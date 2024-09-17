@@ -1,0 +1,99 @@
+// Copyright 2024 Mark Gottscho
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+// Bedrock-RTL Flow Mux with Select
+//
+// A dataflow pipeline mux with explicit select.
+// Uses the AMBA-inspired ready-valid handshake protocol
+// for synchronizing pipeline stages and stalling when
+// encountering backpressure hazards.
+//
+// Data progresses from one stage to another when both
+// the corresponding ready signal and valid signal are
+// both 1 on the same cycle. Otherwise, the stage is stalled.
+//
+// TODO(mgottscho): Write spec doc
+
+`include "br_registers.svh"
+`include "br_asserts_internal.svh"
+
+module br_flow_mux_select #(
+    // Must be at least 2
+    parameter int NumRequesters = 2,
+    // Must be at least 1
+    parameter int BitWidth = 1
+) (
+    input logic clk,
+    input logic rst,  // Synchronous active-high
+
+    input logic [$clog2(NumRequesters)-1:0] select,
+
+    output logic [NumRequesters-1:0]               push_ready,
+    input  logic [NumRequesters-1:0]               push_valid,
+    input  logic [NumRequesters-1:0][BitWidth-1:0] push_data,
+
+    input  logic                pop_ready,
+    output logic                pop_valid,
+    output logic [BitWidth-1:0] pop_data
+);
+
+  //------------------------------------------
+  // Integration checks
+  //------------------------------------------
+  // Rely on submodule integration checks
+
+  //------------------------------------------
+  // Implementation
+  //------------------------------------------
+  // Register the pop outputs to hide the delays of the combinational muxing logic.
+  // Note that there are still combinational paths from pop_ready and select to push_ready.
+
+  logic internal_ready;
+  logic internal_valid;
+  logic [BitWidth-1:0] internal_data;
+
+  br_flow_mux_select_unstable #(
+      .NumRequesters(NumRequesters),
+      .BitWidth(BitWidth)
+  ) br_flow_mux_select_unstable (
+      .clk(clk),
+      .rst(rst),
+      .select(select),
+      .push_ready(push_ready),
+      .push_valid(push_valid),
+      .push_data(push_data),
+      .pop_ready(internal_ready),
+      .pop_valid(internal_valid),
+      .pop_data(internal_data)
+  );
+
+  br_flow_mux_fwd #(
+      .BitWidth(BitWidth)
+  ) br_flow_mux_fwd (
+      .clk(clk),
+      .rst(rst),
+      .push_ready(internal_ready),
+      .push_valid(internal_valid),
+      .push_data(internal_data),
+      .pop_ready(pop_ready),
+      .pop_valid(pop_valid),
+      .pop_data(pop_data)
+  );
+
+  //------------------------------------------
+  // Implementation checks
+  //------------------------------------------
+  // Rely on submodule implementation checks
+
+endmodule : br_flow_mux_select
