@@ -76,5 +76,47 @@
 `BR_ASSERT_COMB(__name__, __expr__) \
 `endif
 
-`endif // BR_ASSERTS_INTERNAL_SVH
+////////////////////////////////////////////////////////////////////////////////
+// Concurrent cover macros (evaluated on posedge of a clock and disabled during a reset)
+////////////////////////////////////////////////////////////////////////////////
 
+// Clock: 'clk'
+// Reset: 'rst'
+`define BR_COVER_INTG(__name__, __expr__) \
+`ifndef BR_DISABLE_INTG_CHECKS \
+`BR_COVER(__name__, __expr__) \
+`endif
+
+// More expressive form of BR_COVER_INTG that allows the use of custom clock and reset signal names.
+`define BR_COVER_INTG_CR(__name__, __expr__, __clk__, __rst__) \
+`ifdef BR_DISABLE_INTG_CHECKS \
+`BR_COVER_CR(__name__, __expr__, __clk__, __rst__) \
+`endif
+
+// Clock: 'clk'
+// Reset: 'rst'
+`define BR_COVER_IMPL(__name__, __expr__) \
+`ifndef BR_ENABLE_IMPL_CHECKS \
+`BR_COVER(__name__, __expr__) \
+`endif
+
+// More expressive form of BR_COVER_IMPL that allows the use of custom clock and reset signal names.
+`define BR_COVER_IMPL_CR(__name__, __expr__, __clk__, __rst__) \
+`ifdef BR_ENABLE_IMPL_CHECKS \
+`BR_COVER_CR(__name__, __expr__, __clk__, __rst__) \
+`endif
+
+////////////////////////////////////////////////////////////////////////////////
+// Combinational cover macros (evaluated continuously based on the expression sensitivity)
+////////////////////////////////////////////////////////////////////////////////
+`define BR_COVER_COMB_INTG(__name__, __expr__) \
+`ifndef BR_DISABLE_INTG_CHECKS \
+`BR_COVER_COMB(__name__, __expr__) \
+`endif
+
+`define BR_COVER_COMB_IMPL(__name__, __expr__) \
+`ifdef BR_ENABLE_IMPL_CHECKS \
+`BR_COVER_COMB(__name__, __expr__) \
+`endif
+
+`endif // BR_ASSERTS_INTERNAL_SVH
