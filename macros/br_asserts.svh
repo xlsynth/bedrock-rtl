@@ -53,4 +53,27 @@ assert property (__expr__); \
 end \
 endgenerate
 
+////////////////////////////////////////////////////////////////////////////////
+// Concurrent cover macros (evaluated on posedge of a clock and disabled during a reset)
+////////////////////////////////////////////////////////////////////////////////
+
+// Clock: 'clk'
+// Reset: 'rst'
+`define BR_COVER(__name__, __expr__) \
+__name__ : cover property (@(posedge clk) disable iff (rst) __expr__);
+
+// More expressive form of BR_COVER that allows the use of custom clock and reset signal names.
+`define BR_COVER_CR(__name__, __expr__, __clk__, __rst__) \
+__name__ : cover property (@(posedge __clk__) disable iff (__rst__) __expr__);
+
+////////////////////////////////////////////////////////////////////////////////
+// Combinational cover macros (evaluated continuously based on the expression sensitivity)
+////////////////////////////////////////////////////////////////////////////////
+`define BR_COVER_COMB(__name__, __expr__) \
+generate : __name__ \
+always_comb begin \
+cover property (__expr__); \
+end \
+endgenerate
+
 `endif // BR_ASSERTS_SVH
