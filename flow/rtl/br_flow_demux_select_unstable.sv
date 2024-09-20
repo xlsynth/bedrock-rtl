@@ -1,4 +1,4 @@
-// Copyright 2024 Mark Gottscho
+// Copyright 2024 The Bedrock-RTL Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -36,8 +36,8 @@ module br_flow_demux_select_unstable #(
     // Must be at least 1
     parameter int BitWidth = 1
 ) (
-    input logic clk,
-    input logic rst,  // Synchronous active-high
+    input logic clk,  // Used only for assertions
+    input logic rst,  // Used only for assertions
 
     input logic [$clog2(NumRequesters)-1:0] select,
 
