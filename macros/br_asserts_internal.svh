@@ -45,7 +45,7 @@
 `endif
 
 // More expressive form of BR_ASSERT_INTG that allows the use of custom clock and reset signal names.
-`define BR_ASSERT_INTG_CR(__name__, __expr__, __clk__, __rst__) \
+`define BR_ASSERT_CR_INTG(__name__, __expr__, __clk__, __rst__) \
 `ifdef BR_DISABLE_INTG_CHECKS \
 `BR_ASSERT_CR(__name__, __expr__, __clk__, __rst__) \
 `endif
@@ -58,7 +58,7 @@
 `endif
 
 // More expressive form of BR_ASSERT_IMPL that allows the use of custom clock and reset signal names.
-`define BR_ASSERT_IMPL_CR(__name__, __expr__, __clk__, __rst__) \
+`define BR_ASSERT_CR_IMPL(__name__, __expr__, __clk__, __rst__) \
 `ifdef BR_ENABLE_IMPL_CHECKS \
 `BR_ASSERT_CR(__name__, __expr__, __clk__, __rst__) \
 `endif
@@ -88,7 +88,7 @@
 `endif
 
 // More expressive form of BR_COVER_INTG that allows the use of custom clock and reset signal names.
-`define BR_COVER_INTG_CR(__name__, __expr__, __clk__, __rst__) \
+`define BR_COVER_CR_INTG(__name__, __expr__, __clk__, __rst__) \
 `ifdef BR_DISABLE_INTG_CHECKS \
 `BR_COVER_CR(__name__, __expr__, __clk__, __rst__) \
 `endif
@@ -101,7 +101,7 @@
 `endif
 
 // More expressive form of BR_COVER_IMPL that allows the use of custom clock and reset signal names.
-`define BR_COVER_IMPL_CR(__name__, __expr__, __clk__, __rst__) \
+`define BR_COVER_CR_IMPL(__name__, __expr__, __clk__, __rst__) \
 `ifdef BR_ENABLE_IMPL_CHECKS \
 `BR_COVER_CR(__name__, __expr__, __clk__, __rst__) \
 `endif
