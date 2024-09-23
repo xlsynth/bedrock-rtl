@@ -19,7 +19,7 @@
 //
 // An enable signal controls whether any grant can be made.
 
-`include "br_asserts_internal.svh"
+`include "br_asserts_internal.sv"
 
 module br_arb_fixed #(
     // Must be at least 2

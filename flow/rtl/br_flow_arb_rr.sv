@@ -24,8 +24,8 @@
 //
 // TODO(mgottscho): Write spec
 
-`include "br_registers.svh"
-`include "br_asserts_internal.svh"
+`include "br_registers.sv"
+`include "br_asserts_internal.sv"
 
 module br_flow_arb_rr #(
     // Must be at least 2

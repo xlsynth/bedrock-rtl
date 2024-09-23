@@ -37,7 +37,7 @@
 //
 // TODO(mgottscho): Write spec
 
-`include "br_asserts_internal.svh"
+`include "br_asserts_internal.sv"
 
 module br_enc_onehot2bin #(
     parameter int NumValues = 2  // Must be at least 2

@@ -19,8 +19,8 @@
 // then the output is the input. The pipeline registers do not
 // get reset.
 
-`include "br_registers.svh"
-`include "br_asserts.svh"
+`include "br_registers.sv"
+`include "br_asserts.sv"
 
 module br_delay_nr #(
     parameter int BitWidth = 1,  // Must be at least 1
