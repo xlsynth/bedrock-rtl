@@ -27,8 +27,8 @@
 //
 // TODO(mgottscho): Write spec doc
 
-`include "br_registers.svh"
-`include "br_asserts_internal.svh"
+`include "br_registers.sv"
+`include "br_asserts_internal.sv"
 
 module br_flow_mux_select_unstable #(
     // Must be at least 2

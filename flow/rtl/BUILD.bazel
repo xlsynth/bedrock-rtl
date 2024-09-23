@@ -1,0 +1,107 @@
+# Copyright 2024 The Bedrock-RTL Authors
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+load("@rules_hdl//verilog:providers.bzl", "verilog_library")
+
+package(default_visibility = ["//visibility:public"])
+
+verilog_library(
+    name = "br_flow_arb_fixed",
+    srcs = ["br_flow_arb_fixed.sv"],
+    deps = [
+        "//arb/rtl:br_arb_fixed",
+        "//macros:br_asserts_internal",
+    ],
+)
+
+verilog_library(
+    name = "br_flow_arb_rr",
+    srcs = ["br_flow_arb_rr.sv"],
+    deps = [
+        "//arb/rtl:br_arb_rr",
+        "//macros:br_registers",
+        "//macros:br_asserts_internal",
+    ],
+)
+
+verilog_library(
+    name = "br_flow_demux_select",
+    srcs = ["br_flow_demux_select.sv"],
+    deps = [
+        ":br_flow_demux_select_unstable",
+        ":br_flow_reg_rev",
+        "//macros:br_asserts_internal",
+    ],
+)
+
+verilog_library(
+    name = "br_flow_demux_select_unstable",
+    srcs = ["br_flow_demux_select_unstable.sv"],
+    deps = ["//macros:br_asserts_internal"],
+)
+
+verilog_library(
+    name = "br_flow_fork",
+    srcs = ["br_flow_fork.sv"],
+    deps = ["//macros:br_asserts_internal"],
+)
+
+verilog_library(
+    name = "br_flow_join",
+    srcs = ["br_flow_join.sv"],
+    deps = ["//macros:br_asserts_internal"],
+)
+
+verilog_library(
+    name = "br_flow_mux_select",
+    srcs = ["br_flow_mux_select.sv"],
+    deps = [
+        ":br_flow_mux_select_unstable",
+        ":br_flow_reg_fwd",
+        "//macros:br_asserts_internal",
+    ],
+)
+
+verilog_library(
+    name = "br_flow_mux_select_unstable",
+    srcs = ["br_flow_mux_select_unstable.sv"],
+    deps = ["//macros:br_asserts_internal"],
+)
+
+verilog_library(
+    name = "br_flow_reg_both",
+    srcs = ["br_flow_reg_both.sv"],
+    deps = [
+        ":br_flow_reg_fwd",
+        ":br_flow_reg_rev",
+    ],
+)
+
+verilog_library(
+    name = "br_flow_reg_fwd",
+    srcs = ["br_flow_reg_fwd.sv"],
+    deps = [
+        "//macros:br_registers",
+        "//macros:br_asserts_internal",
+    ],
+)
+
+verilog_library(
+    name = "br_flow_reg_rev",
+    srcs = ["br_flow_reg_rev.sv"],
+    deps = [
+        "//macros:br_registers",
+        "//macros:br_asserts_internal",
+    ],
+)
