@@ -17,8 +17,8 @@
 // Grants a single request at a time with a fair least-recently-used policy.
 // An enable signal controls whether any grant can be made.
 
-`include "br_asserts_internal.sv"
-`include "br_registers.sv"
+`include "br_asserts_internal.svh"
+`include "br_registers.svh"
 
 module br_arb_lru #(
     // Must be at least 2

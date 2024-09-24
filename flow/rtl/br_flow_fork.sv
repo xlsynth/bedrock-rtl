@@ -20,8 +20,8 @@
 // encountering backpressure hazards. This module does not implement
 // the datapath.
 
-`include "br_asserts.sv"
-`include "br_asserts_internal.sv"
+`include "br_asserts.svh"
+`include "br_asserts_internal.svh"
 
 module br_flow_fork #(
     parameter int NumFlows = 2  // Must be at least 2

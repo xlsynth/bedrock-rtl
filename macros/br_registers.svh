@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-`ifndef BR_REGISTERS_SV
-`define BR_REGISTERS_SV
+`ifndef BR_REGISTERS_SVH
+`define BR_REGISTERS_SVH
 
 // Common macros for instantiating registers in a design.
 // They help make RTL code easier to write, read, and maintain by hiding
@@ -189,4 +189,4 @@ always_ff @(posedge __clk__) begin \
 end
 
 
-`endif // BR_REGISTERS_SV
+`endif // BR_REGISTERS_SVH

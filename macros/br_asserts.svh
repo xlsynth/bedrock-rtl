@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-`ifndef BR_ASSERTS_SV
-`define BR_ASSERTS_SV
+`ifndef BR_ASSERTS_SVH
+`define BR_ASSERTS_SVH
 
 // Common macros for instantiating SystemVerilog Assertions (SVA).
 // They help make code easier to write, read, and maintain by hiding
@@ -76,4 +76,4 @@ cover property (__expr__); \
 end \
 endgenerate
 
-`endif // BR_ASSERTS_SV
+`endif // BR_ASSERTS_SVH

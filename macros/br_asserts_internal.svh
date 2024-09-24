@@ -12,10 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-`ifndef BR_ASSERTS_INTERNAL_SV
-`define BR_ASSERTS_INTERNAL_SV
+`ifndef BR_ASSERTS_INTERNAL_SVH
+`define BR_ASSERTS_INTERNAL_SVH
 
-`include "br_asserts.sv"
+`include "br_asserts.svh"
 
 // Bedrock-internal macros for instantiating SystemVerilog Assertions (SVA).
 // Not intended for use outside of Bedrock.
@@ -119,4 +119,4 @@
 `BR_COVER_COMB(__name__, __expr__) \
 `endif
 
-`endif // BR_ASSERTS_INTERNAL_SV
+`endif // BR_ASSERTS_INTERNAL_SVH
