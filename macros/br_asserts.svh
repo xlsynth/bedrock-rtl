@@ -41,13 +41,13 @@ end \
 // Reset: 'rst'
 `define BR_ASSERT(__name__, __expr__) \
 `ifdef SV_ASSERT_ON \
-__name__ : assert property (@(posedge clk) disable iff (rst) __expr__); \
+__name__ : assert property (@(posedge clk) disable iff (rst) (__expr__)); \
 `endif
 
 // More expressive form of BR_ASSERT that allows the use of custom clock and reset signal names.
 `define BR_ASSERT_CR(__name__, __expr__, __clk__, __rst__) \
 `ifdef SV_ASSERT_ON \
-__name__ : assert property (@(posedge __clk__) disable iff (__rst__) __expr__); \
+__name__ : assert property (@(posedge __clk__) disable iff (__rst__) (__expr__)); \
 `endif
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -70,13 +70,13 @@ endgenerate \
 // Reset: 'rst'
 `define BR_COVER(__name__, __expr__) \
 `ifdef SV_ASSERT_ON \
-__name__ : cover property (@(posedge clk) disable iff (rst) __expr__); \
+__name__ : cover property (@(posedge clk) disable iff (rst) (__expr__)); \
 `endif
 
 // More expressive form of BR_COVER that allows the use of custom clock and reset signal names.
 `define BR_COVER_CR(__name__, __expr__, __clk__, __rst__) \
 `ifdef SV_ASSERT_ON \
-__name__ : cover property (@(posedge __clk__) disable iff (__rst__) __expr__); \
+__name__ : cover property (@(posedge __clk__) disable iff (__rst__) (__expr__)); \
 `endif
 
 ////////////////////////////////////////////////////////////////////////////////
