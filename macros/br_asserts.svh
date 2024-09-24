@@ -26,12 +26,6 @@
 // Static (elaboration-time) assertion macros
 ////////////////////////////////////////////////////////////////////////////////
 
-// TODO(mgottscho): This does not work with the following iverilog command:
-// verilator --lint-only enc/rtl/br_enc_bin2onehot.sv -Imacros +1800-2005ext+sv --assert 
-// ChatGPT suggests sim-time?
-// initial begin \
-//     $error("Static assertion failed: %s", "`__name__"); \
-// end \
 `define BR_ASSERT_STATIC(__name__, __expr__) \
 `ifdef SV_ASSERT_ON \
 if (!(__expr__)) begin : gen__``__name__ \
