@@ -20,8 +20,8 @@
 // but the datapath registers are not. Each datapath register is clock
 // gated using the valid signal.
 
-`include "br_registers.sv"
-`include "br_asserts.sv"
+`include "br_registers.svh"
+`include "br_asserts.svh"
 
 module br_delay #(
     parameter int BitWidth = 1,  // Must be at least 1

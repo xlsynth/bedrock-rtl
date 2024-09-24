@@ -25,8 +25,8 @@
 // timing on a wide bus that covers a long wire distance. The width-wise fanout
 // delay is on a different cycle than the lengthwise wire delay.
 
-`include "br_registers.sv"
-`include "br_asserts.sv"
+`include "br_registers.svh"
+`include "br_asserts.svh"
 
 module br_delay_valid_next #(
     parameter int BitWidth = 1,  // Must be at least 1

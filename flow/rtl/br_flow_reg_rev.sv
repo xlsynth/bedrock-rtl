@@ -23,9 +23,9 @@
 // the corresponding ready signal and valid signal are
 // both 1 on the same cycle. Otherwise, the stage is stalled.
 
-`include "br_asserts.sv"
-`include "br_asserts_internal.sv"
-`include "br_registers.sv"
+`include "br_asserts.svh"
+`include "br_asserts_internal.svh"
+`include "br_registers.svh"
 
 module br_flow_reg_rev #(
     // Must be at least 1

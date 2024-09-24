@@ -27,8 +27,8 @@
 //
 // There is zero latency from request to grant.
 
-`include "br_asserts_internal.sv"
-`include "br_registers.sv"
+`include "br_asserts_internal.svh"
+`include "br_registers.svh"
 
 module br_arb_rr #(
     // Must be at least 2

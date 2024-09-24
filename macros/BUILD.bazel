@@ -18,16 +18,16 @@ package(default_visibility = ["//visibility:public"])
 
 verilog_library(
     name = "br_asserts",
-    srcs = ["br_asserts.sv"],
+    hdrs = ["br_asserts.svh"],
 )
 
 verilog_library(
     name = "br_asserts_internal",
-    srcs = ["br_asserts_internal.sv"],
+    hdrs = ["br_asserts_internal.svh"],
     deps = [":br_asserts"],
 )
 
 verilog_library(
     name = "br_registers",
-    srcs = ["br_registers.sv"],
+    hdrs = ["br_registers.svh"],
 )

@@ -18,7 +18,7 @@
 
 // TODO(mgottscho): Write spec
 
-`include "br_asserts_internal.sv"
+`include "br_asserts_internal.svh"
 
 module br_enc_priority_encoder #(
     // Must be at least 2

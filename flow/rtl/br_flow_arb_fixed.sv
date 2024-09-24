@@ -23,7 +23,7 @@
 //
 // TODO(mgottscho): Write spec
 
-`include "br_asserts_internal.sv"
+`include "br_asserts_internal.svh"
 
 module br_flow_arb_fixed #(
     // Must be at least 2
