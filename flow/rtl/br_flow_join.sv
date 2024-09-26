@@ -24,7 +24,7 @@
 
 module br_flow_join #(
     parameter int NumFlows = 2  // Must be at least 2
-)(
+) (
     input logic clk,  // Used only for assertions
     input logic rst,  // Used only for assertions
 
@@ -37,34 +37,34 @@ module br_flow_join #(
     output logic pop_valid
 );
 
-    //------------------------------------------
-    // Integration checks
-    //------------------------------------------
-    `BR_ASSERT_STATIC(NumFlowsMustBeAtLeastTwo_A, NumFlows >= 2)
+  //------------------------------------------
+  // Integration checks
+  //------------------------------------------
+  `BR_ASSERT_STATIC(NumFlowsMustBeAtLeastTwo_A, NumFlows >= 2)
 
-    for (int i = 0; i < NumFlows; i++) begin : gen_flow_checks
-        `BR_ASSERT_INTG(push_valid_stable_A, !push_ready[i] && push_valid[i] |=> push_valid[i])
-    end
+  for (genvar i = 0; i < NumFlows; i++) begin : gen_flow_checks
+    `BR_ASSERT_INTG(push_valid_stable_A, !push_ready[i] && push_valid[i] |=> push_valid[i])
+  end
 
-    //------------------------------------------
-    // Implementation
-    //------------------------------------------
-    for (int i = 0; i < NumFlows; i++) begin : gen_flows
-        always_comb begin
-            push_ready[i] = pop_ready;
-            for (int j = 0; j < NumFlows; j++) begin
-                if (i != j) begin
-                    push_ready[i] &= push_valid[j];
-                end
-            end
+  //------------------------------------------
+  // Implementation
+  //------------------------------------------
+  for (genvar i = 0; i < NumFlows; i++) begin : gen_flows
+    always_comb begin
+      push_ready[i] = pop_ready;
+      for (int j = 0; j < NumFlows; j++) begin
+        if (i != j) begin
+          push_ready[i] &= push_valid[j];
         end
+      end
     end
+  end
 
-    assign pop_valid = &push_valid;
+  assign pop_valid = &push_valid;
 
-    //------------------------------------------
-    // Implementation checks
-    //------------------------------------------
-    `BR_ASSERT_IMPL(pop_backpressure_A, !pop_ready && pop_valid |=> pop_valid)
+  //------------------------------------------
+  // Implementation checks
+  //------------------------------------------
+  `BR_ASSERT_IMPL(pop_backpressure_A, !pop_ready && pop_valid |=> pop_valid)
 
 endmodule : br_flow_join

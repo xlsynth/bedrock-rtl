@@ -64,12 +64,12 @@ module br_flow_demux_select_unstable #(
   // Implementation
   //------------------------------------------
   assign push_ready = pop_ready[select];
-  assign pop_valid = push_valid << select;
+  assign pop_valid  = push_valid << select;
   // Replicate pop_data to all requesters; this is okay since pop_data[i]
   // is only valid when pop_valid[i] is high.
   always_comb begin
     for (int i = 0; i < NumRequesters; i++) begin
-        pop_data[i] = push_data;
+      pop_data[i] = push_data;
     end
   end
 

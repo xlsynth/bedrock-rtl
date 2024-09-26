@@ -64,8 +64,8 @@ module br_flow_mux_select_unstable #(
   // Implementation
   //------------------------------------------
   assign push_ready = pop_ready << select;
-  assign pop_valid = push_valid[select];
-  assign pop_data = push_data[select];
+  assign pop_valid  = push_valid[select];
+  assign pop_data   = push_data[select];
 
   //------------------------------------------
   // Implementation checks

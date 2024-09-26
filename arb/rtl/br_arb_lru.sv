@@ -31,107 +31,107 @@ module br_arb_lru #(
     output logic [NumRequesters-1:0] grant
 );
 
-    //------------------------------------------
-    // Integration checks
-    //------------------------------------------
-    // Rely on submodule integration checks
+  //------------------------------------------
+  // Integration checks
+  //------------------------------------------
+  // Rely on submodule integration checks
 
-    // TODO(mgottscho): add checks
+  // TODO(mgottscho): add checks
 
-    //------------------------------------------
-    // Implementation
-    //------------------------------------------
-    // Whenever a requester is granted, it becomes the *most* recently used, and therefore
-    // it becomes the lowest priority.
-    //
-    // To ensure fairness, we need to maintain a total order of least recently used requesters.
-    // We do this with a priority state matrix, where state[i][j] == 1'b1 means that requester
-    // i is less recently used than requester j (otherwise, i is more recently used than j and
-    // has lower priority). This scheme is based on the matrix arbiter as described in Chapter
-    // 18.5 of "Principles and Practices of Interconnection Networks" by Dally and Towles.
-    //
-    // Therefore, requester i can only be granted if (!req[j] || state[i][j]) for all j where i != j.
-    // If priorities are tied, the lower-index requester wins.
-    //
-    // State update occurs whenever the arbiter is enabled and there is any valid request
-    // (because it will always result in a grant).
-    // * Whenever a grant occurs for requester i, on the next cycle we fill 0s into state[i][j] for all
-    //   j where i != j. This indicates that requester i is used more recently (lower priority) than all
-    //   requesters j.
-    // * Whenever a grant occurs for requester j, on the next cycle we fill 1s into state[i][j] for all
-    //   i where i != j. This indicates that all requesters i are used less recently (higher priority)
-    //   than requester j.
-    //
-    // The advantage of this implementation is that we can update and search all the priorities in parallel,
-    // which is good for timing. However, the priority state contains some redundancy, costing extra
-    // flip-flops.
+  //------------------------------------------
+  // Implementation
+  //------------------------------------------
+  // Whenever a requester is granted, it becomes the *most* recently used, and therefore
+  // it becomes the lowest priority.
+  //
+  // To ensure fairness, we need to maintain a total order of least recently used requesters.
+  // We do this with a priority state matrix, where state[i][j] == 1'b1 means that requester
+  // i is less recently used than requester j (otherwise, i is more recently used than j and
+  // has lower priority). This scheme is based on the matrix arbiter as described in Chapter
+  // 18.5 of "Principles and Practices of Interconnection Networks" by Dally and Towles.
+  //
+  // Therefore, requester i can only be granted if (!req[j] || state[i][j]) for all j where i != j.
+  // If priorities are tied, the lower-index requester wins.
+  //
+  // State update occurs whenever the arbiter is enabled and there is any valid request
+  // (because it will always result in a grant).
+  // * Whenever a grant occurs for requester i, on the next cycle we fill 0s into state[i][j] for all
+  //   j where i != j. This indicates that requester i is used more recently (lower priority) than all
+  //   requesters j.
+  // * Whenever a grant occurs for requester j, on the next cycle we fill 1s into state[i][j] for all
+  //   i where i != j. This indicates that all requesters i are used less recently (higher priority)
+  //   than requester j.
+  //
+  // The advantage of this implementation is that we can update and search all the priorities in parallel,
+  // which is good for timing. However, the priority state contains some redundancy, costing extra
+  // flip-flops.
 
 
-    // Implement the state matrix. We only need to maintain the upper triangular state (exclusive of
-    // diagonal) in registers because the lower triangle is its complement. The diagonal is undefined
-    // and unused (because we never need to compare the priority of a requester with itself).
-    // There are NumRequesters * (NumRequesters - 1) / 2 flip-flops of priority state.
-    logic [NumRequesters-1:0][NumRequesters-1:0] state, state_reg, state_reg_next;
+  // Implement the state matrix. We only need to maintain the upper triangular state (exclusive of
+  // diagonal) in registers because the lower triangle is its complement. The diagonal is undefined
+  // and unused (because we never need to compare the priority of a requester with itself).
+  // There are NumRequesters * (NumRequesters - 1) / 2 flip-flops of priority state.
+  logic [NumRequesters-1:0][NumRequesters-1:0] state, state_reg, state_reg_next;
 
-    for (genvar i = 0; i < N; i++) begin : gen_state_row
-        for (genvar j = 0; j < N; j++) begin : gen_state_col
-            // Upper triangle
-            if (i < j) begin : gen_upper_tri
-                // All bits in upper triangle init to 1'b1 (lowest numbered req wins)
-                assign state_reg_next[i][j] = grant[i] ? 1'b0 : grant[j] ? 1'b1 : state[i][j];
-                `BR_REGIL(state_reg[i][j], state_reg_next[i][j], enable && |req, 1'b1)
-                assign state[i][j] = state_reg[i][j];
+  for (genvar i = 0; i < N; i++) begin : gen_state_row
+    for (genvar j = 0; j < N; j++) begin : gen_state_col
+      // Upper triangle
+      if (i < j) begin : gen_upper_tri
+        // All bits in upper triangle init to 1'b1 (lowest numbered req wins)
+        assign state_reg_next[i][j] = grant[i] ? 1'b0 : grant[j] ? 1'b1 : state[i][j];
+        `BR_REGIL(state_reg[i][j], state_reg_next[i][j], enable && |req, 1'b1)
+        assign state[i][j] = state_reg[i][j];
 
-            // Lower triangle is the inverse of upper triangle
-            end else if (i > j) begin : gen_lower_tri
-                assign state[i][j] = !state_reg[j][i];
+        // Lower triangle is the inverse of upper triangle
+      end else if (i > j) begin : gen_lower_tri
+        assign state[i][j] = !state_reg[j][i];
 
-                // Tie-off unused signals
-                assign state_reg_next[i][j] = 1'b0;
-                assign state_reg[i][j] = 1'b0;
-                br_misc_unused br_misc_unused_state_reg_next (.in(state_reg_next[i][j]));
-                br_misc_unused br_misc_unused_state_reg (.in(state_reg[i][j]));
+        // Tie-off unused signals
+        assign state_reg_next[i][j] = 1'b0;
+        assign state_reg[i][j] = 1'b0;
+        br_misc_unused br_misc_unused_state_reg_next (.in(state_reg_next[i][j]));
+        br_misc_unused br_misc_unused_state_reg (.in(state_reg[i][j]));
 
-            // The diagonal is unused. Tie off signals.
-            end else begin : gen_diag
-                assign {state_reg_next[i][j], state_reg[i][j], state[i][j]} = '0;
-                br_misc_unused #(
-                    .BitWidth(3)
-                ) br_misc_unused (
-                    .in({state_reg_next[i][j], state_reg[i][j], state[i][j]})
-                );
-            end
-        end
+        // The diagonal is unused. Tie off signals.
+      end else begin : gen_diag
+        assign {state_reg_next[i][j], state_reg[i][j], state[i][j]} = '0;
+        br_misc_unused #(
+            .BitWidth(3)
+        ) br_misc_unused (
+            .in({state_reg_next[i][j], state_reg[i][j], state[i][j]})
+        );
+      end
     end
+  end
 
 
-    // Compute the grant.
-    // * A requester can only be granted if there are no higher priority active requesters.
-    // * A requester i is higher priority than a requester j if state[i][j] is 1.
-    logic [NumRequesters-1:0] can_grant;
+  // Compute the grant.
+  // * A requester can only be granted if there are no higher priority active requesters.
+  // * A requester i is higher priority than a requester j if state[i][j] is 1.
+  logic [NumRequesters-1:0] can_grant;
 
-    always_comb begin
-        for (int i = 0; i < NumRequesters; i++) begin
-            can_grant[i] = 1'b1;
-            for (int j = 0; j < NumRequesters; j++) begin
-                if (i != j) begin  // Diagonal is unused
-                    can_grant[i] &= !req[j] || state[i][j];
-                end
-            end
+  always_comb begin
+    for (int i = 0; i < NumRequesters; i++) begin
+      can_grant[i] = 1'b1;
+      for (int j = 0; j < NumRequesters; j++) begin
+        if (i != j) begin  // Diagonal is unused
+          can_grant[i] &= !req[j] || state[i][j];
         end
+      end
     end
+  end
 
-    assign grant = req & can_grant;
+  assign grant = req & can_grant;
 
-    //------------------------------------------
-    // Implementation checks
-    //------------------------------------------
-    // Rely on submodule implementation checks
+  //------------------------------------------
+  // Implementation checks
+  //------------------------------------------
+  // Rely on submodule implementation checks
 
-    `BR_ASSERT_IMPL(grant_onehot0_A, $onehot0(grant))
-    `BR_ASSERT_IMPL(grant_implies_request_A, (grant & request) == grant)
-    `BR_ASSERT_IMPL(grant_only_when_enabled_A, |grant |-> enable)
+  `BR_ASSERT_IMPL(grant_onehot0_A, $onehot0(grant))
+  `BR_ASSERT_IMPL(grant_implies_request_A, (grant & request) == grant)
+  `BR_ASSERT_IMPL(grant_only_when_enabled_A, |grant |-> enable)
 
-    // TODO(mgottscho): Add more cases
+  // TODO(mgottscho): Add more cases
 
 endmodule : br_arb_lru

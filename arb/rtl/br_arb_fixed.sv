@@ -45,7 +45,7 @@ module br_arb_fixed #(
   br_enc_priority_encoder #(
       .NumRequesters(NumRequesters)
   ) br_enc_priority_encoder (
-      .in(request),
+      .in (request),
       .out(grant_internal)
   );
 

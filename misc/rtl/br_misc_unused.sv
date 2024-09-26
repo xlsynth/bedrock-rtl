@@ -24,7 +24,7 @@ module br_misc_unused #(
     input logic [BitWidth-1:0] in
 );
 
-    // TODO(mgottscho): Implement lint waivers for tools of interest.
-    logic unused = |in;
+  // TODO(mgottscho): Implement lint waivers for tools of interest.
+  logic unused = |in;
 
 endmodule : br_misc_unused
