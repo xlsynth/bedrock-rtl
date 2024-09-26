@@ -23,7 +23,7 @@
 `include "br_registers.svh"
 `include "br_asserts.svh"
 
-module br_delay #(
+module br_delay_valid #(
     parameter int BitWidth  = 1,  // Must be at least 1
     parameter int NumStages = 0   // Must be at least 0
 ) (
@@ -66,4 +66,4 @@ module br_delay #(
   `BR_ASSERT_IMPL(valid_delay_A, ##NumStages out_valid == $past(in_valid, NumStages))
   `BR_ASSERT_IMPL(data_delay_A, in_valid |-> ##NumStages out_valid && out == $past(in, NumStages))
 
-endmodule : br_delay
+endmodule : br_delay_valid
