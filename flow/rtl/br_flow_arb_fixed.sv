@@ -47,17 +47,30 @@ module br_flow_arb_fixed #(
   //------------------------------------------
   // Implementation
   //------------------------------------------
-  logic enable = |pop_ready;
+  logic [NumRequesters-1:0] grant;
 
   br_arb_fixed #(
       .NumRequesters(NumRequesters)
   ) br_arb_fixed (
       .clk,
       .rst,
-      .enable,
+      .enable(pop_ready),
       .request(push_valid),
-      .grant  (push_ready)
+      .grant
   );
+
+  // We could just make push_ready[i] == grant[i], but then push_ready[i] will always depend on push_valid[i].
+  // It is nicer to indicate ready independently of the valid for the same requester.
+  for (genvar i = 0; i < NumRequesters; i++) begin : gen_push_ready
+    always_comb begin
+        push_ready[i] = 1'b1;
+        for (int j = 0; j < NumRequesters; j++) begin
+            if (i != j) begin
+                push_ready[i] &= !grant[j];
+            end
+        end
+    end
+  end
 
   assign pop_valid = |push_valid;
 

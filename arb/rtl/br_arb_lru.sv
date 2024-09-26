@@ -130,7 +130,7 @@ module br_arb_lru #(
 
     `BR_ASSERT_IMPL(grant_onehot0_A, $onehot0(grant))
     `BR_ASSERT_IMPL(grant_implies_request_A, (grant & request) == grant)
-    `BR_ASSERT_IMPL(grant_only_when_enabled_A, grant |-> enable)
+    `BR_ASSERT_IMPL(grant_only_when_enabled_A, |grant |-> enable)
 
     // TODO(mgottscho): Add more cases
 
