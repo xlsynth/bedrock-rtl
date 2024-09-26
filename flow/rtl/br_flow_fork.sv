@@ -25,7 +25,7 @@
 
 module br_flow_fork #(
     parameter int NumFlows = 2  // Must be at least 2
-)(
+) (
     input logic clk,  // Used only for assertions
     input logic rst,  // Used only for assertions
 
@@ -41,33 +41,33 @@ module br_flow_fork #(
     output logic [NumFlows-1:0] pop_valid_unstable
 );
 
-    //------------------------------------------
-    // Integration checks
-    //------------------------------------------
-    `BR_ASSERT_STATIC(NumFlowsMustBeAtLeastTwo_A, NumFlows >= 2)
-    `BR_ASSERT_INTG(push_backpressure_intg_A, !push_ready && push_valid |=> push_valid)
+  //------------------------------------------
+  // Integration checks
+  //------------------------------------------
+  `BR_ASSERT_STATIC(NumFlowsMustBeAtLeastTwo_A, NumFlows >= 2)
+  `BR_ASSERT_INTG(push_backpressure_intg_A, !push_ready && push_valid |=> push_valid)
 
-    //------------------------------------------
-    // Implementation
-    //------------------------------------------
-    assign push_ready = &pop_ready;
+  //------------------------------------------
+  // Implementation
+  //------------------------------------------
+  assign push_ready = &pop_ready;
 
-    for (int i = 0; i < NumFlows; i++) begin : gen_flows
-        always_comb begin
-            pop_valid_unstable[i] = push_valid;
-            for (int j = 0; j < NumFlows; j++) begin
-                if (i != j) begin
-                    pop_valid_unstable[i] &= pop_ready[j];
-                end
-            end
+  for (genvar i = 0; i < NumFlows; i++) begin : gen_flows
+    always_comb begin
+      pop_valid_unstable[i] = push_valid;
+      for (int j = 0; j < NumFlows; j++) begin
+        if (i != j) begin
+          pop_valid_unstable[i] &= pop_ready[j];
         end
+      end
     end
- 
-    //------------------------------------------
-    // Implementation checks
-    //------------------------------------------
-    for (int i = 0; i < NumFlows; i++) begin : gen_flow_checks
-        `BR_COVER_IMPL(pop_valid_unstable_C, $stable(push_valid) && $fell(pop_valid[i]))
-    end
+  end
+
+  //------------------------------------------
+  // Implementation checks
+  //------------------------------------------
+  for (genvar i = 0; i < NumFlows; i++) begin : gen_flow_checks
+    `BR_COVER_IMPL(pop_valid_unstable_C, $stable(push_valid) && $fell(pop_valid[i]))
+  end
 
 endmodule : br_flow_fork

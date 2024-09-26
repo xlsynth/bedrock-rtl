@@ -76,9 +76,9 @@ module br_arb_rr #(
   always_comb begin
     priority_mask = '0;
     for (int i = 0; i < NumRequesters; i++) begin
-        if (i > last_grant) begin
-            priority_mask[i] = 1'b1;
-        end
+      if (i > last_grant) begin
+        priority_mask[i] = 1'b1;
+      end
     end
   end
 
@@ -87,14 +87,14 @@ module br_arb_rr #(
   br_enc_priority_encoder #(
       .NumRequesters(NumRequesters)
   ) br_enc_priority_encoder_high (
-      .in(request_high),
+      .in (request_high),
       .out(grant_high)
   );
 
   br_enc_priority_encoder #(
       .NumRequesters(NumRequesters)
   ) br_enc_priority_encoder_low (
-      .in(request),  // No need to mask since we only use grant_low if request_high is zero
+      .in (request),   // No need to mask since we only use grant_low if request_high is zero
       .out(grant_low)
   );
 

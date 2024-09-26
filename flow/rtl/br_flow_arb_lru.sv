@@ -56,7 +56,7 @@ module br_flow_arb_lru #(
   ) br_arb_lru (
       .clk,
       .rst,
-      .enable(pop_ready),
+      .enable (pop_ready),
       .request(push_valid),
       .grant
   );
@@ -65,12 +65,12 @@ module br_flow_arb_lru #(
   // It is nicer to indicate ready independently of the valid for the same requester.
   for (genvar i = 0; i < NumRequesters; i++) begin : gen_push_ready
     always_comb begin
-        push_ready[i] = 1'b1;
-        for (int j = 0; j < NumRequesters; j++) begin
-            if (i != j) begin
-                push_ready[i] &= !grant[j];
-            end
+      push_ready[i] = 1'b1;
+      for (int j = 0; j < NumRequesters; j++) begin
+        if (i != j) begin
+          push_ready[i] &= !grant[j];
         end
+      end
     end
   end
 

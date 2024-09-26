@@ -24,7 +24,7 @@ module br_enc_priority_encoder #(
     // Must be at least 2
     parameter int NumRequesters = 2
 ) (
-    input logic [NumRequesters-1:0] in,
+    input  logic [NumRequesters-1:0] in,
     output logic [NumRequesters-1:0] out
 );
 
@@ -54,6 +54,8 @@ module br_enc_priority_encoder #(
   //------------------------------------------
   `BR_ASSERT_COMB_IMPL(out_onehot0_A, $onehot0(out))
   `BR_ASSERT_COMB_IMPL(out_lowest_max_priority_A, in[0] == out[0])
-  `BR_ASSERT_COMB_IMPL(out_highest_min_priority_A, out[NumRequesters-1] |-> in[NumRequesters-1] && (|in[NumRequesters-2:0] == '0))
+  `BR_ASSERT_COMB_IMPL(
+      out_highest_min_priority_A,
+      out[NumRequesters-1] |-> in[NumRequesters-1] && (|in[NumRequesters-2:0] == '0))
 
 endmodule : br_enc_priority_encoder

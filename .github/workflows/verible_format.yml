@@ -1,13 +1,13 @@
-name: Verible lint test
+name: Verible format test
 on:
   pull_request:
     types: [opened, reopened, synchronize]
 jobs:
-  lint:
+  format:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@master
-    - uses: chipsalliance/verible-linter-action@main
+    - uses: chipsalliance/verible-formatter-action@main
       with:
-        fail_on_error: true
+        fail_on_formatting_suggestions: true
         github_token: ${{ secrets.GITHUB_TOKEN }}

@@ -23,37 +23,37 @@
 `include "br_asserts.svh"
 
 module br_delay #(
-    parameter int BitWidth = 1,  // Must be at least 1
-    parameter int NumStages = 0  // Must be at least 0
+    parameter int BitWidth  = 1,  // Must be at least 1
+    parameter int NumStages = 0   // Must be at least 0
 ) (
-    input  logic clk,
-    input  logic rst,
-    input  logic [BitWidth-1:0] in,
+    input logic clk,
+    input logic rst,
+    input logic [BitWidth-1:0] in,
     output logic [BitWidth-1:0] out
 );
 
-    //------------------------------------------
-    // Integration checks
-    //------------------------------------------
-    `BR_ASSERT_STATIC(BitWidthMustBeAtLeastOne_A, BitWidth >= 1)
-    `BR_ASSERT_STATIC(NumStagesMustBeAtLeastZero_A, NumStages >= 0)
+  //------------------------------------------
+  // Integration checks
+  //------------------------------------------
+  `BR_ASSERT_STATIC(BitWidthMustBeAtLeastOne_A, BitWidth >= 1)
+  `BR_ASSERT_STATIC(NumStagesMustBeAtLeastZero_A, NumStages >= 0)
 
-    //------------------------------------------
-    // Implementation
-    //------------------------------------------
-    logic [NumStages:0][BitWidth-1:0] stages;
+  //------------------------------------------
+  // Implementation
+  //------------------------------------------
+  logic [NumStages:0][BitWidth-1:0] stages;
 
-    assign stages[0] = in;
+  assign stages[0] = in;
 
-    for (int i = 1; i <= NumStages; i++) begin : gen_stages
-        `BR_REG(stages[i], stages[i-1])
-    end
+  for (genvar i = 1; i <= NumStages; i++) begin : gen_stages
+    `BR_REG(stages[i], stages[i-1])
+  end
 
-    assign out = stages[NumStages];
+  assign out = stages[NumStages];
 
-    //------------------------------------------
-    // Implementation checks
-    //------------------------------------------
-    `BR_ASSERT_IMPL(delay_A, ##NumStages out == $past(in, NumStages))
+  //------------------------------------------
+  // Implementation checks
+  //------------------------------------------
+  `BR_ASSERT_IMPL(delay_A, ##NumStages out == $past(in, NumStages))
 
 endmodule : br_delay

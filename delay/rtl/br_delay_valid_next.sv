@@ -29,48 +29,49 @@
 `include "br_asserts.svh"
 
 module br_delay_valid_next #(
-    parameter int BitWidth = 1,  // Must be at least 1
-    parameter int NumStages = 0  // Must be at least 0
+    parameter int BitWidth  = 1,  // Must be at least 1
+    parameter int NumStages = 0   // Must be at least 0
 ) (
-    input  logic clk,
-    input  logic rst,
+    input  logic                clk,
+    input  logic                rst,
     input  logic                in_valid_next,
     input  logic [BitWidth-1:0] in,
     output logic                out_valid_next,
     output logic [BitWidth-1:0] out
 );
 
-    //------------------------------------------
-    // Integration checks
-    //------------------------------------------
-    `BR_ASSERT_STATIC(BitWidthMustBeAtLeastOne_A, BitWidth >= 1)
-    `BR_ASSERT_STATIC(NumStagesMustBeAtLeastZero_A, NumStages >= 0)
+  //------------------------------------------
+  // Integration checks
+  //------------------------------------------
+  `BR_ASSERT_STATIC(BitWidthMustBeAtLeastOne_A, BitWidth >= 1)
+  `BR_ASSERT_STATIC(NumStagesMustBeAtLeastZero_A, NumStages >= 0)
 
-    `BR_COVER_INTG(in_valid_next_C, in_valid_next)
+  `BR_COVER_INTG(in_valid_next_C, in_valid_next)
 
-    //------------------------------------------
-    // Implementation
-    //------------------------------------------
-    logic [NumStages:0][BitWidth-1:0] stage_valid_next;
-    logic [NumStages:0][BitWidth-1:0] stage;
+  //------------------------------------------
+  // Implementation
+  //------------------------------------------
+  logic [NumStages:0][BitWidth-1:0] stage_valid_next;
+  logic [NumStages:0][BitWidth-1:0] stage;
 
-    assign stage_valid_next[0] = in_valid_next;
-    assign stage[0] = in;
+  assign stage_valid_next[0] = in_valid_next;
+  assign stage[0] = in;
 
-    for (int i = 1; i <= NumStages; i++) begin : gen_stages
-        `BR_REG(stage_valid_next[i], stage_valid_next[i-1])
-        // stage_valid_next[i] is equivalent to hypothetical stage_valid[i-1],
-        // which would be aligned to stage[i-1].
-        `BR_REGLN(stage[i], stage[i-1], stage_valid_next[i])
-    end
+  for (genvar i = 1; i <= NumStages; i++) begin : gen_stages
+    `BR_REG(stage_valid_next[i], stage_valid_next[i-1])
+    // stage_valid_next[i] is equivalent to hypothetical stage_valid[i-1],
+    // which would be aligned to stage[i-1].
+    `BR_REGLN(stage[i], stage[i-1], stage_valid_next[i])
+  end
 
-    assign out_valid_next = stage_valid_next[NumStages];
-    assign out = stage[NumStages];
+  assign out_valid_next = stage_valid_next[NumStages];
+  assign out = stage[NumStages];
 
-    //------------------------------------------
-    // Implementation checks
-    //------------------------------------------
-    `BR_ASSERT_IMPL(valid_next_delay_A, ##NumStages out_valid_next == $past(in_valid_next, NumStages))
-    `BR_ASSERT_IMPL(data_delay_A, in_valid_next |-> ##NumStages out_valid_next ##1 out == $past(in, NumStages))
+  //------------------------------------------
+  // Implementation checks
+  //------------------------------------------
+  `BR_ASSERT_IMPL(valid_next_delay_A, ##NumStages out_valid_next == $past(in_valid_next, NumStages))
+  `BR_ASSERT_IMPL(data_delay_A, in_valid_next |-> ##NumStages out_valid_next ##1 out == $past
+                                (in, NumStages))
 
 endmodule : br_delay_valid_next

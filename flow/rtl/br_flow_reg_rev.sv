@@ -55,7 +55,8 @@ module br_flow_reg_rev #(
   // still 1 and push_data has not changed. In other words,
   // we are checking that the input stimulus abides by the push-side
   // ready-valid interface protocol.
-  `BR_ASSERT_INTG(push_backpressure_intg_A, !push_ready && push_valid |=> push_valid && $stable(push_data))
+  `BR_ASSERT_INTG(push_backpressure_intg_A, !push_ready && push_valid |=> push_valid && $stable
+                                            (push_data))
 
   // Assert that if push_valid is 1, then push_data must be known (not X).
   // This is not strictly a required integration check, because the module implementation
@@ -112,7 +113,8 @@ module br_flow_reg_rev #(
   `BR_ASSERT_IMPL(pop_data_known_A, pop_valid |-> !$isunknown(pop_data));
 
   // Check that the datapath has 0 cycle cut-through delay.
-  `BR_ASSERT_IMPL(cutthrough_0_delay_A, push_ready && push_valid && pop_ready |=> pop_valid && pop_data == push_data);
+  `BR_ASSERT_IMPL(cutthrough_0_delay_A,
+                  push_ready && push_valid && pop_ready |=> pop_valid && pop_data == push_data);
 
   // Check that that the backpressure path has 1 cycle delay.
   `BR_ASSERT_IMPL(backpressure_1_delay_A, pop_ready |=> push_ready);
