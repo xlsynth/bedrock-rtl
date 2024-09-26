@@ -1,4 +1,4 @@
-name: Verible linter example
+name: Verible lint
 on:
   pull_request:
     types: [opened, reopened, synchronize]
