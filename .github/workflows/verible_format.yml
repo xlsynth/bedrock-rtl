@@ -1,6 +1,7 @@
 name: Verible format
 on:
   pull_request:
+    types: [opened, reopened, synchronize]
 jobs:
   format:
     runs-on: ubuntu-latest
