@@ -189,4 +189,4 @@ always_ff @(posedge __clk__) begin \
 end
 
 
-`endif // BR_REGISTERS_SVH
+`endif  // BR_REGISTERS_SVH

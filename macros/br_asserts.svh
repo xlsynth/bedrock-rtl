@@ -91,4 +91,4 @@ end \
 endgenerate \
 `endif
 
-`endif // BR_ASSERTS_SVH
+`endif  // BR_ASSERTS_SVH

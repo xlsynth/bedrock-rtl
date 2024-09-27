@@ -13,6 +13,7 @@
 # limitations under the License.
 
 load("@rules_hdl//verilog:providers.bzl", "verilog_library")
+load("//bazel:verible.bzl", "verible_test")
 
 package(default_visibility = ["//visibility:public"])
 
@@ -104,4 +105,59 @@ verilog_library(
         "//macros:br_registers",
         "//macros:br_asserts_internal",
     ],
+)
+
+verible_test(
+    name = "br_flow_arb_fixed_verible_test",
+    srcs = ["br_flow_arb_fixed.sv"],
+)
+
+verible_test(
+    name = "br_flow_arb_rr_verible_test",
+    srcs = ["br_flow_arb_rr.sv"],
+)
+
+verible_test(
+    name = "br_flow_demux_select_verible_test",
+    srcs = ["br_flow_demux_select.sv"],
+)
+
+verible_test(
+    name = "br_flow_demux_select_unstable_verible_test",
+    srcs = ["br_flow_demux_select_unstable.sv"],
+)
+
+verible_test(
+    name = "br_flow_fork_verible_test",
+    srcs = ["br_flow_fork.sv"],
+)
+
+verible_test(
+    name = "br_flow_join_verible_test",
+    srcs = ["br_flow_join.sv"],
+)
+
+verible_test(
+    name = "br_flow_mux_select_verible_test",
+    srcs = ["br_flow_mux_select.sv"],
+)
+
+verible_test(
+    name = "br_flow_mux_select_unstable_verible_test",
+    srcs = ["br_flow_mux_select_unstable.sv"],
+)
+
+verible_test(
+    name = "br_flow_reg_both_verible_test",
+    srcs = ["br_flow_reg_both.sv"],
+)
+
+verible_test(
+    name = "br_flow_reg_fwd_verible_test",
+    srcs = ["br_flow_reg_fwd.sv"],
+)
+
+verible_test(
+    name = "br_flow_reg_rev_verible_test",
+    srcs = ["br_flow_reg_rev.sv"],
 )

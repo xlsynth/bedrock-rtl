@@ -1,2 +1,0 @@
-# TODO(mgottscho): Temporary! We want to use bzlmod.
-common --noenable_bzlmod

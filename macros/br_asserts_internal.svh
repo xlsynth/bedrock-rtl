@@ -119,4 +119,4 @@
 `BR_COVER_COMB(__name__, __expr__) \
 `endif
 
-`endif // BR_ASSERTS_INTERNAL_SVH
+`endif  // BR_ASSERTS_INTERNAL_SVH

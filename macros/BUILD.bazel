@@ -13,6 +13,7 @@
 # limitations under the License.
 
 load("@rules_hdl//verilog:providers.bzl", "verilog_library")
+load("//bazel:verible.bzl", "verible_test")
 
 package(default_visibility = ["//visibility:public"])
 
@@ -30,4 +31,19 @@ verilog_library(
 verilog_library(
     name = "br_registers",
     hdrs = ["br_registers.svh"],
+)
+
+verible_test(
+    name = "br_asserts_verible_test",
+    srcs = ["br_asserts.svh"],
+)
+
+verible_test(
+    name = "br_asserts_internal_verible_test",
+    srcs = ["br_asserts_internal.svh"],
+)
+
+verible_test(
+    name = "br_registers_verible_test",
+    srcs = ["br_registers.svh"],
 )

@@ -12,17 +12,4 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-load("@rules_hdl//verilog:providers.bzl", "verilog_library")
-load("//bazel:verible.bzl", "verible_test")
-
 package(default_visibility = ["//visibility:public"])
-
-verilog_library(
-    name = "br_misc_unused",
-    srcs = ["br_misc_unused.sv"],
-)
-
-verible_test(
-    name = "br_misc_unused_verible_test",
-    srcs = ["br_misc_unused.sv"],
-)
