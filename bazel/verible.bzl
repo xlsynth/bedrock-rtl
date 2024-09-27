@@ -62,7 +62,7 @@ verible_lint_test = rule(
     doc = "Tests that the given source files don't require Verible lint fixes.",
     implementation = _verible_lint_test_impl,
     attrs = {
-        "srcs": attr.label_list(allow_files = True),
+        "srcs": attr.label_list(allow_files = [".v", ".sv", ".svh"]),
         "tool": attr.string(default = "verible-verilog-lint"),
     },
     test = True,
@@ -98,7 +98,7 @@ verible_format_test = rule(
     doc = "Tests that the given source files don't require Verible formatting changes.",
     implementation = _verible_format_test_impl,
     attrs = {
-        "srcs": attr.label_list(allow_files = True),
+        "srcs": attr.label_list(allow_files = [".v", ".sv", ".svh"]),
         "tool": attr.string(default = "verible-verilog-format"),
     },
     test = True,
