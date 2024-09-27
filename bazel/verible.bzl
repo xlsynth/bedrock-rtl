@@ -12,6 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+"""Verible lint and format test rules for Bazel."""
+
 # TODO(mgottscho): The lint and format rules here are not the ideal solution.
 # We'd prefer to only run the linter and formatter on the changed lines in a
 # git diff so that we can change the lint/format rules over time (if needed)
@@ -33,9 +35,7 @@
 def _verible_lint_test_impl(ctx):
     input_files = [src.path for src in ctx.files.srcs]
 
-    args = [
-        "--ruleset=default",
-    ]
+    args = ["--ruleset=default"]
 
     executable_file = ctx.actions.declare_file(ctx.label.name + ".sh")
     cmd = " ".join([ctx.attr.tool] + args + input_files)
@@ -71,9 +71,7 @@ verible_lint_test = rule(
 def _verible_format_test_impl(ctx):
     input_files = [src.path for src in ctx.files.srcs]
 
-    args = [
-        "--verify=true",
-    ]
+    args = ["--verify=true"]
 
     executable_file = ctx.actions.declare_file(ctx.label.name + ".sh")
     cmd = " ".join([ctx.attr.tool] + args + input_files)
