@@ -12,15 +12,29 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+# TODO(mgottscho): The lint and format rules here are not the ideal solution.
+# We'd prefer to only run the linter and formatter on the changed lines in a
+# git diff so that we can change the lint/format rules over time (if needed)
+# and have the tests gradually ratchet over the codebase. I'm fine with this
+# non-ideal solution for now, though, since we're setting this up on a fresh
+# codebase and moving fast.
+#
+# The ideal solution would probably look like this:
+#
+# bazel run //:verible-format      # Test only changed lines
+# bazel run //:verible-format-fix  # Test and fix changed lines in-place
+#
+# bazel run //:verible-format -- <file1.sv> <file2.sv>  # Run on specific files
+# bazel run //:verible-format-fix -- <file1.sv> <file2.sv>  # Fix specific files
+#
+# bazel run //:verible-format -- --all      # Test all lines
+# bazel run //:verible-format-fix -- --all  # Fix all lines
+
 def _verible_lint_test_impl(ctx):
     input_files = [src.path for src in ctx.files.srcs]
 
     args = [
-        "--rules=" + ctx.attr.rules,
-        "--rules_config=" + ctx.attr.rules_config,
-        "--ruleset=" + ctx.attr.ruleset,
-        "--waiver_files=" + ctx.attr.waiver_files,
-        "--show_diagnostic_context=" + ctx.attr.show_diagnostic_context,
+        "--ruleset=default",
     ]
 
     executable_file = ctx.actions.declare_file(ctx.label.name + ".sh")
@@ -45,16 +59,65 @@ def _verible_lint_test_impl(ctx):
     )
 
 verible_lint_test = rule(
-    doc = "Runs the Verible verilog linter on the given source files.",
+    doc = "Tests that the given source files don't require Verible lint fixes.",
     implementation = _verible_lint_test_impl,
     attrs = {
         "srcs": attr.label_list(allow_files = True),
-        "rules": attr.string(default = ""),
-        "rules_config": attr.string(default = ""),
-        "ruleset": attr.string(default = "default"),
-        "waiver_files": attr.string(default = ""),
-        "show_diagnostic_context": attr.string(default = "false"),
         "tool": attr.string(default = "verible-verilog-lint"),
     },
     test = True,
 )
+
+def _verible_format_test_impl(ctx):
+    input_files = [src.path for src in ctx.files.srcs]
+
+    args = [
+        "--verify=true",
+    ]
+
+    executable_file = ctx.actions.declare_file(ctx.label.name + ".sh")
+    cmd = " ".join([ctx.attr.tool] + args + input_files)
+    runfiles = ctx.runfiles(files = getattr(ctx.files, "srcs", []))
+
+    ctx.actions.write(
+        output = executable_file,
+        content = "\n".join([
+            "#!/usr/bin/env bash",
+            "set -e",
+            "exec " + cmd,
+            "exit 0",
+        ]),
+        is_executable = True,
+    )
+
+    return DefaultInfo(
+        runfiles = runfiles,
+        files = depset(direct = [executable_file]),
+        executable = executable_file,
+    )
+
+verible_format_test = rule(
+    doc = "Tests that the given source files don't require Verible formatting changes.",
+    implementation = _verible_format_test_impl,
+    attrs = {
+        "srcs": attr.label_list(allow_files = True),
+        "tool": attr.string(default = "verible-verilog-format"),
+    },
+    test = True,
+)
+
+def verible_lint_and_format_test(name, srcs, lint_tool = "verible-verilog-lint", format_tool = "verible-verilog-format"):
+    """Expands to a pair of test targets that check for Verible lint and formatting issues."""
+    name = name.replace("_test", "")
+
+    verible_lint_test(
+        name = name + "_verible_lint_test",
+        srcs = srcs,
+        tool = lint_tool,
+    )
+
+    verible_format_test(
+        name = name + "_verible_format_test",
+        srcs = srcs,
+        tool = format_tool,
+    )
