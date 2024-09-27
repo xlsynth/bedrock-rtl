@@ -53,6 +53,15 @@ verilog_library(
     ],
 )
 
+verilog_library(
+    name = "br_delay_valid_next_nr",
+    srcs = ["br_delay_valid_next_nr.sv"],
+    deps = [
+        "//macros:br_registers",
+        "//macros:br_asserts_internal",
+    ],
+)
+
 verible_test(
     name = "br_delay_verible_test",
     srcs = ["br_delay.sv"],
@@ -71,4 +80,9 @@ verible_test(
 verible_test(
     name = "br_delay_valid_next_verible_test",
     srcs = ["br_delay_valid_next.sv"],
+)
+
+verible_test(
+    name = "br_delay_valid_next_nr_verible_test",
+    srcs = ["br_delay_valid_next_nr.sv"],
 )
