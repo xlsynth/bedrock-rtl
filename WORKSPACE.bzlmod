@@ -14,6 +14,8 @@
 
 workspace(name = "bedrock_rtl")
 
+# TODO(mgottscho): migrate everything to bzlmod (in MODULE.bazel)
+
 #################################################################################
 # The following content is a stripped-down version of https://github.com/google/xls/blob/main/WORKSPACE
 # taking only what is needed to get @rules_hdl working. Retains the XLS copyright notice.
