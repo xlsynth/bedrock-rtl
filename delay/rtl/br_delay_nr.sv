@@ -20,13 +20,14 @@
 // get reset.
 
 `include "br_registers.svh"
-`include "br_asserts.svh"
+`include "br_asserts_internal.svh"
 
 module br_delay_nr #(
     parameter int BitWidth  = 1,  // Must be at least 1
     parameter int NumStages = 0   // Must be at least 0
 ) (
     input logic clk,
+    input logic rst,  // Only used for assertions
     input logic [BitWidth-1:0] in,
     output logic [BitWidth-1:0] out
 );

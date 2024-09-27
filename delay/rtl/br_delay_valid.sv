@@ -21,7 +21,7 @@
 // gated using the valid signal.
 
 `include "br_registers.svh"
-`include "br_asserts.svh"
+`include "br_asserts_internal.svh"
 
 module br_delay_valid #(
     parameter int BitWidth  = 1,  // Must be at least 1
