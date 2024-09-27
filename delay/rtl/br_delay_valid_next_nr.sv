@@ -35,7 +35,7 @@ module br_delay_valid_next_nr #(
     parameter int NumStages = 0   // Must be at least 0
 ) (
     input  logic                clk,
-    input  logic                rst, // Only used for assertions
+    input  logic                rst,             // Only used for assertions
     input  logic                in_valid_next,
     input  logic [BitWidth-1:0] in,
     output logic                out_valid_next,
@@ -53,8 +53,8 @@ module br_delay_valid_next_nr #(
   //------------------------------------------
   // Implementation
   //------------------------------------------
-  logic [NumStages:0]                stage_valid_next;
-  logic [NumStages:0][BitWidth-1:0]  stage;
+  logic [NumStages:0]               stage_valid_next;
+  logic [NumStages:0][BitWidth-1:0] stage;
 
   assign stage_valid_next[0] = in_valid_next;
   assign stage[0] = in;
