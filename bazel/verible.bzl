@@ -85,7 +85,7 @@ def _verible_format_test_impl(ctx):
     )
 
 verible_lint_test = rule(
-    doc = "Tests that the given source files don't require Verible lint fixes.",
+    doc = "Tests that the given source files don't have syntax errors or Verible lint errors.",
     implementation = _verible_lint_test_impl,
     attrs = {
         "srcs": attr.label_list(allow_files = [".v", ".sv", ".svh"]),
@@ -97,7 +97,7 @@ verible_lint_test = rule(
 )
 
 verible_format_test = rule(
-    doc = "Tests that the given source files don't require Verible formatting changes.",
+    doc = "Tests that the given source files don't have syntax errors or Verible formatting errors.",
     implementation = _verible_format_test_impl,
     attrs = {
         "srcs": attr.label_list(allow_files = [".v", ".sv", ".svh"]),
