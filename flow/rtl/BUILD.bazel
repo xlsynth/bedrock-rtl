@@ -37,6 +37,16 @@ verilog_library(
 )
 
 verilog_library(
+    name = "br_flow_arb_lru",
+    srcs = ["br_flow_arb_lru.sv"],
+    deps = [
+        "//arb/rtl:br_arb_lru",
+        "//macros:br_registers",
+        "//macros:br_asserts_internal",
+    ],
+)
+
+verilog_library(
     name = "br_flow_demux_select",
     srcs = ["br_flow_demux_select.sv"],
     deps = [
@@ -118,6 +128,11 @@ verible_test(
 )
 
 verible_test(
+    name = "br_flow_arb_lru_verible_test",
+    srcs = ["br_flow_arb_lru.sv"],
+)
+
+verible_test(
     name = "br_flow_demux_select_verible_test",
     srcs = ["br_flow_demux_select.sv"],
 )
@@ -135,6 +150,21 @@ verible_test(
 verible_test(
     name = "br_flow_join_verible_test",
     srcs = ["br_flow_join.sv"],
+)
+
+verible_test(
+    name = "br_flow_mux_fixed_verible_test",
+    srcs = ["br_flow_mux_fixed.sv"],
+)
+
+verible_test(
+    name = "br_flow_mux_rr_verible_test",
+    srcs = ["br_flow_mux_rr.sv"],
+)
+
+verible_test(
+    name = "br_flow_mux_lru_verible_test",
+    srcs = ["br_flow_mux_lru.sv"],
 )
 
 verible_test(
