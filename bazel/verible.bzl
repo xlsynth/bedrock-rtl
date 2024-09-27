@@ -58,16 +58,6 @@ def _verible_lint_test_impl(ctx):
         executable = executable_file,
     )
 
-verible_lint_test = rule(
-    doc = "Tests that the given source files don't require Verible lint fixes.",
-    implementation = _verible_lint_test_impl,
-    attrs = {
-        "srcs": attr.label_list(allow_files = [".v", ".sv", ".svh"]),
-        "tool": attr.string(default = "verible-verilog-lint"),
-    },
-    test = True,
-)
-
 def _verible_format_test_impl(ctx):
     input_files = [src.path for src in ctx.files.srcs]
 
@@ -93,6 +83,16 @@ def _verible_format_test_impl(ctx):
         files = depset(direct = [executable_file]),
         executable = executable_file,
     )
+
+verible_lint_test = rule(
+    doc = "Tests that the given source files don't require Verible lint fixes.",
+    implementation = _verible_lint_test_impl,
+    attrs = {
+        "srcs": attr.label_list(allow_files = [".v", ".sv", ".svh"]),
+        "tool": attr.string(default = "verible-verilog-lint"),
+    },
+    test = True,
+)
 
 verible_format_test = rule(
     doc = "Tests that the given source files don't require Verible formatting changes.",
