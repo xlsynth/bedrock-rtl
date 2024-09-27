@@ -28,7 +28,7 @@
 // Note: The rst port is only used for assertions and covers.
 
 `include "br_registers.svh"
-`include "br_asserts.svh"
+`include "br_asserts_internal.svh"
 
 module br_delay_valid_next_nr #(
     parameter int BitWidth  = 1,  // Must be at least 1
