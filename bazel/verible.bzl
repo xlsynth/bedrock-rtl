@@ -89,6 +89,8 @@ verible_lint_test = rule(
     implementation = _verible_lint_test_impl,
     attrs = {
         "srcs": attr.label_list(allow_files = [".v", ".sv", ".svh"]),
+        # By default, expect to find the tool in the system $PATH.
+        # TODO(mgottscho): It would be better to do this hermetically.
         "tool": attr.string(default = "verible-verilog-lint"),
     },
     test = True,
@@ -99,6 +101,8 @@ verible_format_test = rule(
     implementation = _verible_format_test_impl,
     attrs = {
         "srcs": attr.label_list(allow_files = [".v", ".sv", ".svh"]),
+        # By default, expect to find the tool in the system $PATH.
+        # TODO(mgottscho): It would be better to do this hermetically.
         "tool": attr.string(default = "verible-verilog-format"),
     },
     test = True,
