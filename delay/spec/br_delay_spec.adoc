@@ -75,15 +75,6 @@ The `br_delay` module implements a configurable delay line that delays an input 
   * If `t ≥ NumStages`, then the output `out` will equal the value of `in` from `t - NumStages` cycles earlier:
     * `out(t) = in(t - NumStages)` for `t ≥ NumStages`.
 
-== Assumptions
-
-The following assumptions are constraints on the input stimulus to the design.
-
-* `BitWidth` parameter must be at least 1.
-* `NumStages` parameter must be at least 0.
-* The reset signal `rst` is synchronous and active-high. When `rst` is asserted, all pipeline registers are reset to 0 on the rising edge of `clk`.
-* The input `in` can change every clock cycle without any restrictions.
-
 == Timing, Latency, and Throughput
 
 [cols="1,1,3"]
