@@ -15,9 +15,12 @@
 // Bedrock-RTL Incrementing Counter
 //
 // A simple counter that increments by a potentially variable amount each cycle,
-// where the maximum increment is given by MaxIncrement. Overflows (wraps to 0)
-// at MaxValue, even if it isn't a power-of-2. In the common case where
+// where the maximum increment is given by MaxIncrement. Overflows (wraps around
+// past 0) at MaxValue, even if it isn't a power-of-2. In the common case where
 // MaxValue is a power-of-2, the implementation is simplified.
+//
+// When there is a valid increment and it overflows:
+//   value_next = (value + incr) % MaxValue
 //
 // The counter state is exposed in two ways.
 // (1) value holds the current counter state. There is a latency of 1 cycle from
