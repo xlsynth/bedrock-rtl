@@ -102,7 +102,7 @@ The data path registers are not reset and retain their previous values (which ma
      The user should consider its value to be undefined and must take care to never inspect an invalid value.
 
 
-== Timing, Latency, and Throughput
+== Latency and Throughput
 
 [cols="1,1,3"]
 |===

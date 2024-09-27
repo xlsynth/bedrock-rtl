@@ -75,7 +75,7 @@ The `br_delay` module implements a configurable delay line that delays an input 
   ** If `t ≥ NumStages`, then the output `out` will equal the value of `in` from `t - NumStages` cycles earlier:
     *** `out(t) = in(t - NumStages)` for `t ≥ NumStages`.
 
-== Timing, Latency, and Throughput
+== Latency and Throughput
 
 [cols="1,1,3"]
 |===

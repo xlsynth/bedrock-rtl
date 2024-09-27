@@ -70,7 +70,7 @@ The `br_delay_nr` module implements a configurable delay line that delays an inp
     *** `out(t) = in(t - NumStages)` for `t ≥ NumStages`.
 * Before `NumStages` cycles have elapsed since power-up, the output `out` will reflect the initial contents of the uninitialized pipeline registers, which are undefined.
 
-== Timing, Latency, and Throughput
+== Latency and Throughput
 
 [cols="1,1,3"]
 |===
