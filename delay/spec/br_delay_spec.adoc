@@ -71,9 +71,9 @@ The `br_delay` module implements a configurable delay line that delays an input 
 * Upon assertion of the reset signal `rst`, all pipeline registers are reset to 0.
 * After reset is deasserted, the module delays the input `in` by `NumStages` clock cycles.
 * For each clock cycle after reset deassertion:
-  * If the number of cycles since reset deassertion `t` is less than `NumStages` (`t < NumStages`), the output `out` will be 0.
-  * If `t ≥ NumStages`, then the output `out` will equal the value of `in` from `t - NumStages` cycles earlier:
-    * `out(t) = in(t - NumStages)` for `t ≥ NumStages`.
+  ** If the number of cycles since reset deassertion `t` is less than `NumStages` (`t < NumStages`), the output `out` will be 0.
+  ** If `t ≥ NumStages`, then the output `out` will equal the value of `in` from `t - NumStages` cycles earlier:
+    *** `out(t) = in(t - NumStages)` for `t ≥ NumStages`.
 
 == Timing, Latency, and Throughput
 
