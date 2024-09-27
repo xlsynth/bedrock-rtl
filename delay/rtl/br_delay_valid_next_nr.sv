@@ -12,28 +12,30 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Bedrock-RTL Delay Line (With Valid-Next)
+// Bedrock-RTL Delay Line (With Valid-Next, No Reset)
 //
-// Delays a valid input signal by a fixed number of clock cycles.
+// Delays a valid-next input signal by a fixed number of clock cycles.
 // There are NumStages pipeline registers. If NumStages is 0,
-// then the output is the input. The valid registers are reset
-// to 0 but the datapath registers are not reset. Each datapath register is
+// then the output is the input. The registers are not reset
+// and their initial values are undefined. Each datapath register is
 // clock gated using the valid_next signal.
 //
 // valid_next runs one cycle ahead of the data, i.e., if valid_next is 1 then
 // the data is valid on the following cycle. This can be very useful for closing
 // timing on a wide bus that covers a long wire distance. The width-wise fanout
 // delay is on a different cycle than the lengthwise wire delay.
+//
+// Note: The rst port is only used for assertions and covers.
 
 `include "br_registers.svh"
 `include "br_asserts_internal.svh"
 
-module br_delay_valid_next #(
+module br_delay_valid_next_nr #(
     parameter int BitWidth  = 1,  // Must be at least 1
     parameter int NumStages = 0   // Must be at least 0
 ) (
     input  logic                clk,
-    input  logic                rst,
+    input  logic                rst,             // Only used for assertions
     input  logic                in_valid_next,
     input  logic [BitWidth-1:0] in,
     output logic                out_valid_next,
@@ -51,14 +53,14 @@ module br_delay_valid_next #(
   //------------------------------------------
   // Implementation
   //------------------------------------------
-  logic [NumStages:0][BitWidth-1:0] stage_valid_next;
+  logic [NumStages:0]               stage_valid_next;
   logic [NumStages:0][BitWidth-1:0] stage;
 
   assign stage_valid_next[0] = in_valid_next;
   assign stage[0] = in;
 
   for (genvar i = 1; i <= NumStages; i++) begin : gen_stages
-    `BR_REG(stage_valid_next[i], stage_valid_next[i-1])
+    `BR_REGN(stage_valid_next[i], stage_valid_next[i-1])
     // stage_valid_next[i] is equivalent to hypothetical stage_valid[i-1],
     // which would be aligned to stage[i-1].
     `BR_REGLN(stage[i], stage[i-1], stage_valid_next[i])
@@ -74,4 +76,4 @@ module br_delay_valid_next #(
   `BR_ASSERT_IMPL(data_delay_A, in_valid_next |-> ##NumStages out_valid_next ##1 out == $past
                                 (in, NumStages))
 
-endmodule : br_delay_valid_next
+endmodule : br_delay_valid_next_nr
