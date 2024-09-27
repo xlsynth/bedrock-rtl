@@ -1,0 +1,104 @@
+// Copyright 2024 The Bedrock-RTL Authors
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+= Bedrock-RTL Delay Line Specification
+
+== Overview
+
+The `br_delay` module implements a configurable delay line that delays an input signal `in` by a fixed number of clock cycles specified by the `NumStages` parameter. The delayed signal is output on `out`. If `NumStages` is 0, the output `out` is directly connected to the input `in` without any delay. The module supports a parameterizable bit width of the input and output signals through the `BitWidth` parameter. All pipeline registers are reset synchronously to 0 upon assertion of the reset signal `rst`.
+
+== Parameters
+
+[cols="1,1,1,3"]
+|===
+| Parameter | Type | Scope | Description
+
+| `BitWidth`
+| `int`
+| module
+| Must be at least 1. Specifies the bit width of the input and output signals.
+
+| `NumStages`
+| `int`
+| module
+| Must be at least 0. Specifies the number of pipeline stages (delay cycles).
+|===
+
+== Interfaces
+
+[cols="1,1,1,1,3"]
+|===
+| Interface | Port Direction | Port Type | Port Name | Description
+
+| Clock
+| `input`
+| `logic`
+| `clk`
+| Clock signal.
+
+| Reset
+| `input`
+| `logic`
+| `rst`
+| Synchronous active-high reset signal. Resets all pipeline registers to 0.
+
+| Data Input
+| `input`
+| `logic [BitWidth-1:0]`
+| `in`
+| Input signal to be delayed.
+
+| Data Output
+| `output`
+| `logic [BitWidth-1:0]`
+| `out`
+| Delayed output signal.
+|===
+
+== Functional Behavior
+
+* Upon assertion of the reset signal `rst`, all pipeline registers are reset to 0.
+* After reset is deasserted, the module delays the input `in` by `NumStages` clock cycles.
+* For each clock cycle after reset deassertion:
+  * If the number of cycles since reset deassertion `t` is less than `NumStages` (`t < NumStages`), the output `out` will be 0.
+  * If `t ≥ NumStages`, then the output `out` will equal the value of `in` from `t - NumStages` cycles earlier:
+    * `out(t) = in(t - NumStages)` for `t ≥ NumStages`.
+
+== Assumptions
+
+The following assumptions are constraints on the input stimulus to the design.
+
+* `BitWidth` parameter must be at least 1.
+* `NumStages` parameter must be at least 0.
+* The reset signal `rst` is synchronous and active-high. When `rst` is asserted, all pipeline registers are reset to 0 on the rising edge of `clk`.
+* The input `in` can change every clock cycle without any restrictions.
+
+== Timing, Latency, and Throughput
+
+[cols="1,1,3"]
+|===
+| Latency Metric | Cycles | Description
+
+| Data Delay
+| `NumStages`
+| The output `out` reflects the input `in` delayed by `NumStages` clock cycles.
+
+| Throughput
+| 1
+| The module can accept and process a new input every clock cycle.
+
+| Reset Latency
+| 1
+| After asserting `rst`, the pipeline registers are reset to 0 on the next rising edge of `clk`.
+|===
