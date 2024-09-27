@@ -17,3 +17,32 @@
 WARNING: UNDER CONSTRUCTION. Everything is broken.
 
 High quality and composable base RTL libraries in Verilog
+
+== Prerequisites
+
+You need to have the following tools installed in your environment.
+
+* Bazel 6 or later
+* Verible (tested with v0.0-3798-ga602f072 commit 2024-09-23, YMMV)
+* TODO(mgottscho): Add more as we implement more things
+
+== Testing
+
+[source,shell]
+----
+bazel test //...
+----
+
+If you get a lint test error, go fix the code.
+If you get a format test error, you can automatically fix via:
+
+[source,shell]
+----
+verible-verilog-format --inplace <file1.sv> <file2.sv> ...
+----
+
+#TODO(mgottscho): Improve the formatter to be more user-friendly. Details in bazel/verible.bzl.#
+
+== Continuous Integration
+
+Using GitHub Actions, which currently just runs Verible lint and format tests.
