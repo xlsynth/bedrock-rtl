@@ -103,13 +103,9 @@ The `in_valid_next` signal indicates that the input data `in` will be valid on t
 |===
 | Latency Metric | Cycles | Description
 
-| Valid-Next Delay
+| Latency
 | `NumStages`
-| The output `out_valid_next` reflects the input `in_valid_next` delayed by `NumStages` clock cycles.
-
-| Data Delay
-| `NumStages + 1`
-| The output data `out` reflects the input `in` delayed by `NumStages + 1` clock cycles.
+| The outputs are equal to the inputs after a delay of `NumStages` clock cycles.
 
 | Throughput
 | 1
