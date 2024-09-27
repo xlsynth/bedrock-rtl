@@ -106,9 +106,12 @@ verible_format_test = rule(
     test = True,
 )
 
-def verible_lint_and_format_test(name, srcs, lint_tool = "verible-verilog-lint", format_tool = "verible-verilog-format"):
+def verible_test(name, srcs, lint_tool = "verible-verilog-lint", format_tool = "verible-verilog-format"):
     """Expands to a pair of test targets that check for Verible lint and formatting issues."""
-    name = name.replace("_test", "")
+    if not name.endswith("_verible_test"):
+        fail("verible_test target names must end with '_verible_test'")
+
+    name = name.rstrip("_verible_test")
 
     verible_lint_test(
         name = name + "_verible_lint_test",

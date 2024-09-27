@@ -13,7 +13,7 @@
 # limitations under the License.
 
 load("@rules_hdl//verilog:providers.bzl", "verilog_library")
-load("//bazel:verible.bzl", "verible_lint_and_format_test")
+load("//bazel:verible.bzl", "verible_test")
 
 package(default_visibility = ["//visibility:public"])
 
@@ -33,18 +33,17 @@ verilog_library(
     hdrs = ["br_registers.svh"],
 )
 
-################ Verible lint tests ################
-verible_lint_and_format_test(
-    name = "br_asserts_verible_lint_and_format_test",
+verible_test(
+    name = "br_asserts_verible_test",
     srcs = ["br_asserts.svh"],
 )
 
-verible_lint_and_format_test(
-    name = "br_asserts_internal_verible_lint_and_format_test",
+verible_test(
+    name = "br_asserts_internal_verible_test",
     srcs = ["br_asserts_internal.svh"],
 )
 
-verible_lint_and_format_test(
-    name = "br_registers_verible_lint_and_format_test",
+verible_test(
+    name = "br_registers_verible_test",
     srcs = ["br_registers.svh"],
 )
