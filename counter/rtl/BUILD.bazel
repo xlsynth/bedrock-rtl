@@ -26,7 +26,21 @@ verilog_library(
     ],
 )
 
+verilog_library(
+    name = "br_counter_decr",
+    srcs = ["br_counter_decr.sv"],
+    deps = [
+        "//macros:br_registers",
+        "//macros:br_asserts_internal",
+    ],
+)
+
 verible_test(
     name = "br_counter_incr_verible_test",
     srcs = ["br_counter_incr.sv"],
+)
+
+verible_test(
+    name = "br_counter_decr_verible_test",
+    srcs = ["br_counter_decr.sv"],
 )
