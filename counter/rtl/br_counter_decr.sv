@@ -77,7 +77,7 @@ module br_counter_decr #(
     // For MaxValuePlusOne not being a power of 2, handle wrap-around explicitly
     localparam int Margin = 2 ** ValueWidth - 1 - MaxValue;
     logic [ValueWidth-1:0] value_temp_wrapped;
-    assign value_temp_wrapped = value_temp - Margin;
+    assign value_temp_wrapped  = value_temp - Margin;
     assign value_next_internal = value_temp >= MaxValue ? value_temp_wrapped : value_temp;
 
     // Case-specific implementation checks
@@ -101,7 +101,8 @@ module br_counter_decr #(
   `BR_ASSERT_IMPL(value_next_propagates_A, ##1 value == $past(value_next))
   `BR_ASSERT_IMPL(value_wrap_A,
                   decr_valid && value_temp > MaxValue |-> value_next == value_temp - MaxValue - 1)
-  `BR_ASSERT_IMPL(maxvalue_plus_one_A, value == MaxValue && decr_valid && decr == 1'b1 |-> value_next == 0)
+  `BR_ASSERT_IMPL(maxvalue_plus_one_A,
+                  value == MaxValue && decr_valid && decr == 1'b1 |-> value_next == 0)
   `BR_ASSERT_IMPL(plus_zero_A, decr_valid && decr == '0 |-> value_next == value)
   `BR_COVER_IMPL(decrement_max_C, decr_valid && decr == MaxDecrement)
   `BR_COVER_IMPL(value_temp_oob_C, value_temp > MaxValue)

@@ -98,7 +98,8 @@ module br_counter_incr #(
   `BR_ASSERT_IMPL(value_next_propagates_A, ##1 value == $past(value_next))
   `BR_ASSERT_IMPL(value_wrap_A,
                   incr_valid && value_temp > MaxValue |-> value_next == value_temp - MaxValue - 1)
-  `BR_ASSERT_IMPL(maxvalue_plus_one_A, value == MaxValue && incr_valid && incr == 1'b1 |-> value_next == 0)
+  `BR_ASSERT_IMPL(maxvalue_plus_one_A,
+                  value == MaxValue && incr_valid && incr == 1'b1 |-> value_next == 0)
   `BR_ASSERT_IMPL(plus_zero_A, incr_valid && incr == '0 |-> value_next == value)
   `BR_COVER_IMPL(increment_max_C, incr_valid && incr == MaxIncrement)
   `BR_COVER_IMPL(value_temp_oob_C, value_temp > MaxValue)
