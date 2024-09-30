@@ -30,6 +30,8 @@
 //     incr_valid: if low, then value_next == value. This is useful for constructing
 //     single-cycle chains of counters.
 // value and value_next are always valid.
+//
+// The value resets to 0.
 
 `include "br_asserts_internal.svh"
 `include "br_registers.svh"
