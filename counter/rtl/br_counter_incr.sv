@@ -28,7 +28,7 @@
 //     a valid increment to the counter state being updated.
 // (2) value_next is what value will be on the next cycle. It is conditioned on
 //     incr_valid: if low, then value_next == value. This is useful for constructing
-//     single-cycle chains of incrementing counters.
+//     single-cycle chains of counters.
 // value and value_next are always valid.
 
 `include "br_asserts_internal.svh"
@@ -61,6 +61,7 @@ module br_counter_incr #(
   //------------------------------------------
   localparam int MaxValuePlusOne = MaxValue + 1;
   localparam bit IsMaxValuePlusOnePowerOf2 = (MaxValuePlusOne & (MaxValuePlusOne - 1)) == 0;
+  localparam int TempWidth = ValueWidth + IncrementWidth;
 
   logic [ValueWidth-1:0] value_next_internal;
   logic [ TempWidth-1:0] value_temp;
@@ -73,7 +74,6 @@ module br_counter_incr #(
 
   end else begin : gen_non_power_of_2
     // For MaxValuePlusOne not being a power of 2, handle wrap-around explicitly
-    localparam int TempWidth = ValueWidth + IncrementWidth;
     logic [TempWidth-1:0] value_temp_wrapped;
     assign value_temp_wrapped = value_temp - MaxValue - 1;
     assign value_next_internal = (value_temp >= MaxValue) ?
