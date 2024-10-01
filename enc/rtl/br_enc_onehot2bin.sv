@@ -45,7 +45,7 @@ module br_enc_onehot2bin #(
     input logic clk,  // Used only for assertions
     input logic rst,  // Used only for assertions
     input logic [NumValues-1:0] in,
-    input logic [$clog2(NumValues)-1:0] out
+    output logic [$clog2(NumValues)-1:0] out
 );
 
   //------------------------------------------
