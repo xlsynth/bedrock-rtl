@@ -27,7 +27,6 @@
 //
 // TODO(mgottscho): Write spec doc
 
-`include "br_registers.svh"
 `include "br_asserts_internal.svh"
 
 module br_flow_demux_select_unstable #(
