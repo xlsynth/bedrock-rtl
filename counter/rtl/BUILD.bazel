@@ -14,6 +14,7 @@
 
 load("@rules_hdl//verilog:providers.bzl", "verilog_library")
 load("//bazel:verible.bzl", "verible_test")
+load("//bazel:sv_elab_test.bzl", "sv_elab_test")
 
 package(default_visibility = ["//visibility:public"])
 
@@ -33,6 +34,18 @@ verilog_library(
         "//macros:br_registers",
         "//macros:br_asserts_internal",
     ],
+)
+
+sv_elab_test(
+    name = "br_counter_incr_elab_test",
+    deps = [":br_counter_incr"],
+    top = "br_counter_incr",
+)
+
+sv_elab_test(
+    name = "br_counter_decr_elab_test",
+    deps = [":br_counter_decr"],
+    top = "br_counter_decr",
 )
 
 verible_test(

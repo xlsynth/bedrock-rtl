@@ -14,6 +14,7 @@
 
 load("@rules_hdl//verilog:providers.bzl", "verilog_library")
 load("//bazel:verible.bzl", "verible_test")
+load("//bazel:sv_elab_test.bzl", "sv_elab_test")
 
 package(default_visibility = ["//visibility:public"])
 
@@ -115,6 +116,78 @@ verilog_library(
         "//macros:br_registers",
         "//macros:br_asserts_internal",
     ],
+)
+
+sv_elab_test(
+    name = "br_flow_arb_fixed_elab_test",
+    deps = [":br_flow_arb_fixed"],
+    top = "br_flow_arb_fixed",
+)
+
+sv_elab_test(
+    name = "br_flow_arb_rr_elab_test",
+    deps = [":br_flow_arb_rr"],
+    top = "br_flow_arb_rr",
+)
+
+sv_elab_test(
+    name = "br_flow_arb_lru_elab_test",
+    deps = [":br_flow_arb_lru"],
+    top = "br_flow_arb_lru",
+)
+
+sv_elab_test(
+    name = "br_flow_demux_select_elab_test",
+    deps = [":br_flow_demux_select"],
+    top = "br_flow_demux_select",
+)
+
+sv_elab_test(
+    name = "br_flow_demux_select_unstable_elab_test",
+    deps = [":br_flow_demux_select_unstable"],
+    top = "br_flow_demux_select_unstable",
+)
+
+sv_elab_test(
+    name = "br_flow_fork_elab_test",
+    deps = [":br_flow_fork"],
+    top = "br_flow_fork",
+)
+
+sv_elab_test(
+    name = "br_flow_join_elab_test",
+    deps = [":br_flow_join"],
+    top = "br_flow_join",
+)
+
+sv_elab_test(
+    name = "br_flow_mux_select_elab_test",
+    deps = [":br_flow_mux_select"],
+    top = "br_flow_mux_select",
+)
+
+sv_elab_test(
+    name = "br_flow_mux_select_unstable_elab_test",
+    deps = [":br_flow_mux_select_unstable"],
+    top = "br_flow_mux_select_unstable",
+)
+
+sv_elab_test(
+    name = "br_flow_reg_both_elab_test",
+    deps = [":br_flow_reg_both"],
+    top = "br_flow_reg_both",
+)
+
+sv_elab_test(
+    name = "br_flow_reg_fwd_elab_test",
+    deps = [":br_flow_reg_fwd"],
+    top = "br_flow_reg_fwd",
+)
+
+sv_elab_test(
+    name = "br_flow_reg_rev_elab_test",
+    deps = [":br_flow_reg_rev"],
+    top = "br_flow_reg_rev",
 )
 
 verible_test(

@@ -14,12 +14,19 @@
 
 load("@rules_hdl//verilog:providers.bzl", "verilog_library")
 load("//bazel:verible.bzl", "verible_test")
+load("//bazel:sv_elab_test.bzl", "sv_elab_test")
 
 package(default_visibility = ["//visibility:public"])
 
 verilog_library(
     name = "br_misc_unused",
     srcs = ["br_misc_unused.sv"],
+)
+
+sv_elab_test(
+    name = "br_misc_unused_elab_test",
+    deps = [":br_misc_unused"],
+    top = "br_misc_unused",
 )
 
 verible_test(

@@ -14,6 +14,7 @@
 
 load("@rules_hdl//verilog:providers.bzl", "verilog_library")
 load("//bazel:verible.bzl", "verible_test")
+load("//bazel:sv_elab_test.bzl", "sv_elab_test")
 
 package(default_visibility = ["//visibility:public"])
 
@@ -85,4 +86,34 @@ verible_test(
 verible_test(
     name = "br_delay_valid_next_nr_verible_test",
     srcs = ["br_delay_valid_next_nr.sv"],
+)
+
+sv_elab_test(
+    name = "br_delay_elab_test",
+    deps = [":br_delay"],
+    top = "br_delay",
+)
+
+sv_elab_test(
+    name = "br_delay_nr_elab_test",
+    deps = [":br_delay_nr"],
+    top = "br_delay_nr",
+)
+
+sv_elab_test(
+    name = "br_delay_valid_elab_test",
+    deps = [":br_delay_valid"],
+    top = "br_delay_valid",
+)
+
+sv_elab_test(
+    name = "br_delay_valid_next_elab_test",
+    deps = [":br_delay_valid_next"],
+    top = "br_delay_valid_next",
+)
+
+sv_elab_test(
+    name = "br_delay_valid_next_nr_elab_test",
+    deps = [":br_delay_valid_next_nr"],
+    top = "br_delay_valid_next_nr",
 )
