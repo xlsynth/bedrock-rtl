@@ -12,9 +12,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-package(default_visibility = ["//visibility:public"])
+from typing import List, Optional
 
-exports_files([
-    "verilog_elab_test.py",
-    "verilog_elab_test_impl.py",
-])
+def verilog_elab_test_impl(hdrs: Optional[List[str]], srcs: List[str], top: str) -> bool:
+    """Returns True if the top-level Verilog or SystemVerilog module is able to elaborate; may print to stdout and/or stderr."""
+    # TODO: Implement this using your own tool.
+    return True
