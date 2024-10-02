@@ -14,7 +14,7 @@
 
 load("@rules_hdl//verilog:providers.bzl", "verilog_library")
 load("//bazel:verible.bzl", "verible_test")
-load("//bazel:sv_elab_test.bzl", "sv_elab_test")
+load("//bazel:verilog_elab_test.bzl", "verilog_elab_test")
 
 package(default_visibility = ["//visibility:public"])
 
@@ -45,19 +45,19 @@ verilog_library(
     ],
 )
 
-sv_elab_test(
+verilog_elab_test(
     name = "br_enc_bin2onehot_elab_test",
     deps = [":br_enc_bin2onehot"],
     top = "br_enc_bin2onehot",
 )
 
-sv_elab_test(
+verilog_elab_test(
     name = "br_enc_onehot2bin_elab_test",
     deps = [":br_enc_onehot2bin"],
     top = "br_enc_onehot2bin",
 )
 
-sv_elab_test(
+verilog_elab_test(
     name = "br_enc_priority_encoder_elab_test",
     deps = [":br_enc_priority_encoder"],
     top = "br_enc_priority_encoder",
