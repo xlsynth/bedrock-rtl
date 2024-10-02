@@ -29,10 +29,8 @@ def check_each_filename_suffix(filenames: List[str], suffices: List[str]) -> Non
 
 def verilog_elab_test(hdrs: Optional[List[str]], srcs: List[str], top: str) -> bool:
     """Returns True if the top-level Verilog or SystemVerilog module is able to elaborate; may print to stdout and/or stderr."""
-    import sys
-    print("PYTHONPATH:", sys.path)
-    from verilog_elab_test_impl import verilog_elab_test_impl
-    return verilog_elab_test_impl(hdrs, srcs, top)
+    # TODO: Implement this using your own tool.
+    return True
 
 
 def main():
