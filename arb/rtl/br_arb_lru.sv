@@ -73,13 +73,13 @@ module br_arb_lru #(
   // There are NumRequesters * (NumRequesters - 1) / 2 flip-flops of priority state.
   logic [NumRequesters-1:0][NumRequesters-1:0] state, state_reg, state_reg_next;
 
-  for (genvar i = 0; i < N; i++) begin : gen_state_row
-    for (genvar j = 0; j < N; j++) begin : gen_state_col
+  for (genvar i = 0; i < NumRequesters; i++) begin : gen_state_row
+    for (genvar j = 0; j < NumRequesters; j++) begin : gen_state_col
       // Upper triangle
       if (i < j) begin : gen_upper_tri
         // All bits in upper triangle init to 1'b1 (lowest numbered req wins)
         assign state_reg_next[i][j] = grant[i] ? 1'b0 : grant[j] ? 1'b1 : state[i][j];
-        `BR_REGIL(state_reg[i][j], state_reg_next[i][j], enable && |req, 1'b1)
+        `BR_REGIL(state_reg[i][j], state_reg_next[i][j], enable && |request, 1'b1)
         assign state[i][j] = state_reg[i][j];
 
         // Lower triangle is the inverse of upper triangle
@@ -115,13 +115,13 @@ module br_arb_lru #(
       can_grant[i] = 1'b1;
       for (int j = 0; j < NumRequesters; j++) begin
         if (i != j) begin  // Diagonal is unused
-          can_grant[i] &= !req[j] || state[i][j];
+          can_grant[i] &= !request[j] || state[i][j];
         end
       end
     end
   end
 
-  assign grant = req & can_grant;
+  assign grant = request & can_grant;
 
   //------------------------------------------
   // Implementation checks
