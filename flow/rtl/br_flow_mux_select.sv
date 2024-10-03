@@ -78,9 +78,9 @@ module br_flow_mux_select #(
       .pop_data(internal_data)
   );
 
-  br_flow_mux_fwd #(
+  br_flow_reg_fwd #(
       .BitWidth(BitWidth)
-  ) br_flow_mux_fwd (
+  ) br_flow_reg_fwd (
       .clk(clk),
       .rst(rst),
       .push_ready(internal_ready),

@@ -71,6 +71,7 @@ module br_arb_rr #(
 
   logic [NumRequesters-1:0] priority_mask;
   logic [NumRequesters-1:0] request_high;
+  logic [NumRequesters-1:0] grant_high, grant_low;
   logic [$clog2(NumRequesters)-1:0] last_grant;
 
   always_comb begin
