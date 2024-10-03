@@ -39,13 +39,13 @@ module br_flow_demux_select #(
 
     input logic [$clog2(NumRequesters)-1:0] select,
 
-    output logic [NumRequesters-1:0]               push_ready,
-    input  logic [NumRequesters-1:0]               push_valid,
-    input  logic [NumRequesters-1:0][BitWidth-1:0] push_data,
+    output logic                push_ready,
+    input  logic                push_valid,
+    input  logic [BitWidth-1:0] push_data,
 
-    input  logic                pop_ready,
-    output logic                pop_valid,
-    output logic [BitWidth-1:0] pop_data
+    input  logic [NumRequesters-1:0]               pop_ready,
+    output logic [NumRequesters-1:0]               pop_valid,
+    output logic [NumRequesters-1:0][BitWidth-1:0] pop_data
 );
 
   //------------------------------------------
@@ -63,9 +63,9 @@ module br_flow_demux_select #(
   logic internal_valid;
   logic [BitWidth-1:0] internal_data;
 
-  br_flow_mux_rev #(
+  br_flow_reg_rev #(
       .BitWidth(BitWidth)
-  ) br_flow_mux_rev (
+  ) br_flow_reg_rev (
       .clk(clk),
       .rst(rst),
       .push_ready(push_ready),

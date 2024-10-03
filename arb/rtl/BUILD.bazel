@@ -21,7 +21,10 @@ package(default_visibility = ["//visibility:public"])
 verilog_library(
     name = "br_arb_fixed",
     srcs = ["br_arb_fixed.sv"],
-    deps = ["//macros:br_asserts_internal"],
+    deps = [
+        "//macros:br_asserts_internal",
+        "//enc/rtl:br_enc_priority_encoder",
+    ],
 )
 
 verilog_library(
@@ -40,6 +43,7 @@ verilog_library(
     deps = [
         "//macros:br_asserts_internal",
         "//macros:br_registers",
+        "//enc/rtl:br_enc_priority_encoder",
     ],
 )
 
