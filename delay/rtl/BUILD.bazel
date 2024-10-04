@@ -13,7 +13,7 @@
 # limitations under the License.
 
 load("@rules_hdl//verilog:providers.bzl", "verilog_library")
-load("//bazel:verilog.bzl", "verible_test", "verilog_elab_test", "verilog_lint_test")
+load("//bazel:verilog.bzl", "verible_lint_test", "verilog_elab_test", "verilog_lint_test")
 
 package(default_visibility = ["//visibility:public"])
 
@@ -62,28 +62,28 @@ verilog_library(
     ],
 )
 
-verible_test(
-    name = "br_delay_verible_test",
+verible_lint_test(
+    name = "br_delay_verible_lint_test",
     srcs = ["br_delay.sv"],
 )
 
-verible_test(
-    name = "br_delay_nr_verible_test",
+verible_lint_test(
+    name = "br_delay_nr_verible_lint_test",
     srcs = ["br_delay_nr.sv"],
 )
 
-verible_test(
-    name = "br_delay_valid_verible_test",
+verible_lint_test(
+    name = "br_delay_valid_verible_lint_test",
     srcs = ["br_delay_valid.sv"],
 )
 
-verible_test(
-    name = "br_delay_valid_next_verible_test",
+verible_lint_test(
+    name = "br_delay_valid_next_verible_lint_test",
     srcs = ["br_delay_valid_next.sv"],
 )
 
-verible_test(
-    name = "br_delay_valid_next_nr_verible_test",
+verible_lint_test(
+    name = "br_delay_valid_next_nr_verible_lint_test",
     srcs = ["br_delay_valid_next_nr.sv"],
 )
 

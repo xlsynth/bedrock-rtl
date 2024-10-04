@@ -20,3 +20,35 @@ repos:
       - id: check-shebang-scripts-are-executable
       - id: detect-private-key
       - id: debug-statements
+      - id: mixed-line-ending
+
+  # Format Python files
+  - repo: https://github.com/psf/black-pre-commit-mirror
+    rev: 24.8.0
+    hooks:
+      - id: black
+        language_version: python3.12
+
+  # Format Verilog files
+  - repo: local
+    hooks:
+      - id: verible-verilog-format
+        name: format verilog files
+        entry: verible-verilog-format
+        args: [--inplace]
+        language: system
+        files: \.(v|vh|sv|svh)$
+        pass_filenames: true
+        types: [text]
+
+  # Format Bazel files
+  - repo: local
+    hooks:
+    - id: buildifier
+      name: format bazel files
+      entry: buildifier
+      args: [--mode=fix, --lint=warn]
+      language: system
+      files: (\.(bzl|bazel|bzlmod)$)|WORKSPACE|MODULE|BUILD|\.bazelrc|\.bazelversion
+      pass_filenames: true
+      types: [text]

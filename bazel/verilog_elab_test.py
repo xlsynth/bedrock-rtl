@@ -13,23 +13,14 @@
 # limitations under the License.
 
 import argparse
+from util import check_each_filename_suffix
 from typing import List, Optional
-
-def check_each_filename_suffix(filenames: List[str], suffices: List[str]) -> None:
-    """Raises ValueError if there is any filename in the list that doesn't end with any of the expected suffices."""
-    for filename in filenames:
-        match = False
-        for suffix in suffices:
-            if filename.endswith(suffix):
-                match = True
-                break
-        if not match:
-            raise ValueError(f"Expected filename to end with any of {suffices}: {filename}")
 
 
 def verilog_elab_test(hdrs: Optional[List[str]], srcs: List[str], top: str) -> bool:
     """Returns True if the top-level Verilog or SystemVerilog module is able to elaborate; may print to stdout and/or stderr."""
     # TODO: Implement this using your own tool.
+    print("NOT IMPLEMENTED: Test vacuously passes.")
     return True
 
 

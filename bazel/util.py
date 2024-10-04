@@ -12,10 +12,15 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-package(default_visibility = ["//visibility:public"])
+from typing import List
 
-exports_files([
-    "verilog_elab_test.py",
-    "verilog_lint_test.py",
-    "util.py",
-])
+def check_each_filename_suffix(filenames: List[str], suffices: List[str]) -> None:
+    """Raises ValueError if there is any filename in the list that doesn't end with any of the expected suffices."""
+    for filename in filenames:
+        match = False
+        for suffix in suffices:
+            if filename.endswith(suffix):
+                match = True
+                break
+        if not match:
+            raise ValueError(f"Expected filename to end with any of {suffices}: {filename}")
