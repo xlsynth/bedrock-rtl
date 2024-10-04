@@ -24,31 +24,18 @@ def _check_verilog_info_provider(iterable):
                  "This probably means you accidentally provided a label that didn't come " +
                  "from a verilog_library target. ".format(item.label))
 
-def _get_transitive_srcs(ctx):
-    """Returns a depset of all Verilog source files in the transitive closure of the deps attribute."""
+def _get_transitive(ctx, srcs_not_hdrs):
+    """Returns a depset of all Verilog source or header files in the transitive closure of the deps attribute."""
     _check_verilog_info_provider(ctx.attr.deps)
     transitive_depset = depset(
         [],
         transitive = [dep[VerilogInfo].dag for dep in ctx.attr.deps],
     )
-    transitive_srcs = [
-        verilog_info_struct.srcs
+    transitive_srcs_or_hdrs = [
+        verilog_info_struct.srcs if srcs_not_hdrs else verilog_info_struct.hdrs
         for verilog_info_struct in transitive_depset.to_list()
     ]
-    return depset([src for sub_tuple in transitive_srcs for src in sub_tuple])
-
-def _get_transitive_hdrs(ctx):
-    """Returns a depset of all Verilog header files in the transitive closure of the deps attribute."""
-    _check_verilog_info_provider(ctx.attr.deps)
-    transitive_depset = depset(
-        [],
-        transitive = [dep[VerilogInfo].dag for dep in ctx.attr.deps],
-    )
-    transitive_hdrs = [
-        verilog_info_struct.hdrs
-        for verilog_info_struct in transitive_depset.to_list()
-    ]
-    return depset([src for sub_tuple in transitive_hdrs for src in sub_tuple])
+    return depset([x for sub_tuple in transitive_srcs_or_hdrs for x in sub_tuple])
 
 def _write_executable_shell_script(ctx, filename, cmd):
     """Writes a shell script that executes the given command and returns a handle to it."""
@@ -67,8 +54,8 @@ def _write_executable_shell_script(ctx, filename, cmd):
 
 def _verilog_elab_test_impl(ctx):
     """Implementation of the verilog_elab_test rule."""
-    srcs = ctx.files.srcs + _get_transitive_srcs(ctx).to_list()
-    hdrs = ctx.files.hdrs + _get_transitive_hdrs(ctx).to_list()
+    srcs = ctx.files.srcs + _get_transitive(ctx=ctx, srcs_not_hdrs=True).to_list()
+    hdrs = ctx.files.hdrs + _get_transitive(ctx=ctx, srcs_not_hdrs=False).to_list()
 
     src_files = [src.path for src in srcs]
     hdr_files = [hdr.path for hdr in hdrs]
