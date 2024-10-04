@@ -24,8 +24,10 @@ repos:
   - repo: local
     hooks:
       - id: verible-verilog-format
-        name: verible-verilog-format
-        entry: verible-verilog-format --inplace
+        name: format verilog files
+        entry: verible-verilog-format
+        args: [--inplace]
         language: system
         files: \.(v|vh|sv|svh)$
         pass_filenames: true
+        types: [text]
