@@ -13,7 +13,7 @@
 # limitations under the License.
 
 load("@rules_hdl//verilog:providers.bzl", "verilog_library")
-load("//bazel:verilog.bzl", "verible_test", "verilog_elab_test")
+load("//bazel:verilog.bzl", "verible_test", "verilog_elab_test", "verilog_lint_test")
 
 package(default_visibility = ["//visibility:public"])
 
@@ -26,6 +26,11 @@ verilog_elab_test(
     name = "br_misc_unused_elab_test",
     deps = [":br_misc_unused"],
     top = "br_misc_unused",
+)
+
+verilog_lint_test(
+    name = "br_misc_unused_lint_test",
+    deps = [":br_misc_unused"],
 )
 
 verible_test(

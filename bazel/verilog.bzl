@@ -79,6 +79,22 @@ def _verilog_elab_test_impl(ctx):
         executable = executable_file,
     )
 
+def _verilog_lint_test_impl(ctx):
+    """Implementation of the verilog_lint_test rule."""
+    input_files = _get_transitive(ctx=ctx, srcs_not_hdrs=True).to_list() + _get_transitive(ctx=ctx, srcs_not_hdrs=False).to_list()
+    cmd = " ".join(["python3.12"] + [ctx.attr.tool.files.to_list()[0].path] + [file.path for file in input_files])
+    runfiles = ctx.runfiles(files = input_files + ctx.files.tool)
+    executable_file = _write_executable_shell_script(
+        ctx = ctx,
+        filename = ctx.label.name + ".sh",
+        cmd = cmd,
+    )
+    return DefaultInfo(
+        runfiles = runfiles,
+        files = depset(direct = [executable_file]),
+        executable = executable_file,
+    )
+
 def _verible_impl(ctx):
     """Implementation of the verible_lint_test and verible_format_test rules."""
     srcs = ctx.files.srcs + _get_transitive(ctx=ctx, srcs_not_hdrs=True).to_list()
@@ -110,6 +126,19 @@ verilog_elab_test = rule(
         "tool": attr.label(
             allow_single_file=True,
             default = "//bazel:verilog_elab_test.py",
+        ),
+    },
+    test = True,
+)
+
+verilog_lint_test = rule(
+    doc = "Tests that a Verilog or SystemVerilog design passes a set of static lint checks.",
+    implementation = _verilog_lint_test_impl,
+    attrs = {
+        "deps": attr.label_list(allow_files=False),
+        "tool": attr.label(
+            allow_single_file=True,
+            default = "//bazel:verilog_lint_test.py",
         ),
     },
     test = True,
