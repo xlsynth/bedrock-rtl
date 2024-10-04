@@ -20,3 +20,12 @@ repos:
       - id: check-shebang-scripts-are-executable
       - id: detect-private-key
       - id: debug-statements
+
+  - repo: local
+    hooks:
+      - id: verible-verilog-format
+        name: verible-verilog-format
+        entry: verible-verilog-format --inplace
+        language: system
+        files: \.(v|vh|sv|svh)$
+        pass_filenames: true
