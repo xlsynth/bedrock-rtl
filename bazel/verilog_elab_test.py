@@ -20,6 +20,7 @@ from typing import List, Optional
 def verilog_elab_test(hdrs: Optional[List[str]], srcs: List[str], top: str) -> bool:
     """Returns True if the top-level Verilog or SystemVerilog module is able to elaborate; may print to stdout and/or stderr."""
     # TODO: Implement this using your own tool.
+    print("NOT IMPLEMENTED: Test vacuously passes.")
     return True
 
 

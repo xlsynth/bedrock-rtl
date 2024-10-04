@@ -19,6 +19,7 @@ from typing import List, Optional
 def verilog_lint_test(hdrs: Optional[List[str]], srcs: List[str]) -> bool:
     """Returns True if the the Verilog/SystemVerilog sources pass a lint test; may print to stdout and/or stderr."""
     # TODO: Implement this using your own tool.
+    print("NOT IMPLEMENTED: Test vacuously passes.")
     return True
 
 
