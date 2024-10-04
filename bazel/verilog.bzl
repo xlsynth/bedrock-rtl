@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""Verilog elaboration test rules for Bazel."""
+"""Verilog rules for Bazel."""
 
 load("@rules_hdl//verilog:providers.bzl", "VerilogInfo")
 
@@ -92,58 +92,21 @@ def _verilog_elab_test_impl(ctx):
         executable = executable_file,
     )
 
-def _verible_lint_test_impl(ctx):
+def _verible_impl(ctx):
+    """Implementation of the verible_lint_test and verible_format_test rules."""
     input_files = [src.path for src in ctx.files.srcs]
-
-    args = ["--ruleset=default"]
-
-    executable_file = ctx.actions.declare_file(ctx.label.name + ".sh")
-    cmd = " ".join([ctx.attr.tool] + args + input_files)
+    cmd = " ".join([ctx.attr.tool] + ctx.attr.tool_args + input_files)
     runfiles = ctx.runfiles(files = getattr(ctx.files, "srcs", []))
-
-    ctx.actions.write(
-        output = executable_file,
-        content = "\n".join([
-            "#!/usr/bin/env bash",
-            "set -e",
-            "exec " + cmd,
-            "exit 0",
-        ]),
-        is_executable = True,
+    executable_file = _write_executable_shell_script(
+        ctx = ctx,
+        filename = ctx.label.name + ".sh",
+        cmd = cmd,
     )
-
     return DefaultInfo(
         runfiles = runfiles,
         files = depset(direct = [executable_file]),
         executable = executable_file,
     )
-
-def _verible_format_test_impl(ctx):
-    input_files = [src.path for src in ctx.files.srcs]
-
-    args = ["--verify=true"]
-
-    executable_file = ctx.actions.declare_file(ctx.label.name + ".sh")
-    cmd = " ".join([ctx.attr.tool] + args + input_files)
-    runfiles = ctx.runfiles(files = getattr(ctx.files, "srcs", []))
-
-    ctx.actions.write(
-        output = executable_file,
-        content = "\n".join([
-            "#!/usr/bin/env bash",
-            "set -e",
-            "exec " + cmd,
-            "exit 0",
-        ]),
-        is_executable = True,
-    )
-
-    return DefaultInfo(
-        runfiles = runfiles,
-        files = depset(direct = [executable_file]),
-        executable = executable_file,
-    )
-
 
 verilog_elab_test = rule(
     doc = "Tests that a Verilog or SystemVerilog design elaborates.",
@@ -180,24 +143,26 @@ verilog_elab_test = rule(
 # bazel run //:verible-format-fix -- --all  # Fix all lines
 verible_lint_test = rule(
     doc = "Tests that the given source files don't have syntax errors or Verible lint errors.",
-    implementation = _verible_lint_test_impl,
+    implementation = _verible_impl,
     attrs = {
         "srcs": attr.label_list(allow_files = [".v", ".sv", ".svh"]),
         # By default, expect to find the tool in the system $PATH.
         # TODO(mgottscho): It would be better to do this hermetically.
         "tool": attr.string(default = "verible-verilog-lint"),
+        "tool_args": attr.string_list(default = ["--ruleset=default"]),
     },
     test = True,
 )
 
 verible_format_test = rule(
     doc = "Tests that the given source files don't have syntax errors or Verible formatting errors.",
-    implementation = _verible_format_test_impl,
+    implementation = _verible_impl,
     attrs = {
         "srcs": attr.label_list(allow_files = [".v", ".sv", ".svh"]),
         # By default, expect to find the tool in the system $PATH.
         # TODO(mgottscho): It would be better to do this hermetically.
         "tool": attr.string(default = "verible-verilog-format"),
+        "tool_args": attr.string_list(default = ["--verify=true"]),
     },
     test = True,
 )
