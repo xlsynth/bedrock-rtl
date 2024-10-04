@@ -25,7 +25,7 @@ def _check_verilog_info_provider(iterable):
                  "from a verilog_library target. ".format(item.label))
 
 def _get_transitive_srcs(ctx):
-    """Returns a depset of all source files in the transitive closure of the deps attribute."""
+    """Returns a depset of all Verilog source files in the transitive closure of the deps attribute."""
     _check_verilog_info_provider(ctx.attr.deps)
     transitive_depset = depset(
         [],
@@ -38,7 +38,7 @@ def _get_transitive_srcs(ctx):
     return depset([src for sub_tuple in transitive_srcs for src in sub_tuple])
 
 def _get_transitive_hdrs(ctx):
-    """Returns a depset of all header files in the transitive closure of the deps attribute."""
+    """Returns a depset of all Verilog header files in the transitive closure of the deps attribute."""
     _check_verilog_info_provider(ctx.attr.deps)
     transitive_depset = depset(
         [],
@@ -49,6 +49,21 @@ def _get_transitive_hdrs(ctx):
         for verilog_info_struct in transitive_depset.to_list()
     ]
     return depset([src for sub_tuple in transitive_hdrs for src in sub_tuple])
+
+def _write_executable_shell_script(ctx, filename, cmd):
+    """Writes a shell script that executes the given command and returns a handle to it."""
+    executable_file = ctx.actions.declare_file(filename)
+    ctx.actions.write(
+        output = executable_file,
+        content = "\n".join([
+            "#!/usr/bin/env bash",
+            "set -e",
+            "exec " + cmd,
+            "exit 0",
+        ]),
+        is_executable = True,
+    )
+    return executable_file
 
 def _verilog_elab_test_impl(ctx):
     """Implementation of the verilog_elab_test rule."""
@@ -61,21 +76,14 @@ def _verilog_elab_test_impl(ctx):
     args = ["--hdr=" + hdr for hdr in hdr_files]
     args.append("--top=" + ctx.attr.top)
 
-    executable_file = ctx.actions.declare_file(ctx.label.name + ".sh")
     # TODO(mgottscho): Gross. Use hermetic python?
     cmd = " ".join(["python3.12"] + [ctx.attr.tool.files.to_list()[0].path] + args + src_files)
 
     runfiles = ctx.runfiles(files = srcs + hdrs + ctx.files.tool)
-
-    ctx.actions.write(
-        output = executable_file,
-        content = "\n".join([
-            "#!/usr/bin/env bash",
-            "set -e",
-            "exec " + cmd,
-            "exit 0",
-        ]),
-        is_executable = True,
+    executable_file = _write_executable_shell_script(
+        ctx = ctx,
+        filename = ctx.label.name + ".sh",
+        cmd = cmd
     )
 
     return DefaultInfo(
