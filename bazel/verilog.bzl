@@ -92,6 +92,59 @@ def _verilog_elab_test_impl(ctx):
         executable = executable_file,
     )
 
+def _verible_lint_test_impl(ctx):
+    input_files = [src.path for src in ctx.files.srcs]
+
+    args = ["--ruleset=default"]
+
+    executable_file = ctx.actions.declare_file(ctx.label.name + ".sh")
+    cmd = " ".join([ctx.attr.tool] + args + input_files)
+    runfiles = ctx.runfiles(files = getattr(ctx.files, "srcs", []))
+
+    ctx.actions.write(
+        output = executable_file,
+        content = "\n".join([
+            "#!/usr/bin/env bash",
+            "set -e",
+            "exec " + cmd,
+            "exit 0",
+        ]),
+        is_executable = True,
+    )
+
+    return DefaultInfo(
+        runfiles = runfiles,
+        files = depset(direct = [executable_file]),
+        executable = executable_file,
+    )
+
+def _verible_format_test_impl(ctx):
+    input_files = [src.path for src in ctx.files.srcs]
+
+    args = ["--verify=true"]
+
+    executable_file = ctx.actions.declare_file(ctx.label.name + ".sh")
+    cmd = " ".join([ctx.attr.tool] + args + input_files)
+    runfiles = ctx.runfiles(files = getattr(ctx.files, "srcs", []))
+
+    ctx.actions.write(
+        output = executable_file,
+        content = "\n".join([
+            "#!/usr/bin/env bash",
+            "set -e",
+            "exec " + cmd,
+            "exit 0",
+        ]),
+        is_executable = True,
+    )
+
+    return DefaultInfo(
+        runfiles = runfiles,
+        files = depset(direct = [executable_file]),
+        executable = executable_file,
+    )
+
+
 verilog_elab_test = rule(
     doc = "Tests that a Verilog or SystemVerilog design elaborates.",
     implementation = _verilog_elab_test_impl,
@@ -107,3 +160,63 @@ verilog_elab_test = rule(
     },
     test = True,
 )
+
+# TODO(mgottscho): The verible lint and format rules here are not the ideal solution.
+# We'd prefer to only run the linter and formatter on the changed lines in a
+# git diff so that we can change the lint/format rules over time (if needed)
+# and have the tests gradually ratchet over the codebase. I'm fine with this
+# non-ideal solution for now, though, since we're setting this up on a fresh
+# codebase and moving fast.
+#
+# The ideal solution would probably look like this:
+#
+# bazel run //:verible-format      # Test only changed lines
+# bazel run //:verible-format-fix  # Test and fix changed lines in-place
+#
+# bazel run //:verible-format -- <file1.sv> <file2.sv>  # Run on specific files
+# bazel run //:verible-format-fix -- <file1.sv> <file2.sv>  # Fix specific files
+#
+# bazel run //:verible-format -- --all      # Test all lines
+# bazel run //:verible-format-fix -- --all  # Fix all lines
+verible_lint_test = rule(
+    doc = "Tests that the given source files don't have syntax errors or Verible lint errors.",
+    implementation = _verible_lint_test_impl,
+    attrs = {
+        "srcs": attr.label_list(allow_files = [".v", ".sv", ".svh"]),
+        # By default, expect to find the tool in the system $PATH.
+        # TODO(mgottscho): It would be better to do this hermetically.
+        "tool": attr.string(default = "verible-verilog-lint"),
+    },
+    test = True,
+)
+
+verible_format_test = rule(
+    doc = "Tests that the given source files don't have syntax errors or Verible formatting errors.",
+    implementation = _verible_format_test_impl,
+    attrs = {
+        "srcs": attr.label_list(allow_files = [".v", ".sv", ".svh"]),
+        # By default, expect to find the tool in the system $PATH.
+        # TODO(mgottscho): It would be better to do this hermetically.
+        "tool": attr.string(default = "verible-verilog-format"),
+    },
+    test = True,
+)
+
+def verible_test(name, srcs, lint_tool = "verible-verilog-lint", format_tool = "verible-verilog-format"):
+    """Expands to a pair of test targets that check for Verible lint and formatting issues."""
+    if not name.endswith("_verible_test"):
+        fail("verible_test target names must end with '_verible_test'")
+
+    name = name.removesuffix("_verible_test")
+
+    verible_lint_test(
+        name = name + "_verible_lint_test",
+        srcs = srcs,
+        tool = lint_tool,
+    )
+
+    verible_format_test(
+        name = name + "_verible_format_test",
+        srcs = srcs,
+        tool = format_tool,
+    )
