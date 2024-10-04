@@ -41,7 +41,7 @@ If you get a format test error, you can automatically fix via:
 verible-verilog-format --inplace <file1.sv> <file2.sv> ...
 ----
 
-#TODO(mgottscho): Improve the formatter to be more user-friendly. Details in bazel/verible.bzl.#
+#TODO(mgottscho): Improve the formatter to be more user-friendly. Details in bazel/verilog.bzl.#
 
 == Continuous Integration
 
