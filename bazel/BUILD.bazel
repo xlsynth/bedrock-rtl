@@ -14,4 +14,7 @@
 
 package(default_visibility = ["//visibility:public"])
 
-exports_files(["verilog_elab_test.py"])
+exports_files([
+    "verilog_elab_test.py",
+    "verilog_lint_test.py",
+])
