@@ -89,8 +89,8 @@ def _verilog_lint_test_impl(ctx):
         extra_args=ctx.attr.tool_args,
     )
 
-def _verible_impl(ctx):
-    """Implementation of the verible_lint_test and verible_format_test rules."""
+def _verible_lint_test_impl(ctx):
+    """Implementation of the verible_lint_test rule."""
     # TODO(mgottscho): refactor this to share more code with other rules
     srcs = ctx.files.srcs + _get_transitive(ctx=ctx, srcs_not_hdrs=True).to_list()
     hdrs = _get_transitive(ctx=ctx, srcs_not_hdrs=False).to_list()
@@ -139,26 +139,9 @@ verilog_lint_test = rule(
     test = True,
 )
 
-# TODO(mgottscho): The verible lint and format rules here are not the ideal solution.
-# We'd prefer to only run the linter and formatter on the changed lines in a
-# git diff so that we can change the lint/format rules over time (if needed)
-# and have the tests gradually ratchet over the codebase. I'm fine with this
-# non-ideal solution for now, though, since we're setting this up on a fresh
-# codebase and moving fast.
-#
-# The ideal solution would probably look like this:
-#
-# bazel run //:verible-format      # Test only changed lines
-# bazel run //:verible-format-fix  # Test and fix changed lines in-place
-#
-# bazel run //:verible-format -- <file1.sv> <file2.sv>  # Run on specific files
-# bazel run //:verible-format-fix -- <file1.sv> <file2.sv>  # Fix specific files
-#
-# bazel run //:verible-format -- --all      # Test all lines
-# bazel run //:verible-format-fix -- --all  # Fix all lines
 verible_lint_test = rule(
     doc = "Tests that the given source files don't have syntax errors or Verible lint errors.",
-    implementation = _verible_impl,
+    implementation = _verible_lint_test_impl,
     attrs = {
         "srcs": attr.label_list(allow_files = [".v", ".sv", ".svh"]),
         "deps": attr.label_list(allow_files=False),
@@ -169,36 +152,3 @@ verible_lint_test = rule(
     },
     test = True,
 )
-
-verible_format_test = rule(
-    doc = "Tests that the given source files don't have syntax errors or Verible formatting errors.",
-    implementation = _verible_impl,
-    attrs = {
-        "srcs": attr.label_list(allow_files = [".v", ".sv", ".svh"]),
-        "deps": attr.label_list(allow_files=False),
-        # By default, expect to find the tool in the system $PATH.
-        # TODO(mgottscho): It would be better to do this hermetically.
-        "tool": attr.string(default = "verible-verilog-format"),
-        "tool_args": attr.string_list(default = ["--verify=true"]),
-    },
-    test = True,
-)
-
-def verible_test(name, lint_tool = "verible-verilog-lint", format_tool = "verible-verilog-format", **kwargs):
-    """Expands to a pair of test targets that check for Verible lint and formatting issues."""
-    if not name.endswith("_verible_test"):
-        fail("verible_test target names must end with '_verible_test'")
-
-    name = name.removesuffix("_verible_test")
-
-    verible_lint_test(
-        name = name + "_verible_lint_test",
-        tool = lint_tool,
-        **kwargs
-    )
-
-    verible_format_test(
-        name = name + "_verible_format_test",
-        tool = format_tool,
-        **kwargs
-    )
