@@ -113,7 +113,7 @@ def verible_test(name, srcs, lint_tool = "verible-verilog-lint", format_tool = "
     if not name.endswith("_verible_test"):
         fail("verible_test target names must end with '_verible_test'")
 
-    name = name.rstrip("_verible_test")
+    name = name.removesuffix("_verible_test")
 
     verible_lint_test(
         name = name + "_verible_lint_test",

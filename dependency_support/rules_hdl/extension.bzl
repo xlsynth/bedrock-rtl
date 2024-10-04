@@ -12,13 +12,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""Loads the rules_hdl package which contains Bazel rules for other tools that
-XLS uses."""
-
 load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
 load("@bazel_tools//tools/build_defs/repo:utils.bzl", "maybe")
 
-def repo():
+def _rules_hdl_extension_impl(_):
     # Required to support rules_hdl, 0.7.0 release is current as of 2022-05-09.
     http_archive(
         name = "rules_pkg",
@@ -50,3 +47,5 @@ def repo():
             "https://github.com/hdl/bazel_rules_hdl/archive/%s.tar.gz" % git_hash,
         ],
     )
+
+rules_hdl_extension = module_extension(implementation = _rules_hdl_extension_impl)
