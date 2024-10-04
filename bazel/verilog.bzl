@@ -81,7 +81,11 @@ def _verilog_elab_test_impl(ctx):
 
 def _verible_impl(ctx):
     """Implementation of the verible_lint_test and verible_format_test rules."""
-    input_files = [src.path for src in ctx.files.srcs]
+    srcs = ctx.files.srcs + _get_transitive(ctx=ctx, srcs_not_hdrs=True).to_list()
+    hdrs = _get_transitive(ctx=ctx, srcs_not_hdrs=False).to_list()
+    src_files = [src.path for src in srcs]
+    hdr_files = [hdr.path for hdr in hdrs]
+    input_files = src_files + hdr_files
     cmd = " ".join([ctx.attr.tool] + ctx.attr.tool_args + input_files)
     runfiles = ctx.runfiles(files = getattr(ctx.files, "srcs", []))
     executable_file = _write_executable_shell_script(
@@ -133,6 +137,7 @@ verible_lint_test = rule(
     implementation = _verible_impl,
     attrs = {
         "srcs": attr.label_list(allow_files = [".v", ".sv", ".svh"]),
+        "deps": attr.label_list(allow_files=False),
         # By default, expect to find the tool in the system $PATH.
         # TODO(mgottscho): It would be better to do this hermetically.
         "tool": attr.string(default = "verible-verilog-lint"),
@@ -146,6 +151,7 @@ verible_format_test = rule(
     implementation = _verible_impl,
     attrs = {
         "srcs": attr.label_list(allow_files = [".v", ".sv", ".svh"]),
+        "deps": attr.label_list(allow_files=False),
         # By default, expect to find the tool in the system $PATH.
         # TODO(mgottscho): It would be better to do this hermetically.
         "tool": attr.string(default = "verible-verilog-format"),
