@@ -9,5 +9,6 @@ jobs:
     - uses: actions/checkout@master
     - uses: chipsalliance/verible-formatter-action@main
       with:
+        verible_version: "v0.0-3824-g14eed6a0"
         fail_on_formatting_suggestions: true
         github_token: ${{ secrets.GITHUB_TOKEN }}
