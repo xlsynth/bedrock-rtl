@@ -13,7 +13,7 @@
 # limitations under the License.
 
 load("@rules_hdl//verilog:providers.bzl", "verilog_library")
-load("//bazel:verilog.bzl", "verible_lint_test", "verilog_elab_test", "verilog_lint_test")
+load("//bazel:verilog.bzl", "verilog_elab_test", "verilog_lint_test", "verilog_style_test")
 
 package(default_visibility = ["//visibility:public"])
 
@@ -21,8 +21,8 @@ verilog_library(
     name = "br_enc_bin2onehot",
     srcs = ["br_enc_bin2onehot.sv"],
     deps = [
-        "//macros:br_registers",
         "//macros:br_asserts_internal",
+        "//macros:br_registers",
     ],
 )
 
@@ -30,8 +30,8 @@ verilog_library(
     name = "br_enc_onehot2bin",
     srcs = ["br_enc_onehot2bin.sv"],
     deps = [
-        "//macros:br_registers",
         "//macros:br_asserts_internal",
+        "//macros:br_registers",
     ],
 )
 
@@ -39,27 +39,27 @@ verilog_library(
     name = "br_enc_priority_encoder",
     srcs = ["br_enc_priority_encoder.sv"],
     deps = [
-        "//macros:br_registers",
         "//macros:br_asserts_internal",
+        "//macros:br_registers",
     ],
 )
 
 verilog_elab_test(
     name = "br_enc_bin2onehot_elab_test",
-    deps = [":br_enc_bin2onehot"],
     top = "br_enc_bin2onehot",
+    deps = [":br_enc_bin2onehot"],
 )
 
 verilog_elab_test(
     name = "br_enc_onehot2bin_elab_test",
-    deps = [":br_enc_onehot2bin"],
     top = "br_enc_onehot2bin",
+    deps = [":br_enc_onehot2bin"],
 )
 
 verilog_elab_test(
     name = "br_enc_priority_encoder_elab_test",
-    deps = [":br_enc_priority_encoder"],
     top = "br_enc_priority_encoder",
+    deps = [":br_enc_priority_encoder"],
 )
 
 verilog_lint_test(
@@ -77,17 +77,17 @@ verilog_lint_test(
     deps = [":br_enc_priority_encoder"],
 )
 
-verible_lint_test(
-    name = "br_enc_bin2onehot_verible_lint_test",
+verilog_style_test(
+    name = "br_enc_bin2onehot_style_test",
     srcs = ["br_enc_bin2onehot.sv"],
 )
 
-verible_lint_test(
-    name = "br_enc_onehot2bin_verible_lint_test",
+verilog_style_test(
+    name = "br_enc_onehot2bin_style_test",
     srcs = ["br_enc_onehot2bin.sv"],
 )
 
-verible_lint_test(
-    name = "br_enc_priority_encoder_verible_lint_test",
+verilog_style_test(
+    name = "br_enc_priority_encoder_style_test",
     srcs = ["br_enc_priority_encoder.sv"],
 )

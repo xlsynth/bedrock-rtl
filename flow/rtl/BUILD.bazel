@@ -13,7 +13,7 @@
 # limitations under the License.
 
 load("@rules_hdl//verilog:providers.bzl", "verilog_library")
-load("//bazel:verilog.bzl", "verible_lint_test", "verilog_elab_test", "verilog_lint_test")
+load("//bazel:verilog.bzl", "verilog_elab_test", "verilog_lint_test", "verilog_style_test")
 
 package(default_visibility = ["//visibility:public"])
 
@@ -31,8 +31,8 @@ verilog_library(
     srcs = ["br_flow_arb_rr.sv"],
     deps = [
         "//arb/rtl:br_arb_rr",
-        "//macros:br_registers",
         "//macros:br_asserts_internal",
+        "//macros:br_registers",
     ],
 )
 
@@ -41,8 +41,8 @@ verilog_library(
     srcs = ["br_flow_arb_lru.sv"],
     deps = [
         "//arb/rtl:br_arb_lru",
-        "//macros:br_registers",
         "//macros:br_asserts_internal",
+        "//macros:br_registers",
     ],
 )
 
@@ -103,8 +103,8 @@ verilog_library(
     name = "br_flow_reg_fwd",
     srcs = ["br_flow_reg_fwd.sv"],
     deps = [
-        "//macros:br_registers",
         "//macros:br_asserts_internal",
+        "//macros:br_registers",
     ],
 )
 
@@ -112,81 +112,81 @@ verilog_library(
     name = "br_flow_reg_rev",
     srcs = ["br_flow_reg_rev.sv"],
     deps = [
-        "//macros:br_registers",
         "//macros:br_asserts_internal",
+        "//macros:br_registers",
     ],
 )
 
 verilog_elab_test(
     name = "br_flow_arb_fixed_elab_test",
-    deps = [":br_flow_arb_fixed"],
     top = "br_flow_arb_fixed",
+    deps = [":br_flow_arb_fixed"],
 )
 
 verilog_elab_test(
     name = "br_flow_arb_rr_elab_test",
-    deps = [":br_flow_arb_rr"],
     top = "br_flow_arb_rr",
+    deps = [":br_flow_arb_rr"],
 )
 
 verilog_elab_test(
     name = "br_flow_arb_lru_elab_test",
-    deps = [":br_flow_arb_lru"],
     top = "br_flow_arb_lru",
+    deps = [":br_flow_arb_lru"],
 )
 
 verilog_elab_test(
     name = "br_flow_demux_select_elab_test",
-    deps = [":br_flow_demux_select"],
     top = "br_flow_demux_select",
+    deps = [":br_flow_demux_select"],
 )
 
 verilog_elab_test(
     name = "br_flow_demux_select_unstable_elab_test",
-    deps = [":br_flow_demux_select_unstable"],
     top = "br_flow_demux_select_unstable",
+    deps = [":br_flow_demux_select_unstable"],
 )
 
 verilog_elab_test(
     name = "br_flow_fork_elab_test",
-    deps = [":br_flow_fork"],
     top = "br_flow_fork",
+    deps = [":br_flow_fork"],
 )
 
 verilog_elab_test(
     name = "br_flow_join_elab_test",
-    deps = [":br_flow_join"],
     top = "br_flow_join",
+    deps = [":br_flow_join"],
 )
 
 verilog_elab_test(
     name = "br_flow_mux_select_elab_test",
-    deps = [":br_flow_mux_select"],
     top = "br_flow_mux_select",
+    deps = [":br_flow_mux_select"],
 )
 
 verilog_elab_test(
     name = "br_flow_mux_select_unstable_elab_test",
-    deps = [":br_flow_mux_select_unstable"],
     top = "br_flow_mux_select_unstable",
+    deps = [":br_flow_mux_select_unstable"],
 )
 
 verilog_elab_test(
     name = "br_flow_reg_both_elab_test",
-    deps = [":br_flow_reg_both"],
     top = "br_flow_reg_both",
+    deps = [":br_flow_reg_both"],
 )
 
 verilog_elab_test(
     name = "br_flow_reg_fwd_elab_test",
-    deps = [":br_flow_reg_fwd"],
     top = "br_flow_reg_fwd",
+    deps = [":br_flow_reg_fwd"],
 )
 
 verilog_elab_test(
     name = "br_flow_reg_rev_elab_test",
-    deps = [":br_flow_reg_rev"],
     top = "br_flow_reg_rev",
+    deps = [":br_flow_reg_rev"],
 )
 
 verilog_lint_test(
@@ -249,77 +249,77 @@ verilog_lint_test(
     deps = [":br_flow_reg_rev"],
 )
 
-verible_lint_test(
-    name = "br_flow_arb_fixed_verible_lint_test",
+verilog_style_test(
+    name = "br_flow_arb_fixed_style_test",
     srcs = ["br_flow_arb_fixed.sv"],
 )
 
-verible_lint_test(
-    name = "br_flow_arb_rr_verible_lint_test",
+verilog_style_test(
+    name = "br_flow_arb_rr_style_test",
     srcs = ["br_flow_arb_rr.sv"],
 )
 
-verible_lint_test(
-    name = "br_flow_arb_lru_verible_lint_test",
+verilog_style_test(
+    name = "br_flow_arb_lru_style_test",
     srcs = ["br_flow_arb_lru.sv"],
 )
 
-verible_lint_test(
-    name = "br_flow_demux_select_verible_lint_test",
+verilog_style_test(
+    name = "br_flow_demux_select_style_test",
     srcs = ["br_flow_demux_select.sv"],
 )
 
-verible_lint_test(
-    name = "br_flow_demux_select_unstable_verible_lint_test",
+verilog_style_test(
+    name = "br_flow_demux_select_unstable_style_test",
     srcs = ["br_flow_demux_select_unstable.sv"],
 )
 
-verible_lint_test(
-    name = "br_flow_fork_verible_lint_test",
+verilog_style_test(
+    name = "br_flow_fork_style_test",
     srcs = ["br_flow_fork.sv"],
 )
 
-verible_lint_test(
-    name = "br_flow_join_verible_lint_test",
+verilog_style_test(
+    name = "br_flow_join_style_test",
     srcs = ["br_flow_join.sv"],
 )
 
-verible_lint_test(
-    name = "br_flow_mux_fixed_verible_lint_test",
+verilog_style_test(
+    name = "br_flow_mux_fixed_style_test",
     srcs = ["br_flow_mux_fixed.sv"],
 )
 
-verible_lint_test(
-    name = "br_flow_mux_rr_verible_lint_test",
+verilog_style_test(
+    name = "br_flow_mux_rr_style_test",
     srcs = ["br_flow_mux_rr.sv"],
 )
 
-verible_lint_test(
-    name = "br_flow_mux_lru_verible_lint_test",
+verilog_style_test(
+    name = "br_flow_mux_lru_style_test",
     srcs = ["br_flow_mux_lru.sv"],
 )
 
-verible_lint_test(
-    name = "br_flow_mux_select_verible_lint_test",
+verilog_style_test(
+    name = "br_flow_mux_select_style_test",
     srcs = ["br_flow_mux_select.sv"],
 )
 
-verible_lint_test(
-    name = "br_flow_mux_select_unstable_verible_lint_test",
+verilog_style_test(
+    name = "br_flow_mux_select_unstable_style_test",
     srcs = ["br_flow_mux_select_unstable.sv"],
 )
 
-verible_lint_test(
-    name = "br_flow_reg_both_verible_lint_test",
+verilog_style_test(
+    name = "br_flow_reg_both_style_test",
     srcs = ["br_flow_reg_both.sv"],
 )
 
-verible_lint_test(
-    name = "br_flow_reg_fwd_verible_lint_test",
+verilog_style_test(
+    name = "br_flow_reg_fwd_style_test",
     srcs = ["br_flow_reg_fwd.sv"],
 )
 
-verible_lint_test(
-    name = "br_flow_reg_rev_verible_lint_test",
+verilog_style_test(
+    name = "br_flow_reg_rev_style_test",
     srcs = ["br_flow_reg_rev.sv"],
 )

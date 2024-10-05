@@ -127,8 +127,8 @@ def _verilog_lint_test_impl(ctx):
         extra_runfiles = extra_runfiles,
     )
 
-def _verible_lint_test_impl(ctx):
-    """Implementation of the verible_lint_test rule."""
+def _verilog_style_test_impl(ctx):
+    """Implementation of the verilog_style_test rule."""
 
     # TODO(mgottscho): refactor this to share more code with other rules
     srcs = ctx.files.srcs + _get_transitive(ctx = ctx, srcs_not_hdrs = True).to_list()
@@ -180,9 +180,9 @@ def verilog_lint_test(tags = [], **kwargs):
         **kwargs
     )
 
-verible_lint_test = rule(
-    doc = "Tests that the given source files don't have syntax errors or Verible lint errors.",
-    implementation = _verible_lint_test_impl,
+verilog_style_test = rule(
+    doc = "Tests that Verilog or SystemVerilog source files pass Verible style lint checks.",
+    implementation = _verilog_style_test_impl,
     attrs = {
         "srcs": attr.label_list(allow_files = [".v", ".sv", ".svh"]),
         "deps": attr.label_list(allow_files = False),
