@@ -36,23 +36,16 @@ repos:
     -   id: buildifier
         args: [--version, "v7.3.1", -mode=fix]
 
-  - repo: local
+  # Format Verilog files
+  - repo: https://github.com/imc-trading/verible-py.git
+    rev: v0.0-3426
     hooks:
-      # Format Verilog files
       - id: verible-verilog-format
-        name: verilog format
-        entry: verible-verilog-format
         args: [--inplace]
-        language: system
-        files: \.(v|vh|sv|svh)$
-        pass_filenames: true
-        types: [text]
-      # Style lint Verilog files
+
+  # Style lint Verilog files
+  - repo: https://github.com/imc-trading/verible-py.git
+    rev: v0.0-3426
+    hooks:
       - id: verible-verilog-lint
-        name: verilog style lint
-        entry: verible-verilog-lint
         args: [--ruleset=default]
-        language: system
-        files: \.(v|vh|sv|svh)$
-        pass_filenames: true
-        types: [text]
