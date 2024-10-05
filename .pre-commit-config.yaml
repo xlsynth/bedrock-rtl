@@ -37,15 +37,15 @@ repos:
         args: [--version, "v7.3.1", -mode=fix]
 
   # Format Verilog files
-  - repo: https://github.com/imc-trading/verible-py.git
-    rev: v0.0-3426
+  - repo: https://github.com/mgottscho/verible-py.git
+    rev: v0.0-3824
     hooks:
       - id: verible-verilog-format
         args: [--inplace]
 
   # Style lint Verilog files
-  - repo: https://github.com/imc-trading/verible-py.git
-    rev: v0.0-3426
+  - repo: https://github.com/mgottscho/verible-py.git
+    rev: v0.0-3824
     hooks:
       - id: verible-verilog-lint
         args: [--ruleset=default]
