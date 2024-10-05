@@ -36,16 +36,12 @@ repos:
     -   id: buildifier
         args: [--version, "v7.3.1", -mode=fix]
 
-  # Format Verilog files
   - repo: https://github.com/mgottscho/verible-py.git
     rev: v0.0-3824
     hooks:
+      # Format Verilog files
       - id: verible-verilog-format
         args: [--inplace]
-
-  # Style lint Verilog files
-  - repo: https://github.com/mgottscho/verible-py.git
-    rev: v0.0-3824
-    hooks:
+      # Style lint Verilog files
       - id: verible-verilog-lint
         args: [--ruleset=default]
