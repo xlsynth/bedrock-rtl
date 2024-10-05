@@ -1,0 +1,3 @@
+common \
+--local_resources=verilog_elab_test_tool_licenses=10000 \
+--local_resources=verilog_lint_test_tool_licenses=10000

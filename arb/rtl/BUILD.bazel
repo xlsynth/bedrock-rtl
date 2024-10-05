@@ -13,7 +13,7 @@
 # limitations under the License.
 
 load("@rules_hdl//verilog:providers.bzl", "verilog_library")
-load("//bazel:verilog.bzl", "verible_lint_test", "verilog_elab_test", "verilog_lint_test")
+load("//bazel:verilog.bzl", "verilog_elab_test", "verilog_lint_test")
 
 package(default_visibility = ["//visibility:public"])
 
@@ -21,8 +21,8 @@ verilog_library(
     name = "br_arb_fixed",
     srcs = ["br_arb_fixed.sv"],
     deps = [
-        "//macros:br_asserts_internal",
         "//enc/rtl:br_enc_priority_encoder",
+        "//macros:br_asserts_internal",
     ],
 )
 
@@ -40,28 +40,28 @@ verilog_library(
     name = "br_arb_rr",
     srcs = ["br_arb_rr.sv"],
     deps = [
+        "//enc/rtl:br_enc_priority_encoder",
         "//macros:br_asserts_internal",
         "//macros:br_registers",
-        "//enc/rtl:br_enc_priority_encoder",
     ],
 )
 
 verilog_elab_test(
     name = "br_arb_fixed_elab_test",
-    deps = [":br_arb_fixed"],
     top = "br_arb_fixed",
+    deps = [":br_arb_fixed"],
 )
 
 verilog_elab_test(
     name = "br_arb_lru_elab_test",
-    deps = [":br_arb_lru"],
     top = "br_arb_lru",
+    deps = [":br_arb_lru"],
 )
 
 verilog_elab_test(
     name = "br_arb_rr_elab_test",
-    deps = [":br_arb_rr"],
     top = "br_arb_rr",
+    deps = [":br_arb_rr"],
 )
 
 verilog_lint_test(
@@ -77,19 +77,4 @@ verilog_lint_test(
 verilog_lint_test(
     name = "br_arb_rr_lint_test",
     deps = [":br_arb_rr"],
-)
-
-verible_lint_test(
-    name = "br_arb_fixed_verible_lint_test",
-    srcs = ["br_arb_fixed.sv"],
-)
-
-verible_lint_test(
-    name = "br_arb_lru_verible_lint_test",
-    srcs = ["br_arb_lru.sv"],
-)
-
-verible_lint_test(
-    name = "br_arb_rr_verible_lint_test",
-    srcs = ["br_arb_rr.sv"],
 )

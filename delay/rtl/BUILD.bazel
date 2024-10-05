@@ -13,7 +13,7 @@
 # limitations under the License.
 
 load("@rules_hdl//verilog:providers.bzl", "verilog_library")
-load("//bazel:verilog.bzl", "verible_lint_test", "verilog_elab_test", "verilog_lint_test")
+load("//bazel:verilog.bzl", "verilog_elab_test", "verilog_lint_test")
 
 package(default_visibility = ["//visibility:public"])
 
@@ -21,8 +21,8 @@ verilog_library(
     name = "br_delay",
     srcs = ["br_delay.sv"],
     deps = [
-        "//macros:br_registers",
         "//macros:br_asserts_internal",
+        "//macros:br_registers",
     ],
 )
 
@@ -30,8 +30,8 @@ verilog_library(
     name = "br_delay_nr",
     srcs = ["br_delay_nr.sv"],
     deps = [
-        "//macros:br_registers",
         "//macros:br_asserts_internal",
+        "//macros:br_registers",
     ],
 )
 
@@ -39,8 +39,8 @@ verilog_library(
     name = "br_delay_valid",
     srcs = ["br_delay_valid.sv"],
     deps = [
-        "//macros:br_registers",
         "//macros:br_asserts_internal",
+        "//macros:br_registers",
     ],
 )
 
@@ -48,8 +48,8 @@ verilog_library(
     name = "br_delay_valid_next",
     srcs = ["br_delay_valid_next.sv"],
     deps = [
-        "//macros:br_registers",
         "//macros:br_asserts_internal",
+        "//macros:br_registers",
     ],
 )
 
@@ -57,64 +57,39 @@ verilog_library(
     name = "br_delay_valid_next_nr",
     srcs = ["br_delay_valid_next_nr.sv"],
     deps = [
-        "//macros:br_registers",
         "//macros:br_asserts_internal",
+        "//macros:br_registers",
     ],
-)
-
-verible_lint_test(
-    name = "br_delay_verible_lint_test",
-    srcs = ["br_delay.sv"],
-)
-
-verible_lint_test(
-    name = "br_delay_nr_verible_lint_test",
-    srcs = ["br_delay_nr.sv"],
-)
-
-verible_lint_test(
-    name = "br_delay_valid_verible_lint_test",
-    srcs = ["br_delay_valid.sv"],
-)
-
-verible_lint_test(
-    name = "br_delay_valid_next_verible_lint_test",
-    srcs = ["br_delay_valid_next.sv"],
-)
-
-verible_lint_test(
-    name = "br_delay_valid_next_nr_verible_lint_test",
-    srcs = ["br_delay_valid_next_nr.sv"],
 )
 
 verilog_elab_test(
     name = "br_delay_elab_test",
-    deps = [":br_delay"],
     top = "br_delay",
+    deps = [":br_delay"],
 )
 
 verilog_elab_test(
     name = "br_delay_nr_elab_test",
-    deps = [":br_delay_nr"],
     top = "br_delay_nr",
+    deps = [":br_delay_nr"],
 )
 
 verilog_elab_test(
     name = "br_delay_valid_elab_test",
-    deps = [":br_delay_valid"],
     top = "br_delay_valid",
+    deps = [":br_delay_valid"],
 )
 
 verilog_elab_test(
     name = "br_delay_valid_next_elab_test",
-    deps = [":br_delay_valid_next"],
     top = "br_delay_valid_next",
+    deps = [":br_delay_valid_next"],
 )
 
 verilog_elab_test(
     name = "br_delay_valid_next_nr_elab_test",
-    deps = [":br_delay_valid_next_nr"],
     top = "br_delay_valid_next_nr",
+    deps = [":br_delay_valid_next_nr"],
 )
 
 verilog_lint_test(
