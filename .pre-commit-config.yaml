@@ -29,6 +29,13 @@ repos:
       - id: black
         language_version: python3.12
 
+  # Format Bazel files
+  - repo: https://github.com/warchant/pre-commit-buildifier
+    rev: 0.1.1
+    hooks:
+    -   id: buildifier
+        args: [--version, "v7.3.1", -mode=fix]
+
   - repo: local
     hooks:
       # Format Verilog files
@@ -47,14 +54,5 @@ repos:
         args: [--ruleset=default]
         language: system
         files: \.(v|vh|sv|svh)$
-        pass_filenames: true
-        types: [text]
-      # Format Bazel files
-      - id: buildifier
-        name: format bazel files
-        entry: buildifier
-        args: [--mode=fix, --lint=warn]
-        language: system
-        files: (\.(bzl|bazel|bzlmod)$)|WORKSPACE|MODULE|BUILD|\.bazelversion
         pass_filenames: true
         types: [text]
