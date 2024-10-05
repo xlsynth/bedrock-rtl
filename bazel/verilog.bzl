@@ -15,6 +15,11 @@
 """Verilog rules for Bazel."""
 
 load("@rules_hdl//verilog:providers.bzl", "VerilogInfo")
+load(
+    "//bazel:write_placeholder_tools.bzl",
+    "write_placeholder_verilog_elab_test_tool",
+    "write_placeholder_verilog_lint_test_tool",
+)
 
 def _check_verilog_info_provider(iterable):
     """Check that all items in an iterable have the VerilogInfo provider; fails otherwise."""
@@ -45,21 +50,23 @@ def _write_executable_shell_script(ctx, filename, cmd):
         content = "\n".join([
             "#!/usr/bin/env bash",
             "set -e",
-            "exec " + cmd,
+            "echo 'Running command:'",
+            "echo {}".format(cmd),
+            cmd,
             "exit 0",
         ]),
         is_executable = True,
     )
     return executable_file
 
-def _verilog_base_test_impl(ctx, cmd_prefix, extra_args = []):
-    srcs = _get_transitive(ctx=ctx, srcs_not_hdrs=True).to_list()
-    hdrs = _get_transitive(ctx=ctx, srcs_not_hdrs=False).to_list()
+def _verilog_base_test_impl(ctx, tool, extra_args = [], extra_runfiles = []):
+    srcs = _get_transitive(ctx = ctx, srcs_not_hdrs = True).to_list()
+    hdrs = _get_transitive(ctx = ctx, srcs_not_hdrs = False).to_list()
     src_files = [src.path for src in srcs]
     hdr_files = [hdr.path for hdr in hdrs]
     args = ["--hdr=" + hdr for hdr in hdr_files] + extra_args
-    cmd = " ".join([cmd_prefix] + args + src_files)
-    runfiles = ctx.runfiles(files = srcs + hdrs + ctx.files.tool)
+    cmd = " ".join([tool] + args + src_files)
+    runfiles = ctx.runfiles(files = srcs + hdrs + extra_runfiles)
     executable_file = _write_executable_shell_script(
         ctx = ctx,
         filename = ctx.label.name + ".sh",
@@ -72,28 +79,60 @@ def _verilog_base_test_impl(ctx, cmd_prefix, extra_args = []):
     )
 
 def _verilog_elab_test_impl(ctx):
-    """Implementation of the verilog_elab_test rule."""
+    """Implementation of the verilog_elab_test rule.
+
+    Grab tool from the environment (BAZEL_VERILOG_ELAB_TEST_TOOL) so that
+    the user can provide their own proprietary tool implementation without
+    it being hardcoded anywhere into the repo. It's not hermetic, but it's
+    a decent compromise.
+    """
+    env = ctx.configuration.default_shell_env
+    if "BAZEL_VERILOG_ELAB_TEST_TOOL" in env:
+        tool = ctx.configuration.default_shell_env.get("BAZEL_VERILOG_ELAB_TEST_TOOL")
+        extra_runfiles = []
+    else:
+        # buildifier: disable=print
+        print("!! WARNING !! Environment variable BAZEL_VERILOG_ELAB_TEST_TOOL is not set! Will use placeholder test tool.")
+        tool_file = write_placeholder_verilog_elab_test_tool(ctx)
+        extra_runfiles = [tool_file]
+        tool = tool_file.short_path
     return _verilog_base_test_impl(
-        ctx=ctx,
-        # TODO(mgottscho): Gross. Use hermetic python?
-        cmd_prefix="python3.12 " + ctx.attr.tool.files.to_list()[0].path,
-        extra_args=["--top=" + ctx.attr.top] + ctx.attr.tool_args,
+        ctx = ctx,
+        tool = tool,
+        extra_args = ["--top=" + ctx.attr.top],
+        extra_runfiles = extra_runfiles,
     )
 
 def _verilog_lint_test_impl(ctx):
-    """Implementation of the verilog_lint_test rule."""
+    """Implementation of the verilog_lint_test rule.
+
+    Grab tool from the environment (BAZEL_VERILOG_LINT_TEST_TOOL) so that
+    the user can provide their own proprietary tool implementation without
+    it being hardcoded anywhere into the repo. It's not hermetic, but it's
+    a decent compromise.
+    """
+    env = ctx.configuration.default_shell_env
+    if "BAZEL_VERILOG_LINT_TEST_TOOL" in env:
+        tool = ctx.configuration.default_shell_env.get("BAZEL_VERILOG_LINT_TEST_TOOL")
+        extra_runfiles = []
+    else:
+        # buildifier: disable=print
+        print("!! WARNING !! Environment variable BAZEL_VERILOG_LINT_TEST_TOOL is not set! Will use placeholder test tool.")
+        tool_file = write_placeholder_verilog_lint_test_tool(ctx)
+        extra_runfiles = [tool_file]
+        tool = tool_file.short_path
     return _verilog_base_test_impl(
-        ctx=ctx,
-        # TODO(mgottscho): Gross. Use hermetic python?
-        cmd_prefix="python3.12 " + ctx.attr.tool.files.to_list()[0].path,
-        extra_args=ctx.attr.tool_args,
+        ctx = ctx,
+        tool = tool,
+        extra_runfiles = extra_runfiles,
     )
 
 def _verible_lint_test_impl(ctx):
     """Implementation of the verible_lint_test rule."""
+
     # TODO(mgottscho): refactor this to share more code with other rules
-    srcs = ctx.files.srcs + _get_transitive(ctx=ctx, srcs_not_hdrs=True).to_list()
-    hdrs = _get_transitive(ctx=ctx, srcs_not_hdrs=False).to_list()
+    srcs = ctx.files.srcs + _get_transitive(ctx = ctx, srcs_not_hdrs = True).to_list()
+    hdrs = _get_transitive(ctx = ctx, srcs_not_hdrs = False).to_list()
     src_files = [src.path for src in srcs]
     hdr_files = [hdr.path for hdr in hdrs]
     input_files = src_files + hdr_files
@@ -110,41 +149,43 @@ def _verible_lint_test_impl(ctx):
         executable = executable_file,
     )
 
-verilog_elab_test = rule(
+_verilog_elab_test = rule(
     doc = "Tests that a Verilog or SystemVerilog design elaborates.",
     implementation = _verilog_elab_test_impl,
     attrs = {
-        "deps": attr.label_list(allow_files=False),
+        "deps": attr.label_list(allow_files = False),
         "top": attr.string(),
-        "tool": attr.label(
-            allow_single_file=True,
-            default = "//bazel:verilog_elab_test.py",
-        ),
-        "tool_args": attr.string_list(default = []),
     },
     test = True,
 )
 
-verilog_lint_test = rule(
+def verilog_elab_test(tags = [], **kwargs):
+    _verilog_elab_test(
+        tags = tags + ["resources:verilog_elab_test_tool_licenses:1"],
+        **kwargs
+    )
+
+_verilog_lint_test = rule(
     doc = "Tests that a Verilog or SystemVerilog design passes a set of static lint checks.",
     implementation = _verilog_lint_test_impl,
     attrs = {
-        "deps": attr.label_list(allow_files=False),
-        "tool": attr.label(
-            allow_single_file=True,
-            default = "//bazel:verilog_lint_test.py",
-        ),
-        "tool_args": attr.string_list(default = []),
+        "deps": attr.label_list(allow_files = False),
     },
     test = True,
 )
+
+def verilog_lint_test(tags = [], **kwargs):
+    _verilog_lint_test(
+        tags = tags + ["resources:verilog_lint_test_tool_licenses:1"],
+        **kwargs
+    )
 
 verible_lint_test = rule(
     doc = "Tests that the given source files don't have syntax errors or Verible lint errors.",
     implementation = _verible_lint_test_impl,
     attrs = {
         "srcs": attr.label_list(allow_files = [".v", ".sv", ".svh"]),
-        "deps": attr.label_list(allow_files=False),
+        "deps": attr.label_list(allow_files = False),
         # By default, expect to find the tool in the system $PATH.
         # TODO(mgottscho): It would be better to do this hermetically.
         "tool": attr.string(default = "verible-verilog-lint"),

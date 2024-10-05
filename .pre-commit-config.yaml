@@ -49,6 +49,6 @@ repos:
       entry: buildifier
       args: [--mode=fix, --lint=warn]
       language: system
-      files: (\.(bzl|bazel|bzlmod)$)|WORKSPACE|MODULE|BUILD|\.bazelrc|\.bazelversion
+      files: (\.(bzl|bazel|bzlmod)$)|WORKSPACE|MODULE|BUILD|\.bazelversion
       pass_filenames: true
       types: [text]
