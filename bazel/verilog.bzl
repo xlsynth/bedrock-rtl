@@ -127,28 +127,6 @@ def _verilog_lint_test_impl(ctx):
         extra_runfiles = extra_runfiles,
     )
 
-def _verilog_style_test_impl(ctx):
-    """Implementation of the verilog_style_test rule."""
-
-    # TODO(mgottscho): refactor this to share more code with other rules
-    srcs = ctx.files.srcs + _get_transitive(ctx = ctx, srcs_not_hdrs = True).to_list()
-    hdrs = _get_transitive(ctx = ctx, srcs_not_hdrs = False).to_list()
-    src_files = [src.path for src in srcs]
-    hdr_files = [hdr.path for hdr in hdrs]
-    input_files = src_files + hdr_files
-    cmd = " ".join([ctx.attr.tool] + ctx.attr.tool_args + input_files)
-    runfiles = ctx.runfiles(files = getattr(ctx.files, "srcs", []))
-    executable_file = _write_executable_shell_script(
-        ctx = ctx,
-        filename = ctx.label.name + ".sh",
-        cmd = cmd,
-    )
-    return DefaultInfo(
-        runfiles = runfiles,
-        files = depset(direct = [executable_file]),
-        executable = executable_file,
-    )
-
 _verilog_elab_test = rule(
     doc = "Tests that a Verilog or SystemVerilog design elaborates.",
     implementation = _verilog_elab_test_impl,
@@ -179,17 +157,3 @@ def verilog_lint_test(tags = [], **kwargs):
         tags = tags + ["resources:verilog_lint_test_tool_licenses:1"],
         **kwargs
     )
-
-verilog_style_test = rule(
-    doc = "Tests that Verilog or SystemVerilog source files pass Verible style lint checks.",
-    implementation = _verilog_style_test_impl,
-    attrs = {
-        "srcs": attr.label_list(allow_files = [".v", ".sv", ".svh"]),
-        "deps": attr.label_list(allow_files = False),
-        # By default, expect to find the tool in the system $PATH.
-        # TODO(mgottscho): It would be better to do this hermetically.
-        "tool": attr.string(default = "verible-verilog-lint"),
-        "tool_args": attr.string_list(default = ["--ruleset=default"]),
-    },
-    test = True,
-)

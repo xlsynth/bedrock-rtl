@@ -13,7 +13,7 @@
 # limitations under the License.
 
 load("@rules_hdl//verilog:providers.bzl", "verilog_library")
-load("//bazel:verilog.bzl", "verilog_elab_test", "verilog_lint_test", "verilog_style_test")
+load("//bazel:verilog.bzl", "verilog_elab_test", "verilog_lint_test")
 
 package(default_visibility = ["//visibility:public"])
 
@@ -55,14 +55,4 @@ verilog_lint_test(
 verilog_lint_test(
     name = "br_counter_decr_lint_test",
     deps = [":br_counter_decr"],
-)
-
-verilog_style_test(
-    name = "br_counter_incr_style_test",
-    srcs = ["br_counter_incr.sv"],
-)
-
-verilog_style_test(
-    name = "br_counter_decr_style_test",
-    srcs = ["br_counter_decr.sv"],
 )

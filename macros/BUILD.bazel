@@ -13,7 +13,6 @@
 # limitations under the License.
 
 load("@rules_hdl//verilog:providers.bzl", "verilog_library")
-load("//bazel:verilog.bzl", "verilog_style_test")
 
 package(default_visibility = ["//visibility:public"])
 
@@ -31,19 +30,4 @@ verilog_library(
 verilog_library(
     name = "br_registers",
     hdrs = ["br_registers.svh"],
-)
-
-verilog_style_test(
-    name = "br_asserts_style_test",
-    srcs = ["br_asserts.svh"],
-)
-
-verilog_style_test(
-    name = "br_asserts_internal_style_test",
-    srcs = ["br_asserts_internal.svh"],
-)
-
-verilog_style_test(
-    name = "br_registers_style_test",
-    srcs = ["br_registers.svh"],
 )

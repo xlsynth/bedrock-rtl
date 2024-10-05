@@ -13,7 +13,7 @@
 # limitations under the License.
 
 load("@rules_hdl//verilog:providers.bzl", "verilog_library")
-load("//bazel:verilog.bzl", "verilog_elab_test", "verilog_lint_test", "verilog_style_test")
+load("//bazel:verilog.bzl", "verilog_elab_test", "verilog_lint_test")
 
 package(default_visibility = ["//visibility:public"])
 
@@ -247,79 +247,4 @@ verilog_lint_test(
 verilog_lint_test(
     name = "br_flow_reg_rev_lint_test",
     deps = [":br_flow_reg_rev"],
-)
-
-verilog_style_test(
-    name = "br_flow_arb_fixed_style_test",
-    srcs = ["br_flow_arb_fixed.sv"],
-)
-
-verilog_style_test(
-    name = "br_flow_arb_rr_style_test",
-    srcs = ["br_flow_arb_rr.sv"],
-)
-
-verilog_style_test(
-    name = "br_flow_arb_lru_style_test",
-    srcs = ["br_flow_arb_lru.sv"],
-)
-
-verilog_style_test(
-    name = "br_flow_demux_select_style_test",
-    srcs = ["br_flow_demux_select.sv"],
-)
-
-verilog_style_test(
-    name = "br_flow_demux_select_unstable_style_test",
-    srcs = ["br_flow_demux_select_unstable.sv"],
-)
-
-verilog_style_test(
-    name = "br_flow_fork_style_test",
-    srcs = ["br_flow_fork.sv"],
-)
-
-verilog_style_test(
-    name = "br_flow_join_style_test",
-    srcs = ["br_flow_join.sv"],
-)
-
-verilog_style_test(
-    name = "br_flow_mux_fixed_style_test",
-    srcs = ["br_flow_mux_fixed.sv"],
-)
-
-verilog_style_test(
-    name = "br_flow_mux_rr_style_test",
-    srcs = ["br_flow_mux_rr.sv"],
-)
-
-verilog_style_test(
-    name = "br_flow_mux_lru_style_test",
-    srcs = ["br_flow_mux_lru.sv"],
-)
-
-verilog_style_test(
-    name = "br_flow_mux_select_style_test",
-    srcs = ["br_flow_mux_select.sv"],
-)
-
-verilog_style_test(
-    name = "br_flow_mux_select_unstable_style_test",
-    srcs = ["br_flow_mux_select_unstable.sv"],
-)
-
-verilog_style_test(
-    name = "br_flow_reg_both_style_test",
-    srcs = ["br_flow_reg_both.sv"],
-)
-
-verilog_style_test(
-    name = "br_flow_reg_fwd_style_test",
-    srcs = ["br_flow_reg_fwd.sv"],
-)
-
-verilog_style_test(
-    name = "br_flow_reg_rev_style_test",
-    srcs = ["br_flow_reg_rev.sv"],
 )

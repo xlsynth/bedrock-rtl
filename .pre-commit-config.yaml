@@ -29,26 +29,32 @@ repos:
       - id: black
         language_version: python3.12
 
-  # Format Verilog files
   - repo: local
     hooks:
+      # Format Verilog files
       - id: verible-verilog-format
-        name: format verilog files
+        name: verilog format
         entry: verible-verilog-format
         args: [--inplace]
         language: system
         files: \.(v|vh|sv|svh)$
         pass_filenames: true
         types: [text]
-
-  # Format Bazel files
-  - repo: local
-    hooks:
-    - id: buildifier
-      name: format bazel files
-      entry: buildifier
-      args: [--mode=fix, --lint=warn]
-      language: system
-      files: (\.(bzl|bazel|bzlmod)$)|WORKSPACE|MODULE|BUILD|\.bazelversion
-      pass_filenames: true
-      types: [text]
+      # Style lint Verilog files
+      - id: verible-verilog-lint
+        name: verilog style lint
+        entry: verible-verilog-lint
+        args: [--ruleset=default]
+        language: system
+        files: \.(v|vh|sv|svh)$
+        pass_filenames: true
+        types: [text]
+      # Format Bazel files
+      - id: buildifier
+        name: format bazel files
+        entry: buildifier
+        args: [--mode=fix, --lint=warn]
+        language: system
+        files: (\.(bzl|bazel|bzlmod)$)|WORKSPACE|MODULE|BUILD|\.bazelversion
+        pass_filenames: true
+        types: [text]

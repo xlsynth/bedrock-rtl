@@ -13,7 +13,7 @@
 # limitations under the License.
 
 load("@rules_hdl//verilog:providers.bzl", "verilog_library")
-load("//bazel:verilog.bzl", "verilog_elab_test", "verilog_lint_test", "verilog_style_test")
+load("//bazel:verilog.bzl", "verilog_elab_test", "verilog_lint_test")
 
 package(default_visibility = ["//visibility:public"])
 
@@ -75,19 +75,4 @@ verilog_lint_test(
 verilog_lint_test(
     name = "br_enc_priority_encoder_lint_test",
     deps = [":br_enc_priority_encoder"],
-)
-
-verilog_style_test(
-    name = "br_enc_bin2onehot_style_test",
-    srcs = ["br_enc_bin2onehot.sv"],
-)
-
-verilog_style_test(
-    name = "br_enc_onehot2bin_style_test",
-    srcs = ["br_enc_onehot2bin.sv"],
-)
-
-verilog_style_test(
-    name = "br_enc_priority_encoder_style_test",
-    srcs = ["br_enc_priority_encoder.sv"],
 )
