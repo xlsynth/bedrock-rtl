@@ -65,7 +65,7 @@ def main():
     )
     parser.add_argument("--hdr",
                         type=argparse.FileType("r"),
-                        nargs="*",
+                        action="append",
                         default=[],
                         help="Verilog headers (.vh) or SystemVerilog headers (.svh) to include. "
                              "Can be specified multiple times.",
@@ -136,7 +136,7 @@ def main():
     )
     parser.add_argument("--hdr",
                         type=argparse.FileType("r"),
-                        nargs="*",
+                        action="append",
                         default=[],
                         help="Verilog headers (.vh) or SystemVerilog headers (.svh) to include. "
                              "Can be specified multiple times.",
