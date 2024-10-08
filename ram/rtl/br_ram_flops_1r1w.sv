@@ -54,7 +54,7 @@ module br_ram_flops_1r1w #(
   `BR_ASSERT_STATIC(BitWidth_gte1_A, BitWidth >= 1)
 
   `BR_ASSERT_INTG(wr_addr_in_range_A, wr_valid |-> wr_addr < Depth)
-  `BR_ASSERT_INTG(rd_addr_in_range_A, rd_valid |-> rd_addr < Depth)
+  `BR_ASSERT_INTG(rd_addr_in_range_A, rd_addr_valid |-> rd_addr < Depth)
 
   //------------------------------------------
   // Implementation

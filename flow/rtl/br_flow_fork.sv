@@ -67,7 +67,7 @@ module br_flow_fork #(
   // Implementation checks
   //------------------------------------------
   for (genvar i = 0; i < NumFlows; i++) begin : gen_flow_checks
-    `BR_COVER_IMPL(pop_valid_unstable_C, $stable(push_valid) && $fell(pop_valid[i]))
+    `BR_COVER_IMPL(pop_valid_unstable_C, $stable(push_valid) && $fell(pop_valid_unstable[i]))
   end
 
 endmodule : br_flow_fork

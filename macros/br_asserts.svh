@@ -26,12 +26,14 @@
 // Static (elaboration-time) assertion macros
 ////////////////////////////////////////////////////////////////////////////////
 
+`ifdef SV_ASSERT_ON
 `define BR_ASSERT_STATIC(__name__, __expr__) \
-`ifdef SV_ASSERT_ON \
 if (!(__expr__)) begin : gen__``__name__ \
 __STATIC_ASSERT_FAILED__ __name__ (); \
-end \
-`endif
+end
+`else  // SV_ASSERT_ON
+`define BR_ASSERT_STATIC(__name__, __expr__) ;  // macro no-op; SV_ASSERT_ON not defined
+`endif  // SV_ASSERT_ON
 
 ////////////////////////////////////////////////////////////////////////////////
 // Concurrent assertion macros (evaluated on posedge of a clock and disabled during a reset)
@@ -39,28 +41,34 @@ end \
 
 // Clock: 'clk'
 // Reset: 'rst'
+`ifdef SV_ASSERT_ON
 `define BR_ASSERT(__name__, __expr__) \
-`ifdef SV_ASSERT_ON \
-__name__ : assert property (@(posedge clk) disable iff (rst) (__expr__)); \
-`endif
+__name__ : assert property (@(posedge clk) disable iff (rst) (__expr__));
+`else  // SV_ASSERT_ON
+`define BR_ASSERT(__name__, __expr__) ;  // macro no-op; SV_ASSERT_ON not defined
+`endif  // SV_ASSERT_ON
 
 // More expressive form of BR_ASSERT that allows the use of custom clock and reset signal names.
+`ifdef SV_ASSERT_ON
 `define BR_ASSERT_CR(__name__, __expr__, __clk__, __rst__) \
-`ifdef SV_ASSERT_ON \
-__name__ : assert property (@(posedge __clk__) disable iff (__rst__) (__expr__)); \
-`endif
+__name__ : assert property (@(posedge __clk__) disable iff (__rst__) (__expr__));
+`else  // SV_ASSERT_ON
+`define BR_ASSERT_CR(__name__, __expr__, __clk__, __rst__) ;  // macro no-op; SV_ASSERT_ON not defined
+`endif  // SV_ASSERT_ON
 
 ////////////////////////////////////////////////////////////////////////////////
 // Combinational assertion macros (evaluated continuously based on the expression sensitivity)
 ////////////////////////////////////////////////////////////////////////////////
+`ifdef SV_ASSERT_ON
 `define BR_ASSERT_COMB(__name__, __expr__) \
-`ifdef SV_ASSERT_ON \
 generate : __name__ \
 always_comb begin \
 assert property (__expr__); \
 end \
-endgenerate \
-`endif
+endgenerate
+`else  // SV_ASSERT_ON
+`define BR_ASSERT_COMB(__name__, __expr__) ;  // macro no-op; SV_ASSERT_ON not defined
+`endif  // SV_ASSERT_ON
 
 ////////////////////////////////////////////////////////////////////////////////
 // Concurrent cover macros (evaluated on posedge of a clock and disabled during a reset)
@@ -68,27 +76,34 @@ endgenerate \
 
 // Clock: 'clk'
 // Reset: 'rst'
+`ifdef SV_ASSERT_ON
 `define BR_COVER(__name__, __expr__) \
-`ifdef SV_ASSERT_ON \
-__name__ : cover property (@(posedge clk) disable iff (rst) (__expr__)); \
-`endif
+__name__ : cover property (@(posedge clk) disable iff (rst) (__expr__));
+`else  // SV_ASSERT_ON
+`define BR_COVER(__name__, __expr__) ;  // macro no-op; SV_ASSERT_ON not defined
+`endif  // SV_ASSERT_ON
 
 // More expressive form of BR_COVER that allows the use of custom clock and reset signal names.
+`ifdef SV_ASSERT_ON
 `define BR_COVER_CR(__name__, __expr__, __clk__, __rst__) \
-`ifdef SV_ASSERT_ON \
-__name__ : cover property (@(posedge __clk__) disable iff (__rst__) (__expr__)); \
-`endif
+__name__ : cover property (@(posedge __clk__) disable iff (__rst__) (__expr__));
+`else  // SV_ASSERT_ON
+`define BR_COVER_CR(__name__, __expr__, __clk__,
+                    __rst__) ;  // macro no-op; SV_ASSERT_ON not defined
+`endif  // SV_ASSERT_ON
 
 ////////////////////////////////////////////////////////////////////////////////
 // Combinational cover macros (evaluated continuously based on the expression sensitivity)
 ////////////////////////////////////////////////////////////////////////////////
+`ifdef SV_ASSERT_ON
 `define BR_COVER_COMB(__name__, __expr__) \
-`ifdef SV_ASSERT_ON \
 generate : __name__ \
 always_comb begin \
 cover property (__expr__); \
 end \
-endgenerate \
-`endif
+endgenerate
+`else  // SV_ASSERT_ON
+`define BR_COVER_COMB(__name__, __expr__) ;  // macro no-op; SV_ASSERT_ON not defined
+`endif  // SV_ASSERT_ON
 
 `endif  // BR_ASSERTS_SVH

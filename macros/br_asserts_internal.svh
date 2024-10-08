@@ -37,44 +37,58 @@
 // Concurrent assertion macros (evaluated on posedge of a clock and disabled during a reset)
 ////////////////////////////////////////////////////////////////////////////////
 
+// verilog_lint: disable line-length
+
 // Clock: 'clk'
 // Reset: 'rst'
+`ifndef BR_DISABLE_INTG_CHECKS
 `define BR_ASSERT_INTG(__name__, __expr__) \
-`ifndef BR_DISABLE_INTG_CHECKS \
-`BR_ASSERT(__name__, __expr__) \
-`endif
+`BR_ASSERT(__name__, __expr__)
+`else  // BR_DISABLE_INTG_CHECKS
+`define BR_ASSERT_INTG(__name__, __expr__) ;  // macro no-op; BR_DISABLE_INTG_CHECKS defined
+`endif  // BR_DISABLE_INTG_CHECKS
 
 // More expressive form of BR_ASSERT_INTG that allows the use of custom clock and reset signal names.
+`ifdef BR_DISABLE_INTG_CHECKS
 `define BR_ASSERT_CR_INTG(__name__, __expr__, __clk__, __rst__) \
-`ifdef BR_DISABLE_INTG_CHECKS \
-`BR_ASSERT_CR(__name__, __expr__, __clk__, __rst__) \
-`endif
+`BR_ASSERT_CR(__name__, __expr__, __clk__, __rst__)
+`else  // BR_DISABLE_INTG_CHECKS
+`define BR_ASSERT_CR_INTG(__name__, __expr__, __clk__, __rst__) ;  // macro no-op; BR_DISABLE_INTG_CHECKS defined
+`endif  // BR_DISABLE_INTG_CHECKS
 
 // Clock: 'clk'
 // Reset: 'rst'
+`ifndef BR_ENABLE_IMPL_CHECKS
 `define BR_ASSERT_IMPL(__name__, __expr__) \
-`ifndef BR_ENABLE_IMPL_CHECKS \
-`BR_ASSERT(__name__, __expr__) \
-`endif
+`BR_ASSERT(__name__, __expr__)
+`else  // BR_ENABLE_IMPL_CHECKS
+`define BR_ASSERT_IMPL(__name__, __expr__) ;  // macro no-op; BR_ENABLE_IMPL_CHECKS not defined
+`endif  // BR_ENABLE_IMPL_CHECKS
 
 // More expressive form of BR_ASSERT_IMPL that allows the use of custom clock and reset signal names.
+`ifdef BR_ENABLE_IMPL_CHECKS
 `define BR_ASSERT_CR_IMPL(__name__, __expr__, __clk__, __rst__) \
-`ifdef BR_ENABLE_IMPL_CHECKS \
-`BR_ASSERT_CR(__name__, __expr__, __clk__, __rst__) \
-`endif
+`BR_ASSERT_CR(__name__, __expr__, __clk__, __rst__)
+`else  // BR_ENABLE_IMPL_CHECKS
+`define BR_ASSERT_CR_IMPL(__name__, __expr__, __clk__, __rst__) ;  // macro no-op; BR_ENABLE_IMPL_CHECKS not defined
+`endif  // BR_ENABLE_IMPL_CHECKS
 
 ////////////////////////////////////////////////////////////////////////////////
 // Combinational assertion macros (evaluated continuously based on the expression sensitivity)
 ////////////////////////////////////////////////////////////////////////////////
+`ifndef BR_DISABLE_INTG_CHECKS
 `define BR_ASSERT_COMB_INTG(__name__, __expr__) \
-`ifndef BR_DISABLE_INTG_CHECKS \
-`BR_ASSERT_COMB(__name__, __expr__) \
-`endif
+`BR_ASSERT_COMB(__name__, __expr__)
+`else  // BR_DISABLE_INTG_CHECKS
+`define BR_ASSERT_COMB_INTG(__name__, __expr__) ;  // macro no-op; BR_DISABLE_INTG_CHECKS defined
+`endif  // BR_DISABLE_INTG_CHECKS
 
+`ifdef BR_ENABLE_IMPL_CHECKS
 `define BR_ASSERT_COMB_IMPL(__name__, __expr__) \
-`ifdef BR_ENABLE_IMPL_CHECKS \
-`BR_ASSERT_COMB(__name__, __expr__) \
-`endif
+`BR_ASSERT_COMB(__name__, __expr__)
+`else  // BR_ENABLE_IMPL_CHECKS
+`define BR_ASSERT_COMB_IMPL(__name__, __expr__) ;  // macro no-op; BR_ENABLE_IMPL_CHECKS not defined
+`endif  // BR_ENABLE_IMPL_CHECKS
 
 ////////////////////////////////////////////////////////////////////////////////
 // Concurrent cover macros (evaluated on posedge of a clock and disabled during a reset)
@@ -82,41 +96,55 @@
 
 // Clock: 'clk'
 // Reset: 'rst'
+`ifndef BR_DISABLE_INTG_CHECKS
 `define BR_COVER_INTG(__name__, __expr__) \
-`ifndef BR_DISABLE_INTG_CHECKS \
-`BR_COVER(__name__, __expr__) \
-`endif
+`BR_COVER(__name__, __expr__)
+`else  // BR_DISABLE_INTG_CHECKS
+`define BR_COVER_INTG(__name__, __expr__) ;  // macro no-op; BR_DISABLE_INTG_CHECKS defined
+`endif  // BR_DISABLE_INTG_CHECKS
 
 // More expressive form of BR_COVER_INTG that allows the use of custom clock and reset signal names.
+`ifdef BR_DISABLE_INTG_CHECKS
 `define BR_COVER_CR_INTG(__name__, __expr__, __clk__, __rst__) \
-`ifdef BR_DISABLE_INTG_CHECKS \
-`BR_COVER_CR(__name__, __expr__, __clk__, __rst__) \
-`endif
+`BR_COVER_CR(__name__, __expr__, __clk__, __rst__)
+`else  // BR_DISABLE_INTG_CHECKS
+`define BR_COVER_CR_INTG(__name__, __expr__, __clk__, __rst__) ;  // macro no-op; BR_DISABLE_INTG_CHECKS defined
+`endif  // BR_DISABLE_INTG_CHECKS
 
 // Clock: 'clk'
 // Reset: 'rst'
+`ifndef BR_ENABLE_IMPL_CHECKS
 `define BR_COVER_IMPL(__name__, __expr__) \
-`ifndef BR_ENABLE_IMPL_CHECKS \
-`BR_COVER(__name__, __expr__) \
-`endif
+`BR_COVER(__name__, __expr__)
+`else  // BR_ENABLE_IMPL_CHECKS
+`define BR_COVER_IMPL(__name__, __expr__) ;  // macro no-op; BR_ENABLE_IMPL_CHECKS not defined
+`endif  // BR_ENABLE_IMPL_CHECKS
 
 // More expressive form of BR_COVER_IMPL that allows the use of custom clock and reset signal names.
+`ifdef BR_ENABLE_IMPL_CHECKS
 `define BR_COVER_CR_IMPL(__name__, __expr__, __clk__, __rst__) \
-`ifdef BR_ENABLE_IMPL_CHECKS \
-`BR_COVER_CR(__name__, __expr__, __clk__, __rst__) \
-`endif
+`BR_COVER_CR(__name__, __expr__, __clk__, __rst__)
+`else  // BR_ENABLE_IMPL_CHECKS
+`define BR_COVER_CR_IMPL(__name__, __expr__, __clk__, __rst__) ;  // macro no-op; BR_ENABLE_IMPL_CHECKS not defined
+`endif  // BR_ENABLE_IMPL_CHECKS
 
 ////////////////////////////////////////////////////////////////////////////////
 // Combinational cover macros (evaluated continuously based on the expression sensitivity)
 ////////////////////////////////////////////////////////////////////////////////
+`ifndef BR_DISABLE_INTG_CHECKS
 `define BR_COVER_COMB_INTG(__name__, __expr__) \
-`ifndef BR_DISABLE_INTG_CHECKS \
-`BR_COVER_COMB(__name__, __expr__) \
-`endif
+`BR_COVER_COMB(__name__, __expr__)
+`else  // BR_DISABLE_INTG_CHECKS
+`define BR_COVER_COMB_INTG(__name__, __expr__) ;  // macro no-op; BR_DISABLE_INTG_CHECKS defined
+`endif // BR_DISABLE_INTG_CHECKS
 
+`ifdef BR_ENABLE_IMPL_CHECKS
 `define BR_COVER_COMB_IMPL(__name__, __expr__) \
-`ifdef BR_ENABLE_IMPL_CHECKS \
-`BR_COVER_COMB(__name__, __expr__) \
-`endif
+`BR_COVER_COMB(__name__, __expr__)
+`else  // BR_ENABLE_IMPL_CHECKS
+`define BR_COVER_COMB_IMPL(__name__, __expr__) ;  // macro no-op; BR_ENABLE_IMPL_CHECKS not defined
+`endif  // BR_ENABLE_IMPL_CHECKS
+
+// verilog_lint: enable line-length
 
 `endif  // BR_ASSERTS_INTERNAL_SVH
