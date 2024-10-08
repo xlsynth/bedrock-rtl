@@ -64,7 +64,7 @@ def _verilog_base_test_impl(ctx, tool, extra_args = [], extra_runfiles = []):
     hdrs = _get_transitive(ctx = ctx, srcs_not_hdrs = False).to_list()
     src_files = [src.path for src in srcs]
     hdr_files = [hdr.path for hdr in hdrs]
-    args = ["--hdr=" + hdr for hdr in hdr_files] + extra_args
+    args = ["--hdr=" + hdr for hdr in hdr_files] + ["--define=" + define for define in ctx.attr.defines] + extra_args
     cmd = " ".join([tool] + args + src_files)
     runfiles = ctx.runfiles(files = srcs + hdrs + extra_runfiles)
     executable_file = _write_executable_shell_script(
@@ -133,6 +133,7 @@ _verilog_elab_test = rule(
     attrs = {
         "deps": attr.label_list(allow_files = False),
         "top": attr.string(),
+        "defines": attr.string_list(default = ["SV_ASSERT_ON"]),
     },
     test = True,
 )
@@ -148,6 +149,7 @@ _verilog_lint_test = rule(
     implementation = _verilog_lint_test_impl,
     attrs = {
         "deps": attr.label_list(allow_files = False),
+        "defines": attr.string_list(default = ["SV_ASSERT_ON"]),
     },
     test = True,
 )

@@ -47,7 +47,7 @@ def check_each_filename_suffix(filenames: List[str], suffices: List[str]) -> Non
             raise ValueError(f"Expected filename to end with any of {suffices}: {filename}")
 
 
-def verilog_elab_test(hdrs: Optional[List[str]], srcs: List[str], top: str) -> bool:
+def verilog_elab_test(hdrs: Optional[List[str]], defines: Optional[List[str]], srcs: List[str], top: str) -> bool:
     """Returns True if the top-level Verilog or SystemVerilog module is able to elaborate; may print to stdout and/or stderr."""
     # TODO: Implement this using your own tool.
     print("NOT IMPLEMENTED: Test vacuously passes.")
@@ -67,8 +67,14 @@ def main():
                         type=argparse.FileType("r"),
                         action="append",
                         default=[],
-                        help="Verilog headers (.vh) or SystemVerilog headers (.svh) to include. "
+                        help="Verilog header (.vh) or SystemVerilog header (.svh) to include. "
                              "Can be specified multiple times.",
+    )
+    parser.add_argument("--define",
+                        type=str,
+                        action="append",
+                        default=[],
+                        help="Verilog/SystemVerilog preprocessor define to use in compilation. Can be specified multiple times.",
     )
     parser.add_argument("srcs",
                         type=argparse.FileType("r"),
@@ -80,11 +86,12 @@ def main():
 
     hdrs = [hdr.name for hdr in args.hdr]
     srcs = [src.name for src in args.srcs]
+    defines = args.define
 
     check_each_filename_suffix(hdrs, [".vh", ".svh"])
     check_each_filename_suffix(srcs, [".v", ".sv"])
 
-    exit(0) if verilog_elab_test(hdrs, srcs, args.top) else exit(1)
+    exit(0) if verilog_elab_test(hdrs, defines, srcs, args.top) else exit(1)
 
 
 if __name__ == "__main__":
@@ -123,7 +130,7 @@ def check_each_filename_suffix(filenames: List[str], suffices: List[str]) -> Non
             raise ValueError(f"Expected filename to end with any of {suffices}: {filename}")
 
 
-def verilog_lint_test(hdrs: Optional[List[str]], srcs: List[str]) -> bool:
+def verilog_lint_test(hdrs: Optional[List[str]], defines: Optional[List[str]], srcs: List[str]) -> bool:
     """Returns True if the the Verilog/SystemVerilog sources pass a lint test; may print to stdout and/or stderr."""
     # TODO: Implement this using your own tool.
     print("NOT IMPLEMENTED: Test vacuously passes.")
@@ -138,8 +145,14 @@ def main():
                         type=argparse.FileType("r"),
                         action="append",
                         default=[],
-                        help="Verilog headers (.vh) or SystemVerilog headers (.svh) to include. "
+                        help="Verilog header (.vh) or SystemVerilog header (.svh) to include. "
                              "Can be specified multiple times.",
+    )
+    parser.add_argument("--define",
+                        type=str,
+                        action="append",
+                        default=[],
+                        help="Verilog/SystemVerilog preprocessor define to use in compilation. Can be specified multiple times.",
     )
     parser.add_argument("srcs",
                         type=argparse.FileType("r"),
@@ -150,11 +163,12 @@ def main():
 
     hdrs = [hdr.name for hdr in args.hdr]
     srcs = [src.name for src in args.srcs]
+    defines = args.define
 
     check_each_filename_suffix(hdrs, [".vh", ".svh"])
     check_each_filename_suffix(srcs, [".v", ".sv"])
 
-    exit(0) if verilog_lint_test(hdrs, srcs) else exit(1)
+    exit(0) if verilog_lint_test(hdrs, defines, srcs) else exit(1)
 
 
 if __name__ == "__main__":
