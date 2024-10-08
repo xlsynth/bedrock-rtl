@@ -24,7 +24,6 @@ verilog_library(
         "//counter/rtl:br_counter_incr",
         "//macros:br_asserts_internal",
         "//macros:br_registers",
-        "//ram/rtl:br_ram_flops_1r1w",
     ],
 )
 
