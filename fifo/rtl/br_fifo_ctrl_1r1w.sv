@@ -58,7 +58,9 @@ module br_fifo_ctrl_1r1w #(
     // If 0, then pushes always go through the RAM before they can become
     // visible at the pop interface. This results in a cut-through latency of
     // 1 cycle, but timing is improved.
-    parameter bit EnableBypass = 1
+    parameter bit EnableBypass = 1,
+    localparam int AddrWidth = $clog2(Depth),
+    localparam int CountWidth = $clog2(Depth + 1)
 ) (
     input logic clk,
     input logic rst,  // Synchronous active-high
@@ -73,11 +75,13 @@ module br_fifo_ctrl_1r1w #(
 
     // Push-side status flags
     output logic full,
+    output logic full_next,
     output logic [CountWidth-1:0] slots,
     output logic [CountWidth-1:0] slots_next,
 
     // Pop-side status flags
     output logic empty,
+    output logic empty_next,
     output logic [CountWidth-1:0] items,
     output logic [CountWidth-1:0] items_next,
 
@@ -113,6 +117,62 @@ module br_fifo_ctrl_1r1w #(
   //------------------------------------------
   // Implementation
   //------------------------------------------
+  logic push = push_ready && push_valid;
+  logic pop = pop_ready && pop_valid;
+
+  // Push-side logic
+  logic [AddrWidth-1:0] wr_addr_next;
+
+  br_counter_incr #(
+      .MaxValue(Depth - 1),
+      .MaxIncrement(1)
+  ) br_counter_incr_wr_addr (
+      .clk,
+      .rst,
+      .incr_valid(push),
+      .incr(1'b1),
+      .value(wr_addr),
+      .value_next(wr_addr_next)
+  );
+
+  assign wr_valid = push;
+  assign wr_data  = push_data;
+
+  // Pop-side logic
+  logic [AddrWidth-1:0] rd_addr_next;
+
+  br_counter_incr #(
+      .MaxValue(Depth - 1),
+      .MaxIncrement(1)
+  ) br_counter_incr_rd_addr (
+      .clk,
+      .rst,
+      .incr_valid(pop),
+      .incr(1'b1),
+      .value(rd_addr),
+      .value_next(rd_addr_next)
+  );
+
+  assign rd_valid = pop;
+  assign pop_data = rd_data;
+
+  // Status flags
+  localparam int InternalCountWidth = $clog2(Depth * 2);
+  logic [CountWidth-1:0] wr_minus_rd_next = wr_addr_next - rd_addr_next;
+
+  assign items_next = wr_addr_next >= rd_addr_next ?
+    wr_minus_rd_next :
+    wr_minus_rd_next + Depth - 1;
+
+  assign slots_next = Depth - items_next;
+
+  assign empty_next = items_next == 0;
+  assign full_next = slots_next == 0;
+
+  `BR_REGL(items, items_next, push || pop)
+  `BR_REGL(slots, slots_next, push || pop)
+  `BR_REGL(full, full_next, push || pop)
+  `BR_REGIL(empty, empty_next, push || pop, 1'b1)
 
   //------------------------------------------
   // Implementation checks
@@ -149,5 +209,7 @@ module br_fifo_ctrl_1r1w #(
   `BR_ASSERT_IMPL(empty_A, empty == (items == 0))
   `BR_ASSERT_IMPL(items_next_A, ##1 items == $past(items_next))
   `BR_ASSERT_IMPL(slots_next_A, ##1 slots == $past(slots_next))
+  `BR_ASSERT_IMPL(push_and_pop_flags_unchanged_A,
+                  push && pop |-> items_next == items && slots_next == slots)
 
 endmodule : br_fifo_ctrl_1r1w
