@@ -120,7 +120,8 @@ module br_fifo_ctrl_1r1w #(
   logic push = push_ready && push_valid;
   logic pop = pop_ready && pop_valid;
 
-  // Push-side logic
+  // Push-side
+  assign push_ready = !full;
   logic [AddrWidth-1:0] wr_addr_next;
 
   br_counter_incr #(
@@ -138,7 +139,7 @@ module br_fifo_ctrl_1r1w #(
   assign wr_valid = push;
   assign wr_data  = push_data;
 
-  // Pop-side logic
+  // Pop-side
   logic [AddrWidth-1:0] rd_addr_next;
 
   br_counter_incr #(
@@ -153,7 +154,13 @@ module br_fifo_ctrl_1r1w #(
       .value_next(rd_addr_next)
   );
 
-  assign rd_valid = pop;
+  assign rd_addr_valid = pop;
+
+  if (EnableBypass) begin : gen_pop_valid_bypass
+    assign pop_valid = !empty && push_valid;
+  end else begin : gen_pop_valid_no_bypass
+    assign pop_valid = !empty;
+  end
   assign pop_data = rd_data;
 
   // Status flags
