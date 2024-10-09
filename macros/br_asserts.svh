@@ -56,8 +56,7 @@ __name__ : assert property (@(posedge clk) disable iff (rst) (__expr__));
 `define BR_ASSERT_CR(__name__, __expr__, __clk__, __rst__) \
 __name__ : assert property (@(posedge __clk__) disable iff (__rst__) (__expr__));
 `else  // SV_ASSERT_ON
-`define BR_ASSERT_CR(__name__, __expr__, __clk__,
-                     __rst__) ;  // macro no-op; SV_ASSERT_ON not defined
+`define BR_ASSERT_CR(__name__, __expr__, __clk__, __rst__) ;  // macro no-op; SV_ASSERT_ON not defined
 `endif  // SV_ASSERT_ON
 
 ////////////////////////////////////////////////////////////////////////////////
