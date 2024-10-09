@@ -74,32 +74,32 @@ module br_fifo_ctrl_1r1w #(
     output logic [BitWidth-1:0] pop_data,
 
     // Push-side status flags
-    output logic full,
-    output logic full_next,
+    output logic                  full,
+    output logic                  full_next,
     output logic [CountWidth-1:0] slots,
     output logic [CountWidth-1:0] slots_next,
 
     // Pop-side status flags
-    output logic empty,
-    output logic empty_next,
+    output logic                  empty,
+    output logic                  empty_next,
     output logic [CountWidth-1:0] items,
     output logic [CountWidth-1:0] items_next,
 
     // 1R1W RAM interface
-    output logic wr_valid,
+    output logic                 wr_valid,
     output logic [AddrWidth-1:0] wr_addr,
-    output logic [BitWidth-1:0] wr_data,
-    output logic rd_addr_valid,
+    output logic [ BitWidth-1:0] wr_data,
+    output logic                 rd_addr_valid,
     output logic [AddrWidth-1:0] rd_addr,
-    input logic rd_data_valid,
-    input logic [BitWidth-1:0] rd_data
+    input  logic                 rd_data_valid,
+    input  logic [ BitWidth-1:0] rd_data
 );
 
   //------------------------------------------
   // Integration checks
   //------------------------------------------
-  `BR_ASSERT_STATIC(DepthMustBeAtLeastOne_A, Depth >= 2)
-  `BR_ASSERT_STATIC(BitWidthMustBeAtLeastOne_A, BitWidth >= 1)
+  `BR_ASSERT_STATIC(depth_must_be_at_least_one_a, Depth >= 2)
+  `BR_ASSERT_STATIC(bit_width_must_be_at_least_one_a, BitWidth >= 1)
 
   // Assert that under push-side backpressure conditions,
   // the pipeline register correctly stalls upstream.
@@ -108,17 +108,19 @@ module br_fifo_ctrl_1r1w #(
   // still 1 and push_data has not changed. In other words,
   // we are checking that the input stimulus abides by the push-side
   // ready-valid interface protocol.
-  `BR_ASSERT_INTG(push_backpressure_intg_A, !push_ready && push_valid |=> push_valid && $stable
-                                            (push_data))
-  `BR_ASSERT_INTG(full_intg_C, full)
+  `BR_ASSERT_INTG(push_backpressure_a, !push_ready && push_valid |=> push_valid && $stable
+                                       (push_data))
+  `BR_ASSERT_INTG(full_c, full)
 
-  `BR_ASSERT_INTG(rd_latency_zero_intg_A, rd_addr_valid |-> rd_data_valid)
+  `BR_ASSERT_INTG(rd_latency_zero_a, rd_addr_valid |-> rd_data_valid)
 
   //------------------------------------------
   // Implementation
   //------------------------------------------
-  logic push = push_ready && push_valid;
-  logic pop = pop_ready && pop_valid;
+  logic push, pop;
+
+  assign push = push_ready && push_valid;
+  assign pop = pop_ready && pop_valid;
 
   // Push-side
   assign push_ready = !full;
@@ -162,10 +164,11 @@ module br_fifo_ctrl_1r1w #(
     assign pop_valid = !empty;
   end
   assign pop_data = rd_data;
+  br_misc_unused br_misc_unused (.in(rd_data_valid));  // implied
 
   // Status flags
-  localparam int InternalCountWidth = $clog2(Depth * 2);
-  logic [CountWidth-1:0] wr_minus_rd_next = wr_addr_next - rd_addr_next;
+  logic [CountWidth-1:0] wr_minus_rd_next;
+  assign wr_minus_rd_next = wr_addr_next - rd_addr_next;
 
   assign items_next = wr_addr_next >= rd_addr_next ?
     wr_minus_rd_next :
@@ -184,39 +187,39 @@ module br_fifo_ctrl_1r1w #(
   //------------------------------------------
   // Implementation checks
   //------------------------------------------
-  `BR_ASSERT_IMPL(pop_backpressure_A, !pop_ready && pop_valid |=> pop_valid && $stable(pop_data))
+  `BR_ASSERT_IMPL(pop_backpressure_a, !pop_ready && pop_valid |=> pop_valid && $stable(pop_data))
 
-  `BR_ASSERT_IMPL(wr_addr_in_range_A, wr_valid |-> wr_addr < Depth)
-  `BR_ASSERT_IMPL(rd_addr_in_range_A, rd_addr_valid |-> rd_addr < Depth)
+  `BR_ASSERT_IMPL(wr_addr_in_range_a, wr_valid |-> wr_addr < Depth)
+  `BR_ASSERT_IMPL(rd_addr_in_range_a, rd_addr_valid |-> rd_addr < Depth)
 
   if (EnableBypass) begin : gen_bypass_impl_checks
     // Check that the datapath has 0 cycle cut-through delay when empty.
-    `BR_ASSERT_IMPL(cutthrough_0_delay_A,
+    `BR_ASSERT_IMPL(cutthrough_0_delay_a,
                     push_ready && push_valid && empty |-> pop_valid && pop_data == push_data)
-    `BR_ASSERT_IMPL(push_ready_when_not_full_or_pop_ready_A, push_ready == (!full || pop_ready))
-    `BR_ASSERT_IMPL(pop_valid_when_not_empty_or_push_valid_A, pop_valid == (!empty || push_valid))
+    `BR_ASSERT_IMPL(push_ready_when_not_full_or_pop_ready_a, push_ready == (!full || pop_ready))
+    `BR_ASSERT_IMPL(pop_valid_when_not_empty_or_push_valid_a, pop_valid == (!empty || push_valid))
   end else begin : gen_no_bypass_impl_checks
     // Check that the datapath has 1 cycle cut-through delay.
-    `BR_ASSERT_IMPL(cutthrough_1_delay_A,
+    `BR_ASSERT_IMPL(cutthrough_1_delay_a,
                     push_ready && push_valid && empty |=> pop_valid && pop_data == $past(push_data))
-    `BR_ASSERT_IMPL(push_ready_when_not_full_A, push_ready == !full)
-    `BR_ASSERT_IMPL(pop_valid_when_not_empty_A, pop_valid == !empty)
+    `BR_ASSERT_IMPL(push_ready_when_not_full_a, push_ready == !full)
+    `BR_ASSERT_IMPL(pop_valid_when_not_empty_a, pop_valid == !empty)
   end
 
   // Check that the backpressure path has 1 cycle delay.
-  `BR_ASSERT_IMPL(push_backpressure_when_full_A, full |-> !push_ready)
-  `BR_ASSERT_IMPL(backpressure_latency_1_cycle_A, full && pop_ready |=> !full && push_ready)
+  `BR_ASSERT_IMPL(push_backpressure_when_full_a, full |-> !push_ready)
+  `BR_ASSERT_IMPL(backpressure_latency_1_cycle_a, full && pop_ready |=> !full && push_ready)
 
   // Flags
-  `BR_ASSERT_IMPL(items_in_range_A, items <= Depth)
-  `BR_ASSERT_IMPL(slots_in_range_A, slots <= Depth)
-  `BR_ASSERT_IMPL(items_plus_slots_A, items + slots == Depth)
-  `BR_ASSERT_IMPL(items_next_plus_slots_next_A, items_next + slots_next == Depth)
-  `BR_ASSERT_IMPL(full_A, full == (slots == 0))
-  `BR_ASSERT_IMPL(empty_A, empty == (items == 0))
-  `BR_ASSERT_IMPL(items_next_A, ##1 items == $past(items_next))
-  `BR_ASSERT_IMPL(slots_next_A, ##1 slots == $past(slots_next))
-  `BR_ASSERT_IMPL(push_and_pop_flags_unchanged_A,
+  `BR_ASSERT_IMPL(items_in_range_a, items <= Depth)
+  `BR_ASSERT_IMPL(slots_in_range_a, slots <= Depth)
+  `BR_ASSERT_IMPL(items_plus_slots_a, items + slots == Depth)
+  `BR_ASSERT_IMPL(items_next_plus_slots_next_a, items_next + slots_next == Depth)
+  `BR_ASSERT_IMPL(full_a, full == (slots == 0))
+  `BR_ASSERT_IMPL(empty_a, empty == (items == 0))
+  `BR_ASSERT_IMPL(items_next_a, ##1 items == $past(items_next))
+  `BR_ASSERT_IMPL(slots_next_a, ##1 slots == $past(slots_next))
+  `BR_ASSERT_IMPL(push_and_pop_flags_unchanged_a,
                   push && pop |-> items_next == items && slots_next == slots)
 
 endmodule : br_fifo_ctrl_1r1w
