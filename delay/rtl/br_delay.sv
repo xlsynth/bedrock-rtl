@@ -35,8 +35,8 @@ module br_delay #(
   //------------------------------------------
   // Integration checks
   //------------------------------------------
-  `BR_ASSERT_STATIC(BitWidthMustBeAtLeastOne_A, BitWidth >= 1)
-  `BR_ASSERT_STATIC(NumStagesMustBeAtLeastZero_A, NumStages >= 0)
+  `BR_ASSERT_STATIC(bit_width_must_be_at_least_one_a, BitWidth >= 1)
+  `BR_ASSERT_STATIC(num_stages_must_be_at_least_zero_a, NumStages >= 0)
 
   //------------------------------------------
   // Implementation
@@ -55,9 +55,9 @@ module br_delay #(
   // Implementation checks
   //------------------------------------------
   if (NumStages == 0) begin : gen_zero_delay
-    `BR_ASSERT_IMPL(passthru_A, out == in)
+    `BR_ASSERT_IMPL(passthru_a, out == in)
   end else begin : gen_pos_delay
-    `BR_ASSERT_IMPL(delay_A, ##NumStages out == $past(in, NumStages))
+    `BR_ASSERT_IMPL(delay_a, ##NumStages out == $past(in, NumStages))
   end
 
 
