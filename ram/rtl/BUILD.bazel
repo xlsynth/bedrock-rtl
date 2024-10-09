@@ -28,7 +28,6 @@ verilog_library(
 
 verilog_elab_test(
     name = "br_ram_flops_1r1w_elab_test",
-    top = "br_ram_flops_1r1w",
     deps = [":br_ram_flops_1r1w"],
 )
 

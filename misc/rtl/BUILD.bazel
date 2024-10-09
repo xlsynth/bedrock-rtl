@@ -24,7 +24,6 @@ verilog_library(
 
 verilog_elab_test(
     name = "br_misc_unused_elab_test",
-    top = "br_misc_unused",
     deps = [":br_misc_unused"],
 )
 

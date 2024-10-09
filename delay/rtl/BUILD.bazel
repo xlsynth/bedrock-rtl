@@ -64,31 +64,26 @@ verilog_library(
 
 verilog_elab_test(
     name = "br_delay_elab_test",
-    top = "br_delay",
     deps = [":br_delay"],
 )
 
 verilog_elab_test(
     name = "br_delay_nr_elab_test",
-    top = "br_delay_nr",
     deps = [":br_delay_nr"],
 )
 
 verilog_elab_test(
     name = "br_delay_valid_elab_test",
-    top = "br_delay_valid",
     deps = [":br_delay_valid"],
 )
 
 verilog_elab_test(
     name = "br_delay_valid_next_elab_test",
-    top = "br_delay_valid_next",
     deps = [":br_delay_valid_next"],
 )
 
 verilog_elab_test(
     name = "br_delay_valid_next_nr_elab_test",
-    top = "br_delay_valid_next_nr",
     deps = [":br_delay_valid_next_nr"],
 )
 

@@ -64,7 +64,12 @@ def _verilog_base_test_impl(ctx, tool, extra_args = [], extra_runfiles = []):
     hdrs = _get_transitive(ctx = ctx, srcs_not_hdrs = False).to_list()
     src_files = [src.path for src in srcs]
     hdr_files = [hdr.path for hdr in hdrs]
-    args = ["--hdr=" + hdr for hdr in hdr_files] + ["--define=" + define for define in ctx.attr.defines] + extra_args
+    top = ctx.attr.top
+    if top == "":
+        if (len(ctx.attr.deps) != 1):
+            fail("If the top attribute is not provided, then there must be exactly one dependency.")
+        top = ctx.attr.deps[0].label.name
+    args = ["--hdr=" + hdr for hdr in hdr_files] + ["--define=" + define for define in ctx.attr.defines] + ["--top=" + top] + extra_args
     cmd = " ".join([tool] + args + src_files)
     runfiles = ctx.runfiles(files = srcs + hdrs + extra_runfiles)
     executable_file = _write_executable_shell_script(
@@ -99,7 +104,6 @@ def _verilog_elab_test_impl(ctx):
     return _verilog_base_test_impl(
         ctx = ctx,
         tool = tool,
-        extra_args = ["--top=" + ctx.attr.top],
         extra_runfiles = extra_runfiles,
     )
 
@@ -132,7 +136,7 @@ _verilog_elab_test = rule(
     implementation = _verilog_elab_test_impl,
     attrs = {
         "deps": attr.label_list(allow_files = False),
-        "top": attr.string(),
+        "top": attr.string(doc = "The top-level module; if not provided and there exists one dependency, then defaults to that dep's label name."),
         "defines": attr.string_list(default = ["SV_ASSERT_ON"]),
     },
     test = True,
@@ -150,6 +154,7 @@ _verilog_lint_test = rule(
     attrs = {
         "deps": attr.label_list(allow_files = False),
         "defines": attr.string_list(default = ["SV_ASSERT_ON"]),
+        "top": attr.string(doc = "The top-level module; if not provided and there exists one dependency, then defaults to that dep's label name."),
     },
     test = True,
 )
