@@ -90,7 +90,7 @@ def main():
     check_each_filename_suffix(hdrs, [".vh", ".svh"])
     check_each_filename_suffix(srcs, [".v", ".sv"])
 
-    exit(0) if verilog_elab_test(hdrs, defines, top, srcs) else exit(1)
+    exit(0) if verilog_elab_test(hdrs, defines, args.top, srcs) else exit(1)
 
 
 if __name__ == "__main__":
@@ -140,6 +140,10 @@ def main():
     parser = argparse.ArgumentParser(description="Test that Verilog or SystemVerilog modules are able to pass lint checks.",
                                      allow_abbrev=False,
     )
+    parser.add_argument("--top",
+                        type=str,
+                        help="Top module",
+    )
     parser.add_argument("--hdr",
                         type=argparse.FileType("r"),
                         action="append",
@@ -167,7 +171,7 @@ def main():
     check_each_filename_suffix(hdrs, [".vh", ".svh"])
     check_each_filename_suffix(srcs, [".v", ".sv"])
 
-    exit(0) if verilog_lint_test(hdrs, defines, srcs) else exit(1)
+    exit(0) if verilog_lint_test(hdrs, defines, args.top, srcs) else exit(1)
 
 
 if __name__ == "__main__":
