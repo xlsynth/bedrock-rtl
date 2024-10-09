@@ -37,7 +37,8 @@
 // Concurrent assertion macros (evaluated on posedge of a clock and disabled during a reset)
 ////////////////////////////////////////////////////////////////////////////////
 
-// verilog_lint: disable line-length
+// verilog_lint: waive-start line-length
+// verilog_format: off
 
 // Clock: 'clk'
 // Reset: 'rst'
@@ -145,6 +146,7 @@
 `define BR_COVER_COMB_IMPL(__name__, __expr__) ;  // macro no-op; BR_ENABLE_IMPL_CHECKS not defined
 `endif  // BR_ENABLE_IMPL_CHECKS
 
-// verilog_lint: enable line-length
+// verilog_lint: waive-stop line-length
+// verilog_format: on
 
 `endif  // BR_ASSERTS_INTERNAL_SVH

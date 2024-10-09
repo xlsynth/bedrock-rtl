@@ -26,6 +26,9 @@
 // Non-resettable registers -- clk
 ////////////////////////////////////////////////////////////////////////////////
 
+// verilog_lint: waive-start line-length
+// verilog_format: off
+
 // Flip-flop register
 // * unconditional load
 // * no reset
@@ -188,5 +191,7 @@ always_ff @(posedge __clk__) begin \
     else if (__en__) __q__ <= __d__; \
 end
 
+// verilog_lint: waive-stop line-length
+// verilog_format: on
 
 `endif  // BR_REGISTERS_SVH
