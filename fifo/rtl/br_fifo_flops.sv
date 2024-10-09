@@ -42,9 +42,6 @@
 // when you know you don't need to parameterize to a greater depth and you don't have
 // any use for the status flags.
 
-`include "br_asserts_internal.svh"
-`include "br_registers.svh"
-
 module br_fifo_flops #(
     parameter int Depth = 2,  // Number of entries in the FIFO. Must be at least 2.
     parameter int BitWidth = 1,  // Width of each entry in the FIFO. Must be at least 1.
