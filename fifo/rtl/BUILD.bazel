@@ -29,7 +29,6 @@ verilog_library(
 
 verilog_elab_test(
     name = "br_fifo_ctrl_1r1w_elab_test",
-    top = "br_fifo_ctrl_1r1w",
     deps = [":br_fifo_ctrl_1r1w"],
 )
 

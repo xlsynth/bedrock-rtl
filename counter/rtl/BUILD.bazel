@@ -37,13 +37,11 @@ verilog_library(
 
 verilog_elab_test(
     name = "br_counter_incr_elab_test",
-    top = "br_counter_incr",
     deps = [":br_counter_incr"],
 )
 
 verilog_elab_test(
     name = "br_counter_decr_elab_test",
-    top = "br_counter_decr",
     deps = [":br_counter_decr"],
 )
 

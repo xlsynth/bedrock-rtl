@@ -119,73 +119,61 @@ verilog_library(
 
 verilog_elab_test(
     name = "br_flow_arb_fixed_elab_test",
-    top = "br_flow_arb_fixed",
     deps = [":br_flow_arb_fixed"],
 )
 
 verilog_elab_test(
     name = "br_flow_arb_rr_elab_test",
-    top = "br_flow_arb_rr",
     deps = [":br_flow_arb_rr"],
 )
 
 verilog_elab_test(
     name = "br_flow_arb_lru_elab_test",
-    top = "br_flow_arb_lru",
     deps = [":br_flow_arb_lru"],
 )
 
 verilog_elab_test(
     name = "br_flow_demux_select_elab_test",
-    top = "br_flow_demux_select",
     deps = [":br_flow_demux_select"],
 )
 
 verilog_elab_test(
     name = "br_flow_demux_select_unstable_elab_test",
-    top = "br_flow_demux_select_unstable",
     deps = [":br_flow_demux_select_unstable"],
 )
 
 verilog_elab_test(
     name = "br_flow_fork_elab_test",
-    top = "br_flow_fork",
     deps = [":br_flow_fork"],
 )
 
 verilog_elab_test(
     name = "br_flow_join_elab_test",
-    top = "br_flow_join",
     deps = [":br_flow_join"],
 )
 
 verilog_elab_test(
     name = "br_flow_mux_select_elab_test",
-    top = "br_flow_mux_select",
     deps = [":br_flow_mux_select"],
 )
 
 verilog_elab_test(
     name = "br_flow_mux_select_unstable_elab_test",
-    top = "br_flow_mux_select_unstable",
     deps = [":br_flow_mux_select_unstable"],
 )
 
 verilog_elab_test(
     name = "br_flow_reg_both_elab_test",
-    top = "br_flow_reg_both",
     deps = [":br_flow_reg_both"],
 )
 
 verilog_elab_test(
     name = "br_flow_reg_fwd_elab_test",
-    top = "br_flow_reg_fwd",
     deps = [":br_flow_reg_fwd"],
 )
 
 verilog_elab_test(
     name = "br_flow_reg_rev_elab_test",
-    top = "br_flow_reg_rev",
     deps = [":br_flow_reg_rev"],
 )
 
