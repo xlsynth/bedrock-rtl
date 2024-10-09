@@ -37,3 +37,23 @@ verilog_lint_test(
     name = "br_fifo_ctrl_1r1w_lint_test",
     deps = [":br_fifo_ctrl_1r1w"],
 )
+
+verilog_library(
+    name = "br_fifo_flops",
+    srcs = ["br_fifo_flops.sv"],
+    deps = [
+        ":br_fifo_ctrl_1r1w",
+        "//ram/rtl:br_ram_flops_1r1w",
+    ],
+)
+
+verilog_elab_test(
+    name = "br_fifo_flops_elab_test",
+    top = "br_fifo_flops",
+    deps = [":br_fifo_flops"],
+)
+
+verilog_lint_test(
+    name = "br_fifo_flops_lint_test",
+    deps = [":br_fifo_flops"],
+)
