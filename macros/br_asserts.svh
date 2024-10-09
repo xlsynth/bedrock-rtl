@@ -26,6 +26,9 @@
 // Static (elaboration-time) assertion macros
 ////////////////////////////////////////////////////////////////////////////////
 
+// verilog_lint: waive-start line-length
+// verilog_format: off
+
 `ifdef SV_ASSERT_ON
 `define BR_ASSERT_STATIC(__name__, __expr__) \
 if (!(__expr__)) begin : gen__``__name__ \
@@ -53,7 +56,8 @@ __name__ : assert property (@(posedge clk) disable iff (rst) (__expr__));
 `define BR_ASSERT_CR(__name__, __expr__, __clk__, __rst__) \
 __name__ : assert property (@(posedge __clk__) disable iff (__rst__) (__expr__));
 `else  // SV_ASSERT_ON
-`define BR_ASSERT_CR(__name__, __expr__, __clk__, __rst__) ;  // macro no-op; SV_ASSERT_ON not defined
+`define BR_ASSERT_CR(__name__, __expr__, __clk__,
+                     __rst__) ;  // macro no-op; SV_ASSERT_ON not defined
 `endif  // SV_ASSERT_ON
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -88,8 +92,7 @@ __name__ : cover property (@(posedge clk) disable iff (rst) (__expr__));
 `define BR_COVER_CR(__name__, __expr__, __clk__, __rst__) \
 __name__ : cover property (@(posedge __clk__) disable iff (__rst__) (__expr__));
 `else  // SV_ASSERT_ON
-`define BR_COVER_CR(__name__, __expr__, __clk__,
-                    __rst__) ;  // macro no-op; SV_ASSERT_ON not defined
+`define BR_COVER_CR(__name__, __expr__, __clk__, __rst__) ;  // macro no-op; SV_ASSERT_ON not defined
 `endif  // SV_ASSERT_ON
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -105,5 +108,8 @@ endgenerate
 `else  // SV_ASSERT_ON
 `define BR_COVER_COMB(__name__, __expr__) ;  // macro no-op; SV_ASSERT_ON not defined
 `endif  // SV_ASSERT_ON
+
+// verilog_format: on
+// verilog_lint: waive-stop line-length
 
 `endif  // BR_ASSERTS_SVH
