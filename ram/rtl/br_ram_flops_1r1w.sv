@@ -37,7 +37,8 @@ module br_ram_flops_1r1w #(
     localparam int AddrWidth = $clog2(Depth)
 ) (
     input  logic                 clk,
-    // Always used for assertions. Used for logic only when EnableReset is 1.
+    // Reset is always used for assertions. Used for logic only when EnableReset is 1.
+    // ri lint_check_waive HIER_NET_NOT_READ HIER_BRANCH_NOT_READ NOT_READ
     input  logic                 rst,
     input  logic                 wr_valid,
     input  logic [AddrWidth-1:0] wr_addr,
