@@ -14,7 +14,8 @@
 
 // Bedrock-RTL Priority Encoder
 //
-// Masks all but the highest priority active request in an input where the lowest index is the highest priority.
+// Masks all but the highest priority active request in an input where the
+// lowest index is the highest priority.
 
 // TODO(mgottscho): Write spec
 
@@ -31,7 +32,7 @@ module br_enc_priority_encoder #(
   //------------------------------------------
   // Integration checks
   //------------------------------------------
-  `BR_ASSERT_STATIC(NumRequestersAtLeastTwo_A, NumRequesters >= 2)
+  `BR_ASSERT_STATIC(num_requesters_at_least_two_a, NumRequesters >= 2)
 
   // TODO(mgottscho): Write a cover point that multiple inputs are concurrently active
 
@@ -52,10 +53,10 @@ module br_enc_priority_encoder #(
   //------------------------------------------
   // Implementation checks
   //------------------------------------------
-  `BR_ASSERT_COMB_IMPL(out_onehot0_A, $onehot0(out))
-  `BR_ASSERT_COMB_IMPL(out_lowest_max_priority_A, in[0] == out[0])
+  `BR_ASSERT_COMB_IMPL(out_onehot0_a, $onehot0(out))
+  `BR_ASSERT_COMB_IMPL(out_lowest_max_priority_a, in[0] == out[0])
   `BR_ASSERT_COMB_IMPL(
-      out_highest_min_priority_A,
+      out_highest_min_priority_a,
       out[NumRequesters-1] |-> in[NumRequesters-1] && (|in[NumRequesters-2:0] == '0))
 
 endmodule : br_enc_priority_encoder
