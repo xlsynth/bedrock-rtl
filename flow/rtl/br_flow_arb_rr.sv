@@ -61,8 +61,9 @@ module br_flow_arb_rr #(
       .grant
   );
 
-  // We could just make push_ready[i] == grant[i], but then push_ready[i] will always depend on push_valid[i].
-  // It is nicer to indicate ready independently of the valid for the same requester.
+  // We could just make push_ready[i] == grant[i], but then push_ready[i] will always
+  // depend on push_valid[i]. It is nicer to indicate ready independently of the valid
+  // for the same requester.
   for (genvar i = 0; i < NumRequesters; i++) begin : gen_push_ready
     always_comb begin
       push_ready[i] = 1'b1;
