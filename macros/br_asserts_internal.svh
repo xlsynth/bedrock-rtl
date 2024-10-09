@@ -40,13 +40,7 @@
 // verilog_lint: waive-start line-length
 // verilog_format: off
 
-`define BR_INTG_CHECK_NO_OP \
-// ri lint_check waive NULL_STMT \
-; // (macro no-op; BR_DISABLE_INTG_CHECKS defined)
-
-`define BR_IMPL_CHECK_NO_OP \
-// ri lint_check waive NULL_STMT \
-; // (macro no-op; BR_ENABLE_IMPL_CHECKS not defined)
+`define BR_NOOP
 
 // Clock: 'clk'
 // Reset: 'rst'
@@ -55,7 +49,7 @@
 `BR_ASSERT(__name__, __expr__)
 `else  // BR_DISABLE_INTG_CHECKS
 `define BR_ASSERT_INTG(__name__, __expr__) \
-`BR_INTG_CHECK_NO_OP
+`BR_NOOP
 `endif  // BR_DISABLE_INTG_CHECKS
 
 // More expressive form of BR_ASSERT_INTG that allows the use of custom clock and reset signal names.
@@ -64,7 +58,7 @@
 `BR_ASSERT_CR(__name__, __expr__, __clk__, __rst__)
 `else  // BR_DISABLE_INTG_CHECKS
 `define BR_ASSERT_CR_INTG(__name__, __expr__, __clk__, __rst__) \
-`BR_INTG_CHECK_NO_OP
+`BR_NOOP
 `endif  // BR_DISABLE_INTG_CHECKS
 
 // Clock: 'clk'
@@ -74,7 +68,7 @@
 `BR_ASSERT(__name__, __expr__)
 `else  // BR_ENABLE_IMPL_CHECKS
 `define BR_ASSERT_IMPL(__name__, __expr__) \
-`BR_IMPL_CHECK_NO_OP
+`BR_NOOP
 `endif  // BR_ENABLE_IMPL_CHECKS
 
 // More expressive form of BR_ASSERT_IMPL that allows the use of custom clock and reset signal names.
@@ -83,7 +77,7 @@
 `BR_ASSERT_CR(__name__, __expr__, __clk__, __rst__)
 `else  // BR_ENABLE_IMPL_CHECKS
 `define BR_ASSERT_CR_IMPL(__name__, __expr__, __clk__, __rst__) \
-`BR_IMPL_CHECK_NO_OP
+`BR_NOOP
 `endif  // BR_ENABLE_IMPL_CHECKS
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -94,7 +88,7 @@
 `BR_ASSERT_COMB(__name__, __expr__)
 `else  // BR_DISABLE_INTG_CHECKS
 `define BR_ASSERT_COMB_INTG(__name__, __expr__) \
-`BR_INTG_CHECK_NO_OP
+`BR_NOOP
 `endif  // BR_DISABLE_INTG_CHECKS
 
 `ifdef BR_ENABLE_IMPL_CHECKS
@@ -102,7 +96,7 @@
 `BR_ASSERT_COMB(__name__, __expr__)
 `else  // BR_ENABLE_IMPL_CHECKS
 `define BR_ASSERT_COMB_IMPL(__name__, __expr__) \
-`BR_IMPL_CHECK_NO_OP
+`BR_NOOP
 `endif  // BR_ENABLE_IMPL_CHECKS
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -116,7 +110,7 @@
 `BR_COVER(__name__, __expr__)
 `else  // BR_DISABLE_INTG_CHECKS
 `define BR_COVER_INTG(__name__, __expr__) \
-`BR_INTG_CHECK_NO_OP
+`BR_NOOP
 `endif  // BR_DISABLE_INTG_CHECKS
 
 // More expressive form of BR_COVER_INTG that allows the use of custom clock and reset signal names.
@@ -125,7 +119,7 @@
 `BR_COVER_CR(__name__, __expr__, __clk__, __rst__)
 `else  // BR_DISABLE_INTG_CHECKS
 `define BR_COVER_CR_INTG(__name__, __expr__, __clk__, __rst__) \
-`BR_INTG_CHECK_NO_OP
+`BR_NOOP
 `endif  // BR_DISABLE_INTG_CHECKS
 
 // Clock: 'clk'
@@ -135,7 +129,7 @@
 `BR_COVER(__name__, __expr__)
 `else  // BR_ENABLE_IMPL_CHECKS
 `define BR_COVER_IMPL(__name__, __expr__) \
-`BR_IMPL_CHECK_NO_OP
+`BR_NOOP
 `endif  // BR_ENABLE_IMPL_CHECKS
 
 // More expressive form of BR_COVER_IMPL that allows the use of custom clock and reset signal names.
@@ -144,7 +138,7 @@
 `BR_COVER_CR(__name__, __expr__, __clk__, __rst__)
 `else  // BR_ENABLE_IMPL_CHECKS
 `define BR_COVER_CR_IMPL(__name__, __expr__, __clk__, __rst__) \
-`BR_IMPL_CHECK_NO_OP
+`BR_NOOP
 `endif  // BR_ENABLE_IMPL_CHECKS
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -155,7 +149,7 @@
 `BR_COVER_COMB(__name__, __expr__)
 `else  // BR_DISABLE_INTG_CHECKS
 `define BR_COVER_COMB_INTG(__name__, __expr__) \
-`BR_INTG_CHECK_NO_OP
+`BR_NOOP
 `endif // BR_DISABLE_INTG_CHECKS
 
 `ifdef BR_ENABLE_IMPL_CHECKS
@@ -163,7 +157,7 @@
 `BR_COVER_COMB(__name__, __expr__)
 `else  // BR_ENABLE_IMPL_CHECKS
 `define BR_COVER_COMB_IMPL(__name__, __expr__) \
-`BR_IMPL_CHECK_NO_OP
+`BR_NOOP
 `endif  // BR_ENABLE_IMPL_CHECKS
 
 // verilog_lint: waive-stop line-length
