@@ -47,7 +47,7 @@ def check_each_filename_suffix(filenames: List[str], suffices: List[str]) -> Non
             raise ValueError(f"Expected filename to end with any of {suffices}: {filename}")
 
 
-def verilog_elab_test(hdrs: Optional[List[str]], defines: Optional[List[str]], srcs: List[str], top: str) -> bool:
+def verilog_elab_test(hdrs: Optional[List[str]], defines: Optional[List[str]], top: Optional[str], srcs: List[str]) -> bool:
     """Returns True if the top-level Verilog or SystemVerilog module is able to elaborate; may print to stdout and/or stderr."""
     # TODO: Implement this using your own tool.
     print("NOT IMPLEMENTED: Test vacuously passes.")
@@ -60,8 +60,7 @@ def main():
     )
     parser.add_argument("--top",
                         type=str,
-                        required=True,
-                        help="Top module to elaborate",
+                        help="Top module",
     )
     parser.add_argument("--hdr",
                         type=argparse.FileType("r"),
@@ -91,7 +90,7 @@ def main():
     check_each_filename_suffix(hdrs, [".vh", ".svh"])
     check_each_filename_suffix(srcs, [".v", ".sv"])
 
-    exit(0) if verilog_elab_test(hdrs, defines, srcs, args.top) else exit(1)
+    exit(0) if verilog_elab_test(hdrs, defines, top, srcs) else exit(1)
 
 
 if __name__ == "__main__":
@@ -130,7 +129,7 @@ def check_each_filename_suffix(filenames: List[str], suffices: List[str]) -> Non
             raise ValueError(f"Expected filename to end with any of {suffices}: {filename}")
 
 
-def verilog_lint_test(hdrs: Optional[List[str]], defines: Optional[List[str]], srcs: List[str]) -> bool:
+def verilog_lint_test(hdrs: Optional[List[str]], defines: Optional[List[str]], top: Optional[str], srcs: List[str]) -> bool:
     """Returns True if the the Verilog/SystemVerilog sources pass a lint test; may print to stdout and/or stderr."""
     # TODO: Implement this using your own tool.
     print("NOT IMPLEMENTED: Test vacuously passes.")
