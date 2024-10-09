@@ -14,7 +14,7 @@
 
 // Bedrock-RTL FIFO (Internal 1R1W Flop-RAM, Push Ready/Valid, Pop Ready/Valid Variant)
 //
-// A one-read/one-write (1R1W) FIFO controller that uses the AMBA-inspired
+// A one-read/one-write (1R1W) FIFO that uses the AMBA-inspired
 // ready-valid handshake protocol for synchronizing pipeline stages and stalling
 // when encountering backpressure hazards.
 //
