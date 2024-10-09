@@ -68,6 +68,8 @@ module br_enc_onehot2bin #(
     end
   end
 
+  br_misc_unused br_misc_unused (.in(in[0]));
+
   //------------------------------------------
   // Implementation checks
   //------------------------------------------
