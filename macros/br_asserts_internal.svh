@@ -40,8 +40,6 @@
 // verilog_lint: waive-start line-length
 // verilog_format: off
 
-`define BR_NOOP
-
 // Clock: 'clk'
 // Reset: 'rst'
 `ifndef BR_DISABLE_INTG_CHECKS
