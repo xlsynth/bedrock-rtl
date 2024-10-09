@@ -40,6 +40,7 @@ verilog_library(
     name = "br_arb_rr",
     srcs = ["br_arb_rr.sv"],
     deps = [
+        "//enc/rtl:br_enc_onehot2bin",
         "//enc/rtl:br_enc_priority_encoder",
         "//macros:br_asserts_internal",
         "//macros:br_registers",
