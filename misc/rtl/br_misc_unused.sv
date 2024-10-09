@@ -18,13 +18,14 @@
 // It is expected that this logic will be automatically removed by the
 // synthesis tool.
 
+// ri lint_check_waive EMPTY_MOD
 module br_misc_unused #(
     parameter int BitWidth = 1  // Must be at least 1
 ) (
     input logic [BitWidth-1:0] in
 );
 
-  // TODO(mgottscho): Implement lint waivers for tools of interest.
-  logic unused = |in;
+  logic unused;  // ri lint_check_waive NOT_READ
+  assign unused = |in;
 
 endmodule : br_misc_unused
