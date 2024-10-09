@@ -17,6 +17,10 @@
 
 `include "br_asserts.svh"
 
+// ri lint_check_off LINE_LENGTH
+// verilog_lint: waive-start line-length
+// verilog_format: off
+
 // Bedrock-internal macros for instantiating SystemVerilog Assertions (SVA).
 // Not intended for use outside of Bedrock.
 //
@@ -36,9 +40,6 @@
 ////////////////////////////////////////////////////////////////////////////////
 // Concurrent assertion macros (evaluated on posedge of a clock and disabled during a reset)
 ////////////////////////////////////////////////////////////////////////////////
-
-// verilog_lint: waive-start line-length
-// verilog_format: off
 
 // Clock: 'clk'
 // Reset: 'rst'
@@ -158,7 +159,8 @@
 `BR_NOOP
 `endif  // BR_ENABLE_IMPL_CHECKS
 
-// verilog_lint: waive-stop line-length
 // verilog_format: on
+// verilog_lint: waive-stop line-length
+// ri lint_check_on LINE_LENGTH
 
 `endif  // BR_ASSERTS_INTERNAL_SVH
