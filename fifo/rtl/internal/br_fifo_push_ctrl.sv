@@ -38,20 +38,18 @@ module br_fifo_push_ctrl #(
     output logic [CountWidth-1:0] slots_next,
 
     // Bypass interface
-    input  logic bypass_ready,
+    input logic bypass_ready,
     output logic bypass_valid,
-    output logic bypass_data,
+    output logic [BitWidth-1:0] bypass_data,
 
     // RAM interface
     output logic                 ram_wr_valid,
     output logic [AddrWidth-1:0] ram_wr_addr,
     output logic [ BitWidth-1:0] ram_wr_data,
 
-    // Internal event signal from pop controller.
-    // Must only fire when an item is actually
-    // popped from the RAM (not when the bypass
-    // is used).
-    input logic ram_pop
+    // Internal handshakes between push and pop controllers
+    output logic ram_push,
+    input  logic ram_pop
 );
 
   //------------------------------------------
@@ -66,7 +64,7 @@ module br_fifo_push_ctrl #(
                                        (push_data))
   `BR_ASSERT_INTG(full_c, full)
 
-  // Pop control
+  // Internal integration checks
 
   // This is not the tightest possible check, because we are planning to
   // support pipelined RAM access and CDC use cases that require supporting
@@ -74,16 +72,17 @@ module br_fifo_push_ctrl #(
   // The tightest possible check is items == 0 |-> !ram_pop.
   // This one is looser because slots == Depth |-> items == 0 (but the
   // converse is not true).
-  `BR_ASSERT_INTG(no_ram_pop_when_all_slots_a, slots == Depth |-> !ram_pop)
+  `BR_ASSERT_IMPL(no_ram_pop_when_all_slots_a, slots == Depth |-> !ram_pop)
+  `BR_ASSERT_IMPL(bypass_ready_only_when_not_full_a, bypass_ready |-> !full)
 
   //------------------------------------------
   // Implementation
   //------------------------------------------
 
   // Flow control
-  logic push, ram_push;
-  assign push_ready = !full;
+  logic push;
   assign push = push_ready && push_valid;
+  assign push_ready = !full;
 
   // RAM path
   br_counter_incr #(
@@ -116,7 +115,7 @@ module br_fifo_push_ctrl #(
   end
 
   // Status flags
-  assign slots_next = ram_push && !ram_pop ? slots + 1 : !ram_push && ram_pop ? slots - 1 : slots;
+  assign slots_next = ram_push && !ram_pop ? slots - 1 : !ram_push && ram_pop ? slots + 1 : slots;
   assign full_next  = slots_next == 0;
 
   `BR_REGIL(slots, slots_next, ram_push || ram_pop, Depth)
@@ -140,8 +139,8 @@ module br_fifo_push_ctrl #(
   `BR_ASSERT_IMPL(slots_in_range_a, slots <= Depth)
   `BR_ASSERT_IMPL(slots_next_a, ##1 slots == $past(slots_next))
   `BR_ASSERT_IMPL(push_and_pop_slots_a, ram_push && ram_pop |-> slots_next == slots)
-  `BR_ASSERT_IMPL(push_slots_a, ram_push && !ram_pop |-> slots_next == slots + 1)
-  `BR_ASSERT_IMPL(pop_slots_a, !ram_push && ram_pop |-> slots_next == slots - 1)
+  `BR_ASSERT_IMPL(push_slots_a, ram_push && !ram_pop |-> slots_next == slots - 1)
+  `BR_ASSERT_IMPL(pop_slots_a, !ram_push && ram_pop |-> slots_next == slots + 1)
   `BR_ASSERT_IMPL(full_a, full == (slots == 0))
 
 endmodule : br_fifo_push_ctrl
