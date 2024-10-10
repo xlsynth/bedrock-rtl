@@ -86,13 +86,13 @@ module br_fifo_flops #(
   //------------------------------------------
   // Implementation
   //------------------------------------------
-  logic wr_valid;
-  logic [AddrWidth-1:0] wr_addr;
-  logic [BitWidth-1:0] wr_data;
-  logic rd_addr_valid;
-  logic [AddrWidth-1:0] rd_addr;
-  logic rd_data_valid;
-  logic [BitWidth-1:0] rd_data;
+  logic ram_wr_valid;
+  logic [AddrWidth-1:0] ram_wr_addr;
+  logic [BitWidth-1:0] ram_wr_data;
+  logic ram_rd_addr_valid;
+  logic [AddrWidth-1:0] ram_rd_addr;
+  logic ram_rd_data_valid;
+  logic [BitWidth-1:0] ram_rd_data;
 
   br_fifo_ctrl_1r1w #(
       .Depth(Depth),
@@ -115,13 +115,13 @@ module br_fifo_flops #(
       .empty_next,
       .items,
       .items_next,
-      .wr_valid,
-      .wr_addr,
-      .wr_data,
-      .rd_addr_valid,
-      .rd_addr,
-      .rd_data_valid,
-      .rd_data
+      .ram_wr_valid,
+      .ram_wr_addr,
+      .ram_wr_data,
+      .ram_rd_addr_valid,
+      .ram_rd_addr,
+      .ram_rd_data_valid,
+      .ram_rd_data
   );
 
   br_ram_flops_1r1w #(
@@ -132,13 +132,13 @@ module br_fifo_flops #(
   ) br_ram_flops_1r1w (
       .clk,
       .rst,
-      .wr_valid,
-      .wr_addr,
-      .wr_data,
-      .rd_addr_valid,
-      .rd_addr,
-      .rd_data_valid,
-      .rd_data
+      .wr_valid(ram_wr_valid),
+      .wr_addr(ram_wr_addr),
+      .wr_data(ram_wr_data),
+      .rd_addr_valid(ram_rd_addr_valid),
+      .rd_addr(ram_rd_addr),
+      .rd_data_valid(ram_rd_data_valid),
+      .rd_data(ram_rd_data)
   );
 
   //------------------------------------------
