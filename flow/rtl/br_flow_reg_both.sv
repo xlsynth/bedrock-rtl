@@ -61,27 +61,27 @@ module br_flow_reg_both #(
   br_flow_reg_rev #(
       .BitWidth(BitWidth)
   ) br_flow_reg_rev (
-      .clk(clk),
-      .rst(rst),
-      .push_ready(push_ready),
-      .push_valid(push_valid),
-      .push_data(push_data),
+      .clk,
+      .rst,
+      .push_ready,
+      .push_valid,
+      .push_data,
       .pop_ready(internal_ready),
       .pop_valid(internal_valid),
-      .pop_data(internal_data)
+      .pop_data (internal_data)
   );
 
   br_flow_reg_fwd #(
       .BitWidth(BitWidth)
   ) br_flow_reg_fwd (
-      .clk(clk),
-      .rst(rst),
+      .clk,
+      .rst,
       .push_ready(internal_ready),
       .push_valid(internal_valid),
-      .push_data(internal_data),
-      .pop_ready(pop_ready),
-      .pop_valid(pop_valid),
-      .pop_data(pop_data)
+      .push_data (internal_data),
+      .pop_ready,
+      .pop_valid,
+      .pop_data
   );
 
   //------------------------------------------

@@ -20,14 +20,17 @@
 // encountering backpressure hazards. This module does not implement
 // the datapath.
 
-`include "br_asserts.svh"
 `include "br_asserts_internal.svh"
 
 module br_flow_fork #(
     parameter int NumFlows = 2  // Must be at least 2
 ) (
-    input logic clk,  // Used only for assertions
-    input logic rst,  // Used only for assertions
+    // Used only for assertions
+    // ri lint_check_waive NOT_READ HIER_NET_NOT_READ HIER_BRANCH_NOT_READ
+    input logic clk,
+    // Used only for assertions
+    // ri lint_check_waive NOT_READ HIER_NET_NOT_READ HIER_BRANCH_NOT_READ
+    input logic rst,
 
     // Push-side interface
     output logic push_ready,
@@ -44,8 +47,8 @@ module br_flow_fork #(
   //------------------------------------------
   // Integration checks
   //------------------------------------------
-  `BR_ASSERT_STATIC(NumFlowsMustBeAtLeastTwo_A, NumFlows >= 2)
-  `BR_ASSERT_INTG(push_backpressure_intg_A, !push_ready && push_valid |=> push_valid)
+  `BR_ASSERT_STATIC(num_flows_gte_2_a, NumFlows >= 2)
+  `BR_ASSERT_INTG(push_backpressure_a, !push_ready && push_valid |=> push_valid)
 
   //------------------------------------------
   // Implementation
@@ -67,7 +70,7 @@ module br_flow_fork #(
   // Implementation checks
   //------------------------------------------
   for (genvar i = 0; i < NumFlows; i++) begin : gen_flow_checks
-    `BR_COVER_IMPL(pop_valid_unstable_C, $stable(push_valid) && $fell(pop_valid_unstable[i]))
+    `BR_COVER_IMPL(pop_valid_unstable_c, $stable(push_valid) && $fell(pop_valid_unstable[i]))
   end
 
 endmodule : br_flow_fork

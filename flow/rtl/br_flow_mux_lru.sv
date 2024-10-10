@@ -40,8 +40,8 @@ module br_flow_mux_lru #(
   //------------------------------------------
   // Integration checks
   //------------------------------------------
-  `BR_ASSERT_STATIC(NumRequesters_gte_2, NumRequesters >= 2)
-  `BR_ASSERT_STATIC(DataWidth_gte_1, DataWidth >= 1)
+  `BR_ASSERT_STATIC(numrequesters_gte_2_a, NumRequesters >= 2)
+  `BR_ASSERT_STATIC(datawidth_gte_1_a, DataWidth >= 1)
 
   // Rely on submodule integration checks
 

@@ -19,7 +19,6 @@
 // synchronizing pipeline stages and stalling when encountering backpressure
 // hazards. This module does not implement the datapath.
 
-`include "br_asserts.svh"
 `include "br_asserts_internal.svh"
 
 module br_flow_join #(
@@ -40,7 +39,7 @@ module br_flow_join #(
   //------------------------------------------
   // Integration checks
   //------------------------------------------
-  `BR_ASSERT_STATIC(NumFlowsMustBeAtLeastTwo_A, NumFlows >= 2)
+  `BR_ASSERT_STATIC(num_flows_gte2_a, NumFlows >= 2)
 
   for (genvar i = 0; i < NumFlows; i++) begin : gen_flow_checks
     `BR_ASSERT_INTG(push_valid_stable_A, !push_ready[i] && push_valid[i] |=> push_valid[i])
@@ -65,6 +64,6 @@ module br_flow_join #(
   //------------------------------------------
   // Implementation checks
   //------------------------------------------
-  `BR_ASSERT_IMPL(pop_backpressure_A, !pop_ready && pop_valid |=> pop_valid)
+  `BR_ASSERT_IMPL(pop_backpressure_a, !pop_ready && pop_valid |=> pop_valid)
 
 endmodule : br_flow_join

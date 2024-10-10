@@ -82,7 +82,7 @@ module br_flow_arb_rr #(
   //------------------------------------------
   // Rely on submodule implementation checks
 
-  `BR_ASSERT_IMPL(grant_onehot0_A, $onehot0(grant))
-  `BR_ASSERT_IMPL(grant_equals_push_ready_and_valid_A, grant == (push_ready & push_valid))
+  `BR_ASSERT_IMPL(grant_onehot0_a, $onehot0(grant))
+  `BR_ASSERT_IMPL(grant_equals_push_ready_and_valid_a, grant == (push_ready & push_valid))
 
 endmodule : br_flow_arb_rr

@@ -57,7 +57,8 @@ module br_flow_demux_select #(
   // Implementation
   //------------------------------------------
   // Register the push outputs to hide the delays of the combinational demuxing logic.
-  // Note that there are still combinational paths from push_valid (and pop_data) and select to pop_valid (and pop_data).
+  // Note that there are still combinational paths from push_valid (and pop_data)
+  // and select to pop_valid (and pop_data).
 
   logic internal_ready;
   logic internal_valid;
