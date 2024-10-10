@@ -61,8 +61,8 @@ module br_arb_rr #(
   // * The second encoder uses the unmasked request vector to find the highest priority request
   // after the wraparound index.
   //
-  // If the masked request vector is not zero, then we use the grant from the first encoder; otherwise
-  // we use the grant from the second encoder.
+  // If the masked request vector is not zero, then we use the grant from the first encoder;
+  // otherwise we use the grant from the second encoder.
   //
   // The last_grant gets updated on the next cycle with the index of the grant, so that the
   // priority rotates in a round-robin fashion.
@@ -72,15 +72,10 @@ module br_arb_rr #(
   logic [NumRequesters-1:0] priority_mask;
   logic [NumRequesters-1:0] request_high;
   logic [NumRequesters-1:0] grant_high, grant_low;
-  logic [$clog2(NumRequesters)-1:0] last_grant;
+  logic [$clog2(NumRequesters)-1:0] last_grant, last_grant_next;
 
-  always_comb begin
-    priority_mask = '0;
-    for (int i = 0; i < NumRequesters; i++) begin
-      if (i > last_grant) begin
-        priority_mask[i] = 1'b1;
-      end
-    end
+  for (genvar i = 0; i < NumRequesters; i++) begin : gen_priority_mask
+    assign priority_mask[i] = i > last_grant;
   end
 
   assign request_high = request & priority_mask;
@@ -105,7 +100,14 @@ module br_arb_rr #(
   // We know that any request will always result in a grant if the arbiter is enabled,
   // so we can simplify the timing on the load enable.
   // Initialize the last_grant to 1000...0 to make index 0 the highest priority out of reset.
-  `BR_REGIL(last_grant, grant, |request && enable, 1'b1 << (NumRequesters - 1))
+  br_enc_onehot2bin #(
+      .NumValues(NumRequesters)
+  ) br_enc_onehot2bin (
+      .in (grant),
+      .out(last_grant_next)
+  );
+
+  `BR_REGIL(last_grant, last_grant_next, |request && enable, 1'b1 << (NumRequesters - 1))
 
   //------------------------------------------
   // Implementation checks

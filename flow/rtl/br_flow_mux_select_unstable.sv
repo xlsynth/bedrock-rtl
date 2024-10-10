@@ -35,8 +35,12 @@ module br_flow_mux_select_unstable #(
     // Must be at least 1
     parameter int BitWidth = 1
 ) (
-    input logic clk,  // Used only for assertions
-    input logic rst,  // Used only for assertions
+    // Used only for assertions
+    // ri lint_check_waive NOT_READ HIER_NET_NOT_READ HIER_BRANCH_NOT_READ
+    input logic clk,
+    // Used only for assertions
+    // ri lint_check_waive NOT_READ HIER_NET_NOT_READ HIER_BRANCH_NOT_READ
+    input logic rst,
 
     input logic [$clog2(NumRequesters)-1:0] select,
 
@@ -52,12 +56,13 @@ module br_flow_mux_select_unstable #(
   //------------------------------------------
   // Integration checks
   //------------------------------------------
-  `BR_ASSERT_STATIC(NumRequestersMustBeAtLeastTwo_A, NumRequesters >= 2);
-  `BR_ASSERT_STATIC(BitWidthMustBeAtLeastOne_A, BitWidth >= 1);
+  `BR_ASSERT_STATIC(num_requesters_must_be_at_least_two_a, NumRequesters >= 2)
+  `BR_ASSERT_STATIC(bitwidth_gte_1_a, BitWidth >= 1)
 
-  // TODO(mgottscho): Add integration checks on ready-valid compliance and on stability of push_select.
+  // TODO(mgottscho): Add integration checks on ready-valid compliance and
+  // on stability of push_select.
 
-  `BR_ASSERT_INTG(select_in_range_intg_A, select < NumRequesters)
+  `BR_ASSERT_INTG(select_in_range_a, select < NumRequesters)
 
   //------------------------------------------
   // Implementation

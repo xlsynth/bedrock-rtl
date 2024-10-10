@@ -29,8 +29,12 @@ module br_flow_arb_fixed #(
     // Must be at least 2
     parameter int NumRequesters = 2
 ) (
-    input logic clk,  // Only used for assertions
-    input logic rst,  // Only used for assertions
+    // Only used for assertions
+    // ri lint_check_waive HIER_NET_NOT_READ HIER_BRANCH_NOT_READ NOT_READ
+    input logic clk,
+    // Only used for assertions
+    // ri lint_check_waive HIER_NET_NOT_READ HIER_BRANCH_NOT_READ NOT_READ
+    input logic rst,
     output logic [NumRequesters-1:0] push_ready,
     input logic [NumRequesters-1:0] push_valid,
     input logic pop_ready,
@@ -59,8 +63,9 @@ module br_flow_arb_fixed #(
       .grant
   );
 
-  // We could just make push_ready[i] == grant[i], but then push_ready[i] will always depend on push_valid[i].
-  // It is nicer to indicate ready independently of the valid for the same requester.
+  // We could just make push_ready[i] == grant[i], but then push_ready[i] will always
+  // depend on push_valid[i]. It is nicer to indicate ready independently of the valid
+  // for the same requester.
   for (genvar i = 0; i < NumRequesters; i++) begin : gen_push_ready
     always_comb begin
       push_ready[i] = 1'b1;
@@ -79,7 +84,7 @@ module br_flow_arb_fixed #(
   //------------------------------------------
   // Rely on submodule implementation checks
 
-  `BR_ASSERT_IMPL(grant_onehot0_A, $onehot0(grant))
-  `BR_ASSERT_IMPL(grant_equals_push_ready_and_valid_A, grant == (push_ready & push_valid))
+  `BR_ASSERT_IMPL(grant_onehot0_a, $onehot0(grant))
+  `BR_ASSERT_IMPL(grant_equals_push_ready_and_valid_a, grant == (push_ready & push_valid))
 
 endmodule : br_flow_arb_fixed

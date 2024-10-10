@@ -45,10 +45,10 @@ module br_delay_valid_next_nr #(
   //------------------------------------------
   // Integration checks
   //------------------------------------------
-  `BR_ASSERT_STATIC(BitWidthMustBeAtLeastOne_A, BitWidth >= 1)
-  `BR_ASSERT_STATIC(NumStagesMustBeAtLeastZero_A, NumStages >= 0)
+  `BR_ASSERT_STATIC(bit_width_must_be_at_least_one_a, BitWidth >= 1)
+  `BR_ASSERT_STATIC(num_stages_must_be_at_least_zero_a, NumStages >= 0)
 
-  `BR_COVER_INTG(in_valid_next_C, in_valid_next)
+  `BR_COVER_INTG(in_valid_next_c, in_valid_next)
 
   //------------------------------------------
   // Implementation
@@ -73,11 +73,11 @@ module br_delay_valid_next_nr #(
   // Implementation checks
   //------------------------------------------
   if (NumStages == 0) begin : gen_zero_delay
-    `BR_ASSERT_IMPL(passthru_A, out_valid_next == in_valid_next && out == in)
+    `BR_ASSERT_IMPL(passthru_a, out_valid_next == in_valid_next && out == in)
   end else begin : gen_pos_delay
-    `BR_ASSERT_IMPL(valid_next_delay_A,
+    `BR_ASSERT_IMPL(valid_next_delay_a,
                     ##NumStages out_valid_next == $past(in_valid_next, NumStages))
-    `BR_ASSERT_IMPL(data_delay_A,
+    `BR_ASSERT_IMPL(data_delay_a,
                     in_valid_next |-> ##NumStages out_valid_next ##1 out == $past(in, NumStages))
   end
 

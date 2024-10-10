@@ -38,19 +38,20 @@
 `include "br_asserts_internal.svh"
 
 module br_enc_bin2onehot #(
-    parameter int NumValues = 2  // Must be at least 2
+    parameter int NumValues = 2,  // Must be at least 2
+    localparam int BinWidth = $clog2(NumValues)
 ) (
     input logic clk,  // Used only for assertions
     input logic rst,  // Used only for assertions
-    input logic [$clog2(NumValues)-1:0] in,
+    input logic [BinWidth-1:0] in,
     output logic [NumValues-1:0] out
 );
 
   //------------------------------------------
   // Integration checks
   //------------------------------------------
-  `BR_ASSERT_STATIC(NumValuesAtLeastTwo_A, NumValues >= 2)
-  `BR_ASSERT_INTG(in_within_range_A, in < NumValues)
+  `BR_ASSERT_STATIC(num_values_gte_2_a, NumValues >= 2)
+  `BR_ASSERT_INTG(in_within_range_a, in < NumValues)
 
   //------------------------------------------
   // Implementation
@@ -68,6 +69,6 @@ module br_enc_bin2onehot #(
   //------------------------------------------
   // Implementation checks
   //------------------------------------------
-  `BR_ASSERT_IMPL(out_onehot_A, $onehot(out))
+  `BR_ASSERT_IMPL(out_onehot_a, $onehot(out))
 
 endmodule : br_enc_bin2onehot

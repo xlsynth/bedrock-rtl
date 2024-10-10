@@ -53,10 +53,10 @@ module br_counter_decr #(
   //------------------------------------------
   // Integration checks
   //------------------------------------------
-  `BR_ASSERT_STATIC(MaxValue_gte_1_A, MaxValue >= 1)
-  `BR_ASSERT_STATIC(MaxDecrement_gte_1_A, MaxDecrement >= 1)
+  `BR_ASSERT_STATIC(max_value_gte_1_a, MaxValue >= 1)
+  `BR_ASSERT_STATIC(max_decrement_gte_1_a, MaxDecrement >= 1)
 
-  `BR_ASSERT_INTG(decr_in_range_A, decr_valid |-> decr <= MaxDecrement)
+  `BR_ASSERT_INTG(decr_in_range_a, decr_valid |-> decr <= MaxDecrement)
 
   //------------------------------------------
   // Implementation
@@ -81,8 +81,8 @@ module br_counter_decr #(
     assign value_next_internal = value_temp >= MaxValue ? value_temp_wrapped : value_temp;
 
     // Case-specific implementation checks
-    `BR_ASSERT_STATIC(Margin_gte0_A, Margin > 0)
-    `BR_ASSERT_IMPL(value_temp_wrapped_in_range_A, value_temp_wrapped <= MaxValue)
+    `BR_ASSERT_STATIC(margin_gte0_a, Margin > 0)
+    `BR_ASSERT_IMPL(value_temp_wrapped_in_range_a, value_temp_wrapped <= MaxValue)
   end
 
   // If the user leaves the value_next port unused, then the synthesis tool
@@ -95,16 +95,16 @@ module br_counter_decr #(
   //------------------------------------------
   // Implementation checks
   //------------------------------------------
-  `BR_ASSERT_IMPL(reset_to_MaxValue_A, $fell(rst) |-> value == MaxValue)
-  `BR_ASSERT_IMPL(value_in_range_A, value <= MaxValue)
-  `BR_ASSERT_IMPL(value_next_in_range_A, value_next <= MaxValue)
-  `BR_ASSERT_IMPL(value_next_propagates_A, ##1 value == $past(value_next))
-  `BR_ASSERT_IMPL(value_wrap_A,
+  `BR_ASSERT_IMPL(reset_to_maxvalue_a, $fell(rst) |-> value == MaxValue)
+  `BR_ASSERT_IMPL(value_in_range_a, value <= MaxValue)
+  `BR_ASSERT_IMPL(value_next_in_range_a, value_next <= MaxValue)
+  `BR_ASSERT_IMPL(value_next_propagates_a, ##1 value == $past(value_next))
+  `BR_ASSERT_IMPL(value_wrap_a,
                   decr_valid && value_temp > MaxValue |-> value_next == value_temp - MaxValue - 1)
-  `BR_ASSERT_IMPL(maxvalue_plus_one_A,
+  `BR_ASSERT_IMPL(maxvalue_plus_one_a,
                   value == MaxValue && decr_valid && decr == 1'b1 |-> value_next == 0)
-  `BR_ASSERT_IMPL(plus_zero_A, decr_valid && decr == '0 |-> value_next == value)
-  `BR_COVER_IMPL(decrement_max_C, decr_valid && decr == MaxDecrement)
-  `BR_COVER_IMPL(value_temp_oob_C, value_temp > MaxValue)
+  `BR_ASSERT_IMPL(plus_zero_a, decr_valid && decr == '0 |-> value_next == value)
+  `BR_COVER_IMPL(decrement_max_c, decr_valid && decr == MaxDecrement)
+  `BR_COVER_IMPL(value_temp_oob_c, value_temp > MaxValue)
 
 endmodule : br_counter_decr

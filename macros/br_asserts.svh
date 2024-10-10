@@ -15,6 +15,10 @@
 `ifndef BR_ASSERTS_SVH
 `define BR_ASSERTS_SVH
 
+// ri lint_check_off LINE_LENGTH
+// verilog_lint: waive-start line-length
+// verilog_format: off
+
 // Common macros for instantiating SystemVerilog Assertions (SVA).
 // They help make code easier to write, read, and maintain by hiding
 // the property boilerplate.
@@ -25,9 +29,6 @@
 ////////////////////////////////////////////////////////////////////////////////
 // Static (elaboration-time) assertion macros
 ////////////////////////////////////////////////////////////////////////////////
-
-// verilog_lint: waive-start line-length
-// verilog_format: off
 
 `define BR_NOOP
 
@@ -119,5 +120,6 @@ endgenerate
 
 // verilog_format: on
 // verilog_lint: waive-stop line-length
+// ri lint_check_on LINE_LENGTH
 
 `endif  // BR_ASSERTS_SVH

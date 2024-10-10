@@ -61,8 +61,9 @@ module br_flow_arb_rr #(
       .grant
   );
 
-  // We could just make push_ready[i] == grant[i], but then push_ready[i] will always depend on push_valid[i].
-  // It is nicer to indicate ready independently of the valid for the same requester.
+  // We could just make push_ready[i] == grant[i], but then push_ready[i] will always
+  // depend on push_valid[i]. It is nicer to indicate ready independently of the valid
+  // for the same requester.
   for (genvar i = 0; i < NumRequesters; i++) begin : gen_push_ready
     always_comb begin
       push_ready[i] = 1'b1;
@@ -81,7 +82,7 @@ module br_flow_arb_rr #(
   //------------------------------------------
   // Rely on submodule implementation checks
 
-  `BR_ASSERT_IMPL(grant_onehot0_A, $onehot0(grant))
-  `BR_ASSERT_IMPL(grant_equals_push_ready_and_valid_A, grant == (push_ready & push_valid))
+  `BR_ASSERT_IMPL(grant_onehot0_a, $onehot0(grant))
+  `BR_ASSERT_IMPL(grant_equals_push_ready_and_valid_a, grant == (push_ready & push_valid))
 
 endmodule : br_flow_arb_rr

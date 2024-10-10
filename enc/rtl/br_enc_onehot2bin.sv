@@ -40,19 +40,20 @@
 `include "br_asserts_internal.svh"
 
 module br_enc_onehot2bin #(
-    parameter int NumValues = 2  // Must be at least 2
+    parameter int NumValues = 2,  // Must be at least 2
+    parameter int BinWidth = $clog2(NumValues)
 ) (
     input logic clk,  // Used only for assertions
     input logic rst,  // Used only for assertions
     input logic [NumValues-1:0] in,
-    output logic [$clog2(NumValues)-1:0] out
+    output logic [BinWidth-1:0] out
 );
 
   //------------------------------------------
   // Integration checks
   //------------------------------------------
-  `BR_ASSERT_STATIC(NumValuesAtLeastTwo_A, NumValues >= 2)
-  `BR_ASSERT_INTG(in_onehot_A, $onehot(in))
+  `BR_ASSERT_STATIC(num_values_gte_2_a, NumValues >= 2)
+  `BR_ASSERT_INTG(in_onehot_a, $onehot(in))
 
   //------------------------------------------
   // Implementation
@@ -61,15 +62,17 @@ module br_enc_onehot2bin #(
     out = '0;
     for (int i = 1; i < NumValues; i++) begin
       if (in[i]) begin
-        out = i;
+        out = BinWidth'(i);  // ri lint_check_waive INTEGER ASSIGN_SIGN
         break;
       end
     end
   end
 
+  br_misc_unused br_misc_unused (.in(in[0]));
+
   //------------------------------------------
   // Implementation checks
   //------------------------------------------
-  `BR_ASSERT_IMPL(out_within_range_A, out < NumValues)
+  `BR_ASSERT_IMPL(out_within_range_a, out < NumValues)
 
 endmodule : br_enc_onehot2bin

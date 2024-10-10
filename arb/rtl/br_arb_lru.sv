@@ -55,16 +55,16 @@ module br_arb_lru #(
   //
   // State update occurs whenever the arbiter is enabled and there is any valid request
   // (because it will always result in a grant).
-  // * Whenever a grant occurs for requester i, on the next cycle we fill 0s into state[i][j] for all
-  //   j where i != j. This indicates that requester i is used more recently (lower priority) than all
-  //   requesters j.
-  // * Whenever a grant occurs for requester j, on the next cycle we fill 1s into state[i][j] for all
-  //   i where i != j. This indicates that all requesters i are used less recently (higher priority)
-  //   than requester j.
+  // * Whenever a grant occurs for requester i, on the next cycle we fill 0s into state[i][j]
+  //   for all j where i != j. This indicates that requester i is used more recently (lower
+  //   priority) than all requesters j.
+  // * Whenever a grant occurs for requester j, on the next cycle we fill 1s into state[i][j]
+  //   for all i where i != j. This indicates that all requesters i are used less recently
+  //   (higher priority) than requester j.
   //
-  // The advantage of this implementation is that we can update and search all the priorities in parallel,
-  // which is good for timing. However, the priority state contains some redundancy, costing extra
-  // flip-flops.
+  // The advantage of this implementation is that we can update and search all the priorities
+  // in parallel, which is good for timing. However, the priority state contains some redundancy,
+  // costing extra flip-flops.
 
 
   // Implement the state matrix. We only need to maintain the upper triangular state (exclusive of

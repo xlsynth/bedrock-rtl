@@ -36,22 +36,24 @@ module br_ram_flops_1r1w #(
     parameter bit EnableReset = 0,
     localparam int AddrWidth = $clog2(Depth)
 ) (
-    input logic clk,
-    input logic rst,  // Always used for assertions. Used for logic only when EnableReset is 1.
-    input logic wr_valid,
-    input logic [AddrWidth-1:0] wr_addr,
-    input logic [BitWidth-1:0] wr_data,
-    input logic rd_addr_valid,
-    input logic [AddrWidth-1:0] rd_addr,
-    output logic rd_data_valid,
-    output logic [BitWidth-1:0] rd_data
+    input  logic                 clk,
+    // Reset is always used for assertions. Used for logic only when EnableReset is 1.
+    // ri lint_check_waive HIER_NET_NOT_READ HIER_BRANCH_NOT_READ NOT_READ
+    input  logic                 rst,
+    input  logic                 wr_valid,
+    input  logic [AddrWidth-1:0] wr_addr,
+    input  logic [ BitWidth-1:0] wr_data,
+    input  logic                 rd_addr_valid,
+    input  logic [AddrWidth-1:0] rd_addr,
+    output logic                 rd_data_valid,
+    output logic [ BitWidth-1:0] rd_data
 );
 
   //------------------------------------------
   // Integration checks
   //------------------------------------------
-  `BR_ASSERT_STATIC(Depth_gte2_A, Depth >= 2)
-  `BR_ASSERT_STATIC(BitWidth_gte1_A, BitWidth >= 1)
+  `BR_ASSERT_STATIC(depth_gte2_a, Depth >= 2)
+  `BR_ASSERT_STATIC(bitwidth_gte1_a, BitWidth >= 1)
 
   `BR_ASSERT_INTG(wr_addr_in_range_A, wr_valid |-> wr_addr < Depth)
   `BR_ASSERT_INTG(rd_addr_in_range_A, rd_addr_valid |-> rd_addr < Depth)

@@ -53,17 +53,17 @@ module br_counter_incr #(
   //------------------------------------------
   // Integration checks
   //------------------------------------------
-  `BR_ASSERT_STATIC(MaxValue_gte_1_A, MaxValue >= 1)
-  `BR_ASSERT_STATIC(MaxIncrement_gte_1_A, MaxIncrement >= 1)
+  `BR_ASSERT_STATIC(max_value_gte_1_a, MaxValue >= 1)
+  `BR_ASSERT_STATIC(max_increment_gte_1_a, MaxIncrement >= 1)
 
-  `BR_ASSERT_INTG(incr_in_range_A, incr_valid |-> incr <= MaxIncrement)
+  `BR_ASSERT_INTG(incr_in_range_a, incr_valid |-> incr <= MaxIncrement)
 
   //------------------------------------------
   // Implementation
   //------------------------------------------
   localparam int MaxValuePlusOne = MaxValue + 1;
   localparam bit IsMaxValuePlusOnePowerOf2 = (MaxValuePlusOne & (MaxValuePlusOne - 1)) == 0;
-  localparam int TempWidth = ValueWidth + IncrementWidth;
+  localparam int TempWidth = IsMaxValuePlusOnePowerOf2 ? ValueWidth : ValueWidth + IncrementWidth;
 
   logic [ValueWidth-1:0] value_next_internal;
   logic [ TempWidth-1:0] value_temp;
@@ -93,15 +93,15 @@ module br_counter_incr #(
   //------------------------------------------
   // Implementation checks
   //------------------------------------------
-  `BR_ASSERT_IMPL(value_in_range_A, value <= MaxValue)
-  `BR_ASSERT_IMPL(value_next_in_range_A, value_next <= MaxValue)
-  `BR_ASSERT_IMPL(value_next_propagates_A, ##1 value == $past(value_next))
-  `BR_ASSERT_IMPL(value_wrap_A,
+  `BR_ASSERT_IMPL(value_in_range_a, value <= MaxValue)
+  `BR_ASSERT_IMPL(value_next_in_range_a, value_next <= MaxValue)
+  `BR_ASSERT_IMPL(value_next_propagates_a, ##1 value == $past(value_next))
+  `BR_ASSERT_IMPL(value_wrap_a,
                   incr_valid && value_temp > MaxValue |-> value_next == value_temp - MaxValue - 1)
-  `BR_ASSERT_IMPL(maxvalue_plus_one_A,
+  `BR_ASSERT_IMPL(maxvalue_plus_one_a,
                   value == MaxValue && incr_valid && incr == 1'b1 |-> value_next == 0)
-  `BR_ASSERT_IMPL(plus_zero_A, incr_valid && incr == '0 |-> value_next == value)
-  `BR_COVER_IMPL(increment_max_C, incr_valid && incr == MaxIncrement)
-  `BR_COVER_IMPL(value_temp_oob_C, value_temp > MaxValue)
+  `BR_ASSERT_IMPL(plus_zero_a, incr_valid && incr == '0 |-> value_next == value)
+  `BR_COVER_IMPL(increment_max_c, incr_valid && incr == MaxIncrement)
+  `BR_COVER_IMPL(value_temp_oob_c, value_temp > MaxValue)
 
 endmodule : br_counter_incr
