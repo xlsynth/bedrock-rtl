@@ -86,13 +86,13 @@ module br_fifo_ctrl_1r1w #(
     output logic [CountWidth-1:0] items_next,
 
     // 1R1W RAM interface
-    output logic                 wr_valid,
-    output logic [AddrWidth-1:0] wr_addr,
-    output logic [ BitWidth-1:0] wr_data,
-    output logic                 rd_addr_valid,
-    output logic [AddrWidth-1:0] rd_addr,
-    input  logic                 rd_data_valid,
-    input  logic [ BitWidth-1:0] rd_data
+    output logic                 ram_wr_valid,
+    output logic [AddrWidth-1:0] ram_wr_addr,
+    output logic [ BitWidth-1:0] ram_wr_data,
+    output logic                 ram_rd_addr_valid,
+    output logic [AddrWidth-1:0] ram_rd_addr,
+    input  logic                 ram_rd_data_valid,
+    input  logic [ BitWidth-1:0] ram_rd_data
 );
 
   //------------------------------------------
@@ -112,97 +112,78 @@ module br_fifo_ctrl_1r1w #(
                                        (push_data))
   `BR_ASSERT_INTG(full_c, full)
 
-  `BR_ASSERT_INTG(rd_latency_zero_a, rd_addr_valid |-> rd_data_valid)
+  `BR_ASSERT_INTG(ram_rd_latency_zero_a, ram_rd_addr_valid |-> ram_rd_data_valid)
 
   //------------------------------------------
   // Implementation
   //------------------------------------------
-  logic push, pop;
+  logic bypass_ready;
+  logic bypass_valid;
+  logic [BitWidth-1:0] bypass_data;
 
-  assign push = push_ready && push_valid;
-  assign pop = pop_ready && pop_valid;
+  logic ram_push, ram_pop;
 
-  // Push-side
-  assign push_ready = !full;
-  logic [AddrWidth-1:0] wr_addr_next;
-
-  br_counter_incr #(
-      .MaxValue(Depth - 1),
-      .MaxIncrement(1)
-  ) br_counter_incr_wr_addr (
+  br_fifo_push_ctrl #(
+      .Depth(Depth),
+      .BitWidth(BitWidth),
+      .EnableBypass(EnableBypass)
+  ) br_fifo_push_ctrl (
       .clk,
       .rst,
-      .incr_valid(push),
-      .incr(1'b1),
-      .value(wr_addr),
-      .value_next(wr_addr_next)
+      .push_ready,
+      .push_valid,
+      .push_data,
+      .full,
+      .full_next,
+      .slots,
+      .slots_next,
+      .bypass_ready,
+      .bypass_valid,
+      .bypass_data,
+      .ram_wr_valid,
+      .ram_wr_addr,
+      .ram_wr_data,
+      .ram_push,
+      .ram_pop
   );
 
-  assign wr_valid = push;
-  assign wr_data  = push_data;
-
-  // Pop-side
-  logic [AddrWidth-1:0] rd_addr_next;
-
-  br_counter_incr #(
-      .MaxValue(Depth - 1),
-      .MaxIncrement(1)
-  ) br_counter_incr_rd_addr (
+  br_fifo_pop_ctrl #(
+      .Depth(Depth),
+      .BitWidth(BitWidth),
+      .EnableBypass(EnableBypass)
+  ) br_fifo_pop_ctrl (
       .clk,
       .rst,
-      .incr_valid(pop),
-      .incr(1'b1),
-      .value(rd_addr),
-      .value_next(rd_addr_next)
+      .pop_ready,
+      .pop_valid,
+      .pop_data,
+      .empty,
+      .empty_next,
+      .items,
+      .items_next,
+      .bypass_ready,
+      .bypass_valid,
+      .bypass_data,
+      .ram_rd_addr_valid,
+      .ram_rd_addr,
+      .ram_rd_data_valid,
+      .ram_rd_data,
+      .ram_push,
+      .ram_pop
   );
-
-  assign rd_addr_valid = pop;
-
-  if (EnableBypass) begin : gen_pop_valid_bypass
-    assign pop_valid = !empty && push_valid;
-  end else begin : gen_pop_valid_no_bypass
-    assign pop_valid = !empty;
-  end
-  assign pop_data = rd_data;
-  br_misc_unused br_misc_unused (.in(rd_data_valid));  // implied
-
-  // Status flags
-  logic [CountWidth-1:0] wr_minus_rd_next;
-  assign wr_minus_rd_next = wr_addr_next - rd_addr_next;
-
-  assign items_next = wr_addr_next >= rd_addr_next ?
-    wr_minus_rd_next :
-    wr_minus_rd_next + Depth - 1;
-
-  assign slots_next = Depth - items_next;
-
-  assign empty_next = items_next == 0;
-  assign full_next = slots_next == 0;
-
-  `BR_REGL(items, items_next, push || pop)
-  `BR_REGL(slots, slots_next, push || pop)
-  `BR_REGL(full, full_next, push || pop)
-  `BR_REGIL(empty, empty_next, push || pop, 1'b1)
 
   //------------------------------------------
   // Implementation checks
   //------------------------------------------
-  `BR_ASSERT_IMPL(pop_backpressure_a, !pop_ready && pop_valid |=> pop_valid && $stable(pop_data))
-
-  `BR_ASSERT_IMPL(wr_addr_in_range_a, wr_valid |-> wr_addr < Depth)
-  `BR_ASSERT_IMPL(rd_addr_in_range_a, rd_addr_valid |-> rd_addr < Depth)
-
   if (EnableBypass) begin : gen_bypass_impl_checks
     // Check that the datapath has 0 cycle cut-through delay when empty.
     `BR_ASSERT_IMPL(cutthrough_0_delay_a,
-                    push_ready && push_valid && empty |-> pop_valid && pop_data == push_data)
-    `BR_ASSERT_IMPL(push_ready_when_not_full_or_pop_ready_a, push_ready == (!full || pop_ready))
+                    push_valid && empty |-> pop_valid && pop_data == push_data)
     `BR_ASSERT_IMPL(pop_valid_when_not_empty_or_push_valid_a, pop_valid == (!empty || push_valid))
   end else begin : gen_no_bypass_impl_checks
-    // Check that the datapath has 1 cycle cut-through delay.
+    // Check that the datapath has 1 cycle cut-through delay when empty.
     `BR_ASSERT_IMPL(cutthrough_1_delay_a,
-                    push_ready && push_valid && empty |=> pop_valid && pop_data == $past(push_data))
-    `BR_ASSERT_IMPL(push_ready_when_not_full_a, push_ready == !full)
+                    push_valid && empty |=> pop_valid && pop_data == $past(push_data))
     `BR_ASSERT_IMPL(pop_valid_when_not_empty_a, pop_valid == !empty)
   end
 
@@ -210,16 +191,10 @@ module br_fifo_ctrl_1r1w #(
   `BR_ASSERT_IMPL(push_backpressure_when_full_a, full |-> !push_ready)
   `BR_ASSERT_IMPL(backpressure_latency_1_cycle_a, full && pop_ready |=> !full && push_ready)
 
-  // Flags
-  `BR_ASSERT_IMPL(items_in_range_a, items <= Depth)
-  `BR_ASSERT_IMPL(slots_in_range_a, slots <= Depth)
+  // Flag coherence
   `BR_ASSERT_IMPL(items_plus_slots_a, items + slots == Depth)
   `BR_ASSERT_IMPL(items_next_plus_slots_next_a, items_next + slots_next == Depth)
-  `BR_ASSERT_IMPL(full_a, full == (slots == 0))
-  `BR_ASSERT_IMPL(empty_a, empty == (items == 0))
-  `BR_ASSERT_IMPL(items_next_a, ##1 items == $past(items_next))
-  `BR_ASSERT_IMPL(slots_next_a, ##1 slots == $past(slots_next))
-  `BR_ASSERT_IMPL(push_and_pop_flags_unchanged_a,
-                  push && pop |-> items_next == items && slots_next == slots)
+  `BR_ASSERT_IMPL(ram_push_and_ram_pop_flags_unchanged_a,
+                  ram_push && ram_pop |-> items_next == items && slots_next == slots)
 
 endmodule : br_fifo_ctrl_1r1w

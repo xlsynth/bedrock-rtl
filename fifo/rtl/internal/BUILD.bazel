@@ -15,15 +15,13 @@
 load("@rules_hdl//verilog:providers.bzl", "verilog_library")
 load("//bazel:verilog.bzl", "verilog_elab_test", "verilog_lint_test")
 
-package(default_visibility = ["//visibility:public"])
+package(default_visibility = ["//fifo/rtl:__subpackages__"])
 
 verilog_library(
-    name = "br_fifo_ctrl_1r1w",
-    srcs = ["br_fifo_ctrl_1r1w.sv"],
+    name = "br_fifo_push_ctrl",
+    srcs = ["br_fifo_push_ctrl.sv"],
     deps = [
         "//counter/rtl:br_counter_incr",
-        "//fifo/rtl/internal:br_fifo_pop_ctrl",
-        "//fifo/rtl/internal:br_fifo_push_ctrl",
         "//macros:br_asserts_internal",
         "//macros:br_registers",
         "//misc/rtl:br_misc_unused",
@@ -31,31 +29,32 @@ verilog_library(
 )
 
 verilog_elab_test(
-    name = "br_fifo_ctrl_1r1w_elab_test",
-    deps = [":br_fifo_ctrl_1r1w"],
+    name = "br_fifo_push_ctrl_elab_test",
+    deps = [":br_fifo_push_ctrl"],
 )
 
 verilog_lint_test(
-    name = "br_fifo_ctrl_1r1w_lint_test",
-    deps = [":br_fifo_ctrl_1r1w"],
+    name = "br_fifo_push_ctrl_lint_test",
+    deps = [":br_fifo_push_ctrl"],
 )
 
 verilog_library(
-    name = "br_fifo_flops",
-    srcs = ["br_fifo_flops.sv"],
+    name = "br_fifo_pop_ctrl",
+    srcs = ["br_fifo_pop_ctrl.sv"],
     deps = [
-        ":br_fifo_ctrl_1r1w",
-        "//ram/rtl:br_ram_flops_1r1w",
+        "//counter/rtl:br_counter_incr",
+        "//macros:br_asserts_internal",
+        "//macros:br_registers",
+        "//misc/rtl:br_misc_unused",
     ],
 )
 
 verilog_elab_test(
-    name = "br_fifo_flops_elab_test",
-    top = "br_fifo_flops",
-    deps = [":br_fifo_flops"],
+    name = "br_fifo_pop_ctrl_elab_test",
+    deps = [":br_fifo_pop_ctrl"],
 )
 
 verilog_lint_test(
-    name = "br_fifo_flops_lint_test",
-    deps = [":br_fifo_flops"],
+    name = "br_fifo_pop_ctrl_lint_test",
+    deps = [":br_fifo_pop_ctrl"],
 )
