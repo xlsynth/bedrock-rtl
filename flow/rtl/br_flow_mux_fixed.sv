@@ -28,7 +28,9 @@ module br_flow_mux_fixed #(
     parameter int NumRequesters = 2,  // Must be at least 2
     parameter int DataWidth = 1  // Must be at least 1
 ) (
+    // ri lint_check_waive NOT_READ HIER_NET_NOT_READ HIER_BRANCH_NOT_READ
     input  logic                                    clk,         // Only used for assertions
+    // ri lint_check_waive NOT_READ HIER_NET_NOT_READ HIER_BRANCH_NOT_READ
     input  logic                                    rst,         // Only used for assertions
     output logic [NumRequesters-1:0]                push_ready,
     input  logic [NumRequesters-1:0]                push_valid,

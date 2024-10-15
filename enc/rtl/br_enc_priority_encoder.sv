@@ -25,7 +25,11 @@ module br_enc_priority_encoder #(
     // Must be at least 2
     parameter int NumRequesters = 2
 ) (
-    input  logic [NumRequesters-1:0] in,
+    // ri lint_check_waive NOT_READ HIER_NET_NOT_READ HIER_BRANCH_NOT_READ
+    input logic clk,  // Used only for assertions
+    // ri lint_check_waive NOT_READ HIER_NET_NOT_READ HIER_BRANCH_NOT_READ
+    input logic rst,  // Used only for assertions
+    input logic [NumRequesters-1:0] in,
     output logic [NumRequesters-1:0] out
 );
 
@@ -53,10 +57,9 @@ module br_enc_priority_encoder #(
   //------------------------------------------
   // Implementation checks
   //------------------------------------------
-  `BR_ASSERT_COMB_IMPL(out_onehot0_a, $onehot0(out))
-  `BR_ASSERT_COMB_IMPL(out_lowest_max_priority_a, in[0] == out[0])
-  `BR_ASSERT_COMB_IMPL(
-      out_highest_min_priority_a,
-      out[NumRequesters-1] |-> in[NumRequesters-1] && (|in[NumRequesters-2:0] == '0))
+  `BR_ASSERT_IMPL(out_onehot0_a, $onehot0(out))
+  `BR_ASSERT_IMPL(out_lowest_max_priority_a, in[0] == out[0])
+  `BR_ASSERT_IMPL(out_highest_min_priority_a,
+                  out[NumRequesters-1] |-> in[NumRequesters-1] && (|in[NumRequesters-2:0] == '0))
 
 endmodule : br_enc_priority_encoder
