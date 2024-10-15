@@ -13,7 +13,7 @@
 # limitations under the License.
 
 load("@rules_hdl//verilog:providers.bzl", "verilog_library")
-load("//bazel:verilog.bzl", "verilog_elab_test", "verilog_lint_test")
+load("//bazel:verilog.bzl", "verilog_elab_and_lint_test_suite")
 
 package(default_visibility = ["//visibility:public"])
 
@@ -45,32 +45,29 @@ verilog_library(
     ],
 )
 
-verilog_elab_test(
-    name = "br_enc_bin2onehot_elab_test",
+verilog_elab_and_lint_test_suite(
+    name = "br_enc_bin2onehot_test_suite",
+    params = {"NumValues": [
+        "2",
+        "3",
+    ]},
     deps = [":br_enc_bin2onehot"],
 )
 
-verilog_elab_test(
-    name = "br_enc_onehot2bin_elab_test",
+verilog_elab_and_lint_test_suite(
+    name = "br_enc_onehot2bin_test_suite",
+    params = {"NumValues": [
+        "2",
+        "3",
+    ]},
     deps = [":br_enc_onehot2bin"],
 )
 
-verilog_elab_test(
-    name = "br_enc_priority_encoder_elab_test",
-    deps = [":br_enc_priority_encoder"],
-)
-
-verilog_lint_test(
-    name = "br_enc_bin2onehot_lint_test",
-    deps = [":br_enc_bin2onehot"],
-)
-
-verilog_lint_test(
-    name = "br_enc_onehot2bin_lint_test",
-    deps = [":br_enc_onehot2bin"],
-)
-
-verilog_lint_test(
-    name = "br_enc_priority_encoder_lint_test",
+verilog_elab_and_lint_test_suite(
+    name = "br_enc_priority_encoder_test_suite",
+    params = {"NumRequesters": [
+        "2",
+        "15",
+    ]},
     deps = [":br_enc_priority_encoder"],
 )

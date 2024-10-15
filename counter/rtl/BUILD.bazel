@@ -13,7 +13,7 @@
 # limitations under the License.
 
 load("@rules_hdl//verilog:providers.bzl", "verilog_library")
-load("//bazel:verilog.bzl", "verilog_elab_test", "verilog_lint_test")
+load("//bazel:verilog.bzl", "verilog_elab_and_lint_test_suite")
 
 package(default_visibility = ["//visibility:public"])
 
@@ -35,22 +35,34 @@ verilog_library(
     ],
 )
 
-verilog_elab_test(
-    name = "br_counter_incr_elab_test",
+verilog_elab_and_lint_test_suite(
+    name = "br_counter_incr_test_suite",
+    params = {
+        "MaxValue": [
+            "1",
+            "2",
+            "3",
+        ],
+        "MaxIncrement": [
+            "1",
+            "2",
+        ],
+    },
     deps = [":br_counter_incr"],
 )
 
-verilog_elab_test(
-    name = "br_counter_decr_elab_test",
-    deps = [":br_counter_decr"],
-)
-
-verilog_lint_test(
-    name = "br_counter_incr_lint_test",
-    deps = [":br_counter_incr"],
-)
-
-verilog_lint_test(
-    name = "br_counter_decr_lint_test",
+verilog_elab_and_lint_test_suite(
+    name = "br_counter_decr_test_suite",
+    params = {
+        "MaxValue": [
+            "1",
+            "2",
+            "3",
+        ],
+        "MaxDecrement": [
+            "1",
+            "2",
+        ],
+    },
     deps = [":br_counter_decr"],
 )
