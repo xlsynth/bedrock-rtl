@@ -38,7 +38,7 @@
 
 module br_counter_incr #(
     parameter int MaxValue = 1,  // Must be at least 1. Inclusive.
-    parameter int MaxIncrement = 1,  // Must be at least 1. Inclusive.
+    parameter int MaxIncrement = 1,  // Must be at least 1 and at most MaxValue. Inclusive.
     localparam int ValueWidth = $clog2(MaxValue + 1),
     localparam int IncrementWidth = $clog2(MaxIncrement + 1)
 ) (
@@ -55,6 +55,7 @@ module br_counter_incr #(
   //------------------------------------------
   `BR_ASSERT_STATIC(max_value_gte_1_a, MaxValue >= 1)
   `BR_ASSERT_STATIC(max_increment_gte_1_a, MaxIncrement >= 1)
+  `BR_ASSERT_STATIC(max_increment_lte_max_value_a, MaxIncrement <= MaxValue)
 
   `BR_ASSERT_INTG(incr_in_range_a, incr_valid |-> incr <= MaxIncrement)
 
@@ -63,7 +64,7 @@ module br_counter_incr #(
   //------------------------------------------
   localparam int MaxValuePlusOne = MaxValue + 1;
   localparam bit IsMaxValuePlusOnePowerOf2 = (MaxValuePlusOne & (MaxValuePlusOne - 1)) == 0;
-  localparam int TempWidth = IsMaxValuePlusOnePowerOf2 ? ValueWidth : ValueWidth + IncrementWidth;
+  localparam int TempWidth = ValueWidth + IncrementWidth;
 
   logic [ValueWidth-1:0] value_next_internal;
   logic [ TempWidth-1:0] value_temp;
@@ -72,7 +73,13 @@ module br_counter_incr #(
 
   if (IsMaxValuePlusOnePowerOf2) begin : gen_power_of_2
     // For MaxValuePlusOne being a power of 2, wrapping occurs naturally
-    assign value_next_internal = incr_valid ? value_temp : value;
+    assign value_next_internal = incr_valid ? value_temp[ValueWidth-1:0] : value;
+
+    br_misc_unused #(
+        .BitWidth(IncrementWidth)
+    ) br_misc_unused_value_temp_msbs (
+        .in(value_temp[TempWidth-1:ValueWidth])
+    );
 
   end else begin : gen_non_power_of_2
     // For MaxValuePlusOne not being a power of 2, handle wrap-around explicitly
@@ -81,6 +88,12 @@ module br_counter_incr #(
     assign value_next_internal = (value_temp >= MaxValue) ?
       value_temp_wrapped[ValueWidth-1:0] :
       value_temp[ValueWidth-1:0];
+
+    br_misc_unused #(
+        .BitWidth(IncrementWidth)
+    ) br_misc_unused_value_temp_wrapped_msbs (
+        .in(value_temp_wrapped[TempWidth-1:ValueWidth])
+    );
   end
 
   // If the user leaves the value_next port unused, then the synthesis tool

@@ -23,6 +23,7 @@ verilog_library(
     deps = [
         "//macros:br_asserts_internal",
         "//macros:br_registers",
+        "//misc/rtl:br_misc_unused",
     ],
 )
 
@@ -36,7 +37,7 @@ verilog_library(
 )
 
 verilog_elab_and_lint_test_suite(
-    name = "br_counter_incr_test_suite",
+    name = "br_counter_incr_test_suite0",
     params = {
         "MaxValue": [
             "1",
@@ -45,6 +46,19 @@ verilog_elab_and_lint_test_suite(
         ],
         "MaxIncrement": [
             "1",
+        ],
+    },
+    deps = [":br_counter_incr"],
+)
+
+verilog_elab_and_lint_test_suite(
+    name = "br_counter_incr_test_suite1",
+    params = {
+        "MaxValue": [
+            "2",
+            "3",
+        ],
+        "MaxIncrement": [
             "2",
         ],
     },
@@ -52,7 +66,7 @@ verilog_elab_and_lint_test_suite(
 )
 
 verilog_elab_and_lint_test_suite(
-    name = "br_counter_decr_test_suite",
+    name = "br_counter_decr_test_suite0",
     params = {
         "MaxValue": [
             "1",
@@ -61,6 +75,19 @@ verilog_elab_and_lint_test_suite(
         ],
         "MaxDecrement": [
             "1",
+        ],
+    },
+    deps = [":br_counter_decr"],
+)
+
+verilog_elab_and_lint_test_suite(
+    name = "br_counter_decr_test_suite1",
+    params = {
+        "MaxValue": [
+            "2",
+            "3",
+        ],
+        "MaxDecrement": [
             "2",
         ],
     },
