@@ -53,7 +53,7 @@ module br_delay_valid_next #(
   //------------------------------------------
   // Implementation
   //------------------------------------------
-  logic [NumStages:0][BitWidth-1:0] stage_valid_next;
+  logic [NumStages:0] stage_valid_next;
   logic [NumStages:0][BitWidth-1:0] stage;
 
   assign stage_valid_next[0] = in_valid_next;
