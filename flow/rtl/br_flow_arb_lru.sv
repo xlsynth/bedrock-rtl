@@ -15,8 +15,8 @@
 // Bedrock-RTL Flow-Controlled Arbiter (Least-Recently-Used)
 //
 // Grants a single request at a time with least-recently-used (LRU) priority
-// where the lowest index requester initializes with the highest priority.
-// Uses ready-valid flow control for requesters (push)
+// where the lowest index flow initializes with the highest priority.
+// Uses ready-valid flow control for flows (push)
 // and the grant (pop).
 //
 // 0-cycle latency, but clock and reset are still needed to manage
@@ -63,7 +63,7 @@ module br_flow_arb_lru #(
 
   // We could just make push_ready[i] == grant[i], but then push_ready[i] will always
   // depend on push_valid[i]. It is nicer to indicate ready independently of the valid
-  // for the same requester.
+  // for the same flow.
   for (genvar i = 0; i < NumFlows; i++) begin : gen_push_ready
     always_comb begin
       push_ready[i] = 1'b1;

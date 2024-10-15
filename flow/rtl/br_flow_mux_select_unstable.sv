@@ -56,7 +56,7 @@ module br_flow_mux_select_unstable #(
   //------------------------------------------
   // Integration checks
   //------------------------------------------
-  `BR_ASSERT_STATIC(num_requesters_must_be_at_least_two_a, NumFlows >= 2)
+  `BR_ASSERT_STATIC(num_flows_must_be_at_least_two_a, NumFlows >= 2)
   `BR_ASSERT_STATIC(bitwidth_gte_1_a, BitWidth >= 1)
 
   // TODO(mgottscho): Add integration checks on ready-valid compliance and

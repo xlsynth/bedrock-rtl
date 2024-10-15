@@ -56,7 +56,7 @@ module br_flow_demux_select_unstable #(
   //------------------------------------------
   // Integration checks
   //------------------------------------------
-  `BR_ASSERT_STATIC(num_requesters_must_be_at_least_two_a, NumFlows >= 2)
+  `BR_ASSERT_STATIC(num_flows_must_be_at_least_two_a, NumFlows >= 2)
   `BR_ASSERT_STATIC(bit_width_must_be_at_least_one_a, BitWidth >= 1)
 
   // TODO(mgottscho): Add integration checks on ready-valid compliance and on stability of select.
@@ -68,7 +68,7 @@ module br_flow_demux_select_unstable #(
   //------------------------------------------
   assign push_ready = pop_ready[select];
   assign pop_valid  = push_valid << select;
-  // Replicate pop_data to all requesters; this is okay since pop_data[i]
+  // Replicate pop_data to all flows; this is okay since pop_data[i]
   // is only valid when pop_valid[i] is high.
   always_comb begin
     for (int i = 0; i < NumFlows; i++) begin

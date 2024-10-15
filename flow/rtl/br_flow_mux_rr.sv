@@ -16,7 +16,7 @@
 //
 // Combines RR-priority arbitration with data path multiplexing.
 // Grants a single request at a time with RR priority.
-// Uses ready-valid flow control for requesters (push)
+// Uses ready-valid flow control for flows (push)
 // and the grant (pop).
 //
 // Stateful arbiter, but 0 latency from push to pop.
@@ -40,7 +40,7 @@ module br_flow_mux_rr #(
   //------------------------------------------
   // Integration checks
   //------------------------------------------
-  `BR_ASSERT_STATIC(num_requesters_gte_2_a, NumFlows >= 2)
+  `BR_ASSERT_STATIC(num_flows_gte_2_a, NumFlows >= 2)
   `BR_ASSERT_STATIC(data_width_gte_1_a, DataWidth >= 1)
 
   // Rely on submodule integration checks
@@ -60,7 +60,7 @@ module br_flow_mux_rr #(
       .pop_valid
   );
 
-  // Determine the index of the granted requester
+  // Determine the index of the granted flow
   logic [$clog2(NumFlows)-1:0] grant_idx;
 
   always_comb begin

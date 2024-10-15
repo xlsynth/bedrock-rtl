@@ -15,8 +15,8 @@
 // Bedrock-RTL Flow-Controlled Arbiter (Fixed-Priority)
 //
 // Grants a single request at a time with fixed (strict) priority
-// where the lowest index requester has the highest priority.
-// Uses ready-valid flow control for requesters (push)
+// where the lowest index flow has the highest priority.
+// Uses ready-valid flow control for flows (push)
 // and the grant (pop).
 //
 // Purely combinational (no delays).
@@ -65,7 +65,7 @@ module br_flow_arb_fixed #(
 
   // We could just make push_ready[i] == grant[i], but then push_ready[i] will always
   // depend on push_valid[i]. It is nicer to indicate ready independently of the valid
-  // for the same requester.
+  // for the same flow.
   for (genvar i = 0; i < NumFlows; i++) begin : gen_push_ready
     always_comb begin
       push_ready[i] = 1'b1;

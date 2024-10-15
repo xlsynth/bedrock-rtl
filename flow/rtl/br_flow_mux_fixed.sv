@@ -16,8 +16,8 @@
 //
 // Combines fixed-priority arbitration with data path multiplexing.
 // Grants a single request at a time with fixed (strict) priority
-// where the lowest index requester has the highest priority.
-// Uses ready-valid flow control for requesters (push)
+// where the lowest index flow has the highest priority.
+// Uses ready-valid flow control for flows (push)
 // and the grant (pop).
 //
 // Purely combinational (no delays).
@@ -63,7 +63,7 @@ module br_flow_mux_fixed #(
       .pop_valid
   );
 
-  // Determine the index of the granted requester
+  // Determine the index of the granted flow
   logic [$clog2(NumFlows)-1:0] grant_idx;
 
   always_comb begin
