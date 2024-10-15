@@ -25,7 +25,9 @@ module br_arb_fixed #(
     // Must be at least 2
     parameter int NumRequesters = 2
 ) (
+    // ri lint_check_waive NOT_READ HIER_NET_NOT_READ HIER_BRANCH_NOT_READ
     input logic clk,  // Only used for assertions
+    // ri lint_check_waive NOT_READ HIER_NET_NOT_READ HIER_BRANCH_NOT_READ
     input logic rst,  // Only used for assertions
     input logic enable,
     input logic [NumRequesters-1:0] request,
@@ -45,6 +47,8 @@ module br_arb_fixed #(
   br_enc_priority_encoder #(
       .NumRequesters(NumRequesters)
   ) br_enc_priority_encoder (
+      .clk,
+      .rst,
       .in (request),
       .out(grant_internal)
   );

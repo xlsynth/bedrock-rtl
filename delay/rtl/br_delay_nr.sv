@@ -26,7 +26,9 @@ module br_delay_nr #(
     parameter int BitWidth  = 1,  // Must be at least 1
     parameter int NumStages = 0   // Must be at least 0
 ) (
-    input logic clk,
+    // ri lint_check_waive NOT_READ HIER_NET_NOT_READ HIER_BRANCH_NOT_READ
+    input logic clk,  // If NumStages is 0, then only used for assertions
+    // ri lint_check_waive NOT_READ HIER_NET_NOT_READ HIER_BRANCH_NOT_READ
     input logic rst,  // Only used for assertions
     input logic [BitWidth-1:0] in,
     output logic [BitWidth-1:0] out

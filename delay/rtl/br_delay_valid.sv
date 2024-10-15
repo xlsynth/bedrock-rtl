@@ -27,8 +27,10 @@ module br_delay_valid #(
     parameter int BitWidth  = 1,  // Must be at least 1
     parameter int NumStages = 0   // Must be at least 0
 ) (
-    input  logic                clk,
-    input  logic                rst,
+    // ri lint_check_waive NOT_READ HIER_NET_NOT_READ HIER_BRANCH_NOT_READ
+    input  logic                clk,        // If NumStages is 0, then only used for assertions
+    // ri lint_check_waive NOT_READ HIER_NET_NOT_READ HIER_BRANCH_NOT_READ
+    input  logic                rst,        // If NumStages is 0, then only used for assertions
     input  logic                in_valid,
     input  logic [BitWidth-1:0] in,
     output logic                out_valid,
