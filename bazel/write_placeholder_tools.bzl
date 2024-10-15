@@ -33,7 +33,7 @@ _PLACEHOLDER_VERILOG_ELAB_TEST_TOOL_CONTENT = '''#!/usr/bin/env python3.12
 """Auto-generated code: placeholder Python implementation of the verilog_elab_test tool API."""
 
 import argparse
-from typing import List, Optional
+from typing import Dict, List, Optional
 
 def check_each_filename_suffix(filenames: List[str], suffices: List[str]) -> None:
     """Raises ValueError if there is any filename in the list that doesn't end with any of the expected suffices."""
@@ -47,12 +47,23 @@ def check_each_filename_suffix(filenames: List[str], suffices: List[str]) -> Non
             raise ValueError(f"Expected filename to end with any of {suffices}: {filename}")
 
 
-def verilog_elab_test(hdrs: Optional[List[str]], defines: Optional[List[str]], top: Optional[str], srcs: List[str]) -> bool:
+def verilog_elab_test(hdrs: Optional[List[str]], defines: Optional[List[str]], params: Optional[Dict[str, str]], top: Optional[str], srcs: List[str]) -> bool:
     """Returns True if the top-level Verilog or SystemVerilog module is able to elaborate; may print to stdout and/or stderr."""
     # TODO: Implement this using your own tool.
     print("NOT IMPLEMENTED: Test vacuously passes.")
     return True
 
+def parse_params(parser: argparse.ArgumentParser, params: Optional[List[str]]) -> Dict[str, str]:
+    """Parses parameters into a dict; raises an error if any of the parameters are not in the expected KEY=VALUE format."""
+    params_dict = {}
+    if params:
+        for item in params:
+            if '=' in item:
+                key, value = item.split('=', 1)
+                params_dict[key] = value
+            else:
+                parser.error(f"Invalid format for --param '{item}'. Expected KEY=VALUE.")
+    return params_dict
 
 def main():
     parser = argparse.ArgumentParser(description="Test that a top-level Verilog or SystemVerilog module is able to elaborate.",
@@ -75,6 +86,12 @@ def main():
                         default=[],
                         help="Verilog/SystemVerilog preprocessor define to use in compilation. Can be specified multiple times.",
     )
+    parser.add_argument("--param",
+                        action="append",
+                        metavar="KEY=VALUE",
+                        default=[],
+                        help="Verilog/SystemVerilog module parameter key-value pair for the top module. Can be specified multiple times.",
+    )
     parser.add_argument("srcs",
                         type=argparse.FileType("r"),
                         nargs="+",
@@ -86,11 +103,12 @@ def main():
     hdrs = [hdr.name for hdr in args.hdr]
     srcs = [src.name for src in args.srcs]
     defines = args.define
+    params = parse_params(parser, args.param)
 
     check_each_filename_suffix(hdrs, [".vh", ".svh"])
     check_each_filename_suffix(srcs, [".v", ".sv"])
 
-    exit(0) if verilog_elab_test(hdrs, defines, args.top, srcs) else exit(1)
+    exit(0) if verilog_elab_test(hdrs=hdrs, defines=defines, params=params, top=args.top, srcs=srcs) else exit(1)
 
 
 if __name__ == "__main__":
@@ -115,7 +133,7 @@ _PLACEHOLDER_VERILOG_LINT_TEST_TOOL_CONTENT = '''#!/usr/bin/env python3.12
 """Auto-generated code: placeholder Python implementation of the verilog_lint_test tool API."""
 
 import argparse
-from typing import List, Optional
+from typing import Dict, List, Optional
 
 def check_each_filename_suffix(filenames: List[str], suffices: List[str]) -> None:
     """Raises ValueError if there is any filename in the list that doesn't end with any of the expected suffices."""
@@ -128,8 +146,19 @@ def check_each_filename_suffix(filenames: List[str], suffices: List[str]) -> Non
         if not match:
             raise ValueError(f"Expected filename to end with any of {suffices}: {filename}")
 
+def parse_params(parser: argparse.ArgumentParser, params: Optional[List[str]]) -> Dict[str, str]:
+    """Parses parameters into a dict; raises an error if any of the parameters are not in the expected KEY=VALUE format."""
+    params_dict = {}
+    if params:
+        for item in params:
+            if '=' in item:
+                key, value = item.split('=', 1)
+                params_dict[key] = value
+            else:
+                parser.error(f"Invalid format for --param '{item}'. Expected KEY=VALUE.")
+    return params_dict
 
-def verilog_lint_test(hdrs: Optional[List[str]], defines: Optional[List[str]], top: Optional[str], srcs: List[str]) -> bool:
+def verilog_lint_test(hdrs: Optional[List[str]], defines: Optional[List[str]], params: Optional[Dict[str, str]], top: Optional[str], srcs: List[str]) -> bool:
     """Returns True if the the Verilog/SystemVerilog sources pass a lint test; may print to stdout and/or stderr."""
     # TODO: Implement this using your own tool.
     print("NOT IMPLEMENTED: Test vacuously passes.")
@@ -157,6 +186,12 @@ def main():
                         default=[],
                         help="Verilog/SystemVerilog preprocessor define to use in compilation. Can be specified multiple times.",
     )
+    parser.add_argument("--param",
+                        action="append",
+                        metavar="KEY=VALUE",
+                        default=[],
+                        help="Verilog/SystemVerilog module parameter key-value pair for the top module. Can be specified multiple times.",
+    )
     parser.add_argument("srcs",
                         type=argparse.FileType("r"),
                         nargs="+",
@@ -167,11 +202,12 @@ def main():
     hdrs = [hdr.name for hdr in args.hdr]
     srcs = [src.name for src in args.srcs]
     defines = args.define
+    params = parse_params(parser, args.param)
 
     check_each_filename_suffix(hdrs, [".vh", ".svh"])
     check_each_filename_suffix(srcs, [".v", ".sv"])
 
-    exit(0) if verilog_lint_test(hdrs, defines, args.top, srcs) else exit(1)
+    exit(0) if verilog_lint_test(hdrs=hdrs, defines=defines, params=params, top=args.top, srcs=srcs) else exit(1)
 
 
 if __name__ == "__main__":

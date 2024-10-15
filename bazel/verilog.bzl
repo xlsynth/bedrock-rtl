@@ -69,7 +69,11 @@ def _verilog_base_test_impl(ctx, tool, extra_args = [], extra_runfiles = []):
         if (len(ctx.attr.deps) != 1):
             fail("If the top attribute is not provided, then there must be exactly one dependency.")
         top = ctx.attr.deps[0].label.name
-    args = ["--hdr=" + hdr for hdr in hdr_files] + ["--define=" + define for define in ctx.attr.defines] + ["--top=" + top] + extra_args
+    args = (["--hdr=" + hdr for hdr in hdr_files] +
+            ["--define=" + define for define in ctx.attr.defines] +
+            ["--top=" + top] +
+            ["--param=" + key + "=" + value for key, value in ctx.attr.params.items()] +
+            extra_args)
     cmd = " ".join([tool] + args + src_files)
     runfiles = ctx.runfiles(files = srcs + hdrs + extra_runfiles)
     executable_file = _write_executable_shell_script(
@@ -135,9 +139,10 @@ _verilog_elab_test = rule(
     doc = "Tests that a Verilog or SystemVerilog design elaborates.",
     implementation = _verilog_elab_test_impl,
     attrs = {
-        "deps": attr.label_list(allow_files = False),
+        "deps": attr.label_list(allow_files = False, doc = "The dependencies of the test."),
+        "defines": attr.string_list(default = ["SV_ASSERT_ON"], doc = "Preprocessor defines to pass to the Verilog compiler."),
+        "params": attr.string_dict(doc = "Verilog module parameters to set in the instantiation of the top-level module."),
         "top": attr.string(doc = "The top-level module; if not provided and there exists one dependency, then defaults to that dep's label name."),
-        "defines": attr.string_list(default = ["SV_ASSERT_ON"]),
     },
     test = True,
 )
@@ -152,8 +157,9 @@ _verilog_lint_test = rule(
     doc = "Tests that a Verilog or SystemVerilog design passes a set of static lint checks.",
     implementation = _verilog_lint_test_impl,
     attrs = {
-        "deps": attr.label_list(allow_files = False),
-        "defines": attr.string_list(default = ["SV_ASSERT_ON"]),
+        "deps": attr.label_list(allow_files = False, doc = "The dependencies of the test."),
+        "defines": attr.string_list(default = ["SV_ASSERT_ON"], doc = "Preprocessor defines to pass to the Verilog compiler."),
+        "params": attr.string_dict(doc = "Verilog module parameters to set in the instantiation of the top-level module."),
         "top": attr.string(doc = "The top-level module; if not provided and there exists one dependency, then defaults to that dep's label name."),
     },
     test = True,
