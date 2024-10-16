@@ -38,7 +38,8 @@ module br_fifo_push_ctrl #(
     output logic [CountWidth-1:0] slots_next,
 
     // Bypass interface
-    input logic bypass_ready,
+    // Bypass is only used when EnableBypass is 1, hence lint waiver.
+    input logic bypass_ready,  // ri lint_check_waive INEFFECTIVE_NET
     output logic bypass_valid,
     output logic [BitWidth-1:0] bypass_data,
 
@@ -107,8 +108,8 @@ module br_fifo_push_ctrl #(
     assign ram_wr_data = push_data;
   end else begin : gen_no_bypass
     br_misc_unused br_misc_unused_bypass_ready (.in(bypass_ready));
-    assign bypass_valid = '0;
-    assign bypass_data = '0;
+    assign bypass_valid = '0;  // ri lint_check_waive CONST_ASSIGN CONST_OUTPUT
+    assign bypass_data = '0;  // ri lint_check_waive CONST_ASSIGN CONST_OUTPUT
 
     assign ram_push = push;
     assign ram_wr_data = push_data;

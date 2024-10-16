@@ -35,7 +35,7 @@
 `ifdef SV_ASSERT_ON
 `define BR_ASSERT_STATIC(__name__, __expr__) \
 if (!(__expr__)) begin : gen__``__name__ \
-__STATIC_ASSERT_FAILED__ __name__ (); \
+__STATIC_ASSERT_FAILED__ __STATIC_ASSERT_FAILED__``__name__ (); \
 end
 `else  // SV_ASSERT_ON
 `define BR_ASSERT_STATIC(__name__, __expr__) \
