@@ -62,21 +62,21 @@ module br_counter_decr #(
   //------------------------------------------
   // Implementation
   //------------------------------------------
-  localparam int MaxValuePlusOne = MaxValue + 1;
-  localparam bit IsMaxValuePlusOnePowerOf2 = (MaxValuePlusOne & (MaxValuePlusOne - 1)) == 0;
+  localparam int MaxValueP1 = MaxValue + 1;
+  localparam bit IsMaxValueP1PowerOf2 = (MaxValueP1 & (MaxValueP1 - 1)) == 0;
 
   logic [ValueWidth-1:0] value_next_internal;
   logic [ValueWidth-1:0] value_temp;
 
   assign value_temp = value - decr;
 
-  if (IsMaxValuePlusOnePowerOf2) begin : gen_power_of_2
-    // For MaxValuePlusOne being a power of 2, wrapping occurs naturally
+  if (IsMaxValueP1PowerOf2) begin : gen_power_of_2
+    // For MaxValueP1 being a power of 2, wrapping occurs naturally
     assign value_next_internal = decr_valid ? value_temp : value;
 
   end else begin : gen_non_power_of_2
-    // For MaxValuePlusOne not being a power of 2, handle wrap-around explicitly
-    localparam int Margin = 2 ** ValueWidth - 1 - MaxValue;
+    // For MaxValueP1 not being a power of 2, handle wrap-around explicitly
+    localparam int Margin = ((2 ** ValueWidth) - 1) - MaxValue;
     logic [ValueWidth-1:0] value_temp_wrapped;
     assign value_temp_wrapped  = value_temp - Margin;
     assign value_next_internal = value_temp >= MaxValue ? value_temp_wrapped : value_temp;

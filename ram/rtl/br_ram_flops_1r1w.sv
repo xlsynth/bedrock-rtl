@@ -66,17 +66,19 @@ module br_ram_flops_1r1w #(
   // Write port
   for (genvar i = 0; i < Depth; i++) begin : gen_flops
     if (EnableReset) begin : gen_reset
-      `BR_REGL(mem[i], wr_data, wr_valid && wr_addr == i)
+      `BR_REGL(mem[i], wr_data, wr_valid && (wr_addr == i))
     end else begin : gen_no_reset
-      `BR_REGLN(mem[i], wr_data, wr_valid && wr_addr == i)
+      `BR_REGLN(mem[i], wr_data, wr_valid && (wr_addr == i))
     end
   end
 
   // Read port
   assign rd_data_valid = rd_addr_valid;
   if (EnableBypass) begin : gen_bypass
-    assign rd_data = (wr_valid && wr_addr == rd_addr) ? wr_data : mem[rd_addr];
+    // ri lint_check_waive VAR_INDEX_READ
+    assign rd_data = (wr_valid && (wr_addr == rd_addr)) ? wr_data : mem[rd_addr];
   end else begin : gen_no_bypass
+    // ri lint_check_waive VAR_INDEX_READ
     assign rd_data = mem[rd_addr];
   end
 

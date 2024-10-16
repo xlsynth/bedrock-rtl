@@ -62,38 +62,39 @@ module br_counter_incr #(
   //------------------------------------------
   // Implementation
   //------------------------------------------
-  localparam int MaxValuePlusOne = MaxValue + 1;
-  localparam bit IsMaxValuePlusOnePowerOf2 = (MaxValuePlusOne & (MaxValuePlusOne - 1)) == 0;
-  localparam int TempWidth = ValueWidth + IncrementWidth;
+  localparam int MaxValueP1 = MaxValue + 1;
+  localparam bit IsMaxValueP1PowerOf2 = (MaxValueP1 & (MaxValueP1 - 1)) == 0;
+  localparam int TempWidth = $clog2(MaxValue + MaxIncrement + 1);
 
   logic [ValueWidth-1:0] value_next_internal;
-  logic [ TempWidth-1:0] value_temp;
 
+  logic [ TempWidth-1:0] value_temp;
   assign value_temp = value + incr;
 
-  if (IsMaxValuePlusOnePowerOf2) begin : gen_power_of_2
-    // For MaxValuePlusOne being a power of 2, wrapping occurs naturally
+  // For MaxValueP1 being a power of 2, wrapping occurs naturally
+  if (IsMaxValueP1PowerOf2) begin : gen_power_of_2
     assign value_next_internal = incr_valid ? value_temp[ValueWidth-1:0] : value;
 
-    br_misc_unused #(
-        .BitWidth(IncrementWidth)
-    ) br_misc_unused_value_temp_msbs (
-        .in(value_temp[TempWidth-1:ValueWidth])
-    );
-
+    // For MaxValueP1 not being a power of 2, handle wrap-around explicitly
   end else begin : gen_non_power_of_2
-    // For MaxValuePlusOne not being a power of 2, handle wrap-around explicitly
+    // MSBs won't impact outputs if TempWidth > ValueWidth
+    // ri lint_check_waive INEFFECTIVE_NET
     logic [TempWidth-1:0] value_temp_wrapped;
-    assign value_temp_wrapped = value_temp - MaxValue - 1;
-    assign value_next_internal = (value_temp >= MaxValue) ?
-      value_temp_wrapped[ValueWidth-1:0] :
-      value_temp[ValueWidth-1:0];
 
-    br_misc_unused #(
-        .BitWidth(IncrementWidth)
-    ) br_misc_unused_value_temp_wrapped_msbs (
-        .in(value_temp_wrapped[TempWidth-1:ValueWidth])
-    );
+    // ri lint_check_waive ARITH_EXTENSION
+    assign value_temp_wrapped = (value_temp - MaxValue) - 1;
+    // ri lint_check_waive ARITH_EXTENSION
+    assign value_next_internal = (value_temp >= MaxValue) ?
+      value_temp_wrapped[ValueWidth-1:0] :  // ri lint_check_waive FULL_RANGE
+        value_temp[ValueWidth-1:0];  // ri lint_check_waive FULL_RANGE
+
+    if (TempWidth > ValueWidth) begin : gen_unused
+      br_misc_unused #(
+          .BitWidth(TempWidth - ValueWidth)
+      ) br_misc_unused_value_temp_wrapped_msbs (
+          .in(value_temp_wrapped[TempWidth-1:ValueWidth])
+      );
+    end
   end
 
   // If the user leaves the value_next port unused, then the synthesis tool

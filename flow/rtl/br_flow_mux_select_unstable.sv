@@ -67,8 +67,13 @@ module br_flow_mux_select_unstable #(
   //------------------------------------------
   // Implementation
   //------------------------------------------
+
+  // Lint waivers are safe because we assert select is always in range.
+  // ri lint_check_waive VAR_SHIFT TRUNC_LSHIFT
   assign push_ready = pop_ready << select;
+  // ri lint_check_waive VAR_INDEX_READ
   assign pop_valid  = push_valid[select];
+  // ri lint_check_waive VAR_INDEX_READ
   assign pop_data   = push_data[select];
 
   //------------------------------------------

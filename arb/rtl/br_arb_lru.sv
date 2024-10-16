@@ -71,7 +71,9 @@ module br_arb_lru #(
   // diagonal) in registers because the lower triangle is its complement. The diagonal is undefined
   // and unused (because we never need to compare the priority of a requester with itself).
   // There are NumRequesters * (NumRequesters - 1) / 2 flip-flops of priority state.
-  logic [NumRequesters-1:0][NumRequesters-1:0] state, state_reg, state_reg_next;
+  logic [NumRequesters-1:0][NumRequesters-1:0] state;
+  logic [NumRequesters-1:0][NumRequesters-1:0] state_reg;
+  logic [NumRequesters-1:0][NumRequesters-1:0] state_reg_next;
 
   for (genvar i = 0; i < NumRequesters; i++) begin : gen_state_row
     for (genvar j = 0; j < NumRequesters; j++) begin : gen_state_col
@@ -87,13 +89,14 @@ module br_arb_lru #(
         assign state[i][j] = !state_reg[j][i];
 
         // Tie-off unused signals
-        assign state_reg_next[i][j] = 1'b0;
-        assign state_reg[i][j] = 1'b0;
+        assign state_reg_next[i][j] = 1'b0;  // ri lint_check_waive CONST_ASSIGN
+        assign state_reg[i][j] = 1'b0;  // ri lint_check_waive CONST_ASSIGN
         br_misc_unused br_misc_unused_state_reg_next (.in(state_reg_next[i][j]));
         br_misc_unused br_misc_unused_state_reg (.in(state_reg[i][j]));
 
         // The diagonal is unused. Tie off signals.
       end else begin : gen_diag
+        // ri lint_check_waive CONST_ASSIGN
         assign {state_reg_next[i][j], state_reg[i][j], state[i][j]} = '0;
         br_misc_unused #(
             .BitWidth(3)
