@@ -1,3 +1,7 @@
 bazel-*
 MODULE.bazel.lock
 .vscode
+chipstack_artifacts
+*.docbook
+*.docx
+*.f
