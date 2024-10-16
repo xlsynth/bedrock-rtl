@@ -15,8 +15,8 @@
 // Bedrock-RTL Flow-Controlled Arbiter (Fixed-Priority)
 //
 // Grants a single request at a time with fixed (strict) priority
-// where the lowest index requester has the highest priority.
-// Uses ready-valid flow control for requesters (push)
+// where the lowest index flow has the highest priority.
+// Uses ready-valid flow control for flows (push)
 // and the grant (pop).
 //
 // Purely combinational (no delays).
@@ -27,7 +27,7 @@
 
 module br_flow_arb_fixed #(
     // Must be at least 2
-    parameter int NumRequesters = 2
+    parameter int NumFlows = 2
 ) (
     // Only used for assertions
     // ri lint_check_waive HIER_NET_NOT_READ HIER_BRANCH_NOT_READ NOT_READ
@@ -35,8 +35,8 @@ module br_flow_arb_fixed #(
     // Only used for assertions
     // ri lint_check_waive HIER_NET_NOT_READ HIER_BRANCH_NOT_READ NOT_READ
     input logic rst,
-    output logic [NumRequesters-1:0] push_ready,
-    input logic [NumRequesters-1:0] push_valid,
+    output logic [NumFlows-1:0] push_ready,
+    input logic [NumFlows-1:0] push_valid,
     input logic pop_ready,
     output logic pop_valid
 );
@@ -51,10 +51,10 @@ module br_flow_arb_fixed #(
   //------------------------------------------
   // Implementation
   //------------------------------------------
-  logic [NumRequesters-1:0] grant;
+  logic [NumFlows-1:0] grant;
 
   br_arb_fixed #(
-      .NumRequesters(NumRequesters)
+      .NumRequesters(NumFlows)
   ) br_arb_fixed (
       .clk,
       .rst,
@@ -65,11 +65,11 @@ module br_flow_arb_fixed #(
 
   // We could just make push_ready[i] == grant[i], but then push_ready[i] will always
   // depend on push_valid[i]. It is nicer to indicate ready independently of the valid
-  // for the same requester.
-  for (genvar i = 0; i < NumRequesters; i++) begin : gen_push_ready
+  // for the same flow.
+  for (genvar i = 0; i < NumFlows; i++) begin : gen_push_ready
     always_comb begin
       push_ready[i] = 1'b1;
-      for (int j = 0; j < NumRequesters; j++) begin
+      for (int j = 0; j < NumFlows; j++) begin
         if (i != j) begin
           push_ready[i] &= !grant[j];
         end

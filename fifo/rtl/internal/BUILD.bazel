@@ -13,7 +13,7 @@
 # limitations under the License.
 
 load("@rules_hdl//verilog:providers.bzl", "verilog_library")
-load("//bazel:verilog.bzl", "verilog_elab_test", "verilog_lint_test")
+load("//bazel:verilog.bzl", "verilog_elab_and_lint_test_suite")
 
 package(default_visibility = ["//fifo/rtl:__subpackages__"])
 
@@ -28,16 +28,6 @@ verilog_library(
     ],
 )
 
-verilog_elab_test(
-    name = "br_fifo_push_ctrl_elab_test",
-    deps = [":br_fifo_push_ctrl"],
-)
-
-verilog_lint_test(
-    name = "br_fifo_push_ctrl_lint_test",
-    deps = [":br_fifo_push_ctrl"],
-)
-
 verilog_library(
     name = "br_fifo_pop_ctrl",
     srcs = ["br_fifo_pop_ctrl.sv"],
@@ -49,12 +39,40 @@ verilog_library(
     ],
 )
 
-verilog_elab_test(
-    name = "br_fifo_pop_ctrl_elab_test",
-    deps = [":br_fifo_pop_ctrl"],
+verilog_elab_and_lint_test_suite(
+    name = "br_fifo_push_ctrl_test_suite",
+    params = {
+        "Depth": [
+            "2",
+            "4",
+        ],
+        "BitWidth": [
+            "1",
+            "8",
+        ],
+        "EnableBypass": [
+            "0",
+            "1",
+        ],
+    },
+    deps = [":br_fifo_push_ctrl"],
 )
 
-verilog_lint_test(
-    name = "br_fifo_pop_ctrl_lint_test",
+verilog_elab_and_lint_test_suite(
+    name = "br_fifo_pop_ctrl_test_suite",
+    params = {
+        "Depth": [
+            "2",
+            "4",
+        ],
+        "BitWidth": [
+            "1",
+            "8",
+        ],
+        "EnableBypass": [
+            "0",
+            "1",
+        ],
+    },
     deps = [":br_fifo_pop_ctrl"],
 )

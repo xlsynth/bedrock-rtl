@@ -16,7 +16,7 @@
 //
 // Combines LRU-priority arbitration with data path multiplexing.
 // Grants a single request at a time with LRU priority.
-// Uses ready-valid flow control for requesters (push)
+// Uses ready-valid flow control for flows (push)
 // and the grant (pop).
 //
 // Stateful arbiter, but 0 latency from push to pop.
@@ -24,23 +24,23 @@
 `include "br_asserts.svh"
 
 module br_flow_mux_lru #(
-    parameter int NumRequesters = 2,  // Must be at least 2
-    parameter int DataWidth = 1  // Must be at least 1
+    parameter int NumFlows  = 2,  // Must be at least 2
+    parameter int DataWidth = 1   // Must be at least 1
 ) (
-    input  logic                                    clk,
-    input  logic                                    rst,
-    output logic [NumRequesters-1:0]                push_ready,
-    input  logic [NumRequesters-1:0]                push_valid,
-    input  logic [NumRequesters-1:0][DataWidth-1:0] push_data,
-    input  logic                                    pop_ready,
-    output logic                                    pop_valid,
-    output logic [    DataWidth-1:0]                pop_data
+    input  logic                                clk,
+    input  logic                                rst,
+    output logic [ NumFlows-1:0]                push_ready,
+    input  logic [ NumFlows-1:0]                push_valid,
+    input  logic [ NumFlows-1:0][DataWidth-1:0] push_data,
+    input  logic                                pop_ready,
+    output logic                                pop_valid,
+    output logic [DataWidth-1:0]                pop_data
 );
 
   //------------------------------------------
   // Integration checks
   //------------------------------------------
-  `BR_ASSERT_STATIC(numrequesters_gte_2_a, NumRequesters >= 2)
+  `BR_ASSERT_STATIC(numflows_gte_2_a, NumFlows >= 2)
   `BR_ASSERT_STATIC(datawidth_gte_1_a, DataWidth >= 1)
 
   // Rely on submodule integration checks
@@ -50,7 +50,7 @@ module br_flow_mux_lru #(
   //------------------------------------------
 
   br_flow_arb_lru #(
-      .NumRequesters(NumRequesters)
+      .NumFlows(NumFlows)
   ) br_flow_arb_lru (
       .clk,
       .rst,
@@ -60,12 +60,12 @@ module br_flow_mux_lru #(
       .pop_valid
   );
 
-  // Determine the index of the granted requester
-  logic [$clog2(NumRequesters)-1:0] grant_idx;
+  // Determine the index of the granted flow
+  logic [$clog2(NumFlows)-1:0] grant_idx;
 
   always_comb begin
     grant_idx = '0;
-    for (int i = 0; i < NumRequesters; i++) begin
+    for (int i = 0; i < NumFlows; i++) begin
       if (push_ready[i] && push_valid[i]) begin
         grant_idx = i;
         break;  // push_ready & push_valid is guaranteed onehot0 by br_flow_arb_fixed

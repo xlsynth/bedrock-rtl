@@ -48,7 +48,7 @@ module br_delay_valid #(
   //------------------------------------------
   // Implementation
   //------------------------------------------
-  logic [NumStages:0][BitWidth-1:0] stage_valid;
+  logic [NumStages:0] stage_valid;
   logic [NumStages:0][BitWidth-1:0] stage;
 
   assign stage_valid[0] = in_valid;

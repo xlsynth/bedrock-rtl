@@ -38,7 +38,7 @@
 
 module br_counter_decr #(
     parameter int MaxValue = 1,  // Must be at least 1. Inclusive. Also the initial value.
-    parameter int MaxDecrement = 1,  // Must be at least 1. Inclusive.
+    parameter int MaxDecrement = 1,  // Must be at least 1 and at most MaxValue. Inclusive.
     localparam int ValueWidth = $clog2(MaxValue + 1),
     localparam int DecrementWidth = $clog2(MaxDecrement + 1)
 ) (
@@ -55,6 +55,7 @@ module br_counter_decr #(
   //------------------------------------------
   `BR_ASSERT_STATIC(max_value_gte_1_a, MaxValue >= 1)
   `BR_ASSERT_STATIC(max_decrement_gte_1_a, MaxDecrement >= 1)
+  `BR_ASSERT_STATIC(max_decrement_lte_max_value_a, MaxDecrement <= MaxValue)
 
   `BR_ASSERT_INTG(decr_in_range_a, decr_valid |-> decr <= MaxDecrement)
 

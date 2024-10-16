@@ -16,8 +16,8 @@
 //
 // Combines fixed-priority arbitration with data path multiplexing.
 // Grants a single request at a time with fixed (strict) priority
-// where the lowest index requester has the highest priority.
-// Uses ready-valid flow control for requesters (push)
+// where the lowest index flow has the highest priority.
+// Uses ready-valid flow control for flows (push)
 // and the grant (pop).
 //
 // Purely combinational (no delays).
@@ -25,25 +25,25 @@
 `include "br_asserts.svh"
 
 module br_flow_mux_fixed #(
-    parameter int NumRequesters = 2,  // Must be at least 2
-    parameter int DataWidth = 1  // Must be at least 1
+    parameter int NumFlows  = 2,  // Must be at least 2
+    parameter int DataWidth = 1   // Must be at least 1
 ) (
     // ri lint_check_waive NOT_READ HIER_NET_NOT_READ HIER_BRANCH_NOT_READ
-    input  logic                                    clk,         // Only used for assertions
+    input  logic                                clk,         // Only used for assertions
     // ri lint_check_waive NOT_READ HIER_NET_NOT_READ HIER_BRANCH_NOT_READ
-    input  logic                                    rst,         // Only used for assertions
-    output logic [NumRequesters-1:0]                push_ready,
-    input  logic [NumRequesters-1:0]                push_valid,
-    input  logic [NumRequesters-1:0][DataWidth-1:0] push_data,
-    input  logic                                    pop_ready,
-    output logic                                    pop_valid,
-    output logic [    DataWidth-1:0]                pop_data
+    input  logic                                rst,         // Only used for assertions
+    output logic [ NumFlows-1:0]                push_ready,
+    input  logic [ NumFlows-1:0]                push_valid,
+    input  logic [ NumFlows-1:0][DataWidth-1:0] push_data,
+    input  logic                                pop_ready,
+    output logic                                pop_valid,
+    output logic [DataWidth-1:0]                pop_data
 );
 
   //------------------------------------------
   // Integration checks
   //------------------------------------------
-  `BR_ASSERT_STATIC(num:equesters_gte_2_a, NumRequesters >= 2)
+  `BR_ASSERT_STATIC(num:equesters_gte_2_a, NumFlows >= 2)
   `BR_ASSERT_STATIC(datawidth_gte_1_a, DataWidth >= 1)
 
   // Rely on submodule integration checks
@@ -53,7 +53,7 @@ module br_flow_mux_fixed #(
   //------------------------------------------
 
   br_flow_arb_fixed #(
-      .NumRequesters(NumRequesters)
+      .NumFlows(NumFlows)
   ) br_flow_arb_fixed (
       .clk,
       .rst,
@@ -63,12 +63,12 @@ module br_flow_mux_fixed #(
       .pop_valid
   );
 
-  // Determine the index of the granted requester
-  logic [$clog2(NumRequesters)-1:0] grant_idx;
+  // Determine the index of the granted flow
+  logic [$clog2(NumFlows)-1:0] grant_idx;
 
   always_comb begin
     grant_idx = '0;
-    for (int i = 0; i < NumRequesters; i++) begin
+    for (int i = 0; i < NumFlows; i++) begin
       if (push_ready[i] && push_valid[i]) begin
         grant_idx = i;
         break;  // push_ready & push_valid is guaranteed onehot0 by br_flow_arb_fixed

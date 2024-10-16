@@ -30,22 +30,22 @@
 
 module br_flow_demux_select #(
     // Must be at least 2
-    parameter int NumRequesters = 2,
+    parameter int NumFlows = 2,
     // Must be at least 1
     parameter int BitWidth = 1
 ) (
     input logic clk,
     input logic rst,  // Synchronous active-high
 
-    input logic [$clog2(NumRequesters)-1:0] select,
+    input logic [$clog2(NumFlows)-1:0] select,
 
     output logic                push_ready,
     input  logic                push_valid,
     input  logic [BitWidth-1:0] push_data,
 
-    input  logic [NumRequesters-1:0]               pop_ready,
-    output logic [NumRequesters-1:0]               pop_valid,
-    output logic [NumRequesters-1:0][BitWidth-1:0] pop_data
+    input  logic [NumFlows-1:0]               pop_ready,
+    output logic [NumFlows-1:0]               pop_valid,
+    output logic [NumFlows-1:0][BitWidth-1:0] pop_data
 );
 
   //------------------------------------------
@@ -78,7 +78,7 @@ module br_flow_demux_select #(
   );
 
   br_flow_demux_select_unstable #(
-      .NumRequesters(NumRequesters),
+      .NumFlows(NumFlows),
       .BitWidth(BitWidth)
   ) br_flow_demux_select_unstable (
       .clk(clk),

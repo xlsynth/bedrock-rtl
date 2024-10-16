@@ -13,7 +13,7 @@
 # limitations under the License.
 
 load("@rules_hdl//verilog:providers.bzl", "verilog_library")
-load("//bazel:verilog.bzl", "verilog_elab_test", "verilog_lint_test")
+load("//bazel:verilog.bzl", "verilog_elab_and_lint_test_suite")
 
 package(default_visibility = ["//visibility:public"])
 
@@ -117,122 +117,150 @@ verilog_library(
     ],
 )
 
-verilog_elab_test(
-    name = "br_flow_arb_fixed_elab_test",
+verilog_elab_and_lint_test_suite(
+    name = "br_flow_arb_fixed_test_suite",
+    params = {
+        "NumFlows": [
+            "2",
+            "3",
+        ],
+    },
     deps = [":br_flow_arb_fixed"],
 )
 
-verilog_elab_test(
-    name = "br_flow_arb_rr_elab_test",
+verilog_elab_and_lint_test_suite(
+    name = "br_flow_arb_rr_test_suite",
+    params = {
+        "NumFlows": [
+            "2",
+            "3",
+        ],
+    },
     deps = [":br_flow_arb_rr"],
 )
 
-verilog_elab_test(
-    name = "br_flow_arb_lru_elab_test",
+verilog_elab_and_lint_test_suite(
+    name = "br_flow_arb_lru_test_suite",
+    params = {
+        "NumFlows": [
+            "2",
+            "3",
+        ],
+    },
     deps = [":br_flow_arb_lru"],
 )
 
-verilog_elab_test(
-    name = "br_flow_demux_select_elab_test",
+verilog_elab_and_lint_test_suite(
+    name = "br_flow_demux_select_test_suite",
+    params = {
+        "NumFlows": [
+            "2",
+            "3",
+        ],
+        "BitWidth": [
+            "1",
+            "2",
+        ],
+    },
     deps = [":br_flow_demux_select"],
 )
 
-verilog_elab_test(
-    name = "br_flow_demux_select_unstable_elab_test",
+verilog_elab_and_lint_test_suite(
+    name = "br_flow_demux_select_unstable_test_suite",
+    params = {
+        "NumFlows": [
+            "2",
+            "3",
+        ],
+        "BitWidth": [
+            "1",
+            "2",
+        ],
+    },
     deps = [":br_flow_demux_select_unstable"],
 )
 
-verilog_elab_test(
-    name = "br_flow_fork_elab_test",
+verilog_elab_and_lint_test_suite(
+    name = "br_flow_fork_test_suite",
+    params = {
+        "NumFlows": [
+            "2",
+            "3",
+        ],
+    },
     deps = [":br_flow_fork"],
 )
 
-verilog_elab_test(
-    name = "br_flow_join_elab_test",
+verilog_elab_and_lint_test_suite(
+    name = "br_flow_join_test_suite",
+    params = {
+        "NumFlows": [
+            "2",
+            "3",
+        ],
+    },
     deps = [":br_flow_join"],
 )
 
-verilog_elab_test(
-    name = "br_flow_mux_select_elab_test",
+verilog_elab_and_lint_test_suite(
+    name = "br_flow_mux_select_test_suite",
+    params = {
+        "NumFlows": [
+            "2",
+            "3",
+        ],
+        "BitWidth": [
+            "1",
+            "2",
+        ],
+    },
     deps = [":br_flow_mux_select"],
 )
 
-verilog_elab_test(
-    name = "br_flow_mux_select_unstable_elab_test",
+verilog_elab_and_lint_test_suite(
+    name = "br_flow_mux_select_unstable_test_suite",
+    params = {
+        "NumFlows": [
+            "2",
+            "3",
+        ],
+        "BitWidth": [
+            "1",
+            "2",
+        ],
+    },
     deps = [":br_flow_mux_select_unstable"],
 )
 
-verilog_elab_test(
-    name = "br_flow_reg_both_elab_test",
+verilog_elab_and_lint_test_suite(
+    name = "br_flow_reg_both_test_suite",
+    params = {
+        "BitWidth": [
+            "1",
+            "2",
+        ],
+    },
     deps = [":br_flow_reg_both"],
 )
 
-verilog_elab_test(
-    name = "br_flow_reg_fwd_elab_test",
+verilog_elab_and_lint_test_suite(
+    name = "br_flow_reg_fwd_test_suite",
+    params = {
+        "BitWidth": [
+            "1",
+            "2",
+        ],
+    },
     deps = [":br_flow_reg_fwd"],
 )
 
-verilog_elab_test(
-    name = "br_flow_reg_rev_elab_test",
-    deps = [":br_flow_reg_rev"],
-)
-
-verilog_lint_test(
-    name = "br_flow_arb_fixed_lint_test",
-    deps = [":br_flow_arb_fixed"],
-)
-
-verilog_lint_test(
-    name = "br_flow_arb_rr_lint_test",
-    deps = [":br_flow_arb_rr"],
-)
-
-verilog_lint_test(
-    name = "br_flow_arb_lru_lint_test",
-    deps = [":br_flow_arb_lru"],
-)
-
-verilog_lint_test(
-    name = "br_flow_demux_select_lint_test",
-    deps = [":br_flow_demux_select"],
-)
-
-verilog_lint_test(
-    name = "br_flow_demux_select_unstable_lint_test",
-    deps = [":br_flow_demux_select_unstable"],
-)
-
-verilog_lint_test(
-    name = "br_flow_fork_lint_test",
-    deps = [":br_flow_fork"],
-)
-
-verilog_lint_test(
-    name = "br_flow_join_lint_test",
-    deps = [":br_flow_join"],
-)
-
-verilog_lint_test(
-    name = "br_flow_mux_select_lint_test",
-    deps = [":br_flow_mux_select"],
-)
-
-verilog_lint_test(
-    name = "br_flow_mux_select_unstable_lint_test",
-    deps = [":br_flow_mux_select_unstable"],
-)
-
-verilog_lint_test(
-    name = "br_flow_reg_both_lint_test",
-    deps = [":br_flow_reg_both"],
-)
-
-verilog_lint_test(
-    name = "br_flow_reg_fwd_lint_test",
-    deps = [":br_flow_reg_fwd"],
-)
-
-verilog_lint_test(
-    name = "br_flow_reg_rev_lint_test",
+verilog_elab_and_lint_test_suite(
+    name = "br_flow_reg_rev_test_suite",
+    params = {
+        "BitWidth": [
+            "1",
+            "2",
+        ],
+    },
     deps = [":br_flow_reg_rev"],
 )
