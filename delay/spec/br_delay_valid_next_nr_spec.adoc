@@ -60,7 +60,7 @@ This mechanism allows for timing optimization in scenarios where the data bus is
 | `input`
 | `logic`
 | `rst`
-| Included only for assertions and does not impact the implementation.
+| Synchronous active-high reset signal. Only used for assertions.
 
 | Data Input Valid-Next
 | `input`

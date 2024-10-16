@@ -47,6 +47,12 @@ The `br_delay_nr` module implements a configurable delay line that delays an inp
 | `clk`
 | Clock signal.
 
+| Reset
+| `input`
+| `logic`
+| `rst`
+| Synchronous active-high reset signal. Only used for assertions.
+
 | Data Input
 | `input`
 | `logic [BitWidth-1:0]`
