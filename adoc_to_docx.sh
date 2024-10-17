@@ -31,6 +31,8 @@ if [[ ! $1 == *.adoc ]]; then
     exit 1
 fi
 
+set -e
+
 ADOC=$1
 DOCBOOK="${ADOC%.adoc}.docbook"
 DOCX="${DOCBOOK%.docbook}.docx"
