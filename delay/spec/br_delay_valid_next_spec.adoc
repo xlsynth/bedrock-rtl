@@ -49,7 +49,7 @@ The `in_valid_next` signal indicates that the input data `in` will be valid on t
 | `input`
 | `logic`
 | `clk`
-| Clock signal.
+| Clock signal, positive edge-triggered.
 
 | Reset
 | `input`
