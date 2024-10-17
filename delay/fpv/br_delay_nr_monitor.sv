@@ -11,8 +11,8 @@ module br_delay_nr_monitor #(
 ) (
     input logic clk,
     input logic rst,
-    input logic [0:0] in,
-    input logic [0:0] out
+    input logic [BitWidth-1:0] in,
+    input logic [BitWidth-1:0] out
 );
 
   Immediate_Reflection_for_Zero_Stages #(
@@ -35,8 +35,8 @@ module Immediate_Reflection_for_Zero_Stages #(
 ) (
     input logic clk,
     input logic rst,
-    input logic [NumStages-1:0] in,
-    input logic [NumStages-1:0] out
+    input logic [BitWidth-1:0] in,
+    input logic [BitWidth-1:0] out
 );
 
   // Immediate Reflection for Zero Stages: Check that if: NumStages is 0 and clk rises, then: out equals in immediately.
@@ -52,8 +52,8 @@ module Delayed_Reflection_for_Non_Zero_Stages #(
 ) (
     input logic clk,
     input logic rst,
-    input logic [NumStages-1:0] in,
-    input logic [NumStages-1:0] out
+    input logic [BitWidth-1:0] in,
+    input logic [BitWidth-1:0] out
 );
 
   // Delayed Reflection for Non-Zero Stages: Check that if: NumStages is greater than 0, after an initial one-time delay of NumStages cycles, and clk rises, then: out equals in from NumStages cycles ago.
