@@ -10,6 +10,6 @@
 
 |Name|Description|
 |---|---|
-|Reset Value of 'out'|Check that if: NumStages > 0 and 'rst' is set to '1' and then falls back to '0', then: 'out' is '0' on the following cycle.|
+|Reset Value of 'out'|Check that if: NumStages > 0 and 'rst' is set to '1' and then falls back to '0', then: 'out' is '0' immediately.|
 |Passthrough Operation|Check that if: NumStages = 0 then: out = in immediately.|
 |Delayed Operation|Check that if: NumStages > 0 and an initial one-time delay of NumStages cycles, then: out equals the past value of in from NumStages cycles ago.|

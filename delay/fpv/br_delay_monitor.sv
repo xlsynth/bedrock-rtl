@@ -33,9 +33,9 @@ module Reset_Value_of__out_
         input logic[BitWidth-1:0] out
     );
 
-// Reset Value of 'out': Check that if: NumStages > 0 and 'rst' is set to '1' and then falls back to '0', then: 'out' is '0' on the following cycle.
+// Reset Value of 'out': Check that if: NumStages > 0 and 'rst' is set to '1' and then falls back to '0', then: 'out' is '0' immediately.
 if (NumStages > 0) begin
-    Reset_out_A: assert property (@(posedge clk) $fell(rst) |-> ##1 (out == {BitWidth{1'b0}}));
+    Reset_out_A: assert property (@(posedge clk) $fell(rst) |-> (out == {BitWidth{1'b0}}));
 end
 endmodule
 
