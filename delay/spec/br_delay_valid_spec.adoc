@@ -52,7 +52,7 @@ Each data path register is clock-gated using its corresponding valid signal to p
 | `input`
 | `logic`
 | `clk`
-| Clock signal.
+| Clock signal, positive edge-triggered.
 
 | Reset
 | `input`

@@ -45,7 +45,7 @@ The `br_delay` module implements a configurable delay line that delays an input 
 | `input`
 | `logic`
 | `clk`
-| Clock signal.
+| Clock signal, positive edge-triggered.
 
 | Reset
 | `input`
