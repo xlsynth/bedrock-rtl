@@ -62,7 +62,7 @@
 
 // Clock: 'clk'
 // Reset: 'rst'
-`ifndef BR_ENABLE_IMPL_CHECKS
+`ifdef BR_ENABLE_IMPL_CHECKS
 `define BR_ASSERT_IMPL(__name__, __expr__) \
 `BR_ASSERT(__name__, __expr__)
 `else  // BR_ENABLE_IMPL_CHECKS
@@ -123,7 +123,7 @@
 
 // Clock: 'clk'
 // Reset: 'rst'
-`ifndef BR_ENABLE_IMPL_CHECKS
+`ifdef BR_ENABLE_IMPL_CHECKS
 `define BR_COVER_IMPL(__name__, __expr__) \
 `BR_COVER(__name__, __expr__)
 `else  // BR_ENABLE_IMPL_CHECKS
