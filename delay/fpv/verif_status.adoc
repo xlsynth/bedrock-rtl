@@ -18,8 +18,12 @@ a| Manually verified using ChipStack FPV:
 | 2024-10-17
 
 | br_delay_valid
-|
-|
+a| Manually verified using ChipStack FPV:
+
+* BitWidth = 1, NumStages = 0 (default params)
+* BitWidth = 5, NumStages = 1
+* BitWidth = 5, NumStages = 2
+| 2024-10-17
 
 | br_delay_valid_next
 |
