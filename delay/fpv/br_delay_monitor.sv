@@ -13,8 +13,8 @@ module br_delay_monitor
     (
         input logic clk,
         input logic rst,
-        input logic[0:0] in,
-        input logic[0:0] out
+        input logic[BitWidth-1:0] in,
+        input logic[BitWidth-1:0] out
     );
 
 Reset_Value_of__out_ #(.BitWidth(BitWidth), .NumStages(NumStages)) Reset_Value_of__out__inst(.*);
@@ -30,7 +30,7 @@ module Reset_Value_of__out_
     (
         input logic clk,
         input logic rst,
-        input logic[0:0] out
+        input logic[BitWidth-1:0] out
     );
 
 // Reset Value of 'out': Check that if: NumStages > 0 and 'rst' is set to '1' and then falls back to '0', then: 'out' is '0' on the following cycle.
@@ -47,8 +47,8 @@ module Passthrough_Operation
     (
         input logic clk,
         input logic rst,
-        input logic[0:0] in,
-        input logic[0:0] out
+        input logic[BitWidth-1:0] in,
+        input logic[BitWidth-1:0] out
     );
 
 // Passthrough Operation: Check that if: NumStages = 0 then: out = in immediately.
@@ -65,16 +65,16 @@ module Delayed_Operation
     (
         input logic clk,
         input logic rst,
-        input logic[0:0] in,
-        input logic[0:0] out
+        input logic[BitWidth-1:0] in,
+        input logic[BitWidth-1:0] out
     );
 
 // Delayed Operation: Check that if: NumStages > 0 and an initial one-time delay of NumStages cycles, then: out equals the past value of in from NumStages cycles ago.
 if (NumStages > 0) begin
-    Delayed_Output_Check_A: assert property (@(posedge clk) disable iff (rst) out == $past(in, NumStages));
+    Delayed_Output_Check_A: assert property (@(posedge clk) disable iff (rst) ##NumStages out == $past(in, NumStages));
 end
 endmodule
-bind br_delay br_delay_monitor 
+bind br_delay br_delay_monitor
     #(
         .BitWidth(BitWidth),
         .NumStages(NumStages)
