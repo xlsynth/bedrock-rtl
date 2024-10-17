@@ -19,9 +19,6 @@
 // then the output is the input. The pipeline registers do not
 // get reset.
 
-`define SV_ASSERT_ON
-`define BR_ENABLE_IMPL_CHECKS
-
 `include "br_registers.svh"
 `include "br_asserts_internal.svh"
 
