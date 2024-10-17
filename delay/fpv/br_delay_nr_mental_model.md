@@ -8,45 +8,49 @@
 ## Formal Unit Test Mental Model
 ### File: ./delay/rtl/br_delay_nr.sv
 
-### Module Summaries
+### SUMMARY
 
-### br_delay_nr
-The `br_delay_nr` module is designed to delay an input signal by a specified number of clock cycles, determined by the parameter `NumStages`. Its primary functionality is to pass the input signal through a series of pipeline registers, effectively delaying the signal by the number of stages specified, without any reset functionality for the registers.
+#### Module Instantiation Hierarchy:
+- br_delay_nr
+
+#### Module Summary Table:
+| Module | Summary |
+|--------|---------|
+| br_delay_nr (Top Level) | The `br_delay_nr` module is designed to delay an input signal by a specified number of clock cycles without using a reset mechanism. Its primary functionality is to pass the input signal through a series of pipeline registers, determined by the `NumStages` parameter, effectively delaying the output by the same number of clock cycles. If `NumStages` is set to zero, the output directly mirrors the input. |
 
 ### Clock Ports
 |Name|Description|
 |---|---|
-|clk|The type of this port is: logic.  The signal "clk" is a clock signal. It is an input port in the RTL top-level module and is used to synchronize the operations within the module, such as sampling the input and progressing data through the pipeline stages.|
+|clk|The type of this port is: logic.  The clock functionality of port `clk` is rising edge (posedge) triggered. Users interact with the design by providing an input signal `in` that is processed on the rising edge of `clk`. The expected behavior is that the input signal is delayed by a number of clock cycles specified by `NumStages` before appearing at the output `out`.|
 
 ### Reset Ports
 |Name|Description|
 |---|---|
-|rst|The type of this port is: logic.  The reset functionality of port `rst` in this design is not used for resetting the pipeline registers. It is only used for assertions. Therefore, the reset signal does not affect the behavior of the design in terms of delaying the input signal. The reset is synchronous active-high.|
+|rst|The type of this port is: logic.  The reset functionality of port `rst` is active-high.|
 
 ### Input Ports
 |Name|Description|
 |---|---|
-|in|The type of this port is: `logic[BitWidth-1:0]`.  The port `in` serves as the input signal for the design. When `NumStages = 0`, `in` is directly passed to `out` without delay, acting as a pass-through. When `NumStages > 0`, `in` is delayed by the specified number of clock cycles before appearing at `out`. The width of `in` is determined by the `BitWidth` parameter, which must be at least 1. The design does not reset the pipeline registers, so the input signal will propagate through the stages based on the clock cycles, unaffected by any reset signal.|
+|in|The type of this port is: logic[BitWidth-1:0].  The input port `in` is a logic vector with a width determined by the parameter `BitWidth`, which must be at least 1. It serves as the signal to be delayed by the delay line. Users interact with this port by providing the signal they wish to delay. The expected behavior is that the signal presented at `in` will be delayed by a number of clock cycles specified by `NumStages`. If `NumStages` is 0, the signal at `in` is immediately reflected at `out` with no delay. If `NumStages` is greater than 0, the signal is delayed by the specified number of clock cycles before appearing at `out`.|
 
 ### Output Ports
 |Name|Description|
 |---|---|
-|out|The type of this port is: `logic[BitWidth-1:0]`.  - The `out` port reflects the delayed or immediate value of the `in` signal based on `NumStages`. - If `NumStages = 0`, `out` immediately equals `in`, with no delay. - If `NumStages > 0`, `out` equals `in` delayed by `NumStages` clock cycles. - Upon reset, `out` is undefined.|
+|out|The type of this port is: logic[BitWidth-1:0].  - The `out` port reflects the delayed version of the `in` signal. - If `NumStages` is 0, `out` equals `in` immediately. - If `NumStages` is greater than 0, `out` is delayed by `NumStages` clock cycles. - Upon reset, `out` is undefined.|
 
 ### Design Parameters
 |Name|Description|
 |---|---|
-|NumStages|The type of this parameter is: int.  The configuration parameter `NumStages` determines the number of clock cycles by which the input signal `in` is delayed before appearing at the output `out`. When `NumStages` is set to 0, the design functions as a pass-through, meaning `out` immediately reflects `in` with no delay. For values greater than 0, `out` is delayed by the specified number of clock cycles, corresponding to the value of `NumStages`. This parameter allows users to configure the delay behavior of the design.|
-|BitWidth|The type of this parameter is: int.  The configuration parameter `BitWidth` determines the width of the input and output signals, `in` and `out`. It specifies the number of bits used to represent these signals, ensuring they can accommodate the desired data size. This parameter must be set to at least 1 to ensure valid signal representation.|
+|BitWidth|The type of this parameter is: int.  The configuration parameter `BitWidth` determines the width of the input and output signals, `in` and `out`. It specifies the number of bits used for these signals, allowing the design to handle data of varying sizes. Users set `BitWidth` to match the bit-width of the data they intend to process through the delay line. The parameter ensures that both `in` and `out` have the same bit-width, facilitating consistent data handling across the design.|
+|NumStages|The type of this parameter is: int.  The configuration parameter `NumStages` determines the number of clock cycles by which the input signal `in` is delayed before appearing at the output `out`. It defines the number of pipeline stages the signal passes through. If `NumStages` is set to 0, the output immediately reflects the input with no delay. If greater than 0, the input is delayed by the specified number of clock cycles.|
 
 ### Basic Functionality
 |Function|Description|
 |---|---|
-|Pass-through action|The goal of this function is to directly pass the input signal to the output without any delay. The input for this function is `in` when `NumStages = 0`. The expected output is `out`, which will be equal to `in` immediately, with no delay.|
-|Delay action|The goal of this function is to delay the input signal by a specified number of clock cycles. The input for this function is `in` when `NumStages > 0`. The expected output is `out`, which will be equal to the input signal `in` delayed by `NumStages` clock cycles. The delay type is many cycles, corresponding to the value of `NumStages`.|
+|Delay Line Operation|The goal of the operation is to delay the input signal `in` by a specified number of clock cycles, determined by the parameter `NumStages`. The control signal involved in this operation is `clk`. On the rising edge of `clk`, the input signal `in` is processed through the pipeline stages. If `NumStages` is 0, the output `out` is updated immediately with the input `in`, resulting in a same cycle delay. If `NumStages` is greater than 0, the input `in` is delayed by `NumStages` clock cycles before appearing at the output `out`, resulting in a many cycles delay.|
 
 ### Corner Case Functionality
 |Condition|Expected Behavior|Handling Mechanism|
 |---|---|---|
-|NumStages is 0|The output 'out' is directly equal to the input 'in'.|The design assigns 'in' directly to 'out' without any delay.|
-|NumStages is greater than 0|The output 'out' is the input 'in' delayed by 'NumStages' clock cycles.|The design uses a series of registers to delay the input signal by 'NumStages' cycles before assigning it to 'out'.|
+|NumStages is 0|Output 'out' is directly equal to input 'in'.|The module passes the input 'in' directly to the output 'out' without any delay.|
+|NumStages is greater than 0|Output 'out' is delayed by 'NumStages' clock cycles compared to input 'in'.|The module uses a series of pipeline registers to delay the input 'in' by 'NumStages' cycles before producing the output 'out'.|

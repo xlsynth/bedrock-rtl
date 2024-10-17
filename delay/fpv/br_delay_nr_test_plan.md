@@ -10,13 +10,5 @@
 
 |Name|Description|
 |---|---|
-|Reset Value of 'out'|Check that if: rst was set to '0' and then rises back to '1', then: out is undefined immediately.|
-|Immediate Pass-Through|Cover that: when `in` is set to a specific value, `out` immediately equals `in`.|
-|Delayed Output|Cover that: when `in` is set to a specific value, `out` equals `in` after many clock cycles.|
-|Data Integrity Verification|Clock and Reset Group, Data Group|
-|Pass-through Functionality|Check that if `NumStages = 0` and `in` changes, then `out` equals `in` immediately.|
-|Delay Functionality|Check that if `NumStages > 0` and `in` changes, then `out` equals `in` after NumStages clock cycles.|
-|Pipeline Progression|Check that if `in` changes, then `out` reflects the change after many clock cycles.|
-|Zero Delay Check|Check that if: NumStages is 0, then: out immediately equals in on every clock cycle.|
-|Non-zero Delay Check|Check that if: NumStages is greater than 0, then: out equals in after many clock cycles, specifically after NumStages cycles.|
-|Bit Width Consistency|Check that: the width of out always matches the width of in.|
+|Immediate Reflection for Zero Stages|Check that if: NumStages is 0 and clk rises, then: out equals in immediately.|
+|Delayed Reflection for Non-Zero Stages|Check that if: NumStages is greater than 0, after an initial one-time delay of NumStages cycles, and clk rises, then: out equals in from NumStages cycles ago.|
