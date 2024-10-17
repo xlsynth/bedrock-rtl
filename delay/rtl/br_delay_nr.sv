@@ -19,6 +19,9 @@
 // then the output is the input. The pipeline registers do not
 // get reset.
 
+`define SV_ASSERT_ON
+`define BR_ENABLE_IMPL_CHECKS
+
 `include "br_registers.svh"
 `include "br_asserts_internal.svh"
 
@@ -29,7 +32,7 @@ module br_delay_nr #(
     // Only used for assertions.
     // ri lint_check_waive NOT_READ HIER_NET_NOT_READ HIER_BRANCH_NOT_READ
     input  logic                clk,
-    // Only used for assertions.
+    // Synchronous active-high. Only used for assertions.
     // ri lint_check_waive NOT_READ HIER_NET_NOT_READ HIER_BRANCH_NOT_READ
     input  logic                rst,
     input  logic [BitWidth-1:0] in,
