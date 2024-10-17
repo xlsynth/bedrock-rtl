@@ -1,0 +1,32 @@
+= Verification Status
+
+[cols="2,2,2", options="header"]
+|===
+| Design | Status | Date
+
+| br_delay
+|
+|
+
+| br_delay_nr
+a| Manually verified using ChipStack FPV:
+
+* BitWidth = 1, NumStages = 0 (default params)
+* BitWidth = 5, NumStages = 1
+* BitWidth = 5, NumStages = 2
+
+| 2024-10-17
+
+| br_delay_valid
+|
+|
+
+| br_delay_valid_next
+|
+|
+
+| br_delay_valid_next_nr
+|
+|
+
+|===
