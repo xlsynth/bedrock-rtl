@@ -38,13 +38,16 @@ module br_fifo_pop_ctrl #(
     output logic [CountWidth-1:0] items_next,
 
     // Bypass interface
+    // Bypass is only used when EnableBypass is 1, hence lint waivers.
     output logic bypass_ready,
-    input logic bypass_valid,
-    input logic [BitWidth-1:0] bypass_data,
+    input logic bypass_valid,  // ri lint_check_waive INEFFECTIVE_NET
+    input logic [BitWidth-1:0] bypass_data,  // ri lint_check_waive INEFFECTIVE_NET
 
     // RAM interface
     output logic                 ram_rd_addr_valid,
     output logic [AddrWidth-1:0] ram_rd_addr,
+    // Port provided for clarity of interface design; only used for assertions.
+    // ri lint_check_waive INEFFECTIVE_NET
     input  logic                 ram_rd_data_valid,
     input  logic [ BitWidth-1:0] ram_rd_data,
 
@@ -101,7 +104,7 @@ module br_fifo_pop_ctrl #(
     assign pop_data = bypass_valid ? bypass_data : ram_rd_data;
     assign ram_pop = pop && !bypass_valid;
   end else begin : gen_no_bypass
-    assign bypass_ready = '0;
+    assign bypass_ready = '0;  // ri lint_check_waive CONST_ASSIGN CONST_OUTPUT
     assign pop_valid = !empty;
     assign pop_data = ram_rd_data;
     assign ram_pop = pop;

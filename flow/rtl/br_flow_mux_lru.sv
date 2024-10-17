@@ -81,4 +81,4 @@ module br_flow_mux_lru #(
   //------------------------------------------
   // Rely on submodule implementation checks
 
-endmodule : br_flow_mux_fixed
+endmodule : br_flow_mux_lru

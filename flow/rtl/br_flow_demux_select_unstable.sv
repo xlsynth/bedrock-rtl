@@ -33,7 +33,8 @@ module br_flow_demux_select_unstable #(
     // Must be at least 2
     parameter int NumFlows = 2,
     // Must be at least 1
-    parameter int BitWidth = 1
+    parameter int BitWidth = 1,
+    localparam int SelectWidth = $clog2(NumFlows)
 ) (
     // Used only for assertions
     // ri lint_check_waive HIER_NET_NOT_READ HIER_BRANCH_NOT_READ NOT_READ
@@ -42,7 +43,7 @@ module br_flow_demux_select_unstable #(
     // ri lint_check_waive HIER_NET_NOT_READ HIER_BRANCH_NOT_READ NOT_READ
     input logic rst,
 
-    input logic [$clog2(NumFlows)-1:0] select,
+    input logic [SelectWidth-1:0] select,
 
     output logic                push_ready,
     input  logic                push_valid,
@@ -66,7 +67,11 @@ module br_flow_demux_select_unstable #(
   //------------------------------------------
   // Implementation
   //------------------------------------------
+
+  // Lint waivers are safe because we assert select is always in range.
+  // ri lint_check_waive VAR_INDEX_READ
   assign push_ready = pop_ready[select];
+  // ri lint_check_waive VAR_SHIFT TRUNC_LSHIFT
   assign pop_valid  = push_valid << select;
   // Replicate pop_data to all flows; this is okay since pop_data[i]
   // is only valid when pop_valid[i] is high.

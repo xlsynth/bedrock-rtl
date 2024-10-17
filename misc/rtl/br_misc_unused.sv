@@ -18,7 +18,7 @@
 // It is expected that this logic will be automatically removed by the
 // synthesis tool.
 
-// ri lint_check_waive EMPTY_MOD
+// ri lint_check_waive EMPTY_MOD NO_OUTPUT
 module br_misc_unused #(
     parameter int BitWidth = 1  // Must be at least 1
 ) (

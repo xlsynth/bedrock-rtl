@@ -71,13 +71,19 @@ module br_arb_rr #(
 
   logic [NumRequesters-1:0] priority_mask;
   logic [NumRequesters-1:0] request_high;
-  logic [NumRequesters-1:0] grant_high, grant_low;
-  logic [$clog2(NumRequesters)-1:0] last_grant, last_grant_next;
+  logic [NumRequesters-1:0] grant_high;
+  logic [NumRequesters-1:0] grant_low;
+  logic [$clog2(NumRequesters)-1:0] last_grant;
+  logic [$clog2(NumRequesters)-1:0] last_grant_next;
 
   for (genvar i = 0; i < NumRequesters; i++) begin : gen_priority_mask
+    // priority_mask[0] is constant 0
+    // ri lint_check_waive CONST_ASSIGN
     assign priority_mask[i] = i > last_grant;
   end
 
+  // request[0] is constant 0
+  // ri lint_check_waive CONST_ASSIGN
   assign request_high = request & priority_mask;
 
   br_enc_priority_encoder #(
@@ -99,7 +105,7 @@ module br_arb_rr #(
 
   // We know that any request will always result in a grant if the arbiter is enabled,
   // so we can simplify the timing on the load enable.
-  // Initialize the last_grant to 1000...0 to make index 0 the highest priority out of reset.
+  // Initialize the last_grant the most significant requester to make index 0 the highest priority out of reset.
   br_enc_onehot2bin #(
       .NumValues(NumRequesters)
   ) br_enc_onehot2bin (
@@ -107,7 +113,7 @@ module br_arb_rr #(
       .out(last_grant_next)
   );
 
-  `BR_REGIL(last_grant, last_grant_next, |request && enable, 1'b1 << (NumRequesters - 1))
+  `BR_REGIL(last_grant, last_grant_next, |request && enable, NumRequesters - 1)
 
   //------------------------------------------
   // Implementation checks
