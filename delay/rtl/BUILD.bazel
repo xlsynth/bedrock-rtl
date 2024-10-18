@@ -13,7 +13,7 @@
 # limitations under the License.
 
 load("@rules_hdl//verilog:providers.bzl", "verilog_library")
-load("//bazel:verilog.bzl", "verilog_elab_and_lint_test_suite")
+load("//bazel:br_verilog.bzl", "br_verilog_elab_and_lint_test_suite")
 
 package(default_visibility = ["//visibility:public"])
 
@@ -62,7 +62,7 @@ verilog_library(
     ],
 )
 
-verilog_elab_and_lint_test_suite(
+br_verilog_elab_and_lint_test_suite(
     name = "br_delay_test_suite",
     params = {
         "BitWidth": [
@@ -78,7 +78,7 @@ verilog_elab_and_lint_test_suite(
     deps = [":br_delay"],
 )
 
-verilog_elab_and_lint_test_suite(
+br_verilog_elab_and_lint_test_suite(
     name = "br_delay_nr_test_suite",
     params = {
         "BitWidth": [
@@ -94,7 +94,7 @@ verilog_elab_and_lint_test_suite(
     deps = [":br_delay_nr"],
 )
 
-verilog_elab_and_lint_test_suite(
+br_verilog_elab_and_lint_test_suite(
     name = "br_delay_valid_test_suite",
     params = {
         "BitWidth": [
@@ -110,7 +110,7 @@ verilog_elab_and_lint_test_suite(
     deps = [":br_delay_valid"],
 )
 
-verilog_elab_and_lint_test_suite(
+br_verilog_elab_and_lint_test_suite(
     name = "br_delay_valid_next_test_suite",
     params = {
         "BitWidth": [
@@ -126,7 +126,7 @@ verilog_elab_and_lint_test_suite(
     deps = [":br_delay_valid_next"],
 )
 
-verilog_elab_and_lint_test_suite(
+br_verilog_elab_and_lint_test_suite(
     name = "br_delay_valid_next_nr_test_suite",
     params = {
         "BitWidth": [

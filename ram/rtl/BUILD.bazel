@@ -13,7 +13,7 @@
 # limitations under the License.
 
 load("@rules_hdl//verilog:providers.bzl", "verilog_library")
-load("//bazel:verilog.bzl", "verilog_elab_and_lint_test_suite")
+load("//bazel:br_verilog.bzl", "br_verilog_elab_and_lint_test_suite")
 
 package(default_visibility = ["//visibility:public"])
 
@@ -26,7 +26,7 @@ verilog_library(
     ],
 )
 
-verilog_elab_and_lint_test_suite(
+br_verilog_elab_and_lint_test_suite(
     name = "br_ram_flops_1r1w_test_suite",
     params = {
         "Depth": [

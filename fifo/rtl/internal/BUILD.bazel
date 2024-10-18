@@ -13,7 +13,7 @@
 # limitations under the License.
 
 load("@rules_hdl//verilog:providers.bzl", "verilog_library")
-load("//bazel:verilog.bzl", "verilog_elab_and_lint_test_suite")
+load("//bazel:br_verilog.bzl", "br_verilog_elab_and_lint_test_suite")
 
 package(default_visibility = ["//fifo/rtl:__subpackages__"])
 
@@ -39,7 +39,7 @@ verilog_library(
     ],
 )
 
-verilog_elab_and_lint_test_suite(
+br_verilog_elab_and_lint_test_suite(
     name = "br_fifo_push_ctrl_test_suite",
     params = {
         "Depth": [
@@ -58,7 +58,7 @@ verilog_elab_and_lint_test_suite(
     deps = [":br_fifo_push_ctrl"],
 )
 
-verilog_elab_and_lint_test_suite(
+br_verilog_elab_and_lint_test_suite(
     name = "br_fifo_pop_ctrl_test_suite",
     params = {
         "Depth": [
