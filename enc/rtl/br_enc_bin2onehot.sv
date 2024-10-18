@@ -41,9 +41,9 @@ module br_enc_bin2onehot #(
     parameter int NumValues = 2,  // Must be at least 2
     localparam int BinWidth = $clog2(NumValues)
 ) (
-    // ri lint_check_waive NOT_READ HIER_NET_NOT_READ HIER_BRANCH_NOT_READ
+    // ri lint_check_waive INPUT_NOT_READ HIER_NET_NOT_READ HIER_BRANCH_NOT_READ
     input logic clk,  // Used only for assertions
-    // ri lint_check_waive NOT_READ HIER_NET_NOT_READ HIER_BRANCH_NOT_READ
+    // ri lint_check_waive INPUT_NOT_READ HIER_NET_NOT_READ HIER_BRANCH_NOT_READ
     input logic rst,  // Used only for assertions
     input logic [BinWidth-1:0] in,
     output logic [NumValues-1:0] out
