@@ -89,6 +89,8 @@ module br_arb_rr #(
   br_enc_priority_encoder #(
       .NumRequesters(NumRequesters)
   ) br_enc_priority_encoder_high (
+      .clk,
+      .rst,
       .in (request_high),
       .out(grant_high)
   );
@@ -96,6 +98,8 @@ module br_arb_rr #(
   br_enc_priority_encoder #(
       .NumRequesters(NumRequesters)
   ) br_enc_priority_encoder_low (
+      .clk,
+      .rst,
       .in (request),   // No need to mask since we only use grant_low if request_high is zero
       .out(grant_low)
   );
@@ -109,6 +113,8 @@ module br_arb_rr #(
   br_enc_onehot2bin #(
       .NumValues(NumRequesters)
   ) br_enc_onehot2bin (
+      .clk,
+      .rst,
       .in (grant),
       .out(last_grant_next)
   );

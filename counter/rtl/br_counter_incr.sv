@@ -68,6 +68,9 @@ module br_counter_incr #(
 
   logic [ValueWidth-1:0] value_next_internal;
 
+  // TODO(mgottscho): Sometimes the MSbs may not be used. It'd be cleaner
+  // to capture them more tightly using br_misc_unused.
+  // ri lint_check_waive NOT_READ
   logic [ TempWidth-1:0] value_temp;
   assign value_temp = value + incr;
 

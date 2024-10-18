@@ -25,9 +25,9 @@ module br_enc_priority_encoder #(
     // Must be at least 2
     parameter int NumRequesters = 2
 ) (
-    // ri lint_check_waive NOT_READ HIER_NET_NOT_READ HIER_BRANCH_NOT_READ
+    // ri lint_check_waive INPUT_NOT_READ HIER_NET_NOT_READ HIER_BRANCH_NOT_READ
     input logic clk,  // Used only for assertions
-    // ri lint_check_waive NOT_READ HIER_NET_NOT_READ HIER_BRANCH_NOT_READ
+    // ri lint_check_waive INPUT_NOT_READ HIER_NET_NOT_READ HIER_BRANCH_NOT_READ
     input logic rst,  // Used only for assertions
     input logic [NumRequesters-1:0] in,
     output logic [NumRequesters-1:0] out
