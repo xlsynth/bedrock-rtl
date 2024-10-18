@@ -24,10 +24,11 @@
 module br_flow_join #(
     parameter int NumFlows = 2  // Must be at least 2
 ) (
-    // ri lint_check_waive NOT_READ HIER_NET_NOT_READ HIER_BRANCH_NOT_READ
+    // ri lint_check_waive INPUT_NOT_READ HIER_NET_NOT_READ HIER_BRANCH_NOT_READ
     input logic clk,  // Used only for assertions
-    // ri lint_check_waive NOT_READ HIER_NET_NOT_READ HIER_BRANCH_NOT_READ
-    input logic rst,  // Used only for assertions
+    // Synchronous active-high reset. Used only for assertions.
+    // ri lint_check_waive INPUT_NOT_READ HIER_NET_NOT_READ HIER_BRANCH_NOT_READ
+    input logic rst,
 
     // Push-side interfaces
     output logic [NumFlows-1:0] push_ready,

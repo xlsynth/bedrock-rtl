@@ -13,7 +13,7 @@
 # limitations under the License.
 
 load("@rules_hdl//verilog:providers.bzl", "verilog_library")
-load("//bazel:verilog.bzl", "verilog_elab_and_lint_test_suite")
+load("//bazel:br_verilog.bzl", "br_verilog_elab_and_lint_test_suite")
 
 package(default_visibility = ["//visibility:public"])
 
@@ -117,7 +117,7 @@ verilog_library(
     ],
 )
 
-verilog_elab_and_lint_test_suite(
+br_verilog_elab_and_lint_test_suite(
     name = "br_flow_arb_fixed_test_suite",
     params = {
         "NumFlows": [
@@ -128,7 +128,7 @@ verilog_elab_and_lint_test_suite(
     deps = [":br_flow_arb_fixed"],
 )
 
-verilog_elab_and_lint_test_suite(
+br_verilog_elab_and_lint_test_suite(
     name = "br_flow_arb_rr_test_suite",
     params = {
         "NumFlows": [
@@ -139,7 +139,7 @@ verilog_elab_and_lint_test_suite(
     deps = [":br_flow_arb_rr"],
 )
 
-verilog_elab_and_lint_test_suite(
+br_verilog_elab_and_lint_test_suite(
     name = "br_flow_arb_lru_test_suite",
     params = {
         "NumFlows": [
@@ -150,7 +150,7 @@ verilog_elab_and_lint_test_suite(
     deps = [":br_flow_arb_lru"],
 )
 
-verilog_elab_and_lint_test_suite(
+br_verilog_elab_and_lint_test_suite(
     name = "br_flow_demux_select_test_suite",
     params = {
         "NumFlows": [
@@ -165,7 +165,7 @@ verilog_elab_and_lint_test_suite(
     deps = [":br_flow_demux_select"],
 )
 
-verilog_elab_and_lint_test_suite(
+br_verilog_elab_and_lint_test_suite(
     name = "br_flow_demux_select_unstable_test_suite",
     params = {
         "NumFlows": [
@@ -180,7 +180,7 @@ verilog_elab_and_lint_test_suite(
     deps = [":br_flow_demux_select_unstable"],
 )
 
-verilog_elab_and_lint_test_suite(
+br_verilog_elab_and_lint_test_suite(
     name = "br_flow_fork_test_suite",
     params = {
         "NumFlows": [
@@ -191,7 +191,7 @@ verilog_elab_and_lint_test_suite(
     deps = [":br_flow_fork"],
 )
 
-verilog_elab_and_lint_test_suite(
+br_verilog_elab_and_lint_test_suite(
     name = "br_flow_join_test_suite",
     params = {
         "NumFlows": [
@@ -202,7 +202,7 @@ verilog_elab_and_lint_test_suite(
     deps = [":br_flow_join"],
 )
 
-verilog_elab_and_lint_test_suite(
+br_verilog_elab_and_lint_test_suite(
     name = "br_flow_mux_select_test_suite",
     params = {
         "NumFlows": [
@@ -217,7 +217,7 @@ verilog_elab_and_lint_test_suite(
     deps = [":br_flow_mux_select"],
 )
 
-verilog_elab_and_lint_test_suite(
+br_verilog_elab_and_lint_test_suite(
     name = "br_flow_mux_select_unstable_test_suite",
     params = {
         "NumFlows": [
@@ -232,7 +232,7 @@ verilog_elab_and_lint_test_suite(
     deps = [":br_flow_mux_select_unstable"],
 )
 
-verilog_elab_and_lint_test_suite(
+br_verilog_elab_and_lint_test_suite(
     name = "br_flow_reg_both_test_suite",
     params = {
         "BitWidth": [
@@ -243,7 +243,7 @@ verilog_elab_and_lint_test_suite(
     deps = [":br_flow_reg_both"],
 )
 
-verilog_elab_and_lint_test_suite(
+br_verilog_elab_and_lint_test_suite(
     name = "br_flow_reg_fwd_test_suite",
     params = {
         "BitWidth": [
@@ -254,7 +254,7 @@ verilog_elab_and_lint_test_suite(
     deps = [":br_flow_reg_fwd"],
 )
 
-verilog_elab_and_lint_test_suite(
+br_verilog_elab_and_lint_test_suite(
     name = "br_flow_reg_rev_test_suite",
     params = {
         "BitWidth": [
