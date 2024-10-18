@@ -178,12 +178,12 @@ def _cartesian_product(lists):
         result = [x + [y] for x in result for y in pool]
     return result
 
-def _make_test_name(base_name, param_keys, combination):
+def _make_test_name(base_name, suffix, param_keys, combination):
     """Generate a unique test name based on a combination of parameter values."""
     parts = [base_name]
     for key, value in zip(param_keys, combination):
         parts.append("%s%s" % (key, value))
-    parts.append("test")
+    parts.append(suffix)
     return "_".join(parts)
 
 def verilog_elab_and_lint_test_suite(name, defines = [], params = {}, **kwargs):
@@ -207,13 +207,13 @@ def verilog_elab_and_lint_test_suite(name, defines = [], params = {}, **kwargs):
     for param_combination in param_combinations:
         params = dict(zip(param_keys, param_combination))
         verilog_elab_test(
-            name = _make_test_name(name + "_elab", param_keys, param_combination),
+            name = _make_test_name(name, "elab_test", param_keys, param_combination),
             defines = defines,
             params = params,
             **kwargs
         )
         verilog_lint_test(
-            name = _make_test_name(name + "_lint", param_keys, param_combination),
+            name = _make_test_name(name, "lint_test", param_keys, param_combination),
             defines = defines,
             params = params,
             **kwargs
