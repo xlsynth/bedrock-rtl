@@ -15,7 +15,9 @@
 // Bedrock-RTL Least-Recently-Used (LRU) Arbiter
 //
 // Grants a single request at a time with a fair least-recently-used policy.
-// An enable signal controls whether any grant can be made.
+//
+// The enable_priority_update signal allows the priority state to update when a grant is made.
+// If low, grants can still be made, but the priority will remain unchanged for the next cycle.
 
 `include "br_asserts_internal.svh"
 `include "br_registers.svh"
@@ -26,7 +28,7 @@ module br_arb_lru #(
 ) (
     input logic clk,
     input logic rst,  // Synchronous active-high
-    input logic enable,
+    input logic enable_priority_update,
     input logic [NumRequesters-1:0] request,
     output logic [NumRequesters-1:0] grant
 );
@@ -53,7 +55,7 @@ module br_arb_lru #(
   // Therefore, requester i can only be granted if (!req[j] || state[i][j]) for all j where i != j.
   // If priorities are tied, the lower-index requester wins.
   //
-  // State update occurs whenever the arbiter is enabled and there is any valid request
+  // State update occurs whenever enable_priority_update is 1 and there is any valid request
   // (because it will always result in a grant).
   // * Whenever a grant occurs for requester i, on the next cycle we fill 0s into state[i][j]
   //   for all j where i != j. This indicates that requester i is used more recently (lower
@@ -81,7 +83,7 @@ module br_arb_lru #(
       if (i < j) begin : gen_upper_tri
         // All bits in upper triangle init to 1'b1 (lowest numbered req wins)
         assign state_reg_next[i][j] = grant[i] ? 1'b0 : grant[j] ? 1'b1 : state[i][j];
-        `BR_REGIL(state_reg[i][j], state_reg_next[i][j], enable && |request, 1'b1)
+        `BR_REGIL(state_reg[i][j], state_reg_next[i][j], enable_priority_update && |request, 1'b1)
         assign state[i][j] = state_reg[i][j];
 
         // Lower triangle is the inverse of upper triangle
@@ -132,8 +134,9 @@ module br_arb_lru #(
   // Rely on submodule implementation checks
 
   `BR_ASSERT_IMPL(grant_onehot0_A, $onehot0(grant))
+  `BR_ASSERT_IMPL(always_grant_a, |request |-> |grant)
   `BR_ASSERT_IMPL(grant_implies_request_A, (grant & request) == grant)
-  `BR_ASSERT_IMPL(grant_only_when_enabled_A, |grant |-> enable)
+  `BR_COVER_IMPL(grant_without_state_update_c, !enable_priority_update && |grant)
 
   // TODO(mgottscho): Add more cases
 

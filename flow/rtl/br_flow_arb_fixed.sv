@@ -58,7 +58,6 @@ module br_flow_arb_fixed #(
   ) br_arb_fixed (
       .clk,
       .rst,
-      .enable (pop_ready),
       .request(push_valid),
       .grant
   );
@@ -68,7 +67,7 @@ module br_flow_arb_fixed #(
   // for the same flow.
   for (genvar i = 0; i < NumFlows; i++) begin : gen_push_ready
     always_comb begin
-      push_ready[i] = 1'b1;
+      push_ready[i] = pop_ready;
       for (int j = 0; j < NumFlows; j++) begin
         if (i != j) begin
           push_ready[i] &= !grant[j];

@@ -56,7 +56,7 @@ module br_flow_arb_lru #(
   ) br_arb_lru (
       .clk,
       .rst,
-      .enable (pop_ready),
+      .enable_priority_update(pop_ready),
       .request(push_valid),
       .grant
   );
