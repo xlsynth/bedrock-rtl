@@ -26,10 +26,10 @@ module br_flow_fork #(
     parameter int NumFlows = 2  // Must be at least 2
 ) (
     // Used only for assertions
-    // ri lint_check_waive NOT_READ HIER_NET_NOT_READ HIER_BRANCH_NOT_READ
+    // ri lint_check_waive INPUT_NOT_READ HIER_NET_NOT_READ HIER_BRANCH_NOT_READ
     input logic clk,
-    // Used only for assertions
-    // ri lint_check_waive NOT_READ HIER_NET_NOT_READ HIER_BRANCH_NOT_READ
+    // Synchronous active-high reset. Used only for assertions.
+    // ri lint_check_waive INPUT_NOT_READ HIER_NET_NOT_READ HIER_BRANCH_NOT_READ
     input logic rst,
 
     // Push-side interface
