@@ -49,6 +49,7 @@ pre-commit run
 
 `verilog_elab_test` and `verilog_lint_test` rules use placeholder tools by default, so those tests will always pass unless you point at real tools.
 To do this, set the following Bazel action environment variables to point to executables via the `--action_env` flag (which you can set in your `.bazelrc` file for convenience):
+
 * `BAZEL_VERILOG_ELAB_TEST_TOOL`
 * `BAZEL_VERILOG_LINT_TEST_TOOL`
 
@@ -60,3 +61,134 @@ bazel test //...
 == Continuous Integration
 
 Using GitHub Actions, which currently just runs Verible lint and format tests.
+
+== Planned Features
+
+The following table summarizes the list of features that we plan to implement in the Bedrock-RTL library.
+Checked boxes already have prototype implementations, though they are not verified yet.
+
+[cols="1,2"]
+|===
+| Category | Description
+
+| arb
+a| Basic arbiters
+
+ * [x] Fixed priority
+ * [x] LRU
+ * [x] Round-robin
+ * [ ] Weighted LRU
+ * [ ] Weighted round-robin
+
+| cdc
+a| Clock-domain crossings
+
+* [ ] Single-bit sync
+* [ ] Bus sync using CDC FIFOs
+
+| counter
+a| Counters with the following feature combinations:
+
+* [x] Incrementing/decrementing
+* [x] Wrapping
+* [ ] Saturating
+* [ ] Re-initializable
+
+| credit
+a| Credit/valid flow control
+
+* [ ] Credit counter
+* [ ] Ready/valid -> credit/valid producer conversion
+
+| delay
+a| Feedforward delay pipeline registers
+
+* [x] Non-gated, reset
+* [x] Non-gated, non-reset
+* [x] Self-gated (valid), reset
+* [x] Self-gated on next cycle (valid-next), reset
+* [x] Self-gated on next cycle (valid-next), non-reset
+
+| ecc
+a| Error correcting codes
+
+* [ ] Parity encoder/decoder
+* [ ] SECDED encoder/decoder
+
+| enc
+a| Encoders
+
+* [x] onehot2bin
+* [x] bin2onehot
+* [x] priority
+
+| err
+a| Errors
+
+* [ ] Sticky error log register
+* [ ] Source masking
+* [ ] Interrupt masking
+
+| fifo
+a| FIFO (queue) controllers with external RAM ports. Combinations of:
+
+* [x] Ready/valid
+* [ ] Credit/valid
+* [x] 1R1W (single bank)
+* [ ] 1RW (dual bank)
+
+Additionally, FIFOs that are simple wrappers around controllers and flop-RAMs.
+
+| flow
+a| Ready/valid flow control (streaming)
+
+* [x] Arbs
+* [x] Muxes
+* [x] Regs
+* [x] Fork
+* [x] Join
+* [x] Demuxes
+
+| macros
+a| Macros for inferring flip-flop registers with combinations of the following features.
+
+* [x] Posedge clock
+* [x] Active-high sync/async reset
+* [x] Initial value
+* [x] Load enable
+
+Macros for SystemVerilog assertions.
+
+* [x] Static
+* [x] Concurrent
+* [x] Immediate
+* [x] Bedrock library-internal
+
+| ram
+a| Memories
+
+* [x] Parameterizable Flop RAM
+* [ ] CAM
+* [ ] Addressing helpers
+* [ ] Hazard detection
+
+| rdc
+a| Reset domain crossings
+
+* [ ] Reset controls
+* [ ] Reset handshakes
+
+| timer
+a| Timers
+
+* [ ] Watchdog
+* [ ] Rollover
+
+|===
+
+== Style Guide
+
+:lowrisc-style-guide: https://github.com/lowRISC/style-guides/blob/master/VerilogCodingStyle.md
+
+We aim to follow the {lowrisc-style-guide}[lowRISC Verilog Style Guide^].
+We will document any exceptions here.
