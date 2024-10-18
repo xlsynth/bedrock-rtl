@@ -132,8 +132,10 @@ a| Errors
 | fifo
 a| FIFO (queue) controllers with external RAM ports. Combinations of:
 
-* [x] Ready/valid
-* [ ] Credit/valid
+* [x] Push ready/valid
+* [ ] Push credit/valid
+* [x] Pop ready/valid
+* [ ] Pop credit/valid
 * [x] 1R1W (single bank)
 * [ ] 1RW (dual bank)
 
