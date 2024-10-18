@@ -16,8 +16,6 @@
 //
 // Grants a single request at a time with fixed (strict) priority
 // where the lowest index requester has the highest priority.
-//
-// An enable signal controls whether any grant can be made.
 
 `include "br_asserts_internal.svh"
 
@@ -29,7 +27,6 @@ module br_arb_fixed #(
     input logic clk,  // Only used for assertions
     // ri lint_check_waive HIER_NET_NOT_READ HIER_BRANCH_NOT_READ
     input logic rst,  // Only used for assertions
-    input logic enable,
     input logic [NumRequesters-1:0] request,
     output logic [NumRequesters-1:0] grant
 );
@@ -42,18 +39,14 @@ module br_arb_fixed #(
   //------------------------------------------
   // Implementation
   //------------------------------------------
-  logic [NumRequesters-1:0] grant_internal;
-
   br_enc_priority_encoder #(
       .NumRequesters(NumRequesters)
   ) br_enc_priority_encoder (
       .clk,
       .rst,
       .in (request),
-      .out(grant_internal)
+      .out(grant)
   );
-
-  assign grant = {NumRequesters{enable}} & grant_internal;
 
   //------------------------------------------
   // Implementation checks
@@ -61,7 +54,7 @@ module br_arb_fixed #(
   // Rely on submodule implementation checks
 
   `BR_ASSERT_IMPL(grant_onehot0_A, $onehot0(grant))
+  `BR_ASSERT_IMPL(always_grant_a, |request |-> |grant)
   `BR_ASSERT_IMPL(grant_implies_request_A, (grant & request) == grant)
-  `BR_ASSERT_IMPL(grant_only_when_enabled_A, |grant |-> enable)
 
 endmodule : br_arb_fixed

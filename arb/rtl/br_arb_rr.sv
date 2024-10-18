@@ -22,8 +22,8 @@
 // On average, round-robin arbitration is fair to all requesters so long as each requester
 // does not withdraw its request until it is granted.
 //
-// An enable signal controls whether any grant can be made (and whether the corresponding
-// priority update can occur).
+// The enable_priority_update signal allows the priority state to update when a grant is made.
+// If low, grants can still be made, but the priority will remain unchanged for the next cycle.
 //
 // There is zero latency from request to grant.
 
@@ -36,7 +36,7 @@ module br_arb_rr #(
 ) (
     input logic clk,
     input logic rst,  // Synchronous active-high
-    input logic enable,
+    input logic enable_priority_update,
     input logic [NumRequesters-1:0] request,
     output logic [NumRequesters-1:0] grant
 );
@@ -104,12 +104,12 @@ module br_arb_rr #(
       .out(grant_low)
   );
 
-  // Mask the grant using the enable -- also ensures priority won't be updated if enable is low.
-  assign grant = {NumRequesters{enable}} & (|request_high ? grant_high : grant_low);
+  assign grant = |request_high ? grant_high : grant_low;
 
-  // We know that any request will always result in a grant if the arbiter is enabled,
+  // We know that any request will always result in a grant,
   // so we can simplify the timing on the load enable.
-  // Initialize the last_grant the most significant requester to make index 0 the highest priority out of reset.
+  // Initialize the last_grant the most significant requester
+  // to make index 0 the highest priority out of reset.
   br_enc_onehot2bin #(
       .NumValues(NumRequesters)
   ) br_enc_onehot2bin (
@@ -119,7 +119,7 @@ module br_arb_rr #(
       .out(last_grant_next)
   );
 
-  `BR_REGIL(last_grant, last_grant_next, |request && enable, NumRequesters - 1)
+  `BR_REGIL(last_grant, last_grant_next, enable_priority_update && |request, NumRequesters - 1)
 
   //------------------------------------------
   // Implementation checks
@@ -127,8 +127,9 @@ module br_arb_rr #(
   // Rely on submodule implementation checks
 
   `BR_ASSERT_IMPL(grant_onehot0_A, $onehot0(grant))
+  `BR_ASSERT_IMPL(always_grant_a, |request |-> |grant)
   `BR_ASSERT_IMPL(grant_implies_request_A, (grant & request) == grant)
-  `BR_ASSERT_IMPL(grant_only_when_enabled_A, |grant |-> enable)
+  `BR_COVER_IMPL(grant_without_state_update_c, !enable_priority_update && |grant)
 
   // TODO(mgottscho): Add more cases
   // TODO(mgottscho): Add covers on masked and unmasked cases
