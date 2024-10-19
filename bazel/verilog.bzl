@@ -29,7 +29,7 @@ def _check_verilog_info_provider(iterable):
                  "This probably means you accidentally provided a label that didn't come " +
                  "from a verilog_library target. ".format(item.label))
 
-def _get_transitive(ctx, srcs_not_hdrs):
+def get_transitive(ctx, srcs_not_hdrs):
     """Returns a depset of all Verilog source or header files in the transitive closure of the deps attribute."""
     _check_verilog_info_provider(ctx.attr.deps)
     transitive_depset = depset(
@@ -60,8 +60,8 @@ def _write_executable_shell_script(ctx, filename, cmd):
     return executable_file
 
 def _verilog_base_test_impl(ctx, tool, extra_args = [], extra_runfiles = []):
-    srcs = _get_transitive(ctx = ctx, srcs_not_hdrs = True).to_list()
-    hdrs = _get_transitive(ctx = ctx, srcs_not_hdrs = False).to_list()
+    srcs = get_transitive(ctx = ctx, srcs_not_hdrs = True).to_list()
+    hdrs = get_transitive(ctx = ctx, srcs_not_hdrs = False).to_list()
     src_files = [src.path for src in srcs]
     hdr_files = [hdr.path for hdr in hdrs]
     top = ctx.attr.top
