@@ -40,8 +40,8 @@ module br_fifo_push_ctrl #(
     // Bypass interface
     // Bypass is only used when EnableBypass is 1, hence lint waiver.
     input logic bypass_ready,  // ri lint_check_waive INEFFECTIVE_NET
-    output logic bypass_valid,
-    output logic [BitWidth-1:0] bypass_data,
+    output logic bypass_valid_unstable,
+    output logic [BitWidth-1:0] bypass_data_unstable,
 
     // RAM interface
     output logic                 ram_wr_valid,
@@ -101,15 +101,15 @@ module br_fifo_push_ctrl #(
   // Datapath
   assign ram_wr_valid = ram_push;
   if (EnableBypass) begin : gen_bypass
-    assign bypass_valid = push && bypass_ready;
-    assign bypass_data = push_data;
+    assign bypass_valid_unstable = push_valid;
+    assign bypass_data_unstable = push_data;
 
     assign ram_push = push && !bypass_ready;
     assign ram_wr_data = push_data;
   end else begin : gen_no_bypass
     br_misc_unused br_misc_unused_bypass_ready (.in(bypass_ready));
-    assign bypass_valid = '0;  // ri lint_check_waive CONST_ASSIGN CONST_OUTPUT
-    assign bypass_data = '0;  // ri lint_check_waive CONST_ASSIGN CONST_OUTPUT
+    assign bypass_valid_unstable = '0;  // ri lint_check_waive CONST_ASSIGN CONST_OUTPUT
+    assign bypass_data_unstable = '0;  // ri lint_check_waive CONST_ASSIGN CONST_OUTPUT
 
     assign ram_push = push;
     assign ram_wr_data = push_data;
@@ -130,8 +130,9 @@ module br_fifo_push_ctrl #(
   // Flow control and latency
   `BR_ASSERT_IMPL(push_backpressure_when_full_a, full |-> !push_ready)
   `BR_ASSERT_IMPL(backpressure_latency_1_cycle_a, full && ram_pop |=> !full && push_ready)
-  `BR_ASSERT_IMPL(bypass_backpressure_a, !bypass_ready && bypass_valid |=> bypass_valid && $stable
-                                         (bypass_data))
+  `BR_ASSERT_IMPL(ram_push_and_bypass_mutually_exclusive_a,
+    !(ram_push && bypass_ready && bypass_valid))
+  `BR_COVER_IMPL(bypass_unstable_c, !bypass_ready && bypass_valid_unstable)
 
   // RAM
   `BR_ASSERT_IMPL(ram_write_a, ram_push |-> ram_wr_valid && ram_wr_data == push_data)
