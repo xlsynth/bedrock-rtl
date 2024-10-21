@@ -27,15 +27,45 @@ verilog_library(
 )
 
 br_verilog_elab_and_lint_test_suite(
-    name = "br_credit_counter_test_suite",
+    name = "br_credit_counter_test_suite_basic",
     params = {
         "MaxValue": [
             "1",
             "2",
+        ],
+        "MaxChange": [
+            "1",
+        ],
+    },
+    deps = [":br_credit_counter"],
+)
+
+br_verilog_elab_and_lint_test_suite(
+    name = "br_credit_counter_test_suite_pow_of_2_minus_1",
+    params = {
+        "MaxValue": [
             "3",
         ],
-        "MaxIncrement": [
+        "MaxChange": [
             "1",
+            "2",
+            "3",
+        ],
+    },
+    deps = [":br_credit_counter"],
+)
+
+br_verilog_elab_and_lint_test_suite(
+    name = "br_credit_counter_test_suite_pow_of_2",
+    params = {
+        "MaxValue": [
+            "4",
+        ],
+        "MaxChange": [
+            "1",
+            "2",
+            "3",
+            "4",
         ],
     },
     deps = [":br_credit_counter"],

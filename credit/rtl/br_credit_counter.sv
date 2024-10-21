@@ -40,8 +40,10 @@
 `include "br_registers.svh"
 
 module br_credit_counter #(
-    parameter int MaxValue = 1,  // Maximum credit counter value (inclusive). Default is 1.
-    parameter int MaxChange = 1,  // Maximum increment/decrement amount (inclusive). Default is 1.
+    // Maximum credit counter value (inclusive). Must be at least 1.
+    parameter int MaxValue = 1,
+    // Maximum increment/decrement amount (inclusive). Must be at least 1.
+    parameter int MaxChange = 1,
     localparam int ValueWidth = $clog2(MaxValue + 1),
     localparam int ChangeWidth = $clog2(MaxChange + 1)
 ) (
@@ -50,10 +52,12 @@ module br_credit_counter #(
     // Synchronous active-high reset.
     input  logic                   rst,
     input  logic [ ValueWidth-1:0] initial_value,
+    // Supports independent increment and decrement on the same cycle.
     input  logic                   incr_valid,
     input  logic [ChangeWidth-1:0] incr,
     input  logic                   decr_valid,
     input  logic [ChangeWidth-1:0] decr,
+    // Credit counter state.
     output logic [ ValueWidth-1:0] value,
     output logic [ ValueWidth-1:0] value_next
 );
@@ -106,7 +110,6 @@ module br_credit_counter #(
   assign decr_internal = decr_valid ? decr : '0;
   assign value_next = value + incr_value - decr_value;
 
-  // Register the value with synchronous reset to initial_value
   `BR_REGI(value, value_next, initial_value)
 
   //------------------------------------------
