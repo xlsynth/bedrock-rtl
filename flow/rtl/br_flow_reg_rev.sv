@@ -86,7 +86,7 @@ module br_flow_reg_rev #(
   assign pop_valid = !push_ready || push_valid;
   assign pop_data  = push_ready ? push_data : reg_data;
 
-  `BR_REGI(push_ready, pop_ready || !push_valid, 1'b1)
+  `BR_REGI(push_ready, pop_ready || (push_ready && !push_valid), 1'b1)
 
   // No reset necessary for reg_data because !push_ready qualifies the value of reg_data.
   // And push_ready resets to 1'b1, so the unknown value of reg_data doesn't matter.
@@ -114,7 +114,7 @@ module br_flow_reg_rev #(
 
   // Check that the datapath has 0 cycle cut-through delay.
   `BR_ASSERT_IMPL(cutthrough_0_delay_a,
-                  push_ready && push_valid && pop_ready |=> pop_valid && pop_data == push_data)
+                  push_ready && push_valid && pop_ready |-> pop_valid && pop_data == push_data)
 
   // Check that that the backpressure path has 1 cycle delay.
   `BR_ASSERT_IMPL(backpressure_1_delay_a, pop_ready |=> push_ready)
