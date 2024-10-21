@@ -62,8 +62,8 @@ def _write_executable_shell_script(ctx, filename, cmd):
 def _verilog_base_test_impl(ctx, tool, extra_args = [], extra_runfiles = []):
     srcs = get_transitive(ctx = ctx, srcs_not_hdrs = True).to_list()
     hdrs = get_transitive(ctx = ctx, srcs_not_hdrs = False).to_list()
-    src_files = [src.path for src in srcs]
-    hdr_files = [hdr.path for hdr in hdrs]
+    src_files = [src.short_path for src in srcs]
+    hdr_files = [hdr.short_path for hdr in hdrs]
     top = ctx.attr.top
     if top == "":
         if (len(ctx.attr.deps) != 1):
