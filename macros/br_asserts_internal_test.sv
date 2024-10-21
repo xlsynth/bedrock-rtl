@@ -1,0 +1,115 @@
+// Copyright 2024 The Bedrock-RTL Authors
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+// Unit test for br_asserts_internal.svh macros
+
+`timescale 1ns / 1ps
+
+`include "br_asserts_internal.svh"
+
+module br_asserts_internal_test;
+
+  logic clk;
+  logic rst;
+
+  logic [3:0] a;
+  logic [3:0] b;
+  logic [4:0] sum;
+  logic valid;
+
+  localparam int Width = 4;
+
+  always #5 clk = ~clk;
+
+  initial begin
+    clk = 0;
+    rst = 1;
+    a = 0;
+    b = 0;
+    valid = 0;
+
+    repeat (5) @(posedge clk);
+    rst = 0;
+
+    @(posedge clk);
+    a = 4'd5;
+    b = 4'd3;
+    valid = 1;
+    @(posedge clk);
+    a = 4'd7;
+    b = 4'd8;
+    valid = 1;
+    @(posedge clk);
+    a = 4'd2;
+    b = 4'd2;
+    valid = 0;
+    @(posedge clk);
+    $finish;
+  end
+
+  always_ff @(posedge clk) begin
+    if (rst) begin
+      sum <= 0;
+    end else begin
+      if (valid) begin
+        sum <= a + b;
+      end
+    end
+  end
+
+  // Use BR_ASSERT_INTG
+  `BR_ASSERT_INTG(sum_range_check_intg, sum <= 15)
+
+  // Use BR_ASSERT_IMPL
+  `BR_ASSERT_IMPL(sum_correct_impl, (valid == 1) |-> (sum == a + b))
+
+  // Use BR_ASSERT_CR_INTG
+  logic custom_clk;
+  logic custom_rst;
+  always #7 custom_clk = ~custom_clk;
+  initial begin
+    custom_clk = 0;
+    custom_rst = 1;
+    #15 custom_rst = 0;
+  end
+  `BR_ASSERT_CR_INTG(valid_data_check_intg, (valid == 1) |-> (sum == a + b), custom_clk, custom_rst)
+
+  // Use BR_ASSERT_CR_IMPL
+  `BR_ASSERT_CR_IMPL(sum_nonzero_impl, (sum != 0), custom_clk, custom_rst)
+
+  // Use BR_ASSERT_COMB_INTG
+  `BR_ASSERT_COMB_INTG(inputs_nonzero_intg, (a != 0) || (b != 0))
+
+  // Use BR_ASSERT_COMB_IMPL
+  `BR_ASSERT_COMB_IMPL(sum_in_range_impl, sum <= 15)
+
+  // Use BR_COVER_INTG
+  `BR_COVER_INTG(sum_overflow_intg, sum > 15)
+
+  // Use BR_COVER_IMPL
+  `BR_COVER_IMPL(sum_zero_impl, sum == 0)
+
+  // Use BR_COVER_CR_INTG
+  `BR_COVER_CR_INTG(valid_transition_intg, (valid == 1), custom_clk, custom_rst)
+
+  // Use BR_COVER_CR_IMPL
+  `BR_COVER_CR_IMPL(sum_max_impl, sum == 15, custom_clk, custom_rst)
+
+  // Use BR_COVER_COMB_INTG
+  `BR_COVER_COMB_INTG(inputs_equal_intg, (a == b))
+
+  // Use BR_COVER_COMB_IMPL
+  `BR_COVER_COMB_IMPL(inputs_opposite_impl, (a == ~b))
+
+endmodule : br_asserts_internal_test
