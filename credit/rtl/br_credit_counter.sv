@@ -72,24 +72,28 @@ module br_credit_counter #(
   `BR_ASSERT_STATIC(max_change_lte_max_value_a, MaxChange <= MaxValue)
 
   // Ensure the initial value was within the valid range on the last cycle when exiting reset
-  `BR_ASSERT_COMB_INTG(initial_value_in_range_a, $fell(rst) |-> $past(initial_value) <= MaxValue)
+  `BR_ASSERT_INTG(initial_value_in_range_a, $fell(rst) |-> $past(initial_value) <= MaxValue)
 
   // Ensure increments and decrements are in range
   `BR_ASSERT_INTG(incr_in_range_a, incr_valid |-> (incr <= MaxChange))
   `BR_ASSERT_INTG(decr_in_range_a, decr_valid |-> (decr <= MaxChange))
 
   // Assertion-only helper logic for overflow/underflow detection
-`ifdef SV_ASSSERT_ON
+`ifdef SV_ASSERT_ON
 `ifndef BR_DISABLE_INTG_CHECKS
   localparam int CalcWidth = ValueWidth + 1;
   logic [CalcWidth-1:0] value_extended_next;
 
   // Compute the next value with extended width
+  // ri lint_check_waive IFDEF_CODE
   always_comb begin
     value_extended_next = {1'b0, value};
-    if (incr_valid) value_extended_next = value_extended_next + incr;
-    if (decr_valid) value_extended_next = value_extended_next - decr;
+    // ri lint_check_waive SEQ_COND_ASSIGNS
+    if (incr_valid) value_extended_next = value_extended_next + CalcWidth'(incr);
+    // ri lint_check_waive SEQ_COND_ASSIGNS ONE_IF_CASE
+    if (decr_valid) value_extended_next = value_extended_next - CalcWidth'(decr);
   end
+
 `endif  // BR_DISABLE_INTG_CHECKS
 `endif  // SV_ASSERT_ON
 
@@ -103,12 +107,16 @@ module br_credit_counter #(
   //------------------------------------------
   // Implementation
   //------------------------------------------
-  logic [ValueWidth-1:0] incr_internal;
-  logic [ValueWidth-1:0] decr_internal;
+  logic [ChangeWidth-1:0] incr_internal;
+  logic [ChangeWidth-1:0] decr_internal;
+  logic [ ValueWidth-1:0] value_plus_incr;
 
+  // ri lint_check_waive CONST_ASSIGN
   assign incr_internal = incr_valid ? incr : '0;
+  // ri lint_check_waive CONST_ASSIGN
   assign decr_internal = decr_valid ? decr : '0;
-  assign value_next = value + incr_value - decr_value;
+  assign value_plus_incr = value + ValueWidth'(incr_internal);
+  assign value_next = value_plus_incr - ValueWidth'(decr_internal);
 
   `BR_REGI(value, value_next, initial_value)
 
