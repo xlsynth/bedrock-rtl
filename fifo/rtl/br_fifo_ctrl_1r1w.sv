@@ -118,8 +118,8 @@ module br_fifo_ctrl_1r1w #(
   // Implementation
   //------------------------------------------
   logic bypass_ready;
-  logic bypass_valid;
-  logic [BitWidth-1:0] bypass_data;
+  logic bypass_valid_unstable;
+  logic [BitWidth-1:0] bypass_data_unstable;
 
   logic ram_push;
   logic ram_pop;
@@ -140,8 +140,8 @@ module br_fifo_ctrl_1r1w #(
       .slots_next,
       .bypass_ready,
       // Bypass is only used when EnableBypass is 1.
-      .bypass_valid,  // ri lint_check_waive CONST_ASSIGN
-      .bypass_data,  // ri lint_check_waive CONST_ASSIGN
+      .bypass_valid_unstable,  // ri lint_check_waive CONST_ASSIGN
+      .bypass_data_unstable,  // ri lint_check_waive CONST_ASSIGN
       .ram_wr_valid,
       .ram_wr_addr,
       .ram_wr_data,
@@ -165,8 +165,8 @@ module br_fifo_ctrl_1r1w #(
       .items_next,
       // Bypass is only used when EnableBypass is 1.
       .bypass_ready,  // ri lint_check_waive CONST_ASSIGN
-      .bypass_valid,
-      .bypass_data,
+      .bypass_valid_unstable,
+      .bypass_data_unstable,
       .ram_rd_addr_valid,
       .ram_rd_addr,
       .ram_rd_data_valid,

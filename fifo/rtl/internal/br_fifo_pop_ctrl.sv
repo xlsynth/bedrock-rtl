@@ -40,8 +40,8 @@ module br_fifo_pop_ctrl #(
     // Bypass interface
     // Bypass is only used when EnableBypass is 1, hence lint waivers.
     output logic bypass_ready,
-    input logic bypass_valid,  // ri lint_check_waive INEFFECTIVE_NET
-    input logic [BitWidth-1:0] bypass_data,  // ri lint_check_waive INEFFECTIVE_NET
+    input logic bypass_valid_unstable,  // ri lint_check_waive INEFFECTIVE_NET
+    input logic [BitWidth-1:0] bypass_data_unstable,  // ri lint_check_waive INEFFECTIVE_NET
 
     // RAM interface
     output logic                 ram_rd_addr_valid,
@@ -65,8 +65,8 @@ module br_fifo_pop_ctrl #(
   `BR_ASSERT_INTG(ram_rd_latency_zero_a, ram_rd_addr_valid |-> ram_rd_data_valid)
 
   // Internal integration checks
-  `BR_ASSERT_IMPL(bypass_backpressure_a, !bypass_ready && bypass_valid |=> bypass_valid && $stable
-                                         (bypass_data))
+  `BR_ASSERT_IMPL(bypass_unstable_c, !bypass_ready && bypass_valid_unstable)
+
   // This is not the tightest possible check, because we are planning to
   // support pipelined RAM access and CDC use cases that require supporting
   // delays between the push controller and pop controller.
@@ -100,16 +100,20 @@ module br_fifo_pop_ctrl #(
   assign ram_rd_addr_valid = ram_pop;
   if (EnableBypass) begin : gen_bypass
     assign bypass_ready = empty && pop_ready;
-    assign pop_valid = bypass_valid || !empty;
-    assign pop_data = bypass_valid ? bypass_data : ram_rd_data;
-    assign ram_pop = pop && !bypass_valid;
+    assign pop_valid = !empty || bypass_valid_unstable;
+    assign pop_data = empty ? bypass_data_unstable : ram_rd_data;
+    assign ram_pop = pop && !bypass_valid_unstable;
   end else begin : gen_no_bypass
     assign bypass_ready = '0;  // ri lint_check_waive CONST_ASSIGN CONST_OUTPUT
     assign pop_valid = !empty;
     assign pop_data = ram_rd_data;
     assign ram_pop = pop;
-    br_misc_unused br_misc_unused_bypass_valid (.in(bypass_valid));
-    br_misc_unused #(.BitWidth(BitWidth)) br_misc_unused_bypass_data (.in(bypass_data));
+    br_misc_unused br_misc_unused_bypass_valid_unstable (.in(bypass_valid_unstable));
+    br_misc_unused #(
+        .BitWidth(BitWidth)
+    ) br_misc_unused_bypass_data_unstable (
+        .in(bypass_data_unstable)
+    );
   end
   br_misc_unused br_misc_unused_ram_rd_data_valid (.in(ram_rd_data_valid));  // implied
 
