@@ -13,21 +13,44 @@
 # limitations under the License.
 
 load("@rules_hdl//verilog:providers.bzl", "verilog_library")
+load("//bazel:verilog.bzl", "verilog_elab_test")
 
-package(default_visibility = ["//visibility:public"])
+package(default_visibility = ["//visibility:private"])
 
 verilog_library(
     name = "br_asserts",
     hdrs = ["br_asserts.svh"],
+    visibility = ["//visibility:public"],
 )
 
 verilog_library(
     name = "br_asserts_internal",
     hdrs = ["br_asserts_internal.svh"],
+    visibility = ["//visibility:public"],
     deps = [":br_asserts"],
 )
 
 verilog_library(
     name = "br_registers",
     hdrs = ["br_registers.svh"],
+    visibility = ["//visibility:public"],
+)
+
+# Macro unit tests
+# TODO(mgottscho): verilog_test simulation!
+verilog_library(
+    name = "br_asserts_test",
+    srcs = ["br_asserts_test.sv"],
+    deps = [":br_asserts"],
+)
+
+verilog_elab_test(
+    name = "br_asserts_elab_test",
+    defines = ["SV_ASSERT_ON"],
+    deps = [":br_asserts_test"],
+)
+
+verilog_elab_test(
+    name = "br_asserts_elab_noassert_test",
+    deps = [":br_asserts_test"],
 )
