@@ -54,3 +54,24 @@ verilog_elab_test(
     name = "br_asserts_elab_noassert_test",
     deps = [":br_asserts_test"],
 )
+
+# TODO(mgottscho): verilog_test simulation!
+verilog_library(
+    name = "br_asserts_internal_test",
+    srcs = ["br_asserts_internal_test.sv"],
+    deps = [":br_asserts_internal"],
+)
+
+verilog_elab_test(
+    name = "br_asserts_elab_internal_test",
+    defines = [
+        "SV_ASSERT_ON",
+        "BR_ENABLE_IMPL_CHECKS",
+    ],
+    deps = [":br_asserts_internal_test"],
+)
+
+verilog_elab_test(
+    name = "br_asserts_internal_elab_noassert_test",
+    deps = [":br_asserts_internal_test"],
+)
