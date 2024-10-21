@@ -70,11 +70,9 @@ __name__ : assert property (@(posedge __clk__) disable iff (__rst__) (__expr__))
 ////////////////////////////////////////////////////////////////////////////////
 `ifdef SV_ASSERT_ON
 `define BR_ASSERT_COMB(__name__, __expr__) \
-generate : __name__ \
-always_comb begin \
-assert property (__expr__); \
-end \
-endgenerate
+always_comb begin  : gen_``__name__ \
+assert (__expr__); \
+end
 `else  // SV_ASSERT_ON
 `define BR_ASSERT_COMB(__name__, __expr__) \
 `BR_NOOP
@@ -108,11 +106,9 @@ __name__ : cover property (@(posedge __clk__) disable iff (__rst__) (__expr__));
 ////////////////////////////////////////////////////////////////////////////////
 `ifdef SV_ASSERT_ON
 `define BR_COVER_COMB(__name__, __expr__) \
-generate : __name__ \
-always_comb begin \
-cover property (__expr__); \
-end \
-endgenerate
+always_comb begin  : gen_``__name__ \
+cover (__expr__); \
+end
 `else  // SV_ASSERT_ON
 `define BR_COVER_COMB(__name__, __expr__) \
 `BR_NOOP
