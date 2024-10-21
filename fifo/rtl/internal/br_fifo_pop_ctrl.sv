@@ -109,8 +109,10 @@ module br_fifo_pop_ctrl #(
     assign pop_data = ram_rd_data;
     assign ram_pop = pop;
     br_misc_unused br_misc_unused_bypass_valid_unstable (.in(bypass_valid_unstable));
-    br_misc_unused #(.BitWidth(BitWidth)) br_misc_unused_bypass_data_unstable (
-      .in(bypass_data_unstable)
+    br_misc_unused #(
+        .BitWidth(BitWidth)
+    ) br_misc_unused_bypass_data_unstable (
+        .in(bypass_data_unstable)
     );
   end
   br_misc_unused br_misc_unused_ram_rd_data_valid (.in(ram_rd_data_valid));  // implied
