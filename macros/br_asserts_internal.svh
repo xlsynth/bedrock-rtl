@@ -52,7 +52,7 @@
 `endif  // BR_DISABLE_INTG_CHECKS
 
 // More expressive form of BR_ASSERT_INTG that allows the use of custom clock and reset signal names.
-`ifdef BR_DISABLE_INTG_CHECKS
+`ifndef BR_DISABLE_INTG_CHECKS
 `define BR_ASSERT_CR_INTG(__name__, __expr__, __clk__, __rst__) \
 `BR_ASSERT_CR(__name__, __expr__, __clk__, __rst__)
 `else  // BR_DISABLE_INTG_CHECKS
@@ -113,7 +113,7 @@
 `endif  // BR_DISABLE_INTG_CHECKS
 
 // More expressive form of BR_COVER_INTG that allows the use of custom clock and reset signal names.
-`ifdef BR_DISABLE_INTG_CHECKS
+`ifndef BR_DISABLE_INTG_CHECKS
 `define BR_COVER_CR_INTG(__name__, __expr__, __clk__, __rst__) \
 `BR_COVER_CR(__name__, __expr__, __clk__, __rst__)
 `else  // BR_DISABLE_INTG_CHECKS

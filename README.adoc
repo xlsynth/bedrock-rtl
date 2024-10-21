@@ -97,7 +97,7 @@ a| Counters with the following feature combinations:
 | credit
 a| Credit/valid flow control
 
-* [ ] Credit counter
+* [x] Credit counter
 * [ ] Ready/valid -> credit/valid producer conversion
 
 | delay
