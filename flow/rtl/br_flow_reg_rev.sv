@@ -114,7 +114,7 @@ module br_flow_reg_rev #(
 
   // Check that the datapath has 0 cycle cut-through delay.
   `BR_ASSERT_IMPL(cutthrough_0_delay_a,
-                  push_ready && push_valid && pop_ready |=> pop_valid && pop_data == push_data)
+                  push_ready && push_valid && pop_ready |-> pop_valid && pop_data == push_data)
 
   // Check that that the backpressure path has 1 cycle delay.
   `BR_ASSERT_IMPL(backpressure_1_delay_a, pop_ready |=> push_ready)
