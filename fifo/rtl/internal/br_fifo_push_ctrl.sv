@@ -131,7 +131,7 @@ module br_fifo_push_ctrl #(
   `BR_ASSERT_IMPL(push_backpressure_when_full_a, full |-> !push_ready)
   `BR_ASSERT_IMPL(backpressure_latency_1_cycle_a, full && ram_pop |=> !full && push_ready)
   `BR_ASSERT_IMPL(ram_push_and_bypass_mutually_exclusive_a,
-                  !(ram_push && bypass_ready && bypass_valid))
+                  !(ram_push && bypass_ready && bypass_valid_unstable))
   `BR_COVER_IMPL(bypass_unstable_c, !bypass_ready && bypass_valid_unstable)
 
   // RAM
