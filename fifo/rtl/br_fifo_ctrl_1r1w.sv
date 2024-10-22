@@ -102,21 +102,7 @@ module br_fifo_ctrl_1r1w #(
   //------------------------------------------
   // Integration checks
   //------------------------------------------
-  `BR_ASSERT_STATIC(depth_must_be_at_least_one_a, Depth >= 2)
-  `BR_ASSERT_STATIC(bit_width_must_be_at_least_one_a, BitWidth >= 1)
-
-  // Assert that under push-side backpressure conditions,
-  // the pipeline register correctly stalls upstream.
-  // That is, on any given cycle, if push_valid is 1 and push_ready
-  // is 0, then assert that on the following cycle push_valid is
-  // still 1 and push_data has not changed. In other words,
-  // we are checking that the input stimulus abides by the push-side
-  // ready-valid interface protocol.
-  `BR_ASSERT_INTG(push_backpressure_a, !push_ready && push_valid |=> push_valid && $stable
-                                       (push_data))
-  `BR_ASSERT_INTG(full_c, full)
-
-  `BR_ASSERT_INTG(ram_rd_latency_zero_a, ram_rd_addr_valid |-> ram_rd_data_valid)
+  // Rely on submodule integration checks
 
   //------------------------------------------
   // Implementation
@@ -182,6 +168,7 @@ module br_fifo_ctrl_1r1w #(
   //------------------------------------------
   // Implementation checks
   //------------------------------------------
+  // Rely on submodule implementation checks
   if (EnableBypass) begin : gen_bypass_impl_checks
     // Check that the datapath has 0 cycle cut-through delay when empty.
     `BR_ASSERT_IMPL(cutthrough_0_delay_a,
