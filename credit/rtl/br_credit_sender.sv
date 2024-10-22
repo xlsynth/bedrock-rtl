@@ -25,8 +25,10 @@
 // Pop Interface:
 //   - Credits are replenished when the receiver returns a credit (pop_credit asserted).
 //   - pop_credit_stall is asserted during reset to prevent the receiver from returning credits prematurely.
-//   - The receiver should not exit reset and assert pop_credit when pop_credit_stall is high, otherwise credits will be lost.
-//   - Forwards data to the receiver via pop_data and asserts pop_valid when both push_valid and push_ready are high.
+//   - The receiver should not exit reset and assert pop_credit when pop_credit_stall is high, otherwise
+//     credits will be lost.
+//   - Forwards data to the receiver via pop_data and asserts pop_valid when both push_valid and push_ready
+//     are high.
 //
 // Credit Tracking (credit_count):
 //   - Uses an internal credit counter to track the number of available credits.
@@ -102,8 +104,8 @@ module br_credit_sender #(
       .value_next(credit_count_next)
   );
 
-  `BR_REGI(pop_credit_stall, 1'b0, 1'b1);
-  assign push_ready = credit_count > 0 || pop_credit;
+  `BR_REGI(pop_credit_stall, 1'b0, 1'b1)
+  assign push_ready = (credit_count > 0) || pop_credit;
   assign pop_valid  = push_ready && push_valid;
   assign pop_data   = push_data;
 
