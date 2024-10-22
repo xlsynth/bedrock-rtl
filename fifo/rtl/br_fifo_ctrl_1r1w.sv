@@ -62,13 +62,17 @@ module br_fifo_ctrl_1r1w #(
     localparam int AddrWidth = $clog2(Depth),
     localparam int CountWidth = $clog2(Depth + 1)
 ) (
+    // Posedge-triggered clock.
     input logic clk,
-    input logic rst,  // Synchronous active-high
+    // Synchronous active-high reset.
+    input logic rst,
 
+    // Push-side interface
     output logic                push_ready,
     input  logic                push_valid,
     input  logic [BitWidth-1:0] push_data,
 
+    // Pop-side interface
     input  logic                pop_ready,
     output logic                pop_valid,
     output logic [BitWidth-1:0] pop_data,
