@@ -74,6 +74,10 @@ br_verilog_elab_and_lint_test_suite(
             "0",
             "1",
         ],
+        "MaxCredit": [
+            "4",
+            "16",
+        ],
     },
     deps = [":br_fifo_push_ctrl_credit"],
 )
