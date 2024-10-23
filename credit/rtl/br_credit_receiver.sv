@@ -79,7 +79,7 @@ module br_credit_receiver #(
   `BR_ASSERT_STATIC(bitwidth_in_range_a, BitWidth >= 1)
   `BR_ASSERT_STATIC(max_credit_in_range_a, MaxCredit >= 1)
 
-  `BR_ASSERT_INTG(no_push_valid_if_no_credit_released_a, credit_count == MaxCredits |-> !push_valid)
+  `BR_ASSERT_INTG(no_push_valid_if_no_credit_released_a, credit_count == MaxCredit |-> !push_valid)
 
   // Rely on submodule integration checks
 

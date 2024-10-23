@@ -48,6 +48,7 @@
 //     and/or the pop-side interface (e.g., with br_delay_valid) to help close timing.
 
 `include "br_asserts_internal.svh"
+`include "br_registers.svh"
 
 module br_credit_sender #(
     // Width of the datapath in bits. Must be at least 1.
