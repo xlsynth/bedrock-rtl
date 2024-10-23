@@ -50,13 +50,14 @@ module br_fifo_ctrl_push_credit_1r1w #(
     // visible at the pop interface. This results in a cut-through latency of
     // 1 cycle, but timing is improved.
     parameter bit EnableBypass = 1,
-    // Width of the internal credit counter. Must be at least $clog2(Depth + 1).
+    // Maximum credit for the internal credit counter. Must be at least Depth.
     // Recommended to not override the default because it is the smallest viable size.
     // Overriding may be convenient if having a consistent credit counter register width
     // (say, 16-bit) throughout a design is deemed useful.
-    parameter int CreditWidth = $clog2(Depth + 1),
+    parameter int MaxCredit = Depth,
     localparam int AddrWidth = $clog2(Depth),
-    localparam int CountWidth = $clog2(Depth + 1)
+    localparam int CountWidth = $clog2(Depth + 1),
+    localparam int CreditWidth = $clog2(MaxCredit + 1)
 ) (
     input logic clk,
     input logic rst,  // Synchronous active-high
@@ -84,7 +85,8 @@ module br_fifo_ctrl_push_credit_1r1w #(
     output logic [CountWidth-1:0] items,
     output logic [CountWidth-1:0] items_next,
 
-    // Push-side credit count
+    // Push-side credits
+    input  logic [CreditWidth-1:0] push_initial_credit,
     output logic [CreditWidth-1:0] push_credit_count,
 
     // 1R1W RAM interface
@@ -116,7 +118,7 @@ module br_fifo_ctrl_push_credit_1r1w #(
       .Depth(Depth),
       .BitWidth(BitWidth),
       .EnableBypass(EnableBypass),
-      .CreditWidth(CreditWidth)
+      .MaxCredit(MaxCredit)
   ) br_fifo_push_ctrl_credit (
       .clk,
       .rst,
@@ -128,6 +130,7 @@ module br_fifo_ctrl_push_credit_1r1w #(
       .full_next,
       .slots,
       .slots_next,
+      .push_initial_credit,
       .push_credit_count,
       .bypass_ready,
       // Bypass is only used when EnableBypass is 1.

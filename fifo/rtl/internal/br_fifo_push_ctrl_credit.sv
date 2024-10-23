@@ -20,10 +20,11 @@
 module br_fifo_push_ctrl_credit #(
     parameter int Depth = 2,
     parameter int BitWidth = 1,
-    parameter bit EnableBypas
-    parameter int CreditWidth = $clog2(Depth + 1),
+    parameter bit EnableBypass = 0,
+    parameter int MaxCredit = Depth,
     localparam int AddrWidth = $clog2(Depth),
-    localparam int CountWidth = $clog2(Depth + 1)
+    localparam int CountWidth = $clog2(Depth + 1),
+    localparam int CreditWidth = $clog2(MaxCredit + 1)
 ) (
     // Posedge-triggered clock.
     input logic clk,
@@ -42,7 +43,8 @@ module br_fifo_push_ctrl_credit #(
     output logic [CountWidth-1:0] slots,
     output logic [CountWidth-1:0] slots_next,
 
-    // Push-side credit count
+    // Push-side credits
+    input  logic [CreditWidth-1:0] push_initial_credit,
     output logic [CreditWidth-1:0] push_credit_count,
 
     // Bypass interface
@@ -66,8 +68,8 @@ module br_fifo_push_ctrl_credit #(
   //------------------------------------------
   `BR_ASSERT_STATIC(depth_must_be_at_least_one_a, Depth >= 2)
   `BR_ASSERT_STATIC(bit_width_must_be_at_least_one_a, BitWidth >= 1)
-  `BR_ASSERT_STATIC(credit_width_must_be_at_least_clog2_depth_plus_1_a,
-    CreditWidth >= $clog2(Depth + 1))
+  `BR_ASSERT_STATIC(credit_width_must_be_at_least_clog2_depth_plus_1_a, CreditWidth >= $clog2
+                    (Depth + 1))
 
   `BR_ASSERT_INTG(push_backpressure_a, push_credit_count == '0 |-> !push_valid)
   `BR_ASSERT_INTG(full_c, full)
@@ -88,10 +90,26 @@ module br_fifo_push_ctrl_credit #(
   //------------------------------------------
 
   // Flow control
-  logic push;
-  assign push = push_valid;
+  logic internal_valid;
+  logic [BitWidth-1:0] internal_data;
 
-  // TODO(mgottscho): implement push_credit, push_credit_stall stuff
+  br_credit_receiver #(
+      .BitWidth (BitWidth),
+      .MaxCredit(MaxCredit)
+  ) br_credit_receiver (
+      .clk,
+      .rst,
+      .initial_credit(push_initial_credit),
+      .push_credit_stall(push_credit_stall),
+      .push_credit(push_credit),
+      .push_valid(push_valid),
+      .push_data(push_data),
+      .pop_credit(ram_pop),
+      .pop_valid(internal_valid),
+      .pop_data(internal_data),
+      .credit_count(push_credit_count),
+      .credit_count_next()  // unused
+  );
 
   // RAM path
   br_counter_incr #(
@@ -109,18 +127,18 @@ module br_fifo_push_ctrl_credit #(
   // Datapath
   assign ram_wr_valid = ram_push;
   if (EnableBypass) begin : gen_bypass
-    assign bypass_valid_unstable = push_valid;
-    assign bypass_data_unstable = push_data;
+    assign bypass_valid_unstable = internal_valid;
+    assign bypass_data_unstable = internal_data;
 
-    assign ram_push = push && !bypass_ready;
-    assign ram_wr_data = push_data;
+    assign ram_push = internal_valid && !bypass_ready;
+    assign ram_wr_data = internal_data;
   end else begin : gen_no_bypass
     br_misc_unused br_misc_unused_bypass_ready (.in(bypass_ready));
     assign bypass_valid_unstable = '0;  // ri lint_check_waive CONST_ASSIGN CONST_OUTPUT
     assign bypass_data_unstable = '0;  // ri lint_check_waive CONST_ASSIGN CONST_OUTPUT
 
-    assign ram_push = push;
-    assign ram_wr_data = push_data;
+    assign ram_push = internal_valid;
+    assign ram_wr_data = internal_data;
   end
 
   // Status flags
@@ -137,8 +155,8 @@ module br_fifo_push_ctrl_credit #(
 
   // Flow control and latency
   `BR_ASSERT_IMPL(push_backpressure_when_full_a, full |-> !push_credit)
-  `BR_ASSERT_IMPL(backpressure_latency_1_cycle_a, full && ram_pop |=>
-    !full && (push_credit || push_credit_stall))
+  `BR_ASSERT_IMPL(backpressure_latency_1_cycle_a,
+                  full && ram_pop |=> !full && (push_credit || push_credit_stall))
   `BR_ASSERT_IMPL(ram_push_and_bypass_mutually_exclusive_a,
                   !(ram_push && bypass_ready && bypass_valid_unstable))
   `BR_COVER_IMPL(bypass_unstable_c, !bypass_ready && bypass_valid_unstable)
