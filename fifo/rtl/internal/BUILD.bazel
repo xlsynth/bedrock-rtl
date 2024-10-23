@@ -33,6 +33,7 @@ verilog_library(
     srcs = ["br_fifo_push_ctrl_credit.sv"],
     deps = [
         "//counter/rtl:br_counter_incr",
+        "//credit/rtl:br_credit_receiver",
         "//macros:br_asserts_internal",
         "//macros:br_registers",
         "//misc/rtl:br_misc_unused",

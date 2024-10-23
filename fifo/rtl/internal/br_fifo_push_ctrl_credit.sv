@@ -44,8 +44,10 @@ module br_fifo_push_ctrl_credit #(
     output logic [CountWidth-1:0] slots_next,
 
     // Push-side credits
-    input  logic [CreditWidth-1:0] push_initial_credit,
-    output logic [CreditWidth-1:0] push_credit_count,
+    input  logic [CreditWidth-1:0] credit_initial,
+    input  logic [CreditWidth-1:0] credit_withhold,
+    output logic [CreditWidth-1:0] credit_count,
+    output logic [CreditWidth-1:0] credit_available,
 
     // Bypass interface
     // Bypass is only used when EnableBypass is 1, hence lint waiver.
@@ -99,7 +101,6 @@ module br_fifo_push_ctrl_credit #(
   ) br_credit_receiver (
       .clk,
       .rst,
-      .initial_credit(push_initial_credit),
       .push_credit_stall(push_credit_stall),
       .push_credit(push_credit),
       .push_valid(push_valid),
@@ -107,8 +108,10 @@ module br_fifo_push_ctrl_credit #(
       .pop_credit(ram_pop),
       .pop_valid(internal_valid),
       .pop_data(internal_data),
-      .credit_count(push_credit_count),
-      .credit_count_next()  // unused
+      .credit_initial(credit_initial),
+      .credit_withhold(credit_withhold),
+      .credit_count(credit_count),
+      .credit_available(credit_available)
   );
 
   // RAM path
