@@ -30,8 +30,8 @@ verilog_library(
 )
 
 verilog_library(
-    name = "br_fifo_ctrl_push_credit_1r1w",
-    srcs = ["br_fifo_ctrl_push_credit_1r1w.sv"],
+    name = "br_fifo_ctrl_1r1w_push_credit",
+    srcs = ["br_fifo_ctrl_1r1w_push_credit.sv"],
     deps = [
         "//fifo/rtl/internal:br_fifo_pop_ctrl",
         "//fifo/rtl/internal:br_fifo_push_ctrl_credit",
