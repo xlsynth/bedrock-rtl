@@ -70,6 +70,25 @@ br_verilog_elab_and_lint_test_suite(
 )
 
 br_verilog_elab_and_lint_test_suite(
+    name = "br_fifo_ctrl_1r1w_push_credit_test_suite",
+    params = {
+        "Depth": [
+            "2",
+            "4",
+        ],
+        "BitWidth": [
+            "1",
+            "8",
+        ],
+        "EnableBypass": [
+            "0",
+            "1",
+        ],
+    },
+    deps = [":br_fifo_ctrl_1r1w_push_credit"],
+)
+
+br_verilog_elab_and_lint_test_suite(
     name = "br_fifo_flops_test_suite",
     params = {
         "Depth": [
