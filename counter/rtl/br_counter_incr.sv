@@ -31,7 +31,14 @@
 //     single-cycle chains of counters.
 // value and value_next are always valid.
 //
-// The value resets to 0.
+// The counter value resets to initial_value.
+//
+// The reinit port reinitializes the counter to initial_value.
+// This does *nearly* the same thing as rst but is likely to be driven by completely different
+// logic. Rather than having the user mix together an expression involving both rst and reinit,
+// a separate port helps keep the user's reset code clean and correct. Also, unlike reset, the
+// reinit can accommodate an increment on the same cycle, i.e., the increment
+// applies to the initial value rather than the old value.
 
 `include "br_asserts_internal.svh"
 `include "br_registers.svh"
@@ -42,8 +49,12 @@ module br_counter_incr #(
     localparam int ValueWidth = $clog2(MaxValue + 1),
     localparam int IncrementWidth = $clog2(MaxIncrement + 1)
 ) (
+    // Posedge-triggered clock.
     input  logic                      clk,
+    // Synchronous active-high reset.
     input  logic                      rst,
+    input  logic                      reinit,
+    input  logic [    ValueWidth-1:0] initial_value,
     input  logic                      incr_valid,
     input  logic [IncrementWidth-1:0] incr,
     output logic [    ValueWidth-1:0] value,
@@ -58,6 +69,8 @@ module br_counter_incr #(
   `BR_ASSERT_STATIC(max_increment_lte_max_value_a, MaxIncrement <= MaxValue)
 
   `BR_ASSERT_INTG(incr_in_range_a, incr_valid |-> incr <= MaxIncrement)
+  `BR_ASSERT_INTG(reinit_initial_value_in_range_a, reinit |-> initial_value <= MaxValue)
+  `BR_ASSERT_INTG(rst_initial_value_in_range_a, $fell(rst) |-> initial_value <= MaxValue)
 
   //------------------------------------------
   // Implementation
@@ -72,7 +85,7 @@ module br_counter_incr #(
   // to capture them more tightly using br_misc_unused.
   // ri lint_check_waive NOT_READ
   logic [ TempWidth-1:0] value_temp;
-  assign value_temp = value + incr;
+  assign value_temp = (reinit ? initial_value : value) + incr;
 
   // For MaxValueP1 being a power of 2, wrapping occurs naturally
   if (IsMaxValueP1PowerOf2) begin : gen_power_of_2
@@ -105,7 +118,7 @@ module br_counter_incr #(
   // to just value_next_internal, because the load-enable on the register is
   // conditioned on the same incr_valid.
   assign value_next = incr_valid ? value_next_internal : value;
-  `BR_REGL(value, value_next, incr_valid)
+  `BR_REGIL(value, value_next, incr_valid, initial_value)
 
   //------------------------------------------
   // Implementation checks
