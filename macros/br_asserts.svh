@@ -42,6 +42,12 @@ end
 `BR_NOOP
 `endif  // SV_ASSERT_ON
 
+`define BR_ASSERT_STATIC_IN_PACKAGE(__name__, __expr__) \
+typedef enum logic [1:0] { \
+    __STATIC_ASSERT_OK__``__name__ = ((__expr__) ? 1 : 0), \
+    __STATIC_ASSERT_FAILED__``__name__ = 0 \
+} __static_assert_enum__``__name__;
+
 ////////////////////////////////////////////////////////////////////////////////
 // Concurrent assertion macros (evaluated on posedge of a clock and disabled during a reset)
 ////////////////////////////////////////////////////////////////////////////////
