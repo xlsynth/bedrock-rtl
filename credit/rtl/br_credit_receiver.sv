@@ -109,8 +109,8 @@ module br_credit_receiver #(
   // Implementation checks
   //------------------------------------------
   `BR_ASSERT_IMPL(push_credit_stall_a, push_credit_stall |-> !push_credit)
-  `BR_ASSERT_IMPL(passthru_credit_c, pop_credit && push_credit && credit_count == '0)
-  `BR_ASSERT_IMPL(passthru_credit_nonzero_count_c, pop_credit && push_credit && credit_count > '0)
+  `BR_COVER_IMPL(passthru_credit_c, pop_credit && push_credit && credit_count == '0)
+  `BR_COVER_IMPL(passthru_credit_nonzero_count_c, pop_credit && push_credit && credit_count > '0)
 
   // Rely on submodule implementation checks
 
