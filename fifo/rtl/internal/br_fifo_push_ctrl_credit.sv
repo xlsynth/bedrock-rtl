@@ -12,17 +12,19 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Bedrock-RTL FIFO Push Controller (Ready/Valid)
+// Bedrock-RTL FIFO Push Controller (Credit/Valid)
 
 `include "br_asserts_internal.svh"
 `include "br_registers.svh"
 
-module br_fifo_push_ctrl #(
+module br_fifo_push_ctrl_credit #(
     parameter int Depth = 2,
     parameter int BitWidth = 1,
-    parameter bit EnableBypass = 1,
+    parameter bit EnableBypass = 0,
+    parameter int MaxCredit = Depth,
     localparam int AddrWidth = $clog2(Depth),
-    localparam int CountWidth = $clog2(Depth + 1)
+    localparam int CountWidth = $clog2(Depth + 1),
+    localparam int CreditWidth = $clog2(MaxCredit + 1)
 ) (
     // Posedge-triggered clock.
     input logic clk,
@@ -30,7 +32,8 @@ module br_fifo_push_ctrl #(
     input logic rst,
 
     // Push-side interface.
-    output logic                push_ready,
+    input  logic                push_credit_stall,
+    output logic                push_credit,
     input  logic                push_valid,
     input  logic [BitWidth-1:0] push_data,
 
@@ -39,6 +42,12 @@ module br_fifo_push_ctrl #(
     output logic                  full_next,
     output logic [CountWidth-1:0] slots,
     output logic [CountWidth-1:0] slots_next,
+
+    // Push-side credits
+    input  logic [CreditWidth-1:0] credit_initial_push,
+    input  logic [CreditWidth-1:0] credit_withhold_push,
+    output logic [CreditWidth-1:0] credit_count_push,
+    output logic [CreditWidth-1:0] credit_available_push,
 
     // Bypass interface
     // Bypass is only used when EnableBypass is 1, hence lint waiver.
@@ -61,11 +70,8 @@ module br_fifo_push_ctrl #(
   //------------------------------------------
   `BR_ASSERT_STATIC(depth_must_be_at_least_one_a, Depth >= 2)
   `BR_ASSERT_STATIC(bit_width_must_be_at_least_one_a, BitWidth >= 1)
+  `BR_ASSERT_STATIC(credit_width_a, CreditWidth >= $clog2(Depth + 1))
 
-  // TODO(mgottscho): Do we really want this? It's ready-valid
-  // checker but the FIFO implementation correctness does not depend on it.
-  `BR_ASSERT_INTG(push_backpressure_a, !push_ready && push_valid |=> push_valid && $stable
-                                       (push_data))
   `BR_ASSERT_INTG(full_c, full)
 
   // Internal integration checks
@@ -84,9 +90,27 @@ module br_fifo_push_ctrl #(
   //------------------------------------------
 
   // Flow control
-  logic push;
-  assign push = push_ready && push_valid;
-  assign push_ready = !full;
+  logic internal_valid;
+  logic [BitWidth-1:0] internal_data;
+
+  br_credit_receiver #(
+      .BitWidth (BitWidth),
+      .MaxCredit(MaxCredit)
+  ) br_credit_receiver (
+      .clk,
+      .rst,
+      .push_credit_stall(push_credit_stall),
+      .push_credit(push_credit),
+      .push_valid(push_valid),
+      .push_data(push_data),
+      .pop_credit(ram_pop),
+      .pop_valid(internal_valid),
+      .pop_data(internal_data),
+      .credit_initial(credit_initial_push),
+      .credit_withhold(credit_withhold_push),
+      .credit_count(credit_count_push),
+      .credit_available(credit_available_push)
+  );
 
   // RAM path
   br_counter_incr #(
@@ -104,18 +128,18 @@ module br_fifo_push_ctrl #(
   // Datapath
   assign ram_wr_valid = ram_push;
   if (EnableBypass) begin : gen_bypass
-    assign bypass_valid_unstable = push_valid;
-    assign bypass_data_unstable = push_data;
+    assign bypass_valid_unstable = internal_valid;
+    assign bypass_data_unstable = internal_data;
 
-    assign ram_push = push && !bypass_ready;
-    assign ram_wr_data = push_data;
+    assign ram_push = internal_valid && !bypass_ready;
+    assign ram_wr_data = internal_data;
   end else begin : gen_no_bypass
     br_misc_unused br_misc_unused_bypass_ready (.in(bypass_ready));
     assign bypass_valid_unstable = '0;  // ri lint_check_waive CONST_ASSIGN CONST_OUTPUT
     assign bypass_data_unstable = '0;  // ri lint_check_waive CONST_ASSIGN CONST_OUTPUT
 
-    assign ram_push = push;
-    assign ram_wr_data = push_data;
+    assign ram_push = internal_valid;
+    assign ram_wr_data = internal_data;
   end
 
   // Status flags
@@ -131,8 +155,9 @@ module br_fifo_push_ctrl #(
   `BR_ASSERT_IMPL(ram_wr_addr_in_range_a, ram_wr_valid |-> ram_wr_addr < Depth)
 
   // Flow control and latency
-  `BR_ASSERT_IMPL(push_backpressure_when_full_a, full |-> !push_ready)
-  `BR_ASSERT_IMPL(backpressure_latency_1_cycle_a, full && ram_pop |=> !full && push_ready)
+  `BR_ASSERT_IMPL(push_backpressure_when_full_a, full |-> !push_credit)
+  `BR_ASSERT_IMPL(backpressure_latency_1_cycle_a,
+                  full && ram_pop |=> !full && (push_credit || push_credit_stall))
   `BR_ASSERT_IMPL(ram_push_and_bypass_mutually_exclusive_a,
                   !(ram_push && bypass_ready && bypass_valid_unstable))
   `BR_COVER_IMPL(bypass_unstable_c, !bypass_ready && bypass_valid_unstable)
@@ -148,4 +173,4 @@ module br_fifo_push_ctrl #(
   `BR_ASSERT_IMPL(pop_slots_a, !ram_push && ram_pop |-> slots_next == slots + 1)
   `BR_ASSERT_IMPL(full_a, full == (slots == 0))
 
-endmodule : br_fifo_push_ctrl
+endmodule : br_fifo_push_ctrl_credit

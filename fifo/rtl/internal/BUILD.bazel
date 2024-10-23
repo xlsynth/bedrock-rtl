@@ -28,17 +28,6 @@ verilog_library(
     ],
 )
 
-verilog_library(
-    name = "br_fifo_pop_ctrl",
-    srcs = ["br_fifo_pop_ctrl.sv"],
-    deps = [
-        "//counter/rtl:br_counter_incr",
-        "//macros:br_asserts_internal",
-        "//macros:br_registers",
-        "//misc/rtl:br_misc_unused",
-    ],
-)
-
 br_verilog_elab_and_lint_test_suite(
     name = "br_fifo_push_ctrl_test_suite",
     params = {
@@ -56,6 +45,48 @@ br_verilog_elab_and_lint_test_suite(
         ],
     },
     deps = [":br_fifo_push_ctrl"],
+)
+
+verilog_library(
+    name = "br_fifo_push_ctrl_credit",
+    srcs = ["br_fifo_push_ctrl_credit.sv"],
+    deps = [
+        "//counter/rtl:br_counter_incr",
+        "//credit/rtl:br_credit_receiver",
+        "//macros:br_asserts_internal",
+        "//macros:br_registers",
+        "//misc/rtl:br_misc_unused",
+    ],
+)
+
+br_verilog_elab_and_lint_test_suite(
+    name = "br_fifo_push_ctrl_credit_test_suite",
+    params = {
+        "Depth": [
+            "2",
+            "4",
+        ],
+        "BitWidth": [
+            "1",
+            "8",
+        ],
+        "EnableBypass": [
+            "0",
+            "1",
+        ],
+    },
+    deps = [":br_fifo_push_ctrl_credit"],
+)
+
+verilog_library(
+    name = "br_fifo_pop_ctrl",
+    srcs = ["br_fifo_pop_ctrl.sv"],
+    deps = [
+        "//counter/rtl:br_counter_incr",
+        "//macros:br_asserts_internal",
+        "//macros:br_registers",
+        "//misc/rtl:br_misc_unused",
+    ],
 )
 
 br_verilog_elab_and_lint_test_suite(
