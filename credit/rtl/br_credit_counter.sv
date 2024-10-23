@@ -48,22 +48,22 @@ module br_credit_counter #(
     localparam int ChangeWidth = $clog2(MaxChange + 1)
 ) (
     // Posedge-triggered clock.
-    input  logic                    clk,
+    input  logic                   clk,
     // Synchronous active-high reset.
-    input  logic                    rst,
+    input  logic                   rst,
     // Supports independent increment and decrement on the same cycle.
-    input  logic                    incr_valid,
-    input  logic [ ChangeWidth-1:0] incr,
-    input  logic                    decr_valid,
-    input  logic [ ChangeWidth-1:0] decr,
+    input  logic                   incr_valid,
+    input  logic [ChangeWidth-1:0] incr,
+    input  logic                   decr_valid,
+    input  logic [ChangeWidth-1:0] decr,
     // Reset value for the credit counter
-    input  logic [CounterWidth-1:0] initial_value,
+    input  logic [ ValueWidth-1:0] initial_value,
     // Dynamically withhold credits from circulation
-    input  logic [CounterWidth-1:0] withhold,
-    // Credit counter state before increment/decrement/withhold.
-    output logic [  ValueWidth-1:0] value,
-    // Dynamic amount of available credit.
-    output logic [  ValueWidth-1:0] available
+    input  logic [ ValueWidth-1:0] withhold,
+    // Credit counter state not including increment & withhold.
+    output logic [ ValueWidth-1:0] value,
+    // Dynamic amount of available credit including increment & withhold.
+    output logic [ ValueWidth-1:0] available
 );
 
   //------------------------------------------
@@ -108,9 +108,10 @@ module br_credit_counter #(
   // Ensure the initial value was within the valid range on the last cycle when exiting reset
   `BR_ASSERT_INTG(initial_value_in_range_a, $fell(rst) |-> $past(initial_value) <= MaxValue)
 
-  // Withhold
-  `BR_ASSERT_INTG(withhold_credit_in_range_a, withhold_credit <= MaxCredit)
-  `BR_COVER_INTG(withhold_credit_c, withhold_credit > 0)
+  // Withhold and available
+  `BR_ASSERT_INTG(withhold_in_range_a, withhold <= MaxValue)
+  `BR_COVER_INTG(withhold_c, withhold > 0)
+  `BR_COVER_INTG(available_zero_c, available == 0)
 
   //------------------------------------------
   // Implementation
@@ -119,6 +120,7 @@ module br_credit_counter #(
   // Counter
   logic [ChangeWidth-1:0] incr_internal;
   logic [ChangeWidth-1:0] decr_internal;
+  logic [ ValueWidth-1:0] value_plus_incr;
   logic [ ValueWidth-1:0] value_next;
 
   // ri lint_check_waive CONST_ASSIGN
@@ -130,8 +132,10 @@ module br_credit_counter #(
 
   `BR_REGIL(value, value_next, incr_valid || decr_valid, initial_value)
 
-  // Withholding
-  assign available = value_next > withhold ? value_next - withhold : '0;
+  // Withhold and available: don't use the decrement in the calculation of
+  // available credits because the user can inspect available before deciding
+  // to decrement.
+  assign available = value_plus_incr > withhold ? value_plus_incr - withhold : '0;
 
   //------------------------------------------
   // Implementation checks

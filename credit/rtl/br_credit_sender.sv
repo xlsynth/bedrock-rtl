@@ -62,9 +62,6 @@ module br_credit_sender #(
     // Synchronous active-high reset.
     input logic rst,
 
-    // Reset value for the credit counter
-    input logic [CounterWidth-1:0] initial_credit,
-
     // Ready/valid push interface.
     output logic push_ready,
     input logic push_valid,
@@ -76,9 +73,14 @@ module br_credit_sender #(
     output logic pop_valid,
     output logic [BitWidth-1:0] pop_data,
 
-    // Credit counter status
+    // Reset value for the credit counter
+    input  logic [CounterWidth-1:0] credit_initial,
+    // Dynamically withhold credits from circulation
+    input  logic [CounterWidth-1:0] credit_withhold,
+    // Credit counter state before increment/decrement/withhold.
     output logic [CounterWidth-1:0] credit_count,
-    output logic [CounterWidth-1:0] credit_count_next
+    // Dynamic amount of available credit.
+    output logic [CounterWidth-1:0] credit_available
 );
 
   //------------------------------------------
@@ -86,6 +88,10 @@ module br_credit_sender #(
   //------------------------------------------
   `BR_ASSERT_STATIC(bitwidth_in_range_a, BitWidth >= 1)
   `BR_ASSERT_STATIC(max_credit_in_range_a, MaxCredit >= 1)
+
+  `BR_COVER_INTG(push_backpressure_c, !push_ready && push_valid)
+
+  // Rely on submodule integration checks
 
   //------------------------------------------
   // Implementation
@@ -96,17 +102,18 @@ module br_credit_sender #(
   ) br_credit_counter (
       .clk,
       .rst,
-      .initial_value(initial_credit),
       .incr_valid(pop_credit),
       .incr(1'b1),
       .decr_valid(pop_valid),
       .decr(1'b1),
+      .initial_value(credit_initial),
+      .withhold(credit_withhold),
       .value(credit_count),
-      .value_next(credit_count_next)
+      .available(credit_available)
   );
 
   `BR_REGI(pop_credit_stall, 1'b0, 1'b1)
-  assign push_ready = (credit_count > 0) || pop_credit;
+  assign push_ready = credit_available > 0;
   assign pop_valid  = push_ready && push_valid;
   assign pop_data   = push_data;
 
@@ -117,7 +124,10 @@ module br_credit_sender #(
   `BR_ASSERT_IMPL(pop_with_zero_credits_a,
                   credit_count == '0 && pop_valid |-> pop_credit && push_valid)
   `BR_ASSERT_IMPL(push_pop_unchanged_credit_count_a,
-                  pop_valid && pop_credit |-> credit_count == credit_count_next)
+                  pop_valid && pop_credit |=> credit_count == $past(credit_count))
   `BR_COVER_IMPL(pop_valid_and_pop_credit_c, pop_valid && pop_credit)
+  `BR_ASSERT_IMPL(withhold_and_spend_a, credit_count == credit_withhold && pop_valid |-> pop_credit)
+
+  // Rely on submodule implementation checks
 
 endmodule : br_credit_sender
