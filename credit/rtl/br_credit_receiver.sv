@@ -12,44 +12,34 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Bedrock-RTL Credit Sender
+// Bedrock-RTL Credit Receiver
 //
-// Manages the sender side of a credit-based flow control mechanism.
-// Converts from ready/valid on the push interface to credit/valid on the pop interface.
+// Manages the receiver side of a credit-based flow control mechanism.
+// Both the push and pop interfaces use credit/valid flow control.
 //
-// Push Interface:
-//   - Accepts data to be sent (push_data) when push_valid is asserted.
-//   - Indicates readiness to accept data via push_ready, which is high when there are available credits.
+// The push side is intended for delayed communication with a
+// sender over multiple cycles where there may be reset skew between
+// sender and receiver.
 //
-// Pop Interface:
-//   - Credits are replenished when the receiver returns a credit (pop_credit asserted).
-//   - pop_credit_stall is asserted during reset to prevent the receiver from returning credits prematurely.
-//   - The receiver should not exit reset and assert pop_credit when pop_credit_stall is high, otherwise
-//     credits will be lost.
-//   - Forwards data to the receiver via pop_data and asserts pop_valid when both push_valid and push_ready
-//     are high.
+// The pop side must directly connect to a dedicated buffer (managed with
+// the credits). There must be no reset skew between this module and
+// the receiver buffer attached to the pop interface.
 //
-// Credit Tracking (credit_count):
-//   - Uses an internal credit counter to track the number of available credits.
-//   - Initializes to initial_credit, allowing for adjustable initial credit values.
+// This module does not include any buffering on the datapath.
 //
-// Flow Control Mechanism:
-//   - Decrements the credit count when a flit (data packet) is sent (pop_valid asserted).
-//   - Increments the credit count when a credit is received from the receiver (pop_credit asserted).
-//   - Data is only sent when there are available credits or a credit is being replenished the
-//     same cycle.
+// In most cases, you will want to use br_fifo_*_push_credit instead,
+// since it bundles this module with the receiver buffer logic.
 //
 // Latency:
 //   - There are no registers on the datapath between the push and pop interfaces.
 //   - There is a cut-through latency of 0 cycles from push to pop.
 //   - There is a backpressure latency of 0 cycles from pop to push.
-//   - Credits can be spent the same cycle that they are replenished.
-//   - Users will likely want to register the push-side interface (e.g., with br_flow_reg_*)
-//     and/or the pop-side interface (e.g., with br_delay_valid) to help close timing.
+//   - Credits can be released the same cycle that they are acquired from the receiver buffer.
+//   - Users will likely want to register the push-side interface (e.g., with br_delay_valid).
 
 `include "br_asserts_internal.svh"
 
-module br_credit_sender #(
+module br_credit_receiver #(
     // Width of the datapath in bits. Must be at least 1.
     parameter int BitWidth = 1,
     // Maximum number of credits that can be stored (inclusive). Must be at least 1.
@@ -64,13 +54,16 @@ module br_credit_sender #(
     // Reset value for the credit counter
     input logic [CounterWidth-1:0] initial_credit,
 
-    // Ready/valid push interface.
-    output logic push_ready,
+    // Credit/valid push interface.
+    input logic push_credit_stall,
+    output logic push_credit,
     input logic push_valid,
     input logic [BitWidth-1:0] push_data,
 
     // Credit/valid pop interface.
-    output logic pop_credit_stall,
+    // Unlike the push interface it has no credit stall mechanism.
+    // Intended to be connected directly to a receiver buffer with
+    // no reset skew.
     input logic pop_credit,
     output logic pop_valid,
     output logic [BitWidth-1:0] pop_data,
@@ -86,6 +79,10 @@ module br_credit_sender #(
   `BR_ASSERT_STATIC(bitwidth_in_range_a, BitWidth >= 1)
   `BR_ASSERT_STATIC(max_credit_in_range_a, MaxCredit >= 1)
 
+  `BR_ASSERT_INTG(no_push_valid_if_no_credit_released_a, credit_count == MaxCredits |-> !push_valid)
+
+  // Rely on submodule integration checks
+
   //------------------------------------------
   // Implementation
   //------------------------------------------
@@ -98,25 +95,23 @@ module br_credit_sender #(
       .initial_value(initial_credit),
       .incr_valid(pop_credit),
       .incr(1'b1),
-      .decr_valid(pop_valid),
+      .decr_valid(push_credit),
       .decr(1'b1),
       .value(credit_count),
       .value_next(credit_count_next)
   );
 
-  `BR_REGI(pop_credit_stall, 1'b0, 1'b1)
-  assign push_ready = (credit_count > 0) || pop_credit;
-  assign pop_valid  = push_ready && push_valid;
-  assign pop_data   = push_data;
+  assign push_credit = !push_credit_stall && ((credit_count > 0) || pop_credit);
+  assign pop_valid = push_valid;
+  assign pop_data = push_data;
 
   //------------------------------------------
   // Implementation checks
   //------------------------------------------
-  `BR_ASSERT_IMPL(pop_valid_a, pop_valid == (push_valid && push_ready))
-  `BR_ASSERT_IMPL(pop_with_zero_credits_a,
-                  credit_count == '0 && pop_valid |-> pop_credit && push_valid)
-  `BR_ASSERT_IMPL(push_pop_unchanged_credit_count_a,
-                  pop_valid && pop_credit |-> credit_count == credit_count_next)
-  `BR_COVER_IMPL(pop_valid_and_pop_credit_c, pop_valid && pop_credit)
+  `BR_ASSERT_IMPL(push_credit_stall_a, push_credit_stall |-> !push_credit)
+  `BR_ASSERT_IMPL(passthru_credit_c, pop_credit && push_credit && credit_count == '0)
+  `BR_ASSERT_IMPL(passthru_credit_nonzero_count_c, pop_credit && push_credit && credit_count > '0)
 
-endmodule : br_credit_sender
+  // Rely on submodule implementation checks
+
+endmodule : br_credit_receiver
