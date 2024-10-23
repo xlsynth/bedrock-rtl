@@ -59,8 +59,10 @@ module br_fifo_ctrl_1r1w_push_credit #(
     localparam int CountWidth = $clog2(Depth + 1),
     localparam int CreditWidth = $clog2(MaxCredit + 1)
 ) (
+    // Posedge-triggered clock.
     input logic clk,
-    input logic rst,  // Synchronous active-high
+    // Synchronous active-high reset.
+    input logic rst,
 
     // Push-side interface
     input  logic                push_credit_stall,
@@ -132,8 +134,6 @@ module br_fifo_ctrl_1r1w_push_credit #(
       .full_next,
       .slots,
       .slots_next,
-      .push_initial_credit,
-      .push_credit_count,
       .bypass_ready,
       // Bypass is only used when EnableBypass is 1.
       .bypass_valid_unstable,  // ri lint_check_waive CONST_ASSIGN
