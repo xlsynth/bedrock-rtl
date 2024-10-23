@@ -96,3 +96,28 @@ br_verilog_elab_and_lint_test_suite(
     },
     deps = [":br_credit_sender"],
 )
+
+verilog_library(
+    name = "br_credit_receiver",
+    srcs = ["br_credit_receiver.sv"],
+    deps = [
+        ":br_credit_counter",
+        "//macros:br_asserts_internal",
+    ],
+)
+
+br_verilog_elab_and_lint_test_suite(
+    name = "br_credit_receiver_test_suite",
+    params = {
+        "MaxCredit": [
+            "1",
+            "3",
+            "8",
+        ],
+        "BitWidth": [
+            "1",
+            "16",
+        ],
+    },
+    deps = [":br_credit_receiver"],
+)
