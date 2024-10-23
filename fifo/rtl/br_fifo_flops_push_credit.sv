@@ -12,17 +12,14 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Bedrock-RTL FIFO (Internal 1R1W Flop-RAM, Push Ready/Valid, Pop Ready/Valid Variant)
+// Bedrock-RTL FIFO (Internal 1R1W Flop-RAM, Push Credit/Valid, Pop Ready/Valid Variant)
 //
-// A one-read/one-write (1R1W) FIFO that uses the AMBA-inspired
-// ready-valid handshake protocol for synchronizing pipeline stages and stalling
+// A one-read/one-write (1R1W) FIFO controller that uses a credit-valid
+// push interface and an AMBA-inspired ready-valid pop interface
+// for synchronizing pipeline stages and stalling
 // when encountering backpressure hazards.
 //
 // This module includes an internal flop-RAM.
-//
-// Data progresses from one stage to another when both
-// the corresponding ready signal and valid signal are
-// both 1 on the same cycle. Otherwise, the stage is stalled.
 //
 // The FIFO can be parameterized in bypass mode or non-bypass mode.
 // In bypass mode (default), then pushes forward directly to the pop
@@ -36,11 +33,6 @@
 //
 // Bypass is enabled by default to minimize latency accumulation throughout a design.
 // It is recommended to disable the bypass only when necessary to close timing.
-//
-// See also: br_flow_reg_fwd/br_flow_reg_rev, and br_flow_reg_both, which are optimal
-// FIFO implementations for 1 entry and 2 entries, respectively. Use them
-// when you know you don't need to parameterize to a greater depth and you don't have
-// any use for the status flags.
 
 module br_fifo_flops_push_credit #(
     parameter int Depth = 2,  // Number of entries in the FIFO. Must be at least 2.
