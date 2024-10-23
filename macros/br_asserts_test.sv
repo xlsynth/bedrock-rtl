@@ -18,6 +18,12 @@
 
 `include "br_asserts.svh"
 
+// verilog_lint: waive package-filename
+package br_asserts_test_pkg;
+  localparam int Width = 4;
+  `BR_ASSERT_STATIC_IN_PACKAGE(width_check_a, Width == 4)
+endpackage : br_asserts_test_pkg
+
 module br_asserts_test;
 
   logic clk;
@@ -28,7 +34,8 @@ module br_asserts_test;
   logic [4:0] sum;
   logic valid;
 
-  localparam int Width = 4;
+  // Reference the br_asserts_test_pkg so that the package is elaborated
+  localparam int Width = br_asserts_test_pkg::Width;
 
   always #5 clk = ~clk;
 
