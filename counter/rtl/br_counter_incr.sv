@@ -69,8 +69,7 @@ module br_counter_incr #(
   `BR_ASSERT_STATIC(max_increment_lte_max_value_a, MaxIncrement <= MaxValue)
 
   `BR_ASSERT_INTG(incr_in_range_a, incr_valid |-> incr <= MaxIncrement)
-  `BR_ASSERT_INTG(reinit_initial_value_in_range_a, reinit |-> initial_value <= MaxValue)
-  `BR_ASSERT_INTG(rst_initial_value_in_range_a, $fell(rst) |-> initial_value <= MaxValue)
+  `BR_ASSERT_INTG(initial_value_in_range_a, initial_value <= MaxValue)
 
   //------------------------------------------
   // Implementation
