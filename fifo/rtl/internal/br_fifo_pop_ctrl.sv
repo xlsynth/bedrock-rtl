@@ -93,6 +93,8 @@ module br_fifo_pop_ctrl #(
   ) br_counter_incr_rd_addr (
       .clk,
       .rst,
+      .reinit(1'b0),  // unused
+      .initial_value(AddrWidth'(1'b0)),
       .incr_valid(ram_rd_addr_valid),
       .incr(1'b1),
       .value(ram_rd_addr),
