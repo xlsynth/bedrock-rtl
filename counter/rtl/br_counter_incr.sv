@@ -118,20 +118,30 @@ module br_counter_incr #(
   // to just value_next_internal, because the load-enable on the register is
   // conditioned on the same incr_valid.
   assign value_next = incr_valid ? value_next_internal : value;
-  `BR_REGIL(value, value_next, incr_valid, initial_value)
+  `BR_REGIL(value, value_next, incr_valid || reinit, initial_value)
 
   //------------------------------------------
   // Implementation checks
   //------------------------------------------
+
+  // Value
   `BR_ASSERT_IMPL(value_in_range_a, value <= MaxValue)
   `BR_ASSERT_IMPL(value_next_in_range_a, value_next <= MaxValue)
   `BR_ASSERT_IMPL(value_next_propagates_a, ##1 value == $past(value_next))
-  `BR_ASSERT_IMPL(value_wrap_a,
+
+  // Overflow corners
+  `BR_ASSERT_IMPL(value_overflow_a,
                   incr_valid && value_temp > MaxValue |-> value_next == value_temp - MaxValue - 1)
   `BR_ASSERT_IMPL(maxvalue_plus_one_a,
                   value == MaxValue && incr_valid && incr == 1'b1 |-> value_next == 0)
+
+  // Increment corners
   `BR_ASSERT_IMPL(plus_zero_a, incr_valid && incr == '0 |-> value_next == value)
   `BR_COVER_IMPL(increment_max_c, incr_valid && incr == MaxIncrement)
   `BR_COVER_IMPL(value_temp_oob_c, value_temp > MaxValue)
+
+  // Reinit
+  `BR_ASSERT_IMPL(reinit_no_incr_a, reinit && !incr_valid |=> value == $past(initial_value))
+  `BR_COVER_IMPL(reinit_and_incr_c, reinit && incr_valid && incr > 0)
 
 endmodule : br_counter_incr
