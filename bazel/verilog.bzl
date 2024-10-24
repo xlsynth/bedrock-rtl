@@ -21,17 +21,8 @@ load(
     "write_placeholder_verilog_lint_test_tool",
 )
 
-def _check_verilog_info_provider(iterable):
-    """Check that all items in an iterable have the VerilogInfo provider; fails otherwise."""
-    for item in iterable:
-        if VerilogInfo not in item:
-            fail("Label '{}' does not have the VerilogInfo provider. " +
-                 "This probably means you accidentally provided a label that didn't come " +
-                 "from a verilog_library target. ".format(item.label))
-
 def get_transitive(ctx, srcs_not_hdrs):
     """Returns a depset of all Verilog source or header files in the transitive closure of the deps attribute."""
-    _check_verilog_info_provider(ctx.attr.deps)
     transitive_depset = depset(
         [],
         transitive = [dep[VerilogInfo].dag for dep in ctx.attr.deps],
@@ -60,6 +51,17 @@ def _write_executable_shell_script(ctx, filename, cmd):
     return executable_file
 
 def _verilog_base_test_impl(ctx, tool, extra_args = [], extra_runfiles = []):
+    """Shared implementation for both verilog_elab_test and verilog_lint_test.
+
+    Args:
+        ctx: ctx for the rule
+        tool (string): the base command to run (should be on system PATH)
+        extra_args (list of strings, optional): tool-specific args
+        extra_runfiles (list, optional): additional runfiles to include in the test
+
+    Returns:
+        DefaultInfo for the rule that describes the runfiles, depset, and executable
+    """
     srcs = get_transitive(ctx = ctx, srcs_not_hdrs = True).to_list()
     hdrs = get_transitive(ctx = ctx, srcs_not_hdrs = False).to_list()
     src_files = [src.short_path for src in srcs]
@@ -139,8 +141,8 @@ _verilog_elab_test = rule(
     doc = "Tests that a Verilog or SystemVerilog design elaborates.",
     implementation = _verilog_elab_test_impl,
     attrs = {
-        "deps": attr.label_list(allow_files = False, doc = "The dependencies of the test."),
-        "defines": attr.string_list(default = ["SV_ASSERT_ON"], doc = "Preprocessor defines to pass to the Verilog compiler."),
+        "deps": attr.label_list(allow_files = False, providers = [VerilogInfo], doc = "The dependencies of the test."),
+        "defines": attr.string_list(doc = "Preprocessor defines to pass to the Verilog compiler."),
         "params": attr.string_dict(doc = "Verilog module parameters to set in the instantiation of the top-level module."),
         "top": attr.string(doc = "The top-level module; if not provided and there exists one dependency, then defaults to that dep's label name."),
     },
@@ -157,7 +159,7 @@ _verilog_lint_test = rule(
     doc = "Tests that a Verilog or SystemVerilog design passes a set of static lint checks.",
     implementation = _verilog_lint_test_impl,
     attrs = {
-        "deps": attr.label_list(allow_files = False, doc = "The dependencies of the test."),
+        "deps": attr.label_list(allow_files = False, providers = [VerilogInfo], doc = "The dependencies of the test."),
         "defines": attr.string_list(doc = "Preprocessor defines to pass to the Verilog compiler."),
         "params": attr.string_dict(doc = "Verilog module parameters to set in the instantiation of the top-level module."),
         "top": attr.string(doc = "The top-level module; if not provided and there exists one dependency, then defaults to that dep's label name."),
