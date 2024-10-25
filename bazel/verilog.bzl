@@ -50,7 +50,7 @@ def _write_executable_shell_script(ctx, filename, cmd):
     return executable_file
 
 def _verilog_base_test_impl(ctx, tool, extra_args = [], extra_runfiles = []):
-    """Shared implementation for verilog_elab_test, verilog_lint_test, and verilog_test.
+    """Shared implementation for verilog_elab_test, verilog_lint_test, and verilog_sim_test.
 
     Args:
         ctx: ctx for the rule
@@ -136,8 +136,8 @@ def _verilog_lint_test_impl(ctx):
         extra_runfiles = extra_runfiles,
     )
 
-def _verilog_test_impl(ctx):
-    """Implementation of the verilog_test rule."""
+def _verilog_sim_test_impl(ctx):
+    """Implementation of the verilog_sim_test rule."""
     env = ctx.configuration.default_shell_env
     if "BAZEL_VERILOG_SIM_TEST_TOOL" in env:
         tool = env.get("BAZEL_VERILOG_SIM_TEST_TOOL")
@@ -208,11 +208,11 @@ def verilog_lint_test(tags = [], **kwargs):
         **kwargs
     )
 
-_verilog_test = rule(
+_verilog_sim_test = rule(
     doc = """
     Runs Verilog compilation and simulation in one command. This rule should be used for simple unit tests that do not require multi-step compilation, elaboration, and simulation.
     """,
-    implementation = _verilog_test_impl,
+    implementation = _verilog_sim_test_impl,
     attrs = {
         "deps": attr.label_list(
             doc = "The dependencies of the test.",
@@ -255,9 +255,9 @@ _verilog_test = rule(
     test = True,
 )
 
-def verilog_test(tags = [], **kwargs):
-    _verilog_test(
-        tags = tags + ["resources:verilog_test_tool_licenses:1"],
+def verilog_sim_test(tags = [], **kwargs):
+    _verilog_sim_test(
+        tags = tags + ["resources:verilog_sim_test_tool_licenses:1"],
         **kwargs
     )
 
