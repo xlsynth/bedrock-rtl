@@ -241,7 +241,6 @@ _verilog_sim_test = rule(
         ),
         "tool": attr.string(
             doc = "Simulator tool to use.",
-            default = "vcs",
         ),
         "seed": attr.int(
             doc = "Random seed to use in simulation.",
