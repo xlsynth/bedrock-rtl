@@ -214,7 +214,7 @@ if __name__ == "__main__":
     main()
 '''
 
-_PLACEHOLDER_VERILOG_TEST_TOOL_CONTENT = '''#!/usr/bin/env python3.12
+_PLACEHOLDER_VERILOG_SIM_TEST_TOOL_CONTENT = '''#!/usr/bin/env python3.12
 
 # Copyright 2024 The Bedrock-RTL Authors
 #
@@ -230,7 +230,7 @@ _PLACEHOLDER_VERILOG_TEST_TOOL_CONTENT = '''#!/usr/bin/env python3.12
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""Auto-generated code: placeholder Python implementation of the verilog_test tool API."""
+"""Auto-generated code: placeholder Python implementation of the verilog_sim_test tool API."""
 
 import argparse
 from typing import Dict, List, Optional
@@ -253,7 +253,7 @@ def parse_params(parser: argparse.ArgumentParser, params: Optional[List[str]]) -
                 parser.error(f"Invalid format for --param '{item}'. Expected KEY=VALUE.")
     return params_dict
 
-def verilog_test(
+def verilog_sim_test(
     hdrs: Optional[List[str]],
     defines: Optional[List[str]],
     params: Optional[Dict[str, str]],
@@ -349,7 +349,7 @@ def main():
     check_each_filename_suffix(hdrs, [".vh", ".svh"])
     check_each_filename_suffix(srcs, [".v", ".sv"])
 
-    exit(0) if verilog_test(
+    exit(0) if verilog_sim_test(
         hdrs=hdrs,
         defines=defines,
         params=params,
@@ -383,5 +383,5 @@ def write_placeholder_verilog_elab_test_tool(ctx):
 def write_placeholder_verilog_lint_test_tool(ctx):
     return _write_placeholder_tool(ctx, "placeholder_verilog_lint_test.py", _PLACEHOLDER_VERILOG_LINT_TEST_TOOL_CONTENT)
 
-def write_placeholder_verilog_test_tool(ctx):
-    return _write_placeholder_tool(ctx, "placeholder_verilog_test.py", _PLACEHOLDER_VERILOG_TEST_TOOL_CONTENT)
+def write_placeholder_verilog_sim_test_tool(ctx):
+    return _write_placeholder_tool(ctx, "placeholder_verilog_sim_test.py", _PLACEHOLDER_VERILOG_SIM_TEST_TOOL_CONTENT)

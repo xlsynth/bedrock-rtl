@@ -19,7 +19,7 @@ load(
     "//bazel:write_placeholder_tools.bzl",
     "write_placeholder_verilog_elab_test_tool",
     "write_placeholder_verilog_lint_test_tool",
-    "write_placeholder_verilog_test_tool",
+    "write_placeholder_verilog_sim_test_tool",
 )
 
 def get_transitive(ctx, srcs_not_hdrs):
@@ -139,13 +139,13 @@ def _verilog_lint_test_impl(ctx):
 def _verilog_test_impl(ctx):
     """Implementation of the verilog_test rule."""
     env = ctx.configuration.default_shell_env
-    if "BAZEL_VERILOG_TEST_TOOL" in env:
-        tool = env.get("BAZEL_VERILOG_TEST_TOOL")
+    if "BAZEL_VERILOG_SIM_TEST_TOOL" in env:
+        tool = env.get("BAZEL_VERILOG_SIM_TEST_TOOL")
         extra_runfiles = []
     else:
         # buildifier: disable=print
-        print("!! WARNING !! Environment variable BAZEL_VERILOG_TEST_TOOL is not set! Will use placeholder test tool.")
-        tool_file = write_placeholder_verilog_test_tool(ctx)
+        print("!! WARNING !! Environment variable BAZEL_VERILOG_SIM_TEST_TOOL is not set! Will use placeholder test tool.")
+        tool_file = write_placeholder_verilog_sim_test_tool(ctx)
         extra_runfiles = [tool_file]
         tool = tool_file.short_path
 
