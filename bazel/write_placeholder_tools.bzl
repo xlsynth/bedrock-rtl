@@ -214,6 +214,159 @@ if __name__ == "__main__":
     main()
 '''
 
+_PLACEHOLDER_VERILOG_TEST_TOOL_CONTENT = '''#!/usr/bin/env python3.12
+
+# Copyright 2024 The Bedrock-RTL Authors
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# You may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+"""Auto-generated code: placeholder Python implementation of the verilog_test tool API."""
+
+import argparse
+from typing import Dict, List, Optional
+
+def check_each_filename_suffix(filenames: List[str], suffices: List[str]) -> None:
+    """Raises ValueError if any filename doesn't end with any of the expected suffices."""
+    for filename in filenames:
+        if not any(filename.endswith(suffix) for suffix in suffices):
+            raise ValueError(f"Expected filename to end with any of {suffices}: {filename}")
+
+def parse_params(parser: argparse.ArgumentParser, params: Optional[List[str]]) -> Dict[str, str]:
+    """Parses parameters into a dict; raises an error if format is invalid."""
+    params_dict = {}
+    if params:
+        for item in params:
+            if '=' in item:
+                key, value = item.split('=', 1)
+                params_dict[key] = value
+            else:
+                parser.error(f"Invalid format for --param '{item}'. Expected KEY=VALUE.")
+    return params_dict
+
+def verilog_test(
+    hdrs: Optional[List[str]],
+    defines: Optional[List[str]],
+    params: Optional[Dict[str, str]],
+    top: Optional[str],
+    srcs: List[str],
+    opts: Optional[List[str]],
+    elab_only: bool,
+    uvm: bool,
+    tool: Optional[str],
+    seed: Optional[int],
+    waves: bool,
+) -> bool:
+    """Returns True if the simulation passes; may print to stdout and/or stderr."""
+    # TODO: Implement this using your own tool.
+    print("NOT IMPLEMENTED: Test vacuously passes.")
+    return True
+
+def main():
+    parser = argparse.ArgumentParser(
+        description="Run Verilog or SystemVerilog simulation.",
+        allow_abbrev=False,
+    )
+    parser.add_argument("--top",
+                        type=str,
+                        help="Top module",
+    )
+    parser.add_argument("--hdr",
+                        type=argparse.FileType("r"),
+                        action="append",
+                        default=[],
+                        help="Verilog header (.vh) or SystemVerilog header (.svh) to include. "
+                             "Can be specified multiple times.",
+    )
+    parser.add_argument("--define",
+                        type=str,
+                        action="append",
+                        default=[],
+                        help="Preprocessor defines to pass to the Verilog compiler. Can be specified multiple times.",
+    )
+    parser.add_argument("--param",
+                        action="append",
+                        metavar="KEY=VALUE",
+                        default=[],
+                        help="Module parameter key-value pairs for the top module. Can be specified multiple times.",
+    )
+    parser.add_argument("--opt",
+                        type=str,
+                        action="append",
+                        default=[],
+                        help="Compile and simulation options. Can be specified multiple times.",
+    )
+    parser.add_argument("--elab_only",
+                        action="store_true",
+                        help="Only run elaboration.",
+    )
+    parser.add_argument("--uvm",
+                        action="store_true",
+                        help="Run UVM test.",
+    )
+    parser.add_argument("--tool",
+                        type=str,
+                        default="vcs",
+                        help="Simulator tool to use.",
+    )
+    parser.add_argument("--seed",
+                        type=int,
+                        help="Random seed to use in simulation.",
+    )
+    parser.add_argument("--waves",
+                        action="store_true",
+                        help="Enable waveform dumping.",
+    )
+    parser.add_argument("srcs",
+                        type=argparse.FileType("r"),
+                        nargs="+",
+                        help="One or more Verilog (.v) or SystemVerilog (.sv) source files",
+    )
+
+    args = parser.parse_args()
+
+    hdrs = [hdr.name for hdr in args.hdr]
+    srcs = [src.name for src in args.srcs]
+    defines = args.define
+    params = parse_params(parser, args.param)
+    opts = args.opt
+    elab_only = args.elab_only
+    uvm = args.uvm
+    tool = args.tool
+    seed = args.seed
+    waves = args.waves
+    top = args.top
+
+    check_each_filename_suffix(hdrs, [".vh", ".svh"])
+    check_each_filename_suffix(srcs, [".v", ".sv"])
+
+    exit(0) if verilog_test(
+        hdrs=hdrs,
+        defines=defines,
+        params=params,
+        top=top,
+        srcs=srcs,
+        opts=opts,
+        elab_only=elab_only,
+        uvm=uvm,
+        tool=tool,
+        seed=seed,
+        waves=waves,
+    ) else exit(1)
+
+if __name__ == "__main__":
+    main()
+'''
+
 def _write_placeholder_tool(ctx, filename, content):
     """Writes a placeholder Python implementation of the verilog_elab_test tool API."""
     file = ctx.actions.declare_file(filename)
@@ -229,3 +382,6 @@ def write_placeholder_verilog_elab_test_tool(ctx):
 
 def write_placeholder_verilog_lint_test_tool(ctx):
     return _write_placeholder_tool(ctx, "placeholder_verilog_lint_test.py", _PLACEHOLDER_VERILOG_LINT_TEST_TOOL_CONTENT)
+
+def write_placeholder_verilog_test_tool(ctx):
+    return _write_placeholder_tool(ctx, "placeholder_verilog_test.py", _PLACEHOLDER_VERILOG_TEST_TOOL_CONTENT)
