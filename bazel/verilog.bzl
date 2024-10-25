@@ -41,11 +41,9 @@ def _write_executable_shell_script(ctx, filename, cmd):
         output = executable_file,
         content = "\n".join([
             "#!/usr/bin/env bash",
-            "set -e",
-            "echo 'Running command:'",
-            "echo {}".format(cmd),
+            "set -ex",
+            "pwd",
             cmd,
-            "exit 0",
         ]),
         is_executable = True,
     )
