@@ -75,15 +75,6 @@ module br_enc_bin2onehot_tb;
       end
     end
 
-    // Apply test vectors for undefined inputs
-    for (int i = NumValues; i < (1 << BinWidth); i++) begin
-      in = i;
-      #10;
-
-      // Since output is undefined for these inputs, we skip the comparison
-      $display("Time: %0t | Input: %0d (Undefined) | Output: %b", $time, in, out);
-    end
-
     // Finish simulation
     #10;
 
