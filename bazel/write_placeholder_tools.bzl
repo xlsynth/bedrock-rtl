@@ -315,7 +315,6 @@ def main():
     )
     parser.add_argument("--tool",
                         type=str,
-                        default="vcs",
                         help="Simulator tool to use.",
     )
     parser.add_argument("--seed",
