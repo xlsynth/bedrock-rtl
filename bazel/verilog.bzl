@@ -19,6 +19,7 @@ load(
     "//bazel:write_placeholder_tools.bzl",
     "write_placeholder_verilog_elab_test_tool",
     "write_placeholder_verilog_lint_test_tool",
+    "write_placeholder_verilog_sim_test_tool",
 )
 
 def get_transitive(ctx, srcs_not_hdrs):
@@ -40,18 +41,16 @@ def _write_executable_shell_script(ctx, filename, cmd):
         output = executable_file,
         content = "\n".join([
             "#!/usr/bin/env bash",
-            "set -e",
-            "echo 'Running command:'",
-            "echo {}".format(cmd),
+            "set -ex",
+            "pwd",
             cmd,
-            "exit 0",
         ]),
         is_executable = True,
     )
     return executable_file
 
 def _verilog_base_test_impl(ctx, tool, extra_args = [], extra_runfiles = []):
-    """Shared implementation for both verilog_elab_test and verilog_lint_test.
+    """Shared implementation for verilog_elab_test, verilog_lint_test, and verilog_sim_test.
 
     Args:
         ctx: ctx for the rule
@@ -99,7 +98,7 @@ def _verilog_elab_test_impl(ctx):
     """
     env = ctx.configuration.default_shell_env
     if "BAZEL_VERILOG_ELAB_TEST_TOOL" in env:
-        tool = ctx.configuration.default_shell_env.get("BAZEL_VERILOG_ELAB_TEST_TOOL")
+        tool = env.get("BAZEL_VERILOG_ELAB_TEST_TOOL")
         extra_runfiles = []
     else:
         # buildifier: disable=print
@@ -123,7 +122,7 @@ def _verilog_lint_test_impl(ctx):
     """
     env = ctx.configuration.default_shell_env
     if "BAZEL_VERILOG_LINT_TEST_TOOL" in env:
-        tool = ctx.configuration.default_shell_env.get("BAZEL_VERILOG_LINT_TEST_TOOL")
+        tool = env.get("BAZEL_VERILOG_LINT_TEST_TOOL")
         extra_runfiles = []
     else:
         # buildifier: disable=print
@@ -137,6 +136,42 @@ def _verilog_lint_test_impl(ctx):
         extra_runfiles = extra_runfiles,
     )
 
+def _verilog_sim_test_impl(ctx):
+    """Implementation of the verilog_sim_test rule."""
+    env = ctx.configuration.default_shell_env
+    if "BAZEL_VERILOG_SIM_TEST_TOOL" in env:
+        tool = env.get("BAZEL_VERILOG_SIM_TEST_TOOL")
+        extra_runfiles = []
+    else:
+        # buildifier: disable=print
+        print("!! WARNING !! Environment variable BAZEL_VERILOG_SIM_TEST_TOOL is not set! Will use placeholder test tool.")
+        tool_file = write_placeholder_verilog_sim_test_tool(ctx)
+        extra_runfiles = [tool_file]
+        tool = tool_file.short_path
+
+    extra_args = []
+
+    if ctx.attr.elab_only:
+        extra_args.append("--elab_only")
+    if ctx.attr.uvm:
+        extra_args.append("--uvm")
+    if ctx.attr.tool != "":
+        extra_args.append("--tool=" + ctx.attr.tool)
+    if ctx.attr.seed != None:
+        extra_args.append("--seed=" + str(ctx.attr.seed))
+    if ctx.attr.waves:
+        extra_args.append("--waves")
+    for opt in ctx.attr.opts:
+        extra_args.append("--opt=" + opt)
+
+    return _verilog_base_test_impl(
+        ctx = ctx,
+        tool = tool,
+        extra_args = extra_args,
+        extra_runfiles = extra_runfiles,
+    )
+
+# Rule definitions
 _verilog_elab_test = rule(
     doc = "Tests that a Verilog or SystemVerilog design elaborates.",
     implementation = _verilog_elab_test_impl,
@@ -173,6 +208,58 @@ def verilog_lint_test(tags = [], **kwargs):
         **kwargs
     )
 
+_verilog_sim_test = rule(
+    doc = """
+    Runs Verilog compilation and simulation in one command. This rule should be used for simple unit tests that do not require multi-step compilation, elaboration, and simulation.
+    """,
+    implementation = _verilog_sim_test_impl,
+    attrs = {
+        "deps": attr.label_list(
+            doc = "The dependencies of the test.",
+            allow_files = False,
+            providers = [VerilogInfo],
+        ),
+        "defines": attr.string_list(
+            doc = "Preprocessor defines to pass to the Verilog compiler.",
+        ),
+        "params": attr.string_dict(
+            doc = "Verilog module parameters to set in the instantiation of the top-level module.",
+        ),
+        "top": attr.string(
+            doc = "The top-level module; if not provided and there exists one dependency, then defaults to that dep's label name.",
+        ),
+        "opts": attr.string_list(
+            doc = "Compile and simulation options.",
+        ),
+        "elab_only": attr.bool(
+            doc = "Only run elaboration.",
+            default = False,
+        ),
+        "uvm": attr.bool(
+            doc = "Run UVM test.",
+            default = False,
+        ),
+        "tool": attr.string(
+            doc = "Simulator tool to use.",
+        ),
+        "seed": attr.int(
+            doc = "Random seed to use in simulation.",
+            default = 0,
+        ),
+        "waves": attr.bool(
+            doc = "Enable waveform dumping.",
+            default = False,
+        ),
+    },
+    test = True,
+)
+
+def verilog_sim_test(tags = [], **kwargs):
+    _verilog_sim_test(
+        tags = tags + ["resources:verilog_sim_test_tool_licenses:1"],
+        **kwargs
+    )
+
 def _cartesian_product(lists):
     """Return the cartesian product of a list of lists."""
     result = [[]]
@@ -198,14 +285,14 @@ def verilog_elab_and_lint_test_suite(name, defines = [], params = {}, **kwargs):
         **kwargs: Additional keyword arguments to be passed to the verilog_elab_test and verilog_lint_test functions.
 
     The function generates all possible combinations of the provided parameters and creates a verilog_elab_test
-    and a verilog_lint_test for each combination. The test names are generated by appending "_elab" and "_lint"
+    and a verilog_lint_test for each combination. The test names are generated by appending "_elab_test" and "_lint_test"
     to the base name followed by the parameter key-values.
     """
     param_keys = sorted(params.keys())
     param_values_list = [params[key] for key in param_keys]
     param_combinations = _cartesian_product(param_values_list)
 
-    # Create a verilog_elab_test for each combination of parameters
+    # Create a verilog_elab_test and verilog_lint_test for each combination of parameters
     for param_combination in param_combinations:
         params = dict(zip(param_keys, param_combination))
         verilog_elab_test(
