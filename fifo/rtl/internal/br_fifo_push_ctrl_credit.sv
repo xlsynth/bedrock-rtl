@@ -119,6 +119,8 @@ module br_fifo_push_ctrl_credit #(
   ) br_counter_incr_wr_addr (
       .clk,
       .rst,
+      .reinit(1'b0),  // unused
+      .initial_value(AddrWidth'(1'b0)),
       .incr_valid(ram_wr_valid),
       .incr(1'b1),
       .value(ram_wr_addr),
