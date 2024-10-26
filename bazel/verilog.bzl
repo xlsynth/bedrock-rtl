@@ -15,12 +15,7 @@
 """Verilog rules for Bazel."""
 
 load("@rules_hdl//verilog:providers.bzl", "VerilogInfo")
-load(
-    "//bazel:write_placeholder_tools.bzl",
-    "write_placeholder_verilog_elab_test_tool",
-    "write_placeholder_verilog_lint_test_tool",
-    "write_placeholder_verilog_sim_test_tool",
-)
+load("//bazel:write_placeholder_tools.bzl", "write_placeholder_verilog_test_tool")
 
 def get_transitive(ctx, srcs_not_hdrs):
     """Returns a depset of all Verilog source or header files in the transitive closure of the deps attribute."""
@@ -49,18 +44,33 @@ def _write_executable_shell_script(ctx, filename, cmd):
     )
     return executable_file
 
-def _verilog_base_test_impl(ctx, tool, extra_args = [], extra_runfiles = []):
+def _verilog_base_test_impl(ctx, subcmd, extra_args = []):
     """Shared implementation for verilog_elab_test, verilog_lint_test, and verilog_sim_test.
+
+    Grab tool from the environment (BAZEL_VERILOG_TEST_TOOL) so that
+    the user can provide their own proprietary tool implementation without
+    it being hardcoded anywhere into the repo. It's not hermetic, but it's
+    a decent compromise.
 
     Args:
         ctx: ctx for the rule
-        tool (string): the base command to run (should be on system PATH)
+        subcmd (string): the tool subcommand to run
         extra_args (list of strings, optional): tool-specific args
-        extra_runfiles (list, optional): additional runfiles to include in the test
 
     Returns:
         DefaultInfo for the rule that describes the runfiles, depset, and executable
     """
+    env = ctx.configuration.default_shell_env
+    if "BAZEL_VERILOG_TEST_TOOL" in env:
+        tool = env.get("BAZEL_VERILOG_TEST_TOOL")
+        extra_runfiles = []
+    else:
+        # buildifier: disable=print
+        print("!! WARNING !! Environment variable BAZEL_VERILOG_TEST_TOOL is not set! Will use placeholder test tool.")
+        tool_file = write_placeholder_verilog_test_tool(ctx, "placeholder_verilog_test.py")
+        extra_runfiles = [tool_file]
+        tool = tool_file.short_path
+
     srcs = get_transitive(ctx = ctx, srcs_not_hdrs = True).to_list()
     hdrs = get_transitive(ctx = ctx, srcs_not_hdrs = False).to_list()
     src_files = [src.short_path for src in srcs]
@@ -75,7 +85,7 @@ def _verilog_base_test_impl(ctx, tool, extra_args = [], extra_runfiles = []):
             ["--top=" + top] +
             ["--param=" + key + "=" + value for key, value in ctx.attr.params.items()] +
             extra_args)
-    cmd = " ".join([tool] + args + src_files)
+    cmd = " ".join([tool] + [subcmd] + args + src_files)
     runfiles = ctx.runfiles(files = srcs + hdrs + extra_runfiles)
     executable_file = _write_executable_shell_script(
         ctx = ctx,
@@ -89,68 +99,22 @@ def _verilog_base_test_impl(ctx, tool, extra_args = [], extra_runfiles = []):
     )
 
 def _verilog_elab_test_impl(ctx):
-    """Implementation of the verilog_elab_test rule.
-
-    Grab tool from the environment (BAZEL_VERILOG_ELAB_TEST_TOOL) so that
-    the user can provide their own proprietary tool implementation without
-    it being hardcoded anywhere into the repo. It's not hermetic, but it's
-    a decent compromise.
-    """
-    env = ctx.configuration.default_shell_env
-    if "BAZEL_VERILOG_ELAB_TEST_TOOL" in env:
-        tool = env.get("BAZEL_VERILOG_ELAB_TEST_TOOL")
-        extra_runfiles = []
-    else:
-        # buildifier: disable=print
-        print("!! WARNING !! Environment variable BAZEL_VERILOG_ELAB_TEST_TOOL is not set! Will use placeholder test tool.")
-        tool_file = write_placeholder_verilog_elab_test_tool(ctx)
-        extra_runfiles = [tool_file]
-        tool = tool_file.short_path
+    """Implementation of the verilog_elab_test rule."""
     return _verilog_base_test_impl(
         ctx = ctx,
-        tool = tool,
-        extra_runfiles = extra_runfiles,
+        subcmd = "elab",
     )
 
 def _verilog_lint_test_impl(ctx):
-    """Implementation of the verilog_lint_test rule.
-
-    Grab tool from the environment (BAZEL_VERILOG_LINT_TEST_TOOL) so that
-    the user can provide their own proprietary tool implementation without
-    it being hardcoded anywhere into the repo. It's not hermetic, but it's
-    a decent compromise.
-    """
-    env = ctx.configuration.default_shell_env
-    if "BAZEL_VERILOG_LINT_TEST_TOOL" in env:
-        tool = env.get("BAZEL_VERILOG_LINT_TEST_TOOL")
-        extra_runfiles = []
-    else:
-        # buildifier: disable=print
-        print("!! WARNING !! Environment variable BAZEL_VERILOG_LINT_TEST_TOOL is not set! Will use placeholder test tool.")
-        tool_file = write_placeholder_verilog_lint_test_tool(ctx)
-        extra_runfiles = [tool_file]
-        tool = tool_file.short_path
+    """Implementation of the verilog_lint_test rule."""
     return _verilog_base_test_impl(
         ctx = ctx,
-        tool = tool,
-        extra_runfiles = extra_runfiles,
+        subcmd = "lint",
     )
 
 def _verilog_sim_test_impl(ctx):
     """Implementation of the verilog_sim_test rule."""
-    env = ctx.configuration.default_shell_env
-    if "BAZEL_VERILOG_SIM_TEST_TOOL" in env:
-        tool = env.get("BAZEL_VERILOG_SIM_TEST_TOOL")
-        extra_runfiles = []
-    else:
-        # buildifier: disable=print
-        print("!! WARNING !! Environment variable BAZEL_VERILOG_SIM_TEST_TOOL is not set! Will use placeholder test tool.")
-        tool_file = write_placeholder_verilog_sim_test_tool(ctx)
-        extra_runfiles = [tool_file]
-        tool = tool_file.short_path
-
     extra_args = []
-
     if ctx.attr.elab_only:
         extra_args.append("--elab_only")
     if ctx.attr.uvm:
@@ -166,9 +130,8 @@ def _verilog_sim_test_impl(ctx):
 
     return _verilog_base_test_impl(
         ctx = ctx,
-        tool = tool,
+        subcmd = "sim",
         extra_args = extra_args,
-        extra_runfiles = extra_runfiles,
     )
 
 # Rule definitions
