@@ -32,15 +32,15 @@
 
 `define BR_NOOP
 
-`ifdef SV_ASSERT_ON
+`ifdef BR_ASSERT_ON
 `define BR_ASSERT_STATIC(__name__, __expr__) \
 if (!(__expr__)) begin : gen__``__name__ \
 __STATIC_ASSERT_FAILED__ __STATIC_ASSERT_FAILED__``__name__ (); \
 end
-`else  // SV_ASSERT_ON
+`else  // BR_ASSERT_ON
 `define BR_ASSERT_STATIC(__name__, __expr__) \
 `BR_NOOP
-`endif  // SV_ASSERT_ON
+`endif  // BR_ASSERT_ON
 
 `define BR_ASSERT_STATIC_IN_PACKAGE(__name__, __expr__) \
 typedef enum logic [1:0] { \
@@ -54,35 +54,35 @@ typedef enum logic [1:0] { \
 
 // Clock: 'clk'
 // Reset: 'rst'
-`ifdef SV_ASSERT_ON
+`ifdef BR_ASSERT_ON
 `define BR_ASSERT(__name__, __expr__) \
 __name__ : assert property (@(posedge clk) disable iff (rst) (__expr__));
-`else  // SV_ASSERT_ON
+`else  // BR_ASSERT_ON
 `define BR_ASSERT(__name__, __expr__) \
 `BR_NOOP
-`endif  // SV_ASSERT_ON
+`endif  // BR_ASSERT_ON
 
 // More expressive form of BR_ASSERT that allows the use of custom clock and reset signal names.
-`ifdef SV_ASSERT_ON
+`ifdef BR_ASSERT_ON
 `define BR_ASSERT_CR(__name__, __expr__, __clk__, __rst__) \
 __name__ : assert property (@(posedge __clk__) disable iff (__rst__) (__expr__));
-`else  // SV_ASSERT_ON
+`else  // BR_ASSERT_ON
 `define BR_ASSERT_CR(__name__, __expr__, __clk__, __rst__) \
 `BR_NOOP
-`endif  // SV_ASSERT_ON
+`endif  // BR_ASSERT_ON
 
 ////////////////////////////////////////////////////////////////////////////////
 // Combinational assertion macros (evaluated continuously based on the expression sensitivity)
 ////////////////////////////////////////////////////////////////////////////////
-`ifdef SV_ASSERT_ON
+`ifdef BR_ASSERT_ON
 `define BR_ASSERT_COMB(__name__, __expr__) \
 always_comb begin  : gen_``__name__ \
 assert (__expr__); \
 end
-`else  // SV_ASSERT_ON
+`else  // BR_ASSERT_ON
 `define BR_ASSERT_COMB(__name__, __expr__) \
 `BR_NOOP
-`endif  // SV_ASSERT_ON
+`endif  // BR_ASSERT_ON
 
 ////////////////////////////////////////////////////////////////////////////////
 // Concurrent cover macros (evaluated on posedge of a clock and disabled during a reset)
@@ -90,35 +90,35 @@ end
 
 // Clock: 'clk'
 // Reset: 'rst'
-`ifdef SV_ASSERT_ON
+`ifdef BR_COVER_ON
 `define BR_COVER(__name__, __expr__) \
 __name__ : cover property (@(posedge clk) disable iff (rst) (__expr__));
-`else  // SV_ASSERT_ON
+`else  // BR_COVER_ON
 `define BR_COVER(__name__, __expr__) \
 `BR_NOOP
-`endif  // SV_ASSERT_ON
+`endif  // BR_COVER_ON
 
 // More expressive form of BR_COVER that allows the use of custom clock and reset signal names.
-`ifdef SV_ASSERT_ON
+`ifdef BR_COVER_ON
 `define BR_COVER_CR(__name__, __expr__, __clk__, __rst__) \
 __name__ : cover property (@(posedge __clk__) disable iff (__rst__) (__expr__));
-`else  // SV_ASSERT_ON
+`else  // BR_COVER_ON
 `define BR_COVER_CR(__name__, __expr__, __clk__, __rst__) \
 `BR_NOOP
-`endif  // SV_ASSERT_ON
+`endif  // BR_COVER_ON
 
 ////////////////////////////////////////////////////////////////////////////////
 // Combinational cover macros (evaluated continuously based on the expression sensitivity)
 ////////////////////////////////////////////////////////////////////////////////
-`ifdef SV_ASSERT_ON
+`ifdef BR_COVER_ON
 `define BR_COVER_COMB(__name__, __expr__) \
 always_comb begin  : gen_``__name__ \
 cover (__expr__); \
 end
-`else  // SV_ASSERT_ON
+`else  // BR_COVER_ON
 `define BR_COVER_COMB(__name__, __expr__) \
 `BR_NOOP
-`endif  // SV_ASSERT_ON
+`endif  // BR_COVER_ON
 
 // verilog_format: on
 // verilog_lint: waive-stop line-length
