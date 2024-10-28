@@ -27,21 +27,21 @@ module br_fifo_flops_push_credit_tb ();
   localparam int NData = 100;
 
   // Inputs
-  reg clk;
-  reg rst;
+  logic clk;
+  logic rst;
 
-  // connections
+  // DUT connections
   logic cv_push_credit, cv_push_credit_d;
   logic cv_push_valid, cv_push_valid_d;
   logic [BitWidth-1:0] cv_push_data, cv_push_data_d;
   logic cv_push_credit_stall, cv_push_credit_stall_d;
 
-  // push if
+  // harness push if
   logic push_ready;
   logic push_valid;
   logic [BitWidth-1:0] push_data;
 
-  // pop if
+  // harness pop if
   logic pop_ready;
   logic pop_valid;
   logic [BitWidth-1:0] pop_data;
@@ -70,8 +70,8 @@ module br_fifo_flops_push_credit_tb ();
       .full_next(),
       .slots(),
       .slots_next(),
-      .credit_initial_push(),
-      .credit_withhold_push(),
+      .credit_initial_push(Depth),
+      .credit_withhold_push('0),
       .credit_count_push(),
       .credit_available_push(),
       .empty(),
@@ -135,7 +135,7 @@ module br_fifo_flops_push_credit_tb ();
     rst = 1;
     pop_ready = 1'b1;
     push_valid = 1'b0;
-    push_data = 'x;
+    push_data = '0;
     fail = 0;
 
     // Wait 100 ns for global reset to finish
@@ -156,7 +156,7 @@ module br_fifo_flops_push_credit_tb ();
 
     @(negedge clk);
     push_valid = 1'b0;
-    push_data  = 'x;
+    push_data  = '0;
 
     #1000;
 
