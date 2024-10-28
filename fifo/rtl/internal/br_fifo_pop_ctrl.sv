@@ -135,8 +135,12 @@ module br_fifo_pop_ctrl #(
   `BR_ASSERT_IMPL(ram_rd_addr_in_range_a, ram_rd_addr_valid |-> ram_rd_addr < Depth)
 
   // Flow control and latency
-  `BR_ASSERT_IMPL(pop_invalid_when_empty_a, empty |-> !pop_valid)
-  `BR_ASSERT_IMPL(cutthrough_latency_1_cycle_a, empty && ram_push |=> !empty && pop_valid)
+  if (EnableBypass) begin : gen_bypass_impl_checks
+    `BR_ASSERT_IMPL(pop_valid_when_empty_iff_push_a, empty && pop_valid |-> bypass_valid_unstable)
+  end else begin : gen_no_bypass_impl_checks
+    `BR_ASSERT_IMPL(pop_invalid_when_empty_a, empty |-> !pop_valid)
+    `BR_ASSERT_IMPL(cutthrough_latency_1_cycle_a, empty && ram_push |=> !empty && pop_valid)
+  end
   `BR_ASSERT_IMPL(bypass_ready_only_when_empty_and_pop_ready_a, bypass_ready |-> empty && pop_ready)
 
   // RAM
