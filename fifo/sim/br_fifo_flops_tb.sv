@@ -22,7 +22,7 @@ module br_fifo_flops_tb;
 
   // Parameters
   parameter int Depth = 13;
-  parameter int Width = 8;
+  parameter int BitWidth = 8;
 
   // Clock and Reset
   reg clk;
@@ -31,12 +31,12 @@ module br_fifo_flops_tb;
   // Push Interface
   wire push_ready;
   reg push_valid;
-  reg [Width-1:0] push_data;
+  reg [BitWidth-1:0] push_data;
 
   // Pop Interface
   reg pop_ready;
   wire pop_valid;
-  wire [Width-1:0] pop_data;
+  wire [BitWidth-1:0] pop_data;
 
   // Status Outputs
   wire empty;
@@ -44,12 +44,12 @@ module br_fifo_flops_tb;
   wire [$clog2(Depth+1)-1:0] items;
 
   // Scoreboard
-  reg [Width-1:0] scoreboard[Depth*2];
+  reg [BitWidth-1:0] scoreboard[Depth*2];
 
   // Instantiate the FIFO
   br_fifo_flops #(
       .Depth(Depth),
-      .Width(Width)
+      .BitWidth(BitWidth)
   ) dut (
       .clk(clk),
       .rst(rst),
@@ -171,7 +171,7 @@ module br_fifo_flops_tb;
           @(negedge clk);
           if (push_ready) begin
             push_valid = 1;
-            push_data  = i[Width-1:0];
+            push_data  = i[BitWidth-1:0];
             @(posedge clk);
             scoreboard[i] = push_data;
             $display("Pushed data: %0h | Items: %0d", push_data, items);

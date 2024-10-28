@@ -47,7 +47,7 @@ module br_fifo_flops_push_credit_tb ();
   logic [BitWidth-1:0] pop_data;
 
   logic [$clog2(NData+1)-1:0] pop_count;
-  logic [9:0] sender_credit;
+  logic [$clog2(Depth+1)-1:0] sender_credit;
   logic fail;
   integer unpop;
 
@@ -81,7 +81,7 @@ module br_fifo_flops_push_credit_tb ();
   );
 
   br_credit_sender #(
-      .BitWidth (Width),
+      .BitWidth (BitWidth),
       .MaxCredit(Depth)
   ) br_credit_sender (
       .clk,
@@ -101,7 +101,7 @@ module br_fifo_flops_push_credit_tb ();
 
   br_delay_nr #(
       .NumStages(PropDelay),
-      .BitWidth (Width + 2)
+      .BitWidth (BitWidth + 2)
   ) br_delay_nr_to_fifo (
       .clk,
       .rst,
