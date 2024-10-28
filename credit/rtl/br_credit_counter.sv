@@ -80,7 +80,7 @@ module br_credit_counter #(
   `BR_ASSERT_INTG(decr_in_range_a, decr_valid |-> (decr <= MaxChange))
 
   // Assertion-only helper logic for overflow/underflow detection
-`ifdef BR_ASSERT_ON
+`ifdef SV_ASSERT_ON
 `ifndef BR_DISABLE_INTG_CHECKS
   localparam int CalcWidth = ValueWidth + 1;
   logic [CalcWidth-1:0] value_extended_next;
@@ -96,7 +96,7 @@ module br_credit_counter #(
   end
 
 `endif  // BR_DISABLE_INTG_CHECKS
-`endif  // BR_ASSERT_ON
+`endif  // SV_ASSERT_ON
 
   `BR_ASSERT_INTG(no_overflow_or_underflow_a, value_extended_next <= MaxValue)
 

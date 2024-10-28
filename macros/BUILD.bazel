@@ -46,10 +46,7 @@ verilog_library(
 
 verilog_elab_test(
     name = "br_asserts_elab_test",
-    defines = [
-        "BR_ASSERT_ON",
-        "BR_COVER_ON",
-    ],
+    defines = ["SV_ASSERT_ON"],
     deps = [":br_asserts_test"],
 )
 
@@ -68,8 +65,7 @@ verilog_library(
 verilog_elab_test(
     name = "br_asserts_elab_internal_test",
     defines = [
-        "BR_ASSERT_ON",
-        "BR_COVER_ON",
+        "SV_ASSERT_ON",
         "BR_ENABLE_IMPL_CHECKS",
     ],
     deps = [":br_asserts_internal_test"],
