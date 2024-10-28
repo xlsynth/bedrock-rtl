@@ -68,7 +68,7 @@ module br_fifo_pop_ctrl #(
   `BR_ASSERT_INTG(ram_rd_latency_zero_a, ram_rd_addr_valid |-> ram_rd_data_valid)
 
   // Internal integration checks
-  `BR_ASSERT_IMPL(bypass_unstable_c, !bypass_ready && bypass_valid_unstable)
+  `BR_COVER_IMPL(bypass_unstable_c, !bypass_ready && bypass_valid_unstable)
 
   // This is not the tightest possible check, because we are planning to
   // support pipelined RAM access and CDC use cases that require supporting
