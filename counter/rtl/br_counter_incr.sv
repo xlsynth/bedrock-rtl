@@ -99,7 +99,7 @@ module br_counter_incr #(
     // ri lint_check_waive ARITH_EXTENSION
     assign value_temp_wrapped = (value_temp - MaxValue) - 1;
     // ri lint_check_waive ARITH_EXTENSION
-    assign value_next_internal = (value_temp >= MaxValue) ?
+    assign value_next_internal = (value_temp > MaxValue) ?
       value_temp_wrapped[ValueWidth-1:0] :  // ri lint_check_waive FULL_RANGE
         value_temp[ValueWidth-1:0];  // ri lint_check_waive FULL_RANGE
 
