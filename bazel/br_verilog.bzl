@@ -21,9 +21,9 @@ def br_verilog_elab_and_lint_test_suite(name, **kwargs):
 
     Not intended to be called by Bedrock users.
 
-    (1) The first instance defines "SV_ASSERT_ON" and uses the provided name.
+    (1) The first instance defines "BR_ASSERT_ON" and uses the provided name.
         This is to test the design is elab/lint clean when it will be integrated into a user's design.
-    (2) The second instance defines "SV_ASSERT_ON" and "BR_ENABLE_IMPL_CHECKS".
+    (2) The second instance defines "BR_ASSERT_ON" and "BR_ENABLE_IMPL_CHECKS".
         This is to test the design is elab/lint clean with all Bedrock-internal assertions enabled.
     (3) The third instance has no defines.
         This is to test the design is elab/lint clean without any assertions.
@@ -38,13 +38,13 @@ def br_verilog_elab_and_lint_test_suite(name, **kwargs):
 
     verilog_elab_and_lint_test_suite(
         name = name,
-        defines = ["SV_ASSERT_ON"],
+        defines = ["BR_ASSERT_ON"],
         **kwargs
     )
 
     verilog_elab_and_lint_test_suite(
         name = name + "_allassert",
-        defines = ["SV_ASSERT_ON", "BR_ENABLE_IMPL_CHECKS"],
+        defines = ["BR_ASSERT_ON", "BR_ENABLE_IMPL_CHECKS"],
         **kwargs
     )
 
