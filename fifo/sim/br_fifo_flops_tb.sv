@@ -52,7 +52,8 @@ module br_fifo_flops_tb;
   // Instantiate the FIFO
   br_fifo_flops #(
       .Depth(Depth),
-      .BitWidth(BitWidth)
+      .BitWidth(BitWidth),
+      .EnableBypass(0)
   ) dut (
       .clk(clk),
       .rst(rst),
