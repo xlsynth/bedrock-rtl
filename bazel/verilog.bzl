@@ -120,9 +120,9 @@ def _verilog_sim_test_impl(ctx):
     if ctx.attr.uvm:
         extra_args.append("--uvm")
     if ctx.attr.tool != "":
-        extra_args.append("--tool=" + ctx.attr.tool)
+        extra_args.append("--tool='" + ctx.attr.tool + "'")
     if ctx.attr.seed != None:
-        extra_args.append("--seed=" + str(ctx.attr.seed))
+        extra_args.append("--seed='" + str(ctx.attr.seed) + "'")
     if ctx.attr.waves:
         extra_args.append("--waves")
     for opt in ctx.attr.opts:
@@ -173,7 +173,7 @@ def verilog_lint_test(tags = [], **kwargs):
 
 _verilog_sim_test = rule(
     doc = """
-    Runs Verilog compilation and simulation in one command. This rule should be used for simple unit tests that do not require multi-step compilation, elaboration, and simulation.
+    Runs Verilog/SystemVerilog compilation and simulation in one command. This rule should be used for simple unit tests that do not require multi-step compilation, elaboration, and simulation.
     """,
     implementation = _verilog_sim_test_impl,
     attrs = {
@@ -192,7 +192,7 @@ _verilog_sim_test = rule(
             doc = "The top-level module; if not provided and there exists one dependency, then defaults to that dep's label name.",
         ),
         "opts": attr.string_list(
-            doc = "Compile and simulation options.",
+            doc = "Tool-specific compile and simulation options not covered by other arguments.",
         ),
         "elab_only": attr.bool(
             doc = "Only run elaboration.",
