@@ -1,0 +1,68 @@
+# Copyright 2024 The Bedrock-RTL Authors
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+load("@rules_hdl//verilog:providers.bzl", "verilog_library")
+load("//bazel:verilog.bzl", "verilog_elab_test", "verilog_sim_test")
+
+package(default_visibility = ["//visibility:public"])
+
+verilog_library(
+    name = "br_fifo_flops_tb",
+    srcs = ["br_fifo_flops_tb.sv"],
+    deps = ["@bedrock-rtl//fifo/rtl:br_fifo_flops"],
+)
+
+verilog_elab_test(
+    name = "br_fifo_flops_tb_elab_test",
+    deps = [":br_fifo_flops_tb"],
+)
+
+verilog_sim_test(
+    name = "br_fifo_flops_sim_test",
+    defines = [
+        "SV_ASSERT_ON",
+        "BR_ENABLE_IMPL_CHECKS",
+    ],
+    opts = ["-assert global_finish_maxfail=1+offending_values"],
+    tool = "vcs",
+    top = "br_fifo_flops_tb",
+    deps = [":br_fifo_flops_tb"],
+)
+
+verilog_library(
+    name = "br_fifo_flops_push_credit_tb",
+    srcs = ["br_fifo_flops_push_credit_tb.sv"],
+    deps = [
+        "//credit/rtl:br_credit_sender",
+        "//delay/rtl:br_delay_nr",
+        "//fifo/rtl:br_fifo_flops_push_credit",
+    ],
+)
+
+verilog_elab_test(
+    name = "br_fifo_flops_push_credit_tb_elab_test",
+    deps = [":br_fifo_flops_push_credit_tb"],
+)
+
+verilog_sim_test(
+    name = "br_fifo_flops_push_credit_sim_test",
+    defines = [
+        "SV_ASSERT_ON",
+        "BR_ENABLE_IMPL_CHECKS",
+    ],
+    opts = ["-assert global_finish_maxfail=1+offending_values"],
+    tool = "vcs",
+    top = "br_fifo_flops_push_credit_tb",
+    deps = [":br_fifo_flops_push_credit_tb"],
+)

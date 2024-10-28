@@ -91,7 +91,7 @@ module br_counter_decr #(
     localparam int Margin = ((2 ** ValueWidth) - 1) - MaxValue;
     logic [ValueWidth-1:0] value_temp_wrapped;
     assign value_temp_wrapped  = value_temp - Margin;
-    assign value_next_internal = value_temp >= MaxValue ? value_temp_wrapped : value_temp;
+    assign value_next_internal = value_temp > MaxValue ? value_temp_wrapped : value_temp;
 
     // Case-specific implementation checks
     `BR_ASSERT_STATIC(margin_gte0_a, Margin > 0)

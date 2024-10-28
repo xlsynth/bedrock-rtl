@@ -62,11 +62,7 @@ module br_fifo_push_ctrl #(
   `BR_ASSERT_STATIC(depth_must_be_at_least_one_a, Depth >= 2)
   `BR_ASSERT_STATIC(bit_width_must_be_at_least_one_a, BitWidth >= 1)
 
-  // TODO(mgottscho): Do we really want this? It's ready-valid
-  // checker but the FIFO implementation correctness does not depend on it.
-  `BR_ASSERT_INTG(push_backpressure_a, !push_ready && push_valid |=> push_valid && $stable
-                                       (push_data))
-  `BR_ASSERT_INTG(full_c, full)
+  `BR_COVER_INTG(full_c, full)
 
   // Internal integration checks
 
