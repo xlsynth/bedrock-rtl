@@ -54,7 +54,7 @@ module br_fifo_flops_push_credit_tb ();
   br_fifo_flops_push_credit #(
       .Depth(Depth),
       .BitWidth(BitWidth),
-      .EnableBypass(1),
+      .EnableBypass(0),
       .MaxCredit(Depth)
   ) dut (
       .clk,
