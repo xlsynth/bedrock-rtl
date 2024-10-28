@@ -31,7 +31,14 @@
 //     single-cycle chains of counters.
 // value and value_next are always valid.
 //
-// The value resets to MaxValue.
+// The counter value resets to initial_value.
+//
+// The reinit port reinitializes the counter to initial_value.
+// This does *nearly* the same thing as rst but is likely to be driven by completely different
+// logic. Rather than having the user mix together an expression involving both rst and reinit,
+// a separate port helps keep the user's reset code clean and correct. Also, unlike reset, the
+// reinit can accommodate a decrement on the same cycle, i.e., the decrement
+// applies to the initial value rather than the old value.
 
 `include "br_asserts_internal.svh"
 `include "br_registers.svh"
@@ -42,8 +49,12 @@ module br_counter_decr #(
     localparam int ValueWidth = $clog2(MaxValue + 1),
     localparam int DecrementWidth = $clog2(MaxDecrement + 1)
 ) (
+    // Posedge-triggered clock.
     input  logic                      clk,
+    // Synchronous active-high reset.
     input  logic                      rst,
+    input  logic                      reinit,
+    input  logic [    ValueWidth-1:0] initial_value,
     input  logic                      decr_valid,
     input  logic [DecrementWidth-1:0] decr,
     output logic [    ValueWidth-1:0] value,
@@ -58,6 +69,7 @@ module br_counter_decr #(
   `BR_ASSERT_STATIC(max_decrement_lte_max_value_a, MaxDecrement <= MaxValue)
 
   `BR_ASSERT_INTG(decr_in_range_a, decr_valid |-> decr <= MaxDecrement)
+  `BR_ASSERT_INTG(initial_value_in_range_a, initial_value <= MaxValue)
 
   //------------------------------------------
   // Implementation
@@ -68,7 +80,7 @@ module br_counter_decr #(
   logic [ValueWidth-1:0] value_next_internal;
   logic [ValueWidth-1:0] value_temp;
 
-  assign value_temp = value - decr;
+  assign value_temp = (reinit ? initial_value : value) - decr;
 
   if (IsMaxValueP1PowerOf2) begin : gen_power_of_2
     // For MaxValueP1 being a power of 2, wrapping occurs naturally
@@ -91,21 +103,30 @@ module br_counter_decr #(
   // to just value_next_internal, because the load-enable on the register is
   // conditioned on the same decr_valid.
   assign value_next = decr_valid ? value_next_internal : value;
-  `BR_REGIL(value, value_next, decr_valid, MaxValue)
+  `BR_REGIL(value, value_next, decr_valid || reinit, initial_value)
 
   //------------------------------------------
   // Implementation checks
   //------------------------------------------
-  `BR_ASSERT_IMPL(reset_to_maxvalue_a, $fell(rst) |-> value == MaxValue)
+
+  // Value
   `BR_ASSERT_IMPL(value_in_range_a, value <= MaxValue)
   `BR_ASSERT_IMPL(value_next_in_range_a, value_next <= MaxValue)
   `BR_ASSERT_IMPL(value_next_propagates_a, ##1 value == $past(value_next))
-  `BR_ASSERT_IMPL(value_wrap_a,
+
+  // Underflow corners
+  `BR_ASSERT_IMPL(value_underflow_a,
                   decr_valid && value_temp > MaxValue |-> value_next == value_temp - MaxValue - 1)
-  `BR_ASSERT_IMPL(maxvalue_plus_one_a,
-                  value == MaxValue && decr_valid && decr == 1'b1 |-> value_next == 0)
+  `BR_ASSERT_IMPL(zero_minus_one_a,
+                  value == 0 && decr_valid && decr == 1'b1 |-> value_next == MaxValue)
+
+  // Decrement corners
   `BR_ASSERT_IMPL(plus_zero_a, decr_valid && decr == '0 |-> value_next == value)
   `BR_COVER_IMPL(decrement_max_c, decr_valid && decr == MaxDecrement)
   `BR_COVER_IMPL(value_temp_oob_c, value_temp > MaxValue)
+
+  // Reinit
+  `BR_ASSERT_IMPL(reinit_no_decr_a, reinit && !decr_valid |=> value == $past(initial_value))
+  `BR_COVER_IMPL(reinit_and_decr_c, reinit && decr_valid && decr > 0)
 
 endmodule : br_counter_decr

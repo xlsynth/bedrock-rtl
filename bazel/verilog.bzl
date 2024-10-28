@@ -15,23 +15,10 @@
 """Verilog rules for Bazel."""
 
 load("@rules_hdl//verilog:providers.bzl", "VerilogInfo")
-load(
-    "//bazel:write_placeholder_tools.bzl",
-    "write_placeholder_verilog_elab_test_tool",
-    "write_placeholder_verilog_lint_test_tool",
-)
-
-def _check_verilog_info_provider(iterable):
-    """Check that all items in an iterable have the VerilogInfo provider; fails otherwise."""
-    for item in iterable:
-        if VerilogInfo not in item:
-            fail("Label '{}' does not have the VerilogInfo provider. " +
-                 "This probably means you accidentally provided a label that didn't come " +
-                 "from a verilog_library target. ".format(item.label))
+load("//bazel:write_placeholder_tools.bzl", "write_placeholder_verilog_test_tool")
 
 def get_transitive(ctx, srcs_not_hdrs):
     """Returns a depset of all Verilog source or header files in the transitive closure of the deps attribute."""
-    _check_verilog_info_provider(ctx.attr.deps)
     transitive_depset = depset(
         [],
         transitive = [dep[VerilogInfo].dag for dep in ctx.attr.deps],
@@ -49,17 +36,41 @@ def _write_executable_shell_script(ctx, filename, cmd):
         output = executable_file,
         content = "\n".join([
             "#!/usr/bin/env bash",
-            "set -e",
-            "echo 'Running command:'",
-            "echo {}".format(cmd),
+            "set -ex",
+            "pwd",
             cmd,
-            "exit 0",
         ]),
         is_executable = True,
     )
     return executable_file
 
-def _verilog_base_test_impl(ctx, tool, extra_args = [], extra_runfiles = []):
+def _verilog_base_test_impl(ctx, subcmd, extra_args = []):
+    """Shared implementation for verilog_elab_test, verilog_lint_test, and verilog_sim_test.
+
+    Grab tool from the environment (BAZEL_VERILOG_TEST_TOOL) so that
+    the user can provide their own proprietary tool implementation without
+    it being hardcoded anywhere into the repo. It's not hermetic, but it's
+    a decent compromise.
+
+    Args:
+        ctx: ctx for the rule
+        subcmd (string): the tool subcommand to run
+        extra_args (list of strings, optional): tool-specific args
+
+    Returns:
+        DefaultInfo for the rule that describes the runfiles, depset, and executable
+    """
+    env = ctx.configuration.default_shell_env
+    if "BAZEL_VERILOG_TEST_TOOL" in env:
+        tool = env.get("BAZEL_VERILOG_TEST_TOOL")
+        extra_runfiles = []
+    else:
+        # buildifier: disable=print
+        print("!! WARNING !! Environment variable BAZEL_VERILOG_TEST_TOOL is not set! Will use placeholder test tool.")
+        tool_file = write_placeholder_verilog_test_tool(ctx, "placeholder_verilog_test.py")
+        extra_runfiles = [tool_file]
+        tool = tool_file.short_path
+
     srcs = get_transitive(ctx = ctx, srcs_not_hdrs = True).to_list()
     hdrs = get_transitive(ctx = ctx, srcs_not_hdrs = False).to_list()
     src_files = [src.short_path for src in srcs]
@@ -74,7 +85,7 @@ def _verilog_base_test_impl(ctx, tool, extra_args = [], extra_runfiles = []):
             ["--top=" + top] +
             ["--param=" + key + "=" + value for key, value in ctx.attr.params.items()] +
             extra_args)
-    cmd = " ".join([tool] + args + src_files)
+    cmd = " ".join([tool] + [subcmd] + args + src_files)
     runfiles = ctx.runfiles(files = srcs + hdrs + extra_runfiles)
     executable_file = _write_executable_shell_script(
         ctx = ctx,
@@ -88,59 +99,48 @@ def _verilog_base_test_impl(ctx, tool, extra_args = [], extra_runfiles = []):
     )
 
 def _verilog_elab_test_impl(ctx):
-    """Implementation of the verilog_elab_test rule.
-
-    Grab tool from the environment (BAZEL_VERILOG_ELAB_TEST_TOOL) so that
-    the user can provide their own proprietary tool implementation without
-    it being hardcoded anywhere into the repo. It's not hermetic, but it's
-    a decent compromise.
-    """
-    env = ctx.configuration.default_shell_env
-    if "BAZEL_VERILOG_ELAB_TEST_TOOL" in env:
-        tool = ctx.configuration.default_shell_env.get("BAZEL_VERILOG_ELAB_TEST_TOOL")
-        extra_runfiles = []
-    else:
-        # buildifier: disable=print
-        print("!! WARNING !! Environment variable BAZEL_VERILOG_ELAB_TEST_TOOL is not set! Will use placeholder test tool.")
-        tool_file = write_placeholder_verilog_elab_test_tool(ctx)
-        extra_runfiles = [tool_file]
-        tool = tool_file.short_path
+    """Implementation of the verilog_elab_test rule."""
     return _verilog_base_test_impl(
         ctx = ctx,
-        tool = tool,
-        extra_runfiles = extra_runfiles,
+        subcmd = "elab",
     )
 
 def _verilog_lint_test_impl(ctx):
-    """Implementation of the verilog_lint_test rule.
-
-    Grab tool from the environment (BAZEL_VERILOG_LINT_TEST_TOOL) so that
-    the user can provide their own proprietary tool implementation without
-    it being hardcoded anywhere into the repo. It's not hermetic, but it's
-    a decent compromise.
-    """
-    env = ctx.configuration.default_shell_env
-    if "BAZEL_VERILOG_LINT_TEST_TOOL" in env:
-        tool = ctx.configuration.default_shell_env.get("BAZEL_VERILOG_LINT_TEST_TOOL")
-        extra_runfiles = []
-    else:
-        # buildifier: disable=print
-        print("!! WARNING !! Environment variable BAZEL_VERILOG_LINT_TEST_TOOL is not set! Will use placeholder test tool.")
-        tool_file = write_placeholder_verilog_lint_test_tool(ctx)
-        extra_runfiles = [tool_file]
-        tool = tool_file.short_path
+    """Implementation of the verilog_lint_test rule."""
     return _verilog_base_test_impl(
         ctx = ctx,
-        tool = tool,
-        extra_runfiles = extra_runfiles,
+        subcmd = "lint",
     )
 
+def _verilog_sim_test_impl(ctx):
+    """Implementation of the verilog_sim_test rule."""
+    extra_args = []
+    if ctx.attr.elab_only:
+        extra_args.append("--elab_only")
+    if ctx.attr.uvm:
+        extra_args.append("--uvm")
+    if ctx.attr.tool != "":
+        extra_args.append("--tool=" + ctx.attr.tool)
+    if ctx.attr.seed != None:
+        extra_args.append("--seed=" + str(ctx.attr.seed))
+    if ctx.attr.waves:
+        extra_args.append("--waves")
+    for opt in ctx.attr.opts:
+        extra_args.append("--opt=" + opt)
+
+    return _verilog_base_test_impl(
+        ctx = ctx,
+        subcmd = "sim",
+        extra_args = extra_args,
+    )
+
+# Rule definitions
 _verilog_elab_test = rule(
     doc = "Tests that a Verilog or SystemVerilog design elaborates.",
     implementation = _verilog_elab_test_impl,
     attrs = {
-        "deps": attr.label_list(allow_files = False, doc = "The dependencies of the test."),
-        "defines": attr.string_list(default = ["SV_ASSERT_ON"], doc = "Preprocessor defines to pass to the Verilog compiler."),
+        "deps": attr.label_list(allow_files = False, providers = [VerilogInfo], doc = "The dependencies of the test."),
+        "defines": attr.string_list(doc = "Preprocessor defines to pass to the Verilog compiler."),
         "params": attr.string_dict(doc = "Verilog module parameters to set in the instantiation of the top-level module."),
         "top": attr.string(doc = "The top-level module; if not provided and there exists one dependency, then defaults to that dep's label name."),
     },
@@ -157,7 +157,7 @@ _verilog_lint_test = rule(
     doc = "Tests that a Verilog or SystemVerilog design passes a set of static lint checks.",
     implementation = _verilog_lint_test_impl,
     attrs = {
-        "deps": attr.label_list(allow_files = False, doc = "The dependencies of the test."),
+        "deps": attr.label_list(allow_files = False, providers = [VerilogInfo], doc = "The dependencies of the test."),
         "defines": attr.string_list(doc = "Preprocessor defines to pass to the Verilog compiler."),
         "params": attr.string_dict(doc = "Verilog module parameters to set in the instantiation of the top-level module."),
         "top": attr.string(doc = "The top-level module; if not provided and there exists one dependency, then defaults to that dep's label name."),
@@ -168,6 +168,58 @@ _verilog_lint_test = rule(
 def verilog_lint_test(tags = [], **kwargs):
     _verilog_lint_test(
         tags = tags + ["resources:verilog_lint_test_tool_licenses:1"],
+        **kwargs
+    )
+
+_verilog_sim_test = rule(
+    doc = """
+    Runs Verilog compilation and simulation in one command. This rule should be used for simple unit tests that do not require multi-step compilation, elaboration, and simulation.
+    """,
+    implementation = _verilog_sim_test_impl,
+    attrs = {
+        "deps": attr.label_list(
+            doc = "The dependencies of the test.",
+            allow_files = False,
+            providers = [VerilogInfo],
+        ),
+        "defines": attr.string_list(
+            doc = "Preprocessor defines to pass to the Verilog compiler.",
+        ),
+        "params": attr.string_dict(
+            doc = "Verilog module parameters to set in the instantiation of the top-level module.",
+        ),
+        "top": attr.string(
+            doc = "The top-level module; if not provided and there exists one dependency, then defaults to that dep's label name.",
+        ),
+        "opts": attr.string_list(
+            doc = "Compile and simulation options.",
+        ),
+        "elab_only": attr.bool(
+            doc = "Only run elaboration.",
+            default = False,
+        ),
+        "uvm": attr.bool(
+            doc = "Run UVM test.",
+            default = False,
+        ),
+        "tool": attr.string(
+            doc = "Simulator tool to use.",
+        ),
+        "seed": attr.int(
+            doc = "Random seed to use in simulation.",
+            default = 0,
+        ),
+        "waves": attr.bool(
+            doc = "Enable waveform dumping.",
+            default = False,
+        ),
+    },
+    test = True,
+)
+
+def verilog_sim_test(tags = [], **kwargs):
+    _verilog_sim_test(
+        tags = tags + ["resources:verilog_sim_test_tool_licenses:1"],
         **kwargs
     )
 
@@ -196,14 +248,14 @@ def verilog_elab_and_lint_test_suite(name, defines = [], params = {}, **kwargs):
         **kwargs: Additional keyword arguments to be passed to the verilog_elab_test and verilog_lint_test functions.
 
     The function generates all possible combinations of the provided parameters and creates a verilog_elab_test
-    and a verilog_lint_test for each combination. The test names are generated by appending "_elab" and "_lint"
+    and a verilog_lint_test for each combination. The test names are generated by appending "_elab_test" and "_lint_test"
     to the base name followed by the parameter key-values.
     """
     param_keys = sorted(params.keys())
     param_values_list = [params[key] for key in param_keys]
     param_combinations = _cartesian_product(param_values_list)
 
-    # Create a verilog_elab_test for each combination of parameters
+    # Create a verilog_elab_test and verilog_lint_test for each combination of parameters
     for param_combination in param_combinations:
         params = dict(zip(param_keys, param_combination))
         verilog_elab_test(
