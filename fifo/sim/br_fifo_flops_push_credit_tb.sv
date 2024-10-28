@@ -47,9 +47,11 @@ module br_fifo_flops_push_credit_tb ();
   logic [BitWidth-1:0] pop_data;
 
   logic [$clog2(NData+1)-1:0] pop_count;
-  logic [$clog2(Depth+1)-1:0] sender_credit;
-  logic fail;
+  logic [$clog2(Depth+1)-1:0] sender_credit, credit_initial_push;
+  logic   fail;
   integer unpop;
+
+  assign credit_initial_push = Depth;
 
   br_fifo_flops_push_credit #(
       .Depth(Depth),
@@ -70,7 +72,7 @@ module br_fifo_flops_push_credit_tb ();
       .full_next(),
       .slots(),
       .slots_next(),
-      .credit_initial_push(Depth),
+      .credit_initial_push,
       .credit_withhold_push('0),
       .credit_count_push(),
       .credit_available_push(),

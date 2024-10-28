@@ -62,14 +62,14 @@ def _verilog_base_test_impl(ctx, subcmd, extra_args = []):
     """
     env = ctx.configuration.default_shell_env
     if "BAZEL_VERILOG_TEST_TOOL" in env:
-        tool = env.get("BAZEL_VERILOG_TEST_TOOL")
+        wrapper_tool = env.get("BAZEL_VERILOG_TEST_TOOL")
         extra_runfiles = []
     else:
         # buildifier: disable=print
         print("!! WARNING !! Environment variable BAZEL_VERILOG_TEST_TOOL is not set! Will use placeholder test tool.")
-        tool_file = write_placeholder_verilog_test_tool(ctx, "placeholder_verilog_test.py")
-        extra_runfiles = [tool_file]
-        tool = tool_file.short_path
+        wrapper_tool_file = write_placeholder_verilog_test_tool(ctx, "placeholder_verilog_test.py")
+        extra_runfiles = [wrapper_tool_file]
+        wrapper_tool = wrapper_tool_file.short_path
 
     srcs = get_transitive(ctx = ctx, srcs_not_hdrs = True).to_list()
     hdrs = get_transitive(ctx = ctx, srcs_not_hdrs = False).to_list()
@@ -85,7 +85,7 @@ def _verilog_base_test_impl(ctx, subcmd, extra_args = []):
             ["--top=" + top] +
             ["--param=" + key + "=" + value for key, value in ctx.attr.params.items()] +
             extra_args)
-    cmd = " ".join([tool] + [subcmd] + args + src_files)
+    cmd = " ".join([wrapper_tool] + [subcmd] + args + src_files)
     runfiles = ctx.runfiles(files = srcs + hdrs + extra_runfiles)
     executable_file = _write_executable_shell_script(
         ctx = ctx,
@@ -119,10 +119,8 @@ def _verilog_sim_test_impl(ctx):
         extra_args.append("--elab_only")
     if ctx.attr.uvm:
         extra_args.append("--uvm")
-    if ctx.attr.tool != "":
-        extra_args.append("--tool=" + ctx.attr.tool)
-    if ctx.attr.seed != None:
-        extra_args.append("--seed=" + str(ctx.attr.seed))
+    extra_args.append("--tool='" + ctx.attr.tool + "'")
+    extra_args.append("--seed='" + str(ctx.attr.seed) + "'")
     if ctx.attr.waves:
         extra_args.append("--waves")
     for opt in ctx.attr.opts:
@@ -173,7 +171,7 @@ def verilog_lint_test(tags = [], **kwargs):
 
 _verilog_sim_test = rule(
     doc = """
-    Runs Verilog compilation and simulation in one command. This rule should be used for simple unit tests that do not require multi-step compilation, elaboration, and simulation.
+    Runs Verilog/SystemVerilog compilation and simulation in one command. This rule should be used for simple unit tests that do not require multi-step compilation, elaboration, and simulation.
     """,
     implementation = _verilog_sim_test_impl,
     attrs = {
@@ -192,7 +190,7 @@ _verilog_sim_test = rule(
             doc = "The top-level module; if not provided and there exists one dependency, then defaults to that dep's label name.",
         ),
         "opts": attr.string_list(
-            doc = "Compile and simulation options.",
+            doc = "Tool-specific compile and simulation options not covered by other arguments.",
         ),
         "elab_only": attr.bool(
             doc = "Only run elaboration.",
@@ -203,6 +201,7 @@ _verilog_sim_test = rule(
             default = False,
         ),
         "tool": attr.string(
+            mandatory = True,
             doc = "Simulator tool to use.",
         ),
         "seed": attr.int(
