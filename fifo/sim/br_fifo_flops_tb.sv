@@ -46,6 +46,9 @@ module br_fifo_flops_tb;
   // Scoreboard
   reg [BitWidth-1:0] scoreboard[Depth*2];
 
+  // Error Counter
+  integer error_count;
+
   // Instantiate the FIFO
   br_fifo_flops #(
       .Depth(Depth),
@@ -76,7 +79,6 @@ module br_fifo_flops_tb;
   end
 `endif
 
-
   // Clock Generation: 10ns period
   initial begin
     clk = 0;
@@ -91,6 +93,7 @@ module br_fifo_flops_tb;
     push_valid = 0;
     push_data = 0;
     pop_ready = 0;
+    error_count = 0;
 
     // Apply Reset
     #20;
@@ -110,6 +113,7 @@ module br_fifo_flops_tb;
       end else begin
         push_valid = 0;
         $error("FIFO is full. Cannot push data.");
+        error_count += 1;
       end
       si += 1;
     end
@@ -120,7 +124,10 @@ module br_fifo_flops_tb;
     @(negedge clk);
     if (full && !empty && (items == Depth))
       $display("FIFO is full as expected with %0d items.", items);
-    else $error("Error: FIFO full state is not as expected.");
+    else begin
+      $error("Error: FIFO full state is not as expected.");
+      error_count += 1;
+    end
 
     // Test 2: Attempt to push into a full FIFO
     @(negedge clk);
@@ -128,7 +135,10 @@ module br_fifo_flops_tb;
     push_data  = $urandom;
     @(negedge clk);
     if (!push_ready) $display("Correctly prevented pushing into a full FIFO.");
-    else $error("Error: Allowed pushing into a full FIFO.");
+    else begin
+      $error("Error: Allowed pushing into a full FIFO.");
+      error_count += 1;
+    end
     push_valid = 0;
 
     // Test 3: Pop all items from the FIFO
@@ -139,8 +149,10 @@ module br_fifo_flops_tb;
       @(posedge clk);
       if (pop_valid) begin
         $display("Popped data: %0h | Items: %0d | Empty: %b", pop_data, items, empty);
-        if (pop_data != scoreboard[si])
+        if (pop_data != scoreboard[si]) begin
           $error("Pop data mismatch! expect=%0h got=%0h", scoreboard[si], pop_data);
+          error_count += 1;
+        end
       end
       si += 1;
     end
@@ -151,14 +163,20 @@ module br_fifo_flops_tb;
     @(posedge clk);
     if (empty && !full && (items == 0))
       $display("FIFO is empty as expected with %0d items.", items);
-    else $error("Error: FIFO empty state is not as expected.");
+    else begin
+      $error("Error: FIFO empty state is not as expected.");
+      error_count += 1;
+    end
 
     // Test 4: Attempt to pop from an empty FIFO
     @(negedge clk);
     pop_ready = 1;
     @(posedge clk);
     if (!pop_valid) $display("Correctly prevented popping from an empty FIFO.");
-    else $error("Error: Allowed popping from an empty FIFO.");
+    else begin
+      $error("Error: Allowed popping from an empty FIFO.");
+      error_count += 1;
+    end
     pop_ready = 0;
 
     // Test 5: Interleaved push and pop operations
@@ -179,6 +197,7 @@ module br_fifo_flops_tb;
             push_valid = 0;
             @(posedge clk);
             $error("Cannot push data. FIFO Full.");
+            error_count += 1;
           end
         end
         @(negedge clk);
@@ -194,12 +213,15 @@ module br_fifo_flops_tb;
             pop_ready = 1;
             @(posedge clk);
             $display("Popped data: %0h | Items: %0d", pop_data, items);
-            if (pop_data != scoreboard[j])
+            if (pop_data != scoreboard[j]) begin
               $error("Pop data mismatch! expect=%0h got=%0h", scoreboard[j], pop_data);
+              error_count += 1;
+            end
           end else begin
             pop_ready = 0;
             @(posedge clk);
             $error("Cannot pop data. FIFO Empty.");
+            error_count += 1;
           end
         end
         @(negedge clk);
@@ -210,9 +232,13 @@ module br_fifo_flops_tb;
     // Final check
     @(negedge clk);
     if (empty && (items == 0)) $display("FIFO successfully emptied after interleaved operations.");
-    else $error("Error: FIFO state incorrect after interleaved operations.");
+    else begin
+      $error("Error: FIFO state incorrect after interleaved operations.");
+      error_count += 1;
+    end
 
-    $display("TEST PASSED");
+    if (error_count == 0) $display("TEST PASSED");
+    else $display("TEST FAILED with %0d errors", error_count);
     $finish;
   end
 

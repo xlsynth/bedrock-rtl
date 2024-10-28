@@ -30,7 +30,13 @@ verilog_elab_test(
 
 verilog_sim_test(
     name = "br_fifo_flops_sim_test",
-    opts = ["+SV_ASSERT_ON"],
+    defines = [
+        "BR_ASSERT_ON",
+        "BR_COVER_ON",
+        "BR_ENABLE_IMPL_CHECKS",
+    ],
+    #opts = ["-assert enable_diag", "-assert global_finish_maxfail=5", "-assert summary"],
+    opts = ["-assert enable_diag+global_finish_maxfail=1+offending_values"],
     tool = "vcs",
     top = "br_fifo_flops_tb",
     deps = [":br_fifo_flops_tb"],
@@ -53,7 +59,7 @@ verilog_elab_test(
 
 verilog_sim_test(
     name = "br_fifo_flops_push_credit_sim_test",
-    opts = ["+SV_ASSERT_ON"],
+    opts = ["+BR_ASSERT_ON"],
     tool = "vcs",
     top = "br_fifo_flops_push_credit_tb",
     deps = [":br_fifo_flops_push_credit_tb"],
