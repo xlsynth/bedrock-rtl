@@ -119,10 +119,9 @@ def _verilog_sim_test_impl(ctx):
         extra_args.append("--elab_only")
     if ctx.attr.uvm:
         extra_args.append("--uvm")
-    if ctx.attr.tool != "":
+    if ctx.attr.tool:
         extra_args.append("--tool='" + ctx.attr.tool + "'")
-    if ctx.attr.seed != None:
-        extra_args.append("--seed='" + str(ctx.attr.seed) + "'")
+    extra_args.append("--seed='" + str(ctx.attr.seed) + "'")
     if ctx.attr.waves:
         extra_args.append("--waves")
     for opt in ctx.attr.opts:
