@@ -126,7 +126,7 @@ def _verilog_sim_test_impl(ctx):
     if ctx.attr.waves:
         extra_args.append("--waves")
     for opt in ctx.attr.opts:
-        extra_args.append("--opt='" + opt + "'")
+        extra_args.append("--opt=" + opt)
 
     return _verilog_base_test_impl(
         ctx = ctx,
