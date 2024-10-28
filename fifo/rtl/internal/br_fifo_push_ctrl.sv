@@ -66,7 +66,7 @@ module br_fifo_push_ctrl #(
   // checker but the FIFO implementation correctness does not depend on it.
   `BR_ASSERT_INTG(push_backpressure_a, !push_ready && push_valid |=> push_valid && $stable
                                        (push_data))
-  `BR_ASSERT_INTG(full_c, full)
+  `BR_COVER_INTG(full_c, full)
 
   // Internal integration checks
 
