@@ -17,11 +17,16 @@
 // Converts a 0-based onehot-encoded input to a multihot binary-encoded output.
 // Purely combinational (zero delay and stateless).
 //
+// For convenience, this is actually a "onehot-0" to binary encoder.
+// The LSB is "don't care": both 1'b1 and 1'b0 on LSB produce the same output ('0).
+//
 // For example:
 //
 // NumValues = 5
 //
 // in       |       out
+// --------------------
+//    normal cases
 // --------------------
 // 5'b00001 |    3'b000
 // 5'b00010 |    3'b001
@@ -29,13 +34,16 @@
 // 5'b01000 |    3'b011
 // 5'b10000 |    3'b100
 // --------------------
-// 5'b00000 | undefined
+//    special case
+// --------------------
+// 5'b00000 |    3'b000
+// --------------------
+//   illegal inputs
+// --------------------
 // 5'b00101 | undefined
 // 5'b11010 | undefined
 // 5'b11111 | undefined
 // ...
-//
-// TODO(mgottscho): Write spec
 
 `include "br_asserts_internal.svh"
 
@@ -48,7 +56,7 @@ module br_enc_onehot2bin #(
     // ri lint_check_waive INPUT_NOT_READ HIER_NET_NOT_READ HIER_BRANCH_NOT_READ
     input logic rst,  // Used only for assertions
     // in[0] is not used and does not impact the output
-    // because it must be 1 if all other bits are 0.
+    // because it is "don't care" if all other bits are 0.
     // ri lint_check_waive INEFFECTIVE_NET
     input logic [NumValues-1:0] in,
     output logic [BinWidth-1:0] out
@@ -58,7 +66,7 @@ module br_enc_onehot2bin #(
   // Integration checks
   //------------------------------------------
   `BR_ASSERT_STATIC(num_values_gte_2_a, NumValues >= 2)
-  `BR_ASSERT_INTG(in_onehot_a, $onehot(in))
+  `BR_ASSERT_INTG(in_onehot_a, $onehot0(in))
 
   //------------------------------------------
   // Implementation
