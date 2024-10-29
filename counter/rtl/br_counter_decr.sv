@@ -77,32 +77,26 @@ module br_counter_decr #(
   localparam int MaxValueP1 = MaxValue + 1;
   localparam bit IsMaxValueP1PowerOf2 = (MaxValueP1 & (MaxValueP1 - 1)) == 0;
 
-  logic [ValueWidth-1:0] value_next_internal;
   logic [ValueWidth-1:0] value_temp;
 
-  assign value_temp = (reinit ? initial_value : value) - decr;
+  assign value_temp = (reinit ? initial_value : value) - (decr_valid ? decr : '0);
 
   if (IsMaxValueP1PowerOf2) begin : gen_power_of_2
     // For MaxValueP1 being a power of 2, wrapping occurs naturally
-    assign value_next_internal = decr_valid ? value_temp : value;
+    assign value_next = value_temp;
 
   end else begin : gen_non_power_of_2
     // For MaxValueP1 not being a power of 2, handle wrap-around explicitly
     localparam int Margin = ((2 ** ValueWidth) - 1) - MaxValue;
     logic [ValueWidth-1:0] value_temp_wrapped;
-    assign value_temp_wrapped  = value_temp - Margin;
-    assign value_next_internal = value_temp > MaxValue ? value_temp_wrapped : value_temp;
+    assign value_temp_wrapped = value_temp - Margin;
+    assign value_next = value_temp > MaxValue ? value_temp_wrapped : value_temp;
 
     // Case-specific implementation checks
     `BR_ASSERT_STATIC(margin_gte0_a, Margin > 0)
     `BR_ASSERT_IMPL(value_temp_wrapped_in_range_a, value_temp_wrapped <= MaxValue)
   end
 
-  // If the user leaves the value_next port unused, then the synthesis tool
-  // should be able to automatically simplify the following ternary expression
-  // to just value_next_internal, because the load-enable on the register is
-  // conditioned on the same decr_valid.
-  assign value_next = decr_valid ? value_next_internal : value;
   `BR_REGIL(value, value_next, decr_valid || reinit, initial_value)
 
   //------------------------------------------

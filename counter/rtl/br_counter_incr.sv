@@ -78,17 +78,15 @@ module br_counter_incr #(
   localparam bit IsMaxValueP1PowerOf2 = (MaxValueP1 & (MaxValueP1 - 1)) == 0;
   localparam int TempWidth = $clog2(MaxValue + MaxIncrement + 1);
 
-  logic [ValueWidth-1:0] value_next_internal;
-
   // TODO(mgottscho): Sometimes the MSbs may not be used. It'd be cleaner
   // to capture them more tightly using br_misc_unused.
   // ri lint_check_waive NOT_READ
-  logic [ TempWidth-1:0] value_temp;
-  assign value_temp = (reinit ? initial_value : value) + incr;
+  logic [TempWidth-1:0] value_temp;
+  assign value_temp = (reinit ? initial_value : value) + (incr_valid ? incr : '0);
 
   // For MaxValueP1 being a power of 2, wrapping occurs naturally
   if (IsMaxValueP1PowerOf2) begin : gen_power_of_2
-    assign value_next_internal = incr_valid ? value_temp[ValueWidth-1:0] : value;
+    assign value_next = value_temp[ValueWidth-1:0];
 
     // For MaxValueP1 not being a power of 2, handle wrap-around explicitly
   end else begin : gen_non_power_of_2
@@ -99,7 +97,7 @@ module br_counter_incr #(
     // ri lint_check_waive ARITH_EXTENSION
     assign value_temp_wrapped = (value_temp - MaxValue) - 1;
     // ri lint_check_waive ARITH_EXTENSION
-    assign value_next_internal = (value_temp > MaxValue) ?
+    assign value_next = (value_temp > MaxValue) ?
       value_temp_wrapped[ValueWidth-1:0] :  // ri lint_check_waive FULL_RANGE
         value_temp[ValueWidth-1:0];  // ri lint_check_waive FULL_RANGE
 
@@ -112,11 +110,6 @@ module br_counter_incr #(
     end
   end
 
-  // If the user leaves the value_next port unused, then the synthesis tool
-  // should be able to automatically simplify the following ternary expression
-  // to just value_next_internal, because the load-enable on the register is
-  // conditioned on the same incr_valid.
-  assign value_next = incr_valid ? value_next_internal : value;
   `BR_REGIL(value, value_next, incr_valid || reinit, initial_value)
 
   //------------------------------------------
