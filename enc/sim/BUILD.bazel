@@ -29,7 +29,7 @@ verilog_elab_test(
 )
 
 verilog_sim_test(
-    name = "br_enc_bin2onehot_sim_test",
+    name = "br_enc_bin2onehot_vcs_test",
     defines = [
         "SV_ASSERT_ON",
         "BR_ENABLE_IMPL_CHECKS",

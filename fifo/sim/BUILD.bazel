@@ -29,7 +29,7 @@ verilog_elab_test(
 )
 
 verilog_sim_test(
-    name = "br_fifo_flops_sim_test",
+    name = "br_fifo_flops_vcs_test",
     defines = [
         "SV_ASSERT_ON",
         "BR_ENABLE_IMPL_CHECKS",
@@ -56,7 +56,7 @@ verilog_elab_test(
 )
 
 verilog_sim_test(
-    name = "br_fifo_flops_push_credit_sim_test",
+    name = "br_fifo_flops_push_credit_vcs_test",
     defines = [
         "SV_ASSERT_ON",
         "BR_ENABLE_IMPL_CHECKS",
