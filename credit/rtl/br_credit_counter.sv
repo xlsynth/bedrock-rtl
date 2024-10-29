@@ -111,7 +111,7 @@ module br_credit_counter #(
   // Withhold and available
   `BR_ASSERT_INTG(withhold_in_range_a, withhold <= MaxValue)
   `BR_COVER_INTG(withhold_c, withhold > 0)
-  `BR_COVER_INTG(available_zero_c, available == 0)
+  `BR_ASSERT_INTG(decr_lte_available_a, decr_valid |-> decr <= available)
 
   //------------------------------------------
   // Implementation
@@ -166,8 +166,8 @@ module br_credit_counter #(
   `BR_ASSERT_IMPL(active_noop_a, incr_valid && decr_valid && incr == decr |-> value == value_next)
 
   // Withhold and available
-  `BR_ASSERT_IMPL(available_lte_value_a, available <= value)
-  `BR_COVER_IMPL(available_lt_value_c, available < value)
+  `BR_COVER_IMPL(value_lt_available_c, value < available)
+  `BR_COVER_IMPL(value_gt_available_c, value > available)
   `BR_COVER_IMPL(withhold_gt_value_c, withhold > value)
 
 endmodule : br_credit_counter

@@ -72,7 +72,7 @@ module br_fifo_push_ctrl_credit #(
   `BR_ASSERT_STATIC(bit_width_must_be_at_least_one_a, BitWidth >= 1)
   `BR_ASSERT_STATIC(credit_width_a, CreditWidth >= $clog2(Depth + 1))
 
-  `BR_ASSERT_INTG(full_c, full)
+  `BR_COVER_INTG(full_c, full)
 
   // Internal integration checks
 
@@ -119,6 +119,8 @@ module br_fifo_push_ctrl_credit #(
   ) br_counter_incr_wr_addr (
       .clk,
       .rst,
+      .reinit(1'b0),  // unused
+      .initial_value(AddrWidth'(1'b0)),
       .incr_valid(ram_wr_valid),
       .incr(1'b1),
       .value(ram_wr_addr),
