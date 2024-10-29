@@ -56,7 +56,7 @@ typedef enum logic [1:0] { \
 // Reset: 'rst'
 `ifdef SV_ASSERT_ON
 `define BR_ASSERT(__name__, __expr__) \
-__name__ : assert property (@(posedge clk) disable iff (rst) (__expr__));
+__name__ : assert property (@(posedge clk) disable iff (rst === 1'b1 || rst === 1'bx) (__expr__));
 `else  // SV_ASSERT_ON
 `define BR_ASSERT(__name__, __expr__) \
 `BR_NOOP
@@ -65,7 +65,7 @@ __name__ : assert property (@(posedge clk) disable iff (rst) (__expr__));
 // More expressive form of BR_ASSERT that allows the use of custom clock and reset signal names.
 `ifdef SV_ASSERT_ON
 `define BR_ASSERT_CR(__name__, __expr__, __clk__, __rst__) \
-__name__ : assert property (@(posedge __clk__) disable iff (__rst__) (__expr__));
+__name__ : assert property (@(posedge __clk__) disable iff (__rst__ === 1'b1 || __rst__ === 1'bx) (__expr__));
 `else  // SV_ASSERT_ON
 `define BR_ASSERT_CR(__name__, __expr__, __clk__, __rst__) \
 `BR_NOOP
@@ -92,7 +92,7 @@ end
 // Reset: 'rst'
 `ifdef SV_ASSERT_ON
 `define BR_COVER(__name__, __expr__) \
-__name__ : cover property (@(posedge clk) disable iff (rst) (__expr__));
+__name__ : cover property (@(posedge clk) disable iff (rst === 1'b1 || rst === 1'bx) (__expr__));
 `else  // SV_ASSERT_ON
 `define BR_COVER(__name__, __expr__) \
 `BR_NOOP
@@ -101,7 +101,7 @@ __name__ : cover property (@(posedge clk) disable iff (rst) (__expr__));
 // More expressive form of BR_COVER that allows the use of custom clock and reset signal names.
 `ifdef SV_ASSERT_ON
 `define BR_COVER_CR(__name__, __expr__, __clk__, __rst__) \
-__name__ : cover property (@(posedge __clk__) disable iff (__rst__) (__expr__));
+__name__ : cover property (@(posedge __clk__) disable iff (__rst__ === 1'b1 || __rst__ === 1'bx) (__expr__));
 `else  // SV_ASSERT_ON
 `define BR_COVER_CR(__name__, __expr__, __clk__, __rst__) \
 `BR_NOOP
