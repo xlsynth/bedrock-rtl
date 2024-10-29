@@ -28,13 +28,13 @@ module br_delay #(
 ) (
     // Positive edge-triggered. If NumStages is 0, then only used for assertions.
     // ri lint_check_waive INPUT_NOT_READ HIER_NET_NOT_READ HIER_BRANCH_NOT_READ
-    input  logic                             clk,
+    input  logic                clk,
     // Synchronous active-high. If NumStages is 0, then only used for assertions.
     // ri lint_check_waive INPUT_NOT_READ HIER_NET_NOT_READ HIER_BRANCH_NOT_READ
-    input  logic                             rst,
-    input  logic [BitWidth-1:0]              in,
+    input  logic                rst,
+    input  logic [BitWidth-1:0] in,
     // Output of last delay stage (delayed by NumStages cycles).
-    output logic [BitWidth-1:0]              out,
+    output logic [BitWidth-1:0] out,
     // Output of each delay stage. Note that out_stage[0] == in, and
     // out_stage[NumStages] == out.
     output logic [NumStages:0][BitWidth-1:0] out_stage
