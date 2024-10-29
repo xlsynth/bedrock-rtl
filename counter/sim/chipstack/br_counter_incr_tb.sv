@@ -96,19 +96,19 @@ module br_counter_incr_tb;
     incr = 'h0;
 
     // Wiggling the reset signal.
-    rst = 1'b0;
-    #RESET_DURATION;
+    @(negedge clk);
     rst = 1'b1;
     #RESET_DURATION;
+    @(negedge clk);
     rst = 1'b0;
     #RESET_DURATION;
+    @(negedge clk);
   endtask
 
   //===========================================================
   // Initial Block to Call Tasks
   //===========================================================
   initial begin
-    $assertoff;
     reset_dut();
     test_ReinitializeCounter();
 
@@ -185,24 +185,24 @@ module br_counter_incr_tb;
         bit stimulus_s1 = 0;
         bit is_pass = 1;
         logic [ValueWidth-1:0] observed_value, observed_value_next;
-        fork
+        fork begin
           // Generate a random initial value for the test
-          @(posedge clk);
+          @(negedge clk);
           initial_value = $urandom() % (MaxValue + 1);
-          $display(
-              "Time: %0t, INFO: test_ReinitializeCounter - Driving values: reinit=0x%h, initial_value=0x%h, incr_valid=0x%h, incr=0x%h",
-              $time, 1, initial_value, 0, 0);
           // Drive values to input ports for step 1
           reinit = 1;
           incr_valid = 0;
           incr = 0;
-          @(posedge clk);
+          $display(
+              "Time: %0t, INFO: test_ReinitializeCounter - Driving values: reinit=0x%h, initial_value=0x%h, incr_valid=0x%h, incr=0x%h",
+              $time, reinit, initial_value, incr_valid, incr);
+          @(negedge clk);
           reinit = 0;
           stimulus_s1 = 1;
           // Wait and compare expected output with observed output for step 1
           wait (stimulus_s1 == 1);
           $display("Time: %0t, INFO: test_ReinitializeCounter - observed the stimulus_s1.", $time);
-          @(posedge clk);
+          @(negedge clk);
           observed_value = value;
           observed_value_next = value_next;
           if (observed_value !== initial_value || observed_value_next !== initial_value) begin
@@ -215,7 +215,7 @@ module br_counter_incr_tb;
                 "Time: %0t, INFO: test_ReinitializeCounter - Output is as expected. Expected: value=0x%h, value_next=0x%h, Observed: value=0x%h, value_next=0x%h",
                 $time, initial_value, initial_value, observed_value, observed_value_next);
           end
-        join
+        end join
         if (is_pass) begin
           $display("Time: %0t, PASSED: test_ReinitializeCounter", $time);
         end else begin
@@ -246,9 +246,9 @@ module br_counter_incr_tb;
         logic [ValueWidth-1:0] expected_value_next, observed_value_next;
         logic [ValueWidth-1:0] expected_value, observed_value;
         logic [IncrementWidth-1:0] incr_value;
-        fork
+        fork begin
           // Generate a random increment value within the allowed range
-          @(posedge clk);
+          @(negedge clk);
           incr_value = $urandom_range(1, MaxIncrement);
           $display(
               "Time: %0t, INFO: test_IncrementCounter - Driving values: incr_valid=0x%h, incr=0x%h",
@@ -256,11 +256,11 @@ module br_counter_incr_tb;
           // Apply increment to the counter with incr_valid high
           incr_valid = 1;
           incr = incr_value;
-          @(posedge clk);
+          @(negedge clk);
           stimulus_s1 = 1;
           $display("Time: %0t, INFO: test_IncrementCounter - Waiting for counter update", $time);
           // Wait for the counter to update
-          @(posedge clk);
+          @(negedge clk);
           stimulus_s2 = 1;
           // Wait and compare expected output with observed output for step 1
           wait (stimulus_s1 == 1);
@@ -292,7 +292,7 @@ module br_counter_incr_tb;
                 "Time: %0t, INFO: test_IncrementCounter - Output value is as expected. Expected: 0x%h, Observed: 0x%h",
                 $time, expected_value, observed_value);
           end
-        join
+        end join
         if (is_pass) begin
           $display("Time: %0t, PASSED: test_IncrementCounter", $time);
         end else begin
@@ -323,7 +323,7 @@ module br_counter_incr_tb;
         bit is_pass = 1;
         logic [ValueWidth-1:0] initial_value, incr, value, value_next;
         logic reinit, incr_valid;
-        fork
+        fork begin
           // Step 1: Initialize the counter with random values and ensure both reinit and incr_valid are low.
           initial_value = $urandom();
           incr = $urandom();
@@ -332,7 +332,7 @@ module br_counter_incr_tb;
           $display(
               "Time: %0t, INFO: test_HoldCounterValue - Driving values: reinit=0x%h, incr_valid=0x%h, initial_value=0x%h, incr=0x%h",
               $time, reinit, incr_valid, initial_value, incr);
-          @(posedge clk);
+          @(negedge clk);
           stimulus_s1 = 1;
           // Step 2: Maintain the counter state with reinit and incr_valid still low.
           reinit = 0;
@@ -340,7 +340,7 @@ module br_counter_incr_tb;
           $display(
               "Time: %0t, INFO: test_HoldCounterValue - Driving values: reinit=0x%h, incr_valid=0x%h",
               $time, reinit, incr_valid);
-          @(posedge clk);
+          @(negedge clk);
           stimulus_s2 = 1;
           // Wait and compare expected output with observed output for step 1
           wait (stimulus_s1 == 1);
@@ -368,7 +368,7 @@ module br_counter_incr_tb;
                 "Time: %0t, INFO: test_HoldCounterValue - Output value is as expected. Expected: 0x%h, Observed: 0x%h",
                 $time, value, value_next);
           end
-        join
+        end join
         if (is_pass) begin
           $display("Time: %0t, PASSED: test_HoldCounterValue", $time);
         end else begin
@@ -396,7 +396,7 @@ module br_counter_incr_tb;
         logic [ValueWidth-1:0] initial_value;
         logic [IncrementWidth-1:0] incr;
         logic [ValueWidth-1:0] expected_value;
-        fork
+        fork begin
           // Removed redundant begin-end blocks
           // Generate random initial_value and incr within valid range
           initial_value = $urandom();
@@ -407,7 +407,7 @@ module br_counter_incr_tb;
               $time, 1, 1, initial_value, incr);
           reinit = 1;
           incr_valid = 1;
-          @(posedge clk);
+          @(negedge clk);
           reinit = 0;
           incr_valid = 0;
           stimulus_s1 = 1;
@@ -428,7 +428,7 @@ module br_counter_incr_tb;
                 "Time: %0t, INFO: test_ReinitializeAndIncrement - Output value and value_next are as expected. Expected: value=0x%h, value_next=0x%h, Observed: value=0x%h, value_next=0x%h",
                 $time, expected_value, expected_value, value, value_next);
           end
-        join
+        end join
         // Print pass/fail message based on is_pass flag
         if (is_pass) begin
           $display("Time: %0t, PASSED: test_ReinitializeAndIncrement", $time);
@@ -458,7 +458,7 @@ module br_counter_incr_tb;
         bit stimulus_s1 = 0;
         bit is_pass = 1;
         logic [ValueWidth-1:0] expected_value, observed_value;
-        fork
+        fork begin
           begin : simulation_thread
             // Drive incr_valid high and incr to zero to test holding the current counter value
             $display(
@@ -466,7 +466,7 @@ module br_counter_incr_tb;
                 $time, 1, 0);
             incr_valid = 1;
             incr = 0;
-            @(posedge clk);
+            @(negedge clk);
             stimulus_s1 = 1;
           end
           begin : check_thread
@@ -486,7 +486,7 @@ module br_counter_incr_tb;
                   $time, expected_value, observed_value);
             end
           end
-        join
+        end join
         if (is_pass) begin
           $display("Time: %0t, PASSED: test_IncrementWithZero", $time);
         end else begin
@@ -515,7 +515,7 @@ module br_counter_incr_tb;
         bit stimulus_s1 = 0;
         bit is_pass = 1;
         logic [ValueWidth-1:0] observed_value, observed_value_next;
-        fork
+        fork begin
           // Apply reinit with initial_value equal to MaxValue to reset the counter
           begin : simulation_thread
             $display(
@@ -523,7 +523,7 @@ module br_counter_incr_tb;
                 $time, 1, MaxValue);
             reinit = 1;
             initial_value = MaxValue;
-            @(posedge clk);
+            @(negedge clk);
             reinit = 0;
             stimulus_s1 = 1;
           end
@@ -545,7 +545,7 @@ module br_counter_incr_tb;
                   $time, MaxValue, MaxValue, observed_value, observed_value_next);
             end
           end
-        join
+        end join
         if (is_pass) begin
           $display("Time: %0t, PASSED: test_ReinitializeWithMaxValue", $time);
         end else begin
@@ -576,7 +576,7 @@ module br_counter_incr_tb;
         int incr;
         int expected_value, observed_value;
         int expected_value_next, observed_value_next;
-        fork
+        fork begin
           begin : simulation_thread
             // Step 1: Initialize the counter to MaxValue
             $display(
@@ -584,7 +584,7 @@ module br_counter_incr_tb;
                 $time, 1, MaxValue);
             reinit = 1;
             initial_value = MaxValue;
-            @(posedge clk);
+            @(negedge clk);
             reinit = 0;
             stimulus_s1 = 1;
             // Step 2: Apply a non-zero increment with incr_valid high to cause wrap around
@@ -593,7 +593,7 @@ module br_counter_incr_tb;
                 "Time: %0t, INFO: test_IncrementBeyondMaxValue - Driving values: incr_valid=0x%h, incr=0x%h",
                 $time, 1, incr);
             incr_valid = 1;
-            @(posedge clk);
+            @(negedge clk);
             incr_valid = 0;
             stimulus_s2 = 1;
             // Step 3: Continue incrementing to observe normal operation post-wrap around
@@ -602,7 +602,7 @@ module br_counter_incr_tb;
                 "Time: %0t, INFO: test_IncrementBeyondMaxValue - Driving values: incr_valid=0x%h, incr=0x%h",
                 $time, 1, incr);
             incr_valid = 1;
-            @(posedge clk);
+            @(negedge clk);
             incr_valid  = 0;
             stimulus_s3 = 1;
           end : simulation_thread
@@ -662,7 +662,7 @@ module br_counter_incr_tb;
                   $time, expected_value, expected_value_next, observed_value, observed_value_next);
             end
           end : check_thread
-        join
+        end join
         if (is_pass) begin
           $display("Time: %0t, PASSED: test_IncrementBeyondMaxValue", $time);
         end else begin
@@ -691,31 +691,31 @@ module br_counter_incr_tb;
         logic [ValueWidth-1:0] initial_value;
         logic [IncrementWidth-1:0] incr;
         logic [ValueWidth-1:0] value_next_expected;
-        fork
+        fork begin
           begin : simulation_thread
             incr = $urandom_range(0, MaxIncrement);
             $display(
                 "Time: %0t, INFO: test_SequentialIncrementAndReinitialize - Driving values: incr_valid=0x%h, incr=0x%h",
                 $time, 1, incr);
             incr_valid = 1;
-            @(posedge clk);
+            @(negedge clk);
             stimulus_s1 = 1;
             $display(
                 "Time: %0t, INFO: test_SequentialIncrementAndReinitialize - Driving values: incr_valid=0x%h",
                 $time, 1);
-            @(posedge clk);
+            @(negedge clk);
             stimulus_s2 = 1;
             $display(
                 "Time: %0t, INFO: test_SequentialIncrementAndReinitialize - Driving values: incr_valid=0x%h",
                 $time, 1);
-            @(posedge clk);
+            @(negedge clk);
             stimulus_s3   = 1;
             initial_value = $urandom_range(0, MaxValue);
             $display(
                 "Time: %0t, INFO: test_SequentialIncrementAndReinitialize - Driving values: reinit=0x%h, initial_value=0x%h",
                 $time, 1, initial_value);
             reinit = 1;
-            @(posedge clk);
+            @(negedge clk);
             stimulus_s4 = 1;
           end : simulation_thread
           begin : check_thread
@@ -779,7 +779,7 @@ module br_counter_incr_tb;
                   $time, initial_value, value_next);
             end
           end : check_thread
-        join
+        end join
         if (is_pass) begin
           $display("Time: %0t, PASSED: test_SequentialIncrementAndReinitialize", $time);
         end else begin
@@ -811,7 +811,7 @@ module br_counter_incr_tb;
         bit is_pass = 1;
         logic [ValueWidth-1:0] initial_value, value, value_next;
         logic [IncrementWidth-1:0] incr;
-        fork
+        fork begin
           // Removed redundant begin-end block
           // Step 1: Initialize the counter with a specific initial value and increment continuously.
           initial_value = $urandom_range(0, MaxValue);
@@ -823,7 +823,7 @@ module br_counter_incr_tb;
           initial_value = initial_value;
           incr_valid = 1;
           incr = incr;
-          @(posedge clk);
+          @(negedge clk);
           reinit = 0;
           stimulus_s1 = 1;
           // Step 2: Continue incrementing the counter by the specified increment value.
@@ -833,7 +833,7 @@ module br_counter_incr_tb;
               $time, 1, incr);
           incr_valid = 1;
           incr = incr;
-          @(posedge clk);
+          @(negedge clk);
           stimulus_s2 = 1;
           // Step 3: Conditionally reinitialize the counter to a new initial value while incrementing.
           initial_value = $urandom_range(0, MaxValue);
@@ -845,7 +845,7 @@ module br_counter_incr_tb;
           initial_value = initial_value;
           incr_valid = 1;
           incr = incr;
-          @(posedge clk);
+          @(negedge clk);
           reinit = 0;
           stimulus_s3 = 1;
           // Step 4: Continue incrementing the counter after reinitialization.
@@ -855,7 +855,7 @@ module br_counter_incr_tb;
               $time, 1, incr);
           incr_valid = 1;
           incr = incr;
-          @(posedge clk);
+          @(negedge clk);
           stimulus_s4 = 1;
           // Removed redundant begin-end block
           // Check for Step 1
@@ -958,7 +958,7 @@ module br_counter_incr_tb;
                 "Time: %0t, INFO: test_ContinuousIncrementWithConditionalReinitialize - Output value_next is as expected. Expected: 0x%h, Observed: 0x%h",
                 $time, (value + incr), value_next);
           end
-        join
+        end join
         if (is_pass) begin
           $display("Time: %0t, PASSED: test_ContinuousIncrementWithConditionalReinitialize", $time);
         end else begin
@@ -999,7 +999,7 @@ module br_counter_incr_tb;
             reinit = 1;
             incr_valid = 0;
             incr = 0;
-            @(posedge clk);
+            @(negedge clk);
             reinit = 0;
             stimulus_s1 = 1;
             // Step 2: Apply increment that causes overflow.
@@ -1008,7 +1008,7 @@ module br_counter_incr_tb;
                 $time, 1, 2);
             incr_valid = 1;
             incr = 2;
-            @(posedge clk);
+            @(negedge clk);
             incr_valid  = 0;
             stimulus_s2 = 1;
             // Step 3: Verify counter continues incrementing after overflow.
@@ -1017,7 +1017,7 @@ module br_counter_incr_tb;
                 $time, 1, 1);
             incr_valid = 1;
             incr = 1;
-            @(posedge clk);
+            @(negedge clk);
             incr_valid  = 0;
             stimulus_s3 = 1;
           end : simulation_thread
@@ -1115,13 +1115,13 @@ module br_counter_incr_tb;
                 $time, 1, MaxIncrement);
             incr_valid = 1;
             incr = MaxIncrement;
-            @(posedge clk);
+            @(negedge clk);
             stimulus_s1 = 1;
             // Step 2: Check if the counter value wraps around if necessary
             $display(
                 "Time: %0t, INFO: test_IncrementWithMaxIncrement - Waiting for next clock cycle",
                 $time);
-            @(posedge clk);
+            @(negedge clk);
             stimulus_s2 = 1;
           end
           begin : check_thread
@@ -1195,7 +1195,7 @@ module br_counter_incr_tb;
                 $time, 1, 1, initial_value, incr);
             reinit = 1;
             incr_valid = 1;
-            @(posedge clk);
+            @(negedge clk);
             reinit = 0;
             incr_valid = 0;
             stimulus_s1 = 1;
@@ -1253,7 +1253,7 @@ module br_counter_incr_tb;
             incr_valid = 1;
             initial_value = 0;
             incr = 0;
-            @(posedge clk);
+            @(negedge clk);
             stimulus_s1 = 1;
             $display(
                 "Time: %0t, INFO: test_ReinitializeWithZeroIncrement - Driving values: reinit=0x%h, incr_valid=0x%h",
@@ -1327,7 +1327,7 @@ module br_counter_incr_tb;
             initial_value = MaxValue - 1;
             incr_valid = 0;
             incr = 0;
-            @(posedge clk);
+            @(negedge clk);
             reinit = 0;
             stimulus_s1 = 1;
             $display(
@@ -1335,7 +1335,7 @@ module br_counter_incr_tb;
                 $time, 1, 1);
             incr_valid = 1;
             incr = 1;
-            @(posedge clk);
+            @(negedge clk);
             incr_valid  = 0;
             stimulus_s2 = 1;
           end
@@ -1414,7 +1414,7 @@ module br_counter_incr_tb;
             initial_value = 0;
             incr_valid = 0;
             incr = $urandom();
-            @(posedge clk);
+            @(negedge clk);
             reinit = 0;
             stimulus_s1 = 1;
           end
@@ -1422,7 +1422,7 @@ module br_counter_incr_tb;
             // Wait and compare expected output with observed output for step 1
             wait (stimulus_s1 == 1);
             $display("Time: %0t, INFO: test_ReinitializeToZero - observed the stimulus_s1.", $time);
-            @(posedge clk);
+            @(negedge clk);
             observed_value = value;
             observed_value_next = value_next;
             if (observed_value !== 0 || observed_value_next !== 0) begin
@@ -1479,14 +1479,14 @@ module br_counter_incr_tb;
                 $time, 1, 1, initial_value, incr);
             reinit = 1;
             incr_valid = 1;
-            @(posedge clk);
+            @(negedge clk);
             stimulus_s1 = 1;
             $display(
                 "Time: %0t, INFO: test_IncrementWithReinitAtBoundary - Driving values: reinit=0x%h, incr_valid=0x%h",
                 $time, 0, 0);
             reinit = 0;
             incr_valid = 0;
-            @(posedge clk);
+            @(negedge clk);
             stimulus_s2 = 1;
           end
           begin : check_thread
@@ -1543,7 +1543,7 @@ module br_counter_incr_tb;
               $time, 1, MaxIncrement + 1);
           incr_valid = 1;
           incr = MaxIncrement + 1;
-          @(posedge clk);
+          @(negedge clk);
           stimulus_s1 = 1;
           // Step 2: Check that the counter continues operation without automatic response despite the assertion.
           $display(
@@ -1551,7 +1551,7 @@ module br_counter_incr_tb;
               $time, 0, 0);
           incr_valid = 0;
           incr = 0;
-          @(posedge clk);
+          @(negedge clk);
           stimulus_s2 = 1;
           // Wait and compare expected output with observed output for step 1 if simulation step 1 has any expected output
           wait (stimulus_s1 == 1);
@@ -1611,7 +1611,7 @@ module br_counter_incr_tb;
           initial_value = MaxValue + 1;
           incr_valid = 0;
           incr = 0;
-          @(posedge clk);
+          @(negedge clk);
           reinit = 0;
           stimulus_s1 = 1;
           // Step 2: Check that the counter continues operation without automatic response
@@ -1621,7 +1621,7 @@ module br_counter_incr_tb;
               $time, 1, random_incr);
           incr_valid = 1;
           incr = random_incr;
-          @(posedge clk);
+          @(negedge clk);
           incr_valid  = 0;
           stimulus_s2 = 1;
           // Removed redundant begin-end block
@@ -1630,7 +1630,7 @@ module br_counter_incr_tb;
           $display("Time: %0t, INFO: test_InitialValueExceedsMaxValue - observed the stimulus_s2.",
                    $time);
           expected_value_next = value + random_incr;
-          @(posedge clk);
+          @(negedge clk);
           if (value_next !== expected_value_next) begin
             is_pass = 0;
             $display(
@@ -1684,13 +1684,13 @@ module br_counter_incr_tb;
             incr_valid = 1;
             initial_value = MaxValue + 1;
             incr = MaxIncrement + 1;
-            @(posedge clk);
+            @(negedge clk);
             stimulus_s1 = 1;
             // Step 2: Check if the counter continues operation without automatic response despite exceeding limits
             $display(
                 "Time: %0t, INFO: test_IncrementAndInitialValueExceedLimits - Driving values: No change, checking operation continuity",
                 $time);
-            @(posedge clk);
+            @(negedge clk);
             stimulus_s2 = 1;
           end : simulation_thread
           begin : check_thread
