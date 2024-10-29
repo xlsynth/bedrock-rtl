@@ -33,7 +33,11 @@ module br_delay_nr #(
     // ri lint_check_waive INPUT_NOT_READ HIER_NET_NOT_READ HIER_BRANCH_NOT_READ
     input  logic                rst,
     input  logic [BitWidth-1:0] in,
-    output logic [BitWidth-1:0] out
+    // Output of last delay stage (delayed by NumStages cycles).
+    output logic [BitWidth-1:0] out,
+    // Output of each delay stage. Note that out_stages[0] == in, and
+    // out_stages[NumStages] == out.
+    output logic [NumStages:0][BitWidth-1:0] out_stages
 );
 
   //------------------------------------------
@@ -54,6 +58,7 @@ module br_delay_nr #(
   end
 
   assign out = stages[NumStages];
+  assign out_stages = stages;
 
   //------------------------------------------
   // Implementation checks

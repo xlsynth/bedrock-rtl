@@ -35,9 +35,9 @@ module br_delay #(
     input  logic [BitWidth-1:0] in,
     // Output of last delay stage (delayed by NumStages cycles).
     output logic [BitWidth-1:0] out,
-    // Output of each delay stage. Note that out_stage[0] == in, and
-    // out_stage[NumStages] == out.
-    output logic [NumStages:0][BitWidth-1:0] out_stage
+    // Output of each delay stage. Note that out_stages[0] == in, and
+    // out_stages[NumStages] == out.
+    output logic [NumStages:0][BitWidth-1:0] out_stages
 );
 
   //------------------------------------------
@@ -57,8 +57,8 @@ module br_delay #(
     `BR_REG(stages[i], stages[i-1])
   end
 
-  assign out       = stages[NumStages];
-  assign out_stage = stages;
+  assign out = stages[NumStages];
+  assign out_stages = stages;
 
   //------------------------------------------
   // Implementation checks
