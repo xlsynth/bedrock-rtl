@@ -38,6 +38,8 @@ module br_delay_valid #(
     output logic                              out_valid,
     // Output of last delay stage (delayed by NumStages cycles).
     output logic [BitWidth-1:0]               out,
+    // Indicates the valid status of each delay stage.
+    output logic [ NumStages:0]               out_valid_stages, 
     // Output of each delay stage. Note that out_stages[0] == in, and
     // out_stages[NumStages] == out.
     output logic [ NumStages:0][BitWidth-1:0] out_stages
@@ -67,6 +69,7 @@ module br_delay_valid #(
 
   assign out_valid = stage_valid[NumStages];
   assign out = stage[NumStages];
+  assign out_valid_stages = stage_valid;
   assign out_stages = stage;
 
   //------------------------------------------
