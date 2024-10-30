@@ -186,6 +186,7 @@ def add_sim_args(parser: argparse.ArgumentParser) -> None:
         "--tool",
         type=str,
         help="Simulator tool to use.",
+        required=True,
     )
     parser.add_argument(
         "--uvm",
@@ -209,6 +210,7 @@ def add_fpv_args(parser: argparse.ArgumentParser) -> None:
         "--tool",
         type=str,
         help="Formal tool to use.",
+        required=True,
     )
 
 def main():
