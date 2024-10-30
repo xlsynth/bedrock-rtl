@@ -132,6 +132,21 @@ def _verilog_sim_test_impl(ctx):
         extra_args = extra_args,
     )
 
+def _verilog_fpv_test_impl(ctx):
+    """Implementation of the verilog_fpv_test rule."""
+    extra_args = []
+    if ctx.attr.elab_only:
+        extra_args.append("--elab_only")
+    extra_args.append("--tool='" + ctx.attr.tool + "'")
+    for opt in ctx.attr.opts:
+        extra_args.append("--opt='" + opt + "'")
+
+    return _verilog_base_test_impl(
+        ctx = ctx,
+        subcmd = "fpv",
+        extra_args = extra_args,
+    )
+
 # Rule definitions
 _verilog_elab_test = rule(
     doc = "Tests that a Verilog or SystemVerilog design elaborates.",
@@ -219,6 +234,47 @@ _verilog_sim_test = rule(
 def verilog_sim_test(tags = [], **kwargs):
     _verilog_sim_test(
         tags = tags + ["resources:verilog_sim_test_tool_licenses:1"],
+        **kwargs
+    )
+
+_verilog_fpv_test = rule(
+    doc = """
+    Runs Verilog/SystemVerilog compilation and formal verification in one command. This rule should be used for simple formal unit tests.
+    """,
+    implementation = _verilog_fpv_test_impl,
+    attrs = {
+        "deps": attr.label_list(
+            doc = "The dependencies of the test.",
+            allow_files = False,
+            providers = [VerilogInfo],
+        ),
+        "defines": attr.string_list(
+            doc = "Preprocessor defines to pass to the Verilog compiler.",
+        ),
+        "params": attr.string_dict(
+            doc = "Verilog module parameters to set in the instantiation of the top-level module.",
+        ),
+        "top": attr.string(
+            doc = "The top-level module; if not provided and there exists one dependency, then defaults to that dep's label name.",
+        ),
+        "opts": attr.string_list(
+            doc = "Tool-specific compile and simulation options not covered by other arguments.",
+        ),
+        "elab_only": attr.bool(
+            doc = "Only run elaboration.",
+            default = False,
+        ),
+        "tool": attr.string(
+            mandatory = True,
+            doc = "Formal tool to use.",
+        ),
+    },
+    test = True,
+)
+
+def verilog_fpv_test(tags = [], **kwargs):
+    _verilog_fpv_test(
+        tags = tags + ["resources:verilog_fpv_test_tool_licenses:1"],
         **kwargs
     )
 
