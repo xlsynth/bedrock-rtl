@@ -129,7 +129,6 @@ def parse_params(
                 )
     return params_dict
 
-
 def add_common_args(parser: argparse.ArgumentParser) -> None:
     parser.add_argument(
         "--top",
@@ -167,18 +166,27 @@ def add_common_args(parser: argparse.ArgumentParser) -> None:
     )
 
 
-def add_sim_args(parser: argparse.ArgumentParser) -> None:
+def add_sim_fpv_args(parser: argparse.ArgumentParser) -> None:
     parser.add_argument(
         "--opt",
         type=str,
         action="append",
         default=[],
-        help="Compile and simulation options. Can be specified multiple times.",
+        help="Tool options. Can be specified multiple times.",
     )
     parser.add_argument(
         "--elab_only",
         action="store_true",
         help="Only run elaboration.",
+    )
+
+def add_sim_args(parser: argparse.ArgumentParser) -> None:
+    add_sim_fpv_args(parser)
+    parser.add_argument(
+        "--tool",
+        type=str,
+        help="Simulator tool to use.",
+        required=True,
     )
     parser.add_argument(
         "--uvm",
@@ -186,16 +194,9 @@ def add_sim_args(parser: argparse.ArgumentParser) -> None:
         help="Run UVM test.",
     )
     parser.add_argument(
-        "--tool",
-        type=str,
-        # TODO(mgottscho): legalize the tool argument
-        help="Simulator tool to use (e.g., vcs, xrun).",
-        default="vcs",
-    )
-    parser.add_argument(
         "--seed",
         type=int,
-        help="Random seed to use in simulation.",
+        help="Seed to use in simulation. If not provided, a random value will be chosen.",
     )
     parser.add_argument(
         "--waves",
@@ -203,6 +204,14 @@ def add_sim_args(parser: argparse.ArgumentParser) -> None:
         help="Enable waveform dumping.",
     )
 
+def add_fpv_args(parser: argparse.ArgumentParser) -> None:
+    add_sim_fpv_args(parser)
+    parser.add_argument(
+        "--tool",
+        type=str,
+        help="Formal tool to use.",
+        required=True,
+    )
 
 def main():
     parser = argparse.ArgumentParser(
@@ -224,6 +233,10 @@ def main():
         "sim", parents=[parent_parser], help="Simulate a Verilog/SystemVerilog design"
     )
     add_sim_args(sim_subparser)
+    fpv_subparser = subparsers.add_parser(
+        "fpv", parents=[parent_parser], help="fpvulate a Verilog/SystemVerilog design"
+    )
+    add_fpv_args(fpv_subparser)
 
     args = parser.parse_args()
 
@@ -245,6 +258,9 @@ def main():
     elif args.subcommand == "sim":
         success = True
         print("NOT IMPLEMENTED: Sim test vacuously passes.")
+    elif args.subcommand == "fpv":
+        success = True
+        print("NOT IMPLEMENTED: Formal test vacuously passes.")
     else:
         raise ValueError(f"Invalid subcommand: {args.subcommand}")
 
