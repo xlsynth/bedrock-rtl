@@ -1,0 +1,76 @@
+# Copyright 2024 The Bedrock-RTL Authors
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+load("@rules_hdl//verilog:providers.bzl", "verilog_library")
+load("//bazel:verilog.bzl", "verilog_elab_test", "verilog_fpv_test_suite")
+
+package(default_visibility = ["//visibility:public"])
+
+verilog_library(
+    name = "br_delay_monitor",
+    srcs = ["br_delay_monitor.sv"],
+    deps = ["//delay/rtl:br_delay"],
+)
+
+verilog_elab_test(
+    name = "br_delay_monitor_elab_test",
+    deps = [":br_delay_monitor"],
+)
+
+verilog_fpv_test_suite(
+    name = "br_delay_monitor_fpv_test_suite",
+    defines = [
+        "SV_ASSERT_ON",
+        "BR_ENABLE_IMPL_CHECKS",
+    ],
+    params = {
+        "BitWidth": ["2"],
+        "NumStages": [
+            "0",
+            "1",
+            "2",
+        ],
+    },
+    tool = "jasper",
+    deps = [":br_delay_monitor"],
+)
+
+verilog_library(
+    name = "br_delay_nr_monitor",
+    srcs = ["br_delay_nr_monitor.sv"],
+    deps = ["//delay/rtl:br_delay_nr"],
+)
+
+verilog_elab_test(
+    name = "br_delay_nr_monitor_elab_test",
+    deps = [":br_delay_nr_monitor"],
+)
+
+verilog_fpv_test_suite(
+    name = "br_delay_nr_monitor_fpv_test_suite",
+    defines = [
+        "SV_ASSERT_ON",
+        "BR_ENABLE_IMPL_CHECKS",
+    ],
+    params = {
+        "BitWidth": ["2"],
+        "NumStages": [
+            "0",
+            "1",
+            "2",
+        ],
+    },
+    tool = "jasper",
+    deps = [":br_delay_nr_monitor"],
+)
