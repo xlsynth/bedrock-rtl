@@ -205,7 +205,7 @@ _verilog_sim_test = rule(
             doc = "The top-level module; if not provided and there exists one dependency, then defaults to that dep's label name.",
         ),
         "opts": attr.string_list(
-            doc = "Tool-specific compile and simulation options not covered by other arguments.",
+            doc = "Tool-specific options not covered by other arguments.",
         ),
         "elab_only": attr.bool(
             doc = "Only run elaboration.",
@@ -258,7 +258,7 @@ _verilog_fpv_test = rule(
             doc = "The top-level module; if not provided and there exists one dependency, then defaults to that dep's label name.",
         ),
         "opts": attr.string_list(
-            doc = "Tool-specific compile and simulation options not covered by other arguments.",
+            doc = "Tool-specific options not covered by other arguments.",
         ),
         "elab_only": attr.bool(
             doc = "Only run elaboration.",
