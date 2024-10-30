@@ -78,7 +78,7 @@ def dump_file_to_stdout(filename: str) -> None:
         print(file.read())
 
 
-def print_summary(success: bool, step_success: Dict[str, bool], report_table) -> None:
+def print_summary(success: bool, step_success: Dict[str, bool], report_table: str) -> None:
     step_success_text = "\\n".join(
         f"{k}: {'OK' if v else 'FAIL'}" for k, v in step_success.items()
     )
@@ -249,18 +249,23 @@ def main():
     check_each_filename_suffix(srcs, [".v", ".sv"])
 
     success = False
+    def print_not_implemented(subcmd: str) -> None:
+        print(f"{THIS_FILE}: NOT IMPLEMENTED: subcommand {subcmd}. Set --action_env=BAZEL_VERILOG_TEST_TOOL to point to a fully implemented (non-placeholder) version of this file.")
+        print(f"{FAIL_ART}")
+        print("FAIL")
+
     if args.subcommand == "elab":
-        success = True
-        print("NOT IMPLEMENTED: Elab test vacuously passes.")
+        print_not_implemented("elab")
+        # In your own fork of this file, implement this.
     elif args.subcommand == "lint":
-        success = True
-        print("NOT IMPLEMENTED: Lint test vacuously passes.")
+        print_not_implemented("lint")
+        # In your own fork of this file, implement this.
     elif args.subcommand == "sim":
-        success = True
-        print("NOT IMPLEMENTED: Sim test vacuously passes.")
+        print_not_implemented("sim")
+        # In your own fork of this file, implement this.
     elif args.subcommand == "fpv":
-        success = True
-        print("NOT IMPLEMENTED: Formal test vacuously passes.")
+        print_not_implemented("fpv")
+        # In your own fork of this file, implement this.
     else:
         raise ValueError(f"Invalid subcommand: {args.subcommand}")
 
