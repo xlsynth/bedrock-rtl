@@ -109,15 +109,15 @@ We pick up that rule dependency transitively (see the top-level `MODULE.bazel`).
 load("@rules_hdl//verilog:providers.bzl", "verilog_library")
 
 verilog_library(
-    name = "sub",
-    srcs = ["sub.sv"],
-    hdrs = ["include_file.svh"]
+    name = "bar",
+    srcs = ["bar.sv"],
+    hdrs = ["baz.svh"]
 )
 
 verilog_library(
-    name = "top",
-    srcs = ["top.sv"],
-    deps = [":sub"],
+    name = "foo",
+    srcs = ["foo.sv"],
+    deps = [":bar"],
 )
 ----
 ====
@@ -136,8 +136,8 @@ load("@bedrock-rtl//bazel:verilog.bzl", "verilog_elab_test")
 ...
 
 verilog_elab_test(
-    name = "top_elab_test",
-    deps = [":top"],
+    name = "foo_elab_test",
+    deps = [":foo"],
 )
 ----
 ====
@@ -156,8 +156,8 @@ load("@bedrock-rtl//bazel:verilog.bzl", "verilog_lint_test")
 ...
 
 verilog_lint_test(
-    name = "top_lint_test",
-    deps = [":top"],
+    name = "foo_lint_test",
+    deps = [":foo"],
 )
 ----
 ====
@@ -177,8 +177,8 @@ load("@bedrock-rtl//bazel:verilog.bzl", "verilog_sim_test")
 ...
 
 verilog_sim_test(
-    name = "top_vcs_test",
-    deps = [":top_tb"],
+    name = "foo_vcs_test",
+    deps = [":foo_tb"],
     tool = "vcs",
 )
 ----
@@ -199,8 +199,8 @@ load("@bedrock-rtl//bazel:verilog.bzl", "verilog_fpv_test")
 ...
 
 verilog_fpv_test(
-    name = "top_jg_test",
-    deps = [":top_tb"],
+    name = "foo_jg_test",
+    deps = [":foo_tb"],
     tool = "jg",
 )
 ----
