@@ -13,7 +13,7 @@
 # limitations under the License.
 
 load("@rules_hdl//verilog:providers.bzl", "verilog_library")
-load("//bazel:verilog.bzl", "verilog_elab_test")
+load("//bazel:verilog.bzl", "verilog_elab_test", "verilog_lint_test")
 
 package(default_visibility = ["//visibility:private"])
 
@@ -34,6 +34,29 @@ verilog_library(
     name = "br_registers",
     hdrs = ["br_registers.svh"],
     visibility = ["//visibility:public"],
+)
+
+verilog_library(
+    name = "br_unused",
+    hdrs = ["br_unused.svh"],
+    visibility = ["//visibility:public"],
+    deps = ["//misc/rtl:br_misc_unused"],
+)
+
+verilog_library(
+    name = "br_unused_tb",
+    srcs = ["br_unused_tb.sv"],
+    deps = [":br_unused"],
+)
+
+verilog_elab_test(
+    name = "br_unused_tb_elab_test",
+    deps = [":br_unused_tb"],
+)
+
+verilog_lint_test(
+    name = "br_unused_tb_lint_test",
+    deps = [":br_unused_tb"],
 )
 
 # Macro unit tests

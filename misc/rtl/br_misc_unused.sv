@@ -19,7 +19,8 @@
 // synthesis tool.
 //
 // To automatically instantiate this at the bitwidth of local logic, by name,
-// users can opt to use the `BR_UNUSED(my_name) convenience macro.
+// users can opt to use the `BR_UNUSED(my_name) convenience macro defined in
+// macros/br_unused.svh.
 
 // ri lint_check_waive EMPTY_MOD NO_OUTPUT
 module br_misc_unused #(
@@ -32,5 +33,3 @@ module br_misc_unused #(
   assign unused = |in;
 
 endmodule : br_misc_unused
-
-`define BR_UNUSED(__x) br_misc_unused #(.BitWidth($bits(__x))) br_misc_unused__``__x(.in(__x))
