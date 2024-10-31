@@ -42,7 +42,7 @@ verilog_fpv_test_suite(
             "2",
         ],
     },
-    tool = "jasper",
+    tool = "jg",
     deps = [":br_delay_monitor"],
 )
 
@@ -71,6 +71,6 @@ verilog_fpv_test_suite(
             "2",
         ],
     },
-    tool = "jasper",
+    tool = "jg",
     deps = [":br_delay_nr_monitor"],
 )
