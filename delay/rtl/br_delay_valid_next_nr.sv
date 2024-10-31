@@ -79,7 +79,7 @@ module br_delay_valid_next_nr #(
   assign out_valid_next = stage_valid_next[NumStages];
   assign out = stage[NumStages];
   assign out_valid_next_stages = stage_valid_next;
-  assign out_stages = stages;
+  assign out_stages = stage;
 
   //------------------------------------------
   // Implementation checks

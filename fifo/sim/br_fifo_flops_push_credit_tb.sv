@@ -107,8 +107,9 @@ module br_fifo_flops_push_credit_tb ();
   ) br_delay_nr_to_fifo (
       .clk,
       .rst,
-      .in ({cv_push_valid, cv_push_data, cv_push_credit_stall}),
-      .out({cv_push_valid_d, cv_push_data_d, cv_push_credit_stall_d})
+      .in({cv_push_valid, cv_push_data, cv_push_credit_stall}),
+      .out({cv_push_valid_d, cv_push_data_d, cv_push_credit_stall_d}),
+      .out_stages()  // ri lint_check_waive OPEN_OUTPUT
   );
 
   br_delay_nr #(
@@ -117,8 +118,9 @@ module br_fifo_flops_push_credit_tb ();
   ) br_delay_nr_from_fifo (
       .clk,
       .rst,
-      .in (cv_push_credit),
-      .out(cv_push_credit_d)
+      .in(cv_push_credit),
+      .out(cv_push_credit_d),
+      .out_stages()  // ri lint_check_waive OPEN_OUTPUT
   );
 
   // Clock generation
