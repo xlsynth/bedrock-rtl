@@ -24,19 +24,49 @@
 
 // verilog_format: off
 
+// Buffer
+`define BR_GATE_BUF(__iname__, __out__, __in__) \
+br_gate_buf br_gate_buf_``__iname__`` ( \
+    .in(__in__), \
+    .out(__out__) \
+)
+
+// Clock Buffer
+`define BR_GATE_CLK_BUF(__iname__, __out__, __in__) \
+br_gate_clk_buf br_gate_clk_buf_``__iname__`` ( \
+    .in(__in__), \
+    .out(__out__) \
+)
+
+// Inverter
+`define BR_GATE_INV(__iname__, __out__, __in__) \
+br_gate_inv br_gate_inv_``__iname__`` ( \
+    .in(__in__), \
+    .out(__out__) \
+)
+
 // 2-Input AND Gate
-`define BR_GATE_AND2(__iname__, __out__, __in1__, __in2__) \
+`define BR_GATE_AND2(__iname__, __out__, __in0__, __in1__) \
 br_gate_and2 br_gate_and2_``__iname__`` ( \
+    .in0(__in0__), \
     .in1(__in1__), \
-    .in2(__in2__), \
     .out(__out__) \
 )
 
 // 2-Input OR Gate
-`define BR_GATE_OR2(__iname__, __out__, __in1__, __in2__) \
+`define BR_GATE_OR2(__iname__, __out__, __in0__, __in1__) \
 br_gate_or2 br_gate_or2_``__iname__`` ( \
+    .in0(__in0__), \
     .in1(__in1__), \
-    .in2(__in2__), \
+    .out(__out__) \
+)
+
+// 2-Input Mux Gate
+`define BR_GATE_MUX2(__iname__, __out__, __in0__, __in1__, __sel__) \
+br_gate_or2 br_gate_or2_``__iname__`` ( \
+    .in0(__in0__), \
+    .in1(__in1__), \
+    .sel(__sel__), \
     .out(__out__) \
 )
 

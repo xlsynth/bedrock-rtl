@@ -22,27 +22,80 @@
 // verilog_lint: waive-start module-filename
 // ri lint_check_off ONE_PER_FILE FILE_NAME
 
-// 2-input AND gate
-module br_gate_and2 (
-    input  logic in1,
-    input  logic in2,
+// Buffer
+module br_gate_buf (
+    input  logic in,
     output logic out
 );
 
-  assign out = in1 & in2;
+  assign out = in;
+
+endmodule : br_gate_buf
+
+// Clock Buffer
+module br_gate_clk_buf (
+    input  logic in,
+    output logic out
+);
+
+  assign out = in;
+
+endmodule : br_gate_clk_buf
+
+// Inverter
+module br_gate_inv (
+    input  logic in,
+    output logic out
+);
+
+  assign out = ~in;
+
+endmodule : br_gate_inv
+
+// 2-input AND gate
+module br_gate_and2 (
+    input  logic in0,
+    input  logic in1,
+    output logic out
+);
+
+  assign out = in0 & in1;
 
 endmodule : br_gate_and2
 
 // 2-input OR gate
 module br_gate_or2 (
+    input  logic in0,
     input  logic in1,
-    input  logic in2,
     output logic out
 );
 
-  assign out = in1 | in2;
+  assign out = in0 | in1;
 
 endmodule : br_gate_or2
+
+// 2-input XOR gate
+module br_gate_xor2 (
+    input  logic in0,
+    input  logic in1,
+    output logic out
+);
+
+  assign out = in0 ^ in1;
+
+endmodule : br_gate_xor2
+
+// 2-input MUX gate
+module br_gate_mux2 (
+    input  logic in0,
+    input  logic in1,
+    input  logic sel,
+    output logic out
+);
+
+  assign out = sel ? in1 : in0;
+
+endmodule : br_gate_mux2
 
 // verilog_lint: waive-stop module-filename
 // ri lint_check_on ONE_PER_FILE FILE_NAME
