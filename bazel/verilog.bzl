@@ -15,7 +15,7 @@
 """Verilog rules for Bazel."""
 
 load("@rules_hdl//verilog:providers.bzl", "VerilogInfo")
-load("//bazel:write_placeholder_tools.bzl", "write_placeholder_verilog_test_tool")
+load("//bazel:write_placeholder_verilog_test_py.bzl", "write_placeholder_verilog_test_tool")
 
 def get_transitive(ctx, srcs_not_hdrs):
     """Returns a depset of all Verilog source or header files in the transitive closure of the deps attribute."""
