@@ -20,6 +20,7 @@
 // version of the gatelib should be included in the design filelist.
 
 // verilog_lint: waive-start module-filename
+// ri lint_check_off ONE_PER_FILE FILE_NAME
 
 // 2-input AND gate
 module br_gate_and2 (
@@ -44,3 +45,4 @@ module br_gate_or2 (
 endmodule : br_gate_or2
 
 // verilog_lint: waive-stop module-filename
+// ri lint_check_on ONE_PER_FILE FILE_NAME
