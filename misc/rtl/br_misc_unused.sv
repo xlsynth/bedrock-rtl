@@ -17,6 +17,9 @@
 // Sinks an unused signal and waives the corresponding lint errors internally.
 // It is expected that this logic will be automatically removed by the
 // synthesis tool.
+//
+// To automatically instantiate this at the bitwidth of local logic, by name,
+// users can opt to use the `BR_UNUSED(my_name) convenience macro.
 
 // ri lint_check_waive EMPTY_MOD NO_OUTPUT
 module br_misc_unused #(
@@ -29,3 +32,5 @@ module br_misc_unused #(
   assign unused = |in;
 
 endmodule : br_misc_unused
+
+`define BR_UNUSED(__x) br_misc_unused #(.BitWidth($bits(__x))) br_misc_unused__``__x(.in(__x))
