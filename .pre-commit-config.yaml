@@ -9,7 +9,8 @@ repos:
         exclude: |
           (?x)(
             \.svg$|
-            \.patch$
+            \.patch$|
+            verilog_rules.md$
           )
       - id: check-yaml
       - id: check-toml
