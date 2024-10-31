@@ -89,10 +89,131 @@ Using GitHub Actions, which currently just runs pre-commit checks.
 
 We follow the {xlsynth-verilog-style-guide}[xlsynth Verilog Style Guide^], which is a fork of the {lowrisc-verilog-style-guide}[lowRISC style guide^] with some minor differences.
 
-== Bazel Verilog Rules
+== Bazel Rules for Verilog
 
-This repository defines several generally-helpful Bazel verilog rules that you can use in your own Verilog projects.
-Usage is best illustrated with an example.
+This repository defines several generally-helpful Bazel Verilog rules that you can use in your own projects.
+
+=== `verilog_library` (external)
+
+:verilog-library: https://github.com/hdl/bazel_rules_hdl/blob/main/verilog/providers.bzl
+
+The `verilog_library` rule is used to collect Verilog source and header files and track their dependencies.
+The original definition of the `verilog_library` rule can be found {verilog-library}[here^].
+We pick up that rule dependency transitively (see the top-level `MODULE.bazel`).
+
+.Using `verilog_library`
+[%collapsible]
+====
+[source,bazel]
+----
+load("@rules_hdl//verilog:providers.bzl", "verilog_library")
+
+verilog_library(
+    name = "sub",
+    srcs = ["sub.sv"],
+    hdrs = ["include_file.svh"]
+)
+
+verilog_library(
+    name = "top",
+    srcs = ["top.sv"],
+    deps = [":sub"],
+)
+----
+====
+
+== `verilog_elab_test`
+
+The `verilog_elab_test` rule tests that a top-level Verilog design can be statically analyzed and elaborated without errors.
+
+.Using `verilog_elab_test`
+[%collapsible]
+====
+[source,bazel]
+----
+load("@bedrock-rtl//bazel:verilog.bzl", "verilog_elab_test")
+
+...
+
+verilog_elab_test(
+    name = "top_elab_test",
+    deps = [":top"],
+)
+----
+====
+
+== `verilog_lint_test`
+
+The `verilog_lint_test` rule tests that a top-level Verilog design can pass a set of lint rules without errors.
+
+.Using `verilog_lint_test`
+[%collapsible]
+====
+[source,bazel]
+----
+load("@bedrock-rtl//bazel:verilog.bzl", "verilog_lint_test")
+
+...
+
+verilog_lint_test(
+    name = "top_lint_test",
+    deps = [":top"],
+)
+----
+====
+
+== `verilog_sim_test`
+
+The `verilog_sim_test` rule tests that a top-level Verilog design can one-step compile, elaborate, and simulate without errors.
+It is designed for basic unit tests, not complex scenarios that require multi-step compilation, elaboration, and simulation processes.
+
+.Using `verilog_sim_test`
+[%collapsible]
+====
+[source,bazel]
+----
+load("@bedrock-rtl//bazel:verilog.bzl", "verilog_sim_test")
+
+...
+
+verilog_sim_test(
+    name = "top_vcs_test",
+    deps = [":top_tb"],
+    tool = "vcs",
+)
+----
+====
+
+== `verilog_fpv_test`
+
+The `verilog_fpv_test` rule tests that a top-level Verilog design can one-step compile, elaborate, and pass formal property verification (FPV) checks without errors.
+It is designed for basic unit tests, not complex scenarios that require multi-step compilation, elaboration, and formal processes.
+
+.Using `verilog_fpv_test`
+[%collapsible]
+====
+[source,bazel]
+----
+load("@bedrock-rtl//bazel:verilog.bzl", "verilog_fpv_test")
+
+...
+
+verilog_fpv_test(
+    name = "top_jg_test",
+    deps = [":top_tb"],
+    tool = "jg",
+)
+----
+====
+
+== Using Bedrock
+
+:bzlmod: https://docs.bazel.build/versions/5.1.0/bzlmod.html
+
+Usage is best illustrated with an example using the {bzlmod}[bzlmod^] dependency management system in Bazel.
+
+TIP: You are not required to use Bazel to depend on Bedrock-RTL.
+You can also use the Verilog files directly in your own projects (e.g., with git submodule, git subtree, or some other method).
 
 In your project's `MODULE.bazel`:
 
