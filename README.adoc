@@ -80,7 +80,7 @@ To use a real implementation of the script, you tell Bazel where to find it by s
 
 Using GitHub Actions, which currently just runs pre-commit checks.
 
-#TODO(mgottscho): Find a way to have CI run Bazel tests using real EDA tools.
+#TODO(mgottscho): Find a way to have CI run Bazel tests using real EDA tools.#
 
 == Style Guide
 
