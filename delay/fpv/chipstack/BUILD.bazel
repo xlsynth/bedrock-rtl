@@ -43,7 +43,6 @@ verilog_fpv_test_suite(
         ],
     },
     tool = "jg",
-    top = "br_delay_tb",
     deps = [":br_delay_monitor"],
 )
 
