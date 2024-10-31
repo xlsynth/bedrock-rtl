@@ -26,7 +26,7 @@
 
 // 2-Input AND Gate
 `define BR_GATE_AND2(__iname__, __out__, __in1__, __in2__) \
-br_gate_and2 br_gate_and2(__iname__) ( \
+br_gate_and2 br_gate_and2_``__iname__`` ( \
     .in1(__in1__), \
     .in2(__in2__), \
     .out(__out__) \
@@ -34,7 +34,7 @@ br_gate_and2 br_gate_and2(__iname__) ( \
 
 // 2-Input OR Gate
 `define BR_GATE_OR2(__iname__, __out__, __in1__, __in2__) \
-br_gate_and2 br_gate_or2(__iname__) ( \
+br_gate_or2 br_gate_or2_``__iname__`` ( \
     .in1(__in1__), \
     .in2(__in2__), \
     .out(__out__) \
