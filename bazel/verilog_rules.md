@@ -166,7 +166,9 @@ load("@bedrock-rtl//bazel:verilog.bzl", "verilog_elab_test")
 verilog_elab_test(<a href="#verilog_elab_test-tags">tags</a>, <a href="#verilog_elab_test-kwargs">kwargs</a>)
 </pre>
 
+Wraps rule_verilog_elab_test with a resource tag: 'resources:verilog_elab_test_tool_licenses:1.'
 
+Useful for having Bazel self-throttle test actions that require a finite number of elab tool licenses.
 
 **PARAMETERS**
 
@@ -187,7 +189,9 @@ load("@bedrock-rtl//bazel:verilog.bzl", "verilog_fpv_test")
 verilog_fpv_test(<a href="#verilog_fpv_test-tags">tags</a>, <a href="#verilog_fpv_test-kwargs">kwargs</a>)
 </pre>
 
+Wraps rule_verilog_fpv_test with a resource tag: 'resources:verilog_fpv_test_tool_licenses:1.'
 
+Useful for having Bazel self-throttle test actions that require a finite number of formal tool licenses.
 
 **PARAMETERS**
 
@@ -231,7 +235,9 @@ load("@bedrock-rtl//bazel:verilog.bzl", "verilog_lint_test")
 verilog_lint_test(<a href="#verilog_lint_test-tags">tags</a>, <a href="#verilog_lint_test-kwargs">kwargs</a>)
 </pre>
 
+Wraps rule_verilog_lint_test with a resource tag: 'resources:verilog_lint_test_tool_licenses:1.'
 
+Useful for having Bazel self-throttle test actions that require a finite number of lint tool licenses.
 
 **PARAMETERS**
 
@@ -252,7 +258,9 @@ load("@bedrock-rtl//bazel:verilog.bzl", "verilog_sim_test")
 verilog_sim_test(<a href="#verilog_sim_test-tags">tags</a>, <a href="#verilog_sim_test-kwargs">kwargs</a>)
 </pre>
 
+Wraps rule_verilog_sim_test with a resource tag: 'resources:verilog_sim_test_tool_licenses:1.'
 
+Useful for having Bazel self-throttle test actions that require a finite number of simulator tool licenses.
 
 **PARAMETERS**
 
