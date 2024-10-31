@@ -15,14 +15,14 @@
 // Bedrock-RTL Gate Library Behavioral Models
 //
 // This file contains behavioral models for the Bedrock-RTL gate library. This
-// file is expected to be branched for each process technology. Behavioral
+// file is expected to be branched for each vendor technology and behavioral
 // models should be replaced with vendor-specific standard cells. Only one
 // version of the gatelib should be included in the design filelist.
 
 // verilog_lint: waive-start module-filename
 
 // 2-input AND gate
-module br_gatelib__and2 (
+module br_gate_and2 (
     input  logic in1,
     input  logic in2,
     output logic out
@@ -30,10 +30,10 @@ module br_gatelib__and2 (
 
   assign out = in1 & in2;
 
-endmodule : br_gatelib__and2
+endmodule : br_gate_and2
 
 // 2-input OR gate
-module br_gatelib__or2 (
+module br_gate_or2 (
     input  logic in1,
     input  logic in2,
     output logic out
@@ -41,6 +41,6 @@ module br_gatelib__or2 (
 
   assign out = in1 | in2;
 
-endmodule : br_gatelib__or2
+endmodule : br_gate_or2
 
 // verilog_lint: waive-stop module-filename
