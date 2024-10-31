@@ -12,4 +12,58 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+load("@bazel_skylib//:bzl_library.bzl", "bzl_library")
+load("@bazel_skylib//rules:diff_test.bzl", "diff_test")
+load("@bazel_skylib//rules:write_file.bzl", "write_file")
+load("@stardoc//stardoc:stardoc.bzl", "stardoc")
+
 package(default_visibility = ["//visibility:public"])
+
+bzl_library(
+    name = "rules_hdl_providers",
+    srcs = ["@rules_hdl//verilog:providers.bzl"],
+)
+
+bzl_library(
+    name = "write_placeholder_verilog_test_py",
+    srcs = ["write_placeholder_verilog_test_py.bzl"],
+)
+
+stardoc(
+    name = "gen_verilog_rules",
+    out = "gen_verilog_rules.md",
+    input = "verilog.bzl",
+    deps = [
+        ":rules_hdl_providers",
+        ":write_placeholder_verilog_test_py",
+    ],
+)
+
+diff_test(
+    name = "verilog_rules_diff_test",
+    failure_message = """
+        Golden verilog_rules.md does not match the generated documentation.
+        Please run `bazel run //bazel:update_docs` to automatically update the golden documentation.
+    """,
+    file1 = "verilog_rules.md",
+    file2 = ":gen_verilog_rules.md",
+)
+
+write_file(
+    name = "gen_update_docs",
+    out = "update_docs.sh",
+    content = [
+        "#!/usr/bin/env bash",
+        "cd $BUILD_WORKSPACE_DIRECTORY",
+        "cp -fv bazel-bin/bazel/gen_verilog_rules.md bazel/verilog_rules.md",
+    ],
+)
+
+sh_binary(
+    name = "update_docs",
+    srcs = [":update_docs.sh"],
+    data = [
+        "verilog_rules.md",
+        ":gen_verilog_rules.md",
+    ],
+)

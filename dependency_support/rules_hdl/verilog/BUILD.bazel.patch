@@ -1,0 +1,5 @@
+--- a/verilog/BUILD.bazel
++++ b/verilog/BUILD.bazel
+@@ -19,0 +19,2 @@
++
++exports_files(["providers.bzl"])

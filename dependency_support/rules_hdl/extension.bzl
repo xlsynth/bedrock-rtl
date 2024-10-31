@@ -46,6 +46,9 @@ def _rules_hdl_extension_impl(_):
         urls = [
             "https://github.com/hdl/bazel_rules_hdl/archive/%s.tar.gz" % git_hash,
         ],
+        # Patch verilog/providers.bzl so that we can use it with stardoc
+        patch_args = ["-p1"],
+        patches = ["//dependency_support/rules_hdl:verilog/BUILD.bazel.patch"],
     )
 
 rules_hdl_extension = module_extension(implementation = _rules_hdl_extension_impl)
