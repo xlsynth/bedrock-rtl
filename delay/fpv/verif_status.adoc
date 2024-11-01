@@ -9,21 +9,24 @@
 |
 
 | br_delay_nr
-a| Manually verified using ChipStack FPV:
+a| Verified using ChipStack-generated FPV monitor:
 
 * BitWidth = 1, NumStages = 0 (default params)
-* BitWidth = 5, NumStages = 1
-* BitWidth = 5, NumStages = 2
+* BitWidth = 2, NumStages = 0
+* BitWidth = 2, NumStages = 1
+* BitWidth = 2, NumStages = 2
 
-| 2024-10-17
+| 2024-11-01
 
 | br_delay_valid
-a| Manually verified using ChipStack FPV:
+a| Verified using ChipStack-generated FPV monitor:
 
 * BitWidth = 1, NumStages = 0 (default params)
-* BitWidth = 5, NumStages = 1
-* BitWidth = 5, NumStages = 2
-| 2024-10-17
+* BitWidth = 2, NumStages = 0
+* BitWidth = 2, NumStages = 1
+* BitWidth = 2, NumStages = 2
+
+| 2024-11-01
 
 | br_delay_valid_next
 |
