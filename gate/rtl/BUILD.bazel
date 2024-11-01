@@ -23,7 +23,7 @@ verilog_library(
 )
 
 br_verilog_elab_and_lint_test_suite(
-    name = "br_gate_buf_test_suite_basic",
+    name = "br_gate_buf_test_suite",
     top = "br_gate_buf",
     deps = [
         ":br_gate_behav",
@@ -31,7 +31,7 @@ br_verilog_elab_and_lint_test_suite(
 )
 
 br_verilog_elab_and_lint_test_suite(
-    name = "br_gate_clk_buf_test_suite_basic",
+    name = "br_gate_clk_buf_test_suite",
     top = "br_gate_clk_buf",
     deps = [
         ":br_gate_behav",
@@ -39,7 +39,7 @@ br_verilog_elab_and_lint_test_suite(
 )
 
 br_verilog_elab_and_lint_test_suite(
-    name = "br_gate_inv_test_suite_basic",
+    name = "br_gate_inv_test_suite",
     top = "br_gate_inv",
     deps = [
         ":br_gate_behav",
@@ -47,7 +47,7 @@ br_verilog_elab_and_lint_test_suite(
 )
 
 br_verilog_elab_and_lint_test_suite(
-    name = "br_gate_and2_test_suite_basic",
+    name = "br_gate_and2_test_suite",
     top = "br_gate_and2",
     deps = [
         ":br_gate_behav",
@@ -71,7 +71,7 @@ br_verilog_elab_and_lint_test_suite(
 )
 
 br_verilog_elab_and_lint_test_suite(
-    name = "br_gate_mux2_test_suite_basic",
+    name = "br_gate_mux2_test_suite",
     top = "br_gate_mux2",
     deps = [
         ":br_gate_behav",
@@ -79,7 +79,7 @@ br_verilog_elab_and_lint_test_suite(
 )
 
 br_verilog_elab_and_lint_test_suite(
-    name = "br_gate_clk_mux2_test_suite_basic",
+    name = "br_gate_clk_mux2_test_suite",
     top = "br_gate_clk_mux2",
     deps = [
         ":br_gate_behav",
@@ -87,7 +87,7 @@ br_verilog_elab_and_lint_test_suite(
 )
 
 br_verilog_elab_and_lint_test_suite(
-    name = "br_gate_icg_test_suite_basic",
+    name = "br_gate_icg_test_suite",
     top = "br_gate_icg",
     deps = [
         ":br_gate_behav",

@@ -37,6 +37,12 @@ verilog_library(
 )
 
 verilog_library(
+    name = "br_gates",
+    hdrs = ["br_gates.svh"],
+    visibility = ["//visibility:public"],
+)
+
+verilog_library(
     name = "br_unused",
     hdrs = ["br_unused.svh"],
     visibility = ["//visibility:public"],
@@ -57,6 +63,7 @@ verilog_elab_test(
 verilog_lint_test(
     name = "br_unused_tb_lint_test",
     deps = [":br_unused_tb"],
+    visibility = ["//visibility:public"],
 )
 
 # Macro unit tests

@@ -59,7 +59,7 @@ module br_gate_and2 (
     output logic out
 );
 
-  assign out = in0 & in1;
+  assign out = in0 && in1;
 
 endmodule : br_gate_and2
 
@@ -70,7 +70,7 @@ module br_gate_or2 (
     output logic out
 );
 
-  assign out = in0 | in1;
+  assign out = in0 || in1;
 
 endmodule : br_gate_or2
 
