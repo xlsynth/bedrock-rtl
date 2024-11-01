@@ -13,7 +13,7 @@
 # limitations under the License.
 
 load("@rules_hdl//verilog:providers.bzl", "verilog_library")
-load("//bazel:verilog.bzl", "verilog_elab_test", "verilog_fpv_test_suite")
+load("//bazel:verilog.bzl", "verilog_elab_test", "verilog_fpv_test", "verilog_fpv_test_suite")
 
 package(default_visibility = ["//visibility:public"])
 
@@ -28,8 +28,8 @@ verilog_elab_test(
     deps = [":br_delay_nr_monitor"],
 )
 
-verilog_fpv_test_suite(
-    name = "br_delay_nr_default",
+verilog_fpv_test(
+    name = "br_delay_nr_fpv_test",
     defines = [
         "SV_ASSERT_ON",
         "BR_ENABLE_IMPL_CHECKS",
