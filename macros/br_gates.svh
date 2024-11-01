@@ -61,13 +61,39 @@ br_gate_or2 br_gate_or2_``__iname__`` ( \
     .out(__out__) \
 )
 
+// 2-Input XOR Gate
+`define BR_GATE_XOR2(__iname__, __out__, __in0__, __in1__) \
+br_gate_xor2 br_gate_xor2_``__iname__`` ( \
+    .in0(__in0__), \
+    .in1(__in1__), \
+    .out(__out__) \
+)
+
 // 2-Input Mux Gate
 `define BR_GATE_MUX2(__iname__, __out__, __in0__, __in1__, __sel__) \
+br_gate_mux2 br_gate_mux2_``__iname__`` ( \
+    .in0(__in0__), \
+    .in1(__in1__), \
+    .sel(__sel__), \
+    .out(__out__) \
+)
+
+// 2-Input Clock Mux Gate
+`define BR_GATE_CLK_MUX2(__iname__, __out__, __in0__, __in1__, __sel__) \
 br_gate_or2 br_gate_or2_``__iname__`` ( \
     .in0(__in0__), \
     .in1(__in1__), \
     .sel(__sel__), \
     .out(__out__) \
+)
+
+// Integrated Clock Gate
+`define BR_GATE_ICG(__iname__, __clk_out__, __clk_in__, __en__, __test_en__) \
+br_gate_icg br_gate_icg_``__iname__`` ( \
+    .clk_in(__clk_in__), \
+    .en(__en__), \
+    .test_en(__test_en__), \
+    .clk_out(__clk_out__) \
 )
 
 // verilog_format: on
