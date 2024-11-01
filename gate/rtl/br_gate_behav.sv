@@ -97,5 +97,40 @@ module br_gate_mux2 (
 
 endmodule : br_gate_mux2
 
+// 2-input Clock MUX gate
+// This is *not* meant to be a glitchless clock mux. This is simply a stdcell
+// mux that can be used to select between two clock sources. Some vendors may
+// include a balanced clock tree mux in their standard cell library.
+module br_gate_clk_mux2 (
+    input  logic in0,
+    input  logic in1,
+    input  logic sel,
+    output logic out
+);
+
+  assign out = sel ? in1 : in0;
+
+endmodule : br_gate_clk_mux2
+
+// Integrated Clock Gate with Test Override
+module br_gate_icg (
+    input  logic clk_in,
+    input  logic en,
+    input  logic test_en,
+    output logic clk_out
+);
+
+  logic latch_en;
+
+  always_latch begin
+    if (!clk_in) begin
+      latch_en = en;
+    end
+  end
+
+  assign clk_out = test_en ? clk_in : (clk_in & latch_en);
+
+endmodule : br_gate_icg
+
 // verilog_lint: waive-stop module-filename
 // ri lint_check_on ONE_PER_FILE FILE_NAME

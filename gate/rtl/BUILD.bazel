@@ -77,3 +77,19 @@ br_verilog_elab_and_lint_test_suite(
         ":br_gate_behav",
     ],
 )
+
+br_verilog_elab_and_lint_test_suite(
+    name = "br_gate_clk_mux2_test_suite_basic",
+    top = "br_gate_clk_mux2",
+    deps = [
+        ":br_gate_behav",
+    ],
+)
+
+br_verilog_elab_and_lint_test_suite(
+    name = "br_gate_icg_test_suite_basic",
+    top = "br_gate_icg",
+    deps = [
+        ":br_gate_behav",
+    ],
+)
