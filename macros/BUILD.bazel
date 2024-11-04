@@ -62,8 +62,8 @@ verilog_elab_test(
 
 verilog_lint_test(
     name = "br_unused_tb_lint_test",
-    deps = [":br_unused_tb"],
     visibility = ["//visibility:public"],
+    deps = [":br_unused_tb"],
 )
 
 # Macro unit tests
@@ -104,4 +104,20 @@ verilog_elab_test(
 verilog_elab_test(
     name = "br_asserts_internal_elab_noassert_test",
     deps = [":br_asserts_internal_test"],
+)
+
+verilog_library(
+    name = "br_gates_test",
+    srcs = ["br_gates_test.sv"],
+    deps = [
+        ":br_asserts",
+        ":br_gates",
+        "//gate/rtl:br_gate_behav",
+    ],
+)
+
+verilog_elab_test(
+    name = "br_gates_elab_test",
+    defines = ["SV_ASSERT_ON"],
+    deps = [":br_gates_test"],
 )
