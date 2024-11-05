@@ -37,6 +37,12 @@ verilog_library(
 )
 
 verilog_library(
+    name = "br_gates",
+    hdrs = ["br_gates.svh"],
+    visibility = ["//visibility:public"],
+)
+
+verilog_library(
     name = "br_unused",
     hdrs = ["br_unused.svh"],
     visibility = ["//visibility:public"],
@@ -56,6 +62,7 @@ verilog_elab_test(
 
 verilog_lint_test(
     name = "br_unused_tb_lint_test",
+    visibility = ["//visibility:public"],
     deps = [":br_unused_tb"],
 )
 
@@ -97,4 +104,20 @@ verilog_elab_test(
 verilog_elab_test(
     name = "br_asserts_internal_elab_noassert_test",
     deps = [":br_asserts_internal_test"],
+)
+
+verilog_library(
+    name = "br_gates_test",
+    srcs = ["br_gates_test.sv"],
+    deps = [
+        ":br_asserts",
+        ":br_gates",
+        "//gate/rtl:br_gate_behav",
+    ],
+)
+
+verilog_elab_test(
+    name = "br_gates_elab_test",
+    defines = ["SV_ASSERT_ON"],
+    deps = [":br_gates_test"],
 )
