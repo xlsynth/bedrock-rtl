@@ -30,3 +30,23 @@ br_verilog_elab_and_lint_test_suite(
     ]},
     deps = [":br_misc_unused"],
 )
+
+verilog_library(
+    name = "br_misc_tieoff",
+    srcs = ["br_misc_tieoff.sv"],
+)
+
+br_verilog_elab_and_lint_test_suite(
+    name = "br_misc_tieoff_test_suite",
+    params = {
+        "BitWidth": [
+            "1",
+            "2",
+        ],
+        "ConstantValue": [
+            "0",
+            "1",
+        ],
+    },
+    deps = [":br_misc_tieoff"],
+)
