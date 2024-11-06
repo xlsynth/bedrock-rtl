@@ -66,6 +66,32 @@ verilog_lint_test(
     deps = [":br_unused_tb"],
 )
 
+verilog_library(
+    name = "br_tieoff",
+    hdrs = ["br_tieoff.svh"],
+    visibility = ["//visibility:public"],
+    deps = [
+        "//misc/rtl:br_misc_tieoff_one",
+        "//misc/rtl:br_misc_tieoff_zero",
+    ],
+)
+
+verilog_library(
+    name = "br_tieoff_tb",
+    srcs = ["br_tieoff_tb.sv"],
+    deps = [":br_tieoff"],
+)
+
+verilog_elab_test(
+    name = "br_tieoff_tb_elab_test",
+    deps = [":br_tieoff_tb"],
+)
+
+verilog_lint_test(
+    name = "br_tieoff_tb_lint_test",
+    deps = [":br_tieoff_tb"],
+)
+
 # Macro unit tests
 # TODO(mgottscho): verilog_test simulation!
 verilog_library(
