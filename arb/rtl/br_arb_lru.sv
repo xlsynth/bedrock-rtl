@@ -21,6 +21,7 @@
 
 `include "br_asserts_internal.svh"
 `include "br_registers.svh"
+`include "br_unused.svh"
 
 module br_arb_lru #(
     // Must be at least 2
@@ -93,18 +94,13 @@ module br_arb_lru #(
         // Tie-off unused signals
         assign state_reg_next[i][j] = 1'b0;  // ri lint_check_waive CONST_ASSIGN
         assign state_reg[i][j] = 1'b0;  // ri lint_check_waive CONST_ASSIGN
-        br_misc_unused br_misc_unused_state_reg_next (.in(state_reg_next[i][j]));
-        br_misc_unused br_misc_unused_state_reg (.in(state_reg[i][j]));
+        `BR_UNUSED_NAMED(states, {state_reg_next[i][j], state_reg[i][j]})
 
         // The diagonal is unused. Tie off signals.
       end else begin : gen_diag
         // ri lint_check_waive CONST_ASSIGN
         assign {state_reg_next[i][j], state_reg[i][j], state[i][j]} = '0;
-        br_misc_unused #(
-            .BitWidth(3)
-        ) br_misc_unused (
-            .in({state_reg_next[i][j], state_reg[i][j], state[i][j]})
-        );
+        `BR_UNUSED_NAMED(states, {state_reg_next[i][j], state_reg[i][j], state[i][j]})
       end
     end
   end

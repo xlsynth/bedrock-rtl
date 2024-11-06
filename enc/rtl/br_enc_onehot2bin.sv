@@ -46,6 +46,7 @@
 // ...
 
 `include "br_asserts_internal.svh"
+`include "br_unused.svh"
 
 module br_enc_onehot2bin #(
     parameter int NumValues = 2,  // Must be at least 2
@@ -84,7 +85,7 @@ module br_enc_onehot2bin #(
     end
   end
 
-  br_misc_unused br_misc_unused (.in(in[0]));
+  `BR_UNUSED_NAMED(in0, in[0])
 
   //------------------------------------------
   // Implementation checks
