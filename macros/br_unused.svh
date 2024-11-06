@@ -15,19 +15,11 @@
 `ifndef BR_UNUSED_SVH
 `define BR_UNUSED_SVH
 
-// ri lint_check_off LINE_LENGTH
-// verilog_lint: waive-start line-length
-// verilog_format: off
-
 `define BR_UNUSED(__name__, __x__) \
 br_misc_unused #( \
     .BitWidth($bits(__x__))) \
 br_misc_unused_``__name__ ( \
     .in(__x__) \
 );
-
-// ri lint_check_on LINE_LENGTH
-// verilog_lint: waive-stop line-length
-// verilog_format: on
 
 `endif  // BR_UNUSED_SVH
