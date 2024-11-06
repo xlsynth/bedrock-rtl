@@ -42,6 +42,7 @@
 
 `include "br_asserts_internal.svh"
 `include "br_registers.svh"
+`include "br_unused.svh"
 
 module br_counter_incr #(
     parameter int MaxValue = 1,  // Must be at least 1. Inclusive.
@@ -102,11 +103,7 @@ module br_counter_incr #(
         value_temp[ValueWidth-1:0];  // ri lint_check_waive FULL_RANGE
 
     if (TempWidth > ValueWidth) begin : gen_unused
-      br_misc_unused #(
-          .BitWidth(TempWidth - ValueWidth)
-      ) br_misc_unused_value_temp_wrapped_msbs (
-          .in(value_temp_wrapped[TempWidth-1:ValueWidth])
-      );
+      `BR_UNUSED(value_temp_wrapped_msbs, value_temp_wrapped[TempWidth-1:ValueWidth])
     end
   end
 

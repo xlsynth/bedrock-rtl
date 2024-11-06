@@ -16,6 +16,7 @@
 
 `include "br_asserts_internal.svh"
 `include "br_registers.svh"
+`include "br_unused.svh"
 
 module br_fifo_pop_ctrl #(
     parameter int Depth = 2,
@@ -113,14 +114,9 @@ module br_fifo_pop_ctrl #(
     assign pop_valid = !empty;
     assign pop_data = ram_rd_data;
     assign ram_pop = pop;
-    br_misc_unused br_misc_unused_bypass_valid_unstable (.in(bypass_valid_unstable));
-    br_misc_unused #(
-        .BitWidth(BitWidth)
-    ) br_misc_unused_bypass_data_unstable (
-        .in(bypass_data_unstable)
-    );
+    `BR_UNUSED(bypass, {bypass_valid_unstable, bypass_data_unstable})
   end
-  br_misc_unused br_misc_unused_ram_rd_data_valid (.in(ram_rd_data_valid));  // implied
+  `BR_UNUSED(ram_rd_data_valid, ram_rd_data_valid)  // implied
 
   // Status flags
   assign items_next = ram_push && !ram_pop ? items + 1 : !ram_push && ram_pop ? items - 1 : items;

@@ -16,6 +16,7 @@
 
 `include "br_asserts_internal.svh"
 `include "br_registers.svh"
+`include "br_unused.svh"
 
 module br_fifo_push_ctrl_credit #(
     parameter int Depth = 2,
@@ -136,7 +137,7 @@ module br_fifo_push_ctrl_credit #(
     assign ram_push = internal_valid && !bypass_ready;
     assign ram_wr_data = internal_data;
   end else begin : gen_no_bypass
-    br_misc_unused br_misc_unused_bypass_ready (.in(bypass_ready));
+    `BR_UNUSED(bypass_ready, bypass_ready)
     assign bypass_valid_unstable = '0;  // ri lint_check_waive CONST_ASSIGN CONST_OUTPUT
     assign bypass_data_unstable = '0;  // ri lint_check_waive CONST_ASSIGN CONST_OUTPUT
 

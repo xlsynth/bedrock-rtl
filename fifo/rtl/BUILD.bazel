@@ -25,7 +25,7 @@ verilog_library(
         "//fifo/rtl/internal:br_fifo_push_ctrl",
         "//macros:br_asserts_internal",
         "//macros:br_registers",
-        "//misc/rtl:br_misc_unused",
+        "//macros:br_unused",
     ],
 )
 
@@ -37,7 +37,7 @@ verilog_library(
         "//fifo/rtl/internal:br_fifo_push_ctrl_credit",
         "//macros:br_asserts_internal",
         "//macros:br_registers",
-        "//misc/rtl:br_misc_unused",
+        "//macros:br_unused",
     ],
 )
 
