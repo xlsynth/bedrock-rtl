@@ -94,8 +94,7 @@ module br_arb_lru #(
         // Tie-off unused signals
         assign state_reg_next[i][j] = 1'b0;  // ri lint_check_waive CONST_ASSIGN
         assign state_reg[i][j] = 1'b0;  // ri lint_check_waive CONST_ASSIGN
-        `BR_UNUSED_NAMED(state_reg_next, state_reg_next[i][j])
-        `BR_UNUSED_NAMED(state_reg, state_reg[i][j])
+        `BR_UNUSED_NAMED(states, {state_reg_next[i][j], state_reg[i][j]})
 
         // The diagonal is unused. Tie off signals.
       end else begin : gen_diag
