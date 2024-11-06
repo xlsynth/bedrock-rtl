@@ -19,22 +19,6 @@
 // actual signal assignment. It's super gross but this way we can
 // leverage inline lint waivers (inside the br_misc_tieoff_* module bodies).
 
-// Use for permanent '0 tie-off where __x__ is a signal name.
-`define BR_TIEOFF_ZERO(__x__) \
-br_misc_tieoff_zero #( \
-    .BitWidth($bits(__x__)) \
-) br_misc_tieoff_zero_``__x__ ( \
-    .out(__x__) \
-);
-
-// Use for permanent '1 tie-off where __x__ is a signal name.
-`define BR_TIEOFF_ONE(__x__) \
-br_misc_tieoff_one #( \
-    .BitWidth($bits(__x__)) \
-) br_misc_tieoff_one_``__x__ ( \
-    .out(__x__) \
-);
-
 // Use for permanent '0 tie-off where __x__ is an expression.
 `define BR_TIEOFF_ZERO_NAMED(__name__, __x__) \
 br_misc_tieoff_zero #( \
@@ -50,6 +34,12 @@ br_misc_tieoff_one #( \
 ) br_misc_tieoff_one_``__name__ ( \
     .out(__x__) \
 );
+
+// Use for permanent '0 tie-off where __x__ is a signal name.
+`define BR_TIEOFF_ZERO(__x__) `BR_TIEOFF_ZERO_NAMED(__x__, __x__)
+
+// Use for permanent '1 tie-off where __x__ is a signal name.
+`define BR_TIEOFF_ONE(__x__) `BR_TIEOFF_ONE_NAMED(__x__, __x__)
 
 // Use for temporary '0 tie-off.
 // Intended to make temporary tieoffs easier to find and resolve.
