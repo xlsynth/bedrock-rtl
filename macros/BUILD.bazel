@@ -89,7 +89,6 @@ verilog_elab_test(
 
 verilog_lint_test(
     name = "br_tieoff_tb_lint_test",
-    visibility = ["//visibility:public"],
     deps = [":br_tieoff_tb"],
 )
 
