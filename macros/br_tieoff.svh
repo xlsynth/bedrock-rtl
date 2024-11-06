@@ -15,6 +15,10 @@
 `ifndef BR_TIEOFF_SVH
 `define BR_TIEOFF_SVH
 
+// We implement the tie-off macros using modules that encapsulate the
+// actual signal assignment. It's super gross but this way we can
+// leverage inline lint waivers (inside the br_misc_tieoff_* module bodies).
+
 // Use for permanent '0 tie-off where __x__ is a signal name.
 `define BR_TIEOFF_ZERO(__x__) \
 br_misc_tieoff_zero #( \
