@@ -30,7 +30,6 @@ assign __x__ = {$bits(__x__){1'b0}};
 
 `define BR_TIEOFF_ONE_TODO(__name__, __x__) \
 /* TODO(__name__): Implement logic for __x__ */ \
-/* ri lint_check_waive CONST_ASSIGN */ \
-assign __x__ = {$bits(__x__){1'b1}};
+assign __x__ = {$bits(__x__){1'b1}};  // ri lint_check_waive CONST_ASSIGN
 
 `endif  // BR_TIEOFF_SVH
