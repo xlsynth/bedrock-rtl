@@ -27,4 +27,8 @@ br_misc_unused_``__name__ ( \
 // Use this macro when __x__ is just a plain signal name.
 `define BR_UNUSED(__x__) `BR_UNUSED_NAMED(__x__, __x__)
 
+// Use for temporary unused signals.
+// Intended to make temporary unused easier to find and resolve.
+`define BR_UNUSED_TODO(__name__, __x__) `BR_UNUSED_NAMED(__name__, __x__)
+
 `endif  // BR_UNUSED_SVH
