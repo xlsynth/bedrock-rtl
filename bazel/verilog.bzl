@@ -44,7 +44,7 @@ def _write_executable_shell_script(ctx, filename, cmd):
     )
     return executable_file
 
-def _verilog_base_test_impl(ctx, subcmd, extra_args = []):
+def _verilog_base_test_impl(ctx, subcmd, extra_args = [], extra_runfiles = []):
     """Shared implementation for verilog_elab_test, verilog_lint_test, and verilog_sim_test.
 
     Grab tool from the environment (BAZEL_VERILOG_TEST_TOOL) so that
@@ -56,6 +56,7 @@ def _verilog_base_test_impl(ctx, subcmd, extra_args = []):
         ctx: ctx for the rule
         subcmd (string): the tool subcommand to run
         extra_args (list of strings, optional): tool-specific args
+        extra_runfiles (list of files, optional): tool-specific files
 
     Returns:
         DefaultInfo for the rule that describes the runfiles, depset, and executable
@@ -63,12 +64,11 @@ def _verilog_base_test_impl(ctx, subcmd, extra_args = []):
     env = ctx.configuration.default_shell_env
     if "BAZEL_VERILOG_TEST_TOOL" in env:
         wrapper_tool = env.get("BAZEL_VERILOG_TEST_TOOL")
-        extra_runfiles = []
     else:
         # buildifier: disable=print
         print("!! WARNING !! Environment variable BAZEL_VERILOG_TEST_TOOL is not set! Will use placeholder test tool.")
         wrapper_tool_file = write_placeholder_verilog_test_tool(ctx, "placeholder_verilog_test.py")
-        extra_runfiles = [wrapper_tool_file]
+        extra_runfiles.append(wrapper_tool_file)
         wrapper_tool = wrapper_tool_file.short_path
 
     srcs = get_transitive(ctx = ctx, srcs_not_hdrs = True).to_list()
@@ -107,9 +107,16 @@ def _verilog_elab_test_impl(ctx):
 
 def _verilog_lint_test_impl(ctx):
     """Implementation of the verilog_lint_test rule."""
+    extra_args = []
+    extra_runfiles = []
+    if ctx.attr.policy:
+        extra_args.append("--policy=" + ctx.attr.policy.files.to_list()[0].short_path)
+        extra_runfiles += ctx.files.policy
     return _verilog_base_test_impl(
         ctx = ctx,
         subcmd = "lint",
+        extra_args = extra_args,
+        extra_runfiles = extra_runfiles,
     )
 
 def _verilog_sim_test_impl(ctx):
@@ -174,10 +181,24 @@ rule_verilog_lint_test = rule(
     doc = "Tests that a Verilog or SystemVerilog design passes a set of static lint checks.",
     implementation = _verilog_lint_test_impl,
     attrs = {
-        "deps": attr.label_list(allow_files = False, providers = [VerilogInfo], doc = "The dependencies of the test."),
-        "defines": attr.string_list(doc = "Preprocessor defines to pass to the Verilog compiler."),
-        "params": attr.string_dict(doc = "Verilog module parameters to set in the instantiation of the top-level module."),
-        "top": attr.string(doc = "The top-level module; if not provided and there exists one dependency, then defaults to that dep's label name."),
+        "deps": attr.label_list(
+            allow_files = False,
+            providers = [VerilogInfo],
+            doc = "The dependencies of the test.",
+        ),
+        "defines": attr.string_list(
+            doc = "Preprocessor defines to pass to the Verilog compiler.",
+        ),
+        "params": attr.string_dict(
+            doc = "Verilog module parameters to set in the instantiation of the top-level module.",
+        ),
+        "top": attr.string(
+            doc = "The top-level module; if not provided and there exists one dependency, then defaults to that dep's label name.",
+        ),
+        "policy": attr.label(
+            allow_files = True,
+            doc = "The lint policy file to use. If not provided, then the default tool policy is used (typically provided through an environment variable).",
+        ),
     },
     test = True,
 )
