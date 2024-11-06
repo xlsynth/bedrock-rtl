@@ -15,21 +15,44 @@
 `ifndef BR_TIEOFF_SVH
 `define BR_TIEOFF_SVH
 
+// Use for permanent '0 tie-off where __x__ is a signal name.
 `define BR_TIEOFF_ZERO(__x__) \
-/* ri lint_check_waive CONST_ASSIGN */ \
-assign __x__ = {$bits(__x__){1'b0}};
+br_misc_tieoff_zero #( \
+    .BitWidth($bits(__x__)) \
+) br_misc_tieoff_zero_``__x__ ( \
+    .out(__x__) \
+);
 
+// Use for permanent '1 tie-off where __x__ is a signal name.
 `define BR_TIEOFF_ONE(__x__) \
-/* ri lint_check_waive CONST_ASSIGN */ \
-assign __x__ = {$bits(__x__){1'b1}};
+br_misc_tieoff_one #( \
+    .BitWidth($bits(__x__)) \
+) br_misc_tieoff_one_``__x__ ( \
+    .out(__x__) \
+);
 
-`define BR_TIEOFF_ZERO_TODO(__name__, __x__) \
-/* TODO(__name__): Implement logic for __x__ */ \
-/* ri lint_check_waive CONST_ASSIGN */ \
-assign __x__ = {$bits(__x__){1'b0}};
+// Use for permanent '0 tie-off where __x__ is an expression.
+`define BR_TIEOFF_ZERO_NAMED(__name__, __x__) \
+br_misc_tieoff_zero #( \
+    .BitWidth($bits(__x__)) \
+) br_misc_tieoff_zero_``__name__ ( \
+    .out(__x__) \
+);
 
-`define BR_TIEOFF_ONE_TODO(__name__, __x__) \
-/* TODO(__name__): Implement logic for __x__ */ \
-assign __x__ = {$bits(__x__){1'b1}};  // ri lint_check_waive CONST_ASSIGN
+// Use for permanent '1 tie-off where __x__ is an expression.
+`define BR_TIEOFF_ONE_NAMED(__name__, __x__) \
+br_misc_tieoff_one #( \
+    .BitWidth($bits(__x__)) \
+) br_misc_tieoff_one_``__name__ ( \
+    .out(__x__) \
+);
+
+// Use for temporary '0 tie-off.
+// Intended to make temporary tieoffs easier to find and resolve.
+`define BR_TIEOFF_ZERO_TODO(__name__, __x__) `BR_TIEOFF_ZERO_NAMED(__name__, __x__)
+
+// Use for temporary '1 tie-off.
+// Intended to make temporary tieoffs easier to find and resolve.
+`define BR_TIEOFF_ONE_TODO(__name__, __x__) `BR_TIEOFF_ONE_NAMED(__name__, __x__)
 
 `endif  // BR_TIEOFF_SVH

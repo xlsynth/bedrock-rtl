@@ -12,23 +12,25 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Bedrock-RTL Signal Tie-off Driver
+// Bedrock-RTL Signal Tie-off-to-One Driver
 //
-// Drives a constant signal and waives the corresponding lint errors internally.
+// Drives a signal to constant 1s and waives the corresponding lint errors internally.
 // It is expected that downstream logic will be automatically constant-propagated by the
 // synthesis tool.
 //
 // To automatically instantiate this at the bitwidth of local logic,
 // users can opt to use the convenience macros defined in macros/br_tieoff.svh.
+//
+// We have separate modules for tie-to-zero and tie-to-one because
+// lint tools may complain about multiple parameters per line when wrapped up in a macro.
 
-module br_misc_tieoff #(
-    parameter int BitWidth = 1,  // Must be at least 1
-    parameter logic [BitWidth-1:0] ConstantValue = '0
+module br_misc_tieoff_one #(
+    parameter int BitWidth = 1  // Must be at least 1
 ) (
     output logic [BitWidth-1:0] out
 );
 
   // ri lint_check_waive CONST_ASSIGN CONST_OUTPUT
-  assign out = ConstantValue;
+  assign out = {BitWidth{1'b1}};
 
-endmodule : br_misc_tieoff
+endmodule : br_misc_tieoff_one
