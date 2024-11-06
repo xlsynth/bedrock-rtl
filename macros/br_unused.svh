@@ -15,7 +15,17 @@
 `ifndef BR_UNUSED_SVH
 `define BR_UNUSED_SVH
 
-`define BR_UNUSED(__name__, __x__) \
+// Use this macro when __x__ is just a plain signal name.
+`define BR_UNUSED(__x__) \
+br_misc_unused #( \
+    .BitWidth($bits(__x__))) \
+br_misc_unused_``__x__ ( \
+    .in(__x__) \
+);
+
+// Use this macro when a custom instance name suffix is required or desired.
+// For example, use when __x__ is a complex expression (e.g., concatenation like {foo, bar}).
+`define BR_UNUSED_NAMED(__name__, __x__) \
 br_misc_unused #( \
     .BitWidth($bits(__x__))) \
 br_misc_unused_``__name__ ( \

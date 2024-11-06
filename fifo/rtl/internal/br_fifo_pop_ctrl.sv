@@ -114,9 +114,10 @@ module br_fifo_pop_ctrl #(
     assign pop_valid = !empty;
     assign pop_data = ram_rd_data;
     assign ram_pop = pop;
-    `BR_UNUSED(bypass, {bypass_valid_unstable, bypass_data_unstable})
+    `BR_UNUSED(bypass_valid_unstable)
+    `BR_UNUSED(bypass_data_unstable)
   end
-  `BR_UNUSED(ram_rd_data_valid, ram_rd_data_valid)  // implied
+  `BR_UNUSED(ram_rd_data_valid)  // implied
 
   // Status flags
   assign items_next = ram_push && !ram_pop ? items + 1 : !ram_push && ram_pop ? items - 1 : items;

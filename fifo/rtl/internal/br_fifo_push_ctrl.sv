@@ -109,7 +109,7 @@ module br_fifo_push_ctrl #(
     assign ram_push = push && !bypass_ready;
     assign ram_wr_data = push_data;
   end else begin : gen_no_bypass
-    `BR_UNUSED(bypass_ready, bypass_ready)
+    `BR_UNUSED(bypass_ready)
     assign bypass_valid_unstable = '0;  // ri lint_check_waive CONST_ASSIGN CONST_OUTPUT
     assign bypass_data_unstable = '0;  // ri lint_check_waive CONST_ASSIGN CONST_OUTPUT
 

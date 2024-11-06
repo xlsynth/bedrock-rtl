@@ -85,7 +85,7 @@ module br_enc_onehot2bin #(
     end
   end
 
-  `BR_UNUSED(in0, in[0])
+  `BR_UNUSED_NAMED(in0, in[0])
 
   //------------------------------------------
   // Implementation checks

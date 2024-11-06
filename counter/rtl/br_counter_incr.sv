@@ -103,7 +103,7 @@ module br_counter_incr #(
         value_temp[ValueWidth-1:0];  // ri lint_check_waive FULL_RANGE
 
     if (TempWidth > ValueWidth) begin : gen_unused
-      `BR_UNUSED(value_temp_wrapped_msbs, value_temp_wrapped[TempWidth-1:ValueWidth])
+      `BR_UNUSED_NAMED(value_temp_wrapped_msbs, value_temp_wrapped[TempWidth-1:ValueWidth])
     end
   end
 

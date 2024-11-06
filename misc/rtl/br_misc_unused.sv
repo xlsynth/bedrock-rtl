@@ -18,9 +18,9 @@
 // It is expected that this logic will be automatically removed by the
 // synthesis tool.
 //
-// To automatically instantiate this at the bitwidth of local logic, by name,
-// users can opt to use the `BR_UNUSED(my_name) convenience macro defined in
-// macros/br_unused.svh.
+// To automatically instantiate this at the bitwidth of local logic,
+// users can opt to use the `BR_UNUSED(signal) or `BR_UNUSED_NAMED(name, expression)
+// convenience macros defined in macros/br_unused.svh.
 
 // ri lint_check_waive EMPTY_MOD NO_OUTPUT
 module br_misc_unused #(

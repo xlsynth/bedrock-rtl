@@ -18,8 +18,10 @@
 
 module br_unused_tb ();  // ri lint_check_waive NO_OUTPUT
 
-  wire foo = 1'b0;  // ri lint_check_waive CONST_ASSIGN
+  wire [1:0] foo = 2'b01;  // ri lint_check_waive CONST_ASSIGN
+  wire bar = foo[0];  // ri lint_check_waive CONST_ASSIGN
 
-  `BR_UNUSED(foo)
+  `BR_UNUSED(bar)
+  `BR_UNUSED_NAMED(foo1, foo[1])
 
 endmodule : br_unused_tb
