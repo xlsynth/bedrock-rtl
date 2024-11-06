@@ -165,6 +165,13 @@ def add_common_args(parser: argparse.ArgumentParser) -> None:
         help="One or more Verilog (.h) or SystemVerilog (.sv) source files",
     )
 
+def add_lint_args(parser: argparse.ArgumentParser) -> None:
+    parser.add_argument(
+        "--policy",
+        type=str,
+        help="Lint policy to use. If not provided, lint tool will use a default (may depend on tool-specific environment variables)."
+        required=False,
+    )
 
 def add_sim_fpv_args(parser: argparse.ArgumentParser) -> None:
     parser.add_argument(
@@ -229,6 +236,7 @@ def main():
     lint_subparser = subparsers.add_parser(
         "lint", parents=[parent_parser], help="Lint a Verilog/SystemVerilog design"
     )
+    add_lint_args(lint_subparser)
     sim_subparser = subparsers.add_parser(
         "sim", parents=[parent_parser], help="Simulate a Verilog/SystemVerilog design"
     )
