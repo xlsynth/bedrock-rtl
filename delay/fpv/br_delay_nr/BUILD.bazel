@@ -34,7 +34,6 @@ verilog_fpv_test(
         "SV_ASSERT_ON",
         "BR_ENABLE_IMPL_CHECKS",
     ],
-    tool = "jg",
     top = "br_delay_nr",
     deps = [":br_delay_nr_monitor"],
 )
@@ -53,7 +52,6 @@ verilog_fpv_test_suite(
             "2",
         ],
     },
-    tool = "jg",
     top = "br_delay_nr",
     deps = [":br_delay_nr_monitor"],
 )

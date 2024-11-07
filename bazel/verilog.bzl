@@ -83,8 +83,10 @@ def _verilog_base_test_impl(ctx, subcmd, extra_args = [], extra_runfiles = []):
     args = (["--hdr=" + hdr for hdr in hdr_files] +
             ["--define=" + define for define in ctx.attr.defines] +
             ["--top=" + top] +
-            ["--param=" + key + "=" + value for key, value in ctx.attr.params.items()] +
-            extra_args)
+            ["--param=" + key + "=" + value for key, value in ctx.attr.params.items()])
+    if ctx.attr.tool:
+        args.append("--tool='" + ctx.attr.tool + "'")
+    args += extra_args
     cmd = " ".join([wrapper_tool] + [subcmd] + args + src_files)
     runfiles = ctx.runfiles(files = srcs + hdrs + extra_runfiles)
     executable_file = _write_executable_shell_script(
@@ -126,10 +128,12 @@ def _verilog_sim_test_impl(ctx):
         extra_args.append("--elab_only")
     if ctx.attr.uvm:
         extra_args.append("--uvm")
-    extra_args.append("--tool='" + ctx.attr.tool + "'")
     extra_args.append("--seed='" + str(ctx.attr.seed) + "'")
     if ctx.attr.waves:
         extra_args.append("--waves")
+    if len(ctx.attr.opts) > 0 and ctx.attr.tool == "":
+        fail("If opts are provided, then tool must also be set.")
+
     for opt in ctx.attr.opts:
         extra_args.append("--opt='" + opt + "'")
 
@@ -144,7 +148,8 @@ def _verilog_fpv_test_impl(ctx):
     extra_args = []
     if ctx.attr.elab_only:
         extra_args.append("--elab_only")
-    extra_args.append("--tool='" + ctx.attr.tool + "'")
+    if len(ctx.attr.opts) > 0 and ctx.attr.tool == "":
+        fail("If opts are provided, then tool must also be set.")
     for opt in ctx.attr.opts:
         extra_args.append("--opt='" + opt + "'")
 
@@ -163,6 +168,7 @@ rule_verilog_elab_test = rule(
         "defines": attr.string_list(doc = "Preprocessor defines to pass to the Verilog compiler."),
         "params": attr.string_dict(doc = "Verilog module parameters to set in the instantiation of the top-level module."),
         "top": attr.string(doc = "The top-level module; if not provided and there exists one dependency, then defaults to that dep's label name."),
+        "tool": attr.string(doc = "Elaboration tool to use. If not provided, default is decided by the BAZEL_VERILOG_RUNNER_TOOL implementation."),
     },
     test = True,
 )
@@ -202,6 +208,7 @@ rule_verilog_lint_test = rule(
             allow_files = True,
             doc = "The lint policy file to use. If not provided, then the default tool policy is used (typically provided through an environment variable).",
         ),
+        "tool": attr.string(doc = "Lint tool to use. If not provided, default is decided by the BAZEL_VERILOG_RUNNER_TOOL implementation."),
     },
     test = True,
 )
@@ -240,7 +247,7 @@ rule_verilog_sim_test = rule(
             doc = "The top-level module; if not provided and there exists one dependency, then defaults to that dep's label name.",
         ),
         "opts": attr.string_list(
-            doc = "Tool-specific options not covered by other arguments.",
+            doc = "Tool-specific options not covered by other arguments. If provided, then 'tool' must also be set.",
         ),
         "elab_only": attr.bool(
             doc = "Only run elaboration.",
@@ -251,8 +258,7 @@ rule_verilog_sim_test = rule(
             default = False,
         ),
         "tool": attr.string(
-            mandatory = True,
-            doc = "Simulator tool to use.",
+            doc = "Simulator tool to use. If not provided, default is decided by the BAZEL_VERILOG_RUNNER_TOOL implementation.",
         ),
         "seed": attr.int(
             doc = "Random seed to use in simulation.",
@@ -300,15 +306,14 @@ rule_verilog_fpv_test = rule(
             doc = "The top-level module; if not provided and there exists one dependency, then defaults to that dep's label name.",
         ),
         "opts": attr.string_list(
-            doc = "Tool-specific options not covered by other arguments.",
+            doc = "Tool-specific options not covered by other arguments. If provided, then 'tool' must also be set.",
         ),
         "elab_only": attr.bool(
             doc = "Only run elaboration.",
             default = False,
         ),
         "tool": attr.string(
-            mandatory = True,
-            doc = "Formal tool to use.",
+            doc = "Formal tool to use. If not provided, default is decided by the BAZEL_VERILOG_RUNNER_TOOL implementation.",
         ),
     },
     test = True,
