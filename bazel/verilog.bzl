@@ -173,7 +173,10 @@ def verilog_elab_test(tags = [], **kwargs):
     Useful for having Bazel self-throttle test actions that require a finite number of elab tool licenses.
     """
     rule_verilog_elab_test(
-        tags = tags + ["resources:verilog_elab_test_tool_licenses:1"],
+        tags = tags + [
+            "no-sandbox",  # Preserves miscellaneous undeclared EDA tool outputs for debugging
+            "resources:verilog_elab_test_tool_licenses:1",
+        ],
         **kwargs
     )
 
@@ -209,7 +212,10 @@ def verilog_lint_test(tags = [], **kwargs):
     Useful for having Bazel self-throttle test actions that require a finite number of lint tool licenses.
     """
     rule_verilog_lint_test(
-        tags = tags + ["resources:verilog_lint_test_tool_licenses:1"],
+        tags = tags + [
+            "no-sandbox",  # Preserves miscellaneous undeclared EDA tool outputs for debugging
+            "resources:verilog_lint_test_tool_licenses:1",
+        ],
         **kwargs
     )
 
@@ -266,7 +272,10 @@ def verilog_sim_test(tags = [], **kwargs):
     Useful for having Bazel self-throttle test actions that require a finite number of simulator tool licenses.
     """
     rule_verilog_sim_test(
-        tags = tags + ["resources:verilog_sim_test_tool_licenses:1"],
+        tags = tags + [
+            "no-sandbox",  # Preserves miscellaneous undeclared EDA tool outputs for debugging
+            "resources:verilog_sim_test_tool_licenses:1",
+        ],
         **kwargs
     )
 
@@ -311,7 +320,10 @@ def verilog_fpv_test(tags = [], **kwargs):
     Useful for having Bazel self-throttle test actions that require a finite number of formal tool licenses.
     """
     rule_verilog_fpv_test(
-        tags = tags + ["resources:verilog_fpv_test_tool_licenses:1"],
+        tags = tags + [
+            "no-sandbox",  # Preserves miscellaneous undeclared EDA tool outputs for debugging
+            "resources:verilog_fpv_test_tool_licenses:1",
+        ],
         **kwargs
     )
 
