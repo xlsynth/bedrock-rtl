@@ -70,9 +70,7 @@ module br_credit_receiver #(
     // Dynamically withhold credits from circulation
     input  logic [CounterWidth-1:0] credit_withhold,
     // Credit counter state before increment/decrement/withhold.
-    output logic [CounterWidth-1:0] credit_count,
-    // Dynamic amount of available credit.
-    output logic [CounterWidth-1:0] credit_available
+    output logic [CounterWidth-1:0] credit_count
 );
 
   //------------------------------------------
@@ -88,6 +86,9 @@ module br_credit_receiver #(
   //------------------------------------------
   // Implementation
   //------------------------------------------
+  logic credit_decr_valid;
+  logic credit_decr_ready;
+
   br_credit_counter #(
       .MaxValue (MaxCredit),
       .MaxChange(1)
@@ -96,15 +97,16 @@ module br_credit_receiver #(
       .rst,
       .incr_valid(pop_credit),
       .incr(1'b1),
-      .decr_valid(push_credit),
+      .decr_ready(credit_decr_ready),
+      .decr_valid(credit_decr_valid),
       .decr(1'b1),
       .initial_value(credit_initial),
       .withhold(credit_withhold),
-      .value(credit_count),
-      .available(credit_available)
+      .value(credit_count)
   );
 
-  assign push_credit = !push_credit_stall && (credit_available > 0);
+  assign credit_decr_valid = !push_credit_stall;
+  assign push_credit = credit_decr_valid && credit_decr_ready;
   assign pop_valid = push_valid;
   assign pop_data = push_data;
 
