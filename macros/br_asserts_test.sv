@@ -81,6 +81,11 @@ module br_asserts_test;
   // Use BR_ASSERT
   `BR_ASSERT(sum_range_check_a, sum <= 15)
 
+  // Use BR_ASSUME
+  // Not really useful (redundant with assert above) but it
+  // should work like an assert when not being used in formal
+  `BR_ASSUME(sum_range_check_m, sum <= 15)
+
   // Use BR_ASSERT_CR
   logic custom_clk;
   logic custom_rst;
@@ -91,6 +96,9 @@ module br_asserts_test;
     #15 custom_rst = 0;
   end
   `BR_ASSERT_CR(valid_data_check_a, (valid == 1) |-> (sum == a + b), custom_clk, custom_rst)
+  // Not really useful (redundant with assert above) but it
+  // should work like an assert when not being used in formal
+  `BR_ASSUME_CR(valid_data_check_m, (valid == 1) |-> (sum == a + b), custom_clk, custom_rst)
 
   // Use BR_ASSERT_COMB
   `BR_ASSERT_COMB(inputs_nonzero_a, (a != 0) || (b != 0))
