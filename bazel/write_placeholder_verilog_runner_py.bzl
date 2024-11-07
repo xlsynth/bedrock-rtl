@@ -14,7 +14,7 @@
 
 """Placeholder tool code generation for Verilog/SystemVerilog lint and elaboration tests."""
 
-_PLACEHOLDER_VERILOG_TEST_TOOL_CONTENT = '''#!/usr/bin/env python3.12
+_PLACEHOLDER_VERILOG_RUNNER_TOOL_CONTENT = '''#!/usr/bin/env python3.12
 
 # # Copyright 2024 The Bedrock-RTL Authors
 #
@@ -30,7 +30,7 @@ _PLACEHOLDER_VERILOG_TEST_TOOL_CONTENT = '''#!/usr/bin/env python3.12
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""Auto-generated code: placeholder Python implementation of the verilog_test tool API."""
+"""Auto-generated code: placeholder Python implementation of the verilog_runner tool API."""
 
 import argparse
 from typing import Dict, List, Optional, Tuple
@@ -258,7 +258,7 @@ def main():
 
     success = False
     def print_not_implemented(subcmd: str) -> None:
-        print(f"{THIS_FILE}: NOT IMPLEMENTED: subcommand {subcmd}. Set --action_env=BAZEL_VERILOG_TEST_TOOL to point to a fully implemented (non-placeholder) version of this file.")
+        print(f"{THIS_FILE}: NOT IMPLEMENTED: subcommand {subcmd}. Set --action_env=BAZEL_VERILOG_RUNNER_TOOL to point to a fully implemented (non-placeholder) version of this file.")
         print(f"{FAIL_ART}")
         print("FAIL")
 
@@ -284,12 +284,12 @@ if __name__ == "__main__":
     main()
 '''
 
-def write_placeholder_verilog_test_tool(ctx, filename):
-    """Writes a placeholder Python implementation of the verilog_test tool API."""
+def write_placeholder_verilog_runner_tool(ctx, filename):
+    """Writes a placeholder Python implementation of the verilog_runner tool API."""
     file = ctx.actions.declare_file(filename)
     ctx.actions.write(
         output = file,
-        content = _PLACEHOLDER_VERILOG_TEST_TOOL_CONTENT,
+        content = _PLACEHOLDER_VERILOG_RUNNER_TOOL_CONTENT,
         is_executable = True,
     )
     return file

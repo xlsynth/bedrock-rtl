@@ -15,7 +15,7 @@
 """Verilog rules for Bazel."""
 
 load("@rules_hdl//verilog:providers.bzl", "VerilogInfo")
-load("//bazel:write_placeholder_verilog_test_py.bzl", "write_placeholder_verilog_test_tool")
+load("//bazel:write_placeholder_verilog_runner_py.bzl", "write_placeholder_verilog_runner_tool")
 
 def get_transitive(ctx, srcs_not_hdrs):
     """Returns a depset of all Verilog source or header files in the transitive closure of the deps attribute."""
@@ -45,9 +45,9 @@ def _write_executable_shell_script(ctx, filename, cmd):
     return executable_file
 
 def _verilog_base_test_impl(ctx, subcmd, extra_args = [], extra_runfiles = []):
-    """Shared implementation for verilog_elab_test, verilog_lint_test, and verilog_sim_test.
+    """Shared implementation for rule_verilog_elab_test, rule_verilog_lint_test, rule_verilog_sim_test, and rule_verilog_fpv_test.
 
-    Grab tool from the environment (BAZEL_VERILOG_TEST_TOOL) so that
+    Grab tool from the environment (BAZEL_VERILOG_RUNNER_TOOL) so that
     the user can provide their own proprietary tool implementation without
     it being hardcoded anywhere into the repo. It's not hermetic, but it's
     a decent compromise.
@@ -62,12 +62,12 @@ def _verilog_base_test_impl(ctx, subcmd, extra_args = [], extra_runfiles = []):
         DefaultInfo for the rule that describes the runfiles, depset, and executable
     """
     env = ctx.configuration.default_shell_env
-    if "BAZEL_VERILOG_TEST_TOOL" in env:
-        wrapper_tool = env.get("BAZEL_VERILOG_TEST_TOOL")
+    if "BAZEL_VERILOG_RUNNER_TOOL" in env:
+        wrapper_tool = env.get("BAZEL_VERILOG_RUNNER_TOOL")
     else:
         # buildifier: disable=print
-        print("!! WARNING !! Environment variable BAZEL_VERILOG_TEST_TOOL is not set! Will use placeholder test tool.")
-        wrapper_tool_file = write_placeholder_verilog_test_tool(ctx, "placeholder_verilog_test.py")
+        print("!! WARNING !! Environment variable BAZEL_VERILOG_RUNNER_TOOL is not set! Will use placeholder test tool.")
+        wrapper_tool_file = write_placeholder_verilog_runner_tool(ctx, "placeholder_verilog_runner.py")
         extra_runfiles.append(wrapper_tool_file)
         wrapper_tool = wrapper_tool_file.short_path
 
@@ -156,7 +156,7 @@ def _verilog_fpv_test_impl(ctx):
 
 # Rule definitions
 rule_verilog_elab_test = rule(
-    doc = "Tests that a Verilog or SystemVerilog design elaborates.",
+    doc = "Tests that a Verilog or SystemVerilog design elaborates. Needs BAZEL_VERILOG_RUNNER_TOOL environment variable to be set correctly.",
     implementation = _verilog_elab_test_impl,
     attrs = {
         "deps": attr.label_list(allow_files = False, providers = [VerilogInfo], doc = "The dependencies of the test."),
@@ -181,7 +181,7 @@ def verilog_elab_test(tags = [], **kwargs):
     )
 
 rule_verilog_lint_test = rule(
-    doc = "Tests that a Verilog or SystemVerilog design passes a set of static lint checks.",
+    doc = "Tests that a Verilog or SystemVerilog design passes a set of static lint checks. Needs BAZEL_VERILOG_RUNNER_TOOL environment variable to be set correctly.",
     implementation = _verilog_lint_test_impl,
     attrs = {
         "deps": attr.label_list(
@@ -221,7 +221,7 @@ def verilog_lint_test(tags = [], **kwargs):
 
 rule_verilog_sim_test = rule(
     doc = """
-    Runs Verilog/SystemVerilog compilation and simulation in one command. This rule should be used for simple unit tests that do not require multi-step compilation, elaboration, and simulation.
+    Runs Verilog/SystemVerilog compilation and simulation in one command. This rule should be used for simple unit tests that do not require multi-step compilation, elaboration, and simulation. Needs BAZEL_VERILOG_RUNNER_TOOL environment variable to be set correctly.
     """,
     implementation = _verilog_sim_test_impl,
     attrs = {
@@ -281,7 +281,7 @@ def verilog_sim_test(tags = [], **kwargs):
 
 rule_verilog_fpv_test = rule(
     doc = """
-    Runs Verilog/SystemVerilog compilation and formal verification in one command. This rule should be used for simple formal unit tests.
+    Runs Verilog/SystemVerilog compilation and formal verification in one command. This rule should be used for simple formal unit tests. Needs BAZEL_VERILOG_RUNNER_TOOL environment variable to be set correctly.
     """,
     implementation = _verilog_fpv_test_impl,
     attrs = {

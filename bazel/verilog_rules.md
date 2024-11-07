@@ -12,7 +12,7 @@ load("@bedrock-rtl//bazel:verilog.bzl", "rule_verilog_elab_test")
 rule_verilog_elab_test(<a href="#rule_verilog_elab_test-name">name</a>, <a href="#rule_verilog_elab_test-deps">deps</a>, <a href="#rule_verilog_elab_test-defines">defines</a>, <a href="#rule_verilog_elab_test-params">params</a>, <a href="#rule_verilog_elab_test-top">top</a>)
 </pre>
 
-Tests that a Verilog or SystemVerilog design elaborates.
+Tests that a Verilog or SystemVerilog design elaborates. Needs BAZEL_VERILOG_RUNNER_TOOL environment variable to be set correctly.
 
 **ATTRIBUTES**
 
@@ -36,7 +36,7 @@ load("@bedrock-rtl//bazel:verilog.bzl", "rule_verilog_fpv_test")
 rule_verilog_fpv_test(<a href="#rule_verilog_fpv_test-name">name</a>, <a href="#rule_verilog_fpv_test-deps">deps</a>, <a href="#rule_verilog_fpv_test-defines">defines</a>, <a href="#rule_verilog_fpv_test-elab_only">elab_only</a>, <a href="#rule_verilog_fpv_test-opts">opts</a>, <a href="#rule_verilog_fpv_test-params">params</a>, <a href="#rule_verilog_fpv_test-tool">tool</a>, <a href="#rule_verilog_fpv_test-top">top</a>)
 </pre>
 
-Runs Verilog/SystemVerilog compilation and formal verification in one command. This rule should be used for simple formal unit tests.
+Runs Verilog/SystemVerilog compilation and formal verification in one command. This rule should be used for simple formal unit tests. Needs BAZEL_VERILOG_RUNNER_TOOL environment variable to be set correctly.
 
 **ATTRIBUTES**
 
@@ -63,7 +63,7 @@ load("@bedrock-rtl//bazel:verilog.bzl", "rule_verilog_lint_test")
 rule_verilog_lint_test(<a href="#rule_verilog_lint_test-name">name</a>, <a href="#rule_verilog_lint_test-deps">deps</a>, <a href="#rule_verilog_lint_test-defines">defines</a>, <a href="#rule_verilog_lint_test-params">params</a>, <a href="#rule_verilog_lint_test-policy">policy</a>, <a href="#rule_verilog_lint_test-top">top</a>)
 </pre>
 
-Tests that a Verilog or SystemVerilog design passes a set of static lint checks.
+Tests that a Verilog or SystemVerilog design passes a set of static lint checks. Needs BAZEL_VERILOG_RUNNER_TOOL environment variable to be set correctly.
 
 **ATTRIBUTES**
 
@@ -88,7 +88,7 @@ load("@bedrock-rtl//bazel:verilog.bzl", "rule_verilog_sim_test")
 rule_verilog_sim_test(<a href="#rule_verilog_sim_test-name">name</a>, <a href="#rule_verilog_sim_test-deps">deps</a>, <a href="#rule_verilog_sim_test-defines">defines</a>, <a href="#rule_verilog_sim_test-elab_only">elab_only</a>, <a href="#rule_verilog_sim_test-opts">opts</a>, <a href="#rule_verilog_sim_test-params">params</a>, <a href="#rule_verilog_sim_test-seed">seed</a>, <a href="#rule_verilog_sim_test-tool">tool</a>, <a href="#rule_verilog_sim_test-top">top</a>, <a href="#rule_verilog_sim_test-uvm">uvm</a>, <a href="#rule_verilog_sim_test-waves">waves</a>)
 </pre>
 
-Runs Verilog/SystemVerilog compilation and simulation in one command. This rule should be used for simple unit tests that do not require multi-step compilation, elaboration, and simulation.
+Runs Verilog/SystemVerilog compilation and simulation in one command. This rule should be used for simple unit tests that do not require multi-step compilation, elaboration, and simulation. Needs BAZEL_VERILOG_RUNNER_TOOL environment variable to be set correctly.
 
 **ATTRIBUTES**
 
@@ -154,7 +154,7 @@ to the base name followed by the parameter key-values.
 | <a id="verilog_elab_and_lint_test_suite-name"></a>name |  The base name for the test suite.   |  none |
 | <a id="verilog_elab_and_lint_test_suite-defines"></a>defines |  A list of defines.   |  `[]` |
 | <a id="verilog_elab_and_lint_test_suite-params"></a>params |  A dictionary where keys are parameter names and values are lists of possible values for those parameters.   |  `{}` |
-| <a id="verilog_elab_and_lint_test_suite-kwargs"></a>kwargs |  Additional keyword arguments to be passed to the verilog_elab_test and verilog_lint_test functions.   |  none |
+| <a id="verilog_elab_and_lint_test_suite-kwargs"></a>kwargs |  Additional common keyword arguments to be passed to the verilog_elab_test and verilog_lint_test functions.   |  none |
 
 
 <a id="verilog_elab_test"></a>
