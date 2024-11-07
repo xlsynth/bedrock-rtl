@@ -15,7 +15,7 @@
 """Verilog rules for Bazel."""
 
 load("@rules_hdl//verilog:providers.bzl", "VerilogInfo")
-load("//bazel:write_placeholder_verilog_test_py.bzl", "write_placeholder_verilog_test_tool")
+load("//bazel:write_placeholder_verilog_runner_py.bzl", "write_placeholder_verilog_runner_tool")
 
 def get_transitive(ctx, srcs_not_hdrs):
     """Returns a depset of all Verilog source or header files in the transitive closure of the deps attribute."""
@@ -47,7 +47,7 @@ def _write_executable_shell_script(ctx, filename, cmd):
 def _verilog_base_test_impl(ctx, subcmd, extra_args = [], extra_runfiles = []):
     """Shared implementation for verilog_elab_test, verilog_lint_test, and verilog_sim_test.
 
-    Grab tool from the environment (BAZEL_VERILOG_TEST_TOOL) so that
+    Grab tool from the environment (BAZEL_VERILOG_RUNNER_TOOL) so that
     the user can provide their own proprietary tool implementation without
     it being hardcoded anywhere into the repo. It's not hermetic, but it's
     a decent compromise.
@@ -62,12 +62,12 @@ def _verilog_base_test_impl(ctx, subcmd, extra_args = [], extra_runfiles = []):
         DefaultInfo for the rule that describes the runfiles, depset, and executable
     """
     env = ctx.configuration.default_shell_env
-    if "BAZEL_VERILOG_TEST_TOOL" in env:
-        wrapper_tool = env.get("BAZEL_VERILOG_TEST_TOOL")
+    if "BAZEL_VERILOG_RUNNER_TOOL" in env:
+        wrapper_tool = env.get("BAZEL_VERILOG_RUNNER_TOOL")
     else:
         # buildifier: disable=print
-        print("!! WARNING !! Environment variable BAZEL_VERILOG_TEST_TOOL is not set! Will use placeholder test tool.")
-        wrapper_tool_file = write_placeholder_verilog_test_tool(ctx, "placeholder_verilog_test.py")
+        print("!! WARNING !! Environment variable BAZEL_VERILOG_RUNNER_TOOL is not set! Will use placeholder test tool.")
+        wrapper_tool_file = write_placeholder_verilog_runner_tool(ctx, "placeholder_verilog_runner.py")
         extra_runfiles.append(wrapper_tool_file)
         wrapper_tool = wrapper_tool_file.short_path
 
