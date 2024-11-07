@@ -341,7 +341,7 @@ def verilog_elab_and_lint_test_suite(name, defines = [], params = {}, **kwargs):
         name (str): The base name for the test suite.
         defines (list): A list of defines.
         params (dict): A dictionary where keys are parameter names and values are lists of possible values for those parameters.
-        **kwargs: Additional keyword arguments to be passed to the verilog_elab_test and verilog_lint_test functions.
+        **kwargs: Additional common keyword arguments to be passed to the verilog_elab_test and verilog_lint_test functions.
     """
     param_keys = sorted(params.keys())
     param_values_list = [params[key] for key in param_keys]
