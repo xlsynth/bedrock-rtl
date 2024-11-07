@@ -49,7 +49,7 @@ typedef enum logic [1:0] { \
 } __static_assert_enum__``__name__;
 
 ////////////////////////////////////////////////////////////////////////////////
-// Concurrent assertion macros (evaluated on posedge of a clock and disabled during a reset)
+// Concurrent assertion macros (evaluated on posedge of a clock and disabled during a synchronous active-high reset)
 ////////////////////////////////////////////////////////////////////////////////
 
 // Clock: 'clk'
@@ -85,7 +85,7 @@ end
 `endif  // SV_ASSERT_ON
 
 ////////////////////////////////////////////////////////////////////////////////
-// Concurrent cover macros (evaluated on posedge of a clock and disabled during a reset)
+// Concurrent cover macros (evaluated on posedge of a clock and disabled during a synchronous active-high reset)
 ////////////////////////////////////////////////////////////////////////////////
 
 // Clock: 'clk'
@@ -119,6 +119,30 @@ end
 `define BR_COVER_COMB(__name__, __expr__) \
 `BR_NOOP
 `endif  // SV_ASSERT_ON
+
+////////////////////////////////////////////////////////////////////////////////
+// Concurrent assumption macros (evaluated on posedge of a clock and disabled during a synchronous active-high reset)
+////////////////////////////////////////////////////////////////////////////////
+
+// Clock: 'clk'
+// Reset: 'rst'
+`ifdef SV_ASSERT_ON
+`define BR_ASSUME(__name__, __expr__) \
+__name__ : assume property (@(posedge clk) disable iff (rst === 1'b1 || rst === 1'bx) (__expr__));
+`else  // SV_ASSERT_ON
+`define BR_ASSUME(__name__, __expr__) \
+`BR_NOOP
+`endif  // SV_ASSERT_ON
+
+// More expressive form of BR_ASSUME that allows the use of custom clock and reset signal names.
+`ifdef SV_ASSERT_ON
+`define BR_ASSUME_CR(__name__, __expr__, __clk__, __rst__) \
+__name__ : assume property (@(posedge __clk__) disable iff (__rst__ === 1'b1 || __rst__ === 1'bx) (__expr__));
+`else  // SV_ASSERT_ON
+`define BR_ASSUME_CR(__name__, __expr__, __clk__, __rst__) \
+`BR_NOOP
+`endif  // SV_ASSERT_ON
+
 
 // verilog_format: on
 // verilog_lint: waive-stop line-length

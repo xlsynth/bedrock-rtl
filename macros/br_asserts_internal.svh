@@ -38,7 +38,7 @@
 // the checks speeds up tools and removes noisy covers that won't necessarily get hit in the user's design.
 
 ////////////////////////////////////////////////////////////////////////////////
-// Concurrent assertion macros (evaluated on posedge of a clock and disabled during a reset)
+// Concurrent assertion macros (evaluated on posedge of a clock and disabled during a synchronous active-high reset)
 ////////////////////////////////////////////////////////////////////////////////
 
 // Clock: 'clk'
@@ -99,7 +99,7 @@
 `endif  // BR_ENABLE_IMPL_CHECKS
 
 ////////////////////////////////////////////////////////////////////////////////
-// Concurrent cover macros (evaluated on posedge of a clock and disabled during a reset)
+// Concurrent cover macros (evaluated on posedge of a clock and disabled during a synchronous active-high reset)
 ////////////////////////////////////////////////////////////////////////////////
 
 // Clock: 'clk'
