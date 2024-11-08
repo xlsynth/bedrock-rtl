@@ -29,22 +29,26 @@ def get_transitive(ctx, srcs_not_hdrs):
     ]
     return depset([x for sub_tuple in transitive_srcs_or_hdrs for x in sub_tuple])
 
-def _write_executable_shell_script(ctx, filename, cmd):
+def _write_executable_shell_script(ctx, filename, cmd, output_tarball = None):
     """Writes a shell script that executes the given command and returns a handle to it."""
     executable_file = ctx.actions.declare_file(filename)
+    content = [
+        "#!/usr/bin/env bash",
+        "set -ex",
+        "pwd",
+        cmd,
+    ]
+    if output_tarball:
+        content.append("tar -czf " + output_tarball.path + " *")
+    content.append("")
     ctx.actions.write(
         output = executable_file,
-        content = "\n".join([
-            "#!/usr/bin/env bash",
-            "set -ex",
-            "pwd",
-            cmd,
-        ]),
+        content = "\n".join(content),
         is_executable = True,
     )
     return executable_file
 
-def _verilog_base_test_impl(ctx, subcmd, extra_args = [], extra_runfiles = []):
+def _verilog_base_impl(ctx, subcmd, test = True, extra_args = [], extra_runfiles = []):
     """Shared implementation for rule_verilog_elab_test, rule_verilog_lint_test, rule_verilog_sim_test, and rule_verilog_fpv_test.
 
     Grab tool from the environment (BAZEL_VERILOG_RUNNER_TOOL) so that
@@ -55,6 +59,7 @@ def _verilog_base_test_impl(ctx, subcmd, extra_args = [], extra_runfiles = []):
     Args:
         ctx: ctx for the rule
         subcmd (string): the tool subcommand to run
+        test (bool, optional): whether the rule is a test
         extra_args (list of strings, optional): tool-specific args
         extra_runfiles (list of files, optional): tool-specific files
 
@@ -66,7 +71,7 @@ def _verilog_base_test_impl(ctx, subcmd, extra_args = [], extra_runfiles = []):
         wrapper_tool = env.get("BAZEL_VERILOG_RUNNER_TOOL")
     else:
         # buildifier: disable=print
-        print("!! WARNING !! Environment variable BAZEL_VERILOG_RUNNER_TOOL is not set! Will use placeholder test tool.")
+        print("!! WARNING !! Environment variable BAZEL_VERILOG_RUNNER_TOOL is not set! Will use placeholder runner tool.")
         wrapper_tool_file = write_placeholder_verilog_runner_tool(ctx, "placeholder_verilog_runner.py")
         extra_runfiles.append(wrapper_tool_file)
         wrapper_tool = wrapper_tool_file.short_path
@@ -86,14 +91,36 @@ def _verilog_base_test_impl(ctx, subcmd, extra_args = [], extra_runfiles = []):
             ["--param=" + key + "=" + value for key, value in ctx.attr.params.items()])
     if ctx.attr.tool:
         args.append("--tool='" + ctx.attr.tool + "'")
+        args.append("--tcl=" + subcmd + "_" + ctx.attr.tool + ".tcl")
+        args.append("--script=" + subcmd + "_" + ctx.attr.tool + ".sh")
+        args.append("--log=" + subcmd + "_" + ctx.attr.tool + ".log")
+    else:
+        args.append("--tcl=" + subcmd + ".tcl")
+        args.append("--script=" + subcmd + ".sh")
+        args.append("--log=" + subcmd + ".log")
+    if not test:
+        args.append("--dry-run")
     args += extra_args
     cmd = " ".join([wrapper_tool] + [subcmd] + args + src_files)
     runfiles = ctx.runfiles(files = srcs + hdrs + extra_runfiles)
     executable_file = _write_executable_shell_script(
         ctx = ctx,
         filename = ctx.label.name + ".sh",
+        output_tarball = ctx.outputs.out if not test else None,
         cmd = cmd,
     )
+
+    if not test:
+        ctx.actions.run(
+            inputs = (srcs + hdrs + extra_runfiles + [executable_file]),
+            outputs = [ctx.outputs.out],
+            executable = executable_file,
+            arguments = [],
+        )
+        return DefaultInfo(
+            files = depset(direct = [ctx.outputs.out]),
+        )
+
     return DefaultInfo(
         runfiles = runfiles,
         files = depset(direct = [executable_file]),
@@ -102,7 +129,7 @@ def _verilog_base_test_impl(ctx, subcmd, extra_args = [], extra_runfiles = []):
 
 def _verilog_elab_test_impl(ctx):
     """Implementation of the verilog_elab_test rule."""
-    return _verilog_base_test_impl(
+    return _verilog_base_impl(
         ctx = ctx,
         subcmd = "elab",
     )
@@ -114,7 +141,7 @@ def _verilog_lint_test_impl(ctx):
     if ctx.attr.policy:
         extra_args.append("--policy=" + ctx.attr.policy.files.to_list()[0].short_path)
         extra_runfiles += ctx.files.policy
-    return _verilog_base_test_impl(
+    return _verilog_base_impl(
         ctx = ctx,
         subcmd = "lint",
         extra_args = extra_args,
@@ -124,6 +151,10 @@ def _verilog_lint_test_impl(ctx):
 def _verilog_sim_test_impl(ctx):
     """Implementation of the verilog_sim_test rule."""
     extra_args = []
+    if ctx.attr.tool:
+        extra_args.append("--filelist=sim_" + ctx.attr.tool + ".f")
+    else:
+        extra_args.append("--filelist=sim.f")
     if ctx.attr.elab_only:
         extra_args.append("--elab_only")
     if ctx.attr.uvm:
@@ -137,7 +168,7 @@ def _verilog_sim_test_impl(ctx):
     for opt in ctx.attr.opts:
         extra_args.append("--opt='" + opt + "'")
 
-    return _verilog_base_test_impl(
+    return _verilog_base_impl(
         ctx = ctx,
         subcmd = "sim",
         extra_args = extra_args,
@@ -153,9 +184,34 @@ def _verilog_fpv_test_impl(ctx):
     for opt in ctx.attr.opts:
         extra_args.append("--opt='" + opt + "'")
 
-    return _verilog_base_test_impl(
+    return _verilog_base_impl(
         ctx = ctx,
         subcmd = "fpv",
+        extra_args = extra_args,
+    )
+
+def _verilog_sandbox_impl(ctx):
+    """Implementation of the verilog_sandbox rule."""
+    extra_args = []
+    if len(ctx.attr.opts) > 0 and ctx.attr.tool == "":
+        fail("If opts are provided, then tool must also be set.")
+    for opt in ctx.attr.opts:
+        extra_args.append("--opt='" + opt + "'")
+
+    if ctx.attr.kind == "sim":
+        if ctx.attr.tool:
+            extra_args.append("--filelist=sim_" + ctx.attr.tool + ".f")
+        else:
+            extra_args.append("--filelist=sim.f")
+
+    # Check if the filename ends with '.tar.gz'
+    if not ctx.outputs.out.basename.endswith(".tar.gz"):
+        fail("The 'out' attribute must be a file ending with '.tar.gz', but got '{}'.".format(ctx.outputs.out.basename))
+
+    return _verilog_base_impl(
+        ctx = ctx,
+        subcmd = ctx.attr.kind,
+        test = False,
         extra_args = extra_args,
     )
 
@@ -331,6 +387,42 @@ def verilog_fpv_test(tags = [], **kwargs):
         ],
         **kwargs
     )
+
+rule_verilog_sandbox = rule(
+    doc = "Writes files and run scripts into a tarball for independent execution outside of Bazel.",
+    implementation = _verilog_sandbox_impl,
+    attrs = {
+        "deps": attr.label_list(
+            doc = "The Verilog dependencies of the sandbox.",
+            allow_files = False,
+            providers = [VerilogInfo],
+        ),
+        "defines": attr.string_list(
+            doc = "Preprocessor defines to pass to the Verilog compiler.",
+        ),
+        "params": attr.string_dict(
+            doc = "Verilog module parameters to set in the instantiation of the top-level module.",
+        ),
+        "top": attr.string(
+            doc = "The top-level module; if not provided and there exists one dependency, then defaults to that dep's label name.",
+        ),
+        "opts": attr.string_list(
+            doc = "Tool-specific options not covered by other arguments. If provided, then 'tool' must also be set.",
+        ),
+        "kind": attr.string(
+            doc = "The kind of sandbox to create: [elab, lint, sim, fpv].",
+            values = ["elab", "lint", "sim", "fpv"],
+            mandatory = True,
+        ),
+        "tool": attr.string(
+            doc = "Tool to use. If not provided, default is decided by the BAZEL_VERILOG_RUNNER_TOOL implementation.",
+        ),
+        "out": attr.output(
+            doc = "The tarball of the sandbox directory.",
+            mandatory = True,
+        ),
+    },
+)
 
 def _cartesian_product(lists):
     """Return the cartesian product of a list of lists."""
