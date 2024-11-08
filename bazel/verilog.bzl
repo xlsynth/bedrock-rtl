@@ -29,7 +29,7 @@ def get_transitive(ctx, srcs_not_hdrs):
     ]
     return depset([x for sub_tuple in transitive_srcs_or_hdrs for x in sub_tuple])
 
-def _write_executable_shell_script(ctx, filename, cmd, output_tarball = None):
+def _write_executable_shell_script(ctx, filename, cmd):
     """Writes a shell script that executes the given command and returns a handle to it."""
     executable_file = ctx.actions.declare_file(filename)
     content = [
@@ -37,10 +37,8 @@ def _write_executable_shell_script(ctx, filename, cmd, output_tarball = None):
         "set -ex",
         "pwd",
         cmd,
+        "",
     ]
-    if output_tarball:
-        content.append("tar -czf " + output_tarball.path + " *")
-    content.append("")
     ctx.actions.write(
         output = executable_file,
         content = "\n".join(content),
@@ -59,7 +57,7 @@ def _verilog_base_impl(ctx, subcmd, test = True, extra_args = [], extra_runfiles
     Args:
         ctx: ctx for the rule
         subcmd (string): the tool subcommand to run
-        test (bool, optional): whether the rule is a test
+        test (bool, optional): whether the rule is a test; if not, then generate a tarball sandbox
         extra_args (list of strings, optional): tool-specific args
         extra_runfiles (list of files, optional): tool-specific files
 
@@ -89,33 +87,47 @@ def _verilog_base_impl(ctx, subcmd, test = True, extra_args = [], extra_runfiles
             ["--define=" + define for define in ctx.attr.defines] +
             ["--top=" + top] +
             ["--param=" + key + "=" + value for key, value in ctx.attr.params.items()])
+    tclfile = ctx.actions.declare_file(ctx.label.name + ".tcl")
+    scriptfile = ctx.actions.declare_file(ctx.label.name + ".sh")
+    tcl = tclfile.short_path
+    script = scriptfile.short_path
+    log = ctx.label.name + ".log"
     if ctx.attr.tool:
         args.append("--tool='" + ctx.attr.tool + "'")
-        args.append("--tcl=" + subcmd + "_" + ctx.attr.tool + ".tcl")
-        args.append("--script=" + subcmd + "_" + ctx.attr.tool + ".sh")
-        args.append("--log=" + subcmd + "_" + ctx.attr.tool + ".log")
-    else:
-        args.append("--tcl=" + subcmd + ".tcl")
-        args.append("--script=" + subcmd + ".sh")
-        args.append("--log=" + subcmd + ".log")
+    args.append("--tcl=" + tcl)
+    args.append("--script=" + script)
+    args.append("--log=" + log)
     if not test:
         args.append("--dry-run")
     args += extra_args
     cmd = " ".join([wrapper_tool] + [subcmd] + args + src_files)
     runfiles = ctx.runfiles(files = srcs + hdrs + extra_runfiles)
-    executable_file = _write_executable_shell_script(
+    runner_executable_file = _write_executable_shell_script(
         ctx = ctx,
-        filename = ctx.label.name + ".sh",
-        output_tarball = ctx.outputs.out if not test else None,
+        filename = ctx.label.name + "_runner.sh",
         cmd = cmd,
     )
-
     if not test:
+        runner_inputs = srcs + hdrs + extra_runfiles + [runner_executable_file]
+        runner_outputs = [tclfile, scriptfile]
+
+        # Generate sandbox files
         ctx.actions.run(
-            inputs = (srcs + hdrs + extra_runfiles + [executable_file]),
-            outputs = [ctx.outputs.out],
-            executable = executable_file,
+            inputs = runner_inputs,
+            outputs = runner_outputs,
+            executable = runner_executable_file,
             arguments = [],
+        )
+
+        # Generate tarball
+        ctx.actions.run(
+            inputs = runner_inputs + runner_outputs,
+            outputs = [ctx.outputs.out],
+            executable = "tar",
+            arguments = [
+                "czf",
+                ctx.outputs.out.short_path,
+            ],  # + runner_inputs + runner_outputs,
         )
         return DefaultInfo(
             files = depset(direct = [ctx.outputs.out]),
@@ -123,8 +135,8 @@ def _verilog_base_impl(ctx, subcmd, test = True, extra_args = [], extra_runfiles
 
     return DefaultInfo(
         runfiles = runfiles,
-        files = depset(direct = [executable_file]),
-        executable = executable_file,
+        files = depset(direct = [runner_executable_file]),
+        executable = runner_executable_file,
     )
 
 def _verilog_elab_test_impl(ctx):
@@ -417,10 +429,9 @@ rule_verilog_sandbox = rule(
         "tool": attr.string(
             doc = "Tool to use. If not provided, default is decided by the BAZEL_VERILOG_RUNNER_TOOL implementation.",
         ),
-        "out": attr.output(
-            doc = "The tarball of the sandbox directory.",
-            mandatory = True,
-        ),
+    },
+    outputs = {
+        "out": "%{name}.tar.gz",
     },
 )
 
