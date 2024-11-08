@@ -86,6 +86,11 @@ def _verilog_base_test_impl(ctx, subcmd, extra_args = [], extra_runfiles = []):
             ["--param=" + key + "=" + value for key, value in ctx.attr.params.items()])
     if ctx.attr.tool:
         args.append("--tool='" + ctx.attr.tool + "'")
+        args.append("--tcl-output=" + subcmd + "_" + ctx.attr.tool + ".tcl")
+        args.append("--cmd-output=" + subcmd + "_" + ctx.attr.tool + ".sh")
+    else:
+        args.append("--tcl-output=" + subcmd + ".tcl")
+        args.append("--cmd-output=" + subcmd + ".sh")
     args += extra_args
     cmd = " ".join([wrapper_tool] + [subcmd] + args + src_files)
     runfiles = ctx.runfiles(files = srcs + hdrs + extra_runfiles)
