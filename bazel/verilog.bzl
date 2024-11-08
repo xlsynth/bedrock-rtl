@@ -86,13 +86,13 @@ def _verilog_base_test_impl(ctx, subcmd, extra_args = [], extra_runfiles = []):
             ["--param=" + key + "=" + value for key, value in ctx.attr.params.items()])
     if ctx.attr.tool:
         args.append("--tool='" + ctx.attr.tool + "'")
-        args.append("--tcl-output=" + subcmd + "_" + ctx.attr.tool + ".tcl")
-        args.append("--cmd-output=" + subcmd + "_" + ctx.attr.tool + ".sh")
-        args.append("--log-output=" + subcmd + "_" + ctx.attr.tool + ".log")
+        args.append("--tcl=" + subcmd + "_" + ctx.attr.tool + ".tcl")
+        args.append("--script=" + subcmd + "_" + ctx.attr.tool + ".sh")
+        args.append("--log=" + subcmd + "_" + ctx.attr.tool + ".log")
     else:
-        args.append("--tcl-output=" + subcmd + ".tcl")
-        args.append("--cmd-output=" + subcmd + ".sh")
-        args.append("--log-output=" + subcmd + ".log")
+        args.append("--tcl=" + subcmd + ".tcl")
+        args.append("--script=" + subcmd + ".sh")
+        args.append("--log=" + subcmd + ".log")
     args += extra_args
     cmd = " ".join([wrapper_tool] + [subcmd] + args + src_files)
     runfiles = ctx.runfiles(files = srcs + hdrs + extra_runfiles)
@@ -131,6 +131,10 @@ def _verilog_lint_test_impl(ctx):
 def _verilog_sim_test_impl(ctx):
     """Implementation of the verilog_sim_test rule."""
     extra_args = []
+    if ctx.attr.tool:
+        extra_args.append("--filelist=sim_" + ctx.attr.tool + ".f")
+    else:
+        extra_args.append("--filelist=sim.f")
     if ctx.attr.elab_only:
         extra_args.append("--elab_only")
     if ctx.attr.uvm:
