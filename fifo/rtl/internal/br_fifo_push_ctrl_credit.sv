@@ -23,6 +23,7 @@ module br_fifo_push_ctrl_credit #(
     parameter int BitWidth = 1,
     parameter bit EnableBypass = 0,
     parameter int MaxCredit = Depth,
+    parameter bit RegisterPushCredit = 0,
     localparam int AddrWidth = $clog2(Depth),
     localparam int CountWidth = $clog2(Depth + 1),
     localparam int CreditWidth = $clog2(MaxCredit + 1)
@@ -94,8 +95,9 @@ module br_fifo_push_ctrl_credit #(
   logic [BitWidth-1:0] internal_data;
 
   br_credit_receiver #(
-      .BitWidth (BitWidth),
-      .MaxCredit(MaxCredit)
+      .BitWidth          (BitWidth),
+      .MaxCredit         (MaxCredit),
+      .RegisterPushCredit(RegisterPushCredit)
   ) br_credit_receiver (
       .clk,
       .rst,

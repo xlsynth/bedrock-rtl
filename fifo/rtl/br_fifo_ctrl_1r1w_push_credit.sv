@@ -55,6 +55,10 @@ module br_fifo_ctrl_1r1w_push_credit #(
     // Overriding may be convenient if having a consistent credit counter register width
     // (say, 16-bit) throughout a design is deemed useful.
     parameter int MaxCredit = Depth,
+    // If 1, add a retiming stage to the push_credit signal so that it is
+    // driven directly from a flop. This comes at the expense of one additional
+    // cycle of credit loop latency.
+    parameter bit RegisterPushCredit = 0,
     localparam int AddrWidth = $clog2(Depth),
     localparam int CountWidth = $clog2(Depth + 1),
     localparam int CreditWidth = $clog2(MaxCredit + 1)
@@ -121,7 +125,8 @@ module br_fifo_ctrl_1r1w_push_credit #(
       .Depth(Depth),
       .BitWidth(BitWidth),
       .EnableBypass(EnableBypass),
-      .MaxCredit(MaxCredit)
+      .MaxCredit(MaxCredit),
+      .RegisterPushCredit(RegisterPushCredit)
   ) br_fifo_push_ctrl_credit (
       .clk,
       .rst,

@@ -55,6 +55,8 @@ module br_credit_sender #(
     parameter int BitWidth = 1,
     // Maximum number of credits that can be stored (inclusive). Must be at least 1.
     parameter int MaxCredit = 1,
+    // If 1, add retiming to pop_valid and pop_data
+    parameter bit RegisterPopOutputs = 0,
     localparam int CounterWidth = $clog2(MaxCredit + 1)
 ) (
     // Posedge-triggered clock.
@@ -111,19 +113,30 @@ module br_credit_sender #(
   );
 
   `BR_REGI(pop_credit_stall, 1'b0, 1'b1)
-  assign pop_valid = push_ready && push_valid;
-  assign pop_data  = push_data;
+
+  logic internal_pop_valid;
+  assign internal_pop_valid = push_ready && push_valid;
+
+  if (RegisterPopOutputs) begin : gen_reg_pop
+    `BR_REG(pop_valid, internal_pop_valid)
+    `BR_REGL(pop_data, push_data, internal_pop_valid)
+  end else begin : gen_passthru_pop
+    assign pop_valid = internal_pop_valid;
+    assign pop_data  = push_data;
+  end
 
   //------------------------------------------
   // Implementation checks
   //------------------------------------------
-  `BR_ASSERT_IMPL(pop_valid_a, pop_valid == (push_valid && push_ready))
+  `BR_ASSERT_IMPL(pop_follows_push_a,
+                  (push_valid && push_ready) |-> ##(RegisterPopOutputs) pop_valid)
   `BR_ASSERT_IMPL(pop_with_zero_credits_a,
-                  credit_count == '0 && pop_valid |-> pop_credit && push_valid)
+                  credit_count == '0 && internal_pop_valid |-> pop_credit && push_valid)
   `BR_ASSERT_IMPL(push_pop_unchanged_credit_count_a,
-                  pop_valid && pop_credit |=> credit_count == $past(credit_count))
+                  internal_pop_valid && pop_credit |=> credit_count == $past(credit_count))
+  `BR_ASSERT_IMPL(withhold_and_spend_a,
+                  credit_count == credit_withhold && internal_pop_valid |-> pop_credit)
   `BR_COVER_IMPL(pop_valid_and_pop_credit_c, pop_valid && pop_credit)
-  `BR_ASSERT_IMPL(withhold_and_spend_a, credit_count == credit_withhold && pop_valid |-> pop_credit)
 
   // Rely on submodule implementation checks
 

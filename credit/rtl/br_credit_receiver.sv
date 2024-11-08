@@ -38,12 +38,15 @@
 //   - Users will likely want to register the push-side interface (e.g., with br_delay_valid).
 
 `include "br_asserts_internal.svh"
+`include "br_registers.svh"
 
 module br_credit_receiver #(
     // Width of the datapath in bits. Must be at least 1.
     parameter int BitWidth = 1,
     // Maximum number of credits that can be stored (inclusive). Must be at least 1.
     parameter int MaxCredit = 1,
+    // If 1, add retiming to push_credit
+    parameter bit RegisterPushCredit = 0,
     localparam int CounterWidth = $clog2(MaxCredit + 1)
 ) (
     // Posedge-triggered clock.
@@ -88,6 +91,7 @@ module br_credit_receiver #(
   //------------------------------------------
   logic credit_decr_valid;
   logic credit_decr_ready;
+  logic push_credit_internal;
 
   br_credit_counter #(
       .MaxValue (MaxCredit),
@@ -106,9 +110,15 @@ module br_credit_receiver #(
   );
 
   assign credit_decr_valid = !push_credit_stall;
-  assign push_credit = credit_decr_valid && credit_decr_ready;
+  assign push_credit_internal = credit_decr_valid && credit_decr_ready;
   assign pop_valid = push_valid;
   assign pop_data = push_data;
+
+  if (RegisterPushCredit) begin : gen_reg_push
+    `BR_REG(push_credit, push_credit_internal)
+  end else begin : gen_passthru_push
+    assign push_credit = push_credit_internal;
+  end
 
   //------------------------------------------
   // Implementation checks
