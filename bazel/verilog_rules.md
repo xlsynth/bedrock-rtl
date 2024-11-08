@@ -80,6 +80,34 @@ Tests that a Verilog or SystemVerilog design passes a set of static lint checks.
 | <a id="rule_verilog_lint_test-top"></a>top |  The top-level module; if not provided and there exists one dependency, then defaults to that dep's label name.   | String | optional |  `""`  |
 
 
+<a id="rule_verilog_sandbox"></a>
+
+## rule_verilog_sandbox
+
+<pre>
+load("@bedrock-rtl//bazel:verilog.bzl", "rule_verilog_sandbox")
+
+rule_verilog_sandbox(<a href="#rule_verilog_sandbox-name">name</a>, <a href="#rule_verilog_sandbox-deps">deps</a>, <a href="#rule_verilog_sandbox-out">out</a>, <a href="#rule_verilog_sandbox-defines">defines</a>, <a href="#rule_verilog_sandbox-kind">kind</a>, <a href="#rule_verilog_sandbox-opts">opts</a>, <a href="#rule_verilog_sandbox-params">params</a>, <a href="#rule_verilog_sandbox-tool">tool</a>, <a href="#rule_verilog_sandbox-top">top</a>)
+</pre>
+
+Writes files and run scripts into a tarball for independent execution outside of Bazel.
+
+**ATTRIBUTES**
+
+
+| Name  | Description | Type | Mandatory | Default |
+| :------------- | :------------- | :------------- | :------------- | :------------- |
+| <a id="rule_verilog_sandbox-name"></a>name |  A unique name for this target.   | <a href="https://bazel.build/concepts/labels#target-names">Name</a> | required |  |
+| <a id="rule_verilog_sandbox-deps"></a>deps |  The Verilog dependencies of the sandbox.   | <a href="https://bazel.build/concepts/labels">List of labels</a> | optional |  `[]`  |
+| <a id="rule_verilog_sandbox-out"></a>out |  The tarball of the sandbox directory.   | <a href="https://bazel.build/concepts/labels">Label</a> | required |  |
+| <a id="rule_verilog_sandbox-defines"></a>defines |  Preprocessor defines to pass to the Verilog compiler.   | List of strings | optional |  `[]`  |
+| <a id="rule_verilog_sandbox-kind"></a>kind |  The kind of sandbox to create: [elab, lint, sim, fpv].   | String | required |  |
+| <a id="rule_verilog_sandbox-opts"></a>opts |  Tool-specific options not covered by other arguments. If provided, then 'tool' must also be set.   | List of strings | optional |  `[]`  |
+| <a id="rule_verilog_sandbox-params"></a>params |  Verilog module parameters to set in the instantiation of the top-level module.   | <a href="https://bazel.build/rules/lib/dict">Dictionary: String -> String</a> | optional |  `{}`  |
+| <a id="rule_verilog_sandbox-tool"></a>tool |  Tool to use. If not provided, default is decided by the BAZEL_VERILOG_RUNNER_TOOL implementation.   | String | optional |  `""`  |
+| <a id="rule_verilog_sandbox-top"></a>top |  The top-level module; if not provided and there exists one dependency, then defaults to that dep's label name.   | String | optional |  `""`  |
+
+
 <a id="rule_verilog_sim_test"></a>
 
 ## rule_verilog_sim_test
