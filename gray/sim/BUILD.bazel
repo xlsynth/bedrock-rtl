@@ -1,0 +1,45 @@
+# Copyright 2024 The Bedrock-RTL Authors
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+load("@rules_hdl//verilog:providers.bzl", "verilog_library")
+load("//bazel:verilog.bzl", "verilog_elab_test", "verilog_sim_test")
+
+package(default_visibility = ["//visibility:private"])
+
+verilog_library(
+    name = "br_gray_tb",
+    srcs = ["br_gray_tb.sv"],
+    deps = [
+        "//gray/rtl:br_bin2gray",
+        "//gray/rtl:br_gray2bin",
+        "//macros:br_asserts_internal",
+        "//macros:br_registers",
+    ],
+)
+
+verilog_elab_test(
+    name = "br_gray_tb_elab_test",
+    deps = [":br_gray_tb"],
+)
+
+verilog_sim_test(
+    name = "br_gray_vcs_test",
+    defines = [
+        "SV_ASSERT_ON",
+        "BR_ENABLE_IMPL_CHECKS",
+    ],
+    opts = ["-assert global_finish_maxfail=10+offending_values"],
+    tool = "vcs",
+    deps = [":br_gray_tb"],
+)
