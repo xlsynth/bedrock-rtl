@@ -33,6 +33,10 @@
 // visible at the pop interface. This results in a cut-through latency of
 // 1 cycle, but improves static timing by eliminating any combinational paths
 // from push to pop.
+
+// The RegisterPopOutputs parameter can be set to 1 to add an additional br_flow_reg_fwd
+// before the pop interface of the FIFO. This may improve timing of paths dependent on
+// the pop interface at the expense of an additional cycle of cut-through latency.
 //
 // Bypass is enabled by default to minimize latency accumulation throughout a design.
 // It is recommended to disable the bypass only when necessary to close timing.
@@ -51,6 +55,11 @@ module br_fifo_flops #(
     // visible at the pop interface. This results in a cut-through latency of
     // 1 cycle, but timing is improved.
     parameter bit EnableBypass = 1,
+    // If 1, then ensure pop_valid/pop_data always come directly from a register
+    // at the cost of an additional cycle of cut-through latency.
+    // If 0, pop_valid/pop_data comes directly from push_valid (if bypass is enabled)
+    // and/or ram_wr_data.
+    parameter bit RegisterPopOutputs = 0,
     localparam int AddrWidth = $clog2(Depth),
     localparam int CountWidth = $clog2(Depth + 1)
 ) (
@@ -101,7 +110,9 @@ module br_fifo_flops #(
   br_fifo_ctrl_1r1w #(
       .Depth(Depth),
       .Width(Width),
-      .EnableBypass(EnableBypass)
+      .EnableBypass(EnableBypass),
+      .RegisterPopOutputs(RegisterPopOutputs),
+      .RamReadLatency(0)  // TODO(zhemao): Update this if flop RAM adds pipeline stages
   ) br_fifo_ctrl_1r1w (
       .clk,
       .rst,

@@ -26,21 +26,32 @@
 // the corresponding ready signal and valid signal are
 // both 1 on the same cycle. Otherwise, the stage is stalled.
 //
-// The FIFO can be parameterized in bypass mode or non-bypass mode.
-// In bypass mode (default), then pushes forward directly to the pop
-// interface when the FIFO is empty, resulting in a cut-through latency of 0 cycles.
-// This comes at the cost of a combinational timing path from the push
-// interface to the pop interface. Conversely, when bypass is disabled,
-// then pushes always go through the RAM before they can become
-// visible at the pop interface. This results in a cut-through latency of
-// 1 cycle, but improves static timing by eliminating any combinational paths
-// from push to pop.
+// The FIFO controller can work with RAMs of arbitrary fixed read latency.
+// If the latency is non-zero, a FLOP-based staging buffer is kept in the
+// controller so that a synchronous ready/valid interface can be maintained
+// at the pop interface.
+//
+// The FIFO can be parameterized in bypass mode or non-bypass mode. In bypass
+// mode (default), pushes forward directly to the pop interface or staging
+// buffer when the FIFO has fewer than (RamReadLatency + 1) items, allowing the
+// FIFO to achieve a cut-through latency of zero cycles. This comes at the
+// cost of a combinational timing path from the push interface to the pop
+// interface. Conversely, when bypass is disabled, then pushes always go
+// through the RAM before they can become visible at the pop interface. This
+// results in a cut-through latency of 1 + RamReadLatency cycles, but improves
+// static timing by eliminating any combinational paths from push to pop.
+//
+// The RegisterPopOutputs parameter can be set to 1 to add an additional br_flow_reg_fwd
+// before the pop interface of the FIFO. This may improve timing of paths dependent on
+// the pop interface at the expense of an additional cycle of cut-through latency.
 //
 // Bypass is enabled by default to minimize latency accumulation throughout a design.
 // It is recommended to disable the bypass only when necessary to close timing.
 //
-// The RAM interface is required to have a write latency of 1 cycle and a read latency
-// of 0 cycles.
+// The RAM interface is required to have a read-after-write hazard latency of 1
+// cycle. That is, if ram_wr_valid is asserted on a cycle, ram_rd_addr_valid
+// can be asserted on the next cycle with the same address and be able to read the
+// updated data.
 //
 // See also: br_flow_reg_fwd/br_flow_reg_rev, and br_flow_reg_both, which are optimal
 // FIFO implementations for 1 entry and 2 entries, respectively. Use them
@@ -58,6 +69,15 @@ module br_fifo_ctrl_1r1w #(
     // visible at the pop interface. This results in a cut-through latency of
     // 1 cycle, but timing is improved.
     parameter bit EnableBypass = 1,
+    // If 1, then ensure pop_valid/pop_data always come directly from a register
+    // at the cost of an additional cycle of cut-through latency.
+    // If 0, pop_valid/pop_data can come directly from the push interface
+    // (if bypass is enabled), the RAM read interface, and/or an internal staging
+    // buffer (if RAM read latency is >0).
+    parameter bit RegisterPopOutputs = 0,
+    // The number of cycles between when ram_rd_addr_valid is asserted and
+    // ram_rd_data_valid is asserted.
+    parameter int RamReadLatency = 0,
     localparam int AddrWidth = $clog2(Depth),
     localparam int CountWidth = $clog2(Depth + 1)
 ) (
@@ -97,6 +117,16 @@ module br_fifo_ctrl_1r1w #(
     input  logic                 ram_rd_data_valid,
     input  logic [    Width-1:0] ram_rd_data
 );
+  // Right now, we assume that data can be read the cycle after the
+  // write for it is issued.
+  // TODO(zhemao): Find a way to deal with longer hazard latencies
+  // if we ever get RAMs that have it.
+  localparam int ReadAfterWriteHazardLatency = 1;
+  // Cut-through latency is the number of cycles between push_valid and pop_valid
+  // when the FIFO is initially empty.
+  localparam int CutThroughLatency =
+      EnableBypass ? 32'(RegisterPopOutputs)
+                   : (RamReadLatency + RegisterPopOutputs + ReadAfterWriteHazardLatency);
 
   //------------------------------------------
   // Integration checks
@@ -110,8 +140,8 @@ module br_fifo_ctrl_1r1w #(
   logic bypass_valid_unstable;
   logic [Width-1:0] bypass_data_unstable;
 
-  logic ram_push;
-  logic ram_pop;
+  logic push_beat;
+  logic pop_beat;
 
   br_fifo_push_ctrl #(
       .Depth(Depth),
@@ -134,14 +164,16 @@ module br_fifo_ctrl_1r1w #(
       .ram_wr_valid,
       .ram_wr_addr,
       .ram_wr_data,
-      .ram_push,
-      .ram_pop
+      .push_beat,
+      .pop_beat
   );
 
   br_fifo_pop_ctrl #(
       .Depth(Depth),
       .Width(Width),
-      .EnableBypass(EnableBypass)
+      .EnableBypass(EnableBypass),
+      .RegisterPopOutputs(RegisterPopOutputs),
+      .RamReadLatency(RamReadLatency)
   ) br_fifo_pop_ctrl (
       .clk,
       .rst,
@@ -160,24 +192,25 @@ module br_fifo_ctrl_1r1w #(
       .ram_rd_addr,
       .ram_rd_data_valid,
       .ram_rd_data,
-      .ram_push,
-      .ram_pop
+      .push_beat,
+      .pop_beat
   );
 
   //------------------------------------------
   // Implementation checks
   //------------------------------------------
-  // Rely on submodule implementation checks
-  if (EnableBypass) begin : gen_bypass_impl_checks
-    // Check that the datapath has 0 cycle cut-through delay when empty.
+  if (CutThroughLatency == 0) begin : gen_zero_lat_impl_checks
+    // Check that the datapath actually has 0 cycle cut-through delay when empty.
     `BR_ASSERT_IMPL(cutthrough_0_delay_a,
                     push_valid && empty |-> pop_valid && pop_data == push_data)
     `BR_ASSERT_IMPL(pop_valid_when_not_empty_or_push_valid_a, pop_valid == (!empty || push_valid))
-  end else begin : gen_no_bypass_impl_checks
-    // Check that the datapath has 1 cycle cut-through delay when empty.
-    `BR_ASSERT_IMPL(cutthrough_1_delay_a,
-                    push_valid && empty |=> pop_valid && pop_data == $past(push_data))
-    `BR_ASSERT_IMPL(pop_valid_when_not_empty_a, pop_valid == !empty)
+  end else begin : gen_nonzero_lat_impl_checks
+    // Check that the datapath has the expected cut-through delay when empty.
+    `BR_ASSERT_IMPL(cutthrough_delay_a,
+                    push_valid && empty |-> ##(CutThroughLatency) pop_valid && pop_data == $past(
+                        push_data, CutThroughLatency
+                    ))
+    `BR_ASSERT_IMPL(no_pop_valid_when_empty_a, empty |-> !pop_valid)
   end
 
   // Check that the backpressure path has 1 cycle delay.
@@ -187,7 +220,7 @@ module br_fifo_ctrl_1r1w #(
   // Flag coherence
   `BR_ASSERT_IMPL(items_plus_slots_a, items + slots == Depth)
   `BR_ASSERT_IMPL(items_next_plus_slots_next_a, items_next + slots_next == Depth)
-  `BR_ASSERT_IMPL(ram_push_and_ram_pop_flags_unchanged_a,
-                  ram_push && ram_pop |-> items_next == items && slots_next == slots)
+  `BR_ASSERT_IMPL(push_and_pop_flags_unchanged_a,
+                  push_beat && pop_beat |-> items_next == items && slots_next == slots)
 
 endmodule : br_fifo_ctrl_1r1w

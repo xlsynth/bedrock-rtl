@@ -63,16 +63,23 @@ br_verilog_elab_and_lint_test_suite(
     name = "br_fifo_ctrl_1r1w_test_suite",
     params = {
         "Depth": [
-            "2",
             "4",
         ],
         "Width": [
-            "1",
             "8",
         ],
         "EnableBypass": [
             "0",
             "1",
+        ],
+        "RegisterPopOutputs": [
+            "0",
+            "1",
+        ],
+        "RamReadLatency": [
+            "0",
+            "1",
+            "2",
         ],
     },
     deps = [":br_fifo_ctrl_1r1w"],
@@ -82,11 +89,9 @@ br_verilog_elab_and_lint_test_suite(
     name = "br_fifo_ctrl_1r1w_push_credit_test_suite",
     params = {
         "Depth": [
-            "2",
             "4",
         ],
         "Width": [
-            "1",
             "8",
         ],
         "EnableBypass": [
@@ -94,12 +99,20 @@ br_verilog_elab_and_lint_test_suite(
             "1",
         ],
         "MaxCredit": [
-            "4",
             "16",
         ],
         "RegisterPushCredit": [
             "0",
             "1",
+        ],
+        "RegisterPopOutputs": [
+            "0",
+            "1",
+        ],
+        "RamReadLatency": [
+            "0",
+            "1",
+            "2",
         ],
     },
     deps = [":br_fifo_ctrl_1r1w_push_credit"],
@@ -117,6 +130,10 @@ br_verilog_elab_and_lint_test_suite(
             "8",
         ],
         "EnableBypass": [
+            "0",
+            "1",
+        ],
+        "RegisterPopOutputs": [
             "0",
             "1",
         ],
@@ -144,6 +161,10 @@ br_verilog_elab_and_lint_test_suite(
             "16",
         ],
         "RegisterPushCredit": [
+            "0",
+            "1",
+        ],
+        "RegisterPopOutputs": [
             "0",
             "1",
         ],

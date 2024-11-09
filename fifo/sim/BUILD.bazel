@@ -19,9 +19,23 @@ load("//bazel:verilog.bzl", "verilog_elab_test")
 package(default_visibility = ["//visibility:public"])
 
 verilog_library(
+    name = "br_fifo_test_harness",
+    srcs = ["br_fifo_test_harness.sv"],
+)
+
+verilog_elab_test(
+    name = "br_fifo_test_harness_elab_test",
+    deps = [":br_fifo_test_harness"],
+)
+
+verilog_library(
     name = "br_fifo_flops_tb",
     srcs = ["br_fifo_flops_tb.sv"],
-    deps = ["@bedrock-rtl//fifo/rtl:br_fifo_flops"],
+    deps = [
+        ":br_fifo_test_harness",
+        "//fifo/rtl:br_fifo_flops",
+        "//misc/sim:br_test_driver",
+    ],
 )
 
 verilog_elab_test(
@@ -76,4 +90,33 @@ br_verilog_sim_test_suite(
     },
     tool = "vcs",
     deps = [":br_fifo_flops_push_credit_tb"],
+)
+
+verilog_library(
+    name = "br_fifo_ctrl_1r1w_tb",
+    srcs = ["br_fifo_ctrl_1r1w_tb.sv"],
+    deps = [
+        ":br_fifo_test_harness",
+        "//delay/rtl:br_delay_valid",
+        "//fifo/rtl:br_fifo_ctrl_1r1w",
+        "//misc/sim:br_test_driver",
+        "//ram/rtl:br_ram_flops_1r1w",
+    ],
+)
+
+verilog_elab_test(
+    name = "br_fifo_ctrl_1r1w_tb_elab_test",
+    deps = [":br_fifo_ctrl_1r1w_tb"],
+)
+
+verilog_sim_test(
+    name = "br_fifo_ctrl_1r1w_vcs_test",
+    defines = [
+        "SV_ASSERT_ON",
+        "BR_ENABLE_IMPL_CHECKS",
+    ],
+    opts = ["-assert global_finish_maxfail=1+offending_values"],
+    tool = "vcs",
+    top = "br_fifo_ctrl_1r1w_tb",
+    deps = [":br_fifo_ctrl_1r1w_tb"],
 )
