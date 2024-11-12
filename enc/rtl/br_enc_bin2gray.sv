@@ -32,11 +32,9 @@ module br_enc_bin2gray #(
   // Implementation
   //------------------------------------------
 
-  always_comb begin
-    gray[BitWidth-1] = bin[BitWidth-1];
-    for (int i = 0; i < (BitWidth - 1); i++) begin
-      gray[i] = bin[i+1] ^ bin[i];
-    end
-  end
+  logic [BitWidth-1:0] bin_offset;
+
+  assign bin_offset = {1'b0, bin[BitWidth-1:1]};
+  assign gray = bin_offset ^ bin;
 
 endmodule : br_enc_bin2gray

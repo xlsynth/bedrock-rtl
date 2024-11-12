@@ -27,7 +27,7 @@ module br_enc_gray_tb;
   logic [BitWidth-1:0] counter_bin2gray;
   logic [BitWidth-1:0] counter_gray2bin;
 
-  `BR_ASSERT_IMPL(counter_matches_a, counter == counter_gray2bin)
+  `BR_ASSERT_IMPL(counter_matches_a, $isunknown(counter) || (counter == counter_gray2bin))
 
   br_enc_bin2gray #(
       .BitWidth(BitWidth)
@@ -51,6 +51,8 @@ module br_enc_gray_tb;
     forever #5 clk = ~clk;  // Toggle clock every 5 ns (100 MHz)
   end
 
+  integer errors = 0;
+
   // Test sequence
   initial begin
     rst = 1;
@@ -59,10 +61,24 @@ module br_enc_gray_tb;
     rst = 0;
 
     // Wait until the counter satures
-    wait (counter == '1);
+    while (counter != '1) begin
+      if (counter != counter_gray2bin) begin
+        $error("Time: %0t | Counter: %0h | Gray Output: %0h | Actual Output: %0h", $time, counter,
+               counter_bin2gray, counter_gray2bin);
+        errors = errors + 1;
+      end
 
-    #10 $display("TEST PASSED");
-    $finish;
+      @(negedge clk);
+    end
+
+    if (errors) begin
+      $display("Number of errors: %0d", errors);
+      $display("TEST FAILED");
+      $finish(1);
+    end else begin
+      $display("TEST PASSED");
+      $finish(0);
+    end
   end
 
 endmodule : br_enc_gray_tb

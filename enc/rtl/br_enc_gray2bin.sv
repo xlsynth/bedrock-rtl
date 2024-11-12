@@ -19,7 +19,7 @@
 module br_enc_gray2bin #(
     parameter int BitWidth = 2  // Must be at least 2
 ) (
-    input  logic [BitWidth-1:0] gray,
+    input  logic [BitWidth-1:0] gray,  // ri lint_check_waive INPUT_NOT_READ
     output logic [BitWidth-1:0] bin
 );
 
@@ -33,9 +33,11 @@ module br_enc_gray2bin #(
   //------------------------------------------
 
   always_comb begin
-    bin[BitWidth-1] = gray[BitWidth-1];
-    for (int i = (BitWidth - 2); i >= 0; i--) begin
-      bin[i] = bin[i+1] ^ gray[i];
+    for (int i = (BitWidth - 1); i >= 0; i--) begin
+      bin[i] = gray[BitWidth-1];
+      for (int j = (BitWidth - 2); j >= i; j--) begin  // ri lint_check_waive LOOP_NOT_ENTERED
+        bin[i] ^= gray[j];
+      end
     end
   end
 
