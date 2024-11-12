@@ -87,16 +87,20 @@ def _verilog_base_impl(ctx, subcmd, test = True, extra_args = [], extra_runfiles
             ["--define=" + define for define in ctx.attr.defines] +
             ["--top=" + top] +
             ["--param=" + key + "=" + value for key, value in ctx.attr.params.items()])
-    tclfile = ctx.actions.declare_file(ctx.label.name + ".tcl")
-    scriptfile = ctx.actions.declare_file(ctx.label.name + ".sh")
-    tcl = tclfile.short_path
-    script = scriptfile.short_path
+    tcl = ctx.label.name + ".tcl"
+    script = ctx.label.name + ".sh"
     log = ctx.label.name + ".log"
+    if not test:
+        tclfile = ctx.actions.declare_file(tcl)
+        scriptfile = ctx.actions.declare_file(script)
+        args.append("--tcl=" + tclfile.path)
+        args.append("--script=" + scriptfile.path)
+    else:
+        args.append("--tcl=" + tcl)
+        args.append("--script=" + script)
+    args.append("--log=" + log)
     if ctx.attr.tool:
         args.append("--tool='" + ctx.attr.tool + "'")
-    args.append("--tcl=" + tcl)
-    args.append("--script=" + script)
-    args.append("--log=" + log)
     if not test:
         args.append("--dry-run")
     args += extra_args
@@ -104,7 +108,7 @@ def _verilog_base_impl(ctx, subcmd, test = True, extra_args = [], extra_runfiles
     runfiles = ctx.runfiles(files = srcs + hdrs + extra_runfiles)
     runner_executable_file = _write_executable_shell_script(
         ctx = ctx,
-        filename = ctx.label.name + "_runner.sh",
+        filename = ctx.label.name + "_generator.sh",
         cmd = cmd,
     )
     if not test:
@@ -120,14 +124,18 @@ def _verilog_base_impl(ctx, subcmd, test = True, extra_args = [], extra_runfiles
         )
 
         # Generate tarball
+        tar_inputs = []
+        for f in runner_inputs:
+            tar_inputs.append(f.path)
+
         ctx.actions.run(
             inputs = runner_inputs + runner_outputs,
             outputs = [ctx.outputs.out],
             executable = "tar",
             arguments = [
-                "czf",
-                ctx.outputs.out.short_path,
-            ],  # + runner_inputs + runner_outputs,
+                "-czf",
+                ctx.outputs.out.path,
+            ] + tar_inputs,
         )
         return DefaultInfo(
             files = depset(direct = [ctx.outputs.out]),
