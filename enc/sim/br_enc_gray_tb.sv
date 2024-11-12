@@ -17,7 +17,7 @@
 `include "br_asserts_internal.svh"
 `include "br_registers.svh"
 
-module br_gray_tb;
+module br_enc_gray_tb;
 
   parameter int BitWidth = 2;
 
@@ -29,14 +29,14 @@ module br_gray_tb;
 
   `BR_ASSERT_IMPL(counter_matches_a, counter == counter_gray2bin)
 
-  br_bin2gray #(
+  br_enc_bin2gray #(
       .BitWidth(BitWidth)
   ) bin2gray (
       .bin (counter),
       .gray(counter_bin2gray)
   );
 
-  br_gray2bin #(
+  br_enc_gray2bin #(
       .BitWidth(BitWidth)
   ) gray2bin (
       .gray(counter_bin2gray),
@@ -65,4 +65,4 @@ module br_gray_tb;
     $finish;
   end
 
-endmodule : br_gray_tb
+endmodule : br_enc_gray_tb

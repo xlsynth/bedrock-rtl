@@ -12,15 +12,15 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Bedrock-RTL Gray-to-Binary Converter
+// Bedrock-RTL Binary-to-Gray Converter
 
 `include "br_asserts_internal.svh"
 
-module br_gray2bin #(
+module br_enc_bin2gray #(
     parameter int BitWidth = 2  // Must be at least 2
 ) (
-    input  logic [BitWidth-1:0] gray,
-    output logic [BitWidth-1:0] bin
+    input  logic [BitWidth-1:0] bin,
+    output logic [BitWidth-1:0] gray
 );
 
   //------------------------------------------
@@ -33,10 +33,10 @@ module br_gray2bin #(
   //------------------------------------------
 
   always_comb begin
-    bin[BitWidth-1] = gray[BitWidth-1];
-    for (int i = (BitWidth - 2); i >= 0; i--) begin
-      bin[i] = bin[i+1] ^ gray[i];
+    gray[BitWidth-1] = bin[BitWidth-1];
+    for (int i = 0; i < (BitWidth - 1); i++) begin
+      gray[i] = bin[i+1] ^ bin[i];
     end
   end
 
-endmodule : br_gray2bin
+endmodule : br_enc_bin2gray

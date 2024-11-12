@@ -45,6 +45,18 @@ verilog_library(
     ],
 )
 
+verilog_library(
+    name = "br_enc_bin2gray",
+    srcs = ["br_enc_bin2gray.sv"],
+    deps = ["//macros:br_asserts_internal"],
+)
+
+verilog_library(
+    name = "br_enc_gray2bin",
+    srcs = ["br_enc_gray2bin.sv"],
+    deps = ["//macros:br_asserts_internal"],
+)
+
 br_verilog_elab_and_lint_test_suite(
     name = "br_enc_bin2onehot_test_suite",
     params = {"NumValues": [
@@ -70,4 +82,24 @@ br_verilog_elab_and_lint_test_suite(
         "15",
     ]},
     deps = [":br_enc_priority_encoder"],
+)
+
+br_verilog_elab_and_lint_test_suite(
+    name = "br_enc_gray2bin_test_suite",
+    params = {"BitWidth": [
+        "2",
+        "16",
+        "32",
+    ]},
+    deps = [":br_enc_gray2bin"],
+)
+
+br_verilog_elab_and_lint_test_suite(
+    name = "br_enc_bin2gray_test_suite",
+    params = {"BitWidth": [
+        "2",
+        "16",
+        "32",
+    ]},
+    deps = [":br_enc_bin2gray"],
 )
