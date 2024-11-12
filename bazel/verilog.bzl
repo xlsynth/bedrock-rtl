@@ -102,16 +102,26 @@ def _verilog_base_impl(ctx, subcmd, test = True, extra_args = [], extra_runfiles
     cmd = " ".join([wrapper_tool] + [subcmd] + args + src_files)
     runfiles = ctx.runfiles(files = srcs + hdrs + extra_runfiles)
     if test:
-        runner_or_generator = ctx.label.name + "_runner.sh"
+        runner = ctx.label.name + "_runner.sh"
+        runner_executable_file = _write_executable_shell_script(
+            ctx = ctx,
+            filename = runner,
+            cmd = cmd,
+        )
+        return DefaultInfo(
+            runfiles = runfiles,
+            files = depset(direct = [runner_executable_file]),
+            executable = runner_executable_file,
+        )
+
     else:
-        runner_or_generator = ctx.label.name + "_generator.sh"
-    runner_or_generator_executable_file = _write_executable_shell_script(
-        ctx = ctx,
-        filename = runner_or_generator,
-        cmd = cmd,
-    )
-    if not test:
-        generator_inputs = srcs + hdrs + extra_runfiles + [runner_or_generator_executable_file]
+        generator = ctx.label.name + "_generator.sh"
+        generator_executable_file = _write_executable_shell_script(
+            ctx = ctx,
+            filename = generator,
+            cmd = cmd,
+        )
+        generator_inputs = srcs + hdrs + extra_runfiles + [generator_executable_file]
         generator_outputs = [tcl, script]
 
         # Run generator and generate tarball
@@ -123,7 +133,7 @@ def _verilog_base_impl(ctx, subcmd, test = True, extra_args = [], extra_runfiles
 
         generator_cmd = [
             "source",
-            runner_or_generator_executable_file.path,
+            generator_executable_file.path,
         ]
         tar_cmd = [
             "tar --dereference -czf",
@@ -144,12 +154,6 @@ def _verilog_base_impl(ctx, subcmd, test = True, extra_args = [], extra_runfiles
         return DefaultInfo(
             files = depset(direct = [ctx.outputs.out]),
         )
-
-    return DefaultInfo(
-        runfiles = runfiles,
-        files = depset(direct = [runner_or_generator_executable_file]),
-        executable = runner_or_generator_executable_file,
-    )
 
 def _verilog_elab_test_impl(ctx):
     """Implementation of the verilog_elab_test rule."""
