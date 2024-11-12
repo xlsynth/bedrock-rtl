@@ -38,12 +38,15 @@
 //   - Users will likely want to register the push-side interface (e.g., with br_delay_valid).
 
 `include "br_asserts_internal.svh"
+`include "br_registers.svh"
 
 module br_credit_receiver #(
     // Width of the datapath in bits. Must be at least 1.
     parameter int BitWidth = 1,
     // Maximum number of credits that can be stored (inclusive). Must be at least 1.
     parameter int MaxCredit = 1,
+    // If 1, add retiming to push_credit
+    parameter bit RegisterPushCredit = 0,
     localparam int CounterWidth = $clog2(MaxCredit + 1)
 ) (
     // Posedge-triggered clock.
@@ -70,9 +73,7 @@ module br_credit_receiver #(
     // Dynamically withhold credits from circulation
     input  logic [CounterWidth-1:0] credit_withhold,
     // Credit counter state before increment/decrement/withhold.
-    output logic [CounterWidth-1:0] credit_count,
-    // Dynamic amount of available credit.
-    output logic [CounterWidth-1:0] credit_available
+    output logic [CounterWidth-1:0] credit_count
 );
 
   //------------------------------------------
@@ -88,6 +89,10 @@ module br_credit_receiver #(
   //------------------------------------------
   // Implementation
   //------------------------------------------
+  logic credit_decr_valid;
+  logic credit_decr_ready;
+  logic push_credit_internal;
+
   br_credit_counter #(
       .MaxValue (MaxCredit),
       .MaxChange(1)
@@ -96,17 +101,24 @@ module br_credit_receiver #(
       .rst,
       .incr_valid(pop_credit),
       .incr(1'b1),
-      .decr_valid(push_credit),
+      .decr_ready(credit_decr_ready),
+      .decr_valid(credit_decr_valid),
       .decr(1'b1),
       .initial_value(credit_initial),
       .withhold(credit_withhold),
-      .value(credit_count),
-      .available(credit_available)
+      .value(credit_count)
   );
 
-  assign push_credit = !push_credit_stall && (credit_available > 0);
+  assign credit_decr_valid = !push_credit_stall;
+  assign push_credit_internal = credit_decr_valid && credit_decr_ready;
   assign pop_valid = push_valid;
   assign pop_data = push_data;
+
+  if (RegisterPushCredit) begin : gen_reg_push
+    `BR_REG(push_credit, push_credit_internal)
+  end else begin : gen_passthru_push
+    assign push_credit = push_credit_internal;
+  end
 
   //------------------------------------------
   // Implementation checks

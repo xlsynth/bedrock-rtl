@@ -23,6 +23,7 @@ module br_fifo_push_ctrl_credit #(
     parameter int BitWidth = 1,
     parameter bit EnableBypass = 0,
     parameter int MaxCredit = Depth,
+    parameter bit RegisterPushCredit = 0,
     localparam int AddrWidth = $clog2(Depth),
     localparam int CountWidth = $clog2(Depth + 1),
     localparam int CreditWidth = $clog2(MaxCredit + 1)
@@ -48,7 +49,6 @@ module br_fifo_push_ctrl_credit #(
     input  logic [CreditWidth-1:0] credit_initial_push,
     input  logic [CreditWidth-1:0] credit_withhold_push,
     output logic [CreditWidth-1:0] credit_count_push,
-    output logic [CreditWidth-1:0] credit_available_push,
 
     // Bypass interface
     // Bypass is only used when EnableBypass is 1, hence lint waiver.
@@ -95,8 +95,9 @@ module br_fifo_push_ctrl_credit #(
   logic [BitWidth-1:0] internal_data;
 
   br_credit_receiver #(
-      .BitWidth (BitWidth),
-      .MaxCredit(MaxCredit)
+      .BitWidth          (BitWidth),
+      .MaxCredit         (MaxCredit),
+      .RegisterPushCredit(RegisterPushCredit)
   ) br_credit_receiver (
       .clk,
       .rst,
@@ -109,8 +110,7 @@ module br_fifo_push_ctrl_credit #(
       .pop_data(internal_data),
       .credit_initial(credit_initial_push),
       .credit_withhold(credit_withhold_push),
-      .credit_count(credit_count_push),
-      .credit_available(credit_available_push)
+      .credit_count(credit_count_push)
   );
 
   // RAM path
