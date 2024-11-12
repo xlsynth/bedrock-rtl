@@ -29,9 +29,8 @@ def get_transitive(ctx, srcs_not_hdrs):
     ]
     return depset([x for sub_tuple in transitive_srcs_or_hdrs for x in sub_tuple])
 
-def _write_executable_shell_script(ctx, filename, cmd):
+def _write_executable_shell_script(ctx, executable_file, cmd):
     """Writes a shell script that executes the given command and returns a handle to it."""
-    executable_file = ctx.actions.declare_file(filename)
     content = [
         "#!/usr/bin/env bash",
         "set -ex",
@@ -44,7 +43,6 @@ def _write_executable_shell_script(ctx, filename, cmd):
         content = "\n".join(content),
         is_executable = True,
     )
-    return executable_file
 
 def _verilog_base_impl(ctx, subcmd, test = True, extra_args = [], extra_runfiles = []):
     """Shared implementation for rule_verilog_elab_test, rule_verilog_lint_test, rule_verilog_sim_test, and rule_verilog_fpv_test.
@@ -103,9 +101,10 @@ def _verilog_base_impl(ctx, subcmd, test = True, extra_args = [], extra_runfiles
     verilog_runner_runfiles = ctx.runfiles(files = srcs + hdrs + extra_runfiles)
     if test:
         runner = ctx.label.name + "_runner.sh"
-        runner_executable_file = _write_executable_shell_script(
+        runner_executable_file = ctx.actions.declare_file(runner)
+        _write_executable_shell_script(
             ctx = ctx,
-            filename = runner,
+            executable_file = runner_executable_file,
             cmd = verilog_runner_cmd,
         )
         return DefaultInfo(
@@ -129,38 +128,38 @@ def _verilog_base_impl(ctx, subcmd, test = True, extra_args = [], extra_runfiles
         # Write generator script
         tar_cmd = [
             "tar --dereference -czf",
-            ctx.outputs.out.path,
+            ctx.outputs.tarball.path,
         ] + tar_inputs
         tar_cmd = " ".join(tar_cmd)
         generator_cmd = "\n".join([verilog_runner_cmd, tar_cmd])
         generator = ctx.label.name + "_generator.sh"
-        generator_executable_file = _write_executable_shell_script(
+        generator_executable_file = ctx.actions.declare_file(generator)
+        _write_executable_shell_script(
             ctx = ctx,
-            filename = generator,
+            executable_file = generator_executable_file,
             cmd = generator_cmd,
         )
 
         # Run generator script
         ctx.actions.run(
             inputs = generator_inputs + [generator_executable_file],
-            outputs = [ctx.outputs.out],
+            outputs = [ctx.outputs.tarball],
             executable = generator_executable_file,
             arguments = [],
         )
 
         # Write runner script (but don't run it)
-        untar_cmd = ["tar -xzf " + ctx.outputs.out.basename]
+        untar_cmd = ["tar -xzf " + ctx.outputs.tarball.basename]
         run_cmd = ["source " + script]
         runner_cmd = "\n".join(untar_cmd + run_cmd)
-        runner = ctx.label.name + "_runner.sh"
-        runner_executable_file = _write_executable_shell_script(
+        _write_executable_shell_script(
             ctx = ctx,
-            filename = runner,
+            executable_file = ctx.outputs.runscript,
             cmd = runner_cmd,
         )
 
         return DefaultInfo(
-            files = depset(direct = [ctx.outputs.out, runner_executable_file]),
+            files = depset(direct = [ctx.outputs.tarball, ctx.outputs.runscript]),
         )
 
 def _verilog_elab_test_impl(ctx):
@@ -241,8 +240,8 @@ def _verilog_sandbox_impl(ctx):
             extra_args.append("--filelist=sim.f")
 
     # Check if the filename ends with '.tar.gz'
-    if not ctx.outputs.out.basename.endswith(".tar.gz"):
-        fail("The 'out' attribute must be a file ending with '.tar.gz', but got '{}'.".format(ctx.outputs.out.basename))
+    if not ctx.outputs.tarball.basename.endswith(".tar.gz"):
+        fail("The 'tarball' attribute must be a file ending with '.tar.gz', but got '{}'.".format(ctx.outputs.tarball.basename))
 
     return _verilog_base_impl(
         ctx = ctx,
@@ -455,7 +454,8 @@ rule_verilog_sandbox = rule(
         ),
     },
     outputs = {
-        "out": "%{name}.tar.gz",
+        "tarball": "%{name}.tar.gz",
+        "runscript": "%{name}_runner.sh",
     },
 )
 
