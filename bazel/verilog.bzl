@@ -99,60 +99,68 @@ def _verilog_base_impl(ctx, subcmd, test = True, extra_args = [], extra_runfiles
     if not test:
         args.append("--dry-run")
     args += extra_args
-    cmd = " ".join([wrapper_tool] + [subcmd] + args + src_files)
-    runfiles = ctx.runfiles(files = srcs + hdrs + extra_runfiles)
+    verilog_runner_cmd = " ".join([wrapper_tool] + [subcmd] + args + src_files)
+    verilog_runner_runfiles = ctx.runfiles(files = srcs + hdrs + extra_runfiles)
     if test:
         runner = ctx.label.name + "_runner.sh"
         runner_executable_file = _write_executable_shell_script(
             ctx = ctx,
             filename = runner,
-            cmd = cmd,
+            cmd = verilog_runner_cmd,
         )
         return DefaultInfo(
-            runfiles = runfiles,
+            runfiles = verilog_runner_runfiles,
             files = depset(direct = [runner_executable_file]),
             executable = runner_executable_file,
         )
 
     else:
-        generator = ctx.label.name + "_generator.sh"
-        generator_executable_file = _write_executable_shell_script(
-            ctx = ctx,
-            filename = generator,
-            cmd = cmd,
-        )
-        generator_inputs = srcs + hdrs + extra_runfiles + [generator_executable_file]
+        # Generator I/O
+        generator_inputs = srcs + hdrs + extra_runfiles
         generator_outputs = [tcl, script]
 
-        # Run generator and generate tarball
+        # Tarball inputs
         tar_inputs = []
-        for f in srcs + hdrs + extra_runfiles:
+        for f in generator_inputs:
             tar_inputs.append(f.path)
         for f in generator_outputs:
             tar_inputs.append(f)
 
-        generator_cmd = [
-            "source",
-            generator_executable_file.path,
-        ]
+        # Write generator script
         tar_cmd = [
             "tar --dereference -czf",
             ctx.outputs.out.path,
         ] + tar_inputs
         tar_cmd = " ".join(tar_cmd)
+        generator_cmd = "\n".join([verilog_runner_cmd, tar_cmd])
+        generator = ctx.label.name + "_generator.sh"
+        generator_executable_file = _write_executable_shell_script(
+            ctx = ctx,
+            filename = generator,
+            cmd = generator_cmd,
+        )
 
-        generator_cmd = " ".join(generator_cmd)
-
-        command = " && ".join([generator_cmd, tar_cmd])
-
-        ctx.actions.run_shell(
-            inputs = generator_inputs,
+        # Run generator script
+        ctx.actions.run(
+            inputs = generator_inputs + [generator_executable_file],
             outputs = [ctx.outputs.out],
-            command = command,
+            executable = generator_executable_file,
+            arguments = [],
+        )
+
+        # Write runner script (but don't run it)
+        untar_cmd = ["tar -xzf " + ctx.outputs.out.basename]
+        run_cmd = ["source " + script]
+        runner_cmd = "\n".join(untar_cmd + run_cmd)
+        runner = ctx.label.name + "_runner.sh"
+        runner_executable_file = _write_executable_shell_script(
+            ctx = ctx,
+            filename = runner,
+            cmd = runner_cmd,
         )
 
         return DefaultInfo(
-            files = depset(direct = [ctx.outputs.out]),
+            files = depset(direct = [ctx.outputs.out, runner_executable_file]),
         )
 
 def _verilog_elab_test_impl(ctx):
