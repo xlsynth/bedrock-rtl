@@ -18,7 +18,7 @@
 // Purely combinational (zero delay and stateless).
 //
 // For convenience, this is actually a "onehot-0" to binary encoder.
-// The LSB is "don't care": both 1'b1 and 1'b0 on LSB produce the same output ('0).
+// When input is all 0s, out_valid is driven to '0.
 //
 // For example:
 //
@@ -60,6 +60,7 @@ module br_enc_onehot2bin #(
     // because it is "don't care" if all other bits are 0.
     // ri lint_check_waive INEFFECTIVE_NET
     input logic [NumValues-1:0] in,
+    output logic                out_valid,
     output logic [BinWidth-1:0] out
 );
 
@@ -72,6 +73,7 @@ module br_enc_onehot2bin #(
   //------------------------------------------
   // Implementation
   //------------------------------------------
+  assign out_valid = |in;
   always_comb begin
     out = '0;
     for (int i = 1; i < NumValues; i++) begin
@@ -84,8 +86,6 @@ module br_enc_onehot2bin #(
       end
     end
   end
-
-  `BR_UNUSED_NAMED(in0, in[0])
 
   //------------------------------------------
   // Implementation checks
