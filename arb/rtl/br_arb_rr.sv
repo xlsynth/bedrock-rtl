@@ -115,9 +115,11 @@ module br_arb_rr #(
   ) br_enc_onehot2bin (
       .clk,
       .rst,
-      .in       (grant),
-      .out_valid(),                // unused
-      .out      (last_grant_next)
+      .in(grant),
+      // unused because we know we only consume last_grant_next when
+      // |request (which also implies |grant)
+      .out_valid(),
+      .out(last_grant_next)
   );
 
   `BR_REGIL(last_grant, last_grant_next, enable_priority_update && |request, NumRequesters - 1)

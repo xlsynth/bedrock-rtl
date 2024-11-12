@@ -46,7 +46,6 @@
 // ...
 
 `include "br_asserts_internal.svh"
-`include "br_unused.svh"
 
 module br_enc_onehot2bin #(
     parameter int NumValues = 2,  // Must be at least 2
@@ -56,9 +55,6 @@ module br_enc_onehot2bin #(
     input  logic                 clk,        // Used only for assertions
     // ri lint_check_waive INPUT_NOT_READ HIER_NET_NOT_READ HIER_BRANCH_NOT_READ
     input  logic                 rst,        // Used only for assertions
-    // in[0] is not used and does not impact the output
-    // because it is "don't care" if all other bits are 0.
-    // ri lint_check_waive INEFFECTIVE_NET
     input  logic [NumValues-1:0] in,
     output logic                 out_valid,
     output logic [ BinWidth-1:0] out
@@ -77,12 +73,12 @@ module br_enc_onehot2bin #(
   always_comb begin
     out = '0;
     for (int i = 1; i < NumValues; i++) begin
+      // If multiple bits are set, this is undefined behavior.
       if (in[i]) begin
         // This waiver is not a problem so long as we are not doing
         // anything close to a 32-bit onehot2bin..
         // ri lint_check_waive INTEGER ASSIGN_SIGN SIGNED_SIZE_CAST
-        out = BinWidth'(i);
-        break;
+        out |= BinWidth'(i);
       end
     end
   end
