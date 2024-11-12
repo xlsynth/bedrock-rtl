@@ -90,14 +90,16 @@ def _verilog_base_impl(ctx, subcmd, test = True, extra_args = [], extra_runfiles
     tcl = ctx.label.name + ".tcl"
     script = ctx.label.name + ".sh"
     log = ctx.label.name + ".log"
-    if test:
-        args.append("--tcl=" + tcl)
-        args.append("--script=" + script)
-    else:
-        tclfile = ctx.actions.declare_file(tcl)
-        scriptfile = ctx.actions.declare_file(script)
-        args.append("--tcl=" + tclfile.path)
-        args.append("--script=" + scriptfile.path)
+
+    #if test:
+    args.append("--tcl=" + tcl)
+    args.append("--script=" + script)
+
+    #else:
+    #tclfile = ctx.actions.declare_file(tcl)
+    #scriptfile = ctx.actions.declare_file(script)
+    #args.append("--tcl=" + tclfile.path)
+    #args.append("--script=" + scriptfile.path)
     args.append("--log=" + log)
     if ctx.attr.tool:
         args.append("--tool='" + ctx.attr.tool + "'")
@@ -117,32 +119,48 @@ def _verilog_base_impl(ctx, subcmd, test = True, extra_args = [], extra_runfiles
     )
     if not test:
         generator_inputs = srcs + hdrs + extra_runfiles + [runner_or_generator_executable_file]
-        generator_outputs = [tclfile, scriptfile]
+        generator_outputs = [tcl, script]
 
         # Use generator to create sandbox inputs
-        ctx.actions.run(
-            inputs = generator_inputs,
-            outputs = generator_outputs,
-            executable = runner_or_generator_executable_file,
-            arguments = [],
-        )
+        #ctx.actions.run(
+        #    inputs = generator_inputs,
+        #    outputs = generator_outputs,
+        #    executable = runner_or_generator_executable_file,
+        #    arguments = [],
+        #)
 
         # Generate tarball
         tar_inputs = []
         for f in srcs + hdrs + extra_runfiles:
             tar_inputs.append(f.path)
         for f in generator_outputs:
-            tar_inputs.append(f.path)
+            #tar_inputs.append(f.path)
+            tar_inputs.append(f)
 
-        ctx.actions.run(
-            inputs = generator_inputs + generator_outputs,
+        generator_cmd = [
+            "source",
+            runner_or_generator_executable_file.path,
+        ]
+        tar_cmd = [
+            "tar --dereference -czf",
+            ctx.outputs.out.path,
+        ] + tar_inputs
+        tar_cmd = " ".join(tar_cmd)
+
+        #cleanup_cmd = [
+        #    "rm -v",
+        #] + [f.path for f in generator_outputs]
+        generator_cmd = " ".join(generator_cmd)
+
+        #cleanup_cmd = " ".join(cleanup_cmd)
+        #command = " && ".join([generator_cmd, tar_cmd, cleanup_cmd])
+        command = " && ".join([generator_cmd, tar_cmd])
+        print(command)
+
+        ctx.actions.run_shell(
+            inputs = generator_inputs,  # + generator_outputs,
             outputs = [ctx.outputs.out],
-            executable = "tar",
-            arguments = [
-                "--dereference",
-                "-czf",
-                ctx.outputs.out.path,
-            ] + tar_inputs,
+            command = command,
         )
 
         return DefaultInfo(
