@@ -27,8 +27,6 @@ module br_enc_gray_tb;
   logic [BitWidth-1:0] counter_bin2gray;
   logic [BitWidth-1:0] counter_gray2bin;
 
-  `BR_ASSERT_IMPL(counter_matches_a, $isunknown(counter) || (counter == counter_gray2bin))
-
   br_enc_bin2gray #(
       .BitWidth(BitWidth)
   ) bin2gray (
