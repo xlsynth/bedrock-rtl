@@ -78,12 +78,12 @@ module br_ram_addr_decoder #(
   // nice array structure so it's a bit tricky to code this up with generate loops.
 
   // ri lint_check_waive INEFFECTIVE_NET
-  logic [Stages:0][Tiles-1:0] stage_in_addr_valid;
+  logic [Stages:0][Tiles-1:0] stage_in_valid;
   // ri lint_check_waive INEFFECTIVE_NET
   logic [Stages:0][Tiles-1:0][AddressWidth-1:0] stage_in_addr;
   logic [Stages:0][Tiles-1:0][DataWidth-1:0] stage_in_data;
   // ri lint_check_waive INEFFECTIVE_NET
-  logic [Stages:0][Tiles-1:0] stage_out_addr_valid;
+  logic [Stages:0][Tiles-1:0] stage_out_valid;
   // ri lint_check_waive INEFFECTIVE_NET
   logic [Stages:0][Tiles-1:0][AddressWidth-1:0] stage_out_addr;
   logic [Stages:0][Tiles-1:0][DataWidth-1:0] stage_out_data;
@@ -97,14 +97,14 @@ module br_ram_addr_decoder #(
 
     for (genvar f = 0; f < InputForks; f++) begin : gen_forks
       if (s == 0) begin : gen_s_eq_0
-        assign stage_in_addr_valid[s][f] = addr_valid;
-        assign stage_in_addr[s][f] = addr;
-        assign stage_in_data[s][f] = data;
+        assign stage_in_valid[s][f] = valid;
+        assign stage_in_addr[s][f]  = addr;
+        assign stage_in_data[s][f]  = data;
       end else begin : gen_s_gt_0
-        assign stage_in_addr_valid[s][f] = stage_out_addr_valid[s-1][f];
+        assign stage_in_valid[s][f] = stage_out_valid[s-1][f];
         // ri lint_check_waive FULL_RANGE
-        assign stage_in_addr[s][f] = stage_out_addr[s-1][f][StageInputAddressWidth-1:0];
-        assign stage_in_addr[s][f] = stage_out_data[s-1][f];
+        assign stage_in_addr[s][f]  = stage_out_addr[s-1][f][StageInputAddressWidth-1:0];
+        assign stage_in_data[s][f]  = stage_out_data[s-1][f];
 
         if ((AddressWidth - 1) >= StageInputAddressWidth) begin : gen_unused
           `BR_UNUSED_NAMED(stage_out_addr,
@@ -120,32 +120,37 @@ module br_ram_addr_decoder #(
       ) br_ram_addr_decoder_stage (
           .clk,
           .rst,
-          .in_addr_valid(stage_in_addr_valid[s][f]),
-          .in_addr(stage_in_addr[s][f]),
-          .out_addr_valid(stage_out_addr_valid[s][f]),
-          .out_addr(stage_out_addr[s][f])
+          .in_valid (stage_in_valid[s][f]),
+          .in_addr  (stage_in_addr[s][f]),
+          .in_data  (stage_in_data[s][f]),
+          .out_valid(stage_out_valid[s][f]),
+          .out_addr (stage_out_addr[s][f]),
+          .out_data (stage_out_data[s][f])
       );
     end
 
     // Earlier stages don't drive all forks. Tie off the unused forks.
     for (genvar f = InputForks; f < Tiles; f++) begin : gen_forks_tied_off
-      `BR_TIEOFF_ZERO_NAMED(stage_in_addr_valid, stage_in_addr_valid[s][f])
+      `BR_TIEOFF_ZERO_NAMED(stage_in_valid, stage_in_valid[s][f])
       `BR_TIEOFF_ZERO_NAMED(stage_in_addr, stage_in_addr[s][f])
-      `BR_UNUSED_NAMED(stage_in_addr_valid, stage_in_addr_valid[s][f])
+      `BR_UNUSED_NAMED(stage_in_valid, stage_in_valid[s][f])
       `BR_UNUSED_NAMED(stage_in_addr, stage_in_addr[s][f])
+      `BR_UNUSED_NAMED(stage_in_data, stage_in_data[s][f])
 
-      `BR_TIEOFF_ZERO_NAMED(stage_out_addr_valid, stage_out_addr_valid[s][f])
+      `BR_TIEOFF_ZERO_NAMED(stage_out_valid, stage_out_valid[s][f])
       `BR_TIEOFF_ZERO_NAMED(stage_out_addr, stage_out_addr[s][f])
-      `BR_UNUSED_NAMED(stage_out_addr_valid, stage_out_addr_valid[s][f])
+      `BR_UNUSED_NAMED(stage_out_valid, stage_out_valid[s][f])
       `BR_UNUSED_NAMED(stage_out_addr, stage_out_addr[s][f])
+      `BR_UNUSED_NAMED(stage_out_data, stage_out_data[s][f])
     end
   end
 
   for (genvar t = 0; t < Tiles; t++) begin : gen_outputs
     // ri lint_check_waive FULL_RANGE
-    assign tile_addr_valid[t] = stage_out_addr_valid[Stages][t];
+    assign tile_addr_valid[t] = stage_out_valid[Stages][t];
     // ri lint_check_waive FULL_RANGE
     assign tile_addr[t] = stage_out_addr[Stages][t][TileAddressWidth-1:0];
+    assign tile_data[t] = stage_out_data[Stages][t];
     if ((AddressWidth - 1) >= TileAddressWidth) begin : gen_unused
       `BR_UNUSED_NAMED(stage_out_addr_msbs,
                        stage_out_addr[Stages][t][AddressWidth-1:TileAddressWidth])
