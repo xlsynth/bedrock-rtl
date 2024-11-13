@@ -82,6 +82,7 @@ module br_fifo_flops_push_credit #(
     input  logic [CreditWidth-1:0] credit_initial_push,
     input  logic [CreditWidth-1:0] credit_withhold_push,
     output logic [CreditWidth-1:0] credit_count_push,
+    output logic [CreditWidth-1:0] credit_available_push,
 
     // Pop-side status flags
     output logic empty,
@@ -133,6 +134,7 @@ module br_fifo_flops_push_credit #(
       .credit_initial_push,
       .credit_withhold_push,
       .credit_count_push,
+      .credit_available_push,
       .ram_wr_valid,
       .ram_wr_addr,
       .ram_wr_data,

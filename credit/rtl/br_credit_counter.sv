@@ -65,10 +65,10 @@ module br_credit_counter #(
     // Dynamically withhold credits from circulation
     input  logic [ ValueWidth-1:0] withhold,
     // Credit counter state not including increment & withhold.
-    output logic [ ValueWidth-1:0] value
+    output logic [ ValueWidth-1:0] value,
+    // Dynamic amount of available credit including increment & withhold.
+    output logic [ ValueWidth-1:0] available
 );
-  logic [ValueWidth-1:0] available;
-
   //------------------------------------------
   // Integration checks
   //------------------------------------------
