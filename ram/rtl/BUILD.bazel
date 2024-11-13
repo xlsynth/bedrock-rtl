@@ -60,13 +60,13 @@ verilog_library(
 )
 
 br_verilog_elab_and_lint_test_suite(
-    name = "br_ram_addr_decoder_stage_test_suite_base_case",
+    name = "br_ram_addr_decoder_stage_test_suite_common_case",
     params = {
         "InputAddressWidth": [
             "7",
             "8",
         ],
-        "NumForks": [
+        "Forks": [
             "1",
             "2",
             "4",
@@ -76,14 +76,18 @@ br_verilog_elab_and_lint_test_suite(
 )
 
 br_verilog_elab_and_lint_test_suite(
-    name = "br_ram_addr_decoder_stage_test_suite_common_case",
+    name = "br_ram_addr_decoder_stage_test_suite_base_case",
     params = {
         "InputAddressWidth": [
             "2",
         ],
-        "NumForks": [
+        "Forks": [
             "1",
             "2",
+        ],
+        "RegisterOutputs": [
+            "0",
+            "1",
         ],
     },
     deps = [":br_ram_addr_decoder_stage"],
