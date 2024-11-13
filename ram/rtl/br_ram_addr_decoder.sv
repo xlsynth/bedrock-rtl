@@ -69,9 +69,17 @@ module br_ram_addr_decoder #(
   `BR_ASSERT_STATIC(forks_per_stage_pos_power_of_2_a,
                     (ForksPerStage > 0) && br_math::is_power_of_2(ForksPerStage))
 
+  // Ineffective net waivers are because we make a big 2D array of Stages x Tiles but
+  // we don't use all of the Tiles dimension until the last stage. It's not a very
+  // nice array structure so it's a bit tricky to code this up with generate loops.
+
+  // ri lint_check_waive INEFFECTIVE_NET
   logic [Stages:0][Tiles-1:0] stage_in_addr_valid;
+  // ri lint_check_waive INEFFECTIVE_NET
   logic [Stages:0][Tiles-1:0][AddressWidth-1:0] stage_in_addr;
+  // ri lint_check_waive INEFFECTIVE_NET
   logic [Stages:0][Tiles-1:0] stage_out_addr_valid;
+  // ri lint_check_waive INEFFECTIVE_NET
   logic [Stages:0][Tiles-1:0][AddressWidth-1:0] stage_out_addr;
 
   for (genvar s = 0; s <= Stages; s++) begin : gen_stage
@@ -83,15 +91,17 @@ module br_ram_addr_decoder #(
 
     for (genvar f = 0; f < InputForks; f++) begin : gen_forks
       if (s == 0) begin : gen_s_eq_0
-        assign stage_in_addr_valid[0][f] = addr_valid;
-        assign stage_in_addr[0][f] = addr;
-
+        assign stage_in_addr_valid[s][f] = addr_valid;
+        assign stage_in_addr[s][f] = addr;
       end else begin : gen_s_gt_0
         assign stage_in_addr_valid[s][f] = stage_out_addr_valid[s-1][f];
+        // ri lint_check_waive FULL_RANGE
         assign stage_in_addr[s][f] = stage_out_addr[s-1][f][StageInputAddressWidth-1:0];
 
-        `BR_UNUSED_NAMED(stage_out_addr,
-                         stage_out_addr[s-1][f][AddressWidth-1:StageInputAddressWidth])
+        if ((AddressWidth - 1) >= StageInputAddressWidth) begin : gen_unused
+          `BR_UNUSED_NAMED(stage_out_addr,
+                           stage_out_addr[s-1][f][AddressWidth-1:StageInputAddressWidth])
+        end
       end
 
       br_ram_addr_decoder_stage #(
@@ -111,10 +121,15 @@ module br_ram_addr_decoder #(
 
     // Earlier stages don't drive all forks. Tie off the unused forks.
     for (genvar f = InputForks; f < Tiles; f++) begin : gen_forks_tied_off
+      `BR_TIEOFF_ZERO_NAMED(stage_in_addr_valid, stage_in_addr_valid[s][f])
+      `BR_TIEOFF_ZERO_NAMED(stage_in_addr, stage_in_addr[s][f])
       `BR_UNUSED_NAMED(stage_in_addr_valid, stage_in_addr_valid[s][f])
       `BR_UNUSED_NAMED(stage_in_addr, stage_in_addr[s][f])
+
       `BR_TIEOFF_ZERO_NAMED(stage_out_addr_valid, stage_out_addr_valid[s][f])
       `BR_TIEOFF_ZERO_NAMED(stage_out_addr, stage_out_addr[s][f])
+      `BR_UNUSED_NAMED(stage_out_addr_valid, stage_out_addr_valid[s][f])
+      `BR_UNUSED_NAMED(stage_out_addr, stage_out_addr[s][f])
     end
   end
 
@@ -123,13 +138,23 @@ module br_ram_addr_decoder #(
     assign tile_addr_valid[t] = stage_out_addr_valid[Stages][t];
     // ri lint_check_waive FULL_RANGE
     assign tile_addr[t] = stage_out_addr[Stages][t][TileAddressWidth-1:0];
+    if ((AddressWidth - 1) >= TileAddressWidth) begin : gen_unused
+      `BR_UNUSED_NAMED(stage_out_addr_msbs,
+                       stage_out_addr[Stages][t][AddressWidth-1:TileAddressWidth])
+    end
   end
 
   //------------------------------------------
   // Implementation checks
   //------------------------------------------
+  `BR_ASSERT_IMPL(tile_addr_valid_onehot0_a, $onehot0(tile_addr_valid))
+  `BR_ASSERT_IMPL(latency_a, addr_valid |-> ##Stages $onehot(tile_addr_valid))
+  if (Stages > 0) begin : gen_causality_stages_gt0
+    `BR_ASSERT_IMPL(tile_addr_valid_sanity_a, |tile_addr_valid |-> $past(addr_valid, NumStages))
+  end else begin : gen_causality_stages_eq0
+    `BR_ASSERT_IMPL(tile_addr_valid_sanity_a, |tile_addr_valid == addr_valid)
+  end
 
-  // TODO(mgottscho): Write more
   // Rely on submodule implementation checks
 
 endmodule : br_ram_addr_decoder
