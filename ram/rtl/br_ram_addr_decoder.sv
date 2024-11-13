@@ -31,7 +31,7 @@ module br_ram_addr_decoder #(
     // and less than or equal to Depth.
     parameter int Tiles = 1,
     // Number of pipeline register stages inserted along the address path.
-    // Must be a nonnegative power-of-2 that is less than or equal to $clog2(Tiles).
+    // Must be at least 0 and less than or equal to $clog2(Tiles).
     parameter int Stages = 0,
     localparam int AddressWidth = $clog2(Depth),
     localparam int TileDepth = br_math::ceil_div(Depth, Tiles),
@@ -61,7 +61,6 @@ module br_ram_addr_decoder #(
 
   // Stages checks
   `BR_ASSERT_STATIC(stages_gte0_a, Stages >= 0)
-  `BR_ASSERT_STATIC(stages_power_of_2_a, br_math::is_power_of_2(Stages))
   `BR_ASSERT_STATIC(stages_lte_clog2_tiles_a, Stages <= $clog2(Tiles))
 
   `BR_ASSERT(addr_in_range_a, valid |-> addr < Depth)
@@ -81,11 +80,13 @@ module br_ram_addr_decoder #(
   logic [Stages:0][Tiles-1:0] stage_in_valid;
   // ri lint_check_waive INEFFECTIVE_NET
   logic [Stages:0][Tiles-1:0][AddressWidth-1:0] stage_in_addr;
+  // ri lint_check_waive INEFFECTIVE_NET
   logic [Stages:0][Tiles-1:0][DataWidth-1:0] stage_in_data;
   // ri lint_check_waive INEFFECTIVE_NET
   logic [Stages:0][Tiles-1:0] stage_out_valid;
   // ri lint_check_waive INEFFECTIVE_NET
   logic [Stages:0][Tiles-1:0][AddressWidth-1:0] stage_out_addr;
+  // ri lint_check_waive INEFFECTIVE_NET
   logic [Stages:0][Tiles-1:0][DataWidth-1:0] stage_out_data;
 
   for (genvar s = 0; s <= Stages; s++) begin : gen_stage
@@ -133,12 +134,14 @@ module br_ram_addr_decoder #(
     for (genvar f = InputForks; f < Tiles; f++) begin : gen_forks_tied_off
       `BR_TIEOFF_ZERO_NAMED(stage_in_valid, stage_in_valid[s][f])
       `BR_TIEOFF_ZERO_NAMED(stage_in_addr, stage_in_addr[s][f])
+      `BR_TIEOFF_ZERO_NAMED(stage_in_data, stage_in_data[s][f])
       `BR_UNUSED_NAMED(stage_in_valid, stage_in_valid[s][f])
       `BR_UNUSED_NAMED(stage_in_addr, stage_in_addr[s][f])
       `BR_UNUSED_NAMED(stage_in_data, stage_in_data[s][f])
 
       `BR_TIEOFF_ZERO_NAMED(stage_out_valid, stage_out_valid[s][f])
       `BR_TIEOFF_ZERO_NAMED(stage_out_addr, stage_out_addr[s][f])
+      `BR_TIEOFF_ZERO_NAMED(stage_out_data, stage_out_data[s][f])
       `BR_UNUSED_NAMED(stage_out_valid, stage_out_valid[s][f])
       `BR_UNUSED_NAMED(stage_out_addr, stage_out_addr[s][f])
       `BR_UNUSED_NAMED(stage_out_data, stage_out_data[s][f])
@@ -164,17 +167,17 @@ module br_ram_addr_decoder #(
   `BR_ASSERT_IMPL(latency_a, valid |-> ##Stages $onehot(tile_valid))
 
   for (genvar t = 0; t < Tiles; t++) begin : gen_tile_checks
-    `BR_ASSERT_IMPL(tile_addr_in_range_a, tile_valid[i] |-> tile_addr[i] < TileDepth)
+    `BR_ASSERT_IMPL(tile_addr_in_range_a, tile_valid[t] |-> tile_addr[t] < TileDepth)
     // Generate branch needed because we cannot use a zero delay in a $past expression.
     if (Stages > 0) begin : gen_stages_gt0
-      `BR_ASSERT_IMPL(tile_valid_a, tile_valid[i] |-> $past(valid, Stages))
+      `BR_ASSERT_IMPL(tile_valid_a, tile_valid[t] |-> $past(valid, Stages))
       `BR_ASSERT_IMPL(tile_addr_a,
-                      tile_valid[i] |-> tile_addr[i] == $past(addr[TileAddressWidth-1:0], Stages))
-      `BR_ASSERT_IMPL(tile_data_a, tile_valid[i] |-> tile_data[i] == $past(data, Stages))
+                      tile_valid[t] |-> tile_addr[t] == $past(addr[TileAddressWidth-1:0], Stages))
+      `BR_ASSERT_IMPL(tile_data_a, tile_valid[t] |-> tile_data[t] == $past(data, Stages))
     end else begin : gen_stages_eq0
       `BR_ASSERT_IMPL(tile_valid_a, |tile_valid == valid)
-      `BR_ASSERT_IMPL(tile_addr_a, tile_valid[i] |-> tile_addr[i] == addr[TileAddressWidth-1:0])
-      `BR_ASSERT_IMPL(tile_data_a, tile_valid[i] |-> tile_data[i] == data)
+      `BR_ASSERT_IMPL(tile_addr_a, tile_valid[t] |-> tile_addr[t] == addr[TileAddressWidth-1:0])
+      `BR_ASSERT_IMPL(tile_data_a, tile_valid[t] |-> tile_data[t] == data)
     end
   end
 

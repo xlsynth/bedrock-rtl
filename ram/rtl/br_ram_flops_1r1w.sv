@@ -32,10 +32,10 @@ module br_ram_flops_1r1w #(
     // and less than or equal to BitWidth.
     parameter int BitWidthTiles = 1,
     // Number of pipeline register stages inserted along the write address and read address paths.
-    // Must be a nonnegative power-of-2 that is less than or equal to $clog2(DepthTiles).
+    // Must be at least 0 and less than or equal to $clog2(DepthTiles).
     parameter int AddressStages = 0,
     // Number of pipeline register stages inserted along the read data path.
-    // Must be a nonnegative power-of-2 that is less than or equal to $clog2(BitWidthTiles).
+    // Must be at least 0 and less than or equal to $clog2(BitWidthTiles).
     parameter int ReadDataStages = 0,
     // If 1, then each memory tile has a read-after-write hazard latency of 0 cycles, i.e.,
     // if the tile read and write address are valid and equal on the same cycle then the tile
@@ -83,12 +83,10 @@ module br_ram_flops_1r1w #(
 
   // AddressStages checks
   `BR_ASSERT_STATIC(address_stages_gte0_a, AddressStages >= 0)
-  `BR_ASSERT_STATIC(address_stages_power_of_2_a, br_math::is_power_of_2(AddressStages))
   `BR_ASSERT_STATIC(address_stages_lte_clog2_depth_tiles_a, AddressStages <= $clog2(DepthTiles))
 
   // ReadDataStages checks
   `BR_ASSERT_STATIC(read_data_stages_gte0_a, ReadDataStages >= 0)
-  `BR_ASSERT_STATIC(read_data_stages_power_of_2_a, br_math::is_power_of_2(ReadDataStages))
   `BR_ASSERT_STATIC(read_data_stages_lte_clog2_depth_tiles_a, ReadDataStages <= $clog2
                     (BitWidthTiles))
 
@@ -113,16 +111,19 @@ module br_ram_flops_1r1w #(
 
   // Write pipeline (address + data)
   br_ram_addr_decoder #(
-      .Depth (Depth),
-      .Tiles (DepthTiles),
+      .Depth(Depth),
+      .DataWidth(BitWidth),
+      .Tiles(DepthTiles),
       .Stages(AddressStages)
   ) br_ram_addr_decoder_wr (
       .clk,
       .rst,
       .addr_valid(wr_valid),
       .addr(wr_addr),
-      .tile_addr_valid(tile_wr_valid),
-      .tile_addr(tile_wr_addr)
+      .data(wr_data),
+      .tile_valid(tile_wr_valid),
+      .tile_addr(tile_wr_addr),
+      .tile_data(tile_wr_data)
   );
 
   // TODO(mgottscho): implement write data support
@@ -135,10 +136,12 @@ module br_ram_flops_1r1w #(
   ) br_ram_addr_decoder_rd (
       .clk,
       .rst,
-      .addr_valid(rd_addr_valid),
+      .valid(rd_addr_valid),
       .addr(rd_addr),
+      .data('0),  // unused
       .tile_addr_valid(tile_rd_addr_valid),
-      .tile_addr(tile_rd_addr)
+      .tile_addr(tile_rd_addr),
+      .tile_data()  // unused
   );
 
   // Memory tiles

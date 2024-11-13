@@ -102,7 +102,7 @@ module br_ram_addr_decoder_stage #(
           .in_valid(fork_valid[i]),
           .in({in_addr[OutputAddressWidth-1:0], in_data}),
           .out_valid(out_valid[i]),
-          .out({out_addr[i], out_data}),
+          .out({out_addr[i], out_data[i]}),
           .out_valid_stages(),  // unused
           .out_stages()  // unused
       );
