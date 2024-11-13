@@ -34,6 +34,8 @@ module br_ram_data_rd_pipe #(
     // Number of pipeline register stages inserted along the datapath.
     // Must be at least 0 and less than or equal to $clog2(DepthTiles).
     parameter int Stages = 0,
+    // If 1, then reset datapath flops. Otherwise, datapath flops are not reset.
+    parameter bit EnableReset = 0,
     localparam int TileWidth = br_math::ceil_div(Width, WidthTiles)
 ) (
     // Posedge-triggered clock.
