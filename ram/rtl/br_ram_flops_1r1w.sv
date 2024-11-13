@@ -126,8 +126,6 @@ module br_ram_flops_1r1w #(
       .tile_data(tile_wr_data)
   );
 
-  // TODO(mgottscho): implement write data support
-
   // Read address pipeline
   br_ram_addr_decoder #(
       .Depth (Depth),
@@ -167,7 +165,19 @@ module br_ram_flops_1r1w #(
   end
 
   // Read data pipeline
-  // TODO(mgottscho): implement
+  br_ram_rd_data_pipe #(
+      .Depth(Depth),
+      .DataWidth(BitWidth),
+      .Tiles(DepthTiles),
+      .Stages(ReadDataStages)
+  ) br_ram_rd_data_pipe (
+      .clk,
+      .rst,
+      .tile_valid(tile_rd_data_valid),
+      .tile_data(tile_rd_data),
+      .valid(rd_data_valid),
+      .data(rd_data)
+  );
 
   //------------------------------------------
   // Implementation checks

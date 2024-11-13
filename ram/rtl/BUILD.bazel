@@ -186,6 +186,7 @@ verilog_library(
     deps = [
         ":br_ram_addr_decoder",
         ":br_ram_flops_1r1w_tile",
+        ":br_ram_rd_data_pipe",
         "//macros:br_asserts_internal",
         "//pkg:br_math_pkg",
     ],
@@ -212,3 +213,17 @@ br_verilog_elab_and_lint_test_suite(
     },
     deps = [":br_ram_flops_1r1w"],
 )
+
+verilog_library(
+    name = "br_ram_rd_data_pipe",
+    srcs = ["br_ram_rd_data_pipe.sv"],
+    deps = [
+        "//delay/rtl:br_delay_valid",
+        "//macros:br_asserts_internal",
+        "//macros:br_tieoff",
+        "//macros:br_unused",
+        "//pkg:br_math_pkg",
+    ],
+)
+
+# TODO(mgottscho): elab/lint
