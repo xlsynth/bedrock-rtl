@@ -27,7 +27,7 @@ module br_ram_addr_decoder #(
     // and less than or equal to Depth.
     parameter int Tiles = 1,
     // Number of pipeline register stages inserted along the address path.
-    // Must be a positive power-of-2 that is less than or equal to Tiles.
+    // Must be a nonnegative power-of-2 that is less than or equal to $clog2(Tiles).
     parameter int Stages = 0,
     localparam int AddressWidth = $clog2(Depth),
     localparam int TileDepth = br_math::ceil_div(Depth, Tiles),
@@ -54,7 +54,7 @@ module br_ram_addr_decoder #(
 
   // Stages checks
   `BR_ASSERT_STATIC(stages_gte0_a, Stages >= 0)
-  `BR_ASSERT_STATIC(stages_positive_power_of_2_a, br_math::is_power_of_2(Stages))
+  `BR_ASSERT_STATIC(stages_power_of_2_a, br_math::is_power_of_2(Stages))
   `BR_ASSERT_STATIC(stages_lte_clog2_tiles_a, Stages <= $clog2(Tiles))
 
   // TODO(mgottscho): write more
