@@ -14,25 +14,31 @@
 
 // Bedrock-RTL Math Package
 //
-// Convenient helper functions for basic math operations.
+// Convenient helper functions for basic math operations. Only use these
+// in elaboration-time logic.
 
 // ri lint_check_waive FILE_NAME
 package br_math;
 
   // Integer division with floor rounding.
+  // ri lint_check_waive TWO_STATE_TYPE
   function automatic int floor_div(input int numerator, input int denominator);
     return numerator / denominator;
   endfunction
 
   // Integer division with ceil rounding.
+  // ri lint_check_waive TWO_STATE_TYPE
   function automatic int ceil_div(input int numerator, input int denominator);
+    // ri lint_check_waive ARITH_ARGS DIVIDE
     return (numerator + denominator - 1) / denominator;
   endfunction
 
+  // ri lint_check_waive TWO_STATE_TYPE
   function automatic bit is_power_of_2(input int value);
     return (value & (value - 1)) == 0;
   endfunction
 
+  // ri lint_check_waive TWO_STATE_TYPE
   function automatic bit is_even(input int value);
     return (value & 1'b1) == 0;
   endfunction
