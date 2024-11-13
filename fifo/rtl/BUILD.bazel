@@ -97,6 +97,10 @@ br_verilog_elab_and_lint_test_suite(
             "4",
             "16",
         ],
+        "RegisterPushCredit": [
+            "0",
+            "1",
+        ],
     },
     deps = [":br_fifo_ctrl_1r1w_push_credit"],
 )
@@ -138,6 +142,10 @@ br_verilog_elab_and_lint_test_suite(
         "MaxCredit": [
             "4",
             "16",
+        ],
+        "RegisterPushCredit": [
+            "0",
+            "1",
         ],
     },
     deps = [":br_fifo_flops_push_credit"],

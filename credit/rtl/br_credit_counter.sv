@@ -28,8 +28,11 @@
 // is 1). The counter can increment and decrement on the same cycle, potentially
 // by different amounts.
 //
-// The user is responsible for ensuring the credit counter never overflows or
-// underflows. This is checked by assertions.
+// This module prevents credit underflow by deasserting the decr_ready signal
+// which insufficient credit is available.
+//
+// The user is responsible for ensuring the credit counter never overflows.
+// This is checked by assertions.
 //
 // The actual data (flits) do not flow through this module.
 //
@@ -54,6 +57,7 @@ module br_credit_counter #(
     // Supports independent increment and decrement on the same cycle.
     input  logic                   incr_valid,
     input  logic [ChangeWidth-1:0] incr,
+    output logic                   decr_ready,
     input  logic                   decr_valid,
     input  logic [ChangeWidth-1:0] decr,
     // Reset value for the credit counter
@@ -61,10 +65,9 @@ module br_credit_counter #(
     // Dynamically withhold credits from circulation
     input  logic [ ValueWidth-1:0] withhold,
     // Credit counter state not including increment & withhold.
-    output logic [ ValueWidth-1:0] value,
-    // Dynamic amount of available credit including increment & withhold.
-    output logic [ ValueWidth-1:0] available
+    output logic [ ValueWidth-1:0] value
 );
+  logic [ValueWidth-1:0] available;
 
   //------------------------------------------
   // Integration checks
@@ -92,7 +95,7 @@ module br_credit_counter #(
     // ri lint_check_waive SEQ_COND_ASSIGNS
     if (incr_valid) value_extended_next = value_extended_next + CalcWidth'(incr);
     // ri lint_check_waive SEQ_COND_ASSIGNS ONE_IF_CASE
-    if (decr_valid) value_extended_next = value_extended_next - CalcWidth'(decr);
+    if (decr_valid && decr_ready) value_extended_next = value_extended_next - CalcWidth'(decr);
   end
 
 `endif  // BR_DISABLE_INTG_CHECKS
@@ -111,7 +114,7 @@ module br_credit_counter #(
   // Withhold and available
   `BR_ASSERT_INTG(withhold_in_range_a, withhold <= MaxValue)
   `BR_COVER_INTG(withhold_c, withhold > 0)
-  `BR_ASSERT_INTG(decr_lte_available_a, decr_valid |-> decr <= available)
+  `BR_COVER_INTG(decr_gt_available_c, decr_valid && decr > available)
 
   //------------------------------------------
   // Implementation
@@ -122,20 +125,22 @@ module br_credit_counter #(
   logic [ChangeWidth-1:0] decr_internal;
   logic [ ValueWidth-1:0] value_plus_incr;
   logic [ ValueWidth-1:0] value_next;
+  logic                   value_loaden;
 
   // ri lint_check_waive CONST_ASSIGN
   assign incr_internal = incr_valid ? incr : '0;
   // ri lint_check_waive CONST_ASSIGN
   assign decr_internal = decr_valid ? decr : '0;
   assign value_plus_incr = value + ValueWidth'(incr_internal);
-  assign value_next = value_plus_incr - ValueWidth'(decr_internal);
+  assign value_next = value_plus_incr - (decr_ready ? ValueWidth'(decr_internal) : '0);
+  assign value_loaden = incr_valid || (decr_valid && decr_ready);
 
-  `BR_REGIL(value, value_next, incr_valid || decr_valid, initial_value)
+  `BR_REGIL(value, value_next, value_loaden, initial_value)
 
   // Withhold and available: don't use the decrement in the calculation of
-  // available credits because the user can inspect available before deciding
-  // to decrement.
-  assign available = value_plus_incr > withhold ? value_plus_incr - withhold : '0;
+  // available credits because that would cause a combinational loop
+  assign available  = value_plus_incr > withhold ? value_plus_incr - withhold : '0;
+  assign decr_ready = ValueWidth'(decr_internal) <= available;
 
   //------------------------------------------
   // Implementation checks

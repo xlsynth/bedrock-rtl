@@ -93,6 +93,10 @@ br_verilog_elab_and_lint_test_suite(
             "1",
             "16",
         ],
+        "RegisterPopOutputs": [
+            "0",
+            "1",
+        ],
     },
     deps = [":br_credit_sender"],
 )
@@ -117,6 +121,10 @@ br_verilog_elab_and_lint_test_suite(
         "BitWidth": [
             "1",
             "16",
+        ],
+        "RegisterPushCredit": [
+            "0",
+            "1",
         ],
     },
     deps = [":br_credit_receiver"],

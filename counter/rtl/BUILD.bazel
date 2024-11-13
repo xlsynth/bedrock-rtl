@@ -36,6 +36,16 @@ verilog_library(
     ],
 )
 
+verilog_library(
+    name = "br_counter",
+    srcs = ["br_counter.sv"],
+    deps = [
+        "//macros:br_asserts_internal",
+        "//macros:br_registers",
+        "//macros:br_unused",
+    ],
+)
+
 br_verilog_elab_and_lint_test_suite(
     name = "br_counter_incr_test_suite0",
     params = {
@@ -92,4 +102,37 @@ br_verilog_elab_and_lint_test_suite(
         ],
     },
     deps = [":br_counter_decr"],
+)
+
+br_verilog_elab_and_lint_test_suite(
+    name = "br_counter_test_suite0",
+    params = {
+        "MaxValue": [
+            "1",
+            "2",
+            "3",
+        ],
+        "MaxChange": [
+            "1",
+        ],
+    },
+    deps = [":br_counter"],
+)
+
+br_verilog_elab_and_lint_test_suite(
+    name = "br_counter_test_suite1",
+    params = {
+        "MaxValue": [
+            "2",
+            "3",
+        ],
+        "MaxChange": [
+            "2",
+        ],
+        "EnableWrap": [
+            "0",
+            "1",
+        ],
+    },
+    deps = [":br_counter"],
 )
