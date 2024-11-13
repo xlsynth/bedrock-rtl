@@ -13,7 +13,7 @@
 # limitations under the License.
 
 load("@rules_hdl//verilog:providers.bzl", "verilog_library")
-load("//bazel:verilog.bzl", "verilog_elab_test")
+load("//bazel:verilog.bzl", "verilog_elab_test", "verilog_lint_test")
 
 package(default_visibility = ["//visibility:private"])
 
@@ -34,5 +34,10 @@ verilog_library(
 
 verilog_elab_test(
     name = "br_math_pkg_elab_test",
+    deps = [":br_math_pkg_tb"],
+)
+
+verilog_lint_test(
+    name = "br_math_pkg_lint_test",
     deps = [":br_math_pkg_tb"],
 )

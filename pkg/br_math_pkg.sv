@@ -15,6 +15,8 @@
 // Bedrock-RTL Math Package
 //
 // Convenient helper functions for basic math operations.
+
+// ri lint_check_waive FILE_NAME
 package br_math;
 
   // Integer division with floor rounding.
@@ -29,6 +31,10 @@ package br_math;
 
   function automatic bit is_power_of_2(input int value);
     return (value & (value - 1)) == 0;
+  endfunction
+
+  function automatic bit is_even(input int value);
+    return (value & 1'b1) == 0;
   endfunction
 
 endpackage : br_math

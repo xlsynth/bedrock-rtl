@@ -16,6 +16,7 @@
 
 `include "br_asserts_internal.svh"
 
+// ri lint_check_waive NO_OUTPUT
 module br_math_pkg_tb;
 
   // Test cases for floor_div function
@@ -54,5 +55,15 @@ module br_math_pkg_tb;
   `BR_ASSERT_STATIC(not_ispowerof2_m7_a, br_math::is_power_of_2(-7) == 0)
   `BR_ASSERT_STATIC(not_ispowerof2_m26_a, br_math::is_power_of_2(-26) == 0)
   `BR_ASSERT_STATIC(not_ispowerof2_m27_a, br_math::is_power_of_2(-27) == 0)
+
+  // Test cases for is_even function
+  `BR_ASSERT_STATIC(is_even_0_a, is_even(0) == 1)
+  `BR_ASSERT_STATIC(is_even_1_a, is_even(1) == 0)
+  `BR_ASSERT_STATIC(is_even_2_a, is_even(2) == 1)
+  `BR_ASSERT_STATIC(is_even_3_a, is_even(3) == 0)
+  `BR_ASSERT_STATIC(is_even_neg2_a, is_even(-2) == 1)
+  `BR_ASSERT_STATIC(is_even_neg3_a, is_even(-3) == 0)
+  `BR_ASSERT_STATIC(is_even_maxint_a, is_even($bits(int)'(2 ** 31 - 1)) == 0)
+  `BR_ASSERT_STATIC(is_even_minint_a, is_even($bits(int)'(-2 ** 31)) == 1)
 
 endmodule : br_math_pkg_tb
