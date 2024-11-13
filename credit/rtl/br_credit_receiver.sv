@@ -73,7 +73,9 @@ module br_credit_receiver #(
     // Dynamically withhold credits from circulation
     input  logic [CounterWidth-1:0] credit_withhold,
     // Credit counter state before increment/decrement/withhold.
-    output logic [CounterWidth-1:0] credit_count
+    output logic [CounterWidth-1:0] credit_count,
+    // Dynamic amount of available credit.
+    output logic [CounterWidth-1:0] credit_available
 );
 
   //------------------------------------------
@@ -106,7 +108,8 @@ module br_credit_receiver #(
       .decr(1'b1),
       .initial_value(credit_initial),
       .withhold(credit_withhold),
-      .value(credit_count)
+      .value(credit_count),
+      .available(credit_available)
   );
 
   assign credit_decr_valid = !push_credit_stall;

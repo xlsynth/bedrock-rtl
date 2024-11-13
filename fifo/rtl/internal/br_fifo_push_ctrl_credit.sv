@@ -49,6 +49,7 @@ module br_fifo_push_ctrl_credit #(
     input  logic [CreditWidth-1:0] credit_initial_push,
     input  logic [CreditWidth-1:0] credit_withhold_push,
     output logic [CreditWidth-1:0] credit_count_push,
+    output logic [CreditWidth-1:0] credit_available_push,
 
     // Bypass interface
     // Bypass is only used when EnableBypass is 1, hence lint waiver.
@@ -110,7 +111,8 @@ module br_fifo_push_ctrl_credit #(
       .pop_data(internal_data),
       .credit_initial(credit_initial_push),
       .credit_withhold(credit_withhold_push),
-      .credit_count(credit_count_push)
+      .credit_count(credit_count_push),
+      .credit_available(credit_available_push)
   );
 
   // RAM path
