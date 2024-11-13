@@ -17,7 +17,7 @@
 `include "br_asserts_internal.svh"
 
 module br_ram_addr_decoder_stage #(
-    parameter int InputAddressWidth = 2,  // Width of the address. Must be at least 2.
+    parameter int InputAddressWidth = 1,  // Width of the address. Must be at least 1.
     parameter int Forks = 1,  // Number of output forks. Must be a positive power-of-2.
     parameter bit RegisterOutputs = 0,  // If 1, then pipeline latency is 1 cycle; else, 0 cycles.
     localparam int ForkSelectWidth = $clog2(Forks),  // Must be less than InputAddressWidth.
@@ -40,10 +40,11 @@ module br_ram_addr_decoder_stage #(
   //------------------------------------------
   // Integration checks
   //------------------------------------------
-  `BR_ASSERT_STATIC(input_address_width_gte2_a, InputAddressWidth >= 2)
+  `BR_ASSERT_STATIC(input_address_width_gte1_a, InputAddressWidth >= 1)
   `BR_ASSERT_STATIC(forks_gte1_a, Forks >= 1)
   `BR_ASSERT_STATIC(forks_power_of_2_a, br_math::is_power_of_2(Forks))
   `BR_ASSERT_STATIC(fork_select_width_correct_a, ForkSelectWidth < InputAddressWidth)
+  `BR_ASSERT_STATIC(output_address_gt0_a, OutputAddressWidth > 0)
 
   // TODO(mgottscho): write more
 
@@ -53,7 +54,7 @@ module br_ram_addr_decoder_stage #(
 
   // Base case: single fork, i.e., just a simple delay register
   if (Forks == 1) begin : gen_fork_eq_1
-    `BR_ASSERT_STATIC(output_address_width_correct_a, OutputAddressWidth == InputAddressWidth)
+    `BR_ASSERT_STATIC(output_address_width_ok_a, OutputAddressWidth == InputAddressWidth)
 
     br_delay_valid #(
         .BitWidth (OutputAddressWidth),
@@ -71,7 +72,7 @@ module br_ram_addr_decoder_stage #(
 
     // Common case: multiple forks, i.e., requires decoding to one of the forks (replicated delay registers)
   end else begin : gen_fork_gt_1
-    `BR_ASSERT_STATIC(output_address_width_correct_a, OutputAddressWidth < InputAddressWidth)
+    `BR_ASSERT_STATIC(output_address_width_ok_a, OutputAddressWidth < InputAddressWidth)
 
     localparam int SelectMsb = InputAddressWidth - 1;
     localparam int SelectLsb = (SelectMsb - ForkSelectWidth) + 1;

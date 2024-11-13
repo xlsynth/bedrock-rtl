@@ -21,6 +21,8 @@
 
 `include "br_asserts_internal.svh"
 `include "br_registers.svh"
+`include "br_tieoff.svh"
+`include "br_unused.svh"
 
 module br_ram_addr_decoder #(
     parameter int Depth = 2,  // Number of entries in the RAM. Must be at least 2.
@@ -74,7 +76,10 @@ module br_ram_addr_decoder #(
 
   for (genvar s = 0; s <= Stages; s++) begin : gen_stage
     localparam int InputForks = ForksPerStage ** s;
+    localparam int StageInputAddressWidth = AddressWidth - $clog2(InputForks);
     `BR_ASSERT_STATIC(input_forks_lte_tiles_a, InputForks <= Tiles)
+    `BR_ASSERT_STATIC(stage_input_address_width_range_a,
+                      (StageInputAddressWidth > 0) && (StageInputAddressWidth <= AddressWidth))
 
     for (genvar f = 0; f < InputForks; f++) begin : gen_forks
       if (s == 0) begin : gen_s_eq_0
@@ -83,12 +88,16 @@ module br_ram_addr_decoder #(
 
       end else begin : gen_s_gt_0
         assign stage_in_addr_valid[s][f] = stage_out_addr_valid[s-1][f];
-        assign stage_in_addr[s][f] = stage_out_addr[s-1][f];
+        assign stage_in_addr[s][f] = stage_out_addr[s-1][f][StageInputAddressWidth-1:0];
+
+        `BR_UNUSED_NAMED(stage_out_addr,
+                         stage_out_addr[s-1][f][AddressWidth-1:StageInputAddressWidth])
       end
 
       br_ram_addr_decoder_stage #(
-          .InputAddressWidth(AddressWidth),
+          .InputAddressWidth(StageInputAddressWidth),
           .Forks(ForksPerStage),
+          // TODO(mgottscho): make this a parameter
           .RegisterOutputs(1)
       ) br_ram_addr_decoder_stage (
           .clk,
@@ -99,11 +108,22 @@ module br_ram_addr_decoder #(
           .out_addr(stage_out_addr[s][f])
       );
     end
+
+    // Earlier stages don't drive all forks. Tie off the unused forks.
+    for (genvar f = InputForks; f < Tiles; f++) begin : gen_forks_tied_off
+      `BR_UNUSED_NAMED(stage_in_addr_valid, stage_in_addr_valid[s][f])
+      `BR_UNUSED_NAMED(stage_in_addr, stage_in_addr[s][f])
+      `BR_TIEOFF_ZERO_NAMED(stage_out_addr_valid, stage_out_addr_valid[s][f])
+      `BR_TIEOFF_ZERO_NAMED(stage_out_addr, stage_out_addr[s][f])
+    end
   end
 
-  assign tile_addr_valid = stage_out_addr_valid[Stages];
-  assign tile_addr = stage_out_addr[Stages];
-
+  for (genvar t = 0; t < Tiles; t++) begin : gen_outputs
+    // ri lint_check_waive FULL_RANGE
+    assign tile_addr_valid[t] = stage_out_addr_valid[Stages][t];
+    // ri lint_check_waive FULL_RANGE
+    assign tile_addr[t] = stage_out_addr[Stages][t][TileAddressWidth-1:0];
+  end
 
   //------------------------------------------
   // Implementation checks

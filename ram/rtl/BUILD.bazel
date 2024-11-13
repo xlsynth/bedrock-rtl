@@ -99,28 +99,47 @@ verilog_library(
     deps = [
         ":br_ram_addr_decoder_stage",
         "//macros:br_asserts_internal",
+        "//macros:br_tieoff",
+        "//macros:br_unused",
         "//pkg:br_math_pkg",
     ],
 )
 
 br_verilog_elab_and_lint_test_suite(
-    name = "br_ram_addr_decoder_test_suite_0_stage",
+    name = "br_ram_addr_decoder_test_suite_depth_sweep_stage_0",
     params = {
         "Depth": [
-            # TODO: WIP
-            #"27",
+            "2",
+            "3",
+            "4",
             "32",
         ],
         "Tiles": [
             "1",
-            # TODO: WIP
-            #"2",
-            #"4",
         ],
         "Stages": [
-            # TODO: WIP
             "0",
         ],
     },
     deps = [":br_ram_addr_decoder"],
 )
+
+br_verilog_elab_and_lint_test_suite(
+    name = "br_ram_addr_decoder_test_suite_tile_sweep_stage_0",
+    params = {
+        "Depth": [
+            "29",
+            "32",
+        ],
+        "Tiles": [
+            "2",
+            "4",
+        ],
+        "Stages": [
+            "0",
+        ],
+    },
+    deps = [":br_ram_addr_decoder"],
+)
+
+# TODO(mgottscho): sweep stages
