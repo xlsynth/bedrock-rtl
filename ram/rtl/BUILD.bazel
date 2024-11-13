@@ -215,8 +215,8 @@ br_verilog_elab_and_lint_test_suite(
 )
 
 verilog_library(
-    name = "br_ram_rd_data_pipe",
-    srcs = ["br_ram_rd_data_pipe.sv"],
+    name = "br_ram_data_rd_pipe",
+    srcs = ["br_ram_data_rd_pipe.sv"],
     deps = [
         "//delay/rtl:br_delay_valid",
         "//macros:br_asserts_internal",
@@ -226,4 +226,25 @@ verilog_library(
     ],
 )
 
-# TODO(mgottscho): elab/lint
+br_verilog_elab_and_lint_test_suite(
+    name = "br_ram_data_rd_pipe_test_suite",
+    params = {
+        "Depth": [
+            "2",
+            "7",
+        ],
+        "Width": [
+            "1",
+            "16",
+        ],
+        "DepthTiles": [
+            "1",
+            "2",
+        ],
+        "EnableReset": [
+            "0",
+            "1",
+        ],
+    },
+    deps = [":br_ram_data_rd_pipe"],
+)
