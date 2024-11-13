@@ -116,7 +116,6 @@ module br_ram_addr_decoder #(
       br_ram_addr_decoder_stage #(
           .InputAddressWidth(StageInputAddressWidth),
           .Forks(ForksPerStage),
-          // TODO(mgottscho): make this a parameter
           .RegisterOutputs(1)
       ) br_ram_addr_decoder_stage (
           .clk,
