@@ -144,7 +144,10 @@ module br_ram_addr_decoder #(
       br_ram_addr_decoder_stage #(
           .InputAddressWidth(StageInputAddressWidth),
           .Fanout(FanoutPerStage),
-          .RegisterOutputs(1)
+          // In order to satisfy Latency == Stages - 1, i.e., there should be Stages - 1 pipeline registers
+          // such that when Stages is 1, we simplify to a combinational address decoder and the effect of tiling
+          // goes away.
+          .RegisterOutputs(s < (Stages - 1))
       ) br_ram_addr_decoder_stage (
           .clk,
           .rst,
