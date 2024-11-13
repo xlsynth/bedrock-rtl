@@ -47,10 +47,11 @@ package br_math;
   // ri lint_check_waive TWO_STATE_TYPE
   function automatic int clogb(input int base, input int x);
     if ((base <= 1) || !is_power_of_2(base) || (x <= 0)) begin
+      // ri lint_check_waive MULTI_RETURN
       return -1;  // Indicates an error
+    end else begin
+      return ceil_div($clog2(x), $clog2(base));
     end
-
-    return ceil_div($clog2(x), $clog2(base));
   endfunction
 
 endpackage : br_math
