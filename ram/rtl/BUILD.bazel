@@ -48,3 +48,43 @@ br_verilog_elab_and_lint_test_suite(
     },
     deps = [":br_ram_flops_1r1w_tile"],
 )
+
+verilog_library(
+    name = "br_ram_addr_decoder_stage",
+    srcs = ["br_ram_addr_decoder_stage.sv"],
+    deps = [
+        "//delay/rtl:br_delay_valid",
+        "//macros:br_asserts_internal",
+        "//pkg:br_math_pkg",
+    ],
+)
+
+br_verilog_elab_and_lint_test_suite(
+    name = "br_ram_addr_decoder_stage_test_suite_base_case",
+    params = {
+        "InputAddressWidth": [
+            "7",
+            "8",
+        ],
+        "NumForks": [
+            "1",
+            "2",
+            "4",
+        ],
+    },
+    deps = [":br_ram_addr_decoder_stage"],
+)
+
+br_verilog_elab_and_lint_test_suite(
+    name = "br_ram_addr_decoder_stage_test_suite_common_case",
+    params = {
+        "InputAddressWidth": [
+            "2",
+        ],
+        "NumForks": [
+            "1",
+            "2",
+        ],
+    },
+    deps = [":br_ram_addr_decoder_stage"],
+)
