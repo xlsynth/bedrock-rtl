@@ -75,7 +75,6 @@ module br_fifo_flops_push_credit_tb ();
       .credit_initial_push,
       .credit_withhold_push('0),
       .credit_count_push(),
-      .credit_available_push(),
       .empty(),
       .empty_next(),
       .items(),
@@ -97,8 +96,7 @@ module br_fifo_flops_push_credit_tb ();
       .pop_data(cv_push_data),
       .credit_initial('0),
       .credit_withhold('0),
-      .credit_count(sender_credit),
-      .credit_available()
+      .credit_count(sender_credit)
   );
 
   br_delay_nr #(
