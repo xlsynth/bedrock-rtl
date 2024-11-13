@@ -32,7 +32,6 @@ verilog_library(
     deps = [
         "//macros:br_asserts_internal",
         "//macros:br_registers",
-        "//macros:br_unused",
     ],
 )
 
