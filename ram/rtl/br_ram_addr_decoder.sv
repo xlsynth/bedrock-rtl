@@ -30,8 +30,13 @@ module br_ram_addr_decoder #(
     // Number of tiles along the depth dimension. Must be a positive power-of-2
     // and less than or equal to Depth.
     parameter int Tiles = 1,
-    // Must be at least 1, a positive-power-of-2, and at most Tiles.
+    // Must be at least 1 and a positive-power-of-2 such that FanoutPerStage ** Stages == Tiles
+    // for some positive integer Stages.
     // High FanoutPerStage results in lower latency but worse static timing.
+    //
+    // TODO(mgottscho): Relax this requirement so we can achieve design points with any desired
+    // FanoutPerStage and resulting number of stages with a ragged decoder,
+    // i.e., cases where FanoutPerStage ** Stages > Tiles rather than FanoutPerStage ** Stages == Tiles.
     parameter int FanoutPerStage = Tiles,
     localparam int Stages = (FanoutPerStage > 1) ? br_math::clogb(FanoutPerStage, Tiles) : 1,
     localparam int AddressWidth = $clog2(Depth),
@@ -65,16 +70,14 @@ module br_ram_addr_decoder #(
   `BR_ASSERT_STATIC(fanout_per_stage_gte_1_a, FanoutPerStage >= 1)
   `BR_ASSERT_STATIC(fanout_per_stage_power_of_2_a, br_math::is_power_of_2(FanoutPerStage))
   `BR_ASSERT_STATIC(fanout_per_stage_lte_tiles_a, FanoutPerStage <= Tiles)
+  `BR_ASSERT_STATIC(derived_stages_gte1_a, Stages >= 1)
+  `BR_ASSERT_STATIC(fanout_per_stage_pow_check_a, (FanoutPerStage ** Stages) == Tiles)
 
   `BR_ASSERT(addr_in_range_a, valid |-> addr < Depth)
 
   //------------------------------------------
   // Implementation
   //------------------------------------------
-
-  // Stages checks
-  `BR_ASSERT_STATIC(stages_gte1_a, Stages >= 1)
-  `BR_ASSERT_STATIC(stages_pow_check_a, (FanoutPerStage ** Stages) == Tiles)
 
   // Ineffective net waivers are because we make a big 2D array of Stages x Tiles but
   // we don't use all of the Tiles dimension until the last stage. It's not a very
