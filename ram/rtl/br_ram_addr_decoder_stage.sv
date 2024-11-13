@@ -19,7 +19,11 @@
 `include "br_asserts_internal.svh"
 
 module br_ram_addr_decoder_stage #(
-    parameter int InputAddressWidth = 1,  // Width of the address. Must be at least 1.
+    // Width of the address. Must be at least 1.
+    parameter int InputAddressWidth = 1,
+    // Sideband signals to pipeline in lockstep with the address decoding.
+    // Safe to tie-off if not used. Must be at least 1.
+    parameter int DataWidth = 1,
     parameter int Forks = 1,  // Number of output forks. Must be a positive power-of-2.
     parameter bit RegisterOutputs = 0,  // If 1, then pipeline latency is 1 cycle; else, 0 cycles.
     localparam int ForkSelectWidth = $clog2(Forks),  // Must be less than InputAddressWidth.
@@ -33,6 +37,7 @@ module br_ram_addr_decoder_stage #(
     // Can be unused if RegisterOutputs == 0.
     // ri lint_check_waive HIER_NET_NOT_READ HIER_BRANCH_NOT_READ
     input  logic                                                 rst,
+    // TODO(mgottscho): WIP: datapath
     input  logic                                                 in_addr_valid,
     input  logic [InputAddressWidth-1:0]                         in_addr,
     output logic [            Forks-1:0]                         out_addr_valid,
