@@ -106,16 +106,20 @@ module br_ram_addr_decoder #(
     `BR_ASSERT_STATIC(stage_output_address_width_range_a,
                       (StageOutputAddressWidth > 0) && (StageOutputAddressWidth <= AddressWidth))
 
-    for (genvar f = 0; f < InputFanout; f++) begin : gen_input_fanout
+    // TODO(mgottscho): BUG: decoder stage needs to concat output signals.
+    // Right now there is no cross-tile fanout actually happening in any stage.
+    // Getting elab errors about port width mismatches. Probably need a genvar
+    // loop somewhere over the OutputFanout parameter.
+    for (genvar ifo = 0; ifo < InputFanout; ifo++) begin : gen_input_fanout
       // Full width inter-stage wiring
       if (s == 0) begin : gen_s_eq_0
-        assign stage_in_valid[s][f] = valid;
-        assign stage_in_addr[s][f]  = addr;
-        assign stage_in_data[s][f]  = data;
+        assign stage_in_valid[s][ifo] = valid;
+        assign stage_in_addr[s][ifo]  = addr;
+        assign stage_in_data[s][ifo]  = data;
       end else begin : gen_s_gt_0
-        assign stage_in_valid[s][f] = stage_out_valid[s-1][f];
-        assign stage_in_addr[s][f]  = stage_out_addr[s-1][f];
-        assign stage_in_data[s][f]  = stage_out_data[s-1][f];
+        assign stage_in_valid[s][ifo] = stage_out_valid[s-1][ifo];
+        assign stage_in_addr[s][ifo]  = stage_out_addr[s-1][ifo];
+        assign stage_in_data[s][ifo]  = stage_out_data[s-1][ifo];
       end
 
       // Trim address widths
@@ -123,10 +127,10 @@ module br_ram_addr_decoder #(
       logic [StageOutputAddressWidth-1:0] stage_out_addr_trim;
 
       // ri lint_check_waive FULL_RANGE
-      assign stage_in_addr_trim = stage_in_addr[s][f][StageInputAddressWidth-1:0];
+      assign stage_in_addr_trim = stage_in_addr[s][ifo][StageInputAddressWidth-1:0];
       if (AddressWidth > StageInputAddressWidth) begin : gen_unused_in
         `BR_UNUSED_NAMED(stage_in_addr_msbs,
-                         stage_in_addr[s][f][AddressWidth-1:StageInputAddressWidth])
+                         stage_in_addr[s][ifo][AddressWidth-1:StageInputAddressWidth])
       end
 
       br_ram_addr_decoder_stage #(
@@ -136,37 +140,37 @@ module br_ram_addr_decoder #(
       ) br_ram_addr_decoder_stage (
           .clk,
           .rst,
-          .in_valid (stage_in_valid[s][f]),
+          .in_valid (stage_in_valid[s][ifo]),
           .in_addr  (stage_in_addr_trim),
-          .in_data  (stage_in_data[s][f]),
-          .out_valid(stage_out_valid[s][f]),
+          .in_data  (stage_in_data[s][ifo]),
+          .out_valid(stage_out_valid[s][ifo]),
           .out_addr (stage_out_addr_trim),
-          .out_data (stage_out_data[s][f])
+          .out_data (stage_out_data[s][ifo])
       );
 
       // ri lint_check_waive FULL_RANGE
-      assign stage_out_addr[s][f][StageOutputAddressWidth-1:0] = stage_out_addr_trim;
+      assign stage_out_addr[s][ifo][StageOutputAddressWidth-1:0] = stage_out_addr_trim;
       if (AddressWidth > StageOutputAddressWidth) begin : gen_unused_out
         `BR_TIEOFF_ZERO_NAMED(stage_out_addr_msbs,
-                              stage_out_addr[s][f][AddressWidth-1:StageOutputAddressWidth])
+                              stage_out_addr[s][ifo][AddressWidth-1:StageOutputAddressWidth])
       end
     end
 
     // Earlier stages don't drive all forks. Tie off the unused forks.
-    for (genvar f = InputFanout; f < Tiles; f++) begin : gen_fanouts_tied_off
-      `BR_TIEOFF_ZERO_NAMED(stage_in_valid, stage_in_valid[s][f])
-      `BR_TIEOFF_ZERO_NAMED(stage_in_addr, stage_in_addr[s][f])
-      `BR_TIEOFF_ZERO_NAMED(stage_in_data, stage_in_data[s][f])
-      `BR_UNUSED_NAMED(stage_in_valid, stage_in_valid[s][f])
-      `BR_UNUSED_NAMED(stage_in_addr, stage_in_addr[s][f])
-      `BR_UNUSED_NAMED(stage_in_data, stage_in_data[s][f])
+    for (genvar ifo = InputFanout; ifo < Tiles; ifo++) begin : gen_input_fanouts_tied_off
+      `BR_TIEOFF_ZERO_NAMED(stage_in_valid, stage_in_valid[s][ifo])
+      `BR_TIEOFF_ZERO_NAMED(stage_in_addr, stage_in_addr[s][ifo])
+      `BR_TIEOFF_ZERO_NAMED(stage_in_data, stage_in_data[s][ifo])
+      `BR_UNUSED_NAMED(stage_in_valid, stage_in_valid[s][ifo])
+      `BR_UNUSED_NAMED(stage_in_addr, stage_in_addr[s][ifo])
+      `BR_UNUSED_NAMED(stage_in_data, stage_in_data[s][ifo])
 
-      `BR_TIEOFF_ZERO_NAMED(stage_out_valid, stage_out_valid[s][f])
-      `BR_TIEOFF_ZERO_NAMED(stage_out_addr, stage_out_addr[s][f])
-      `BR_TIEOFF_ZERO_NAMED(stage_out_data, stage_out_data[s][f])
-      `BR_UNUSED_NAMED(stage_out_valid, stage_out_valid[s][f])
-      `BR_UNUSED_NAMED(stage_out_addr, stage_out_addr[s][f])
-      `BR_UNUSED_NAMED(stage_out_data, stage_out_data[s][f])
+      `BR_TIEOFF_ZERO_NAMED(stage_out_valid, stage_out_valid[s][ifo])
+      `BR_TIEOFF_ZERO_NAMED(stage_out_addr, stage_out_addr[s][ifo])
+      `BR_TIEOFF_ZERO_NAMED(stage_out_data, stage_out_data[s][ifo])
+      `BR_UNUSED_NAMED(stage_out_valid, stage_out_valid[s][ifo])
+      `BR_UNUSED_NAMED(stage_out_addr, stage_out_addr[s][ifo])
+      `BR_UNUSED_NAMED(stage_out_data, stage_out_data[s][ifo])
     end
   end
 
