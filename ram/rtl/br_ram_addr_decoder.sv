@@ -162,34 +162,32 @@ module br_ram_addr_decoder #(
         localparam int StageOutTileIndex = (ifo * FanoutPerStage) + ofo;
 
         assign stage_out_valid[s][StageOutTileIndex] = local_stage_out_valid[ifo][ofo];
-        // ri lint_check_waive ZERO_REP
         assign stage_out_addr[s][StageOutTileIndex] = {
-          {StageOutputAddressPadWidth{1'b0}}, local_stage_out_addr[ifo][ofo]
+          // ri lint_check_waive ZERO_REP
+          {StageOutputAddressPadWidth{1'b0}},
+          local_stage_out_addr[ifo][ofo]
         };
-        if (AddressWidth > StageOutputAddressWidth) begin : gen_unused_out
-          `BR_TIEOFF_ZERO_NAMED(
-              stage_out_addr_msbs,
-              stage_out_addr[s][StageOutTileIndex][AddressWidth-1:StageOutputAddressWidth])
-        end
         assign stage_out_data[s][StageOutTileIndex] = local_stage_out_data[ifo][ofo];
       end
     end
 
     // Earlier stages don't drive all forks. Tie off the unused forks.
-    for (genvar ifo = InputFanout; ifo < Tiles; ifo++) begin : gen_input_fanouts_tied_off
-      `BR_TIEOFF_ZERO_NAMED(stage_in_valid, stage_in_valid[s][ifo])
-      `BR_TIEOFF_ZERO_NAMED(stage_in_addr, stage_in_addr[s][ifo])
-      `BR_TIEOFF_ZERO_NAMED(stage_in_data, stage_in_data[s][ifo])
-      `BR_UNUSED_NAMED(stage_in_valid, stage_in_valid[s][ifo])
-      `BR_UNUSED_NAMED(stage_in_addr, stage_in_addr[s][ifo])
-      `BR_UNUSED_NAMED(stage_in_data, stage_in_data[s][ifo])
+    for (genvar t = InputFanout; t < Tiles; t++) begin : gen_stage_in_tieoffs
+      `BR_TIEOFF_ZERO_NAMED(stage_in_valid, stage_in_valid[s][t])
+      `BR_TIEOFF_ZERO_NAMED(stage_in_addr, stage_in_addr[s][t])
+      `BR_TIEOFF_ZERO_NAMED(stage_in_data, stage_in_data[s][t])
+      `BR_UNUSED_NAMED(stage_in_valid, stage_in_valid[s][t])
+      `BR_UNUSED_NAMED(stage_in_addr, stage_in_addr[s][t])
+      `BR_UNUSED_NAMED(stage_in_data, stage_in_data[s][t])
+    end
 
-      `BR_TIEOFF_ZERO_NAMED(stage_out_valid, stage_out_valid[s][ifo])
-      `BR_TIEOFF_ZERO_NAMED(stage_out_addr, stage_out_addr[s][ifo])
-      `BR_TIEOFF_ZERO_NAMED(stage_out_data, stage_out_data[s][ifo])
-      `BR_UNUSED_NAMED(stage_out_valid, stage_out_valid[s][ifo])
-      `BR_UNUSED_NAMED(stage_out_addr, stage_out_addr[s][ifo])
-      `BR_UNUSED_NAMED(stage_out_data, stage_out_data[s][ifo])
+    for (genvar t = InputFanout + FanoutPerStage; t < Tiles; t++) begin : gen_stage_out_tieoffs
+      `BR_TIEOFF_ZERO_NAMED(stage_out_valid, stage_out_valid[s][t])
+      `BR_TIEOFF_ZERO_NAMED(stage_out_addr, stage_out_addr[s][t])
+      `BR_TIEOFF_ZERO_NAMED(stage_out_data, stage_out_data[s][t])
+      `BR_UNUSED_NAMED(stage_out_valid, stage_out_valid[s][t])
+      `BR_UNUSED_NAMED(stage_out_addr, stage_out_addr[s][t])
+      `BR_UNUSED_NAMED(stage_out_data, stage_out_data[s][t])
     end
   end
 
