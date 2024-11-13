@@ -27,4 +27,8 @@ package br_math;
     return (numerator + denominator - 1) / denominator;
   endfunction
 
+  function automatic bit is_power_of_2(input int value);
+    return (value & (value - 1)) == 0;
+  endfunction
+
 endpackage : br_math
