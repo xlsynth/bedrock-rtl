@@ -13,6 +13,8 @@
 // limitations under the License.
 
 // Bedrock-RTL Address Decoder Stage
+//
+// TODO(mgottscho): description
 
 `include "br_asserts_internal.svh"
 

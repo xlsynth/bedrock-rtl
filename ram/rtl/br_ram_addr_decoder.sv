@@ -12,12 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Bedrock-RTL Flop-RAM (1R1W)
+// Bedrock-RTL Address Decoder
 //
-// A one-read/one-write (1R1W, also known as pseudo-dual-port) flop-based RAM
-// that is constructed out of pipelined tiles.
-//
-// Parameterized write, read, and read-after-write hazard latencies.
+// TODO(mgottscho): description
 
 `include "br_asserts_internal.svh"
 `include "br_registers.svh"
