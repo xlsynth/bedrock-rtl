@@ -142,4 +142,40 @@ br_verilog_elab_and_lint_test_suite(
     deps = [":br_ram_addr_decoder"],
 )
 
+br_verilog_elab_and_lint_test_suite(
+    name = "br_ram_addr_decoder_test_suite_tile_sweep_stage_1",
+    params = {
+        "Depth": [
+            "64",
+        ],
+        "Tiles": [
+            "2",
+            "4",
+        ],
+        "Stages": [
+            "1",
+        ],
+    },
+    deps = [":br_ram_addr_decoder"],
+)
+
+br_verilog_elab_and_lint_test_suite(
+    name = "br_ram_addr_decoder_test_suitestage_sweep",
+    params = {
+        "Depth": [
+            "128",
+        ],
+        "Tiles": [
+            "4",
+            "8",
+        ],
+        "Stages": [
+            "1",
+            "2",
+            "3",
+        ],
+    },
+    deps = [":br_ram_addr_decoder"],
+)
+
 # TODO(mgottscho): sweep stages

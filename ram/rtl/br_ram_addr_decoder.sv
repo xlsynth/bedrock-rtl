@@ -150,7 +150,7 @@ module br_ram_addr_decoder #(
   `BR_ASSERT_IMPL(tile_addr_valid_onehot0_a, $onehot0(tile_addr_valid))
   `BR_ASSERT_IMPL(latency_a, addr_valid |-> ##Stages $onehot(tile_addr_valid))
   if (Stages > 0) begin : gen_causality_stages_gt0
-    `BR_ASSERT_IMPL(tile_addr_valid_sanity_a, |tile_addr_valid |-> $past(addr_valid, NumStages))
+    `BR_ASSERT_IMPL(tile_addr_valid_sanity_a, |tile_addr_valid |-> $past(addr_valid, Stages))
   end else begin : gen_causality_stages_eq0
     `BR_ASSERT_IMPL(tile_addr_valid_sanity_a, |tile_addr_valid == addr_valid)
   end
