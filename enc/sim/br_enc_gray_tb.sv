@@ -24,8 +24,10 @@ module br_enc_gray_tb;
   logic clk;
   logic rst;
   logic [BitWidth-1:0] counter;
+  logic [BitWidth-1:0] counter_prev;
   logic [BitWidth-1:0] counter_bin2gray;
   logic [BitWidth-1:0] counter_gray2bin;
+  logic [BitWidth-1:0] counter_bin2gray_prev;
 
   br_enc_bin2gray #(
       .BitWidth(BitWidth)
@@ -42,6 +44,7 @@ module br_enc_gray_tb;
   );
 
   `BR_REG(counter, counter + 1)
+  `BR_REG(counter_bin2gray_prev, counter_bin2gray)
 
   // Clock generation
   initial begin
@@ -63,6 +66,12 @@ module br_enc_gray_tb;
       if (counter != counter_gray2bin) begin
         $error("Time: %0t | Counter: %0h | Gray Output: %0h | Actual Output: %0h", $time, counter,
                counter_bin2gray, counter_gray2bin);
+        errors = errors + 1;
+      end
+
+      if ($countones(counter_bin2gray ^ counter_bin2gray_prev) > 1) begin
+        $error("Time: %0t | Counter: %0h | Gray Output: %0h | Previous Gray Output: %0h", $time,
+               counter, counter_bin2gray, counter_bin2gray_prev);
         errors = errors + 1;
       end
 
