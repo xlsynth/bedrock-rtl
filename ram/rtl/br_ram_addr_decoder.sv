@@ -64,7 +64,7 @@ module br_ram_addr_decoder #(
   `BR_ASSERT_STATIC(stages_power_of_2_a, br_math::is_power_of_2(Stages))
   `BR_ASSERT_STATIC(stages_lte_clog2_tiles_a, Stages <= $clog2(Tiles))
 
-  // TODO(mgottscho): write more
+  `BR_ASSERT(addr_in_range_a, valid |-> addr < Depth)
 
   //------------------------------------------
   // Implementation
@@ -147,10 +147,10 @@ module br_ram_addr_decoder #(
 
   for (genvar t = 0; t < Tiles; t++) begin : gen_outputs
     // ri lint_check_waive FULL_RANGE
-    assign tile_addr_valid[t] = stage_out_valid[Stages][t];
+    assign tile_valid[t] = stage_out_valid[Stages][t];
     // ri lint_check_waive FULL_RANGE
-    assign tile_addr[t] = stage_out_addr[Stages][t][TileAddressWidth-1:0];
-    assign tile_data[t] = stage_out_data[Stages][t];
+    assign tile_addr[t]  = stage_out_addr[Stages][t][TileAddressWidth-1:0];
+    assign tile_data[t]  = stage_out_data[Stages][t];
     if ((AddressWidth - 1) >= TileAddressWidth) begin : gen_unused
       `BR_UNUSED_NAMED(stage_out_addr_msbs,
                        stage_out_addr[Stages][t][AddressWidth-1:TileAddressWidth])
@@ -160,12 +160,22 @@ module br_ram_addr_decoder #(
   //------------------------------------------
   // Implementation checks
   //------------------------------------------
-  `BR_ASSERT_IMPL(tile_addr_valid_onehot0_a, $onehot0(tile_addr_valid))
-  `BR_ASSERT_IMPL(latency_a, addr_valid |-> ##Stages $onehot(tile_addr_valid))
-  if (Stages > 0) begin : gen_causality_stages_gt0
-    `BR_ASSERT_IMPL(tile_addr_valid_sanity_a, |tile_addr_valid |-> $past(addr_valid, Stages))
-  end else begin : gen_causality_stages_eq0
-    `BR_ASSERT_IMPL(tile_addr_valid_sanity_a, |tile_addr_valid == addr_valid)
+  `BR_ASSERT_IMPL(tile_valid_onehot0_a, $onehot0(tile_valid))
+  `BR_ASSERT_IMPL(latency_a, valid |-> ##Stages $onehot(tile_valid))
+
+  for (genvar t = 0; t < Tiles; t++) begin : gen_tile_checks
+    `BR_ASSERT_IMPL(tile_addr_in_range_a, tile_valid[i] |-> tile_addr[i] < TileDepth)
+    // Generate branch needed because we cannot use a zero delay in a $past expression.
+    if (Stages > 0) begin : gen_stages_gt0
+      `BR_ASSERT_IMPL(tile_valid_a, tile_valid[i] |-> $past(valid, Stages))
+      `BR_ASSERT_IMPL(tile_addr_a,
+                      tile_valid[i] |-> tile_addr[i] == $past(addr[TileAddressWidth-1:0], Stages))
+      `BR_ASSERT_IMPL(tile_data_a, tile_valid[i] |-> tile_data[i] == $past(data, Stages))
+    end else begin : gen_stages_eq0
+      `BR_ASSERT_IMPL(tile_valid_a, |tile_valid == valid)
+      `BR_ASSERT_IMPL(tile_addr_a, tile_valid[i] |-> tile_addr[i] == addr[TileAddressWidth-1:0])
+      `BR_ASSERT_IMPL(tile_data_a, tile_valid[i] |-> tile_data[i] == data)
+    end
   end
 
   // Rely on submodule implementation checks
