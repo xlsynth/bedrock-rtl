@@ -160,7 +160,7 @@ br_verilog_elab_and_lint_test_suite(
 )
 
 br_verilog_elab_and_lint_test_suite(
-    name = "br_ram_addr_decoder_test_suitestage_sweep",
+    name = "br_ram_addr_decoder_test_suite_stage_sweep",
     params = {
         "Depth": [
             "128",
@@ -179,3 +179,36 @@ br_verilog_elab_and_lint_test_suite(
 )
 
 # TODO(mgottscho): sweep stages
+
+verilog_library(
+    name = "br_ram_flops_1r1w",
+    srcs = ["br_ram_flops_1r1w.sv"],
+    deps = [
+        ":br_ram_addr_decoder",
+        ":br_ram_flops_1r1w_tile",
+        "//macros:br_asserts_internal",
+        "//pkg:br_math_pkg",
+    ],
+)
+
+br_verilog_elab_and_lint_test_suite(
+    name = "br_ram_flops_1r1w_test_suite_sweep_depth_bitwidth",
+    params = {
+        "Depth": [
+            "123",
+            "128",
+        ],
+        "BitWidth": [
+            "1",
+            "7",
+            "32",
+        ],
+        "DepthTiles": ["1"],
+        "BitWidthTiles": ["1"],
+        "AddressStages": ["1"],
+        "ReadDataStages": ["0"],
+        "TileEnableBypass": ["0"],
+        "EnableMemReset": ["0"],
+    },
+    deps = [":br_ram_flops_1r1w"],
+)
