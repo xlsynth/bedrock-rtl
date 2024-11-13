@@ -98,6 +98,7 @@ module br_ram_addr_decoder #(
     localparam int OutputFanout = FanoutPerStage ** (s + 1);
     localparam int StageInputAddressWidth = AddressWidth - $clog2(InputFanout);
     localparam int StageOutputAddressWidth = AddressWidth - $clog2(OutputFanout);
+    localparam int StageOutputAddressPadWidth = AddressWidth - StageOutputAddressWidth;
 
     `BR_ASSERT_STATIC(input_fanout_lte_tiles_a, InputFanout <= Tiles)
     `BR_ASSERT_STATIC(output_fanout_lte_tiles_a, OutputFanout <= Tiles)
@@ -105,6 +106,17 @@ module br_ram_addr_decoder #(
                       (StageInputAddressWidth > 0) && (StageInputAddressWidth <= AddressWidth))
     `BR_ASSERT_STATIC(stage_output_address_width_range_a,
                       (StageOutputAddressWidth > 0) && (StageOutputAddressWidth <= AddressWidth))
+
+    // Local stage inputs
+    logic [InputFanout-1:0] local_stage_in_valid;
+    logic [InputFanout-1:0][StageInputAddressWidth-1:0] local_stage_in_addr;
+    logic [InputFanout-1:0][DataWidth-1:0] local_stage_in_data;
+
+    // Local stage outputs
+    logic [InputFanout-1:0][FanoutPerStage-1:0] local_stage_out_valid;
+    logic [InputFanout-1:0][FanoutPerStage-1:0][StageOutputAddressWidth-1:0] local_stage_out_addr;
+    logic [InputFanout-1:0][FanoutPerStage-1:0][DataWidth-1:0] local_stage_out_data;
+
 
     // TODO(mgottscho): BUG: decoder stage needs to concat output signals.
     // Right now there is no cross-tile fanout actually happening in any stage.
@@ -122,16 +134,14 @@ module br_ram_addr_decoder #(
         assign stage_in_data[s][ifo]  = stage_out_data[s-1][ifo];
       end
 
-      // Trim address widths
-      logic [ StageInputAddressWidth-1:0] stage_in_addr_trim;
-      logic [StageOutputAddressWidth-1:0] stage_out_addr_trim;
-
+      assign local_stage_in_valid[ifo] = stage_in_valid[s][ifo];
       // ri lint_check_waive FULL_RANGE
-      assign stage_in_addr_trim = stage_in_addr[s][ifo][StageInputAddressWidth-1:0];
+      assign local_stage_in_addr[ifo]  = stage_in_addr[s][ifo][StageInputAddressWidth-1:0];
       if (AddressWidth > StageInputAddressWidth) begin : gen_unused_in
         `BR_UNUSED_NAMED(stage_in_addr_msbs,
                          stage_in_addr[s][ifo][AddressWidth-1:StageInputAddressWidth])
       end
+      assign local_stage_in_data[ifo] = stage_in_data[s][ifo];
 
       br_ram_addr_decoder_stage #(
           .InputAddressWidth(StageInputAddressWidth),
@@ -140,19 +150,28 @@ module br_ram_addr_decoder #(
       ) br_ram_addr_decoder_stage (
           .clk,
           .rst,
-          .in_valid (stage_in_valid[s][ifo]),
-          .in_addr  (stage_in_addr_trim),
-          .in_data  (stage_in_data[s][ifo]),
-          .out_valid(stage_out_valid[s][ifo]),
-          .out_addr (stage_out_addr_trim),
-          .out_data (stage_out_data[s][ifo])
+          .in_valid (local_stage_in_valid[ifo]),
+          .in_addr  (local_stage_in_addr[ifo]),
+          .in_data  (local_stage_in_data[ifo]),
+          .out_valid(local_stage_out_valid[ifo]),
+          .out_addr (local_stage_out_addr[ifo]),
+          .out_data (local_stage_out_data[ifo])
       );
 
-      // ri lint_check_waive FULL_RANGE
-      assign stage_out_addr[s][ifo][StageOutputAddressWidth-1:0] = stage_out_addr_trim;
-      if (AddressWidth > StageOutputAddressWidth) begin : gen_unused_out
-        `BR_TIEOFF_ZERO_NAMED(stage_out_addr_msbs,
-                              stage_out_addr[s][ifo][AddressWidth-1:StageOutputAddressWidth])
+      for (genvar ofo = 0; ofo < FanoutPerStage; ofo++) begin : gen_output_fanout
+        localparam int StageOutTileIndex = (ifo * FanoutPerStage) + ofo;
+
+        assign stage_out_valid[s][StageOutTileIndex] = local_stage_out_valid[ifo][ofo];
+        // ri lint_check_waive ZERO_REP
+        assign stage_out_addr[s][StageOutTileIndex] = {
+          {StageOutputAddressPadWidth{1'b0}}, local_stage_out_addr[ifo][ofo]
+        };
+        if (AddressWidth > StageOutputAddressWidth) begin : gen_unused_out
+          `BR_TIEOFF_ZERO_NAMED(
+              stage_out_addr_msbs,
+              stage_out_addr[s][StageOutTileIndex][AddressWidth-1:StageOutputAddressWidth])
+        end
+        assign stage_out_data[s][StageOutTileIndex] = local_stage_out_data[ifo][ofo];
       end
     end
 
