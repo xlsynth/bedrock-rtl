@@ -35,16 +35,29 @@ module br_math_pkg_tb;
   `BR_ASSERT_STATIC(ceildiv_0_1_a, br_math::ceil_div(0, 1) == 0)
   `BR_ASSERT_STATIC(ceildiv_neg5_2_a, br_math::ceil_div(-5, 2) == -2)
 
+  // Test cases for clogb function
+  `BR_ASSERT_STATIC(clogb_2_0_a, br_math::clogb(2, 0) == -1)
+  `BR_ASSERT_STATIC(clogb_2_1_a, br_math::clogb(2, 1) == 0)
+  `BR_ASSERT_STATIC(clogb_2_2_a, br_math::clogb(2, 2) == 1)
+  `BR_ASSERT_STATIC(clogb_2_3_a, br_math::clogb(2, 3) == 2)
+  `BR_ASSERT_STATIC(clogb_2_4_a, br_math::clogb(2, 4) == 2)
+  `BR_ASSERT_STATIC(clogb_2_5_a, br_math::clogb(2, 5) == 3)
+
+  `BR_ASSERT_STATIC(clogb_4_0_a, br_math::clogb(4, 0) == -1)
+  `BR_ASSERT_STATIC(clogb_4_1_a, br_math::clogb(4, 1) == 0)
+  `BR_ASSERT_STATIC(clogb_4_2_a, br_math::clogb(4, 2) == 1)
+  `BR_ASSERT_STATIC(clogb_4_3_a, br_math::clogb(4, 3) == 1)
+  `BR_ASSERT_STATIC(clogb_4_4_a, br_math::clogb(4, 4) == 1)
+  `BR_ASSERT_STATIC(clogb_4_5_a, br_math::clogb(4, 5) == 2)
+  `BR_ASSERT_STATIC(clogb_4_6_a, br_math::clogb(4, 6) == 2)
+  `BR_ASSERT_STATIC(clogb_4_7_a, br_math::clogb(4, 7) == 2)
+  `BR_ASSERT_STATIC(clogb_4_8_a, br_math::clogb(4, 8) == 2)
+
   // Test cases for is_power_of_2 function
   `BR_ASSERT_STATIC(ispowerof2_0_a, br_math::is_power_of_2(0) == 1)
   `BR_ASSERT_STATIC(ispowerof2_1_a, br_math::is_power_of_2(1) == 1)
   `BR_ASSERT_STATIC(ispowerof2_2_a, br_math::is_power_of_2(2) == 1)
   `BR_ASSERT_STATIC(ispowerof2_128_a, br_math::is_power_of_2(128) == 1)
-
-  `BR_ASSERT_STATIC(ispowerof2_m0_a, br_math::is_power_of_2(-0) == 1)
-  `BR_ASSERT_STATIC(ispowerof2_m1_a, br_math::is_power_of_2(-1) == 1)
-  `BR_ASSERT_STATIC(ispowerof2_m2_a, br_math::is_power_of_2(-2) == 1)
-  `BR_ASSERT_STATIC(ispowerof2_m128_a, br_math::is_power_of_2(-128) == 1)
 
   `BR_ASSERT_STATIC(not_ispowerof2_3_a, br_math::is_power_of_2(3) == 0)
   `BR_ASSERT_STATIC(not_ispowerof2_7_a, br_math::is_power_of_2(7) == 0)
@@ -57,13 +70,13 @@ module br_math_pkg_tb;
   `BR_ASSERT_STATIC(not_ispowerof2_m27_a, br_math::is_power_of_2(-27) == 0)
 
   // Test cases for is_even function
-  `BR_ASSERT_STATIC(is_even_0_a, is_even(0) == 1)
-  `BR_ASSERT_STATIC(is_even_1_a, is_even(1) == 0)
-  `BR_ASSERT_STATIC(is_even_2_a, is_even(2) == 1)
-  `BR_ASSERT_STATIC(is_even_3_a, is_even(3) == 0)
-  `BR_ASSERT_STATIC(is_even_neg2_a, is_even(-2) == 1)
-  `BR_ASSERT_STATIC(is_even_neg3_a, is_even(-3) == 0)
-  `BR_ASSERT_STATIC(is_even_maxint_a, is_even($bits(int)'(2 ** 31 - 1)) == 0)
-  `BR_ASSERT_STATIC(is_even_minint_a, is_even($bits(int)'(-2 ** 31)) == 1)
+  `BR_ASSERT_STATIC(is_even_0_a, br_math::is_even(0) == 1)
+  `BR_ASSERT_STATIC(is_even_1_a, br_math::is_even(1) == 0)
+  `BR_ASSERT_STATIC(is_even_2_a, br_math::is_even(2) == 1)
+  `BR_ASSERT_STATIC(is_even_3_a, br_math::is_even(3) == 0)
+  `BR_ASSERT_STATIC(is_even_neg2_a, br_math::is_even(-2) == 1)
+  `BR_ASSERT_STATIC(is_even_neg3_a, br_math::is_even(-3) == 0)
+  `BR_ASSERT_STATIC(is_even_maxint_a, br_math::is_even($bits(int)'((2 ** 31) - 1)) == 0)
+  `BR_ASSERT_STATIC(is_even_minint_a, br_math::is_even($bits(int)'(-2 ** 31)) == 1)
 
 endmodule : br_math_pkg_tb

@@ -34,10 +34,12 @@ verilog_library(
 
 verilog_elab_test(
     name = "br_math_pkg_elab_test",
+    defines = ["SV_ASSERT_ON"],
     deps = [":br_math_pkg_tb"],
 )
 
 verilog_lint_test(
     name = "br_math_pkg_lint_test",
+    defines = ["SV_ASSERT_ON"],
     deps = [":br_math_pkg_tb"],
 )

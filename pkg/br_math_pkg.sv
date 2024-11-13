@@ -43,4 +43,14 @@ package br_math;
     return (value & 1'b1) == 0;
   endfunction
 
+  // ceil(log_base(x)) using change-of-base formula. base must be a power-of-2.
+  // ri lint_check_waive TWO_STATE_TYPE
+  function automatic int clogb(input int base, input int x);
+    if ((base <= 1) || !is_power_of_2(base) || (x <= 0)) begin
+      return -1;  // Indicates an error
+    end
+
+    return ceil_div($clog2(x), $clog2(base));
+  endfunction
+
 endpackage : br_math
