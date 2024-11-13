@@ -165,12 +165,12 @@ module br_ram_flops_1r1w #(
   end
 
   // Read data pipeline
-  br_ram_rd_data_pipe #(
+  br_ram_data_rd_pipe #(
       .Depth(Depth),
       .DataWidth(BitWidth),
       .Tiles(DepthTiles),
       .Stages(ReadDataStages)
-  ) br_ram_rd_data_pipe (
+  ) br_ram_data_rd_pipe (
       .clk,
       .rst,
       .tile_valid(tile_rd_data_valid),
