@@ -112,10 +112,34 @@ module br_ram_flops_1r1w #(
   logic [DepthTiles-1:0][BitWidthTiles-1:0][TileBitWidth-1:0] tile_rd_data;
 
   // Write pipeline (address + data)
-  // TODO(mgottscho): implement
+  br_ram_addr_decoder #(
+      .Depth (Depth),
+      .Tiles (DepthTiles),
+      .Stages(AddressStages)
+  ) br_ram_addr_decoder_wr (
+      .clk,
+      .rst,
+      .addr_valid(wr_valid),
+      .addr(wr_addr),
+      .tile_addr_valid(tile_wr_valid),
+      .tile_addr(tile_wr_addr)
+  );
+
+  // TODO(mgottscho): implement write data support
 
   // Read address pipeline
-  // TODO(mgottscho): implement
+  br_ram_addr_decoder #(
+      .Depth (Depth),
+      .Tiles (DepthTiles),
+      .Stages(AddressStages)
+  ) br_ram_addr_decoder_rd (
+      .clk,
+      .rst,
+      .addr_valid(rd_addr_valid),
+      .addr(rd_addr),
+      .tile_addr_valid(tile_rd_addr_valid),
+      .tile_addr(tile_rd_addr)
+  );
 
   // Memory tiles
   for (genvar r = 0; r < DepthTiles; r++) begin : gen_row
