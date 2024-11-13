@@ -37,11 +37,12 @@ module br_ram_addr_decoder_stage #(
     // Can be unused if RegisterOutputs == 0.
     // ri lint_check_waive HIER_NET_NOT_READ HIER_BRANCH_NOT_READ
     input  logic                                                 rst,
-    // TODO(mgottscho): WIP: datapath
-    input  logic                                                 in_addr_valid,
+    input  logic                                                 in_valid,
     input  logic [InputAddressWidth-1:0]                         in_addr,
-    output logic [            Forks-1:0]                         out_addr_valid,
-    output logic [            Forks-1:0][OutputAddressWidth-1:0] out_addr
+    input  logic [        DataWidth-1:0]                         in_data,
+    output logic [            Forks-1:0]                         out_valid,
+    output logic [            Forks-1:0][OutputAddressWidth-1:0] out_addr,
+    output logic [            Forks-1:0][         DataWidth-1:0] out_data
 );
 
   //------------------------------------------
@@ -64,15 +65,15 @@ module br_ram_addr_decoder_stage #(
     `BR_ASSERT_STATIC(output_address_width_ok_a, OutputAddressWidth == InputAddressWidth)
 
     br_delay_valid #(
-        .BitWidth (OutputAddressWidth),
+        .BitWidth (OutputAddressWidth + DataWidth),
         .NumStages(RegisterOutputs ? 1 : 0)
     ) br_delay_valid (
         .clk,
         .rst,
         .in_valid(in_addr_valid),
-        .in(in_addr),
+        .in({in_addr, in_data}),
         .out_valid(out_addr_valid),
-        .out(out_addr),
+        .out({out_addr, out_data}),
         .out_valid_stages(),  // unused
         .out_stages()  // unused
     );
@@ -93,15 +94,15 @@ module br_ram_addr_decoder_stage #(
       assign fork_valid[i] = in_addr_valid && (in_addr[SelectMsb:SelectLsb] == i);
 
       br_delay_valid #(
-          .BitWidth (OutputAddressWidth),
+          .BitWidth (OutputAddressWidth + DataWidth),
           .NumStages(RegisterOutputs ? 1 : 0)
       ) br_delay_valid (
           .clk,
           .rst,
           .in_valid(fork_valid[i]),
-          .in(in_addr[OutputAddressWidth-1:0]),
+          .in({in_addr[OutputAddressWidth-1:0], in_data}),
           .out_valid(out_addr_valid[i]),
-          .out(out_addr[i]),
+          .out({out_addr[i], out_data}),
           .out_valid_stages(),  // unused
           .out_stages()  // unused
       );
