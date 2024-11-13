@@ -23,6 +23,17 @@ verilog_library(
     deps = ["//enc/rtl:br_enc_bin2onehot"],
 )
 
+verilog_library(
+    name = "br_enc_gray_tb",
+    srcs = ["br_enc_gray_tb.sv"],
+    deps = [
+        "//enc/rtl:br_enc_bin2gray",
+        "//enc/rtl:br_enc_gray2bin",
+        "//macros:br_asserts_internal",
+        "//macros:br_registers",
+    ],
+)
+
 verilog_elab_test(
     name = "br_enc_bin2onehot_tb_elab_test",
     deps = [":br_enc_bin2onehot_tb"],
@@ -37,4 +48,20 @@ verilog_sim_test(
     opts = ["-assert global_finish_maxfail=1+offending_values"],
     tool = "vcs",
     deps = [":br_enc_bin2onehot_tb"],
+)
+
+verilog_elab_test(
+    name = "br_enc_gray_tb_elab_test",
+    deps = [":br_enc_gray_tb"],
+)
+
+verilog_sim_test(
+    name = "br_enc_gray_vcs_test",
+    defines = [
+        "SV_ASSERT_ON",
+        "BR_ENABLE_IMPL_CHECKS",
+    ],
+    opts = ["-assert global_finish_maxfail=10+offending_values"],
+    tool = "vcs",
+    deps = [":br_enc_gray_tb"],
 )
