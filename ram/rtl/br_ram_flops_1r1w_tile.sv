@@ -26,7 +26,7 @@
 
 module br_ram_flops_1r1w_tile #(
     parameter int Depth = 2,  // Must be at least 2
-    parameter int BitWidth = 1,  // Must be at least 1
+    parameter int Width = 1,  // Must be at least 1
     // If 1, then if the read and write ports access the same address on the same cycle,
     // the write data is forwarded directly to the read data with zero delay.
     // If 0, then if the read and write ports access the same address on the same cycle,
@@ -43,18 +43,18 @@ module br_ram_flops_1r1w_tile #(
     input  logic                 rst,
     input  logic                 wr_valid,
     input  logic [AddrWidth-1:0] wr_addr,
-    input  logic [ BitWidth-1:0] wr_data,
+    input  logic [    Width-1:0] wr_data,
     input  logic                 rd_addr_valid,
     input  logic [AddrWidth-1:0] rd_addr,
     output logic                 rd_data_valid,
-    output logic [ BitWidth-1:0] rd_data
+    output logic [    Width-1:0] rd_data
 );
 
   //------------------------------------------
   // Integration checks
   //------------------------------------------
   `BR_ASSERT_STATIC(depth_gte2_a, Depth >= 2)
-  `BR_ASSERT_STATIC(bitwidth_gte1_a, BitWidth >= 1)
+  `BR_ASSERT_STATIC(width_gte1_a, Width >= 1)
 
   `BR_ASSERT_INTG(wr_addr_in_range_A, wr_valid |-> wr_addr < Depth)
   `BR_ASSERT_INTG(rd_addr_in_range_A, rd_addr_valid |-> rd_addr < Depth)
@@ -62,7 +62,7 @@ module br_ram_flops_1r1w_tile #(
   //------------------------------------------
   // Implementation
   //------------------------------------------
-  logic [Depth-1:0][BitWidth-1:0] mem;
+  logic [Depth-1:0][Width-1:0] mem;
 
   // Write port
   for (genvar i = 0; i < Depth; i++) begin : gen_flops

@@ -31,12 +31,19 @@ module br_ram_data_rd_pipe #(
     // Number of tiles along the width dimension. Must be a positive power-of-2
     // and less than or equal to Width.
     parameter int WidthTiles = 1,
-    // Number of pipeline register stages inserted along the datapath.
-    // Must be at least 0 and less than or equal to $clog2(DepthTiles).
-    parameter int Stages = 0,
+    // Must be at least 1 and a positive-power-of-2 such that FaninPerStage ** Stages == DepthTiles
+    // for some positive integer Stages.
+    // High FaninPerStage results in lower latency but worse static timing.
+    //
+    // TODO(mgottscho): Relax this requirement so we can achieve design points with any desired
+    // FaninPerStage and resulting number of stages with a ragged tree,
+    // i.e., cases where FaninPerStage ** Stages > DepthTiles rather than FaninPerStage ** Stages == DepthTiles.
+    parameter int FaninPerStage = DepthTiles,
     // If 1, then reset datapath flops. Otherwise, datapath flops are not reset.
     parameter bit EnableReset = 0,
-    localparam int TileWidth = br_math::ceil_div(Width, WidthTiles)
+    localparam int Stages = (FaninPerStage > 1) ? br_math::clogb(FaninPerStage, DepthTiles) : 1,
+    localparam int TileWidth = br_math::ceil_div(Width, WidthTiles),
+    localparam int Latency = Stages - 1
 ) (
     // Posedge-triggered clock.
     input  logic                                                 clk,
@@ -62,9 +69,12 @@ module br_ram_data_rd_pipe #(
   `BR_ASSERT_STATIC(width_tiles_gte1_a, WidthTiles >= 1)
   `BR_ASSERT_STATIC(width_tiles_power_of_2_a, br_math::is_power_of_2(WidthTiles))
 
-  // Stages checks
-  `BR_ASSERT_STATIC(stages_gte0_a, Stages >= 0)
-  `BR_ASSERT_STATIC(stages_lte_depth_tiles_a, Stages <= $clog2(DepthTiles))
+  // FaninPerStage checks
+  `BR_ASSERT_STATIC(fanin_per_stage_gte_1_a, FaninPerStage >= 1)
+  `BR_ASSERT_STATIC(fanin_per_stage_power_of_2_a, br_math::is_power_of_2(FaninPerStage))
+  `BR_ASSERT_STATIC(fanin_per_stage_lte_depth_tiles_a, FaninPerStage <= DepthTiles)
+  `BR_ASSERT_STATIC(derived_stages_gte1_a, Stages >= 1)
+  `BR_ASSERT_STATIC(fanin_per_stage_pow_check_a, (FaninPerStage ** Stages) == DepthTiles)
 
 `ifdef SV_ASSERT_ON
 `ifndef BR_DISABLE_INTG_CHECKS
