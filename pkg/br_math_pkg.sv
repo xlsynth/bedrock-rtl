@@ -33,17 +33,20 @@ package br_math;
     return (numerator + denominator - 1) / denominator;
   endfunction
 
+  // Returns 1 if the value is a power of 2, 0 otherwise.
   // ri lint_check_waive TWO_STATE_TYPE
   function automatic bit is_power_of_2(input int value);
     return (value & (value - 1)) == 0;
   endfunction
 
+  // Returns 1 if the value is even, 0 otherwise.
   // ri lint_check_waive TWO_STATE_TYPE
   function automatic bit is_even(input int value);
     return (value & 1'b1) == 0;
   endfunction
 
   // ceil(log_base(x)) using change-of-base formula. base must be a power-of-2.
+  // Returns -1 on error.
   // ri lint_check_waive TWO_STATE_TYPE
   function automatic int clogb(input int base, input int x);
     if ((base <= 1) || !is_power_of_2(base) || (x <= 0)) begin
