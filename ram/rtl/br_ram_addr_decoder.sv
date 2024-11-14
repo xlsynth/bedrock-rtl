@@ -29,6 +29,7 @@ module br_ram_addr_decoder #(
     parameter int DataWidth = 1,
     // Number of tiles along the depth dimension. Must be a positive power-of-2
     // and less than or equal to Depth.
+    // TODO(mgottscho): Relax this requirement to be any positive number <= Depth.
     parameter int Tiles = 1,
     // Must be at least 1 and a positive-power-of-2 such that FanoutPerStage ** Stages == Tiles
     // for some positive integer Stages.
