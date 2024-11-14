@@ -32,6 +32,10 @@ module br_mux_bin #(
     input  logic [NumSymbolsIn-1:0][SymbolWidth-1:0] in,
     output logic [ SymbolWidth-1:0]                  out
 );
+
+  //------------------------------------------
+  // Integration checks
+  //------------------------------------------
   `BR_ASSERT_STATIC(legal_num_symbols_in_a, NumSymbolsIn >= 2)
   `BR_ASSERT_STATIC(legal_symbol_width_a, SymbolWidth >= 1)
   // TODO(mgottscho, #109):
@@ -41,6 +45,9 @@ module br_mux_bin #(
   // ri lint_check_waive ALWAYS_COMB
   `BR_ASSERT_COMB_INTG(select_in_range_a, $isunknown(select) || select < NumSymbolsIn)
 
+  //------------------------------------------
+  // Implementation
+  //------------------------------------------
   always_comb begin
     out = '0;
 
@@ -48,5 +55,9 @@ module br_mux_bin #(
       out |= ({SymbolWidth{select == i}} & in[i]);
     end
   end
+
+  //------------------------------------------
+  // Implementation checks
+  //------------------------------------------
 
 endmodule : br_mux_bin
