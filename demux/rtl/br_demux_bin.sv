@@ -12,12 +12,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 //
-// Bedrock-RTL Binary Select Demultiplexer with Valid Signals
+// Bedrock-RTL Binary Select Demultiplexer
 //
 // A 1-to-N demultiplexer with a binary select and validity control.
 //
-// The input is replicated to all outputs, but only one output in
-// the `out_valid` indicator is considered valid when `in_valid` is high.
+// The input is replicated to all outputs, but at most one output is valid;
+// the selected output is determined by the binary encoded select input,
+// and it is valid only when the input is also valid.
 
 `include "br_asserts_internal.svh"
 
@@ -28,9 +29,11 @@ module br_demux_bin #(
     parameter  int SymbolWidth   = 1,
     localparam int SelectWidth   = $clog2(NumSymbolsOut)
 ) (
+    // Binary-encoded select. Must be in range of NumSymbolsOut.
     input  logic [  SelectWidth-1:0]                  select,
     input  logic                                      in_valid,
     input  logic [  SymbolWidth-1:0]                  in,
+    // The selected out_valid bit is high when the corresponding in_valid is high.
     output logic [NumSymbolsOut-1:0]                  out_valid,
     output logic [NumSymbolsOut-1:0][SymbolWidth-1:0] out
 );
