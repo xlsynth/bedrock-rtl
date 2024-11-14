@@ -41,3 +41,28 @@ br_verilog_elab_and_lint_test_suite(
     },
     deps = [":br_mux_onehot"],
 )
+
+verilog_library(
+    name = "br_mux_bin",
+    srcs = ["br_mux_bin.sv"],
+    deps = [
+        "//macros:br_asserts_internal",
+    ],
+)
+
+br_verilog_elab_and_lint_test_suite(
+    name = "br_mux_bin_test_suite",
+    params = {
+        "NumSymbolsIn": [
+            "2",
+            "3",
+            "4",
+        ],
+        "SymbolWidth": [
+            "1",
+            "5",
+            "8",
+        ],
+    },
+    deps = [":br_mux_bin"],
+)
