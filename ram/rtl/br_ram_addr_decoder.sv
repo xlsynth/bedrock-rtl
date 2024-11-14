@@ -46,8 +46,12 @@ module br_ram_addr_decoder #(
     localparam int Latency = Stages - 1
 ) (
     // Posedge-triggered clock.
+    // Unused when Stages == 0, so waive lint errors.
+    // ri lint_check_waive HIER_NET_NOT_READ HIER_BRANCH_NOT_READ
     input  logic                                          clk,
     // Synchronous active-high reset.
+    // Unused when Stages == 0, so waive lint errors.
+    // ri lint_check_waive HIER_NET_NOT_READ HIER_BRANCH_NOT_READ
     input  logic                                          rst,
     input  logic                                          valid,
     input  logic [AddressWidth-1:0]                       addr,

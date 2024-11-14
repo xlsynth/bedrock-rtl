@@ -112,8 +112,7 @@ module br_ram_flops_1r1w #(
   br_ram_addr_decoder #(
       .Depth(Depth),
       .DataWidth(Width),
-      .Tiles(DepthTiles),
-      .Stages(AddressStages)
+      .Tiles(DepthTiles)
   ) br_ram_addr_decoder_wr (
       .clk,
       .rst,
@@ -127,9 +126,8 @@ module br_ram_flops_1r1w #(
 
   // Read address pipeline
   br_ram_addr_decoder #(
-      .Depth (Depth),
-      .Tiles (DepthTiles),
-      .Stages(AddressStages)
+      .Depth(Depth),
+      .Tiles(DepthTiles)
   ) br_ram_addr_decoder_rd (
       .clk,
       .rst,
