@@ -789,12 +789,12 @@ a| Bus CDC using a dual-clock FIFO with internal flop-RAM
 
 | `br_demux_onehot`
 | One-hot demultiplexer
-|
+| Yes
 |
 
 | `br_demux_bin`
 | Binary-select demultiplexer
-|
+| Yes
 |
 
 |===
