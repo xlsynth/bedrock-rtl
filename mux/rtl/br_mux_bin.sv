@@ -12,22 +12,23 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 //
-// Bedrock-RTL onehot select multiplexer
+// Bedrock-RTL Binary Select Multiplexer
 //
-// An N-to-1 multiplexer with a onehot select.
+// An N-to-1 multiplexer with a binary select.
 //
-// The out signal will be set to in[i] for which select[i] is 1.
-// The select must have at most one bit set.
+// The out signal is set to in[i] for which select == i.
+// Select must be in range of NumSymbolsIn.
 
 `include "br_asserts_internal.svh"
 
-module br_mux_onehot #(
+module br_mux_bin #(
     // Number of inputs to select among. Must be >= 2.
-    parameter int NumSymbolsIn = 2,
+    parameter  int NumSymbolsIn = 2,
     // The width of each symbol in bits. Must be >= 1.
-    parameter int SymbolWidth  = 1
+    parameter  int SymbolWidth  = 1,
+    localparam int SelectWidth  = $clog2(NumSymbolsIn)
 ) (
-    input  logic [NumSymbolsIn-1:0]                  select,
+    input  logic [ SelectWidth-1:0]                  select,
     input  logic [NumSymbolsIn-1:0][SymbolWidth-1:0] in,
     output logic [ SymbolWidth-1:0]                  out
 );
@@ -38,14 +39,14 @@ module br_mux_onehot #(
   // assertion inside. Need to add this waiver until we can figure out
   // how to handle it properly in the macro.
   // ri lint_check_waive ALWAYS_COMB
-  `BR_ASSERT_COMB_INTG(select_onehot_a, $isunknown(select) || $onehot0(select))
+  `BR_ASSERT_COMB_INTG(select_in_range_a, $isunknown(select) || select < NumSymbolsIn)
 
   always_comb begin
     out = '0;
 
     for (int i = 0; i < NumSymbolsIn; i++) begin
-      out |= ({SymbolWidth{select[i]}} & in[i]);
+      out |= ({SymbolWidth{select == i}} & in[i]);
     end
   end
 
-endmodule : br_mux_onehot
+endmodule : br_mux_bin
