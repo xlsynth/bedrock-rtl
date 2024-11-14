@@ -1120,7 +1120,7 @@ a| FIFO with internal flop RAM
 
 | `br_ram_flops_1r1w_tile`
 | One-tile flop-RAM with one read port and one write port
-| WIP
+| Yes
 |
 
 | `br_ram_flops_1r1w`

@@ -18,8 +18,8 @@ load("//bazel:br_verilog.bzl", "br_verilog_elab_and_lint_test_suite")
 package(default_visibility = ["//visibility:public"])
 
 verilog_library(
-    name = "br_ram_flops_1r1w",
-    srcs = ["br_ram_flops_1r1w.sv"],
+    name = "br_ram_flops_1r1w_tile",
+    srcs = ["br_ram_flops_1r1w_tile.sv"],
     deps = [
         "//macros:br_asserts_internal",
         "//macros:br_registers",
@@ -38,7 +38,7 @@ verilog_library(
 )
 
 br_verilog_elab_and_lint_test_suite(
-    name = "br_ram_flops_1r1w_test_suite",
+    name = "br_ram_flops_1r1w_tile_test_suite",
     params = {
         "Depth": [
             "2",
@@ -57,7 +57,7 @@ br_verilog_elab_and_lint_test_suite(
             "1",
         ],
     },
-    deps = [":br_ram_flops_1r1w"],
+    deps = [":br_ram_flops_1r1w_tile"],
 )
 
 br_verilog_elab_and_lint_test_suite(

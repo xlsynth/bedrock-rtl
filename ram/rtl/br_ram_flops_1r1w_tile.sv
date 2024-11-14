@@ -12,9 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Bedrock-RTL Flop-RAM (1R1W)
+// Bedrock-RTL Flop-RAM (1R1W) Tile
 //
-// A one-read/one-write (1R1W, also known as pseudo-dual-port) flop-based RAM.
+// A one-read/one-write (1R1W, also known as pseudo-dual-port) flop-based RAM tile.
 // Read latency is zero cycles. Write latency is one cycle.
 // By default, write-to-read latency is therefore one cycle.
 // If the bypass is enabled, then the write-to-read latency is zero cycles, but
@@ -24,7 +24,7 @@
 `include "br_asserts_internal.svh"
 `include "br_registers.svh"
 
-module br_ram_flops_1r1w #(
+module br_ram_flops_1r1w_tile #(
     parameter int Depth = 2,  // Must be at least 2
     parameter int BitWidth = 1,  // Must be at least 1
     // If 1, then if the read and write ports access the same address on the same cycle,
@@ -102,4 +102,4 @@ module br_ram_flops_1r1w #(
                     ))
   end
 
-endmodule : br_ram_flops_1r1w
+endmodule : br_ram_flops_1r1w_tile
