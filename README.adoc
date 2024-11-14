@@ -273,128 +273,923 @@ verilog_elab_and_lint_test_suite(
 ----
 ====
 
-== Planned Features
+== `macros`: Macros and Defines
 
-The following table summarizes the list of features that we plan to implement in the Bedrock-RTL library.
-Checked boxes already have prototype implementations, though they are not verified yet.
+=== `br_registers.svh`: Flip-Flop Inference Macros
 
-[cols="1,2"]
+These macros conveniently wrap `always_ff` blocks, improving readability and helping to structure user code into sequential and combinational portions.
+The macros are named according to the following suffix convention.
+
+* `A`: Asynchronous reset (if absent, then synchronous)
+* `I`: Initial value given (if absent, then 0)
+* `L`: Conditional load enable (if absent, then unconditional)
+* `N`: No reset (if absent, then reset)
+* `X`: Given explicit clock and reset names (if absent, then `clk` and either `rst` if synchronous or `arst` if asynchronous)
+
+IMPORTANT: Clocks are always positive-edge triggered.
+Resets are always active-high.
+
+[cols="1,4,1,1"]
 |===
-| Category | Description
+| Macro/define | Description | Implemented | Tested
 
-| arb
-a| Basic arbiters
+| `BR_REGA`
+| Flip-flop register with unconditional load, asynchronous active-high reset named `arst`, initial value 0, positive-edge triggered clock named `clk`.
+| Yes
+| Yes
 
- * [x] Fixed priority
- * [x] LRU
- * [x] Round-robin
- * [ ] Weighted LRU
- * [ ] Weighted round-robin
+| `BR_REGAIL`
+| Flip-flop register with conditional load enable, asynchronous active-high reset named `arst`, initial value given, positive-edge triggered clock named `clk`.
+| Yes
+| Yes
 
-| cdc
-a| Clock-domain crossings
+| `BR_REGAI`
+| Flip-flop register with unconditional load, asynchronous active-high reset named `arst`, initial value given, positive-edge triggered clock named `clk`.
+| Yes
+| Yes
 
-* [ ] Single-bit sync
-* [ ] Bus sync using CDC FIFOs
+| `BR_REGAL`
+| Flip-flop register with conditional load enable, asynchronous active-high reset named `arst`, initial value 0, positive-edge triggered clock named `clk`.
+| Yes
+| Yes
 
-| counter
-a| Counters with the following feature combinations:
+| `BR_REGIL`
+| Flip-flop register with conditional load enable, synchronous active-high reset named `rst`, initial value given, positive-edge triggered clock named `clk`.
+| Yes
+| Yes
 
-* [x] Incrementing/decrementing
-* [x] Wrapping
-* [ ] Saturating
-* [ ] Re-initializable
+| `BR_REGI`
+| Flip-flop register with unconditional load, synchronous active-high reset named `rst`, initial value given, positive-edge triggered clock named `clk`.
+| Yes
+| Yes
 
-| credit
-a| Credit/valid flow control
+| `BR_REGILX`
+| Flip-flop register with conditional load enable, synchronous active-high given reset, initial value given, positive-edge triggered given clock.
+| Yes
+| Yes
 
-* [x] Credit counter
-* [ ] Ready/valid -> credit/valid producer conversion
+| `BR_REGIX`
+| Flip-flop register with unconditional load, synchronous active-high given reset, initial value given, positive-edge triggered given clock.
+| Yes
+| Yes
 
-| delay
-a| Feedforward delay pipeline registers
+| `BR_REGLN`
+| Flip-flop register with load enable, no reset, positive-edge triggered clock named `clk`.
+| Yes
+| Yes
 
-* [x] Non-gated, reset
-* [x] Non-gated, non-reset
-* [x] Self-gated (valid), reset
-* [x] Self-gated on next cycle (valid-next), reset
-* [x] Self-gated on next cycle (valid-next), non-reset
+| `BR_REGLX`
+| Flip-flop register with conditional load enable, synchronous active-high reset, initial value 0, positive-edge triggered given clock.
+| Yes
+| Yes
 
-| ecc
-a| Error correcting codes
+| `BR_REGL`
+| Flip-flop register with conditional load enable, synchronous active-high reset named `rst`, initial value 0, positive-edge triggered clock named `clk`.
+| Yes
+| Yes
 
-* [ ] Parity encoder/decoder
-* [ ] SECDED encoder/decoder
+| `BR_REGN`
+| Flip-flop register with unconditional load, no reset, positive-edge triggered clock named `clk`.
+| Yes
+| Yes
 
-| enc
-a| Encoders
+| `BR_REGX`
+| Flip-flop register with unconditional load, synchronous active-high given reset, initial value 0, positive-edge triggered given clock.
+| Yes
+| Yes
 
-* [x] onehot2bin
-* [x] bin2onehot
-* [x] priority
+| `BR_REG`
+| Flip-flop register with unconditional load, synchronous active-high reset named `rst`, initial value 0, positive-edge triggered clock named `clk`.
+| Yes
+| Yes
 
-| err
-a| Errors
+|===
 
-* [ ] Sticky error log register
-* [ ] Source masking
-* [ ] Interrupt masking
 
-| fifo
-a| FIFO (queue) controllers with external RAM ports. Combinations of:
+=== `br_asserts.svh`: Public Assertions
 
-* [x] Push ready/valid
-* [ ] Push credit/valid
-* [x] Pop ready/valid
-* [ ] Pop credit/valid
-* [x] 1R1W (single bank)
-* [ ] 1RW (dual bank)
+These assertion macros are intended for use by the user in their own designs.
+They are guarded (enabled) by the following defines:
 
-Additionally, FIFOs that are simple wrappers around controllers and flop-RAMs.
+* `ifdef SV_ASSERT_ON`
 
-| flow
-a| Ready/valid flow control (streaming)
+IMPORTANT: Clocks are always positive-edge triggered.
+Resets are always active-high.
 
-* [x] Arbs
-* [x] Muxes
-* [x] Regs
-* [x] Fork
-* [x] Join
-* [x] Demuxes
+[cols="1,4,1,1"]
+|===
+| Macro/define | Description | Implemented | Tested
 
-| macros
-a| Macros for inferring flip-flop registers with combinations of the following features.
+| `BR_ASSERT_STATIC`
+| Static (elaboration-time) assertion for use within modules
+| Yes
+| Yes
 
-* [x] Posedge clock
-* [x] Active-high sync/async reset
-* [x] Initial value
-* [x] Load enable
+| `BR_ASSERT_STATIC_IN_PACKAGE`
+| Static (elaboration-time) assertion for use within packages
+| Yes
+| Yes
 
-Macros for SystemVerilog assertions.
+| `BR_ASSERT`
+| Concurrent assertion with implicit `clk` and `rst` names.
+| Yes
+| Yes
 
-* [x] Static
-* [x] Concurrent
-* [x] Immediate
-* [x] Bedrock library-internal
+| `BR_ASSERT_CR`
+| Concurrent assertion with explicit clock and reset names.
+| Yes
+| Yes
 
-| ram
-a| Memories
+| `BR_ASSERT_COMB`
+| Combinational/immediate assertion.
+| Yes
+| Yes
 
-* [x] Parameterizable Flop RAM
-* [ ] CAM
-* [ ] Addressing helpers
-* [ ] Hazard detection
+| `BR_COVER`
+| Concurrent cover with implicit `clk` and `rst` names.
+| Yes
+| Yes
 
-| rdc
-a| Reset domain crossings
+| `BR_COVER_CR`
+| Concurrent cover with explicit clock and reset names.
+| Yes
+| Yes
 
-* [ ] Reset controls
-* [ ] Reset handshakes
+| `BR_COVER_COMB`
+| Combinational/immediate cover.
+| Yes
+| Yes
 
-| timer
-a| Timers
+| `BR_ASSUME`
+| Concurrent assumption with implicit `clk` and `rst` names.
+| Yes
+| Yes
 
-* [ ] Watchdog
-* [ ] Rollover
+| `BR_ASSUME_CR`
+| Concurrent assumption with explicit clock and reset names.
+| Yes
+| Yes
+
+|===
+
+=== `br_asserts_internal.svh`: Bedrock-internal Assertions
+
+These assertion macros wrap the public assertions.
+They are intended only for internal use inside Bedrock libraries, but the user needs to know about them.
+They are guarded (enabled) by the following defines:
+
+* `ifndef BR_DISABLE_INTG_CHECKS` for the integration cases
+* `ifdef BR_ENABLE_IMPL_CHECKS` for the implementation cases
+
+[cols="1,4,1,1"]
+|===
+| Macro/define | Description | Implemented | Tested
+
+| `BR_ASSERT_INTG`
+a| Concurrent integration assertion with implicit `clk` and `rst` names.
+Disable by defining `BR_DISABLE_INTG_CHECKS`.
+| Yes
+| Yes
+
+| `BR_ASSERT_CR_INTG`
+a| Concurrent integration assertion with explicit clock and reset names.
+Disable by defining `BR_DISABLE_INTG_CHECKS`.
+| Yes
+| Yes
+
+| `BR_ASSERT_IMPL`
+a| Concurrent implementation assertion with implicit `clk` and `rst` names.
+Enable by defining `BR_ENABLE_IMPL_CHECKS`.
+| Yes
+| Yes
+
+| `BR_ASSERT_CR_IMPL`
+a| Concurrent implementation assertion with explicit clock and reset names.
+Enable by defining `BR_ENABLE_IMPL_CHECKS`.
+| Yes
+| Yes
+
+| `BR_ASSERT_COMB_INTG`
+a| Combinational/immediate integration assertion.
+Disable by defining `BR_DISABLE_INTG_CHECKS`.
+| Yes
+| Yes
+
+| `BR_ASSERT_COMB_IMPL`
+a| Combinational/immediate implementation assertion.
+Enable by defining `BR_ENABLE_IMPL_CHECKS`.
+| Yes
+| Yes
+
+| `BR_COVER_INTG`
+a| Concurrent integration cover with implicit `clk` and `rst` names.
+Disable by defining `BR_DISABLE_INTG_CHECKS`.
+| Yes
+| Yes
+
+| `BR_COVER_CR_INTG`
+a| Concurrent integration cover with explicit clock and reset names.
+Disable by defining `BR_DISABLE_INTG_CHECKS`.
+| Yes
+| Yes
+
+| `BR_COVER_IMPL`
+a| Concurrent implementation cover with implicit `clk` and `rst` names.
+Enable by defining `BR_ENABLE_IMPL_CHECKS`.
+| Yes
+| Yes
+
+| `BR_COVER_CR_IMPL`
+a| Concurrent implementation cover with explicit clock and reset names.
+Enable by defining `BR_ENABLE_IMPL_CHECKS`.
+| Yes
+| Yes
+
+| `BR_COVER_COMB_INTG`
+a| Combinational/immediate integration cover.
+Disable by defining `BR_DISABLE_INTG_CHECKS`.
+| Yes
+| Yes
+
+| `BR_COVER_COMB_IMPL`
+a| Combinational/immediate implementation cover.
+Enable by defining `BR_ENABLE_IMPL_CHECKS`.
+| Yes
+| Yes
+
+|===
+
+=== `br_gates.svh`: Gate Convenience Wrappers
+
+These macros conveniently wrap module instantiations from the `gate` category.
+
+[cols="1,4,1,1"]
+|===
+| Macro/define | Description | Implemented | Tested
+
+| `BR_GATE_BUF`
+| Instantiates `br_gate_buf`.
+| Yes
+| Yes
+
+| `BR_GATE_CLK_BUF`
+| Instantiates `br_gate_clk_buf`.
+| Yes
+| Yes
+
+| `BR_GATE_INV`
+| Instantiates `br_gate_inv`.
+| Yes
+| Yes
+
+| `BR_GATE_AND2`
+| Instantiates `br_gate_and2`.
+| Yes
+| Yes
+
+| `BR_GATE_OR2`
+| Instantiates `br_gate_or2`.
+| Yes
+| Yes
+
+| `BR_GATE_XOR2`
+| Instantiates `br_gate_xor2`.
+| Yes
+| Yes
+
+| `BR_GATE_MUX2`
+| Instantiates `br_gate_mux2`.
+| Yes
+| Yes
+
+| `BR_GATE_CLK_MUX2`
+| Instantiates `br_gate_clk_mux2`.
+| Yes
+| Yes
+
+| `BR_GATE_ICG`
+| Instantiates `br_gate_icg`.
+| Yes
+| Yes
+
+|===
+
+=== `br_tieoff.svh`: Tie-off Convenience Wrappers
+
+These macros conveniently wrap `br_misc_tieoff*` module instantiations.
+
+[cols="1,4,1,1"]
+|===
+| Macro/define | Description | Implemented | Tested
+
+| `BR_TIEOFF_ZERO_NAMED`
+| Instantiates `br_tieoff_zero` with a given submodule instance suffix.
+| Yes
+| Yes
+
+| BR_TIEOFF_ONE_NAMED
+| Instantiates `br_tieoff_one` with a given submodule instance suffix.
+| Yes
+| Yes
+
+| BR_TIEOFF_ZERO
+| Instantiates `br_tieoff_zero` with a derived submodule instance suffix.
+| Yes
+| Yes
+
+| BR_TIEOFF_ONE
+| Instantiates `br_tieoff_one` with a derived submodule instance suffix.
+| Yes
+| Yes
+
+| BR_TIEOFF_ZERO_TODO
+a| Provided for convenience of the user grepping for `TODO` in the codebase, to help prevent accidental tie-offs that result in bugs.
+Instantiates `br_tieoff_zero` with a derived submodule instance suffix.
+| Yes
+| Yes
+
+| BR_TIEOFF_ONE_TODO
+a| Provided for convenience of the user grepping for `TODO` in the codebase, to help prevent accidental tie-offs that result in bugs.
+Instantiates `br_tieoff_one` with a derived submodule instance suffix.
+| Yes
+| Yes
+
+|===
+
+=== `br_unused.svh`: Unused Signal Convenience Wrappers
+
+These macros conveniently wrap `br_misc_unused` module instantiations.
+
+[cols="1,4,1,1"]
+|===
+| Macro/define | Description | Implemented | Tested
+
+| `BR_UNUSED_NAMED`
+| Instantiates `br_misc_unused` with a given submodule instance suffix.
+| Yes
+| Yes
+
+| `BR_UNUSED`
+| Instantiates `br_misc_unused` with a derived submodule instance suffix.
+| Yes
+| Yes
+
+| `BR_UNUSED_TODO`
+a| Provided for convenience of the user grepping for `TODO` in the codebase, to help prevent accidental unused signals that result in bugs.
+Instantiates `br_misc_unused` with a derived submodule instance suffix.
+| Yes
+| Yes
+
+|===
+
+
+== Modules
+
+=== `arb`: Arbiters
+
+[cols="1,4,1,1"]
+|===
+| Module | Description | Implemented | Verified
+
+| `br_arb_fixed`
+| Fixed priority
+| Yes
+|
+
+| `br_arb_lru`
+| Least-recently used
+| Yes
+|
+
+| `br_arb_rr`
+| Round-robin
+| Yes
+|
+
+|===
+
+=== `cdc`: Clock Domain Crossings
+
+[cols="1,4,1,1"]
+|===
+| Module | Description | Implemented | Verified
+
+| `br_cdc_bit`
+| Single-bit CDC
+|
+|
+
+| `br_cdc_fifo_ctrl_1r1w`
+a| Bus CDC using a dual-clock FIFO controller for a 1R1W dual-clock SRAM
+
+* Push flow control: ready/valid
+* Pop flow control: ready/valid
+|
+|
+
+| `br_cdc_fifo_flops`
+a| Bus CDC using a dual-clock FIFO with internal flop-RAM
+
+* Push flow control: ready/valid
+* Pop flow control: ready/valid
+|
+|
+
+|===
+
+=== `counter`: Wrapping and Saturating Counters
+
+[cols="1,4,1,1"]
+|===
+| Module | Description | Implemented | Verified
+
+| `br_counter_decr`
+| Decrementing counter
+| Yes
+|
+
+| `br_counter_incr`
+| Incrementing counter
+| Yes
+|
+
+| `br_counter_sat`
+| Up-down saturating counter
+|
+|
+
+| `br_counter`
+| Up-down counter
+| Yes
+|
+
+|===
+
+=== `credit`: Credit/Valid Flow Control
+
+[cols="1,4,1,1"]
+|===
+| Module | Description | Implemented | Verified
+
+| `br_credit_counter`
+| Credit counter
+| Yes
+|
+
+| `br_credit_receiver`
+| Credit/valid to ready/valid converter (credit-loop receiver-side)
+| Yes
+|
+
+| `br_credit_sender`
+| Ready/valid to credit/valid converter (credit-loop sender-side)
+| Yes
+|
+
+|===
+
+=== `delay`: Fixed-Delay Pipelines
+
+[cols="1,4,1,1"]
+|===
+| Module | Description | Implemented | Verified
+
+| `br_delay`
+| With reset
+| Yes
+|
+
+| `br_delay_nr`
+| Without reset
+| Yes, but want to merge with `br_delay` (https://github.com/xlsynth/bedrock-rtl/issues/137)
+|
+
+| `br_delay_valid_next_nr`
+| With self-gating (valid-next) and without reset
+| Yes, but want to merge with `br_delay_valid_next` (https://github.com/xlsynth/bedrock-rtl/issues/137)
+|
+
+| `br_delay_valid_next`
+| With self-gating (valid-next)
+| Yes
+|
+
+| `br_delay_valid`
+| With self-gating (valid)
+| Yes
+|
+
+|===
+
+=== `demux`: Simple Demultiplexers
+
+[cols="1,4,1,1"]
+|===
+| Module | Description | Implemented | Verified
+
+| `br_demux_onehot`
+| One-hot demultiplexer
+|
+|
+
+| `br_demux_bin`
+| Binary-select demultiplexer
+|
+|
+
+|===
+
+=== `enc`: Combinational encoders
+
+[cols="1,4,1,1"]
+|===
+| Module | Description | Implemented | Verified
+
+| `br_enc_bin2gray`
+| Binary to gray
+| Yes
+|
+
+| `br_enc_bin2onehot`
+| Binary to onehot
+| Yes
+|
+
+| `br_enc_gray2bin`
+| Gray to binary
+| Yes
+|
+
+| `br_enc_onehot2bin`
+| One-hot to binary
+| Yes
+|
+
+| `br_enc_priority_encoder`
+| Priority encoder
+| Yes
+|
+
+|===
+
+=== `ecc`: Error Correcting Codes
+
+[cols="1,4,1,1"]
+|===
+| Module | Description | Implemented | Verified
+
+| `br_ecc_parity_dec`
+| Single-error-detecting (parity) decoder
+|
+|
+
+| `br_ecc_parity_enc`
+| Single-error-detecting (parity) encoder
+|
+|
+
+| `br_ecc_secded_dec`
+| Single-error-correcting, double-error-detecting (SECDED) decoder
+|
+|
+
+| `br_ecc_secded_enc`
+| Single-error-correcting, double-error-detecting (SECDED) encoder
+|
+|
+
+|===
+
+=== `fifo`: First-In-First-Out Queues
+
+[cols="1,4,1,1"]
+|===
+| Module | Description | Implemented | Verified
+
+| `br_fifo_ctrl_1r1w_bare`
+a| FIFO controller with external RAM port for 1R1W
+
+* Push flow control: none
+* Pop flow control: none
+|
+|
+
+| `br_fifo_ctrl_1r1w_pop_credit`
+a| FIFO controller with external RAM port for 1R1W
+
+* Push flow control: ready/valid
+* Pop flow control: credit/valid
+|
+|
+
+| `br_fifo_ctrl_1r1w_push_credit`
+a| FIFO controller with external RAM port for 1R1W
+
+* Push flow control: credit/valid
+* Pop flow control: ready/valid
+| Yes
+|
+
+| `br_fifo_ctrl_1r1w`
+a| FIFO controller with external RAM port for 1R1W
+
+* Push flow control: ready/valid
+* Pop flow control: ready/valid
+| Yes
+|
+
+| `br_fifo_flops_pop_credit`
+a| FIFO with internal flop RAM
+
+* Push flow control: ready/valid
+* Pop flow control: credit/valid
+|
+|
+
+| `br_fifo_flops_push_credit`
+a| FIFO with internal flop RAM
+
+* Push flow control: credit/valid
+* Pop flow control: ready/valid
+| Yes
+|
+
+| `br_fifo_flops`
+a| FIFO with internal flop RAM
+
+* Push flow control: ready/valid
+* Pop flow control: ready/valid
+| Yes
+|
+
+
+|===
+
+=== `flow`: Ready/Valid Flow Control
+
+[cols="1,4,1,1"]
+|===
+| Module | Description | Implemented | Verified
+
+| `br_flow_arb_fixed`
+| Fixed priority arbiter
+| Yes
+|
+
+| `br_flow_arb_lru`
+| Least-recently used arbiter
+| Yes
+|
+
+| `br_flow_arb_rr`
+| Round-robin arbiter
+| Yes
+|
+
+| `br_flow_demux_select`
+| Registered demultiplexer, external select
+| Yes
+|
+
+| `br_flow_demux_select_unstable`
+| Combinational demultiplexer, external select, with unstable flow control
+| Yes
+|
+
+| `br_flow_fork`
+| Datapath flow control split
+| Yes
+|
+
+| `br_flow_join`
+| Datapath flow control join
+| Yes
+|
+
+| `br_flow_mux_fixed`
+| Arbitrated multiplexer, fixed priority
+| Yes
+|
+
+| `br_flow_mux_lru`
+| Arbitrated multiplexer, least-recently used
+| Yes
+|
+
+| `br_flow_mux_rr`
+| Arbitrated multiplexer, round-robin
+| Yes
+|
+
+| `br_flow_mux_select`
+| Registered multiplexer, user select
+| Yes
+|
+
+| `br_flow_mux_select_unstable`
+| Combinational multiplexer, external select, with unstable flow control
+| Yes
+|
+
+| `br_flow_reg_both`
+| Pipeline register, registered forward and reverse signals
+| Yes
+|
+
+| `br_flow_reg_fwd`
+| Pipeline register, registered forward signals
+| Yes
+|
+
+| `br_flow_reg_rev`
+| Pipeline register, registered backward signals
+| Yes
+|
+
+|===
+
+=== `gate`: Behavioral Gate Primitives
+
+[cols="1,4,1,1"]
+|===
+| Module | Description | Implemented | Verified
+
+| `br_gate_buf`
+| Wire buffer/repeater
+| Yes
+|
+
+| `br_gate_clk_buf`
+| Clock wire buffer/repeater
+| Yes
+|
+
+| `br_gate_inv`
+| Inverter
+| Yes
+|
+
+| `br_gate_and2`
+| Two-input AND gate
+| Yes
+|
+
+| `br_gate_or2`
+| Two-input OR gate
+| Yes
+|
+
+| `br_gate_xor2`
+| Two-input XOR gate
+| Yes
+|
+
+| `br_gate_mux2`
+| Two-input multiplexer
+| Yes
+|
+
+| `br_gate_clk_mux2`
+| Two-input clock multiplexer
+| Yes
+|
+
+| `br_gate_icg`
+| Integrated clock gate
+| Yes
+|
+
+|===
+
+=== `misc`: Miscellaneous
+
+[cols="1,4,1,1"]
+|===
+| Module | Description | Implemented | Verified
+
+| `br_misc_tieoff_one`
+| Drive an expression to constant 1s and internally waive relevant lint rules
+| Yes
+| Yes
+
+| `br_misc_tieoff_zero`
+| Drive an expression to constant 0s and internally waive relevant lint rules
+| Yes
+| Yes
+
+| `br_misc_unused`
+| Sink an unused expression and internally waive relevant lint rules
+| Yes
+| Yes
+
+|===
+
+=== `mux`: Simple Multiplexers
+
+[cols="1,4,1,1"]
+|===
+| Module | Description | Implemented | Verified
+
+| `br_mux_onehot`
+| One-hot multiplexer
+| Yes
+|
+
+| `br_mux_bin`
+| Binary-select multiplexer
+| Yes
+|
+
+|===
+
+=== `ram`: Memories
+
+[cols="1,4,1,1"]
+|===
+| Module | Description | Implemented | Verified
+
+| `br_ram_addr_decoder`
+| Single-stage address decoder for a tiled RAM
+| WIP
+|
+
+| `br_ram_addr_decoder`
+| Pipelined address decoder for tiled RAM
+| WIP
+|
+
+| `br_ram_flops_1r1w_tile`
+| One-tile flop-RAM with one read port and one write port
+| WIP
+|
+
+| `br_ram_flops_1r1w`
+| Tiled flop-RAM with one read port and one write port
+| WIP
+|
+
+| `br_ram_flops_1rw_tile`
+| One-tile flop-RAM with one port (shared for read and write)
+|
+|
+
+| `br_ram_flops_1rw`
+| Tiled flop-RAM with one port (shared for read and write)
+|
+|
+
+| `br_ram_data_rd_pipe`
+| Pipeline for reading data from a tiled RAM
+| WIP
+|
+
+|===
+
+=== `timer`: Saturating and Wrapping Timers
+
+[cols="1,4,1,1"]
+|===
+| Module | Description | Implemented | Verified
+
+| `br_timer_sat`
+| Tick down from a threshold and saturate at zero; signal continuously at zero
+
+| `br_timer`
+| Tick down from a threshold and signal a pulse every time when wrapping past zero
+
+|===
+
+== Packages
+
+=== `br_math`: Non-synthesizable Math Helper Functions
+
+[cols="1,4,1,1"]
+|===
+| Function | Description | Implemented | Tested
+
+| `ceil_div`
+| Return integer ceiling division
+| WIP
+| WIP
+
+| `floor_div`
+| Return integer floor division
+| WIP
+| WIP
+
+| `clogb`
+| Return integer ceiling of base-`b` logarithm
+| WIP
+| WIP
+
+| `is_power_of_2`
+| Return 1 if an integer is a power of 2
+| WIP
+| WIP
+
+| `is_even`
+| Return 1 if an integer is even
+| WIP
+| WIP
 
 |===
