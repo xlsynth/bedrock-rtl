@@ -273,26 +273,374 @@ verilog_elab_and_lint_test_suite(
 ----
 ====
 
-== Macros
+== `macros`: Macros and Defines
 
-The following table lists all the macros that we plan to have in the Bedrock-RTL library.
+=== `br_registers.svh`: Flip-Flop Inference Macros
 
-TODO(mgottscho): WIP
+These macros conveniently wrap `always_ff` blocks, improving readability and helping to structure user code into sequential and combinational portions.
+The macros are named according to the following suffix convention.
 
-| macros
-a| Macros for inferring flip-flop registers with combinations of the following features.
+* `A`: Asynchronous reset (if absent, then synchronous)
+* `I`: Initial value given (if absent, then 0)
+* `L`: Conditional load enable (if absent, then unconditional)
+* `N`: No reset (if absent, then reset)
+* `X`: Given explicit clock and reset names (if absent, then `clk` and either `rst` if synchronous or `arst` if asynchronous)
 
-* [x] Posedge clock
-* [x] Active-high sync/async reset
-* [x] Initial value
-* [x] Load enable
+IMPORTANT: Clocks are always positive-edge triggered.
+Resets are always active-high.
 
-Macros for SystemVerilog assertions.
+[cols="1,4,1,1"]
+|===
+| Macro/define | Description | Implemented | Tested
 
-* [x] Static
-* [x] Concurrent
-* [x] Immediate
-* [x] Bedrock library-internal
+| `BR_REGA`
+| Flip-flop register with unconditional load, asynchronous active-high reset named `arst`, initial value 0, positive-edge triggered clock named `clk`.
+| Yes
+| Yes
+
+| `BR_REGAIL`
+| Flip-flop register with conditional load enable, asynchronous active-high reset named `arst`, initial value given, positive-edge triggered clock named `clk`.
+| Yes
+| Yes
+
+| `BR_REGAI`
+| Flip-flop register with unconditional load, asynchronous active-high reset named `arst`, initial value given, positive-edge triggered clock named `clk`.
+| Yes
+| Yes
+
+| `BR_REGAL`
+| Flip-flop register with conditional load enable, asynchronous active-high reset named `arst`, initial value 0, positive-edge triggered clock named `clk`.
+| Yes
+| Yes
+
+| `BR_REGIL`
+| Flip-flop register with conditional load enable, synchronous active-high reset named `rst`, initial value given, positive-edge triggered clock named `clk`.
+| Yes
+| Yes
+
+| `BR_REGI`
+| Flip-flop register with unconditional load, synchronous active-high reset named `rst`, initial value given, positive-edge triggered clock named `clk`.
+| Yes
+| Yes
+
+| `BR_REGILX`
+| Flip-flop register with conditional load enable, synchronous active-high given reset, initial value given, positive-edge triggered given clock.
+| Yes
+| Yes
+
+| `BR_REGIX`
+| Flip-flop register with unconditional load, synchronous active-high given reset, initial value given, positive-edge triggered given clock.
+| Yes
+| Yes
+
+| `BR_REGLN`
+| Flip-flop register with load enable, no reset, positive-edge triggered clock named `clk`.
+| Yes
+| Yes
+
+| `BR_REGLX`
+| Flip-flop register with conditional load enable, synchronous active-high reset, initial value 0, positive-edge triggered given clock.
+| Yes
+| Yes
+
+| `BR_REGL`
+| Flip-flop register with conditional load enable, synchronous active-high reset named `rst`, initial value 0, positive-edge triggered clock named `clk`.
+| Yes
+| Yes
+
+| `BR_REGN`
+| Flip-flop register with unconditional load, no reset, positive-edge triggered clock named `clk`.
+| Yes
+| Yes
+
+| `BR_REGX`
+| Flip-flop register with unconditional load, synchronous active-high given reset, initial value 0, positive-edge triggered given clock.
+| Yes
+| Yes
+
+| `BR_REG`
+| Flip-flop register with unconditional load, synchronous active-high reset named `rst`, initial value 0, positive-edge triggered clock named `clk`.
+| Yes
+| Yes
+
+|===
+
+
+=== `br_asserts.svh`: Public Assertions
+
+These assertion macros are intended for use by the user in their own designs.
+They are guarded (enabled) by the following defines:
+
+* `ifdef SV_ASSERT_ON`
+
+IMPORTANT: Clocks are always positive-edge triggered.
+Resets are always active-high.
+
+[cols="1,4,1,1"]
+|===
+| Macro/define | Description | Implemented | Tested
+
+| `BR_ASSERT_STATIC`
+| Static (elaboration-time) assertion for use within modules
+| Yes
+| Yes
+
+| `BR_ASSERT_STATIC_IN_PACKAGE`
+| Static (elaboration-time) assertion for use within packages
+| Yes
+| Yes
+
+| `BR_ASSERT`
+| Concurrent assertion with implicit `clk` and `rst` names.
+| Yes
+| Yes
+
+| `BR_ASSERT_CR`
+| Concurrent assertion with explicit clock and reset names.
+| Yes
+| Yes
+
+| `BR_ASSERT_COMB`
+| Combinational/immediate assertion.
+| Yes
+| Yes
+
+| `BR_COVER`
+| Concurrent cover with implicit `clk` and `rst` names.
+| Yes
+| Yes
+
+| `BR_COVER_CR`
+| Concurrent cover with explicit clock and reset names.
+| Yes
+| Yes
+
+| `BR_COVER_COMB`
+| Combinational/immediate cover.
+| Yes
+| Yes
+
+| `BR_ASSUME`
+| Concurrent assumption with implicit `clk` and `rst` names.
+| Yes
+| Yes
+
+| `BR_ASSUME_CR`
+| Concurrent assumption with explicit clock and reset names.
+| Yes
+| Yes
+
+|===
+
+=== `br_asserts_internal.svh`: Bedrock-internal Assertions
+
+These assertion macros wrap the public assertions.
+They are intended only for internal use inside Bedrock libraries, but the user needs to know about them.
+They are guarded (enabled) by the following defines:
+
+* `ifndef BR_DISABLE_INTG_CHECKS` for the integration cases
+* `ifdef BR_ENABLE_IMPL_CHECKS` for the implementation cases
+
+[cols="1,4,1,1"]
+|===
+| Macro/define | Description | Implemented | Tested
+
+| `BR_ASSERT_INTG`
+a| Concurrent integration assertion with implicit `clk` and `rst` names.
+Disable by defining `BR_DISABLE_INTG_CHECKS`.
+| Yes
+| Yes
+
+| `BR_ASSERT_CR_INTG`
+a| Concurrent integration assertion with explicit clock and reset names.
+Disable by defining `BR_DISABLE_INTG_CHECKS`.
+| Yes
+| Yes
+
+| `BR_ASSERT_IMPL`
+a| Concurrent implementation assertion with implicit `clk` and `rst` names.
+Enable by defining `BR_ENABLE_IMPL_CHECKS`.
+| Yes
+| Yes
+
+| `BR_ASSERT_CR_IMPL`
+a| Concurrent implementation assertion with explicit clock and reset names.
+Enable by defining `BR_ENABLE_IMPL_CHECKS`.
+| Yes
+| Yes
+
+| `BR_ASSERT_COMB_INTG`
+a| Combinational/immediate integration assertion.
+Disable by defining `BR_DISABLE_INTG_CHECKS`.
+| Yes
+| Yes
+
+| `BR_ASSERT_COMB_IMPL`
+a| Combinational/immediate implementation assertion.
+Enable by defining `BR_ENABLE_IMPL_CHECKS`.
+| Yes
+| Yes
+
+| `BR_COVER_INTG`
+a| Concurrent integration cover with implicit `clk` and `rst` names.
+Disable by defining `BR_DISABLE_INTG_CHECKS`.
+| Yes
+| Yes
+
+| `BR_COVER_CR_INTG`
+a| Concurrent integration cover with explicit clock and reset names.
+Disable by defining `BR_DISABLE_INTG_CHECKS`.
+| Yes
+| Yes
+
+| `BR_COVER_IMPL`
+a| Concurrent implementation cover with implicit `clk` and `rst` names.
+Enable by defining `BR_ENABLE_IMPL_CHECKS`.
+| Yes
+| Yes
+
+| `BR_COVER_CR_IMPL`
+a| Concurrent implementation cover with explicit clock and reset names.
+Enable by defining `BR_ENABLE_IMPL_CHECKS`.
+| Yes
+| Yes
+
+| `BR_COVER_COMB_INTG`
+a| Combinational/immediate integration cover.
+Disable by defining `BR_DISABLE_INTG_CHECKS`.
+| Yes
+| Yes
+
+| `BR_COVER_COMB_IMPL`
+a| Combinational/immediate implementation cover.
+Enable by defining `BR_ENABLE_IMPL_CHECKS`.
+| Yes
+| Yes
+
+|===
+
+=== `br_gates.svh`: Gate Convenience Wrappers
+
+These macros conveniently wrap module instantiations from the `gate` category.
+
+[cols="1,4,1,1"]
+|===
+| Macro/define | Description | Implemented | Tested
+
+| `BR_GATE_BUF`
+| Instantiates `br_gate_buf`.
+| Yes
+| Yes
+
+| `BR_GATE_CLK_BUF`
+| Instantiates `br_gate_clk_buf`.
+| Yes
+| Yes
+
+| `BR_GATE_INV`
+| Instantiates `br_gate_inv`.
+| Yes
+| Yes
+
+| `BR_GATE_AND2`
+| Instantiates `br_gate_and2`.
+| Yes
+| Yes
+
+| `BR_GATE_OR2`
+| Instantiates `br_gate_or2`.
+| Yes
+| Yes
+
+| `BR_GATE_XOR2`
+| Instantiates `br_gate_xor2`.
+| Yes
+| Yes
+
+| `BR_GATE_MUX2`
+| Instantiates `br_gate_mux2`.
+| Yes
+| Yes
+
+| `BR_GATE_CLK_MUX2`
+| Instantiates `br_gate_clk_mux2`.
+| Yes
+| Yes
+
+| `BR_GATE_ICG`
+| Instantiates `br_gate_icg`.
+| Yes
+| Yes
+
+|===
+
+=== `br_tieoff.svh`: Tie-off Convenience Wrappers
+
+These macros conveniently wrap `br_misc_tieoff*` module instantiations.
+
+[cols="1,4,1,1"]
+|===
+| Macro/define | Description | Implemented | Tested
+
+| `BR_TIEOFF_ZERO_NAMED`
+| Instantiates `br_tieoff_zero` with a given submodule instance suffix.
+| Yes
+| Yes
+
+| BR_TIEOFF_ONE_NAMED
+| Instantiates `br_tieoff_one` with a given submodule instance suffix.
+| Yes
+| Yes
+
+| BR_TIEOFF_ZERO
+| Instantiates `br_tieoff_zero` with a derived submodule instance suffix.
+| Yes
+| Yes
+
+| BR_TIEOFF_ONE
+| Instantiates `br_tieoff_one` with a derived submodule instance suffix.
+| Yes
+| Yes
+
+| BR_TIEOFF_ZERO_TODO
+a| Provided for convenience of the user grepping for `TODO` in the codebase, to help prevent accidental tie-offs that result in bugs.
+Instantiates `br_tieoff_zero` with a derived submodule instance suffix.
+| Yes
+| Yes
+
+| BR_TIEOFF_ONE_TODO
+a| Provided for convenience of the user grepping for `TODO` in the codebase, to help prevent accidental tie-offs that result in bugs.
+Instantiates `br_tieoff_one` with a derived submodule instance suffix.
+| Yes
+| Yes
+
+|===
+
+=== `br_unused.svh`: Unused Signal Convenience Wrappers
+
+These macros conveniently wrap `br_misc_unused` module instantiations.
+
+[cols="1,4,1,1"]
+|===
+| Macro/define | Description | Implemented | Tested
+
+| `BR_UNUSED_NAMED`
+| Instantiates `br_misc_unused` with a given submodule instance suffix.
+| Yes
+| Yes
+
+| `BR_UNUSED`
+| Instantiates `br_misc_unused` with a derived submodule instance suffix.
+| Yes
+| Yes
+
+| `BR_UNUSED_TODO`
+a| Provided for convenience of the user grepping for `TODO` in the codebase, to help prevent accidental unused signals that result in bugs.
+Instantiates `br_misc_unused` with a derived submodule instance suffix.
+| Yes
+| Yes
+
+|===
 
 
 == Modules
