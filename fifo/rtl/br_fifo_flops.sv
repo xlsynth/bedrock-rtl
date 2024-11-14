@@ -128,12 +128,13 @@ module br_fifo_flops #(
       .ram_rd_data
   );
 
-  br_ram_flops_1r1w #(
+  // TODO(https://github.com/xlsynth/bedrock-rtl/issues/136): switch to br_ram_flops_1r1w when ready
+  br_ram_flops_1r1w_tile #(
       .Depth(Depth),
       .BitWidth(BitWidth),
       .EnableBypass(EnableBypass),
       .EnableReset(0)
-  ) br_ram_flops_1r1w (
+  ) br_ram_flops_1r1w_tile (
       .clk,
       .rst,
       .wr_valid(ram_wr_valid),

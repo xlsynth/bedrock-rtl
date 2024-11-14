@@ -46,7 +46,7 @@ verilog_library(
     srcs = ["br_fifo_flops.sv"],
     deps = [
         ":br_fifo_ctrl_1r1w",
-        "//ram/rtl:br_ram_flops_1r1w",
+        "//ram/rtl:br_ram_flops_1r1w_tile",
     ],
 )
 
@@ -55,7 +55,7 @@ verilog_library(
     srcs = ["br_fifo_flops_push_credit.sv"],
     deps = [
         ":br_fifo_ctrl_1r1w_push_credit",
-        "//ram/rtl:br_ram_flops_1r1w",
+        "//ram/rtl:br_ram_flops_1r1w_tile",
     ],
 )
 
