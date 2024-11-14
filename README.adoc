@@ -273,208 +273,11 @@ verilog_elab_and_lint_test_suite(
 ----
 ====
 
-== Planned Features
+== Macros
 
-The following table summarizes the list of features that we plan to implement in the Bedrock-RTL library.
-Checked boxes already have prototype implementations, though they are not verified yet.
-
-[cols="1,1,3,1"]
-|===
-| Category | Module | Description | Implemented
-
-| Arbiters
-| `br_arb_fixed`
-| Fixed priority
-| Yes
-
-| Arbiters
-| `br_arb_lru`
-| Least-recently used
-| Yes
-
-| Arbiters
-| `br_arb_rr`
-| Round-robin
-| Yes
-
-| Arbiters
-| `br_arb_wlru`
-| Weighted least-recently used
-|
-
-| Arbiters
-| `br_arb_wrr`
-| Weighted round-robin
-|
-
-| Clock-domain crossing
-| `br_cdc_bit`
-| Single-bit CDC
-|
-
-| Clock-domain crossing
-| `br_cdc_fifo_ctrl_1r1w`
-| Bus CDC using a dual-clock FIFO controller for a 1R1W dual-clock SRAM
-|
-
-| Clock-domain crossing
-| `br_cdc_fifo_flops`
-| Bus CDC using a dual-clock FIFO with internal flop-RAM
-|
-
-| Counters
-| `br_counter_incr`
-| Incrementing counter
-| Yes
-
-| Counters
-| `br_counter_decr`
-| Decrementing counter
-| Yes
-
-| Counters
-| `br_counter`
-| Up-down counter
-| Yes
-
-| Counters
-| `br_counter_sat`
-| Up-down saturating counter
-|
-
-| Credit
-| `br_credit_counter`
-| Credit counter
-| Yes
-
-| Credit
-| `br_credit_sender
-| Ready/valid to credit/valid converter (credit-loop sender-side)
-| Yes
-
-| Credit
-| `br_credit_receiver
-| Credit/valid to ready/valid converter (credit-loop receiver-side)
-| Yes
-
-| Fixed-delay pipelines
-| `br_delay`
-| With reset
-| Yes
-
-| Fixed-delay pipelines
-| `br_delay_nr`
-| Without reset
-| Yes, but want to merge with `br_delay` (https://github.com/xlsynth/bedrock-rtl/issues/137)
-
-| Fixed-delay pipelines
-| `br_delay_valid`
-| With self-gating (valid)
-| Yes
-
-| Fixed-delay pipelines
-| `br_delay_valid_next`
-| With self-gating (valid-next)
-| Yes
-
-| Fixed-delay pipelines
-| `br_delay_valid_next_nr`
-| With self-gating (valid-next) and without reset
-| Yes, but want to merge with `br_delay_valid_next` (https://github.com/xlsynth/bedrock-rtl/issues/137)
-
-| Error correcting codes
-| `br_ecc_parity_enc`
-| Parity encoder
-|
-
-| Error correcting codes
-| `br_ecc_parity_dec`
-| Parity decoder
-|
-
-| Error correcting codes
-| `br_ecc_secded_enc`
-| Single-error-correcting, double-error-detecting encoder
-|
-
-| Error correcting codes
-| `br_ecc_secded_dec`
-| Single-error-correcting, double-error-detecting decoder
-|
-
-| Encoders
-| `br_enc_bin2gray`
-| Binary to gray
-| Yes
-
-| Encoders
-| `br_enc_bin2onehot`
-| Binary to onehot
-| Yes
-
-| Encoders
-| `br_enc_gray2bin`
-| Gray to binary
-| Yes
-
-| Encoders
-| `br_enc_onehot2bin`
-| One-hot to binary
-| Yes
-
-| Encoders
-| `br_enc_priority`
-| Priority encoder
-| Yes
-
-| FIFOs
-| `br_fifo_ctrl_1r1w`
-| FIFO controller with external RAM port for 1R1W, ready/valid push and ready/valid pop
-| Yes
-
-| FIFOs
-| `br_fifo_ctrl_1r1w_push_credit`
-| FIFO controller with external RAM port for 1R1W, credit/valid push and ready/valid pop
-| Yes
-
-| FIFOs
-| `br_fifo_flops_push_credit`
-| FIFO controller with internal flop RAM, ready/valid push and ready/valid pop
-| Yes
-
-| FIFOs
-| `br_fifo_flops_push_credit`
-| FIFO controller with internal flop RAM, credit/valid push and ready/valid pop
-| Yes
-
-|===
-
+The following table lists all the macros that we plan to have in the Bedrock-RTL library.
 
 TODO(mgottscho): WIP
-
-
-
-| fifo
-a| FIFO (queue) controllers with external RAM ports. Combinations of:
-
-* [x] Push ready/valid
-* [ ] Push credit/valid
-* [x] Pop ready/valid
-* [ ] Pop credit/valid
-* [x] 1R1W (single bank)
-* [ ] 1RW (dual bank)
-
-Additionally, FIFOs that are simple wrappers around controllers and flop-RAMs.
-
-| flow
-a| Ready/valid flow control (streaming)
-
-* [x] Arbs
-* [x] Muxes
-* [x] Regs
-* [x] Fork
-* [x] Join
-* [x] Demuxes
 
 | macros
 a| Macros for inferring flip-flop registers with combinations of the following features.
@@ -490,6 +293,363 @@ Macros for SystemVerilog assertions.
 * [x] Concurrent
 * [x] Immediate
 * [x] Bedrock library-internal
+
+
+== Modules
+
+The following table lists all the modules that we plan to have in the Bedrock-RTL library.
+
+[cols="1,2,1,4,1,1"]
+|===
+| Prefix | Category | Module | Description | Implemented | Verified
+
+| arb
+| Arbiters
+| `br_arb_fixed`
+| Fixed priority
+| Yes
+|
+
+| arb
+| Arbiters
+| `br_arb_lru`
+| Least-recently used
+| Yes
+|
+
+| arb
+| Arbiters
+| `br_arb_rr`
+| Round-robin
+| Yes
+|
+
+| cdc
+| Clock-domain crossing
+| `br_cdc_bit`
+| Single-bit CDC
+|
+|
+
+| cdc
+| Clock-domain crossing
+| `br_cdc_fifo_ctrl_1r1w`
+| Bus CDC using a dual-clock FIFO controller for a 1R1W dual-clock SRAM
+|
+|
+
+| cdc
+| Clock-domain crossing
+| `br_cdc_fifo_flops`
+| Bus CDC using a dual-clock FIFO with internal flop-RAM
+|
+|
+
+| counter
+| Counters
+| `br_counter_incr`
+| Incrementing counter
+| Yes
+|
+
+| counter
+| Counters
+| `br_counter_decr`
+| Decrementing counter
+| Yes
+|
+
+| counter
+| Counters
+| `br_counter`
+| Up-down counter
+| Yes
+|
+
+| counter
+| Counters
+| `br_counter_sat`
+| Up-down saturating counter
+|
+|
+
+| credit
+| Credit
+| `br_credit_counter`
+| Credit counter
+| Yes
+|
+
+| credit
+| Credit
+| `br_credit_sender`
+| Ready/valid to credit/valid converter (credit-loop sender-side)
+| Yes
+|
+
+| credit
+| Credit
+| `br_credit_receiver`
+| Credit/valid to ready/valid converter (credit-loop receiver-side)
+| Yes
+|
+
+| delay
+| Fixed-delay pipelines
+| `br_delay`
+| With reset
+| Yes
+|
+
+| delay
+| Fixed-delay pipelines
+| `br_delay_nr`
+| Without reset
+| Yes, but want to merge with `br_delay` (https://github.com/xlsynth/bedrock-rtl/issues/137)
+|
+
+| delay
+| Fixed-delay pipelines
+| `br_delay_valid`
+| With self-gating (valid)
+| Yes
+|
+
+| delay
+| Fixed-delay pipelines
+| `br_delay_valid_next`
+| With self-gating (valid-next)
+| Yes
+|
+
+| delay
+| Fixed-delay pipelines
+| `br_delay_valid_next_nr`
+| With self-gating (valid-next) and without reset
+| Yes, but want to merge with `br_delay_valid_next` (https://github.com/xlsynth/bedrock-rtl/issues/137)
+|
+
+| ecc
+| Error correcting codes
+| `br_ecc_parity_enc`
+| Parity encoder
+|
+|
+
+| ecc
+| Error correcting codes
+| `br_ecc_parity_dec`
+| Parity decoder
+|
+|
+
+| ecc
+| Error correcting codes
+| `br_ecc_secded_enc`
+| Single-error-correcting, double-error-detecting encoder
+|
+|
+
+| ecc
+| Error correcting codes
+| `br_ecc_secded_dec`
+| Single-error-correcting, double-error-detecting decoder
+|
+|
+
+| enc
+| Encoders
+| `br_enc_bin2gray`
+| Binary to gray
+| Yes
+|
+
+| enc
+| Encoders
+| `br_enc_bin2onehot`
+| Binary to onehot
+| Yes
+|
+
+| enc
+| Encoders
+| `br_enc_gray2bin`
+| Gray to binary
+| Yes
+|
+
+| enc
+| Encoders
+| `br_enc_onehot2bin`
+| One-hot to binary
+| Yes
+|
+
+| enc
+| Encoders
+| `br_enc_priority`
+| Priority encoder
+| Yes
+|
+
+| fifo
+| FIFOs
+| `br_fifo_ctrl_1r1w`
+| FIFO controller with external RAM port for 1R1W, ready/valid push and ready/valid pop
+| Yes
+|
+
+| fifo
+| FIFOs
+| `br_fifo_ctrl_1r1w_bare`
+| FIFO controller with external RAM port for 1R1W, without any push or pop flow control
+|
+|
+
+| fifo
+| FIFOs
+| `br_fifo_ctrl_1r1w_pop_credit`
+| FIFO controller with external RAM port for 1R1W, ready/valid push and credit/valid pop
+|
+|
+
+| fifo
+| FIFOs
+| `br_fifo_ctrl_1r1w_push_credit`
+| FIFO controller with external RAM port for 1R1W, credit/valid push and ready/valid pop
+| Yes
+|
+
+| fifo
+| FIFOs
+| `br_fifo_flops`
+| FIFO with internal flop RAM, ready/valid push and ready/valid pop
+| Yes
+|
+
+| fifo
+| FIFOs
+| `br_fifo_flops_pop_credit`
+| FIFO with internal flop RAM, ready/valid push and credit/valid pop
+|
+|
+
+| fifo
+| FIFOs
+| `br_fifo_flops_push_credit`
+| FIFO with internal flop RAM, credit/valid push and ready/valid pop
+| Yes
+|
+
+
+| flow
+| Ready/valid pipelines
+| `br_flow_arb_fixed`
+| Fixed priority arbiter with flow control
+| Yes
+|
+
+| flow
+| Ready/valid pipelines
+| `br_flow_arb_lru`
+| Least-recently used arbiter with flow control
+| Yes
+|
+
+| flow
+| Ready/valid pipelines
+| `br_flow_arb_rr`
+| Round-robin arbiter with flow control
+| Yes
+|
+
+| flow
+| Ready/valid pipelines
+| `br_flow_demux_select`
+| Registered demultiplexer (user select) with flow control
+| Yes
+|
+
+| flow
+| Ready/valid pipelines
+| `br_flow_demux_select_unstable`
+| Combinational demultiplexer (user select) with unstable flow control
+| Yes
+|
+
+| flow
+| Ready/valid pipelines
+| `br_flow_fork`
+| Datapath flow control split
+| Yes
+|
+
+| flow
+| Ready/valid pipelines
+| `br_flow_join`
+| Datapath flow control join
+| Yes
+|
+
+| flow
+| Ready/valid pipelines
+| `br_flow_mux_fixed`
+| Fixed priority arbitrated multiplexer with flow control
+| Yes
+|
+
+| flow
+| Ready/valid pipelines
+| `br_flow_mux_lru`
+| Least-recently used arbitrated multiplexer with flow control
+| Yes
+|
+
+| flow
+| Ready/valid pipelines
+| `br_flow_mux_rr`
+| Round-robin arbitrated multiplexer with flow control
+| Yes
+|
+
+| flow
+| Ready/valid pipelines
+| `br_flow_mux_select`
+| Registered multiplexer (user select) with flow control
+| Yes
+|
+
+| flow
+| Ready/valid pipelines
+| `br_flow_mux_select_unstable`
+| Combinational multiplexer (user select) with unstable flow control
+| Yes
+|
+
+| flow
+| Ready/valid pipelines
+| `br_flow_reg_both`
+| Pipeline register, registered forward and reverse signals, with flow control
+| Yes
+|
+
+| flow
+| Ready/valid pipelines
+| `br_flow_reg_fwd`
+| Pipeline register, registered forward signals, with flow control
+| Yes
+|
+
+| flow
+| Ready/valid pipelines
+| `br_flow_reg_rev`
+| Pipeline register, registered backward signals, with flow control
+| Yes
+|
+
+|===
+
+TODO(mgottscho): WIP
 
 | ram
 a| Memories
@@ -511,4 +671,10 @@ a| Timers
 * [ ] Watchdog
 * [ ] Rollover
 
-|===
+
+
+== Packages
+
+The following table lists all the packages that we plan to have in the Bedrock-RTL library.
+
+TODO(mgottscho): WIP
