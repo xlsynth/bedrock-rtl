@@ -1108,9 +1108,9 @@ a| FIFO with internal flop RAM
 |===
 | Module | Description | Implemented | Verified
 
-| `br_ram_addr_decoder`
+| `br_ram_addr_decoder_stage`
 | Single-stage address decoder for a tiled RAM
-| WIP
+| Yes
 |
 
 | `br_ram_addr_decoder`
