@@ -815,4 +815,19 @@ a| FIFO with internal flop RAM
 
 The following table lists all the packages that we plan to have in the Bedrock-RTL library.
 
-TODO(mgottscho): WIP
+[cols="1,4,1,1"]
+|===
+| Package | Description | Implemented | Verified
+
+| `br_math`
+a| Non-synthesizable math helper functions
+
+* `ceil_div`
+* `floor_div`
+* `clogb`
+* `is_power_of_2`
+* `is_even`
+| WIP
+| WIP
+
+|===
