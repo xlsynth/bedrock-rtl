@@ -63,8 +63,11 @@ module br_demux_onehot #(
   // Implementation checks
   //------------------------------------------
   // Ensure only one out_valid is high if in_valid is high
-  `BR_ASSERT_IMPL(out_valid_onehot0_a, $onehot0(out_valid))
-  `BR_ASSERT_IMPL(out_valid_a, in_valid && |select |-> $onehot(out_valid))
-  `BR_ASSERT_IMPL(out_invalid_when_select_0_a, select == '0 |-> out_valid == '0)
+  // ri lint_check_waive ALWAYS_COMB
+  `BR_ASSERT_COMB_IMPL(out_valid_onehot0_a, $onehot0(out_valid))
+  // ri lint_check_waive ALWAYS_COMB
+  `BR_ASSERT_COMB_IMPL(out_valid_a, (in_valid && |select) == $onehot(out_valid))
+  // ri lint_check_waive ALWAYS_COMB
+  `BR_ASSERT_COMB_IMPL(out_invalid_when_select_0_a, (out_valid == '0) || (select != '0))
 
 endmodule : br_demux_onehot

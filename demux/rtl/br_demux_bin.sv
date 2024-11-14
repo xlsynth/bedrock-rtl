@@ -61,7 +61,9 @@ module br_demux_bin #(
   //------------------------------------------
   // Implementation checks
   //------------------------------------------
-  `BR_ASSERT_IMPL(out_valid_onehot0_a, $onehot0(out_valid))
-  `BR_ASSERT_IMPL(out_valid_a, in_valid |-> $onehot(out_valid))
+  // ri lint_check_waive ALWAYS_COMB
+  `BR_ASSERT_COMB_IMPL(out_valid_onehot0_a, $onehot0(out_valid))
+  // ri lint_check_waive ALWAYS_COMB
+  `BR_ASSERT_COMB_IMPL(out_valid_a, $onehot(out_valid) || !in_valid)
 
 endmodule : br_demux_bin
