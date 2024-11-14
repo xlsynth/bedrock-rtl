@@ -1161,20 +1161,39 @@ a| FIFO with internal flop RAM
 
 == Packages
 
-The following table lists all the packages that we plan to have in the Bedrock-RTL library.
+=== `br_math`: Non-synthesizable Math Helper Functions
 
 [cols="1,4,1,1"]
 |===
-| Package | Description | Implemented | Verified
+| Function | Description | Implemented | Tested
 
-| `br_math`
-a| Non-synthesizable math helper functions
+| `ceil_div`
+| Return integer ceiling division
+| WIP
+| WIP
 
-* `ceil_div`
-* `floor_div`
-* `clogb`
-* `is_power_of_2`
-* `is_even`
+| `floor_div`
+| Return integer floor division
+| WIP
+| WIP
+
+| `clogb`
+| Return integer ceiling of base-`b` logarithm
+| WIP
+| WIP
+
+| `is_power_of_2`
+| Return 1 if an integer is a power of 2
+| WIP
+| WIP
+
+| `is_power_of_2`
+| Return 1 if an integer is a power of 2
+| WIP
+| WIP
+
+| `is_even`
+| Return 1 if an integer is even
 | WIP
 | WIP
 
