@@ -297,381 +297,519 @@ Macros for SystemVerilog assertions.
 
 == Modules
 
-The following table lists all the modules that we plan to have in the Bedrock-RTL library.
+=== `arb`: Arbiters
 
-[cols="1,2,1,4,1,1"]
+[cols="1,4,1,1"]
 |===
-| Prefix | Category | Module | Description | Implemented | Verified
+| Module | Description | Implemented | Verified
 
-| arb
-| Arbiters
 | `br_arb_fixed`
 | Fixed priority
 | Yes
 |
 
-| arb
-| Arbiters
 | `br_arb_lru`
 | Least-recently used
 | Yes
 |
 
-| arb
-| Arbiters
 | `br_arb_rr`
 | Round-robin
 | Yes
 |
 
-| cdc
-| Clock-domain crossing
+|===
+
+=== `cdc`: Clock Domain Crossings
+
+[cols="1,4,1,1"]
+|===
+| Module | Description | Implemented | Verified
+
 | `br_cdc_bit`
 | Single-bit CDC
 |
 |
 
-| cdc
-| Clock-domain crossing
 | `br_cdc_fifo_ctrl_1r1w`
-| Bus CDC using a dual-clock FIFO controller for a 1R1W dual-clock SRAM
+a| Bus CDC using a dual-clock FIFO controller for a 1R1W dual-clock SRAM
+
+* Push flow control: ready/valid
+* Pop flow control: ready/valid
 |
 |
 
-| cdc
-| Clock-domain crossing
 | `br_cdc_fifo_flops`
-| Bus CDC using a dual-clock FIFO with internal flop-RAM
+a| Bus CDC using a dual-clock FIFO with internal flop-RAM
+
+* Push flow control: ready/valid
+* Pop flow control: ready/valid
 |
 |
 
-| counter
-| Counters
+|===
+
+=== `counter`: Wrapping and Saturating Counters
+
+[cols="1,4,1,1"]
+|===
+| Module | Description | Implemented | Verified
+
 | `br_counter_decr`
 | Decrementing counter
 | Yes
 |
 
-| counter
-| Counters
 | `br_counter_incr`
 | Incrementing counter
 | Yes
 |
 
-| counter
-| Counters
 | `br_counter_sat`
 | Up-down saturating counter
 |
 |
 
-| counter
-| Counters
 | `br_counter`
 | Up-down counter
 | Yes
 |
 
-| credit
-| Credit
+|===
+
+=== `credit`: Credit/Valid Flow Control
+
+[cols="1,4,1,1"]
+|===
+| Module | Description | Implemented | Verified
+
 | `br_credit_counter`
 | Credit counter
 | Yes
 |
 
-| credit
-| Credit
 | `br_credit_receiver`
 | Credit/valid to ready/valid converter (credit-loop receiver-side)
 | Yes
 |
 
-| credit
-| Credit
 | `br_credit_sender`
 | Ready/valid to credit/valid converter (credit-loop sender-side)
 | Yes
 |
 
-| delay
-| Fixed-delay pipelines
+|===
+
+=== `delay`: Fixed-Delay Pipelines
+
+[cols="1,4,1,1"]
+|===
+| Module | Description | Implemented | Verified
+
 | `br_delay`
 | With reset
 | Yes
 |
 
-| delay
-| Fixed-delay pipelines
 | `br_delay_nr`
 | Without reset
 | Yes, but want to merge with `br_delay` (https://github.com/xlsynth/bedrock-rtl/issues/137)
 |
 
-| delay
-| Fixed-delay pipelines
 | `br_delay_valid_next_nr`
 | With self-gating (valid-next) and without reset
 | Yes, but want to merge with `br_delay_valid_next` (https://github.com/xlsynth/bedrock-rtl/issues/137)
 |
 
-| delay
-| Fixed-delay pipelines
 | `br_delay_valid_next`
 | With self-gating (valid-next)
 | Yes
 |
 
-
-| delay
-| Fixed-delay pipelines
 | `br_delay_valid`
 | With self-gating (valid)
 | Yes
 |
 
-| enc
-| Encoders
+|===
+
+=== `demux`: Simple Demultiplexers
+
+[cols="1,4,1,1"]
+|===
+| Module | Description | Implemented | Verified
+
+| `br_demux_onehot`
+| One-hot demultiplexer
+|
+|
+
+| `br_demux_bin`
+| Binary-select demultiplexer
+|
+|
+
+|===
+
+=== `enc`: Combinational encoders
+
+[cols="1,4,1,1"]
+|===
+| Module | Description | Implemented | Verified
+
 | `br_enc_bin2gray`
 | Binary to gray
 | Yes
 |
 
-| enc
-| Encoders
 | `br_enc_bin2onehot`
 | Binary to onehot
 | Yes
 |
 
-| enc
-| Encoders
 | `br_enc_gray2bin`
 | Gray to binary
 | Yes
 |
 
-| enc
-| Encoders
 | `br_enc_onehot2bin`
 | One-hot to binary
 | Yes
 |
 
-| enc
-| Encoders
 | `br_enc_priority_encoder`
 | Priority encoder
 | Yes
 |
 
-| ecc
-| Error correcting codes
+|===
+
+=== `ecc`: Error Correcting Codes
+
+[cols="1,4,1,1"]
+|===
+| Module | Description | Implemented | Verified
+
 | `br_ecc_parity_dec`
-| Parity decoder
+| Single-error-detecting (parity) decoder
 |
 |
 
-| ecc
-| Error correcting codes
 | `br_ecc_parity_enc`
-| Parity encoder
+| Single-error-detecting (parity) encoder
 |
 |
 
-| ecc
-| Error correcting codes
 | `br_ecc_secded_dec`
-| Single-error-correcting, double-error-detecting decoder
+| Single-error-correcting, double-error-detecting (SECDED) decoder
 |
 |
 
-| ecc
-| Error correcting codes
 | `br_ecc_secded_enc`
-| Single-error-correcting, double-error-detecting encoder
+| Single-error-correcting, double-error-detecting (SECDED) encoder
 |
 |
 
-| fifo
-| FIFOs
+|===
+
+=== `fifo`: First-In-First-Out Queues
+
+[cols="1,4,1,1"]
+|===
+| Module | Description | Implemented | Verified
+
 | `br_fifo_ctrl_1r1w_bare`
-| FIFO controller with external RAM port for 1R1W, without any push or pop flow control
+a| FIFO controller with external RAM port for 1R1W
+
+* Push flow control: none
+* Pop flow control: none
 |
 |
 
-| fifo
-| FIFOs
 | `br_fifo_ctrl_1r1w_pop_credit`
-| FIFO controller with external RAM port for 1R1W, ready/valid push and credit/valid pop
+a| FIFO controller with external RAM port for 1R1W
+
+* Push flow control: ready/valid
+* Pop flow control: credit/valid
 |
 |
 
-| fifo
-| FIFOs
 | `br_fifo_ctrl_1r1w_push_credit`
-| FIFO controller with external RAM port for 1R1W, credit/valid push and ready/valid pop
+a| FIFO controller with external RAM port for 1R1W
+
+* Push flow control: credit/valid
+* Pop flow control: ready/valid
 | Yes
 |
 
-| fifo
-| FIFOs
 | `br_fifo_ctrl_1r1w`
-| FIFO controller with external RAM port for 1R1W, ready/valid push and ready/valid pop
+a| FIFO controller with external RAM port for 1R1W
+
+* Push flow control: ready/valid
+* Pop flow control: ready/valid
 | Yes
 |
 
-| fifo
-| FIFOs
 | `br_fifo_flops_pop_credit`
-| FIFO with internal flop RAM, ready/valid push and credit/valid pop
+a| FIFO with internal flop RAM
+
+* Push flow control: ready/valid
+* Pop flow control: credit/valid
 |
 |
 
-| fifo
-| FIFOs
 | `br_fifo_flops_push_credit`
-| FIFO with internal flop RAM, credit/valid push and ready/valid pop
+a| FIFO with internal flop RAM
+
+* Push flow control: credit/valid
+* Pop flow control: ready/valid
 | Yes
 |
 
-| fifo
-| FIFOs
 | `br_fifo_flops`
-| FIFO with internal flop RAM, ready/valid push and ready/valid pop
+a| FIFO with internal flop RAM
+
+* Push flow control: ready/valid
+* Pop flow control: ready/valid
 | Yes
 |
 
-| flow
-| Ready/valid pipelines
+
+|===
+
+=== `flow`: Ready/Valid Flow Control
+
+[cols="1,4,1,1"]
+|===
+| Module | Description | Implemented | Verified
+
 | `br_flow_arb_fixed`
-| Fixed priority arbiter with flow control
+| Fixed priority arbiter
 | Yes
 |
 
-| flow
-| Ready/valid pipelines
 | `br_flow_arb_lru`
-| Least-recently used arbiter with flow control
+| Least-recently used arbiter
 | Yes
 |
 
-| flow
-| Ready/valid pipelines
 | `br_flow_arb_rr`
-| Round-robin arbiter with flow control
+| Round-robin arbiter
 | Yes
 |
 
-| flow
-| Ready/valid pipelines
 | `br_flow_demux_select`
-| Registered demultiplexer (user select) with flow control
+| Registered demultiplexer, external select
 | Yes
 |
 
-| flow
-| Ready/valid pipelines
 | `br_flow_demux_select_unstable`
-| Combinational demultiplexer (user select) with unstable flow control
+| Combinational demultiplexer, external select, with unstable flow control
 | Yes
 |
 
-| flow
-| Ready/valid pipelines
 | `br_flow_fork`
 | Datapath flow control split
 | Yes
 |
 
-| flow
-| Ready/valid pipelines
 | `br_flow_join`
 | Datapath flow control join
 | Yes
 |
 
-| flow
-| Ready/valid pipelines
 | `br_flow_mux_fixed`
-| Fixed priority arbitrated multiplexer with flow control
+| Arbitrated multiplexer, fixed priority
 | Yes
 |
 
-| flow
-| Ready/valid pipelines
 | `br_flow_mux_lru`
-| Least-recently used arbitrated multiplexer with flow control
+| Arbitrated multiplexer, least-recently used
 | Yes
 |
 
-| flow
-| Ready/valid pipelines
 | `br_flow_mux_rr`
-| Round-robin arbitrated multiplexer with flow control
+| Arbitrated multiplexer, round-robin
 | Yes
 |
 
-| flow
-| Ready/valid pipelines
 | `br_flow_mux_select`
-| Registered multiplexer (user select) with flow control
+| Registered multiplexer, user select
 | Yes
 |
 
-| flow
-| Ready/valid pipelines
 | `br_flow_mux_select_unstable`
-| Combinational multiplexer (user select) with unstable flow control
+| Combinational multiplexer, external select, with unstable flow control
 | Yes
 |
 
-| flow
-| Ready/valid pipelines
 | `br_flow_reg_both`
-| Pipeline register, registered forward and reverse signals, with flow control
+| Pipeline register, registered forward and reverse signals
 | Yes
 |
 
-| flow
-| Ready/valid pipelines
 | `br_flow_reg_fwd`
-| Pipeline register, registered forward signals, with flow control
+| Pipeline register, registered forward signals
 | Yes
 |
 
-| flow
-| Ready/valid pipelines
 | `br_flow_reg_rev`
-| Pipeline register, registered backward signals, with flow control
+| Pipeline register, registered backward signals
 | Yes
 |
 
 |===
 
-TODO(mgottscho): WIP
+=== `gate`: Behavioral Gate Primitives
 
-| ram
-a| Memories
+[cols="1,4,1,1"]
+|===
+| Module | Description | Implemented | Verified
 
-* [x] Parameterizable Flop RAM
-* [ ] CAM
-* [ ] Addressing helpers
-* [ ] Hazard detection
+| `br_gate_buf`
+| Wire buffer/repeater
+| Yes
+|
 
-| rdc
-a| Reset domain crossings
+| `br_gate_clk_buf`
+| Clock wire buffer/repeater
+| Yes
+|
 
-* [ ] Reset controls
-* [ ] Reset handshakes
+| `br_gate_inv`
+| Inverter
+| Yes
+|
 
-| timer
-a| Timers
+| `br_gate_and2`
+| Two-input AND gate
+| Yes
+|
 
-* [ ] Watchdog
-* [ ] Rollover
+| `br_gate_or2`
+| Two-input OR gate
+| Yes
+|
 
+| `br_gate_xor2`
+| Two-input XOR gate
+| Yes
+|
 
+| `br_gate_mux2`
+| Two-input multiplexer
+| Yes
+|
+
+| `br_gate_clk_mux2`
+| Two-input clock multiplexer
+| Yes
+|
+
+| `br_gate_icg`
+| Integrated clock gate
+| Yes
+|
+
+|===
+
+=== `misc`: Miscellaneous
+
+[cols="1,4,1,1"]
+|===
+| Module | Description | Implemented | Verified
+
+| `br_misc_tieoff_one`
+| Drive an expression to constant 1s and internally waive relevant lint rules
+| Yes
+| Yes
+
+| `br_misc_tieoff_zero`
+| Drive an expression to constant 0s and internally waive relevant lint rules
+| Yes
+| Yes
+
+| `br_misc_unused`
+| Sink an unused expression and internally waive relevant lint rules
+| Yes
+| Yes
+
+|===
+
+=== `mux`: Simple Multiplexers
+
+[cols="1,4,1,1"]
+|===
+| Module | Description | Implemented | Verified
+
+| `br_mux_onehot`
+| One-hot multiplexer
+| Yes
+|
+
+| `br_mux_bin`
+| Binary-select multiplexer
+| Yes
+|
+
+|===
+
+=== `ram`: Memories
+
+[cols="1,4,1,1"]
+|===
+| Module | Description | Implemented | Verified
+
+| `br_ram_addr_decoder`
+| Single-stage address decoder for a tiled RAM
+| WIP
+|
+
+| `br_ram_addr_decoder`
+| Pipelined address decoder for tiled RAM
+| WIP
+|
+
+| `br_ram_flops_1r1w_tile`
+| One-tile flop-RAM with one read port and one write port
+| WIP
+|
+
+| `br_ram_flops_1r1w`
+| Tiled flop-RAM with one read port and one write port
+| WIP
+|
+
+| `br_ram_flops_1rw_tile`
+| One-tile flop-RAM with one port (shared for read and write)
+|
+|
+
+| `br_ram_flops_1rw`
+| Tiled flop-RAM with one port (shared for read and write)
+|
+|
+
+| `br_ram_data_rd_pipe`
+| Pipeline for reading data from a tiled RAM
+| WIP
+|
+
+|===
+
+=== `timer`: Saturating and Wrapping Timers
+
+[cols="1,4,1,1"]
+|===
+| Module | Description | Implemented | Verified
+
+| `br_timer_sat`
+| Tick down from a threshold and saturate at zero; signal continuously at zero
+
+| `br_timer`
+| Tick down from a threshold and signal a pulse every time when wrapping past zero
+
+|===
 
 == Packages
 
