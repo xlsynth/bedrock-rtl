@@ -587,28 +587,28 @@ These macros conveniently wrap `br_misc_tieoff*` module instantiations.
 | Yes
 | Yes
 
-| BR_TIEOFF_ONE_NAMED
+| `BR_TIEOFF_ONE_NAMED`
 | Instantiates `br_tieoff_one` with a given submodule instance suffix.
 | Yes
 | Yes
 
-| BR_TIEOFF_ZERO
+| `BR_TIEOFF_ZERO`
 | Instantiates `br_tieoff_zero` with a derived submodule instance suffix.
 | Yes
 | Yes
 
-| BR_TIEOFF_ONE
+| `BR_TIEOFF_ONE`
 | Instantiates `br_tieoff_one` with a derived submodule instance suffix.
 | Yes
 | Yes
 
-| BR_TIEOFF_ZERO_TODO
+| `BR_TIEOFF_ZERO_TODO`
 a| Provided for convenience of the user grepping for `TODO` in the codebase, to help prevent accidental tie-offs that result in bugs.
 Instantiates `br_tieoff_zero` with a derived submodule instance suffix.
 | Yes
 | Yes
 
-| BR_TIEOFF_ONE_TODO
+| `BR_TIEOFF_ONE_TODO`
 a| Provided for convenience of the user grepping for `TODO` in the codebase, to help prevent accidental tie-offs that result in bugs.
 Instantiates `br_tieoff_one` with a derived submodule instance suffix.
 | Yes
@@ -1169,27 +1169,27 @@ a| FIFO with internal flop RAM
 
 | `ceil_div`
 | Return integer ceiling division
-| WIP
-| WIP
+| Yes
+| Yes
 
 | `floor_div`
 | Return integer floor division
-| WIP
-| WIP
+| Yes
+| Yes
 
 | `clogb`
-| Return integer ceiling of base-`b` logarithm
-| WIP
-| WIP
+| Return integer ceiling of base-`b` logarithm where `b` is a power-of-2
+| Yes
+| Yes
 
 | `is_power_of_2`
 | Return 1 if an integer is a power of 2
-| WIP
-| WIP
+| Yes
+| Yes
 
 | `is_even`
 | Return 1 if an integer is even
-| WIP
-| WIP
+| Yes
+| Yes
 
 |===
