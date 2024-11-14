@@ -147,8 +147,8 @@ module br_ram_addr_decoder_tree #(
       assign local_stage_in_data[il] = stage_in_data[s][il];
 
       br_ram_addr_decoder #(
-          .InputAddressWidth(StageInputAddressWidth),
-          .Fanout(FanoutPerStage),
+          .Depth(TileDepth),
+          .Tiles(FanoutPerStage),
           // In order to satisfy Latency == Stages - 1, i.e., there should be Stages - 1 pipeline registers
           // such that when Stages is 1, we simplify to a combinational address decoder and the effect of tiling
           // goes away.
