@@ -55,8 +55,10 @@ module br_math_pkg_tb;
 
   // Test cases for is_power_of_2 function
   `BR_ASSERT_STATIC(ispowerof2_0_a, br_math::is_power_of_2(0) == 1)
+
   `BR_ASSERT_STATIC(ispowerof2_1_a, br_math::is_power_of_2(1) == 1)
   `BR_ASSERT_STATIC(ispowerof2_2_a, br_math::is_power_of_2(2) == 1)
+  `BR_ASSERT_STATIC(ispowerof2_32_a, br_math::is_power_of_2(32) == 1)
   `BR_ASSERT_STATIC(ispowerof2_128_a, br_math::is_power_of_2(128) == 1)
 
   `BR_ASSERT_STATIC(not_ispowerof2_3_a, br_math::is_power_of_2(3) == 0)
@@ -68,6 +70,10 @@ module br_math_pkg_tb;
   `BR_ASSERT_STATIC(not_ispowerof2_m7_a, br_math::is_power_of_2(-7) == 0)
   `BR_ASSERT_STATIC(not_ispowerof2_m26_a, br_math::is_power_of_2(-26) == 0)
   `BR_ASSERT_STATIC(not_ispowerof2_m27_a, br_math::is_power_of_2(-27) == 0)
+
+  `BR_ASSERT_STATIC(not_ispowerof2_m1_a, br_math::is_power_of_2(-1) == 0)
+  `BR_ASSERT_STATIC(not_ispowerof2_m2_a, br_math::is_power_of_2(-2) == 0)
+  `BR_ASSERT_STATIC(not_ispowerof2_m128_a, br_math::is_power_of_2(-128) == 0)
 
   // Test cases for is_even function
   `BR_ASSERT_STATIC(is_even_0_a, br_math::is_even(0) == 1)
