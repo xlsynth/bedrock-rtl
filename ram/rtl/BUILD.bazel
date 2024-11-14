@@ -27,8 +27,8 @@ verilog_library(
 )
 
 verilog_library(
-    name = "br_ram_addr_decoder_stage",
-    srcs = ["br_ram_addr_decoder_stage.sv"],
+    name = "br_ram_addr_decoder",
+    srcs = ["br_ram_addr_decoder.sv"],
     deps = [
         "//delay/rtl:br_delay_valid",
         "//demux/rtl:br_demux_bin",
@@ -61,35 +61,68 @@ br_verilog_elab_and_lint_test_suite(
 )
 
 br_verilog_elab_and_lint_test_suite(
-    name = "br_ram_addr_decoder_stage_test_suite_common_case",
+    name = "br_ram_addr_decoder_test_suite_one_tile",
     params = {
-        "InputAddressWidth": [
+        "Depth": [
+            "2",
             "7",
             "8",
         ],
-        "Tiles": [
+        "DataWidth": [
             "1",
-            "2",
-            "4",
-        ],
-    },
-    deps = [":br_ram_addr_decoder_stage"],
-)
-
-br_verilog_elab_and_lint_test_suite(
-    name = "br_ram_addr_decoder_stage_test_suite_base_case",
-    params = {
-        "InputAddressWidth": [
-            "2",
+            "13",
+            "16",
         ],
         "Tiles": [
             "1",
-            "2",
         ],
         "RegisterOutputs": [
             "0",
             "1",
         ],
     },
-    deps = [":br_ram_addr_decoder_stage"],
+    deps = [":br_ram_addr_decoder"],
+)
+
+br_verilog_elab_and_lint_test_suite(
+    name = "br_ram_addr_decoder_test_suite_multi_tile0",
+    params = {
+        "Depth": [
+            "32",
+        ],
+        "DataWidth": [
+            "8",
+        ],
+        "Tiles": [
+            "2",
+            "4",
+            "8",
+        ],
+        "RegisterOutputs": [
+            "0",
+        ],
+    },
+    deps = [":br_ram_addr_decoder"],
+)
+
+br_verilog_elab_and_lint_test_suite(
+    name = "br_ram_addr_decoder_test_suite_multi_tile1",
+    params = {
+        "Depth": [
+            "30",
+        ],
+        "DataWidth": [
+            "8",
+        ],
+        "Tiles": [
+            "1",
+            "3",
+            "5",
+            "6",
+        ],
+        "RegisterOutputs": [
+            "0",
+        ],
+    },
+    deps = [":br_ram_addr_decoder"],
 )
