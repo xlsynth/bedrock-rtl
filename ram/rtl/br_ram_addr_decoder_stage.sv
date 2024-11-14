@@ -100,7 +100,7 @@ module br_ram_addr_decoder_stage #(
 
     br_demux_bin #(
         .NumSymbolsOut(Tiles),
-        .SymbolWidth  (OutputAddressWidth + DataWidth),
+        .SymbolWidth  (OutputAddressWidth + DataWidth)
     ) br_demux_bin (
         .select(in_addr[SelectMsb:SelectLsb]),
         .in_valid(in_valid),

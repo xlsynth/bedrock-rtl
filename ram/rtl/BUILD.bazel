@@ -31,6 +31,7 @@ verilog_library(
     srcs = ["br_ram_addr_decoder_stage.sv"],
     deps = [
         "//delay/rtl:br_delay_valid",
+        "//demux/rtl:br_demux_bin",
         "//macros:br_asserts_internal",
         "//pkg:br_math_pkg",
     ],
@@ -66,7 +67,7 @@ br_verilog_elab_and_lint_test_suite(
             "7",
             "8",
         ],
-        "Fanout": [
+        "Tiles": [
             "1",
             "2",
             "4",
@@ -81,7 +82,7 @@ br_verilog_elab_and_lint_test_suite(
         "InputAddressWidth": [
             "2",
         ],
-        "Fanout": [
+        "Tiles": [
             "1",
             "2",
         ],
