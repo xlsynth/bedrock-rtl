@@ -1187,11 +1187,6 @@ a| FIFO with internal flop RAM
 | WIP
 | WIP
 
-| `is_power_of_2`
-| Return 1 if an integer is a power of 2
-| WIP
-| WIP
-
 | `is_even`
 | Return 1 if an integer is even
 | WIP
