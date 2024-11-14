@@ -347,13 +347,6 @@ The following table lists all the modules that we plan to have in the Bedrock-RT
 
 | counter
 | Counters
-| `br_counter_incr`
-| Incrementing counter
-| Yes
-|
-
-| counter
-| Counters
 | `br_counter_decr`
 | Decrementing counter
 | Yes
@@ -361,8 +354,8 @@ The following table lists all the modules that we plan to have in the Bedrock-RT
 
 | counter
 | Counters
-| `br_counter`
-| Up-down counter
+| `br_counter_incr`
+| Incrementing counter
 | Yes
 |
 
@@ -371,6 +364,13 @@ The following table lists all the modules that we plan to have in the Bedrock-RT
 | `br_counter_sat`
 | Up-down saturating counter
 |
+|
+
+| counter
+| Counters
+| `br_counter`
+| Up-down counter
+| Yes
 |
 
 | credit
@@ -382,15 +382,15 @@ The following table lists all the modules that we plan to have in the Bedrock-RT
 
 | credit
 | Credit
-| `br_credit_sender`
-| Ready/valid to credit/valid converter (credit-loop sender-side)
+| `br_credit_receiver`
+| Credit/valid to ready/valid converter (credit-loop receiver-side)
 | Yes
 |
 
 | credit
 | Credit
-| `br_credit_receiver`
-| Credit/valid to ready/valid converter (credit-loop receiver-side)
+| `br_credit_sender`
+| Ready/valid to credit/valid converter (credit-loop sender-side)
 | Yes
 |
 
@@ -410,9 +410,9 @@ The following table lists all the modules that we plan to have in the Bedrock-RT
 
 | delay
 | Fixed-delay pipelines
-| `br_delay_valid`
-| With self-gating (valid)
-| Yes
+| `br_delay_valid_next_nr`
+| With self-gating (valid-next) and without reset
+| Yes, but want to merge with `br_delay_valid_next` (https://github.com/xlsynth/bedrock-rtl/issues/137)
 |
 
 | delay
@@ -422,39 +422,12 @@ The following table lists all the modules that we plan to have in the Bedrock-RT
 | Yes
 |
 
+
 | delay
 | Fixed-delay pipelines
-| `br_delay_valid_next_nr`
-| With self-gating (valid-next) and without reset
-| Yes, but want to merge with `br_delay_valid_next` (https://github.com/xlsynth/bedrock-rtl/issues/137)
-|
-
-| ecc
-| Error correcting codes
-| `br_ecc_parity_enc`
-| Parity encoder
-|
-|
-
-| ecc
-| Error correcting codes
-| `br_ecc_parity_dec`
-| Parity decoder
-|
-|
-
-| ecc
-| Error correcting codes
-| `br_ecc_secded_enc`
-| Single-error-correcting, double-error-detecting encoder
-|
-|
-
-| ecc
-| Error correcting codes
-| `br_ecc_secded_dec`
-| Single-error-correcting, double-error-detecting decoder
-|
+| `br_delay_valid`
+| With self-gating (valid)
+| Yes
 |
 
 | enc
@@ -487,16 +460,37 @@ The following table lists all the modules that we plan to have in the Bedrock-RT
 
 | enc
 | Encoders
-| `br_enc_priority`
+| `br_enc_priority_encoder`
 | Priority encoder
 | Yes
 |
 
-| fifo
-| FIFOs
-| `br_fifo_ctrl_1r1w`
-| FIFO controller with external RAM port for 1R1W, ready/valid push and ready/valid pop
-| Yes
+| ecc
+| Error correcting codes
+| `br_ecc_parity_dec`
+| Parity decoder
+|
+|
+
+| ecc
+| Error correcting codes
+| `br_ecc_parity_enc`
+| Parity encoder
+|
+|
+
+| ecc
+| Error correcting codes
+| `br_ecc_secded_dec`
+| Single-error-correcting, double-error-detecting decoder
+|
+|
+
+| ecc
+| Error correcting codes
+| `br_ecc_secded_enc`
+| Single-error-correcting, double-error-detecting encoder
+|
 |
 
 | fifo
@@ -522,8 +516,8 @@ The following table lists all the modules that we plan to have in the Bedrock-RT
 
 | fifo
 | FIFOs
-| `br_fifo_flops`
-| FIFO with internal flop RAM, ready/valid push and ready/valid pop
+| `br_fifo_ctrl_1r1w`
+| FIFO controller with external RAM port for 1R1W, ready/valid push and ready/valid pop
 | Yes
 |
 
@@ -541,6 +535,12 @@ The following table lists all the modules that we plan to have in the Bedrock-RT
 | Yes
 |
 
+| fifo
+| FIFOs
+| `br_fifo_flops`
+| FIFO with internal flop RAM, ready/valid push and ready/valid pop
+| Yes
+|
 
 | flow
 | Ready/valid pipelines
