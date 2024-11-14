@@ -37,6 +37,17 @@ verilog_library(
     ],
 )
 
+verilog_library(
+    name = "br_ram_data_rd_pipe",
+    srcs = ["br_ram_data_rd_pipe.sv"],
+    deps = [
+        "//delay/rtl:br_delay_valid",
+        "//macros:br_asserts_internal",
+        "//macros:br_tieoff",
+        "//macros:br_unused",
+    ],
+)
+
 br_verilog_elab_and_lint_test_suite(
     name = "br_ram_flops_1r1w_tile_test_suite",
     params = {
@@ -125,4 +136,27 @@ br_verilog_elab_and_lint_test_suite(
         ],
     },
     deps = [":br_ram_addr_decoder"],
+)
+
+br_verilog_elab_and_lint_test_suite(
+    name = "br_ram_data_rd_pipe_test_suite",
+    params = {
+        "Depth": [
+            "2",
+            "7",
+        ],
+        "Width": [
+            "1",
+            "16",
+        ],
+        "DepthTiles": [
+            "1",
+            "2",
+        ],
+        "EnableReset": [
+            "0",
+            "1",
+        ],
+    },
+    deps = [":br_ram_data_rd_pipe"],
 )
