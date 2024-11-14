@@ -1108,14 +1108,14 @@ a| FIFO with internal flop RAM
 |===
 | Module | Description | Implemented | Verified
 
-| `br_ram_addr_decoder`
-| Single-stage address decoder for a tiled RAM
+| `br_ram_addr_decoder_tree`
+| Address decoder tree for a tiled RAM
 | WIP
 |
 
 | `br_ram_addr_decoder`
-| Pipelined address decoder for tiled RAM
-| WIP
+| Address decoder for a tiled RAM
+| Yes
 |
 
 | `br_ram_flops_1r1w_tile`
