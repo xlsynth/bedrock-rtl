@@ -25,6 +25,14 @@ verilog_library(
     ],
 )
 
+verilog_library(
+    name = "br_demux_onehot",
+    srcs = ["br_demux_onehot.sv"],
+    deps = [
+        "//macros:br_asserts_internal",
+    ],
+)
+
 br_verilog_elab_and_lint_test_suite(
     name = "br_demux_bin_test_suite",
     params = {
@@ -40,4 +48,21 @@ br_verilog_elab_and_lint_test_suite(
         ],
     },
     deps = [":br_demux_bin"],
+)
+
+br_verilog_elab_and_lint_test_suite(
+    name = "br_demux_onehot_test_suite",
+    params = {
+        "NumSymbolsOut": [
+            "2",
+            "3",
+            "4",
+        ],
+        "SymbolWidth": [
+            "1",
+            "5",
+            "8",
+        ],
+    },
+    deps = [":br_demux_onehot"],
 )
