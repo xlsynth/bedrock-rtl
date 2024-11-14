@@ -27,9 +27,11 @@ module br_ram_data_rd_pipe #(
     parameter int Width = 1,
     // Number of tiles along the depth dimension. Must be a positive power-of-2
     // and less than or equal to Depth.
+    // TODO(mgottscho): Relax this requirement to be any positive number <= Depth.
     parameter int DepthTiles = 1,
     // Number of tiles along the width dimension. Must be a positive power-of-2
     // and less than or equal to Width.
+    // TODO(mgottscho): Relax this requirement to be any positive number <= Depth.
     parameter int WidthTiles = 1,
     // Must be at least 1 and a positive-power-of-2 such that FaninPerStage ** Stages == DepthTiles
     // for some positive integer Stages.
