@@ -18,11 +18,35 @@ load("//bazel:br_verilog.bzl", "br_verilog_elab_and_lint_test_suite")
 package(default_visibility = ["//visibility:public"])
 
 verilog_library(
+    name = "br_ram_flops_1r1w",
+    srcs = ["br_ram_flops_1r1w.sv"],
+    deps = [
+        ":br_ram_addr_decoder",
+        ":br_ram_data_rd_pipe",
+        ":br_ram_flops_1r1w_tile",
+        "//macros:br_asserts_internal",
+        "//pkg:br_math_pkg",
+    ],
+)
+
+verilog_library(
     name = "br_ram_flops_1r1w_tile",
     srcs = ["br_ram_flops_1r1w_tile.sv"],
     deps = [
         "//macros:br_asserts_internal",
         "//macros:br_registers",
+    ],
+)
+
+verilog_library(
+    name = "br_ram_data_rd_pipe",
+    srcs = ["br_ram_data_rd_pipe.sv"],
+    deps = [
+        "//delay/rtl:br_delay_valid",
+        "//macros:br_asserts_internal",
+        "//macros:br_tieoff",
+        "//macros:br_unused",
+        "//pkg:br_math_pkg",
     ],
 )
 
@@ -50,54 +74,10 @@ br_verilog_elab_and_lint_test_suite(
 )
 
 verilog_library(
-    name = "br_ram_addr_decoder_stage",
-    srcs = ["br_ram_addr_decoder_stage.sv"],
-    deps = [
-        "//delay/rtl:br_delay_valid",
-        "//macros:br_asserts_internal",
-        "//pkg:br_math_pkg",
-    ],
-)
-
-br_verilog_elab_and_lint_test_suite(
-    name = "br_ram_addr_decoder_stage_test_suite_common_case",
-    params = {
-        "InputAddressWidth": [
-            "7",
-            "8",
-        ],
-        "Fanout": [
-            "1",
-            "2",
-            "4",
-        ],
-    },
-    deps = [":br_ram_addr_decoder_stage"],
-)
-
-br_verilog_elab_and_lint_test_suite(
-    name = "br_ram_addr_decoder_stage_test_suite_base_case",
-    params = {
-        "InputAddressWidth": [
-            "2",
-        ],
-        "Fanout": [
-            "1",
-            "2",
-        ],
-        "RegisterOutputs": [
-            "0",
-            "1",
-        ],
-    },
-    deps = [":br_ram_addr_decoder_stage"],
-)
-
-verilog_library(
-    name = "br_ram_addr_decoder",
+    name = "br_ram_addr_decoder_tree",
     srcs = ["br_ram_addr_decoder.sv"],
     deps = [
-        ":br_ram_addr_decoder_stage",
+        ":br_ram_addr_decoder",
         "//macros:br_asserts_internal",
         "//macros:br_tieoff",
         "//macros:br_unused",
@@ -106,7 +86,7 @@ verilog_library(
 )
 
 br_verilog_elab_and_lint_test_suite(
-    name = "br_ram_addr_decoder_test_suite_depth_sweep",
+    name = "br_ram_addr_decoder_tree_test_suite_depth_sweep",
     params = {
         "Depth": [
             "2",
@@ -119,11 +99,11 @@ br_verilog_elab_and_lint_test_suite(
         ],
         # Default FanoutPerStage
     },
-    deps = [":br_ram_addr_decoder"],
+    deps = [":br_ram_addr_decoder_tree"],
 )
 
 br_verilog_elab_and_lint_test_suite(
-    name = "br_ram_addr_decoder_test_suite_tile_sweep0",
+    name = "br_ram_addr_decoder_tree_test_suite_tile_sweep0",
     params = {
         "Depth": [
             "29",
@@ -140,7 +120,7 @@ br_verilog_elab_and_lint_test_suite(
 )
 
 br_verilog_elab_and_lint_test_suite(
-    name = "br_ram_addr_decoder_test_suite_tile_sweep1",
+    name = "br_ram_addr_decoder_tree_test_suite_tile_sweep1",
     params = {
         "Depth": [
             "64",
@@ -158,18 +138,6 @@ br_verilog_elab_and_lint_test_suite(
         ],
     },
     deps = [":br_ram_addr_decoder"],
-)
-
-verilog_library(
-    name = "br_ram_flops_1r1w",
-    srcs = ["br_ram_flops_1r1w.sv"],
-    deps = [
-        ":br_ram_addr_decoder",
-        ":br_ram_data_rd_pipe",
-        ":br_ram_flops_1r1w_tile",
-        "//macros:br_asserts_internal",
-        "//pkg:br_math_pkg",
-    ],
 )
 
 br_verilog_elab_and_lint_test_suite(
@@ -192,18 +160,6 @@ br_verilog_elab_and_lint_test_suite(
         "EnableMemReset": ["0"],
     },
     deps = [":br_ram_flops_1r1w"],
-)
-
-verilog_library(
-    name = "br_ram_data_rd_pipe",
-    srcs = ["br_ram_data_rd_pipe.sv"],
-    deps = [
-        "//delay/rtl:br_delay_valid",
-        "//macros:br_asserts_internal",
-        "//macros:br_tieoff",
-        "//macros:br_unused",
-        "//pkg:br_math_pkg",
-    ],
 )
 
 br_verilog_elab_and_lint_test_suite(

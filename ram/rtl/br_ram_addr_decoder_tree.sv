@@ -21,7 +21,7 @@
 `include "br_tieoff.svh"
 `include "br_unused.svh"
 
-module br_ram_addr_decoder #(
+module br_ram_addr_decoder_tree #(
     // Number of entries in the RAM. Must be at least 2.
     parameter int Depth = 2,
     // Sideband signals to pipeline in lockstep with the address decoding.
@@ -232,4 +232,4 @@ module br_ram_addr_decoder #(
 
   // Rely on submodule implementation checks
 
-endmodule : br_ram_addr_decoder
+endmodule : br_ram_addr_decoder_tree
