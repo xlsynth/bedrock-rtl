@@ -278,67 +278,181 @@ verilog_elab_and_lint_test_suite(
 The following table summarizes the list of features that we plan to implement in the Bedrock-RTL library.
 Checked boxes already have prototype implementations, though they are not verified yet.
 
-[cols="1,2"]
+[cols="1,1,3,1"]
 |===
-| Category | Description
+| Category | Module | Description | Implemented
 
-| arb
-a| Basic arbiters
+| Arbiters
+| `br_arb_fixed`
+| Fixed priority
+| Yes
 
- * [x] Fixed priority
- * [x] LRU
- * [x] Round-robin
- * [ ] Weighted LRU
- * [ ] Weighted round-robin
+| Arbiters
+| `br_arb_lru`
+| Least-recently used
+| Yes
 
-| cdc
-a| Clock-domain crossings
+| Arbiters
+| `br_arb_rr`
+| Round-robin
+| Yes
 
-* [ ] Single-bit sync
-* [ ] Bus sync using CDC FIFOs
+| Arbiters
+| `br_arb_wlru`
+| Weighted least-recently used
+|
 
-| counter
-a| Counters with the following feature combinations:
+| Arbiters
+| `br_arb_wrr`
+| Weighted round-robin
+|
 
-* [x] Incrementing/decrementing
-* [x] Wrapping
-* [ ] Saturating
-* [ ] Re-initializable
+| Clock-domain crossing
+| `br_cdc_bit`
+| Single-bit CDC
+|
 
-| credit
-a| Credit/valid flow control
+| Clock-domain crossing
+| `br_cdc_fifo_ctrl_1r1w`
+| Bus CDC using a dual-clock FIFO controller for a 1R1W dual-clock SRAM
+|
 
-* [x] Credit counter
-* [ ] Ready/valid -> credit/valid producer conversion
+| Clock-domain crossing
+| `br_cdc_fifo_flops`
+| Bus CDC using a dual-clock FIFO with internal flop-RAM
+|
 
-| delay
-a| Feedforward delay pipeline registers
+| Counters
+| `br_counter_incr`
+| Incrementing counter
+| Yes
 
-* [x] Non-gated, reset
-* [x] Non-gated, non-reset
-* [x] Self-gated (valid), reset
-* [x] Self-gated on next cycle (valid-next), reset
-* [x] Self-gated on next cycle (valid-next), non-reset
+| Counters
+| `br_counter_decr`
+| Decrementing counter
+| Yes
 
-| ecc
-a| Error correcting codes
+| Counters
+| `br_counter`
+| Up-down counter
+| Yes
 
-* [ ] Parity encoder/decoder
-* [ ] SECDED encoder/decoder
+| Counters
+| `br_counter_sat`
+| Up-down saturating counter
+|
 
-| enc
-a| Encoders
+| Credit
+| `br_credit_counter`
+| Credit counter
+| Yes
 
-* [x] onehot2bin
-* [x] bin2onehot
-* [x] priority
+| Credit
+| `br_credit_sender
+| Ready/valid to credit/valid converter (credit-loop sender-side)
+| Yes
 
-| err
-a| Errors
+| Credit
+| `br_credit_receiver
+| Credit/valid to ready/valid converter (credit-loop receiver-side)
+| Yes
 
-* [ ] Sticky error log register
-* [ ] Source masking
-* [ ] Interrupt masking
+| Fixed-delay pipelines
+| `br_delay`
+| With reset
+| Yes
+
+| Fixed-delay pipelines
+| `br_delay_nr`
+| Without reset
+| Yes, but want to merge with `br_delay` (https://github.com/xlsynth/bedrock-rtl/issues/137)
+
+| Fixed-delay pipelines
+| `br_delay_valid`
+| With self-gating (valid)
+| Yes
+
+| Fixed-delay pipelines
+| `br_delay_valid_next`
+| With self-gating (valid-next)
+| Yes
+
+| Fixed-delay pipelines
+| `br_delay_valid_next_nr`
+| With self-gating (valid-next) and without reset
+| Yes, but want to merge with `br_delay_valid_next` (https://github.com/xlsynth/bedrock-rtl/issues/137)
+
+| Error correcting codes
+| `br_ecc_parity_enc`
+| Parity encoder
+|
+
+| Error correcting codes
+| `br_ecc_parity_dec`
+| Parity decoder
+|
+
+| Error correcting codes
+| `br_ecc_secded_enc`
+| Single-error-correcting, double-error-detecting encoder
+|
+
+| Error correcting codes
+| `br_ecc_secded_dec`
+| Single-error-correcting, double-error-detecting decoder
+|
+
+| Encoders
+| `br_enc_bin2gray`
+| Binary to gray
+| Yes
+
+| Encoders
+| `br_enc_bin2onehot`
+| Binary to onehot
+| Yes
+
+| Encoders
+| `br_enc_gray2bin`
+| Gray to binary
+| Yes
+
+| Encoders
+| `br_enc_onehot2bin`
+| One-hot to binary
+| Yes
+
+| Encoders
+| `br_enc_priority`
+| Priority encoder
+| Yes
+
+| FIFOs
+| `br_fifo_ctrl_1r1w`
+| FIFO controller with external RAM port for 1R1W, ready/valid push and ready/valid pop
+| Yes
+
+| FIFOs
+| `br_fifo_ctrl_1r1w_push_credit`
+| FIFO controller with external RAM port for 1R1W, credit/valid push and ready/valid pop
+| Yes
+
+| FIFOs
+| `br_fifo_flops_push_credit`
+| FIFO controller with internal flop RAM, ready/valid push and ready/valid pop
+| Yes
+
+| FIFOs
+| `br_fifo_flops_push_credit`
+| FIFO controller with internal flop RAM, credit/valid push and ready/valid pop
+| Yes
+
+|===
+
+
+TODO(mgottscho): WIP
+
+
 
 | fifo
 a| FIFO (queue) controllers with external RAM ports. Combinations of:
