@@ -130,8 +130,8 @@ module br_fifo_flops #(
 
   br_ram_flops_1r1w #(
       .Depth(Depth),
-      .BitWidth(BitWidth),
-      .EnableTileBypass(EnableBypass),
+      .Width(BitWidth),
+      .TileEnableBypass(0),
       .EnableMemReset(0)
   ) br_ram_flops_1r1w (
       .clk,
