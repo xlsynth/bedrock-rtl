@@ -20,7 +20,7 @@
 
 module br_fifo_pop_ctrl #(
     parameter int Depth = 2,
-    parameter int BitWidth = 1,
+    parameter int Width = 1,
     parameter bit EnableBypass = 1,
     localparam int AddrWidth = $clog2(Depth),
     localparam int CountWidth = $clog2(Depth + 1)
@@ -31,9 +31,9 @@ module br_fifo_pop_ctrl #(
     input logic rst,
 
     // Pop-side interface.
-    input  logic                pop_ready,
-    output logic                pop_valid,
-    output logic [BitWidth-1:0] pop_data,
+    input  logic             pop_ready,
+    output logic             pop_valid,
+    output logic [Width-1:0] pop_data,
 
     // Pop-side status flags
     output logic                  empty,
@@ -45,7 +45,7 @@ module br_fifo_pop_ctrl #(
     // Bypass is only used when EnableBypass is 1, hence lint waivers.
     output logic bypass_ready,
     input logic bypass_valid_unstable,  // ri lint_check_waive INEFFECTIVE_NET
-    input logic [BitWidth-1:0] bypass_data_unstable,  // ri lint_check_waive INEFFECTIVE_NET
+    input logic [Width-1:0] bypass_data_unstable,  // ri lint_check_waive INEFFECTIVE_NET
 
     // RAM interface
     output logic                 ram_rd_addr_valid,
@@ -53,7 +53,7 @@ module br_fifo_pop_ctrl #(
     // Port provided for clarity of interface design; only used for assertions.
     // ri lint_check_waive INEFFECTIVE_NET
     input  logic                 ram_rd_data_valid,
-    input  logic [ BitWidth-1:0] ram_rd_data,
+    input  logic [    Width-1:0] ram_rd_data,
 
     // Internal handshakes between push and pop controllers
     input  logic ram_push,
@@ -64,7 +64,7 @@ module br_fifo_pop_ctrl #(
   // Integration checks
   //------------------------------------------
   `BR_ASSERT_STATIC(depth_must_be_at_least_one_a, Depth >= 2)
-  `BR_ASSERT_STATIC(bit_width_must_be_at_least_one_a, BitWidth >= 1)
+  `BR_ASSERT_STATIC(bit_width_must_be_at_least_one_a, Width >= 1)
 
   `BR_ASSERT_INTG(ram_rd_latency_zero_a, ram_rd_addr_valid |-> ram_rd_data_valid)
 

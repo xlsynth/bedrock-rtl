@@ -43,7 +43,7 @@
 
 module br_fifo_ctrl_1r1w_push_credit #(
     parameter int Depth = 2,  // Number of entries in the FIFO. Must be at least 2.
-    parameter int BitWidth = 1,  // Width of each entry in the FIFO. Must be at least 1.
+    parameter int Width = 1,  // Width of each entry in the FIFO. Must be at least 1.
     // If 1, then bypasses push-to-pop when the FIFO is empty, resulting in
     // a cut-through latency of 0 cycles, but at the cost of worse timing.
     // If 0, then pushes always go through the RAM before they can become
@@ -69,15 +69,15 @@ module br_fifo_ctrl_1r1w_push_credit #(
     input logic rst,
 
     // Push-side interface
-    input  logic                push_credit_stall,
-    output logic                push_credit,
-    input  logic                push_valid,
-    input  logic [BitWidth-1:0] push_data,
+    input  logic             push_credit_stall,
+    output logic             push_credit,
+    input  logic             push_valid,
+    input  logic [Width-1:0] push_data,
 
     // Pop-side interface
-    input  logic                pop_ready,
-    output logic                pop_valid,
-    output logic [BitWidth-1:0] pop_data,
+    input  logic             pop_ready,
+    output logic             pop_valid,
+    output logic [Width-1:0] pop_data,
 
     // Push-side status flags
     output logic                  full,
@@ -100,11 +100,11 @@ module br_fifo_ctrl_1r1w_push_credit #(
     // 1R1W RAM interface
     output logic                 ram_wr_valid,
     output logic [AddrWidth-1:0] ram_wr_addr,
-    output logic [ BitWidth-1:0] ram_wr_data,
+    output logic [    Width-1:0] ram_wr_data,
     output logic                 ram_rd_addr_valid,
     output logic [AddrWidth-1:0] ram_rd_addr,
     input  logic                 ram_rd_data_valid,
-    input  logic [ BitWidth-1:0] ram_rd_data
+    input  logic [    Width-1:0] ram_rd_data
 );
 
   //------------------------------------------
@@ -117,14 +117,14 @@ module br_fifo_ctrl_1r1w_push_credit #(
   //------------------------------------------
   logic bypass_ready;
   logic bypass_valid_unstable;
-  logic [BitWidth-1:0] bypass_data_unstable;
+  logic [Width-1:0] bypass_data_unstable;
 
   logic ram_push;
   logic ram_pop;
 
   br_fifo_push_ctrl_credit #(
       .Depth(Depth),
-      .BitWidth(BitWidth),
+      .Width(Width),
       .EnableBypass(EnableBypass),
       .MaxCredit(MaxCredit),
       .RegisterPushCredit(RegisterPushCredit)
@@ -156,7 +156,7 @@ module br_fifo_ctrl_1r1w_push_credit #(
 
   br_fifo_pop_ctrl #(
       .Depth(Depth),
-      .BitWidth(BitWidth),
+      .Width(Width),
       .EnableBypass(EnableBypass)
   ) br_fifo_pop_ctrl (
       .clk,

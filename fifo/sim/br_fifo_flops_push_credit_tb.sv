@@ -21,7 +21,7 @@ module br_fifo_flops_push_credit_tb ();
   // Depth of 8 allows full-throughput
 
   // Parameters
-  localparam int BitWidth = 8;
+  localparam int Width = 8;
   localparam int Depth = 8;
   localparam int PropDelay = 3;
   localparam int NData = 100;
@@ -33,18 +33,18 @@ module br_fifo_flops_push_credit_tb ();
   // DUT connections
   logic cv_push_credit, cv_push_credit_d;
   logic cv_push_valid, cv_push_valid_d;
-  logic [BitWidth-1:0] cv_push_data, cv_push_data_d;
+  logic [Width-1:0] cv_push_data, cv_push_data_d;
   logic cv_push_credit_stall, cv_push_credit_stall_d;
 
   // harness push if
   logic push_ready;
   logic push_valid;
-  logic [BitWidth-1:0] push_data;
+  logic [Width-1:0] push_data;
 
   // harness pop if
   logic pop_ready;
   logic pop_valid;
-  logic [BitWidth-1:0] pop_data;
+  logic [Width-1:0] pop_data;
 
   logic [$clog2(NData+1)-1:0] pop_count;
   logic [$clog2(Depth+1)-1:0] sender_credit, credit_initial_push;
@@ -55,7 +55,7 @@ module br_fifo_flops_push_credit_tb ();
 
   br_fifo_flops_push_credit #(
       .Depth(Depth),
-      .BitWidth(BitWidth),
+      .Width(Width),
       .EnableBypass(0),
       .MaxCredit(Depth)
   ) dut (
@@ -83,7 +83,7 @@ module br_fifo_flops_push_credit_tb ();
   );
 
   br_credit_sender #(
-      .BitWidth (BitWidth),
+      .Width(Width),
       .MaxCredit(Depth)
   ) br_credit_sender (
       .clk,
@@ -103,7 +103,7 @@ module br_fifo_flops_push_credit_tb ();
 
   br_delay_nr #(
       .NumStages(PropDelay),
-      .BitWidth (BitWidth + 2)
+      .Width(Width + 2)
   ) br_delay_nr_to_fifo (
       .clk,
       .rst,
@@ -114,7 +114,7 @@ module br_fifo_flops_push_credit_tb ();
 
   br_delay_nr #(
       .NumStages(PropDelay),
-      .BitWidth (1)
+      .Width(1)
   ) br_delay_nr_from_fifo (
       .clk,
       .rst,

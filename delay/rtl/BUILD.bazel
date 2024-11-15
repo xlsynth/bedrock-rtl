@@ -65,7 +65,7 @@ verilog_library(
 br_verilog_elab_and_lint_test_suite(
     name = "br_delay_test_suite",
     params = {
-        "BitWidth": [
+        "Width": [
             "1",
             "8",
         ],
@@ -81,7 +81,7 @@ br_verilog_elab_and_lint_test_suite(
 br_verilog_elab_and_lint_test_suite(
     name = "br_delay_nr_test_suite",
     params = {
-        "BitWidth": [
+        "Width": [
             "1",
             "8",
         ],
@@ -97,7 +97,7 @@ br_verilog_elab_and_lint_test_suite(
 br_verilog_elab_and_lint_test_suite(
     name = "br_delay_valid_test_suite",
     params = {
-        "BitWidth": [
+        "Width": [
             "1",
             "8",
         ],
@@ -113,7 +113,7 @@ br_verilog_elab_and_lint_test_suite(
 br_verilog_elab_and_lint_test_suite(
     name = "br_delay_valid_next_test_suite",
     params = {
-        "BitWidth": [
+        "Width": [
             "1",
             "8",
         ],
@@ -129,7 +129,7 @@ br_verilog_elab_and_lint_test_suite(
 br_verilog_elab_and_lint_test_suite(
     name = "br_delay_valid_next_nr_test_suite",
     params = {
-        "BitWidth": [
+        "Width": [
             "1",
             "8",
         ],

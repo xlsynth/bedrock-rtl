@@ -16,7 +16,7 @@
 
 == Overview
 
-The `br_delay` module implements a configurable delay line that delays an input signal `in` by a fixed number of clock cycles specified by the `NumStages` parameter. The delayed signal is output on `out`. If `NumStages` is 0, the output `out` is directly connected to the input `in` without any delay. The module supports a parameterizable bit width of the input and output signals through the `BitWidth` parameter. All pipeline registers are reset synchronously to 0 upon assertion of the reset signal `rst`.
+The `br_delay` module implements a configurable delay line that delays an input signal `in` by a fixed number of clock cycles specified by the `NumStages` parameter. The delayed signal is output on `out`. If `NumStages` is 0, the output `out` is directly connected to the input `in` without any delay. The module supports a parameterizable bit width of the input and output signals through the `Width` parameter. All pipeline registers are reset synchronously to 0 upon assertion of the reset signal `rst`.
 
 == Parameters
 
@@ -24,7 +24,7 @@ The `br_delay` module implements a configurable delay line that delays an input 
 |===
 | Parameter | Type | Scope | Description
 
-| `BitWidth`
+| `Width`
 | `int`
 | module
 | Must be at least 1. Specifies the bit width of the input and output signals.
@@ -55,13 +55,13 @@ The `br_delay` module implements a configurable delay line that delays an input 
 
 | Data Input
 | `input`
-| `logic [BitWidth-1:0]`
+| `logic [Width-1:0]`
 | `in`
 | Input signal to be delayed.
 
 | Data Output
 | `output`
-| `logic [BitWidth-1:0]`
+| `logic [Width-1:0]`
 | `out`
 | Delayed output signal.
 |===

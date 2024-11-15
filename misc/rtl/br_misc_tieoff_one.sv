@@ -18,19 +18,19 @@
 // It is expected that downstream logic will be automatically constant-propagated by the
 // synthesis tool.
 //
-// To automatically instantiate this at the bitwidth of local logic,
+// To automatically instantiate this at the width of local logic,
 // users can opt to use the convenience macros defined in macros/br_tieoff.svh.
 //
 // We have separate modules for tie-to-zero and tie-to-one because
 // lint tools may complain about multiple parameters per line when wrapped up in a macro.
 
 module br_misc_tieoff_one #(
-    parameter int BitWidth = 1  // Must be at least 1
+    parameter int Width = 1  // Must be at least 1
 ) (
-    output logic [BitWidth-1:0] out
+    output logic [Width-1:0] out
 );
 
   // ri lint_check_waive CONST_ASSIGN CONST_OUTPUT
-  assign out = {BitWidth{1'b1}};
+  assign out = {Width{1'b1}};
 
 endmodule : br_misc_tieoff_one

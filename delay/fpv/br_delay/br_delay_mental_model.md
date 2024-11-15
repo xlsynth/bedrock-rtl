@@ -31,17 +31,17 @@
 ### Input Ports
 |Name|Description|
 |---|---|
-|in|The type of this port is: logic[BitWidth-1:0].  The `in` port is a logic vector with a width defined by the `BitWidth` parameter, which must be at least 1. It serves as the input signal to the module. When `NumStages` is 0, the `in` signal is directly passed to the `out` port without delay, behaving as a combinatorial path. When `NumStages` is greater than 0, the `in` signal is delayed by the specified number of clock cycles, with the `out` port reflecting the `in` signal from `NumStages` cycles ago. The `clk` signal is used to clock the pipeline stages for the delayed operation.|
+|in|The type of this port is: logic[Width-1:0].  The `in` port is a logic vector with a width defined by the `Width` parameter, which must be at least 1. It serves as the input signal to the module. When `NumStages` is 0, the `in` signal is directly passed to the `out` port without delay, behaving as a combinatorial path. When `NumStages` is greater than 0, the `in` signal is delayed by the specified number of clock cycles, with the `out` port reflecting the `in` signal from `NumStages` cycles ago. The `clk` signal is used to clock the pipeline stages for the delayed operation.|
 
 ### Output Ports
 |Name|Description|
 |---|---|
-|out|The type of this port is: logic[BitWidth-1:0].  - The `out` port reflects the input `in` directly when `NumStages` is 0, acting as a passthrough. - When `NumStages` is greater than 0, `out` represents the value of `in` from `NumStages` cycles ago. - Upon reset, `out` = 0.|
+|out|The type of this port is: logic[Width-1:0].  - The `out` port reflects the input `in` directly when `NumStages` is 0, acting as a passthrough. - When `NumStages` is greater than 0, `out` represents the value of `in` from `NumStages` cycles ago. - Upon reset, `out` = 0.|
 
 ### Design Parameters
 |Name|Description|
 |---|---|
-|BitWidth|The type of this parameter is: int.  The configuration parameter `BitWidth` determines the width of the input and output signals in the design. It specifies the number of bits for both `in` and `out`, ensuring they match in size. This parameter allows users to configure the design to handle signals of varying bit widths, accommodating different data sizes as required by the application.|
+|Width|The type of this parameter is: int.  The configuration parameter `Width` determines the width of the input and output signals in the design. It specifies the number of bits for both `in` and `out`, ensuring they match in size. This parameter allows users to configure the design to handle signals of varying bit widths, accommodating different data sizes as required by the application.|
 |NumStages|The type of this parameter is: int.  The configuration parameter `NumStages` determines the number of clock cycles by which the input signal `in` is delayed before appearing at the output `out`. When `NumStages` is set to 0, the design functions as a passthrough, meaning `out` is equal to `in` in the same cycle. When `NumStages` is greater than 0, the input signal is delayed by the specified number of cycles, with `out` reflecting the value of `in` from `NumStages` cycles ago.|
 
 ### Basic Functionality
