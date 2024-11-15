@@ -139,16 +139,16 @@ module br_counter_incr_tb;
     reinit        = 1;
     initial_value = 2;
     incr_valid    = 1;
-    incr          = 3;
+    incr          = 1;
     @(negedge clk);
     reinit     = 0;
     incr_valid = 0;
     incr       = 0;
 
     @(negedge clk);
-    if (value !== 5) begin
+    if (value !== 3) begin
       error_count++;
-      $error("Test failed: Expected value = 5, Got value = %0d", 5, value);
+      $error("Test failed: Expected value = 3, Got value = %0d", value);
     end
 
     // Finish simulation
