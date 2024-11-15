@@ -70,7 +70,7 @@ module br_delay_valid_next_nr #(
   assign stage[0] = in;
 
   for (genvar i = 1; i <= NumStages; i++) begin : gen_stages
-    `BR_REGN(stage_valid_next[i], stage_valid_next[i-1])
+    `BR_REG(stage_valid_next[i], stage_valid_next[i-1])
     // stage_valid_next[i] is equivalent to hypothetical stage_valid[i-1],
     // which would be aligned to stage[i-1].
     `BR_REGLN(stage[i], stage[i-1], stage_valid_next[i])
