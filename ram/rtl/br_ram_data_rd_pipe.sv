@@ -70,7 +70,7 @@ module br_ram_data_rd_pipe #(
   // WidthStages check
   `BR_ASSERT_STATIC(width_stages_gte0_a, WidthStages >= 0)
 
-`ifdef SV_ASSERT_ON
+`ifdef BR_ASSERT_ON
 `ifndef BR_DISABLE_INTG_CHECKS
   logic [DepthTiles-1:0] depth_tile_valid;
   // ri lint_check_waive IFDEF_CODE
@@ -80,7 +80,7 @@ module br_ram_data_rd_pipe #(
   end
   `BR_ASSERT_INTG(depthwise_tile_valid_onehot0_a, $onehot0(depth_tile_valid))
 `endif  // BR_DISABLE_INTG_CHECKS
-`endif  // SV_ASSERT_ON
+`endif  // BR_ASSERT_ON
 
   //------------------------------------------
   // Implementation
