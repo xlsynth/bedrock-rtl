@@ -55,9 +55,7 @@ module br_demux_onehot #(
   // Implementation
   //------------------------------------------
   assign out_valid = {NumSymbolsOut{in_valid}} & select;
-  for (genvar i = 0; i < NumSymbolsOut; i++) begin : gen_outs
-    assign out[i] = in;
-  end
+  assign out = {NumSymbolsOut{in}};
 
   //------------------------------------------
   // Implementation checks
