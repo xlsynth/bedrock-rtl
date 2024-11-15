@@ -38,14 +38,14 @@ def br_verilog_elab_and_lint_test_suite(name, **kwargs):
 
     verilog_elab_and_lint_test_suite(
         name = name,
-        defines = ["BR_ASSERT_ON"],
+        defines = ["BR_ASSERT_ON", "BR_ENABLE_ASSERT_COMB"],
         tags = ["assert"],
         **kwargs
     )
 
     verilog_elab_and_lint_test_suite(
         name = name + "_allassert",
-        defines = ["BR_ASSERT_ON", "BR_ENABLE_IMPL_CHECKS"],
+        defines = ["BR_ASSERT_ON", "BR_ENABLE_ASSERT_COMB", "BR_ENABLE_IMPL_CHECKS"],
         tags = ["allassert"],
         **kwargs
     )
@@ -80,7 +80,7 @@ def br_verilog_sim_test_suite(name, tool, opts = [], **kwargs):
         name = name,
         tool = tool,
         opts = opts,
-        defines = ["BR_ASSERT_ON", "BR_ENABLE_IMPL_CHECKS"],
+        defines = ["BR_ASSERT_ON", "BR_ENABLE_ASSERT_COMB", "BR_ENABLE_IMPL_CHECKS"],
         **kwargs
     )
 
@@ -99,6 +99,7 @@ def br_verilog_fpv_test_suite(name, **kwargs):
 
     verilog_fpv_test_suite(
         name = name,
+        # No BR_ENABLE_ASSERT_COMB for fpv tools, they may not support it.
         defines = ["BR_ASSERT_ON", "BR_ENABLE_IMPL_CHECKS"],
         **kwargs
     )
