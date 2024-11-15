@@ -120,36 +120,36 @@ module br_counter_tb;
     // Test wrapping around MaxValue
     td.wait_cycles();
     incr_valid = 1;
-    incr       = 2;
+    incr       = MaxChange;
 
     td.wait_cycles();
     incr_valid = 0;
     incr       = 0;
-    td.check_integer(value, 1, "Increment wrap-around value mismatch");
+    td.check_integer(value, MaxChange - 1, "Increment wrap-around value mismatch");
 
     // Test reinit with increment on the same cycle
     td.wait_cycles();
     reinit        = 1;
     initial_value = 2;
     incr_valid    = 1;
-    incr          = 3;
+    incr          = 1;
     td.wait_cycles();
     reinit     = 0;
     incr_valid = 0;
     incr       = 0;
 
     td.wait_cycles();
-    td.check_integer(value, 5, "Reinit w/ Increment mismatch");
+    td.check_integer(value, 3, "Reinit w/ Increment mismatch");
 
     // Test normal decrement
     td.wait_cycles();
     set_initial_value(3);
     decr_valid = 1;
-    decr = 2;
+    decr = 1;
 
     td.wait_cycles();
     decr_valid = 0;
-    td.check_integer(value, 1, "Simple decrement value mismatch");
+    td.check_integer(value, 2, "Simple decrement value mismatch");
 
     // Test decrementing from MaxValue to 0 by 1
     td.wait_cycles();
@@ -166,50 +166,50 @@ module br_counter_tb;
 
     // Test underflow wrapping
     td.wait_cycles();
-    set_initial_value(1);
+    set_initial_value(0);
 
     decr_valid = 1;
-    decr = 3;
+    decr = 1;
 
     td.wait_cycles();
     decr_valid = 0;
 
-    td.check_integer(value, MaxValue - 1, "Underflow value mismatch");
+    td.check_integer(value, MaxValue, "Underflow value mismatch");
 
     // Test decrement during reinit
     td.wait_cycles();
     reinit = 1;
     initial_value = 5;
     decr_valid = 1;
-    decr = 2;
+    decr = 1;
 
     td.wait_cycles();
     reinit = 0;
     decr_valid = 0;
 
-    td.check_integer(value, 3, "Reinit w/ decrement value mismatch");
+    td.check_integer(value, 4, "Reinit w/ decrement value mismatch");
 
     // Test simultaneous increment and decrement
     td.wait_cycles();
     set_initial_value(0);
     incr_valid = 1;
-    incr = 3;
+    incr = MaxChange;
     decr_valid = 1;
-    decr = 2;
+    decr = MaxChange;
 
     td.wait_cycles();
     incr_valid = 0;
     decr_valid = 0;
 
-    td.check_integer(value, 1, "Simultaneous incr/decr value mismatch");
+    td.check_integer(value, 0, "Simultaneous incr/decr value mismatch");
 
     // Test overflow w/ simultaneous incr/decr
     td.wait_cycles();
-    set_initial_value(MaxValue - 1);
+    set_initial_value(MaxValue);
     incr_valid = 1;
-    incr = 3;
+    incr = MaxChange;
     decr_valid = 1;
-    decr = 1;
+    decr = MaxChange - 1;
 
     td.wait_cycles();
     incr_valid = 0;
@@ -219,11 +219,11 @@ module br_counter_tb;
 
     // Test underflow w/ simultaneous incr/decr
     td.wait_cycles();
-    set_initial_value(1);
+    set_initial_value(0);
     incr_valid = 1;
-    incr = 1;
+    incr = MaxChange - 1;
     decr_valid = 1;
-    decr = 3;
+    decr = MaxChange;
 
     td.wait_cycles();
     incr_valid = 0;

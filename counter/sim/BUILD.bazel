@@ -61,6 +61,16 @@ verilog_elab_test(
 
 br_verilog_sim_test_suite(
     name = "br_counter_vcs_test_suite",
+    params = {
+        "MaxValue": [
+            "8",
+            "15",
+        ],
+        "MaxChange": [
+            "1",
+            "3",
+        ],
+    },
     tool = "vcs",
     deps = [":br_counter_tb"],
 )
