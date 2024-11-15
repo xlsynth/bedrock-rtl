@@ -42,6 +42,11 @@ verilog_elab_test(
 
 br_verilog_sim_test_suite(
     name = "br_enc_bin2onehot_vcs_test_suite",
+    params = {"NumValues": [
+        "2",
+        "4",
+        "5",
+    ]},
     tool = "vcs",
     deps = [":br_enc_bin2onehot_tb"],
 )
@@ -53,6 +58,11 @@ verilog_elab_test(
 
 br_verilog_sim_test_suite(
     name = "br_enc_gray_vcs_test_suite",
+    params = {"Width": [
+        "2",
+        "3",
+        "5",
+    ]},
     tool = "vcs",
     deps = [":br_enc_gray_tb"],
 )
