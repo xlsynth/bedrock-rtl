@@ -401,7 +401,7 @@ Resets are always active-high.
 | Yes
 
 | `BR_ASSERT_IMM`
-| Immediate assertion that passes when the expression is unknown (X).
+| Immediate assertion. Also passes when the expression is unknown (X).
 | Yes
 | Yes
 
