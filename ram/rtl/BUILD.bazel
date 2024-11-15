@@ -45,6 +45,8 @@ verilog_library(
         "//macros:br_asserts_internal",
         "//macros:br_tieoff",
         "//macros:br_unused",
+        "//mux/rtl:br_mux_onehot",
+        "//pkg:br_math_pkg",
     ],
 )
 
@@ -139,22 +141,49 @@ br_verilog_elab_and_lint_test_suite(
 )
 
 br_verilog_elab_and_lint_test_suite(
-    name = "br_ram_data_rd_pipe_test_suite",
+    name = "br_ram_data_rd_pipe_test_suite_stages",
     params = {
-        "Depth": [
-            "2",
-            "7",
-        ],
         "Width": [
             "1",
-            "16",
+        ],
+        "DepthTiles": [
+            "1",
+        ],
+        "WidthTiles": [
+            "1",
+        ],
+        "DepthStages": [
+            "0",
+            "1",
+            "2",
+        ],
+        "WidthStages": [
+            "0",
+            "1",
+            "2",
+        ],
+    },
+    deps = [":br_ram_data_rd_pipe"],
+)
+
+br_verilog_elab_and_lint_test_suite(
+    name = "br_ram_data_rd_pipe_test_suite_tiles",
+    params = {
+        "Width": [
+            "128",
         ],
         "DepthTiles": [
             "1",
             "2",
         ],
-        "EnableReset": [
-            "0",
+        "WidthTiles": [
+            "4",
+            "16",
+        ],
+        "DepthStages": [
+            "1",
+        ],
+        "WidthStages": [
             "1",
         ],
     },
