@@ -77,11 +77,19 @@ __name__ : assert property (@(posedge __clk__) disable iff (__rst__ === 1'b1 || 
 // Combinational assertion macros (evaluated continuously based on the expression sensitivity).
 // Also pass if the expression is unknown.
 ////////////////////////////////////////////////////////////////////////////////
+
+// BR_ASSERT_COMB is guarded with BR_ENABLE_ASSERT_COMB because some tools don't like immediate assertions,
+// and/or $isunknown in combinational blocks, even when it's used inside of an assert statement.
 `ifdef BR_ASSERT_ON
+`ifdef BR_ENABLE_ASSERT_COMB
 `define BR_ASSERT_COMB(__name__, __expr__) \
 always_comb begin  : gen_``__name__ \
 assert ($isunknown(__expr__) || (__expr__)); \
 end
+`else  // BR_ENABLE_COMB_CHECKS
+`define BR_ASSERT_COMB(__name__, __expr__) \
+`BR_NOOP
+`endif  // BR_ENABLE_COMB_CHECKS
 `else  // BR_ASSERT_ON
 `define BR_ASSERT_COMB(__name__, __expr__) \
 `BR_NOOP
