@@ -72,15 +72,15 @@ __name__ : assert property (@(posedge __clk__) disable iff (__rst__ === 1'b1 || 
 `endif  // SV_ASSERT_ON
 
 ////////////////////////////////////////////////////////////////////////////////
-// Combinational assertion macros (evaluated continuously based on the expression sensitivity)
+// Immediate assertion macro (evaluated continuously based on the expression sensitivity).
+// Use inside of an always_comb, initial, or final block.
+// Also passes when the expression is unknown.
 ////////////////////////////////////////////////////////////////////////////////
 `ifdef SV_ASSERT_ON
-`define BR_ASSERT_COMB(__name__, __expr__) \
-always_comb begin  : gen_``__name__ \
-assert (__expr__); \
-end
+`define BR_ASSERT_IMM(__expr__) \
+assert ($isunknown(__expr__) || (__expr__));
 `else  // SV_ASSERT_ON
-`define BR_ASSERT_COMB(__name__, __expr__) \
+`define BR_ASSERT_IMM(__expr__) \
 `BR_NOOP
 `endif  // SV_ASSERT_ON
 
@@ -108,15 +108,14 @@ __name__ : cover property (@(posedge __clk__) disable iff (__rst__ === 1'b1 || _
 `endif  // SV_ASSERT_ON
 
 ////////////////////////////////////////////////////////////////////////////////
-// Combinational cover macros (evaluated continuously based on the expression sensitivity)
+// Immediate cover macro (evaluated continuously based on the expression sensitivity).
+// Use inside of an always_comb, initial, or final block.
 ////////////////////////////////////////////////////////////////////////////////
 `ifdef SV_ASSERT_ON
-`define BR_COVER_COMB(__name__, __expr__) \
-always_comb begin  : gen_``__name__ \
-cover (__expr__); \
-end
+`define BR_COVER_IMM(__expr__) \
+cover (__expr__);
 `else  // SV_ASSERT_ON
-`define BR_COVER_COMB(__name__, __expr__) \
+`define BR_COVER_IMM(__expr__) \
 `BR_NOOP
 `endif  // SV_ASSERT_ON
 

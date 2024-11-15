@@ -88,12 +88,6 @@ module br_asserts_internal_test;
   // Use BR_ASSERT_CR_IMPL
   `BR_ASSERT_CR_IMPL(sum_nonzero_impl, (sum != 0), custom_clk, custom_rst)
 
-  // Use BR_ASSERT_COMB_INTG
-  `BR_ASSERT_COMB_INTG(inputs_nonzero_intg, (a != 0) || (b != 0))
-
-  // Use BR_ASSERT_COMB_IMPL
-  `BR_ASSERT_COMB_IMPL(sum_in_range_impl, sum <= 15)
-
   // Use BR_COVER_INTG
   `BR_COVER_INTG(sum_overflow_intg, sum > 15)
 
@@ -105,11 +99,5 @@ module br_asserts_internal_test;
 
   // Use BR_COVER_CR_IMPL
   `BR_COVER_CR_IMPL(sum_max_impl, sum == 15, custom_clk, custom_rst)
-
-  // Use BR_COVER_COMB_INTG
-  `BR_COVER_COMB_INTG(inputs_equal_intg, (a == b))
-
-  // Use BR_COVER_COMB_IMPL
-  `BR_COVER_COMB_IMPL(inputs_opposite_impl, (a == ~b))
 
 endmodule : br_asserts_internal_test

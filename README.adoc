@@ -400,8 +400,8 @@ Resets are always active-high.
 | Yes
 | Yes
 
-| `BR_ASSERT_COMB`
-| Combinational/immediate assertion.
+| `BR_ASSERT_IMM`
+| Immediate assertion that passes when the expression is unknown (X).
 | Yes
 | Yes
 
@@ -415,8 +415,8 @@ Resets are always active-high.
 | Yes
 | Yes
 
-| `BR_COVER_COMB`
-| Combinational/immediate cover.
+| `BR_COVER_IMM`
+| Immediate cover.
 | Yes
 | Yes
 
@@ -469,18 +469,6 @@ Enable by defining `BR_ENABLE_IMPL_CHECKS`.
 | Yes
 | Yes
 
-| `BR_ASSERT_COMB_INTG`
-a| Combinational/immediate integration assertion.
-Disable by defining `BR_DISABLE_INTG_CHECKS`.
-| Yes
-| Yes
-
-| `BR_ASSERT_COMB_IMPL`
-a| Combinational/immediate implementation assertion.
-Enable by defining `BR_ENABLE_IMPL_CHECKS`.
-| Yes
-| Yes
-
 | `BR_COVER_INTG`
 a| Concurrent integration cover with implicit `clk` and `rst` names.
 Disable by defining `BR_DISABLE_INTG_CHECKS`.
@@ -501,18 +489,6 @@ Enable by defining `BR_ENABLE_IMPL_CHECKS`.
 
 | `BR_COVER_CR_IMPL`
 a| Concurrent implementation cover with explicit clock and reset names.
-Enable by defining `BR_ENABLE_IMPL_CHECKS`.
-| Yes
-| Yes
-
-| `BR_COVER_COMB_INTG`
-a| Combinational/immediate integration cover.
-Disable by defining `BR_DISABLE_INTG_CHECKS`.
-| Yes
-| Yes
-
-| `BR_COVER_COMB_IMPL`
-a| Combinational/immediate implementation cover.
 Enable by defining `BR_ENABLE_IMPL_CHECKS`.
 | Yes
 | Yes

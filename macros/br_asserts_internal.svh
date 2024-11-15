@@ -80,25 +80,6 @@
 `endif  // BR_ENABLE_IMPL_CHECKS
 
 ////////////////////////////////////////////////////////////////////////////////
-// Combinational assertion macros (evaluated continuously based on the expression sensitivity)
-////////////////////////////////////////////////////////////////////////////////
-`ifndef BR_DISABLE_INTG_CHECKS
-`define BR_ASSERT_COMB_INTG(__name__, __expr__) \
-`BR_ASSERT_COMB(__name__, __expr__)
-`else  // BR_DISABLE_INTG_CHECKS
-`define BR_ASSERT_COMB_INTG(__name__, __expr__) \
-`BR_NOOP
-`endif  // BR_DISABLE_INTG_CHECKS
-
-`ifdef BR_ENABLE_IMPL_CHECKS
-`define BR_ASSERT_COMB_IMPL(__name__, __expr__) \
-`BR_ASSERT_COMB(__name__, __expr__)
-`else  // BR_ENABLE_IMPL_CHECKS
-`define BR_ASSERT_COMB_IMPL(__name__, __expr__) \
-`BR_NOOP
-`endif  // BR_ENABLE_IMPL_CHECKS
-
-////////////////////////////////////////////////////////////////////////////////
 // Concurrent cover macros (evaluated on posedge of a clock and disabled during a synchronous active-high reset)
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -137,25 +118,6 @@
 `BR_COVER_CR(__name__, __expr__, __clk__, __rst__)
 `else  // BR_ENABLE_IMPL_CHECKS
 `define BR_COVER_CR_IMPL(__name__, __expr__, __clk__, __rst__) \
-`BR_NOOP
-`endif  // BR_ENABLE_IMPL_CHECKS
-
-////////////////////////////////////////////////////////////////////////////////
-// Combinational cover macros (evaluated continuously based on the expression sensitivity)
-////////////////////////////////////////////////////////////////////////////////
-`ifndef BR_DISABLE_INTG_CHECKS
-`define BR_COVER_COMB_INTG(__name__, __expr__) \
-`BR_COVER_COMB(__name__, __expr__)
-`else  // BR_DISABLE_INTG_CHECKS
-`define BR_COVER_COMB_INTG(__name__, __expr__) \
-`BR_NOOP
-`endif // BR_DISABLE_INTG_CHECKS
-
-`ifdef BR_ENABLE_IMPL_CHECKS
-`define BR_COVER_COMB_IMPL(__name__, __expr__) \
-`BR_COVER_COMB(__name__, __expr__)
-`else  // BR_ENABLE_IMPL_CHECKS
-`define BR_COVER_COMB_IMPL(__name__, __expr__) \
 `BR_NOOP
 `endif  // BR_ENABLE_IMPL_CHECKS
 

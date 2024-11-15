@@ -100,8 +100,10 @@ module br_asserts_test;
   // should work like an assert when not being used in formal
   `BR_ASSUME_CR(valid_data_check_m, (valid == 1) |-> (sum == a + b), custom_clk, custom_rst)
 
-  // Use BR_ASSERT_COMB
-  `BR_ASSERT_COMB(inputs_nonzero_a, (a != 0) || (b != 0))
+  // Use BR_ASSERT_IMM
+  always_comb begin
+    `BR_ASSERT_IMM((a != 0) || (b != 0))
+  end
 
   // Use BR_COVER
   `BR_COVER(sum_overflow_a, sum > 15)
@@ -109,7 +111,9 @@ module br_asserts_test;
   // Use BR_COVER_CR
   `BR_COVER_CR(valid_transition_a, (valid == 1), custom_clk, custom_rst)
 
-  // Use BR_COVER_COMB
-  `BR_COVER_COMB(inputs_equal_a, (a == b))
+  // Use BR_COVER_IMM
+  always_comb begin
+    `BR_COVER_IMM((a == b))
+  end
 
 endmodule : br_asserts_test

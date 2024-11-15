@@ -43,14 +43,16 @@ module br_gates_test;
   `BR_GATE_CLK_MUX2(dut, out_clk_mux, in0, in1, mux_sel)
 
 
-  `BR_ASSERT_COMB(out_buf_check, out_buf == in0)
-  `BR_ASSERT_COMB(out_clk_buf_check, out_clk_buf == in0)
-  `BR_ASSERT_COMB(out_inv_check, out_inv == ~in0)
-  `BR_ASSERT_COMB(out_and2_check, out_and2 == (in0 & in1))
-  `BR_ASSERT_COMB(out_or2_check, out_or2 == (in0 | in1))
-  `BR_ASSERT_COMB(out_xor2_check, out_xor2 == (in0 ^ in1))
-  `BR_ASSERT_COMB(out_mux_check, out_mux == (mux_sel ? in1 : in0))
-  `BR_ASSERT_COMB(out_clk_mux_check, out_clk_mux == (mux_sel ? in1 : in0))
+  always_comb begin
+    `BR_ASSERT_IMM(out_buf == in0)
+    `BR_ASSERT_IMM(out_clk_buf == in0)
+    `BR_ASSERT_IMM(out_inv == ~in0)
+    `BR_ASSERT_IMM(out_and2 == (in0 & in1))
+    `BR_ASSERT_IMM(out_or2 == (in0 | in1))
+    `BR_ASSERT_IMM(out_xor2 == (in0 ^ in1))
+    `BR_ASSERT_IMM(out_mux == (mux_sel ? in1 : in0))
+    `BR_ASSERT_IMM(out_clk_mux == (mux_sel ? in1 : in0))
+  end
 
 
   initial begin
