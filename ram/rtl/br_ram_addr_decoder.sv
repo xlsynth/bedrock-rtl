@@ -150,7 +150,7 @@ module br_ram_addr_decoder #(
             // Lint waiver needed because when i == 0, this subexpression is always true.
             // ri lint_check_waive INVALID_COMPARE
             (in_addr >= TileBaseAddress) && (in_addr < TileBoundAddress);
-        assign internal_out_addr[i] = in_addr[OutputAddressWidth-1:0];
+        assign internal_out_addr[i] = in_addr - TileBaseAddress;
         assign internal_out_data[i] = in_data;
       end
     end
@@ -188,14 +188,14 @@ module br_ram_addr_decoder #(
                       out_valid[i] |-> $past(
                           in_valid, Stages
                       ) && (out_addr[i] == $past(
-                          in_addr[OutputAddressWidth-1:0], Stages
+                          (in_addr - (TileDepth * i)), Stages
                       )))
     end
   end else begin : gen_impl_checks_not_delayed
     `BR_ASSERT_IMPL(valid_propagation_a, in_valid |-> $onehot(out_valid))
     for (genvar i = 0; i < Tiles; i++) begin : gen_tiles_check
       `BR_ASSERT_IMPL(out_addr_correct_a,
-                      out_valid[i] |-> in_valid && (out_addr[i] == in_addr[OutputAddressWidth-1:0]))
+                      out_valid[i] |-> in_valid && (out_addr[i] == (in_addr - (TileDepth * i))))
     end
   end
 
