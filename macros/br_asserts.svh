@@ -77,7 +77,7 @@ __name__ : assert property (@(posedge __clk__) disable iff (__rst__ === 1'b1 || 
 `ifdef SV_ASSERT_ON
 `define BR_ASSERT_COMB(__name__, __expr__) \
 always_comb begin  : gen_``__name__ \
-assert (__expr__); \
+assert ($isunknown(__expr__) || (__expr__)); \
 end
 `else  // SV_ASSERT_ON
 `define BR_ASSERT_COMB(__name__, __expr__) \
