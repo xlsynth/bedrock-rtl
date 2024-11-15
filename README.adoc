@@ -372,6 +372,7 @@ These assertion macros are intended for use by the user in their own designs.
 They are guarded (enabled) by the following defines:
 
 * `ifdef BR_ASSERT_ON`
+* `ifdef BR_ENABLE_ASSERT_COMB` - only for guarding `BR_ASSERT_COMB` (off by default).
 
 IMPORTANT: Clocks are always positive-edge triggered.
 Resets are always active-high.
