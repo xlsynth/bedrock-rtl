@@ -64,7 +64,7 @@ module br_delay_nr #(
   // Implementation checks
   //------------------------------------------
   if (NumStages == 0) begin : gen_zero_delay
-    `BR_ASSERT_IMPL(passthru_a, out === in)
+    `BR_ASSERT_IMPL(passthru_a, out == in)
   end else begin : gen_pos_delay
     `BR_ASSERT_IMPL(delay_a, ##NumStages out == $past(in, NumStages))
   end
