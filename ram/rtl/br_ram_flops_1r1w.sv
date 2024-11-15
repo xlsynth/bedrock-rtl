@@ -215,6 +215,4 @@ module br_ram_flops_1r1w #(
     end
   end
 
-  // Rely on submodule implementation checks
-
 endmodule : br_ram_flops_1r1w

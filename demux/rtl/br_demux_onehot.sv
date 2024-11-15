@@ -44,10 +44,6 @@ module br_demux_onehot #(
   //------------------------------------------
   `BR_ASSERT_STATIC(legal_num_symbols_out_a, NumSymbolsOut >= 2)
   `BR_ASSERT_STATIC(legal_symbol_width_a, SymbolWidth >= 1)
-  // TODO(mgottscho, #109):
-  // ASSERT_COMB macro has an always_comb block that only has an
-  // assertion inside. Need to add this waiver until we can figure out
-  // how to handle it properly in the macro.
   // ri lint_check_waive ALWAYS_COMB
   `BR_ASSERT_COMB_INTG(select_onehot0_a, $onehot0(select))
 
