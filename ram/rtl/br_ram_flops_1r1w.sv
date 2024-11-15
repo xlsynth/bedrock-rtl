@@ -16,27 +16,27 @@
 //
 // A one-read/one-write (1R1W, also known as pseudo-dual-port) flop-based RAM
 // that is constructed out of pipelined tiles.
-//
-// Parameterized write, read, and read-after-write hazard latencies.
+// Heavily parameterized for tiling and pipeline configurations.
 
 `include "br_asserts_internal.svh"
 `include "br_registers.svh"
 
 module br_ram_flops_1r1w #(
     parameter int Depth = 2,  // Number of entries in the RAM. Must be at least 2.
-    parameter int Width = 1,  // Width of each entry in the RAM. Must be at least 1.
-    // Number of tiles along the depth (address) dimension. Must be a positive power-of-2
-    // and less than or equal to Depth.
+    parameter int Width = 1,  // Bitwidth of each entry in the RAM. Must be at least 1.
+    // Number of tiles along the depth (address) dimension. Must be at least 1 and evenly divide Depth.
     parameter int DepthTiles = 1,
-    // Number of tiles along the width (data) dimension. Must be a positive power-of-2
-    // and less than or equal to Width.
+    // Number of tiles along the width (data) dimension. Must be at least 1 and evenly divide Width.
     parameter int WidthTiles = 1,
-    // Number of pipeline register stages inserted along the write address and read address paths.
-    // Must be at least 0 and less than or equal to $clog2(DepthTiles).
-    parameter int AddressStages = 0,
-    // Number of pipeline register stages inserted along the read data path.
-    // Must be at least 0 and less than or equal to $clog2(WidthTiles).
-    parameter int ReadDataStages = 0,
+    // Number of pipeline register stages inserted along the write address and read address paths
+    // in the depth dimension. Must be at least 0.
+    parameter int AddressDepthStages = 0,
+    // Number of pipeline register stages inserted along the read data path in the depth dimension.
+    // Must be at least 0.
+    parameter int ReadDataDepthStages = 0,
+    // Number of pipeline register stages inserted along the read data path in the width dimension.
+    // Must be at least 0.
+    parameter int ReadDataWidthStages = 0,
     // If 1, then each memory tile has a read-after-write hazard latency of 0 cycles, i.e.,
     // if the tile read and write address are valid and equal on the same cycle then the tile
     // read data equals the tile write data.
@@ -47,14 +47,13 @@ module br_ram_flops_1r1w #(
     // If 1, then the memory elements are cleared to 0 upon reset. Otherwise, they are undefined until
     // written for the first time.
     parameter bit EnableMemReset = 0,
-    localparam int WriteLatency = AddressStages + 1,
-    localparam int ReadLatency = AddressStages + ReadDataStages,
-    localparam int ReadAfterWriteHazardLatency = TileEnableBypass ? 0 : 1,
     localparam int AddressWidth = $clog2(Depth)
 ) (
     // Posedge-triggered clock.
     input  logic                    clk,
     // Synchronous active-high reset.
+    // Reset is not used if all stages are 0, hence lint waiver.
+    // ri lint_check_waive HIER_NET_NOT_READ HIER_BRANCH_NOT_READ
     input  logic                    rst,
     input  logic                    wr_valid,
     input  logic [AddressWidth-1:0] wr_addr,
@@ -65,6 +64,9 @@ module br_ram_flops_1r1w #(
     output logic [       Width-1:0] rd_data
 );
 
+  localparam int TileDepth = br_math::ceil_div(Depth, DepthTiles);
+  localparam int TileWidth = br_math::ceil_div(Width, WidthTiles);
+
   //------------------------------------------
   // Integration checks
   //------------------------------------------
@@ -72,31 +74,29 @@ module br_ram_flops_1r1w #(
   `BR_ASSERT_STATIC(width_gte_1_a, Width >= 1)
 
   // DepthTiles checks
-  `BR_ASSERT_STATIC(depth_tiles_gt0_a, DepthTiles > 0)
-  `BR_ASSERT_STATIC(depth_tiles_power_of_2_a, br_math::is_power_of_2(DepthTiles))
-  `BR_ASSERT_STATIC(depth_tiles_lte_depth_a, DepthTiles <= Depth)
+  `BR_ASSERT_STATIC(depth_tiles_gte1_a, DepthTiles >= 1)
+  `BR_ASSERT_STATIC(depth_tiles_evenly_divides_depth_a, (DepthTiles * TileDepth) == Depth)
 
   // WidthTiles checks
-  `BR_ASSERT_STATIC(bitwidth_tiles_gt0_a, WidthTiles > 0)
-  `BR_ASSERT_STATIC(bitwidth_tiles_power_of_2_a, br_math::is_power_of_2(WidthTiles))
-  `BR_ASSERT_STATIC(bitwidth_tiles_lte_bitwidth_a, WidthTiles <= Width)
+  `BR_ASSERT_STATIC(width_tiles_gte1_a, WidthTiles >= 1)
+  `BR_ASSERT_STATIC(width_tiles_evenly_divides_width_a, (WidthTiles * TileWidth) == Width)
 
-  // AddressStages checks
-  `BR_ASSERT_STATIC(address_stages_gte0_a, AddressStages >= 0)
-  `BR_ASSERT_STATIC(address_stages_lte_clog2_depth_tiles_a, AddressStages <= $clog2(DepthTiles))
+  // Address stages checks
+  `BR_ASSERT_STATIC(address_depth_stages_gte0_a, AddressDepthStages >= 0)
 
-  // ReadDataStages checks
-  `BR_ASSERT_STATIC(read_data_stages_gte0_a, ReadDataStages >= 0)
-  `BR_ASSERT_STATIC(read_data_stages_lte_clog2_depth_tiles_a, ReadDataStages <= $clog2(WidthTiles))
+  // Read data stages checks
+  `BR_ASSERT_STATIC(read_data_depth_stages_gte0_a, ReadDataDepthStages >= 0)
+  `BR_ASSERT_STATIC(read_data_width_stages_gte0_a, ReadDataWidthStages >= 0)
 
-  // TODO(mgottscho): write more
+  // Address range checks
+  `BR_ASSERT_INTG(wr_addr_in_range_a, wr_valid |-> wr_addr < Depth)
+  `BR_ASSERT_INTG(rd_addr_in_range_a, rd_addr_valid |-> rd_addr < Depth)
+
   // Rely on submodule integration checks
 
   //------------------------------------------
   // Implementation
   //------------------------------------------
-  localparam int TileDepth = br_math::ceil_div(Depth, DepthTiles);
-  localparam int TileWidth = br_math::ceil_div(Width, WidthTiles);
   localparam int TileAddressWidth = $clog2(TileDepth);
 
   logic [DepthTiles-1:0] tile_wr_valid;
@@ -105,38 +105,40 @@ module br_ram_flops_1r1w #(
 
   logic [DepthTiles-1:0] tile_rd_addr_valid;
   logic [DepthTiles-1:0][TileAddressWidth-1:0] tile_rd_addr;
-  logic [DepthTiles-1:0] tile_rd_data_valid;
+  logic [DepthTiles-1:0][WidthTiles-1:0] tile_rd_data_valid;
   logic [DepthTiles-1:0][WidthTiles-1:0][TileWidth-1:0] tile_rd_data;
 
   // Write pipeline (address + data)
-  br_ram_addr_decoder_tree #(
+  br_ram_addr_decoder #(
       .Depth(Depth),
       .DataWidth(Width),
-      .Tiles(DepthTiles)
-  ) br_ram_addr_decoder_tree_wr (
+      .Tiles(DepthTiles),
+      .Stages(AddressDepthStages)
+  ) br_ram_addr_decoder_wr (
       .clk,
       .rst,
-      .addr_valid(wr_valid),
-      .addr(wr_addr),
-      .data(wr_data),
-      .tile_valid(tile_wr_valid),
-      .tile_addr(tile_wr_addr),
-      .tile_data(tile_wr_data)
+      .in_valid (wr_valid),
+      .in_addr  (wr_addr),
+      .in_data  (wr_data),
+      .out_valid(tile_wr_valid),
+      .out_addr (tile_wr_addr),
+      .out_data (tile_wr_data)
   );
 
   // Read address pipeline
-  br_ram_addr_decoder_tree #(
-      .Depth(Depth),
-      .Tiles(DepthTiles)
-  ) br_ram_addr_decoder_tree_rd (
+  br_ram_addr_decoder #(
+      .Depth (Depth),
+      .Tiles (DepthTiles),
+      .Stages(AddressDepthStages)
+  ) br_ram_addr_decoder_rd (
       .clk,
       .rst,
-      .valid(rd_addr_valid),
-      .addr(rd_addr),
-      .data('0),  // unused
-      .tile_addr_valid(tile_rd_addr_valid),
-      .tile_addr(tile_rd_addr),
-      .tile_data()  // unused
+      .in_valid(rd_addr_valid),
+      .in_addr(rd_addr),
+      .in_data(1'b0),  // unused
+      .out_valid(tile_rd_addr_valid),
+      .out_addr(tile_rd_addr),
+      .out_data()  // unused
   );
 
   // Memory tiles
@@ -144,7 +146,7 @@ module br_ram_flops_1r1w #(
     for (genvar c = 0; c < WidthTiles; c++) begin : gen_col
       br_ram_flops_1r1w_tile #(
           .Depth(TileDepth),
-          .Width(TileWidth),
+          .BitWidth(TileWidth),
           .EnableBypass(TileEnableBypass),
           .EnableReset(EnableMemReset)
       ) br_ram_flops_1r1w_tile (
@@ -163,10 +165,11 @@ module br_ram_flops_1r1w #(
 
   // Read data pipeline
   br_ram_data_rd_pipe #(
-      .Depth(Depth),
-      .DataWidth(Width),
-      .Tiles(DepthTiles),
-      .Stages(ReadDataStages)
+      .Width(Width),
+      .DepthTiles(DepthTiles),
+      .WidthTiles(WidthTiles),
+      .DepthStages(ReadDataDepthStages),
+      .WidthStages(ReadDataWidthStages)
   ) br_ram_data_rd_pipe (
       .clk,
       .rst,
@@ -179,9 +182,29 @@ module br_ram_flops_1r1w #(
   //------------------------------------------
   // Implementation checks
   //------------------------------------------
-  `BR_ASSERT_IMPL(read_latency_A, rd_addr_valid |-> ##ReadLatency rd_data_valid)
+`ifdef SV_ASSERT_ON
+`ifdef BR_ENABLE_IMPL_CHECKS
+  localparam int WriteLatency = AddressDepthStages + 1;
+  localparam int ReadLatency = ReadDataDepthStages + ReadDataWidthStages;
+`endif  // BR_ENABLE_IMPL_CHECKS
+`endif  // SV_ASSERT_ON
+  localparam int ReadAfterWriteHazardLatency = TileEnableBypass ? 0 : 1;
 
-  // TODO(mgottscho): Write more
+  `BR_ASSERT_IMPL(read_latency_a, rd_addr_valid |-> ##ReadLatency rd_data_valid)
+  if (ReadAfterWriteHazardLatency == 0) begin : gen_hazard0_checks
+    `BR_ASSERT_IMPL(read_write_hazard_gets_new_data_a,
+                    wr_valid && rd_addr_valid && (wr_addr == rd_addr) |->
+        ##ReadLatency rd_data_valid && rd_data == $past(
+                        wr_data, WriteLatency
+                    ))
+  end else begin : gen_hazard1_checks
+    `BR_COVER_IMPL(read_write_hazard_gets_old_data_c,
+                   (wr_valid && rd_addr_valid && (wr_addr == rd_addr)) ##ReadLatency
+        (rd_data_valid && rd_data != $past(
+                       wr_data, WriteLatency
+                   )))
+  end
+
   // Rely on submodule implementation checks
 
 endmodule : br_ram_flops_1r1w

@@ -20,7 +20,9 @@
 // Works for any RAM depth >= 2 and any number of output tiles >= 1 that evenly
 // divides the RAM depth. If RAM depth is a power-of-2 then the implementation is optimized.
 //
-// The latency is 0 cycles if RegisterOutputs is 0; otherwise, it is 1 cycle (pipelined).
+// The latency is given by Stages. If Stages is 0, then the module is purely combinational;
+// if 1, then there is a single pipeline register stage. Values greater than 1 work but don't
+// pipeline the logic inside the decoding tree, they just retime the decoded outputs.
 
 `include "br_asserts_internal.svh"
 
@@ -32,18 +34,19 @@ module br_ram_addr_decoder #(
     parameter int DataWidth = 1,
     // Number of output address tiles. Must be at least 1 and evenly divide Depth.
     parameter int Tiles = 1,
-    // If 1, then pipeline latency is 1 cycle; else, 0 cycles.
-    parameter bit RegisterOutputs = 0,
+    // Pipeline depth. Must be at least 0.
+    // Values greater than 1 are of dubious utility but don't hurt anything.
+    parameter int Stages = 0,
     localparam int TileDepth = br_math::ceil_div(Depth, Tiles),
     localparam int InputAddressWidth = $clog2(Depth),
     localparam int OutputAddressWidth = $clog2(TileDepth)
 ) (
     // Posedge-triggered clock.
-    // Can be unused if RegisterOutputs == 0.
+    // Can be unused if Stages == 0.
     // ri lint_check_waive HIER_NET_NOT_READ HIER_BRANCH_NOT_READ
     input  logic                                                 clk,
     // Synchronous active-high reset.
-    // Can be unused if RegisterOutputs == 0.
+    // Can be unused if Stages == 0.
     // ri lint_check_waive HIER_NET_NOT_READ HIER_BRANCH_NOT_READ
     input  logic                                                 rst,
     // Input address and data.
@@ -63,6 +66,7 @@ module br_ram_addr_decoder #(
   `BR_ASSERT_STATIC(data_width_gte1_a, DataWidth >= 1)
   `BR_ASSERT_STATIC(tiles_gte1_a, Tiles >= 1)
   `BR_ASSERT_STATIC(tiles_evenly_divides_depth_a, (Tiles * TileDepth) == Depth)
+  `BR_ASSERT_STATIC(stages_gte0_a, Stages >= 0)
 
   `BR_ASSERT_INTG(in_addr_in_range_a, in_valid |-> in_addr < Depth)
 
@@ -76,7 +80,7 @@ module br_ram_addr_decoder #(
 
     br_delay_valid #(
         .BitWidth (OutputAddressWidth + DataWidth),
-        .NumStages(RegisterOutputs ? 1 : 0)
+        .NumStages(Stages)
     ) br_delay_valid (
         .clk,
         .rst,
@@ -134,11 +138,11 @@ module br_ram_addr_decoder #(
       end
     end
 
-    // Replicate to reduce register fanout when RegisterOutputs == 1
+    // Replicate to reduce register fanout when Stages >= 1
     for (genvar i = 0; i < Tiles; i++) begin : gen_out
       br_delay_valid #(
           .BitWidth (OutputAddressWidth + DataWidth),
-          .NumStages(RegisterOutputs ? 1 : 0)
+          .NumStages(Stages)
       ) br_delay_valid (
           .clk,
           .rst,
@@ -160,17 +164,17 @@ module br_ram_addr_decoder #(
     `BR_ASSERT_IMPL(out_addr_in_range_a, out_valid[i] |-> out_addr[i] < TileDepth)
   end
 
-  if (RegisterOutputs) begin : gen_impl_checks_registered
+  if (Stages > 0) begin : gen_impl_checks_delayed
     `BR_ASSERT_IMPL(valid_propagation_a, in_valid |=> $onehot(out_valid))
     for (genvar i = 0; i < Tiles; i++) begin : gen_tiles_check
       `BR_ASSERT_IMPL(out_addr_correct_a,
                       out_valid[i] |-> $past(
-                          in_valid
+                          in_valid, Stages
                       ) && (out_addr[i] == $past(
-                          in_addr[OutputAddressWidth-1:0]
+                          in_addr[OutputAddressWidth-1:0], Stages
                       )))
     end
-  end else begin : gen_impl_checks_not_registered
+  end else begin : gen_impl_checks_not_delayed
     `BR_ASSERT_IMPL(valid_propagation_a, in_valid |-> $onehot(out_valid))
     for (genvar i = 0; i < Tiles; i++) begin : gen_tiles_check
       `BR_ASSERT_IMPL(out_addr_correct_a,
