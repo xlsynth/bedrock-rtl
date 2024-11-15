@@ -13,7 +13,8 @@
 # limitations under the License.
 
 load("@rules_hdl//verilog:providers.bzl", "verilog_library")
-load("//bazel:verilog.bzl", "verilog_elab_test", "verilog_sim_test")
+load("//bazel:br_verilog.bzl", "br_verilog_sim_test_suite")
+load("//bazel:verilog.bzl", "verilog_elab_test")
 
 package(default_visibility = ["//visibility:public"])
 
@@ -28,14 +29,54 @@ verilog_elab_test(
     deps = [":br_ram_flops_1r1w_tb"],
 )
 
-verilog_sim_test(
-    name = "br_ram_flops_1r1w_vcs_test",
-    defines = [
-        "SV_ASSERT_ON",
-        "BR_ENABLE_IMPL_CHECKS",
-    ],
-    #opts = ["-assert global_finish_maxfail=1+offending_values"],
+br_verilog_sim_test_suite(
+    name = "br_ram_flops_1r1w_vcs_test_suite_basic",
+    params = {
+        "TileEnableBypass": [
+            "0",
+            "1",
+        ],
+        "EnableMemReset": [
+            "0",
+            "1",
+        ],
+    },
     tool = "vcs",
-    top = "br_ram_flops_1r1w_tb",
+    deps = [":br_ram_flops_1r1w_tb"],
+)
+
+br_verilog_sim_test_suite(
+    name = "br_ram_flops_1r1w_vcs_test_suite_evenshape",
+    params = {
+        "Depth": ["16"],
+        "Width": ["8"],
+        "DepthTiles": [
+            "1",
+            "4",
+        ],
+        "WidthTiles": [
+            "1",
+            "2",
+        ],
+    },
+    tool = "vcs",
+    deps = [":br_ram_flops_1r1w_tb"],
+)
+
+br_verilog_sim_test_suite(
+    name = "br_ram_flops_1r1w_vcs_test_suite_oddshape",
+    params = {
+        "Depth": ["15"],
+        "Width": ["9"],
+        "DepthTiles": [
+            "1",
+            "5",
+        ],
+        "WidthTiles": [
+            "1",
+            "3",
+        ],
+    },
+    tool = "vcs",
     deps = [":br_ram_flops_1r1w_tb"],
 )
