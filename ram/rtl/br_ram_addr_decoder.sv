@@ -109,16 +109,33 @@ module br_ram_addr_decoder #(
       localparam int SelectLsb = (SelectMsb - TileSelectWidth) + 1;
       `BR_ASSERT_STATIC(select_check_a, SelectMsb >= SelectLsb)
 
+      // Need this indirection because addr/data are interleaved at demux output.
+      typedef struct packed {
+        logic [OutputAddressWidth-1:0] addr;
+        logic [DataWidth-1:0]          data;
+      } mux_payload_t;
+
+      mux_payload_t mux_in;
+      mux_payload_t [Tiles-1:0] mux_out;
+
+      assign mux_in.addr = in_addr[OutputAddressWidth-1:0];
+      assign mux_in.data = in_data;
+
       br_demux_bin #(
           .NumSymbolsOut(Tiles),
-          .SymbolWidth  (OutputAddressWidth + DataWidth)
+          .SymbolWidth  ($bits(mux_payload_t))
       ) br_demux_bin (
           .select(in_addr[SelectMsb:SelectLsb]),
           .in_valid(in_valid),
-          .in({in_addr[OutputAddressWidth-1:0], in_data}),
+          .in(mux_in),
           .out_valid(internal_out_valid),
-          .out({internal_out_addr, internal_out_data})
+          .out(mux_out)
       );
+
+      for (genvar i = 0; i < Tiles; i++) begin : gen_mux_out
+        assign internal_out_addr[i] = mux_out[i].addr;
+        assign internal_out_data[i] = mux_out[i].data;
+      end
 
       // If Depth is not a power-of-2 we cannot just slice off the MSBs for the tile select.
       // We have to look at the address range and steer it with bit overlaps.
