@@ -39,17 +39,20 @@ def br_verilog_elab_and_lint_test_suite(name, **kwargs):
     verilog_elab_and_lint_test_suite(
         name = name,
         defines = ["SV_ASSERT_ON"],
+        tags = ["assert"],
         **kwargs
     )
 
     verilog_elab_and_lint_test_suite(
         name = name + "_allassert",
         defines = ["SV_ASSERT_ON", "BR_ENABLE_IMPL_CHECKS"],
+        tags = ["allassert"],
         **kwargs
     )
 
     verilog_elab_and_lint_test_suite(
         name = name + "_noassert",
         defines = [],
+        tags = ["noassert"],
         **kwargs
     )
