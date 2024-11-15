@@ -157,7 +157,7 @@ module br_ram_flops_1r1w #(
           .wr_data(tile_wr_data[r][c]),
           .rd_addr_valid(tile_rd_addr_valid[r]),
           .rd_addr(tile_rd_addr[r]),
-          .rd_data_valid(tile_rd_data_valid[r]),
+          .rd_data_valid(tile_rd_data_valid[r][c]),
           .rd_data(tile_rd_data[r][c])
       );
     end
