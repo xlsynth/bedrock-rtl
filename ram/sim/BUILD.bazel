@@ -60,7 +60,11 @@ br_verilog_sim_test_suite(
         ],
     },
     tool = "vcs",
-    deps = [":br_ram_flops_1r1w_tb"],
+    top = "br_ram_flops_1r1w_tb",
+    deps = [
+        ":br_ram_flops_1r1w_tb",
+        "//delay/rtl:br_delay_nr",
+    ],
 )
 
 br_verilog_sim_test_suite(
@@ -80,3 +84,50 @@ br_verilog_sim_test_suite(
     tool = "vcs",
     deps = [":br_ram_flops_1r1w_tb"],
 )
+
+br_verilog_sim_test_suite(
+    name = "br_ram_flops_1r1w_vcs_test_suite_latency1a",
+    params = {
+        "Depth": ["16"],
+        "Width": ["4"],
+        "AddressDepthStages": ["1"],
+    },
+    tool = "vcs",
+    deps = [":br_ram_flops_1r1w_tb"],
+)
+
+br_verilog_sim_test_suite(
+    name = "br_ram_flops_1r1w_vcs_test_suite_latency1b",
+    params = {
+        "Depth": ["16"],
+        "Width": ["4"],
+        "ReadDataDepthStages": ["1"],
+    },
+    tool = "vcs",
+    deps = [":br_ram_flops_1r1w_tb"],
+)
+
+br_verilog_sim_test_suite(
+    name = "br_ram_flops_1r1w_vcs_test_suite_latency1c",
+    params = {
+        "Depth": ["16"],
+        "Width": ["4"],
+        "ReadDataWidthStages": ["1"],
+    },
+    tool = "vcs",
+    deps = [":br_ram_flops_1r1w_tb"],
+)
+
+# TODO(mgottscho): enable test suite when they all pass. TB doesn't work if total read latency > 1.
+#br_verilog_sim_test_suite(
+#    name = "br_ram_flops_1r1w_vcs_test_suite_latency",
+#    params = {
+#        "Depth": ["16"],
+#        "Width": ["4"],
+#        "AddressDepthStages": ["0", "1", "2"],
+#        "ReadDataDepthStages": ["0", "1", "2"],
+#        "ReadDataWidthStages": ["0", "1", "2"],
+#    },
+#    tool = "vcs",
+#    deps = [":br_ram_flops_1r1w_tb"],
+#)
