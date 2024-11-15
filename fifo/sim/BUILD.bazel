@@ -31,6 +31,17 @@ verilog_elab_test(
 
 br_verilog_sim_test_suite(
     name = "br_fifo_flops_vcs_test_suite",
+    params = {
+        "Depth": [
+            "2",
+            "13",
+        ],
+        "Width": ["8"],
+        "EnableBypass": [
+            "0",
+            "1",
+        ],
+    },
     tool = "vcs",
     deps = [":br_fifo_flops_tb"],
 )
@@ -52,6 +63,17 @@ verilog_elab_test(
 
 br_verilog_sim_test_suite(
     name = "br_fifo_flops_push_credit_vcs_test_suite",
+    params = {
+        "Depth": [
+            "13",
+            "16",
+        ],
+        "Width": ["8"],
+        "EnableBypass": [
+            "0",
+            "1",
+        ],
+    },
     tool = "vcs",
     deps = [":br_fifo_flops_push_credit_tb"],
 )
