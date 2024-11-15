@@ -61,6 +61,21 @@ module br_fifo_flops_push_credit #(
     // If 0, pop_valid/pop_data comes directly from push_valid (if bypass is enabled)
     // and/or ram_wr_data.
     parameter bit RegisterPopOutputs = 1,
+    // Number of tiles in the depth (address) dimension. Must be at least 1 and evenly divide Depth.
+    parameter int FlopRamDepthTiles = 1,
+    // Number of tiles along the width (data) dimension. Must be at least 1 and evenly divide Width.
+    parameter int FlopRamWidthTiles = 1,
+    // Number of pipeline register stages inserted along the write address and read address paths
+    // in the depth dimension. Must be at least 0.
+    parameter int FlopRamAddressDepthStages = 0,
+    // Number of pipeline register stages inserted along the read data path in the depth dimension.
+    // Must be at least 0.
+    parameter int FlopRamReadDataDepthStages = 0,
+    // Number of pipeline register stages inserted along the read data path in the width dimension.
+    // Must be at least 0.
+    parameter int FlopRamReadDataWidthStages = 0,
+
+    // Internal computed parameters
     localparam int AddrWidth = $clog2(Depth),
     localparam int CountWidth = $clog2(Depth + 1),
     localparam int CreditWidth = $clog2(MaxCredit + 1)

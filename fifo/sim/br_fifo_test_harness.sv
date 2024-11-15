@@ -32,10 +32,10 @@ module br_fifo_test_harness #(
     input  logic             pop_valid,
     input  logic [Width-1:0] pop_data,
 
-    input logic                     empty,
-    input logic                     full,
-    input logic [$clog2(Depth)-1:0] items,
-    input logic [$clog2(Depth)-1:0] slots
+    input logic                       empty,
+    input logic                       full,
+    input logic [$clog2(Depth+1)-1:0] items,
+    input logic [$clog2(Depth+1)-1:0] slots
 );
 
   // Scoreboard

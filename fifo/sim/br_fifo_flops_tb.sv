@@ -17,85 +17,83 @@
 module br_fifo_flops_tb;
 
   // Parameters
-  parameter int NumTests = 4;
-
   parameter int Depth = 13;
   parameter int Width = 8;
-  parameter int EnableBypass[NumTests] = '{0, 1, 0, 1};
-  parameter int RegisterPopOutputs[NumTests] = '{0, 0, 1, 1};
+  parameter int EnableBypass = 1;
+  parameter int RegisterPopOutputs = 0;
+  parameter int FlopRamAddressDepthStages = 0;
 
   // Clock and Reset
   reg clk;
   reg rst;
 
-  logic [NumTests-1:0] start;
-  logic [NumTests-1:0] finished;
-  logic [NumTests-1:0][31:0] error_count;
+  logic start;
+  logic finished;
+  logic [31:0] error_count;
 
-  for (genvar i = 0; i < NumTests; i++) begin : gen_tests
-    // Push Interface
-    wire push_ready;
-    reg push_valid;
-    reg [Width-1:0] push_data;
+  // Push Interface
+  wire push_ready;
+  reg push_valid;
+  reg [Width-1:0] push_data;
 
-    // Pop Interface
-    reg pop_ready;
-    wire pop_valid;
-    wire [Width-1:0] pop_data;
+  // Pop Interface
+  reg pop_ready;
+  wire pop_valid;
+  wire [Width-1:0] pop_data;
 
-    // Status Outputs
-    wire empty;
-    wire full;
-    wire [$clog2(Depth+1)-1:0] items;
-    wire [$clog2(Depth+1)-1:0] slots;
+  // Status Outputs
+  wire empty;
+  wire full;
+  wire [$clog2(Depth+1)-1:0] items;
+  wire [$clog2(Depth+1)-1:0] slots;
 
-    // Instantiate the FIFO
-    br_fifo_flops #(
-        .Depth(Depth),
-        .Width(Width),
-        .RegisterPopOutputs(RegisterPopOutputs[i]),
-        .EnableBypass(EnableBypass[i])
-    ) dut (
-        .clk(clk),
-        .rst(rst),
-        .push_ready(push_ready),
-        .push_valid(push_valid),
-        .push_data(push_data),
-        .pop_ready(pop_ready),
-        .pop_valid(pop_valid),
-        .pop_data(pop_data),
-        .empty(empty),
-        .empty_next(),
-        .slots(),
-        .slots_next(),
-        .full(full),
-        .full_next(),
-        .items(items),
-        .items_next()
-    );
+  // Instantiate the FIFO
+  br_fifo_flops #(
+      .Depth(Depth),
+      .Width(Width),
+      .RegisterPopOutputs(RegisterPopOutputs),
+      .EnableBypass(EnableBypass),
+      .FlopRamAddressDepthStages(FlopRamAddressDepthStages)
+  ) dut (
+      .clk(clk),
+      .rst(rst),
+      .push_ready(push_ready),
+      .push_valid(push_valid),
+      .push_data(push_data),
+      .pop_ready(pop_ready),
+      .pop_valid(pop_valid),
+      .pop_data(pop_data),
+      .empty(empty),
+      .empty_next(),
+      .slots(),
+      .slots_next(),
+      .full(full),
+      .full_next(),
+      .items(items),
+      .items_next()
+  );
 
-    // Hook up the test harness
-    br_fifo_test_harness #(
-        .Depth(Depth),
-        .Width(Width)
-    ) br_fifo_test_harness (
-        .clk,
-        .rst,
-        .start      (start[i]),
-        .finished   (finished[i]),
-        .error_count(error_count[i]),
-        .push_ready,
-        .push_valid,
-        .push_data,
-        .pop_ready,
-        .pop_valid,
-        .pop_data,
-        .empty,
-        .full,
-        .items,
-        .slots
-    );
-  end
+  // Hook up the test harness
+  br_fifo_test_harness #(
+      .Depth(Depth),
+      .Width(Width)
+  ) br_fifo_test_harness (
+      .clk,
+      .rst,
+      .start      (start),
+      .finished   (finished),
+      .error_count(error_count),
+      .push_ready,
+      .push_valid,
+      .push_data,
+      .pop_ready,
+      .pop_valid,
+      .pop_data,
+      .empty,
+      .full,
+      .items,
+      .slots
+  );
 
 `ifdef DUMP_WAVES
   initial begin
@@ -117,18 +115,16 @@ module br_fifo_flops_tb;
 
     td.reset_dut();
 
-    for (int i = 0; i < NumTests; i++) begin
-      $display("Starting test %d", i);
+    $display("Starting test");
 
-      start[i] = 1'b1;
+    start = 1'b1;
 
-      timeout  = 5000;
-      td.wait_cycles();
-      while (timeout > 0 && !finished[i]) td.wait_cycles();
+    timeout  = 5000;
+    td.wait_cycles();
+    while (timeout > 0 && !finished) td.wait_cycles();
 
-      td.check(timeout > 0, $sformatf("Test %d timed out", i));
-      td.check(error_count[i] == 0, $sformatf("Errors in test %d", i));
-    end
+    td.check(timeout > 0, $sformatf("Test timed out"));
+    td.check(error_count == 0, $sformatf("Errors in test"));
 
     td.finish();
   end
