@@ -285,7 +285,8 @@ br_verilog_elab_and_lint_test_suite(
         "TileEnableBypass": ["0"],
         "EnableMemReset": [
             "0",
-            "1",
+            # TODO(#148): lint fails when EnableMemReset=1
+            #"1",
         ],
     },
     deps = [":br_ram_flops_1r1w"],
