@@ -80,7 +80,7 @@ module br_ram_flops_1r1w_tb #(
     wr_data = '0;
     #20 rst = 0;  // Release reset after 20ns
 
-    // Phase 1: Sequential write to every address
+    $display("Phase 1: Sequential write to every address");
     for (int i = 0; i < Depth; i++) begin
       @(negedge clk);
       wr_valid = 1;
@@ -94,11 +94,12 @@ module br_ram_flops_1r1w_tb #(
     // Wait for potential pipeline delays
     #100;
 
-    // Phase 2: Sequential read from every address to check initial writes
+    $display("Phase 2: Sequential read from every address to check initial writes");
     for (int i = 0; i < Depth; i++) begin
       @(negedge clk);
       rd_addr_valid = 1;
       rd_addr = i;
+      // TODO(mgottscho): BUG: this does not account for read latency and pipelining
       @(posedge clk);
       if (rd_data_valid) begin
         @(negedge clk);
@@ -111,7 +112,7 @@ module br_ram_flops_1r1w_tb #(
     end
     rd_addr_valid = 0;
 
-    // Phase 3: Write-only stress phase
+    $display("Phase 3: Write-only stress phase");
     for (int k = 0; k < 100; k++) begin
       @(negedge clk);
       wr_valid = 1;
@@ -125,11 +126,12 @@ module br_ram_flops_1r1w_tb #(
     // Wait for potential pipeline delays
     #100;
 
-    // Phase 4: Read-only stress phase
+    $display("Phase 4: Read-only stress phase");
     for (int k = 0; k < 100; k++) begin
       @(negedge clk);
       rd_addr_valid = 1;
       rd_addr = $urandom_range(0, Depth - 1);  // Random address
+      // TODO(mgottscho): BUG: this does not account for pipelined reads
       #ReadLatency;  // Wait for read latency delay
 
       // Check result
@@ -148,7 +150,7 @@ module br_ram_flops_1r1w_tb #(
     // Wait for potential pipeline delays
     #100;
 
-    // Phase 5: Write + Read stress phase
+    $display("Phase 5: Write + Read stress phase");
     for (int k = 0; k < 200; k++) begin
       @(negedge clk);
       wr_valid = $urandom_range(0, 1);  // Random decision to write

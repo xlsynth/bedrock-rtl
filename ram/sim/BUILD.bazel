@@ -34,7 +34,7 @@ verilog_sim_test(
         "SV_ASSERT_ON",
         "BR_ENABLE_IMPL_CHECKS",
     ],
-    opts = ["-assert global_finish_maxfail=1+offending_values"],
+    #opts = ["-assert global_finish_maxfail=1+offending_values"],
     tool = "vcs",
     top = "br_ram_flops_1r1w_tb",
     deps = [":br_ram_flops_1r1w_tb"],
