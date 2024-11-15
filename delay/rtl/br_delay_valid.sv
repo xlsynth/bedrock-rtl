@@ -63,8 +63,8 @@ module br_delay_valid #(
   assign stage[0] = in;
 
   for (genvar i = 1; i <= NumStages; i++) begin : gen_stages
-    `BR_REGN(stage_valid[i], stage_valid[i-1])
-    `BR_REGL(stage[i], stage[i-1], stage_valid[i-1])
+    `BR_REG(stage_valid[i], stage_valid[i-1])
+    `BR_REGLN(stage[i], stage[i-1], stage_valid[i-1])
   end
 
   assign out_valid = stage_valid[NumStages];
