@@ -49,13 +49,13 @@ module br_demux_onehot #(
   // assertion inside. Need to add this waiver until we can figure out
   // how to handle it properly in the macro.
   // ri lint_check_waive ALWAYS_COMB
-  `BR_ASSERT_COMB_INTG(select_onehot0_a, $isunknown(select) || $onehot0(select))
+  `BR_ASSERT_COMB_INTG(select_onehot0_a, $onehot0(select))
 
   //------------------------------------------
   // Implementation
   //------------------------------------------
+  assign out_valid = {NumSymbolsOut{in_valid}} & select;
   for (genvar i = 0; i < NumSymbolsOut; i++) begin : gen_outs
-    assign out_valid[i] = in_valid && select[i];
     assign out[i] = in;
   end
 
@@ -66,8 +66,9 @@ module br_demux_onehot #(
   // ri lint_check_waive ALWAYS_COMB
   `BR_ASSERT_COMB_IMPL(out_valid_onehot0_a, $onehot0(out_valid))
   // ri lint_check_waive ALWAYS_COMB
-  `BR_ASSERT_COMB_IMPL(out_valid_a, (in_valid && |select) == $onehot(out_valid))
+  `BR_ASSERT_COMB_IMPL(out_valid_a, (in_valid && $onehot(select)) == $onehot(out_valid))
   // ri lint_check_waive ALWAYS_COMB
-  `BR_ASSERT_COMB_IMPL(out_invalid_when_select_0_a, (out_valid == '0) || (select != '0))
+  `BR_ASSERT_COMB_IMPL(out_invalid_when_select_0_a,
+                       (out_valid == '0) || ((select != '0) && in_valid))
 
 endmodule : br_demux_onehot
