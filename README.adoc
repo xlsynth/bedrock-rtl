@@ -165,7 +165,7 @@ Then suppose you have the following SystemVerilog module called `datapath_join.s
 ----
 // An example design using two Bedrock-RTL modules: br_flow_reg_fwd and br_flow_join.
 //
-// Joins two or more equal-bitwidth datapaths into a single output datapath.
+// Joins two or more equal-width datapaths into a single output datapath.
 // Uses ready/valid protocol on all flows.
 // Push-side is registered.
 
@@ -173,28 +173,28 @@ Then suppose you have the following SystemVerilog module called `datapath_join.s
 
 module datapath_join #(
     parameter int NumFlows = 2,  // must be at least 2
-    parameter int BitWidthPerFlow = 32  // must be at least 1
+    parameter int WidthPerFlow = 32  // must be at least 1
 ) (
     input logic clk,
     input logic rst,
     output logic [NumFlows-1:0] push_ready,
     input logic [NumFlows-1:0] push_valid,
-    input logic [NumFlows-1:0][BitWidthPerFlow-1:0] push_data,
+    input logic [NumFlows-1:0][WidthPerFlow-1:0] push_data,
     input logic pop_ready,
     output logic pop_valid,
-    output logic [(NumFlows*BitWidthPerFlow)-1:0] pop_data
+    output logic [(NumFlows*WidthPerFlow)-1:0] pop_data
 );
 
   `BR_ASSERT_STATIC(numflows_gte_2_a, NumFlows >= 2)
-  `BR_ASSERT_STATIC(bitwidthperflow_gte_1_a, BitWidthPerFlow >= 1)
+  `BR_ASSERT_STATIC(widthperflow_gte_1_a, WidthPerFlow >= 1)
 
   logic [NumFlows-1:0] inter_ready;
   logic [NumFlows-1:0] inter_valid;
-  logic [NumFlows-1:0][BitWidthPerFlow-1:0] inter_data;
+  logic [NumFlows-1:0][WidthPerFlow-1:0] inter_data;
 
   for (genvar i = 0; i < NumFlows; i++) begin : gen_regs
     br_flow_reg_fwd #(
-        .BitWidth(BitWidthPerFlow)
+        .Width(WidthPerFlow)
     ) br_flow_reg_fwd (
         .clk,
         .rst,
@@ -263,7 +263,7 @@ verilog_elab_and_lint_test_suite(
             "2",
             "3",
         ],
-        "BitWidthPerFlow": [
+        "WidthPerFlow": [
             "1",
             "64",
         ],

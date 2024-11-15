@@ -89,7 +89,7 @@ br_verilog_elab_and_lint_test_suite(
             "3",
             "8",
         ],
-        "BitWidth": [
+        "Width": [
             "1",
             "16",
         ],
@@ -118,7 +118,7 @@ br_verilog_elab_and_lint_test_suite(
             "3",
             "8",
         ],
-        "BitWidth": [
+        "Width": [
             "1",
             "16",
         ],

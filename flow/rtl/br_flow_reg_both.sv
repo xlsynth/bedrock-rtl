@@ -25,18 +25,18 @@
 
 module br_flow_reg_both #(
     // Must be at least 1
-    parameter int BitWidth = 1
+    parameter int Width = 1
 ) (
     input logic clk,
     input logic rst,  // Synchronous active-high
 
-    output logic                push_ready,
-    input  logic                push_valid,
-    input  logic [BitWidth-1:0] push_data,
+    output logic             push_ready,
+    input  logic             push_valid,
+    input  logic [Width-1:0] push_data,
 
-    input  logic                pop_ready,
-    output logic                pop_valid,
-    output logic [BitWidth-1:0] pop_data
+    input  logic             pop_ready,
+    output logic             pop_valid,
+    output logic [Width-1:0] pop_data
 );
 
   //------------------------------------------
@@ -54,12 +54,12 @@ module br_flow_reg_both #(
   // all output signals driven directly from flops. This provides for a clean timing
   // interface and allows for easy integration with other ready-valid components.
 
-  logic                internal_valid;
-  logic                internal_ready;
-  logic [BitWidth-1:0] internal_data;
+  logic             internal_valid;
+  logic             internal_ready;
+  logic [Width-1:0] internal_data;
 
   br_flow_reg_rev #(
-      .BitWidth(BitWidth)
+      .Width(Width)
   ) br_flow_reg_rev (
       .clk,
       .rst,
@@ -72,7 +72,7 @@ module br_flow_reg_both #(
   );
 
   br_flow_reg_fwd #(
-      .BitWidth(BitWidth)
+      .Width(Width)
   ) br_flow_reg_fwd (
       .clk,
       .rst,

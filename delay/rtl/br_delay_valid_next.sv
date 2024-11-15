@@ -29,30 +29,30 @@
 `include "br_asserts_internal.svh"
 
 module br_delay_valid_next #(
-    parameter int BitWidth  = 1,  // Must be at least 1
-    parameter int NumStages = 0   // Must be at least 0
+    parameter int Width = 1,  // Must be at least 1
+    parameter int NumStages = 0  // Must be at least 0
 ) (
     // Positive edge-triggered. If NumStages is 0, then only used for assertions.
     // ri lint_check_waive INPUT_NOT_READ HIER_NET_NOT_READ HIER_BRANCH_NOT_READ
-    input  logic                              clk,
+    input  logic                          clk,
     // Synchronous active-high. If NumStages is 0, then only used for assertions.
     // ri lint_check_waive INPUT_NOT_READ HIER_NET_NOT_READ HIER_BRANCH_NOT_READ
-    input  logic                              rst,
-    input  logic                              in_valid_next,
-    input  logic [BitWidth-1:0]               in,
-    output logic                              out_valid_next,
-    output logic [BitWidth-1:0]               out,
+    input  logic                          rst,
+    input  logic                          in_valid_next,
+    input  logic [  Width-1:0]            in,
+    output logic                          out_valid_next,
+    output logic [  Width-1:0]            out,
     // Indicates the valid_next signal at each stage.
-    output logic [ NumStages:0]               out_valid_next_stages,
+    output logic [NumStages:0]            out_valid_next_stages,
     // Output of each delay stage. Note that out_stages[0] == in, and
     // out_stages[NumStages] == out.
-    output logic [ NumStages:0][BitWidth-1:0] out_stages
+    output logic [NumStages:0][Width-1:0] out_stages
 );
 
   //------------------------------------------
   // Integration checks
   //------------------------------------------
-  `BR_ASSERT_STATIC(bit_width_must_be_at_least_one_a, BitWidth >= 1)
+  `BR_ASSERT_STATIC(bit_width_must_be_at_least_one_a, Width >= 1)
   `BR_ASSERT_STATIC(num_stages_must_be_at_least_zero_a, NumStages >= 0)
 
   `BR_COVER_INTG(in_valid_next_c, in_valid_next)
@@ -61,7 +61,7 @@ module br_delay_valid_next #(
   // Implementation
   //------------------------------------------
   logic [NumStages:0] stage_valid_next;
-  logic [NumStages:0][BitWidth-1:0] stage;
+  logic [NumStages:0][Width-1:0] stage;
 
   assign stage_valid_next[0] = in_valid_next;
   assign stage[0] = in;

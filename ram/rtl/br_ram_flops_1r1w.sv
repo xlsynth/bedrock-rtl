@@ -23,7 +23,7 @@
 
 module br_ram_flops_1r1w #(
     parameter int Depth = 2,  // Number of entries in the RAM. Must be at least 2.
-    parameter int Width = 1,  // Bitwidth of each entry in the RAM. Must be at least 1.
+    parameter int Width = 1,  // Width of each entry in the RAM. Must be at least 1.
     // Number of tiles along the depth (address) dimension. Must be at least 1 and evenly divide Depth.
     parameter int DepthTiles = 1,
     // Number of tiles along the width (data) dimension. Must be at least 1 and evenly divide Width.
@@ -146,7 +146,7 @@ module br_ram_flops_1r1w #(
     for (genvar c = 0; c < WidthTiles; c++) begin : gen_col
       br_ram_flops_1r1w_tile #(
           .Depth(TileDepth),
-          .BitWidth(TileWidth),
+          .Width(TileWidth),
           .EnableBypass(TileEnableBypass),
           .EnableReset(EnableMemReset)
       ) br_ram_flops_1r1w_tile (

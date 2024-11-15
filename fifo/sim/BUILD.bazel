@@ -13,7 +13,8 @@
 # limitations under the License.
 
 load("@rules_hdl//verilog:providers.bzl", "verilog_library")
-load("//bazel:verilog.bzl", "verilog_elab_test", "verilog_sim_test")
+load("//bazel:br_verilog.bzl", "br_verilog_sim_test_suite")
+load("//bazel:verilog.bzl", "verilog_elab_test")
 
 package(default_visibility = ["//visibility:public"])
 
@@ -28,15 +29,20 @@ verilog_elab_test(
     deps = [":br_fifo_flops_tb"],
 )
 
-verilog_sim_test(
-    name = "br_fifo_flops_vcs_test",
-    defines = [
-        "SV_ASSERT_ON",
-        "BR_ENABLE_IMPL_CHECKS",
-    ],
-    opts = ["-assert global_finish_maxfail=1+offending_values"],
+br_verilog_sim_test_suite(
+    name = "br_fifo_flops_vcs_test_suite",
+    params = {
+        "Depth": [
+            "2",
+            "13",
+        ],
+        "Width": ["8"],
+        "EnableBypass": [
+            "0",
+            "1",
+        ],
+    },
     tool = "vcs",
-    top = "br_fifo_flops_tb",
     deps = [":br_fifo_flops_tb"],
 )
 
@@ -55,14 +61,19 @@ verilog_elab_test(
     deps = [":br_fifo_flops_push_credit_tb"],
 )
 
-verilog_sim_test(
-    name = "br_fifo_flops_push_credit_vcs_test",
-    defines = [
-        "SV_ASSERT_ON",
-        "BR_ENABLE_IMPL_CHECKS",
-    ],
-    opts = ["-assert global_finish_maxfail=1+offending_values"],
+br_verilog_sim_test_suite(
+    name = "br_fifo_flops_push_credit_vcs_test_suite",
+    params = {
+        "Depth": [
+            "13",
+            "16",
+        ],
+        "Width": ["8"],
+        "EnableBypass": [
+            "0",
+            "1",
+        ],
+    },
     tool = "vcs",
-    top = "br_fifo_flops_push_credit_tb",
     deps = [":br_fifo_flops_push_credit_tb"],
 )

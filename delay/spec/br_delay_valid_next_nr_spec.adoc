@@ -33,7 +33,7 @@ This mechanism allows for timing optimization in scenarios where the data bus is
 |===
 | Parameter | Type | Scope | Description
 
-| `BitWidth`
+| `Width`
 | `int`
 | module
 | Must be at least 1. Specifies the bit width of the input and output data signals.
@@ -70,7 +70,7 @@ This mechanism allows for timing optimization in scenarios where the data bus is
 
 | Data Input
 | `input`
-| `logic [BitWidth-1:0]`
+| `logic [Width-1:0]`
 | `in`
 | Input data signal to be delayed.
 
@@ -82,7 +82,7 @@ This mechanism allows for timing optimization in scenarios where the data bus is
 
 | Data Output
 | `output`
-| `logic [BitWidth-1:0]`
+| `logic [Width-1:0]`
 | `out`
 | Delayed output data signal.
 |===

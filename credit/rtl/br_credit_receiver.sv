@@ -42,7 +42,7 @@
 
 module br_credit_receiver #(
     // Width of the datapath in bits. Must be at least 1.
-    parameter int BitWidth = 1,
+    parameter int Width = 1,
     // Maximum number of credits that can be stored (inclusive). Must be at least 1.
     parameter int MaxCredit = 1,
     // If 1, add retiming to push_credit
@@ -58,7 +58,7 @@ module br_credit_receiver #(
     input logic push_credit_stall,
     output logic push_credit,
     input logic push_valid,
-    input logic [BitWidth-1:0] push_data,
+    input logic [Width-1:0] push_data,
 
     // Credit/valid pop interface.
     // Unlike the push interface it has no credit stall mechanism.
@@ -66,7 +66,7 @@ module br_credit_receiver #(
     // no reset skew.
     input logic pop_credit,
     output logic pop_valid,
-    output logic [BitWidth-1:0] pop_data,
+    output logic [Width-1:0] pop_data,
 
     // Reset value for the credit counter
     input  logic [CounterWidth-1:0] credit_initial,
@@ -81,7 +81,7 @@ module br_credit_receiver #(
   //------------------------------------------
   // Integration checks
   //------------------------------------------
-  `BR_ASSERT_STATIC(bitwidth_in_range_a, BitWidth >= 1)
+  `BR_ASSERT_STATIC(width_in_range_a, Width >= 1)
   `BR_ASSERT_STATIC(max_credit_in_range_a, MaxCredit >= 1)
 
   `BR_ASSERT_INTG(no_push_valid_if_no_credit_released_a, credit_count == MaxCredit |-> !push_valid)

@@ -21,7 +21,7 @@
 `include "br_unused.svh"
 
 module br_ram_data_rd_pipe #(
-    // Bitwidth of each entry in the RAM. Must be at least 1.
+    // Width of each entry in the RAM. Must be at least 1.
     parameter int Width = 1,
     // Number of tiles along the depth dimension.
     // Must be at least 1 and evenly divide Depth.
@@ -106,7 +106,7 @@ module br_ram_data_rd_pipe #(
     // But supporting >1 is easy and doesn't hurt anything.
     for (genvar w = 0; w < WidthTiles; w++) begin : gen_w
       br_delay_valid #(
-          .BitWidth (TileWidth),
+          .Width(TileWidth),
           .NumStages(WidthStages)
       ) br_delay_valid_w (
           .clk,
@@ -143,7 +143,7 @@ module br_ram_data_rd_pipe #(
     // dubious value (unless we later choose to implement a pipelined mux tree).
     // But supporting >1 is easy and doesn't hurt anything.
     br_delay_valid #(
-        .BitWidth (Width),
+        .Width(Width),
         .NumStages(DepthStages)
     ) br_delay_valid_d (
         .clk,

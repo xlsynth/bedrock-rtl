@@ -31,7 +31,7 @@ Each data path register is clock-gated using its corresponding valid signal to p
 |===
 | Parameter | Type | Scope | Description
 
-| `BitWidth`
+| `Width`
 | `int`
 | module
 | Must be at least 1. Specifies the bit width of the input and output data signals.
@@ -68,7 +68,7 @@ Each data path register is clock-gated using its corresponding valid signal to p
 
 | Data Input
 | `input`
-| `logic [BitWidth-1:0]`
+| `logic [Width-1:0]`
 | `in`
 | Input data signal to be delayed.
 
@@ -80,7 +80,7 @@ Each data path register is clock-gated using its corresponding valid signal to p
 
 | Data Output
 | `output`
-| `logic [BitWidth-1:0]`
+| `logic [Width-1:0]`
 | `out`
 | Delayed output data signal.
 |===
