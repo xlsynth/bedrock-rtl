@@ -48,14 +48,18 @@ module br_demux_bin #(
   // assertion inside. Need to add this waiver until we can figure out
   // how to handle it properly in the macro.
   // ri lint_check_waive ALWAYS_COMB
-  `BR_ASSERT_COMB_INTG(select_in_range_a, $isunknown(select) || select < NumSymbolsOut)
+  `BR_ASSERT_COMB_INTG(select_in_range_a, select < NumSymbolsOut)
 
   //------------------------------------------
   // Implementation
   //------------------------------------------
-  for (genvar i = 0; i < NumSymbolsOut; i++) begin : gen_outs
-    assign out_valid[i] = in_valid && (select == i);
-    assign out[i] = in;
+
+  // For some reason, simulator doesn't like this coded using a generate loop.
+  always_comb begin
+    for (int i = 0; i < NumSymbolsOut; i++) begin
+      out_valid[i] = in_valid && (select == i);
+      out[i] = in;
+    end
   end
 
   //------------------------------------------
