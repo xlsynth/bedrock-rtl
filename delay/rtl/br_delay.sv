@@ -64,7 +64,8 @@ module br_delay #(
   // Implementation checks
   //------------------------------------------
   if (NumStages == 0) begin : gen_zero_delay
-    `BR_ASSERT_IMPL(passthru_a, out == in)
+    // ri lint_check_waive ALWAYS_COMB
+    `BR_ASSERT_COMB_IMPL(passthru_a, out == in)
   end else begin : gen_pos_delay
     `BR_ASSERT_IMPL(delay_a, ##NumStages out == $past(in, NumStages))
   end
