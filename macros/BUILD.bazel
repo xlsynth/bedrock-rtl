@@ -102,7 +102,7 @@ verilog_library(
 
 verilog_elab_test(
     name = "br_asserts_elab_test",
-    defines = ["SV_ASSERT_ON"],
+    defines = ["BR_ASSERT_ON"],
     deps = [":br_asserts_test"],
 )
 
@@ -121,7 +121,7 @@ verilog_library(
 verilog_elab_test(
     name = "br_asserts_elab_internal_test",
     defines = [
-        "SV_ASSERT_ON",
+        "BR_ASSERT_ON",
         "BR_ENABLE_IMPL_CHECKS",
     ],
     deps = [":br_asserts_internal_test"],
@@ -144,6 +144,6 @@ verilog_library(
 
 verilog_elab_test(
     name = "br_gates_elab_test",
-    defines = ["SV_ASSERT_ON"],
+    defines = ["BR_ASSERT_ON"],
     deps = [":br_gates_test"],
 )

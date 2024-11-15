@@ -371,7 +371,7 @@ Resets are always active-high.
 These assertion macros are intended for use by the user in their own designs.
 They are guarded (enabled) by the following defines:
 
-* `ifdef SV_ASSERT_ON`
+* `ifdef BR_ASSERT_ON`
 
 IMPORTANT: Clocks are always positive-edge triggered.
 Resets are always active-high.
