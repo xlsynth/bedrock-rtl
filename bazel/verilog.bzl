@@ -265,14 +265,17 @@ rule_verilog_elab_test = rule(
 )
 
 def verilog_elab_test(tags = [], **kwargs):
-    """Wraps rule_verilog_elab_test with a resource tag: 'resources:verilog_elab_test_tool_licenses:1.'
+    """Wraps rule_verilog_elab_test with extra tags.
 
-    Useful for having Bazel self-throttle test actions that require a finite number of elab tool licenses.
+    * no-sandbox -- Loosens some Bazel hermeticity features so that undeclared EDA tool test outputs are preserved for debugging.
+    * resources:verilog_elab_test_tool_licenses:1 -- indicates that the test requires a elaboration tool license.
+    * elab -- useful for test filtering, e.g., bazel test //... --test_tag_filters=elab
     """
     rule_verilog_elab_test(
         tags = tags + [
             "no-sandbox",  # Preserves miscellaneous undeclared EDA tool outputs for debugging
             "resources:verilog_elab_test_tool_licenses:1",
+            "elab",
         ],
         **kwargs
     )
@@ -305,14 +308,17 @@ rule_verilog_lint_test = rule(
 )
 
 def verilog_lint_test(tags = [], **kwargs):
-    """Wraps rule_verilog_lint_test with a resource tag: 'resources:verilog_lint_test_tool_licenses:1.'
+    """Wraps rule_verilog_lint_test with extra tags.
 
-    Useful for having Bazel self-throttle test actions that require a finite number of lint tool licenses.
+    * no-sandbox -- Loosens some Bazel hermeticity features so that undeclared EDA tool test outputs are preserved for debugging.
+    * resources:verilog_lint_test_tool_licenses:1 -- indicates that the test requires a lint tool license.
+    * lint -- useful for test filtering, e.g., bazel test //... --test_tag_filters=lint
     """
     rule_verilog_lint_test(
         tags = tags + [
             "no-sandbox",  # Preserves miscellaneous undeclared EDA tool outputs for debugging
             "resources:verilog_lint_test_tool_licenses:1",
+            "lint",
         ],
         **kwargs
     )
@@ -364,14 +370,17 @@ rule_verilog_sim_test = rule(
 )
 
 def verilog_sim_test(tags = [], **kwargs):
-    """Wraps rule_verilog_sim_test with a resource tag: 'resources:verilog_sim_test_tool_licenses:1.'
+    """Wraps rule_verilog_sim_test with extra tags.
 
-    Useful for having Bazel self-throttle test actions that require a finite number of simulator tool licenses.
+    * no-sandbox -- Loosens some Bazel hermeticity features so that undeclared EDA tool test outputs are preserved for debugging.
+    * resources:verilog_sim_test_tool_licenses:1 -- indicates that the test requires a simulation tool license.
+    * sim -- useful for test filtering, e.g., bazel test //... --test_tag_filters=sim
     """
     rule_verilog_sim_test(
         tags = tags + [
             "no-sandbox",  # Preserves miscellaneous undeclared EDA tool outputs for debugging
             "resources:verilog_sim_test_tool_licenses:1",
+            "sim",
         ],
         **kwargs
     )
@@ -411,14 +420,17 @@ rule_verilog_fpv_test = rule(
 )
 
 def verilog_fpv_test(tags = [], **kwargs):
-    """Wraps rule_verilog_fpv_test with a resource tag: 'resources:verilog_fpv_test_tool_licenses:1.'
+    """Wraps rule_verilog_fpv_test with extra tags.
 
-    Useful for having Bazel self-throttle test actions that require a finite number of formal tool licenses.
+    * no-sandbox -- Loosens some Bazel hermeticity features so that undeclared EDA tool test outputs are preserved for debugging.
+    * resources:verilog_fpv_test_tool_licenses:1 -- indicates that the test requires a formal tool license.
+    * fpv -- useful for test filtering, e.g., bazel test //... --test_tag_filters=fpv
     """
     rule_verilog_fpv_test(
         tags = tags + [
             "no-sandbox",  # Preserves miscellaneous undeclared EDA tool outputs for debugging
             "resources:verilog_fpv_test_tool_licenses:1",
+            "fpv",
         ],
         **kwargs
     )
