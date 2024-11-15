@@ -100,7 +100,7 @@ module br_ram_flops_1r1w_tb #(
       rd_addr_valid = 1;
       rd_addr = i;
       // TODO(mgottscho): BUG: this does not account for read latency and pipelining
-      @(posedge clk);
+      @(negedge clk);
       if (rd_data_valid) begin
         @(negedge clk);
         if (rd_data !== expected_memory[i]) begin
