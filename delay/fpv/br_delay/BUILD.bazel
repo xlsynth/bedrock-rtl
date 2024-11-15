@@ -31,7 +31,7 @@ verilog_elab_test(
 )
 
 br_verilog_fpv_test_suite(
-    name = "br_delay_sweep_jg_test_suite",
+    name = "br_delay_jg_test_suite",
     params = {
         "Width": ["2"],
         "NumStages": [
