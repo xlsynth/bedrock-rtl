@@ -185,7 +185,7 @@ module br_ram_flops_1r1w #(
 `ifdef SV_ASSERT_ON
 `ifdef BR_ENABLE_IMPL_CHECKS
   localparam int WriteLatency = AddressDepthStages + 1;
-  localparam int ReadLatency = ReadDataDepthStages + ReadDataWidthStages;
+  localparam int ReadLatency = AddressDepthStages + ReadDataDepthStages + ReadDataWidthStages;
 `endif  // BR_ENABLE_IMPL_CHECKS
 `endif  // SV_ASSERT_ON
   localparam int ReadAfterWriteHazardLatency = TileEnableBypass ? 0 : 1;
