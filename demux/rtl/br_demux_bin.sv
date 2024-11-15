@@ -53,14 +53,12 @@ module br_demux_bin #(
   //------------------------------------------
   // Implementation
   //------------------------------------------
-
-  // For some reason, simulator doesn't like this coded using a generate loop.
   always_comb begin
     for (int i = 0; i < NumSymbolsOut; i++) begin
       out_valid[i] = in_valid && (select == i);
-      out[i] = in;
     end
   end
+  assign out = {NumSymbolsOut{in}};
 
   //------------------------------------------
   // Implementation checks
