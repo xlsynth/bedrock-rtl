@@ -23,6 +23,7 @@ package br_math;
   // Integer division with floor rounding.
   // ri lint_check_waive TWO_STATE_TYPE
   function automatic int floor_div(input int numerator, input int denominator);
+    // ri lint_check_waive DIVIDE
     return numerator / denominator;
   endfunction
 
