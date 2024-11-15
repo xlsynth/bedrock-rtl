@@ -24,7 +24,7 @@ verilog_library(
 
 br_verilog_elab_and_lint_test_suite(
     name = "br_misc_unused_test_suite",
-    params = {"BitWidth": [
+    params = {"Width": [
         "1",
         "2",
     ]},
@@ -39,7 +39,7 @@ verilog_library(
 br_verilog_elab_and_lint_test_suite(
     name = "br_misc_tieoff_zero_test_suite",
     params = {
-        "BitWidth": [
+        "Width": [
             "1",
             "2",
         ],
@@ -55,7 +55,7 @@ verilog_library(
 br_verilog_elab_and_lint_test_suite(
     name = "br_misc_tieoff_one_test_suite",
     params = {
-        "BitWidth": [
+        "Width": [
             "1",
             "2",
         ],

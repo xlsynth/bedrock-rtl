@@ -19,7 +19,7 @@
 // For example, use when __x__ is a complex expression (e.g., concatenation like {foo, bar}).
 `define BR_UNUSED_NAMED(__name__, __x__) \
 br_misc_unused #( \
-    .BitWidth($bits(__x__))) \
+    .Width($bits(__x__))) \
 br_misc_unused_``__name__ ( \
     .in(__x__) \
 );

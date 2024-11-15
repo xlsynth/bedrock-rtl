@@ -19,25 +19,25 @@
 
 module br_enc_gray_tb;
 
-  parameter int BitWidth = 2;
+  parameter int Width = 2;
 
   logic clk;
   logic rst;
-  logic [BitWidth-1:0] counter;
-  logic [BitWidth-1:0] counter_prev;
-  logic [BitWidth-1:0] counter_bin2gray;
-  logic [BitWidth-1:0] counter_gray2bin;
-  logic [BitWidth-1:0] counter_bin2gray_prev;
+  logic [Width-1:0] counter;
+  logic [Width-1:0] counter_prev;
+  logic [Width-1:0] counter_bin2gray;
+  logic [Width-1:0] counter_gray2bin;
+  logic [Width-1:0] counter_bin2gray_prev;
 
   br_enc_bin2gray #(
-      .BitWidth(BitWidth)
+      .Width(Width)
   ) bin2gray (
       .bin (counter),
       .gray(counter_bin2gray)
   );
 
   br_enc_gray2bin #(
-      .BitWidth(BitWidth)
+      .Width(Width)
   ) gray2bin (
       .gray(counter_bin2gray),
       .bin (counter_gray2bin)

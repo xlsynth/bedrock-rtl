@@ -46,7 +46,7 @@ verilog_fpv_test_suite(
         "BR_ENABLE_IMPL_CHECKS",
     ],
     params = {
-        "BitWidth": ["2"],
+        "Width": ["2"],
         "NumStages": [
             "0",
             "1",

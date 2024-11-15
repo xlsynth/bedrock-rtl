@@ -20,7 +20,7 @@
 
 module br_fifo_push_ctrl #(
     parameter int Depth = 2,
-    parameter int BitWidth = 1,
+    parameter int Width = 1,
     parameter bit EnableBypass = 1,
     localparam int AddrWidth = $clog2(Depth),
     localparam int CountWidth = $clog2(Depth + 1)
@@ -31,9 +31,9 @@ module br_fifo_push_ctrl #(
     input logic rst,
 
     // Push-side interface.
-    output logic                push_ready,
-    input  logic                push_valid,
-    input  logic [BitWidth-1:0] push_data,
+    output logic             push_ready,
+    input  logic             push_valid,
+    input  logic [Width-1:0] push_data,
 
     // Push-side status flags
     output logic                  full,
@@ -45,12 +45,12 @@ module br_fifo_push_ctrl #(
     // Bypass is only used when EnableBypass is 1, hence lint waiver.
     input logic bypass_ready,  // ri lint_check_waive INEFFECTIVE_NET
     output logic bypass_valid_unstable,
-    output logic [BitWidth-1:0] bypass_data_unstable,
+    output logic [Width-1:0] bypass_data_unstable,
 
     // RAM interface
     output logic                 ram_wr_valid,
     output logic [AddrWidth-1:0] ram_wr_addr,
-    output logic [ BitWidth-1:0] ram_wr_data,
+    output logic [    Width-1:0] ram_wr_data,
 
     // Internal handshakes between push and pop controllers
     output logic ram_push,
@@ -61,7 +61,7 @@ module br_fifo_push_ctrl #(
   // Integration checks
   //------------------------------------------
   `BR_ASSERT_STATIC(depth_must_be_at_least_one_a, Depth >= 2)
-  `BR_ASSERT_STATIC(bit_width_must_be_at_least_one_a, BitWidth >= 1)
+  `BR_ASSERT_STATIC(bit_width_must_be_at_least_one_a, Width >= 1)
 
   `BR_COVER_INTG(full_c, full)
 

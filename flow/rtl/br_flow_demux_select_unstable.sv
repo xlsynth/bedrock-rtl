@@ -33,7 +33,7 @@ module br_flow_demux_select_unstable #(
     // Must be at least 2
     parameter int NumFlows = 2,
     // Must be at least 1
-    parameter int BitWidth = 1,
+    parameter int Width = 1,
     localparam int SelectWidth = $clog2(NumFlows)
 ) (
     // Used only for assertions
@@ -45,20 +45,20 @@ module br_flow_demux_select_unstable #(
 
     input logic [SelectWidth-1:0] select,
 
-    output logic                push_ready,
-    input  logic                push_valid,
-    input  logic [BitWidth-1:0] push_data,
+    output logic             push_ready,
+    input  logic             push_valid,
+    input  logic [Width-1:0] push_data,
 
-    input  logic [NumFlows-1:0]               pop_ready,
-    output logic [NumFlows-1:0]               pop_valid,
-    output logic [NumFlows-1:0][BitWidth-1:0] pop_data
+    input  logic [NumFlows-1:0]            pop_ready,
+    output logic [NumFlows-1:0]            pop_valid,
+    output logic [NumFlows-1:0][Width-1:0] pop_data
 );
 
   //------------------------------------------
   // Integration checks
   //------------------------------------------
   `BR_ASSERT_STATIC(num_flows_must_be_at_least_two_a, NumFlows >= 2)
-  `BR_ASSERT_STATIC(bit_width_must_be_at_least_one_a, BitWidth >= 1)
+  `BR_ASSERT_STATIC(bit_width_must_be_at_least_one_a, Width >= 1)
 
   // TODO(mgottscho): Add integration checks on ready-valid compliance and on stability of select.
 

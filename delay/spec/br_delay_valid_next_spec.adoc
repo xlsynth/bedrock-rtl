@@ -28,7 +28,7 @@ The `in_valid_next` signal indicates that the input data `in` will be valid on t
 |===
 | Parameter | Type | Scope | Description
 
-| `BitWidth`
+| `Width`
 | `int`
 | module
 | Must be at least 1. Specifies the bit width of the input and output data signals.
@@ -65,7 +65,7 @@ The `in_valid_next` signal indicates that the input data `in` will be valid on t
 
 | Data Input
 | `input`
-| `logic [BitWidth-1:0]`
+| `logic [Width-1:0]`
 | `in`
 | Input data signal to be delayed.
 
@@ -77,7 +77,7 @@ The `in_valid_next` signal indicates that the input data `in` will be valid on t
 
 | Data Output
 | `output`
-| `logic [BitWidth-1:0]`
+| `logic [Width-1:0]`
 | `out`
 | Delayed output data signal.
 |===

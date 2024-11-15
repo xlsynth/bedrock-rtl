@@ -28,24 +28,24 @@
 
 module br_flow_reg_rev #(
     // Must be at least 1
-    parameter int BitWidth = 1
+    parameter int Width = 1
 ) (
     input logic clk,
     input logic rst,  // Synchronous active-high
 
-    output logic                push_ready,
-    input  logic                push_valid,
-    input  logic [BitWidth-1:0] push_data,
+    output logic             push_ready,
+    input  logic             push_valid,
+    input  logic [Width-1:0] push_data,
 
-    input  logic                pop_ready,
-    output logic                pop_valid,
-    output logic [BitWidth-1:0] pop_data
+    input  logic             pop_ready,
+    output logic             pop_valid,
+    output logic [Width-1:0] pop_data
 );
 
   //------------------------------------------
   // Integration checks
   //------------------------------------------
-  `BR_ASSERT_STATIC(bit_width_must_be_at_least_one_a, BitWidth >= 1)
+  `BR_ASSERT_STATIC(bit_width_must_be_at_least_one_a, Width >= 1)
 
   // Assert that under push-side backpressure conditions,
   // the pipeline register correctly stalls upstream.
@@ -81,7 +81,7 @@ module br_flow_reg_rev #(
   // However, when pop_ready is low, then the internal register
   // captures the data (like a 1-deep skid buffer).
 
-  logic [BitWidth-1:0] reg_data;
+  logic [Width-1:0] reg_data;
 
   assign pop_valid = !push_ready || push_valid;
   assign pop_data  = push_ready ? push_data : reg_data;

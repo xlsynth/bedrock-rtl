@@ -79,7 +79,7 @@ module br_ram_addr_decoder #(
     `BR_ASSERT_STATIC(output_address_width_ok_a, OutputAddressWidth == InputAddressWidth)
 
     br_delay_valid #(
-        .BitWidth (OutputAddressWidth + DataWidth),
+        .Width(OutputAddressWidth + DataWidth),
         .NumStages(Stages)
     ) br_delay_valid (
         .clk,
@@ -141,7 +141,7 @@ module br_ram_addr_decoder #(
     // Replicate to reduce register fanout when Stages >= 1
     for (genvar i = 0; i < Tiles; i++) begin : gen_out
       br_delay_valid #(
-          .BitWidth (OutputAddressWidth + DataWidth),
+          .Width(OutputAddressWidth + DataWidth),
           .NumStages(Stages)
       ) br_delay_valid (
           .clk,

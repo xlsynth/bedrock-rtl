@@ -6,23 +6,23 @@
 */
 
 module br_delay_nr_monitor #(
-    parameter int BitWidth  = 1,
+    parameter int Width  = 1,
     parameter int NumStages = 0
 ) (
     input logic clk,
     input logic rst,
-    input logic [BitWidth-1:0] in,
-    input logic [BitWidth-1:0] out
+    input logic [Width-1:0] in,
+    input logic [Width-1:0] out
 );
 
   Immediate_Reflection_for_Zero_Stages #(
-      .BitWidth (BitWidth),
+      .Width (Width),
       .NumStages(NumStages)
   ) Immediate_Reflection_for_Zero_Stages_inst (
       .*
   );
   Delayed_Reflection_for_Non_Zero_Stages #(
-      .BitWidth (BitWidth),
+      .Width (Width),
       .NumStages(NumStages)
   ) Delayed_Reflection_for_Non_Zero_Stages_inst (
       .*
@@ -30,13 +30,13 @@ module br_delay_nr_monitor #(
 endmodule
 
 module Immediate_Reflection_for_Zero_Stages #(
-    parameter int BitWidth  = 1,
+    parameter int Width  = 1,
     parameter int NumStages = 0
 ) (
     input logic clk,
     input logic rst,
-    input logic [BitWidth-1:0] in,
-    input logic [BitWidth-1:0] out
+    input logic [Width-1:0] in,
+    input logic [Width-1:0] out
 );
 
   // Immediate Reflection for Zero Stages: Check that if: NumStages is 0 and clk rises, then: out equals in immediately.
@@ -47,13 +47,13 @@ module Immediate_Reflection_for_Zero_Stages #(
 endmodule
 
 module Delayed_Reflection_for_Non_Zero_Stages #(
-    parameter int BitWidth  = 1,
+    parameter int Width  = 1,
     parameter int NumStages = 0
 ) (
     input logic clk,
     input logic rst,
-    input logic [BitWidth-1:0] in,
-    input logic [BitWidth-1:0] out
+    input logic [Width-1:0] in,
+    input logic [Width-1:0] out
 );
 
   // Delayed Reflection for Non-Zero Stages: Check that if: NumStages is greater than 0, after an initial one-time delay of NumStages cycles, and clk rises, then: out equals in from NumStages cycles ago.
@@ -63,7 +63,7 @@ module Delayed_Reflection_for_Non_Zero_Stages #(
   end
 endmodule
 bind br_delay_nr br_delay_nr_monitor #(
-    .BitWidth (BitWidth),
+    .Width (Width),
     .NumStages(NumStages)
 ) monitor (
     .clk(clk),

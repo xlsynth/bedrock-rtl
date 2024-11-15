@@ -33,7 +33,7 @@ module br_flow_mux_select_unstable #(
     // Must be at least 2
     parameter int NumFlows = 2,
     // Must be at least 1
-    parameter int BitWidth = 1
+    parameter int Width = 1
 ) (
     // Used only for assertions
     // ri lint_check_waive INPUT_NOT_READ HIER_NET_NOT_READ HIER_BRANCH_NOT_READ
@@ -44,20 +44,20 @@ module br_flow_mux_select_unstable #(
 
     input logic [$clog2(NumFlows)-1:0] select,
 
-    output logic [NumFlows-1:0]               push_ready,
-    input  logic [NumFlows-1:0]               push_valid,
-    input  logic [NumFlows-1:0][BitWidth-1:0] push_data,
+    output logic [NumFlows-1:0]            push_ready,
+    input  logic [NumFlows-1:0]            push_valid,
+    input  logic [NumFlows-1:0][Width-1:0] push_data,
 
-    input  logic                pop_ready,
-    output logic                pop_valid,
-    output logic [BitWidth-1:0] pop_data
+    input  logic             pop_ready,
+    output logic             pop_valid,
+    output logic [Width-1:0] pop_data
 );
 
   //------------------------------------------
   // Integration checks
   //------------------------------------------
   `BR_ASSERT_STATIC(num_flows_must_be_at_least_two_a, NumFlows >= 2)
-  `BR_ASSERT_STATIC(bitwidth_gte_1_a, BitWidth >= 1)
+  `BR_ASSERT_STATIC(width_gte_1_a, Width >= 1)
 
   // TODO(mgottscho): Add integration checks on ready-valid compliance and
   // on stability of push_select.
