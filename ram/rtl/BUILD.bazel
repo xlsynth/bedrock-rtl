@@ -18,6 +18,18 @@ load("//bazel:br_verilog.bzl", "br_verilog_elab_and_lint_test_suite")
 package(default_visibility = ["//visibility:public"])
 
 verilog_library(
+    name = "br_ram_flops_1r1w",
+    srcs = ["br_ram_flops_1r1w.sv"],
+    deps = [
+        ":br_ram_addr_decoder",
+        ":br_ram_data_rd_pipe",
+        ":br_ram_flops_1r1w_tile",
+        "//macros:br_asserts_internal",
+        "//pkg:br_math_pkg",
+    ],
+)
+
+verilog_library(
     name = "br_ram_flops_1r1w_tile",
     srcs = ["br_ram_flops_1r1w_tile.sv"],
     deps = [
@@ -89,7 +101,7 @@ br_verilog_elab_and_lint_test_suite(
         "Tiles": [
             "1",
         ],
-        "RegisterOutputs": [
+        "Stages": [
             "0",
             "1",
         ],
@@ -111,8 +123,9 @@ br_verilog_elab_and_lint_test_suite(
             "4",
             "8",
         ],
-        "RegisterOutputs": [
+        "Stages": [
             "0",
+            "3",
         ],
     },
     deps = [":br_ram_addr_decoder"],
@@ -133,7 +146,7 @@ br_verilog_elab_and_lint_test_suite(
             "5",
             "6",
         ],
-        "RegisterOutputs": [
+        "Stages": [
             "0",
         ],
     },
@@ -212,4 +225,69 @@ br_verilog_elab_and_lint_test_suite(
         ],
     },
     deps = [":br_ram_data_rd_pipe"],
+)
+
+br_verilog_elab_and_lint_test_suite(
+    name = "br_ram_flops_1r1w_test_suite_sweep_depth_width",
+    params = {
+        "Depth": [
+            "123",
+            "128",
+        ],
+        "Width": [
+            "1",
+            "7",
+            "32",
+        ],
+        "DepthTiles": ["1"],
+        "WidthTiles": ["1"],
+        "AddressDepthStages": ["0"],
+        "ReadDataDepthStages": ["0"],
+        "ReadDataWidthStages": ["0"],
+        "TileEnableBypass": [
+            "0",
+            "1",
+        ],
+        "EnableMemReset": ["0"],
+    },
+    deps = [":br_ram_flops_1r1w"],
+)
+
+br_verilog_elab_and_lint_test_suite(
+    name = "br_ram_flops_1r1w_test_suite_sweep_tiles_stages",
+    params = {
+        "Depth": [
+            "30",
+        ],
+        "Width": [
+            "64",
+        ],
+        "DepthTiles": [
+            "2",
+            "3",
+        ],
+        "WidthTiles": [
+            "1",
+            "2",
+        ],
+        "AddressDepthStages": [
+            "0",
+            "1",
+        ],
+        "ReadDataDepthStages": [
+            "0",
+            "1",
+        ],
+        "ReadDataWidthStages": [
+            "0",
+            "1",
+        ],
+        "TileEnableBypass": ["0"],
+        "EnableMemReset": [
+            "0",
+            # TODO(#148): lint fails when EnableMemReset=1
+            #"1",
+        ],
+    },
+    deps = [":br_ram_flops_1r1w"],
 )

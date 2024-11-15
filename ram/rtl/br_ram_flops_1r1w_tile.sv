@@ -19,7 +19,6 @@
 // By default, write-to-read latency is therefore one cycle.
 // If the bypass is enabled, then the write-to-read latency is zero cycles, but
 // at the cost of a combinational timing path from the write port to the read port.
-// The internal flop-RAM does not get reset.
 
 `include "br_asserts_internal.svh"
 `include "br_registers.svh"
