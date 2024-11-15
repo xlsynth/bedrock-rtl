@@ -165,7 +165,7 @@ module br_ram_addr_decoder #(
   end
 
   if (Stages > 0) begin : gen_impl_checks_delayed
-    `BR_ASSERT_IMPL(valid_propagation_a, in_valid |=> $onehot(out_valid))
+    `BR_ASSERT_IMPL(valid_propagation_a, in_valid |-> ##Stages $onehot(out_valid))
     for (genvar i = 0; i < Tiles; i++) begin : gen_tiles_check
       `BR_ASSERT_IMPL(out_addr_correct_a,
                       out_valid[i] |-> $past(
