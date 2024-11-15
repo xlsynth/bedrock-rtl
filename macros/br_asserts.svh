@@ -72,7 +72,8 @@ __name__ : assert property (@(posedge __clk__) disable iff (__rst__ === 1'b1 || 
 `endif  // SV_ASSERT_ON
 
 ////////////////////////////////////////////////////////////////////////////////
-// Combinational assertion macros (evaluated continuously based on the expression sensitivity)
+// Combinational assertion macros (evaluated continuously based on the expression sensitivity).
+// Also pass if the expression is unknown.
 ////////////////////////////////////////////////////////////////////////////////
 `ifdef SV_ASSERT_ON
 `define BR_ASSERT_COMB(__name__, __expr__) \
