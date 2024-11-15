@@ -76,7 +76,8 @@ module br_delay_valid #(
   // Implementation checks
   //------------------------------------------
   if (NumStages == 0) begin : gen_zero_delay
-    `BR_ASSERT_IMPL(passthru_a, out_valid == in_valid && out == in)
+    // ri lint_check_waive ALWAYS_COMB
+    `BR_ASSERT_COMB_IMPL(passthru_a, out_valid == in_valid && out == in)
   end else begin : gen_pos_delay
     `BR_ASSERT_IMPL(valid_delay_a, ##NumStages out_valid == $past(in_valid, NumStages))
     `BR_ASSERT_IMPL(data_delay_a, in_valid |-> ##NumStages out_valid && out == $past(in, NumStages))
