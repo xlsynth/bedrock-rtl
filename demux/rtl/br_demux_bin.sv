@@ -43,20 +43,18 @@ module br_demux_bin #(
   //------------------------------------------
   `BR_ASSERT_STATIC(legal_num_symbols_out_a, NumSymbolsOut >= 2)
   `BR_ASSERT_STATIC(legal_symbol_width_a, SymbolWidth >= 1)
-  // TODO(mgottscho, #109):
-  // ASSERT_COMB macro has an always_comb block that only has an
-  // assertion inside. Need to add this waiver until we can figure out
-  // how to handle it properly in the macro.
   // ri lint_check_waive ALWAYS_COMB
-  `BR_ASSERT_COMB_INTG(select_in_range_a, $isunknown(select) || select < NumSymbolsOut)
+  `BR_ASSERT_COMB_INTG(select_in_range_a, select < NumSymbolsOut)
 
   //------------------------------------------
   // Implementation
   //------------------------------------------
-  for (genvar i = 0; i < NumSymbolsOut; i++) begin : gen_outs
-    assign out_valid[i] = in_valid && (select == i);
-    assign out[i] = in;
+  always_comb begin
+    for (int i = 0; i < NumSymbolsOut; i++) begin
+      out_valid[i] = in_valid && (select == i);
+    end
   end
+  assign out = {NumSymbolsOut{in}};
 
   //------------------------------------------
   // Implementation checks

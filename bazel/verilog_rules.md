@@ -87,7 +87,7 @@ Tests that a Verilog or SystemVerilog design passes a set of static lint checks.
 <pre>
 load("@bedrock-rtl//bazel:verilog.bzl", "rule_verilog_sandbox")
 
-rule_verilog_sandbox(<a href="#rule_verilog_sandbox-name">name</a>, <a href="#rule_verilog_sandbox-deps">deps</a>, <a href="#rule_verilog_sandbox-out">out</a>, <a href="#rule_verilog_sandbox-defines">defines</a>, <a href="#rule_verilog_sandbox-kind">kind</a>, <a href="#rule_verilog_sandbox-opts">opts</a>, <a href="#rule_verilog_sandbox-params">params</a>, <a href="#rule_verilog_sandbox-tool">tool</a>, <a href="#rule_verilog_sandbox-top">top</a>)
+rule_verilog_sandbox(<a href="#rule_verilog_sandbox-name">name</a>, <a href="#rule_verilog_sandbox-deps">deps</a>, <a href="#rule_verilog_sandbox-defines">defines</a>, <a href="#rule_verilog_sandbox-kind">kind</a>, <a href="#rule_verilog_sandbox-opts">opts</a>, <a href="#rule_verilog_sandbox-params">params</a>, <a href="#rule_verilog_sandbox-tool">tool</a>, <a href="#rule_verilog_sandbox-top">top</a>)
 </pre>
 
 Writes files and run scripts into a tarball for independent execution outside of Bazel.
@@ -99,7 +99,6 @@ Writes files and run scripts into a tarball for independent execution outside of
 | :------------- | :------------- | :------------- | :------------- | :------------- |
 | <a id="rule_verilog_sandbox-name"></a>name |  A unique name for this target.   | <a href="https://bazel.build/concepts/labels#target-names">Name</a> | required |  |
 | <a id="rule_verilog_sandbox-deps"></a>deps |  The Verilog dependencies of the sandbox.   | <a href="https://bazel.build/concepts/labels">List of labels</a> | optional |  `[]`  |
-| <a id="rule_verilog_sandbox-out"></a>out |  The tarball of the sandbox directory.   | <a href="https://bazel.build/concepts/labels">Label</a> | required |  |
 | <a id="rule_verilog_sandbox-defines"></a>defines |  Preprocessor defines to pass to the Verilog compiler.   | List of strings | optional |  `[]`  |
 | <a id="rule_verilog_sandbox-kind"></a>kind |  The kind of sandbox to create: [elab, lint, sim, fpv].   | String | required |  |
 | <a id="rule_verilog_sandbox-opts"></a>opts |  Tool-specific options not covered by other arguments. If provided, then 'tool' must also be set.   | List of strings | optional |  `[]`  |
@@ -197,9 +196,11 @@ load("@bedrock-rtl//bazel:verilog.bzl", "verilog_elab_test")
 verilog_elab_test(<a href="#verilog_elab_test-tags">tags</a>, <a href="#verilog_elab_test-kwargs">kwargs</a>)
 </pre>
 
-Wraps rule_verilog_elab_test with a resource tag: 'resources:verilog_elab_test_tool_licenses:1.'
+Wraps rule_verilog_elab_test with extra tags.
 
-Useful for having Bazel self-throttle test actions that require a finite number of elab tool licenses.
+* no-sandbox -- Loosens some Bazel hermeticity features so that undeclared EDA tool test outputs are preserved for debugging.
+* resources:verilog_elab_test_tool_licenses:1 -- indicates that the test requires a elaboration tool license.
+* elab -- useful for test filtering, e.g., bazel test //... --test_tag_filters=elab
 
 **PARAMETERS**
 
@@ -220,9 +221,11 @@ load("@bedrock-rtl//bazel:verilog.bzl", "verilog_fpv_test")
 verilog_fpv_test(<a href="#verilog_fpv_test-tags">tags</a>, <a href="#verilog_fpv_test-kwargs">kwargs</a>)
 </pre>
 
-Wraps rule_verilog_fpv_test with a resource tag: 'resources:verilog_fpv_test_tool_licenses:1.'
+Wraps rule_verilog_fpv_test with extra tags.
 
-Useful for having Bazel self-throttle test actions that require a finite number of formal tool licenses.
+* no-sandbox -- Loosens some Bazel hermeticity features so that undeclared EDA tool test outputs are preserved for debugging.
+* resources:verilog_fpv_test_tool_licenses:1 -- indicates that the test requires a formal tool license.
+* fpv -- useful for test filtering, e.g., bazel test //... --test_tag_filters=fpv
 
 **PARAMETERS**
 
@@ -271,9 +274,11 @@ load("@bedrock-rtl//bazel:verilog.bzl", "verilog_lint_test")
 verilog_lint_test(<a href="#verilog_lint_test-tags">tags</a>, <a href="#verilog_lint_test-kwargs">kwargs</a>)
 </pre>
 
-Wraps rule_verilog_lint_test with a resource tag: 'resources:verilog_lint_test_tool_licenses:1.'
+Wraps rule_verilog_lint_test with extra tags.
 
-Useful for having Bazel self-throttle test actions that require a finite number of lint tool licenses.
+* no-sandbox -- Loosens some Bazel hermeticity features so that undeclared EDA tool test outputs are preserved for debugging.
+* resources:verilog_lint_test_tool_licenses:1 -- indicates that the test requires a lint tool license.
+* lint -- useful for test filtering, e.g., bazel test //... --test_tag_filters=lint
 
 **PARAMETERS**
 
@@ -294,9 +299,11 @@ load("@bedrock-rtl//bazel:verilog.bzl", "verilog_sim_test")
 verilog_sim_test(<a href="#verilog_sim_test-tags">tags</a>, <a href="#verilog_sim_test-kwargs">kwargs</a>)
 </pre>
 
-Wraps rule_verilog_sim_test with a resource tag: 'resources:verilog_sim_test_tool_licenses:1.'
+Wraps rule_verilog_sim_test with extra tags.
 
-Useful for having Bazel self-throttle test actions that require a finite number of simulator tool licenses.
+* no-sandbox -- Loosens some Bazel hermeticity features so that undeclared EDA tool test outputs are preserved for debugging.
+* resources:verilog_sim_test_tool_licenses:1 -- indicates that the test requires a simulation tool license.
+* sim -- useful for test filtering, e.g., bazel test //... --test_tag_filters=sim
 
 **PARAMETERS**
 
@@ -305,5 +312,33 @@ Useful for having Bazel self-throttle test actions that require a finite number 
 | :------------- | :------------- | :------------- |
 | <a id="verilog_sim_test-tags"></a>tags |  <p align="center"> - </p>   |  `[]` |
 | <a id="verilog_sim_test-kwargs"></a>kwargs |  <p align="center"> - </p>   |  none |
+
+
+<a id="verilog_sim_test_suite"></a>
+
+## verilog_sim_test_suite
+
+<pre>
+load("@bedrock-rtl//bazel:verilog.bzl", "verilog_sim_test_suite")
+
+verilog_sim_test_suite(<a href="#verilog_sim_test_suite-name">name</a>, <a href="#verilog_sim_test_suite-defines">defines</a>, <a href="#verilog_sim_test_suite-params">params</a>, <a href="#verilog_sim_test_suite-kwargs">kwargs</a>)
+</pre>
+
+Creates a suite of Verilog sim tests for each combination of the provided parameters.
+
+The function generates all possible combinations of the provided parameters and creates a verilog_sim_test
+for each combination. The test names are generated by appending "_sim_test"
+to the base name followed by the parameter key-values.
+
+
+**PARAMETERS**
+
+
+| Name  | Description | Default Value |
+| :------------- | :------------- | :------------- |
+| <a id="verilog_sim_test_suite-name"></a>name |  The base name for the test suite.   |  none |
+| <a id="verilog_sim_test_suite-defines"></a>defines |  A list of defines.   |  `[]` |
+| <a id="verilog_sim_test_suite-params"></a>params |  A dictionary where keys are parameter names and values are lists of possible values for those parameters.   |  `{}` |
+| <a id="verilog_sim_test_suite-kwargs"></a>kwargs |  Additional keyword arguments to be passed to the verilog_elab_test and verilog_lint_test functions.   |  none |
 
 

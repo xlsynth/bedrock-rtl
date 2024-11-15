@@ -31,7 +31,7 @@ It comes the cost of roughly 2X the flop count and area compared with the forwar
 |===
 | Parameter | Type | Scope | Description
 
-| `BitWidth`
+| `Width`
 | `int`
 | module
 | Must be at least 1
@@ -69,7 +69,7 @@ It comes the cost of roughly 2X the flop count and area compared with the forwar
 
 | Push
 | `input`
-| `logic [BitWidth-1:0]`
+| `logic [Width-1:0]`
 | `push_data`
 | Flow controlled using the ready/valid handshake protocol
 
@@ -88,7 +88,7 @@ It comes the cost of roughly 2X the flop count and area compared with the forwar
 
 | Pop
 | `output`
-| `logic [BitWidth-1:0]`
+| `logic [Width-1:0]`
 | `pop_data`
 | Flow controlled using the ready/valid handshake protocol
 |===
@@ -97,7 +97,7 @@ It comes the cost of roughly 2X the flop count and area compared with the forwar
 
 The following assumptions are constraints on the input stimulus to the design.
 
-* BitWidth integration check: BitWidth parameter must be set to at least 1.
+* Width integration check: Width parameter must be set to at least 1.
 * Push-side backpressure check: If `push_valid` is 1 and `push_ready` is 0, then on the following cycle `push_valid` must still be 1 and `push_data` must not have changed.
 * `push_data` known check: If `push_valid` is 1, `push_data` should not be unknown (X).
 * `pop_ready` eventual validity check: If `pop_valid` is 1, `pop_ready` must eventually be 1.

@@ -79,7 +79,7 @@ module br_ram_addr_decoder #(
     `BR_ASSERT_STATIC(output_address_width_ok_a, OutputAddressWidth == InputAddressWidth)
 
     br_delay_valid #(
-        .BitWidth (OutputAddressWidth + DataWidth),
+        .Width(OutputAddressWidth + DataWidth),
         .NumStages(Stages)
     ) br_delay_valid (
         .clk,
@@ -109,16 +109,33 @@ module br_ram_addr_decoder #(
       localparam int SelectLsb = (SelectMsb - TileSelectWidth) + 1;
       `BR_ASSERT_STATIC(select_check_a, SelectMsb >= SelectLsb)
 
+      // Need this indirection because addr/data are interleaved at demux output.
+      typedef struct packed {
+        logic [OutputAddressWidth-1:0] addr;
+        logic [DataWidth-1:0]          data;
+      } mux_payload_t;
+
+      mux_payload_t mux_in;
+      mux_payload_t [Tiles-1:0] mux_out;
+
+      assign mux_in.addr = in_addr[OutputAddressWidth-1:0];
+      assign mux_in.data = in_data;
+
       br_demux_bin #(
           .NumSymbolsOut(Tiles),
-          .SymbolWidth  (OutputAddressWidth + DataWidth)
+          .SymbolWidth  ($bits(mux_payload_t))
       ) br_demux_bin (
           .select(in_addr[SelectMsb:SelectLsb]),
           .in_valid(in_valid),
-          .in({in_addr[OutputAddressWidth-1:0], in_data}),
+          .in(mux_in),
           .out_valid(internal_out_valid),
-          .out({internal_out_addr, internal_out_data})
+          .out(mux_out)
       );
+
+      for (genvar i = 0; i < Tiles; i++) begin : gen_mux_out
+        assign internal_out_addr[i] = mux_out[i].addr;
+        assign internal_out_data[i] = mux_out[i].data;
+      end
 
       // If Depth is not a power-of-2 we cannot just slice off the MSBs for the tile select.
       // We have to look at the address range and steer it with bit overlaps.
@@ -133,7 +150,7 @@ module br_ram_addr_decoder #(
             // Lint waiver needed because when i == 0, this subexpression is always true.
             // ri lint_check_waive INVALID_COMPARE
             (in_addr >= TileBaseAddress) && (in_addr < TileBoundAddress);
-        assign internal_out_addr[i] = in_addr[OutputAddressWidth-1:0];
+        assign internal_out_addr[i] = in_addr - TileBaseAddress;
         assign internal_out_data[i] = in_data;
       end
     end
@@ -141,7 +158,7 @@ module br_ram_addr_decoder #(
     // Replicate to reduce register fanout when Stages >= 1
     for (genvar i = 0; i < Tiles; i++) begin : gen_out
       br_delay_valid #(
-          .BitWidth (OutputAddressWidth + DataWidth),
+          .Width(OutputAddressWidth + DataWidth),
           .NumStages(Stages)
       ) br_delay_valid (
           .clk,
@@ -165,20 +182,20 @@ module br_ram_addr_decoder #(
   end
 
   if (Stages > 0) begin : gen_impl_checks_delayed
-    `BR_ASSERT_IMPL(valid_propagation_a, in_valid |=> $onehot(out_valid))
+    `BR_ASSERT_IMPL(valid_propagation_a, in_valid |-> ##Stages $onehot(out_valid))
     for (genvar i = 0; i < Tiles; i++) begin : gen_tiles_check
       `BR_ASSERT_IMPL(out_addr_correct_a,
                       out_valid[i] |-> $past(
                           in_valid, Stages
                       ) && (out_addr[i] == $past(
-                          in_addr[OutputAddressWidth-1:0], Stages
+                          (in_addr - (TileDepth * i)), Stages
                       )))
     end
   end else begin : gen_impl_checks_not_delayed
     `BR_ASSERT_IMPL(valid_propagation_a, in_valid |-> $onehot(out_valid))
     for (genvar i = 0; i < Tiles; i++) begin : gen_tiles_check
       `BR_ASSERT_IMPL(out_addr_correct_a,
-                      out_valid[i] |-> in_valid && (out_addr[i] == in_addr[OutputAddressWidth-1:0]))
+                      out_valid[i] |-> in_valid && (out_addr[i] == (in_addr - (TileDepth * i))))
     end
   end
 

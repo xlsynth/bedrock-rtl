@@ -44,7 +44,7 @@
 
 module br_fifo_flops #(
     parameter int Depth = 2,  // Number of entries in the FIFO. Must be at least 2.
-    parameter int BitWidth = 1,  // Width of each entry in the FIFO. Must be at least 1.
+    parameter int Width = 1,  // Width of each entry in the FIFO. Must be at least 1.
     // If 1, then bypasses push-to-pop when the FIFO is empty, resulting in
     // a cut-through latency of 0 cycles, but at the cost of worse timing.
     // If 0, then pushes always go through the RAM before they can become
@@ -60,14 +60,14 @@ module br_fifo_flops #(
     input logic rst,
 
     // Push-side interface.
-    output logic                push_ready,
-    input  logic                push_valid,
-    input  logic [BitWidth-1:0] push_data,
+    output logic             push_ready,
+    input  logic             push_valid,
+    input  logic [Width-1:0] push_data,
 
     // Pop-side interface.
-    input  logic                pop_ready,
-    output logic                pop_valid,
-    output logic [BitWidth-1:0] pop_data,
+    input  logic             pop_ready,
+    output logic             pop_valid,
+    output logic [Width-1:0] pop_data,
 
     // Push-side status flags
     output logic full,
@@ -92,15 +92,15 @@ module br_fifo_flops #(
   //------------------------------------------
   logic ram_wr_valid;
   logic [AddrWidth-1:0] ram_wr_addr;
-  logic [BitWidth-1:0] ram_wr_data;
+  logic [Width-1:0] ram_wr_data;
   logic ram_rd_addr_valid;
   logic [AddrWidth-1:0] ram_rd_addr;
   logic ram_rd_data_valid;
-  logic [BitWidth-1:0] ram_rd_data;
+  logic [Width-1:0] ram_rd_data;
 
   br_fifo_ctrl_1r1w #(
       .Depth(Depth),
-      .BitWidth(BitWidth),
+      .Width(Width),
       .EnableBypass(EnableBypass)
   ) br_fifo_ctrl_1r1w (
       .clk,
@@ -130,9 +130,9 @@ module br_fifo_flops #(
 
   br_ram_flops_1r1w #(
       .Depth(Depth),
-      .Width(BitWidth),
+      .Width(Width),
       .TileEnableBypass(0),
-      .EnableMemReset(0)
+      .EnableReset(0)
   ) br_ram_flops_1r1w (
       .clk,
       .rst,

@@ -21,7 +21,7 @@
 `include "br_unused.svh"
 
 module br_ram_data_rd_pipe #(
-    // Bitwidth of each entry in the RAM. Must be at least 1.
+    // Width of each entry in the RAM. Must be at least 1.
     parameter int Width = 1,
     // Number of tiles along the depth dimension.
     // Must be at least 1 and evenly divide Depth.
@@ -70,7 +70,7 @@ module br_ram_data_rd_pipe #(
   // WidthStages check
   `BR_ASSERT_STATIC(width_stages_gte0_a, WidthStages >= 0)
 
-`ifdef SV_ASSERT_ON
+`ifdef BR_ASSERT_ON
 `ifndef BR_DISABLE_INTG_CHECKS
   logic [DepthTiles-1:0] depth_tile_valid;
   // ri lint_check_waive IFDEF_CODE
@@ -80,7 +80,7 @@ module br_ram_data_rd_pipe #(
   end
   `BR_ASSERT_INTG(depthwise_tile_valid_onehot0_a, $onehot0(depth_tile_valid))
 `endif  // BR_DISABLE_INTG_CHECKS
-`endif  // SV_ASSERT_ON
+`endif  // BR_ASSERT_ON
 
   //------------------------------------------
   // Implementation
@@ -106,7 +106,7 @@ module br_ram_data_rd_pipe #(
     // But supporting >1 is easy and doesn't hurt anything.
     for (genvar w = 0; w < WidthTiles; w++) begin : gen_w
       br_delay_valid #(
-          .BitWidth (TileWidth),
+          .Width(TileWidth),
           .NumStages(WidthStages)
       ) br_delay_valid_w (
           .clk,
@@ -143,7 +143,7 @@ module br_ram_data_rd_pipe #(
     // dubious value (unless we later choose to implement a pipelined mux tree).
     // But supporting >1 is easy and doesn't hurt anything.
     br_delay_valid #(
-        .BitWidth (Width),
+        .Width(Width),
         .NumStages(DepthStages)
     ) br_delay_valid_d (
         .clk,

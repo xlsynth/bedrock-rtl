@@ -22,7 +22,7 @@
 // Use for permanent '0 tie-off where __x__ is an expression.
 `define BR_TIEOFF_ZERO_NAMED(__name__, __x__) \
 br_misc_tieoff_zero #( \
-    .BitWidth($bits(__x__)) \
+    .Width($bits(__x__)) \
 ) br_misc_tieoff_zero_``__name__ ( \
     .out(__x__) \
 );
@@ -30,7 +30,7 @@ br_misc_tieoff_zero #( \
 // Use for permanent '1 tie-off where __x__ is an expression.
 `define BR_TIEOFF_ONE_NAMED(__name__, __x__) \
 br_misc_tieoff_one #( \
-    .BitWidth($bits(__x__)) \
+    .Width($bits(__x__)) \
 ) br_misc_tieoff_one_``__name__ ( \
     .out(__x__) \
 );

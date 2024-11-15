@@ -7,48 +7,48 @@
 
 module br_delay_monitor
     #(
-        parameter int BitWidth = 1,
+        parameter int Width = 1,
         parameter int NumStages = 0
     )
     (
         input logic clk,
         input logic rst,
-        input logic[BitWidth-1:0] in,
-        input logic[BitWidth-1:0] out
+        input logic[Width-1:0] in,
+        input logic[Width-1:0] out
     );
 
-Reset_Value_of__out_ #(.BitWidth(BitWidth), .NumStages(NumStages)) Reset_Value_of__out__inst(.*);
-Passthrough_Operation #(.BitWidth(BitWidth), .NumStages(NumStages)) Passthrough_Operation_inst(.*);
-Delayed_Operation #(.BitWidth(BitWidth), .NumStages(NumStages)) Delayed_Operation_inst(.*);
+Reset_Value_of__out_ #(.Width(Width), .NumStages(NumStages)) Reset_Value_of__out__inst(.*);
+Passthrough_Operation #(.Width(Width), .NumStages(NumStages)) Passthrough_Operation_inst(.*);
+Delayed_Operation #(.Width(Width), .NumStages(NumStages)) Delayed_Operation_inst(.*);
 endmodule
 
 module Reset_Value_of__out_
     #(
-        parameter int BitWidth = 1,
+        parameter int Width = 1,
         parameter int NumStages = 0
     )
     (
         input logic clk,
         input logic rst,
-        input logic[BitWidth-1:0] out
+        input logic[Width-1:0] out
     );
 
 // Reset Value of 'out': Check that if: NumStages > 0 and 'rst' is set to '1' and then falls back to '0', then: 'out' is '0' immediately.
 if (NumStages > 0) begin
-    Reset_out_A: assert property (@(posedge clk) $fell(rst) |-> (out == {BitWidth{1'b0}}));
+    Reset_out_A: assert property (@(posedge clk) $fell(rst) |-> (out == {Width{1'b0}}));
 end
 endmodule
 
 module Passthrough_Operation
     #(
-        parameter int BitWidth = 1,
+        parameter int Width = 1,
         parameter int NumStages = 0
     )
     (
         input logic clk,
         input logic rst,
-        input logic[BitWidth-1:0] in,
-        input logic[BitWidth-1:0] out
+        input logic[Width-1:0] in,
+        input logic[Width-1:0] out
     );
 
 // Passthrough Operation: Check that if: NumStages = 0 then: out = in immediately.
@@ -59,14 +59,14 @@ endmodule
 
 module Delayed_Operation
     #(
-        parameter int BitWidth = 1,
+        parameter int Width = 1,
         parameter int NumStages = 0
     )
     (
         input logic clk,
         input logic rst,
-        input logic[BitWidth-1:0] in,
-        input logic[BitWidth-1:0] out
+        input logic[Width-1:0] in,
+        input logic[Width-1:0] out
     );
 
 // Delayed Operation: Check that if: NumStages > 0 and an initial one-time delay of NumStages cycles, then: out equals the past value of in from NumStages cycles ago.
@@ -76,7 +76,7 @@ end
 endmodule
 bind br_delay br_delay_monitor
     #(
-        .BitWidth(BitWidth),
+        .Width(Width),
         .NumStages(NumStages)
     )  monitor (
         .clk(clk),

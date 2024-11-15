@@ -20,7 +20,7 @@
 
 module br_fifo_push_ctrl_credit #(
     parameter int Depth = 2,
-    parameter int BitWidth = 1,
+    parameter int Width = 1,
     parameter bit EnableBypass = 0,
     parameter int MaxCredit = Depth,
     parameter bit RegisterPushCredit = 0,
@@ -34,10 +34,10 @@ module br_fifo_push_ctrl_credit #(
     input logic rst,
 
     // Push-side interface.
-    input  logic                push_credit_stall,
-    output logic                push_credit,
-    input  logic                push_valid,
-    input  logic [BitWidth-1:0] push_data,
+    input  logic             push_credit_stall,
+    output logic             push_credit,
+    input  logic             push_valid,
+    input  logic [Width-1:0] push_data,
 
     // Push-side status flags
     output logic                  full,
@@ -55,12 +55,12 @@ module br_fifo_push_ctrl_credit #(
     // Bypass is only used when EnableBypass is 1, hence lint waiver.
     input logic bypass_ready,  // ri lint_check_waive INEFFECTIVE_NET
     output logic bypass_valid_unstable,
-    output logic [BitWidth-1:0] bypass_data_unstable,
+    output logic [Width-1:0] bypass_data_unstable,
 
     // RAM interface
     output logic                 ram_wr_valid,
     output logic [AddrWidth-1:0] ram_wr_addr,
-    output logic [ BitWidth-1:0] ram_wr_data,
+    output logic [    Width-1:0] ram_wr_data,
 
     // Internal handshakes between push and pop controllers
     output logic ram_push,
@@ -71,7 +71,7 @@ module br_fifo_push_ctrl_credit #(
   // Integration checks
   //------------------------------------------
   `BR_ASSERT_STATIC(depth_must_be_at_least_one_a, Depth >= 2)
-  `BR_ASSERT_STATIC(bit_width_must_be_at_least_one_a, BitWidth >= 1)
+  `BR_ASSERT_STATIC(bit_width_must_be_at_least_one_a, Width >= 1)
   `BR_ASSERT_STATIC(credit_width_a, CreditWidth >= $clog2(Depth + 1))
 
   `BR_COVER_INTG(full_c, full)
@@ -93,10 +93,10 @@ module br_fifo_push_ctrl_credit #(
 
   // Flow control
   logic internal_valid;
-  logic [BitWidth-1:0] internal_data;
+  logic [Width-1:0] internal_data;
 
   br_credit_receiver #(
-      .BitWidth          (BitWidth),
+      .Width             (Width),
       .MaxCredit         (MaxCredit),
       .RegisterPushCredit(RegisterPushCredit)
   ) br_credit_receiver (

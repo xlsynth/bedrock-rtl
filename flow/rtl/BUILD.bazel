@@ -157,7 +157,7 @@ br_verilog_elab_and_lint_test_suite(
             "2",
             "3",
         ],
-        "BitWidth": [
+        "Width": [
             "1",
             "2",
         ],
@@ -172,7 +172,7 @@ br_verilog_elab_and_lint_test_suite(
             "2",
             "3",
         ],
-        "BitWidth": [
+        "Width": [
             "1",
             "2",
         ],
@@ -209,7 +209,7 @@ br_verilog_elab_and_lint_test_suite(
             "2",
             "3",
         ],
-        "BitWidth": [
+        "Width": [
             "1",
             "2",
         ],
@@ -224,7 +224,7 @@ br_verilog_elab_and_lint_test_suite(
             "2",
             "3",
         ],
-        "BitWidth": [
+        "Width": [
             "1",
             "2",
         ],
@@ -235,7 +235,7 @@ br_verilog_elab_and_lint_test_suite(
 br_verilog_elab_and_lint_test_suite(
     name = "br_flow_reg_both_test_suite",
     params = {
-        "BitWidth": [
+        "Width": [
             "1",
             "2",
         ],
@@ -246,7 +246,7 @@ br_verilog_elab_and_lint_test_suite(
 br_verilog_elab_and_lint_test_suite(
     name = "br_flow_reg_fwd_test_suite",
     params = {
-        "BitWidth": [
+        "Width": [
             "1",
             "2",
         ],
@@ -257,7 +257,7 @@ br_verilog_elab_and_lint_test_suite(
 br_verilog_elab_and_lint_test_suite(
     name = "br_flow_reg_rev_test_suite",
     params = {
-        "BitWidth": [
+        "Width": [
             "1",
             "2",
         ],

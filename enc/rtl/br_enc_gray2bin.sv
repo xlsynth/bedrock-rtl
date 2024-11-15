@@ -17,16 +17,16 @@
 `include "br_asserts_internal.svh"
 
 module br_enc_gray2bin #(
-    parameter int BitWidth = 2  // Must be at least 2
+    parameter int Width = 2  // Must be at least 2
 ) (
-    input  logic [BitWidth-1:0] gray,
-    output logic [BitWidth-1:0] bin
+    input  logic [Width-1:0] gray,
+    output logic [Width-1:0] bin
 );
 
   //------------------------------------------
   // Integration checks
   //------------------------------------------
-  `BR_ASSERT_STATIC(bit_width_gte_2_a, BitWidth >= 2)
+  `BR_ASSERT_STATIC(bit_width_gte_2_a, Width >= 2)
 
   //------------------------------------------
   // Implementation
@@ -34,10 +34,10 @@ module br_enc_gray2bin #(
 
   genvar i;
 
-  assign bin[BitWidth-1] = gray[BitWidth-1];
+  assign bin[Width-1] = gray[Width-1];
   generate
-    for (i = (BitWidth - 2); i >= 0; i--) begin : gen_loop
-      assign bin[i] = ^gray[BitWidth-1:i];  // ri lint_check_waive FULL_RANGE
+    for (i = (Width - 2); i >= 0; i--) begin : gen_loop
+      assign bin[i] = ^gray[Width-1:i];  // ri lint_check_waive FULL_RANGE
     end
   endgenerate
 

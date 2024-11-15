@@ -23,7 +23,7 @@
 
 module br_ram_flops_1r1w #(
     parameter int Depth = 2,  // Number of entries in the RAM. Must be at least 2.
-    parameter int Width = 1,  // Bitwidth of each entry in the RAM. Must be at least 1.
+    parameter int Width = 1,  // Width of each entry in the RAM. Must be at least 1.
     // Number of tiles along the depth (address) dimension. Must be at least 1 and evenly divide Depth.
     parameter int DepthTiles = 1,
     // Number of tiles along the width (data) dimension. Must be at least 1 and evenly divide Width.
@@ -47,7 +47,11 @@ module br_ram_flops_1r1w #(
     // If 1, then the memory elements are cleared to 0 upon reset. Otherwise, they are undefined until
     // written for the first time.
     parameter bit EnableMemReset = 0,
-    localparam int AddressWidth = $clog2(Depth)
+    localparam int AddressWidth = $clog2(Depth),
+    // ri lint_check_waive PARAM_NOT_USED
+    localparam int WriteLatency = AddressDepthStages + 1,
+    localparam int ReadLatency = AddressDepthStages + ReadDataDepthStages + ReadDataWidthStages,
+    localparam int ReadAfterWriteHazardLatency = TileEnableBypass ? 0 : 1
 ) (
     // Posedge-triggered clock.
     input  logic                    clk,
@@ -146,7 +150,7 @@ module br_ram_flops_1r1w #(
     for (genvar c = 0; c < WidthTiles; c++) begin : gen_col
       br_ram_flops_1r1w_tile #(
           .Depth(TileDepth),
-          .BitWidth(TileWidth),
+          .Width(TileWidth),
           .EnableBypass(TileEnableBypass),
           .EnableReset(EnableMemReset)
       ) br_ram_flops_1r1w_tile (
@@ -182,29 +186,33 @@ module br_ram_flops_1r1w #(
   //------------------------------------------
   // Implementation checks
   //------------------------------------------
-`ifdef SV_ASSERT_ON
-`ifdef BR_ENABLE_IMPL_CHECKS
-  localparam int WriteLatency = AddressDepthStages + 1;
-  localparam int ReadLatency = ReadDataDepthStages + ReadDataWidthStages;
-`endif  // BR_ENABLE_IMPL_CHECKS
-`endif  // SV_ASSERT_ON
-  localparam int ReadAfterWriteHazardLatency = TileEnableBypass ? 0 : 1;
-
   `BR_ASSERT_IMPL(read_latency_a, rd_addr_valid |-> ##ReadLatency rd_data_valid)
-  if (ReadAfterWriteHazardLatency == 0) begin : gen_hazard0_checks
-    `BR_ASSERT_IMPL(read_write_hazard_gets_new_data_a,
-                    wr_valid && rd_addr_valid && (wr_addr == rd_addr) |->
-        ##ReadLatency rd_data_valid && rd_data == $past(
-                        wr_data, WriteLatency
-                    ))
-  end else begin : gen_hazard1_checks
-    `BR_COVER_IMPL(read_write_hazard_gets_old_data_c,
-                   (wr_valid && rd_addr_valid && (wr_addr == rd_addr)) ##ReadLatency
-        (rd_data_valid && rd_data != $past(
-                       wr_data, WriteLatency
-                   )))
-  end
 
-  // Rely on submodule implementation checks
+  if (ReadAfterWriteHazardLatency == 0) begin : gen_hazard0_checks
+    if (ReadLatency > 0) begin : gen_readlat_gt0
+      `BR_ASSERT_IMPL(read_write_hazard_gets_new_data_a,
+                      wr_valid && rd_addr_valid && (wr_addr == rd_addr) |->
+          ##ReadLatency rd_data_valid && rd_data == $past(
+                          wr_data, ReadLatency
+                      ))
+    end else begin : gen_readlat_eq0
+      `BR_ASSERT_IMPL(read_write_hazard_gets_new_data_a,
+                      wr_valid && rd_addr_valid && (wr_addr == rd_addr) |->
+          rd_data_valid && (rd_data == wr_data))
+    end
+  end else begin : gen_hazard1_checks
+    if (ReadLatency > 0) begin : gen_readlat_gt0
+      `BR_COVER_IMPL(read_write_hazard_gets_old_data_c,
+                     (wr_valid && rd_addr_valid && (wr_addr == rd_addr)) ##ReadLatency
+          (rd_data_valid && rd_data != $past(
+                         wr_data, ReadLatency
+                     )))
+    end else begin : gen_readlat_eq0
+      `BR_COVER_IMPL(
+          read_write_hazard_gets_old_data_c,
+          (wr_valid && rd_addr_valid && (wr_addr == rd_addr)) && rd_data_valid && (rd_data != $past(
+          wr_data)))
+    end
+  end
 
 endmodule : br_ram_flops_1r1w
