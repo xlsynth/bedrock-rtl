@@ -45,6 +45,7 @@ verilog_library(
         "//delay/rtl:br_delay_valid",
         "//demux/rtl:br_demux_bin",
         "//macros:br_asserts_internal",
+        "//macros:br_unused",
         "//pkg:br_math_pkg",
     ],
 )
