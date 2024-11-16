@@ -157,7 +157,8 @@ module br_ram_addr_decoder #(
         assign internal_out_addr[i] = tile_addr_offset[OutputAddressWidth-1:0];
         assign internal_out_data[i] = in_data;
 
-        `BR_UNUSED(tile_addr_offset_msbs, tile_addr_offset[InputAddressWidth-1:OutputAddressWidth])
+        `BR_UNUSED_NAMED(tile_addr_offset_msbs,
+                         tile_addr_offset[InputAddressWidth-1:OutputAddressWidth])
       end
     end
 
