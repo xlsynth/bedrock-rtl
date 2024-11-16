@@ -117,9 +117,9 @@ module br_fifo_flops_tb;
 
     $display("Starting test");
 
-    start = 1'b1;
+    start   = 1'b1;
 
-    timeout  = 5000;
+    timeout = 5000;
     td.wait_cycles();
     while (timeout > 0 && !finished) td.wait_cycles();
 

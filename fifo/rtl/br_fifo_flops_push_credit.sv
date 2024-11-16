@@ -76,8 +76,8 @@ module br_fifo_flops_push_credit #(
     parameter int FlopRamReadDataWidthStages = 0,
 
     // Internal computed parameters
-    localparam int AddrWidth = $clog2(Depth),
-    localparam int CountWidth = $clog2(Depth + 1),
+    localparam int AddrWidth   = $clog2(Depth),
+    localparam int CountWidth  = $clog2(Depth + 1),
     localparam int CreditWidth = $clog2(MaxCredit + 1)
 ) (
     // Posedge-triggered clock.
