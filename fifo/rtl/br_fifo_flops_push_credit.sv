@@ -170,13 +170,19 @@ module br_fifo_flops_push_credit #(
       .ram_rd_data
   );
 
-  // TODO(https://github.com/xlsynth/bedrock-rtl/issues/136): switch to br_ram_flops_1r1w when ready
-  br_ram_flops_1r1w_tile #(
+  br_ram_flops_1r1w #(
       .Depth(Depth),
       .Width(Width),
-      .EnableBypass(EnableBypass),
-      .EnableReset(0)
-  ) br_ram_flops_1r1w_tile (
+      .DepthTiles(FlopRamDepthTiles),
+      .WidthTiles(FlopRamWidthTiles),
+      .AddressDepthStages(FlopRamAddressDepthStages),
+      .ReadDataDepthStages(FlopRamReadDataDepthStages),
+      .ReadDataWidthStages(FlopRamReadDataWidthStages),
+      // FIFO will never read and write same address on the same cycle
+      .TileEnableBypass(0),
+      // Flops don't need to be reset, since uninitialized cells will never be read
+      .EnableMemReset(0)
+  ) br_ram_flops_1r1w (
       .clk,
       .rst,
       .wr_valid(ram_wr_valid),
