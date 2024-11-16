@@ -25,6 +25,7 @@
 // pipeline the logic inside the decoding tree, they just retime the decoded outputs.
 
 `include "br_asserts_internal.svh"
+`include "br_unused.svh"
 
 module br_ram_addr_decoder #(
     // Depth of the RAM. Must be at least 2.
@@ -110,6 +111,7 @@ module br_ram_addr_decoder #(
       `BR_ASSERT_STATIC(select_check_a, SelectMsb >= SelectLsb)
 
       // Need this indirection because addr/data are interleaved at demux output.
+      // ri lint_check_waive GENERATE_TYPEDEF
       typedef struct packed {
         logic [OutputAddressWidth-1:0] addr;
         logic [DataWidth-1:0]          data;
@@ -145,13 +147,20 @@ module br_ram_addr_decoder #(
         localparam logic [InputAddressWidth-1:0] TileBaseAddress = TileDepth * i;
         // exclusive
         localparam logic [InputAddressWidth-1:0] TileBoundAddress = TileDepth * (i + 1);
+        // ri lint_check_waive INEFFECTIVE_NET
+        logic [InputAddressWidth-1:0] tile_addr_offset;
+        // ri lint_check_waive ARITH_EXTENSION
+        assign tile_addr_offset = (in_addr - TileBaseAddress);
 
         assign internal_out_valid[i] = in_valid &&
             // Lint waiver needed because when i == 0, this subexpression is always true.
             // ri lint_check_waive INVALID_COMPARE
             (in_addr >= TileBaseAddress) && (in_addr < TileBoundAddress);
-        assign internal_out_addr[i] = in_addr - TileBaseAddress;
+        assign internal_out_addr[i] = tile_addr_offset[OutputAddressWidth-1:0];
         assign internal_out_data[i] = in_data;
+
+        `BR_UNUSED_NAMED(tile_addr_offset_msbs,
+                         tile_addr_offset[InputAddressWidth-1:OutputAddressWidth])
       end
     end
 
