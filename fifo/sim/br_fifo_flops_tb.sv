@@ -12,10 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// This unit test doesn't yet scoreboard the values (so you currently need to
-// eyeball the text output to make sure it looks right).
-// TODO(mgottscho): scoreboard
-
 `timescale 1ns / 1ps
 
 module br_fifo_flops_tb;
@@ -23,10 +19,17 @@ module br_fifo_flops_tb;
   // Parameters
   parameter int Depth = 13;
   parameter int Width = 8;
+  parameter int EnableBypass = 1;
+  parameter int RegisterPopOutputs = 0;
+  parameter int FlopRamAddressDepthStages = 0;
 
   // Clock and Reset
   reg clk;
   reg rst;
+
+  logic start;
+  logic finished;
+  logic [31:0] error_count;
 
   // Push Interface
   wire push_ready;
@@ -42,18 +45,15 @@ module br_fifo_flops_tb;
   wire empty;
   wire full;
   wire [$clog2(Depth+1)-1:0] items;
-
-  // Scoreboard
-  reg [Width-1:0] scoreboard[Depth*2];
-
-  // Error Counter
-  integer error_count;
+  wire [$clog2(Depth+1)-1:0] slots;
 
   // Instantiate the FIFO
   br_fifo_flops #(
       .Depth(Depth),
       .Width(Width),
-      .EnableBypass(0)
+      .RegisterPopOutputs(RegisterPopOutputs),
+      .EnableBypass(EnableBypass),
+      .FlopRamAddressDepthStages(FlopRamAddressDepthStages)
   ) dut (
       .clk(clk),
       .rst(rst),
@@ -73,6 +73,28 @@ module br_fifo_flops_tb;
       .items_next()
   );
 
+  // Hook up the test harness
+  br_fifo_test_harness #(
+      .Depth(Depth),
+      .Width(Width)
+  ) br_fifo_test_harness (
+      .clk,
+      .rst,
+      .start      (start),
+      .finished   (finished),
+      .error_count(error_count),
+      .push_ready,
+      .push_valid,
+      .push_data,
+      .pop_ready,
+      .pop_valid,
+      .pop_data,
+      .empty,
+      .full,
+      .items,
+      .slots
+  );
+
 `ifdef DUMP_WAVES
   initial begin
     $shm_open("waves.shm");
@@ -80,167 +102,31 @@ module br_fifo_flops_tb;
   end
 `endif
 
-  // Clock Generation: 10ns period
-  initial begin
-    clk = 0;
-    forever #5 clk = ~clk;
-  end
+  br_test_driver td (
+      .clk,
+      .rst
+  );
 
   // Test Sequence
   initial begin
-    integer si;
-    // Initialize signals
-    rst = 1;
-    push_valid = 0;
-    push_data = 0;
-    pop_ready = 0;
-    error_count = 0;
+    integer timeout;
 
-    // Apply Reset
-    #20;
-    rst = 0;
-    #10;
+    start = 0;
 
-    // Test 1: Fill the FIFO completely
-    $display("Test 1: Filling the FIFO completely...");
-    si = 0;
-    repeat (Depth) begin
-      @(negedge clk);
-      if (push_ready) begin
-        push_valid = 1;
-        push_data = $urandom;
-        scoreboard[si] = push_data;
-        $display("Pushed data: %0h | Items: %0d | Full: %b", push_data, items, full);
-      end else begin
-        push_valid = 0;
-        $error("FIFO is full. Cannot push data.");
-        error_count += 1;
-      end
-      si += 1;
-    end
-    @(negedge clk);
-    push_valid = 0;
+    td.reset_dut();
 
-    // Check if FIFO is full
-    @(negedge clk);
-    if (full && !empty && (items == Depth))
-      $display("FIFO is full as expected with %0d items.", items);
-    else begin
-      $error("Error: FIFO full state is not as expected.");
-      error_count += 1;
-    end
+    $display("Starting test");
 
-    // Test 2: Attempt to push into a full FIFO
-    @(negedge clk);
-    push_valid = 1;
-    push_data  = $urandom;
-    @(negedge clk);
-    if (!push_ready) $display("Correctly prevented pushing into a full FIFO.");
-    else begin
-      $error("Error: Allowed pushing into a full FIFO.");
-      error_count += 1;
-    end
-    push_valid = 0;
+    start   = 1'b1;
 
-    // Test 3: Pop all items from the FIFO
-    $display("Test 3: Popping all items from the FIFO...");
-    si = 0;
-    pop_ready = 1;
-    while (!empty) begin
-      @(posedge clk);
-      if (pop_valid) begin
-        $display("Popped data: %0h | Items: %0d | Empty: %b", pop_data, items, empty);
-        if (pop_data != scoreboard[si]) begin
-          $error("Pop data mismatch! expect=%0h got=%0h", scoreboard[si], pop_data);
-          error_count += 1;
-        end
-      end
-      si += 1;
-    end
-    @(negedge clk);
-    pop_ready = 0;
+    timeout = 5000;
+    td.wait_cycles();
+    while (timeout > 0 && !finished) td.wait_cycles();
 
-    // Check if FIFO is empty
-    @(posedge clk);
-    if (empty && !full && (items == 0))
-      $display("FIFO is empty as expected with %0d items.", items);
-    else begin
-      $error("Error: FIFO empty state is not as expected.");
-      error_count += 1;
-    end
+    td.check(timeout > 0, $sformatf("Test timed out"));
+    td.check(error_count == 0, $sformatf("Errors in test"));
 
-    // Test 4: Attempt to pop from an empty FIFO
-    @(negedge clk);
-    pop_ready = 1;
-    @(posedge clk);
-    if (!pop_valid) $display("Correctly prevented popping from an empty FIFO.");
-    else begin
-      $error("Error: Allowed popping from an empty FIFO.");
-      error_count += 1;
-    end
-    pop_ready = 0;
-
-    // Test 5: Interleaved push and pop operations
-    $display("Test 5: Interleaved push and pop operations...");
-    fork
-      // Push process
-      begin
-        integer i;
-        for (i = 0; i < Depth * 2; i = i + 1) begin
-          @(negedge clk);
-          if (push_ready) begin
-            push_valid = 1;
-            push_data  = i[Width-1:0];
-            @(posedge clk);
-            scoreboard[i] = push_data;
-            $display("Pushed data: %0h | Items: %0d", push_data, items);
-          end else begin
-            push_valid = 0;
-            @(posedge clk);
-            $error("Cannot push data. FIFO Full.");
-            error_count += 1;
-          end
-        end
-        @(negedge clk);
-        push_valid = 0;
-      end
-      // Pop process
-      begin
-        integer j;
-        @(posedge pop_valid);
-        for (j = 0; j < Depth * 2; j = j + 1) begin
-          @(negedge clk);
-          if (pop_valid) begin
-            pop_ready = 1;
-            @(posedge clk);
-            $display("Popped data: %0h | Items: %0d", pop_data, items);
-            if (pop_data != scoreboard[j]) begin
-              $error("Pop data mismatch! expect=%0h got=%0h", scoreboard[j], pop_data);
-              error_count += 1;
-            end
-          end else begin
-            pop_ready = 0;
-            @(posedge clk);
-            $error("Cannot pop data. FIFO Empty.");
-            error_count += 1;
-          end
-        end
-        @(negedge clk);
-        pop_ready = 0;
-      end
-    join
-
-    // Final check
-    @(negedge clk);
-    if (empty && (items == 0)) $display("FIFO successfully emptied after interleaved operations.");
-    else begin
-      $error("Error: FIFO state incorrect after interleaved operations.");
-      error_count += 1;
-    end
-
-    if (error_count == 0) $display("TEST PASSED");
-    else $display("TEST FAILED with %0d errors", error_count);
-    $finish;
+    td.finish();
   end
 
 endmodule

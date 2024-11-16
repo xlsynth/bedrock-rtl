@@ -33,6 +33,10 @@
 // visible at the pop interface. This results in a cut-through latency of
 // 1 cycle, but improves static timing by eliminating any combinational paths
 // from push to pop.
+
+// The RegisterPopOutputs parameter can be set to 1 to add an additional br_flow_reg_fwd
+// before the pop interface of the FIFO. This may improve timing of paths dependent on
+// the pop interface at the expense of an additional cycle of cut-through latency.
 //
 // Bypass is enabled by default to minimize latency accumulation throughout a design.
 // It is recommended to disable the bypass only when necessary to close timing.
@@ -51,7 +55,27 @@ module br_fifo_flops #(
     // visible at the pop interface. This results in a cut-through latency of
     // 1 cycle, but timing is improved.
     parameter bit EnableBypass = 1,
-    localparam int AddrWidth = $clog2(Depth),
+    // If 1, then ensure pop_valid/pop_data always come directly from a register
+    // at the cost of an additional cycle of cut-through latency.
+    // If 0, pop_valid/pop_data comes directly from push_valid (if bypass is enabled)
+    // and/or ram_wr_data.
+    parameter bit RegisterPopOutputs = 0,
+    // Number of tiles in the depth (address) dimension. Must be at least 1 and evenly divide Depth.
+    parameter int FlopRamDepthTiles = 1,
+    // Number of tiles along the width (data) dimension. Must be at least 1 and evenly divide Width.
+    parameter int FlopRamWidthTiles = 1,
+    // Number of pipeline register stages inserted along the write address and read address paths
+    // in the depth dimension. Must be at least 0.
+    parameter int FlopRamAddressDepthStages = 0,
+    // Number of pipeline register stages inserted along the read data path in the depth dimension.
+    // Must be at least 0.
+    parameter int FlopRamReadDataDepthStages = 0,
+    // Number of pipeline register stages inserted along the read data path in the width dimension.
+    // Must be at least 0.
+    parameter int FlopRamReadDataWidthStages = 0,
+
+    // Internal computed parameters
+    localparam int AddrWidth  = $clog2(Depth),
     localparam int CountWidth = $clog2(Depth + 1)
 ) (
     // Posedge-triggered clock.
@@ -82,6 +106,9 @@ module br_fifo_flops #(
     output logic [CountWidth-1:0] items_next
 );
 
+  localparam int RamReadLatency =
+      FlopRamAddressDepthStages + FlopRamReadDataDepthStages + FlopRamReadDataWidthStages;
+
   //------------------------------------------
   // Integration checks
   //------------------------------------------
@@ -101,7 +128,9 @@ module br_fifo_flops #(
   br_fifo_ctrl_1r1w #(
       .Depth(Depth),
       .Width(Width),
-      .EnableBypass(EnableBypass)
+      .EnableBypass(EnableBypass),
+      .RegisterPopOutputs(RegisterPopOutputs),
+      .RamReadLatency(RamReadLatency)
   ) br_fifo_ctrl_1r1w (
       .clk,
       .rst,
@@ -128,13 +157,19 @@ module br_fifo_flops #(
       .ram_rd_data
   );
 
-  // TODO(https://github.com/xlsynth/bedrock-rtl/issues/136): switch to br_ram_flops_1r1w when ready
-  br_ram_flops_1r1w_tile #(
+  br_ram_flops_1r1w #(
       .Depth(Depth),
       .Width(Width),
-      .EnableBypass(EnableBypass),
-      .EnableReset(0)
-  ) br_ram_flops_1r1w_tile (
+      .DepthTiles(FlopRamDepthTiles),
+      .WidthTiles(FlopRamWidthTiles),
+      .AddressDepthStages(FlopRamAddressDepthStages),
+      .ReadDataDepthStages(FlopRamReadDataDepthStages),
+      .ReadDataWidthStages(FlopRamReadDataWidthStages),
+      // FIFO will never read and write same address on the same cycle
+      .TileEnableBypass(0),
+      // Flops don't need to be reset, since uninitialized cells will never be read
+      .EnableMemReset(0)
+  ) br_ram_flops_1r1w (
       .clk,
       .rst,
       .wr_valid(ram_wr_valid),

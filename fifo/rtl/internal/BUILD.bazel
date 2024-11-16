@@ -21,6 +21,7 @@ verilog_library(
     name = "br_fifo_push_ctrl",
     srcs = ["br_fifo_push_ctrl.sv"],
     deps = [
+        "//counter/rtl:br_counter",
         "//counter/rtl:br_counter_incr",
         "//macros:br_asserts_internal",
         "//macros:br_registers",
@@ -51,6 +52,7 @@ verilog_library(
     name = "br_fifo_push_ctrl_credit",
     srcs = ["br_fifo_push_ctrl_credit.sv"],
     deps = [
+        "//counter/rtl:br_counter",
         "//counter/rtl:br_counter_incr",
         "//credit/rtl:br_credit_receiver",
         "//macros:br_asserts_internal",
@@ -86,6 +88,7 @@ verilog_library(
     name = "br_fifo_pop_ctrl",
     srcs = ["br_fifo_pop_ctrl.sv"],
     deps = [
+        ":br_fifo_staging_buffer",
         "//counter/rtl:br_counter_incr",
         "//macros:br_asserts_internal",
         "//macros:br_registers",
@@ -94,7 +97,7 @@ verilog_library(
 )
 
 br_verilog_elab_and_lint_test_suite(
-    name = "br_fifo_pop_ctrl_test_suite",
+    name = "br_fifo_pop_ctrl_test_suite_zero_lat",
     params = {
         "Depth": [
             "2",
@@ -104,10 +107,75 @@ br_verilog_elab_and_lint_test_suite(
             "1",
             "8",
         ],
+        "RamReadLatency": ["0"],
         "EnableBypass": [
+            "0",
+            "1",
+        ],
+        "RegisterPopOutputs": [
             "0",
             "1",
         ],
     },
     deps = [":br_fifo_pop_ctrl"],
+)
+
+br_verilog_elab_and_lint_test_suite(
+    name = "br_fifo_pop_ctrl_test_suite_nonzero_lat",
+    params = {
+        "Depth": [
+            "4",
+        ],
+        "RamReadLatency": [
+            "1",
+            "2",
+        ],
+        "EnableBypass": [
+            "0",
+            "1",
+        ],
+        "RegisterPopOutputs": [
+            "0",
+            "1",
+        ],
+    },
+    deps = [":br_fifo_pop_ctrl"],
+)
+
+verilog_library(
+    name = "br_fifo_staging_buffer",
+    srcs = ["br_fifo_staging_buffer.sv"],
+    deps = [
+        "//counter/rtl:br_counter",
+        "//delay/rtl:br_delay_valid",
+        "//flow/rtl:br_flow_reg_fwd",
+        "//flow/rtl:br_flow_reg_rev",
+        "//macros:br_asserts_internal",
+        "//macros:br_registers",
+        "//macros:br_tieoff",
+        "//macros:br_unused",
+        "//mux/rtl:br_mux_onehot",
+    ],
+)
+
+br_verilog_elab_and_lint_test_suite(
+    name = "br_fifo_staging_buffer_test_suite",
+    params = {
+        "EnableBypass": [
+            "0",
+            "1",
+        ],
+        "TotalDepth": [
+            "4",
+        ],
+        "RamReadLatency": [
+            "1",
+            "2",
+        ],
+        "RegisterPopOutputs": [
+            "0",
+            "1",
+        ],
+    },
+    deps = [":br_fifo_staging_buffer"],
 )

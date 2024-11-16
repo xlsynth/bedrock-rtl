@@ -19,9 +19,23 @@ load("//bazel:verilog.bzl", "verilog_elab_test")
 package(default_visibility = ["//visibility:public"])
 
 verilog_library(
+    name = "br_fifo_test_harness",
+    srcs = ["br_fifo_test_harness.sv"],
+)
+
+verilog_elab_test(
+    name = "br_fifo_test_harness_elab_test",
+    deps = [":br_fifo_test_harness"],
+)
+
+verilog_library(
     name = "br_fifo_flops_tb",
     srcs = ["br_fifo_flops_tb.sv"],
-    deps = ["@bedrock-rtl//fifo/rtl:br_fifo_flops"],
+    deps = [
+        ":br_fifo_test_harness",
+        "//fifo/rtl:br_fifo_flops",
+        "//misc/sim:br_test_driver",
+    ],
 )
 
 verilog_elab_test(
@@ -30,16 +44,47 @@ verilog_elab_test(
 )
 
 br_verilog_sim_test_suite(
-    name = "br_fifo_flops_vcs_test_suite",
+    name = "br_fifo_flops_vcs_test_suite_zero_lat",
     params = {
         "Depth": [
-            "2",
+            "3",
             "13",
         ],
         "Width": ["8"],
         "EnableBypass": [
             "0",
             "1",
+        ],
+        "RegisterPopOutputs": [
+            "0",
+            "1",
+        ],
+        "FlopRamAddressDepthStages": ["0"],
+    },
+    tool = "vcs",
+    deps = [":br_fifo_flops_tb"],
+)
+
+br_verilog_sim_test_suite(
+    name = "br_fifo_flops_vcs_test_suite_nonzero_lat",
+    params = {
+        "Depth": [
+            "13",
+        ],
+        "Width": ["8"],
+        "EnableBypass": [
+            "0",
+            "1",
+        ],
+        "RegisterPopOutputs": [
+            "0",
+            "1",
+        ],
+        "FlopRamAddressDepthStages": [
+            "0",
+            "1",
+            "2",
+            "3",
         ],
     },
     tool = "vcs",
@@ -70,6 +115,10 @@ br_verilog_sim_test_suite(
         ],
         "Width": ["8"],
         "EnableBypass": [
+            "0",
+            "1",
+        ],
+        "RegisterPopOutputs": [
             "0",
             "1",
         ],

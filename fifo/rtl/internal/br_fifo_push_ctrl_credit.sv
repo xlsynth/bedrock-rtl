@@ -63,8 +63,8 @@ module br_fifo_push_ctrl_credit #(
     output logic [    Width-1:0] ram_wr_data,
 
     // Internal handshakes between push and pop controllers
-    output logic ram_push,
-    input  logic ram_pop
+    output logic push_beat,
+    input  logic pop_beat
 );
 
   //------------------------------------------
@@ -75,17 +75,6 @@ module br_fifo_push_ctrl_credit #(
   `BR_ASSERT_STATIC(credit_width_a, CreditWidth >= $clog2(Depth + 1))
 
   `BR_COVER_INTG(full_c, full)
-
-  // Internal integration checks
-
-  // This is not the tightest possible check, because we are planning to
-  // support pipelined RAM access and CDC use cases that require supporting
-  // delays between the push controller and pop controller.
-  // The tightest possible check is items == 0 |-> !ram_pop.
-  // This one is looser because slots == Depth |-> items == 0 (but the
-  // converse is not true).
-  `BR_ASSERT_IMPL(no_ram_pop_when_all_slots_a, slots == Depth |-> !ram_pop)
-  `BR_ASSERT_IMPL(bypass_ready_only_when_not_full_a, bypass_ready |-> !full)
 
   //------------------------------------------
   // Implementation
@@ -106,7 +95,7 @@ module br_fifo_push_ctrl_credit #(
       .push_credit(push_credit),
       .push_valid(push_valid),
       .push_data(push_data),
-      .pop_credit(ram_pop),
+      .pop_credit(pop_beat),
       .pop_valid(internal_valid),
       .pop_data(internal_data),
       .credit_initial(credit_initial_push),
@@ -131,28 +120,45 @@ module br_fifo_push_ctrl_credit #(
   );
 
   // Datapath
-  assign ram_wr_valid = ram_push;
+  assign push_beat = internal_valid;
   if (EnableBypass) begin : gen_bypass
     assign bypass_valid_unstable = internal_valid;
     assign bypass_data_unstable = internal_data;
 
-    assign ram_push = internal_valid && !bypass_ready;
+    assign ram_wr_valid = internal_valid && !bypass_ready;
     assign ram_wr_data = internal_data;
   end else begin : gen_no_bypass
     `BR_UNUSED(bypass_ready)
+    // TODO(zhemao, #157): Replace this with BR_TIEOFF macros once they are fixed
     assign bypass_valid_unstable = '0;  // ri lint_check_waive CONST_ASSIGN CONST_OUTPUT
     assign bypass_data_unstable = '0;  // ri lint_check_waive CONST_ASSIGN CONST_OUTPUT
 
-    assign ram_push = internal_valid;
+    assign ram_wr_valid = internal_valid;
     assign ram_wr_data = internal_data;
   end
 
   // Status flags
-  assign slots_next = ram_push && !ram_pop ? slots - 1 : !ram_push && ram_pop ? slots + 1 : slots;
-  assign full_next  = slots_next == 0;
+  br_counter #(
+      .MaxValue(Depth)
+  ) br_counter_slots (
+      .clk,
+      .rst,
 
-  `BR_REGIL(slots, slots_next, ram_push || ram_pop, Depth)
-  `BR_REGL(full, full_next, ram_push || ram_pop)
+      .reinit(1'b0),
+      .initial_value(CountWidth'($unsigned(Depth))),
+
+      .incr_valid(pop_beat),
+      .incr      (1'b1),
+
+      .decr_valid(push_beat),
+      .decr      (1'b1),
+
+      .value     (slots),
+      .value_next(slots_next)
+  );
+
+  assign full_next = slots_next == 0;
+  `BR_REGL(full, full_next, push_beat || pop_beat)
 
   //------------------------------------------
   // Implementation checks
@@ -160,22 +166,17 @@ module br_fifo_push_ctrl_credit #(
   `BR_ASSERT_IMPL(ram_wr_addr_in_range_a, ram_wr_valid |-> ram_wr_addr < Depth)
 
   // Flow control and latency
-  `BR_ASSERT_IMPL(push_backpressure_when_full_a, full |-> !push_credit)
-  `BR_ASSERT_IMPL(backpressure_latency_1_cycle_a,
-                  full && ram_pop |=> !full && (push_credit || push_credit_stall))
+  `BR_ASSERT_IMPL(no_overflow_a, internal_valid |-> !full)
   `BR_ASSERT_IMPL(ram_push_and_bypass_mutually_exclusive_a,
-                  !(ram_push && bypass_ready && bypass_valid_unstable))
+                  !(ram_wr_valid && bypass_ready && bypass_valid_unstable))
   `BR_COVER_IMPL(bypass_unstable_c, !bypass_ready && bypass_valid_unstable)
-
-  // RAM
-  `BR_ASSERT_IMPL(ram_write_a, ram_push |-> ram_wr_valid && ram_wr_data == push_data)
 
   // Flags
   `BR_ASSERT_IMPL(slots_in_range_a, slots <= Depth)
   `BR_ASSERT_IMPL(slots_next_a, ##1 slots == $past(slots_next))
-  `BR_ASSERT_IMPL(push_and_pop_slots_a, ram_push && ram_pop |-> slots_next == slots)
-  `BR_ASSERT_IMPL(push_slots_a, ram_push && !ram_pop |-> slots_next == slots - 1)
-  `BR_ASSERT_IMPL(pop_slots_a, !ram_push && ram_pop |-> slots_next == slots + 1)
+  `BR_ASSERT_IMPL(push_and_pop_slots_a, push_beat && pop_beat |-> slots_next == slots)
+  `BR_ASSERT_IMPL(push_slots_a, push_beat && !pop_beat |-> slots_next == slots - 1)
+  `BR_ASSERT_IMPL(pop_slots_a, !push_beat && pop_beat |-> slots_next == slots + 1)
   `BR_ASSERT_IMPL(full_a, full == (slots == 0))
 
 endmodule : br_fifo_push_ctrl_credit

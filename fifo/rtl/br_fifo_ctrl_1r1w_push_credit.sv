@@ -23,15 +23,24 @@
 // read and write ports to an external 1R1W (pseudo-dual-port)
 // RAM module, which could be implemented in flops or SRAM.
 //
-// The FIFO can be parameterized in bypass mode or non-bypass mode.
-// In bypass mode (default), then pushes forward directly to the pop
-// interface when the FIFO is empty, resulting in a cut-through latency of 0 cycles.
-// This comes at the cost of a combinational timing path from the push
-// interface to the pop interface. Conversely, when bypass is disabled,
-// then pushes always go through the RAM before they can become
-// visible at the pop interface. This results in a cut-through latency of
-// 1 cycle, but improves static timing by eliminating any combinational paths
-// from push to pop.
+// The FIFO controller can work with RAMs of arbitrary fixed read latency.
+// If the latency is non-zero, a FLOP-based staging buffer is kept in the
+// controller so that a synchronous ready/valid interface can be maintained
+// at the pop interface.
+//
+// The FIFO can be parameterized in bypass mode or non-bypass mode. In bypass
+// mode (default), pushes forward directly to the pop interface or staging
+// buffer when the FIFO has fewer than (RamReadLatency + 1) items, allowing the
+// FIFO to achieve a cut-through latency of zero cycles. This comes at the
+// cost of a combinational timing path from the push interface to the pop
+// interface. Conversely, when bypass is disabled, then pushes always go
+// through the RAM before they can become visible at the pop interface. This
+// results in a cut-through latency of 1 + RamReadLatency cycles, but improves
+// static timing by eliminating any combinational paths from push to pop.
+//
+// The RegisterPopOutputs parameter can be set to 1 to add an additional br_flow_reg_fwd
+// before the pop interface of the FIFO. This may improve timing of paths dependent on
+// the pop interface at the expense of an additional cycle of cut-through latency.
 //
 // Bypass is enabled by default to minimize latency accumulation throughout a design.
 // It is recommended to disable the bypass only when necessary to close timing.
@@ -59,6 +68,14 @@ module br_fifo_ctrl_1r1w_push_credit #(
     // driven directly from a flop. This comes at the expense of one additional
     // cycle of credit loop latency.
     parameter bit RegisterPushCredit = 0,
+    // If 1, then ensure pop_valid/pop_data always come directly from a register
+    // at the cost of an additional cycle of cut-through latency.
+    // If 0, pop_valid/pop_data comes directly from push_valid (if bypass is enabled)
+    // and/or ram_wr_data.
+    parameter bit RegisterPopOutputs = 1,
+    // The number of cycles between when ram_rd_addr_valid is asserted and
+    // ram_rd_data_valid is asserted.
+    parameter int RamReadLatency = 0,
     localparam int AddrWidth = $clog2(Depth),
     localparam int CountWidth = $clog2(Depth + 1),
     localparam int CreditWidth = $clog2(MaxCredit + 1)
@@ -119,8 +136,8 @@ module br_fifo_ctrl_1r1w_push_credit #(
   logic bypass_valid_unstable;
   logic [Width-1:0] bypass_data_unstable;
 
-  logic ram_push;
-  logic ram_pop;
+  logic push_beat;
+  logic pop_beat;
 
   br_fifo_push_ctrl_credit #(
       .Depth(Depth),
@@ -150,14 +167,16 @@ module br_fifo_ctrl_1r1w_push_credit #(
       .ram_wr_valid,
       .ram_wr_addr,
       .ram_wr_data,
-      .ram_push,
-      .ram_pop
+      .push_beat,
+      .pop_beat
   );
 
   br_fifo_pop_ctrl #(
       .Depth(Depth),
       .Width(Width),
-      .EnableBypass(EnableBypass)
+      .EnableBypass(EnableBypass),
+      .RegisterPopOutputs(RegisterPopOutputs),
+      .RamReadLatency(RamReadLatency)
   ) br_fifo_pop_ctrl (
       .clk,
       .rst,
@@ -176,8 +195,8 @@ module br_fifo_ctrl_1r1w_push_credit #(
       .ram_rd_addr,
       .ram_rd_data_valid,
       .ram_rd_data,
-      .ram_push,
-      .ram_pop
+      .push_beat,
+      .pop_beat
   );
 
   //------------------------------------------
