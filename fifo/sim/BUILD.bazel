@@ -122,6 +122,12 @@ br_verilog_sim_test_suite(
             "0",
             "1",
         ],
+        "FlopRamAddressDepthStages": [
+            "0",
+            "1",
+            "2",
+            "3",
+        ],
     },
     tool = "vcs",
     deps = [":br_fifo_flops_push_credit_tb"],
