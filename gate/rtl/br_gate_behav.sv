@@ -22,6 +22,8 @@
 // verilog_lint: waive-start module-filename
 // ri lint_check_off ONE_PER_FILE FILE_NAME
 
+`include "br_registers.svh"
+
 // Buffer
 module br_gate_buf (
     input  logic in,
@@ -132,5 +134,21 @@ module br_gate_icg (
 
 endmodule : br_gate_icg
 
+// Clock Domain Crossing Synchronizer
+module br_gate_cdc_sync #(
+    parameter int NumStages = 3
+) (
+    input  logic clk,
+    input  logic in,
+    output logic out
+);
+
+
+  logic [NumStages-1:0] in_d;
+
+  `BR_REGN(in_d, {in_d[NumStages-2:0], in})
+
+  assign out = in_d[NumStages-1];
+endmodule : br_gate_cdc_sync
 // verilog_lint: waive-stop module-filename
 // ri lint_check_on ONE_PER_FILE FILE_NAME
