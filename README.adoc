@@ -402,7 +402,8 @@ Resets are always active-high.
 | Yes
 
 | `BR_ASSERT_COMB`
-| Combinational/immediate assertion. Also passes if the expression is unknown.
+a| Combinational/immediate assertion. Also passes if the expression is unknown.
+Enable by defining `BR_ENABLE_ASSERT_COMB`.
 | Yes
 | Yes
 
