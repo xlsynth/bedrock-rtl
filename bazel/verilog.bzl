@@ -85,10 +85,11 @@ def _verilog_base_impl(ctx, subcmd, test = True, extra_args = [], extra_runfiles
             ["--define=" + define for define in ctx.attr.defines] +
             ["--top=" + top] +
             ["--param=" + key + "=" + value for key, value in ctx.attr.params.items()])
+    filelist = ctx.label.name + ".f"
     tcl = ctx.label.name + ".tcl"
     script = ctx.label.name + ".sh"
     log = ctx.label.name + ".log"
-
+    args.append("--filelist=" + filelist)
     args.append("--tcl=" + tcl)
     args.append("--script=" + script)
     args.append("--log=" + log)
@@ -186,10 +187,6 @@ def _verilog_lint_test_impl(ctx):
 def _verilog_sim_test_impl(ctx):
     """Implementation of the verilog_sim_test rule."""
     extra_args = []
-    if ctx.attr.tool:
-        extra_args.append("--filelist=sim_" + ctx.attr.tool + ".f")
-    else:
-        extra_args.append("--filelist=sim.f")
     if ctx.attr.elab_only:
         extra_args.append("--elab_only")
     if ctx.attr.uvm:
@@ -232,12 +229,6 @@ def _verilog_sandbox_impl(ctx):
         fail("If opts are provided, then tool must also be set.")
     for opt in ctx.attr.opts:
         extra_args.append("--opt='" + opt + "'")
-
-    if ctx.attr.kind == "sim":
-        if ctx.attr.tool:
-            extra_args.append("--filelist=sim_" + ctx.attr.tool + ".f")
-        else:
-            extra_args.append("--filelist=sim.f")
 
     # Check if the filename ends with '.tar.gz'
     if not ctx.outputs.tarball.basename.endswith(".tar.gz"):
