@@ -15,6 +15,7 @@
 // Bedrock-RTL LRU Arbiter FPV monitor
 
 `include "br_asserts.svh"
+`include "br_registers.svh"
 
 module br_arb_lru_fpv_monitor #(
     // Must be at least 2
