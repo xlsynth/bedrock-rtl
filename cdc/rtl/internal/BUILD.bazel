@@ -1,0 +1,168 @@
+# Copyright 2024 The Bedrock-RTL Authors
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+load("@rules_hdl//verilog:providers.bzl", "verilog_library")
+load("//bazel:br_verilog.bzl", "br_verilog_elab_and_lint_test_suite")
+
+package(default_visibility = ["//cdc/rtl:__subpackages__"])
+
+verilog_library(
+    name = "br_cdc_fifo_push_flag_mgr",
+    srcs = ["br_cdc_fifo_push_flag_mgr.sv"],
+    deps = [
+        "//counter/rtl:br_counter_incr",
+        "//delay/rtl:br_delay",
+        "//delay/rtl:br_delay_nr",
+        "//enc/rtl:br_enc_bin2gray",
+        "//enc/rtl:br_enc_gray2bin",
+        "//macros:br_asserts_internal",
+        "//macros:br_registers",
+        "//pkg:br_math_pkg",
+    ],
+)
+
+verilog_library(
+    name = "br_cdc_fifo_push_ctrl",
+    srcs = ["br_cdc_fifo_push_ctrl.sv"],
+    deps = [
+        ":br_cdc_fifo_push_flag_mgr",
+        "//fifo/rtl/internal:br_fifo_push_ctrl_core",
+        "//macros:br_asserts_internal",
+        "//macros:br_registers",
+    ],
+)
+
+br_verilog_elab_and_lint_test_suite(
+    name = "br_cdc_fifo_push_ctrl_test_suite",
+    params = {
+        "Depth": [
+            "5",
+            "8",
+        ],
+        "Width": [
+            "8",
+        ],
+        "RamWriteLatency": [
+            "1",
+            "2",
+        ],
+    },
+    deps = [":br_cdc_fifo_push_ctrl"],
+)
+
+verilog_library(
+    name = "br_cdc_fifo_push_ctrl_credit",
+    srcs = ["br_cdc_fifo_push_ctrl_credit.sv"],
+    deps = [
+        ":br_cdc_fifo_push_flag_mgr",
+        "//credit/rtl:br_credit_receiver",
+        "//fifo/rtl/internal:br_fifo_push_ctrl_core",
+        "//macros:br_asserts_internal",
+        "//macros:br_registers",
+    ],
+)
+
+br_verilog_elab_and_lint_test_suite(
+    name = "br_cdc_fifo_push_ctrl_credit_test_suite",
+    params = {
+        "Depth": [
+            "5",
+            "8",
+        ],
+        "Width": [
+            "8",
+        ],
+        "RamWriteLatency": [
+            "1",
+            "2",
+        ],
+        "RegisterPushCredit": [
+            "0",
+            "1",
+        ],
+    },
+    deps = [":br_cdc_fifo_push_ctrl_credit"],
+)
+
+verilog_library(
+    name = "br_cdc_fifo_pop_flag_mgr",
+    srcs = ["br_cdc_fifo_pop_flag_mgr.sv"],
+    deps = [
+        "//counter/rtl:br_counter_incr",
+        "//delay/rtl:br_delay",
+        "//delay/rtl:br_delay_nr",
+        "//enc/rtl:br_enc_bin2gray",
+        "//enc/rtl:br_enc_gray2bin",
+        "//macros:br_asserts_internal",
+        "//macros:br_registers",
+    ],
+)
+
+verilog_library(
+    name = "br_cdc_fifo_pop_ctrl",
+    srcs = ["br_cdc_fifo_pop_ctrl.sv"],
+    deps = [
+        ":br_cdc_fifo_pop_flag_mgr",
+        "//fifo/rtl/internal:br_fifo_pop_ctrl_core",
+        "//macros:br_asserts_internal",
+        "//macros:br_registers",
+    ],
+)
+
+br_verilog_elab_and_lint_test_suite(
+    name = "br_cdc_fifo_pop_ctrl_test_suite",
+    params = {
+        "Depth": [
+            "5",
+            "8",
+        ],
+        "Width": [
+            "8",
+        ],
+        "RamReadLatency": [
+            "0",
+            "1",
+            "2",
+        ],
+        "RegisterPopOutputs": [
+            "0",
+            "1",
+        ],
+    },
+    deps = [":br_cdc_fifo_pop_ctrl"],
+)
+
+verilog_library(
+    name = "br_cdc_fifo_gray_count_sync",
+    srcs = ["br_cdc_fifo_gray_count_sync.sv"],
+    deps = [
+        "//cdc/rtl:br_cdc_bit_toggle",
+        "//macros:br_asserts_internal",
+    ],
+)
+
+br_verilog_elab_and_lint_test_suite(
+    name = "br_cdc_fifo_gray_count_sync_test_suite",
+    params = {
+        "CountWidth": [
+            "3",
+            "4",
+        ],
+        "NumStages": [
+            "2",
+            "3",
+        ],
+    },
+    deps = [":br_cdc_fifo_gray_count_sync"],
+)

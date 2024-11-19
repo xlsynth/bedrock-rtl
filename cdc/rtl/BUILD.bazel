@@ -41,3 +41,147 @@ br_verilog_elab_and_lint_test_suite(
     },
     deps = [":br_cdc_bit_toggle"],
 )
+
+verilog_library(
+    name = "br_cdc_fifo_ctrl_1r1w",
+    srcs = ["br_cdc_fifo_ctrl_1r1w.sv"],
+    deps = [
+        ":br_cdc_bit_toggle",
+        "//cdc/rtl/internal:br_cdc_fifo_gray_count_sync",
+        "//cdc/rtl/internal:br_cdc_fifo_pop_ctrl",
+        "//cdc/rtl/internal:br_cdc_fifo_push_ctrl",
+    ],
+)
+
+br_verilog_elab_and_lint_test_suite(
+    name = "br_cdc_fifo_ctrl_1r1w_test_suite",
+    params = {
+        "Depth": [
+            "5",
+            "8",
+        ],
+        "Width": ["8"],
+        "RamWriteLatency": [
+            "1",
+            "2",
+        ],
+        "RamReadLatency": [
+            "0",
+            "1",
+            "2",
+        ],
+        "RegisterPopOutputs": [
+            "0",
+            "1",
+        ],
+    },
+    top = "br_cdc_fifo_ctrl_1r1w",
+    deps = [":br_cdc_fifo_ctrl_1r1w"],
+)
+
+verilog_library(
+    name = "br_cdc_fifo_ctrl_1r1w_push_credit",
+    srcs = ["br_cdc_fifo_ctrl_1r1w_push_credit.sv"],
+    deps = [
+        ":br_cdc_bit_toggle",
+        "//cdc/rtl/internal:br_cdc_fifo_gray_count_sync",
+        "//cdc/rtl/internal:br_cdc_fifo_pop_ctrl",
+        "//cdc/rtl/internal:br_cdc_fifo_push_ctrl_credit",
+    ],
+)
+
+br_verilog_elab_and_lint_test_suite(
+    name = "br_cdc_fifo_ctrl_1r1w_push_credit_test_suite",
+    params = {
+        "Depth": [
+            "5",
+            "8",
+        ],
+        "Width": ["8"],
+        "RamWriteLatency": [
+            "1",
+            "2",
+        ],
+        "RamReadLatency": [
+            "0",
+            "1",
+            "2",
+        ],
+        "RegisterPopOutputs": [
+            "0",
+            "1",
+        ],
+    },
+    top = "br_cdc_fifo_ctrl_1r1w_push_credit",
+    deps = [":br_cdc_fifo_ctrl_1r1w_push_credit"],
+)
+
+verilog_library(
+    name = "br_cdc_fifo_flops",
+    srcs = ["br_cdc_fifo_flops.sv"],
+    deps = [
+        ":br_cdc_fifo_ctrl_1r1w",
+        "//ram/rtl:br_ram_flops_1r1w",
+    ],
+)
+
+br_verilog_elab_and_lint_test_suite(
+    name = "br_cdc_fifo_flops_test_suite",
+    params = {
+        "Depth": [
+            "5",
+            "8",
+        ],
+        "Width": ["8"],
+        "RamWriteLatency": [
+            "1",
+            "2",
+        ],
+        "RamReadLatency": [
+            "0",
+            "1",
+            "2",
+        ],
+        "RegisterPopOutputs": [
+            "0",
+            "1",
+        ],
+    },
+    top = "br_cdc_fifo_flops",
+    deps = [":br_cdc_fifo_flops"],
+)
+
+verilog_library(
+    name = "br_cdc_fifo_flops_push_credit",
+    srcs = ["br_cdc_fifo_flops_push_credit.sv"],
+    deps = [
+        ":br_cdc_fifo_ctrl_1r1w_push_credit",
+        "//ram/rtl:br_ram_flops_1r1w",
+    ],
+)
+
+br_verilog_elab_and_lint_test_suite(
+    name = "br_cdc_fifo_flops_push_credit_test_suite",
+    params = {
+        "Depth": [
+            "5",
+            "8",
+        ],
+        "Width": ["8"],
+        "RamWriteLatency": [
+            "1",
+            "2",
+        ],
+        "RamReadLatency": [
+            "0",
+            "1",
+            "2",
+        ],
+        "RegisterPopOutputs": [
+            "0",
+            "1",
+        ],
+    },
+    top = "br_cdc_fifo_flops_push_credit",
+    deps = [":br_cdc_fifo_flops_push_credit"],
+)

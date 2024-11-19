@@ -16,7 +16,9 @@
 
 module br_fifo_test_harness #(
     parameter int Width = 1,
-    parameter int Depth = 2
+    parameter int Depth = 2,
+    parameter int CutThroughLatency = 1,
+    parameter int BackpressureLatency = 1
 ) (
     input  logic        clk,
     input  logic        rst,
@@ -76,7 +78,7 @@ module br_fifo_test_harness #(
     push_valid = 0;
 
     // Check if FIFO is full
-    @(negedge clk);
+    repeat (CutThroughLatency) @(negedge clk);
     if (full && !empty && (items == Depth))
       $display("FIFO is full as expected with %0d items.", items);
     else begin
@@ -115,7 +117,7 @@ module br_fifo_test_harness #(
     pop_ready = 0;
 
     // Check if FIFO is empty
-    @(posedge clk);
+    repeat (BackpressureLatency) @(posedge clk);
     if (empty && !full && (items == 0))
       $display("FIFO is empty as expected with %0d items.", items);
     else begin
