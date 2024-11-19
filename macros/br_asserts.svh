@@ -34,21 +34,16 @@
 
 `define BR_NOOP
 
-`ifdef BR_ASSERT_ON
 `define BR_ASSERT_STATIC(__name__, __expr__) \
 if (!(__expr__)) begin : gen__``__name__ \
-__STATIC_ASSERT_FAILED__``__name__ __STATIC_ASSERT_FAILED__``__name__ (); \
+__BR_ASSERT_STATIC_FAILED__``__name__ __BR_ASSERT_STATIC_FAILED__``__name__ (); \
 end
-`else  // BR_ASSERT_ON
-`define BR_ASSERT_STATIC(__name__, __expr__) \
-`BR_NOOP
-`endif  // BR_ASSERT_ON
 
 `define BR_ASSERT_STATIC_IN_PACKAGE(__name__, __expr__) \
 typedef enum logic [1:0] { \
-    __STATIC_ASSERT_OK__``__name__ = ((__expr__) ? 1 : 0), \
-    __STATIC_ASSERT_FAILED__``__name__ = 0 \
-} __static_assert_enum__``__name__;
+    __BR_ASSERT_STATIC_IN_PACKAGE_OK__``__name__ = ((__expr__) ? 1 : 0), \
+    __BR_ASSERT_STATIC_IN_PACKAGE_FAILED__``__name__ = 0 \
+} __br_static_assert_enum__``__name__;
 
 ////////////////////////////////////////////////////////////////////////////////
 // Concurrent assertion macros (evaluated on posedge of a clock and disabled during a synchronous active-high reset)
