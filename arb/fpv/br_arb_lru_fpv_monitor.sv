@@ -29,14 +29,9 @@ module br_arb_lru_fpv_monitor #(
   logic [NumRequesters-1:0][$clog2(NumRequesters)-1:0] arb_priority;
 
   for (genvar i = 0; i < NumRequesters; i++) begin : gen_priority
-    always_ff @(posedge clk) begin
-      if (rst) begin
-        arb_priority[i] <= 0;
-      end if (grant != 0) begin
-        // The granted request will have priority reset to the lowest
-        // All other requesters bump up their priority
-        arb_priority[i] <= grant[i] ? 0 : arb_priority[i] + 1'b1;
-      end
+     // The granted request will have priority reset to the lowest
+     // All other requesters bump up their priority
+    `BR_REGL(arb_priority[i], grant[i] ? 0 : arb_priority[i] + 1'b1, grant != 0)
     end
   end
 
