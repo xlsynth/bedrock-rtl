@@ -31,7 +31,7 @@ module br_arb_lru_fpv_monitor #(
   for (genvar i = 0; i < NumRequesters; i++) begin : gen_priority
      // The granted request will have priority reset to the lowest
      // All other requesters bump up their priority
-    `BR_REGL(arb_priority[i], grant[i] ? 0 : arb_priority[i] + 1'b1, grant != 0)
+    `BR_REGL(arb_priority[i], grant[i] ? 0 : arb_priority[i] + request[i], grant != 0)
   end
 
   `BR_ASSERT(must_grant_a, request != 0 |-> grant != 0)
