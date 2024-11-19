@@ -32,13 +32,7 @@ module br_arb_rr_fpv_monitor #(
 
    logic [NumRequesters-1:0] high_priority_request;
 
-  always_ff @(posedge clk) begin
-    if (rst) begin
-      high_priority_request <= 1;
-    end if (grant != 0) begin
-      high_priority_request <= (grant == 1 << NumRequesters) ? 1 : grant << 1;
-    end
-  end
+  `BR_REGL(high_priority_request, (grant == 1 << NumRequesters) ? 1 : grant << 1, grant != 0)
 
   for (genvar i = 0; i < NumRequesters; i++) begin : gen_req_0
     // Request must be hold until granted

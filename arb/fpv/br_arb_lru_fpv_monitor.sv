@@ -32,7 +32,6 @@ module br_arb_lru_fpv_monitor #(
      // The granted request will have priority reset to the lowest
      // All other requesters bump up their priority
     `BR_REGL(arb_priority[i], grant[i] ? 0 : arb_priority[i] + 1'b1, grant != 0)
-    end
   end
 
   `BR_ASSERT(must_grant_a, request != 0 |-> grant != 0)
@@ -53,8 +52,8 @@ module br_arb_lru_fpv_monitor #(
       if (i != j) begin
         `BR_ASSERT(arb_priority_a, grant[j] |->
           !request[i] || (arb_priority[i] < arb_priority[j]) ||
-          // TODO: when two requests have the same priority, the
-          // lower index request should be granted first?
+          // When two requests have the same priority, the
+          // lower index request should be granted
           (arb_priority[i] == arb_priority[j] && (i < j))
          )
        end
