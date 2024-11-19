@@ -14,19 +14,17 @@
 
 // Bedrock-RTL LRU Arbiter FPV monitor
 
+`include "br_asserts.svh"
+
 module br_arb_lru_fpv_monitor #(
     // Must be at least 2
     parameter int NumRequesters = 2
 ) (
-    // ri lint_check_waive HIER_NET_NOT_READ HIER_BRANCH_NOT_READ
-    input logic clk,  // Only used for assertions
-    // ri lint_check_waive HIER_NET_NOT_READ HIER_BRANCH_NOT_READ
-    input logic rst,  // Only used for assertions
+    input logic clk,
+    input logic rst,
     input logic [NumRequesters-1:0] request,
     input logic [NumRequesters-1:0] grant
 );
-
-  `include "br_asserts.svh"
 
   logic [NumRequesters-1:0][$clog2(NumRequesters)-1:0] arb_priority;
 
