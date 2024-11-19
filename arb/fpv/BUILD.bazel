@@ -59,6 +59,7 @@ verilog_elab_test(
 
 br_verilog_fpv_test_suite(
     name = "br_arb_rr_jg_test_suite",
+    gui = True,
     params = {
         "NumRequesters": [
             "2",

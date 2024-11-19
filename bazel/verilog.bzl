@@ -211,6 +211,8 @@ def _verilog_fpv_test_impl(ctx):
     extra_args = []
     if ctx.attr.elab_only:
         extra_args.append("--elab_only")
+    if ctx.attr.gui:
+        extra_args.append("--gui")
     if len(ctx.attr.opts) > 0 and ctx.attr.tool == "":
         fail("If opts are provided, then tool must also be set.")
     for opt in ctx.attr.opts:
@@ -405,6 +407,10 @@ rule_verilog_fpv_test = rule(
         ),
         "tool": attr.string(
             doc = "Formal tool to use. If not provided, default is decided by the BAZEL_VERILOG_RUNNER_TOOL implementation.",
+        ),
+        "gui": attr.bool(
+            doc = "Enable GUI.",
+            default = False,
         ),
     },
     test = True,
