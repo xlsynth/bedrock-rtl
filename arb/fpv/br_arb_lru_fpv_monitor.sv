@@ -41,6 +41,7 @@ module br_arb_lru_fpv_monitor #(
 
   for (genvar i = 0; i < NumRequesters; i++) begin : gen_req_0
     // Request must be hold until granted
+    // TODO: Remove below assumption and fix other liveness assrtion
     `BR_ASSUME(hold_request_until_grant_m, request[i] && !grant[i] |=> request[i])
     // Grant must be given to an active requester
     `BR_ASSERT(grant_active_req_a, grant[i] |-> request[i])
