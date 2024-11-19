@@ -43,7 +43,7 @@ end
 typedef enum logic [1:0] { \
     __BR_ASSERT_STATIC_IN_PACKAGE_OK__``__name__ = ((__expr__) ? 1 : 0), \
     __BR_ASSERT_STATIC_IN_PACKAGE_FAILED__``__name__ = 0 \
-} __static_assert_enum__``__name__;
+} __br_static_assert_enum__``__name__;
 
 ////////////////////////////////////////////////////////////////////////////////
 // Concurrent assertion macros (evaluated on posedge of a clock and disabled during a synchronous active-high reset)
