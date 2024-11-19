@@ -36,7 +36,7 @@ module br_arb_lru_fpv_monitor #(
   end
 
   `BR_ASSERT(must_grant_a, request != 0 |-> grant != 0)
-  `BR_ASSERT(onehot_grant_a, $countones(grant) <= 1)
+  `BR_ASSERT(onehot_grant_a, $onehot0(grant))
   `BR_COVER(all_request_c, request == '1)
 
   for (genvar i = 0; i < NumRequesters; i++) begin : gen_req_0
