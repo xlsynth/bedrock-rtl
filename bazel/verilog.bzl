@@ -86,11 +86,11 @@ def _verilog_base_impl(ctx, subcmd, test = True, extra_args = [], extra_runfiles
             ["--top=" + top] +
             ["--param=" + key + "=" + value for key, value in ctx.attr.params.items()])
     filelist = ctx.label.name + ".f"
-    tcl = ctx.label.name + ".tcl"
+    tclout = ctx.label.name + ".tcl"
     script = ctx.label.name + ".sh"
     log = ctx.label.name + ".log"
     args.append("--filelist=" + filelist)
-    args.append("--tcl=" + tcl)
+    args.append("--tcl-out=" + tclout)
     args.append("--script=" + script)
     args.append("--log=" + log)
     if ctx.attr.tool:
@@ -117,7 +117,7 @@ def _verilog_base_impl(ctx, subcmd, test = True, extra_args = [], extra_runfiles
     else:
         # Generator I/O
         generator_inputs = srcs + hdrs + extra_runfiles
-        generator_outputs = [tcl, script]
+        generator_outputs = [tclout, script]
 
         # Tarball inputs
         tar_inputs = []
