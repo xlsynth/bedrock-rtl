@@ -59,6 +59,7 @@ verilog_elab_test(
 
 br_verilog_fpv_test_suite(
     name = "br_arb_rr_jg_test_suite",
+    custom_tcl = "br_arb_rr_fpv.tcl",
     params = {
         "NumRequesters": [
             "2",
@@ -67,7 +68,6 @@ br_verilog_fpv_test_suite(
     },
     tool = "jg",
     top = "br_arb_rr",
-    custom_tcl = "br_arb_rr_fpv.tcl",
     deps = [":br_arb_rr_fpv_monitor"],
 )
 
