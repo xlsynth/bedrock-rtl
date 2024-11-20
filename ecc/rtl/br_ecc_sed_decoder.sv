@@ -28,7 +28,7 @@
 //
 // In Bedrock ECC libs, our convention is to always append the parity bits on
 // the MSbs:
-//     codeword == {parity, msg}
+//     codeword == {parity, message}
 //
 // This is a purely combinational module. Valid bits are provided for
 // convenience of user integration and port compatibility with the
@@ -77,6 +77,7 @@ module br_ecc_sed_decoder #(
   //------------------------------------------
   // Implementation checks
   //------------------------------------------
-  `BR_ASSERT_COMB_IMPL(codeword_valid_eq_msg_valid_a, codeword_valid == msg_valid)
+  // ri lint_check_waive ALWAYS_COMB
+  `BR_ASSERT_COMB_IMPL(codeword_valid_eq_message_valid_a, codeword_valid == message_valid)
 
 endmodule : br_ecc_sed_decoder
