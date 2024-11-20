@@ -21,7 +21,7 @@ module br_amba_axil2apb #(
     parameter int DataWidth = 64
 ) (
     input clk,
-    input rst,  // Synchronous active-high
+    input rst,  // Synchronous, active-high reset
 
     // AXI4-Lite interface
     input  logic [    AddrWidth-1:0] awaddr,
@@ -55,135 +55,92 @@ module br_amba_axil2apb #(
     input  logic                 pslverr
 );
 
-  // Internal signals
-  logic [AddrWidth-1:0] awaddr_reg, araddr_reg;
-  logic [DataWidth-1:0] wdata_reg;
-  logic [(DataWidth/8)-1:0] wstrb_reg;
-  logic awvalid_reg, wvalid_reg, arvalid_reg;
-  logic bready_reg, rready_reg;
-  logic [1:0] bresp_reg, rresp_reg;
-  logic [DataWidth-1:0] rdata_reg;
-  logic bvalid_reg, rvalid_reg;
+  typedef enum logic [1:0] {
+    IDLE,
+    SETUP,
+    ACCESS
+  } apb_state_t;
+  apb_state_t apb_state, apb_state_next;
 
-  // AXI4-Lite write address channel
-  always_ff @(posedge clk) begin
+  logic [AddrWidth-1:0] addr_reg;
+  logic [DataWidth-1:0] data_reg;
+  logic write_reg;
+  logic write_txn, read_txn;
+  logic write_done, read_done;
+
+  // APB signal assignments
+  assign psel = (apb_state != IDLE);
+  assign penable = (apb_state == ACCESS);
+
+  always_ff @(posedge clk or posedge rst) begin
     if (rst) begin
-      awready <= 1'b0;
-      awaddr_reg <= '0;
-      awvalid_reg <= 1'b0;
+      // Reset APB signals
+      apb_state <= IDLE;
+      addr_reg  <= '0;
+      data_reg  <= '0;
+      write_reg <= 1'b0;
     end else begin
-      if (awvalid && !awready) begin
-        awready <= 1'b1;
-        awaddr_reg <= awaddr;
-        awvalid_reg <= 1'b1;
-      end else begin
-        awready <= 1'b0;
-        awvalid_reg <= 1'b0;
+      apb_state <= apb_state_next;
+
+      if (write_txn || read_txn) begin
+        addr_reg  <= write_txn ? awaddr : araddr;
+        data_reg  <= wdata;
+        write_reg <= write_txn;
       end
     end
   end
 
-  // AXI4-Lite write data channel
+  always_comb begin
+    // Default next state
+    apb_state_next = apb_state;
+
+    unique case (apb_state)
+      IDLE: begin
+        if (write_txn || read_txn) begin
+          apb_state_next = SETUP;
+        end
+      end
+      SETUP: begin
+        apb_state_next = ACCESS;
+      end
+      ACCESS: begin
+        if (pready) begin
+          apb_state_next = IDLE;
+        end
+      end
+    endcase
+  end
+
+  // Write transaction detection
+  assign write_txn = awvalid && wvalid && ~bvalid && (apb_state == IDLE);
+  assign write_done = bvalid && bready;
+
+  // Read transaction detection
+  assign read_txn = arvalid && ~rvalid && (apb_state == IDLE);
+  assign read_done = rvalid && rready;
+
+  // AXI4-Lite write handshake
+  assign awready = (apb_state == IDLE);
+  assign wready = (apb_state == IDLE);
+  assign bvalid = write_done;
+  assign bresp = pslverr ? 2'b10 : 2'b00;  // Error or OKAY
+
+  // AXI4-Lite read handshake
+  assign arready = (apb_state == IDLE);
+  assign rvalid = (apb_state == IDLE) && read_done;
+  assign rresp = pslverr ? 2'b10 : 2'b00;  // Error or OKAY
+
   always_ff @(posedge clk) begin
     if (rst) begin
-      wready <= 1'b0;
-      wdata_reg <= '0;
-      wstrb_reg <= '0;
-      wvalid_reg <= 1'b0;
-    end else begin
-      if (wvalid && !wready) begin
-        wready <= 1'b1;
-        wdata_reg <= wdata;
-        wstrb_reg <= wstrb;
-        wvalid_reg <= 1'b1;
-      end else begin
-        wready <= 1'b0;
-        wvalid_reg <= 1'b0;
-      end
+      rdata <= '0;
+    end else if (read_done) begin
+      rdata <= prdata;
     end
   end
 
-  // AXI4-Lite write response channel
-  always_ff @(posedge clk) begin
-    if (rst) begin
-      bvalid <= 1'b0;
-      bresp_reg <= 2'b00;
-    end else begin
-      if (bready && bvalid) begin
-        bvalid <= 1'b0;
-      end else if (awvalid_reg && wvalid_reg) begin
-        bvalid <= 1'b1;
-        bresp_reg <= pslverr ? 2'b10 : 2'b00;
-      end
-    end
-  end
-
-  assign bresp = bresp_reg;
-
-  // AXI4-Lite read address channel
-  always_ff @(posedge clk) begin
-    if (rst) begin
-      arready <= 1'b0;
-      araddr_reg <= '0;
-      arvalid_reg <= 1'b0;
-    end else begin
-      if (arvalid && !arready) begin
-        arready <= 1'b1;
-        araddr_reg <= araddr;
-        arvalid_reg <= 1'b1;
-      end else begin
-        arready <= 1'b0;
-        arvalid_reg <= 1'b0;
-      end
-    end
-  end
-
-  // AXI4-Lite read data channel
-  always_ff @(posedge clk) begin
-    if (rst) begin
-      rvalid <= 1'b0;
-      rdata_reg <= '0;
-      rresp_reg <= 2'b00;
-    end else begin
-      if (rready && rvalid) begin
-        rvalid <= 1'b0;
-      end else if (arvalid_reg) begin
-        rvalid <= 1'b1;
-        rdata_reg <= prdata;
-        rresp_reg <= pslverr ? 2'b10 : 2'b00;
-      end
-    end
-  end
-
-  assign rdata = rdata_reg;
-  assign rresp = rresp_reg;
-
-  // APB interface control
-  always_ff @(posedge clk) begin
-    if (rst) begin
-      psel <= 1'b0;
-      penable <= 1'b0;
-      pwrite <= 1'b0;
-      paddr <= '0;
-      pwdata <= '0;
-    end else begin
-      if (awvalid_reg && wvalid_reg) begin
-        psel <= 1'b1;
-        penable <= 1'b1;
-        pwrite <= 1'b1;
-        paddr <= awaddr_reg;
-        pwdata <= wdata_reg;
-      end else if (arvalid_reg) begin
-        psel <= 1'b1;
-        penable <= 1'b1;
-        pwrite <= 1'b0;
-        paddr <= araddr_reg;
-      end else begin
-        psel <= 1'b0;
-        penable <= 1'b0;
-        pwrite <= 1'b0;
-      end
-    end
-  end
+  // APB signal generation
+  assign paddr  = addr_reg;
+  assign pwdata = data_reg;
+  assign pwrite = write_reg;
 
 endmodule : br_amba_axil2apb
