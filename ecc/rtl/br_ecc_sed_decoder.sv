@@ -65,11 +65,14 @@ module br_ecc_sed_decoder #(
   assign message_valid = codeword_valid;
   assign message = codeword[MessageWidth-1:0];
 
-  // Even parity: the total number of 1s in a valid codeword is even.
-  logic codeword_parity_even;
-  assign codeword_parity_even  = (^codeword) == 1'b0;
+  // Even parity: the total number of 1s in a valid codeword
+  // (including the parity bits) is even.
+  logic codeword_parity;
+  logic codeword_parity_is_even;
+  assign codeword_parity = ^codeword;
+  assign codeword_parity_is_even = codeword_parity == 1'b0;
 
-  assign single_error_detected = codeword_valid && !codeword_parity_even;
+  assign single_error_detected = codeword_valid && !codeword_parity_is_even;
 
   //------------------------------------------
   // Implementation checks
