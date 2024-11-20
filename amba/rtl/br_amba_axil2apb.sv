@@ -20,8 +20,8 @@
 `include "br_registers.svh"
 
 module br_amba_axil2apb #(
-    parameter int AddrWidth = 40,
-    parameter int DataWidth = 64
+    parameter int AddrWidth = 12,  // Must be at least 12
+    parameter int DataWidth = 32   // Must be at least 32
 ) (
     input clk,
     input rst,  // Synchronous, active-high reset
@@ -59,6 +59,16 @@ module br_amba_axil2apb #(
     input  logic                             pready,
     input  logic                             pslverr
 );
+
+  //------------------------------------------
+  // Integration checks
+  //------------------------------------------
+  `BR_ASSERT_STATIC(addr_width_must_be_at_least_12_a, AddrWidth >= 12)
+  `BR_ASSERT_STATIC(data_width_must_be_at_least_32_a, DataWidth >= 32)
+
+  //------------------------------------------
+  // Implementation
+  //------------------------------------------
 
   typedef enum logic [3:0] {
     Idle   = 4'b0001,
@@ -128,7 +138,7 @@ module br_amba_axil2apb #(
         end
       end
       Resp: begin
-        if ((write_reg && bready) || (~write_reg && rready)) begin
+        if ((write_reg && bready) || (!write_reg && rready)) begin
           apb_state_next = Idle;
         end
       end
@@ -158,6 +168,6 @@ module br_amba_axil2apb #(
   // Implementation checks
   //------------------------------------------
 
-  `BR_ASSERT_IMPL(apb_state_next_known_a, !$isunknown(apb_state_next))
+  `BR_ASSERT_IMPL(apb_state_next_known_a, $isknown(apb_state))
 
 endmodule : br_amba_axil2apb

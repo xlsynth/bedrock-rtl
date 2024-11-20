@@ -17,12 +17,13 @@
 // This module creates a timing slice on an AXI4-Lite interface.
 
 module br_amba_axil_timing_slice #(
-    parameter int AddrWidth   = 40,
-    parameter int DataWidth   = 64,
-    parameter int AWUserWidth = 1,
-    parameter int WUserWidth  = 1,
-    parameter int ARUserWidth = 1,
-    parameter int RUserWidth  = 1
+    parameter  int AddrWidth   = 40,
+    parameter  int DataWidth   = 64,
+    parameter  int AWUserWidth = 1,
+    parameter  int WUserWidth  = 1,
+    parameter  int ARUserWidth = 1,
+    parameter  int RUserWidth  = 1,
+    localparam int StrobeWidth = DataWidth / 8
 ) (
     input clk,
     input rst,  // Synchronous, active-high reset
@@ -34,7 +35,7 @@ module br_amba_axil_timing_slice #(
     input  logic                             target_awvalid,
     output logic                             target_awready,
     input  logic [            DataWidth-1:0] target_wdata,
-    input  logic [        (DataWidth/8)-1:0] target_wstrb,
+    input  logic [          StrobeWidth-1:0] target_wstrb,
     input  logic [           WUserWidth-1:0] target_wuser,
     input  logic                             target_wvalid,
     output logic                             target_wready,
@@ -59,7 +60,7 @@ module br_amba_axil_timing_slice #(
     output logic                             init_awvalid,
     input  logic                             init_awready,
     output logic [            DataWidth-1:0] init_wdata,
-    output logic [        (DataWidth/8)-1:0] init_wstrb,
+    output logic [          StrobeWidth-1:0] init_wstrb,
     output logic [           WUserWidth-1:0] init_wuser,
     output logic                             init_wvalid,
     input  logic                             init_wready,
@@ -80,8 +81,8 @@ module br_amba_axil_timing_slice #(
 
   // Write Address Channel Timing Slice
   br_flow_reg_both #(
-      .Width(AddrWidth + 3 + AWUserWidth)  // Address + Prot + User
-  ) aw_slice (
+      .Width(AddrWidth + br_amba::AxiProtWidth + AWUserWidth)
+  ) br_flow_reg_both_aw_slice (
       .clk,
       .rst,
       .push_ready(target_awready),
@@ -94,8 +95,8 @@ module br_amba_axil_timing_slice #(
 
   // Write Data Channel Timing Slice
   br_flow_reg_both #(
-      .Width(DataWidth + WUserWidth + (DataWidth / 8))  // Data + Wstrb + User
-  ) w_slice (
+      .Width(DataWidth + WUserWidth + StrobeWidth)
+  ) br_flow_reg_both_w_slice (
       .clk,
       .rst,
       .push_ready(target_wready),
@@ -108,7 +109,7 @@ module br_amba_axil_timing_slice #(
 
   // Write Response Channel Timing Slice
   br_flow_reg_both #(
-      .Width(2)  // Response (2 bits)
+      .Width(br_amba::AxiRespWidth)
   ) b_slice (
       .clk,
       .rst,
@@ -122,8 +123,8 @@ module br_amba_axil_timing_slice #(
 
   // Read Address Channel Timing Slice
   br_flow_reg_both #(
-      .Width(AddrWidth + 3 + RUserWidth)  // Address + Prot + User
-  ) ar_slice (
+      .Width(AddrWidth + br_amba::AxiProtWidth + RUserWidth)
+  ) br_flow_reg_both_ar_slice (
       .clk,
       .rst,
       .push_ready(target_arready),
@@ -136,8 +137,8 @@ module br_amba_axil_timing_slice #(
 
   // Read Data Channel Timing Slice
   br_flow_reg_both #(
-      .Width(DataWidth + 2 + RUserWidth)  // Data + Response (2 bits) + User
-  ) r_slice (
+      .Width(DataWidth + br_amba::AxiRespWidth + RUserWidth)
+  ) br_flow_reg_both_r_slice (
       .clk,
       .rst,
       .push_ready(init_rready),
