@@ -27,73 +27,65 @@ module br_amba_axil2apb #(
     input rst,  // Synchronous, active-high reset
 
     // AXI4-Lite interface
-    input  logic [    AddrWidth-1:0] awaddr,
-    input  logic [              2:0] awprot,
-    input  logic                     awvalid,
-    output logic                     awready,
-    input  logic [    DataWidth-1:0] wdata,
-    input  logic [(DataWidth/8)-1:0] wstrb,
-    input  logic                     wvalid,
-    output logic                     wready,
-    output logic [              1:0] bresp,
-    output logic                     bvalid,
-    input  logic                     bready,
-    input  logic [    AddrWidth-1:0] araddr,
-    input  logic [              2:0] arprot,
-    input  logic                     arvalid,
-    output logic                     arready,
-    output logic [    DataWidth-1:0] rdata,
-    output logic [              1:0] rresp,
-    output logic                     rvalid,
-    input  logic                     rready,
+    input  logic [                AddrWidth-1:0] awaddr,
+    input  logic [br_amba_pkg::AxiProtWidth-1:0] awprot,
+    input  logic                                 awvalid,
+    output logic                                 awready,
+    input  logic [                DataWidth-1:0] wdata,
+    input  logic [            (DataWidth/8)-1:0] wstrb,
+    input  logic                                 wvalid,
+    output logic                                 wready,
+    output logic [br_amba_pkg::AxiRespWidth-1:0] bresp,
+    output logic                                 bvalid,
+    input  logic                                 bready,
+    input  logic [                AddrWidth-1:0] araddr,
+    input  logic [br_amba_pkg::AxiProtWidth-1:0] arprot,
+    input  logic                                 arvalid,
+    output logic                                 arready,
+    output logic [                DataWidth-1:0] rdata,
+    output logic [br_amba_pkg::AxiRespWidth-1:0] rresp,
+    output logic                                 rvalid,
+    input  logic                                 rready,
 
     // APB interface
-    output logic [    AddrWidth-1:0] paddr,
-    output logic                     psel,
-    output logic                     penable,
-    output logic [              2:0] pprot,
-    output logic [(DataWidth/8)-1:0] pstrb,
-    output logic                     pwrite,
-    output logic [    DataWidth-1:0] pwdata,
-    input  logic [    DataWidth-1:0] prdata,
-    input  logic                     pready,
-    input  logic                     pslverr
+    output logic [                AddrWidth-1:0] paddr,
+    output logic                                 psel,
+    output logic                                 penable,
+    output logic [br_amba_pkg::ApbProtWidth-1:0] pprot,
+    output logic [            (DataWidth/8)-1:0] pstrb,
+    output logic                                 pwrite,
+    output logic [                DataWidth-1:0] pwdata,
+    input  logic [                DataWidth-1:0] prdata,
+    input  logic                                 pready,
+    input  logic                                 pslverr
 );
 
   typedef enum logic [3:0] {
-    IDLE   = 4'b0001,
-    SETUP  = 4'b0010,
-    ACCESS = 4'b0100,
-    RESP   = 4'b1000
+    Idle   = 4'b0001,
+    Setup  = 4'b0010,
+    Access = 4'b0100,
+    Resp   = 4'b1000
   } apb_state_t;
   apb_state_t apb_state, apb_state_next;
 
   logic [AddrWidth-1:0] addr_reg, addr_next;
   logic [DataWidth-1:0] data_reg;
   logic [(DataWidth/8)-1:0] strb_reg;
-  logic [2:0] prot_reg, prot_next;
+  logic [br_amba_pkg::AxiProtWidth-1:0] prot_reg, prot_next;
   logic resp_reg;
   logic write_reg;
   logic arb_write_req, arb_write_grant;
   logic arb_read_req, arb_read_grant;
   logic arb_any_grant;
-  logic write_txn, write_txn_next;
-  logic read_txn, read_txn_next;
-  logic write_done, write_done_next;
-  logic read_done, read_done_next;
 
   `BR_REGLN(addr_reg, addr_next, arb_any_grant)
   `BR_REGLN(data_reg, wdata, arb_any_grant)
-  `BR_REGLN(write_reg, write_txn, arb_any_grant)
+  `BR_REGLN(write_reg, arb_write_grant, arb_any_grant)
   `BR_REGLN(strb_reg, wstrb, arb_any_grant)
   `BR_REGLN(prot_reg, prot_next, arb_any_grant)
-  `BR_REGLN(resp_reg, pslverr, (apb_state == ACCESS) && pready)
-  `BR_REGLN(rdata, prdata, read_done)
-  `BR_REG(write_txn, write_txn_next)
-  `BR_REG(read_txn, read_txn_next)
-  `BR_REG(write_done, write_done_next)
-  `BR_REG(read_done, read_done_next)
-  `BR_REGI(apb_state, apb_state_next, IDLE)
+  `BR_REGLN(resp_reg, pslverr, (apb_state == Access) && pready)
+  `BR_REGLN(rdata, prdata, (apb_state == Access) && pready)
+  `BR_REGI(apb_state, apb_state_next, Idle)
 
   // Arbitrate between read and write transactions
   br_arb_rr #(
@@ -107,21 +99,13 @@ module br_amba_axil2apb #(
   );
 
   // Arbiter request signals
-  assign arb_write_req = awvalid && wvalid && ~bvalid && (apb_state == IDLE);
-  assign arb_read_req = arvalid && ~rvalid && (apb_state == IDLE);
+  assign arb_write_req = awvalid && wvalid && (apb_state == Idle);
+  assign arb_read_req = arvalid && (apb_state == Idle);
   assign arb_any_grant = arb_write_grant || arb_read_grant;
 
   // Save the address and data for the transaction
   assign addr_next = arb_write_grant ? awaddr : araddr;
   assign prot_next = arb_write_grant ? awprot : arprot;
-
-  // Track transaction state
-  assign write_txn_next = (write_txn && ~write_done) || (~write_txn && arb_write_grant);
-  assign read_txn_next = (read_txn && ~read_done) || (~read_txn && arb_read_grant);
-
-  // Track transaction completion
-  assign write_done_next = bvalid && bready;
-  assign read_done_next = rvalid && rready;
 
   // APB state machine
   // ri lint_check_off GRAY_CODE_FSM
@@ -130,22 +114,22 @@ module br_amba_axil2apb #(
     apb_state_next = apb_state;
 
     unique case (apb_state)  // ri lint_check_waive FSM_DEFAULT_REQ
-      IDLE: begin
+      Idle: begin
         if (arb_any_grant) begin
-          apb_state_next = SETUP;
+          apb_state_next = Setup;
         end
       end
-      SETUP: begin
-        apb_state_next = ACCESS;
+      Setup: begin
+        apb_state_next = Access;
       end
-      ACCESS: begin
+      Access: begin
         if (pready) begin
-          apb_state_next = RESP;
+          apb_state_next = Resp;
         end
       end
-      RESP: begin
-        if (write_done_next || read_done_next) begin
-          apb_state_next = IDLE;
+      Resp: begin
+        if ((write_reg && bready) || (~write_reg && rready)) begin
+          apb_state_next = Idle;
         end
       end
     endcase
@@ -155,15 +139,15 @@ module br_amba_axil2apb #(
   // AXI4-Lite signal generation
   assign awready = arb_write_grant;
   assign wready = arb_write_grant;
-  assign bvalid = (apb_state == RESP) && write_txn;
-  assign bresp = {resp_reg, 1'b0};  // ri lint_check_waive CONST_ASSIGN CONST_OUTPUT
+  assign bvalid = (apb_state == Resp) && write_reg;
+  assign bresp = resp_reg ? br_amba_pkg::AxiRespSlverr : br_amba_pkg::AxiRespOkay;  // ri lint_check_waive CONST_ASSIGN CONST_OUTPUT ENUM_RHS
   assign arready = arb_read_grant;
-  assign rvalid = (apb_state == RESP) && read_txn;
-  assign rresp = {resp_reg, 1'b0};  // ri lint_check_waive CONST_ASSIGN CONST_OUTPUT
+  assign rvalid = (apb_state == Resp) && ~write_reg;
+  assign rresp = resp_reg ? br_amba_pkg::AxiRespSlverr : br_amba_pkg::AxiRespOkay;  // ri lint_check_waive CONST_ASSIGN CONST_OUTPUT ENUM_RHS
 
   // APB signal generation
-  assign psel = (apb_state != IDLE);
-  assign penable = (apb_state == ACCESS);
+  assign psel = (apb_state != Idle);
+  assign penable = (apb_state == Access);
   assign paddr = addr_reg;
   assign pwdata = data_reg;
   assign pwrite = write_reg;

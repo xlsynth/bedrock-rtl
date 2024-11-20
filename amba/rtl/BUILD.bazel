@@ -18,9 +18,15 @@ load("//bazel:br_verilog.bzl", "br_verilog_elab_and_lint_test_suite")
 package(default_visibility = ["//visibility:public"])
 
 verilog_library(
+    name = "br_amba_pkg",
+    srcs = ["br_amba_pkg.sv"],
+)
+
+verilog_library(
     name = "br_amba_axil2apb",
     srcs = ["br_amba_axil2apb.sv"],
     deps = [
+        ":br_amba_pkg",
         "//arb/rtl:br_arb_rr",
         "//macros:br_asserts_internal",
         "//macros:br_registers",
