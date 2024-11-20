@@ -14,9 +14,11 @@
 
 // Bedrock-RTL Delay Shift Register
 //
-// Implements a configurable depth shift register with an enable input.
+// Implements a loadable shift register with a shift enable input.
 // The contents of the shift register are initialized to the 'initial_value'
 // at reset or upon assertion of the 'reinit' input.
+//
+// The 'shift_en' input is ignored when 'reinit' is asserted.
 
 `include "br_registers.svh"
 `include "br_asserts_internal.svh"
@@ -31,7 +33,7 @@ module br_delay_shift_reg #(
     input  logic                            reinit,
     input  logic [NumStages-1:0][Width-1:0] initial_value,
     output logic [NumStages-1:0][Width-1:0] value,
-    // when shift_en is 1, value becomes {value[NumStages-2:0], shift_in}
+    // when shift_en is 1 and reinit is 0, value becomes {value[NumStages-2:0], shift_in}
     input  logic                            shift_en,
     input  logic [    Width-1:0]            shift_in,
     // shift_out is the same as value[NumStages-1]
@@ -55,7 +57,7 @@ module br_delay_shift_reg #(
     assign stages_next = (reinit) ? initial_value : {stages[NumStages-2:0], shift_in};
   end
 
-  `BR_REGIL(stages, stages_next, shift_en | reinit, initial_value)
+  `BR_REGIL(stages, stages_next, shift_en || reinit, initial_value)
 
   assign shift_out = stages[NumStages-1];
   assign value = stages;
@@ -63,9 +65,12 @@ module br_delay_shift_reg #(
   //------------------------------------------
   // Implementation checks
   //------------------------------------------
-  `BR_ASSERT_IMPL(value_shifted_a,
-                  (shift_en && !reinit) |-> value == {stages, shift_in})  // relies on truncation
-  `BR_ASSERT_IMPL(value_initialized_a, reinit |-> value == initial_value)
-  `BR_ASSERT_IMPL(value_stable_a, !shift_en && !reinit |-> $stable(value))
+  if (NumStages == 1) begin : gen_assert_one_stage
+    `BR_ASSERT_IMPL(value_shifted_a, (shift_en && !reinit) |=> value == shift_in)
+  end else begin : gen_assert_multi_stage
+    `BR_ASSERT_IMPL(value_shifted_a, (shift_en && !reinit) |=> value == {stages, shift_in})
+  end
+  `BR_ASSERT_IMPL(value_initialized_a, reinit |=> value == initial_value)
+  `BR_ASSERT_IMPL(value_stable_a, (!shift_en && !reinit) |=> $stable(value))
 
 endmodule : br_delay_shift_reg
