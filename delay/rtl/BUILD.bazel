@@ -62,6 +62,15 @@ verilog_library(
     ],
 )
 
+verilog_library(
+    name = "br_delay_shift_reg",
+    srcs = ["br_delay_shift_reg.sv"],
+    deps = [
+        "//macros:br_asserts_internal",
+        "//macros:br_registers",
+    ],
+)
+
 br_verilog_elab_and_lint_test_suite(
     name = "br_delay_test_suite",
     params = {
@@ -140,4 +149,20 @@ br_verilog_elab_and_lint_test_suite(
         ],
     },
     deps = [":br_delay_valid_next_nr"],
+)
+
+br_verilog_elab_and_lint_test_suite(
+    name = "br_delay_shift_reg_test_suite",
+    params = {
+        "Width": [
+            "1",
+            "8",
+        ],
+        "NumStages": [
+            "1",
+            "2",
+            "3",
+        ],
+    },
+    deps = [":br_delay_shift_reg"],
 )
