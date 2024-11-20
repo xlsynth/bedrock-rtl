@@ -67,6 +67,7 @@ br_verilog_fpv_test_suite(
     },
     tool = "jg",
     top = "br_arb_rr",
+    custom_tcl = "br_arb_rr_fpv.tcl",
     deps = [":br_arb_rr_fpv_monitor"],
 )
 
