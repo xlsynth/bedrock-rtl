@@ -14,7 +14,11 @@
 
 // AXI4-Lite Timing Slice
 //
-// This module creates a timing slice on an AXI4-Lite interface.
+// This module creates a full timing slice for all 5 channels of on an
+// AXI4-Lite interface.
+//
+// TODO: We may want to support per-channel parameters to choose between
+//       forward, reverse, or full timing slices.
 
 module br_amba_axil_timing_slice #(
     parameter  int AddrWidth   = 40,

@@ -28,10 +28,10 @@ package br_amba;
   } axi_resp_t;
 
   // AXI parameters
-  parameter int unsigned AxiProtWidth = 3;
-  parameter int unsigned AxiRespWidth = 2;
+  localparam int unsigned AxiProtWidth = 3;
+  localparam int unsigned AxiRespWidth = 2;
 
   // APB parameters
-  parameter int unsigned ApbProtWidth = 3;
+  localparam int unsigned ApbProtWidth = 3;
 
 endpackage : br_amba

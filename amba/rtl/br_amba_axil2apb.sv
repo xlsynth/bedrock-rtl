@@ -168,6 +168,10 @@ module br_amba_axil2apb #(
   // Implementation checks
   //------------------------------------------
 
-  `BR_ASSERT_IMPL(apb_state_next_known_a, $isknown(apb_state))
+  // Check that the APB state is known
+  `BR_ASSERT_IMPL(apb_state_next_known_a, !$isunknown(apb_state))
+
+  // Make sure that we do not accept any transactions when we are not in the IDLE state
+  `BR_ASSERT_IMPL(only_transactions_in_idle_a, (!arready && !awready) || (apb_state == Idle))
 
 endmodule : br_amba_axil2apb
