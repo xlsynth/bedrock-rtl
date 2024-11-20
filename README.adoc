@@ -840,24 +840,24 @@ a| Bus CDC using a dual-clock FIFO with internal flop-RAM
 |===
 | Module | Description | Implemented | Verified
 
-| `br_ecc_parity_decoder`
-| Single-error-detecting (parity) decoder
-| Yes
-|
-
-| `br_ecc_parity_encoder`
-| Single-error-detecting (parity) encoder
-| Yes
-|
-
-| `br_ecc_secded_dec`
+| `br_ecc_secded_decoder`
 | Single-error-correcting, double-error-detecting (SECDED) decoder
 |
 |
 
-| `br_ecc_secded_enc`
+| `br_ecc_secded_encoder`
 | Single-error-correcting, double-error-detecting (SECDED) encoder
 |
+|
+
+| `br_ecc_sed_decoder`
+| Single-error-detecting (SED) decoder
+| Yes
+|
+
+| `br_ecc_sed_encoder`
+| Single-error-detecting (SED) encoder
+| Yes
 |
 
 |===
