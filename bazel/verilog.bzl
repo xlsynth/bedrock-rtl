@@ -413,8 +413,8 @@ rule_verilog_fpv_test = rule(
         "tool": attr.string(
             doc = "Formal tool to use. If not provided, default is decided by the BAZEL_VERILOG_RUNNER_TOOL implementation.",
         ),
-        "custom_tcl": attr.label(
-            doc = "custom TCL script to run.",
+        "appendcustom_tcl": attr.label(
+            doc = "Custom TCL script to run after the elaboration step. Do not include Tcl commands that manipulate sources, headers, defines, or parameters, as those will be handled by the rule implementation.",
             allow_single_file = [".tcl"],
         ),
         "gui": attr.bool(
