@@ -20,6 +20,13 @@ package(default_visibility = ["//visibility:public"])
 verilog_library(
     name = "br_amba_axil2apb",
     srcs = ["br_amba_axil2apb.sv"],
+    deps = ["//macros:br_registers"],
+)
+
+verilog_library(
+    name = "br_amba_axil_timing_slice",
+    srcs = ["br_amba_axil_timing_slice.sv"],
+    deps = ["//flow/rtl:br_flow_reg_both"],
 )
 
 br_verilog_elab_and_lint_test_suite(
@@ -35,4 +42,19 @@ br_verilog_elab_and_lint_test_suite(
         ],
     },
     deps = [":br_amba_axil2apb"],
+)
+
+br_verilog_elab_and_lint_test_suite(
+    name = "br_amba_axil_timing_slice_test_suite",
+    params = {
+        "AddrWidth": [
+            "32",
+            "40",
+        ],
+        "DataWidth": [
+            "32",
+            "64",
+        ],
+    },
+    deps = [":br_amba_axil_timing_slice"],
 )
