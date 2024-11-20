@@ -16,6 +16,7 @@
 //
 // Converts an AXI4-Lite interface to an APB interface.
 
+`include "br_asserts_internal.svh"
 `include "br_registers.svh"
 
 module br_amba_axil2apb #(
@@ -59,10 +60,11 @@ module br_amba_axil2apb #(
     input  logic                     pslverr
 );
 
-  typedef enum logic [2:0] {
-    IDLE   = 3'b001,
-    SETUP  = 3'b010,
-    ACCESS = 3'b100
+  typedef enum logic [3:0] {
+    IDLE   = 4'b0001,
+    SETUP  = 4'b0010,
+    ACCESS = 4'b0100,
+    RESP   = 4'b1000
   } apb_state_t;
   apb_state_t apb_state, apb_state_next;
 
@@ -70,18 +72,22 @@ module br_amba_axil2apb #(
   logic [DataWidth-1:0] data_reg;
   logic [(DataWidth/8)-1:0] strb_reg;
   logic [2:0] prot_reg, prot_next;
+  logic resp_reg;
   logic write_reg;
+  logic arb_write_req, arb_write_grant;
+  logic arb_read_req, arb_read_grant;
+  logic arb_any_grant;
   logic write_txn, write_txn_next;
   logic read_txn, read_txn_next;
-  logic read_or_write_txn;
   logic write_done, write_done_next;
   logic read_done, read_done_next;
 
-  `BR_REGLN(addr_reg, addr_next, read_or_write_txn)
-  `BR_REGLN(data_reg, wdata, read_or_write_txn)
-  `BR_REGLN(write_reg, write_txn, read_or_write_txn)
-  `BR_REGLN(strb_reg, wstrb, read_or_write_txn)
-  `BR_REGLN(prot_reg, prot_next, read_or_write_txn)
+  `BR_REGLN(addr_reg, addr_next, arb_any_grant)
+  `BR_REGLN(data_reg, wdata, arb_any_grant)
+  `BR_REGLN(write_reg, write_txn, arb_any_grant)
+  `BR_REGLN(strb_reg, wstrb, arb_any_grant)
+  `BR_REGLN(prot_reg, prot_next, arb_any_grant)
+  `BR_REGLN(resp_reg, pslverr, (apb_state == ACCESS) && pready)
   `BR_REGLN(rdata, prdata, read_done)
   `BR_REG(write_txn, write_txn_next)
   `BR_REG(read_txn, read_txn_next)
@@ -89,12 +95,31 @@ module br_amba_axil2apb #(
   `BR_REG(read_done, read_done_next)
   `BR_REGI(apb_state, apb_state_next, IDLE)
 
-  // Transaction control
-  assign addr_next = write_txn ? awaddr : araddr;
-  assign prot_next = write_txn ? awprot : arprot;
-  assign read_or_write_txn = write_txn || read_txn;
-  assign write_txn_next = awvalid && wvalid && ~bvalid && (apb_state == IDLE);
-  assign read_txn_next = arvalid && ~rvalid && (apb_state == IDLE);
+  // Arbitrate between read and write transactions
+  br_arb_rr #(
+      .NumRequesters(2)
+  ) br_arb_rr (
+      .clk(clk),
+      .rst(rst),
+      .enable_priority_update(1'b0),
+      .request({arb_write_req, arb_read_req}),
+      .grant({arb_write_grant, arb_read_grant})
+  );
+
+  // Arbiter request signals
+  assign arb_write_req = awvalid && wvalid && ~bvalid && (apb_state == IDLE);
+  assign arb_read_req = arvalid && ~rvalid && (apb_state == IDLE);
+  assign arb_any_grant = arb_write_grant || arb_read_grant;
+
+  // Save the address and data for the transaction
+  assign addr_next = arb_write_grant ? awaddr : araddr;
+  assign prot_next = arb_write_grant ? awprot : arprot;
+
+  // Track transaction state
+  assign write_txn_next = (write_txn && ~write_done) || (~write_txn && arb_write_grant);
+  assign read_txn_next = (read_txn && ~read_done) || (~read_txn && arb_read_grant);
+
+  // Track transaction completion
   assign write_done_next = bvalid && bready;
   assign read_done_next = rvalid && rready;
 
@@ -104,9 +129,9 @@ module br_amba_axil2apb #(
     // Default next state
     apb_state_next = apb_state;
 
-    unique case (apb_state)
+    unique case (apb_state)  // ri lint_check_waive FSM_DEFAULT_REQ
       IDLE: begin
-        if (write_txn || read_txn) begin
+        if (arb_any_grant) begin
           apb_state_next = SETUP;
         end
       end
@@ -115,24 +140,26 @@ module br_amba_axil2apb #(
       end
       ACCESS: begin
         if (pready) begin
-          apb_state_next = IDLE;  // ri lint_check_waive GRAY_CODE_FSM
+          apb_state_next = RESP;
         end
       end
-      default: begin
-        apb_state_next = IDLE;
+      RESP: begin
+        if (write_done_next || read_done_next) begin
+          apb_state_next = IDLE;
+        end
       end
     endcase
   end
   // ri lint_check_on GRAY_CODE_FSM
 
   // AXI4-Lite signal generation
-  assign awready = (apb_state == IDLE);
-  assign wready = (apb_state == IDLE);
-  assign bvalid = write_done;
-  assign bresp = pslverr ? 2'b10 : 2'b00;  // ri lint_check_waive CONST_OUTPUT
-  assign arready = (apb_state == IDLE);
-  assign rvalid = (apb_state == IDLE) && read_done;
-  assign rresp = pslverr ? 2'b10 : 2'b00;  // ri lint_check_waive CONST_OUTPUT
+  assign awready = arb_write_grant;
+  assign wready = arb_write_grant;
+  assign bvalid = (apb_state == RESP) && write_txn;
+  assign bresp = {resp_reg, 1'b0};  // ri lint_check_waive CONST_ASSIGN CONST_OUTPUT
+  assign arready = arb_read_grant;
+  assign rvalid = (apb_state == RESP) && read_txn;
+  assign rresp = {resp_reg, 1'b0};  // ri lint_check_waive CONST_ASSIGN CONST_OUTPUT
 
   // APB signal generation
   assign psel = (apb_state != IDLE);
@@ -142,5 +169,11 @@ module br_amba_axil2apb #(
   assign pwrite = write_reg;
   assign pprot = prot_reg;
   assign pstrb = strb_reg;
+
+  //------------------------------------------
+  // Implementation checks
+  //------------------------------------------
+
+  `BR_ASSERT_IMPL(apb_state_next_known_a, !$isunknown(apb_state_next))
 
 endmodule : br_amba_axil2apb
