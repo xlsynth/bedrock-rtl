@@ -33,9 +33,9 @@ module br_delay_shift_reg #(
     output logic [NumStages-1:0][Width-1:0] value,
     // when shift_en is 1, value becomes {value[NumStages-2:0], shift_in}
     input  logic                            shift_en,
-    input  logic [Width-1:0]                shift_in,
+    input  logic [    Width-1:0]            shift_in,
     // shift_out is the same as value[NumStages-1]
-    output logic [Width-1:0]                shift_out
+    output logic [    Width-1:0]            shift_out
 );
 
   //------------------------------------------
@@ -64,7 +64,7 @@ module br_delay_shift_reg #(
   // Implementation checks
   //------------------------------------------
   `BR_ASSERT_IMPL(value_shifted_a,
-      (shift_en && !reinit) |-> value == {stages, shift_in})  // relies on truncation
+                  (shift_en && !reinit) |-> value == {stages, shift_in})  // relies on truncation
   `BR_ASSERT_IMPL(value_initialized_a, reinit |-> value == initial_value)
   `BR_ASSERT_IMPL(value_stable_a, !shift_en && !reinit |-> $stable(value))
 
