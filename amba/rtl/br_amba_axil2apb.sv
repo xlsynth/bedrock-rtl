@@ -27,37 +27,37 @@ module br_amba_axil2apb #(
     input rst,  // Synchronous, active-high reset
 
     // AXI4-Lite interface
-    input  logic [                AddrWidth-1:0] awaddr,
-    input  logic [br_amba_pkg::AxiProtWidth-1:0] awprot,
-    input  logic                                 awvalid,
-    output logic                                 awready,
-    input  logic [                DataWidth-1:0] wdata,
-    input  logic [            (DataWidth/8)-1:0] wstrb,
-    input  logic                                 wvalid,
-    output logic                                 wready,
-    output logic [br_amba_pkg::AxiRespWidth-1:0] bresp,
-    output logic                                 bvalid,
-    input  logic                                 bready,
-    input  logic [                AddrWidth-1:0] araddr,
-    input  logic [br_amba_pkg::AxiProtWidth-1:0] arprot,
-    input  logic                                 arvalid,
-    output logic                                 arready,
-    output logic [                DataWidth-1:0] rdata,
-    output logic [br_amba_pkg::AxiRespWidth-1:0] rresp,
-    output logic                                 rvalid,
-    input  logic                                 rready,
+    input  logic [            AddrWidth-1:0] awaddr,
+    input  logic [br_amba::AxiProtWidth-1:0] awprot,
+    input  logic                             awvalid,
+    output logic                             awready,
+    input  logic [            DataWidth-1:0] wdata,
+    input  logic [        (DataWidth/8)-1:0] wstrb,
+    input  logic                             wvalid,
+    output logic                             wready,
+    output logic [br_amba::AxiRespWidth-1:0] bresp,
+    output logic                             bvalid,
+    input  logic                             bready,
+    input  logic [            AddrWidth-1:0] araddr,
+    input  logic [br_amba::AxiProtWidth-1:0] arprot,
+    input  logic                             arvalid,
+    output logic                             arready,
+    output logic [            DataWidth-1:0] rdata,
+    output logic [br_amba::AxiRespWidth-1:0] rresp,
+    output logic                             rvalid,
+    input  logic                             rready,
 
     // APB interface
-    output logic [                AddrWidth-1:0] paddr,
-    output logic                                 psel,
-    output logic                                 penable,
-    output logic [br_amba_pkg::ApbProtWidth-1:0] pprot,
-    output logic [            (DataWidth/8)-1:0] pstrb,
-    output logic                                 pwrite,
-    output logic [                DataWidth-1:0] pwdata,
-    input  logic [                DataWidth-1:0] prdata,
-    input  logic                                 pready,
-    input  logic                                 pslverr
+    output logic [            AddrWidth-1:0] paddr,
+    output logic                             psel,
+    output logic                             penable,
+    output logic [br_amba::ApbProtWidth-1:0] pprot,
+    output logic [        (DataWidth/8)-1:0] pstrb,
+    output logic                             pwrite,
+    output logic [            DataWidth-1:0] pwdata,
+    input  logic [            DataWidth-1:0] prdata,
+    input  logic                             pready,
+    input  logic                             pslverr
 );
 
   typedef enum logic [3:0] {
@@ -71,7 +71,7 @@ module br_amba_axil2apb #(
   logic [AddrWidth-1:0] addr_reg, addr_next;
   logic [DataWidth-1:0] data_reg;
   logic [(DataWidth/8)-1:0] strb_reg;
-  logic [br_amba_pkg::AxiProtWidth-1:0] prot_reg, prot_next;
+  logic [br_amba::AxiProtWidth-1:0] prot_reg, prot_next;
   logic resp_reg;
   logic write_reg;
   logic arb_write_req, arb_write_grant;
@@ -140,13 +140,13 @@ module br_amba_axil2apb #(
   assign awready = arb_write_grant;
   assign wready = arb_write_grant;
   assign bvalid = (apb_state == Resp) && write_reg;
-  assign bresp = resp_reg ? br_amba_pkg::AxiRespSlverr : br_amba_pkg::AxiRespOkay;  // ri lint_check_waive CONST_ASSIGN CONST_OUTPUT ENUM_RHS
+  assign bresp = resp_reg ? br_amba::AxiRespSlverr : br_amba::AxiRespOkay;  // ri lint_check_waive CONST_ASSIGN CONST_OUTPUT ENUM_RHS
   assign arready = arb_read_grant;
   assign rvalid = (apb_state == Resp) && ~write_reg;
-  assign rresp = resp_reg ? br_amba_pkg::AxiRespSlverr : br_amba_pkg::AxiRespOkay;  // ri lint_check_waive CONST_ASSIGN CONST_OUTPUT ENUM_RHS
+  assign rresp = resp_reg ? br_amba::AxiRespSlverr : br_amba::AxiRespOkay;  // ri lint_check_waive CONST_ASSIGN CONST_OUTPUT ENUM_RHS
 
   // APB signal generation
-  assign psel = (apb_state != Idle);
+  assign psel = (apb_state == Setup) || (apb_state == Access);
   assign penable = (apb_state == Access);
   assign paddr = addr_reg;
   assign pwdata = data_reg;

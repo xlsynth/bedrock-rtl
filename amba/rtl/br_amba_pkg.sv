@@ -16,7 +16,7 @@
 //
 // Contains some AMBA-related definitions and helper functions.
 
-package br_amba_pkg;
+package br_amba;
 
   // AXI response types
   typedef enum logic [1:0] {
@@ -33,4 +33,4 @@ package br_amba_pkg;
   // APB parameters
   localparam int unsigned ApbProtWidth = 3;
 
-endpackage : br_amba_pkg
+endpackage : br_amba
