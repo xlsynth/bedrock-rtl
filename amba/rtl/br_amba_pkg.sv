@@ -16,6 +16,7 @@
 //
 // Contains some AMBA-related definitions and helper functions.
 
+// ri lint_check_waive FILE_NAME
 package br_amba;
 
   // AXI response types
