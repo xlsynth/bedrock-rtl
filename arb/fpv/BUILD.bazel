@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+load("@bedrock-rtl//bazel:verilog.bzl", "rule_verilog_sandbox")
 load("@rules_hdl//verilog:providers.bzl", "verilog_library")
 load("//bazel:br_verilog.bzl", "br_verilog_fpv_test_suite")
 load("//bazel:verilog.bzl", "verilog_elab_test")
@@ -91,6 +92,21 @@ br_verilog_fpv_test_suite(
             "2",
             "3",
         ],
+    },
+    tool = "jg",
+    top = "br_arb_lru",
+    deps = [":br_arb_lru_fpv_monitor"],
+)
+
+rule_verilog_sandbox(
+    name = "br_arb_lru_sandbox",
+    defines = [
+        "BR_ASSERT_ON",
+        "BR_ENABLE_IMPL_CHECKS",
+    ],
+    kind = "fpv",
+    params = {
+        "NumRequesters": "2",
     },
     tool = "jg",
     top = "br_arb_lru",

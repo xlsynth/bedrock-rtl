@@ -117,7 +117,7 @@ def _verilog_base_impl(ctx, subcmd, test = True, extra_args = [], extra_runfiles
     else:
         # Generator I/O
         generator_inputs = srcs + hdrs + extra_runfiles
-        generator_outputs = [tcl, script]
+        generator_outputs = [tcl, script, filelist]
 
         # Tarball inputs
         tar_inputs = []
@@ -142,11 +142,15 @@ def _verilog_base_impl(ctx, subcmd, test = True, extra_args = [], extra_runfiles
         )
 
         # Run generator script
+
         ctx.actions.run(
             inputs = generator_inputs + [generator_executable_file],
             outputs = [ctx.outputs.tarball],
             executable = generator_executable_file,
             arguments = [],
+            env = {
+                "VERILOG_RUNNER_PLUGIN_PATH": env.get("VERILOG_RUNNER_PLUGIN_PATH"),
+            },
         )
 
         # Write runner script (but don't run it)
