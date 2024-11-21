@@ -35,6 +35,7 @@ module br_delay_shift_reg #(
     input  logic [NumStages-1:0][Width-1:0] initial_value,
     output logic [NumStages-1:0][Width-1:0] value,
     // when shift_en is 1 and reinit is 0, value becomes {value[NumStages-2:0], shift_in}
+    // when shift_en is 1 and reinit is 1, value becomes {initial_value[NumStages-2:0], shift_in}
     input  logic                            shift_en,
     input  logic [    Width-1:0]            shift_in,
     // shift_out is the same as value[NumStages-1]
