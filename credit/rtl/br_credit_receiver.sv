@@ -47,7 +47,11 @@ module br_credit_receiver #(
     parameter int MaxCredit = 1,
     // If 1, add retiming to push_credit
     parameter bit RegisterPushCredit = 0,
-    localparam int CounterWidth = $clog2(MaxCredit + 1)
+    // Maximum pop credits that can be returned in a single cycle.
+    // Must be at least 1 but cannot be greater than MaxCredit.
+    parameter int PopCreditMaxChange = 1,
+    localparam int CounterWidth = $clog2(MaxCredit + 1),
+    localparam int PopCreditChangeWidth = $clog2(PopCreditMaxChange + 1)
 ) (
     // Posedge-triggered clock.
     input logic clk,
@@ -64,9 +68,9 @@ module br_credit_receiver #(
     // Unlike the push interface it has no credit stall mechanism.
     // Intended to be connected directly to a receiver buffer with
     // no reset skew.
-    input logic pop_credit,
-    output logic pop_valid,
-    output logic [Width-1:0] pop_data,
+    input  logic [PopCreditChangeWidth-1:0] pop_credit,
+    output logic                            pop_valid,
+    output logic [               Width-1:0] pop_data,
 
     // Reset value for the credit counter
     input  logic [CounterWidth-1:0] credit_initial,
@@ -83,8 +87,11 @@ module br_credit_receiver #(
   //------------------------------------------
   `BR_ASSERT_STATIC(width_in_range_a, Width >= 1)
   `BR_ASSERT_STATIC(max_credit_in_range_a, MaxCredit >= 1)
+  `BR_ASSERT_STATIC(pop_credit_change_in_range_a,
+                    (PopCreditMaxChange >= 1) && (PopCreditMaxChange <= MaxCredit))
 
   `BR_ASSERT_INTG(no_push_valid_if_no_credit_released_a, credit_count == MaxCredit |-> !push_valid)
+  `BR_ASSERT_INTG(pop_credit_in_range_a, pop_credit <= PopCreditMaxChange)
 
   // Rely on submodule integration checks
 
@@ -94,18 +101,21 @@ module br_credit_receiver #(
   logic credit_decr_valid;
   logic credit_decr_ready;
   logic push_credit_internal;
+  logic credit_incr_valid;
+
+  assign credit_incr_valid = |pop_credit;
 
   br_credit_counter #(
       .MaxValue (MaxCredit),
-      .MaxChange(1)
+      .MaxChange(PopCreditMaxChange)
   ) br_credit_counter (
       .clk,
       .rst,
-      .incr_valid(pop_credit),
-      .incr(1'b1),
+      .incr_valid(credit_incr_valid),
+      .incr(pop_credit),
       .decr_ready(credit_decr_ready),
       .decr_valid(credit_decr_valid),
-      .decr(1'b1),
+      .decr(PopCreditChangeWidth'(1'b1)),
       .initial_value(credit_initial),
       .withhold(credit_withhold),
       .value(credit_count),
