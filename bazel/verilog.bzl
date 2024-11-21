@@ -142,15 +142,12 @@ def _verilog_base_impl(ctx, subcmd, test = True, extra_args = [], extra_runfiles
         )
 
         # Run generator script
-
         ctx.actions.run(
             inputs = generator_inputs + [generator_executable_file],
             outputs = [ctx.outputs.tarball],
             executable = generator_executable_file,
             arguments = [],
-            env = {
-                "VERILOG_RUNNER_PLUGIN_PATH": env.get("VERILOG_RUNNER_PLUGIN_PATH"),
-            },
+            use_default_shell_env=True,
         )
 
         # Write runner script (but don't run it)
