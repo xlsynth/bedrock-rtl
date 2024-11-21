@@ -135,6 +135,7 @@ module br_counter #(
   end else begin : gen_wrap
     // The MSB will not be used
     // ri lint_check_waive INEFFECTIVE_NET
+    logic [TempWidth-1:0] max_value_p1;
     logic [TempWidth-1:0] value_temp_wrapped;
     logic                 is_net_decr;
     logic                 will_wrap;
@@ -146,9 +147,10 @@ module br_counter #(
     assign will_underflow = will_wrap && is_net_decr;
     assign will_overflow = will_wrap && !is_net_decr;
 
+    assign max_value_p1 = TempWidth'($unsigned(MaxValueP1));
     assign value_temp_wrapped =
-        will_underflow ? (value_temp + MaxValueP1) :
-        will_overflow  ? (value_temp - MaxValueP1) :
+        will_underflow ? (value_temp + max_value_p1) :
+        will_overflow  ? (value_temp - max_value_p1) :
                          value_temp;
     // If TempWidth == ValueWidth, the bit select covers the full range
     // ri lint_check_waive FULL_RANGE
