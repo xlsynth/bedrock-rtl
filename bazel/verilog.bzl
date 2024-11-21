@@ -97,6 +97,12 @@ def _verilog_base_impl(ctx, subcmd, test = True, extra_args = [], extra_runfiles
         args.append("--tool='" + ctx.attr.tool + "'")
     if not test:
         args.append("--dry-run")
+    if ctx.attr.custom_tcl_header:
+        extra_args.append("--custom_tcl_header=" + ctx.attr.custom_tcl_header.files.to_list()[0].short_path)
+        extra_runfiles += ctx.files.custom_tcl_header
+    if ctx.attr.custom_tcl_body:
+        extra_args.append("--custom_tcl_body=" + ctx.attr.custom_tcl_body.files.to_list()[0].short_path)
+        extra_runfiles += ctx.files.custom_tcl_body
     args += extra_args
     verilog_runner_cmd = " ".join([wrapper_tool] + [subcmd] + args + src_files)
     verilog_runner_runfiles = ctx.runfiles(files = srcs + hdrs + extra_runfiles)
@@ -214,9 +220,6 @@ def _verilog_fpv_test_impl(ctx):
         extra_args.append("--elab_only")
     if ctx.attr.gui:
         extra_args.append("--gui")
-    if ctx.attr.append_tcl:
-        extra_args.append("--append_tcl=" + ctx.attr.append_tcl.files.to_list()[0].short_path)
-        extra_runfiles += ctx.files.append_tcl
     if len(ctx.attr.opts) > 0 and ctx.attr.tool == "":
         fail("If opts are provided, then tool must also be set.")
     for opt in ctx.attr.opts:
@@ -258,6 +261,18 @@ rule_verilog_elab_test = rule(
         "params": attr.string_dict(doc = "Verilog module parameters to set in the instantiation of the top-level module."),
         "top": attr.string(doc = "The top-level module; if not provided and there exists one dependency, then defaults to that dep's label name."),
         "tool": attr.string(doc = "Elaboration tool to use. If not provided, default is decided by the BAZEL_VERILOG_RUNNER_TOOL implementation."),
+        "custom_tcl_header": attr.label(
+            doc = ("Tcl script file containing custom tool-specific commands to insert at the beginning of the generated tcl script." +
+                   "The tcl header (custom or not) is unconditionally followed by analysis and elaborate commands, and then the tcl body." +
+                   "Do not include Tcl commands that manipulate sources, headers, defines, or parameters, as those will be handled by the rule implementation."),
+            allow_single_file = [".tcl"],
+        ),
+        "custom_tcl_body": attr.label(
+            doc = ("Tcl script file containing custom tool-specific commands to insert in the middle of the generated tcl script after the elaboration step." +
+                   "The tcl body (custom or not) is unconditionally followed by the tcl footer." +
+                   "Do not include Tcl commands that manipulate sources, headers, defines, or parameters, as those will be handled by the rule implementation."),
+            allow_single_file = [".tcl"],
+        ),
     },
     test = True,
 )
@@ -301,6 +316,18 @@ rule_verilog_lint_test = rule(
             doc = "The lint policy file to use. If not provided, then the default tool policy is used (typically provided through an environment variable).",
         ),
         "tool": attr.string(doc = "Lint tool to use. If not provided, default is decided by the BAZEL_VERILOG_RUNNER_TOOL implementation."),
+        "custom_tcl_header": attr.label(
+            doc = ("Tcl script file containing custom tool-specific commands to insert at the beginning of the generated tcl script." +
+                   "The tcl header (custom or not) is unconditionally followed by analysis and elaborate commands, and then the tcl body." +
+                   "Do not include Tcl commands that manipulate sources, headers, defines, or parameters, as those will be handled by the rule implementation."),
+            allow_single_file = [".tcl"],
+        ),
+        "custom_tcl_body": attr.label(
+            doc = ("Tcl script file containing custom tool-specific commands to insert in the middle of the generated tcl script after the elaboration step." +
+                   "The tcl body (custom or not) is unconditionally followed by the tcl footer." +
+                   "Do not include Tcl commands that manipulate sources, headers, defines, or parameters, as those will be handled by the rule implementation."),
+            allow_single_file = [".tcl"],
+        ),
     },
     test = True,
 )
@@ -354,6 +381,18 @@ rule_verilog_sim_test = rule(
         ),
         "tool": attr.string(
             doc = "Simulator tool to use. If not provided, default is decided by the BAZEL_VERILOG_RUNNER_TOOL implementation.",
+        ),
+        "custom_tcl_header": attr.label(
+            doc = ("Tcl script file containing custom tool-specific commands to insert at the beginning of the generated tcl script." +
+                   "The tcl header (custom or not) is unconditionally followed by analysis and elaborate commands, and then the tcl body." +
+                   "Do not include Tcl commands that manipulate sources, headers, defines, or parameters, as those will be handled by the rule implementation."),
+            allow_single_file = [".tcl"],
+        ),
+        "custom_tcl_body": attr.label(
+            doc = ("Tcl script file containing custom tool-specific commands to insert in the middle of the generated tcl script after the elaboration step." +
+                   "The tcl body (custom or not) is unconditionally followed by the tcl footer." +
+                   "Do not include Tcl commands that manipulate sources, headers, defines, or parameters, as those will be handled by the rule implementation."),
+            allow_single_file = [".tcl"],
         ),
         "seed": attr.int(
             doc = "Random seed to use in simulation.",
@@ -413,8 +452,16 @@ rule_verilog_fpv_test = rule(
         "tool": attr.string(
             doc = "Formal tool to use. If not provided, default is decided by the BAZEL_VERILOG_RUNNER_TOOL implementation.",
         ),
-        "append_tcl": attr.label(
-            doc = "Custom TCL script to run after the elaboration step. Do not include Tcl commands that manipulate sources, headers, defines, or parameters, as those will be handled by the rule implementation.",
+        "custom_tcl_header": attr.label(
+            doc = ("Tcl script file containing custom tool-specific commands to insert at the beginning of the generated tcl script." +
+                   "The tcl header (custom or not) is unconditionally followed by analysis and elaborate commands, and then the tcl body." +
+                   "Do not include Tcl commands that manipulate sources, headers, defines, or parameters, as those will be handled by the rule implementation."),
+            allow_single_file = [".tcl"],
+        ),
+        "custom_tcl_body": attr.label(
+            doc = ("Tcl script file containing custom tool-specific commands to insert in the middle of the generated tcl script after the elaboration step." +
+                   "The tcl body (custom or not) is unconditionally followed by the tcl footer." +
+                   "Do not include Tcl commands that manipulate sources, headers, defines, or parameters, as those will be handled by the rule implementation."),
             allow_single_file = [".tcl"],
         ),
         "gui": attr.bool(
@@ -469,6 +516,18 @@ rule_verilog_sandbox = rule(
         ),
         "tool": attr.string(
             doc = "Tool to use. If not provided, default is decided by the BAZEL_VERILOG_RUNNER_TOOL implementation.",
+        ),
+        "custom_tcl_header": attr.label(
+            doc = ("Tcl script file containing custom tool-specific commands to insert at the beginning of the generated tcl script." +
+                   "The tcl header (custom or not) is unconditionally followed by analysis and elaborate commands, and then the tcl body." +
+                   "Do not include Tcl commands that manipulate sources, headers, defines, or parameters, as those will be handled by the rule implementation."),
+            allow_single_file = [".tcl"],
+        ),
+        "custom_tcl_body": attr.label(
+            doc = ("Tcl script file containing custom tool-specific commands to insert in the middle of the generated tcl script after the elaboration step." +
+                   "The tcl body (custom or not) is unconditionally followed by the tcl footer." +
+                   "Do not include Tcl commands that manipulate sources, headers, defines, or parameters, as those will be handled by the rule implementation."),
+            allow_single_file = [".tcl"],
         ),
     },
     outputs = {
