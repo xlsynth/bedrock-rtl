@@ -68,7 +68,8 @@ module br_delay_shift_reg #(
   if (NumStages == 1) begin : gen_assert_one_stage
     `BR_ASSERT_IMPL(value_shifted_a, (shift_en && !reinit) |=> value == $past(shift_in))
   end else begin : gen_assert_multi_stage
-    `BR_ASSERT_IMPL(value_shifted_a, (shift_en && !reinit) |=> value == $past({stages, shift_in}))
+    `BR_ASSERT_IMPL(value_shifted_a,
+                    (shift_en && !reinit) |=> value == $past({stages[NumStages-2:0], shift_in}))
   end
   `BR_ASSERT_IMPL(value_initialized_a, reinit |=> value == $past(initial_value))
   `BR_ASSERT_IMPL(value_stable_a, (!shift_en && !reinit) |=> $stable(value))
