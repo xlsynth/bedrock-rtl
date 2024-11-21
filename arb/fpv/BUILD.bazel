@@ -36,7 +36,8 @@ br_verilog_fpv_test_suite(
     params = {
         "NumRequesters": [
             "2",
-            "3",
+            "5",
+            "6",
         ],
     },
     tool = "jg",
@@ -63,7 +64,8 @@ br_verilog_fpv_test_suite(
     params = {
         "NumRequesters": [
             "2",
-            "3",
+            "5",
+            "6",
         ],
     },
     tool = "jg",
@@ -89,7 +91,8 @@ br_verilog_fpv_test_suite(
     params = {
         "NumRequesters": [
             "2",
-            "3",
+            "5",
+            "6",
         ],
     },
     tool = "jg",

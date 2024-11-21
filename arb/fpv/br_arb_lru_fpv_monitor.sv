@@ -23,16 +23,62 @@ module br_arb_lru_fpv_monitor #(
 ) (
     input logic clk,
     input logic rst,
+    input logic enable_priority_update,
     input logic [NumRequesters-1:0] request,
     input logic [NumRequesters-1:0] grant
 );
 
-  logic [NumRequesters-1:0][$clog2(NumRequesters)-1:0] arb_priority;
+  logic [NumRequesters-1:0][$clog2(NumRequesters):0] arb_priority;
+  logic [$clog2(NumRequesters):0] granted_priority;
+
+  always @(*) begin
+    if (grant == 0) begin
+      granted_priority = 0;
+    end else begin
+      for (int i = 0; i < NumRequesters; i++) begin
+        if (grant[i]) begin
+          granted_priority = arb_priority[i];
+        end
+      end
+    end
+  end
+
+  // Implementation:
+  // - At the beginning, all requester set to high priority = NumRequesters
+  // - When a request is granted, the priority set to the lowest = 0
+  //   All other requesters with the priority lower than the granted requester
+  //   will bump its priority by 1.
 
   for (genvar i = 0; i < NumRequesters; i++) begin : gen_priority
-     // The granted request will have priority reset to the lowest
-     // All other requesters bump up their priority
-    `BR_REGL(arb_priority[i], grant[i] ? 0 : arb_priority[i] + request[i], grant != 0)
+    always @(posedge clk) begin
+      if (rst) begin
+        arb_priority[i] <= NumRequesters;
+      end else begin
+        if (grant[i] && enable_priority_update) begin
+          arb_priority[i] <= 0;
+        end else if (enable_priority_update && (grant != 0) && (arb_priority[i] < granted_priority)) begin
+          arb_priority[i] <= arb_priority[i] + $clog2(NumRequesters)'(1);
+        end
+      end
+    end
+  end
+
+  logic [NumRequesters-1:0][$clog2(NumRequesters):0] wait_count;
+
+  // count the number of cycles that the requester is not granted
+  for (genvar i = 0; i < NumRequesters; i++) begin : gen_counter
+    always @(posedge clk) begin
+      if (rst) begin
+        wait_count[i] <= 0;
+      end else begin
+        if (grant[i]) begin
+          wait_count[i] <= 0;
+        end else if (enable_priority_update && (grant != 0) && request[i] && !grant[i]) begin
+          wait_count[i] <= wait_count[i] + $clog2(NumRequesters)'(1);
+        end
+      end
+      `BR_COVER(wait_count_c, wait_count[i] == NumRequesters - 1)
+    end
   end
 
   `BR_ASSERT(must_grant_a, request != 0 |-> grant != 0)
@@ -40,23 +86,22 @@ module br_arb_lru_fpv_monitor #(
   `BR_COVER(all_request_c, request == '1)
 
   for (genvar i = 0; i < NumRequesters; i++) begin : gen_req_0
-    // Request must be hold until granted
-    // TODO: Remove below assumption and fix other liveness assrtion
-    `BR_ASSUME(hold_request_until_grant_m, request[i] && !grant[i] |=> request[i])
     // Grant must be given to an active requester
     `BR_ASSERT(grant_active_req_a, grant[i] |-> request[i])
     // Grant must be returned to the requester after all other requesters are granted once
-    `BR_ASSERT(grant_latency_a, request[i] && !grant[i] |-> ##[1:NumRequesters] grant[i])
-    // High priority request must be grant the same cycle
-    `BR_ASSERT(high_priority_grant_a, request[i] && (arb_priority[i] == NumRequesters - 1) |-> grant[i])
+    `BR_ASSERT(grant_latency_a, request[i] && (wait_count[i] == NumRequesters - 1) |-> grant[i])
     for (genvar j = 0; j < NumRequesters; j++) begin : gen_req_1
       if (i != j) begin
+        // Cover all combinations of priorities
+        `BR_COVER(same_priority_c, request[i] && request[j] && (arb_priority[i] == arb_priority[j]))
+        `BR_COVER(low_priority_c,  request[i] && request[j] && (arb_priority[i] <  arb_priority[j]))
+        `BR_COVER(high_priority_c, request[i] && request[j] && (arb_priority[i] >  arb_priority[j]))
+        // Check correct arbitration priority
         `BR_ASSERT(arb_priority_a, grant[j] |->
           !request[i] || (arb_priority[i] < arb_priority[j]) ||
           // When two requests have the same priority, the
           // lower index request should be granted
-          (arb_priority[i] == arb_priority[j] && (i < j))
-         )
+          (arb_priority[i] == arb_priority[j]) && (j < i))
        end
      end
    end
