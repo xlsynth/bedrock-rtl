@@ -209,10 +209,14 @@ def _verilog_sim_test_impl(ctx):
 def _verilog_fpv_test_impl(ctx):
     """Implementation of the verilog_fpv_test rule."""
     extra_args = []
+    extra_runfiles = []
     if ctx.attr.elab_only:
         extra_args.append("--elab_only")
     if ctx.attr.gui:
         extra_args.append("--gui")
+    if ctx.attr.append_tcl:
+        extra_args.append("--append_tcl=" + ctx.attr.append_tcl.files.to_list()[0].short_path)
+        extra_runfiles += ctx.files.append_tcl
     if len(ctx.attr.opts) > 0 and ctx.attr.tool == "":
         fail("If opts are provided, then tool must also be set.")
     for opt in ctx.attr.opts:
@@ -222,6 +226,7 @@ def _verilog_fpv_test_impl(ctx):
         ctx = ctx,
         subcmd = "fpv",
         extra_args = extra_args,
+        extra_runfiles = extra_runfiles,
     )
 
 def _verilog_sandbox_impl(ctx):
@@ -407,6 +412,10 @@ rule_verilog_fpv_test = rule(
         ),
         "tool": attr.string(
             doc = "Formal tool to use. If not provided, default is decided by the BAZEL_VERILOG_RUNNER_TOOL implementation.",
+        ),
+        "append_tcl": attr.label(
+            doc = "Custom TCL script to run after the elaboration step. Do not include Tcl commands that manipulate sources, headers, defines, or parameters, as those will be handled by the rule implementation.",
+            allow_single_file = [".tcl"],
         ),
         "gui": attr.bool(
             doc = "Enable GUI.",
