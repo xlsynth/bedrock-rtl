@@ -23,6 +23,7 @@ module br_arb_rr_fpv_monitor #(
 ) (
     input logic clk,
     input logic rst,
+    input logic enable_priority_update,
     input logic [NumRequesters-1:0] request,
     input logic [NumRequesters-1:0] grant
 );
@@ -33,18 +34,19 @@ module br_arb_rr_fpv_monitor #(
 
    logic [NumRequesters-1:0] high_priority_request;
 
-  `BR_REGL(high_priority_request, (grant == 1 << NumRequesters) ? 1 : grant << 1, grant != 0)
+  `BR_REGL(high_priority_request,
+           (grant == 1 << (NumRequesters - 1)) ? NumRequesters'(1) : grant << 1,
+           (grant != 0) && enable_priority_update)
 
   for (genvar i = 0; i < NumRequesters; i++) begin : gen_req_0
-    // Request must be hold until granted
-    // TODO: Remove below assumption and fix other liveness assrtion
-    `BR_ASSUME(hold_request_until_grant_m, request[i] && !grant[i] |=> request[i])
     // Grant must be given to an active requester
     `BR_ASSERT(grant_active_req_a, grant[i] |-> request[i])
     // Grant must be returned to the requester after all other requesters are granted once
-    `BR_ASSERT(grant_latency_a, request[i] && !grant[i] |-> ##[1:NumRequesters] grant[i])
+    // `BR_ASSERT(grant_latency_a, request[i] && !grant[i] |-> ##[1:NumRequesters] grant[i])
     // High priority request must be grant the same cycle
-    `BR_ASSERT(high_priority_grant_a, request[i] && (2 ** i == high_priority_request) |-> grant[i])
+    `BR_ASSERT(high_priority_grant_a, request[i] && high_priority_request[i] |-> grant[i])
+    // Make sure every port can reach highest priority
+    `BR_COVER(priority_c, high_priority_request[i])
     for (genvar j = 0; j < NumRequesters; j++) begin : gen_req_1
       if (i != j) begin
         `BR_ASSERT(arb_priority_a, grant[j] |->

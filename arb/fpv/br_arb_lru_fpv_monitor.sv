@@ -23,6 +23,7 @@ module br_arb_lru_fpv_monitor #(
 ) (
     input logic clk,
     input logic rst,
+    input logic enable_priority_update,
     input logic [NumRequesters-1:0] request,
     input logic [NumRequesters-1:0] grant
 );
@@ -35,6 +36,7 @@ module br_arb_lru_fpv_monitor #(
     `BR_REGL(arb_priority[i], grant[i] ? 0 : arb_priority[i] + request[i], grant != 0)
   end
 
+  `BR_ASSUME(enable_priority_update_m, enable_priority_update == 1'b1)
   `BR_ASSERT(must_grant_a, request != 0 |-> grant != 0)
   `BR_ASSERT(onehot_grant_a, $onehot0(grant))
   `BR_COVER(all_request_c, request == '1)
