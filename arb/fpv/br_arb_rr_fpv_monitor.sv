@@ -41,12 +41,11 @@ module br_arb_rr_fpv_monitor #(
   for (genvar i = 0; i < NumRequesters; i++) begin : gen_req_0
     // Grant must be given to an active requester
     `BR_ASSERT(grant_active_req_a, grant[i] |-> request[i])
-    // Grant must be returned to the requester after all other requesters are granted once
-    // `BR_ASSERT(grant_latency_a, request[i] && !grant[i] |-> ##[1:NumRequesters] grant[i])
     // High priority request must be grant the same cycle
     `BR_ASSERT(high_priority_grant_a, request[i] && high_priority_request[i] |-> grant[i])
     // Make sure every port can reach highest priority
     `BR_COVER(priority_c, high_priority_request[i])
+    `BR_COVER(low_priority_grant_c, request[i] && !high_priority_request[i] && grant[i])
     for (genvar j = 0; j < NumRequesters; j++) begin : gen_req_1
       if (i != j) begin
         `BR_ASSERT(arb_priority_a, grant[j] |->
