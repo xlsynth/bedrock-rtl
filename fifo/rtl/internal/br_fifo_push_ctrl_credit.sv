@@ -104,38 +104,30 @@ module br_fifo_push_ctrl_credit #(
       .credit_available(credit_available_push)
   );
 
-  // RAM path
-  br_counter_incr #(
-      .MaxValue(Depth - 1),
-      .MaxIncrement(1)
-  ) br_counter_incr_wr_addr (
+  // Core flow-control logic
+  br_fifo_push_ctrl_core #(
+      .Depth(Depth),
+      .Width(Width),
+      .EnableBypass(EnableBypass)
+  ) br_fifo_push_ctrl_core (
       .clk,
       .rst,
-      .reinit(1'b0),  // unused
-      .initial_value(AddrWidth'(1'b0)),
-      .incr_valid(ram_wr_valid),
-      .incr(1'b1),
-      .value(ram_wr_addr),
-      .value_next()  // unused
+
+      .push_ready(),
+      .push_valid(internal_valid),
+      .push_data (internal_data),
+
+      .bypass_ready,
+      .bypass_valid_unstable,  // ri lint_check_waive CONST_OUTPUT
+      .bypass_data_unstable,  // ri lint_check_waive CONST_OUTPUT
+
+      .ram_wr_valid,
+      .ram_wr_addr,
+      .ram_wr_data,
+
+      .full,
+      .push_beat
   );
-
-  // Datapath
-  assign push_beat = internal_valid;
-  if (EnableBypass) begin : gen_bypass
-    assign bypass_valid_unstable = internal_valid;
-    assign bypass_data_unstable = internal_data;
-
-    assign ram_wr_valid = internal_valid && !bypass_ready;
-    assign ram_wr_data = internal_data;
-  end else begin : gen_no_bypass
-    `BR_UNUSED(bypass_ready)
-    // TODO(zhemao, #157): Replace this with BR_TIEOFF macros once they are fixed
-    assign bypass_valid_unstable = '0;  // ri lint_check_waive CONST_ASSIGN CONST_OUTPUT
-    assign bypass_data_unstable = '0;  // ri lint_check_waive CONST_ASSIGN CONST_OUTPUT
-
-    assign ram_wr_valid = internal_valid;
-    assign ram_wr_data = internal_data;
-  end
 
   // Status flags
   br_counter #(

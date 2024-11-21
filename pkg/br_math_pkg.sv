@@ -58,4 +58,16 @@ package br_math;
     end
   endfunction
 
+  // Returns the minimum of two integers.
+  // ri lint_check_waive TWO_STATE_TYPE
+  function automatic int min2(input int a, input int b);
+    return (a < b) ? a : b;
+  endfunction
+
+  // Returns the maximum of two integers.
+  // ri lint_check_waive TWO_STATE_TYPE
+  function automatic int max2(input int a, input int b);
+    return (a > b) ? a : b;
+  endfunction
+
 endpackage : br_math

@@ -37,7 +37,8 @@ br_verilog_fpv_test_suite(
     params = {
         "NumRequesters": [
             "2",
-            "3",
+            "5",
+            "6",
         ],
     },
     tool = "jg",
@@ -60,11 +61,12 @@ verilog_elab_test(
 
 br_verilog_fpv_test_suite(
     name = "br_arb_rr_jg_test_suite",
-    append_tcl = "br_arb_rr_fpv.tcl",
+    custom_tcl_body = "br_arb_rr_fpv.tcl",
     params = {
         "NumRequesters": [
             "2",
-            "3",
+            "5",
+            "6",
         ],
     },
     tool = "jg",
@@ -90,7 +92,8 @@ br_verilog_fpv_test_suite(
     params = {
         "NumRequesters": [
             "2",
-            "3",
+            "5",
+            "6",
         ],
     },
     tool = "jg",

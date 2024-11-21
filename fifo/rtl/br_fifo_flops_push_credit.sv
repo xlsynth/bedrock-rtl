@@ -114,6 +114,8 @@ module br_fifo_flops_push_credit #(
     output logic [CountWidth-1:0] items,
     output logic [CountWidth-1:0] items_next
 );
+  localparam int RamReadLatency =
+      FlopRamAddressDepthStages + FlopRamReadDataDepthStages + FlopRamReadDataWidthStages;
 
   //------------------------------------------
   // Integration checks
@@ -138,7 +140,7 @@ module br_fifo_flops_push_credit #(
       .MaxCredit(MaxCredit),
       .RegisterPushCredit(RegisterPushCredit),
       .RegisterPopOutputs(RegisterPopOutputs),
-      .RamReadLatency(0)  // TODO(zhemao): Update this if flop RAM adds pipeline stages
+      .RamReadLatency(RamReadLatency)
   ) br_fifo_ctrl_1r1w_push_credit (
       .clk,
       .rst,

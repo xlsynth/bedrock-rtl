@@ -52,7 +52,7 @@ module br_fifo_pop_ctrl #(
     // RAM interface
     output logic                 ram_rd_addr_valid,
     output logic [AddrWidth-1:0] ram_rd_addr,
-    // Port provided for clarity of interface design; only used for assertions.
+    // Not used except for assertions in some configurations.
     // ri lint_check_waive INEFFECTIVE_NET
     input  logic                 ram_rd_data_valid,
     input  logic [    Width-1:0] ram_rd_data,
@@ -86,97 +86,31 @@ module br_fifo_pop_ctrl #(
   // Implementation
   //------------------------------------------
 
-  // Flow control
-  assign pop_beat = pop_ready && pop_valid;
+  // Core flow-control logic
 
-  // RAM path
-  br_counter_incr #(
-      .MaxValue(Depth - 1),
-      .MaxIncrement(1)
-  ) br_counter_incr_rd_addr (
+  br_fifo_pop_ctrl_core #(
+      .Depth(Depth),
+      .Width(Width),
+      .EnableBypass(EnableBypass),
+      .RamReadLatency(RamReadLatency),
+      .RegisterPopOutputs(RegisterPopOutputs)
+  ) br_fifo_pop_ctrl_core (
       .clk,
       .rst,
-      .reinit(1'b0),  // unused
-      .initial_value(AddrWidth'(1'b0)),
-      .incr_valid(ram_rd_addr_valid),
-      .incr(1'b1),
-      .value(ram_rd_addr),
-      .value_next()  // unused
+      .pop_ready,
+      .pop_valid,
+      .pop_data,
+      .bypass_ready,  // ri lint_check_waive CONST_OUTPUT
+      .bypass_valid_unstable,
+      .bypass_data_unstable,
+      .ram_rd_addr_valid,
+      .ram_rd_addr,
+      .ram_rd_data_valid,
+      .ram_rd_data,
+      .empty,
+      .items,
+      .pop_beat
   );
-
-  // Datapath
-  if (RamReadLatency == 0) begin : gen_zero_rd_lat
-    logic             internal_pop_valid;
-    logic             internal_pop_ready;
-    logic [Width-1:0] internal_pop_data;
-    logic             internal_empty;
-
-    if (EnableBypass) begin : gen_bypass
-      assign bypass_ready = internal_empty && internal_pop_ready;
-      assign internal_pop_valid = !internal_empty || bypass_valid_unstable;
-      assign internal_pop_data = internal_empty ? bypass_data_unstable : ram_rd_data;
-      assign ram_rd_addr_valid = internal_pop_valid && internal_pop_ready && !internal_empty;
-    end else begin : gen_no_bypass
-      // TODO(zhemao, #157): Replace this with BR_TIEOFF macros once they are fixed
-      assign bypass_ready = '0;  // ri lint_check_waive CONST_ASSIGN CONST_OUTPUT
-      assign internal_pop_valid = !internal_empty;
-      assign internal_pop_data = ram_rd_data;
-      assign ram_rd_addr_valid = internal_pop_valid && internal_pop_ready;
-
-      `BR_UNUSED_NAMED(bypass_signals, {bypass_valid_unstable, bypass_data_unstable})
-    end
-    `BR_UNUSED(ram_rd_data_valid)  // implied
-
-    if (RegisterPopOutputs) begin : gen_reg_pop
-      br_flow_reg_fwd #(
-          .Width(Width)
-      ) br_flow_reg_fwd_pop (
-          .clk,
-          .rst,
-          .push_valid(internal_pop_valid),
-          .push_ready(internal_pop_ready),
-          .push_data (internal_pop_data),
-          .pop_valid,
-          .pop_ready,
-          .pop_data
-      );
-      // internal_empty is true if there are no items or if there is one item
-      // and it is already in the staging register
-      assign internal_empty = empty || ((items == 1'b1) && pop_valid);
-    end else begin : gen_noreg_pop
-      assign internal_empty = empty;
-      assign pop_valid = internal_pop_valid;
-      assign pop_data = internal_pop_data;
-      assign internal_pop_ready = pop_ready;
-    end
-  end else begin : gen_nonzero_rd_lat
-    br_fifo_staging_buffer #(
-        .EnableBypass      (EnableBypass),
-        .TotalDepth        (Depth),
-        .RamReadLatency    (RamReadLatency),
-        .Width             (Width),
-        .RegisterPopOutputs(RegisterPopOutputs)
-    ) br_fifo_staging_buffer (
-        .clk,
-        .rst,
-
-        // If bypass is disabled, bypass_ready will be driven by constant
-        // TODO(zhemao, #157): Remove this once lint waiver issue is fixed
-        .bypass_ready,  // ri lint_check_waive CONST_OUTPUT
-        .bypass_valid_unstable,
-        .bypass_data_unstable,
-
-        .total_items(items),
-
-        .ram_rd_addr_valid,
-        .ram_rd_data_valid,
-        .ram_rd_data,
-
-        .pop_ready,
-        .pop_valid,
-        .pop_data
-    );
-  end
 
   // Status flags
   br_counter #(
