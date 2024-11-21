@@ -99,7 +99,7 @@ br_verilog_fpv_test_suite(
 )
 
 rule_verilog_sandbox(
-    name = "br_arb_lru_sandbox",
+    name = "br_arb_lru_jg_sandbox",
     defines = [
         "BR_ASSERT_ON",
         "BR_ENABLE_IMPL_CHECKS",
