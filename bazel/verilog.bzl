@@ -214,9 +214,9 @@ def _verilog_fpv_test_impl(ctx):
         extra_args.append("--elab_only")
     if ctx.attr.gui:
         extra_args.append("--gui")
-    if ctx.attr.custom_tcl:
-        extra_args.append("--custom_tcl=" + ctx.attr.custom_tcl.files.to_list()[0].short_path)
-        extra_runfiles += ctx.files.custom_tcl
+    if ctx.attr.append_tcl:
+        extra_args.append("--append_tcl=" + ctx.attr.append_tcl.files.to_list()[0].short_path)
+        extra_runfiles += ctx.files.append_tcl
     if len(ctx.attr.opts) > 0 and ctx.attr.tool == "":
         fail("If opts are provided, then tool must also be set.")
     for opt in ctx.attr.opts:
@@ -413,7 +413,7 @@ rule_verilog_fpv_test = rule(
         "tool": attr.string(
             doc = "Formal tool to use. If not provided, default is decided by the BAZEL_VERILOG_RUNNER_TOOL implementation.",
         ),
-        "appendcustom_tcl": attr.label(
+        "append_tcl": attr.label(
             doc = "Custom TCL script to run after the elaboration step. Do not include Tcl commands that manipulate sources, headers, defines, or parameters, as those will be handled by the rule implementation.",
             allow_single_file = [".tcl"],
         ),
