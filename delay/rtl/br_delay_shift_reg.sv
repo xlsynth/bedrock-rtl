@@ -78,9 +78,8 @@ module br_delay_shift_reg #(
     `BR_ASSERT_IMPL(
         value_shifted_with_reinit_a,
         (shift_en && reinit) |=> value == $past({initial_value[NumStages-2:0], shift_in}))
-    `BR_ASSERT_IMPL(
-        value_shifted_without_reinit_a,
-        (shift_en && !reinit) |=> value == $past({stages[NumStages-2:0], shift_in}))
+    `BR_ASSERT_IMPL(value_shifted_without_reinit_a,
+                    (shift_en && !reinit) |=> value == $past({stages[NumStages-2:0], shift_in}))
   end
 
 endmodule : br_delay_shift_reg
