@@ -18,11 +18,20 @@ load("//bazel:br_verilog.bzl", "br_verilog_elab_and_lint_test_suite")
 package(default_visibility = ["//fifo/rtl:__subpackages__"])
 
 verilog_library(
+    name = "br_fifo_push_ctrl_core",
+    srcs = ["br_fifo_push_ctrl_core.sv"],
+    deps = [
+        "//counter/rtl:br_counter_incr",
+        "//macros:br_unused",
+    ],
+)
+
+verilog_library(
     name = "br_fifo_push_ctrl",
     srcs = ["br_fifo_push_ctrl.sv"],
     deps = [
+        ":br_fifo_push_ctrl_core",
         "//counter/rtl:br_counter",
-        "//counter/rtl:br_counter_incr",
         "//macros:br_asserts_internal",
         "//macros:br_registers",
         "//macros:br_unused",
@@ -52,8 +61,8 @@ verilog_library(
     name = "br_fifo_push_ctrl_credit",
     srcs = ["br_fifo_push_ctrl_credit.sv"],
     deps = [
+        ":br_fifo_push_ctrl_core",
         "//counter/rtl:br_counter",
-        "//counter/rtl:br_counter_incr",
         "//credit/rtl:br_credit_receiver",
         "//macros:br_asserts_internal",
         "//macros:br_registers",
@@ -85,11 +94,21 @@ br_verilog_elab_and_lint_test_suite(
 )
 
 verilog_library(
-    name = "br_fifo_pop_ctrl",
-    srcs = ["br_fifo_pop_ctrl.sv"],
+    name = "br_fifo_pop_ctrl_core",
+    srcs = ["br_fifo_pop_ctrl_core.sv"],
     deps = [
         ":br_fifo_staging_buffer",
         "//counter/rtl:br_counter_incr",
+        "//macros:br_unused",
+    ],
+)
+
+verilog_library(
+    name = "br_fifo_pop_ctrl",
+    srcs = ["br_fifo_pop_ctrl.sv"],
+    deps = [
+        ":br_fifo_pop_ctrl_core",
+        "//counter/rtl:br_counter",
         "//macros:br_asserts_internal",
         "//macros:br_registers",
         "//macros:br_unused",
