@@ -147,7 +147,7 @@ def _verilog_base_impl(ctx, subcmd, test = True, extra_args = [], extra_runfiles
             outputs = [ctx.outputs.tarball],
             executable = generator_executable_file,
             arguments = [],
-            use_default_shell_env=True,
+            use_default_shell_env = True,
         )
 
         # Write runner script (but don't run it)
