@@ -63,13 +63,14 @@ def _verilog_base_impl(ctx, subcmd, test = True, extra_args = [], extra_runfiles
         DefaultInfo for the rule that describes the runfiles, depset, and executable
     """
     env = ctx.configuration.default_shell_env
+    runfiles = []
     if "BAZEL_VERILOG_RUNNER_TOOL" in env:
         wrapper_tool = env.get("BAZEL_VERILOG_RUNNER_TOOL")
     else:
         # buildifier: disable=print
         print("!! WARNING !! Environment variable BAZEL_VERILOG_RUNNER_TOOL is not set! Will use placeholder runner tool.")
         wrapper_tool_file = write_placeholder_verilog_runner_tool(ctx, "placeholder_verilog_runner.py")
-        extra_runfiles.append(wrapper_tool_file)
+        runfiles.append(wrapper_tool_file)
         wrapper_tool = wrapper_tool_file.short_path
 
     srcs = get_transitive(ctx = ctx, srcs_not_hdrs = True).to_list()
@@ -98,14 +99,14 @@ def _verilog_base_impl(ctx, subcmd, test = True, extra_args = [], extra_runfiles
     if not test:
         args.append("--dry-run")
     if ctx.attr.custom_tcl_header:
-        extra_args.append("--custom_tcl_header=" + ctx.attr.custom_tcl_header.files.to_list()[0].short_path)
-        extra_runfiles += ctx.files.custom_tcl_header
+        args.append("--custom_tcl_header=" + ctx.attr.custom_tcl_header.files.to_list()[0].short_path)
+        runfiles += ctx.files.custom_tcl_header
     if ctx.attr.custom_tcl_body:
-        extra_args.append("--custom_tcl_body=" + ctx.attr.custom_tcl_body.files.to_list()[0].short_path)
-        extra_runfiles += ctx.files.custom_tcl_body
+        args.append("--custom_tcl_body=" + ctx.attr.custom_tcl_body.files.to_list()[0].short_path)
+        runfiles += ctx.files.custom_tcl_body
     args += extra_args
     verilog_runner_cmd = " ".join([wrapper_tool] + [subcmd] + args + src_files)
-    verilog_runner_runfiles = ctx.runfiles(files = srcs + hdrs + extra_runfiles)
+    verilog_runner_runfiles = ctx.runfiles(files = srcs + hdrs + runfiles + extra_runfiles)
     if test:
         runner = ctx.label.name + "_runner.sh"
         runner_executable_file = ctx.actions.declare_file(runner)
@@ -122,7 +123,7 @@ def _verilog_base_impl(ctx, subcmd, test = True, extra_args = [], extra_runfiles
 
     else:
         # Generator I/O
-        generator_inputs = srcs + hdrs + extra_runfiles
+        generator_inputs = srcs + hdrs + runfiles + extra_runfiles
         generator_outputs = [tcl, script, filelist]
 
         # Tarball inputs
