@@ -15,10 +15,12 @@
 // Bedrock-RTL Flop-RAM (1R1W) Tile
 //
 // A one-read/one-write (1R1W, also known as pseudo-dual-port) flop-based RAM tile.
+// The read and write ports may be clocked by different clocks.
 // Read latency is zero cycles. Write latency is one cycle.
 // By default, write-to-read latency is therefore one cycle.
 // If the bypass is enabled, then the write-to-read latency is zero cycles, but
 // at the cost of a combinational timing path from the write port to the read port.
+// Bypassing is only permissible if the read and write clocks are the same.
 
 `include "br_asserts_internal.svh"
 `include "br_registers.svh"
@@ -35,14 +37,22 @@ module br_ram_flops_1r1w_tile #(
     parameter bit EnableReset = 0,
     localparam int AddrWidth = $clog2(Depth)
 ) (
-    input  logic                 clk,
+    input logic                 wr_clk,
     // Synchronous active-high reset.
     // Reset is always used for assertions. Additionally used for logic only when EnableReset is 1.
     // ri lint_check_waive INPUT_NOT_READ HIER_NET_NOT_READ HIER_BRANCH_NOT_READ
-    input  logic                 rst,
-    input  logic                 wr_valid,
-    input  logic [AddrWidth-1:0] wr_addr,
-    input  logic [    Width-1:0] wr_data,
+    input logic                 wr_rst,
+    input logic                 wr_valid,
+    input logic [AddrWidth-1:0] wr_addr,
+    input logic [    Width-1:0] wr_data,
+
+    // Used only for assertions.
+    // ri lint_check_waive INPUT_NOT_READ HIER_NET_NOT_READ HIER_BRANCH_NOT_READ
+    input  logic                 rd_clk,
+    // Synchronous active-high reset.
+    // Read reset is only used for assertions.
+    // ri lint_check_waive INPUT_NOT_READ HIER_NET_NOT_READ HIER_BRANCH_NOT_READ
+    input  logic                 rd_rst,
     input  logic                 rd_addr_valid,
     input  logic [AddrWidth-1:0] rd_addr,
     output logic                 rd_data_valid,
@@ -55,20 +65,28 @@ module br_ram_flops_1r1w_tile #(
   `BR_ASSERT_STATIC(depth_gte2_a, Depth >= 2)
   `BR_ASSERT_STATIC(width_gte1_a, Width >= 1)
 
-  `BR_ASSERT_INTG(wr_addr_in_range_A, wr_valid |-> wr_addr < Depth)
-  `BR_ASSERT_INTG(rd_addr_in_range_A, rd_addr_valid |-> rd_addr < Depth)
+  `BR_ASSERT_CR_INTG(wr_addr_in_range_A, wr_valid |-> wr_addr < Depth, wr_clk, wr_rst)
+  `BR_ASSERT_CR_INTG(rd_addr_in_range_A, rd_addr_valid |-> rd_addr < Depth, rd_clk, rd_rst)
+
+  if (EnableBypass) begin : gen_bypass_intg_checks
+    // Bypass is only permissible if the read and write clocks are the same.
+    // ri lint_check_waive ALWAYS_COMB
+    `BR_ASSERT_COMB_INTG(same_clock_a, wr_clk == rd_clk)
+  end
 
   //------------------------------------------
   // Implementation
   //------------------------------------------
+  // Storage flops are on the write clock but read asynchronously
+  // from the read clock.
   logic [Depth-1:0][Width-1:0] mem;
 
   // Write port
   for (genvar i = 0; i < Depth; i++) begin : gen_flops
     if (EnableReset) begin : gen_reset
-      `BR_REGL(mem[i], wr_data, wr_valid && (wr_addr == i))
+      `BR_REGLX(mem[i], wr_data, wr_valid && (wr_addr == i), wr_clk, wr_rst)
     end else begin : gen_no_reset
-      `BR_REGLN(mem[i], wr_data, wr_valid && (wr_addr == i))
+      `BR_REGLNX(mem[i], wr_data, wr_valid && (wr_addr == i), wr_clk)
     end
   end
 
@@ -85,20 +103,12 @@ module br_ram_flops_1r1w_tile #(
   //------------------------------------------
   // Implementation checks
   //------------------------------------------
-  `BR_ASSERT_IMPL(zero_read_latency_A, rd_addr_valid |-> rd_data_valid)
+  `BR_ASSERT_CR_IMPL(zero_read_latency_A, rd_addr_valid |-> rd_data_valid, rd_clk, rd_rst)
   if (EnableBypass) begin : gen_bypass_impl_checks
-    `BR_ASSERT_IMPL(
+    `BR_ASSERT_CR_IMPL(
         bypass_write_to_read_zero_cycles_A,
-        wr_valid && rd_addr_valid && wr_addr == rd_addr |-> rd_data_valid && rd_data == wr_data)
-  end else begin : gen_bypass_impl_checks
-    `BR_ASSERT_IMPL(no_bypass_write_to_read_one_cycle_A,
-                    rd_addr_valid && $past(
-                        wr_valid
-                    ) && rd_addr == $past(
-                        wr_addr
-                    ) |-> rd_data_valid && rd_data == $past(
-                        wr_data
-                    ))
+        wr_valid && rd_addr_valid && (wr_addr == rd_addr) |-> rd_data_valid && rd_data == wr_data,
+        rd_clk, rd_rst)
   end
 
 endmodule : br_ram_flops_1r1w_tile

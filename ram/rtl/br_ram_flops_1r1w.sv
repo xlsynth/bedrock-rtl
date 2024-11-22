@@ -43,25 +43,38 @@ module br_ram_flops_1r1w #(
     // If 0, then each memory tile has a read-after-write hazard latency of 1 cycle, i.e.,
     // a read cannot observe previously written data unless the read address is issued at least
     // one cycle after the write.
+    // Bypassing is only permissible if the read and write clocks are the same.
     parameter bit TileEnableBypass = 0,
     // If 1, then the memory elements are cleared to 0 upon reset. Otherwise, they are undefined until
     // written for the first time.
     parameter bit EnableMemReset = 0,
     localparam int AddressWidth = $clog2(Depth),
+    // Write latency in units of wr_clk cycles
     // ri lint_check_waive PARAM_NOT_USED
     localparam int WriteLatency = AddressDepthStages + 1,
-    localparam int ReadLatency = AddressDepthStages + ReadDataDepthStages + ReadDataWidthStages,
-    localparam int ReadAfterWriteHazardLatency = TileEnableBypass ? 0 : 1
+    // Read latency in units of rd_clk cycles
+    localparam int ReadLatency = AddressDepthStages + ReadDataDepthStages + ReadDataWidthStages
 ) (
+    // Write-clock signals
     // Posedge-triggered clock.
-    input  logic                    clk,
+    input logic                    wr_clk,
     // Synchronous active-high reset.
     // Reset is not used if all stages are 0, hence lint waiver.
     // ri lint_check_waive HIER_NET_NOT_READ HIER_BRANCH_NOT_READ
-    input  logic                    rst,
-    input  logic                    wr_valid,
-    input  logic [AddressWidth-1:0] wr_addr,
-    input  logic [       Width-1:0] wr_data,
+    input logic                    wr_rst,
+    input logic                    wr_valid,
+    input logic [AddressWidth-1:0] wr_addr,
+    input logic [       Width-1:0] wr_data,
+
+    // Read-clock signals
+    // Posedge-triggered clock.
+    // The clock may not be used if all stages are 0, hence lint waiver.
+    // ri lint_check_waive HIER_NET_NOT_READ HIER_BRANCH_NOT_READ
+    input  logic                    rd_clk,
+    // Synchronous active-high reset.
+    // Reset is not used if all stages are 0, hence lint waiver.
+    // ri lint_check_waive HIER_NET_NOT_READ HIER_BRANCH_NOT_READ
+    input  logic                    rd_rst,
     input  logic                    rd_addr_valid,
     input  logic [AddressWidth-1:0] rd_addr,
     output logic                    rd_data_valid,
@@ -93,8 +106,8 @@ module br_ram_flops_1r1w #(
   `BR_ASSERT_STATIC(read_data_width_stages_gte0_a, ReadDataWidthStages >= 0)
 
   // Address range checks
-  `BR_ASSERT_INTG(wr_addr_in_range_a, wr_valid |-> wr_addr < Depth)
-  `BR_ASSERT_INTG(rd_addr_in_range_a, rd_addr_valid |-> rd_addr < Depth)
+  `BR_ASSERT_CR_INTG(wr_addr_in_range_a, wr_valid |-> wr_addr < Depth, wr_clk, wr_rst)
+  `BR_ASSERT_CR_INTG(rd_addr_in_range_a, rd_addr_valid |-> rd_addr < Depth, rd_clk, rd_rst)
 
   // Rely on submodule integration checks
 
@@ -119,14 +132,14 @@ module br_ram_flops_1r1w #(
       .Tiles(DepthTiles),
       .Stages(AddressDepthStages)
   ) br_ram_addr_decoder_wr (
-      .clk,
-      .rst,
-      .in_valid (wr_valid),
-      .in_addr  (wr_addr),
-      .in_data  (wr_data),
+      .clk(wr_clk),  // ri lint_check_waive SAME_CLOCK_NAME
+      .rst(wr_rst),  // ri lint_check_waive SAME_CLOCK_NAME
+      .in_valid(wr_valid),
+      .in_addr(wr_addr),
+      .in_data(wr_data),
       .out_valid(tile_wr_valid),
-      .out_addr (tile_wr_addr),
-      .out_data (tile_wr_data)
+      .out_addr(tile_wr_addr),
+      .out_data(tile_wr_data)
   );
 
   // Read address pipeline
@@ -135,8 +148,8 @@ module br_ram_flops_1r1w #(
       .Tiles (DepthTiles),
       .Stages(AddressDepthStages)
   ) br_ram_addr_decoder_rd (
-      .clk,
-      .rst,
+      .clk(rd_clk),  // ri lint_check_waive SAME_CLOCK_NAME
+      .rst(rd_rst),  // ri lint_check_waive SAME_CLOCK_NAME
       .in_valid(rd_addr_valid),
       .in_addr(rd_addr),
       .in_data(1'b0),  // unused
@@ -154,11 +167,13 @@ module br_ram_flops_1r1w #(
           .EnableBypass(TileEnableBypass),
           .EnableReset(EnableMemReset)
       ) br_ram_flops_1r1w_tile (
-          .clk,
-          .rst,
+          .wr_clk,
+          .wr_rst,
           .wr_valid(tile_wr_valid[r]),
           .wr_addr(tile_wr_addr[r]),
           .wr_data(tile_wr_data[r][c]),
+          .rd_clk,
+          .rd_rst,
           .rd_addr_valid(tile_rd_addr_valid[r]),
           .rd_addr(tile_rd_addr[r]),
           .rd_data_valid(tile_rd_data_valid[r][c]),
@@ -175,8 +190,8 @@ module br_ram_flops_1r1w #(
       .DepthStages(ReadDataDepthStages),
       .WidthStages(ReadDataWidthStages)
   ) br_ram_data_rd_pipe (
-      .clk,
-      .rst,
+      .clk(rd_clk),  // ri lint_check_waive SAME_CLOCK_NAME
+      .rst(rd_rst),  // ri lint_check_waive SAME_CLOCK_NAME
       .tile_valid(tile_rd_data_valid),
       .tile_data(tile_rd_data),
       .valid(rd_data_valid),
@@ -186,32 +201,21 @@ module br_ram_flops_1r1w #(
   //------------------------------------------
   // Implementation checks
   //------------------------------------------
-  `BR_ASSERT_IMPL(read_latency_a, rd_addr_valid |-> ##ReadLatency rd_data_valid)
+  `BR_ASSERT_CR_IMPL(read_latency_a, rd_addr_valid |-> ##ReadLatency rd_data_valid, rd_clk, rd_rst)
 
-  if (ReadAfterWriteHazardLatency == 0) begin : gen_hazard0_checks
+  if (TileEnableBypass) begin : gen_bypass_checks
     if (ReadLatency > 0) begin : gen_readlat_gt0
-      `BR_ASSERT_IMPL(read_write_hazard_gets_new_data_a,
-                      wr_valid && rd_addr_valid && (wr_addr == rd_addr) |->
+      `BR_ASSERT_CR_IMPL(read_write_hazard_gets_new_data_a,
+                         wr_valid && rd_addr_valid && (wr_addr == rd_addr) |->
           ##ReadLatency rd_data_valid && rd_data == $past(
-                          wr_data, ReadLatency
-                      ))
+                             wr_data, ReadLatency
+                         ),
+                         rd_clk, rd_rst)
     end else begin : gen_readlat_eq0
-      `BR_ASSERT_IMPL(read_write_hazard_gets_new_data_a,
-                      wr_valid && rd_addr_valid && (wr_addr == rd_addr) |->
-          rd_data_valid && (rd_data == wr_data))
-    end
-  end else begin : gen_hazard1_checks
-    if (ReadLatency > 0) begin : gen_readlat_gt0
-      `BR_COVER_IMPL(read_write_hazard_gets_old_data_c,
-                     (wr_valid && rd_addr_valid && (wr_addr == rd_addr)) ##ReadLatency
-          (rd_data_valid && rd_data != $past(
-                         wr_data, ReadLatency
-                     )))
-    end else begin : gen_readlat_eq0
-      `BR_COVER_IMPL(
-          read_write_hazard_gets_old_data_c,
-          (wr_valid && rd_addr_valid && (wr_addr == rd_addr)) && rd_data_valid && (rd_data != $past(
-          wr_data)))
+      `BR_ASSERT_CR_IMPL(read_write_hazard_gets_new_data_a,
+                         wr_valid && rd_addr_valid && (wr_addr == rd_addr) |->
+          rd_data_valid && (rd_data == wr_data),
+                         rd_clk, rd_rst)
     end
   end
 
