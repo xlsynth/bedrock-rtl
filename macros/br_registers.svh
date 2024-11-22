@@ -152,7 +152,7 @@ end
 // * initial value is 0
 // * synchronous active-high reset
 // * positive-edge triggered clock
-`define BR_REGX(__q__, __d__, __rst__, __clk__) \
+`define BR_REGX(__q__, __d__, __clk__, __rst__) \
 always_ff @(posedge __clk__) begin \
     if (__rst__) __q__ <= '0; \
     else __q__ <= __d__; \
@@ -163,7 +163,7 @@ end
 // * initial value is 0
 // * synchronous active-high reset
 // * positive-edge triggered clock
-`define BR_REGLX(__q__, __d__, __en__, __rst__, __clk__) \
+`define BR_REGLX(__q__, __d__, __en__, __clk__, __rst__) \
 always_ff @(posedge __clk__) begin \
     if (__rst__) __q__ <= '0; \
     else if (__en__) __q__ <= __d__; \
@@ -174,7 +174,7 @@ end
 // * initial value given
 // * synchronous active-high reset
 // * positive-edge triggered clock
-`define BR_REGIX(__q__, __d__, __init__, __rst__, __clk__) \
+`define BR_REGIX(__q__, __d__, __init__, __clk__, __rst__) \
 always_ff @(posedge __clk__) begin \
     if (__rst__) __q__ <= __init__; \
     else __q__ <= __d__; \
@@ -185,10 +185,30 @@ end
 // * initial value given
 // * synchronous active-high reset
 // * positive-edge triggered clock
-`define BR_REGILX(__q__, __d__, __en__, __init__, __rst__, __clk__) \
+`define BR_REGILX(__q__, __d__, __en__, __init__, __clk__, __rst__) \
 always_ff @(posedge __clk__) begin \
     if (__rst__) __q__ <= __init__; \
     else if (__en__) __q__ <= __d__; \
+end
+
+// Flip-flop register
+// * unconditional load
+// * initial value is 0
+// * no reset
+// * positive-edge triggered clock
+`define BR_REGNX(__q__, __d__, __clk__) \
+always_ff @(posedge __clk__) begin \
+    __q__ <= __d__; \
+end
+
+// Flip-flop register
+// * conditional load
+// * initial value is 0
+// * no reset
+// * positive-edge triggered clock
+`define BR_REGLNX(__q__, __d__, __en__, __clk__) \
+always_ff @(posedge __clk__) begin \
+    if (__en__) __q__ <= __d__; \
 end
 
 // verilog_lint: waive-stop line-length
