@@ -781,6 +781,11 @@ a| Bus CDC using a dual-clock FIFO with internal flop-RAM
 | Yes
 |
 
+| `br_delay_shift_reg`
+| Loadable shift register
+| Yes
+|
+
 |===
 
 === `demux`: Simple Demultiplexers
