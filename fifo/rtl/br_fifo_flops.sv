@@ -170,11 +170,13 @@ module br_fifo_flops #(
       // Flops don't need to be reset, since uninitialized cells will never be read
       .EnableMemReset(0)
   ) br_ram_flops_1r1w (
-      .clk,
-      .rst,
+      .wr_clk(clk),  // ri lint_check_waive SAME_CLOCK_NAME
+      .wr_rst(rst),
       .wr_valid(ram_wr_valid),
       .wr_addr(ram_wr_addr),
       .wr_data(ram_wr_data),
+      .rd_clk(clk),  // ri lint_check_waive SAME_CLOCK_NAME
+      .rd_rst(rst),
       .rd_addr_valid(ram_rd_addr_valid),
       .rd_addr(ram_rd_addr),
       .rd_data_valid(ram_rd_data_valid),

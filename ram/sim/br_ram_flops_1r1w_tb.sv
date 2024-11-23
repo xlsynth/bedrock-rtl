@@ -57,11 +57,13 @@ module br_ram_flops_1r1w_tb #(
       .TileEnableBypass(TileEnableBypass),
       .EnableMemReset(EnableMemReset)
   ) dut (
-      .clk,
-      .rst,
+      .wr_clk(clk),
+      .wr_rst(rst),
       .wr_valid,
       .wr_addr,
       .wr_data,
+      .rd_clk(clk),
+      .rd_rst(rst),
       .rd_addr_valid,
       .rd_addr,
       .rd_data_valid,
