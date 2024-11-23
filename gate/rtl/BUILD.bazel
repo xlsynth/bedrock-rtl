@@ -20,6 +20,7 @@ package(default_visibility = ["//visibility:public"])
 verilog_library(
     name = "br_gate_behav",
     srcs = ["br_gate_behav.sv"],
+    deps = ["//macros:br_registers"],
 )
 
 br_verilog_elab_and_lint_test_suite(
@@ -89,6 +90,20 @@ br_verilog_elab_and_lint_test_suite(
 br_verilog_elab_and_lint_test_suite(
     name = "br_gate_icg_test_suite",
     top = "br_gate_icg",
+    deps = [
+        ":br_gate_behav",
+    ],
+)
+
+br_verilog_elab_and_lint_test_suite(
+    name = "br_gate_cdc_sync_test_suite",
+    params = {
+        "NumStages": [
+            "2",
+            "3",
+        ],
+    },
+    top = "br_gate_cdc_sync",
     deps = [
         ":br_gate_behav",
     ],
