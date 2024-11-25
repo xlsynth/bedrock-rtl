@@ -16,14 +16,18 @@
 
 module br_fifo_flops_push_credit_tb ();
 
-  // 6 cycles of transport delay (2*PropDelay)
-  // 2 cycles of valid->credit delay at FIFO
-  // Depth of 8 allows full-throughput
-
   // Parameters
-  localparam int Width = 8;
-  localparam int Depth = 8;
+  parameter bit EnableBypass = 1;
+  parameter bit RegisterPopOutputs = 0;
+  parameter bit RegisterPushCredit = 0;
+  parameter int FlopRamAddressDepthStages = 0;
+
   localparam int PropDelay = 3;
+  localparam int Width = 8;
+  localparam int CutThroughLatency =
+      PropDelay + (EnableBypass ? 0 : (FlopRamAddressDepthStages + 1)) + RegisterPopOutputs;
+  localparam int BackpressureLatency = PropDelay + 1 + RegisterPushCredit;
+  localparam int Depth = CutThroughLatency + BackpressureLatency + 1;
   localparam int NData = 100;
 
   // Inputs
@@ -46,17 +50,24 @@ module br_fifo_flops_push_credit_tb ();
   logic pop_valid;
   logic [Width-1:0] pop_data;
 
-  logic [$clog2(NData+1)-1:0] pop_count;
+  logic empty, full;
+  logic [$clog2(Depth+1)-1:0] items, slots;
+
   logic [$clog2(Depth+1)-1:0] sender_credit, credit_initial_push;
-  logic   fail;
-  integer unpop;
 
   assign credit_initial_push = Depth;
+
+  logic start;
+  logic finished;
+  logic [31:0] error_count;
 
   br_fifo_flops_push_credit #(
       .Depth(Depth),
       .Width(Width),
-      .EnableBypass(0),
+      .EnableBypass(EnableBypass),
+      .RegisterPopOutputs(RegisterPopOutputs),
+      .RegisterPushCredit(RegisterPushCredit),
+      .FlopRamAddressDepthStages(FlopRamAddressDepthStages),
       .MaxCredit(Depth)
   ) dut (
       .clk,
@@ -68,17 +79,17 @@ module br_fifo_flops_push_credit_tb ();
       .pop_ready,
       .pop_valid,
       .pop_data,
-      .full(),
+      .full,
       .full_next(),
-      .slots(),
+      .slots,
       .slots_next(),
       .credit_initial_push,
       .credit_withhold_push('0),
       .credit_count_push(),
       .credit_available_push(),
-      .empty(),
+      .empty,
       .empty_next(),
-      .items(),
+      .items,
       .items_next()
   );
 
@@ -123,85 +134,66 @@ module br_fifo_flops_push_credit_tb ();
       .out_stages()  // ri lint_check_waive OPEN_OUTPUT
   );
 
-  // Clock generation
-  always #5 clk = ~clk;
+  br_test_driver #(
+      // Need to wait twice the prop delay for Xs to clear out
+      .ResetCycles(2 * PropDelay + 1)
+  ) td (
+      .clk,
+      .rst
+  );
 
-`ifdef DUMP_WAVES
+  br_fifo_test_harness #(
+      .Width(Width),
+      .Depth(Depth),
+      .CutThroughLatency(CutThroughLatency),
+      .BackpressureLatency(BackpressureLatency)
+  ) br_fifo_test_harness (
+      .clk,
+      .rst,
+      .start,
+      .finished,
+      .error_count,
+      .push_ready,
+      .push_valid,
+      .push_data,
+      .pop_ready,
+      .pop_valid,
+      .pop_data,
+      .empty,
+      .full,
+      .items,
+      .slots
+  );
+
+  // Test Sequence
   initial begin
-    $shm_open("waves.shm");
-    $shm_probe("AS");
+    integer timeout;
+
+    start = 0;
+
+    $display("Resetting DUT");
+
+    td.reset_dut();
+
+    $display("Waiting for initial credit return");
+    while (sender_credit != credit_initial_push) begin
+      td.wait_cycles();
+    end
+
+    $display("Starting test");
+
+    start   = 1'b1;
+
+    timeout = 5000;
+    td.wait_cycles();
+    while (timeout > 0 && !finished) begin
+      td.wait_cycles();
+      timeout = timeout - 1;
+    end
+
+    td.check(timeout > 0, $sformatf("Test timed out"));
+    td.check(error_count == 0, $sformatf("Errors in test"));
+
+    td.finish();
   end
-`endif
-
-  // Initialize Inputs
-  initial begin
-    clk = 0;
-    rst = 1;
-    pop_ready = 1'b1;
-    push_valid = 1'b0;
-    push_data = '0;
-    fail = 0;
-
-    // Wait 100 ns for global reset to finish
-    #100 rst = 0;
-
-    // wait for initial credit release
-    #400;
-
-    for (integer i = 0; i < NData; i += 1) begin
-      while (!push_ready) begin
-        @(posedge clk);
-      end
-      @(negedge clk);
-      // push data
-      push_valid = 1'b1;
-      push_data  = i;
-    end
-
-    @(negedge clk);
-    push_valid = 1'b0;
-    push_data  = '0;
-
-    #1000;
-
-    // end of test checks
-    if (pop_count != NData) begin
-      $error("Test failed: pop_count=%d", pop_count);
-      fail = 1;
-    end
-    if (sender_credit != Depth) begin
-      $error("Test failed: sender_credit=%d", sender_credit);
-      fail = 1;
-    end
-    if (unpop != 1) begin
-      // check no bubbles in output - unpop should be 1
-      $error("Test failed: pop_valid deasserted %d times", unpop);
-      fail = 1;
-    end
-    // finish
-    if (!fail) begin
-      $display("TEST PASSED");
-    end
-    $finish;
-  end
-
-  initial begin
-    pop_count = 0;
-    while (1) begin
-      @(posedge clk);
-      if (pop_valid && pop_ready) begin
-        pop_count = pop_count + 1;
-      end
-    end
-  end
-
-  initial begin
-    @(negedge rst);
-    unpop = 0;
-    while (1) begin
-      @(negedge pop_valid);
-      unpop += 1;
-    end
-  end
-
 endmodule
