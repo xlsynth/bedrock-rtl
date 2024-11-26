@@ -21,3 +21,18 @@ rules_hdl_extension = use_extension("//dependency_support/rules_hdl:extension.bz
 use_repo(rules_hdl_extension, "rules_hdl")
 
 bazel_dep(name = "stardoc", version = "0.7.1")
+bazel_dep(name = "rules_python", version = "1.0.0-rc1")
+
+python = use_extension("@rules_python//python/extensions:python.bzl", "python")
+python.toolchain(python_version = "3.12")
+use_repo(python, "python_3_12", "python_versions", "pythons_hub")
+
+pip = use_extension("@rules_python//python/extensions:pip.bzl", "pip")
+pip.parse(
+    download_only = True,
+    hub_name = "pypi",
+    # We need to use the same version here as in the `python.toolchain` call.
+    python_version = "3.12",
+    requirements_lock = "//:requirements_lock_3_12.txt",
+)
+use_repo(pip, "pypi")
