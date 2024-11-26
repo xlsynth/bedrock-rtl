@@ -177,8 +177,11 @@ module br_fifo_staging_buffer #(
     // TODO(zhemao): Consider separating the pointer management logic into a standalone module
     logic [InternalDepth-1:0][Width-1:0] mem;
     // Use onehot-encoded pointers to avoid decoding logic
-    logic [InternalDepth-1:0] rd_ptr_onehot, rd_ptr_onehot_next;
-    logic [InternalDepth-1:0] wr_ptr_onehot, wr_ptr_onehot_next;
+    logic [InternalDepth-1:0]            ptr_onehot_init;
+    logic [InternalDepth-1:0]            rd_ptr_onehot;
+    logic [InternalDepth-1:0]            wr_ptr_onehot;
+    logic                                rd_ptr_shift_bit;
+    logic                                wr_ptr_shift_bit;
     // write-en and next for each data cell
     // mem_wr_en can have up to two bits set (immediate and delayed path)
     logic [InternalDepth-1:0]            mem_wr_en;
@@ -199,14 +202,39 @@ module br_fifo_staging_buffer #(
     // Maybe-full becomes high when there is a push without pop
     // and goes low when there is a pop without push
     assign maybe_full_next = (advance_wr_ptr == advance_rd_ptr) ? maybe_full : advance_wr_ptr;
+
+    assign ptr_onehot_init = InternalDepth'(1'b1);
     // Left-Rotate by 1 to advance pointer
-    // TODO(zhemao, #159): Use a shift register module for this once available
-    assign rd_ptr_onehot_next = {rd_ptr_onehot[InternalDepth-2:0], rd_ptr_onehot[InternalDepth-1]};
-    assign wr_ptr_onehot_next = {wr_ptr_onehot[InternalDepth-2:0], wr_ptr_onehot[InternalDepth-1]};
+    // shift_out becomes shift in
+    br_delay_shift_reg #(
+        .Width(1),
+        .NumStages(InternalDepth)
+    ) br_delay_shift_reg_rd_ptr (
+        .clk,
+        .rst,
+        .reinit(1'b0),
+        .initial_value(ptr_onehot_init),
+        .value(rd_ptr_onehot),
+        .shift_en(advance_rd_ptr),
+        .shift_in(rd_ptr_shift_bit),
+        .shift_out(rd_ptr_shift_bit)
+    );
+
+    br_delay_shift_reg #(
+        .Width(1),
+        .NumStages(InternalDepth)
+    ) br_delay_shift_reg_wr_ptr (
+        .clk,
+        .rst,
+        .reinit(1'b0),
+        .initial_value(ptr_onehot_init),
+        .value(wr_ptr_onehot),
+        .shift_en(advance_wr_ptr),
+        .shift_in(wr_ptr_shift_bit),
+        .shift_out(wr_ptr_shift_bit)
+    );
 
     `BR_REG(maybe_full, maybe_full_next)
-    `BR_REGIL(rd_ptr_onehot, rd_ptr_onehot_next, advance_rd_ptr, InternalDepth'(1'b1))
-    `BR_REGIL(wr_ptr_onehot, wr_ptr_onehot_next, advance_wr_ptr, InternalDepth'(1'b1))
 
     // Actual storage update
     for (genvar i = 0; i < InternalDepth; i++) begin : gen_storage
