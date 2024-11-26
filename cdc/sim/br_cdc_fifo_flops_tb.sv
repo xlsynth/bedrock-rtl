@@ -138,7 +138,10 @@ module br_cdc_fifo_flops_tb;
 
     timeout = 5000;
     td.wait_cycles();
-    while (timeout > 0 && !finished) td.wait_cycles();
+    while (timeout > 0 && !finished) begin
+      td.wait_cycles();
+      timeout = timeout - 1;
+    end
 
     td.check(timeout > 0, $sformatf("Test timed out"));
     td.check(error_count == 0, $sformatf("Errors in test"));

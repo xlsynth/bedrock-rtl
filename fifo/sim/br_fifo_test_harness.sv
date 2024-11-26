@@ -62,17 +62,17 @@ module br_fifo_test_harness #(
     si = 0;
     repeat (Depth) begin
       @(negedge clk);
+      push_valid = 1;
+      push_data  = $urandom;
+      @(posedge clk);
       if (push_ready) begin
-        push_valid = 1;
-        push_data = $urandom;
         scoreboard[si] = push_data;
         $display("Pushed data: %0h | Items: %0d | Full: %b", push_data, items, full);
+        si += 1;
       end else begin
-        push_valid = 0;
         $error("FIFO is full. Cannot push data.");
         error_count += 1;
       end
-      si += 1;
     end
     @(negedge clk);
     push_valid = 0;
@@ -90,19 +90,20 @@ module br_fifo_test_harness #(
     @(negedge clk);
     push_valid = 1;
     push_data  = $urandom;
-    @(negedge clk);
+    @(posedge clk);
     if (!push_ready) $display("Correctly prevented pushing into a full FIFO.");
     else begin
       $error("Error: Allowed pushing into a full FIFO.");
       error_count += 1;
     end
+    @(negedge clk);
     push_valid = 0;
 
     // Test 3: Pop all items from the FIFO
     $display("Test 3: Popping all items from the FIFO...");
     si = 0;
     pop_ready = 1;
-    while (!empty) begin
+    repeat (Depth) begin
       @(posedge clk);
       if (pop_valid) begin
         $display("Popped data: %0h | Items: %0d | Empty: %b", pop_data, items, empty);
@@ -110,8 +111,11 @@ module br_fifo_test_harness #(
           $error("Pop data mismatch! expect=%0h got=%0h", scoreboard[si], pop_data);
           error_count += 1;
         end
+        si += 1;
+      end else begin
+        $error("Cannot pop data. FIFO Empty.");
+        error_count += 1;
       end
-      si += 1;
     end
     @(negedge clk);
     pop_ready = 0;
@@ -144,15 +148,13 @@ module br_fifo_test_harness #(
         integer i;
         for (i = 0; i < Depth * 2; i = i + 1) begin
           @(negedge clk);
+          push_valid = 1'b1;
+          push_data = i[Width-1:0];
+          scoreboard[i] = push_data;
+          @(posedge clk);
           if (push_ready) begin
-            push_valid = 1;
-            push_data  = i[Width-1:0];
-            @(posedge clk);
-            scoreboard[i] = push_data;
             $display("Pushed data: %0h | Items: %0d", push_data, items);
           end else begin
-            push_valid = 0;
-            @(posedge clk);
             $error("Cannot push data. FIFO Full.");
             error_count += 1;
           end
@@ -163,20 +165,18 @@ module br_fifo_test_harness #(
       // Pop process
       begin
         integer j;
-        @(posedge pop_valid);
+        // Wait for the data to get to the pop side
+        repeat (CutThroughLatency + 1) @(negedge clk);
+        pop_ready = 1;
         for (j = 0; j < Depth * 2; j = j + 1) begin
-          @(negedge clk);
+          @(posedge clk);
           if (pop_valid) begin
-            pop_ready = 1;
-            @(posedge clk);
             $display("Popped data: %0h | Items: %0d", pop_data, items);
             if (pop_data != scoreboard[j]) begin
               $error("Pop data mismatch! expect=%0h got=%0h", scoreboard[j], pop_data);
               error_count += 1;
             end
           end else begin
-            pop_ready = 0;
-            @(posedge clk);
             $error("Cannot pop data. FIFO Empty.");
             error_count += 1;
           end

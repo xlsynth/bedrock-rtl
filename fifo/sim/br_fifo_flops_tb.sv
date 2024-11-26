@@ -23,6 +23,10 @@ module br_fifo_flops_tb;
   parameter int RegisterPopOutputs = 0;
   parameter int FlopRamAddressDepthStages = 0;
 
+  localparam int CutThroughLatency =
+      (EnableBypass ? 0 : (FlopRamAddressDepthStages + 1)) + RegisterPopOutputs;
+  localparam int BackpressureLatency = 1;
+
   // Clock and Reset
   reg clk;
   reg rst;
@@ -76,7 +80,9 @@ module br_fifo_flops_tb;
   // Hook up the test harness
   br_fifo_test_harness #(
       .Depth(Depth),
-      .Width(Width)
+      .Width(Width),
+      .CutThroughLatency(CutThroughLatency),
+      .BackpressureLatency(BackpressureLatency)
   ) br_fifo_test_harness (
       .clk,
       .rst,
@@ -121,7 +127,10 @@ module br_fifo_flops_tb;
 
     timeout = 5000;
     td.wait_cycles();
-    while (timeout > 0 && !finished) td.wait_cycles();
+    while (timeout > 0 && !finished) begin
+      td.wait_cycles();
+      timeout = timeout - 1;
+    end
 
     td.check(timeout > 0, $sformatf("Test timed out"));
     td.check(error_count == 0, $sformatf("Errors in test"));
