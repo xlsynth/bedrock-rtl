@@ -51,6 +51,7 @@ def uint_to_bit_vector(number: int, bit_length: int) -> list:
     return bit_vector
 
 
+# TODO(mgottscho): BUG: it's not possible to use the min column weight for all columns in a long code.
 def min_column_weight(k: int, r: int) -> int:
     """Returns the smallest odd column weight that can be used to construct the r x k message part of the parity-check matrix."""
     for weight in range(3, r, 2):

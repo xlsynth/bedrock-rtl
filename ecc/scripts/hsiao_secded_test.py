@@ -71,11 +71,13 @@ class TestHsiaoSecdedCode(unittest.TestCase):
         [
             ("k4", 4, 4, 8),
             ("k8", 8, 5, 13),
+            ("k15", 15, 6, 21),
             ("k16", 16, 6, 22),
+            ("k30", 30, 7, 37),
             ("k32", 32, 7, 39),
-            # TODO(mgottscho): debug failing tests
-            # ("k64", 64, 8, 72),
-            # ("k128", 128, 9, 137),
+            ("k59", 59, 8, 68),
+            ("k64", 64, 8, 72),
+            ("k128", 128, 9, 137),
         ]
     )
     def test_hsiao_secded_code(self, name, k, expected_r, expected_n):
