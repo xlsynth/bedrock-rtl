@@ -284,7 +284,7 @@ def G_col_to_sv_assign(col: np.ndarray, col_idx: int) -> str:
     nonzero_indices = np.nonzero(col)[0]
     for i in nonzero_indices:
         xors.append(f"message[{i}]")
-    return f"    assign codeword[{col_idx}] = " + " ^ ".join(xors) + ";"
+    return f"    assign parity[{col_idx}] = " + " ^ ".join(xors) + ";"
 
 
 def G_to_sv(G: np.ndarray) -> str:
@@ -293,9 +293,9 @@ def G_to_sv(G: np.ndarray) -> str:
     # Since we know G is in systematic form, we can just assign the message bits to the codeword bits.
     # We don't need to codegen that part.
     k = G.shape[0]
-    n = G.shape[1]
-    for i in range(k, n, 1):
-        assigns.append(G_col_to_sv_assign(G[:, i], i))
+    r = get_r(k)
+    for i in range(r):
+        assigns.append(G_col_to_sv_assign(G[:, k + i], i))
     return "\n".join(assigns)
 
 

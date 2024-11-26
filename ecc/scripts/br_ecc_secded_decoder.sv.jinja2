@@ -174,7 +174,8 @@ module br_ecc_secded_decoder #(
   //------------------------------------------
   `BR_ASSERT_COMB_IMPL(data_valid_only_if_codeword_valid_a, !data_valid || codeword_valid)
   `BR_ASSERT_COMB_IMPL(error_valid_only_if_data_valid_a, !error_valid || data_valid)
-  `BR_ASSERT_COMB_IMPL(ce_due_mutually_exclusive_a, !error_valid || !(error_corrected && error_detected_but_uncorrectable))
+  `BR_ASSERT_COMB_IMPL(ce_due_mutually_exclusive_a,
+                       !error_valid || !(error_corrected && error_detected_but_uncorrectable))
   `BR_COVER_COMB_IMPL(error_valid_c, error_valid)
   `BR_COVER_COMB_IMPL(ce_c, error_valid && error_corrected)
   `BR_COVER_COMB_IMPL(due_c, error_valid && error_detected_but_uncorrectable)

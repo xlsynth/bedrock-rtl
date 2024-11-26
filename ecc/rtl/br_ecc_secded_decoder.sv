@@ -35,8 +35,6 @@
 // corresponding encoder module (br_ecc_secded_encoder).
 //
 // The data is still marked valid even if an error is detected.
-// The error signals are always valid, though they will be 0
-// if data_valid is 0.
 //
 // Any data width >= 1 is supported. It is considered internally zero-padded up to
 // the nearest power-of-2 message width as part of decoding. The following
@@ -73,8 +71,10 @@ module br_ecc_secded_decoder #(
     input  logic [CodewordWidth-1:0] codeword,
     output logic                     data_valid,
     output logic [    DataWidth-1:0] data,
-    output logic                     corrected_error,
-    output logic                     detected_but_uncorrectable_error
+    output logic                     error_valid,
+    output logic                     error_corrected,
+    output logic                     error_detected_but_uncorrectable,
+    output logic [  ParityWidth-1:0] error_syndrome
 );
 
   //------------------------------------------
@@ -206,20 +206,20 @@ module br_ecc_secded_decoder #(
   br_enc_countones #(
       .Width(ParityWidth)
   ) br_enc_countones_syndrome (
-      .in(syndrome),
+      .in(error_syndrome),
       .count(syndrome_ones_count)
   );
 
-  assign syndrome_is_zero = syndrome == '0;
+  assign syndrome_is_zero = error_syndrome == '0;
   assign syndrome_is_even = !syndrome_is_zero && !syndrome_ones_count[0];
   assign syndrome_is_odd = syndrome_ones_count[1];
 
   // TODO(mgottscho): Implement this. Need code generation. (WIP)
   assign column_match_onehot = '0;
 
-  assign detected_but_uncorrectable_error = codeword_valid &&
+  assign error_detected_but_uncorrectable = codeword_valid &&
     (syndrome_is_even || (syndrome_is_odd && column_match_onehot == 0));
-  assign corrected_error = codeword_valid && syndrome_is_odd && (column_match_onehot != 0);
+  assign error_corrected = codeword_valid && syndrome_is_odd && (column_match_onehot != 0);
 
   // Actually correct the error.
   logic PadWidth = MessageWidth - DataWidth;
@@ -235,6 +235,12 @@ module br_ecc_secded_decoder #(
   //------------------------------------------
   // Implementation checks
   //------------------------------------------
-  // TODO(mgottscho): write some
+  `BR_ASSERT_COMB_IMPL(data_valid_only_if_codeword_valid_a, !data_valid || codeword_valid)
+  `BR_ASSERT_COMB_IMPL(error_valid_only_if_data_valid_a, !error_valid || data_valid)
+  `BR_ASSERT_COMB_IMPL(ce_due_mutually_exclusive_a,
+                       !error_valid || !(error_corrected && error_detected_but_uncorrectable))
+  `BR_COVER_COMB_IMPL(error_valid_c, error_valid)
+  `BR_COVER_COMB_IMPL(ce_c, error_valid && error_corrected)
+  `BR_COVER_COMB_IMPL(due_c, error_valid && error_detected_but_uncorrectable)
 
 endmodule : br_ecc_secded_decoder
