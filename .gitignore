@@ -5,3 +5,4 @@ chipstack_artifacts
 *.docbook
 *.docx
 *.f
+__pycache__
