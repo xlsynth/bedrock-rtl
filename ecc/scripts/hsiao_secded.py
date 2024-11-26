@@ -135,13 +135,29 @@ def check_column_weights_are_odd(matrix: np.ndarray) -> bool:
     return np.all(sum_over_rows % 2 == 1)
 
 
-def check_H_G_orthogonal(H: np.ndarray, G: np.ndarray) -> bool:
-    """Check that the parity-check matrix H and generator matrix G are orthogonal."""
+def check_H_G_orthogonal(H: np.ndarray, G: np.ndarray) -> None:
+    """Raise a ValueError if the parity-check matrix H and generator matrix G are not orthogonal."""
     H_G_product = H @ G.T
     if not np.all(H_G_product == 0):
-        raise ValueError(f"H and G are not orthogonal. H @ G.T = \n{H_G_product}")
-        return False
-    return True
+        H_str = np.array2string(
+            H, separator=", ", threshold=np.inf, max_line_width=np.inf
+        )
+        G_T_str = np.array2string(
+            G.T, separator=", ", threshold=np.inf, max_line_width=np.inf
+        )
+        H_G_product_str = np.array2string(
+            H_G_product, separator=", ", threshold=np.inf, max_line_width=np.inf
+        )
+        err_string = [
+            "H and G are not orthogonal.",
+            "H =",
+            f"{H_str}",
+            "G.T =",
+            f"{G_T_str}",
+            "H @ G.T =",
+            f"{H_G_product_str}",
+        ]
+        raise ValueError("\n".join(err_string))
 
 
 def hsiao_secded_code(k: int) -> tuple[int, int, np.ndarray, np.ndarray]:

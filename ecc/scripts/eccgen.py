@@ -30,6 +30,11 @@ def main():
         "--k", type=int, required=True, help="The number of data bits (k)"
     )
     parser.add_argument(
+        "--print0",
+        action="store_true",
+        help="Print 0s in the outputs (otherwise, leave blanks instead).",
+    )
+    parser.add_argument(
         "--generator-matrix-output",
         "--G",
         type=argparse.FileType("w"),
@@ -51,21 +56,21 @@ def main():
         print(f"Number of data bits (k): {args.k}")
         print(f"Number of parity bits (r): {r}")
         print(f"Total number of bits (n): {n}\n")
-        print("Parity-Check Matrix H:")
-        print(H)
-        print("\nGenerator Matrix G:")
-        print(G)
 
         # Convert matrices to strings without ellipses
         H_str = np.array2string(
             H, separator=", ", threshold=np.inf, max_line_width=np.inf
-        )
+        ).replace("0", " " if args.print0 else "0")
         G_str = np.array2string(
             G, separator=", ", threshold=np.inf, max_line_width=np.inf
-        )
+        ).replace("0", " " if args.print0 else "0")
 
+        print("\nGenerator Matrix G:")
+        print(G_str)
         if args.generator_matrix_output:
             args.generator_matrix_output.write(G_str)
+        print("\nParity-Check Matrix H:")
+        print(H_str)
         if args.parity_check_matrix_output:
             args.parity_check_matrix_output.write(H_str)
 
