@@ -62,6 +62,7 @@
 
 `include "br_asserts_internal.svh"
 
+// TODO(mgottscho): Pipeline the syndrome decoding and then correction with a parameter.
 module br_ecc_secded_decoder #(
     parameter int DataWidth = 1,  // Must be at least 1
     parameter int ParityWidth = 4,  // Must be at least 4 and at most 12
@@ -71,7 +72,7 @@ module br_ecc_secded_decoder #(
     input  logic                     codeword_valid,
     input  logic [CodewordWidth-1:0] codeword,
     output logic                     data_valid,
-    output logic [DataWidth-1:0]     data,
+    output logic [    DataWidth-1:0] data,
     output logic                     corrected_error,
     output logic                     detected_but_uncorrectable_error
 );
@@ -140,10 +141,10 @@ module br_ecc_secded_decoder #(
   logic [CodewordWidth-1:0] column_match_onehot;
 
   br_enc_countones #(
-    .Width(ParityWidth)
+      .Width(ParityWidth)
   ) br_enc_countones_syndrome (
-    .in(syndrome),
-    .count(syndrome_ones_count)
+      .in(syndrome),
+      .count(syndrome_ones_count)
   );
 
   assign syndrome_is_zero = syndrome == '0;

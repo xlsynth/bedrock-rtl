@@ -83,6 +83,8 @@ def get_H(k: int, r: int) -> np.ndarray:
     > (3) The difference of the number of 1s in any two rows is not greater than 1.
     > (4) No two columns are the same.
     """
+    # TODO(mgottscho): code is not optimal - the rows of H are not balanced (at most off-by-one number of 1s across all rows of H).
+    # This will lead to suboptimal timing and logic depth!!
     n = get_n(k, r)
     # Fill H_m with column vectors that satisfy conditions (1), (2), and (4).
     start_col = 0

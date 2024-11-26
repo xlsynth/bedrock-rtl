@@ -65,7 +65,7 @@ module br_ecc_secded_encoder #(
     localparam int CodewordWidth = MessageWidth + ParityWidth
 ) (
     input  logic                     data_valid,
-    input  logic [DataWidth-1:0]     data,
+    input  logic [    DataWidth-1:0] data,
     output logic                     codeword_valid,
     output logic [CodewordWidth-1:0] codeword
 );
@@ -84,7 +84,7 @@ module br_ecc_secded_encoder #(
   logic PadWidth = MessageWidth - DataWidth;
   logic [MessageWidth-1:0] message;
   if (PadWidth > 0) begin : gen_pad
-    assign message = {PadWidth{1'b0}, data};
+    assign message = {PadWidth'{1'b0}, data};
   end else begin : gen_no_pad
     assign message = data;
   end
