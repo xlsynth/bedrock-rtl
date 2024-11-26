@@ -169,6 +169,7 @@ verilog_library(
     srcs = ["br_fifo_staging_buffer.sv"],
     deps = [
         "//counter/rtl:br_counter",
+        "//delay/rtl:br_delay_shift_reg",
         "//delay/rtl:br_delay_valid",
         "//flow/rtl:br_flow_reg_fwd",
         "//flow/rtl:br_flow_reg_rev",
