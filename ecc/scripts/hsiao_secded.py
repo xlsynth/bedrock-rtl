@@ -299,8 +299,8 @@ def G_to_sv(G: np.ndarray) -> str:
     return "\n".join(assigns)
 
 
-def H_row_to_sv_assign(row: np.ndarray, row_idx: int) -> str:
-    """Generate a Verilog RTL assignment for a single row of the parity-check matrix H."""
+def syndrome_bit_to_sv(row: np.ndarray, row_idx: int) -> str:
+    """Generate a Verilog RTL assignment for a single bit of the syndrome."""
     xors = []
     nonzero_indices = np.nonzero(row)[0]
     for i in nonzero_indices:
@@ -308,12 +308,26 @@ def H_row_to_sv_assign(row: np.ndarray, row_idx: int) -> str:
     return f"    assign syndrome[{row_idx}] = " + " ^ ".join(xors) + ";"
 
 
-def H_to_sv(H: np.ndarray) -> str:
-    """Generate Verilog RTL code for the given parity-check matrix H."""
+def syndrome_to_sv(H: np.ndarray) -> str:
+    """Generate Verilog RTL code for the syndrome of the given parity-check matrix H."""
     assigns = []
     # Since we know G is in systematic form, we can just assign the message bits to the codeword bits.
     # We don't need to codegen that part.
     r = H.shape[0]
     for i in range(r):
-        assigns.append(H_row_to_sv_assign(H[i, :], i))
+        assigns.append(syndrome_bit_to_sv(H[i, :], i))
+    return "\n".join(assigns)
+
+
+def H_col_to_sv(col: np.ndarray, col_idx: int) -> str:
+    """Generate a Verilog RTL assignment for a single column of the parity-check matrix H."""
+    r = col.shape[0]
+    return f"    assign H[{col_idx}] = {r}'b" + "".join(col.astype(str)) + ";"
+
+
+def H_to_sv(H: np.ndarray) -> str:
+    """Generate Verilog RTL code for the columns of the given parity-check matrix H."""
+    assigns = []
+    for i in range(H.shape[1]):
+        assigns.append(H_col_to_sv(H[:, i], i))
     return "\n".join(assigns)

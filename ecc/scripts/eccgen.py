@@ -13,7 +13,7 @@
 # limitations under the License.
 
 import argparse
-from ecc.scripts.hsiao_secded import hsiao_secded_code, G_to_sv, H_to_sv
+from ecc.scripts.hsiao_secded import hsiao_secded_code, G_to_sv, syndrome_to_sv, H_to_sv
 import numpy as np
 from jinja2 import Template
 
@@ -162,7 +162,8 @@ def main():
                 mapping = {}
                 for n, k in RTL_SUPPORTED_N_K:
                     r, n, H, G = hsiao_secded_code(k)
-                    mapping[f"secded_dec_{n}_{k}"] = H_to_sv(H)
+                    mapping[f"secded_dec_syndrome_{n}_{k}"] = syndrome_to_sv(H)
+                    mapping[f"secded_dec_H_{n}_{k}"] = H_to_sv(H)
                 rendered = template.render(mapping)
                 rendered += "\n"
                 args.rtl_decoder_output.write(rendered)

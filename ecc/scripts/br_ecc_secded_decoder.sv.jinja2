@@ -88,36 +88,46 @@ module br_ecc_secded_decoder #(
   //------------------------------------------
   // Implementation
   //------------------------------------------
+  logic [CodewordWidth-1:0][ParityWidth-1:0] H;  // parity-check-matrix
 
   // verilog_format: off
   // verilog_lint: waive-start line-length
   if (CodewordWidth == 4 && MessageWidth == 4) begin : gen_8_4
     `BR_ASSERT_STATIC(parity_width_matches_a, ParityWidth == 4)
-{{ secded_dec_8_4 }}
+{{ secded_dec_syndrome_8_4 }}
+{{ secded_dec_H_8_4 }}
   end else if (CodewordWidth == 13 && MessageWidth == 8) begin : gen_13_8
     `BR_ASSERT_STATIC(parity_width_matches_a, ParityWidth == 5)
-{{ secded_dec_13_8 }}
+{{ secded_dec_syndrome_13_8 }}
+{{ secded_dec_H_13_8 }}
   end else if (CodewordWidth == 22 && MessageWidth == 16) begin : gen_22_16
     `BR_ASSERT_STATIC(parity_width_matches_a, ParityWidth == 6)
-{{ secded_dec_22_16 }}
+{{ secded_dec_syndrome_22_16 }}
+{{ secded_dec_H_22_16 }}
   end else if (CodewordWidth == 39 && MessageWidth == 32) begin : gen_39_32
     `BR_ASSERT_STATIC(parity_width_matches_a, ParityWidth == 7)
-{{ secded_dec_39_32 }}
+{{ secded_dec_syndrome_39_32 }}
+{{ secded_dec_H_39_32 }}
   end else if (CodewordWidth == 72 && MessageWidth == 64) begin : gen_72_64
     `BR_ASSERT_STATIC(parity_width_matches_a, ParityWidth == 8)
-{{ secded_dec_72_64 }}
+{{ secded_dec_syndrome_72_64 }}
+{{ secded_dec_H_72_64 }}
   end else if (CodewordWidth == 137 && MessageWidth == 128) begin : gen_137_128
     `BR_ASSERT_STATIC(parity_width_matches_a, ParityWidth == 9)
-{{ secded_dec_137_128 }}
+{{ secded_dec_syndrome_137_128 }}
+{{ secded_dec_H_137_128 }}
   end else if (CodewordWidth == 266 && MessageWidth == 256) begin : gen_266_256
     `BR_ASSERT_STATIC(parity_width_matches_a, ParityWidth == 10)
-{{ secded_dec_266_256 }}
+{{ secded_dec_syndrome_266_256 }}
+{{ secded_dec_H_266_256 }}
   end else if (CodewordWidth == 523 && MessageWidth == 512) begin : gen_523_512
     `BR_ASSERT_STATIC(parity_width_matches_a, ParityWidth == 11)
-{{ secded_dec_523_512 }}
+{{ secded_dec_syndrome_523_512 }}
+{{ secded_dec_H_523_512 }}
   end else if (CodewordWidth == 1036 && MessageWidth == 1024) begin : gen_1036_1024
     `BR_ASSERT_STATIC(parity_width_matches_a, ParityWidth == 12)
-{{ secded_dec_1036_1024 }}
+{{ secded_dec_syndrome_1036_1024 }}
+{{ secded_dec_H_1036_1024 }}
   end else begin : gen_default_parity
     `BR_ASSERT_STATIC(invalid_parity_width_a, 1'b0)
   end
