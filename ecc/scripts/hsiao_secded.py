@@ -141,26 +141,6 @@ def hsiao_secded_code(k: int) -> tuple[int, int, np.ndarray, np.ndarray]:
     """
     r = get_r(k)
     n = get_n(k, r)
-    print(f"Number of message bits (k): {k}")
-    print(f"Number of parity bits (r): {r}")
-    print(f"Number of codeword bits (n): {n}")
-    print("Constructing parity-check matrix H.")
     H = get_H(k, r)
-    print("Constructing generator matrix G.")
     G = get_G(H)
-    print("Parity-Check Matrix H:")
-    print(H)
-    print("Generator Matrix G:")
-    print(G)
     return r, n, H, G
-
-
-def main():
-    parser = argparse.ArgumentParser(description="Hsiao SECDED code generator.")
-    parser.add_argument("k", type=int, help="Number of data bits (k)")
-    args = parser.parse_args()
-    hsiao_secded_code(args.k)
-
-
-if __name__ == "__main__":
-    main()
