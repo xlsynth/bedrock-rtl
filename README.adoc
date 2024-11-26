@@ -14,7 +14,7 @@
 
 = Bedrock-RTL
 
-WARNING: UNDER CONSTRUCTION. Everything is broken.
+WARNING: UNDER CONSTRUCTION. Many things are broken.
 
 High quality and composable base RTL libraries in Verilog
 
