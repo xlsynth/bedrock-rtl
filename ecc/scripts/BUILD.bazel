@@ -23,7 +23,13 @@ py_library(
 py_binary(
     name = "eccgen",
     srcs = ["eccgen.py"],
-    deps = [":hsiao_secded"],
+    data = [
+        "br_ecc_secded_encoder.sv.jinja2",
+    ],
+    deps = [
+        ":hsiao_secded",
+        "@pypi//jinja2:pkg",
+    ],
 )
 
 py_test(

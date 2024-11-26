@@ -22,6 +22,7 @@ References:
 
 import numpy as np
 import math
+import textwrap
 
 
 def get_r(k: int) -> int:
@@ -212,6 +213,11 @@ def hsiao_secded_code(k: int) -> tuple[int, int, np.ndarray, np.ndarray]:
     return r, n, H, G
 
 
+def gen_rtl_for_G(G: np.ndarray) -> str:
+    """Generate Verilog RTL code for the given generator matrix G."""
+    pass
+
+
 def encode(m: np.ndarray, G: np.ndarray) -> np.ndarray:
     """Encode a message m using the generator matrix G."""
     return binary_matmul(m, G)
@@ -268,3 +274,19 @@ def decode_message(
     # If no column of H matches the syndrome, then the codeword is uncorrectable.
     # Similarly to above, we return *some* message but it is likely to have been corrupted!
     return (c[:k], False, True)
+
+
+def G_col_to_sv_assign(col: np.ndarray, col_idx: int) -> str:
+    xors = []
+    nonzero_indices = np.nonzero(col)[0]
+    for i in nonzero_indices:
+        xors.append(f"message[{i}]")
+    return f"    assign codeword[{col_idx}] = " + " ^ ".join(xors) + ";"
+
+
+def G_to_sv(G: np.ndarray) -> str:
+    """Generate Verilog RTL code for the given generator matrix G."""
+    assigns = []
+    for i in range(G.shape[1]):
+        assigns.append(G_col_to_sv_assign(G[:, i], i))
+    return "\n".join(assigns)

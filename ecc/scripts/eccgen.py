@@ -13,8 +13,22 @@
 # limitations under the License.
 
 import argparse
-from ecc.scripts.hsiao_secded import hsiao_secded_code
+from ecc.scripts.hsiao_secded import hsiao_secded_code, G_to_sv
 import numpy as np
+from jinja2 import Template
+
+
+def check_filename_extension(filename: str, allowed_extensions: tuple[str]) -> str:
+    """Checks if a filename has one of the allowed extensions and returns it as-is."""
+    if not filename.endswith(allowed_extensions):
+        raise argparse.ArgumentTypeError(
+            f"File '{filename}' must have one of the extensions: {allowed_extensions}"
+        )
+    return filename
+
+
+def sv_jinja2_file(filename: str) -> str:
+    return check_filename_extension(filename, (".sv.jinja2"))
 
 
 def main():
@@ -49,10 +63,16 @@ def main():
         help="The output file to write the parity check matrix to",
     )
     parser.add_argument(
-        "--seed",
-        type=int,
+        "--rtl-encoder-template",
+        type=sv_jinja2_file,
         required=False,
-        help="The seed to use for the random number generator",
+        help="The input file containing the Jinja2 SystemVerilog RTL code template for the encoder.",
+    )
+    parser.add_argument(
+        "--rtl-encoder-output",
+        type=argparse.FileType("w"),
+        required=False,
+        help="Dump the encoder implementation for all supported codes to the provided output file.",
     )
 
     args = parser.parse_args()
@@ -79,6 +99,33 @@ def main():
         print(H_str)
         if args.parity_check_matrix_output:
             args.parity_check_matrix_output.write(H_str)
+
+        if args.rtl_encoder_output:
+            print("Dumping all supported Hsiao encoders to file.")
+            if not args.rtl_encoder_template:
+                raise ValueError(
+                    "RTL encoder template file is required to generate the encoder."
+                )
+
+            RTL_SUPPORTED_N_K = [
+                (8, 4),
+                (13, 8),
+                (22, 16),
+                (39, 32),
+                (72, 64),
+                (137, 128),
+                (266, 256),
+                (523, 512),
+                (1036, 1024),
+            ]
+            with open(args.rtl_encoder_template, "r") as template_file:
+                template = Template(template_file.read())
+                mapping = {}
+                for n, k in RTL_SUPPORTED_N_K:
+                    r, n, H, G = hsiao_secded_code(k)
+                    mapping[f"secded_enc_{n}_{k}"] = G_to_sv(G)
+                rendered = template.render(mapping)
+                args.rtl_encoder_output.write(rendered)
 
 
 if __name__ == "__main__":

@@ -89,27 +89,31 @@ module br_ecc_secded_encoder #(
     assign message = data;
   end
 
+  // verilog_format: off
+  // verilog_lint: waive-start line-length
   if (CodewordWidth == 4 && ParityWidth == 4) begin : gen_8_4
-    {{ secded_enc_8_4 }}
+{{ secded_enc_8_4 }}
   end else if (CodewordWidth == 13 && MessageWidth == 8) begin : gen_13_8
-    {{ secded_enc_13_8 }}
+{{ secded_enc_13_8 }}
   end else if (CodewordWidth == 22 && MessageWidth == 16) begin : gen_22_16
-    {{ secded_enc_22_16 }}
+{{ secded_enc_22_16 }}
   end else if (CodewordWidth == 39 && MessageWidth == 32) begin : gen_39_32
-    {{ secded_enc_39_32 }}
+{{ secded_enc_39_32 }}
   end else if (CodewordWidth == 72 && MessageWidth == 64) begin : gen_72_64
-    {{ secded_enc_72_64 }}
+{{ secded_enc_72_64 }}
   end else if (CodewordWidth == 137 && MessageWidth == 128) begin : gen_137_128
-    {{ secded_enc_137_128 }}
+{{ secded_enc_137_128 }}
   end else if (CodewordWidth == 266 && MessageWidth == 256) begin : gen_266_256
-    {{ secded_enc_266_256 }}
+{{ secded_enc_266_256 }}
   end else if (CodewordWidth == 523 && MessageWidth == 512) begin : gen_523_512
-    {{ secded_enc_523_512 }}
+{{ secded_enc_523_512 }}
   end else if (CodewordWidth == 1036 && MessageWidth == 1024) begin : gen_1036_1024
-    {{ secded_enc_1036_1024 }}
+{{ secded_enc_1036_1024 }}
   end else begin : gen_default_parity
     `BR_ASSERT_STATIC(invalid_parity_width_a, 1'b0)
   end
+  // verilog_lint: waive-stop line-length
+  // verilog_format: on
 
   assign codeword_valid = data_valid;
 
