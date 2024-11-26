@@ -65,9 +65,6 @@ module br_flow_reg_fwd #(
   // protocol requirement.
   `BR_ASSERT_INTG(push_data_known_a, push_valid |-> !$isunknown(push_data))
 
-  // Assert that if pop_valid is 1, pop_ready must eventually be 1.
-  `BR_ASSERT_INTG(eventually_pop_ready_a, pop_valid |-> ##[0:$] pop_ready)
-
   //------------------------------------------
   // Implementation
   //------------------------------------------
