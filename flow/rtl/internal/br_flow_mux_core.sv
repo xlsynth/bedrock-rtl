@@ -12,23 +12,32 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Bedrock-RTL Flow-Controlled Multiplexer (Round-Robin)
+// Bedrock-RTL Flow-Controlled Multiplexer Core
 //
-// Combines RR-priority arbitration with data path multiplexing.
-// Grants a single request at a time with RR priority.
+// Combines core-priority arbitration with data path multiplexing.
+// Grants a single request at a time with core priority.
 // Uses ready-valid flow control for flows (push)
 // and the grant (pop).
 //
 // Stateful arbiter, but 0 latency from push to pop.
 
 `include "br_asserts.svh"
+`include "br_asserts_internal.svh"
 
-module br_flow_mux_rr #(
+module br_flow_mux_core #(
     parameter int NumFlows = 2,  // Must be at least 2
     parameter int Width = 1  // Must be at least 1
 ) (
-    input  logic                           clk,
-    input  logic                           rst,
+    // ri lint_check_waive HIER_NET_NOT_READ HIER_BRANCH_NOT_READ INPUT_NOT_READ
+    input  logic                           clk,                     // Used for assertions only
+    // ri lint_check_waive HIER_NET_NOT_READ HIER_BRANCH_NOT_READ INPUT_NOT_READ
+    input  logic                           rst,                     // Used for assertions only
+    // Interface to base arbiter
+    output logic [NumFlows-1:0]            request,
+    input  logic [NumFlows-1:0]            can_grant,
+    input  logic [NumFlows-1:0]            grant,
+    output logic                           enable_priority_update,
+    // External-facing signals
     output logic [NumFlows-1:0]            push_ready,
     input  logic [NumFlows-1:0]            push_valid,
     input  logic [NumFlows-1:0][Width-1:0] push_data,
@@ -40,7 +49,7 @@ module br_flow_mux_rr #(
   //------------------------------------------
   // Integration checks
   //------------------------------------------
-  `BR_ASSERT_STATIC(num_requesters_gte_2_a, NumFlows >= 2)
+  `BR_ASSERT_STATIC(numflows_gte_2_a, NumFlows >= 2)
   `BR_ASSERT_STATIC(datawidth_gte_1_a, Width >= 1)
 
   // Rely on submodule integration checks
@@ -48,26 +57,10 @@ module br_flow_mux_rr #(
   //------------------------------------------
   // Implementation
   //------------------------------------------
-  logic [NumFlows-1:0] request;
-  logic [NumFlows-1:0] can_grant;
-  logic [NumFlows-1:0] grant;
-  logic enable_priority_update;
 
-  br_arb_rr_internal #(
-      .NumRequesters(NumFlows)
-  ) br_arb_rr_internal (
-      .clk,
-      .rst,
-      .request,
-      .can_grant,
-      .grant,
-      .enable_priority_update
-  );
-
-  br_flow_mux_core #(
-      .NumFlows(NumFlows),
-      .Width(Width)
-  ) br_flow_mux_core (
+  br_flow_arb_core #(
+      .NumFlows(NumFlows)
+  ) br_flow_arb_core (
       .clk,
       .rst,
       .request,
@@ -76,15 +69,27 @@ module br_flow_mux_rr #(
       .enable_priority_update,
       .push_ready,
       .push_valid,
-      .push_data,
       .pop_ready,
-      .pop_valid,
-      .pop_data
+      .pop_valid
+  );
+
+  br_mux_onehot #(
+      .NumSymbolsIn(NumFlows),
+      .SymbolWidth (Width)
+  ) br_mux_onehot (
+      .select(grant),
+      .in(push_data),
+      .out(pop_data)
   );
 
   //------------------------------------------
   // Implementation checks
   //------------------------------------------
-  // Rely on submodule implementation checks
 
-endmodule : br_flow_mux_rr
+  for (genvar i = 0; i < NumFlows; i++) begin : gen_data_selected_assert
+    `BR_ASSERT_IMPL(data_selected_when_granted_a,
+                    (pop_valid && push_ready[i]) |-> pop_data == push_data[i])
+  end
+  // Additional implementation checks in submodules
+
+endmodule : br_flow_mux_core

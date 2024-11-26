@@ -24,3 +24,14 @@ verilog_library(
         "//macros:br_unused",
     ],
 )
+
+verilog_library(
+    name = "br_flow_mux_core",
+    srcs = ["br_flow_mux_core.sv"],
+    deps = [
+        ":br_flow_arb_core",
+        "//macros:br_asserts_internal",
+        "//macros:br_unused",
+        "//mux/rtl:br_mux_onehot",
+    ],
+)
