@@ -87,12 +87,6 @@ module br_ecc_secded_decoder #(
   //------------------------------------------
   // Implementation
   //------------------------------------------
-  logic PadWidth = MessageWidth - DataWidth;
-  logic [MessageWidth-1:0] message;
-
-  assign message = codeword[MessageWidth-1:0];
-  assign data_valid = codeword_valid;
-  assign data = message[DataWidth-1:0];
 
   // verilog_format: off
   // verilog_lint: waive-start line-length
@@ -128,6 +122,50 @@ module br_ecc_secded_decoder #(
   end
   // verilog_lint: waive-stop line-length
   // verilog_format: on
+
+
+  // Decode syndrome.
+  // * Case 0: Syndrome is zero, no errors detected.
+  // * Case 1: Syndrome is for an even number of bits in error, which happens when the syndrome is even in a Hsiao SECDED code.
+  //   Maximum likelihood decoding produces multiple equiprobable candidate codewords, so treat as detected-but-uncorrectable.
+  //   NOTE: We are returning *some* message but it is likely to have been corrupted!
+  // * Remaining case: Syndrome is for an odd number of bits in error, which happens when the syndrome is odd in a Hsiao SECDED code.
+  //   *Usually* this is a single-bit error, which is always closest to exactly one codeword. So with maximum likelihood decoding
+  //   we can correct it. However, sometimes it can be a three-bit error that is actually detected-but-uncorrectable.
+
+  logic [ParityWidth-1:0] syndrome_ones_count;
+  logic syndrome_is_zero;
+  logic syndrome_is_even;
+  logic syndrome_is_odd;
+  logic [CodewordWidth-1:0] column_match_onehot;
+
+  br_enc_countones #(
+    .Width(ParityWidth)
+  ) br_enc_countones_syndrome (
+    .in(syndrome),
+    .count(syndrome_ones_count)
+  );
+
+  assign syndrome_is_zero = syndrome == '0;
+  assign syndrome_is_even = !syndrome_is_zero && !syndrome_ones_count[0];
+  assign syndrome_is_odd = syndrome_ones_count[1];
+
+  // TODO(mgottscho): Implement this. Need code generation. (WIP)
+  assign column_match_onehot = '0;
+
+  assign detected_but_uncorrectable_error = codeword_valid && (syndrome_is_even || (syndrome_is_odd && column_match_onehot == 0));
+  assign corrected_error = codeword_valid && syndrome_is_odd && (column_match_onehot != 0);
+
+  // Actually correct the error.
+  logic PadWidth = MessageWidth - DataWidth;
+  logic [CodewordWidth-1:0] corrected_codeword;
+  logic [MessageWidth-1:0] message;
+
+  assign corrected_codeword = codeword ^ column_match_onehot;
+
+  assign message = corrected_codeword[MessageWidth-1:0];
+  assign data_valid = codeword_valid;
+  assign data = message[DataWidth-1:0];
 
   //------------------------------------------
   // Implementation checks
