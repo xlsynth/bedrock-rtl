@@ -49,40 +49,40 @@ module br_flow_arb_lru #(
   //------------------------------------------
   // Implementation
   //------------------------------------------
+  logic [NumFlows-1:0] request;
+  logic [NumFlows-1:0] can_grant;
   logic [NumFlows-1:0] grant;
+  logic enable_priority_update;
 
-  br_arb_lru #(
+  br_arb_lru_internal #(
       .NumRequesters(NumFlows)
-  ) br_arb_lru (
+  ) br_arb_lru_internal (
       .clk,
       .rst,
-      .enable_priority_update(pop_ready),
-      .request(push_valid),
+      .enable_priority_update,
+      .request,
+      .can_grant,
       .grant
   );
 
-  // We could just make push_ready[i] == grant[i], but then push_ready[i] will always
-  // depend on push_valid[i]. It is nicer to indicate ready independently of the valid
-  // for the same flow.
-  for (genvar i = 0; i < NumFlows; i++) begin : gen_push_ready
-    always_comb begin
-      push_ready[i] = 1'b1;
-      for (int j = 0; j < NumFlows; j++) begin
-        if (i != j) begin
-          push_ready[i] &= !grant[j];
-        end
-      end
-    end
-  end
-
-  assign pop_valid = |push_valid;
+  br_flow_arb_core #(
+      .NumFlows(NumFlows)
+  ) br_flow_arb_core (
+      .clk,
+      .rst,
+      .request,
+      .can_grant,
+      .grant,
+      .enable_priority_update,
+      .push_ready,
+      .push_valid,
+      .pop_ready,
+      .pop_valid
+  );
 
   //------------------------------------------
   // Implementation checks
   //------------------------------------------
   // Rely on submodule implementation checks
-
-  `BR_ASSERT_IMPL(grant_onehot0_a, $onehot0(grant))
-  `BR_ASSERT_IMPL(grant_equals_push_ready_and_valid_a, grant == (push_ready & push_valid))
 
 endmodule : br_flow_arb_lru
