@@ -1,0 +1,121 @@
+// Copyright 2024 The Bedrock-RTL Authors
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// Copyright 2024 The Bedrock-RTL Authors
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+// Bedrock-RTL Single-Error-Correcting, Double-Error-Detecting (SECDED - Hsiao) Encoder
+//
+// Encodes a message using a single-error-correcting, double-error-detecting
+// linear block code in systematic form (in layperson's terms: a Hsiao SECDED [1] encoder,
+// closely related to Hamming codes).
+//
+// Systematic form means that the codeword is formed by appending the
+// calculated parity bits to the message, i.e., the code has the property
+// that the message bits are 1:1 with a slice of bits in the codeword (if they
+// have not been corrupted).
+//
+// In Bedrock ECC libs, our convention is to always append the parity bits on
+// the MSbs:
+//     codeword == {parity, message}
+//
+// This is a purely combinational module. Valid bits are provided for
+// convenience of user integration and port compatibility with the
+// corresponding decoder module (br_ecc_secded_decoder).
+//
+// Any data width >= 1 is supported. It is internally zero-padded up to
+// the nearest power-of-2 message width before being encoded. The following
+// table outlines the number of parity bits required for different message widths.
+//
+// | Message Width (k) | Parity Width (r) | Codeword Width (n)|
+// |-------------------|------------------|-------------------|
+// | 4                 | 4                | 8                 |
+// | 8                 | 5                | 13                |
+// | 16                | 6                | 22                |
+// | 32                | 7                | 39                |
+// | 64                | 8                | 72                |
+// | 128               | 9                | 137               |
+// | 256               | 10               | 266               |
+// | 512               | 11               | 523               |
+// | 1024              | 12               | 1036              |
+//
+// The number of parity bits must be one of the values in the table above
+// or the module will not elaborate.
+//
+// References:
+// [1] https://ieeexplore.ieee.org/abstract/document/5391627
+
+`include "br_asserts_internal.svh"
+
+module br_ecc_secded_encoder #(
+    parameter int DataWidth = 1,  // Must be at least 1
+    parameter int ParityWidth = 4,  // Must be at least 4 and at most 12
+    localparam int MessageWidth = 2 ** $clog2(DataWidth),
+    localparam int CodewordWidth = MessageWidth + ParityWidth
+) (
+    input  logic                     data_valid,
+    input  logic [DataWidth-1:0]     data,
+    output logic                     codeword_valid,
+    output logic [CodewordWidth-1:0] codeword
+);
+
+  //------------------------------------------
+  // Integration checks
+  //------------------------------------------
+  `BR_ASSERT_STATIC(message_width_gte_1_a, DataWidth >= 1)
+  `BR_ASSERT_STATIC(parity_width_gte_4_a, ParityWidth >= 4)
+  `BR_ASSERT_STATIC(parity_width_lte_12_a, ParityWidth <= 12)
+  `BR_ASSERT_STATIC(message_width_is_power_of_2_a, br_math::is_power_of_2(MessageWidth))
+
+  //------------------------------------------
+  // Implementation
+  //------------------------------------------
+  logic PadWidth = MessageWidth - DataWidth;
+  logic [MessageWidth-1:0] message;
+  if (PadWidth > 0) begin : gen_pad
+    assign message = {PadWidth{1'b0}, data};
+  end else begin : gen_no_pad
+    assign message = data;
+  end
+
+  if (CodewordWidth == 4 && ParityWidth == 4) begin : gen_8_4
+    {{ secded_enc_8_4 }}
+  end else if (CodewordWidth == 13 && ParityWidth == 5) begin : gen_13_5
+    {{ secded_enc_13_5 }}
+  end else if (CodewordWidth == 22 && ParityWidth == 6) begin : gen_22_6
+    {{ secded_enc_22_6 }}
+  end else if (CodewordWidth == 39 && ParityWidth == 7) begin : gen_39_7
+    {{ secded_enc_39_7 }}
+  end else if (CodewordWidth == 72 && ParityWidth == 8) begin : gen_72_8
+    {{ secded_enc_72_8 }}
+  end else if (CodewordWidth == 137 && ParityWidth == 9) begin : gen_137_9
+    {{ secded_enc_137_9 }}
+  end else if (CodewordWidth == 266 && ParityWidth == 10) begin : gen_266_10
+    {{ secded_enc_266_10 }}
+  end else if (CodewordWidth == 523 && ParityWidth == 11) begin : gen_523_11
+    {{ secded_enc_523_11 }}
+  end else if (CodewordWidth == 1036 && ParityWidth == 12) begin : gen_1036_12
+    {{ secded_enc_1036_12 }}
+  end else begin : gen_default_parity
+    `BR_ASSERT_STATIC(invalid_parity_width_a, 1'b0)
+  end
+
+  assign codeword_valid = data_valid;
+
+  //------------------------------------------
+  // Implementation checks
+  //------------------------------------------
+  `BR_ASSERT_COMB(codeword_valid_only_if_data_valid_a, !codeword_valid || data_valid)
+
+endmodule : br_ecc_secded_encoder
