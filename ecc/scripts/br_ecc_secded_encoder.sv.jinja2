@@ -34,9 +34,8 @@
 // the MSbs:
 //     codeword == {parity, message}
 //
-// This is a purely combinational module. Valid bits are provided for
-// convenience of user integration and port compatibility with the
-// corresponding decoder module (br_ecc_secded_decoder).
+// This module has a parameterizable number of pipeline stages, ranging from fully
+// combinational to 1 cycle of latency.
 //
 // Any data width >= 1 is supported. It is internally zero-padded up to
 // the nearest power-of-2 message width before being encoded. The following
