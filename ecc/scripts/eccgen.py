@@ -136,6 +136,7 @@ def main():
                     r, n, H, G = hsiao_secded_code(k)
                     mapping[f"secded_enc_{n}_{k}"] = G_to_sv(G)
                 rendered = template.render(mapping)
+                rendered += "\n"
                 args.rtl_encoder_output.write(rendered)
 
         if args.rtl_decoder_output:
@@ -163,6 +164,7 @@ def main():
                     r, n, H, G = hsiao_secded_code(k)
                     mapping[f"secded_dec_{n}_{k}"] = H_to_sv(H)
                 rendered = template.render(mapping)
+                rendered += "\n"
                 args.rtl_decoder_output.write(rendered)
 
         if not args.k and not args.rtl_encoder_output and not args.rtl_decoder_output:
