@@ -135,27 +135,24 @@ def check_column_weights_are_odd(matrix: np.ndarray) -> bool:
     return np.all(sum_over_rows % 2 == 1)
 
 
-def check_H_G_orthogonal(H: np.ndarray, G: np.ndarray) -> None:
-    """Raise a ValueError if the parity-check matrix H and generator matrix G are not orthogonal."""
-    H_G_product = H @ G.T
-    if not np.all(H_G_product == 0):
-        H_str = np.array2string(
-            H, separator=", ", threshold=np.inf, max_line_width=np.inf
+def check_matrices_orthogonal(A: np.ndarray, B: np.ndarray) -> None:
+    """Raise a ValueError if two matrices are not orthogonal (A @ B != 0)."""
+    AB = A @ B
+    if not np.all(AB == 0):
+        A_str = np.array2string(
+            A, separator=", ", threshold=np.inf, max_line_width=np.inf
         )
-        G_T_str = np.array2string(
-            G.T, separator=", ", threshold=np.inf, max_line_width=np.inf
+        B_str = np.array2string(
+            B, separator=", ", threshold=np.inf, max_line_width=np.inf
         )
-        H_G_product_str = np.array2string(
-            H_G_product, separator=", ", threshold=np.inf, max_line_width=np.inf
+        AB_str = np.array2string(
+            AB, separator=", ", threshold=np.inf, max_line_width=np.inf
         )
         err_string = [
-            "H and G are not orthogonal.",
-            "H =",
-            f"{H_str}",
-            "G.T =",
-            f"{G_T_str}",
-            "H @ G.T =",
-            f"{H_G_product_str}",
+            "Matrices are not orthogonal.",
+            f"A =\n{A_str}",
+            f"B =\n{B_str}",
+            f"A @ B =\n{AB_str}",
         ]
         raise ValueError("\n".join(err_string))
 
@@ -183,5 +180,5 @@ def hsiao_secded_code(k: int) -> tuple[int, int, np.ndarray, np.ndarray]:
     n = get_n(k, r)
     H = get_H(k, r)
     G = get_G(H)
-    assert check_H_G_orthogonal(H, G)
+    check_matrices_orthogonal(H, G.T)
     return r, n, H, G
