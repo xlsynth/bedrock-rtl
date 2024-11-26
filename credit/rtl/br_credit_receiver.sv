@@ -136,12 +136,13 @@ module br_credit_receiver #(
   //------------------------------------------
   // Implementation checks
   //------------------------------------------
-  `BR_ASSERT_IMPL(push_credit_stall_a, push_credit_stall |-> !push_credit)
-  `BR_COVER_IMPL(passthru_credit_c, pop_credit && push_credit && credit_count == '0)
-  `BR_COVER_IMPL(passthru_credit_nonzero_count_c, pop_credit && push_credit && credit_count > '0)
-  `BR_ASSERT_IMPL(over_withhold_a, credit_withhold > credit_count |-> !push_credit)
+  `BR_ASSERT_IMPL(push_credit_stall_a, push_credit_stall |-> !push_credit_internal)
+  `BR_COVER_IMPL(passthru_credit_c, pop_credit && push_credit_internal && credit_count == '0)
+  `BR_COVER_IMPL(passthru_credit_nonzero_count_c,
+                 pop_credit && push_credit_internal && credit_count > '0)
+  `BR_ASSERT_IMPL(over_withhold_a, credit_withhold > credit_count |-> !push_credit_internal)
   `BR_ASSERT_IMPL(withhold_and_release_a,
-                  credit_count == credit_withhold && push_credit |-> pop_credit)
+                  credit_count == credit_withhold && push_credit_internal |-> pop_credit)
 
   // Rely on submodule implementation checks
 
