@@ -135,9 +135,33 @@ def check_column_weights_are_odd(matrix: np.ndarray) -> bool:
     return np.all(sum_over_rows % 2 == 1)
 
 
+def check_matrix_is_binary(matrix: np.ndarray) -> None:
+    """Raise a ValueError if the given matrix is not binary (contains only 0s and 1s)."""
+    zeros = matrix == 0
+    ones = matrix == 1
+    if not np.all(zeros + ones):
+        matrix_str = np.array2string(
+            matrix, separator=", ", threshold=np.inf, max_line_width=np.inf
+        )
+        err_string = [
+            "Matrix contains non-binary values:",
+            f"{matrix_str}",
+        ]
+        raise ValueError("\n".join(err_string))
+
+
+def binary_matmul(A: np.ndarray, B: np.ndarray) -> np.ndarray:
+    """Multiply two binary matrices (A @ B) and raise a ValueError if the result is not binary."""
+    check_matrix_is_binary(A)
+    check_matrix_is_binary(B)
+    AB = (A @ B) % 2
+    check_matrix_is_binary(AB)
+    return AB
+
+
 def check_matrices_orthogonal(A: np.ndarray, B: np.ndarray) -> None:
     """Raise a ValueError if two matrices are not orthogonal (A @ B != 0)."""
-    AB = A @ B
+    AB = binary_matmul(A, B)
     if not np.all(AB == 0):
         A_str = np.array2string(
             A, separator=", ", threshold=np.inf, max_line_width=np.inf
@@ -180,5 +204,7 @@ def hsiao_secded_code(k: int) -> tuple[int, int, np.ndarray, np.ndarray]:
     n = get_n(k, r)
     H = get_H(k, r)
     G = get_G(H)
+    check_matrix_is_binary(H)
+    check_matrix_is_binary(G)
     check_matrices_orthogonal(H, G.T)
     return r, n, H, G
