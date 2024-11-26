@@ -15,7 +15,7 @@
 import unittest
 import numpy as np
 from parameterized import parameterized
-from ecc.scripts.hsiao_secded import (
+from python.eccgen.hsiao_secded import (
     hsiao_secded_code,
     get_r,
     get_n,

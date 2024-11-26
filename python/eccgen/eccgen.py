@@ -13,7 +13,12 @@
 # limitations under the License.
 
 import argparse
-from ecc.scripts.hsiao_secded import hsiao_secded_code, G_to_sv, syndrome_to_sv, H_to_sv
+from python.eccgen.hsiao_secded import (
+    hsiao_secded_code,
+    G_to_sv,
+    syndrome_to_sv,
+    H_to_sv,
+)
 import numpy as np
 from jinja2 import Template
 
