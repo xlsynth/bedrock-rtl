@@ -63,3 +63,49 @@ br_verilog_sim_test_suite(
     waves = True,
     deps = [":br_cdc_fifo_flops_tb"],
 )
+
+verilog_library(
+    name = "br_cdc_fifo_flops_push_credit_tb",
+    srcs = ["br_cdc_fifo_flops_push_credit_tb.sv"],
+    deps = [
+        "//cdc/rtl:br_cdc_fifo_flops_push_credit",
+        "//credit/rtl:br_credit_sender",
+        "//fifo/sim:br_fifo_test_harness",
+        "//misc/sim:br_test_driver",
+        "//pkg:br_math_pkg",
+    ],
+)
+
+verilog_elab_test(
+    name = "br_cdc_fifo_flops_push_credit_tb_elab_test",
+    deps = [":br_cdc_fifo_flops_push_credit_tb"],
+)
+
+br_verilog_sim_test_suite(
+    name = "br_cdc_fifo_flops_push_credit_vcs_test_suite",
+    params = {
+        "RegisterPopOutputs": [
+            "0",
+            "1",
+        ],
+        "FlopRamAddressDepthStages": [
+            "0",
+            "1",
+        ],
+        "FlopRamReadDataDepthStages": [
+            "0",
+            "1",
+        ],
+        "NumSyncStages": [
+            "2",
+            "3",
+        ],
+        "RegisterPushCredit": [
+            "0",
+            "1",
+        ],
+    },
+    tool = "vcs",
+    waves = True,
+    deps = [":br_cdc_fifo_flops_push_credit_tb"],
+)
