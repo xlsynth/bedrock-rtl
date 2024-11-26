@@ -12,20 +12,19 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+load("@bazel_skylib//rules:diff_test.bzl", "diff_test")
+load("@bazel_skylib//rules:write_file.bzl", "write_file")
 load("@rules_hdl//verilog:providers.bzl", "verilog_library")
 load("//bazel:br_verilog.bzl", "br_verilog_elab_and_lint_test_suite")
 
 package(default_visibility = ["//visibility:public"])
 
+#########################################
+# SED Encoder
+#########################################
 verilog_library(
     name = "br_ecc_sed_encoder",
     srcs = ["br_ecc_sed_encoder.sv"],
-    deps = ["//macros:br_asserts_internal"],
-)
-
-verilog_library(
-    name = "br_ecc_sed_decoder",
-    srcs = ["br_ecc_sed_decoder.sv"],
     deps = ["//macros:br_asserts_internal"],
 )
 
@@ -38,6 +37,15 @@ br_verilog_elab_and_lint_test_suite(
     deps = [":br_ecc_sed_encoder"],
 )
 
+#########################################
+# SED Decoder
+#########################################
+verilog_library(
+    name = "br_ecc_sed_decoder",
+    srcs = ["br_ecc_sed_decoder.sv"],
+    deps = ["//macros:br_asserts_internal"],
+)
+
 br_verilog_elab_and_lint_test_suite(
     name = "br_ecc_sed_decoder_test_suite",
     params = {"MessageWidth": [
@@ -45,4 +53,167 @@ br_verilog_elab_and_lint_test_suite(
         "32",
     ]},
     deps = [":br_ecc_sed_decoder"],
+)
+
+#########################################
+# SECDED Encoder
+#########################################
+verilog_library(
+    name = "br_ecc_secded_encoder",
+    srcs = ["br_ecc_secded_encoder.sv"],
+    deps = [
+        "//delay/rtl:br_delay_valid",
+        "//macros:br_asserts",
+        "//macros:br_asserts_internal",
+        "//pkg:br_math_pkg",
+    ],
+)
+
+br_verilog_elab_and_lint_test_suite(
+    name = "br_ecc_secded_encoder_test_suite_32_7",
+    params = {
+        "DataWidth": ["32"],
+        "ParityWidth": ["7"],
+        "RegisterOutputs": [
+            "0",
+            "1",
+        ],
+    },
+    deps = [":br_ecc_secded_encoder"],
+)
+
+br_verilog_elab_and_lint_test_suite(
+    name = "br_ecc_secded_encoder_test_suite_61_8",
+    params = {
+        "DataWidth": ["61"],
+        "ParityWidth": ["8"],
+        "RegisterOutputs": [
+            "0",
+            "1",
+        ],
+    },
+    deps = [":br_ecc_secded_encoder"],
+)
+
+diff_test(
+    name = "br_ecc_secded_encoder_diff_test",
+    failure_message = """
+        Golden br_ecc_secded_encoder.sv does not match the generated code.
+        Please run `bazel run //ecc/rtl:update_br_ecc_secded_encoder` to automatically update the golden.
+    """,
+    file1 = "br_ecc_secded_encoder.sv",
+    file2 = ":gen_br_ecc_secded_encoder.sv",
+)
+
+genrule(
+    name = "gen_br_ecc_secded_encoder",
+    srcs = ["//ecc/scripts:br_ecc_secded_encoder.sv.jinja2"],
+    outs = ["gen_br_ecc_secded_encoder.sv"],
+    cmd = "$(location //ecc/scripts:eccgen) --scheme=hsiao_secded --rtl-encoder-template=$(location //ecc/scripts:br_ecc_secded_encoder.sv.jinja2) --rtl-encoder-output=$@",
+    tools = ["//ecc/scripts:eccgen"],
+)
+
+write_file(
+    name = "gen_update_br_ecc_secded_encoder",
+    out = "update_br_ecc_secded_encoder.sh",
+    content = [
+        "#!/usr/bin/env bash",
+        "cd $BUILD_WORKSPACE_DIRECTORY",
+        "cp -fv bazel-bin/ecc/rtl/gen_br_ecc_secded_encoder.sv ecc/rtl/br_ecc_secded_encoder.sv",
+    ],
+)
+
+sh_binary(
+    name = "update_br_ecc_secded_encoder",
+    srcs = [":update_br_ecc_secded_encoder.sh"],
+    data = [
+        "br_ecc_secded_encoder.sv",
+        ":gen_br_ecc_secded_encoder.sv",
+    ],
+)
+
+#########################################
+# SECDED Decoder
+#########################################
+verilog_library(
+    name = "br_ecc_secded_decoder",
+    srcs = ["br_ecc_secded_decoder.sv"],
+    deps = [
+        "//delay/rtl:br_delay_valid",
+        "//macros:br_asserts",
+        "//macros:br_asserts_internal",
+        "//macros:br_unused",
+        "//pkg:br_math_pkg",
+    ],
+)
+
+br_verilog_elab_and_lint_test_suite(
+    name = "br_ecc_secded_decoder_test_suite_32_7",
+    params = {
+        "DataWidth": ["32"],
+        "ParityWidth": ["7"],
+        "RegisterSyndrome": [
+            "0",
+            "1",
+        ],
+        "RegisterOutputs": [
+            "0",
+            "1",
+        ],
+    },
+    deps = [":br_ecc_secded_decoder"],
+)
+
+br_verilog_elab_and_lint_test_suite(
+    name = "br_ecc_secded_decoder_test_suite_157_10",
+    params = {
+        "DataWidth": ["157"],
+        "ParityWidth": ["10"],
+        "RegisterSyndrome": [
+            "0",
+            "1",
+        ],
+        "RegisterOutputs": [
+            "0",
+            "1",
+        ],
+    },
+    deps = [":br_ecc_secded_decoder"],
+)
+
+diff_test(
+    name = "br_ecc_secded_decoder_diff_test",
+    failure_message = """
+        Golden br_ecc_secded_decoder.sv does not match the generated code.
+        Please run `bazel run //ecc/rtl:update_br_ecc_secded_decoder` to automatically update the golden.
+    """,
+    file1 = "br_ecc_secded_decoder.sv",
+    file2 = ":gen_br_ecc_secded_decoder.sv",
+)
+
+genrule(
+    name = "gen_br_ecc_secded_decoder",
+    srcs = ["//ecc/scripts:br_ecc_secded_decoder.sv.jinja2"],
+    outs = ["gen_br_ecc_secded_decoder.sv"],
+    cmd = "$(location //ecc/scripts:eccgen) --scheme=hsiao_secded --rtl-decoder-template=$(location //ecc/scripts:br_ecc_secded_decoder.sv.jinja2) --rtl-decoder-output=$@",
+    tools = ["//ecc/scripts:eccgen"],
+)
+
+write_file(
+    name = "gen_update_br_ecc_secded_decoder",
+    out = "update_br_ecc_secded_decoder.sh",
+    content = [
+        "#!/usr/bin/env bash",
+        "cd $BUILD_WORKSPACE_DIRECTORY",
+        "cp -fv bazel-bin/ecc/rtl/gen_br_ecc_secded_decoder.sv ecc/rtl/br_ecc_secded_decoder.sv",
+    ],
+)
+
+sh_binary(
+    name = "update_br_ecc_secded_decoder",
+    srcs = [":update_br_ecc_secded_decoder.sh"],
+    data = [
+        "br_ecc_secded_decoder.sv",
+        ":gen_br_ecc_secded_decoder.sv",
+    ],
 )

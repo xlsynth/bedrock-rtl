@@ -1,0 +1,301 @@
+// Copyright 2024 The Bedrock-RTL Authors
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// Copyright 2024 The Bedrock-RTL Authors
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+
+// verilog_format: off
+// verilog_lint: waive-start line-length
+
+// Bedrock-RTL Single-Error-Correcting, Double-Error-Detecting (SECDED - Hsiao) Decoder
+//
+// Decodes a codeword using a single-error-correcting, double-error-detecting
+// linear block code in systematic form (in layperson's terms: a Hsiao SECDED [1] decoder,
+// closely related to Hamming codes).
+//
+// Systematic form means that the codeword is formed by appending the
+// calculated parity bits to the message, i.e., the code has the property
+// that the message bits are 1:1 with a slice of bits in the codeword (if they
+// have not been corrupted).
+//
+// In Bedrock ECC libs, our convention is to always append the parity bits on
+// the MSbs:
+//     codeword == {parity, message}
+//
+// The data is still marked valid even if an error is detected.
+//
+// This module has a parameterizable number of pipeline stages, ranging from fully
+// combinational to 2 cycles of latency.
+//
+// Any data width >= 1 is supported. It is considered internally zero-padded up to
+// the nearest power-of-2 message width as part of decoding. The following
+// table outlines the number of parity bits required for different message widths.
+//
+// | Message Width (k) | Parity Width (r) | Codeword Width (n)|
+// |-------------------|------------------|-------------------|
+// | 4                 | 4                | 8                 |
+// | 8                 | 5                | 13                |
+// | 16                | 6                | 22                |
+// | 32                | 7                | 39                |
+// | 64                | 8                | 72                |
+// | 128               | 9                | 137               |
+// | 256               | 10               | 266               |
+// | 512               | 11               | 523               |
+// | 1024              | 12               | 1036              |
+//
+// The number of parity bits must be one of the values in the table above
+// or the module will not elaborate.
+//
+// References:
+// [1] https://ieeexplore.ieee.org/abstract/document/5391627
+
+`include "br_asserts.svh"
+`include "br_asserts_internal.svh"
+`include "br_unused.svh"
+
+// TODO(mgottscho): Pipeline the syndrome decoding and then correction with a parameter.
+module br_ecc_secded_decoder #(
+    parameter int DataWidth = 1,  // Must be at least 1
+    parameter int ParityWidth = 4,  // Must be at least 4 and at most 12
+    // If 1, then insert a pipeline register between syndrome computation and
+    // syndrome decoding (error correction).
+    parameter bit RegisterSyndrome = 0,
+    // If 1, then insert a pipeline register at the output.
+    parameter bit RegisterOutputs = 0,
+    localparam int MessageWidth = 2 ** $clog2(DataWidth),
+    localparam int CodewordWidth = MessageWidth + ParityWidth
+) (
+    // Positive edge-triggered clock.
+    input  logic                     clk,
+    // Synchronous active-high reset.
+    input  logic                     rst,
+    input  logic                     codeword_valid,
+    input  logic [CodewordWidth-1:0] codeword,
+    output logic                     data_valid,
+    output logic [    DataWidth-1:0] data,
+    output logic                     data_error_corrected,
+    output logic                     data_error_detected_but_uncorrectable,
+    output logic [  ParityWidth-1:0] data_error_syndrome
+);
+
+  // ri lint_check_waive PARAM_NOT_USED
+  localparam int Latency = RegisterSyndrome + RegisterOutputs;
+
+  //------------------------------------------
+  // Integration checks
+  //------------------------------------------
+  `BR_ASSERT_STATIC(message_width_gte_1_a, DataWidth >= 1)
+  `BR_ASSERT_STATIC(parity_width_gte_4_a, ParityWidth >= 4)
+  `BR_ASSERT_STATIC(parity_width_lte_12_a, ParityWidth <= 12)
+  `BR_ASSERT_STATIC(message_width_is_power_of_2_a, br_math::is_power_of_2(MessageWidth))
+
+  //------------------------------------------
+  // Implementation
+  //------------------------------------------
+  logic [CodewordWidth-1:0][ParityWidth-1:0] parity_check_matrix;  // H
+  logic [ParityWidth-1:0] syndrome;
+
+  //------
+  // Compute syndrome and set up constant parity check matrix.
+  //------
+
+  // ri lint_check_off EXPR_ID_LIMIT
+
+  if ((CodewordWidth == 4) && (MessageWidth == 4)) begin : gen_8_4
+    `BR_ASSERT_STATIC(parity_width_matches_a, ParityWidth == 4)
+{{ secded_dec_syndrome_8_4 }}
+{{ secded_dec_H_8_4 }}
+  end else if ((CodewordWidth == 13) && (MessageWidth == 8)) begin : gen_13_8
+    `BR_ASSERT_STATIC(parity_width_matches_a, ParityWidth == 5)
+{{ secded_dec_syndrome_13_8 }}
+{{ secded_dec_H_13_8 }}
+  end else if ((CodewordWidth == 22) && (MessageWidth == 16)) begin : gen_22_16
+    `BR_ASSERT_STATIC(parity_width_matches_a, ParityWidth == 6)
+{{ secded_dec_syndrome_22_16 }}
+{{ secded_dec_H_22_16 }}
+  end else if ((CodewordWidth == 39) && (MessageWidth == 32)) begin : gen_39_32
+    `BR_ASSERT_STATIC(parity_width_matches_a, ParityWidth == 7)
+{{ secded_dec_syndrome_39_32 }}
+{{ secded_dec_H_39_32 }}
+  end else if ((CodewordWidth == 72) && (MessageWidth == 64)) begin : gen_72_64
+    `BR_ASSERT_STATIC(parity_width_matches_a, ParityWidth == 8)
+{{ secded_dec_syndrome_72_64 }}
+{{ secded_dec_H_72_64 }}
+  end else if ((CodewordWidth == 137) && (MessageWidth == 128)) begin : gen_137_128
+    `BR_ASSERT_STATIC(parity_width_matches_a, ParityWidth == 9)
+{{ secded_dec_syndrome_137_128 }}
+{{ secded_dec_H_137_128 }}
+  end else if ((CodewordWidth == 266) && (MessageWidth == 256)) begin : gen_266_256
+    `BR_ASSERT_STATIC(parity_width_matches_a, ParityWidth == 10)
+{{ secded_dec_syndrome_266_256 }}
+{{ secded_dec_H_266_256 }}
+  end else if ((CodewordWidth == 523) && (MessageWidth == 512)) begin : gen_523_512
+    `BR_ASSERT_STATIC(parity_width_matches_a, ParityWidth == 11)
+{{ secded_dec_syndrome_523_512 }}
+{{ secded_dec_H_523_512 }}
+  end else if ((CodewordWidth == 1036) && (MessageWidth == 1024)) begin : gen_1036_1024
+    `BR_ASSERT_STATIC(parity_width_matches_a, ParityWidth == 12)
+{{ secded_dec_syndrome_1036_1024 }}
+{{ secded_dec_H_1036_1024 }}
+  end else begin : gen_default_parity
+    `BR_ASSERT_STATIC(invalid_parity_width_a, 1'b0)
+  end
+
+  // ri lint_check_on EXPR_ID_LIMIT
+
+  //------
+  // Optionally register the syndrome before decoding.
+  //------
+  logic internal_valid;
+  logic [CodewordWidth-1:0] internal_codeword;
+  logic [ParityWidth-1:0] internal_error_syndrome;
+
+  br_delay_valid #(
+      .Width(CodewordWidth + ParityWidth),
+      .NumStages(RegisterSyndrome)
+  ) br_delay_valid_syndrome (
+      .clk,
+      .rst,
+      .in_valid(codeword_valid),
+      .in({codeword, syndrome}),
+      .out_valid(internal_valid),
+      .out({internal_codeword, internal_error_syndrome}),
+      .out_valid_stages(),  // unused
+      .out_stages()  // unused
+  );
+
+  //------
+  // Decode syndrome.
+  //------
+  // * Case 0: Syndrome is zero, no errors detected.
+  // * Case 1: Syndrome is for a nonzero even number of bits in error, which happens when
+  //   the syndrome is nonzero and even in a Hsiao SECDED code.
+  //   Maximum likelihood decoding produces multiple equiprobable candidate codewords, so
+  //   treat as detected-but-uncorrectable.
+  //   NOTE: We are returning *some* message but it is likely to have been corrupted!
+  // * Case 2: Syndrome is for an odd number of bits in error, which happens when the syndrome
+  //   is odd in a Hsiao SECDED code.
+  //   * Case 2a: Rarely this can be a three-bit error that is actually detected-but-uncorrectable.
+  //   * Case 2b: Usually this is a single-bit error, which is always closest to exactly one codeword.
+  //     So with maximum likelihood decoding we can correct it.
+  logic internal_error_syndrome_parity;
+  logic internal_error_syndrome_is_zero;
+  logic internal_error_syndrome_is_even;
+  logic internal_error_syndrome_is_odd;
+
+  assign internal_error_syndrome_parity  = ^internal_error_syndrome;
+  assign internal_error_syndrome_is_zero = internal_error_syndrome == '0;
+  assign internal_error_syndrome_is_even = !internal_error_syndrome_parity;
+  assign internal_error_syndrome_is_odd  = internal_error_syndrome_parity;
+
+  // Case 0 (no errors detected) -- implicitly true if case 1, 2a, and 2b are all false.
+
+  // Case 1 (detected-but-uncorrectable with nonzero and even syndrome)
+  logic internal_due_even;
+  assign internal_due_even = !internal_error_syndrome_is_zero && internal_error_syndrome_is_even;
+
+  // Case 2 - need more information to decide if it's case 2a or 2b.
+  logic [CodewordWidth-1:0] internal_h_column_match;
+  for (genvar i = 0; i < CodewordWidth; i++) begin : gen_col_match
+    assign internal_h_column_match[i] = (internal_error_syndrome == parity_check_matrix[i]);
+  end
+
+  // Case 2a (detected-but-uncorrectable with odd syndrome)
+  // This happens when the syndrome is odd but it doesn't match any of the columns in H.
+  // Since the code is guaranteed to correct any single-bit error, this means it must be
+  // an odd number (at least 3) of bits in error.
+  logic internal_due_odd;
+  assign internal_due_odd = internal_error_syndrome_is_odd && (internal_h_column_match == '0);
+
+  // Merge case 1 and 2a (detected-but-uncorrectable)
+  logic internal_error_due;
+  assign internal_error_due = (internal_due_even || internal_due_odd);
+
+  // Case 2b (correctable with single-bit error)
+  logic internal_error_corrected;
+  assign internal_error_corrected =
+    internal_error_syndrome_is_odd && (internal_h_column_match != '0);
+
+  //------
+  // Correct the codeword (if necessary and possible), then extract the message and data.
+  //------
+  // If there was a DUE, then the corrected codeword is still corrupted and
+  // the message and data are likely to also be corrupted.
+
+  logic [CodewordWidth-1:0] internal_corrected_codeword;
+  logic [ MessageWidth-1:0] internal_message;
+  logic [DataWidth-1:0] internal_data;
+
+  assign internal_corrected_codeword = internal_codeword ^ internal_h_column_match;
+  assign internal_message = internal_corrected_codeword[MessageWidth-1:0];
+
+  `BR_UNUSED_NAMED(corrected_codeword_parity,
+    internal_corrected_codeword[CodewordWidth-1:MessageWidth])
+
+  if (MessageWidth > DataWidth) begin : gen_pad
+    assign internal_data = internal_message[DataWidth-1:0];
+    `BR_UNUSED_NAMED(messsage_pad, internal_message[MessageWidth-1:DataWidth])
+  end else begin : gen_no_pad
+    assign internal_data = internal_message;
+  end
+
+  `BR_ASSERT_IMPL(internal_h_column_match_onehot0_a,
+                  internal_valid |-> $onehot0(internal_h_column_match))
+  `BR_ASSERT_IMPL(due_no_h_column_match_a,
+                  internal_valid && internal_error_due |->
+                  (internal_h_column_match == '0))
+  `BR_ASSERT_IMPL(no_error_correction_a,
+                  internal_valid && !internal_error_corrected |->
+                  (internal_corrected_codeword == internal_codeword))
+  `BR_ASSERT_IMPL(error_correction_a,
+                  internal_valid && internal_error_corrected |->
+                  (internal_corrected_codeword != internal_codeword))
+
+  //------
+  // Optionally register the output signals.
+  //------
+  br_delay_valid #(
+      .Width({(DataWidth + 32'd2) + ParityWidth}),
+      .NumStages(RegisterOutputs == 1 ? 1 : 0)
+  ) br_delay_valid_outputs (
+      .clk,
+      .rst,
+      .in_valid(internal_valid),
+      .in({internal_data,
+          internal_error_corrected,
+          internal_error_due,
+          internal_error_syndrome}),
+      .out_valid(data_valid),
+      .out({data,
+            data_error_corrected,
+            data_error_detected_but_uncorrectable,
+            data_error_syndrome}),
+      .out_valid_stages(),  // unused
+      .out_stages()  // unused
+  );
+
+  //------------------------------------------
+  // Implementation checks
+  //------------------------------------------
+  `BR_ASSERT_IMPL(latency_a, codeword_valid |-> ##Latency data_valid)
+  `BR_ASSERT_IMPL(ce_due_mutually_exclusive_a,
+                  data_valid |-> $onehot0({data_error_corrected, data_error_detected_but_uncorrectable}))
+  `BR_COVER_IMPL(ce_c, data_valid && data_error_corrected)
+  `BR_COVER_IMPL(due_c, data_valid && data_error_detected_but_uncorrectable)
+
+  // verilog_format: on
+  // verilog_lint: waive-stop line-length
+
+endmodule : br_ecc_secded_decoder

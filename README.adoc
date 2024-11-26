@@ -14,7 +14,7 @@
 
 = Bedrock-RTL
 
-WARNING: UNDER CONSTRUCTION. Everything is broken.
+WARNING: UNDER CONSTRUCTION. Many things are broken.
 
 High quality and composable base RTL libraries in Verilog
 
@@ -822,6 +822,11 @@ a| Bus CDC using a dual-clock FIFO with internal flop-RAM
 | Yes
 |
 
+| `br_enc_countones`
+| Count the number of ones in a vector
+| Yes
+|
+
 | `br_enc_gray2bin`
 | Gray to binary
 | Yes
@@ -847,12 +852,12 @@ a| Bus CDC using a dual-clock FIFO with internal flop-RAM
 
 | `br_ecc_secded_decoder`
 | Single-error-correcting, double-error-detecting (SECDED) decoder
-|
+| Yes
 |
 
 | `br_ecc_secded_encoder`
 | Single-error-correcting, double-error-detecting (SECDED) encoder
-|
+| Yes
 |
 
 | `br_ecc_sed_decoder`
