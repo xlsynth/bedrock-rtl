@@ -278,7 +278,7 @@ def decode_message(
     return (c[:k], False, True)
 
 
-def G_col_to_sv_assign(col: np.ndarray, col_idx: int) -> str:
+def G_col_to_sv(col: np.ndarray, col_idx: int) -> str:
     """Generate a Verilog RTL assignment for a single column of the generator matrix G."""
     xors = []
     nonzero_indices = np.nonzero(col)[0]
@@ -295,7 +295,7 @@ def G_to_sv(G: np.ndarray) -> str:
     k = G.shape[0]
     r = get_r(k)
     for i in range(r):
-        assigns.append(G_col_to_sv_assign(G[:, k + i], i))
+        assigns.append(G_col_to_sv(G[:, k + i], i))
     return "\n".join(assigns)
 
 
