@@ -25,59 +25,61 @@
 `include "br_asserts.svh"
 
 module br_flow_mux_fixed #(
-    parameter int NumFlows  = 2,  // Must be at least 2
-    parameter int DataWidth = 1   // Must be at least 1
+    parameter int NumFlows = 2,  // Must be at least 2
+    parameter int Width = 1  // Must be at least 1
 ) (
     // ri lint_check_waive NOT_READ HIER_NET_NOT_READ HIER_BRANCH_NOT_READ
-    input  logic                                clk,         // Only used for assertions
+    input  logic                           clk,         // Only used for assertions
     // ri lint_check_waive NOT_READ HIER_NET_NOT_READ HIER_BRANCH_NOT_READ
-    input  logic                                rst,         // Only used for assertions
-    output logic [ NumFlows-1:0]                push_ready,
-    input  logic [ NumFlows-1:0]                push_valid,
-    input  logic [ NumFlows-1:0][DataWidth-1:0] push_data,
-    input  logic                                pop_ready,
-    output logic                                pop_valid,
-    output logic [DataWidth-1:0]                pop_data
+    input  logic                           rst,         // Only used for assertions
+    output logic [NumFlows-1:0]            push_ready,
+    input  logic [NumFlows-1:0]            push_valid,
+    input  logic [NumFlows-1:0][Width-1:0] push_data,
+    input  logic                           pop_ready,
+    output logic                           pop_valid,
+    output logic [   Width-1:0]            pop_data
 );
 
   //------------------------------------------
   // Integration checks
   //------------------------------------------
-  `BR_ASSERT_STATIC(num:equesters_gte_2_a, NumFlows >= 2)
-  `BR_ASSERT_STATIC(datawidth_gte_1_a, DataWidth >= 1)
+  `BR_ASSERT_STATIC(num_requesters_gte_2_a, NumFlows >= 2)
+  `BR_ASSERT_STATIC(datawidth_gte_1_a, Width >= 1)
 
   // Rely on submodule integration checks
 
   //------------------------------------------
   // Implementation
   //------------------------------------------
+  logic [NumFlows-1:0] request;
+  logic [NumFlows-1:0] can_grant;
+  logic [NumFlows-1:0] grant;
 
-  br_flow_arb_fixed #(
-      .NumFlows(NumFlows)
-  ) br_flow_arb_fixed (
-      .clk,
-      .rst,
-      .push_ready,
-      .push_valid,
-      .pop_ready,
-      .pop_valid
+  br_arb_fixed_internal #(
+      .NumRequesters(NumFlows)
+  ) br_arb_fixed_internal (
+      .request,
+      .can_grant,
+      .grant
   );
 
-  // Determine the index of the granted flow
-  logic [$clog2(NumFlows)-1:0] grant_idx;
-
-  always_comb begin
-    grant_idx = '0;
-    for (int i = 0; i < NumFlows; i++) begin
-      if (push_ready[i] && push_valid[i]) begin
-        grant_idx = i;
-        break;  // push_ready & push_valid is guaranteed onehot0 by br_flow_arb_fixed
-      end
-    end
-  end
-
-  // Mux to the output
-  assign pop_data = push_data[grant_idx];
+  br_flow_mux_core #(
+      .NumFlows(NumFlows),
+      .Width(Width)
+  ) br_flow_mux_core (
+      .clk,
+      .rst,
+      .request,
+      .can_grant,
+      .grant,
+      .enable_priority_update(),  // Not used
+      .push_ready,
+      .push_valid,
+      .push_data,
+      .pop_ready,
+      .pop_valid,
+      .pop_data
+  );
 
   //------------------------------------------
   // Implementation checks
