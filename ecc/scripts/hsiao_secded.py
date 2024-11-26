@@ -26,22 +26,22 @@ import math
 import argparse
 
 
-def num_parity_bits(message_bits: int) -> int:
-    """Calculate the number of parity bits required for a Hsiao SECDED code with the given message length in bits."""
+def get_r(k: int) -> int:
+    """Calculate the number of parity bits (p) required for a Hsiao SECDED code with the given message length (k) in bits."""
     r = 1
-    while r < math.ceil(math.log2(message_bits + r)) + 1:
+    while r < math.ceil(math.log2(k + r)) + 1:
         r += 1
     return r
 
 
-def num_codeword_bits(message_bits: int, parity_bits: int) -> int:
-    """Calculate the total number of bits in a codeword for a Hsiao SECDED code with the given message length and parity length in bits."""
-    return message_bits + parity_bits
+def get_n(k: int, r: int) -> int:
+    """Calculate the total number of bits in a codeword (n) for a Hsiao SECDED code with the given message length (k) and parity length (p) in bits."""
+    return k + r
 
 
-def num_message_bits(codeword_bits: int, parity_bits: int) -> int:
-    """Calculate the number of message bits in a codeword for a Hsiao SECDED code with the given codeword length and parity length in bits."""
-    return codeword_bits - parity_bits
+def get_k(n: int, r: int) -> int:
+    """Calculate the number of message bits (k) in a codeword for a Hsiao SECDED code with the given codeword length (n) and parity length (p) in bits."""
+    return n - r
 
 
 def uint_to_bit_vector(number: int, bit_length: int) -> list:
@@ -53,25 +53,23 @@ def uint_to_bit_vector(number: int, bit_length: int) -> list:
     return bit_vector
 
 
-def min_column_weight(message_bits: int, parity_bits: int) -> int:
-    """Returns the smallest odd column weight that can be used to construct the parity-check matrix."""
-    for weight in range(3, parity_bits, 2):
-        num_ways = math.comb(parity_bits, weight)
-        if num_ways >= message_bits:
+def min_column_weight(k: int, r: int) -> int:
+    """Returns the smallest odd column weight that can be used to construct the r x k message part of the parity-check matrix."""
+    for weight in range(3, r, 2):
+        num_ways = math.comb(r, weight)
+        if num_ways >= k:
             return weight
     raise ValueError("No valid column weight found!")
 
 
-def parity_check_message_columns(
-    parity_bits: int, message_bits: int, col_weight: int
-) -> np.ndarray:
-    """Returns all possible values for a parity column with the given weight."""
+def parity_check_message_columns(r: int, k: int, col_weight: int) -> np.ndarray:
+    """Returns a set of parity columns for the r x k message part of the r x n parity-check matrix."""
     # This is not the most efficient way of finding the columns, but it works!
-    ret = np.zeros((parity_bits, message_bits), dtype=int)
+    ret = np.zeros((r, k), dtype=int)
     i = 0
     c = 0
-    while c < message_bits:
-        vec = uint_to_bit_vector(i, parity_bits)
+    while c < k:
+        vec = uint_to_bit_vector(i, r)
         if sum(vec) == col_weight:
             assert (sum(vec) % 2) == 1
             ret[:, c] = vec
@@ -89,8 +87,8 @@ def check_columns_unique(matrix: np.ndarray) -> bool:
     return True
 
 
-def parity_check_matrix(message_bits: int, parity_bits: int) -> np.ndarray:
-    """Generate the n x r parity-check matrix for a Hsiao SECDED code with the given number of parity bits.
+def get_H(k: int, r: int) -> np.ndarray:
+    """Generate the n x r parity-check matrix H for a Hsiao SECDED code with the given number of parity bits.
 
     Reference [2] states:
     > The definition of Hsiao code is a type of SEC-DED codes whose check matrix H defined on GF(2)
@@ -100,32 +98,35 @@ def parity_check_matrix(message_bits: int, parity_bits: int) -> np.ndarray:
     > (3) The difference of the number of 1s in any two rows is not greater than 1.
     > (4) No two columns are the same.
     """
-    k = message_bits
-    r = parity_bits
-    n = num_codeword_bits(k, r)
+    n = get_n(k, r)
     # Fill H_m with column vectors that satisfy conditions (1), (2), and (4).
     min_msg_col_weight = min_column_weight(k, r)
     H_m = parity_check_message_columns(r, k, min_msg_col_weight)
     # r x r matrix for parity bits (identity)
     H_p = np.identity(r, dtype=int)
-    return np.hstack((H_m, H_p))  # Combine data and parity
+    H = np.hstack((H_m, H_p))  # Combine message and parity parts in systematic form
+    return H
 
 
-def generator_matrix(parity_check_matrix: np.ndarray) -> np.ndarray:
-    """Generate the generator matrix for a Hsiao SECDED code with the given parity-check matrix."""
-    # G = [I_k | P], where P = transpose of H_d
-    r = parity_check_matrix.shape[0]
-    n = parity_check_matrix.shape[1]
-    k = num_message_bits(n, r)
-    # TODO(mgottscho): Implement this
-    return np.zeros((k, n), dtype=int)
+def get_G(H: np.ndarray) -> np.ndarray:
+    """Generate the k x n generator matrix G for a Hsiao SECDED code with the given r x n parity-check matrix H."""
+    r = H.shape[0]
+    n = H.shape[1]
+    k = get_k(n, r)
+    # Message part of G is identity matrix since we want systematic form.
+    G_m = np.identity(k, dtype=int)
+    H_m = H[:, :k]
+    # Parity part of G is the transpose of the messsage part of H.
+    G_p = H_m.T
+    G = np.hstack((G_m, G_p))
+    return G
 
 
-def hsiao_secded_code(message_bits: int) -> tuple[int, int, np.ndarray, np.ndarray]:
+def hsiao_secded_code(k: int) -> tuple[int, int, np.ndarray, np.ndarray]:
     """Generate a Hsiao SECDED code with the given number of message bits.
 
     Args:
-        message_bits: Number of message bits (k)
+        k: Number of message bits (k)
 
     Returns:
         tuple[int, int, np.ndarray, np.ndarray]:
@@ -138,16 +139,15 @@ def hsiao_secded_code(message_bits: int) -> tuple[int, int, np.ndarray, np.ndarr
             - c is the 1 x n codeword
             - s is the r x 1 syndrome
     """
-    k = message_bits
-    r = num_parity_bits(k)
-    n = num_codeword_bits(k, r)
+    r = get_r(k)
+    n = get_n(k, r)
     print(f"Number of message bits (k): {k}")
     print(f"Number of parity bits (r): {r}")
     print(f"Number of codeword bits (n): {n}")
     print("Constructing parity-check matrix H.")
-    H = parity_check_matrix(k, r)
+    H = get_H(k, r)
     print("Constructing generator matrix G.")
-    G = generator_matrix(H)
+    G = get_G(H)
     print("Parity-Check Matrix H:")
     print(H)
     print("Generator Matrix G:")
