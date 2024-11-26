@@ -24,6 +24,8 @@ from ecc.scripts.hsiao_secded import (
     check_columns_unique,
     check_columns_have_same_weight,
     check_column_weights_are_odd,
+    encode,
+    decode,
 )
 
 
@@ -80,7 +82,7 @@ class TestHsiaoSecdedCode(unittest.TestCase):
             ("k128", 128, 9, 137),
         ]
     )
-    def test_hsiao_secded_code(self, name, k, expected_r, expected_n):
+    def test_hsiao_secded_code_construction(self, name, k, expected_r, expected_n):
         r, n, H, G = hsiao_secded_code(k)
 
         # Check the number of parity and codeword bits
@@ -106,6 +108,50 @@ class TestHsiaoSecdedCode(unittest.TestCase):
     def test_invalid_k(self):
         with self.assertRaises(ValueError):
             hsiao_secded_code(0)
+
+    @parameterized.expand(
+        [
+            ("k4", 4, 4, 8),
+            ("k8", 8, 5, 13),
+            ("k15", 15, 6, 21),
+            ("k16", 16, 6, 22),
+        ]
+    )
+    def test_encode_decode_exhaustive(self, name, k, expected_r, expected_n):
+        """Test messages exhaustively for smaller codes."""
+        r, n, H, G = hsiao_secded_code(k)
+        for m in range(2**k):
+            m = np.array([int(b) for b in format(m, f"0{k}b")])
+            c = encode(m, G)
+            self.assertEqual(c.shape, (n,))
+            # Decode the codeword and check that: (1) it matches the original message, and (2) the syndrome is zero.
+            (m_prime, s) = decode(c, H, k)
+            self.assertTrue(np.array_equal(m, m_prime))
+            self.assertTrue(np.array_equal(s, np.zeros(r, dtype=int)))
+
+    @parameterized.expand(
+        [
+            ("k30", 30, 7, 37),
+            ("k32", 32, 7, 39),
+            ("k59", 59, 8, 67),
+            ("k64", 64, 8, 72),
+            ("k128", 128, 9, 137),
+            ("k977", 977, 10, 987),
+            ("k1024", 1024, 12, 1036),
+        ]
+    )
+    def test_encode_decode_random(self, name, k, expected_r, expected_n):
+        """Test a bunch of random messages. Note that doing it exhaustively is infeasible for large k."""
+        r, n, H, G = hsiao_secded_code(k)
+        np.random.seed(42)
+        for _ in range(1000):
+            m = np.random.randint(0, 2, k)
+            c = encode(m, G)
+            self.assertEqual(c.shape, (n,))
+            # Decode the codeword and check that: (1) it matches the original message, and (2) the syndrome is zero.
+            (m_prime, s) = decode(c, H, k)
+            self.assertTrue(np.array_equal(m, m_prime))
+            self.assertTrue(np.array_equal(s, np.zeros(r, dtype=int)))
 
 
 if __name__ == "__main__":

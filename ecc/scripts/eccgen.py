@@ -48,6 +48,12 @@ def main():
         required=False,
         help="The output file to write the parity check matrix to",
     )
+    parser.add_argument(
+        "--seed",
+        type=int,
+        required=False,
+        help="The seed to use for the random number generator",
+    )
 
     args = parser.parse_args()
 

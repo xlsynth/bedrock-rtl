@@ -207,3 +207,13 @@ def hsiao_secded_code(k: int) -> tuple[int, int, np.ndarray, np.ndarray]:
     check_matrix_is_binary(G)
     check_matrices_orthogonal(H, G.T)
     return r, n, H, G
+
+
+def encode(m: np.ndarray, G: np.ndarray) -> np.ndarray:
+    """Encode a message m using the generator matrix G."""
+    return binary_matmul(m, G)
+
+
+def decode(c: np.ndarray, H: np.ndarray, k: int) -> tuple[np.ndarray, np.ndarray]:
+    """Decode a codeword c using the parity-check matrix H."""
+    return (c[:k], binary_matmul(c, H.T))
