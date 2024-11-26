@@ -139,8 +139,13 @@ module br_credit_counter #(
 
   // Withhold and available: don't use the decrement in the calculation of
   // available credits because that would cause a combinational loop
-  assign available  = value_plus_incr > withhold ? value_plus_incr - withhold : '0;
-  assign decr_ready = ValueWidth'(decr_internal) <= available;
+  assign available = value_plus_incr > withhold ? value_plus_incr - withhold : '0;
+
+  if (MaxChange == 1) begin : gen_decr_ready_one
+    assign decr_ready = available > '0;
+  end else begin : gen_decr_ready_gt_one
+    assign decr_ready = ValueWidth'(decr_internal) <= available;
+  end
 
   //------------------------------------------
   // Implementation checks
