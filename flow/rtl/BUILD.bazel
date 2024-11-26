@@ -21,7 +21,8 @@ verilog_library(
     name = "br_flow_arb_fixed",
     srcs = ["br_flow_arb_fixed.sv"],
     deps = [
-        "//arb/rtl:br_arb_fixed",
+        "//arb/rtl/internal:br_arb_fixed_internal",
+        "//flow/rtl/internal:br_flow_arb_core",
         "//macros:br_asserts_internal",
     ],
 )
@@ -30,7 +31,8 @@ verilog_library(
     name = "br_flow_arb_rr",
     srcs = ["br_flow_arb_rr.sv"],
     deps = [
-        "//arb/rtl:br_arb_rr",
+        "//arb/rtl/internal:br_arb_rr_internal",
+        "//flow/rtl/internal:br_flow_arb_core",
         "//macros:br_asserts_internal",
         "//macros:br_registers",
     ],
@@ -40,7 +42,8 @@ verilog_library(
     name = "br_flow_arb_lru",
     srcs = ["br_flow_arb_lru.sv"],
     deps = [
-        "//arb/rtl:br_arb_lru",
+        "//arb/rtl/internal:br_arb_lru_internal",
+        "//flow/rtl/internal:br_flow_arb_core",
         "//macros:br_asserts_internal",
         "//macros:br_registers",
     ],
