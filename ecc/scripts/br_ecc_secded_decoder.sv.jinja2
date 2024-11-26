@@ -159,10 +159,11 @@ module br_ecc_secded_decoder #(
 
   assign syndrome_is_zero = error_syndrome == '0;
   assign syndrome_is_even = !syndrome_is_zero && !syndrome_ones_count[0];
-  assign syndrome_is_odd = syndrome_ones_count[1];
+  assign syndrome_is_odd  = syndrome_ones_count[1];
 
-  // TODO(mgottscho): Implement this. Need code generation. (WIP)
-  assign column_match_onehot = '0;
+  for (genvar i = 0; i < CodewordWidth; i++) begin : gen_H_col_match
+    assign column_match_onehot[i] = (error_syndrome == H[i]);
+  end
 
   assign error_detected_but_uncorrectable = codeword_valid &&
     (syndrome_is_even || (syndrome_is_odd && column_match_onehot == 0));
@@ -186,6 +187,7 @@ module br_ecc_secded_decoder #(
   `BR_ASSERT_COMB_IMPL(error_valid_only_if_data_valid_a, !error_valid || data_valid)
   `BR_ASSERT_COMB_IMPL(ce_due_mutually_exclusive_a,
                        !error_valid || !(error_corrected && error_detected_but_uncorrectable))
+  `BR_ASSERT_COMB_IMPL(column_match_onehot0_a, $onehot0(column_match_onehot))
   `BR_COVER_COMB_IMPL(error_valid_c, error_valid)
   `BR_COVER_COMB_IMPL(ce_c, error_valid && error_corrected)
   `BR_COVER_COMB_IMPL(due_c, error_valid && error_detected_but_uncorrectable)
