@@ -70,11 +70,27 @@ verilog_library(
 )
 
 br_verilog_elab_and_lint_test_suite(
-    name = "br_ecc_secded_encoder_test_suite",
-    # TODO(mgottscho): sweep more
+    name = "br_ecc_secded_encoder_test_suite_32_7",
     params = {
         "DataWidth": ["32"],
         "ParityWidth": ["7"],
+        "RegisterOutputs": [
+            "0",
+            "1",
+        ],
+    },
+    deps = [":br_ecc_secded_encoder"],
+)
+
+br_verilog_elab_and_lint_test_suite(
+    name = "br_ecc_secded_encoder_test_suite_61_8",
+    params = {
+        "DataWidth": ["61"],
+        "ParityWidth": ["8"],
+        "RegisterOutputs": [
+            "0",
+            "1",
+        ],
     },
     deps = [":br_ecc_secded_encoder"],
 )
@@ -132,11 +148,35 @@ verilog_library(
 )
 
 br_verilog_elab_and_lint_test_suite(
-    name = "br_ecc_secded_decoder_test_suite",
-    # TODO(mgottscho): sweep more
+    name = "br_ecc_secded_decoder_test_suite_32_7",
     params = {
         "DataWidth": ["32"],
         "ParityWidth": ["7"],
+        "RegisterSyndrome": [
+            "0",
+            "1",
+        ],
+        "RegisterOutputs": [
+            "0",
+            "1",
+        ],
+    },
+    deps = [":br_ecc_secded_decoder"],
+)
+
+br_verilog_elab_and_lint_test_suite(
+    name = "br_ecc_secded_decoder_test_suite_157_10",
+    params = {
+        "DataWidth": ["157"],
+        "ParityWidth": ["10"],
+        "RegisterSyndrome": [
+            "0",
+            "1",
+        ],
+        "RegisterOutputs": [
+            "0",
+            "1",
+        ],
     },
     deps = [":br_ecc_secded_decoder"],
 )
