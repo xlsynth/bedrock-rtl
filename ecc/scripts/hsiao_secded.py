@@ -42,13 +42,12 @@ def get_k(n: int, r: int) -> int:
     return n - r
 
 
-def uint_to_bit_vector(number: int, bit_length: int) -> list:
+def uint_to_bit_vector(number: int, bit_length: int) -> np.ndarray:
     """Convert an unsigned integer to a vector of bits with a specified length."""
     if number < 0:
         raise ValueError("Number must be non-negative.")
     binary_str = format(number, f"0{bit_length}b")
-    bit_vector = [int(bit) for bit in binary_str]
-    return bit_vector
+    return np.array([int(bit) for bit in binary_str])
 
 
 def parity_check_message_columns(r: int, k: int, col_weight: int) -> np.ndarray:
@@ -59,8 +58,9 @@ def parity_check_message_columns(r: int, k: int, col_weight: int) -> np.ndarray:
     c = 0
     while c < k:
         vec = uint_to_bit_vector(i, r)
-        if sum(vec) == col_weight:
-            assert (sum(vec) % 2) == 1
+        vec_sum = np.sum(vec)
+        if vec_sum == col_weight:
+            assert (vec_sum % 2) == 1
             ret[:, c] = vec
             c += 1
         i += 1

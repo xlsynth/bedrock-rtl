@@ -19,13 +19,11 @@ from ecc.scripts.hsiao_secded import (
     hsiao_secded_code,
     get_r,
     get_n,
-    get_H,
-    get_G,
     check_columns_unique,
-    check_columns_have_same_weight,
     check_column_weights_are_odd,
     encode,
     decode,
+    parity_check_message_columns,
 )
 
 
@@ -68,6 +66,12 @@ class TestHsiaoSecdedCode(unittest.TestCase):
     )
     def test_get_n(self, name, k, r, expected_n):
         self.assertEqual(get_n(k, r), expected_n)
+
+    def test_parity_check_message_columns(self):
+        self.assertTrue(check_columns_unique(parity_check_message_columns(7, 32, 3)))
+        self.assertTrue(
+            check_column_weights_are_odd(parity_check_message_columns(7, 32, 3))
+        )
 
     @parameterized.expand(
         [
