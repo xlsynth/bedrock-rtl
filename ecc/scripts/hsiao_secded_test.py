@@ -224,6 +224,39 @@ class TestHsiaoSecdedCode(unittest.TestCase):
             self.assertFalse(ce)
             self.assertTrue(due)
 
+    @parameterized.expand(
+        [
+            ("k4", 4),
+            ("k8", 8),
+            ("k15", 15),
+            ("k16", 16),
+            ("k30", 30),
+            ("k32", 32),
+            ("k59", 59),
+            ("k64", 64),
+            ("k128", 128),
+            ("k977", 977),
+            ("k1024", 1024),
+        ]
+    )
+    def test_encode_decode_random_triple_error_injection(self, name, k):
+        r, n, H, G = hsiao_secded_code(k)
+        np.random.seed(42)
+        for _ in range(1000):
+            m = np.random.randint(0, 2, k)
+            c = encode(m, G)
+            # Inject a triple bit flip
+            locs = np.random.choice(n, 3, replace=False)
+            rc = c.copy()
+            for loc in locs:
+                rc[loc] = 1 - c[loc]
+            # Decode the codeword and check that syndrome is odd
+            s = decode_syndrome(rc, H, k)
+            self.assertTrue((np.sum(s) % 2) == 1)
+            # Run the error correction algorithm and check that either (1) corrects the error or (2) detects but doesn't correct the error
+            _, ce, due = decode_message(rc, s, H)
+            self.assertTrue(ce ^ due)
+
 
 if __name__ == "__main__":
     unittest.main()
