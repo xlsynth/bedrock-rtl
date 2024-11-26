@@ -83,6 +83,8 @@ module br_ecc_secded_encoder #(
   //------------------------------------------
   logic PadWidth = MessageWidth - DataWidth;
   logic [MessageWidth-1:0] message;
+  logic [ParityWidth-1:0] parity;
+
   if (PadWidth > 0) begin : gen_pad
     assign message = {PadWidth'{1'b0}, data};
   end else begin : gen_no_pad
@@ -91,6 +93,7 @@ module br_ecc_secded_encoder #(
 
   assign codeword_valid = data_valid;
   assign codeword[MessageWidth-1:0] = message;
+  assign codeword[CodewordWidth-1:MessageWidth] = parity;
 
   // verilog_format: off
   // verilog_lint: waive-start line-length

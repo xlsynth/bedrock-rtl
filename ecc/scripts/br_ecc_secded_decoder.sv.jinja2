@@ -143,11 +143,11 @@ module br_ecc_secded_decoder #(
   br_enc_countones #(
       .Width(ParityWidth)
   ) br_enc_countones_syndrome (
-      .in(syndrome),
+      .in(error_syndrome),
       .count(syndrome_ones_count)
   );
 
-  assign syndrome_is_zero = syndrome == '0;
+  assign syndrome_is_zero = error_syndrome == '0;
   assign syndrome_is_even = !syndrome_is_zero && !syndrome_ones_count[0];
   assign syndrome_is_odd = syndrome_ones_count[1];
 
