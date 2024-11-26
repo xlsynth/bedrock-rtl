@@ -55,14 +55,10 @@ def uint_to_bit_vector(number: int, bit_length: int) -> list:
 
 def min_column_weight(message_bits: int, parity_bits: int) -> int:
     """Returns the smallest odd column weight that can be used to construct the parity-check matrix."""
-    codeword_bits = num_codeword_bits(message_bits, parity_bits)
-    for i in range(1, 2**parity_bits, 2):
-        bitvec = uint_to_bit_vector(i, parity_bits)
-        weight = sum(bitvec)
-        if weight % 2 == 1:
-            num_ways = math.comb(parity_bits, weight)
-            if num_ways >= message_bits:
-                return weight
+    for weight in range(3, parity_bits, 2):
+        num_ways = math.comb(parity_bits, weight)
+        if num_ways >= message_bits:
+            return weight
     raise ValueError("No valid column weight found!")
 
 
@@ -109,7 +105,6 @@ def parity_check_matrix(message_bits: int, parity_bits: int) -> np.ndarray:
     n = num_codeword_bits(k, r)
     # Fill H_m with column vectors that satisfy conditions (1), (2), and (4).
     min_msg_col_weight = min_column_weight(k, r)
-    print(f"Minimum message column weight: {min_msg_col_weight}")
     H_m = parity_check_message_columns(r, k, min_msg_col_weight)
     # r x r matrix for parity bits (identity)
     H_p = np.identity(r, dtype=int)
