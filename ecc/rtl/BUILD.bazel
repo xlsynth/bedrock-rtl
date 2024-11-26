@@ -61,7 +61,12 @@ br_verilog_elab_and_lint_test_suite(
 verilog_library(
     name = "br_ecc_secded_encoder",
     srcs = ["br_ecc_secded_encoder.sv"],
-    deps = ["//macros:br_asserts_internal"],
+    deps = [
+        "//delay/rtl:br_delay_valid",
+        "//macros:br_asserts",
+        "//macros:br_asserts_internal",
+        "//pkg:br_math_pkg",
+    ],
 )
 
 br_verilog_elab_and_lint_test_suite(
@@ -117,7 +122,13 @@ sh_binary(
 verilog_library(
     name = "br_ecc_secded_decoder",
     srcs = ["br_ecc_secded_decoder.sv"],
-    deps = ["//macros:br_asserts_internal"],
+    deps = [
+        "//delay/rtl:br_delay_valid",
+        "//macros:br_asserts",
+        "//macros:br_asserts_internal",
+        "//macros:br_unused",
+        "//pkg:br_math_pkg",
+    ],
 )
 
 br_verilog_elab_and_lint_test_suite(

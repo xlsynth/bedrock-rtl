@@ -320,7 +320,11 @@ def syndrome_to_sv(H: np.ndarray) -> str:
 def H_col_to_sv(col: np.ndarray, col_idx: int) -> str:
     """Generate a Verilog RTL assignment for a single column of the parity-check matrix H."""
     r = col.shape[0]
-    return f"    assign H[{col_idx}] = {r}'b" + "".join(col.astype(str)) + ";"
+    return (
+        f"    assign parity_check_matrix[{col_idx}] = {r}'b"
+        + "".join(col.astype(str))
+        + ";"
+    )
 
 
 def H_to_sv(H: np.ndarray) -> str:

@@ -112,7 +112,6 @@ def main():
                 args.parity_check_matrix_output.write(H_str)
 
         if args.rtl_encoder_output:
-            print("Dumping all supported Hsiao encoders to file.")
             if not args.rtl_encoder_template:
                 raise ValueError(
                     "RTL encoder template file is required to generate the encoder."
@@ -140,7 +139,6 @@ def main():
                 args.rtl_encoder_output.write(rendered)
 
         if args.rtl_decoder_output:
-            print("Dumping all supported Hsiao decoders to file.")
             if not args.rtl_decoder_template:
                 raise ValueError(
                     "RTL decoder template file is required to generate the decoder."

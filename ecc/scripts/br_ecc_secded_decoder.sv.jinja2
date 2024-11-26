@@ -63,6 +63,7 @@
 
 `include "br_asserts.svh"
 `include "br_asserts_internal.svh"
+`include "br_unused.svh"
 
 // TODO(mgottscho): Pipeline the syndrome decoding and then correction with a parameter.
 module br_ecc_secded_decoder #(
@@ -89,6 +90,7 @@ module br_ecc_secded_decoder #(
     output logic [  ParityWidth-1:0] data_error_syndrome
 );
 
+  // ri lint_check_waive PARAM_NOT_USED
   localparam int Latency = RegisterSyndrome + RegisterOutputs;
 
   //------------------------------------------
@@ -102,52 +104,56 @@ module br_ecc_secded_decoder #(
   //------------------------------------------
   // Implementation
   //------------------------------------------
-  logic [CodewordWidth-1:0][ParityWidth-1:0] H;  // parity-check-matrix
+  logic [CodewordWidth-1:0][ParityWidth-1:0] parity_check_matrix;  // H
   logic [ParityWidth-1:0] syndrome;
 
   //------
-  // Compute syndrome and set up constant H matrix.
+  // Compute syndrome and set up constant parity check matrix.
   //------
 
-  if (CodewordWidth == 4 && MessageWidth == 4) begin : gen_8_4
+  // ri lint_check_off EXPR_ID_LIMIT
+
+  if ((CodewordWidth == 4) && (MessageWidth == 4)) begin : gen_8_4
     `BR_ASSERT_STATIC(parity_width_matches_a, ParityWidth == 4)
 {{ secded_dec_syndrome_8_4 }}
 {{ secded_dec_H_8_4 }}
-  end else if (CodewordWidth == 13 && MessageWidth == 8) begin : gen_13_8
+  end else if ((CodewordWidth == 13) && (MessageWidth == 8)) begin : gen_13_8
     `BR_ASSERT_STATIC(parity_width_matches_a, ParityWidth == 5)
 {{ secded_dec_syndrome_13_8 }}
 {{ secded_dec_H_13_8 }}
-  end else if (CodewordWidth == 22 && MessageWidth == 16) begin : gen_22_16
+  end else if ((CodewordWidth == 22) && (MessageWidth == 16)) begin : gen_22_16
     `BR_ASSERT_STATIC(parity_width_matches_a, ParityWidth == 6)
 {{ secded_dec_syndrome_22_16 }}
 {{ secded_dec_H_22_16 }}
-  end else if (CodewordWidth == 39 && MessageWidth == 32) begin : gen_39_32
+  end else if ((CodewordWidth == 39) && (MessageWidth == 32)) begin : gen_39_32
     `BR_ASSERT_STATIC(parity_width_matches_a, ParityWidth == 7)
 {{ secded_dec_syndrome_39_32 }}
 {{ secded_dec_H_39_32 }}
-  end else if (CodewordWidth == 72 && MessageWidth == 64) begin : gen_72_64
+  end else if ((CodewordWidth == 72) && (MessageWidth == 64)) begin : gen_72_64
     `BR_ASSERT_STATIC(parity_width_matches_a, ParityWidth == 8)
 {{ secded_dec_syndrome_72_64 }}
 {{ secded_dec_H_72_64 }}
-  end else if (CodewordWidth == 137 && MessageWidth == 128) begin : gen_137_128
+  end else if ((CodewordWidth == 137) && (MessageWidth == 128)) begin : gen_137_128
     `BR_ASSERT_STATIC(parity_width_matches_a, ParityWidth == 9)
 {{ secded_dec_syndrome_137_128 }}
 {{ secded_dec_H_137_128 }}
-  end else if (CodewordWidth == 266 && MessageWidth == 256) begin : gen_266_256
+  end else if ((CodewordWidth == 266) && (MessageWidth == 256)) begin : gen_266_256
     `BR_ASSERT_STATIC(parity_width_matches_a, ParityWidth == 10)
 {{ secded_dec_syndrome_266_256 }}
 {{ secded_dec_H_266_256 }}
-  end else if (CodewordWidth == 523 && MessageWidth == 512) begin : gen_523_512
+  end else if ((CodewordWidth == 523) && (MessageWidth == 512)) begin : gen_523_512
     `BR_ASSERT_STATIC(parity_width_matches_a, ParityWidth == 11)
 {{ secded_dec_syndrome_523_512 }}
 {{ secded_dec_H_523_512 }}
-  end else if (CodewordWidth == 1036 && MessageWidth == 1024) begin : gen_1036_1024
+  end else if ((CodewordWidth == 1036) && (MessageWidth == 1024)) begin : gen_1036_1024
     `BR_ASSERT_STATIC(parity_width_matches_a, ParityWidth == 12)
 {{ secded_dec_syndrome_1036_1024 }}
 {{ secded_dec_H_1036_1024 }}
   end else begin : gen_default_parity
     `BR_ASSERT_STATIC(invalid_parity_width_a, 1'b0)
   end
+
+  // ri lint_check_on EXPR_ID_LIMIT
 
   //------
   // Optionally register the syndrome before decoding.
@@ -201,9 +207,9 @@ module br_ecc_secded_decoder #(
   assign internal_due_even = !internal_error_syndrome_is_zero && internal_error_syndrome_is_even;
 
   // Case 2 - need more information to decide if it's case 2a or 2b.
-  logic [CodewordWidth-1:0] internal_H_column_match;
+  logic [CodewordWidth-1:0] internal_h_column_match;
   for (genvar i = 0; i < CodewordWidth; i++) begin : gen_col_match
-    assign internal_H_column_match[i] = (internal_error_syndrome == H[i]);
+    assign internal_h_column_match[i] = (internal_error_syndrome == parity_check_matrix[i]);
   end
 
   // Case 2a (detected-but-uncorrectable with odd syndrome)
@@ -211,16 +217,16 @@ module br_ecc_secded_decoder #(
   // Since the code is guaranteed to correct any single-bit error, this means it must be
   // an odd number (at least 3) of bits in error.
   logic internal_due_odd;
-  assign internal_due_odd = internal_error_syndrome_is_odd && (internal_H_column_match == '0);
+  assign internal_due_odd = internal_error_syndrome_is_odd && (internal_h_column_match == '0);
 
   // Merge case 1 and 2a (detected-but-uncorrectable)
-  logic internal_error_detected_but_uncorrectable;
-  assign internal_error_detected_but_uncorrectable = (internal_due_even || internal_due_odd);
+  logic internal_error_due;
+  assign internal_error_due = (internal_due_even || internal_due_odd);
 
   // Case 2b (correctable with single-bit error)
   logic internal_error_corrected;
   assign internal_error_corrected =
-    internal_error_syndrome_is_odd && (internal_H_column_match != '0);
+    internal_error_syndrome_is_odd && (internal_h_column_match != '0);
 
   //------
   // Correct the codeword (if necessary and possible), then extract the message and data.
@@ -228,20 +234,28 @@ module br_ecc_secded_decoder #(
   // If there was a DUE, then the corrected codeword is still corrupted and
   // the message and data are likely to also be corrupted.
 
-  parameter int PadWidth = MessageWidth - DataWidth;
   logic [CodewordWidth-1:0] internal_corrected_codeword;
   logic [ MessageWidth-1:0] internal_message;
   logic [DataWidth-1:0] internal_data;
 
-  assign internal_corrected_codeword = internal_codeword ^ internal_H_column_match;
+  assign internal_corrected_codeword = internal_codeword ^ internal_h_column_match;
   assign internal_message = internal_corrected_codeword[MessageWidth-1:0];
-  assign internal_data = internal_message[DataWidth-1:0];
 
-  `BR_ASSERT_IMPL(internal_H_column_match_onehot0_a,
-                  internal_valid |-> $onehot0(internal_H_column_match))
-  `BR_ASSERT_IMPL(due_no_H_column_match_a,
-                  internal_valid && internal_error_detected_but_uncorrectable |->
-                  (internal_H_column_match == '0))
+  `BR_UNUSED_NAMED(corrected_codeword_parity,
+    internal_corrected_codeword[CodewordWidth-1:MessageWidth])
+
+  if (MessageWidth > DataWidth) begin : gen_pad
+    assign internal_data = internal_message[DataWidth-1:0];
+    `BR_UNUSED_NAMED(messsage_pad, internal_message[MessageWidth-1:DataWidth])
+  end else begin : gen_no_pad
+    assign internal_data = internal_message;
+  end
+
+  `BR_ASSERT_IMPL(internal_h_column_match_onehot0_a,
+                  internal_valid |-> $onehot0(internal_h_column_match))
+  `BR_ASSERT_IMPL(due_no_h_column_match_a,
+                  internal_valid && internal_error_due |->
+                  (internal_h_column_match == '0))
   `BR_ASSERT_IMPL(no_error_correction_a,
                   internal_valid && !internal_error_corrected |->
                   (internal_corrected_codeword == internal_codeword))
@@ -253,15 +267,15 @@ module br_ecc_secded_decoder #(
   // Optionally register the output signals.
   //------
   br_delay_valid #(
-      .Width({DataWidth + 2 + ParityWidth}),
-      .NumStages(RegisterOutputs)
+      .Width({(DataWidth + 32'd2) + ParityWidth}),
+      .NumStages(RegisterOutputs == 1 ? 1 : 0)
   ) br_delay_valid_outputs (
       .clk,
       .rst,
       .in_valid(internal_valid),
       .in({internal_data,
           internal_error_corrected,
-          internal_error_detected_but_uncorrectable,
+          internal_error_due,
           internal_error_syndrome}),
       .out_valid(data_valid),
       .out({data,
