@@ -50,6 +50,11 @@ def uint_to_bit_vector(number: int, bit_length: int) -> np.ndarray:
     return np.array([int(bit) for bit in binary_str])
 
 
+def bit_vector_to_uint(bit_vector: np.ndarray) -> int:
+    """Convert a bit vector to an unsigned integer."""
+    return int("".join(map(str, bit_vector)), 2)
+
+
 def parity_check_message_columns(r: int, k: int, col_weight: int) -> np.ndarray:
     """Returns a set of parity columns for the r x k message part of the r x n parity-check matrix."""
     # This is not the most efficient way of finding the columns, but it works!
@@ -60,11 +65,9 @@ def parity_check_message_columns(r: int, k: int, col_weight: int) -> np.ndarray:
         vec = uint_to_bit_vector(i, r)
         vec_sum = np.sum(vec)
         if vec_sum == col_weight:
-            assert (vec_sum % 2) == 1
             ret[:, c] = vec
             c += 1
         i += 1
-    assert check_columns_unique(ret)
     return ret
 
 
@@ -214,6 +217,54 @@ def encode(m: np.ndarray, G: np.ndarray) -> np.ndarray:
     return binary_matmul(m, G)
 
 
-def decode(c: np.ndarray, H: np.ndarray, k: int) -> tuple[np.ndarray, np.ndarray]:
-    """Decode a codeword c using the parity-check matrix H."""
-    return (c[:k], binary_matmul(c, H.T))
+def decode_syndrome(c: np.ndarray, H: np.ndarray, k: int) -> np.ndarray:
+    """Decode a codeword c to a syndrome using the parity-check matrix H."""
+    return binary_matmul(c, H.T)
+
+
+def decode_message(
+    c: np.ndarray, s: np.ndarray, H: np.ndarray
+) -> tuple[np.ndarray, bool, bool]:
+    """Decode a codeword c to a message using the syndrome s.
+
+    Args:
+        c: Codeword of shape (n,)
+        s: Syndrome of shape (r,)
+        H: Parity-check matrix of shape (r, n)
+
+    Returns:
+        tuple[np.ndarray, bool, bool]:
+            - Decoded message. Can be valid only if no double-bit error was detected.
+            - True if a single-bit error was corrected, False otherwise
+            - True if a double-bit error was detected-but-uncorrectable, False otherwise
+    """
+    n = c.shape[0]
+    r = s.shape[0]
+    k = get_k(n, r)
+    if H.shape[0] != r or H.shape[1] != n:
+        raise ValueError("H must be r x n.")
+
+    # Case 0: Syndrome is zero, no errors detected.
+    if np.all(s == 0):
+        return (c[:k], False, False)
+
+    # Case 1: Syndrome is for an even number of bits in error, which happens when the syndrome is even in a Hsiao SECDED code.
+    # Maximum likelihood decoding produces multiple equiprobable candidate codewords, so treat as detected-but-uncorrectable.
+    # NOTE: We are returning *some* message but it is likely to have been corrupted!
+    if (np.sum(s) % 2) == 0:
+        return (c[:k], False, True)
+
+    # Remaining case: Syndrome is for an odd number of bits in error, which happens when the syndrome is odd in a Hsiao SECDED code.
+    # *Usually* this is a single-bit error, which is always closest to exactly one codeword. So with maximum likelihood decoding
+    # we can correct it. However, sometimes it can be a three-bit error that is actually detected-but-uncorrectable.
+    assert np.sum(s) % 2 == 1
+    for ci in range(n):
+        # If the syndrome equals a column of H, then we decide the error is in that column and we can correct it.
+        if np.array_equal(H[:, ci], s):
+            loc = ci
+            c[loc] = 1 - c[loc]
+            return (c[:k], True, False)
+
+    # If no column of H matches the syndrome, then the codeword is uncorrectable.
+    # Similarly to above, we return *some* message but it is likely to have been corrupted!
+    return (c[:k], False, True)

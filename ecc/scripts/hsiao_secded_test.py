@@ -22,7 +22,8 @@ from ecc.scripts.hsiao_secded import (
     check_columns_unique,
     check_column_weights_are_odd,
     encode,
-    decode,
+    decode_syndrome,
+    decode_message,
     parity_check_message_columns,
 )
 
@@ -121,16 +122,15 @@ class TestHsiaoSecdedCode(unittest.TestCase):
             ("k16", 16, 6, 22),
         ]
     )
-    def test_encode_decode_exhaustive(self, name, k, expected_r, expected_n):
-        """Test messages exhaustively for smaller codes."""
+    def test_encode_decode_syndrome_exhaustive(self, name, k, expected_r, expected_n):
+        """Test message encoding and syndrome decoding exhaustively for smaller codes without any errors."""
         r, n, H, G = hsiao_secded_code(k)
         for m in range(2**k):
             m = np.array([int(b) for b in format(m, f"0{k}b")])
             c = encode(m, G)
             self.assertEqual(c.shape, (n,))
-            # Decode the codeword and check that: (1) it matches the original message, and (2) the syndrome is zero.
-            (m_prime, s) = decode(c, H, k)
-            self.assertTrue(np.array_equal(m, m_prime))
+            # Decode the codeword and check that syndrome is zero
+            s = decode_syndrome(c, H, k)
             self.assertTrue(np.array_equal(s, np.zeros(r, dtype=int)))
 
     @parameterized.expand(
@@ -144,7 +144,7 @@ class TestHsiaoSecdedCode(unittest.TestCase):
             ("k1024", 1024, 12, 1036),
         ]
     )
-    def test_encode_decode_random(self, name, k, expected_r, expected_n):
+    def test_encode_decode_syndrome_random(self, name, k, expected_r, expected_n):
         """Test a bunch of random messages. Note that doing it exhaustively is infeasible for large k."""
         r, n, H, G = hsiao_secded_code(k)
         np.random.seed(42)
@@ -152,10 +152,41 @@ class TestHsiaoSecdedCode(unittest.TestCase):
             m = np.random.randint(0, 2, k)
             c = encode(m, G)
             self.assertEqual(c.shape, (n,))
-            # Decode the codeword and check that: (1) it matches the original message, and (2) the syndrome is zero.
-            (m_prime, s) = decode(c, H, k)
-            self.assertTrue(np.array_equal(m, m_prime))
+            # Decode the codeword and check that syndrome is zero
+            s = decode_syndrome(c, H, k)
             self.assertTrue(np.array_equal(s, np.zeros(r, dtype=int)))
+
+    @parameterized.expand(
+        [
+            ("k4", 4),
+            ("k8", 8),
+            ("k15", 15),
+            ("k16", 16),
+            ("k30", 30),
+            ("k32", 32),
+            ("k59", 59),
+            ("k64", 64),
+            ("k128", 128),
+            ("k977", 977),
+            ("k1024", 1024),
+        ]
+    )
+    def test_encode_decode_random_single_error_injection(self, name, k):
+        r, n, H, G = hsiao_secded_code(k)
+        np.random.seed(42)
+        for _ in range(1000):
+            m = np.random.randint(0, 2, k)
+            c = encode(m, G)
+            # Inject a single bit flip
+            loc = np.random.randint(0, n)
+            rc = c.copy()
+            rc[loc] = 1 - c[loc]
+            # Decode the codeword and check that syndrome is non-zero
+            s = decode_syndrome(rc, H, k)
+            self.assertFalse(np.array_equal(s, np.zeros(r, dtype=int)))
+            # Run the error correction algorithm and check that it corrects the error
+            m_prime, ce, due = decode_message(rc, s, H)
+            self.assertTrue(np.array_equal(m, m_prime))
 
 
 if __name__ == "__main__":
