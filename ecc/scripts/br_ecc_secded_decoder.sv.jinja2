@@ -61,6 +61,7 @@
 // References:
 // [1] https://ieeexplore.ieee.org/abstract/document/5391627
 
+`include "br_asserts.svh"
 `include "br_asserts_internal.svh"
 
 // TODO(mgottscho): Pipeline the syndrome decoding and then correction with a parameter.

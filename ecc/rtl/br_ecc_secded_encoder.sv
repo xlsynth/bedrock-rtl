@@ -15,6 +15,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+
+// verilog_format: off
+// verilog_lint: waive-start line-length
+
 // Bedrock-RTL Single-Error-Correcting, Double-Error-Detecting (SECDED - Hsiao) Encoder
 //
 // Encodes a message using a single-error-correcting, double-error-detecting
@@ -56,19 +60,28 @@
 // References:
 // [1] https://ieeexplore.ieee.org/abstract/document/5391627
 
+`include "br_asserts.svh"
 `include "br_asserts_internal.svh"
 
 module br_ecc_secded_encoder #(
     parameter int DataWidth = 1,  // Must be at least 1
     parameter int ParityWidth = 4,  // Must be at least 4 and at most 12
+    // If 1, then insert a pipeline register at the output.
+    paramter bit RegisterOutputs = 0,
     localparam int MessageWidth = 2 ** $clog2(DataWidth),
     localparam int CodewordWidth = MessageWidth + ParityWidth
 ) (
+    // Positive edge-triggered clock.
+    input  logic                     clk,
+    // Synchronous active-high reset.
+    input  logic                     rst,
     input  logic                     data_valid,
     input  logic [    DataWidth-1:0] data,
     output logic                     codeword_valid,
     output logic [CodewordWidth-1:0] codeword
 );
+
+  localparam int Latency = RegisterOutputs;
 
   //------------------------------------------
   // Integration checks
@@ -81,9 +94,13 @@ module br_ecc_secded_encoder #(
   //------------------------------------------
   // Implementation
   //------------------------------------------
+
+
+  //------
+  // Pad data to the nearest power of 2 message width.
+  //------
   logic PadWidth = MessageWidth - DataWidth;
   logic [MessageWidth-1:0] message;
-  logic [ParityWidth-1:0] parity;
 
   if (PadWidth > 0) begin : gen_pad
     assign message = {PadWidth'{1'b0}, data};
@@ -91,12 +108,11 @@ module br_ecc_secded_encoder #(
     assign message = data;
   end
 
-  assign codeword_valid = data_valid;
-  assign codeword[MessageWidth-1:0] = message;
-  assign codeword[CodewordWidth-1:MessageWidth] = parity;
+  //------
+  // Compute parity bits.
+  //------
+  logic [ParityWidth-1:0] parity;
 
-  // verilog_format: off
-  // verilog_lint: waive-start line-length
   if (CodewordWidth == 4 && MessageWidth == 4) begin : gen_8_4
     `BR_ASSERT_STATIC(parity_width_matches_a, ParityWidth == 4)
     assign parity[0] = message[1] ^ message[2] ^ message[3];
@@ -190,12 +206,36 @@ module br_ecc_secded_encoder #(
   end else begin : gen_default_parity
     `BR_ASSERT_STATIC(invalid_parity_width_a, 1'b0)
   end
-  // verilog_lint: waive-stop line-length
-  // verilog_format: on
+
+  //------
+  // Concatenate message and parity bits to form the codeword.
+  //------
+  logic [CodewordWidth-1:0] internal_codeword;
+  assign internal_codeword = {parity, message};
+
+  //------
+  // Optionally register the output signals.
+  //------
+  br_delay_valid #(
+      .Width(CodewordWidth),
+      .NumStages(RegisterOutputs)
+  ) br_delay_valid_outputs (
+      .clk,
+      .rst,
+      .in_valid(data_valid),
+      .in({internal_codeword}),
+      .out_valid(codeword_valid),
+      .out(codeword),
+      .out_valid_stages(),  // unused
+      .out_stages()  // unused
+  );
 
   //------------------------------------------
   // Implementation checks
   //------------------------------------------
-  `BR_ASSERT_COMB(codeword_valid_only_if_data_valid_a, !codeword_valid || data_valid)
+  `BR_ASSERT_IMPL(latency_a, data_valid |-> ##Latency codeword_valid)
+
+  // verilog_lint: waive-stop line-length
+  // verilog_format: on
 
 endmodule : br_ecc_secded_encoder
