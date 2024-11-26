@@ -847,12 +847,12 @@ a| Bus CDC using a dual-clock FIFO with internal flop-RAM
 
 | `br_ecc_secded_decoder`
 | Single-error-correcting, double-error-detecting (SECDED) decoder
-|
+| Yes
 |
 
 | `br_ecc_secded_encoder`
 | Single-error-correcting, double-error-detecting (SECDED) encoder
-|
+| Yes
 |
 
 | `br_ecc_sed_decoder`
