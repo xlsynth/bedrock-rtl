@@ -311,8 +311,6 @@ def syndrome_bit_to_sv(row: np.ndarray, row_idx: int) -> str:
 def syndrome_to_sv(H: np.ndarray) -> str:
     """Generate Verilog RTL code for the syndrome of the given parity-check matrix H."""
     assigns = []
-    # Since we know G is in systematic form, we can just assign the message bits to the codeword bits.
-    # We don't need to codegen that part.
     r = H.shape[0]
     for i in range(r):
         assigns.append(syndrome_bit_to_sv(H[i, :], i))
