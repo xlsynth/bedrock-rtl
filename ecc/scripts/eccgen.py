@@ -13,7 +13,7 @@
 # limitations under the License.
 
 import argparse
-from ecc.scripts.hsiao_secded import hsiao_secded_code, G_to_sv
+from ecc.scripts.hsiao_secded import hsiao_secded_code, G_to_sv, H_to_sv
 import numpy as np
 from jinja2 import Template
 
@@ -72,6 +72,18 @@ def main():
         required=False,
         help="Dump the encoder implementation for all supported codes to the provided output file.",
     )
+    parser.add_argument(
+        "--rtl-decoder-template",
+        type=sv_jinja2_file,
+        required=False,
+        help="The input file containing the Jinja2 SystemVerilog RTL code template for the decoder.",
+    )
+    parser.add_argument(
+        "--rtl-decoder-output",
+        type=argparse.FileType("w"),
+        required=False,
+        help="Dump the decoder implementation for all supported codes to the provided output file.",
+    )
 
     args = parser.parse_args()
 
@@ -126,9 +138,36 @@ def main():
                 rendered = template.render(mapping)
                 args.rtl_encoder_output.write(rendered)
 
-        if not args.k and not args.rtl_encoder_output:
+        if args.rtl_decoder_output:
+            print("Dumping all supported Hsiao decoders to file.")
+            if not args.rtl_decoder_template:
+                raise ValueError(
+                    "RTL decoder template file is required to generate the decoder."
+                )
+
+            RTL_SUPPORTED_N_K = [
+                (8, 4),
+                (13, 8),
+                (22, 16),
+                (39, 32),
+                (72, 64),
+                (137, 128),
+                (266, 256),
+                (523, 512),
+                (1036, 1024),
+            ]
+            with open(args.rtl_decoder_template, "r") as template_file:
+                template = Template(template_file.read())
+                mapping = {}
+                for n, k in RTL_SUPPORTED_N_K:
+                    r, n, H, G = hsiao_secded_code(k)
+                    mapping[f"secded_dec_{n}_{k}"] = H_to_sv(H)
+                rendered = template.render(mapping)
+                args.rtl_decoder_output.write(rendered)
+
+        if not args.k and not args.rtl_encoder_output and not args.rtl_decoder_output:
             raise ValueError(
-                "Either k or rtl-encoder-output must be provided for Hsiao SEC-DED code generation."
+                "Either k or rtl-encoder-output or rtl-decoder-output must be provided for Hsiao SEC-DED code generation."
             )
 
 
