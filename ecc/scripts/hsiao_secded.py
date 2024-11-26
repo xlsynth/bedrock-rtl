@@ -18,12 +18,10 @@ Hsiao SECDED code generator
 References:
 [1] https://ieeexplore.ieee.org/abstract/document/5391627
 [2] https://arxiv.org/pdf/0803.1217
-
 """
 
 import numpy as np
 import math
-import argparse
 
 
 def get_r(k: int) -> int:
