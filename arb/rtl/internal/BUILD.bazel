@@ -13,24 +13,21 @@
 # limitations under the License.
 
 load("@rules_hdl//verilog:providers.bzl", "verilog_library")
-load("//bazel:br_verilog.bzl", "br_verilog_elab_and_lint_test_suite")
 
-package(default_visibility = ["//arb/rtl:__subpackages__"])
+package(default_visibility = ["//visibility:public"])
 
 verilog_library(
-    name = "br_arb_fixed",
-    srcs = ["br_arb_fixed.sv"],
+    name = "br_arb_fixed_internal",
+    srcs = ["br_arb_fixed_internal.sv"],
     deps = [
-        "//arb/rtl/internal:br_arb_fixed_internal",
         "//macros:br_asserts_internal",
     ],
 )
 
 verilog_library(
-    name = "br_arb_lru",
-    srcs = ["br_arb_lru.sv"],
+    name = "br_arb_lru_internal",
+    srcs = ["br_arb_lru_internal.sv"],
     deps = [
-        "//arb/rtl/internal:br_arb_lru_internal",
         "//macros:br_asserts_internal",
         "//macros:br_registers",
         "//macros:br_unused",
@@ -38,38 +35,12 @@ verilog_library(
 )
 
 verilog_library(
-    name = "br_arb_rr",
-    srcs = ["br_arb_rr.sv"],
+    name = "br_arb_rr_internal",
+    srcs = ["br_arb_rr_internal.sv"],
     deps = [
-        "//arb/rtl/internal:br_arb_rr_internal",
         "//macros:br_asserts_internal",
         "//macros:br_registers",
     ],
 )
 
-br_verilog_elab_and_lint_test_suite(
-    name = "br_arb_fixed_test_suite",
-    params = {"NumRequesters": [
-        "2",
-        "5",
-    ]},
-    deps = [":br_arb_fixed"],
-)
-
-br_verilog_elab_and_lint_test_suite(
-    name = "br_arb_lru_test_suite",
-    params = {"NumRequesters": [
-        "2",
-        "5",
-    ]},
-    deps = [":br_arb_lru"],
-)
-
-br_verilog_elab_and_lint_test_suite(
-    name = "br_arb_rr_test_suite",
-    params = {"NumRequesters": [
-        "2",
-        "5",
-    ]},
-    deps = [":br_arb_rr"],
-)
+# Elab/Lint tests done on public modules
