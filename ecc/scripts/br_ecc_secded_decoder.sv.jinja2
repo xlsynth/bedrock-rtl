@@ -154,7 +154,8 @@ module br_ecc_secded_decoder #(
   // TODO(mgottscho): Implement this. Need code generation. (WIP)
   assign column_match_onehot = '0;
 
-  assign detected_but_uncorrectable_error = codeword_valid && (syndrome_is_even || (syndrome_is_odd && column_match_onehot == 0));
+  assign detected_but_uncorrectable_error = codeword_valid &&
+    (syndrome_is_even || (syndrome_is_odd && column_match_onehot == 0));
   assign corrected_error = codeword_valid && syndrome_is_odd && (column_match_onehot != 0);
 
   // Actually correct the error.
