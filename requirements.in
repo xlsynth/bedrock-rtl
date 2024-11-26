@@ -1,3 +1,4 @@
-parameterized
-numpy
 jinja2
+numpy
+parameterized
+tabulate
