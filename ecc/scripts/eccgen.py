@@ -14,6 +14,7 @@
 
 import argparse
 from ecc.scripts.hsiao_secded import hsiao_secded_code
+import numpy as np
 
 
 def main():
@@ -28,6 +29,20 @@ def main():
     parser.add_argument(
         "--k", type=int, required=True, help="The number of data bits (k)"
     )
+    parser.add_argument(
+        "--generator-matrix-output",
+        "--G",
+        type=argparse.FileType("w"),
+        required=False,
+        help="The output file to write the generator matrix to",
+    )
+    parser.add_argument(
+        "--parity-check-matrix-output",
+        "--H",
+        type=argparse.FileType("w"),
+        required=False,
+        help="The output file to write the parity check matrix to",
+    )
 
     args = parser.parse_args()
 
@@ -40,6 +55,19 @@ def main():
         print(H)
         print("\nGenerator Matrix G:")
         print(G)
+
+        # Convert matrices to strings without ellipses
+        H_str = np.array2string(
+            H, separator=", ", threshold=np.inf, max_line_width=np.inf
+        )
+        G_str = np.array2string(
+            G, separator=", ", threshold=np.inf, max_line_width=np.inf
+        )
+
+        if args.generator_matrix_output:
+            args.generator_matrix_output.write(G_str)
+        if args.parity_check_matrix_output:
+            args.parity_check_matrix_output.write(H_str)
 
 
 if __name__ == "__main__":
