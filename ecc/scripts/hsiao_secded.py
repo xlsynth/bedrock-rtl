@@ -135,6 +135,15 @@ def check_column_weights_are_odd(matrix: np.ndarray) -> bool:
     return np.all(sum_over_rows % 2 == 1)
 
 
+def check_H_G_orthogonal(H: np.ndarray, G: np.ndarray) -> bool:
+    """Check that the parity-check matrix H and generator matrix G are orthogonal."""
+    H_G_product = H @ G.T
+    if not np.all(H_G_product == 0):
+        raise ValueError(f"H and G are not orthogonal. H @ G.T = \n{H_G_product}")
+        return False
+    return True
+
+
 def hsiao_secded_code(k: int) -> tuple[int, int, np.ndarray, np.ndarray]:
     """Generate a Hsiao SECDED code with the given number of message bits.
 
@@ -158,6 +167,5 @@ def hsiao_secded_code(k: int) -> tuple[int, int, np.ndarray, np.ndarray]:
     n = get_n(k, r)
     H = get_H(k, r)
     G = get_G(H)
-    if k == 0:
-        print(r, n, H, G)
+    assert check_H_G_orthogonal(H, G)
     return r, n, H, G
