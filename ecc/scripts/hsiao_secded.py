@@ -77,14 +77,6 @@ def parity_check_message_columns(r: int, k: int, col_weight: int) -> np.ndarray:
     return ret
 
 
-def check_columns_unique(matrix: np.ndarray) -> bool:
-    """Check that no columns are the same in the given matrix."""
-    for ci in range(matrix.shape[1]):
-        for cj in range(ci + 1, matrix.shape[1]):
-            assert not np.array_equal(matrix[:, ci], matrix[:, cj])
-    return True
-
-
 def get_H(k: int, r: int) -> np.ndarray:
     """Generate the n x r parity-check matrix H for a Hsiao SECDED code with the given number of parity bits.
 
@@ -118,6 +110,27 @@ def get_G(H: np.ndarray) -> np.ndarray:
     G_p = H_m.T
     G = np.hstack((G_m, G_p))
     return G
+
+
+def check_columns_unique(matrix: np.ndarray) -> bool:
+    """Check that no columns are the same in the given matrix."""
+    for ci in range(matrix.shape[1]):
+        for cj in range(ci + 1, matrix.shape[1]):
+            assert not np.array_equal(matrix[:, ci], matrix[:, cj])
+    return True
+
+
+def check_columns_have_same_weight(matrix: np.ndarray) -> bool:
+    """Check that all columns in the given matrix have the same weight."""
+    ok = True
+    sum_over_rows = np.sum(matrix, axis=0)
+    return np.all(sum_over_rows == sum_over_rows[0])
+
+
+def check_column_weights_are_odd(matrix: np.ndarray) -> bool:
+    """Check that all columns in the given matrix have an odd weight."""
+    sum_over_rows = np.sum(matrix, axis=0)
+    return np.all(sum_over_rows % 2 == 1)
 
 
 def hsiao_secded_code(k: int) -> tuple[int, int, np.ndarray, np.ndarray]:
