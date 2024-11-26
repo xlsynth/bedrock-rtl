@@ -44,85 +44,23 @@ module br_arb_rr #(
   //------------------------------------------
   // Integration checks
   //------------------------------------------
-  // Rely on submodule integration checks
 
-  // TODO(mgottscho): add checks
+  `BR_COVER_INTG(request_multihot_c, !$onehot0(request))
 
   //------------------------------------------
   // Implementation
   //------------------------------------------
-  // last_grant is the only state in the design. The requester with the last grant
-  // is the lowest priority, so the next highest index (modulo NumRequesters) is the
-  // highest priority.
-  //
-  // We use two priority encoders to handle the modulo indexing.
-  // * The first encoder uses a masked request vector to find the highest priority request
-  // (if any exists) before wrapping around.
-  // * The second encoder uses the unmasked request vector to find the highest priority request
-  // after the wraparound index.
-  //
-  // If the masked request vector is not zero, then we use the grant from the first encoder;
-  // otherwise we use the grant from the second encoder.
-  //
-  // The last_grant gets updated on the next cycle with the index of the grant, so that the
-  // priority rotates in a round-robin fashion.
-  // last_grant initializes to NumRequesters'b100....0 such that index 0 is the highest priority
-  // out of reset.
 
-  logic [NumRequesters-1:0] priority_mask;
-  logic [NumRequesters-1:0] request_high;
-  logic [NumRequesters-1:0] grant_high;
-  logic [NumRequesters-1:0] grant_low;
-  logic [$clog2(NumRequesters)-1:0] last_grant;
-  logic [$clog2(NumRequesters)-1:0] last_grant_next;
-
-  for (genvar i = 0; i < NumRequesters; i++) begin : gen_priority_mask
-    // priority_mask[0] is constant 0
-    // ri lint_check_waive CONST_ASSIGN
-    assign priority_mask[i] = i > last_grant;
-  end
-
-  // request[0] is constant 0
-  // ri lint_check_waive CONST_ASSIGN
-  assign request_high = request & priority_mask;
-
-  br_enc_priority_encoder #(
+  br_arb_rr_internal #(
       .NumRequesters(NumRequesters)
-  ) br_enc_priority_encoder_high (
+  ) br_arb_rr_internal (
       .clk,
       .rst,
-      .in (request_high),
-      .out(grant_high)
+      .enable_priority_update,
+      .request,
+      .can_grant(),  // Unused internal signal
+      .grant
   );
-
-  br_enc_priority_encoder #(
-      .NumRequesters(NumRequesters)
-  ) br_enc_priority_encoder_low (
-      .clk,
-      .rst,
-      .in (request),   // No need to mask since we only use grant_low if request_high is zero
-      .out(grant_low)
-  );
-
-  assign grant = |request_high ? grant_high : grant_low;
-
-  // We know that any request will always result in a grant,
-  // so we can simplify the timing on the load enable.
-  // Initialize the last_grant the most significant requester
-  // to make index 0 the highest priority out of reset.
-  br_enc_onehot2bin #(
-      .NumValues(NumRequesters)
-  ) br_enc_onehot2bin (
-      .clk,
-      .rst,
-      .in(grant),
-      // unused because we know we only consume last_grant_next when
-      // |request (which also implies |grant)
-      .out_valid(),
-      .out(last_grant_next)
-  );
-
-  `BR_REGIL(last_grant, last_grant_next, enable_priority_update && |request, NumRequesters - 1)
 
   //------------------------------------------
   // Implementation checks
