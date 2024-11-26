@@ -40,9 +40,7 @@ def main():
         required=True,
         help="The error correction code scheme to use (e.g., hsiao_secded)",
     )
-    parser.add_argument(
-        "--k", type=int, required=True, help="The number of data bits (k)"
-    )
+    parser.add_argument("--k", type=int, help="The number of data bits (k)")
     parser.add_argument(
         "--print0",
         action="store_true",
@@ -78,27 +76,28 @@ def main():
     args = parser.parse_args()
 
     if args.scheme == "hsiao_secded":
-        r, n, H, G = hsiao_secded_code(args.k)
-        print(f"Number of data bits (k): {args.k}")
-        print(f"Number of parity bits (r): {r}")
-        print(f"Total number of bits (n): {n}\n")
+        if args.k:
+            r, n, H, G = hsiao_secded_code(args.k)
+            print(f"Number of data bits (k): {args.k}")
+            print(f"Number of parity bits (r): {r}")
+            print(f"Total number of bits (n): {n}\n")
 
-        # Convert matrices to strings without ellipses
-        H_str = np.array2string(
-            H, separator=", ", threshold=np.inf, max_line_width=np.inf
-        ).replace("0", " " if args.print0 else "0")
-        G_str = np.array2string(
-            G, separator=", ", threshold=np.inf, max_line_width=np.inf
-        ).replace("0", " " if args.print0 else "0")
+            # Convert matrices to strings without ellipses
+            H_str = np.array2string(
+                H, separator=", ", threshold=np.inf, max_line_width=np.inf
+            ).replace("0", " " if args.print0 else "0")
+            G_str = np.array2string(
+                G, separator=", ", threshold=np.inf, max_line_width=np.inf
+            ).replace("0", " " if args.print0 else "0")
 
-        print("\nGenerator Matrix G:")
-        print(G_str)
-        if args.generator_matrix_output:
-            args.generator_matrix_output.write(G_str)
-        print("\nParity-Check Matrix H:")
-        print(H_str)
-        if args.parity_check_matrix_output:
-            args.parity_check_matrix_output.write(H_str)
+            print("\nGenerator Matrix G:")
+            print(G_str)
+            if args.generator_matrix_output:
+                args.generator_matrix_output.write(G_str)
+            print("\nParity-Check Matrix H:")
+            print(H_str)
+            if args.parity_check_matrix_output:
+                args.parity_check_matrix_output.write(H_str)
 
         if args.rtl_encoder_output:
             print("Dumping all supported Hsiao encoders to file.")
@@ -126,6 +125,11 @@ def main():
                     mapping[f"secded_enc_{n}_{k}"] = G_to_sv(G)
                 rendered = template.render(mapping)
                 args.rtl_encoder_output.write(rendered)
+
+        if not args.k and not args.rtl_encoder_output:
+            raise ValueError(
+                "Either k or rtl-encoder-output must be provided for Hsiao SEC-DED code generation."
+            )
 
 
 if __name__ == "__main__":

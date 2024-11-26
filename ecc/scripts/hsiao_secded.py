@@ -277,6 +277,7 @@ def decode_message(
 
 
 def G_col_to_sv_assign(col: np.ndarray, col_idx: int) -> str:
+    """Generate a Verilog RTL assignment for a single column of the generator matrix G."""
     xors = []
     nonzero_indices = np.nonzero(col)[0]
     for i in nonzero_indices:
@@ -287,6 +288,10 @@ def G_col_to_sv_assign(col: np.ndarray, col_idx: int) -> str:
 def G_to_sv(G: np.ndarray) -> str:
     """Generate Verilog RTL code for the given generator matrix G."""
     assigns = []
-    for i in range(G.shape[1]):
+    # Since we know G is in systematic form, we can just assign the message bits to the codeword bits.
+    # We don't need to codegen that part.
+    k = G.shape[0]
+    n = G.shape[1]
+    for i in range(k, n, 1):
         assigns.append(G_col_to_sv_assign(G[:, i], i))
     return "\n".join(assigns)
