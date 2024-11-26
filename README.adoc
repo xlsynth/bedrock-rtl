@@ -822,6 +822,11 @@ a| Bus CDC using a dual-clock FIFO with internal flop-RAM
 | Yes
 |
 
+| `br_enc_countones`
+| Count the number of ones in a vector
+| Yes
+|
+
 | `br_enc_gray2bin`
 | Gray to binary
 | Yes
