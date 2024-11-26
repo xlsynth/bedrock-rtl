@@ -155,7 +155,6 @@ def binary_matmul(A: np.ndarray, B: np.ndarray) -> np.ndarray:
     check_matrix_is_binary(A)
     check_matrix_is_binary(B)
     AB = (A @ B) % 2
-    check_matrix_is_binary(AB)
     return AB
 
 
