@@ -75,7 +75,7 @@ class TestHsiaoSecdedCode(unittest.TestCase):
             ("k16", 16, 6, 22),
             ("k30", 30, 7, 37),
             ("k32", 32, 7, 39),
-            ("k59", 59, 8, 68),
+            ("k59", 59, 8, 67),
             ("k64", 64, 8, 72),
             ("k128", 128, 9, 137),
         ]
@@ -91,21 +91,21 @@ class TestHsiaoSecdedCode(unittest.TestCase):
         self.assertEqual(H.shape, (r, n))
         self.assertEqual(G.shape, (k, n))
 
-        # Check that the matrices both contain identity matrices (suggesting systematic form)
+        # Check that both matrices contain identity matrices in the right positions (suggesting systematic form)
         I_k = np.identity(k, dtype=int)
         I_r = np.identity(r, dtype=int)
         self.assertTrue(np.array_equal(G[:, :k], I_k))
         self.assertTrue(np.array_equal(H[:, k:], I_r))
 
+        # Check that both matrices contain unique columns
         self.assertTrue(check_columns_unique(H))
-        self.assertTrue(check_column_weights_are_odd(H))
-        self.assertTrue(check_columns_have_same_weight(H[:, :k]))
-        self.assertTrue(check_columns_have_same_weight(H[:, k:]))
         self.assertTrue(check_columns_unique(G))
+
+        self.assertTrue(check_column_weights_are_odd(H))
 
     def test_invalid_k(self):
         with self.assertRaises(ValueError):
-            hsiao_secded_code(0)  # Invalid k, should raise an error
+            hsiao_secded_code(0)
 
 
 if __name__ == "__main__":

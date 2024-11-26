@@ -51,16 +51,6 @@ def uint_to_bit_vector(number: int, bit_length: int) -> list:
     return bit_vector
 
 
-# TODO(mgottscho): BUG: it's not possible to use the min column weight for all columns in a long code.
-def min_column_weight(k: int, r: int) -> int:
-    """Returns the smallest odd column weight that can be used to construct the r x k message part of the parity-check matrix."""
-    for weight in range(3, r, 2):
-        num_ways = math.comb(r, weight)
-        if num_ways >= k:
-            return weight
-    raise ValueError("No valid column weight found!")
-
-
 def parity_check_message_columns(r: int, k: int, col_weight: int) -> np.ndarray:
     """Returns a set of parity columns for the r x k message part of the r x n parity-check matrix."""
     # This is not the most efficient way of finding the columns, but it works!
@@ -79,7 +69,7 @@ def parity_check_message_columns(r: int, k: int, col_weight: int) -> np.ndarray:
 
 
 def get_H(k: int, r: int) -> np.ndarray:
-    """Generate the n x r parity-check matrix H for a Hsiao SECDED code with the given number of parity bits.
+    """Generate the r x n parity-check matrix H for a Hsiao SECDED code with the given number of parity bits.
 
     Reference [2] states:
     > The definition of Hsiao code is a type of SEC-DED codes whose check matrix H defined on GF(2)
@@ -91,8 +81,19 @@ def get_H(k: int, r: int) -> np.ndarray:
     """
     n = get_n(k, r)
     # Fill H_m with column vectors that satisfy conditions (1), (2), and (4).
-    min_msg_col_weight = min_column_weight(k, r)
-    H_m = parity_check_message_columns(r, k, min_msg_col_weight)
+    start_col = 0
+    weight = 3  # Only use odd weights, and skip weight 1 since it's only used for H_p
+    H_m = np.zeros((r, k), dtype=int)
+    while start_col < k:
+        remaining_cols = k - start_col
+        cols_using_weight = min(math.comb(r, weight), remaining_cols)
+        end_col = start_col + cols_using_weight
+        H_m[:, start_col:end_col] = parity_check_message_columns(
+            r, cols_using_weight, weight
+        )
+        assert check_columns_have_same_weight(H_m[:, start_col:end_col])
+        start_col = end_col
+        weight += 2  # Only use odd weights
     # r x r matrix for parity bits (identity)
     H_p = np.identity(r, dtype=int)
     H = np.hstack((H_m, H_p))  # Combine message and parity parts in systematic form
@@ -151,8 +152,12 @@ def hsiao_secded_code(k: int) -> tuple[int, int, np.ndarray, np.ndarray]:
             - c is the 1 x n codeword
             - s is the r x 1 syndrome
     """
+    if k <= 0:
+        raise ValueError("k must be positive.")
     r = get_r(k)
     n = get_n(k, r)
     H = get_H(k, r)
     G = get_G(H)
+    if k == 0:
+        print(r, n, H, G)
     return r, n, H, G
