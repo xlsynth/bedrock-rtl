@@ -15,7 +15,7 @@
 load("@rules_hdl//verilog:providers.bzl", "verilog_library")
 load("//bazel:br_verilog.bzl", "br_verilog_elab_and_lint_test_suite")
 
-package(default_visibility = ["//arb/rtl:__subpackages__"])
+package(default_visibility = ["//visibility:public"])
 
 verilog_library(
     name = "br_arb_fixed",
