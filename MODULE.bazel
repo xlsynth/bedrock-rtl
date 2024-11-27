@@ -32,11 +32,15 @@ python.toolchain(python_version = "3.12")
 use_repo(python, "python_3_12", "python_versions", "pythons_hub")
 
 pip = use_extension("@rules_python//python/extensions:pip.bzl", "pip")
+
+# The requirements_lock_3_12.txt file is auto-generated from requirements_3_12.in and statically checked in.
+# To regenerate it, run `bazel run //:requirements_3_12.update`.
 pip.parse(
-    download_only = True,
-    hub_name = "pypi",
+    # Hub names must be unique across Bazel modules. To avoid problems when integrating
+    # this module with others, namespace the hub name using the git repo name.
+    hub_name = "bedrock-rtl-pypi",
     # We need to use the same version here as in the `python.toolchain` call.
     python_version = "3.12",
     requirements_lock = "//:requirements_lock_3_12.txt",
 )
-use_repo(pip, "pypi")
+use_repo(pip, "bedrock-rtl-pypi")

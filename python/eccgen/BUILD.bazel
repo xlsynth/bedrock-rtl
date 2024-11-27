@@ -19,7 +19,7 @@ package(default_visibility = ["//visibility:public"])
 py_library(
     name = "hsiao_secded",
     srcs = ["hsiao_secded.py"],
-    deps = ["@pypi//numpy:pkg"],
+    deps = ["@bedrock-rtl-pypi//numpy:pkg"],
 )
 
 py_binary(
@@ -31,7 +31,7 @@ py_binary(
     ],
     deps = [
         ":hsiao_secded",
-        "@pypi//jinja2:pkg",
+        "@bedrock-rtl-pypi//jinja2:pkg",
     ],
 )
 
@@ -40,7 +40,7 @@ py_test(
     srcs = ["hsiao_secded_test.py"],
     deps = [
         ":hsiao_secded",
-        "@pypi//numpy:pkg",
-        "@pypi//parameterized:pkg",
+        "@bedrock-rtl-pypi//numpy:pkg",
+        "@bedrock-rtl-pypi//parameterized:pkg",
     ],
 )
