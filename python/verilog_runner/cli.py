@@ -1,0 +1,251 @@
+# Copyright 2024 The Bedrock-RTL Authors
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+"""Verilog Runner CLI."""
+
+from abc import ABC, abstractmethod
+import argparse
+from typing import List, Dict
+from util import check_filename_extension
+
+
+def verilog_file(filename: str) -> str:
+    # .vp and .svp are encrypted files.
+    return check_filename_extension(filename, (".v", ".sv", ".vp", ".svp"))
+
+
+def verilog_header_file(filename: str) -> str:
+    # Some vendor libraries include .h, .v, and .sv files rather than
+    # following the .vh/.svh convention.
+    return check_filename_extension(filename, (".vh", ".svh", ".h", ".v", ".sv"))
+
+
+def tcl_file(filename: str) -> str:
+    return check_filename_extension(filename, (".tcl"))
+
+
+def sh_file(filename: str) -> str:
+    return check_filename_extension(filename, (".sh"))
+
+
+def log_file(filename: str) -> str:
+    return check_filename_extension(filename, (".log"))
+
+
+def filelist_file(filename: str) -> str:
+    return check_filename_extension(filename, (".f"))
+
+
+def add_common_args(parser: argparse.ArgumentParser) -> None:
+    """Common arguments for all subcommands and plugins."""
+    parser.add_argument(
+        "--top",
+        type=str,
+        required=True,
+        help="Top module",
+    )
+    parser.add_argument(
+        "--hdr",
+        type=verilog_header_file,
+        action="append",
+        default=[],
+        help="Verilog header (.vh) or SystemVerilog header (.svh) to include. "
+        "Can be specified multiple times.",
+    )
+    parser.add_argument(
+        "--define",
+        type=str,
+        action="append",
+        default=[],
+        help="Verilog/SystemVerilog preprocessor define to use in compilation. Can be specified multiple times.",
+    )
+    parser.add_argument(
+        "--param",
+        action="append",
+        metavar="KEY=VALUE",
+        default=[],
+        help="Verilog/SystemVerilog module parameter key-value pair for the top module. Can be specified multiple times.",
+    )
+    parser.add_argument(
+        "--dry-run",
+        action="store_true",
+        help="Prepare the test command, including writing necessary files, but don't actually run the EDA tool command.",
+    )
+    parser.add_argument(
+        "--opt",
+        type=str,
+        action="append",
+        default=[],
+        help="Tool-specific options to pass directly to the tool. Can be specified multiple times. "
+        "If provided, then --tool must be provided explicitly.",
+    )
+    parser.add_argument(
+        "--tcl",
+        type=tcl_file,
+        help="Tcl script file to write commands to. The generated tcl script consists of three parts: header, body, and footer."
+        "The tcl header is unconditionally followed by analysis and elaborate commands, then the tcl body."
+        "The tcl body is unconditionally followed by the tcl footer."
+        "By default, header, body, and footer are all auto-generated, but the header and body can be overridden "
+        "by --custom_tcl_header and --custom_tcl_body, respectively.",
+        required=True,
+    )
+    parser.add_argument(
+        "--custom_tcl_header",
+        type=tcl_file,
+        help="Tcl script file containing custom tool-specific commands to insert at the beginning of the generated tcl script."
+        "The tcl header (custom or not) is unconditionally followed by analysis and elaborate commands, and then the tcl body.",
+    )
+    parser.add_argument(
+        "--custom_tcl_body",
+        type=tcl_file,
+        help="Tcl script file containing custom tool-specific commands to insert in the middle of the generated tcl script."
+        "The tcl body (custom or not) is unconditionally followed by the tcl footer.",
+    )
+    parser.add_argument(
+        "--script",
+        type=sh_file,
+        help="Shell script file to write commands to.",
+        required=True,
+    )
+    parser.add_argument(
+        "--log",
+        type=log_file,
+        help="Log file to write tool stdout/stderr to.",
+        required=True,
+    )
+    parser.add_argument(
+        "--filelist",
+        type=filelist_file,
+        help="Filelist file to write srcs list to.",
+        required=True,
+    )
+    parser.add_argument(
+        "srcs",
+        type=verilog_file,
+        nargs="+",
+        help="One or more Verilog (.h) or SystemVerilog (.sv) source files",
+    )
+
+
+def parse_params(parser: argparse.ArgumentParser, params: List[str]) -> Dict[str, str]:
+    """Parses Verilog parameter args into a dict; raises an error if any of the parameters are not in the expected KEY=VALUE format."""
+    params_dict = {}
+    for item in params:
+        if "=" in item:
+            key, value = item.split("=", 1)
+            params_dict[key] = value
+        else:
+            parser.error(f"Invalid format for --param '{item}'. Expected KEY=VALUE.")
+    return params_dict
+
+
+def common_args(args: argparse.Namespace):
+    return {
+        "hdrs": args.hdr,
+        "defines": args.define,
+        "params": args.params,
+        "opts": args.opt,
+        "srcs": args.srcs,
+        "top": args.top,
+        "tclfile": args.tcl,
+        "scriptfile": args.script,
+        "logfile": args.log,
+        "filelist": args.filelist,
+        "tclfile_custom_header": args.custom_tcl_header,
+        "tclfile_custom_body": args.custom_tcl_body,
+    }
+
+
+class Subcommand(ABC):
+    """Abstract base class for subcommands."""
+
+    name: str
+    help: str
+
+    def __init__(self, name: str, help: str) -> None:
+        self.name = name
+        self.help = help
+
+    @abstractmethod
+    def add_args(parser: argparse.ArgumentParser) -> None:
+        pass
+
+
+class Elab(Subcommand):
+    name = "elab"
+    help = "Static elaboration test"
+
+    @staticmethod
+    def add_args(parser: argparse.ArgumentParser) -> None:
+        pass
+
+
+class Lint(Subcommand):
+    name = "lint"
+    help = "Lint test"
+
+    @staticmethod
+    def add_args(parser: argparse.ArgumentParser) -> None:
+        parser.add_argument(
+            "--policy",
+            type=str,
+            help="Lint policy to use. If not provided, lint tool will use a default (may depend on tool-specific environment variables).",
+            required=False,
+        )
+
+
+class Sim(Subcommand):
+    name = "sim"
+    help = "Simulation test"
+
+    @staticmethod
+    def add_args(parser: argparse.ArgumentParser) -> None:
+        parser.add_argument(
+            "--elab_only",
+            action="store_true",
+            help="Only run elaboration.",
+        )
+        parser.add_argument(
+            "--uvm",
+            action="store_true",
+            help="Run UVM test.",
+        )
+        parser.add_argument(
+            "--seed",
+            type=int,
+            help="Seed to use in simulation. If not provided, a random value will be chosen.",
+        )
+        parser.add_argument(
+            "--waves",
+            action="store_true",
+            help="Enable waveform dumping.",
+        )
+
+
+class Fpv(Subcommand):
+    name = "fpv"
+    help = "Formal property verification test"
+
+    @staticmethod
+    def add_args(parser: argparse.ArgumentParser) -> None:
+        parser.add_argument(
+            "--elab_only",
+            action="store_true",
+            help="Only run elaboration.",
+        )
+        parser.add_argument(
+            "--gui",
+            action="store_true",
+            help="Run with GUI",
+        )

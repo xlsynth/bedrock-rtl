@@ -24,19 +24,11 @@ bzl_library(
     srcs = ["@rules_hdl//verilog:providers.bzl"],
 )
 
-bzl_library(
-    name = "write_placeholder_verilog_runner_py",
-    srcs = ["write_placeholder_verilog_runner_py.bzl"],
-)
-
 stardoc(
     name = "gen_verilog_rules",
     out = "gen_verilog_rules.md",
     input = "verilog.bzl",
-    deps = [
-        ":rules_hdl_providers",
-        ":write_placeholder_verilog_runner_py",
-    ],
+    deps = [":rules_hdl_providers"],
 )
 
 diff_test(

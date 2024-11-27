@@ -15,7 +15,6 @@
 """Verilog rules for Bazel."""
 
 load("@rules_hdl//verilog:providers.bzl", "VerilogInfo")
-load("//bazel:write_placeholder_verilog_runner_py.bzl", "write_placeholder_verilog_runner_tool")
 
 def get_transitive(ctx, srcs_not_hdrs):
     """Returns a depset of all Verilog source or header files in the transitive closure of the deps attribute."""
@@ -47,11 +46,6 @@ def _write_executable_shell_script(ctx, executable_file, cmd):
 def _verilog_base_impl(ctx, subcmd, test = True, extra_args = [], extra_runfiles = []):
     """Shared implementation for rule_verilog_elab_test, rule_verilog_lint_test, rule_verilog_sim_test, and rule_verilog_fpv_test.
 
-    Grab tool from the environment (BAZEL_VERILOG_RUNNER_TOOL) so that
-    the user can provide their own proprietary tool implementation without
-    it being hardcoded anywhere into the repo. It's not hermetic, but it's
-    a decent compromise.
-
     Args:
         ctx: ctx for the rule
         subcmd (string): the tool subcommand to run
@@ -62,17 +56,8 @@ def _verilog_base_impl(ctx, subcmd, test = True, extra_args = [], extra_runfiles
     Returns:
         DefaultInfo for the rule that describes the runfiles, depset, and executable
     """
-    env = ctx.configuration.default_shell_env
     runfiles = []
-    if "BAZEL_VERILOG_RUNNER_TOOL" in env:
-        wrapper_tool = env.get("BAZEL_VERILOG_RUNNER_TOOL")
-    else:
-        # buildifier: disable=print
-        print("!! WARNING !! Environment variable BAZEL_VERILOG_RUNNER_TOOL is not set! Will use placeholder runner tool.")
-        wrapper_tool_file = write_placeholder_verilog_runner_tool(ctx, "placeholder_verilog_runner.py")
-        runfiles.append(wrapper_tool_file)
-        wrapper_tool = wrapper_tool_file.short_path
-
+    runfiles += ctx.files.verilog_runner_tool
     srcs = get_transitive(ctx = ctx, srcs_not_hdrs = True).to_list()
     hdrs = get_transitive(ctx = ctx, srcs_not_hdrs = False).to_list()
     src_files = [src.short_path for src in srcs]
@@ -99,13 +84,16 @@ def _verilog_base_impl(ctx, subcmd, test = True, extra_args = [], extra_runfiles
     if not test:
         args.append("--dry-run")
     if ctx.attr.custom_tcl_header:
-        args.append("--custom_tcl_header=" + ctx.attr.custom_tcl_header.files.to_list()[0].short_path)
+        args.append("--custom_tcl_header=" + ctx.files.custom_tcl_header[0].short_path)
         runfiles += ctx.files.custom_tcl_header
     if ctx.attr.custom_tcl_body:
-        args.append("--custom_tcl_body=" + ctx.attr.custom_tcl_body.files.to_list()[0].short_path)
+        args.append("--custom_tcl_body=" + ctx.files.custom_tcl_body[0].short_path)
         runfiles += ctx.files.custom_tcl_body
     args += extra_args
-    verilog_runner_cmd = " ".join([wrapper_tool] + [subcmd] + args + src_files)
+
+    # TODO: This is a hack. We should use the py_binary target directly, but I'm not sure how to get the environment
+    # to work correctly when we wrap the py_binary in a shell script that gets invoked later.
+    verilog_runner_cmd = " ".join(["python3"] + [ctx.files.verilog_runner_tool[0].short_path] + [subcmd] + args + src_files)
     verilog_runner_runfiles = ctx.runfiles(files = srcs + hdrs + runfiles + extra_runfiles)
     if test:
         runner = ctx.label.name + "_runner.sh"
@@ -255,14 +243,15 @@ def _verilog_sandbox_impl(ctx):
 
 # Rule definitions
 rule_verilog_elab_test = rule(
-    doc = "Tests that a Verilog or SystemVerilog design elaborates. Needs BAZEL_VERILOG_RUNNER_TOOL environment variable to be set correctly.",
+    doc = "Tests that a Verilog or SystemVerilog design elaborates. Needs VERILOG_RUNNER_PLUGIN_PATH environment variable to be set correctly.",
     implementation = _verilog_elab_test_impl,
     attrs = {
         "deps": attr.label_list(allow_files = False, providers = [VerilogInfo], doc = "The dependencies of the test."),
         "defines": attr.string_list(doc = "Preprocessor defines to pass to the Verilog compiler."),
         "params": attr.string_dict(doc = "Verilog module parameters to set in the instantiation of the top-level module."),
         "top": attr.string(doc = "The top-level module; if not provided and there exists one dependency, then defaults to that dep's label name."),
-        "tool": attr.string(doc = "Elaboration tool to use. If not provided, default is decided by the BAZEL_VERILOG_RUNNER_TOOL implementation."),
+        "verilog_runner_tool": attr.label(doc = "The Verilog Runner tool to use.", default = "//python/verilog_runner:verilog_runner.py", allow_files = True),
+        "tool": attr.string(doc = "Elaboration tool to use. If not provided, default is decided by the Verilog Runner tool implementation with available plugins."),
         "custom_tcl_header": attr.label(
             doc = ("Tcl script file containing custom tool-specific commands to insert at the beginning of the generated tcl script." +
                    "The tcl header (custom or not) is unconditionally followed by analysis and elaborate commands, and then the tcl body." +
@@ -296,7 +285,7 @@ def verilog_elab_test(tags = [], **kwargs):
     )
 
 rule_verilog_lint_test = rule(
-    doc = "Tests that a Verilog or SystemVerilog design passes a set of static lint checks. Needs BAZEL_VERILOG_RUNNER_TOOL environment variable to be set correctly.",
+    doc = "Tests that a Verilog or SystemVerilog design passes a set of static lint checks. Needs VERILOG_RUNNER_PLUGIN_PATH environment variable to be set correctly.",
     implementation = _verilog_lint_test_impl,
     attrs = {
         "deps": attr.label_list(
@@ -317,7 +306,8 @@ rule_verilog_lint_test = rule(
             allow_files = True,
             doc = "The lint policy file to use. If not provided, then the default tool policy is used (typically provided through an environment variable).",
         ),
-        "tool": attr.string(doc = "Lint tool to use. If not provided, default is decided by the BAZEL_VERILOG_RUNNER_TOOL implementation."),
+        "verilog_runner_tool": attr.label(doc = "The Verilog Runner tool to use.", default = "//python/verilog_runner:verilog_runner.py", allow_files = True),
+        "tool": attr.string(doc = "Lint tool to use. If not provided, default is decided by the Verilog Runner tool implementation with available plugins."),
         "custom_tcl_header": attr.label(
             doc = ("Tcl script file containing custom tool-specific commands to insert at the beginning of the generated tcl script." +
                    "The tcl header (custom or not) is unconditionally followed by analysis and elaborate commands, and then the tcl body." +
@@ -352,7 +342,7 @@ def verilog_lint_test(tags = [], **kwargs):
 
 rule_verilog_sim_test = rule(
     doc = """
-    Runs Verilog/SystemVerilog compilation and simulation in one command. This rule should be used for simple unit tests that do not require multi-step compilation, elaboration, and simulation. Needs BAZEL_VERILOG_RUNNER_TOOL environment variable to be set correctly.
+    Runs Verilog/SystemVerilog compilation and simulation in one command. This rule should be used for simple unit tests that do not require multi-step compilation, elaboration, and simulation. Needs VERILOG_RUNNER_PLUGIN_PATH environment variable to be set correctly.
     """,
     implementation = _verilog_sim_test_impl,
     attrs = {
@@ -381,8 +371,9 @@ rule_verilog_sim_test = rule(
             doc = "Run UVM test.",
             default = False,
         ),
+        "verilog_runner_tool": attr.label(doc = "The Verilog Runner tool to use.", default = "//python/verilog_runner:verilog_runner.py", allow_files = True),
         "tool": attr.string(
-            doc = "Simulator tool to use. If not provided, default is decided by the BAZEL_VERILOG_RUNNER_TOOL implementation.",
+            doc = "Simulator tool to use. If not provided, default is decided by the Verilog Runner tool implementation with available plugins.",
         ),
         "custom_tcl_header": attr.label(
             doc = ("Tcl script file containing custom tool-specific commands to insert at the beginning of the generated tcl script." +
@@ -426,7 +417,7 @@ def verilog_sim_test(tags = [], **kwargs):
 
 rule_verilog_fpv_test = rule(
     doc = """
-    Runs Verilog/SystemVerilog compilation and formal verification in one command. This rule should be used for simple formal unit tests. Needs BAZEL_VERILOG_RUNNER_TOOL environment variable to be set correctly.
+    Runs Verilog/SystemVerilog compilation and formal verification in one command. This rule should be used for simple formal unit tests. Needs VERILOG_RUNNER_PLUGIN_PATH environment variable to be set correctly.
     """,
     implementation = _verilog_fpv_test_impl,
     attrs = {
@@ -451,8 +442,9 @@ rule_verilog_fpv_test = rule(
             doc = "Only run elaboration.",
             default = False,
         ),
+        "verilog_runner_tool": attr.label(doc = "The Verilog Runner tool to use.", default = "//python/verilog_runner:verilog_runner.py", allow_files = True),
         "tool": attr.string(
-            doc = "Formal tool to use. If not provided, default is decided by the BAZEL_VERILOG_RUNNER_TOOL implementation.",
+            doc = "Formal tool to use. If not provided, default is decided by the Verilog Runner tool implementation with available plugins.",
         ),
         "custom_tcl_header": attr.label(
             doc = ("Tcl script file containing custom tool-specific commands to insert at the beginning of the generated tcl script." +
@@ -516,8 +508,9 @@ rule_verilog_sandbox = rule(
             values = ["elab", "lint", "sim", "fpv"],
             mandatory = True,
         ),
+        "verilog_runner_tool": attr.label(doc = "The Verilog Runner tool to use.", default = "//python/verilog_runner:verilog_runner.py", allow_files = True),
         "tool": attr.string(
-            doc = "Tool to use. If not provided, default is decided by the BAZEL_VERILOG_RUNNER_TOOL implementation.",
+            doc = "Tool to use. If not provided, default is decided by the Verilog Runner tool implementation with available plugins.",
         ),
         "custom_tcl_header": attr.label(
             doc = ("Tcl script file containing custom tool-specific commands to insert at the beginning of the generated tcl script." +
