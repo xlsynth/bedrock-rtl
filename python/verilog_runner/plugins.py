@@ -23,11 +23,36 @@ from eda_tool import EdaTool
 from cli import Subcommand
 from typing import Dict, List, Tuple, Type
 
+# Currently we only support a single version of the plugin API at a time.
+# We check for plugin compatibility at import time by checking versions are equal.
+#
+# The version number is used as a simple semantic versioning check.
+#
+# Major version changes are definitely breaking.
+# Minor version changes are intended to be non-breaking but we don't guarantee it.
+PLUGIN_API_VERSION = "1.0"
+
+
+def check_plugin_api_version(module: object) -> bool:
+    """Return true if the plugin API version is compatible."""
+    if not hasattr(module, "PLUGIN_API_VERSION"):
+        logging.warning(
+            f"Plugin module {module.__name__} does not have a PLUGIN_API_VERSION."
+        )
+        return False
+    if module.PLUGIN_API_VERSION != PLUGIN_API_VERSION:
+        logging.warning(
+            f"Plugin module {module.__name__} has an invalid PLUGIN_API_VERSION: {module.PLUGIN_API_VERSION}."
+        )
+        return False
+    return True
+
 
 def discover_plugins(
     plugin_dirs: List[str], allowed_subcommands: Tuple[Type[Subcommand]]
 ) -> Dict[Type[Subcommand], Dict[str, Type["EdaTool"]]]:
     """Discover plugins and organize them by subcommand and tool."""
+    logging.info(f"PLUGIN_API_VERSION: {PLUGIN_API_VERSION}")
     logging.info(f"Searching plugin directories: {plugin_dirs}")
     plugin_files = collect_plugin_files(plugin_dirs)
     logging.info(f"Found plugin files: {plugin_files}")
@@ -62,7 +87,10 @@ def import_plugin_modules(plugin_files: List[str]) -> List[object]:
         sys.path.insert(0, directory)  # Temporarily add directory to sys.path
         try:
             module = importlib.import_module(module_name)
-            modules.append(module)
+            if check_plugin_api_version(module):
+                modules.append(module)
+            else:
+                logging.warning(f"Skipping import of plugin module {module_name}.")
         except Exception as e:
             logging.error(f"Failed to load plugin module {module_name}: {e}")
         finally:
