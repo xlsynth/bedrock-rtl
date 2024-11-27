@@ -42,8 +42,10 @@ def collect_plugin_files(plugin_dirs: List[str]) -> List[str]:
     """Collect all Python plugin files from the specified directories."""
     plugin_files = []
     for directory in plugin_dirs:
+        if not os.path.exists(directory):
+            raise ValueError(f"{directory} does not exist.")
         if not os.path.isdir(directory):
-            continue
+            raise ValueError(f"{directory} is not a directory.")
         for filename in os.listdir(directory):
             if filename.endswith(".py") and not filename.startswith("__"):
                 file_path = os.path.join(directory, filename)

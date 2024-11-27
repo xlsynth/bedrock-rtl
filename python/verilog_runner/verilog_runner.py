@@ -57,6 +57,11 @@ def main():
     plugin_dirs_env = os.environ.get("VERILOG_RUNNER_PLUGIN_PATH", "")
     plugin_dirs = plugin_dirs_env.split(os.pathsep)
 
+    if len(plugin_dirs) == 0 or plugin_dirs[0] == "":
+        raise ValueError("VERILOG_RUNNER_PLUGIN_PATH environment variable is not set.")
+
+    logging.info(f"VERILOG_RUNNER_PLUGIN_PATH: {plugin_dirs_env}")
+
     allowed_subcommands = (Elab, Lint, Sim, Fpv)
     subcommand_name_to_class = {cls.name: cls for cls in allowed_subcommands}
 
@@ -66,6 +71,12 @@ def main():
     )
     logging.info("Discovering plugins...")
     plugins_by_subcommand = discover_plugins(plugin_dirs, allowed_subcommands)
+
+    if len(plugins_by_subcommand) == 0:
+        raise ValueError(
+            "No plugins found! Are you sure that the VERILOG_RUNNER_PLUGIN_PATH environment variable is set correctly?"
+        )
+
     for subcommand, tool_plugins in plugins_by_subcommand.items():
         subcommand_parser = subparsers.add_parser(
             subcommand.name,
