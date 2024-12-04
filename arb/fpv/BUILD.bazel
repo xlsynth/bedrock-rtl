@@ -12,10 +12,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-load("@bedrock-rtl//bazel:verilog.bzl", "rule_verilog_sandbox")
 load("@rules_hdl//verilog:providers.bzl", "verilog_library")
 load("//bazel:br_verilog.bzl", "br_verilog_fpv_test_suite")
-load("//bazel:verilog.bzl", "verilog_elab_test")
+load("//bazel:verilog.bzl", "rule_verilog_sandbox", "verilog_elab_test")
 
 package(default_visibility = ["//visibility:public"])
 
