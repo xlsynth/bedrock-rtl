@@ -42,6 +42,12 @@ verilog_library(
     ],
 )
 
+verilog_library(
+    name = "br_amba_axil_default_target",
+    srcs = ["br_amba_axil_default_target.sv"],
+    deps = [":br_amba_pkg"],
+)
+
 br_verilog_elab_and_lint_test_suite(
     name = "br_amba_axil2apb_test_suite",
     params = {
@@ -70,4 +76,19 @@ br_verilog_elab_and_lint_test_suite(
         ],
     },
     deps = [":br_amba_axil_timing_slice"],
+)
+
+br_verilog_elab_and_lint_test_suite(
+    name = "br_amba_axil_default_target_test_suite",
+    params = {
+        "DataWidth": [
+            "32",
+            "64",
+        ],
+        "DecodeError": [
+            "0",
+            "1",
+        ],
+    },
+    deps = [":br_amba_axil_default_target"],
 )
