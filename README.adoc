@@ -18,14 +18,25 @@ WARNING: UNDER CONSTRUCTION. Many things are broken.
 
 High quality and composable base RTL libraries in Verilog
 
-== Prerequisites
+== Dependencies
 
-You need to have the following tools installed in your environment.
+At minimum, you need to have the following tools installed in your environment.
 
 * Bazel (tested with 7.3.1)
-* pre-commit (tested with 4.0.1)
 * System Python interpreter (tested with 3.12.5)
-* Your own EDA tool plugins that implement the plugin API for `verilog_runner.py`.
+
+You can use the provided Dockerfile to build a container image with the above dependencies installed.
+For example:
+
+[source,shell]
+----
+docker build . --target user --tag=bedrock-rtl:${USER}
+docker run -v $(pwd):/src -w /src bedrock-rtl:${USER} <YOUR_COMMAND>
+----
+
+You need to provide your own EDA tool plugins that implement the plugin API for `verilog_runner.py`.
+
+#TODO: Add support for open-source EDA tools. iverilog would be nice but it does not support macros with arguments.#
 
 == Pre-Commit Hooks
 
@@ -44,6 +55,8 @@ You can also run them manually via:
 ----
 pre-commit run
 ----
+
+We've tested with pre-commit version 4.0.1.
 
 == Building and Testing
 
