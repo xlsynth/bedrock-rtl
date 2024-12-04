@@ -63,6 +63,9 @@ class TestUtilFunctions(unittest.TestCase):
         self.assertEqual(check_filename_extension("test.v", (".v", ".sv")), "test.v")
         with self.assertRaises(argparse.ArgumentTypeError):
             check_filename_extension("test.txt", (".v", ".sv"))
+        self.assertEqual(
+            check_filename_extension("test.foo", (".v", ".sv"), error=False), "test.foo"
+        )
 
     def test_gen_file_header(self):
         header = gen_file_header("test.v", "test_tool")

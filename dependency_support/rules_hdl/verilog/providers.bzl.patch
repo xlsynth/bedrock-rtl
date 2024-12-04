@@ -1,6 +1,6 @@
 --- a/verilog/providers.bzl
 +++ b/verilog/providers.bzl
-@@ -124,11 +124,14 @@ verilog_library = rule(
+@@ -124,11 +124,13 @@ verilog_library = rule(
          ),
          "hdrs": attr.label_list(
              doc = "Verilog or SystemVerilog headers.",
