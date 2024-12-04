@@ -5,15 +5,14 @@
          "hdrs": attr.label_list(
              doc = "Verilog or SystemVerilog headers.",
 -            allow_files = [".vh", ".svh"],
-+            # Some vendor libraries include .h, .v, and .sv files rather than
-+            # following the .vh/.svh convention.
-+            allow_files = [".vh", ".svh", ".h", ".v", ".sv"],
++            # Normally we'd constrain the set of suffices, but some IP vendors use really weird conventions.
++            allow_files = True,
          ),
          "srcs": attr.label_list(
              doc = "Verilog or SystemVerilog sources.",
 -            allow_files = [".v", ".sv"],
-+            # .vp and .svp are encrypted files.
-+            allow_files = [".v", ".sv", ".vp", ".svp"],
++            # Normally we'd constrain the set of suffices, but some IP vendors use really weird conventions.
++            allow_files = True,
          ),
      },
  )
