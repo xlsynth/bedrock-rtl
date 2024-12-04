@@ -22,13 +22,15 @@ from util import check_filename_extension
 
 def verilog_file(filename: str) -> str:
     # .vp and .svp are encrypted files.
-    return check_filename_extension(filename, (".v", ".sv", ".vp", ".svp"))
+    return check_filename_extension(filename, (".v", ".sv", ".vp", ".svp"), error=False)
 
 
 def verilog_header_file(filename: str) -> str:
     # Some vendor libraries include .h, .v, and .sv files rather than
     # following the .vh/.svh convention.
-    return check_filename_extension(filename, (".vh", ".svh", ".h", ".v", ".sv"))
+    return check_filename_extension(
+        filename, (".vh", ".svh", ".h", ".v", ".sv"), error=False
+    )
 
 
 def tcl_file(filename: str) -> str:

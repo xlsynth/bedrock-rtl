@@ -109,12 +109,27 @@ def print_summary(
     logger.info(f"Summary:\n{SEPARATOR}\n{summary_text}\n{SEPARATOR}\n")
 
 
-def check_filename_extension(filename: str, allowed_extensions: Tuple[str]) -> str:
+def check_filename_extension(
+    filename: str,
+    allowed_extensions: Tuple[str],
+    logger: logging.Logger = None,
+    error: bool = True,
+) -> str:
     """Checks if a filename has one of the allowed extensions and returns it as-is."""
     if not filename.endswith(allowed_extensions):
-        raise argparse.ArgumentTypeError(
-            f"File '{filename}' must have one of the extensions: {allowed_extensions}"
-        )
+        if error:
+            raise argparse.ArgumentTypeError(
+                f"File '{filename}' must have one of the extensions: {allowed_extensions}"
+            )
+        else:
+            if logger:
+                logger.warning(
+                    f"File '{filename}' has an atypical extension. Expected one of: {allowed_extensions}"
+                )
+            else:
+                logging.warn(
+                    f"File '{filename}' has an atypical extension. Expected one of: {allowed_extensions}"
+                )
     return filename
 
 
