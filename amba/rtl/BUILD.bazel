@@ -48,6 +48,16 @@ verilog_library(
     deps = [":br_amba_pkg"],
 )
 
+verilog_library(
+    name = "br_amba_axil_split",
+    srcs = ["br_amba_axil_split.sv"],
+    deps = [
+        ":br_amba_pkg",
+        "//arb/rtl:br_arb_rr",
+        "//macros:br_asserts_internal",
+    ],
+)
+
 br_verilog_elab_and_lint_test_suite(
     name = "br_amba_axil2apb_test_suite",
     params = {
@@ -91,4 +101,19 @@ br_verilog_elab_and_lint_test_suite(
         ],
     },
     deps = [":br_amba_axil_default_target"],
+)
+
+br_verilog_elab_and_lint_test_suite(
+    name = "br_amba_axil_split_test_suite",
+    params = {
+        "AddrWidth": [
+            "32",
+            "40",
+        ],
+        "DataWidth": [
+            "32",
+            "64",
+        ],
+    },
+    deps = [":br_amba_axil_split"],
 )
