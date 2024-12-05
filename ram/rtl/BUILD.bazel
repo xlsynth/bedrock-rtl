@@ -30,6 +30,16 @@ verilog_library(
 )
 
 verilog_library(
+    name = "br_ram_flops_1r1w_mock",
+    srcs = ["br_ram_flops_1r1w_mock.sv"],
+    deps = [
+        "//delay/rtl:br_delay_valid",
+        "//macros:br_asserts_internal",
+        "//pkg:br_math_pkg",
+    ],
+)
+
+verilog_library(
     name = "br_ram_flops_1r1w_tile",
     srcs = ["br_ram_flops_1r1w_tile.sv"],
     deps = [
@@ -291,4 +301,68 @@ br_verilog_elab_and_lint_test_suite(
         ],
     },
     deps = [":br_ram_flops_1r1w"],
+)
+
+br_verilog_elab_and_lint_test_suite(
+    name = "br_ram_flops_1r1w_mock_test_suite_sweep_depth_width",
+    params = {
+        "Depth": [
+            "123",
+            "128",
+        ],
+        "Width": [
+            "1",
+            "7",
+            "32",
+        ],
+        "DepthTiles": ["1"],
+        "WidthTiles": ["1"],
+        "AddressDepthStages": ["0"],
+        "ReadDataDepthStages": ["0"],
+        "ReadDataWidthStages": ["0"],
+        "TileEnableBypass": [
+            "0",
+            "1",
+        ],
+        "EnableMemReset": ["0"],
+    },
+    deps = [":br_ram_flops_1r1w_mock"],
+)
+
+br_verilog_elab_and_lint_test_suite(
+    name = "br_ram_flops_1r1w_mock_test_suite_sweep_tiles_stages",
+    params = {
+        "Depth": [
+            "30",
+        ],
+        "Width": [
+            "64",
+        ],
+        "DepthTiles": [
+            "2",
+            "3",
+        ],
+        "WidthTiles": [
+            "1",
+            "2",
+        ],
+        "AddressDepthStages": [
+            "0",
+            "1",
+        ],
+        "ReadDataDepthStages": [
+            "0",
+            "1",
+        ],
+        "ReadDataWidthStages": [
+            "0",
+            "1",
+        ],
+        "TileEnableBypass": ["0"],
+        "EnableMemReset": [
+            "0",
+            "1",
+        ],
+    },
+    deps = [":br_ram_flops_1r1w_mock"],
 )
