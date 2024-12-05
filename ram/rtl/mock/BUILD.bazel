@@ -1,0 +1,92 @@
+# Copyright 2024 The Bedrock-RTL Authors
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+load("@rules_hdl//verilog:providers.bzl", "verilog_library")
+load("//bazel:br_verilog.bzl", "br_verilog_elab_and_lint_test_suite")
+
+package(default_visibility = ["//visibility:public"])
+
+verilog_library(
+    name = "br_ram_flops_1r1w",
+    srcs = ["br_ram_flops_1r1w.sv"],
+    deps = [
+        "//delay/rtl:br_delay_valid",
+        "//macros:br_asserts_internal",
+        "//pkg:br_math_pkg",
+    ],
+)
+
+br_verilog_elab_and_lint_test_suite(
+    name = "br_ram_flops_1r1w_test_suite_sweep_depth_width",
+    params = {
+        "Depth": [
+            "123",
+            "128",
+        ],
+        "Width": [
+            "1",
+            "7",
+            "32",
+        ],
+        "DepthTiles": ["1"],
+        "WidthTiles": ["1"],
+        "AddressDepthStages": ["0"],
+        "ReadDataDepthStages": ["0"],
+        "ReadDataWidthStages": ["0"],
+        "TileEnableBypass": [
+            "0",
+            "1",
+        ],
+        "EnableMemReset": ["0"],
+    },
+    deps = [":br_ram_flops_1r1w"],
+)
+
+br_verilog_elab_and_lint_test_suite(
+    name = "br_ram_flops_1r1w_test_suite_sweep_tiles_stages",
+    params = {
+        "Depth": [
+            "30",
+        ],
+        "Width": [
+            "64",
+        ],
+        "DepthTiles": [
+            "2",
+            "3",
+        ],
+        "WidthTiles": [
+            "1",
+            "2",
+        ],
+        "AddressDepthStages": [
+            "0",
+            "1",
+        ],
+        "ReadDataDepthStages": [
+            "0",
+            "1",
+        ],
+        "ReadDataWidthStages": [
+            "0",
+            "1",
+        ],
+        "TileEnableBypass": ["0"],
+        "EnableMemReset": [
+            "0",
+            "1",
+        ],
+    },
+    deps = [":br_ram_flops_1r1w"],
+)

@@ -12,11 +12,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Bedrock-RTL Flop-RAM (1R1W)
+// Bedrock-RTL Flop-RAM (1R1W) -- MOCK
 //
-// A one-read/one-write (1R1W, also known as pseudo-dual-port) flop-based RAM
-// that is constructed out of pipelined tiles.
-// Heavily parameterized for tiling and pipeline configurations.
+// A **MOCK** implementation of a one-read/one-write (1R1W, also known as pseudo-dual-port) flop-RAM.
+// Behaves identically to br_ram_flops_1r1w, but omits unnecessary implementation details that are
+// only relevant for physical design.
+//
+// Not intended for synthesis!!
 
 `include "br_asserts_internal.svh"
 `include "br_registers.svh"
@@ -114,88 +116,75 @@ module br_ram_flops_1r1w #(
   //------------------------------------------
   // Implementation
   //------------------------------------------
-  localparam int TileAddressWidth = $clog2(TileDepth);
+  logic mem_wr_valid;
+  logic [AddressWidth-1:0] mem_wr_addr;
+  logic [Width-1:0] mem_wr_data;
+  logic mem_rd_addr_valid;
+  logic mem_rd_data_valid;
+  logic [AddressWidth-1:0] mem_rd_addr;
+  logic [Width-1:0] mem_rd_data;
+  logic [Depth-1:0][Width-1:0] mem;
 
-  logic [DepthTiles-1:0] tile_wr_valid;
-  logic [DepthTiles-1:0][TileAddressWidth-1:0] tile_wr_addr;
-  logic [DepthTiles-1:0][WidthTiles-1:0][TileWidth-1:0] tile_wr_data;
-
-  logic [DepthTiles-1:0] tile_rd_addr_valid;
-  logic [DepthTiles-1:0][TileAddressWidth-1:0] tile_rd_addr;
-  logic [DepthTiles-1:0][WidthTiles-1:0] tile_rd_data_valid;
-  logic [DepthTiles-1:0][WidthTiles-1:0][TileWidth-1:0] tile_rd_data;
-
-  // Write pipeline (address + data)
-  br_ram_addr_decoder #(
-      .Depth(Depth),
-      .DataWidth(Width),
-      .Tiles(DepthTiles),
-      .Stages(AddressDepthStages)
-  ) br_ram_addr_decoder_wr (
+  br_delay_valid #(
+      .Width(AddressWidth + Width),
+      .NumStages(AddressDepthStages)
+  ) br_delay_valid_wr (
       .clk(wr_clk),  // ri lint_check_waive SAME_CLOCK_NAME
       .rst(wr_rst),
       .in_valid(wr_valid),
-      .in_addr(wr_addr),
-      .in_data(wr_data),
-      .out_valid(tile_wr_valid),
-      .out_addr(tile_wr_addr),
-      .out_data(tile_wr_data)
+      .in({wr_addr, wr_data}),
+      .out_valid(mem_wr_valid),
+      .out({mem_wr_addr, mem_wr_data}),
+      .out_valid_stages(),  // unused
+      .out_stages()  // unused
   );
 
-  // Read address pipeline
-  br_ram_addr_decoder #(
-      .Depth (Depth),
-      .Tiles (DepthTiles),
-      .Stages(AddressDepthStages)
-  ) br_ram_addr_decoder_rd (
+  br_delay_valid #(
+      .Width(AddressWidth),
+      .NumStages(AddressDepthStages)
+  ) br_delay_valid_rd_addr (
       .clk(rd_clk),  // ri lint_check_waive SAME_CLOCK_NAME
       .rst(rd_rst),
       .in_valid(rd_addr_valid),
-      .in_addr(rd_addr),
-      .in_data(1'b0),  // unused
-      .out_valid(tile_rd_addr_valid),
-      .out_addr(tile_rd_addr),
-      .out_data()  // unused
+      .in(rd_addr),
+      .out_valid(mem_rd_addr_valid),
+      .out(mem_rd_addr),
+      .out_valid_stages(),  // unused
+      .out_stages()  // unused
   );
 
-  // Memory tiles
-  for (genvar r = 0; r < DepthTiles; r++) begin : gen_row
-    for (genvar c = 0; c < WidthTiles; c++) begin : gen_col
-      br_ram_flops_1r1w_tile #(
-          .Depth(TileDepth),
-          .Width(TileWidth),
-          .EnableBypass(TileEnableBypass),
-          .EnableReset(EnableMemReset)
-      ) br_ram_flops_1r1w_tile (
-          .wr_clk,
-          .wr_rst,
-          .wr_valid(tile_wr_valid[r]),
-          .wr_addr(tile_wr_addr[r]),
-          .wr_data(tile_wr_data[r][c]),
-          .rd_clk,
-          .rd_rst,
-          .rd_addr_valid(tile_rd_addr_valid[r]),
-          .rd_addr(tile_rd_addr[r]),
-          .rd_data_valid(tile_rd_data_valid[r][c]),
-          .rd_data(tile_rd_data[r][c])
-      );
+  // Memory and write port
+  for (genvar i = 0; i < Depth; i++) begin : gen_mem
+    if (EnableMemReset) begin : gen_reset
+      `BR_REGLX(mem[i], mem_wr_data, mem_wr_valid && (mem_wr_addr == i), wr_clk, wr_rst)
+    end else begin : gen_no_reset
+      `BR_REGLNX(mem[i], mem_wr_data, mem_wr_valid && (mem_wr_addr == i), wr_clk)
     end
   end
 
-  // Read data pipeline
-  br_ram_data_rd_pipe #(
+  // Read port
+  assign mem_rd_data_valid = mem_rd_addr_valid;
+  if (TileEnableBypass) begin : gen_bypass
+    // ri lint_check_waive VAR_INDEX_READ
+    assign mem_rd_data =
+      (mem_wr_valid && (mem_wr_addr == mem_rd_addr)) ? mem_wr_data : mem[mem_rd_addr];
+  end else begin : gen_no_bypass
+    // ri lint_check_waive VAR_INDEX_READ
+    assign mem_rd_data = mem[mem_rd_addr];
+  end
+
+  br_delay_valid #(
       .Width(Width),
-      .DepthTiles(DepthTiles),
-      .WidthTiles(WidthTiles),
-      .DepthStages(ReadDataDepthStages),
-      .WidthStages(ReadDataWidthStages)
-  ) br_ram_data_rd_pipe (
+      .NumStages(ReadDataDepthStages + ReadDataWidthStages)
+  ) br_delay_valid_rd_data (
       .clk(rd_clk),  // ri lint_check_waive SAME_CLOCK_NAME
       .rst(rd_rst),
-      .tile_valid(tile_rd_data_valid),
-      .tile_data(tile_rd_data),
-      .valid(rd_data_valid),
-      .data(rd_data)
+      .in_valid(mem_rd_data_valid),
+      .in(mem_rd_data),
+      .out_valid(rd_data_valid),
+      .out(rd_data),
+      .out_valid_stages(),  // unused
+      .out_stages()  // unused
   );
 
   //------------------------------------------
