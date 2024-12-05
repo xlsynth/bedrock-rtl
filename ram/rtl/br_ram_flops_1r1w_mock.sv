@@ -23,7 +23,7 @@
 `include "br_asserts_internal.svh"
 `include "br_registers.svh"
 
-module br_ram_flops_1r1w #(
+module br_ram_flops_1r1w_mock #(
     parameter int Depth = 2,  // Number of entries in the RAM. Must be at least 2.
     parameter int Width = 1,  // Width of each entry in the RAM. Must be at least 1.
     // Number of tiles along the depth (address) dimension. Must be at least 1 and evenly divide Depth.
@@ -208,4 +208,4 @@ module br_ram_flops_1r1w #(
     end
   end
 
-endmodule : br_ram_flops_1r1w
+endmodule : br_ram_flops_1r1w_mock

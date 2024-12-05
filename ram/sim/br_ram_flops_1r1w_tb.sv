@@ -23,7 +23,8 @@ module br_ram_flops_1r1w_tb #(
     parameter int ReadDataDepthStages = 0,
     parameter int ReadDataWidthStages = 0,
     parameter bit TileEnableBypass = 0,
-    parameter bit EnableMemReset = 0
+    parameter bit EnableMemReset = 0,
+    parameter bit EnableMock = 0
 ) ();
 
   // Clock and Reset
@@ -46,29 +47,55 @@ module br_ram_flops_1r1w_tb #(
   logic [       Width-1:0] rd_data;
 
   // DUT instantiation
-  br_ram_flops_1r1w #(
-      .Depth(Depth),
-      .Width(Width),
-      .DepthTiles(DepthTiles),
-      .WidthTiles(WidthTiles),
-      .AddressDepthStages(AddressDepthStages),
-      .ReadDataDepthStages(ReadDataDepthStages),
-      .ReadDataWidthStages(ReadDataWidthStages),
-      .TileEnableBypass(TileEnableBypass),
-      .EnableMemReset(EnableMemReset)
-  ) dut (
-      .wr_clk(clk),
-      .wr_rst(rst),
-      .wr_valid,
-      .wr_addr,
-      .wr_data,
-      .rd_clk(clk),
-      .rd_rst(rst),
-      .rd_addr_valid,
-      .rd_addr,
-      .rd_data_valid,
-      .rd_data
-  );
+  if (EnableMock) begin : gen_mock
+    br_ram_flops_1r1w_mock #(
+        .Depth(Depth),
+        .Width(Width),
+        .DepthTiles(DepthTiles),
+        .WidthTiles(WidthTiles),
+        .AddressDepthStages(AddressDepthStages),
+        .ReadDataDepthStages(ReadDataDepthStages),
+        .ReadDataWidthStages(ReadDataWidthStages),
+        .TileEnableBypass(TileEnableBypass),
+        .EnableMemReset(EnableMemReset)
+    ) dut (
+        .wr_clk(clk),
+        .wr_rst(rst),
+        .wr_valid,
+        .wr_addr,
+        .wr_data,
+        .rd_clk(clk),
+        .rd_rst(rst),
+        .rd_addr_valid,
+        .rd_addr,
+        .rd_data_valid,
+        .rd_data
+    );
+  end else begin : gen_real
+    br_ram_flops_1r1w #(
+        .Depth(Depth),
+        .Width(Width),
+        .DepthTiles(DepthTiles),
+        .WidthTiles(WidthTiles),
+        .AddressDepthStages(AddressDepthStages),
+        .ReadDataDepthStages(ReadDataDepthStages),
+        .ReadDataWidthStages(ReadDataWidthStages),
+        .TileEnableBypass(TileEnableBypass),
+        .EnableMemReset(EnableMemReset)
+    ) dut (
+        .wr_clk(clk),
+        .wr_rst(rst),
+        .wr_valid,
+        .wr_addr,
+        .wr_data,
+        .rd_clk(clk),
+        .rd_rst(rst),
+        .rd_addr_valid,
+        .rd_addr,
+        .rd_data_valid,
+        .rd_data
+    );
+  end
 
   // Scoreboard memory to track expected values
   logic [Width-1:0] expected_memory[Depth];
