@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Bridge AXI4-Lite to APB Bridge
+// Bedrock-RTL AXI4-Lite to APB Bridge
 //
 // Converts an AXI4-Lite interface to an APB interface.
 
