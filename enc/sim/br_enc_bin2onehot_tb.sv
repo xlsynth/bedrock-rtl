@@ -82,8 +82,8 @@ module br_enc_bin2onehot_tb;
     in = 'x;
     #10;
     if (out !== '0) begin
-      $error("Time: %0t | Input: %0d | Expected Output: %b | Actual Output: %b", $time, in,
-             '0, out);
+      $error("Time: %0t | Input: %0d | Expected Output: %b | Actual Output: %b", $time, in, '0,
+             out);
       errors = errors + 1;
     end
 
