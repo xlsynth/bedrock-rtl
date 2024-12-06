@@ -114,6 +114,14 @@ br_verilog_elab_and_lint_test_suite(
             "32",
             "64",
         ],
+        "MaxOutstandingReads": [
+            "4",
+            "16",
+        ],
+        "MaxOutstandingWrites": [
+            "4",
+            "16",
+        ],
     },
     deps = [":br_amba_axil_split"],
 )
