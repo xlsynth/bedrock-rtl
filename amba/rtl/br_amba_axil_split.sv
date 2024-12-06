@@ -20,9 +20,6 @@
 // falls within the range of the branch, it is routed to the branch. If
 // the transaction address does not fall within the range of the branch, it
 // is routed to the "trunk" interface.
-//
-// TODO: This does not support ID tracking, so we assume that the same ID
-//       will not be used for different target interfaces.
 
 `include "br_asserts_internal.svh"
 
