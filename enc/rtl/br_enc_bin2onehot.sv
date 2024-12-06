@@ -51,8 +51,7 @@ module br_enc_bin2onehot #(
     input logic rst,  // Used only for assertions
     input logic [BinWidth-1:0] in,
     input logic in_valid,
-    output logic [NumValues-1:0] out,
-    output logic out_valid
+    output logic [NumValues-1:0] out
 );
 
   //------------------------------------------
@@ -60,7 +59,7 @@ module br_enc_bin2onehot #(
   //------------------------------------------
   `BR_ASSERT_STATIC(num_values_gte_2_a, NumValues >= 2)
   if (EnableInputRangeCheck) begin : gen_in_range_check
-    `BR_ASSERT_INTG(in_within_range_a, in < NumValues || !in_valid)
+    `BR_ASSERT_INTG(in_within_range_a, in_valid |-> in < NumValues)
   end
 
   //------------------------------------------
@@ -78,13 +77,10 @@ module br_enc_bin2onehot #(
     end
   end
 
-  assign out_valid = in_valid;
-
   //------------------------------------------
   // Implementation checks
   //------------------------------------------
-  if (EnableInputRangeCheck) begin : gen_out_onehot_check
-    `BR_ASSERT_IMPL(out_onehot_a, $onehot(out) || !out_valid)
+  if (EnableInputRangeCheck) begin : gen_out_onehot
+    `BR_ASSERT_IMPL(out_onehot_a, in_valid |-> $onehot(out))
   end
-
 endmodule : br_enc_bin2onehot

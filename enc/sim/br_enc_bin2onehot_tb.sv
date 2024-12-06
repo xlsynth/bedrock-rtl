@@ -34,8 +34,7 @@ module br_enc_bin2onehot_tb;
       .rst,
       .in,
       .in_valid(in_valid),
-      .out,
-      .out_valid()
+      .out
   );
 
   // Clock generation
