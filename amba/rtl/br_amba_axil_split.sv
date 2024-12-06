@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// AXI4-Lite 1:2 Split
+// Bedrock-RTL AXI4-Lite 1:2 Split
 //
 // This module splits an AXI4-Lite interface into two separate AXI4-Lite
 // interfaces. The intended use case is to create a "narrow" branch that
