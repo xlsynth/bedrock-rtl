@@ -17,6 +17,9 @@
 // Converts a 0-based multihot binary-encoded input to a onehot-encoded output.
 // Purely combinational (zero delay and stateless).
 //
+// The in_valid input can be used to qualify the input (all outputs are driven
+// to 0 when in_valid is 0). It can be tied to 1'b1 when not needed.
+//
 // For example:
 //
 // NumValues = 5
@@ -39,6 +42,7 @@
 
 module br_enc_bin2onehot #(
     parameter int NumValues = 2,  // Must be at least 2
+    parameter int EnableInputRangeCheck = 1,
     localparam int BinWidth = $clog2(NumValues)
 ) (
     // ri lint_check_waive INPUT_NOT_READ HIER_NET_NOT_READ HIER_BRANCH_NOT_READ
@@ -46,6 +50,7 @@ module br_enc_bin2onehot #(
     // ri lint_check_waive INPUT_NOT_READ HIER_NET_NOT_READ HIER_BRANCH_NOT_READ
     input logic rst,  // Used only for assertions
     input logic [BinWidth-1:0] in,
+    input logic in_valid,
     output logic [NumValues-1:0] out
 );
 
@@ -53,17 +58,21 @@ module br_enc_bin2onehot #(
   // Integration checks
   //------------------------------------------
   `BR_ASSERT_STATIC(num_values_gte_2_a, NumValues >= 2)
-  `BR_ASSERT_INTG(in_within_range_a, in < NumValues)
+  if (EnableInputRangeCheck) begin : gen_in_range_check
+    `BR_ASSERT_INTG(in_within_range_a, in_valid |-> in < NumValues)
+  end
 
   //------------------------------------------
   // Implementation
   //------------------------------------------
   always_comb begin
     out = '0;
-    for (int i = 0; i < NumValues; i++) begin
-      if (in == i) begin
-        out[i] = 1'b1;
-        break;
+    if (in_valid) begin
+      for (int i = 0; i < NumValues; i++) begin
+        if (in == i) begin
+          out[i] = 1'b1;
+          break;
+        end
       end
     end
   end
@@ -71,6 +80,7 @@ module br_enc_bin2onehot #(
   //------------------------------------------
   // Implementation checks
   //------------------------------------------
-  `BR_ASSERT_IMPL(out_onehot_a, $onehot(out))
-
+  if (EnableInputRangeCheck) begin : gen_out_onehot
+    `BR_ASSERT_IMPL(out_onehot_a, in_valid |-> $onehot(out))
+  end
 endmodule : br_enc_bin2onehot

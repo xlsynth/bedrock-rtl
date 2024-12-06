@@ -25,7 +25,7 @@ module br_enc_bin2onehot_tb;
   logic rst;
   logic [BinWidth-1:0] in;
   logic [NumValues-1:0] out;
-
+  logic in_valid;
   // Instantiate the DUT
   br_enc_bin2onehot #(
       .NumValues(NumValues)
@@ -33,6 +33,7 @@ module br_enc_bin2onehot_tb;
       .clk,
       .rst,
       .in,
+      .in_valid(in_valid),
       .out
   );
 
@@ -58,6 +59,7 @@ module br_enc_bin2onehot_tb;
     // Apply test vectors for valid inputs
     for (int i = 0; i < NumValues; i++) begin
       in = i;
+      in_valid = 1'b1;
       #10;
 
       // Calculate expected output
@@ -74,6 +76,18 @@ module br_enc_bin2onehot_tb;
                  expected_out, out);
       end
     end
+
+    // Check that the DUT can handle invalid inputs
+    in_valid = 1'b0;
+    in = 'x;
+    #10;
+    if (out !== '0) begin
+      $error("Time: %0t | Input: %0d | Expected Output: %b | Actual Output: %b", $time, in, '0,
+             out);
+      errors = errors + 1;
+    end
+
+    #10;
 
     // Finish simulation
     #10;
