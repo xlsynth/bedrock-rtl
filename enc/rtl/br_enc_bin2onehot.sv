@@ -43,7 +43,6 @@
 module br_enc_bin2onehot #(
     parameter int NumValues = 2,  // Must be at least 2
     parameter int EnableInputRangeCheck = 1,
-    parameter int EnableOutputOnehotCheck = 1,
     localparam int BinWidth = $clog2(NumValues)
 ) (
     // ri lint_check_waive INPUT_NOT_READ HIER_NET_NOT_READ HIER_BRANCH_NOT_READ
@@ -85,7 +84,7 @@ module br_enc_bin2onehot #(
   // Implementation checks
   //------------------------------------------
   if (EnableInputRangeCheck) begin : gen_out_onehot_check
-    `BR_ASSERT_IMPL(out_onehot_a, $onehot(out) || !in_valid)
+    `BR_ASSERT_IMPL(out_onehot_a, $onehot(out) || !out_valid)
   end
 
 endmodule : br_enc_bin2onehot
