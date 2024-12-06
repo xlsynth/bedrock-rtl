@@ -28,7 +28,6 @@ module br_arb_rr_fpv_monitor #(
     input logic [NumRequesters-1:0] grant
 );
 
-// test
   `BR_ASSERT(must_grant_a, request != 0 |-> grant != 0)
   `BR_ASSERT(onehot_grant_a, $countones(grant) <= 1)
   `BR_COVER(all_request_c, request == '1)

@@ -23,7 +23,10 @@ package(default_visibility = ["//visibility:public"])
 verilog_library(
     name = "br_arb_fixed_fpv_monitor",
     srcs = ["br_arb_fixed_fpv_monitor.sv"],
-    deps = ["//arb/rtl:br_arb_fixed"],
+    deps = [
+        "//arb/rtl:br_arb_fixed",
+        "//macros:br_fv",
+    ],
 )
 
 verilog_elab_test(
@@ -50,7 +53,10 @@ br_verilog_fpv_test_suite(
 verilog_library(
     name = "br_arb_rr_fpv_monitor",
     srcs = ["br_arb_rr_fpv_monitor.sv"],
-    deps = ["//arb/rtl:br_arb_rr"],
+    deps = [
+        "//arb/rtl:br_arb_rr",
+        "//macros:br_fv",
+    ],
 )
 
 verilog_elab_test(
@@ -78,7 +84,10 @@ br_verilog_fpv_test_suite(
 verilog_library(
     name = "br_arb_lru_fpv_monitor",
     srcs = ["br_arb_lru_fpv_monitor.sv"],
-    deps = ["//arb/rtl:br_arb_lru"],
+    deps = [
+        "//arb/rtl:br_arb_lru",
+        "//macros:br_fv",
+    ],
 )
 
 verilog_elab_test(
