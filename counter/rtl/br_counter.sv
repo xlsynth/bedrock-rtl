@@ -126,7 +126,7 @@ module br_counter #(
 
   // For MaxValueP1 being a power of 2, wrapping occurs naturally
   if (IsMaxValueP1PowerOf2 || !EnableWrap) begin : gen_no_wrap
-    assign value_next = value_temp[ValueWidth-1:0];
+    assign value_next = value_temp[ValueWidth-1:0];  // ri lint_check_waive FULL_RANGE
 
     if (TempWidth > ValueWidth) begin : gen_unused
       `BR_UNUSED_NAMED(value_temp_msbs, value_temp[TempWidth-1:ValueWidth])
