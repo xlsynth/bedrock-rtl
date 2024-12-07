@@ -31,6 +31,13 @@ verilog_library(
 )
 
 verilog_library(
+    name = "br_fv",
+    hdrs = ["br_fv.svh"],
+    visibility = ["//visibility:public"],
+    deps = [":br_asserts"],
+)
+
+verilog_library(
     name = "br_registers",
     hdrs = ["br_registers.svh"],
     visibility = ["//visibility:public"],

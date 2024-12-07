@@ -15,6 +15,7 @@
 // Bedrock-RTL Fixed-Priority Arbiter FPV monitor
 
 `include "br_asserts.svh"
+`include "br_fv.svh"
 
 module br_arb_fixed_fpv_monitor #(
     // Must be at least 2
@@ -26,17 +27,22 @@ module br_arb_fixed_fpv_monitor #(
     input logic [NumRequesters-1:0] grant
 );
 
-   `BR_ASSERT(must_grant_a, request != 0 |-> grant != 0)
-   `BR_ASSERT(onehot_grant_a, $countones(grant) <= 1)
-   `BR_COVER(all_request_c, request == '1)
+// FV Modeling Code
+logic[$clog2(NumRequesters)-1:0] i,j;
+`BR_FV_2RAND_IDX(i, j, NumRequesters)
 
-   for (genvar i = 0; i < NumRequesters - 1; i++) begin : gen_high
-     `BR_ASSERT(grant_active_req_a, grant[i] |-> request[i])
-     for (genvar j = i + 1; j < NumRequesters; j++) begin : gen_low
-       `BR_ASSERT(arb_priority_a, grant[j] |-> !request[i])
-     end
-   end
+// Sanity Check
+`BR_ASSERT(onehot_grant_a, $onehot0(grant))
+
+// Forward Progress Check
+`BR_ASSERT(must_grant_a, |request |-> |grant)
+
+// Fairness Check
+`BR_ASSERT(strict_priority_a, (i < j) && request[i] && request[j] |-> !grant[j])
+
+// Critical Covers
+`BR_COVER(all_request_c, &request)
 
 endmodule : br_arb_fixed_fpv_monitor
 
-bind br_arb_fixed br_arb_fixed_fpv_monitor#(.NumRequesters(NumRequesters)) monitor (.*);
+bind br_arb_fixed br_arb_fixed_fpv_monitor #(.NumRequesters(NumRequesters)) monitor (.*);
