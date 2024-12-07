@@ -22,6 +22,7 @@
 // is routed to the "trunk" interface.
 
 `include "br_asserts_internal.svh"
+`include "br_registers.svh"
 
 module br_amba_axil_split #(
     parameter int AddrWidth = 40,  // Must be at least 12
@@ -128,18 +129,26 @@ module br_amba_axil_split #(
   // Implementation
   //------------------------------------------
 
-  localparam int ReadCounterWidth = $clog2(MaxOutstandingReads);
-  localparam int WriteCounterWidth = $clog2(MaxOutstandingWrites);
+  localparam int ReadCounterWidth = $clog2(MaxOutstandingReads + 1);
+  localparam int WriteCounterWidth = $clog2(MaxOutstandingWrites + 1);
 
   logic branch_awaddr_in_range, branch_araddr_in_range;
   logic branch_bvalid_req, trunk_bvalid_req;
   logic branch_rvalid_req, trunk_rvalid_req;
   logic branch_bvalid_grant, trunk_bvalid_grant;
   logic branch_rvalid_grant, trunk_rvalid_grant;
-  logic [ ReadCounterWidth:0] outstanding_read_transaction_count;
-  logic [WriteCounterWidth:0] outstanding_write_transaction_count;
-  logic outstanding_read_transaction_eq_zero, outstanding_write_transaction_eq_zero;
+  logic [ ReadCounterWidth-1:0] outstanding_reads_count;
+  logic [WriteCounterWidth-1:0] outstanding_writes_count;
+  logic no_outstanding_reads, no_outstanding_writes;
   logic last_arvalid_is_branch, last_awvalid_is_branch;
+  logic ar_handshake_valid, aw_handshake_valid;
+  logic r_handshake_valid, b_handshake_valid;
+
+  // AXI handshake signals
+  assign ar_handshake_valid = root_arvalid && root_arready;
+  assign r_handshake_valid = root_rvalid && root_rready;
+  assign aw_handshake_valid = root_awvalid && root_awready;
+  assign b_handshake_valid = root_bvalid && root_bready;
 
   // ri lint_check_off INVALID_COMPARE
   assign branch_awaddr_in_range = (root_awaddr >= BranchStartAddr) &&
@@ -149,78 +158,69 @@ module br_amba_axil_split #(
   // ri lint_check_on INVALID_COMPARE
 
   // Counters to track outstanding read transactions
-  always_ff @(posedge clk) begin
-    if (rst) begin
-      outstanding_read_transaction_count <= 32'd0;
-    end else begin
-      // Update the read counter based on read address and response handshakes
-      // ri lint_check_waive CASE_SEL_EXPR
-      case ({
-        root_arvalid && root_arready, root_rvalid && root_rready
-      })
-        2'b10:   outstanding_read_transaction_count <= outstanding_read_transaction_count + 1;
-        2'b01:   outstanding_read_transaction_count <= outstanding_read_transaction_count - 1;
-        default: outstanding_read_transaction_count <= outstanding_read_transaction_count;
-      endcase
-    end
-  end
+  br_counter #(
+      .MaxValue  (MaxOutstandingReads),
+      .MaxChange (1),
+      .EnableWrap(0)
+  ) br_counter_outstanding_reads (
+      .clk,
+      .rst,
+      .reinit(1'b0),
+      .initial_value({ReadCounterWidth{1'b0}}),
+      .incr_valid(ar_handshake_valid),
+      .incr(1'b1),
+      .decr_valid(r_handshake_valid),
+      .decr(1'b1),
+      .value(outstanding_reads_count),
+      .value_next()  // ri lint_check_waive OPEN_OUTPUT
+  );
 
-  assign outstanding_read_transaction_eq_zero = (outstanding_read_transaction_count == 0);
+  assign no_outstanding_reads = (outstanding_reads_count == 0);
 
   // Track the last read tranasctions, if it was trunk or branch
-  always_ff @(posedge clk) begin
-    if (rst) begin
-      last_arvalid_is_branch <= 1'b0;
-    end else if (root_arvalid && root_arready) begin
-      last_arvalid_is_branch <= branch_araddr_in_range;
-    end
-  end
+  `BR_REGLN(last_arvalid_is_branch, branch_araddr_in_range, ar_handshake_valid)
 
   // Split the read address channel
   assign trunk_arvalid = root_arvalid && !branch_araddr_in_range &&
-                         (outstanding_read_transaction_eq_zero || !last_arvalid_is_branch);
+                         (no_outstanding_reads || !last_arvalid_is_branch);
   assign branch_arvalid = root_arvalid && branch_araddr_in_range &&
-                          (outstanding_read_transaction_eq_zero || last_arvalid_is_branch);
+                          (no_outstanding_reads || last_arvalid_is_branch);
   assign root_arready = (trunk_arvalid && trunk_arready) || (branch_arvalid && branch_arready);
 
   // Counters to track outstanding write transactions
-  always_ff @(posedge clk) begin
-    if (rst) begin
-      outstanding_write_transaction_count <= 32'd0;
-    end else begin
-      // Update the write counter based on write address and response handshakes
-      // ri lint_check_waive CASE_SEL_EXPR
-      case ({
-        root_awvalid && root_awready, root_bvalid && root_bready
-      })
-        2'b10:   outstanding_write_transaction_count <= outstanding_write_transaction_count + 1;
-        2'b01:   outstanding_write_transaction_count <= outstanding_write_transaction_count - 1;
-        default: outstanding_write_transaction_count <= outstanding_write_transaction_count;
-      endcase
-    end
-  end
+  br_counter #(
+      .MaxValue  (MaxOutstandingWrites),
+      .MaxChange (1),
+      .EnableWrap(0)
+  ) br_counter_outstanding_writes (
+      .clk,
+      .rst,
+      .reinit(1'b0),
+      .initial_value({WriteCounterWidth{1'b0}}),
+      .incr_valid(aw_handshake_valid),
+      .incr(1'b1),
+      .decr_valid(b_handshake_valid),
+      .decr(1'b1),
+      .value(outstanding_writes_count),
+      .value_next()  // ri lint_check_waive OPEN_OUTPUT
+  );
 
-  assign outstanding_write_transaction_eq_zero = (outstanding_write_transaction_count == 0);
+
+  assign no_outstanding_writes = (outstanding_writes_count == 0);
 
   // Track the last tranasctions, if it was trunk or branch
-  always_ff @(posedge clk) begin
-    if (rst) begin
-      last_awvalid_is_branch <= 1'b0;
-    end else if (root_awvalid && root_awready) begin
-      last_awvalid_is_branch <= branch_awaddr_in_range;
-    end
-  end
+  `BR_REGLN(last_awvalid_is_branch, branch_awaddr_in_range, aw_handshake_valid)
 
   // Split the write address and write data channels
   // - Need to hold write address and write data until both are valid
   assign trunk_awvalid = root_awvalid && root_wvalid && !branch_awaddr_in_range &&
-                          (outstanding_write_transaction_eq_zero || !last_awvalid_is_branch);
+                          (no_outstanding_writes || !last_awvalid_is_branch);
   assign branch_awvalid = root_awvalid && root_wvalid && branch_awaddr_in_range &&
-                          (outstanding_write_transaction_eq_zero || last_awvalid_is_branch);
+                          (no_outstanding_writes || last_awvalid_is_branch);
   assign trunk_wvalid = root_awvalid && root_wvalid && !branch_awaddr_in_range &&
-                         (outstanding_write_transaction_eq_zero || !last_awvalid_is_branch);
+                         (no_outstanding_writes || !last_awvalid_is_branch);
   assign branch_wvalid = root_awvalid && root_wvalid && branch_awaddr_in_range &&
-                         (outstanding_write_transaction_eq_zero || last_awvalid_is_branch);
+                         (no_outstanding_writes || last_awvalid_is_branch);
   assign root_awready = (trunk_awvalid && trunk_awready) || (branch_awvalid && branch_awready);
   assign root_wready = (trunk_wvalid && trunk_wready) || (branch_wvalid && branch_wready);
 
