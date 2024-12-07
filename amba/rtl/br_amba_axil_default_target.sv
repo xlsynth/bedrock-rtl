@@ -22,8 +22,9 @@
 // target will respond with a DECERR response.
 
 module br_amba_axil_default_target #(
-    parameter int DataWidth   = 64,
-    parameter int DecodeError = 1
+    parameter int DataWidth = 64,
+    parameter int DecodeError = 1,
+    parameter logic [DataWidth-1:0] DefaultReadData = '0
 ) (
     input clk,
     input rst,  // Synchronous, active-high reset
@@ -45,60 +46,69 @@ module br_amba_axil_default_target #(
 );
 
   // Internal signals
-  logic aw_handshake, w_handshake, ar_handshake, b_handshake, r_handshake;
-
-  // Handshake signals
-  assign aw_handshake = target_awvalid && target_awready;
-  assign w_handshake = target_wvalid && target_wready;
-  assign ar_handshake = target_arvalid && target_arready;
-  assign b_handshake = target_bvalid && target_bready;
-  assign r_handshake = target_rvalid && target_rready;
+  logic awfifo_pop_valid, awfifo_pop_ready;
+  logic wfifo_pop_valid, wfifo_pop_ready;
 
   // Response signals
   assign target_bresp = DecodeError ? br_amba::AxiRespDecerr : br_amba::AxiRespOkay;  // ri lint_check_waive ENUM_RHS CONST_ASSIGN CONST_OUTPUT
-  assign target_rdata = '0;  // ri lint_check_waive CONST_ASSIGN CONST_OUTPUT
+  assign target_rdata = DefaultReadData;  // ri lint_check_waive CONST_ASSIGN CONST_OUTPUT
   assign target_rresp = DecodeError ? br_amba::AxiRespDecerr : br_amba::AxiRespOkay;  // ri lint_check_waive ENUM_RHS CONST_ASSIGN CONST_OUTPUT
 
-  // Write address & data channel
-  always_ff @(posedge clk) begin
-    if (rst) begin
-      target_awready <= 1'b0;
-      target_wready  <= 1'b0;
-    end else begin
-      target_awready <= !target_bvalid && !target_awready && target_awvalid && target_wvalid;
-      target_wready  <= !target_bvalid && !target_wready && target_awvalid && target_wvalid;
-    end
-  end
+  // Write address channel
+  br_flow_reg_fwd #(
+      .Width(1)
+  ) br_flow_reg_fwd_aw (
+      .clk,
+      .rst,
 
-  // Write response channel
-  always_ff @(posedge clk) begin
-    if (rst) begin
-      target_bvalid <= 1'b0;
-    end else if (aw_handshake && w_handshake) begin
-      target_bvalid <= 1'b1;
-    end else if (b_handshake) begin
-      target_bvalid <= 1'b0;
-    end
-  end
+      .push_ready(target_awready),
+      .push_valid(target_awvalid),
+      .push_data (1'b0),
 
-  // Read address channel
-  always_ff @(posedge clk) begin
-    if (rst) begin
-      target_arready <= 1'b0;
-    end else begin
-      target_arready <= !target_arready && target_arvalid;
-    end
-  end
+      .pop_ready(awfifo_pop_ready),
+      .pop_valid(awfifo_pop_valid),
+      .pop_data()  // ri lint_check_waive OPEN_OUTPUT
+  );
 
-  // Read data channel
-  always_ff @(posedge clk) begin
-    if (rst) begin
-      target_rvalid <= 1'b0;
-    end else if (ar_handshake) begin
-      target_rvalid <= 1'b1;
-    end else if (r_handshake) begin
-      target_rvalid <= 1'b0;
-    end
-  end
+  // Only pop from write address channel when write response is ready and valid
+  assign awfifo_pop_ready = target_bready && target_bvalid;
+
+  // Write data channel
+  br_flow_reg_fwd #(
+      .Width(1)
+  ) br_flow_reg_fwd_w (
+      .clk,
+      .rst,
+
+      .push_ready(target_wready),
+      .push_valid(target_wvalid),
+      .push_data (1'b0),
+
+      .pop_ready(wfifo_pop_ready),
+      .pop_valid(wfifo_pop_valid),
+      .pop_data()  // ri lint_check_waive OPEN_OUTPUT
+  );
+
+  // Only pop from write data channel when write response is ready and valid
+  assign wfifo_pop_ready = target_bready && target_bvalid;
+
+  // Generate write response when both address and data channels have valid signals
+  assign target_bvalid   = awfifo_pop_valid && wfifo_pop_valid;
+
+  // Read address and response channels
+  br_flow_reg_fwd #(
+      .Width(1)
+  ) br_flow_reg_fwd_ar (
+      .clk,
+      .rst,
+
+      .push_ready(target_arready),
+      .push_valid(target_arvalid),
+      .push_data (1'b0),
+
+      .pop_ready(target_rready),
+      .pop_valid(target_rvalid),
+      .pop_data()  // ri lint_check_waive OPEN_OUTPUT
+  );
 
 endmodule : br_amba_axil_default_target

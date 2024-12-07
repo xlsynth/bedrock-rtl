@@ -45,7 +45,10 @@ verilog_library(
 verilog_library(
     name = "br_amba_axil_default_target",
     srcs = ["br_amba_axil_default_target.sv"],
-    deps = [":br_amba_pkg"],
+    deps = [
+        ":br_amba_pkg",
+        "//flow/rtl:br_flow_reg_fwd",
+    ],
 )
 
 verilog_library(
