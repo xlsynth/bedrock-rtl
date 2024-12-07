@@ -24,6 +24,6 @@
 `define BR_FV_2RAND_IDX(__i__, __j__, __n__) \
 `BR_ASSUME(asm_index_i, $stable(__i__) && (__i__ < __n__)) \
 `BR_ASSUME(asm_index_j, $stable(__j__) && (__j__ < __n__)) \
-`BR_ASSUME(asm_unique_index, __i__ != __j__) 
+`BR_ASSUME(asm_unique_index, __i__ != __j__)
 
 `endif  // BR_FV_SVH
