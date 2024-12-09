@@ -34,4 +34,7 @@ package br_amba;
   // APB parameters
   localparam int unsigned ApbProtWidth = 3;
 
+  // ATB parameters
+  localparam int unsigned AtbIdWidth = 7;
+
 endpackage : br_amba
