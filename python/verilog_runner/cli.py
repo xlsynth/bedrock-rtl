@@ -251,3 +251,17 @@ class Fpv(Subcommand):
             action="store_true",
             help="Run with GUI",
         )
+        parser.add_argument(
+            "--elab_opt",
+            type=str,
+            action="append",
+            default=[],
+            help="elab options",
+        )
+        parser.add_argument(
+            "--analysis_opt",
+            type=str,
+            action="append",
+            default=[],
+            help="analysis options",
+        )

@@ -214,6 +214,10 @@ def _verilog_fpv_test_impl(ctx):
         fail("If opts are provided, then tool must also be set.")
     for opt in ctx.attr.opts:
         extra_args.append("--opt='" + opt + "'")
+    for opt in ctx.attr.elab_opts:
+        extra_args.append("--elab_opt='" + opt + "'")
+    for opt in ctx.attr.analysis_opts:
+        extra_args.append("--analysis_opt='" + opt + "'")
 
     return _verilog_base_impl(
         ctx = ctx,
@@ -437,6 +441,12 @@ rule_verilog_fpv_test = rule(
         ),
         "opts": attr.string_list(
             doc = "Tool-specific options not covered by other arguments. If provided, then 'tool' must also be set.",
+        ),
+        "elab_opts": attr.string_list(
+            doc = "custom elab options",
+        ),
+        "analysis_opts": attr.string_list(
+            doc = "custom analysis options",
         ),
         "elab_only": attr.bool(
             doc = "Only run elaboration.",
