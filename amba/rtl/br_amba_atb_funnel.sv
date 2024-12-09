@@ -22,6 +22,7 @@
 module br_amba_atb_funnel #(
     parameter int NumSources = 2,  // Must be at least 2
     parameter int DataWidth = 32,  // Must be at least 1
+    parameter int UserWidth = 1,  // Must be at least 1
     localparam int ByteCountWidth = $clog2(DataWidth / 8)
 ) (
     input logic clk,
@@ -33,13 +34,14 @@ module br_amba_atb_funnel #(
     input logic [NumSources-1:0][br_amba::AtbIdWidth-1:0] src_atid,
     input logic [NumSources-1:0][DataWidth-1:0] src_atdata,
     input logic [NumSources-1:0][ByteCountWidth-1:0] src_atbytes,
-
+    input logic [NumSources-1:0][UserWidth-1:0] src_atuser,
     // ATB destination interface
     output logic dst_atvalid,
     input logic dst_atready,
     output logic [br_amba::AtbIdWidth-1:0] dst_atid,
     output logic [DataWidth-1:0] dst_atdata,
-    output logic [ByteCountWidth-1:0] dst_atbytes
+    output logic [ByteCountWidth-1:0] dst_atbytes,
+    output logic [UserWidth-1:0] dst_atuser
 );
 
   //------------------------------------------
@@ -47,23 +49,23 @@ module br_amba_atb_funnel #(
   //------------------------------------------
   `BR_ASSERT_STATIC(num_sources_gte_2_a, NumSources >= 2)
   `BR_ASSERT_STATIC(datawidth_gte_1_a, DataWidth >= 1)
-
+  `BR_ASSERT_STATIC(userwidth_gte_1_a, UserWidth >= 1)
   //------------------------------------------
   // Implementation
   //------------------------------------------
 
   br_flow_mux_rr #(
       .NumFlows(NumSources),
-      .Width(br_amba::AtbIdWidth + DataWidth + ByteCountWidth)
+      .Width(br_amba::AtbIdWidth + DataWidth + ByteCountWidth + UserWidth)
   ) br_flow_mux_rr (
       .clk(clk),
       .rst(rst),
       .push_valid(src_atvalid),
       .push_ready(src_atready),
-      .push_data({src_atid, src_atdata, src_atbytes}),
+      .push_data({src_atid, src_atdata, src_atbytes, src_atuser}),
       .pop_valid(dst_atvalid),
       .pop_ready(dst_atready),
-      .pop_data({dst_atid, dst_atdata, dst_atbytes})
+      .pop_data({dst_atid, dst_atdata, dst_atbytes, dst_atuser})
   );
 
 endmodule : br_amba_atb_funnel
