@@ -133,10 +133,6 @@ module br_amba_axil_split #(
   localparam int WriteCounterWidth = $clog2(MaxOutstandingWrites + 1);
 
   logic branch_awaddr_in_range, branch_araddr_in_range;
-  logic branch_bvalid_req, trunk_bvalid_req;
-  logic branch_rvalid_req, trunk_rvalid_req;
-  logic branch_bvalid_grant, trunk_bvalid_grant;
-  logic branch_rvalid_grant, trunk_rvalid_grant;
   logic [ ReadCounterWidth-1:0] outstanding_reads_count;
   logic [WriteCounterWidth-1:0] outstanding_writes_count;
   logic no_outstanding_reads, no_outstanding_writes;
@@ -177,7 +173,7 @@ module br_amba_axil_split #(
 
   assign no_outstanding_reads = (outstanding_reads_count == 0);
 
-  // Track the last read tranasctions, if it was trunk or branch
+  // Track the last read transaction, if it was trunk or branch
   `BR_REGLN(last_arvalid_is_branch, branch_araddr_in_range, ar_handshake_valid)
 
   // Split the read address channel
@@ -208,7 +204,7 @@ module br_amba_axil_split #(
 
   assign no_outstanding_writes = (outstanding_writes_count == 0);
 
-  // Track the last tranasctions, if it was trunk or branch
+  // Track the last write transaction, if it was trunk or branch
   `BR_REGLN(last_awvalid_is_branch, branch_awaddr_in_range, aw_handshake_valid)
 
   // Split the write address and write data channels
@@ -235,44 +231,31 @@ module br_amba_axil_split #(
   assign {trunk_arprot, branch_arprot} = {2{root_arprot}};
   assign {trunk_aruser, branch_aruser} = {2{root_aruser}};
 
-  // Read Response Channel Arbitration
-  br_arb_rr #(
-      .NumRequesters(2)
-  ) br_arb_rr_rvalid (
-      .clk(clk),
-      .rst(rst),
-      .enable_priority_update(1'b0),
-      .request({branch_rvalid_req, trunk_rvalid_req}),
-      .grant({branch_rvalid_grant, trunk_rvalid_grant})
-  );
-
-  // Assign the read response signal based on the arbiter grant
-  assign branch_rvalid_req = branch_rvalid && root_rready;
-  assign trunk_rvalid_req = trunk_rvalid && root_rready;
+  // Read Response Channel Merge
   assign root_rvalid = branch_rvalid || trunk_rvalid;
-  assign root_rresp = trunk_rvalid_grant ? trunk_rresp : branch_rresp;
-  assign root_rdata = trunk_rvalid_grant ? trunk_rdata : branch_rdata;
-  assign root_ruser = trunk_rvalid_grant ? trunk_ruser : branch_ruser;
-  assign branch_rready = branch_rvalid_grant;
-  assign trunk_rready = trunk_rvalid_grant;
+  assign root_rresp = ({br_amba::AxiRespWidth{trunk_rvalid}} & trunk_rresp) |
+                      ({br_amba::AxiRespWidth{branch_rvalid}} & branch_rresp);
+  assign root_rdata = ({DataWidth{trunk_rvalid}} & trunk_rdata) |
+                      ({DataWidth{branch_rvalid}} & branch_rdata);
+  assign root_ruser = ({RUserWidth{trunk_rvalid}} & trunk_ruser) |
+                      ({RUserWidth{branch_rvalid}} & branch_ruser);
+  assign {trunk_rready, branch_rready} = {2{root_rready}};
 
-  // Write Response Channel Arbitration
-  br_arb_rr #(
-      .NumRequesters(2)
-  ) br_arb_rr_bvalid (
-      .clk(clk),
-      .rst(rst),
-      .enable_priority_update(1'b0),
-      .request({branch_bvalid_req, trunk_bvalid_req}),
-      .grant({branch_bvalid_grant, trunk_bvalid_grant})
-  );
-
-  // Assign the write response signals based on the arbiter grant
-  assign branch_bvalid_req = branch_bvalid && root_bready;
-  assign trunk_bvalid_req = trunk_bvalid && root_bready;
+  // Write Response Channel Merge
   assign root_bvalid = branch_bvalid || trunk_bvalid;
-  assign root_bresp = trunk_bvalid_grant ? trunk_bresp : branch_bresp;
-  assign branch_bready = branch_bvalid_grant;
-  assign trunk_bready = trunk_bvalid_grant;
+  assign root_bresp = ({br_amba::AxiRespWidth{trunk_bvalid}} & trunk_bresp) |
+                      ({br_amba::AxiRespWidth{branch_bvalid}} & branch_bresp);
+  assign {trunk_bready, branch_bready} = {2{root_bready}};
+
+  //------------------------------------------
+  // Implementation checks
+  //------------------------------------------
+
+  `BR_ASSERT_IMPL(last_arvalid_is_branch_is_valid_a, !$isunknown(last_arvalid_is_branch)
+                  || no_outstanding_reads)
+  `BR_ASSERT_IMPL(last_awvalid_is_branch_is_valid_a, !$isunknown(last_awvalid_is_branch)
+                  || no_outstanding_writes)
+  `BR_ASSERT_IMPL(rvalid_is_onehot_a, !(branch_rvalid && trunk_rvalid))
+  `BR_ASSERT_IMPL(bvalid_is_onehot_a, !(branch_bvalid && trunk_bvalid))
 
 endmodule : br_amba_axil_split
