@@ -79,14 +79,26 @@ module br_ram_flops_1r1w_tile #(
   //------------------------------------------
   // Storage flops are on the write clock but read asynchronously
   // from the read clock.
-  logic [Depth-1:0][Width-1:0] mem;
+  logic [Width-1:0] mem[Depth];
 
-  // Write port
-  for (genvar i = 0; i < Depth; i++) begin : gen_flops
-    if (EnableReset) begin : gen_reset
-      `BR_REGLX(mem[i], wr_data, wr_valid && (wr_addr == i), wr_clk, wr_rst)
-    end else begin : gen_no_reset
-      `BR_REGLNX(mem[i], wr_data, wr_valid && (wr_addr == i), wr_clk)
+  // Write port and memory. We avoid the BR_REG* coding style so that certain emulation tools
+  // can correctly recognize this behavior as a memory.
+  if (EnableReset) begin : gen_reset
+    always_ff @(posedge wr_clk) begin
+      if (wr_rst) begin
+        // Loop required over entries since cannot assign a packed type ('0) to an unpacked type (mem).
+        for (int i = 0; i < Depth; i++) begin
+          mem[i] <= '0;
+        end
+      end else if (wr_valid) begin
+        mem[wr_addr] <= wr_data;  // ri lint_check_waive VAR_INDEX_WRITE
+      end
+    end
+  end else begin : gen_no_reset
+    always_ff @(posedge wr_clk) begin
+      if (wr_valid) begin
+        mem[wr_addr] <= wr_data;  // ri lint_check_waive VAR_INDEX_WRITE
+      end
     end
   end
 

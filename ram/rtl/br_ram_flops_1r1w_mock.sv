@@ -18,7 +18,7 @@
 // Behaves identically to br_ram_flops_1r1w, but omits unnecessary implementation details that are
 // only relevant for physical design.
 //
-// Not intended for synthesis!!
+// Not intended for synthesis (doesn't actually implement tiling or hierarchical address decoding).
 
 `include "br_asserts_internal.svh"
 `include "br_registers.svh"
@@ -153,12 +153,24 @@ module br_ram_flops_1r1w_mock #(
       .out_stages()  // unused
   );
 
-  // Memory and write port
-  for (genvar i = 0; i < Depth; i++) begin : gen_mem
-    if (EnableMemReset) begin : gen_reset
-      `BR_REGLX(mem[i], mem_wr_data, mem_wr_valid && (mem_wr_addr == i), wr_clk, wr_rst)
-    end else begin : gen_no_reset
-      `BR_REGLNX(mem[i], mem_wr_data, mem_wr_valid && (mem_wr_addr == i), wr_clk)
+  // Write port and memory. We avoid the BR_REG* coding style so that certain emulation tools
+  // can correctly recognize this behavior as a memory.
+  if (EnableMemReset) begin : gen_reset
+    always_ff @(posedge wr_clk) begin
+      if (wr_rst) begin
+        // Loop required over entries since cannot assign a packed type ('0) to an unpacked type (mem).
+        for (int i = 0; i < Depth; i++) begin
+          mem[i] <= '0;
+        end
+      end else if (mem_wr_valid) begin
+        mem[mem_wr_addr] <= mem_wr_data;  // ri lint_check_waive VAR_INDEX_WRITE
+      end
+    end
+  end else begin : gen_no_reset
+    always_ff @(posedge wr_clk) begin
+      if (mem_wr_valid) begin
+        mem[mem_wr_addr] <= mem_wr_data;  // ri lint_check_waive VAR_INDEX_WRITE
+      end
     end
   end
 
