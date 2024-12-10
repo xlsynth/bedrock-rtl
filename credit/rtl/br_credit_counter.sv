@@ -38,6 +38,10 @@
 //
 // Resets to initial_value, which is a port rather than a parameter to accommodate
 // designs where the initial value needs to be adjustable.
+//
+// The credit count can be set back to the initial value without resetting the
+// entire module by asserting the reinit signal. During reinit, increments will
+// be discarded and decrement ready will be blocked.
 
 `include "br_asserts_internal.svh"
 `include "br_registers.svh"
@@ -60,6 +64,10 @@ module br_credit_counter #(
     output logic                   decr_ready,
     input  logic                   decr_valid,
     input  logic [ChangeWidth-1:0] decr,
+    // Reinit the credit count to the initial value.
+    // While reinit is high, increments will be discarded and decrement ready
+    // will be blocked.
+    input  logic                   reinit,
     // Reset value for the credit counter
     input  logic [ ValueWidth-1:0] initial_value,
     // Dynamically withhold credits from circulation
@@ -89,7 +97,6 @@ module br_credit_counter #(
   logic [CalcWidth-1:0] value_extended_next;
 
   // Compute the next value with extended width
-  // ri lint_check_waive IFDEF_CODE
   always_comb begin
     value_extended_next = {1'b0, value};
     // ri lint_check_waive SEQ_COND_ASSIGNS
@@ -109,7 +116,8 @@ module br_credit_counter #(
   `BR_COVER_INTG(value_reaches_max_c, value == MaxValue)
 
   // Ensure the initial value was within the valid range on the last cycle when exiting reset
-  `BR_ASSERT_INTG(initial_value_in_range_a, $fell(rst) |-> $past(initial_value) <= MaxValue)
+  `BR_ASSERT_INTG(initial_value_in_range_reset_a, $fell(rst) |-> $past(initial_value) <= MaxValue)
+  `BR_ASSERT_INTG(initial_value_in_range_reinit_a, reinit |-> initial_value <= MaxValue)
 
   // Withhold and available
   `BR_ASSERT_INTG(withhold_in_range_a, withhold <= MaxValue)
@@ -124,6 +132,7 @@ module br_credit_counter #(
   logic [ChangeWidth-1:0] incr_internal;
   logic [ChangeWidth-1:0] decr_internal;
   logic [ ValueWidth-1:0] value_plus_incr;
+  logic [ ValueWidth-1:0] value_plus_incr_minus_decr;
   logic [ ValueWidth-1:0] value_next;
   logic                   value_loaden;
 
@@ -132,8 +141,10 @@ module br_credit_counter #(
   // ri lint_check_waive CONST_ASSIGN
   assign decr_internal = decr_valid ? decr : '0;
   assign value_plus_incr = value + ValueWidth'(incr_internal);
-  assign value_next = value_plus_incr - (decr_ready ? ValueWidth'(decr_internal) : '0);
-  assign value_loaden = incr_valid || (decr_valid && decr_ready);
+  assign value_plus_incr_minus_decr =
+      value_plus_incr - (decr_ready ? ValueWidth'(decr_internal) : '0);
+  assign value_next = reinit ? initial_value : value_plus_incr_minus_decr;
+  assign value_loaden = incr_valid || (decr_valid && decr_ready) || reinit;
 
   `BR_REGIL(value, value_next, value_loaden, initial_value)
 
@@ -142,9 +153,9 @@ module br_credit_counter #(
   assign available = value_plus_incr > withhold ? value_plus_incr - withhold : '0;
 
   if (MaxChange == 1) begin : gen_decr_ready_one
-    assign decr_ready = available > '0;
+    assign decr_ready = !reinit && (available > '0);
   end else begin : gen_decr_ready_gt_one
-    assign decr_ready = ValueWidth'(decr_internal) <= available;
+    assign decr_ready = !reinit && (ValueWidth'(decr_internal) <= available);
   end
 
   //------------------------------------------

@@ -36,7 +36,14 @@
 //   - There is a backpressure latency of 0 cycles from pop to push.
 //   - Credits can be released the same cycle that they are acquired from the receiver buffer.
 //   - Users will likely want to register the push-side interface (e.g., with br_delay_valid).
-
+//
+// Reset Handshaking:
+//   - push_reset_active_fwd is asserted by the sender to indicate that the sender is in reset.
+//     When this signal is high, the receiver will reset its credit counter to the initial value
+//     and not return any credit (assert push_credit) until the reset active is set low.
+//   - push_reset_active_rev is asserted by the receiver to indicate that the receiver is in reset.
+//     When this signal is high, the sender will reinitialize its credit counter to its initial value
+//     and not send any data (assert push_valid) until the reset active is set low.
 `include "br_asserts_internal.svh"
 `include "br_registers.svh"
 
@@ -59,7 +66,8 @@ module br_credit_receiver #(
     input logic rst,
 
     // Credit/valid push interface.
-    input logic push_credit_stall,
+    input logic push_reset_active_fwd,
+    output logic push_reset_active_rev,
     output logic push_credit,
     input logic push_valid,
     input logic [Width-1:0] push_data,
@@ -116,13 +124,14 @@ module br_credit_receiver #(
       .decr_ready(credit_decr_ready),
       .decr_valid(credit_decr_valid),
       .decr(PopCreditChangeWidth'(1'b1)),
+      .reinit(push_reset_active_fwd),
       .initial_value(credit_initial),
       .withhold(credit_withhold),
       .value(credit_count),
       .available(credit_available)
   );
 
-  assign credit_decr_valid = !push_credit_stall;
+  assign credit_decr_valid = !push_reset_active_fwd;
   assign push_credit_internal = credit_decr_valid && credit_decr_ready;
   assign pop_valid = push_valid;
   assign pop_data = push_data;
@@ -133,10 +142,13 @@ module br_credit_receiver #(
     assign push_credit = push_credit_internal;
   end
 
+  `BR_REGI(push_reset_active_rev, 1'b0, 1'b1)
+
   //------------------------------------------
   // Implementation checks
   //------------------------------------------
-  `BR_ASSERT_IMPL(push_credit_stall_a, push_credit_stall |-> !push_credit_internal)
+  `BR_ASSERT_IMPL(push_reset_active_fwd_a,
+                  push_reset_active_fwd |-> !push_credit_internal)
   `BR_COVER_IMPL(passthru_credit_c, pop_credit && push_credit_internal && credit_count == '0)
   `BR_COVER_IMPL(passthru_credit_nonzero_count_c,
                  pop_credit && push_credit_internal && credit_count > '0)
