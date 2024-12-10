@@ -60,8 +60,12 @@ def _verilog_base_impl(ctx, subcmd, test = True, extra_args = [], extra_runfiles
     runfiles += ctx.files.verilog_runner_tool
     srcs = get_transitive(ctx = ctx, srcs_not_hdrs = True).to_list()
     hdrs = get_transitive(ctx = ctx, srcs_not_hdrs = False).to_list()
-    src_files = [src.short_path for src in srcs]
-    hdr_files = [hdr.short_path for hdr in hdrs]
+    if test:
+        src_files = [src.short_path for src in srcs]
+        hdr_files = [hdr.short_path for hdr in hdrs]
+    else:
+        src_files = [src.path for src in srcs]
+        hdr_files = [hdr.path for hdr in hdrs]
     top = ctx.attr.top
     if top == "":
         if (len(ctx.attr.deps) != 1):
@@ -84,16 +88,26 @@ def _verilog_base_impl(ctx, subcmd, test = True, extra_args = [], extra_runfiles
     if not test:
         args.append("--dry-run")
     if ctx.attr.custom_tcl_header:
-        args.append("--custom_tcl_header=" + ctx.files.custom_tcl_header[0].short_path)
+        if test:
+            args.append("--custom_tcl_header=" + ctx.files.custom_tcl_header[0].short_path)
+        else:
+            args.append("--custom_tcl_header=" + ctx.files.custom_tcl_header[0].path)
         runfiles += ctx.files.custom_tcl_header
     if ctx.attr.custom_tcl_body:
-        args.append("--custom_tcl_body=" + ctx.files.custom_tcl_body[0].short_path)
+        if test:
+            args.append("--custom_tcl_body=" + ctx.files.custom_tcl_body[0].short_path)
+        else:
+            args.append("--custom_tcl_body=" + ctx.files.custom_tcl_body[0].path)
         runfiles += ctx.files.custom_tcl_body
     args += extra_args
 
     # TODO: This is a hack. We should use the py_binary target directly, but I'm not sure how to get the environment
     # to work correctly when we wrap the py_binary in a shell script that gets invoked later.
-    verilog_runner_cmd = " ".join(["python3"] + [ctx.files.verilog_runner_tool[0].short_path] + [subcmd] + args + src_files)
+    if test:
+        runner_path  = ctx.files.verilog_runner_tool[0].short_path
+    else:
+        runner_path = ctx.files.verilog_runner_tool[0].path
+    verilog_runner_cmd = " ".join(["python3"] + [runner_path] + [subcmd] + args + src_files)
     verilog_runner_runfiles = ctx.runfiles(files = srcs + hdrs + runfiles + extra_runfiles)
     if test:
         runner = ctx.label.name + "_runner.sh"
