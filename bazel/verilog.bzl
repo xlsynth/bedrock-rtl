@@ -104,7 +104,7 @@ def _verilog_base_impl(ctx, subcmd, test = True, extra_args = [], extra_runfiles
     # TODO: This is a hack. We should use the py_binary target directly, but I'm not sure how to get the environment
     # to work correctly when we wrap the py_binary in a shell script that gets invoked later.
     if test:
-        runner_path  = ctx.files.verilog_runner_tool[0].short_path
+        runner_path = ctx.files.verilog_runner_tool[0].short_path
     else:
         runner_path = ctx.files.verilog_runner_tool[0].path
     verilog_runner_cmd = " ".join(["python3"] + [runner_path] + [subcmd] + args + src_files)
