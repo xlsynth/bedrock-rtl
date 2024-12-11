@@ -40,6 +40,8 @@ module br_fifo_test_harness #(
     input logic [$clog2(Depth+1)-1:0] slots
 );
 
+  parameter int RandDelayMax = 10;
+
   // Scoreboard
   reg [Width-1:0] scoreboard[Depth*2];
 
@@ -146,8 +148,12 @@ module br_fifo_test_harness #(
       // Push process
       begin
         integer i;
+        integer delay;
+        @(negedge clk);
+
         for (i = 0; i < Depth * 2; i = i + 1) begin
-          @(negedge clk);
+          delay = $urandom_range(RandDelayMax);
+          repeat (delay) @(negedge clk);
           push_valid = 1'b1;
           push_data = i[Width-1:0];
           scoreboard[i] = push_data;
@@ -158,31 +164,34 @@ module br_fifo_test_harness #(
             $error("Cannot push data. FIFO Full.");
             error_count += 1;
           end
+          @(negedge clk);
+          push_valid = 1'b0;
         end
-        @(negedge clk);
-        push_valid = 0;
       end
       // Pop process
       begin
         integer j;
-        // Wait for the data to get to the pop side
-        repeat (CutThroughLatency + 1) @(negedge clk);
-        pop_ready = 1;
+        integer delay;
+
+        @(negedge clk);
+
         for (j = 0; j < Depth * 2; j = j + 1) begin
+          delay = $urandom_range(RandDelayMax);
+          repeat (delay) @(negedge clk);
+          pop_ready = 1;
+
           @(posedge clk);
-          if (pop_valid) begin
-            $display("Popped data: %0h | Items: %0d", pop_data, items);
-            if (pop_data != scoreboard[j]) begin
-              $error("Pop data mismatch! expect=%0h got=%0h", scoreboard[j], pop_data);
-              error_count += 1;
-            end
-          end else begin
-            $error("Cannot pop data. FIFO Empty.");
+          while (!pop_valid) @(posedge clk);
+
+          $display("Popped data: %0h | Items: %0d", pop_data, items);
+          if (pop_data != scoreboard[j]) begin
+            $error("Pop data mismatch! expect=%0h got=%0h", scoreboard[j], pop_data);
             error_count += 1;
           end
+
+          @(negedge clk);
+          pop_ready = 0;
         end
-        @(negedge clk);
-        pop_ready = 0;
       end
     join
 
