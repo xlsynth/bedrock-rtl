@@ -54,6 +54,7 @@ module br_cdc_fifo_flops_tb;
   br_cdc_fifo_flops #(
       .Depth(Depth),
       .Width(Width),
+      .NumSyncStages(NumSyncStages),
       .RegisterPopOutputs(RegisterPopOutputs),
       .FlopRamAddressDepthStages(FlopRamAddressDepthStages),
       .FlopRamReadDataDepthStages(FlopRamReadDataDepthStages)
@@ -80,7 +81,7 @@ module br_cdc_fifo_flops_tb;
 
   localparam int ResetActiveDelay = 1;
   localparam int RamWriteLatency = FlopRamAddressDepthStages + 1;
-  localparam int RamReadLatency = FlopRamReadDataDepthStages;
+  localparam int RamReadLatency = FlopRamAddressDepthStages + FlopRamReadDataDepthStages;
   localparam int CutThroughLatency =
   // Push-side retiming
   br_math::max2(

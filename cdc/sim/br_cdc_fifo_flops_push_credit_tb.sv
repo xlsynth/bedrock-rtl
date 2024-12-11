@@ -26,7 +26,7 @@ module br_cdc_fifo_flops_push_credit_tb ();
   localparam int PropDelay = 3;
   localparam int Width = 8;
   localparam int RamWriteLatency = FlopRamAddressDepthStages + 1;
-  localparam int RamReadLatency = FlopRamAddressDepthStages + FlopRamReadDataDepthStages + 1;
+  localparam int RamReadLatency = FlopRamAddressDepthStages + FlopRamReadDataDepthStages;
   localparam int CutThroughLatency = PropDelay + br_math::max2(
       2, RamWriteLatency + 1
   ) +  // push-side latency
