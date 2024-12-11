@@ -191,6 +191,7 @@ module br_fifo_staging_buffer #(
 
     logic maybe_full, maybe_full_next;
     logic ptr_match;
+    logic empty;
     // only used for assertion
     logic full;  // ri lint_check_waive NOT_READ HIER_NET_NOT_READ
     logic advance_wr_ptr;
@@ -198,6 +199,7 @@ module br_fifo_staging_buffer #(
 
     assign ptr_match = rd_ptr_onehot == wr_ptr_onehot;
     assign full = ptr_match && maybe_full;
+    assign empty = ptr_match && !maybe_full;
 
     // Maybe-full becomes high when there is a push without pop
     // and goes low when there is a pop without push
@@ -298,6 +300,7 @@ module br_fifo_staging_buffer #(
       // for each cell.
       logic [InternalDepth-1:0] mem_valid, mem_valid_next;
       logic [InternalDepth-1:0] mem_valid_set, mem_valid_clr;
+      logic mem_valid_le;
       logic head_valid;
 
       // If there is a write and read to the same cell on a cycle,
@@ -310,19 +313,31 @@ module br_fifo_staging_buffer #(
       assign mem_valid_set  = mem_wr_en & ~mem_rd_en;
       assign mem_valid_clr  = mem_rd_en & ~mem_wr_en;
       assign mem_valid_next = (mem_valid | mem_valid_set) & ~mem_valid_clr;
+      assign mem_valid_le   = advance_rd_ptr || ram_rd_data_valid || bypass_beat;
 
-      `BR_REGL(mem_valid, mem_valid_next, advance_rd_ptr || advance_wr_ptr)
+      `BR_REGL(mem_valid, mem_valid_next, mem_valid_le)
 
       assign head_valid = |(mem_valid & rd_ptr_onehot);
-      assign internal_pop_valid = head_valid || push_valid;
+      // internal_pop_valid can come from the head of the buffer
+      // or be bypassed directly from the read data or the bypass data
+      // For bypass data, we can only do direct bypass when the buffer is empty
+      assign internal_pop_valid = head_valid ||
+                                  ram_rd_data_valid ||
+                                  (empty && bypass_valid_unstable);
       assign internal_pop_data = head_valid ? mem_rd_data : push_data;
+
+      // Not used in this configuration
+      `BR_UNUSED(push_valid)
 
       `BR_ASSERT_IMPL(no_push_hazard_a, ~|(mem_wr_en_immediate & mem_wr_en_delayed))
       `BR_ASSERT_IMPL(no_push_overwrite_a, ~|(mem_wr_en & mem_valid & ~mem_rd_en))
+      `BR_ASSERT_IMPL(bypass_to_pop_correct_address_a,
+                      (!head_valid && !ram_rd_data_valid && internal_pop_valid)
+                      |->
+                      (bypass_valid_unstable && (wr_ptr_onehot == rd_ptr_onehot)))
+      `BR_ASSERT_IMPL(rd_data_to_pop_correct_address_a,
+                      (!head_valid && ram_rd_data_valid) |-> (wr_ptr_onehot_d == rd_ptr_onehot))
     end else begin : gen_nonbypass_mem_wr
-      logic empty;
-
-      assign empty = ptr_match && !maybe_full;
       assign advance_wr_ptr = push_valid;
       assign mem_wr_en = push_valid ? wr_ptr_onehot : '0;
       assign mem_wr_data = {InternalDepth{ram_rd_data}};
