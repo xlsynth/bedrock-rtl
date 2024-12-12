@@ -109,7 +109,7 @@ module br_ecc_sed_decoder #(
   //
   // (Also, in a linear code, syndrome 0 means a legal codeword.)
   assign syndrome = ^rcv_codeword;
-  assign due = dec_valid && (syndrome == '0);
+  assign due = dec_valid && (syndrome != '0);
 
   //------
   // Optionally register the output signals.
