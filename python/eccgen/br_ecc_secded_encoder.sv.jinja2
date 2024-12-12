@@ -65,6 +65,8 @@
 module br_ecc_secded_encoder #(
     parameter int DataWidth = 1,  // Must be at least 1
     parameter int ParityWidth = 4,  // Must be at least 4 and at most 12
+    // If 1, then insert a pipeline register at the input.
+    parameter bit RegisterInputs = 0,
     // If 1, then insert a pipeline register at the output.
     parameter bit RegisterOutputs = 0,
     localparam int MessageWidth = 2 ** $clog2(DataWidth),
@@ -76,8 +78,8 @@ module br_ecc_secded_encoder #(
     input  logic                     rst,
     input  logic                     data_valid,
     input  logic [    DataWidth-1:0] data,
-    output logic                     codeword_valid,
-    output logic [CodewordWidth-1:0] codeword
+    output logic                     enc_codeword_valid,
+    output logic [CodewordWidth-1:0] enc_codeword
 );
 
   // ri lint_check_waive PARAM_NOT_USED
@@ -95,17 +97,37 @@ module br_ecc_secded_encoder #(
   // Implementation
   //------------------------------------------
 
+  //------
+  // Optionally register the input signals.
+  //------
+  logic data_valid_d;
+  logic [DataWidth-1:0] data_d;
+
+  br_delay_valid #(
+      .Width(DataWidth),
+      .NumStages(RegisterInputs == 1 ? 1 : 0)
+  ) br_delay_valid_inputs (
+      .clk,
+      .rst,
+      .in_valid(data_valid),
+      .in(data),
+      .out_valid(data_valid_d),
+      .out(data_d),
+      .out_valid_stages(),  // unused
+      .out_stages()  // unused
+  );
 
   //------
-  // Pad data to the nearest power of 2 message width.
+  // Pad the data to the nearest power of 2 message width.
   //------
+
   localparam int PadWidth = MessageWidth - DataWidth;
-  logic [MessageWidth-1:0] message;
+  logic [MessageWidth-1:0] m;
 
   if (PadWidth > 0) begin : gen_pad
-    assign message = { {PadWidth{1'b0} }, data};
+    assign m = { {PadWidth{1'b0} }, data_d};
   end else begin : gen_no_pad
-    assign message = data;
+    assign m = data_d;
   end
 
   //------
@@ -152,7 +174,7 @@ module br_ecc_secded_encoder #(
   // Concatenate message and parity bits to form the codeword.
   //------
   logic [CodewordWidth-1:0] internal_codeword;
-  assign internal_codeword = {parity, message};
+  assign internal_codeword = {parity, m};
 
   //------
   // Optionally register the output signals.
@@ -163,10 +185,10 @@ module br_ecc_secded_encoder #(
   ) br_delay_valid_outputs (
       .clk,
       .rst,
-      .in_valid(data_valid),
+      .in_valid(data_valid_d),
       .in({internal_codeword}),
-      .out_valid(codeword_valid),
-      .out(codeword),
+      .out_valid(enc_codeword_valid),
+      .out(enc_codeword),
       .out_valid_stages(),  // unused
       .out_stages()  // unused
   );
@@ -174,7 +196,7 @@ module br_ecc_secded_encoder #(
   //------------------------------------------
   // Implementation checks
   //------------------------------------------
-  `BR_ASSERT_IMPL(latency_a, data_valid |-> ##Latency codeword_valid)
+  `BR_ASSERT_IMPL(latency_a, data_valid |-> ##Latency enc_codeword_valid)
 
   // verilog_lint: waive-stop line-length
   // verilog_format: on

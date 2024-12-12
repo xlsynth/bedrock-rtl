@@ -63,35 +63,41 @@
 
 `include "br_asserts.svh"
 `include "br_asserts_internal.svh"
-`include "br_unused.svh"
 
 // TODO(mgottscho): Pipeline the syndrome decoding and then correction with a parameter.
 module br_ecc_secded_decoder #(
     parameter int DataWidth = 1,  // Must be at least 1
     parameter int ParityWidth = 4,  // Must be at least 4 and at most 12
+    // If 1, then insert a pipeline register at the input.
+    parameter bit RegisterInputs = 0,
     // If 1, then insert a pipeline register between syndrome computation and
     // syndrome decoding (error correction).
     parameter bit RegisterSyndrome = 0,
     // If 1, then insert a pipeline register at the output.
     parameter bit RegisterOutputs = 0,
     localparam int MessageWidth = 2 ** $clog2(DataWidth),
-    localparam int CodewordWidth = MessageWidth + ParityWidth
+    localparam int CodewordWidth = MessageWidth + ParityWidth,
+    // ri lint_check_waive PARAM_NOT_USED
+    localparam int Latency = RegisterInputs + RegisterSyndrome + RegisterOutputs
 ) (
     // Positive edge-triggered clock.
     input  logic                     clk,
     // Synchronous active-high reset.
     input  logic                     rst,
-    input  logic                     codeword_valid,
-    input  logic [CodewordWidth-1:0] codeword,
-    output logic                     data_valid,
-    output logic [    DataWidth-1:0] data,
-    output logic                     data_error_corrected,
-    output logic                     data_error_detected_but_uncorrectable,
-    output logic [  ParityWidth-1:0] data_error_syndrome
-);
 
-  // ri lint_check_waive PARAM_NOT_USED
-  localparam int Latency = RegisterSyndrome + RegisterOutputs;
+    // Decoder input (received codeword, possibly with errors)
+    input  logic                     rcv_valid,
+    input  logic [CodewordWidth-1:0] rcv_codeword,
+
+    // Decoder output
+    output logic                     dec_valid,
+    output logic [CodewordWidth-1:0] dec_codeword,
+    output logic                     dec_codeword_error_ce,  // corrected error
+    output logic                     dec_codeword_error_due,  // detected-but-uncorrectable error
+    output logic [  ParityWidth-1:0] dec_codeword_error_syndrome,
+    output logic [ MessageWidth-1:0] dec_message,
+    output logic [    DataWidth-1:0] dec_data
+);
 
   //------------------------------------------
   // Integration checks
@@ -104,12 +110,34 @@ module br_ecc_secded_decoder #(
   //------------------------------------------
   // Implementation
   //------------------------------------------
-  logic [CodewordWidth-1:0][ParityWidth-1:0] parity_check_matrix;  // H
-  logic [ParityWidth-1:0] syndrome;
+
+  //------
+  // Optionally register the input signals.
+  //------
+  logic rcv_valid_d;
+  logic [CodewordWidth-1:0] rcv_codeword_d;
+
+  br_delay_valid #(
+      .Width(CodewordWidth),
+      .NumStages(RegisterInputs == 1 ? 1 : 0)
+  ) br_delay_valid_inputs (
+      .clk,
+      .rst,
+      .in_valid(rcv_valid),
+      .in(rcv_codeword),
+      .out_valid(rcv_valid_d),
+      .out(rcv_codeword_d),
+      .out_valid_stages(),  // unused
+      .out_stages()  // unused
+  );
 
   //------
   // Compute syndrome and set up constant parity check matrix.
   //------
+  logic [CodewordWidth-1:0][ParityWidth-1:0] parity_check_matrix;  // H
+  logic [ParityWidth-1:0] syndrome;
+  logic [CodewordWidth-1:0] cw;  // shorten name for internal readability
+  assign cw = rcv_codeword_d;
 
   // ri lint_check_off EXPR_ID_LIMIT
 
@@ -168,8 +196,8 @@ module br_ecc_secded_decoder #(
   ) br_delay_valid_syndrome (
       .clk,
       .rst,
-      .in_valid(codeword_valid),
-      .in({codeword, syndrome}),
+      .in_valid(rcv_valid_d),
+      .in({rcv_codeword_d, syndrome}),
       .out_valid(internal_valid),
       .out({internal_codeword, internal_error_syndrome}),
       .out_valid_stages(),  // unused
@@ -224,32 +252,19 @@ module br_ecc_secded_decoder #(
   assign internal_error_due = (internal_due_even || internal_due_odd);
 
   // Case 2b (correctable with single-bit error)
-  logic internal_error_corrected;
-  assign internal_error_corrected =
+  logic internal_error_ce;
+  assign internal_error_ce =
     internal_error_syndrome_is_odd && (internal_h_column_match != '0);
 
   //------
   // Correct the codeword (if necessary and possible), then extract the message and data.
   //------
-  // If there was a DUE, then the corrected codeword is still corrupted and
+  // If there was a DUE, then the corr codeword is still corrupted and
   // the message and data are likely to also be corrupted.
 
   logic [CodewordWidth-1:0] internal_corrected_codeword;
-  logic [ MessageWidth-1:0] internal_message;
-  logic [DataWidth-1:0] internal_data;
 
   assign internal_corrected_codeword = internal_codeword ^ internal_h_column_match;
-  assign internal_message = internal_corrected_codeword[MessageWidth-1:0];
-
-  `BR_UNUSED_NAMED(corrected_codeword_parity,
-    internal_corrected_codeword[CodewordWidth-1:MessageWidth])
-
-  if (MessageWidth > DataWidth) begin : gen_pad
-    assign internal_data = internal_message[DataWidth-1:0];
-    `BR_UNUSED_NAMED(messsage_pad, internal_message[MessageWidth-1:DataWidth])
-  end else begin : gen_no_pad
-    assign internal_data = internal_message;
-  end
 
   `BR_ASSERT_IMPL(internal_h_column_match_onehot0_a,
                   internal_valid |-> $onehot0(internal_h_column_match))
@@ -257,43 +272,47 @@ module br_ecc_secded_decoder #(
                   internal_valid && internal_error_due |->
                   (internal_h_column_match == '0))
   `BR_ASSERT_IMPL(no_error_correction_a,
-                  internal_valid && !internal_error_corrected |->
+                  internal_valid && !internal_error_ce |->
                   (internal_corrected_codeword == internal_codeword))
   `BR_ASSERT_IMPL(error_correction_a,
-                  internal_valid && internal_error_corrected |->
+                  internal_valid && internal_error_ce |->
                   (internal_corrected_codeword != internal_codeword))
 
   //------
   // Optionally register the output signals.
   //------
   br_delay_valid #(
-      .Width({(DataWidth + 32'd2) + ParityWidth}),
+      .Width(CodewordWidth + 2 + ParityWidth),
       .NumStages(RegisterOutputs == 1 ? 1 : 0)
   ) br_delay_valid_outputs (
       .clk,
       .rst,
       .in_valid(internal_valid),
-      .in({internal_data,
-          internal_error_corrected,
+      .in({internal_corrected_codeword,
+          internal_error_ce,
           internal_error_due,
           internal_error_syndrome}),
-      .out_valid(data_valid),
-      .out({data,
-            data_error_corrected,
-            data_error_detected_but_uncorrectable,
-            data_error_syndrome}),
+      .out_valid(dec_valid),
+      .out({dec_codeword,
+            dec_codeword_error_ce,
+            dec_codeword_error_due,
+            dec_codeword_error_syndrome}),
       .out_valid_stages(),  // unused
       .out_stages()  // unused
   );
 
+  assign dec_message = dec_codeword[MessageWidth-1:0];
+  // ri lint_check_waive FULL_RANGE
+  assign dec_data = dec_message[DataWidth-1:0];
+
   //------------------------------------------
   // Implementation checks
   //------------------------------------------
-  `BR_ASSERT_IMPL(latency_a, codeword_valid |-> ##Latency data_valid)
+  `BR_ASSERT_IMPL(latency_a, rcv_valid |-> ##Latency dec_valid)
   `BR_ASSERT_IMPL(ce_due_mutually_exclusive_a,
-                  data_valid |-> $onehot0({data_error_corrected, data_error_detected_but_uncorrectable}))
-  `BR_COVER_IMPL(ce_c, data_valid && data_error_corrected)
-  `BR_COVER_IMPL(due_c, data_valid && data_error_detected_but_uncorrectable)
+                  dec_valid |-> $onehot0({dec_codeword_error_ce, dec_codeword_error_due}))
+  `BR_COVER_IMPL(ce_c, dec_valid && dec_codeword_error_ce)
+  `BR_COVER_IMPL(due_c, dec_valid && dec_codeword_error_due)
 
   // verilog_format: on
   // verilog_lint: waive-stop line-length

@@ -283,7 +283,7 @@ def G_col_to_sv(col: np.ndarray, col_idx: int) -> str:
     xors = []
     nonzero_indices = np.nonzero(col)[0]
     for i in nonzero_indices:
-        xors.append(f"message[{i}]")
+        xors.append(f"m[{i}]")
     return f"    assign parity[{col_idx}] = " + " ^ ".join(xors) + ";"
 
 
@@ -304,7 +304,7 @@ def syndrome_bit_to_sv(row: np.ndarray, row_idx: int) -> str:
     xors = []
     nonzero_indices = np.nonzero(row)[0]
     for i in nonzero_indices:
-        xors.append(f"codeword[{i}]")
+        xors.append(f"cw[{i}]")
     return f"    assign syndrome[{row_idx}] = " + " ^ ".join(xors) + ";"
 
 
