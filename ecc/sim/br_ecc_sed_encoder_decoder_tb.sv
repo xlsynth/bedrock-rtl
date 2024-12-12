@@ -16,29 +16,25 @@
 // limitations under the License.
 
 
-// Testbench for br_ecc_secded_encoder and br_ecc_secded_decoder
+// Testbench for br_ecc_sed_encoder and br_ecc_sed_decoder
 
 `timescale 1ns / 1ps
 
-module br_ecc_secded_encoder_decoder_tb;
+module br_ecc_sed_encoder_decoder_tb;
 
   // Parameters
   parameter int DataWidth = 8;
-  parameter int ParityWidth = 5;
-  // Separate RegisterOutputs parameters for encoder and decoder
   parameter bit EncoderRegisterInputs = 0;
   parameter bit EncoderRegisterOutputs = 0;
   parameter bit DecoderRegisterInputs = 0;
-  parameter bit DecoderRegisterSyndrome = 0;
   parameter bit DecoderRegisterOutputs = 0;
-  localparam int MessageWidth = 2 ** $clog2(DataWidth);
+  localparam int MessageWidth = DataWidth;
+  localparam int ParityWidth = 1;
   localparam int CodewordWidth = MessageWidth + ParityWidth;
-
   localparam int E2ELatency =
       EncoderRegisterInputs +
       EncoderRegisterOutputs +
       DecoderRegisterInputs +
-      DecoderRegisterSyndrome +
       DecoderRegisterOutputs;
 
   // Clock and reset
@@ -56,18 +52,16 @@ module br_ecc_secded_encoder_decoder_tb;
   // Decoder outputs
   logic dec_valid;
   logic [CodewordWidth-1:0] dec_codeword;
-  logic dec_error_ce;
   logic dec_error_due;
   logic [ParityWidth-1:0] dec_error_syndrome;
   logic [DataWidth-1:0] dec_data;
 
   // Instantiate encoder
-  br_ecc_secded_encoder #(
+  br_ecc_sed_encoder #(
       .DataWidth(DataWidth),
-      .ParityWidth(ParityWidth),
       .RegisterInputs(EncoderRegisterInputs),
       .RegisterOutputs(EncoderRegisterOutputs)
-  ) br_ecc_secded_encoder (
+  ) br_ecc_sed_encoder (
       .clk,
       .rst,
       .data_valid,
@@ -77,23 +71,19 @@ module br_ecc_secded_encoder_decoder_tb;
   );
 
   // Instantiate decoder (inputs connected directly to encoder outputs)
-  br_ecc_secded_decoder #(
+  br_ecc_sed_decoder #(
       .DataWidth(DataWidth),
-      .ParityWidth(ParityWidth),
       .RegisterInputs(DecoderRegisterInputs),
-      .RegisterSyndrome(DecoderRegisterSyndrome),
       .RegisterOutputs(DecoderRegisterOutputs)
-  ) br_ecc_secded_decoder (
+  ) br_ecc_sed_decoder (
       .clk,
       .rst,
       .rcv_valid(enc_valid),
       .rcv_codeword(enc_codeword),
       .dec_valid,
       .dec_codeword,
-      .dec_error_ce,
       .dec_error_due,
       .dec_error_syndrome,
-      .dec_message(),  // unused
       .dec_data
   );
 
@@ -134,20 +124,14 @@ module br_ecc_secded_encoder_decoder_tb;
                dec_data);
         error_counter = error_counter + 1;
       end
-      if (dec_error_ce) begin
-        $error("Test %0d FAILED: error corrected when it was not supposed to", i);
-        error_counter = error_counter + 1;
-      end
       if (dec_error_due) begin
-        $error("Test %0d FAILED: error DUE when it was not supposed to", i);
+        $error("Test %0d FAILED: error due when it was not supposed to", i);
         error_counter = error_counter + 1;
       end
 
       // Wait for a cycle before next test
       @(negedge clk);
     end
-
-    // TODO: Test single error correction and double-error-detection.
 
     // Print final result
     if (error_counter == 0) begin

@@ -25,12 +25,15 @@ package(default_visibility = ["//visibility:public"])
 verilog_library(
     name = "br_ecc_sed_encoder",
     srcs = ["br_ecc_sed_encoder.sv"],
-    deps = ["//macros:br_asserts_internal"],
+    deps = [
+        "//delay/rtl:br_delay_valid",
+        "//macros:br_asserts_internal",
+    ],
 )
 
 br_verilog_elab_and_lint_test_suite(
     name = "br_ecc_sed_encoder_test_suite",
-    params = {"MessageWidth": [
+    params = {"DataWidth": [
         "1",
         "32",
     ]},
@@ -43,12 +46,15 @@ br_verilog_elab_and_lint_test_suite(
 verilog_library(
     name = "br_ecc_sed_decoder",
     srcs = ["br_ecc_sed_decoder.sv"],
-    deps = ["//macros:br_asserts_internal"],
+    deps = [
+        "//delay/rtl:br_delay_valid",
+        "//macros:br_asserts_internal",
+    ],
 )
 
 br_verilog_elab_and_lint_test_suite(
     name = "br_ecc_sed_decoder_test_suite",
-    params = {"MessageWidth": [
+    params = {"DataWidth": [
         "1",
         "32",
     ]},
@@ -142,7 +148,6 @@ verilog_library(
         "//delay/rtl:br_delay_valid",
         "//macros:br_asserts",
         "//macros:br_asserts_internal",
-        "//macros:br_unused",
         "//pkg:br_math_pkg",
     ],
 )

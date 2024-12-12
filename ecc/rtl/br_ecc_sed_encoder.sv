@@ -37,37 +37,88 @@
 `include "br_asserts_internal.svh"
 
 module br_ecc_sed_encoder #(
-    parameter int MessageWidth = 1,  // Must be at least 1
-    localparam int CodewordWidth = MessageWidth + 1
+    parameter int DataWidth = 1,  // Must be at least 1
+    // If 1, then insert a pipeline register at the input.
+    parameter bit RegisterInputs = 0,
+    // If 1, then insert a pipeline register at the output.
+    parameter bit RegisterOutputs = 0,
+    // Message width is the same as the data width (no internal padding)
+    localparam int ParityWidth = 1,
+    localparam int CodewordWidth = DataWidth + ParityWidth,
+    // ri lint_check_waive PARAM_NOT_USED
+    localparam int Latency = RegisterInputs + RegisterOutputs
 ) (
-    input  logic                     message_valid,
-    input  logic [ MessageWidth-1:0] message,
-    output logic                     codeword_valid,
-    output logic [CodewordWidth-1:0] codeword
+    // Positive edge-triggered clock.
+    input  logic                     clk,
+    // Synchronous active-high reset.
+    input  logic                     rst,
+    input  logic                     data_valid,
+    input  logic [    DataWidth-1:0] data,
+    output logic                     enc_valid,
+    output logic [CodewordWidth-1:0] enc_codeword
 );
 
   //------------------------------------------
   // Integration checks
   //------------------------------------------
-  `BR_ASSERT_STATIC(message_width_gte_1_a, MessageWidth >= 1)
+  `BR_ASSERT_STATIC(data_width_gte_1_a, DataWidth >= 1)
 
   //------------------------------------------
   // Implementation
   //------------------------------------------
 
+  //------
+  // Optionally register the input signals.
+  //------
+  logic data_valid_d;
+  logic [DataWidth-1:0] data_d;
+
+  br_delay_valid #(
+      .Width(DataWidth),
+      .NumStages(RegisterInputs == 1 ? 1 : 0)
+  ) br_delay_valid_inputs (
+      .clk,
+      .rst,
+      .in_valid(data_valid),
+      .in(data),
+      .out_valid(data_valid_d),
+      .out(data_d),
+      .out_valid_stages(),  // unused
+      .out_stages()  // unused
+  );
+
+  // ------
+  // Compute parity
+  // ------
+
   // Even parity: the total number of 1s in a valid codeword
   // (including the parity bits) is even.
-  logic message_parity;
-  assign message_parity = ^message;
-  assign codeword = {message_parity, message};
-  assign codeword_valid = message_valid;
+  logic parity;
+  logic [CodewordWidth-1:0] codeword;
+  assign parity   = ^data_d;
+  assign codeword = {parity, data_d};
+
+  //------
+  // Optionally register the output signals.
+  //------
+  br_delay_valid #(
+      .Width(CodewordWidth),
+      .NumStages(RegisterOutputs == 1 ? 1 : 0)
+  ) br_delay_valid_outputs (
+      .clk,
+      .rst,
+      .in_valid(data_valid_d),
+      .in(codeword),
+      .out_valid(enc_valid),
+      .out(enc_codeword),
+      .out_valid_stages(),  // unused
+      .out_stages()  // unused
+  );
 
   //------------------------------------------
   // Implementation checks
   //------------------------------------------
-  // ri lint_check_waive ALWAYS_COMB
-  `BR_ASSERT_COMB_IMPL(codeword_valid_eq_message_valid_a, codeword_valid == message_valid)
-  // ri lint_check_waive ALWAYS_COMB
-  `BR_ASSERT_COMB_IMPL(even_parity_a, ^codeword == 1'b0)
+  `BR_ASSERT_IMPL(latency_a, data_valid |-> ##Latency enc_valid)
+  `BR_ASSERT_IMPL(even_parity_a, enc_valid |-> ^enc_codeword == 1'b0)
 
 endmodule : br_ecc_sed_encoder

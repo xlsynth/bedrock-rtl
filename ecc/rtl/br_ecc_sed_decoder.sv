@@ -41,43 +41,101 @@
 `include "br_asserts_internal.svh"
 
 module br_ecc_sed_decoder #(
-    parameter int MessageWidth = 1,  // Must be at least 1
-    localparam int CodewordWidth = MessageWidth + 1
+    parameter int DataWidth = 1,  // Must be at least 1
+    // If 1, then insert a pipeline register at the input.
+    parameter bit RegisterInputs = 0,
+    // If 1, then insert a pipeline register at the output.
+    parameter bit RegisterOutputs = 0,
+    // Message width is the same as the data width (no internal padding)
+    localparam int ParityWidth = 1,
+    localparam int CodewordWidth = DataWidth + ParityWidth,
+    // ri lint_check_waive PARAM_NOT_USED
+    localparam int Latency = RegisterInputs + RegisterOutputs
 ) (
-    input  logic                     codeword_valid,
-    input  logic [CodewordWidth-1:0] codeword,
-    output logic                     message_valid,
-    output logic [ MessageWidth-1:0] message,
-    output logic                     single_error_detected
+    // Positive edge-triggered clock.
+    input logic clk,
+    // Synchronous active-high reset.
+    input logic rst,
+
+    // Decoder input (received codeword, possibly with errors)
+    input logic                     rcv_valid,
+    input logic [CodewordWidth-1:0] rcv_codeword,
+
+    // Decoder output
+    output logic dec_valid,
+    output logic [CodewordWidth-1:0] dec_codeword,
+    output logic dec_error_due,  // detected-but-uncorrectable error
+    output logic dec_error_syndrome,
+    output logic [DataWidth-1:0] dec_data
 );
 
   //------------------------------------------
   // Integration checks
   //------------------------------------------
-  `BR_ASSERT_STATIC(message_width_gte_1_a, MessageWidth >= 1)
+  `BR_ASSERT_STATIC(data_width_gte_1_a, DataWidth >= 1)
 
   //------------------------------------------
   // Implementation
   //------------------------------------------
 
-  // SED code cannot correct errors, so just forward the message portion
-  // of the codeword as-is even if an error is detected.
-  assign message_valid = codeword_valid;
-  assign message = codeword[MessageWidth-1:0];
+  //------
+  // Optionally register the input signals.
+  //------
+  logic rcv_valid_d;
+  logic [CodewordWidth-1:0] rcv_codeword_d;
+
+  br_delay_valid #(
+      .Width(CodewordWidth),
+      .NumStages(RegisterInputs == 1 ? 1 : 0)
+  ) br_delay_valid_inputs (
+      .clk,
+      .rst,
+      .in_valid(rcv_valid),
+      .in(rcv_codeword),
+      .out_valid(rcv_valid_d),
+      .out(rcv_codeword_d),
+      .out_valid_stages(),  // unused
+      .out_stages()  // unused
+  );
+
+  // ------
+  // Compute syndrome
+  // ------
+  logic syndrome;
+  logic due;
 
   // Even parity: the total number of 1s in a valid codeword
   // (including the parity bits) is even.
-  logic codeword_parity;
-  logic codeword_parity_is_even;
-  assign codeword_parity = ^codeword;
-  assign codeword_parity_is_even = codeword_parity == 1'b0;
+  //
+  // (Also, in a linear code, syndrome 0 means a legal codeword.)
+  assign syndrome = ^rcv_codeword;
+  assign due = dec_valid && (syndrome != '0);
 
-  assign single_error_detected = codeword_valid && !codeword_parity_is_even;
+  //------
+  // Optionally register the output signals.
+  //------
+  br_delay_valid #(
+      .Width(CodewordWidth + 2),
+      .NumStages(RegisterOutputs == 1 ? 1 : 0)
+  ) br_delay_valid_outputs (
+      .clk,
+      .rst,
+      .in_valid(rcv_valid_d),
+      .in({rcv_codeword_d, syndrome, due}),
+      .out_valid(dec_valid),
+      .out({dec_codeword, dec_error_syndrome, dec_error_due}),
+      .out_valid_stages(),  // unused
+      .out_stages()  // unused
+  );
+
+  // SED code cannot correct errors, so just forward the message (data) portion
+  // of the codeword as-is even if an error is detected.
+  assign dec_data = dec_codeword[DataWidth-1:0];
 
   //------------------------------------------
   // Implementation checks
   //------------------------------------------
-  // ri lint_check_waive ALWAYS_COMB
-  `BR_ASSERT_COMB_IMPL(codeword_valid_eq_message_valid_a, codeword_valid == message_valid)
+  `BR_ASSERT_IMPL(latency_a, rcv_valid |-> ##Latency dec_valid)
+  `BR_COVER_IMPL(due_c, dec_valid && dec_error_due)
 
 endmodule : br_ecc_sed_decoder
