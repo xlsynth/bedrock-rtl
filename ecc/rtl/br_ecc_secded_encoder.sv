@@ -34,8 +34,9 @@
 // the MSbs:
 //     codeword == {parity, message}
 //
-// This module has a parameterizable number of pipeline stages, ranging from fully
-// combinational to 1 cycle of latency.
+// This module has parameterizable latency. By default, it is purely combinational,
+// but it can have up to 2 cycles of delay (RegisterInputs and RegisterOutputs).
+// The initiation interval is always 1 cycle.
 //
 // Any data width >= 1 is supported. It is internally zero-padded up to
 // the nearest power-of-2 message width before being encoded. The following

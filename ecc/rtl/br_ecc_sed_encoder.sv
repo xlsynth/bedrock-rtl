@@ -30,9 +30,9 @@
 // the MSbs:
 //     codeword == {parity, message}
 //
-// This is a purely combinational module. Valid bits are provided for
-// convenience of user integration and port compatibility with the
-// corresponding decoder module (br_ecc_sed_decoder).
+// This module has parameterizable latency. By default, it is purely combinational,
+// but it can have up to 2 cycles of delay (RegisterInputs and RegisterOutputs).
+// The initiation interval is always 1 cycle.
 
 `include "br_asserts_internal.svh"
 

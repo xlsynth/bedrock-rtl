@@ -36,8 +36,9 @@
 //
 // The data is still marked valid even if an error is detected.
 //
-// This module has a parameterizable number of pipeline stages, ranging from fully
-// combinational to 2 cycles of latency.
+// This module has parameterizable latency. By default, it is purely combinational,
+// but it can have up to 3 cycles of delay (RegisterInputs, RegisterSyndrome, and
+// RegisterOutputs). The initiation interval is always 1 cycle.
 //
 // Any data width >= 1 is supported. It is considered internally zero-padded up to
 // the nearest power-of-2 message width as part of decoding. The following

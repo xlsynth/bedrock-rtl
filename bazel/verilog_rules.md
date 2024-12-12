@@ -38,8 +38,8 @@ Tests that a Verilog or SystemVerilog design elaborates. Needs VERILOG_RUNNER_PL
 <pre>
 load("@bedrock-rtl//bazel:verilog.bzl", "rule_verilog_fpv_test")
 
-rule_verilog_fpv_test(<a href="#rule_verilog_fpv_test-name">name</a>, <a href="#rule_verilog_fpv_test-deps">deps</a>, <a href="#rule_verilog_fpv_test-custom_tcl_body">custom_tcl_body</a>, <a href="#rule_verilog_fpv_test-custom_tcl_header">custom_tcl_header</a>, <a href="#rule_verilog_fpv_test-defines">defines</a>, <a href="#rule_verilog_fpv_test-elab_only">elab_only</a>, <a href="#rule_verilog_fpv_test-gui">gui</a>, <a href="#rule_verilog_fpv_test-opts">opts</a>,
-                      <a href="#rule_verilog_fpv_test-params">params</a>, <a href="#rule_verilog_fpv_test-tool">tool</a>, <a href="#rule_verilog_fpv_test-top">top</a>, <a href="#rule_verilog_fpv_test-verilog_runner_tool">verilog_runner_tool</a>)
+rule_verilog_fpv_test(<a href="#rule_verilog_fpv_test-name">name</a>, <a href="#rule_verilog_fpv_test-deps">deps</a>, <a href="#rule_verilog_fpv_test-analysis_opts">analysis_opts</a>, <a href="#rule_verilog_fpv_test-custom_tcl_body">custom_tcl_body</a>, <a href="#rule_verilog_fpv_test-custom_tcl_header">custom_tcl_header</a>, <a href="#rule_verilog_fpv_test-defines">defines</a>,
+                      <a href="#rule_verilog_fpv_test-elab_only">elab_only</a>, <a href="#rule_verilog_fpv_test-elab_opts">elab_opts</a>, <a href="#rule_verilog_fpv_test-gui">gui</a>, <a href="#rule_verilog_fpv_test-opts">opts</a>, <a href="#rule_verilog_fpv_test-params">params</a>, <a href="#rule_verilog_fpv_test-tool">tool</a>, <a href="#rule_verilog_fpv_test-top">top</a>, <a href="#rule_verilog_fpv_test-verilog_runner_tool">verilog_runner_tool</a>)
 </pre>
 
 Runs Verilog/SystemVerilog compilation and formal verification in one command. This rule should be used for simple formal unit tests. Needs VERILOG_RUNNER_PLUGIN_PATH environment variable to be set correctly.
@@ -51,10 +51,12 @@ Runs Verilog/SystemVerilog compilation and formal verification in one command. T
 | :------------- | :------------- | :------------- | :------------- | :------------- |
 | <a id="rule_verilog_fpv_test-name"></a>name |  A unique name for this target.   | <a href="https://bazel.build/concepts/labels#target-names">Name</a> | required |  |
 | <a id="rule_verilog_fpv_test-deps"></a>deps |  The dependencies of the test.   | <a href="https://bazel.build/concepts/labels">List of labels</a> | optional |  `[]`  |
+| <a id="rule_verilog_fpv_test-analysis_opts"></a>analysis_opts |  custom analysis options   | List of strings | optional |  `[]`  |
 | <a id="rule_verilog_fpv_test-custom_tcl_body"></a>custom_tcl_body |  Tcl script file containing custom tool-specific commands to insert in the middle of the generated tcl script after the elaboration step.The tcl body (custom or not) is unconditionally followed by the tcl footer.Do not include Tcl commands that manipulate sources, headers, defines, or parameters, as those will be handled by the rule implementation.   | <a href="https://bazel.build/concepts/labels">Label</a> | optional |  `None`  |
 | <a id="rule_verilog_fpv_test-custom_tcl_header"></a>custom_tcl_header |  Tcl script file containing custom tool-specific commands to insert at the beginning of the generated tcl script.The tcl header (custom or not) is unconditionally followed by analysis and elaborate commands, and then the tcl body.Do not include Tcl commands that manipulate sources, headers, defines, or parameters, as those will be handled by the rule implementation.   | <a href="https://bazel.build/concepts/labels">Label</a> | optional |  `None`  |
 | <a id="rule_verilog_fpv_test-defines"></a>defines |  Preprocessor defines to pass to the Verilog compiler.   | List of strings | optional |  `[]`  |
 | <a id="rule_verilog_fpv_test-elab_only"></a>elab_only |  Only run elaboration.   | Boolean | optional |  `False`  |
+| <a id="rule_verilog_fpv_test-elab_opts"></a>elab_opts |  custom elab options   | List of strings | optional |  `[]`  |
 | <a id="rule_verilog_fpv_test-gui"></a>gui |  Enable GUI.   | Boolean | optional |  `False`  |
 | <a id="rule_verilog_fpv_test-opts"></a>opts |  Tool-specific options not covered by other arguments. If provided, then 'tool' must also be set.   | List of strings | optional |  `[]`  |
 | <a id="rule_verilog_fpv_test-params"></a>params |  Verilog module parameters to set in the instantiation of the top-level module.   | <a href="https://bazel.build/rules/lib/dict">Dictionary: String -> String</a> | optional |  `{}`  |
