@@ -64,8 +64,8 @@ module br_ecc_sed_decoder #(
     // Decoder output
     output logic dec_valid,
     output logic [CodewordWidth-1:0] dec_codeword,
-    output logic dec_codeword_error_due,  // detected-but-uncorrectable error
-    output logic dec_codeword_error_syndrome,
+    output logic dec_error_due,  // detected-but-uncorrectable error
+    output logic dec_error_syndrome,
     output logic [DataWidth-1:0] dec_data
 );
 
@@ -123,7 +123,7 @@ module br_ecc_sed_decoder #(
       .in_valid(rcv_valid_d),
       .in({rcv_codeword_d, syndrome, due}),
       .out_valid(dec_valid),
-      .out({dec_codeword, dec_codeword_error_syndrome, dec_codeword_error_due}),
+      .out({dec_codeword, dec_error_syndrome, dec_error_due}),
       .out_valid_stages(),  // unused
       .out_stages()  // unused
   );
@@ -136,6 +136,6 @@ module br_ecc_sed_decoder #(
   // Implementation checks
   //------------------------------------------
   `BR_ASSERT_IMPL(latency_a, rcv_valid |-> ##Latency dec_valid)
-  `BR_COVER_IMPL(due_c, dec_valid && dec_codeword_error_due)
+  `BR_COVER_IMPL(due_c, dec_valid && dec_error_due)
 
 endmodule : br_ecc_sed_decoder

@@ -50,15 +50,15 @@ module br_ecc_secded_encoder_decoder_tb;
   logic [DataWidth-1:0] data;
 
   // Encoder outputs (directly connected to decoder inputs)
-  logic enc_codeword_valid;
+  logic enc_valid;
   logic [CodewordWidth-1:0] enc_codeword;
 
   // Decoder outputs
   logic dec_valid;
   logic [CodewordWidth-1:0] dec_codeword;
-  logic dec_codeword_error_ce;
-  logic dec_codeword_error_due;
-  logic [ParityWidth-1:0] dec_codeword_error_syndrome;
+  logic dec_error_ce;
+  logic dec_error_due;
+  logic [ParityWidth-1:0] dec_error_syndrome;
   logic [DataWidth-1:0] dec_data;
 
   // Instantiate encoder
@@ -72,7 +72,7 @@ module br_ecc_secded_encoder_decoder_tb;
       .rst,
       .data_valid,
       .data,
-      .enc_codeword_valid,
+      .enc_valid,
       .enc_codeword
   );
 
@@ -86,13 +86,13 @@ module br_ecc_secded_encoder_decoder_tb;
   ) br_ecc_secded_decoder (
       .clk,
       .rst,
-      .rcv_valid(enc_codeword_valid),
+      .rcv_valid(enc_valid),
       .rcv_codeword(enc_codeword),
       .dec_valid,
       .dec_codeword,
-      .dec_codeword_error_ce,
-      .dec_codeword_error_due,
-      .dec_codeword_error_syndrome,
+      .dec_error_ce,
+      .dec_error_due,
+      .dec_error_syndrome,
       .dec_message(),  // unused
       .dec_data
   );
@@ -134,11 +134,11 @@ module br_ecc_secded_encoder_decoder_tb;
                dec_data);
         error_counter = error_counter + 1;
       end
-      if (dec_codeword_error_ce) begin
+      if (dec_error_ce) begin
         $error("Test %0d FAILED: error corrected when it was not supposed to", i);
         error_counter = error_counter + 1;
       end
-      if (dec_codeword_error_due) begin
+      if (dec_error_due) begin
         $error("Test %0d FAILED: error DUE when it was not supposed to", i);
         error_counter = error_counter + 1;
       end

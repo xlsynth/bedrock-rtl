@@ -54,7 +54,7 @@ module br_ecc_sed_encoder #(
     input  logic                     rst,
     input  logic                     data_valid,
     input  logic [    DataWidth-1:0] data,
-    output logic                     enc_codeword_valid,
+    output logic                     enc_valid,
     output logic [CodewordWidth-1:0] enc_codeword
 );
 
@@ -109,7 +109,7 @@ module br_ecc_sed_encoder #(
       .rst,
       .in_valid(data_valid_d),
       .in(codeword),
-      .out_valid(enc_codeword_valid),
+      .out_valid(enc_valid),
       .out(enc_codeword),
       .out_valid_stages(),  // unused
       .out_stages()  // unused
@@ -118,7 +118,7 @@ module br_ecc_sed_encoder #(
   //------------------------------------------
   // Implementation checks
   //------------------------------------------
-  `BR_ASSERT_IMPL(latency_a, data_valid |-> ##Latency enc_codeword_valid)
-  `BR_ASSERT_IMPL(even_parity_a, enc_codeword_valid |-> ^enc_codeword == 1'b0)
+  `BR_ASSERT_IMPL(latency_a, data_valid |-> ##Latency enc_valid)
+  `BR_ASSERT_IMPL(even_parity_a, enc_valid |-> ^enc_codeword == 1'b0)
 
 endmodule : br_ecc_sed_encoder

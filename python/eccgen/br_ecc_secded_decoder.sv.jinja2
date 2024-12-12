@@ -92,9 +92,9 @@ module br_ecc_secded_decoder #(
     // Decoder output
     output logic                     dec_valid,
     output logic [CodewordWidth-1:0] dec_codeword,
-    output logic                     dec_codeword_error_ce,  // corrected error
-    output logic                     dec_codeword_error_due,  // detected-but-uncorrectable error
-    output logic [  ParityWidth-1:0] dec_codeword_error_syndrome,
+    output logic                     dec_error_ce,  // corrected error
+    output logic                     dec_error_due,  // detected-but-uncorrectable error
+    output logic [  ParityWidth-1:0] dec_error_syndrome,
     output logic [ MessageWidth-1:0] dec_message,
     output logic [    DataWidth-1:0] dec_data
 );
@@ -294,9 +294,9 @@ module br_ecc_secded_decoder #(
           internal_error_syndrome}),
       .out_valid(dec_valid),
       .out({dec_codeword,
-            dec_codeword_error_ce,
-            dec_codeword_error_due,
-            dec_codeword_error_syndrome}),
+            dec_error_ce,
+            dec_error_due,
+            dec_error_syndrome}),
       .out_valid_stages(),  // unused
       .out_stages()  // unused
   );
@@ -310,9 +310,9 @@ module br_ecc_secded_decoder #(
   //------------------------------------------
   `BR_ASSERT_IMPL(latency_a, rcv_valid |-> ##Latency dec_valid)
   `BR_ASSERT_IMPL(ce_due_mutually_exclusive_a,
-                  dec_valid |-> $onehot0({dec_codeword_error_ce, dec_codeword_error_due}))
-  `BR_COVER_IMPL(ce_c, dec_valid && dec_codeword_error_ce)
-  `BR_COVER_IMPL(due_c, dec_valid && dec_codeword_error_due)
+                  dec_valid |-> $onehot0({dec_error_ce, dec_error_due}))
+  `BR_COVER_IMPL(ce_c, dec_valid && dec_error_ce)
+  `BR_COVER_IMPL(due_c, dec_valid && dec_error_due)
 
   // verilog_format: on
   // verilog_lint: waive-stop line-length
