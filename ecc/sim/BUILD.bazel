@@ -18,6 +18,32 @@ load("//bazel:verilog.bzl", "verilog_elab_test")
 
 package(default_visibility = ["//visibility:private"])
 
+##################3
+# SED
+##################3
+verilog_library(
+    name = "br_ecc_sed_encoder_decoder_tb",
+    srcs = ["br_ecc_sed_encoder_decoder_tb.sv"],
+    deps = [
+        "//ecc/rtl:br_ecc_sed_decoder",
+        "//ecc/rtl:br_ecc_sed_encoder",
+    ],
+)
+
+verilog_elab_test(
+    name = "br_ecc_sed_encoder_decoder_tb_elab_test",
+    deps = [":br_ecc_sed_encoder_decoder_tb"],
+)
+
+br_verilog_sim_test_suite(
+    name = "br_ecc_sed_encoder_decoder_vcs_test_suite",
+    tool = "vcs",
+    deps = [":br_ecc_sed_encoder_decoder_tb"],
+)
+
+##################3
+# SECDED
+##################3
 verilog_library(
     name = "br_ecc_secded_encoder_decoder_tb",
     srcs = ["br_ecc_secded_encoder_decoder_tb.sv"],
