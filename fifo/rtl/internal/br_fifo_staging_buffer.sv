@@ -151,28 +151,68 @@ module br_fifo_staging_buffer #(
   logic [Width-1:0] internal_pop_data;
 
 
-  if (InternalDepth == 1) begin : gen_flow_reg_rev
-    // This is only reachable if RegisterPopOutputs=1 since minimum BufferDepth is 2
-    // In this case, place a br_flow_reg_rev so the staging buffer is basically like
-    // br_flow_reg_both.
+  if (InternalDepth == 1) begin : gen_single_entry_buffer
+    // This is only reachable if RegisterPopOutputs=1 and RamReadLatency=1
+    // In this case, we keep a single entry buffer that is filled if data is returned
+    // but internal_pop_ready is not asserted.
     // Used for assertion only
-    logic push_ready;  // ri lint_check_waive NOT_READ HIER_NET_NOT_READ
+    logic buffer_valid, buffer_valid_next;
+    logic buffer_data_le;
+    logic [Width-1:0] buffer_data, buffer_data_next;
 
-    br_flow_reg_rev #(
-        .Width(Width)
-    ) br_flow_reg_rev (
-        .clk,
-        .rst,
-        .push_valid,
-        .push_ready,
-        .push_data,
-        .pop_valid(internal_pop_valid),
-        .pop_ready(internal_pop_ready),
-        .pop_data (internal_pop_data)
-    );
+    // We don't have to worry about bypass_valid_unstable being asserted
+    // while a read is pending since the RamReadLatency must be 1.
+    // If read is pending when the bypass occurred, the read must
+    // have been issued in the previous cycle and the data is
+    // returning on the same cycle. We just give priority to the
+    // ram_rd_data and store the bypassed data in the buffer.
+    assign internal_pop_valid = buffer_valid || push_valid;
+    assign internal_pop_data = buffer_valid ? buffer_data : push_data;
 
-    `BR_ASSERT_IMPL(no_push_hazard_a, !(bypass_valid_unstable && ram_rd_data_valid))
-    `BR_ASSERT_IMPL(no_push_overflow_a, push_valid |-> push_ready)
+    // The buffer is written to if
+    // 1. There is a bypass or read data return when internal_pop_ready is not
+    //    asserted and buffer is not occupied.
+    // 2. There is a bypass or read data return when internal_pop_ready is
+    //    asserted and buffer is occupied.
+    // 3. There is a read data return on the same cycle as a bypass,
+    //    internal_pop_ready is asserted, and buffer is not occupied
+    // In the first two cases, we save either the bypass data or the read data
+    // (depending on which one occured). In the third case, we save the bypass
+    // data and forward the read data.
+    // Getting both bypass and read data on the same cycle when the buffer is
+    // occupied and internal_pop_ready is deasserted would result in data loss
+    // and should not be possible.
+    // The buffer is cleared if internal_pop_ready is asserted and there is no push.
+    assign buffer_valid_next =
+        ((buffer_valid || push_valid) && !internal_pop_ready) ||
+        (ram_rd_data_valid && bypass_beat);
+    assign buffer_data_le = buffer_valid_next && (!buffer_valid || internal_pop_ready);
+    assign buffer_data_next =
+        (internal_pop_ready && !buffer_valid) ? bypass_data_unstable : push_data;
+
+    `BR_REG(buffer_valid, buffer_valid_next)
+    `BR_REGL(buffer_data, buffer_data_next, buffer_data_le)
+
+    `BR_ASSERT_IMPL(no_double_push_overflow_a,
+                    (ram_rd_data_valid && bypass_beat) |-> (!buffer_valid && internal_pop_ready))
+    `BR_ASSERT_IMPL(no_single_push_overflow_a, push_valid |-> (!buffer_valid || internal_pop_ready))
+
+`ifdef BR_ASSERT_ON
+`ifdef BR_ENABLE_IMPL_CHECKS
+    logic buffer_rd_data;
+    logic buffer_bypass_data;
+
+    assign buffer_rd_data = ram_rd_data_valid && (buffer_valid || !internal_pop_ready);
+    assign buffer_bypass_data =
+        bypass_beat && (ram_rd_data_valid || buffer_valid || !internal_pop_ready);
+`endif
+`endif
+
+    `BR_ASSERT_IMPL(rd_data_buffered_correctly_a,
+                    buffer_rd_data |=> (buffer_valid && buffer_data == $past(ram_rd_data)))
+    `BR_ASSERT_IMPL(
+        bypass_data_buffered_correctly_a,
+        buffer_bypass_data |=> (buffer_valid && buffer_data == $past(bypass_data_unstable)))
   end else begin : gen_circ_buffer
     // TODO(zhemao): Consider separating the pointer management logic into a standalone module
     logic [InternalDepth-1:0][Width-1:0] mem;
