@@ -67,6 +67,15 @@ module br_cdc_fifo_ctrl_1r1w #(
     parameter int RamReadLatency = 0,
     // The number of synchronization stages to use for the gray counts.
     parameter int NumSyncStages = 3,
+    // If 1, cover that the push side experiences backpressure.
+    // If 0, assert that there is never backpressure.
+    parameter bit EnableCoverPushBackpressure = 1,
+    // If 1, assert that push_valid is stable when backpressured.
+    // If 0, cover that push_valid can be unstable.
+    parameter bit EnableAssertPushValidStability = EnableCoverPushBackpressure,
+    // If 1, assert that push_data is stable when backpressured.
+    // If 0, cover that push_data can be unstable.
+    parameter bit EnableAssertPushDataStability = EnableAssertPushValidStability,
     localparam int AddrWidth = $clog2(Depth),
     localparam int CountWidth = $clog2(Depth + 1)
 ) (
@@ -134,7 +143,10 @@ module br_cdc_fifo_ctrl_1r1w #(
   br_cdc_fifo_push_ctrl #(
       .Depth(Depth),
       .Width(Width),
-      .RamWriteLatency(RamWriteLatency)
+      .RamWriteLatency(RamWriteLatency),
+      .EnableCoverPushBackpressure(EnableCoverPushBackpressure),
+      .EnableAssertPushValidStability(EnableAssertPushValidStability),
+      .EnableAssertPushDataStability(EnableAssertPushDataStability)
   ) br_cdc_fifo_push_ctrl (
       .clk              (push_clk),               // ri lint_check_waive SAME_CLOCK_NAME
       .rst              (push_rst),

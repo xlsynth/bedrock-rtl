@@ -125,7 +125,9 @@ module br_cdc_fifo_push_ctrl_credit #(
   br_fifo_push_ctrl_core #(
       .Depth(Depth),
       .Width(Width),
-      .EnableBypass(1'b0)  // Bypass is not enabled for CDC
+      .EnableBypass(1'b0),  // Bypass is not enabled for CDC
+      // The core push control should never be backpressured.
+      .EnableCoverPushBackpressure(0)
   ) br_fifo_push_ctrl_core (
       .clk,
       .rst,

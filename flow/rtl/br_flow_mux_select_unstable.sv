@@ -33,7 +33,16 @@ module br_flow_mux_select_unstable #(
     // Must be at least 2
     parameter int NumFlows = 2,
     // Must be at least 1
-    parameter int Width = 1
+    parameter int Width = 1,
+    // If 1, cover that the push side experiences backpressure.
+    // If 0, assert that there is never backpressure.
+    parameter bit EnableCoverPushBackpressure = 1,
+    // If 1, assert that push_valid is stable when backpressured.
+    // If 0, cover that push_valid can be unstable.
+    parameter bit EnableAssertPushValidStability = EnableCoverPushBackpressure,
+    // If 1, assert that push_data is stable when backpressured.
+    // If 0, cover that push_data can be unstable.
+    parameter bit EnableAssertPushDataStability = EnableAssertPushValidStability
 ) (
     // Used only for assertions
     // ri lint_check_waive INPUT_NOT_READ HIER_NET_NOT_READ HIER_BRANCH_NOT_READ
@@ -59,10 +68,29 @@ module br_flow_mux_select_unstable #(
   `BR_ASSERT_STATIC(num_flows_must_be_at_least_two_a, NumFlows >= 2)
   `BR_ASSERT_STATIC(width_gte_1_a, Width >= 1)
 
-  // TODO(mgottscho): Add integration checks on ready-valid compliance and
-  // on stability of push_select.
-
   `BR_ASSERT_INTG(select_in_range_a, select < NumFlows)
+
+  br_flow_checks_valid_data #(
+      .NumFlows(NumFlows),
+      .Width(Width),
+      .EnableCoverBackpressure(EnableCoverPushBackpressure),
+      .EnableAssertValidStability(EnableAssertPushValidStability),
+      .EnableAssertDataStability(EnableAssertPushDataStability)
+  ) br_flow_checks_valid_data (
+      .clk,
+      .rst,
+      .ready(push_ready),
+      .valid(push_valid),
+      .data (push_data)
+  );
+
+  if (EnableCoverPushBackpressure && EnableAssertPushValidStability)
+  begin : gen_select_stability_check
+    // If the selected flow is backpressured, the select must be stable
+    // to maintain valid stability on the pop side.
+    `BR_ASSERT_INTG(select_stability_a,
+                    (push_valid[select] && !push_ready[select]) |=> $stable(select))
+  end
 
   //------------------------------------------
   // Implementation

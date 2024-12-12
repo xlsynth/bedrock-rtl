@@ -26,7 +26,16 @@
 
 module br_flow_mux_fixed #(
     parameter int NumFlows = 2,  // Must be at least 2
-    parameter int Width = 1  // Must be at least 1
+    parameter int Width = 1,  // Must be at least 1
+    // If 1, cover that the push side experiences backpressure.
+    // If 0, assert that there is never backpressure.
+    parameter bit EnableCoverPushBackpressure = 1,
+    // If 1, assert that push_valid is stable when backpressured.
+    // If 0, cover that push_valid can be unstable.
+    parameter bit EnableAssertPushValidStability = EnableCoverPushBackpressure,
+    // If 1, assert that push_data is stable when backpressured.
+    // If 0, cover that push_data can be unstable.
+    parameter bit EnableAssertPushDataStability = EnableAssertPushValidStability
 ) (
     // ri lint_check_waive NOT_READ HIER_NET_NOT_READ HIER_BRANCH_NOT_READ
     input  logic                           clk,         // Only used for assertions
@@ -65,7 +74,10 @@ module br_flow_mux_fixed #(
 
   br_flow_mux_core #(
       .NumFlows(NumFlows),
-      .Width(Width)
+      .Width(Width),
+      .EnableCoverPushBackpressure(EnableCoverPushBackpressure),
+      .EnableAssertPushValidStability(EnableAssertPushValidStability),
+      .EnableAssertPushDataStability(EnableAssertPushDataStability)
   ) br_flow_mux_core (
       .clk,
       .rst,

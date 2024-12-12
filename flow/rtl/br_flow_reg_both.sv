@@ -25,7 +25,16 @@
 
 module br_flow_reg_both #(
     // Must be at least 1
-    parameter int Width = 1
+    parameter int Width = 1,
+    // If 1, cover that the push side experiences backpressure.
+    // If 0, assert that there is never backpressure.
+    parameter bit EnableCoverPushBackpressure = 1,
+    // If 1, assert that push_valid is stable when backpressured.
+    // If 0, cover that push_valid can be unstable.
+    parameter bit EnableAssertPushValidStability = EnableCoverPushBackpressure,
+    // If 1, assert that push_data is stable when backpressured.
+    // If 0, cover that push_data can be unstable.
+    parameter bit EnableAssertPushDataStability = EnableAssertPushValidStability
 ) (
     input logic clk,
     input logic rst,  // Synchronous active-high
@@ -59,7 +68,10 @@ module br_flow_reg_both #(
   logic [Width-1:0] internal_data;
 
   br_flow_reg_rev #(
-      .Width(Width)
+      .Width(Width),
+      .EnableCoverPushBackpressure(EnableCoverPushBackpressure),
+      .EnableAssertPushValidStability(EnableAssertPushValidStability),
+      .EnableAssertPushDataStability(EnableAssertPushDataStability)
   ) br_flow_reg_rev (
       .clk,
       .rst,
@@ -72,7 +84,14 @@ module br_flow_reg_both #(
   );
 
   br_flow_reg_fwd #(
-      .Width(Width)
+      .Width(Width),
+      // The fwd stage can still backpressure the rev stage
+      // without backpressuring the input.
+      .EnableCoverPushBackpressure(1),
+      // The rev stage should deal with any data instability
+      // by buffering the data when backpressure occurs.
+      .EnableAssertPushValidStability(1),
+      .EnableAssertPushDataStability(1)
   ) br_flow_reg_fwd (
       .clk,
       .rst,

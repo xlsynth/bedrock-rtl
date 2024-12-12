@@ -34,6 +34,15 @@ module br_flow_demux_select_unstable #(
     parameter int NumFlows = 2,
     // Must be at least 1
     parameter int Width = 1,
+    // If 1, cover that the push side experiences backpressure.
+    // If 0, assert that there is never backpressure.
+    parameter bit EnableCoverPushBackpressure = 1,
+    // If 1, assert that push_valid is stable when backpressured.
+    // If 0, cover that push_valid can be unstable.
+    parameter bit EnableAssertPushValidStability = EnableCoverPushBackpressure,
+    // If 1, assert that push_data is stable when backpressured.
+    // If 0, cover that push_data can be unstable.
+    parameter bit EnableAssertPushDataStability = EnableAssertPushValidStability,
     localparam int SelectWidth = $clog2(NumFlows)
 ) (
     // Used only for assertions
@@ -60,9 +69,26 @@ module br_flow_demux_select_unstable #(
   `BR_ASSERT_STATIC(num_flows_must_be_at_least_two_a, NumFlows >= 2)
   `BR_ASSERT_STATIC(bit_width_must_be_at_least_one_a, Width >= 1)
 
-  // TODO(mgottscho): Add integration checks on ready-valid compliance and on stability of select.
+  br_flow_checks_valid_data #(
+      .NumFlows(1),
+      .Width(Width),
+      .EnableCoverBackpressure(EnableCoverPushBackpressure),
+      .EnableAssertValidStability(EnableAssertPushValidStability),
+      .EnableAssertDataStability(EnableAssertPushDataStability)
+  ) br_flow_checks_valid_data (
+      .clk,
+      .rst,
+      .ready(push_ready),
+      .valid(push_valid),
+      .data (push_data)
+  );
 
-  `BR_ASSERT_INTG(select_in_range_a, select < NumFlows)
+  if (EnableCoverPushBackpressure && EnableAssertPushValidStability)
+  begin : gen_select_stability_check
+    // If push_valid is backpressured, the select must be stable
+    // to maintain valid stability on the pop side.
+    `BR_ASSERT_INTG(select_stability_a, (push_valid && !push_ready) |=> $stable(select))
+  end
 
   //------------------------------------------
   // Implementation

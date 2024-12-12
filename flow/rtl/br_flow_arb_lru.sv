@@ -29,7 +29,13 @@
 
 module br_flow_arb_lru #(
     // Must be at least 2
-    parameter int NumFlows = 2
+    parameter int NumFlows = 2,
+    // If 1, cover that the push side experiences backpressure.
+    // If 0, assert that there is never backpressure.
+    parameter bit EnableCoverPushBackpressure = 1,
+    // If 1, assert that push_valid is stable when backpressured.
+    // If 0, cover that push_valid can be unstable.
+    parameter bit EnableAssertPushValidStability = EnableCoverPushBackpressure
 ) (
     input logic clk,
     input logic rst,
@@ -66,7 +72,9 @@ module br_flow_arb_lru #(
   );
 
   br_flow_arb_core #(
-      .NumFlows(NumFlows)
+      .NumFlows(NumFlows),
+      .EnableCoverPushBackpressure(EnableCoverPushBackpressure),
+      .EnableAssertPushValidStability(EnableAssertPushValidStability)
   ) br_flow_arb_core (
       .clk,
       .rst,

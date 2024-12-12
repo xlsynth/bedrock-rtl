@@ -76,6 +76,7 @@ verilog_library(
     srcs = ["br_credit_sender.sv"],
     deps = [
         ":br_credit_counter",
+        "//flow/rtl:br_flow_checks_valid_data",
         "//macros:br_asserts_internal",
         "//macros:br_registers",
     ],
