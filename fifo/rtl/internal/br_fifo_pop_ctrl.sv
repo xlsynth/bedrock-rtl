@@ -141,8 +141,14 @@ module br_fifo_pop_ctrl #(
 
   // Flow control and latency
   if (EnableBypass) begin : gen_bypass_cut_through_latency_check
+    // If a RAM read is inflight when the bypass occurs, pop_valid will not
+    // be asserted until the RAM read completes. So the range of the latency
+    // from bypass to the input of the final register stage is
+    // 0 to RamReadLatency.
     `BR_ASSERT_IMPL(bypass_cut_through_latency_a,
-                    (bypass_valid_unstable && bypass_ready) |-> ##(RegisterPopOutputs) pop_valid)
+                    (bypass_valid_unstable && bypass_ready)
+                    |->
+                    ##[RegisterPopOutputs:RegisterPopOutputs+RamReadLatency] pop_valid)
   end
   `BR_ASSERT_IMPL(
       non_bypass_cut_through_latency_a,
