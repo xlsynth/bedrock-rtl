@@ -95,7 +95,10 @@ module br_fifo_flops_push_credit_tb ();
 
   br_credit_sender #(
       .Width(Width),
-      .MaxCredit(Depth)
+      .MaxCredit(Depth),
+      // The test harness causes instability on the push_valid,
+      // so need to disable the stability check
+      .EnableAssertPushValidStability(0)
   ) br_credit_sender (
       .clk,
       .rst,
