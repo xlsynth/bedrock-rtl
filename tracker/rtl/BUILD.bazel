@@ -1,0 +1,44 @@
+# Copyright 2024 The Bedrock-RTL Authors
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+load("@rules_hdl//verilog:providers.bzl", "verilog_library")
+load("//bazel:br_verilog.bzl", "br_verilog_elab_and_lint_test_suite")
+
+package(default_visibility = ["//visibility:public"])
+
+verilog_library(
+    name = "br_tracker_freelist",
+    srcs = ["br_tracker_freelist.sv"],
+    deps = [
+        "//enc/rtl:br_enc_bin2onehot",
+        "//enc/rtl:br_enc_onehot2bin",
+        "//enc/rtl:br_enc_priority_encoder",
+        "//flow/rtl:br_flow_reg_both",
+    ],
+)
+
+br_verilog_elab_and_lint_test_suite(
+    name = "br_tracker_freelist_test_suite",
+    params = {
+        "NumEntries": [
+            "4",
+            "6",
+        ],
+        "NumDeallocPorts": [
+            "1",
+            "2",
+        ],
+    },
+    deps = [":br_tracker_freelist"],
+)
