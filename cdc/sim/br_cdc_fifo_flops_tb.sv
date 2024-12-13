@@ -57,7 +57,10 @@ module br_cdc_fifo_flops_tb;
       .NumSyncStages(NumSyncStages),
       .RegisterPopOutputs(RegisterPopOutputs),
       .FlopRamAddressDepthStages(FlopRamAddressDepthStages),
-      .FlopRamReadDataDepthStages(FlopRamReadDataDepthStages)
+      .FlopRamReadDataDepthStages(FlopRamReadDataDepthStages),
+      // The test harness causes instability on the push_valid,
+      // so need to disable the stability check
+      .EnableAssertPushValidStability(0)
   ) dut (
       .push_clk(clk),  // ri lint_check_waive SAME_CLOCK_NAME
       .push_rst(rst),
