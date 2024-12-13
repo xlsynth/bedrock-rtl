@@ -92,7 +92,8 @@ module br_flow_reg_rev #(
 
   // No reset necessary for reg_data because !push_ready qualifies the value of reg_data.
   // And push_ready resets to 1'b1, so the unknown value of reg_data doesn't matter.
-  `BR_REGLN(reg_data, push_data, !pop_ready && push_valid)
+  // Data is updated if it push data is accepted but cannot be forwarded to pop.
+  `BR_REGLN(reg_data, push_data, !pop_ready && push_ready && push_valid)
 
   //------------------------------------------
   // Implementation checks
