@@ -20,6 +20,7 @@ verilog_library(
     name = "br_flow_arb_core",
     srcs = ["br_flow_arb_core.sv"],
     deps = [
+        "//flow/rtl:br_flow_checks_valid_data",
         "//macros:br_asserts_internal",
         "//macros:br_unused",
     ],
@@ -30,6 +31,7 @@ verilog_library(
     srcs = ["br_flow_mux_core.sv"],
     deps = [
         ":br_flow_arb_core",
+        "//flow/rtl:br_flow_checks_valid_data",
         "//macros:br_asserts_internal",
         "//macros:br_unused",
         "//mux/rtl:br_mux_onehot",

@@ -24,7 +24,14 @@
 
 module br_flow_arb_core #(
     // Must be at least 2
-    parameter int NumFlows = 2
+    parameter int NumFlows = 2,
+
+    // If 1, cover that the push side experiences backpressure.
+    // If 0, assert that there is never backpressure.
+    parameter bit EnableCoverPushBackpressure = 1,
+    // If 1, assert that push_valid is stable when backpressured.
+    // If 0, cover that push_valid can be unstable when backpressured.
+    parameter bit EnableAssertPushValidStability = 1
 ) (
     // ri lint_check_waive HIER_NET_NOT_READ HIER_BRANCH_NOT_READ INPUT_NOT_READ
     input logic clk,  // Only used for assertions
@@ -46,8 +53,20 @@ module br_flow_arb_core #(
   // Integration checks
   //------------------------------------------
 
-  // TODO(mgottscho): Add checks
-  `BR_COVER_INTG(push_backpressure_a, |push_valid && !pop_ready)
+  br_flow_checks_valid_data #(
+      .NumFlows(NumFlows),
+      .Width(1),
+      .EnableCoverBackpressure(EnableCoverPushBackpressure),
+      .EnableAssertValidStability(EnableAssertPushValidStability),
+      // Data is always stable when valid is stable since it is constant.
+      .EnableAssertDataStability(EnableAssertPushValidStability)
+  ) br_flow_checks_valid_data (
+      .clk,
+      .rst,
+      .ready(push_ready),
+      .valid(push_valid),
+      .data ({NumFlows{1'b0}})
+  );
 
   // Internal integration checks
   `BR_ASSERT_IMPL(request_implies_grant_a, |request |-> |grant)

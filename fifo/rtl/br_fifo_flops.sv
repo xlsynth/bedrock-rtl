@@ -73,6 +73,15 @@ module br_fifo_flops #(
     // Number of pipeline register stages inserted along the read data path in the width dimension.
     // Must be at least 0.
     parameter int FlopRamReadDataWidthStages = 0,
+    // If 1, cover that the push side experiences backpressure.
+    // If 0, assert that there is never backpressure.
+    parameter bit EnableCoverPushBackpressure = 1,
+    // If 1, assert that push_valid is stable when backpressured.
+    // If 0, cover that push_valid can be unstable.
+    parameter bit EnableAssertPushValidStability = EnableCoverPushBackpressure,
+    // If 1, assert that push_data is stable when backpressured.
+    // If 0, cover that push_data can be unstable.
+    parameter bit EnableAssertPushDataStability = EnableAssertPushValidStability,
 
     // Internal computed parameters
     localparam int AddrWidth  = $clog2(Depth),
@@ -130,7 +139,10 @@ module br_fifo_flops #(
       .Width(Width),
       .EnableBypass(EnableBypass),
       .RegisterPopOutputs(RegisterPopOutputs),
-      .RamReadLatency(RamReadLatency)
+      .RamReadLatency(RamReadLatency),
+      .EnableCoverPushBackpressure(EnableCoverPushBackpressure),
+      .EnableAssertPushValidStability(EnableAssertPushValidStability),
+      .EnableAssertPushDataStability(EnableAssertPushDataStability)
   ) br_fifo_ctrl_1r1w (
       .clk,
       .rst,

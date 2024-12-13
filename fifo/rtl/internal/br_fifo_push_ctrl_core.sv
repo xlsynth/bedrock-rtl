@@ -22,6 +22,15 @@ module br_fifo_push_ctrl_core #(
     parameter int Depth = 2,
     parameter int Width = 1,
     parameter bit EnableBypass = 1,
+    // If 1, cover that the push side experiences backpressure.
+    // If 0, assert that there is never backpressure.
+    parameter bit EnableCoverPushBackpressure = 1,
+    // If 1, assert that push_valid is stable when backpressured.
+    // If 0, cover that push_valid can be unstable.
+    parameter bit EnableAssertPushValidStability = EnableCoverPushBackpressure,
+    // If 1, assert that push_data is stable when backpressured.
+    // If 0, cover that push_data can be unstable.
+    parameter bit EnableAssertPushDataStability = EnableAssertPushValidStability,
     localparam int AddrWidth = $clog2(Depth)
 ) (
     // Posedge-triggered clock.
@@ -49,6 +58,24 @@ module br_fifo_push_ctrl_core #(
     input  logic full,
     output logic push_beat
 );
+
+  //------------------------------------------
+  // Integration checks
+  //------------------------------------------
+
+  br_flow_checks_valid_data #(
+      .NumFlows(1),
+      .Width(Width),
+      .EnableCoverBackpressure(EnableCoverPushBackpressure),
+      .EnableAssertValidStability(EnableAssertPushValidStability),
+      .EnableAssertDataStability(EnableAssertPushDataStability)
+  ) br_flow_checks_valid_data (
+      .clk,
+      .rst,
+      .ready(push_ready),
+      .valid(push_valid),
+      .data (push_data)
+  );
 
   //------------------------------------------
   // Implementation

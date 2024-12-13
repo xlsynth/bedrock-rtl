@@ -108,7 +108,9 @@ module br_fifo_push_ctrl_credit #(
   br_fifo_push_ctrl_core #(
       .Depth(Depth),
       .Width(Width),
-      .EnableBypass(EnableBypass)
+      .EnableBypass(EnableBypass),
+      // The core push control should never be backpressured.
+      .EnableCoverPushBackpressure(0)
   ) br_fifo_push_ctrl_core (
       .clk,
       .rst,

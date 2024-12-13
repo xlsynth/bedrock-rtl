@@ -28,7 +28,16 @@
 
 module br_flow_reg_rev #(
     // Must be at least 1
-    parameter int Width = 1
+    parameter int Width = 1,
+    // If 1, cover that the push side experiences backpressure.
+    // If 0, assert that there is never backpressure.
+    parameter bit EnableCoverPushBackpressure = 1,
+    // If 1, assert that push_valid is stable when backpressured.
+    // If 0, cover that push_valid can be unstable.
+    parameter bit EnableAssertPushValidStability = 1,
+    // If 1, assert that push_data is stable when backpressured.
+    // If 0, cover that push_data can be unstable.
+    parameter bit EnableAssertPushDataStability = 1
 ) (
     input logic clk,
     input logic rst,  // Synchronous active-high
@@ -47,23 +56,19 @@ module br_flow_reg_rev #(
   //------------------------------------------
   `BR_ASSERT_STATIC(bit_width_must_be_at_least_one_a, Width >= 1)
 
-  // Assert that under push-side backpressure conditions,
-  // the pipeline register correctly stalls upstream.
-  // That is, on any given cycle, if push_valid is 1 and push_ready
-  // is 0, then assert that on the following cycle push_valid is
-  // still 1 and push_data has not changed. In other words,
-  // we are checking that the input stimulus abides by the push-side
-  // ready-valid interface protocol.
-  `BR_ASSERT_INTG(push_backpressure_a, !push_ready && push_valid |=> push_valid && $stable
-                                       (push_data))
-
-  // Assert that if push_valid is 1, then push_data must be known (not X).
-  // This is not strictly a required integration check, because the module implementation
-  // will still function correctly even if push_data is unknown (X).
-  // However, under the ready-valid protocol convention where push_data is stable while
-  // backpressured, unknown values are by definition not stable and therefore violate the
-  // protocol requirement.
-  `BR_ASSERT_INTG(push_data_known_a, push_valid |-> !$isunknown(push_data))
+  br_flow_checks_valid_data #(
+      .NumFlows(1),
+      .Width(Width),
+      .EnableCoverBackpressure(EnableCoverPushBackpressure),
+      .EnableAssertValidStability(EnableAssertPushValidStability),
+      .EnableAssertDataStability(EnableAssertPushDataStability)
+  ) br_flow_checks_valid_data (
+      .clk,
+      .rst,
+      .ready(push_ready),
+      .valid(push_valid),
+      .data (push_data)
+  );
 
   //------------------------------------------
   // Implementation

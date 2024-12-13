@@ -57,6 +57,15 @@ module br_credit_sender #(
     parameter int MaxCredit = 1,
     // If 1, add retiming to pop_valid and pop_data
     parameter bit RegisterPopOutputs = 0,
+    // If 1, cover that the push side experiences backpressure.
+    // If 0, assert that there is never backpressure.
+    parameter bit EnableCoverPushBackpressure = 1,
+    // If 1, assert that push_valid is stable when backpressured.
+    // If 0, cover that push_valid can be unstable.
+    parameter bit EnableAssertPushValidStability = EnableCoverPushBackpressure,
+    // If 1, assert that push_data is stable when backpressured.
+    // If 0, cover that push_data can be unstable.
+    parameter bit EnableAssertPushDataStability = EnableAssertPushValidStability,
     localparam int CounterWidth = $clog2(MaxCredit + 1)
 ) (
     // Posedge-triggered clock.
@@ -91,7 +100,19 @@ module br_credit_sender #(
   `BR_ASSERT_STATIC(width_in_range_a, Width >= 1)
   `BR_ASSERT_STATIC(max_credit_in_range_a, MaxCredit >= 1)
 
-  `BR_COVER_INTG(push_backpressure_c, !push_ready && push_valid)
+  br_flow_checks_valid_data #(
+      .NumFlows(1),
+      .Width(Width),
+      .EnableCoverBackpressure(EnableCoverPushBackpressure),
+      .EnableAssertValidStability(EnableAssertPushValidStability),
+      .EnableAssertDataStability(EnableAssertPushDataStability)
+  ) br_flow_checks_valid_data (
+      .clk,
+      .rst,
+      .ready(push_ready),
+      .valid(push_valid),
+      .data (push_data)
+  );
 
   // Rely on submodule integration checks
 

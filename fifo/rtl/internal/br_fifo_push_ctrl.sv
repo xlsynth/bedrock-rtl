@@ -22,6 +22,15 @@ module br_fifo_push_ctrl #(
     parameter int Depth = 2,
     parameter int Width = 1,
     parameter bit EnableBypass = 1,
+    // If 1, cover that the push side experiences backpressure.
+    // If 0, assert that there is never backpressure.
+    parameter bit EnableCoverPushBackpressure = 1,
+    // If 1, assert that push_valid is stable when backpressured.
+    // If 0, cover that push_valid can be unstable.
+    parameter bit EnableAssertPushValidStability = 1,
+    // If 1, assert that push_data is stable when backpressured.
+    // If 0, cover that push_data can be unstable.
+    parameter bit EnableAssertPushDataStability = 1,
     localparam int AddrWidth = $clog2(Depth),
     localparam int CountWidth = $clog2(Depth + 1)
 ) (
@@ -65,6 +74,8 @@ module br_fifo_push_ctrl #(
 
   `BR_COVER_INTG(full_c, full)
 
+  // Other integration checks in submodules
+
   //------------------------------------------
   // Implementation
   //------------------------------------------
@@ -73,7 +84,10 @@ module br_fifo_push_ctrl #(
   br_fifo_push_ctrl_core #(
       .Depth(Depth),
       .Width(Width),
-      .EnableBypass(EnableBypass)
+      .EnableBypass(EnableBypass),
+      .EnableCoverPushBackpressure(EnableCoverPushBackpressure),
+      .EnableAssertPushValidStability(EnableAssertPushValidStability),
+      .EnableAssertPushDataStability(EnableAssertPushDataStability)
   ) br_fifo_push_ctrl_core (
       .clk,
       .rst,
