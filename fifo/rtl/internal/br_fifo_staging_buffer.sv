@@ -283,9 +283,6 @@ module br_fifo_staging_buffer #(
       `BR_REGL(mem[i], mem_wr_data[i], mem_wr_en[i])
     end
 
-    // The read path is the same regardless of bypassing or not
-    assign advance_rd_ptr = internal_pop_valid && internal_pop_ready;
-
     br_mux_onehot #(
         .NumSymbolsIn(InternalDepth),
         .SymbolWidth (Width)
@@ -302,9 +299,6 @@ module br_fifo_staging_buffer #(
       // Easiest way to track this is just to put the write pointer through a delay line,
       // even though this creates some additional flops.
       logic [InternalDepth-1:0] wr_ptr_onehot_d;
-      // Used for assertion only
-      // ri lint_check_waive NOT_READ HIER_NET_NOT_READ
-      logic                     wr_ptr_valid_d;
 
       br_delay_valid #(
           .Width(InternalDepth),
@@ -314,19 +308,31 @@ module br_fifo_staging_buffer #(
           .rst,
           .in_valid        (ram_rd_addr_valid),
           .in              (wr_ptr_onehot),
-          .out_valid       (wr_ptr_valid_d),
+          .out_valid       (),
           .out             (wr_ptr_onehot_d),
           .out_valid_stages(),
           .out_stages      ()
       );
 
+      logic bypass_write_en;
+      logic rd_data_write_en;
+      logic is_first_read_data;
       logic [InternalDepth-1:0] mem_wr_en_delayed;
       logic [InternalDepth-1:0] mem_wr_en_immediate;
       logic [InternalDepth-1:0] mem_rd_en;
 
-      assign advance_wr_ptr = ram_rd_addr_valid || bypass_beat;
-      assign mem_wr_en_immediate = bypass_beat ? wr_ptr_onehot : '0;
-      assign mem_wr_en_delayed = ram_rd_data_valid ? wr_ptr_onehot_d : '0;
+      // Make sure not to write data to the RAM if it is being bypassed
+      // to the internal pop interface.
+      // Bypass goes direct to pop if there is no data buffered or inflight and
+      // internal_pop_ready is asserted
+      assign bypass_write_en = bypass_beat && !(empty && internal_pop_ready);
+      // Read data goes direct to pop if it was the first read issued for an empty buffer
+      // and internal_pop_ready is asserted
+      assign rd_data_write_en = ram_rd_data_valid && !(is_first_read_data && internal_pop_ready);
+      // Write pointer advances when a read is initiated or a bypass write occurs
+      assign advance_wr_ptr = ram_rd_addr_valid || bypass_write_en;
+      assign mem_wr_en_immediate = bypass_write_en ? wr_ptr_onehot : '0;
+      assign mem_wr_en_delayed = rd_data_write_en ? wr_ptr_onehot_d : '0;
       assign mem_wr_en = mem_wr_en_immediate | mem_wr_en_delayed;
       assign mem_rd_en = advance_rd_ptr ? rd_ptr_onehot : '0;
 
@@ -339,25 +345,19 @@ module br_fifo_staging_buffer #(
       // or not the cell at the head has valid data. Instead, keep a valid bit
       // for each cell.
       logic [InternalDepth-1:0] mem_valid, mem_valid_next;
-      logic [InternalDepth-1:0] mem_valid_set, mem_valid_clr;
       logic mem_valid_le;
       logic head_valid;
 
       // If there is a write and read to the same cell on a cycle,
-      // it can be for one of two reasons.
-      // 1. The memory is full. The previous occupant of the cell is being replaced by the new data.
-      // 2. The memory is empty. The new data is being bypassed through.
-      // In the first case, mem_valid will be set and we want it to remain set.
-      // In the second case, mem_valid will be clear and we want it to remain clear.
-      // Therefore, the value of mem_valid[i] should only change if mem_wr_en[i] != mem_rd_en[i]
-      assign mem_valid_set  = mem_wr_en & ~mem_rd_en;
-      assign mem_valid_clr  = mem_rd_en & ~mem_wr_en;
-      assign mem_valid_next = (mem_valid | mem_valid_set) & ~mem_valid_clr;
+      // it must be because the memory is full and the previous occupant is being replaced.
+      // Therefore, write should take precedence over read.
+      assign mem_valid_next = (mem_valid & ~mem_rd_en) | mem_wr_en;
       assign mem_valid_le   = advance_rd_ptr || ram_rd_data_valid || bypass_beat;
 
       `BR_REGL(mem_valid, mem_valid_next, mem_valid_le)
 
       assign head_valid = |(mem_valid & rd_ptr_onehot);
+      assign is_first_read_data = !head_valid;
       // internal_pop_valid can come from the head of the buffer
       // or be bypassed directly from the read data or the bypass data
       // For bypass data, we can only do direct bypass when the buffer is empty
@@ -365,9 +365,11 @@ module br_fifo_staging_buffer #(
                                   ram_rd_data_valid ||
                                   (empty && bypass_valid_unstable);
       assign internal_pop_data = head_valid ? mem_rd_data : push_data;
-
-      // Not used in this configuration
-      `BR_UNUSED(push_valid)
+      // Only advance the read pointer if the write pointer was advanced
+      // to provide the data currently being consumed.
+      // This is true for read from the buffer or direct from read data,
+      // since a slot is always allocated for a read.
+      assign advance_rd_ptr = (head_valid || ram_rd_data_valid) && internal_pop_ready;
 
       `BR_ASSERT_IMPL(no_push_hazard_a, ~|(mem_wr_en_immediate & mem_wr_en_delayed))
       `BR_ASSERT_IMPL(no_push_overwrite_a, ~|(mem_wr_en & mem_valid & ~mem_rd_en))
@@ -378,14 +380,22 @@ module br_fifo_staging_buffer #(
       `BR_ASSERT_IMPL(rd_data_to_pop_correct_address_a,
                       (!head_valid && ram_rd_data_valid) |-> (wr_ptr_onehot_d == rd_ptr_onehot))
     end else begin : gen_nonbypass_mem_wr
-      assign advance_wr_ptr = push_valid;
-      assign mem_wr_en = push_valid ? wr_ptr_onehot : '0;
+      // When ram_rd_data_valid comes back, two things can happen:
+      // 1. If the buffer is empty and internal_pop_ready is asserted,
+      //    the data is bypassed directly to the pop interface.
+      // 2. Otherwise, the data is written to the buffer.
+      assign advance_wr_ptr = ram_rd_data_valid && !(empty && internal_pop_ready);
+      assign mem_wr_en = advance_wr_ptr ? wr_ptr_onehot : '0;
       assign mem_wr_data = {InternalDepth{ram_rd_data}};
       assign internal_pop_valid = !empty || push_valid;
       assign internal_pop_data = empty ? push_data : mem_rd_data;
+      assign advance_rd_ptr = !empty && internal_pop_ready;
     end
 
-    `BR_ASSERT_IMPL(no_push_overflow_a, advance_wr_ptr |-> (!full || advance_rd_ptr))
+    // Not used in this configuration
+    `BR_UNUSED(push_valid)
+
+    `BR_ASSERT_IMPL(no_push_overflow_a, advance_wr_ptr |-> (!full || internal_pop_ready))
   end
 
   // ====================
@@ -413,5 +423,6 @@ module br_fifo_staging_buffer #(
   // Implementation Checks
   if (EnableBypass) begin : gen_bypass_impl_checks
     `BR_ASSERT_IMPL(no_alloc_hazard_a, !(ram_rd_addr_valid && bypass_beat))
+    `BR_COVER_IMPL(bypass_and_rd_data_same_cycle_c, bypass_beat && ram_rd_data_valid)
   end
 endmodule
