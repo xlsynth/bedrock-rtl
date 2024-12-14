@@ -36,7 +36,12 @@ br_verilog_sim_test_suite(
     name = "br_tracker_freelist_vcs_test_suite",
     params = {
         "NumEntries": [
-            "16",
+            "12",
+        ],
+        "NumAllocPorts": [
+            "1",
+            "2",
+            "3",
         ],
         "NumDeallocPorts": [
             "1",
@@ -44,6 +49,5 @@ br_verilog_sim_test_suite(
         ],
     },
     tool = "vcs",
-    waves = True,
     deps = [":br_tracker_freelist_tb"],
 )

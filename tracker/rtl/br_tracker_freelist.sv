@@ -15,18 +15,27 @@
 // Bedrock-RTL Free List Manager
 //
 // This module tracks a set of entries that can be dynamically allocated. It
-// stages the next two entries to be allocated in a buffer and allows a single
-// entry to be allocated every cycle. It supports deallocating one or more
-// entries per cycle.
+// allows multiple entries to be allocated per cycle. For each allocation port,
+// it stages the next two entries to be allocated in a buffer. It supports
+// deallocating one or more entries per cycle.
 //
 // The freelist manager ensures that once an entry is allocated, the same entry
 // cannot be allocated again until it is deallocated.
+//
+// Note that fairness of allocation when the freelist is low on entries
+// is not guaranteed. If the freelist is almost empty, the allocation ports
+// get freed entries in fixed priority with port 0 having highest priority
+// and port NumAllocPorts-1 having lowest priority.
 
 `include "br_asserts.svh"
 `include "br_registers.svh"
 
 module br_tracker_freelist #(
+    // Number of entries in the freelist. Must be greater than 2 X NumAllocPorts.
     parameter int NumEntries = 2,
+    // Number of allocation ports. Must be at least 1.
+    parameter int NumAllocPorts = 1,
+    // Number of deallocation ports. Must be at least 1.
     parameter int NumDeallocPorts = 1,
 
     localparam int EntryIdWidth = $clog2(NumEntries)
@@ -35,9 +44,9 @@ module br_tracker_freelist #(
     input logic rst,
 
     // Allocation Interface
-    input logic alloc_ready,
-    output logic alloc_valid,
-    output logic [EntryIdWidth-1:0] alloc_entry_id,
+    input logic [NumAllocPorts-1:0] alloc_ready,
+    output logic [NumAllocPorts-1:0] alloc_valid,
+    output logic [NumAllocPorts-1:0][EntryIdWidth-1:0] alloc_entry_id,
 
     // Deallocation Interface
     input logic [NumDeallocPorts-1:0]                   dealloc_valid,
@@ -45,16 +54,15 @@ module br_tracker_freelist #(
 );
   // Integration Assertions
 
-  `BR_ASSERT_STATIC(legal_num_entries_a, NumEntries >= 2)
+  `BR_ASSERT_STATIC(legal_num_entries_a, NumEntries > (2 * NumAllocPorts))
+  `BR_ASSERT_STATIC(legal_num_alloc_ports_a, NumAllocPorts >= 1)
   `BR_ASSERT_STATIC(legal_num_dealloc_ports_a, NumDeallocPorts >= 1)
 
 
-  `BR_ASSERT(alloc_in_range_a, alloc_valid |-> alloc_entry_id < NumEntries)
-
 `ifdef BR_ASSERT_ON
+`ifndef BR_DISABLE_INTG_CHECKS
   // Track the set of allocated entries and make sure we don't deallocate
   // an entry that has not been allocated.
-  // ri lint_check_off IFDEF_CODE
   logic [NumEntries-1:0] allocated_entries;
   logic [NumEntries-1:0] allocated_entries_next;
 
@@ -63,9 +71,11 @@ module br_tracker_freelist #(
   always_comb begin
     allocated_entries_next = allocated_entries;
 
-    if (alloc_valid && alloc_ready) begin
-      // ri lint_check_waive VAR_INDEX_WRITE
-      allocated_entries_next[alloc_entry_id] = 1'b1;
+    for (int i = 0; i < NumAllocPorts; i++) begin : gen_alloc_intg_asserts
+      if (alloc_valid[i] && alloc_ready[i]) begin
+        // ri lint_check_waive VAR_INDEX_WRITE
+        allocated_entries_next[alloc_entry_id[i]] = 1'b1;
+      end
     end
 
     // ri lint_check_waive ONE_IF_CASE
@@ -78,11 +88,11 @@ module br_tracker_freelist #(
   end
 
   for (genvar i = 0; i < NumDeallocPorts; i++) begin : gen_dealloc_intg_asserts
-    `BR_ASSERT(dealloc_in_range_a, dealloc_valid[i] |-> dealloc_entry_id[i] < NumEntries)
-    `BR_ASSERT(no_dealloc_unallocated_a,
-               dealloc_valid[i] |-> allocated_entries[dealloc_entry_id[i]])
+    `BR_ASSERT_INTG(dealloc_in_range_a, dealloc_valid[i] |-> dealloc_entry_id[i] < NumEntries)
+    `BR_ASSERT_INTG(no_dealloc_unallocated_a,
+                    dealloc_valid[i] |-> allocated_entries[dealloc_entry_id[i]])
   end
-  // ri lint_check_on IFDEF_CODE
+`endif
 `endif
 
   // Implementation
@@ -103,39 +113,85 @@ module br_tracker_freelist #(
             unstaged_free_entries_init)
 
   // Push Interface of the output buffer.
-  logic push_valid;
-  logic push_ready;
-  logic [EntryIdWidth-1:0] push_entry_id;
-  logic [NumEntries-1:0] push_entry_id_onehot;
+  logic [NumAllocPorts-1:0] push_valid;
+  logic [NumAllocPorts-1:0] push_ready;
+  logic [NumAllocPorts-1:0][EntryIdWidth-1:0] push_entry_id;
+  logic [NumAllocPorts-1:0][NumEntries-1:0] push_entry_id_onehot;
 
-  // Pick the first free entry to push to the output buffer.
-  br_enc_priority_encoder #(
-      .NumRequesters(NumEntries)
-  ) br_enc_priority_encoder_free_entries (
-      .clk,
-      .rst,
-      .in (unstaged_free_entries),
-      .out(push_entry_id_onehot)
-  );
+  for (genvar i = 0; i < NumAllocPorts; i++) begin : gen_alloc_port
+    logic [NumEntries-1:0] masked_free_entries;
 
-  // Encode the first free entry ID to binary
-  br_enc_onehot2bin #(
-      .NumValues(NumEntries)
-  ) br_enc_onehot2bin_push_entry_id (
-      .clk,
-      .rst,
-      .in(push_entry_id_onehot),
-      .out_valid(),
-      .out(push_entry_id)
-  );
+    always_comb begin
+      // Start with all free entries unmasked
+      masked_free_entries = unstaged_free_entries;
 
-  assign push_valid = |unstaged_free_entries;
+      // ri lint_check_waive LOOP_NOT_ENTERED
+      for (int j = 0; j < i; j++) begin
+        // If a higher priority buffer is ready, mask off the entry that it will
+        // take.
+        if (push_ready[j]) begin
+          masked_free_entries &= ~push_entry_id_onehot[j];
+        end
+      end
+    end
+
+    assign push_valid[i] = |masked_free_entries;
+
+    // Pick the first unmasked free entry to push to the output buffer.
+    br_enc_priority_encoder #(
+        .NumRequesters(NumEntries)
+    ) br_enc_priority_encoder_free_entries (
+        .clk,
+        .rst,
+        .in (masked_free_entries),
+        .out(push_entry_id_onehot[i])
+    );
+
+    // Encode the first free entry ID to binary
+    br_enc_onehot2bin #(
+        .NumValues(NumEntries)
+    ) br_enc_onehot2bin_push_entry_id (
+        .clk,
+        .rst,
+        .in(push_entry_id_onehot[i]),
+        .out_valid(),
+        .out(push_entry_id[i])
+    );
+
+    // Staging buffer
+    br_flow_reg_both #(
+        .Width(EntryIdWidth),
+        // If there is more than one allocation port, we might revoke the valid
+        // if the last unstaged entry was taken by another port.
+        .EnableAssertPushValidStability(NumAllocPorts == 1),
+        // Since the entry ID is coming from a priority encoder,
+        // it could be unstable if a higher priority entry is deallocated.
+        .EnableAssertPushDataStability(0)
+    ) br_flow_reg_both (
+        .clk,
+        .rst,
+        .push_valid(push_valid[i]),
+        .push_ready(push_ready[i]),
+        .push_data (push_entry_id[i]),
+        .pop_valid (alloc_valid[i]),
+        .pop_ready (alloc_ready[i]),
+        .pop_data  (alloc_entry_id[i])
+    );
+  end
 
   // Free entry vector is updated when a push or deallocation happens.
-  assign unstaged_free_entries_le = (push_valid && push_ready) || (|dealloc_valid);
+  assign unstaged_free_entries_le = (|(push_valid & push_ready)) || (|dealloc_valid);
 
   // Entry is cleared in vector when it is pushed to the output buffer.
-  assign unstaged_free_entries_clear = (push_valid && push_ready) ? push_entry_id_onehot : '0;
+  always_comb begin
+    unstaged_free_entries_clear = '0;
+
+    for (int i = 0; i < NumAllocPorts; i++) begin : gen_unstaged_free_entries_clear
+      if (push_valid[i] && push_ready[i]) begin
+        unstaged_free_entries_clear |= push_entry_id_onehot[i];
+      end
+    end
+  end
 
   // Deallocation Logic
   logic [NumDeallocPorts-1:0][NumEntries-1:0] dealloc_entry_id_onehot;
@@ -161,41 +217,29 @@ module br_tracker_freelist #(
     end
   end
 
-  // Staging buffer
-  br_flow_reg_both #(
-      .Width(EntryIdWidth),
-      // Since the entry ID is coming from a priority encoder,
-      // it could be unstable if a higher priority entry is deallocated.
-      .EnableAssertPushDataStability(0)
-  ) br_flow_reg_both (
-      .clk,
-      .rst,
-      .push_valid,
-      .push_ready,
-      .push_data(push_entry_id),
-      .pop_valid(alloc_valid),
-      .pop_ready(alloc_ready),
-      .pop_data (alloc_entry_id)
-  );
-
   // Implementation Assertions
 
 `ifdef BR_ASSERT_ON
+`ifdef BR_ENABLE_IMPL_CHECKS
   logic [NumEntries-1:0] staged_entries, staged_entries_next;
   logic [NumEntries-1:0] all_entries;
 
   always_comb begin
     staged_entries_next = staged_entries;
 
-    if (push_valid && push_ready) begin
-      // ri lint_check_waive VAR_INDEX_WRITE
-      staged_entries_next[push_entry_id] = 1'b1;
+    for (int i = 0; i < NumAllocPorts; i++) begin : gen_staged_entries_next
+      if (push_valid[i] && push_ready[i]) begin
+        // ri lint_check_waive VAR_INDEX_WRITE
+        staged_entries_next[push_entry_id[i]] = 1'b1;
+      end
     end
 
     // ri lint_check_waive ONE_IF_CASE
-    if (alloc_valid && alloc_ready) begin
-      // ri lint_check_waive SEQ_COND_ASSIGNS VAR_INDEX_WRITE
-      staged_entries_next[alloc_entry_id] = 1'b0;
+    for (int i = 0; i < NumAllocPorts; i++) begin : gen_staged_entries_next
+      if (alloc_valid[i] && alloc_ready[i]) begin
+        // ri lint_check_waive SEQ_COND_ASSIGNS VAR_INDEX_WRITE
+        staged_entries_next[alloc_entry_id[i]] = 1'b0;
+      end
     end
   end
 
@@ -205,9 +249,22 @@ module br_tracker_freelist #(
 
   // Every entry must always be accounted for. It must either be allocated, in
   // the free vector, or in the staging buffer.
-  `BR_ASSERT(no_lost_entries_a, &all_entries)
-  // Ensure that we don't allocate the same entry twice without deallocating it.
-  `BR_ASSERT(no_double_alloc_a, alloc_valid |-> !allocated_entries[alloc_entry_id])
+  `BR_ASSERT_IMPL(no_lost_entries_a, &all_entries)
+
+  for (genvar i = 0; i < NumAllocPorts; i++) begin : gen_no_double_alloc_asserts
+    `BR_ASSERT_IMPL(alloc_in_range_a, alloc_valid[i] |-> alloc_entry_id[i] < NumEntries)
+    // Ensure that we don't allocate the same entry twice without deallocating it.
+    `BR_ASSERT_IMPL(no_double_alloc_seq_a, alloc_valid[i] |-> !allocated_entries[alloc_entry_id[i]])
+
+    // ri lint_check_waive LOOP_NOT_ENTERED
+    for (genvar j = i + 1; j < NumAllocPorts; j++) begin : gen_no_double_alloc_comb_assert
+      // Ensure that we don't allocate the same entry from two different ports.
+      `BR_ASSERT_IMPL(
+          no_double_alloc_comb_a,
+          (alloc_valid[i] && alloc_valid[j]) |-> (alloc_entry_id[i] != alloc_entry_id[j]))
+    end
+  end
+`endif
 `endif
 
 endmodule

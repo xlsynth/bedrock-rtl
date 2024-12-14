@@ -32,8 +32,12 @@ br_verilog_elab_and_lint_test_suite(
     name = "br_tracker_freelist_test_suite",
     params = {
         "NumEntries": [
-            "4",
-            "6",
+            "5",
+            "8",
+        ],
+        "NumAllocPorts": [
+            "1",
+            "2",
         ],
         "NumDeallocPorts": [
             "1",
