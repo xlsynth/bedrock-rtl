@@ -176,6 +176,19 @@ verilog_library(
     ],
 )
 
+verilog_library(
+    name = "br_flow_serializer",
+    srcs = ["br_flow_serializer.sv"],
+    deps = [
+        ":br_flow_checks_valid_data",
+        ":br_flow_reg_fwd",
+        "//counter/rtl:br_counter_incr",
+        "//macros:br_asserts_internal",
+        "//macros:br_registers",
+        "//mux/rtl:br_mux_bin",
+    ],
+)
+
 br_verilog_elab_and_lint_test_suite(
     name = "br_flow_checks_valid_data_test_suite_valid_stable",
     params = {
@@ -419,4 +432,26 @@ br_verilog_elab_and_lint_test_suite(
         ],
     },
     deps = [":br_flow_reg_rev"],
+)
+
+br_verilog_elab_and_lint_test_suite(
+    name = "br_flow_serializer_test_suite",
+    params = {
+        "PushWidth": [
+            "8",
+            "12",
+        ],
+        "PopWidth": [
+            "4",
+        ],
+        "SerializeMostSignificantFirst": [
+            "0",
+            "1",
+        ],
+        "RegisterPopOutputs": [
+            "0",
+            "1",
+        ],
+    },
+    deps = [":br_flow_serializer"],
 )

@@ -127,6 +127,7 @@ module br_flow_serializer #(
   logic [      PopWidth-1:0] internal_pop_data;
   logic [PopFlidIdWidth-1:0] internal_pop_id;
   logic                      internal_pop_last;
+  logic                      pop_id_incr;
 
   br_counter_incr #(
       .MaxValue(NumPopFlitsMinus1),
@@ -135,12 +136,14 @@ module br_flow_serializer #(
       .clk,
       .rst,
       .reinit(1'b0),  // unused
-      .initial_value('0),
-      .incr_valid(internal_pop_ready && internal_pop_valid),
+      .initial_value(PopFlidIdWidth'(0)),
+      .incr_valid(pop_id_incr),
       .incr(1'b1),
       .value(internal_pop_id),
       .value_next()  // unused
   );
+
+  assign pop_id_incr = internal_pop_ready && internal_pop_valid;
 
   assign num_pop_flits_minus_1 = NumPopFlitsMinus1;
   assign internal_pop_last = (internal_pop_id == num_pop_flits_minus_1);
@@ -175,9 +178,9 @@ module br_flow_serializer #(
   end else begin : gen_no_register_pop_outputs
     assign internal_pop_ready = pop_ready;
     assign pop_valid = internal_pop_valid;
-    assign pop_data = pop_data_internal;
-    assign pop_id = pop_id_internal;
-    assign pop_last = pop_last_internal;
+    assign pop_data = internal_pop_data;
+    assign pop_id = internal_pop_id;
+    assign pop_last = internal_pop_last;
   end
 
   //------------------------------------------
@@ -185,9 +188,9 @@ module br_flow_serializer #(
   //------------------------------------------
   // TODO: standard ready-valid check modules
 
-  if (RegisterPopOutputs) begin : gen_register_pop_outputs
+  if (RegisterPopOutputs) begin : gen_cutthru_latency_1
     `BR_ASSERT_IMPL(cut_through_latency_1_a, push_valid |=> pop_valid)
-  end else begin : gen_no_register_pop_outputs
+  end else begin : gen_cutthru_latency_0
     `BR_ASSERT_IMPL(cut_through_latency_0_a, push_valid |-> pop_valid)
   end
   `BR_ASSERT_IMPL(pop_id_in_range_a, pop_valid |-> pop_id < NumPopFlits)
