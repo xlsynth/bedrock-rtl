@@ -24,8 +24,6 @@
 // the data is valid on the following cycle. This can be very useful for closing
 // timing on a wide bus that covers a long wire distance. The width-wise fanout
 // delay is on a different cycle than the lengthwise wire delay.
-//
-// Note: The rst port is only used for assertions and covers.
 
 `include "br_registers.svh"
 `include "br_asserts_internal.svh"
@@ -37,9 +35,6 @@ module br_delay_valid_next_nr #(
     // Positive edge-triggered. If NumStages is 0, then only used for assertions.
     // ri lint_check_waive INPUT_NOT_READ HIER_NET_NOT_READ HIER_BRANCH_NOT_READ
     input  logic                          clk,
-    // Synchronous active-high. Only used for assertions.
-    // ri lint_check_waive INPUT_NOT_READ HIER_NET_NOT_READ HIER_BRANCH_NOT_READ
-    input  logic                          rst,
     input  logic                          in_valid_next,
     input  logic [  Width-1:0]            in,
     output logic                          out_valid_next,
@@ -58,7 +53,7 @@ module br_delay_valid_next_nr #(
   `BR_ASSERT_STATIC(bit_width_must_be_at_least_one_a, Width >= 1)
   `BR_ASSERT_STATIC(num_stages_must_be_at_least_zero_a, NumStages >= 0)
 
-  `BR_COVER_INTG(in_valid_next_c, in_valid_next)
+  `BR_COVER_CR_INTG(in_valid_next_c, in_valid_next === 1'b1, clk, 1'b0)
 
   //------------------------------------------
   // Implementation
@@ -90,10 +85,11 @@ module br_delay_valid_next_nr #(
     // ri lint_check_waive ALWAYS_COMB
     `BR_ASSERT_COMB_IMPL(data_passthru_a, out === in)
   end else begin : gen_pos_delay
-    `BR_ASSERT_IMPL(valid_next_delay_a,
-                    ##NumStages out_valid_next == $past(in_valid_next, NumStages))
-    `BR_ASSERT_IMPL(data_delay_a,
-                    in_valid_next |-> ##NumStages out_valid_next ##1 out == $past(in, NumStages))
+    `BR_ASSERT_CR_IMPL(valid_next_delay_a,
+                       ##NumStages out_valid_next === $past(in_valid_next, NumStages), clk, 1'b0)
+    `BR_ASSERT_CR_IMPL(
+        data_delay_a, in_valid_next |-> ##NumStages out_valid_next ##1 out === $past(in, NumStages),
+        clk, 1'b0)
   end
 
 endmodule : br_delay_valid_next_nr

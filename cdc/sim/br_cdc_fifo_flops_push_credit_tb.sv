@@ -130,7 +130,6 @@ module br_cdc_fifo_flops_push_credit_tb ();
       .Width(Width + 2)
   ) br_delay_nr_to_fifo (
       .clk,
-      .rst,
       .in({cv_push_valid, cv_push_data, cv_push_credit_stall}),
       .out({cv_push_valid_d, cv_push_data_d, cv_push_credit_stall_d}),
       .out_stages()  // ri lint_check_waive OPEN_OUTPUT
@@ -141,7 +140,6 @@ module br_cdc_fifo_flops_push_credit_tb ();
       .Width(1)
   ) br_delay_nr_from_fifo (
       .clk,
-      .rst,
       .in(cv_push_credit),
       .out(cv_push_credit_d),
       .out_stages()  // ri lint_check_waive OPEN_OUTPUT
