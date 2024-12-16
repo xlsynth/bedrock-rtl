@@ -57,8 +57,8 @@
 //     3     | stable       | 8'hAD    | 2'd2   | 1'b0
 //     4     | stable       | 8'hBA    | 2'd3   | 1'b1
 
+`include "br_asserts.svh"
 `include "br_asserts_internal.svh"
-`include "br_registers.svh"
 
 module br_flow_serializer #(
     // Width of the push side packet. Must be greater than PopWidth
