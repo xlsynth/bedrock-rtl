@@ -78,19 +78,21 @@ module br_flow_deserializer #(
     // Push-side interface (narrow, serialized)
     output logic                       push_ready,
     input  logic                       push_valid,
-    input  logic [PushWidth-1:0]       push_data,
+    input  logic [      PushWidth-1:0] push_data,
     input  logic [PushFlidIdWidth-1:0] push_id,
     input  logic                       push_last,
 
     // Pop-side interface (wide)
-    input  logic                      pop_ready,
-    output logic                      pop_valid,
-    output logic [      PopWidth-1:0] pop_data,
+    input  logic                pop_ready,
+    output logic                pop_valid,
+    output logic [PopWidth-1:0] pop_data
 );
 
   //------------------------------------------
   // Integration checks
   //------------------------------------------
+  localparam int NumPushFlitsMinus1 = NumPushFlits - 1;
+
   `BR_ASSERT_STATIC(push_width_gte_1_a, PushWidth >= 1)
   `BR_ASSERT_STATIC(pop_width_multiple_of_push_width_a, (PopWidth % PushWidth) == 0)
   `BR_ASSERT_STATIC(pop_width_greater_than_push_width_a, PopWidth > PushWidth)
@@ -116,9 +118,6 @@ module br_flow_deserializer #(
   //------------------------------------------
   // Implementation
   //------------------------------------------
-  localparam int NumPushFlitsMinus1 = NumPushFlits - 1;
-  logic [PushFlidIdWidth-1:0] num_push_flits_minus_1;
-
   logic [NumPushFlits-1:0] internal_ready;
   logic [NumPushFlits-1:0] internal_valid;
   logic [NumPushFlits-1:0][PushWidth-1:0] internal_data;
@@ -147,9 +146,9 @@ module br_flow_deserializer #(
 
   // TODO(mgottscho): Simplify. We know by construction that internal_ready when visiting push_id > 0.
   // So we can omit some register logic.
-  for (genvar i = 0; i < NumPushFlits - 1; i++) begin : gen_reg
+  for (genvar i = 0; i < NumPushFlitsMinus1; i++) begin : gen_reg
     br_flow_reg_fwd #(
-        .Width(PopWidth + PopFlidIdWidth + 1)
+        .Width(PushWidth)
     ) br_flow_reg_fwd (
         .clk,
         .rst,
@@ -173,7 +172,7 @@ module br_flow_deserializer #(
 
   if (DeserializeMostSignificantFirst) begin : gen_concat_msb_first
     for (genvar i = 0; i < NumPushFlits; i++) begin : gen_loop
-      localparam int Lsb = (NumPushFlits - i - 1) * PushWidth;
+      localparam int Lsb = ((NumPushFlits - i) - 1) * PushWidth;
       localparam int Msb = Lsb + PushWidth - 1;
       assign pop_data[Msb:Lsb] = internal_pop_data[i];
     end
