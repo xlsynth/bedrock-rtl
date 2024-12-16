@@ -41,6 +41,7 @@ verilog_library(
     deps = [
         "//macros:br_asserts_internal",
         "//macros:br_registers",
+        "//macros:br_unused",
     ],
 )
 
@@ -82,10 +83,17 @@ br_verilog_elab_and_lint_test_suite(
 
 br_verilog_elab_and_lint_test_suite(
     name = "br_enc_priority_encoder_test_suite",
-    params = {"NumRequesters": [
-        "2",
-        "15",
-    ]},
+    params = {
+        "NumRequesters": [
+            "4",
+            "15",
+        ],
+        "NumResults": [
+            "1",
+            "2",
+            "3",
+        ],
+    },
     deps = [":br_enc_priority_encoder"],
 )
 
