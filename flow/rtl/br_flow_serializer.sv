@@ -183,6 +183,15 @@ module br_flow_serializer #(
   //------------------------------------------
   // Implementation checks
   //------------------------------------------
+  // TODO: standard ready-valid check modules
 
+  if (RegisterPopOutputs) begin : gen_register_pop_outputs
+    `BR_ASSERT_IMPL(cut_through_latency_1_a, push_valid |=> pop_valid)
+  end else begin : gen_no_register_pop_outputs
+    `BR_ASSERT_IMPL(cut_through_latency_0_a, push_valid |-> pop_valid)
+  end
+  `BR_ASSERT_IMPL(pop_id_in_range_a, pop_valid |-> pop_id < NumPopFlits)
+  `BR_ASSERT_IMPL(pop_last_a, pop_valid && pop_id == NumPopFlitsMinus1 |-> pop_last)
+  `BR_ASSERT_IMPL(push_ready_iff_pop_last_a, push_ready |-> pop_ready && pop_valid && pop_last)
 
 endmodule : br_flow_serializer
