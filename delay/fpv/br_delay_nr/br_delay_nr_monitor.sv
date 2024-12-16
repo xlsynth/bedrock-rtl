@@ -10,7 +10,6 @@ module br_delay_nr_monitor #(
     parameter int NumStages = 0
 ) (
     input logic clk,
-    input logic rst,
     input logic [Width-1:0] in,
     input logic [Width-1:0] out
 );
@@ -34,7 +33,6 @@ module Immediate_Reflection_for_Zero_Stages #(
     parameter int NumStages = 0
 ) (
     input logic clk,
-    input logic rst,
     input logic [Width-1:0] in,
     input logic [Width-1:0] out
 );
@@ -42,7 +40,7 @@ module Immediate_Reflection_for_Zero_Stages #(
   // Immediate Reflection for Zero Stages: Check that if: NumStages is 0 and clk rises, then: out equals in immediately.
   if (NumStages == 0) begin
     Immediate_Reflection_A :
-    assert property (@(posedge clk) disable iff (rst) (out == in));
+    assert property (@(posedge clk) (out == in));
   end
 endmodule
 
@@ -51,7 +49,6 @@ module Delayed_Reflection_for_Non_Zero_Stages #(
     parameter int NumStages = 0
 ) (
     input logic clk,
-    input logic rst,
     input logic [Width-1:0] in,
     input logic [Width-1:0] out
 );
@@ -59,7 +56,7 @@ module Delayed_Reflection_for_Non_Zero_Stages #(
   // Delayed Reflection for Non-Zero Stages: Check that if: NumStages is greater than 0, after an initial one-time delay of NumStages cycles, and clk rises, then: out equals in from NumStages cycles ago.
   if (NumStages > 0) begin
     Delayed_Reflection_A :
-    assert property (@(posedge clk) disable iff (rst) ##NumStages out == $past(in, NumStages));
+    assert property (@(posedge clk) ##NumStages out == $past(in, NumStages));
   end
 endmodule
 bind br_delay_nr br_delay_nr_monitor #(
@@ -67,7 +64,6 @@ bind br_delay_nr br_delay_nr_monitor #(
     .NumStages(NumStages)
 ) monitor (
     .clk(clk),
-    .rst(rst),
     .in (in),
     .out(out)
 );

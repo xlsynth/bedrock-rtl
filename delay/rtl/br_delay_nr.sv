@@ -29,9 +29,6 @@ module br_delay_nr #(
     // Positive edge-triggered. If NumStages is 0, then only used for assertions.
     // ri lint_check_waive INPUT_NOT_READ HIER_NET_NOT_READ HIER_BRANCH_NOT_READ
     input  logic                          clk,
-    // Synchronous active-high. Only used for assertions.
-    // ri lint_check_waive INPUT_NOT_READ HIER_NET_NOT_READ HIER_BRANCH_NOT_READ
-    input  logic                          rst,
     input  logic [  Width-1:0]            in,
     // Output of last delay stage (delayed by NumStages cycles).
     output logic [  Width-1:0]            out,
@@ -67,7 +64,7 @@ module br_delay_nr #(
     // ri lint_check_waive ALWAYS_COMB
     `BR_ASSERT_COMB_IMPL(passthru_a, out === in)
   end else begin : gen_pos_delay
-    `BR_ASSERT_IMPL(delay_a, ##NumStages out == $past(in, NumStages))
+    `BR_ASSERT_CR_IMPL(delay_a, ##NumStages out === $past(in, NumStages), clk, 1'b0)
   end
 
 

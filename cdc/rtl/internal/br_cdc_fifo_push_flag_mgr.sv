@@ -87,7 +87,6 @@ module br_cdc_fifo_push_flag_mgr #(
       .NumStages(ResetActiveDelay)
   ) br_delay_nr_reset_active_push (
       .clk,
-      .rst(1'b0),  // unused
       .in(rst),
       .out(reset_active_push),
       .out_stages()
