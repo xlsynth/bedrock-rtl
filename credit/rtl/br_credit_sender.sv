@@ -23,8 +23,12 @@
 //
 // Pop Interface:
 //   - Credits are replenished when the receiver returns a credit (pop_credit asserted).
-//   - pop_credit_stall is asserted during reset to prevent the receiver from returning credits prematurely.
-//   - The receiver should not exit reset and assert pop_credit when pop_credit_stall is high, otherwise
+//   - pop_reset_active_fwd is asserted during reset to prevent the receiver from returning credits prematurely
+//     and to indicate that the receiver's credit count should be reset.
+//   - pop_reset_active_rev is asserted by the receiver to indicate that the receiver is in reset
+//     the sender will reset its credit count to the initial value and block sending any data until
+//     the pop_reset_active_rev is deasserted.
+//   - The receiver should not exit reset and assert pop_credit when pop_reset_active_fwd is high, otherwise
 //     credits will be lost.
 //   - Forwards data to the receiver via pop_data and asserts pop_valid when both push_valid and push_ready
 //     are high.
@@ -79,7 +83,8 @@ module br_credit_sender #(
     input logic [Width-1:0] push_data,
 
     // Credit/valid pop interface.
-    output logic pop_credit_stall,
+    output logic pop_reset_active_fwd,
+    input logic pop_reset_active_rev,
     input logic pop_credit,
     output logic pop_valid,
     output logic [Width-1:0] pop_data,
@@ -130,13 +135,14 @@ module br_credit_sender #(
       .decr_ready(push_ready),
       .decr_valid(push_valid),
       .decr(1'b1),
+      .reinit(pop_reset_active_rev),
       .initial_value(credit_initial),
       .withhold(credit_withhold),
       .value(credit_count),
       .available(credit_available)
   );
 
-  `BR_REGI(pop_credit_stall, 1'b0, 1'b1)
+  `BR_REGI(pop_reset_active_fwd, 1'b0, 1'b1)
 
   logic internal_pop_valid;
   assign internal_pop_valid = push_ready && push_valid;

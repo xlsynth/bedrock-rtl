@@ -45,7 +45,8 @@ module br_cdc_fifo_flops_push_credit_tb ();
   logic cv_push_credit, cv_push_credit_d;
   logic cv_push_valid, cv_push_valid_d;
   logic [Width-1:0] cv_push_data, cv_push_data_d;
-  logic cv_push_credit_stall, cv_push_credit_stall_d;
+  logic cv_push_reset_active_fwd, cv_push_reset_active_fwd_d;
+  logic cv_push_reset_active_rev, cv_push_reset_active_rev_d;
 
   // harness push if
   logic push_ready;
@@ -80,7 +81,8 @@ module br_cdc_fifo_flops_push_credit_tb ();
   ) dut (
       .push_clk(clk),
       .push_rst(rst),
-      .push_credit_stall(cv_push_credit_stall_d),
+      .push_reset_active_fwd(cv_push_reset_active_fwd_d),
+      .push_reset_active_rev(cv_push_reset_active_rev),
       .push_credit(cv_push_credit),
       .push_valid(cv_push_valid_d),
       .push_data(cv_push_data_d),
@@ -115,7 +117,8 @@ module br_cdc_fifo_flops_push_credit_tb ();
       .push_ready,
       .push_valid,
       .push_data,
-      .pop_credit_stall(cv_push_credit_stall),
+      .pop_reset_active_fwd(cv_push_reset_active_fwd),
+      .pop_reset_active_rev(cv_push_reset_active_rev_d),
       .pop_credit(cv_push_credit_d),
       .pop_valid(cv_push_valid),
       .pop_data(cv_push_data),
@@ -131,19 +134,19 @@ module br_cdc_fifo_flops_push_credit_tb ();
   ) br_delay_nr_to_fifo (
       .clk,
       .rst,
-      .in({cv_push_valid, cv_push_data, cv_push_credit_stall}),
-      .out({cv_push_valid_d, cv_push_data_d, cv_push_credit_stall_d}),
+      .in({cv_push_valid, cv_push_data, cv_push_reset_active_fwd}),
+      .out({cv_push_valid_d, cv_push_data_d, cv_push_reset_active_fwd_d}),
       .out_stages()  // ri lint_check_waive OPEN_OUTPUT
   );
 
   br_delay_nr #(
       .NumStages(PropDelay),
-      .Width(1)
+      .Width(2)
   ) br_delay_nr_from_fifo (
       .clk,
       .rst,
-      .in(cv_push_credit),
-      .out(cv_push_credit_d),
+      .in({cv_push_credit, cv_push_reset_active_rev}),
+      .out({cv_push_credit_d, cv_push_reset_active_rev_d}),
       .out_stages()  // ri lint_check_waive OPEN_OUTPUT
   );
 
