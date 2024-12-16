@@ -31,6 +31,7 @@ verilog_elab_test(
 
 br_verilog_fpv_test_suite(
     name = "br_delay_nr_jg_test_suite",
+    custom_tcl_body = "br_delay_nr_monitor_custom_body.tcl",
     params = {
         "Width": ["2"],
         "NumStages": [
@@ -40,6 +41,6 @@ br_verilog_fpv_test_suite(
         ],
     },
     tool = "jg",
-    top = "br_delay_nr_monitor",
+    top = "br_delay_nr",
     deps = [":br_delay_nr_monitor"],
 )

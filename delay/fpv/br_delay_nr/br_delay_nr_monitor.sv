@@ -10,7 +10,6 @@ module br_delay_nr_monitor #(
     parameter int NumStages = 0
 ) (
     input logic clk,
-    input logic rst,
     input logic [Width-1:0] in,
     input logic [Width-1:0] out
 );
