@@ -102,7 +102,7 @@ module br_tracker_freelist_tb;
       alloc_ready[aid] = 1;
       @(posedge clk);
 
-      timeout = (MaxDelay + 1) * (NumAllocPorts - 1) * NumAllocations;
+      timeout = (MaxDelay + 1) * NumAllocPorts * NumAllocations;
       while (!alloc_valid[aid] && timeout > 0) begin
         @(posedge clk);
         timeout--;

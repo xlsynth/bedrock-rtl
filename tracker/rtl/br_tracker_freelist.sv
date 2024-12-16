@@ -27,7 +27,7 @@
 // get freed entries in fixed priority with port 0 having highest priority
 // and port NumAllocPorts-1 having lowest priority.
 
-`include "br_asserts.svh"
+`include "br_asserts_internal.svh"
 `include "br_registers.svh"
 
 module br_tracker_freelist #(
