@@ -173,7 +173,8 @@ module br_credit_counter #(
 
   // No-op corners
   `BR_ASSERT_IMPL(idle_noop_a, !incr_valid && !decr_valid |-> value == value_next)
-  `BR_ASSERT_IMPL(active_noop_a, incr_valid && decr_valid && incr == decr |-> value == value_next)
+  `BR_ASSERT_IMPL(active_noop_a,
+                  incr_valid && decr_valid && decr_ready && incr == decr |-> value == value_next)
 
   // Withhold and available
   `BR_COVER_IMPL(value_lt_available_c, value < available)
