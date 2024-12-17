@@ -104,6 +104,10 @@ module br_flow_deserializer #(
   br_flow_checks_valid_data #(
       .NumFlows(1),
       .Width(PushWidth + PushFlitIdWidth + 1),
+      // Ready/valid stability is required for the serializer to work correctly.
+      // That's because it serially scans over the valid push data until the entire
+      // packet has been transmitted. If the push data is unstable during
+      // transmission, then the data integrity is compromised.
       .EnableCoverBackpressure(1),
       .EnableAssertValidStability(1),
       .EnableAssertDataStability(1)
