@@ -80,11 +80,13 @@ module br_asserts_test;
 
   // Use BR_ASSERT
   `BR_ASSERT(sum_range_check_a, sum <= 15)
+  `BR_ASSERT_FPV(sum_range_check_fpv_a, sum <= 15)
 
   // Use BR_ASSUME
   // Not really useful (redundant with assert above) but it
   // should work like an assert when not being used in formal
   `BR_ASSUME(sum_range_check_m, sum <= 15)
+  `BR_ASSUME_FPV(sum_range_check_fpv_m, sum <= 15)
 
   // Use BR_ASSERT_CR
   logic custom_clk;
@@ -96,20 +98,26 @@ module br_asserts_test;
     #15 custom_rst = 0;
   end
   `BR_ASSERT_CR(valid_data_check_a, (valid == 1) |-> (sum == a + b), custom_clk, custom_rst)
+  `BR_ASSERT_CR_FPV(valid_data_check_fpv_a, (valid == 1) |-> (sum == a + b), custom_clk, custom_rst)
   // Not really useful (redundant with assert above) but it
   // should work like an assert when not being used in formal
   `BR_ASSUME_CR(valid_data_check_m, (valid == 1) |-> (sum == a + b), custom_clk, custom_rst)
+  `BR_ASSUME_CR_FPV(valid_data_check_fpv_m, (valid == 1) |-> (sum == a + b), custom_clk, custom_rst)
 
   // Use BR_ASSERT_COMB
   `BR_ASSERT_COMB(inputs_nonzero_a, (a != 0) || (b != 0))
+  `BR_ASSERT_COMB_FPV(inputs_nonzero_fpv_a, (a != 0) || (b != 0))
 
   // Use BR_COVER
   `BR_COVER(sum_overflow_a, sum > 15)
+  `BR_COVER_FPV(sum_overflow_fpv_a, sum > 15)
 
   // Use BR_COVER_CR
   `BR_COVER_CR(valid_transition_a, (valid == 1), custom_clk, custom_rst)
+  `BR_COVER_CR_FPV(valid_transition_fpv_a, (valid == 1), custom_clk, custom_rst)
 
   // Use BR_COVER_COMB
   `BR_COVER_COMB(inputs_equal_a, (a == b))
+  `BR_COVER_COMB_FPV(inputs_equal_fpv_a, (a == b))
 
 endmodule : br_asserts_test
