@@ -70,7 +70,7 @@ module br_flow_serializer #(
     // appear on the push interface.
     parameter bit SerializeMostSignificantFirst = 1,
     localparam int NumPopFlits = PushWidth / PopWidth,
-    localparam int PopFlidIdWidth = $clog2(NumPopFlits)
+    localparam int PopFlitIdWidth = $clog2(NumPopFlits)
 ) (
     // Posedge-triggered clock
     input logic clk,
@@ -86,7 +86,7 @@ module br_flow_serializer #(
     input  logic                      pop_ready,
     output logic                      pop_valid,
     output logic [      PopWidth-1:0] pop_data,
-    output logic [PopFlidIdWidth-1:0] pop_id,
+    output logic [PopFlitIdWidth-1:0] pop_id,
     output logic                      pop_last
 );
 
@@ -116,8 +116,8 @@ module br_flow_serializer #(
   // Implementation
   //------------------------------------------
   localparam int NumPopFlitsMinus1 = NumPopFlits - 1;
-  logic [PopFlidIdWidth-1:0] num_pop_flits_minus_1;
-  logic [PopFlidIdWidth-1:0] slice_id;
+  logic [PopFlitIdWidth-1:0] num_pop_flits_minus_1;
+  logic [PopFlitIdWidth-1:0] slice_id;
   logic                      pop_id_incr;
 
   br_counter_incr #(
@@ -127,7 +127,7 @@ module br_flow_serializer #(
       .clk,
       .rst,
       .reinit(1'b0),  // unused
-      .initial_value(PopFlidIdWidth'(0)),
+      .initial_value(PopFlitIdWidth'(0)),
       .incr_valid(pop_id_incr),
       .incr(1'b1),
       .value(pop_id),

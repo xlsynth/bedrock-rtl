@@ -68,7 +68,7 @@ module br_flow_deserializer #(
     // appear on the push interface.
     parameter bit DeserializeMostSignificantFirst = 1,
     localparam int NumPushFlits = PopWidth / PushWidth,
-    localparam int PushFlidIdWidth = $clog2(NumPushFlits)
+    localparam int PushFlitIdWidth = $clog2(NumPushFlits)
 ) (
     // Posedge-triggered clock
     input logic clk,
@@ -79,7 +79,7 @@ module br_flow_deserializer #(
     output logic                       push_ready,
     input  logic                       push_valid,
     input  logic [      PushWidth-1:0] push_data,
-    input  logic [PushFlidIdWidth-1:0] push_id,
+    input  logic [PushFlitIdWidth-1:0] push_id,
     input  logic                       push_last,
 
     // Pop-side interface (wide)
@@ -103,7 +103,7 @@ module br_flow_deserializer #(
 
   br_flow_checks_valid_data #(
       .NumFlows(1),
-      .Width(PushWidth + PushFlidIdWidth + 1),
+      .Width(PushWidth + PushFlitIdWidth + 1),
       .EnableCoverBackpressure(1),
       .EnableAssertValidStability(1),
       .EnableAssertDataStability(1)
