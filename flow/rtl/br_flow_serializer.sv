@@ -37,7 +37,7 @@
 //
 // The cut-through latency of the push packet to the first pop flit is 0 cycles.
 //
-// Examples(where the ready and valid signals are not shown and are always 1):
+// Examples(where the ready and valid signals are not shown:
 //
 //     PushWidth = 64, PopWidth = 8, SerializeMostSignificantFirst = 1
 //     Cycle | push_data    | pop_data | pop_id | pop_last

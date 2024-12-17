@@ -35,7 +35,7 @@
 // The throughput of this module is 1 push flit per cycle; equivalently, a packet output interval of
 // 1 packet per (PushWidth / PopWidth) cycles.
 //
-// Examples(where the ready and valid signals are not shown and are always 1):
+// Examples(where the ready and valid signals are not shown:
 //
 //     PushWidth = 8, PopWidth = 64, DeserializeMostSignificantFirst = 1
 //     Cycle | push_data | push_id | push_last | pop_data
