@@ -58,7 +58,7 @@ module br_flow_checks_valid_data #(
 
 `ifdef BR_ASSERT_ON
 `ifndef BR_DISABLE_INTG_CHECKS
-  for (genvar i = 0; i < NumFlows; i++) begin : gen_flow_checks
+  for (genvar i = 0; i < NumFlows; i++) begin : gen_flow_checks  // ri lint_check_waive IFDEF_CODE
     if (EnableCoverBackpressure) begin : gen_backpressure_checks
       if (EnableAssertValidStability) begin : gen_valid_stability_checks
         // Assert that under backpressure conditions, the upstream properly
