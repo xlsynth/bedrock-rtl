@@ -35,12 +35,11 @@
 // The throughput of this module is 1 pop flit per cycle; equivalently, a packet initiation interval of
 // 1 packet per (PopWidth / PushWidth) cycles.
 //
-// The pop interface can be optionally registered. If it is, then the cut-through latency
-// of the push packet to the first pop flit is 1 cycle; otherwise, it is 0 cycles.
+// The cut-through latency of the push packet to the first pop flit is 0 cycles.
 //
 // Examples(where the ready and valid signals are not shown and are always 1):
 //
-//     PushWidth = 64, PopWidth = 8, SerializeMostSignificantFirst = 1, RegisterPopOutputs = 0
+//     PushWidth = 64, PopWidth = 8, SerializeMostSignificantFirst = 1
 //     Cycle | push_data    | pop_data | pop_id | pop_last
 //     ------|--------------|----------|--------|---------
 //     0     | 64'hBAADF00D | 8'hBA    | 2'd0   | 1'b0
@@ -48,14 +47,13 @@
 //     2     | stable       | 8'hF0    | 2'd2   | 1'b0
 //     3     | stable       | 8'h0D    | 2'd3   | 1'b1
 //
-//     PushWidth = 64, PopWidth = 8, SerializeMostSignificantFirst = 0, RegisterPopOutputs = 1
+//     PushWidth = 64, PopWidth = 8, SerializeMostSignificantFirst = 0
 //     Cycle | push_data    | pop_data | pop_id | pop_last
 //     ------|--------------|----------|--------|---------
-//     0     | 64'hBAADF00D |          |        |
-//     1     | stable       | 8'h0D    | 2'd0   | 1'b0
-//     2     | stable       | 8'hF0    | 2'd1   | 1'b0
-//     3     | stable       | 8'hAD    | 2'd2   | 1'b0
-//     4     | stable       | 8'hBA    | 2'd3   | 1'b1
+//     0     | 64'hBAADF00D | 8'h0D    | 2'd0   | 1'b0
+//     1     | stable       | 8'hF0    | 2'd1   | 1'b0
+//     2     | stable       | 8'hAD    | 2'd2   | 1'b0
+//     3     | stable       | 8'hBA    | 2'd3   | 1'b1
 
 `include "br_asserts.svh"
 `include "br_asserts_internal.svh"
@@ -71,8 +69,6 @@ module br_flow_serializer #(
     // The order of bits within each flit is always the same that they
     // appear on the push interface.
     parameter bit SerializeMostSignificantFirst = 1,
-    // If 1, the pop interface outputs are registered.
-    parameter bit RegisterPopOutputs = 0,
     localparam int NumPopFlits = PushWidth / PopWidth,
     localparam int PopFlidIdWidth = $clog2(NumPopFlits)
 ) (
@@ -122,11 +118,6 @@ module br_flow_serializer #(
   localparam int NumPopFlitsMinus1 = NumPopFlits - 1;
   logic [PopFlidIdWidth-1:0] num_pop_flits_minus_1;
   logic [PopFlidIdWidth-1:0] slice_id;
-  logic                      internal_pop_ready;
-  logic                      internal_pop_valid;
-  logic [      PopWidth-1:0] internal_pop_data;
-  logic [PopFlidIdWidth-1:0] internal_pop_id;
-  logic                      internal_pop_last;
   logic                      pop_id_incr;
 
   br_counter_incr #(
@@ -139,18 +130,17 @@ module br_flow_serializer #(
       .initial_value(PopFlidIdWidth'(0)),
       .incr_valid(pop_id_incr),
       .incr(1'b1),
-      .value(internal_pop_id),
+      .value(pop_id),
       .value_next()  // unused
   );
 
-  assign pop_id_incr = internal_pop_ready && internal_pop_valid;
+  assign pop_id_incr = pop_ready && pop_valid;
 
   assign num_pop_flits_minus_1 = NumPopFlitsMinus1;
-  assign internal_pop_last = (internal_pop_id == num_pop_flits_minus_1);
-  assign internal_pop_valid = push_valid;
-  assign push_ready = internal_pop_ready && internal_pop_last;
-  assign slice_id = SerializeMostSignificantFirst ?
-    (num_pop_flits_minus_1 - internal_pop_id) : internal_pop_id;
+  assign pop_last = (pop_id == num_pop_flits_minus_1);
+  assign pop_valid = push_valid;
+  assign push_ready = pop_ready && pop_last;
+  assign slice_id = SerializeMostSignificantFirst ? (num_pop_flits_minus_1 - pop_id) : pop_id;
 
   br_mux_bin #(
       .NumSymbolsIn(NumPopFlits),
@@ -158,41 +148,14 @@ module br_flow_serializer #(
   ) br_mux_bin (
       .select(slice_id),
       .in(push_data),
-      .out(internal_pop_data)
+      .out(pop_data)
   );
-
-  // Optionally register the pop outputs
-  if (RegisterPopOutputs) begin : gen_register_pop_outputs
-    br_flow_reg_fwd #(
-        .Width(PopWidth + PopFlidIdWidth + 1)
-    ) br_flow_reg_fwd (
-        .clk,
-        .rst,
-        .push_ready(internal_pop_ready),
-        .push_valid(internal_pop_valid),
-        .push_data ({internal_pop_data, internal_pop_id, internal_pop_last}),
-        .pop_ready (pop_ready),
-        .pop_valid (pop_valid),
-        .pop_data  ({pop_data, pop_id, pop_last})
-    );
-  end else begin : gen_no_register_pop_outputs
-    assign internal_pop_ready = pop_ready;
-    assign pop_valid = internal_pop_valid;
-    assign pop_data = internal_pop_data;
-    assign pop_id = internal_pop_id;
-    assign pop_last = internal_pop_last;
-  end
 
   //------------------------------------------
   // Implementation checks
   //------------------------------------------
   // TODO: standard ready-valid check modules
-
-  if (RegisterPopOutputs) begin : gen_cutthru_latency_1
-    `BR_ASSERT_IMPL(cut_through_latency_1_a, push_valid |=> pop_valid)
-  end else begin : gen_cutthru_latency_0
-    `BR_ASSERT_IMPL(cut_through_latency_0_a, push_valid |-> pop_valid)
-  end
+  `BR_ASSERT_IMPL(cut_through_latency_0_a, push_valid |-> pop_valid)
   `BR_ASSERT_IMPL(pop_id_in_range_a, pop_valid |-> pop_id < NumPopFlits)
   `BR_ASSERT_IMPL(pop_last_a, pop_valid && pop_id == NumPopFlitsMinus1 |-> pop_last)
   `BR_ASSERT_IMPL(push_ready_iff_pop_last_a, push_ready |-> pop_ready && pop_valid && pop_last)
