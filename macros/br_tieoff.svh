@@ -23,6 +23,7 @@
 `define BR_TIEOFF_ZERO_NAMED(__name__, __x__) \
 br_misc_tieoff_zero #( \
     .Width($bits(__x__)) \
+// ri lint_check_waive BLACKBOX \
 ) br_misc_tieoff_zero_``__name__ ( \
     .out(__x__) \
 );
@@ -31,6 +32,7 @@ br_misc_tieoff_zero #( \
 `define BR_TIEOFF_ONE_NAMED(__name__, __x__) \
 br_misc_tieoff_one #( \
     .Width($bits(__x__)) \
+// ri lint_check_waive BLACKBOX \
 ) br_misc_tieoff_one_``__name__ ( \
     .out(__x__) \
 );
