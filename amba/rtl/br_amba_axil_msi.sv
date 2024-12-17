@@ -19,16 +19,33 @@
 // the address field of the MSI message (4-byte aligned), and the event ID is
 // encoded in the lower bits of the data field.
 //
+// The configuration of the MSI address and data fields are done through inputs.
+// It is expected that the configuration will be done through a register interface
+// which is not part of this module.
+//
+// This module supports high-asserted, level-triggered interrupts. The module
+// watches for rising edges of the interrupts and latches them. Then, if enabled,
+// it sends the interrupt via the AXI4-Lite initiator interface. It is assumed
+// that the interrupt will remain asserted until the interrupt is cleared by SW.
+// If the interrupt pulses, a message will be sent again.
+//
+// This module also supports a per-interrupt enable/disable mechanism. When a
+// per-interrupt enable is asserted, the interrupt is sent. When a per-interrupt
+// enable is not asserted, the interrupt is not sent.
+//
+// This module also supports a throttle mechanism. When a throttle is enabled,
+// the interrupt is sent once every `throttle_cnt` cycles.
 
 `include "br_registers.svh"
 `include "br_asserts_internal.svh"
 
 module br_amba_axil_msi #(
     parameter int AddrWidth = 40,  // must be at least 12
-    parameter int DataWidth = 64,  // must be at least 32
+    parameter int DataWidth = 64,  // must be 32 or 64
     parameter int NumInterrupts = 2,  // must be at least 2
     parameter int DeviceIdWidth = 16,  // must be less than or equal to AddrWidth
     parameter int EventIdWidth = 16,  // must be less than or equal to DataWidth
+    parameter int ThrottleCntrWidth = 16,  // must be at least 1
     localparam int StrobeWidth = (DataWidth + 7) / 8
 ) (
     input clk,
@@ -38,8 +55,13 @@ module br_amba_axil_msi #(
     input logic [NumInterrupts-1:0] irq,
 
     // MSI Configuration
+    input logic [NumInterrupts-1:0] msi_enable,
     input logic [NumInterrupts-1:0][DeviceIdWidth-1:0] device_id_per_irq,
-    input logic [NumInterrupts-1:0][ EventIdWidth-1:0] event_id_per_irq,
+    input logic [NumInterrupts-1:0][EventIdWidth-1:0] event_id_per_irq,
+
+    // Throttle configuration
+    input logic throttle_en,
+    input logic [ThrottleCntrWidth-1:0] throttle_cntr_threshold,
 
     // Error output
     output logic error,
@@ -61,11 +83,11 @@ module br_amba_axil_msi #(
   // Integration checks
   //------------------------------------------
   `BR_ASSERT_STATIC(addr_width_gte_12_a, AddrWidth >= 12)
-  `BR_ASSERT_STATIC(data_width_gte_32_a, DataWidth >= 32)
+  `BR_ASSERT_STATIC(data_width_eq_32_or_64_a, (DataWidth == 32) || (DataWidth == 64))
   `BR_ASSERT_STATIC(device_id_lte_addr_width_a, DeviceIdWidth <= AddrWidth)
   `BR_ASSERT_STATIC(event_id_lte_data_width_a, EventIdWidth <= DataWidth)
   `BR_ASSERT_STATIC(num_interrupts_gt_0_a, NumInterrupts > 0)
-
+  `BR_ASSERT_STATIC(throttle_cntr_width_gt_0_a, ThrottleCntrWidth > 0)
   //------------------------------------------
   // Implementation
   //------------------------------------------
@@ -86,6 +108,10 @@ module br_amba_axil_msi #(
   logic [FifoWidth-1:0] fifo_pop_data;
   logic fifo_pop_ready, fifo_pop_valid;
   logic error_next;
+  logic [ThrottleCntrWidth-1:0] throttle_cntr_value;
+  logic throttle_cntr_matches;
+  logic reinit_throttle_cntr;
+  logic clear_to_send;
 
   // Detect rising edge of irq
   `BR_REG(irq_d, irq)
@@ -94,7 +120,10 @@ module br_amba_axil_msi #(
   // Track irqs that are pending to be sent. Set the pending bit when there is a
   // rising edge and clear it when the irq is sent.
   `BR_REG(pending_irq, pending_irq_next)
-  assign pending_irq_next = (pending_irq | irq_rising_edge) & ~(fifo_push_ready & fifo_push_valid);
+  assign pending_irq_next =
+      msi_enable &
+      (pending_irq | irq_rising_edge) &
+      ~(fifo_push_ready & fifo_push_valid);
 
   // Use round-robin arbitration to select the next irq to send
   br_flow_mux_rr #(
@@ -118,6 +147,23 @@ module br_amba_axil_msi #(
   assign fifo_push_valid = pending_irq;
   assign {device_id_to_send, event_id_to_send} = fifo_pop_data;
 
+  // Throttle counter
+  br_counter_decr #(
+      .MaxValue((2 ** ThrottleCntrWidth) - 1),
+      .MaxDecrement(1)
+  ) br_counter_decr_throttle (
+      .clk,
+      .rst,
+      .reinit(reinit_throttle_cntr),
+      .initial_value(throttle_cntr_threshold),
+      .decr_valid(fifo_pop_valid),
+      .decr(1'b1),
+      .value(throttle_cntr_value),
+      .value_next()
+  );
+  assign reinit_throttle_cntr = ~fifo_pop_valid || clear_to_send;
+  assign throttle_cntr_matches = throttle_cntr_value == {ThrottleCntrWidth{1'b0}};
+  assign clear_to_send = ~throttle_en || throttle_cntr_matches;
 
   // AXI4-Lite interface
   assign init_awaddr =  // ri lint_check_waive CONST_OUTPUT
@@ -132,9 +178,9 @@ module br_amba_axil_msi #(
       {
         {StrobeWidthPadding{1'b0}}, {EventIdStrobeWidth{1'b1}}
       };
-  assign init_awvalid = fifo_pop_valid;
-  assign init_wvalid = fifo_pop_valid;
-  assign fifo_pop_ready = init_awready && init_wready;
+  assign init_awvalid = fifo_pop_valid && clear_to_send;
+  assign init_wvalid = fifo_pop_valid && clear_to_send;
+  assign fifo_pop_ready = init_awready && init_wready && clear_to_send;
 
   // Provide a registered error output
   `BR_REGL(error, error_next, init_bvalid && init_bready)
