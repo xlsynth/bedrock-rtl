@@ -68,6 +68,33 @@ __name__ : assert property (@(posedge __clk__) disable iff (__rst__ === 1'b1 || 
 `BR_NOOP
 `endif  // BR_ASSERT_ON
 
+// FPV version macros
+`ifdef BR_ASSERT_ON
+`ifdef BR_ENABLE_FPV
+`define BR_ASSERT_FPV(__name__, __expr__) \
+`BR_ASSERT(__name__, __expr__);
+`else  // BR_ENABLE_FPV
+`define BR_ASSERT_FPV(__name__, __expr__) \
+`BR_NOOP
+`endif  // BR_ENABLE_FPV
+`else  // BR_ASSERT_ON
+`define BR_ASSERT_FPV(__name__, __expr__) \
+`BR_NOOP
+`endif  // BR_ASSERT_ON
+
+`ifdef BR_ASSERT_ON
+`ifdef BR_ENABLE_FPV
+`define BR_ASSERT_CR_FPV(__name__, __expr__, __clk__, __rst__) \
+`BR_ASSERT_CR(__name__, __expr__, __clk__, __rst__);
+`else  // BR_ENABLE_FPV
+`define BR_ASSERT_CR_FPV(__name__, __expr__, __clk__, __rst__) \
+`BR_NOOP
+`endif  // BR_ENABLE_FPV
+`else  // BR_ASSERT_ON
+`define BR_ASSERT_CR_FPV(__name__, __expr__, __clk__, __rst__) \
+`BR_NOOP
+`endif  // BR_ASSERT_ON
+
 ////////////////////////////////////////////////////////////////////////////////
 // Combinational assertion macros (evaluated continuously based on the expression sensitivity).
 // Also pass if the expression is unknown.
@@ -81,12 +108,31 @@ __name__ : assert property (@(posedge __clk__) disable iff (__rst__ === 1'b1 || 
 always_comb begin  : gen_``__name__ \
 assert ($isunknown(__expr__) || (__expr__)); \
 end
-`else  // BR_ENABLE_COMB_CHECKS
+`else  // BR_ENABLE_ASSERT_COMB
 `define BR_ASSERT_COMB(__name__, __expr__) \
 `BR_NOOP
-`endif  // BR_ENABLE_COMB_CHECKS
+`endif  // BR_ENABLE_ASSERT_COMB
 `else  // BR_ASSERT_ON
 `define BR_ASSERT_COMB(__name__, __expr__) \
+`BR_NOOP
+`endif  // BR_ASSERT_ON
+
+// FPV version macros
+`ifdef BR_ASSERT_ON
+`ifdef BR_ENABLE_ASSERT_COMB
+`ifdef BR_ENABLE_FPV
+`define BR_ASSERT_COMB_FPV(__name__, __expr__) \
+`BR_ASSERT_COMB(__name__, __expr__);
+`else  // BR_ENABLE_FPV
+`define BR_ASSERT_COMB_FPV(__name__, __expr__) \
+`BR_NOOP
+`endif  // BR_ENABLE_FPV
+`else  // BR_ENABLE_ASSERT_COMB
+`define BR_ASSERT_COMB_FPV(__name__, __expr__) \
+`BR_NOOP
+`endif  // BR_ENABLE_ASSERT_COMB
+`else  // BR_ASSERT_ON
+`define BR_ASSERT_COMB_FPV(__name__, __expr__) \
 `BR_NOOP
 `endif  // BR_ASSERT_ON
 
@@ -113,6 +159,33 @@ __name__ : cover property (@(posedge __clk__) disable iff (__rst__ === 1'b1 || _
 `BR_NOOP
 `endif  // BR_ASSERT_ON
 
+// FPV version macros
+`ifdef BR_ASSERT_ON
+`ifdef BR_ENABLE_FPV
+`define BR_COVER_FPV(__name__, __expr__) \
+`BR_COVER(__name__, __expr__);
+`else  // BR_ENABLE_FPV
+`define BR_COVER_FPV(__name__, __expr__) \
+`BR_NOOP
+`endif  // BR_ENABLE_FPV
+`else  // BR_ASSERT_ON
+`define BR_COVER_FPV(__name__, __expr__) \
+`BR_NOOP
+`endif  // BR_ASSERT_ON
+
+`ifdef BR_ASSERT_ON
+`ifdef BR_ENABLE_FPV
+`define BR_COVER_CR_FPV(__name__, __expr__, __clk__, __rst__) \
+`BR_COVER_CR(__name__, __expr__, __clk__, __rst__);
+`else  // BR_ENABLE_FPV
+`define BR_COVER_CR_FPV(__name__, __expr__, __clk__, __rst__) \
+`BR_NOOP
+`endif  // BR_ENABLE_FPV
+`else  // BR_ASSERT_ON
+`define BR_COVER_CR_FPV(__name__, __expr__, __clk__, __rst__) \
+`BR_NOOP
+`endif  // BR_ASSERT_ON
+
 ////////////////////////////////////////////////////////////////////////////////
 // Combinational cover macros (evaluated continuously based on the expression sensitivity)
 ////////////////////////////////////////////////////////////////////////////////
@@ -123,6 +196,20 @@ cover (__expr__); \
 end
 `else  // BR_ASSERT_ON
 `define BR_COVER_COMB(__name__, __expr__) \
+`BR_NOOP
+`endif  // BR_ASSERT_ON
+
+// FPV version macros
+`ifdef BR_ASSERT_ON
+`ifdef BR_ENABLE_FPV
+`define BR_COVER_COMB_FPV(__name__, __expr__) \
+`BR_COVER_COMB(__name__, __expr__);
+`else  // BR_ENABLE_FPV
+`define BR_COVER_COMB_FPV(__name__, __expr__) \
+`BR_NOOP
+`endif  // BR_ENABLE_FPV
+`else  // BR_ASSERT_ON
+`define BR_COVER_COMB_FPV(__name__, __expr__) \
 `BR_NOOP
 `endif  // BR_ASSERT_ON
 
@@ -149,6 +236,32 @@ __name__ : assume property (@(posedge __clk__) disable iff (__rst__ === 1'b1 || 
 `BR_NOOP
 `endif  // BR_ASSERT_ON
 
+// FPV version macros
+`ifdef BR_ASSERT_ON
+`ifdef BR_ENABLE_FPV
+`define BR_ASSUME_FPV(__name__, __expr__) \
+`BR_ASSUME(__name__, __expr__);
+`else  // BR_ENABLE_FPV
+`define BR_ASSUME_FPV(__name__, __expr__) \
+`BR_NOOP
+`endif  // BR_ENABLE_FPV
+`else  // BR_ASSERT_ON
+`define BR_ASSUME_FPV(__name__, __expr__) \
+`BR_NOOP
+`endif  // BR_ASSERT_ON
+
+`ifdef BR_ASSERT_ON
+`ifdef BR_ENABLE_FPV
+`define BR_ASSUME_CR_FPV(__name__, __expr__, __clk__, __rst__) \
+`BR_ASSUME_CR(__name__, __expr__, __clk__, __rst__);
+`else  // BR_ENABLE_FPV
+`define BR_ASSUME_CR_FPV(__name__, __expr__, __clk__, __rst__) \
+`BR_NOOP
+`endif  // BR_ENABLE_FPV
+`else  // BR_ASSERT_ON
+`define BR_ASSUME_CR_FPV(__name__, __expr__, __clk__, __rst__) \
+`BR_NOOP
+`endif  // BR_ASSERT_ON
 
 // verilog_format: on
 // verilog_lint: waive-stop line-length
