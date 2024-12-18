@@ -79,6 +79,7 @@
 
 `include "br_asserts.svh"
 `include "br_asserts_internal.svh"
+`include "br_registers.svh"
 
 module br_flow_deserializer #(
     // Width of the push side flit. Must be at least 1.
@@ -123,8 +124,6 @@ module br_flow_deserializer #(
   //------------------------------------------
   // Integration checks
   //------------------------------------------
-  localparam int NumPushFlitsMinus1 = NumPushFlits - 1;
-
   `BR_ASSERT_STATIC(push_width_gte_1_a, PushWidth >= 1)
   `BR_ASSERT_STATIC(pop_width_multiple_of_push_width_a, (PopWidth % PushWidth) == 0)
   `BR_ASSERT_STATIC(metadata_width_gte_1_a, MetadataWidth >= 1)
@@ -161,7 +160,9 @@ module br_flow_deserializer #(
   // Reinitialize the counter on the cycle that the pop flit is completed so that a new pop flit
   // can be started on the next cycle.
   //------
+  localparam int IdWidth = $clog2(DeserializationRatio);
   localparam int DrMinus1 = DeserializationRatio - 1;
+
   logic               push_flit_id_incr_valid;
   logic [IdWidth-1:0] push_flit_id;
   logic               push;
@@ -226,24 +227,31 @@ module br_flow_deserializer #(
       i * PushWidth;
     localparam int Msb = Lsb + PushWidth - 1;
 
-    logic passthru_this_slice;
-    assign passthru_this_slice = (push_last && (push_flit_id == i)) || (push_flit_id == dr_minus_1);
+    if (i < DrMinus1) begin : gen_mux
+      logic passthru_this_slice;
+      assign passthru_this_slice =
+        (push_last && (push_flit_id == i)) || (push_flit_id == dr_minus_1);
 
-    br_mux_bin #(
-        .NumSymbolsIn(2),
-        .SymbolWidth (PushWidth)
-    ) br_mux_bin (
-        .select(passthru_this_slice),
-        .in({slice_data[i], slice_reg[i]}),
-        .out(pop_data[Msb:Lsb])
-    );
+      br_mux_bin #(
+          .NumSymbolsIn(2),
+          .SymbolWidth (PushWidth)
+      ) br_mux_bin (
+          .select(passthru_this_slice),
+          .in({slice_data[i], slice_reg[i]}),
+          .out(pop_data[Msb:Lsb])
+      );
+
+      // Last slice does not have a register to mux from.
+    end else begin : gen_no_mux
+      assign pop_data[Msb:Lsb] = slice_data[i];
+    end
   end
 
   //------
   // Drive the rest of the pop interface outputs.
   // The metadata is sampled from the last push flit.
   //------
-  assign pop_valid = push_valid && ((push_flit_id == dr_minus_1) || push_last);
+  assign pop_valid = slice_valid[DrMinus1] || (push_valid && push_last);
   assign pop_last = push_last;
   assign pop_metadata = push_metadata;
 
@@ -255,7 +263,7 @@ module br_flow_deserializer #(
   logic not_done_building_pop_flit;
 
   assign completing_pop_flit = pop_ready && (pop_last || (push_flit_id == dr_minus_1));
-  assign not_done_building_pop_flit = push_flit_id < push_flit_id;
+  assign not_done_building_pop_flit = push_flit_id < dr_minus_1;
   assign push_ready = completing_pop_flit || not_done_building_pop_flit;
 
   //------------------------------------------
