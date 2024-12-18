@@ -85,11 +85,11 @@ module br_flow_serializer #(
     parameter int PopWidth = 1,
     // Width of the sideband metadata (not serialized). Must be at least 1.
     parameter int MetadataWidth = 1,
-    // If 1, the most significant bits of the packet are sent first.
-    // If 0, the least significant bits are sent first.
+    // If 1, the most significant bits of the packet are sent first (big endian).
+    // If 0, the least significant bits are sent first (little endian).
     // The order of bits within each flit is always the same that they
     // appear on the push interface.
-    parameter bit SerializeMostSignificantFirst = 1,
+    parameter bit SerializeMostSignificantFirst,
     localparam int SerializationRatio = PushWidth / PopWidth,
     localparam int IdWidth = $clog2(SerializationRatio)
 ) (

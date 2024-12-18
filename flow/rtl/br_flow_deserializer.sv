@@ -96,12 +96,13 @@ module br_flow_deserializer #(
     parameter int PopWidth = 2,
     // Width of the sideband metadata (not serialized). Must be at least 1.
     parameter int MetadataWidth = 1,
-    // If 1, the most significant bits of the packet are received first.
-    // If 0, the least significant bits are received first.
+    // If 1, the most significant bits of the packet are received first (big endian).
+    // If 0, the least significant bits are received first (little endian).
     // The order of bits within each flit is always the same that they
     // appear on the push interface.
-    parameter bit DeserializeMostSignificantFirst = 1,
-    localparam int DeserializationRatio = PopWidth / PushWidth
+    parameter bit DeserializeMostSignificantFirst,
+    localparam int DeserializationRatio = PopWidth / PushWidth,
+    localparam int IdWidth = $clog2(DeserializationRatio)
 ) (
     // Posedge-triggered clock
     input logic clk,
@@ -176,7 +177,6 @@ module br_flow_deserializer #(
   // Reinitialize the counter on the cycle that the pop flit is completed so that a new pop flit
   // can be started on the next cycle.
   //------
-  localparam int IdWidth = $clog2(DeserializationRatio);
   localparam int DrMinus1 = DeserializationRatio - 1;
 
   logic               push_flit_id_incr_valid;
