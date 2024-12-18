@@ -91,7 +91,7 @@ module br_flow_serializer #(
     // Push-side interface (wide flits).
     output logic                     push_ready,
     input  logic                     push_valid,
-    input  logic [PushWidth-1:0]     push_data,
+    input  logic [    PushWidth-1:0] push_data,
     // Indicates that this is the last push flit of a packet.
     // Safe to tie to 0 if you don't need to keep track of this
     // in external logic.
@@ -103,21 +103,21 @@ module br_flow_serializer #(
     // is not allowed to consist of "don't care" slices. Tie to 0
     // if each push flit should be fully serialized and transmitted
     // over SerializationRatio pop flits.
-    input  logic [IdWidth-1:0]       push_last_dont_care_count,
+    input  logic [      IdWidth-1:0] push_last_dont_care_count,
     // Constant metadata to carry alongside the flits.
     // Does not get serialized (simply replicated alongside each pop flit).
     input  logic [MetadataWidth-1:0] push_metadata,
 
     // Pop-side interface (narrow, serialized flits).
-    input  logic                      pop_ready,
-    output logic                      pop_valid,
-    output logic [      PopWidth-1:0] pop_data,
+    input  logic                     pop_ready,
+    output logic                     pop_valid,
+    output logic [     PopWidth-1:0] pop_data,
     // Driven to 1 on the last pop flit of the packet, i.e.,
     // the last slice of the push flit when push_last is 1.
     // If push_last is tied to 0 then pop_last will always be 0.
-    output logic                      pop_last,
+    output logic                     pop_last,
     // Each pop flit has replicated metadata from the push interface.
-    output logic [MetadataWidth-1:0]  pop_metadata
+    output logic [MetadataWidth-1:0] pop_metadata
 );
 
   //------------------------------------------
@@ -129,7 +129,7 @@ module br_flow_serializer #(
   `BR_ASSERT_STATIC(serialization_ratio_gt_1_a, SerializationRatio > 1)
 
   `BR_ASSERT_INTG(push_last_dont_care_count_in_range_a,
-    push_valid && push_last |-> push_last_dont_care_count < SerializationRatio)
+                  push_valid && push_last |-> push_last_dont_care_count < SerializationRatio)
 
   // Check push side validity and data stability
   br_flow_checks_valid_data #(
@@ -167,7 +167,7 @@ module br_flow_serializer #(
   ) br_delay_nr_push_handshake (
       .clk,
       .in({push_valid, push_ready}),
-      .out({push_valid_d, push_ready_d})
+      .out({push_valid_d, push_ready_d}),
       .out_stages()  // unused
   );
 
@@ -190,7 +190,7 @@ module br_flow_serializer #(
   logic [IdWidth-1:0] pop_flit_id;
   logic [IdWidth-1:0] pop_flit_id_next;
   logic [IdWidth-1:0] pop_flit_id_internal;
-  logic pop;
+  logic               pop;
 
   br_counter_incr #(
       .MaxValue(SrMinus1),
@@ -241,8 +241,11 @@ module br_flow_serializer #(
   //
   // The metadata is replicated from the push side for each pop flit.
   //------
+  logic [IdWidth-1:0] pop_flit_id_plus_dont_care_count;
+
   assign pop_valid = push_valid;
-  assign pop_last = push_last && ((pop_flit_id + push_last_dont_care_count) == sr_minus_1);
+  assign pop_flit_id_plus_dont_care_count = pop_flit_id + push_last_dont_care_count;
+  assign pop_last = push_last && (pop_flit_id_plus_dont_care_count == sr_minus_1);
   assign pop_metadata = push_metadata;
 
   //------
@@ -255,6 +258,7 @@ module br_flow_serializer #(
   //------------------------------------------
   // TODO: standard ready-valid check modules
   `BR_ASSERT_IMPL(cut_through_latency_0_a, push_valid |-> pop_valid)
-  // TODO: more checks
+  `BR_ASSERT_IMPL(pop_last_a, pop_valid && pop_last |-> push_last)
+  `BR_COVER_IMPL(dont_cares_c, push_valid && push_last && push_last_dont_care_count != 0)
 
 endmodule : br_flow_serializer

@@ -181,8 +181,8 @@ verilog_library(
     srcs = ["br_flow_serializer.sv"],
     deps = [
         ":br_flow_checks_valid_data",
-        ":br_flow_reg_fwd",
         "//counter/rtl:br_counter_incr",
+        "//delay/rtl:br_delay_nr",
         "//macros:br_asserts",
         "//macros:br_asserts_internal",
         "//mux/rtl:br_mux_bin",
