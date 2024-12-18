@@ -456,6 +456,9 @@ br_verilog_elab_and_lint_test_suite(
         "PopWidth": [
             "4",
         ],
+        "MetadataWidth": [
+            "1",
+        ],
         "SerializeMostSignificantFirst": [
             "0",
             "1",
