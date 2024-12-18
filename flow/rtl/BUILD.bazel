@@ -194,10 +194,12 @@ verilog_library(
     srcs = ["br_flow_deserializer.sv"],
     deps = [
         ":br_flow_checks_valid_data",
-        ":br_flow_demux_select_unstable",
-        ":br_flow_reg_fwd",
+        "//counter/rtl:br_counter_incr",
+        "//demux/rtl:br_demux_bin",
         "//macros:br_asserts",
         "//macros:br_asserts_internal",
+        "//macros:br_registers",
+        "//mux/rtl:br_mux_bin",
     ],
 )
 
@@ -476,6 +478,9 @@ br_verilog_elab_and_lint_test_suite(
         "PopWidth": [
             "8",
             "12",
+        ],
+        "MetadataWidth": [
+            "1",
         ],
         "DeserializeMostSignificantFirst": [
             "0",

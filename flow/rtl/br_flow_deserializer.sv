@@ -188,47 +188,84 @@ module br_flow_deserializer #(
   //-----
   // Use the push_flit_id to demux the incoming push_data into slices that form the pop_data.
   //-----
+  logic [DeserializationRatio-1:0] slice_valid;
+  logic [DeserializationRatio-1:0][PushWidth-1:0] slice_data;
+
+  br_demux_bin #(
+      .NumSymbolsOut(DeserializationRatio),
+      .SymbolWidth  (PushWidth)
+  ) br_demux_bin (
+      .select(push_flit_id),
+      .in_valid(push_valid),
+      .in(push_data),
+      .out_valid(slice_valid),
+      .out(slice_data)
+  );
+
+  //-----
+  // Register the slice data for all but the last slice.
+  //-----
   logic [IdWidth-1:0] dr_minus_1;
-  logic [DeserializationRatio-2:0][PushWidth-1:0] slice_data;
-  logic [DeserializationRatio-2:0] slice_ld_en;
-  logic [PushWidth-1:0] last_slice_data;
+  logic [DeserializationRatio-2:0][PushWidth-1:0] slice_reg;
+  logic [DeserializationRatio-2:0] slice_reg_ld_en;
 
   assign dr_minus_1 = DrMinus1;
 
   for (genvar i = 0; i < DrMinus1; i++) begin : gen_reg
-    `BR_REGL(slice_data[i], push_data, slice_ld_en[i])
-  end
-
-  // This is only used when the pop flit is fully populated.
-  // In this case, the push and pop ready/valid signals directly handshake so
-  // we don't need to register the data.
-  assign last_slice_data = push_data;
-
-  always_comb begin
-    slice_ld_en = '0;
-    slice_ld_en[push_flit_id] |= (push && !push_last);
+    `BR_REGL(slice_reg[i], slice_data[i], slice_reg_ld_en[i])
+    assign slice_reg_ld_en[i] = slice_valid[i] && push && !push_last;
   end
 
   //-----
   // Concat & merge the pop interface; all deserialized flits must be synchronously popped.
   //-----
-  assign pop_valid = push_valid && ((push_flit_id == dr_minus_1) || push_last);
-
-  for (genvar i = 0; i < DrMinus1; i++) begin : gen_pop_data_concat
+  for (genvar i = 0; i < DeserializationRatio; i++) begin : gen_pop_data_concat
     localparam int Lsb =
       DeserializeMostSignificantFirst ?
       ((DeserializationRatio - i) - 1) * PushWidth :
       i * PushWidth;
     localparam int Msb = Lsb + PushWidth - 1;
-    assign pop_data[Msb:Lsb] = push_last && (push_flit_id == i) ? last_slice_data : slice_data[i];
+
+    logic passthru_this_slice;
+    assign passthru_this_slice = (push_last && (push_flit_id == i)) || (push_flit_id == dr_minus_1);
+
+    br_mux_bin #(
+        .NumSymbolsIn(2),
+        .SymbolWidth (PushWidth)
+    ) br_mux_bin (
+        .select(passthru_this_slice),
+        .in({slice_data[i], slice_reg[i]}),
+        .out(pop_data[Msb:Lsb])
+    );
   end
-  assign pop_data[PopWidth-1:PushWidth*DrMinus1] = last_slice_data;
+
+  //------
+  // Drive the rest of the pop interface outputs.
+  // The metadata is sampled from the last push flit.
+  //------
+  assign pop_valid = push_valid && ((push_flit_id == dr_minus_1) || push_last);
+  assign pop_last = push_last;
+  assign pop_metadata = push_metadata;
+
+  //------
+  // Complete the push flit when we're completing the pop flit or when we
+  // we're not done building up the pop flit in registers.
+  //------
+  logic completing_pop_flit;
+  logic not_done_building_pop_flit;
+
+  assign completing_pop_flit = pop_ready && (pop_last || (push_flit_id == dr_minus_1));
+  assign not_done_building_pop_flit = push_flit_id < push_flit_id;
+  assign push_ready = completing_pop_flit || not_done_building_pop_flit;
 
   //------------------------------------------
   // Implementation checks
   //------------------------------------------
   // TODO: standard ready-valid check modules
 
-  `BR_ASSERT_IMPL(pop_valid_iff_last_a, pop_valid |-> push_valid && push_last)
+  `BR_ASSERT_IMPL(pop_valid_iff_last_a, pop_valid |-> push_valid)
+  `BR_ASSERT_IMPL(pop_last_iff_push_last_a, pop_valid && pop_last |-> push_last)
+  `BR_COVER_IMPL(incomplete_pop_flit_iff_pop_last_a,
+                 pop_valid && (push_flit_id < dr_minus_1) |-> pop_last)
 
 endmodule : br_flow_deserializer
