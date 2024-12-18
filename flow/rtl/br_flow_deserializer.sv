@@ -54,6 +54,8 @@
 // The latency from the first push flit valid to the pop flit being valid varies from 0 cycles (when push_last is 1 on the first flit)
 // up to (DeserializationRatio - 1) cycles (when push_last is 1 on the last flit or not set at all).
 //
+// The implementation uses a demux into staging registers rather than a shift register to reduce power.
+//
 // Examples (where the ready signals are not shown and are assumed to always be 1; X denotes an unknown value when pop_valid is 0):
 //
 //     Packet length = 32 bits (4 push flits)

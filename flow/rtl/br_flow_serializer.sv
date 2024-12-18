@@ -48,6 +48,8 @@
 //
 // The cut-through latency of the push packet to the first pop flit is 0 cycles.
 //
+// The implementation uses a mux rather than a shift register to reduce power.
+//
 // Examples (where the ready signals are not shown and are assumed to always be 1; X denotes an unknown value):
 //
 //     Packet length = 32 bits (4 push flits), not using last bit
