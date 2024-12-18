@@ -40,29 +40,36 @@
 // is 1, then the don't care values are the least-significant bits; otherwise, they are the most-significant bits,
 // i.e., the tail end of the flit.
 //
-// The push_valid, push_data, push_last, and push_last_dont_care_count must be held stable until push_ready is 1.
+// The push_valid, push_data, push_last, push_last_dont_care_count, and push_metadata must be held stable until push_ready is 1.
 //
 // The throughput of this module is 1 pop flit per cycle; equivalently, a packet initiation interval of
-// 1 packet per SerializationRatio cycles.
+// 1 packet per SerializationRatio cycles. The throughput can increase if push_last and push_last_dont_care_count are used
+// to send packets that are not evenly divisible by SerializationRatio, allowing the pop-side stream to be compressed.
 //
 // The cut-through latency of the push packet to the first pop flit is 0 cycles.
 //
-// Examples(where the ready and valid signals are not shown and handshake every cycle):
+// Examples (where the ready signals are not shown and are assumed to always be 1; X denotes an unknown value):
 //
+//     Packet length = 32 bits (4 push flits), not using last bit
 //     PushWidth = 32, PopWidth = 8, MetadataWidth = 3, (SerializationRatio = 4), SerializeMostSignificantFirst = 1
-//     Cycle | push_data    | push_last | push_last_dont_care_count | push_metadata | pop_data | pop_last | pop_metadata
-//     ------|--------------|-----------|---------------------------|---------------|----------|----------|------------
-//     0     | 32'hBAADF00D | 1'b0      | 2'd0                      | 3'd6          | 8'hBA    | 1'b0     | 3'd6
-//     1     | stable       | stable    | stable                    | stable        | 8'hAD    | 1'b0     | 3'd6
-//     2     | stable       | stable    | stable                    | stable        | 8'hF0    | 1'b0     | 3'd6
-//     3     | stable       | stable    | stable                    | stable        | 8'h0D    | 1'b0     | 3'd6
+//     Cycle | push_valid | push_data    | push_last | push_last_dont_care_count | push_metadata | pop_valid | pop_data | pop_last | pop_metadata
+//     ------|------------|--------------|-----------|---------------------------|---------------|-----------|----------|----------|------------
+//     0     | 1'b1       | 32'hBAADF00D | 1'b0      | 2'd0                      | 3'd6          | 1'b1      | 8'hBA    | 1'b0     | 3'd6
+//     1     | stable     | stable       | stable    | stable                    | stable        | 1'b1      | 8'hAD    | 1'b0     | 3'd6
+//     2     | stable     | stable       | stable    | stable                    | stable        | 1'b1      | 8'hF0    | 1'b0     | 3'd6
+//     3     | stable     | stable       | stable    | stable                    | stable        | 1'b1      | 8'h0D    | 1'b0     | 3'd6
 //
+//     Packet length = 56 bits (7 pop flits), using last bit
 //     PushWidth = 32, PopWidth = 8, MetadataWidth = 3, (SerializationRatio = 4), SerializeMostSignificantFirst = 0
-//     Cycle | push_data    | push_last | push_last_dont_care_count | push_metadata | pop_data | pop_last | pop_metadata
-//     ------|--------------|-----------|---------------------------|---------------|----------|----------|------------
-//     0     | 32'hXXADF00D | 1'b1      | 2'd1                      | 3'd2          | 8'h0D    | 1'b0     | 3'd2
-//     1     | stable       | stable    | stable                    | stable        | 8'hF0    | 1'b0     | 3'd2
-//     2     | stable       | stable    | stable                    | stable        | 8'hAD    | 1'b1     | 3'd2
+//     Cycle | push_valid | push_data    | push_last | push_last_dont_care_count | push_metadata | pop_data | pop_last | pop_metadata
+//     ------|------------|--------------|-----------|---------------------------|---------------|----------|----------|------------
+//     0     | 1'b1       | 32'h01234567 | 1'b0      | 2'd0                      | 3'd2          | 8'h67    | 1'b0     | 3'd2
+//     1     | stable     | stable       | stable    | stable                    | stable        | 8'h45    | 1'b0     | 3'd2
+//     2     | stable     | stable       | stable    | stable                    | stable        | 8'h23    | 1'b0     | 3'd2
+//     3     | stable     | stable       | stable    | stable                    | stable        | 8'h01    | 1'b0     | 3'd2
+//     4     | 1'b1       | 32'hXXAAF00D | 1'b1      | 2'd1                      | 3'd5          | 8'h0D    | 1'b0     | 3'd5
+//     5     | stable     | stable       | stable    | stable                    | stable        | 8'hF0    | 1'b0     | 3'd5
+//     6     | stable     | stable       | stable    | stable                    | stable        | 8'hAD    | 1'b1     | 3'd5
 
 `include "br_asserts.svh"
 `include "br_asserts_internal.svh"
@@ -73,7 +80,7 @@ module br_flow_serializer #(
     parameter int PushWidth = 2,
     // Width of the pop side flit. Must be at least 1.
     parameter int PopWidth = 1,
-    // Width of the push side metadata. Must be at least 1.
+    // Width of the sideband metadata (not serialized). Must be at least 1.
     parameter int MetadataWidth = 1,
     // If 1, the most significant bits of the packet are sent first.
     // If 0, the least significant bits are sent first.
@@ -134,7 +141,7 @@ module br_flow_serializer #(
   // Check push side validity and data stability
   br_flow_checks_valid_data #(
       .NumFlows(1),
-      .Width(PushWidth),
+      .Width(PushWidth + 1 + IdWidth + MetadataWidth),
       // Push ready/valid stability is required for the serializer to work correctly.
       // That's because it serially scans over the valid push data until the entire
       // packet has been transmitted. If the push data is unstable during
@@ -147,7 +154,7 @@ module br_flow_serializer #(
       .rst,
       .ready(push_ready),
       .valid(push_valid),
-      .data (push_data)
+      .data ({push_data, push_last, push_last_dont_care_count, push_metadata})
   );
 
   //------------------------------------------
