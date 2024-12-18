@@ -34,11 +34,12 @@
 // The push interface has a push_last signal that indicates the last flit of a packet on the push side.
 // For push flits where push_last is 0, then exactly SerializationRatio pop flits are produced.
 // When push_last is 1, then the number of pop flits produced can vary between 1 and SerializationRatio. The exact
-// number is given by (SerializationRatio - push_last_dont_care_count). The push_last_dont_care_count port indicates how much
-// of the last push_data flit contains "don't care" values that can be dropped from the serialized transmission.
-// The don't care values are always in contiguous multiples of PopWidth bits. If SerializeMostSignificantFirst
-// is 1, then the don't care values are the least-significant bits; otherwise, they are the most-significant bits,
-// i.e., the tail end of the flit.
+// number is given by (SerializationRatio - push_last_dont_care_count).
+//
+// The push_last_dont_care_count port indicates how much of the last push_data flit contains "don't care"
+// values that can be dropped from the serialized transmission. The don't care values are always in contiguous
+// multiples of PopWidth bits. If SerializeMostSignificantFirst is 1, then the don't care values are the
+// least-significant bits; otherwise, they are the most-significant bits, i.e., either way, the tail end of the flit.
 //
 // The push_valid, push_data, push_last, push_last_dont_care_count, and push_metadata must be held stable until push_ready is 1.
 //
