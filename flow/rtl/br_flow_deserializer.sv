@@ -63,7 +63,7 @@
 //
 // Examples (where the ready signals are not shown and are assumed to always be 1; X denotes an unknown value when pop_valid is 0):
 //
-//     Packet length = 32 bits (4 push flits)
+//     Packet length = 32 bits (4 push flits), not using last bit
 //     PushWidth = 8, PopWidth = 32, MetadataWidth = 3, (DeserializationRatio = 4), DeserializeMostSignificantFirst = 1
 //     Cycle | push_valid | push_data | push_last | push_metadata | pop_valid | pop_data     | pop_last | pop_last_dont_care_count | pop_metadata
 //     ------|------------|-----------|-----------|---------------|-----------|--------------|----------|--------------------------|-------------
@@ -72,7 +72,7 @@
 //     2     | 1'b1       | 8'hF0     | 1'b0      | stable        | 1'b0      | 32'hXXXXXXXX | 1'bX     | 2'dX                     | 3'dX
 //     3     | 1'b1       | 8'h0D     | 1'b0      | stable        | 1'b1      | 32'hBAADF00D | 1'b0     | 2'd0                     | 3'd6
 //
-//     Packet length = 56 bits (7 push flits)
+//     Packet length = 56 bits (7 push flits), using last bit
 //     PushWidth = 8, PopWidth = 32, MetadataWidth = 3, (DeserializationRatio = 4), DeserializeMostSignificantFirst = 0
 //     Cycle | push_valid | push_data | push_last | push_metadata | pop_valid | pop_data     | pop_last | pop_last_dont_care_count | pop_metadata
 //     ------|------------|-----------|-----------|---------------|-----------|--------------|----------|--------------------------|-------------

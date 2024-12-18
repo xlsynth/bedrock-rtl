@@ -64,15 +64,15 @@
 //
 //     Packet length = 56 bits (7 pop flits), using last bit
 //     PushWidth = 32, PopWidth = 8, MetadataWidth = 3, (SerializationRatio = 4), SerializeMostSignificantFirst = 0
-//     Cycle | push_valid | push_data    | push_last | push_last_dont_care_count | push_metadata | pop_data | pop_last | pop_metadata
-//     ------|------------|--------------|-----------|---------------------------|---------------|----------|----------|------------
-//     0     | 1'b1       | 32'h01234567 | 1'b0      | 2'd0                      | 3'd2          | 8'h67    | 1'b0     | 3'd2
-//     1     | stable     | stable       | stable    | stable                    | stable        | 8'h45    | 1'b0     | 3'd2
-//     2     | stable     | stable       | stable    | stable                    | stable        | 8'h23    | 1'b0     | 3'd2
-//     3     | stable     | stable       | stable    | stable                    | stable        | 8'h01    | 1'b0     | 3'd2
-//     4     | 1'b1       | 32'hXXAAF00D | 1'b1      | 2'd1                      | 3'd5          | 8'h0D    | 1'b0     | 3'd5
-//     5     | stable     | stable       | stable    | stable                    | stable        | 8'hF0    | 1'b0     | 3'd5
-//     6     | stable     | stable       | stable    | stable                    | stable        | 8'hAD    | 1'b1     | 3'd5
+//     Cycle | push_valid | push_data    | push_last | push_last_dont_care_count | push_metadata | pop_valid | pop_data | pop_last | pop_metadata
+//     ------|------------|--------------|-----------|---------------------------|---------------|-----------|----------|----------|------------
+//     0     | 1'b1       | 32'h01234567 | 1'b0      | 2'd0                      | 3'd2          | 1'b1      | 8'h67    | 1'b0     | 3'd2
+//     1     | stable     | stable       | stable    | stable                    | stable        | 1'b1      | 8'h45    | 1'b0     | 3'd2
+//     2     | stable     | stable       | stable    | stable                    | stable        | 1'b1      | 8'h23    | 1'b0     | 3'd2
+//     3     | stable     | stable       | stable    | stable                    | stable        | 1'b1      | 8'h01    | 1'b0     | 3'd2
+//     4     | 1'b1       | 32'hXXAAF00D | 1'b1      | 2'd1                      | 3'd5          | 1'b1      | 8'h0D    | 1'b0     | 3'd5
+//     5     | stable     | stable       | stable    | stable                    | stable        | 1'b1      | 8'hF0    | 1'b0     | 3'd5
+//     6     | stable     | stable       | stable    | stable                    | stable        | 1'b1      | 8'hAD    | 1'b1     | 3'd5
 
 `include "br_asserts.svh"
 `include "br_asserts_internal.svh"
