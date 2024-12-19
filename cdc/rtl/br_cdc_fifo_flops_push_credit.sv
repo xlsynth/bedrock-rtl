@@ -196,6 +196,7 @@ module br_cdc_fifo_flops_push_credit #(
       .wr_valid(push_ram_wr_valid),
       .wr_addr(push_ram_wr_addr),
       .wr_data(push_ram_wr_data),
+      .wr_word_en(1'b1),  // no partial write
       .rd_addr_valid(pop_ram_rd_addr_valid),
       .rd_addr(pop_ram_rd_addr),
       .rd_data_valid(pop_ram_rd_data_valid),

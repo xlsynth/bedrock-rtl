@@ -22,6 +22,7 @@
 
 `include "br_asserts_internal.svh"
 `include "br_registers.svh"
+`include "br_unused.svh"
 
 module br_ram_flops_1r1w_mock #(
     parameter int Depth = 2,  // Number of entries in the RAM. Must be at least 2.
@@ -30,6 +31,15 @@ module br_ram_flops_1r1w_mock #(
     parameter int DepthTiles = 1,
     // Number of tiles along the width (data) dimension. Must be at least 1 and evenly divide Width.
     parameter int WidthTiles = 1,
+    // If 1, allow partial writes to the memory using the wr_word_en signal.
+    // If 0, only full writes are allowed and wr_word_en is ignored.
+    parameter bit EnablePartialWrite = 0,
+    // The width of a word in the memory. This is the smallest unit of data that
+    // can be written when partial write is enabled.
+    // Must be at least 1 and at most (Width / WidthTiles).
+    // Must be evenly divisible by WidthTiles.
+    // Width must be evenly divisible by WordWidth.
+    parameter int WordWidth = Width / WidthTiles,
     // Number of pipeline register stages inserted along the write address and read address paths
     // in the depth dimension. Must be at least 0.
     parameter int AddressDepthStages = 0,
@@ -51,6 +61,7 @@ module br_ram_flops_1r1w_mock #(
     // written for the first time.
     parameter bit EnableMemReset = 0,
     localparam int AddressWidth = $clog2(Depth),
+    localparam int NumWords = br_math::ceil_div(Width, WordWidth),
     // Write latency in units of wr_clk cycles
     // ri lint_check_waive PARAM_NOT_USED
     localparam int WriteLatency = AddressDepthStages + 1,
@@ -67,6 +78,7 @@ module br_ram_flops_1r1w_mock #(
     input logic                    wr_valid,
     input logic [AddressWidth-1:0] wr_addr,
     input logic [       Width-1:0] wr_data,
+    input logic [    NumWords-1:0] wr_word_en,
 
     // Read-clock signals
     // Posedge-triggered clock.
@@ -111,6 +123,12 @@ module br_ram_flops_1r1w_mock #(
   `BR_ASSERT_CR_INTG(wr_addr_in_range_a, wr_valid |-> wr_addr < Depth, wr_clk, wr_rst)
   `BR_ASSERT_CR_INTG(rd_addr_in_range_a, rd_addr_valid |-> rd_addr < Depth, rd_clk, rd_rst)
 
+  if (EnablePartialWrite) begin : gen_partial_write_intg_checks
+    `BR_ASSERT_STATIC(word_width_in_range_a, (WordWidth >= 1) && (WordWidth <= TileWidth))
+    `BR_ASSERT_STATIC(num_words_div_width_tiles_a, (NumWords % WidthTiles) == 0)
+    `BR_ASSERT_STATIC(tile_width_div_word_width_a, (TileWidth % WordWidth) == 0)
+  end
+
   // Rely on submodule integration checks
 
   //------------------------------------------
@@ -123,7 +141,7 @@ module br_ram_flops_1r1w_mock #(
   logic mem_rd_data_valid;
   logic [AddressWidth-1:0] mem_rd_addr;
   logic [Width-1:0] mem_rd_data;
-  logic [Depth-1:0][Width-1:0] mem;
+  logic [NumWords-1:0][WordWidth-1:0] mem[Depth];
 
   br_delay_valid #(
       .Width(AddressWidth + Width),
@@ -155,23 +173,57 @@ module br_ram_flops_1r1w_mock #(
 
   // Write port and memory. We avoid the BR_REG* coding style so that certain emulation tools
   // can correctly recognize this behavior as a memory.
-  if (EnableMemReset) begin : gen_reset
-    always_ff @(posedge wr_clk) begin
-      if (wr_rst) begin
-        // Loop required over entries since cannot assign a packed type ('0) to an unpacked type (mem).
-        for (int i = 0; i < Depth; i++) begin
-          mem[i] <= '0;
+  if (EnablePartialWrite) begin : gen_partial_write
+    logic [NumWords-1:0][WordWidth-1:0] mem_wr_data_words;
+
+    assign mem_wr_data_words = mem_wr_data;
+
+    if (EnableMemReset) begin : gen_reset
+      always_ff @(posedge wr_clk) begin
+        if (wr_rst) begin
+          // Loop required over entries since cannot assign a packed type ('0) to an unpacked type (mem).
+          for (int i = 0; i < Depth; i++) begin
+            mem[i] <= '0;
+          end
+        end else if (mem_wr_valid) begin
+          for (int i = 0; i < NumWords; i++) begin
+            if (wr_word_en[i]) begin
+              mem[mem_wr_addr][i] <= mem_wr_data_words[i];  // ri lint_check_waive VAR_INDEX_WRITE
+            end
+          end
         end
-      end else if (mem_wr_valid) begin
-        mem[mem_wr_addr] <= mem_wr_data;  // ri lint_check_waive VAR_INDEX_WRITE
+      end
+    end else begin : gen_no_reset
+      always_ff @(posedge wr_clk) begin
+        if (mem_wr_valid) begin
+          for (int i = 0; i < NumWords; i++) begin
+            if (wr_word_en[i]) begin
+              mem[mem_wr_addr][i] <= mem_wr_data_words[i];  // ri lint_check_waive VAR_INDEX_WRITE
+            end
+          end
+        end
       end
     end
-  end else begin : gen_no_reset
-    always_ff @(posedge wr_clk) begin
-      if (mem_wr_valid) begin
-        mem[mem_wr_addr] <= mem_wr_data;  // ri lint_check_waive VAR_INDEX_WRITE
+  end else begin : gen_no_partial_write
+    if (EnableMemReset) begin : gen_reset
+      always_ff @(posedge wr_clk) begin
+        if (wr_rst) begin
+          // Loop required over entries since cannot assign a packed type ('0) to an unpacked type (mem).
+          for (int i = 0; i < Depth; i++) begin
+            mem[i] <= '0;
+          end
+        end else if (mem_wr_valid) begin
+          mem[mem_wr_addr] <= mem_wr_data;  // ri lint_check_waive VAR_INDEX_WRITE
+        end
+      end
+    end else begin : gen_no_reset
+      always_ff @(posedge wr_clk) begin
+        if (mem_wr_valid) begin
+          mem[mem_wr_addr] <= mem_wr_data;  // ri lint_check_waive VAR_INDEX_WRITE
+        end
       end
     end
+    `BR_UNUSED(wr_word_en)
   end
 
   // Read port

@@ -20,6 +20,7 @@
 
 `include "br_asserts_internal.svh"
 `include "br_registers.svh"
+`include "br_unused.svh"
 
 module br_ram_flops_1r1w #(
     parameter int Depth = 2,  // Number of entries in the RAM. Must be at least 2.
@@ -28,6 +29,15 @@ module br_ram_flops_1r1w #(
     parameter int DepthTiles = 1,
     // Number of tiles along the width (data) dimension. Must be at least 1 and evenly divide Width.
     parameter int WidthTiles = 1,
+    // If 1, allow partial writes to the memory using the wr_word_en signal.
+    // If 0, only full writes are allowed and wr_word_en is ignored.
+    parameter bit EnablePartialWrite = 0,
+    // The width of a word in the memory. This is the smallest unit of data that
+    // can be written when partial write is enabled.
+    // Must be at least 1 and at most (Width / WidthTiles).
+    // Must be evenly divisible by WidthTiles.
+    // Width must be evenly divisible by WordWidth.
+    parameter int WordWidth = Width / WidthTiles,
     // Number of pipeline register stages inserted along the write address and read address paths
     // in the depth dimension. Must be at least 0.
     parameter int AddressDepthStages = 0,
@@ -49,6 +59,7 @@ module br_ram_flops_1r1w #(
     // written for the first time.
     parameter bit EnableMemReset = 0,
     localparam int AddressWidth = $clog2(Depth),
+    localparam int NumWords = Width / WordWidth,
     // Write latency in units of wr_clk cycles
     // ri lint_check_waive PARAM_NOT_USED
     localparam int WriteLatency = AddressDepthStages + 1,
@@ -65,6 +76,7 @@ module br_ram_flops_1r1w #(
     input logic                    wr_valid,
     input logic [AddressWidth-1:0] wr_addr,
     input logic [       Width-1:0] wr_data,
+    input logic [    NumWords-1:0] wr_word_en,
 
     // Read-clock signals
     // Posedge-triggered clock.
@@ -83,6 +95,7 @@ module br_ram_flops_1r1w #(
 
   localparam int TileDepth = br_math::ceil_div(Depth, DepthTiles);
   localparam int TileWidth = br_math::ceil_div(Width, WidthTiles);
+  localparam int TileNumWords = br_math::ceil_div(NumWords, WidthTiles);
 
   //------------------------------------------
   // Integration checks
@@ -109,6 +122,12 @@ module br_ram_flops_1r1w #(
   `BR_ASSERT_CR_INTG(wr_addr_in_range_a, wr_valid |-> wr_addr < Depth, wr_clk, wr_rst)
   `BR_ASSERT_CR_INTG(rd_addr_in_range_a, rd_addr_valid |-> rd_addr < Depth, rd_clk, rd_rst)
 
+  if (EnablePartialWrite) begin : gen_partial_write_intg_checks
+    `BR_ASSERT_STATIC(word_width_in_range_a, (WordWidth >= 1) && (WordWidth <= TileWidth))
+    `BR_ASSERT_STATIC(num_words_div_width_tiles_a, (NumWords % WidthTiles) == 0)
+    `BR_ASSERT_STATIC(tile_width_div_word_width_a, (TileWidth % WordWidth) == 0)
+  end
+
   // Rely on submodule integration checks
 
   //------------------------------------------
@@ -119,6 +138,7 @@ module br_ram_flops_1r1w #(
   logic [DepthTiles-1:0] tile_wr_valid;
   logic [DepthTiles-1:0][TileAddressWidth-1:0] tile_wr_addr;
   logic [DepthTiles-1:0][WidthTiles-1:0][TileWidth-1:0] tile_wr_data;
+  logic [DepthTiles-1:0][WidthTiles-1:0][TileNumWords-1:0] tile_wr_word_en;
 
   logic [DepthTiles-1:0] tile_rd_addr_valid;
   logic [DepthTiles-1:0][TileAddressWidth-1:0] tile_rd_addr;
@@ -126,21 +146,52 @@ module br_ram_flops_1r1w #(
   logic [DepthTiles-1:0][WidthTiles-1:0][TileWidth-1:0] tile_rd_data;
 
   // Write pipeline (address + data)
-  br_ram_addr_decoder #(
-      .Depth(Depth),
-      .DataWidth(Width),
-      .Tiles(DepthTiles),
-      .Stages(AddressDepthStages)
-  ) br_ram_addr_decoder_wr (
-      .clk(wr_clk),  // ri lint_check_waive SAME_CLOCK_NAME
-      .rst(wr_rst),
-      .in_valid(wr_valid),
-      .in_addr(wr_addr),
-      .in_data(wr_data),
-      .out_valid(tile_wr_valid),
-      .out_addr(tile_wr_addr),
-      .out_data(tile_wr_data)
-  );
+  if (EnablePartialWrite) begin : gen_partial_write_addr_decoder
+    localparam int DecoderDataWidth = Width + NumWords;
+    logic [DecoderDataWidth-1:0] decoder_in_data;
+    logic [DepthTiles-1:0][DecoderDataWidth-1:0] decoder_out_data;
+
+    assign decoder_in_data = {wr_data, wr_word_en};
+
+    br_ram_addr_decoder #(
+        .Depth(Depth),
+        .DataWidth(DecoderDataWidth),
+        .Tiles(DepthTiles),
+        .Stages(AddressDepthStages)
+    ) br_ram_addr_decoder_wr (
+        .clk(wr_clk),  // ri lint_check_waive SAME_CLOCK_NAME
+        .rst(wr_rst),
+        .in_valid(wr_valid),
+        .in_addr(wr_addr),
+        .in_data(decoder_in_data),
+        .out_valid(tile_wr_valid),
+        .out_addr(tile_wr_addr),
+        .out_data(decoder_out_data)
+    );
+
+    for (genvar i = 0; i < DepthTiles; i++) begin : gen_tile_wr_data_and_word_en
+      assign {tile_wr_data[i], tile_wr_word_en[i]} = decoder_out_data[i];
+    end
+  end else begin : gen_full_write_addr_decoder
+    br_ram_addr_decoder #(
+        .Depth(Depth),
+        .DataWidth(Width),
+        .Tiles(DepthTiles),
+        .Stages(AddressDepthStages)
+    ) br_ram_addr_decoder_wr (
+        .clk(wr_clk),  // ri lint_check_waive SAME_CLOCK_NAME
+        .rst(wr_rst),
+        .in_valid(wr_valid),
+        .in_addr(wr_addr),
+        .in_data(wr_data),
+        .out_valid(tile_wr_valid),
+        .out_addr(tile_wr_addr),
+        .out_data(tile_wr_data)
+    );
+
+    `BR_UNUSED(wr_word_en)
+    assign tile_wr_word_en = '1;
+  end
 
   // Read address pipeline
   br_ram_addr_decoder #(
@@ -164,6 +215,7 @@ module br_ram_flops_1r1w #(
       br_ram_flops_1r1w_tile #(
           .Depth(TileDepth),
           .Width(TileWidth),
+          .WordWidth(WordWidth),
           .EnableBypass(TileEnableBypass),
           .EnableReset(EnableMemReset)
       ) br_ram_flops_1r1w_tile (
@@ -172,6 +224,7 @@ module br_ram_flops_1r1w #(
           .wr_valid(tile_wr_valid[r]),
           .wr_addr(tile_wr_addr[r]),
           .wr_data(tile_wr_data[r][c]),
+          .wr_word_en(tile_wr_word_en[r][c]),
           .rd_clk,
           .rd_rst,
           .rd_addr_valid(tile_rd_addr_valid[r]),
