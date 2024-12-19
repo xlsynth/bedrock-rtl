@@ -69,21 +69,21 @@
 //     PushWidth = 8, PopWidth = 32, MetadataWidth = 3, (DeserializationRatio = 4), DeserializeMostSignificantFirst = 1
 //     Cycle | push_valid | push_data | push_last | push_metadata | pop_valid | pop_data     | pop_last | pop_last_dont_care_count | pop_metadata
 //     ------|------------|-----------|-----------|---------------|-----------|--------------|----------|--------------------------|-------------
-//     0     | 1'b1       | 8'hBA     | 1'b0      | 3'd6          | 1'b0      | 32'hXXXXXXXX | 1'bX     | 2'dX                     | 3'dX
-//     1     | 1'b1       | 8'hAD     | 1'b0      | stable        | 1'b0      | 32'hXXXXXXXX | 1'bX     | 2'dX                     | 3'dX
-//     2     | 1'b1       | 8'hF0     | 1'b0      | stable        | 1'b0      | 32'hXXXXXXXX | 1'bX     | 2'dX                     | 3'dX
+//     0     | 1'b1       | 8'hBA     | 1'b0      | 3'd6          | 1'b0      | 32'hXXXXXXXX | 1'bX     | 2'd0                     | 3'dX
+//     1     | 1'b1       | 8'hAD     | 1'b0      | stable        | 1'b0      | 32'hXXXXXXXX | 1'bX     | 2'd0                     | 3'dX
+//     2     | 1'b1       | 8'hF0     | 1'b0      | stable        | 1'b0      | 32'hXXXXXXXX | 1'bX     | 2'd0                     | 3'dX
 //     3     | 1'b1       | 8'h0D     | 1'b0      | stable        | 1'b1      | 32'hBAADF00D | 1'b0     | 2'd0                     | 3'd6
 //
 //     Packet length = 56 bits (7 push flits), using last bit
 //     PushWidth = 8, PopWidth = 32, MetadataWidth = 3, (DeserializationRatio = 4), DeserializeMostSignificantFirst = 0
 //     Cycle | push_valid | push_data | push_last | push_metadata | pop_valid | pop_data     | pop_last | pop_last_dont_care_count | pop_metadata
 //     ------|------------|-----------|-----------|---------------|-----------|--------------|----------|--------------------------|-------------
-//     0     | 1'b1       | 8'h67     | 1'b0      | 3'd2          | 1'b0      | 32'hXXXXXXXX | 1'bX     | 2'dX                     | 3'dX
-//     1     | 1'b1       | 8'h45     | 1'b0      | stable        | 1'b0      | 32'hXXXXXXXX | 1'bX     | 2'dX                     | 3'dX
-//     2     | 1'b1       | 8'h23     | 1'b0      | stable        | 1'b0      | 32'hXXXXXXXX | 1'bX     | 2'dX                     | 3'dX
-//     3     | 1'b1       | 8'h01     | 1'b0      | stable        | 1'b1      | 32'h01234567 | 1'b0     | 2'dX                     | 3'd2
-//     4     | 1'b1       | 8'h0D     | 1'b0      | 3'd5          | 1'b0      | 32'hXXXXXXXX | 1'bX     | 2'dX                     | 3'dX
-//     5     | 1'b1       | 8'hF0     | 1'b0      | stable        | 1'b0      | 32'hXXXXXXXX | 1'bX     | 2'dX                     | 3'dX
+//     0     | 1'b1       | 8'h67     | 1'b0      | 3'd2          | 1'b0      | 32'hXXXXXXXX | 1'bX     | 2'd0                     | 3'dX
+//     1     | 1'b1       | 8'h45     | 1'b0      | stable        | 1'b0      | 32'hXXXXXXXX | 1'bX     | 2'd0                     | 3'dX
+//     2     | 1'b1       | 8'h23     | 1'b0      | stable        | 1'b0      | 32'hXXXXXXXX | 1'bX     | 2'd0                     | 3'dX
+//     3     | 1'b1       | 8'h01     | 1'b0      | stable        | 1'b1      | 32'h01234567 | 1'b0     | 2'd0                     | 3'd2
+//     4     | 1'b1       | 8'h0D     | 1'b0      | 3'd5          | 1'b0      | 32'hXXXXXXXX | 1'bX     | 2'd0                     | 3'dX
+//     5     | 1'b1       | 8'hF0     | 1'b0      | stable        | 1'b0      | 32'hXXXXXXXX | 1'bX     | 2'd0                     | 3'dX
 //     6     | 1'b1       | 8'hAD     | 1'b1      | stable        | 1'b1      | 32'hXXADF00D | 1'b1     | 2'd1                     | 3'd5
 
 `include "br_asserts.svh"
@@ -133,10 +133,11 @@ module br_flow_deserializer #(
     output logic [      PopWidth-1:0] pop_data,
     // Indicates that this is the last pop flit of a packet.
     output logic                      pop_last,
-    // This signal must be ignored if push_last is 0.
-    // However, if push_last is 1, then this is the
+    // This signal should only be used when push_last is 1.
+    // (If push_last is 0, then it's driven to 0.)
+    // When push_last is 1, then this is the
     // number of don't care slices at the tail end of the pop flit.
-    // It will be less than DeserializationRatio, i.e., the entire pop flit
+    // It is less than DeserializationRatio, i.e., the entire pop flit
     // will not consist of "don't care" slices. 0 means the pop flit
     // is entirely populated with valid data.
     output logic [SerFlitIdWidth-1:0] pop_last_dont_care_count,
@@ -287,7 +288,7 @@ module br_flow_deserializer #(
     //------
     assign pop_valid = slice_valid[DrMinus1] || (push_valid && push_last);
     assign pop_last = push_last;
-    assign pop_last_dont_care_count = dr_minus_1 - push_flit_id;
+    assign pop_last_dont_care_count = pop_last ? (dr_minus_1 - push_flit_id) : 0;
     assign pop_metadata = push_metadata;
 
     //------
@@ -314,7 +315,7 @@ module br_flow_deserializer #(
 
   `BR_ASSERT_IMPL(pop_valid_iff_last_a, pop_valid |-> push_valid)
   `BR_ASSERT_IMPL(pop_last_iff_push_last_a, pop_valid && pop_last |-> push_last)
-  `BR_COVER_IMPL(complete_pop_flit_no_last_c, pop_valid && !pop_last)
-  `BR_COVER_IMPL(complete_pop_flit_last_c, pop_valid && pop_last)
+  `BR_ASSERT_IMPL(complete_pop_flit_no_last_a,
+                  pop_valid && !pop_last |-> pop_last_dont_care_count == 0)
 
 endmodule : br_flow_deserializer

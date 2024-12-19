@@ -111,13 +111,11 @@ module br_flow_serializer #(
     // Safe to tie to 0 if you don't need to keep track of this
     // in external logic.
     input  logic                      push_last,
-    // This signal is ignored if push_last is 0.
-    // However, if push_last is 1, then this is the
-    // number of don't care slices at the tail end of the push flit.
-    // It must be less than SerializationRatio, i.e., the entire push flit
-    // is not allowed to consist of "don't care" slices. Tie to 0
-    // if each push flit should be fully serialized and transmitted
-    // over SerializationRatio pop flits.
+    // If push_last is 1, then this is the number of don't care slices at
+    // the tail end of the push flit. It must be less than SerializationRatio,
+    // i.e., the entire push flit is not allowed to consist of "don't care" slices.
+    // Drive to 0 if each push flit should be fully serialized and transmitted
+    // over SerializationRatio pop flits. Must be 0 when push_last is 0.
     input  logic [SerFlitIdWidth-1:0] push_last_dont_care_count,
     // Constant metadata to carry alongside the flits.
     // Does not get serialized (simply replicated alongside each pop flit).
@@ -145,6 +143,8 @@ module br_flow_serializer #(
 
   `BR_ASSERT_INTG(push_last_dont_care_count_in_range_a,
                   push_valid && push_last |-> push_last_dont_care_count < SerializationRatio)
+  `BR_ASSERT_INTG(push_last_dont_care_count_zero_a,
+                  push_valid && !push_last |-> push_last_dont_care_count == 0)
 
   // Check push side validity and data stability
   br_flow_checks_valid_data #(
