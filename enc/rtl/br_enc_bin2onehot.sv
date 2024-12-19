@@ -43,7 +43,8 @@
 module br_enc_bin2onehot #(
     parameter int NumValues = 2,  // Must be at least 2
     parameter int EnableInputRangeCheck = 1,
-    localparam int BinWidth = $clog2(NumValues)
+    // Width of the binary-encoded value. Must be at least $clog2(NumValues).
+    parameter int BinWidth = $clog2(NumValues)
 ) (
     // ri lint_check_waive INPUT_NOT_READ HIER_NET_NOT_READ HIER_BRANCH_NOT_READ
     input logic clk,  // Used only for assertions
@@ -58,6 +59,7 @@ module br_enc_bin2onehot #(
   // Integration checks
   //------------------------------------------
   `BR_ASSERT_STATIC(num_values_gte_2_a, NumValues >= 2)
+  `BR_ASSERT_STATIC(binwidth_gte_log2_num_values_a, BinWidth >= $clog2(NumValues))
   if (EnableInputRangeCheck) begin : gen_in_range_check
     `BR_ASSERT_INTG(in_within_range_a, in_valid |-> in < NumValues)
   end

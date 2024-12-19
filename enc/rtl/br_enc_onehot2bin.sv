@@ -64,6 +64,7 @@ module br_enc_onehot2bin #(
   // Integration checks
   //------------------------------------------
   `BR_ASSERT_STATIC(num_values_gte_2_a, NumValues >= 2)
+  `BR_ASSERT_STATIC(binwidth_gte_log2_num_values_a, BinWidth >= $clog2(NumValues))
   `BR_ASSERT_INTG(in_onehot_a, $onehot0(in))
 
   //------------------------------------------
