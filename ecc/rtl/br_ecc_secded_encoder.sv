@@ -70,7 +70,7 @@ module br_ecc_secded_encoder #(
     parameter bit RegisterInputs = 0,
     // If 1, then insert a pipeline register at the output.
     parameter bit RegisterOutputs = 0,
-    localparam int MessageWidth = 2 ** $clog2(DataWidth),
+    localparam int MessageWidth = 2 ** (ParityWidth-2),
     localparam int CodewordWidth = MessageWidth + ParityWidth
 ) (
     // Positive edge-triggered clock.

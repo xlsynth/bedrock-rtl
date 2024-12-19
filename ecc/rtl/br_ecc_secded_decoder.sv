@@ -76,7 +76,7 @@ module br_ecc_secded_decoder #(
     parameter bit RegisterSyndrome = 0,
     // If 1, then insert a pipeline register at the output.
     parameter bit RegisterOutputs = 0,
-    localparam int MessageWidth = 2 ** $clog2(DataWidth),
+    localparam int MessageWidth = 2 ** (ParityWidth-2),
     localparam int CodewordWidth = MessageWidth + ParityWidth,
     // ri lint_check_waive PARAM_NOT_USED
     localparam int Latency = RegisterInputs + RegisterSyndrome + RegisterOutputs
