@@ -89,6 +89,7 @@
 `include "br_asserts.svh"
 `include "br_asserts_internal.svh"
 `include "br_registers.svh"
+`include "br_tieoff.svh"
 
 module br_flow_deserializer #(
     // Width of the push side flit. Must be at least 1.
@@ -177,6 +178,7 @@ module br_flow_deserializer #(
     assign pop_valid = push_valid;
     assign pop_data  = push_data;
     assign pop_last  = push_last;
+    // ri lint_check_waive CONST_OUTPUT
     `BR_TIEOFF_ZERO(pop_last_dont_care_count)
     assign pop_metadata = push_metadata;
     assign push_ready   = pop_ready;
@@ -299,6 +301,10 @@ module br_flow_deserializer #(
     assign not_done_building_pop_flit = push_flit_id < dr_minus_1;
     assign push_ready = completing_pop_flit || not_done_building_pop_flit;
 
+    `BR_ASSERT_IMPL(
+        incomplete_pop_flit_a,
+        pop_valid && (not_done_building_pop_flit) |-> pop_last && pop_last_dont_care_count != 0)
+
   end
 
   //------------------------------------------
@@ -308,9 +314,6 @@ module br_flow_deserializer #(
 
   `BR_ASSERT_IMPL(pop_valid_iff_last_a, pop_valid |-> push_valid)
   `BR_ASSERT_IMPL(pop_last_iff_push_last_a, pop_valid && pop_last |-> push_last)
-  `BR_ASSERT_IMPL(
-      incomplete_pop_flit_a,
-      pop_valid && (not_done_building_pop_flit) |-> pop_last && pop_last_dont_care_count != 0)
   `BR_COVER_IMPL(complete_pop_flit_no_last_c, pop_valid && !pop_last)
   `BR_COVER_IMPL(complete_pop_flit_last_c, pop_valid && pop_last)
 

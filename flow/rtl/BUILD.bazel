@@ -185,6 +185,7 @@ verilog_library(
         "//delay/rtl:br_delay_nr",
         "//macros:br_asserts",
         "//macros:br_asserts_internal",
+        "//macros:br_unused",
         "//mux/rtl:br_mux_bin",
     ],
 )
@@ -199,6 +200,7 @@ verilog_library(
         "//macros:br_asserts",
         "//macros:br_asserts_internal",
         "//macros:br_registers",
+        "//macros:br_tieoff",
         "//mux/rtl:br_mux_bin",
     ],
 )
@@ -452,6 +454,7 @@ br_verilog_elab_and_lint_test_suite(
     name = "br_flow_serializer_test_suite",
     params = {
         "PushWidth": [
+            "4",
             "8",
             "12",
         ],
@@ -476,6 +479,7 @@ br_verilog_elab_and_lint_test_suite(
             "4",
         ],
         "PopWidth": [
+            "4",
             "8",
             "12",
         ],

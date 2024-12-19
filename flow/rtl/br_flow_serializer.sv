@@ -78,6 +78,7 @@
 
 `include "br_asserts.svh"
 `include "br_asserts_internal.svh"
+`include "br_unused.svh"
 
 module br_flow_serializer #(
     // Width of the push side packet. Must be greater than PopWidth
