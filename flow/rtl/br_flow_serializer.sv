@@ -72,7 +72,7 @@
 //     1     | stable     | stable       | stable    | stable                    | stable        | 1'b1      | 8'h45    | 1'b0     | 3'd2
 //     2     | stable     | stable       | stable    | stable                    | stable        | 1'b1      | 8'h23    | 1'b0     | 3'd2
 //     3     | stable     | stable       | stable    | stable                    | stable        | 1'b1      | 8'h01    | 1'b0     | 3'd2
-//     4     | 1'b1       | 32'hXXAAF00D | 1'b1      | 2'd1                      | 3'd5          | 1'b1      | 8'h0D    | 1'b0     | 3'd5
+//     4     | 1'b1       | 32'hXXADF00D | 1'b1      | 2'd1                      | 3'd5          | 1'b1      | 8'h0D    | 1'b0     | 3'd5
 //     5     | stable     | stable       | stable    | stable                    | stable        | 1'b1      | 8'hF0    | 1'b0     | 3'd5
 //     6     | stable     | stable       | stable    | stable                    | stable        | 1'b1      | 8'hAD    | 1'b1     | 3'd5
 
