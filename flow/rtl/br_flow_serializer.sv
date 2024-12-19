@@ -96,7 +96,7 @@ module br_flow_serializer #(
     localparam int SerializationRatio = PushWidth / PopWidth,
     // Vector widths cannot be 0, so we need to special-case when SerializationRatio == 1
     // even though the push_last_dont_care_count port won't be used in that case.
-    localparam int IdWidth = SerializationRatio > 1 ? $clog2(SerializationRatio) : 1
+    localparam int SerFlitIdWidth = SerializationRatio > 1 ? $clog2(SerializationRatio) : 1
 ) (
     // Posedge-triggered clock
     input logic clk,
@@ -104,13 +104,13 @@ module br_flow_serializer #(
     input logic rst,
 
     // Push-side interface (wide flits).
-    output logic                     push_ready,
-    input  logic                     push_valid,
-    input  logic [    PushWidth-1:0] push_data,
+    output logic                      push_ready,
+    input  logic                      push_valid,
+    input  logic [     PushWidth-1:0] push_data,
     // Indicates that this is the last push flit of a packet.
     // Safe to tie to 0 if you don't need to keep track of this
     // in external logic.
-    input  logic                     push_last,
+    input  logic                      push_last,
     // This signal is ignored if push_last is 0.
     // However, if push_last is 1, then this is the
     // number of don't care slices at the tail end of the push flit.
@@ -118,10 +118,10 @@ module br_flow_serializer #(
     // is not allowed to consist of "don't care" slices. Tie to 0
     // if each push flit should be fully serialized and transmitted
     // over SerializationRatio pop flits.
-    input  logic [      IdWidth-1:0] push_last_dont_care_count,
+    input  logic [SerFlitIdWidth-1:0] push_last_dont_care_count,
     // Constant metadata to carry alongside the flits.
     // Does not get serialized (simply replicated alongside each pop flit).
-    input  logic [MetadataWidth-1:0] push_metadata,
+    input  logic [ MetadataWidth-1:0] push_metadata,
 
     // Pop-side interface (narrow, serialized flits).
     input  logic                     pop_ready,
@@ -149,7 +149,7 @@ module br_flow_serializer #(
   // Check push side validity and data stability
   br_flow_checks_valid_data #(
       .NumFlows(1),
-      .Width(PushWidth + 1 + IdWidth + MetadataWidth),
+      .Width(PushWidth + 1 + SerFlitIdWidth + MetadataWidth),
       // Push ready/valid stability is required for the serializer to work correctly.
       // That's because it serially scans over the valid push data until the entire
       // packet has been transmitted. If the push data is unstable during
@@ -213,11 +213,11 @@ module br_flow_serializer #(
     // a push flit.
     //------
     localparam int SrMinus1 = SerializationRatio - 1;
-    logic               pop_flit_id_reinit;
-    logic [IdWidth-1:0] pop_flit_id;
-    logic [IdWidth-1:0] pop_flit_id_next;
-    logic [IdWidth-1:0] pop_flit_id_internal;
-    logic               pop;
+    logic                      pop_flit_id_reinit;
+    logic [SerFlitIdWidth-1:0] pop_flit_id;
+    logic [SerFlitIdWidth-1:0] pop_flit_id_next;
+    logic [SerFlitIdWidth-1:0] pop_flit_id_internal;
+    logic                      pop;
 
     br_counter_incr #(
         .MaxValue(SrMinus1),
@@ -226,7 +226,7 @@ module br_flow_serializer #(
         .clk,
         .rst,
         .reinit(pop_flit_id_reinit),
-        .initial_value(IdWidth'(0)),
+        .initial_value(SerFlitIdWidth'(0)),
         .incr_valid(pop),
         .incr(1'b1),
         .value(pop_flit_id),
@@ -241,8 +241,8 @@ module br_flow_serializer #(
     // Calculate which slice of the push flit is muxed to the pop interface.
     // It depends on both the serialization order and the state of the counter.
     //------
-    logic [IdWidth-1:0] sr_minus_1;
-    logic [IdWidth-1:0] slice_id;
+    logic [SerFlitIdWidth-1:0] sr_minus_1;
+    logic [SerFlitIdWidth-1:0] slice_id;
 
     assign sr_minus_1 = SrMinus1;
     assign slice_id = SerializeMostSignificantFirst ?
@@ -268,7 +268,7 @@ module br_flow_serializer #(
     //
     // The metadata is replicated from the push side for each pop flit.
     //------
-    logic [IdWidth-1:0] pop_flit_id_plus_dont_care_count;
+    logic [SerFlitIdWidth-1:0] pop_flit_id_plus_dont_care_count;
 
     assign pop_valid = push_valid;
     assign pop_flit_id_plus_dont_care_count = pop_flit_id + push_last_dont_care_count;

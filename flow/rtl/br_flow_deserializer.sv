@@ -107,7 +107,7 @@ module br_flow_deserializer #(
     localparam int DeserializationRatio = PopWidth / PushWidth,
     // Vector widths cannot be 0, so we need to special-case when DeserializationRatio == 1
     // even though the pop_last_dont_care_count port will be unused downstream in that case.
-    localparam int IdWidth = DeserializationRatio > 1 ? $clog2(DeserializationRatio) : 1
+    localparam int SerFlitIdWidth = DeserializationRatio > 1 ? $clog2(DeserializationRatio) : 1
 ) (
     // Posedge-triggered clock
     input logic clk,
@@ -126,21 +126,21 @@ module br_flow_deserializer #(
     input  logic [MetadataWidth-1:0] push_metadata,
 
     // Pop-side interface (wide flits).
-    input  logic                     pop_ready,
-    output logic                     pop_valid,
+    input  logic                      pop_ready,
+    output logic                      pop_valid,
     // If pop_last is 1, inspect pop_last_dont_care_count to determine
     // how much of the pop_data consists of valid data.
-    output logic [     PopWidth-1:0] pop_data,
+    output logic [      PopWidth-1:0] pop_data,
     // Indicates that this is the last pop flit of a packet.
-    output logic                     pop_last,
+    output logic                      pop_last,
     // This signal must be ignored if push_last is 0.
     // However, if push_last is 1, then this is the
     // number of don't care slices at the tail end of the pop flit.
     // It will be less than DeserializationRatio, i.e., the entire pop flit
     // will not consist of "don't care" slices. 0 means the pop flit
     // is entirely populated with valid data.
-    output logic [      IdWidth-1:0] pop_last_dont_care_count,
-    output logic [MetadataWidth-1:0] pop_metadata
+    output logic [SerFlitIdWidth-1:0] pop_last_dont_care_count,
+    output logic [ MetadataWidth-1:0] pop_metadata
 );
 
   //------------------------------------------
@@ -197,10 +197,10 @@ module br_flow_deserializer #(
     //------
     localparam int DrMinus1 = DeserializationRatio - 1;
 
-    logic               push_flit_id_incr_valid;
-    logic [IdWidth-1:0] push_flit_id;
-    logic               push;
-    logic               pop;
+    logic                      push_flit_id_incr_valid;
+    logic [SerFlitIdWidth-1:0] push_flit_id;
+    logic                      push;
+    logic                      pop;
 
     br_counter_incr #(
         .MaxValue(DrMinus1),
@@ -209,7 +209,7 @@ module br_flow_deserializer #(
         .clk,
         .rst,
         .reinit(pop),
-        .initial_value(IdWidth'(0)),
+        .initial_value(SerFlitIdWidth'(0)),
         .incr_valid(push_flit_id_incr_valid),
         .incr(1'b1),
         .value(push_flit_id),
@@ -240,7 +240,7 @@ module br_flow_deserializer #(
     //-----
     // Register the slice data for all but the last slice.
     //-----
-    logic [IdWidth-1:0] dr_minus_1;
+    logic [SerFlitIdWidth-1:0] dr_minus_1;
     logic [DeserializationRatio-2:0][PushWidth-1:0] slice_reg;
     logic [DeserializationRatio-2:0] slice_reg_ld_en;
 
