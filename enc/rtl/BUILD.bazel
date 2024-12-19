@@ -80,10 +80,16 @@ br_verilog_elab_and_lint_test_suite(
 
 br_verilog_elab_and_lint_test_suite(
     name = "br_enc_onehot2bin_test_suite",
-    params = {"NumValues": [
-        "2",
-        "3",
-    ]},
+    params = {
+        "NumValues": [
+            "2",
+            "3",
+        ],
+        "BinWidth": [
+            "2",
+            "5",
+        ],
+    },
     deps = [":br_enc_onehot2bin"],
 )
 
