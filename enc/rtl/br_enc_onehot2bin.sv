@@ -77,14 +77,14 @@ module br_enc_onehot2bin #(
   //------------------------------------------
   assign out_valid = |in;
   always_comb begin
-    out = '0; // ri lint_check_waive CONST_OUTPUT
+    out = '0;  // ri lint_check_waive CONST_OUTPUT
     for (int i = 1; i < NumValues; i++) begin
       // If multiple bits are set, this is undefined behavior.
       if (in[i]) begin
         // This waiver is not a problem so long as we are not doing
         // anything close to a 32-bit onehot2bin..
         // ri lint_check_waive INTEGER ASSIGN_SIGN SIGNED_SIZE_CAST
-        out |= BinWidth'(i); // ri lint_check_waive CONST_OUTPUT
+        out |= BinWidth'(i);  // ri lint_check_waive CONST_OUTPUT
       end
     end
   end
