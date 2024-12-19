@@ -35,6 +35,7 @@ verilog_library(
     deps = [
         "//delay/rtl:br_delay_valid",
         "//macros:br_asserts_internal",
+        "//macros:br_unused",
         "//pkg:br_math_pkg",
     ],
 )
@@ -45,6 +46,7 @@ verilog_library(
     deps = [
         "//macros:br_asserts_internal",
         "//macros:br_registers",
+        "//macros:br_unused",
     ],
 )
 
@@ -74,7 +76,7 @@ verilog_library(
 )
 
 br_verilog_elab_and_lint_test_suite(
-    name = "br_ram_flops_1r1w_tile_test_suite",
+    name = "br_ram_flops_1r1w_tile_test_suite_full_write",
     params = {
         "Depth": [
             "2",
@@ -87,6 +89,26 @@ br_verilog_elab_and_lint_test_suite(
         "EnableBypass": [
             "0",
             "1",
+        ],
+        "EnableReset": [
+            "0",
+            "1",
+        ],
+        "EnablePartialWrite": ["0"],
+    },
+    deps = [":br_ram_flops_1r1w_tile"],
+)
+
+br_verilog_elab_and_lint_test_suite(
+    name = "br_ram_flops_1r1w_tile_test_suite_partial_write",
+    params = {
+        "EnablePartialWrite": ["1"],
+        "Depth": ["4"],
+        "Width": ["12"],
+        "WordWidth": [
+            "3",
+            "4",
+            "12",
         ],
         "EnableReset": [
             "0",
@@ -304,6 +326,51 @@ br_verilog_elab_and_lint_test_suite(
 )
 
 br_verilog_elab_and_lint_test_suite(
+    name = "br_ram_flops_1r1w_test_suite_sweep_word_width_single_tile",
+    params = {
+        "Depth": ["4"],
+        "Width": ["64"],
+        "EnablePartialWrite": ["1"],
+        "WordWidth": [
+            "8",
+            "16",
+            "32",
+        ],
+        "WidthTiles": ["1"],
+        "EnableMemReset": ["0"],
+    },
+    deps = [":br_ram_flops_1r1w"],
+)
+
+br_verilog_elab_and_lint_test_suite(
+    name = "br_ram_flops_1r1w_test_suite_sweep_tile_width_partial_write",
+    params = {
+        "Depth": ["4"],
+        "Width": ["64"],
+        "EnablePartialWrite": ["1"],
+        "WordWidth": ["8"],
+        "WidthTiles": [
+            "2",
+            "4",
+            "8",
+        ],
+    },
+    deps = [":br_ram_flops_1r1w"],
+)
+
+br_verilog_elab_and_lint_test_suite(
+    name = "br_ram_flops_1r1w_test_suite_en_mem_reset_partial_write",
+    params = {
+        "EnableMemReset": ["1"],
+        "Depth": ["4"],
+        "Width": ["64"],
+        "EnablePartialWrite": ["1"],
+        "WordWidth": ["8"],
+    },
+    deps = [":br_ram_flops_1r1w"],
+)
+
+br_verilog_elab_and_lint_test_suite(
     name = "br_ram_flops_1r1w_mock_test_suite_sweep_depth_width",
     params = {
         "Depth": [
@@ -363,6 +430,35 @@ br_verilog_elab_and_lint_test_suite(
             "0",
             "1",
         ],
+    },
+    deps = [":br_ram_flops_1r1w_mock"],
+)
+
+br_verilog_elab_and_lint_test_suite(
+    name = "br_ram_flops_1r1w_mock_test_suite_sweep_word_width_single_tile",
+    params = {
+        "Depth": ["4"],
+        "Width": ["64"],
+        "EnablePartialWrite": ["1"],
+        "WordWidth": [
+            "8",
+            "16",
+            "32",
+        ],
+        "WidthTiles": ["1"],
+        "EnableMemReset": ["0"],
+    },
+    deps = [":br_ram_flops_1r1w_mock"],
+)
+
+br_verilog_elab_and_lint_test_suite(
+    name = "br_ram_flops_1r1w_mock_test_suite_en_mem_reset_partial_write",
+    params = {
+        "EnableMemReset": ["1"],
+        "Depth": ["4"],
+        "Width": ["64"],
+        "EnablePartialWrite": ["1"],
+        "WordWidth": ["8"],
     },
     deps = [":br_ram_flops_1r1w_mock"],
 )

@@ -73,6 +73,18 @@ verilog_library(
     ],
 )
 
+verilog_library(
+    name = "br_amba_axil_msi",
+    srcs = ["br_amba_axil_msi.sv"],
+    deps = [
+        ":br_amba_pkg",
+        "//counter/rtl:br_counter_decr",
+        "//flow/rtl:br_flow_mux_rr",
+        "//macros:br_asserts_internal",
+        "//macros:br_registers",
+    ],
+)
+
 br_verilog_elab_and_lint_test_suite(
     name = "br_amba_axil2apb_test_suite",
     params = {
@@ -158,4 +170,19 @@ br_verilog_elab_and_lint_test_suite(
         ],
     },
     deps = [":br_amba_atb_funnel"],
+)
+
+br_verilog_elab_and_lint_test_suite(
+    name = "br_amba_axil_msi_test_suite",
+    params = {
+        "NumInterrupts": [
+            "2",
+            "8",
+        ],
+        "ThrottleCntrWidth": [
+            "2",
+            "4",
+        ],
+    },
+    deps = [":br_amba_axil_msi"],
 )

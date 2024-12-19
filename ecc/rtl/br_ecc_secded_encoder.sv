@@ -138,7 +138,7 @@ module br_ecc_secded_encoder #(
 
   // ri lint_check_off EXPR_ID_LIMIT
 
-  if ((CodewordWidth == 4) && (MessageWidth == 4)) begin : gen_8_4
+  if ((CodewordWidth == 8) && (MessageWidth == 4)) begin : gen_8_4
     `BR_ASSERT_STATIC(parity_width_matches_a, ParityWidth == 4)
     assign parity[0] = m[1] ^ m[2] ^ m[3];
     assign parity[1] = m[0] ^ m[2] ^ m[3];
