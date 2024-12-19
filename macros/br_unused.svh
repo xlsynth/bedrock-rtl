@@ -20,6 +20,7 @@
 `define BR_UNUSED_NAMED(__name__, __x__) \
 br_misc_unused #( \
     .Width($bits(__x__))) \
+// ri lint_check_waive BLACKBOX \
 br_misc_unused_``__name__ ( \
     .in(__x__) \
 );
