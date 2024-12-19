@@ -182,42 +182,19 @@ module br_flow_serializer #(
   end else begin : gen_sr_gt_1
 
     //------
-    // Remember the push handshake from the prior cycle (needed for reinitializing the FSM
-    // on a new push flit).
-    //------
-    logic push_valid_d;
-    logic push_ready_d;
-
-    br_delay_nr #(
-        .NumStages(1),
-        .Width(2)
-    ) br_delay_nr_push_handshake (
-        .clk,
-        .in({push_valid, push_ready}),
-        .out({push_valid_d, push_ready_d}),
-        .out_stages()  // unused
-    );
-
-    //------
     // FSM is just an incrementing counter that keeps track of the pop flit ID.
     // When push_last is 0, then this simply counts up to SerializationRatio - 1
     // and then we complete the push flit. When push_last is 1, then we can complete
     // the push flit early when push_last_dont_care_count is not 0.
     //
-    // Reinitialize the counter sans bubbles when either of the following is true:
-    // (1) A new push flit appears (push_valid) after a cycle where there was no flit (!push_valid_d)
-    // (2) A new push flit appears (push_valid) after a cycle where we potentially completed the previous push flit (push_ready_d)
-    //
-    // We need both the current and next value of pop_flit_id because
-    // we don't want to incur a pop bubble cycle every time we finish serializing
-    // a push flit.
+    // Reinitialize the counter to 0 when we send the last pop flit.
+    // If we finish serializing a push flit without the last bit, then we let the counter
+    // naturally overflow to 0 on the next cycle (don't need to explicitly reinit).
     //------
     localparam int SrMinus1 = SerializationRatio - 1;
     logic                      pop_flit_id_reinit;
+    logic                      pop_flit_id_incr_valid;
     logic [SerFlitIdWidth-1:0] pop_flit_id;
-    logic [SerFlitIdWidth-1:0] pop_flit_id_next;
-    logic [SerFlitIdWidth-1:0] pop_flit_id_internal;
-    logic                      pop;
 
     br_counter_incr #(
         .MaxValue(SrMinus1),
@@ -227,15 +204,15 @@ module br_flow_serializer #(
         .rst,
         .reinit(pop_flit_id_reinit),
         .initial_value(SerFlitIdWidth'(0)),
-        .incr_valid(pop),
+        .incr_valid(pop_flit_id_incr_valid),
         .incr(1'b1),
         .value(pop_flit_id),
-        .value_next(pop_flit_id_next)
+        .value_next()  // unused
     );
 
-    assign pop = pop_ready && pop_valid;
-    assign pop_flit_id_reinit = push_valid && (!push_valid_d || push_ready_d);
-    assign pop_flit_id_internal = pop_flit_id_reinit ? pop_flit_id_next : pop_flit_id;
+    assign pop_flit_id_reinit = pop_ready && pop_valid && pop_last;
+    // Need to qualify the increment on !pop_last because the counter supports reinit-and-increment in one cycle.
+    assign pop_flit_id_incr_valid = pop_ready && pop_valid && !pop_last;
 
     //------
     // Calculate which slice of the push flit is muxed to the pop interface.
@@ -245,9 +222,7 @@ module br_flow_serializer #(
     logic [SerFlitIdWidth-1:0] slice_id;
 
     assign sr_minus_1 = SrMinus1;
-    assign slice_id = SerializeMostSignificantFirst ?
-        (sr_minus_1 - pop_flit_id_internal) :
-        pop_flit_id_internal;
+    assign slice_id   = SerializeMostSignificantFirst ? (sr_minus_1 - pop_flit_id) : pop_flit_id;
 
     //------
     // Do the muxing.
