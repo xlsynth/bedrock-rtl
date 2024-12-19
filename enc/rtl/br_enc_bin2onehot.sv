@@ -43,6 +43,7 @@
 module br_enc_bin2onehot #(
     parameter int NumValues = 2,  // Must be at least 2
     parameter int EnableInputRangeCheck = 1,
+    // Width of the binary-encoded value. Must be at least $clog2(NumValues).
     parameter int BinWidth = $clog2(NumValues)
 ) (
     // ri lint_check_waive INPUT_NOT_READ HIER_NET_NOT_READ HIER_BRANCH_NOT_READ
