@@ -20,8 +20,10 @@
 // The push and pop bitwidths are parameterized; the PushWidth must be a positive integer
 // that is greater than PopWidth and is also divisible by PopWidth.
 // The flit serialization ratio is given by SerializationRatio = PushWidth / PopWidth, i.e.,
-// the ratio of bus widths is 1:SerializationRatio for some integer SerializationRatio > 1 and the
+// the ratio of bus widths is 1:SerializationRatio for some integer SerializationRatio >= 1 and the
 // maximum number of pop flits per push flit is SerializationRatio.
+//
+// When SerializationRatio is 1, then this module is a pass-through.
 //
 // The serialization order is configured by SerializeMostSignificantFirst. If 1, then the most-significant
 // bits of the push flit are sent first; otherwise, the least-significant are sent first.
@@ -91,7 +93,9 @@ module br_flow_serializer #(
     // appear on the push interface.
     parameter bit SerializeMostSignificantFirst,
     localparam int SerializationRatio = PushWidth / PopWidth,
-    localparam int IdWidth = $clog2(SerializationRatio)
+    // Vector widths cannot be 0, so we need to special-case when SerializationRatio == 1
+    // even though the push_last_dont_care_count port won't be used in that case.
+    localparam int IdWidth = SerializationRatio > 1 ? $clog2(SerializationRatio) : 1
 ) (
     // Posedge-triggered clock
     input logic clk,
@@ -136,7 +140,7 @@ module br_flow_serializer #(
   `BR_ASSERT_STATIC(pop_width_gte_1_a, PopWidth >= 1)
   `BR_ASSERT_STATIC(push_width_multiple_of_pop_width_a, (PushWidth % PopWidth) == 0)
   `BR_ASSERT_STATIC(metadata_width_gte_1_a, MetadataWidth >= 1)
-  `BR_ASSERT_STATIC(serialization_ratio_gt_1_a, SerializationRatio > 1)
+  `BR_ASSERT_STATIC(serialization_ratio_gte_1_a, SerializationRatio >= 1)
 
   `BR_ASSERT_INTG(push_last_dont_care_count_in_range_a,
                   push_valid && push_last |-> push_last_dont_care_count < SerializationRatio)
@@ -164,104 +168,118 @@ module br_flow_serializer #(
   // Implementation
   //------------------------------------------
 
-  //------
-  // Remember the push handshake from the prior cycle (needed for reinitializing the FSM
-  // on a new push flit).
-  //------
-  logic push_valid_d;
-  logic push_ready_d;
+  // Base case: pass-through.
+  if (SerializationRatio == 1) begin : gen_sr_eq_1
+    assign pop_valid = push_valid;
+    assign pop_data = push_data;
+    assign pop_last = push_last;
+    assign pop_metadata = push_metadata;
+    assign push_ready = pop_ready;
+    `BR_UNUSED(push_last_dont_care_count)
 
-  br_delay_nr #(
-      .NumStages(1),
-      .Width(2)
-  ) br_delay_nr_push_handshake (
-      .clk,
-      .in({push_valid, push_ready}),
-      .out({push_valid_d, push_ready_d}),
-      .out_stages()  // unused
-  );
+    // General case: serialize.
+  end else begin : gen_sr_gt_1
 
-  //------
-  // FSM is just an incrementing counter that keeps track of the pop flit ID.
-  // When push_last is 0, then this simply counts up to the SerializationRatio - 1
-  // and then we complete the push flit. When push_last is 1, then we can complete
-  // the push flit early when push_last_dont_care_count is not 0.
-  //
-  // Reinitialize the counter sans bubbles when either of the following is true:
-  // (1) A new push flit appears (push_valid) after a cycle where there was no flit (!push_valid_d)
-  // (2) A new push flit appears (push_valid) after a cycle where we potentially completed the previous push flit (push_ready_d)
-  //
-  // We need both the current and next value of pop_flit_id because
-  // we don't want to incur a pop bubble cycle every time we finish serializing
-  // a push flit.
-  //------
-  localparam int SrMinus1 = SerializationRatio - 1;
-  logic               pop_flit_id_reinit;
-  logic [IdWidth-1:0] pop_flit_id;
-  logic [IdWidth-1:0] pop_flit_id_next;
-  logic [IdWidth-1:0] pop_flit_id_internal;
-  logic               pop;
+    //------
+    // Remember the push handshake from the prior cycle (needed for reinitializing the FSM
+    // on a new push flit).
+    //------
+    logic push_valid_d;
+    logic push_ready_d;
 
-  br_counter_incr #(
-      .MaxValue(SrMinus1),
-      .MaxIncrement(1)
-  ) br_counter_incr_pop_flit_id (
-      .clk,
-      .rst,
-      .reinit(pop_flit_id_reinit),
-      .initial_value(IdWidth'(0)),
-      .incr_valid(pop),
-      .incr(1'b1),
-      .value(pop_flit_id),
-      .value_next(pop_flit_id_next)
-  );
+    br_delay_nr #(
+        .NumStages(1),
+        .Width(2)
+    ) br_delay_nr_push_handshake (
+        .clk,
+        .in({push_valid, push_ready}),
+        .out({push_valid_d, push_ready_d}),
+        .out_stages()  // unused
+    );
 
-  assign pop = pop_ready && pop_valid;
-  assign pop_flit_id_reinit = push_valid && (!push_valid_d || push_ready_d);
-  assign pop_flit_id_internal = pop_flit_id_reinit ? pop_flit_id_next : pop_flit_id;
+    //------
+    // FSM is just an incrementing counter that keeps track of the pop flit ID.
+    // When push_last is 0, then this simply counts up to SerializationRatio - 1
+    // and then we complete the push flit. When push_last is 1, then we can complete
+    // the push flit early when push_last_dont_care_count is not 0.
+    //
+    // Reinitialize the counter sans bubbles when either of the following is true:
+    // (1) A new push flit appears (push_valid) after a cycle where there was no flit (!push_valid_d)
+    // (2) A new push flit appears (push_valid) after a cycle where we potentially completed the previous push flit (push_ready_d)
+    //
+    // We need both the current and next value of pop_flit_id because
+    // we don't want to incur a pop bubble cycle every time we finish serializing
+    // a push flit.
+    //------
+    localparam int SrMinus1 = SerializationRatio - 1;
+    logic               pop_flit_id_reinit;
+    logic [IdWidth-1:0] pop_flit_id;
+    logic [IdWidth-1:0] pop_flit_id_next;
+    logic [IdWidth-1:0] pop_flit_id_internal;
+    logic               pop;
 
-  //------
-  // Calculate which slice of the push flit is muxed to the pop interface.
-  // It depends on both the serialization order and the state of the counter.
-  //------
-  logic [IdWidth-1:0] sr_minus_1;
-  logic [IdWidth-1:0] slice_id;
+    br_counter_incr #(
+        .MaxValue(SrMinus1),
+        .MaxIncrement(1)
+    ) br_counter_incr_pop_flit_id (
+        .clk,
+        .rst,
+        .reinit(pop_flit_id_reinit),
+        .initial_value(IdWidth'(0)),
+        .incr_valid(pop),
+        .incr(1'b1),
+        .value(pop_flit_id),
+        .value_next(pop_flit_id_next)
+    );
 
-  assign sr_minus_1 = SrMinus1;
-  assign slice_id = SerializeMostSignificantFirst ?
-    (sr_minus_1 - pop_flit_id_internal) :
-    pop_flit_id_internal;
+    assign pop = pop_ready && pop_valid;
+    assign pop_flit_id_reinit = push_valid && (!push_valid_d || push_ready_d);
+    assign pop_flit_id_internal = pop_flit_id_reinit ? pop_flit_id_next : pop_flit_id;
 
-  //------
-  // Do the muxing.
-  //------
-  br_mux_bin #(
-      .NumSymbolsIn(SerializationRatio),
-      .SymbolWidth (PopWidth)
-  ) br_mux_bin (
-      .select(slice_id),
-      .in(push_data),
-      .out(pop_data)
-  );
+    //------
+    // Calculate which slice of the push flit is muxed to the pop interface.
+    // It depends on both the serialization order and the state of the counter.
+    //------
+    logic [IdWidth-1:0] sr_minus_1;
+    logic [IdWidth-1:0] slice_id;
 
-  //------
-  // Drive the rest of the pop interface outputs.
-  // Terminate the pop stream early when it's the last push flit and
-  // there are "don't care" slices at the tail of it.
-  //
-  // The metadata is replicated from the push side for each pop flit.
-  //------
-  logic [IdWidth-1:0] pop_flit_id_plus_dont_care_count;
+    assign sr_minus_1 = SrMinus1;
+    assign slice_id = SerializeMostSignificantFirst ?
+        (sr_minus_1 - pop_flit_id_internal) :
+        pop_flit_id_internal;
 
-  assign pop_valid = push_valid;
-  assign pop_flit_id_plus_dont_care_count = pop_flit_id + push_last_dont_care_count;
-  assign pop_last = push_last && (pop_flit_id_plus_dont_care_count == sr_minus_1);
-  assign pop_metadata = push_metadata;
+    //------
+    // Do the muxing.
+    //------
+    br_mux_bin #(
+        .NumSymbolsIn(SerializationRatio),
+        .SymbolWidth (PopWidth)
+    ) br_mux_bin (
+        .select(slice_id),
+        .in(push_data),
+        .out(pop_data)
+    );
 
-  //------
-  // Complete the push flit when we're finished serializing it (the last pop flit is accepted).
-  //------
-  assign push_ready = pop_ready && pop_last;
+    //------
+    // Drive the rest of the pop interface outputs.
+    // Terminate the pop stream early when it's the last push flit and
+    // there are "don't care" slices at the tail of it.
+    //
+    // The metadata is replicated from the push side for each pop flit.
+    //------
+    logic [IdWidth-1:0] pop_flit_id_plus_dont_care_count;
+
+    assign pop_valid = push_valid;
+    assign pop_flit_id_plus_dont_care_count = pop_flit_id + push_last_dont_care_count;
+    assign pop_last = push_last && (pop_flit_id_plus_dont_care_count == sr_minus_1);
+    assign pop_metadata = push_metadata;
+
+    //------
+    // Complete the push flit when we're finished serializing it (the last pop flit is accepted).
+    //------
+    assign push_ready = pop_ready && pop_last;
+
+  end
 
   //------------------------------------------
   // Implementation checks
