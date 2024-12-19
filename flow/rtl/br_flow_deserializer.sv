@@ -20,8 +20,10 @@
 // The push and pop bitwidths are parameterized; the PopWidth must be a positive integer
 // that is greater than PushWidth and is also divisible by PushWidth.
 // The flit deserialization ratio is given by DeserializationRatio = PopWidth / PushWidth, i.e.,
-// the ratio of bus widths is DeserializationRatio:1 for some integer DeserializationRatio > 1 and the
+// the ratio of bus widths is DeserializationRatio:1 for some integer DeserializationRatio >= 1 and the
 // maximum number of push flits per pop flit is DeserializationRatio.
+//
+// When DeserializationRatio is 1, then this module is a pass-through.
 //
 // The deserialization order is configured by DeserializeMostSignificantFirst. If 1, then the most-significant
 // bits of the pop flit are reconstructed first from incoming push flits; otherwise, the least-significant bits
@@ -102,7 +104,9 @@ module br_flow_deserializer #(
     // appear on the push interface.
     parameter bit DeserializeMostSignificantFirst,
     localparam int DeserializationRatio = PopWidth / PushWidth,
-    localparam int IdWidth = $clog2(DeserializationRatio)
+    // Vector widths cannot be 0, so we need to special-case when DeserializationRatio == 1
+    // even though the pop_last_dont_care_count port will be unused downstream in that case.
+    localparam int IdWidth = DeserializationRatio > 1 ? $clog2(DeserializationRatio) : 1
 ) (
     // Posedge-triggered clock
     input logic clk,
@@ -144,7 +148,7 @@ module br_flow_deserializer #(
   `BR_ASSERT_STATIC(push_width_gte_1_a, PushWidth >= 1)
   `BR_ASSERT_STATIC(pop_width_multiple_of_push_width_a, (PopWidth % PushWidth) == 0)
   `BR_ASSERT_STATIC(metadata_width_gte_1_a, MetadataWidth >= 1)
-  `BR_ASSERT_STATIC(deserialization_ratio_gt_1_a, DeserializationRatio > 1)
+  `BR_ASSERT_STATIC(deserialization_ratio_gte_1_a, DeserializationRatio >= 1)
 
   br_flow_checks_valid_data #(
       .NumFlows(1),
@@ -168,120 +172,134 @@ module br_flow_deserializer #(
   // Implementation
   //------------------------------------------
 
-  //------
-  // FSM is just an incrementing counter that keeps track of the push flit ID.
-  // When push_last is 0, then this simply counts up to the DeserializationRatio - 1
-  // and then we complete the pop flit. When push_last is 1, then we can complete
-  // the pop flit early.
-  //
-  // Reinitialize the counter on the cycle that the pop flit is completed so that a new pop flit
-  // can be started on the next cycle.
-  //------
-  localparam int DrMinus1 = DeserializationRatio - 1;
+  // Base case: pass-through.
+  if (DeserializationRatio == 1) begin : gen_dr_eq_1
+    assign pop_valid = push_valid;
+    assign pop_data  = push_data;
+    assign pop_last  = push_last;
+    `BR_TIEOFF_ZERO(pop_last_dont_care_count)
+    assign pop_metadata = push_metadata;
+    assign push_ready   = pop_ready;
 
-  logic               push_flit_id_incr_valid;
-  logic [IdWidth-1:0] push_flit_id;
-  logic               push;
-  logic               pop;
+    // General case: deserialize.
+  end else begin : gen_dr_gt_1
 
-  br_counter_incr #(
-      .MaxValue(DrMinus1),
-      .MaxIncrement(1)
-  ) br_counter_incr_push_flit_id (
-      .clk,
-      .rst,
-      .reinit(pop),
-      .initial_value(IdWidth'(0)),
-      .incr_valid(push_flit_id_incr_valid),
-      .incr(1'b1),
-      .value(push_flit_id),
-      .value_next()  // unused
-  );
+    //------
+    // FSM is just an incrementing counter that keeps track of the push flit ID.
+    // When push_last is 0, then this simply counts up to the DeserializationRatio - 1
+    // and then we complete the pop flit. When push_last is 1, then we can complete
+    // the pop flit early.
+    //
+    // Reinitialize the counter on the cycle that the pop flit is completed so that a new pop flit
+    // can be started on the next cycle.
+    //------
+    localparam int DrMinus1 = DeserializationRatio - 1;
 
-  assign push = push_ready && push_valid;
-  assign pop = pop_ready && pop_valid;
-  assign push_flit_id_incr_valid = !pop && push;
+    logic               push_flit_id_incr_valid;
+    logic [IdWidth-1:0] push_flit_id;
+    logic               push;
+    logic               pop;
 
-  //-----
-  // Use the push_flit_id to demux the incoming push_data into slices that form the pop_data.
-  //-----
-  logic [DeserializationRatio-1:0] slice_valid;
-  logic [DeserializationRatio-1:0][PushWidth-1:0] slice_data;
+    br_counter_incr #(
+        .MaxValue(DrMinus1),
+        .MaxIncrement(1)
+    ) br_counter_incr_push_flit_id (
+        .clk,
+        .rst,
+        .reinit(pop),
+        .initial_value(IdWidth'(0)),
+        .incr_valid(push_flit_id_incr_valid),
+        .incr(1'b1),
+        .value(push_flit_id),
+        .value_next()  // unused
+    );
 
-  br_demux_bin #(
-      .NumSymbolsOut(DeserializationRatio),
-      .SymbolWidth  (PushWidth)
-  ) br_demux_bin (
-      .select(push_flit_id),
-      .in_valid(push_valid),
-      .in(push_data),
-      .out_valid(slice_valid),
-      .out(slice_data)
-  );
+    assign push = push_ready && push_valid;
+    assign pop = pop_ready && pop_valid;
+    assign push_flit_id_incr_valid = !pop && push;
 
-  //-----
-  // Register the slice data for all but the last slice.
-  //-----
-  logic [IdWidth-1:0] dr_minus_1;
-  logic [DeserializationRatio-2:0][PushWidth-1:0] slice_reg;
-  logic [DeserializationRatio-2:0] slice_reg_ld_en;
+    //-----
+    // Use the push_flit_id to demux the incoming push_data into slices that form the pop_data.
+    //-----
+    logic [DeserializationRatio-1:0] slice_valid;
+    logic [DeserializationRatio-1:0][PushWidth-1:0] slice_data;
 
-  assign dr_minus_1 = DrMinus1;
+    br_demux_bin #(
+        .NumSymbolsOut(DeserializationRatio),
+        .SymbolWidth  (PushWidth)
+    ) br_demux_bin (
+        .select(push_flit_id),
+        .in_valid(push_valid),
+        .in(push_data),
+        .out_valid(slice_valid),
+        .out(slice_data)
+    );
 
-  for (genvar i = 0; i < DrMinus1; i++) begin : gen_reg
-    `BR_REGL(slice_reg[i], slice_data[i], slice_reg_ld_en[i])
-    assign slice_reg_ld_en[i] = slice_valid[i] && push && !push_last;
-  end
+    //-----
+    // Register the slice data for all but the last slice.
+    //-----
+    logic [IdWidth-1:0] dr_minus_1;
+    logic [DeserializationRatio-2:0][PushWidth-1:0] slice_reg;
+    logic [DeserializationRatio-2:0] slice_reg_ld_en;
 
-  //-----
-  // Concat & merge the pop interface; all deserialized flits must be synchronously popped.
-  //-----
-  for (genvar i = 0; i < DeserializationRatio; i++) begin : gen_pop_data_concat
-    localparam int Lsb =
-      DeserializeMostSignificantFirst ?
-      ((DeserializationRatio - i) - 1) * PushWidth :
-      i * PushWidth;
-    localparam int Msb = Lsb + PushWidth - 1;
+    assign dr_minus_1 = DrMinus1;
 
-    if (i < DrMinus1) begin : gen_mux
-      logic passthru_this_slice;
-      assign passthru_this_slice =
-        (push_last && (push_flit_id == i)) || (push_flit_id == dr_minus_1);
-
-      br_mux_bin #(
-          .NumSymbolsIn(2),
-          .SymbolWidth (PushWidth)
-      ) br_mux_bin (
-          .select(passthru_this_slice),
-          .in({slice_data[i], slice_reg[i]}),
-          .out(pop_data[Msb:Lsb])
-      );
-
-      // Last slice does not have a register to mux from.
-    end else begin : gen_no_mux
-      assign pop_data[Msb:Lsb] = slice_data[i];
+    for (genvar i = 0; i < DrMinus1; i++) begin : gen_reg
+      `BR_REGL(slice_reg[i], slice_data[i], slice_reg_ld_en[i])
+      assign slice_reg_ld_en[i] = slice_valid[i] && push && !push_last;
     end
+
+    //-----
+    // Concat & merge the pop interface; all deserialized flits must be synchronously popped.
+    //-----
+    for (genvar i = 0; i < DeserializationRatio; i++) begin : gen_pop_data_concat
+      localparam int Lsb =
+        DeserializeMostSignificantFirst ?
+        ((DeserializationRatio - i) - 1) * PushWidth :
+        i * PushWidth;
+      localparam int Msb = Lsb + PushWidth - 1;
+
+      if (i < DrMinus1) begin : gen_mux
+        logic passthru_this_slice;
+        assign passthru_this_slice =
+          (push_last && (push_flit_id == i)) || (push_flit_id == dr_minus_1);
+
+        br_mux_bin #(
+            .NumSymbolsIn(2),
+            .SymbolWidth (PushWidth)
+        ) br_mux_bin (
+            .select(passthru_this_slice),
+            .in({slice_data[i], slice_reg[i]}),
+            .out(pop_data[Msb:Lsb])
+        );
+
+        // Last slice does not have a register to mux from.
+      end else begin : gen_no_mux
+        assign pop_data[Msb:Lsb] = slice_data[i];
+      end
+    end
+
+    //------
+    // Drive the rest of the pop interface outputs.
+    // The metadata is sampled from the last push flit.
+    //------
+    assign pop_valid = slice_valid[DrMinus1] || (push_valid && push_last);
+    assign pop_last = push_last;
+    assign pop_last_dont_care_count = dr_minus_1 - push_flit_id;
+    assign pop_metadata = push_metadata;
+
+    //------
+    // Complete the push flit when we're completing the pop flit or when we
+    // we're not done building up the pop flit in registers.
+    //------
+    logic completing_pop_flit;
+    logic not_done_building_pop_flit;
+
+    assign completing_pop_flit = pop_ready && (pop_last || (push_flit_id == dr_minus_1));
+    assign not_done_building_pop_flit = push_flit_id < dr_minus_1;
+    assign push_ready = completing_pop_flit || not_done_building_pop_flit;
+
   end
-
-  //------
-  // Drive the rest of the pop interface outputs.
-  // The metadata is sampled from the last push flit.
-  //------
-  assign pop_valid = slice_valid[DrMinus1] || (push_valid && push_last);
-  assign pop_last = push_last;
-  assign pop_last_dont_care_count = dr_minus_1 - push_flit_id;
-  assign pop_metadata = push_metadata;
-
-  //------
-  // Complete the push flit when we're completing the pop flit or when we
-  // we're not done building up the pop flit in registers.
-  //------
-  logic completing_pop_flit;
-  logic not_done_building_pop_flit;
-
-  assign completing_pop_flit = pop_ready && (pop_last || (push_flit_id == dr_minus_1));
-  assign not_done_building_pop_flit = push_flit_id < dr_minus_1;
-  assign push_ready = completing_pop_flit || not_done_building_pop_flit;
 
   //------------------------------------------
   // Implementation checks
