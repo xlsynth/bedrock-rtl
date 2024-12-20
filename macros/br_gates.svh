@@ -96,6 +96,16 @@ br_gate_icg br_gate_icg_``__iname__`` ( \
     .clk_out(__clk_out__) \
 );
 
+// Integrated Clock Gate with Synchronous Reset
+`define BR_GATE_ICG_RST(__iname__, __clk_out__, __clk_in__, __en__, __rst__, __test_en__) \
+br_gate_icg_rst br_gate_icg_rst_``__iname__`` ( \
+    .clk_in(__clk_in__), \
+    .en(__en__), \
+    .rst(__rst__), \
+    .test_en(__test_en__), \
+    .clk_out(__clk_out__) \
+);
+
 // verilog_format: on
 
 `endif  // BR_GATES_SVH
