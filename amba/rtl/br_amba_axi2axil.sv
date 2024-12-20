@@ -33,7 +33,7 @@ module br_amba_axi2axil #(
     parameter int WUserWidth = 8,  // Must be at least 1
     parameter int BUserWidth = 8,  // Must be at least 1
     parameter int RUserWidth = 8,  // Must be at least 1
-    localparam int StrbWidth = DataWidth / 8
+    localparam int StrobeWidth = DataWidth / 8
 ) (
     input clk,
     input rst,  // Synchronous, active-high reset
@@ -49,11 +49,12 @@ module br_amba_axi2axil #(
     input  logic                                  axi_awvalid,
     output logic                                  axi_awready,
     input  logic [                 DataWidth-1:0] axi_wdata,
-    input  logic [             (DataWidth/8)-1:0] axi_wstrb,
+    input  logic [               StrobeWidth-1:0] axi_wstrb,
     input  logic                                  axi_wvalid,
     output logic                                  axi_wready,
     output logic [                   IdWidth-1:0] axi_bid,
     output logic [                BUserWidth-1:0] axi_buser,
+    output logic [     br_amba::AxiRespWidth-1:0] axi_bresp,
     output logic                                  axi_bvalid,
     input  logic                                  axi_bready,
     input  logic [                 AddrWidth-1:0] axi_araddr,
@@ -66,7 +67,10 @@ module br_amba_axi2axil #(
     input  logic                                  axi_arvalid,
     output logic                                  axi_arready,
     output logic [                   IdWidth-1:0] axi_rid,
+    output logic [                 DataWidth-1:0] axi_rdata,
     output logic [                RUserWidth-1:0] axi_ruser,
+    output logic [     br_amba::AxiRespWidth-1:0] axi_rresp,
+    output logic                                  axi_rlast,
     output logic                                  axi_rvalid,
     input  logic                                  axi_rready,
 
@@ -77,7 +81,7 @@ module br_amba_axi2axil #(
     output logic                             axil_awvalid,
     input  logic                             axil_awready,
     output logic [            DataWidth-1:0] axil_wdata,
-    output logic [        (DataWidth/8)-1:0] axil_wstrb,
+    output logic [          StrobeWidth-1:0] axil_wstrb,
     output logic [           WUserWidth-1:0] axil_wuser,
     output logic                             axil_wvalid,
     input  logic                             axil_wready,
@@ -108,11 +112,15 @@ module br_amba_axi2axil #(
   `BR_ASSERT_STATIC(buser_width_must_be_at_least_1_a, BUserWidth >= 1)
   `BR_ASSERT_STATIC(ruser_width_must_be_at_least_1_a, RUserWidth >= 1)
 
+  // ri lint_check_waive NOT_READ
   logic supported_write_burst_type, supported_read_burst_type;
+
+  // ri lint_check_off ENUM_COMPARE
   assign supported_write_burst_type =
       (axi_awburst == br_amba::AxiBurstIncr) || (axi_awburst == br_amba::AxiBurstFixed);
   assign supported_read_burst_type =
       (axi_arburst == br_amba::AxiBurstIncr) || (axi_arburst == br_amba::AxiBurstFixed);
+  // ri lint_check_on ENUM_COMPARE
 
   `BR_ASSERT_INTG(valid_awburst_type_a, axi_awvalid |-> supported_write_burst_type)
   `BR_ASSERT_INTG(valid_arburst_type_a, axi_arvalid |-> supported_read_burst_type)
@@ -125,9 +133,10 @@ module br_amba_axi2axil #(
   function automatic logic [AddrWidth-1:0] next_address(
       input logic [AddrWidth-1:0] start_addr, input logic [br_amba::AxiBurstSizeWidth-1:0] size,
       input logic [br_amba::AxiBurstTypeWidth-1:0] burst_type,
-      input logic [br_amba::AxiBurstLenWidth-1:0] index);
+      input logic [br_amba::AxiBurstLenWidth:0] index);
     logic [AddrWidth-1:0] increment;
-    increment = (burst_type == br_amba::AxiBurstIncr) ? (index << size) : 0;
+    increment = (burst_type == br_amba::AxiBurstIncr) ?  // ri lint_check_waive ENUM_COMPARE
+    (index << size) : 0;  // ri lint_check_waive VAR_SHIFT
     next_address = start_addr + increment;
   endfunction
 
@@ -146,24 +155,24 @@ module br_amba_axi2axil #(
   logic [br_amba::AxiBurstLenWidth:0] write_resp_count, read_resp_count;
   logic [br_amba::AxiRespWidth-1:0] write_resp, write_resp_next;
   logic wstate_le, rstate_le;
-  logic axi_write_req_handshake, axi_write_data_handshake, axi_read_req_handshake;
-  logic axi_write_resp_handshake, axi_read_resp_handshake;
+  logic axi_write_req_handshake, axi_read_req_handshake;
+  logic axi_write_resp_handshake;
   logic axil_write_req_handshake, axil_write_data_handshake, axil_read_req_handshake;
   logic axil_write_resp_handshake, axil_read_resp_handshake;
+  logic [br_amba::AxiBurstLenWidth:0] write_burst_len_extended, read_burst_len_extended;
 
-  typedef enum logic [1:0] {
-    WriteStateIdle   = 2'd0,
-    WriteStateActive = 2'd1,
-    WriteStateDone   = 2'd2
+  typedef enum logic [2:0] {
+    WriteStateIdle   = 3'b001,
+    WriteStateActive = 3'b010,
+    WriteStateDone   = 3'b100
   } wstate_t;
   wstate_t wstate, wstate_next;
 
   typedef enum logic [1:0] {
-    ReadStateIdle   = 2'd0,
-    ReadStateActive = 2'd1,
-    ReadStateDone   = 2'd2
+    ReadStateIdle   = 2'b01,
+    ReadStateActive = 2'b10
   } rstate_t;
-  rstate_t rstate, rstate_next;
+  rstate_t rstate, rstate_next;  // ri lint_check_waive ONE_BIT_STATE_REG
 
   //----------------------------------------------------------------------------
   // Registers
@@ -193,15 +202,16 @@ module br_amba_axi2axil #(
   //----------------------------------------------------------------------------
 
   assign axi_write_req_handshake = axi_awvalid && axi_awready;
-  assign axi_write_data_handshake = axi_wvalid && axi_wready;
   assign axi_write_resp_handshake = axi_bvalid && axi_bready;
   assign axi_read_req_handshake = axi_arvalid && axi_arready;
-  assign axi_read_resp_handshake = axi_rvalid && axi_rready;
   assign axil_write_req_handshake = axil_awvalid && axil_awready;
   assign axil_write_data_handshake = axil_wvalid && axil_wready;
   assign axil_write_resp_handshake = axil_bvalid && axil_bready;
   assign axil_read_req_handshake = axil_arvalid && axil_arready;
   assign axil_read_resp_handshake = axil_rvalid && axil_rready;
+
+  assign write_burst_len_extended = {1'b0, write_burst_len};  // ri lint_check_waive ZERO_EXT
+  assign read_burst_len_extended = {1'b0, read_burst_len};  // ri lint_check_waive ZERO_EXT
 
   //----------------------------------------------------------------------------
   // Request, Data, and Response Counters
@@ -215,7 +225,7 @@ module br_amba_axi2axil #(
       .clk,
       .rst,
       .reinit(axi_write_req_handshake),
-      .initial_value('0),
+      .initial_value({(br_amba::AxiBurstLenWidth + 1) {1'b0}}),
       .incr_valid(axil_write_req_handshake),
       .incr(1'b1),
       .value(write_req_count),
@@ -230,7 +240,7 @@ module br_amba_axi2axil #(
       .clk,
       .rst,
       .reinit(axi_write_req_handshake),
-      .initial_value('0),
+      .initial_value({(br_amba::AxiBurstLenWidth + 1) {1'b0}}),
       .incr_valid(axil_write_data_handshake),
       .incr(1'b1),
       .value(write_data_count),
@@ -245,7 +255,7 @@ module br_amba_axi2axil #(
       .clk,
       .rst,
       .reinit(axi_write_req_handshake),
-      .initial_value('0),
+      .initial_value({(br_amba::AxiBurstLenWidth + 1) {1'b0}}),
       .incr_valid(axil_write_resp_handshake),
       .incr(1'b1),
       .value(write_resp_count),
@@ -260,7 +270,7 @@ module br_amba_axi2axil #(
       .clk,
       .rst,
       .reinit(axi_read_req_handshake),
-      .initial_value('0),
+      .initial_value({(br_amba::AxiBurstLenWidth + 1) {1'b0}}),
       .incr_valid(axil_read_req_handshake),
       .incr(1'b1),
       .value(read_req_count),
@@ -275,7 +285,7 @@ module br_amba_axi2axil #(
       .clk,
       .rst,
       .reinit(axi_read_req_handshake),
-      .initial_value('0),
+      .initial_value({(br_amba::AxiBurstLenWidth + 1) {1'b0}}),
       .incr_valid(axil_read_resp_handshake),
       .incr(1'b1),
       .value(read_resp_count),
@@ -286,18 +296,19 @@ module br_amba_axi2axil #(
   // Write State Machine and Signals
   //----------------------------------------------------------------------------
 
-  // For write responses, we need to aggregate the responses from each beat. We need to
-  // reset it when starting a new transaction.
-  assign write_resp_next =
-      (axi_write_req_handshake) ? br_amba::AxiRespOkay :
-      (axil_bresp != br_amba::AxiRespOkay) ? axil_bresp : write_resp;
-
   // AXI4 write request signals
   assign axi_awready = (wstate == WriteStateIdle);
 
   // AXI4 write data signals
   assign axi_wready = (wstate == WriteStateActive) && axil_wready &&
-                      (write_data_count <= write_burst_len);
+                      (write_data_count <= write_burst_len_extended);
+
+  // For write responses, we need to aggregate the responses from each beat. We need to
+  // reset it when starting a new transaction.
+  assign write_resp_next =
+      (axi_write_req_handshake) ? br_amba::AxiRespOkay :  // ri lint_check_waive ENUM_RHS
+      (axil_bresp != br_amba::AxiRespOkay) ?  // ri lint_check_waive ENUM_COMPARE
+      axil_bresp : write_resp;
 
   // AXI4 write response signals
   assign axi_bvalid = (wstate == WriteStateDone);
@@ -306,7 +317,8 @@ module br_amba_axi2axil #(
   assign axi_buser = write_user;
 
   // AXI4-Lite write request signals
-  assign axil_awvalid = (wstate == WriteStateActive) && (write_req_count <= write_burst_len);
+  assign axil_awvalid = (wstate == WriteStateActive) &&
+                        (write_req_count <= write_burst_len_extended);
   assign axil_awaddr = next_address(
       write_base_addr, write_burst_size, write_burst_type, write_data_count
   );
@@ -315,14 +327,15 @@ module br_amba_axi2axil #(
 
   // AXI4-Lite write data signals
   assign axil_wvalid = (wstate == WriteStateActive) && axi_wvalid &&
-                       (write_data_count <= write_burst_len);
+                       (write_data_count <= write_burst_len_extended);
   assign axil_wdata = axi_wdata;
   assign axil_wstrb = axi_wstrb;
   assign axil_wuser = write_user;
 
   // AXI4-Lite write response signals
-  assign axil_bready = 1'b1;
+  assign axil_bready = 1'b1;  // ri lint_check_waive CONST_OUTPUT
 
+  // ri lint_check_off GRAY_CODE_FSM
   always_comb begin
     wstate_next = wstate;
     wstate_le   = 1'b0;
@@ -338,8 +351,9 @@ module br_amba_axi2axil #(
 
       // Issue AXI4-Lite write requests and write data, and wait for all of the write responses
       WriteStateActive: begin
-        if ((write_req_count > write_burst_len) && (write_data_count > write_burst_len) &&
-            (write_resp_count > write_burst_len)) begin
+        if ((write_req_count > write_burst_len_extended) &&
+            (write_data_count > write_burst_len_extended) &&
+            (write_resp_count > write_burst_len_extended)) begin
           wstate_next = WriteStateDone;
           wstate_le   = 1'b1;
         end
@@ -354,31 +368,39 @@ module br_amba_axi2axil #(
       end
 
       default: begin
-        wstate_next = wstate;
+        wstate_next = wstate;  // ri lint_check_waive ENUM_ASSIGN FSM_DEFAULT_REQ
       end
     endcase
   end
+  // ri lint_check_on GRAY_CODE_FSM
 
   //----------------------------------------------------------------------------
   // Read State Machine and Signals
   //----------------------------------------------------------------------------
 
+  // AXI4 read request signals
   assign axi_arready = (rstate == ReadStateIdle);
 
+  // AXI4 read response signals
+  assign axi_rvalid = axil_rvalid;
   assign axi_rid = current_read_id;
   assign axi_rresp = axil_rresp;
   assign axi_rdata = axil_rdata;
-  assign axi_rlast = (read_resp_count == read_burst_len);
+  assign axi_rlast = (read_resp_count == read_burst_len_extended);
   assign axi_ruser = axil_ruser;
 
-  assign axil_arvalid = (rstate == ReadStateActive) && (read_req_count <= read_burst_len);
+  // AXI4-Lite read request signals
+  assign axil_arvalid = (rstate == ReadStateActive) && (read_req_count <= read_burst_len_extended);
   assign axil_araddr = next_address(
       read_base_addr, read_burst_size, read_burst_type, read_resp_count
   );
   assign axil_arprot = read_prot;
   assign axil_aruser = read_user;
-  assign axil_rready = (rstate == ReadStateActive) && axi_rready;
 
+  // AXI4-Lite read response signals
+  assign axil_rready = axi_rready;
+
+  // ri lint_check_off GRAY_CODE_FSM
   always_comb begin
     rstate_next = rstate;
     rstate_le   = 1'b0;
@@ -393,24 +415,18 @@ module br_amba_axi2axil #(
 
       // Issue AXI4-Lite read requests and wait for all of the read responses
       ReadStateActive: begin
-        if ((read_req_count > read_burst_len) && (read_resp_count > read_burst_len)) begin
-          rstate_next = ReadStateDone;
-          rstate_le   = 1'b1;
-        end
-      end
-
-      // Perform the AXI4 read response handshake
-      ReadStateDone: begin
-        if (axi_read_resp_handshake) begin
+        if ((read_req_count > read_burst_len_extended) &&
+            (read_resp_count > read_burst_len_extended)) begin
           rstate_next = ReadStateIdle;
           rstate_le   = 1'b1;
         end
       end
 
       default: begin
-        rstate_next = rstate;
+        rstate_next = rstate;  // ri lint_check_waive ENUM_ASSIGN FSM_DEFAULT_REQ
       end
     endcase
   end
+  // ri lint_check_on GRAY_CODE_FSM
 
 endmodule : br_amba_axi2axil
