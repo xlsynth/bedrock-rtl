@@ -134,6 +134,27 @@ module br_gate_icg (
 
 endmodule : br_gate_icg
 
+// Integrated Clock Gate with Test Override and Synchronous Reset
+module br_gate_icg_rst (
+    input logic clk_in,
+    input logic en,
+    input logic rst,  // sync reset
+    input logic test_en,
+    output logic clk_out
+);
+
+  logic latch_en;
+
+  always_latch begin
+    if (!clk_in) begin
+      latch_en = rst | en;
+    end
+  end
+
+  assign clk_out = test_en ? clk_in : (clk_in & latch_en);
+
+endmodule : br_gate_icg_rst
+
 // Clock Domain Crossing Synchronizer
 module br_gate_cdc_sync #(
     parameter int NumStages = 3
