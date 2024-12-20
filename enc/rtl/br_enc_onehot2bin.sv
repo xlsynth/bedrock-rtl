@@ -44,11 +44,16 @@
 // 5'b11010 | undefined
 // 5'b11111 | undefined
 // ...
+//
+// The BinWidth parameter sets the width of the binary-encoded value.
+// It must be at least $clog2(NumValues) but may be set larger than the minimum
+// width and the result will be zero-extended.
 
 `include "br_asserts_internal.svh"
 
 module br_enc_onehot2bin #(
     parameter int NumValues = 2,  // Must be at least 2
+    // Width of the binary-encoded value. Must be at least $clog2(NumValues).
     parameter int BinWidth = $clog2(NumValues)
 ) (
     // ri lint_check_waive INPUT_NOT_READ HIER_NET_NOT_READ HIER_BRANCH_NOT_READ
@@ -64,6 +69,7 @@ module br_enc_onehot2bin #(
   // Integration checks
   //------------------------------------------
   `BR_ASSERT_STATIC(num_values_gte_2_a, NumValues >= 2)
+  `BR_ASSERT_STATIC(binwidth_gte_log2_num_values_a, BinWidth >= $clog2(NumValues))
   `BR_ASSERT_INTG(in_onehot_a, $onehot0(in))
 
   //------------------------------------------
@@ -71,14 +77,14 @@ module br_enc_onehot2bin #(
   //------------------------------------------
   assign out_valid = |in;
   always_comb begin
-    out = '0;
+    out = '0;  // ri lint_check_waive CONST_OUTPUT
     for (int i = 1; i < NumValues; i++) begin
       // If multiple bits are set, this is undefined behavior.
       if (in[i]) begin
         // This waiver is not a problem so long as we are not doing
         // anything close to a 32-bit onehot2bin..
         // ri lint_check_waive INTEGER ASSIGN_SIGN SIGNED_SIZE_CAST
-        out |= BinWidth'(i);
+        out |= BinWidth'(i);  // ri lint_check_waive CONST_OUTPUT
       end
     end
   end
