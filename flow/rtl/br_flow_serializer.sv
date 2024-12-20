@@ -92,7 +92,7 @@ module br_flow_serializer #(
     // If 0, the least significant bits are sent first (little endian).
     // The order of bits within each flit is always the same that they
     // appear on the push interface.
-    parameter bit SerializeMostSignificantFirst,
+    parameter bit SerializeMostSignificantFirst = 1,
     localparam int SerializationRatio = PushWidth / PopWidth,
     // Vector widths cannot be 0, so we need to special-case when SerializationRatio == 1
     // even though the push_last_dont_care_count port won't be used in that case.
@@ -253,7 +253,7 @@ module br_flow_serializer #(
     //------
     // Complete the push flit when we're finished serializing it (the last pop flit is accepted).
     //------
-    assign push_ready = pop_ready && pop_last;
+    assign push_ready = pop_ready && pop_flit_id_plus_dont_care_count;
 
   end
 
