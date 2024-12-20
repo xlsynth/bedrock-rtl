@@ -212,7 +212,23 @@ br_verilog_elab_and_lint_test_suite(
             "1",
             "4",
         ],
-        "UserWidth": [
+        "AWUserWidth": [
+            "1",
+            "8",
+        ],
+        "ARUserWidth": [
+            "1",
+            "8",
+        ],
+        "WUserWidth": [
+            "1",
+            "8",
+        ],
+        "BUserWidth": [
+            "1",
+            "8",
+        ],
+        "RUserWidth": [
             "1",
             "8",
         ],
