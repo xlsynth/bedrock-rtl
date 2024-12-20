@@ -18,8 +18,9 @@
 // It does not support WRAP bursts. AXI4 burst transactions will be split into multiple AXI4-Lite
 // transactions. All write responses will be aggregated into a single AXI4 write response.
 //
-// NOTE: This module does not support multiple outstanding AXI4 transactions. If there is a pending
-// transaction, the AXI4 interface will be stalled until the pending transaction has completed.
+// TODO: This module does not support multiple outstanding AXI4 transactions. If there is a pending
+// transaction, the AXI4 interface will be stalled until the pending transaction has completed. In
+// the future, we will support multiple outstanding AXI4 transactions.
 
 `include "br_asserts_internal.svh"
 `include "br_registers.svh"
