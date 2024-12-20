@@ -65,7 +65,7 @@ module br_delay_valid_next_nr #(
   assign stage[0] = in;
 
   for (genvar i = 1; i <= NumStages; i++) begin : gen_stages
-    `BR_REGN(stage_valid_next[i], stage_valid_next[i-1])
+    `BR_REG(stage_valid_next[i], stage_valid_next[i-1])
     // stage_valid_next[i] is equivalent to hypothetical stage_valid[i-1],
     // which would be aligned to stage[i-1].
     `BR_REGLN(stage[i], stage[i-1], stage_valid_next[i])
@@ -86,7 +86,7 @@ module br_delay_valid_next_nr #(
     `BR_ASSERT_COMB_IMPL(data_passthru_a, out === in)
   end else begin : gen_pos_delay
     `BR_ASSERT_CR_IMPL(valid_next_delay_a,
-                       ##NumStages out_valid_next === $past(in_valid_next, NumStages), clk, 1'b0)
+                       ##NumStages out_valid_next == $past(in_valid_next, NumStages), clk, 1'b0)
     `BR_ASSERT_CR_IMPL(
         data_delay_a, in_valid_next |-> ##NumStages out_valid_next ##1 out === $past(in, NumStages),
         clk, 1'b0)
