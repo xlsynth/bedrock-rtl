@@ -109,7 +109,7 @@ module br_flow_mux_core #(
 
   for (genvar i = 0; i < NumFlows; i++) begin : gen_data_selected_assert
     `BR_ASSERT_IMPL(data_selected_when_granted_a,
-                    (pop_valid && push_ready[i]) |-> pop_data == push_data[i])
+                    (push_valid[i] && push_ready[i]) |-> pop_data == push_data[i])
   end
   // Additional implementation checks in submodules
 
