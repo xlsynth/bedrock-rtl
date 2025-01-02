@@ -84,7 +84,7 @@ module br_ecc_secded_encoder #(
 );
 
   // ri lint_check_waive PARAM_NOT_USED
-  localparam int Latency = RegisterOutputs ? 1 : 0;
+  localparam int Latency = RegisterInputs + RegisterOutputs;
 
   //------------------------------------------
   // Integration checks
@@ -138,7 +138,7 @@ module br_ecc_secded_encoder #(
 
   // ri lint_check_off EXPR_ID_LIMIT
 
-  if ((CodewordWidth == 4) && (MessageWidth == 4)) begin : gen_8_4
+  if ((CodewordWidth == 8) && (MessageWidth == 4)) begin : gen_8_4
     `BR_ASSERT_STATIC(parity_width_matches_a, ParityWidth == 4)
 {{ secded_enc_8_4 }}
   end else if ((CodewordWidth == 13) && (MessageWidth == 8)) begin : gen_13_8

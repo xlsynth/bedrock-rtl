@@ -84,7 +84,7 @@ module br_ecc_secded_encoder #(
 );
 
   // ri lint_check_waive PARAM_NOT_USED
-  localparam int Latency = RegisterOutputs ? 1 : 0;
+  localparam int Latency = RegisterInputs + RegisterOutputs;
 
   //------------------------------------------
   // Integration checks
