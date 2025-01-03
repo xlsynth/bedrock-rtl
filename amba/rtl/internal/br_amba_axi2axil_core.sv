@@ -176,6 +176,8 @@ module br_amba_axi2axil_core #(
   logic resp_fifo_push_valid;
   logic resp_fifo_push_ready, resp_fifo_pop_ready;
   logic zero_burst_len;
+  logic is_last_req_beat;
+
   typedef enum logic [1:0] {
     StateIdle     = 2'b01,
     StateReqSplit = 2'b10
@@ -194,7 +196,7 @@ module br_amba_axi2axil_core #(
   `BR_REGLN(req_burst_len, axi_req_len, axi_req_handshake)
   `BR_REGLN(req_burst_size, axi_req_size, axi_req_handshake)
   `BR_REGLN(req_burst_type, axi_req_burst, axi_req_handshake)
-  `BR_REGLN(resp, resp_next, (axi_req_handshake || axil_resp_handshake))
+  `BR_REGLN(resp, resp_next, (axi_resp_handshake || axil_resp_handshake))
 
   //----------------------------------------------------------------------------
   // AXI4 and AXI4-Lite Handshakes
@@ -238,9 +240,9 @@ module br_amba_axi2axil_core #(
       StateReqSplit: begin
         axil_req_valid = resp_fifo_push_ready;
 
-        resp_fifo_push_data = {current_req_id, (req_count == burst_len_extended)};
+        resp_fifo_push_data = {current_req_id, is_last_req_beat};
 
-        if (axil_req_handshake && (req_count == burst_len_extended)) begin
+        if (axil_req_handshake && is_last_req_beat) begin
           state_next = StateIdle;
           state_le   = 1'b1;
         end
@@ -274,6 +276,7 @@ module br_amba_axi2axil_core #(
 
   assign zero_burst_len = (axi_req_len == {br_amba::AxiBurstLenWidth{1'b0}});
   assign burst_len_extended = {1'b0, req_burst_len};  // ri lint_check_waive ZERO_EXT
+  assign is_last_req_beat = (req_count == burst_len_extended);
 
   //----------------------------------------------------------------------------
   // Request Transaction Signals
