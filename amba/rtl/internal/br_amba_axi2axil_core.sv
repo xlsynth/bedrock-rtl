@@ -124,7 +124,7 @@ module br_amba_axi2axil_core #(
       input logic [AddrWidth-1:0] start_addr, input logic [br_amba::AxiBurstSizeWidth-1:0] size,
       input logic [br_amba::AxiBurstLenWidth-1:0] burst_len,
       input logic [br_amba::AxiBurstTypeWidth-1:0] burst_type,
-      input logic [br_amba::AxiBurstLenWidth:0] index);
+      input logic [br_amba::AxiBurstLenWidth-1:0] index);
     logic [AddrWidth-1:0] increment;
     logic [AddrWidth-1:0] base_address;  // aligned to wrap boundary
     logic [AddrWidth-1:0] wrap_mask;  // mask the wrap boundary
@@ -152,7 +152,7 @@ module br_amba_axi2axil_core #(
 
   localparam int RespFifoWidth = (IdWidth + 1);  // 1 bit to indicate if the burst is complete
 
-  logic [br_amba::AxiBurstLenWidth:0] req_count;
+  logic [br_amba::AxiBurstLenWidth-1:0] req_count;
   logic [br_amba::AxiRespWidth-1:0] resp, resp_next;
   logic axi_req_handshake;
   logic axi_resp_handshake;
@@ -197,13 +197,13 @@ module br_amba_axi2axil_core #(
 
   // Request count
   br_counter_incr #(
-      .MaxValue(1 << br_amba::AxiBurstLenWidth),
+      .MaxValue((1 << br_amba::AxiBurstLenWidth) - 1),
       .MaxIncrement(1)
   ) br_counter_incr_req (
       .clk,
       .rst,
       .reinit(axi_req_handshake),
-      .initial_value({(br_amba::AxiBurstLenWidth + 1) {1'b0}}),
+      .initial_value({br_amba::AxiBurstLenWidth{1'b0}}),
       .incr_valid(axil_req_handshake),
       .incr(req_counter_incr),
       .value(req_count),
@@ -214,7 +214,7 @@ module br_amba_axi2axil_core #(
   assign req_counter_incr = !axi_req_handshake;
 
   // We only need to compare the lower bits of the request count to the burst length.
-  assign is_last_req_beat = (req_count[br_amba::AxiBurstLenWidth-1:0] == axi_req_len);
+  assign is_last_req_beat = (req_count == axi_req_len);
 
   //----------------------------------------------------------------------------
   // Request Transaction Signals
