@@ -155,7 +155,7 @@ module br_amba_axi2axil_core #(
   logic [(IdWidth + 1)-1:0] resp_fifo_push_data, resp_fifo_pop_data;
   logic resp_fifo_push_valid;
   logic resp_fifo_push_ready, resp_fifo_pop_ready;
-
+  logic zero_burst_len;
   typedef enum logic [1:0] {
     StateIdle     = 2'b01,
     StateReqSplit = 2'b10
@@ -196,16 +196,19 @@ module br_amba_axi2axil_core #(
     state_le = 1'b0;
     axi_req_ready = 1'b0;
     axil_req_valid = 1'b0;
+    resp_fifo_push_data = {(IdWidth + 1) {1'b0}};
 
     unique case (state)
       // Wait for a new request
       StateIdle: begin
-        axi_req_ready  = axil_req_ready && resp_fifo_push_ready;
+        axi_req_ready = axil_req_ready && resp_fifo_push_ready;
         axil_req_valid = axi_req_valid && resp_fifo_push_ready;
+
+        resp_fifo_push_data = {axi_req_id, zero_burst_len};
 
         // If there is a new request, and it is not a single beat request, then we need to split it
         // into multiple AXI4-Lite requests.
-        if (axi_req_handshake && (axi_req_len != {br_amba::AxiBurstLenWidth{1'b0}})) begin
+        if (axi_req_handshake && !zero_burst_len) begin
           state_next = StateReqSplit;
           state_le   = 1'b1;
         end
@@ -214,6 +217,8 @@ module br_amba_axi2axil_core #(
       // Issue AXI4-Lite requests
       StateReqSplit: begin
         axil_req_valid = resp_fifo_push_ready;
+
+        resp_fifo_push_data = {current_req_id, (req_count > burst_len_extended)};
 
         if (axil_req_handshake && (req_count > burst_len_extended)) begin
           state_next = StateIdle;
@@ -247,6 +252,7 @@ module br_amba_axi2axil_core #(
       .value_next()
   );
 
+  assign zero_burst_len = (axi_req_len == {br_amba::AxiBurstLenWidth{1'b0}});
   assign burst_len_extended = {1'b0, req_burst_len};  // ri lint_check_waive ZERO_EXT
 
   //----------------------------------------------------------------------------
@@ -310,8 +316,6 @@ module br_amba_axi2axil_core #(
   );
 
   assign resp_fifo_push_valid = axil_req_handshake;
-  assign resp_fifo_push_data = {current_req_id, req_count > burst_len_extended};
-
   assign resp_fifo_pop_ready = axi_resp_handshake;
 
   //----------------------------------------------------------------------------
