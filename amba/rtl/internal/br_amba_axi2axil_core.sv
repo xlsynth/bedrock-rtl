@@ -163,7 +163,6 @@ module br_amba_axi2axil_core #(
   logic axi_resp_handshake;
   logic axil_req_handshake;
   logic axil_resp_handshake;
-  logic [br_amba::AxiBurstLenWidth:0] burst_len_extended;
   logic [RespFifoWidth-1:0] resp_fifo_push_data, resp_fifo_pop_data;
   logic resp_fifo_push_valid;
   logic resp_fifo_push_ready, resp_fifo_pop_ready;
@@ -251,8 +250,8 @@ module br_amba_axi2axil_core #(
       .value_next()
   );
 
-  assign burst_len_extended = {1'b0, axi_req_len};  // ri lint_check_waive ZERO_EXT
-  assign is_last_req_beat = (req_count == burst_len_extended);
+  // We only need to compare the lower bits of the request count to the burst length.
+  assign is_last_req_beat = (req_count[br_amba::AxiBurstLenWidth-1:0] == axi_req_len);
 
   //----------------------------------------------------------------------------
   // Request Transaction Signals
