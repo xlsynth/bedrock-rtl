@@ -27,9 +27,20 @@ package br_amba;
     AxiRespDecerr = 2'b11   // Decode error
   } axi_resp_t;
 
+  // AXI Burst types
+  typedef enum logic [1:0] {
+    AxiBurstFixed    = 2'b00,  // Fixed burst
+    AxiBurstIncr     = 2'b01,  // Incrementing burst
+    AxiBurstWrap     = 2'b10,  // Wrapping burst
+    AxiBurstReserved = 2'b11   // Reserved
+  } axi_burst_type_t;
+
   // AXI parameters
   localparam int unsigned AxiProtWidth = 3;
   localparam int unsigned AxiRespWidth = 2;
+  localparam int unsigned AxiBurstLenWidth = 8;
+  localparam int unsigned AxiBurstSizeWidth = 3;
+  localparam int unsigned AxiBurstTypeWidth = 2;
 
   // APB parameters
   localparam int unsigned ApbProtWidth = 3;
