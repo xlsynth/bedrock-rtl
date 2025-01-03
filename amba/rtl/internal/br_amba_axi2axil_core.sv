@@ -27,6 +27,7 @@
 
 `include "br_asserts_internal.svh"
 `include "br_registers.svh"
+`include "br_unused.svh"
 
 module br_amba_axi2axil_core #(
     parameter int AddrWidth = 12,  // Must be at least 12
@@ -101,11 +102,11 @@ module br_amba_axi2axil_core #(
   `BR_ASSERT_STATIC(max_outstanding_reqs_must_be_at_least_2_a, MaxOutstandingReqs >= 2)
   // ri lint_check_on GENERATE_NAME
 
-  // These signals are only read from in assertions, so we can waive the NOT_READ lint check.
-  // ri lint_check_off NOT_READ
+  // These signals are only read from in assertions.
   logic supported_burst_type;
   logic resp_fifo_pop_valid;
-  // ri lint_check_on NOT_READ
+  `BR_UNUSED(supported_burst_type)
+  `BR_UNUSED(resp_fifo_pop_valid)
 
   // ri lint_check_off ENUM_COMPARE
   assign supported_burst_type =
@@ -125,18 +126,37 @@ module br_amba_axi2axil_core #(
   // Compute next address for each beat:
   function automatic logic [AddrWidth-1:0] next_address(
       input logic [AddrWidth-1:0] start_addr, input logic [br_amba::AxiBurstSizeWidth-1:0] size,
+      input logic [br_amba::AxiBurstLenWidth-1:0] burst_len,
       input logic [br_amba::AxiBurstTypeWidth-1:0] burst_type,
       input logic [br_amba::AxiBurstLenWidth:0] index);
     logic [AddrWidth-1:0] increment;
-    increment = (burst_type == br_amba::AxiBurstIncr) ?  // ri lint_check_waive ENUM_COMPARE
-    (index << size) : 0;  // ri lint_check_waive VAR_SHIFT
-    next_address = start_addr + increment;
+    logic [AddrWidth-1:0] base_address;  // aligned to wrap boundary
+    logic [AddrWidth-1:0] wrap_mask;  // mask the wrap boundary
+
+    increment = start_addr + (index << size);  // ri lint_check_waive VAR_SHIFT
+
+    unique case (br_amba::axi_burst_type_t'(burst_type))
+      br_amba::AxiBurstIncr: begin
+        next_address = start_addr + increment;
+      end
+      br_amba::AxiBurstWrap: begin
+        wrap_mask = ((burst_len + 1) << size) - 1;  // ri lint_check_waive ARITH_EXTENSION VAR_SHIFT TRUNC_LSHIFT
+        base_address = start_addr & ~wrap_mask;
+        next_address = base_address | ((start_addr + increment) & wrap_mask);
+      end
+      default: begin
+        next_address = start_addr;
+      end
+    endcase
   endfunction
 
   //----------------------------------------------------------------------------
   // Signal Declarations
   //----------------------------------------------------------------------------
 
+  localparam int RespFifoWidth = (IdWidth + 1);  // 1 bit to indicate if the burst is complete
+
+  // Request signals
   logic [IdWidth-1:0] current_req_id;
   logic [AddrWidth-1:0] req_base_addr;
   logic [br_amba::AxiProtWidth-1:0] req_prot;
@@ -152,7 +172,7 @@ module br_amba_axi2axil_core #(
   logic axil_req_handshake;
   logic axil_resp_handshake;
   logic [br_amba::AxiBurstLenWidth:0] burst_len_extended;
-  logic [(IdWidth + 1)-1:0] resp_fifo_push_data, resp_fifo_pop_data;
+  logic [RespFifoWidth-1:0] resp_fifo_push_data, resp_fifo_pop_data;
   logic resp_fifo_push_valid;
   logic resp_fifo_push_ready, resp_fifo_pop_ready;
   logic zero_burst_len;
@@ -218,9 +238,9 @@ module br_amba_axi2axil_core #(
       StateReqSplit: begin
         axil_req_valid = resp_fifo_push_ready;
 
-        resp_fifo_push_data = {current_req_id, (req_count > burst_len_extended)};
+        resp_fifo_push_data = {current_req_id, (req_count == burst_len_extended)};
 
-        if (axil_req_handshake && (req_count > burst_len_extended)) begin
+        if (axil_req_handshake && (req_count == burst_len_extended)) begin
           state_next = StateIdle;
           state_le   = 1'b1;
         end
@@ -260,7 +280,9 @@ module br_amba_axi2axil_core #(
   //----------------------------------------------------------------------------
 
   // AXI4-Lite request signals
-  assign axil_req_addr = next_address(req_base_addr, req_burst_size, req_burst_type, req_count);
+  assign axil_req_addr = next_address(
+      req_base_addr, req_burst_size, req_burst_len, req_burst_type, req_count
+  );
   assign axil_req_prot = req_prot;
   assign axil_req_user = req_user;
 
@@ -280,7 +302,7 @@ module br_amba_axi2axil_core #(
 
   br_fifo_flops #(
       .Depth(MaxOutstandingReqs),
-      .Width(IdWidth + 1),  // ID + is_last
+      .Width(RespFifoWidth),
       .EnableBypass(0),
       .RegisterPopOutputs(0),
       .FlopRamDepthTiles(1),
@@ -316,7 +338,7 @@ module br_amba_axi2axil_core #(
   );
 
   assign resp_fifo_push_valid = axil_req_handshake;
-  assign resp_fifo_pop_ready = axi_resp_handshake;
+  assign resp_fifo_pop_ready = axil_resp_handshake;
 
   //----------------------------------------------------------------------------
   // Response Signals

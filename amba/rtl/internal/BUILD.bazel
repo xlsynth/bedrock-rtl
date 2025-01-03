@@ -26,6 +26,7 @@ verilog_library(
         "//fifo/rtl:br_fifo_flops",
         "//macros:br_asserts_internal",
         "//macros:br_registers",
+        "//macros:br_unused",
     ],
 )
 
