@@ -29,10 +29,10 @@ package br_amba;
 
   // AXI Burst types
   typedef enum logic [1:0] {
-    AxiBurstFixed   = 2'b00,  // Fixed burst
-    AxiBurstIncr    = 2'b01,  // Incrementing burst
-    AxiBurstWrap    = 2'b10,  // Wrapping burst
-    AxiBurstReserve = 2'b11   // Reserved
+    AxiBurstFixed    = 2'b00,  // Fixed burst
+    AxiBurstIncr     = 2'b01,  // Incrementing burst
+    AxiBurstWrap     = 2'b10,  // Wrapping burst
+    AxiBurstReserved = 2'b11   // Reserved
   } axi_burst_type_t;
 
   // AXI parameters
