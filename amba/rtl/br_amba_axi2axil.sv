@@ -48,6 +48,7 @@ module br_amba_axi2axil #(
     output logic                                  axi_awready,
     input  logic [                 DataWidth-1:0] axi_wdata,
     input  logic [               StrobeWidth-1:0] axi_wstrb,
+    input  logic [                WUserWidth-1:0] axi_wuser,
     input  logic                                  axi_wvalid,
     output logic                                  axi_wready,
     output logic [                   IdWidth-1:0] axi_bid,
@@ -102,6 +103,8 @@ module br_amba_axi2axil #(
   //----------------------------------------------------------------------------
   // Integration checks
   //----------------------------------------------------------------------------
+
+  // ri lint_check_off GENERATE_NAME
   `BR_ASSERT_STATIC(addr_width_must_be_at_least_12_a, AddrWidth >= 12)
   `BR_ASSERT_STATIC(data_width_must_be_32_or_64_a, (DataWidth == 32) || (DataWidth == 64))
   `BR_ASSERT_STATIC(id_width_must_be_at_least_1_a, IdWidth >= 1)
@@ -111,6 +114,7 @@ module br_amba_axi2axil #(
   `BR_ASSERT_STATIC(buser_width_must_be_at_least_1_a, BUserWidth >= 1)
   `BR_ASSERT_STATIC(ruser_width_must_be_at_least_1_a, RUserWidth >= 1)
   `BR_ASSERT_STATIC(max_outstanding_reqs_must_be_at_least_2_a, MaxOutstandingReqs >= 2)
+  // ri lint_check_on GENERATE_NAME
 
   //----------------------------------------------------------------------------
   // Implementation
@@ -167,9 +171,9 @@ module br_amba_axi2axil #(
       .axil_req_data_valid(axil_wvalid),
       .axil_req_data_ready(axil_wready),
 
-      .axil_resp_resp(axil_bresp),
-      .axil_resp_user(axil_buser),
-      .axil_resp_data(),  // not used for writes
+      .axil_resp_resp (axil_bresp),
+      .axil_resp_user (axil_buser),
+      .axil_resp_data ({DataWidth{1'b0}}),  // not used for writes
       .axil_resp_valid(axil_bvalid),
       .axil_resp_ready(axil_bready)
   );
@@ -198,9 +202,9 @@ module br_amba_axi2axil #(
       .axi_req_valid(axi_arvalid),
       .axi_req_ready(axi_arready),
 
-      .axi_req_data('0),  // not used for reads
-      .axi_req_data_strb('0),  // not used for reads
-      .axi_req_data_user('0),  // not used for reads
+      .axi_req_data({DataWidth{1'b0}}),  // not used for reads
+      .axi_req_data_strb({StrobeWidth{1'b0}}),  // not used for reads
+      .axi_req_data_user(1'b0),  // not used for reads
       .axi_req_data_valid(1'b0),  // not used for reads
       .axi_req_data_ready(),  // not used for reads
 
