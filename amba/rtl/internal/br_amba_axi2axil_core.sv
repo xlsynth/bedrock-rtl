@@ -200,8 +200,8 @@ module br_amba_axi2axil_core #(
     unique case (state)
       // Wait for a new request
       StateIdle: begin
-        axi_req_ready  = axil_req_ready && !resp_fifo_push_ready;
-        axil_req_valid = axi_req_valid && !resp_fifo_push_ready;
+        axi_req_ready  = axil_req_ready && resp_fifo_push_ready;
+        axil_req_valid = axi_req_valid && resp_fifo_push_ready;
 
         // If there is a new request, and it is not a single beat request, then we need to split it
         // into multiple AXI4-Lite requests.
@@ -213,7 +213,7 @@ module br_amba_axi2axil_core #(
 
       // Issue AXI4-Lite requests
       StateReqSplit: begin
-        axil_req_valid = !resp_fifo_push_ready;
+        axil_req_valid = resp_fifo_push_ready;
 
         if (axil_req_handshake && (req_count > burst_len_extended)) begin
           state_next = StateIdle;
