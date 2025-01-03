@@ -46,12 +46,15 @@ verilog_library(
     name = "br_mux_bin",
     srcs = ["br_mux_bin.sv"],
     deps = [
+        "//gate/rtl:br_gate_behav",
         "//macros:br_asserts_internal",
+        "//macros:br_unused",
+        "//pkg:br_math_pkg",
     ],
 )
 
 br_verilog_elab_and_lint_test_suite(
-    name = "br_mux_bin_test_suite",
+    name = "br_mux_bin_test_suite_unstructured",
     params = {
         "NumSymbolsIn": [
             "2",
@@ -62,6 +65,33 @@ br_verilog_elab_and_lint_test_suite(
             "1",
             "5",
             "8",
+        ],
+        "UseStructuredGates": [
+            "0",
+        ],
+    },
+    deps = [":br_mux_bin"],
+)
+
+br_verilog_elab_and_lint_test_suite(
+    name = "br_mux_bin_test_suite_structured",
+    params = {
+        "NumSymbolsIn": [
+            "2",
+            "4",
+            "5",
+            "6",
+            "7",
+            "9",
+            "10",
+            "13",
+            "14",
+        ],
+        "SymbolWidth": [
+            "2",
+        ],
+        "UseStructuredGates": [
+            "1",
         ],
     },
     deps = [":br_mux_bin"],
