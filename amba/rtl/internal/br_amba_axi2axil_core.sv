@@ -17,13 +17,11 @@
 // This module is the core of the AXI4 to AXI4-Lite bridge. It handles the unrolling of AXI4 bursts
 // into AXI4-Lite transactions, and the aggregation of AXI4-Lite responses.
 //
-// This module also supports optional datapaths for both requests and responses. If
-// `ReqDatapathEnable` is set, the module will pass through the AXI4 request and data signals to the
-// AXI4-Lite interface. If `RespDatapathEnable` is set, the module will pass through the AXI4-Lite
-// response signals to the AXI4 interface.
+// The `MaxOutstandingReqs` parameter controls the depth of the response FIFO and determines the
+// maximum number of outstanding AXI4-Lite requests.
 //
 // This module is instantiated twice in the br_amba_axi2axil module to support both read and write
-// requests separately.
+// requests separately. The `IsReadNotWrite` parameter controls which side is instantiated.
 
 `include "br_asserts_internal.svh"
 `include "br_registers.svh"
@@ -108,10 +106,8 @@ module br_amba_axi2axil_core #(
   `BR_UNUSED(supported_burst_type)
   `BR_UNUSED(resp_fifo_pop_valid)
 
-  // ri lint_check_off ENUM_COMPARE
   assign supported_burst_type =
-      (axi_req_burst == br_amba::AxiBurstIncr) || (axi_req_burst == br_amba::AxiBurstFixed);
-  // ri lint_check_on ENUM_COMPARE
+      (br_amba::axi_burst_type_t'(axi_req_burst) != br_amba::AxiBurstReserved);
 
   // We should only get requests with a supported burst type (Incr or Fixed)
   `BR_ASSERT_INTG(valid_burst_type_a, axi_req_valid |-> supported_burst_type)
@@ -158,7 +154,6 @@ module br_amba_axi2axil_core #(
 
   logic [br_amba::AxiBurstLenWidth:0] req_count;
   logic [br_amba::AxiRespWidth-1:0] resp, resp_next;
-  logic state_le;
   logic axi_req_handshake;
   logic axi_resp_handshake;
   logic axil_req_handshake;
@@ -167,69 +162,34 @@ module br_amba_axi2axil_core #(
   logic resp_fifo_push_valid;
   logic resp_fifo_push_ready, resp_fifo_pop_ready;
   logic is_last_req_beat;
-
-  typedef enum logic [1:0] {
-    StateIdle     = 2'b01,
-    StateReqSplit = 2'b10
-  } state_t;
-  state_t state, state_next;  // ri lint_check_waive ONE_BIT_STATE_REG
+  logic req_counter_incr;
 
   //----------------------------------------------------------------------------
   // Registers
   //----------------------------------------------------------------------------
 
-  `BR_REGIL(state, state_next, state_le, StateIdle)
   `BR_REGLN(resp, resp_next, (axi_resp_handshake || axil_resp_handshake))
 
   //----------------------------------------------------------------------------
   // AXI4 and AXI4-Lite Handshakes
   //----------------------------------------------------------------------------
 
-  assign axi_req_handshake   = axi_req_valid && axi_req_ready;
-  assign axi_resp_handshake  = axi_resp_valid && axi_resp_ready;
+  assign axi_req_handshake = axi_req_valid && axi_req_ready;
+  assign axi_resp_handshake = axi_resp_valid && axi_resp_ready;
 
-  assign axil_req_handshake  = axil_req_valid && axil_req_ready;
+  assign axil_req_handshake = axil_req_valid && axil_req_ready;
   assign axil_resp_handshake = axil_resp_valid && axil_resp_ready;
 
   //----------------------------------------------------------------------------
-  // Request Split State Machine and Signals
+  // Request Handshake Logic
   //----------------------------------------------------------------------------
 
-  // ri lint_check_off GRAY_CODE_FSM
-  always_comb begin
-    state_next = state;
-    state_le = 1'b0;
+  // Perform AXI handshake when the last AXI4-Lite request is issued
+  assign axi_req_ready = axil_req_handshake && is_last_req_beat;
 
-    axi_req_ready = 1'b0;
-    axil_req_valid = 1'b0;
+  // Issue AXI4-Lite requests as long as the response FIFO is ready
+  assign axil_req_valid = axi_req_valid && resp_fifo_push_ready;
 
-    unique case (state)
-      // Wait for a new request
-      StateIdle: begin
-        if (axi_req_valid) begin
-          state_next = StateReqSplit;
-          state_le   = 1'b1;
-        end
-      end
-
-      // Issue AXI4-Lite requests
-      StateReqSplit: begin
-        axil_req_valid = resp_fifo_push_ready;
-
-        if (axil_req_handshake && is_last_req_beat) begin
-          axi_req_ready = 1'b1;
-
-          state_next = StateIdle;
-          state_le = 1'b1;
-        end
-      end
-
-      default: begin
-        state_next = state;  // ri lint_check_waive ENUM_ASSIGN FSM_DEFAULT_REQ
-      end
-    endcase
-  end
-  // ri lint_check_on GRAY_CODE_FSM
 
   //----------------------------------------------------------------------------
   // Request Counter
@@ -243,12 +203,15 @@ module br_amba_axi2axil_core #(
       .clk,
       .rst,
       .reinit(axi_req_handshake),
-      .initial_value({{br_amba::AxiBurstLenWidth{1'b0}}, 1'b1}),
+      .initial_value({(br_amba::AxiBurstLenWidth + 1) {1'b0}}),
       .incr_valid(axil_req_handshake),
-      .incr(1'b1),
+      .incr(req_counter_incr),
       .value(req_count),
       .value_next()
   );
+
+  // Do not increment in the same cycle as reinit. Otherwise, increment by 1.
+  assign req_counter_incr = !axi_req_handshake;
 
   // We only need to compare the lower bits of the request count to the burst length.
   assign is_last_req_beat = (req_count[br_amba::AxiBurstLenWidth-1:0] == axi_req_len);
