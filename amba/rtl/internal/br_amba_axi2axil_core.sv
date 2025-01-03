@@ -156,14 +156,6 @@ module br_amba_axi2axil_core #(
 
   localparam int RespFifoWidth = (IdWidth + 1);  // 1 bit to indicate if the burst is complete
 
-  // Request signals
-  logic [IdWidth-1:0] current_req_id;
-  logic [AddrWidth-1:0] req_base_addr;
-  logic [br_amba::AxiProtWidth-1:0] req_prot;
-  logic [ReqUserWidth-1:0] req_user;
-  logic [br_amba::AxiBurstLenWidth-1:0] req_burst_len;
-  logic [br_amba::AxiBurstSizeWidth-1:0] req_burst_size;
-  logic [br_amba::AxiBurstTypeWidth-1:0] req_burst_type;
   logic [br_amba::AxiBurstLenWidth:0] req_count;
   logic [br_amba::AxiRespWidth-1:0] resp, resp_next;
   logic state_le;
@@ -175,7 +167,6 @@ module br_amba_axi2axil_core #(
   logic [RespFifoWidth-1:0] resp_fifo_push_data, resp_fifo_pop_data;
   logic resp_fifo_push_valid;
   logic resp_fifo_push_ready, resp_fifo_pop_ready;
-  logic zero_burst_len;
   logic is_last_req_beat;
 
   typedef enum logic [1:0] {
@@ -189,13 +180,6 @@ module br_amba_axi2axil_core #(
   //----------------------------------------------------------------------------
 
   `BR_REGIL(state, state_next, state_le, StateIdle)
-  `BR_REGLN(current_req_id, axi_req_id, axi_req_handshake)
-  `BR_REGLN(req_prot, axi_req_prot, axi_req_handshake)
-  `BR_REGLN(req_user, axi_req_user, axi_req_handshake)
-  `BR_REGLN(req_base_addr, axi_req_addr, axi_req_handshake)
-  `BR_REGLN(req_burst_len, axi_req_len, axi_req_handshake)
-  `BR_REGLN(req_burst_size, axi_req_size, axi_req_handshake)
-  `BR_REGLN(req_burst_type, axi_req_burst, axi_req_handshake)
   `BR_REGLN(resp, resp_next, (axi_resp_handshake || axil_resp_handshake))
 
   //----------------------------------------------------------------------------
@@ -216,21 +200,14 @@ module br_amba_axi2axil_core #(
   always_comb begin
     state_next = state;
     state_le = 1'b0;
+
     axi_req_ready = 1'b0;
     axil_req_valid = 1'b0;
-    resp_fifo_push_data = {(IdWidth + 1) {1'b0}};
 
     unique case (state)
       // Wait for a new request
       StateIdle: begin
-        axi_req_ready = axil_req_ready && resp_fifo_push_ready;
-        axil_req_valid = axi_req_valid && resp_fifo_push_ready;
-
-        resp_fifo_push_data = {axi_req_id, zero_burst_len};
-
-        // If there is a new request, and it is not a single beat request, then we need to split it
-        // into multiple AXI4-Lite requests.
-        if (axi_req_handshake && !zero_burst_len) begin
+        if (axi_req_valid) begin
           state_next = StateReqSplit;
           state_le   = 1'b1;
         end
@@ -240,11 +217,11 @@ module br_amba_axi2axil_core #(
       StateReqSplit: begin
         axil_req_valid = resp_fifo_push_ready;
 
-        resp_fifo_push_data = {current_req_id, is_last_req_beat};
-
         if (axil_req_handshake && is_last_req_beat) begin
+          axi_req_ready = 1'b1;
+
           state_next = StateIdle;
-          state_le   = 1'b1;
+          state_le = 1'b1;
         end
       end
 
@@ -274,8 +251,7 @@ module br_amba_axi2axil_core #(
       .value_next()
   );
 
-  assign zero_burst_len = (axi_req_len == {br_amba::AxiBurstLenWidth{1'b0}});
-  assign burst_len_extended = {1'b0, req_burst_len};  // ri lint_check_waive ZERO_EXT
+  assign burst_len_extended = {1'b0, axi_req_len};  // ri lint_check_waive ZERO_EXT
   assign is_last_req_beat = (req_count == burst_len_extended);
 
   //----------------------------------------------------------------------------
@@ -284,10 +260,10 @@ module br_amba_axi2axil_core #(
 
   // AXI4-Lite request signals
   assign axil_req_addr = next_address(
-      req_base_addr, req_burst_size, req_burst_len, req_burst_type, req_count
+      axi_req_addr, axi_req_size, axi_req_len, axi_req_burst, req_count
   );
-  assign axil_req_prot = req_prot;
-  assign axil_req_user = req_user;
+  assign axil_req_prot = axi_req_prot;
+  assign axil_req_user = axi_req_user;
 
   //----------------------------------------------------------------------------
   // Request Data Path Signals
@@ -340,7 +316,9 @@ module br_amba_axi2axil_core #(
       .items_next()
   );
 
+  assign resp_fifo_push_data = {axi_req_id, is_last_req_beat};
   assign resp_fifo_push_valid = axil_req_handshake;
+
   assign resp_fifo_pop_ready = axil_resp_handshake;
 
   //----------------------------------------------------------------------------
