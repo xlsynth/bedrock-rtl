@@ -339,11 +339,11 @@ module br_amba_axi2axil_core #(
   // generate an AXI4 response for the last beat as indicated by axi_resp_data_last.
   generate
     if (IsReadNotWrite) begin : gen_read_response
-      assign axi_resp_valid  = axil_req_valid;
+      assign axi_resp_valid  = axil_resp_valid;
       assign axi_resp_resp   = axil_resp_resp;
       assign axil_resp_ready = axi_resp_ready;
     end else begin : gen_write_response
-      assign axi_resp_valid = (axi_resp_data_last && axil_req_valid);
+      assign axi_resp_valid = (axi_resp_data_last && axil_resp_valid);
       assign axi_resp_resp = (axil_resp_resp != br_amba::AxiRespOkay) ?  // ri lint_check_waive ENUM_COMPARE
           axil_resp_resp : resp;
       assign axil_resp_ready = (!axi_resp_data_last || axi_resp_ready);
