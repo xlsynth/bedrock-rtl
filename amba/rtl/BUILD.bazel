@@ -90,9 +90,8 @@ verilog_library(
     srcs = ["br_amba_axi2axil.sv"],
     deps = [
         ":br_amba_pkg",
-        "//counter/rtl:br_counter_incr",
+        "//amba/rtl/internal:br_amba_axi2axil_core",
         "//macros:br_asserts_internal",
-        "//macros:br_registers",
     ],
 )
 
