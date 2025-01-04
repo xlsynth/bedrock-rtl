@@ -47,6 +47,7 @@ verilog_library(
         "//macros:br_asserts_internal",
         "//macros:br_registers",
         "//macros:br_unused",
+        "//mux/rtl:br_mux_bin",
     ],
 )
 
@@ -114,6 +115,17 @@ br_verilog_elab_and_lint_test_suite(
             "0",
             "1",
         ],
+    },
+    deps = [":br_ram_flops_1r1w_tile"],
+)
+
+br_verilog_elab_and_lint_test_suite(
+    name = "br_ram_flops_1r1w_tile_test_suite_structured_gates",
+    params = {
+        "Depth": ["12"],
+        "Width": ["8"],
+        "EnableBypass": ["0"],
+        "UseStructuredGates": ["1"],
     },
     deps = [":br_ram_flops_1r1w_tile"],
 )
@@ -366,6 +378,17 @@ br_verilog_elab_and_lint_test_suite(
         "Width": ["64"],
         "EnablePartialWrite": ["1"],
         "WordWidth": ["8"],
+    },
+    deps = [":br_ram_flops_1r1w"],
+)
+
+br_verilog_elab_and_lint_test_suite(
+    name = "br_ram_flops_1r1w_test_suite_structured_gates",
+    params = {
+        "Depth": ["12"],
+        "Width": ["8"],
+        "TileEnableBypass": ["0"],
+        "UseStructuredGates": ["1"],
     },
     deps = [":br_ram_flops_1r1w"],
 )

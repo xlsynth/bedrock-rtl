@@ -179,7 +179,10 @@ module br_cdc_fifo_flops #(
       .ReadDataDepthStages(FlopRamReadDataDepthStages),
       .ReadDataWidthStages(FlopRamReadDataWidthStages),
       // Flops don't need to be reset, since uninitialized cells will never be read
-      .EnableMemReset(0)
+      .EnableMemReset(0),
+      // Since there is an asynchronous path on the read,
+      // we need to use structured gates for the read mux.
+      .UseStructuredGates(1)
   ) br_ram_flops_1r1w (
       .wr_clk(push_clk),  // ri lint_check_waive SAME_CLOCK_NAME
       .wr_rst(push_rst),

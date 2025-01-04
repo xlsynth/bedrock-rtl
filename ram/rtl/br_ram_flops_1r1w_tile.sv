@@ -44,6 +44,9 @@ module br_ram_flops_1r1w_tile #(
     parameter bit EnableBypass = 0,
     // If 1, then the memory elements are cleared to 0 upon reset.
     parameter bit EnableReset = 0,
+    // If 1, use structured mux2 gates for the read mux instead of relying on synthesis.
+    // This is required if write and read clocks are different.
+    parameter bit UseStructuredGates = 0,
     localparam int AddrWidth = $clog2(Depth),
     localparam int NumWords = Width / WordWidth
 ) (
@@ -75,6 +78,7 @@ module br_ram_flops_1r1w_tile #(
   //------------------------------------------
   `BR_ASSERT_STATIC(depth_gte2_a, Depth >= 2)
   `BR_ASSERT_STATIC(width_gte1_a, Width >= 1)
+  `BR_ASSERT_STATIC(no_bypass_with_structured_gates_a, !(EnableBypass && UseStructuredGates))
 
   `BR_ASSERT_CR_INTG(wr_addr_in_range_A, wr_valid |-> wr_addr < Depth, wr_clk, wr_rst)
   `BR_ASSERT_CR_INTG(rd_addr_in_range_A, rd_addr_valid |-> rd_addr < Depth, rd_clk, rd_rst)
@@ -84,8 +88,9 @@ module br_ram_flops_1r1w_tile #(
     `BR_ASSERT_STATIC(width_divisible_by_word_width_a, (Width % WordWidth) == 0)
   end
 
-  if (EnableBypass) begin : gen_bypass_intg_checks
-    // Bypass is only permissible if the read and write clocks are the same.
+  // If EnableBypass is 1 or UseStructuredGates is 0,
+  // we must use the same clock for both read and write.
+  if (EnableBypass || !UseStructuredGates) begin : gen_same_clock_check
     // ri lint_check_waive ALWAYS_COMB
     `BR_ASSERT_COMB_INTG(same_clock_a, wr_clk == rd_clk)
   end
@@ -154,12 +159,31 @@ module br_ram_flops_1r1w_tile #(
 
   // Read port
   assign rd_data_valid = rd_addr_valid;
-  if (EnableBypass) begin : gen_bypass
-    // ri lint_check_waive VAR_INDEX_READ
-    assign rd_data = (wr_valid && (wr_addr == rd_addr)) ? wr_data : mem[rd_addr];
-  end else begin : gen_no_bypass
-    // ri lint_check_waive VAR_INDEX_READ
-    assign rd_data = mem[rd_addr];
+  if (UseStructuredGates) begin : gen_structured_read
+    // Need to convert memory to packed array
+    logic [Depth-1:0][Width-1:0] mem_packed;
+
+    for (genvar i = 0; i < Depth; i++) begin : gen_mem_packed
+      assign mem_packed[i] = mem[i];
+    end
+
+    br_mux_bin #(
+        .NumSymbolsIn(Depth),
+        .SymbolWidth(Width),
+        .UseStructuredGates(1)
+    ) br_mux_bin_inst (
+        .select(rd_addr),
+        .in(mem_packed),
+        .out(rd_data)
+    );
+  end else begin : gen_behavioral_read
+    if (EnableBypass) begin : gen_bypass
+      // ri lint_check_waive VAR_INDEX_READ
+      assign rd_data = (wr_valid && (wr_addr == rd_addr)) ? wr_data : mem[rd_addr];
+    end else begin : gen_no_bypass
+      // ri lint_check_waive VAR_INDEX_READ
+      assign rd_data = mem[rd_addr];
+    end
   end
 
   //------------------------------------------
