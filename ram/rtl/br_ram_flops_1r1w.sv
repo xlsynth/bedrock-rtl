@@ -58,6 +58,9 @@ module br_ram_flops_1r1w #(
     // If 1, then the memory elements are cleared to 0 upon reset. Otherwise, they are undefined until
     // written for the first time.
     parameter bit EnableMemReset = 0,
+    // If 1, use structured mux2 gates for the read mux instead of relying on synthesis.
+    // This is required if write and read clocks are different.
+    parameter bit UseStructuredGates = 0,
     localparam int AddressWidth = $clog2(Depth),
     localparam int NumWords = Width / WordWidth,
     // Write latency in units of wr_clk cycles
@@ -217,7 +220,8 @@ module br_ram_flops_1r1w #(
           .Width(TileWidth),
           .WordWidth(WordWidth),
           .EnableBypass(TileEnableBypass),
-          .EnableReset(EnableMemReset)
+          .EnableReset(EnableMemReset),
+          .UseStructuredGates(UseStructuredGates)
       ) br_ram_flops_1r1w_tile (
           .wr_clk,
           .wr_rst,
