@@ -25,53 +25,53 @@
 // verilog_format: off
 
 // Buffer
-`define BR_GATE_BUF(__iname__, __out__, __in__) \
-br_gate_buf br_gate_buf_``__iname__`` ( \
+`define BR_GATE_BUF(__out__, __in__) \
+br_gate_buf br_gate_buf_``__out__`` ( \
     .in(__in__), \
     .out(__out__) \
 );
 
 // Clock Buffer
-`define BR_GATE_CLK_BUF(__iname__, __out__, __in__) \
-br_gate_clk_buf br_gate_clk_buf_``__iname__`` ( \
+`define BR_GATE_CLK_BUF(__out__, __in__) \
+br_gate_clk_buf br_gate_clk_buf_``__out__`` ( \
     .in(__in__), \
     .out(__out__) \
 );
 
 // Inverter
-`define BR_GATE_INV(__iname__, __out__, __in__) \
-br_gate_inv br_gate_inv_``__iname__`` ( \
+`define BR_GATE_INV(__out__, __in__) \
+br_gate_inv br_gate_inv_``__out__`` ( \
     .in(__in__), \
     .out(__out__) \
 );
 
 // 2-Input AND Gate
-`define BR_GATE_AND2(__iname__, __out__, __in0__, __in1__) \
-br_gate_and2 br_gate_and2_``__iname__`` ( \
+`define BR_GATE_AND2(__out__, __in0__, __in1__) \
+br_gate_and2 br_gate_and2_``__out__`` ( \
     .in0(__in0__), \
     .in1(__in1__), \
     .out(__out__) \
 );
 
 // 2-Input OR Gate
-`define BR_GATE_OR2(__iname__, __out__, __in0__, __in1__) \
-br_gate_or2 br_gate_or2_``__iname__`` ( \
+`define BR_GATE_OR2(__out__, __in0__, __in1__) \
+br_gate_or2 br_gate_or2_``__out__`` ( \
     .in0(__in0__), \
     .in1(__in1__), \
     .out(__out__) \
 );
 
 // 2-Input XOR Gate
-`define BR_GATE_XOR2(__iname__, __out__, __in0__, __in1__) \
-br_gate_xor2 br_gate_xor2_``__iname__`` ( \
+`define BR_GATE_XOR2(__out__, __in0__, __in1__) \
+br_gate_xor2 br_gate_xor2_``__out__`` ( \
     .in0(__in0__), \
     .in1(__in1__), \
     .out(__out__) \
 );
 
 // 2-Input Mux Gate
-`define BR_GATE_MUX2(__iname__, __out__, __in0__, __in1__, __sel__) \
-br_gate_mux2 br_gate_mux2_``__iname__`` ( \
+`define BR_GATE_MUX2(__out__, __in0__, __in1__, __sel__) \
+br_gate_mux2 br_gate_mux2_``__out__`` ( \
     .in0(__in0__), \
     .in1(__in1__), \
     .sel(__sel__), \
@@ -79,8 +79,8 @@ br_gate_mux2 br_gate_mux2_``__iname__`` ( \
 );
 
 // 2-Input Clock Mux Gate
-`define BR_GATE_CLK_MUX2(__iname__, __out__, __in0__, __in1__, __sel__) \
-br_gate_clk_mux2 br_gate_clk_mux2_``__iname__`` ( \
+`define BR_GATE_CLK_MUX2(__out__, __in0__, __in1__, __sel__) \
+br_gate_clk_mux2 br_gate_clk_mux2_``__out__`` ( \
     .in0(__in0__), \
     .in1(__in1__), \
     .sel(__sel__), \
@@ -88,21 +88,19 @@ br_gate_clk_mux2 br_gate_clk_mux2_``__iname__`` ( \
 );
 
 // Integrated Clock Gate
-`define BR_GATE_ICG(__iname__, __clk_out__, __clk_in__, __en__, __test_en__) \
-br_gate_icg br_gate_icg_``__iname__`` ( \
+`define BR_GATE_ICG(__clk_out__, __clk_in__, __en__) \
+br_gate_icg br_gate_icg_``__clk_out__`` ( \
     .clk_in(__clk_in__), \
     .en(__en__), \
-    .test_en(__test_en__), \
     .clk_out(__clk_out__) \
 );
 
 // Integrated Clock Gate with Synchronous Reset
-`define BR_GATE_ICG_RST(__iname__, __clk_out__, __clk_in__, __en__, __rst__, __test_en__) \
-br_gate_icg_rst br_gate_icg_rst_``__iname__`` ( \
+`define BR_GATE_ICG_RST(__clk_out__, __clk_in__, __en__, __rst__) \
+br_gate_icg_rst br_gate_icg_rst_``__clk_out__`` ( \
     .clk_in(__clk_in__), \
     .en(__en__), \
     .rst(__rst__), \
-    .test_en(__test_en__), \
     .clk_out(__clk_out__) \
 );
 
