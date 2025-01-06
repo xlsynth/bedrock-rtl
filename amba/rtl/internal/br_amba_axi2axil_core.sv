@@ -125,20 +125,20 @@ module br_amba_axi2axil_core #(
       input logic [br_amba::AxiBurstLenWidth-1:0] burst_len,
       input logic [br_amba::AxiBurstTypeWidth-1:0] burst_type,
       input logic [br_amba::AxiBurstLenWidth-1:0] index);
-    logic [AddrWidth-1:0] increment;
+    logic [AddrWidth-1:0] incr_address;
     logic [AddrWidth-1:0] base_address;  // aligned to wrap boundary
     logic [AddrWidth-1:0] wrap_mask;  // mask the wrap boundary
 
-    increment = start_addr + (index << size);  // ri lint_check_waive VAR_SHIFT
+    incr_address = start_addr + (index << size);  // ri lint_check_waive VAR_SHIFT
 
     unique case (br_amba::axi_burst_type_t'(burst_type))
       br_amba::AxiBurstIncr: begin
-        next_address = start_addr + increment;
+        next_address = incr_address;
       end
       br_amba::AxiBurstWrap: begin
         wrap_mask = ((burst_len + 1) << size) - 1;  // ri lint_check_waive ARITH_EXTENSION VAR_SHIFT TRUNC_LSHIFT
         base_address = start_addr & ~wrap_mask;
-        next_address = base_address | ((start_addr + increment) & wrap_mask);
+        next_address = base_address | (incr_address & wrap_mask);
       end
       default: begin
         next_address = start_addr;
