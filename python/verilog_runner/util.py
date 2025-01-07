@@ -176,7 +176,12 @@ def run_shell_script(script: str, logger: logging.Logger) -> Tuple[int, str]:
     with open(script, "r") as file:
         cmd = file.read()
     result = subprocess.run(
-        cmd, shell=True, capture_output=True, text=True, errors="replace"
+        cmd,
+        shell=True,
+        executable="/bin/bash",
+        capture_output=True,
+        text=True,
+        errors="replace",
     )
     shell_output = "\n".join([result.stdout, result.stderr])
     return result.returncode, shell_output
