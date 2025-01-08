@@ -169,6 +169,37 @@ module br_gate_cdc_sync #(
   `BR_REGN(in_d, {in_d[NumStages-2:0], in})
 
   assign out = in_d[NumStages-1];
+
 endmodule : br_gate_cdc_sync
+
+// Buffer used at CDC crossings but when the signal is considered pseudo-static. In other words,
+// this signal will be stable before the destination domain is out of reset and the clock is
+// running.
+module br_gate_cdc_pseudostatic (
+    input  logic in,
+    output logic out
+);
+
+  br_gate_buf dont_touch_cdc_pseudostatic_buf (
+      .in (in),
+      .out(out)
+  );
+
+endmodule : br_gate_cdc_pseudostatic
+
+// Buffer used at CDC crossings that indicate that this crossing would need to be checked for
+// max delay (skew checks).
+module br_gate_cdc_maxdel (
+    input  logic in,
+    output logic out
+);
+
+  br_gate_buf dont_touch_cdc_maxdel_buf (
+      .in (in),
+      .out(out)
+  );
+
+endmodule : br_gate_cdc_maxdel
+
 // verilog_lint: waive-stop module-filename
 // ri lint_check_on ONE_PER_FILE FILE_NAME

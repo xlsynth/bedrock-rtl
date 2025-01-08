@@ -104,6 +104,39 @@ br_gate_icg_rst br_gate_icg_rst_``__clk_out__`` ( \
     .clk_out(__clk_out__) \
 );
 
+// Clock Domain Crossing Synchronizer with default number of stages
+`define BR_GATE_CDC_SYNC(__out__, __in__, __clk__) \
+br_gate_cdc_sync br_gate_cdc_sync_``__out__`` ( \
+    .clk(__clk__), \
+    .in(__in__), \
+    .out(__out__) \
+);
+
+// Clock Domain Crossing Synchronizer with configurable number of stages
+`define BR_GATE_CDC_SYNC_STAGES(__out__, __in__, __clk__, __stages__) \
+br_gate_cdc_sync #(__stages__) br_gate_cdc_sync_``__out__`` ( \
+    .clk(__clk__), \
+    .in(__in__), \
+    .out(__out__) \
+);
+
+// Buffer used at CDC crossings but when the signal is considered pseudo-static. In other words,
+// this signal will be stable before the destination domain is out of reset and the clock is
+// running.
+`define BR_GATE_CDC_PSEUDOSTATIC(__out__, __in__) \
+br_gate_cdc_pseudostatic br_gate_cdc_pseudostatic_``__out__`` ( \
+    .in(__in__), \
+    .out(__out__) \
+);
+
+// Buffer used at CDC crossings that indicate that this crossing would need to be checked for
+// max delay (skew checks).
+`define BR_GATE_CDC_MAXDEL(__out__, __in__) \
+br_gate_cdc_maxdel br_gate_cdc_maxdel_``__out__`` ( \
+    .in(__in__), \
+    .out(__out__) \
+);
+
 // verilog_format: on
 
 `endif  // BR_GATES_SVH
