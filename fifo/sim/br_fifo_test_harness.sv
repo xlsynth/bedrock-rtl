@@ -40,7 +40,7 @@ module br_fifo_test_harness #(
     input logic [$clog2(Depth+1)-1:0] slots
 );
 
-  parameter int RandDelayMax = 10;
+  localparam int RandDelayMax = 10;
 
   // Scoreboard
   reg [Width-1:0] scoreboard[Depth*2];
