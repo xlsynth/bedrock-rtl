@@ -221,10 +221,6 @@ br_verilog_elab_and_lint_test_suite(
             "0",
             "1",
         ],
-        "EnableAssertFinalNotValid": [
-            "0",
-            "1",
-        ],
     },
     deps = [":br_flow_checks_valid_data"],
 )
