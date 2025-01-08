@@ -61,7 +61,7 @@ module br_delay_shift_reg #(
     assign stages_next = (shift_en) ? {stages_temp[NumStages-2:0], shift_in} : stages_temp;
   end
 
-  `BR_REGIL(stages, stages_next, shift_en || reinit, initial_value)
+  `BR_REGLI(stages, stages_next, shift_en || reinit, initial_value)
 
   assign shift_out = stages[NumStages-1];
   assign value = stages;

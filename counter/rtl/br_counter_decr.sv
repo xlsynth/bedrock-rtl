@@ -97,7 +97,7 @@ module br_counter_decr #(
     `BR_ASSERT_IMPL(value_temp_wrapped_in_range_a, value_temp_wrapped <= MaxValue)
   end
 
-  `BR_REGIL(value, value_next, decr_valid || reinit, initial_value)
+  `BR_REGLI(value, value_next, decr_valid || reinit, initial_value)
 
   //------------------------------------------
   // Implementation checks

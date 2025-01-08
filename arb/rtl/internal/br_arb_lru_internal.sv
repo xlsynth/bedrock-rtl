@@ -78,7 +78,7 @@ module br_arb_lru_internal #(
       if (i < j) begin : gen_upper_tri
         // All bits in upper triangle init to 1'b1 (lowest numbered req wins)
         assign state_reg_next[i][j] = grant[i] ? 1'b0 : grant[j] ? 1'b1 : state[i][j];
-        `BR_REGIL(state_reg[i][j], state_reg_next[i][j], enable_priority_update && |request, 1'b1)
+        `BR_REGLI(state_reg[i][j], state_reg_next[i][j], enable_priority_update && |request, 1'b1)
         assign state[i][j] = state_reg[i][j];
 
         // Lower triangle is the inverse of upper triangle

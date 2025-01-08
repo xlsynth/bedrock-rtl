@@ -109,7 +109,7 @@ module br_tracker_freelist #(
       (unstaged_free_entries | unstaged_free_entries_set) & ~unstaged_free_entries_clear;
   assign unstaged_free_entries_init = {NumEntries{1'b1}};
 
-  `BR_REGIL(unstaged_free_entries, unstaged_free_entries_next, unstaged_free_entries_le,
+  `BR_REGLI(unstaged_free_entries, unstaged_free_entries_next, unstaged_free_entries_le,
             unstaged_free_entries_init)
 
   // Push Interface of the output buffer.

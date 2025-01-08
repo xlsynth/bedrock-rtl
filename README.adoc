@@ -299,6 +299,9 @@ The macros are named according to the following suffix convention.
 IMPORTANT: Clocks are always positive-edge triggered.
 Resets are always active-high.
 
+NOTE: The order of the suffices generally matches the order of the arguments to the macro.
+The suffices are also listed in alphabetical order, with the exception of `L` before `I`.
+
 [cols="1,4,1,1"]
 |===
 | Macro/define | Description | Implemented | Tested
@@ -308,7 +311,7 @@ Resets are always active-high.
 | Yes
 | Yes
 
-| `BR_REGAIL`
+| `BR_REGALI`
 | Flip-flop register with conditional load enable, asynchronous active-high reset named `arst`, initial value given, positive-edge triggered clock named `clk`.
 | Yes
 | Yes
@@ -323,7 +326,7 @@ Resets are always active-high.
 | Yes
 | Yes
 
-| `BR_REGIL`
+| `BR_REGLI`
 | Flip-flop register with conditional load enable, synchronous active-high reset named `rst`, initial value given, positive-edge triggered clock named `clk`.
 | Yes
 | Yes
@@ -333,7 +336,7 @@ Resets are always active-high.
 | Yes
 | Yes
 
-| `BR_REGILX`
+| `BR_REGLIX`
 | Flip-flop register with conditional load enable, synchronous active-high given reset, initial value given, positive-edge triggered given clock.
 | Yes
 | Yes

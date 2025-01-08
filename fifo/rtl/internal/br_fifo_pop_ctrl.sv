@@ -132,7 +132,7 @@ module br_fifo_pop_ctrl #(
       .value_next(items_next)
   );
   assign empty_next = items_next == 0;
-  `BR_REGIL(empty, empty_next, push_beat || pop_beat, 1'b1)
+  `BR_REGLI(empty, empty_next, push_beat || pop_beat, 1'b1)
 
   //------------------------------------------
   // Implementation checks

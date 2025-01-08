@@ -120,7 +120,7 @@ module br_cdc_fifo_pop_flag_mgr #(
 
   `BR_REGL(push_count_saved, push_count, !reset_active_push)
   `BR_REGL(items, items_next, pop_beat || !reset_active_push)
-  `BR_REGIL(empty, empty_next, pop_beat || !reset_active_push, 1'b1)
+  `BR_REGLI(empty, empty_next, pop_beat || !reset_active_push, 1'b1)
 
   `BR_UNUSED_NAMED(items_next_ext_msb, items_next_ext[CountWidth])
 
