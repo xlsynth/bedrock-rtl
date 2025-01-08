@@ -53,6 +53,8 @@ module br_delay_valid #(
 
   `BR_COVER_INTG(in_valid_c, in_valid)
 
+  `BR_ASSERT_FINAL(final_not_in_valid_a, !in_valid)
+
   //------------------------------------------
   // Implementation
   //------------------------------------------
@@ -84,5 +86,7 @@ module br_delay_valid #(
     `BR_ASSERT_IMPL(valid_delay_a, ##NumStages out_valid == $past(in_valid, NumStages))
     `BR_ASSERT_IMPL(data_delay_a, in_valid |-> ##NumStages out_valid && out == $past(in, NumStages))
   end
+
+  `BR_ASSERT_FINAL(final_not_out_valid_a, !out_valid)
 
 endmodule : br_delay_valid

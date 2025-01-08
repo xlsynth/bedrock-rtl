@@ -107,6 +107,7 @@ module br_ecc_secded_decoder #(
   `BR_ASSERT_STATIC(parity_width_gte_4_a, ParityWidth >= 4)
   `BR_ASSERT_STATIC(parity_width_lte_12_a, ParityWidth <= 12)
   `BR_ASSERT_STATIC(message_width_is_power_of_2_a, br_math::is_power_of_2(MessageWidth))
+  `BR_ASSERT_FINAL(final_not_rcv_valid_a, !rcv_valid)
 
   //------------------------------------------
   // Implementation
@@ -2484,6 +2485,8 @@ module br_ecc_secded_decoder #(
                   dec_valid |-> $onehot0({dec_error_ce, dec_error_due}))
   `BR_COVER_IMPL(ce_c, dec_valid && dec_error_ce)
   `BR_COVER_IMPL(due_c, dec_valid && dec_error_due)
+
+  `BR_ASSERT_FINAL(final_not_dec_valid_a, !dec_valid)
 
   // verilog_format: on
   // verilog_lint: waive-stop line-length

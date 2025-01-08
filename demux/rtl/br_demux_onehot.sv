@@ -47,6 +47,8 @@ module br_demux_onehot #(
   // ri lint_check_waive ALWAYS_COMB
   `BR_ASSERT_COMB_INTG(select_onehot0_a, $onehot0(select))
 
+  `BR_ASSERT_FINAL(final_not_in_valid_a, !in_valid)
+
   //------------------------------------------
   // Implementation
   //------------------------------------------
@@ -64,5 +66,7 @@ module br_demux_onehot #(
   `BR_ASSERT_COMB_IMPL(out_invalid_when_select_0_a,
                        // ri lint_check_waive ALWAYS_COMB
                        (out_valid == '0) || ((select != '0) && in_valid))
+
+  `BR_ASSERT_FINAL(final_not_out_valid_a, !out_valid)
 
 endmodule : br_demux_onehot

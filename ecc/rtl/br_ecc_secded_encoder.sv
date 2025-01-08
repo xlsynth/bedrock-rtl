@@ -93,6 +93,7 @@ module br_ecc_secded_encoder #(
   `BR_ASSERT_STATIC(parity_width_gte_4_a, ParityWidth >= 4)
   `BR_ASSERT_STATIC(parity_width_lte_12_a, ParityWidth <= 12)
   `BR_ASSERT_STATIC(message_width_is_power_of_2_a, br_math::is_power_of_2(MessageWidth))
+  `BR_ASSERT_FINAL(final_not_data_valid_a, !data_valid)
 
   //------------------------------------------
   // Implementation
@@ -261,6 +262,7 @@ module br_ecc_secded_encoder #(
   // Implementation checks
   //------------------------------------------
   `BR_ASSERT_IMPL(latency_a, data_valid |-> ##Latency enc_valid)
+  `BR_ASSERT_FINAL(final_not_enc_valid_a, !enc_valid)
 
   // verilog_lint: waive-stop line-length
   // verilog_format: on

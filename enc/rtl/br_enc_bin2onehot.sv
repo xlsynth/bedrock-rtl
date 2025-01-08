@@ -70,6 +70,8 @@ module br_enc_bin2onehot #(
     `BR_ASSERT_INTG(in_within_range_a, in_valid |-> in < NumValues)
   end
 
+  `BR_ASSERT_FINAL(final_not_in_valid_a, !in_valid)
+
   //------------------------------------------
   // Implementation
   //------------------------------------------

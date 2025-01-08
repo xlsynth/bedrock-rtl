@@ -51,9 +51,6 @@ module br_counter #(
     // If 0, don't allow wrapping and omit overflow/underflow correction logic.
     // Assert there is no overflow/underflow.
     parameter bit EnableWrap = 1,
-    // If 1, then assert incr_valid and decr_valid are 0 at end of simulation.
-    // Otherwise, don't check.
-    parameter bit EnableAssertFinalNotValid = 1,
     localparam int ValueWidth = $clog2(MaxValue + 1),
     localparam int ChangeWidth = $clog2(MaxChange + 1)
 ) (
@@ -105,10 +102,8 @@ module br_counter #(
 `endif  // BR_ASSERT_ON
 
   `BR_UNUSED_NAMED(all_unused, {rst, valid, ready, data})
-  if (EnableAssertFinalNotValid) begin : gen_assert_final
-    `BR_ASSERT_FINAL(final_not_incr_valid_a, !incr_valid)
-    `BR_ASSERT_FINAL(final_not_decr_valid_a, !decr_valid)
-  end
+  `BR_ASSERT_FINAL(final_not_incr_valid_a, !incr_valid)
+  `BR_ASSERT_FINAL(final_not_decr_valid_a, !decr_valid)
 
   //------------------------------------------
   // Implementation

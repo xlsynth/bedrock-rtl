@@ -55,6 +55,8 @@ module br_delay_valid_next_nr #(
 
   `BR_COVER_CR_INTG(in_valid_next_c, in_valid_next === 1'b1, clk, 1'b0)
 
+  `BR_ASSERT_FINAL(final_not_in_valid_next_a, !in_valid_next)
+
   //------------------------------------------
   // Implementation
   //------------------------------------------
@@ -91,5 +93,7 @@ module br_delay_valid_next_nr #(
         data_delay_a, in_valid_next |-> ##NumStages out_valid_next ##1 out === $past(in, NumStages),
         clk, 1'b0)
   end
+
+  `BR_ASSERT_FINAL(final_not_out_valid_next_a, !out_valid_next)
 
 endmodule : br_delay_valid_next_nr

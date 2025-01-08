@@ -69,6 +69,7 @@ module br_ecc_sed_decoder #(
   // Integration checks
   //------------------------------------------
   `BR_ASSERT_STATIC(data_width_gte_1_a, DataWidth >= 1)
+  `BR_ASSERT_FINAL(final_not_rcv_valid_a, !rcv_valid)
 
   //------------------------------------------
   // Implementation
@@ -133,5 +134,6 @@ module br_ecc_sed_decoder #(
   //------------------------------------------
   `BR_ASSERT_IMPL(latency_a, rcv_valid |-> ##Latency dec_valid)
   `BR_COVER_IMPL(due_c, dec_valid && dec_error_due)
+  `BR_ASSERT_FINAL(final_not_dec_valid_a, !dec_valid)
 
 endmodule : br_ecc_sed_decoder

@@ -62,6 +62,7 @@ module br_ecc_sed_encoder #(
   // Integration checks
   //------------------------------------------
   `BR_ASSERT_STATIC(data_width_gte_1_a, DataWidth >= 1)
+  `BR_ASSERT_FINAL(final_not_data_valid_a, !data_valid)
 
   //------------------------------------------
   // Implementation
@@ -120,5 +121,6 @@ module br_ecc_sed_encoder #(
   //------------------------------------------
   `BR_ASSERT_IMPL(latency_a, data_valid |-> ##Latency enc_valid)
   `BR_ASSERT_IMPL(even_parity_a, enc_valid |-> ^enc_codeword == 1'b0)
+  `BR_ASSERT_FINAL(final_not_enc_valid_a, !enc_valid)
 
 endmodule : br_ecc_sed_encoder

@@ -58,6 +58,7 @@ module br_tracker_freelist #(
   `BR_ASSERT_STATIC(legal_num_alloc_ports_a, NumAllocPorts >= 1)
   `BR_ASSERT_STATIC(legal_num_dealloc_ports_a, NumDeallocPorts >= 1)
 
+  `BR_ASSERT_FINAL(final_not_dealloc_valid_a, !dealloc_valid)
 
 `ifdef BR_ASSERT_ON
 `ifndef BR_DISABLE_INTG_CHECKS
@@ -266,5 +267,8 @@ module br_tracker_freelist #(
   end
 `endif
 `endif
+
+  // We expect alloc_valid can be 1 at the end of simulation (i.e., if all entries are free).
+  // So don't do a BR_ASSERT_FINAL on it.
 
 endmodule

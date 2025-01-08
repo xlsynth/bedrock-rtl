@@ -131,6 +131,9 @@ module br_ram_flops_1r1w #(
     `BR_ASSERT_STATIC(tile_width_div_word_width_a, (TileWidth % WordWidth) == 0)
   end
 
+  `BR_ASSERT_FINAL(final_not_wr_valid_a, !wr_valid)
+  `BR_ASSERT_FINAL(final_not_rd_addr_valid_a, !rd_addr_valid)
+
   // Rely on submodule integration checks
 
   //------------------------------------------
@@ -275,5 +278,7 @@ module br_ram_flops_1r1w #(
                          rd_clk, rd_rst)
     end
   end
+
+  `BR_ASSERT_FINAL(final_not_rd_data_valid_a, !rd_data_valid)
 
 endmodule : br_ram_flops_1r1w

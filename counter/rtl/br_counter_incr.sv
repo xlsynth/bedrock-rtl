@@ -47,9 +47,6 @@
 module br_counter_incr #(
     parameter int MaxValue = 1,  // Must be at least 1. Inclusive.
     parameter int MaxIncrement = 1,  // Must be at least 1 and at most MaxValue. Inclusive.
-    // If 1, then assert incr_valid is 0 at end of simulation.
-    // Otherwise, don't check.
-    parameter bit EnableAssertFinalNotValid = 1,
     localparam int ValueWidth = $clog2(MaxValue + 1),
     localparam int IncrementWidth = $clog2(MaxIncrement + 1)
 ) (
@@ -75,9 +72,7 @@ module br_counter_incr #(
   `BR_ASSERT_INTG(incr_in_range_a, incr_valid |-> incr <= MaxIncrement)
   `BR_ASSERT_INTG(initial_value_in_range_a, initial_value <= MaxValue)
 
-  if (EnableAssertFinalNotValid) begin : gen_assert_final
-    `BR_ASSERT_FINAL(final_not_incr_valid_a, !incr_valid)
-  end
+  `BR_ASSERT_FINAL(final_not_incr_valid_a, !incr_valid)
 
   //------------------------------------------
   // Implementation

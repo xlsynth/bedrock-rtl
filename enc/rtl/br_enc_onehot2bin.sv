@@ -94,4 +94,6 @@ module br_enc_onehot2bin #(
   //------------------------------------------
   `BR_ASSERT_IMPL(out_within_range_a, out < NumValues)
 
+  `BR_ASSERT_FINAL(final_not_out_valid_a, !out_valid)
+
 endmodule : br_enc_onehot2bin

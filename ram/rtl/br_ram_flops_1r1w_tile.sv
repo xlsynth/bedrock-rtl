@@ -95,6 +95,9 @@ module br_ram_flops_1r1w_tile #(
     `BR_ASSERT_COMB_INTG(same_clock_a, wr_clk == rd_clk)
   end
 
+  `BR_ASSERT_FINAL(final_not_wr_valid_a, !wr_valid)
+  `BR_ASSERT_FINAL(final_not_rd_addr_valid_a, !rd_addr_valid)
+
   //------------------------------------------
   // Implementation
   //------------------------------------------
@@ -196,5 +199,7 @@ module br_ram_flops_1r1w_tile #(
         wr_valid && rd_addr_valid && (wr_addr == rd_addr) |-> rd_data_valid && rd_data == wr_data,
         rd_clk, rd_rst)
   end
+
+  `BR_ASSERT_FINAL(final_not_rd_data_valid_a, !rd_data_valid)
 
 endmodule : br_ram_flops_1r1w_tile

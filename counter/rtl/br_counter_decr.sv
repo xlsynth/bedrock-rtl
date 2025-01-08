@@ -46,9 +46,6 @@
 module br_counter_decr #(
     parameter int MaxValue = 1,  // Must be at least 1. Inclusive. Also the initial value.
     parameter int MaxDecrement = 1,  // Must be at least 1 and at most MaxValue. Inclusive.
-    // If 1, then assert decr_valid is 0 at end of simulation.
-    // Otherwise, don't check.
-    parameter bit EnableAssertFinalNotValid = 1,
     localparam int ValueWidth = $clog2(MaxValue + 1),
     localparam int DecrementWidth = $clog2(MaxDecrement + 1)
 ) (
@@ -74,9 +71,7 @@ module br_counter_decr #(
   `BR_ASSERT_INTG(decr_in_range_a, decr_valid |-> decr <= MaxDecrement)
   `BR_ASSERT_INTG(initial_value_in_range_a, initial_value <= MaxValue)
 
-  if (EnableAssertFinalNotValid) begin : gen_assert_final
-    `BR_ASSERT_FINAL(final_not_decr_valid_a, !decr_valid)
-  end
+  `BR_ASSERT_FINAL(final_not_decr_valid_a, !decr_valid)
 
   //------------------------------------------
   // Implementation
