@@ -161,7 +161,7 @@ module br_counter #(
     end
   end
 
-  `BR_REGIL(value, value_next, value_loaden, initial_value)
+  `BR_REGLI(value, value_next, value_loaden, initial_value)
 
   //------------------------------------------
   // Implementation checks

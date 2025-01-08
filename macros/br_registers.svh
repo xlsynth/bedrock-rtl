@@ -89,7 +89,7 @@ end
 // * initial value given
 // * synchronous active-high reset named 'rst'
 // * positive-edge triggered clock named 'clk'
-`define BR_REGIL(__q__, __d__, __en__, __init__) \
+`define BR_REGLI(__q__, __d__, __en__, __init__) \
 always_ff @(posedge clk) begin \
     if (rst) __q__ <= __init__; \
     else if (__en__) __q__ <= __d__; \
@@ -137,7 +137,7 @@ end
 // * initial value given
 // * asynchronous active-high reset named 'arst'
 // * positive-edge triggered clock named 'clk'
-`define BR_REGAIL(__q__, __d__, __en__, __init__) \
+`define BR_REGALI(__q__, __d__, __en__, __init__) \
 always_ff @(posedge clk or posedge arst) begin \
     if (arst) __q__ <= __init__; \
     else if (__en__) __q__ <= __d__; \
@@ -185,7 +185,7 @@ end
 // * initial value given
 // * synchronous active-high reset
 // * positive-edge triggered clock
-`define BR_REGILX(__q__, __d__, __en__, __init__, __clk__, __rst__) \
+`define BR_REGLIX(__q__, __d__, __en__, __init__, __clk__, __rst__) \
 always_ff @(posedge __clk__) begin \
     if (__rst__) __q__ <= __init__; \
     else if (__en__) __q__ <= __d__; \

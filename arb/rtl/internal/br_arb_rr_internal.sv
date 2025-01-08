@@ -125,6 +125,6 @@ module br_arb_rr_internal #(
   // ri lint_check_waive CONST_ASSIGN
   assign last_grant_init[NumRequesters-2:0] = '0;
 
-  `BR_REGIL(last_grant, grant, enable_priority_update && |request, last_grant_init)
+  `BR_REGLI(last_grant, grant, enable_priority_update && |request, last_grant_init)
 
 endmodule : br_arb_rr_internal

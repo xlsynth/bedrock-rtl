@@ -123,7 +123,7 @@ module br_cdc_fifo_push_flag_mgr #(
   assign full_next = (slots_next == '0);
 
   `BR_REGL(pop_count_saved, pop_count, !reset_active_pop)
-  `BR_REGIL(slots, slots_next, push_beat || !reset_active_pop, Depth)
+  `BR_REGLI(slots, slots_next, push_beat || !reset_active_pop, Depth)
   `BR_REGL(full, full_next, push_beat || !reset_active_pop)
 
   `BR_UNUSED_NAMED(items_next_msb, items_next[CountWidth])

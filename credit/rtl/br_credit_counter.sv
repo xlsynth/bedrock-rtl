@@ -135,7 +135,7 @@ module br_credit_counter #(
   assign value_next = value_plus_incr - (decr_ready ? ValueWidth'(decr_internal) : '0);
   assign value_loaden = incr_valid || (decr_valid && decr_ready);
 
-  `BR_REGIL(value, value_next, value_loaden, initial_value)
+  `BR_REGLI(value, value_next, value_loaden, initial_value)
 
   // Withhold and available: don't use the decrement in the calculation of
   // available credits because that would cause a combinational loop

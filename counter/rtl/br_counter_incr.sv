@@ -107,7 +107,7 @@ module br_counter_incr #(
     end
   end
 
-  `BR_REGIL(value, value_next, incr_valid || reinit, initial_value)
+  `BR_REGLI(value, value_next, incr_valid || reinit, initial_value)
 
   //------------------------------------------
   // Implementation checks
