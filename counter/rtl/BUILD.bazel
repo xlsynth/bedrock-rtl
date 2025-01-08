@@ -57,6 +57,10 @@ br_verilog_elab_and_lint_test_suite(
         "MaxIncrement": [
             "1",
         ],
+        "EnableAssertFinalNotValid": [
+            "0",
+            "1",
+        ],
     },
     deps = [":br_counter_incr"],
 )
@@ -86,6 +90,10 @@ br_verilog_elab_and_lint_test_suite(
         "MaxDecrement": [
             "1",
         ],
+        "EnableAssertFinalNotValid": [
+            "0",
+            "1",
+        ],
     },
     deps = [":br_counter_decr"],
 )
@@ -113,6 +121,10 @@ br_verilog_elab_and_lint_test_suite(
             "3",
         ],
         "MaxChange": [
+            "1",
+        ],
+        "EnableAssertFinalNotValid": [
+            "0",
             "1",
         ],
     },

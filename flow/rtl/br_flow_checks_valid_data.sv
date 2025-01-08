@@ -41,7 +41,10 @@ module br_flow_checks_valid_data #(
     // If 0, cover that data can be unstable.
     // Can only be enabled if EnableAssertValidStability is also enabled.
     // ri lint_check_waive PARAM_NOT_USED
-    parameter bit EnableAssertDataStability = EnableAssertValidStability
+    parameter bit EnableAssertDataStability = EnableAssertValidStability,
+    // If 1, then assert valid is 0 at end of simulation.
+    // Otherwise, don't check.
+    parameter bit EnableAssertFinalNotValid = 1
 ) (
     // ri lint_check_waive INPUT_NOT_READ HIER_NET_NOT_READ HIER_BRANCH_NOT_READ
     input logic clk,
@@ -93,5 +96,9 @@ module br_flow_checks_valid_data #(
 `endif
 
   `BR_UNUSED_NAMED(all_unused, {rst, valid, ready, data})
+  if (EnableAssertFinalNotValid) begin : gen_assert_final
+    `BR_ASSERT_FINAL(final_not_valid_a, !valid)
+  end
+
 endmodule
 // ri lint_check_on NO_OUTPUT
