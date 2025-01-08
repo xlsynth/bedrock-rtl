@@ -33,14 +33,14 @@ module br_gates_test;
   logic out_mux;
   logic out_clk_mux;
 
-  `BR_GATE_BUF(dut, out_buf, in0)
-  `BR_GATE_CLK_BUF(dut, out_clk_buf, in0)
-  `BR_GATE_INV(dut, out_inv, in0)
-  `BR_GATE_AND2(dut, out_and2, in0, in1)
-  `BR_GATE_OR2(dut, out_or2, in0, in1)
-  `BR_GATE_XOR2(dut, out_xor2, in0, in1)
-  `BR_GATE_MUX2(dut, out_mux, in0, in1, mux_sel)
-  `BR_GATE_CLK_MUX2(dut, out_clk_mux, in0, in1, mux_sel)
+  `BR_GATE_BUF(out_buf, in0)
+  `BR_GATE_CLK_BUF(out_clk_buf, in0)
+  `BR_GATE_INV(out_inv, in0)
+  `BR_GATE_AND2(out_and2, in0, in1)
+  `BR_GATE_OR2(out_or2, in0, in1)
+  `BR_GATE_XOR2(out_xor2, in0, in1)
+  `BR_GATE_MUX2(out_mux, in0, in1, mux_sel)
+  `BR_GATE_CLK_MUX2(out_clk_mux, in0, in1, mux_sel)
 
 
   `BR_ASSERT_COMB(out_buf_check, out_buf == in0)

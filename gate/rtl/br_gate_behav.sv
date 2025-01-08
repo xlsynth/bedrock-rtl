@@ -19,6 +19,8 @@
 // models should be replaced with vendor-specific standard cells. Only one
 // version of the gatelib should be included in the design filelist.
 
+// TODO: add a mechanism to make sure these modules are never synthesized
+
 // verilog_lint: waive-start module-filename
 // ri lint_check_off ONE_PER_FILE FILE_NAME
 
@@ -114,11 +116,10 @@ module br_gate_clk_mux2 (
 
 endmodule : br_gate_clk_mux2
 
-// Integrated Clock Gate with Test Override
+// Integrated Clock Gate
 module br_gate_icg (
     input  logic clk_in,
     input  logic en,
-    input  logic test_en,
     output logic clk_out
 );
 
@@ -130,9 +131,29 @@ module br_gate_icg (
     end
   end
 
-  assign clk_out = test_en ? clk_in : (clk_in & latch_en);
+  assign clk_out = clk_in & latch_en;
 
 endmodule : br_gate_icg
+
+// Integrated Clock Gate with Synchronous Reset
+module br_gate_icg_rst (
+    input logic clk_in,
+    input logic en,
+    input logic rst,  // sync reset
+    output logic clk_out
+);
+
+  logic latch_en;
+
+  always_latch begin
+    if (!clk_in) begin
+      latch_en = rst | en;
+    end
+  end
+
+  assign clk_out = clk_in & latch_en;
+
+endmodule : br_gate_icg_rst
 
 // Clock Domain Crossing Synchronizer
 module br_gate_cdc_sync #(
@@ -142,7 +163,6 @@ module br_gate_cdc_sync #(
     input  logic in,
     output logic out
 );
-
 
   logic [NumStages-1:0] in_d;
 
