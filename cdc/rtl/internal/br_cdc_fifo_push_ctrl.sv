@@ -133,4 +133,6 @@ module br_cdc_fifo_push_ctrl #(
   `BR_ASSERT_IMPL(push_slots_a, (slots_next < slots) |-> push_beat)
   `BR_ASSERT_IMPL(full_a, full == (slots == 0))
 
+  `BR_ASSERT_FINAL(final_slots_all_a, slots == Depth)
+
 endmodule : br_cdc_fifo_push_ctrl

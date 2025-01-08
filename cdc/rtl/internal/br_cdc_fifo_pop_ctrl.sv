@@ -128,4 +128,6 @@ module br_cdc_fifo_pop_ctrl #(
   `BR_ASSERT_IMPL(pop_items_a, (items_next < items) |-> pop_beat)
   `BR_ASSERT_IMPL(empty_a, empty == (items == 0))
 
+  `BR_ASSERT_FINAL(final_empty_a, empty)
+
 endmodule : br_cdc_fifo_pop_ctrl
