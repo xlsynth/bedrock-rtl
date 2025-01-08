@@ -25,6 +25,7 @@ verilog_library(
     srcs = ["br_fifo_push_ctrl_core.sv"],
     deps = [
         "//counter/rtl:br_counter_incr",
+        "//flow/rtl:br_flow_checks_valid_data",
         "//macros:br_unused",
     ],
 )
