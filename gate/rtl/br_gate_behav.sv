@@ -116,7 +116,7 @@ module br_gate_clk_mux2 (
 
 endmodule : br_gate_clk_mux2
 
-// Integrated Clock Gate with Test Override
+// Integrated Clock Gate
 module br_gate_icg (
     input  logic clk_in,
     input  logic en,
@@ -135,7 +135,7 @@ module br_gate_icg (
 
 endmodule : br_gate_icg
 
-// Integrated Clock Gate with Test Override and Synchronous Reset
+// Integrated Clock Gate with Synchronous Reset
 module br_gate_icg_rst (
     input logic clk_in,
     input logic en,
