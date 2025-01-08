@@ -15,8 +15,8 @@
 // Bedrock-RTL Signal Tie-off-to-Zero Driver
 //
 // Drives a signal to constant 0s and waives the corresponding lint errors internally.
-// It is expected that downstream logic will be automatically constant-propagated by the
-// synthesis tool.
+// It is expected that downstream logic will be automatically constant-propagated by
+// the synthesis tool.
 //
 // To automatically instantiate this at the width of local logic,
 // users can opt to use the convenience macros defined in macros/br_tieoff.svh.
