@@ -144,6 +144,21 @@ verilog_elab_test(
 )
 
 verilog_elab_test(
+    name = "br_asserts_elab_internal_no_impl_test",
+    defines = ["BR_ASSERT_ON"],
+    deps = [":br_asserts_internal_test"],
+)
+
+verilog_elab_test(
+    name = "br_asserts_elab_internal_no_intg_test",
+    defines = [
+        "BR_ASSERT_ON",
+        "BR_DISABLE_INTG_CHECKS",
+    ],
+    deps = [":br_asserts_internal_test"],
+)
+
+verilog_elab_test(
     name = "br_asserts_internal_elab_noassert_test",
     deps = [":br_asserts_internal_test"],
 )
