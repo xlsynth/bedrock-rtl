@@ -152,7 +152,7 @@ module br_flow_deserializer #(
   `BR_ASSERT_STATIC(metadata_width_gte_1_a, MetadataWidth >= 1)
   `BR_ASSERT_STATIC(deserialization_ratio_gte_1_a, DeserializationRatio >= 1)
 
-  br_flow_checks_valid_data #(
+  br_flow_checks_valid_data_intg #(
       .NumFlows(1),
       .Width(PushWidth + 1 + MetadataWidth),
       // Push ready/valid stability is required for the deserializer to work correctly.
@@ -162,7 +162,7 @@ module br_flow_deserializer #(
       .EnableCoverBackpressure(1),
       .EnableAssertValidStability(1),
       .EnableAssertDataStability(1)
-  ) br_flow_checks_valid_data (
+  ) br_flow_checks_valid_data_intg (
       .clk,
       .rst,
       .ready(push_ready),

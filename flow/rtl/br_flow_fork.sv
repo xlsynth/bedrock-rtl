@@ -55,14 +55,14 @@ module br_flow_fork #(
   //------------------------------------------
   `BR_ASSERT_STATIC(num_flows_gte_2_a, NumFlows >= 2)
 
-  br_flow_checks_valid_data #(
+  br_flow_checks_valid_data_intg #(
       .NumFlows(1),
       .Width(1),
       .EnableCoverBackpressure(EnableCoverPushBackpressure),
       .EnableAssertValidStability(EnableAssertPushValidStability),
       // Data is always stable when valid is since it is constant.
       .EnableAssertDataStability(EnableAssertPushValidStability)
-  ) br_flow_checks_valid_data (
+  ) br_flow_checks_valid_data_intg (
       .clk,
       .rst,
       .ready(push_ready),

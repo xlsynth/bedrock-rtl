@@ -61,13 +61,13 @@ module br_flow_mux_core #(
   `BR_ASSERT_STATIC(numflows_gte_2_a, NumFlows >= 2)
   `BR_ASSERT_STATIC(datawidth_gte_1_a, Width >= 1)
 
-  br_flow_checks_valid_data #(
+  br_flow_checks_valid_data_intg #(
       .NumFlows(NumFlows),
       .Width(Width),
       .EnableCoverBackpressure(EnableCoverPushBackpressure),
       .EnableAssertValidStability(EnableAssertPushValidStability),
       .EnableAssertDataStability(EnableAssertPushDataStability)
-  ) br_flow_checks_valid_data (
+  ) br_flow_checks_valid_data_intg (
       .clk,
       .rst,
       .ready(push_ready),

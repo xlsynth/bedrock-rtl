@@ -23,7 +23,7 @@
 `include "br_unused.svh"
 
 // ri lint_check_off NO_OUTPUT
-module br_flow_checks_valid_data #(
+module br_flow_checks_valid_data_intg #(
     // The number of ready-valid flows. Must be at least 1.
     parameter int NumFlows = 1,
     // The width of the data signal. Must be at least 1.
@@ -89,8 +89,8 @@ module br_flow_checks_valid_data #(
       end
     end
   end
-`endif
-`endif
+`endif  // BR_DISABLE_INTG_CHECKS
+`endif  // BR_ASSERT_ON
 
   `BR_UNUSED_NAMED(all_unused, {rst, valid, ready, data})
 endmodule

@@ -20,7 +20,7 @@ verilog_library(
     name = "br_flow_arb_core",
     srcs = ["br_flow_arb_core.sv"],
     deps = [
-        "//flow/rtl:br_flow_checks_valid_data",
+        ":br_flow_checks_valid_data_intg",
         "//macros:br_asserts_internal",
         "//macros:br_unused",
     ],
@@ -31,9 +31,27 @@ verilog_library(
     srcs = ["br_flow_mux_core.sv"],
     deps = [
         ":br_flow_arb_core",
-        "//flow/rtl:br_flow_checks_valid_data",
+        ":br_flow_checks_valid_data_intg",
         "//macros:br_asserts_internal",
         "//macros:br_unused",
         "//mux/rtl:br_mux_onehot",
+    ],
+)
+
+verilog_library(
+    name = "br_flow_checks_valid_data_intg",
+    srcs = ["br_flow_checks_valid_data_intg.sv"],
+    deps = [
+        "//macros:br_asserts_internal",
+        "//macros:br_unused",
+    ],
+)
+
+verilog_library(
+    name = "br_flow_checks_valid_data_impl",
+    srcs = ["br_flow_checks_valid_data_impl.sv"],
+    deps = [
+        "//macros:br_asserts_internal",
+        "//macros:br_unused",
     ],
 )
