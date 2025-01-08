@@ -78,6 +78,9 @@ module br_asserts_test;
   // Use BR_ASSERT_STATIC
   `BR_ASSERT_STATIC(width_check_a, Width == 4)
 
+  // Use BR_ASSERT_FINAL
+  `BR_ASSERT_FINAL(valid_0_final_a, valid == 0)
+
   // Use BR_ASSERT
   `BR_ASSERT(sum_range_check_a, sum <= 15)
   `BR_ASSERT_FPV(sum_range_check_fpv_a, sum <= 15)
