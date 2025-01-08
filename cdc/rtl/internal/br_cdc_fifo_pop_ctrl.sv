@@ -15,6 +15,7 @@
 // Bedrock-RTL FIFO Pop Controller (Ready/Valid)
 
 `include "br_asserts_internal.svh"
+`include "br_gates.svh"
 `include "br_registers.svh"
 `include "br_unused.svh"
 
@@ -73,6 +74,12 @@ module br_cdc_fifo_pop_ctrl #(
   // Core flow-control logic
 
   logic pop_beat;
+  logic [Width-1:0] pop_data_pre_maxdel;
+
+  // Tag this signal as needing max delay checks
+  // ri lint_check_off ONE_CONN_PER_LINE
+  `BR_GATE_CDC_MAXDEL_BUS(pop_data, pop_data_pre_maxdel, Width)
+  // ri lint_check_on ONE_CONN_PER_LINE
 
   br_fifo_pop_ctrl_core #(
       .Depth(Depth),
@@ -85,7 +92,7 @@ module br_cdc_fifo_pop_ctrl #(
       .rst,
       .pop_ready,
       .pop_valid,
-      .pop_data,
+      .pop_data(pop_data_pre_maxdel),
       .bypass_ready(),  // Not used
       .bypass_valid_unstable(1'b0),  // Not used
       .bypass_data_unstable(Width'(1'b0)),  // Not used

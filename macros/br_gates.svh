@@ -129,10 +129,22 @@ br_gate_cdc_pseudostatic br_gate_cdc_pseudostatic_``__out__`` ( \
     .out(__out__) \
 );
 
+`define BR_GATE_CDC_PSEUDOSTATIC_BUS(__out__, __in__, __width__) \
+br_gate_cdc_pseudostatic br_gate_cdc_pseudostatic_``__out__`` [``__width__``-1:0] ( \
+    .in(__in__), \
+    .out(__out__) \
+);
+
 // Buffer used at CDC crossings that indicate that this crossing would need to be checked for
 // max delay (skew checks).
 `define BR_GATE_CDC_MAXDEL(__out__, __in__) \
 br_gate_cdc_maxdel br_gate_cdc_maxdel_``__out__`` ( \
+    .in(__in__), \
+    .out(__out__) \
+);
+
+`define BR_GATE_CDC_MAXDEL_BUS(__out__, __in__, __width__) \
+br_gate_cdc_maxdel br_gate_cdc_maxdel_``__out__`` [``__width__``-1:0] ( \
     .in(__in__), \
     .out(__out__) \
 );
