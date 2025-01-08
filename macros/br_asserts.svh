@@ -27,6 +27,7 @@
 // Therefore we namespace all macros with the BR_ prefix (stands for Bedrock).
 //
 // Assertion macros are only enabled when BR_ASSERT_ON is defined.
+// A subset of assertion macros are enabled when both BR_ASSERT_ON and BR_ENABLE_FPV are defined.
 
 ////////////////////////////////////////////////////////////////////////////////
 // Static (elaboration-time) assertion macros
@@ -67,6 +68,46 @@ __name__ : assert property (@(posedge __clk__) disable iff (__rst__ === 1'b1 || 
 `define BR_ASSERT_CR(__name__, __expr__, __clk__, __rst__) \
 `BR_NOOP
 `endif  // BR_ASSERT_ON
+
+// Assert an expression is always known.
+`ifdef BR_ASSERT_ON
+`define BR_ASSERT_KNOWN(__name__, __expr__) \
+__name__ : assert property (@(posedge clk) disable iff (rst === 1'b1 || rst === 1'bx) (!$isunknown(__expr__)));
+`else  // BR_ASSERT_ON
+`define BR_ASSERT_KNOWN(__name__, __expr__) \
+`BR_NOOP
+`endif  // BR_ASSERT_ON
+
+// Assert an expression is known whenever a corresponding valid signal is 1.
+`ifdef BR_ASSERT_ON
+`define BR_ASSERT_KNOWN_VALID(__name__, __valid__, __expr__) \
+__name__ : assert property (@(posedge clk) disable iff (rst === 1'b1 || rst === 1'bx) (__valid__ |-> !$isunknown(__expr__)));
+`else  // BR_ASSERT_ON
+`define BR_ASSERT_KNOWN_VALID(__name__, __valid__, __expr__) \
+`BR_NOOP
+`endif  // BR_ASSERT_ON
+
+// More expressive form of BR_ASSERT_KNOWN that allows the use of custom clock and reset signal names.
+`ifdef BR_ASSERT_ON
+`define BR_ASSERT_KNOWN_CR(__name__, __expr__, __clk__, __rst__) \
+__name__ : assert property (@(posedge __clk__) disable iff (__rst__ === 1'b1 || __rst__ === 1'bx) (!$isunknown(__expr__)));
+`else  // BR_ASSERT_ON
+`define BR_ASSERT_KNOWN_CR(__name__, __expr__, __clk__, __rst__) \
+`BR_NOOP
+`endif  // BR_ASSERT_ON
+
+// More expressive form of BR_ASSERT_KNOWN_VALID that allows the use of custom clock and reset signal names.
+`ifdef BR_ASSERT_ON
+`define BR_ASSERT_KNOWN_VALID_CR(__name__, __valid__, __expr__, __clk__, __rst__) \
+__name__ : assert property (@(posedge __clk__) disable iff (__rst__ === 1'b1 || __rst__ === 1'bx) (__valid__ |-> !$isunknown(__expr__)));
+`else  // BR_ASSERT_ON
+`define BR_ASSERT_KNOWN_VALID_CR(__name__, __valid__, __expr__, __clk__, __rst__) \
+`BR_NOOP
+`endif  // BR_ASSERT_ON
+
+////////////////////////////////////////////////////////////////////////////////
+// FPV-only concurrent assertion macros (evaluated on posedge of a clock and disabled during a synchronous active-high reset)
+////////////////////////////////////////////////////////////////////////////////
 
 // FPV version macros
 `ifdef BR_ASSERT_ON

@@ -60,6 +60,42 @@
 `BR_NOOP
 `endif  // BR_DISABLE_INTG_CHECKS
 
+// Assert an expression is always known.
+`ifndef BR_DISABLE_INTG_CHECKS
+`define BR_ASSERT_KNOWN_INTG(__name__, __expr__) \
+`BR_ASSERT_KNOWN(__name__, __expr__)
+`else  // BR_DISABLE_INTG_CHECKS
+`define BR_ASSERT_KNOWN_INTG(__name__, __expr__) \
+`BR_NOOP
+`endif  // BR_DISABLE_INTG_CHECKS
+
+// Assert an expression is known whenever a corresponding valid signal is 1.
+`ifndef BR_DISABLE_INTG_CHECKS
+`define BR_ASSERT_KNOWN_VALID_INTG(__name__, __valid__, __expr__) \
+`BR_ASSERT_KNOWN_VALID(__name__, __valid__, __expr__)
+`else  // BR_DISABLE_INTG_CHECKS
+`define BR_ASSERT_KNOWN_VALID_INTG(__name__, __valid__, __expr__) \
+`BR_NOOP
+`endif  // BR_DISABLE_INTG_CHECKS
+
+// More expressive form of BR_ASSERT_KNOWN_INTG that allows the use of custom clock and reset signal names.
+`ifndef BR_DISABLE_INTG_CHECKS
+`define BR_ASSERT_KNOWN_CR_INTG(__name__, __expr__, __clk__, __rst__) \
+`BR_ASSERT_KNOWN_CR(__name__, __expr__, __clk__, __rst__)
+`else  // BR_DISABLE_INTG_CHECKS
+`define BR_ASSERT_KNOWN_CR_INTG(__name__, __expr__, __clk__, __rst__) \
+`BR_NOOP
+`endif  // BR_DISABLE_INTG_CHECKS
+
+// More expressive form of BR_ASSERT_KNOWN_VALID_INTG that allows the use of custom clock and reset signal names.
+`ifndef BR_DISABLE_INTG_CHECKS
+`define BR_ASSERT_KNOWN_VALID_CR_INTG(__name__, __valid__, __expr__, __clk__, __rst__) \
+`BR_ASSERT_KNOWN_VALID_CR(__name__, __valid__, __expr__, __clk__, __rst__)
+`else  // BR_DISABLE_INTG_CHECKS
+`define BR_ASSERT_KNOWN_VALID_CR_INTG(__name__, __valid__, __expr__, __clk__, __rst__) \
+`BR_NOOP
+`endif  // BR_DISABLE_INTG_CHECKS
+
 // Clock: 'clk'
 // Reset: 'rst'
 `ifdef BR_ENABLE_IMPL_CHECKS
@@ -76,6 +112,42 @@
 `BR_ASSERT_CR(__name__, __expr__, __clk__, __rst__)
 `else  // BR_ENABLE_IMPL_CHECKS
 `define BR_ASSERT_CR_IMPL(__name__, __expr__, __clk__, __rst__) \
+`BR_NOOP
+`endif  // BR_ENABLE_IMPL_CHECKS
+
+// Assert an expression is always known.
+`ifndef BR_ENABLE_IMPL_CHECKS
+`define BR_ASSERT_KNOWN_IMPL(__name__, __expr__) \
+`BR_ASSERT_KNOWN(__name__, __expr__)
+`else  // BR_ENABLE_IMPL_CHECKS
+`define BR_ASSERT_KNOWN_IMPL(__name__, __expr__) \
+`BR_NOOP
+`endif  // BR_ENABLE_IMPL_CHECKS
+
+// Assert an expression is known whenever a corresponding valid signal is 1.
+`ifndef BR_ENABLE_IMPL_CHECKS
+`define BR_ASSERT_KNOWN_VALID_IMPL(__name__, __valid__, __expr__) \
+`BR_ASSERT_KNOWN_VALID(__name__, __valid__, __expr__)
+`else  // BR_ENABLE_IMPL_CHECKS
+`define BR_ASSERT_KNOWN_VALID_IMPL(__name__, __valid__, __expr__) \
+`BR_NOOP
+`endif  // BR_ENABLE_IMPL_CHECKS
+
+// More expressive form of BR_ASSERT_KNOWN_IMPL that allows the use of custom clock and reset signal names.
+`ifndef BR_ENABLE_IMPL_CHECKS
+`define BR_ASSERT_KNOWN_CR_IMPL(__name__, __expr__, __clk__, __rst__) \
+`BR_ASSERT_KNOWN_CR(__name__, __expr__, __clk__, __rst__)
+`else  // BR_ENABLE_IMPL_CHECKS
+`define BR_ASSERT_KNOWN_CR_IMPL(__name__, __expr__, __clk__, __rst__) \
+`BR_NOOP
+`endif  // BR_ENABLE_IMPL_CHECKS
+
+// More expressive form of BR_ASSERT_KNOWN_VALID_IMPL that allows the use of custom clock and reset signal names.
+`ifndef BR_ENABLE_IMPL_CHECKS
+`define BR_ASSERT_KNOWN_VALID_CR_IMPL(__name__, __valid__, __expr__, __clk__, __rst__) \
+`BR_ASSERT_KNOWN_VALID_CR(__name__, __valid__, __expr__, __clk__, __rst__)
+`else  // BR_ENABLE_IMPL_CHECKS
+`define BR_ASSERT_KNOWN_VALID_CR_IMPL(__name__, __valid__, __expr__, __clk__, __rst__) \
 `BR_NOOP
 `endif  // BR_ENABLE_IMPL_CHECKS
 

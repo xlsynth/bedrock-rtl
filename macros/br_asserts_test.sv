@@ -82,6 +82,12 @@ module br_asserts_test;
   `BR_ASSERT(sum_range_check_a, sum <= 15)
   `BR_ASSERT_FPV(sum_range_check_fpv_a, sum <= 15)
 
+  // Use BR_ASSERT_KNOWN variants
+  `BR_ASSERT_KNOWN(valid_known_a, valid)
+  `BR_ASSERT_KNOWN_VALID(sum_known_when_valid_a, valid, sum)
+  `BR_ASSERT_KNOWN_CR(valid_known_cr_a, valid, clk, rst)
+  `BR_ASSERT_KNOWN_VALID_CR(sum_known_when_valid_cr_a, valid, sum, clk, rst)
+
   // Use BR_ASSUME
   // Not really useful (redundant with assert above) but it
   // should work like an assert when not being used in formal

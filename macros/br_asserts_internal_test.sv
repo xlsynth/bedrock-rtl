@@ -71,8 +71,32 @@ module br_asserts_internal_test;
   // Use BR_ASSERT_INTG
   `BR_ASSERT_INTG(sum_range_check_intg, sum <= 15)
 
+  // Use BR_ASSERT_KNOWN_INTG
+  `BR_ASSERT_KNOWN_INTG(valid_known_intg, valid)
+
+  // Use BR_ASSERT_KNOWN_VALID_INTG
+  `BR_ASSERT_KNOWN_VALID_INTG(sum_known_when_valid_intg, valid, sum)
+
+  // Use BR_ASSERT_KNOWN_CR_INTG
+  `BR_ASSERT_KNOWN_CR_INTG(valid_known_cr_intg, valid, clk, rst)
+
+  // Use BR_ASSERT_KNOWN_VALID_CR_INTG
+  `BR_ASSERT_KNOWN_VALID_CR_INTG(sum_known_when_valid_cr_intg, valid, sum, clk, rst)
+
   // Use BR_ASSERT_IMPL
   `BR_ASSERT_IMPL(sum_correct_impl, (valid == 1) |-> (sum == a + b))
+
+  // Use BR_ASSERT_KNOWN_IMPL
+  `BR_ASSERT_KNOWN_IMPL(valid_known_impl, valid)
+
+  // Use BR_ASSERT_KNOWN_VALID_IMPL
+  `BR_ASSERT_KNOWN_VALID_IMPL(sum_known_when_valid_impl, valid, sum)
+
+  // Use BR_ASSERT_KNOWN_CR_IMPL
+  `BR_ASSERT_KNOWN_CR_IMPL(valid_known_cr_impl, valid, clk, rst)
+
+  // Use BR_ASSERT_KNOWN_VALID_CR_IMPL
+  `BR_ASSERT_KNOWN_VALID_CR_IMPL(sum_known_when_valid_cr_impl, valid, sum, clk, rst)
 
   // Use BR_ASSERT_CR_INTG
   logic custom_clk;
