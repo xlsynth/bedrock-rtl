@@ -101,7 +101,6 @@ module br_counter #(
 `endif  // BR_DISABLE_INTG_CHECKS
 `endif  // BR_ASSERT_ON
 
-  `BR_UNUSED_NAMED(all_unused, {rst, valid, ready, data})
   `BR_ASSERT_FINAL(final_not_incr_valid_a, !incr_valid)
   `BR_ASSERT_FINAL(final_not_decr_valid_a, !decr_valid)
 
