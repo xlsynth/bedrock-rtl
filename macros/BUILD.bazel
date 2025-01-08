@@ -114,6 +114,15 @@ verilog_elab_test(
 )
 
 verilog_elab_test(
+    name = "br_asserts_fpv_elab_test",
+    defines = [
+        "BR_ASSERT_ON",
+        "BR_ENABLE_FPV",
+    ],
+    deps = [":br_asserts_test"],
+)
+
+verilog_elab_test(
     name = "br_asserts_elab_noassert_test",
     deps = [":br_asserts_test"],
 )
