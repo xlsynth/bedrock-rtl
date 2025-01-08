@@ -180,7 +180,7 @@ module br_gate_cdc_pseudostatic (
     output logic out
 );
 
-  br_gate_buf dont_touch_cdc_pseudostatic_buf (
+  br_gate_buf br_gate_buf_dont_touch_cdc_pseudostatic (
       .in (in),
       .out(out)
   );
@@ -194,7 +194,7 @@ module br_gate_cdc_maxdel (
     output logic out
 );
 
-  br_gate_buf dont_touch_cdc_maxdel_buf (
+  br_gate_buf br_gate_buf_dont_touch_cdc_maxdel (
       .in (in),
       .out(out)
   );
