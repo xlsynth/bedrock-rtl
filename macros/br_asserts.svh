@@ -51,7 +51,9 @@ typedef enum logic [1:0] { \
 ////////////////////////////////////////////////////////////////////////////////
 `ifdef BR_ASSERT_ON
 `define BR_ASSERT_FINAL(__name__, __expr__) \
-__name__ : assert final (__expr__);
+final begin : __name__ \
+assert (__expr__); \
+end
 `else  // BR_ASSERT_ON
 `define BR_ASSERT_FINAL(__name__, __expr__) \
 `BR_NOOP
