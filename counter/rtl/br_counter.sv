@@ -134,7 +134,7 @@ module br_counter #(
     assign value_temp = value_temp_incr_decr;
   end else begin : gen_reinit_ignore_change
     assign base_value = value;
-    assign value_temp = reinit ? initial_value : value_temp_incr_decr;
+    assign value_temp = reinit ? TempWidth'(initial_value) : value_temp_incr_decr;
   end
   assign value_loaden = reinit || incr_valid || decr_valid;
 
