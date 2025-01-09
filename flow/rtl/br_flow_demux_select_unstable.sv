@@ -14,7 +14,7 @@
 
 // Bedrock-RTL Flow Demux with Select (Unstable)
 //
-// A dataflow pipeline demux with explicit select.
+// A dataflow pipeline demux with explicit binary select.
 // Uses the AMBA-inspired ready-valid handshake protocol
 // for synchronizing pipeline stages and stalling when
 // encountering backpressure hazards.

@@ -14,7 +14,7 @@
 
 // Bedrock-RTL Flow Mux with Select
 //
-// A dataflow pipeline mux with explicit select.
+// A dataflow pipeline mux with explicit binary select.
 // Uses the AMBA-inspired ready-valid handshake protocol
 // for synchronizing pipeline stages and stalling when
 // encountering backpressure hazards.
@@ -69,8 +69,8 @@ module br_flow_mux_select #(
   // Note that there are still combinational paths from pop_ready and select to push_ready.
 
   logic internal_ready;
-  logic internal_valid;
-  logic [Width-1:0] internal_data;
+  logic internal_valid_unstable;
+  logic [Width-1:0] internal_data_unstable;
 
   br_flow_mux_select_unstable #(
       .NumFlows(NumFlows),
@@ -86,18 +86,22 @@ module br_flow_mux_select #(
       .push_valid,
       .push_data,
       .pop_ready         (internal_ready),
-      .pop_valid_unstable(internal_valid),
-      .pop_data_unstable (internal_data)
+      .pop_valid_unstable(internal_valid_unstable),
+      .pop_data_unstable (internal_data_unstable)
   );
 
   br_flow_reg_fwd #(
-      .Width(Width)
+      .Width(Width),
+      // We know that valid and data can be unstable internally.
+      // This register hides that instability from the pop interface.
+      .EnableAssertPushValidStability(0),
+      .EnableAssertPushDataStability(0)
   ) br_flow_reg_fwd (
       .clk,
       .rst,
       .push_ready(internal_ready),
-      .push_valid(internal_valid),
-      .push_data (internal_data),
+      .push_valid(internal_valid_unstable),
+      .push_data (internal_data_unstable),
       .pop_ready,
       .pop_valid,
       .pop_data
