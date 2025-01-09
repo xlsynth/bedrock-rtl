@@ -115,11 +115,8 @@ module br_counter #(
   localparam int TempWidth = $clog2(MaxValue + MaxChange + 1);
 
   logic                   value_loaden;
-  logic [ ValueWidth-1:0] base_value;
   // The MSB might not be used
   // ri lint_check_waive INEFFECTIVE_NET
-  logic [  TempWidth-1:0] value_temp_incr;
-  logic [  TempWidth-1:0] value_temp_incr_decr;
   logic [  TempWidth-1:0] value_temp;
   logic [ChangeWidth-1:0] incr_qual;
   logic [ChangeWidth-1:0] decr_qual;
@@ -127,14 +124,12 @@ module br_counter #(
   assign incr_qual = incr_valid ? incr : '0;
   assign decr_qual = decr_valid ? decr : '0;
 
-  assign value_temp_incr = base_value + incr_qual;
-  assign value_temp_incr_decr = value_temp_incr - TempWidth'(decr_qual);
   if (EnableReinitAndChange) begin : gen_reinit_and_change
-    assign base_value = reinit ? initial_value : value;
-    assign value_temp = value_temp_incr_decr;
+    // ri lint_check_waive ARITH_ARGS RHS_TOO_SHORT
+    assign value_temp = (reinit ? initial_value : value) + incr_qual - decr_qual;
   end else begin : gen_reinit_ignore_change
-    assign base_value = value;
-    assign value_temp = reinit ? TempWidth'(initial_value) : value_temp_incr_decr;
+    // ri lint_check_waive ARITH_ARGS RHS_TOO_SHORT
+    assign value_temp = reinit ? initial_value : (value + incr_qual - decr_qual);
   end
   assign value_loaden = reinit || incr_valid || decr_valid;
 
