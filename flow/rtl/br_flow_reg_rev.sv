@@ -99,21 +99,24 @@ module br_flow_reg_rev #(
   // Implementation checks
   //------------------------------------------
 
-  // Assert that under pop-side backpressure conditions,
-  // the pipeline register correctly stalls downstream.
-  // That is, on any given cycle, if pop_valid is 1 and pop_ready is 0,
-  // then assert that on the following cycle pop_valid is still 1 and
-  // pop_data has not changed. In other words, we are checking that
-  // the implementation absides by the pop-side ready-valid interface protocol.
-  `BR_ASSERT_IMPL(pop_backpressure_a, !pop_ready && pop_valid |=> pop_valid && $stable(pop_data))
+  br_flow_checks_valid_data_impl #(
+      .NumFlows(1),
+      .Width(Width),
+      .EnableCoverBackpressure(EnableCoverPushBackpressure),
+      // If the push interface is unstable so then will the pop interface,
+      // because there are combinational paths on valid and data.
+      .EnableAssertValidStability(EnableAssertPushValidStability),
+      .EnableAssertDataStability(EnableAssertPushDataStability)
+  ) br_flow_checks_valid_data_impl (
+      .clk,
+      .rst,
+      .ready(pop_ready),
+      .valid(pop_valid),
+      .data (pop_data)
+  );
 
   // This module must be ready to accept pushes out of reset.
   `BR_ASSERT_IMPL(reset_a, $fell(rst) |-> push_ready)
-
-  // As noted in the integration checks, unknown pop_data can be checked with X-propagation tools.
-  // However, if we already check the integration that push_valid |-> !$isunknown(push_data), then
-  // we also know this module must also have known pop_data whenever pop_valid is 1.
-  `BR_ASSERT_IMPL(pop_data_known_a, pop_valid |-> !$isunknown(pop_data))
 
   // Check that the datapath has 0 cycle cut-through delay.
   `BR_ASSERT_IMPL(cutthrough_0_delay_a,
