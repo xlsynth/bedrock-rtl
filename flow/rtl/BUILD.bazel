@@ -187,6 +187,7 @@ verilog_library(
     deps = [
         "//counter/rtl:br_counter_incr",
         "//demux/rtl:br_demux_bin",
+        "//flow/rtl/internal:br_flow_checks_valid_data_impl",
         "//flow/rtl/internal:br_flow_checks_valid_data_intg",
         "//macros:br_asserts",
         "//macros:br_asserts_internal",
