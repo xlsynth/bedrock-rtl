@@ -58,8 +58,8 @@ module br_flow_mux_select_unstable #(
     input  logic [NumFlows-1:0][Width-1:0] push_data,
 
     input  logic             pop_ready,
-    output logic             pop_valid,
-    output logic [Width-1:0] pop_data
+    output logic             pop_valid_unstable,
+    output logic [Width-1:0] pop_data_unstable
 );
 
   //------------------------------------------
@@ -100,14 +100,26 @@ module br_flow_mux_select_unstable #(
   // ri lint_check_waive VAR_SHIFT TRUNC_LSHIFT
   assign push_ready = pop_ready << select;
   // ri lint_check_waive VAR_INDEX_READ
-  assign pop_valid  = push_valid[select];
+  assign pop_valid_unstable = push_valid[select];
   // ri lint_check_waive VAR_INDEX_READ
-  assign pop_data   = push_data[select];
+  assign pop_data_unstable = push_data[select];
 
   //------------------------------------------
   // Implementation checks
   //------------------------------------------
 
-  // TODO(mgottscho): Add implementation checks on ready-valid compliance.
+  br_flow_checks_valid_data_impl #(
+      .NumFlows(1),
+      .Width(Width),
+      .EnableCoverBackpressure(1),
+      // We know that pop valid can be unstable.
+      .EnableAssertValidStability(0)
+  ) br_flow_checks_valid_data_impl (
+      .clk,
+      .rst,
+      .ready(pop_ready),
+      .valid(pop_valid_unstable),
+      .data (pop_data_unstable)
+  );
 
 endmodule : br_flow_mux_select_unstable

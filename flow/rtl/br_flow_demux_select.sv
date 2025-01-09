@@ -100,9 +100,11 @@ module br_flow_demux_select #(
       .push_valid(internal_valid),
       .push_data(internal_data),
       .pop_ready(pop_ready),
-      .pop_valid(pop_valid),
+      .pop_valid_unstable(pop_valid),
       .pop_data(pop_data)
   );
+
+  // TODO FIXME: There should be a flow reg fwd on the pop side in order to make this module actually stable!!
 
   //------------------------------------------
   // Implementation checks

@@ -59,7 +59,7 @@ module br_flow_demux_select_unstable #(
     input  logic [Width-1:0] push_data,
 
     input  logic [NumFlows-1:0]            pop_ready,
-    output logic [NumFlows-1:0]            pop_valid,
+    output logic [NumFlows-1:0]            pop_valid_unstable,
     output logic [NumFlows-1:0][Width-1:0] pop_data
 );
 
@@ -98,9 +98,9 @@ module br_flow_demux_select_unstable #(
   // ri lint_check_waive VAR_INDEX_READ
   assign push_ready = pop_ready[select];
   // ri lint_check_waive VAR_SHIFT TRUNC_LSHIFT
-  assign pop_valid  = push_valid << select;
+  assign pop_valid_unstable = push_valid << select;
   // Replicate pop_data to all flows; this is okay since pop_data[i]
-  // is only valid when pop_valid[i] is high.
+  // is only valid when pop_valid_unstable[i] is high.
   always_comb begin
     for (int i = 0; i < NumFlows; i++) begin
       pop_data[i] = push_data;
@@ -115,13 +115,13 @@ module br_flow_demux_select_unstable #(
       .NumFlows(NumFlows),
       .Width(Width),
       .EnableCoverBackpressure(EnableCoverPushBackpressure),
-      .EnableAssertValidStability(EnableAssertPushValidStability),
-      .EnableAssertDataStability(EnableAssertPushDataStability)
+      // We know that the valid can be unstable.
+      .EnableAssertValidStability(0)
   ) br_flow_checks_valid_data_impl (
       .clk,
       .rst,
       .ready(pop_ready),
-      .valid(pop_valid),
+      .valid(pop_valid_unstable),
       .data (pop_data)
   );
 

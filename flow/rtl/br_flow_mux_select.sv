@@ -85,9 +85,9 @@ module br_flow_mux_select #(
       .push_ready,
       .push_valid,
       .push_data,
-      .pop_ready(internal_ready),
-      .pop_valid(internal_valid),
-      .pop_data (internal_data)
+      .pop_ready         (internal_ready),
+      .pop_valid_unstable(internal_valid),
+      .pop_data_unstable (internal_data)
   );
 
   br_flow_reg_fwd #(
