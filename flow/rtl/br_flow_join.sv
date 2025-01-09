@@ -85,6 +85,20 @@ module br_flow_join #(
   //------------------------------------------
   // Implementation checks
   //------------------------------------------
+  br_flow_checks_valid_data_impl #(
+      .NumFlows(1),
+      .Width(1),
+      .EnableCoverBackpressure(1),
+      .EnableAssertValidStability(EnableAssertPushValidStability),
+      .EnableAssertDataStability(EnableAssertPushValidStability)
+  ) br_flow_checks_valid_data_impl (
+      .clk,
+      .rst,
+      .ready(pop_ready),
+      .valid(pop_valid),
+      .data (1'b0)
+  );
+
   `BR_ASSERT_IMPL(pop_backpressure_a, !pop_ready && pop_valid |=> pop_valid)
 
 endmodule : br_flow_join
