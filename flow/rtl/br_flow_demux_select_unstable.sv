@@ -111,6 +111,18 @@ module br_flow_demux_select_unstable #(
   // Implementation checks
   //------------------------------------------
 
-  // TODO(mgottscho): Add implementation checks on ready-valid compliance.
+  br_flow_checks_valid_data_impl #(
+      .NumFlows(NumFlows),
+      .Width(Width),
+      .EnableCoverBackpressure(EnableCoverPushBackpressure),
+      .EnableAssertValidStability(EnableAssertPushValidStability),
+      .EnableAssertDataStability(EnableAssertPushDataStability)
+  ) br_flow_checks_valid_data_impl (
+      .clk,
+      .rst,
+      .ready(pop_ready),
+      .valid(pop_valid),
+      .data (pop_data)
+  );
 
 endmodule : br_flow_demux_select_unstable
