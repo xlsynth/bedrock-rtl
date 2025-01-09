@@ -145,14 +145,15 @@ module br_flow_demux_select_unstable #(
       .NumFlows(NumFlows),
       .Width(Width),
       .EnableCoverBackpressure(EnableCoverPushBackpressure),
-      // We know that the valid can be unstable.
-      .EnableAssertValidStability(0)
+      // We know that the pop valid and data can be unstable.
+      .EnableAssertValidStability(0),
+      .EnableAssertDataStability(0)
   ) br_flow_checks_valid_data_impl (
       .clk,
       .rst,
       .ready(pop_ready),
       .valid(pop_valid_unstable),
-      .data (pop_data)
+      .data (pop_data_unstable)
   );
 
 endmodule : br_flow_demux_select_unstable

@@ -25,6 +25,10 @@
 //
 // This is a purely combinational module with 0 delay.
 //
+// It is called "unstable" because the pop interface is not guaranteed
+// to follow the ready-valid stability convention, because the select
+// input could change while the selected push interface is backpressured.
+//
 // TODO(mgottscho): Write spec doc
 
 `include "br_asserts_internal.svh"
@@ -84,14 +88,6 @@ module br_flow_mux_select_unstable #(
       .data (push_data)
   );
 
-  if (EnableCoverPushBackpressure && EnableAssertPushValidStability)
-  begin : gen_select_stability_check
-    // If the selected flow is backpressured, the select must be stable
-    // to maintain valid stability on the pop side.
-    `BR_ASSERT_INTG(select_stability_a,
-                    (push_valid[select] && !push_ready[select]) |=> $stable(select))
-  end
-
   //------------------------------------------
   // Implementation
   //------------------------------------------
@@ -107,13 +103,31 @@ module br_flow_mux_select_unstable #(
   //------------------------------------------
   // Implementation checks
   //------------------------------------------
+  if (EnableAssertPushValidStability) begin : gen_stable_push_valid
+    `BR_ASSERT_IMPL(
+        pop_valid_instability_caused_by_select_a,
+        ##1 !pop_ready && $stable(pop_ready) && $fell(pop_valid_unstable) |-> !$stable(select))
+    if (EnableAssertPushDataStability) begin : gen_stable_push_data
+      `BR_ASSERT_IMPL(pop_data_instability_caused_by_select_a,
+                      ##1 !pop_ready && pop_valid && $stable(
+                          pop_ready
+                      ) && $stable(
+                          pop_valid
+                      ) && !$stable(
+                          pop_data_unstable
+                      ) |-> !$stable(
+                          select
+                      ))
+    end
+  end
 
   br_flow_checks_valid_data_impl #(
       .NumFlows(1),
       .Width(Width),
       .EnableCoverBackpressure(1),
-      // We know that pop valid can be unstable.
-      .EnableAssertValidStability(0)
+      // We know that pop valid and pop data can be unstable.
+      .EnableAssertValidStability(0),
+      .EnableAssertDataStability(0)
   ) br_flow_checks_valid_data_impl (
       .clk,
       .rst,
