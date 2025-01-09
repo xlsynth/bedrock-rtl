@@ -116,6 +116,7 @@ verilog_library(
         ":br_cdc_fifo_pop_flag_mgr",
         "//fifo/rtl/internal:br_fifo_pop_ctrl_core",
         "//macros:br_asserts_internal",
+        "//macros:br_gates",
         "//macros:br_registers",
     ],
 )
@@ -149,6 +150,7 @@ verilog_library(
     deps = [
         "//cdc/rtl:br_cdc_bit_toggle",
         "//macros:br_asserts_internal",
+        "//macros:br_gates",
     ],
 )
 

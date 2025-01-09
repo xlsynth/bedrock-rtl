@@ -49,6 +49,7 @@
 // (CutThroughLatency + BackpressureLatency) / max(PushT, PopT).
 
 `include "br_asserts_internal.svh"
+`include "br_gates.svh"
 
 module br_cdc_fifo_ctrl_1r1w #(
     parameter int Depth = 2,  // Number of entries in the FIFO. Must be at least 2.
@@ -139,6 +140,7 @@ module br_cdc_fifo_ctrl_1r1w #(
   logic                  push_reset_active_push;
   logic                  pop_reset_active_pop;
   logic                  pop_reset_active_push;
+  logic [     Width-1:0] pop_ram_rd_data_maxdel;
 
   br_cdc_fifo_push_ctrl #(
       .Depth(Depth),
@@ -214,13 +216,18 @@ module br_cdc_fifo_ctrl_1r1w #(
       .dst_bit(push_reset_active_pop)
   );
 
+  // Tag this signal as needing max delay checks
+  // ri lint_check_off ONE_CONN_PER_LINE
+  `BR_GATE_CDC_MAXDEL_BUS(pop_ram_rd_data_maxdel, pop_ram_rd_data, Width)
+  // ri lint_check_on ONE_CONN_PER_LINE
+
   br_cdc_fifo_pop_ctrl #(
       .Depth(Depth),
       .Width(Width),
       .RegisterPopOutputs(RegisterPopOutputs),
       .RamReadLatency(RamReadLatency)
   ) br_cdc_fifo_pop_ctrl (
-      .clk              (pop_clk),                // ri lint_check_waive SAME_CLOCK_NAME
+      .clk              (pop_clk),                 // ri lint_check_waive SAME_CLOCK_NAME
       .rst              (pop_rst),
       .pop_ready,
       .pop_valid,
@@ -232,7 +239,7 @@ module br_cdc_fifo_ctrl_1r1w #(
       .ram_rd_addr_valid(pop_ram_rd_addr_valid),
       .ram_rd_addr      (pop_ram_rd_addr),
       .ram_rd_data_valid(pop_ram_rd_data_valid),
-      .ram_rd_data      (pop_ram_rd_data),
+      .ram_rd_data      (pop_ram_rd_data_maxdel),
       .push_count_gray  (pop_push_count_gray),
       .pop_count_gray   (pop_pop_count_gray),
       .reset_active_pop (pop_reset_active_pop),
