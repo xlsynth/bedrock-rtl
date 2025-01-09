@@ -153,6 +153,7 @@ verilog_library(
     name = "br_flow_reg_fwd",
     srcs = ["br_flow_reg_fwd.sv"],
     deps = [
+        "//flow/rtl/internal:br_flow_checks_valid_data_impl",
         "//flow/rtl/internal:br_flow_checks_valid_data_intg",
         "//macros:br_asserts_internal",
         "//macros:br_registers",
