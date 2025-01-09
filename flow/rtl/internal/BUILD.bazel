@@ -15,7 +15,7 @@
 load("@rules_hdl//verilog:providers.bzl", "verilog_library")
 load("//bazel:br_verilog.bzl", "br_verilog_elab_and_lint_test_suite")
 
-package(default_visibility = ["//flow/rtl:__subpackages__"])
+package(default_visibility = ["//visibility:public"])
 
 verilog_library(
     name = "br_flow_arb_core",
@@ -44,6 +44,9 @@ verilog_library(
 verilog_library(
     name = "br_flow_checks_valid_data_intg",
     srcs = ["br_flow_checks_valid_data_intg.sv"],
+    # Users should never instance this directly in their design because
+    # it uses the Bedrock library-internal macros.
+    visibility = ["//:__subpackages__"],
     deps = [
         "//macros:br_asserts_internal",
         "//macros:br_unused",
@@ -53,6 +56,9 @@ verilog_library(
 verilog_library(
     name = "br_flow_checks_valid_data_impl",
     srcs = ["br_flow_checks_valid_data_impl.sv"],
+    # Users should never instance this directly in their design because
+    # it uses the Bedrock library-internal macros.
+    visibility = ["//:__subpackages__"],
     deps = [
         "//macros:br_asserts_internal",
         "//macros:br_unused",
