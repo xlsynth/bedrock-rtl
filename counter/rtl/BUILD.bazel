@@ -71,6 +71,10 @@ br_verilog_elab_and_lint_test_suite(
         "MaxIncrement": [
             "2",
         ],
+        "EnableReinitAndIncr": [
+            "0",
+            "1",
+        ],
     },
     deps = [":br_counter_incr"],
 )
@@ -84,6 +88,10 @@ br_verilog_elab_and_lint_test_suite(
             "3",
         ],
         "MaxDecrement": [
+            "1",
+        ],
+        "EnableReinitAndDecr": [
+            "0",
             "1",
         ],
     },
@@ -113,6 +121,10 @@ br_verilog_elab_and_lint_test_suite(
             "3",
         ],
         "MaxChange": [
+            "1",
+        ],
+        "EnableReinitAndChange": [
+            "0",
             "1",
         ],
     },

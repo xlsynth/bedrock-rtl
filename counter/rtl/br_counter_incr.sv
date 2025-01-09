@@ -47,6 +47,12 @@
 module br_counter_incr #(
     parameter int MaxValue = 1,  // Must be at least 1. Inclusive.
     parameter int MaxIncrement = 1,  // Must be at least 1 and at most MaxValue. Inclusive.
+    // If 1, then when reinit is asserted together with incr_valid,
+    // the increment is applied to the initial value rather than the current value, i.e.,
+    // value_next == initial_value + applicable incr.
+    // If 0, then when reinit is asserted together with incr_valid,
+    // the increment values are ignored, i.e., value_next == initial_value.
+    parameter bit EnableReinitAndIncr = 1,
     localparam int ValueWidth = $clog2(MaxValue + 1),
     localparam int IncrementWidth = $clog2(MaxIncrement + 1)
 ) (
@@ -83,7 +89,13 @@ module br_counter_incr #(
   // to capture them more tightly using br_misc_unused.
   // ri lint_check_waive NOT_READ
   logic [TempWidth-1:0] value_temp;
-  assign value_temp = (reinit ? initial_value : value) + (incr_valid ? incr : '0);
+  if (EnableReinitAndIncr) begin : gen_reinit_and_incr
+    // ri lint_check_waive RHS_TOO_SHORT
+    assign value_temp = (reinit ? initial_value : value) + (incr_valid ? incr : '0);
+  end else begin : gen_reinit_ignore_incr
+    // ri lint_check_waive RHS_TOO_SHORT
+    assign value_temp = reinit ? initial_value : (value + (incr_valid ? incr : '0));
+  end
 
   // For MaxValueP1 being a power of 2, wrapping occurs naturally
   if (IsMaxValueP1PowerOf2) begin : gen_power_of_2
