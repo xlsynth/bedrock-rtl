@@ -12,15 +12,15 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Bedrock-RTL CDC FIFO Controller (1R1W, Push Ready/Valid, Pop Ready/Valid Variant)
+// Pop-side of Bedrock-RTL CDC FIFO Controller (1R1W, Ready/Valid Variant)
 //
-// A one-read/one-write (1R1W) asynchronous FIFO controller that uses the
-// AMBA-inspired ready-valid handshake protocol for synchronizing pipeline
-// stages and stalling when encountering backpressure hazards.
+// The pop side of a one-read/one-write (1R1W) asynchronous FIFO controller
+// that uses the AMBA-inspired ready-valid handshake protocol for synchronizing
+// pipeline stages and stalling when encountering backpressure hazards.
 //
 // This module does not include any internal RAM. Instead, it exposes
-// read and write ports to an external 1R1W (pseudo-dual-port)
-// RAM module, which could be implemented in flops or SRAM.
+// read ports to an external 1R1W (pseudo-dual-port) RAM module, which
+// could be implemented in flops or SRAM.
 //
 // Data progresses from one stage to another when both
 // the corresponding ready signal and valid signal are
@@ -51,7 +51,7 @@
 `include "br_asserts_internal.svh"
 `include "br_gates.svh"
 
-module br_cdc_fifo_ctrl_1r1w #(
+module br_cdc_fifo_ctrl_pop_1r1w #(
     parameter int Depth = 2,  // Number of entries in the FIFO. Must be at least 2.
     parameter int Width = 1,  // Width of each entry in the FIFO. Must be at least 1.
     // If 1, then ensure pop_valid/pop_data always come directly from a register
@@ -60,26 +60,11 @@ module br_cdc_fifo_ctrl_1r1w #(
     // (if bypass is enabled), the RAM read interface, and/or an internal staging
     // buffer (if RAM read latency is >0).
     parameter bit RegisterPopOutputs = 0,
-    // The number of push cycles after ram_wr_valid is asserted at which
-    // it is safe to read the newly written data.
-    parameter int RamWriteLatency = 1,
     // The number of pop cycles between when ram_rd_addr_valid is asserted and
     // ram_rd_data_valid is asserted.
     parameter int RamReadLatency = 0,
     // The number of synchronization stages to use for the gray counts.
     parameter int NumSyncStages = 3,
-    // If 1, cover that the push side experiences backpressure.
-    // If 0, assert that there is never backpressure.
-    parameter bit EnableCoverPushBackpressure = 1,
-    // If 1, assert that push_valid is stable when backpressured.
-    // If 0, cover that push_valid can be unstable.
-    parameter bit EnableAssertPushValidStability = EnableCoverPushBackpressure,
-    // If 1, assert that push_data is stable when backpressured.
-    // If 0, cover that push_data can be unstable.
-    parameter bit EnableAssertPushDataStability = EnableAssertPushValidStability,
-    // If 1, then assert there are no valid bits asserted and that the FIFO is
-    // empty at the end of the test.
-    parameter bit EnableAssertFinalNotValid = 1,
     localparam int AddrWidth = $clog2(Depth),
     localparam int CountWidth = $clog2(Depth + 1)
 ) (
@@ -88,21 +73,11 @@ module br_cdc_fifo_ctrl_1r1w #(
     // Synchronous active-high reset.
     input logic push_rst,
 
-    // Push-side interface
-    output logic             push_ready,
-    input  logic             push_valid,
-    input  logic [Width-1:0] push_data,
-
-    // Push-side status flags
-    output logic                  push_full,
-    output logic                  push_full_next,
-    output logic [CountWidth-1:0] push_slots,
-    output logic [CountWidth-1:0] push_slots_next,
-
-    // Push-side RAM write interface
-    output logic                 push_ram_wr_valid,
-    output logic [AddrWidth-1:0] push_ram_wr_addr,
-    output logic [    Width-1:0] push_ram_wr_data,
+    // Signals that connect to the push side.
+    output logic                  pop_reset_active_pop,
+    output logic [CountWidth-1:0] pop_pop_count_gray,
+    input  logic [CountWidth-1:0] push_push_count_gray,
+    input  logic                  push_reset_active_push,
 
     // Posedge-triggered clock.
     input logic pop_clk,
@@ -135,68 +110,67 @@ module br_cdc_fifo_ctrl_1r1w #(
   // Implementation
   //------------------------------------------
 
-  logic [CountWidth-1:0] push_push_count_gray;
-  logic [CountWidth-1:0] pop_pop_count_gray;
-  logic                  push_reset_active_push;
-  logic                  pop_reset_active_pop;
+  logic [CountWidth-1:0] pop_push_count_gray;
+  logic                  pop_reset_active_push;
+  logic [     Width-1:0] pop_ram_rd_data_maxdel;
 
-  br_cdc_fifo_ctrl_push_1r1w #(
-      .Depth(Depth),
-      .Width(Width),
-      .RamWriteLatency(RamWriteLatency),
-      .NumSyncStages(NumSyncStages),
-      .EnableCoverPushBackpressure(EnableCoverPushBackpressure),
-      .EnableAssertPushValidStability(EnableAssertPushValidStability),
-      .EnableAssertPushDataStability(EnableAssertPushDataStability),
-      .EnableAssertFinalNotValid(EnableAssertFinalNotValid)
-  ) br_cdc_fifo_ctrl_push_1r1w (
-      .push_clk,
-      .push_rst,
-      .push_ready,
-      .push_valid,
-      .push_data,
-      .push_full,
-      .push_full_next,
-      .push_slots,
-      .push_slots_next,
-      .push_ram_wr_valid,
-      .push_ram_wr_addr,
-      .push_ram_wr_data,
-      .pop_clk,
-      .pop_rst,
-      .pop_reset_active_pop,
-      .pop_pop_count_gray,
-      .push_push_count_gray,
-      .push_reset_active_push
+  br_cdc_fifo_gray_count_sync #(
+      .CountWidth(CountWidth),
+      .NumStages (NumSyncStages)
+  ) br_cdc_fifo_gray_count_sync_push2pop (
+      .src_clk(push_clk),  // ri lint_check_waive SAME_CLOCK_NAME
+      .src_rst(push_rst),
+      .src_count_gray(push_push_count_gray),
+      .dst_clk(pop_clk),  // ri lint_check_waive SAME_CLOCK_NAME
+      .dst_rst(pop_rst),
+      .dst_count_gray(pop_push_count_gray)
   );
 
-  br_cdc_fifo_ctrl_pop_1r1w #(
+  br_cdc_bit_toggle #(
+      .NumStages(NumSyncStages),
+      .AddSourceFlop(0)
+  ) br_cdc_bit_toggle_reset_active_push (
+      .src_clk(push_clk),  // ri lint_check_waive SAME_CLOCK_NAME
+      .src_rst(push_rst),
+      .src_bit(push_reset_active_push),
+      .dst_clk(pop_clk),  // ri lint_check_waive SAME_CLOCK_NAME
+      .dst_rst(pop_rst),
+      .dst_bit(pop_reset_active_push)
+  );
+
+  br_cdc_fifo_pop_ctrl #(
       .Depth(Depth),
       .Width(Width),
       .RegisterPopOutputs(RegisterPopOutputs),
-      .RamReadLatency(RamReadLatency),
-      .EnableAssertFinalNotValid(EnableAssertFinalNotValid),
-      .NumSyncStages(NumSyncStages)
-  ) br_cdc_fifo_ctrl_pop_1r1w_inst (
-      .push_clk,
-      .push_rst,
-      .pop_reset_active_pop,
-      .pop_pop_count_gray,
-      .push_push_count_gray,
-      .push_reset_active_push,
-      .pop_clk,
-      .pop_rst,
+      .RamReadLatency(RamReadLatency)
+  ) br_cdc_fifo_pop_ctrl (
+      .clk              (pop_clk),                 // ri lint_check_waive SAME_CLOCK_NAME
+      .rst              (pop_rst),
       .pop_ready,
       .pop_valid,
       .pop_data,
-      .pop_empty,
-      .pop_empty_next,
-      .pop_items,
-      .pop_items_next,
-      .pop_ram_rd_addr_valid,
-      .pop_ram_rd_addr,
-      .pop_ram_rd_data_valid,
-      .pop_ram_rd_data
+      .empty            (pop_empty),
+      .empty_next       (pop_empty_next),
+      .items            (pop_items),
+      .items_next       (pop_items_next),
+      .ram_rd_addr_valid(pop_ram_rd_addr_valid),
+      .ram_rd_addr      (pop_ram_rd_addr),
+      .ram_rd_data_valid(pop_ram_rd_data_valid),
+      .ram_rd_data      (pop_ram_rd_data_maxdel),
+      .push_count_gray  (pop_push_count_gray),
+      .pop_count_gray   (pop_pop_count_gray),
+      .reset_active_pop (pop_reset_active_pop),
+      .reset_active_push(pop_reset_active_push)
   );
 
-endmodule : br_cdc_fifo_ctrl_1r1w
+  // Tag this signal as needing max delay checks
+  // ri lint_check_off ONE_CONN_PER_LINE
+  `BR_GATE_CDC_MAXDEL_BUS(pop_ram_rd_data_maxdel, pop_ram_rd_data, Width)
+  // ri lint_check_on ONE_CONN_PER_LINE
+
+  //------------------------------------------
+  // Implementation checks
+  //------------------------------------------
+  `BR_ASSERT_CR_IMPL(no_pop_valid_when_empty_a, pop_empty |-> !pop_valid, pop_clk, pop_rst)
+
+endmodule : br_cdc_fifo_ctrl_pop_1r1w
