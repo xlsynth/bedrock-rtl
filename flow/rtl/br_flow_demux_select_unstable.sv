@@ -98,7 +98,7 @@ module br_flow_demux_select_unstable #(
   // ri lint_check_waive VAR_INDEX_READ
   assign push_ready = pop_ready[select];
   // ri lint_check_waive VAR_SHIFT TRUNC_LSHIFT
-  assign pop_valid  = push_valid << select;
+  assign pop_valid = push_valid ? (push_valid << select) : '0;
   // Replicate pop_data to all flows; this is okay since pop_data[i]
   // is only valid when pop_valid[i] is high.
   always_comb begin
