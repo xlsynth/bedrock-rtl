@@ -26,7 +26,6 @@
 // TODO(mgottscho): Write spec doc
 
 `include "br_registers.svh"
-`include "br_asserts_internal.svh"
 
 module br_flow_mux_select #(
     // Must be at least 2

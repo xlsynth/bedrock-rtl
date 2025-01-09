@@ -26,7 +26,6 @@
 // TODO(mgottscho): Write spec doc
 
 `include "br_registers.svh"
-`include "br_asserts_internal.svh"
 
 module br_flow_demux_select #(
     // Must be at least 2
@@ -65,9 +64,9 @@ module br_flow_demux_select #(
   //------------------------------------------
   // Implementation
   //------------------------------------------
-  logic [NumFlows-1:0] internal_pop_ready;
-  logic [NumFlows-1:0] internal_pop_valid_unstable;
-  logic [NumFlows-1:0][Width-1:0] pop_data_unstable;
+  logic [NumFlows-1:0] internal_ready;
+  logic [NumFlows-1:0] internal_valid_unstable;
+  logic [NumFlows-1:0][Width-1:0] internal_data_unstable;
 
   br_flow_demux_select_unstable #(
       .NumFlows(NumFlows),
@@ -82,7 +81,7 @@ module br_flow_demux_select #(
       .push_ready,
       .push_valid,
       .push_data,
-      .pop_ready(internal_ready_internal),
+      .pop_ready(internal_ready),
       .pop_valid_unstable(internal_valid_unstable),
       .pop_data_unstable(internal_data_unstable)
   );

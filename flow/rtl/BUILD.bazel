@@ -94,7 +94,6 @@ verilog_library(
     deps = [
         ":br_flow_mux_select_unstable",
         ":br_flow_reg_fwd",
-        "//macros:br_asserts_internal",
     ],
 )
 

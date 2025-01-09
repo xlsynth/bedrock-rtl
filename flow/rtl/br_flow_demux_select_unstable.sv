@@ -109,7 +109,7 @@ module br_flow_demux_select_unstable #(
   // is only valid when pop_valid_unstable[i] is high.
   always_comb begin
     for (int i = 0; i < NumFlows; i++) begin
-      pop_data[i] = push_data;
+      pop_data_unstable[i] = push_data;
     end
   end
 
@@ -128,10 +128,10 @@ module br_flow_demux_select_unstable #(
                       ))
       if (EnableAssertPushDataStability) begin : gen_stable_push_data
         `BR_ASSERT_IMPL(pop_data_instability_caused_by_select_a,
-                        ##1 !pop_ready[i] && pop_valid[i] && $stable(
+                        ##1 !pop_ready[i] && pop_valid_unstable[i] && $stable(
                             pop_ready[i]
                         ) && $stable(
-                            pop_valid
+                            pop_valid_unstable
                         ) && !$stable(
                             pop_data_unstable[i]
                         ) |-> !$stable(

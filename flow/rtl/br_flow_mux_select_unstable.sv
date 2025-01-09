@@ -109,10 +109,10 @@ module br_flow_mux_select_unstable #(
         ##1 !pop_ready && $stable(pop_ready) && $fell(pop_valid_unstable) |-> !$stable(select))
     if (EnableAssertPushDataStability) begin : gen_stable_push_data
       `BR_ASSERT_IMPL(pop_data_instability_caused_by_select_a,
-                      ##1 !pop_ready && pop_valid && $stable(
+                      ##1 !pop_ready && pop_valid_unstable && $stable(
                           pop_ready
                       ) && $stable(
-                          pop_valid
+                          pop_valid_unstable
                       ) && !$stable(
                           pop_data_unstable
                       ) |-> !$stable(
