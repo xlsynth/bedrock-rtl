@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Bedrock-RTL Flow Demux with Select
+// Bedrock-RTL Flow Demux with Select (Unstable)
 //
 // A dataflow pipeline demux with explicit select.
 // Uses the AMBA-inspired ready-valid handshake protocol
@@ -24,6 +24,10 @@
 // both 1 on the same cycle. Otherwise, the stage is stalled.
 //
 // This is a purely combinational module with 0 delay.
+//
+// It is called "unstable" because the pop interface is not guaranteed
+// to follow the ready-valid stability convention, because the select
+// input could change while the selected pop interface is backpressuring.
 //
 // TODO(mgottscho): Write spec doc
 
@@ -52,6 +56,10 @@ module br_flow_demux_select_unstable #(
     // ri lint_check_waive INPUT_NOT_READ HIER_NET_NOT_READ HIER_BRANCH_NOT_READ
     input logic rst,
 
+    // Select can potentially change independently of the push and pop interfaces, which
+    // is why this module is called "unstable": if the select changes while the connected
+    // pop interface is backpressuring, then the ready-valid stability guarantee will be
+    // violated on that previously selected pop interface.
     input logic [SelectWidth-1:0] select,
 
     output logic             push_ready,
@@ -59,8 +67,11 @@ module br_flow_demux_select_unstable #(
     input  logic [Width-1:0] push_data,
 
     input  logic [NumFlows-1:0]            pop_ready,
+    // These are labeled explicitly as unstable so that users understand
+    // they may not rigorously follow the ready-valid stability guarantee (unless
+    // the select signal is used in a more constrained fashion).
     output logic [NumFlows-1:0]            pop_valid_unstable,
-    output logic [NumFlows-1:0][Width-1:0] pop_data
+    output logic [NumFlows-1:0][Width-1:0] pop_data_unstable
 );
 
   //------------------------------------------
@@ -83,13 +94,6 @@ module br_flow_demux_select_unstable #(
       .data (push_data)
   );
 
-  if (EnableCoverPushBackpressure && EnableAssertPushValidStability)
-  begin : gen_select_stability_check
-    // If push_valid is backpressured, the select must be stable
-    // to maintain valid stability on the pop side.
-    `BR_ASSERT_INTG(select_stability_a, (push_valid && !push_ready) |=> $stable(select))
-  end
-
   //------------------------------------------
   // Implementation
   //------------------------------------------
@@ -97,8 +101,10 @@ module br_flow_demux_select_unstable #(
   // Lint waivers are safe because we assert select is always in range.
   // ri lint_check_waive VAR_INDEX_READ
   assign push_ready = pop_ready[select];
+  // The ternary expression is needed to ensure pop_valid_unstable is 0 (and not X)
+  // when select is X and push_valid is 0.
   // ri lint_check_waive VAR_SHIFT TRUNC_LSHIFT
-  assign pop_valid_unstable = push_valid << select;
+  assign pop_valid_unstable = push_valid ? (push_valid << select) : '0;
   // Replicate pop_data to all flows; this is okay since pop_data[i]
   // is only valid when pop_valid_unstable[i] is high.
   always_comb begin
@@ -110,6 +116,30 @@ module br_flow_demux_select_unstable #(
   //------------------------------------------
   // Implementation checks
   //------------------------------------------
+  for (genvar i = 0; i < NumFlows; i++) begin : gen_pop_unstable_checks
+    if (EnableAssertPushValidStability) begin : gen_stable_push_valid
+      `BR_ASSERT_IMPL(pop_valid_instability_caused_by_select_a,
+                      ##1 !pop_ready[i] && $stable(
+                          pop_ready[i]
+                      ) && $fell(
+                          pop_valid_unstable[i]
+                      ) |-> !$stable(
+                          select
+                      ))
+      if (EnableAssertPushDataStability) begin : gen_stable_push_data
+        `BR_ASSERT_IMPL(pop_data_instability_caused_by_select_a,
+                        ##1 !pop_ready[i] && pop_valid[i] && $stable(
+                            pop_ready[i]
+                        ) && $stable(
+                            pop_valid
+                        ) && !$stable(
+                            pop_data_unstable[i]
+                        ) |-> !$stable(
+                            select
+                        ))
+      end
+    end
+  end
 
   br_flow_checks_valid_data_impl #(
       .NumFlows(NumFlows),

@@ -251,9 +251,10 @@ module br_flow_serializer #(
     assign pop_metadata = push_metadata;
 
     //------
-    // Complete the push flit when we're finished serializing it (the last pop flit is accepted).
+    // Complete the push flit when we're finished serializing it (the last pop flit for
+    // this push flit is accepted).
     //------
-    assign push_ready = pop_ready && pop_flit_id_plus_dont_care_count;
+    assign push_ready = pop_ready && pop_valid && (pop_flit_id_plus_dont_care_count == sr_minus_1);
 
   end
 
