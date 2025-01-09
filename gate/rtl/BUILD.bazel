@@ -116,3 +116,33 @@ br_verilog_elab_and_lint_test_suite(
         ":br_gate_behav",
     ],
 )
+
+br_verilog_elab_and_lint_test_suite(
+    name = "br_gate_cdc_sync_rst_test_suite",
+    params = {
+        "NumStages": [
+            "2",
+            "3",
+        ],
+    },
+    top = "br_gate_cdc_sync_rst",
+    deps = [
+        ":br_gate_behav",
+    ],
+)
+
+br_verilog_elab_and_lint_test_suite(
+    name = "br_gate_cdc_pseudostatic_test_suite",
+    top = "br_gate_cdc_pseudostatic",
+    deps = [
+        ":br_gate_behav",
+    ],
+)
+
+br_verilog_elab_and_lint_test_suite(
+    name = "br_gate_cdc_maxdel_test_suite",
+    top = "br_gate_cdc_maxdel",
+    deps = [
+        ":br_gate_behav",
+    ],
+)

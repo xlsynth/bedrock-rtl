@@ -120,6 +120,24 @@ br_gate_cdc_sync #(__stages__) br_gate_cdc_sync_``__out__`` ( \
     .out(__out__) \
 );
 
+// Clock Domain Crossing Synchronizer with Synchronous Reset
+`define BR_GATE_CDC_SYNC_RST(__out__, __in__, __clk__, __rst__) \
+br_gate_cdc_sync_rst #(__stages__) br_gate_cdc_sync_rst_``__out__`` ( \
+    .clk(__clk__), \
+    .rst(__rst__), \
+    .in(__in__), \
+    .out(__out__) \
+);
+
+// Clock Domain Crossing Synchronizer with Synchronous Reset with configurable number of stages
+`define BR_GATE_CDC_SYNC_RST_STAGES(__out__, __in__, __clk__, __rst__, __stages__) \
+br_gate_cdc_sync_rst #(__stages__) br_gate_cdc_sync_rst_``__out__`` ( \
+    .clk(__clk__), \
+    .rst(__rst__), \
+    .in(__in__), \
+    .out(__out__) \
+);
+
 // Buffer used at CDC crossings but when the signal is considered pseudo-static. In other words,
 // this signal will be stable before the destination domain is out of reset and the clock is
 // running.

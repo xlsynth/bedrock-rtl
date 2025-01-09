@@ -172,6 +172,24 @@ module br_gate_cdc_sync #(
 
 endmodule : br_gate_cdc_sync
 
+// Clock Domain Crossing Synchronizer with Synchronous Reset
+module br_gate_cdc_sync_rst #(
+    parameter int NumStages = 3
+) (
+    input  logic clk,
+    input  logic in,
+    input  logic rst,
+    output logic out
+);
+
+  logic [NumStages-1:0] in_d;
+
+  `BR_REG(in_d, {in_d[NumStages-2:0], in})
+
+  assign out = in_d[NumStages-1];
+
+endmodule : br_gate_cdc_sync_rst
+
 // Buffer used at CDC crossings but when the signal is considered pseudo-static. In other words,
 // this signal will be stable before the destination domain is out of reset and the clock is
 // running.
