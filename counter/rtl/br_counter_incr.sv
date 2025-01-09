@@ -89,14 +89,12 @@ module br_counter_incr #(
   // to capture them more tightly using br_misc_unused.
   // ri lint_check_waive NOT_READ
   logic [TempWidth-1:0] value_temp;
-  logic [IncrementWidth-1:0] incr_qual;
-  assign incr_qual = incr_valid ? incr : '0;
   if (EnableReinitAndIncr) begin : gen_reinit_and_incr
-    logic [ValueWidth-1:0] base_value;
-    assign base_value = reinit ? initial_value : value;
-    assign value_temp = base_value + incr_qual;
+    // ri lint_check_waive RHS_TOO_SHORT
+    assign value_temp = (reinit ? initial_value : value) + (incr_valid ? incr : '0);
   end else begin : gen_reinit_ignore_incr
-    assign value_temp = reinit ? TempWidth'(initial_value) : (value + incr_qual);
+    // ri lint_check_waive RHS_TOO_SHORT
+    assign value_temp = reinit ? initial_value : (value + (incr_valid ? incr : '0));
   end
 
   // For MaxValueP1 being a power of 2, wrapping occurs naturally
