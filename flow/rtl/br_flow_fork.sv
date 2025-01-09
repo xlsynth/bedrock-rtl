@@ -55,14 +55,14 @@ module br_flow_fork #(
   //------------------------------------------
   `BR_ASSERT_STATIC(num_flows_gte_2_a, NumFlows >= 2)
 
-  br_flow_checks_valid_data #(
+  br_flow_checks_valid_data_intg #(
       .NumFlows(1),
       .Width(1),
       .EnableCoverBackpressure(EnableCoverPushBackpressure),
       .EnableAssertValidStability(EnableAssertPushValidStability),
       // Data is always stable when valid is since it is constant.
       .EnableAssertDataStability(EnableAssertPushValidStability)
-  ) br_flow_checks_valid_data (
+  ) br_flow_checks_valid_data_intg (
       .clk,
       .rst,
       .ready(push_ready),
@@ -89,6 +89,20 @@ module br_flow_fork #(
   //------------------------------------------
   // Implementation checks
   //------------------------------------------
+  br_flow_checks_valid_data_impl #(
+      .NumFlows(NumFlows),
+      .Width(1),
+      .EnableCoverBackpressure(1),
+      // We know that the pop valids can be unstable.
+      .EnableAssertValidStability(0)
+  ) br_flow_checks_valid_data_impl (
+      .clk,
+      .rst,
+      .ready(pop_ready),
+      .valid(pop_valid_unstable),
+      .data ({NumFlows{1'b0}})
+  );
+
   for (genvar i = 0; i < NumFlows; i++) begin : gen_flow_checks
     `BR_COVER_IMPL(pop_valid_unstable_c, $stable(push_valid) && $fell(pop_valid_unstable[i]))
   end

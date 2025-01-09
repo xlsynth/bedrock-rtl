@@ -14,7 +14,7 @@
 
 // Bedrock-RTL Flow Demux with Select
 //
-// A dataflow pipeline demux with explicit select.
+// A dataflow pipeline demux with explicit binary select.
 // Uses the AMBA-inspired ready-valid handshake protocol
 // for synchronizing pipeline stages and stalling when
 // encountering backpressure hazards.
@@ -26,7 +26,6 @@
 // TODO(mgottscho): Write spec doc
 
 `include "br_registers.svh"
-`include "br_asserts_internal.svh"
 
 module br_flow_demux_select #(
     // Must be at least 2
@@ -65,26 +64,9 @@ module br_flow_demux_select #(
   //------------------------------------------
   // Implementation
   //------------------------------------------
-  // Register the push outputs to hide the delays of the combinational demuxing logic.
-  // Note that there are still combinational paths from push_valid (and pop_data)
-  // and select to pop_valid (and pop_data).
-
-  logic internal_ready;
-  logic internal_valid;
-  logic [Width-1:0] internal_data;
-
-  br_flow_reg_rev #(
-      .Width(Width)
-  ) br_flow_reg_rev (
-      .clk(clk),
-      .rst(rst),
-      .push_ready(push_ready),
-      .push_valid(push_valid),
-      .push_data(push_data),
-      .pop_ready(internal_ready),
-      .pop_valid(internal_valid),
-      .pop_data(internal_data)
-  );
+  logic [NumFlows-1:0] internal_ready;
+  logic [NumFlows-1:0] internal_valid_unstable;
+  logic [NumFlows-1:0][Width-1:0] internal_data_unstable;
 
   br_flow_demux_select_unstable #(
       .NumFlows(NumFlows),
@@ -93,16 +75,37 @@ module br_flow_demux_select #(
       .EnableAssertPushValidStability(EnableAssertPushValidStability),
       .EnableAssertPushDataStability(EnableAssertPushDataStability)
   ) br_flow_demux_select_unstable (
-      .clk(clk),
-      .rst(rst),
-      .select(select),
-      .push_ready(internal_ready),
-      .push_valid(internal_valid),
-      .push_data(internal_data),
-      .pop_ready(pop_ready),
-      .pop_valid(pop_valid),
-      .pop_data(pop_data)
+      .clk,
+      .rst,
+      .select,
+      .push_ready,
+      .push_valid,
+      .push_data,
+      .pop_ready(internal_ready),
+      .pop_valid_unstable(internal_valid_unstable),
+      .pop_data_unstable(internal_data_unstable)
   );
+
+  // Register the pop outputs to hide the internal instability of the combinational demux.
+  // There are still combinational paths from pop_ready to push_ready.
+  for (genvar i = 0; i < NumFlows; i++) begin : gen_pop_reg
+    br_flow_reg_fwd #(
+        .Width(Width),
+        // We know that valid and data can be unstable internally.
+        // This register hides that instability from the pop interface.
+        .EnableAssertPushValidStability(0),
+        .EnableAssertPushDataStability(0)
+    ) br_flow_reg_fwd (
+        .clk,
+        .rst,
+        .push_ready(internal_ready[i]),
+        .push_valid(internal_valid_unstable[i]),
+        .push_data (internal_data_unstable[i]),
+        .pop_ready (pop_ready[i]),
+        .pop_valid (pop_valid[i]),
+        .pop_data  (pop_data[i])
+    );
+  end
 
   //------------------------------------------
   // Implementation checks

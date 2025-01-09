@@ -147,7 +147,7 @@ module br_flow_serializer #(
                   push_valid && !push_last |-> push_last_dont_care_count == 0)
 
   // Check push side validity and data stability
-  br_flow_checks_valid_data #(
+  br_flow_checks_valid_data_intg #(
       .NumFlows(1),
       .Width(PushWidth + 1 + SerFlitIdWidth + MetadataWidth),
       // Push ready/valid stability is required for the serializer to work correctly.
@@ -157,7 +157,7 @@ module br_flow_serializer #(
       .EnableCoverBackpressure(1),
       .EnableAssertValidStability(1),
       .EnableAssertDataStability(1)
-  ) br_flow_checks_valid_data (
+  ) br_flow_checks_valid_data_intg (
       .clk,
       .rst,
       .ready(push_ready),

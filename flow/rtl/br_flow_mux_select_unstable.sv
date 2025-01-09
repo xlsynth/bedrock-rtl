@@ -14,7 +14,7 @@
 
 // Bedrock-RTL Flow Mux with Select (Unstable)
 //
-// A dataflow pipeline mux with explicit select.
+// A dataflow pipeline mux with explicit binary select.
 // Uses the AMBA-inspired ready-valid handshake protocol
 // for synchronizing pipeline stages and stalling when
 // encountering backpressure hazards.
@@ -24,6 +24,10 @@
 // both 1 on the same cycle. Otherwise, the stage is stalled.
 //
 // This is a purely combinational module with 0 delay.
+//
+// It is called "unstable" because the pop interface is not guaranteed
+// to follow the ready-valid stability convention, because the select
+// input could change while the selected push interface is backpressured.
 //
 // TODO(mgottscho): Write spec doc
 
@@ -58,8 +62,8 @@ module br_flow_mux_select_unstable #(
     input  logic [NumFlows-1:0][Width-1:0] push_data,
 
     input  logic             pop_ready,
-    output logic             pop_valid,
-    output logic [Width-1:0] pop_data
+    output logic             pop_valid_unstable,
+    output logic [Width-1:0] pop_data_unstable
 );
 
   //------------------------------------------
@@ -70,27 +74,19 @@ module br_flow_mux_select_unstable #(
 
   `BR_ASSERT_INTG(select_in_range_a, select < NumFlows)
 
-  br_flow_checks_valid_data #(
+  br_flow_checks_valid_data_intg #(
       .NumFlows(NumFlows),
       .Width(Width),
       .EnableCoverBackpressure(EnableCoverPushBackpressure),
       .EnableAssertValidStability(EnableAssertPushValidStability),
       .EnableAssertDataStability(EnableAssertPushDataStability)
-  ) br_flow_checks_valid_data (
+  ) br_flow_checks_valid_data_intg (
       .clk,
       .rst,
       .ready(push_ready),
       .valid(push_valid),
       .data (push_data)
   );
-
-  if (EnableCoverPushBackpressure && EnableAssertPushValidStability)
-  begin : gen_select_stability_check
-    // If the selected flow is backpressured, the select must be stable
-    // to maintain valid stability on the pop side.
-    `BR_ASSERT_INTG(select_stability_a,
-                    (push_valid[select] && !push_ready[select]) |=> $stable(select))
-  end
 
   //------------------------------------------
   // Implementation
@@ -100,14 +96,44 @@ module br_flow_mux_select_unstable #(
   // ri lint_check_waive VAR_SHIFT TRUNC_LSHIFT
   assign push_ready = pop_ready << select;
   // ri lint_check_waive VAR_INDEX_READ
-  assign pop_valid  = push_valid[select];
+  assign pop_valid_unstable = push_valid[select];
   // ri lint_check_waive VAR_INDEX_READ
-  assign pop_data   = push_data[select];
+  assign pop_data_unstable = push_data[select];
 
   //------------------------------------------
   // Implementation checks
   //------------------------------------------
+  if (EnableAssertPushValidStability) begin : gen_stable_push_valid
+    `BR_ASSERT_IMPL(
+        pop_valid_instability_caused_by_select_a,
+        ##1 !pop_ready && $stable(pop_ready) && $fell(pop_valid_unstable) |-> !$stable(select))
+    if (EnableAssertPushDataStability) begin : gen_stable_push_data
+      `BR_ASSERT_IMPL(pop_data_instability_caused_by_select_a,
+                      ##1 !pop_ready && pop_valid_unstable && $stable(
+                          pop_ready
+                      ) && $stable(
+                          pop_valid_unstable
+                      ) && !$stable(
+                          pop_data_unstable
+                      ) |-> !$stable(
+                          select
+                      ))
+    end
+  end
 
-  // TODO(mgottscho): Add implementation checks on ready-valid compliance.
+  br_flow_checks_valid_data_impl #(
+      .NumFlows(1),
+      .Width(Width),
+      .EnableCoverBackpressure(1),
+      // We know that pop valid and pop data can be unstable.
+      .EnableAssertValidStability(0),
+      .EnableAssertDataStability(0)
+  ) br_flow_checks_valid_data_impl (
+      .clk,
+      .rst,
+      .ready(pop_ready),
+      .valid(pop_valid_unstable),
+      .data (pop_data_unstable)
+  );
 
 endmodule : br_flow_mux_select_unstable

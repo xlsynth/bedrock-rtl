@@ -13,14 +13,16 @@
 # limitations under the License.
 
 load("@rules_hdl//verilog:providers.bzl", "verilog_library")
+load("//bazel:br_verilog.bzl", "br_verilog_elab_and_lint_test_suite")
 
-package(default_visibility = ["//flow/rtl:__subpackages__"])
+package(default_visibility = ["//visibility:public"])
 
 verilog_library(
     name = "br_flow_arb_core",
     srcs = ["br_flow_arb_core.sv"],
     deps = [
-        "//flow/rtl:br_flow_checks_valid_data",
+        ":br_flow_checks_valid_data_impl",
+        ":br_flow_checks_valid_data_intg",
         "//macros:br_asserts_internal",
         "//macros:br_unused",
     ],
@@ -31,9 +33,138 @@ verilog_library(
     srcs = ["br_flow_mux_core.sv"],
     deps = [
         ":br_flow_arb_core",
-        "//flow/rtl:br_flow_checks_valid_data",
+        ":br_flow_checks_valid_data_impl",
+        ":br_flow_checks_valid_data_intg",
         "//macros:br_asserts_internal",
         "//macros:br_unused",
         "//mux/rtl:br_mux_onehot",
     ],
+)
+
+verilog_library(
+    name = "br_flow_checks_valid_data_intg",
+    srcs = ["br_flow_checks_valid_data_intg.sv"],
+    # Users should never instance this directly in their design because
+    # it uses the Bedrock library-internal macros.
+    visibility = ["//:__subpackages__"],
+    deps = [
+        "//macros:br_asserts_internal",
+        "//macros:br_unused",
+    ],
+)
+
+verilog_library(
+    name = "br_flow_checks_valid_data_impl",
+    srcs = ["br_flow_checks_valid_data_impl.sv"],
+    # Users should never instance this directly in their design because
+    # it uses the Bedrock library-internal macros.
+    visibility = ["//:__subpackages__"],
+    deps = [
+        "//macros:br_asserts_internal",
+        "//macros:br_unused",
+    ],
+)
+
+br_verilog_elab_and_lint_test_suite(
+    name = "br_flow_checks_valid_data_intg_test_suite_valid_stable",
+    params = {
+        "NumFlows": [
+            "1",
+            "2",
+        ],
+        "EnableCoverBackpressure": [
+            "1",
+        ],
+        "EnableAssertValidStability": [
+            "1",
+        ],
+        "EnableAssertDataStability": [
+            "0",
+            "1",
+        ],
+    },
+    deps = [":br_flow_checks_valid_data_intg"],
+)
+
+br_verilog_elab_and_lint_test_suite(
+    name = "br_flow_checks_valid_data_intg_test_suite_valid_unstable",
+    params = {
+        "NumFlows": [
+            "1",
+            "2",
+        ],
+        "EnableCoverBackpressure": [
+            "1",
+        ],
+        "EnableAssertValidStability": [
+            "0",
+        ],
+    },
+    deps = [":br_flow_checks_valid_data_intg"],
+)
+
+br_verilog_elab_and_lint_test_suite(
+    name = "br_flow_checks_valid_data_intg_test_suite_no_backpressure",
+    params = {
+        "NumFlows": [
+            "1",
+            "2",
+        ],
+        "EnableCoverBackpressure": [
+            "0",
+        ],
+    },
+    deps = [":br_flow_checks_valid_data_intg"],
+)
+
+br_verilog_elab_and_lint_test_suite(
+    name = "br_flow_checks_valid_data_impl_test_suite_valid_stable",
+    params = {
+        "NumFlows": [
+            "1",
+            "2",
+        ],
+        "EnableCoverBackpressure": [
+            "1",
+        ],
+        "EnableAssertValidStability": [
+            "1",
+        ],
+        "EnableAssertDataStability": [
+            "0",
+            "1",
+        ],
+    },
+    deps = [":br_flow_checks_valid_data_impl"],
+)
+
+br_verilog_elab_and_lint_test_suite(
+    name = "br_flow_checks_valid_data_impl_test_suite_valid_unstable",
+    params = {
+        "NumFlows": [
+            "1",
+            "2",
+        ],
+        "EnableCoverBackpressure": [
+            "1",
+        ],
+        "EnableAssertValidStability": [
+            "0",
+        ],
+    },
+    deps = [":br_flow_checks_valid_data_impl"],
+)
+
+br_verilog_elab_and_lint_test_suite(
+    name = "br_flow_checks_valid_data_impl_test_suite_no_backpressure",
+    params = {
+        "NumFlows": [
+            "1",
+            "2",
+        ],
+        "EnableCoverBackpressure": [
+            "0",
+        ],
+    },
+    deps = [":br_flow_checks_valid_data_impl"],
 )
