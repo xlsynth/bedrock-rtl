@@ -196,58 +196,6 @@ verilog_library(
 )
 
 br_verilog_elab_and_lint_test_suite(
-    name = "br_flow_checks_valid_data_test_suite_valid_stable",
-    params = {
-        "NumFlows": [
-            "1",
-            "2",
-        ],
-        "EnableCoverBackpressure": [
-            "1",
-        ],
-        "EnableAssertValidStability": [
-            "1",
-        ],
-        "EnableAssertDataStability": [
-            "0",
-            "1",
-        ],
-    },
-    deps = ["//flow/rtl/internal:br_flow_checks_valid_data_intg"],
-)
-
-br_verilog_elab_and_lint_test_suite(
-    name = "br_flow_checks_valid_data_test_suite_valid_unstable",
-    params = {
-        "NumFlows": [
-            "1",
-            "2",
-        ],
-        "EnableCoverBackpressure": [
-            "1",
-        ],
-        "EnableAssertValidStability": [
-            "0",
-        ],
-    },
-    deps = ["//flow/rtl/internal:br_flow_checks_valid_data_intg"],
-)
-
-br_verilog_elab_and_lint_test_suite(
-    name = "br_flow_checks_valid_data_test_suite_no_backpressure",
-    params = {
-        "NumFlows": [
-            "1",
-            "2",
-        ],
-        "EnableCoverBackpressure": [
-            "0",
-        ],
-    },
-    deps = ["//flow/rtl/internal:br_flow_checks_valid_data_intg"],
-)
-
-br_verilog_elab_and_lint_test_suite(
     name = "br_flow_arb_fixed_test_suite",
     params = {
         "NumFlows": [
