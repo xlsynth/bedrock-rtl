@@ -12,12 +12,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Bedrock-RTL Inbound Ready-Valid Interface Checks
+// Bedrock-RTL Ready-Valid Interface Checks (Integration)
 //
-// This is an assertion-only module that can be reused in all
-// modules with inbound ready-valid interfaces.
-// It checks that the valid and data signals conform to the
-// ready-valid interface protocol.
+// This is an internal assertion-only module that can be reused in all
+// modules with ready-valid interfaces. It uses the Bedrock-internal
+// integration check macros to ensure the valid and data signals
+// conform to the ready-valid interface protocol.
 
 `include "br_asserts_internal.svh"
 `include "br_unused.svh"
