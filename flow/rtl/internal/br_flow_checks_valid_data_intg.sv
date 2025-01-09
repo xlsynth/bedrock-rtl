@@ -12,18 +12,18 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Bedrock-RTL Inbound Ready-Valid Interface Checks
+// Bedrock-RTL Ready-Valid Interface Checks (Integration)
 //
-// This is an assertion-only module that can be reused in all
-// modules with inbound ready-valid interfaces.
-// It checks that the valid and data signals conform to the
-// ready-valid interface protocol.
+// This is an internal assertion-only module that can be reused in all
+// modules with ready-valid interfaces. It uses the Bedrock-internal
+// integration check macros to ensure the valid and data signals
+// conform to the ready-valid interface protocol.
 
 `include "br_asserts_internal.svh"
 `include "br_unused.svh"
 
 // ri lint_check_off NO_OUTPUT
-module br_flow_checks_valid_data #(
+module br_flow_checks_valid_data_intg #(
     // The number of ready-valid flows. Must be at least 1.
     parameter int NumFlows = 1,
     // The width of the data signal. Must be at least 1.
@@ -89,8 +89,8 @@ module br_flow_checks_valid_data #(
       end
     end
   end
-`endif
-`endif
+`endif  // BR_DISABLE_INTG_CHECKS
+`endif  // BR_ASSERT_ON
 
   `BR_UNUSED_NAMED(all_unused, {rst, valid, ready, data})
   `BR_ASSERT_FINAL(final_not_valid_a, !valid)

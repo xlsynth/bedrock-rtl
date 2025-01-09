@@ -88,10 +88,11 @@ module br_flow_reg_both #(
       // The fwd stage can still backpressure the rev stage
       // without backpressuring the input.
       .EnableCoverPushBackpressure(1),
-      // The rev stage should deal with any data instability
-      // by buffering the data when backpressure occurs.
-      .EnableAssertPushValidStability(1),
-      .EnableAssertPushDataStability(1)
+      // The rev stage has combinational paths on valid and data, so any instability on the
+      // push interface will also cause instability on the internal signals.
+      // But the output of the fwd stage is guaranteed to be stable either way.
+      .EnableAssertPushValidStability(EnableAssertPushValidStability),
+      .EnableAssertPushDataStability(EnableAssertPushDataStability)
   ) br_flow_reg_fwd (
       .clk,
       .rst,

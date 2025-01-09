@@ -56,13 +56,13 @@ module br_flow_reg_fwd #(
   //------------------------------------------
   `BR_ASSERT_STATIC(bit_width_must_be_at_least_one_a, Width >= 1)
 
-  br_flow_checks_valid_data #(
+  br_flow_checks_valid_data_intg #(
       .NumFlows(1),
       .Width(Width),
       .EnableCoverBackpressure(EnableCoverPushBackpressure),
       .EnableAssertValidStability(EnableAssertPushValidStability),
       .EnableAssertDataStability(EnableAssertPushDataStability)
-  ) br_flow_checks_valid_data (
+  ) br_flow_checks_valid_data_intg (
       .clk,
       .rst,
       .ready(push_ready),
@@ -92,21 +92,22 @@ module br_flow_reg_fwd #(
   // Implementation checks
   //------------------------------------------
 
-  // Assert that under pop-side backpressure conditions,
-  // the pipeline register correctly stalls downstream.
-  // That is, on any given cycle, if pop_valid is 1 and pop_ready is 0,
-  // then assert that on the following cycle pop_valid is still 1 and
-  // pop_data has not changed. In other words, we are checking that
-  // the implementation absides by the pop-side ready-valid interface protocol.
-  `BR_ASSERT_IMPL(pop_backpressure_a, !pop_ready && pop_valid |=> pop_valid && $stable(pop_data))
+  br_flow_checks_valid_data_impl #(
+      .NumFlows(1),
+      .Width(Width),
+      .EnableCoverBackpressure(EnableCoverPushBackpressure),
+      .EnableAssertValidStability(1),
+      .EnableAssertDataStability(1)
+  ) br_flow_checks_valid_data_impl (
+      .clk,
+      .rst,
+      .ready(pop_ready),
+      .valid(pop_valid),
+      .data (pop_data)
+  );
 
   // This module must be ready to accept pushes out of reset.
   `BR_ASSERT_IMPL(reset_a, $fell(rst) |-> push_ready)
-
-  // As noted in the integration checks, unknown pop_data can be checked with X-propagation tools.
-  // However, if we already check the integration that push_valid |-> !$isunknown(push_data), then
-  // we also know this module must also have known pop_data whenever pop_valid is 1.
-  `BR_ASSERT_IMPL(pop_data_known_a, pop_valid |-> !$isunknown(pop_data))
 
   // Check that the datapath has 1 cycle cut-through delay.
   `BR_ASSERT_IMPL(cutthrough_1_delay_a,

@@ -53,14 +53,14 @@ module br_flow_arb_core #(
   // Integration checks
   //------------------------------------------
 
-  br_flow_checks_valid_data #(
+  br_flow_checks_valid_data_intg #(
       .NumFlows(NumFlows),
       .Width(1),
       .EnableCoverBackpressure(EnableCoverPushBackpressure),
       .EnableAssertValidStability(EnableAssertPushValidStability),
       // Data is always stable when valid is stable since it is constant.
       .EnableAssertDataStability(EnableAssertPushValidStability)
-  ) br_flow_checks_valid_data (
+  ) br_flow_checks_valid_data_intg (
       .clk,
       .rst,
       .ready(push_ready),
@@ -89,6 +89,20 @@ module br_flow_arb_core #(
   //------------------------------------------
   // Implementation checks
   //------------------------------------------
+  br_flow_checks_valid_data_impl #(
+      .NumFlows(1),
+      .Width(1),
+      .EnableCoverBackpressure(1),
+      .EnableAssertValidStability(EnableAssertPushValidStability),
+      // Data is always stable when valid is stable since it is constant.
+      .EnableAssertDataStability(EnableAssertPushValidStability)
+  ) br_flow_checks_valid_data_impl (
+      .clk,
+      .rst,
+      .ready(pop_ready),
+      .valid(pop_valid),
+      .data (1'b0)
+  );
 
   `BR_ASSERT_IMPL(push_handshake_onehot0_a, $onehot0(push_valid & push_ready))
   `BR_ASSERT_IMPL(pop_ready_equals_push_ready_or_a, pop_ready == |push_ready)

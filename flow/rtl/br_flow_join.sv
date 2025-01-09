@@ -51,14 +51,14 @@ module br_flow_join #(
   `BR_ASSERT_STATIC(num_flows_gte2_a, NumFlows >= 2)
 
 
-  br_flow_checks_valid_data #(
+  br_flow_checks_valid_data_intg #(
       .NumFlows(NumFlows),
       .Width(1),
       .EnableCoverBackpressure(EnableCoverPushBackpressure),
       .EnableAssertValidStability(EnableAssertPushValidStability),
       // Data is always stable when valid is since it is constant.
       .EnableAssertDataStability(EnableAssertPushValidStability)
-  ) br_flow_checks_valid_data (
+  ) br_flow_checks_valid_data_intg (
       .clk,
       .rst,
       .ready(push_ready),
@@ -85,6 +85,20 @@ module br_flow_join #(
   //------------------------------------------
   // Implementation checks
   //------------------------------------------
+  br_flow_checks_valid_data_impl #(
+      .NumFlows(1),
+      .Width(1),
+      .EnableCoverBackpressure(1),
+      .EnableAssertValidStability(EnableAssertPushValidStability),
+      .EnableAssertDataStability(EnableAssertPushValidStability)
+  ) br_flow_checks_valid_data_impl (
+      .clk,
+      .rst,
+      .ready(pop_ready),
+      .valid(pop_valid),
+      .data (1'b0)
+  );
+
   `BR_ASSERT_IMPL(pop_backpressure_a, !pop_ready && pop_valid |=> pop_valid)
 
 endmodule : br_flow_join

@@ -16,6 +16,7 @@
 // assertions.
 
 `include "br_asserts_internal.svh"
+`include "br_gates.svh"
 
 module br_cdc_fifo_gray_count_sync #(
     // Width of the gray-encoded count. Must be at least 2.
@@ -46,6 +47,14 @@ module br_cdc_fifo_gray_count_sync #(
                      src_clk, src_rst)
 
   // Implementation
+
+  logic [CountWidth-1:0] src_count_gray_maxdel;
+
+  // Tag this signal as needing max delay checks
+  // ri lint_check_off ONE_CONN_PER_LINE
+  `BR_GATE_CDC_MAXDEL_BUS(src_count_gray_maxdel, src_count_gray, CountWidth)
+  // ri lint_check_on ONE_CONN_PER_LINE
+
   for (genvar i = 0; i < CountWidth; i++) begin : gen_cdc_sync
     br_cdc_bit_toggle #(
         .AddSourceFlop(0),  // Assume flopped externally
@@ -53,7 +62,7 @@ module br_cdc_fifo_gray_count_sync #(
     ) br_cdc_bit_toggle_inst (
         .src_clk,
         .src_rst,
-        .src_bit(src_count_gray[i]),
+        .src_bit(src_count_gray_maxdel[i]),
         .dst_clk,
         .dst_rst,
         .dst_bit(dst_count_gray[i])

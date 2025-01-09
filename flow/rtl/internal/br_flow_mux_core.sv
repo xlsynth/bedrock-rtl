@@ -61,13 +61,13 @@ module br_flow_mux_core #(
   `BR_ASSERT_STATIC(numflows_gte_2_a, NumFlows >= 2)
   `BR_ASSERT_STATIC(datawidth_gte_1_a, Width >= 1)
 
-  br_flow_checks_valid_data #(
+  br_flow_checks_valid_data_intg #(
       .NumFlows(NumFlows),
       .Width(Width),
       .EnableCoverBackpressure(EnableCoverPushBackpressure),
       .EnableAssertValidStability(EnableAssertPushValidStability),
       .EnableAssertDataStability(EnableAssertPushDataStability)
-  ) br_flow_checks_valid_data (
+  ) br_flow_checks_valid_data_intg (
       .clk,
       .rst,
       .ready(push_ready),
@@ -106,6 +106,19 @@ module br_flow_mux_core #(
   //------------------------------------------
   // Implementation checks
   //------------------------------------------
+  br_flow_checks_valid_data_impl #(
+      .NumFlows(1),
+      .Width(Width),
+      .EnableCoverBackpressure(1),
+      .EnableAssertValidStability(EnableAssertPushValidStability),
+      .EnableAssertDataStability(EnableAssertPushDataStability)
+  ) br_flow_checks_valid_data_impl (
+      .clk,
+      .rst,
+      .ready(pop_ready),
+      .valid(pop_valid),
+      .data (pop_data)
+  );
 
   for (genvar i = 0; i < NumFlows; i++) begin : gen_data_selected_assert
     `BR_ASSERT_IMPL(data_selected_when_granted_a,

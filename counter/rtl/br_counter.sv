@@ -51,6 +51,12 @@ module br_counter #(
     // If 0, don't allow wrapping and omit overflow/underflow correction logic.
     // Assert there is no overflow/underflow.
     parameter bit EnableWrap = 1,
+    // If 1, then when reinit is asserted together with incr_valid and/or decr_valid,
+    // the increment/decrement are applied to the initial value rather than the current value, i.e.,
+    // value_next == initial_value + applicable incr - applicable decr.
+    // If 0, then when reinit is asserted together with incr_valid and/or decr_valid,
+    // the increment/decrement values are ignored, i.e., value_next == initial_value.
+    parameter bit EnableReinitAndChange = 1,
     localparam int ValueWidth = $clog2(MaxValue + 1),
     localparam int ChangeWidth = $clog2(MaxChange + 1)
 ) (
@@ -112,19 +118,22 @@ module br_counter #(
   localparam int TempWidth = $clog2(MaxValue + MaxChange + 1);
 
   logic                   value_loaden;
-  logic [  TempWidth-1:0] value_temp_incr;
   // The MSB might not be used
   // ri lint_check_waive INEFFECTIVE_NET
   logic [  TempWidth-1:0] value_temp;
-  logic [ ValueWidth-1:0] base_value;
   logic [ChangeWidth-1:0] incr_qual;
   logic [ChangeWidth-1:0] decr_qual;
 
-  assign base_value = reinit ? initial_value : value;
   assign incr_qual = incr_valid ? incr : '0;
   assign decr_qual = decr_valid ? decr : '0;
-  assign value_temp_incr = base_value + incr_qual;
-  assign value_temp = value_temp_incr - TempWidth'(decr_qual);
+
+  if (EnableReinitAndChange) begin : gen_reinit_and_change
+    // ri lint_check_waive ARITH_ARGS RHS_TOO_SHORT
+    assign value_temp = (reinit ? initial_value : value) + incr_qual - decr_qual;
+  end else begin : gen_reinit_ignore_change
+    // ri lint_check_waive ARITH_ARGS RHS_TOO_SHORT
+    assign value_temp = reinit ? initial_value : (value + incr_qual - decr_qual);
+  end
   assign value_loaden = reinit || incr_valid || decr_valid;
 
   // For MaxValueP1 being a power of 2, wrapping occurs naturally

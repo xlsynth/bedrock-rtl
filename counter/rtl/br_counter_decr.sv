@@ -46,6 +46,12 @@
 module br_counter_decr #(
     parameter int MaxValue = 1,  // Must be at least 1. Inclusive. Also the initial value.
     parameter int MaxDecrement = 1,  // Must be at least 1 and at most MaxValue. Inclusive.
+    // If 1, then when reinit is asserted together with decr_valid,
+    // the decrement is applied to the initial value rather than the current value, i.e.,
+    // value_next == initial_value - applicable decr.
+    // If 0, then when reinit is asserted together with decr_valid,
+    // the decrement values are ignored, i.e., value_next == initial_value.
+    parameter bit EnableReinitAndDecr = 1,
     localparam int ValueWidth = $clog2(MaxValue + 1),
     localparam int DecrementWidth = $clog2(MaxDecrement + 1)
 ) (
@@ -81,7 +87,11 @@ module br_counter_decr #(
 
   logic [ValueWidth-1:0] value_temp;
 
-  assign value_temp = (reinit ? initial_value : value) - (decr_valid ? decr : '0);
+  if (EnableReinitAndDecr) begin : gen_reinit_and_decr
+    assign value_temp = (reinit ? initial_value : value) - (decr_valid ? decr : '0);
+  end else begin : gen_reinit_ignore_decr
+    assign value_temp = reinit ? initial_value : (value - (decr_valid ? decr : '0));
+  end
 
   if (IsMaxValueP1PowerOf2) begin : gen_power_of_2
     // For MaxValueP1 being a power of 2, wrapping occurs naturally

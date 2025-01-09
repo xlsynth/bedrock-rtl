@@ -152,7 +152,7 @@ module br_flow_deserializer #(
   `BR_ASSERT_STATIC(metadata_width_gte_1_a, MetadataWidth >= 1)
   `BR_ASSERT_STATIC(deserialization_ratio_gte_1_a, DeserializationRatio >= 1)
 
-  br_flow_checks_valid_data #(
+  br_flow_checks_valid_data_intg #(
       .NumFlows(1),
       .Width(PushWidth + 1 + MetadataWidth),
       // Push ready/valid stability is required for the deserializer to work correctly.
@@ -162,7 +162,7 @@ module br_flow_deserializer #(
       .EnableCoverBackpressure(1),
       .EnableAssertValidStability(1),
       .EnableAssertDataStability(1)
-  ) br_flow_checks_valid_data (
+  ) br_flow_checks_valid_data_intg (
       .clk,
       .rst,
       .ready(push_ready),
@@ -311,7 +311,21 @@ module br_flow_deserializer #(
   //------------------------------------------
   // Implementation checks
   //------------------------------------------
-  // TODO: standard ready-valid check modules
+  br_flow_checks_valid_data_impl #(
+      .NumFlows(1),
+      .Width(PopWidth + 1 + SerFlitIdWidth + MetadataWidth),
+      // Pop ready/valid stability can only be guaranteed if the push side is also stable.
+      // We already check that above, so here we just unconditionally check the implementation.
+      .EnableCoverBackpressure(1),
+      .EnableAssertValidStability(1),
+      .EnableAssertDataStability(1)
+  ) br_flow_checks_valid_data_impl (
+      .clk,
+      .rst,
+      .ready(pop_ready),
+      .valid(pop_valid),
+      .data ({pop_data, pop_last, pop_last_dont_care_count, pop_metadata})
+  );
 
   `BR_ASSERT_IMPL(pop_valid_iff_last_a, pop_valid |-> push_valid)
   `BR_ASSERT_IMPL(pop_last_iff_push_last_a, pop_valid && pop_last |-> push_last)
