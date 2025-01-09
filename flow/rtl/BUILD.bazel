@@ -54,8 +54,7 @@ verilog_library(
     srcs = ["br_flow_demux_select.sv"],
     deps = [
         ":br_flow_demux_select_unstable",
-        ":br_flow_reg_rev",
-        "//macros:br_asserts_internal",
+        ":br_flow_reg_fwd",
     ],
 )
 
