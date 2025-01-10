@@ -258,7 +258,11 @@ module br_flow_serializer #(
     // Complete the push flit when we're finished serializing it (the last pop flit for
     // this push flit is accepted).
     //------
-    assign push_ready = pop_ready && pop_valid && (pop_flit_id_plus_dont_care_count == sr_minus_1);
+
+    // Note that this might be X when push_valid is 0, because pop_flit_id_plus_dont_care_count
+    // has a fanin from push_data. That's ok, since 0 && X == 0. Keeping the valid off of the
+    // fanin for push_ready improves timing.
+    assign push_ready = pop_ready && (pop_flit_id_plus_dont_care_count == sr_minus_1);
 
   end
 
