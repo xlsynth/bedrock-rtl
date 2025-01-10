@@ -1,5 +1,6 @@
 bazel-*
 MODULE.bazel.lock
+.bazelrc
 .vscode
 chipstack_artifacts
 *.docbook
