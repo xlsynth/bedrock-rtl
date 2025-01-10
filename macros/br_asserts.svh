@@ -60,6 +60,20 @@ end
 `endif  // BR_ASSERT_ON
 
 ////////////////////////////////////////////////////////////////////////////////
+// Concurrent assertion macros (evaluated on posedge of a clock and enabled during a synchronous active-high reset)
+////////////////////////////////////////////////////////////////////////////////
+
+// Clock: 'clk'
+// Reset: 'rst'
+`ifdef BR_ASSERT_ON
+`define BR_ASSERT_RST(__name__, __expr__) \
+__name__ : assert property (@(posedge clk) (__expr__));
+`else  // BR_ASSERT_ON
+`define BR_ASSERT_RST(__name__, __expr__) \
+`BR_NOOP
+`endif  // BR_ASSERT_ON
+
+////////////////////////////////////////////////////////////////////////////////
 // Concurrent assertion macros (evaluated on posedge of a clock and disabled during a synchronous active-high reset)
 ////////////////////////////////////////////////////////////////////////////////
 
