@@ -23,6 +23,7 @@ verilog_library(
     deps = [
         "//gate/rtl:br_gate_behav",
         "//macros:br_asserts",
+        "//macros:br_gates",
         "//macros:br_registers",
     ],
 )
