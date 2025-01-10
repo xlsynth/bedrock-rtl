@@ -41,7 +41,9 @@ module br_flow_checks_valid_data_intg #(
     // If 0, cover that data can be unstable.
     // Can only be enabled if EnableAssertValidStability is also enabled.
     // ri lint_check_waive PARAM_NOT_USED
-    parameter bit EnableAssertDataStability = EnableAssertValidStability
+    parameter bit EnableAssertDataStability = EnableAssertValidStability,
+    // If 1, then assert there are no valid bits asserted at the end of the test.
+    parameter bit EnableAssertFinalNotValid = 1
 ) (
     // ri lint_check_waive INPUT_NOT_READ HIER_NET_NOT_READ HIER_BRANCH_NOT_READ
     input logic clk,
@@ -55,6 +57,10 @@ module br_flow_checks_valid_data_intg #(
                     !(EnableAssertValidStability && !EnableCoverBackpressure))
   `BR_ASSERT_STATIC(legal_assert_data_stability_a,
                     !(EnableAssertDataStability && !EnableAssertValidStability))
+
+  if (EnableAssertFinalNotValid) begin : gen_assert_final
+    `BR_ASSERT_FINAL(final_not_valid_a, !valid)
+  end
 
 `ifdef BR_ASSERT_ON
 `ifndef BR_DISABLE_INTG_CHECKS
@@ -93,5 +99,6 @@ module br_flow_checks_valid_data_intg #(
 `endif  // BR_ASSERT_ON
 
   `BR_UNUSED_NAMED(all_unused, {rst, valid, ready, data})
+
 endmodule
 // ri lint_check_on NO_OUTPUT

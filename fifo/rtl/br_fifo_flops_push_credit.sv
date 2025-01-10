@@ -74,6 +74,9 @@ module br_fifo_flops_push_credit #(
     // Number of pipeline register stages inserted along the read data path in the width dimension.
     // Must be at least 0.
     parameter int FlopRamReadDataWidthStages = 0,
+    // If 1, then assert there are no valid bits asserted and that the FIFO is
+    // empty at the end of the test.
+    parameter bit EnableAssertFinalNotValid = 1,
 
     // Internal computed parameters
     localparam int AddrWidth   = $clog2(Depth),
@@ -140,7 +143,8 @@ module br_fifo_flops_push_credit #(
       .MaxCredit(MaxCredit),
       .RegisterPushCredit(RegisterPushCredit),
       .RegisterPopOutputs(RegisterPopOutputs),
-      .RamReadLatency(RamReadLatency)
+      .RamReadLatency(RamReadLatency),
+      .EnableAssertFinalNotValid(EnableAssertFinalNotValid)
   ) br_fifo_ctrl_1r1w_push_credit (
       .clk,
       .rst,
@@ -183,7 +187,8 @@ module br_fifo_flops_push_credit #(
       // FIFO will never read and write same address on the same cycle
       .TileEnableBypass(0),
       // Flops don't need to be reset, since uninitialized cells will never be read
-      .EnableMemReset(0)
+      .EnableMemReset(0),
+      .EnableAssertFinalNotValid(EnableAssertFinalNotValid)
   ) br_ram_flops_1r1w (
       .wr_clk(clk),  // ri lint_check_waive SAME_CLOCK_NAME
       .wr_rst(rst),

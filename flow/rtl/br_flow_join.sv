@@ -28,7 +28,9 @@ module br_flow_join #(
     parameter bit EnableCoverPushBackpressure = 1,
     // If 1, assert that push_valid is stable when backpressured.
     // If 0, cover that push_valid can be unstable.
-    parameter bit EnableAssertPushValidStability = EnableCoverPushBackpressure
+    parameter bit EnableAssertPushValidStability = EnableCoverPushBackpressure,
+    // If 1, then assert there are no valid bits asserted at the end of the test.
+    parameter bit EnableAssertFinalNotValid = 1
 ) (
     // ri lint_check_waive INPUT_NOT_READ HIER_NET_NOT_READ HIER_BRANCH_NOT_READ
     input logic clk,  // Used only for assertions
@@ -57,7 +59,8 @@ module br_flow_join #(
       .EnableCoverBackpressure(EnableCoverPushBackpressure),
       .EnableAssertValidStability(EnableAssertPushValidStability),
       // Data is always stable when valid is since it is constant.
-      .EnableAssertDataStability(EnableAssertPushValidStability)
+      .EnableAssertDataStability(EnableAssertPushValidStability),
+      .EnableAssertFinalNotValid(EnableAssertFinalNotValid)
   ) br_flow_checks_valid_data_intg (
       .clk,
       .rst,
@@ -90,7 +93,8 @@ module br_flow_join #(
       .Width(1),
       .EnableCoverBackpressure(1),
       .EnableAssertValidStability(EnableAssertPushValidStability),
-      .EnableAssertDataStability(EnableAssertPushValidStability)
+      .EnableAssertDataStability(EnableAssertPushValidStability),
+      .EnableAssertFinalNotValid(EnableAssertFinalNotValid)
   ) br_flow_checks_valid_data_impl (
       .clk,
       .rst,

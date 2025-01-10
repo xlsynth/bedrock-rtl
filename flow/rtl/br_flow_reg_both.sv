@@ -34,7 +34,9 @@ module br_flow_reg_both #(
     parameter bit EnableAssertPushValidStability = EnableCoverPushBackpressure,
     // If 1, assert that push_data is stable when backpressured.
     // If 0, cover that push_data can be unstable.
-    parameter bit EnableAssertPushDataStability = EnableAssertPushValidStability
+    parameter bit EnableAssertPushDataStability = EnableAssertPushValidStability,
+    // If 1, then assert there are no valid bits asserted at the end of the test.
+    parameter bit EnableAssertFinalNotValid = 1
 ) (
     input logic clk,
     input logic rst,  // Synchronous active-high
@@ -71,7 +73,8 @@ module br_flow_reg_both #(
       .Width(Width),
       .EnableCoverPushBackpressure(EnableCoverPushBackpressure),
       .EnableAssertPushValidStability(EnableAssertPushValidStability),
-      .EnableAssertPushDataStability(EnableAssertPushDataStability)
+      .EnableAssertPushDataStability(EnableAssertPushDataStability),
+      .EnableAssertFinalNotValid(EnableAssertFinalNotValid)
   ) br_flow_reg_rev (
       .clk,
       .rst,
@@ -92,7 +95,8 @@ module br_flow_reg_both #(
       // push interface will also cause instability on the internal signals.
       // But the output of the fwd stage is guaranteed to be stable either way.
       .EnableAssertPushValidStability(EnableAssertPushValidStability),
-      .EnableAssertPushDataStability(EnableAssertPushDataStability)
+      .EnableAssertPushDataStability(EnableAssertPushDataStability),
+      .EnableAssertFinalNotValid(EnableAssertFinalNotValid)
   ) br_flow_reg_fwd (
       .clk,
       .rst,

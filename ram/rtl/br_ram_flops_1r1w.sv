@@ -61,6 +61,8 @@ module br_ram_flops_1r1w #(
     // If 1, use structured mux2 gates for the read mux instead of relying on synthesis.
     // This is required if write and read clocks are different.
     parameter bit UseStructuredGates = 0,
+    // If 1, then assert there are no valid bits asserted at the end of the test.
+    parameter bit EnableAssertFinalNotValid = 1,
     localparam int AddressWidth = $clog2(Depth),
     localparam int NumWords = Width / WordWidth,
     // Write latency in units of wr_clk cycles
@@ -160,7 +162,8 @@ module br_ram_flops_1r1w #(
         .Depth(Depth),
         .DataWidth(DecoderDataWidth),
         .Tiles(DepthTiles),
-        .Stages(AddressDepthStages)
+        .Stages(AddressDepthStages),
+        .EnableAssertFinalNotValid(EnableAssertFinalNotValid)
     ) br_ram_addr_decoder_wr (
         .clk(wr_clk),  // ri lint_check_waive SAME_CLOCK_NAME
         .rst(wr_rst),
@@ -180,7 +183,8 @@ module br_ram_flops_1r1w #(
         .Depth(Depth),
         .DataWidth(Width),
         .Tiles(DepthTiles),
-        .Stages(AddressDepthStages)
+        .Stages(AddressDepthStages),
+        .EnableAssertFinalNotValid(EnableAssertFinalNotValid)
     ) br_ram_addr_decoder_wr (
         .clk(wr_clk),  // ri lint_check_waive SAME_CLOCK_NAME
         .rst(wr_rst),
@@ -198,9 +202,10 @@ module br_ram_flops_1r1w #(
 
   // Read address pipeline
   br_ram_addr_decoder #(
-      .Depth (Depth),
-      .Tiles (DepthTiles),
-      .Stages(AddressDepthStages)
+      .Depth(Depth),
+      .Tiles(DepthTiles),
+      .Stages(AddressDepthStages),
+      .EnableAssertFinalNotValid(EnableAssertFinalNotValid)
   ) br_ram_addr_decoder_rd (
       .clk(rd_clk),  // ri lint_check_waive SAME_CLOCK_NAME
       .rst(rd_rst),
@@ -221,7 +226,8 @@ module br_ram_flops_1r1w #(
           .WordWidth(WordWidth),
           .EnableBypass(TileEnableBypass),
           .EnableReset(EnableMemReset),
-          .UseStructuredGates(UseStructuredGates)
+          .UseStructuredGates(UseStructuredGates),
+          .EnableAssertFinalNotValid(EnableAssertFinalNotValid)
       ) br_ram_flops_1r1w_tile (
           .wr_clk,
           .wr_rst,
@@ -245,7 +251,8 @@ module br_ram_flops_1r1w #(
       .DepthTiles(DepthTiles),
       .WidthTiles(WidthTiles),
       .DepthStages(ReadDataDepthStages),
-      .WidthStages(ReadDataWidthStages)
+      .WidthStages(ReadDataWidthStages),
+      .EnableAssertFinalNotValid(EnableAssertFinalNotValid)
   ) br_ram_data_rd_pipe (
       .clk(rd_clk),  // ri lint_check_waive SAME_CLOCK_NAME
       .rst(rd_rst),
@@ -275,5 +282,7 @@ module br_ram_flops_1r1w #(
                          rd_clk, rd_rst)
     end
   end
+
+  `BR_ASSERT_FINAL(final_not_rd_data_valid_a, !rd_data_valid)
 
 endmodule : br_ram_flops_1r1w

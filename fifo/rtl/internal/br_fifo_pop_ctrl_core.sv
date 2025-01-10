@@ -24,6 +24,9 @@ module br_fifo_pop_ctrl_core #(
     parameter bit EnableBypass = 1,
     parameter int RamReadLatency = 0,
     parameter bit RegisterPopOutputs = 0,
+    // If 1, then assert there are no valid bits asserted and that the FIFO is
+    // empty at the end of the test.
+    parameter bit EnableAssertFinalNotValid = 1,
     localparam int AddrWidth = $clog2(Depth),
     localparam int CountWidth = $clog2(Depth + 1)
 ) (
@@ -64,7 +67,8 @@ module br_fifo_pop_ctrl_core #(
   // RAM path
   br_counter_incr #(
       .MaxValue(Depth - 1),
-      .MaxIncrement(1)
+      .MaxIncrement(1),
+      .EnableAssertFinalNotValid(EnableAssertFinalNotValid)
   ) br_counter_incr_rd_addr (
       .clk,
       .rst,
@@ -101,7 +105,8 @@ module br_fifo_pop_ctrl_core #(
 
     if (RegisterPopOutputs) begin : gen_reg_pop
       br_flow_reg_fwd #(
-          .Width(Width)
+          .Width(Width),
+          .EnableAssertFinalNotValid(EnableAssertFinalNotValid)
       ) br_flow_reg_fwd_pop (
           .clk,
           .rst,
@@ -124,11 +129,12 @@ module br_fifo_pop_ctrl_core #(
     end
   end else begin : gen_nonzero_rd_lat
     br_fifo_staging_buffer #(
-        .EnableBypass      (EnableBypass),
-        .TotalDepth        (Depth),
-        .RamReadLatency    (RamReadLatency),
-        .Width             (Width),
-        .RegisterPopOutputs(RegisterPopOutputs)
+        .EnableBypass             (EnableBypass),
+        .TotalDepth               (Depth),
+        .RamReadLatency           (RamReadLatency),
+        .Width                    (Width),
+        .RegisterPopOutputs       (RegisterPopOutputs),
+        .EnableAssertFinalNotValid(EnableAssertFinalNotValid)
     ) br_fifo_staging_buffer (
         .clk,
         .rst,

@@ -72,6 +72,9 @@ module br_cdc_fifo_flops_push_credit #(
     // Number of pipeline register stages inserted along the read data path in the width dimension.
     // Must be at least 0.
     parameter int FlopRamReadDataWidthStages = 0,
+    // If 1, then assert there are no valid bits asserted and that the FIFO is
+    // empty at the end of the test.
+    parameter bit EnableAssertFinalNotValid = 1,
 
     // Internal computed parameters
     localparam int AddrWidth   = $clog2(Depth),
@@ -144,7 +147,8 @@ module br_cdc_fifo_flops_push_credit #(
       .RegisterPopOutputs(RegisterPopOutputs),
       .RamWriteLatency(RamWriteLatency),
       .RamReadLatency(RamReadLatency),
-      .NumSyncStages(NumSyncStages)
+      .NumSyncStages(NumSyncStages),
+      .EnableAssertFinalNotValid(EnableAssertFinalNotValid)
   ) br_cdc_fifo_ctrl_1r1w_push_credit (
       .push_clk,
       .push_rst,
@@ -190,7 +194,8 @@ module br_cdc_fifo_flops_push_credit #(
       .EnableMemReset(0),
       // Since there is an asynchronous path on the read,
       // we need to use structured gates for the read mux.
-      .UseStructuredGates(1)
+      .UseStructuredGates(1),
+      .EnableAssertFinalNotValid(EnableAssertFinalNotValid)
   ) br_ram_flops_1r1w (
       .wr_clk(push_clk),  // ri lint_check_waive SAME_CLOCK_NAME
       .wr_rst(push_rst),

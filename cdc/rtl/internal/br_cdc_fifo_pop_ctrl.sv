@@ -23,6 +23,9 @@ module br_cdc_fifo_pop_ctrl #(
     parameter int Width = 1,
     parameter int RamReadLatency = 0,
     parameter bit RegisterPopOutputs = 0,
+    // If 1, then assert there are no valid bits asserted and that the FIFO is
+    // empty at the end of the test.
+    parameter bit EnableAssertFinalNotValid = 1,
     localparam int AddrWidth = $clog2(Depth),
     localparam int CountWidth = $clog2(Depth + 1)
 ) (
@@ -79,7 +82,8 @@ module br_cdc_fifo_pop_ctrl #(
       .Width(Width),
       .EnableBypass(1'b0),  // Bypass is not used for CDC
       .RamReadLatency(RamReadLatency),
-      .RegisterPopOutputs(RegisterPopOutputs)
+      .RegisterPopOutputs(RegisterPopOutputs),
+      .EnableAssertFinalNotValid(EnableAssertFinalNotValid)
   ) br_fifo_pop_ctrl_core (
       .clk,
       .rst,

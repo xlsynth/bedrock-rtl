@@ -37,6 +37,10 @@ module br_tracker_freelist #(
     parameter int NumAllocPorts = 1,
     // Number of deallocation ports. Must be at least 1.
     parameter int NumDeallocPorts = 1,
+    // If 1, then assert there are no dealloc_valid bits asserted at the end of the test.
+    // It is expected that alloc_valid could be 1 at end of the test because it's
+    // a natural idle condition for this design.
+    parameter bit EnableAssertFinalNotDeallocValid = 1,
 
     localparam int EntryIdWidth = $clog2(NumEntries)
 ) (
@@ -57,7 +61,6 @@ module br_tracker_freelist #(
   `BR_ASSERT_STATIC(legal_num_entries_a, NumEntries > (2 * NumAllocPorts))
   `BR_ASSERT_STATIC(legal_num_alloc_ports_a, NumAllocPorts >= 1)
   `BR_ASSERT_STATIC(legal_num_dealloc_ports_a, NumDeallocPorts >= 1)
-
 
 `ifdef BR_ASSERT_ON
 `ifndef BR_DISABLE_INTG_CHECKS
@@ -149,7 +152,8 @@ module br_tracker_freelist #(
 
     // Encode the first free entry ID to binary
     br_enc_onehot2bin #(
-        .NumValues(NumEntries)
+        .NumValues(NumEntries),
+        .EnableAssertFinalNotValid(EnableAssertFinalNotDeallocValid)
     ) br_enc_onehot2bin_push_entry_id (
         .clk,
         .rst,
@@ -166,7 +170,9 @@ module br_tracker_freelist #(
         .EnableAssertPushValidStability(NumAllocPorts == 1),
         // Since the entry ID is coming from a priority encoder,
         // it could be unstable if a higher priority entry is deallocated.
-        .EnableAssertPushDataStability(0)
+        .EnableAssertPushDataStability(0),
+        // Expect that alloc_valid can be 1 at end of test (or when idle, in general)
+        .EnableAssertFinalNotValid(0)
     ) br_flow_reg_both (
         .clk,
         .rst,
@@ -198,7 +204,8 @@ module br_tracker_freelist #(
 
   for (genvar i = 0; i < NumDeallocPorts; i++) begin : gen_dealloc_entry_id_onehot
     br_enc_bin2onehot #(
-        .NumValues(NumEntries)
+        .NumValues(NumEntries),
+        .EnableAssertFinalNotValid(EnableAssertFinalNotDeallocValid)
     ) br_enc_bin2onehot_dealloc_entry_id (
         .clk,
         .rst,
@@ -266,5 +273,8 @@ module br_tracker_freelist #(
   end
 `endif
 `endif
+
+  // We expect alloc_valid can be 1 at the end of simulation (i.e., if all entries are free).
+  // So don't do a BR_ASSERT_FINAL on it.
 
 endmodule

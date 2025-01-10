@@ -50,6 +50,8 @@ module br_credit_receiver #(
     // Maximum pop credits that can be returned in a single cycle.
     // Must be at least 1 but cannot be greater than MaxCredit.
     parameter int PopCreditMaxChange = 1,
+    // If 1, then assert there are no valid bits asserted at the end of the test.
+    parameter bit EnableAssertFinalNotValid = 1,
     localparam int CounterWidth = $clog2(MaxCredit + 1),
     localparam int PopCreditChangeWidth = $clog2(PopCreditMaxChange + 1)
 ) (
@@ -93,6 +95,11 @@ module br_credit_receiver #(
   `BR_ASSERT_INTG(no_push_valid_if_no_credit_released_a, credit_count == MaxCredit |-> !push_valid)
   `BR_ASSERT_INTG(pop_credit_in_range_a, pop_credit <= PopCreditMaxChange)
 
+  if (EnableAssertFinalNotValid) begin : gen_assert_final
+    `BR_ASSERT_FINAL(final_not_push_valid_a, !push_valid)
+    `BR_ASSERT_FINAL(final_not_pop_valid_a, !pop_valid)
+  end
+
   // Rely on submodule integration checks
 
   //------------------------------------------
@@ -106,8 +113,9 @@ module br_credit_receiver #(
   assign credit_incr_valid = |pop_credit;
 
   br_credit_counter #(
-      .MaxValue (MaxCredit),
-      .MaxChange(PopCreditMaxChange)
+      .MaxValue(MaxCredit),
+      .MaxChange(PopCreditMaxChange),
+      .EnableAssertFinalNotValid(EnableAssertFinalNotValid)
   ) br_credit_counter (
       .clk,
       .rst,

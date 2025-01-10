@@ -52,6 +52,8 @@ module br_counter_decr #(
     // If 0, then when reinit is asserted together with decr_valid,
     // the decrement values are ignored, i.e., value_next == initial_value.
     parameter bit EnableReinitAndDecr = 1,
+    // If 1, then assert there are no valid bits asserted at the end of the test.
+    parameter bit EnableAssertFinalNotValid = 1,
     localparam int ValueWidth = $clog2(MaxValue + 1),
     localparam int DecrementWidth = $clog2(MaxDecrement + 1)
 ) (
@@ -76,6 +78,10 @@ module br_counter_decr #(
 
   `BR_ASSERT_INTG(decr_in_range_a, decr_valid |-> decr <= MaxDecrement)
   `BR_ASSERT_INTG(initial_value_in_range_a, initial_value <= MaxValue)
+
+  if (EnableAssertFinalNotValid) begin : gen_assert_final
+    `BR_ASSERT_FINAL(final_not_decr_valid_a, !decr_valid)
+  end
 
   //------------------------------------------
   // Implementation

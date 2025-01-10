@@ -53,6 +53,8 @@ module br_counter_incr #(
     // If 0, then when reinit is asserted together with incr_valid,
     // the increment values are ignored, i.e., value_next == initial_value.
     parameter bit EnableReinitAndIncr = 1,
+    // If 1, then assert there are no valid bits asserted at the end of the test.
+    parameter bit EnableAssertFinalNotValid = 1,
     localparam int ValueWidth = $clog2(MaxValue + 1),
     localparam int IncrementWidth = $clog2(MaxIncrement + 1)
 ) (
@@ -77,6 +79,10 @@ module br_counter_incr #(
 
   `BR_ASSERT_INTG(incr_in_range_a, incr_valid |-> incr <= MaxIncrement)
   `BR_ASSERT_INTG(initial_value_in_range_a, initial_value <= MaxValue)
+
+  if (EnableAssertFinalNotValid) begin : gen_assert_final
+    `BR_ASSERT_FINAL(final_not_incr_valid_a, !incr_valid)
+  end
 
   //------------------------------------------
   // Implementation

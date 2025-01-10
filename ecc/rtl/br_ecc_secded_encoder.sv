@@ -70,6 +70,8 @@ module br_ecc_secded_encoder #(
     parameter bit RegisterInputs = 0,
     // If 1, then insert a pipeline register at the output.
     parameter bit RegisterOutputs = 0,
+    // If 1, then assert there are no valid bits asserted at the end of the test.
+    parameter bit EnableAssertFinalNotValid = 1,
     localparam int MessageWidth = 2 ** $clog2(DataWidth),
     localparam int CodewordWidth = MessageWidth + ParityWidth
 ) (
@@ -106,7 +108,8 @@ module br_ecc_secded_encoder #(
 
   br_delay_valid #(
       .Width(DataWidth),
-      .NumStages(RegisterInputs == 1 ? 1 : 0)
+      .NumStages(RegisterInputs == 1 ? 1 : 0),
+      .EnableAssertFinalNotValid(EnableAssertFinalNotValid)
   ) br_delay_valid_inputs (
       .clk,
       .rst,
@@ -245,7 +248,8 @@ module br_ecc_secded_encoder #(
   //------
   br_delay_valid #(
       .Width(CodewordWidth),
-      .NumStages(RegisterOutputs == 1 ? 1 : 0)
+      .NumStages(RegisterOutputs == 1 ? 1 : 0),
+      .EnableAssertFinalNotValid(EnableAssertFinalNotValid)
   ) br_delay_valid_outputs (
       .clk,
       .rst,

@@ -104,6 +104,8 @@ module br_flow_deserializer #(
     // The order of bits within each flit is always the same that they
     // appear on the push interface.
     parameter bit DeserializeMostSignificantFirst,
+    // If 1, then assert there are no valid bits asserted at the end of the test.
+    parameter bit EnableAssertFinalNotValid = 1,
     localparam int DeserializationRatio = PopWidth / PushWidth,
     // Vector widths cannot be 0, so we need to special-case when DeserializationRatio == 1
     // even though the pop_last_dont_care_count port will be unused downstream in that case.
@@ -161,7 +163,8 @@ module br_flow_deserializer #(
       // integrity is compromised.
       .EnableCoverBackpressure(1),
       .EnableAssertValidStability(1),
-      .EnableAssertDataStability(1)
+      .EnableAssertDataStability(1),
+      .EnableAssertFinalNotValid(EnableAssertFinalNotValid)
   ) br_flow_checks_valid_data_intg (
       .clk,
       .rst,
@@ -205,7 +208,8 @@ module br_flow_deserializer #(
 
     br_counter_incr #(
         .MaxValue(DrMinus1),
-        .MaxIncrement(1)
+        .MaxIncrement(1),
+        .EnableAssertFinalNotValid(EnableAssertFinalNotValid)
     ) br_counter_incr_push_flit_id (
         .clk,
         .rst,
@@ -229,7 +233,8 @@ module br_flow_deserializer #(
 
     br_demux_bin #(
         .NumSymbolsOut(DeserializationRatio),
-        .SymbolWidth  (PushWidth)
+        .SymbolWidth(PushWidth),
+        .EnableAssertFinalNotValid(EnableAssertFinalNotValid)
     ) br_demux_bin (
         .select(push_flit_id),
         .in_valid(push_valid),
@@ -318,7 +323,8 @@ module br_flow_deserializer #(
       // We already check that above, so here we just unconditionally check the implementation.
       .EnableCoverBackpressure(1),
       .EnableAssertValidStability(1),
-      .EnableAssertDataStability(1)
+      .EnableAssertDataStability(1),
+      .EnableAssertFinalNotValid(EnableAssertFinalNotValid)
   ) br_flow_checks_valid_data_impl (
       .clk,
       .rst,

@@ -22,6 +22,7 @@ module br_cdc_fifo_push_ctrl_credit #(
     parameter int RamWriteLatency = 1,
     parameter int MaxCredit = Depth,
     parameter bit RegisterPushCredit = 0,
+    parameter bit EnableAssertFinalNotValid = 1,
     localparam int AddrWidth = $clog2(Depth),
     localparam int CountWidth = $clog2(Depth + 1),
     localparam int CreditWidth = $clog2(MaxCredit + 1)
@@ -83,10 +84,11 @@ module br_cdc_fifo_push_ctrl_credit #(
   logic [CountWidth-1:0] pop_count_delta;
 
   br_credit_receiver #(
-      .Width             (Width),
-      .MaxCredit         (MaxCredit),
-      .RegisterPushCredit(RegisterPushCredit),
-      .PopCreditMaxChange(Depth)
+      .Width                    (Width),
+      .MaxCredit                (MaxCredit),
+      .RegisterPushCredit       (RegisterPushCredit),
+      .PopCreditMaxChange       (Depth),
+      .EnableAssertFinalNotValid(EnableAssertFinalNotValid)
   ) br_credit_receiver (
       .clk,
       .rst,
@@ -127,7 +129,8 @@ module br_cdc_fifo_push_ctrl_credit #(
       .Width(Width),
       .EnableBypass(1'b0),  // Bypass is not enabled for CDC
       // The core push control should never be backpressured.
-      .EnableCoverPushBackpressure(0)
+      .EnableCoverPushBackpressure(0),
+      .EnableAssertFinalNotValid(EnableAssertFinalNotValid)
   ) br_fifo_push_ctrl_core (
       .clk,
       .rst,

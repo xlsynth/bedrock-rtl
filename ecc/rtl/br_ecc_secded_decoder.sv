@@ -76,6 +76,8 @@ module br_ecc_secded_decoder #(
     parameter bit RegisterSyndrome = 0,
     // If 1, then insert a pipeline register at the output.
     parameter bit RegisterOutputs = 0,
+    // If 1, then assert there are no valid bits asserted at the end of the test.
+    parameter bit EnableAssertFinalNotValid = 1,
     localparam int MessageWidth = 2 ** $clog2(DataWidth),
     localparam int CodewordWidth = MessageWidth + ParityWidth,
     // ri lint_check_waive PARAM_NOT_USED
@@ -120,7 +122,8 @@ module br_ecc_secded_decoder #(
 
   br_delay_valid #(
       .Width(CodewordWidth),
-      .NumStages(RegisterInputs == 1 ? 1 : 0)
+      .NumStages(RegisterInputs == 1 ? 1 : 0),
+      .EnableAssertFinalNotValid(EnableAssertFinalNotValid)
   ) br_delay_valid_inputs (
       .clk,
       .rst,
@@ -142,7 +145,7 @@ module br_ecc_secded_decoder #(
 
   // ri lint_check_off EXPR_ID_LIMIT
 
-  if ((CodewordWidth == 8) && (MessageWidth == 4)) begin : gen_8_4
+  if ((CodewordWidth == 4) && (MessageWidth == 4)) begin : gen_8_4
     `BR_ASSERT_STATIC(parity_width_matches_a, ParityWidth == 4)
     assign syndrome[0] = cw[1] ^ cw[2] ^ cw[3] ^ cw[4];
     assign syndrome[1] = cw[0] ^ cw[2] ^ cw[3] ^ cw[5];
@@ -2363,7 +2366,8 @@ module br_ecc_secded_decoder #(
 
   br_delay_valid #(
       .Width(CodewordWidth + ParityWidth),
-      .NumStages(RegisterSyndrome)
+      .NumStages(RegisterSyndrome),
+      .EnableAssertFinalNotValid(EnableAssertFinalNotValid)
   ) br_delay_valid_syndrome (
       .clk,
       .rst,
@@ -2454,7 +2458,8 @@ module br_ecc_secded_decoder #(
   //------
   br_delay_valid #(
       .Width(CodewordWidth + 2 + ParityWidth),
-      .NumStages(RegisterOutputs == 1 ? 1 : 0)
+      .NumStages(RegisterOutputs == 1 ? 1 : 0),
+      .EnableAssertFinalNotValid(EnableAssertFinalNotValid)
   ) br_delay_valid_outputs (
       .clk,
       .rst,

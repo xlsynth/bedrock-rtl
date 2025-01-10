@@ -33,7 +33,9 @@ module br_flow_arb_fixed #(
     parameter bit EnableCoverPushBackpressure = 1,
     // If 1, assert that push_valid is stable when backpressured.
     // If 0, cover that push_valid can be unstable.
-    parameter bit EnableAssertPushValidStability = EnableCoverPushBackpressure
+    parameter bit EnableAssertPushValidStability = EnableCoverPushBackpressure,
+    // If 1, then assert there are no valid bits asserted at the end of the test.
+    parameter bit EnableAssertFinalNotValid = 1
 ) (
     // Only used for assertions
     // ri lint_check_waive HIER_NET_NOT_READ HIER_BRANCH_NOT_READ NOT_READ
@@ -70,7 +72,8 @@ module br_flow_arb_fixed #(
   br_flow_arb_core #(
       .NumFlows(NumFlows),
       .EnableCoverPushBackpressure(EnableCoverPushBackpressure),
-      .EnableAssertPushValidStability(EnableAssertPushValidStability)
+      .EnableAssertPushValidStability(EnableAssertPushValidStability),
+      .EnableAssertFinalNotValid(EnableAssertFinalNotValid)
   ) br_flow_arb_core (
       .clk,
       .rst,

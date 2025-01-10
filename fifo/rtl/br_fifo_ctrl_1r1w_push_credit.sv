@@ -76,6 +76,9 @@ module br_fifo_ctrl_1r1w_push_credit #(
     // The number of cycles between when ram_rd_addr_valid is asserted and
     // ram_rd_data_valid is asserted.
     parameter int RamReadLatency = 0,
+    // If 1, then assert there are no valid bits asserted and that the FIFO is
+    // empty at the end of the test.
+    parameter bit EnableAssertFinalNotValid = 1,
     localparam int AddrWidth = $clog2(Depth),
     localparam int CountWidth = $clog2(Depth + 1),
     localparam int CreditWidth = $clog2(MaxCredit + 1)
@@ -144,7 +147,8 @@ module br_fifo_ctrl_1r1w_push_credit #(
       .Width(Width),
       .EnableBypass(EnableBypass),
       .MaxCredit(MaxCredit),
-      .RegisterPushCredit(RegisterPushCredit)
+      .RegisterPushCredit(RegisterPushCredit),
+      .EnableAssertFinalNotValid(EnableAssertFinalNotValid)
   ) br_fifo_push_ctrl_credit (
       .clk,
       .rst,
@@ -176,7 +180,8 @@ module br_fifo_ctrl_1r1w_push_credit #(
       .Width(Width),
       .EnableBypass(EnableBypass),
       .RegisterPopOutputs(RegisterPopOutputs),
-      .RamReadLatency(RamReadLatency)
+      .RamReadLatency(RamReadLatency),
+      .EnableAssertFinalNotValid(EnableAssertFinalNotValid)
   ) br_fifo_pop_ctrl (
       .clk,
       .rst,

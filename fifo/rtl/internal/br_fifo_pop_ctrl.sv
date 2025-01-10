@@ -24,6 +24,9 @@ module br_fifo_pop_ctrl #(
     parameter bit EnableBypass = 1,
     parameter int RamReadLatency = 0,
     parameter bit RegisterPopOutputs = 0,
+    // If 1, then assert there are no valid bits asserted and that the FIFO is
+    // empty at the end of the test.
+    parameter bit EnableAssertFinalNotValid = 1,
     localparam int AddrWidth = $clog2(Depth),
     localparam int CountWidth = $clog2(Depth + 1)
 ) (
@@ -93,7 +96,8 @@ module br_fifo_pop_ctrl #(
       .Width(Width),
       .EnableBypass(EnableBypass),
       .RamReadLatency(RamReadLatency),
-      .RegisterPopOutputs(RegisterPopOutputs)
+      .RegisterPopOutputs(RegisterPopOutputs),
+      .EnableAssertFinalNotValid(EnableAssertFinalNotValid)
   ) br_fifo_pop_ctrl_core (
       .clk,
       .rst,
@@ -114,7 +118,8 @@ module br_fifo_pop_ctrl #(
 
   // Status flags
   br_counter #(
-      .MaxValue(Depth)
+      .MaxValue(Depth),
+      .EnableAssertFinalNotValid(EnableAssertFinalNotValid)
   ) br_counter_items (
       .clk,
       .rst,
@@ -169,5 +174,7 @@ module br_fifo_pop_ctrl #(
   `BR_ASSERT_IMPL(push_items_a, push_beat && !pop_beat |-> items_next == items + 1)
   `BR_ASSERT_IMPL(pop_items_a, !push_beat && pop_beat |-> items_next == items - 1)
   `BR_ASSERT_IMPL(empty_a, empty == (items == 0))
+
+  `BR_ASSERT_FINAL(final_empty_a, empty)
 
 endmodule : br_fifo_pop_ctrl

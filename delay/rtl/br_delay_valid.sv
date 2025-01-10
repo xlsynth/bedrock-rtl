@@ -25,7 +25,9 @@
 
 module br_delay_valid #(
     parameter int Width = 1,  // Must be at least 1
-    parameter int NumStages = 0  // Must be at least 0
+    parameter int NumStages = 0,  // Must be at least 0
+    // If 1, then assert there are no valid bits asserted at the end of the test.
+    parameter bit EnableAssertFinalNotValid = 1
 ) (
     // Positive edge-triggered. If NumStages is 0, then only used for assertions.
     // ri lint_check_waive INPUT_NOT_READ HIER_NET_NOT_READ HIER_BRANCH_NOT_READ
@@ -52,6 +54,12 @@ module br_delay_valid #(
   `BR_ASSERT_STATIC(num_stages_must_be_at_least_zero_a, NumStages >= 0)
 
   `BR_COVER_INTG(in_valid_c, in_valid)
+
+  if (EnableAssertFinalNotValid) begin : gen_assert_final
+    `BR_ASSERT_FINAL(final_not_in_valid_a, !in_valid)
+    `BR_ASSERT_FINAL(final_not_out_valid_a, !out_valid)
+    `BR_ASSERT_FINAL(final_not_out_valid_stages_a, out_valid_stages == '0)
+  end
 
   //------------------------------------------
   // Implementation

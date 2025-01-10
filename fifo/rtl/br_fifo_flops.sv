@@ -82,6 +82,9 @@ module br_fifo_flops #(
     // If 1, assert that push_data is stable when backpressured.
     // If 0, cover that push_data can be unstable.
     parameter bit EnableAssertPushDataStability = EnableAssertPushValidStability,
+    // If 1, then assert there are no valid bits asserted and that the FIFO is
+    // empty at the end of the test.
+    parameter bit EnableAssertFinalNotValid = 1,
 
     // Internal computed parameters
     localparam int AddrWidth  = $clog2(Depth),
@@ -142,7 +145,8 @@ module br_fifo_flops #(
       .RamReadLatency(RamReadLatency),
       .EnableCoverPushBackpressure(EnableCoverPushBackpressure),
       .EnableAssertPushValidStability(EnableAssertPushValidStability),
-      .EnableAssertPushDataStability(EnableAssertPushDataStability)
+      .EnableAssertPushDataStability(EnableAssertPushDataStability),
+      .EnableAssertFinalNotValid(EnableAssertFinalNotValid)
   ) br_fifo_ctrl_1r1w (
       .clk,
       .rst,
@@ -180,7 +184,8 @@ module br_fifo_flops #(
       // FIFO will never read and write same address on the same cycle
       .TileEnableBypass(0),
       // Flops don't need to be reset, since uninitialized cells will never be read
-      .EnableMemReset(0)
+      .EnableMemReset(0),
+      .EnableAssertFinalNotValid(EnableAssertFinalNotValid)
   ) br_ram_flops_1r1w (
       .wr_clk(clk),  // ri lint_check_waive SAME_CLOCK_NAME
       .wr_rst(rst),

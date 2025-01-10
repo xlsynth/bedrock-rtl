@@ -35,6 +35,8 @@ module br_ram_data_rd_pipe #(
     // Number of pipeline stages to join data along the width dimension.
     // Must be at least 0.
     parameter int WidthStages = 0,
+    // If 1, then assert there are no valid bits asserted at the end of the test.
+    parameter bit EnableAssertFinalNotValid = 1,
     localparam int TileWidth = br_math::ceil_div(Width, WidthTiles),
     localparam int Latency = DepthStages + WidthStages
 ) (
@@ -107,7 +109,8 @@ module br_ram_data_rd_pipe #(
     for (genvar w = 0; w < WidthTiles; w++) begin : gen_w
       br_delay_valid #(
           .Width(TileWidth),
-          .NumStages(WidthStages)
+          .NumStages(WidthStages),
+          .EnableAssertFinalNotValid(EnableAssertFinalNotValid)
       ) br_delay_valid_w (
           .clk,
           .rst,
@@ -144,7 +147,8 @@ module br_ram_data_rd_pipe #(
     // But supporting >1 is easy and doesn't hurt anything.
     br_delay_valid #(
         .Width(Width),
-        .NumStages(DepthStages)
+        .NumStages(DepthStages),
+        .EnableAssertFinalNotValid(EnableAssertFinalNotValid)
     ) br_delay_valid_d (
         .clk,
         .rst,
