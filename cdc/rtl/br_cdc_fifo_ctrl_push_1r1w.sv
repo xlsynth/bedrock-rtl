@@ -18,35 +18,13 @@
 // that uses the AMBA-inspired ready-valid handshake protocol for synchronizing
 // pipeline stages and stalling when encountering backpressure hazards.
 //
-// This module does not include any internal RAM. Instead, it exposes
-// write ports to an external 1R1W (pseudo-dual-port) RAM module, which
-// RAM module, which could be implemented in flops or SRAM.
+// This module is intended to connect to an instance of br_cdc_fifo_ctrl_pop_1r1w
+// as well as a 1R1W RAM module.
 //
-// Data progresses from one stage to another when both
-// the corresponding ready signal and valid signal are
-// both 1 on the same cycle. Otherwise, the stage is stalled.
-//
-// The FIFO controller can work with RAMs of arbitrary fixed read latency.
-// If the latency is non-zero, a FLOP-based staging buffer is kept in the
-// controller so that a synchronous ready/valid interface can be maintained
-// at the pop interface.
-//
-// The RegisterPopOutputs parameter can be set to 1 to add an additional br_flow_reg_fwd
-// before the pop interface of the FIFO. This may improve timing of paths dependent on
-// the pop interface at the expense of an additional pop cycle of cut-through latency.
-
-// The cut-through latency (push_valid to pop_valid latency) and backpressure
-// latency (pop_ready to push_ready) can be calculated as follows:
-//
-// Let PushT and PopT be the push period and pop period, respectively.
-//
-// The cut-through latency is max(2, RamWriteLatency + 1) * PushT +
-// (NumSyncStages + 1 + RamReadLatency + RegisterPopOutputs) * PopT.
-
-// The backpressure latency is 2 * PopT + (NumSyncStages + 1) * PushT.
-//
-// To achieve full bandwidth, the depth of the FIFO must be at least
-// (CutThroughLatency + BackpressureLatency) / max(PushT, PopT).
+// Ordinarily the push and pop sides of the FIFO controller can be connected
+// together directly. If necessary, they can be separated, for example to
+// implement a CDC crossing across a boundary where the sending and receiving
+// flops must be separated or logic needs to be placed in between the two sides.
 
 `include "br_asserts_internal.svh"
 
@@ -144,6 +122,7 @@ module br_cdc_fifo_ctrl_push_1r1w #(
       .CountWidth(CountWidth),
       .NumStages (NumSyncStages)
   ) br_cdc_fifo_gray_count_sync_pop2push (
+      // TODO(zhemao): Remove need for pop_clk and pop_rst here.
       .src_clk(pop_clk),  // ri lint_check_waive SAME_CLOCK_NAME
       .src_rst(pop_rst),
       .src_count_gray(pop_pop_count_gray),
