@@ -138,7 +138,9 @@ module br_credit_receiver #(
   if (RegisterPushCredit) begin : gen_reg_push
     `BR_REG(push_credit, push_credit_internal)
   end else begin : gen_passthru_push
-    assign push_credit = push_credit_internal;
+    logic reset_released;
+    `BR_REG(reset_released, 1'b1)
+    assign push_credit = reset_released && push_credit_internal;
   end
 
   //------------------------------------------
