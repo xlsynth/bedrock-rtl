@@ -82,7 +82,7 @@ module br_asserts_test;
   `BR_ASSERT_FINAL(valid_0_final_a, valid == 0)
 
   // Use BR_ASSERT_RST
-  `BR_ASSERT_RST(valid_0_final_a, rst |-> !valid)
+  `BR_ASSERT_RST(valid_0_during_rst_a, rst |-> valid == 0)
 
   // Use BR_ASSERT
   `BR_ASSERT(sum_range_check_a, sum <= 15)
