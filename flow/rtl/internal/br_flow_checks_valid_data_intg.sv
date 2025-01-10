@@ -58,7 +58,9 @@ module br_flow_checks_valid_data_intg #(
   `BR_ASSERT_STATIC(legal_assert_data_stability_a,
                     !(EnableAssertDataStability && !EnableAssertValidStability))
 
-  `BR_ASSERT_FINAL(final_not_valid_a, !valid)
+  if (EnableAssertFinalNotValid) begin : gen_assert_final
+    `BR_ASSERT_FINAL(final_not_valid_a, !valid)
+  end
 
 `ifdef BR_ASSERT_ON
 `ifndef BR_DISABLE_INTG_CHECKS

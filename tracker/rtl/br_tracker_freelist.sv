@@ -204,7 +204,7 @@ module br_tracker_freelist #(
 
   for (genvar i = 0; i < NumDeallocPorts; i++) begin : gen_dealloc_entry_id_onehot
     br_enc_bin2onehot #(
-        .NumValues(NumEntries)
+        .NumValues(NumEntries),
         .EnableAssertFinalNotValid(EnableAssertFinalNotDeallocValid)
     ) br_enc_bin2onehot_dealloc_entry_id (
         .clk,

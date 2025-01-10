@@ -61,7 +61,7 @@ module br_flow_arb_core #(
       .EnableCoverBackpressure(EnableCoverPushBackpressure),
       .EnableAssertValidStability(EnableAssertPushValidStability),
       // Data is always stable when valid is stable since it is constant.
-      .EnableAssertDataStability(EnableAssertPushValidStability)
+      .EnableAssertDataStability(EnableAssertPushValidStability),
       .EnableAssertFinalNotValid(EnableAssertFinalNotValid)
   ) br_flow_checks_valid_data_intg (
       .clk,
