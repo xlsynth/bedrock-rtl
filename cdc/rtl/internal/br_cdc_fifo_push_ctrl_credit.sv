@@ -22,6 +22,7 @@ module br_cdc_fifo_push_ctrl_credit #(
     parameter int RamWriteLatency = 1,
     parameter int MaxCredit = Depth,
     parameter bit RegisterPushCredit = 0,
+    parameter bit EnableAssertFinalAllSlotsFree = 1,
     localparam int AddrWidth = $clog2(Depth),
     localparam int CountWidth = $clog2(Depth + 1),
     localparam int CreditWidth = $clog2(MaxCredit + 1)
@@ -161,6 +162,8 @@ module br_cdc_fifo_push_ctrl_credit #(
   `BR_ASSERT_IMPL(push_slots_a, (slots_next < slots) |-> push_beat)
   `BR_ASSERT_IMPL(full_a, full == (slots == 0))
 
-  `BR_ASSERT_FINAL(final_slots_all_a, slots == Depth)
+  if (EnableAssertFinalAllSlotsFree) begin : gen_assert_final
+    `BR_ASSERT_FINAL(final_slots_all_a, slots == Depth)
+  end
 
 endmodule : br_cdc_fifo_push_ctrl_credit

@@ -46,7 +46,9 @@ module br_flow_mux_select_unstable #(
     parameter bit EnableAssertPushValidStability = EnableCoverPushBackpressure,
     // If 1, assert that push_data is stable when backpressured.
     // If 0, cover that push_data can be unstable.
-    parameter bit EnableAssertPushDataStability = EnableAssertPushValidStability
+    parameter bit EnableAssertPushDataStability = EnableAssertPushValidStability,
+    // If 1, then assert there are no valid bits asserted at the end of the test.
+    parameter bit EnableAssertFinalNotValid = 1
 ) (
     // Used only for assertions
     // ri lint_check_waive INPUT_NOT_READ HIER_NET_NOT_READ HIER_BRANCH_NOT_READ
@@ -79,7 +81,8 @@ module br_flow_mux_select_unstable #(
       .Width(Width),
       .EnableCoverBackpressure(EnableCoverPushBackpressure),
       .EnableAssertValidStability(EnableAssertPushValidStability),
-      .EnableAssertDataStability(EnableAssertPushDataStability)
+      .EnableAssertDataStability(EnableAssertPushDataStability),
+      .EnableAssertFinalNotValid(EnableAssertFinalNotValid)
   ) br_flow_checks_valid_data_intg (
       .clk,
       .rst,
@@ -127,7 +130,8 @@ module br_flow_mux_select_unstable #(
       .EnableCoverBackpressure(1),
       // We know that pop valid and pop data can be unstable.
       .EnableAssertValidStability(0),
-      .EnableAssertDataStability(0)
+      .EnableAssertDataStability(0),
+      .EnableAssertFinalNotValid(EnableAssertFinalNotValid)
   ) br_flow_checks_valid_data_impl (
       .clk,
       .rst,

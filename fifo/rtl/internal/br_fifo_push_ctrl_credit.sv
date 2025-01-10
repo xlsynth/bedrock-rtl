@@ -24,6 +24,9 @@ module br_fifo_push_ctrl_credit #(
     parameter bit EnableBypass = 0,
     parameter int MaxCredit = Depth,
     parameter bit RegisterPushCredit = 0,
+    // If 1, then assert there are no valid bits asserted and that the FIFO is
+    // empty at the end of the test.
+    parameter bit EnableAssertFinalNotValid = 1,
     localparam int AddrWidth = $clog2(Depth),
     localparam int CountWidth = $clog2(Depth + 1),
     localparam int CreditWidth = $clog2(MaxCredit + 1)
@@ -85,9 +88,10 @@ module br_fifo_push_ctrl_credit #(
   logic [Width-1:0] internal_data;
 
   br_credit_receiver #(
-      .Width             (Width),
-      .MaxCredit         (MaxCredit),
-      .RegisterPushCredit(RegisterPushCredit)
+      .Width                    (Width),
+      .MaxCredit                (MaxCredit),
+      .RegisterPushCredit       (RegisterPushCredit),
+      .EnableAssertFinalNotValid(EnableAssertFinalNotValid)
   ) br_credit_receiver (
       .clk,
       .rst,
@@ -110,7 +114,8 @@ module br_fifo_push_ctrl_credit #(
       .Width(Width),
       .EnableBypass(EnableBypass),
       // The core push control should never be backpressured.
-      .EnableCoverPushBackpressure(0)
+      .EnableCoverPushBackpressure(0),
+      .EnableAssertFinalNotValid(EnableAssertFinalNotValid)
   ) br_fifo_push_ctrl_core (
       .clk,
       .rst,
@@ -133,7 +138,8 @@ module br_fifo_push_ctrl_credit #(
 
   // Status flags
   br_counter #(
-      .MaxValue(Depth)
+      .MaxValue(Depth),
+      .EnableAssertFinalNotValid(EnableAssertFinalNotValid)
   ) br_counter_slots (
       .clk,
       .rst,

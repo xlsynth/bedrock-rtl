@@ -60,6 +60,8 @@ module br_ram_flops_1r1w_mock #(
     // If 1, then the memory elements are cleared to 0 upon reset. Otherwise, they are undefined until
     // written for the first time.
     parameter bit EnableMemReset = 0,
+    // If 1, then assert there are no valid bits asserted at the end of the test.
+    parameter bit EnableAssertFinalNotValid = 1,
     localparam int AddressWidth = $clog2(Depth),
     localparam int NumWords = br_math::ceil_div(Width, WordWidth),
     // Write latency in units of wr_clk cycles
@@ -129,8 +131,10 @@ module br_ram_flops_1r1w_mock #(
     `BR_ASSERT_STATIC(tile_width_div_word_width_a, (TileWidth % WordWidth) == 0)
   end
 
-  `BR_ASSERT_FINAL(final_not_wr_valid_a, !wr_valid)
-  `BR_ASSERT_FINAL(final_not_rd_addr_valid_a, !rd_addr_valid)
+  if (EnableAssertFinalNotValid) begin : gen_assert_final
+    `BR_ASSERT_FINAL(final_not_wr_valid_a, !wr_valid)
+    `BR_ASSERT_FINAL(final_not_rd_addr_valid_a, !rd_addr_valid)
+  end
 
   // Rely on submodule integration checks
 
@@ -148,7 +152,8 @@ module br_ram_flops_1r1w_mock #(
 
   br_delay_valid #(
       .Width(AddressWidth + Width),
-      .NumStages(AddressDepthStages)
+      .NumStages(AddressDepthStages),
+      .EnableAssertFinalNotValid(EnableAssertFinalNotValid)
   ) br_delay_valid_wr (
       .clk(wr_clk),  // ri lint_check_waive SAME_CLOCK_NAME
       .rst(wr_rst),
@@ -162,7 +167,8 @@ module br_ram_flops_1r1w_mock #(
 
   br_delay_valid #(
       .Width(AddressWidth),
-      .NumStages(AddressDepthStages)
+      .NumStages(AddressDepthStages),
+      .EnableAssertFinalNotValid(EnableAssertFinalNotValid)
   ) br_delay_valid_rd_addr (
       .clk(rd_clk),  // ri lint_check_waive SAME_CLOCK_NAME
       .rst(rd_rst),
@@ -242,7 +248,8 @@ module br_ram_flops_1r1w_mock #(
 
   br_delay_valid #(
       .Width(Width),
-      .NumStages(ReadDataDepthStages + ReadDataWidthStages)
+      .NumStages(ReadDataDepthStages + ReadDataWidthStages),
+      .EnableAssertFinalNotValid(EnableAssertFinalNotValid)
   ) br_delay_valid_rd_data (
       .clk(rd_clk),  // ri lint_check_waive SAME_CLOCK_NAME
       .rst(rd_rst),

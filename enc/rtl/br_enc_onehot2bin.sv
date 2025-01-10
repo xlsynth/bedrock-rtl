@@ -54,7 +54,9 @@
 module br_enc_onehot2bin #(
     parameter int NumValues = 2,  // Must be at least 2
     // Width of the binary-encoded value. Must be at least $clog2(NumValues).
-    parameter int BinWidth = $clog2(NumValues)
+    parameter int BinWidth = $clog2(NumValues),
+    // If 1, then assert there are no valid bits asserted at the end of the test.
+    parameter bit EnableAssertFinalNotValid = 1
 ) (
     // ri lint_check_waive INPUT_NOT_READ HIER_NET_NOT_READ HIER_BRANCH_NOT_READ
     input  logic                 clk,        // Used only for assertions
@@ -71,6 +73,10 @@ module br_enc_onehot2bin #(
   `BR_ASSERT_STATIC(num_values_gte_2_a, NumValues >= 2)
   `BR_ASSERT_STATIC(binwidth_gte_log2_num_values_a, BinWidth >= $clog2(NumValues))
   `BR_ASSERT_INTG(in_onehot_a, $onehot0(in))
+
+  if (EnableAssertFinalNotValid) begin : gen_assert_final
+    `BR_ASSERT_FINAL(final_not_out_valid_a, !out_valid)
+  end
 
   //------------------------------------------
   // Implementation
@@ -93,7 +99,5 @@ module br_enc_onehot2bin #(
   // Implementation checks
   //------------------------------------------
   `BR_ASSERT_IMPL(out_within_range_a, out < NumValues)
-
-  `BR_ASSERT_FINAL(final_not_out_valid_a, !out_valid)
 
 endmodule : br_enc_onehot2bin

@@ -47,6 +47,8 @@ module br_ram_flops_1r1w_tile #(
     // If 1, use structured mux2 gates for the read mux instead of relying on synthesis.
     // This is required if write and read clocks are different.
     parameter bit UseStructuredGates = 0,
+    // If 1, then assert there are no valid bits asserted at the end of the test.
+    parameter bit EnableAssertFinalNotValid = 1,
     localparam int AddrWidth = $clog2(Depth),
     localparam int NumWords = Width / WordWidth
 ) (
@@ -95,8 +97,11 @@ module br_ram_flops_1r1w_tile #(
     `BR_ASSERT_COMB_INTG(same_clock_a, wr_clk == rd_clk)
   end
 
-  `BR_ASSERT_FINAL(final_not_wr_valid_a, !wr_valid)
-  `BR_ASSERT_FINAL(final_not_rd_addr_valid_a, !rd_addr_valid)
+  if (EnableAssertFinalNotValid) begin : gen_assert_final
+    `BR_ASSERT_FINAL(final_not_wr_valid_a, !wr_valid)
+    `BR_ASSERT_FINAL(final_not_rd_addr_valid_a, !rd_addr_valid)
+    `BR_ASSERT_FINAL(final_not_rd_data_valid_a, !rd_data_valid)
+  end
 
   //------------------------------------------
   // Implementation
@@ -199,7 +204,5 @@ module br_ram_flops_1r1w_tile #(
         wr_valid && rd_addr_valid && (wr_addr == rd_addr) |-> rd_data_valid && rd_data == wr_data,
         rd_clk, rd_rst)
   end
-
-  `BR_ASSERT_FINAL(final_not_rd_data_valid_a, !rd_data_valid)
 
 endmodule : br_ram_flops_1r1w_tile

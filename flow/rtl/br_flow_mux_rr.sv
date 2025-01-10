@@ -34,7 +34,9 @@ module br_flow_mux_rr #(
     parameter bit EnableAssertPushValidStability = EnableCoverPushBackpressure,
     // If 1, assert that push_data is stable when backpressured.
     // If 0, cover that push_data can be unstable.
-    parameter bit EnableAssertPushDataStability = EnableAssertPushValidStability
+    parameter bit EnableAssertPushDataStability = EnableAssertPushValidStability,
+    // If 1, then assert there are no valid bits asserted at the end of the test.
+    parameter bit EnableAssertFinalNotValid = 1
 ) (
     input  logic                           clk,
     input  logic                           rst,
@@ -78,7 +80,8 @@ module br_flow_mux_rr #(
       .Width(Width),
       .EnableCoverPushBackpressure(EnableCoverPushBackpressure),
       .EnableAssertPushValidStability(EnableAssertPushValidStability),
-      .EnableAssertPushDataStability(EnableAssertPushDataStability)
+      .EnableAssertPushDataStability(EnableAssertPushDataStability),
+      .EnableAssertFinalNotValid(EnableAssertFinalNotValid)
   ) br_flow_mux_core (
       .clk,
       .rst,

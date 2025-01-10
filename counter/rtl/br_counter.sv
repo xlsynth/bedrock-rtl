@@ -57,6 +57,8 @@ module br_counter #(
     // If 0, then when reinit is asserted together with incr_valid and/or decr_valid,
     // the increment/decrement values are ignored, i.e., value_next == initial_value.
     parameter bit EnableReinitAndChange = 1,
+    // If 1, then assert there are no valid bits asserted at the end of the test.
+    parameter bit EnableAssertFinalNotValid = 1,
     localparam int ValueWidth = $clog2(MaxValue + 1),
     localparam int ChangeWidth = $clog2(MaxChange + 1)
 ) (
@@ -107,8 +109,10 @@ module br_counter #(
 `endif  // BR_DISABLE_INTG_CHECKS
 `endif  // BR_ASSERT_ON
 
-  `BR_ASSERT_FINAL(final_not_incr_valid_a, !incr_valid)
-  `BR_ASSERT_FINAL(final_not_decr_valid_a, !decr_valid)
+  if (EnableAssertFinalNotValid) begin : gen_assert_final
+    `BR_ASSERT_FINAL(final_not_incr_valid_a, !incr_valid)
+    `BR_ASSERT_FINAL(final_not_decr_valid_a, !decr_valid)
+  end
 
   //------------------------------------------
   // Implementation

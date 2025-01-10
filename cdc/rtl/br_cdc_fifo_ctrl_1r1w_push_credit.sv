@@ -77,6 +77,9 @@ module br_cdc_fifo_ctrl_1r1w_push_credit #(
     // driven directly from a flop. This comes at the expense of one additional
     // push cycle of credit loop latency.
     parameter bit RegisterPushCredit = 0,
+    // If 1, then assert there are no valid bits asserted and that the FIFO is
+    // empty at the end of the test.
+    parameter bit EnableAssertFinalNotValid = 1,
     localparam int AddrWidth = $clog2(Depth),
     localparam int CountWidth = $clog2(Depth + 1),
     localparam int CreditWidth = $clog2(MaxCredit + 1)
@@ -155,7 +158,8 @@ module br_cdc_fifo_ctrl_1r1w_push_credit #(
       .Width(Width),
       .RamWriteLatency(RamWriteLatency),
       .RegisterPushCredit(RegisterPushCredit),
-      .MaxCredit(MaxCredit)
+      .MaxCredit(MaxCredit),
+      .EnableAssertFinalNotValid(EnableAssertFinalNotValid)
   ) br_cdc_fifo_push_ctrl_credit (
       .clk              (push_clk),               // ri lint_check_waive SAME_CLOCK_NAME
       .rst              (push_rst),
@@ -237,7 +241,8 @@ module br_cdc_fifo_ctrl_1r1w_push_credit #(
       .Depth(Depth),
       .Width(Width),
       .RegisterPopOutputs(RegisterPopOutputs),
-      .RamReadLatency(RamReadLatency)
+      .RamReadLatency(RamReadLatency),
+      .EnableAssertFinalNotValid(EnableAssertFinalNotValid)
   ) br_cdc_fifo_pop_ctrl (
       .clk              (pop_clk),                 // ri lint_check_waive SAME_CLOCK_NAME
       .rst              (pop_rst),

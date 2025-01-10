@@ -42,6 +42,8 @@ module br_ecc_sed_encoder #(
     parameter bit RegisterInputs = 0,
     // If 1, then insert a pipeline register at the output.
     parameter bit RegisterOutputs = 0,
+    // If 1, then assert there are no valid bits asserted at the end of the test.
+    parameter bit EnableAssertFinalNotValid = 1,
     // Message width is the same as the data width (no internal padding)
     localparam int ParityWidth = 1,
     localparam int CodewordWidth = DataWidth + ParityWidth,
@@ -62,7 +64,6 @@ module br_ecc_sed_encoder #(
   // Integration checks
   //------------------------------------------
   `BR_ASSERT_STATIC(data_width_gte_1_a, DataWidth >= 1)
-  `BR_ASSERT_FINAL(final_not_data_valid_a, !data_valid)
 
   //------------------------------------------
   // Implementation
@@ -76,7 +77,8 @@ module br_ecc_sed_encoder #(
 
   br_delay_valid #(
       .Width(DataWidth),
-      .NumStages(RegisterInputs == 1 ? 1 : 0)
+      .NumStages(RegisterInputs == 1 ? 1 : 0),
+      .EnableAssertFinalNotValid(EnableAssertFinalNotValid)
   ) br_delay_valid_inputs (
       .clk,
       .rst,
@@ -104,7 +106,8 @@ module br_ecc_sed_encoder #(
   //------
   br_delay_valid #(
       .Width(CodewordWidth),
-      .NumStages(RegisterOutputs == 1 ? 1 : 0)
+      .NumStages(RegisterOutputs == 1 ? 1 : 0),
+      .EnableAssertFinalNotValid(EnableAssertFinalNotValid)
   ) br_delay_valid_outputs (
       .clk,
       .rst,

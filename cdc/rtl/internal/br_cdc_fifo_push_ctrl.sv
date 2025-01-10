@@ -29,6 +29,9 @@ module br_cdc_fifo_push_ctrl #(
     // If 1, assert that push_data is stable when backpressured.
     // If 0, cover that push_data can be unstable.
     parameter bit EnableAssertPushDataStability = 1,
+    // If 1, then assert there are no valid bits asserted and that the FIFO is
+    // empty at the end of the test.
+    parameter bit EnableAssertFinalNotValid = 1,
     localparam int AddrWidth = $clog2(Depth),
     localparam int CountWidth = $clog2(Depth + 1)
 ) (
@@ -99,6 +102,7 @@ module br_cdc_fifo_push_ctrl #(
       .EnableCoverPushBackpressure(EnableCoverPushBackpressure),
       .EnableAssertPushValidStability(EnableAssertPushValidStability),
       .EnableAssertPushDataStability(EnableAssertPushDataStability)
+      .EnableAssertFinalNotValid(EnableAssertFinalNotValid)
   ) br_fifo_push_ctrl_core (
       .clk,
       .rst,
@@ -132,7 +136,5 @@ module br_cdc_fifo_push_ctrl #(
   // Slots should only decrease on a push
   `BR_ASSERT_IMPL(push_slots_a, (slots_next < slots) |-> push_beat)
   `BR_ASSERT_IMPL(full_a, full == (slots == 0))
-
-  `BR_ASSERT_FINAL(final_slots_all_a, slots == Depth)
 
 endmodule : br_cdc_fifo_push_ctrl

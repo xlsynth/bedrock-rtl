@@ -47,6 +47,8 @@ module br_credit_counter #(
     parameter int MaxValue = 1,
     // Maximum increment/decrement amount (inclusive). Must be at least 1.
     parameter int MaxChange = 1,
+    // If 1, then assert there are no valid bits asserted at the end of the test.
+    parameter bit EnableAssertFinalNotValid = 1,
     localparam int ValueWidth = $clog2(MaxValue + 1),
     localparam int ChangeWidth = $clog2(MaxChange + 1)
 ) (
@@ -78,8 +80,10 @@ module br_credit_counter #(
   `BR_ASSERT_STATIC(max_change_gte_1_a, MaxChange >= 1)
   `BR_ASSERT_STATIC(max_change_lte_max_value_a, MaxChange <= MaxValue)
 
-  `BR_ASSERT_FINAL(final_not_incr_valid_a, !incr_valid)
-  `BR_ASSERT_FINAL(final_not_decr_valid_a, !decr_valid)
+  if (EnableAssertFinalNotValid) begin : gen_assert_final
+    `BR_ASSERT_FINAL(final_not_incr_valid_a, !incr_valid)
+    `BR_ASSERT_FINAL(final_not_decr_valid_a, !decr_valid)
+  end
 
   // Ensure increments and decrements are in range
   `BR_ASSERT_INTG(incr_in_range_a, incr_valid |-> (incr <= MaxChange))

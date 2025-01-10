@@ -38,6 +38,8 @@ module br_ram_addr_decoder #(
     // Pipeline depth. Must be at least 0.
     // Values greater than 1 are of dubious utility but don't hurt anything.
     parameter int Stages = 0,
+    // If 1, then assert there are no valid bits asserted at the end of the test.
+    parameter bit EnableAssertFinalNotValid = 1,
     localparam int TileDepth = br_math::ceil_div(Depth, Tiles),
     localparam int InputAddressWidth = $clog2(Depth),
     localparam int OutputAddressWidth = $clog2(TileDepth)
@@ -81,7 +83,8 @@ module br_ram_addr_decoder #(
 
     br_delay_valid #(
         .Width(OutputAddressWidth + DataWidth),
-        .NumStages(Stages)
+        .NumStages(Stages),
+        .EnableAssertFinalNotValid(EnableAssertFinalNotValid)
     ) br_delay_valid (
         .clk,
         .rst,
@@ -125,7 +128,8 @@ module br_ram_addr_decoder #(
 
       br_demux_bin #(
           .NumSymbolsOut(Tiles),
-          .SymbolWidth  ($bits(mux_payload_t))
+          .SymbolWidth($bits(mux_payload_t)),
+          .EnableAssertFinalNotValid(EnableAssertFinalNotValid)
       ) br_demux_bin (
           .select(in_addr[SelectMsb:SelectLsb]),
           .in_valid(in_valid),
@@ -168,7 +172,8 @@ module br_ram_addr_decoder #(
     for (genvar i = 0; i < Tiles; i++) begin : gen_out
       br_delay_valid #(
           .Width(OutputAddressWidth + DataWidth),
-          .NumStages(Stages)
+          .NumStages(Stages),
+          .EnableAssertFinalNotValid(EnableAssertFinalNotValid)
       ) br_delay_valid (
           .clk,
           .rst,

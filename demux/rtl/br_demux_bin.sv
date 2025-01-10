@@ -24,10 +24,12 @@
 
 module br_demux_bin #(
     // Number of outputs to distribute among. Must be >= 2.
-    parameter  int NumSymbolsOut = 2,
+    parameter int NumSymbolsOut = 2,
     // The width of each symbol in bits. Must be >= 1.
-    parameter  int SymbolWidth   = 1,
-    localparam int SelectWidth   = $clog2(NumSymbolsOut)
+    parameter int SymbolWidth = 1,
+    // If 1, then assert there are no valid bits asserted at the end of the test.
+    parameter bit EnableAssertFinalNotValid = 1,
+    localparam int SelectWidth = $clog2(NumSymbolsOut)
 ) (
     // Binary-encoded select. Must be in range of NumSymbolsOut.
     input  logic [  SelectWidth-1:0]                  select,
@@ -46,7 +48,10 @@ module br_demux_bin #(
   // ri lint_check_waive ALWAYS_COMB
   `BR_ASSERT_COMB_INTG(select_in_range_a, select < NumSymbolsOut)
 
-  `BR_ASSERT_FINAL(final_not_in_valid_a, !in_valid)
+  if (EnableAssertFinalNotValid) begin : gen_assert_final
+    `BR_ASSERT_FINAL(final_not_in_valid_a, !in_valid)
+    `BR_ASSERT_FINAL(foutal_not_out_valid_a, !out_valid)
+  end
 
   //------------------------------------------
   // Implementation
@@ -65,7 +70,5 @@ module br_demux_bin #(
   `BR_ASSERT_COMB_IMPL(out_valid_onehot0_a, $onehot0(out_valid))
   // ri lint_check_waive ALWAYS_COMB
   `BR_ASSERT_COMB_IMPL(out_valid_a, $onehot(out_valid) || !in_valid)
-
-  `BR_ASSERT_FINAL(final_not_out_valid_a, !out_valid)
 
 endmodule : br_demux_bin

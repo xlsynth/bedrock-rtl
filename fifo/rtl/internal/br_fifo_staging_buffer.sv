@@ -36,6 +36,9 @@ module br_fifo_staging_buffer #(
     // valid and data come directly from registers.
     // If 0, valid and data come combinationally from the read muxing logic.
     parameter bit RegisterPopOutputs = 0,
+    // If 1, then assert there are no valid bits asserted and that the FIFO is
+    // empty at the end of the test.
+    parameter bit EnableAssertFinalNotValid = 1,
 
     localparam int BufferDepth = RamReadLatency + 1,
     localparam int TotalCountWidth = $clog2(TotalDepth + 1),
@@ -103,7 +106,8 @@ module br_fifo_staging_buffer #(
   logic [           Width-1:0] push_data;
 
   br_counter #(
-      .MaxValue(BufferDepth)
+      .MaxValue(BufferDepth),
+      .EnableAssertFinalNotValid(EnableAssertFinalNotValid)
   ) br_counter (
       .clk,
       .rst,
@@ -302,7 +306,8 @@ module br_fifo_staging_buffer #(
 
       br_delay_valid #(
           .Width(InternalDepth),
-          .NumStages(RamReadLatency)
+          .NumStages(RamReadLatency),
+          .EnableAssertFinalNotValid(EnableAssertFinalNotValid)
       ) br_delay_valid_wr_ptr_onehot (
           .clk,
           .rst,
@@ -403,7 +408,8 @@ module br_fifo_staging_buffer #(
   // ====================
   if (RegisterPopOutputs) begin : gen_pop_reg
     br_flow_reg_fwd #(
-        .Width(Width)
+        .Width(Width),
+        .EnableAssertFinalNotValid(EnableAssertFinalNotValid)
     ) br_flow_reg_fwd (
         .clk,
         .rst,

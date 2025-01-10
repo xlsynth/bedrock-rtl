@@ -74,6 +74,9 @@ module br_cdc_fifo_flops #(
     // If 1, assert that push_data is stable when backpressured.
     // If 0, cover that push_data can be unstable.
     parameter bit EnableAssertPushDataStability = EnableAssertPushValidStability,
+    // If 1, then assert there are no valid bits asserted and that the FIFO is
+    // empty at the end of the test.
+    parameter bit EnableAssertFinalNotValid = 1,
 
     // Internal computed parameters
     localparam int AddrWidth  = $clog2(Depth),
@@ -141,7 +144,8 @@ module br_cdc_fifo_flops #(
       .NumSyncStages(NumSyncStages),
       .EnableCoverPushBackpressure(EnableCoverPushBackpressure),
       .EnableAssertPushValidStability(EnableAssertPushValidStability),
-      .EnableAssertPushDataStability(EnableAssertPushDataStability)
+      .EnableAssertPushDataStability(EnableAssertPushDataStability),
+      .EnableAssertFinalNotValid(EnableAssertFinalNotValid)
   ) br_cdc_fifo_ctrl_1r1w (
       .push_clk,
       .push_rst,
@@ -182,7 +186,8 @@ module br_cdc_fifo_flops #(
       .EnableMemReset(0),
       // Since there is an asynchronous path on the read,
       // we need to use structured gates for the read mux.
-      .UseStructuredGates(1)
+      .UseStructuredGates(1),
+      .EnableAssertFinalNotValid(EnableAssertFinalNotValid)
   ) br_ram_flops_1r1w (
       .wr_clk(push_clk),  // ri lint_check_waive SAME_CLOCK_NAME
       .wr_rst(push_rst),

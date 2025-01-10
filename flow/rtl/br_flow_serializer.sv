@@ -93,6 +93,8 @@ module br_flow_serializer #(
     // The order of bits within each flit is always the same that they
     // appear on the push interface.
     parameter bit SerializeMostSignificantFirst = 1,
+    // If 1, then assert there are no valid bits asserted at the end of the test.
+    parameter bit EnableAssertFinalNotValid = 1,
     localparam int SerializationRatio = PushWidth / PopWidth,
     // Vector widths cannot be 0, so we need to special-case when SerializationRatio == 1
     // even though the push_last_dont_care_count port won't be used in that case.
@@ -156,7 +158,8 @@ module br_flow_serializer #(
       // transmission, then the data integrity is compromised.
       .EnableCoverBackpressure(1),
       .EnableAssertValidStability(1),
-      .EnableAssertDataStability(1)
+      .EnableAssertDataStability(1),
+      .EnableAssertFinalNotValid(EnableAssertFinalNotValid)
   ) br_flow_checks_valid_data_intg (
       .clk,
       .rst,
@@ -198,7 +201,8 @@ module br_flow_serializer #(
 
     br_counter_incr #(
         .MaxValue(SrMinus1),
-        .MaxIncrement(1)
+        .MaxIncrement(1),
+        .EnableAssertFinalNotValid(EnableAssertFinalNotValid)
     ) br_counter_incr_pop_flit_id (
         .clk,
         .rst,
