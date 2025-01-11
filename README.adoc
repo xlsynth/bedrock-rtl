@@ -533,6 +533,9 @@ Disable them globally by defining `BR_DISABLE_INTG_CHECKS`.
 
 ==== Implementation Checks
 
+These checks are meant for checking the implementation of a library module.
+Enable them globally by defining `BR_ENABLE_IMPL_CHECKS`.
+
 [cols="2,4"]
 |===
 | Macro/define | Description
