@@ -130,17 +130,21 @@ module br_credit_receiver #(
       .available(credit_available)
   );
 
-  assign credit_decr_valid = !push_credit_stall;
   assign push_credit_internal = credit_decr_valid && credit_decr_ready;
   assign pop_valid = push_valid;
   assign pop_data = push_data;
 
   if (RegisterPushCredit) begin : gen_reg_push
+    assign credit_decr_valid = !push_credit_stall;
     `BR_REG(push_credit, push_credit_internal)
   end else begin : gen_passthru_push
     logic reset_released;
     `BR_REG(reset_released, 1'b1)
-    assign push_credit = reset_released && push_credit_internal;
+
+    // Mask off credit_decr_valid during reset to avoid
+    // sending out push credit during reset.
+    assign credit_decr_valid = reset_released && !push_credit_stall;
+    assign push_credit = push_credit_internal;
   end
 
   //------------------------------------------
