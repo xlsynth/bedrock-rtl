@@ -387,7 +387,7 @@ They are guarded (enabled) by the following defines:
 * `BR_ASSERT_ON` -- if not defined, then all assertion macros are no-ops.
 * `BR_ENABLE_FPV` -- if not defined, then all BR_*_FPV macros are no-ops.
 * `BR_DISABLE_ASSERT_COMB` -- if defined, then all BR_ASSERT_COMB* macros are no-ops.
-* `BR_DISABLE_FINAL_CHECKS` -- if defined, then all BR_ASSERT_FINAL macros are no-ops.
+* `BR_DISABLE_FINAL_CHECKS` -- if defined, then the BR_ASSERT_FINAL macro is a no-op.
 
 TIP: It is recommended that users simply define `BR_ASSERT_ON` when integrating Bedrock modules into their designs.
 The other guards will typically not be necessary.
@@ -395,60 +395,82 @@ The other guards will typically not be necessary.
 IMPORTANT: Clocks are always positive-edge triggered.
 Resets are always active-high.
 
-[cols="1,4,1,1"]
+[cols="2,4"]
 |===
-| Macro/define | Description | Implemented | Tested
+| Macro/define | Description
 
 | `BR_ASSERT_STATIC`
 | Static (elaboration-time) assertion for use within modules
-| Yes
-| Yes
 
 | `BR_ASSERT_STATIC_IN_PACKAGE`
 | Static (elaboration-time) assertion for use within packages
-| Yes
-| Yes
+
+| BR_ASSERT_FINAL
+a| Immediate assertion evaluated at the end of simulation (e.g., when `$finish` is called).
+Disable by defining `BR_DISABLE_FINAL_CHECKS`.
 
 | `BR_ASSERT`
 | Concurrent assertion with implicit `clk` and `rst` names.
-| Yes
-| Yes
 
 | `BR_ASSERT_CR`
 | Concurrent assertion with explicit clock and reset names.
-| Yes
-| Yes
 
 | `BR_ASSERT_COMB`
 a| Combinational/immediate assertion. Also passes if the expression is unknown.
 Disable by defining `BR_DISABLE_ASSERT_COMB`.
-| Yes
-| Yes
 
 | `BR_COVER`
 | Concurrent cover with implicit `clk` and `rst` names.
-| Yes
-| Yes
 
 | `BR_COVER_CR`
 | Concurrent cover with explicit clock and reset names.
-| Yes
-| Yes
 
 | `BR_COVER_COMB`
 | Combinational/immediate cover.
-| Yes
-| Yes
 
 | `BR_ASSUME`
 | Concurrent assumption with implicit `clk` and `rst` names.
-| Yes
-| Yes
 
 | `BR_ASSUME_CR`
 | Concurrent assumption with explicit clock and reset names.
-| Yes
-| Yes
+
+|===
+
+==== FPV-only Wrappers
+
+These assertion macros are intended for use in formal verification monitors that might
+be integrated into a simulation environment, but where not all formal assertions should be used in simulation.
+They are guarded (enabled) by the following defines:
+
+* `BR_ENABLE_FPV` -- if not defined, then all BR_*_FPV macros are no-ops.
+
+[cols="2,4"]
+|===
+| Macro/define | Description
+
+| `BR_ASSERT_FPV`
+| Wraps BR_ASSERT.
+
+| `BR_ASSERT_CR_FPV`
+| Wraps BR_ASSERT_CR.
+
+| `BR_ASSERT_COMB_FPV`
+| Wraps BR_ASSERT_COMB.
+
+| `BR_COVER_FPV`
+| Wraps BR_COVER.
+
+| `BR_COVER_CR_FPV`
+| Wraps BR_COVER_CR.
+
+| `BR_COVER_COMB_FPV`
+| Wraps BR_COVER_COMB.
+
+| `BR_ASSUME_FPV`
+| Wraps BR_ASSUME.
+
+| `BR_ASSUME_CR_FPV`
+| Wraps BR_ASSUME_CR.
 
 |===
 
@@ -465,129 +487,85 @@ The macros in this file are guarded with the following defines.
 The intent is that users should not need to do anything, so that by default they will get only
 the integration checks but not the implementation checks.
 
-[cols="1,4,1,1"]
+TIP: All of these macros wrap the public macros in `br_asserts.svh`, so they are also subject to the same global defines such as `BR_ASSERT_ON`.
+
+==== Integration Checks
+
+These checks are meant for checking the integration of a library module into an end user's design.
+Disable them globally by defining `BR_DISABLE_INTG_CHECKS`.
+
+[cols="2,4"]
 |===
-| Macro/define | Description | Implemented | Tested
+| Macro/define | Description
 
 | `BR_ASSERT_INTG`
-a| Concurrent integration assertion with implicit `clk` and `rst` names.
-Disable by defining `BR_DISABLE_INTG_CHECKS`.
-| Yes
-| Yes
+| Wraps BR_ASSERT.
 
 | `BR_ASSERT_CR_INTG`
-a| Concurrent integration assertion with explicit clock and reset names.
-Disable by defining `BR_DISABLE_INTG_CHECKS`.
-| Yes
-| Yes
+| Wraps `BR_ASSERT_CR`.
 
 | `BR_ASSERT_KNOWN_INTG`
-a| Concurrent integration assertion that an expression is known (not X), with implicit `clk` and `rst` names.
-Disable by defining `BR_DISABLE_INTG_CHECKS`.
-| Yes
-| Yes
+| Wraps `BR_ASSERT_KNOWN`.
 
 | `BR_ASSERT_KNOWN_VALID_INTG`
-a| Concurrent integration assertion that an expression is known (not X) when a valid condition is true, with implicit `clk` and `rst` names.
-Disable by defining `BR_DISABLE_INTG_CHECKS`.
-| Yes
-| Yes
+| Wraps `BR_ASSERT_KNOWN_VALID`.
 
 | `BR_ASSERT_KNOWN_CR_INTG`
-a| Concurrent integration assertion that an expression is known (not X), with explicit clock and reset names.
-Disable by defining `BR_DISABLE_INTG_CHECKS`.
-| Yes
-| Yes
+| Wraps `BR_ASSERT_KNOWN_CR`.
 
 | `BR_ASSERT_KNOWN_VALID_CR_INTG`
-a| Concurrent integration assertion that an expression is known (not X) when a valid condition is true, with explicit clock and reset names.
-Disable by defining `BR_DISABLE_INTG_CHECKS`.
-| Yes
-| Yes
-
-| `BR_ASSERT_IMPL`
-a| Concurrent implementation assertion with implicit `clk` and `rst` names.
-Enable by defining `BR_ENABLE_IMPL_CHECKS`.
-| Yes
-| Yes
-
-| `BR_ASSERT_CR_IMPL`
-a| Concurrent implementation assertion with explicit clock and reset names.
-Enable by defining `BR_ENABLE_IMPL_CHECKS`.
-| Yes
-| Yes
-
-| `BR_ASSERT_KNOWN_IMPL`
-a| Concurrent integration assertion that an expression is known (not X), with implicit `clk` and `rst` names.
-Enable by defining `BR_ENABLE_IMPL_CHECKS`.
-| Yes
-| Yes
-
-| `BR_ASSERT_KNOWN_VALID_IMPL`
-a| Concurrent integration assertion that an expression is known (not X) when a valid condition is true, with implicit `clk` and `rst` names.
-Enable by defining `BR_ENABLE_IMPL_CHECKS`.
-| Yes
-| Yes
-
-| `BR_ASSERT_KNOWN_CR_IMPL`
-a| Concurrent integration assertion that an expression is known (not X), with explicit clock and reset names.
-Enable by defining `BR_ENABLE_IMPL_CHECKS`.
-| Yes
-| Yes
-
-| `BR_ASSERT_KNOWN_VALID_CR_IMPL`
-a| Concurrent integration assertion that an expression is known (not X) when a valid condition is true, with explicit clock and reset names.
-Enable by defining `BR_ENABLE_IMPL_CHECKS`.
-| Yes
-| Yes
+| Wraps `BR_ASSERT_KNOWN_VALID_CR`.
 
 | `BR_ASSERT_COMB_INTG`
-a| Combinational/immediate integration assertion.
-Disable by defining `BR_DISABLE_INTG_CHECKS`.
-| Yes
-| Yes
-
-| `BR_ASSERT_COMB_IMPL`
-a| Combinational/immediate implementation assertion.
-Enable by defining `BR_ENABLE_IMPL_CHECKS`.
-| Yes
-| Yes
+| Wraps `BR_ASSERT_COMB`.
 
 | `BR_COVER_INTG`
-a| Concurrent integration cover with implicit `clk` and `rst` names.
-Disable by defining `BR_DISABLE_INTG_CHECKS`.
-| Yes
-| Yes
+| Wraps `BR_COVER`.
 
 | `BR_COVER_CR_INTG`
-a| Concurrent integration cover with explicit clock and reset names.
-Disable by defining `BR_DISABLE_INTG_CHECKS`.
-| Yes
-| Yes
-
-| `BR_COVER_IMPL`
-a| Concurrent implementation cover with implicit `clk` and `rst` names.
-Enable by defining `BR_ENABLE_IMPL_CHECKS`.
-| Yes
-| Yes
-
-| `BR_COVER_CR_IMPL`
-a| Concurrent implementation cover with explicit clock and reset names.
-Enable by defining `BR_ENABLE_IMPL_CHECKS`.
-| Yes
-| Yes
+| Wraps `BR_COVER_CR`.
 
 | `BR_COVER_COMB_INTG`
-a| Combinational/immediate integration cover.
-Disable by defining `BR_DISABLE_INTG_CHECKS`.
-| Yes
-| Yes
+| Wraps `BR_COVER_COMB`.
+
+|===
+
+
+==== Implementation Checks
+
+[cols="2,4"]
+|===
+| Macro/define | Description
+
+| `BR_ASSERT_IMPL`
+| Wraps `BR_ASSERT`.
+
+| `BR_ASSERT_CR_IMPL`
+| Wraps `BR_ASSERT_CR`.
+
+| `BR_ASSERT_KNOWN_IMPL`
+| Wraps `BR_ASSERT_KNOWN`.
+
+| `BR_ASSERT_KNOWN_VALID_IMPL`
+| Wraps `BR_ASSERT_KNOWN_VALID`.
+
+| `BR_ASSERT_KNOWN_CR_IMPL`
+| Wraps `BR_ASSERT_KNOWN_CR`.
+
+| `BR_ASSERT_KNOWN_VALID_CR_IMPL`
+| Wraps `BR_ASSERT_KNOWN_VALID_CR`.
+
+| `BR_ASSERT_COMB_IMPL`
+| Wraps `BR_ASSERT_COMB`.
+
+| `BR_COVER_IMPL`
+| Wraps `BR_COVER`.
+
+| `BR_COVER_CR_IMPL`
+| Wraps `BR_COVER_CR`.
 
 | `BR_COVER_COMB_IMPL`
-a| Combinational/immediate implementation cover.
-Enable by defining `BR_ENABLE_IMPL_CHECKS`.
-| Yes
-| Yes
+| Wraps `BR_COVER_COMB`.
 
 |===
 
