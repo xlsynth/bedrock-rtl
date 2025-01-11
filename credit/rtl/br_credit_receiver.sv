@@ -141,7 +141,7 @@ module br_credit_receiver #(
     logic reset_released;
     `BR_REG(reset_released, 1'b1)
     assign credit_decr_valid = !push_credit_stall && reset_released;
-    assign push_credit = reset_released && push_credit_internal;
+    assign push_credit = push_credit_internal;
   end
 
   //------------------------------------------
