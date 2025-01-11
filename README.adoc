@@ -415,7 +415,10 @@ Disable by defining `BR_DISABLE_FINAL_CHECKS`.
 | Concurrent assertion with explicit clock and reset names.
 
 | `BR_ASSERT_COMB`
-a| Combinational/immediate assertion. Also passes if the expression is unknown.
+a| Combinational/immediate assertion that exists outside the scope of an always_comb block.
+Also passes if the expression is unknown.
+If an immediate assertion is needed inside an always_comb block, recommend to use built-in
+SystemVerilog assert syntax.
 Disable by defining `BR_DISABLE_ASSERT_COMB`.
 
 | `BR_COVER`
