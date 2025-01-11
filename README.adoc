@@ -458,8 +458,12 @@ These assertion macros wrap the public assertions.
 They are intended only for internal use inside Bedrock libraries, but the user needs to know about them.
 They are guarded (enabled) by the following defines:
 
-* `ifndef BR_DISABLE_INTG_CHECKS` for the integration cases
-* `ifdef BR_ENABLE_IMPL_CHECKS` for the implementation cases
+The macros in this file are guarded with the following defines.
+* `BR_DISABLE_INTG_CHECKS` -- if defined, then all the BR_*_INTG checks are no-ops.
+* `BR_ENABLE_IMPL_CHECKS` -- if not defined, then all the BR_*_IMPL checks are no-ops.
+
+The intent is that users should not need to do anything, so that by default they will get only
+the integration checks but not the implementation checks.
 
 [cols="1,4,1,1"]
 |===
@@ -477,6 +481,30 @@ Disable by defining `BR_DISABLE_INTG_CHECKS`.
 | Yes
 | Yes
 
+| `BR_ASSERT_KNOWN_INTG`
+a| Concurrent integration assertion that an expression is known (not X), with implicit `clk` and `rst` names.
+Disable by defining `BR_DISABLE_INTG_CHECKS`.
+| Yes
+| Yes
+
+| `BR_ASSERT_KNOWN_VALID_INTG`
+a| Concurrent integration assertion that an expression is known (not X) when a valid condition is true, with implicit `clk` and `rst` names.
+Disable by defining `BR_DISABLE_INTG_CHECKS`.
+| Yes
+| Yes
+
+| `BR_ASSERT_KNOWN_CR_INTG`
+a| Concurrent integration assertion that an expression is known (not X), with explicit clock and reset names.
+Disable by defining `BR_DISABLE_INTG_CHECKS`.
+| Yes
+| Yes
+
+| `BR_ASSERT_KNOWN_VALID_CR_INTG`
+a| Concurrent integration assertion that an expression is known (not X) when a valid condition is true, with explicit clock and reset names.
+Disable by defining `BR_DISABLE_INTG_CHECKS`.
+| Yes
+| Yes
+
 | `BR_ASSERT_IMPL`
 a| Concurrent implementation assertion with implicit `clk` and `rst` names.
 Enable by defining `BR_ENABLE_IMPL_CHECKS`.
@@ -485,6 +513,30 @@ Enable by defining `BR_ENABLE_IMPL_CHECKS`.
 
 | `BR_ASSERT_CR_IMPL`
 a| Concurrent implementation assertion with explicit clock and reset names.
+Enable by defining `BR_ENABLE_IMPL_CHECKS`.
+| Yes
+| Yes
+
+| `BR_ASSERT_KNOWN_IMPL`
+a| Concurrent integration assertion that an expression is known (not X), with implicit `clk` and `rst` names.
+Enable by defining `BR_ENABLE_IMPL_CHECKS`.
+| Yes
+| Yes
+
+| `BR_ASSERT_KNOWN_VALID_IMPL`
+a| Concurrent integration assertion that an expression is known (not X) when a valid condition is true, with implicit `clk` and `rst` names.
+Enable by defining `BR_ENABLE_IMPL_CHECKS`.
+| Yes
+| Yes
+
+| `BR_ASSERT_KNOWN_CR_IMPL`
+a| Concurrent integration assertion that an expression is known (not X), with explicit clock and reset names.
+Enable by defining `BR_ENABLE_IMPL_CHECKS`.
+| Yes
+| Yes
+
+| `BR_ASSERT_KNOWN_VALID_CR_IMPL`
+a| Concurrent integration assertion that an expression is known (not X) when a valid condition is true, with explicit clock and reset names.
 Enable by defining `BR_ENABLE_IMPL_CHECKS`.
 | Yes
 | Yes
