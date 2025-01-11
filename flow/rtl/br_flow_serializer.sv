@@ -261,7 +261,7 @@ module br_flow_serializer #(
 
     // Note that this might be X when push_valid is 0, because pop_flit_id_plus_dont_care_count
     // has a fanin from push_data. That's ok, since 0 && X == 0. Keeping the valid off of the
-    // fanin for push_ready improves timing.
+    // fanin for push_ready improves timing and helps avoid combinational loops.
     assign push_ready = pop_ready && (pop_flit_id_plus_dont_care_count == sr_minus_1);
 
   end
