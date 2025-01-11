@@ -175,13 +175,14 @@ module br_gate_cdc_sync #(
 
 endmodule : br_gate_cdc_sync
 
-// Reset Synchronizer
-module br_gate_cdc_rst_sync #(
+// Clock Domain Crossing Synchronizer with Asynchronous Reset
+module br_gate_cdc_sync_arst #(
     parameter int NumStages = 3  // must be at least 1
 ) (
     input  logic clk,
-    input  logic arst,  // active high async reset
-    output logic srst   // active high sync reset
+    input  logic arst,  // active-high async reset
+    input  logic in,
+    output logic out
 );
 
   `BR_ASSERT_STATIC(num_stages_must_be_at_least_1_a, NumStages >= 1)
@@ -189,11 +190,11 @@ module br_gate_cdc_rst_sync #(
   logic [NumStages-1:0] in_d;
 
   // ri lint_check_waive RESET_LEVEL CONST_FF
-  `BR_REGAI(in_d, {in_d[NumStages-2:0], 1'b1}, 1'b1)
+  `BR_REGA(in_d, {in_d[NumStages-2:0], in})
 
-  assign srst = in_d[NumStages-1];
+  assign out = in_d[NumStages-1];
 
-endmodule : br_gate_cdc_rst_sync
+endmodule : br_gate_cdc_sync_arst
 
 // Buffer used at CDC crossings but when the signal is considered pseudo-static. In other words,
 // this signal will be stable before the destination domain is out of reset and the clock is
