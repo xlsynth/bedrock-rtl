@@ -152,8 +152,7 @@ module br_tracker_freelist #(
 
     // Encode the first free entry ID to binary
     br_enc_onehot2bin #(
-        .NumValues(NumEntries),
-        .EnableAssertFinalNotValid(EnableAssertFinalNotDeallocValid)
+        .NumValues(NumEntries)
     ) br_enc_onehot2bin_push_entry_id (
         .clk,
         .rst,
