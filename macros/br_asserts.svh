@@ -26,8 +26,11 @@
 // The SystemVerilog language lacks native support for namespacing.
 // Therefore we namespace all macros with the BR_ prefix (stands for Bedrock).
 //
-// Assertion macros are only enabled when BR_ASSERT_ON is defined.
-// A subset of assertion macros are enabled when both BR_ASSERT_ON and BR_ENABLE_FPV are defined.
+// The macros in this file are guarded with the following defines.
+// * BR_ASSERT_ON -- if not defined, then all assertion macros are no-ops.
+// * BR_ENABLE_FPV -- if not defined, then all BR_*_FPV macros are no-ops.
+// * BR_DISABLE_ASSERT_COMB -- if defined, then all BR_ASSERT_COMB* macros are no-ops.
+// * BR_DISABLE_FINAL_CHECKS -- if defined, then all BR_ASSERT_FINAL macros are no-ops.
 
 ////////////////////////////////////////////////////////////////////////////////
 // Static (elaboration-time) assertion macros
@@ -50,10 +53,15 @@ typedef enum logic [1:0] { \
 // Final assertion macros (end of test)
 ////////////////////////////////////////////////////////////////////////////////
 `ifdef BR_ASSERT_ON
+`ifndef BR_DISABLE_FINAL_CHECKS
 `define BR_ASSERT_FINAL(__name__, __expr__) \
 final begin : __name__ \
 assert (__expr__); \
 end
+`else  // BR_DISABLE_FINAL_CHECKS
+`define BR_ASSERT_FINAL(__name__, __expr__) \
+`BR_NOOP
+`endif  // BR_DISABLE_FINAL_CHECKS
 `else  // BR_ASSERT_ON
 `define BR_ASSERT_FINAL(__name__, __expr__) \
 `BR_NOOP
@@ -177,18 +185,18 @@ __name__ : assert property (@(posedge __clk__) disable iff (__rst__ === 1'b1 || 
 // Also pass if the expression is unknown.
 ////////////////////////////////////////////////////////////////////////////////
 
-// BR_ASSERT_COMB is guarded with BR_ENABLE_ASSERT_COMB because some tools don't like immediate assertions,
+// BR_ASSERT_COMB is guarded with BR_DISABLE_ASSERT_COMB because some tools don't like immediate assertions,
 // and/or $isunknown in combinational blocks, even when it's used inside of an assert statement.
 `ifdef BR_ASSERT_ON
-`ifdef BR_ENABLE_ASSERT_COMB
+`ifndef BR_DISABLE_ASSERT_COMB
 `define BR_ASSERT_COMB(__name__, __expr__) \
 always_comb begin  : gen_``__name__ \
 assert ($isunknown(__expr__) || (__expr__)); \
 end
-`else  // BR_ENABLE_ASSERT_COMB
+`else  // BR_DISABLE_ASSERT_COMB
 `define BR_ASSERT_COMB(__name__, __expr__) \
 `BR_NOOP
-`endif  // BR_ENABLE_ASSERT_COMB
+`endif  // BR_DISABLE_ASSERT_COMB
 `else  // BR_ASSERT_ON
 `define BR_ASSERT_COMB(__name__, __expr__) \
 `BR_NOOP
@@ -196,7 +204,7 @@ end
 
 // FPV version macros
 `ifdef BR_ASSERT_ON
-`ifdef BR_ENABLE_ASSERT_COMB
+`ifndef BR_DISABLE_ASSERT_COMB
 `ifdef BR_ENABLE_FPV
 `define BR_ASSERT_COMB_FPV(__name__, __expr__) \
 `BR_ASSERT_COMB(__name__, __expr__);
@@ -204,10 +212,10 @@ end
 `define BR_ASSERT_COMB_FPV(__name__, __expr__) \
 `BR_NOOP
 `endif  // BR_ENABLE_FPV
-`else  // BR_ENABLE_ASSERT_COMB
+`else  // BR_DISABLE_ASSERT_COMB
 `define BR_ASSERT_COMB_FPV(__name__, __expr__) \
 `BR_NOOP
-`endif  // BR_ENABLE_ASSERT_COMB
+`endif  // BR_DISABLE_ASSERT_COMB
 `else  // BR_ASSERT_ON
 `define BR_ASSERT_COMB_FPV(__name__, __expr__) \
 `BR_NOOP
