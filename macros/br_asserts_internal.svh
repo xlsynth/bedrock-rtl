@@ -28,12 +28,13 @@
 // Implementation checks are intended to check a design's correctness given that its input assumptions
 // are not violated.
 //
-// The macros in this file are guarded with two magic defines:
-// * BR_DISABLE_INTG_CHECKS -- If set, then the integration checks will be disabled in the design.
-// * BR_ENABLE_IMPL_CHECKS -- If set, then the implementation checks will be included in the design.
+// The macros in this file are guarded with the following defines.
+// * BR_DISABLE_INTG_CHECKS -- if defined, then all the BR_*_INTG checks are no-ops.
+// * BR_ENABLE_IMPL_CHECKS -- if not defined, then all the BR_*_IMPL checks are no-ops.
 //
-// The intent is that users should not need to set either define, so that by default they will get only
-// the integration checks and not the implementation checks.
+// The intent is that users should not need to do anything, so that by default they will get only
+// the integration checks but not the implementation checks.
+//
 // The user should not need implementation checks because the Bedrock modules are pre-verified; omitting
 // the checks speeds up tools and removes noisy covers that won't necessarily get hit in the user's design.
 

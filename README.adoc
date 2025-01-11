@@ -384,8 +384,13 @@ The suffices are also listed in alphabetical order, with the exception of `L` be
 These assertion macros are intended for use by the user in their own designs.
 They are guarded (enabled) by the following defines:
 
-* `ifdef BR_ASSERT_ON`
-* `ifdef BR_ENABLE_ASSERT_COMB` - only for guarding `BR_ASSERT_COMB` (off by default).
+* `BR_ASSERT_ON` -- if not defined, then all assertion macros are no-ops.
+* `BR_ENABLE_FPV` -- if not defined, then all BR_*_FPV macros are no-ops.
+* `BR_DISABLE_ASSERT_COMB` -- if defined, then all BR_ASSERT_COMB* macros are no-ops.
+* `BR_DISABLE_FINAL_CHECKS` -- if defined, then all BR_ASSERT_FINAL macros are no-ops.
+
+TIP: It is recommended that users simply define `BR_ASSERT_ON` when integrating Bedrock modules into their designs.
+The other guards will typically not be necessary.
 
 IMPORTANT: Clocks are always positive-edge triggered.
 Resets are always active-high.
@@ -416,7 +421,7 @@ Resets are always active-high.
 
 | `BR_ASSERT_COMB`
 a| Combinational/immediate assertion. Also passes if the expression is unknown.
-Enable by defining `BR_ENABLE_ASSERT_COMB`.
+Disable by defining `BR_DISABLE_ASSERT_COMB`.
 | Yes
 | Yes
 
