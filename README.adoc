@@ -385,7 +385,6 @@ These assertion macros are intended for use by the user in their own designs.
 They are guarded (enabled) by the following defines:
 
 * `BR_ASSERT_ON` -- if not defined, then all assertion macros are no-ops.
-* `BR_ENABLE_FPV` -- if not defined, then all BR_*_FPV macros are no-ops.
 * `BR_DISABLE_ASSERT_COMB` -- if defined, then all BR_ASSERT_COMB* macros are no-ops.
 * `BR_DISABLE_FINAL_CHECKS` -- if defined, then the BR_ASSERT_FINAL macro is a no-op.
 
@@ -576,54 +575,36 @@ Enable them globally by defining `BR_ENABLE_IMPL_CHECKS`.
 
 These macros conveniently wrap module instantiations from the `gate` category.
 
-[cols="1,4,1,1"]
+[cols="2,4"]
 |===
-| Macro/define | Description | Implemented | Tested
+| Macro/define | Description
 
 | `BR_GATE_BUF`
 | Instantiates `br_gate_buf`.
-| Yes
-| Yes
 
 | `BR_GATE_CLK_BUF`
 | Instantiates `br_gate_clk_buf`.
-| Yes
-| Yes
 
 | `BR_GATE_INV`
 | Instantiates `br_gate_inv`.
-| Yes
-| Yes
 
 | `BR_GATE_AND2`
 | Instantiates `br_gate_and2`.
-| Yes
-| Yes
 
 | `BR_GATE_OR2`
 | Instantiates `br_gate_or2`.
-| Yes
-| Yes
 
 | `BR_GATE_XOR2`
 | Instantiates `br_gate_xor2`.
-| Yes
-| Yes
 
 | `BR_GATE_MUX2`
 | Instantiates `br_gate_mux2`.
-| Yes
-| Yes
 
 | `BR_GATE_CLK_MUX2`
 | Instantiates `br_gate_clk_mux2`.
-| Yes
-| Yes
 
 | `BR_GATE_ICG`
 | Instantiates `br_gate_icg`.
-| Yes
-| Yes
 
 |===
 
@@ -631,41 +612,29 @@ These macros conveniently wrap module instantiations from the `gate` category.
 
 These macros conveniently wrap `br_misc_tieoff*` module instantiations.
 
-[cols="1,4,1,1"]
+[cols="2,4"]
 |===
-| Macro/define | Description | Implemented | Tested
+| Macro/define | Description
 
 | `BR_TIEOFF_ZERO_NAMED`
 | Instantiates `br_tieoff_zero` with a given submodule instance suffix.
-| Yes
-| Yes
 
 | `BR_TIEOFF_ONE_NAMED`
 | Instantiates `br_tieoff_one` with a given submodule instance suffix.
-| Yes
-| Yes
 
 | `BR_TIEOFF_ZERO`
 | Instantiates `br_tieoff_zero` with a derived submodule instance suffix.
-| Yes
-| Yes
 
 | `BR_TIEOFF_ONE`
 | Instantiates `br_tieoff_one` with a derived submodule instance suffix.
-| Yes
-| Yes
 
 | `BR_TIEOFF_ZERO_TODO`
 a| Provided for convenience of the user grepping for `TODO` in the codebase, to help prevent accidental tie-offs that result in bugs.
 Instantiates `br_tieoff_zero` with a derived submodule instance suffix.
-| Yes
-| Yes
 
 | `BR_TIEOFF_ONE_TODO`
 a| Provided for convenience of the user grepping for `TODO` in the codebase, to help prevent accidental tie-offs that result in bugs.
 Instantiates `br_tieoff_one` with a derived submodule instance suffix.
-| Yes
-| Yes
 
 |===
 
@@ -673,25 +642,19 @@ Instantiates `br_tieoff_one` with a derived submodule instance suffix.
 
 These macros conveniently wrap `br_misc_unused` module instantiations.
 
-[cols="1,4,1,1"]
+[cols="2,4"]
 |===
-| Macro/define | Description | Implemented | Tested
+| Macro/define | Description
 
 | `BR_UNUSED_NAMED`
 | Instantiates `br_misc_unused` with a given submodule instance suffix.
-| Yes
-| Yes
 
 | `BR_UNUSED`
 | Instantiates `br_misc_unused` with a derived submodule instance suffix.
-| Yes
-| Yes
 
 | `BR_UNUSED_TODO`
 a| Provided for convenience of the user grepping for `TODO` in the codebase, to help prevent accidental unused signals that result in bugs.
 Instantiates `br_misc_unused` with a derived submodule instance suffix.
-| Yes
-| Yes
 
 |===
 
