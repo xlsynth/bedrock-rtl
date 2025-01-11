@@ -433,6 +433,14 @@ Disable by defining `BR_DISABLE_ASSERT_COMB`.
 | `BR_ASSUME_CR`
 | Concurrent assumption with explicit clock and reset names.
 
+| `BR_ASSERT_IN_RESET`
+a| Concurrent assertion that is active in reset and out of reset
+(but specifically intended for checking the former), with implicit `clk` name.
+
+| `BR_ASSERT_IN_RESET_C`
+a| Concurrent assertion that is active in reset and out of reset
+(but specifically intended for checking the former), with explicit clock name.
+
 |===
 
 ==== FPV-only Wrappers
