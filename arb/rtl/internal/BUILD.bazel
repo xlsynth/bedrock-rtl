@@ -38,9 +38,18 @@ verilog_library(
     name = "br_arb_rr_internal",
     srcs = ["br_arb_rr_internal.sv"],
     deps = [
+        ":br_rr_state_internal",
+    ],
+)
+
+verilog_library(
+    name = "br_rr_state_internal",
+    srcs = ["br_rr_state_internal.sv"],
+    deps = [
         "//macros:br_asserts_internal",
         "//macros:br_registers",
     ],
 )
 
 # Elab/Lint tests done on public modules
+

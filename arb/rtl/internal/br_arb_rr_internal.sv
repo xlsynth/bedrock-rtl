@@ -31,9 +31,6 @@
 // requests of higher priority.  The final grant signal is equivalent to
 // 'can_grant & request'.
 
-`include "br_asserts_internal.svh"
-`include "br_registers.svh"
-
 module br_arb_rr_internal #(
     // Must be at least 2
     parameter int NumRequesters = 2
@@ -49,39 +46,40 @@ module br_arb_rr_internal #(
   //------------------------------------------
   // Implementation
   //------------------------------------------
-  // last_grant is the only state in the design. The requester with the last grant
-  // is the lowest priority, so the next highest index (modulo NumRequesters) is the
-  // highest priority.
-  //
+
   // We use two priority encoders to handle the modulo indexing.
-  // * The first encoder uses a masked request vector to find the highest priority request
-  // (if any exists) before wrapping around.
-  // * The second encoder uses the unmasked request vector to find the highest priority request
-  // after the wraparound index.
+  // * The first encoder uses a masked request vector to find the highest priority 
+  // request (if any exists) before wrapping around. These are the requests in the 
+  // range [RR_ptr, NumRequesters).
+  // * The second encoder uses the unmasked request vector to find the highest 
+  // priority request after the wraparound index. These are the requests in the 
+  // range [0, RR_ptr).
   //
-  // If the masked request vector is not zero, then we use the grant from the first encoder;
-  // otherwise we use the grant from the second encoder.
+  // The round-robin state is tracked in the rr_state_internal module. The 
+  // priority_mask output contains a mask of all request indices that are less 
+  // than the current  round-robin priority---those in the range [0, RR_ptr) that 
+  // are passed to the second (lower priority) encoder.
   //
   // The last_grant gets updated on the next cycle with grant, so that the
   // priority rotates in a round-robin fashion.
-  // last_grant initializes to NumRequesters'b100....0 such that index 0 is the highest priority
-  // out of reset.
+  // last_grant initializes to NumRequesters'b100....0 such that index 0 is the 
+  // highest priority out of reset.
 
+  logic update_priority;
   logic [NumRequesters-1:0] priority_mask;
-  logic [NumRequesters-1:0] request_high;
-  logic [NumRequesters-1:0] last_grant;
-  logic [NumRequesters-1:0] last_grant_init;
 
-  // priority_mask selects all bits at or below the last grant.
-  // e.g. if last grant is 001, then priority_mask is 001
-  //      if last grant is 010, then priority_mask is 011
-  //      if last grant is 100, then priority_mask is 111
-  // priority_mask[0] is thus always 1.
-  for (genvar i = 0; i < NumRequesters; i++) begin : gen_priority_mask
-    // For i = NumRequesters - 1, the full range will be selected
-    // ri lint_check_waive FULL_RANGE
-    assign priority_mask[i] = |last_grant[NumRequesters-1:i];
-  end
+  assign update_priority = enable_priority_update && |request;
+
+  br_rr_state_internal #(
+      .NumRequesters(NumRequesters)
+  ) rr_state_internal (
+      .clk,
+      .rst,
+      .update_priority,
+      .grant,
+      .last_grant(),
+      .priority_mask
+  );
 
   // request_high[0] is constant 0
   // ri lint_check_waive CONST_ASSIGN
@@ -120,11 +118,5 @@ module br_arb_rr_internal #(
   end
 
   assign grant = request & can_grant;
-  // ri lint_check_waive CONST_ASSIGN
-  assign last_grant_init[NumRequesters-1] = 1'b1;
-  // ri lint_check_waive CONST_ASSIGN
-  assign last_grant_init[NumRequesters-2:0] = '0;
-
-  `BR_REGLI(last_grant, grant, enable_priority_update && |request, last_grant_init)
 
 endmodule : br_arb_rr_internal
