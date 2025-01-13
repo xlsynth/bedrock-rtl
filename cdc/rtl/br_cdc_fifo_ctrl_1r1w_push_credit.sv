@@ -155,8 +155,6 @@ module br_cdc_fifo_ctrl_1r1w_push_credit #(
       .RegisterPushCredit(RegisterPushCredit),
       .MaxCredit(MaxCredit),
       .NumSyncStages(NumSyncStages),
-      .MaxCredit(MaxCredit),
-      .RegisterPushCredit(RegisterPushCredit),
       .EnableAssertFinalNotValid(EnableAssertFinalNotValid)
   ) br_cdc_fifo_ctrl_push_1r1w_push_credit_inst (
       .push_clk,
@@ -189,7 +187,7 @@ module br_cdc_fifo_ctrl_1r1w_push_credit #(
       .Width(Width),
       .RegisterPopOutputs(RegisterPopOutputs),
       .RamReadLatency(RamReadLatency),
-      .NumSyncStages(NumSyncStages)
+      .NumSyncStages(NumSyncStages),
       .EnableAssertFinalNotValid(EnableAssertFinalNotValid)
   ) br_cdc_fifo_ctrl_pop_1r1w_inst (
       .push_clk,
