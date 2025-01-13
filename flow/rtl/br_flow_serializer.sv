@@ -237,7 +237,8 @@ module br_flow_serializer #(
     ) br_mux_bin (
         .select(slice_id),
         .in(push_data),
-        .out(pop_data)
+        .out(pop_data),
+        .out_valid()
     );
 
     //------

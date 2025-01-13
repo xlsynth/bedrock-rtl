@@ -35,7 +35,8 @@ module br_mux_bin #(
 ) (
     input  logic [ SelectWidth-1:0]                  select,
     input  logic [NumSymbolsIn-1:0][SymbolWidth-1:0] in,
-    output logic [ SymbolWidth-1:0]                  out
+    output logic [ SymbolWidth-1:0]                  out,
+    output logic                                     out_valid
 );
 
   //------------------------------------------
@@ -114,6 +115,8 @@ module br_mux_bin #(
       end
     end
   end
+
+  assign out_valid = select < NumSymbolsIn;  // ri lint_check_waive INVALID_COMPARE
 
   //------------------------------------------
   // Implementation checks

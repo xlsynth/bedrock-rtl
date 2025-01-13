@@ -278,7 +278,8 @@ module br_flow_deserializer #(
         ) br_mux_bin (
             .select(passthru_this_slice),
             .in({slice_data[i], slice_reg[i]}),
-            .out(pop_data[Msb:Lsb])
+            .out(pop_data[Msb:Lsb]),
+            .out_valid()
         );
 
         // Last slice does not have a register to mux from.
