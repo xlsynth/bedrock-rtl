@@ -98,8 +98,8 @@ br_verilog_elab_and_lint_test_suite(
 )
 
 verilog_library(
-    name = "br_mux_array",
-    srcs = ["br_mux_array.sv"],
+    name = "br_mux_bin_array",
+    srcs = ["br_mux_bin_array.sv"],
     deps = [
         ":br_mux_bin",
         "//macros:br_asserts_internal",
@@ -107,7 +107,7 @@ verilog_library(
 )
 
 br_verilog_elab_and_lint_test_suite(
-    name = "br_mux_array_test_suite",
+    name = "br_mux_bin_array_test_suite",
     params = {
         "NumSymbolsIn": [
             "2",
@@ -125,5 +125,5 @@ br_verilog_elab_and_lint_test_suite(
             "3",
         ],
     },
-    deps = [":br_mux_array"],
+    deps = [":br_mux_bin_array"],
 )
