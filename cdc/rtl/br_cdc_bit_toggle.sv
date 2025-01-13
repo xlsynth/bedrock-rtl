@@ -16,7 +16,7 @@
 
 `include "br_registers.svh"
 `include "br_asserts.svh"
-
+`include "br_gates.svh"
 module br_cdc_bit_toggle #(
     // Number of synchronization stages. Must be at least 1.
     // WARNING: Setting this parameter correctly is critical to
@@ -46,7 +46,7 @@ module br_cdc_bit_toggle #(
   `BR_ASSERT_STATIC(num_stages_must_be_at_least_one_a, NumStages >= 1)
 
   // Implementation
-  logic src_bit_internal;
+  logic src_bit_internal, src_bit_internal_maxdel;
 
   if (AddSourceFlop) begin : gen_src_flop
     `BR_REGNX(src_bit_internal, src_bit, src_clk)
@@ -54,13 +54,17 @@ module br_cdc_bit_toggle #(
     assign src_bit_internal = src_bit;
   end
 
+  // ri lint_check_off ONE_CONN_PER_LINE
+  `BR_GATE_CDC_MAXDEL(src_bit_internal_maxdel, src_bit_internal)
+  // ri lint_check_on ONE_CONN_PER_LINE
+
   // TODO: Add simulation delay modeling
 
   br_gate_cdc_sync #(
       .NumStages(NumStages)
   ) br_gate_cdc_sync (
       .clk(dst_clk),  // ri lint_check_waive SAME_CLOCK_NAME
-      .in(src_bit_internal),
+      .in(src_bit_internal_maxdel),
       .out(dst_bit)
   );
 
