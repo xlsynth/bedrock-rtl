@@ -23,6 +23,7 @@ verilog_library(
     deps = [
         "//gate/rtl:br_gate_behav",
         "//macros:br_asserts",
+        "//macros:br_gates",
         "//macros:br_registers",
     ],
 )
@@ -46,10 +47,41 @@ verilog_library(
     name = "br_cdc_fifo_ctrl_1r1w",
     srcs = ["br_cdc_fifo_ctrl_1r1w.sv"],
     deps = [
+        ":br_cdc_fifo_ctrl_pop_1r1w",
+        ":br_cdc_fifo_ctrl_push_1r1w",
+    ],
+)
+
+verilog_library(
+    name = "br_cdc_fifo_ctrl_pop_1r1w",
+    srcs = ["br_cdc_fifo_ctrl_pop_1r1w.sv"],
+    deps = [
         ":br_cdc_bit_toggle",
         "//cdc/rtl/internal:br_cdc_fifo_gray_count_sync",
         "//cdc/rtl/internal:br_cdc_fifo_pop_ctrl",
+        "//macros:br_asserts_internal",
+        "//macros:br_gates",
+    ],
+)
+
+verilog_library(
+    name = "br_cdc_fifo_ctrl_push_1r1w",
+    srcs = ["br_cdc_fifo_ctrl_push_1r1w.sv"],
+    deps = [
+        ":br_cdc_bit_toggle",
+        "//cdc/rtl/internal:br_cdc_fifo_gray_count_sync",
         "//cdc/rtl/internal:br_cdc_fifo_push_ctrl",
+        "//macros:br_asserts_internal",
+    ],
+)
+
+verilog_library(
+    name = "br_cdc_fifo_ctrl_push_1r1w_push_credit",
+    srcs = ["br_cdc_fifo_ctrl_push_1r1w_push_credit.sv"],
+    deps = [
+        ":br_cdc_bit_toggle",
+        "//cdc/rtl/internal:br_cdc_fifo_gray_count_sync",
+        "//cdc/rtl/internal:br_cdc_fifo_push_ctrl_credit",
     ],
 )
 
@@ -83,10 +115,8 @@ verilog_library(
     name = "br_cdc_fifo_ctrl_1r1w_push_credit",
     srcs = ["br_cdc_fifo_ctrl_1r1w_push_credit.sv"],
     deps = [
-        ":br_cdc_bit_toggle",
-        "//cdc/rtl/internal:br_cdc_fifo_gray_count_sync",
-        "//cdc/rtl/internal:br_cdc_fifo_pop_ctrl",
-        "//cdc/rtl/internal:br_cdc_fifo_push_ctrl_credit",
+        ":br_cdc_fifo_ctrl_pop_1r1w",
+        ":br_cdc_fifo_ctrl_push_1r1w_push_credit",
     ],
 )
 

@@ -144,128 +144,71 @@ module br_cdc_fifo_ctrl_1r1w_push_credit #(
   //------------------------------------------
 
   logic [CountWidth-1:0] push_push_count_gray;
-  logic [CountWidth-1:0] pop_push_count_gray;
-  logic [CountWidth-1:0] push_pop_count_gray;
   logic [CountWidth-1:0] pop_pop_count_gray;
-  logic                  push_reset_active_pop;
   logic                  push_reset_active_push;
   logic                  pop_reset_active_pop;
-  logic                  pop_reset_active_push;
-  logic [     Width-1:0] pop_ram_rd_data_maxdel;
 
-  br_cdc_fifo_push_ctrl_credit #(
+  br_cdc_fifo_ctrl_push_1r1w_push_credit #(
       .Depth(Depth),
       .Width(Width),
       .RamWriteLatency(RamWriteLatency),
       .RegisterPushCredit(RegisterPushCredit),
       .MaxCredit(MaxCredit),
+      .NumSyncStages(NumSyncStages),
       .EnableAssertFinalNotValid(EnableAssertFinalNotValid)
-  ) br_cdc_fifo_push_ctrl_credit (
-      .clk              (push_clk),               // ri lint_check_waive SAME_CLOCK_NAME
-      .rst              (push_rst),
+  ) br_cdc_fifo_ctrl_push_1r1w_push_credit_inst (
+      .push_clk,
+      .push_rst,
       .push_credit_stall,
       .push_credit,
       .push_valid,
       .push_data,
+      .push_full,
+      .push_full_next,
+      .push_slots,
+      .push_slots_next,
       .credit_initial_push,
       .credit_withhold_push,
       .credit_count_push,
       .credit_available_push,
-      .full             (push_full),
-      .full_next        (push_full_next),
-      .slots            (push_slots),
-      .slots_next       (push_slots_next),
-      .ram_wr_valid     (push_ram_wr_valid),
-      .ram_wr_addr      (push_ram_wr_addr),
-      .ram_wr_data      (push_ram_wr_data),
-      .push_count_gray  (push_push_count_gray),
-      .pop_count_gray   (push_pop_count_gray),
-      .reset_active_pop (push_reset_active_pop),
-      .reset_active_push(push_reset_active_push)
+      .push_ram_wr_valid,
+      .push_ram_wr_addr,
+      .push_ram_wr_data,
+      .pop_clk,
+      .pop_rst,
+      .pop_reset_active_pop,
+      .pop_pop_count_gray,
+      .push_push_count_gray,
+      .push_reset_active_push
   );
 
-  br_cdc_fifo_gray_count_sync #(
-      .CountWidth(CountWidth),
-      .NumStages (NumSyncStages)
-  ) br_cdc_fifo_gray_count_sync_push2pop (
-      .src_clk(push_clk),  // ri lint_check_waive SAME_CLOCK_NAME
-      .src_rst(push_rst),
-      .src_count_gray(push_push_count_gray),
-      .dst_clk(pop_clk),  // ri lint_check_waive SAME_CLOCK_NAME
-      .dst_rst(pop_rst),
-      .dst_count_gray(pop_push_count_gray)
-  );
-
-  br_cdc_fifo_gray_count_sync #(
-      .CountWidth(CountWidth),
-      .NumStages (NumSyncStages)
-  ) br_cdc_fifo_gray_count_sync_pop2push (
-      .src_clk(pop_clk),  // ri lint_check_waive SAME_CLOCK_NAME
-      .src_rst(pop_rst),
-      .src_count_gray(pop_pop_count_gray),
-      .dst_clk(push_clk),  // ri lint_check_waive SAME_CLOCK_NAME
-      .dst_rst(push_rst),
-      .dst_count_gray(push_pop_count_gray)
-  );
-
-  br_cdc_bit_toggle #(
-      .NumStages(NumSyncStages),
-      .AddSourceFlop(0)
-  ) br_cdc_bit_toggle_reset_active_push (
-      .src_clk(push_clk),  // ri lint_check_waive SAME_CLOCK_NAME
-      .src_rst(push_rst),
-      .src_bit(push_reset_active_push),
-      .dst_clk(pop_clk),  // ri lint_check_waive SAME_CLOCK_NAME
-      .dst_rst(pop_rst),
-      .dst_bit(pop_reset_active_push)
-  );
-
-  br_cdc_bit_toggle #(
-      .NumStages(NumSyncStages),
-      .AddSourceFlop(0)
-  ) br_cdc_bit_toggle_reset_active_pop (
-      .src_clk(pop_clk),  // ri lint_check_waive SAME_CLOCK_NAME
-      .src_rst(pop_rst),
-      .src_bit(pop_reset_active_pop),
-      .dst_clk(push_clk),  // ri lint_check_waive SAME_CLOCK_NAME
-      .dst_rst(push_rst),
-      .dst_bit(push_reset_active_pop)
-  );
-
-  // Tag this signal as needing max delay checks
-  // ri lint_check_off ONE_CONN_PER_LINE
-  `BR_GATE_CDC_MAXDEL_BUS(pop_ram_rd_data_maxdel, pop_ram_rd_data, Width)
-  // ri lint_check_on ONE_CONN_PER_LINE
-
-  br_cdc_fifo_pop_ctrl #(
+  br_cdc_fifo_ctrl_pop_1r1w #(
       .Depth(Depth),
       .Width(Width),
       .RegisterPopOutputs(RegisterPopOutputs),
       .RamReadLatency(RamReadLatency),
+      .NumSyncStages(NumSyncStages),
       .EnableAssertFinalNotValid(EnableAssertFinalNotValid)
-  ) br_cdc_fifo_pop_ctrl (
-      .clk              (pop_clk),                 // ri lint_check_waive SAME_CLOCK_NAME
-      .rst              (pop_rst),
+  ) br_cdc_fifo_ctrl_pop_1r1w_inst (
+      .push_clk,
+      .push_rst,
+      .pop_reset_active_pop,
+      .pop_pop_count_gray,
+      .push_push_count_gray,
+      .push_reset_active_push,
+      .pop_clk,
+      .pop_rst,
       .pop_ready,
       .pop_valid,
       .pop_data,
-      .empty            (pop_empty),
-      .empty_next       (pop_empty_next),
-      .items            (pop_items),
-      .items_next       (pop_items_next),
-      .ram_rd_addr_valid(pop_ram_rd_addr_valid),
-      .ram_rd_addr      (pop_ram_rd_addr),
-      .ram_rd_data_valid(pop_ram_rd_data_valid),
-      .ram_rd_data      (pop_ram_rd_data_maxdel),
-      .push_count_gray  (pop_push_count_gray),
-      .pop_count_gray   (pop_pop_count_gray),
-      .reset_active_pop (pop_reset_active_pop),
-      .reset_active_push(pop_reset_active_push)
+      .pop_empty,
+      .pop_empty_next,
+      .pop_items,
+      .pop_items_next,
+      .pop_ram_rd_addr_valid,
+      .pop_ram_rd_addr,
+      .pop_ram_rd_data_valid,
+      .pop_ram_rd_data
   );
-
-  //------------------------------------------
-  // Implementation checks
-  //------------------------------------------
-  `BR_ASSERT_CR_IMPL(no_pop_valid_when_empty_a, pop_empty |-> !pop_valid, pop_clk, pop_rst)
 
 endmodule : br_cdc_fifo_ctrl_1r1w_push_credit
