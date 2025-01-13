@@ -18,7 +18,8 @@ module br_mux_bin_tb;
   ) dut (
       .select,
       .in,
-      .out
+      .out,
+      .out_valid()
   );
 
   br_test_driver td (

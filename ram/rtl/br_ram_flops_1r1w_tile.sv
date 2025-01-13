@@ -182,7 +182,8 @@ module br_ram_flops_1r1w_tile #(
     ) br_mux_bin_inst (
         .select(rd_addr),
         .in(mem_packed),
-        .out(rd_data)
+        .out(rd_data),
+        .out_valid()
     );
   end else begin : gen_behavioral_read
     if (EnableBypass) begin : gen_bypass
