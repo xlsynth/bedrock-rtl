@@ -215,3 +215,25 @@ br_verilog_elab_and_lint_test_suite(
     top = "br_cdc_fifo_flops_push_credit",
     deps = [":br_cdc_fifo_flops_push_credit"],
 )
+
+verilog_library(
+    name = "br_cdc_rst_sync",
+    srcs = ["br_cdc_rst_sync.sv"],
+    deps = [
+        "//gate/rtl:br_gate_behav",
+        "//macros:br_asserts",
+        "//macros:br_gates",
+    ],
+)
+
+br_verilog_elab_and_lint_test_suite(
+    name = "br_cdc_rst_sync_test_suite",
+    params = {
+        "NumStages": [
+            "2",
+            "3",
+        ],
+    },
+    top = "br_cdc_rst_sync",
+    deps = [":br_cdc_rst_sync"],
+)
