@@ -71,7 +71,7 @@ module br_credit_sender #(
     parameter int Width = 1,
     // Maximum number of credits that can be stored (inclusive). Must be at least 1.
     parameter int MaxCredit = 1,
-    // If 1, add retiming to pop_sender_in_reset, pop_valid, and pop_data.
+    // If 1, add 1 cycle of retiming to pop outputs.
     parameter bit RegisterPopOutputs = 0,
     // If 1, cover that the push side experiences backpressure.
     // If 0, assert that there is never backpressure.
@@ -97,15 +97,13 @@ module br_credit_sender #(
     input logic [Width-1:0] push_data,
 
     // Credit/valid pop interface.
+    // Indicates that this module is in reset.
+    // Synchronous active-high.
+    output logic pop_sender_in_reset,
     // Indicates that the receiver is in reset.
     // Synchronous active-high.
     input logic pop_receiver_in_reset,
     input logic pop_credit,
-    // Indicates that this module is in reset.
-    // Synchronous active-high.
-    // Always valid (not qualified by pop_valid).
-    output logic pop_sender_in_reset,
-    // Qualifies the data.
     output logic pop_valid,
     output logic [Width-1:0] pop_data,
 
@@ -146,10 +144,9 @@ module br_credit_sender #(
   // Implementation
   //------------------------------------------
   logic either_rst;
-  logic internal_push_ready;
-
   assign either_rst = rst || pop_receiver_in_reset;
-  assign push_ready = !either_rst && internal_push_ready;
+
+  logic internal_push_ready;
 
   // Credit counter
   br_credit_counter #(
@@ -171,6 +168,8 @@ module br_credit_sender #(
   );
 
   logic internal_pop_valid;
+
+  assign push_ready = internal_push_ready && !either_rst;
   assign internal_pop_valid = push_ready && push_valid;
 
   if (RegisterPopOutputs) begin : gen_reg_pop
@@ -203,7 +202,11 @@ module br_credit_sender #(
 
   // Reset handshake
   `BR_ASSERT_IMPL(pop_receiver_in_reset_no_push_ready_a, pop_receiver_in_reset |-> !push_ready)
-  `BR_ASSERT_IMPL(pop_receiver_in_reset_no_pop_valid_a, pop_receiver_in_reset |-> !pop_valid)
+  if (RegisterPopOutputs) begin : gen_assert_pop_reg
+    `BR_ASSERT_IMPL(pop_receiver_in_reset_no_pop_valid_a, pop_receiver_in_reset |=> !pop_valid)
+  end else begin : gen_assert_pop_no_reg
+    `BR_ASSERT_IMPL(pop_receiver_in_reset_no_pop_valid_a, pop_receiver_in_reset |-> !pop_valid)
+  end
 
   // Rely on submodule implementation checks
 
