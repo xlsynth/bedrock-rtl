@@ -72,6 +72,9 @@ module br_fifo_push_ctrl_credit #(
     input  logic pop_beat
 );
 
+  logic either_rst;
+  assign either_rst = rst || push_sender_in_reset;
+
   //------------------------------------------
   // Integration checks
   //------------------------------------------
@@ -79,7 +82,7 @@ module br_fifo_push_ctrl_credit #(
   `BR_ASSERT_STATIC(bit_width_must_be_at_least_one_a, Width >= 1)
   `BR_ASSERT_STATIC(credit_width_a, CreditWidth >= $clog2(Depth + 1))
 
-  `BR_COVER_INTG(full_c, full)
+  `BR_COVER_CR_INTG(full_c, full, clk, either_rst)
 
   //------------------------------------------
   // Implementation
@@ -96,6 +99,8 @@ module br_fifo_push_ctrl_credit #(
       .EnableAssertFinalNotValid(EnableAssertFinalNotValid)
   ) br_credit_receiver (
       .clk,
+      // Not using either_rst here so that there is no path from
+      // push_sender_in_reset to push_receiver_in_reset.
       .rst,
       .push_sender_in_reset,
       .push_receiver_in_reset,
@@ -122,7 +127,7 @@ module br_fifo_push_ctrl_credit #(
       .EnableAssertFinalNotValid(EnableAssertFinalNotValid)
   ) br_fifo_push_ctrl_core (
       .clk,
-      .rst,
+      .rst(either_rst),
 
       .push_ready(),
       .push_valid(internal_valid),
@@ -146,7 +151,7 @@ module br_fifo_push_ctrl_credit #(
       .EnableAssertFinalNotValid(EnableAssertFinalNotValid)
   ) br_counter_slots (
       .clk,
-      .rst,
+      .rst(either_rst),
 
       .reinit(1'b0),
       .initial_value(CountWidth'($unsigned(Depth))),
@@ -162,25 +167,28 @@ module br_fifo_push_ctrl_credit #(
   );
 
   assign full_next = slots_next == 0;
-  `BR_REGL(full, full_next, push_beat || pop_beat)
+  `BR_REGLX(full, full_next, push_beat || pop_beat, clk, either_rst)
 
   //------------------------------------------
   // Implementation checks
   //------------------------------------------
-  `BR_ASSERT_IMPL(ram_wr_addr_in_range_a, ram_wr_valid |-> ram_wr_addr < Depth)
+  `BR_ASSERT_CR_IMPL(ram_wr_addr_in_range_a, ram_wr_valid |-> ram_wr_addr < Depth, clk, either_rst)
 
   // Flow control and latency
-  `BR_ASSERT_IMPL(no_overflow_a, internal_valid |-> !full)
-  `BR_ASSERT_IMPL(ram_push_and_bypass_mutually_exclusive_a,
-                  !(ram_wr_valid && bypass_ready && bypass_valid_unstable))
-  `BR_COVER_IMPL(bypass_unstable_c, !bypass_ready && bypass_valid_unstable)
+  `BR_ASSERT_CR_IMPL(no_overflow_a, internal_valid |-> !full, clk, either_rst)
+  `BR_ASSERT_CR_IMPL(ram_push_and_bypass_mutually_exclusive_a,
+                     !(ram_wr_valid && bypass_ready && bypass_valid_unstable), clk, either_rst)
+  `BR_COVER_CR_IMPL(bypass_unstable_c, !bypass_ready && bypass_valid_unstable, clk, either_rst)
 
   // Flags
-  `BR_ASSERT_IMPL(slots_in_range_a, slots <= Depth)
-  `BR_ASSERT_IMPL(slots_next_a, ##1 slots == $past(slots_next))
-  `BR_ASSERT_IMPL(push_and_pop_slots_a, push_beat && pop_beat |-> slots_next == slots)
-  `BR_ASSERT_IMPL(push_slots_a, push_beat && !pop_beat |-> slots_next == slots - 1)
-  `BR_ASSERT_IMPL(pop_slots_a, !push_beat && pop_beat |-> slots_next == slots + 1)
-  `BR_ASSERT_IMPL(full_a, full == (slots == 0))
+  `BR_ASSERT_CR_IMPL(slots_in_range_a, slots <= Depth, clk, either_rst)
+  `BR_ASSERT_CR_IMPL(slots_next_a, ##1 slots == $past(slots_next), clk, either_rst)
+  `BR_ASSERT_CR_IMPL(push_and_pop_slots_a, push_beat && pop_beat |-> slots_next == slots, clk,
+                     either_rst)
+  `BR_ASSERT_CR_IMPL(push_slots_a, push_beat && !pop_beat |-> slots_next == slots - 1, clk,
+                     either_rst)
+  `BR_ASSERT_CR_IMPL(pop_slots_a, !push_beat && pop_beat |-> slots_next == slots + 1, clk,
+                     either_rst)
+  `BR_ASSERT_CR_IMPL(full_a, full == (slots == 0), clk, either_rst)
 
 endmodule : br_fifo_push_ctrl_credit

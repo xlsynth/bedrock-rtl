@@ -149,7 +149,9 @@ module br_fifo_flops_push_credit #(
       .EnableAssertFinalNotValid(EnableAssertFinalNotValid)
   ) br_fifo_ctrl_1r1w_push_credit (
       .clk,
-      .rst,  // The 'either_rst' logic is done inside this submodule.
+      // Not using either_rst here so that there is no path from
+      // push_sender_in_reset to push_receiver_in_reset.
+      .rst,
       .push_sender_in_reset,
       .push_receiver_in_reset,
       .push_credit_stall,
