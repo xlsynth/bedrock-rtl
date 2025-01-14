@@ -101,7 +101,7 @@ br_verilog_elab_and_lint_test_suite(
         "MaxCredit": [
             "16",
         ],
-        "RegisterPushCredit": [
+        "RegisterPushOutputs": [
             "0",
             "1",
         ],
@@ -160,7 +160,7 @@ br_verilog_elab_and_lint_test_suite(
             "4",
             "16",
         ],
-        "RegisterPushCredit": [
+        "RegisterPushOutputs": [
             "0",
             "1",
         ],

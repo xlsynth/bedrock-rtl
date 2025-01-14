@@ -23,7 +23,7 @@ module br_fifo_push_ctrl_credit #(
     parameter int Width = 1,
     parameter bit EnableBypass = 0,
     parameter int MaxCredit = Depth,
-    parameter bit RegisterPushCredit = 0,
+    parameter bit RegisterPushOutputs = 0,
     // If 1, then assert there are no valid bits asserted and that the FIFO is
     // empty at the end of the test.
     parameter bit EnableAssertFinalNotValid = 1,
@@ -90,7 +90,7 @@ module br_fifo_push_ctrl_credit #(
   br_credit_receiver #(
       .Width                    (Width),
       .MaxCredit                (MaxCredit),
-      .RegisterPushCredit       (RegisterPushCredit),
+      .RegisterPushOutputs      (RegisterPushOutputs),
       .EnableAssertFinalNotValid(EnableAssertFinalNotValid)
   ) br_credit_receiver (
       .clk,

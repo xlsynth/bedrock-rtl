@@ -34,7 +34,7 @@
 // (NumSyncStages + 1 + FlopRamAddressDepthStages + FlopRamReadDataDepthStages +
 // FlopRamReadDataWidthStages + RegisterPopOutputs) * PopT.
 
-// The backpressure latency is 2 * PopT + (NumSyncStages + 1 + RegisterPushCredit) * PushT.
+// The backpressure latency is 2 * PopT + (NumSyncStages + 1 + RegisterPushOutputs) * PushT.
 //
 // To achieve full bandwidth, the depth of the FIFO must be at least
 // (CutThroughLatency + BackpressureLatency) / max(PushT, PopT).
@@ -51,7 +51,7 @@ module br_cdc_fifo_flops_push_credit #(
     // If 1, add a retiming stage to the push_credit signal so that it is
     // driven directly from a flop. This comes at the expense of one additional
     // push cycle of credit loop latency.
-    parameter bit RegisterPushCredit = 0,
+    parameter bit RegisterPushOutputs = 0,
     // If 1, then ensure pop_valid/pop_data always come directly from a register
     // at the cost of an additional pop cycle of cut-through latency.
     // If 0, pop_valid/pop_data comes directly from push_valid (if bypass is enabled)
@@ -143,7 +143,7 @@ module br_cdc_fifo_flops_push_credit #(
       .Depth(Depth),
       .Width(Width),
       .MaxCredit(MaxCredit),
-      .RegisterPushCredit(RegisterPushCredit),
+      .RegisterPushOutputs(RegisterPushOutputs),
       .RegisterPopOutputs(RegisterPopOutputs),
       .RamWriteLatency(RamWriteLatency),
       .RamReadLatency(RamReadLatency),

@@ -43,7 +43,7 @@
 // The cut-through latency is max(2, RamWriteLatency + 1) * PushT +
 // (NumSyncStages + 1 + RamReadLatency + RegisterPopOutputs) * PopT.
 
-// The backpressure latency is 2 * PopT + (NumSyncStages + 1 + RegisterPushCredit) * PushT.
+// The backpressure latency is 2 * PopT + (NumSyncStages + 1 + RegisterPushOutputs) * PushT.
 //
 // To achieve full bandwidth, the depth of the FIFO must be at least
 // (CutThroughLatency + BackpressureLatency) / max(PushT, PopT).
@@ -76,7 +76,7 @@ module br_cdc_fifo_ctrl_1r1w_push_credit #(
     // If 1, add a retiming stage to the push_credit signal so that it is
     // driven directly from a flop. This comes at the expense of one additional
     // push cycle of credit loop latency.
-    parameter bit RegisterPushCredit = 0,
+    parameter bit RegisterPushOutputs = 0,
     // If 1, then assert there are no valid bits asserted and that the FIFO is
     // empty at the end of the test.
     parameter bit EnableAssertFinalNotValid = 1,
@@ -152,7 +152,7 @@ module br_cdc_fifo_ctrl_1r1w_push_credit #(
       .Depth(Depth),
       .Width(Width),
       .RamWriteLatency(RamWriteLatency),
-      .RegisterPushCredit(RegisterPushCredit),
+      .RegisterPushOutputs(RegisterPushOutputs),
       .MaxCredit(MaxCredit),
       .NumSyncStages(NumSyncStages),
       .EnableAssertFinalNotValid(EnableAssertFinalNotValid)

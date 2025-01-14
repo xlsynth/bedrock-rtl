@@ -67,7 +67,7 @@ module br_fifo_ctrl_1r1w_push_credit #(
     // If 1, add a retiming stage to the push_credit signal so that it is
     // driven directly from a flop. This comes at the expense of one additional
     // cycle of credit loop latency.
-    parameter bit RegisterPushCredit = 0,
+    parameter bit RegisterPushOutputs = 0,
     // If 1, then ensure pop_valid/pop_data always come directly from a register
     // at the cost of an additional cycle of cut-through latency.
     // If 0, pop_valid/pop_data comes directly from push_valid (if bypass is enabled)
@@ -147,7 +147,7 @@ module br_fifo_ctrl_1r1w_push_credit #(
       .Width(Width),
       .EnableBypass(EnableBypass),
       .MaxCredit(MaxCredit),
-      .RegisterPushCredit(RegisterPushCredit),
+      .RegisterPushOutputs(RegisterPushOutputs),
       .EnableAssertFinalNotValid(EnableAssertFinalNotValid)
   ) br_fifo_push_ctrl_credit (
       .clk,

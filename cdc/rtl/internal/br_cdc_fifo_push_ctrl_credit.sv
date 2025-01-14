@@ -21,7 +21,7 @@ module br_cdc_fifo_push_ctrl_credit #(
     parameter int Width = 1,
     parameter int RamWriteLatency = 1,
     parameter int MaxCredit = Depth,
-    parameter bit RegisterPushCredit = 0,
+    parameter bit RegisterPushOutputs = 0,
     parameter bit EnableAssertFinalNotValid = 1,
     localparam int AddrWidth = $clog2(Depth),
     localparam int CountWidth = $clog2(Depth + 1),
@@ -86,7 +86,7 @@ module br_cdc_fifo_push_ctrl_credit #(
   br_credit_receiver #(
       .Width                    (Width),
       .MaxCredit                (MaxCredit),
-      .RegisterPushCredit       (RegisterPushCredit),
+      .RegisterPushOutputs      (RegisterPushOutputs),
       .PopCreditMaxChange       (Depth),
       .EnableAssertFinalNotValid(EnableAssertFinalNotValid)
   ) br_credit_receiver (
