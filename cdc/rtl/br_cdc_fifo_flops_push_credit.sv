@@ -34,7 +34,7 @@
 // (NumSyncStages + 1 + FlopRamAddressDepthStages + FlopRamReadDataDepthStages +
 // FlopRamReadDataWidthStages + RegisterPopOutputs) * PopT.
 
-// The backpressure latency is 2 * PopT + (NumSyncStages + 1 + RegisterPushCredit) * PushT.
+// The backpressure latency is 2 * PopT + (NumSyncStages + 1 + RegisterPushOutputs) * PushT.
 //
 // To achieve full bandwidth, the depth of the FIFO must be at least
 // (CutThroughLatency + BackpressureLatency) / max(PushT, PopT).
@@ -51,7 +51,7 @@ module br_cdc_fifo_flops_push_credit #(
     // If 1, add a retiming stage to the push_credit signal so that it is
     // driven directly from a flop. This comes at the expense of one additional
     // push cycle of credit loop latency.
-    parameter bit RegisterPushCredit = 0,
+    parameter bit RegisterPushOutputs = 0,
     // If 1, then ensure pop_valid/pop_data always come directly from a register
     // at the cost of an additional pop cycle of cut-through latency.
     // If 0, pop_valid/pop_data comes directly from push_valid (if bypass is enabled)
@@ -91,6 +91,8 @@ module br_cdc_fifo_flops_push_credit #(
     input logic pop_rst,
 
     // Push-side interface
+    input  logic             push_sender_in_reset,
+    output logic             push_receiver_in_reset,
     input  logic             push_credit_stall,
     output logic             push_credit,
     input  logic             push_valid,
@@ -119,6 +121,7 @@ module br_cdc_fifo_flops_push_credit #(
     output logic [CountWidth-1:0] pop_items,
     output logic [CountWidth-1:0] pop_items_next
 );
+
   localparam int RamReadLatency =
       FlopRamAddressDepthStages + FlopRamReadDataDepthStages + FlopRamReadDataWidthStages;
   localparam int RamWriteLatency = FlopRamAddressDepthStages + 1;
@@ -143,7 +146,7 @@ module br_cdc_fifo_flops_push_credit #(
       .Depth(Depth),
       .Width(Width),
       .MaxCredit(MaxCredit),
-      .RegisterPushCredit(RegisterPushCredit),
+      .RegisterPushOutputs(RegisterPushOutputs),
       .RegisterPopOutputs(RegisterPopOutputs),
       .RamWriteLatency(RamWriteLatency),
       .RamReadLatency(RamReadLatency),
@@ -151,7 +154,11 @@ module br_cdc_fifo_flops_push_credit #(
       .EnableAssertFinalNotValid(EnableAssertFinalNotValid)
   ) br_cdc_fifo_ctrl_1r1w_push_credit (
       .push_clk,
+      // Not using push_either_rst here so that there is no path from
+      // push_sender_in_reset to push_receiver_in_reset.
       .push_rst,
+      .push_sender_in_reset,
+      .push_receiver_in_reset,
       .push_credit_stall,
       .push_credit,
       .push_valid,
@@ -182,6 +189,9 @@ module br_cdc_fifo_flops_push_credit #(
       .pop_ram_rd_data
   );
 
+  logic push_either_rst;
+  assign push_either_rst = push_rst || push_sender_in_reset;
+
   br_ram_flops_1r1w #(
       .Depth(Depth),
       .Width(Width),
@@ -198,7 +208,7 @@ module br_cdc_fifo_flops_push_credit #(
       .EnableAssertFinalNotValid(EnableAssertFinalNotValid)
   ) br_ram_flops_1r1w (
       .wr_clk(push_clk),  // ri lint_check_waive SAME_CLOCK_NAME
-      .wr_rst(push_rst),
+      .wr_rst(push_either_rst),
       .rd_clk(pop_clk),  // ri lint_check_waive SAME_CLOCK_NAME
       .rd_rst(pop_rst),
       .wr_valid(push_ram_wr_valid),

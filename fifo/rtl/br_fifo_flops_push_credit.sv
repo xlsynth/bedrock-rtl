@@ -55,7 +55,7 @@ module br_fifo_flops_push_credit #(
     // If 1, add a retiming stage to the push_credit signal so that it is
     // driven directly from a flop. This comes at the expense of one additional
     // cycle of credit loop latency.
-    parameter bit RegisterPushCredit = 0,
+    parameter bit RegisterPushOutputs = 0,
     // If 1, then ensure pop_valid/pop_data always come directly from a register
     // at the cost of an additional cycle of cut-through latency.
     // If 0, pop_valid/pop_data comes directly from push_valid (if bypass is enabled)
@@ -89,6 +89,8 @@ module br_fifo_flops_push_credit #(
     input logic rst,
 
     // Push-side interface
+    input  logic             push_sender_in_reset,
+    output logic             push_receiver_in_reset,
     input  logic             push_credit_stall,
     output logic             push_credit,
     input  logic             push_valid,
@@ -141,13 +143,17 @@ module br_fifo_flops_push_credit #(
       .Width(Width),
       .EnableBypass(EnableBypass),
       .MaxCredit(MaxCredit),
-      .RegisterPushCredit(RegisterPushCredit),
+      .RegisterPushOutputs(RegisterPushOutputs),
       .RegisterPopOutputs(RegisterPopOutputs),
       .RamReadLatency(RamReadLatency),
       .EnableAssertFinalNotValid(EnableAssertFinalNotValid)
   ) br_fifo_ctrl_1r1w_push_credit (
       .clk,
+      // Not using either_rst here so that there is no path from
+      // push_sender_in_reset to push_receiver_in_reset.
       .rst,
+      .push_sender_in_reset,
+      .push_receiver_in_reset,
       .push_credit_stall,
       .push_credit,
       .push_valid,
@@ -176,6 +182,9 @@ module br_fifo_flops_push_credit #(
       .ram_rd_data
   );
 
+  logic either_rst;
+  assign either_rst = rst || push_sender_in_reset;
+
   br_ram_flops_1r1w #(
       .Depth(Depth),
       .Width(Width),
@@ -191,13 +200,13 @@ module br_fifo_flops_push_credit #(
       .EnableAssertFinalNotValid(EnableAssertFinalNotValid)
   ) br_ram_flops_1r1w (
       .wr_clk(clk),  // ri lint_check_waive SAME_CLOCK_NAME
-      .wr_rst(rst),
+      .wr_rst(either_rst),
       .wr_valid(ram_wr_valid),
       .wr_addr(ram_wr_addr),
       .wr_data(ram_wr_data),
       .wr_word_en(1'b1),  // no partial write
       .rd_clk(clk),  // ri lint_check_waive SAME_CLOCK_NAME
-      .rd_rst(rst),
+      .rd_rst(either_rst),
       .rd_addr_valid(ram_rd_addr_valid),
       .rd_addr(ram_rd_addr),
       .rd_data_valid(ram_rd_data_valid),

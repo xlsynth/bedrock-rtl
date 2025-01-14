@@ -19,14 +19,14 @@ module br_fifo_flops_push_credit_tb ();
   // Parameters
   parameter bit EnableBypass = 1;
   parameter bit RegisterPopOutputs = 0;
-  parameter bit RegisterPushCredit = 0;
+  parameter bit RegisterPushOutputs = 0;
   parameter int FlopRamAddressDepthStages = 0;
 
   localparam int PropDelay = 3;
   localparam int Width = 8;
   localparam int CutThroughLatency =
       PropDelay + (EnableBypass ? 0 : (FlopRamAddressDepthStages + 1)) + RegisterPopOutputs;
-  localparam int BackpressureLatency = PropDelay + 1 + RegisterPushCredit;
+  localparam int BackpressureLatency = PropDelay + 1 + RegisterPushOutputs;
   localparam int Depth = CutThroughLatency + BackpressureLatency + 1;
   localparam int NData = 100;
 
@@ -38,7 +38,8 @@ module br_fifo_flops_push_credit_tb ();
   logic cv_push_credit, cv_push_credit_d;
   logic cv_push_valid, cv_push_valid_d;
   logic [Width-1:0] cv_push_data, cv_push_data_d;
-  logic cv_push_credit_stall, cv_push_credit_stall_d;
+  logic cv_push_sender_in_reset, cv_push_sender_in_reset_d;
+  logic cv_push_receiver_in_reset, cv_push_receiver_in_reset_d;
 
   // harness push if
   logic push_ready;
@@ -66,13 +67,15 @@ module br_fifo_flops_push_credit_tb ();
       .Width(Width),
       .EnableBypass(EnableBypass),
       .RegisterPopOutputs(RegisterPopOutputs),
-      .RegisterPushCredit(RegisterPushCredit),
+      .RegisterPushOutputs(RegisterPushOutputs),
       .FlopRamAddressDepthStages(FlopRamAddressDepthStages),
       .MaxCredit(Depth)
   ) dut (
       .clk,
       .rst,
-      .push_credit_stall(cv_push_credit_stall_d),
+      .push_sender_in_reset(cv_push_sender_in_reset_d),
+      .push_receiver_in_reset(cv_push_receiver_in_reset),
+      .push_credit_stall(1'b0),
       .push_credit(cv_push_credit),
       .push_valid(cv_push_valid_d),
       .push_data(cv_push_data_d),
@@ -105,7 +108,8 @@ module br_fifo_flops_push_credit_tb ();
       .push_ready,
       .push_valid,
       .push_data,
-      .pop_credit_stall(cv_push_credit_stall),
+      .pop_sender_in_reset(cv_push_sender_in_reset),
+      .pop_receiver_in_reset(cv_push_receiver_in_reset_d),
       .pop_credit(cv_push_credit_d),
       .pop_valid(cv_push_valid),
       .pop_data(cv_push_data),
@@ -120,19 +124,19 @@ module br_fifo_flops_push_credit_tb ();
       .Width(Width + 2)
   ) br_delay_nr_to_fifo (
       .clk,
-      .in({cv_push_valid, cv_push_data, cv_push_credit_stall}),
-      .out({cv_push_valid_d, cv_push_data_d, cv_push_credit_stall_d}),
-      .out_stages()  // ri lint_check_waive OPEN_OUTPUT
+      .in({cv_push_valid, cv_push_data, cv_push_sender_in_reset}),
+      .out({cv_push_valid_d, cv_push_data_d, cv_push_sender_in_reset_d}),
+      .out_stages()
   );
 
   br_delay_nr #(
       .NumStages(PropDelay),
-      .Width(1)
+      .Width(2)
   ) br_delay_nr_from_fifo (
       .clk,
-      .in(cv_push_credit),
-      .out(cv_push_credit_d),
-      .out_stages()  // ri lint_check_waive OPEN_OUTPUT
+      .in({cv_push_credit, cv_push_receiver_in_reset}),
+      .out({cv_push_credit_d, cv_push_receiver_in_reset_d}),
+      .out_stages()
   );
 
   br_test_driver #(

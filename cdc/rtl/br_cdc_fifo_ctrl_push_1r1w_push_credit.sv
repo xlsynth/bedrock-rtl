@@ -45,7 +45,7 @@ module br_cdc_fifo_ctrl_push_1r1w_push_credit #(
     // If 1, add a retiming stage to the push_credit signal so that it is
     // driven directly from a flop. This comes at the expense of one additional
     // push cycle of credit loop latency.
-    parameter bit RegisterPushCredit = 0,
+    parameter bit RegisterPushOutputs = 0,
     // If 1, then assert there are no valid bits asserted and that the FIFO is
     // empty at the end of the test.
     parameter bit EnableAssertFinalNotValid = 1,
@@ -59,6 +59,8 @@ module br_cdc_fifo_ctrl_push_1r1w_push_credit #(
     input logic push_rst,
 
     // Push-side interface
+    input  logic             push_sender_in_reset,
+    output logic             push_receiver_in_reset,
     input  logic             push_credit_stall,
     output logic             push_credit,
     input  logic             push_valid,
@@ -92,6 +94,7 @@ module br_cdc_fifo_ctrl_push_1r1w_push_credit #(
     output logic [CountWidth-1:0] push_push_count_gray,
     output logic                  push_reset_active_push
 );
+
   //------------------------------------------
   // Integration checks
   //------------------------------------------
@@ -108,12 +111,16 @@ module br_cdc_fifo_ctrl_push_1r1w_push_credit #(
       .Depth(Depth),
       .Width(Width),
       .RamWriteLatency(RamWriteLatency),
-      .RegisterPushCredit(RegisterPushCredit),
+      .RegisterPushOutputs(RegisterPushOutputs),
       .MaxCredit(MaxCredit),
       .EnableAssertFinalNotValid(EnableAssertFinalNotValid)
   ) br_cdc_fifo_push_ctrl_credit (
       .clk              (push_clk),               // ri lint_check_waive SAME_CLOCK_NAME
+      // Not using push_either_rst here so that there is no path from
+      // push_sender_in_reset to push_receiver_in_reset.
       .rst              (push_rst),
+      .push_sender_in_reset,
+      .push_receiver_in_reset,
       .push_credit_stall,
       .push_credit,
       .push_valid,
@@ -135,6 +142,9 @@ module br_cdc_fifo_ctrl_push_1r1w_push_credit #(
       .reset_active_push(push_reset_active_push)
   );
 
+  logic push_either_rst;
+  assign push_either_rst = push_rst || push_sender_in_reset;
+
   br_cdc_fifo_gray_count_sync #(
       .CountWidth(CountWidth),
       .NumStages (NumSyncStages)
@@ -144,7 +154,7 @@ module br_cdc_fifo_ctrl_push_1r1w_push_credit #(
       .src_rst(pop_rst),
       .src_count_gray(pop_pop_count_gray),
       .dst_clk(push_clk),  // ri lint_check_waive SAME_CLOCK_NAME
-      .dst_rst(push_rst),
+      .dst_rst(push_either_rst),
       .dst_count_gray(push_pop_count_gray)
   );
 
@@ -156,8 +166,13 @@ module br_cdc_fifo_ctrl_push_1r1w_push_credit #(
       .src_rst(pop_rst),
       .src_bit(pop_reset_active_pop),
       .dst_clk(push_clk),  // ri lint_check_waive SAME_CLOCK_NAME
-      .dst_rst(push_rst),
+      .dst_rst(push_either_rst),
       .dst_bit(push_reset_active_pop)
   );
+
+  //------------------------------------------
+  // Implementation checks
+  //------------------------------------------
+  // Rely on submodule implementation checks
 
 endmodule : br_cdc_fifo_ctrl_push_1r1w_push_credit

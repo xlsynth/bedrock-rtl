@@ -43,7 +43,7 @@
 // The cut-through latency is max(2, RamWriteLatency + 1) * PushT +
 // (NumSyncStages + 1 + RamReadLatency + RegisterPopOutputs) * PopT.
 
-// The backpressure latency is 2 * PopT + (NumSyncStages + 1 + RegisterPushCredit) * PushT.
+// The backpressure latency is 2 * PopT + (NumSyncStages + 1 + RegisterPushOutputs) * PushT.
 //
 // To achieve full bandwidth, the depth of the FIFO must be at least
 // (CutThroughLatency + BackpressureLatency) / max(PushT, PopT).
@@ -76,7 +76,7 @@ module br_cdc_fifo_ctrl_1r1w_push_credit #(
     // If 1, add a retiming stage to the push_credit signal so that it is
     // driven directly from a flop. This comes at the expense of one additional
     // push cycle of credit loop latency.
-    parameter bit RegisterPushCredit = 0,
+    parameter bit RegisterPushOutputs = 0,
     // If 1, then assert there are no valid bits asserted and that the FIFO is
     // empty at the end of the test.
     parameter bit EnableAssertFinalNotValid = 1,
@@ -90,6 +90,8 @@ module br_cdc_fifo_ctrl_1r1w_push_credit #(
     input logic push_rst,
 
     // Push-side interface
+    input  logic             push_sender_in_reset,
+    output logic             push_receiver_in_reset,
     input  logic             push_credit_stall,
     output logic             push_credit,
     input  logic             push_valid,
@@ -134,6 +136,7 @@ module br_cdc_fifo_ctrl_1r1w_push_credit #(
     input  logic                 pop_ram_rd_data_valid,
     input  logic [    Width-1:0] pop_ram_rd_data
 );
+
   //------------------------------------------
   // Integration checks
   //------------------------------------------
@@ -152,13 +155,17 @@ module br_cdc_fifo_ctrl_1r1w_push_credit #(
       .Depth(Depth),
       .Width(Width),
       .RamWriteLatency(RamWriteLatency),
-      .RegisterPushCredit(RegisterPushCredit),
+      .RegisterPushOutputs(RegisterPushOutputs),
       .MaxCredit(MaxCredit),
       .NumSyncStages(NumSyncStages),
       .EnableAssertFinalNotValid(EnableAssertFinalNotValid)
   ) br_cdc_fifo_ctrl_push_1r1w_push_credit_inst (
       .push_clk,
+      // Not using push_either_rst here so that there is no path from
+      // push_sender_in_reset to push_receiver_in_reset.
       .push_rst,
+      .push_sender_in_reset,
+      .push_receiver_in_reset,
       .push_credit_stall,
       .push_credit,
       .push_valid,
@@ -182,6 +189,9 @@ module br_cdc_fifo_ctrl_1r1w_push_credit #(
       .push_reset_active_push
   );
 
+  logic push_either_rst;
+  assign push_either_rst = push_rst || push_sender_in_reset;
+
   br_cdc_fifo_ctrl_pop_1r1w #(
       .Depth(Depth),
       .Width(Width),
@@ -191,7 +201,7 @@ module br_cdc_fifo_ctrl_1r1w_push_credit #(
       .EnableAssertFinalNotValid(EnableAssertFinalNotValid)
   ) br_cdc_fifo_ctrl_pop_1r1w_inst (
       .push_clk,
-      .push_rst,
+      .push_rst(push_either_rst),
       .pop_reset_active_pop,
       .pop_pop_count_gray,
       .push_push_count_gray,
@@ -210,5 +220,10 @@ module br_cdc_fifo_ctrl_1r1w_push_credit #(
       .pop_ram_rd_data_valid,
       .pop_ram_rd_data
   );
+
+  //------------------------------------------
+  // Implementation checks
+  //------------------------------------------
+  // Rely on submodule implementation checks
 
 endmodule : br_cdc_fifo_ctrl_1r1w_push_credit

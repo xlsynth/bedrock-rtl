@@ -122,7 +122,7 @@ br_verilog_elab_and_lint_test_suite(
             "1",
             "16",
         ],
-        "RegisterPushCredit": [
+        "RegisterPushOutputs": [
             "0",
             "1",
         ],

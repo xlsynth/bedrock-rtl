@@ -67,7 +67,7 @@ module br_fifo_ctrl_1r1w_push_credit #(
     // If 1, add a retiming stage to the push_credit signal so that it is
     // driven directly from a flop. This comes at the expense of one additional
     // cycle of credit loop latency.
-    parameter bit RegisterPushCredit = 0,
+    parameter bit RegisterPushOutputs = 0,
     // If 1, then ensure pop_valid/pop_data always come directly from a register
     // at the cost of an additional cycle of cut-through latency.
     // If 0, pop_valid/pop_data comes directly from push_valid (if bypass is enabled)
@@ -89,6 +89,8 @@ module br_fifo_ctrl_1r1w_push_credit #(
     input logic rst,
 
     // Push-side interface
+    input  logic             push_sender_in_reset,
+    output logic             push_receiver_in_reset,
     input  logic             push_credit_stall,
     output logic             push_credit,
     input  logic             push_valid,
@@ -147,11 +149,15 @@ module br_fifo_ctrl_1r1w_push_credit #(
       .Width(Width),
       .EnableBypass(EnableBypass),
       .MaxCredit(MaxCredit),
-      .RegisterPushCredit(RegisterPushCredit),
+      .RegisterPushOutputs(RegisterPushOutputs),
       .EnableAssertFinalNotValid(EnableAssertFinalNotValid)
   ) br_fifo_push_ctrl_credit (
       .clk,
+      // Not using either_rst here so that there is no path from
+      // push_sender_in_reset to push_receiver_in_reset.
       .rst,
+      .push_sender_in_reset,
+      .push_receiver_in_reset,
       .push_credit_stall,
       .push_credit,
       .push_valid,
@@ -175,6 +181,9 @@ module br_fifo_ctrl_1r1w_push_credit #(
       .pop_beat
   );
 
+  logic either_rst;
+  assign either_rst = rst || push_sender_in_reset;
+
   br_fifo_pop_ctrl #(
       .Depth(Depth),
       .Width(Width),
@@ -184,7 +193,7 @@ module br_fifo_ctrl_1r1w_push_credit #(
       .EnableAssertFinalNotValid(EnableAssertFinalNotValid)
   ) br_fifo_pop_ctrl (
       .clk,
-      .rst,
+      .rst(either_rst),
       .pop_ready,
       .pop_valid,
       .pop_data,
@@ -208,7 +217,5 @@ module br_fifo_ctrl_1r1w_push_credit #(
   // Implementation checks
   //------------------------------------------
   // Rely on submodule implementation checks
-
-  // TODO(mgottscho): write some
 
 endmodule : br_fifo_ctrl_1r1w_push_credit

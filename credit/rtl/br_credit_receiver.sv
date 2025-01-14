@@ -36,6 +36,26 @@
 //   - There is a backpressure latency of 0 cycles from pop to push.
 //   - Credits can be released the same cycle that they are acquired from the receiver buffer.
 //   - Users will likely want to register the push-side interface (e.g., with br_delay_valid).
+//
+// Reset:
+//   - If either this sender or the receiver resets, then the other side must also reset
+//     to ensure they collectively have a coherent view of the total credits and an empty receiver
+//     buffer.
+//     - If there is no reset skew between sender and receiver, the push_sender_in_reset and
+//       push_receiver_in_reset ports can be tied off to 0/left unused.
+//     - If there is reset skew between sender and receiver, or if they are in different reset domains,
+//       then the push_sender_in_reset and push_receiver_in_reset signals should be connected accordingly
+//       between sender and receiver.
+//     - Note that this is *NOT* a general-purpose substitute for a higher-level reset protocol and
+//       architectural reset domain crossing (RDC). All it does is make sure the sender and receiver
+//       can be reset with skew or completely independently without causing a permanent loss of credits and
+//       broken flow control.
+//   - When in reset (the rst port and/or the push_receiver_in_reset port is high), this module:
+//     - Ignores (drops) any incoming push valids.
+//     - Does not send output credits on the push interface.
+//     - Ignores (drops) any incoming pop credits.
+//     - Does not send output valids on the pop interface.
+//     - Loads the initial value for the credit counter from the credit_initial port.
 
 `include "br_asserts_internal.svh"
 `include "br_registers.svh"
@@ -45,8 +65,8 @@ module br_credit_receiver #(
     parameter int Width = 1,
     // Maximum number of credits that can be stored (inclusive). Must be at least 1.
     parameter int MaxCredit = 1,
-    // If 1, add retiming to push_credit
-    parameter bit RegisterPushCredit = 0,
+    // If 1, add 1 cycle of retiming to push outputs.
+    parameter bit RegisterPushOutputs = 0,
     // Maximum pop credits that can be returned in a single cycle.
     // Must be at least 1 but cannot be greater than MaxCredit.
     parameter int PopCreditMaxChange = 1,
@@ -61,6 +81,12 @@ module br_credit_receiver #(
     input logic rst,
 
     // Credit/valid push interface.
+    // Indicates that the sender is in reset.
+    // Synchronous active-high.
+    input logic push_sender_in_reset,
+    // Indicates that this module is in reset.
+    // Synchronous active-high.
+    output logic push_receiver_in_reset,
     input logic push_credit_stall,
     output logic push_credit,
     input logic push_valid,
@@ -105,12 +131,13 @@ module br_credit_receiver #(
   //------------------------------------------
   // Implementation
   //------------------------------------------
+  logic either_rst;
+  assign either_rst = rst || push_sender_in_reset;
+
   logic credit_decr_valid;
   logic credit_decr_ready;
   logic push_credit_internal;
   logic credit_incr_valid;
-
-  assign credit_incr_valid = |pop_credit;
 
   br_credit_counter #(
       .MaxValue(MaxCredit),
@@ -118,7 +145,7 @@ module br_credit_receiver #(
       .EnableAssertFinalNotValid(EnableAssertFinalNotValid)
   ) br_credit_counter (
       .clk,
-      .rst,
+      .rst(either_rst),
       .incr_valid(credit_incr_valid),
       .incr(pop_credit),
       .decr_ready(credit_decr_ready),
@@ -130,17 +157,19 @@ module br_credit_receiver #(
       .available(credit_available)
   );
 
-  assign push_credit_internal = credit_decr_valid && credit_decr_ready;
-  assign pop_valid = push_valid;
+  assign credit_incr_valid = |pop_credit;
+
+  assign credit_decr_valid = !push_credit_stall;
+  assign push_credit_internal = credit_decr_valid && credit_decr_ready && !either_rst;
+
+  assign pop_valid = push_valid && !either_rst;
   assign pop_data = push_data;
 
-  if (RegisterPushCredit) begin : gen_reg_push
+  if (RegisterPushOutputs) begin : gen_reg_push
+    `BR_REGI(push_receiver_in_reset, 1'b0, 1'b1)
     `BR_REG(push_credit, push_credit_internal)
-    assign credit_decr_valid = !push_credit_stall;
   end else begin : gen_passthru_push
-    logic reset_released;
-    `BR_REG(reset_released, 1'b1)
-    assign credit_decr_valid = !push_credit_stall && reset_released;
+    assign push_receiver_in_reset = rst;
     assign push_credit = push_credit_internal;
   end
 
@@ -154,6 +183,19 @@ module br_credit_receiver #(
   `BR_ASSERT_IMPL(over_withhold_a, credit_withhold > credit_count |-> !push_credit_internal)
   `BR_ASSERT_IMPL(withhold_and_release_a,
                   credit_count == credit_withhold && push_credit_internal |-> pop_credit)
+
+  // Reset
+  `BR_ASSERT_INCL_RST_IMPL(pop_valid_0_in_reset_a, rst |-> !pop_valid)
+  `BR_ASSERT_IMPL(push_sender_in_reset_no_pop_valid_a, push_sender_in_reset |-> !pop_valid)
+  if (RegisterPushOutputs) begin : gen_assert_push_reg
+    `BR_ASSERT_INCL_RST_IMPL(push_receiver_in_reset_a, rst |=> push_receiver_in_reset)
+    `BR_ASSERT_INCL_RST_IMPL(push_credit_0_in_reset_a, rst |=> !push_credit)
+    `BR_ASSERT_IMPL(push_sender_in_reset_no_push_credit_a, push_sender_in_reset |=> !push_credit)
+  end else begin : gen_assert_push_no_reg
+    `BR_ASSERT_INCL_RST_IMPL(push_receiver_in_reset_a, rst |-> push_receiver_in_reset)
+    `BR_ASSERT_INCL_RST_IMPL(push_credit_0_in_reset_a, rst |-> !push_credit)
+    `BR_ASSERT_IMPL(push_sender_in_reset_no_push_credit_a, push_sender_in_reset |-> !push_credit)
+  end
 
   // Rely on submodule implementation checks
 
