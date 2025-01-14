@@ -144,6 +144,9 @@ module br_fifo_ctrl_1r1w_push_credit #(
   logic push_beat;
   logic pop_beat;
 
+  logic either_rst;
+  assign either_rst = rst || push_sender_in_reset;
+
   br_fifo_push_ctrl_credit #(
       .Depth(Depth),
       .Width(Width),
@@ -153,7 +156,10 @@ module br_fifo_ctrl_1r1w_push_credit #(
       .EnableAssertFinalNotValid(EnableAssertFinalNotValid)
   ) br_fifo_push_ctrl_credit (
       .clk,
-      .rst,
+      // This 'either_rst' connection is partially redundant with how the 'push_sender_in_reset'
+      // gets used by the br_credit_receiver within this submodule hierarchy, but doing it here
+      // makes the intent clearer and reduces the risk of reset bugs.
+      .rst(either_rst),
       .push_sender_in_reset,
       .push_receiver_in_reset,
       .push_credit_stall,
@@ -188,7 +194,7 @@ module br_fifo_ctrl_1r1w_push_credit #(
       .EnableAssertFinalNotValid(EnableAssertFinalNotValid)
   ) br_fifo_pop_ctrl (
       .clk,
-      .rst,
+      .rst(either_rst),
       .pop_ready,
       .pop_valid,
       .pop_data,

@@ -153,7 +153,7 @@ module br_cdc_fifo_flops_push_credit #(
       .EnableAssertFinalNotValid(EnableAssertFinalNotValid)
   ) br_cdc_fifo_ctrl_1r1w_push_credit (
       .push_clk,
-      .push_rst,
+      .push_rst,  // The 'push_either_rst' logic is done inside this submodule.
       .push_sender_in_reset,
       .push_receiver_in_reset,
       .push_credit_stall,
@@ -186,6 +186,9 @@ module br_cdc_fifo_flops_push_credit #(
       .pop_ram_rd_data
   );
 
+  logic push_either_rst;
+  assign push_either_rst = push_rst || push_sender_in_reset;
+
   br_ram_flops_1r1w #(
       .Depth(Depth),
       .Width(Width),
@@ -202,7 +205,7 @@ module br_cdc_fifo_flops_push_credit #(
       .EnableAssertFinalNotValid(EnableAssertFinalNotValid)
   ) br_ram_flops_1r1w (
       .wr_clk(push_clk),  // ri lint_check_waive SAME_CLOCK_NAME
-      .wr_rst(push_rst),
+      .wr_rst(push_either_rst),
       .rd_clk(pop_clk),  // ri lint_check_waive SAME_CLOCK_NAME
       .rd_rst(pop_rst),
       .wr_valid(push_ram_wr_valid),
