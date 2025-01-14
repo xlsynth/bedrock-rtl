@@ -59,6 +59,8 @@ module br_cdc_fifo_ctrl_push_1r1w_push_credit #(
     input logic push_rst,
 
     // Push-side interface
+    input  logic             push_sender_in_reset,
+    output logic             push_receiver_in_reset,
     input  logic             push_credit_stall,
     output logic             push_credit,
     input  logic             push_valid,
@@ -114,6 +116,8 @@ module br_cdc_fifo_ctrl_push_1r1w_push_credit #(
   ) br_cdc_fifo_push_ctrl_credit (
       .clk              (push_clk),               // ri lint_check_waive SAME_CLOCK_NAME
       .rst              (push_rst),
+      .push_sender_in_reset,
+      .push_receiver_in_reset,
       .push_credit_stall,
       .push_credit,
       .push_valid,

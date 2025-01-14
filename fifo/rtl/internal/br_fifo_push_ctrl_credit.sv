@@ -37,6 +37,8 @@ module br_fifo_push_ctrl_credit #(
     input logic rst,
 
     // Push-side interface.
+    input  logic             push_sender_in_reset,
+    output logic             push_receiver_in_reset,
     input  logic             push_credit_stall,
     output logic             push_credit,
     input  logic             push_valid,
@@ -95,6 +97,8 @@ module br_fifo_push_ctrl_credit #(
   ) br_credit_receiver (
       .clk,
       .rst,
+      .push_sender_in_reset,
+      .push_receiver_in_reset,
       .push_credit_stall(push_credit_stall),
       .push_credit(push_credit),
       .push_valid(push_valid),
