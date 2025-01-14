@@ -136,6 +136,7 @@ module br_cdc_fifo_ctrl_1r1w_push_credit #(
     input  logic                 pop_ram_rd_data_valid,
     input  logic [    Width-1:0] pop_ram_rd_data
 );
+
   //------------------------------------------
   // Integration checks
   //------------------------------------------
@@ -150,9 +151,6 @@ module br_cdc_fifo_ctrl_1r1w_push_credit #(
   logic                  push_reset_active_push;
   logic                  pop_reset_active_pop;
 
-  logic                  push_either_rst;
-  assign push_either_rst = push_rst || push_sender_in_reset;
-
   br_cdc_fifo_ctrl_push_1r1w_push_credit #(
       .Depth(Depth),
       .Width(Width),
@@ -163,10 +161,9 @@ module br_cdc_fifo_ctrl_1r1w_push_credit #(
       .EnableAssertFinalNotValid(EnableAssertFinalNotValid)
   ) br_cdc_fifo_ctrl_push_1r1w_push_credit_inst (
       .push_clk,
-      // This 'either_rst' connection is partially redundant with how the 'push_sender_in_reset'
-      // gets used by the br_credit_receiver within this submodule hierarchy, but doing it here
-      // makes the intent clearer and reduces the risk of reset bugs.
-      .push_rst(push_either_rst),
+      // Not using push_either_rst here so that there is no path from
+      // push_sender_in_reset to push_receiver_in_reset.
+      .push_rst,
       .push_sender_in_reset,
       .push_receiver_in_reset,
       .push_credit_stall,
@@ -191,6 +188,9 @@ module br_cdc_fifo_ctrl_1r1w_push_credit #(
       .push_push_count_gray,
       .push_reset_active_push
   );
+
+  logic push_either_rst;
+  assign push_either_rst = push_rst || push_sender_in_reset;
 
   br_cdc_fifo_ctrl_pop_1r1w #(
       .Depth(Depth),
@@ -220,5 +220,10 @@ module br_cdc_fifo_ctrl_1r1w_push_credit #(
       .pop_ram_rd_data_valid,
       .pop_ram_rd_data
   );
+
+  //------------------------------------------
+  // Implementation checks
+  //------------------------------------------
+  // Rely on submodule implementation checks
 
 endmodule : br_cdc_fifo_ctrl_1r1w_push_credit

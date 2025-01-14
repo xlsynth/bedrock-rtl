@@ -121,6 +121,7 @@ module br_cdc_fifo_flops_push_credit #(
     output logic [CountWidth-1:0] pop_items,
     output logic [CountWidth-1:0] pop_items_next
 );
+
   localparam int RamReadLatency =
       FlopRamAddressDepthStages + FlopRamReadDataDepthStages + FlopRamReadDataWidthStages;
   localparam int RamWriteLatency = FlopRamAddressDepthStages + 1;
@@ -153,7 +154,9 @@ module br_cdc_fifo_flops_push_credit #(
       .EnableAssertFinalNotValid(EnableAssertFinalNotValid)
   ) br_cdc_fifo_ctrl_1r1w_push_credit (
       .push_clk,
-      .push_rst,  // The 'push_either_rst' logic is done inside this submodule.
+      // Not using push_either_rst here so that there is no path from
+      // push_sender_in_reset to push_receiver_in_reset.
+      .push_rst,
       .push_sender_in_reset,
       .push_receiver_in_reset,
       .push_credit_stall,
