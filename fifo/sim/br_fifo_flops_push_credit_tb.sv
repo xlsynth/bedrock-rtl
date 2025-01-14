@@ -40,7 +40,6 @@ module br_fifo_flops_push_credit_tb ();
   logic [Width-1:0] cv_push_data, cv_push_data_d;
   logic cv_push_sender_in_reset, cv_push_sender_in_reset_d;
   logic cv_push_receiver_in_reset, cv_push_receiver_in_reset_d;
-  logic cv_push_credit_stall, cv_push_credit_stall_d;
 
   // harness push if
   logic push_ready;
@@ -76,7 +75,7 @@ module br_fifo_flops_push_credit_tb ();
       .rst,
       .push_sender_in_reset(cv_push_sender_in_reset_d),
       .push_receiver_in_reset(cv_push_receiver_in_reset),
-      .push_credit_stall(cv_push_credit_stall_d),
+      .push_credit_stall(1'b0),
       .push_credit(cv_push_credit),
       .push_valid(cv_push_valid_d),
       .push_data(cv_push_data_d),

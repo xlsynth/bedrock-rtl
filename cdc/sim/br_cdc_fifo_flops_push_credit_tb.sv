@@ -47,7 +47,6 @@ module br_cdc_fifo_flops_push_credit_tb ();
   logic [Width-1:0] cv_push_data, cv_push_data_d;
   logic cv_push_sender_in_reset, cv_push_sender_in_reset_d;
   logic cv_push_receiver_in_reset, cv_push_receiver_in_reset_d;
-  logic cv_push_credit_stall, cv_push_credit_stall_d;
 
   // harness push if
   logic push_ready;
