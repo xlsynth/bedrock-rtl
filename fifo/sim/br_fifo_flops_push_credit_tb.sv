@@ -19,14 +19,14 @@ module br_fifo_flops_push_credit_tb ();
   // Parameters
   parameter bit EnableBypass = 1;
   parameter bit RegisterPopOutputs = 0;
-  parameter bit RegisterPushCredit = 0;
+  parameter bit RegisterPushOutputs = 0;
   parameter int FlopRamAddressDepthStages = 0;
 
   localparam int PropDelay = 3;
   localparam int Width = 8;
   localparam int CutThroughLatency =
       PropDelay + (EnableBypass ? 0 : (FlopRamAddressDepthStages + 1)) + RegisterPopOutputs;
-  localparam int BackpressureLatency = PropDelay + 1 + RegisterPushCredit;
+  localparam int BackpressureLatency = PropDelay + 1 + RegisterPushOutputs;
   localparam int Depth = CutThroughLatency + BackpressureLatency + 1;
   localparam int NData = 100;
 
@@ -66,7 +66,7 @@ module br_fifo_flops_push_credit_tb ();
       .Width(Width),
       .EnableBypass(EnableBypass),
       .RegisterPopOutputs(RegisterPopOutputs),
-      .RegisterPushCredit(RegisterPushCredit),
+      .RegisterPushOutputs(RegisterPushOutputs),
       .FlopRamAddressDepthStages(FlopRamAddressDepthStages),
       .MaxCredit(Depth)
   ) dut (

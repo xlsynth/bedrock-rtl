@@ -18,7 +18,7 @@ module br_cdc_fifo_flops_push_credit_tb ();
 
   // Parameters
   parameter bit RegisterPopOutputs = 0;
-  parameter bit RegisterPushCredit = 0;
+  parameter bit RegisterPushOutputs = 0;
   parameter int FlopRamAddressDepthStages = 0;
   parameter int FlopRamReadDataDepthStages = 0;
   parameter int NumSyncStages = 2;
@@ -31,7 +31,7 @@ module br_cdc_fifo_flops_push_credit_tb ();
       2, RamWriteLatency + 1
   ) +  // push-side latency
   NumSyncStages + 1 + RamReadLatency + RegisterPopOutputs;  // pop-side latency
-  localparam int BackpressureLatency = 2 + NumSyncStages + 1 + RegisterPushCredit + PropDelay;
+  localparam int BackpressureLatency = 2 + NumSyncStages + 1 + RegisterPushOutputs + PropDelay;
   localparam int Depth = CutThroughLatency + BackpressureLatency + 1;
   localparam int NData = 100;
 
@@ -73,7 +73,7 @@ module br_cdc_fifo_flops_push_credit_tb ();
       .Width(Width),
       .NumSyncStages(NumSyncStages),
       .RegisterPopOutputs(RegisterPopOutputs),
-      .RegisterPushCredit(RegisterPushCredit),
+      .RegisterPushOutputs(RegisterPushOutputs),
       .FlopRamAddressDepthStages(FlopRamAddressDepthStages),
       .FlopRamReadDataDepthStages(FlopRamReadDataDepthStages),
       .MaxCredit(Depth)

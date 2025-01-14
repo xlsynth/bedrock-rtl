@@ -125,7 +125,7 @@ br_verilog_sim_test_suite(
             "2",
             "3",
         ],
-        "RegisterPushCredit": [
+        "RegisterPushOutputs": [
             "0",
             "1",
         ],
