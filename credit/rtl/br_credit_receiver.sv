@@ -36,6 +36,26 @@
 //   - There is a backpressure latency of 0 cycles from pop to push.
 //   - Credits can be released the same cycle that they are acquired from the receiver buffer.
 //   - Users will likely want to register the push-side interface (e.g., with br_delay_valid).
+//
+// Reset:
+//   - If either this sender or the receiver resets, then the other side must also reset
+//     to ensure they collectively have a coherent view of the total credits and an empty receiver
+//     buffer.
+//     - If there is no reset skew between sender and receiver, the push_sender_in_reset and
+//       push_receiver_in_reset ports can be tied off to 0/left unused.
+//     - If there is reset skew between sender and receiver, or if they are in different reset domains,
+//       then the push_sender_in_reset and push_receiver_in_reset signals should be connected accordingly
+//       between sender and receiver.
+//     - Note that this is *NOT* a general-purpose substitute for a higher-level reset protocol and
+//       architectural reset domain crossing (RDC). All it does is make sure the sender and receiver
+//       can be reset with skew or completely independently without causing a permanent loss of credits and
+//       broken flow control.
+//   - When in reset (the rst port and/or the push_receiver_in_reset port is high), this module:
+//     - Ignores (drops) any incoming push valids.
+//     - Does not send output credits on the push interface.
+//     - Ignores (drops) any incoming pop credits.
+//     - Does not send output valids on the pop interface.
+//     - Loads the initial value for the credit counter from the credit_initial port.
 
 `include "br_asserts_internal.svh"
 `include "br_registers.svh"
@@ -61,8 +81,14 @@ module br_credit_receiver #(
     input logic rst,
 
     // Credit/valid push interface.
-    input logic push_credit_stall,
+    // Indicates that this module is in reset.
+    // Synchronous active-high.
+    output logic push_receiver_in_reset,
     output logic push_credit,
+    // Indicates that the sender is in reset.
+    // Synchronous active-high.
+    input logic push_sender_in_reset,
+    input logic push_credit_stall,
     input logic push_valid,
     input logic [Width-1:0] push_data,
 
@@ -154,6 +180,14 @@ module br_credit_receiver #(
   `BR_ASSERT_IMPL(over_withhold_a, credit_withhold > credit_count |-> !push_credit_internal)
   `BR_ASSERT_IMPL(withhold_and_release_a,
                   credit_count == credit_withhold && push_credit_internal |-> pop_credit)
+
+  // Reset
+  `BR_ASSERT_IN_RST_IMPL(push_credit_0_in_reset_a, !push_credit)
+  `BR_ASSERT_IN_RST_IMPL(pop_valid_0_in_reset_a, !pop_valid)
+
+  // Reset handshake
+  `BR_ASSERT_IMPL(receiver_in_reset_q_no_push_ready_a, receiver_in_reset_q |-> !push_ready)
+  `BR_ASSERT_IMPL(receiver_in_reset_q_no_pop_valid_a, receiver_in_reset_q |-> !pop_valid)
 
   // Rely on submodule implementation checks
 
