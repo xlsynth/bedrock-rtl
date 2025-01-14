@@ -17,11 +17,11 @@
 
 // Bedrock-RTL Round-Robin State
 //
-// Tracks round-robin priority pointer state. When a grant is issued and 
-// update_priority is high, the last_grant register is updated to the 
+// Tracks round-robin priority pointer state. When a grant is issued and
+// update_priority is high, the last_grant register is updated to the
 // grant index.
 //
-// The priority_mask output contains a mask of all request indices that 
+// The priority_mask output contains a mask of all request indices that
 // are less than the current round-robin priority---those in the range
 // [0, RR_ptr).
 
@@ -37,9 +37,6 @@ module br_rr_state_internal #(
     output logic [NumRequesters-1:0] priority_mask
 );
 
-  logic [NumRequesters-1:0] priority_mask;
-  logic [NumRequesters-1:0] request_high;
-  logic [NumRequesters-1:0] last_grant;
   logic [NumRequesters-1:0] last_grant_init;
 
   // priority_mask selects all bits at or below the last grant.
@@ -54,7 +51,7 @@ module br_rr_state_internal #(
   end
 
   // ri lint_check_waive CONST_ASSIGN
-  assign last_grant_init[NumRequesters-1] = 1'b1;
+  assign last_grant_init[NumRequesters-1]   = 1'b1;
   // ri lint_check_waive CONST_ASSIGN
   assign last_grant_init[NumRequesters-2:0] = '0;
 

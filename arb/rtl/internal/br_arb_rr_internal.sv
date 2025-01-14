@@ -48,21 +48,21 @@ module br_arb_rr_internal #(
   //------------------------------------------
 
   // We use two priority encoders to handle the modulo indexing.
-  // * The first encoder uses a masked request vector to find the highest priority 
-  // request (if any exists) before wrapping around. These are the requests in the 
+  // * The first encoder uses a masked request vector to find the highest priority
+  // request (if any exists) before wrapping around. These are the requests in the
   // range [RR_ptr, NumRequesters).
-  // * The second encoder uses the unmasked request vector to find the highest 
-  // priority request after the wraparound index. These are the requests in the 
+  // * The second encoder uses the unmasked request vector to find the highest
+  // priority request after the wraparound index. These are the requests in the
   // range [0, RR_ptr).
   //
-  // The round-robin state is tracked in the rr_state_internal module. The 
-  // priority_mask output contains a mask of all request indices that are less 
-  // than the current  round-robin priority---those in the range [0, RR_ptr) that 
+  // The round-robin state is tracked in the rr_state_internal module. The
+  // priority_mask output contains a mask of all request indices that are less
+  // than the current  round-robin priority---those in the range [0, RR_ptr) that
   // are passed to the second (lower priority) encoder.
   //
   // The last_grant gets updated on the next cycle with grant, so that the
   // priority rotates in a round-robin fashion.
-  // last_grant initializes to NumRequesters'b100....0 such that index 0 is the 
+  // last_grant initializes to NumRequesters'b100....0 such that index 0 is the
   // highest priority out of reset.
 
   logic update_priority;
@@ -81,6 +81,7 @@ module br_arb_rr_internal #(
       .priority_mask
   );
 
+  logic [NumRequesters-1:0] request_high;
   // request_high[0] is constant 0
   // ri lint_check_waive CONST_ASSIGN
   assign request_high = request & ~priority_mask;
