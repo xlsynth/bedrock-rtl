@@ -107,6 +107,22 @@
 `BR_NOOP
 `endif  // BR_ENABLE_IMPL_CHECKS
 
+`ifndef BR_DISABLE_INTG_CHECKS
+`define BR_ASSERT_IN_RST_INTG(__name__, __expr__) \
+`BR_ASSERT_IN_RST(__name__, __expr__)
+`else  // BR_DISABLE_INTG_CHECKS
+`define BR_ASSERT_IN_RST_INTG(__name__, __expr__) \
+`BR_NOOP
+`endif  // BR_DISABLE_INTG_CHECKS
+
+`ifndef BR_DISABLE_INTG_CHECKS
+`define BR_ASSERT_IN_RST_C_INTG(__name__, __expr__, __clk__) \
+`BR_ASSERT_IN_RST_C(__name__, __expr__, __clk__)
+`else  // BR_DISABLE_INTG_CHECKS
+`define BR_ASSERT_IN_RST_C_INTG(__name__, __expr__, __clk__) \
+`BR_NOOP
+`endif  // BR_DISABLE_INTG_CHECKS
+
 // More expressive form of BR_ASSERT_IMPL that allows the use of custom clock and reset signal names.
 `ifdef BR_ENABLE_IMPL_CHECKS
 `define BR_ASSERT_CR_IMPL(__name__, __expr__, __clk__, __rst__) \
@@ -149,6 +165,22 @@
 `BR_ASSERT_KNOWN_VALID_CR(__name__, __valid__, __expr__, __clk__, __rst__)
 `else  // BR_ENABLE_IMPL_CHECKS
 `define BR_ASSERT_KNOWN_VALID_CR_IMPL(__name__, __valid__, __expr__, __clk__, __rst__) \
+`BR_NOOP
+`endif  // BR_ENABLE_IMPL_CHECKS
+
+`ifdef BR_ENABLE_IMPL_CHECKS
+`define BR_ASSERT_IN_RST_IMPL(__name__, __expr__) \
+`BR_ASSERT_IN_RST(__name__, __expr__)
+`else  // BR_ENABLE_IMPL_CHECKS
+`define BR_ASSERT_IN_RST_IMPL(__name__, __expr__) \
+`BR_NOOP
+`endif  // BR_ENABLE_IMPL_CHECKS
+
+`ifdef BR_ENABLE_IMPL_CHECKS
+`define BR_ASSERT_IN_RST_C_IMPL(__name__, __expr__, __clk__) \
+`BR_ASSERT_IN_RST_C(__name__, __expr__, __clk__)
+`else  // BR_ENABLE_IMPL_CHECKS
+`define BR_ASSERT_IN_RST_C_IMPL(__name__, __expr__, __clk__) \
 `BR_NOOP
 `endif  // BR_ENABLE_IMPL_CHECKS
 

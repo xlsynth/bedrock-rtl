@@ -75,16 +75,16 @@ end
 // Reset: 'rst'
 `ifdef BR_ASSERT_ON
 `define BR_ASSERT_IN_RST(__name__, __expr__) \
-__name__ : assert property (@(posedge clk) (__expr__));
+__name__ : assert property (@(posedge clk) disable iff (rst === 1'b0 || rst === 1'bx) (__expr__));
 `else  // BR_ASSERT_ON
 `define BR_ASSERT_IN_RST(__name__, __expr__) \
 `BR_NOOP
 `endif  // BR_ASSERT_ON
 
-// More expressive form of BR_ASSERT_IN_RST that allows the use of custom clock and reset signal names.
+// More expressive form of BR_ASSERT_IN_RST that allows the use of a custom clock signal name.
 `ifdef BR_ASSERT_ON
 `define BR_ASSERT_IN_RST_C(__name__, __expr__, __clk__) \
-__name__ : assert property (@(posedge __clk__) (__expr__));
+__name__ : assert property (@(posedge __clk__) disable iff (rst === 1'b0 || rst === 1'bx) (__expr__));
 `else  // BR_ASSERT_ON
 `define BR_ASSERT_IN_RST_C(__name__, __expr__, __clk__) \
 `BR_NOOP
