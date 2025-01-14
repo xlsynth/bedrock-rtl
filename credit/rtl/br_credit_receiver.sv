@@ -185,15 +185,15 @@ module br_credit_receiver #(
                   credit_count == credit_withhold && push_credit_internal |-> pop_credit)
 
   // Reset
-  `BR_ASSERT_INCL_RST_IMPL(push_receiver_in_reset_a, push_receiver_in_reset)
-  `BR_ASSERT_INCL_RST_IMPL(push_credit_0_in_reset_a, !push_credit)
-  `BR_ASSERT_INCL_RST_IMPL(pop_valid_0_in_reset_a, !pop_valid)
-
-  // Reset handshake
+  `BR_ASSERT_INCL_RST_IMPL(pop_valid_0_in_reset_a, rst |-> !pop_valid)
   `BR_ASSERT_IMPL(push_sender_in_reset_no_pop_valid_a, push_sender_in_reset |-> !pop_valid)
   if (RegisterPushOutputs) begin : gen_assert_push_reg
+    `BR_ASSERT_INCL_RST_IMPL(push_receiver_in_reset_a, rst |=> push_receiver_in_reset)
+    `BR_ASSERT_INCL_RST_IMPL(push_credit_0_in_reset_a, rst |=> !push_credit)
     `BR_ASSERT_IMPL(push_sender_in_reset_no_push_credit_a, push_sender_in_reset |=> !push_credit)
   end else begin : gen_assert_push_no_reg
+    `BR_ASSERT_INCL_RST_IMPL(push_receiver_in_reset_a, rst |-> push_receiver_in_reset)
+    `BR_ASSERT_INCL_RST_IMPL(push_credit_0_in_reset_a, rst |-> !push_credit)
     `BR_ASSERT_IMPL(push_sender_in_reset_no_push_credit_a, push_sender_in_reset |-> !push_credit)
   end
 

@@ -163,7 +163,7 @@ module br_credit_counter #(
 
   // Value basics
   `BR_ASSERT_IMPL(value_next_a, value_next == value_extended_next[ValueWidth-1:0])
-  `BR_ASSERT_IMPL(value_updates_a, ##1 value == $past(value_next))
+  `BR_ASSERT_IMPL(value_updates_a, ##1 !$fell(rst) |-> value == $past(value_next))
 
   // Increment corners
   `BR_COVER_IMPL(max_incr_c, incr_valid && incr == MaxChange)
