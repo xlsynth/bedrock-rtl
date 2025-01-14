@@ -108,18 +108,18 @@
 `endif  // BR_ENABLE_IMPL_CHECKS
 
 `ifndef BR_DISABLE_INTG_CHECKS
-`define BR_ASSERT_IN_RST_INTG(__name__, __expr__) \
-`BR_ASSERT_IN_RST(__name__, __expr__)
+`define BR_ASSERT_INCL_RST_INTG(__name__, __expr__) \
+`BR_ASSERT_INCL_RST(__name__, __expr__)
 `else  // BR_DISABLE_INTG_CHECKS
-`define BR_ASSERT_IN_RST_INTG(__name__, __expr__) \
+`define BR_ASSERT_INCL_RST_INTG(__name__, __expr__) \
 `BR_NOOP
 `endif  // BR_DISABLE_INTG_CHECKS
 
 `ifndef BR_DISABLE_INTG_CHECKS
-`define BR_ASSERT_IN_RST_C_INTG(__name__, __expr__, __clk__) \
-`BR_ASSERT_IN_RST_C(__name__, __expr__, __clk__)
+`define BR_ASSERT_INCL_RST_C_INTG(__name__, __expr__, __clk__) \
+`BR_ASSERT_INCL_RST_C(__name__, __expr__, __clk__)
 `else  // BR_DISABLE_INTG_CHECKS
-`define BR_ASSERT_IN_RST_C_INTG(__name__, __expr__, __clk__) \
+`define BR_ASSERT_INCL_RST_C_INTG(__name__, __expr__, __clk__) \
 `BR_NOOP
 `endif  // BR_DISABLE_INTG_CHECKS
 
@@ -169,18 +169,18 @@
 `endif  // BR_ENABLE_IMPL_CHECKS
 
 `ifdef BR_ENABLE_IMPL_CHECKS
-`define BR_ASSERT_IN_RST_IMPL(__name__, __expr__) \
-`BR_ASSERT_IN_RST(__name__, __expr__)
+`define BR_ASSERT_INCL_RST_IMPL(__name__, __expr__) \
+`BR_ASSERT_INCL_RST(__name__, __expr__)
 `else  // BR_ENABLE_IMPL_CHECKS
-`define BR_ASSERT_IN_RST_IMPL(__name__, __expr__) \
+`define BR_ASSERT_INCL_RST_IMPL(__name__, __expr__) \
 `BR_NOOP
 `endif  // BR_ENABLE_IMPL_CHECKS
 
 `ifdef BR_ENABLE_IMPL_CHECKS
-`define BR_ASSERT_IN_RST_C_IMPL(__name__, __expr__, __clk__) \
-`BR_ASSERT_IN_RST_C(__name__, __expr__, __clk__)
+`define BR_ASSERT_INCL_RST_C_IMPL(__name__, __expr__, __clk__) \
+`BR_ASSERT_INCL_RST_C(__name__, __expr__, __clk__)
 `else  // BR_ENABLE_IMPL_CHECKS
-`define BR_ASSERT_IN_RST_C_IMPL(__name__, __expr__, __clk__) \
+`define BR_ASSERT_INCL_RST_C_IMPL(__name__, __expr__, __clk__) \
 `BR_NOOP
 `endif  // BR_ENABLE_IMPL_CHECKS
 

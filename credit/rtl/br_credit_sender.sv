@@ -196,9 +196,9 @@ module br_credit_sender #(
   `BR_COVER_IMPL(pop_valid_and_pop_credit_c, pop_valid && pop_credit)
 
   // Reset
-  `BR_ASSERT_IN_RST_IMPL(push_ready_0_in_reset_a, !push_ready)
-  `BR_ASSERT_IN_RST_IMPL(pop_valid_0_in_reset_a, !pop_valid)
-  `BR_ASSERT_IN_RST_IMPL(pop_sender_in_reset_a, pop_sender_in_reset)
+  `BR_ASSERT_INCL_RST_IMPL(push_ready_0_in_reset_a, !push_ready)
+  `BR_ASSERT_INCL_RST_IMPL(pop_valid_0_in_reset_a, !pop_valid)
+  `BR_ASSERT_INCL_RST_IMPL(pop_sender_in_reset_a, pop_sender_in_reset)
 
   // Reset handshake
   `BR_ASSERT_IMPL(pop_receiver_in_reset_no_push_ready_a, pop_receiver_in_reset |-> !push_ready)

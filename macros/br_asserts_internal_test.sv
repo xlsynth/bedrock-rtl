@@ -83,11 +83,11 @@ module br_asserts_internal_test;
   // Use BR_ASSERT_KNOWN_VALID_CR_INTG
   `BR_ASSERT_KNOWN_VALID_CR_INTG(sum_known_when_valid_cr_intg, valid, sum, clk, rst)
 
-  // Use BR_ASSERT_IN_RST_INTG
-  `BR_ASSERT_IN_RST_INTG(a_zero_in_reset_intg, a == 0)
+  // Use BR_ASSERT_INCL_RST_INTG
+  `BR_ASSERT_INCL_RST_INTG(a_zero_in_reset_intg, a == 0)
 
-  // Use BR_ASSERT_IN_RST_C_INTG
-  `BR_ASSERT_IN_RST_C_INTG(b_zero_in_reset_intg, b == 0, clk)
+  // Use BR_ASSERT_INCL_RST_C_INTG
+  `BR_ASSERT_INCL_RST_C_INTG(b_zero_in_reset_intg, b == 0, clk)
 
   // Use BR_ASSERT_IMPL
   `BR_ASSERT_IMPL(sum_correct_impl, (valid == 1) |-> (sum == a + b))
@@ -104,11 +104,11 @@ module br_asserts_internal_test;
   // Use BR_ASSERT_KNOWN_VALID_CR_IMPL
   `BR_ASSERT_KNOWN_VALID_CR_IMPL(sum_known_when_valid_cr_impl, valid, sum, clk, rst)
 
-  // Use BR_ASSERT_IN_RST_IMPL
-  `BR_ASSERT_IN_RST_IMPL(a_zero_in_reset_impl, a == 0)
+  // Use BR_ASSERT_INCL_RST_IMPL
+  `BR_ASSERT_INCL_RST_IMPL(a_zero_in_reset_impl, a == 0)
 
-  // Use BR_ASSERT_IN_RST_C_IMPL
-  `BR_ASSERT_IN_RST_C_IMPL(b_zero_in_reset_impl, b == 0, clk)
+  // Use BR_ASSERT_INCL_RST_C_IMPL
+  `BR_ASSERT_INCL_RST_C_IMPL(b_zero_in_reset_impl, b == 0, clk)
 
   // Use BR_ASSERT_CR_INTG
   logic custom_clk;
