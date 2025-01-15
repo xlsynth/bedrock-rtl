@@ -74,50 +74,61 @@ module br_arb_pri_rr #(
   // "Unifying on-chip and inter-node switching within the Anton 2 network"
   // where the priority and priority_mask are unrolled into a request
   // vector that is then fed into a fixed priority arbiter to find
-  // the highest priority request.
+  // the highest priority request. (Unlike the reference, the below
+  // code assumes the LSB of the request vector is the highest priority
+  // request.)
 
   // First unroll requests into NumPriorities+1 levels. The requests at
-  // priority level p are those whose
-  //   1) input priority is = p and index < RR priority, or
-  //   2) input priority is = p-1 and index >= RR priority
+  // level 0 are the highest priority requests:
   //
-  // This assigns every request a unique priority level. And the requests
-  // greater than the RR priority are effectively bumped to the next
-  // input priority level, which allows the fixed priority arbiter
-  // to find the highest priority request using the RR priority to break
-  // ties.
+  //   Level p=0: request priority = NP-1 and >= RR priority
   //
-  // We simplify the find first set by theremometer encoding a
-  // request's prority level such that request_unrolled[p][i] implies
-  // request_unrolled[p-1][i] for all p > 0. Then, we simplifiy case
-  // 1 by removing the RR priority check: the request will either
-  // pass the check or already be encoded in case 2, which is a higher
-  // priority level. Finally, we make use the RR pointer encoded in the
-  // priority_mask:
-  //   1) priority[i] => p, OR
-  //   2) priority[i] => p-1 AND !priority_mask[i]
+  // At Level 1, we combine the requests from level 0 that were disabled
+  // by the RR priority AND those that are enabled with p=1:
+  //
+  //   Level p=1: (request priority = NP-2 and >= RR priority) OR
+  //              (request priority = NP-1 and < RR priority)
+  //
+  // These two request sets are mutually exclusive and the NP-1 requests
+  // appear before the NP-2 requests in the fixed priority order (LSB is
+  // highest priority), so it is safe to OR them together.
+  //
+  // Generalizing, the requests at level p are:
+  //
+  //   Level p: (request priority = NP-1-p and >= RR priority) OR
+  //             (request priority = NP-p and < RR priority)
+  //
+  // We use the thermometer encoded priority_mask to indicate if a
+  // < RR priority. Also, thermometer encode the unrolled requests
+  // vector (such that request_unrolled[p][i] implies
+  // request_unrolled[p-1][i] for all p > 0) by replacing the
+  // equality comparisons above with greater than or equal to:
+  //
+  //  Level p: (request priority >= NP-1-p and !priority_mask[i]) OR
+  //             (request priority >= NP-p and priority_mask[i])
   //
   // Note: for a single priority level, the correspondes to the typical
   // approach used for a non-prioritized RR arbiter.
 
   logic [NumPriorities:0][NumRequesters-1:0] request_unrolled;
 
-  assign request_unrolled[0] = request;
-  for (genvar i = 0; i < NumRequesters; i++) begin : gen_request_unrolled
-    // p = 1 case
-    assign request_unrolled[1][i] = request[i] && ((request_priority[i] >= 1) ||
-        /*request_priority[i] >= 0 &&*/ !priority_mask[i]);
+  assign request_unrolled[NumPriorities] = request;  // lowest priority
 
-    // p = 2 ... NumPriorities-1 cases
-    for (genvar p = 2; p < NumPriorities; p++) begin : gen_request_unrolled_pri
+  for (genvar i = 0; i < NumRequesters; i++) begin : gen_request_unrolled
+    // p = 0 case (highest priority)
+    assign request_unrolled[0][i] = request[i] &&
+        (request_priority[i] == NumPriorities - 1) && !priority_mask[i];
+
+    // p = 1 ... NumPriorities-2 cases
+    for (genvar p = 1; p < NumPriorities - 1; p++) begin : gen_request_unrolled_pri
       assign request_unrolled[p][i] = request[i] && (
-          (request_priority[i] >= p) ||
-          ((request_priority[i] >= p - 1) && !priority_mask[i]));
+          ((request_priority[i] >= NumPriorities - 1 - p) && !priority_mask[i]) ||
+          ((request_priority[i] >= NumPriorities - p) && priority_mask[i]));
     end
 
-    // p = NumPriorities case
-    assign request_unrolled[NumPriorities][i] = request[i] &&
-        (request_priority[i] == NumPriorities - 1) && !priority_mask[i];
+    // p = NumPriorities-1 case
+    assign request_unrolled[NumPriorities-1][i] = request[i] && (
+          !priority_mask[i] || ((request_priority[i] >= 1) && priority_mask[i]));
   end
 
   // Now, treat request_unrolled as a flattened vector and
@@ -129,9 +140,10 @@ module br_arb_pri_rr #(
 
   logic [$clog2(NumRequesters-1):0][NumPriorities:0][NumRequesters-1:0] any_higher_pri_req;
 
-  assign any_higher_pri_req[0] = request_unrolled >> 1;
+  assign any_higher_pri_req[0] = request_unrolled << 1;  // ri lint_check_waive TRUNC_LSHIFT
   for (genvar i = 0; i < $clog2(NumRequesters - 1); i++) begin : gen_any_higher_pri_req
-    assign any_higher_pri_req[i+1] = any_higher_pri_req[i] | (any_higher_pri_req[i] >> (1 << i));
+    // ri lint_check_waive TRUNC_LSHIFT
+    assign any_higher_pri_req[i+1] = any_higher_pri_req[i] | (any_higher_pri_req[i] << (1 << i));
   end
 
   // Finally, generate an unrolled grant by disabling unrolled

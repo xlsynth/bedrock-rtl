@@ -144,13 +144,16 @@ verilog_elab_test(
 br_verilog_fpv_test_suite(
     name = "br_arb_pri_rr_jg_test_suite",
     custom_tcl_body = "br_arb_rr_fpv.tcl",
-    gui = True,
     params = {
         "NumRequesters": [
             "2",
+            "5",
+            "8",
         ],
         "NumPriorities": [
             "2",
+            "3",
+            "4",
         ],
     },
     tool = "jg",
