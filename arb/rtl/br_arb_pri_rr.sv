@@ -135,8 +135,8 @@ module br_arb_pri_rr #(
   // create a mask to disable all lower priority requests using
   // a Kogge-Stone parallel prefix tree. Note: we only need
   // $clog2(NumRequesters-1) levels of prefix tree because
-  // request_unrolled[i][j] -> request_unrolled[i-1][j] for
-  // all i > 0 due the encoding used above.
+  // request_unrolled[i][j] -> request_unrolled[i+1][j] for
+  // due the encoding used above.
 
   logic [$clog2(NumRequesters-1):0][NumPriorities:0][NumRequesters-1:0] any_higher_pri_req;
 
