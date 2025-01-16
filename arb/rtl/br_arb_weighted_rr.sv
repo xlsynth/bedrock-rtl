@@ -50,8 +50,6 @@
 module br_arb_weighted_rr #(
     // Must be at least 2
     parameter int NumRequesters = 2,
-    // Must be at least 2
-    parameter int NumPriorities = 2,
     parameter int MaxWeight = 1,
     parameter int MaxAccumulatedWeight = 1,
     localparam int WeightWidth = $clog2(MaxWeight + 1),
@@ -73,7 +71,7 @@ module br_arb_weighted_rr #(
 
   br_arb_pri_rr #(
       .NumRequesters(NumRequesters),
-      .NumPriorities(NumPriorities)
+      .NumPriorities(2)
   ) br_arb_pri_rr_inst (
       .clk,
       .rst,
@@ -107,7 +105,7 @@ module br_arb_weighted_rr #(
         .incr_valid(incr_accumulated_weight),
         .incr(request_weight[i]),
         .decr_valid(grant[i]),
-        .decr({WeightWidth{1'b0}} | grant[i]),
+        .decr(WeightWidth'(1'b1)),
         .value(accumulated_weight[i]),
         .value_next()
     );
