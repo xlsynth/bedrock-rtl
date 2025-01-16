@@ -53,6 +53,8 @@ verilog_library(
     deps = [
         "//arb/rtl/internal:br_rr_state_internal",
         "//macros:br_asserts_internal",
+        "//macros:br_unused",
+        "//pkg:br_math_pkg",
     ],
 )
 

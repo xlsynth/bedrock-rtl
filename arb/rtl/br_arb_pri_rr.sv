@@ -21,12 +21,17 @@
 // the lowest round-robin priority and the next higher index (modulo
 // NumRequesters) becomes the highest priority.
 //
+// The number of priorities is a parameter, and the priority inputs
+// must be in the range [0, NumPriorities). Zero is the lowest priority and
+// NumPriorities-1 is the highest priority.
+//
 // The enable_priority_update signal allows the priority state to update
 // when a grant is made. If low, grants can still be made, but the priority
 // will remain unchanged for the next cycle.
 //
 // There is zero latency from request to grant.
 
+`include "br_unused.svh"
 `include "br_asserts_internal.svh"
 
 module br_arb_pri_rr #(
@@ -132,26 +137,30 @@ module br_arb_pri_rr #(
   end
 
   // Now, treat request_unrolled as a flattened vector and
-  // create a mask to disable all lower priority requests using
-  // a Kogge-Stone parallel prefix tree. Note: we only need
-  // $clog2(NumRequesters-1) levels of prefix tree because
-  // request_unrolled[i][j] -> request_unrolled[i+1][j] for
+  // create a mask to disable all lower priority requests.
+  // Note: we only need $clog2(NumRequesters-1) levels of prefix tree
+  // because request_unrolled[i][j] -> request_unrolled[i+1][j] for
   // due the encoding used above.
 
-  logic [$clog2(NumRequesters-1):0][NumPriorities:0][NumRequesters-1:0] any_higher_pri_req;
+  logic [$bits(request_unrolled)-1:0] request_unrolled_flat;
+  logic [$bits(request_unrolled)-1:0] any_higher_pri_req;
 
-  assign any_higher_pri_req[0] = request_unrolled << 1;  // ri lint_check_waive TRUNC_LSHIFT
-  for (genvar i = 0; i < $clog2(NumRequesters - 1); i++) begin : gen_any_higher_pri_req
-    // ri lint_check_waive TRUNC_LSHIFT
-    assign any_higher_pri_req[i+1] = any_higher_pri_req[i] | (any_higher_pri_req[i] << (1 << i));
+  assign request_unrolled_flat = request_unrolled;
+  assign any_higher_pri_req[0] = 1'b0;
+  assign any_higher_pri_req[1] = request_unrolled_flat[0];
+
+  for (genvar i = 2; i < $bits(request_unrolled); i++) begin : gen_any_higher_pri_req
+    assign any_higher_pri_req[i] = |request_unrolled_flat[i-1:br_math::max2(0, i-NumRequesters+1)];
   end
+
+  `BR_UNUSED(request_unrolled_flat[$bits(request_unrolled)-1])
 
   // Finally, generate an unrolled grant by disabling unrolled
   // requests for which there are higher priority requests. Then
   // OR each unrolled grant into the final grant.
 
   logic [NumPriorities:0][NumRequesters-1:0] grant_unrolled;
-  assign grant_unrolled = request_unrolled & ~any_higher_pri_req[$clog2(NumRequesters-1)];
+  assign grant_unrolled = request_unrolled & ~any_higher_pri_req;
 
   always_comb begin
     grant = '0;

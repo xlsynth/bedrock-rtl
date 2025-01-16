@@ -58,8 +58,8 @@ module br_rr_state_internal #(
   `BR_REGLI(last_grant, grant, update_priority, last_grant_init)
 
   `BR_ASSERT_IMPL(grant_onehot_A, update_priority |-> $onehot(grant))
-  `BR_ASSERT_IMPL(last_grant_onehot0_A, $onehot0(last_grant))
+  `BR_ASSERT_IMPL(last_grant_onehot_A, $onehot(last_grant))
   // For i > 0, priority_mask[i] |-> priority_mask[i-1]
-  `BR_ASSERT_IMPL(priority_mask_therm_encoded_A, &(~(priority_mask >> 1) | priority_mask))
+  `BR_ASSERT_IMPL(priority_mask_thermometer_encoded_A, &(~(priority_mask >> 1) | priority_mask))
 
 endmodule : br_rr_state_internal
