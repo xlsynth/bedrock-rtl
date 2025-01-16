@@ -53,6 +53,9 @@ module br_counter_incr #(
     // If 0, then when reinit is asserted together with incr_valid,
     // the increment values are ignored, i.e., value_next == initial_value.
     parameter bit EnableReinitAndIncr = 1,
+    // If 1, the counter value saturates at MaxValue.
+    // If 0, the counter value wraps around at MaxValue.
+    parameter bit EnableSaturate = 0,
     // If 1, then assert there are no valid bits asserted at the end of the test.
     parameter bit EnableAssertFinalNotValid = 1,
     localparam int ValueWidth = $clog2(MaxValue + 1),
@@ -103,12 +106,18 @@ module br_counter_incr #(
     assign value_temp = reinit ? initial_value : (value + (incr_valid ? incr : '0));
   end
 
-  // For MaxValueP1 being a power of 2, wrapping occurs naturally
-  if (IsMaxValueP1PowerOf2) begin : gen_power_of_2
+  if (EnableSaturate) begin : gen_saturate
+    logic [ValueWidth-1:0] value_next_saturated;
+
+    assign value_next_saturated = MaxValue;
+    assign value_next = (value_temp > MaxValue) ? value_next_saturated : value_temp[ValueWidth-1:0];
+
+    // For MaxValueP1 being a power of 2, wrapping occurs naturally
+  end else if (IsMaxValueP1PowerOf2) begin : gen_power_of_2_wrap
     assign value_next = value_temp[ValueWidth-1:0];
 
     // For MaxValueP1 not being a power of 2, handle wrap-around explicitly
-  end else begin : gen_non_power_of_2
+  end else begin : gen_non_power_of_2_wrap
     // MSBs won't impact outputs if TempWidth > ValueWidth
     // ri lint_check_waive INEFFECTIVE_NET
     logic [TempWidth-1:0] value_temp_wrapped;
@@ -137,10 +146,15 @@ module br_counter_incr #(
   `BR_ASSERT_IMPL(value_next_propagates_a, ##1 value == $past(value_next))
 
   // Overflow corners
-  `BR_ASSERT_IMPL(value_overflow_a,
-                  incr_valid && value_temp > MaxValue |-> value_next == value_temp - MaxValue - 1)
-  `BR_ASSERT_IMPL(maxvalue_plus_one_a,
-                  value == MaxValue && incr_valid && incr == 1'b1 |-> value_next == 0)
+  if (EnableSaturate) begin : gen_saturate_impl_check
+    `BR_ASSERT_IMPL(value_saturate_a,
+                    (incr_valid && value_temp > MaxValue) |-> (value_next == MaxValue))
+  end else begin : gen_wrap_impl_check
+    `BR_ASSERT_IMPL(value_overflow_a,
+                    incr_valid && value_temp > MaxValue |-> value_next == value_temp - MaxValue - 1)
+    `BR_ASSERT_IMPL(maxvalue_plus_one_a,
+                    value == MaxValue && incr_valid && incr == 1'b1 |-> value_next == 0)
+  end
 
   // Increment corners
   `BR_ASSERT_IMPL(plus_zero_a, incr_valid && incr == '0 |-> value_next == value)

@@ -42,6 +42,7 @@
 
 `include "br_asserts_internal.svh"
 `include "br_registers.svh"
+`include "br_unused.svh"
 
 module br_counter_decr #(
     parameter int MaxValue = 1,  // Must be at least 1. Inclusive. Also the initial value.
@@ -52,6 +53,9 @@ module br_counter_decr #(
     // If 0, then when reinit is asserted together with decr_valid,
     // the decrement values are ignored, i.e., value_next == initial_value.
     parameter bit EnableReinitAndDecr = 1,
+    // If 1, the counter value saturates at 0.
+    // If 0, the counter value wraps around at 0.
+    parameter bit EnableSaturate = 0,
     // If 1, then assert there are no valid bits asserted at the end of the test.
     parameter bit EnableAssertFinalNotValid = 1,
     localparam int ValueWidth = $clog2(MaxValue + 1),
@@ -90,23 +94,34 @@ module br_counter_decr #(
   localparam bit IsMaxValueP1PowerOf2 = (MaxValueP1 & (MaxValueP1 - 1)) == 0;
 
   logic [ValueWidth-1:0] value_temp;
+  logic underflow;
+  logic [ValueWidth-1:0] decr_ext;
+
+  assign decr_ext = ValueWidth'(decr);
 
   if (EnableReinitAndDecr) begin : gen_reinit_and_decr
-    assign value_temp = (reinit ? initial_value : value) - (decr_valid ? decr : '0);
+    logic [ValueWidth-1:0] base_value;
+    assign base_value = reinit ? initial_value : value;
+    assign value_temp = base_value - (decr_valid ? decr : '0);
+    assign underflow  = decr_valid && (decr_ext > base_value);
   end else begin : gen_reinit_ignore_decr
     assign value_temp = reinit ? initial_value : (value - (decr_valid ? decr : '0));
+    assign underflow  = !reinit && decr_valid && (decr_ext > value);
   end
 
-  if (IsMaxValueP1PowerOf2) begin : gen_power_of_2
-    // For MaxValueP1 being a power of 2, wrapping occurs naturally
-    assign value_next = value_temp;
+  if (EnableSaturate) begin : gen_saturate
+    assign value_next = underflow ? '0 : value_temp;
 
-  end else begin : gen_non_power_of_2
+    // For MaxValueP1 being a power of 2, wrapping occurs naturally
+  end else if (IsMaxValueP1PowerOf2) begin : gen_power_of_2_wrap
+    assign value_next = value_temp;
+    `BR_UNUSED(underflow)
+  end else begin : gen_non_power_of_2_wrap
     // For MaxValueP1 not being a power of 2, handle wrap-around explicitly
     localparam int Margin = ((2 ** ValueWidth) - 1) - MaxValue;
     logic [ValueWidth-1:0] value_temp_wrapped;
     assign value_temp_wrapped = value_temp - Margin;
-    assign value_next = value_temp > MaxValue ? value_temp_wrapped : value_temp;
+    assign value_next = underflow ? value_temp_wrapped : value_temp;
 
     // Case-specific implementation checks
     `BR_ASSERT_STATIC(margin_gte0_a, Margin > 0)

@@ -33,6 +33,7 @@ verilog_library(
     deps = [
         "//macros:br_asserts_internal",
         "//macros:br_registers",
+        "//macros:br_unused",
     ],
 )
 
@@ -80,6 +81,24 @@ br_verilog_elab_and_lint_test_suite(
 )
 
 br_verilog_elab_and_lint_test_suite(
+    name = "br_counter_incr_test_suite2",
+    params = {
+        "MaxValue": [
+            "2",
+            "3",
+        ],
+        "MaxIncrement": [
+            "1",
+            "2",
+        ],
+        "EnableSaturate": [
+            "1",
+        ],
+    },
+    deps = [":br_counter_incr"],
+)
+
+br_verilog_elab_and_lint_test_suite(
     name = "br_counter_decr_test_suite0",
     params = {
         "MaxValue": [
@@ -107,6 +126,24 @@ br_verilog_elab_and_lint_test_suite(
         ],
         "MaxDecrement": [
             "2",
+        ],
+    },
+    deps = [":br_counter_decr"],
+)
+
+br_verilog_elab_and_lint_test_suite(
+    name = "br_counter_decr_test_suite2",
+    params = {
+        "MaxValue": [
+            "2",
+            "3",
+        ],
+        "MaxDecrement": [
+            "1",
+            "2",
+        ],
+        "EnableSaturate": [
+            "1",
         ],
     },
     deps = [":br_counter_decr"],
@@ -143,6 +180,26 @@ br_verilog_elab_and_lint_test_suite(
         ],
         "EnableWrap": [
             "0",
+            "1",
+        ],
+    },
+    deps = [":br_counter"],
+)
+
+br_verilog_elab_and_lint_test_suite(
+    name = "br_counter_test_suite2",
+    params = {
+        "MaxValue": [
+            "2",
+            "3",
+        ],
+        "MaxChange": [
+            "2",
+        ],
+        "EnableWrap": [
+            "0",
+        ],
+        "EnableSaturate": [
             "1",
         ],
     },
