@@ -87,7 +87,7 @@ def br_verilog_sim_test_suite(name, tool, opts = [], **kwargs):
 def br_verilog_fpv_test_suite(name, **kwargs):
     """Wraps verilog_fpv_test_suite with Bedrock-internal settings. Not intended to be called by Bedrock users.
 
-    * Defines `BR_ASSERT_ON`, `BR_ENABLE_IMPL_CHECKS`, and `BR_ENABLE_FPV`.
+    * Defines `BR_ASSERT_ON`, `BR_ENABLE_IMPL_CHECKS`, `BR_DISABLE_FINAL_CHECKS` and `BR_ENABLE_FPV`.
 
     Args:
         name (str): The base name of the test suite.
@@ -99,6 +99,6 @@ def br_verilog_fpv_test_suite(name, **kwargs):
 
     verilog_fpv_test_suite(
         name = name,
-        defines = ["BR_ASSERT_ON", "BR_ENABLE_IMPL_CHECKS", "BR_ENABLE_FPV"],
+        defines = ["BR_ASSERT_ON", "BR_ENABLE_IMPL_CHECKS", "BR_DISABLE_FINAL_CHECKS", "BR_ENABLE_FPV"],
         **kwargs
     )
