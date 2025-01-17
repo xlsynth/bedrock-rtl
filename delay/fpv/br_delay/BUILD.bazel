@@ -40,6 +40,7 @@ br_verilog_fpv_test_suite(
             "2",
         ],
     },
+    sandbox = True,
     tool = "jg",
     top = "br_delay",
     deps = [":br_delay_monitor"],
