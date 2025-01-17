@@ -24,12 +24,16 @@
 
 module br_mux_bin_array #(
     // Number of inputs to select among. Must be >= 2.
-    parameter  int NumSymbolsIn  = 2,
+    parameter int NumSymbolsIn = 2,
     // Number of outputs to select among. Must be >= 1.
-    parameter  int NumSymbolsOut = 1,
+    parameter int NumSymbolsOut = 1,
     // The width of each symbol in bits. Must be >= 1.
-    parameter  int SymbolWidth   = 1,
-    localparam int SelectWidth   = $clog2(NumSymbolsIn)
+    parameter int SymbolWidth = 1,
+    // If set to 1, manually build a tree of mux2 gates instead of relying on
+    // the synthesis tool.  This may be necessary if implementing an
+    // asynchronous path.
+    parameter bit UseStructuredGates = 0,
+    localparam int SelectWidth = $clog2(NumSymbolsIn)
 ) (
     input logic [NumSymbolsOut-1:0][SelectWidth-1:0] select,
     input logic [NumSymbolsIn-1:0][SymbolWidth-1:0] in,
@@ -43,6 +47,8 @@ module br_mux_bin_array #(
   `BR_ASSERT_STATIC(legal_num_symbols_in_a, NumSymbolsIn >= 2)
   `BR_ASSERT_STATIC(legal_num_symbols_out_a, NumSymbolsOut >= 1)
   `BR_ASSERT_STATIC(legal_symbol_width_a, SymbolWidth >= 1)
+  `BR_ASSERT_STATIC(legal_use_structured_gates_a,
+                    (UseStructuredGates == 0) || (UseStructuredGates == 1))
 
   //------------------------------------------
   // Implementation
@@ -50,7 +56,8 @@ module br_mux_bin_array #(
   for (genvar i = 0; i < NumSymbolsOut; i++) begin : gen_mux
     br_mux_bin #(
         .NumSymbolsIn(NumSymbolsIn),
-        .SymbolWidth (SymbolWidth)
+        .SymbolWidth(SymbolWidth),
+        .UseStructuredGates(UseStructuredGates)
     ) br_mux_bin (
         .select(select[i]),
         .in(in),
