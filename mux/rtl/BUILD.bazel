@@ -124,6 +124,10 @@ br_verilog_elab_and_lint_test_suite(
             "2",
             "3",
         ],
+        "UseStructuredGates": [
+            "0",
+            "1",
+        ],
     },
     deps = [":br_mux_bin_array"],
 )
