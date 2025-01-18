@@ -40,6 +40,14 @@ br_verilog_sim_test_suite(
             "1",
             "3",
         ],
+        "EnableReinitAndIncr": [
+            "0",
+            "1",
+        ],
+        "EnableSaturate": [
+            "0",
+            "1",
+        ],
     },
     tool = "vcs",
     deps = [":br_counter_incr_tb"],
@@ -69,6 +77,14 @@ br_verilog_sim_test_suite(
         "MaxChange": [
             "1",
             "3",
+        ],
+        "EnableReinitAndChange": [
+            "0",
+            "1",
+        ],
+        "EnableSaturate": [
+            "0",
+            "1",
         ],
     },
     tool = "vcs",

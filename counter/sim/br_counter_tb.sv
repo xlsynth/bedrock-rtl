@@ -21,6 +21,8 @@ module br_counter_tb;
   // Parameters matching the module under test
   parameter int MaxValue = 10;  // Example maximum value
   parameter int MaxChange = 3;  // Example maximum change
+  parameter bit EnableSaturate = 0;
+  parameter bit EnableReinitAndChange = 0;
   localparam int ValueWidth = $clog2(MaxValue + 1);
   localparam int ChangeWidth = $clog2(MaxChange + 1);
 
@@ -38,9 +40,11 @@ module br_counter_tb;
 
   // Instantiate the design under test (DUT)
   br_counter #(
-      .MaxValue  (MaxValue),
-      .MaxChange (MaxChange),
-      .EnableWrap(1)
+      .MaxValue(MaxValue),
+      .MaxChange(MaxChange),
+      .EnableSaturate(EnableSaturate),
+      .EnableReinitAndChange(EnableReinitAndChange),
+      .EnableWrap(!EnableSaturate)
   ) dut (
       .clk(clk),
       .rst(rst),
@@ -68,6 +72,8 @@ module br_counter_tb;
 
   // Test sequence
   initial begin
+    int expected_value;
+
     // Initialize signals
     reinit        = 0;
     initial_value = 0;
@@ -117,15 +123,18 @@ module br_counter_tb;
 
     td.check_integer(value, MaxValue, "Reinit w/o Change mismatch");
 
-    // Test wrapping around MaxValue
+    // Test wrapping around / saturating at MaxValue
     td.wait_cycles();
     incr_valid = 1;
     incr       = MaxChange;
 
     td.wait_cycles();
-    incr_valid = 0;
-    incr       = 0;
-    td.check_integer(value, MaxChange - 1, "Increment wrap-around value mismatch");
+    incr_valid     = 0;
+    incr           = 0;
+
+    expected_value = EnableSaturate ? MaxValue : MaxChange - 1;
+
+    td.check_integer(value, expected_value, "Increment wrap-around value mismatch");
 
     // Test reinit with increment on the same cycle
     td.wait_cycles();
@@ -134,12 +143,14 @@ module br_counter_tb;
     incr_valid    = 1;
     incr          = 1;
     td.wait_cycles();
-    reinit     = 0;
-    incr_valid = 0;
-    incr       = 0;
+    reinit         = 0;
+    incr_valid     = 0;
+    incr           = 0;
+
+    expected_value = EnableReinitAndChange ? 3 : 2;
 
     td.wait_cycles();
-    td.check_integer(value, 3, "Reinit w/ Increment mismatch");
+    td.check_integer(value, expected_value, "Reinit w/ Increment mismatch");
 
     // Test normal decrement
     td.wait_cycles();
@@ -164,7 +175,7 @@ module br_counter_tb;
     decr_valid = 0;
     td.check_integer(value, 0, "Decrement by 1 value mismatch");
 
-    // Test underflow wrapping
+    // Test underflow wrapping / saturating
     td.wait_cycles();
     set_initial_value(0);
 
@@ -174,7 +185,9 @@ module br_counter_tb;
     td.wait_cycles();
     decr_valid = 0;
 
-    td.check_integer(value, MaxValue, "Underflow value mismatch");
+    expected_value = EnableSaturate ? 0 : MaxValue;
+
+    td.check_integer(value, expected_value, "Underflow value mismatch");
 
     // Test decrement during reinit
     td.wait_cycles();
@@ -187,7 +200,9 @@ module br_counter_tb;
     reinit = 0;
     decr_valid = 0;
 
-    td.check_integer(value, 4, "Reinit w/ decrement value mismatch");
+    expected_value = EnableReinitAndChange ? 4 : 5;
+
+    td.check_integer(value, expected_value, "Reinit w/ decrement value mismatch");
 
     // Test simultaneous increment and decrement
     td.wait_cycles();
@@ -215,7 +230,9 @@ module br_counter_tb;
     incr_valid = 0;
     decr_valid = 0;
 
-    td.check_integer(value, 0, "Simultaneous incr/decr overflow value mismatch");
+    expected_value = EnableSaturate ? MaxValue : 0;
+
+    td.check_integer(value, expected_value, "Simultaneous incr/decr overflow value mismatch");
 
     // Test underflow w/ simultaneous incr/decr
     td.wait_cycles();
@@ -229,7 +246,9 @@ module br_counter_tb;
     incr_valid = 0;
     decr_valid = 0;
 
-    td.check_integer(value, MaxValue, "Simultaneous incr/decr underflow value mismatch");
+    expected_value = EnableSaturate ? 0 : MaxValue;
+
+    td.check_integer(value, expected_value, "Simultaneous incr/decr underflow value mismatch");
 
     // Finish simulation
     td.wait_cycles();

@@ -21,6 +21,8 @@ module br_counter_incr_tb;
   // Parameters matching the module under test
   parameter int MaxValue = 15;  // Example maximum value
   parameter int MaxIncrement = 3;  // Example maximum increment
+  parameter bit EnableSaturate = 0;
+  parameter bit EnableReinitAndIncr = 0;
   localparam int ValueWidth = $clog2(MaxValue + 1);
   localparam int IncrementWidth = $clog2(MaxIncrement + 1);
 
@@ -37,7 +39,9 @@ module br_counter_incr_tb;
   // Instantiate the module under test (MUT)
   br_counter_incr #(
       .MaxValue(MaxValue),
-      .MaxIncrement(MaxIncrement)
+      .MaxIncrement(MaxIncrement),
+      .EnableSaturate(EnableSaturate),
+      .EnableReinitAndIncr(EnableReinitAndIncr)
   ) dut (
       .clk(clk),
       .rst(rst),
@@ -55,6 +59,8 @@ module br_counter_incr_tb;
 
   // Test sequence
   integer error_count;
+  integer expected_value;
+
   initial begin
     error_count   = 0;
 
@@ -121,17 +127,21 @@ module br_counter_incr_tb;
       $error("Test failed: Expected reinitialized value = %0d, Got value = %0d", MaxValue, value);
     end
 
-    // Test wrapping around MaxValue
+    // Test wrapping around / saturating at MaxValue
     @(negedge clk);
     incr_valid = 1;
     incr       = 1;
 
     @(negedge clk);
-    incr_valid = 0;
-    incr       = 0;
-    if (value !== 0) begin
+    incr_valid     = 0;
+    incr           = 0;
+
+    expected_value = EnableSaturate ? MaxValue : 0;
+
+    if (value !== expected_value) begin
       error_count++;
-      $error("Test failed: Expected wrap-around value = 0, Got value = %0d", value);
+      $error("Test failed: Expected wrap-around value = %0d, Got value = %0d", expected_value,
+             value);
     end
 
     // Test reinit with increment on the same cycle
@@ -141,14 +151,16 @@ module br_counter_incr_tb;
     incr_valid    = 1;
     incr          = 1;
     @(negedge clk);
-    reinit     = 0;
-    incr_valid = 0;
-    incr       = 0;
+    reinit         = 0;
+    incr_valid     = 0;
+    incr           = 0;
+
+    expected_value = EnableReinitAndIncr ? 3 : 2;
 
     @(negedge clk);
-    if (value !== 3) begin
+    if (value !== expected_value) begin
       error_count++;
-      $error("Test failed: Expected value = 3, Got value = %0d", value);
+      $error("Test failed: Expected value = %0d, Got value = %0d", expected_value, value);
     end
 
     // Finish simulation

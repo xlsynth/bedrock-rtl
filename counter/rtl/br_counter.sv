@@ -50,6 +50,7 @@ module br_counter #(
     // logic to do so if MaxValue is not 1 less than a power of two.
     // If 0, don't allow wrapping and omit overflow/underflow correction logic.
     // Assert there is no overflow/underflow.
+    // Must be 0 if EnableSaturate is 1.
     parameter bit EnableWrap = 1,
     // If 1, then when reinit is asserted together with incr_valid and/or decr_valid,
     // the increment/decrement are applied to the initial value rather than the current value, i.e.,
@@ -57,6 +58,10 @@ module br_counter #(
     // If 0, then when reinit is asserted together with incr_valid and/or decr_valid,
     // the increment/decrement values are ignored, i.e., value_next == initial_value.
     parameter bit EnableReinitAndChange = 1,
+    // If 1, the counter value saturates at 0 and MaxValue.
+    // If 0, the counter value wraps around at 0 and MaxValue.
+    // Must be 0 if EnableWrap is 1.
+    parameter bit EnableSaturate = 0,
     // If 1, then assert there are no valid bits asserted at the end of the test.
     parameter bit EnableAssertFinalNotValid = 1,
     localparam int ValueWidth = $clog2(MaxValue + 1),
@@ -82,6 +87,7 @@ module br_counter #(
   `BR_ASSERT_STATIC(max_value_gte_1_a, MaxValue >= 1)
   `BR_ASSERT_STATIC(max_increment_gte_1_a, MaxChange >= 1)
   `BR_ASSERT_STATIC(max_increment_lte_max_value_a, MaxChange <= MaxValue)
+  `BR_ASSERT_STATIC(no_wrap_and_saturate_a, !(EnableWrap && EnableSaturate))
 
   `BR_ASSERT_INTG(incr_in_range_a, incr_valid |-> incr <= MaxChange)
   `BR_ASSERT_INTG(decr_in_range_a, decr_valid |-> decr <= MaxChange)
@@ -101,10 +107,10 @@ module br_counter #(
       // ri lint_check_waive ARITH_ARGS
       value_extended + (incr_valid ? incr : '0) - (decr_valid ? decr : '0);
 
-  if (EnableWrap) begin : gen_wrap_cover
-    `BR_COVER_INTG(overflow_or_underflow_c, value_extended_next > MaxValue)
-  end else begin : gen_no_wrap_assert
-    `BR_ASSERT_INTG(no_overflow_or_underflow_a, value_extended_next <= MaxValue)
+  if (EnableWrap || EnableSaturate) begin : gen_wrap_or_saturate_cover
+    `BR_COVER_INTG(wrap_or_saturate_c, value_extended_next > MaxValue)
+  end else begin : gen_no_wrap_or_saturate_assert
+    `BR_ASSERT_INTG(no_wrap_or_saturate_a, value_extended_next <= MaxValue)
   end
 `endif  // BR_DISABLE_INTG_CHECKS
 `endif  // BR_ASSERT_ON
@@ -141,39 +147,53 @@ module br_counter #(
   assign value_loaden = reinit || incr_valid || decr_valid;
 
   // For MaxValueP1 being a power of 2, wrapping occurs naturally
-  if (IsMaxValueP1PowerOf2 || !EnableWrap) begin : gen_no_wrap
+  if (!EnableSaturate && (IsMaxValueP1PowerOf2 || !EnableWrap)) begin : gen_no_wrap_or_saturate
     assign value_next = value_temp[ValueWidth-1:0];  // ri lint_check_waive FULL_RANGE
 
     if (TempWidth > ValueWidth) begin : gen_unused
       `BR_UNUSED_NAMED(value_temp_msbs, value_temp[TempWidth-1:ValueWidth])
     end
     // For MaxValueP1 not being a power of 2, handle wrap-around explicitly
-  end else begin : gen_wrap
-    // The MSB will not be used
-    // ri lint_check_waive INEFFECTIVE_NET
-    logic [TempWidth-1:0] max_value_p1;
-    logic [TempWidth-1:0] value_temp_wrapped;
-    logic                 is_net_decr;
-    logic                 will_wrap;
-    logic                 will_underflow;
-    logic                 will_overflow;
+  end else begin : gen_wrap_or_saturate
+    logic is_net_decr;
+    logic would_out_of_bounds;
+    logic would_underflow;
+    logic would_overflow;
 
     assign is_net_decr = decr_qual > incr_qual;
-    assign will_wrap = value_temp > MaxValue;
-    assign will_underflow = will_wrap && is_net_decr;
-    assign will_overflow = will_wrap && !is_net_decr;
+    assign would_out_of_bounds = value_temp > MaxValue;
+    assign would_underflow = would_out_of_bounds && is_net_decr;
+    assign would_overflow = would_out_of_bounds && !is_net_decr;
 
-    assign max_value_p1 = TempWidth'($unsigned(MaxValueP1));
-    assign value_temp_wrapped =
-        will_underflow ? (value_temp + max_value_p1) :
-        will_overflow  ? (value_temp - max_value_p1) :
-                         value_temp;
-    // If TempWidth == ValueWidth, the bit select covers the full range
-    // ri lint_check_waive FULL_RANGE
-    assign value_next = value_temp_wrapped[ValueWidth-1:0];
+    if (EnableSaturate) begin : gen_saturate
+      logic [ValueWidth-1:0] value_next_saturated;
 
-    if (TempWidth > ValueWidth) begin : gen_unused
-      `BR_UNUSED_NAMED(value_temp_wrapped_msbs, value_temp_wrapped[TempWidth-1:ValueWidth])
+      assign value_next_saturated = MaxValue;
+      assign value_next = would_underflow ? '0 :
+                          would_overflow ? value_next_saturated :
+                          value_temp[ValueWidth-1:0];
+
+      if (TempWidth > ValueWidth) begin : gen_unused
+        `BR_UNUSED_NAMED(value_temp_msbs, value_temp[TempWidth-1:ValueWidth])
+      end
+    end else begin : gen_wrap
+      // The MSB will not be used
+      // ri lint_check_waive INEFFECTIVE_NET
+      logic [TempWidth-1:0] max_value_p1;
+      logic [TempWidth-1:0] value_temp_wrapped;
+
+      assign max_value_p1 = TempWidth'($unsigned(MaxValueP1));
+      assign value_temp_wrapped =
+          would_underflow ? (value_temp + max_value_p1) :
+          would_overflow  ? (value_temp - max_value_p1) :
+                          value_temp;
+      // If TempWidth == ValueWidth, the bit select covers the full range
+      // ri lint_check_waive FULL_RANGE
+      assign value_next = value_temp_wrapped[ValueWidth-1:0];
+
+      if (TempWidth > ValueWidth) begin : gen_unused
+        `BR_UNUSED_NAMED(value_temp_wrapped_msbs, value_temp_wrapped[TempWidth-1:ValueWidth])
+      end
     end
   end
 
