@@ -125,7 +125,8 @@ module br_counter_decr #(
 
     // Case-specific implementation checks
     `BR_ASSERT_STATIC(margin_gte0_a, Margin > 0)
-    `BR_ASSERT_IMPL(value_temp_wrapped_in_range_a, value_temp_wrapped <= MaxValue)
+    `BR_ASSERT_IMPL(value_temp_wrapped_in_range_on_underflow_a,
+                    underflow |-> (value_temp_wrapped >= Margin))
   end
 
   `BR_REGLI(value, value_next, decr_valid || reinit, initial_value)
@@ -140,13 +141,27 @@ module br_counter_decr #(
   `BR_ASSERT_IMPL(value_next_propagates_a, ##1 value == $past(value_next))
 
   // Underflow corners
-  `BR_ASSERT_IMPL(value_underflow_a,
-                  decr_valid && value_temp > MaxValue |-> value_next == value_temp - MaxValue - 1)
-  `BR_ASSERT_IMPL(zero_minus_one_a,
-                  value == 0 && decr_valid && decr == 1'b1 |-> value_next == MaxValue)
+  if (EnableSaturate) begin : gen_saturate_impl_checks
+    `BR_ASSERT_IMPL(value_saturate_a, (decr_valid && value_temp > MaxValue) |-> (value_next == '0))
+  end else begin : gen_overflow_impl_checks
+`ifdef BR_ASSERT_ON
+`ifdef BR_ENABLE_IMPL_CHECKS
+    logic [ValueWidth-1:0] value_temp_adjusted;
+
+    // If there is an underflow, we can treat value_temp as a negative number.
+    // By adding MaxValue + 1 to it, we should get to the correct wrap-around value.
+    assign value_temp_adjusted = value_temp + MaxValue + 1;
+`endif
+`endif
+    `BR_ASSERT_IMPL(value_underflow_a,
+                    (decr_valid && value_temp > MaxValue) |-> (value_next == value_temp_adjusted))
+    `BR_ASSERT_IMPL(
+        zero_minus_one_a,
+        (!reinit && value == 0 && decr_valid && decr == 1'b1) |-> (value_next == MaxValue))
+  end
 
   // Decrement corners
-  `BR_ASSERT_IMPL(plus_zero_a, decr_valid && decr == '0 |-> value_next == value)
+  `BR_ASSERT_IMPL(plus_zero_a, (!reinit && decr_valid && decr == '0) |-> (value_next == value))
   `BR_COVER_IMPL(decrement_max_c, decr_valid && decr == MaxDecrement)
   `BR_COVER_IMPL(value_temp_oob_c, value_temp > MaxValue)
 
