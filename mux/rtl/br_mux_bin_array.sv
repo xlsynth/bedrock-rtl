@@ -47,8 +47,6 @@ module br_mux_bin_array #(
   `BR_ASSERT_STATIC(legal_num_symbols_in_a, NumSymbolsIn >= 2)
   `BR_ASSERT_STATIC(legal_num_symbols_out_a, NumSymbolsOut >= 1)
   `BR_ASSERT_STATIC(legal_symbol_width_a, SymbolWidth >= 1)
-  `BR_ASSERT_STATIC(legal_use_structured_gates_a,
-                    (UseStructuredGates == 0) || (UseStructuredGates == 1))
 
   //------------------------------------------
   // Implementation
