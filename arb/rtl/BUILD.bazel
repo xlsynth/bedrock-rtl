@@ -64,6 +64,7 @@ verilog_library(
     deps = [
         "//arb/rtl:br_arb_pri_rr",
         "//counter/rtl:br_counter",
+        "//macros:br_asserts_internal",
     ],
 )
 

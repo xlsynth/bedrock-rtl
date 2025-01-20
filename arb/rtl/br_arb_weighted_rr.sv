@@ -1,3 +1,5 @@
+`include "br_asserts_internal.svh"
+
 // Copyright 2025 The Bedrock-RTL Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -30,28 +32,35 @@
 // output. A larger MaxAccumulatedWeight also tends to increase the
 // burstiness of the arbiter output.
 //
-// The high-level operation of the arbiter is:
-// 1. Grant the active requestor with the largest accumulated weight
-// 2. If the accumulated weight of the granted requestor is zero,
-//    a. Increment all accumulated weights by the corresponding weight
-//    b. Saturate the counts at the configurable maximum accumulated weight
-// 3. Decrement the accumulated weight of the granted requestor by 1
-//
-// We could implement the above exactly, but Step 1 tends to be expensive
-// and high latency. A reasonable approximation is:
+// The detailed operation of the arbiter is:
 // 1. Assign a 1-bit priority to each requestor
 //    a. Priority = 1 if accumulated weight is non-zero else 0
 // 2. Grant the active requestor with the largest priority, using RR to break ties
 // 3. If the accumulated weight of the granted requestor is zero,
-//    a. Increment all accumulated weights by the corresponding weight
+//    a. Increment all accumulated weights by the corresponding weight (including
+//       the grantee)
 //    b. Saturate the counts at the configurable maximum accumulated weight
-// 4. Decrement the accumulated weight of the granted requestor by 1
-
+// 4. Decrement the accumulated weight of the granted requestor by 1.
+//
+// Note: Step 4 will never underflow unless the granted request_weight is zero.
+// In this case, the accumulated weight is saturated at zero (instead of being
+// decremented to -1).
+//
+// With this implementation, any request that remains asserted and whose
+// request_weight is non-zero will eventually be granted. A requestor whose
+// weight accumulators is zero could first need to wait
+// MaxAccumulatedWeight*(NumRequesters-1) grants before all weight
+// accumulators are zero. Then, it could need to wait an additional
+// NumRequesters-1 grants before it is guaranteed to be selected.
+// So, a requestor may need to wait up to a total of
+// (MaxAccumulatedWeight+1)*(NumRequesters-1) grants before being granted itself.
 module br_arb_weighted_rr #(
     // Must be at least 2
     parameter int NumRequesters = 2,
+    // Must be at least 1
     parameter int MaxWeight = 1,
-    parameter int MaxAccumulatedWeight = 1,
+    // Maximum accumulated weight per requester. Must be at least MaxWeight.
+    parameter int MaxAccumulatedWeight = MaxWeight,
     localparam int WeightWidth = $clog2(MaxWeight + 1),
     localparam int AccumulatedWeightWidth = $clog2(MaxAccumulatedWeight + 1)
 ) (
@@ -62,6 +71,10 @@ module br_arb_weighted_rr #(
     input logic [NumRequesters-1:0][WeightWidth-1:0] request_weight,
     output logic [NumRequesters-1:0] grant
 );
+  `BR_ASSERT_STATIC(min_num_requestors_a, NumRequesters >= 2)
+  `BR_ASSERT_STATIC(min_max_weight_a, MaxWeight >= 1)
+  `BR_ASSERT_STATIC(max_accum_gte_max_weight_a, MaxAccumulatedWeight >= MaxWeight)
+
   //------------------------------------------
   // Arbitrate, prioritizing requests with
   // non-zero accumulated weight
@@ -85,10 +98,10 @@ module br_arb_weighted_rr #(
   // Track per-request accumulated weight
   //------------------------------------------
 
-  logic non_zero_weight_request;
+  logic any_high_priority_request;
   logic incr_accumulated_weight;
-  assign non_zero_weight_request = |(request & request_priority);
-  assign incr_accumulated_weight = enable_priority_update && |request && !non_zero_weight_request;
+  assign any_high_priority_request = |(request & request_priority);
+  assign incr_accumulated_weight = enable_priority_update && |request && !any_high_priority_request;
 
   logic [NumRequesters-1:0][AccumulatedWeightWidth-1:0] accumulated_weight;
 
@@ -96,8 +109,9 @@ module br_arb_weighted_rr #(
     br_counter #(
         .MaxValue(MaxAccumulatedWeight),
         .MaxChange(MaxWeight),
-        .EnableWrap(1)  // TODO(btowles): change this to EnableSaturation once implemented
-    ) br_counter_inst (
+        .EnableSaturate(1),
+        .EnableWrap(0)
+    ) br_counter (
         .clk,
         .rst,
         .reinit(1'b0),
