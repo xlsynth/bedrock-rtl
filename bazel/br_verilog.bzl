@@ -84,14 +84,14 @@ def br_verilog_sim_test_suite(name, tool, opts = [], **kwargs):
         **kwargs
     )
 
-def br_verilog_fpv_test_suite(name, sandbox = False, **kwargs):
+def br_verilog_fpv_test_suite(name, sandbox = True, **kwargs):
     """Wraps verilog_fpv_test_suite with Bedrock-internal settings. Not intended to be called by Bedrock users.
 
     * Defines `BR_ASSERT_ON`, `BR_ENABLE_IMPL_CHECKS`, `BR_DISABLE_FINAL_CHECKS` and `BR_ENABLE_FPV`.
 
     Args:
         name (str): The base name of the test suite.
-        sadnbox (bool): Whether to create a sandbox for fpv test
+        sandbox (bool): Whether to create a sandbox for fpv test
         **kwargs: Additional keyword arguments passed to verilog_fpv_test_suite. Do not pass defines.
     """
 
