@@ -138,10 +138,10 @@ module br_counter #(
   assign decr_qual = decr_valid ? decr : '0;
 
   if (EnableReinitAndChange) begin : gen_reinit_and_change
-    // ri lint_check_waive ARITH_ARGS RHS_TOO_SHORT
+    // ri lint_check_waive ARITH_ARGS RHS_TOO_SHORT ARITH_BITLEN
     assign value_temp = (reinit ? initial_value : value) + incr_qual - decr_qual;
   end else begin : gen_reinit_ignore_change
-    // ri lint_check_waive ARITH_ARGS RHS_TOO_SHORT
+    // ri lint_check_waive ARITH_ARGS RHS_TOO_SHORT ARITH_BITLEN
     assign value_temp = reinit ? initial_value : (value + incr_qual - decr_qual);
   end
   assign value_loaden = reinit || incr_valid || decr_valid;
