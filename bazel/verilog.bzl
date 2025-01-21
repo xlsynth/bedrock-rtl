@@ -603,7 +603,7 @@ def verilog_elab_and_lint_test_suite(name, defines = [], params = {}, **kwargs):
             **kwargs
         )
 
-def verilog_fpv_test_suite(name, defines = [], params = {}, **kwargs):
+def verilog_fpv_test_suite(name, defines = [], params = {}, sandbox = True, **kwargs):
     """Creates a suite of Verilog fpv tests for each combination of the provided parameters.
 
     The function generates all possible combinations of the provided parameters and creates a verilog_fpv_test
@@ -614,6 +614,7 @@ def verilog_fpv_test_suite(name, defines = [], params = {}, **kwargs):
         name (str): The base name for the test suite.
         defines (list): A list of defines.
         params (dict): A dictionary where keys are parameter names and values are lists of possible values for those parameters.
+        sandbox (bool): Whether to create a sandbox for the test.
         **kwargs: Additional keyword arguments to be passed to the verilog_elab_test and verilog_lint_test functions.
     """
     param_keys = sorted(params.keys())
@@ -629,6 +630,14 @@ def verilog_fpv_test_suite(name, defines = [], params = {}, **kwargs):
             params = params,
             **kwargs
         )
+        if sandbox:
+            rule_verilog_sandbox(
+                name = _make_test_name(name, "fpv_sandbox", param_keys, param_combination),
+                kind = "fpv",
+                defines = defines,
+                params = params,
+                **kwargs
+            )
 
 def verilog_sim_test_suite(name, defines = [], params = {}, **kwargs):
     """Creates a suite of Verilog sim tests for each combination of the provided parameters.
