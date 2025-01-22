@@ -1,5 +1,0 @@
-//arb/rtl:br_arb_fixed.sv
-//enc/rtl:br_enc_priority_encoder.sv
-//macros:br_asserts.svh
-//macros:br_asserts_internal.svh
-//macros:br_registers.svh
