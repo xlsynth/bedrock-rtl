@@ -173,8 +173,8 @@ module tb;
         @(cb_clk);
 
         // Calculate expected value_next
-        expected_value_next = (current_value >= decrement_value) ? 
-                                (current_value - decrement_value) : 
+        expected_value_next = (current_value >= decrement_value) ?
+                                (current_value - decrement_value) :
                                 (MaxValue + 1 - (decrement_value - current_value));
 
         // Check if value_next is as expected
