@@ -34,6 +34,16 @@ verilog_library(
 )
 
 verilog_library(
+    name = "br_amba_axi_timing_slice",
+    srcs = ["br_amba_axi_timing_slice.sv"],
+    deps = [
+        ":br_amba_pkg",
+        "//flow/rtl:br_flow_reg_both",
+        "//macros:br_asserts_internal",
+    ],
+)
+
+verilog_library(
     name = "br_amba_axil_timing_slice",
     srcs = ["br_amba_axil_timing_slice.sv"],
     deps = [
@@ -108,6 +118,21 @@ br_verilog_elab_and_lint_test_suite(
         ],
     },
     deps = [":br_amba_axil2apb"],
+)
+
+br_verilog_elab_and_lint_test_suite(
+    name = "br_amba_axi_timing_slice_test_suite",
+    params = {
+        "AddrWidth": [
+            "32",
+            "40",
+        ],
+        "DataWidth": [
+            "32",
+            "64",
+        ],
+    },
+    deps = [":br_amba_axi_timing_slice"],
 )
 
 br_verilog_elab_and_lint_test_suite(

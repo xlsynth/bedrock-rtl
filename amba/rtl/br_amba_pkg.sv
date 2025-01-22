@@ -41,6 +41,7 @@ package br_amba;
   localparam int unsigned AxiBurstLenWidth = 8;
   localparam int unsigned AxiBurstSizeWidth = 3;
   localparam int unsigned AxiBurstTypeWidth = 2;
+  localparam int unsigned AxiRLastWidth = 1;
 
   // APB parameters
   localparam int unsigned ApbProtWidth = 3;
