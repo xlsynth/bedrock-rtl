@@ -397,7 +397,7 @@ module br_arb_fixed_gen_tb;
         for (i = 0; i < NumRequesters; i++) begin
           // Generate a request pattern with a single active request at position i
           request_pattern = 1 << i;
-          expected_grant = request_pattern;
+          expected_grant  = request_pattern;
           // Expected cb_clk.grant is the same as the cb_clk.request pattern for a single cb_clk.request
 
           // Apply the request pattern

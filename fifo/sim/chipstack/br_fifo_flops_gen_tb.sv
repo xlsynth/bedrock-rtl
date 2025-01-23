@@ -555,9 +555,8 @@ module br_fifo_flops_gen_tb;
             cb_clk.pop_valid !== expected_pop_valid
           ) begin
             $display(
-                {
-                  "Time: %0t, ERROR: test_RegisterPopOutputsControlTransaction1 - Check failed.",
-                  "Expected pop_data=0x%h, pop_valid=%0b, got pop_data=0x%h, pop_valid=%0b"}, $time,
+                {"Time: %0t, ERROR: test_RegisterPopOutputsControlTransaction1 - Check failed.",
+                 "Expected pop_data=0x%h, pop_valid=%0b, got pop_data=0x%h, pop_valid=%0b"}, $time,
                   expected_pop_data, expected_pop_valid, pop_data, pop_valid);
             test_failed = 1;
           end else begin

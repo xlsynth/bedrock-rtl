@@ -247,12 +247,11 @@ module br_cdc_fifo_ctrl_1r1w_gen_tb;
                     cb_push_clk.push_ram_wr_addr !== expected_addr ||
                     cb_push_clk.push_ram_wr_data !== random_data) begin
                   $display(
-                      {
-                      "Time: %0t, ERROR: test_PushDataHandling - Check failed. Expected ",
-                      "push_ram_wr_valid=1, push_ram_wr_addr=0x%h, push_ram_wr_data=0x%h, got ",
-                      "push_ram_wr_valid=%b, push_ram_wr_addr=0x%h, push_ram_wr_data=0x%h"},
-                      $time, expected_addr, random_data, cb_push_clk.push_ram_wr_valid,
-                      cb_push_clk.push_ram_wr_addr, cb_push_clk.push_ram_wr_data);
+                      {"Time: %0t, ERROR: test_PushDataHandling - Check failed. Expected ",
+                       "push_ram_wr_valid=1, push_ram_wr_addr=0x%h, push_ram_wr_data=0x%h, got ",
+                       "push_ram_wr_valid=%b, push_ram_wr_addr=0x%h, push_ram_wr_data=0x%h"},
+                        $time, expected_addr, random_data, cb_push_clk.push_ram_wr_valid,
+                        cb_push_clk.push_ram_wr_addr, cb_push_clk.push_ram_wr_data);
                   test_failed = 1;
                 end else begin
                   $display(
@@ -266,11 +265,10 @@ module br_cdc_fifo_ctrl_1r1w_gen_tb;
                 // Check push_slots_next, push_full_next
                 if (cb_push_clk.push_slots_next !== expected_slots_next ||
                     cb_push_clk.push_full_next !== expected_full_next) begin
-                  $display(
-                      {"Time: %0t, ERROR: test_PushDataHandling - Check failed. Expected ",
-                       "push_slots_next=0x%h, push_full_next=%b, got push_slots_next=0x%h,",
-                       "push_full_next=%b"}, $time, expected_slots_next, expected_full_next,
-                        cb_push_clk.push_slots_next, cb_push_clk.push_full_next);
+                  $display({"Time: %0t, ERROR: test_PushDataHandling - Check failed. Expected ",
+                            "push_slots_next=0x%h, push_full_next=%b, got push_slots_next=0x%h,",
+                            "push_full_next=%b"}, $time, expected_slots_next, expected_full_next,
+                             cb_push_clk.push_slots_next, cb_push_clk.push_full_next);
                   test_failed = 1;
                 end else begin
                   $display({"Time: %0t, INFO: test_PushDataHandling - Check passed. ",

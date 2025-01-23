@@ -377,18 +377,14 @@ module br_cdc_fifo_flops_push_credit_gen_tb;
         // Step 4: Update `push_full_next` to predict if the FIFO will be full in the next cycle
         if (cb_push_clk.push_full_next !== initial_push_full_next) begin
           $display(
-            {
-              "Time: %0t, ERROR: test_PushDataOperationTransaction2 - push_full_next changed ",
-              "during stall.", "Expected %0b, got %0b"
-            }, $time, initial_push_full_next,
-            push_full_next);
+              {"Time: %0t, ERROR: test_PushDataOperationTransaction2 - push_full_next changed ",
+               "during stall.", "Expected %0b, got %0b"}, $time, initial_push_full_next,
+                push_full_next);
           test_failed = 1;
         end else begin
           $display(
-              {
-              "Time: %0t, INFO: test_PushDataOperationTransaction2 - push_full_next correctly",
-              "maintained during stall"
-              }, $time);
+              {"Time: %0t, INFO: test_PushDataOperationTransaction2 - push_full_next correctly",
+               "maintained during stall"}, $time);
           if (test_failed != 1) test_failed = 0;
         end
 
@@ -479,32 +475,24 @@ module br_cdc_fifo_flops_push_credit_gen_tb;
             @(cb_pop_clk);
             if (cb_push_clk.pop_items_next == expected_pop_items_next) begin
               // Step 6: Update cb_push_clk.pop_items_next
-              $display(
-                  {
-                    "Time: %0t, INFO: test_PopDataOperationTransaction1 - pop_items_next correct: %0d"
-                  }, $time, pop_items_next);
+              $display({"Time: %0t, INFO: test_PopDataOperationTransaction1 -",
+                        "pop_items_next correct: %0d"}, $time, pop_items_next);
             end else begin
-              $display(
-                  {
-                  "Time: %0t, ERROR: test_PopDataOperationTransaction1 - Incorrect pop_items_next.",
-                  "Expected: %0d, Got: %0d"
-                  }, $time, expected_pop_items_next, pop_items_next);
+              $display({"Time: %0t, ERROR: test_PopDataOperationTransaction1 - Incorrect ",
+                        "pop_items_next. Expected: %0d, Got: %0d"}, $time, expected_pop_items_next,
+                         pop_items_next);
               test_failed = 1;
             end
 
             @(cb_pop_clk);
             if (cb_push_clk.pop_empty_next == expected_pop_empty_next) begin
               // Step 7: Update cb_push_clk.pop_empty_next
-              $display(
-                  {
-                    "Time: %0t, INFO: test_PopDataOperationTransaction1 - pop_empty_next correct: %0d"
-                  }, $time, pop_empty_next);
+              $display({"Time: %0t, INFO: test_PopDataOperationTransaction1 - ",
+                        "pop_empty_next correct: %0d"}, $time, pop_empty_next);
             end else begin
-              $display(
-                  {
-                  "Time: %0t, ERROR: test_PopDataOperationTransaction1 - Incorrect pop_empty_next.",
-                  "Expected: %0d, Got: %0d"
-                  }, $time, expected_pop_empty_next, pop_empty_next);
+              $display({"Time: %0t, ERROR: test_PopDataOperationTransaction1 - ",
+                        "Incorrect pop_empty_next.", "Expected: %0d, Got: %0d"}, $time,
+                         expected_pop_empty_next, pop_empty_next);
               test_failed = 1;
             end
 

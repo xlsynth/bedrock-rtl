@@ -289,7 +289,7 @@ module br_arb_rr_gen_tb;
         for (i = 0; i < NumRequesters; i++) begin
           // Generate a request pattern with a single requester making a request
           request_pattern = 1 << i;
-          expected_grant = request_pattern;
+          expected_grant  = request_pattern;
           // Expected cb_clk.grant is the same as the cb_clk.request pattern
 
           // Apply the request pattern
