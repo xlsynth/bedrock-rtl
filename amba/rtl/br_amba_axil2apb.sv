@@ -143,8 +143,7 @@ module br_amba_axil2apb #(
         end
       end
       default: begin
-        // Default next state
-        apb_state_next = apb_state;
+        apb_state_next = 'x;
       end
     endcase
   end
