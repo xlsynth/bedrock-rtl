@@ -287,9 +287,10 @@ module br_credit_receiver_gen_tb;
 
         // Step 2: Monitor `credit_available` to ensure sufficient credits for the pop operation
         if (cb_clk.credit_available < pop_credit_value) begin
-          $display({"Time: %0t, ERROR: test_PopCreditManagementTransaction1 - Insufficient credits ",
-                    "for pop operation. ", "Available: %0d, Required: %0d"}, $time,
-                     credit_available, pop_credit_value);
+          $display(
+              {"Time: %0t, ERROR: test_PopCreditManagementTransaction1 - Insufficient credits ",
+               "for pop operation. ", "Available: %0d, Required: %0d"}, $time, credit_available,
+                pop_credit_value);
           test_failed = 1;
         end else begin
           // Step 3: If credits are sufficient, expect `pop_valid` to be asserted
@@ -306,8 +307,9 @@ module br_credit_receiver_gen_tb;
 
           // Step 4: Verify that the data on `pop_data` corresponds to the popped credits
           if (cb_clk.pop_data !== expected_pop_data) begin
-            $display({"Time: %0t, ERROR: test_PopCreditManagementTransaction1 - pop_data mismatch. ",
-                      "Expected: 0x%h, Got: 0x%h"}, $time, expected_pop_data, pop_data);
+            $display(
+                {"Time: %0t, ERROR: test_PopCreditManagementTransaction1 - pop_data mismatch. ",
+                 "Expected: 0x%h, Got: 0x%h"}, $time, expected_pop_data, pop_data);
             test_failed = 1;
           end else begin
             $display({"Time: %0t, INFO: test_PopCreditManagementTransaction1 - pop_data matches ",
