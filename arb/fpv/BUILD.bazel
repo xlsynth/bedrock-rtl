@@ -14,7 +14,7 @@
 
 load("@rules_hdl//verilog:providers.bzl", "verilog_library")
 load("//bazel:br_verilog.bzl", "br_verilog_fpv_test_suite")
-load("//bazel:verilog.bzl", "rule_verilog_sandbox", "verilog_elab_test")
+load("//bazel:verilog.bzl", "rule_verilog_fpv_sandbox", "verilog_elab_test")
 
 package(default_visibility = ["//visibility:public"])
 
@@ -109,13 +109,12 @@ br_verilog_fpv_test_suite(
     deps = [":br_arb_lru_fpv_monitor"],
 )
 
-rule_verilog_sandbox(
-    name = "br_arb_lru_jg_sandbox",
+rule_verilog_fpv_sandbox(
+    name = "br_arb_lru_fpv_sandbox",
     defines = [
         "BR_ASSERT_ON",
         "BR_ENABLE_IMPL_CHECKS",
     ],
-    kind = "fpv",
     params = {
         "NumRequesters": "2",
     },
