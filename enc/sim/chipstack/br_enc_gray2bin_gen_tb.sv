@@ -6,7 +6,7 @@
 // Description: Unit test for br_enc_gray2bin
 //=============================================================
 
-module tb;
+module br_enc_gray2bin_gen_tb;
   timeunit 1ns; timeprecision 100ps;
 
   //===========================================================
@@ -14,12 +14,9 @@ module tb;
   //===========================================================
 
 
-  parameter TIMEOUT = 10000000;  // Timeout value in ns
-  parameter PER_TASK_TIMEOUT = 1000000;  // Timeout value for each task in ns
-  parameter DRAIN_TIME = 10000;  // Time to observe all results in ns
-
-
-  parameter DISABLE_CHECKS = 0;  // Disable checks
+  parameter int TIMEOUT = 10000000;  // Timeout value in ns
+  parameter int PER_TASK_TIMEOUT = 1000000;  // Timeout value for each task in ns
+  parameter int DRAIN_TIME = 10000;  // Time to observe all results in ns
 
   //===========================================================
   // DUT Imports and Includes
@@ -59,7 +56,7 @@ module tb;
   initial begin
 
     #(TIMEOUT);
-    $display("Error: Testbench timeout!");
+    $display({"Error: Testbench timeout!"});
     $finish;
   end
 
@@ -107,28 +104,27 @@ module tb;
     observed_bin_output = bin;
 
     // Display the applied stimulus
-    $display("Time: %0t, INFO: test_Transaction1 - Driving gray=0x%h", $time, gray_input);
+    $display({"Time: %0t, INFO: test_Transaction1 - Driving gray=0x%h"}, $time, gray_input);
 
     // Perform check
     if (observed_bin_output !== expected_bin_output) begin
-      $display(
-          "Time: %0t, ERROR: test_Transaction1 - Check failed. Expected bin=0x%h, got bin=0x%h",
-          $time, expected_bin_output, observed_bin_output);
+      $display({"Time: %0t, ERROR: test_Transaction1 - Check failed.",
+                "Expected bin=0x%h, got bin=0x%h"}, $time, expected_bin_output,
+                 observed_bin_output);
       test_failed = 1;
     end else begin
-      $display(
-          "Time: %0t, INFO: test_Transaction1 - Check passed. Expected value for bin is the same as the observed value (both are 0x%h).",
-          $time, expected_bin_output);
+      $display({"Time: %0t, INFO: test_Transaction1 - Check passed.",
+                "Expected value for bin is the same as the observed value (both are 0x%h)."},
+                 $time, expected_bin_output);
       if (test_failed != 1) test_failed = 0;
     end
 
     // Report test status
     if (test_failed == 0) begin
-      $display("Time: %0t, PASSED: test_Transaction1", $time);
+      $display({"Time: %0t, PASSED: test_Transaction1"}, $time);
     end else begin
-      $display("Time: %0t, FAILED: test_Transaction1", $time);
+      $display({"Time: %0t, FAILED: test_Transaction1"}, $time);
     end
   endtask
 
 endmodule
-

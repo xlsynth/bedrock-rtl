@@ -144,7 +144,7 @@ module tb;
   initial begin
     if (NO_ASSERTS_ON_RESET) $assertoff;
     #(TIMEOUT);
-    $display("Error: Testbench timeout!");
+    $display({"Error: Testbench timeout!"});
     $finish;
   end
 
@@ -204,9 +204,8 @@ module tb;
     fork
       begin
         #(PER_TASK_TIMEOUT);
-        $display(
-            "Time: %0t, INFO: Timeout: test_PushDataOperationTransaction1. Stimuli is not observed or it needs more time to finish this test.",
-            $time);
+        $display({"Time: %0t, INFO: Timeout: test_PushDataOperationTransaction1.",
+                  "Stimuli is not observed or it needs more time to finish this test."}, $time);
       end
       begin
         // Purpose: Test the push data operation of the FIFO, ensuring data is pushed only when there is available space.
@@ -230,8 +229,8 @@ module tb;
         @(cb_push_clk);
         cb_push_clk.credit_initial_push  <= initial_credit;
         cb_push_clk.credit_withhold_push <= withhold_credit;
-        $display("Time: %0t, INFO: test_PushDataOperationTransaction1 - Initial credits set to %0d",
-                 $time, initial_credit);
+        $display({"Time: %0t, INFO: test_PushDataOperationTransaction1 - Initial credits set to %0d"
+                   }, $time, initial_credit);
 
         // Wait for a clock cycle to propagate initial conditions
         @(cb_push_clk);
@@ -242,9 +241,8 @@ module tb;
         cb_push_clk.push_valid <= 1;
         cb_push_clk.push_data  <= random_data;
 
-        $display(
-            "Time: %0t, INFO: test_PushDataOperationTransaction1 - Driving push_valid=1, push_data=0x%h",
-            $time, random_data);
+        $display({"Time: %0t, INFO: test_PushDataOperationTransaction1 - Driving push_valid=1,",
+                  "push_data=0x%h"}, $time, random_data);
 
         // Step 2: Monitor `push_full` to check if the FIFO is full
         @(cb_push_clk);
@@ -252,21 +250,20 @@ module tb;
         expected_push_slots_next -= 1;
         expected_push_full_next = 1;
         if (cb_push_clk.push_full) begin
-          $display(
-              "Time: %0t, ERROR: test_PushDataOperationTransaction1 - FIFO is full, cannot push data",
-              $time);
+          $display({"Time: %0t, ERROR: test_PushDataOperationTransaction1 - FIFO is full, cannot",
+                    "push data"}, $time);
           test_failed = 1;
         end else begin
           // Step 3: If `push_full` is deasserted, acknowledge data push by asserting `push_credit`
           if (cb_push_clk.push_credit) begin
             $display(
-                "Time: %0t, INFO: test_PushDataOperationTransaction1 - Data push acknowledged with push_credit=1",
-                $time);
+                {"Time: %0t, INFO: test_PushDataOperationTransaction1 - Data push acknowledged",
+                 "with push_credit=1"}, $time);
 
           end else begin
             $display(
-                "Time: %0t, INFO: test_PushDataOperationTransaction1 - push_credit not asserted",
-                $time);
+                {"Time: %0t, INFO: test_PushDataOperationTransaction1 - push_credit not asserted"},
+                  $time);
             test_failed = 0;
           end
         end
@@ -275,45 +272,44 @@ module tb;
         @(cb_push_clk);
         expected_push_slots_next -= 1;
         if (cb_push_clk.push_slots != expected_push_slots) begin
-          $display(
-              "Time: %0t, ERROR: test_PushDataOperationTransaction1 - push_slots mismatch. Expected: %0d, Got: %0d",
-              $time, expected_push_slots, cb_push_clk.push_slots);
+          $display({"Time: %0t, ERROR: test_PushDataOperationTransaction1 - push_slots mismatch.",
+                    "Expected: %0d, Got: %0d"}, $time, expected_push_slots, cb_push_clk.push_slots);
           test_failed = 1;
         end else begin
-          $display(
-              "Time: %0t, INFO: test_PushDataOperationTransaction1 - push_slots correctly updated to %0d",
-              $time, push_slots);
+          $display({"Time: %0t, INFO: test_PushDataOperationTransaction1 - push_slots correctly",
+                    "updated to %0d"}, $time, push_slots);
         end
 
         // Step 5: Update `push_slots_next` to predict available slots in the next cycle
         if (cb_push_clk.push_slots_next != expected_push_slots_next) begin
           $display(
-              "Time: %0t, ERROR: test_PushDataOperationTransaction1 - push_slots_next mismatch. Expected: %0d, Got: %0d",
-              $time, expected_push_slots_next, cb_push_clk.push_slots_next);
+              {"Time: %0t, ERROR: test_PushDataOperationTransaction1 - push_slots_next mismatch.",
+               "Expected: %0d, Got: %0d"}, $time, expected_push_slots_next,
+                cb_push_clk.push_slots_next);
           test_failed = 1;
         end else begin
           $display(
-              "Time: %0t, INFO: test_PushDataOperationTransaction1 - push_slots_next correctly predicted to %0d",
-              $time, push_slots_next);
+              {"Time: %0t, INFO: test_PushDataOperationTransaction1 - push_slots_next correctly",
+               "predicted to %0d"}, $time, push_slots_next);
         end
 
         // Step 6: Update `push_full_next` to predict if the FIFO will be full in the next cycle
         if (cb_push_clk.push_full_next != expected_push_full_next) begin
           $display(
-              "Time: %0t, ERROR: test_PushDataOperationTransaction1 - push_full_next mismatch. Expected: %0d, Got: %0d",
-              $time, expected_push_full_next, push_full_next);
+              {"Time: %0t, ERROR: test_PushDataOperationTransaction1 - push_full_next mismatch.",
+               "Expected: %0d, Got: %0d"}, $time, expected_push_full_next, push_full_next);
           test_failed = 1;
         end else begin
           $display(
-              "Time: %0t, INFO: test_PushDataOperationTransaction1 - push_full_next correctly predicted to %0d",
-              $time, push_full_next);
+              {"Time: %0t, INFO: test_PushDataOperationTransaction1 - push_full_next correctly",
+               "predicted to %0d"}, $time, push_full_next);
         end
 
         // Final test status
         if (test_failed == 0) begin
-          $display("Time: %0t, PASSED: test_PushDataOperationTransaction1", $time);
+          $display({"Time: %0t, PASSED: test_PushDataOperationTransaction1"}, $time);
         end else begin
-          $display("Time: %0t, FAILED: test_PushDataOperationTransaction1", $time);
+          $display({"Time: %0t, FAILED: test_PushDataOperationTransaction1"}, $time);
         end
       end
     join_any
@@ -325,9 +321,8 @@ module tb;
     fork
       begin
         #(PER_TASK_TIMEOUT);
-        $display(
-            "Time: %0t, INFO: Timeout: test_PushDataOperationTransaction2. Stimuli is not observed or it needs more time to finish this test.",
-            $time);
+        $display({"Time: %0t, INFO: Timeout: test_PushDataOperationTransaction2.",
+                  "Stimuli is not observed or it needs more time to finish this test."}, $time);
       end
       begin
         // Purpose: Simulate a stall condition during the push operation and verify the behavior of the FIFO.
@@ -348,53 +343,51 @@ module tb;
         // Step 1: Assert `push_credit_stall` to simulate a stall condition
         cb_push_clk.push_credit_stall <= 1;
         @(cb_push_clk);
-        $display("Time: %0t, INFO: test_PushDataOperationTransaction2 - Asserted push_credit_stall",
-                 $time);
+        $display({"Time: %0t, INFO: test_PushDataOperationTransaction2 - Asserted push_credit_stall"
+                   }, $time);
 
         // Step 2: Deassert `push_credit` to indicate no data can be pushed during the stall
         if (cb_push_clk.push_credit !== 0) begin
-          $display(
-              "Time: %0t, ERROR: test_PushDataOperationTransaction2 - push_credit should be deasserted during stall. Expected 0, got %0b",
-              $time, push_credit);
+          $display({"Time: %0t, ERROR: test_PushDataOperationTransaction2 - push_credit should be",
+                    "deasserted during stall.", "Expected 0, got %0b"}, $time, push_credit);
           test_failed = 1;
         end else begin
-          $display(
-              "Time: %0t, INFO: test_PushDataOperationTransaction2 - push_credit correctly deasserted during stall",
-              $time);
+          $display({"Time: %0t, INFO: test_PushDataOperationTransaction2 - push_credit correctly",
+                    "deasserted during stall"}, $time);
           if (test_failed != 1) test_failed = 0;
         end
 
         // Step 3: Maintain current state of `push_slots` and `push_slots_next` during the stall
         if (cb_push_clk.push_slots !== initial_push_slots || cb_push_clk.push_slots_next !== initial_push_slots_next) begin
-          $display(
-              "Time: %0t, ERROR: test_PushDataOperationTransaction2 - push_slots or push_slots_next changed during stall. Expected %0d/%0d, got %0d/%0d",
-              $time, initial_push_slots, initial_push_slots_next, push_slots, push_slots_next);
+          $display({"Time: %0t, ERROR: test_PushDataOperationTransaction2 - push_slots or",
+                    "push_slots_next changed during stall.", "Expected %0d/%0d, got %0d/%0d"},
+                     $time, initial_push_slots, initial_push_slots_next, push_slots,
+                     push_slots_next);
           test_failed = 1;
         end else begin
-          $display(
-              "Time: %0t, INFO: test_PushDataOperationTransaction2 - push_slots and push_slots_next maintained during stall",
-              $time);
+          $display({"Time: %0t, INFO: test_PushDataOperationTransaction2 - push_slots and",
+                    "push_slots_next maintained during stall"}, $time);
           if (test_failed != 1) test_failed = 0;
         end
 
         // Step 4: Update `push_full_next` to predict if the FIFO will be full in the next cycle
         if (cb_push_clk.push_full_next !== initial_push_full_next) begin
-          $display(
-              "Time: %0t, ERROR: test_PushDataOperationTransaction2 - push_full_next changed during stall. Expected %0b, got %0b",
-              $time, initial_push_full_next, push_full_next);
+          $display({"Time: %0t, ERROR: test_PushDataOperationTransaction2 - push_full_next changed",
+                    "during stall.", "Expected %0b, got %0b"}, $time, initial_push_full_next,
+                     push_full_next);
           test_failed = 1;
         end else begin
           $display(
-              "Time: %0t, INFO: test_PushDataOperationTransaction2 - push_full_next correctly maintained during stall",
-              $time);
+              {"Time: %0t, INFO: test_PushDataOperationTransaction2 - push_full_next correctly",
+               "maintained during stall"}, $time);
           if (test_failed != 1) test_failed = 0;
         end
 
         // End of test: Report status
         if (test_failed == 0) begin
-          $display("Time: %0t, PASSED: test_PushDataOperationTransaction2", $time);
+          $display({"Time: %0t, PASSED: test_PushDataOperationTransaction2"}, $time);
         end else begin
-          $display("Time: %0t, FAILED: test_PushDataOperationTransaction2", $time);
+          $display({"Time: %0t, FAILED: test_PushDataOperationTransaction2"}, $time);
         end
       end
     join_any
@@ -406,9 +399,8 @@ module tb;
     fork
       begin
         #(PER_TASK_TIMEOUT);
-        $display(
-            "Time: %0t, INFO: Timeout: test_PopDataOperationTransaction1. Stimuli is not observed or it needs more time to finish this test.",
-            $time);
+        $display({"Time: %0t, INFO: Timeout: test_PopDataOperationTransaction1.",
+                  "Stimuli is not observed or it needs more time to finish this test."}, $time);
       end
       begin
         // Purpose: Test the pop data operation, ensuring data is popped only when the FIFO is not empty and the pop interface is ready.
@@ -437,80 +429,85 @@ module tb;
         @(cb_pop_clk);
         @(cb_pop_clk);
 
-        if (cb_push_clk.pop_empty == 0) begin // Step 2: Monitor cb_push_clk.pop_empty to ensure FIFO is not empty
-          $display("Time: %0t, INFO: test_PopDataOperationTransaction1 - FIFO is not empty", $time);
+        if (cb_push_clk.pop_empty == 0) begin
+          // Step 2: Monitor cb_push_clk.pop_empty to ensure FIFO is not empty
+          $display({"Time: %0t, INFO: test_PopDataOperationTransaction1 - FIFO is not empty"},
+                     $time);
 
           @(cb_pop_clk);
-          if (cb_push_clk.pop_valid == 1) begin // Step 3: If cb_push_clk.pop_empty is deasserted, assert cb_push_clk.pop_valid
+          if (cb_push_clk.pop_valid == 1) begin
+            // Step 3: If cb_push_clk.pop_empty is deasserted, assert cb_push_clk.pop_valid
             $display(
-                "Time: %0t, INFO: test_PopDataOperationTransaction1 - pop_valid asserted, valid data available",
-                $time);
+                {"Time: %0t, INFO: test_PopDataOperationTransaction1 - pop_valid asserted, valid",
+                 "data available"}, $time);
 
             @(cb_pop_clk);
-            if (cb_push_clk.pop_data == expected_pop_data) begin // Step 4: Provide data on cb_push_clk.pop_data
+            if (cb_push_clk.pop_data == expected_pop_data) begin
+              // Step 4: Provide data on cb_push_clk.pop_data
               $display(
-                  "Time: %0t, INFO: test_PopDataOperationTransaction1 - Correct data popped: 0x%h",
-                  $time, pop_data);
+                  {"Time: %0t, INFO: test_PopDataOperationTransaction1 - Correct data popped: 0x%h"
+                    }, $time, pop_data);
             end else begin
               $display(
-                  "Time: %0t, ERROR: test_PopDataOperationTransaction1 - Incorrect data popped. Expected: 0x%h, Got: 0x%h",
-                  $time, expected_pop_data, pop_data);
+                  {"Time: %0t, ERROR: test_PopDataOperationTransaction1 - Incorrect data popped.",
+                   "Expected: 0x%h, Got: 0x%h"}, $time, expected_pop_data, pop_data);
               test_failed = 1;
             end
 
             @(cb_pop_clk);
-            if (cb_push_clk.pop_items == expected_pop_items) begin // Step 5: Update cb_push_clk.pop_items
+            if (cb_push_clk.pop_items == expected_pop_items) begin
+              // Step 5: Update cb_push_clk.pop_items
               $display(
-                  "Time: %0t, INFO: test_PopDataOperationTransaction1 - pop_items correct: %0d",
-                  $time, pop_items);
+                  {"Time: %0t, INFO: test_PopDataOperationTransaction1 - pop_items correct: %0d"},
+                    $time, pop_items);
             end else begin
               $display(
-                  "Time: %0t, ERROR: test_PopDataOperationTransaction1 - Incorrect pop_items. Expected: %0d, Got: %0d",
-                  $time, expected_pop_items, pop_items);
+                  {"Time: %0t, ERROR: test_PopDataOperationTransaction1 - Incorrect pop_items.",
+                   "Expected: %0d, Got: %0d"}, $time, expected_pop_items, pop_items);
               test_failed = 1;
             end
 
             @(cb_pop_clk);
-            if (cb_push_clk.pop_items_next == expected_pop_items_next) begin // Step 6: Update cb_push_clk.pop_items_next
+            if (cb_push_clk.pop_items_next == expected_pop_items_next) begin
+              // Step 6: Update cb_push_clk.pop_items_next
               $display(
-                  "Time: %0t, INFO: test_PopDataOperationTransaction1 - pop_items_next correct: %0d",
-                  $time, pop_items_next);
+                  {"Time: %0t, INFO: test_PopDataOperationTransaction1 - pop_items_next correct: %0d"
+                    }, $time, pop_items_next);
             end else begin
               $display(
-                  "Time: %0t, ERROR: test_PopDataOperationTransaction1 - Incorrect pop_items_next. Expected: %0d, Got: %0d",
-                  $time, expected_pop_items_next, pop_items_next);
+                  {"Time: %0t, ERROR: test_PopDataOperationTransaction1 - Incorrect pop_items_next.",
+                   "Expected: %0d, Got: %0d"}, $time, expected_pop_items_next, pop_items_next);
               test_failed = 1;
             end
 
             @(cb_pop_clk);
             if (cb_push_clk.pop_empty_next == expected_pop_empty_next) begin // Step 7: Update cb_push_clk.pop_empty_next
               $display(
-                  "Time: %0t, INFO: test_PopDataOperationTransaction1 - pop_empty_next correct: %0d",
-                  $time, pop_empty_next);
+                  {"Time: %0t, INFO: test_PopDataOperationTransaction1 - pop_empty_next correct: %0d"
+                    }, $time, pop_empty_next);
             end else begin
               $display(
-                  "Time: %0t, ERROR: test_PopDataOperationTransaction1 - Incorrect pop_empty_next. Expected: %0d, Got: %0d",
-                  $time, expected_pop_empty_next, pop_empty_next);
+                  {"Time: %0t, ERROR: test_PopDataOperationTransaction1 - Incorrect pop_empty_next.",
+                   "Expected: %0d, Got: %0d"}, $time, expected_pop_empty_next, pop_empty_next);
               test_failed = 1;
             end
 
           end else begin
             $display(
-                "Time: %0t, ERROR: test_PopDataOperationTransaction1 - pop_valid not asserted when expected",
-                $time);
+                {"Time: %0t, ERROR: test_PopDataOperationTransaction1 - pop_valid not asserted",
+                 "when expected"}, $time);
             test_failed = 1;
           end
         end else begin
-          $display(
-              "Time: %0t, ERROR: test_PopDataOperationTransaction1 - FIFO is empty when it should not be",
-              $time);
+          $display({"Time: %0t, ERROR: test_PopDataOperationTransaction1 - FIFO is empty when it",
+                    "should not be"}, $time);
           test_failed = 1;
         end
 
         if (test_failed == 0) begin
-          $display("Time: %0t, PASSED: test_PopDataOperationTransaction1", $time);
+          $display({"Time: %0t, PASSED: test_PopDataOperationTransaction1"}, $time);
         end else begin
-          $display("Time: %0t, FAILED: test_PopDataOperationTransaction1", $time);
+          $display({"Time: %0t, FAILED: test_PopDataOperationTransaction1"}, $time);
         end
       end
     join_any
@@ -522,9 +519,8 @@ module tb;
     fork
       begin
         #(PER_TASK_TIMEOUT);
-        $display(
-            "Time: %0t, INFO: Timeout: test_CreditInitializationTransaction1. Stimuli is not observed or it needs more time to finish this test.",
-            $time);
+        $display({"Time: %0t, INFO: Timeout: test_CreditInitializationTransaction1.",
+                  "Stimuli is not observed or it needs more time to finish this test."}, $time);
       end
       begin
         // Purpose: Test the initialization of the credit system for FIFO push control.
@@ -539,9 +535,8 @@ module tb;
             $urandom_range(1, MaxCredit);  // Random initial credit value within valid range
         @(cb_push_clk);
         cb_push_clk.credit_initial_push <= initial_credit_value;
-        $display(
-            "Time: %0t, INFO: test_CreditInitializationTransaction1 - Driving credit_initial_push=0x%h",
-            $time, initial_credit_value);
+        $display({"Time: %0t, INFO: test_CreditInitializationTransaction1 - Driving",
+                  "credit_initial_push=0x%h"}, $time, initial_credit_value);
 
         // Wait for the credit system to initialize
         @(cb_push_clk);
@@ -556,22 +551,22 @@ module tb;
 
         // Check if the credit_count_push is initialized correctly
         if (cb_push_clk.credit_count_push !== expected_credit_count_push) begin
-          $display(
-              "Time: %0t, ERROR: test_CreditInitializationTransaction1 - Check failed. Expected credit_count_push=0x%h, got 0x%h",
-              $time, expected_credit_count_push, cb_push_clk.credit_count_push);
+          $display({"Time: %0t, ERROR: test_CreditInitializationTransaction1 - Check failed.",
+                    "Expected credit_count_push=0x%h, got 0x%h"}, $time,
+                     expected_credit_count_push, cb_push_clk.credit_count_push);
           test_failed = 1;
         end else begin
-          $display(
-              "Time: %0t, INFO: test_CreditInitializationTransaction1 - Check passed. Expected value for credit_count_push is the same as the observed value (both are 0x%h).",
-              $time, credit_count_push);
+          $display({"Time: %0t, INFO: test_CreditInitializationTransaction1 - Check passed.",
+                    "Expected value for credit_count_push is the same as the observed value (both",
+                    "are 0x%h)."}, $time, credit_count_push);
           if (test_failed != 1) test_failed = 0;
         end
 
         // Report the test status
         if (test_failed == 0) begin
-          $display("Time: %0t, PASSED: test_CreditInitializationTransaction1", $time);
+          $display({"Time: %0t, PASSED: test_CreditInitializationTransaction1"}, $time);
         end else begin
-          $display("Time: %0t, FAILED: test_CreditInitializationTransaction1", $time);
+          $display({"Time: %0t, FAILED: test_CreditInitializationTransaction1"}, $time);
         end
       end
     join_any
@@ -583,9 +578,8 @@ module tb;
     fork
       begin
         #(PER_TASK_TIMEOUT);
-        $display(
-            "Time: %0t, INFO: Timeout: test_CreditWithholdingTransaction1. Stimuli is not observed or it needs more time to finish this test.",
-            $time);
+        $display({"Time: %0t, INFO: Timeout: test_CreditWithholdingTransaction1.",
+                  "Stimuli is not observed or it needs more time to finish this test."}, $time);
       end
       begin
         // Purpose: Test the credit withholding functionality by setting `credit_withhold_push` and verifying the reduction in `credit_count_push` and update of `credit_available_push`.
@@ -605,8 +599,8 @@ module tb;
         // Apply initial credit
         @(cb_push_clk);
         cb_push_clk.credit_initial_push <= initial_credit;
-        $display("Time: %0t, INFO: test_CreditWithholdingTransaction1 - Initial credit set to %0d",
-                 $time, initial_credit);
+        $display({"Time: %0t, INFO: test_CreditWithholdingTransaction1 - Initial credit set to %0d"
+                   }, $time, initial_credit);
 
         // Wait for credit initialization
         @(cb_push_clk);
@@ -614,9 +608,8 @@ module tb;
         // Apply credit withholding
         @(cb_push_clk);
         cb_push_clk.credit_withhold_push <= withhold_credit;
-        $display(
-            "Time: %0t, INFO: test_CreditWithholdingTransaction1 - Withholding credit set to %0d",
-            $time, withhold_credit);
+        $display({"Time: %0t, INFO: test_CreditWithholdingTransaction1 - Withholding credit set to",
+                  "%0d"}, $time, withhold_credit);
 
         // Calculate expected values
         expected_credit_count = initial_credit - withhold_credit;
@@ -627,35 +620,33 @@ module tb;
 
         // Check credit count
         if (cb_push_clk.credit_count_push !== expected_credit_count) begin
-          $display(
-              "Time: %0t, ERROR: test_CreditWithholdingTransaction1 - Credit count mismatch. Expected %0d, got %0d",
-              $time, expected_credit_count, credit_count_push);
+          $display({"Time: %0t, ERROR: test_CreditWithholdingTransaction1 - Credit count mismatch.",
+                    "Expected %0d, got %0d"}, $time, expected_credit_count, credit_count_push);
           test_failed = 1;
         end else begin
           $display(
-              "Time: %0t, INFO: test_CreditWithholdingTransaction1 - Credit count check passed. Expected and got %0d",
-              $time, expected_credit_count);
+              {"Time: %0t, INFO: test_CreditWithholdingTransaction1 - Credit count check passed.",
+               "Expected and got %0d"}, $time, expected_credit_count);
           if (test_failed != 1) test_failed = 0;
         end
 
         // Check available credit
         if (cb_push_clk.credit_available_push !== expected_credit_available) begin
-          $display(
-              "Time: %0t, ERROR: test_CreditWithholdingTransaction1 - Available credit mismatch. Expected %0d, got %0d",
-              $time, expected_credit_available, credit_available_push);
+          $display({"Time: %0t, ERROR: test_CreditWithholdingTransaction1 - Available credit",
+                    "mismatch.", "Expected %0d, got %0d"}, $time, expected_credit_available,
+                     credit_available_push);
           test_failed = 1;
         end else begin
-          $display(
-              "Time: %0t, INFO: test_CreditWithholdingTransaction1 - Available credit check passed. Expected and got %0d",
-              $time, expected_credit_available);
+          $display({"Time: %0t, INFO: test_CreditWithholdingTransaction1 - Available credit check",
+                    "passed.", "Expected and got %0d"}, $time, expected_credit_available);
           if (test_failed != 1) test_failed = 0;
         end
 
         // Report test status
         if (test_failed == 0) begin
-          $display("Time: %0t, PASSED: test_CreditWithholdingTransaction1", $time);
+          $display({"Time: %0t, PASSED: test_CreditWithholdingTransaction1"}, $time);
         end else begin
-          $display("Time: %0t, FAILED: test_CreditWithholdingTransaction1", $time);
+          $display({"Time: %0t, FAILED: test_CreditWithholdingTransaction1"}, $time);
         end
       end
     join_any
@@ -667,9 +658,8 @@ module tb;
     fork
       begin
         #(PER_TASK_TIMEOUT);
-        $display(
-            "Time: %0t, INFO: Timeout: test_CreditAvailabilityMonitoringTransaction1. Stimuli is not observed or it needs more time to finish this test.",
-            $time);
+        $display({"Time: %0t, INFO: Timeout: test_CreditAvailabilityMonitoringTransaction1.",
+                  "Stimuli is not observed or it needs more time to finish this test."}, $time);
       end
       begin
         // Purpose: Monitor available credits and update `credit_available_push` to reflect current credit availability.
@@ -701,21 +691,23 @@ module tb;
         // Check if the credit_available_push matches the expected value
         if (cb_push_clk.credit_available_push !== expected_credit_available_push) begin
           $display(
-              "Time: %0t, ERROR: test_CreditAvailabilityMonitoringTransaction1 - Check failed. Expected credit_available_push = 0x%h, got 0x%h",
-              $time, expected_credit_available_push, credit_available_push);
+              {"Time: %0t, ERROR: test_CreditAvailabilityMonitoringTransaction1 - Check failed.",
+               "Expected credit_available_push = 0x%h, got 0x%h"}, $time,
+                expected_credit_available_push, credit_available_push);
           test_failed = 1;
         end else begin
           $display(
-              "Time: %0t, INFO: test_CreditAvailabilityMonitoringTransaction1 - Check passed. Expected value for credit_available_push is the same as the observed value (both are 0x%h).",
-              $time, credit_available_push);
+              {"Time: %0t, INFO: test_CreditAvailabilityMonitoringTransaction1 - Check passed.",
+               "Expected value for credit_available_push is the same as the observed value",
+               "(both are 0x%h)."}, $time, credit_available_push);
           if (test_failed != 1) test_failed = 0;
         end
 
         // Final test status
         if (test_failed == 0) begin
-          $display("Time: %0t, PASSED: test_CreditAvailabilityMonitoringTransaction1", $time);
+          $display({"Time: %0t, PASSED: test_CreditAvailabilityMonitoringTransaction1"}, $time);
         end else begin
-          $display("Time: %0t, FAILED: test_CreditAvailabilityMonitoringTransaction1", $time);
+          $display({"Time: %0t, FAILED: test_CreditAvailabilityMonitoringTransaction1"}, $time);
         end
       end
     join_any
@@ -723,4 +715,3 @@ module tb;
   endtask
 
 endmodule
-

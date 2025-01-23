@@ -6,20 +6,19 @@
 // Description: Unit test for br_credit_receiver
 //=============================================================
 
-module tb;
+module br_credit_receiver_gen_tb;
   timeunit 1ns; timeprecision 100ps;
 
   //===========================================================
   // Testbench Parameters
   //===========================================================
-  parameter CLOCK_FREQ = 100;  // Clock frequency in MHz
-  parameter RESET_DURATION = 100;  // Reset duration in ns
-  parameter TIMEOUT = 10000000;  // Timeout value in ns
-  parameter PER_TASK_TIMEOUT = 1000000;  // Timeout value for each task in ns
-  parameter DRAIN_TIME = 10000;  // Time to observe all results in ns
-  parameter CLOCK_FREQ_NS_CONVERSION_FACTOR = 1000;  // Conversion factor to nanoseconds
-  parameter NO_ASSERTS_ON_RESET = 0;  // Disable assertions during reset
-  parameter DISABLE_CHECKS = 0;  // Disable checks
+  parameter int CLOCK_FREQ = 100;  // Clock frequency in MHz
+  parameter int RESET_DURATION = 100;  // Reset duration in ns
+  parameter int TIMEOUT = 10000000;  // Timeout value in ns
+  parameter int PER_TASK_TIMEOUT = 1000000;  // Timeout value for each task in ns
+  parameter int DRAIN_TIME = 10000;  // Time to observe all results in ns
+  parameter int CLOCK_FREQ_NS_CONVERSION_FACTOR = 1000;  // Conversion factor to nanoseconds
+  parameter int NO_ASSERTS_ON_RESET = 0;  // Disable assertions during reset
 
   //===========================================================
   // DUT Imports and Includes
@@ -97,7 +96,8 @@ module tb;
   end
   clocking cb_clk @(posedge clk);
     default input #1step output #4;
-    inout rst, push_credit_stall, push_valid, push_data, pop_credit, credit_initial, credit_withhold;
+    inout rst, push_credit_stall, push_valid, push_data,
+    pop_credit, credit_initial, credit_withhold;
     input push_credit, pop_valid, pop_data, credit_count, credit_available;
   endclocking
 
@@ -108,7 +108,7 @@ module tb;
   initial begin
     if (NO_ASSERTS_ON_RESET) $assertoff;
     #(TIMEOUT);
-    $display("Error: Testbench timeout!");
+    $display({"Error: Testbench timeout!"});
     $finish;
   end
 
@@ -153,9 +153,8 @@ module tb;
     fork
       begin
         #(PER_TASK_TIMEOUT);
-        $display(
-            "Time: %0t, INFO: Timeout: test_PushCreditManagementTransaction1. Stimuli is not observed or it needs more time to finish this test.",
-            $time);
+        $display({"Time: %0t, INFO: Timeout: test_PushCreditManagementTransaction1.",
+                  "Stimuli is not observed or it needs more time to finish this test."}, $time);
       end
       begin
         // Purpose: To verify the push credit management functionality by ensuring credits are available for data transmission.
@@ -179,70 +178,67 @@ module tb;
         random_push_data = $urandom();
         cb_clk.push_data <= random_push_data;
         @(cb_clk);
-        $display(
-            "Time: %0t, INFO: test_PushCreditManagementTransaction1 - Driving push_valid=1, push_data=0x%h",
-            $time, random_push_data);
+        $display({"Time: %0t, INFO: test_PushCreditManagementTransaction1 - Driving push_valid=1,",
+                  "push_data=0x%h"}, $time, random_push_data);
 
         // Step 2: Monitor `credit_available` to ensure sufficient credits for the push operation
         expected_credit_available = initial_credit;
         if (cb_clk.credit_available != expected_credit_available) begin
-          $display(
-              "Time: %0t, ERROR: test_PushCreditManagementTransaction1 - Check failed. Expected credit_available=%0d, got %0d",
-              $time, expected_credit_available, credit_available);
+          $display({"Time: %0t, ERROR: test_PushCreditManagementTransaction1 - Check failed.",
+                    "Expected credit_available=%0d, got %0d"}, $time, expected_credit_available,
+                     credit_available);
           test_failed = 1;
         end else begin
-          $display(
-              "Time: %0t, INFO: test_PushCreditManagementTransaction1 - Check passed. Expected credit_available=%0d is the same as the observed value.",
-              $time, expected_credit_available);
+          $display({"Time: %0t, INFO: test_PushCreditManagementTransaction1 - Check passed.",
+                    "Expected credit_available=%0d is the same as the observed value."}, $time,
+                     expected_credit_available);
           if (test_failed != 1) test_failed = 0;
         end
 
         // Step 3: If credits are available, expect `push_credit` to be asserted
         if (cb_clk.push_credit !== 1) begin
-          $display(
-              "Time: %0t, ERROR: test_PushCreditManagementTransaction1 - Check failed. Expected push_credit=1, got %0d",
-              $time, push_credit);
+          $display({"Time: %0t, ERROR: test_PushCreditManagementTransaction1 - Check failed.",
+                    "Expected push_credit=1, got %0d"}, $time, push_credit);
           test_failed = 1;
         end else begin
-          $display(
-              "Time: %0t, INFO: test_PushCreditManagementTransaction1 - Check passed. push_credit is asserted as expected.",
-              $time);
+          $display({"Time: %0t, INFO: test_PushCreditManagementTransaction1 - Check passed.",
+                    "push_credit is asserted as expected."}, $time);
           if (test_failed != 1) test_failed = 0;
         end
 
         // Step 4: Verify that `credit_count` is updated to reflect the new credit state after the push
         expected_credit_count = initial_credit - 1;
         if (cb_clk.credit_count != expected_credit_count) begin
-          $display(
-              "Time: %0t, ERROR: test_PushCreditManagementTransaction1 - Check failed. Expected credit_count=%0d, got %0d",
-              $time, expected_credit_count, credit_count);
+          $display({"Time: %0t, ERROR: test_PushCreditManagementTransaction1 - Check failed.",
+                    "Expected credit_count=%0d, got %0d"}, $time, expected_credit_count,
+                     credit_count);
           test_failed = 1;
         end else begin
-          $display(
-              "Time: %0t, INFO: test_PushCreditManagementTransaction1 - Check passed. Expected credit_count=%0d is the same as the observed value.",
-              $time, expected_credit_count);
+          $display({"Time: %0t, INFO: test_PushCreditManagementTransaction1 - Check passed.",
+                    "Expected credit_count=%0d is the same as the observed value."}, $time,
+                     expected_credit_count);
           if (test_failed != 1) test_failed = 0;
         end
 
         // Step 5: Confirm that `credit_available` is updated to reflect the remaining available credits
         expected_credit_available = expected_credit_count;
         if (cb_clk.credit_available != expected_credit_available) begin
-          $display(
-              "Time: %0t, ERROR: test_PushCreditManagementTransaction1 - Check failed. Expected credit_available=%0d, got %0d",
-              $time, expected_credit_available, credit_available);
+          $display({"Time: %0t, ERROR: test_PushCreditManagementTransaction1 - Check failed.",
+                    "Expected credit_available=%0d, got %0d"}, $time, expected_credit_available,
+                     credit_available);
           test_failed = 1;
         end else begin
-          $display(
-              "Time: %0t, INFO: test_PushCreditManagementTransaction1 - Check passed. Expected credit_available=%0d is the same as the observed value.",
-              $time, expected_credit_available);
+          $display({"Time: %0t, INFO: test_PushCreditManagementTransaction1 - Check passed.",
+                    "Expected credit_available=%0d is the same as the observed value."}, $time,
+                     expected_credit_available);
           if (test_failed != 1) test_failed = 0;
         end
 
         // Final test status
         if (test_failed == 0) begin
-          $display("Time: %0t, PASSED: test_PushCreditManagementTransaction1", $time);
+          $display({"Time: %0t, PASSED: test_PushCreditManagementTransaction1"}, $time);
         end else begin
-          $display("Time: %0t, FAILED: test_PushCreditManagementTransaction1", $time);
+          $display({"Time: %0t, FAILED: test_PushCreditManagementTransaction1"}, $time);
         end
       end
     join_any
@@ -254,9 +250,8 @@ module tb;
     fork
       begin
         #(PER_TASK_TIMEOUT);
-        $display(
-            "Time: %0t, INFO: Timeout: test_PopCreditManagementTransaction1. Stimuli is not observed or it needs more time to finish this test.",
-            $time);
+        $display({"Time: %0t, INFO: Timeout: test_PopCreditManagementTransaction1.",
+                  "Stimuli is not observed or it needs more time to finish this test."}, $time);
       end
       begin
         // Purpose: To verify the pop credit management functionality by ensuring credits are correctly decremented when data is received.
@@ -287,70 +282,67 @@ module tb;
         @(cb_clk);
 
         // Step 1: Set `pop_credit` to indicate a pop operation request
-        $display("Time: %0t, INFO: test_PopCreditManagementTransaction1 - Driving pop_credit=0x%h",
-                 $time, pop_credit_value);
+        $display({"Time: %0t, INFO: test_PopCreditManagementTransaction1 - Driving pop_credit=0x%h"
+                   }, $time, pop_credit_value);
 
         // Step 2: Monitor `credit_available` to ensure sufficient credits for the pop operation
         if (cb_clk.credit_available < pop_credit_value) begin
-          $display(
-              "Time: %0t, ERROR: test_PopCreditManagementTransaction1 - Insufficient credits for pop operation. Available: %0d, Required: %0d",
-              $time, credit_available, pop_credit_value);
+          $display({"Time: %0t, ERROR: test_PopCreditManagementTransaction1 - Insufficient credits",
+                    "for pop operation.", "Available: %0d, Required: %0d"}, $time,
+                     credit_available, pop_credit_value);
           test_failed = 1;
         end else begin
           // Step 3: If credits are sufficient, expect `pop_valid` to be asserted
           if (!cb_clk.pop_valid) begin
             $display(
-                "Time: %0t, ERROR: test_PopCreditManagementTransaction1 - pop_valid not asserted as expected.",
-                $time);
+                {"Time: %0t, ERROR: test_PopCreditManagementTransaction1 - pop_valid not asserted",
+                 "as expected."}, $time);
             test_failed = 1;
           end else begin
             $display(
-                "Time: %0t, INFO: test_PopCreditManagementTransaction1 - pop_valid asserted as expected.",
-                $time);
+                {"Time: %0t, INFO: test_PopCreditManagementTransaction1 - pop_valid asserted as",
+                 "expected."}, $time);
           end
 
           // Step 4: Verify that the data on `pop_data` corresponds to the popped credits
           if (cb_clk.pop_data !== expected_pop_data) begin
-            $display(
-                "Time: %0t, ERROR: test_PopCreditManagementTransaction1 - pop_data mismatch. Expected: 0x%h, Got: 0x%h",
-                $time, expected_pop_data, pop_data);
+            $display({"Time: %0t, ERROR: test_PopCreditManagementTransaction1 - pop_data mismatch.",
+                      "Expected: 0x%h, Got: 0x%h"}, $time, expected_pop_data, pop_data);
             test_failed = 1;
           end else begin
-            $display(
-                "Time: %0t, INFO: test_PopCreditManagementTransaction1 - pop_data matches expected value.",
-                $time);
+            $display({"Time: %0t, INFO: test_PopCreditManagementTransaction1 - pop_data matches",
+                      "expected value."}, $time);
           end
 
           // Step 5: Confirm that `credit_count` is updated to reflect the new credit state after the pop
           if (cb_clk.credit_count !== expected_credit_count) begin
             $display(
-                "Time: %0t, ERROR: test_PopCreditManagementTransaction1 - credit_count mismatch. Expected: %0d, Got: %0d",
-                $time, expected_credit_count, credit_count);
+                {"Time: %0t, ERROR: test_PopCreditManagementTransaction1 - credit_count mismatch.",
+                 "Expected: %0d, Got: %0d"}, $time, expected_credit_count, credit_count);
             test_failed = 1;
           end else begin
             $display(
-                "Time: %0t, INFO: test_PopCreditManagementTransaction1 - credit_count updated correctly.",
-                $time);
+                {"Time: %0t, INFO: test_PopCreditManagementTransaction1 - credit_count updated",
+                 "correctly."}, $time);
           end
 
           // Step 6: Ensure `credit_available` is updated to reflect the remaining available credits
           if (cb_clk.credit_available !== expected_credit_available) begin
-            $display(
-                "Time: %0t, ERROR: test_PopCreditManagementTransaction1 - credit_available mismatch. Expected: %0d, Got: %0d",
-                $time, expected_credit_available, credit_available);
+            $display({"Time: %0t, ERROR: test_PopCreditManagementTransaction1 - credit_available",
+                      "mismatch.", "Expected: %0d, Got: %0d"}, $time, expected_credit_available,
+                       credit_available);
             test_failed = 1;
           end else begin
-            $display(
-                "Time: %0t, INFO: test_PopCreditManagementTransaction1 - credit_available updated correctly.",
-                $time);
+            $display({"Time: %0t, INFO: test_PopCreditManagementTransaction1 - credit_available",
+                      "updated correctly."}, $time);
           end
         end
 
         // Final test status
         if (test_failed == 0) begin
-          $display("Time: %0t, PASSED: test_PopCreditManagementTransaction1", $time);
+          $display({"Time: %0t, PASSED: test_PopCreditManagementTransaction1"}, $time);
         end else begin
-          $display("Time: %0t, FAILED: test_PopCreditManagementTransaction1", $time);
+          $display({"Time: %0t, FAILED: test_PopCreditManagementTransaction1"}, $time);
         end
       end
     join_any
@@ -358,4 +350,3 @@ module tb;
   endtask
 
 endmodule
-

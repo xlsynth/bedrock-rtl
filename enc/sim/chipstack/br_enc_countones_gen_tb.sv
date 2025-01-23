@@ -6,7 +6,7 @@
 // Description: Unit test for br_enc_countones
 //=============================================================
 
-module tb;
+module br_enc_countones_gen_tb;
   timeunit 1ns; timeprecision 100ps;
 
   //===========================================================
@@ -14,12 +14,9 @@ module tb;
   //===========================================================
 
 
-  parameter TIMEOUT = 10000000;  // Timeout value in ns
-  parameter PER_TASK_TIMEOUT = 1000000;  // Timeout value for each task in ns
-  parameter DRAIN_TIME = 10000;  // Time to observe all results in ns
-
-
-  parameter DISABLE_CHECKS = 0;  // Disable checks
+  parameter int TIMEOUT = 10000000;  // Timeout value in ns
+  parameter int PER_TASK_TIMEOUT = 1000000;  // Timeout value for each task in ns
+  parameter int DRAIN_TIME = 10000;  // Time to observe all results in ns
 
   //===========================================================
   // DUT Imports and Includes
@@ -60,7 +57,7 @@ module tb;
   initial begin
 
     #(TIMEOUT);
-    $display("Error: Testbench timeout!");
+    $display({"Error: Testbench timeout!"});
     $finish;
   end
 
@@ -78,9 +75,8 @@ module tb;
     fork
       begin
         #(PER_TASK_TIMEOUT);
-        $display(
-            "Time: %0t, INFO: Timeout: test_CountOnesInInputVector. Stimuli is not observed or it needs more time to finish this test.",
-            $time);
+        $display({"Time: %0t, INFO: Timeout: test_CountOnesInInputVector.",
+                  "Stimuli is not observed or it needs more time to finish this test."}, $time);
       end
       begin
         // Purpose: Verify the functionality of counting the number of '1's in the input vector `in`.
@@ -100,14 +96,13 @@ module tb;
         #1;  // Allow time for the DUT to process the input
         observed_count = count;
         if (observed_count !== expected_count) begin
-          $display(
-              "Time: %0t, ERROR: test_CountOnesInInputVector - Check failed. Expected %0d, got %0d",
-              $time, expected_count, observed_count);
+          $display({"Time: %0t, ERROR: test_CountOnesInInputVector - Check failed.",
+                    "Expected %0d, got %0d"}, $time, expected_count, observed_count);
           test_failed = 1;
         end else begin
-          $display(
-              "Time: %0t, INFO: test_CountOnesInInputVector - Check passed. Expected value for count is the same as the observed value (both are %0d).",
-              $time, observed_count);
+          $display({"Time: %0t, INFO: test_CountOnesInInputVector - Check passed.",
+                    "Expected value for count is the same as the observed value (both are %0d)."},
+                     $time, observed_count);
           if (test_failed != 1) test_failed = 0;
         end
 
@@ -118,14 +113,13 @@ module tb;
         #1;
         observed_count = count;
         if (observed_count !== expected_count) begin
-          $display(
-              "Time: %0t, ERROR: test_CountOnesInInputVector - Check failed. Expected %0d, got %0d",
-              $time, expected_count, observed_count);
+          $display({"Time: %0t, ERROR: test_CountOnesInInputVector - Check failed.",
+                    "Expected %0d, got %0d"}, $time, expected_count, observed_count);
           test_failed = 1;
         end else begin
-          $display(
-              "Time: %0t, INFO: test_CountOnesInInputVector - Check passed. Expected value for count is the same as the observed value (both are %0d).",
-              $time, observed_count);
+          $display({"Time: %0t, INFO: test_CountOnesInInputVector - Check passed.",
+                    "Expected value for count is the same as the observed value (both are %0d)."},
+                     $time, observed_count);
           if (test_failed != 1) test_failed = 0;
         end
 
@@ -139,22 +133,21 @@ module tb;
         #1;
         observed_count = count;
         if (observed_count !== expected_count) begin
-          $display(
-              "Time: %0t, ERROR: test_CountOnesInInputVector - Check failed. Expected %0d, got %0d",
-              $time, expected_count, observed_count);
+          $display({"Time: %0t, ERROR: test_CountOnesInInputVector - Check failed.",
+                    "Expected %0d, got %0d"}, $time, expected_count, observed_count);
           test_failed = 1;
         end else begin
-          $display(
-              "Time: %0t, INFO: test_CountOnesInInputVector - Check passed. Expected value for count is the same as the observed value (both are %0d).",
-              $time, observed_count);
+          $display({"Time: %0t, INFO: test_CountOnesInInputVector - Check passed.",
+                    "Expected value for count is the same as the observed value (both are %0d)."},
+                     $time, observed_count);
           if (test_failed != 1) test_failed = 0;
         end
 
         // Final test status
         if (test_failed == 0) begin
-          $display("Time: %0t, PASSED: test_CountOnesInInputVector", $time);
+          $display({"Time: %0t, PASSED: test_CountOnesInInputVector"}, $time);
         end else begin
-          $display("Time: %0t, FAILED: test_CountOnesInInputVector", $time);
+          $display({"Time: %0t, FAILED: test_CountOnesInInputVector"}, $time);
         end
       end
     join_any
@@ -162,4 +155,3 @@ module tb;
   endtask
 
 endmodule
-

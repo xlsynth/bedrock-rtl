@@ -6,20 +6,19 @@
 // Description: Unit test for br_arb_rr
 //=============================================================
 
-module tb;
+module br_arb_rr_gen_tb;
   timeunit 1ns; timeprecision 100ps;
 
   //===========================================================
   // Testbench Parameters
   //===========================================================
-  parameter CLOCK_FREQ = 100;  // Clock frequency in MHz
-  parameter RESET_DURATION = 100;  // Reset duration in ns
-  parameter TIMEOUT = 10000000;  // Timeout value in ns
-  parameter PER_TASK_TIMEOUT = 1000000;  // Timeout value for each task in ns
-  parameter DRAIN_TIME = 10000;  // Time to observe all results in ns
-  parameter CLOCK_FREQ_NS_CONVERSION_FACTOR = 1000;  // Conversion factor to nanoseconds
-  parameter NO_ASSERTS_ON_RESET = 0;  // Disable assertions during reset
-  parameter DISABLE_CHECKS = 0;  // Disable checks
+  parameter int CLOCK_FREQ = 100;  // Clock frequency in MHz
+  parameter int RESET_DURATION = 100;  // Reset duration in ns
+  parameter int TIMEOUT = 10000000;  // Timeout value in ns
+  parameter int PER_TASK_TIMEOUT = 1000000;  // Timeout value for each task in ns
+  parameter int DRAIN_TIME = 10000;  // Time to observe all results in ns
+  parameter int CLOCK_FREQ_NS_CONVERSION_FACTOR = 1000;  // Conversion factor to nanoseconds
+  parameter int NO_ASSERTS_ON_RESET = 0;  // Disable assertions during reset
 
   //===========================================================
   // DUT Imports and Includes
@@ -84,7 +83,7 @@ module tb;
   initial begin
     if (NO_ASSERTS_ON_RESET) $assertoff;
     #(TIMEOUT);
-    $display("Error: Testbench timeout!");
+    $display({"Error: Testbench timeout!"});
     $finish;
   end
 
@@ -128,9 +127,8 @@ module tb;
     fork
       begin
         #(PER_TASK_TIMEOUT);
-        $display(
-            "Time: %0t, INFO: Timeout: test_RoundRobinPriorityUpdate. Stimuli is not observed or it needs more time to finish this test.",
-            $time);
+        $display({"Time: %0t, INFO: Timeout: test_RoundRobinPriorityUpdate.",
+                  "Stimuli is not observed or it needs more time to finish this test."}, $time);
       end
       begin
         // Purpose: To verify the round-robin priority update mechanism ensuring fair access among requesters.
@@ -151,23 +149,21 @@ module tb;
         // Step 1: Set initial requests
         cb_clk.request <= 4'b1010;  // Requesters 1 and 3 are making requests
         cb_clk.enable_priority_update <= 1'b1;  // Enable priority update
-        $display(
-            "Time: %0t, INFO: test_RoundRobinPriorityUpdate - Driving request=0x%h, enable_priority_update=%b",
-            $time, request, enable_priority_update);
+        $display({"Time: %0t, INFO: test_RoundRobinPriorityUpdate - Driving request=0x%h,",
+                  "enable_priority_update=%b"}, $time, request, enable_priority_update);
 
         @(cb_clk);  // Wait for clock edge
 
         // Step 2: Check grant for the highest priority requester
         expected_grant = 4'b0010;  // Expecting requester 1 to be granted
         if (cb_clk.grant !== expected_grant) begin
-          $display(
-              "Time: %0t, ERROR: test_RoundRobinPriorityUpdate - Check failed. Expected grant=0x%h, got grant=0x%h",
-              $time, expected_grant, grant);
+          $display({"Time: %0t, ERROR: test_RoundRobinPriorityUpdate - Check failed.",
+                    "Expected grant=0x%h, got grant=0x%h"}, $time, expected_grant, grant);
           test_failed = 1;
         end else begin
-          $display(
-              "Time: %0t, INFO: test_RoundRobinPriorityUpdate - Check passed. Expected grant=0x%h is the same as the observed grant=0x%h.",
-              $time, expected_grant, grant);
+          $display({"Time: %0t, INFO: test_RoundRobinPriorityUpdate - Check passed.",
+                    "Expected grant=0x%h is the same as the observed grant=0x%h."}, $time,
+                     expected_grant, grant);
           if (test_failed != 1) test_failed = 0;
         end
 
@@ -176,29 +172,27 @@ module tb;
         // Step 3: Rotate priority and check next grant
         cb_clk.request <= 4'b1010;  // Keep the same cb_clk.request pattern
         expected_grant = 4'b1000;  // Expecting requester 3 to be granted after rotation
-        $display(
-            "Time: %0t, INFO: test_RoundRobinPriorityUpdate - Driving request=0x%h, enable_priority_update=%b",
-            $time, request, enable_priority_update);
+        $display({"Time: %0t, INFO: test_RoundRobinPriorityUpdate - Driving request=0x%h,",
+                  "enable_priority_update=%b"}, $time, request, enable_priority_update);
 
         @(cb_clk);  // Wait for clock edge
 
         if (cb_clk.grant !== expected_grant) begin
-          $display(
-              "Time: %0t, ERROR: test_RoundRobinPriorityUpdate - Check failed. Expected grant=0x%h, got grant=0x%h",
-              $time, expected_grant, grant);
+          $display({"Time: %0t, ERROR: test_RoundRobinPriorityUpdate - Check failed.",
+                    "Expected grant=0x%h, got grant=0x%h"}, $time, expected_grant, grant);
           test_failed = 1;
         end else begin
-          $display(
-              "Time: %0t, INFO: test_RoundRobinPriorityUpdate - Check passed. Expected grant=0x%h is the same as the observed grant=0x%h.",
-              $time, expected_grant, grant);
+          $display({"Time: %0t, INFO: test_RoundRobinPriorityUpdate - Check passed.",
+                    "Expected grant=0x%h is the same as the observed grant=0x%h."}, $time,
+                     expected_grant, grant);
           if (test_failed != 1) test_failed = 0;
         end
 
         // Final test status
         if (test_failed == 0) begin
-          $display("Time: %0t, PASSED: test_RoundRobinPriorityUpdate", $time);
+          $display({"Time: %0t, PASSED: test_RoundRobinPriorityUpdate"}, $time);
         end else begin
-          $display("Time: %0t, FAILED: test_RoundRobinPriorityUpdate", $time);
+          $display({"Time: %0t, FAILED: test_RoundRobinPriorityUpdate"}, $time);
         end
       end
     join_any
@@ -210,9 +204,8 @@ module tb;
     fork
       begin
         #(PER_TASK_TIMEOUT);
-        $display(
-            "Time: %0t, INFO: Timeout: test_RequestEvaluation. Stimuli is not observed or it needs more time to finish this test.",
-            $time);
+        $display({"Time: %0t, INFO: Timeout: test_RequestEvaluation.",
+                  "Stimuli is not observed or it needs more time to finish this test."}, $time);
       end
       begin
         // Purpose: To evaluate incoming requests and determine which requester should be granted access based on the current priority.
@@ -231,8 +224,8 @@ module tb;
         // Step 1: Set `request` to indicate which requesters are making requests
         request_pattern = 4'b1010;  // Example pattern: requesters 1 and 3 are requesting
         cb_clk.request <= request_pattern;
-        $display("Time: %0t, INFO: test_RequestEvaluation - Driving request=0x%h", $time,
-                 request_pattern);
+        $display({"Time: %0t, INFO: test_RequestEvaluation - Driving request=0x%h"}, $time,
+                   request_pattern);
 
         // Step 2: Wait for the design to evaluate the `request` signals
         @(cb_clk);
@@ -243,27 +236,26 @@ module tb;
 
         // Step 4: Capture the observed `grant` signal
         observed_grant = cb_clk.grant;
-        $display("Time: %0t, INFO: test_RequestEvaluation - Observed grant=0x%h", $time,
-                 observed_grant);
+        $display({"Time: %0t, INFO: test_RequestEvaluation - Observed grant=0x%h"}, $time,
+                   observed_grant);
 
         // Step 5: Verify that the correct requester is granted access
         if (observed_grant !== expected_grant) begin
-          $display(
-              "Time: %0t, ERROR: test_RequestEvaluation - Check failed. Expected grant=0x%h, got grant=0x%h",
-              $time, expected_grant, observed_grant);
+          $display({"Time: %0t, ERROR: test_RequestEvaluation - Check failed.",
+                    "Expected grant=0x%h, got grant=0x%h"}, $time, expected_grant, observed_grant);
           test_failed = 1;
         end else begin
-          $display(
-              "Time: %0t, INFO: test_RequestEvaluation - Check passed. Expected grant=0x%h is the same as the observed grant=0x%h.",
-              $time, expected_grant, observed_grant);
+          $display({"Time: %0t, INFO: test_RequestEvaluation - Check passed.",
+                    "Expected grant=0x%h is the same as the observed grant=0x%h."}, $time,
+                     expected_grant, observed_grant);
           if (test_failed != 1) test_failed = 0;
         end
 
         // Final test status
         if (test_failed == 0) begin
-          $display("Time: %0t, PASSED: test_RequestEvaluation", $time);
+          $display({"Time: %0t, PASSED: test_RequestEvaluation"}, $time);
         end else begin
-          $display("Time: %0t, FAILED: test_RequestEvaluation", $time);
+          $display({"Time: %0t, FAILED: test_RequestEvaluation"}, $time);
         end
       end
     join_any
@@ -275,9 +267,8 @@ module tb;
     fork
       begin
         #(PER_TASK_TIMEOUT);
-        $display(
-            "Time: %0t, INFO: Timeout: test_GrantAssertion. Stimuli is not observed or it needs more time to finish this test.",
-            $time);
+        $display({"Time: %0t, INFO: Timeout: test_GrantAssertion.",
+                  "Stimuli is not observed or it needs more time to finish this test."}, $time);
       end
       begin
         // Purpose: To assert the grant signal for the requester with the highest priority, allowing it to proceed with its operation.
@@ -310,23 +301,22 @@ module tb;
 
           // Check if the grant matches the expected value
           if (cb_clk.grant !== expected_grant) begin
-            $display(
-                "Time: %0t, ERROR: test_GrantAssertion - Check failed. Expected grant=0x%h, got grant=0x%h",
-                $time, expected_grant, grant);
+            $display({"Time: %0t, ERROR: test_GrantAssertion - Check failed.",
+                      "Expected grant=0x%h, got grant=0x%h"}, $time, expected_grant, grant);
             test_failed = 1;
           end else begin
-            $display(
-                "Time: %0t, INFO: test_GrantAssertion - Check passed. Expected grant=0x%h is the same as the observed grant=0x%h.",
-                $time, expected_grant, grant);
+            $display({"Time: %0t, INFO: test_GrantAssertion - Check passed.",
+                      "Expected grant=0x%h is the same as the observed grant=0x%h."}, $time,
+                       expected_grant, grant);
             if (test_failed != 1) test_failed = 0;
           end
         end
 
         // Final test status
         if (test_failed == 0) begin
-          $display("Time: %0t, PASSED: test_GrantAssertion", $time);
+          $display({"Time: %0t, PASSED: test_GrantAssertion"}, $time);
         end else begin
-          $display("Time: %0t, FAILED: test_GrantAssertion", $time);
+          $display({"Time: %0t, FAILED: test_GrantAssertion"}, $time);
         end
       end
     join_any
@@ -334,4 +324,3 @@ module tb;
   endtask
 
 endmodule
-

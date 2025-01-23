@@ -6,20 +6,19 @@
 // Description: Unit test for br_counter_decr
 //=============================================================
 
-module tb;
+module br_counter_decr_gen_tb;
   timeunit 1ns; timeprecision 100ps;
 
   //===========================================================
   // Testbench Parameters
   //===========================================================
-  parameter CLOCK_FREQ = 100;  // Clock frequency in MHz
-  parameter RESET_DURATION = 100;  // Reset duration in ns
-  parameter TIMEOUT = 10000000;  // Timeout value in ns
-  parameter PER_TASK_TIMEOUT = 1000000;  // Timeout value for each task in ns
-  parameter DRAIN_TIME = 10000;  // Time to observe all results in ns
-  parameter CLOCK_FREQ_NS_CONVERSION_FACTOR = 1000;  // Conversion factor to nanoseconds
-  parameter NO_ASSERTS_ON_RESET = 0;  // Disable assertions during reset
-  parameter DISABLE_CHECKS = 0;  // Disable checks
+  parameter int CLOCK_FREQ = 100;  // Clock frequency in MHz
+  parameter int RESET_DURATION = 100;  // Reset duration in ns
+  parameter int TIMEOUT = 10000000;  // Timeout value in ns
+  parameter int PER_TASK_TIMEOUT = 1000000;  // Timeout value for each task in ns
+  parameter int DRAIN_TIME = 10000;  // Time to observe all results in ns
+  parameter int CLOCK_FREQ_NS_CONVERSION_FACTOR = 1000;  // Conversion factor to nanoseconds
+  parameter int NO_ASSERTS_ON_RESET = 0;  // Disable assertions during reset
 
   //===========================================================
   // DUT Imports and Includes
@@ -94,7 +93,7 @@ module tb;
   initial begin
     if (NO_ASSERTS_ON_RESET) $assertoff;
     #(TIMEOUT);
-    $display("Error: Testbench timeout!");
+    $display({"Error: Testbench timeout!"});
     $finish;
   end
 
@@ -143,9 +142,8 @@ module tb;
     fork
       begin
         #(PER_TASK_TIMEOUT);
-        $display(
-            "Time: %0t, INFO: Timeout: test_DecrementOperation. Stimuli is not observed or it needs more time to finish this test.",
-            $time);
+        $display({"Time: %0t, INFO: Timeout: test_DecrementOperation.",
+                  "Stimuli is not observed or it needs more time to finish this test."}, $time);
       end
       begin
         // Purpose: To verify the decrement operation of the counter.
@@ -179,14 +177,14 @@ module tb;
 
         // Check if value_next is as expected
         if (cb_clk.value_next !== expected_value_next) begin
-          $display(
-              "Time: %0t, ERROR: test_DecrementOperation - Check failed. Expected value_next: 0x%h, got: 0x%h",
-              $time, expected_value_next, value_next);
+          $display({"Time: %0t, ERROR: test_DecrementOperation - Check failed.",
+                    "Expected value_next: 0x%h, got: 0x%h"}, $time, expected_value_next,
+                     value_next);
           test_failed = 1;
         end else begin
-          $display(
-              "Time: %0t, INFO: test_DecrementOperation - Check passed. Expected value_next: 0x%h is the same as the observed value_next.",
-              $time, value_next);
+          $display({"Time: %0t, INFO: test_DecrementOperation - Check passed.",
+                    "Expected value_next: 0x%h is the same as the observed value_next."}, $time,
+                     value_next);
           if (test_failed != 1) test_failed = 0;
         end
 
@@ -195,22 +193,20 @@ module tb;
 
         // Check if value is updated with value_next
         if (cb_clk.value !== cb_clk.value_next) begin
-          $display(
-              "Time: %0t, ERROR: test_DecrementOperation - Check failed. Expected value: 0x%h, got: 0x%h",
-              $time, value_next, value);
+          $display({"Time: %0t, ERROR: test_DecrementOperation - Check failed.",
+                    "Expected value: 0x%h, got: 0x%h"}, $time, value_next, value);
           test_failed = 1;
         end else begin
-          $display(
-              "Time: %0t, INFO: test_DecrementOperation - Check passed. Expected value: 0x%h is the same as the observed value.",
-              $time, value);
+          $display({"Time: %0t, INFO: test_DecrementOperation - Check passed.",
+                    "Expected value: 0x%h is the same as the observed value."}, $time, value);
           if (test_failed != 1) test_failed = 0;
         end
 
         // Report test status
         if (test_failed == 0) begin
-          $display("Time: %0t, PASSED: test_DecrementOperation", $time);
+          $display({"Time: %0t, PASSED: test_DecrementOperation"}, $time);
         end else begin
-          $display("Time: %0t, FAILED: test_DecrementOperation", $time);
+          $display({"Time: %0t, FAILED: test_DecrementOperation"}, $time);
         end
       end
     join_any
@@ -222,9 +218,8 @@ module tb;
     fork
       begin
         #(PER_TASK_TIMEOUT);
-        $display(
-            "Time: %0t, INFO: Timeout: test_DecrementWithUnderflowHandling. Stimuli is not observed or it needs more time to finish this test.",
-            $time);
+        $display({"Time: %0t, INFO: Timeout: test_DecrementWithUnderflowHandling.",
+                  "Stimuli is not observed or it needs more time to finish this test."}, $time);
       end
       begin
         // Purpose: To verify the decrement operation with underflow handling.
@@ -252,9 +247,8 @@ module tb;
         @(cb_clk);
         cb_clk.decr_valid <= 1;
         cb_clk.decr <= decrement_value;
-        $display(
-            "Time: %0t, INFO: test_DecrementWithUnderflowHandling - Driving decr_valid=1, decr=0x%h",
-            $time, decrement_value);
+        $display({"Time: %0t, INFO: test_DecrementWithUnderflowHandling - Driving decr_valid=1,",
+                  "decr=0x%h"}, $time, decrement_value);
 
         // Calculate expected wrapped-around value
         expected_value_next = (current_value - decrement_value) + (MaxValue + 1);
@@ -262,14 +256,13 @@ module tb;
         // Check value_next
         @(cb_clk);
         if (cb_clk.value_next !== expected_value_next) begin
-          $display(
-              "Time: %0t, ERROR: test_DecrementWithUnderflowHandling - Check failed. Expected value_next=0x%h, got 0x%h",
-              $time, expected_value_next, value_next);
+          $display({"Time: %0t, ERROR: test_DecrementWithUnderflowHandling - Check failed.",
+                    "Expected value_next=0x%h, got 0x%h"}, $time, expected_value_next, value_next);
           test_failed = 1;
         end else begin
-          $display(
-              "Time: %0t, INFO: test_DecrementWithUnderflowHandling - Check passed. Expected value_next=0x%h is the same as the observed value_next=0x%h.",
-              $time, expected_value_next, value_next);
+          $display({"Time: %0t, INFO: test_DecrementWithUnderflowHandling - Check passed.",
+                    "Expected value_next=0x%h is the same as the observed value_next=0x%h."},
+                     $time, expected_value_next, value_next);
           if (test_failed != 1) test_failed = 0;
         end
 
@@ -277,22 +270,21 @@ module tb;
         expected_value = expected_value_next;
         @(cb_clk);
         if (cb_clk.value !== expected_value) begin
-          $display(
-              "Time: %0t, ERROR: test_DecrementWithUnderflowHandling - Check failed. Expected value=0x%h, got 0x%h",
-              $time, expected_value, value);
+          $display({"Time: %0t, ERROR: test_DecrementWithUnderflowHandling - Check failed.",
+                    "Expected value=0x%h, got 0x%h"}, $time, expected_value, value);
           test_failed = 1;
         end else begin
-          $display(
-              "Time: %0t, INFO: test_DecrementWithUnderflowHandling - Check passed. Expected value=0x%h is the same as the observed value=0x%h.",
-              $time, expected_value, value);
+          $display({"Time: %0t, INFO: test_DecrementWithUnderflowHandling - Check passed.",
+                    "Expected value=0x%h is the same as the observed value=0x%h."}, $time,
+                     expected_value, value);
           if (test_failed != 1) test_failed = 0;
         end
 
         // Final test status
         if (test_failed == 0) begin
-          $display("Time: %0t, PASSED: test_DecrementWithUnderflowHandling", $time);
+          $display({"Time: %0t, PASSED: test_DecrementWithUnderflowHandling"}, $time);
         end else begin
-          $display("Time: %0t, FAILED: test_DecrementWithUnderflowHandling", $time);
+          $display({"Time: %0t, FAILED: test_DecrementWithUnderflowHandling"}, $time);
         end
       end
     join_any
@@ -304,9 +296,8 @@ module tb;
     fork
       begin
         #(PER_TASK_TIMEOUT);
-        $display(
-            "Time: %0t, INFO: Timeout: test_ReinitializationWithDecrement. Stimuli is not observed or it needs more time to finish this test.",
-            $time);
+        $display({"Time: %0t, INFO: Timeout: test_ReinitializationWithDecrement.",
+                  "Stimuli is not observed or it needs more time to finish this test."}, $time);
       end
       begin
         // Purpose: To verify reinitialization of the counter with a decrement in the same cycle.
@@ -328,9 +319,8 @@ module tb;
         cb_clk.initial_value <= initial_value;
         cb_clk.decr_valid <= decr_valid;
         cb_clk.decr <= decr;
-        $display(
-            "Time: %0t, INFO: test_ReinitializationWithDecrement - Driving reinit=1, initial_value=0x%h, decr_valid=1, decr=0x%h",
-            $time, initial_value, decr);
+        $display({"Time: %0t, INFO: test_ReinitializationWithDecrement - Driving reinit=1,",
+                  "initial_value=0x%h, decr_valid=1, decr=0x%h"}, $time, initial_value, decr);
 
         // Calculate expected value_next
         expected_value_next = cb_clk.initial_value - cb_clk.decr;
@@ -342,35 +332,35 @@ module tb;
 
         // Check if value_next is as expected
         if (observed_value_next !== expected_value_next) begin
-          $display(
-              "Time: %0t, ERROR: test_ReinitializationWithDecrement - Check failed. Expected value_next=0x%h, got value_next=0x%h",
-              $time, expected_value_next, observed_value_next);
+          $display({"Time: %0t, ERROR: test_ReinitializationWithDecrement - Check failed.",
+                    "Expected value_next=0x%h, got value_next=0x%h"}, $time, expected_value_next,
+                     observed_value_next);
           test_failed = 1;
         end else begin
-          $display(
-              "Time: %0t, INFO: test_ReinitializationWithDecrement - Check passed. Expected value_next=0x%h is the same as the observed value_next=0x%h.",
-              $time, expected_value_next, observed_value_next);
+          $display({"Time: %0t, INFO: test_ReinitializationWithDecrement - Check passed.",
+                    "Expected value_next=0x%h is the same as the observed value_next=0x%h."},
+                     $time, expected_value_next, observed_value_next);
           if (test_failed != 1) test_failed = 0;
         end
 
         // Check if value is updated to value_next
         if (observed_value !== observed_value_next) begin
-          $display(
-              "Time: %0t, ERROR: test_ReinitializationWithDecrement - Check failed. Expected value=0x%h, got value=0x%h",
-              $time, observed_value_next, observed_value);
+          $display({"Time: %0t, ERROR: test_ReinitializationWithDecrement - Check failed.",
+                    "Expected value=0x%h, got value=0x%h"}, $time, observed_value_next,
+                     observed_value);
           test_failed = 1;
         end else begin
-          $display(
-              "Time: %0t, INFO: test_ReinitializationWithDecrement - Check passed. Expected value=0x%h is the same as the observed value=0x%h.",
-              $time, observed_value_next, observed_value);
+          $display({"Time: %0t, INFO: test_ReinitializationWithDecrement - Check passed.",
+                    "Expected value=0x%h is the same as the observed value=0x%h."}, $time,
+                     observed_value_next, observed_value);
           if (test_failed != 1) test_failed = 0;
         end
 
         // Report test status
         if (test_failed == 0) begin
-          $display("Time: %0t, PASSED: test_ReinitializationWithDecrement", $time);
+          $display({"Time: %0t, PASSED: test_ReinitializationWithDecrement"}, $time);
         end else begin
-          $display("Time: %0t, FAILED: test_ReinitializationWithDecrement", $time);
+          $display({"Time: %0t, FAILED: test_ReinitializationWithDecrement"}, $time);
         end
       end
     join_any
@@ -382,9 +372,8 @@ module tb;
     fork
       begin
         #(PER_TASK_TIMEOUT);
-        $display(
-            "Time: %0t, INFO: Timeout: test_ReinitializationWithoutDecrement. Stimuli is not observed or it needs more time to finish this test.",
-            $time);
+        $display({"Time: %0t, INFO: Timeout: test_ReinitializationWithoutDecrement.",
+                  "Stimuli is not observed or it needs more time to finish this test."}, $time);
       end
       begin
         // Purpose: To verify reinitialization of the counter without applying any decrement.
@@ -404,9 +393,8 @@ module tb;
         cb_clk.decr <= 0;  // No decrement
 
         // Display the applied stimulus
-        $display(
-            "Time: %0t, INFO: test_ReinitializationWithoutDecrement - Driving reinit=1, initial_value=0x%h, decr_valid=0, decr=0",
-            $time, initial_value_random);
+        $display({"Time: %0t, INFO: test_ReinitializationWithoutDecrement - Driving reinit=1,",
+                  "initial_value=0x%h, decr_valid=0, decr=0"}, $time, initial_value_random);
 
         // Calculate expected value_next
         expected_value_next = initial_value_random;
@@ -416,14 +404,13 @@ module tb;
 
         // Check if value_next is set to initial_value
         if (cb_clk.value_next !== expected_value_next) begin
-          $display(
-              "Time: %0t, ERROR: test_ReinitializationWithoutDecrement - Check failed. Expected value_next=0x%h, got 0x%h",
-              $time, expected_value_next, value_next);
+          $display({"Time: %0t, ERROR: test_ReinitializationWithoutDecrement - Check failed.",
+                    "Expected value_next=0x%h, got 0x%h"}, $time, expected_value_next, value_next);
           test_failed = 1;
         end else begin
-          $display(
-              "Time: %0t, INFO: test_ReinitializationWithoutDecrement - Check passed. Expected value_next=0x%h is the same as the observed value_next=0x%h.",
-              $time, expected_value_next, value_next);
+          $display({"Time: %0t, INFO: test_ReinitializationWithoutDecrement - Check passed.",
+                    "Expected value_next=0x%h is the same as the observed value_next=0x%h."},
+                     $time, expected_value_next, value_next);
           if (test_failed != 1) test_failed = 0;
         end
 
@@ -432,22 +419,21 @@ module tb;
 
         // Check if value is updated to value_next
         if (cb_clk.value !== expected_value_next) begin
-          $display(
-              "Time: %0t, ERROR: test_ReinitializationWithoutDecrement - Check failed. Expected value=0x%h, got 0x%h",
-              $time, expected_value_next, value);
+          $display({"Time: %0t, ERROR: test_ReinitializationWithoutDecrement - Check failed.",
+                    "Expected value=0x%h, got 0x%h"}, $time, expected_value_next, value);
           test_failed = 1;
         end else begin
-          $display(
-              "Time: %0t, INFO: test_ReinitializationWithoutDecrement - Check passed. Expected value=0x%h is the same as the observed value=0x%h.",
-              $time, expected_value_next, value);
+          $display({"Time: %0t, INFO: test_ReinitializationWithoutDecrement - Check passed.",
+                    "Expected value=0x%h is the same as the observed value=0x%h."}, $time,
+                     expected_value_next, value);
           if (test_failed != 1) test_failed = 0;
         end
 
         // Report test status
         if (test_failed == 0) begin
-          $display("Time: %0t, PASSED: test_ReinitializationWithoutDecrement", $time);
+          $display({"Time: %0t, PASSED: test_ReinitializationWithoutDecrement"}, $time);
         end else begin
-          $display("Time: %0t, FAILED: test_ReinitializationWithoutDecrement", $time);
+          $display({"Time: %0t, FAILED: test_ReinitializationWithoutDecrement"}, $time);
         end
       end
     join_any
@@ -455,4 +441,3 @@ module tb;
   endtask
 
 endmodule
-

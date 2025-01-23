@@ -6,20 +6,19 @@
 // Description: Unit test for br_counter_incr
 //=============================================================
 
-module tb;
+module br_counter_incr_gen_tb;
   timeunit 1ns; timeprecision 100ps;
 
   //===========================================================
   // Testbench Parameters
   //===========================================================
-  parameter CLOCK_FREQ = 100;  // Clock frequency in MHz
-  parameter RESET_DURATION = 100;  // Reset duration in ns
-  parameter TIMEOUT = 10000000;  // Timeout value in ns
-  parameter PER_TASK_TIMEOUT = 1000000;  // Timeout value for each task in ns
-  parameter DRAIN_TIME = 10000;  // Time to observe all results in ns
-  parameter CLOCK_FREQ_NS_CONVERSION_FACTOR = 1000;  // Conversion factor to nanoseconds
-  parameter NO_ASSERTS_ON_RESET = 0;  // Disable assertions during reset
-  parameter DISABLE_CHECKS = 0;  // Disable checks
+  parameter int CLOCK_FREQ = 100;  // Clock frequency in MHz
+  parameter int RESET_DURATION = 100;  // Reset duration in ns
+  parameter int TIMEOUT = 10000000;  // Timeout value in ns
+  parameter int PER_TASK_TIMEOUT = 1000000;  // Timeout value for each task in ns
+  parameter int DRAIN_TIME = 10000;  // Time to observe all results in ns
+  parameter int CLOCK_FREQ_NS_CONVERSION_FACTOR = 1000;  // Conversion factor to nanoseconds
+  parameter int NO_ASSERTS_ON_RESET = 0;  // Disable assertions during reset
 
   //===========================================================
   // DUT Imports and Includes
@@ -95,7 +94,7 @@ module tb;
   initial begin
     if (NO_ASSERTS_ON_RESET) $assertoff;
     #(TIMEOUT);
-    $display("Error: Testbench timeout!");
+    $display({"Error: Testbench timeout!"});
     $finish;
   end
 
@@ -144,9 +143,8 @@ module tb;
     fork
       begin
         #(PER_TASK_TIMEOUT);
-        $display(
-            "Time: %0t, INFO: Timeout: test_IncrementCounterTransaction1. Stimuli is not observed or it needs more time to finish this test.",
-            $time);
+        $display({"Time: %0t, INFO: Timeout: test_IncrementCounterTransaction1.",
+                  "Stimuli is not observed or it needs more time to finish this test."}, $time);
       end
       begin
         // This task tests the increment functionality of the br_counter_incr module.
@@ -176,9 +174,8 @@ module tb;
           cb_clk.incr_valid <= 1;
           @(cb_clk);
           cb_clk.incr_valid <= 0;
-          $display(
-              "Time: %0t, INFO: test_IncrementCounterTransaction1 - Driving incr=0x%h, incr_valid=1",
-              $time, random_incr);
+          $display({"Time: %0t, INFO: test_IncrementCounterTransaction1 - Driving incr=0x%h,",
+                    "incr_valid=1"}, $time, random_incr);
 
           // Calculate expected value considering overflow
           expected_value = (current_value + random_incr) % (MaxValue + 1);
@@ -191,14 +188,13 @@ module tb;
 
           // Check if the expected value matches the current value
           if (current_value !== expected_value) begin
-            $display(
-                "Time: %0t, ERROR: test_IncrementCounterTransaction1 - Check failed. Expected value=0x%h, got value=0x%h",
-                $time, expected_value, current_value);
+            $display({"Time: %0t, ERROR: test_IncrementCounterTransaction1 - Check failed.",
+                      "Expected value=0x%h, got value=0x%h"}, $time, expected_value, current_value);
             test_failed = 1;
           end else begin
-            $display(
-                "Time: %0t, INFO: test_IncrementCounterTransaction1 - Check passed. Expected value=0x%h is the same as the observed value=0x%h.",
-                $time, expected_value, current_value);
+            $display({"Time: %0t, INFO: test_IncrementCounterTransaction1 - Check passed.",
+                      "Expected value=0x%h is the same as the observed value=0x%h."}, $time,
+                       expected_value, current_value);
             if (test_failed != 1) test_failed = 0;
           end
 
@@ -209,9 +205,9 @@ module tb;
 
         // Report test status
         if (test_failed == 0) begin
-          $display("Time: %0t, PASSED: test_IncrementCounterTransaction1", $time);
+          $display({"Time: %0t, PASSED: test_IncrementCounterTransaction1"}, $time);
         end else begin
-          $display("Time: %0t, FAILED: test_IncrementCounterTransaction1", $time);
+          $display({"Time: %0t, FAILED: test_IncrementCounterTransaction1"}, $time);
         end
       end
     join_any
@@ -223,9 +219,8 @@ module tb;
     fork
       begin
         #(PER_TASK_TIMEOUT);
-        $display(
-            "Time: %0t, INFO: Timeout: test_OverflowHandlingTransaction1. Stimuli is not observed or it needs more time to finish this test.",
-            $time);
+        $display({"Time: %0t, INFO: Timeout: test_OverflowHandlingTransaction1.",
+                  "Stimuli is not observed or it needs more time to finish this test."}, $time);
       end
       begin
         // Purpose: Test the overflow handling of the counter when the sum of the current value and increment exceeds MaxValue.
@@ -255,22 +250,22 @@ module tb;
         @(cb_clk);
         observed_value_next = cb_clk.value_next;
         if (observed_value_next !== expected_value_next) begin
-          $display(
-              "Time: %0t, ERROR: test_OverflowHandlingTransaction1 - Check failed. Expected value_next=0x%h, got 0x%h",
-              $time, expected_value_next, observed_value_next);
+          $display({"Time: %0t, ERROR: test_OverflowHandlingTransaction1 - Check failed.",
+                    "Expected value_next=0x%h, got 0x%h"}, $time, expected_value_next,
+                     observed_value_next);
           test_failed = 1;
         end else begin
-          $display(
-              "Time: %0t, INFO: test_OverflowHandlingTransaction1 - Check passed. Expected value_next=0x%h is the same as the observed value_next=0x%h.",
-              $time, expected_value_next, observed_value_next);
+          $display({"Time: %0t, INFO: test_OverflowHandlingTransaction1 - Check passed.",
+                    "Expected value_next=0x%h is the same as the observed value_next=0x%h."},
+                     $time, expected_value_next, observed_value_next);
           if (test_failed != 1) test_failed = 0;
         end
 
         // Report test status
         if (test_failed == 0) begin
-          $display("Time: %0t, PASSED: test_OverflowHandlingTransaction1", $time);
+          $display({"Time: %0t, PASSED: test_OverflowHandlingTransaction1"}, $time);
         end else begin
-          $display("Time: %0t, FAILED: test_OverflowHandlingTransaction1", $time);
+          $display({"Time: %0t, FAILED: test_OverflowHandlingTransaction1"}, $time);
         end
       end
     join_any
@@ -282,9 +277,8 @@ module tb;
     fork
       begin
         #(PER_TASK_TIMEOUT);
-        $display(
-            "Time: %0t, INFO: Timeout: test_OverflowHandlingTransaction2. Stimuli is not observed or it needs more time to finish this test.",
-            $time);
+        $display({"Time: %0t, INFO: Timeout: test_OverflowHandlingTransaction2.",
+                  "Stimuli is not observed or it needs more time to finish this test."}, $time);
       end
       begin
         // This task tests the overflow handling of the br_counter_incr module by setting the counter to MaxValue and incrementing by 1, expecting a wrap-around to 0.
@@ -306,31 +300,30 @@ module tb;
         cb_clk.initial_value <= initial_value;
         cb_clk.incr_valid <= incr_valid;
         cb_clk.incr <= incr;
-        $display(
-            "Time: %0t, INFO: test_OverflowHandlingTransaction2 - Driving initial_value=0x%h, incr_valid=%b, incr=0x%h",
-            $time, initial_value, incr_valid, incr);
+        $display({"Time: %0t, INFO: test_OverflowHandlingTransaction2 - Driving",
+                  "initial_value=0x%h, incr_valid=%b, incr=0x%h"}, $time, initial_value,
+                   incr_valid, incr);
 
         // Wait for the next clock cycle to observe value_next
         @(cb_clk);
 
         // Check the result
         if (cb_clk.value_next !== value_next_expected) begin
-          $display(
-              "Time: %0t, ERROR: test_OverflowHandlingTransaction2 - Check failed. Expected value_next=0x%h, got 0x%h",
-              $time, value_next_expected, value_next);
+          $display({"Time: %0t, ERROR: test_OverflowHandlingTransaction2 - Check failed.",
+                    "Expected value_next=0x%h, got 0x%h"}, $time, value_next_expected, value_next);
           test_failed = 1;
         end else begin
-          $display(
-              "Time: %0t, INFO: test_OverflowHandlingTransaction2 - Check passed. Expected value_next=0x%h is the same as the observed value_next=0x%h.",
-              $time, value_next_expected, value_next);
+          $display({"Time: %0t, INFO: test_OverflowHandlingTransaction2 - Check passed.",
+                    "Expected value_next=0x%h is the same as the observed value_next=0x%h."},
+                     $time, value_next_expected, value_next);
           if (test_failed != 1) test_failed = 0;
         end
 
         // Report test status
         if (test_failed == 0) begin
-          $display("Time: %0t, PASSED: test_OverflowHandlingTransaction2", $time);
+          $display({"Time: %0t, PASSED: test_OverflowHandlingTransaction2"}, $time);
         end else begin
-          $display("Time: %0t, FAILED: test_OverflowHandlingTransaction2", $time);
+          $display({"Time: %0t, FAILED: test_OverflowHandlingTransaction2"}, $time);
         end
       end
     join_any
@@ -342,9 +335,8 @@ module tb;
     fork
       begin
         #(PER_TASK_TIMEOUT);
-        $display(
-            "Time: %0t, INFO: Timeout: test_CounterReinitializationTransaction1. Stimuli is not observed or it needs more time to finish this test.",
-            $time);
+        $display({"Time: %0t, INFO: Timeout: test_CounterReinitializationTransaction1.",
+                  "Stimuli is not observed or it needs more time to finish this test."}, $time);
       end
       begin
         // This task tests the counter reinitialization functionality, ensuring that the counter is correctly set to the initial value and optionally incremented in the same cycle.
@@ -368,9 +360,9 @@ module tb;
         cb_clk.reinit <= 1;
         cb_clk.incr_valid <= random_incr_valid;
         cb_clk.incr <= random_incr;
-        $display(
-            "Time: %0t, INFO: test_CounterReinitializationTransaction1 - Driving initial_value=0x%h, reinit=1, incr_valid=%0b, incr=0x%h",
-            $time, random_initial_value, random_incr_valid, random_incr);
+        $display({"Time: %0t, INFO: test_CounterReinitializationTransaction1 - Driving",
+                  "initial_value=0x%h, reinit=1, incr_valid=%0b, incr=0x%h"}, $time,
+                   random_initial_value, random_incr_valid, random_incr);
 
         // Calculate expected value_next
         if (random_incr_valid) begin
@@ -382,14 +374,13 @@ module tb;
         // Check value_next
         @(cb_clk);
         if (cb_clk.value_next !== expected_value_next) begin
-          $display(
-              "Time: %0t, ERROR: test_CounterReinitializationTransaction1 - Check failed. Expected value_next=0x%h, got 0x%h",
-              $time, expected_value_next, value_next);
+          $display({"Time: %0t, ERROR: test_CounterReinitializationTransaction1 - Check failed.",
+                    "Expected value_next=0x%h, got 0x%h"}, $time, expected_value_next, value_next);
           test_failed = 1;
         end else begin
-          $display(
-              "Time: %0t, INFO: test_CounterReinitializationTransaction1 - Check passed. Expected value_next=0x%h is the same as the observed value_next=0x%h.",
-              $time, expected_value_next, value_next);
+          $display({"Time: %0t, INFO: test_CounterReinitializationTransaction1 - Check passed.",
+                    "Expected value_next=0x%h is the same as the observed value_next=0x%h."},
+                     $time, expected_value_next, value_next);
           if (test_failed != 1) test_failed = 0;
         end
 
@@ -397,22 +388,21 @@ module tb;
         @(cb_clk);
         expected_value = expected_value_next;
         if (cb_clk.value !== expected_value) begin
-          $display(
-              "Time: %0t, ERROR: test_CounterReinitializationTransaction1 - Check failed. Expected value=0x%h, got 0x%h",
-              $time, expected_value, value);
+          $display({"Time: %0t, ERROR: test_CounterReinitializationTransaction1 - Check failed.",
+                    "Expected value=0x%h, got 0x%h"}, $time, expected_value, value);
           test_failed = 1;
         end else begin
-          $display(
-              "Time: %0t, INFO: test_CounterReinitializationTransaction1 - Check passed. Expected value=0x%h is the same as the observed value=0x%h.",
-              $time, expected_value, value);
+          $display({"Time: %0t, INFO: test_CounterReinitializationTransaction1 - Check passed.",
+                    "Expected value=0x%h is the same as the observed value=0x%h."}, $time,
+                     expected_value, value);
           if (test_failed != 1) test_failed = 0;
         end
 
         // Report test status
         if (test_failed == 0) begin
-          $display("Time: %0t, PASSED: test_CounterReinitializationTransaction1", $time);
+          $display({"Time: %0t, PASSED: test_CounterReinitializationTransaction1"}, $time);
         end else begin
-          $display("Time: %0t, FAILED: test_CounterReinitializationTransaction1", $time);
+          $display({"Time: %0t, FAILED: test_CounterReinitializationTransaction1"}, $time);
         end
       end
     join_any
@@ -420,4 +410,3 @@ module tb;
   endtask
 
 endmodule
-

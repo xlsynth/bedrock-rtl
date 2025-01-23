@@ -6,20 +6,19 @@
 // Description: Unit test for br_enc_bin2onehot
 //=============================================================
 
-module tb;
+module br_enc_bin2onehot_gen_tb;
   timeunit 1ns; timeprecision 100ps;
 
   //===========================================================
   // Testbench Parameters
   //===========================================================
-  parameter CLOCK_FREQ = 100;  // Clock frequency in MHz
-  parameter RESET_DURATION = 100;  // Reset duration in ns
-  parameter TIMEOUT = 10000000;  // Timeout value in ns
-  parameter PER_TASK_TIMEOUT = 1000000;  // Timeout value for each task in ns
-  parameter DRAIN_TIME = 10000;  // Time to observe all results in ns
-  parameter CLOCK_FREQ_NS_CONVERSION_FACTOR = 1000;  // Conversion factor to nanoseconds
-  parameter NO_ASSERTS_ON_RESET = 0;  // Disable assertions during reset
-  parameter DISABLE_CHECKS = 0;  // Disable checks
+  parameter int CLOCK_FREQ = 100;  // Clock frequency in MHz
+  parameter int RESET_DURATION = 100;  // Reset duration in ns
+  parameter int TIMEOUT = 10000000;  // Timeout value in ns
+  parameter int PER_TASK_TIMEOUT = 1000000;  // Timeout value for each task in ns
+  parameter int DRAIN_TIME = 10000;  // Time to observe all results in ns
+  parameter int CLOCK_FREQ_NS_CONVERSION_FACTOR = 1000;  // Conversion factor to nanoseconds
+  parameter int NO_ASSERTS_ON_RESET = 0;  // Disable assertions during reset
 
   //===========================================================
   // DUT Imports and Includes
@@ -87,7 +86,7 @@ module tb;
   initial begin
     if (NO_ASSERTS_ON_RESET) $assertoff;
     #(TIMEOUT);
-    $display("Error: Testbench timeout!");
+    $display({"Error: Testbench timeout!"});
     $finish;
   end
 
@@ -134,9 +133,8 @@ module tb;
     fork
       begin
         #(PER_TASK_TIMEOUT);
-        $display(
-            "Time: %0t, INFO: Timeout: test_BinaryToOnehotConversion. Stimuli is not observed or it needs more time to finish this test.",
-            $time);
+        $display({"Time: %0t, INFO: Timeout: test_BinaryToOnehotConversion.",
+                  "Stimuli is not observed or it needs more time to finish this test."}, $time);
       end
       begin
         // Purpose: Convert a binary-encoded input to a onehot-encoded output when the input is valid.
@@ -164,14 +162,13 @@ module tb;
 
           @(cb_clk);
           if (cb_clk.out !== expected_out) begin
-            $display(
-                "Time: %0t, ERROR: test_BinaryToOnehotConversion - Check failed. Expected out=0x%h, got out=0x%h",
-                $time, expected_out, out);
+            $display({"Time: %0t, ERROR: test_BinaryToOnehotConversion - Check failed.",
+                      "Expected out=0x%h, got out=0x%h"}, $time, expected_out, out);
             test_failed = 1;
           end else begin
-            $display(
-                "Time: %0t, INFO: test_BinaryToOnehotConversion - Check passed. Expected value for out is the same as the observed value (both are 0x%h).",
-                $time, out);
+            $display({"Time: %0t, INFO: test_BinaryToOnehotConversion - Check passed.",
+                      "Expected value for out is the same as the observed value (both are 0x%h)."},
+                       $time, out);
             if (test_failed != 1) test_failed = 0;
           end
         end
@@ -184,22 +181,22 @@ module tb;
 
         @(cb_clk);
         if (cb_clk.out !== expected_out) begin
-          $display(
-              "Time: %0t, ERROR: test_BinaryToOnehotConversion - Check failed for invalid input. Expected out=0x%h, got out=0x%h",
-              $time, expected_out, out);
+          $display({"Time: %0t, ERROR: test_BinaryToOnehotConversion - Check failed for invalid",
+                    "input.", "Expected out=0x%h, got out=0x%h"}, $time, expected_out, out);
           test_failed = 1;
         end else begin
           $display(
-              "Time: %0t, INFO: test_BinaryToOnehotConversion - Check passed for invalid input. Expected value for out is the same as the observed value (both are 0x%h).",
-              $time, out);
+              {"Time: %0t, INFO: test_BinaryToOnehotConversion - Check passed for invalid input.",
+               "Expected value for out is the same as the observed value (both are 0x%h)."}, $time,
+                out);
           if (test_failed != 1) test_failed = 0;
         end
 
         // Final test status
         if (test_failed == 0) begin
-          $display("Time: %0t, PASSED: test_BinaryToOnehotConversion", $time);
+          $display({"Time: %0t, PASSED: test_BinaryToOnehotConversion"}, $time);
         end else begin
-          $display("Time: %0t, FAILED: test_BinaryToOnehotConversion", $time);
+          $display({"Time: %0t, FAILED: test_BinaryToOnehotConversion"}, $time);
         end
       end
     join_any
@@ -211,9 +208,8 @@ module tb;
     fork
       begin
         #(PER_TASK_TIMEOUT);
-        $display(
-            "Time: %0t, INFO: Timeout: test_InvalidInputHandling. Stimuli is not observed or it needs more time to finish this test.",
-            $time);
+        $display({"Time: %0t, INFO: Timeout: test_InvalidInputHandling.",
+                  "Stimuli is not observed or it needs more time to finish this test."}, $time);
       end
       begin
         // Purpose: Ensure that when the input is invalid, the output is driven to zero.
@@ -233,30 +229,29 @@ module tb;
         random_in_valid = 0;  // Deassert cb_clk.in_valid to indicate invalid input
         cb_clk.in <= random_in;
         cb_clk.in_valid <= random_in_valid;
-        $display("Time: %0t, INFO: test_InvalidInputHandling - Driving in=0x%h, in_valid=%b",
-                 $time, random_in, random_in_valid);
+        $display({"Time: %0t, INFO: test_InvalidInputHandling - Driving in=0x%h, in_valid=%b"},
+                   $time, random_in, random_in_valid);
 
         // Wait for the output to stabilize
         @(cb_clk);
 
         // Check the output
         if (cb_clk.out !== expected_out) begin
-          $display(
-              "Time: %0t, ERROR: test_InvalidInputHandling - Check failed. Expected out=0x%h, got out=0x%h",
-              $time, expected_out, out);
+          $display({"Time: %0t, ERROR: test_InvalidInputHandling - Check failed.",
+                    "Expected out=0x%h, got out=0x%h"}, $time, expected_out, out);
           test_failed = 1;
         end else begin
-          $display(
-              "Time: %0t, INFO: test_InvalidInputHandling - Check passed. Expected value for out is the same as the observed value (both are 0x%h).",
-              $time, out);
+          $display({"Time: %0t, INFO: test_InvalidInputHandling - Check passed.",
+                    "Expected value for out is the same as the observed value (both are 0x%h)."},
+                     $time, out);
           if (test_failed != 1) test_failed = 0;
         end
 
         // Report test status
         if (test_failed == 0) begin
-          $display("Time: %0t, PASSED: test_InvalidInputHandling", $time);
+          $display({"Time: %0t, PASSED: test_InvalidInputHandling"}, $time);
         end else begin
-          $display("Time: %0t, FAILED: test_InvalidInputHandling", $time);
+          $display({"Time: %0t, FAILED: test_InvalidInputHandling"}, $time);
         end
       end
     join_any
@@ -268,9 +263,8 @@ module tb;
     fork
       begin
         #(PER_TASK_TIMEOUT);
-        $display(
-            "Time: %0t, INFO: Timeout: test_InputRangeValidationWithinRange. Stimuli is not observed or it needs more time to finish this test.",
-            $time);
+        $display({"Time: %0t, INFO: Timeout: test_InputRangeValidationWithinRange.",
+                  "Stimuli is not observed or it needs more time to finish this test."}, $time);
       end
       begin
         // Purpose: Check if the binary input is within the valid range specified by `NumValues` when `EnableInputRangeCheck` is enabled.
@@ -303,23 +297,22 @@ module tb;
           @(cb_clk);
           // Check if the output matches the expected onehot encoding
           if (cb_clk.out !== expected_out) begin
-            $display(
-                "Time: %0t, ERROR: test_InputRangeValidationWithinRange - Check failed. Expected out=0x%h, got out=0x%h",
-                $time, expected_out, out);
+            $display({"Time: %0t, ERROR: test_InputRangeValidationWithinRange - Check failed.",
+                      "Expected out=0x%h, got out=0x%h"}, $time, expected_out, out);
             test_failed = 1;
           end else begin
-            $display(
-                "Time: %0t, INFO: test_InputRangeValidationWithinRange - Check passed. Expected value for out is the same as the observed value (both are 0x%h).",
-                $time, out);
+            $display({"Time: %0t, INFO: test_InputRangeValidationWithinRange - Check passed.",
+                      "Expected value for out is the same as the observed value (both are 0x%h)."},
+                       $time, out);
             if (test_failed != 1) test_failed = 0;
           end
         end
 
         // Final test status
         if (test_failed == 0) begin
-          $display("Time: %0t, PASSED: test_InputRangeValidationWithinRange", $time);
+          $display({"Time: %0t, PASSED: test_InputRangeValidationWithinRange"}, $time);
         end else begin
-          $display("Time: %0t, FAILED: test_InputRangeValidationWithinRange", $time);
+          $display({"Time: %0t, FAILED: test_InputRangeValidationWithinRange"}, $time);
         end
       end
     join_any
@@ -331,9 +324,8 @@ module tb;
     fork
       begin
         #(PER_TASK_TIMEOUT);
-        $display(
-            "Time: %0t, INFO: Timeout: test_InputRangeValidationOutOfRange. Stimuli is not observed or it needs more time to finish this test.",
-            $time);
+        $display({"Time: %0t, INFO: Timeout: test_InputRangeValidationOutOfRange.",
+                  "Stimuli is not observed or it needs more time to finish this test."}, $time);
       end
       begin
         // Purpose: Ensure that the input does not exceed the allowed range, preventing undefined behavior.
@@ -350,9 +342,8 @@ module tb;
         @(cb_clk);
         cb_clk.in <= invalid_in;
         cb_clk.in_valid <= 1'b1;
-        $display(
-            "Time: %0t, INFO: test_InputRangeValidationOutOfRange - Driving in=0x%h, in_valid=1",
-            $time, invalid_in);
+        $display({"Time: %0t, INFO: test_InputRangeValidationOutOfRange - Driving in=0x%h,",
+                  "in_valid=1"}, $time, invalid_in);
 
         // Wait for the output to stabilize
         @(cb_clk);
@@ -360,14 +351,13 @@ module tb;
         // Check the output
         expected_out = '0;  // Expected output is zero for cb_clk.out-of-range input
         if (cb_clk.out !== expected_out) begin
-          $display(
-              "Time: %0t, ERROR: test_InputRangeValidationOutOfRange - Check failed. Expected out=0x%h, got out=0x%h",
-              $time, expected_out, out);
+          $display({"Time: %0t, ERROR: test_InputRangeValidationOutOfRange - Check failed.",
+                    "Expected out=0x%h, got out=0x%h"}, $time, expected_out, out);
           test_failed = 1;
         end else begin
-          $display(
-              "Time: %0t, INFO: test_InputRangeValidationOutOfRange - Check passed. Expected value for out is the same as the observed value (both are 0x%h).",
-              $time, out);
+          $display({"Time: %0t, INFO: test_InputRangeValidationOutOfRange - Check passed.",
+                    "Expected value for out is the same as the observed value (both are 0x%h)."},
+                     $time, out);
           if (test_failed != 1) test_failed = 0;
         end
 
@@ -377,9 +367,9 @@ module tb;
 
         // Report test status
         if (test_failed == 0) begin
-          $display("Time: %0t, PASSED: test_InputRangeValidationOutOfRange", $time);
+          $display({"Time: %0t, PASSED: test_InputRangeValidationOutOfRange"}, $time);
         end else begin
-          $display("Time: %0t, FAILED: test_InputRangeValidationOutOfRange", $time);
+          $display({"Time: %0t, FAILED: test_InputRangeValidationOutOfRange"}, $time);
         end
       end
     join_any
@@ -387,4 +377,3 @@ module tb;
   endtask
 
 endmodule
-

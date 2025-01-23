@@ -6,20 +6,19 @@
 // Description: Unit test for br_fifo_flops
 //=============================================================
 
-module tb;
+module br_fifo_flops_gen_tb;
   timeunit 1ns; timeprecision 100ps;
 
   //===========================================================
   // Testbench Parameters
   //===========================================================
-  parameter CLOCK_FREQ = 100;  // Clock frequency in MHz
-  parameter RESET_DURATION = 100;  // Reset duration in ns
-  parameter TIMEOUT = 10000000;  // Timeout value in ns
-  parameter PER_TASK_TIMEOUT = 1000000;  // Timeout value for each task in ns
-  parameter DRAIN_TIME = 10000;  // Time to observe all results in ns
-  parameter CLOCK_FREQ_NS_CONVERSION_FACTOR = 1000;  // Conversion factor to nanoseconds
-  parameter NO_ASSERTS_ON_RESET = 0;  // Disable assertions during reset
-  parameter DISABLE_CHECKS = 0;  // Disable checks
+  parameter int CLOCK_FREQ = 100;  // Clock frequency in MHz
+  parameter int RESET_DURATION = 100;  // Reset duration in ns
+  parameter int TIMEOUT = 10000000;  // Timeout value in ns
+  parameter int PER_TASK_TIMEOUT = 1000000;  // Timeout value for each task in ns
+  parameter int DRAIN_TIME = 10000;  // Time to observe all results in ns
+  parameter int CLOCK_FREQ_NS_CONVERSION_FACTOR = 1000;  // Conversion factor to nanoseconds
+  parameter int NO_ASSERTS_ON_RESET = 0;  // Disable assertions during reset
 
 
   //===========================================================
@@ -124,7 +123,7 @@ module tb;
   initial begin
     if (NO_ASSERTS_ON_RESET) $assertoff;
     #(TIMEOUT);
-    $display("Error: Testbench timeout!");
+    $display({"Error: Testbench timeout!"});
     $finish;
   end
 
@@ -176,9 +175,8 @@ module tb;
       // 1) TIMEOUT PROCESS
       begin
         #(PER_TASK_TIMEOUT);
-        $display(
-            "Time: %0t, INFO: Timeout: test_PushDataFlowControlTransaction2. Stimuli is not observed or it needs more time to finish this test.",
-            $time);
+        $display({"Time: %0t, INFO: Timeout: test_PushDataFlowControlTransaction2.",
+                  "Stimuli is not observed or it needs more time to finish this test."}, $time);
       end
 
       // 2) MAIN TEST LOGIC
@@ -213,13 +211,13 @@ module tb;
                 // If FIFO is full, stop pushing and possibly enable popping
                 push_valid_flag = 0;
                 cb_clk.pop_ready <= 1;  // Let the FIFO drain if your design needs it
-                $display("Time: %0t, INFO: FIFO is full, deasserting push_valid.", $time);
+                $display({"Time: %0t, INFO: FIFO is full, deasserting push_valid."}, $time);
               end else begin
                 // If FIFO has space, push data
                 push_valid_flag = 1;
                 random_data = $urandom();
-                $display("Time: %0t, INFO: FIFO has space, asserting push_valid with data=0x%h.",
-                         $time, random_data);
+                $display({"Time: %0t, INFO: FIFO has space, asserting push_valid with data=0x%h."},
+                           $time, random_data);
               end
             end
             // Once we've done our required pushes, deassert push_valid
@@ -247,9 +245,10 @@ module tb;
               @(cb_clk);
               if (cb_clk.push_ready && push_valid_flag) begin
                 push_count++;
-                $display("Time: %0t, INFO: Push successful. push_count=%0d", $time, push_count);
+                $display({"Time: %0t, INFO: Push successful.", "push_count=%0d"}, $time,
+                           push_count);
               end else if (!cb_clk.push_ready && push_valid_flag) begin
-                $display("Time: %0t, INFO: push_ready deasserted, waiting to push data.", $time);
+                $display({"Time: %0t, INFO: push_ready deasserted, waiting to push data."}, $time);
               end
             end
           end
@@ -257,9 +256,9 @@ module tb;
 
         // Final reporting
         if (test_failed == 0) begin
-          $display("Time: %0t, PASSED: test_PushDataFlowControlTransaction2", $time);
+          $display({"Time: %0t, PASSED: test_PushDataFlowControlTransaction2"}, $time);
         end else begin
-          $display("Time: %0t, FAILED: test_PushDataFlowControlTransaction2", $time);
+          $display({"Time: %0t, FAILED: test_PushDataFlowControlTransaction2"}, $time);
         end
       end
     join_any
@@ -271,9 +270,8 @@ module tb;
     fork
       begin
         #(PER_TASK_TIMEOUT);
-        $display(
-            "Time: %0t, INFO: Timeout: test_PushValidStabilityTransaction1. Stimuli is not observed or it needs more time to finish this test.",
-            $time);
+        $display({"Time: %0t, INFO: Timeout: test_PushValidStabilityTransaction1.",
+                  "Stimuli is not observed or it needs more time to finish this test."}, $time);
       end
       begin
         // Purpose: Ensure that the `push_valid` signal remains stable during backpressure conditions, maintaining consistent signaling for data validity.
@@ -295,9 +293,8 @@ module tb;
         stable_push_valid = 1;
         cb_clk.push_valid <= stable_push_valid;
         cb_clk.push_data  <= random_push_data;
-        $display(
-            "Time: %0t, INFO: test_PushValidStabilityTransaction1 - Driving push_valid=1, push_data=0x%h",
-            $time, random_push_data);
+        $display({"Time: %0t, INFO: test_PushValidStabilityTransaction1 - Driving push_valid=1,",
+                  "push_data=0x%h"}, $time, random_push_data);
 
         // Step 2: Monitor `push_valid` for stability during backpressure
         fork
@@ -306,8 +303,9 @@ module tb;
               @(cb_clk);
               if (cb_clk.push_valid !== stable_push_valid) begin
                 $display(
-                    "Time: %0t, ERROR: test_PushValidStabilityTransaction1 - push_valid is not stable during backpressure. Expected %0b, got %0b",
-                    $time, stable_push_valid, cb_clk.push_valid);
+                    {"Time: %0t, ERROR: test_PushValidStabilityTransaction1 - push_valid is not",
+                     "stable during backpressure.", "Expected %0b, got %0b"}, $time,
+                      stable_push_valid, cb_clk.push_valid);
                 test_failed = 1;
               end
             end
@@ -317,28 +315,26 @@ module tb;
         // Step 3: Assert `push_ready` when data can be accepted
         @(cb_clk);
         cb_clk.pop_ready <= 1;
-        $display("Time: %0t, INFO: test_PushValidStabilityTransaction1 - pop_ready asserted",
-                 $time);
+        $display({"Time: %0t, INFO: test_PushValidStabilityTransaction1 - pop_ready asserted"},
+                   $time);
 
         // Step 4: If backpressure occurs, ensure `push_valid` remains stable until `push_ready` is asserted again
         @(cb_clk);
         if (cb_clk.push_ready && cb_clk.push_valid === stable_push_valid) begin
-          $display(
-              "Time: %0t, INFO: test_PushValidStabilityTransaction1 - push_valid remained stable during backpressure",
-              $time);
+          $display({"Time: %0t, INFO: test_PushValidStabilityTransaction1 - push_valid remained",
+                    "stable during backpressure"}, $time);
           if (test_failed != 1) test_failed = 0;
         end else begin
-          $display(
-              "Time: %0t, ERROR: test_PushValidStabilityTransaction1 - push_valid did not remain stable during backpressure",
-              $time);
+          $display({"Time: %0t, ERROR: test_PushValidStabilityTransaction1 - push_valid did not",
+                    "remain stable during backpressure"}, $time);
           test_failed = 1;
         end
 
         // Final test status
         if (test_failed == 0) begin
-          $display("Time: %0t, PASSED: test_PushValidStabilityTransaction1", $time);
+          $display({"Time: %0t, PASSED: test_PushValidStabilityTransaction1"}, $time);
         end else begin
-          $display("Time: %0t, FAILED: test_PushValidStabilityTransaction1", $time);
+          $display({"Time: %0t, FAILED: test_PushValidStabilityTransaction1"}, $time);
         end
       end
     join_any
@@ -351,9 +347,8 @@ module tb;
       // (1) Timeout thread
       begin : timeout_thread
         #(PER_TASK_TIMEOUT);
-        $display(
-            "Time: %0t, INFO: Timeout: test_PopDataRetrievalTransaction1. Stimulus not observed or needs more time to finish.",
-            $time);
+        $display({"Time: %0t, INFO: Timeout: test_PopDataRetrievalTransaction1.",
+                  "Stimulus not observed or needs more time to finish."}, $time);
         // If you want the test to end on timeout:
         disable test_thread;
       end
@@ -371,7 +366,8 @@ module tb;
         // Step 1: Assert pop_ready
         pop_ready_flag = 1;
         cb_clk.pop_ready <= pop_ready_flag;  // Non-blocking or blocking depends on your usage
-        $display("Time: %0t, INFO: test_PopDataRetrievalTransaction1 - pop_ready asserted.", $time);
+        $display({"Time: %0t, INFO: test_PopDataRetrievalTransaction1 - pop_ready asserted."},
+                   $time);
 
         // Example: We attempt 10 pops
         for (i = 0; i < 10; i++) begin
@@ -384,23 +380,23 @@ module tb;
           end
 
           if (cb_clk.pop_valid == 0) begin
-            $display("Time: %0t, ERROR: Did not see pop_valid within 100 cycles for pop %0d.",
-                     $time, i);
+            $display({"Time: %0t, ERROR: Did not see pop_valid within 100 cycles for pop %0d."},
+                       $time, i);
             test_failed = 1;
             break;
           end
 
           // Now pop_valid is asserted, capture data
           expected_pop_data = cb_clk.pop_data;
-          $display("Time: %0t, INFO: pop_valid asserted, pop_data=0x%h.", $time, cb_clk.pop_data);
+          $display({"Time: %0t, INFO: pop_valid asserted, pop_data=0x%h."}, $time, cb_clk.pop_data);
 
           // Check data
           if (cb_clk.pop_data !== expected_pop_data) begin
-            $display("Time: %0t, ERROR: Data mismatch. Expected 0x%h, got 0x%h.", $time,
-                     expected_pop_data, cb_clk.pop_data);
+            $display({"Time: %0t, ERROR: Data mismatch.", "Expected 0x%h, got 0x%h."}, $time,
+                       expected_pop_data, cb_clk.pop_data);
             test_failed = 1;
           end else begin
-            $display("Time: %0t, INFO: Data matched: 0x%h.", $time, cb_clk.pop_data);
+            $display({"Time: %0t, INFO: Data matched: 0x%h."}, $time, cb_clk.pop_data);
             // If we haven't failed yet, mark as passing so far
             if (test_failed != 1) test_failed = 0;
           end
@@ -412,9 +408,9 @@ module tb;
 
         // Final pass/fail message
         if (test_failed == 0) begin
-          $display("Time: %0t, PASSED: test_PopDataRetrievalTransaction1", $time);
+          $display({"Time: %0t, PASSED: test_PopDataRetrievalTransaction1"}, $time);
         end else begin
-          $display("Time: %0t, FAILED: test_PopDataRetrievalTransaction1", $time);
+          $display({"Time: %0t, FAILED: test_PopDataRetrievalTransaction1"}, $time);
         end
 
         // If we got here, test is done, so disable the timeout thread
@@ -427,9 +423,8 @@ module tb;
     fork
       begin
         #(PER_TASK_TIMEOUT);
-        $display(
-            "Time: %0t, INFO: Timeout: test_ItemCountManagementTransaction1. Stimuli is not observed or it needs more time to finish this test.",
-            $time);
+        $display({"Time: %0t, INFO: Timeout: test_ItemCountManagementTransaction1.",
+                  "Stimuli is not observed or it needs more time to finish this test."}, $time);
       end
       begin
         // Purpose: Manage the count of items in the FIFO, updating the current and next item counts based on pop operations.
@@ -470,26 +465,25 @@ module tb;
 
               // Check the DUT's items and items_next against expected values
               if (cb_clk.items !== expected_items) begin
-                $display(
-                    "Time: %0t, ERROR: test_ItemCountManagementTransaction1 - Check failed. Expected items: %0d, got: %0d",
-                    $time, expected_items, items);
+                $display({"Time: %0t, ERROR: test_ItemCountManagementTransaction1 - Check failed.",
+                          "Expected items: %0d, got: %0d"}, $time, expected_items, items);
                 test_failed = 1;
               end else begin
-                $display(
-                    "Time: %0t, INFO: test_ItemCountManagementTransaction1 - Check passed. Expected items: %0d, observed items: %0d",
-                    $time, expected_items, items);
+                $display({"Time: %0t, INFO: test_ItemCountManagementTransaction1 - Check passed.",
+                          "Expected items: %0d, observed items: %0d"}, $time, expected_items,
+                           items);
                 if (test_failed != 1) test_failed = 0;
               end
 
               if (cb_clk.items_next !== expected_items_next) begin
-                $display(
-                    "Time: %0t, ERROR: test_ItemCountManagementTransaction1 - Check failed. Expected items_next: %0d, got: %0d",
-                    $time, expected_items_next, items_next);
+                $display({"Time: %0t, ERROR: test_ItemCountManagementTransaction1 - Check failed.",
+                          "Expected items_next: %0d, got: %0d"}, $time, expected_items_next,
+                           items_next);
                 test_failed = 1;
               end else begin
-                $display(
-                    "Time: %0t, INFO: test_ItemCountManagementTransaction1 - Check passed. Expected items_next: %0d, observed items_next: %0d",
-                    $time, expected_items_next, items_next);
+                $display({"Time: %0t, INFO: test_ItemCountManagementTransaction1 - Check passed.",
+                          "Expected items_next: %0d, observed items_next: %0d"}, $time,
+                           expected_items_next, items_next);
                 if (test_failed != 1) test_failed = 0;
               end
             end
@@ -498,9 +492,9 @@ module tb;
 
         // Final test status
         if (test_failed == 0) begin
-          $display("Time: %0t, PASSED: test_ItemCountManagementTransaction1", $time);
+          $display({"Time: %0t, PASSED: test_ItemCountManagementTransaction1"}, $time);
         end else begin
-          $display("Time: %0t, FAILED: test_ItemCountManagementTransaction1", $time);
+          $display({"Time: %0t, FAILED: test_ItemCountManagementTransaction1"}, $time);
         end
       end
     join_any
@@ -512,9 +506,8 @@ module tb;
     fork
       begin
         #(PER_TASK_TIMEOUT);
-        $display(
-            "Time: %0t, INFO: Timeout: test_RegisterPopOutputsControlTransaction1. Stimuli is not observed or it needs more time to finish this test.",
-            $time);
+        $display({"Time: %0t, INFO: Timeout: test_RegisterPopOutputsControlTransaction1.",
+                  "Stimuli is not observed or it needs more time to finish this test."}, $time);
       end
       begin
         // Purpose: Manage the registration of pop outputs when `RegisterPopOutputs` is enabled, ensuring that pop data and valid signals are registered before being output, which may add an additional cycle of latency.
@@ -530,9 +523,8 @@ module tb;
 
         // Preconditions: Ensure RegisterPopOutputs is enabled
         if (RegisterPopOutputs != 1) begin
-          $display(
-              "Time: %0t, INFO: test_RegisterPopOutputsControlTransaction1 - RegisterPopOutputs is not enabled.",
-              $time);
+          $display({"Time: %0t, INFO: test_RegisterPopOutputsControlTransaction1 -",
+                    "RegisterPopOutputs is not enabled."}, $time);
           test_failed = 0;
         end else begin
           // Initial setup
@@ -545,9 +537,9 @@ module tb;
           cb_clk.push_data  <= random_push_data;
           cb_clk.push_valid <= random_push_valid;
           cb_clk.pop_ready  <= random_pop_ready;
-          $display(
-              "Time: %0t, INFO: test_RegisterPopOutputsControlTransaction1 - Driving push_data=0x%h, push_valid=%0b, pop_ready=%0b",
-              $time, random_push_data, random_push_valid, random_pop_ready);
+          $display({"Time: %0t, INFO: test_RegisterPopOutputsControlTransaction1 - Driving",
+                    "push_data=0x%h, push_valid=%0b, pop_ready=%0b"}, $time, random_push_data,
+                     random_push_valid, random_pop_ready);
 
           // Wait for one clock cycle to register outputs
           @(cb_clk);
@@ -559,13 +551,14 @@ module tb;
           // Check registered outputs
           if (cb_clk.pop_data !== expected_pop_data || cb_clk.pop_valid !== expected_pop_valid) begin
             $display(
-                "Time: %0t, ERROR: test_RegisterPopOutputsControlTransaction1 - Check failed. Expected pop_data=0x%h, pop_valid=%0b, got pop_data=0x%h, pop_valid=%0b",
-                $time, expected_pop_data, expected_pop_valid, pop_data, pop_valid);
+                {"Time: %0t, ERROR: test_RegisterPopOutputsControlTransaction1 - Check failed.",
+                 "Expected pop_data=0x%h, pop_valid=%0b, got pop_data=0x%h, pop_valid=%0b"}, $time,
+                  expected_pop_data, expected_pop_valid, pop_data, pop_valid);
             test_failed = 1;
           end else begin
-            $display(
-                "Time: %0t, INFO: test_RegisterPopOutputsControlTransaction1 - Check passed. Expected pop_data=0x%h, pop_valid=%0b, observed pop_data=0x%h, pop_valid=%0b",
-                $time, expected_pop_data, expected_pop_valid, pop_data, pop_valid);
+            $display({"Time: %0t, INFO: test_RegisterPopOutputsControlTransaction1 - Check passed.",
+                      "Expected pop_data=0x%h, pop_valid=%0b, observed pop_data=0x%h, pop_valid=%0b"
+                       }, $time, expected_pop_data, expected_pop_valid, pop_data, pop_valid);
             if (test_failed != 1) test_failed = 0;
           end
 
@@ -577,9 +570,9 @@ module tb;
 
         // Report test status
         if (test_failed == 0) begin
-          $display("Time: %0t, PASSED: test_RegisterPopOutputsControlTransaction1", $time);
+          $display({"Time: %0t, PASSED: test_RegisterPopOutputsControlTransaction1"}, $time);
         end else begin
-          $display("Time: %0t, FAILED: test_RegisterPopOutputsControlTransaction1", $time);
+          $display({"Time: %0t, FAILED: test_RegisterPopOutputsControlTransaction1"}, $time);
         end
       end
     join_any
@@ -587,4 +580,3 @@ module tb;
   endtask
 
 endmodule
-

@@ -6,20 +6,19 @@
 // Description: Unit test for br_enc_priority_encoder
 //=============================================================
 
-module tb;
+module br_enc_priority_encoder_gen_tb;
   timeunit 1ns; timeprecision 100ps;
 
   //===========================================================
   // Testbench Parameters
   //===========================================================
-  parameter CLOCK_FREQ = 100;  // Clock frequency in MHz
-  parameter RESET_DURATION = 100;  // Reset duration in ns
-  parameter TIMEOUT = 10000000;  // Timeout value in ns
-  parameter PER_TASK_TIMEOUT = 1000000;  // Timeout value for each task in ns
-  parameter DRAIN_TIME = 10000;  // Time to observe all results in ns
-  parameter CLOCK_FREQ_NS_CONVERSION_FACTOR = 1000;  // Conversion factor to nanoseconds
-  parameter NO_ASSERTS_ON_RESET = 0;  // Disable assertions during reset
-  parameter DISABLE_CHECKS = 0;  // Disable checks
+  parameter int CLOCK_FREQ = 100;  // Clock frequency in MHz
+  parameter int RESET_DURATION = 100;  // Reset duration in ns
+  parameter int TIMEOUT = 10000000;  // Timeout value in ns
+  parameter int PER_TASK_TIMEOUT = 1000000;  // Timeout value for each task in ns
+  parameter int DRAIN_TIME = 10000;  // Time to observe all results in ns
+  parameter int CLOCK_FREQ_NS_CONVERSION_FACTOR = 1000;  // Conversion factor to nanoseconds
+  parameter int NO_ASSERTS_ON_RESET = 0;  // Disable assertions during reset
 
   //===========================================================
   // DUT Imports and Includes
@@ -84,7 +83,7 @@ module tb;
   initial begin
     if (NO_ASSERTS_ON_RESET) $assertoff;
     #(TIMEOUT);
-    $display("Error: Testbench timeout!");
+    $display({"Error: Testbench timeout!"});
     $finish;
   end
 
@@ -127,9 +126,8 @@ module tb;
     fork
       begin
         #(PER_TASK_TIMEOUT);
-        $display(
-            "Time: %0t, INFO: Timeout: test_HighestPrioritySelection. Stimuli is not observed or it needs more time to finish this test.",
-            $time);
+        $display({"Time: %0t, INFO: Timeout: test_HighestPrioritySelection.",
+                  "Stimuli is not observed or it needs more time to finish this test."}, $time);
       end
       begin
         // Purpose: Verify that the DUT correctly identifies and outputs the highest priority active request from the input signals, where the lowest index has the highest priority.
@@ -155,30 +153,29 @@ module tb;
         // Apply stimulus
         @(cb_clk);
         cb_clk.in <= in_vector;
-        $display("Time: %0t, INFO: test_HighestPrioritySelection - Driving in=0x%h", $time,
-                 in_vector);
+        $display({"Time: %0t, INFO: test_HighestPrioritySelection - Driving in=0x%h"}, $time,
+                   in_vector);
 
         // Wait for the output to stabilize
         @(cb_clk);
 
         // Check the output
         if (cb_clk.out[0] !== expected_out) begin
-          $display(
-              "Time: %0t, ERROR: test_HighestPrioritySelection - Check failed. Expected out[0]=0x%h, got out[0]=0x%h",
-              $time, expected_out, cb_clk.out[0]);
+          $display({"Time: %0t, ERROR: test_HighestPrioritySelection - Check failed.",
+                    "Expected out[0]=0x%h, got out[0]=0x%h"}, $time, expected_out, cb_clk.out[0]);
           test_failed = 1;
         end else begin
-          $display(
-              "Time: %0t, INFO: test_HighestPrioritySelection - Check passed. Expected value for out[0] is the same as the observed value (both are 0x%h).",
-              $time, expected_out);
+          $display({"Time: %0t, INFO: test_HighestPrioritySelection - Check passed.",
+                    "Expected value for out[0] is the same as the observed value (both are 0x%h)."
+                     }, $time, expected_out);
           if (test_failed != 1) test_failed = 0;
         end
 
         // Report test status
         if (test_failed == 0) begin
-          $display("Time: %0t, PASSED: test_HighestPrioritySelection", $time);
+          $display({"Time: %0t, PASSED: test_HighestPrioritySelection"}, $time);
         end else begin
-          $display("Time: %0t, FAILED: test_HighestPrioritySelection", $time);
+          $display({"Time: %0t, FAILED: test_HighestPrioritySelection"}, $time);
         end
       end
     join_any
@@ -190,9 +187,8 @@ module tb;
     fork
       begin
         #(PER_TASK_TIMEOUT);
-        $display(
-            "Time: %0t, INFO: Timeout: test_MaskingLowerPriorities. Stimuli is not observed or it needs more time to finish this test.",
-            $time);
+        $display({"Time: %0t, INFO: Timeout: test_MaskingLowerPriorities.",
+                  "Stimuli is not observed or it needs more time to finish this test."}, $time);
       end
       begin
         // Purpose: Ensure that the DUT masks all lower priority requests once a higher priority request has been identified and outputted.
@@ -208,8 +204,8 @@ module tb;
         // Apply stimulus
         @(cb_clk);
         cb_clk.in <= in_vector;
-        $display("Time: %0t, INFO: test_MaskingLowerPriorities - Driving in=0x%h", $time,
-                 in_vector);
+        $display({"Time: %0t, INFO: test_MaskingLowerPriorities - Driving in=0x%h"}, $time,
+                   in_vector);
 
         // Calculate expected output
         expected_out[0] = 4'b0010;  // Highest priority request is at index 1
@@ -222,36 +218,32 @@ module tb;
 
         // Check the output
         if (cb_clk.out[0] !== expected_out[0]) begin
-          $display(
-              "Time: %0t, ERROR: test_MaskingLowerPriorities - Check failed for out[0]. Expected 0x%h, got 0x%h",
-              $time, expected_out[0], out[0]);
+          $display({"Time: %0t, ERROR: test_MaskingLowerPriorities - Check failed for out[0].",
+                    "Expected 0x%h, got 0x%h"}, $time, expected_out[0], out[0]);
           test_failed = 1;
         end else begin
-          $display(
-              "Time: %0t, INFO: test_MaskingLowerPriorities - Check passed for out[0]. Expected and observed value is 0x%h",
-              $time, out[0]);
+          $display({"Time: %0t, INFO: test_MaskingLowerPriorities - Check passed for out[0].",
+                    "Expected and observed value is 0x%h"}, $time, out[0]);
           if (test_failed != 1) test_failed = 0;
         end
 
         for (i = 1; i < NumResults; i++) begin
           if (cb_clk.out[i] !== expected_out[i]) begin
-            $display(
-                "Time: %0t, ERROR: test_MaskingLowerPriorities - Check failed for out[%0d]. Expected 0x%h, got 0x%h",
-                $time, i, expected_out[i], out[i]);
+            $display({"Time: %0t, ERROR: test_MaskingLowerPriorities - Check failed for out[%0d].",
+                      "Expected 0x%h, got 0x%h"}, $time, i, expected_out[i], out[i]);
             test_failed = 1;
           end else begin
-            $display(
-                "Time: %0t, INFO: test_MaskingLowerPriorities - Check passed for out[%0d]. Expected and observed value is 0x%h",
-                $time, i, out[i]);
+            $display({"Time: %0t, INFO: test_MaskingLowerPriorities - Check passed for out[%0d].",
+                      "Expected and observed value is 0x%h"}, $time, i, out[i]);
             if (test_failed != 1) test_failed = 0;
           end
         end
 
         // Report test result
         if (test_failed == 0) begin
-          $display("Time: %0t, PASSED: test_MaskingLowerPriorities", $time);
+          $display({"Time: %0t, PASSED: test_MaskingLowerPriorities"}, $time);
         end else begin
-          $display("Time: %0t, FAILED: test_MaskingLowerPriorities", $time);
+          $display({"Time: %0t, FAILED: test_MaskingLowerPriorities"}, $time);
         end
       end
     join_any
@@ -263,9 +255,8 @@ module tb;
     fork
       begin
         #(PER_TASK_TIMEOUT);
-        $display(
-            "Time: %0t, INFO: Timeout: test_OneHotEncoding. Stimuli is not observed or it needs more time to finish this test.",
-            $time);
+        $display({"Time: %0t, INFO: Timeout: test_OneHotEncoding.",
+                  "Stimuli is not observed or it needs more time to finish this test."}, $time);
       end
       begin
         // Purpose: Validate that the DUT produces a one-hot encoded output for each of the highest priority requests, up to the number specified by `NumResults`.
@@ -292,14 +283,12 @@ module tb;
 
           // Check first result
           if (cb_clk.out[0] !== expected_out[0]) begin
-            $display(
-                "Time: %0t, ERROR: test_OneHotEncoding - Check failed for out[0]. Expected 0x%h, got 0x%h",
-                $time, expected_out[0], out[0]);
+            $display({"Time: %0t, ERROR: test_OneHotEncoding - Check failed for out[0].",
+                      "Expected 0x%h, got 0x%h"}, $time, expected_out[0], out[0]);
             test_failed = 1;
           end else begin
-            $display(
-                "Time: %0t, INFO: test_OneHotEncoding - Check passed for out[0]. Expected and observed value: 0x%h",
-                $time, out[0]);
+            $display({"Time: %0t, INFO: test_OneHotEncoding - Check passed for out[0].",
+                      "Expected and observed value: 0x%h"}, $time, out[0]);
             if (test_failed != 1) test_failed = 0;
           end
 
@@ -307,14 +296,12 @@ module tb;
           for (j = 1; j < NumResults; j++) begin
             expected_out[j] = 1 << (i + j);
             if (cb_clk.out[j] !== expected_out[j]) begin
-              $display(
-                  "Time: %0t, ERROR: test_OneHotEncoding - Check failed for out[%0d]. Expected 0x%h, got 0x%h",
-                  $time, j, expected_out[j], out[j]);
+              $display({"Time: %0t, ERROR: test_OneHotEncoding - Check failed for out[%0d].",
+                        "Expected 0x%h, got 0x%h"}, $time, j, expected_out[j], out[j]);
               test_failed = 1;
             end else begin
-              $display(
-                  "Time: %0t, INFO: test_OneHotEncoding - Check passed for out[%0d]. Expected and observed value: 0x%h",
-                  $time, j, out[j]);
+              $display({"Time: %0t, INFO: test_OneHotEncoding - Check passed for out[%0d].",
+                        "Expected and observed value: 0x%h"}, $time, j, out[j]);
               if (test_failed != 1) test_failed = 0;
             end
           end
@@ -325,9 +312,9 @@ module tb;
 
         // Final test status
         if (test_failed == 0) begin
-          $display("Time: %0t, PASSED: test_OneHotEncoding", $time);
+          $display({"Time: %0t, PASSED: test_OneHotEncoding"}, $time);
         end else begin
-          $display("Time: %0t, FAILED: test_OneHotEncoding", $time);
+          $display({"Time: %0t, FAILED: test_OneHotEncoding"}, $time);
         end
       end
     join_any
@@ -335,4 +322,3 @@ module tb;
   endtask
 
 endmodule
-
