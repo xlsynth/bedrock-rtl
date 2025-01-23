@@ -31,6 +31,40 @@ Tests that a Verilog or SystemVerilog design elaborates. Needs VERILOG_RUNNER_PL
 | <a id="rule_verilog_elab_test-verilog_runner_tool"></a>verilog_runner_tool |  The Verilog Runner tool to use.   | <a href="https://bazel.build/concepts/labels">Label</a> | optional |  `"@bedrock-rtl//python/verilog_runner:verilog_runner.py"`  |
 
 
+<a id="rule_verilog_fpv_sandbox"></a>
+
+## rule_verilog_fpv_sandbox
+
+<pre>
+load("@bedrock-rtl//bazel:verilog.bzl", "rule_verilog_fpv_sandbox")
+
+rule_verilog_fpv_sandbox(<a href="#rule_verilog_fpv_sandbox-name">name</a>, <a href="#rule_verilog_fpv_sandbox-deps">deps</a>, <a href="#rule_verilog_fpv_sandbox-analysis_opts">analysis_opts</a>, <a href="#rule_verilog_fpv_sandbox-custom_tcl_body">custom_tcl_body</a>, <a href="#rule_verilog_fpv_sandbox-custom_tcl_header">custom_tcl_header</a>, <a href="#rule_verilog_fpv_sandbox-defines">defines</a>,
+                         <a href="#rule_verilog_fpv_sandbox-elab_only">elab_only</a>, <a href="#rule_verilog_fpv_sandbox-elab_opts">elab_opts</a>, <a href="#rule_verilog_fpv_sandbox-gui">gui</a>, <a href="#rule_verilog_fpv_sandbox-opts">opts</a>, <a href="#rule_verilog_fpv_sandbox-params">params</a>, <a href="#rule_verilog_fpv_sandbox-tool">tool</a>, <a href="#rule_verilog_fpv_sandbox-top">top</a>, <a href="#rule_verilog_fpv_sandbox-verilog_runner_tool">verilog_runner_tool</a>)
+</pre>
+
+Writes FPV files and run scripts into a tarball for independent execution outside of Bazel.
+
+**ATTRIBUTES**
+
+
+| Name  | Description | Type | Mandatory | Default |
+| :------------- | :------------- | :------------- | :------------- | :------------- |
+| <a id="rule_verilog_fpv_sandbox-name"></a>name |  A unique name for this target.   | <a href="https://bazel.build/concepts/labels#target-names">Name</a> | required |  |
+| <a id="rule_verilog_fpv_sandbox-deps"></a>deps |  The Verilog dependencies of the sandbox.   | <a href="https://bazel.build/concepts/labels">List of labels</a> | optional |  `[]`  |
+| <a id="rule_verilog_fpv_sandbox-analysis_opts"></a>analysis_opts |  custom analysis options   | List of strings | optional |  `[]`  |
+| <a id="rule_verilog_fpv_sandbox-custom_tcl_body"></a>custom_tcl_body |  Tcl script file containing custom tool-specific commands to insert in the middle of the generated tcl script after the elaboration step.The tcl body (custom or not) is unconditionally followed by the tcl footer.Do not include Tcl commands that manipulate sources, headers, defines, or parameters, as those will be handled by the rule implementation.   | <a href="https://bazel.build/concepts/labels">Label</a> | optional |  `None`  |
+| <a id="rule_verilog_fpv_sandbox-custom_tcl_header"></a>custom_tcl_header |  Tcl script file containing custom tool-specific commands to insert at the beginning of the generated tcl script.The tcl header (custom or not) is unconditionally followed by analysis and elaborate commands, and then the tcl body.Do not include Tcl commands that manipulate sources, headers, defines, or parameters, as those will be handled by the rule implementation.   | <a href="https://bazel.build/concepts/labels">Label</a> | optional |  `None`  |
+| <a id="rule_verilog_fpv_sandbox-defines"></a>defines |  Preprocessor defines to pass to the Verilog compiler.   | List of strings | optional |  `[]`  |
+| <a id="rule_verilog_fpv_sandbox-elab_only"></a>elab_only |  Only run elaboration.   | Boolean | optional |  `False`  |
+| <a id="rule_verilog_fpv_sandbox-elab_opts"></a>elab_opts |  custom elab options   | List of strings | optional |  `[]`  |
+| <a id="rule_verilog_fpv_sandbox-gui"></a>gui |  Enable GUI.   | Boolean | optional |  `False`  |
+| <a id="rule_verilog_fpv_sandbox-opts"></a>opts |  Tool-specific options not covered by other arguments. If provided, then 'tool' must also be set.   | List of strings | optional |  `[]`  |
+| <a id="rule_verilog_fpv_sandbox-params"></a>params |  Verilog module parameters to set in the instantiation of the top-level module.   | <a href="https://bazel.build/rules/lib/dict">Dictionary: String -> String</a> | optional |  `{}`  |
+| <a id="rule_verilog_fpv_sandbox-tool"></a>tool |  Tool to use. If not provided, default is decided by the Verilog Runner tool implementation with available plugins.   | String | optional |  `""`  |
+| <a id="rule_verilog_fpv_sandbox-top"></a>top |  The top-level module; if not provided and there exists one dependency, then defaults to that dep's label name.   | String | optional |  `""`  |
+| <a id="rule_verilog_fpv_sandbox-verilog_runner_tool"></a>verilog_runner_tool |  The Verilog Runner tool to use.   | <a href="https://bazel.build/concepts/labels">Label</a> | optional |  `"@bedrock-rtl//python/verilog_runner:verilog_runner.py"`  |
+
+
 <a id="rule_verilog_fpv_test"></a>
 
 ## rule_verilog_fpv_test
@@ -93,37 +127,6 @@ Tests that a Verilog or SystemVerilog design passes a set of static lint checks.
 | <a id="rule_verilog_lint_test-tool"></a>tool |  Lint tool to use. If not provided, default is decided by the Verilog Runner tool implementation with available plugins.   | String | optional |  `""`  |
 | <a id="rule_verilog_lint_test-top"></a>top |  The top-level module; if not provided and there exists one dependency, then defaults to that dep's label name.   | String | optional |  `""`  |
 | <a id="rule_verilog_lint_test-verilog_runner_tool"></a>verilog_runner_tool |  The Verilog Runner tool to use.   | <a href="https://bazel.build/concepts/labels">Label</a> | optional |  `"@bedrock-rtl//python/verilog_runner:verilog_runner.py"`  |
-
-
-<a id="rule_verilog_sandbox"></a>
-
-## rule_verilog_sandbox
-
-<pre>
-load("@bedrock-rtl//bazel:verilog.bzl", "rule_verilog_sandbox")
-
-rule_verilog_sandbox(<a href="#rule_verilog_sandbox-name">name</a>, <a href="#rule_verilog_sandbox-deps">deps</a>, <a href="#rule_verilog_sandbox-custom_tcl_body">custom_tcl_body</a>, <a href="#rule_verilog_sandbox-custom_tcl_header">custom_tcl_header</a>, <a href="#rule_verilog_sandbox-defines">defines</a>, <a href="#rule_verilog_sandbox-kind">kind</a>, <a href="#rule_verilog_sandbox-opts">opts</a>, <a href="#rule_verilog_sandbox-params">params</a>,
-                     <a href="#rule_verilog_sandbox-tool">tool</a>, <a href="#rule_verilog_sandbox-top">top</a>, <a href="#rule_verilog_sandbox-verilog_runner_tool">verilog_runner_tool</a>)
-</pre>
-
-Writes files and run scripts into a tarball for independent execution outside of Bazel.
-
-**ATTRIBUTES**
-
-
-| Name  | Description | Type | Mandatory | Default |
-| :------------- | :------------- | :------------- | :------------- | :------------- |
-| <a id="rule_verilog_sandbox-name"></a>name |  A unique name for this target.   | <a href="https://bazel.build/concepts/labels#target-names">Name</a> | required |  |
-| <a id="rule_verilog_sandbox-deps"></a>deps |  The Verilog dependencies of the sandbox.   | <a href="https://bazel.build/concepts/labels">List of labels</a> | optional |  `[]`  |
-| <a id="rule_verilog_sandbox-custom_tcl_body"></a>custom_tcl_body |  Tcl script file containing custom tool-specific commands to insert in the middle of the generated tcl script after the elaboration step.The tcl body (custom or not) is unconditionally followed by the tcl footer.Do not include Tcl commands that manipulate sources, headers, defines, or parameters, as those will be handled by the rule implementation.   | <a href="https://bazel.build/concepts/labels">Label</a> | optional |  `None`  |
-| <a id="rule_verilog_sandbox-custom_tcl_header"></a>custom_tcl_header |  Tcl script file containing custom tool-specific commands to insert at the beginning of the generated tcl script.The tcl header (custom or not) is unconditionally followed by analysis and elaborate commands, and then the tcl body.Do not include Tcl commands that manipulate sources, headers, defines, or parameters, as those will be handled by the rule implementation.   | <a href="https://bazel.build/concepts/labels">Label</a> | optional |  `None`  |
-| <a id="rule_verilog_sandbox-defines"></a>defines |  Preprocessor defines to pass to the Verilog compiler.   | List of strings | optional |  `[]`  |
-| <a id="rule_verilog_sandbox-kind"></a>kind |  The kind of sandbox to create: [elab, lint, sim, fpv].   | String | required |  |
-| <a id="rule_verilog_sandbox-opts"></a>opts |  Tool-specific options not covered by other arguments. If provided, then 'tool' must also be set.   | List of strings | optional |  `[]`  |
-| <a id="rule_verilog_sandbox-params"></a>params |  Verilog module parameters to set in the instantiation of the top-level module.   | <a href="https://bazel.build/rules/lib/dict">Dictionary: String -> String</a> | optional |  `{}`  |
-| <a id="rule_verilog_sandbox-tool"></a>tool |  Tool to use. If not provided, default is decided by the Verilog Runner tool implementation with available plugins.   | String | optional |  `""`  |
-| <a id="rule_verilog_sandbox-top"></a>top |  The top-level module; if not provided and there exists one dependency, then defaults to that dep's label name.   | String | optional |  `""`  |
-| <a id="rule_verilog_sandbox-verilog_runner_tool"></a>verilog_runner_tool |  The Verilog Runner tool to use.   | <a href="https://bazel.build/concepts/labels">Label</a> | optional |  `"@bedrock-rtl//python/verilog_runner:verilog_runner.py"`  |
 
 
 <a id="rule_verilog_sim_test"></a>
@@ -266,7 +269,7 @@ Wraps rule_verilog_fpv_test with extra tags.
 <pre>
 load("@bedrock-rtl//bazel:verilog.bzl", "verilog_fpv_test_suite")
 
-verilog_fpv_test_suite(<a href="#verilog_fpv_test_suite-name">name</a>, <a href="#verilog_fpv_test_suite-defines">defines</a>, <a href="#verilog_fpv_test_suite-params">params</a>, <a href="#verilog_fpv_test_suite-kwargs">kwargs</a>)
+verilog_fpv_test_suite(<a href="#verilog_fpv_test_suite-name">name</a>, <a href="#verilog_fpv_test_suite-defines">defines</a>, <a href="#verilog_fpv_test_suite-params">params</a>, <a href="#verilog_fpv_test_suite-sandbox">sandbox</a>, <a href="#verilog_fpv_test_suite-kwargs">kwargs</a>)
 </pre>
 
 Creates a suite of Verilog fpv tests for each combination of the provided parameters.
@@ -284,6 +287,7 @@ to the base name followed by the parameter key-values.
 | <a id="verilog_fpv_test_suite-name"></a>name |  The base name for the test suite.   |  none |
 | <a id="verilog_fpv_test_suite-defines"></a>defines |  A list of defines.   |  `[]` |
 | <a id="verilog_fpv_test_suite-params"></a>params |  A dictionary where keys are parameter names and values are lists of possible values for those parameters.   |  `{}` |
+| <a id="verilog_fpv_test_suite-sandbox"></a>sandbox |  Whether to create a sandbox for the test.   |  `True` |
 | <a id="verilog_fpv_test_suite-kwargs"></a>kwargs |  Additional keyword arguments to be passed to the verilog_elab_test and verilog_lint_test functions.   |  none |
 
 
