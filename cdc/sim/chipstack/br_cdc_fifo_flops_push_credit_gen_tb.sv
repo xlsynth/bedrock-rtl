@@ -6,21 +6,19 @@
 // Description: Unit test for br_cdc_fifo_flops_push_credit
 //=============================================================
 
-module tb;
+module br_cdc_fifo_flops_push_credit_gen_tb;
   timeunit 1ns; timeprecision 100ps;
 
   //===========================================================
   // Testbench Parameters
   //===========================================================
-  parameter CLOCK_FREQ = 100;  // Clock frequency in MHz
-  parameter RESET_DURATION = 100;  // Reset duration in ns
-  parameter TIMEOUT = 10000000;  // Timeout value in ns
-  parameter PER_TASK_TIMEOUT = 1000000;  // Timeout value for each task in ns
-  parameter DRAIN_TIME = 10000;  // Time to observe all results in ns
-  parameter CLOCK_FREQ_NS_CONVERSION_FACTOR = 1000;  // Conversion factor to nanoseconds
-  parameter NO_ASSERTS_ON_RESET = 0;  // Disable assertions during reset
-  parameter DISABLE_CHECKS = 0;  // Disable checks
-
+  parameter int CLOCK_FREQ = 100;  // Clock frequency in MHz
+  parameter int RESET_DURATION = 100;  // Reset duration in ns
+  parameter int TIMEOUT = 10000000;  // Timeout value in ns
+  parameter int PER_TASK_TIMEOUT = 1000000;  // Timeout value for each task in ns
+  parameter int DRAIN_TIME = 10000;  // Time to observe all results in ns
+  parameter int CLOCK_FREQ_NS_CONVERSION_FACTOR = 1000;  // Conversion factor to nanoseconds
+  parameter int NO_ASSERTS_ON_RESET = 0;  // Disable assertions during reset
 
   //===========================================================
   // DUT Parameters
@@ -127,14 +125,19 @@ module tb;
   end
   clocking cb_push_clk @(posedge push_clk);
     default input #1step output #4;
-    inout push_rst, pop_rst, push_credit_stall, push_valid, push_data, pop_ready, credit_initial_push, credit_withhold_push;
-    input push_credit, pop_valid, pop_data, push_full, push_full_next, push_slots, push_slots_next, credit_count_push, credit_available_push, pop_empty, pop_empty_next, pop_items, pop_items_next;
+    inout push_rst, pop_rst, push_credit_stall, push_valid, push_data, pop_ready,
+          credit_initial_push, credit_withhold_push;
+    input push_credit, pop_valid, pop_data, push_full, push_full_next, push_slots, push_slots_next,
+    credit_count_push, credit_available_push, pop_empty, pop_empty_next, pop_items, pop_items_next;
   endclocking
 
   clocking cb_pop_clk @(posedge pop_clk);
     default input #1step output #4;
-    inout push_rst, pop_rst, push_credit_stall, push_valid, push_data, pop_ready, credit_initial_push, credit_withhold_push;
-    input push_credit, pop_valid, pop_data, push_full, push_full_next, push_slots, push_slots_next, credit_count_push, credit_available_push, pop_empty, pop_empty_next, pop_items, pop_items_next;
+    inout push_rst, pop_rst, push_credit_stall, push_valid, push_data, pop_ready,
+          credit_initial_push, credit_withhold_push;
+    input push_credit, pop_valid, pop_data, push_full, push_full_next, push_slots, push_slots_next,
+          credit_count_push, credit_available_push, pop_empty, pop_empty_next, pop_items,
+          pop_items_next;
   endclocking
 
 
@@ -358,28 +361,34 @@ module tb;
         end
 
         // Step 3: Maintain current state of `push_slots` and `push_slots_next` during the stall
-        if (cb_push_clk.push_slots !== initial_push_slots || cb_push_clk.push_slots_next !== initial_push_slots_next) begin
-          $display({"Time: %0t, ERROR: test_PushDataOperationTransaction2 - push_slots or",
+        if (cb_push_clk.push_slots !== initial_push_slots ||
+            cb_push_clk.push_slots_next !== initial_push_slots_next) begin
+          $display({"Time: %0t, ERROR: test_PushDataOperationTransaction2 - push_slots or ",
                     "push_slots_next changed during stall.", "Expected %0d/%0d, got %0d/%0d"},
                      $time, initial_push_slots, initial_push_slots_next, push_slots,
                      push_slots_next);
           test_failed = 1;
         end else begin
-          $display({"Time: %0t, INFO: test_PushDataOperationTransaction2 - push_slots and",
+          $display({"Time: %0t, INFO: test_PushDataOperationTransaction2 - push_slots and ",
                     "push_slots_next maintained during stall"}, $time);
           if (test_failed != 1) test_failed = 0;
         end
 
         // Step 4: Update `push_full_next` to predict if the FIFO will be full in the next cycle
         if (cb_push_clk.push_full_next !== initial_push_full_next) begin
-          $display({"Time: %0t, ERROR: test_PushDataOperationTransaction2 - push_full_next changed",
-                    "during stall.", "Expected %0b, got %0b"}, $time, initial_push_full_next,
-                     push_full_next);
+          $display(
+            {
+              "Time: %0t, ERROR: test_PushDataOperationTransaction2 - push_full_next changed ",
+              "during stall.", "Expected %0b, got %0b"
+            }, $time, initial_push_full_next,
+            push_full_next);
           test_failed = 1;
         end else begin
           $display(
-              {"Time: %0t, INFO: test_PushDataOperationTransaction2 - push_full_next correctly",
-               "maintained during stall"}, $time);
+              {
+              "Time: %0t, INFO: test_PushDataOperationTransaction2 - push_full_next correctly",
+              "maintained during stall"
+              }, $time);
           if (test_failed != 1) test_failed = 0;
         end
 
@@ -471,24 +480,31 @@ module tb;
             if (cb_push_clk.pop_items_next == expected_pop_items_next) begin
               // Step 6: Update cb_push_clk.pop_items_next
               $display(
-                  {"Time: %0t, INFO: test_PopDataOperationTransaction1 - pop_items_next correct: %0d"
-                    }, $time, pop_items_next);
+                  {
+                    "Time: %0t, INFO: test_PopDataOperationTransaction1 - pop_items_next correct: %0d"
+                  }, $time, pop_items_next);
             end else begin
               $display(
-                  {"Time: %0t, ERROR: test_PopDataOperationTransaction1 - Incorrect pop_items_next.",
-                   "Expected: %0d, Got: %0d"}, $time, expected_pop_items_next, pop_items_next);
+                  {
+                  "Time: %0t, ERROR: test_PopDataOperationTransaction1 - Incorrect pop_items_next.",
+                  "Expected: %0d, Got: %0d"
+                  }, $time, expected_pop_items_next, pop_items_next);
               test_failed = 1;
             end
 
             @(cb_pop_clk);
-            if (cb_push_clk.pop_empty_next == expected_pop_empty_next) begin // Step 7: Update cb_push_clk.pop_empty_next
+            if (cb_push_clk.pop_empty_next == expected_pop_empty_next) begin
+              // Step 7: Update cb_push_clk.pop_empty_next
               $display(
-                  {"Time: %0t, INFO: test_PopDataOperationTransaction1 - pop_empty_next correct: %0d"
-                    }, $time, pop_empty_next);
+                  {
+                    "Time: %0t, INFO: test_PopDataOperationTransaction1 - pop_empty_next correct: %0d"
+                  }, $time, pop_empty_next);
             end else begin
               $display(
-                  {"Time: %0t, ERROR: test_PopDataOperationTransaction1 - Incorrect pop_empty_next.",
-                   "Expected: %0d, Got: %0d"}, $time, expected_pop_empty_next, pop_empty_next);
+                  {
+                  "Time: %0t, ERROR: test_PopDataOperationTransaction1 - Incorrect pop_empty_next.",
+                  "Expected: %0d, Got: %0d"
+                  }, $time, expected_pop_empty_next, pop_empty_next);
               test_failed = 1;
             end
 

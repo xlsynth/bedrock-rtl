@@ -210,7 +210,8 @@ module br_enc_priority_encoder_gen_tb;
         // Calculate expected output
         expected_out[0] = 4'b0010;  // Highest priority request is at index 1
         for (i = 1; i < NumResults; i++) begin
-          expected_out[i] = 4'b0000; // No other requests should be active cb_clk.in subsequent outputs
+          expected_out[i] = 4'b0000;
+          // No other requests should be active cb_clk.in subsequent outputs
         end
 
         // Wait for the DUT to process the input

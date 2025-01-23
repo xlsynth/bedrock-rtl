@@ -130,14 +130,20 @@ module br_cdc_fifo_ctrl_1r1w_gen_tb;
   end
   clocking cb_push_clk @(posedge push_clk);
     default input #1step output #4;
-    inout push_rst, pop_rst, push_valid, push_data, pop_ready, pop_ram_rd_data_valid, pop_ram_rd_data;
-    input push_ready, push_full, push_full_next, push_slots, push_slots_next, push_ram_wr_valid, push_ram_wr_addr, push_ram_wr_data, pop_valid, pop_data, pop_empty, pop_empty_next, pop_items, pop_items_next, pop_ram_rd_addr_valid, pop_ram_rd_addr;
+    inout push_rst, pop_rst, push_valid, push_data, pop_ready, pop_ram_rd_data_valid,
+          pop_ram_rd_data;
+    input push_ready, push_full, push_full_next, push_slots, push_slots_next, push_ram_wr_valid,
+          push_ram_wr_addr, push_ram_wr_data, pop_valid, pop_data, pop_empty, pop_empty_next,
+          pop_items, pop_items_next, pop_ram_rd_addr_valid, pop_ram_rd_addr;
   endclocking
 
   clocking cb_pop_clk @(posedge pop_clk);
     default input #1step output #4;
-    inout push_rst, pop_rst, push_valid, push_data, pop_ready, pop_ram_rd_data_valid, pop_ram_rd_data;
-    input push_ready, push_full, push_full_next, push_slots, push_slots_next, push_ram_wr_valid, push_ram_wr_addr, push_ram_wr_data, pop_valid, pop_data, pop_empty, pop_empty_next, pop_items, pop_items_next, pop_ram_rd_addr_valid, pop_ram_rd_addr;
+    inout push_rst, pop_rst, push_valid, push_data, pop_ready, pop_ram_rd_data_valid,
+          pop_ram_rd_data;
+    input push_ready, push_full, push_full_next, push_slots, push_slots_next, push_ram_wr_valid,
+          push_ram_wr_addr, push_ram_wr_data, pop_valid, pop_data, pop_empty, pop_empty_next,
+          pop_items, pop_items_next, pop_ram_rd_addr_valid, pop_ram_rd_addr;
   endclocking
 
 
@@ -237,33 +243,37 @@ module br_cdc_fifo_ctrl_1r1w_gen_tb;
               if (cb_push_clk.push_ready) begin
                 expected_slots_next = expected_slots_next - 1;
                 // Check push_ram_wr_valid, push_ram_wr_addr, push_ram_wr_data
-                if (cb_push_clk.push_ram_wr_valid !== 1 || cb_push_clk.push_ram_wr_addr !== expected_addr || cb_push_clk.push_ram_wr_data !== random_data) begin
+                if (cb_push_clk.push_ram_wr_valid !== 1 ||
+                    cb_push_clk.push_ram_wr_addr !== expected_addr ||
+                    cb_push_clk.push_ram_wr_data !== random_data) begin
                   $display(
-                      {"Time: %0t, ERROR: test_PushDataHandling - Check failed.",
-                       "Expected push_ram_wr_valid=1, push_ram_wr_addr=0x%h, push_ram_wr_data=0x%h, got",
-                       "push_ram_wr_valid=%b, push_ram_wr_addr=0x%h, push_ram_wr_data=0x%h"},
-                        $time, expected_addr, random_data, cb_push_clk.push_ram_wr_valid,
-                        cb_push_clk.push_ram_wr_addr, cb_push_clk.push_ram_wr_data);
+                      {
+                      "Time: %0t, ERROR: test_PushDataHandling - Check failed. Expected ",
+                      "push_ram_wr_valid=1, push_ram_wr_addr=0x%h, push_ram_wr_data=0x%h, got ",
+                      "push_ram_wr_valid=%b, push_ram_wr_addr=0x%h, push_ram_wr_data=0x%h"},
+                      $time, expected_addr, random_data, cb_push_clk.push_ram_wr_valid,
+                      cb_push_clk.push_ram_wr_addr, cb_push_clk.push_ram_wr_data);
                   test_failed = 1;
                 end else begin
                   $display(
                       {"Time: %0t, INFO: test_PushDataHandling - Check passed.",
-                       "Expected values for push_ram_wr_valid, push_ram_wr_addr, push_ram_wr_data are",
-                       "correct."}, $time);
+                       "Expected values for push_ram_wr_valid, push_ram_wr_addr, push_ram_wr_data ",
+                       "are correct."}, $time);
                   if (test_failed != 1) test_failed = 0;
                   expected_addr = expected_addr + 1;
                 end
 
                 // Check push_slots_next, push_full_next
-                if (cb_push_clk.push_slots_next !== expected_slots_next || cb_push_clk.push_full_next !== expected_full_next) begin
+                if (cb_push_clk.push_slots_next !== expected_slots_next ||
+                    cb_push_clk.push_full_next !== expected_full_next) begin
                   $display(
-                      {"Time: %0t, ERROR: test_PushDataHandling - Check failed.",
-                       "Expected push_slots_next=0x%h, push_full_next=%b, got push_slots_next=0x%h,",
+                      {"Time: %0t, ERROR: test_PushDataHandling - Check failed. Expected ",
+                       "push_slots_next=0x%h, push_full_next=%b, got push_slots_next=0x%h,",
                        "push_full_next=%b"}, $time, expected_slots_next, expected_full_next,
                         cb_push_clk.push_slots_next, cb_push_clk.push_full_next);
                   test_failed = 1;
                 end else begin
-                  $display({"Time: %0t, INFO: test_PushDataHandling - Check passed.",
+                  $display({"Time: %0t, INFO: test_PushDataHandling - Check passed. ",
                             "Expected values for push_slots_next and push_full_next are correct."},
                              $time);
                   if (test_failed != 1) test_failed = 0;

@@ -97,7 +97,8 @@ module br_flow_serializer_gen_tb;
   end
   clocking cb_clk @(posedge clk);
     default input #1step output #4;
-    inout rst, push_valid, push_data, push_last, push_last_dont_care_count, push_metadata, pop_ready;
+    inout rst, push_valid, push_data, push_last, push_last_dont_care_count,
+          push_metadata, pop_ready;
     input push_ready, pop_valid, pop_data, pop_last, pop_metadata;
   endclocking
 
@@ -202,11 +203,14 @@ module br_flow_serializer_gen_tb;
             expected_pop_data = cb_clk.push_data[i*PopWidth+:PopWidth];
           end
           expected_pop_metadata = cb_clk.push_metadata;
-          expected_pop_last = (i == (serialization_ratio - cb_clk.push_last_dont_care_count - 1)) ? 1'b1 : 1'b0;
+          expected_pop_last = (i == (serialization_ratio - cb_clk.push_last_dont_care_count - 1)) ?
+                              1'b1 : 1'b0;
 
           // Apply stimulus and check outputs
           @(cb_clk);
-          if (cb_clk.pop_valid !== 1'b1 || cb_clk.pop_data !== expected_pop_data || cb_clk.pop_metadata !== expected_pop_metadata || cb_clk.pop_last !== expected_pop_last) begin
+          if (cb_clk.pop_valid !== 1'b1 || cb_clk.pop_data !== expected_pop_data ||
+              cb_clk.pop_metadata !== expected_pop_metadata ||
+              cb_clk.pop_last !== expected_pop_last) begin
             $display({"Time: %0t, ERROR: test_DataSerialization - Check failed.",
                       "Expected pop_valid=1, pop_data=0x%h, pop_metadata=0x%h, pop_last=%b; got",
                       "pop_valid=%b, pop_data=0x%h, pop_metadata=0x%h, pop_last=%b"}, $time,
@@ -292,11 +296,15 @@ module br_flow_serializer_gen_tb;
         // Check serialized output
         for (i = 0; i < valid_segments; i++) begin
           @(cb_clk);
-          expected_pop_data = (SerializeMostSignificantFirst) ? push_data_value[PushWidth-1 - i*PopWidth -: PopWidth] : push_data_value[i*PopWidth +: PopWidth];
+          expected_pop_data = (SerializeMostSignificantFirst) ?
+                              push_data_value[PushWidth-1 - i*PopWidth -: PopWidth] :
+                              push_data_value[i*PopWidth +: PopWidth];
           expected_pop_metadata = push_metadata_value;
           expected_pop_last = (i == valid_segments - 1);
 
-          if (cb_clk.pop_valid && cb_clk.pop_data == expected_pop_data && cb_clk.pop_metadata == expected_pop_metadata && cb_clk.pop_last == expected_pop_last) begin
+          if (cb_clk.pop_valid && cb_clk.pop_data == expected_pop_data &&
+              cb_clk.pop_metadata == expected_pop_metadata &&
+              cb_clk.pop_last == expected_pop_last) begin
             $display(
                 {"Time: %0t, INFO: test_HandlingDontCareValues - Check passed for segment %0d.",
                  "Expected pop_data=0x%h, pop_metadata=0x%h, pop_last=%0b"}, $time, i,

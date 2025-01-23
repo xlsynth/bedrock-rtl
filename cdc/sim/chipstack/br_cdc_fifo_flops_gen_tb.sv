@@ -6,20 +6,19 @@
 // Description: Unit test for br_cdc_fifo_flops
 //=============================================================
 
-module tb;
+module br_cdc_fifo_flops_gen_tb;
   timeunit 1ns; timeprecision 100ps;
 
   //===========================================================
   // Testbench Parameters
   //===========================================================
-  parameter CLOCK_FREQ = 100;  // Clock frequency in MHz
-  parameter RESET_DURATION = 100;  // Reset duration in ns
-  parameter TIMEOUT = 10000000;  // Timeout value in ns
-  parameter PER_TASK_TIMEOUT = 1000000;  // Timeout value for each task in ns
-  parameter DRAIN_TIME = 10000;  // Time to observe all results in ns
-  parameter CLOCK_FREQ_NS_CONVERSION_FACTOR = 1000;  // Conversion factor to nanoseconds
-  parameter NO_ASSERTS_ON_RESET = 0;  // Disable assertions during reset
-  parameter DISABLE_CHECKS = 0;  // Disable checks
+  parameter int CLOCK_FREQ = 100;  // Clock frequency in MHz
+  parameter int RESET_DURATION = 100;  // Reset duration in ns
+  parameter int TIMEOUT = 10000000;  // Timeout value in ns
+  parameter int PER_TASK_TIMEOUT = 1000000;  // Timeout value for each task in ns
+  parameter int DRAIN_TIME = 10000;  // Time to observe all results in ns
+  parameter int CLOCK_FREQ_NS_CONVERSION_FACTOR = 1000;  // Conversion factor to nanoseconds
+  parameter int NO_ASSERTS_ON_RESET = 0;  // Disable assertions during reset
 
 
   //===========================================================
@@ -119,13 +118,15 @@ module tb;
   clocking cb_push_clk @(posedge push_clk);
     default input #1step output #4;
     inout push_rst, pop_rst, push_valid, push_data, pop_ready;
-    input push_ready, pop_valid, pop_data, push_full, push_full_next, push_slots, push_slots_next, pop_empty, pop_empty_next, pop_items, pop_items_next;
+    input push_ready, pop_valid, pop_data, push_full, push_full_next, push_slots, push_slots_next,
+          pop_empty, pop_empty_next, pop_items, pop_items_next;
   endclocking
 
   clocking cb_pop_clk @(posedge pop_clk);
     default input #1step output #4;
     inout push_rst, pop_rst, push_valid, push_data, pop_ready;
-    input push_ready, pop_valid, pop_data, push_full, push_full_next, push_slots, push_slots_next, pop_empty, pop_empty_next, pop_items, pop_items_next;
+    input push_ready, pop_valid, pop_data, push_full, push_full_next, push_slots, push_slots_next,
+          pop_empty, pop_empty_next, pop_items, pop_items_next;
   endclocking
 
 
@@ -487,7 +488,8 @@ module tb;
         $display({"Time: %0t, INFO: test_PopStatusPrediction - pop_ready set to 1"}, $time);
 
         // Calculate expected values
-        expected_pop_items_next = cb_push_clk.pop_items - (cb_push_clk.pop_ready && !cb_push_clk.pop_empty);
+        expected_pop_items_next = cb_push_clk.pop_items -
+                                  (cb_push_clk.pop_ready && !cb_push_clk.pop_empty);
         expected_pop_empty_next = (expected_pop_items_next == 0);
 
         // Wait for a clock cycle to allow the DUT to update its outputs

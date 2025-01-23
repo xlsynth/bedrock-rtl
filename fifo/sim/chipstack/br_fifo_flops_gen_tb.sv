@@ -113,7 +113,8 @@ module br_fifo_flops_gen_tb;
   clocking cb_clk @(posedge clk);
     default input #1step output #4;
     inout rst, push_valid, push_data, pop_ready;
-    input push_ready, pop_valid, pop_data, full, full_next, slots, slots_next, empty, empty_next, items, items_next;
+    input push_ready, pop_valid, pop_data, full, full_next, slots,
+          slots_next, empty, empty_next, items, items_next;
   endclocking
 
 
@@ -549,10 +550,14 @@ module br_fifo_flops_gen_tb;
           expected_pop_valid = random_push_valid;
 
           // Check registered outputs
-          if (cb_clk.pop_data !== expected_pop_data || cb_clk.pop_valid !== expected_pop_valid) begin
+          if (
+            cb_clk.pop_data !== expected_pop_data ||
+            cb_clk.pop_valid !== expected_pop_valid
+          ) begin
             $display(
-                {"Time: %0t, ERROR: test_RegisterPopOutputsControlTransaction1 - Check failed.",
-                 "Expected pop_data=0x%h, pop_valid=%0b, got pop_data=0x%h, pop_valid=%0b"}, $time,
+                {
+                  "Time: %0t, ERROR: test_RegisterPopOutputsControlTransaction1 - Check failed.",
+                  "Expected pop_data=0x%h, pop_valid=%0b, got pop_data=0x%h, pop_valid=%0b"}, $time,
                   expected_pop_data, expected_pop_valid, pop_data, pop_valid);
             test_failed = 1;
           end else begin

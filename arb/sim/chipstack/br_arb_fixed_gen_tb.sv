@@ -397,7 +397,8 @@ module br_arb_fixed_gen_tb;
         for (i = 0; i < NumRequesters; i++) begin
           // Generate a request pattern with a single active request at position i
           request_pattern = 1 << i;
-          expected_grant = request_pattern; // Expected cb_clk.grant is the same as the cb_clk.request pattern for a single cb_clk.request
+          expected_grant = request_pattern;
+          // Expected cb_clk.grant is the same as the cb_clk.request pattern for a single cb_clk.request
 
           // Apply the request pattern
           cb_clk.request <= request_pattern;
@@ -472,7 +473,8 @@ module br_arb_fixed_gen_tb;
 
         // Test: Apply multiple requests and check the grant signal
         for (i = 0; i < NumRequesters; i = i + 1) begin
-          request_val = (1 << i) | (1 << ((i + 1) % NumRequesters)); // Set two bits in cb_clk.request
+          request_val = (1 << i) | (1 << ((i + 1) % NumRequesters));
+          // Set two bits in cb_clk.request
           cb_clk.request <= request_val;
           @(cb_clk);
           grant_val = cb_clk.grant;  // Capture the cb_clk.grant signal
