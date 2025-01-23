@@ -15,10 +15,10 @@ module br_assign_test #(
   assign `BR_TRUNCATE_FROM_LSB(small_out[0], large_in)
   assign `BR_TRUNCATE_FROM_MSB(small_out[1], large_in)
 
-  assign `BR_TO_LSB(large_out[1], small_in)
+  assign `BR_INSERT_TO_LSB(large_out[1], small_in)
   assign large_out[1][L-1:S] = '0;
 
-  assign `BR_TO_MSB(large_out[2], small_in)
+  assign `BR_INSERT_TO_MSB(large_out[2], small_in)
   assign large_out[2][L-S-1:0] = '0;
 
   `BR_ASSIGN_MAYBE_ZERO_EXT(extend, large_out[3], small_in)

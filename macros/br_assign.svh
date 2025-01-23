@@ -32,7 +32,7 @@
   __lhs__ = __rhs__[$bits(__lhs__) - 1:0];
 
 // Assign a smaller signal to the least significant bits of a larger signal.
-`define BR_TO_LSB(__lhs__, __rhs__) \
+`define BR_INSERT_TO_LSB(__lhs__, __rhs__) \
   __lhs__[$bits(__rhs__) - 1:0] = __rhs__;
 
 // Assign the most significant bits of a larger signal to a smaller signal.
@@ -40,7 +40,7 @@
   __lhs__ = __rhs__[$bits(__rhs__) - 1 -: $bits(__lhs__)];
 
 // Assign a smaller signal to the most significant bits of a larger signal.
-`define BR_TO_MSB(__lhs__, __rhs__) \
+`define BR_INSERT_TO_MSB(__lhs__, __rhs__) \
   __lhs__[$bits(__lhs__) - 1 -: $bits(__rhs__)] = __rhs__;
 
 `endif  // BR_ASSIGN_SVH
