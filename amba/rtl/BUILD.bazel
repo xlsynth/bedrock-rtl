@@ -39,6 +39,8 @@ verilog_library(
     deps = [
         ":br_amba_pkg",
         "//flow/rtl:br_flow_reg_both",
+        "//flow/rtl:br_flow_reg_fwd",
+        "//flow/rtl:br_flow_reg_rev",
         "//macros:br_asserts_internal",
     ],
 )
@@ -124,12 +126,39 @@ br_verilog_elab_and_lint_test_suite(
     name = "br_amba_axi_timing_slice_test_suite",
     params = {
         "AddrWidth": [
+            "12",
             "32",
             "40",
         ],
         "DataWidth": [
             "32",
             "64",
+            "128",
+        ],
+        "AWSliceType": [
+            "0",
+            "1",
+            "2",
+        ],
+        "WSliceType": [
+            "0",
+            "1",
+            "2",
+        ],
+        "ARSliceType": [
+            "0",
+            "1",
+            "2",
+        ],
+        "RSliceType": [
+            "0",
+            "1",
+            "2",
+        ],
+        "BSliceType": [
+            "0",
+            "1",
+            "2",
         ],
     },
     deps = [":br_amba_axi_timing_slice"],
