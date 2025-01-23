@@ -133,7 +133,7 @@ module br_enc_onehot2bin_gen_tb;
     fork
       begin
         #(PER_TASK_TIMEOUT);
-        $display({"Time: %0t, INFO: Timeout: test_NormalConversion.",
+        $display({"Time: %0t, INFO: Timeout: test_NormalConversion. ",
                   "Stimuli is not observed or it needs more time to finish this test."}, $time);
       end
       begin
@@ -155,12 +155,12 @@ module br_enc_onehot2bin_gen_tb;
           @(cb_clk);
 
           if (cb_clk.out !== expected_out || cb_clk.out_valid !== expected_out_valid) begin
-            $display({"Time: %0t, ERROR: test_NormalConversion - Check failed.",
+            $display({"Time: %0t, ERROR: test_NormalConversion - Check failed. ",
                       "Expected out=0x%h, out_valid=%b; got out=0x%h, out_valid=%b"}, $time,
                        expected_out, expected_out_valid, cb_clk.out, cb_clk.out_valid);
             test_failed = 1;
           end else begin
-            $display({"Time: %0t, INFO: test_NormalConversion - Check passed.",
+            $display({"Time: %0t, INFO: test_NormalConversion - Check passed. ",
                       "Expected out=0x%h, out_valid=%b; observed out=0x%h, out_valid=%b."}, $time,
                        expected_out, expected_out_valid, cb_clk.out, cb_clk.out_valid);
             if (test_failed != 1) test_failed = 0;
@@ -182,7 +182,7 @@ module br_enc_onehot2bin_gen_tb;
     fork
       begin
         #(PER_TASK_TIMEOUT);
-        $display({"Time: %0t, INFO: Timeout: test_SpecialCaseConversion.",
+        $display({"Time: %0t, INFO: Timeout: test_SpecialCaseConversion. ",
                   "Stimuli is not observed or it needs more time to finish this test."}, $time);
       end
       begin
@@ -209,12 +209,12 @@ module br_enc_onehot2bin_gen_tb;
 
         // Check outputs
         if (cb_clk.out_valid !== expected_out_valid || cb_clk.out !== expected_out) begin
-          $display({"Time: %0t, ERROR: test_SpecialCaseConversion - Check failed.",
+          $display({"Time: %0t, ERROR: test_SpecialCaseConversion - Check failed. ",
                     "Expected out_valid=%b, out=0x%h; got out_valid=%b, out=0x%h"}, $time,
                      expected_out_valid, expected_out, cb_clk.out_valid, cb_clk.out);
           test_failed = 1;
         end else begin
-          $display({"Time: %0t, INFO: test_SpecialCaseConversion - Check passed.",
+          $display({"Time: %0t, INFO: test_SpecialCaseConversion - Check passed. ",
                     "Expected out_valid=%b, out=0x%h; observed out_valid=%b, out=0x%h"}, $time,
                      expected_out_valid, expected_out, cb_clk.out_valid, cb_clk.out);
           if (test_failed != 1) test_failed = 0;
@@ -236,7 +236,7 @@ module br_enc_onehot2bin_gen_tb;
     fork
       begin
         #(PER_TASK_TIMEOUT);
-        $display({"Time: %0t, INFO: Timeout: test_IllegalInputHandling.",
+        $display({"Time: %0t, INFO: Timeout: test_IllegalInputHandling. ",
                   "Stimuli is not observed or it needs more time to finish this test."}, $time);
       end
       begin
@@ -258,12 +258,12 @@ module br_enc_onehot2bin_gen_tb;
         expected_out_valid = 'x;
 
         if (cb_clk.out !== expected_out || cb_clk.out_valid !== expected_out_valid) begin
-          $display({"Time: %0t, ERROR: test_IllegalInputHandling - Check failed.",
+          $display({"Time: %0t, ERROR: test_IllegalInputHandling - Check failed. ",
                     "Expected out=0x%x, out_valid=%b, got out=0x%x, out_valid=%b"}, $time,
                      expected_out, expected_out_valid, cb_clk.out, cb_clk.out_valid);
           test_failed = 1;
         end else begin
-          $display({"Time: %0t, INFO: test_IllegalInputHandling - Check passed.",
+          $display({"Time: %0t, INFO: test_IllegalInputHandling - Check passed. ",
                     "Expected values are undefined as observed."}, $time);
           if (test_failed != 1) test_failed = 0;
         end
@@ -283,7 +283,7 @@ module br_enc_onehot2bin_gen_tb;
     fork
       begin
         #(PER_TASK_TIMEOUT);
-        $display({"Time: %0t, INFO: Timeout: test_Transaction1.",
+        $display({"Time: %0t, INFO: Timeout: test_Transaction1. ",
                   "Stimuli is not observed or it needs more time to finish this test."}, $time);
       end
       begin
@@ -314,11 +314,11 @@ module br_enc_onehot2bin_gen_tb;
           @(cb_clk);
           // Check out_valid
           if (cb_clk.out_valid !== expected_out_valid) begin
-            $display({"Time: %0t, ERROR: test_Transaction1 - Check failed for out_valid.",
+            $display({"Time: %0t, ERROR: test_Transaction1 - Check failed for out_valid. ",
                       "Expected %b, got %b"}, $time, expected_out_valid, out_valid);
             test_failed = 1;
           end else begin
-            $display({"Time: %0t, INFO: test_Transaction1 - Check passed for out_valid.",
+            $display({"Time: %0t, INFO: test_Transaction1 - Check passed for out_valid. ",
                       "Expected value is the same as the observed value (both are %b)."}, $time,
                        out_valid);
             if (test_failed != 1) test_failed = 0;
@@ -326,11 +326,11 @@ module br_enc_onehot2bin_gen_tb;
 
           // Check out
           if (cb_clk.out !== expected_out) begin
-            $display({"Time: %0t, ERROR: test_Transaction1 - Check failed for out.",
+            $display({"Time: %0t, ERROR: test_Transaction1 - Check failed for out. ",
                       "Expected %b, got %b"}, $time, expected_out, out);
             test_failed = 1;
           end else begin
-            $display({"Time: %0t, INFO: test_Transaction1 - Check passed for out.",
+            $display({"Time: %0t, INFO: test_Transaction1 - Check passed for out. ",
                       "Expected value is the same as the observed value (both are %b)."}, $time,
                        out);
             if (test_failed != 1) test_failed = 0;
@@ -353,7 +353,7 @@ module br_enc_onehot2bin_gen_tb;
     fork
       begin
         #(PER_TASK_TIMEOUT);
-        $display({"Time: %0t, INFO: Timeout: test_Transaction2.",
+        $display({"Time: %0t, INFO: Timeout: test_Transaction2. ",
                   "Stimuli is not observed or it needs more time to finish this test."}, $time);
       end
       begin
@@ -379,12 +379,12 @@ module br_enc_onehot2bin_gen_tb;
 
         // Check the output validity
         if (cb_clk.out_valid !== out_valid_expected) begin
-          $display({"Time: %0t, ERROR: test_Transaction2 - Check failed.",
+          $display({"Time: %0t, ERROR: test_Transaction2 - Check failed. ",
                     "Expected out_valid=%0b, got out_valid=%0b"}, $time, out_valid_expected,
                      cb_clk.out_valid);
           test_failed = 1;
         end else begin
-          $display({"Time: %0t, INFO: test_Transaction2 - Check passed.",
+          $display({"Time: %0t, INFO: test_Transaction2 - Check passed. ",
                     "Expected out_valid=%0b is the same as the observed value (both are %0b)."},
                      $time, out_valid_expected, cb_clk.out_valid);
           if (test_failed != 1) test_failed = 0;
@@ -392,11 +392,11 @@ module br_enc_onehot2bin_gen_tb;
 
         // Check the output value
         if (cb_clk.out !== out_expected) begin
-          $display({"Time: %0t, ERROR: test_Transaction2 - Check failed.",
+          $display({"Time: %0t, ERROR: test_Transaction2 - Check failed. ",
                     "Expected out=0x%h, got out=0x%h"}, $time, out_expected, cb_clk.out);
           test_failed = 1;
         end else begin
-          $display({"Time: %0t, INFO: test_Transaction2 - Check passed.",
+          $display({"Time: %0t, INFO: test_Transaction2 - Check passed. ",
                     "Expected out=0x%h is the same as the observed value (both are 0x%h)."}, $time,
                      out_expected, cb_clk.out);
           if (test_failed != 1) test_failed = 0;

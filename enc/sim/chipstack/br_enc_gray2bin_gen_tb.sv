@@ -108,12 +108,12 @@ module br_enc_gray2bin_gen_tb;
 
     // Perform check
     if (observed_bin_output !== expected_bin_output) begin
-      $display({"Time: %0t, ERROR: test_Transaction1 - Check failed.",
+      $display({"Time: %0t, ERROR: test_Transaction1 - Check failed. ",
                 "Expected bin=0x%h, got bin=0x%h"}, $time, expected_bin_output,
                  observed_bin_output);
       test_failed = 1;
     end else begin
-      $display({"Time: %0t, INFO: test_Transaction1 - Check passed.",
+      $display({"Time: %0t, INFO: test_Transaction1 - Check passed. ",
                 "Expected value for bin is the same as the observed value (both are 0x%h)."},
                  $time, expected_bin_output);
       if (test_failed != 1) test_failed = 0;

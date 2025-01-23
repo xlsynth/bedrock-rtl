@@ -75,7 +75,7 @@ module br_enc_countones_gen_tb;
     fork
       begin
         #(PER_TASK_TIMEOUT);
-        $display({"Time: %0t, INFO: Timeout: test_CountOnesInInputVector.",
+        $display({"Time: %0t, INFO: Timeout: test_CountOnesInInputVector. ",
                   "Stimuli is not observed or it needs more time to finish this test."}, $time);
       end
       begin
@@ -96,11 +96,11 @@ module br_enc_countones_gen_tb;
         #1;  // Allow time for the DUT to process the input
         observed_count = count;
         if (observed_count !== expected_count) begin
-          $display({"Time: %0t, ERROR: test_CountOnesInInputVector - Check failed.",
+          $display({"Time: %0t, ERROR: test_CountOnesInInputVector - Check failed. ",
                     "Expected %0d, got %0d"}, $time, expected_count, observed_count);
           test_failed = 1;
         end else begin
-          $display({"Time: %0t, INFO: test_CountOnesInInputVector - Check passed.",
+          $display({"Time: %0t, INFO: test_CountOnesInInputVector - Check passed. ",
                     "Expected value for count is the same as the observed value (both are %0d)."},
                      $time, observed_count);
           if (test_failed != 1) test_failed = 0;
@@ -113,11 +113,11 @@ module br_enc_countones_gen_tb;
         #1;
         observed_count = count;
         if (observed_count !== expected_count) begin
-          $display({"Time: %0t, ERROR: test_CountOnesInInputVector - Check failed.",
+          $display({"Time: %0t, ERROR: test_CountOnesInInputVector - Check failed. ",
                     "Expected %0d, got %0d"}, $time, expected_count, observed_count);
           test_failed = 1;
         end else begin
-          $display({"Time: %0t, INFO: test_CountOnesInInputVector - Check passed.",
+          $display({"Time: %0t, INFO: test_CountOnesInInputVector - Check passed. ",
                     "Expected value for count is the same as the observed value (both are %0d)."},
                      $time, observed_count);
           if (test_failed != 1) test_failed = 0;
@@ -133,11 +133,11 @@ module br_enc_countones_gen_tb;
         #1;
         observed_count = count;
         if (observed_count !== expected_count) begin
-          $display({"Time: %0t, ERROR: test_CountOnesInInputVector - Check failed.",
+          $display({"Time: %0t, ERROR: test_CountOnesInInputVector - Check failed. ",
                     "Expected %0d, got %0d"}, $time, expected_count, observed_count);
           test_failed = 1;
         end else begin
-          $display({"Time: %0t, INFO: test_CountOnesInInputVector - Check passed.",
+          $display({"Time: %0t, INFO: test_CountOnesInInputVector - Check passed. ",
                     "Expected value for count is the same as the observed value (both are %0d)."},
                      $time, observed_count);
           if (test_failed != 1) test_failed = 0;

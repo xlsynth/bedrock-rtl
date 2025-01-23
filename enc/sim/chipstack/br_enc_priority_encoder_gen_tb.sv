@@ -126,7 +126,7 @@ module br_enc_priority_encoder_gen_tb;
     fork
       begin
         #(PER_TASK_TIMEOUT);
-        $display({"Time: %0t, INFO: Timeout: test_HighestPrioritySelection.",
+        $display({"Time: %0t, INFO: Timeout: test_HighestPrioritySelection. ",
                   "Stimuli is not observed or it needs more time to finish this test."}, $time);
       end
       begin
@@ -161,11 +161,11 @@ module br_enc_priority_encoder_gen_tb;
 
         // Check the output
         if (cb_clk.out[0] !== expected_out) begin
-          $display({"Time: %0t, ERROR: test_HighestPrioritySelection - Check failed.",
+          $display({"Time: %0t, ERROR: test_HighestPrioritySelection - Check failed. ",
                     "Expected out[0]=0x%h, got out[0]=0x%h"}, $time, expected_out, cb_clk.out[0]);
           test_failed = 1;
         end else begin
-          $display({"Time: %0t, INFO: test_HighestPrioritySelection - Check passed.",
+          $display({"Time: %0t, INFO: test_HighestPrioritySelection - Check passed. ",
                     "Expected value for out[0] is the same as the observed value (both are 0x%h)."
                      }, $time, expected_out);
           if (test_failed != 1) test_failed = 0;
@@ -187,7 +187,7 @@ module br_enc_priority_encoder_gen_tb;
     fork
       begin
         #(PER_TASK_TIMEOUT);
-        $display({"Time: %0t, INFO: Timeout: test_MaskingLowerPriorities.",
+        $display({"Time: %0t, INFO: Timeout: test_MaskingLowerPriorities. ",
                   "Stimuli is not observed or it needs more time to finish this test."}, $time);
       end
       begin
@@ -219,22 +219,22 @@ module br_enc_priority_encoder_gen_tb;
 
         // Check the output
         if (cb_clk.out[0] !== expected_out[0]) begin
-          $display({"Time: %0t, ERROR: test_MaskingLowerPriorities - Check failed for out[0].",
+          $display({"Time: %0t, ERROR: test_MaskingLowerPriorities - Check failed for out[0]. ",
                     "Expected 0x%h, got 0x%h"}, $time, expected_out[0], out[0]);
           test_failed = 1;
         end else begin
-          $display({"Time: %0t, INFO: test_MaskingLowerPriorities - Check passed for out[0].",
+          $display({"Time: %0t, INFO: test_MaskingLowerPriorities - Check passed for out[0]. ",
                     "Expected and observed value is 0x%h"}, $time, out[0]);
           if (test_failed != 1) test_failed = 0;
         end
 
         for (i = 1; i < NumResults; i++) begin
           if (cb_clk.out[i] !== expected_out[i]) begin
-            $display({"Time: %0t, ERROR: test_MaskingLowerPriorities - Check failed for out[%0d].",
+            $display({"Time: %0t, ERROR: test_MaskingLowerPriorities - Check failed for out[%0d]. ",
                       "Expected 0x%h, got 0x%h"}, $time, i, expected_out[i], out[i]);
             test_failed = 1;
           end else begin
-            $display({"Time: %0t, INFO: test_MaskingLowerPriorities - Check passed for out[%0d].",
+            $display({"Time: %0t, INFO: test_MaskingLowerPriorities - Check passed for out[%0d]. ",
                       "Expected and observed value is 0x%h"}, $time, i, out[i]);
             if (test_failed != 1) test_failed = 0;
           end
@@ -256,7 +256,7 @@ module br_enc_priority_encoder_gen_tb;
     fork
       begin
         #(PER_TASK_TIMEOUT);
-        $display({"Time: %0t, INFO: Timeout: test_OneHotEncoding.",
+        $display({"Time: %0t, INFO: Timeout: test_OneHotEncoding. ",
                   "Stimuli is not observed or it needs more time to finish this test."}, $time);
       end
       begin
@@ -284,11 +284,11 @@ module br_enc_priority_encoder_gen_tb;
 
           // Check first result
           if (cb_clk.out[0] !== expected_out[0]) begin
-            $display({"Time: %0t, ERROR: test_OneHotEncoding - Check failed for out[0].",
+            $display({"Time: %0t, ERROR: test_OneHotEncoding - Check failed for out[0]. ",
                       "Expected 0x%h, got 0x%h"}, $time, expected_out[0], out[0]);
             test_failed = 1;
           end else begin
-            $display({"Time: %0t, INFO: test_OneHotEncoding - Check passed for out[0].",
+            $display({"Time: %0t, INFO: test_OneHotEncoding - Check passed for out[0]. ",
                       "Expected and observed value: 0x%h"}, $time, out[0]);
             if (test_failed != 1) test_failed = 0;
           end
@@ -297,11 +297,11 @@ module br_enc_priority_encoder_gen_tb;
           for (j = 1; j < NumResults; j++) begin
             expected_out[j] = 1 << (i + j);
             if (cb_clk.out[j] !== expected_out[j]) begin
-              $display({"Time: %0t, ERROR: test_OneHotEncoding - Check failed for out[%0d].",
+              $display({"Time: %0t, ERROR: test_OneHotEncoding - Check failed for out[%0d]. ",
                         "Expected 0x%h, got 0x%h"}, $time, j, expected_out[j], out[j]);
               test_failed = 1;
             end else begin
-              $display({"Time: %0t, INFO: test_OneHotEncoding - Check passed for out[%0d].",
+              $display({"Time: %0t, INFO: test_OneHotEncoding - Check passed for out[%0d]. ",
                         "Expected and observed value: 0x%h"}, $time, j, out[j]);
               if (test_failed != 1) test_failed = 0;
             end

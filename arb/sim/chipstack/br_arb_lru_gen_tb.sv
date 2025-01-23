@@ -125,7 +125,7 @@ module br_arb_lru_gen_tb;
     fork
       begin
         #(PER_TASK_TIMEOUT);
-        $display({"Time: %0t, INFO: Timeout: test_RequestGrantWithPriorityUpdate.",
+        $display({"Time: %0t, INFO: Timeout: test_RequestGrantWithPriorityUpdate. ",
                   "Stimuli is not observed or it needs more time to finish this test."}, $time);
       end
       begin
@@ -161,11 +161,11 @@ module br_arb_lru_gen_tb;
 
         // Step 3: Check if the correct request is granted
         if (observed_grant !== expected_grant) begin
-          $display({"Time: %0t, ERROR: test_RequestGrantWithPriorityUpdate - Check failed.",
+          $display({"Time: %0t, ERROR: test_RequestGrantWithPriorityUpdate - Check failed. ",
                     "Expected grant=0x%b, got grant=0x%b"}, $time, expected_grant, observed_grant);
           test_failed = 1;
         end else begin
-          $display({"Time: %0t, INFO: test_RequestGrantWithPriorityUpdate - Check passed.",
+          $display({"Time: %0t, INFO: test_RequestGrantWithPriorityUpdate - Check passed. ",
                     "Expected grant=0x%b is the same as the observed grant=0x%b."}, $time,
                      expected_grant, observed_grant);
           if (test_failed != 1) test_failed = 0;
@@ -183,12 +183,12 @@ module br_arb_lru_gen_tb;
                      $time, observed_grant);
 
           if (observed_grant !== expected_grant) begin
-            $display({"Time: %0t, ERROR: test_RequestGrantWithPriorityUpdate - Check failed.",
+            $display({"Time: %0t, ERROR: test_RequestGrantWithPriorityUpdate - Check failed. ",
                       "Expected grant=0x%b, got grant=0x%b"}, $time, expected_grant,
                        observed_grant);
             test_failed = 1;
           end else begin
-            $display({"Time: %0t, INFO: test_RequestGrantWithPriorityUpdate - Check passed.",
+            $display({"Time: %0t, INFO: test_RequestGrantWithPriorityUpdate - Check passed. ",
                       "Expected grant=0x%b is the same as the observed grant=0x%b."}, $time,
                        expected_grant, observed_grant);
             if (test_failed != 1) test_failed = 0;
@@ -211,7 +211,7 @@ module br_arb_lru_gen_tb;
     fork
       begin
         #(PER_TASK_TIMEOUT);
-        $display({"Time: %0t, INFO: Timeout: test_RequestGrantWithoutPriorityUpdate.",
+        $display({"Time: %0t, INFO: Timeout: test_RequestGrantWithoutPriorityUpdate. ",
                   "Stimuli is not observed or it needs more time to finish this test."}, $time);
       end
       begin
@@ -240,11 +240,11 @@ module br_arb_lru_gen_tb;
 
         // Check if the observed grant matches the expected grant
         if (observed_grant !== expected_grant) begin
-          $display({"Time: %0t, ERROR: test_RequestGrantWithoutPriorityUpdate - Check failed.",
+          $display({"Time: %0t, ERROR: test_RequestGrantWithoutPriorityUpdate - Check failed. ",
                     "Expected grant: 0x%h, got: 0x%h"}, $time, expected_grant, observed_grant);
           test_failed = 1;
         end else begin
-          $display({"Time: %0t, INFO: test_RequestGrantWithoutPriorityUpdate - Check passed.",
+          $display({"Time: %0t, INFO: test_RequestGrantWithoutPriorityUpdate - Check passed. ",
                     "Expected grant: 0x%h is the same as the observed grant: 0x%h."}, $time,
                      expected_grant, observed_grant);
           if (test_failed != 1) test_failed = 0;

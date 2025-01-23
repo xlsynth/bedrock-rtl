@@ -187,7 +187,7 @@ module br_cdc_fifo_flops_gen_tb;
     fork
       begin
         #(PER_TASK_TIMEOUT);
-        $display({"Time: %0t, INFO: Timeout: test_PushDataFlowControl.",
+        $display({"Time: %0t, INFO: Timeout: test_PushDataFlowControl. ",
                   "Stimuli is not observed or it needs more time to finish this test."}, $time);
       end
       begin
@@ -234,35 +234,36 @@ module br_cdc_fifo_flops_gen_tb;
 
             // Step 5: Update `push_slots` and `push_slots_next` to reflect the new state.
             if (cb_push_clk.push_slots != expected_push_slots) begin
-              $display({"Time: %0t, ERROR: test_PushDataFlowControl - push_slots mismatch.",
+              $display({"Time: %0t, ERROR: test_PushDataFlowControl - push_slots mismatch. ",
                         "Expected %0d, got %0d"}, $time, expected_push_slots, push_slots);
               test_failed = 1;
             end else begin
-              $display({"Time: %0t, INFO: test_PushDataFlowControl - push_slots check passed.",
+              $display({"Time: %0t, INFO: test_PushDataFlowControl - push_slots check passed. ",
                         "Expected %0d, got %0d"}, $time, expected_push_slots, push_slots);
             end
 
             if (cb_push_clk.push_slots_next != expected_push_slots_next) begin
-              $display({"Time: %0t, ERROR: test_PushDataFlowControl - push_slots_next mismatch.",
+              $display({"Time: %0t, ERROR: test_PushDataFlowControl - push_slots_next mismatch. ",
                         "Expected %0d, got %0d"}, $time, expected_push_slots_next, push_slots_next);
               test_failed = 1;
             end else begin
-              $display({"Time: %0t, INFO: test_PushDataFlowControl - push_slots_next check passed.",
-                        "Expected %0d, got %0d"}, $time, expected_push_slots_next, push_slots_next);
+              $display(
+                  {"Time: %0t, INFO: test_PushDataFlowControl - push_slots_next check passed. ",
+                   "Expected %0d, got %0d"}, $time, expected_push_slots_next, push_slots_next);
             end
 
             // Step 6: Update `push_full_next` to predict if the FIFO will be full after the current transaction.
             if (cb_push_clk.push_full_next != expected_push_full_next) begin
-              $display({"Time: %0t, ERROR: test_PushDataFlowControl - push_full_next mismatch.",
+              $display({"Time: %0t, ERROR: test_PushDataFlowControl - push_full_next mismatch. ",
                         "Expected %0d, got %0d"}, $time, expected_push_full_next, push_full_next);
               test_failed = 1;
             end else begin
-              $display({"Time: %0t, INFO: test_PushDataFlowControl - push_full_next check passed.",
+              $display({"Time: %0t, INFO: test_PushDataFlowControl - push_full_next check passed. ",
                         "Expected %0d, got %0d"}, $time, expected_push_full_next, push_full_next);
             end
 
           end else begin
-            $display({"Time: %0t, ERROR: test_PushDataFlowControl - push_ready not asserted when",
+            $display({"Time: %0t, ERROR: test_PushDataFlowControl - push_ready not asserted when ",
                       "expected"}, $time);
             test_failed = 1;
           end
@@ -284,7 +285,7 @@ module br_cdc_fifo_flops_gen_tb;
     fork
       begin
         #(PER_TASK_TIMEOUT);
-        $display({"Time: %0t, INFO: Timeout: test_PushStatusMonitoring.",
+        $display({"Time: %0t, INFO: Timeout: test_PushStatusMonitoring. ",
                   "Stimuli is not observed or it needs more time to finish this test."}, $time);
       end
       begin
@@ -311,7 +312,7 @@ module br_cdc_fifo_flops_gen_tb;
           random_push_data = $urandom();
           cb_push_clk.push_valid <= 1;
           cb_push_clk.push_data  <= random_push_data;
-          $display({"Time: %0t, INFO: test_PushStatusMonitoring - Driving push_valid=1,",
+          $display({"Time: %0t, INFO: test_PushStatusMonitoring - Driving push_valid=1, ",
                     "push_data=0x%h"}, $time, random_push_data);
 
           @(cb_push_clk);
@@ -328,23 +329,23 @@ module br_cdc_fifo_flops_gen_tb;
 
           // Check push_slots
           if (cb_push_clk.push_slots !== expected_push_slots) begin
-            $display({"Time: %0t, ERROR: test_PushStatusMonitoring - Check failed.",
+            $display({"Time: %0t, ERROR: test_PushStatusMonitoring - Check failed. ",
                       "Expected push_slots=%0d, got %0d"}, $time, expected_push_slots, push_slots);
             test_failed = 1;
           end else begin
-            $display({"Time: %0t, INFO: test_PushStatusMonitoring - Check passed.",
+            $display({"Time: %0t, INFO: test_PushStatusMonitoring - Check passed. ",
                       "Expected push_slots=%0d, got %0d"}, $time, expected_push_slots, push_slots);
             if (test_failed != 1) test_failed = 0;
           end
 
           // Check push_slots_next
           if (cb_push_clk.push_slots_next !== expected_push_slots_next) begin
-            $display({"Time: %0t, ERROR: test_PushStatusMonitoring - Check failed.",
+            $display({"Time: %0t, ERROR: test_PushStatusMonitoring - Check failed. ",
                       "Expected push_slots_next=%0d, got %0d"}, $time, expected_push_slots_next,
                        push_slots_next);
             test_failed = 1;
           end else begin
-            $display({"Time: %0t, INFO: test_PushStatusMonitoring - Check passed.",
+            $display({"Time: %0t, INFO: test_PushStatusMonitoring - Check passed. ",
                       "Expected push_slots_next=%0d, got %0d"}, $time, expected_push_slots_next,
                        push_slots_next);
             if (test_failed != 1) test_failed = 0;
@@ -352,22 +353,22 @@ module br_cdc_fifo_flops_gen_tb;
 
           // Check push_full
           if (cb_push_clk.push_full !== expected_push_full) begin
-            $display({"Time: %0t, ERROR: test_PushStatusMonitoring - Check failed.",
+            $display({"Time: %0t, ERROR: test_PushStatusMonitoring - Check failed. ",
                       "Expected push_full=%0b, got %0b"}, $time, expected_push_full, push_full);
             test_failed = 1;
           end else begin
-            $display({"Time: %0t, INFO: test_PushStatusMonitoring - Check passed.",
+            $display({"Time: %0t, INFO: test_PushStatusMonitoring - Check passed. ",
                       "Expected push_full=%0b, got %0b"}, $time, expected_push_full, push_full);
             if (test_failed != 1) test_failed = 0;
           end
 
           // Check push_ready
           if (cb_push_clk.push_full && cb_push_clk.push_ready) begin
-            $display({"Time: %0t, ERROR: test_PushStatusMonitoring - Check failed.",
+            $display({"Time: %0t, ERROR: test_PushStatusMonitoring - Check failed. ",
                       "push_ready should be deasserted when push_full is asserted"}, $time);
             test_failed = 1;
           end else if (!cb_push_clk.push_full && !cb_push_clk.push_ready) begin
-            $display({"Time: %0t, ERROR: test_PushStatusMonitoring - Check failed.",
+            $display({"Time: %0t, ERROR: test_PushStatusMonitoring - Check failed. ",
                       "push_ready should be asserted when push_full is deasserted"}, $time);
             test_failed = 1;
           end else begin
@@ -396,7 +397,7 @@ module br_cdc_fifo_flops_gen_tb;
     fork
       begin
         #(PER_TASK_TIMEOUT);
-        $display({"Time: %0t, INFO: Timeout: test_PopDataFlowControl.",
+        $display({"Time: %0t, INFO: Timeout: test_PopDataFlowControl. ",
                   "Stimuli is not observed or it needs more time to finish this test."}, $time);
       end
       begin
@@ -436,11 +437,11 @@ module br_cdc_fifo_flops_gen_tb;
 
             // Perform checks
             if (cb_push_clk.pop_items_next != expected_pop_items) begin
-              $display({"Time: %0t, ERROR: test_PopDataFlowControl - pop_items_next check failed.",
+              $display({"Time: %0t, ERROR: test_PopDataFlowControl - pop_items_next check failed. ",
                         "Expected %0d, got %0d"}, $time, expected_pop_items, pop_items_next);
               test_failed = 1;
             end else begin
-              $display({"Time: %0t, INFO: test_PopDataFlowControl - pop_items_next check passed.",
+              $display({"Time: %0t, INFO: test_PopDataFlowControl - pop_items_next check passed. ",
                         "Expected and got %0d"}, $time, expected_pop_items);
               if (test_failed != 1) test_failed = 0;
             end
@@ -451,7 +452,7 @@ module br_cdc_fifo_flops_gen_tb;
             test_failed = 1;
           end
         end else begin
-          $display({"Time: %0t, INFO: test_PopDataFlowControl - FIFO is empty, no pop operation",
+          $display({"Time: %0t, INFO: test_PopDataFlowControl - FIFO is empty, no pop operation ",
                     "performed"}, $time);
         end
 
@@ -471,7 +472,7 @@ module br_cdc_fifo_flops_gen_tb;
     fork
       begin
         #(PER_TASK_TIMEOUT);
-        $display({"Time: %0t, INFO: Timeout: test_PopStatusPrediction.",
+        $display({"Time: %0t, INFO: Timeout: test_PopStatusPrediction. ",
                   "Stimuli is not observed or it needs more time to finish this test."}, $time);
       end
       begin
@@ -497,22 +498,22 @@ module br_cdc_fifo_flops_gen_tb;
 
         // Check pop_items_next
         if (cb_push_clk.pop_items_next !== expected_pop_items_next) begin
-          $display({"Time: %0t, ERROR: test_PopStatusPrediction - pop_items_next check failed.",
+          $display({"Time: %0t, ERROR: test_PopStatusPrediction - pop_items_next check failed. ",
                     "Expected: %0d, Got: %0d"}, $time, expected_pop_items_next, pop_items_next);
           test_failed = 1;
         end else begin
-          $display({"Time: %0t, INFO: test_PopStatusPrediction - pop_items_next check passed.",
+          $display({"Time: %0t, INFO: test_PopStatusPrediction - pop_items_next check passed. ",
                     "Expected and got: %0d"}, $time, expected_pop_items_next);
           if (test_failed != 1) test_failed = 0;
         end
 
         // Check pop_empty_next
         if (cb_push_clk.pop_empty_next !== expected_pop_empty_next) begin
-          $display({"Time: %0t, ERROR: test_PopStatusPrediction - pop_empty_next check failed.",
+          $display({"Time: %0t, ERROR: test_PopStatusPrediction - pop_empty_next check failed. ",
                     "Expected: %b, Got: %b"}, $time, expected_pop_empty_next, pop_empty_next);
           test_failed = 1;
         end else begin
-          $display({"Time: %0t, INFO: test_PopStatusPrediction - pop_empty_next check passed.",
+          $display({"Time: %0t, INFO: test_PopStatusPrediction - pop_empty_next check passed. ",
                     "Expected and got: %b"}, $time, expected_pop_empty_next);
           if (test_failed != 1) test_failed = 0;
         end

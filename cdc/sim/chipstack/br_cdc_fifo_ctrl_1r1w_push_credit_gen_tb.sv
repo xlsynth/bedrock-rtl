@@ -226,7 +226,7 @@ module br_cdc_fifo_ctrl_1r1w_push_credit_gen_tb;
     fork
       begin
         #(PER_TASK_TIMEOUT);
-        $display({"Time: %0t, INFO: Timeout: test_PushDataFlowControl.",
+        $display({"Time: %0t, INFO: Timeout: test_PushDataFlowControl. ",
                   "Stimuli is not observed or it needs more time to finish this test."}, $time);
       end
       begin
@@ -263,53 +263,54 @@ module br_cdc_fifo_ctrl_1r1w_push_credit_gen_tb;
         if (!cb_push_clk.push_full) begin
           if (cb_push_clk.push_ram_wr_valid) begin
             $display(
-                {"Time: %0t, INFO: test_PushDataFlowControl - push_ram_wr_valid asserted, write",
+                {"Time: %0t, INFO: test_PushDataFlowControl - push_ram_wr_valid asserted, write ",
                  "operation initiated"}, $time);
             if (cb_push_clk.push_ram_wr_addr != expected_addr) begin
-              $display({"Time: %0t, ERROR: test_PushDataFlowControl - Address mismatch.",
+              $display({"Time: %0t, ERROR: test_PushDataFlowControl - Address mismatch. ",
                         "Expected 0x%h, got 0x%h"}, $time, expected_addr, push_ram_wr_addr);
               test_failed = 1;
             end else begin
-              $display({"Time: %0t, INFO: test_PushDataFlowControl - Address check passed.",
+              $display({"Time: %0t, INFO: test_PushDataFlowControl - Address check passed. ",
                         "Expected and got 0x%h"}, $time, expected_addr);
             end
 
             if (cb_push_clk.push_ram_wr_data != random_data) begin
-              $display({"Time: %0t, ERROR: test_PushDataFlowControl - Data mismatch.",
+              $display({"Time: %0t, ERROR: test_PushDataFlowControl - Data mismatch. ",
                         "Expected 0x%h, got 0x%h"}, $time, random_data, push_ram_wr_data);
               test_failed = 1;
             end else begin
-              $display({"Time: %0t, INFO: test_PushDataFlowControl - Data check passed.",
+              $display({"Time: %0t, INFO: test_PushDataFlowControl - Data check passed. ",
                         "Expected and got 0x%h"}, $time, random_data);
             end
 
             if (cb_push_clk.push_full_next != expected_full_next) begin
-              $display({"Time: %0t, ERROR: test_PushDataFlowControl - push_full_next mismatch.",
+              $display({"Time: %0t, ERROR: test_PushDataFlowControl - push_full_next mismatch. ",
                         "Expected %0b, got %0b"}, $time, expected_full_next, push_full_next);
               test_failed = 1;
             end else begin
-              $display({"Time: %0t, INFO: test_PushDataFlowControl - push_full_next check passed.",
+              $display({"Time: %0t, INFO: test_PushDataFlowControl - push_full_next check passed. ",
                         "Expected and got %0b"}, $time, expected_full_next);
             end
 
             @(cb_push_clk);  // MANUAL FIX
             if (cb_push_clk.push_slots != expected_slots - 1) begin
-              $display({"Time: %0t, ERROR: test_PushDataFlowControl - push_slots mismatch.",
+              $display({"Time: %0t, ERROR: test_PushDataFlowControl - push_slots mismatch. ",
                         "Expected %0d, got %0d"}, $time, expected_slots - 1, push_slots);
               test_failed = 1;
             end else begin
-              $display({"Time: %0t, INFO: test_PushDataFlowControl - push_slots check passed.",
+              $display({"Time: %0t, INFO: test_PushDataFlowControl - push_slots check passed. ",
                         "Expected and got %0d"}, $time, expected_slots - 1);
             end
 
             if (test_failed != 1) test_failed = 0;
           end else begin
-            $display({"Time: %0t, ERROR: test_PushDataFlowControl - push_ram_wr_valid not asserted",
-                      "when expected"}, $time);
+            $display(
+                {"Time: %0t, ERROR: test_PushDataFlowControl - push_ram_wr_valid not asserted ",
+                 "when expected"}, $time);
             test_failed = 1;
           end
         end else begin
-          $display({"Time: %0t, INFO: test_PushDataFlowControl - FIFO is full, no push operation",
+          $display({"Time: %0t, INFO: test_PushDataFlowControl - FIFO is full, no push operation ",
                     "performed"}, $time);
           test_failed = 0;
         end
@@ -330,7 +331,7 @@ module br_cdc_fifo_ctrl_1r1w_push_credit_gen_tb;
     fork
       begin
         #(PER_TASK_TIMEOUT);
-        $display({"Time: %0t, INFO: Timeout: test_PushCreditManagement.",
+        $display({"Time: %0t, INFO: Timeout: test_PushCreditManagement. ",
                   "Stimuli is not observed or it needs more time to finish this test."}, $time);
       end
       begin
@@ -356,20 +357,20 @@ module br_cdc_fifo_ctrl_1r1w_push_credit_gen_tb;
         @(cb_push_clk);
         cb_push_clk.credit_initial_push  <= initial_credit;
         cb_push_clk.credit_withhold_push <= withhold_credit;
-        $display({"Time: %0t, INFO: test_PushCreditManagement - Initial credit set to %0d,",
+        $display({"Time: %0t, INFO: test_PushCreditManagement - Initial credit set to %0d, ",
                   "withhold credit set to %0d"}, $time, initial_credit, withhold_credit);
 
         // Wait for credit to be available
         @(cb_push_clk);
         if (cb_push_clk.credit_available_push != expected_credit_available) begin
           $display(
-              {"Time: %0t, ERROR: test_PushCreditManagement - Initial credit available mismatch.",
+              {"Time: %0t, ERROR: test_PushCreditManagement - Initial credit available mismatch. ",
                "Expected %0d, got %0d"}, $time, expected_credit_available,
                 cb_push_clk.credit_available_push);
           test_failed = 1;
         end else begin
-          $display({"Time: %0t, INFO: test_PushCreditManagement - Initial credit available check",
-                    "passed.", "Expected and got %0d"}, $time, credit_available_push);
+          $display({"Time: %0t, INFO: test_PushCreditManagement - Initial credit available check ",
+                    "passed. ", "Expected and got %0d"}, $time, credit_available_push);
           if (test_failed != 1) test_failed = 0;
         end
 
@@ -383,24 +384,25 @@ module br_cdc_fifo_ctrl_1r1w_push_credit_gen_tb;
         @(cb_push_clk);
         if (cb_push_clk.credit_count_push != expected_credit_count - 1) begin
           $display(
-              {"Time: %0t, ERROR: test_PushCreditManagement - Credit count mismatch after push.",
+              {"Time: %0t, ERROR: test_PushCreditManagement - Credit count mismatch after push. ",
                "Expected %0d, got %0d"}, $time, expected_credit_count - 1, credit_count_push);
           test_failed = 1;
         end else begin
-          $display({"Time: %0t, INFO: test_PushCreditManagement - Credit count check passed after",
-                    "push.", "Expected and got %0d"}, $time, credit_count_push);
+          $display({"Time: %0t, INFO: test_PushCreditManagement - Credit count check passed after ",
+                    "push. ", "Expected and got %0d"}, $time, credit_count_push);
           if (test_failed != 1) test_failed = 0;
         end
 
         // Check push_credit signal
         @(cb_push_clk);
         if (cb_push_clk.push_credit != (expected_credit_count - 1 > 0)) begin
-          $display({"Time: %0t, ERROR: test_PushCreditManagement - Push credit signal mismatch.",
+          $display({"Time: %0t, ERROR: test_PushCreditManagement - Push credit signal mismatch. ",
                     "Expected %0d, got %0d"}, $time, (expected_credit_count - 1 > 0), push_credit);
           test_failed = 1;
         end else begin
-          $display({"Time: %0t, INFO: test_PushCreditManagement - Push credit signal check passed.",
-                    "Expected and got %0d"}, $time, push_credit);
+          $display(
+              {"Time: %0t, INFO: test_PushCreditManagement - Push credit signal check passed. ",
+               "Expected and got %0d"}, $time, push_credit);
           if (test_failed != 1) test_failed = 0;
         end
 
@@ -420,7 +422,7 @@ module br_cdc_fifo_ctrl_1r1w_push_credit_gen_tb;
     fork
       begin
         #(PER_TASK_TIMEOUT);
-        $display({"Time: %0t, INFO: Timeout: test_FIFOStatusFlagManagement.",
+        $display({"Time: %0t, INFO: Timeout: test_FIFOStatusFlagManagement. ",
                   "Stimuli is not observed or it needs more time to finish this test."}, $time);
       end
       begin
@@ -454,7 +456,7 @@ module br_cdc_fifo_ctrl_1r1w_push_credit_gen_tb;
               cb_push_clk.credit_initial_push <= initial_credit;
               cb_push_clk.credit_withhold_push <= withhold_credit;
               @(cb_push_clk);
-              $display({"Time: %0t, INFO: test_FIFOStatusFlagManagement - Driving push_valid=1,",
+              $display({"Time: %0t, INFO: test_FIFOStatusFlagManagement - Driving push_valid=1, ",
                         "push_data=0x%h"}, $time, random_data);
             end
             cb_push_clk.push_valid <= 0;
@@ -466,13 +468,12 @@ module br_cdc_fifo_ctrl_1r1w_push_credit_gen_tb;
               @(cb_push_clk);
               if (cb_push_clk.push_full && cb_push_clk.push_slots != 0) begin
                 $display(
-                    {"Time: %0t, ERROR: test_FIFOStatusFlagManagement - push_full asserted but",
+                    {"Time: %0t, ERROR: test_FIFOStatusFlagManagement - push_full asserted but ",
                      "push_slots is not zero."}, $time);
                 test_failed = 1;
               end else if (!cb_push_clk.push_full && cb_push_clk.push_slots == 0) begin
-                $display(
-                    {"Time: %0t, ERROR: test_FIFOStatusFlagManagement - push_full not asserted but",
-                     "push_slots is zero."}, $time);
+                $display({"Time: %0t, ERROR: test_FIFOStatusFlagManagement - push_full not ",
+                          "asserted but push_slots is zero."}, $time);
                 test_failed = 1;
               end else begin
                 $display(
@@ -500,7 +501,7 @@ module br_cdc_fifo_ctrl_1r1w_push_credit_gen_tb;
     fork
       begin
         #(PER_TASK_TIMEOUT);
-        $display({"Time: %0t, INFO: Timeout: test_PopDataFlowControl.",
+        $display({"Time: %0t, INFO: Timeout: test_PopDataFlowControl. ",
                   "Stimuli is not observed or it needs more time to finish this test."}, $time);
       end
       begin
@@ -547,7 +548,7 @@ module br_cdc_fifo_ctrl_1r1w_push_credit_gen_tb;
             cb_pop_clk.pop_ram_rd_data_valid <= pop_ram_rd_data_valid_flag;
             cb_pop_clk.pop_ram_rd_data <= expected_data;
             $display(
-                {"Time: %0t, INFO: test_PopDataFlowControl - Driving pop_ram_rd_data_valid=0x%h,",
+                {"Time: %0t, INFO: test_PopDataFlowControl - Driving pop_ram_rd_data_valid=0x%h, ",
                  "pop_ram_rd_data=0x%h"}, $time, pop_ram_rd_data_valid_flag, expected_data);
           end
         join
@@ -559,19 +560,19 @@ module br_cdc_fifo_ctrl_1r1w_push_credit_gen_tb;
         if (cb_pop_clk.pop_valid && pop_ready_flag && pop_ram_rd_data_valid_flag) begin
           observed_data = cb_pop_clk.pop_data;
           if (observed_data !== expected_data) begin
-            $display({"Time: %0t, ERROR: test_PopDataFlowControl - Check failed.",
+            $display({"Time: %0t, ERROR: test_PopDataFlowControl - Check failed. ",
                       "Expected pop_data=0x%h, got 0x%h"}, $time, expected_data, observed_data);
             test_failed = 1;
           end else begin
-            $display({"Time: %0t, INFO: test_PopDataFlowControl - Check passed.",
+            $display({"Time: %0t, INFO: test_PopDataFlowControl - Check passed. ",
                       "Expected pop_data=0x%h is the same as the observed value (both are 0x%h)."},
                        $time, expected_data, observed_data);
             if (test_failed != 1) test_failed = 0;
           end
         end else begin
-          // $display({"Time: %0t, ERROR: test_PopDataFlowControl - pop_valid not asserted or", "conditions not met."}, $time);
-          $display({"Time: %0t, ERROR: test_PopDataFlowControl - pop_valid not asserted or",
-                    "conditions not met.",
+          // $display({"Time: %0t, ERROR: test_PopDataFlowControl - pop_valid not asserted or ", "conditions not met."}, $time);
+          $display({"Time: %0t, ERROR: test_PopDataFlowControl - pop_valid not asserted or ",
+                    "conditions not met. ",
                     "pop_valid=%b, pop_ready_flag=%b, pop_ram_rd_data_valid_flag=%b"}, $time,
                      cb_pop_clk.pop_valid, pop_ready_flag,
                      pop_ram_rd_data_valid_flag);  //MANUAL ADDED THIS LINE
@@ -595,7 +596,7 @@ module br_cdc_fifo_ctrl_1r1w_push_credit_gen_tb;
     fork
       begin
         #(PER_TASK_TIMEOUT);
-        $display({"Time: %0t, INFO: Timeout: test_PopStatusManagement.",
+        $display({"Time: %0t, INFO: Timeout: test_PopStatusManagement. ",
                   "Stimuli is not observed or it needs more time to finish this test."}, $time);
       end
       begin
@@ -640,38 +641,38 @@ module br_cdc_fifo_ctrl_1r1w_push_credit_gen_tb;
               expected_pop_empty_next = (cb_pop_clk.pop_items_next == 0);
 
               if (cb_pop_clk.pop_items_next != expected_pop_items) begin
-                $display({"Time: %0t, ERROR: test_PopStatusManagement - pop_items_next mismatch.",
+                $display({"Time: %0t, ERROR: test_PopStatusManagement - pop_items_next mismatch. ",
                           "Expected: %0d, Got: %0d"}, $time, expected_pop_items,
                            cb_pop_clk.pop_items_next);
                 test_failed = 1;
               end else begin
                 $display(
-                    {"Time: %0t, INFO: test_PopStatusManagement - pop_items_next check passed.",
+                    {"Time: %0t, INFO: test_PopStatusManagement - pop_items_next check passed. ",
                      "Expected: %0d, Got: %0d"}, $time, expected_pop_items,
                       cb_pop_clk.pop_items_next);
                 if (test_failed != 1) test_failed = 0;
               end
 
               if (cb_pop_clk.pop_empty != expected_pop_empty) begin
-                $display({"Time: %0t, ERROR: test_PopStatusManagement - pop_empty mismatch.",
+                $display({"Time: %0t, ERROR: test_PopStatusManagement - pop_empty mismatch. ",
                           "Expected: %b, Got: %b"}, $time, expected_pop_empty,
                            cb_pop_clk.pop_empty);
                 test_failed = 1;
               end else begin
-                $display({"Time: %0t, INFO: test_PopStatusManagement - pop_empty check passed.",
+                $display({"Time: %0t, INFO: test_PopStatusManagement - pop_empty check passed. ",
                           "Expected: %b, Got: %b"}, $time, expected_pop_empty,
                            cb_pop_clk.pop_empty);
                 if (test_failed != 1) test_failed = 0;
               end
 
               if (cb_pop_clk.pop_empty_next != expected_pop_empty_next) begin
-                $display({"Time: %0t, ERROR: test_PopStatusManagement - pop_empty_next mismatch.",
+                $display({"Time: %0t, ERROR: test_PopStatusManagement - pop_empty_next mismatch. ",
                           "Expected: %b, Got: %b"}, $time, expected_pop_empty_next,
                            cb_pop_clk.pop_empty_next);
                 test_failed = 1;
               end else begin
                 $display(
-                    {"Time: %0t, INFO: test_PopStatusManagement - pop_empty_next check passed.",
+                    {"Time: %0t, INFO: test_PopStatusManagement - pop_empty_next check passed. ",
                      "Expected: %b, Got: %b"}, $time, expected_pop_empty_next,
                       cb_pop_clk.pop_empty_next);
                 if (test_failed != 1) test_failed = 0;
@@ -696,7 +697,7 @@ module br_cdc_fifo_ctrl_1r1w_push_credit_gen_tb;
     fork
       begin
         #(PER_TASK_TIMEOUT);
-        $display({"Time: %0t, INFO: Timeout: test_PopRAMAddressControl.",
+        $display({"Time: %0t, INFO: Timeout: test_PopRAMAddressControl. ",
                   "Stimuli is not observed or it needs more time to finish this test."}, $time);
       end
       begin
@@ -719,10 +720,10 @@ module br_cdc_fifo_ctrl_1r1w_push_credit_gen_tb;
         observed_pop_ram_rd_addr_valid = cb_push_clk.pop_ram_rd_addr_valid;
         if (observed_pop_ram_rd_addr_valid) begin
           expected_pop_ram_rd_addr = cb_push_clk.pop_ram_rd_addr;
-          $display({"Time: %0t, INFO: test_PopRAMAddressControl - pop_ram_rd_addr_valid asserted,",
+          $display({"Time: %0t, INFO: test_PopRAMAddressControl - pop_ram_rd_addr_valid asserted, ",
                     "expected address: 0x%h"}, $time, expected_pop_ram_rd_addr);
         end else begin
-          $display({"Time: %0t, ERROR: test_PopRAMAddressControl - pop_ram_rd_addr_valid not",
+          $display({"Time: %0t, ERROR: test_PopRAMAddressControl - pop_ram_rd_addr_valid not ",
                     "asserted as expected."}, $time);
           test_failed = 1;
         end
@@ -731,10 +732,10 @@ module br_cdc_fifo_ctrl_1r1w_push_credit_gen_tb;
         @(cb_pop_clk);
         if (cb_push_clk.pop_ram_rd_data_valid) begin
           expected_pop_data = cb_push_clk.pop_ram_rd_data;
-          $display({"Time: %0t, INFO: test_PopRAMAddressControl - pop_ram_rd_data_valid asserted,",
+          $display({"Time: %0t, INFO: test_PopRAMAddressControl - pop_ram_rd_data_valid asserted, ",
                     "expected data: 0x%h"}, $time, expected_pop_data);
         end else begin
-          $display({"Time: %0t, ERROR: test_PopRAMAddressControl - pop_ram_rd_data_valid not",
+          $display({"Time: %0t, ERROR: test_PopRAMAddressControl - pop_ram_rd_data_valid not ",
                     "asserted as expected."}, $time);
           test_failed = 1;
         end
@@ -744,12 +745,13 @@ module br_cdc_fifo_ctrl_1r1w_push_credit_gen_tb;
         observed_pop_valid = cb_push_clk.pop_valid;
         observed_pop_data  = cb_push_clk.pop_data;
         if (observed_pop_valid && (observed_pop_data == expected_pop_data)) begin
-          $display({"Time: %0t, INFO: test_PopRAMAddressControl - pop_valid asserted, data matches",
-                    "expected: 0x%h"}, $time, observed_pop_data);
+          $display(
+              {"Time: %0t, INFO: test_PopRAMAddressControl - pop_valid asserted, data matches ",
+               "expected: 0x%h"}, $time, observed_pop_data);
           if (test_failed != 1) test_failed = 0;
         end else begin
-          $display({"Time: %0t, ERROR: test_PopRAMAddressControl - pop_valid not asserted or data",
-                    "mismatch.", "Expected: 0x%h, Got: 0x%h"}, $time, expected_pop_data,
+          $display({"Time: %0t, ERROR: test_PopRAMAddressControl - pop_valid not asserted or data ",
+                    "mismatch. ", "Expected: 0x%h, Got: 0x%h"}, $time, expected_pop_data,
                      observed_pop_data);
           test_failed = 1;
         end

@@ -72,7 +72,7 @@ module br_enc_bin2gray_gen_tb;
     fork
       begin
         #(PER_TASK_TIMEOUT);
-        $display({"Time: %0t, INFO: Timeout: test_Transaction1.",
+        $display({"Time: %0t, INFO: Timeout: test_Transaction1. ",
                   "Stimuli is not observed or it needs more time to finish this test."}, $time);
       end
       begin
@@ -98,11 +98,11 @@ module br_enc_bin2gray_gen_tb;
 
           // Check the output
           if (gray !== expected_gray) begin
-            $display({"Time: %0t, ERROR: test_Transaction1 - Check failed.",
+            $display({"Time: %0t, ERROR: test_Transaction1 - Check failed. ",
                       "Expected gray=0x%h, got gray=0x%h"}, $time, expected_gray, gray);
             test_failed = 1;
           end else begin
-            $display({"Time: %0t, INFO: test_Transaction1 - Check passed.",
+            $display({"Time: %0t, INFO: test_Transaction1 - Check passed. ",
                       "Expected gray=0x%h is the same as the observed gray=0x%h."}, $time,
                        expected_gray, gray);
             if (test_failed != 1) test_failed = 0;

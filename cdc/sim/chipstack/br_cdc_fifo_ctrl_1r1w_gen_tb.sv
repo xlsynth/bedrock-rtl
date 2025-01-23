@@ -206,7 +206,7 @@ module br_cdc_fifo_ctrl_1r1w_gen_tb;
     fork
       begin
         #(PER_TASK_TIMEOUT);
-        $display({"Time: %0t, INFO: Timeout: test_PushDataHandling.",
+        $display({"Time: %0t, INFO: Timeout: test_PushDataHandling. ",
                   "Stimuli is not observed or it needs more time to finish this test."}, $time);
       end
       begin
@@ -255,7 +255,7 @@ module br_cdc_fifo_ctrl_1r1w_gen_tb;
                   test_failed = 1;
                 end else begin
                   $display(
-                      {"Time: %0t, INFO: test_PushDataHandling - Check passed.",
+                      {"Time: %0t, INFO: test_PushDataHandling - Check passed. ",
                        "Expected values for push_ram_wr_valid, push_ram_wr_addr, push_ram_wr_data ",
                        "are correct."}, $time);
                   if (test_failed != 1) test_failed = 0;
@@ -266,7 +266,7 @@ module br_cdc_fifo_ctrl_1r1w_gen_tb;
                 if (cb_push_clk.push_slots_next !== expected_slots_next ||
                     cb_push_clk.push_full_next !== expected_full_next) begin
                   $display({"Time: %0t, ERROR: test_PushDataHandling - Check failed. Expected ",
-                            "push_slots_next=0x%h, push_full_next=%b, got push_slots_next=0x%h,",
+                            "push_slots_next=0x%h, push_full_next=%b, got push_slots_next=0x%h, ",
                             "push_full_next=%b"}, $time, expected_slots_next, expected_full_next,
                              cb_push_clk.push_slots_next, cb_push_clk.push_full_next);
                   test_failed = 1;
@@ -298,7 +298,7 @@ module br_cdc_fifo_ctrl_1r1w_gen_tb;
     fork
       begin
         #(PER_TASK_TIMEOUT);
-        $display({"Time: %0t, INFO: Timeout: test_PushBackpressureManagement.",
+        $display({"Time: %0t, INFO: Timeout: test_PushBackpressureManagement. ",
                   "Stimuli is not observed or it needs more time to finish this test."}, $time);
       end
       begin
@@ -323,7 +323,7 @@ module br_cdc_fifo_ctrl_1r1w_gen_tb;
           // Apply stimulus
           cb_push_clk.push_valid <= 1;
           cb_push_clk.push_data  <= random_push_data;
-          $display({"Time: %0t, INFO: test_PushBackpressureManagement - Driving push_valid=1,",
+          $display({"Time: %0t, INFO: test_PushBackpressureManagement - Driving push_valid=1, ",
                     "push_data=0x%h"}, $time, random_push_data);
 
           // Wait for one clock cycle
@@ -331,12 +331,12 @@ module br_cdc_fifo_ctrl_1r1w_gen_tb;
 
           // Check if push_full is asserted and push_ready is deasserted
           if (cb_push_clk.push_full && !cb_push_clk.push_ready) begin
-            $display({"Time: %0t, INFO: test_PushBackpressureManagement - Backpressure applied",
-                      "correctly.", "push_full=1, push_ready=0"}, $time);
+            $display({"Time: %0t, INFO: test_PushBackpressureManagement - Backpressure applied ",
+                      "correctly. ", "push_full=1, push_ready=0"}, $time);
             if (test_failed != 1) test_failed = 0;
           end else if (cb_push_clk.push_full && cb_push_clk.push_ready) begin
             $display(
-                {"Time: %0t, ERROR: test_PushBackpressureManagement - Backpressure not applied.",
+                {"Time: %0t, ERROR: test_PushBackpressureManagement - Backpressure not applied. ",
                  "Expected push_ready=0, got push_ready=1"}, $time);
             test_failed = 1;
           end
@@ -366,7 +366,7 @@ module br_cdc_fifo_ctrl_1r1w_gen_tb;
     fork
       begin
         #(PER_TASK_TIMEOUT);
-        $display({"Time: %0t, INFO: Timeout: test_PopDataRetrieval.",
+        $display({"Time: %0t, INFO: Timeout: test_PopDataRetrieval. ",
                   "Stimuli is not observed or it needs more time to finish this test."}, $time);
       end
       begin
@@ -423,12 +423,12 @@ module br_cdc_fifo_ctrl_1r1w_gen_tb;
         @(cb_pop_clk);
         // Check pop_data
         if (cb_push_clk.pop_data !== expected_pop_data) begin
-          $display({"Time: %0t, ERROR: test_PopDataRetrieval - pop_data mismatch.",
+          $display({"Time: %0t, ERROR: test_PopDataRetrieval - pop_data mismatch. ",
                     "Expected: 0x%h, Got: 0x%h"}, $time, expected_pop_data, pop_data);
           test_failed = 1;
         end else begin
-          $display({"Time: %0t, INFO: test_PopDataRetrieval - pop_data check passed.", "Value: 0x%h"
-                     }, $time, pop_data);
+          $display({"Time: %0t, INFO: test_PopDataRetrieval - pop_data check passed. ",
+                    "Value: 0x%h"}, $time, pop_data);
           if (test_failed != 1) test_failed = 0;
         end
 
@@ -451,34 +451,34 @@ module br_cdc_fifo_ctrl_1r1w_gen_tb;
 
         // Check pop_items and pop_items_next
         if (cb_push_clk.pop_items !== expected_pop_items) begin
-          $display({"Time: %0t, ERROR: test_PopDataRetrieval - pop_items mismatch.",
+          $display({"Time: %0t, ERROR: test_PopDataRetrieval - pop_items mismatch. ",
                     "Expected: %0d, Got: %0d"}, $time, expected_pop_items, cb_push_clk.pop_items);
           test_failed = 1;
         end else begin
-          $display({"Time: %0t, INFO: test_PopDataRetrieval - pop_items check passed.", "Value: %0d"
-                     }, $time, cb_push_clk.pop_items);
+          $display({"Time: %0t, INFO: test_PopDataRetrieval - pop_items check passed. ",
+                    "Value: %0d"}, $time, cb_push_clk.pop_items);
           if (test_failed != 1) test_failed = 0;
         end
 
         if (cb_push_clk.pop_items_next !== expected_pop_items_next) begin
-          $display({"Time: %0t, ERROR: test_PopDataRetrieval - pop_items_next mismatch.",
+          $display({"Time: %0t, ERROR: test_PopDataRetrieval - pop_items_next mismatch. ",
                     "Expected: %0d, Got: %0d"}, $time, expected_pop_items_next,
                      cb_push_clk.pop_items_next);
           test_failed = 1;
         end else begin
-          $display({"Time: %0t, INFO: test_PopDataRetrieval - pop_items_next check passed.",
+          $display({"Time: %0t, INFO: test_PopDataRetrieval - pop_items_next check passed. ",
                     "Value: %0d"}, $time, cb_push_clk.pop_items_next);
           if (test_failed != 1) test_failed = 0;
         end
 
         // Check pop_empty_next
         if (cb_push_clk.pop_empty_next !== expected_pop_empty_next) begin
-          $display({"Time: %0t, ERROR: test_PopDataRetrieval - pop_empty_next mismatch.",
+          $display({"Time: %0t, ERROR: test_PopDataRetrieval - pop_empty_next mismatch. ",
                     "Expected: %b, Got: %b"}, $time, expected_pop_empty_next,
                      cb_push_clk.pop_empty_next);
           test_failed = 1;
         end else begin
-          $display({"Time: %0t, INFO: test_PopDataRetrieval - pop_empty_next check passed.",
+          $display({"Time: %0t, INFO: test_PopDataRetrieval - pop_empty_next check passed. ",
                     "Value: %b"}, $time, pop_empty_next);
           if (test_failed != 1) test_failed = 0;
         end
@@ -500,7 +500,7 @@ module br_cdc_fifo_ctrl_1r1w_gen_tb;
     fork
       begin
         #(PER_TASK_TIMEOUT);
-        $display({"Time: %0t, INFO: Timeout: test_GrayEncodedCounterSynchronizationPushToPop.",
+        $display({"Time: %0t, INFO: Timeout: test_GrayEncodedCounterSynchronizationPushToPop. ",
                   "Stimuli is not observed or it needs more time to finish this test."}, $time);
       end
       begin
@@ -518,7 +518,7 @@ module br_cdc_fifo_ctrl_1r1w_gen_tb;
         for (i = 0; i < 10; i++) begin
           expected_push_count_gray = $urandom_range(0, Depth);
           cb_push_clk.push_valid <= expected_push_count_gray;
-          $display({"Time: %0t, INFO: test_GrayEncodedCounterSynchronizationPushToPop - Driving",
+          $display({"Time: %0t, INFO: test_GrayEncodedCounterSynchronizationPushToPop - Driving ",
                     "push_push_count_gray=0x%h"}, $time, expected_push_count_gray);
 
           repeat (NumSyncStages + 1) @(cb_pop_clk);
@@ -526,15 +526,14 @@ module br_cdc_fifo_ctrl_1r1w_gen_tb;
           observed_pop_count_gray = cb_pop_clk.pop_valid;
 
           if (observed_pop_count_gray !== expected_push_count_gray) begin
-            $display({"Time: %0t, ERROR: test_GrayEncodedCounterSynchronizationPushToPop - Check",
-                      "failed.", "Expected pop_push_count_gray=0x%h, got 0x%h"}, $time,
+            $display({"Time: %0t, ERROR: test_GrayEncodedCounterSynchronizationPushToPop - Check ",
+                      "failed. ", "Expected pop_push_count_gray=0x%h, got 0x%h"}, $time,
                        expected_push_count_gray, observed_pop_count_gray);
             test_failed = 1;
           end else begin
-            $display(
-                {"Time: %0t, INFO: test_GrayEncodedCounterSynchronizationPushToPop - Check passed.",
-                 "Expected value for pop_push_count_gray is the same as the observed value (both",
-                 "are 0x%h)."}, $time, observed_pop_count_gray);
+            $display({"Time: %0t, INFO: test_GrayEncodedCounterSynchronizationPushToPop - ",
+                      "Check passed. Expected value for pop_push_count_gray is the same as ",
+                      "the observed value (both are 0x%h)."}, $time, observed_pop_count_gray);
             if (test_failed != 1) test_failed = 0;
           end
         end

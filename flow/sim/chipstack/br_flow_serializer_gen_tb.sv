@@ -163,7 +163,7 @@ module br_flow_serializer_gen_tb;
     fork
       begin
         #(PER_TASK_TIMEOUT);
-        $display({"Time: %0t, INFO: Timeout: test_DataSerialization.",
+        $display({"Time: %0t, INFO: Timeout: test_DataSerialization. ",
                   "Stimuli is not observed or it needs more time to finish this test."}, $time);
       end
       begin
@@ -211,16 +211,16 @@ module br_flow_serializer_gen_tb;
           if (cb_clk.pop_valid !== 1'b1 || cb_clk.pop_data !== expected_pop_data ||
               cb_clk.pop_metadata !== expected_pop_metadata ||
               cb_clk.pop_last !== expected_pop_last) begin
-            $display({"Time: %0t, ERROR: test_DataSerialization - Check failed.",
-                      "Expected pop_valid=1, pop_data=0x%h, pop_metadata=0x%h, pop_last=%b; got",
+            $display({"Time: %0t, ERROR: test_DataSerialization - Check failed. ",
+                      "Expected pop_valid=1, pop_data=0x%h, pop_metadata=0x%h, pop_last=%b; got ",
                       "pop_valid=%b, pop_data=0x%h, pop_metadata=0x%h, pop_last=%b"}, $time,
                        expected_pop_data, expected_pop_metadata, expected_pop_last,
                        cb_clk.pop_valid, cb_clk.pop_data, cb_clk.pop_metadata, cb_clk.pop_last);
             test_failed = 1;
           end else begin
             $display(
-                {"Time: %0t, INFO: test_DataSerialization - Check passed.",
-                 "Expected pop_data=0x%h, pop_metadata=0x%h, pop_last=%b; observed pop_data=0x%h,",
+                {"Time: %0t, INFO: test_DataSerialization - Check passed. ",
+                 "Expected pop_data=0x%h, pop_metadata=0x%h, pop_last=%b; observed pop_data=0x%h, ",
                  "pop_metadata=0x%h, pop_last=%b"}, $time, expected_pop_data, expected_pop_metadata,
                   expected_pop_last, cb_clk.pop_data, cb_clk.pop_metadata, cb_clk.pop_last);
             if (test_failed != 1) test_failed = 0;
@@ -251,7 +251,7 @@ module br_flow_serializer_gen_tb;
     fork
       begin
         #(PER_TASK_TIMEOUT);
-        $display({"Time: %0t, INFO: Timeout: test_HandlingDontCareValues.",
+        $display({"Time: %0t, INFO: Timeout: test_HandlingDontCareValues. ",
                   "Stimuli is not observed or it needs more time to finish this test."}, $time);
       end
       begin
@@ -283,7 +283,7 @@ module br_flow_serializer_gen_tb;
         cb_clk.push_last_dont_care_count <= push_last_dont_care_count_value;
         cb_clk.push_metadata <= push_metadata_value;
         cb_clk.pop_ready <= 1;
-        $display({"Time: %0t, INFO: test_HandlingDontCareValues - Driving push_valid=1,",
+        $display({"Time: %0t, INFO: test_HandlingDontCareValues - Driving push_valid=1, ",
                   "push_data=0x%h, push_last=1, push_last_dont_care_count=%0d, push_metadata=0x%h"},
                    $time, push_data_value, push_last_dont_care_count_value, push_metadata_value);
 
@@ -306,14 +306,14 @@ module br_flow_serializer_gen_tb;
               cb_clk.pop_metadata == expected_pop_metadata &&
               cb_clk.pop_last == expected_pop_last) begin
             $display(
-                {"Time: %0t, INFO: test_HandlingDontCareValues - Check passed for segment %0d.",
+                {"Time: %0t, INFO: test_HandlingDontCareValues - Check passed for segment %0d. ",
                  "Expected pop_data=0x%h, pop_metadata=0x%h, pop_last=%0b"}, $time, i,
                   expected_pop_data, expected_pop_metadata, expected_pop_last);
             if (test_failed != 1) test_failed = 0;
           end else begin
             $display(
-                {"Time: %0t, ERROR: test_HandlingDontCareValues - Check failed for segment %0d.",
-                 "Expected pop_data=0x%h, pop_metadata=0x%h, pop_last=%0b, got pop_data=0x%h,",
+                {"Time: %0t, ERROR: test_HandlingDontCareValues - Check failed for segment %0d. ",
+                 "Expected pop_data=0x%h, pop_metadata=0x%h, pop_last=%0b, got pop_data=0x%h, ",
                  "pop_metadata=0x%h, pop_last=%0b"}, $time, i, expected_pop_data,
                   expected_pop_metadata, expected_pop_last, pop_data, pop_metadata, pop_last);
             test_failed = 1;
@@ -336,7 +336,7 @@ module br_flow_serializer_gen_tb;
     fork
       begin
         #(PER_TASK_TIMEOUT);
-        $display({"Time: %0t, INFO: Timeout: test_MetadataReplication.",
+        $display({"Time: %0t, INFO: Timeout: test_MetadataReplication. ",
                   "Stimuli is not observed or it needs more time to finish this test."}, $time);
       end
       begin
@@ -366,7 +366,7 @@ module br_flow_serializer_gen_tb;
         cb_clk.pop_ready <= 1;
 
         // Display the applied stimulus
-        $display({"Time: %0t, INFO: test_MetadataReplication - Driving push_valid=1,",
+        $display({"Time: %0t, INFO: test_MetadataReplication - Driving push_valid=1, ",
                   "push_data=0x%h, push_metadata=0x%h"}, $time, push_data, push_metadata);
 
         // Wait for the serialization process to complete
@@ -382,12 +382,12 @@ module br_flow_serializer_gen_tb;
 
           // Check pop_valid and pop_metadata
           if (cb_clk.pop_valid && cb_clk.pop_metadata == expected_pop_metadata) begin
-            $display({"Time: %0t, INFO: test_MetadataReplication - Check passed.",
+            $display({"Time: %0t, INFO: test_MetadataReplication - Check passed. ",
                       "pop_metadata=0x%h matches expected=0x%h"}, $time, pop_metadata,
                        expected_pop_metadata);
             if (test_failed != 1) test_failed = 0;
           end else begin
-            $display({"Time: %0t, ERROR: test_MetadataReplication - Check failed.",
+            $display({"Time: %0t, ERROR: test_MetadataReplication - Check failed. ",
                       "pop_metadata=0x%h, expected=0x%h"}, $time, pop_metadata,
                        expected_pop_metadata);
             test_failed = 1;
@@ -395,11 +395,11 @@ module br_flow_serializer_gen_tb;
 
           // Check pop_data
           if (cb_clk.pop_data == expected_pop_data) begin
-            $display({"Time: %0t, INFO: test_MetadataReplication - Check passed.",
+            $display({"Time: %0t, INFO: test_MetadataReplication - Check passed. ",
                       "pop_data=0x%h matches expected=0x%h"}, $time, pop_data, expected_pop_data);
             if (test_failed != 1) test_failed = 0;
           end else begin
-            $display({"Time: %0t, ERROR: test_MetadataReplication - Check failed.",
+            $display({"Time: %0t, ERROR: test_MetadataReplication - Check failed. ",
                       "pop_data=0x%h, expected=0x%h"}, $time, pop_data, expected_pop_data);
             test_failed = 1;
           end
@@ -421,7 +421,7 @@ module br_flow_serializer_gen_tb;
     fork
       begin
         #(PER_TASK_TIMEOUT);
-        $display({"Time: %0t, INFO: Timeout: test_PushReadyHandshake.",
+        $display({"Time: %0t, INFO: Timeout: test_PushReadyHandshake. ",
                   "Stimuli is not observed or it needs more time to finish this test."}, $time);
       end
       begin
@@ -457,8 +457,8 @@ module br_flow_serializer_gen_tb;
           cb_clk.pop_ready <= random_pop_ready;
 
           // Display applied stimulus
-          $display({"Time: %0t, INFO: test_PushReadyHandshake - Driving push_valid=1,",
-                    "push_data=0x%h, push_metadata=0x%h, push_last=%0b,",
+          $display({"Time: %0t, INFO: test_PushReadyHandshake - Driving push_valid=1, ",
+                    "push_data=0x%h, push_metadata=0x%h, push_last=%0b, ",
                     "push_last_dont_care_count=%0d, pop_ready=%0b"}, $time, random_push_data,
                      random_push_metadata, random_push_last, random_push_last_dont_care_count,
                      random_pop_ready);
@@ -468,15 +468,15 @@ module br_flow_serializer_gen_tb;
 
           // Check the push_ready signal
           if (random_pop_ready && cb_clk.push_ready !== 1) begin
-            $display({"Time: %0t, ERROR: test_PushReadyHandshake - Check failed.",
+            $display({"Time: %0t, ERROR: test_PushReadyHandshake - Check failed. ",
                       "Expected push_ready=1, got push_ready=%0b"}, $time, cb_clk.push_ready);
             test_failed = 1;
           end else if (!random_pop_ready && cb_clk.push_ready !== 0) begin
-            $display({"Time: %0t, ERROR: test_PushReadyHandshake - Check failed.",
+            $display({"Time: %0t, ERROR: test_PushReadyHandshake - Check failed. ",
                       "Expected push_ready=0, got push_ready=%0b"}, $time, cb_clk.push_ready);
             test_failed = 1;
           end else begin
-            $display({"Time: %0t, INFO: test_PushReadyHandshake - Check passed.",
+            $display({"Time: %0t, INFO: test_PushReadyHandshake - Check passed. ",
                       "push_ready=%0b as expected."}, $time, cb_clk.push_ready);
             if (test_failed != 1) test_failed = 0;
           end
@@ -504,7 +504,7 @@ module br_flow_serializer_gen_tb;
     fork
       begin
         #(PER_TASK_TIMEOUT);
-        $display({"Time: %0t, INFO: Timeout: test_PopReadyHandshake.",
+        $display({"Time: %0t, INFO: Timeout: test_PopReadyHandshake. ",
                   "Stimuli is not observed or it needs more time to finish this test."}, $time);
       end
       begin
@@ -536,7 +536,7 @@ module br_flow_serializer_gen_tb;
         cb_clk.push_metadata <= push_metadata;
         cb_clk.pop_ready <= 1;
 
-        $display({"Time: %0t, INFO: test_PopReadyHandshake - Initial stimulus applied.",
+        $display({"Time: %0t, INFO: test_PopReadyHandshake - Initial stimulus applied. ",
                   "push_data=0x%h, push_metadata=0x%h"}, $time, push_data, push_metadata);
 
         // Loop through serialization process
@@ -554,12 +554,12 @@ module br_flow_serializer_gen_tb;
 
           // Check pop_valid and pop_data
           if (cb_clk.pop_valid !== 1 || cb_clk.pop_data !== expected_pop_data) begin
-            $display({"Time: %0t, ERROR: test_PopReadyHandshake - Check failed.",
+            $display({"Time: %0t, ERROR: test_PopReadyHandshake - Check failed. ",
                       "Expected pop_data=0x%h, got pop_data=0x%h"}, $time, expected_pop_data,
                        pop_data);
             test_failed = 1;
           end else begin
-            $display({"Time: %0t, INFO: test_PopReadyHandshake - Check passed.",
+            $display({"Time: %0t, INFO: test_PopReadyHandshake - Check passed. ",
                       "Expected pop_data=0x%h is the same as observed pop_data=0x%h."}, $time,
                        expected_pop_data, pop_data);
             if (test_failed != 1) test_failed = 0;
@@ -567,12 +567,12 @@ module br_flow_serializer_gen_tb;
 
           // Check pop_metadata
           if (cb_clk.pop_metadata !== expected_pop_metadata) begin
-            $display({"Time: %0t, ERROR: test_PopReadyHandshake - Check failed.",
+            $display({"Time: %0t, ERROR: test_PopReadyHandshake - Check failed. ",
                       "Expected pop_metadata=0x%h, got pop_metadata=0x%h"}, $time,
                        expected_pop_metadata, pop_metadata);
             test_failed = 1;
           end else begin
-            $display({"Time: %0t, INFO: test_PopReadyHandshake - Check passed.",
+            $display({"Time: %0t, INFO: test_PopReadyHandshake - Check passed. ",
                       "Expected pop_metadata=0x%h is the same as observed pop_metadata=0x%h."},
                        $time, expected_pop_metadata, pop_metadata);
             if (test_failed != 1) test_failed = 0;
@@ -586,12 +586,12 @@ module br_flow_serializer_gen_tb;
           end
 
           if (cb_clk.pop_last !== expected_pop_last) begin
-            $display({"Time: %0t, ERROR: test_PopReadyHandshake - Check failed.",
+            $display({"Time: %0t, ERROR: test_PopReadyHandshake - Check failed. ",
                       "Expected pop_last=%0b, got pop_last=%0b"}, $time, expected_pop_last,
                        pop_last);
             test_failed = 1;
           end else begin
-            $display({"Time: %0t, INFO: test_PopReadyHandshake - Check passed.",
+            $display({"Time: %0t, INFO: test_PopReadyHandshake - Check passed. ",
                       "Expected pop_last=%0b is the same as observed pop_last=%0b."}, $time,
                        expected_pop_last, pop_last);
             if (test_failed != 1) test_failed = 0;

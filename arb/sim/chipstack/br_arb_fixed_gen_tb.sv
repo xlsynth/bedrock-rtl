@@ -135,7 +135,7 @@ module br_arb_fixed_gen_tb;
     fork
       begin
         #(PER_TASK_TIMEOUT);
-        $display({"Time: %0t, INFO: Timeout: test_RequestEvaluation.",
+        $display({"Time: %0t, INFO: Timeout: test_RequestEvaluation. ",
                   "Stimuli is not observed or it needs more time to finish this test."}, $time);
       end
       begin
@@ -170,11 +170,11 @@ module br_arb_fixed_gen_tb;
 
           // Check the grant output
           if (cb_clk.grant !== expected_grant) begin
-            $display({"Time: %0t, ERROR: test_RequestEvaluation - Check failed.",
+            $display({"Time: %0t, ERROR: test_RequestEvaluation - Check failed. ",
                       "Expected grant=0x%h, got grant=0x%h"}, $time, expected_grant, grant);
             test_failed = 1;
           end else begin
-            $display({"Time: %0t, INFO: test_RequestEvaluation - Check passed.",
+            $display({"Time: %0t, INFO: test_RequestEvaluation - Check passed. ",
                       "Expected grant=0x%h is the same as the observed grant=0x%h."}, $time,
                        expected_grant, grant);
             if (test_failed != 1) test_failed = 0;
@@ -201,7 +201,7 @@ module br_arb_fixed_gen_tb;
     fork
       begin
         #(PER_TASK_TIMEOUT);
-        $display({"Time: %0t, INFO: Timeout: test_PriorityDetermination.",
+        $display({"Time: %0t, INFO: Timeout: test_PriorityDetermination. ",
                   "Stimuli is not observed or it needs more time to finish this test."}, $time);
       end
       begin
@@ -232,11 +232,11 @@ module br_arb_fixed_gen_tb;
           // Check the grant output
           @(cb_clk);
           if (cb_clk.grant !== expected_grant) begin
-            $display({"Time: %0t, ERROR: test_PriorityDetermination - Check failed.",
+            $display({"Time: %0t, ERROR: test_PriorityDetermination - Check failed. ",
                       "Expected grant=0x%h, got grant=0x%h"}, $time, expected_grant, grant);
             test_failed = 1;
           end else begin
-            $display({"Time: %0t, INFO: test_PriorityDetermination - Check passed.",
+            $display({"Time: %0t, INFO: test_PriorityDetermination - Check passed. ",
                       "Expected grant=0x%h is the same as the observed grant=0x%h."}, $time,
                        expected_grant, grant);
             if (test_failed != 1) test_failed = 0;
@@ -262,7 +262,7 @@ module br_arb_fixed_gen_tb;
     fork
       begin
         #(PER_TASK_TIMEOUT);
-        $display({"Time: %0t, INFO: Timeout: test_LowestIndexPriority.",
+        $display({"Time: %0t, INFO: Timeout: test_LowestIndexPriority. ",
                   "Stimuli is not observed or it needs more time to finish this test."}, $time);
       end
       begin
@@ -290,11 +290,11 @@ module br_arb_fixed_gen_tb;
         @(cb_clk);
 
         if (cb_clk.grant !== expected_grant) begin
-          $display({"Time: %0t, ERROR: test_LowestIndexPriority - Check failed.",
+          $display({"Time: %0t, ERROR: test_LowestIndexPriority - Check failed. ",
                     "Expected grant=0x%h, got grant=0x%h"}, $time, expected_grant, grant);
           test_failed = 1;
         end else begin
-          $display({"Time: %0t, INFO: test_LowestIndexPriority - Check passed.",
+          $display({"Time: %0t, INFO: test_LowestIndexPriority - Check passed. ",
                     "Expected value for grant is the same as the observed value (both are 0x%h)."},
                      $time, grant);
           if (test_failed != 1) test_failed = 0;
@@ -315,7 +315,7 @@ module br_arb_fixed_gen_tb;
     fork
       begin
         #(PER_TASK_TIMEOUT);
-        $display({"Time: %0t, INFO: Timeout: test_SingleRequestGrant.",
+        $display({"Time: %0t, INFO: Timeout: test_SingleRequestGrant. ",
                   "Stimuli is not observed or it needs more time to finish this test."}, $time);
       end
       begin
@@ -352,11 +352,11 @@ module br_arb_fixed_gen_tb;
 
         // Check the grant output
         if (cb_clk.grant !== expected_grant) begin
-          $display({"Time: %0t, ERROR: test_SingleRequestGrant - Check failed.",
+          $display({"Time: %0t, ERROR: test_SingleRequestGrant - Check failed. ",
                     "Expected grant=0x%h, got grant=0x%h"}, $time, expected_grant, grant);
           test_failed = 1;
         end else begin
-          $display({"Time: %0t, INFO: test_SingleRequestGrant - Check passed.",
+          $display({"Time: %0t, INFO: test_SingleRequestGrant - Check passed. ",
                     "Expected grant=0x%h is the same as the observed grant=0x%h."}, $time,
                      expected_grant, grant);
           if (test_failed != 1) test_failed = 0;
@@ -378,7 +378,7 @@ module br_arb_fixed_gen_tb;
     fork
       begin
         #(PER_TASK_TIMEOUT);
-        $display({"Time: %0t, INFO: Timeout: test_GrantSignals.",
+        $display({"Time: %0t, INFO: Timeout: test_GrantSignals. ",
                   "Stimuli is not observed or it needs more time to finish this test."}, $time);
       end
       begin
@@ -406,11 +406,11 @@ module br_arb_fixed_gen_tb;
 
           // Check if the grant matches the expected value
           if (cb_clk.grant !== expected_grant) begin
-            $display({"Time: %0t, ERROR: test_GrantSignals - Check failed.",
+            $display({"Time: %0t, ERROR: test_GrantSignals - Check failed. ",
                       "Expected grant=0x%h, got grant=0x%h"}, $time, expected_grant, grant);
             test_failed = 1;
           end else begin
-            $display({"Time: %0t, INFO: test_GrantSignals - Check passed.",
+            $display({"Time: %0t, INFO: test_GrantSignals - Check passed. ",
                       "Expected grant=0x%h is the same as the observed grant=0x%h."}, $time,
                        expected_grant, grant);
             if (test_failed != 1) test_failed = 0;
@@ -427,11 +427,11 @@ module br_arb_fixed_gen_tb;
 
         // Check if the grant matches the expected value
         if (cb_clk.grant !== expected_grant) begin
-          $display({"Time: %0t, ERROR: test_GrantSignals - Check failed.",
+          $display({"Time: %0t, ERROR: test_GrantSignals - Check failed. ",
                     "Expected grant=0x%h, got grant=0x%h"}, $time, expected_grant, grant);
           test_failed = 1;
         end else begin
-          $display({"Time: %0t, INFO: test_GrantSignals - Check passed.",
+          $display({"Time: %0t, INFO: test_GrantSignals - Check passed. ",
                     "Expected grant=0x%h is the same as the observed grant=0x%h."}, $time,
                      expected_grant, grant);
           if (test_failed != 1) test_failed = 0;
@@ -453,7 +453,7 @@ module br_arb_fixed_gen_tb;
     fork
       begin
         #(PER_TASK_TIMEOUT);
-        $display({"Time: %0t, INFO: Timeout: test_OnehotGrant.",
+        $display({"Time: %0t, INFO: Timeout: test_OnehotGrant. ",
                   "Stimuli is not observed or it needs more time to finish this test."}, $time);
       end
       begin
@@ -481,12 +481,12 @@ module br_arb_fixed_gen_tb;
 
           // Check if grant is one-hot encoded
           if (!$onehot0(grant_val)) begin
-            $display({"Time: %0t, ERROR: test_OnehotGrant - Check failed.",
-                      "Grant is not one-hot.", "Request: 0x%h, Grant: 0x%h"}, $time, request_val,
+            $display({"Time: %0t, ERROR: test_OnehotGrant - Check failed. ",
+                      "Grant is not one-hot. ", "Request: 0x%h, Grant: 0x%h"}, $time, request_val,
                        grant_val);
             test_failed = 1;
           end else begin
-            $display({"Time: %0t, INFO: test_OnehotGrant - Check passed.", "Grant is one-hot.",
+            $display({"Time: %0t, INFO: test_OnehotGrant - Check passed. ", "Grant is one-hot. ",
                       "Request: 0x%h, Grant: 0x%h"}, $time, request_val, grant_val);
             if (test_failed != 1) test_failed = 0;
           end
@@ -508,7 +508,7 @@ module br_arb_fixed_gen_tb;
     fork
       begin
         #(PER_TASK_TIMEOUT);
-        $display({"Time: %0t, INFO: Timeout: test_RequestAndGrantCorrelation.",
+        $display({"Time: %0t, INFO: Timeout: test_RequestAndGrantCorrelation. ",
                   "Stimuli is not observed or it needs more time to finish this test."}, $time);
       end
       begin
@@ -535,11 +535,11 @@ module br_arb_fixed_gen_tb;
 
           // Check if the grant corresponds to the request
           if (cb_clk.grant !== expected_grant) begin
-            $display({"Time: %0t, ERROR: test_RequestAndGrantCorrelation - Check failed.",
+            $display({"Time: %0t, ERROR: test_RequestAndGrantCorrelation - Check failed. ",
                       "Expected grant=0x%h, got grant=0x%h"}, $time, expected_grant, grant);
             test_failed = 1;
           end else begin
-            $display({"Time: %0t, INFO: test_RequestAndGrantCorrelation - Check passed.",
+            $display({"Time: %0t, INFO: test_RequestAndGrantCorrelation - Check passed. ",
                       "Expected grant=0x%h is the same as the observed grant=0x%h."}, $time,
                        expected_grant, grant);
             if (test_failed != 1) test_failed = 0;
@@ -559,11 +559,11 @@ module br_arb_fixed_gen_tb;
 
         // Check if the grant corresponds to the highest priority request
         if (cb_clk.grant !== expected_grant) begin
-          $display({"Time: %0t, ERROR: test_RequestAndGrantCorrelation - Check failed.",
+          $display({"Time: %0t, ERROR: test_RequestAndGrantCorrelation - Check failed. ",
                     "Expected grant=0x%h, got grant=0x%h"}, $time, expected_grant, grant);
           test_failed = 1;
         end else begin
-          $display({"Time: %0t, INFO: test_RequestAndGrantCorrelation - Check passed.",
+          $display({"Time: %0t, INFO: test_RequestAndGrantCorrelation - Check passed. ",
                     "Expected grant=0x%h is the same as the observed grant=0x%h."}, $time,
                      expected_grant, grant);
           if (test_failed != 1) test_failed = 0;
