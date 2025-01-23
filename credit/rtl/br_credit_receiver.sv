@@ -118,7 +118,18 @@ module br_credit_receiver #(
   `BR_ASSERT_STATIC(pop_credit_change_in_range_a,
                     (PopCreditMaxChange >= 1) && (PopCreditMaxChange <= MaxCredit))
 
-  `BR_ASSERT_INTG(no_push_valid_if_no_credit_released_a, credit_count == MaxCredit |-> !push_valid)
+`ifdef BR_ASSERT_ON
+`ifndef BR_DISABLE_INTG_CHECKS
+  logic [CounterWidth-1:0] sender_credit_count;
+  logic [CounterWidth-1:0] sender_credit_count_next;
+
+  assign sender_credit_count_next = (sender_credit_count + push_credit) - push_valid;
+
+  `BR_REG(sender_credit_count, sender_credit_count_next)
+`endif  // BR_DISABLE_INTG_CHECKS
+`endif  // BR_ASSERT_ON
+  `BR_ASSERT_INTG(no_push_valid_if_no_credit_released_a,
+                  ((sender_credit_count == '0) && !push_credit) |-> !push_valid)
   `BR_ASSERT_INTG(pop_credit_in_range_a, pop_credit <= PopCreditMaxChange)
 
   if (EnableAssertFinalNotValid) begin : gen_assert_final
