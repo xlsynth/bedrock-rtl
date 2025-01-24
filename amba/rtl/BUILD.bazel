@@ -135,31 +135,48 @@ br_verilog_elab_and_lint_test_suite(
             "64",
             "128",
         ],
-        "AWSliceType": [
-            "0",
-            "1",
-            "2",
-        ],
-        "WSliceType": [
-            "0",
-            "1",
-            "2",
-        ],
-        "ARSliceType": [
-            "0",
-            "1",
-            "2",
-        ],
-        "RSliceType": [
-            "0",
-            "1",
-            "2",
-        ],
-        "BSliceType": [
-            "0",
-            "1",
-            "2",
-        ],
+    },
+    deps = [":br_amba_axi_timing_slice"],
+)
+
+br_verilog_elab_and_lint_test_suite(
+    name = "br_amba_axi_timing_slice_fwd_test_suite",
+    params = {
+        "AddrWidth": ["32"],
+        "DataWidth": ["32"],
+        "AWSliceType": ["0"],
+        "WSliceType": ["0"],
+        "ARSliceType": ["0"],
+        "RSliceType": ["0"],
+        "BSliceType": ["0"],
+    },
+    deps = [":br_amba_axi_timing_slice"],
+)
+
+br_verilog_elab_and_lint_test_suite(
+    name = "br_amba_axi_timing_slice_rev_test_suite",
+    params = {
+        "AddrWidth": ["32"],
+        "DataWidth": ["32"],
+        "AWSliceType": ["1"],
+        "WSliceType": ["1"],
+        "ARSliceType": ["1"],
+        "RSliceType": ["1"],
+        "BSliceType": ["1"],
+    },
+    deps = [":br_amba_axi_timing_slice"],
+)
+
+br_verilog_elab_and_lint_test_suite(
+    name = "br_amba_axi_timing_slice_full_test_suite",
+    params = {
+        "AddrWidth": ["32"],
+        "DataWidth": ["32"],
+        "AWSliceType": ["2"],
+        "WSliceType": ["2"],
+        "ARSliceType": ["2"],
+        "RSliceType": ["2"],
+        "BSliceType": ["2"],
     },
     deps = [":br_amba_axi_timing_slice"],
 )
