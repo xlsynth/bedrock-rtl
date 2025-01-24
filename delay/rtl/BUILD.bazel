@@ -72,8 +72,17 @@ verilog_library(
 )
 
 verilog_library(
-    name = "br_delay_skew_valid",
-    srcs = ["br_delay_skew_valid.sv"],
+    name = "br_delay_skew",
+    srcs = ["br_delay_skew.sv"],
+    deps = [
+        "//macros:br_asserts_internal",
+        "//macros:br_registers",
+    ],
+)
+
+verilog_library(
+    name = "br_delay_deskew",
+    srcs = ["br_delay_deskew.sv"],
     deps = [
         "//macros:br_asserts_internal",
         "//macros:br_registers",
@@ -185,4 +194,15 @@ br_verilog_elab_and_lint_test_suite(
         ],
     },
     deps = [":br_delay_skew"],
+)
+
+br_verilog_elab_and_lint_test_suite(
+    name = "br_delay_deskew_test_suite",
+    params = {
+        "Width": [
+            "1",
+            "8",
+        ],
+    },
+    deps = [":br_delay_deskew"],
 )
