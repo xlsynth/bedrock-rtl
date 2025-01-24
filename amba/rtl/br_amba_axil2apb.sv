@@ -142,6 +142,9 @@ module br_amba_axil2apb #(
           apb_state_next = Idle;
         end
       end
+      default: begin
+        apb_state_next = 'x;
+      end
     endcase
   end
   // ri lint_check_on GRAY_CODE_FSM

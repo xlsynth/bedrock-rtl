@@ -28,12 +28,12 @@ def get_transitive(ctx, srcs_not_hdrs):
     ]
     return depset([x for sub_tuple in transitive_srcs_or_hdrs for x in sub_tuple])
 
-def _write_executable_shell_script(ctx, executable_file, cmd):
+def _write_executable_shell_script(ctx, executable_file, cmd, verbose = True):
     """Writes a shell script that executes the given command and returns a handle to it."""
     content = [
         "#!/usr/bin/env bash",
-        "set -ex",
-        "pwd",
+        "set -ex" if verbose else "set -e",
+        "pwd" if verbose else "",
         cmd,
         "",
     ]
@@ -136,10 +136,11 @@ def _verilog_base_impl(ctx, subcmd, test = True, extra_args = [], extra_runfiles
             tar_inputs.append(f)
 
         # Write generator script
+        verilog_runner_cmd += " >/dev/null"
         tar_cmd = [
             "tar --dereference -czf",
             ctx.outputs.tarball.path,
-        ] + tar_inputs
+        ] + tar_inputs + [" >/dev/null"]
         tar_cmd = " ".join(tar_cmd)
         generator_cmd = "\n".join([verilog_runner_cmd, tar_cmd])
         generator = ctx.label.name + "_generator.sh"
@@ -148,6 +149,7 @@ def _verilog_base_impl(ctx, subcmd, test = True, extra_args = [], extra_runfiles
             ctx = ctx,
             executable_file = generator_executable_file,
             cmd = generator_cmd,
+            verbose = False,
         )
 
         # Run generator script
@@ -157,6 +159,7 @@ def _verilog_base_impl(ctx, subcmd, test = True, extra_args = [], extra_runfiles
             executable = generator_executable_file,
             arguments = [],
             use_default_shell_env = True,
+            progress_message = "Generating FPV sandbox for %{label}",
         )
 
         # Write runner script (but don't run it)
@@ -216,10 +219,8 @@ def _verilog_sim_test_impl(ctx):
         extra_args = extra_args,
     )
 
-def _verilog_fpv_test_impl(ctx):
-    """Implementation of the verilog_fpv_test rule."""
+def _verilog_fpv_args(ctx):
     extra_args = []
-    extra_runfiles = []
     if ctx.attr.elab_only:
         extra_args.append("--elab_only")
     if ctx.attr.gui:
@@ -232,21 +233,18 @@ def _verilog_fpv_test_impl(ctx):
         extra_args.append("--elab_opt='" + opt + "'")
     for opt in ctx.attr.analysis_opts:
         extra_args.append("--analysis_opt='" + opt + "'")
+    return extra_args
 
+def _verilog_fpv_test_impl(ctx):
+    """Implementation of the verilog_fpv_test rule."""
     return _verilog_base_impl(
         ctx = ctx,
         subcmd = "fpv",
-        extra_args = extra_args,
-        extra_runfiles = extra_runfiles,
+        extra_args = _verilog_fpv_args(ctx),
     )
 
-def _verilog_sandbox_impl(ctx):
-    """Implementation of the verilog_sandbox rule."""
-    extra_args = []
-    if len(ctx.attr.opts) > 0 and ctx.attr.tool == "":
-        fail("If opts are provided, then tool must also be set.")
-    for opt in ctx.attr.opts:
-        extra_args.append("--opt='" + opt + "'")
+def _verilog_fpv_sandbox_impl(ctx):
+    """Implementation of the rule_verilog_fpv_sandbox rule."""
 
     # Check if the filename ends with '.tar.gz'
     if not ctx.outputs.tarball.basename.endswith(".tar.gz"):
@@ -254,9 +252,9 @@ def _verilog_sandbox_impl(ctx):
 
     return _verilog_base_impl(
         ctx = ctx,
-        subcmd = ctx.attr.kind,
+        subcmd = "fpv",
         test = False,
-        extra_args = extra_args,
+        extra_args = _verilog_fpv_args(ctx),
     )
 
 # Rule definitions
@@ -506,9 +504,9 @@ def verilog_fpv_test(tags = [], **kwargs):
         **kwargs
     )
 
-rule_verilog_sandbox = rule(
-    doc = "Writes files and run scripts into a tarball for independent execution outside of Bazel.",
-    implementation = _verilog_sandbox_impl,
+rule_verilog_fpv_sandbox = rule(
+    doc = "Writes FPV files and run scripts into a tarball for independent execution outside of Bazel.",
+    implementation = _verilog_fpv_sandbox_impl,
     attrs = {
         "deps": attr.label_list(
             doc = "The Verilog dependencies of the sandbox.",
@@ -527,10 +525,15 @@ rule_verilog_sandbox = rule(
         "opts": attr.string_list(
             doc = "Tool-specific options not covered by other arguments. If provided, then 'tool' must also be set.",
         ),
-        "kind": attr.string(
-            doc = "The kind of sandbox to create: [elab, lint, sim, fpv].",
-            values = ["elab", "lint", "sim", "fpv"],
-            mandatory = True,
+        "elab_opts": attr.string_list(
+            doc = "custom elab options",
+        ),
+        "analysis_opts": attr.string_list(
+            doc = "custom analysis options",
+        ),
+        "elab_only": attr.bool(
+            doc = "Only run elaboration.",
+            default = False,
         ),
         "verilog_runner_tool": attr.label(doc = "The Verilog Runner tool to use.", default = "//python/verilog_runner:verilog_runner.py", allow_files = True),
         "tool": attr.string(
@@ -547,6 +550,10 @@ rule_verilog_sandbox = rule(
                    "The tcl body (custom or not) is unconditionally followed by the tcl footer." +
                    "Do not include Tcl commands that manipulate sources, headers, defines, or parameters, as those will be handled by the rule implementation."),
             allow_single_file = [".tcl"],
+        ),
+        "gui": attr.bool(
+            doc = "Enable GUI.",
+            default = False,
         ),
     },
     outputs = {
@@ -631,9 +638,8 @@ def verilog_fpv_test_suite(name, defines = [], params = {}, sandbox = True, **kw
             **kwargs
         )
         if sandbox:
-            rule_verilog_sandbox(
+            rule_verilog_fpv_sandbox(
                 name = _make_test_name(name, "fpv_sandbox", param_keys, param_combination),
-                kind = "fpv",
                 defines = defines,
                 params = params,
                 **kwargs
