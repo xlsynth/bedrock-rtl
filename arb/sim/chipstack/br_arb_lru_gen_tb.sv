@@ -98,7 +98,7 @@ module br_arb_lru_gen_tb;
     cb_clk.request <= 'h0;
 
     // Wiggling the reset signal.
-    rst = 1'b0;
+    rst = 1'bx;
     #RESET_DURATION;
     rst = 1'b1;
     #RESET_DURATION;
@@ -117,7 +117,13 @@ module br_arb_lru_gen_tb;
     reset_dut();
     test_RequestGrantWithoutPriorityUpdate();
 
-    $finish;
+    if (test_failed) begin
+      $display("TEST FAILED");
+      $finish(1);
+    end else begin
+      $display("TEST PASSED");
+      $finish(0);
+    end
   end
 
 
@@ -132,8 +138,6 @@ module br_arb_lru_gen_tb;
         // Purpose: Ensure that a request is granted based on the least-recently-used policy, with priority state updates.
 
         // Local variables declaration
-        int test_failed = -1;
-        localparam int NumRequesters = 4;  // Assuming 4 requesters for this test
         logic [NumRequesters-1:0] request_pattern;
         logic [NumRequesters-1:0] expected_grant;
         logic [NumRequesters-1:0] observed_grant;
@@ -218,7 +222,6 @@ module br_arb_lru_gen_tb;
         // Purpose: Ensure that a request is granted based on the least-recently-used policy, without updating the priority state.
 
         // Local variables declaration
-        int test_failed = -1;
         logic [NumRequesters-1:0] request_pattern;
         logic [NumRequesters-1:0] expected_grant;
         logic [NumRequesters-1:0] observed_grant;

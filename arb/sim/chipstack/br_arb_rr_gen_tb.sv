@@ -30,7 +30,7 @@ module br_arb_rr_gen_tb;
   //===========================================================
   // DUT Parameters
   //===========================================================
-  parameter int NumRequesters = 2;
+  parameter int NumRequesters = 4;
 
   //===========================================================
   // Clock and Reset Signals
@@ -61,7 +61,7 @@ module br_arb_rr_gen_tb;
   //===========================================================
   // Helper testbench variables
   //===========================================================
-  int test_failed = -1;
+  int errors = 0;
 
   //===========================================================
   // Clock Generation
@@ -72,7 +72,7 @@ module br_arb_rr_gen_tb;
   end
   clocking cb_clk @(posedge clk);
     default input #1step output #4;
-    inout rst, enable_priority_update, request;
+    output rst, enable_priority_update, request;
     input grant;
   endclocking
 
@@ -97,7 +97,7 @@ module br_arb_rr_gen_tb;
     cb_clk.request <= 'h0;
 
     // Wiggling the reset signal.
-    rst = 1'b0;
+    rst = 1'bx;
     #RESET_DURATION;
     rst = 1'b1;
     #RESET_DURATION;
@@ -119,7 +119,13 @@ module br_arb_rr_gen_tb;
     reset_dut();
     test_GrantAssertion();
 
-    $finish;
+    if (errors > 0) begin
+      $display("TEST FAILED");
+      $finish(1);
+    end else begin
+      $display("TEST PASSED");
+      $finish(0);
+    end
   end
 
 
@@ -133,66 +139,49 @@ module br_arb_rr_gen_tb;
       begin
         // Purpose: To verify the round-robin priority update mechanism ensuring fair access among requesters.
 
-        // Local variables declaration
-        int test_failed = -1;
-        localparam int NumRequesters = 4;  // Example number of requesters
-        logic [NumRequesters-1:0] expected_grant;
-        int current_priority = 0;
-
         // Initialize test conditions
         cb_clk.request <= 4'b0000;
         cb_clk.enable_priority_update <= 1'b0;
-        expected_grant = 4'b0000;
 
         @(cb_clk);  // Ensure adequate stimulus propagation time
 
         // Step 1: Set initial requests
-        cb_clk.request <= 4'b1010;  // Requesters 1 and 3 are making requests
-        cb_clk.enable_priority_update <= 1'b1;  // Enable priority update
-        $display({"Time: %0t, INFO: test_RoundRobinPriorityUpdate - Driving request=0x%h, ",
-                  "enable_priority_update=%b"}, $time, request, enable_priority_update);
+        cb_clk.request <= 4'b1010;
+        cb_clk.enable_priority_update <= 1'b1;
 
-        @(cb_clk);  // Wait for clock edge
+        $display({"Time: %0t, INFO: test_RoundRobinPriorityUpdate - Driving request=0x%h, ",
+                  "enable_priority_update=%b"}, $time, 4'b1010, 1'b1);
+
+        @(cb_clk);  // Ensure adequate stimulus propagation time
 
         // Step 2: Check grant for the highest priority requester
-        expected_grant = 4'b0010;  // Expecting requester 1 to be granted
-        if (cb_clk.grant !== expected_grant) begin
+        if (cb_clk.grant !== 4'b0010) begin
           $display({"Time: %0t, ERROR: test_RoundRobinPriorityUpdate - Check failed. ",
-                    "Expected grant=0x%h, got grant=0x%h"}, $time, expected_grant, grant);
-          test_failed = 1;
+                    "Expected grant=0x%h, got grant=0x%h"}, $time, 4'b0010, grant);
+          errors++;
         end else begin
           $display({"Time: %0t, INFO: test_RoundRobinPriorityUpdate - Check passed. ",
-                    "Expected grant=0x%h is the same as the observed grant=0x%h."}, $time,
-                     expected_grant, grant);
-          if (test_failed != 1) test_failed = 0;
+                    "Expected grant=0x%h is the same as the observed grant=0x%h."}, $time, 4'b0010,
+                     grant);
         end
-
-        @(cb_clk);  // Wait for clock edge
 
         // Step 3: Rotate priority and check next grant
-        cb_clk.request <= 4'b1010;  // Keep the same cb_clk.request pattern
-        expected_grant = 4'b1000;  // Expecting requester 3 to be granted after rotation
+        cb_clk.request <= 4'b1010;
+        cb_clk.enable_priority_update <= 1'b1;
+
         $display({"Time: %0t, INFO: test_RoundRobinPriorityUpdate - Driving request=0x%h, ",
-                  "enable_priority_update=%b"}, $time, request, enable_priority_update);
+                  "enable_priority_update=%b"}, $time, 4'b1010, 1'b1);
 
-        @(cb_clk);  // Wait for clock edge
+        @(cb_clk);  // Ensure adequate stimulus propagation time
 
-        if (cb_clk.grant !== expected_grant) begin
+        if (cb_clk.grant !== 4'b1000) begin
           $display({"Time: %0t, ERROR: test_RoundRobinPriorityUpdate - Check failed. ",
-                    "Expected grant=0x%h, got grant=0x%h"}, $time, expected_grant, grant);
-          test_failed = 1;
+                    "Expected grant=0x%h, got grant=0x%h"}, $time, 4'b1000, grant);
+          errors++;
         end else begin
           $display({"Time: %0t, INFO: test_RoundRobinPriorityUpdate - Check passed. ",
-                    "Expected grant=0x%h is the same as the observed grant=0x%h."}, $time,
-                     expected_grant, grant);
-          if (test_failed != 1) test_failed = 0;
-        end
-
-        // Final test status
-        if (test_failed == 0) begin
-          $display({"Time: %0t, PASSED: test_RoundRobinPriorityUpdate"}, $time);
-        end else begin
-          $display({"Time: %0t, FAILED: test_RoundRobinPriorityUpdate"}, $time);
+                    "Expected grant=0x%h is the same as the observed grant=0x%h."}, $time, 4'b1000,
+                     grant);
         end
       end
     join_any
@@ -211,8 +200,6 @@ module br_arb_rr_gen_tb;
         // Purpose: To evaluate incoming requests and determine which requester should be granted access based on the current priority.
 
         // Local variables declaration
-        int test_failed = -1;
-        localparam int NumRequesters = 4;  // Example number of requesters
         logic [NumRequesters-1:0] request_pattern;
         logic [NumRequesters-1:0] expected_grant;
         logic [NumRequesters-1:0] observed_grant;
@@ -243,19 +230,11 @@ module br_arb_rr_gen_tb;
         if (observed_grant !== expected_grant) begin
           $display({"Time: %0t, ERROR: test_RequestEvaluation - Check failed. ",
                     "Expected grant=0x%h, got grant=0x%h"}, $time, expected_grant, observed_grant);
-          test_failed = 1;
+          errors++;
         end else begin
           $display({"Time: %0t, INFO: test_RequestEvaluation - Check passed. ",
                     "Expected grant=0x%h is the same as the observed grant=0x%h."}, $time,
                      expected_grant, observed_grant);
-          if (test_failed != 1) test_failed = 0;
-        end
-
-        // Final test status
-        if (test_failed == 0) begin
-          $display({"Time: %0t, PASSED: test_RequestEvaluation"}, $time);
-        end else begin
-          $display({"Time: %0t, FAILED: test_RequestEvaluation"}, $time);
         end
       end
     join_any
@@ -274,7 +253,6 @@ module br_arb_rr_gen_tb;
         // Purpose: To assert the grant signal for the requester with the highest priority, allowing it to proceed with its operation.
 
         // Local variables declaration
-        int test_failed = -1;
         logic [NumRequesters-1:0] request_pattern;
         logic [NumRequesters-1:0] expected_grant;
         int i;
@@ -304,20 +282,12 @@ module br_arb_rr_gen_tb;
           if (cb_clk.grant !== expected_grant) begin
             $display({"Time: %0t, ERROR: test_GrantAssertion - Check failed. ",
                       "Expected grant=0x%h, got grant=0x%h"}, $time, expected_grant, grant);
-            test_failed = 1;
+            errors++;
           end else begin
             $display({"Time: %0t, INFO: test_GrantAssertion - Check passed. ",
                       "Expected grant=0x%h is the same as the observed grant=0x%h."}, $time,
                        expected_grant, grant);
-            if (test_failed != 1) test_failed = 0;
           end
-        end
-
-        // Final test status
-        if (test_failed == 0) begin
-          $display({"Time: %0t, PASSED: test_GrantAssertion"}, $time);
-        end else begin
-          $display({"Time: %0t, FAILED: test_GrantAssertion"}, $time);
         end
       end
     join_any

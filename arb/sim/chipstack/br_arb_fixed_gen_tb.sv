@@ -93,7 +93,7 @@ module br_arb_fixed_gen_tb;
     cb_clk.request <= 'h0;
 
     // Wiggling the reset signal.
-    rst = 1'b0;
+    rst = 1'bx;
     #RESET_DURATION;
     rst = 1'b1;
     #RESET_DURATION;
@@ -127,9 +127,14 @@ module br_arb_fixed_gen_tb;
     reset_dut();
     test_RequestAndGrantCorrelation();
 
-    $finish;
+    if (test_failed) begin
+      $display("TEST FAILED");
+      $finish(1);
+    end else begin
+      $display("TEST PASSED");
+      $finish(0);
+    end
   end
-
 
   task automatic test_RequestEvaluation;
     fork
@@ -142,7 +147,6 @@ module br_arb_fixed_gen_tb;
         // This task evaluates the functionality of the fixed-priority arbiter by simulating multiple active requests and checking if the correct request is granted based on priority.
 
         // Local variables declaration
-        int test_failed = -1;
         logic [NumRequesters-1:0] request_val;
         logic [NumRequesters-1:0] expected_grant;
         int i;
@@ -209,7 +213,7 @@ module br_arb_fixed_gen_tb;
         // It verifies that the arbiter grants the request with the highest priority (lowest index) when multiple requests are active.
 
         // Local variables declaration
-        int test_failed = -1;
+        logic [NumRequesters-1:0] request_val;
         logic [NumRequesters-1:0] expected_grant;
         int i;
 
@@ -218,16 +222,16 @@ module br_arb_fixed_gen_tb;
         expected_grant = '0;
 
         // Apply multiple requests and check the grant output
-        for (i = 0; i < NumRequesters; i++) begin
+        for (i = 0; i < NumRequesters - 1; i++) begin
           // Set multiple bits in request to simulate simultaneous active requests
-          cb_clk.request <= (1 << i) | (1 << (i + 1) % NumRequesters);
+          request_val = (1 << i) | (1 << (i + 1));
           expected_grant = 1 << i;  // Expect the lowest index cb_clk.request to be granted
 
           // Apply the request
           @(cb_clk);
-          cb_clk.request <= request;
+          cb_clk.request <= request_val;
           $display({"Time: %0t, INFO: test_PriorityDetermination - Driving request=0x%h"}, $time,
-                     request);
+                     request_val);
 
           // Check the grant output
           @(cb_clk);
@@ -266,7 +270,6 @@ module br_arb_fixed_gen_tb;
                   "Stimuli is not observed or it needs more time to finish this test."}, $time);
       end
       begin
-        int test_failed = -1;
         logic [NumRequesters-1:0] request_val;
         logic [NumRequesters-1:0] expected_grant;
         int i;
@@ -323,7 +326,6 @@ module br_arb_fixed_gen_tb;
         // It ensures that only one request is granted at a time, even when multiple requests are active.
 
         // Local variables declaration
-        int test_failed = -1;
         logic [NumRequesters-1:0] request_val;
         logic [NumRequesters-1:0] expected_grant;
         int i;
@@ -385,7 +387,6 @@ module br_arb_fixed_gen_tb;
         // Task to verify the correct generation of grant signals based on active requests and their priorities.
 
         // Local variables declaration
-        int test_failed = -1;
         logic [NumRequesters-1:0] request_pattern;
         logic [NumRequesters-1:0] expected_grant;
         int i;
@@ -460,7 +461,6 @@ module br_arb_fixed_gen_tb;
         // Purpose: Verify that the `grant` signal is always one-hot encoded, meaning only one bit is set at any time.
 
         // Local variables declaration
-        int test_failed = -1;
         logic [NumRequesters-1:0] request_val;
         logic [NumRequesters-1:0] grant_val;
         int i;
@@ -515,7 +515,6 @@ module br_arb_fixed_gen_tb;
         // Purpose: Verify that the `grant` signal correctly corresponds to the active `request` signal based on the fixed-priority scheme.
 
         // Local variables declaration
-        int test_failed = -1;
         logic [NumRequesters-1:0] request_val;
         logic [NumRequesters-1:0] expected_grant;
         int i;
