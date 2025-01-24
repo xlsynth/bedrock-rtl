@@ -143,7 +143,7 @@ module br_amba_axil2apb #(
         end
       end
       default: begin
-        apb_state_next = Idle;
+        apb_state_next = apb_state_t'(4'hx);  // ri lint_check_waive FSM_DEFAULT_REQ MISSING_STATE
       end
     endcase
   end
