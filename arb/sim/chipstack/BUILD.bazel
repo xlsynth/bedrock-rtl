@@ -34,10 +34,6 @@ verilog_elab_test(
 
 br_verilog_sim_test_suite(
     name = "br_arb_fixed_gen_tb_vcs_test_suite",
-    params = {"NumRequesters": [
-        "2",
-        "3",
-    ]},
     tool = "vcs",
     deps = [":br_arb_fixed_gen_tb"],
 )
@@ -58,10 +54,6 @@ verilog_elab_test(
 
 br_verilog_sim_test_suite(
     name = "br_arb_lru_gen_tb_vcs_test_suite",
-    params = {"NumRequesters": [
-        "2",
-        "3",
-    ]},
     tool = "vcs",
     deps = [":br_arb_lru_gen_tb"],
 )
@@ -82,10 +74,6 @@ verilog_elab_test(
 
 br_verilog_sim_test_suite(
     name = "br_arb_rr_gen_tb_vcs_test_suite",
-    params = {"NumRequesters": [
-        "2",
-        "3",
-    ]},
     tool = "vcs",
     deps = [":br_arb_rr_gen_tb"],
 )
