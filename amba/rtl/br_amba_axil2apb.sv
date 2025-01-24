@@ -143,7 +143,7 @@ module br_amba_axil2apb #(
         end
       end
       default: begin
-        apb_state_next = 'x;
+        apb_state_next = Idle;
       end
     endcase
   end
