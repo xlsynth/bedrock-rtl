@@ -53,6 +53,7 @@ module br_enc_gray_tb;
   end
 
   integer errors = 0;
+  logic   result;
 
   // Test sequence
   initial begin
@@ -69,8 +70,9 @@ module br_enc_gray_tb;
         errors = errors + 1;
       end
 
-      if ($countones(counter_bin2gray ^ counter_bin2gray_prev) > 1) begin
-        $error("Time: %0t | Counter: %0h | Gray Output: %0h | Previous Gray Output: %0h", $time,
+      result = counter_bin2gray ^ counter_bin2gray_prev;
+      if (result != 0 && !br_math::is_power_of_2(result)) begin
+        $error("Time: %0t | Counter: %0h | Gray Output: %2b | Previous Gray Output: %2b", $time,
                counter, counter_bin2gray, counter_bin2gray_prev);
         errors = errors + 1;
       end
