@@ -13,7 +13,7 @@
 # limitations under the License.
 
 load("@rules_hdl//verilog:providers.bzl", "verilog_library")
-load("//bazel:br_verilog.bzl", "br_verilog_sim_test_suite")
+load("//bazel:br_verilog.bzl", "br_verilog_sim_test_tools_suite")
 load("//bazel:verilog.bzl", "verilog_elab_test")
 
 package(default_visibility = ["//visibility:private"])
@@ -35,9 +35,12 @@ verilog_elab_test(
     deps = [":br_ecc_sed_encoder_decoder_tb"],
 )
 
-br_verilog_sim_test_suite(
-    name = "br_ecc_sed_encoder_decoder_vcs_test_suite",
-    tool = "vcs",
+br_verilog_sim_test_tools_suite(
+    name = "br_ecc_sed_encoder_decoder_sim_test_tools_suite",
+    tools = [
+        "iverilog",
+        "vcs",
+    ],
     deps = [":br_ecc_sed_encoder_decoder_tb"],
 )
 
@@ -58,8 +61,11 @@ verilog_elab_test(
     deps = [":br_ecc_secded_encoder_decoder_tb"],
 )
 
-br_verilog_sim_test_suite(
-    name = "br_ecc_secded_encoder_decoder_vcs_test_suite",
-    tool = "vcs",
+br_verilog_sim_test_tools_suite(
+    name = "br_ecc_secded_encoder_decoder_sim_test_tools_suite",
+    tools = [
+        "iverilog",
+        "vcs",
+    ],
     deps = [":br_ecc_secded_encoder_decoder_tb"],
 )
