@@ -23,8 +23,7 @@ module br_amba_atb_funnel #(
     parameter int NumSources = 2,  // Must be at least 2
     parameter int DataWidth = 32,  // Must be at least 1
     parameter int UserWidth = 1,  // Must be at least 1
-    // Per AMBA ATB spec 3.2.1, atbytes is defined this way
-    localparam int ByteCountWidth = $clog2(DataWidth) - 4
+    localparam int ByteCountWidth = $clog2(DataWidth / 128)
 ) (
     input logic clk,
     input logic rst,
