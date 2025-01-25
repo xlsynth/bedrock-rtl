@@ -159,7 +159,7 @@ def generate_random_seed() -> int:
 
 def to_filelist(srcs: List[str]) -> str:
     """Returns a filelist string representation of a list of sources."""
-    return "\n".join(srcs)
+    return "\n".join(srcs) + "\n"
 
 
 def write_and_dump_file(content: str, filename: str, logger: logging.Logger) -> None:
