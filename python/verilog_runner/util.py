@@ -23,43 +23,7 @@ import subprocess
 import sys
 import textwrap
 from typing import Dict, Tuple, List
-
-MAIN_FILE = "verilog_runner.py"
-MAIN_FILE_ABBREV = "vr"
-PASS_ART = f"""
-######   #######   ######  ######
-##  ##   ##   ##   ##      ##
-######   #######   ######  #####
-##       ##   ##       ##      ##
-##       ##   ##   ######  ######"""
-FAIL_ART = f"""
-######   #######  ######   ##
-##       ##   ##    ##     ##
-######   #######    ##     ##
-##       ##   ##    ##     ##
-##       ##   ##  ######   #######"""
-SEPARATOR = "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
-
-
-def get_class_logger(subcommand: str, tool: str) -> logging.LoggerAdapter:
-    """Returns a LoggerAdapter with a subcommand and tool name."""
-    # Create a logger with subcommand
-    logger = logging.getLogger(subcommand)
-    logger.propagate = False  # Prevent propagation to the root logger
-    logger.setLevel(logging.INFO)
-    # Create a handler that outputs to stdout
-    handler = logging.StreamHandler(sys.stdout)
-    # Define the formatter including both names
-    formatter = logging.Formatter(
-        "["
-        + MAIN_FILE_ABBREV
-        + "][%(name)s][%(tool)s][%(filename)s:%(lineno)-4d] %(message)s"
-    )
-    handler.setFormatter(formatter)
-    logger.addHandler(handler)
-    # Create a LoggerAdapter with extra context
-    adapter = logging.LoggerAdapter(logger, {"tool": tool})
-    return adapter
+from logging_utils import MAIN_FILE_ABBREV, MAIN_FILE, SEPARATOR, PASS_ART, FAIL_ART
 
 
 def wrap_text(text, width=60):

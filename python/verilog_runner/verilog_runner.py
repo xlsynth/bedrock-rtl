@@ -21,23 +21,13 @@ import sys
 
 from cli import Elab, Lint, Sim, Fpv, add_common_args, parse_params
 from plugins import discover_plugins
-from util import MAIN_FILE_ABBREV, print_greeting
-
-# Configure the root logger
-root_logger = logging.getLogger()
-root_logger.setLevel(logging.INFO)
-
-# Create handler for the root logger
-root_handler = logging.StreamHandler(sys.stdout)
-root_formatter = logging.Formatter(
-    "[" + MAIN_FILE_ABBREV + "][%(filename)s:%(lineno)-4d] %(message)s"
-)
-root_handler.setFormatter(root_formatter)
-root_logger.addHandler(root_handler)
+from util import print_greeting
+from logging_utils import init_root_logger
 
 
 def main():
     print_greeting()
+    init_root_logger()
     logging.info("Working directory: " + os.getcwd())
     logging.info("Python binary: " + sys.executable)
     logging.info("Python version: " + sys.version)
