@@ -30,7 +30,7 @@ from typing import Dict, List, Tuple, Type
 #
 # Major version changes are definitely breaking.
 # Minor version changes are intended to be non-breaking but we don't guarantee it.
-PLUGIN_API_VERSION = "1.0"
+PLUGIN_API_VERSION = "1.1"
 
 
 def check_plugin_api_version(module: object) -> bool:
@@ -92,7 +92,7 @@ def import_plugin_modules(plugin_files: List[str]) -> List[object]:
             else:
                 logging.warning(f"Skipping import of plugin module {module_name}.")
         except Exception as e:
-            logging.error(f"Failed to load plugin module {module_name}: {e}")
+            logging.warning(f"Failed to load plugin module {module_name}: {e}")
         finally:
             sys.path.pop(0)  # Remove directory from sys.path
     return modules
