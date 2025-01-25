@@ -8,6 +8,7 @@ from typing import Dict, Type
 from cli import Sim, Subcommand, common_args
 from eda_tool import EdaTool
 from util import (
+    get_class_logger,
     check_simulation_success,
     gen_file_header,
     include_dirs,
@@ -16,7 +17,6 @@ from util import (
     write_and_dump_file,
     print_summary,
 )
-from logging_utils import get_class_logger
 
 PLUGIN_API_VERSION = "1.1"
 

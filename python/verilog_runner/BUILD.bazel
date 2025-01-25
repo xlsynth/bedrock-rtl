@@ -24,6 +24,7 @@ exports_files([
     "eda_tool.py",
     "plugins.py",
     "util.py",
+    "plugins/iverilog.py",
 ])
 
 py_library(
