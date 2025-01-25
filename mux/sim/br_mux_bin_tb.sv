@@ -1,8 +1,8 @@
 module br_mux_bin_tb;
 
-  localparam int NumSymbolsIn = 2;
-  localparam int SymbolWidth = 8;
-  localparam bit UseStructuredGates = 0;
+  parameter int NumSymbolsIn = 2;
+  parameter int SymbolWidth = 8;
+  parameter bit UseStructuredGates = 0;
 
   logic clk;
   logic rst;
