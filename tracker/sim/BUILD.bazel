@@ -13,7 +13,7 @@
 # limitations under the License.
 
 load("@rules_hdl//verilog:providers.bzl", "verilog_library")
-load("//bazel:br_verilog.bzl", "br_verilog_sim_test_suite")
+load("//bazel:br_verilog.bzl", "br_verilog_sim_test_tools_suite")
 load("//bazel:verilog.bzl", "verilog_elab_test")
 
 package(default_visibility = ["//visibility:public"])
@@ -32,8 +32,8 @@ verilog_elab_test(
     deps = [":br_tracker_freelist_tb"],
 )
 
-br_verilog_sim_test_suite(
-    name = "br_tracker_freelist_vcs_test_suite",
+br_verilog_sim_test_tools_suite(
+    name = "br_tracker_freelist_sim_test_tools_suite",
     params = {
         "NumEntries": [
             "12",
@@ -48,6 +48,7 @@ br_verilog_sim_test_suite(
             "2",
         ],
     },
-    tool = "vcs",
+    # TODO: iverilog does not work
+    tools = ["vcs"],
     deps = [":br_tracker_freelist_tb"],
 )
