@@ -13,7 +13,7 @@
 # limitations under the License.
 
 load("@rules_hdl//verilog:providers.bzl", "verilog_library")
-load("//bazel:br_verilog.bzl", "br_verilog_sim_test_suite")
+load("//bazel:br_verilog.bzl", "br_verilog_sim_test_tools_suite")
 load("//bazel:verilog.bzl", "verilog_elab_test")
 
 package(default_visibility = ["//visibility:public"])
@@ -43,8 +43,8 @@ verilog_elab_test(
     deps = [":br_fifo_flops_tb"],
 )
 
-br_verilog_sim_test_suite(
-    name = "br_fifo_flops_vcs_test_suite_zero_lat",
+br_verilog_sim_test_tools_suite(
+    name = "br_fifo_flops_sim_test_tools_suite_zero_lat",
     params = {
         "Depth": [
             "3",
@@ -61,12 +61,15 @@ br_verilog_sim_test_suite(
         ],
         "FlopRamAddressDepthStages": ["0"],
     },
-    tool = "vcs",
+    tools = [
+        "iverilog",
+        "vcs",
+    ],
     deps = [":br_fifo_flops_tb"],
 )
 
-br_verilog_sim_test_suite(
-    name = "br_fifo_flops_vcs_test_suite_nonzero_lat",
+br_verilog_sim_test_tools_suite(
+    name = "br_fifo_flops_sim_test_tools_suite_nonzero_lat",
     params = {
         "Depth": [
             "13",
@@ -87,7 +90,10 @@ br_verilog_sim_test_suite(
             "3",
         ],
     },
-    tool = "vcs",
+    tools = [
+        "iverilog",
+        "vcs",
+    ],
     deps = [":br_fifo_flops_tb"],
 )
 
@@ -108,8 +114,8 @@ verilog_elab_test(
     deps = [":br_fifo_flops_push_credit_tb"],
 )
 
-br_verilog_sim_test_suite(
-    name = "br_fifo_flops_push_credit_vcs_test_suite",
+br_verilog_sim_test_tools_suite(
+    name = "br_fifo_flops_push_credit_sim_test_tools_suite",
     params = {
         "EnableBypass": [
             "0",
@@ -130,6 +136,9 @@ br_verilog_sim_test_suite(
             "1",
         ],
     },
-    tool = "vcs",
+    tools = [
+        "iverilog",
+        "vcs",
+    ],
     deps = [":br_fifo_flops_push_credit_tb"],
 )
