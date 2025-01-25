@@ -84,7 +84,7 @@ class TestUtilFunctions(unittest.TestCase):
     def test_to_filelist(self):
         srcs = ["file1.v", "file2.v"]
         filelist = to_filelist(srcs)
-        self.assertEqual(filelist, "file1.v\nfile2.v")
+        self.assertEqual(filelist, "file1.v\nfile2.v\n")
 
     def test_write_and_dump_file(self):
         logger = logging.getLogger("test_logger")

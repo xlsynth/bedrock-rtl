@@ -21,8 +21,7 @@ import sys
 
 from cli import Elab, Lint, Sim, Fpv, add_common_args, parse_params
 from plugins import discover_plugins
-from util import print_greeting
-from logging_utils import init_root_logger
+from util import print_greeting, init_root_logger
 
 
 def main():
@@ -40,12 +39,13 @@ def main():
     parent_parser = argparse.ArgumentParser(add_help=False)
     add_common_args(parent_parser)
 
-    # Get plugin directories from environment variable
     logging.info(
-        "Getting plugin directories from VERILOG_RUNNER_PLUGIN_PATH environment variable."
+        "Getting additional plugin directories from VERILOG_RUNNER_PLUGIN_PATH environment variable. "
+        "Note that the current directory is always searched for plugins "
+        "regardless of the environment variable setting."
     )
     plugin_dirs_env = os.environ.get("VERILOG_RUNNER_PLUGIN_PATH", "")
-    plugin_dirs = plugin_dirs_env.split(os.pathsep)
+    plugin_dirs = plugin_dirs_env.split(os.pathsep) + ["."]
 
     if len(plugin_dirs) == 0 or plugin_dirs[0] == "":
         raise ValueError("VERILOG_RUNNER_PLUGIN_PATH environment variable is not set.")
