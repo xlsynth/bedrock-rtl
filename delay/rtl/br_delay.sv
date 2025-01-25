@@ -54,6 +54,7 @@ module br_delay #(
   assign stages[0] = in;
 
   for (genvar i = 1; i <= NumStages; i++) begin : gen_stages
+    // ri lint_check_waive BA_NBA_REG
     `BR_REG(stages[i], stages[i-1])
   end
 
