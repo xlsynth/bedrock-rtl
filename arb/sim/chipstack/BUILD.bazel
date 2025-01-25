@@ -13,7 +13,7 @@
 # limitations under the License.
 
 load("@rules_hdl//verilog:providers.bzl", "verilog_library")
-load("//bazel:br_verilog.bzl", "br_verilog_sim_test_suite")
+load("//bazel:br_verilog.bzl", "br_verilog_sim_test_tools_suite")
 load("//bazel:verilog.bzl", "verilog_elab_test")
 
 package(default_visibility = ["//visibility:public"])
@@ -32,9 +32,10 @@ verilog_elab_test(
     deps = [":br_arb_fixed_gen_tb"],
 )
 
-br_verilog_sim_test_suite(
-    name = "br_arb_fixed_gen_tb_vcs_test_suite",
-    tool = "vcs",
+br_verilog_sim_test_tools_suite(
+    name = "br_arb_fixed_gen_tb_sim_test_tools_suite",
+    # TODO: Does not work with iverilog.
+    tools = ["vcs"],
     deps = [":br_arb_fixed_gen_tb"],
 )
 
@@ -52,9 +53,10 @@ verilog_elab_test(
     deps = [":br_arb_lru_gen_tb"],
 )
 
-br_verilog_sim_test_suite(
-    name = "br_arb_lru_gen_tb_vcs_test_suite",
-    tool = "vcs",
+br_verilog_sim_test_tools_suite(
+    name = "br_arb_lru_gen_tb_sim_test_tools_suite",
+    # TODO: Does not work with iverilog.
+    tools = ["vcs"],
     deps = [":br_arb_lru_gen_tb"],
 )
 
@@ -72,8 +74,9 @@ verilog_elab_test(
     deps = [":br_arb_rr_gen_tb"],
 )
 
-br_verilog_sim_test_suite(
-    name = "br_arb_rr_gen_tb_vcs_test_suite",
-    tool = "vcs",
+br_verilog_sim_test_tools_suite(
+    name = "br_arb_rr_gen_tb_sim_test_tools_suite",
+    # TODO: Does not work with iverilog.
+    tools = ["vcs"],
     deps = [":br_arb_rr_gen_tb"],
 )
