@@ -283,6 +283,13 @@ verilog_elab_and_lint_test_suite(
 ----
 ====
 
+== ChipStack-Generated Code
+
+Some test code in this repository was written and debugged with the assistance of tools by link:https://ChipStack.ai[ChipStack.ai].
+The relevant code is located in subdirectories named accordingly (e.g., `arb/sim/chipstack/`).
+The copyright is still held by the Bedrock-RTL authors and licensed the same as the rest of the code in this repository.
+Refer to the `LICENSE` file.
+
 == `macros`: Macros and Defines
 
 === `br_registers.svh`: Flip-Flop Inference Macros
