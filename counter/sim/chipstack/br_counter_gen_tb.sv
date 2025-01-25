@@ -78,7 +78,7 @@ module br_counter_gen_tb;
   //===========================================================
   // Helper testbench variables
   //===========================================================
-  bit overall_tb_status = 1; // If any test fails, set this flag to 0.
+  bit overall_tb_status = 1;  // If any test fails, set this flag to 0.
 
   //===========================================================
   // Clock Generation
@@ -158,7 +158,8 @@ module br_counter_gen_tb;
       begin
         #(PER_TASK_TIMEOUT);
         $display($sformatf({"Time: %0t, INFO: Timeout: test_IncrementOperation. ",
-                  "Stimuli is not observed or it needs more time to finish this test."}, $time));
+                            "Stimuli is not observed or it needs more time to finish this test."},
+                             $time));
         overall_tb_status = 0;
       end
       begin
@@ -179,8 +180,9 @@ module br_counter_gen_tb;
         // Step 1: Assert `incr_valid` to indicate a valid increment operation
         cb_clk.incr_valid <= 1;
         cb_clk.incr <= increment_value;
-        $display($sformatf({"Time: %0t, INFO: test_IncrementOperation - Driving incr_valid=1, incr=0x%h"},
-                   $time, increment_value));
+        $display($sformatf(
+                     {"Time: %0t, INFO: test_IncrementOperation - Driving incr_valid=1, incr=0x%h"
+                       }, $time, increment_value));
 
         // Step 2: Provide the increment amount on `incr`
         expected_value = cb_clk.value + increment_value;
@@ -192,13 +194,13 @@ module br_counter_gen_tb;
         observed_value_next = cb_clk.value_next;
         if (observed_value_next !== expected_value) begin
           $display($sformatf({"Time: %0t, ERROR: test_IncrementOperation - Check failed. ",
-                    "Expected value_next=0x%h, got 0x%h"}, $time, expected_value,
-                     observed_value_next));
+                              "Expected value_next=0x%h, got 0x%h"}, $time, expected_value,
+                               observed_value_next));
           test_failed = 1;
         end else begin
           $display($sformatf({"Time: %0t, INFO: test_IncrementOperation - Check passed. ",
-                    "Expected value_next=0x%h, observed value_next=0x%h"}, $time, expected_value,
-                     observed_value_next));
+                              "Expected value_next=0x%h, observed value_next=0x%h"}, $time,
+                               expected_value, observed_value_next));
           if (test_failed != 1) test_failed = 0;
         end
 
@@ -207,12 +209,13 @@ module br_counter_gen_tb;
         observed_value = cb_clk.value;
         if (observed_value !== expected_value) begin
           $display($sformatf({"Time: %0t, ERROR: test_IncrementOperation - Check failed. ",
-                    "Expected value=0x%h, got 0x%h"}, $time, expected_value, observed_value));
+                              "Expected value=0x%h, got 0x%h"}, $time, expected_value,
+                               observed_value));
           test_failed = 1;
         end else begin
           $display($sformatf({"Time: %0t, INFO: test_IncrementOperation - Check passed. ",
-                    "Expected value=0x%h, observed value=0x%h"}, $time, expected_value,
-                     observed_value));
+                              "Expected value=0x%h, observed value=0x%h"}, $time, expected_value,
+                               observed_value));
           if (test_failed != 1) test_failed = 0;
         end
 
@@ -237,7 +240,8 @@ module br_counter_gen_tb;
       begin
         #(PER_TASK_TIMEOUT);
         $display($sformatf({"Time: %0t, INFO: Timeout: test_DecrementOperation. ",
-                  "Stimuli is not observed or it needs more time to finish this test."}, $time));
+                            "Stimuli is not observed or it needs more time to finish this test."},
+                             $time));
         overall_tb_status = 0;
       end
       begin
@@ -259,7 +263,7 @@ module br_counter_gen_tb;
         cb_clk.decr_valid <= 1;
         cb_clk.decr <= decrement_amount;
         $display("Time: %0t, INFO: test_DecrementOperation - Driving decr_valid=1, decr=0x%h",
-                   $time, decrement_amount);
+                 $time, decrement_amount);
 
         // Step 2: Calculate the expected next value
         expected_value = cb_clk.value - decrement_amount;
@@ -274,8 +278,8 @@ module br_counter_gen_tb;
         observed_value_next = cb_clk.value_next;
         if (observed_value_next !== expected_value) begin
           $display($sformatf({"Time: %0t, ERROR: test_DecrementOperation - Check failed. ",
-                    "Expected value_next=0x%h, got 0x%h"}, $time, expected_value,
-                     observed_value_next));
+                              "Expected value_next=0x%h, got 0x%h"}, $time, expected_value,
+                               observed_value_next));
           test_failed = 1;
         end else begin
           $display(
@@ -290,12 +294,14 @@ module br_counter_gen_tb;
         observed_value = cb_clk.value;
         if (observed_value !== expected_value) begin
           $display($sformatf({"Time: %0t, ERROR: test_DecrementOperation - Check failed. ",
-                    "Expected value=0x%h, got 0x%h"}, $time, expected_value, observed_value));
+                              "Expected value=0x%h, got 0x%h"}, $time, expected_value,
+                               observed_value));
           test_failed = 1;
         end else begin
-          $display($sformatf({"Time: %0t, INFO: test_DecrementOperation - Check passed. ",
-                    "Expected value=0x%h is the same as the observed value (both are 0x%h)."},
-                     $time, expected_value, observed_value));
+          $display($sformatf(
+                       {"Time: %0t, INFO: test_DecrementOperation - Check passed. ",
+                        "Expected value=0x%h is the same as the observed value (both are 0x%h)."},
+                         $time, expected_value, observed_value));
           if (test_failed != 1) test_failed = 0;
         end
 
@@ -321,7 +327,8 @@ module br_counter_gen_tb;
       begin
         #(PER_TASK_TIMEOUT);
         $display($sformatf({"Time: %0t, INFO: Timeout: test_SimultaneousIncrementAndDecrement. ",
-                  "Stimuli is not observed or it needs more time to finish this test."}, $time));
+                            "Stimuli is not observed or it needs more time to finish this test."},
+                             $time));
         overall_tb_status = 0;
       end
       begin
@@ -345,8 +352,10 @@ module br_counter_gen_tb;
         cb_clk.initial_value <= initial_counter_value;
         cb_clk.incr_valid <= 0;
         cb_clk.decr_valid <= 0;
-        $display($sformatf({"Time: %0t, INFO: test_SimultaneousIncrementAndDecrement - Initializing counter ",
-                  "to %0d"}, $time, initial_counter_value));
+        $display(
+            $sformatf(
+                {"Time: %0t, INFO: test_SimultaneousIncrementAndDecrement - Initializing counter ",
+                 "to %0d"}, $time, initial_counter_value));
 
         @(cb_clk);
         cb_clk.reinit <= 0;
@@ -357,8 +366,10 @@ module br_counter_gen_tb;
         cb_clk.decr_valid <= 1;
         cb_clk.incr <= incr_value;
         cb_clk.decr <= decr_value;
-        $display($sformatf({"Time: %0t, INFO: test_SimultaneousIncrementAndDecrement - Driving incr_valid=1, ",
-             "decr_valid=1, incr=0x%h, decr=0x%h"}, $time, incr_value, decr_value));
+        $display(
+            $sformatf(
+                {"Time: %0t, INFO: test_SimultaneousIncrementAndDecrement - Driving incr_valid=1, ",
+                 "decr_valid=1, incr=0x%h, decr=0x%h"}, $time, incr_value, decr_value));
 
         // Calculate expected value_next
         expected_value_next = initial_counter_value + incr_value - decr_value;
@@ -366,13 +377,16 @@ module br_counter_gen_tb;
         // Step 2: Observe that the design calculates the net change and updates `value_next`
         @(cb_clk);
         if (cb_clk.value_next !== expected_value_next) begin
-          $display($sformatf({"Time: %0t, ERROR: test_SimultaneousIncrementAndDecrement - Check failed. ",
-                    "Expected value_next=0x%h, got 0x%h"}, $time, expected_value_next, value_next));
+          $display(
+              $sformatf(
+                  {"Time: %0t, ERROR: test_SimultaneousIncrementAndDecrement - Check failed. ",
+                   "Expected value_next=0x%h, got 0x%h"}, $time, expected_value_next, value_next));
           test_failed = 1;
         end else begin
-          $display($sformatf({"Time: %0t, INFO: test_SimultaneousIncrementAndDecrement - Check passed. ",
-                    "Expected value_next=0x%h is the same as the observed value_next"}, $time,
-                     expected_value_next));
+          $display($sformatf(
+                       {"Time: %0t, INFO: test_SimultaneousIncrementAndDecrement - Check passed. ",
+                        "Expected value_next=0x%h is the same as the observed value_next"}, $time,
+                         expected_value_next));
           if (test_failed != 1) test_failed = 0;
         end
 
@@ -380,13 +394,15 @@ module br_counter_gen_tb;
         @(cb_clk);
         expected_value = expected_value_next;
         if (cb_clk.value !== expected_value) begin
-          $display($sformatf({"Time: %0t, ERROR: test_SimultaneousIncrementAndDecrement - Check failed. ",
-                    "Expected value=0x%h, got 0x%h"}, $time, expected_value, value));
+          $display($sformatf(
+                       {"Time: %0t, ERROR: test_SimultaneousIncrementAndDecrement - Check failed. ",
+                        "Expected value=0x%h, got 0x%h"}, $time, expected_value, value));
           test_failed = 1;
         end else begin
-          $display($sformatf({"Time: %0t, INFO: test_SimultaneousIncrementAndDecrement - Check passed. ",
-                    "Expected value=0x%h is the same as the observed value"}, $time,
-                     expected_value));
+          $display($sformatf(
+                       {"Time: %0t, INFO: test_SimultaneousIncrementAndDecrement - Check passed. ",
+                        "Expected value=0x%h is the same as the observed value"}, $time,
+                         expected_value));
           if (test_failed != 1) test_failed = 0;
         end
 
@@ -408,7 +424,8 @@ module br_counter_gen_tb;
       begin
         #(PER_TASK_TIMEOUT);
         $display($sformatf({"Time: %0t, INFO: Timeout: test_ReinitializationWithChange. ",
-                  "Stimuli is not observed or it needs more time to finish this test."}, $time));
+                            "Stimuli is not observed or it needs more time to finish this test."},
+                             $time));
         overall_tb_status = 0;
       end
       begin
@@ -443,21 +460,23 @@ module br_counter_gen_tb;
         cb_clk.incr <= incr;
         cb_clk.decr_valid <= decr_valid;
         cb_clk.decr <= decr;
-        $display($sformatf({"Time: %0t, INFO: test_ReinitializationWithChange - Driving reinit=0x%h, ",
-                  "initial_value=0x%h, incr_valid=0x%h, incr=0x%h, decr_valid=0x%h, decr=0x%h"},
-                   $time, reinit, initial_value, incr_valid, incr, decr_valid, decr));
+        $display($sformatf(
+                     {"Time: %0t, INFO: test_ReinitializationWithChange - Driving reinit=0x%h, ",
+                      "initial_value=0x%h, incr_valid=0x%h, incr=0x%h, decr_valid=0x%h, decr=0x%h"
+                       }, $time, reinit, initial_value, incr_valid, incr, decr_valid, decr));
 
         // Wait for the next clock cycle to observe value_next
         @(cb_clk);
         if (cb_clk.value_next !== expected_value_next) begin
           $display($sformatf({"Time: %0t, ERROR: test_ReinitializationWithChange - Check failed. ",
-                    "Expected value_next=0x%h, got value_next=0x%h"}, $time, expected_value_next,
-                     value_next));
+                              "Expected value_next=0x%h, got value_next=0x%h"}, $time,
+                               expected_value_next, value_next));
           test_failed = 1;
         end else begin
-          $display($sformatf({"Time: %0t, INFO: test_ReinitializationWithChange - Check passed. ",
-                    "Expected value_next=0x%h is the same as the observed value_next=0x%h."},
-                     $time, expected_value_next, value_next));
+          $display($sformatf(
+                       {"Time: %0t, INFO: test_ReinitializationWithChange - Check passed. ",
+                        "Expected value_next=0x%h is the same as the observed value_next=0x%h."},
+                         $time, expected_value_next, value_next));
           if (test_failed != 1) test_failed = 0;
         end
 
@@ -465,12 +484,13 @@ module br_counter_gen_tb;
         @(cb_clk);
         if (cb_clk.value !== expected_value_next) begin
           $display($sformatf({"Time: %0t, ERROR: test_ReinitializationWithChange - Check failed. ",
-                    "Expected value=0x%h, got value=0x%h"}, $time, expected_value_next, value));
+                              "Expected value=0x%h, got value=0x%h"}, $time, expected_value_next,
+                               value));
           test_failed = 1;
         end else begin
           $display($sformatf({"Time: %0t, INFO: test_ReinitializationWithChange - Check passed. ",
-                    "Expected value=0x%h is the same as the observed value=0x%h."}, $time,
-                     expected_value_next, value));
+                              "Expected value=0x%h is the same as the observed value=0x%h."},
+                               $time, expected_value_next, value));
           if (test_failed != 1) test_failed = 0;
         end
 
