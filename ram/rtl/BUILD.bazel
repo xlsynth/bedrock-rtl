@@ -100,7 +100,7 @@ br_verilog_elab_and_lint_test_suite(
     top = "br_ram_flops_1r1w_tile",
     deps = [
         ":br_ram_flops_1r1w_tile",
-        "//gate/rtl:br_gate_behav",
+        "//gate/rtl:br_gate_mock",
     ],
 )
 
@@ -123,7 +123,7 @@ br_verilog_elab_and_lint_test_suite(
     top = "br_ram_flops_1r1w_tile",
     deps = [
         ":br_ram_flops_1r1w_tile",
-        "//gate/rtl:br_gate_behav",
+        "//gate/rtl:br_gate_mock",
     ],
 )
 
@@ -138,7 +138,7 @@ br_verilog_elab_and_lint_test_suite(
     top = "br_ram_flops_1r1w_tile",
     deps = [
         ":br_ram_flops_1r1w_tile",
-        "//gate/rtl:br_gate_behav",
+        "//gate/rtl:br_gate_mock",
     ],
 )
 
@@ -404,7 +404,7 @@ br_verilog_elab_and_lint_test_suite(
     top = "br_ram_flops_1r1w",
     deps = [
         ":br_ram_flops_1r1w",
-        "//gate/rtl:br_gate_behav",
+        "//gate/rtl:br_gate_mock",
     ],
 )
 

@@ -168,7 +168,7 @@ br_verilog_elab_and_lint_test_suite(
     },
     top = "br_cdc_fifo_gray_count_sync",
     deps = [
-        ":br_cdc_fifo_gray_count_sync",
+        ":br_cdc_fifbr_gate_mocksync",
         "//gate/rtl:br_gate_behav",
     ],
 )

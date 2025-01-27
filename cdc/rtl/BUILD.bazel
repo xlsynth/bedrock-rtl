@@ -21,9 +21,9 @@ verilog_library(
     name = "br_cdc_bit_toggle",
     srcs = ["br_cdc_bit_toggle.sv"],
     deps = [
-        # Omitting //gate/rtl:br_gate_behav so that downstream targets (which may exist in another repo)
+        # Omitting //gate/rtl:br_gate_mock so that downstream targets (which may exist in another repo)
         # can decide whether to use these behavioral models or swap them out for some other vendor models.
-        # Downstream targets should decide whether to add the //gate/rtl:br_gate_behav dependency themselves.
+        # Downstream targets should decide whether to add the //gate/rtl:br_gate_mock dependency themselves.
         "//macros:br_asserts",
         "//macros:br_gates",
         "//macros:br_registers",
@@ -45,7 +45,7 @@ br_verilog_elab_and_lint_test_suite(
     top = "br_cdc_bit_toggle",
     deps = [
         ":br_cdc_bit_toggle",
-        "//gate/rtl:br_gate_behav",
+        "//gate/rtl:br_gate_mock",
     ],
 )
 
@@ -116,7 +116,7 @@ br_verilog_elab_and_lint_test_suite(
     top = "br_cdc_fifo_ctrl_1r1w",
     deps = [
         ":br_cdc_fifo_ctrl_1r1w",
-        "//gate/rtl:br_gate_behav",
+        "//gate/rtl:br_gate_mock",
     ],
 )
 
@@ -154,7 +154,7 @@ br_verilog_elab_and_lint_test_suite(
     top = "br_cdc_fifo_ctrl_1r1w_push_credit",
     deps = [
         ":br_cdc_fifo_ctrl_1r1w_push_credit",
-        "//gate/rtl:br_gate_behav",
+        "//gate/rtl:br_gate_mock",
     ],
 )
 
@@ -192,7 +192,7 @@ br_verilog_elab_and_lint_test_suite(
     top = "br_cdc_fifo_flops",
     deps = [
         ":br_cdc_fifo_flops",
-        "//gate/rtl:br_gate_behav",
+        "//gate/rtl:br_gate_mock",
     ],
 )
 
@@ -230,7 +230,7 @@ br_verilog_elab_and_lint_test_suite(
     top = "br_cdc_fifo_flops_push_credit",
     deps = [
         ":br_cdc_fifo_flops_push_credit",
-        "//gate/rtl:br_gate_behav",
+        "//gate/rtl:br_gate_mock",
     ],
 )
 
@@ -238,9 +238,9 @@ verilog_library(
     name = "br_cdc_rst_sync",
     srcs = ["br_cdc_rst_sync.sv"],
     deps = [
-        # Omitting //gate/rtl:br_gate_behav so that downstream targets (which may exist in another repo)
+        # Omitting //gate/rtl:br_gate_mock so that downstream targets (which may exist in another repo)
         # can decide whether to use these behavioral models or swap them out for some other vendor models.
-        # Downstream targets should decide whether to add the //gate/rtl:br_gate_behav dependency themselves.
+        # Downstream targets should decide whether to add the //gate/rtl:br_gate_mock dependency themselves.
         "//macros:br_asserts",
         "//macros:br_gates",
     ],
@@ -257,6 +257,6 @@ br_verilog_elab_and_lint_test_suite(
     top = "br_cdc_rst_sync",
     deps = [
         ":br_cdc_rst_sync",
-        "//gate/rtl:br_gate_behav",
+        "//gate/rtl:br_gate_mock",
     ],
 )
