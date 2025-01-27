@@ -46,7 +46,9 @@ verilog_library(
     name = "br_mux_bin",
     srcs = ["br_mux_bin.sv"],
     deps = [
-        "//gate/rtl:br_gate_behav",
+        # Omitting //gate/rtl:br_gate_mock so that downstream targets (which may exist in another repo)
+        # can decide whether to use these behavioral models or swap them out for some other vendor models.
+        # Downstream targets should decide whether to add the //gate/rtl:br_gate_mock dependency themselves.
         "//macros:br_asserts_internal",
         "//macros:br_unused",
         "//pkg:br_math_pkg",
@@ -70,7 +72,11 @@ br_verilog_elab_and_lint_test_suite(
             "0",
         ],
     },
-    deps = [":br_mux_bin"],
+    top = "br_mux_bin",
+    deps = [
+        ":br_mux_bin",
+        "//gate/rtl:br_gate_mock",
+    ],
 )
 
 br_verilog_elab_and_lint_test_suite(
@@ -94,7 +100,11 @@ br_verilog_elab_and_lint_test_suite(
             "1",
         ],
     },
-    deps = [":br_mux_bin"],
+    top = "br_mux_bin",
+    deps = [
+        ":br_mux_bin",
+        "//gate/rtl:br_gate_mock",
+    ],
 )
 
 verilog_library(
@@ -129,5 +139,9 @@ br_verilog_elab_and_lint_test_suite(
             "1",
         ],
     },
-    deps = [":br_mux_bin_array"],
+    top = "br_mux_bin_array",
+    deps = [
+        ":br_mux_bin_array",
+        "//gate/rtl:br_gate_mock",
+    ],
 )

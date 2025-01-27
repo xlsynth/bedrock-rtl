@@ -169,7 +169,7 @@ verilog_library(
     deps = [
         ":br_asserts",
         ":br_gates",
-        "//gate/rtl:br_gate_behav",
+        "//gate/rtl:br_gate_mock",
     ],
 )
 
