@@ -53,6 +53,7 @@ module br_amba_axi_timing_slice #(
     input  logic [                 DataWidth-1:0] target_wdata,
     input  logic [               StrobeWidth-1:0] target_wstrb,
     input  logic [                WUserWidth-1:0] target_wuser,
+    input  logic                                  target_wlast,
     input  logic                                  target_wvalid,
     output logic                                  target_wready,
     output logic [                   IdWidth-1:0] target_bid,
@@ -90,6 +91,7 @@ module br_amba_axi_timing_slice #(
     output logic [                 DataWidth-1:0] init_wdata,
     output logic [               StrobeWidth-1:0] init_wstrb,
     output logic [                WUserWidth-1:0] init_wuser,
+    output logic                                  init_wlast,
     output logic                                  init_wvalid,
     input  logic                                  init_wready,
     input  logic [                   IdWidth-1:0] init_bid,
@@ -245,46 +247,46 @@ module br_amba_axi_timing_slice #(
   // Write Data Channel Timing Slice
   if (WSliceType == 0) begin : gen_w_slice_forward
     br_flow_reg_fwd #(
-        .Width(DataWidth + WUserWidth + StrobeWidth)
+        .Width(DataWidth + WUserWidth + StrobeWidth + br_amba::AxiWLastWidth)
     ) br_flow_reg_fwd_w_slice (
         .clk,
         .rst,
         .push_ready(target_wready),
         .push_valid(target_wvalid),
-        .push_data ({target_wdata, target_wstrb, target_wuser}),
+        .push_data ({target_wdata, target_wstrb, target_wuser, target_wlast}),
         .pop_ready (init_wready),
         .pop_valid (init_wvalid),
-        .pop_data  ({init_wdata, init_wstrb, init_wuser})
+        .pop_data  ({init_wdata, init_wstrb, init_wuser, init_wlast})
     );
   end : gen_w_slice_forward
 
   if (WSliceType == 1) begin : gen_w_slice_reverse
     br_flow_reg_rev #(
-        .Width(DataWidth + WUserWidth + StrobeWidth)
+        .Width(DataWidth + WUserWidth + StrobeWidth + br_amba::AxiWLastWidth)
     ) br_flow_reg_rev_w_slice (
         .clk,
         .rst,
         .push_ready(target_wready),
         .push_valid(target_wvalid),
-        .push_data ({target_wdata, target_wstrb, target_wuser}),
+        .push_data ({target_wdata, target_wstrb, target_wuser, target_wlast}),
         .pop_ready (init_wready),
         .pop_valid (init_wvalid),
-        .pop_data  ({init_wdata, init_wstrb, init_wuser})
+        .pop_data  ({init_wdata, init_wstrb, init_wuser, init_wlast})
     );
   end : gen_w_slice_reverse
 
   if (WSliceType == 2) begin : gen_w_slice_full
     br_flow_reg_both #(
-        .Width(DataWidth + WUserWidth + StrobeWidth)
+        .Width(DataWidth + WUserWidth + StrobeWidth + br_amba::AxiWLastWidth)
     ) br_flow_reg_both_w_slice (
         .clk,
         .rst,
         .push_ready(target_wready),
         .push_valid(target_wvalid),
-        .push_data ({target_wdata, target_wstrb, target_wuser}),
+        .push_data ({target_wdata, target_wstrb, target_wuser, target_wlast}),
         .pop_ready (init_wready),
         .pop_valid (init_wvalid),
-        .pop_data  ({init_wdata, init_wstrb, init_wuser})
+        .pop_data  ({init_wdata, init_wstrb, init_wuser, init_wlast})
     );
   end : gen_w_slice_full
 

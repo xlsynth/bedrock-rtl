@@ -55,6 +55,7 @@ module br_amba_axi2axil_core #(
     input  logic [       DataWidth-1:0] axi_req_data,
     input  logic [     StrobeWidth-1:0] axi_req_data_strb,
     input  logic [ReqDataUserWidth-1:0] axi_req_data_user,
+    input  logic                        axi_req_data_last,
     input  logic                        axi_req_data_valid,
     output logic                        axi_req_data_ready,
 
@@ -85,6 +86,8 @@ module br_amba_axi2axil_core #(
     input  logic                             axil_resp_valid,
     output logic                             axil_resp_ready
 );
+
+  `BR_UNUSED(axi_req_data_last)
 
   //----------------------------------------------------------------------------
   // Integration checks
