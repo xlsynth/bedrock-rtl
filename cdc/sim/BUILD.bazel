@@ -31,7 +31,11 @@ verilog_library(
 
 verilog_elab_test(
     name = "br_cdc_fifo_flops_tb_elab_test",
-    deps = [":br_cdc_fifo_flops_tb"],
+    top = "br_cdc_fifo_flops_tb",
+    deps = [
+        ":br_cdc_fifo_flops_tb",
+        "//gate/rtl:br_gate_mock",
+    ],
 )
 
 br_verilog_sim_test_tools_suite(
@@ -63,7 +67,11 @@ br_verilog_sim_test_tools_suite(
         "iverilog",
         "vcs",
     ],
-    deps = [":br_cdc_fifo_flops_tb"],
+    top = "br_cdc_fifo_flops_tb",
+    deps = [
+        ":br_cdc_fifo_flops_tb",
+        "//gate/rtl:br_gate_mock",
+    ],
 )
 
 verilog_library(
@@ -80,7 +88,11 @@ verilog_library(
 
 verilog_elab_test(
     name = "br_cdc_fifo_flops_push_credit_tb_elab_test",
-    deps = [":br_cdc_fifo_flops_push_credit_tb"],
+    top = "br_cdc_fifo_flops_push_credit_tb",
+    deps = [
+        ":br_cdc_fifo_flops_push_credit_tb",
+        "//gate/rtl:br_gate_mock",
+    ],
 )
 
 br_verilog_sim_test_tools_suite(
@@ -111,5 +123,9 @@ br_verilog_sim_test_tools_suite(
         "iverilog",
         "vcs",
     ],
-    deps = [":br_cdc_fifo_flops_push_credit_tb"],
+    top = "br_cdc_fifo_flops_push_credit_tb",
+    deps = [
+        ":br_cdc_fifo_flops_push_credit_tb",
+        "//gate/rtl:br_gate_mock",
+    ],
 )
