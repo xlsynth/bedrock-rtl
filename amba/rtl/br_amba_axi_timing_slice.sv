@@ -247,7 +247,7 @@ module br_amba_axi_timing_slice #(
   // Write Data Channel Timing Slice
   if (WSliceType == 0) begin : gen_w_slice_forward
     br_flow_reg_fwd #(
-        .Width(DataWidth + WUserWidth + StrobeWidth + AxiWLastWidth)
+        .Width(DataWidth + WUserWidth + StrobeWidth + br_amba::AxiWLastWidth)
     ) br_flow_reg_fwd_w_slice (
         .clk,
         .rst,
@@ -262,7 +262,7 @@ module br_amba_axi_timing_slice #(
 
   if (WSliceType == 1) begin : gen_w_slice_reverse
     br_flow_reg_rev #(
-        .Width(DataWidth + WUserWidth + StrobeWidth + AxiWLastWidth)
+        .Width(DataWidth + WUserWidth + StrobeWidth + br_amba::AxiWLastWidth)
     ) br_flow_reg_rev_w_slice (
         .clk,
         .rst,
@@ -277,7 +277,7 @@ module br_amba_axi_timing_slice #(
 
   if (WSliceType == 2) begin : gen_w_slice_full
     br_flow_reg_both #(
-        .Width(DataWidth + WUserWidth + StrobeWidth + AxiWLastWidth)
+        .Width(DataWidth + WUserWidth + StrobeWidth + br_amba::AxiWLastWidth)
     ) br_flow_reg_both_w_slice (
         .clk,
         .rst,

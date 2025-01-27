@@ -208,6 +208,7 @@ module br_amba_axi2axil #(
       .axi_req_data({DataWidth{1'b0}}),  // not used for reads
       .axi_req_data_strb({StrobeWidth{1'b0}}),  // not used for reads
       .axi_req_data_user(1'b0),  // not used for reads
+      .axi_req_data_last(1'b0),  // not used for reads
       .axi_req_data_valid(1'b0),  // not used for reads
       .axi_req_data_ready(),  // not used for reads
 
