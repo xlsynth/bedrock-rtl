@@ -20,6 +20,7 @@
 //
 
 `include "br_asserts_internal.svh"
+`include "br_unused.svh"
 
 module br_amba_axi2axil #(
     parameter int AddrWidth = 12,  // Must be at least 12
@@ -49,6 +50,7 @@ module br_amba_axi2axil #(
     input  logic [                 DataWidth-1:0] axi_wdata,
     input  logic [               StrobeWidth-1:0] axi_wstrb,
     input  logic [                WUserWidth-1:0] axi_wuser,
+    input  logic                                  axi_wlast,
     input  logic                                  axi_wvalid,
     output logic                                  axi_wready,
     output logic [                   IdWidth-1:0] axi_bid,
@@ -147,6 +149,7 @@ module br_amba_axi2axil #(
       .axi_req_data(axi_wdata),
       .axi_req_data_strb(axi_wstrb),
       .axi_req_data_user(axi_wuser),
+      .axi_req_data_last(axi_wlast),
       .axi_req_data_valid(axi_wvalid),
       .axi_req_data_ready(axi_wready),
 
