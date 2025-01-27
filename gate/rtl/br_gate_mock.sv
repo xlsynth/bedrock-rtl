@@ -12,14 +12,16 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Bedrock-RTL Gate Library Behavioral Models
+// Bedrock-RTL Gate Library Mock Behavioral Models
 //
-// This file contains behavioral models for the Bedrock-RTL gate library. This
+// This file contains mock behavioral models for the Bedrock-RTL gate library. This
 // file is expected to be branched for each vendor technology and behavioral
 // models should be replaced with vendor-specific standard cells. Only one
 // version of the gatelib should be included in the design filelist.
 
-// TODO: add a mechanism to make sure these modules are never synthesized
+`ifdef SYNTHESIS
+`BR_ASSERT_STATIC(do_not_synthesize_br_gate_mock_modules_a, 0)
+`endif
 
 // verilog_lint: waive-start module-filename
 // ri lint_check_off ONE_PER_FILE FILE_NAME
