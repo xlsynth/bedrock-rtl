@@ -97,7 +97,11 @@ br_verilog_elab_and_lint_test_suite(
         ],
         "EnablePartialWrite": ["0"],
     },
-    deps = [":br_ram_flops_1r1w_tile"],
+    top = "br_ram_flops_1r1w_tile",
+    deps = [
+        ":br_ram_flops_1r1w_tile",
+        "//gate/rtl:br_gate_behav",
+    ],
 )
 
 br_verilog_elab_and_lint_test_suite(
@@ -116,7 +120,11 @@ br_verilog_elab_and_lint_test_suite(
             "1",
         ],
     },
-    deps = [":br_ram_flops_1r1w_tile"],
+    top = "br_ram_flops_1r1w_tile",
+    deps = [
+        ":br_ram_flops_1r1w_tile",
+        "//gate/rtl:br_gate_behav",
+    ],
 )
 
 br_verilog_elab_and_lint_test_suite(
@@ -127,7 +135,11 @@ br_verilog_elab_and_lint_test_suite(
         "EnableBypass": ["0"],
         "UseStructuredGates": ["1"],
     },
-    deps = [":br_ram_flops_1r1w_tile"],
+    top = "br_ram_flops_1r1w_tile",
+    deps = [
+        ":br_ram_flops_1r1w_tile",
+        "//gate/rtl:br_gate_behav",
+    ],
 )
 
 br_verilog_elab_and_lint_test_suite(
@@ -389,7 +401,11 @@ br_verilog_elab_and_lint_test_suite(
         "TileEnableBypass": ["0"],
         "UseStructuredGates": ["1"],
     },
-    deps = [":br_ram_flops_1r1w"],
+    top = "br_ram_flops_1r1w",
+    deps = [
+        ":br_ram_flops_1r1w",
+        "//gate/rtl:br_gate_behav",
+    ],
 )
 
 br_verilog_elab_and_lint_test_suite(
