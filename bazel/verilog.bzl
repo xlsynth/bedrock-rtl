@@ -28,18 +28,24 @@ def get_transitive(ctx, srcs_not_hdrs):
     ]
     return depset([x for sub_tuple in transitive_srcs_or_hdrs for x in sub_tuple])
 
-def _write_executable_shell_script(ctx, executable_file, cmd, verbose = True):
+def _write_executable_shell_script(ctx, executable_file, cmd, verbose = True, env_exports = None):
     """Writes a shell script that executes the given command and returns a handle to it."""
-    content = [
+    lines = [
         "#!/usr/bin/env bash",
         "set -ex" if verbose else "set -e",
-        "pwd" if verbose else "",
-        cmd,
-        "",
     ]
+
+    # Insert environment variable exports if provided
+    if env_exports:
+        for key, value in env_exports.items():
+            lines.append("export {}={}".format(key, value))
+    if verbose:
+        lines.append("pwd")
+    lines.append(cmd)
+    lines.append("")
     ctx.actions.write(
         output = executable_file,
-        content = "\n".join(content),
+        content = "\n".join(lines),
         is_executable = True,
     )
 
@@ -58,6 +64,7 @@ def _verilog_base_impl(ctx, subcmd, test = True, extra_args = [], extra_runfiles
     """
     runfiles = []
     runfiles += ctx.files.verilog_runner_tool
+    runfiles += ctx.files.verilog_runner_plugins
     srcs = get_transitive(ctx = ctx, srcs_not_hdrs = True).to_list()
     hdrs = get_transitive(ctx = ctx, srcs_not_hdrs = False).to_list()
     if test:
@@ -107,6 +114,15 @@ def _verilog_base_impl(ctx, subcmd, test = True, extra_args = [], extra_runfiles
         runner_path = ctx.files.verilog_runner_tool[0].short_path
     else:
         runner_path = ctx.files.verilog_runner_tool[0].path
+    plugin_paths = []
+    for plugin in ctx.files.verilog_runner_plugins:
+        if plugin.dirname not in plugin_paths:
+            plugin_paths.append(plugin.dirname)
+    verilog_runner_plugin_paths = ":".join(plugin_paths)
+    env_exports = {
+        "VERILOG_RUNNER_PLUGIN_PATH": "${VERILOG_RUNNER_PLUGIN_PATH}:" + verilog_runner_plugin_paths,
+    }
+
     verilog_runner_cmd = " ".join(["python3"] + [runner_path] + [subcmd] + args + src_files)
     verilog_runner_runfiles = ctx.runfiles(files = srcs + hdrs + runfiles + extra_runfiles)
     if test:
@@ -116,6 +132,7 @@ def _verilog_base_impl(ctx, subcmd, test = True, extra_args = [], extra_runfiles
             ctx = ctx,
             executable_file = runner_executable_file,
             cmd = verilog_runner_cmd,
+            env_exports = env_exports,
         )
         return DefaultInfo(
             runfiles = verilog_runner_runfiles,
@@ -150,6 +167,7 @@ def _verilog_base_impl(ctx, subcmd, test = True, extra_args = [], extra_runfiles
             executable_file = generator_executable_file,
             cmd = generator_cmd,
             verbose = False,
+            env_exports = env_exports,
         )
 
         # Run generator script
@@ -267,6 +285,11 @@ rule_verilog_elab_test = rule(
         "params": attr.string_dict(doc = "Verilog module parameters to set in the instantiation of the top-level module."),
         "top": attr.string(doc = "The top-level module; if not provided and there exists one dependency, then defaults to that dep's label name."),
         "verilog_runner_tool": attr.label(doc = "The Verilog Runner tool to use.", default = "//python/verilog_runner:verilog_runner.py", allow_files = True),
+        "verilog_runner_plugins": attr.label_list(
+            default = ["//python/verilog_runner/plugins:iverilog.py"],
+            allow_files = True,
+            doc = "Verilog runner plugins to load from this workspace, in addition to those loaded from VERILOG_RUNNER_PLUGIN_PATH.",
+        ),
         "tool": attr.string(doc = "Elaboration tool to use. If not provided, default is decided by the Verilog Runner tool implementation with available plugins."),
         "custom_tcl_header": attr.label(
             doc = ("Tcl script file containing custom tool-specific commands to insert at the beginning of the generated tcl script." +
@@ -323,6 +346,11 @@ rule_verilog_lint_test = rule(
             doc = "The lint policy file to use. If not provided, then the default tool policy is used (typically provided through an environment variable).",
         ),
         "verilog_runner_tool": attr.label(doc = "The Verilog Runner tool to use.", default = "//python/verilog_runner:verilog_runner.py", allow_files = True),
+        "verilog_runner_plugins": attr.label_list(
+            default = ["//python/verilog_runner/plugins:iverilog.py"],
+            allow_files = True,
+            doc = "Verilog runner plugins to load from this workspace, in addition to those loaded from VERILOG_RUNNER_PLUGIN_PATH.",
+        ),
         "tool": attr.string(doc = "Lint tool to use. If not provided, default is decided by the Verilog Runner tool implementation with available plugins."),
         "custom_tcl_header": attr.label(
             doc = ("Tcl script file containing custom tool-specific commands to insert at the beginning of the generated tcl script." +
@@ -388,6 +416,11 @@ rule_verilog_sim_test = rule(
             default = False,
         ),
         "verilog_runner_tool": attr.label(doc = "The Verilog Runner tool to use.", default = "//python/verilog_runner:verilog_runner.py", allow_files = True),
+        "verilog_runner_plugins": attr.label_list(
+            default = ["//python/verilog_runner/plugins:iverilog.py"],
+            allow_files = True,
+            doc = "Verilog runner plugins to load from this workspace, in addition to those loaded from VERILOG_RUNNER_PLUGIN_PATH.",
+        ),
         "tool": attr.string(
             doc = "Simulator tool to use. If not provided, default is decided by the Verilog Runner tool implementation with available plugins.",
         ),
@@ -465,6 +498,11 @@ rule_verilog_fpv_test = rule(
             default = False,
         ),
         "verilog_runner_tool": attr.label(doc = "The Verilog Runner tool to use.", default = "//python/verilog_runner:verilog_runner.py", allow_files = True),
+        "verilog_runner_plugins": attr.label_list(
+            default = ["//python/verilog_runner/plugins:iverilog.py"],
+            allow_files = True,
+            doc = "Verilog runner plugins to load from this workspace, in addition to those loaded from VERILOG_RUNNER_PLUGIN_PATH.",
+        ),
         "tool": attr.string(
             doc = "Formal tool to use. If not provided, default is decided by the Verilog Runner tool implementation with available plugins.",
         ),
@@ -536,6 +574,11 @@ rule_verilog_fpv_sandbox = rule(
             default = False,
         ),
         "verilog_runner_tool": attr.label(doc = "The Verilog Runner tool to use.", default = "//python/verilog_runner:verilog_runner.py", allow_files = True),
+        "verilog_runner_plugins": attr.label_list(
+            default = ["//python/verilog_runner/plugins:iverilog.py"],
+            allow_files = True,
+            doc = "Verilog runner plugins to load from this workspace, in addition to those loaded from VERILOG_RUNNER_PLUGIN_PATH.",
+        ),
         "tool": attr.string(
             doc = "Tool to use. If not provided, default is decided by the Verilog Runner tool implementation with available plugins.",
         ),
