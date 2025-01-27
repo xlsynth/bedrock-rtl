@@ -125,5 +125,7 @@ module br_arb_weighted_rr #(
     );
 
     assign request_priority[i] = |accumulated_weight[i];
+
+    `BR_ASSERT_IMPL(non_zero_weight_a, incr_accumulated_weight |-> request_weight[i] != 0)
   end
 endmodule
