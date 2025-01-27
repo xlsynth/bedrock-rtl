@@ -51,9 +51,13 @@ module br_delay #(
   //------------------------------------------
   logic [NumStages:0][Width-1:0] stages;
 
-  assign stages[0] = in;
+  // always_comb instead of assign here to keep iverilog happy
+  always_comb begin
+    stages[0] = in;
+  end
 
   for (genvar i = 1; i <= NumStages; i++) begin : gen_stages
+    // ri lint_check_waive BA_NBA_REG
     `BR_REG(stages[i], stages[i-1])
   end
 

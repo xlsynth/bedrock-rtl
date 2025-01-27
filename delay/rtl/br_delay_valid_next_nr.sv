@@ -69,13 +69,18 @@ module br_delay_valid_next_nr #(
   logic [NumStages:0]            stage_valid_next;
   logic [NumStages:0][Width-1:0] stage;
 
-  assign stage_valid_next[0] = in_valid_next;
-  assign stage[0] = in;
+  // always_comb instead of assign here to keep iverilog happy
+  always_comb begin
+    stage_valid_next[0] = in_valid_next;
+    stage[0] = in;
+  end
 
   for (genvar i = 1; i <= NumStages; i++) begin : gen_stages
+    // ri lint_check_waive BA_NBA_REG
     `BR_REGN(stage_valid_next[i], stage_valid_next[i-1])
     // stage_valid_next[i] is equivalent to hypothetical stage_valid[i-1],
     // which would be aligned to stage[i-1].
+    // ri lint_check_waive BA_NBA_REG
     `BR_REGLN(stage[i], stage[i-1], stage_valid_next[i])
   end
 

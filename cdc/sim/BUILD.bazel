@@ -13,7 +13,7 @@
 # limitations under the License.
 
 load("@rules_hdl//verilog:providers.bzl", "verilog_library")
-load("//bazel:br_verilog.bzl", "br_verilog_sim_test_suite")
+load("//bazel:br_verilog.bzl", "br_verilog_sim_test_tools_suite")
 load("//bazel:verilog.bzl", "verilog_elab_test")
 
 package(default_visibility = ["//visibility:public"])
@@ -31,11 +31,15 @@ verilog_library(
 
 verilog_elab_test(
     name = "br_cdc_fifo_flops_tb_elab_test",
-    deps = [":br_cdc_fifo_flops_tb"],
+    top = "br_cdc_fifo_flops_tb",
+    deps = [
+        ":br_cdc_fifo_flops_tb",
+        "//gate/rtl:br_gate_mock",
+    ],
 )
 
-br_verilog_sim_test_suite(
-    name = "br_cdc_fifo_flops_vcs_test_suite",
+br_verilog_sim_test_tools_suite(
+    name = "br_cdc_fifo_flops_sim_test_tools_suite",
     params = {
         "Depth": [
             # Minimum depth needed for full bandwidth at the maximum cut-through and backpressure latencies
@@ -59,9 +63,15 @@ br_verilog_sim_test_suite(
             "3",
         ],
     },
-    tool = "vcs",
-    waves = True,
-    deps = [":br_cdc_fifo_flops_tb"],
+    tools = [
+        "iverilog",
+        "vcs",
+    ],
+    top = "br_cdc_fifo_flops_tb",
+    deps = [
+        ":br_cdc_fifo_flops_tb",
+        "//gate/rtl:br_gate_mock",
+    ],
 )
 
 verilog_library(
@@ -78,11 +88,15 @@ verilog_library(
 
 verilog_elab_test(
     name = "br_cdc_fifo_flops_push_credit_tb_elab_test",
-    deps = [":br_cdc_fifo_flops_push_credit_tb"],
+    top = "br_cdc_fifo_flops_push_credit_tb",
+    deps = [
+        ":br_cdc_fifo_flops_push_credit_tb",
+        "//gate/rtl:br_gate_mock",
+    ],
 )
 
-br_verilog_sim_test_suite(
-    name = "br_cdc_fifo_flops_push_credit_vcs_test_suite",
+br_verilog_sim_test_tools_suite(
+    name = "br_cdc_fifo_flops_push_credit_sim_test_tools_suite",
     params = {
         "RegisterPopOutputs": [
             "0",
@@ -105,7 +119,13 @@ br_verilog_sim_test_suite(
             "1",
         ],
     },
-    tool = "vcs",
-    waves = True,
-    deps = [":br_cdc_fifo_flops_push_credit_tb"],
+    tools = [
+        "iverilog",
+        "vcs",
+    ],
+    top = "br_cdc_fifo_flops_push_credit_tb",
+    deps = [
+        ":br_cdc_fifo_flops_push_credit_tb",
+        "//gate/rtl:br_gate_mock",
+    ],
 )

@@ -57,7 +57,7 @@ def br_verilog_elab_and_lint_test_suite(name, **kwargs):
         **kwargs
     )
 
-def br_verilog_sim_test_suite(name, tool, opts = [], **kwargs):
+def br_verilog_sim_test_suite(name, tool, defines = [], opts = [], **kwargs):
     """Wraps verilog_sim_test_suite with Bedrock-internal settings. Not intended to be called by Bedrock users.
 
     * Defines `BR_ASSERT_ON` and `BR_ENABLE_IMPL_CHECKS`.
@@ -66,8 +66,9 @@ def br_verilog_sim_test_suite(name, tool, opts = [], **kwargs):
     Args:
         name (str): The base name of the test suite.
         tool (str): The simulator tool to use.
+        defines (List[str]): Defines to pass to the simulator. If not provided, defaults are determined internally.
         opts (List[str]): Additional options to pass to the simulator.
-        **kwargs: Additional keyword arguments passed to verilog_sim_test_suite. Do not pass defines.
+        **kwargs: Additional keyword arguments passed to verilog_sim_test_suite.
     """
 
     if "defines" in kwargs:
@@ -76,13 +77,33 @@ def br_verilog_sim_test_suite(name, tool, opts = [], **kwargs):
     if tool == "vcs":
         opts = opts + ["-assert global_finish_maxfail=1+offending_values"]
 
+    # Don't enable assertions with iverilog because it doesn't handle them well, even in -g2012 mode.
+    if tool != "iverilog" and len(defines) == 0:
+        defines = ["BR_ASSERT_ON", "BR_ENABLE_IMPL_CHECKS"]
+
     verilog_sim_test_suite(
         name = name,
         tool = tool,
         opts = opts,
-        defines = ["BR_ASSERT_ON", "BR_ENABLE_IMPL_CHECKS"],
+        defines = defines,
         **kwargs
     )
+
+def br_verilog_sim_test_tools_suite(name, tools = [], **kwargs):
+    """Wraps br_verilog_sim_test_suite with multiple simulation tools.
+
+    Args:
+        name (str): The base name of the test suite.
+        tools (list of strings): simulator tools to use.
+        **kwargs: Additional keyword arguments passed to br_verilog_sim_test_suite.
+    """
+
+    for tool in tools:
+        br_verilog_sim_test_suite(
+            name = name + "_" + tool,
+            tool = tool,
+            **kwargs
+        )
 
 def br_verilog_fpv_test_suite(name, sandbox = True, **kwargs):
     """Wraps verilog_fpv_test_suite with Bedrock-internal settings. Not intended to be called by Bedrock users.

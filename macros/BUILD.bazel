@@ -169,7 +169,7 @@ verilog_library(
     deps = [
         ":br_asserts",
         ":br_gates",
-        "//gate/rtl:br_gate_behav",
+        "//gate/rtl:br_gate_mock",
     ],
 )
 
@@ -177,4 +177,27 @@ verilog_elab_test(
     name = "br_gates_elab_test",
     defines = ["BR_ASSERT_ON"],
     deps = [":br_gates_test"],
+)
+
+verilog_library(
+    name = "br_assign",
+    hdrs = ["br_assign.svh"],
+    visibility = ["//visibility:public"],
+)
+
+verilog_library(
+    name = "br_assign_test",
+    srcs = ["br_assign_test.sv"],
+    deps = [":br_assign"],
+)
+
+verilog_elab_test(
+    name = "br_assign_elab_test",
+    deps = [":br_assign_test"],
+)
+
+verilog_lint_test(
+    name = "br_assign_lint_test",
+    visibility = ["//visibility:public"],
+    deps = [":br_assign_test"],
 )

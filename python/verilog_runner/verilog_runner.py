@@ -21,23 +21,12 @@ import sys
 
 from cli import Elab, Lint, Sim, Fpv, add_common_args, parse_params
 from plugins import discover_plugins
-from util import MAIN_FILE_ABBREV, print_greeting
-
-# Configure the root logger
-root_logger = logging.getLogger()
-root_logger.setLevel(logging.INFO)
-
-# Create handler for the root logger
-root_handler = logging.StreamHandler(sys.stdout)
-root_formatter = logging.Formatter(
-    "[" + MAIN_FILE_ABBREV + "][%(filename)s:%(lineno)-4d] %(message)s"
-)
-root_handler.setFormatter(root_formatter)
-root_logger.addHandler(root_handler)
+from util import print_greeting, init_root_logger
 
 
 def main():
     print_greeting()
+    init_root_logger()
     logging.info("Working directory: " + os.getcwd())
     logging.info("Python binary: " + sys.executable)
     logging.info("Python version: " + sys.version)
@@ -50,12 +39,13 @@ def main():
     parent_parser = argparse.ArgumentParser(add_help=False)
     add_common_args(parent_parser)
 
-    # Get plugin directories from environment variable
     logging.info(
-        "Getting plugin directories from VERILOG_RUNNER_PLUGIN_PATH environment variable."
+        "Getting additional plugin directories from VERILOG_RUNNER_PLUGIN_PATH environment variable. "
+        "Note that the current directory is always searched for plugins "
+        "regardless of the environment variable setting."
     )
     plugin_dirs_env = os.environ.get("VERILOG_RUNNER_PLUGIN_PATH", "")
-    plugin_dirs = plugin_dirs_env.split(os.pathsep)
+    plugin_dirs = plugin_dirs_env.split(os.pathsep) + ["."]
 
     if len(plugin_dirs) == 0 or plugin_dirs[0] == "":
         raise ValueError("VERILOG_RUNNER_PLUGIN_PATH environment variable is not set.")

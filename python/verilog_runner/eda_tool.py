@@ -38,6 +38,7 @@ class EdaTool(ABC):
     filelist: str = field(default_factory=str)
     tclfile_custom_header: Optional[str] = field(default_factory=Optional[str])
     tclfile_custom_body: Optional[str] = field(default_factory=Optional[str])
+    env_setup_commands: Optional[str] = field(default_factory=Optional[str])
 
     @abstractmethod
     def tcl_preamble(self) -> str:
@@ -107,6 +108,12 @@ class EdaTool(ABC):
                 self.tcl_footer(),
             ]
         )
+
+    def read_env_setup_commands(self) -> List[str]:
+        if self.env_setup_commands:
+            with open(self.env_setup_commands, "r") as file:
+                return file.readlines()
+        return []
 
     @abstractmethod
     def cmd(self) -> str:
