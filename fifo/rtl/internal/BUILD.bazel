@@ -26,7 +26,9 @@ verilog_library(
     deps = [
         "//counter/rtl:br_counter_incr",
         "//flow/rtl/internal:br_flow_checks_valid_data_intg",
+        "//macros:br_asserts",
         "//macros:br_unused",
+        "//pkg:br_math_pkg",
     ],
 )
 
@@ -103,7 +105,9 @@ verilog_library(
     deps = [
         ":br_fifo_staging_buffer",
         "//counter/rtl:br_counter_incr",
+        "//macros:br_asserts",
         "//macros:br_unused",
+        "//pkg:br_math_pkg",
     ],
 )
 
@@ -161,6 +165,21 @@ br_verilog_elab_and_lint_test_suite(
             "0",
             "1",
         ],
+    },
+    deps = [":br_fifo_pop_ctrl"],
+)
+
+br_verilog_elab_and_lint_test_suite(
+    name = "br_fifo_pop_ctrl_test_suite_ram_depth_ne_depth",
+    params = {
+        "Depth": ["4"],
+        "RamDepth": [
+            "2",
+            "3",
+            "5",
+        ],
+        "RamReadLatency": ["1"],
+        "EnableBypass": ["1"],
     },
     deps = [":br_fifo_pop_ctrl"],
 )

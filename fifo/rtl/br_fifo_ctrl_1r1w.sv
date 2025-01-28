@@ -78,6 +78,15 @@ module br_fifo_ctrl_1r1w #(
     // The number of cycles between when ram_rd_addr_valid is asserted and
     // ram_rd_data_valid is asserted.
     parameter int RamReadLatency = 0,
+    // The actual depth of the RAM. This may be smaller than the FIFO depth
+    // if EnableBypass is 1 and RamReadLatency is >0 or RegisterPopOutputs is 1.
+    // The minimum RAM depth would be (Depth - RamReadLatency - 1) or 1
+    // if Depth is less than or equal to RamReadLatency + 1.
+    // If bypass is disabled or RamReadLatency and RegisterPopOutputs are both 0,
+    // the minimum RAM depth is Depth.
+    // The RAM depth may be made larger than the minimum if convenient (e.g. the
+    // backing RAM is an SRAM of slightly larger depth than the FIFO depth).
+    parameter int RamDepth = Depth,
     // If 1, cover that the push side experiences backpressure.
     // If 0, assert that there is never backpressure.
     parameter bit EnableCoverPushBackpressure = 1,
@@ -90,7 +99,7 @@ module br_fifo_ctrl_1r1w #(
     // If 1, then assert there are no valid bits asserted and that the FIFO is
     // empty at the end of the test.
     parameter bit EnableAssertFinalNotValid = 1,
-    localparam int AddrWidth = $clog2(Depth),
+    localparam int AddrWidth = br_math::clamped_clog2(RamDepth),
     localparam int CountWidth = $clog2(Depth + 1)
 ) (
     // Posedge-triggered clock.
@@ -159,6 +168,7 @@ module br_fifo_ctrl_1r1w #(
       .Depth(Depth),
       .Width(Width),
       .EnableBypass(EnableBypass),
+      .RamDepth(RamDepth),
       .EnableCoverPushBackpressure(EnableCoverPushBackpressure),
       .EnableAssertPushValidStability(EnableAssertPushValidStability),
       .EnableAssertPushDataStability(EnableAssertPushDataStability),
@@ -189,6 +199,7 @@ module br_fifo_ctrl_1r1w #(
       .Width(Width),
       .EnableBypass(EnableBypass),
       .RegisterPopOutputs(RegisterPopOutputs),
+      .RamDepth(RamDepth),
       .RamReadLatency(RamReadLatency),
       .EnableAssertFinalNotValid(EnableAssertFinalNotValid)
   ) br_fifo_pop_ctrl (
