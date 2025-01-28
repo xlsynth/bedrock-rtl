@@ -1,5 +1,3 @@
-`include "br_asserts_internal.svh"
-
 // Copyright 2025 The Bedrock-RTL Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -54,6 +52,9 @@
 // NumRequesters-1 grants before it is guaranteed to be selected.
 // So, a requestor may need to wait up to a total of
 // (MaxAccumulatedWeight+1)*(NumRequesters-1) grants before being granted itself.
+
+`include "br_asserts_internal.svh"
+
 module br_arb_weighted_rr #(
     // Must be at least 2
     parameter int NumRequesters = 2,
@@ -71,15 +72,26 @@ module br_arb_weighted_rr #(
     input logic [NumRequesters-1:0][WeightWidth-1:0] request_weight,
     output logic [NumRequesters-1:0] grant
 );
+
+  //------------------------------------------
+  // Integration checks
+  //------------------------------------------
   `BR_ASSERT_STATIC(min_num_requestors_a, NumRequesters >= 2)
   `BR_ASSERT_STATIC(min_max_weight_a, MaxWeight >= 1)
   `BR_ASSERT_STATIC(max_accum_gte_max_weight_a, MaxAccumulatedWeight >= MaxWeight)
 
+  // We only care about request weight being non-zero when it's actually sampled
+  // to update the accumulated weight. But this check is both stronger and simpler.
+  for (genvar i = 0; i < NumRequesters; i++) begin : gen_intg_checks
+    `BR_ASSERT_INTG(request_weight_ne_0_a, request_weight[i] != 0)
+  end
+
   //------------------------------------------
-  // Arbitrate, prioritizing requests with
-  // non-zero accumulated weight
+  // Implementation
   //------------------------------------------
 
+  // Arbitrate, prioritizing requests with
+  // non-zero accumulated weight
   logic [NumRequesters-1:0] request_priority;
 
   br_arb_pri_rr #(
@@ -94,10 +106,7 @@ module br_arb_weighted_rr #(
       .grant
   );
 
-  //------------------------------------------
   // Track per-request accumulated weight
-  //------------------------------------------
-
   logic any_high_priority_request;
   logic incr_accumulated_weight;
   assign any_high_priority_request = |(request & request_priority);
@@ -126,4 +135,9 @@ module br_arb_weighted_rr #(
 
     assign request_priority[i] = |accumulated_weight[i];
   end
+
+  //------------------------------------------
+  // Implementation checks
+  //------------------------------------------
+
 endmodule
