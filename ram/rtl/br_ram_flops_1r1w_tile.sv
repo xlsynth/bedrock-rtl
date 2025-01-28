@@ -187,8 +187,16 @@ module br_ram_flops_1r1w_tile #(
     );
   end else begin : gen_behavioral_read
     if (EnableBypass) begin : gen_bypass
-      // ri lint_check_waive VAR_INDEX_READ
-      assign rd_data = (wr_valid && (wr_addr == rd_addr)) ? wr_data : mem[rd_addr];
+      if (EnablePartialWrite) begin : gen_partial_write_bypass
+        for (genvar i = 0; i < NumWords; i++) begin : gen_partial_write_bypass_word
+          assign rd_data[i*WordWidth +: WordWidth] =
+              (wr_valid && (wr_addr == rd_addr) && wr_word_en[i]) ?
+                  wr_data[i*WordWidth +: WordWidth] : mem[rd_addr][i];
+        end
+      end else begin : gen_full_write_bypass
+        // ri lint_check_waive VAR_INDEX_READ
+        assign rd_data = (wr_valid && (wr_addr == rd_addr)) ? wr_data : mem[rd_addr];
+      end
     end else begin : gen_no_bypass
       // ri lint_check_waive VAR_INDEX_READ
       assign rd_data = mem[rd_addr];
@@ -199,11 +207,31 @@ module br_ram_flops_1r1w_tile #(
   // Implementation checks
   //------------------------------------------
   `BR_ASSERT_CR_IMPL(zero_read_latency_A, rd_addr_valid |-> rd_data_valid, rd_clk, rd_rst)
+`ifdef BR_ASSERT_EN
+`ifdef BR_ENABLE_IMPL_CHECKS
   if (EnableBypass) begin : gen_bypass_impl_checks
-    `BR_ASSERT_CR_IMPL(
-        bypass_write_to_read_zero_cycles_A,
-        wr_valid && rd_addr_valid && (wr_addr == rd_addr) |-> rd_data_valid && rd_data == wr_data,
-        rd_clk, rd_rst)
+    if (EnablePartialWrite) begin : gen_partial_write_bypass_impl_checks
+      for (genvar i = 0; i < NumWords; i++) begin : gen_partial_write_bypass_impl_checks_word
+        logic [WordWidth-1:0] rd_data_word;
+        logic [WordWidth-1:0] wr_data_word;
+
+        assign rd_data_word = rd_data[i*WordWidth+:WordWidth];
+        assign wr_data_word = wr_data[i*WordWidth+:WordWidth];
+
+        `BR_ASSERT_CR_IMPL(bypass_write_to_read_zero_cycles_A,
+                           (wr_valid && rd_addr_valid && (wr_addr == rd_addr) && wr_word_en[i])
+            |->
+            (rd_data_valid && rd_data_word == wr_data_word),
+                           rd_clk, rd_rst)
+      end
+    end else begin : gen_full_write_bypass_impl_checks
+      `BR_ASSERT_CR_IMPL(
+          bypass_write_to_read_zero_cycles_A,
+          wr_valid && rd_addr_valid && (wr_addr == rd_addr) |-> rd_data_valid && rd_data == wr_data,
+          rd_clk, rd_rst)
+    end
   end
+`endif
+`endif
 
 endmodule : br_ram_flops_1r1w_tile
