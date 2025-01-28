@@ -22,7 +22,7 @@ verilog_library(
     name = "br_enc_bin2gray_gen_tb",
     srcs = ["br_enc_bin2gray_gen_tb.sv"],
     deps = [
-        "//counter/rtl:br_enc_bin2gray",
+        "//enc/rtl:br_enc_bin2gray",
         "//macros:br_asserts_internal",
     ],
 )
@@ -43,7 +43,7 @@ verilog_library(
     name = "br_enc_bin2onehot_gen_tb",
     srcs = ["br_enc_bin2onehot_gen_tb.sv"],
     deps = [
-        "//counter/rtl:br_enc_bin2onehot",
+        "//enc/rtl:br_enc_bin2onehot",
         "//macros:br_asserts_internal",
     ],
 )
@@ -64,7 +64,7 @@ verilog_library(
     name = "br_enc_countones_gen_tb",
     srcs = ["br_enc_countones_gen_tb.sv"],
     deps = [
-        "//counter/rtl:br_enc_countones",
+        "//enc/rtl:br_enc_countones",
         "//macros:br_asserts_internal",
     ],
 )
@@ -85,7 +85,7 @@ verilog_library(
     name = "br_enc_gray2bin_gen_tb",
     srcs = ["br_enc_gray2bin_gen_tb.sv"],
     deps = [
-        "//counter/rtl:br_enc_gray2bin",
+        "//enc/rtl:br_enc_gray2bin",
         "//macros:br_asserts_internal",
     ],
 )
@@ -106,7 +106,7 @@ verilog_library(
     name = "br_enc_onehot2bin_gen_tb",
     srcs = ["br_enc_onehot2bin_gen_tb.sv"],
     deps = [
-        "//counter/rtl:br_enc_onehot2bin",
+        "//enc/rtl:br_enc_onehot2bin",
         "//macros:br_asserts_internal",
     ],
 )
@@ -127,7 +127,7 @@ verilog_library(
     name = "br_enc_priority_encoder_gen_tb",
     srcs = ["br_enc_priority_encoder_gen_tb.sv"],
     deps = [
-        "//counter/rtl:br_enc_priority_encoder",
+        "//enc/rtl:br_enc_priority_encoder",
         "//macros:br_asserts_internal",
     ],
 )
