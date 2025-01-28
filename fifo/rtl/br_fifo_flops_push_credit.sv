@@ -79,7 +79,6 @@ module br_fifo_flops_push_credit #(
     parameter bit EnableAssertFinalNotValid = 1,
 
     // Internal computed parameters
-    localparam int AddrWidth   = $clog2(Depth),
     localparam int CountWidth  = $clog2(Depth + 1),
     localparam int CreditWidth = $clog2(MaxCredit + 1)
 ) (
@@ -121,6 +120,14 @@ module br_fifo_flops_push_credit #(
 );
   localparam int RamReadLatency =
       FlopRamAddressDepthStages + FlopRamReadDataDepthStages + FlopRamReadDataWidthStages;
+  // If there is a bypass staging buffer, we can reduce the depth of the flop RAM
+  // by the number of buffer entries.
+  localparam int RamDepth =
+      (EnableBypass && ((RamReadLatency > 0) || RegisterPopOutputs)) ?
+          br_math::max2(
+      1, Depth - RamReadLatency - 1
+  ) : Depth;
+  localparam int AddrWidth = br_math::clamped_clog2(RamDepth);
 
   //------------------------------------------
   // Integration checks
@@ -146,6 +153,7 @@ module br_fifo_flops_push_credit #(
       .RegisterPushOutputs(RegisterPushOutputs),
       .RegisterPopOutputs(RegisterPopOutputs),
       .RamReadLatency(RamReadLatency),
+      .RamDepth(RamDepth),
       .EnableAssertFinalNotValid(EnableAssertFinalNotValid)
   ) br_fifo_ctrl_1r1w_push_credit (
       .clk,
@@ -186,7 +194,7 @@ module br_fifo_flops_push_credit #(
   assign either_rst = rst || push_sender_in_reset;
 
   br_ram_flops_1r1w #(
-      .Depth(Depth),
+      .Depth(RamDepth),
       .Width(Width),
       .DepthTiles(FlopRamDepthTiles),
       .WidthTiles(FlopRamWidthTiles),

@@ -76,10 +76,19 @@ module br_fifo_ctrl_1r1w_push_credit #(
     // The number of cycles between when ram_rd_addr_valid is asserted and
     // ram_rd_data_valid is asserted.
     parameter int RamReadLatency = 0,
+    // The actual depth of the RAM. This may be smaller than the FIFO depth
+    // if EnableBypass is 1 and RamReadLatency is >0 or RegisterPopOutputs is 1.
+    // The minimum RAM depth would be (Depth - RamReadLatency - 1) or 1
+    // if Depth is less than or equal to RamReadLatency + 1.
+    // If bypass is disabled or RamReadLatency and RegisterPopOutputs are both 0,
+    // the minimum RAM depth is Depth.
+    // The RAM depth may be made larger than the minimum if convenient (e.g. the
+    // backing RAM is an SRAM of slightly larger depth than the FIFO depth).
+    parameter int RamDepth = Depth,
     // If 1, then assert there are no valid bits asserted and that the FIFO is
     // empty at the end of the test.
     parameter bit EnableAssertFinalNotValid = 1,
-    localparam int AddrWidth = $clog2(Depth),
+    localparam int AddrWidth = br_math::clamped_clog2(RamDepth),
     localparam int CountWidth = $clog2(Depth + 1),
     localparam int CreditWidth = $clog2(MaxCredit + 1)
 ) (
@@ -150,6 +159,7 @@ module br_fifo_ctrl_1r1w_push_credit #(
       .EnableBypass(EnableBypass),
       .MaxCredit(MaxCredit),
       .RegisterPushOutputs(RegisterPushOutputs),
+      .RamDepth(RamDepth),
       .EnableAssertFinalNotValid(EnableAssertFinalNotValid)
   ) br_fifo_push_ctrl_credit (
       .clk,
@@ -190,6 +200,7 @@ module br_fifo_ctrl_1r1w_push_credit #(
       .EnableBypass(EnableBypass),
       .RegisterPopOutputs(RegisterPopOutputs),
       .RamReadLatency(RamReadLatency),
+      .RamDepth(RamDepth),
       .EnableAssertFinalNotValid(EnableAssertFinalNotValid)
   ) br_fifo_pop_ctrl (
       .clk,

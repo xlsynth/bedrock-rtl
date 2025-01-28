@@ -16,6 +16,7 @@
 // Contains just the bypass and RAM read logic, leaving occupancy tracking up to
 // the instantiating module.
 
+`include "br_asserts.svh"
 `include "br_unused.svh"
 
 module br_fifo_pop_ctrl_core #(
@@ -24,10 +25,11 @@ module br_fifo_pop_ctrl_core #(
     parameter bit EnableBypass = 1,
     parameter int RamReadLatency = 0,
     parameter bit RegisterPopOutputs = 0,
+    parameter int RamDepth = Depth,
     // If 1, then assert there are no valid bits asserted and that the FIFO is
     // empty at the end of the test.
     parameter bit EnableAssertFinalNotValid = 1,
-    localparam int AddrWidth = $clog2(Depth),
+    localparam int AddrWidth = br_math::clamped_clog2(RamDepth),
     localparam int CountWidth = $clog2(Depth + 1)
 ) (
     // Posedge-triggered clock.
@@ -58,6 +60,20 @@ module br_fifo_pop_ctrl_core #(
 );
 
   //------------------------------------------
+  // Integration Checks
+  //------------------------------------------
+
+  // If EnableBypass is 0, RamDepth must be at least the FIFO depth.
+  // If EnableBypass is 1, the staging buffers may provide additional space,
+  // so the RAM depth can be smaller than the FIFO depth.
+  // ri lint_check_waive PARAM_NOT_USED
+  localparam int StagingBufferDepth =
+      (RamReadLatency == 0 && !RegisterPopOutputs) ? 0 : (RamReadLatency + 1);
+  // ri lint_check_waive PARAM_NOT_USED
+  localparam int MinRamDepth = EnableBypass ? br_math::max2(1, Depth - StagingBufferDepth) : Depth;
+  `BR_ASSERT_STATIC(legal_ram_depth_a, RamDepth >= MinRamDepth)
+
+  //------------------------------------------
   // Implementation
   //------------------------------------------
 
@@ -65,20 +81,24 @@ module br_fifo_pop_ctrl_core #(
   assign pop_beat = pop_ready && pop_valid;
 
   // RAM path
-  br_counter_incr #(
-      .MaxValue(Depth - 1),
-      .MaxIncrement(1),
-      .EnableAssertFinalNotValid(EnableAssertFinalNotValid)
-  ) br_counter_incr_rd_addr (
-      .clk,
-      .rst,
-      .reinit(1'b0),  // unused
-      .initial_value(AddrWidth'(1'b0)),
-      .incr_valid(ram_rd_addr_valid),
-      .incr(1'b1),
-      .value(ram_rd_addr),
-      .value_next()  // unused
-  );
+  if (RamDepth > 1) begin : gen_ram_rd_addr_counter
+    br_counter_incr #(
+        .MaxValue(RamDepth - 1),
+        .MaxIncrement(1),
+        .EnableAssertFinalNotValid(EnableAssertFinalNotValid)
+    ) br_counter_incr_rd_addr (
+        .clk,
+        .rst,
+        .reinit(1'b0),  // unused
+        .initial_value(AddrWidth'(1'b0)),
+        .incr_valid(ram_rd_addr_valid),
+        .incr(1'b1),
+        .value(ram_rd_addr),
+        .value_next()  // unused
+    );
+  end else begin : gen_ram_rd_addr_const
+    assign ram_rd_addr = 1'b0;
+  end
 
   // Datapath
   if (RamReadLatency == 0) begin : gen_zero_rd_lat

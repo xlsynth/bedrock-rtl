@@ -22,6 +22,7 @@ module br_fifo_push_ctrl #(
     parameter int Depth = 2,
     parameter int Width = 1,
     parameter bit EnableBypass = 1,
+    parameter int RamDepth = Depth,
     // If 1, cover that the push side experiences backpressure.
     // If 0, assert that there is never backpressure.
     parameter bit EnableCoverPushBackpressure = 1,
@@ -34,7 +35,7 @@ module br_fifo_push_ctrl #(
     // If 1, then assert there are no valid bits asserted and that the FIFO is
     // empty at the end of the test.
     parameter bit EnableAssertFinalNotValid = 1,
-    localparam int AddrWidth = $clog2(Depth),
+    localparam int AddrWidth = br_math::clamped_clog2(RamDepth),
     localparam int CountWidth = $clog2(Depth + 1)
 ) (
     // Posedge-triggered clock.
@@ -85,7 +86,7 @@ module br_fifo_push_ctrl #(
 
   // Core flow-control logic
   br_fifo_push_ctrl_core #(
-      .Depth(Depth),
+      .Depth(RamDepth),
       .Width(Width),
       .EnableBypass(EnableBypass),
       .EnableCoverPushBackpressure(EnableCoverPushBackpressure),

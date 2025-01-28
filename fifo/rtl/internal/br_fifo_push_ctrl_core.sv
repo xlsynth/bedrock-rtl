@@ -16,10 +16,11 @@
 // Contains just the bypass and RAM write logic, leaving occupancy tracking up to
 // the instantiating module.
 
+`include "br_asserts.svh"
 `include "br_unused.svh"
 
 module br_fifo_push_ctrl_core #(
-    parameter int Depth = 2,
+    parameter int Depth = 1,
     parameter int Width = 1,
     parameter bit EnableBypass = 1,
     // If 1, cover that the push side experiences backpressure.
@@ -34,7 +35,7 @@ module br_fifo_push_ctrl_core #(
     // If 1, then assert there are no valid bits asserted and that the FIFO is
     // empty at the end of the test.
     parameter bit EnableAssertFinalNotValid = 1,
-    localparam int AddrWidth = $clog2(Depth)
+    localparam int AddrWidth = br_math::clamped_clog2(Depth)
 ) (
     // Posedge-triggered clock.
     input logic clk,
@@ -66,6 +67,8 @@ module br_fifo_push_ctrl_core #(
   // Integration checks
   //------------------------------------------
 
+  `BR_ASSERT_STATIC(depth_must_be_at_least_one_a, Depth >= 1)
+
   br_flow_checks_valid_data_intg #(
       .NumFlows(1),
       .Width(Width),
@@ -90,20 +93,24 @@ module br_fifo_push_ctrl_core #(
   assign push_ready = !full;
 
   // RAM path
-  br_counter_incr #(
-      .MaxValue(Depth - 1),
-      .MaxIncrement(1),
-      .EnableAssertFinalNotValid(EnableAssertFinalNotValid)
-  ) br_counter_incr_wr_addr (
-      .clk,
-      .rst,
-      .reinit(1'b0),  // unused
-      .initial_value(AddrWidth'(1'b0)),
-      .incr_valid(ram_wr_valid),
-      .incr(1'b1),
-      .value(ram_wr_addr),
-      .value_next()  // unused
-  );
+  if (Depth > 1) begin : gen_wr_addr_counter
+    br_counter_incr #(
+        .MaxValue(Depth - 1),
+        .MaxIncrement(1),
+        .EnableAssertFinalNotValid(EnableAssertFinalNotValid)
+    ) br_counter_incr_wr_addr (
+        .clk,
+        .rst,
+        .reinit(1'b0),  // unused
+        .initial_value(AddrWidth'(1'b0)),
+        .incr_valid(ram_wr_valid),
+        .incr(1'b1),
+        .value(ram_wr_addr),
+        .value_next()  // unused
+    );
+  end else begin : gen_wr_addr_const
+    assign ram_wr_addr = '0;
+  end
 
   // Datapath
   if (EnableBypass) begin : gen_bypass

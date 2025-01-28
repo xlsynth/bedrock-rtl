@@ -24,10 +24,11 @@ module br_fifo_pop_ctrl #(
     parameter bit EnableBypass = 1,
     parameter int RamReadLatency = 0,
     parameter bit RegisterPopOutputs = 0,
+    parameter int RamDepth = Depth,
     // If 1, then assert there are no valid bits asserted and that the FIFO is
     // empty at the end of the test.
     parameter bit EnableAssertFinalNotValid = 1,
-    localparam int AddrWidth = $clog2(Depth),
+    localparam int AddrWidth = br_math::clamped_clog2(RamDepth),
     localparam int CountWidth = $clog2(Depth + 1)
 ) (
     // Posedge-triggered clock.
@@ -68,7 +69,7 @@ module br_fifo_pop_ctrl #(
   //------------------------------------------
   // Integration checks
   //------------------------------------------
-  `BR_ASSERT_STATIC(depth_must_be_at_least_one_a, Depth >= 2)
+  `BR_ASSERT_STATIC(depth_must_be_at_least_two_a, Depth >= 2)
   `BR_ASSERT_STATIC(bit_width_must_be_at_least_one_a, Width >= 1)
 
   `BR_ASSERT_INTG(ram_rd_latency_matches_a,
@@ -97,6 +98,7 @@ module br_fifo_pop_ctrl #(
       .EnableBypass(EnableBypass),
       .RamReadLatency(RamReadLatency),
       .RegisterPopOutputs(RegisterPopOutputs),
+      .RamDepth(RamDepth),
       .EnableAssertFinalNotValid(EnableAssertFinalNotValid)
   ) br_fifo_pop_ctrl_core (
       .clk,
