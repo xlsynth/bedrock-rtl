@@ -58,6 +58,13 @@ package br_math;
     end
   endfunction
 
+  // If value > 1, returns $clog2(value). Otherwise, returns 1.
+  // This function is useful for ensuring that address widths are at least 1.
+  // ri lint_check_waive TWO_STATE_TYPE
+  function automatic int clamped_clog2(input int value);
+    return (value <= 1) ? 1 : $clog2(value);
+  endfunction
+
   // Returns the minimum of two integers.
   // ri lint_check_waive TWO_STATE_TYPE
   function automatic int min2(input int a, input int b);

@@ -23,7 +23,7 @@
 `include "br_unused.svh"
 
 module br_ram_flops_1r1w #(
-    parameter int Depth = 2,  // Number of entries in the RAM. Must be at least 2.
+    parameter int Depth = 1,  // Number of entries in the RAM. Must be at least 1.
     parameter int Width = 1,  // Width of each entry in the RAM. Must be at least 1.
     // Number of tiles along the depth (address) dimension. Must be at least 1 and evenly divide Depth.
     parameter int DepthTiles = 1,
@@ -63,7 +63,7 @@ module br_ram_flops_1r1w #(
     parameter bit UseStructuredGates = 0,
     // If 1, then assert there are no valid bits asserted at the end of the test.
     parameter bit EnableAssertFinalNotValid = 1,
-    localparam int AddressWidth = $clog2(Depth),
+    localparam int AddressWidth = br_math::clamped_clog2(Depth),
     localparam int NumWords = Width / WordWidth,
     // Write latency in units of wr_clk cycles
     // ri lint_check_waive PARAM_NOT_USED
@@ -105,7 +105,7 @@ module br_ram_flops_1r1w #(
   //------------------------------------------
   // Integration checks
   //------------------------------------------
-  `BR_ASSERT_STATIC(depth_gte_2_a, Depth >= 2)
+  `BR_ASSERT_STATIC(depth_gte_1_a, Depth >= 1)
   `BR_ASSERT_STATIC(width_gte_1_a, Width >= 1)
 
   // DepthTiles checks
@@ -138,7 +138,7 @@ module br_ram_flops_1r1w #(
   //------------------------------------------
   // Implementation
   //------------------------------------------
-  localparam int TileAddressWidth = $clog2(TileDepth);
+  localparam int TileAddressWidth = br_math::clamped_clog2(TileDepth);
 
   logic [DepthTiles-1:0] tile_wr_valid;
   logic [DepthTiles-1:0][TileAddressWidth-1:0] tile_wr_addr;

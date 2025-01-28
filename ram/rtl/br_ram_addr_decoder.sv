@@ -28,8 +28,8 @@
 `include "br_unused.svh"
 
 module br_ram_addr_decoder #(
-    // Depth of the RAM. Must be at least 2.
-    parameter int Depth = 2,
+    // Depth of the RAM. Must be at least 1.
+    parameter int Depth = 1,
     // Sideband signals to pipeline in lockstep with the address decoding.
     // Safe to tie-off if not used. Must be at least 1.
     parameter int DataWidth = 1,
@@ -41,8 +41,8 @@ module br_ram_addr_decoder #(
     // If 1, then assert there are no valid bits asserted at the end of the test.
     parameter bit EnableAssertFinalNotValid = 1,
     localparam int TileDepth = br_math::ceil_div(Depth, Tiles),
-    localparam int InputAddressWidth = $clog2(Depth),
-    localparam int OutputAddressWidth = $clog2(TileDepth)
+    localparam int InputAddressWidth = br_math::clamped_clog2(Depth),
+    localparam int OutputAddressWidth = br_math::clamped_clog2(TileDepth)
 ) (
     // Posedge-triggered clock.
     // Can be unused if Stages == 0.
@@ -65,7 +65,7 @@ module br_ram_addr_decoder #(
   //------------------------------------------
   // Integration checks
   //------------------------------------------
-  `BR_ASSERT_STATIC(depth_gte1_a, Depth >= 2)
+  `BR_ASSERT_STATIC(depth_gte1_a, Depth >= 1)
   `BR_ASSERT_STATIC(data_width_gte1_a, DataWidth >= 1)
   `BR_ASSERT_STATIC(tiles_gte1_a, Tiles >= 1)
   `BR_ASSERT_STATIC(tiles_evenly_divides_depth_a, (Tiles * TileDepth) == Depth)
@@ -98,16 +98,35 @@ module br_ram_addr_decoder #(
 
     // Common case: multiple tiles, i.e., requires decoding to one of them (replicated delay registers)
   end else begin : gen_tiles_gt1
-    `BR_ASSERT_STATIC(output_address_width_ok_a, OutputAddressWidth < InputAddressWidth)
+    if (TileDepth > 1) begin : gen_address_width_check
+      `BR_ASSERT_STATIC(output_address_width_ok_a, OutputAddressWidth < InputAddressWidth)
+    end
 
     logic [Tiles-1:0]                         internal_out_valid;
     logic [Tiles-1:0][OutputAddressWidth-1:0] internal_out_addr;
     logic [Tiles-1:0][         DataWidth-1:0] internal_out_data;
 
-    // If Depth is a power of 2 (and Tiles evenly divides it), then we know we can
-    // decode the address by looking only at the MSBs as the tile select bits,
-    // and simply slice them off.
-    if (br_math::is_power_of_2(Depth)) begin : gen_demux_impl
+    if (TileDepth == 1) begin : gen_tile_depth_eq1
+      // If each tile only has one entry, the out valid is just a onehot
+      // decoding of the input address. The out address is always 0.
+
+      br_demux_bin #(
+          .NumSymbolsOut(Tiles),
+          .SymbolWidth(DataWidth),
+          .EnableAssertFinalNotValid(EnableAssertFinalNotValid)
+      ) br_demux_bin (
+          .select(in_addr),
+          .in_valid(in_valid),
+          .in(in_data),
+          .out_valid(internal_out_valid),
+          .out(internal_out_data)
+      );
+
+      assign internal_out_addr = '0;
+    end else if (br_math::is_power_of_2(Depth)) begin : gen_demux_impl
+      // If Depth is a power of 2 (and Tiles evenly divides it), then we know we can
+      // decode the address by looking only at the MSBs as the tile select bits,
+      // and simply slice them off.
       localparam int TileSelectWidth = $clog2(Tiles);
       localparam int SelectMsb = InputAddressWidth - 1;
       localparam int SelectLsb = (SelectMsb - TileSelectWidth) + 1;
