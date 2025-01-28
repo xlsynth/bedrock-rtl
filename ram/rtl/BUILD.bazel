@@ -119,6 +119,10 @@ br_verilog_elab_and_lint_test_suite(
             "0",
             "1",
         ],
+        "EnableBypass": [
+            "0",
+            "1",
+        ],
     },
     top = "br_ram_flops_1r1w_tile",
     deps = [
