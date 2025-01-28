@@ -53,6 +53,12 @@ module br_math_pkg_tb;
   `BR_ASSERT_STATIC(clogb_4_7_a, br_math::clogb(4, 7) == 2)
   `BR_ASSERT_STATIC(clogb_4_8_a, br_math::clogb(4, 8) == 2)
 
+  // Test cases for clamped_clog2 function
+  `BR_ASSERT_STATIC(clamped_clog2_1_a, br_math::clamped_clog2(1) == 1)
+  `BR_ASSERT_STATIC(clamped_clog2_2_a, br_math::clamped_clog2(2) == 1)
+  `BR_ASSERT_STATIC(clamped_clog2_3_a, br_math::clamped_clog2(3) == 2)
+  `BR_ASSERT_STATIC(clamped_clog2_4_a, br_math::clamped_clog2(4) == 2)
+
   // Test cases for is_power_of_2 function
   `BR_ASSERT_STATIC(ispowerof2_0_a, br_math::is_power_of_2(0) == 1)
 

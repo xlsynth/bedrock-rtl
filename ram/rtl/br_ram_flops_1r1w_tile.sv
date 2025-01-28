@@ -27,7 +27,7 @@
 `include "br_unused.svh"
 
 module br_ram_flops_1r1w_tile #(
-    parameter int Depth = 2,  // Must be at least 2
+    parameter int Depth = 1,  // Must be at least 1
     parameter int Width = 1,  // Must be at least 1
     // If 1, allow partial writes to the memory using the wr_word_en signal.
     // If 0, only full writes are allowed and wr_word_en is ignored.
@@ -49,7 +49,7 @@ module br_ram_flops_1r1w_tile #(
     parameter bit UseStructuredGates = 0,
     // If 1, then assert there are no valid bits asserted at the end of the test.
     parameter bit EnableAssertFinalNotValid = 1,
-    localparam int AddrWidth = $clog2(Depth),
+    localparam int AddrWidth = br_math::clamped_clog2(Depth),
     localparam int NumWords = Width / WordWidth
 ) (
     input logic                 wr_clk,
@@ -78,7 +78,7 @@ module br_ram_flops_1r1w_tile #(
   //------------------------------------------
   // Integration checks
   //------------------------------------------
-  `BR_ASSERT_STATIC(depth_gte2_a, Depth >= 2)
+  `BR_ASSERT_STATIC(depth_gte1_a, Depth >= 1)
   `BR_ASSERT_STATIC(width_gte1_a, Width >= 1)
   `BR_ASSERT_STATIC(no_bypass_with_structured_gates_a, !(EnableBypass && UseStructuredGates))
 
@@ -106,100 +106,139 @@ module br_ram_flops_1r1w_tile #(
   //------------------------------------------
   // Implementation
   //------------------------------------------
-  // Storage flops are on the write clock but read asynchronously
-  // from the read clock.
-  logic [NumWords-1:0][WordWidth-1:0] mem[Depth];
+  if (Depth == 1) begin : gen_single_entry
+    logic [NumWords-1:0][WordWidth-1:0] mem;
 
-  // Write port and memory. We avoid the BR_REG* coding style so that certain emulation tools
-  // can correctly recognize this behavior as a memory.
-  if (EnablePartialWrite) begin : gen_partial_write
-    logic [NumWords-1:0][WordWidth-1:0] wr_data_words;
-
-    assign wr_data_words = wr_data;
-
-    if (EnableReset) begin : gen_reset
-      always_ff @(posedge wr_clk) begin
-        if (wr_rst) begin
-          // Loop required over entries since cannot assign a packed type ('0) to an unpacked type (mem).
-          for (int i = 0; i < Depth; i++) begin
-            mem[i] <= '0;
-          end
-        end else if (wr_valid) begin
-          for (int i = 0; i < NumWords; i++) begin
-            if (wr_word_en[i]) begin
-              mem[wr_addr][i] <= wr_data_words[i];  // ri lint_check_waive VAR_INDEX_WRITE
-            end
-          end
+    if (EnablePartialWrite) begin : gen_partial_write
+      for (genvar i = 0; i < NumWords; i++) begin : gen_word
+        if (EnableReset) begin : gen_reset
+          `BR_REGLX(mem[i], wr_data[i*WordWidth+:WordWidth], wr_valid && wr_word_en[i], wr_clk,
+                    wr_rst)
+        end else begin : gen_no_reset
+          `BR_REGLNX(mem[i], wr_data[i*WordWidth+:WordWidth], wr_valid && wr_word_en[i], wr_clk)
         end
       end
-    end else begin : gen_no_reset
-      always_ff @(posedge wr_clk) begin
-        if (wr_valid) begin
-          for (int i = 0; i < NumWords; i++) begin
-            if (wr_word_en[i]) begin
-              mem[wr_addr][i] <= wr_data_words[i];  // ri lint_check_waive VAR_INDEX_WRITE
-            end
-          end
-        end
+    end else begin : gen_full_write
+      if (EnableReset) begin : gen_reset
+        `BR_REGLX(mem, wr_data, wr_valid, wr_clk, wr_rst)
+      end else begin : gen_no_reset
+        `BR_REGLNX(mem, wr_data, wr_valid, wr_clk)
       end
-    end
-  end else begin : gen_no_partial_write
-    if (EnableReset) begin : gen_reset
-      always_ff @(posedge wr_clk) begin
-        if (wr_rst) begin
-          // Loop required over entries since cannot assign a packed type ('0) to an unpacked type (mem).
-          for (int i = 0; i < Depth; i++) begin
-            mem[i] <= '0;
-          end
-        end else if (wr_valid) begin
-          mem[wr_addr] <= wr_data;  // ri lint_check_waive VAR_INDEX_WRITE
-        end
-      end
-    end else begin : gen_no_reset
-      always_ff @(posedge wr_clk) begin
-        if (wr_valid) begin
-          mem[wr_addr] <= wr_data;  // ri lint_check_waive VAR_INDEX_WRITE
-        end
-      end
-    end
-    `BR_UNUSED(wr_word_en)
-  end
-
-  // Read port
-  assign rd_data_valid = rd_addr_valid;
-  if (UseStructuredGates) begin : gen_structured_read
-    // Need to convert memory to packed array
-    logic [Depth-1:0][Width-1:0] mem_packed;
-
-    for (genvar i = 0; i < Depth; i++) begin : gen_mem_packed
-      assign mem_packed[i] = mem[i];
+      `BR_UNUSED(wr_word_en)
     end
 
-    br_mux_bin #(
-        .NumSymbolsIn(Depth),
-        .SymbolWidth(Width),
-        .UseStructuredGates(1)
-    ) br_mux_bin_inst (
-        .select(rd_addr),
-        .in(mem_packed),
-        .out(rd_data),
-        .out_valid()
-    );
-  end else begin : gen_behavioral_read
+    assign rd_data_valid = rd_addr_valid;
     if (EnableBypass) begin : gen_bypass
       if (EnablePartialWrite) begin : gen_partial_write_bypass
         for (genvar i = 0; i < NumWords; i++) begin : gen_partial_write_bypass_word
           assign rd_data[i*WordWidth +: WordWidth] =
-              (wr_valid && (wr_addr == rd_addr) && wr_word_en[i]) ?
-                  wr_data[i*WordWidth +: WordWidth] : mem[rd_addr][i];
+              (wr_valid && wr_word_en[i]) ?
+                  wr_data[i*WordWidth +: WordWidth] : mem[i];
         end
       end else begin : gen_full_write_bypass
-        // ri lint_check_waive VAR_INDEX_READ
-        assign rd_data = (wr_valid && (wr_addr == rd_addr)) ? wr_data : mem[rd_addr];
+        assign rd_data = wr_valid ? wr_data : mem;
       end
     end else begin : gen_no_bypass
-      // ri lint_check_waive VAR_INDEX_READ
-      assign rd_data = mem[rd_addr];
+      assign rd_data = mem;
+    end
+
+    `BR_UNUSED_NAMED(single_entry_addr, {wr_addr, rd_addr})
+  end else begin : gen_multi_entry
+    // Storage flops are on the write clock but read asynchronously
+    // from the read clock.
+    logic [NumWords-1:0][WordWidth-1:0] mem[Depth];
+
+    // Write port and memory. We avoid the BR_REG* coding style so that certain emulation tools
+    // can correctly recognize this behavior as a memory.
+    if (EnablePartialWrite) begin : gen_partial_write
+      logic [NumWords-1:0][WordWidth-1:0] wr_data_words;
+
+      assign wr_data_words = wr_data;
+
+      if (EnableReset) begin : gen_reset
+        always_ff @(posedge wr_clk) begin
+          if (wr_rst) begin
+            // Loop required over entries since cannot assign a packed type ('0) to an unpacked type (mem).
+            for (int i = 0; i < Depth; i++) begin
+              mem[i] <= '0;
+            end
+          end else if (wr_valid) begin
+            for (int i = 0; i < NumWords; i++) begin
+              if (wr_word_en[i]) begin
+                mem[wr_addr][i] <= wr_data_words[i];  // ri lint_check_waive VAR_INDEX_WRITE
+              end
+            end
+          end
+        end
+      end else begin : gen_no_reset
+        always_ff @(posedge wr_clk) begin
+          if (wr_valid) begin
+            for (int i = 0; i < NumWords; i++) begin
+              if (wr_word_en[i]) begin
+                mem[wr_addr][i] <= wr_data_words[i];  // ri lint_check_waive VAR_INDEX_WRITE
+              end
+            end
+          end
+        end
+      end
+    end else begin : gen_no_partial_write
+      if (EnableReset) begin : gen_reset
+        always_ff @(posedge wr_clk) begin
+          if (wr_rst) begin
+            // Loop required over entries since cannot assign a packed type ('0) to an unpacked type (mem).
+            for (int i = 0; i < Depth; i++) begin
+              mem[i] <= '0;
+            end
+          end else if (wr_valid) begin
+            mem[wr_addr] <= wr_data;  // ri lint_check_waive VAR_INDEX_WRITE
+          end
+        end
+      end else begin : gen_no_reset
+        always_ff @(posedge wr_clk) begin
+          if (wr_valid) begin
+            mem[wr_addr] <= wr_data;  // ri lint_check_waive VAR_INDEX_WRITE
+          end
+        end
+      end
+      `BR_UNUSED(wr_word_en)
+    end
+
+    // Read port
+    assign rd_data_valid = rd_addr_valid;
+    if (UseStructuredGates) begin : gen_structured_read
+      // Need to convert memory to packed array
+      logic [Depth-1:0][Width-1:0] mem_packed;
+
+      for (genvar i = 0; i < Depth; i++) begin : gen_mem_packed
+        assign mem_packed[i] = mem[i];
+      end
+
+      br_mux_bin #(
+          .NumSymbolsIn(Depth),
+          .SymbolWidth(Width),
+          .UseStructuredGates(1)
+      ) br_mux_bin_inst (
+          .select(rd_addr),
+          .in(mem_packed),
+          .out(rd_data),
+          .out_valid()
+      );
+    end else begin : gen_behavioral_read
+      if (EnableBypass) begin : gen_bypass
+        if (EnablePartialWrite) begin : gen_partial_write_bypass
+          for (genvar i = 0; i < NumWords; i++) begin : gen_partial_write_bypass_word
+            assign rd_data[i*WordWidth +: WordWidth] =
+                (wr_valid && (wr_addr == rd_addr) && wr_word_en[i]) ?
+                    wr_data[i*WordWidth +: WordWidth] : mem[rd_addr][i];
+          end
+        end else begin : gen_full_write_bypass
+          // ri lint_check_waive VAR_INDEX_READ
+          assign rd_data = (wr_valid && (wr_addr == rd_addr)) ? wr_data : mem[rd_addr];
+        end
+      end else begin : gen_no_bypass
+        // ri lint_check_waive VAR_INDEX_READ
+        assign rd_data = mem[rd_addr];
+      end
     end
   end
 

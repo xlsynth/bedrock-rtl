@@ -119,10 +119,6 @@ br_verilog_elab_and_lint_test_suite(
             "0",
             "1",
         ],
-        "EnableBypass": [
-            "0",
-            "1",
-        ],
     },
     top = "br_ram_flops_1r1w_tile",
     deps = [
@@ -144,6 +140,29 @@ br_verilog_elab_and_lint_test_suite(
         ":br_ram_flops_1r1w_tile",
         "//gate/rtl:br_gate_mock",
     ],
+)
+
+br_verilog_elab_and_lint_test_suite(
+    name = "br_ram_flops_1r1w_tile_test_suite_single_entry",
+    params = {
+        "EnableBypass": [
+            "0",
+            "1",
+        ],
+        "EnablePartialWrite": [
+            "0",
+            "1",
+        ],
+        "EnableReset": [
+            "0",
+            "1",
+        ],
+        "Depth": ["1"],
+        "Width": ["8"],
+        "WordWidth": ["2"],
+    },
+    top = "br_ram_flops_1r1w_tile",
+    deps = [":br_ram_flops_1r1w_tile"],
 )
 
 br_verilog_elab_and_lint_test_suite(
@@ -183,6 +202,7 @@ br_verilog_elab_and_lint_test_suite(
             "2",
             "4",
             "8",
+            "32",
         ],
         "Stages": [
             "0",
@@ -206,6 +226,7 @@ br_verilog_elab_and_lint_test_suite(
             "3",
             "5",
             "6",
+            "30",
         ],
         "Stages": [
             "0",
@@ -404,6 +425,60 @@ br_verilog_elab_and_lint_test_suite(
         "Width": ["8"],
         "TileEnableBypass": ["0"],
         "UseStructuredGates": ["1"],
+    },
+    top = "br_ram_flops_1r1w",
+    deps = [
+        ":br_ram_flops_1r1w",
+        "//gate/rtl:br_gate_mock",
+    ],
+)
+
+br_verilog_elab_and_lint_test_suite(
+    name = "br_ram_flops_1r1w_test_suite_single_tile_single_entry",
+    params = {
+        "TileEnableBypass": [
+            "0",
+            "1",
+        ],
+        "EnablePartialWrite": [
+            "0",
+            "1",
+        ],
+        "EnableMemReset": [
+            "0",
+            "1",
+        ],
+        "Depth": ["1"],
+        "Width": ["8"],
+        "WordWidth": ["2"],
+    },
+    top = "br_ram_flops_1r1w",
+    deps = [
+        ":br_ram_flops_1r1w",
+        "//gate/rtl:br_gate_mock",
+    ],
+)
+
+br_verilog_elab_and_lint_test_suite(
+    name = "br_ram_flops_1r1w_test_suite_multi_tile_single_entry",
+    params = {
+        "TileEnableBypass": [
+            "0",
+            "1",
+        ],
+        "EnablePartialWrite": [
+            "0",
+            "1",
+        ],
+        "EnableMemReset": [
+            "0",
+            "1",
+        ],
+        "Depth": ["2"],
+        "DepthTiles": ["2"],
+        "WidthTiles": ["2"],
+        "Width": ["8"],
+        "WordWidth": ["2"],
     },
     top = "br_ram_flops_1r1w",
     deps = [
