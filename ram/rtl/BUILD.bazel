@@ -52,6 +52,19 @@ verilog_library(
 )
 
 verilog_library(
+    name = "br_ram_flops_multi_rw_tile",
+    srcs = ["br_ram_flops_multi_rw_tile.sv"],
+    deps = [
+        "//enc/rtl:br_enc_bin2onehot",
+        "//macros:br_asserts_internal",
+        "//macros:br_registers",
+        "//macros:br_unused",
+        "//mux/rtl:br_mux_bin",
+        "//mux/rtl:br_mux_onehot",
+    ],
+)
+
+verilog_library(
     name = "br_ram_addr_decoder",
     srcs = ["br_ram_addr_decoder.sv"],
     deps = [
@@ -499,4 +512,82 @@ br_verilog_elab_and_lint_test_suite(
         "WordWidth": ["8"],
     },
     deps = [":br_ram_flops_1r1w_mock"],
+)
+
+br_verilog_elab_and_lint_test_suite(
+    name = "br_ram_flops_multi_rw_tile_test_suite_full_write",
+    params = {
+        "Depth": [
+            "2",
+            "7",
+        ],
+        "Width": [
+            "1",
+            "16",
+        ],
+        "EnableBypass": [
+            "0",
+            "1",
+        ],
+        "EnableReset": [
+            "0",
+            "1",
+        ],
+        "NumWritePorts": [
+            "1",
+            "2",
+        ],
+        "NumReadPorts": [
+            "1",
+            "2",
+        ],
+        "EnablePartialWrite": ["0"],
+    },
+    top = "br_ram_flops_multi_rw_tile",
+    deps = [
+        ":br_ram_flops_multi_rw_tile",
+        "//gate/rtl:br_gate_mock",
+    ],
+)
+
+br_verilog_elab_and_lint_test_suite(
+    name = "br_ram_flops_multi_rw_tile_test_suite_partial_write",
+    params = {
+        "EnablePartialWrite": ["1"],
+        "Depth": ["4"],
+        "Width": ["12"],
+        "WordWidth": [
+            "3",
+            "4",
+            "12",
+        ],
+        "EnableReset": [
+            "0",
+            "1",
+        ],
+        "NumWritePorts": [
+            "1",
+            "2",
+        ],
+    },
+    top = "br_ram_flops_multi_rw_tile",
+    deps = [
+        ":br_ram_flops_multi_rw_tile",
+        "//gate/rtl:br_gate_mock",
+    ],
+)
+
+br_verilog_elab_and_lint_test_suite(
+    name = "br_ram_flops_multi_rw_tile_test_suite_structured_gates",
+    params = {
+        "Depth": ["12"],
+        "Width": ["8"],
+        "EnableBypass": ["0"],
+        "UseStructuredGates": ["1"],
+    },
+    top = "br_ram_flops_multi_rw_tile",
+    deps = [
+        ":br_ram_flops_multi_rw_tile",
+        "//gate/rtl:br_gate_mock",
+    ],
 )
