@@ -52,7 +52,13 @@ module br_arb_pri_rr #(
   // Integration checks
   //------------------------------------------
 
+  `BR_ASSERT_STATIC(num_requesters_gte_2_a, NumRequesters >= 2)
+  `BR_ASSERT_STATIC(num_priorities_gte_2_a, NumPriorities >= 2)
+
   `BR_COVER_INTG(request_multihot_c, !$onehot0(request))
+  for (genvar i = 0; i < NumRequesters; i++) begin : gen_intg_checks
+    `BR_ASSERT_INTG(request_priority_range_a, request[i] |-> request_priority[i] < NumPriorities)
+  end
 
   //------------------------------------------
   // Implementation
@@ -178,9 +184,5 @@ module br_arb_pri_rr #(
   `BR_ASSERT_IMPL(always_grant_A, |request |-> |grant)
   `BR_ASSERT_IMPL(grant_implies_request_A, (grant & request) == grant)
   `BR_COVER_IMPL(grant_without_state_update_C, !enable_priority_update && |grant)
-
-  for (genvar i = 0; i < NumRequesters; i++) begin : gen_priority_range
-    `BR_ASSERT_IMPL(requested_priority_range_A, request[i] |-> request_priority[i] < NumPriorities)
-  end
 
 endmodule : br_arb_pri_rr
