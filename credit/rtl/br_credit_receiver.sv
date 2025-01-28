@@ -191,7 +191,8 @@ module br_credit_receiver #(
   `BR_COVER_IMPL(passthru_credit_c, pop_credit && push_credit_internal && credit_count == '0)
   `BR_COVER_IMPL(passthru_credit_nonzero_count_c,
                  pop_credit && push_credit_internal && credit_count > '0)
-  `BR_ASSERT_IMPL(over_withhold_a, credit_withhold > credit_count |-> !push_credit_internal)
+  `BR_ASSERT_IMPL(over_withhold_a,
+                  credit_withhold > (credit_count + pop_credit) |-> !push_credit_internal)
   `BR_ASSERT_IMPL(withhold_and_release_a,
                   credit_count == credit_withhold && push_credit_internal |-> pop_credit)
 
