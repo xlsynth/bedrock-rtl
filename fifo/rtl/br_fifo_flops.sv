@@ -181,7 +181,7 @@ module br_fifo_flops #(
       .ram_rd_data
   );
 
-  br_ram_flops_1r1w #(
+  br_ram_flops #(
       .Depth(RamDepth),
       .Width(Width),
       .DepthTiles(FlopRamDepthTiles),
@@ -194,7 +194,7 @@ module br_fifo_flops #(
       // Flops don't need to be reset, since uninitialized cells will never be read
       .EnableMemReset(0),
       .EnableAssertFinalNotValid(EnableAssertFinalNotValid)
-  ) br_ram_flops_1r1w (
+  ) br_ram_flops (
       .wr_clk(clk),  // ri lint_check_waive SAME_CLOCK_NAME
       .wr_rst(rst),
       .wr_valid(ram_wr_valid),

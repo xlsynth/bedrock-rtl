@@ -22,7 +22,7 @@ verilog_library(
     name = "br_ram_flops_1r1w_tb",
     srcs = ["br_ram_flops_1r1w_tb.sv"],
     deps = [
-        "//ram/rtl:br_ram_flops_1r1w",
+        "//ram/rtl:br_ram_flops",
         "//ram/rtl:br_ram_flops_1r1w_mock",
     ],
 )
