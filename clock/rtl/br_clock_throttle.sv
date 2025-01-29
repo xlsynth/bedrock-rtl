@@ -72,7 +72,8 @@ module br_clock_throttle #(
 
   br_counter_incr #(
       .MaxValue((2 ** CntrWidth) - 1),
-      .MaxIncrement(1)
+      .MaxIncrement(1),
+      .EnableReinitAndIncr(0)
   ) br_counter_incr (
       .clk(clk_in),  // ri lint_check_waive SAME_CLOCK_NAME
       .rst,
