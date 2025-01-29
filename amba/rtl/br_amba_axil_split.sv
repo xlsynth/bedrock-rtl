@@ -121,7 +121,7 @@ module br_amba_axil_split #(
   //------------------------------------------
   `BR_ASSERT_STATIC(addr_width_must_be_at_least_12_a, AddrWidth >= 12)
   `BR_ASSERT_STATIC(data_width_must_be_at_least_32_a, DataWidth >= 32)
-  `BR_ASSERT_IMPL(branch_end_addr_after_start_addr_a, branch_end_addr > branch_start_addr)
+  `BR_ASSERT_INTG(branch_end_addr_after_start_addr_a, branch_end_addr > branch_start_addr)
   `BR_ASSERT_STATIC(max_out_reads_must_be_at_least_1_a, MaxOutstandingReads >= 1)
   `BR_ASSERT_STATIC(max_out_writes_must_be_at_least_1_a, MaxOutstandingWrites >= 1)
 
