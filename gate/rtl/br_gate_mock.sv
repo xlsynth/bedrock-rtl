@@ -121,7 +121,7 @@ endmodule : br_gate_clk_mux2
 
 // Integrated Clock Gate
 module br_gate_icg (
-    input  logic clk_in,
+    input  logic clk,
     input  logic en,
     output logic clk_out
 );
@@ -129,18 +129,18 @@ module br_gate_icg (
   logic latch_en;
 
   always_latch begin
-    if (!clk_in) begin
+    if (!clk) begin
       latch_en = en;
     end
   end
 
-  assign clk_out = clk_in & latch_en;
+  assign clk_out = clk & latch_en;
 
 endmodule : br_gate_icg
 
 // Integrated Clock Gate with Synchronous Reset
 module br_gate_icg_rst (
-    input logic clk_in,
+    input logic clk,
     input logic en,
     input logic rst,  // sync reset
     output logic clk_out
@@ -149,12 +149,12 @@ module br_gate_icg_rst (
   logic latch_en;
 
   always_latch begin
-    if (!clk_in) begin
+    if (!clk) begin
       latch_en = rst | en;
     end
   end
 
-  assign clk_out = clk_in & latch_en;
+  assign clk_out = clk & latch_en;
 
 endmodule : br_gate_icg_rst
 

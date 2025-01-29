@@ -20,13 +20,14 @@
 // skip with a trigger event occurs.
 
 `include "br_asserts_internal.svh"
+`include "br_registers.svh"
 
 module br_clock_throttle #(
     parameter int CntrWidth   = 2,  // must be at least 2
     parameter bit SyncTrigger = 1   // 0 for async trigger, 1 for sync trigger
 ) (
     // Input clock
-    input logic clk_in,
+    input logic clk,
     // Synchronous active-high reset
     input logic rst,
 
@@ -41,6 +42,8 @@ module br_clock_throttle #(
     input logic [CntrWidth-1:0] skip_value
 );
 
+  localparam int CntrMaxValue = (2 ** CntrWidth) - 1;
+
   //------------------------------------------
   // Integration checks
   //------------------------------------------
@@ -52,34 +55,44 @@ module br_clock_throttle #(
   //------------------------------------------
 
   logic sync_trigger;
+  logic cntr_en, cntr_en_set, cntr_en_clr;
   logic clk_en;
   logic [CntrWidth-1:0] cntr_value;
   logic cntr_reinit;
-  logic cntr_incr;
 
+  // Configurable synchronization of trigger signal
   if (SyncTrigger) begin : gen_sync_trigger
     assign sync_trigger = trigger;
   end else begin : gen_async_trigger
     br_gate_cdc_sync br_gate_cdc_sync_trigger (
-        .clk(clk_in),  // ri lint_check_waive SAME_CLOCK_NAME
-        .in(trigger),
+        .clk,
+        .in (trigger),
         .out(sync_trigger)
     );
   end
 
-  assign cntr_reinit = !throttle_en || !sync_trigger;
-  assign cntr_incr   = throttle_en && sync_trigger;
+  // Start the counter when throttle is enabled and trigger is asserted. It should keep running
+  // until the counter reaches the max value and then we can check to see if the trigger is still
+  // asserted. If the trigger is not deasserted, the counter will contine to run. It will wrap
+  // around to 0 and start again.
+  `BR_REG(cntr_en, cntr_en_set | (cntr_en && !cntr_en_clr))
+  assign cntr_en_set = throttle_en && sync_trigger;
+  assign cntr_en_clr = (cntr_value == CntrMaxValue) && (!throttle_en || !sync_trigger);
 
+  // Reset the counter to 0 when the counter is first enabled. Once it's running, it will wrap
+  // around to 0 after hitting the max value.
+  assign cntr_reinit = !cntr_en && cntr_en_set;
+
+  // Counter instance
   br_counter_incr #(
-      .MaxValue((2 ** CntrWidth) - 1),
-      .MaxIncrement(1),
-      .EnableReinitAndIncr(0)
+      .MaxValue(CntrMaxValue),
+      .MaxIncrement(1)
   ) br_counter_incr (
-      .clk(clk_in),  // ri lint_check_waive SAME_CLOCK_NAME
+      .clk,
       .rst,
       .reinit(cntr_reinit),
       .initial_value({CntrWidth{1'b0}}),
-      .incr_valid(cntr_incr),
+      .incr_valid(cntr_en),
       .incr(1'b1),
       .value(cntr_value),
       .value_next()
@@ -89,10 +102,11 @@ module br_clock_throttle #(
   // * Throttle is disabled
   // * Trigger is not asserted
   // * Counter value is greater than or equal to skip_value
-  assign clk_en = !throttle_en || !sync_trigger || (cntr_value >= skip_value);
+  assign clk_en = !throttle_en || !cntr_en || (cntr_value >= skip_value);
 
+  // Clock gate
   br_gate_icg_rst br_gate_icg_rst (
-      .clk_in,
+      .clk,
       .en(clk_en),
       .rst,
       .clk_out

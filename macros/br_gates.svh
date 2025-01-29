@@ -88,17 +88,17 @@ br_gate_clk_mux2 br_gate_clk_mux2_``__out__`` ( \
 );
 
 // Integrated Clock Gate
-`define BR_GATE_ICG(__clk_out__, __clk_in__, __en__) \
+`define BR_GATE_ICG(__clk_out__, __clk__, __en__) \
 br_gate_icg br_gate_icg_``__clk_out__`` ( \
-    .clk_in(__clk_in__), \
+    .clk(__clk__), \
     .en(__en__), \
     .clk_out(__clk_out__) \
 );
 
 // Integrated Clock Gate with Synchronous Reset
-`define BR_GATE_ICG_RST(__clk_out__, __clk_in__, __en__, __rst__) \
+`define BR_GATE_ICG_RST(__clk_out__, __clk__, __en__, __rst__) \
 br_gate_icg_rst br_gate_icg_rst_``__clk_out__`` ( \
-    .clk_in(__clk_in__), \
+    .clk(__clk__), \
     .en(__en__), \
     .rst(__rst__), \
     .clk_out(__clk_out__) \

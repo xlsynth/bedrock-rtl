@@ -23,6 +23,7 @@ verilog_library(
     deps = [
         "//counter/rtl:br_counter_incr",
         "//macros:br_asserts_internal",
+        "//macros:br_registers",
     ],
 )
 
