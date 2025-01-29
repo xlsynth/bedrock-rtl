@@ -31,14 +31,14 @@ module br_amba_axil_split #(
     parameter int WUserWidth = 1,
     parameter int ARUserWidth = 1,
     parameter int RUserWidth = 1,
-    parameter logic [AddrWidth-1:0] BranchStartAddr = {AddrWidth{1'b0}},
-    parameter logic [AddrWidth-1:0] BranchEndAddr = {AddrWidth{1'b1}},
     parameter int MaxOutstandingReads = 1,  // Must be at least 1
     parameter int MaxOutstandingWrites = 1,  // Must be at least 1
     localparam int StrobeWidth = DataWidth / 8
 ) (
     input clk,
     input rst,  // Synchronous, active-high reset
+    input logic [AddrWidth-1:0] branch_start_addr,
+    input logic [AddrWidth-1:0] branch_end_addr,
 
     // AXI4-Lite root target interface
     input  logic [            AddrWidth-1:0] root_awaddr,
@@ -121,7 +121,7 @@ module br_amba_axil_split #(
   //------------------------------------------
   `BR_ASSERT_STATIC(addr_width_must_be_at_least_12_a, AddrWidth >= 12)
   `BR_ASSERT_STATIC(data_width_must_be_at_least_32_a, DataWidth >= 32)
-  `BR_ASSERT_STATIC(branch_end_addr_after_start_addr_a, BranchEndAddr > BranchStartAddr)
+  `BR_ASSERT_INTG(branch_end_addr_after_start_addr_a, branch_end_addr > branch_start_addr)
   `BR_ASSERT_STATIC(max_out_reads_must_be_at_least_1_a, MaxOutstandingReads >= 1)
   `BR_ASSERT_STATIC(max_out_writes_must_be_at_least_1_a, MaxOutstandingWrites >= 1)
 
@@ -147,10 +147,10 @@ module br_amba_axil_split #(
   assign b_handshake_valid = root_bvalid && root_bready;
 
   // ri lint_check_off INVALID_COMPARE
-  assign branch_awaddr_in_range = (root_awaddr >= BranchStartAddr) &&
-                                  (root_awaddr <= BranchEndAddr);
-  assign branch_araddr_in_range = (root_araddr >= BranchStartAddr) &&
-                                  (root_araddr <= BranchEndAddr);
+  assign branch_awaddr_in_range = (root_awaddr >= branch_start_addr) &&
+                                  (root_awaddr <= branch_end_addr);
+  assign branch_araddr_in_range = (root_araddr >= branch_start_addr) &&
+                                  (root_araddr <= branch_end_addr);
   // ri lint_check_on INVALID_COMPARE
 
   // Counters to track outstanding read transactions
