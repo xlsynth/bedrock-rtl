@@ -80,14 +80,8 @@ module br_enc_bin2onehot #(
   // Implementation
   //------------------------------------------
   always_comb begin
-    out = '0;
-    if (in_valid) begin
-      for (int i = 0; i < NumValues; i++) begin
-        if (in == i) begin
-          out[i] = 1'b1;
-          break;
-        end
-      end
+    for (int i = 0; i < NumValues; i++) begin
+      out[i] = in_valid && (in == i);
     end
   end
 
