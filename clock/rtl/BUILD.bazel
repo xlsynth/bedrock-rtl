@@ -21,13 +21,23 @@ verilog_library(
     name = "br_clock_throttle",
     srcs = ["br_clock_throttle.sv"],
     deps = [
-        "//counter:br_counter_incr",
+        "//counter/rtl:br_counter_incr",
         "//macros:br_asserts_internal",
     ],
 )
 
 br_verilog_elab_and_lint_test_suite(
     name = "br_clock_throttle_test_suite",
+    params = {
+        "CntrWidth": [
+            "2",
+            "5",
+        ],
+        "SyncTrigger": [
+            "0",
+            "1",
+        ],
+    },
     top = "br_clock_throttle",
     deps = [
         ":br_clock_throttle",

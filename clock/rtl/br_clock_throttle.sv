@@ -22,7 +22,7 @@
 `include "br_asserts_internal.svh"
 
 module br_clock_throttle #(
-    parameter int CntrWidth   = 1,  // must be at least 1
+    parameter int CntrWidth   = 2,  // must be at least 2
     parameter bit SyncTrigger = 1   // 0 for async trigger, 1 for sync trigger
 ) (
     // Input clock
@@ -44,7 +44,8 @@ module br_clock_throttle #(
   //------------------------------------------
   // Integration checks
   //------------------------------------------
-  `BR_ASSERT_STATIC(cntr_width_must_be_at_least_1_a, CntrWidth >= 1)
+  `BR_ASSERT_STATIC(cntr_width_must_be_at_least_2_a, CntrWidth >= 2)
+  `BR_ASSERT_STATIC(sync_trigger_must_be_0_or_1_a, (SyncTrigger == 0) || (SyncTrigger == 1))
 
   //------------------------------------------
   // Implementation
@@ -52,40 +53,42 @@ module br_clock_throttle #(
 
   logic sync_trigger;
   logic clk_en;
-  logic [CntrWidth-1:0] throttle_cntr_value;
-  logic throttle_cntr_matches;
-  logic skip_cycle;
-  logic reinit_throttle_cntr;
+  logic [CntrWidth-1:0] cntr_value;
+  logic cntr_reinit;
+  logic cntr_incr;
 
-  // Optionally synchronize the trigger signal
   if (SyncTrigger) begin : gen_sync_trigger
     assign sync_trigger = trigger;
   end else begin : gen_async_trigger
     br_gate_cdc_sync br_gate_cdc_sync_trigger (
-        .clk(clk_in),
-        .in (trigger),
+        .clk(clk_in),  // ri lint_check_waive SAME_CLOCK_NAME
+        .in(trigger),
         .out(sync_trigger)
     );
   end
 
-  // Throttle counter
+  assign cntr_reinit = !throttle_en || !sync_trigger;
+  assign cntr_incr   = throttle_en && sync_trigger;
+
   br_counter_incr #(
       .MaxValue((2 ** CntrWidth) - 1),
       .MaxIncrement(1)
   ) br_counter_incr (
-      .clk,
+      .clk(clk_in),  // ri lint_check_waive SAME_CLOCK_NAME
       .rst,
-      .reinit(reinit_throttle_cntr),
-      .initial_value(throttle_cntr_value),
-      .incr_valid(throttle_en && sync_trigger),
+      .reinit(cntr_reinit),
+      .initial_value({CntrWidth{1'b0}}),
+      .incr_valid(cntr_incr),
       .incr(1'b1),
-      .value(throttle_cntr_value),
+      .value(cntr_value),
       .value_next()
   );
 
-  assign skip_cycle = throttle_cntr_value < skip_value;
-  assign reinit_throttle_cntr = !throttle_en || !sync_trigger;
-  assign clk_en = !throttle_en || !sync_trigger || !skip_cycle;
+  // Output clock is enabled on any of the following conditions:
+  // * Throttle is disabled
+  // * Trigger is not asserted
+  // * Counter value is greater than or equal to skip_value
+  assign clk_en = !throttle_en || !sync_trigger || (cntr_value >= skip_value);
 
   br_gate_icg_rst br_gate_icg_rst (
       .clk_in,
