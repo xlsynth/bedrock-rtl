@@ -171,7 +171,7 @@ module br_amba_axi2axil_core #(
   // Registers
   //----------------------------------------------------------------------------
 
-  `BR_REGLN(resp, resp_next, (axi_resp_handshake || axil_resp_handshake))
+  `BR_REGLI(resp, resp_next, (axi_resp_handshake || axil_resp_handshake), br_amba::AxiRespOkay)
 
   //----------------------------------------------------------------------------
   // AXI4 and AXI4-Lite Handshakes
