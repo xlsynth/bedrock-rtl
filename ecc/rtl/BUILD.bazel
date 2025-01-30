@@ -71,6 +71,8 @@ verilog_library(
         "//delay/rtl:br_delay_valid",
         "//macros:br_asserts",
         "//macros:br_asserts_internal",
+        "//macros:br_assign",
+        "//macros:br_unused",
         "//pkg:br_math_pkg",
     ],
 )
@@ -148,6 +150,8 @@ verilog_library(
         "//delay/rtl:br_delay_valid",
         "//macros:br_asserts",
         "//macros:br_asserts_internal",
+        "//macros:br_assign",
+        "//macros:br_unused",
         "//pkg:br_math_pkg",
     ],
 )

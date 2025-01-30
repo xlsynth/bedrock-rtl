@@ -391,9 +391,12 @@ The suffices are also listed in alphabetical order, with the exception of `L` be
 These assertion macros are intended for use by the user in their own designs.
 They are guarded (enabled) by the following defines:
 
-* `BR_ASSERT_ON` -- if not defined, then all assertion macros are no-ops.
-* `BR_DISABLE_ASSERT_COMB` -- if defined, then all BR_ASSERT_COMB* macros are no-ops.
-* `BR_DISABLE_FINAL_CHECKS` -- if defined, then the BR_ASSERT_FINAL macro is a no-op.
+* `BR_ASSERT_ON` -- if not defined, then all macros other than `BR_ASSERT_STATIC*`
+      are no-ops.
+* `BR_ENABLE_FPV` -- if not defined, then all `BR_*_FPV` macros are no-ops.
+* `BR_DISABLE_ASSERT_IMM` -- if defined, then all `BR_ASSERT_IMM*`, `BR_COVER_IMM*`,
+      `BR_ASSERT_COMB*`, and `BR_ASSERT_IMM*` macros are no-ops.
+* `BR_DISABLE_FINAL_CHECKS` -- if defined, then all `BR_ASSERT_FINAL*` macros are no-ops.
 
 TIP: It is recommended that users simply define `BR_ASSERT_ON` when integrating Bedrock modules into their designs.
 The other guards will typically not be necessary.
@@ -411,7 +414,7 @@ Resets are always active-high.
 | `BR_ASSERT_STATIC_IN_PACKAGE`
 | Static (elaboration-time) assertion for use within packages
 
-| BR_ASSERT_FINAL
+| `BR_ASSERT_FINAL`
 a| Immediate assertion evaluated at the end of simulation (e.g., when `$finish` is called).
 Disable by defining `BR_DISABLE_FINAL_CHECKS`.
 
@@ -421,12 +424,15 @@ Disable by defining `BR_DISABLE_FINAL_CHECKS`.
 | `BR_ASSERT_CR`
 | Concurrent assertion with explicit clock and reset names.
 
-| `BR_ASSERT_COMB`
-a| Combinational/immediate assertion that exists outside the scope of an always_comb block.
+| `BR_ASSERT_IMM`
+a| Immediate assertion.
 Also passes if the expression is unknown.
-If an immediate assertion is needed inside an always_comb block, recommend to use built-in
-SystemVerilog assert syntax.
-Disable by defining `BR_DISABLE_ASSERT_COMB`.
+Disable by defining `BR_DISABLE_ASSERT_IMM`.
+
+| `BR_ASSERT_COMB`
+a| Immediate assertion wrapped inside of an `always_comb` block.
+Also passes if the expression is unknown.
+Disable by defining `BR_DISABLE_ASSERT_IMM`.
 
 | `BR_COVER`
 | Concurrent cover with implicit `clk` and `rst` names.
@@ -434,8 +440,13 @@ Disable by defining `BR_DISABLE_ASSERT_COMB`.
 | `BR_COVER_CR`
 | Concurrent cover with explicit clock and reset names.
 
+| `BR_COVER_IMM`
+a| Immediate cover.
+Disable by defining `BR_DISABLE_ASSERT_IMM`.
+
 | `BR_COVER_COMB`
-| Combinational/immediate cover.
+a| Immediate cover wrapped inside of an `always_comb` block.
+Disable by defining `BR_DISABLE_ASSERT_IMM`.
 
 | `BR_ASSUME`
 | Concurrent assumption with implicit `clk` and `rst` names.

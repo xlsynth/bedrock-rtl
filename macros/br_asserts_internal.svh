@@ -185,8 +185,24 @@
 `endif  // BR_ENABLE_IMPL_CHECKS
 
 ////////////////////////////////////////////////////////////////////////////////
-// Combinational assertion macros (evaluated continuously based on the expression sensitivity)
+// Combinational/immediate assertion macros (evaluated continuously based on the expression sensitivity)
 ////////////////////////////////////////////////////////////////////////////////
+`ifndef BR_DISABLE_INTG_CHECKS
+`define BR_ASSERT_IMM_INTG(__name__, __expr__) \
+`BR_ASSERT_IMM(__name__, __expr__)
+`else  // BR_DISABLE_INTG_CHECKS
+`define BR_ASSERT_IMM_INTG(__name__, __expr__) \
+`BR_NOOP
+`endif  // BR_DISABLE_INTG_CHECKS
+
+`ifdef BR_ENABLE_IMPL_CHECKS
+`define BR_ASSERT_IMM_IMPL(__name__, __expr__) \
+`BR_ASSERT_IMM(__name__, __expr__)
+`else  // BR_ENABLE_IMPL_CHECKS
+`define BR_ASSERT_IMM_IMPL(__name__, __expr__) \
+`BR_NOOP
+`endif  // BR_ENABLE_IMPL_CHECKS
+
 `ifndef BR_DISABLE_INTG_CHECKS
 `define BR_ASSERT_COMB_INTG(__name__, __expr__) \
 `BR_ASSERT_COMB(__name__, __expr__)
@@ -248,6 +264,22 @@
 ////////////////////////////////////////////////////////////////////////////////
 // Combinational cover macros (evaluated continuously based on the expression sensitivity)
 ////////////////////////////////////////////////////////////////////////////////
+`ifndef BR_DISABLE_INTG_CHECKS
+`define BR_COVER_IMM_INTG(__name__, __expr__) \
+`BR_COVER_IMM(__name__, __expr__)
+`else  // BR_DISABLE_INTG_CHECKS
+`define BR_COVER_IMM_INTG(__name__, __expr__) \
+`BR_NOOP
+`endif // BR_DISABLE_INTG_CHECKS
+
+`ifdef BR_ENABLE_IMPL_CHECKS
+`define BR_COVER_IMM_IMPL(__name__, __expr__) \
+`BR_COVER_IMM(__name__, __expr__)
+`else  // BR_ENABLE_IMPL_CHECKS
+`define BR_COVER_IMM_IMPL(__name__, __expr__) \
+`BR_NOOP
+`endif  // BR_ENABLE_IMPL_CHECKS
+
 `ifndef BR_DISABLE_INTG_CHECKS
 `define BR_COVER_COMB_INTG(__name__, __expr__) \
 `BR_COVER_COMB(__name__, __expr__)

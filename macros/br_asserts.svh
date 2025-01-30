@@ -27,9 +27,11 @@
 // Therefore we namespace all macros with the BR_ prefix (stands for Bedrock).
 //
 // The macros in this file are guarded with the following defines.
-// * BR_ASSERT_ON -- if not defined, then all assertion macros are no-ops.
+// * BR_ASSERT_ON -- if not defined, then all macros other than BR_ASSERT_STATIC*
+//       are no-ops.
 // * BR_ENABLE_FPV -- if not defined, then all BR_*_FPV macros are no-ops.
-// * BR_DISABLE_ASSERT_COMB -- if defined, then all BR_ASSERT_COMB* macros are no-ops.
+// * BR_DISABLE_ASSERT_IMM -- if defined, then all BR_ASSERT_IMM*, BR_COVER_IMM*,
+//       BR_ASSERT_COMB*, and BR_ASSERT_IMM* macros are no-ops.
 // * BR_DISABLE_FINAL_CHECKS -- if defined, then all BR_ASSERT_FINAL macros are no-ops.
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -181,25 +183,33 @@ __name__ : assert property (@(posedge __clk__) disable iff (__rst__ === 1'b1 || 
 `endif  // BR_ASSERT_ON
 
 ////////////////////////////////////////////////////////////////////////////////
-// Combinational assertion macros (evaluated continuously based on the expression sensitivity).
+// Combinational/immediate assertion macros (evaluated continuously based on the expression sensitivity).
 // Also pass if the expression is unknown.
 ////////////////////////////////////////////////////////////////////////////////
 
-// BR_ASSERT_COMB is guarded with BR_DISABLE_ASSERT_COMB because some tools don't like immediate assertions,
-// and/or $isunknown in combinational blocks, even when it's used inside of an assert statement.
-// Implemented using an always_comb block, so this cannot be embedded inside another always_comb block.
-// If an immediate assertion is needed inside an existing always_comb block, recommend the user leverage built-in
-// SystemVerilog assert syntax.
 `ifdef BR_ASSERT_ON
-`ifndef BR_DISABLE_ASSERT_COMB
+`ifndef BR_DISABLE_ASSERT_IMM
+`define BR_ASSERT_IMM(__name__, __expr__) \
+assert ($isunknown(__expr__) || (__expr__));
+`else  // BR_DISABLE_ASSERT_IMM
+`define BR_ASSERT_IMM(__name__, __expr__) \
+`BR_NOOP
+`endif  // BR_DISABLE_ASSERT_IMM
+`else  // BR_ASSERT_ON
+`define BR_ASSERT_IMM(__name__, __expr__) \
+`BR_NOOP
+`endif  // BR_ASSERT_ON
+
+`ifdef BR_ASSERT_ON
+`ifndef BR_DISABLE_ASSERT_IMM
 `define BR_ASSERT_COMB(__name__, __expr__) \
 always_comb begin  : gen_``__name__ \
-assert ($isunknown(__expr__) || (__expr__)); \
+`BR_ASSERT_IMM(__name__, __expr__); \
 end
-`else  // BR_DISABLE_ASSERT_COMB
+`else  // BR_DISABLE_ASSERT_IMM
 `define BR_ASSERT_COMB(__name__, __expr__) \
 `BR_NOOP
-`endif  // BR_DISABLE_ASSERT_COMB
+`endif  // BR_DISABLE_ASSERT_IMM
 `else  // BR_ASSERT_ON
 `define BR_ASSERT_COMB(__name__, __expr__) \
 `BR_NOOP
@@ -207,7 +217,6 @@ end
 
 // FPV version macros
 `ifdef BR_ASSERT_ON
-`ifndef BR_DISABLE_ASSERT_COMB
 `ifdef BR_ENABLE_FPV
 `define BR_ASSERT_COMB_FPV(__name__, __expr__) \
 `BR_ASSERT_COMB(__name__, __expr__);
@@ -215,10 +224,6 @@ end
 `define BR_ASSERT_COMB_FPV(__name__, __expr__) \
 `BR_NOOP
 `endif  // BR_ENABLE_FPV
-`else  // BR_DISABLE_ASSERT_COMB
-`define BR_ASSERT_COMB_FPV(__name__, __expr__) \
-`BR_NOOP
-`endif  // BR_DISABLE_ASSERT_COMB
 `else  // BR_ASSERT_ON
 `define BR_ASSERT_COMB_FPV(__name__, __expr__) \
 `BR_NOOP
@@ -275,13 +280,32 @@ __name__ : cover property (@(posedge __clk__) disable iff (__rst__ === 1'b1 || _
 `endif  // BR_ASSERT_ON
 
 ////////////////////////////////////////////////////////////////////////////////
-// Combinational cover macros (evaluated continuously based on the expression sensitivity)
+// Combinational/immediate cover macros (evaluated continuously based on the expression sensitivity)
 ////////////////////////////////////////////////////////////////////////////////
+
 `ifdef BR_ASSERT_ON
+`ifndef BR_DISABLE_ASSERT_IMM
+`define BR_COVER_IMM(__name__, __expr__) \
+cover (__expr__);
+`else  // BR_DISABLE_ASSERT_IMM
+`define BR_COVER_IMM(__name__, __expr__) \
+`BR_NOOP
+`endif  // BR_DISABLE_ASSERT_IMM
+`else  // BR_ASSERT_ON
+`define BR_COVER_IMM(__name__, __expr__) \
+`BR_NOOP
+`endif  // BR_ASSERT_ON
+
+`ifdef BR_ASSERT_ON
+`ifndef BR_DISABLE_ASSERT_IMM
 `define BR_COVER_COMB(__name__, __expr__) \
 always_comb begin  : gen_``__name__ \
-cover (__expr__); \
+`BR_COVER_IMM(__name__, __expr__); \
 end
+`else  // BR_DISABLE_ASSERT_IMM
+`define BR_COVER_COMB(__name__, __expr__) \
+`BR_NOOP
+`endif  // BR_DISABLE_ASSERT_IMM
 `else  // BR_ASSERT_ON
 `define BR_COVER_COMB(__name__, __expr__) \
 `BR_NOOP
