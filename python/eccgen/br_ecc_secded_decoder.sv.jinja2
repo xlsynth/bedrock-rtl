@@ -91,7 +91,15 @@ module br_ecc_secded_decoder #(
     // Synchronous active-high reset.
     input  logic                     rst,
 
-    // Decoder input (received codeword, possibly with errors)
+    // Decoder input (received data and parity, possibly with errors).
+    // Provide the rcv_data and rcv_parity as separate signals,
+    // rather than the complete rcv_codeword, because the codeword
+    // construction may involve some zero-padded bits that aren't necessary
+    // to transmit through the faulty communication channel.
+    //
+    // The rcv_data is internally zero-padded up to the message size
+    // and then concatenated with the rcv_parity to form the received
+    // codeword prior to syndrome decoding.
     input  logic                     rcv_valid,
     input  logic [    DataWidth-1:0] rcv_data,
     input  logic [  ParityWidth-1:0] rcv_parity,

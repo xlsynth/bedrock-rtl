@@ -51,15 +51,15 @@ module br_ecc_secded_encoder_decoder_tb;
 
   // Encoder outputs (directly connected to decoder inputs)
   logic enc_valid;
-  logic [CodewordWidth-1:0] enc_codeword;
+  logic [DataWidth-1:0] enc_data;
+  logic [ParityWidth-1:0] enc_parity;
 
   // Decoder outputs
   logic dec_valid;
-  logic [CodewordWidth-1:0] dec_codeword;
+  logic [DataWidth-1:0] dec_data;
   logic dec_error_ce;
   logic dec_error_due;
   logic [ParityWidth-1:0] dec_error_syndrome;
-  logic [DataWidth-1:0] dec_data;
 
   // Instantiate encoder
   br_ecc_secded_encoder #(
@@ -73,7 +73,9 @@ module br_ecc_secded_encoder_decoder_tb;
       .data_valid,
       .data,
       .enc_valid,
-      .enc_codeword
+      .enc_codeword(),  // unused
+      .enc_data,
+      .enc_parity
   );
 
   // Instantiate decoder (inputs connected directly to encoder outputs)
@@ -87,14 +89,14 @@ module br_ecc_secded_encoder_decoder_tb;
       .clk,
       .rst,
       .rcv_valid(enc_valid),
-      .rcv_codeword(enc_codeword),
+      .rcv_data(enc_data),
+      .rcv_parity(enc_parity),
       .dec_valid,
-      .dec_codeword,
+      .dec_codeword(),  // unused
+      .dec_data,
       .dec_error_ce,
       .dec_error_due,
-      .dec_error_syndrome,
-      .dec_message(),  // unused
-      .dec_data
+      .dec_error_syndrome
   );
 
   // Clock generation

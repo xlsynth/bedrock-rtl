@@ -86,7 +86,10 @@ module br_ecc_secded_encoder #(
     input  logic [    DataWidth-1:0] data,
     output logic                     enc_valid,
     output logic [    DataWidth-1:0] enc_data,
-    output logic [  ParityWidth-1:0] enc_parity
+    output logic [  ParityWidth-1:0] enc_parity,
+    // A concatenation of {enc_parity, 0 padding, enc_data}, i.e.,
+    // {enc_parity, message}
+    output logic [CodewordWidth-1:0] enc_codeword
 );
 
   // ri lint_check_waive PARAM_NOT_USED
@@ -249,7 +252,6 @@ module br_ecc_secded_encoder #(
   //------
   // Optionally register the output signals.
   //------
-  logic [CodewordWidth-1:0] enc_codeword_int;
   br_delay_valid #(
       .Width(CodewordWidth),
       .NumStages(RegisterOutputs == 1 ? 1 : 0),
@@ -260,7 +262,7 @@ module br_ecc_secded_encoder #(
       .in_valid(data_valid_d),
       .in({internal_codeword}),
       .out_valid(enc_valid),
-      .out(enc_codeword_int),
+      .out(enc_codeword),
       .out_valid_stages(),  // unused
       .out_stages()  // unused
   );
@@ -268,10 +270,10 @@ module br_ecc_secded_encoder #(
   //------
   // Drop pad bits
   //------
-  assign `BR_TRUNCATE_FROM_LSB(enc_data, enc_codeword_int)
-  assign `BR_TRUNCATE_FROM_MSB(enc_parity, enc_codeword_int)
+  assign `BR_TRUNCATE_FROM_LSB(enc_data, enc_codeword)
+  assign `BR_TRUNCATE_FROM_MSB(enc_parity, enc_codeword)
   if (OutputWidth < CodewordWidth) begin : gen_unused_out
-    `BR_UNUSED_NAMED(unused_out, enc_codeword_int[MessageWidth-1 : DataWidth])
+    `BR_UNUSED_NAMED(unused_out, enc_codeword[MessageWidth-1 : DataWidth])
   end
 
   //------------------------------------------
