@@ -116,7 +116,8 @@ module br_ram_flops_tile #(
 
   if (NumWritePorts > 1) begin : gen_write_conflict_checks
     for (genvar porta = 0; porta < (NumWritePorts - 1); porta++) begin : gen_write_conflict_check_a
-      for (genvar portb = porta + 1; portb < NumWritePorts; portb++) begin : gen_write_conflict_check_b
+      for (genvar portb = porta + 1; portb < NumWritePorts; portb++)
+      begin : gen_write_conflict_check_b
         `BR_ASSERT_CR_INTG(no_write_conflict_a,
             (wr_valid[porta] && wr_valid[portb]) |-> (wr_addr[porta] != wr_addr[portb]),
             wr_clk, wr_rst)
@@ -167,7 +168,8 @@ module br_ram_flops_tile #(
     if (EnablePartialWrite) begin : gen_partial_write
       for (genvar i = 0; i < NumWords; i++) begin : gen_word
         if (EnableReset) begin : gen_reset
-          `BR_REGLX(mem[0][i], muxed_wr_data[i], single_wr_valid && muxed_wr_word_en[i], wr_clk, wr_rst)
+          `BR_REGLX(mem[0][i], muxed_wr_data[i], single_wr_valid && muxed_wr_word_en[i],
+            wr_clk, wr_rst)
         end else begin : gen_no_reset
           `BR_REGLNX(mem[0][i], muxed_wr_data[i], single_wr_valid && muxed_wr_word_en[i], wr_clk)
         end
