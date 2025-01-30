@@ -204,7 +204,7 @@ assert ($isunknown(__expr__) || (__expr__));
 `ifndef BR_DISABLE_ASSERT_IMM
 `define BR_ASSERT_COMB(__name__, __expr__) \
 always_comb begin  : gen_``__name__ \
-`BR_ASSERT_IMM(__name__, __expr__); \
+`BR_ASSERT_IMM(__name__, __expr__) \
 end
 `else  // BR_DISABLE_ASSERT_IMM
 `define BR_ASSERT_COMB(__name__, __expr__) \
@@ -300,7 +300,7 @@ cover (__expr__);
 `ifndef BR_DISABLE_ASSERT_IMM
 `define BR_COVER_COMB(__name__, __expr__) \
 always_comb begin  : gen_``__name__ \
-`BR_COVER_IMM(__name__, __expr__); \
+`BR_COVER_IMM(__name__, __expr__) \
 end
 `else  // BR_DISABLE_ASSERT_IMM
 `define BR_COVER_COMB(__name__, __expr__) \
