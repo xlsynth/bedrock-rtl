@@ -241,6 +241,7 @@ br_verilog_elab_and_lint_test_suite(
             "0",
             "1",
         ],
+        "EnableDatapath": ["1"],
     },
     deps = [":br_ram_addr_decoder"],
 )
@@ -264,6 +265,7 @@ br_verilog_elab_and_lint_test_suite(
             "0",
             "3",
         ],
+        "EnableDatapath": ["1"],
     },
     deps = [":br_ram_addr_decoder"],
 )
@@ -287,6 +289,7 @@ br_verilog_elab_and_lint_test_suite(
         "Stages": [
             "0",
         ],
+        "EnableDatapath": ["0"],
     },
     deps = [":br_ram_addr_decoder"],
 )
