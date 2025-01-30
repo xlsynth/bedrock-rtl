@@ -89,7 +89,7 @@ module br_ecc_secded_encoder #(
     output logic [  ParityWidth-1:0] enc_parity,
     // A concatenation of {enc_parity, 0 padding, enc_data}, i.e.,
     // {enc_parity, message}
-    output logic [CodewordWidth-1:0] enc_codeword,
+    output logic [CodewordWidth-1:0] enc_codeword
 );
 
   // ri lint_check_waive PARAM_NOT_USED
