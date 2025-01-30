@@ -38,6 +38,8 @@ module br_ram_addr_decoder #(
     // Pipeline depth. Must be at least 0.
     // Values greater than 1 are of dubious utility but don't hurt anything.
     parameter int Stages = 0,
+    // If 1, then the datapath is implemented. Otherwise, asserts that in_valid is always 0.
+    parameter bit EnableDatapath = 0,
     // If 1, then assert there are no valid bits asserted at the end of the test.
     parameter bit EnableAssertFinalNotValid = 1,
     localparam int TileDepth = br_math::ceil_div(Depth, Tiles),
@@ -55,10 +57,27 @@ module br_ram_addr_decoder #(
     // Input address and data.
     input  logic                                                 in_valid,
     input  logic [InputAddressWidth-1:0]                         in_addr,
+    // in_data_valid is provided so that the datapath can be clock gated.
+    //
+    // When EnableDatapath is 1:
+    //   * in_data_valid can only be 1 if in_valid is also 1.
+    //   * If this address decoder is used for only reads: tie in_data_valid to 0.
+    //   * If this address decoder is used for only writes: tie in_data_valid to 1.
+    //   * Otherwise, connect it to a corresponding write enable signal.
+    //
+    // When EnableDatapath is 0:
+    //   * in_data_valid must be tied to 0.
+    input  logic                                                 in_data_valid,
     input  logic [        DataWidth-1:0]                         in_data,
     // Output tile addresses and data.
     output logic [            Tiles-1:0]                         out_valid,
     output logic [            Tiles-1:0][OutputAddressWidth-1:0] out_addr,
+    // When EnableDatapath is 1:
+    // * out_data_valid may only be 1 if out_valid is also 1.
+    //
+    // When EnableDatapath is 0:
+    // * out_data_valid is tied to 0.
+    output logic [            Tiles-1:0]                         out_data_valid,
     output logic [            Tiles-1:0][         DataWidth-1:0] out_data
 );
 
@@ -73,6 +92,12 @@ module br_ram_addr_decoder #(
 
   `BR_ASSERT_INTG(in_addr_in_range_a, in_valid |-> in_addr < Depth)
 
+  if (EnableDatapath) begin : gen_datapath_checks
+    `BR_ASSERT_INTG(in_data_valid_a, in_data_valid |-> in_valid)
+  end else begin : gen_datapath_checks_disabled
+    `BR_ASSERT_INTG(in_data_valid_tied_to_0_a, in_data_valid == 0)
+  end
+
   //------------------------------------------
   // Implementation
   //------------------------------------------
@@ -82,19 +107,42 @@ module br_ram_addr_decoder #(
     `BR_ASSERT_STATIC(output_address_width_ok_a, OutputAddressWidth == InputAddressWidth)
 
     br_delay_valid #(
-        .Width(OutputAddressWidth + DataWidth),
+        .Width(OutputAddressWidth),
         .NumStages(Stages),
         .EnableAssertFinalNotValid(EnableAssertFinalNotValid)
-    ) br_delay_valid (
+    ) br_delay_valid_addr (
         .clk,
         .rst,
         .in_valid(in_valid),
-        .in({in_addr, in_data}),
+        .in(in_addr),
         .out_valid(out_valid),
-        .out({out_addr, out_data}),
+        .out(out_addr),
         .out_valid_stages(),  // unused
         .out_stages()  // unused
     );
+
+    if (EnableDatapath) begin : gen_datapath
+      br_delay_valid #(
+          .Width(DataWidth),
+          .NumStages(Stages),
+          .EnableAssertFinalNotValid(EnableAssertFinalNotValid)
+      ) br_delay_valid_data (
+          .clk,
+          .rst,
+          .in_valid(in_data_valid),
+          .in(in_data),
+          .out_valid(out_data_valid),
+          .out(out_data),
+          .out_valid_stages(),  // unused
+          .out_stages()  // unused
+      );
+
+    end else begin : gen_no_datapath
+      `BR_UNUSED(in_data_valid)
+      `BR_UNUSED(in_data)
+      `BR_TIEOFF_ZERO(out_data_valid)
+      `BR_TIEOFF_ZERO(out_data)
+    end
 
     // Common case: multiple tiles, i.e., requires decoding to one of them (replicated delay registers)
   end else begin : gen_tiles_gt1
@@ -104,6 +152,7 @@ module br_ram_addr_decoder #(
 
     logic [Tiles-1:0]                         internal_out_valid;
     logic [Tiles-1:0][OutputAddressWidth-1:0] internal_out_addr;
+    logic [Tiles-1:0]                         internal_out_data_valid;
     logic [Tiles-1:0][         DataWidth-1:0] internal_out_data;
 
     if (TileDepth == 1) begin : gen_tile_depth_eq1
@@ -112,17 +161,37 @@ module br_ram_addr_decoder #(
 
       br_demux_bin #(
           .NumSymbolsOut(Tiles),
-          .SymbolWidth(DataWidth),
           .EnableAssertFinalNotValid(EnableAssertFinalNotValid)
-      ) br_demux_bin (
+      ) br_demux_bin_addr (
           .select(in_addr),
           .in_valid(in_valid),
-          .in(in_data),
+          .in('0),  // unused
           .out_valid(internal_out_valid),
-          .out(internal_out_data)
+          .out()  // unused
       );
 
       assign internal_out_addr = '0;
+
+      if (EnableDatapath) begin : gen_datapath
+        br_demux_bin #(
+            .NumSymbolsOut(Tiles),
+            .SymbolWidth(DataWidth),
+            .EnableAssertFinalNotValid(EnableAssertFinalNotValid)
+        ) br_demux_bin_data (
+            .select(in_addr),
+            .in_valid(in_data_valid),
+            .in(in_data),
+            .out_valid(internal_out_data_valid),
+            .out(internal_out_data)
+        );
+
+      end else begin : gen_no_datapath
+        `BR_UNUSED(in_data_valid)
+        `BR_UNUSED(in_data)
+        `BR_TIEOFF_ZERO(internal_out_data_valid)
+        `BR_TIEOFF_ZERO(internal_out_data)
+      end
+
     end else if (br_math::is_power_of_2(Depth)) begin : gen_demux_impl
       // If Depth is a power of 2 (and Tiles evenly divides it), then we know we can
       // decode the address by looking only at the MSBs as the tile select bits,
@@ -132,39 +201,41 @@ module br_ram_addr_decoder #(
       localparam int SelectLsb = (SelectMsb - TileSelectWidth) + 1;
       `BR_ASSERT_STATIC(select_check_a, SelectMsb >= SelectLsb)
 
-      // Need this indirection because addr/data are interleaved at demux output.
-      // ri lint_check_waive GENERATE_TYPEDEF
-      typedef struct packed {
-        logic [OutputAddressWidth-1:0] addr;
-        logic [DataWidth-1:0]          data;
-      } mux_payload_t;
-
-      mux_payload_t mux_in;
-      mux_payload_t [Tiles-1:0] mux_out;
-
-      assign mux_in.addr = in_addr[OutputAddressWidth-1:0];
-      assign mux_in.data = in_data;
-
       br_demux_bin #(
           .NumSymbolsOut(Tiles),
-          .SymbolWidth($bits(mux_payload_t)),
+          .SymbolWidth(OutputAddressWidth),
           .EnableAssertFinalNotValid(EnableAssertFinalNotValid)
-      ) br_demux_bin (
+      ) br_demux_bin_addr (
           .select(in_addr[SelectMsb:SelectLsb]),
           .in_valid(in_valid),
-          .in(mux_in),
+          .in(in_addr[OutputAddressWidth-1:0]),
           .out_valid(internal_out_valid),
-          .out(mux_out)
+          .out(internal_out_addr)
       );
 
-      for (genvar i = 0; i < Tiles; i++) begin : gen_mux_out
-        assign internal_out_addr[i] = mux_out[i].addr;
-        assign internal_out_data[i] = mux_out[i].data;
+      if (EnableDatapath) begin : gen_datapath
+        br_demux_bin #(
+            .NumSymbolsOut(Tiles),
+            .SymbolWidth(DataWidth),
+            .EnableAssertFinalNotValid(EnableAssertFinalNotValid)
+        ) br_demux_bin_data (
+            .select(in_addr[SelectMsb:SelectLsb]),
+            .in_valid(in_data_valid),
+            .in(in_data),
+            .out_valid(internal_out_data_valid),
+            .out(internal_out_data)
+        );
+
+      end else begin : gen_no_datapath
+        `BR_UNUSED(in_data_valid)
+        `BR_UNUSED(in_data)
+        `BR_TIEOFF_ZERO(internal_out_data_valid)
+        `BR_TIEOFF_ZERO(internal_out_data)
       end
 
+    end else begin : gen_compare_impl
       // If Depth is not a power-of-2 we cannot just slice off the MSBs for the tile select.
       // We have to look at the address range and steer it with bit overlaps.
-    end else begin : gen_compare_impl
       for (genvar i = 0; i < Tiles; i++) begin : gen_compare
         // inclusive
         localparam logic [InputAddressWidth-1:0] TileBaseAddress = TileDepth * i;
@@ -180,29 +251,60 @@ module br_ram_addr_decoder #(
             // ri lint_check_waive INVALID_COMPARE
             (in_addr >= TileBaseAddress) && (in_addr < TileBoundAddress);
         assign internal_out_addr[i] = tile_addr_offset[OutputAddressWidth-1:0];
-        assign internal_out_data[i] = in_data;
 
         `BR_UNUSED_NAMED(tile_addr_offset_msbs,
                          tile_addr_offset[InputAddressWidth-1:OutputAddressWidth])
+
+        if (EnableDatapath) begin : gen_datapath
+            assign internal_out_data_valid[i] = in_data_valid;
+            assign internal_out_data[i] = in_data;
+        end else begin : gen_no_datapath
+            `BR_UNUSED(in_data_valid)
+            `BR_UNUSED(in_data)
+            `BR_TIEOFF_ZERO(internal_out_data_valid[i])
+            `BR_TIEOFF_ZERO(internal_out_data[i])
+        end
       end
     end
 
     // Replicate to reduce register fanout when Stages >= 1
     for (genvar i = 0; i < Tiles; i++) begin : gen_out
       br_delay_valid #(
-          .Width(OutputAddressWidth + DataWidth),
+          .Width(OutputAddressWidth)
           .NumStages(Stages),
           .EnableAssertFinalNotValid(EnableAssertFinalNotValid)
-      ) br_delay_valid (
+      ) br_delay_valid_addr (
           .clk,
           .rst,
           .in_valid(internal_out_valid[i]),
-          .in({internal_out_addr[i], internal_out_data[i]}),
+          .in(internal_out_addr[i]),
           .out_valid(out_valid[i]),
-          .out({out_addr[i], out_data[i]}),
+          .out(out_addr[i]),
           .out_valid_stages(),  // unused
           .out_stages()  // unused
       );
+
+      if (EnableDatapath) begin : gen_datapath
+        br_delay_valid #(
+            .Width(DataWidth),
+            .NumStages(Stages),
+            .EnableAssertFinalNotValid(EnableAssertFinalNotValid)
+        ) br_delay_valid_data (
+            .clk,
+            .rst,
+            .in_valid(internal_out_data_valid[i]),
+            .in(internal_out_data[i]),
+            .out_valid(out_data_valid[i]),
+            .out(out_data[i]),
+            .out_valid_stages(),  // unused
+            .out_stages()  // unused
+        );
+      end else begin : gen_no_datapath
+        `BR_UNUSED(internal_out_data_valid[i])
+        `BR_UNUSED(internal_out_data[i])
+        `BR_TIEOFF_ZERO(out_data_valid[i])
+        `BR_TIEOFF_ZERO(out_data[i])
+      end
     end
   end
 
@@ -210,8 +312,14 @@ module br_ram_addr_decoder #(
   // Implementation checks
   //------------------------------------------
   `BR_ASSERT_IMPL(out_valid_onehot0_a, $onehot0(out_valid))
+
   for (genvar i = 0; i < Tiles; i++) begin : gen_out_addr_checks
     `BR_ASSERT_IMPL(out_addr_in_range_a, out_valid[i] |-> out_addr[i] < TileDepth)
+    if (EnableDatapath) begin : gen_datapath_checks
+      `BR_ASSERT_IMPL(out_data_valid_iff_out_valid_a, out_data_valid[i] |-> out_valid[i])
+    end else begin : gen_datapath_checks_disabled
+      `BR_ASSERT_IMPL(out_data_valid_tied_to_0_a, out_data_valid[i] == 0)
+    end
   end
 
   if (Stages > 0) begin : gen_impl_checks_delayed
