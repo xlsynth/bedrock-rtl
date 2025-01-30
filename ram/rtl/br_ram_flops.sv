@@ -17,6 +17,7 @@
 // A multi-read/multi-write flop-based RAM
 // that is constructed out of pipelined tiles.
 // Heavily parameterized for tiling and pipeline configurations.
+// Read and write ports are separated.
 
 `include "br_asserts_internal.svh"
 `include "br_registers.svh"
@@ -166,7 +167,6 @@ module br_ram_flops #(
       localparam int DecoderDataWidth = Width + NumWords;
       logic [DecoderDataWidth-1:0] decoder_in_data;
       logic [DepthTiles-1:0][DecoderDataWidth-1:0] decoder_out_data;
-
       assign decoder_in_data = {wr_data[wport], wr_word_en[wport]};
 
       br_ram_addr_decoder #(
@@ -174,15 +174,18 @@ module br_ram_flops #(
           .DataWidth(DecoderDataWidth),
           .Tiles(DepthTiles),
           .Stages(AddressDepthStages),
+          .EnableDatapath(1),
           .EnableAssertFinalNotValid(EnableAssertFinalNotValid)
       ) br_ram_addr_decoder_wr (
           .clk(wr_clk),  // ri lint_check_waive SAME_CLOCK_NAME
           .rst(wr_rst),
           .in_valid(wr_valid[wport]),
           .in_addr(wr_addr[wport]),
+          .in_data_valid(wr_valid[wport]),
           .in_data(decoder_in_data),
           .out_valid(decoded_wr_valid),
           .out_addr(decoded_wr_addr),
+          .out_data_valid(),  // unused
           .out_data(decoder_out_data)
       );
 
@@ -195,15 +198,18 @@ module br_ram_flops #(
           .DataWidth(Width),
           .Tiles(DepthTiles),
           .Stages(AddressDepthStages),
+          .EnableDatapath(1),
           .EnableAssertFinalNotValid(EnableAssertFinalNotValid)
       ) br_ram_addr_decoder_wr (
           .clk(wr_clk),  // ri lint_check_waive SAME_CLOCK_NAME
           .rst(wr_rst),
           .in_valid(wr_valid[wport]),
           .in_addr(wr_addr[wport]),
+          .in_data_valid(wr_valid[wport]),
           .in_data(wr_data[wport]),
           .out_valid(decoded_wr_valid),
           .out_addr(decoded_wr_addr),
+          .out_data_valid(),  // unused
           .out_data(decoded_wr_data)
       );
 
@@ -236,9 +242,11 @@ module br_ram_flops #(
         .rst(rd_rst),
         .in_valid(rd_addr_valid[rport]),
         .in_addr(rd_addr[rport]),
+        .in_data_valid(1'b0),  // unused
         .in_data(1'b0),  // unused
         .out_valid(decoded_rd_addr_valid),
         .out_addr(decoded_rd_addr),
+        .out_data_valid(),  // unused
         .out_data()  // unused
     );
 
