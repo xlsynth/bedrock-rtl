@@ -51,15 +51,16 @@ module br_ecc_secded_encoder_decoder_tb;
 
   // Encoder outputs (directly connected to decoder inputs)
   logic enc_valid;
-  logic [CodewordWidth-1:0] enc_codeword;
+  logic [DataWidth-1:0] enc_data;
+  logic [ParityWidth-1:0] enc_parity;
 
   // Decoder outputs
   logic dec_valid;
-  logic [CodewordWidth-1:0] dec_codeword;
+  logic [DataWidth-1:0] dec_data;
+  logic [ParityWidth-1:0] dec_parity;
   logic dec_error_ce;
   logic dec_error_due;
   logic [ParityWidth-1:0] dec_error_syndrome;
-  logic [DataWidth-1:0] dec_data;
 
   // Instantiate encoder
   br_ecc_secded_encoder #(
