@@ -185,11 +185,28 @@ __name__ : assert property (@(posedge __clk__) disable iff (__rst__ === 1'b1 || 
 // Also pass if the expression is unknown.
 ////////////////////////////////////////////////////////////////////////////////
 
-// BR_ASSERT_COMB is guarded with BR_DISABLE_ASSERT_COMB because some tools don't like immediate assertions,
-// and/or $isunknown in combinational blocks, even when it's used inside of an assert statement.
-// Implemented using an always_comb block, so this cannot be embedded inside another always_comb block.
-// If an immediate assertion is needed inside an existing always_comb block, recommend the user leverage built-in
+// BR_ASSERT_COMB and BR_ASSERT_COMB_EXPR are guarded with BR_DISABLE_ASSERT_COMB because some tools don't
+// like immediate assertions, and/or $isunknown in combinational blocks, even when it's used inside of an
+// assert statement. Implemented using an always_comb block, so this cannot be embedded inside another
+// always_comb block. If an immediate assertion is needed inside an existing always_comb block,
+// recommend the user leverage built-in
 // SystemVerilog assert syntax.
+
+`ifdef BR_ASSERT_ON
+`ifndef BR_DISABLE_ASSERT_COMB
+`define BR_ASSERT_COMB_EXPR(__name__, __expr__) \
+begin : gen_``__name__ \
+assert ($isunknown(__expr__) || (__expr__)); \
+end
+`else  // BR_DISABLE_ASSERT_COMB
+`define BR_ASSERT_COMB_EXPR(__name__, __expr__) \
+`BR_NOOP
+`endif  // BR_DISABLE_ASSERT_COMB
+`else  // BR_ASSERT_ON
+`define BR_ASSERT_COMB_EXPR(__name__, __expr__) \
+`BR_NOOP
+`endif  // BR_ASSERT_ON
+
 `ifdef BR_ASSERT_ON
 `ifndef BR_DISABLE_ASSERT_COMB
 `define BR_ASSERT_COMB(__name__, __expr__) \

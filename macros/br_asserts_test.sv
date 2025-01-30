@@ -117,6 +117,12 @@ module br_asserts_test;
   `BR_ASSUME_CR(valid_data_check_m, (valid == 1) |-> (sum == a + b), custom_clk, custom_rst)
   `BR_ASSUME_CR_FPV(valid_data_check_fpv_m, (valid == 1) |-> (sum == a + b), custom_clk, custom_rst)
 
+  // Use BR_ASSERT_COMB_EXPR
+  always_comb begin
+    `BR_ASSERT_COMB_EXPR(inputs_nonzero_a, (a != 0) || (b != 0))
+    `BR_ASSERT_COMB_FPV(inputs_nonzero_fpv_a, (a != 0) || (b != 0))
+  end
+
   // Use BR_ASSERT_COMB
   `BR_ASSERT_COMB(inputs_nonzero_a, (a != 0) || (b != 0))
   `BR_ASSERT_COMB_FPV(inputs_nonzero_fpv_a, (a != 0) || (b != 0))
