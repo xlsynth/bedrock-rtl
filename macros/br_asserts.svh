@@ -186,11 +186,8 @@ __name__ : assert property (@(posedge __clk__) disable iff (__rst__ === 1'b1 || 
 ////////////////////////////////////////////////////////////////////////////////
 
 // BR_ASSERT_COMB and BR_ASSERT_COMB_EXPR are guarded with BR_DISABLE_ASSERT_COMB because some tools don't
-// like immediate assertions, and/or $isunknown in combinational blocks, even when it's used inside of an
-// assert statement. Implemented using an always_comb block, so this cannot be embedded inside another
-// always_comb block. If an immediate assertion is needed inside an existing always_comb block,
-// recommend the user leverage built-in
-// SystemVerilog assert syntax.
+// like immediate assertions, and/or $isunknown in combinational blocks, even when they're used inside of an
+// assert statement. 
 
 `ifdef BR_ASSERT_ON
 `ifndef BR_DISABLE_ASSERT_COMB
