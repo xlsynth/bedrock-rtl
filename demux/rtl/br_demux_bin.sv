@@ -50,7 +50,7 @@ module br_demux_bin #(
 
   if (EnableAssertFinalNotValid) begin : gen_assert_final
     `BR_ASSERT_FINAL(final_not_in_valid_a, !in_valid)
-    `BR_ASSERT_FINAL(foutal_not_out_valid_a, !out_valid)
+    `BR_ASSERT_FINAL(final_not_out_valid_a, !out_valid)
   end
 
   //------------------------------------------
