@@ -1102,7 +1102,7 @@ a| FIFO with internal flop RAM
 | Module | Description | Verified
 
 | `br_ram_addr_decoder`
-| Address decoder for a tiled RAM
+| Address decoder and optional write data steering for a tiled RAM
 |
 
 | `br_ram_data_rd_pipe`

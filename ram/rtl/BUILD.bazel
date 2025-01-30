@@ -60,6 +60,7 @@ verilog_library(
         "//delay/rtl:br_delay_valid",
         "//demux/rtl:br_demux_bin",
         "//macros:br_asserts_internal",
+        "//macros:br_tieoff",
         "//macros:br_unused",
         "//pkg:br_math_pkg",
     ],
@@ -241,6 +242,7 @@ br_verilog_elab_and_lint_test_suite(
             "0",
             "1",
         ],
+        "EnableDatapath": ["1"],
     },
     deps = [":br_ram_addr_decoder"],
 )
@@ -264,6 +266,7 @@ br_verilog_elab_and_lint_test_suite(
             "0",
             "3",
         ],
+        "EnableDatapath": ["1"],
     },
     deps = [":br_ram_addr_decoder"],
 )
@@ -287,6 +290,7 @@ br_verilog_elab_and_lint_test_suite(
         "Stages": [
             "0",
         ],
+        "EnableDatapath": ["0"],
     },
     deps = [":br_ram_addr_decoder"],
 )
