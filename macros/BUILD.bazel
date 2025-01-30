@@ -109,12 +109,6 @@ verilog_library(
 
 verilog_elab_test(
     name = "br_asserts_elab_test",
-    defines = ["BR_ASSERT_ON"],
-    deps = [":br_asserts_test"],
-)
-
-verilog_elab_test(
-    name = "br_asserts_fpv_elab_test",
     defines = [
         "BR_ASSERT_ON",
         "BR_ENABLE_FPV",
@@ -138,6 +132,7 @@ verilog_elab_test(
     name = "br_asserts_elab_internal_test",
     defines = [
         "BR_ASSERT_ON",
+        "BR_ENABLE_FPV",
         "BR_ENABLE_IMPL_CHECKS",
     ],
     deps = [":br_asserts_internal_test"],

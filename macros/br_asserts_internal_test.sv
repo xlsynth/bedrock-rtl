@@ -130,6 +130,27 @@ module br_asserts_internal_test;
   // Use BR_ASSERT_COMB_IMPL
   `BR_ASSERT_COMB_IMPL(sum_in_range_impl, sum <= 15)
 
+  always_comb begin
+    `BR_ASSERT_IMM_INTG(comb_sanity_imm_intg_a, 0 === 0)
+    `BR_ASSERT_IMM_IMPL(comb_sanity_imm_impl_a, 0 === 0)
+    `BR_COVER_IMM_INTG(comb_sanity_imm_intg_c, 0 === 0)
+    `BR_COVER_IMM_IMPL(comb_sanity_imm_impl_c, 0 === 0)
+  end
+
+  initial begin
+    `BR_ASSERT_IMM_INTG(initial_sanity_imm_intg_a, 0 === 0)
+    `BR_ASSERT_IMM_IMPL(initial_sanity_imm_impl_a, 0 === 0)
+    `BR_COVER_IMM_INTG(initial_sanity_imm_intg_c, 0 === 0)
+    `BR_COVER_IMM_IMPL(initial_sanity_imm_impl_c, 0 === 0)
+  end
+
+  final begin
+    `BR_ASSERT_IMM_INTG(final_sanity_imm_intg_a, 0 === 0)
+    `BR_ASSERT_IMM_IMPL(final_sanity_imm_impl_a, 0 === 0)
+    `BR_COVER_IMM_INTG(final_sanity_imm_intg_c, 0 === 0)
+    `BR_COVER_IMM_IMPL(final_sanity_imm_impl_c, 0 === 0)
+  end
+
   // Use BR_COVER_INTG
   `BR_COVER_INTG(sum_overflow_intg, sum > 15)
 
