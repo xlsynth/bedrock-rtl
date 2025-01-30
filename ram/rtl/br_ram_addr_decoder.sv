@@ -23,6 +23,11 @@
 // The latency is given by Stages. If Stages is 0, then the module is purely combinational;
 // if 1, then there is a single pipeline register stage. Values greater than 1 work but don't
 // pipeline the logic inside the decoding tree, they just retime the decoded outputs.
+//
+// If EnableDatapath is 1, then the datapath is implemented. The in_data_valid signal
+// must be in lockstep with in_valid; it is provided separately so that the datapath
+// can be clock gated when not used (e.g., for accessing a shared read-write RAM port)
+// If EnableDatapath is 0, then asserts that in_data_valid is always 0.
 
 `include "br_asserts_internal.svh"
 `include "br_tieoff.svh"
@@ -57,6 +62,7 @@ module br_ram_addr_decoder #(
     input  logic                                                 rst,
     // Input address and data.
     input  logic                                                 in_valid,
+    // ri lint_check_waive UNBALANCED_FANOUT
     input  logic [InputAddressWidth-1:0]                         in_addr,
     // in_data_valid is provided so that the datapath can be clock gated.
     //
@@ -93,9 +99,9 @@ module br_ram_addr_decoder #(
 
   `BR_ASSERT_INTG(in_addr_in_range_a, in_valid |-> in_addr < Depth)
 
-  if (EnableDatapath) begin : gen_datapath_checks
+  if (EnableDatapath) begin : gen_datapath_checks_intg
     `BR_ASSERT_INTG(in_data_valid_a, in_data_valid |-> in_valid)
-  end else begin : gen_datapath_checks_disabled
+  end else begin : gen_no_datapath_checks_intg
     `BR_ASSERT_INTG(in_data_valid_tied_to_0_a, in_data_valid == 0)
   end
 
@@ -244,20 +250,23 @@ module br_ram_addr_decoder #(
         localparam logic [InputAddressWidth-1:0] TileBoundAddress = TileDepth * (i + 1);
         // ri lint_check_waive INEFFECTIVE_NET
         logic [InputAddressWidth-1:0] tile_addr_offset;
+        logic in_addr_in_range;
+
         // ri lint_check_waive ARITH_EXTENSION
         assign tile_addr_offset = (in_addr - TileBaseAddress);
 
-        assign internal_out_valid[i] = in_valid &&
+        assign in_addr_in_range = in_valid &&
             // Lint waiver needed because when i == 0, this subexpression is always true.
             // ri lint_check_waive INVALID_COMPARE
             (in_addr >= TileBaseAddress) && (in_addr < TileBoundAddress);
         assign internal_out_addr[i] = tile_addr_offset[OutputAddressWidth-1:0];
+        assign internal_out_valid[i] = in_valid && in_addr_in_range;
 
         `BR_UNUSED_NAMED(tile_addr_offset_msbs,
                          tile_addr_offset[InputAddressWidth-1:OutputAddressWidth])
 
         if (EnableDatapath) begin : gen_datapath
-          assign internal_out_data_valid[i] = in_data_valid;
+          assign internal_out_data_valid[i] = in_data_valid && in_addr_in_range;
           assign internal_out_data[i] = in_data;
         end else begin : gen_no_datapath
           `BR_UNUSED(in_data_valid)
@@ -314,11 +323,11 @@ module br_ram_addr_decoder #(
   //------------------------------------------
   `BR_ASSERT_IMPL(out_valid_onehot0_a, $onehot0(out_valid))
 
-  for (genvar i = 0; i < Tiles; i++) begin : gen_out_addr_checks
+  for (genvar i = 0; i < Tiles; i++) begin : gen_out_checks
     `BR_ASSERT_IMPL(out_addr_in_range_a, out_valid[i] |-> out_addr[i] < TileDepth)
-    if (EnableDatapath) begin : gen_datapath_checks
+    if (EnableDatapath) begin : gen_datapath_checks_impl
       `BR_ASSERT_IMPL(out_data_valid_iff_out_valid_a, out_data_valid[i] |-> out_valid[i])
-    end else begin : gen_datapath_checks_disabled
+    end else begin : gen_no_datapath_checks_impl
       `BR_ASSERT_IMPL(out_data_valid_tied_to_0_a, out_data_valid[i] == 0)
     end
   end
