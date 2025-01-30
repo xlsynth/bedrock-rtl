@@ -25,6 +25,7 @@
 // pipeline the logic inside the decoding tree, they just retime the decoded outputs.
 
 `include "br_asserts_internal.svh"
+`include "br_tieoff.svh"
 `include "br_unused.svh"
 
 module br_ram_addr_decoder #(
@@ -256,13 +257,13 @@ module br_ram_addr_decoder #(
                          tile_addr_offset[InputAddressWidth-1:OutputAddressWidth])
 
         if (EnableDatapath) begin : gen_datapath
-            assign internal_out_data_valid[i] = in_data_valid;
-            assign internal_out_data[i] = in_data;
+          assign internal_out_data_valid[i] = in_data_valid;
+          assign internal_out_data[i] = in_data;
         end else begin : gen_no_datapath
-            `BR_UNUSED(in_data_valid)
-            `BR_UNUSED(in_data)
-            `BR_TIEOFF_ZERO(internal_out_data_valid[i])
-            `BR_TIEOFF_ZERO(internal_out_data[i])
+          `BR_UNUSED(in_data_valid)
+          `BR_UNUSED(in_data)
+          `BR_TIEOFF_ZERO_NAMED(internal_out_data_valid_i, internal_out_data_valid[i])
+          `BR_TIEOFF_ZERO_NAMED(internal_out_data_i, internal_out_data[i])
         end
       end
     end
@@ -270,7 +271,7 @@ module br_ram_addr_decoder #(
     // Replicate to reduce register fanout when Stages >= 1
     for (genvar i = 0; i < Tiles; i++) begin : gen_out
       br_delay_valid #(
-          .Width(OutputAddressWidth)
+          .Width(OutputAddressWidth),
           .NumStages(Stages),
           .EnableAssertFinalNotValid(EnableAssertFinalNotValid)
       ) br_delay_valid_addr (
@@ -300,10 +301,10 @@ module br_ram_addr_decoder #(
             .out_stages()  // unused
         );
       end else begin : gen_no_datapath
-        `BR_UNUSED(internal_out_data_valid[i])
-        `BR_UNUSED(internal_out_data[i])
-        `BR_TIEOFF_ZERO(out_data_valid[i])
-        `BR_TIEOFF_ZERO(out_data[i])
+        `BR_UNUSED_NAMED(internal_out_data_valid_i, internal_out_data_valid[i])
+        `BR_UNUSED_NAMED(internal_out_data_i, internal_out_data[i])
+        `BR_TIEOFF_ZERO_NAMED(out_data_valid_i, out_data_valid[i])
+        `BR_TIEOFF_ZERO_NAMED(out_data_i, out_data[i])
       end
     end
   end
