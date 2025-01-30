@@ -319,7 +319,8 @@ module br_ram_flops #(
       for (genvar wport = 0; wport < NumWritePorts; wport++) begin : gen_bypass_check_write_port
         logic addr_match;
 
-        assign addr_match = wr_valid[wport] && rd_addr_valid[rport] && (wr_addr[wport] == rd_addr[rport]);
+        assign addr_match = wr_valid[wport] && rd_addr_valid[rport] &&
+          (wr_addr[wport] == rd_addr[rport]);
 
         if (EnablePartialWrite) begin : gen_partial_write_bypass_check
           for (genvar word = 0; word < NumWords; word++) begin : gen_partial_write_bypass_check_word
