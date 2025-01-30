@@ -57,7 +57,6 @@ module br_ecc_secded_encoder_decoder_tb;
   // Decoder outputs
   logic dec_valid;
   logic [DataWidth-1:0] dec_data;
-  logic [ParityWidth-1:0] dec_parity;
   logic dec_error_ce;
   logic dec_error_due;
   logic [ParityWidth-1:0] dec_error_syndrome;
