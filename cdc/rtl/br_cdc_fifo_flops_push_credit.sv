@@ -192,7 +192,7 @@ module br_cdc_fifo_flops_push_credit #(
   logic push_either_rst;
   assign push_either_rst = push_rst || push_sender_in_reset;
 
-  br_ram_flops_1r1w #(
+  br_ram_flops #(
       .Depth(Depth),
       .Width(Width),
       .DepthTiles(FlopRamDepthTiles),
@@ -206,7 +206,7 @@ module br_cdc_fifo_flops_push_credit #(
       // we need to use structured gates for the read mux.
       .UseStructuredGates(1),
       .EnableAssertFinalNotValid(EnableAssertFinalNotValid)
-  ) br_ram_flops_1r1w (
+  ) br_ram_flops (
       .wr_clk(push_clk),  // ri lint_check_waive SAME_CLOCK_NAME
       .wr_rst(push_either_rst),
       .rd_clk(pop_clk),  // ri lint_check_waive SAME_CLOCK_NAME

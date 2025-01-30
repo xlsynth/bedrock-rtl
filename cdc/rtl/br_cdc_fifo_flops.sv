@@ -174,7 +174,7 @@ module br_cdc_fifo_flops #(
       .pop_ram_rd_data
   );
 
-  br_ram_flops_1r1w #(
+  br_ram_flops #(
       .Depth(Depth),
       .Width(Width),
       .DepthTiles(FlopRamDepthTiles),
@@ -188,7 +188,7 @@ module br_cdc_fifo_flops #(
       // we need to use structured gates for the read mux.
       .UseStructuredGates(1),
       .EnableAssertFinalNotValid(EnableAssertFinalNotValid)
-  ) br_ram_flops_1r1w (
+  ) br_ram_flops (
       .wr_clk(push_clk),  // ri lint_check_waive SAME_CLOCK_NAME
       .wr_rst(push_rst),
       .wr_valid(push_ram_wr_valid),

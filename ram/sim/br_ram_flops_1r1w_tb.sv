@@ -73,9 +73,11 @@ module br_ram_flops_1r1w_tb #(
         .rd_data
     );
   end else begin : gen_real
-    br_ram_flops_1r1w #(
+    br_ram_flops #(
         .Depth(Depth),
         .Width(Width),
+        .NumReadPorts(1),
+        .NumWritePorts(1),
         .DepthTiles(DepthTiles),
         .WidthTiles(WidthTiles),
         .AddressDepthStages(AddressDepthStages),

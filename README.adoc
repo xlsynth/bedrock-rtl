@@ -1110,16 +1110,17 @@ a| FIFO with internal flop RAM
 |
 
 | `br_ram_flops_1r1w_mock`
-a | Simplified version of `br_ram_flops_1r1w` with identical behavior, but without
-physical-aware tiling and pipelining implementation (should not be synthesized)
+a | Simplified version of `br_ram_flops` with single read port and single write
+port, but without physical-aware tiling and pipelining implementation (should
+not be synthesized)
 |
 
-| `br_ram_flops_1r1w`
-| Tiled flop-RAM with one read port and one write port
+| `br_ram_flops`
+| Tiled flop-RAM with one or more read ports and one or more write ports
 |
 
-| `br_ram_flops_1r1w_tile`
-| One-tile flop-RAM with one read port and one write port
+| `br_ram_flops_tile`
+| One-tile flop-RAM with one or more read ports and one or more write ports
 |
 
 |===

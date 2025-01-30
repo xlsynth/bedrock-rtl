@@ -193,7 +193,7 @@ module br_fifo_flops_push_credit #(
   logic either_rst;
   assign either_rst = rst || push_sender_in_reset;
 
-  br_ram_flops_1r1w #(
+  br_ram_flops #(
       .Depth(RamDepth),
       .Width(Width),
       .DepthTiles(FlopRamDepthTiles),
@@ -206,7 +206,7 @@ module br_fifo_flops_push_credit #(
       // Flops don't need to be reset, since uninitialized cells will never be read
       .EnableMemReset(0),
       .EnableAssertFinalNotValid(EnableAssertFinalNotValid)
-  ) br_ram_flops_1r1w (
+  ) br_ram_flops (
       .wr_clk(clk),  // ri lint_check_waive SAME_CLOCK_NAME
       .wr_rst(either_rst),
       .wr_valid(ram_wr_valid),
