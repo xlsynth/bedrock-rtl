@@ -195,9 +195,7 @@ __name__ : assert property (@(posedge __clk__) disable iff (__rst__ === 1'b1 || 
 `ifdef BR_ASSERT_ON
 `ifndef BR_DISABLE_ASSERT_COMB
 `define BR_ASSERT_COMB_EXPR(__name__, __expr__) \
-begin : gen_``__name__ \
-assert ($isunknown(__expr__) || (__expr__)); \
-end
+assert ($isunknown(__expr__) || (__expr__));
 `else  // BR_DISABLE_ASSERT_COMB
 `define BR_ASSERT_COMB_EXPR(__name__, __expr__) \
 `BR_NOOP
