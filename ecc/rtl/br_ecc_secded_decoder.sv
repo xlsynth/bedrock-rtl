@@ -64,6 +64,8 @@
 
 `include "br_asserts.svh"
 `include "br_asserts_internal.svh"
+`include "br_assign.svh"
+`include "br_unused.svh"
 
 // TODO(mgottscho): Pipeline the syndrome decoding and then correction with a parameter.
 module br_ecc_secded_decoder #(
@@ -78,6 +80,7 @@ module br_ecc_secded_decoder #(
     parameter bit RegisterOutputs = 0,
     // If 1, then assert there are no valid bits asserted at the end of the test.
     parameter bit EnableAssertFinalNotValid = 1,
+    localparam int InputWidth = DataWidth + ParityWidth,
     localparam int MessageWidth = 2 ** $clog2(DataWidth),
     localparam int CodewordWidth = MessageWidth + ParityWidth,
     // ri lint_check_waive PARAM_NOT_USED
@@ -90,15 +93,15 @@ module br_ecc_secded_decoder #(
 
     // Decoder input (received codeword, possibly with errors)
     input  logic                     rcv_valid,
-    input  logic [CodewordWidth-1:0] rcv_codeword,
+    input  logic [    DataWidth-1:0] rcv_data,
+    input  logic [  ParityWidth-1:0] rcv_parity,
 
     // Decoder output
     output logic                     dec_valid,
-    output logic [CodewordWidth-1:0] dec_codeword,
+    output logic [   InputWidth-1:0] dec_codeword,
     output logic                     dec_error_ce,  // corrected error
     output logic                     dec_error_due,  // detected-but-uncorrectable error
     output logic [  ParityWidth-1:0] dec_error_syndrome,
-    output logic [ MessageWidth-1:0] dec_message,
     output logic [    DataWidth-1:0] dec_data
 );
 
@@ -108,7 +111,6 @@ module br_ecc_secded_decoder #(
   `BR_ASSERT_STATIC(message_width_gte_1_a, DataWidth >= 1)
   `BR_ASSERT_STATIC(parity_width_gte_4_a, ParityWidth >= 4)
   `BR_ASSERT_STATIC(parity_width_lte_12_a, ParityWidth <= 12)
-  `BR_ASSERT_STATIC(message_width_is_power_of_2_a, br_math::is_power_of_2(MessageWidth))
 
   //------------------------------------------
   // Implementation
@@ -118,17 +120,17 @@ module br_ecc_secded_decoder #(
   // Optionally register the input signals.
   //------
   logic rcv_valid_d;
-  logic [CodewordWidth-1:0] rcv_codeword_d;
+  logic [InputWidth-1:0] rcv_codeword_d;
 
   br_delay_valid #(
-      .Width(CodewordWidth),
+      .Width(InputWidth),
       .NumStages(RegisterInputs == 1 ? 1 : 0),
       .EnableAssertFinalNotValid(EnableAssertFinalNotValid)
   ) br_delay_valid_inputs (
       .clk,
       .rst,
       .in_valid(rcv_valid),
-      .in(rcv_codeword),
+      .in({rcv_parity, rcv_data}),
       .out_valid(rcv_valid_d),
       .out(rcv_codeword_d),
       .out_valid_stages(),  // unused
@@ -141,7 +143,11 @@ module br_ecc_secded_decoder #(
   logic [CodewordWidth-1:0][ParityWidth-1:0] parity_check_matrix;  // H
   logic [ParityWidth-1:0] syndrome;
   logic [CodewordWidth-1:0] cw;  // shorten name for internal readability
-  assign cw = rcv_codeword_d;
+  assign `BR_INSERT_TO_MSB(cw, rcv_codeword_d[InputWidth-1 -: ParityWidth])
+  if (CodewordWidth > InputWidth) begin : gen_cw_pad_bits
+    assign cw[MessageWidth -1 : DataWidth] = '0;
+  end
+  assign `BR_INSERT_TO_LSB(cw, rcv_codeword_d[DataWidth-1:0])
 
   // ri lint_check_off EXPR_ID_LIMIT
 
@@ -2372,7 +2378,7 @@ module br_ecc_secded_decoder #(
       .clk,
       .rst,
       .in_valid(rcv_valid_d),
-      .in({rcv_codeword_d, syndrome}),
+      .in({cw, syndrome}),
       .out_valid(internal_valid),
       .out({internal_codeword, internal_error_syndrome}),
       .out_valid_stages(),  // unused
@@ -2456,15 +2462,21 @@ module br_ecc_secded_decoder #(
   //------
   // Optionally register the output signals.
   //------
+  logic [InputWidth-1:0] internal_corrected_codeword_compressed;
+  assign `BR_INSERT_TO_MSB(internal_corrected_codeword_compressed, internal_corrected_codeword[CodewordWidth-1 -: ParityWidth])
+  assign `BR_INSERT_TO_LSB(internal_corrected_codeword_compressed, internal_corrected_codeword[DataWidth-1:0])
+  if (CodewordWidth > InputWidth) begin : gen_internal_corrected_codeword_unused
+    `BR_UNUSED_NAMED(unused_internal_corrected_codeword, internal_corrected_codeword[MessageWidth-1 : DataWidth])
+  end
   br_delay_valid #(
-      .Width(CodewordWidth + 2 + ParityWidth),
+      .Width(InputWidth + 2 + ParityWidth),
       .NumStages(RegisterOutputs == 1 ? 1 : 0),
       .EnableAssertFinalNotValid(EnableAssertFinalNotValid)
   ) br_delay_valid_outputs (
       .clk,
       .rst,
       .in_valid(internal_valid),
-      .in({internal_corrected_codeword,
+      .in({internal_corrected_codeword_compressed,
           internal_error_ce,
           internal_error_due,
           internal_error_syndrome}),
@@ -2477,9 +2489,8 @@ module br_ecc_secded_decoder #(
       .out_stages()  // unused
   );
 
-  assign dec_message = dec_codeword[MessageWidth-1:0];
   // ri lint_check_waive FULL_RANGE
-  assign dec_data = dec_message[DataWidth-1:0];
+  assign dec_data = dec_codeword[DataWidth-1:0];
 
   //------------------------------------------
   // Implementation checks
