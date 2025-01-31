@@ -22,6 +22,12 @@
 // Data progresses from one stage to another when both
 // the corresponding ready signal and valid signal are
 // both 1 on the same cycle. Otherwise, the stage is stalled.
+//
+// The pop_valid and pop_data outputs are registered, although the pop_valid also has some internal fanout.
+//
+// The cut-through latency (minimum delay from push_valid to pop_valid) is 1 cycle.
+// The backpressure latency (minimum delay from pop_ready to push_ready) is 0 cycles.
+// The steady-state throughput is 1 transaction per cycle.
 
 `include "br_asserts_internal.svh"
 `include "br_registers.svh"
