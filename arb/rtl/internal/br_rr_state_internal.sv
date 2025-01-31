@@ -1,7 +1,7 @@
 `include "br_asserts_internal.svh"
 `include "br_registers.svh"
 
-// Copyright 2024,2025 The Bedrock-RTL Authors
+// Copyright 2024-2025,2025 The Bedrock-RTL Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
