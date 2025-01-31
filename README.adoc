@@ -816,6 +816,10 @@ a| Bus CDC using a dual-clock FIFO with internal flop-RAM
 | With self-gating (valid-next)
 |
 
+| `br_delay_valid_nr`
+| With self-gating (valid) and without reset
+|
+
 | `br_delay_valid`
 | With self-gating (valid)
 |
