@@ -46,6 +46,14 @@ module br_cdc_fifo_ctrl_push_1r1w_push_credit #(
     // driven directly from a flop. This comes at the expense of one additional
     // push cycle of credit loop latency.
     parameter bit RegisterPushOutputs = 0,
+    // If 1 (the default), register push_rst on push_clk before sending it out
+    // as push_reset_active_push. This adds an extra cycle to the cut-through
+    // latency of the FIFO.
+    // Do not set this to 0 unless either push_rst is driven directly by a
+    // register or if push_reset_active_push is registered externally
+    // before synchronization to the pop clock domain. You also cannot set this
+    // to 0 if push_sender_in_reset is not tied to 0.
+    parameter bit RegisterResetActive = 1,
     // If 1, then assert there are no valid bits asserted and that the FIFO is
     // empty at the end of the test.
     parameter bit EnableAssertFinalNotValid = 1,
@@ -112,6 +120,7 @@ module br_cdc_fifo_ctrl_push_1r1w_push_credit #(
       .Width(Width),
       .RamWriteLatency(RamWriteLatency),
       .RegisterPushOutputs(RegisterPushOutputs),
+      .RegisterResetActive(RegisterResetActive),
       .MaxCredit(MaxCredit),
       .EnableAssertFinalNotValid(EnableAssertFinalNotValid)
   ) br_cdc_fifo_push_ctrl_credit (

@@ -23,6 +23,7 @@
 
 module br_cdc_fifo_pop_flag_mgr #(
     parameter int Depth = 2,
+    parameter bit RegisterResetActive = 1,
     localparam int CountWidth = $clog2(Depth + 1)
 ) (
     input  logic                  clk,
@@ -41,10 +42,9 @@ module br_cdc_fifo_pop_flag_mgr #(
 
   localparam int MaxCountP1 = 1 << CountWidth;
   localparam int MaxCount = MaxCountP1 - 1;
-  localparam int ResetActiveDelay = 1;
   // Need to make sure that on pop reset, the updated pop_count is not visible
   // to the push side before reset_active is.
-  localparam int PopCountDelay = ResetActiveDelay + 1;
+  localparam int PopCountDelay = RegisterResetActive + 1;
 
   logic [CountWidth-1:0] pop_count_next;
   logic [CountWidth-1:0] pop_count_next_gray;
@@ -81,7 +81,7 @@ module br_cdc_fifo_pop_flag_mgr #(
 
   br_delay_nr #(
       .Width(1),
-      .NumStages(ResetActiveDelay)
+      .NumStages(RegisterResetActive)
   ) br_delay_nr_reset_active_pop (
       .clk,
       .in(rst),

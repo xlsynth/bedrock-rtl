@@ -30,11 +30,12 @@
 //
 // Let PushT and PopT be the push period and pop period, respectively.
 //
-// The cut-through latency is max(2, FlopRamAddressDepthStages + 2) * PushT +
+// The cut-through latency is max(RegisterResetActive + 1, FlopRamAddressDepthStages + 2) * PushT +
 // (NumSyncStages + 1 + FlopRamAddressDepthStages + FlopRamReadDataDepthStages +
 // FlopRamReadDataWidthStages + RegisterPopOutputs) * PopT.
-
-// The backpressure latency is 2 * PopT + (NumSyncStages + 1 + RegisterPushOutputs) * PushT.
+//
+// The backpressure latency is (RegisterResetActive + 1) * PopT +
+// (NumSyncStages + 1 + RegisterPushOutputs) * PushT.
 //
 // To achieve full bandwidth, the depth of the FIFO must be at least
 // (CutThroughLatency + BackpressureLatency) / max(PushT, PopT).
@@ -57,6 +58,12 @@ module br_cdc_fifo_flops_push_credit #(
     // If 0, pop_valid/pop_data comes directly from push_valid (if bypass is enabled)
     // and/or ram_wr_data.
     parameter bit RegisterPopOutputs = 1,
+    // If 1 (the default), register push_rst on push_clk and pop_rst on pop_clk
+    // before sending to the CDC synchronizers. This adds one cycle to the cut-through
+    // latency and one cycle to the backpressure latency.
+    // Do not set this to 0 unless push_rst and pop_rst are driven directly by
+    // registers. If set to 0, push_sender_in_reset must be tied to 0.
+    parameter bit RegisterResetActive = 1,
     // Number of synchronization stages to use for the gray counts. Must be >=2.
     parameter int NumSyncStages = 3,
     // Number of tiles in the depth (address) dimension. Must be at least 1 and evenly divide Depth.
@@ -148,6 +155,7 @@ module br_cdc_fifo_flops_push_credit #(
       .MaxCredit(MaxCredit),
       .RegisterPushOutputs(RegisterPushOutputs),
       .RegisterPopOutputs(RegisterPopOutputs),
+      .RegisterResetActive(RegisterResetActive),
       .RamWriteLatency(RamWriteLatency),
       .RamReadLatency(RamReadLatency),
       .NumSyncStages(NumSyncStages),

@@ -23,6 +23,7 @@ module br_cdc_fifo_pop_ctrl #(
     parameter int Width = 1,
     parameter int RamReadLatency = 0,
     parameter bit RegisterPopOutputs = 0,
+    parameter bit RegisterResetActive = 1,
     // If 1, then assert there are no valid bits asserted and that the FIFO is
     // empty at the end of the test.
     parameter bit EnableAssertFinalNotValid = 1,
@@ -104,7 +105,8 @@ module br_cdc_fifo_pop_ctrl #(
 
   // Status flags
   br_cdc_fifo_pop_flag_mgr #(
-      .Depth(Depth)
+      .Depth(Depth),
+      .RegisterResetActive(RegisterResetActive)
   ) br_cdc_fifo_pop_flag_mgr (
       .clk,
       .rst,

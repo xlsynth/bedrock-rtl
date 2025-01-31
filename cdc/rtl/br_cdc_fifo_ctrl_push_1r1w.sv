@@ -36,6 +36,13 @@ module br_cdc_fifo_ctrl_push_1r1w #(
     parameter int RamWriteLatency = 1,
     // The number of synchronization stages to use for the gray counts.
     parameter int NumSyncStages = 3,
+    // If 1 (the default), register push_rst on push_clk before sending it out
+    // as push_reset_active_push. This adds an extra cycle to the cut-through
+    // latency of the FIFO.
+    // Do not set this to 0 unless either push_rst is driven directly by a
+    // register or if push_reset_active_push is registered externally
+    // before synchronization to the pop clock domain.
+    parameter bit RegisterResetActive = 1,
     // If 1, cover that the push side experiences backpressure.
     // If 0, assert that there is never backpressure.
     parameter bit EnableCoverPushBackpressure = 1,
@@ -99,6 +106,7 @@ module br_cdc_fifo_ctrl_push_1r1w #(
       .Depth(Depth),
       .Width(Width),
       .RamWriteLatency(RamWriteLatency),
+      .RegisterResetActive(RegisterResetActive),
       .EnableCoverPushBackpressure(EnableCoverPushBackpressure),
       .EnableAssertPushValidStability(EnableAssertPushValidStability),
       .EnableAssertPushDataStability(EnableAssertPushDataStability),
