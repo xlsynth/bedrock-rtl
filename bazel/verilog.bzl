@@ -319,17 +319,17 @@ def verilog_elab_test(tags = [], **kwargs):
         **kwargs: Other arguments to pass to the rule_verilog_elab_test rule.
     """
 
-    tags = [
+    extra_tags = [
         "no-sandbox",  # Preserves miscellaneous undeclared EDA tool outputs for debugging
         "resources:verilog_elab_test_tool_licenses:1",
         "elab",
     ]
 
     if "tool" in kwargs:
-        tags.append(kwargs["tool"])
+        extra_tags.append(kwargs["tool"])
 
     rule_verilog_elab_test(
-        tags = tags,
+        tags = tags + extra_tags,
         **kwargs
     )
 
@@ -390,17 +390,17 @@ def verilog_lint_test(tags = [], **kwargs):
         **kwargs: Other arguments to pass to the rule_verilog_lint_test rule.
     """
 
-    tags = [
+    extra_tags = [
         "no-sandbox",  # Preserves miscellaneous undeclared EDA tool outputs for debugging
         "resources:verilog_lint_test_tool_licenses:1",
         "lint",
     ]
 
     if "tool" in kwargs:
-        tags.append(kwargs["tool"])
+        extra_tags.append(kwargs["tool"])
 
     rule_verilog_lint_test(
-        tags = tags,
+        tags = tags + extra_tags,
         **kwargs
     )
 
@@ -480,16 +480,16 @@ def verilog_sim_test(tags = [], **kwargs):
         **kwargs: Other arguments to pass to the rule_verilog_sim_test rule.
     """
 
-    tags = [
+    extra_tags = [
         "no-sandbox",  # Preserves miscellaneous undeclared EDA tool outputs for debugging
         "resources:verilog_sim_test_tool_licenses:1",
         "sim",
     ]
     if "tool" in kwargs:
-        tags.append(kwargs["tool"])
+        extra_tags.append(kwargs["tool"])
 
     rule_verilog_sim_test(
-        tags = tags,
+        tags = tags + extra_tags,
         **kwargs
     )
 
@@ -566,16 +566,16 @@ def verilog_fpv_test(tags = [], **kwargs):
             * If the tool is provided in kwargs, then the tool name is added to the above tags.
         **kwargs: Other arguments to pass to the rule_verilog_fpv_test rule.
     """
-    tags = [
+    extra_tags = [
         "no-sandbox",  # Preserves miscellaneous undeclared EDA tool outputs for debugging
         "resources:verilog_fpv_test_tool_licenses:1",
         "fpv",
     ]
     if "tool" in kwargs:
-        tags.append(kwargs["tool"])
+        extra_tags.append(kwargs["tool"])
 
     rule_verilog_fpv_test(
-        tags = tags,
+        tags = tags + extra_tags,
         **kwargs
     )
 
