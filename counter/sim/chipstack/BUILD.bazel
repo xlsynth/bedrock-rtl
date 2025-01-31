@@ -33,9 +33,12 @@ verilog_elab_test(
 )
 
 br_verilog_sim_test_tools_suite(
-    name = "br_counter_decr_gen_tb_vcs_test_suite",
+    name = "br_counter_decr_gen_tb_sim_test_suite",
     # TODO: support iverilog
-    tools = ["vcs"],
+    tools = [
+        "dsim",
+        "vcs",
+    ],
     deps = [":br_counter_decr_gen_tb"],
 )
 
@@ -54,9 +57,12 @@ verilog_elab_test(
 )
 
 br_verilog_sim_test_tools_suite(
-    name = "br_counter_gen_tb_vcs_test_suite",
+    name = "br_counter_gen_tb_sim_test_suite",
     # TODO: support iverilog
-    tools = ["vcs"],
+    tools = [
+        "dsim",
+        "vcs",
+    ],
     deps = [":br_counter_gen_tb"],
 )
 
@@ -75,8 +81,11 @@ verilog_elab_test(
 )
 
 br_verilog_sim_test_tools_suite(
-    name = "br_counter_incr_gen_tb_vcs_test_suite",
+    name = "br_counter_incr_gen_tb_sim_test_suite",
     # TODO: support iverilog
-    tools = ["vcs"],
+    tools = [
+        "dsim",
+        "vcs",
+    ],
     deps = [":br_counter_incr_gen_tb"],
 )
