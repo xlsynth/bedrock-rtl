@@ -310,16 +310,26 @@ rule_verilog_elab_test = rule(
 def verilog_elab_test(tags = [], **kwargs):
     """Wraps rule_verilog_elab_test with extra tags.
 
-    * no-sandbox -- Loosens some Bazel hermeticity features so that undeclared EDA tool test outputs are preserved for debugging.
-    * resources:verilog_elab_test_tool_licenses:1 -- indicates that the test requires a elaboration tool license.
-    * elab -- useful for test filtering, e.g., bazel test //... --test_tag_filters=elab
+    Args:
+        tags: The tags to add to the test. If not provided, then defaults to:
+            * no-sandbox -- Loosens some Bazel hermeticity features so that undeclared EDA tool test outputs are preserved for debugging.
+            * resources:verilog_elab_test_tool_licenses:1 -- indicates that the test requires a elaboration tool license.
+            * elab -- useful for test filtering, e.g., bazel test //... --test_tag_filters=elab
+            * If the tool is provided in kwargs, then the tool name is added to the above tags.
+        **kwargs: Other arguments to pass to the rule_verilog_elab_test rule.
     """
+
+    tags = [
+        "no-sandbox",  # Preserves miscellaneous undeclared EDA tool outputs for debugging
+        "resources:verilog_elab_test_tool_licenses:1",
+        "elab",
+    ]
+
+    if "tool" in kwargs:
+        tags.append(kwargs["tool"])
+
     rule_verilog_elab_test(
-        tags = tags + [
-            "no-sandbox",  # Preserves miscellaneous undeclared EDA tool outputs for debugging
-            "resources:verilog_elab_test_tool_licenses:1",
-            "elab",
-        ],
+        tags = tags,
         **kwargs
     )
 
@@ -371,16 +381,26 @@ rule_verilog_lint_test = rule(
 def verilog_lint_test(tags = [], **kwargs):
     """Wraps rule_verilog_lint_test with extra tags.
 
-    * no-sandbox -- Loosens some Bazel hermeticity features so that undeclared EDA tool test outputs are preserved for debugging.
-    * resources:verilog_lint_test_tool_licenses:1 -- indicates that the test requires a lint tool license.
-    * lint -- useful for test filtering, e.g., bazel test //... --test_tag_filters=lint
+    Args:
+        tags: The tags to add to the test. If not provided, then defaults to:
+            * no-sandbox -- Loosens some Bazel hermeticity features so that undeclared EDA tool test outputs are preserved for debugging.
+            * resources:verilog_lint_test_tool_licenses:1 -- indicates that the test requires a lint tool license.
+            * lint -- useful for test filtering, e.g., bazel test //... --test_tag_filters=lint
+            * If the tool is provided in kwargs, then the tool name is added to the above tags.
+        **kwargs: Other arguments to pass to the rule_verilog_lint_test rule.
     """
+
+    tags = [
+        "no-sandbox",  # Preserves miscellaneous undeclared EDA tool outputs for debugging
+        "resources:verilog_lint_test_tool_licenses:1",
+        "lint",
+    ]
+
+    if "tool" in kwargs:
+        tags.append(kwargs["tool"])
+
     rule_verilog_lint_test(
-        tags = tags + [
-            "no-sandbox",  # Preserves miscellaneous undeclared EDA tool outputs for debugging
-            "resources:verilog_lint_test_tool_licenses:1",
-            "lint",
-        ],
+        tags = tags,
         **kwargs
     )
 
@@ -451,16 +471,25 @@ rule_verilog_sim_test = rule(
 def verilog_sim_test(tags = [], **kwargs):
     """Wraps rule_verilog_sim_test with extra tags.
 
-    * no-sandbox -- Loosens some Bazel hermeticity features so that undeclared EDA tool test outputs are preserved for debugging.
-    * resources:verilog_sim_test_tool_licenses:1 -- indicates that the test requires a simulation tool license.
-    * sim -- useful for test filtering, e.g., bazel test //... --test_tag_filters=sim
+    Args:
+        tags: The tags to add to the test. If not provided, then defaults to:
+            * no-sandbox -- Loosens some Bazel hermeticity features so that undeclared EDA tool test outputs are preserved for debugging.
+            * resources:verilog_sim_test_tool_licenses:1 -- indicates that the test requires a simulation tool license.
+            * sim -- useful for test filtering, e.g., bazel test //... --test_tag_filters=sim
+            * If the tool is provided in kwargs, then the tool name is added to the above tags.
+        **kwargs: Other arguments to pass to the rule_verilog_sim_test rule.
     """
+
+    tags = [
+        "no-sandbox",  # Preserves miscellaneous undeclared EDA tool outputs for debugging
+        "resources:verilog_sim_test_tool_licenses:1",
+        "sim",
+    ]
+    if "tool" in kwargs:
+        tags.append(kwargs["tool"])
+
     rule_verilog_sim_test(
-        tags = tags + [
-            "no-sandbox",  # Preserves miscellaneous undeclared EDA tool outputs for debugging
-            "resources:verilog_sim_test_tool_licenses:1",
-            "sim",
-        ],
+        tags = tags,
         **kwargs
     )
 
@@ -529,16 +558,24 @@ rule_verilog_fpv_test = rule(
 def verilog_fpv_test(tags = [], **kwargs):
     """Wraps rule_verilog_fpv_test with extra tags.
 
-    * no-sandbox -- Loosens some Bazel hermeticity features so that undeclared EDA tool test outputs are preserved for debugging.
-    * resources:verilog_fpv_test_tool_licenses:1 -- indicates that the test requires a formal tool license.
-    * fpv -- useful for test filtering, e.g., bazel test //... --test_tag_filters=fpv
+    Args:
+        tags: The tags to add to the test. If not provided, then defaults to:
+            * no-sandbox -- Loosens some Bazel hermeticity features so that undeclared EDA tool test outputs are preserved for debugging.
+            * resources:verilog_fpv_test_tool_licenses:1 -- indicates that the test requires a formal tool license.
+            * fpv -- useful for test filtering, e.g., bazel test //... --test_tag_filters=fpv
+            * If the tool is provided in kwargs, then the tool name is added to the above tags.
+        **kwargs: Other arguments to pass to the rule_verilog_fpv_test rule.
     """
+    tags = [
+        "no-sandbox",  # Preserves miscellaneous undeclared EDA tool outputs for debugging
+        "resources:verilog_fpv_test_tool_licenses:1",
+        "fpv",
+    ]
+    if "tool" in kwargs:
+        tags.append(kwargs["tool"])
+
     rule_verilog_fpv_test(
-        tags = tags + [
-            "no-sandbox",  # Preserves miscellaneous undeclared EDA tool outputs for debugging
-            "resources:verilog_fpv_test_tool_licenses:1",
-            "fpv",
-        ],
+        tags = tags,
         **kwargs
     )
 
