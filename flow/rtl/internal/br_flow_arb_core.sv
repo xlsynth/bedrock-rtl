@@ -112,6 +112,8 @@ module br_flow_arb_core #(
   `BR_ASSERT_IMPL(pop_ready_equals_push_ready_or_a, pop_ready == |push_ready)
   `BR_ASSERT_IMPL(push_handshake_implies_pop_handshake_a,
                   |(push_valid & push_ready) |-> (pop_valid & pop_ready))
-  `BR_ASSERT_IMPL(grant_equals_push_ready_and_valid_a, grant == (push_ready & push_valid))
+  for (genvar i = 0; i < NumFlows; i++) begin : gen_per_flow_impl_checks
+    `BR_ASSERT_IMPL(only_accept_on_grant_a, (push_valid[i] & push_ready[i]) |-> grant[i])
+  end
 
 endmodule : br_flow_arb_core
