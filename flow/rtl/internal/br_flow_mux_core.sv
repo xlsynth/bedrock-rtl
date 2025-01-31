@@ -63,6 +63,10 @@ module br_flow_mux_core #(
   `BR_ASSERT_STATIC(numflows_gte_2_a, NumFlows >= 2)
   `BR_ASSERT_STATIC(datawidth_gte_1_a, Width >= 1)
 
+  // This is a bit redundant with the integration checks in br_flow_arb_core,
+  // but we need this to check data stability.
+  // TODO(zhemao): Replace this with standalone data stability checks
+  // so that we can reduce the redundant assertions.
   br_flow_checks_valid_data_intg #(
       .NumFlows(NumFlows),
       .Width(Width),
@@ -84,6 +88,8 @@ module br_flow_mux_core #(
 
   br_flow_arb_core #(
       .NumFlows(NumFlows),
+      .EnableCoverPushBackpressure(EnableCoverPushBackpressure),
+      .EnableAssertPushValidStability(EnableAssertPushValidStability),
       .EnableAssertFinalNotValid(EnableAssertFinalNotValid)
   ) br_flow_arb_core (
       .clk,
