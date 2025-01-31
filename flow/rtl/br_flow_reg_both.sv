@@ -19,9 +19,16 @@
 // for synchronizing pipeline stages and stalling when
 // encountering backpressure hazards.
 //
+// All outputs are registered, although the push_ready and pop_valid signals
+// also have some internal fanout.
+//
 // Data progresses from one stage to another when both
 // the corresponding ready signal and valid signal are
 // both 1 on the same cycle. Otherwise, the stage is stalled.
+//
+// The cut-through latency (minimum delay from push_valid to pop_valid) is 1 cycle.
+// The backpressure latency (minimum delay from pop_ready to push_ready) is 1 cycle.
+// The steady-state throughput is 1 transaction per cycle.
 
 module br_flow_reg_both #(
     // Must be at least 1
