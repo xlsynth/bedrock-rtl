@@ -24,6 +24,7 @@
 module br_cdc_fifo_push_flag_mgr #(
     parameter int Depth = 2,
     parameter int RamWriteLatency = 1,
+    parameter bit RegisterResetActive = 1,
     localparam int CountWidth = $clog2(Depth + 1)
 ) (
     input  logic                  clk,
@@ -44,10 +45,9 @@ module br_cdc_fifo_push_flag_mgr #(
 
   localparam int MaxCountP1 = 1 << CountWidth;
   localparam int MaxCount = MaxCountP1 - 1;
-  localparam int ResetActiveDelay = 1;
   // Need to make sure that on push reset, the updated push_count is not visible
   // to the pop side before reset_active is.
-  localparam int PushCountDelay = br_math::max2(ResetActiveDelay + 1, RamWriteLatency);
+  localparam int PushCountDelay = br_math::max2(RegisterResetActive + 1, RamWriteLatency);
 
   logic [CountWidth-1:0] push_count_next;
   logic [CountWidth-1:0] push_count_next_gray;
@@ -84,7 +84,7 @@ module br_cdc_fifo_push_flag_mgr #(
 
   br_delay_nr #(
       .Width(1),
-      .NumStages(ResetActiveDelay)
+      .NumStages(RegisterResetActive)
   ) br_delay_nr_reset_active_push (
       .clk,
       .in(rst),

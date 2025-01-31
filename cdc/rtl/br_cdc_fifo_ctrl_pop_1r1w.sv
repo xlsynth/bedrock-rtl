@@ -38,6 +38,13 @@ module br_cdc_fifo_ctrl_pop_1r1w #(
     // (if bypass is enabled), the RAM read interface, and/or an internal staging
     // buffer (if RAM read latency is >0).
     parameter bit RegisterPopOutputs = 0,
+    // If 1 (the default), register pop_rst on pop_clk before sending it out
+    // as pop_reset_active_pop. This adds an extra cycle to the backpressure
+    // latency of the FIFO.
+    // Do not set this to 0 unless either pop_rst is driven directly by a
+    // register or if pop_reset_active_pop is registered externally
+    // before synchronization to the push clock domain.
+    parameter bit RegisterResetActive = 1,
     // The number of pop cycles between when ram_rd_addr_valid is asserted and
     // ram_rd_data_valid is asserted.
     parameter int RamReadLatency = 0,
@@ -124,6 +131,7 @@ module br_cdc_fifo_ctrl_pop_1r1w #(
       .Depth(Depth),
       .Width(Width),
       .RegisterPopOutputs(RegisterPopOutputs),
+      .RegisterResetActive(RegisterResetActive),
       .RamReadLatency(RamReadLatency),
       .EnableAssertFinalNotValid(EnableAssertFinalNotValid)
   ) br_cdc_fifo_pop_ctrl (

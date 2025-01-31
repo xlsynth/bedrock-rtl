@@ -40,10 +40,10 @@
 //
 // Let PushT and PopT be the push period and pop period, respectively.
 //
-// The cut-through latency is max(2, RamWriteLatency + 1) * PushT +
-// (NumSyncStages + 1 + RamReadLatency + RegisterPopOutputs) * PopT.
-
-// The backpressure latency is 2 * PopT + (NumSyncStages + 1) * PushT.
+// The cut-through latency is max(RegisterResetActive + 1, RamWriteLatency + 1)
+// * PushT + (NumSyncStages + 1 + RamReadLatency + RegisterPopOutputs) * PopT.
+//
+// The backpressure latency is (RegisterResetActive + 1) * PopT + (NumSyncStages + 1) * PushT.
 //
 // To achieve full bandwidth, the depth of the FIFO must be at least
 // (CutThroughLatency + BackpressureLatency) / max(PushT, PopT).
@@ -60,6 +60,12 @@ module br_cdc_fifo_ctrl_1r1w #(
     // (if bypass is enabled), the RAM read interface, and/or an internal staging
     // buffer (if RAM read latency is >0).
     parameter bit RegisterPopOutputs = 0,
+    // If 1 (the default), register push_rst on push_clk and pop_rst on pop_clk
+    // before sending to the CDC synchronizers. This adds one cycle to the cut-through
+    // latency and one cycle to the backpressure latency.
+    // Do not set this to 0 unless push_rst and pop_rst are driven directly by
+    // registers.
+    parameter bit RegisterResetActive = 1,
     // The number of push cycles after ram_wr_valid is asserted at which
     // it is safe to read the newly written data.
     parameter int RamWriteLatency = 1,
@@ -143,6 +149,7 @@ module br_cdc_fifo_ctrl_1r1w #(
   br_cdc_fifo_ctrl_push_1r1w #(
       .Depth(Depth),
       .Width(Width),
+      .RegisterResetActive(RegisterResetActive),
       .RamWriteLatency(RamWriteLatency),
       .NumSyncStages(NumSyncStages),
       .EnableCoverPushBackpressure(EnableCoverPushBackpressure),
@@ -174,6 +181,7 @@ module br_cdc_fifo_ctrl_1r1w #(
       .Depth(Depth),
       .Width(Width),
       .RegisterPopOutputs(RegisterPopOutputs),
+      .RegisterResetActive(RegisterResetActive),
       .RamReadLatency(RamReadLatency),
       .EnableAssertFinalNotValid(EnableAssertFinalNotValid),
       .NumSyncStages(NumSyncStages)

@@ -20,6 +20,7 @@ module br_cdc_fifo_push_ctrl #(
     parameter int Depth = 2,
     parameter int Width = 1,
     parameter int RamWriteLatency = 1,
+    parameter bit RegisterResetActive = 1,
     // If 1, cover that the push side experiences backpressure.
     // If 0, assert that there is never backpressure.
     parameter bit EnableCoverPushBackpressure = 1,
@@ -78,7 +79,8 @@ module br_cdc_fifo_push_ctrl #(
 
   br_cdc_fifo_push_flag_mgr #(
       .Depth(Depth),
-      .RamWriteLatency(RamWriteLatency)
+      .RamWriteLatency(RamWriteLatency),
+      .RegisterResetActive(RegisterResetActive)
   ) br_cdc_fifo_push_flag_mgr (
       .clk,
       .rst,
