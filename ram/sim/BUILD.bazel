@@ -55,6 +55,7 @@ br_verilog_sim_test_tools_suite(
         ],
     },
     tools = [
+        "dsim",
         "iverilog",
         "vcs",
     ],
@@ -80,6 +81,7 @@ br_verilog_sim_test_tools_suite(
         ],
     },
     tools = [
+        "dsim",
         "iverilog",
         "vcs",
     ],
@@ -109,6 +111,7 @@ br_verilog_sim_test_tools_suite(
         ],
     },
     tools = [
+        "dsim",
         "iverilog",
         "vcs",
     ],
@@ -127,6 +130,7 @@ br_verilog_sim_test_tools_suite(
         ],
     },
     tools = [
+        "dsim",
         "iverilog",
         "vcs",
     ],
@@ -145,6 +149,7 @@ br_verilog_sim_test_tools_suite(
         ],
     },
     tools = [
+        "dsim",
         "iverilog",
         "vcs",
     ],
@@ -163,6 +168,7 @@ br_verilog_sim_test_tools_suite(
         ],
     },
     tools = [
+        "dsim",
         "iverilog",
         "vcs",
     ],
@@ -183,6 +189,6 @@ br_verilog_sim_test_tools_suite(
 #            "1",
 #        ],
 #    },
-#    tools = ["vcs", "iverilog"],
+#    tools = ["vcs", "iverilog", "dsim"],
 #    deps = [":br_ram_flops_1r1w_tb"],
 #)

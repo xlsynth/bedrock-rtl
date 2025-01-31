@@ -62,6 +62,7 @@ br_verilog_sim_test_tools_suite(
         "FlopRamAddressDepthStages": ["0"],
     },
     tools = [
+        "dsim",
         "iverilog",
         "vcs",
     ],
@@ -91,6 +92,7 @@ br_verilog_sim_test_tools_suite(
         ],
     },
     tools = [
+        "dsim",
         "iverilog",
         "vcs",
     ],
@@ -137,6 +139,7 @@ br_verilog_sim_test_tools_suite(
         ],
     },
     tools = [
+        "dsim",
         "iverilog",
         "vcs",
     ],

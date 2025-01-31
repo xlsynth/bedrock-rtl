@@ -38,6 +38,7 @@ verilog_elab_test(
 br_verilog_sim_test_tools_suite(
     name = "br_ecc_sed_encoder_decoder_sim_test_tools_suite",
     tools = [
+        "dsim",
         "iverilog",
         "vcs",
     ],
@@ -64,6 +65,7 @@ verilog_elab_test(
 br_verilog_sim_test_tools_suite(
     name = "br_ecc_secded_encoder_decoder_sim_test_tools_suite",
     tools = [
+        "dsim",
         "iverilog",
         "vcs",
     ],
