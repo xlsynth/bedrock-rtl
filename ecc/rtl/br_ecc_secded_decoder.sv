@@ -159,7 +159,7 @@ module br_ecc_secded_decoder #(
 
   // ri lint_check_off EXPR_ID_LIMIT
 
-  if ((CodewordWidth == 4) && (MessageWidth == 4)) begin : gen_8_4
+  if ((CodewordWidth == 8) && (MessageWidth == 4)) begin : gen_8_4
     `BR_ASSERT_STATIC(parity_width_matches_a, ParityWidth == 4)
     assign syndrome[0] = cw[1] ^ cw[2] ^ cw[3] ^ cw[4];
     assign syndrome[1] = cw[0] ^ cw[2] ^ cw[3] ^ cw[5];
