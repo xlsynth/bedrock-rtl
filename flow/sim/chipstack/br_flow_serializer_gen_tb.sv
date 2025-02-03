@@ -483,4 +483,3 @@ module br_flow_serializer_gen_tb;
   endtask
 
 endmodule
-
