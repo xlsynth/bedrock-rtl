@@ -41,6 +41,7 @@ br_verilog_sim_test_tools_suite(
     ],
     deps = [":br_cdc_fifo_ctrl_1r1w_gen_tb"],
 )
+
 verilog_library(
     name = "br_cdc_fifo_ctrl_1r1w_push_credit_gen_tb",
     srcs = ["br_cdc_fifo_ctrl_1r1w_push_credit_gen_tb.sv"],
@@ -64,6 +65,7 @@ br_verilog_sim_test_tools_suite(
     ],
     deps = [":br_cdc_fifo_ctrl_1r1w_push_credit_gen_tb"],
 )
+
 verilog_library(
     name = "br_cdc_fifo_flops_gen_tb",
     srcs = ["br_cdc_fifo_flops_gen_tb.sv"],
