@@ -467,4 +467,3 @@ module br_fifo_flops_gen_tb;
   endtask
 
 endmodule
-
