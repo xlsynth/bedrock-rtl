@@ -70,9 +70,7 @@ module br_cdc_fifo_ctrl_push_1r1w #(
 
     // Push-side status flags
     output logic                  push_full,
-    output logic                  push_full_next,
     output logic [CountWidth-1:0] push_slots,
-    output logic [CountWidth-1:0] push_slots_next,
 
     // Push-side RAM write interface
     output logic                 push_ram_wr_valid,
@@ -118,9 +116,7 @@ module br_cdc_fifo_ctrl_push_1r1w #(
       .push_valid,
       .push_data,
       .full             (push_full),
-      .full_next        (push_full_next),
       .slots            (push_slots),
-      .slots_next       (push_slots_next),
       .ram_wr_valid     (push_ram_wr_valid),
       .ram_wr_addr      (push_ram_wr_addr),
       .ram_wr_data      (push_ram_wr_data),

@@ -76,9 +76,7 @@ module br_cdc_fifo_ctrl_push_1r1w_push_credit #(
 
     // Push-side status flags
     output logic                  push_full,
-    output logic                  push_full_next,
     output logic [CountWidth-1:0] push_slots,
-    output logic [CountWidth-1:0] push_slots_next,
 
     // Push-side credits
     input  logic [CreditWidth-1:0] credit_initial_push,
@@ -139,9 +137,7 @@ module br_cdc_fifo_ctrl_push_1r1w_push_credit #(
       .credit_count_push,
       .credit_available_push,
       .full             (push_full),
-      .full_next        (push_full_next),
       .slots            (push_slots),
-      .slots_next       (push_slots_next),
       .ram_wr_valid     (push_ram_wr_valid),
       .ram_wr_addr      (push_ram_wr_addr),
       .ram_wr_data      (push_ram_wr_data),

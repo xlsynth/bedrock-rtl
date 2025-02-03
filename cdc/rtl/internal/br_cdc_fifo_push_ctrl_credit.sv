@@ -43,9 +43,7 @@ module br_cdc_fifo_push_ctrl_credit #(
 
     // Push-side status flags
     output logic                  full,
-    output logic                  full_next,
     output logic [CountWidth-1:0] slots,
-    output logic [CountWidth-1:0] slots_next,
 
     // Push-side credits
     input  logic [CreditWidth-1:0] credit_initial_push,
@@ -126,9 +124,7 @@ module br_cdc_fifo_push_ctrl_credit #(
       .push_count_gray,
       .pop_count_gray,
       .pop_count_delta,
-      .slots_next,
       .slots,
-      .full_next,
       .full,
       .reset_active_push,
       .reset_active_pop
@@ -172,9 +168,6 @@ module br_cdc_fifo_push_ctrl_credit #(
 
   // Flags
   `BR_ASSERT_CR_IMPL(slots_in_range_a, slots <= Depth, clk, either_rst)
-  `BR_ASSERT_CR_IMPL(slots_next_a, ##1 slots == $past(slots_next), clk, either_rst)
-  // Slots should only decrease on a push
-  `BR_ASSERT_CR_IMPL(push_slots_a, (slots_next < slots) |-> push_beat, clk, either_rst)
   `BR_ASSERT_CR_IMPL(full_a, full == (slots == 0), clk, either_rst)
 
 endmodule : br_cdc_fifo_push_ctrl_credit

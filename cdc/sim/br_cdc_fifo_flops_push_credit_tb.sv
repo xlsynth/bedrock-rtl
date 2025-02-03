@@ -88,9 +88,7 @@ module br_cdc_fifo_flops_push_credit_tb ();
       .push_valid(cv_push_valid_d),
       .push_data(cv_push_data_d),
       .push_full(full),
-      .push_full_next(),
       .push_slots(slots),
-      .push_slots_next(),
       .credit_initial_push,
       .credit_withhold_push('0),
       .credit_count_push(),
@@ -101,9 +99,7 @@ module br_cdc_fifo_flops_push_credit_tb ();
       .pop_valid,
       .pop_data,
       .pop_empty(empty),
-      .pop_empty_next(),
-      .pop_items(items),
-      .pop_items_next()
+      .pop_items(items)
   );
 
   br_credit_sender #(
