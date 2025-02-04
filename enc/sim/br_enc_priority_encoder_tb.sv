@@ -20,6 +20,7 @@
 module br_enc_priority_encoder_tb;
   parameter int NumRequesters = 8;
   parameter int NumResults = 3;
+  parameter bit MsbHighestPriority = 0;
   localparam int MaxInValue = (2 ** NumRequesters) - 1;
 
   logic clk;
@@ -35,7 +36,8 @@ module br_enc_priority_encoder_tb;
 
   br_enc_priority_encoder #(
       .NumRequesters(NumRequesters),
-      .NumResults(NumResults)
+      .NumResults(NumResults),
+      .MsbHighestPriority(MsbHighestPriority)
   ) dut (
       .clk,
       .rst,
@@ -48,14 +50,27 @@ module br_enc_priority_encoder_tb;
     logic [NumResults-1:0][NumRequesters-1:0] fout;
 
     fout = '0;
-    for (int i = 0; i < NumRequesters; i++) begin
-      // Once we find an input bit set, just set it on the current
-      // output and then move on to the next output.
-      if (fin[i]) begin
-        fout[res_idx][i] = 1;
-        res_idx++;
-        // We're done once we've found a set bit for each output.
-        if (res_idx == NumResults) break;
+    if (MsbHighestPriority) begin
+      for (int i = NumRequesters - 1; i >= 0; i--) begin
+        // Once we find an input bit set, just set it on the current
+        // output and then move on to the next output.
+        if (fin[i]) begin
+          fout[res_idx][i] = 1;
+          res_idx++;
+          // We're done once we've found a set bit for each output.
+          if (res_idx == NumResults) break;
+        end
+      end
+    end else begin
+      for (int i = 0; i < NumRequesters; i++) begin
+        // Once we find an input bit set, just set it on the current
+        // output and then move on to the next output.
+        if (fin[i]) begin
+          fout[res_idx][i] = 1;
+          res_idx++;
+          // We're done once we've found a set bit for each output.
+          if (res_idx == NumResults) break;
+        end
       end
     end
     return fout;
