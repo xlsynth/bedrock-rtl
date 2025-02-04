@@ -130,8 +130,14 @@ module br_ram_flops #(
   `BR_ASSERT_STATIC(read_data_width_stages_gte0_a, ReadDataWidthStages >= 0)
 
   // Address range checks
-  `BR_ASSERT_CR_INTG(wr_addr_in_range_a, wr_valid |-> wr_addr < Depth, wr_clk, wr_rst)
-  `BR_ASSERT_CR_INTG(rd_addr_in_range_a, rd_addr_valid |-> rd_addr < Depth, rd_clk, rd_rst)
+  for (genvar wport = 0; wport < NumWritePorts; wport++) begin : gen_wr_addr_in_range
+    `BR_ASSERT_CR_INTG(wr_addr_in_range_a, wr_valid[wport] |-> wr_addr[wport] < Depth, wr_clk,
+                       wr_rst)
+  end
+  for (genvar rport = 0; rport < NumReadPorts; rport++) begin : gen_rd_addr_in_range
+    `BR_ASSERT_CR_INTG(rd_addr_in_range_a, rd_addr_valid[rport] |-> rd_addr[rport] < Depth, rd_clk,
+                       rd_rst)
+  end
 
   if (EnablePartialWrite) begin : gen_partial_write_intg_checks
     `BR_ASSERT_STATIC(word_width_in_range_a, (WordWidth >= 1) && (WordWidth <= TileWidth))
