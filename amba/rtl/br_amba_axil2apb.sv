@@ -73,7 +73,7 @@ module br_amba_axil2apb #(
   typedef enum logic [3:0] {
     Idle   = 4'b0001,
     Setup  = 4'b0010,
-    Access = 4'b0100,
+    Access = 4'b0110,
     Resp   = 4'b1000
   } apb_state_t;
   apb_state_t apb_state, apb_state_next;
@@ -159,7 +159,8 @@ module br_amba_axil2apb #(
   assign rresp = resp_reg ? br_amba::AxiRespSlverr : br_amba::AxiRespOkay;  // ri lint_check_waive CONST_ASSIGN CONST_OUTPUT ENUM_RHS
 
   // APB signal generation
-  assign psel = (apb_state == Setup) || (apb_state == Access);
+  `BR_ASSERT_IMPL(psel_state_a, psel == (apb_state == Setup) || (apb_state == Access))
+  assign psel = apb_state[1];  // ri lint_check_waive ENUM_RHS ENUM_RANGE
   assign penable = (apb_state == Access);
   assign paddr = addr_reg;
   assign pwdata = data_reg;
