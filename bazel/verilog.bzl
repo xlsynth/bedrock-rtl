@@ -690,7 +690,7 @@ def verilog_elab_and_lint_test_suite(name, defines = [], params = {}, **kwargs):
             **kwargs
         )
 
-def verilog_fpv_test_suite(name, defines = [], params = {}, illegal_params = {}, sandbox = True, **kwargs):
+def verilog_fpv_test_suite(name, defines = [], params = {}, illegal_param_combinations = {}, sandbox = True, **kwargs):
     """Creates a suite of Verilog fpv tests for each combination of the provided parameters.
 
     The function generates all possible combinations of the provided parameters and creates a verilog_fpv_test
@@ -701,7 +701,7 @@ def verilog_fpv_test_suite(name, defines = [], params = {}, illegal_params = {},
         name (str): The base name for the test suite.
         defines (list): A list of defines.
         params (dict): A dictionary where keys are parameter names and values are lists of possible values for those parameters.
-        illegal_params (dict): A dictionary where keys are parameter tuples and values are lists of illegal values for those parameters.
+        illegal_param_combinations (dict): A dictionary where keys are parameter tuples and values are lists of illegal values for those parameters.
         sandbox (bool): Whether to create a sandbox for the test.
         **kwargs: Additional keyword arguments to be passed to the verilog_elab_test and verilog_lint_test functions.
     """
@@ -715,7 +715,7 @@ def verilog_fpv_test_suite(name, defines = [], params = {}, illegal_params = {},
 
         # Check if this combination is illegal
         skip = False
-        for keys_tuple, disallowed_values in illegal_params.items():
+        for keys_tuple, disallowed_values in illegal_param_combinations.items():
             values_tuple = tuple([params[k] for k in keys_tuple])
             if values_tuple in disallowed_values:
                 skip = True
