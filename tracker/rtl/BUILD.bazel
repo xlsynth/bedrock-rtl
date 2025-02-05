@@ -46,3 +46,44 @@ br_verilog_elab_and_lint_test_suite(
     },
     deps = [":br_tracker_freelist"],
 )
+
+verilog_library(
+    name = "br_tracker_linked_list_ctrl",
+    srcs = ["br_tracker_linked_list_ctrl.sv"],
+    deps = [
+        "//counter/rtl:br_counter",
+        "//delay/rtl:br_delay_shift_reg",
+        "//delay/rtl:br_delay_valid",
+        "//enc/rtl:br_enc_countones",
+        "//enc/rtl:br_enc_priority_encoder",
+        "//flow/rtl/internal:br_flow_checks_valid_data_impl",
+        "//mux/rtl:br_mux_onehot",
+        "//shift/rtl:br_shift_rotate",
+    ],
+)
+
+br_verilog_elab_and_lint_test_suite(
+    name = "br_tracker_linked_list_ctrl_test_suite",
+    params = {
+        "Depth": [
+            "5",
+            "8",
+        ],
+        "NumWritePorts": [
+            "1",
+            "2",
+            "3",
+        ],
+        "NumLinkedLists": [
+            "1",
+            "2",
+            "4",
+        ],
+        "RamReadLatency": [
+            "0",
+            "1",
+            "2",
+        ],
+    },
+    deps = [":br_tracker_linked_list_ctrl"],
+)
