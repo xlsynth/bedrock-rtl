@@ -48,9 +48,7 @@ module br_cdc_fifo_push_ctrl #(
 
     // Push-side status flags
     output logic                  full,
-    output logic                  full_next,
     output logic [CountWidth-1:0] slots,
-    output logic [CountWidth-1:0] slots_next,
 
     // RAM interface
     output logic                 ram_wr_valid,
@@ -88,9 +86,7 @@ module br_cdc_fifo_push_ctrl #(
       .push_count_gray,
       .pop_count_gray,
       .pop_count_delta(),
-      .slots_next,
       .slots,
-      .full_next,
       .full,
       .reset_active_push,
       .reset_active_pop
@@ -134,9 +130,6 @@ module br_cdc_fifo_push_ctrl #(
 
   // Flags
   `BR_ASSERT_IMPL(slots_in_range_a, slots <= Depth)
-  `BR_ASSERT_IMPL(slots_next_a, ##1 slots == $past(slots_next))
-  // Slots should only decrease on a push
-  `BR_ASSERT_IMPL(push_slots_a, (slots_next < slots) |-> push_beat)
   `BR_ASSERT_IMPL(full_a, full == (slots == 0))
 
 endmodule : br_cdc_fifo_push_ctrl
