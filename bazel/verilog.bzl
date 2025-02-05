@@ -81,7 +81,8 @@ def _verilog_base_impl(ctx, subcmd, test = True, extra_args = [], extra_runfiles
     args = (["--hdr=" + hdr for hdr in hdr_files] +
             ["--define=" + define for define in ctx.attr.defines] +
             ["--top=" + top] +
-            ["--param=" + key + "=" + value for key, value in ctx.attr.params.items()])
+            ["--param=" + key + "=" + value for key, value in ctx.attr.params.items()] +
+            ["--illegal_param=" + key + "=" + value for key, value in ctx.attr.illegal_params.items()])
     filelist = ctx.label.name + ".f"
     tcl = ctx.label.name + ".tcl"
     script = ctx.label.name + ".sh"
@@ -510,6 +511,9 @@ rule_verilog_fpv_test = rule(
         "params": attr.string_dict(
             doc = "Verilog module parameters to set in the instantiation of the top-level module.",
         ),
+        "illegal_params": attr.string_dict(
+            doc = "Illegal Verilog module parameter combinations to exclude in the instantiation of the top-level module.",
+        ),
         "top": attr.string(
             doc = "The top-level module; if not provided and there exists one dependency, then defaults to that dep's label name.",
         ),
@@ -593,6 +597,9 @@ rule_verilog_fpv_sandbox = rule(
         ),
         "params": attr.string_dict(
             doc = "Verilog module parameters to set in the instantiation of the top-level module.",
+        ),
+        "illegal_params": attr.string_dict(
+            doc = "Illegal Verilog module parameter combinations to exclude in the instantiation of the top-level module.",
         ),
         "top": attr.string(
             doc = "The top-level module; if not provided and there exists one dependency, then defaults to that dep's label name.",
@@ -690,7 +697,7 @@ def verilog_elab_and_lint_test_suite(name, defines = [], params = {}, **kwargs):
             **kwargs
         )
 
-def verilog_fpv_test_suite(name, defines = [], params = {}, sandbox = True, **kwargs):
+def verilog_fpv_test_suite(name, defines = [], params = {}, illegal_params = {}, sandbox = True, **kwargs):
     """Creates a suite of Verilog fpv tests for each combination of the provided parameters.
 
     The function generates all possible combinations of the provided parameters and creates a verilog_fpv_test
@@ -711,19 +718,28 @@ def verilog_fpv_test_suite(name, defines = [], params = {}, sandbox = True, **kw
     # Create a verilog_fpv_test for each combination of parameters
     for param_combination in param_combinations:
         params = dict(zip(param_keys, param_combination))
-        verilog_fpv_test(
-            name = _make_test_name(name, "fpv_test", param_keys, param_combination),
-            defines = defines,
-            params = params,
-            **kwargs
-        )
-        if sandbox:
-            rule_verilog_fpv_sandbox(
-                name = _make_test_name(name, "fpv_sandbox", param_keys, param_combination),
+
+        # Check if this combination is illegal
+        skip = False
+        for keys_tuple, disallowed_values in illegal_params.items():
+            values_tuple = tuple([params[k] for k in keys_tuple])
+            if values_tuple in disallowed_values:
+                skip = True
+                break
+        if not skip:
+            verilog_fpv_test(
+                name = _make_test_name(name, "fpv_test", param_keys, param_combination),
                 defines = defines,
                 params = params,
                 **kwargs
             )
+            if sandbox:
+                rule_verilog_fpv_sandbox(
+                    name = _make_test_name(name, "fpv_sandbox", param_keys, param_combination),
+                    defines = defines,
+                    params = params,
+                    **kwargs
+                )
 
 def verilog_sim_test_suite(name, defines = [], params = {}, **kwargs):
     """Creates a suite of Verilog sim tests for each combination of the provided parameters.
