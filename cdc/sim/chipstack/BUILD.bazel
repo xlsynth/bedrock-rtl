@@ -23,6 +23,7 @@ verilog_library(
     srcs = ["br_cdc_fifo_ctrl_1r1w_gen_tb.sv"],
     deps = [
         "//cdc/rtl:br_cdc_fifo_ctrl_1r1w",
+        "//gate/rtl:br_gate_mock",
         "//macros:br_asserts_internal",
     ],
 )
@@ -47,6 +48,7 @@ verilog_library(
     srcs = ["br_cdc_fifo_ctrl_1r1w_push_credit_gen_tb.sv"],
     deps = [
         "//cdc/rtl:br_cdc_fifo_ctrl_1r1w_push_credit",
+        "//gate/rtl:br_gate_mock",
         "//macros:br_asserts_internal",
     ],
 )
@@ -71,6 +73,7 @@ verilog_library(
     srcs = ["br_cdc_fifo_flops_gen_tb.sv"],
     deps = [
         "//cdc/rtl:br_cdc_fifo_flops",
+        "//gate/rtl:br_gate_mock",
         "//macros:br_asserts_internal",
     ],
 )
@@ -95,6 +98,7 @@ verilog_library(
     srcs = ["br_cdc_fifo_flops_push_credit_gen_tb.sv"],
     deps = [
         "//cdc/rtl:br_cdc_fifo_flops_push_credit",
+        "//gate/rtl:br_gate_mock",
         "//macros:br_asserts_internal",
     ],
 )

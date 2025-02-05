@@ -32,7 +32,6 @@ module br_cdc_fifo_flops_push_credit_gen_tb;
   parameter int Depth = 2;
   parameter int Width = 1;
   parameter int MaxCredit = Depth;
-  parameter bit RegisterPushCredit = 0;
   parameter bit RegisterPopOutputs = 1;
   parameter int NumSyncStages = 3;
   parameter int FlopRamDepthTiles = 1;
@@ -69,6 +68,7 @@ module br_cdc_fifo_flops_push_credit_gen_tb;
   logic [CountWidth-1:0] push_slots;
   logic [CountWidth-1:0] push_slots_next;
   logic [CreditWidth-1:0] available;
+  logic [CreditWidth-1:0] credit_count_push;
   logic [CreditWidth-1:0] credit_available_push;
   logic pop_empty;
   logic pop_empty_next;
@@ -82,7 +82,6 @@ module br_cdc_fifo_flops_push_credit_gen_tb;
       .Depth(Depth),
       .Width(Width),
       .MaxCredit(MaxCredit),
-      .RegisterPushCredit(RegisterPushCredit),
       .RegisterPopOutputs(RegisterPopOutputs),
       .NumSyncStages(NumSyncStages),
       .FlopRamDepthTiles(FlopRamDepthTiles),
@@ -95,6 +94,8 @@ module br_cdc_fifo_flops_push_credit_gen_tb;
       .pop_clk(pop_clk),
       .push_rst(push_rst),
       .pop_rst(pop_rst),
+      .push_sender_in_reset(1'b0),  // unused
+      .push_receiver_in_reset(),  // unused
       .push_credit_stall(push_credit_stall),
       .push_valid(push_valid),
       .push_data(push_data),

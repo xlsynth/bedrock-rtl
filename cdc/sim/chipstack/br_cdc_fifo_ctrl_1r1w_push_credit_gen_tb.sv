@@ -42,7 +42,6 @@ module br_cdc_fifo_ctrl_1r1w_push_credit_gen_tb;
   parameter int RamReadLatency = 0;
   parameter int NumSyncStages = 3;
   parameter int MaxCredit = Depth;
-  parameter bit RegisterPushCredit = 0;
   localparam int AddrWidth = $clog2(Depth);
   localparam int CountWidth = $clog2((Depth + 1));
   localparam int CreditWidth = $clog2((MaxCredit + 1));
@@ -95,13 +94,14 @@ module br_cdc_fifo_ctrl_1r1w_push_credit_gen_tb;
       .RamWriteLatency(RamWriteLatency),
       .RamReadLatency(RamReadLatency),
       .NumSyncStages(NumSyncStages),
-      .MaxCredit(MaxCredit),
-      .RegisterPushCredit(RegisterPushCredit)
+      .MaxCredit(MaxCredit)
   ) dut (
       .push_clk(push_clk),
       .pop_clk(pop_clk),
       .push_rst(push_rst),
       .pop_rst(pop_rst),
+      .push_sender_in_reset(1'b0),  // unused
+      .push_receiver_in_reset(),  // unused
       .push_credit_stall(push_credit_stall),
       .push_valid(push_valid),
       .push_data(push_data),
