@@ -81,8 +81,7 @@ def _verilog_base_impl(ctx, subcmd, test = True, extra_args = [], extra_runfiles
     args = (["--hdr=" + hdr for hdr in hdr_files] +
             ["--define=" + define for define in ctx.attr.defines] +
             ["--top=" + top] +
-            ["--param=" + key + "=" + value for key, value in ctx.attr.params.items()] +
-            ["--illegal_param=" + key + "=" + value for key, value in ctx.attr.illegal_params.items()])
+            ["--param=" + key + "=" + value for key, value in ctx.attr.params.items()])
     filelist = ctx.label.name + ".f"
     tcl = ctx.label.name + ".tcl"
     script = ctx.label.name + ".sh"
@@ -511,9 +510,6 @@ rule_verilog_fpv_test = rule(
         "params": attr.string_dict(
             doc = "Verilog module parameters to set in the instantiation of the top-level module.",
         ),
-        "illegal_params": attr.string_dict(
-            doc = "Illegal Verilog module parameter combinations to exclude in the instantiation of the top-level module.",
-        ),
         "top": attr.string(
             doc = "The top-level module; if not provided and there exists one dependency, then defaults to that dep's label name.",
         ),
@@ -597,9 +593,6 @@ rule_verilog_fpv_sandbox = rule(
         ),
         "params": attr.string_dict(
             doc = "Verilog module parameters to set in the instantiation of the top-level module.",
-        ),
-        "illegal_params": attr.string_dict(
-            doc = "Illegal Verilog module parameter combinations to exclude in the instantiation of the top-level module.",
         ),
         "top": attr.string(
             doc = "The top-level module; if not provided and there exists one dependency, then defaults to that dep's label name.",
@@ -708,6 +701,7 @@ def verilog_fpv_test_suite(name, defines = [], params = {}, illegal_params = {},
         name (str): The base name for the test suite.
         defines (list): A list of defines.
         params (dict): A dictionary where keys are parameter names and values are lists of possible values for those parameters.
+        illegal_params (dict): A dictionary where keys are parameter tuples and values are lists of illegal values for those parameters.
         sandbox (bool): Whether to create a sandbox for the test.
         **kwargs: Additional keyword arguments to be passed to the verilog_elab_test and verilog_lint_test functions.
     """
