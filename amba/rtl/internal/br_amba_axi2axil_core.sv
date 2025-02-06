@@ -196,7 +196,7 @@ module br_amba_axi2axil_core #(
       br_amba::AxiProtWidth +
       ReqUserWidth
     )
-  ) br_flow_reg_both_aw_slice (
+  ) br_flow_reg_both_req (
       .clk,
       .rst,
       .push_ready(axi_req_ready),
