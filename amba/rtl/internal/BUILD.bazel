@@ -24,6 +24,7 @@ verilog_library(
         "//amba/rtl:br_amba_pkg",
         "//counter/rtl:br_counter_incr",
         "//fifo/rtl:br_fifo_flops",
+        "//flow/rtl:br_flow_reg_both",
         "//macros:br_asserts_internal",
         "//macros:br_registers",
         "//macros:br_unused",
