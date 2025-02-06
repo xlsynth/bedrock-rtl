@@ -55,3 +55,47 @@ br_verilog_sim_test_tools_suite(
     ],
     deps = [":br_tracker_freelist_tb"],
 )
+
+verilog_library(
+    name = "br_tracker_linked_list_ctrl_tb",
+    srcs = ["br_tracker_linked_list_ctrl_tb.sv"],
+    deps = [
+        "//misc/sim:br_test_driver",
+        "//ram/rtl:br_ram_flops",
+        "//tracker/rtl:br_tracker_linked_list_ctrl",
+    ],
+)
+
+verilog_elab_test(
+    name = "br_tracker_linked_list_ctrl_tb_elab_test",
+    deps = [":br_tracker_linked_list_ctrl_tb"],
+)
+
+br_verilog_sim_test_tools_suite(
+    name = "br_tracker_linked_list_ctrl_sim_test_tools_suite",
+    params = {
+        "NumLinkedLists": [
+            "1",
+            "2",
+        ],
+        "Depth": [
+            "8",
+        ],
+        "NumWritePorts": [
+            "1",
+            "2",
+            "3",
+        ],
+        "RamReadLatency": [
+            "0",
+            "1",
+            "2",
+        ],
+    },
+    tools = [
+        "dsim",
+        "iverilog",
+        "vcs",
+    ],
+    deps = [":br_tracker_linked_list_ctrl_tb"],
+)
