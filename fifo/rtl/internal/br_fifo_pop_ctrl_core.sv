@@ -101,53 +101,24 @@ module br_fifo_pop_ctrl_core #(
   end
 
   // Datapath
-  if (RamReadLatency == 0) begin : gen_zero_rd_lat
-    logic             internal_pop_valid;
-    logic             internal_pop_ready;
-    logic [Width-1:0] internal_pop_data;
-    logic             internal_empty;
-
+  if (RamReadLatency == 0 && !RegisterPopOutputs) begin : gen_no_buffer
     if (EnableBypass) begin : gen_bypass
-      assign bypass_ready = internal_empty && internal_pop_ready;
-      assign internal_pop_valid = !internal_empty || bypass_valid_unstable;
-      assign internal_pop_data = internal_empty ? bypass_data_unstable : ram_rd_data;
-      assign ram_rd_addr_valid = internal_pop_valid && internal_pop_ready && !internal_empty;
+      assign bypass_ready = empty && pop_ready;
+      assign pop_valid = !empty || bypass_valid_unstable;
+      assign pop_data = empty ? bypass_data_unstable : ram_rd_data;
+      assign ram_rd_addr_valid = pop_valid && pop_ready && !empty;
     end else begin : gen_no_bypass
       // TODO(zhemao, #157): Replace this with BR_TIEOFF macros once they are fixed
       assign bypass_ready = '0;  // ri lint_check_waive CONST_ASSIGN CONST_OUTPUT
-      assign internal_pop_valid = !internal_empty;
-      assign internal_pop_data = ram_rd_data;
-      assign ram_rd_addr_valid = internal_pop_valid && internal_pop_ready;
+      assign pop_valid = !empty;
+      assign pop_data = ram_rd_data;
+      assign ram_rd_addr_valid = pop_valid && pop_ready;
 
       `BR_UNUSED_NAMED(bypass_signals, {bypass_valid_unstable, bypass_data_unstable})
     end
     `BR_UNUSED(ram_rd_data_valid)  // implied
-
-    if (RegisterPopOutputs) begin : gen_reg_pop
-      br_flow_reg_fwd #(
-          .Width(Width),
-          .EnableAssertFinalNotValid(EnableAssertFinalNotValid)
-      ) br_flow_reg_fwd_pop (
-          .clk,
-          .rst,
-          .push_valid(internal_pop_valid),
-          .push_ready(internal_pop_ready),
-          .push_data (internal_pop_data),
-          .pop_valid,
-          .pop_ready,
-          .pop_data
-      );
-      // internal_empty is true if there are no items or if there is one item
-      // and it is already in the staging register
-      assign internal_empty = empty || ((items == 1'b1) && pop_valid);
-    end else begin : gen_noreg_pop
-      assign internal_empty = empty;
-      assign pop_valid = internal_pop_valid;
-      assign pop_data = internal_pop_data;
-      assign internal_pop_ready = pop_ready;
-      `BR_UNUSED(items)
-    end
-  end else begin : gen_nonzero_rd_lat
+    `BR_UNUSED(items)
+  end else begin : gen_staging_buffer
     br_fifo_staging_buffer #(
         .EnableBypass             (EnableBypass),
         .TotalDepth               (Depth),
@@ -167,6 +138,7 @@ module br_fifo_pop_ctrl_core #(
 
         .total_items(items),
 
+        .ram_rd_addr_ready(1'b1),
         .ram_rd_addr_valid,
         .ram_rd_data_valid,
         .ram_rd_data,

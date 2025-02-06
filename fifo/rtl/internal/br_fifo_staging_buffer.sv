@@ -30,6 +30,8 @@ module br_fifo_staging_buffer #(
     parameter int TotalDepth = 3,
     // Latency of RAM reads. Must be >= 1.
     parameter int RamReadLatency = 1,
+    // The depth of the buffer. Must be >= 1.
+    parameter int BufferDepth = RamReadLatency + 1,
     // The width of the data. Must be >= 1.
     parameter int Width = 1,
     // If 1, a flow register is added to the output so that
@@ -40,8 +42,7 @@ module br_fifo_staging_buffer #(
     // empty at the end of the test.
     parameter bit EnableAssertFinalNotValid = 1,
 
-    localparam int BufferDepth = RamReadLatency + 1,
-    localparam int TotalCountWidth = $clog2(TotalDepth + 1),
+    localparam int TotalCountWidth  = $clog2(TotalDepth + 1),
     localparam int BufferCountWidth = $clog2(BufferDepth + 1)
 ) (
     input logic clk,
@@ -55,6 +56,7 @@ module br_fifo_staging_buffer #(
     input  logic [Width-1:0] bypass_data_unstable,
     // ri lint_check_on INEFFECTIVE_NET
 
+    input  logic             ram_rd_addr_ready,
     output logic             ram_rd_addr_valid,
     // ram_rd_addr driven externally by counter
     input  logic             ram_rd_data_valid,
@@ -68,11 +70,20 @@ module br_fifo_staging_buffer #(
   // Integration Checks
   // ===================
 
-  `BR_ASSERT_STATIC(legal_ram_read_latency_a, RamReadLatency >= 1)
+  `BR_ASSERT_STATIC(legal_ram_read_latency_a, RamReadLatency >= 0)
   `BR_ASSERT_STATIC(legal_total_depth_a, TotalDepth > BufferDepth)
   `BR_ASSERT_STATIC(legal_bitwidth_a, Width >= 1)
-  `BR_ASSERT_INTG(expected_read_latency_a, ##(RamReadLatency) ram_rd_data_valid == $past
-                                           (ram_rd_addr_valid, RamReadLatency))
+  `BR_ASSERT_STATIC(legal_buffer_depth_a, BufferDepth >= 1)
+
+  if (RamReadLatency > 0) begin : gen_read_latency_gt_0
+    `BR_ASSERT_INTG(expected_read_latency_a,
+                    ##(RamReadLatency) ram_rd_data_valid == $past(
+                        ram_rd_addr_valid && ram_rd_addr_ready, RamReadLatency
+                    ))
+  end else begin : gen_read_latency_eq_0
+    `BR_ASSERT_INTG(zero_read_latency_a,
+                    ram_rd_data_valid == (ram_rd_addr_valid && ram_rd_addr_ready))
+  end
 
   // Internal integration check
   if (!EnableBypass) begin : gen_no_bypass_assert
@@ -96,6 +107,7 @@ module br_fifo_staging_buffer #(
   logic                        staged_items_incr;
   logic                        bypass_beat;
   logic                        pop_beat;
+  logic                        ram_rd_addr_beat;
   // 1 if there is space available in the buffer. This is true if
   // staged_items < BufferDepth or the buffer is being popped on this cycle.
   logic                        space_available;
@@ -130,19 +142,21 @@ module br_fifo_staging_buffer #(
   assign items_not_staged = TotalCountWidth'(staged_items) < total_items;
   assign bypass_beat = bypass_valid_unstable && bypass_ready;
   assign ram_rd_addr_valid = space_available && items_not_staged && !bypass_ready;
+  assign ram_rd_addr_beat = ram_rd_addr_valid && ram_rd_addr_ready;
 
   if (EnableBypass) begin : gen_bypass_push
     // Bypass is allowed for the first BufferDepth entries to enter the FIFO.
-    assign bypass_ready = space_available && (total_items < BufferDepth);
+    assign bypass_ready = space_available && (
+        (total_items < BufferDepth) ||
+        ((total_items == BufferDepth) && pop_ready));
     assign push_valid = ram_rd_data_valid || bypass_beat;
     assign push_data = ram_rd_data_valid ? ram_rd_data : bypass_data_unstable;
-    assign staged_items_incr = ram_rd_addr_valid || bypass_beat;
+    assign staged_items_incr = ram_rd_addr_beat || bypass_beat;
   end else begin : gen_no_bypass_push
-    // TODO(zhemao, #157): Replace this with BR_TIEOFF macros once they are fixed
-    assign bypass_ready = 1'b0;  // ri lint_check_waive CONST_OUTPUT CONST_ASSIGN
+    `BR_TIEOFF_ZERO(bypass_ready)
     assign push_valid = ram_rd_data_valid;
     assign push_data = ram_rd_data;
-    assign staged_items_incr = ram_rd_addr_valid;
+    assign staged_items_incr = ram_rd_addr_beat;
 
     `BR_UNUSED_NAMED(bypass_inputs, {bypass_beat, bypass_valid_unstable, bypass_data_unstable})
   end
@@ -154,9 +168,18 @@ module br_fifo_staging_buffer #(
   logic             internal_pop_ready;
   logic [Width-1:0] internal_pop_data;
 
+  if (InternalDepth == 0) begin : gen_no_buffer
+    // This can only be true if RegisterPopOutputs=1 and BufferDepth=1
+    // Just pass the push_valid through to the flow register
 
-  if (InternalDepth == 1) begin : gen_single_entry_buffer
-    // This is only reachable if RegisterPopOutputs=1 and RamReadLatency=1
+    assign internal_pop_valid = push_valid;
+    assign internal_pop_data  = push_data;
+
+    `BR_ASSERT_IMPL(no_double_push_a, !(ram_rd_data_valid && bypass_beat))
+    `BR_ASSERT_IMPL(no_push_overflow_a, push_valid |-> internal_pop_ready)
+    // Only used for assertion
+    `BR_UNUSED(internal_pop_ready)
+  end else if (InternalDepth == 1) begin : gen_single_entry_buffer
     // In this case, we keep a single entry buffer that is filled if data is returned
     // but internal_pop_ready is not asserted.
     // Used for assertion only
@@ -311,7 +334,7 @@ module br_fifo_staging_buffer #(
       ) br_delay_valid_wr_ptr_onehot (
           .clk,
           .rst,
-          .in_valid        (ram_rd_addr_valid),
+          .in_valid        (ram_rd_addr_beat),
           .in              (wr_ptr_onehot),
           .out_valid       (),
           .out             (wr_ptr_onehot_d),
@@ -335,7 +358,7 @@ module br_fifo_staging_buffer #(
       // and internal_pop_ready is asserted
       assign rd_data_write_en = ram_rd_data_valid && !(is_first_read_data && internal_pop_ready);
       // Write pointer advances when a read is initiated or a bypass write occurs
-      assign advance_wr_ptr = ram_rd_addr_valid || bypass_write_en;
+      assign advance_wr_ptr = ram_rd_addr_beat || bypass_write_en;
       assign mem_wr_en_immediate = bypass_write_en ? wr_ptr_onehot : '0;
       assign mem_wr_en_delayed = rd_data_write_en ? wr_ptr_onehot_d : '0;
       assign mem_wr_en = mem_wr_en_immediate | mem_wr_en_delayed;
@@ -428,7 +451,7 @@ module br_fifo_staging_buffer #(
 
   // Implementation Checks
   if (EnableBypass) begin : gen_bypass_impl_checks
-    `BR_ASSERT_IMPL(no_alloc_hazard_a, !(ram_rd_addr_valid && bypass_beat))
+    `BR_ASSERT_IMPL(no_alloc_hazard_a, !(ram_rd_addr_beat && bypass_beat))
     `BR_COVER_IMPL(bypass_and_rd_data_same_cycle_c, bypass_beat && ram_rd_data_valid)
   end
 endmodule
