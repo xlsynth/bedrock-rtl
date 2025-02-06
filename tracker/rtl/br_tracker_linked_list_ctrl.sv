@@ -99,6 +99,7 @@ module br_tracker_linked_list_ctrl #(
   // the head/tail pointers in round-robin fashion.
 
   logic [NumLinkedLists-1:0] ll_empty, ll_empty_next;
+  logic [NumLinkedLists-1:0] ll_head_bypass;
   logic [NumLinkedLists-1:0][CountWidth-1:0] ll_count, ll_count_next;
   logic [NumLinkedLists-1:0] ll_head_valid;
   logic [NumLinkedLists-1:0] ll_head_last;
@@ -282,9 +283,15 @@ module br_tracker_linked_list_ctrl #(
     logic ll_head_valid_next;
     logic ll_head_clear;
 
-    assign ll_tail_update  = |ll_next_tail_valid_transpose[i];
-    // This is the last head if there's only one element left and we aren't updating the tail.
-    assign ll_head_last[i] = (ll_count[i] == 'd1) && !ll_tail_update;
+    assign ll_tail_update = |ll_next_tail_valid_transpose[i];
+    // This is the last head if there's only one element left.
+    assign ll_head_last[i] = (ll_count[i] == 'd1);
+    // Bypass the tail to the head in one of the following cases:
+    // 1. The list is empty.
+    // 2. There is a single item left in the list and it is currently being popped.
+    assign ll_head_bypass[i] =
+        ll_empty[i] ||
+        (ll_head_last[i] && ll_head_valid[i] && ll_head_select_read[i] && head_ready);
 
     if (NumWritePorts <= NumLinkedLists) begin : gen_tail_update_no_chaining
       // If the number of write ports is less than or equal to the number of linked lists,
@@ -312,7 +319,7 @@ module br_tracker_linked_list_ctrl #(
         assign ll_ptr_ram_wr_addr[j][i]  = ll_tail[i];
       end
 
-      assign ll_head_next = ll_empty[i] ? ll_tail_next : ptr_ram_rd_data;
+      assign ll_head_next = ll_head_bypass[i] ? ll_tail_next : ptr_ram_rd_data;
     end else begin : gen_tail_update_chaining
       // If multiple write ports are hitting the same linked list,
       // we need to chain the updates. The pointer RAM write address
@@ -409,10 +416,10 @@ module br_tracker_linked_list_ctrl #(
           .out(ll_head_next_from_tail)
       );
 
-      assign ll_head_next = ll_empty[i] ? ll_head_next_from_tail : ptr_ram_rd_data;
+      assign ll_head_next = ll_head_bypass[i] ? ll_head_next_from_tail : ptr_ram_rd_data;
     end
 
-    assign ll_head_update_from_next_tail = ll_tail_update && ll_empty[i];
+    assign ll_head_update_from_next_tail = ll_tail_update && ll_head_bypass[i];
     assign ll_head_update_from_ptr_ram = ptr_ram_rd_data_valid && ll_head_select_write[i];
     assign ll_head_update = ll_head_update_from_next_tail || ll_head_update_from_ptr_ram;
 

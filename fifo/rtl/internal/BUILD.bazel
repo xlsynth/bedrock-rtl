@@ -222,3 +222,138 @@ br_verilog_elab_and_lint_test_suite(
     },
     deps = [":br_fifo_staging_buffer"],
 )
+
+verilog_library(
+    name = "br_fifo_shared_read_xbar",
+    srcs = ["br_fifo_shared_read_xbar.sv"],
+    deps = [
+        "//delay/rtl:br_delay_valid",
+        "//demux/rtl:br_demux_bin",
+        "//flow/rtl:br_flow_demux_select_unstable",
+        "//flow/rtl:br_flow_mux_lru",
+        "//macros:br_asserts_internal",
+        "//mux/rtl:br_mux_onehot",
+        "//pkg:br_math_pkg",
+    ],
+)
+
+br_verilog_elab_and_lint_test_suite(
+    name = "br_fifo_shared_read_xbar_test_suite",
+    params = {
+        "NumFifos": [
+            "2",
+            "4",
+        ],
+        "NumReadPorts": [
+            "1",
+            "2",
+        ],
+        "AddrWidth": ["2"],
+    },
+    deps = [":br_fifo_shared_read_xbar"],
+)
+
+verilog_library(
+    name = "br_fifo_shared_dynamic_push_ctrl",
+    srcs = ["br_fifo_shared_dynamic_push_ctrl.sv"],
+    deps = [
+        "//demux/rtl:br_demux_bin",
+        "//enc/rtl:br_enc_countones",
+        "//enc/rtl:br_enc_priority_dynamic",
+        "//macros:br_asserts_internal",
+        "//mux/rtl:br_mux_onehot",
+        "//pkg:br_math_pkg",
+        "//tracker/rtl:br_tracker_freelist",
+    ],
+)
+
+br_verilog_elab_and_lint_test_suite(
+    name = "br_fifo_shared_dynamic_push_ctrl_test_suite",
+    params = {
+        "NumFifos": [
+            "2",
+            "4",
+        ],
+        "NumWritePorts": [
+            "1",
+            "2",
+        ],
+        "Depth": ["5"],
+        "Width": ["8"],
+    },
+    deps = [":br_fifo_shared_dynamic_push_ctrl"],
+)
+
+verilog_library(
+    name = "br_fifo_shared_dynamic_ptr_mgr",
+    srcs = ["br_fifo_shared_dynamic_ptr_mgr.sv"],
+    deps = [
+        "//demux/rtl:br_demux_bin",
+        "//mux/rtl:br_mux_onehot",
+        "//tracker/rtl:br_tracker_linked_list_ctrl",
+    ],
+)
+
+br_verilog_elab_and_lint_test_suite(
+    name = "br_fifo_shared_dynamic_ptr_mgr_test_suite",
+    params = {
+        "NumFifos": [
+            "2",
+            "4",
+        ],
+        "NumWritePorts": [
+            "1",
+            "2",
+        ],
+        "NumReadPorts": [
+            "1",
+            "2",
+        ],
+        "Depth": ["5"],
+        "RamReadLatency": ["1"],
+    },
+    deps = [":br_fifo_shared_dynamic_ptr_mgr"],
+)
+
+verilog_library(
+    name = "br_fifo_shared_pop_ctrl",
+    srcs = ["br_fifo_shared_pop_ctrl.sv"],
+    deps = [
+        ":br_fifo_shared_read_xbar",
+        ":br_fifo_staging_buffer",
+        "//flow/rtl:br_flow_join",
+    ],
+)
+
+br_verilog_elab_and_lint_test_suite(
+    name = "br_fifo_shared_pop_ctrl_test_suite",
+    params = {
+        "NumFifos": [
+            "2",
+            "4",
+        ],
+        "NumReadPorts": [
+            "1",
+            "2",
+        ],
+        "Depth": ["5"],
+        "Width": ["8"],
+        "StagingBufferDepth": [
+            "1",
+            "2",
+        ],
+        "RamReadLatency": [
+            "0",
+            "1",
+        ],
+        "RegisterDeallocation": [
+            "0",
+            "1",
+        ],
+        "RegisterPopOutputs": [
+            "0",
+            "1",
+        ],
+    },
+    deps = [":br_fifo_shared_pop_ctrl"],
+)
