@@ -105,6 +105,10 @@ br_verilog_elab_and_lint_test_suite(
             "2",
             "3",
         ],
+        "MsbHighestPriority": [
+            "0",
+            "1",
+        ],
     },
     deps = [":br_enc_priority_encoder"],
 )
