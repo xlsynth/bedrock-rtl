@@ -199,3 +199,53 @@ br_verilog_sim_test_tools_suite(
     ],
     deps = [":br_fifo_shared_dynamic_flops_tb"],
 )
+
+verilog_library(
+    name = "br_fifo_shared_dynamic_flops_push_credit_tb",
+    srcs = ["br_fifo_shared_dynamic_flops_push_credit_tb.sv"],
+    deps = [
+        ":br_fifo_shared_test_harness",
+        "//credit/rtl:br_credit_sender",
+        "//fifo/rtl:br_fifo_shared_dynamic_flops_push_credit",
+        "//misc/sim:br_test_driver",
+    ],
+)
+
+verilog_elab_test(
+    name = "br_fifo_shared_dynamic_flops_push_credit_tb_elab_test",
+    deps = [":br_fifo_shared_dynamic_flops_push_credit_tb"],
+)
+
+br_verilog_sim_test_tools_suite(
+    name = "br_fifo_shared_dynamic_flops_push_credit_sim_test_tools_suite",
+    params = {
+        "Depth": ["5"],
+        "Width": ["8"],
+        "NumFifos": ["4"],
+        "NumWritePorts": [
+            "1",
+            "2",
+        ],
+        "NumReadPorts": [
+            "1",
+            "2",
+        ],
+        "StagingBufferDepth": [
+            "1",
+            "2",
+        ],
+        "RegisterPopOutputs": [
+            "0",
+            "1",
+        ],
+        "RegisterDeallocation": [
+            "0",
+            "1",
+        ],
+    },
+    tools = [
+        "dsim",
+        "vcs",
+    ],
+    deps = [":br_fifo_shared_dynamic_flops_push_credit_tb"],
+)
