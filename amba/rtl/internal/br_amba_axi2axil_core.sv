@@ -36,6 +36,7 @@ module br_amba_axi2axil_core #(
     parameter int ReqDataUserWidth = 8,  // Must be at least 1
     parameter int MaxOutstandingReqs = 16,  // Must be at least 2
     parameter bit IsReadNotWrite = 0,  // Must be 0 or 1
+    parameter bit ForwardLatencyCycles = 0,  // Must be 0 or 1
     localparam int StrobeWidth = DataWidth / 8
 ) (
     input clk,
@@ -157,7 +158,7 @@ module br_amba_axi2axil_core #(
 
   logic [br_amba::AxiBurstLenWidth-1:0] req_count;
   logic [br_amba::AxiRespWidth-1:0] resp, resp_next;
-  logic axi_req_handshake;
+  logic flow_reg_pop_handshake;
   logic axi_resp_handshake;
   logic axil_req_handshake;
   logic axil_resp_handshake;
@@ -165,7 +166,15 @@ module br_amba_axi2axil_core #(
   logic resp_fifo_push_valid;
   logic resp_fifo_push_ready, resp_fifo_pop_ready;
   logic is_last_req_beat;
-  logic req_counter_incr;
+  logic flow_reg_pop_valid;
+  logic flow_reg_pop_ready;
+  logic [AddrWidth-1:0] axi_req_addr_reg;
+  logic [IdWidth-1:0] axi_req_id_reg;
+  logic [br_amba::AxiProtWidth-1:0] axi_req_prot_reg;
+  logic [ReqUserWidth-1:0] axi_req_user_reg;
+  logic [br_amba::AxiBurstLenWidth-1:0] axi_req_len_reg;
+  logic [br_amba::AxiBurstSizeWidth-1:0] axi_req_size_reg;
+  logic [br_amba::AxiBurstTypeWidth-1:0] axi_req_burst_reg;
 
   //----------------------------------------------------------------------------
   // Registers
@@ -175,10 +184,92 @@ module br_amba_axi2axil_core #(
             br_amba::AxiRespOkay)  // ri lint_check_waive ENUM_RHS
 
   //----------------------------------------------------------------------------
+  // Flow Register to Capture the AXI4 Request
+  //----------------------------------------------------------------------------
+
+  if (ForwardLatencyCycles) begin : gen_forward_latency
+    br_flow_reg_both #(
+        .Width(
+        AddrWidth +
+        IdWidth +
+        br_amba::AxiBurstLenWidth +
+        br_amba::AxiBurstSizeWidth +
+        br_amba::AxiBurstTypeWidth +
+        br_amba::AxiProtWidth +
+        ReqUserWidth
+      )
+    ) br_flow_reg_both_req (
+        .clk,
+        .rst,
+        .push_ready(axi_req_ready),
+        .push_valid(axi_req_valid),
+        .push_data({
+          axi_req_addr,
+          axi_req_id,
+          axi_req_len,
+          axi_req_size,
+          axi_req_burst,
+          axi_req_prot,
+          axi_req_user
+        }),
+        .pop_ready(flow_reg_pop_ready),
+        .pop_valid(flow_reg_pop_valid),
+        .pop_data({
+          axi_req_addr_reg,
+          axi_req_id_reg,
+          axi_req_len_reg,
+          axi_req_size_reg,
+          axi_req_burst_reg,
+          axi_req_prot_reg,
+          axi_req_user_reg
+        })
+    );
+  end : gen_forward_latency
+  else begin : gen_no_forward_latency
+    br_flow_reg_rev #(
+        .Width(
+        AddrWidth +
+        IdWidth +
+        br_amba::AxiBurstLenWidth +
+        br_amba::AxiBurstSizeWidth +
+        br_amba::AxiBurstTypeWidth +
+        br_amba::AxiProtWidth +
+        ReqUserWidth
+      )
+    ) br_flow_reg_rev_req (
+        .clk,
+        .rst,
+        .push_ready(axi_req_ready),
+        .push_valid(axi_req_valid),
+        .push_data({
+          axi_req_addr,
+          axi_req_id,
+          axi_req_len,
+          axi_req_size,
+          axi_req_burst,
+          axi_req_prot,
+          axi_req_user
+        }),
+        .pop_ready(flow_reg_pop_ready),
+        .pop_valid(flow_reg_pop_valid),
+        .pop_data({
+          axi_req_addr_reg,
+          axi_req_id_reg,
+          axi_req_len_reg,
+          axi_req_size_reg,
+          axi_req_burst_reg,
+          axi_req_prot_reg,
+          axi_req_user_reg
+        })
+    );
+  end : gen_no_forward_latency
+
+  assign flow_reg_pop_handshake = flow_reg_pop_valid && flow_reg_pop_ready;
+
+  //----------------------------------------------------------------------------
   // AXI4 and AXI4-Lite Handshakes
   //----------------------------------------------------------------------------
 
-  assign axi_req_handshake = axi_req_valid && axi_req_ready;
   assign axi_resp_handshake = axi_resp_valid && axi_resp_ready;
 
   assign axil_req_handshake = axil_req_valid && axil_req_ready;
@@ -188,11 +279,11 @@ module br_amba_axi2axil_core #(
   // Request Handshake Logic
   //----------------------------------------------------------------------------
 
-  // Perform AXI handshake when the last AXI4-Lite request is issued
-  assign axi_req_ready = axil_req_handshake && is_last_req_beat;
+  // Pop the flow reg when the last AXI4-Lite request is issued
+  assign flow_reg_pop_ready = axil_req_handshake && is_last_req_beat;
 
   // Issue AXI4-Lite requests as long as the response FIFO is ready
-  assign axil_req_valid = axi_req_valid && resp_fifo_push_ready;
+  assign axil_req_valid = flow_reg_pop_valid && resp_fifo_push_ready;
 
 
   //----------------------------------------------------------------------------
@@ -202,23 +293,21 @@ module br_amba_axi2axil_core #(
   // Request count
   br_counter_incr #(
       .MaxValue((1 << br_amba::AxiBurstLenWidth) - 1),
-      .MaxIncrement(1)
+      .MaxIncrement(1),
+      .EnableReinitAndIncr(0)
   ) br_counter_incr_req (
       .clk,
       .rst,
-      .reinit(axi_req_handshake),
+      .reinit(flow_reg_pop_handshake),
       .initial_value({br_amba::AxiBurstLenWidth{1'b0}}),
       .incr_valid(axil_req_handshake),
-      .incr(req_counter_incr),
+      .incr(1'b1),
       .value(req_count),
       .value_next()
   );
 
-  // Do not increment in the same cycle as reinit. Otherwise, increment by 1.
-  assign req_counter_incr = !axi_req_handshake;
-
   // We only need to compare the lower bits of the request count to the burst length.
-  assign is_last_req_beat = (req_count == axi_req_len);
+  assign is_last_req_beat = (req_count == axi_req_len_reg);
 
   //----------------------------------------------------------------------------
   // Request Transaction Signals
@@ -226,10 +315,10 @@ module br_amba_axi2axil_core #(
 
   // AXI4-Lite request signals
   assign axil_req_addr = next_address(
-      axi_req_addr, axi_req_size, axi_req_len, axi_req_burst, req_count
+      axi_req_addr_reg, axi_req_size_reg, axi_req_len_reg, axi_req_burst_reg, req_count
   );
-  assign axil_req_prot = axi_req_prot;
-  assign axil_req_user = axi_req_user;
+  assign axil_req_prot = axi_req_prot_reg;
+  assign axil_req_user = axi_req_user_reg;
 
   //----------------------------------------------------------------------------
   // Request Data Path Signals
@@ -282,7 +371,7 @@ module br_amba_axi2axil_core #(
       .items_next()
   );
 
-  assign resp_fifo_push_data = {axi_req_id, is_last_req_beat};
+  assign resp_fifo_push_data = {axi_req_id_reg, is_last_req_beat};
   assign resp_fifo_push_valid = axil_req_handshake;
 
   assign resp_fifo_pop_ready = axil_resp_handshake;

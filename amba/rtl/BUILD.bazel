@@ -279,6 +279,10 @@ br_verilog_elab_and_lint_test_suite(
             "32",
             "64",
         ],
+        "ForwardLatencyCycles": [
+            "0",
+            "1",
+        ],
     },
     deps = [":br_amba_axi2axil"],
 )

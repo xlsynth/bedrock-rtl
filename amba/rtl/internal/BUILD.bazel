@@ -24,6 +24,8 @@ verilog_library(
         "//amba/rtl:br_amba_pkg",
         "//counter/rtl:br_counter_incr",
         "//fifo/rtl:br_fifo_flops",
+        "//flow/rtl:br_flow_reg_both",
+        "//flow/rtl:br_flow_reg_rev",
         "//macros:br_asserts_internal",
         "//macros:br_registers",
         "//macros:br_unused",
@@ -38,6 +40,10 @@ br_verilog_elab_and_lint_test_suite(
         ],
         "DataWidth": [
             "64",
+        ],
+        "ForwardLatencyCycles": [
+            "0",
+            "1",
         ],
     },
     deps = [":br_amba_axi2axil_core"],
