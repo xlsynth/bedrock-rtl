@@ -68,6 +68,18 @@ verilog_library(
     ],
 )
 
+verilog_library(
+    name = "br_arb_multi_rr",
+    srcs = ["br_arb_multi_rr.sv"],
+    deps = [
+        "//enc/rtl:br_enc_countones",
+        "//enc/rtl:br_enc_priority_dynamic",
+        "//macros:br_asserts_internal",
+        "//macros:br_registers",
+        "//mux/rtl:br_mux_bin",
+    ],
+)
+
 br_verilog_elab_and_lint_test_suite(
     name = "br_arb_fixed_test_suite",
     params = {"NumRequesters": [
@@ -126,4 +138,19 @@ br_verilog_elab_and_lint_test_suite(
         ],
     },
     deps = [":br_arb_weighted_rr"],
+)
+
+br_verilog_elab_and_lint_test_suite(
+    name = "br_arb_multi_rr_test_suite",
+    params = {
+        "NumRequesters": [
+            "3",
+            "5",
+        ],
+        "MaxGrantPerCycle": [
+            "2",
+            "3",
+        ],
+    },
+    deps = [":br_arb_multi_rr"],
 )

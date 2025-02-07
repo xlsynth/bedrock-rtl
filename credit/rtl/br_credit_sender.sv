@@ -62,15 +62,29 @@
 //     - Ignores (drops) any incoming pop credits.
 //     - Loads the initial value for the credit counter from the credit_initial port.
 //     - Sets push_ready to 0.
+//
+// Multi-Flow Operation:
+//   - If NumFlows > 1, the credit sender supports multiple data flows sharing the same credit
+//     pool. On a given cycle, the credit sender can issue up to NumFlows flits, assuming that
+//     there are enough credits available. If credit_available < NumFlows, only up to
+//     credit_available flits will be issued. The data flows allowed to send in this case
+//     are selected through round-robin arbitration.
 
 `include "br_asserts_internal.svh"
 `include "br_registers.svh"
+`include "br_unused.svh"
 
 module br_credit_sender #(
+    // Number of data flows sharing this credit sender.
+    // Must be at least 1 and at most MaxCredit.
+    parameter int NumFlows = 1,
     // Width of the datapath in bits. Must be at least 1.
     parameter int Width = 1,
     // Maximum number of credits that can be stored (inclusive). Must be at least 1.
     parameter int MaxCredit = 1,
+    // Maximum number of credits that can be returned in a single cycle.
+    // Must be at least 1 but at most MaxCredit.
+    parameter int PopCreditMaxChange = 1,
     // If 1, add 1 cycle of retiming to pop outputs.
     parameter bit RegisterPopOutputs = 0,
     // If 1, cover that the push side experiences backpressure.
@@ -84,7 +98,9 @@ module br_credit_sender #(
     parameter bit EnableAssertPushDataStability = EnableAssertPushValidStability,
     // If 1, then assert there are no valid bits asserted at the end of the test.
     parameter bit EnableAssertFinalNotValid = 1,
-    localparam int CounterWidth = $clog2(MaxCredit + 1)
+
+    localparam int CounterWidth   = $clog2(MaxCredit + 1),
+    localparam int PopCreditWidth = $clog2(PopCreditMaxChange + 1)
 ) (
     // Posedge-triggered clock.
     input logic clk,
@@ -92,9 +108,9 @@ module br_credit_sender #(
     input logic rst,
 
     // Ready/valid push interface.
-    output logic push_ready,
-    input logic push_valid,
-    input logic [Width-1:0] push_data,
+    output logic [NumFlows-1:0] push_ready,
+    input logic [NumFlows-1:0] push_valid,
+    input logic [NumFlows-1:0][Width-1:0] push_data,
 
     // Credit/valid pop interface.
     // Indicates that this module is in reset.
@@ -103,9 +119,9 @@ module br_credit_sender #(
     // Indicates that the receiver is in reset.
     // Synchronous active-high.
     input logic pop_receiver_in_reset,
-    input logic pop_credit,
-    output logic pop_valid,
-    output logic [Width-1:0] pop_data,
+    input logic [PopCreditWidth-1:0] pop_credit,
+    output logic [NumFlows-1:0] pop_valid,
+    output logic [NumFlows-1:0][Width-1:0] pop_data,
 
     // Reset value for the credit counter
     input  logic [CounterWidth-1:0] credit_initial,
@@ -120,11 +136,14 @@ module br_credit_sender #(
   //------------------------------------------
   // Integration checks
   //------------------------------------------
+  `BR_ASSERT_STATIC(num_flows_in_range_a, (NumFlows >= 1) && (NumFlows <= MaxCredit))
   `BR_ASSERT_STATIC(width_in_range_a, Width >= 1)
   `BR_ASSERT_STATIC(max_credit_in_range_a, MaxCredit >= 1)
+  `BR_ASSERT_STATIC(pop_credit_max_change_in_range_a,
+                    (PopCreditMaxChange >= 1) && (PopCreditMaxChange <= MaxCredit))
 
   br_flow_checks_valid_data_intg #(
-      .NumFlows(1),
+      .NumFlows(NumFlows),
       .Width(Width),
       .EnableCoverBackpressure(EnableCoverPushBackpressure),
       .EnableAssertValidStability(EnableAssertPushValidStability),
@@ -143,39 +162,86 @@ module br_credit_sender #(
   //------------------------------------------
   // Implementation
   //------------------------------------------
+  localparam int FlowCountWidth = $clog2(NumFlows + 1);
+  localparam int ChangeWidth = br_math::max2(PopCreditWidth, FlowCountWidth);
+
   logic either_rst;
   assign either_rst = rst || pop_receiver_in_reset;
 
-  logic internal_push_ready;
+  logic credit_decr_ready;
+  logic credit_decr_valid;
+  logic [ChangeWidth-1:0] credit_decr;
+
+  logic credit_incr_valid;
+  logic [ChangeWidth-1:0] credit_incr;
+
+  assign credit_incr_valid = |pop_credit;
+  assign credit_incr = ChangeWidth'(pop_credit);
 
   // Credit counter
   br_credit_counter #(
       .MaxValue(MaxCredit),
-      .MaxChange(1),
+      .MaxChange(NumFlows),
       .EnableAssertFinalNotValid(EnableAssertFinalNotValid)
   ) br_credit_counter (
       .clk,
       .rst(either_rst),
-      .incr_valid(pop_credit),
-      .incr(1'b1),
-      .decr_ready(internal_push_ready),
-      .decr_valid(push_valid),
-      .decr(1'b1),
+      .incr_valid(credit_incr_valid),
+      .incr(credit_incr),
+      .decr_ready(credit_decr_ready),
+      .decr_valid(credit_decr_valid),
+      .decr(credit_decr),
       .initial_value(credit_initial),
       .withhold(credit_withhold),
       .value(credit_count),
       .available(credit_available)
   );
 
-  logic internal_pop_valid;
+  logic [NumFlows-1:0] internal_pop_valid;
 
-  assign push_ready = internal_push_ready && !either_rst;
-  assign internal_pop_valid = push_ready && push_valid;
+  if (NumFlows == 1) begin : gen_single_flow
+    assign credit_decr_valid = push_valid;
+    assign push_ready = credit_decr_ready && !either_rst;
+    assign credit_decr = ChangeWidth'(1'b1);
+  end else begin : gen_multi_flow
+    // Credit decrement logic.
+    // We can decrement up to NumFlows per cycle as long as credit is available.
+    // If there are fewer credits available than active flows, we need to fairly
+    // distribute the available credits. This will be done with a multi-grant
+    // round-robin arbiter.
+
+    logic [FlowCountWidth-1:0] grant_allowed;
+
+    br_arb_multi_rr #(
+        .NumRequesters(NumFlows),
+        .MaxGrantPerCycle(NumFlows)
+    ) br_arb_multi_rr (
+        .clk,
+        .rst,
+        .enable_priority_update(1'b1),
+        .request(push_valid),
+        .grant(push_ready),
+        .grant_ordered(),
+        .grant_allowed,
+        .grant_count(credit_decr)
+    );
+
+    assign credit_decr_valid = |push_valid;
+    assign grant_allowed =
+        (credit_available < NumFlows) ? FlowCountWidth'(credit_available) : NumFlows;
+
+    `BR_UNUSED(credit_decr_ready)  // Only used for assertions
+    `BR_ASSERT_IMPL(no_credit_underflow_a, credit_decr_valid |-> credit_decr_ready)
+  end
+
+  assign internal_pop_valid = push_ready & push_valid;
 
   if (RegisterPopOutputs) begin : gen_reg_pop
     `BR_REGI(pop_sender_in_reset, 1'b0, 1'b1)
     `BR_REG(pop_valid, internal_pop_valid)
-    `BR_REGL(pop_data, push_data, internal_pop_valid)
+    for (genvar i = 0; i < NumFlows; i++) begin : gen_reg_pop_data
+      `BR_REGL(pop_data[i], push_data[i], internal_pop_valid[i])
+    end
   end else begin : gen_passthru_pop
     assign pop_sender_in_reset = rst;
     assign pop_valid = internal_pop_valid;
@@ -185,15 +251,23 @@ module br_credit_sender #(
   //------------------------------------------
   // Implementation checks
   //------------------------------------------
-  `BR_ASSERT_IMPL(pop_follows_push_a,
-                  (push_valid && push_ready) |-> ##(RegisterPopOutputs) pop_valid)
-  `BR_ASSERT_IMPL(pop_with_zero_credits_a,
-                  credit_count == '0 && internal_pop_valid |-> pop_credit && push_valid)
-  `BR_ASSERT_IMPL(push_pop_unchanged_credit_count_a,
-                  internal_pop_valid && pop_credit |=> credit_count == $past(credit_count))
+  if (RegisterPopOutputs) begin : gen_reg_pop_check
+    `BR_ASSERT_IMPL(pop_follows_push_a, ##1 (pop_valid == $past(push_valid & push_ready)))
+  end else begin : gen_passthru_pop_check
+    `BR_ASSERT_IMPL(pop_follows_push_a, pop_valid == (push_valid & push_ready))
+  end
+
+  `BR_ASSERT_IMPL(
+      pop_with_zero_credits_a,
+      credit_count == '0 && (|internal_pop_valid) |-> (pop_credit != '0) && (|push_valid))
+  `BR_ASSERT_IMPL(push_pop_unchanged_credit_count_a, $countones(internal_pop_valid)
+                                                     == pop_credit |=> credit_count == $past
+                                                     (credit_count))
   `BR_ASSERT_IMPL(withhold_and_spend_a,
-                  credit_count == credit_withhold && internal_pop_valid |-> pop_credit)
-  `BR_COVER_IMPL(pop_valid_and_pop_credit_c, pop_valid && pop_credit)
+                  credit_count == credit_withhold && (|internal_pop_valid) |-> (pop_credit != '0))
+  `BR_COVER_IMPL(pop_valid_and_pop_credit_c, (|pop_valid) && (pop_credit != '0))
+  `BR_ASSERT_IMPL(pop_only_avail_credit_a, (credit_available < NumFlows) |-> ($countones
+                                           (push_valid & push_ready) <= credit_available))
 
   // Reset
   `BR_ASSERT_INCL_RST_IMPL(push_ready_0_in_reset_a, rst |-> !push_ready)
