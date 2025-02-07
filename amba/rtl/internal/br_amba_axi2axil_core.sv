@@ -36,7 +36,6 @@ module br_amba_axi2axil_core #(
     parameter int ReqDataUserWidth = 8,  // Must be at least 1
     parameter int MaxOutstandingReqs = 16,  // Must be at least 2
     parameter bit IsReadNotWrite = 0,  // Must be 0 or 1
-    parameter bit ForwardLatencyCycles = 0,  // Must be 0 or 1
     localparam int StrobeWidth = DataWidth / 8
 ) (
     input clk,
@@ -187,9 +186,8 @@ module br_amba_axi2axil_core #(
   // Flow Register to Capture the AXI4 Request
   //----------------------------------------------------------------------------
 
-  if (ForwardLatencyCycles) begin : gen_forward_latency
-    br_flow_reg_both #(
-        .Width(
+  br_flow_reg_both #(
+      .Width(
         AddrWidth +
         IdWidth +
         br_amba::AxiBurstLenWidth +
@@ -198,71 +196,32 @@ module br_amba_axi2axil_core #(
         br_amba::AxiProtWidth +
         ReqUserWidth
       )
-    ) br_flow_reg_both_req (
-        .clk,
-        .rst,
-        .push_ready(axi_req_ready),
-        .push_valid(axi_req_valid),
-        .push_data({
-          axi_req_addr,
-          axi_req_id,
-          axi_req_len,
-          axi_req_size,
-          axi_req_burst,
-          axi_req_prot,
-          axi_req_user
-        }),
-        .pop_ready(flow_reg_pop_ready),
-        .pop_valid(flow_reg_pop_valid),
-        .pop_data({
-          axi_req_addr_reg,
-          axi_req_id_reg,
-          axi_req_len_reg,
-          axi_req_size_reg,
-          axi_req_burst_reg,
-          axi_req_prot_reg,
-          axi_req_user_reg
-        })
-    );
-  end : gen_forward_latency
-  else begin : gen_no_forward_latency
-    br_flow_reg_rev #(
-        .Width(
-        AddrWidth +
-        IdWidth +
-        br_amba::AxiBurstLenWidth +
-        br_amba::AxiBurstSizeWidth +
-        br_amba::AxiBurstTypeWidth +
-        br_amba::AxiProtWidth +
-        ReqUserWidth
-      )
-    ) br_flow_reg_rev_req (
-        .clk,
-        .rst,
-        .push_ready(axi_req_ready),
-        .push_valid(axi_req_valid),
-        .push_data({
-          axi_req_addr,
-          axi_req_id,
-          axi_req_len,
-          axi_req_size,
-          axi_req_burst,
-          axi_req_prot,
-          axi_req_user
-        }),
-        .pop_ready(flow_reg_pop_ready),
-        .pop_valid(flow_reg_pop_valid),
-        .pop_data({
-          axi_req_addr_reg,
-          axi_req_id_reg,
-          axi_req_len_reg,
-          axi_req_size_reg,
-          axi_req_burst_reg,
-          axi_req_prot_reg,
-          axi_req_user_reg
-        })
-    );
-  end : gen_no_forward_latency
+  ) br_flow_reg_both_req (
+      .clk,
+      .rst,
+      .push_ready(axi_req_ready),
+      .push_valid(axi_req_valid),
+      .push_data({
+        axi_req_addr,
+        axi_req_id,
+        axi_req_len,
+        axi_req_size,
+        axi_req_burst,
+        axi_req_prot,
+        axi_req_user
+      }),
+      .pop_ready(flow_reg_pop_ready),
+      .pop_valid(flow_reg_pop_valid),
+      .pop_data({
+        axi_req_addr_reg,
+        axi_req_id_reg,
+        axi_req_len_reg,
+        axi_req_size_reg,
+        axi_req_burst_reg,
+        axi_req_prot_reg,
+        axi_req_user_reg
+      })
+  );
 
   assign flow_reg_pop_handshake = flow_reg_pop_valid && flow_reg_pop_ready;
 

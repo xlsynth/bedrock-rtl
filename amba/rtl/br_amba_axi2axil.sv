@@ -32,9 +32,6 @@ module br_amba_axi2axil #(
     parameter int BUserWidth = 8,  // Must be at least 1
     parameter int RUserWidth = 8,  // Must be at least 1
     parameter int MaxOutstandingReqs = 16,  // Must be at least 2
-    // If 0, a rev timing slice will be added and the forward latency will be 0 cycles.
-    // If 1, a full timing slice will be added and the forward latency will be 1 cycle.
-    parameter bit ForwardLatencyCycles = 0,
     localparam int StrobeWidth = DataWidth / 8
 ) (
     input clk,
@@ -133,8 +130,7 @@ module br_amba_axi2axil #(
       .RespUserWidth(BUserWidth),
       .ReqDataUserWidth(WUserWidth),
       .IsReadNotWrite(0),
-      .MaxOutstandingReqs(MaxOutstandingReqs),
-      .ForwardLatencyCycles(ForwardLatencyCycles)
+      .MaxOutstandingReqs(MaxOutstandingReqs)
   ) br_amba_axi2axil_core_write (
       .clk,
       .rst,
@@ -193,8 +189,7 @@ module br_amba_axi2axil #(
       .RespUserWidth(RUserWidth),
       .ReqDataUserWidth(1),
       .IsReadNotWrite(1),
-      .MaxOutstandingReqs(MaxOutstandingReqs),
-      .ForwardLatencyCycles(ForwardLatencyCycles)
+      .MaxOutstandingReqs(MaxOutstandingReqs)
   ) br_amba_axi2axil_core_read (
       .clk,
       .rst,
