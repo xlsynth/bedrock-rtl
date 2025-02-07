@@ -14,9 +14,9 @@
 
 // Bedrock-RTL AXI4 to AXI4-Lite Bridge
 //
-// Converts an AXI4 interface to an AXI4-Lite interface. This module supports FIXED and INCR bursts.
-// It does not support WRAP bursts. AXI4 burst transactions will be split into multiple AXI4-Lite
-// transactions. All write responses will be aggregated into a single AXI4 write response.
+// Converts an AXI4 interface to an AXI4-Lite interface. AXI4 burst transactions will be split into
+// multiple AXI4-Lite transactions. All write responses will be aggregated into a single AXI4 write
+// response.
 //
 
 `include "br_asserts_internal.svh"
@@ -32,6 +32,9 @@ module br_amba_axi2axil #(
     parameter int BUserWidth = 8,  // Must be at least 1
     parameter int RUserWidth = 8,  // Must be at least 1
     parameter int MaxOutstandingReqs = 16,  // Must be at least 2
+    // If 0, a rev timing slice will be added and the forward latency will be 0 cycles.
+    // If 1, a full timing slice will be added and the forward latency will be 1 cycle.
+    parameter bit ForwardLatencyCycles = 0,
     localparam int StrobeWidth = DataWidth / 8
 ) (
     input clk,
@@ -130,7 +133,8 @@ module br_amba_axi2axil #(
       .RespUserWidth(BUserWidth),
       .ReqDataUserWidth(WUserWidth),
       .IsReadNotWrite(0),
-      .MaxOutstandingReqs(MaxOutstandingReqs)
+      .MaxOutstandingReqs(MaxOutstandingReqs),
+      .ForwardLatencyCycles(ForwardLatencyCycles)
   ) br_amba_axi2axil_core_write (
       .clk,
       .rst,
@@ -189,7 +193,8 @@ module br_amba_axi2axil #(
       .RespUserWidth(RUserWidth),
       .ReqDataUserWidth(1),
       .IsReadNotWrite(1),
-      .MaxOutstandingReqs(MaxOutstandingReqs)
+      .MaxOutstandingReqs(MaxOutstandingReqs),
+      .ForwardLatencyCycles(ForwardLatencyCycles)
   ) br_amba_axi2axil_core_read (
       .clk,
       .rst,
