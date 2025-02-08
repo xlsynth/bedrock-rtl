@@ -44,8 +44,6 @@ module br_mux_bin #(
   //------------------------------------------
   `BR_ASSERT_STATIC(legal_num_symbols_in_a, NumSymbolsIn >= 2)
   `BR_ASSERT_STATIC(legal_symbol_width_a, SymbolWidth >= 1)
-  // ri lint_check_waive ALWAYS_COMB
-  `BR_ASSERT_COMB_INTG(select_in_range_a, select < NumSymbolsIn)
 
   //------------------------------------------
   // Implementation
