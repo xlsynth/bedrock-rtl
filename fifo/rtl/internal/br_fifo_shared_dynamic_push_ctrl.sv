@@ -43,7 +43,8 @@ module br_fifo_shared_dynamic_push_ctrl #(
     parameter bit EnableAssertFinalNotValid = 1,
 
     localparam int FifoIdWidth = br_math::clamped_clog2(NumFifos),
-    localparam int AddrWidth   = br_math::clamped_clog2(Depth)
+    localparam int AddrWidth = br_math::clamped_clog2(Depth),
+    localparam int FifoCountWidth = $clog2(NumFifos + 1)
 ) (
     input logic clk,
     input logic rst,
@@ -65,7 +66,8 @@ module br_fifo_shared_dynamic_push_ctrl #(
 
     // Entry deallocation from pop controller
     input logic [NumFifos-1:0] dealloc_valid,
-    input logic [NumFifos-1:0][AddrWidth-1:0] dealloc_entry_id
+    input logic [NumFifos-1:0][AddrWidth-1:0] dealloc_entry_id,
+    output logic [FifoCountWidth-1:0] dealloc_count
 );
 
   // Integration Assertions
@@ -116,7 +118,8 @@ module br_fifo_shared_dynamic_push_ctrl #(
       .alloc_entry_id,
 
       .dealloc_valid,
-      .dealloc_entry_id
+      .dealloc_entry_id,
+      .dealloc_count
   );
 
   if (NumWritePorts > 1) begin : gen_alloc_mapping
