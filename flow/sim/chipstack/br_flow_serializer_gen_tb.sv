@@ -134,7 +134,7 @@ module br_flow_serializer_gen_tb;
     cb_clk.pop_ready <= 'h0;
 
     // Wiggling the reset signal.
-    rst = 1'b0;
+    rst = 1'bx;
     #RESET_DURATION;
     rst = 1'b1;
     #RESET_DURATION;
@@ -481,5 +481,26 @@ module br_flow_serializer_gen_tb;
     join_any
     disable fork;
   endtask
+
+
+  asrt_push_valid_not_unknown :
+  assert property (@(posedge clk) disable iff (rst !== 1'b0) !$isunknown(push_valid));
+
+  asrt_push_data_not_unknown :
+  assert property (@(posedge clk) disable iff (rst !== 1'b0) !$isunknown(push_data));
+
+  asrt_push_last_not_unknown :
+  assert property (@(posedge clk) disable iff (rst !== 1'b0) !$isunknown(push_last));
+
+  asrt_push_last_dont_care_count_not_unknown :
+  assert property (@(posedge clk) disable iff (rst !== 1'b0) !$isunknown(
+      push_last_dont_care_count
+  ));
+
+  asrt_push_metadata_not_unknown :
+  assert property (@(posedge clk) disable iff (rst !== 1'b0) !$isunknown(push_metadata));
+
+  asrt_pop_ready_not_unknown :
+  assert property (@(posedge clk) disable iff (rst !== 1'b0) !$isunknown(pop_ready));
 
 endmodule

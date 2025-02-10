@@ -146,7 +146,7 @@ module br_fifo_flops_gen_tb;
     cb_clk.pop_ready  <= 'h0;
 
     // Wiggling the reset signal.
-    rst = 1'b0;
+    rst = 1'bx;
     #RESET_DURATION;
     rst = 1'b1;
     #RESET_DURATION;
@@ -466,4 +466,12 @@ module br_fifo_flops_gen_tb;
     disable fork;
   endtask
 
+  asrt_push_valid_not_unknown :
+  assert property (@(posedge clk) disable iff (rst !== 1'b0) !$isunknown(push_valid));
+
+  asrt_push_data_not_unknown :
+  assert property (@(posedge clk) disable iff (rst !== 1'b0) !$isunknown(push_data));
+
+  asrt_pop_ready_not_unknown :
+  assert property (@(posedge clk) disable iff (rst !== 1'b0) !$isunknown(pop_ready));
 endmodule
