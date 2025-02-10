@@ -21,6 +21,10 @@
 // and the grant (pop).
 //
 // Purely combinational (no delays).
+//
+// Pop data is unstable as a new requester with higher priority will preempt an
+// existing requester. Pop valid can be unstable if all push valids are revoked
+// while pop_ready is low.
 
 `include "br_asserts.svh"
 
@@ -40,15 +44,19 @@ module br_flow_mux_fixed #(
     parameter bit EnableAssertFinalNotValid = 1
 ) (
     // ri lint_check_waive NOT_READ HIER_NET_NOT_READ HIER_BRANCH_NOT_READ
-    input  logic                           clk,         // Only used for assertions
+    input  logic                           clk,                 // Only used for assertions
     // ri lint_check_waive NOT_READ HIER_NET_NOT_READ HIER_BRANCH_NOT_READ
-    input  logic                           rst,         // Only used for assertions
+    input  logic                           rst,                 // Only used for assertions
     output logic [NumFlows-1:0]            push_ready,
     input  logic [NumFlows-1:0]            push_valid,
     input  logic [NumFlows-1:0][Width-1:0] push_data,
     input  logic                           pop_ready,
-    output logic                           pop_valid,
-    output logic [   Width-1:0]            pop_data
+    // Pop valid can be unstable if push valid is unstable
+    // and all active push_valid are withdrawn while pop_ready is low
+    output logic                           pop_valid_unstable,
+    // Pop data will be unstable if a higher priority requester
+    // asserts on push_valid while pop_ready is low
+    output logic [   Width-1:0]            pop_data_unstable
 );
 
   //------------------------------------------
@@ -92,8 +100,8 @@ module br_flow_mux_fixed #(
       .push_valid,
       .push_data,
       .pop_ready,
-      .pop_valid,
-      .pop_data
+      .pop_valid_unstable,
+      .pop_data_unstable
   );
 
   //------------------------------------------

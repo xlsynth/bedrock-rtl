@@ -20,6 +20,9 @@
 // and the grant (pop).
 //
 // Stateful arbiter, but 0 latency from push to pop.
+// The pop data is thus unstable as a new requester with higher priority will
+// preempt an existing requester. Pop valid can be unstable if all push valids
+// are revoked while pop_ready is low.
 
 `include "br_asserts.svh"
 
@@ -44,8 +47,12 @@ module br_flow_mux_lru #(
     input  logic [NumFlows-1:0]            push_valid,
     input  logic [NumFlows-1:0][Width-1:0] push_data,
     input  logic                           pop_ready,
-    output logic                           pop_valid,
-    output logic [   Width-1:0]            pop_data
+    // Pop valid can be unstable if push valid is unstable
+    // and all active push_valid are withdrawn while pop_ready is low
+    output logic                           pop_valid_unstable,
+    // Pop data will be unstable if a higher priority requester
+    // asserts on push_valid while pop_ready is low
+    output logic [   Width-1:0]            pop_data_unstable
 );
 
   //------------------------------------------
@@ -93,8 +100,8 @@ module br_flow_mux_lru #(
       .push_valid,
       .push_data,
       .pop_ready,
-      .pop_valid,
-      .pop_data
+      .pop_valid_unstable,
+      .pop_data_unstable
   );
 
   //------------------------------------------
