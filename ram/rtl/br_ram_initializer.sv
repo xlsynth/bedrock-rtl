@@ -52,6 +52,7 @@ module br_ram_initializer #(
   `BR_ASSERT_STATIC(width_gte_1_a, Width >= 1)
 
   `BR_ASSERT_INTG(initial_value_stable_when_busy_a, busy |-> $stable(initial_value))
+  `BR_ASSERT_INTG(no_start_when_busy_a, busy |-> !start)
 
   //------------------------------------------
   // Implementation
@@ -69,14 +70,20 @@ module br_ram_initializer #(
 
   assign wr_valid = state == Busy;
   assign wr_data = initial_value;
-  assign wr_addr_next = wr_addr + 1'b1;
   assign wr_addr_final = Depth - 1;
   assign busy = state == Busy;
 
   always_comb begin
+    state_next   = state;
+    wr_addr_next = wr_addr + 1'b1;
     unique case (state)
-      Idle: state_next = start ? Busy : Idle;
-      Busy: state_next = wr_addr == wr_addr_final ? Idle : Busy;
+      Idle: if (start) state_next = Busy;
+      Busy: begin
+        if (wr_addr == wr_addr_final) begin
+          state_next   = Idle;
+          wr_addr_next = '0;
+        end
+      end
       default: state_next = state_t'(1'bx);  // fully specified case statement (do x-prop)
     endcase
   end
@@ -84,7 +91,7 @@ module br_ram_initializer #(
   //------------------------------------------
   // Implementation checks
   //------------------------------------------
-  `BR_ASSERT_IMPL(wr_addr_in_range_a, wr_addr < Depth)
+  `BR_ASSERT_IMPL(wr_addr_in_range_a, wr_valid |-> wr_addr < Depth)
   `BR_ASSERT_FINAL(final_not_busy_a, !busy)
 
 endmodule : br_ram_initializer
