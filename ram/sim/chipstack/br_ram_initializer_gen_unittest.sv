@@ -80,7 +80,7 @@ module br_ram_initializer_gen_unittest;
   //===========================================================
   // Helper testbench variables
   //===========================================================
-  int test_failed = -1;
+  bit test_failed = 0;
 
   //===========================================================
   // Clock Generation
@@ -132,14 +132,20 @@ module br_ram_initializer_gen_unittest;
     reset_dut();
     test_InitializeRamWithInitialValue();
 
-    $finish;
+    if (test_failed) begin
+      $display("TEST FAILED");
+      $finish(1);
+    end else begin
+      $display("TEST PASSED");
+      $finish(0);
+    end
   end
 
   task automatic test_InitializeRamWithInitialValue;
     // Purpose: Test the RAM initialization process by writing a specified initial value to each entry from address 0 to Depth-1.
 
     // Local variables declaration
-    int test_failed = -1;
+    int errors = 0;
     logic [AddressWidth-1:0] expected_wr_addr;
     logic [Width-1:0] expected_wr_data;
     int i;
@@ -168,12 +174,11 @@ module br_ram_initializer_gen_unittest;
       $display(
           "Time: %0t, ERROR: test_InitializeRamWithInitialValue - Check failed. Expected busy=1, got busy=%b",
           $time, busy);
-      test_failed = 1;
+      errors++;
     end else begin
       $display(
           "Time: %0t, INFO: test_InitializeRamWithInitialValue - Check passed. Expected busy=1 is the same as the observed value (both are 1).",
           $time);
-      if (test_failed != 1) test_failed = 0;
     end
 
     // Loop through each address and verify initialization
@@ -186,12 +191,11 @@ module br_ram_initializer_gen_unittest;
             "Time: %0t, ERROR: test_InitializeRamWithInitialValue - Check failed. Expected wr_valid=1, wr_addr=0x%h, wr_data=0x%h, got wr_valid=%b, wr_addr=0x%h, wr_data=0x%h",
             $time, expected_wr_addr, expected_wr_data, cb_clk.wr_valid, cb_clk.wr_addr,
             cb_clk.wr_data);
-        test_failed = 1;
+        errors++;
       end else begin
         $display(
             "Time: %0t, INFO: test_InitializeRamWithInitialValue - Check passed. Expected wr_valid=1, wr_addr=0x%h, wr_data=0x%h is the same as the observed values.",
             $time, expected_wr_addr, expected_wr_data);
-        if (test_failed != 1) test_failed = 0;
       end
 
       // Increment expected address
@@ -204,19 +208,19 @@ module br_ram_initializer_gen_unittest;
       $display(
           "Time: %0t, ERROR: test_InitializeRamWithInitialValue - Check failed. Expected busy=0, got busy=%b",
           $time, busy);
-      test_failed = 1;
+      errors++;
     end else begin
       $display(
           "Time: %0t, INFO: test_InitializeRamWithInitialValue - Check passed. Expected busy=0 is the same as the observed value (both are 0).",
           $time);
-      if (test_failed != 1) test_failed = 0;
     end
 
     // Report test status
-    if (test_failed == 0) begin
+    if (errors == 0) begin
       $display("Time: %0t, PASSED: test_InitializeRamWithInitialValue", $time);
     end else begin
       $display("Time: %0t, FAILED: test_InitializeRamWithInitialValue", $time);
+      test_failed = 1;
     end
   endtask
 endmodule
