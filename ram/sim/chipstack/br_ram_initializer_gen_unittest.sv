@@ -112,18 +112,15 @@ module br_ram_initializer_gen_unittest;
   task automatic reset_dut;
     if (NO_ASSERTS_ON_RESET) $assertoff;
     // Set all the DUT inputs to zero, making sure there are no X/Z at the inputs.
-    cb_clk.initial_value = 'h0;
-    cb_clk.start = 'h0;
+    cb_clk.initial_value <= 'h0;
+    cb_clk.start <= 'h0;
 
     // Wiggling the reset signal.
-    cb_clk.rst = 1'b0;
-    @(cb_clk);
+    rst = 1'bx;
     #RESET_DURATION;
-    cb_clk.rst = 1'b1;
-    @(cb_clk);
+    rst = 1'b1;
     #RESET_DURATION;
-    cb_clk.rst = 1'b0;
-    @(cb_clk);
+    rst = 1'b0;
     #RESET_DURATION;
     if (NO_ASSERTS_ON_RESET) $asserton;
   endtask
@@ -154,7 +151,7 @@ module br_ram_initializer_gen_unittest;
     int i;
 
     // Set initial conditions
-    cb_clk.initial_value = $urandom();
+    cb_clk.initial_value <= $urandom();
     expected_wr_addr = 0;
     expected_wr_data = cb_clk.initial_value;
 
@@ -162,15 +159,15 @@ module br_ram_initializer_gen_unittest;
     @(cb_clk);
 
     // Apply initial value and start the initialization process
-    cb_clk.initial_value = initial_value;
-    cb_clk.start = 1;
+    cb_clk.initial_value <= initial_value;
+    cb_clk.start <= 1;
     $display(
         "Time: %0t, INFO: test_InitializeRamWithInitialValue - Driving initial_value=0x%h, start=1",
         $time, initial_value);
 
     // Wait for a clock cycle to capture the start of initialization
     @(cb_clk);
-    cb_clk.start = 0;
+    cb_clk.start <= 0;
 
     // Check if busy is asserted
     if (cb_clk.busy !== 1) begin
