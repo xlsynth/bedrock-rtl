@@ -63,6 +63,16 @@ verilog_library(
     deps = ["//macros:br_asserts_internal"],
 )
 
+verilog_library(
+    name = "br_enc_priority_dynamic",
+    srcs = ["br_enc_priority_dynamic.sv"],
+    deps = [
+        ":br_enc_priority_encoder",
+        "//macros:br_asserts_internal",
+        "//pkg:br_math_pkg",
+    ],
+)
+
 br_verilog_elab_and_lint_test_suite(
     name = "br_enc_bin2onehot_test_suite",
     params = {
@@ -105,6 +115,10 @@ br_verilog_elab_and_lint_test_suite(
             "2",
             "3",
         ],
+        "MsbHighestPriority": [
+            "0",
+            "1",
+        ],
     },
     deps = [":br_enc_priority_encoder"],
 )
@@ -136,4 +150,20 @@ br_verilog_elab_and_lint_test_suite(
         "16",
     ]},
     deps = [":br_enc_countones"],
+)
+
+br_verilog_elab_and_lint_test_suite(
+    name = "br_enc_priority_dynamic_test_suite",
+    params = {
+        "NumRequesters": [
+            "4",
+            "8",
+        ],
+        "NumResults": [
+            "1",
+            "2",
+            "4",
+        ],
+    },
+    deps = [":br_enc_priority_dynamic"],
 )

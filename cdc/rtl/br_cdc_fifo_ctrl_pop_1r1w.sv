@@ -79,9 +79,7 @@ module br_cdc_fifo_ctrl_pop_1r1w #(
 
     // Pop-side status flags
     output logic                  pop_empty,
-    output logic                  pop_empty_next,
     output logic [CountWidth-1:0] pop_items,
-    output logic [CountWidth-1:0] pop_items_next,
 
     // Pop-side RAM read interface
     output logic                 pop_ram_rd_addr_valid,
@@ -141,9 +139,7 @@ module br_cdc_fifo_ctrl_pop_1r1w #(
       .pop_valid,
       .pop_data,
       .empty            (pop_empty),
-      .empty_next       (pop_empty_next),
       .items            (pop_items),
-      .items_next       (pop_items_next),
       .ram_rd_addr_valid(pop_ram_rd_addr_valid),
       .ram_rd_addr      (pop_ram_rd_addr),
       .ram_rd_data_valid(pop_ram_rd_data_valid),

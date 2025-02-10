@@ -34,11 +34,11 @@
 // Let PushT and PopT be the push period and pop period, respectively.
 //
 // The cut-through latency is max(RegisterResetActive + 1, FlopRamAddressDepthStages + 2) * PushT +
-// (NumSyncStages + 1 + FlopRamAddressDepthStages + FlopRamReadDataDepthStages +
+// (NumSyncStages + FlopRamAddressDepthStages + FlopRamReadDataDepthStages +
 // FlopRamReadDataWidthStages + RegisterPopOutputs) * PopT.
 //
 // The backpressure latency is (RegisterResetActive + 1) * PopT +
-// (NumSyncStages + 1 + RegisterPushOutputs) * PushT.
+// (NumSyncStages + RegisterPushOutputs) * PushT.
 //
 // To achieve full bandwidth, the depth of the FIFO must be at least
 // (CutThroughLatency + BackpressureLatency) / max(PushT, PopT).
@@ -105,21 +105,16 @@ module br_cdc_fifo_flops #(
     input logic pop_rst,
 
     // Pop-side interface.
-    input  logic             pop_ready,
-    output logic             pop_valid,
-    output logic [Width-1:0] pop_data,
-
+    input  logic                  pop_ready,
+    output logic                  pop_valid,
+    output logic [     Width-1:0] pop_data,
     // Push-side status flags
-    output logic push_full,
-    output logic push_full_next,
+    output logic                  push_full,
     output logic [CountWidth-1:0] push_slots,
-    output logic [CountWidth-1:0] push_slots_next,
 
     // Pop-side status flags
     output logic pop_empty,
-    output logic pop_empty_next,
-    output logic [CountWidth-1:0] pop_items,
-    output logic [CountWidth-1:0] pop_items_next
+    output logic [CountWidth-1:0] pop_items
 );
 
   localparam int RamReadLatency =
@@ -166,13 +161,9 @@ module br_cdc_fifo_flops #(
       .pop_valid,
       .pop_data,
       .push_full,
-      .push_full_next,
       .push_slots,
-      .push_slots_next,
       .pop_empty,
-      .pop_empty_next,
       .pop_items,
-      .pop_items_next,
       .push_ram_wr_valid,
       .push_ram_wr_addr,
       .push_ram_wr_data,

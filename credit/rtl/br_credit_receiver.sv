@@ -67,12 +67,16 @@ module br_credit_receiver #(
     parameter int MaxCredit = 1,
     // If 1, add 1 cycle of retiming to push outputs.
     parameter bit RegisterPushOutputs = 0,
+    // Maximum number of push credit that can be returned in a single cycle.
+    // Must be at least 1 but cannot be greater than PopCreditMaxChange.
+    parameter int PushCreditMaxChange = 1,
     // Maximum pop credits that can be returned in a single cycle.
     // Must be at least 1 but cannot be greater than MaxCredit.
     parameter int PopCreditMaxChange = 1,
     // If 1, then assert there are no valid bits asserted at the end of the test.
     parameter bit EnableAssertFinalNotValid = 1,
     localparam int CounterWidth = $clog2(MaxCredit + 1),
+    localparam int PushCreditWidth = $clog2(PushCreditMaxChange + 1),
     localparam int PopCreditChangeWidth = $clog2(PopCreditMaxChange + 1)
 ) (
     // Posedge-triggered clock.
@@ -88,7 +92,7 @@ module br_credit_receiver #(
     // Synchronous active-high.
     output logic push_receiver_in_reset,
     input logic push_credit_stall,
-    output logic push_credit,
+    output logic [PushCreditWidth-1:0] push_credit,
     input logic push_valid,
     input logic [Width-1:0] push_data,
 
@@ -117,19 +121,21 @@ module br_credit_receiver #(
   `BR_ASSERT_STATIC(max_credit_in_range_a, MaxCredit >= 1)
   `BR_ASSERT_STATIC(pop_credit_change_in_range_a,
                     (PopCreditMaxChange >= 1) && (PopCreditMaxChange <= MaxCredit))
+  `BR_ASSERT_STATIC(push_credit_change_in_range_a,
+                    (PushCreditMaxChange >= 1) && (PushCreditMaxChange <= PopCreditMaxChange))
 
 `ifdef BR_ASSERT_ON
 `ifndef BR_DISABLE_INTG_CHECKS
   logic [CounterWidth-1:0] sender_credit_count;
   logic [CounterWidth-1:0] sender_credit_count_next;
 
-  assign sender_credit_count_next = (sender_credit_count + push_credit) - push_valid;
+  assign sender_credit_count_next = (sender_credit_count + CounterWidth'(push_credit)) - push_valid;
 
   `BR_REG(sender_credit_count, sender_credit_count_next)
 `endif  // BR_DISABLE_INTG_CHECKS
 `endif  // BR_ASSERT_ON
   `BR_ASSERT_INTG(no_push_valid_if_no_credit_released_a,
-                  ((sender_credit_count == '0) && !push_credit) |-> !push_valid)
+                  ((sender_credit_count == '0) && (push_credit == '0)) |-> !push_valid)
   `BR_ASSERT_INTG(pop_credit_in_range_a, pop_credit <= PopCreditMaxChange)
 
   if (EnableAssertFinalNotValid) begin : gen_assert_final
@@ -142,26 +148,32 @@ module br_credit_receiver #(
   //------------------------------------------
   // Implementation
   //------------------------------------------
+  localparam int CreditCounterMaxChange = br_math::max2(PushCreditMaxChange, PopCreditMaxChange);
+  localparam int CreditCounterChangeWidth = $clog2(CreditCounterMaxChange + 1);
+
   logic either_rst;
   assign either_rst = rst || push_sender_in_reset;
 
   logic credit_decr_valid;
   logic credit_decr_ready;
-  logic push_credit_internal;
+  logic [CreditCounterChangeWidth-1:0] credit_decr;
+
+  logic [PushCreditWidth-1:0] push_credit_internal;
   logic credit_incr_valid;
+  logic [CreditCounterChangeWidth-1:0] credit_incr;
 
   br_credit_counter #(
       .MaxValue(MaxCredit),
-      .MaxChange(PopCreditMaxChange),
+      .MaxChange(CreditCounterMaxChange),
       .EnableAssertFinalNotValid(EnableAssertFinalNotValid)
   ) br_credit_counter (
       .clk,
       .rst(either_rst),
       .incr_valid(credit_incr_valid),
-      .incr(pop_credit),
+      .incr(credit_incr),
       .decr_ready(credit_decr_ready),
       .decr_valid(credit_decr_valid),
-      .decr(PopCreditChangeWidth'(1'b1)),
+      .decr(credit_decr),
       .initial_value(credit_initial),
       .withhold(credit_withhold),
       .value(credit_count),
@@ -169,12 +181,26 @@ module br_credit_receiver #(
   );
 
   assign credit_incr_valid = |pop_credit;
+  assign credit_incr = CreditCounterChangeWidth'(pop_credit);
 
   assign credit_decr_valid = !push_credit_stall;
-  assign push_credit_internal = credit_decr_valid && credit_decr_ready && !either_rst;
+  if (PushCreditMaxChange == 1) begin : gen_single_push_credit
+    assign credit_decr = 1'b1;
+    assign push_credit_internal = (credit_decr_valid && credit_decr_ready && !either_rst);
+  end else begin : gen_multi_push_credit
+    assign credit_decr =
+        (credit_available < PushCreditMaxChange) ?
+        CreditCounterChangeWidth'(credit_available) :
+        CreditCounterChangeWidth'($unsigned(
+        PushCreditMaxChange
+    ));
+    assign push_credit_internal =
+        (credit_decr_valid && credit_decr_ready && !either_rst) ?
+        PushCreditWidth'(credit_decr) : '0;
+  end
 
   assign pop_valid = push_valid && !either_rst;
-  assign pop_data = push_data;
+  assign pop_data  = push_data;
 
   if (RegisterPushOutputs) begin : gen_reg_push
     `BR_REGI(push_receiver_in_reset, 1'b0, 1'b1)
@@ -195,6 +221,7 @@ module br_credit_receiver #(
                   credit_withhold > (credit_count + pop_credit) |-> !push_credit_internal)
   `BR_ASSERT_IMPL(withhold_and_release_a,
                   credit_count == credit_withhold && push_credit_internal |-> pop_credit)
+  `BR_ASSERT_IMPL(push_credit_in_range_a, push_credit <= PushCreditMaxChange)
 
   // Reset
   `BR_ASSERT_INCL_RST_IMPL(pop_valid_0_in_reset_a, rst |-> !pop_valid)

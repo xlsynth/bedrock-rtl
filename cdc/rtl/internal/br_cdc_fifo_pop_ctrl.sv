@@ -42,9 +42,7 @@ module br_cdc_fifo_pop_ctrl #(
 
     // Pop-side status flags
     output logic                  empty,
-    output logic                  empty_next,
     output logic [CountWidth-1:0] items,
-    output logic [CountWidth-1:0] items_next,
 
     // RAM interface
     output logic                 ram_rd_addr_valid,
@@ -113,9 +111,7 @@ module br_cdc_fifo_pop_ctrl #(
       .pop_beat,
       .push_count_gray,
       .pop_count_gray,
-      .items_next,
       .items,
-      .empty_next,
       .empty,
       .reset_active_push,
       .reset_active_pop
@@ -131,7 +127,6 @@ module br_cdc_fifo_pop_ctrl #(
 
   // Flags
   `BR_ASSERT_IMPL(items_in_range_a, items <= Depth)
-  `BR_ASSERT_IMPL(pop_items_a, (items_next < items) |-> pop_beat)
   `BR_ASSERT_IMPL(empty_a, empty == (items == 0))
 
 endmodule : br_cdc_fifo_pop_ctrl

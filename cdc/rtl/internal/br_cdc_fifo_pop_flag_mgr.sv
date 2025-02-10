@@ -31,9 +31,7 @@ module br_cdc_fifo_pop_flag_mgr #(
     input  logic                  pop_beat,
     input  logic [CountWidth-1:0] push_count_gray,
     output logic [CountWidth-1:0] pop_count_gray,
-    output logic [CountWidth-1:0] items_next,
     output logic [CountWidth-1:0] items,
-    output logic                  empty_next,
     output logic                  empty,
     input  logic                  reset_active_push,
     output logic                  reset_active_pop
@@ -46,6 +44,7 @@ module br_cdc_fifo_pop_flag_mgr #(
   // to the push side before reset_active is.
   localparam int PopCountDelay = RegisterResetActive + 1;
 
+  logic [CountWidth-1:0] pop_count;
   logic [CountWidth-1:0] pop_count_next;
   logic [CountWidth-1:0] pop_count_next_gray;
   logic [CountWidth-1:0] push_count;
@@ -61,7 +60,7 @@ module br_cdc_fifo_pop_flag_mgr #(
       .initial_value(CountWidth'(1'b0)),
       .incr_valid(pop_beat),
       .incr(1'b1),
-      .value(),
+      .value(pop_count),
       .value_next(pop_count_next)
   );
 
@@ -101,30 +100,28 @@ module br_cdc_fifo_pop_flag_mgr #(
   );
 
   // Extended versions of the counts to allow for overflow
-  logic [CountWidth:0] pop_count_next_ext;
+  logic [CountWidth:0] pop_count_ext;
   logic [CountWidth:0] push_count_visible_ext;
-  logic [CountWidth:0] items_next_ext;  // ri lint_check_waive INEFFECTIVE_NET
+  logic [CountWidth:0] items_ext;  // ri lint_check_waive INEFFECTIVE_NET
   logic [CountWidth:0] items_wrap_offset;
   logic [CountWidth:0] push_count_adjusted;
 
   assign push_count_visible = reset_active_push ? push_count_saved : push_count;
-  assign pop_count_next_ext = {1'b0, pop_count_next};
+  assign pop_count_ext = {1'b0, pop_count};
   assign push_count_visible_ext = {1'b0, push_count_visible};
   assign items_wrap_offset = MaxCountP1;
   assign push_count_adjusted = push_count_visible_ext + items_wrap_offset;
-  assign items_next_ext = (push_count_visible_ext >= pop_count_next_ext) ?
-      (push_count_visible_ext - pop_count_next_ext) :
-      (push_count_adjusted - pop_count_next_ext);
-  assign items_next = items_next_ext[CountWidth-1:0];
-  assign empty_next = (items_next == '0);
+  assign items_ext = (push_count_visible_ext >= pop_count_ext) ?
+      (push_count_visible_ext - pop_count_ext) :
+      (push_count_adjusted - pop_count_ext);
+  assign items = items_ext[CountWidth-1:0];
+  assign empty = (items == '0);
 
   `BR_REGL(push_count_saved, push_count, !reset_active_push)
-  `BR_REGL(items, items_next, pop_beat || !reset_active_push)
-  `BR_REGLI(empty, empty_next, pop_beat || !reset_active_push, 1'b1)
 
-  `BR_UNUSED_NAMED(items_next_ext_msb, items_next_ext[CountWidth])
+  `BR_UNUSED_NAMED(items_msb, items_ext[CountWidth])
 
   // Implementation checks
-  `BR_ASSERT_IMPL(no_items_overflow_A, items_next_ext <= Depth)
+  `BR_ASSERT_IMPL(no_items_overflow_A, items_ext <= Depth)
 
 endmodule : br_cdc_fifo_pop_flag_mgr
