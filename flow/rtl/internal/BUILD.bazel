@@ -42,6 +42,16 @@ verilog_library(
 )
 
 verilog_library(
+    name = "br_flow_mux_core_stable",
+    srcs = ["br_flow_mux_core_stable.sv"],
+    deps = [
+        ":br_flow_checks_valid_data_impl",
+        ":br_flow_mux_core",
+        "//flow/rtl:br_flow_reg_both",
+    ],
+)
+
+verilog_library(
     name = "br_flow_checks_valid_data_intg",
     srcs = ["br_flow_checks_valid_data_intg.sv"],
     # Users should never instance this directly in their design because
@@ -63,6 +73,51 @@ verilog_library(
         "//macros:br_asserts_internal",
         "//macros:br_unused",
     ],
+)
+
+br_verilog_elab_and_lint_test_suite(
+    name = "br_flow_arb_core_test_suite",
+    params = {
+        "NumFlows": [
+            "2",
+            "3",
+        ],
+    },
+    deps = [":br_flow_arb_core"],
+)
+
+br_verilog_elab_and_lint_test_suite(
+    name = "br_flow_mux_core_test_suite",
+    params = {
+        "NumFlows": [
+            "2",
+            "3",
+        ],
+        "Width": [
+            "5",
+            "8",
+        ],
+    },
+    deps = [":br_flow_mux_core"],
+)
+
+br_verilog_elab_and_lint_test_suite(
+    name = "br_flow_mux_core_stable_test_suite",
+    params = {
+        "NumFlows": [
+            "2",
+            "3",
+        ],
+        "Width": [
+            "5",
+            "8",
+        ],
+        "RegisterPopReady": [
+            "0",
+            "1",
+        ],
+    },
+    deps = [":br_flow_mux_core_stable"],
 )
 
 br_verilog_elab_and_lint_test_suite(
