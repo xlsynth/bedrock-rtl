@@ -92,6 +92,7 @@ module br_ram_initializer #(
   // Implementation checks
   //------------------------------------------
   `BR_ASSERT_IMPL(wr_addr_in_range_a, wr_valid |-> wr_addr < Depth)
+  `BR_COVER_IMPL(start_and_busy_c, start && busy)
   `BR_ASSERT_FINAL(final_not_busy_a, !busy)
 
 endmodule : br_ram_initializer
