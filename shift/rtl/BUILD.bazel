@@ -1,4 +1,4 @@
-# Copyright 2024-2025 The Bedrock-RTL Authors
+# Copyright 2025 The Bedrock-RTL Authors
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -18,28 +18,35 @@ load("//bazel:br_verilog.bzl", "br_verilog_elab_and_lint_test_suite")
 package(default_visibility = ["//visibility:public"])
 
 verilog_library(
-    name = "br_amba_axi2axil_core",
-    srcs = ["br_amba_axi2axil_core.sv"],
+    name = "br_shift_rotate",
+    srcs = ["br_shift_rotate.sv"],
     deps = [
-        "//amba/rtl:br_amba_pkg",
-        "//counter/rtl:br_counter_incr",
-        "//fifo/rtl:br_fifo_flops",
-        "//flow/rtl:br_flow_reg_both",
         "//macros:br_asserts_internal",
-        "//macros:br_registers",
-        "//macros:br_unused",
+        "//pkg:br_math_pkg",
     ],
 )
 
 br_verilog_elab_and_lint_test_suite(
-    name = "br_amba_axi2axil_core_test_suite",
+    name = "br_shift_rotate_test",
     params = {
-        "AddrWidth": [
-            "40",
+        "NumSymbols": [
+            "2",
+            "3",
+            "5",
+            "8",
         ],
-        "DataWidth": [
-            "64",
+        "SymbolWidth": [
+            "1",
+            "5",
+            "8",
+        ],
+        "MaxRotate": [
+            "1",
+            "3",
+            "7",
         ],
     },
-    deps = [":br_amba_axi2axil_core"],
+    deps = [
+        ":br_shift_rotate",
+    ],
 )

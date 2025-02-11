@@ -108,11 +108,12 @@ verilog_library(
     deps = [
         ":br_credit_counter",
         "//macros:br_asserts_internal",
+        "//pkg:br_math_pkg",
     ],
 )
 
 br_verilog_elab_and_lint_test_suite(
-    name = "br_credit_receiver_test_suite",
+    name = "br_credit_receiver_test_suite_basic",
     params = {
         "MaxCredit": [
             "3",
@@ -128,6 +129,24 @@ br_verilog_elab_and_lint_test_suite(
         ],
         "PopCreditMaxChange": [
             "1",
+            "3",
+        ],
+    },
+    deps = [":br_credit_receiver"],
+)
+
+br_verilog_elab_and_lint_test_suite(
+    name = "br_credit_receiver_test_suite_push_credit_change",
+    params = {
+        "MaxCredit": ["5"],
+        "PopCreditMaxChange": ["3"],
+        "RegisterPushOutputs": [
+            "0",
+            "1",
+        ],
+        "PushCreditMaxChange": [
+            "1",
+            "2",
             "3",
         ],
     },

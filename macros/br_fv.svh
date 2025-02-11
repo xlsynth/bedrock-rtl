@@ -26,4 +26,15 @@
 `BR_ASSUME(asm_index_j, $stable(__j__) && (__j__ < __n__)) \
 `BR_ASSUME(asm_unique_index, __i__ != __j__)
 
+// find which index is 1 for onehot vector
+`define BR_FV_IDX(__index__, __vec__, __n__) \
+always_comb begin \
+  __index__ = 0; \
+  for (int i = 0; i < __n__; i++) begin \
+    if (__vec__[i]) begin \
+      __index__ = i; \
+    end \
+  end \
+end
+
 `endif  // BR_FV_SVH

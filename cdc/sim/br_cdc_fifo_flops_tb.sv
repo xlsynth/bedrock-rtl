@@ -68,18 +68,14 @@ module br_cdc_fifo_flops_tb;
       .push_valid,
       .push_data,
       .push_slots(slots),
-      .push_slots_next(),
       .push_full(full),
-      .push_full_next(),
       .pop_clk(clk),  // ri lint_check_waive SAME_CLOCK_NAME
       .pop_rst(rst),
       .pop_ready,
       .pop_valid,
       .pop_data,
       .pop_empty(empty),
-      .pop_empty_next(),
-      .pop_items(items),
-      .pop_items_next()
+      .pop_items(items)
   );
 
   localparam int ResetActiveDelay = 1;

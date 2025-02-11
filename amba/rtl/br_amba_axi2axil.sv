@@ -14,9 +14,9 @@
 
 // Bedrock-RTL AXI4 to AXI4-Lite Bridge
 //
-// Converts an AXI4 interface to an AXI4-Lite interface. This module supports FIXED and INCR bursts.
-// It does not support WRAP bursts. AXI4 burst transactions will be split into multiple AXI4-Lite
-// transactions. All write responses will be aggregated into a single AXI4 write response.
+// Converts an AXI4 interface to an AXI4-Lite interface. AXI4 burst transactions will be split into
+// multiple AXI4-Lite transactions. All write responses will be aggregated into a single AXI4 write
+// response.
 //
 
 `include "br_asserts_internal.svh"
