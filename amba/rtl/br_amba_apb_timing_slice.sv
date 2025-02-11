@@ -74,8 +74,6 @@ module br_amba_apb_timing_slice #(
 
   // Because we are introducing delay to psel and penable, we need to reset the pready_out signal
   // to allow psel and penable to propagate to the target.
-  assign pready_out_next = (psel_in && ~penable_in) ? 1'b0 :
-                           (psel_out && penable_out) ? pready_in :
-                           pready_out;
+  assign pready_out_next = psel_out && penable_out && pready_in;
 
 endmodule
