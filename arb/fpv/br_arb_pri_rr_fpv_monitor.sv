@@ -16,6 +16,7 @@
 
 `include "br_asserts.svh"
 `include "br_registers.svh"
+`include "br_fv.svh"
 
 module br_arb_pri_rr_fpv_monitor #(
     // Must be at least 2
@@ -30,43 +31,45 @@ module br_arb_pri_rr_fpv_monitor #(
     input logic [NumRequesters-1:0][$clog2(NumPriorities)-1:0] request_priority,
     input logic [NumRequesters-1:0] grant
 );
-  `BR_ASSERT(must_grant_a, request != 0 |-> grant != 0)
-  `BR_ASSERT(onehot_grant_a, $countones(grant) <= 1)
-  `BR_COVER(all_request_c, request == '1)
 
-  for (genvar i = 0; i < NumRequesters; i++) begin : gen_req_0
-    `BR_ASSUME(req_priority_range_a, request[i] |-> request_priority[i] < NumPriorities)
-  end
-
+  // ----------FV Modeling Code----------
   logic [$clog2(NumPriorities)-1:0] max_priority;
+  logic [NumRequesters-1:0] highest_priority_request;
+
   always_comb begin
     max_priority = '0;
-    for (int i = 0; i < NumRequesters; i++) begin
-      if (request[i] && (request_priority[i] > max_priority)) begin
-        max_priority = request_priority[i];
+    for (int n = 0; n < NumRequesters; n++) begin
+      if (request[n] && (request_priority[n] > max_priority)) begin
+        max_priority = request_priority[n];
       end
     end
   end
 
-  logic [NumRequesters-1:0] highest_priority_request;
   always_comb begin
-    for (int i = 0; i < NumRequesters; i++) begin
-      highest_priority_request[i] = request[i] && (request_priority[i] == max_priority);
+    for (int n = 0; n < NumRequesters; n++) begin
+      highest_priority_request[n] = request[n] && (request_priority[n] == max_priority);
     end
   end
 
-  logic [NumRequesters-1:0] expected_grant;
-  br_arb_rr #(
-    .NumRequesters(NumRequesters)
-  ) br_arb_rr_inst (
-    .clk,
-    .rst,
-    .enable_priority_update,
-    .request(highest_priority_request),
-    .grant(expected_grant)
+  // ----------FV assumptions----------
+  for (genvar i = 0; i < NumRequesters; i++) begin : gen_asm
+    `BR_ASSUME(req_priority_range_a, request[i] |-> request_priority[i] < NumPriorities)
+  end
+
+  // ----------Instantiate arb_rr FV checker----------
+  br_arb_rr_fpv_monitor #(
+      .NumRequesters(NumRequesters)
+  ) br_arb_rr_fpv_monitor (
+      .clk,
+      .rst,
+      .enable_priority_update,
+      .request(highest_priority_request),
+      .grant  (grant)
   );
-  `BR_ASSERT(grant_match_a, grant == expected_grant)
 
 endmodule : br_arb_pri_rr_fpv_monitor
 
-bind br_arb_pri_rr br_arb_pri_rr_fpv_monitor#(.NumRequesters(NumRequesters), .NumPriorities(NumPriorities)) monitor (.*);
+bind br_arb_pri_rr br_arb_pri_rr_fpv_monitor #(
+    .NumRequesters(NumRequesters),
+    .NumPriorities(NumPriorities)
+) monitor (.*);
