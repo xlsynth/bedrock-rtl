@@ -280,9 +280,9 @@ module Completion_of_Initialization #(
 
   // Completion of Initialization: Check that once `start` is asserted, `busy` is eventually deasserted after all addresses from 0 to `Depth-1` have been initialized.
   initialization_complete_A :
-  assert property (@(posedge clk) disable iff (rst) start |-> s_eventually (!busy));
+  assert property (@(posedge clk) disable iff (rst) start |-> ##(Depth+1) $fell(busy));
   initialize_last_addr_A :
-  assert property (@(posedge clk) disable iff (rst) start |-> s_eventually (wr_addr == Depth-1));
+  assert property (@(posedge clk) disable iff (rst) start |-> ##Depth (wr_addr == Depth-1));
 endmodule
 
 
