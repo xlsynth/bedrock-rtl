@@ -62,7 +62,7 @@ module br_ram_initializer #(
     Busy = 1'b1
   } state_t;
 
-  state_t state, state_next;
+  state_t state, state_next;  // ri lint_check_waive ONE_BIT_STATE_REG
   logic [AddressWidth-1:0] wr_addr_next, wr_addr_final;
 
   `BR_REGI(state, state_next, Idle)
@@ -76,7 +76,7 @@ module br_ram_initializer #(
   always_comb begin
     state_next   = state;
     wr_addr_next = wr_addr + 1'b1;
-    unique case (state)
+    unique case (state)  // ri lint_check_waive ONE_BIT_STATE_REG
       Idle: if (start) state_next = Busy;
       Busy: begin
         if (wr_addr == wr_addr_final) begin
@@ -84,6 +84,7 @@ module br_ram_initializer #(
           wr_addr_next = '0;
         end
       end
+      // ri lint_check_waive FSM_DEFAULT_REQ
       default: state_next = state_t'(1'bx);  // fully specified case statement (do x-prop)
     endcase
   end
