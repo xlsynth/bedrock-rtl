@@ -32,6 +32,7 @@ module br_ram_initializer #(
     // The value to write into each entry of the RAM.
     input logic [Width-1:0] initial_value,
     // Starts the initialization process. The first write occurs on the next clock cycle.
+    // Start is ignored while busy is high.
     input logic start,
     // Busy is asserted while initialization is in progress.
     // While busy, the user is responsible for ensuring that:
@@ -52,7 +53,6 @@ module br_ram_initializer #(
   `BR_ASSERT_STATIC(width_gte_1_a, Width >= 1)
 
   `BR_ASSERT_INTG(initial_value_stable_when_busy_a, busy |-> $stable(initial_value))
-  `BR_ASSERT_INTG(no_start_when_busy_a, busy |-> !start)
 
   //------------------------------------------
   // Implementation
