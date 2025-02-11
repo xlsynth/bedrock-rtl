@@ -79,6 +79,15 @@ verilog_library(
     ],
 )
 
+verilog_library(
+    name = "br_ram_initializer",
+    srcs = ["br_ram_initializer.sv"],
+    deps = [
+        "//macros:br_asserts_internal",
+        "//macros:br_registers",
+    ],
+)
+
 br_verilog_elab_and_lint_test_suite(
     name = "br_ram_flops_tile_test_suite_full_write",
     params = {
@@ -740,4 +749,19 @@ br_verilog_elab_and_lint_test_suite(
         "EnableMemReset": ["0"],
     },
     deps = [":br_ram_flops"],
+)
+
+br_verilog_elab_and_lint_test_suite(
+    name = "br_ram_initializer_test_suite",
+    params = {
+        "Depth": [
+            "2",
+            "5",
+        ],
+        "Width": [
+            "1",
+            "3",
+        ],
+    },
+    deps = [":br_ram_initializer"],
 )
