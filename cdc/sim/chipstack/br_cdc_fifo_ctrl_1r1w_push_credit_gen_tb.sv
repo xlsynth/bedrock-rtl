@@ -145,7 +145,7 @@ module br_cdc_fifo_ctrl_1r1w_push_credit_gen_tb;
   end
   clocking cb_push_clk @(posedge push_clk);
     default input #1step output #4;
-    inout push_rst, push_credit_stall, push_valid, push_data, 
+    inout push_rst, push_credit_stall, push_valid, push_data,
           credit_initial_push, credit_withhold_push;
     input push_credit, push_full, push_full_next, push_slots, push_slots_next, credit_count_push,
           credit_available_push, push_ram_wr_valid, push_ram_wr_addr, push_ram_wr_data;
