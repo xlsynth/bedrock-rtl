@@ -45,12 +45,6 @@ module br_ram_initializer_monitor #(
   ) Sequential_Addressing_inst (
       .*
   );
-  Initialization_No_Start_When_Busy #(
-      .Depth(Depth),
-      .Width(Width)
-  ) Initialization_No_Start_When_Busy_inst (
-      .*
-  );
   Initial_Value_Stability #(
       .Depth(Depth),
       .Width(Width)
@@ -108,9 +102,9 @@ module Initialization_Start #(
     input logic wr_valid
 );
 
-  // Initialization Start: Cover that: `start` is asserted, after one clock cycle `busy` is asserted, after one clock cycle `wr_valid` is asserted.
+  // Initialization Start: Cover that: `start` is asserted, after one clock cycle `busy` and `wr_valid` are asserted
   init_start_C :
-  cover property (@(posedge clk) start ##1 busy ##1 wr_valid);
+  cover property (@(posedge clk) start ##1 busy && wr_valid);
 endmodule
 
 
@@ -145,23 +139,6 @@ module Sequential_Addressing #(
   // Sequential Addressing: Cover that: `wr_valid` is asserted, `wr_addr` starts at 0 and increments sequentially until it reaches `Depth-1`.
   sequential_addressing_C :
   cover property (@(posedge clk) wr_valid && (wr_addr == 0) ##[1:$] (wr_addr == Depth - 1));
-endmodule
-
-
-module Initialization_No_Start_When_Busy #(
-    parameter int Depth = 2,
-    parameter int Width = 1,
-    localparam int AddressWidth = $clog2(Depth)
-) (
-    input logic clk,
-    input logic rst,
-    input logic start,
-    input logic busy
-);
-
-  // Assume that 'start' cannot be asserted when 'busy' is asserted
-  no_start_when_busy_A :
-  assume property (@(posedge clk) disable iff (rst) busy |-> !start);
 endmodule
 
 
@@ -280,9 +257,9 @@ module Completion_of_Initialization #(
 
   // Completion of Initialization: Check that once `start` is asserted, `busy` is eventually deasserted after all addresses from 0 to `Depth-1` have been initialized.
   initialization_complete_A :
-  assert property (@(posedge clk) disable iff (rst) start |-> ##(Depth+1) $fell(busy));
+  assert property (@(posedge clk) disable iff (rst) !busy && start |-> ##(Depth+1) $fell(busy));
   initialize_last_addr_A :
-  assert property (@(posedge clk) disable iff (rst) start |-> ##Depth (wr_addr == Depth-1));
+  assert property (@(posedge clk) disable iff (rst) !busy && start |-> ##Depth (wr_addr == Depth-1));
 endmodule
 
 
@@ -320,7 +297,7 @@ module Advanced_Verification_Check #(
   end
 
   all_addr_eventually_written_A :
-  assert property (@(posedge clk) disable iff (rst) start |-> ##[1:$] (addr_written == '1));
+  assert property (@(posedge clk) disable iff (rst) !busy && start |-> ##[1:$] (addr_written == '1));
 
   // Ensure `busy` is deasserted only after the final address is written.
   busy_deassert_after_final_write_A :
