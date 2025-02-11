@@ -111,7 +111,7 @@ module br_flow_reg_rev #(
   br_flow_checks_valid_data_impl #(
       .NumFlows(1),
       .Width(Width),
-      .EnableCoverBackpressure(EnableCoverPushBackpressure),
+      .EnableCoverBackpressure(1),
       // If the push interface is unstable so then will the pop interface,
       // because there are combinational paths on valid and data.
       .EnableAssertValidStability(EnableAssertPushValidStability),

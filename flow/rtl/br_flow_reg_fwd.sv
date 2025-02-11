@@ -104,7 +104,7 @@ module br_flow_reg_fwd #(
   br_flow_checks_valid_data_impl #(
       .NumFlows(1),
       .Width(Width),
-      .EnableCoverBackpressure(EnableCoverPushBackpressure),
+      .EnableCoverBackpressure(1),
       .EnableAssertValidStability(1),
       .EnableAssertDataStability(1),
       .EnableAssertFinalNotValid(EnableAssertFinalNotValid)
