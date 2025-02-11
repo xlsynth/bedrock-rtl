@@ -13,7 +13,7 @@ task -create standard -copy_all -source_task <embedded>
 task -create special -copy_all -source_task <embedded>
 assume -disable {special::*req_hold_until_grant_a}
 assert -disable {special::*no_deadlock_a}
-assert -disable {special::*round_robin_a}
+assert -disable {special::*lru_a}
 
 # prove command
 prove -task {standard}

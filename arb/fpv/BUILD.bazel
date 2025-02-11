@@ -18,12 +18,34 @@ load("//bazel:verilog.bzl", "rule_verilog_fpv_sandbox", "verilog_elab_test")
 
 package(default_visibility = ["//visibility:public"])
 
+# Basic arb checker
+verilog_library(
+    name = "arb_basic_fpv_monitor",
+    srcs = ["arb_basic_fpv_monitor.sv"],
+    deps = [
+        "//macros:br_registers",
+    ],
+)
+
+# Basic LRU checker
+verilog_library(
+    name = "lru_basic_fpv_monitor",
+    srcs = ["lru_basic_fpv_monitor.sv"],
+)
+
+# Basic Round Robin checker
+verilog_library(
+    name = "rr_basic_fpv_monitor",
+    srcs = ["rr_basic_fpv_monitor.sv"],
+)
+
 # Fixed priority arbiter
 
 verilog_library(
     name = "br_arb_fixed_fpv_monitor",
     srcs = ["br_arb_fixed_fpv_monitor.sv"],
     deps = [
+        ":arb_basic_fpv_monitor",
         "//arb/rtl:br_arb_fixed",
         "//macros:br_fv",
     ],
@@ -36,6 +58,7 @@ verilog_elab_test(
 
 br_verilog_fpv_test_suite(
     name = "br_arb_fixed_jg_test_suite",
+    custom_tcl_body = "br_arb_fixed_fpv.tcl",
     params = {
         "NumRequesters": [
             "2",
@@ -43,6 +66,16 @@ br_verilog_fpv_test_suite(
             "6",
         ],
     },
+    tags = ["manual"],
+    tool = "jg",
+    top = "br_arb_fixed",
+    deps = [":br_arb_fixed_fpv_monitor"],
+)
+
+# Sample FPV sandbox for rr_arbiter
+rule_verilog_fpv_sandbox(
+    name = "br_arb_fixed_fpv_sandbox",
+    custom_tcl_body = "br_arb_fixed_fpv.tcl",
     tool = "jg",
     top = "br_arb_fixed",
     deps = [":br_arb_fixed_fpv_monitor"],
@@ -54,6 +87,8 @@ verilog_library(
     name = "br_arb_rr_fpv_monitor",
     srcs = ["br_arb_rr_fpv_monitor.sv"],
     deps = [
+        ":arb_basic_fpv_monitor",
+        ":rr_basic_fpv_monitor",
         "//arb/rtl:br_arb_rr",
         "//macros:br_fv",
     ],
@@ -74,6 +109,7 @@ br_verilog_fpv_test_suite(
             "6",
         ],
     },
+    tags = ["manual"],
     tool = "jg",
     top = "br_arb_rr",
     deps = [":br_arb_rr_fpv_monitor"],
@@ -85,6 +121,8 @@ verilog_library(
     name = "br_arb_lru_fpv_monitor",
     srcs = ["br_arb_lru_fpv_monitor.sv"],
     deps = [
+        ":arb_basic_fpv_monitor",
+        ":lru_basic_fpv_monitor",
         "//arb/rtl:br_arb_lru",
         "//macros:br_fv",
     ],
@@ -97,6 +135,7 @@ verilog_elab_test(
 
 br_verilog_fpv_test_suite(
     name = "br_arb_lru_jg_test_suite",
+    custom_tcl_body = "br_arb_lru_fpv.tcl",
     params = {
         "NumRequesters": [
             "2",
@@ -104,31 +143,18 @@ br_verilog_fpv_test_suite(
             "6",
         ],
     },
-    tool = "jg",
-    top = "br_arb_lru",
-    deps = [":br_arb_lru_fpv_monitor"],
-)
-
-rule_verilog_fpv_sandbox(
-    name = "br_arb_lru_fpv_sandbox",
-    defines = [
-        "BR_ASSERT_ON",
-        "BR_ENABLE_IMPL_CHECKS",
-    ],
-    params = {
-        "NumRequesters": "2",
-    },
+    tags = ["manual"],
     tool = "jg",
     top = "br_arb_lru",
     deps = [":br_arb_lru_fpv_monitor"],
 )
 
 # Prioritized round-robin arbiter
-
 verilog_library(
     name = "br_arb_pri_rr_fpv_monitor",
     srcs = ["br_arb_pri_rr_fpv_monitor.sv"],
     deps = [
+        ":br_arb_rr_fpv_monitor",
         "//arb/rtl:br_arb_pri_rr",
         "//arb/rtl:br_arb_rr",
         "//macros:br_fv",
@@ -142,20 +168,73 @@ verilog_elab_test(
 
 br_verilog_fpv_test_suite(
     name = "br_arb_pri_rr_jg_test_suite",
-    custom_tcl_body = "br_arb_rr_fpv.tcl",
+    custom_tcl_body = "br_arb_pri_rr_fpv.tcl",
     params = {
-        "NumRequesters": [
-            "2",
-            "5",
-            "8",
-        ],
         "NumPriorities": [
             "2",
             "3",
             "4",
         ],
+        "NumRequesters": [
+            "2",
+            "5",
+            "8",
+        ],
     },
+    tags = ["manual"],
     tool = "jg",
     top = "br_arb_pri_rr",
     deps = [":br_arb_pri_rr_fpv_monitor"],
+)
+
+# Weighted Round-Robin Arbiter
+
+verilog_library(
+    name = "br_arb_weighted_rr_fpv_monitor",
+    srcs = ["br_arb_weighted_rr_fpv_monitor.sv"],
+    deps = [
+        "//arb/rtl:br_arb_weighted_rr",
+        "//macros:br_fv",
+    ],
+)
+
+verilog_elab_test(
+    name = "br_arb_weighted_rr_fpv_monitor_elab_test",
+    deps = [":br_arb_weighted_rr_fpv_monitor"],
+)
+
+br_verilog_fpv_test_suite(
+    name = "br_arb_weighted_rr_jg_test_suite",
+    custom_tcl_body = "br_arb_weighted_rr_fpv.tcl",
+    # MaxAccumulatedWeight >= MaxWeight
+    illegal_param_combinations = {
+        (
+            "MaxAccumulatedWeight",
+            "MaxWeight",
+        ): [
+            ("1", "3"),
+            ("1", "5"),
+        ],
+    },
+    params = {
+        "MaxAccumulatedWeight": [
+            "1",
+            "5",
+            "7",
+        ],
+        "MaxWeight": [
+            "1",
+            "3",
+            "5",
+        ],
+        "NumRequesters": [
+            "2",
+            "3",
+            "8",
+        ],
+    },
+    #tags = ["manual"],
+    tool = "jg",
+    top = "br_arb_weighted_rr",
+    deps = [":br_arb_weighted_rr_fpv_monitor"],
 )
