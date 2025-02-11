@@ -305,7 +305,7 @@ module br_flow_deserializer #(
     logic not_done_building_pop_flit;
 
     assign completing_pop_flit = pop_ready && (pop_last || (push_flit_id == dr_minus_1));
-    assign not_done_building_pop_flit = !push_last && push_flit_id < dr_minus_1;
+    assign not_done_building_pop_flit = !(push_valid && push_last) && (push_flit_id < dr_minus_1);
     assign push_ready = completing_pop_flit || not_done_building_pop_flit;
 
     `BR_ASSERT_IMPL(
