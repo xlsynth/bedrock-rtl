@@ -125,16 +125,14 @@ module br_cdc_fifo_flops_gen_tb;
   end
   clocking cb_push_clk @(posedge push_clk);
     default input #1step output #4;
-    inout push_rst, pop_rst, push_valid, push_data, pop_ready;
-    input push_ready, pop_valid, pop_data, push_full, push_full_next, push_slots, push_slots_next,
-     pop_empty, pop_empty_next, pop_items, pop_items_next;
+    inout push_rst, push_valid, push_data;
+    input push_ready, push_full, push_full_next, push_slots, push_slots_next;
   endclocking
 
   clocking cb_pop_clk @(posedge pop_clk);
     default input #1step output #4;
-    inout push_rst, pop_rst, push_valid, push_data, pop_ready;
-    input push_ready, pop_valid, pop_data, push_full, push_full_next, push_slots, push_slots_next,
-     pop_empty, pop_empty_next, pop_items, pop_items_next;
+    inout pop_rst, pop_ready;
+    input pop_valid, pop_data, pop_empty, pop_empty_next, pop_items, pop_items_next;
   endclocking
 
 
@@ -156,11 +154,11 @@ module br_cdc_fifo_flops_gen_tb;
     // Set all the DUT inputs to zero, making sure there are no X/Z at the inputs.
     cb_push_clk.push_valid <= 'h0;
     cb_push_clk.push_data  <= 'h0;
-    cb_push_clk.pop_ready  <= 'h0;
+    cb_pop_clk.pop_ready   <= 'h0;
 
     // Wiggling the reset signal.
-    push_rst = 1'b0;
-    pop_rst  = 1'b0;
+    push_rst = 1'bx;
+    pop_rst  = 1'bx;
     #RESET_DURATION;
     push_rst = 1'b1;
     pop_rst  = 1'b1;
@@ -268,5 +266,17 @@ module br_cdc_fifo_flops_gen_tb;
     join_any
     disable fork;
   endtask
+
+  asrt_push_valid_not_unknown :
+  assert property (@(posedge push_clk) disable iff (push_rst !== 1'b0) (!$isunknown(push_valid)))
+  else $error("push_valid is X after reset!");
+
+  asrt_push_data_not_unknown :
+  assert property (@(posedge push_clk) disable iff (push_rst !== 1'b0) (!$isunknown(push_data)))
+  else $error("push_data is X after reset!");
+
+  asrt_pop_ready_not_unknown :
+  assert property (@(posedge pop_clk) disable iff (pop_rst !== 1'b0) (!$isunknown(pop_ready)))
+  else $error("pop_ready is X after reset!");
 
 endmodule

@@ -145,22 +145,17 @@ module br_cdc_fifo_ctrl_1r1w_push_credit_gen_tb;
   end
   clocking cb_push_clk @(posedge push_clk);
     default input #1step output #4;
-    inout push_rst, pop_rst, push_credit_stall, push_valid, push_data, credit_initial_push,
-          credit_withhold_push, pop_ready, pop_ram_rd_data_valid, pop_ram_rd_data;
+    inout push_rst, push_credit_stall, push_valid, push_data, 
+          credit_initial_push, credit_withhold_push;
     input push_credit, push_full, push_full_next, push_slots, push_slots_next, credit_count_push,
-          credit_available_push, push_ram_wr_valid, push_ram_wr_addr, push_ram_wr_data, pop_valid,
-          pop_data, pop_empty, pop_empty_next, pop_items, pop_items_next, pop_ram_rd_addr_valid,
-          pop_ram_rd_addr;
+          credit_available_push, push_ram_wr_valid, push_ram_wr_addr, push_ram_wr_data;
   endclocking
 
   clocking cb_pop_clk @(posedge pop_clk);
     default input #1step output #4;
-    inout push_rst, pop_rst, push_credit_stall, push_valid, push_data, credit_initial_push,
-          credit_withhold_push, pop_ready, pop_ram_rd_data_valid, pop_ram_rd_data;
-    input push_credit, push_full, push_full_next, push_slots, push_slots_next, credit_count_push,
-          credit_available_push, push_ram_wr_valid, push_ram_wr_addr, push_ram_wr_data, pop_valid,
-          pop_data, pop_empty, pop_empty_next, pop_items, pop_items_next, pop_ram_rd_addr_valid,
-          pop_ram_rd_addr;
+    inout pop_rst, pop_ready, pop_ram_rd_data_valid, pop_ram_rd_data;
+    input pop_valid, pop_data, pop_empty, pop_empty_next, pop_items, pop_items_next,
+          pop_ram_rd_addr_valid, pop_ram_rd_addr;
   endclocking
 
 
@@ -185,13 +180,13 @@ module br_cdc_fifo_ctrl_1r1w_push_credit_gen_tb;
     cb_push_clk.push_data <= 'h0;
     cb_push_clk.credit_initial_push <= 'h0;
     cb_push_clk.credit_withhold_push <= 'h0;
-    cb_push_clk.pop_ready <= 'h0;
-    cb_push_clk.pop_ram_rd_data_valid <= 'h0;
-    cb_push_clk.pop_ram_rd_data <= 'h0;
+    cb_pop_clk.pop_ready <= 'h0;
+    cb_pop_clk.pop_ram_rd_data_valid <= 'h0;
+    cb_pop_clk.pop_ram_rd_data <= 'h0;
 
     // Wiggling the reset signal.
-    push_rst = 1'b0;
-    pop_rst  = 1'b0;
+    push_rst = 1'bx;
+    pop_rst  = 1'bx;
     #RESET_DURATION;
     push_rst = 1'b1;
     pop_rst  = 1'b1;
@@ -430,6 +425,7 @@ module br_cdc_fifo_ctrl_1r1w_push_credit_gen_tb;
           $display($sformatf({"Time: %0t, PASSED: test_PushCreditManagement"}, $time));
         end else begin
           $display($sformatf({"Time: %0t, FAILED: test_PushCreditManagement"}, $time));
+          overall_tb_status = 1'b0;
         end
       end
     join_any
@@ -617,5 +613,48 @@ module br_cdc_fifo_ctrl_1r1w_push_credit_gen_tb;
     join_any
     disable fork;
   endtask
+
+  // Assertion to ensure push_valid is not unknown
+  asrt_push_valid_not_unknown :
+  assert property (@(posedge push_clk) disable iff (push_rst !== 1'b0) (!$isunknown(push_valid)));
+
+  // Assertion to ensure push_credit_stall is not unknown
+  asrt_push_credit_stall_not_unknown :
+  assert property (@(posedge push_clk) disable iff (push_rst !== 1'b0) (!$isunknown(
+      push_credit_stall
+  )));
+
+  // Assertion to ensure push_data is not unknown
+  asrt_push_data_not_unknown :
+  assert property (@(posedge push_clk) disable iff (push_rst !== 1'b0) (!$isunknown(push_data)));
+
+  // Assertion to ensure credit_initial_push is not unknown
+  asrt_credit_initial_push_not_unknown :
+  assert property (@(posedge push_clk) disable iff (push_rst !== 1'b0) (!$isunknown(
+      credit_initial_push
+  )));
+
+  // Assertion to ensure credit_withhold_push is not unknown
+  asrt_credit_withhold_push_not_unknown :
+  assert property (@(posedge push_clk) disable iff (push_rst !== 1'b0) (!$isunknown(
+      credit_withhold_push
+  )));
+
+  // Assertion to ensure pop_ready is not unknown
+  asrt_pop_ready_not_unknown :
+  assert property (@(posedge pop_clk) disable iff (pop_rst !== 1'b0) (!$isunknown(pop_ready)));
+
+  // Assertion to ensure pop_ram_rd_data_valid is not unknown
+  asrt_pop_ram_rd_data_valid_not_unknown :
+  assert property (@(posedge pop_clk) disable iff (pop_rst !== 1'b0) (!$isunknown(
+      pop_ram_rd_data_valid
+  )));
+
+  // Assertion to ensure pop_ram_rd_data is not unknown
+  asrt_pop_ram_rd_data_not_unknown :
+  assert property (@(posedge pop_clk) disable iff (pop_rst !== 1'b0) (!$isunknown(
+      pop_ram_rd_data
+  )));
+
 
 endmodule

@@ -132,19 +132,16 @@ module br_cdc_fifo_flops_push_credit_gen_tb;
   end
   clocking cb_push_clk @(posedge push_clk);
     default input #1step output #4;
-    inout push_rst, pop_rst, push_credit_stall, push_valid, push_data, pop_ready,
+    inout push_rst, push_credit_stall, push_valid, push_data,
           credit_initial_push, credit_withhold_push;
-    input push_credit, pop_valid, pop_data, push_full, push_full_next, push_slots, push_slots_next,
-    credit_count_push, credit_available_push, pop_empty, pop_empty_next, pop_items, pop_items_next;
+    input push_credit, push_full, push_full_next, push_slots, push_slots_next,
+    credit_count_push, credit_available_push;
   endclocking
 
   clocking cb_pop_clk @(posedge pop_clk);
     default input #1step output #4;
-    inout push_rst, pop_rst, push_credit_stall, push_valid, push_data, pop_ready,
-          credit_initial_push, credit_withhold_push;
-    input push_credit, pop_valid, pop_data, push_full, push_full_next, push_slots, push_slots_next,
-          credit_count_push, credit_available_push, pop_empty, pop_empty_next, pop_items,
-          pop_items_next;
+    inout pop_rst, pop_ready;
+    input pop_valid, pop_data, pop_empty, pop_empty_next, pop_items, pop_items_next;
   endclocking
 
 
@@ -167,13 +164,13 @@ module br_cdc_fifo_flops_push_credit_gen_tb;
     cb_push_clk.push_credit_stall <= 'h0;
     cb_push_clk.push_valid <= 'h0;
     cb_push_clk.push_data <= 'h0;
-    cb_push_clk.pop_ready <= 'h0;
+    cb_pop_clk.pop_ready <= 'h0;
     cb_push_clk.credit_initial_push <= 'h0;
     cb_push_clk.credit_withhold_push <= 'h0;
 
     // Wiggling the reset signal.
-    push_rst = 1'b0;
-    pop_rst  = 1'b0;
+    push_rst = 1'bx;
+    pop_rst  = 1'bx;
     #RESET_DURATION;
     push_rst = 1'b1;
     pop_rst  = 1'b1;
@@ -460,20 +457,20 @@ module br_cdc_fifo_flops_push_credit_gen_tb;
         @(cb_pop_clk);
         @(cb_pop_clk);
 
-        if (cb_push_clk.pop_empty == 0) begin
-          // Step 2: Monitor cb_push_clk.pop_empty to ensure FIFO is not empty
+        if (cb_pop_clk.pop_empty == 0) begin
+          // Step 2: Monitor cb_pop_clk.pop_empty to ensure FIFO is not empty
           $display($sformatf({"Time: %0t, INFO: test_PopDataOperationTransaction1 -  ",
                               "FIFO is not empty"}, $time));
 
           @(cb_pop_clk);
-          if (cb_push_clk.pop_valid == 1) begin
-            // Step 3: If cb_push_clk.pop_empty is deasserted, assert cb_push_clk.pop_valid
+          if (cb_pop_clk.pop_valid == 1) begin
+            // Step 3: If cb_pop_clk.pop_empty is deasserted, assert cb_pop_clk.pop_valid
             $display($sformatf({"Time: %0t, INFO: test_PopDataOperationTransaction1 - ",
                                 "pop_valid asserted, valid", "data available"}, $time));
 
             @(cb_pop_clk);
-            if (cb_push_clk.pop_data == expected_pop_data) begin
-              // Step 4: Provide data on cb_push_clk.pop_data
+            if (cb_pop_clk.pop_data == expected_pop_data) begin
+              // Step 4: Provide data on cb_pop_clk.pop_data
               $display($sformatf({"Time: %0t, INFO: test_PopDataOperationTransaction1 - ",
                                   "Correct data popped: 0x%h"}, $time, pop_data));
             end else begin
@@ -484,8 +481,8 @@ module br_cdc_fifo_flops_push_credit_gen_tb;
             end
 
             @(cb_pop_clk);
-            if (cb_push_clk.pop_items == expected_pop_items) begin
-              // Step 5: Update cb_push_clk.pop_items
+            if (cb_pop_clk.pop_items == expected_pop_items) begin
+              // Step 5: Update cb_pop_clk.pop_items
               $display($sformatf({"Time: %0t, INFO: test_PopDataOperationTransaction1 -  ",
                                   "pop_items correct: %0d"}, $time, pop_items));
             end else begin
@@ -496,8 +493,8 @@ module br_cdc_fifo_flops_push_credit_gen_tb;
             end
 
             @(cb_pop_clk);
-            if (cb_push_clk.pop_items_next == expected_pop_items_next) begin
-              // Step 6: Update cb_push_clk.pop_items_next
+            if (cb_pop_clk.pop_items_next == expected_pop_items_next) begin
+              // Step 6: Update cb_pop_clk.pop_items_next
               $display($sformatf({"Time: %0t, INFO: test_PopDataOperationTransaction1 -",
                                   "pop_items_next correct: %0d"}, $time, pop_items_next));
             end else begin
@@ -509,8 +506,8 @@ module br_cdc_fifo_flops_push_credit_gen_tb;
             end
 
             @(cb_pop_clk);
-            if (cb_push_clk.pop_empty_next == expected_pop_empty_next) begin
-              // Step 7: Update cb_push_clk.pop_empty_next
+            if (cb_pop_clk.pop_empty_next == expected_pop_empty_next) begin
+              // Step 7: Update cb_pop_clk.pop_empty_next
               $display($sformatf({"Time: %0t, INFO: test_PopDataOperationTransaction1 - ",
                                   "pop_empty_next correct: %0d"}, $time, pop_empty_next));
             end else begin
@@ -755,5 +752,35 @@ module br_cdc_fifo_flops_push_credit_gen_tb;
     join_any
     disable fork;
   endtask
+
+  asrt_push_credit_stall_not_unknown :
+  assert property (@(posedge push_clk) disable iff (push_rst !== 1'b0) (!$isunknown(
+      push_credit_stall
+  )))
+  else $error("push_credit_stall is X after reset!");
+
+  asrt_push_valid_not_unknown :
+  assert property (@(posedge push_clk) disable iff (push_rst !== 1'b0) (!$isunknown(push_valid)))
+  else $error("push_valid is X after reset!");
+
+  asrt_push_data_not_unknown :
+  assert property (@(posedge push_clk) disable iff (push_rst !== 1'b0) (!$isunknown(push_data)))
+  else $error("push_data is X after reset!");
+
+  asrt_credit_initial_push_not_unknown :
+  assert property (@(posedge push_clk) disable iff (push_rst !== 1'b0) (!$isunknown(
+      credit_initial_push
+  )))
+  else $error("credit_initial_push is X after reset!");
+
+  asrt_pop_ready_not_unknown :
+  assert property (@(posedge pop_clk) disable iff (pop_rst !== 1'b0) (!$isunknown(pop_ready)))
+  else $error("pop_ready is X after reset!");
+
+  asrt_credit_withhold_push_not_unknown :
+  assert property (@(posedge push_clk) disable iff (push_rst !== 1'b0) (!$isunknown(
+      credit_withhold_push
+  )))
+  else $error("credit_withhold_push is X after reset!");
 
 endmodule
