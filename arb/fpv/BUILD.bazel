@@ -233,7 +233,7 @@ br_verilog_fpv_test_suite(
             "8",
         ],
     },
-    #tags = ["manual"],
+    tags = ["manual"],
     tool = "jg",
     top = "br_arb_weighted_rr",
     deps = [":br_arb_weighted_rr_fpv_monitor"],

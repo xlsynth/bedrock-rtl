@@ -1,0 +1,485 @@
+# Copyright 2024-2025 The Bedrock-RTL Authors
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+load("@rules_hdl//verilog:providers.bzl", "verilog_library")
+load("//bazel:br_verilog.bzl", "br_verilog_fpv_test_suite")
+load("//bazel:verilog.bzl", "verilog_elab_test")
+
+package(default_visibility = ["//visibility:public"])
+
+# Delays an input signal by a fixed number of clock cycles.
+verilog_library(
+    name = "fv_delay",
+    srcs = ["fv_delay.sv"],
+    deps = [
+        "//macros:br_registers",
+    ],
+)
+
+# Basic cdc FIFO checkers
+verilog_library(
+    name = "br_cdc_fifo_basic_fpv_monitor",
+    srcs = ["br_cdc_fifo_basic_fpv_monitor.sv"],
+    deps = [
+        ":fv_delay",
+    ],
+)
+
+# Bedrock-RTL CDC FIFO (Internal 1R1W Flop-RAM, Push Ready/Valid, Pop Ready/Valid Variant)
+
+verilog_library(
+    name = "br_cdc_fifo_flops_fpv_monitor",
+    srcs = ["br_cdc_fifo_flops_fpv_monitor.sv"],
+    deps = [
+        ":br_cdc_fifo_basic_fpv_monitor",
+        "//cdc/rtl:br_cdc_fifo_flops",
+        "//gate/rtl:br_gate_mock",
+        "//macros:br_gates",
+    ],
+)
+
+verilog_elab_test(
+    name = "br_cdc_fifo_flops_fpv_monitor_elab_test",
+    # TODO: need to demote warning
+    tags = ["manual"],
+    deps = [":br_cdc_fifo_flops_fpv_monitor"],
+)
+
+br_verilog_fpv_test_suite(
+    name = "br_cdc_fifo_flops_jg_test_suite",
+    custom_tcl_body = "br_cdc_fifo_flops_fpv.tcl",
+    illegal_param_combinations = {
+        (
+            "EnableCoverPushBackpressure",
+            "EnableAssertPushValidStability",
+            "EnableAssertPushDataStability",
+        ): [
+            ("0", "0", "1"),
+            ("0", "1", "0"),
+            ("0", "1", "1"),
+            ("1", "0", "1"),
+        ],
+    },
+    params = {
+        "Depth": [
+            "2",
+            "5",
+            "6",
+        ],
+        "EnableAssertPushDataStability": [
+            "0",
+            "1",
+        ],
+        "EnableAssertPushValidStability": [
+            "0",
+            "1",
+        ],
+        "EnableCoverPushBackpressure": [
+            "0",
+            "1",
+        ],
+        "NumSyncStages": [
+            "2",
+            "3",
+            "4",
+        ],
+        "RegisterPopOutputs": [
+            "0",
+            "1",
+        ],
+        "Width": [
+            "1",
+            "3",
+            "4",
+        ],
+    },
+    tags = ["manual"],
+    tool = "jg",
+    top = "br_cdc_fifo_flops_fpv_monitor",
+    deps = [":br_cdc_fifo_flops_fpv_monitor"],
+)
+
+# Bedrock-RTL CDC FIFO (Internal 1R1W Flop-RAM, Push Credit/Valid, Pop Ready/Valid Variant)
+
+verilog_library(
+    name = "br_cdc_fifo_flops_push_credit_fpv_monitor",
+    srcs = ["br_cdc_fifo_flops_push_credit_fpv_monitor.sv"],
+    deps = [
+        ":br_cdc_fifo_basic_fpv_monitor",
+        "//cdc/rtl:br_cdc_fifo_flops_push_credit",
+        "//fifo/fpv:br_credit_receiver_fpv_monitor",
+        "//gate/rtl:br_gate_mock",
+        "//macros:br_gates",
+    ],
+)
+
+verilog_elab_test(
+    name = "br_cdc_fifo_flops_push_credit_fpv_monitor_elab_test",
+    # TODO: need to demote warning
+    tags = ["manual"],
+    deps = [":br_cdc_fifo_flops_push_credit_fpv_monitor"],
+)
+
+br_verilog_fpv_test_suite(
+    name = "br_cdc_fifo_flops_push_credit_jg_test_suite",
+    custom_tcl_body = "br_cdc_fifo_flops_push_credit_fpv.tcl",
+    params = {
+        "Depth": [
+            "2",
+            "5",
+            "6",
+        ],
+        "MaxCredit": [
+            "2",
+            "6",
+            "8",
+        ],
+        "NumSyncStages": [
+            "2",
+            "3",
+            "4",
+        ],
+        "RegisterPopOutputs": [
+            "0",
+            "1",
+        ],
+        "RegisterPushOutputs": [
+            "0",
+            "1",
+        ],
+        "Width": [
+            "1",
+            "3",
+            "4",
+        ],
+    },
+    tags = ["manual"],
+    tool = "jg",
+    top = "br_cdc_fifo_flops_push_credit_fpv_monitor",
+    deps = [":br_cdc_fifo_flops_push_credit_fpv_monitor"],
+)
+
+# Bedrock-RTL CDC FIFO Controller (1R1W, Push Ready/Valid, Pop Ready/Valid Variant)
+
+verilog_library(
+    name = "br_cdc_fifo_ctrl_1r1w_fpv_monitor",
+    srcs = ["br_cdc_fifo_ctrl_1r1w_fpv_monitor.sv"],
+    deps = [
+        ":br_cdc_fifo_basic_fpv_monitor",
+        "//cdc/rtl:br_cdc_fifo_ctrl_1r1w",
+        "//gate/rtl:br_gate_mock",
+        "//macros:br_gates",
+    ],
+)
+
+verilog_elab_test(
+    name = "br_cdc_fifo_ctrl_1r1w_fpv_monitor_elab_test",
+    # TODO: need to demote warning
+    tags = ["manual"],
+    deps = [":br_cdc_fifo_ctrl_1r1w_fpv_monitor"],
+)
+
+br_verilog_fpv_test_suite(
+    name = "br_cdc_fifo_ctrl_1r1w_jg_test_suite",
+    custom_tcl_body = "br_cdc_fifo_ctrl_1r1w_fpv.tcl",
+    illegal_param_combinations = {
+        (
+            "EnableCoverPushBackpressure",
+            "EnableAssertPushValidStability",
+            "EnableAssertPushDataStability",
+        ): [
+            ("0", "0", "1"),
+            ("0", "1", "0"),
+            ("0", "1", "1"),
+            ("1", "0", "1"),
+        ],
+    },
+    params = {
+        "Depth": [
+            "2",
+            "5",
+            "6",
+        ],
+        "EnableAssertPushDataStability": [
+            "0",
+            "1",
+        ],
+        "EnableAssertPushValidStability": [
+            "0",
+            "1",
+        ],
+        "EnableCoverPushBackpressure": [
+            "0",
+            "1",
+        ],
+        "NumSyncStages": [
+            "2",
+            "3",
+            "4",
+        ],
+        "RamReadLatency": [
+            "0",
+            "3",
+            "5",
+        ],
+        "RamWriteLatency": [
+            "1",
+            "3",
+            "5",
+        ],
+        "RegisterPopOutputs": [
+            "0",
+            "1",
+        ],
+        "Width": [
+            "1",
+            "3",
+            "4",
+        ],
+    },
+    tags = ["manual"],
+    tool = "jg",
+    top = "br_cdc_fifo_ctrl_1r1w_fpv_monitor",
+    deps = [":br_cdc_fifo_ctrl_1r1w_fpv_monitor"],
+)
+
+# Bedrock-RTL CDC FIFO Controller (1R1W, Push Ready/Valid, Pop Credit/Valid Variant)
+
+verilog_library(
+    name = "br_cdc_fifo_ctrl_1r1w_push_credit_fpv_monitor",
+    srcs = ["br_cdc_fifo_ctrl_1r1w_push_credit_fpv_monitor.sv"],
+    deps = [
+        ":br_cdc_fifo_basic_fpv_monitor",
+        "//cdc/rtl:br_cdc_fifo_ctrl_1r1w_push_credit",
+        "//fifo/fpv:br_credit_receiver_fpv_monitor",
+        "//gate/rtl:br_gate_mock",
+        "//macros:br_gates",
+    ],
+)
+
+verilog_elab_test(
+    name = "br_cdc_fifo_ctrl_1r1w_push_credit_fpv_monitor_elab_test",
+    # TODO: need to demote warning
+    tags = ["manual"],
+    deps = [":br_cdc_fifo_ctrl_1r1w_push_credit_fpv_monitor"],
+)
+
+br_verilog_fpv_test_suite(
+    name = "br_cdc_fifo_ctrl_1r1w_push_credit_jg_test_suite",
+    custom_tcl_body = "br_cdc_fifo_ctrl_1r1w_push_credit_fpv.tcl",
+    params = {
+        "Depth": [
+            "2",
+            "5",
+            "6",
+        ],
+        "MaxCredit": [
+            "2",
+            "6",
+            "8",
+        ],
+        "NumSyncStages": [
+            "2",
+            "3",
+            "4",
+        ],
+        "RamReadLatency": [
+            "0",
+            "3",
+            "5",
+        ],
+        "RamWriteLatency": [
+            "1",
+            "3",
+            "5",
+        ],
+        "RegisterPopOutputs": [
+            "0",
+            "1",
+        ],
+        "RegisterPushOutputs": [
+            "0",
+            "1",
+        ],
+        "Width": [
+            "1",
+            "3",
+            "4",
+        ],
+    },
+    tags = ["manual"],
+    tool = "jg",
+    top = "br_cdc_fifo_ctrl_1r1w_push_credit_fpv_monitor",
+    deps = [":br_cdc_fifo_ctrl_1r1w_push_credit_fpv_monitor"],
+)
+
+# Combined FV env:
+# Push-side of Bedrock-RTL CDC FIFO Controller (1R1W, Ready/Valid Variant)
+# Pop-side of Bedrock-RTL CDC FIFO Controller (1R1W, Ready/Valid Variant)
+
+verilog_library(
+    name = "br_cdc_fifo_ctrl_push_pop_1r1w_fpv_monitor",
+    srcs = ["br_cdc_fifo_ctrl_push_pop_1r1w_fpv_monitor.sv"],
+    deps = [
+        ":br_cdc_fifo_basic_fpv_monitor",
+        "//cdc/rtl:br_cdc_fifo_ctrl_pop_1r1w",
+        "//cdc/rtl:br_cdc_fifo_ctrl_push_1r1w",
+        "//gate/rtl:br_gate_mock",
+        "//macros:br_gates",
+    ],
+)
+
+verilog_elab_test(
+    name = "br_cdc_fifo_ctrl_push_pop_1r1w_fpv_monitor_elab_test",
+    # TODO: need to demote warning
+    tags = ["manual"],
+    deps = [":br_cdc_fifo_ctrl_push_pop_1r1w_fpv_monitor"],
+)
+
+br_verilog_fpv_test_suite(
+    name = "br_cdc_fifo_ctrl_push_pop_1r1w_jg_test_suite",
+    custom_tcl_body = "br_cdc_fifo_ctrl_push_pop_1r1w_fpv.tcl",
+    illegal_param_combinations = {
+        (
+            "EnableCoverPushBackpressure",
+            "EnableAssertPushValidStability",
+            "EnableAssertPushDataStability",
+        ): [
+            ("0", "0", "1"),
+            ("0", "1", "0"),
+            ("0", "1", "1"),
+            ("1", "0", "1"),
+        ],
+    },
+    params = {
+        "Depth": [
+            "2",
+            "5",
+            "6",
+        ],
+        "EnableAssertPushDataStability": [
+            "0",
+            "1",
+        ],
+        "EnableAssertPushValidStability": [
+            "0",
+            "1",
+        ],
+        "EnableCoverPushBackpressure": [
+            "0",
+            "1",
+        ],
+        "NumSyncStages": [
+            "2",
+            "3",
+            "4",
+        ],
+        "RamReadLatency": [
+            "0",
+            "3",
+            "5",
+        ],
+        "RamWriteLatency": [
+            "1",
+            "3",
+            "5",
+        ],
+        "RegisterPopOutputs": [
+            "0",
+            "1",
+        ],
+        "Width": [
+            "1",
+            "3",
+            "4",
+        ],
+    },
+    tags = ["manual"],
+    tool = "jg",
+    top = "br_cdc_fifo_ctrl_push_pop_1r1w_fpv_monitor",
+    deps = [":br_cdc_fifo_ctrl_push_pop_1r1w_fpv_monitor"],
+)
+
+# Combined FV env:
+# Push-side of Bedrock-RTL CDC FIFO Controller (1R1W, Push Credit/Valid)
+# Pop-side of Bedrock-RTL CDC FIFO Controller (1R1W, Ready/Valid Variant)
+
+verilog_library(
+    name = "br_cdc_fifo_ctrl_push_pop_1r1w_push_credit_fpv_monitor",
+    srcs = ["br_cdc_fifo_ctrl_push_pop_1r1w_push_credit_fpv_monitor.sv"],
+    deps = [
+        ":br_cdc_fifo_basic_fpv_monitor",
+        "//cdc/rtl:br_cdc_fifo_ctrl_pop_1r1w",
+        "//cdc/rtl:br_cdc_fifo_ctrl_push_1r1w_push_credit",
+        "//fifo/fpv:br_credit_receiver_fpv_monitor",
+        "//gate/rtl:br_gate_mock",
+        "//macros:br_gates",
+    ],
+)
+
+verilog_elab_test(
+    name = "br_cdc_fifo_ctrl_push_pop_1r1w_push_credit_fpv_monitor_elab_test",
+    # TODO: need to demote warning
+    tags = ["manual"],
+    deps = [":br_cdc_fifo_ctrl_push_pop_1r1w_push_credit_fpv_monitor"],
+)
+
+br_verilog_fpv_test_suite(
+    name = "br_cdc_fifo_ctrl_push_pop_1r1w_push_credit_jg_test_suite",
+    custom_tcl_body = "br_cdc_fifo_ctrl_push_pop_1r1w_push_credit_fpv.tcl",
+    params = {
+        "Depth": [
+            "2",
+            "5",
+            "6",
+        ],
+        "MaxCredit": [
+            "2",
+            "6",
+            "8",
+        ],
+        "NumSyncStages": [
+            "2",
+            "3",
+            "4",
+        ],
+        "RamReadLatency": [
+            "0",
+            "3",
+            "5",
+        ],
+        "RamWriteLatency": [
+            "1",
+            "3",
+            "5",
+        ],
+        "RegisterPopOutputs": [
+            "0",
+            "1",
+        ],
+        "RegisterPushOutputs": [
+            "0",
+            "1",
+        ],
+        "Width": [
+            "1",
+            "3",
+            "4",
+        ],
+    },
+    tags = ["manual"],
+    tool = "jg",
+    top = "br_cdc_fifo_ctrl_push_pop_1r1w_push_credit_fpv_monitor",
+    deps = [":br_cdc_fifo_ctrl_push_pop_1r1w_push_credit_fpv_monitor"],
+)
