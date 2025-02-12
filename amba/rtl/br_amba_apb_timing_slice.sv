@@ -66,10 +66,11 @@ module br_amba_apb_timing_slice #(
   `BR_REGN(pstrb_out, pstrb_in)
   `BR_REGN(pwrite_out, pwrite_in)
   `BR_REGN(pwdata_out, pwdata_in)
-  `BR_REG(psel_out, psel_in)
-  `BR_REG(penable_out, penable_in)
   `BR_REGN(pslverr_out, pslverr_in)
   `BR_REGN(prdata_out, prdata_in)
+
+  `BR_REG(psel_out, psel_in)
+  `BR_REG(penable_out, penable_in)
   `BR_REG(pready_out, pready_out_next)
 
   // Because we are introducing delay to psel and penable, we need to reset the pready_out signal
