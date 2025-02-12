@@ -1,0 +1,169 @@
+# Copyright 2024-2025 The Bedrock-RTL Authors
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+load("@rules_hdl//verilog:providers.bzl", "verilog_library")
+load("//bazel:br_verilog.bzl", "br_verilog_fpv_test_suite")
+load("//bazel:verilog.bzl", "verilog_elab_test")
+
+package(default_visibility = ["//visibility:public"])
+
+# Bedrock-RTL Credit Counter
+
+verilog_library(
+    name = "br_credit_counter_fpv_monitor",
+    srcs = ["br_credit_counter_fpv_monitor.sv"],
+    deps = [
+        "//credit/rtl:br_credit_counter",
+        "//macros:br_fv",
+    ],
+)
+
+verilog_elab_test(
+    name = "br_credit_counter_fpv_monitor_elab_test",
+    deps = [":br_credit_counter_fpv_monitor"],
+)
+
+br_verilog_fpv_test_suite(
+    name = "br_credit_counter_jg_test_suite",
+    custom_tcl_body = "br_credit_counter_fpv.tcl",
+    illegal_param_combinations = {
+        (
+            "MaxChange",
+            "MaxValue",
+        ): [
+            ("2", "1"),
+            ("3", "1"),
+        ],
+    },
+    params = {
+        "MaxChange": [
+            "1",
+            "2",
+            "3",
+        ],
+        "MaxValue": [
+            "1",
+            "5",
+            "6",
+        ],
+    },
+    #tags = ["manual"],
+    tool = "jg",
+    top = "br_credit_counter",
+    deps = [":br_credit_counter_fpv_monitor"],
+)
+
+# Bedrock-RTL Credit Receiver
+verilog_library(
+    name = "br_credit_receiver_fpv_monitor",
+    srcs = ["br_credit_receiver_fpv_monitor.sv"],
+    deps = [
+        ":br_credit_counter_fpv_monitor",
+        "//credit/rtl:br_credit_receiver",
+        "//macros:br_fv",
+    ],
+)
+
+verilog_elab_test(
+    name = "br_credit_receiver_fpv_monitor_elab_test",
+    # TODO: need to demote warning
+    tags = ["manual"],
+    deps = [":br_credit_receiver_fpv_monitor"],
+)
+
+br_verilog_fpv_test_suite(
+    name = "br_credit_receiver_jg_test_suite",
+    custom_tcl_body = "br_credit_receiver_fpv.tcl",
+    illegal_param_combinations = {
+        (
+            "PopCreditMaxChange",
+            "MaxCredit",
+        ): [
+            ("2", "1"),
+            ("3", "1"),
+        ],
+    },
+    params = {
+        "MaxCredit": [
+            "1",
+            "5",
+            "6",
+        ],
+        "PopCreditMaxChange": [
+            "1",
+            "2",
+            "3",
+        ],
+        "RegisterPushOutputs": [
+            "0",
+            "1",
+        ],
+        "Width": [
+            "1",
+            "5",
+            "6",
+        ],
+    },
+    #tags = ["manual"],
+    tool = "jg",
+    top = "br_credit_receiver",
+    deps = [":br_credit_receiver_fpv_monitor"],
+)
+
+# Bedrock-RTL Credit Sender
+verilog_library(
+    name = "br_credit_sender_fpv_monitor",
+    srcs = ["br_credit_sender_fpv_monitor.sv"],
+    deps = [
+        ":br_credit_counter_fpv_monitor",
+        "//credit/rtl:br_credit_sender",
+        "//macros:br_fv",
+    ],
+)
+
+verilog_elab_test(
+    name = "br_credit_sender_fpv_monitor_elab_test",
+    # TODO: need to demote warning
+    tags = ["manual"],
+    deps = [":br_credit_sender_fpv_monitor"],
+)
+
+br_verilog_fpv_test_suite(
+    name = "br_credit_sender_jg_test_suite",
+    custom_tcl_body = "br_credit_sender_fpv.tcl",
+    params = {
+        "EnableCoverPushBackpressure": [
+            "0",
+            "1",
+        ],
+        "MaxCredit": [
+            "1",
+            "5",
+            "6",
+        ],
+        "RegisterPopOutputs": [
+            "0",
+            "1",
+        ],
+        "Width": [
+            "1",
+            "5",
+            "6",
+        ],
+    },
+    #tags = ["manual"],
+    tool = "jg",
+    top = "br_credit_sender",
+    deps = [":br_credit_sender_fpv_monitor"],
+)
