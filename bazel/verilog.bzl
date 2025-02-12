@@ -489,7 +489,7 @@ def verilog_sim_test(tool = None, opts = [], tags = [], **kwargs):
         tool,
     ]
 
-    # Make sure we fail the test if any assertions fail.
+    # Make sure we fail the test ASAP after any error occurs (assertion or otherwise).
     extra_opts = []
     if tool == "vcs":
         extra_opts.append("-assert global_finish_maxfail=1+offending_values")
