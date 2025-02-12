@@ -94,8 +94,9 @@ module br_counter_fpv_monitor #(
     if (EnableReinitAndChange) begin : gen_reinit_change
       `BR_ASSUME(no_overflow_init_a,
                  reinit && (fv_incr > fv_decr) |-> initial_value + fv_incr - fv_decr <= MaxValue)
-      `BR_ASSUME(no_underflow_init_a,
-                 reinit && (fv_decr > fv_incr) |-> initial_value + fv_incr - fv_decr < initial_value)
+      `BR_ASSUME(
+          no_underflow_init_a,
+          reinit && (fv_decr > fv_incr) |-> initial_value + fv_incr - fv_decr < initial_value)
     end
     // normal case
     `BR_ASSUME(no_overflow_a, fv_incr > fv_decr |-> fv_counter + fv_incr - fv_decr <= MaxValue)
