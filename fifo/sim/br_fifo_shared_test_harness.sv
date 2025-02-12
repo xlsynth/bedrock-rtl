@@ -23,7 +23,7 @@ module br_fifo_shared_test_harness #(
     input logic [NumFifos-1:0][Width-1:0] pop_data
 );
 
-  localparam int WritePortIdWidth = $clog2(NumWritePorts);
+  localparam int WritePortIdWidth = $clog2(NumWritePorts + 1);
   // Reserve some bits to indicate write port.
   // The remaining bits can be randomly assigned.
   localparam int MaxRandomValue = 2 ** (Width - WritePortIdWidth) - 1;
