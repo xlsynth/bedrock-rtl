@@ -76,9 +76,11 @@ verilog_library(
     srcs = ["br_credit_sender.sv"],
     deps = [
         ":br_credit_counter",
+        "//arb/rtl:br_arb_multi_rr",
         "//flow/rtl/internal:br_flow_checks_valid_data_intg",
         "//macros:br_asserts_internal",
         "//macros:br_registers",
+        "//pkg:br_math_pkg",
     ],
 )
 
@@ -93,6 +95,28 @@ br_verilog_elab_and_lint_test_suite(
         "Width": [
             "1",
             "16",
+        ],
+        "RegisterPopOutputs": [
+            "0",
+            "1",
+        ],
+    },
+    deps = [":br_credit_sender"],
+)
+
+br_verilog_elab_and_lint_test_suite(
+    name = "br_credit_sender_test_suite_multi_flow",
+    params = {
+        "NumFlows": [
+            "2",
+            "3",
+        ],
+        "PopCreditMaxChange": [
+            "2",
+            "3",
+        ],
+        "MaxCredit": [
+            "3",
         ],
         "RegisterPopOutputs": [
             "0",
@@ -136,8 +160,12 @@ br_verilog_elab_and_lint_test_suite(
 )
 
 br_verilog_elab_and_lint_test_suite(
-    name = "br_credit_receiver_test_suite_push_credit_change",
+    name = "br_credit_receiver_test_suite_multi_push",
     params = {
+        "NumFlows": [
+            "2",
+            "3",
+        ],
         "MaxCredit": ["5"],
         "PopCreditMaxChange": ["3"],
         "RegisterPushOutputs": [

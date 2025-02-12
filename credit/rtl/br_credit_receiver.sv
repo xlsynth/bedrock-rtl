@@ -61,14 +61,16 @@
 `include "br_registers.svh"
 
 module br_credit_receiver #(
+    // Number of data flows associated with this receiver. Must be at least 1.
+    parameter int NumFlows = 1,
     // Width of the datapath in bits. Must be at least 1.
     parameter int Width = 1,
-    // Maximum number of credits that can be stored (inclusive). Must be at least 1.
+    // Maximum number of credits that can be stored (inclusive). Must be at least NumFlows.
     parameter int MaxCredit = 1,
     // If 1, add 1 cycle of retiming to push outputs.
     parameter bit RegisterPushOutputs = 0,
     // Maximum number of push credit that can be returned in a single cycle.
-    // Must be at least 1 but cannot be greater than PopCreditMaxChange.
+    // Must be at least 1 but cannot be greater than MaxCredit.
     parameter int PushCreditMaxChange = 1,
     // Maximum pop credits that can be returned in a single cycle.
     // Must be at least 1 but cannot be greater than MaxCredit.
@@ -93,16 +95,16 @@ module br_credit_receiver #(
     output logic push_receiver_in_reset,
     input logic push_credit_stall,
     output logic [PushCreditWidth-1:0] push_credit,
-    input logic push_valid,
-    input logic [Width-1:0] push_data,
+    input logic [NumFlows-1:0] push_valid,
+    input logic [NumFlows-1:0][Width-1:0] push_data,
 
     // Credit/valid pop interface.
     // Unlike the push interface it has no credit stall mechanism.
     // Intended to be connected directly to a receiver buffer with
     // no reset skew.
-    input  logic [PopCreditChangeWidth-1:0] pop_credit,
-    output logic                            pop_valid,
-    output logic [               Width-1:0] pop_data,
+    input  logic [PopCreditChangeWidth-1:0]            pop_credit,
+    output logic [            NumFlows-1:0]            pop_valid,
+    output logic [            NumFlows-1:0][Width-1:0] pop_data,
 
     // Reset value for the credit counter
     input  logic [CounterWidth-1:0] credit_initial,
@@ -117,30 +119,42 @@ module br_credit_receiver #(
   //------------------------------------------
   // Integration checks
   //------------------------------------------
+  `BR_ASSERT_STATIC(num_ports_in_range_a, NumFlows >= 1)
   `BR_ASSERT_STATIC(width_in_range_a, Width >= 1)
-  `BR_ASSERT_STATIC(max_credit_in_range_a, MaxCredit >= 1)
+  `BR_ASSERT_STATIC(max_credit_in_range_a, MaxCredit >= NumFlows)
   `BR_ASSERT_STATIC(pop_credit_change_in_range_a,
                     (PopCreditMaxChange >= 1) && (PopCreditMaxChange <= MaxCredit))
   `BR_ASSERT_STATIC(push_credit_change_in_range_a,
-                    (PushCreditMaxChange >= 1) && (PushCreditMaxChange <= PopCreditMaxChange))
+                    (PushCreditMaxChange >= 1) && (PushCreditMaxChange <= MaxCredit))
 
 `ifdef BR_ASSERT_ON
 `ifndef BR_DISABLE_INTG_CHECKS
   logic [CounterWidth-1:0] sender_credit_count;
+  logic [CounterWidth-1:0] sender_credit_count_decr;
   logic [CounterWidth-1:0] sender_credit_count_next;
 
-  assign sender_credit_count_next = (sender_credit_count + CounterWidth'(push_credit)) - push_valid;
+  always_comb begin
+    sender_credit_count_decr = '0;
+    for (int i = 0; i < NumFlows; i++) begin
+      sender_credit_count_decr += push_valid[i];
+    end
+  end
+
+  // ri lint_check_off ARITH_ARGS
+  assign sender_credit_count_next =
+      (sender_credit_count + CounterWidth'(push_credit)) - sender_credit_count_decr;
+  // ri lint_check_on ARITH_ARGS
 
   `BR_REG(sender_credit_count, sender_credit_count_next)
 `endif  // BR_DISABLE_INTG_CHECKS
 `endif  // BR_ASSERT_ON
   `BR_ASSERT_INTG(no_push_valid_if_no_credit_released_a,
-                  ((sender_credit_count == '0) && (push_credit == '0)) |-> !push_valid)
+                  ((sender_credit_count == '0) && (push_credit == '0)) |-> (push_valid == '0))
   `BR_ASSERT_INTG(pop_credit_in_range_a, pop_credit <= PopCreditMaxChange)
 
   if (EnableAssertFinalNotValid) begin : gen_assert_final
-    `BR_ASSERT_FINAL(final_not_push_valid_a, !push_valid)
-    `BR_ASSERT_FINAL(final_not_pop_valid_a, !pop_valid)
+    `BR_ASSERT_FINAL(final_not_push_valid_a, push_valid == '0)
+    `BR_ASSERT_FINAL(final_not_pop_valid_a, pop_valid == '0)
   end
 
   // Rely on submodule integration checks
@@ -199,7 +213,7 @@ module br_credit_receiver #(
         PushCreditWidth'(credit_decr) : '0;
   end
 
-  assign pop_valid = push_valid && !either_rst;
+  assign pop_valid = push_valid & {NumFlows{!either_rst}};
   assign pop_data  = push_data;
 
   if (RegisterPushOutputs) begin : gen_reg_push
