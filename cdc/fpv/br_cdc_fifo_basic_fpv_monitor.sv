@@ -119,7 +119,7 @@ module br_cdc_fifo_basic_fpv_monitor #(
 
   fv_delay #(
       .Width(CW),
-      .NumStages(NumSyncStages + 1)
+      .NumStages(NumSyncStages)
   ) delay_pop_sync (
       .clk(push_clk),
       .rst(push_rst),
@@ -140,7 +140,7 @@ module br_cdc_fifo_basic_fpv_monitor #(
 
   fv_delay #(
       .Width(CW),
-      .NumStages(NumSyncStages + 1)
+      .NumStages(NumSyncStages)
   ) delay_push_sync (
       .clk(pop_clk),
       .rst(pop_rst),

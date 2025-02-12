@@ -134,6 +134,15 @@ verilog_elab_test(
 br_verilog_fpv_test_suite(
     name = "br_cdc_fifo_flops_push_credit_jg_test_suite",
     custom_tcl_body = "br_cdc_fifo_flops_push_credit_fpv.tcl",
+    illegal_param_combinations = {
+        (
+            "Depth",
+            "MaxCredit",
+        ): [
+            ("5", "2"),
+            ("6", "2"),
+        ],
+    },
     params = {
         "Depth": [
             "2",
@@ -203,6 +212,15 @@ br_verilog_fpv_test_suite(
             ("0", "1", "0"),
             ("0", "1", "1"),
             ("1", "0", "1"),
+        ],
+        (
+            "Depth",
+            "RamReadLatency",
+        ): [
+            ("2", "3"),
+            ("2", "5"),
+            ("5", "5"),
+            ("6", "5"),
         ],
     },
     params = {
@@ -278,6 +296,24 @@ verilog_elab_test(
 br_verilog_fpv_test_suite(
     name = "br_cdc_fifo_ctrl_1r1w_push_credit_jg_test_suite",
     custom_tcl_body = "br_cdc_fifo_ctrl_1r1w_push_credit_fpv.tcl",
+    illegal_param_combinations = {
+        (
+            "Depth",
+            "RamReadLatency",
+        ): [
+            ("2", "3"),
+            ("2", "5"),
+            ("5", "5"),
+            ("6", "5"),
+        ],
+        (
+            "Depth",
+            "MaxCredit",
+        ): [
+            ("5", "2"),
+            ("6", "2"),
+        ],
+    },
     params = {
         "Depth": [
             "2",
@@ -361,6 +397,15 @@ br_verilog_fpv_test_suite(
             ("0", "1", "1"),
             ("1", "0", "1"),
         ],
+        (
+            "Depth",
+            "RamReadLatency",
+        ): [
+            ("2", "3"),
+            ("2", "5"),
+            ("5", "5"),
+            ("6", "5"),
+        ],
     },
     params = {
         "Depth": [
@@ -438,6 +483,24 @@ verilog_elab_test(
 br_verilog_fpv_test_suite(
     name = "br_cdc_fifo_ctrl_push_pop_1r1w_push_credit_jg_test_suite",
     custom_tcl_body = "br_cdc_fifo_ctrl_push_pop_1r1w_push_credit_fpv.tcl",
+    illegal_param_combinations = {
+        (
+            "Depth",
+            "RamReadLatency",
+        ): [
+            ("2", "3"),
+            ("2", "5"),
+            ("5", "5"),
+            ("6", "5"),
+        ],
+        (
+            "Depth",
+            "MaxCredit",
+        ): [
+            ("5", "2"),
+            ("6", "2"),
+        ],
+    },
     params = {
         "Depth": [
             "2",
