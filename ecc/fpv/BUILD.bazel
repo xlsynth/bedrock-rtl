@@ -1,0 +1,176 @@
+# Copyright 2024-2025 The Bedrock-RTL Authors
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+load("@rules_hdl//verilog:providers.bzl", "verilog_library")
+load("//bazel:br_verilog.bzl", "br_verilog_fpv_test_suite")
+load("//bazel:verilog.bzl", "verilog_elab_test")
+
+package(default_visibility = ["//visibility:public"])
+
+# Bedrock-RTL Single-Error-Detecting (SED - Even Parity)
+
+verilog_library(
+    name = "br_ecc_sed_fpv_monitor",
+    srcs = ["br_ecc_sed_fpv_monitor.sv"],
+    deps = [
+        "//ecc/rtl:br_ecc_sed_decoder",
+        "//ecc/rtl:br_ecc_sed_encoder",
+        "//macros:br_fv",
+    ],
+)
+
+verilog_elab_test(
+    name = "br_ecc_sed_fpv_monitor_elab_test",
+    deps = [":br_ecc_sed_fpv_monitor"],
+)
+
+br_verilog_fpv_test_suite(
+    name = "br_ecc_sed_jg_test_suite",
+    custom_tcl_body = "br_ecc_sed_fpv.tcl",
+    params = {
+        "DataWidth": [
+            "1",
+            "5",
+            "6",
+        ],
+        "DecRegisterInputs": [
+            "1",
+            "0",
+        ],
+        "DecRegisterOutputs": [
+            "1",
+            "0",
+        ],
+        "EncRegisterInputs": [
+            "1",
+            "0",
+        ],
+        "EncRegisterOutputs": [
+            "1",
+            "0",
+        ],
+    },
+    tags = ["manual"],
+    tool = "jg",
+    top = "br_ecc_sed_fpv_monitor",
+    deps = [":br_ecc_sed_fpv_monitor"],
+)
+
+# Bedrock-RTL Single-Error-Correcting, Double-Error-Detecting (SECDED - Hsiao)
+# no ecc error set up
+
+verilog_library(
+    name = "br_ecc_secded_fpv_monitor",
+    srcs = ["br_ecc_secded_fpv_monitor.sv"],
+    deps = [
+        "//ecc/rtl:br_ecc_secded_decoder",
+        "//ecc/rtl:br_ecc_secded_encoder",
+        "//macros:br_fv",
+    ],
+)
+
+verilog_elab_test(
+    name = "br_ecc_secded_fpv_monitor_elab_test",
+    #TODO: RTL has bug
+    tags = ["manual"],
+    deps = [":br_ecc_secded_fpv_monitor"],
+)
+
+br_verilog_fpv_test_suite(
+    name = "br_ecc_secded_jg_test_suite",
+    custom_tcl_body = "br_ecc_secded_fpv.tcl",
+    elab_opts = [
+        "-parameter DataWidth 120",
+        "-parameter ParityWidth 9",
+    ],
+    params = {
+        "DecRegisterInputs": [
+            "1",
+            "0",
+        ],
+        "DecRegisterOutputs": [
+            "1",
+            "0",
+        ],
+        "EncRegisterInputs": [
+            "1",
+            "0",
+        ],
+        "EncRegisterOutputs": [
+            "1",
+            "0",
+        ],
+        "RegisterSyndrome": [
+            "1",
+            "0",
+        ],
+    },
+    tags = ["manual"],
+    tool = "jg",
+    top = "br_ecc_secded_fpv_monitor",
+    deps = [":br_ecc_secded_fpv_monitor"],
+)
+
+# ecc error set up
+
+verilog_library(
+    name = "br_ecc_secded_error_fpv_monitor",
+    srcs = ["br_ecc_secded_error_fpv_monitor.sv"],
+    deps = [
+        "//ecc/rtl:br_ecc_secded_decoder",
+        "//ecc/rtl:br_ecc_secded_encoder",
+        "//macros:br_fv",
+    ],
+)
+
+verilog_elab_test(
+    name = "br_ecc_secded_error_fpv_monitor_elab_test",
+    #TODO: RTL has bug
+    tags = ["manual"],
+    deps = [":br_ecc_secded_error_fpv_monitor"],
+)
+
+br_verilog_fpv_test_suite(
+    name = "br_ecc_secded_error_jg_test_suite",
+    elab_opts = [
+        "-parameter DataWidth 8",
+        "-parameter ParityWidth 5",
+    ],
+    params = {
+        "DecRegisterInputs": [
+            "1",
+            "0",
+        ],
+        "DecRegisterOutputs": [
+            "1",
+            "0",
+        ],
+        "EncRegisterInputs": [
+            "1",
+            "0",
+        ],
+        "EncRegisterOutputs": [
+            "1",
+            "0",
+        ],
+        "RegisterSyndrome": [
+            "1",
+            "0",
+        ],
+    },
+    tags = ["manual"],
+    tool = "jg",
+    top = "br_ecc_secded_error_fpv_monitor",
+    deps = [":br_ecc_secded_error_fpv_monitor"],
+)

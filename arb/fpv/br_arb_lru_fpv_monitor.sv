@@ -16,6 +16,7 @@
 
 `include "br_asserts.svh"
 `include "br_registers.svh"
+`include "br_fv.svh"
 
 module br_arb_lru_fpv_monitor #(
     // Must be at least 2
@@ -28,84 +29,37 @@ module br_arb_lru_fpv_monitor #(
     input logic [NumRequesters-1:0] grant
 );
 
-  logic [NumRequesters-1:0][$clog2(NumRequesters):0] arb_priority;
-  logic [$clog2(NumRequesters):0] granted_priority;
-
-  always @(*) begin
-    if (grant == 0) begin
-      granted_priority = 0;
-    end else begin
-      for (int i = 0; i < NumRequesters; i++) begin
-        if (grant[i]) begin
-          granted_priority = arb_priority[i];
-        end
-      end
-    end
+  // ----------FV assumptions----------
+  // This assumption is ONLY enabled in standard use case where request won't drop without its grant
+  // If request drop without its grant, these checks FAIL
+  //      no_deadlock_a
+  //      lru_a
+  for (genvar i = 0; i < NumRequesters; i++) begin : gen_asm
+    `BR_ASSUME(req_hold_until_grant_a, request[i] && !grant[i] |=> request[i])
   end
 
-  // Implementation:
-  // - At the beginning, all requester set to high priority = NumRequesters
-  // - When a request is granted, the priority set to the lowest = 0
-  //   All other requesters with the priority lower than the granted requester
-  //   will bump its priority by 1.
+  // ----------arb checks----------
+  arb_basic_fpv_monitor #(
+      .NumRequesters(NumRequesters)
+  ) arb_check (
+      .clk,
+      .rst,
+      .enable_priority_update,
+      .request,
+      .grant
+  );
 
-  for (genvar i = 0; i < NumRequesters; i++) begin : gen_priority
-    always @(posedge clk) begin
-      if (rst) begin
-        arb_priority[i] <= NumRequesters;
-      end else begin
-        if (grant[i] && enable_priority_update) begin
-          arb_priority[i] <= 0;
-        end else if (enable_priority_update && (grant != 0) && (arb_priority[i] < granted_priority)) begin
-          arb_priority[i] <= arb_priority[i] + $clog2(NumRequesters)'(1);
-        end
-      end
-    end
-  end
-
-  logic [NumRequesters-1:0][$clog2(NumRequesters):0] wait_count;
-
-  // count the number of cycles that the requester is not granted
-  for (genvar i = 0; i < NumRequesters; i++) begin : gen_counter
-    always @(posedge clk) begin
-      if (rst) begin
-        wait_count[i] <= 0;
-      end else begin
-        if (grant[i]) begin
-          wait_count[i] <= 0;
-        end else if (enable_priority_update && (grant != 0) && request[i] && !grant[i]) begin
-          wait_count[i] <= wait_count[i] + $clog2(NumRequesters)'(1);
-        end
-      end
-      `BR_COVER(wait_count_c, wait_count[i] == NumRequesters - 1)
-    end
-  end
-
-  `BR_ASSERT(must_grant_a, request != 0 |-> grant != 0)
-  `BR_ASSERT(onehot_grant_a, $onehot0(grant))
-  `BR_COVER(all_request_c, request == '1)
-
-  for (genvar i = 0; i < NumRequesters; i++) begin : gen_req_0
-    // Grant must be given to an active requester
-    `BR_ASSERT(grant_active_req_a, grant[i] |-> request[i])
-    // Grant must be returned to the requester after all other requesters are granted once
-    `BR_ASSERT(grant_latency_a, request[i] && (wait_count[i] == NumRequesters - 1) |-> grant[i])
-    for (genvar j = 0; j < NumRequesters; j++) begin : gen_req_1
-      if (i != j) begin
-        // Cover all combinations of priorities
-        `BR_COVER(same_priority_c, request[i] && request[j] && (arb_priority[i] == arb_priority[j]))
-        `BR_COVER(low_priority_c,  request[i] && request[j] && (arb_priority[i] <  arb_priority[j]))
-        `BR_COVER(high_priority_c, request[i] && request[j] && (arb_priority[i] >  arb_priority[j]))
-        // Check correct arbitration priority
-        `BR_ASSERT(arb_priority_a, grant[j] |->
-          !request[i] || (arb_priority[i] < arb_priority[j]) ||
-          // When two requests have the same priority, the
-          // lower index request should be granted
-          (arb_priority[i] == arb_priority[j]) && (j < i))
-       end
-     end
-   end
+  // ----------LRU checks----------
+  lru_basic_fpv_monitor #(
+      .NumRequesters(NumRequesters)
+  ) lru_check (
+      .clk,
+      .rst,
+      .enable_priority_update,
+      .request,
+      .grant
+  );
 
 endmodule : br_arb_lru_fpv_monitor
 
-bind br_arb_lru br_arb_lru_fpv_monitor#(.NumRequesters(NumRequesters)) monitor (.*);
+bind br_arb_lru br_arb_lru_fpv_monitor #(.NumRequesters(NumRequesters)) monitor (.*);

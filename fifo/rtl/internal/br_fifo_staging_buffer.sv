@@ -119,7 +119,8 @@ module br_fifo_staging_buffer #(
 
   br_counter #(
       .MaxValue(BufferDepth),
-      .EnableAssertFinalNotValid(EnableAssertFinalNotValid)
+      .EnableAssertFinalNotValid(EnableAssertFinalNotValid),
+      .EnableWrap(0)
   ) br_counter (
       .clk,
       .rst,
@@ -211,8 +212,9 @@ module br_fifo_staging_buffer #(
     // and should not be possible.
     // The buffer is cleared if internal_pop_ready is asserted and there is no push.
     assign buffer_valid_next =
-        ((buffer_valid || push_valid) && !internal_pop_ready) ||
-        (ram_rd_data_valid && bypass_beat);
+        buffer_valid ?
+        (push_valid || !internal_pop_ready) :
+        ((push_valid && !internal_pop_ready) || (ram_rd_data_valid && bypass_beat));
     assign buffer_data_le = buffer_valid_next && (!buffer_valid || internal_pop_ready);
     assign buffer_data_next =
         (internal_pop_ready && !buffer_valid) ? bypass_data_unstable : push_data;
