@@ -45,3 +45,31 @@ pip.parse(
     requirements_lock = "//:requirements_lock_3_12.txt",
 )
 use_repo(pip, "bedrock-rtl-pypi")
+
+# Rust toolchain and TopStitch dependencies
+bazel_dep(name = "rules_rust", version = "0.57.1")
+
+rust = use_extension("@rules_rust//rust:extensions.bzl", "rust")
+
+# See https://bazelbuild.github.io/rules_rust/#specifying-rust-version.
+rust.toolchain(
+    edition = "2021",
+    versions = ["1.84.1"],
+)
+use_repo(rust, "rust_toolchains")
+
+register_toolchains("@rust_toolchains//:all")
+
+RUST_TARGET_TRIPLES = [
+    "x86_64-unknown-linux-gnu",
+]
+
+bedrock_stitch_crate = use_extension("@rules_rust//crate_universe:extension.bzl", "crate")
+bedrock_stitch_crate.from_cargo(
+    name = "bedrock_stitch",
+    cargo_lockfile = "//stitch:Cargo.lock",
+    isolated = False,  # Allow caching via the local Cargo cache.
+    manifests = ["//stitch:Cargo.toml"],
+    supported_platform_triples = RUST_TARGET_TRIPLES,
+)
+use_repo(bedrock_stitch_crate, "bedrock_stitch")
