@@ -67,9 +67,7 @@ module br_cdc_fifo_ctrl_1r1w_push_credit_gen_tb;
   logic [      Width-1:0] pop_ram_rd_data;
   logic                   push_credit;
   logic                   push_full;
-  logic                   push_full_next;
   logic [ CountWidth-1:0] push_slots;
-  logic [ CountWidth-1:0] push_slots_next;
   logic [CreditWidth-1:0] credit_count_push;
   logic [CreditWidth-1:0] credit_available_push;
   logic                   push_ram_wr_valid;
@@ -78,9 +76,7 @@ module br_cdc_fifo_ctrl_1r1w_push_credit_gen_tb;
   logic                   pop_valid;
   logic [      Width-1:0] pop_data;
   logic                   pop_empty;
-  logic                   pop_empty_next;
   logic [ CountWidth-1:0] pop_items;
-  logic [ CountWidth-1:0] pop_items_next;
   logic                   pop_ram_rd_addr_valid;
   logic [  AddrWidth-1:0] pop_ram_rd_addr;
 
@@ -112,9 +108,7 @@ module br_cdc_fifo_ctrl_1r1w_push_credit_gen_tb;
       .pop_ram_rd_data(pop_ram_rd_data),
       .push_credit(push_credit),
       .push_full(push_full),
-      .push_full_next(push_full_next),
       .push_slots(push_slots),
-      .push_slots_next(push_slots_next),
       .credit_count_push(credit_count_push),
       .credit_available_push(credit_available_push),
       .push_ram_wr_valid(push_ram_wr_valid),
@@ -123,9 +117,7 @@ module br_cdc_fifo_ctrl_1r1w_push_credit_gen_tb;
       .pop_valid(pop_valid),
       .pop_data(pop_data),
       .pop_empty(pop_empty),
-      .pop_empty_next(pop_empty_next),
       .pop_items(pop_items),
-      .pop_items_next(pop_items_next),
       .pop_ram_rd_addr_valid(pop_ram_rd_addr_valid),
       .pop_ram_rd_addr(pop_ram_rd_addr)
   );
@@ -147,15 +139,14 @@ module br_cdc_fifo_ctrl_1r1w_push_credit_gen_tb;
     default input #1step output #4;
     inout push_rst, push_credit_stall, push_valid, push_data,
           credit_initial_push, credit_withhold_push;
-    input push_credit, push_full, push_full_next, push_slots, push_slots_next, credit_count_push,
+    input push_credit, push_full, push_slots, credit_count_push,
           credit_available_push, push_ram_wr_valid, push_ram_wr_addr, push_ram_wr_data;
   endclocking
 
   clocking cb_pop_clk @(posedge pop_clk);
     default input #1step output #4;
     inout pop_rst, pop_ready, pop_ram_rd_data_valid, pop_ram_rd_data;
-    input pop_valid, pop_data, pop_empty, pop_empty_next, pop_items, pop_items_next,
-          pop_ram_rd_addr_valid, pop_ram_rd_addr;
+    input pop_valid, pop_data, pop_empty, pop_items, pop_ram_rd_addr_valid, pop_ram_rd_addr;
   endclocking
 
 
@@ -237,7 +228,6 @@ module br_cdc_fifo_ctrl_1r1w_push_credit_gen_tb;
         logic [Width-1:0] random_data;
         logic [AddrWidth-1:0] expected_addr;
         logic [CountWidth-1:0] expected_slots;
-        logic expected_full_next;
 
         // Initial conditions
         @(cb_push_clk);
@@ -250,7 +240,6 @@ module br_cdc_fifo_ctrl_1r1w_push_credit_gen_tb;
         random_data = $urandom();
         expected_addr = 0;
         expected_slots = Depth;
-        expected_full_next = 0;
 
         // Apply stimulus
         cb_push_clk.push_valid <= 1;
@@ -284,17 +273,6 @@ module br_cdc_fifo_ctrl_1r1w_push_credit_gen_tb;
             end else begin
               $display($sformatf({"Time: %0t, INFO: test_PushDataFlowControl - Data check passed. ",
                                   "Expected and got 0x%h"}, $time, random_data));
-            end
-
-            if (cb_push_clk.push_full_next != expected_full_next) begin
-              $display($sformatf({"Time: %0t, ERROR: test_PushDataFlowControl - ",
-                                  "push_full_next mismatch. ", "Expected %0b, got %0b"}, $time,
-                                   expected_full_next, push_full_next));
-              test_failed = 1;
-            end else begin
-              $display($sformatf({"Time: %0t, INFO: test_PushDataFlowControl - ",
-                                  "push_full_next check passed. ", "Expected and got %0b"}, $time,
-                                   expected_full_next));
             end
 
             @(cb_push_clk);  // MANUAL FIX
@@ -529,7 +507,6 @@ module br_cdc_fifo_ctrl_1r1w_push_credit_gen_tb;
         localparam int Depth = 4;  // Example depth, adjust as needed
         logic [CountWidth-1:0] expected_pop_items;
         logic expected_pop_empty;
-        logic expected_pop_empty_next;
 
         // Preconditions: Initialize the FIFO to a known state
         @(cb_pop_clk);
@@ -559,17 +536,16 @@ module br_cdc_fifo_ctrl_1r1w_push_credit_gen_tb;
               //expected_pop_items = cb_pop_clk.pop_items - 1;
               expected_pop_items = Depth - cb_pop_clk.pop_items;  // MANUAL FIX
               expected_pop_empty = (expected_pop_items == 0);
-              expected_pop_empty_next = (cb_pop_clk.pop_items_next == 0);
 
-              if (cb_pop_clk.pop_items_next != expected_pop_items) begin
+              if (cb_pop_clk.pop_items != expected_pop_items) begin
                 $display($sformatf({"Time: %0t, ERROR: test_PopStatusManagement - ",
-                                    "pop_items_next mismatch. ", "Expected: %0d, Got: %0d"}, $time,
-                                     expected_pop_items, cb_pop_clk.pop_items_next));
+                                    "pop_items mismatch. ", "Expected: %0d, Got: %0d"}, $time,
+                                     expected_pop_items, cb_pop_clk.pop_items));
                 test_failed = 1;
               end else begin
                 $display($sformatf({"Time: %0t, INFO: test_PopStatusManagement - ",
-                                    "pop_items_next check passed. ", "Expected: %0d, Got: %0d"},
-                                     $time, expected_pop_items, cb_pop_clk.pop_items_next));
+                                    "pop_items check passed. ", "Expected: %0d, Got: %0d"}, $time,
+                                     expected_pop_items, cb_pop_clk.pop_items));
                 if (test_failed != 1) test_failed = 0;
               end
 
@@ -584,18 +560,6 @@ module br_cdc_fifo_ctrl_1r1w_push_credit_gen_tb;
                         {"Time: %0t, INFO: test_PopStatusManagement - pop_empty check passed. ",
                          "Expected: %b, Got: %b"}, $time, expected_pop_empty,
                           cb_pop_clk.pop_empty));
-                if (test_failed != 1) test_failed = 0;
-              end
-
-              if (cb_pop_clk.pop_empty_next != expected_pop_empty_next) begin
-                $display($sformatf({"Time: %0t, ERROR: test_PopStatusManagement - ",
-                                    "pop_empty_next mismatch. ", "Expected: %b, Got: %b"}, $time,
-                                     expected_pop_empty_next, cb_pop_clk.pop_empty_next));
-                test_failed = 1;
-              end else begin
-                $display($sformatf({"Time: %0t, INFO: test_PopStatusManagement - ",
-                                    "pop_empty_next check passed. ", "Expected: %b, Got: %b"},
-                                     $time, expected_pop_empty_next, cb_pop_clk.pop_empty_next));
                 if (test_failed != 1) test_failed = 0;
               end
             end

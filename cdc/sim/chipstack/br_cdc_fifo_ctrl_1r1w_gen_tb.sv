@@ -66,18 +66,14 @@ module br_cdc_fifo_ctrl_1r1w_gen_tb;
   logic [     Width-1:0] pop_ram_rd_data;
   logic                  push_ready;
   logic                  push_full;
-  logic                  push_full_next;
   logic [CountWidth-1:0] push_slots;
-  logic [CountWidth-1:0] push_slots_next;
   logic                  push_ram_wr_valid;
   logic [ AddrWidth-1:0] push_ram_wr_addr;
   logic [     Width-1:0] push_ram_wr_data;
   logic                  pop_valid;
   logic [     Width-1:0] pop_data;
   logic                  pop_empty;
-  logic                  pop_empty_next;
   logic [CountWidth-1:0] pop_items;
-  logic [CountWidth-1:0] pop_items_next;
   logic                  pop_ram_rd_addr_valid;
   logic [ AddrWidth-1:0] pop_ram_rd_addr;
 
@@ -106,18 +102,14 @@ module br_cdc_fifo_ctrl_1r1w_gen_tb;
       .pop_ram_rd_data(pop_ram_rd_data),
       .push_ready(push_ready),
       .push_full(push_full),
-      .push_full_next(push_full_next),
       .push_slots(push_slots),
-      .push_slots_next(push_slots_next),
       .push_ram_wr_valid(push_ram_wr_valid),
       .push_ram_wr_addr(push_ram_wr_addr),
       .push_ram_wr_data(push_ram_wr_data),
       .pop_valid(pop_valid),
       .pop_data(pop_data),
       .pop_empty(pop_empty),
-      .pop_empty_next(pop_empty_next),
       .pop_items(pop_items),
-      .pop_items_next(pop_items_next),
       .pop_ram_rd_addr_valid(pop_ram_rd_addr_valid),
       .pop_ram_rd_addr(pop_ram_rd_addr)
   );
@@ -138,15 +130,13 @@ module br_cdc_fifo_ctrl_1r1w_gen_tb;
   clocking cb_push_clk @(posedge push_clk);
     default input #1step output #4;
     inout push_rst, push_valid, push_data;
-    input push_ready, push_full, push_full_next, push_slots, push_slots_next, push_ram_wr_valid,
-    push_ram_wr_addr, push_ram_wr_data;
+    input push_ready, push_full, push_slots, push_ram_wr_valid, push_ram_wr_addr, push_ram_wr_data;
   endclocking
 
   clocking cb_pop_clk @(posedge pop_clk);
     default input #1step output #4;
     inout pop_rst, pop_ready, pop_ram_rd_data_valid, pop_ram_rd_data;
-    input pop_valid, pop_data, pop_empty, pop_empty_next, pop_items,
-    pop_items_next, pop_ram_rd_addr_valid, pop_ram_rd_addr;
+    input pop_valid, pop_data, pop_empty, pop_items, pop_ram_rd_addr_valid, pop_ram_rd_addr;
   endclocking
 
 
@@ -227,15 +217,11 @@ module br_cdc_fifo_ctrl_1r1w_gen_tb;
             // Local variables declaration
             logic test_failed = 0;  // Changed from int to logic for single-bit size variable
             logic [CountWidth-1:0] expected_pop_items;
-            logic [CountWidth-1:0] expected_pop_items_next;
             logic expected_pop_empty;
-            logic expected_pop_empty_next;
 
             // Initialize expected values
             expected_pop_items = 0;
-            expected_pop_items_next = 0;
             expected_pop_empty = 1;
-            expected_pop_empty_next = 1;
 
             // Ensure initial conditions
             @(cb_pop_clk);
@@ -250,7 +236,7 @@ module br_cdc_fifo_ctrl_1r1w_gen_tb;
             // Wait for a clock cycle to allow the DUT to process the pop_ready signal
             @(cb_pop_clk);
 
-            // Check pop_items, pop_items_next, pop_empty, and pop_empty_next
+            // Check pop_items and pop_empty
             if (cb_pop_clk.pop_items !== expected_pop_items) begin  // Corrected clocking block
               $display($sformatf({"Time: %0t, ERROR: test_PopStatusManagement - ",
                                   "pop_items check failed. Expected %0d, got %0d"}, $time,
@@ -262,18 +248,6 @@ module br_cdc_fifo_ctrl_1r1w_gen_tb;
                                    cb_pop_clk.pop_items));
             end
 
-            if (cb_pop_clk.pop_items_next !== expected_pop_items_next) begin
-              // Corrected clocking block
-              $display($sformatf({"Time: %0t, ERROR: test_PopStatusManagement - ",
-                                  "pop_items_next check failed. Expected %0d, got %0d"}, $time,
-                                   expected_pop_items_next, cb_pop_clk.pop_items_next));
-              test_failed = 1;
-            end else begin
-              $display($sformatf({"Time: %0t, INFO: test_PopStatusManagement - ",
-                                  "pop_items_next check passed. Expected and got %0d"}, $time,
-                                   cb_pop_clk.pop_items_next));
-            end
-
             if (cb_pop_clk.pop_empty !== expected_pop_empty) begin  // Corrected clocking block
               $display($sformatf({"Time: %0t, ERROR: test_PopStatusManagement - ",
                                   "pop_empty check failed. Expected %0d, got %0d"}, $time,
@@ -283,18 +257,6 @@ module br_cdc_fifo_ctrl_1r1w_gen_tb;
               $display($sformatf({"Time: %0t, INFO: test_PopStatusManagement - ",
                                   "pop_empty check passed. Expected and got %0d"}, $time,
                                    cb_pop_clk.pop_empty));
-            end
-
-            if (cb_pop_clk.pop_empty_next !== expected_pop_empty_next) begin
-              // Corrected clocking block
-              $display($sformatf({"Time: %0t, ERROR: test_PopStatusManagement - ",
-                                  "pop_empty_next check failed. Expected %0d, got %0d"}, $time,
-                                   expected_pop_empty_next, cb_pop_clk.pop_empty_next));
-              test_failed = 1;
-            end else begin
-              $display($sformatf({"Time: %0t, INFO: test_PopStatusManagement - ",
-                                  "pop_empty_next check passed. Expected and got %0d"}, $time,
-                                   cb_pop_clk.pop_empty_next));
             end
 
             // Final test status

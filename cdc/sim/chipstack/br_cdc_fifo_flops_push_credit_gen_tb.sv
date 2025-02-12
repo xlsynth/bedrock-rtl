@@ -64,16 +64,12 @@ module br_cdc_fifo_flops_push_credit_gen_tb;
   logic pop_valid;
   logic [Width-1:0] pop_data;
   logic push_full;
-  logic push_full_next;
   logic [CountWidth-1:0] push_slots;
-  logic [CountWidth-1:0] push_slots_next;
   logic [CreditWidth-1:0] available;
   logic [CreditWidth-1:0] credit_count_push;
   logic [CreditWidth-1:0] credit_available_push;
   logic pop_empty;
-  logic pop_empty_next;
   logic [CountWidth-1:0] pop_items;
-  logic [CountWidth-1:0] pop_items_next;
 
   //===========================================================
   // DUT Instantiation
@@ -106,15 +102,11 @@ module br_cdc_fifo_flops_push_credit_gen_tb;
       .pop_valid(pop_valid),
       .pop_data(pop_data),
       .push_full(push_full),
-      .push_full_next(push_full_next),
       .push_slots(push_slots),
-      .push_slots_next(push_slots_next),
       .credit_count_push(credit_count_push),
       .credit_available_push(credit_available_push),
       .pop_empty(pop_empty),
-      .pop_empty_next(pop_empty_next),
-      .pop_items(pop_items),
-      .pop_items_next(pop_items_next)
+      .pop_items(pop_items)
   );
 
   //===========================================================
@@ -134,14 +126,13 @@ module br_cdc_fifo_flops_push_credit_gen_tb;
     default input #1step output #4;
     inout push_rst, push_credit_stall, push_valid, push_data,
           credit_initial_push, credit_withhold_push;
-    input push_credit, push_full, push_full_next, push_slots, push_slots_next,
-    credit_count_push, credit_available_push;
+    input push_credit, push_full, push_slots, credit_count_push, credit_available_push;
   endclocking
 
   clocking cb_pop_clk @(posedge pop_clk);
     default input #1step output #4;
     inout pop_rst, pop_ready;
-    input pop_valid, pop_data, pop_empty, pop_empty_next, pop_items, pop_items_next;
+    input pop_valid, pop_data, pop_empty, pop_items;
   endclocking
 
 
@@ -229,15 +220,11 @@ module br_cdc_fifo_flops_push_credit_gen_tb;
         logic [CreditWidth-1:0] initial_credit;
         logic [CreditWidth-1:0] withhold_credit;
         logic [CountWidth-1:0] expected_push_slots;
-        logic [CountWidth-1:0] expected_push_slots_next;
-        logic expected_push_full_next;
 
         // Preconditions: Initialize credits and ensure FIFO is not full
         initial_credit = $urandom_range(1, MaxCredit);
         withhold_credit = 0;
         expected_push_slots = Depth;
-        expected_push_slots_next = Depth;
-        expected_push_full_next = 0;
 
         // Apply initial credit
         @(cb_push_clk);
@@ -261,8 +248,6 @@ module br_cdc_fifo_flops_push_credit_gen_tb;
         // Step 2: Monitor `push_full` to check if the FIFO is full
         @(cb_push_clk);
         expected_push_slots -= 1;
-        expected_push_slots_next -= 1;
-        expected_push_full_next = 1;
         if (cb_push_clk.push_full) begin
           $display($sformatf({"Time: %0t, ERROR: test_PushDataOperationTransaction1 -  ",
                               "FIFO is full, cannot ", "push data"}, $time));
@@ -282,7 +267,6 @@ module br_cdc_fifo_flops_push_credit_gen_tb;
 
         // Step 4: Update `push_slots` to reflect current available slots
         @(cb_push_clk);
-        expected_push_slots_next -= 1;
         if (cb_push_clk.push_slots != expected_push_slots) begin
           $display($sformatf({"Time: %0t, ERROR: test_PushDataOperationTransaction1 -  ",
                               "push_slots mismatch. ", "Expected: %0d, Got: %0d"}, $time,
@@ -291,30 +275,6 @@ module br_cdc_fifo_flops_push_credit_gen_tb;
         end else begin
           $display($sformatf({"Time: %0t, INFO: test_PushDataOperationTransaction1 -  ",
                               "push_slots correctly ", "updated to %0d"}, $time, push_slots));
-        end
-
-        // Step 5: Update `push_slots_next` to predict available slots in the next cycle
-        if (cb_push_clk.push_slots_next != expected_push_slots_next) begin
-          $display($sformatf({"Time: %0t, ERROR: test_PushDataOperationTransaction1 - ",
-                              "push_slots_next mismatch. ", "Expected: %0d, Got: %0d"}, $time,
-                               expected_push_slots_next, cb_push_clk.push_slots_next));
-          test_failed = 1;
-        end else begin
-          $display($sformatf({"Time: %0t, INFO: test_PushDataOperationTransaction1 - ",
-                              "push_slots_next correctly ", "predicted to %0d"}, $time,
-                               push_slots_next));
-        end
-
-        // Step 6: Update `push_full_next` to predict if the FIFO will be full in the next cycle
-        if (cb_push_clk.push_full_next != expected_push_full_next) begin
-          $display($sformatf({"Time: %0t, ERROR: test_PushDataOperationTransaction1 - ",
-                              "push_full_next mismatch. ", "Expected: %0d, Got: %0d"}, $time,
-                               expected_push_full_next, push_full_next));
-          test_failed = 1;
-        end else begin
-          $display($sformatf({"Time: %0t, INFO: test_PushDataOperationTransaction1 - ",
-                              "push_full_next correctly ", "predicted to %0d"}, $time,
-                               push_full_next));
         end
 
         // Final test status
@@ -345,14 +305,10 @@ module br_cdc_fifo_flops_push_credit_gen_tb;
         int test_failed = -1;
         localparam int CountWidth = $clog2(Depth + 1);
         logic [CountWidth-1:0] initial_push_slots;
-        logic [CountWidth-1:0] initial_push_slots_next;
-        logic initial_push_full_next;
 
-        // Precondition: Capture initial state of push_slots and push_slots_next
+        // Precondition: Capture initial state of push_slots
         @(cb_push_clk);
         initial_push_slots = cb_push_clk.push_slots;
-        initial_push_slots_next = cb_push_clk.push_slots_next;
-        initial_push_full_next = cb_push_clk.push_full_next;
 
         // Step 1: Assert `push_credit_stall` to simulate a stall condition
         cb_push_clk.push_credit_stall <= 1;
@@ -377,35 +333,15 @@ module br_cdc_fifo_flops_push_credit_gen_tb;
           if (test_failed != 1) test_failed = 0;
         end
 
-        // Step 3: Maintain current state of `push_slots` and `push_slots_next` during the stall
-        if (cb_push_clk.push_slots !== initial_push_slots ||
-            cb_push_clk.push_slots_next !== initial_push_slots_next) begin
-          $display($sformatf(
-                       {"Time: %0t, ERROR: test_PushDataOperationTransaction2 - push_slots or ",
-                        "push_slots_next changed during stall.", "Expected %0d/%0d, got %0d/%0d"},
-                         $time, initial_push_slots, initial_push_slots_next, push_slots,
-                         push_slots_next));
+        // Step 3: Maintain current state of `push_slots` during the stall
+        if (cb_push_clk.push_slots !== initial_push_slots) begin
+          $display($sformatf({"Time: %0t, ERROR: test_PushDataOperationTransaction2 - push_slots ",
+                              "changed during stall.", "Expected %0d, got %0d"}, $time,
+                               initial_push_slots, push_slots));
           test_failed = 1;
         end else begin
-          $display($sformatf(
-                       {"Time: %0t, INFO: test_PushDataOperationTransaction2 - push_slots and ",
-                        "push_slots_next maintained during stall"}, $time));
-          if (test_failed != 1) test_failed = 0;
-        end
-
-        // Step 4: Update `push_full_next` to predict if the FIFO will be full in the next cycle
-        if (cb_push_clk.push_full_next !== initial_push_full_next) begin
-          $display(
-              $sformatf(
-                  {"Time: %0t, ERROR: test_PushDataOperationTransaction2 - push_full_next changed ",
-                   "during stall.", "Expected %0b, got %0b"}, $time, initial_push_full_next,
-                    push_full_next));
-          test_failed = 1;
-        end else begin
-          $display(
-              $sformatf(
-                  {"Time: %0t, INFO: test_PushDataOperationTransaction2 - push_full_next correctly",
-                   "maintained during stall"}, $time));
+          $display($sformatf({"Time: %0t, INFO: test_PushDataOperationTransaction2 - ",
+                              "push_slots maintained during stall"}, $time));
           if (test_failed != 1) test_failed = 0;
         end
 
@@ -437,15 +373,11 @@ module br_cdc_fifo_flops_push_credit_gen_tb;
         int test_failed = -1;
         logic [Width-1:0] expected_pop_data;
         logic [CountWidth-1:0] expected_pop_items;
-        logic [CountWidth-1:0] expected_pop_items_next;
-        logic expected_pop_empty_next;
 
         // Preconditions: Initialize FIFO with known data
         // Assuming FIFO is pre-filled with known data for this test scenario
-        expected_pop_data = 'hA5;  // Example data
+        expected_pop_data  = 'hA5;  // Example data
         expected_pop_items = 1;  // Assuming 1 item in FIFO
-        expected_pop_items_next = 0;  // Predicting FIFO will be empty after pop
-        expected_pop_empty_next = 1;  // Predicting FIFO will be empty after pop
 
         @(cb_push_clk);
         cb_push_clk.push_valid <= 1;
@@ -489,31 +421,6 @@ module br_cdc_fifo_flops_push_credit_gen_tb;
               $display($sformatf({"Time: %0t, ERROR: test_PopDataOperationTransaction1 -  ",
                                   "Incorrect pop_items.", "Expected: %0d, Got: %0d"}, $time,
                                    expected_pop_items, pop_items));
-              test_failed = 1;
-            end
-
-            @(cb_pop_clk);
-            if (cb_pop_clk.pop_items_next == expected_pop_items_next) begin
-              // Step 6: Update cb_pop_clk.pop_items_next
-              $display($sformatf({"Time: %0t, INFO: test_PopDataOperationTransaction1 -",
-                                  "pop_items_next correct: %0d"}, $time, pop_items_next));
-            end else begin
-              $display($sformatf(
-                           {"Time: %0t, ERROR: test_PopDataOperationTransaction1 - Incorrect ",
-                            "pop_items_next. Expected: %0d, Got: %0d"}, $time,
-                             expected_pop_items_next, pop_items_next));
-              test_failed = 1;
-            end
-
-            @(cb_pop_clk);
-            if (cb_pop_clk.pop_empty_next == expected_pop_empty_next) begin
-              // Step 7: Update cb_pop_clk.pop_empty_next
-              $display($sformatf({"Time: %0t, INFO: test_PopDataOperationTransaction1 - ",
-                                  "pop_empty_next correct: %0d"}, $time, pop_empty_next));
-            end else begin
-              $display($sformatf({"Time: %0t, ERROR: test_PopDataOperationTransaction1 - ",
-                                  "Incorrect pop_empty_next.", "Expected: %0d, Got: %0d"}, $time,
-                                   expected_pop_empty_next, pop_empty_next));
               test_failed = 1;
             end
 

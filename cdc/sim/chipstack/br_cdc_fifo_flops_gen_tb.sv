@@ -65,13 +65,9 @@ module br_cdc_fifo_flops_gen_tb;
   logic pop_valid;
   logic [Width-1:0] pop_data;
   logic push_full;
-  logic push_full_next;
   logic [CountWidth-1:0] push_slots;
-  logic [CountWidth-1:0] push_slots_next;
   logic pop_empty;
-  logic pop_empty_next;
   logic [CountWidth-1:0] pop_items;
-  logic [CountWidth-1:0] pop_items_next;
 
   //===========================================================
   // DUT Instantiation
@@ -101,13 +97,9 @@ module br_cdc_fifo_flops_gen_tb;
       .pop_valid(pop_valid),
       .pop_data(pop_data),
       .push_full(push_full),
-      .push_full_next(push_full_next),
       .push_slots(push_slots),
-      .push_slots_next(push_slots_next),
       .pop_empty(pop_empty),
-      .pop_empty_next(pop_empty_next),
-      .pop_items(pop_items),
-      .pop_items_next(pop_items_next)
+      .pop_items(pop_items)
   );
 
   //===========================================================
@@ -126,13 +118,13 @@ module br_cdc_fifo_flops_gen_tb;
   clocking cb_push_clk @(posedge push_clk);
     default input #1step output #4;
     inout push_rst, push_valid, push_data;
-    input push_ready, push_full, push_full_next, push_slots, push_slots_next;
+    input push_ready, push_full, push_slots;
   endclocking
 
   clocking cb_pop_clk @(posedge pop_clk);
     default input #1step output #4;
     inout pop_rst, pop_ready;
-    input pop_valid, pop_data, pop_empty, pop_empty_next, pop_items, pop_items_next;
+    input pop_valid, pop_data, pop_empty, pop_items;
   endclocking
 
 
