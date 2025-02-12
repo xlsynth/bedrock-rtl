@@ -57,27 +57,27 @@ module br_ram_flops_tile #(
     localparam int AddrWidth = br_math::clamped_clog2(Depth),
     localparam int NumWords = Width / WordWidth
 ) (
-    input logic                 wr_clk,
+    input logic                                    wr_clk,
     // Synchronous active-high reset.
     // Reset is always used for assertions. Additionally used for logic only when EnableReset is 1.
     // ri lint_check_waive INPUT_NOT_READ HIER_NET_NOT_READ HIER_BRANCH_NOT_READ
-    input logic                 wr_rst,
-    input logic [NumWritePorts-1:0] wr_valid,
+    input logic                                    wr_rst,
+    input logic [NumWritePorts-1:0]                wr_valid,
     input logic [NumWritePorts-1:0][AddrWidth-1:0] wr_addr,
-    input logic [NumWritePorts-1:0][Width-1:0] wr_data,
-    input logic [NumWritePorts-1:0][NumWords-1:0] wr_word_en,
+    input logic [NumWritePorts-1:0][    Width-1:0] wr_data,
+    input logic [NumWritePorts-1:0][ NumWords-1:0] wr_word_en,
 
     // Used only for assertions.
     // ri lint_check_waive INPUT_NOT_READ HIER_NET_NOT_READ HIER_BRANCH_NOT_READ
-    input  logic                 rd_clk,
+    input  logic                                   rd_clk,
     // Synchronous active-high reset.
     // Read reset is only used for assertions.
     // ri lint_check_waive INPUT_NOT_READ HIER_NET_NOT_READ HIER_BRANCH_NOT_READ
-    input  logic                 rd_rst,
-    input  logic [NumReadPorts-1:0] rd_addr_valid,
+    input  logic                                   rd_rst,
+    input  logic [NumReadPorts-1:0]                rd_addr_valid,
     input  logic [NumReadPorts-1:0][AddrWidth-1:0] rd_addr,
-    output logic [NumReadPorts-1:0] rd_data_valid,
-    output logic [NumReadPorts-1:0][Width-1:0] rd_data
+    output logic [NumReadPorts-1:0]                rd_data_valid,
+    output logic [NumReadPorts-1:0][    Width-1:0] rd_data
 );
 
   //------------------------------------------
@@ -88,12 +88,12 @@ module br_ram_flops_tile #(
   `BR_ASSERT_STATIC(no_bypass_with_structured_gates_a, !(EnableBypass && UseStructuredGates))
 
   for (genvar wport = 0; wport < NumWritePorts; wport++) begin : gen_wr_addr_in_range
-    `BR_ASSERT_CR_INTG(
-        wr_addr_in_range_A, wr_valid[wport] |-> wr_addr[wport] < Depth, wr_clk, wr_rst)
+    `BR_ASSERT_CR_INTG(wr_addr_in_range_A, wr_valid[wport] |-> wr_addr[wport] < Depth, wr_clk,
+                       wr_rst)
   end
   for (genvar rport = 0; rport < NumReadPorts; rport++) begin : gen_rd_addr_in_range
-    `BR_ASSERT_CR_INTG(
-        rd_addr_in_range_A, rd_addr_valid[rport] |-> rd_addr[rport] < Depth, rd_clk, rd_rst)
+    `BR_ASSERT_CR_INTG(rd_addr_in_range_A, rd_addr_valid[rport] |-> rd_addr[rport] < Depth, rd_clk,
+                       rd_rst)
   end
 
   if (EnablePartialWrite) begin : gen_partial_write_intg_checks
@@ -116,11 +116,13 @@ module br_ram_flops_tile #(
 
   if (NumWritePorts > 1) begin : gen_write_conflict_checks
     for (genvar porta = 0; porta < (NumWritePorts - 1); porta++) begin : gen_write_conflict_check_a
-      for (genvar portb = porta + 1; portb < NumWritePorts; portb++)
-      begin : gen_write_conflict_check_b
-        `BR_ASSERT_CR_INTG(no_write_conflict_a,
-            (wr_valid[porta] && wr_valid[portb]) |-> (wr_addr[porta] != wr_addr[portb]),
-            wr_clk, wr_rst)
+      for (
+          genvar portb = porta + 1; portb < NumWritePorts; portb++
+      ) begin : gen_write_conflict_check_b
+        `BR_ASSERT_CR_INTG(
+            no_write_conflict_a,
+            (wr_valid[porta] && wr_valid[portb]) |-> (wr_addr[porta] != wr_addr[portb]), wr_clk,
+            wr_rst)
       end
     end
   end
@@ -148,7 +150,7 @@ module br_ram_flops_tile #(
 
       br_mux_onehot #(
           .NumSymbolsIn(NumWritePorts),
-          .SymbolWidth(Width)
+          .SymbolWidth (Width)
       ) br_mux_onehot_wr_data (
           .select(wr_valid),
           .in(wr_data),
@@ -157,7 +159,7 @@ module br_ram_flops_tile #(
 
       br_mux_onehot #(
           .NumSymbolsIn(NumWritePorts),
-          .SymbolWidth(NumWords)
+          .SymbolWidth (NumWords)
       ) br_mux_onehot_wr_word_en (
           .select(wr_valid),
           .in(wr_word_en),
@@ -168,8 +170,8 @@ module br_ram_flops_tile #(
     if (EnablePartialWrite) begin : gen_partial_write
       for (genvar i = 0; i < NumWords; i++) begin : gen_word
         if (EnableReset) begin : gen_reset
-          `BR_REGLX(mem[0][i], muxed_wr_data[i], single_wr_valid && muxed_wr_word_en[i],
-            wr_clk, wr_rst)
+          `BR_REGLX(mem[0][i], muxed_wr_data[i], single_wr_valid && muxed_wr_word_en[i], wr_clk,
+                    wr_rst)
         end else begin : gen_no_reset
           `BR_REGLNX(mem[0][i], muxed_wr_data[i], single_wr_valid && muxed_wr_word_en[i], wr_clk)
         end
@@ -327,7 +329,7 @@ module br_ram_flops_tile #(
                         wr_clk, wr_rst)
             end else begin : gen_no_reset
               `BR_REGLNX(mem[i][word], mem_wr_data_words[word], mem_wr_en && mem_wr_word_en[word],
-                        wr_clk)
+                         wr_clk)
             end
           end
         end else begin : gen_no_partial_write
@@ -400,7 +402,7 @@ module br_ram_flops_tile #(
           if (NumWritePorts > 1) begin : gen_bypass_mux_word_en
             br_mux_onehot #(
                 .NumSymbolsIn(NumWritePorts),
-                .SymbolWidth(NumWords)
+                .SymbolWidth (NumWords)
             ) br_mux_onehot_rd_data_bypass_word_en (
                 .select(wr_addr_match),
                 .in(wr_word_en),
@@ -428,13 +430,11 @@ module br_ram_flops_tile #(
   // Implementation checks
   //------------------------------------------
   `BR_ASSERT_CR_IMPL(zero_read_latency_A, rd_addr_valid |-> rd_data_valid, rd_clk, rd_rst)
-`ifdef BR_ASSERT_EN
+`ifdef BR_ASSERT_ON
 `ifdef BR_ENABLE_IMPL_CHECKS
   if (EnableBypass) begin : gen_bypass_impl_checks
-    for (genvar wport = 0; wport < NumWritePorts; wport++)
-    begin : gen_bypass_impl_checks_write_port
-      for (genvar rport = 0; rport < NumReadPorts; rport++)
-      begin : gen_bypass_impl_checks_read_port
+    for (genvar wport = 0; wport < NumWritePorts; wport++) begin : gen_bypass_impl_checks_write_port
+      for (genvar rport = 0; rport < NumReadPorts; rport++) begin : gen_bypass_impl_checks_read_port
         logic addr_match;
 
         assign addr_match =
@@ -449,17 +449,19 @@ module br_ram_flops_tile #(
             assign wr_data_word = wr_data[wport][i*WordWidth+:WordWidth];
 
             `BR_ASSERT_CR_IMPL(bypass_write_to_read_zero_cycles_A,
-                (addr_match && wr_word_en[wport][i])
+                               (addr_match && wr_word_en[wport][i])
                 |->
                 (rd_data_valid[rport] && rd_data_word == wr_data_word),
-                              rd_clk, rd_rst)
+                               rd_clk, rd_rst)
           end
         end else begin : gen_full_write_bypass_impl_checks
           `BR_ASSERT_CR_IMPL(
               bypass_write_to_read_zero_cycles_A,
-              addr_match |-> rd_data_valid && rd_data[rport] == wr_data[wport],
-              rd_clk, rd_rst)
+              addr_match |-> rd_data_valid[rport] && rd_data[rport] == wr_data[wport], rd_clk,
+              rd_rst)
         end
+      end
+    end
   end
 `endif
 `endif

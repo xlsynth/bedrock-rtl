@@ -468,15 +468,17 @@ rule_verilog_sim_test = rule(
     test = True,
 )
 
-def verilog_sim_test(tags = [], **kwargs):
+def verilog_sim_test(tool = None, opts = [], tags = [], **kwargs):
     """Wraps rule_verilog_sim_test with extra tags.
 
     Args:
+        tool: The simulation tool to use.
+        opts: Tool-specific options not covered by other arguments.
         tags: The tags to add to the test. If not provided, then defaults to:
             * no-sandbox -- Loosens some Bazel hermeticity features so that undeclared EDA tool test outputs are preserved for debugging.
             * resources:verilog_sim_test_tool_licenses:1 -- indicates that the test requires a simulation tool license.
             * sim -- useful for test filtering, e.g., bazel test //... --test_tag_filters=sim
-            * If the tool is provided in kwargs, then the tool name is added to the above tags.
+            * If the tool is provided, then the tool name is added to the above tags.
         **kwargs: Other arguments to pass to the rule_verilog_sim_test rule.
     """
 
@@ -484,11 +486,19 @@ def verilog_sim_test(tags = [], **kwargs):
         "no-sandbox",  # Preserves miscellaneous undeclared EDA tool outputs for debugging
         "resources:verilog_sim_test_tool_licenses:1",
         "sim",
+        tool,
     ]
-    if "tool" in kwargs:
-        extra_tags.append(kwargs["tool"])
+
+    # Make sure we fail the test ASAP after any error occurs (assertion or otherwise).
+    extra_opts = []
+    if tool == "vcs":
+        extra_opts.append("-assert global_finish_maxfail=1+offending_values")
+    elif tool == "dsim":
+        extra_opts.append("-exit-on-error 1")
 
     rule_verilog_sim_test(
+        tool = tool,
+        opts = opts + extra_opts,
         tags = tags + extra_tags,
         **kwargs
     )

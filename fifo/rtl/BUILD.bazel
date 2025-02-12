@@ -59,6 +59,26 @@ verilog_library(
     ],
 )
 
+verilog_library(
+    name = "br_fifo_shared_dynamic_ctrl",
+    srcs = ["br_fifo_shared_dynamic_ctrl.sv"],
+    deps = [
+        "//fifo/rtl/internal:br_fifo_shared_dynamic_ptr_mgr",
+        "//fifo/rtl/internal:br_fifo_shared_dynamic_push_ctrl",
+        "//fifo/rtl/internal:br_fifo_shared_pop_ctrl",
+        "//macros:br_asserts_internal",
+    ],
+)
+
+verilog_library(
+    name = "br_fifo_shared_dynamic_flops",
+    srcs = ["br_fifo_shared_dynamic_flops.sv"],
+    deps = [
+        ":br_fifo_shared_dynamic_ctrl",
+        "//ram/rtl:br_ram_flops",
+    ],
+)
+
 br_verilog_elab_and_lint_test_suite(
     name = "br_fifo_ctrl_1r1w_test_suite",
     params = {
@@ -220,4 +240,81 @@ br_verilog_elab_and_lint_test_suite(
         ],
     },
     deps = [":br_fifo_flops_push_credit"],
+)
+
+br_verilog_elab_and_lint_test_suite(
+    name = "br_fifo_shared_dynamic_ctrl_test_suite_fifo_port_sweep",
+    params = {
+        "Depth": ["5"],
+        "Width": ["8"],
+        "NumFifos": [
+            "2",
+            "4",
+        ],
+        "NumWritePorts": [
+            "1",
+            "2",
+        ],
+        "NumReadPorts": [
+            "1",
+            "2",
+        ],
+    },
+    deps = [":br_fifo_shared_dynamic_ctrl"],
+)
+
+br_verilog_elab_and_lint_test_suite(
+    name = "br_fifo_shared_dynamic_flops_test_suite_pop_ctrl_sweep",
+    params = {
+        "Depth": ["5"],
+        "Width": ["8"],
+        "NumFifos": ["2"],
+        "StagingBufferDepth": [
+            "1",
+            "2",
+        ],
+        "PointerRamReadLatency": [
+            "0",
+            "1",
+        ],
+        "DataRamReadLatency": [
+            "0",
+            "1",
+        ],
+        "RegisterPopOutputs": [
+            "0",
+            "1",
+        ],
+        "RegisterDeallocation": [
+            "0",
+            "1",
+        ],
+    },
+    deps = [":br_fifo_shared_dynamic_flops"],
+)
+
+br_verilog_elab_and_lint_test_suite(
+    name = "br_fifo_shared_dynamic_flops_test_suite",
+    params = {
+        "Depth": ["5"],
+        "Width": ["8"],
+        "NumFifos": ["2"],
+        "NumWritePorts": [
+            "1",
+            "2",
+        ],
+        "NumReadPorts": [
+            "1",
+            "2",
+        ],
+        "DataRamAddressDepthStages": [
+            "0",
+            "1",
+        ],
+        "PointerRamAddressDepthStages": [
+            "0",
+            "1",
+        ],
+    },
+    deps = [":br_fifo_shared_dynamic_flops"],
 )

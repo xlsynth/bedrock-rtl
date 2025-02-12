@@ -16,6 +16,7 @@
 
 `include "br_asserts.svh"
 `include "br_registers.svh"
+`include "br_fv.svh"
 
 module br_arb_rr_fpv_monitor #(
     // Must be at least 2
@@ -27,40 +28,38 @@ module br_arb_rr_fpv_monitor #(
     input logic [NumRequesters-1:0] request,
     input logic [NumRequesters-1:0] grant
 );
-
-  `BR_ASSERT(must_grant_a, request != 0 |-> grant != 0)
-  `BR_ASSERT(onehot_grant_a, $countones(grant) <= 1)
-  `BR_COVER(all_request_c, request == '1)
-
-   logic [NumRequesters-1:0] high_priority_request;
-
-  `BR_REGL(high_priority_request,
-           (grant == 1 << (NumRequesters - 1)) ? NumRequesters'(1) : grant << 1,
-           (grant != 0) && enable_priority_update)
-
-  for (genvar i = 0; i < NumRequesters; i++) begin : gen_req_0
-    // Grant must be given to an active requester
-    `BR_ASSERT(grant_active_req_a, grant[i] |-> request[i])
-    // High priority request must be grant the same cycle
-    `BR_ASSERT(high_priority_grant_a, request[i] && high_priority_request[i] |-> grant[i])
-    // Make sure every port can reach highest priority
-    `BR_COVER(priority_c, high_priority_request[i])
-    `BR_COVER(low_priority_grant_c, request[i] && !high_priority_request[i] && grant[i])
-    for (genvar j = 0; j < NumRequesters; j++) begin : gen_req_1
-      if (i != j) begin
-        `BR_ASSERT(arb_priority_a, grant[j] |->
-          !request[i] ||
-          // high_priority ... j ... i
-          ((2 ** j >= high_priority_request) && (2 ** i > high_priority_request) && (j < i)) ||
-          // i ... high_priority ... j
-          ((2 ** j >= high_priority_request) && (2 ** i < high_priority_request)) ||
-          // j ... i ... high_priority ...
-          ((2 ** j <= high_priority_request) && (2 ** i < high_priority_request) && (j < i))
-        )
-      end
-    end
+  // ----------FV assumptions----------
+  // This assumption is ONLY enabled in standard use case where request won't drop without its grant
+  // If request drop without its grant, these checks FAIL
+  //      no_deadlock_a
+  //      round_robin_a
+  for (genvar i = 0; i < NumRequesters; i++) begin : gen_asm
+    `BR_ASSUME(req_hold_until_grant_a, request[i] && !grant[i] |=> request[i])
   end
+
+  // ----------arb checks----------
+  arb_basic_fpv_monitor #(
+      .NumRequesters(NumRequesters)
+  ) arb_check (
+      .clk,
+      .rst,
+      .enable_priority_update,
+      .request,
+      .grant
+  );
+
+  // ----------Round Robin checks----------
+  rr_basic_fpv_monitor #(
+      .NumRequesters(NumRequesters),
+      .EnableAssertPushValidStability(1)
+  ) rr_check (
+      .clk,
+      .rst,
+      .enable_priority_update,
+      .request,
+      .grant
+  );
 
 endmodule : br_arb_rr_fpv_monitor
 
-bind br_arb_rr br_arb_rr_fpv_monitor#(.NumRequesters(NumRequesters)) monitor (.*);
+bind br_arb_rr br_arb_rr_fpv_monitor #(.NumRequesters(NumRequesters)) monitor (.*);
