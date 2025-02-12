@@ -24,7 +24,7 @@ verilog_library(
     name = "br_flow_serializer_fpv_monitor",
     srcs = ["br_flow_serializer_fpv_monitor.sv"],
     deps = [
-        "@bedrock-rtl//flow/rtl:br_flow_serializer",
+        "//flow/rtl:br_flow_serializer",
     ],
 )
 
@@ -68,7 +68,7 @@ verilog_library(
     name = "br_flow_deserializer_fpv_monitor",
     srcs = ["br_flow_deserializer_fpv_monitor.sv"],
     deps = [
-        "@bedrock-rtl//flow/rtl:br_flow_deserializer",
+        "//flow/rtl:br_flow_deserializer",
     ],
 )
 

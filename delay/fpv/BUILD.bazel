@@ -24,8 +24,8 @@ verilog_library(
     name = "br_delay_fpv_monitor",
     srcs = ["br_delay_fpv_monitor.sv"],
     deps = [
-        "@bedrock-rtl//delay/rtl:br_delay",
-        "@bedrock-rtl//macros:br_fv",
+        "//delay/rtl:br_delay",
+        "//macros:br_fv",
     ],
 )
 
@@ -60,8 +60,8 @@ verilog_library(
     name = "br_delay_nr_fpv_monitor",
     srcs = ["br_delay_nr_fpv_monitor.sv"],
     deps = [
-        "@bedrock-rtl//delay/rtl:br_delay_nr",
-        "@bedrock-rtl//macros:br_fv",
+        "//delay/rtl:br_delay_nr",
+        "//macros:br_fv",
     ],
 )
 
@@ -97,8 +97,8 @@ verilog_library(
     name = "br_delay_valid_fpv_monitor",
     srcs = ["br_delay_valid_fpv_monitor.sv"],
     deps = [
-        "@bedrock-rtl//delay/rtl:br_delay_valid",
-        "@bedrock-rtl//macros:br_fv",
+        "//delay/rtl:br_delay_valid",
+        "//macros:br_fv",
     ],
 )
 
@@ -133,8 +133,8 @@ verilog_library(
     name = "br_delay_valid_next_fpv_monitor",
     srcs = ["br_delay_valid_next_fpv_monitor.sv"],
     deps = [
-        "@bedrock-rtl//delay/rtl:br_delay_valid_next",
-        "@bedrock-rtl//macros:br_fv",
+        "//delay/rtl:br_delay_valid_next",
+        "//macros:br_fv",
     ],
 )
 
@@ -168,8 +168,8 @@ verilog_library(
     name = "br_delay_valid_next_nr_fpv_monitor",
     srcs = ["br_delay_valid_next_nr_fpv_monitor.sv"],
     deps = [
-        "@bedrock-rtl//delay/rtl:br_delay_valid_next_nr",
-        "@bedrock-rtl//macros:br_fv",
+        "//delay/rtl:br_delay_valid_next_nr",
+        "//macros:br_fv",
     ],
 )
 

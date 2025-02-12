@@ -24,8 +24,8 @@ verilog_library(
     name = "br_tracker_freelist_fpv_monitor",
     srcs = ["br_tracker_freelist_fpv_monitor.sv"],
     deps = [
-        "@bedrock-rtl//macros:br_fv",
-        "@bedrock-rtl//tracker/rtl:br_tracker_freelist",
+        "//macros:br_fv",
+        "//tracker/rtl:br_tracker_freelist",
     ],
 )
 
