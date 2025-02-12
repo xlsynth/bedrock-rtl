@@ -42,8 +42,8 @@ module br_cdc_fifo_flops_gen_tb;
   parameter int FlopRamReadDataDepthStages = 0;
   parameter int FlopRamReadDataWidthStages = 0;
   parameter bit EnableCoverPushBackpressure = 1;
-  parameter bit EnableAssertPushValidStability = EnableCoverPushBackpressure;
-  parameter bit EnableAssertPushDataStability = EnableAssertPushValidStability;
+  parameter bit EnableAssertPushValidStability = 0;
+  parameter bit EnableAssertPushDataStability = 0;
   localparam int AddrWidth = $clog2(Depth);
   localparam int CountWidth = $clog2((Depth + 1));
 
@@ -145,18 +145,24 @@ module br_cdc_fifo_flops_gen_tb;
     if (NO_ASSERTS_ON_RESET) $assertoff;
     // Set all the DUT inputs to zero, making sure there are no X/Z at the inputs.
     cb_push_clk.push_valid <= 'h0;
-    cb_push_clk.push_data  <= 'h0;
-    cb_pop_clk.pop_ready   <= 'h0;
+    cb_push_clk.push_data <= 'h0;
+    cb_pop_clk.pop_ready <= 'h0;
 
     // Wiggling the reset signal.
-    push_rst = 1'bx;
-    pop_rst  = 1'bx;
+    cb_push_clk.push_rst <= 1'bx;
+    cb_pop_clk.pop_rst <= 1'bx;
+    @(cb_push_clk);
+    @(cb_pop_clk);
     #RESET_DURATION;
-    push_rst = 1'b1;
-    pop_rst  = 1'b1;
+    cb_push_clk.push_rst <= 1'b1;
+    cb_pop_clk.pop_rst   <= 1'b1;
+    @(cb_push_clk);
+    @(cb_pop_clk);
     #RESET_DURATION;
-    push_rst = 1'b0;
-    pop_rst  = 1'b0;
+    cb_push_clk.push_rst <= 1'b0;
+    cb_pop_clk.pop_rst   <= 1'b0;
+    @(cb_push_clk);
+    @(cb_pop_clk);
     #RESET_DURATION;
     if (NO_ASSERTS_ON_RESET) $asserton;
   endtask

@@ -160,14 +160,20 @@ module br_cdc_fifo_flops_push_credit_gen_tb;
     cb_push_clk.credit_withhold_push <= 'h0;
 
     // Wiggling the reset signal.
-    push_rst = 1'bx;
-    pop_rst  = 1'bx;
+    cb_push_clk.push_rst <= 1'bx;
+    cb_pop_clk.pop_rst <= 1'bx;
+    @(cb_push_clk);
+    @(cb_pop_clk);
     #RESET_DURATION;
-    push_rst = 1'b1;
-    pop_rst  = 1'b1;
+    cb_push_clk.push_rst <= 1'b1;
+    cb_pop_clk.pop_rst   <= 1'b1;
+    @(cb_push_clk);
+    @(cb_pop_clk);
     #RESET_DURATION;
-    push_rst = 1'b0;
-    pop_rst  = 1'b0;
+    cb_push_clk.push_rst <= 1'b0;
+    cb_pop_clk.pop_rst   <= 1'b0;
+    @(cb_push_clk);
+    @(cb_pop_clk);
     #RESET_DURATION;
     if (NO_ASSERTS_ON_RESET) $asserton;
   endtask

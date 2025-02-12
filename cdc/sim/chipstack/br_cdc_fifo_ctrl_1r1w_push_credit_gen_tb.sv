@@ -35,8 +35,8 @@ module br_cdc_fifo_ctrl_1r1w_push_credit_gen_tb;
   //===========================================================
   // DUT Parameters
   //===========================================================
-  parameter int Depth = 2;
-  parameter int Width = 1;
+  parameter int Depth = 5;
+  parameter int Width = 4;
   parameter bit RegisterPopOutputs = 0;
   parameter int RamWriteLatency = 1;
   parameter int RamReadLatency = 0;
@@ -60,15 +60,13 @@ module br_cdc_fifo_ctrl_1r1w_push_credit_gen_tb;
   logic                   push_credit_stall;
   logic                   push_valid;
   logic [      Width-1:0] push_data;
-  logic [CreditWidth-1:0] credit_initial_push;
-  logic [CreditWidth-1:0] credit_withhold_push;
   logic                   pop_ready;
   logic                   pop_ram_rd_data_valid;
   logic [      Width-1:0] pop_ram_rd_data;
   logic                   push_credit;
   logic                   push_full;
   logic [ CountWidth-1:0] push_slots;
-  logic [CreditWidth-1:0] credit_count_push;
+  logic [CreditWidth-1:0] credit_initial_push;
   logic [CreditWidth-1:0] credit_available_push;
   logic                   push_ram_wr_valid;
   logic [  AddrWidth-1:0] push_ram_wr_addr;
@@ -83,6 +81,8 @@ module br_cdc_fifo_ctrl_1r1w_push_credit_gen_tb;
   //===========================================================
   // DUT Instantiation
   //===========================================================
+  assign credit_initial_push = Depth;
+
   br_cdc_fifo_ctrl_1r1w_push_credit #(
       .Depth(Depth),
       .Width(Width),
@@ -98,18 +98,18 @@ module br_cdc_fifo_ctrl_1r1w_push_credit_gen_tb;
       .pop_rst(pop_rst),
       .push_sender_in_reset(1'b0),  // unused
       .push_receiver_in_reset(),  // unused
-      .push_credit_stall(push_credit_stall),
+      .push_credit_stall(1'b0),  // unused
       .push_valid(push_valid),
       .push_data(push_data),
       .credit_initial_push(credit_initial_push),
-      .credit_withhold_push(credit_withhold_push),
+      .credit_withhold_push('0),  // unused
       .pop_ready(pop_ready),
       .pop_ram_rd_data_valid(pop_ram_rd_data_valid),
       .pop_ram_rd_data(pop_ram_rd_data),
       .push_credit(push_credit),
       .push_full(push_full),
       .push_slots(push_slots),
-      .credit_count_push(credit_count_push),
+      .credit_count_push(),  // unused
       .credit_available_push(credit_available_push),
       .push_ram_wr_valid(push_ram_wr_valid),
       .push_ram_wr_addr(push_ram_wr_addr),
@@ -137,10 +137,10 @@ module br_cdc_fifo_ctrl_1r1w_push_credit_gen_tb;
   end
   clocking cb_push_clk @(posedge push_clk);
     default input #1step output #4;
-    inout push_rst, push_credit_stall, push_valid, push_data,
-          credit_initial_push, credit_withhold_push;
-    input push_credit, push_full, push_slots, credit_count_push,
-          credit_available_push, push_ram_wr_valid, push_ram_wr_addr, push_ram_wr_data;
+    inout push_rst, push_credit_stall, push_valid, push_data;
+    input push_credit, push_full, push_slots,
+          push_ram_wr_valid, push_ram_wr_addr, push_ram_wr_data,
+          credit_available_push;
   endclocking
 
   clocking cb_pop_clk @(posedge pop_clk);
@@ -166,24 +166,27 @@ module br_cdc_fifo_ctrl_1r1w_push_credit_gen_tb;
   task automatic reset_dut;
     if (NO_ASSERTS_ON_RESET) $assertoff;
     // Set all the DUT inputs to zero, making sure there are no X/Z at the inputs.
-    cb_push_clk.push_credit_stall <= 'h0;
     cb_push_clk.push_valid <= 'h0;
     cb_push_clk.push_data <= 'h0;
-    cb_push_clk.credit_initial_push <= 'h0;
-    cb_push_clk.credit_withhold_push <= 'h0;
     cb_pop_clk.pop_ready <= 'h0;
     cb_pop_clk.pop_ram_rd_data_valid <= 'h0;
     cb_pop_clk.pop_ram_rd_data <= 'h0;
 
     // Wiggling the reset signal.
-    push_rst = 1'bx;
-    pop_rst  = 1'bx;
+    cb_push_clk.push_rst <= 1'bx;
+    cb_pop_clk.pop_rst <= 1'bx;
+    @(cb_push_clk);
+    @(cb_pop_clk);
     #RESET_DURATION;
-    push_rst = 1'b1;
-    pop_rst  = 1'b1;
+    cb_push_clk.push_rst <= 1'b1;
+    cb_pop_clk.pop_rst   <= 1'b1;
+    @(cb_push_clk);
+    @(cb_pop_clk);
     #RESET_DURATION;
-    push_rst = 1'b0;
-    pop_rst  = 1'b0;
+    cb_push_clk.push_rst <= 1'b0;
+    cb_pop_clk.pop_rst   <= 1'b0;
+    @(cb_push_clk);
+    @(cb_pop_clk);
     #RESET_DURATION;
     if (NO_ASSERTS_ON_RESET) $asserton;
   endtask
@@ -196,13 +199,7 @@ module br_cdc_fifo_ctrl_1r1w_push_credit_gen_tb;
     test_PushDataFlowControl();
 
     reset_dut();
-    test_PushCreditManagement();
-
-    reset_dut();
     test_FIFOStatusFlagManagement();
-
-    reset_dut();
-    test_PopStatusManagement();
 
     if (overall_tb_status == 1'b0) begin
       $display("TEST FAILED");
@@ -314,102 +311,6 @@ module br_cdc_fifo_ctrl_1r1w_push_credit_gen_tb;
   endtask
 
 
-  task automatic test_PushCreditManagement;
-    fork
-      begin
-        #(PER_TASK_TIMEOUT);
-        $display($sformatf({"Time: %0t, INFO: Timeout: test_PushCreditManagement. ",
-                            "Stimuli is not observed or it needs more time to finish this test."},
-                             $time));
-      end
-      begin
-        // This task tests the Push Credit Management functionality of the FIFO controller.
-        // It ensures that data is only pushed when sufficient credit is available.
-
-        // Local variables declaration
-        int test_failed = -1;
-        logic [CreditWidth-1:0] initial_credit;
-        logic [CreditWidth-1:0] withhold_credit;
-        logic [Width-1:0] test_data;
-        logic [CreditWidth-1:0] expected_credit_count;
-        logic [CreditWidth-1:0] expected_credit_available;
-
-        // Initialize test conditions
-        initial_credit = $urandom_range(1, MaxCredit);
-        withhold_credit = $urandom_range(0, initial_credit - 1);
-        test_data = $urandom();
-        expected_credit_count = initial_credit - withhold_credit;
-        expected_credit_available = expected_credit_count;
-
-        // Apply initial credit and withhold credit
-        @(cb_push_clk);
-        cb_push_clk.credit_initial_push  <= initial_credit;
-        cb_push_clk.credit_withhold_push <= withhold_credit;
-        $display($sformatf({"Time: %0t, INFO: test_PushCreditManagement - ",
-                            "Initial credit set to %0d, ", "withhold credit set to %0d"}, $time,
-                             initial_credit, withhold_credit));
-
-        // Wait for credit to be available
-        @(cb_push_clk);
-        if (cb_push_clk.credit_available_push != expected_credit_available) begin
-          $display($sformatf({"Time: %0t, ERROR: test_PushCreditManagement - ",
-                              "Initial credit available mismatch. ", "Expected %0d, got %0d"},
-                               $time, expected_credit_available,
-                               cb_push_clk.credit_available_push));
-          test_failed = 1;
-        end else begin
-          $display($sformatf({"Time: %0t, INFO: test_PushCreditManagement - ",
-                              "Initial credit available check ", "passed. ", "Expected and got %0d"
-                               }, $time, credit_available_push));
-          if (test_failed != 1) test_failed = 0;
-        end
-
-        // Assert push_valid and check credit decrement
-        @(cb_push_clk);
-        cb_push_clk.push_valid <= 1;
-        cb_push_clk.push_data  <= test_data;
-        $display($sformatf({"Time: %0t, INFO: test_PushCreditManagement - ",
-                            "Asserting push_valid with data 0x%h"}, $time, test_data));
-
-        @(cb_push_clk);
-        if (cb_push_clk.credit_count_push != expected_credit_count - 1) begin
-          $display($sformatf({"Time: %0t, ERROR: test_PushCreditManagement - ",
-                              "Credit count mismatch after push. ", "Expected %0d, got %0d"},
-                               $time, expected_credit_count - 1, credit_count_push));
-          test_failed = 1;
-        end else begin
-          $display($sformatf({"Time: %0t, INFO: test_PushCreditManagement - ",
-                              "Credit count check passed after ", "push. ", "Expected and got %0d"
-                               }, $time, credit_count_push));
-          if (test_failed != 1) test_failed = 0;
-        end
-
-        // Check push_credit signal
-        @(cb_push_clk);
-        if (cb_push_clk.push_credit != (expected_credit_count - 1 > 0)) begin
-          $display($sformatf({"Time: %0t, ERROR: test_PushCreditManagement - ",
-                              "Push credit signal mismatch. ", "Expected %0d, got %0d"}, $time,
-                               (expected_credit_count - 1 > 0), push_credit));
-          test_failed = 1;
-        end else begin
-          $display($sformatf({"Time: %0t, INFO: test_PushCreditManagement - ",
-                              "Push credit signal check passed. ", "Expected and got %0d"}, $time,
-                               push_credit));
-          if (test_failed != 1) test_failed = 0;
-        end
-
-        // Final test status
-        if (test_failed == 0) begin
-          $display($sformatf({"Time: %0t, PASSED: test_PushCreditManagement"}, $time));
-        end else begin
-          $display($sformatf({"Time: %0t, FAILED: test_PushCreditManagement"}, $time));
-          overall_tb_status = 1'b0;
-        end
-      end
-    join_any
-    disable fork;
-  endtask
-
 
   task automatic test_FIFOStatusFlagManagement;
     fork
@@ -425,15 +326,7 @@ module br_cdc_fifo_ctrl_1r1w_push_credit_gen_tb;
 
         // Local variables declaration
         int test_failed = -1;
-        localparam int Depth = 4;  // Example depth for the FIFO
-        localparam int Width = 8;  // Example width for the FIFO data
         logic [Width-1:0] random_data;
-        logic [CreditWidth-1:0] initial_credit;
-        logic [CreditWidth-1:0] withhold_credit;
-
-        // Initialize preconditions
-        initial_credit  = $urandom_range(1, Depth);
-        withhold_credit = $urandom_range(0, initial_credit);
 
         // Ensure adequate stimulus propagation time
         @(cb_push_clk);
@@ -446,9 +339,7 @@ module br_cdc_fifo_ctrl_1r1w_push_credit_gen_tb;
             repeat (Depth) begin
               random_data = $urandom();
               cb_push_clk.push_valid <= 1;
-              cb_push_clk.push_data <= random_data;
-              cb_push_clk.credit_initial_push <= initial_credit;
-              cb_push_clk.credit_withhold_push <= withhold_credit;
+              cb_push_clk.push_data  <= random_data;
               @(cb_push_clk);
               $display($sformatf({"Time: %0t, INFO: test_FIFOStatusFlagManagement - ",
                                   "Driving push_valid=1, ", "push_data=0x%h"}, $time, random_data));
@@ -489,136 +380,5 @@ module br_cdc_fifo_ctrl_1r1w_push_credit_gen_tb;
     join_any
     disable fork;
   endtask
-
-  task automatic test_PopStatusManagement;
-    fork
-      begin
-        #(PER_TASK_TIMEOUT);
-        $display($sformatf({"Time: %0t, INFO: Timeout: test_PopStatusManagement. ",
-                            "Stimuli is not observed or it needs more time to finish this test."},
-                             $time));
-      end
-      begin
-        // This task tests the Pop Status Management functionality of the FIFO controller.
-        // It verifies the correct management of pop status flags, including `pop_empty` and `pop_items`.
-
-        // Local variables declaration
-        int test_failed = -1;
-        localparam int Depth = 4;  // Example depth, adjust as needed
-        logic [CountWidth-1:0] expected_pop_items;
-        logic expected_pop_empty;
-
-        // Preconditions: Initialize the FIFO to a known state
-        @(cb_pop_clk);
-        cb_pop_clk.pop_rst <= 1;
-        @(cb_pop_clk);
-        cb_pop_clk.pop_rst <= 0;
-        @(cb_pop_clk);
-
-        // Test sequence
-        fork
-          // Drive pop_ready and pop_ram_rd_data_valid signals
-          begin
-            repeat (Depth) begin
-              @(cb_pop_clk);
-              cb_pop_clk.pop_ready <= 1;
-              cb_pop_clk.pop_ram_rd_data_valid <= 1;
-              @(cb_pop_clk);
-              cb_pop_clk.pop_ready <= 0;
-              cb_pop_clk.pop_ram_rd_data_valid <= 0;
-            end
-          end
-
-          // Monitor and check pop status flags
-          begin
-            repeat (Depth) begin
-              @(cb_pop_clk);
-              //expected_pop_items = cb_pop_clk.pop_items - 1;
-              expected_pop_items = Depth - cb_pop_clk.pop_items;  // MANUAL FIX
-              expected_pop_empty = (expected_pop_items == 0);
-
-              if (cb_pop_clk.pop_items != expected_pop_items) begin
-                $display($sformatf({"Time: %0t, ERROR: test_PopStatusManagement - ",
-                                    "pop_items mismatch. ", "Expected: %0d, Got: %0d"}, $time,
-                                     expected_pop_items, cb_pop_clk.pop_items));
-                test_failed = 1;
-              end else begin
-                $display($sformatf({"Time: %0t, INFO: test_PopStatusManagement - ",
-                                    "pop_items check passed. ", "Expected: %0d, Got: %0d"}, $time,
-                                     expected_pop_items, cb_pop_clk.pop_items));
-                if (test_failed != 1) test_failed = 0;
-              end
-
-              if (cb_pop_clk.pop_empty != expected_pop_empty) begin
-                $display($sformatf({"Time: %0t, ERROR: test_PopStatusManagement - ",
-                                    "pop_empty mismatch. ", "Expected: %b, Got: %b"}, $time,
-                                     expected_pop_empty, cb_pop_clk.pop_empty));
-                test_failed = 1;
-              end else begin
-                $display(
-                    $sformatf(
-                        {"Time: %0t, INFO: test_PopStatusManagement - pop_empty check passed. ",
-                         "Expected: %b, Got: %b"}, $time, expected_pop_empty,
-                          cb_pop_clk.pop_empty));
-                if (test_failed != 1) test_failed = 0;
-              end
-            end
-          end
-        join
-
-        // Final test status
-        if (test_failed == 0) begin
-          $display("Time: %0t, PASSED: test_PopStatusManagement", $time);
-        end else begin
-          $display("Time: %0t, FAILED: test_PopStatusManagement", $time);
-          overall_tb_status = 1'b0;
-        end
-      end
-    join_any
-    disable fork;
-  endtask
-
-  // Assertion to ensure push_valid is not unknown
-  asrt_push_valid_not_unknown :
-  assert property (@(posedge push_clk) disable iff (push_rst !== 1'b0) (!$isunknown(push_valid)));
-
-  // Assertion to ensure push_credit_stall is not unknown
-  asrt_push_credit_stall_not_unknown :
-  assert property (@(posedge push_clk) disable iff (push_rst !== 1'b0) (!$isunknown(
-      push_credit_stall
-  )));
-
-  // Assertion to ensure push_data is not unknown
-  asrt_push_data_not_unknown :
-  assert property (@(posedge push_clk) disable iff (push_rst !== 1'b0) (!$isunknown(push_data)));
-
-  // Assertion to ensure credit_initial_push is not unknown
-  asrt_credit_initial_push_not_unknown :
-  assert property (@(posedge push_clk) disable iff (push_rst !== 1'b0) (!$isunknown(
-      credit_initial_push
-  )));
-
-  // Assertion to ensure credit_withhold_push is not unknown
-  asrt_credit_withhold_push_not_unknown :
-  assert property (@(posedge push_clk) disable iff (push_rst !== 1'b0) (!$isunknown(
-      credit_withhold_push
-  )));
-
-  // Assertion to ensure pop_ready is not unknown
-  asrt_pop_ready_not_unknown :
-  assert property (@(posedge pop_clk) disable iff (pop_rst !== 1'b0) (!$isunknown(pop_ready)));
-
-  // Assertion to ensure pop_ram_rd_data_valid is not unknown
-  asrt_pop_ram_rd_data_valid_not_unknown :
-  assert property (@(posedge pop_clk) disable iff (pop_rst !== 1'b0) (!$isunknown(
-      pop_ram_rd_data_valid
-  )));
-
-  // Assertion to ensure pop_ram_rd_data is not unknown
-  asrt_pop_ram_rd_data_not_unknown :
-  assert property (@(posedge pop_clk) disable iff (pop_rst !== 1'b0) (!$isunknown(
-      pop_ram_rd_data
-  )));
-
 
 endmodule

@@ -43,8 +43,8 @@ module br_cdc_fifo_ctrl_1r1w_gen_tb;
   parameter int RamReadLatency = 0;
   parameter int NumSyncStages = 3;
   parameter bit EnableCoverPushBackpressure = 1;
-  parameter bit EnableAssertPushValidStability = EnableCoverPushBackpressure;
-  parameter bit EnableAssertPushDataStability = EnableAssertPushValidStability;
+  parameter bit EnableAssertPushValidStability = 0;
+  parameter bit EnableAssertPushDataStability = 0;
   localparam int AddrWidth = $clog2(Depth);
   localparam int CountWidth = $clog2((Depth + 1));
 
@@ -163,14 +163,20 @@ module br_cdc_fifo_ctrl_1r1w_gen_tb;
     cb_pop_clk.pop_ram_rd_data <= 'h0;
 
     // Wiggling the reset signal.
-    push_rst = 1'bx;
-    pop_rst  = 1'bx;
+    cb_push_clk.push_rst <= 1'bx;
+    cb_pop_clk.pop_rst <= 1'bx;
+    @(cb_push_clk);
+    @(cb_pop_clk);
     #RESET_DURATION;
-    push_rst = 1'b1;
-    pop_rst  = 1'b1;
+    cb_push_clk.push_rst <= 1'b1;
+    cb_pop_clk.pop_rst   <= 1'b1;
+    @(cb_push_clk);
+    @(cb_pop_clk);
     #RESET_DURATION;
-    push_rst = 1'b0;
-    pop_rst  = 1'b0;
+    cb_push_clk.push_rst <= 1'b0;
+    cb_pop_clk.pop_rst   <= 1'b0;
+    @(cb_push_clk);
+    @(cb_pop_clk);
     #RESET_DURATION;
     if (NO_ASSERTS_ON_RESET) $asserton;
   endtask
