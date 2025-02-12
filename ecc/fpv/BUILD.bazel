@@ -24,9 +24,9 @@ verilog_library(
     name = "br_ecc_sed_fpv_monitor",
     srcs = ["br_ecc_sed_fpv_monitor.sv"],
     deps = [
-        "@bedrock-rtl//ecc/rtl:br_ecc_sed_decoder",
-        "@bedrock-rtl//ecc/rtl:br_ecc_sed_encoder",
-        "@bedrock-rtl//macros:br_fv",
+        "//ecc/rtl:br_ecc_sed_decoder",
+        "//ecc/rtl:br_ecc_sed_encoder",
+        "//macros:br_fv",
     ],
 )
 
@@ -74,9 +74,9 @@ verilog_library(
     name = "br_ecc_secded_fpv_monitor",
     srcs = ["br_ecc_secded_fpv_monitor.sv"],
     deps = [
-        "@bedrock-rtl//ecc/rtl:br_ecc_secded_decoder",
-        "@bedrock-rtl//ecc/rtl:br_ecc_secded_encoder",
-        "@bedrock-rtl//macros:br_fv",
+        "//ecc/rtl:br_ecc_secded_decoder",
+        "//ecc/rtl:br_ecc_secded_encoder",
+        "//macros:br_fv",
     ],
 )
 
@@ -128,9 +128,9 @@ verilog_library(
     name = "br_ecc_secded_error_fpv_monitor",
     srcs = ["br_ecc_secded_error_fpv_monitor.sv"],
     deps = [
-        "@bedrock-rtl//ecc/rtl:br_ecc_secded_decoder",
-        "@bedrock-rtl//ecc/rtl:br_ecc_secded_encoder",
-        "@bedrock-rtl//macros:br_fv",
+        "//ecc/rtl:br_ecc_secded_decoder",
+        "//ecc/rtl:br_ecc_secded_encoder",
+        "//macros:br_fv",
     ],
 )
 
