@@ -61,7 +61,6 @@ br_verilog_fpv_test_suite(
             "0",
         ],
     },
-    tags = ["manual"],
     tool = "jg",
     top = "br_ecc_sed_fpv_monitor",
     deps = [":br_ecc_sed_fpv_monitor"],
@@ -82,8 +81,6 @@ verilog_library(
 
 verilog_elab_test(
     name = "br_ecc_secded_fpv_monitor_elab_test",
-    #TODO: RTL has bug
-    tags = ["manual"],
     deps = [":br_ecc_secded_fpv_monitor"],
 )
 
@@ -116,7 +113,6 @@ br_verilog_fpv_test_suite(
             "0",
         ],
     },
-    tags = ["manual"],
     tool = "jg",
     top = "br_ecc_secded_fpv_monitor",
     deps = [":br_ecc_secded_fpv_monitor"],
@@ -137,7 +133,6 @@ verilog_library(
 verilog_elab_test(
     name = "br_ecc_secded_error_fpv_monitor_elab_test",
     #TODO: RTL has bug
-    tags = ["manual"],
     deps = [":br_ecc_secded_error_fpv_monitor"],
 )
 
@@ -169,7 +164,6 @@ br_verilog_fpv_test_suite(
             "0",
         ],
     },
-    tags = ["manual"],
     tool = "jg",
     top = "br_ecc_secded_error_fpv_monitor",
     deps = [":br_ecc_secded_error_fpv_monitor"],
