@@ -44,7 +44,8 @@ module br_tracker_freelist #(
     // a natural idle condition for this design.
     parameter bit EnableAssertFinalNotDeallocValid = 1,
 
-    localparam int EntryIdWidth = $clog2(NumEntries)
+    localparam int EntryIdWidth = $clog2(NumEntries),
+    localparam int DeallocCountWidth = $clog2(NumDeallocPorts + 1)
 ) (
     input logic clk,
     input logic rst,
@@ -59,8 +60,12 @@ module br_tracker_freelist #(
     output logic [NumAllocPorts-1:0][EntryIdWidth-1:0] alloc_entry_id,
 
     // Deallocation Interface
-    input logic [NumDeallocPorts-1:0]                   dealloc_valid,
-    input logic [NumDeallocPorts-1:0][EntryIdWidth-1:0] dealloc_entry_id
+    input  logic [  NumDeallocPorts-1:0]                   dealloc_valid,
+    input  logic [  NumDeallocPorts-1:0][EntryIdWidth-1:0] dealloc_entry_id,
+    // Number of deallocations that have been performed.
+    // This count will be nonzero to indicate that a given number of
+    // entries will be available for allocation again.
+    output logic [DeallocCountWidth-1:0]                   dealloc_count
 );
   // Integration Assertions
 
@@ -350,6 +355,19 @@ module br_tracker_freelist #(
     end
   end
 
+  logic [DeallocCountWidth-1:0] dealloc_count_next;
+
+  br_enc_countones #(
+      .Width(NumDeallocPorts)
+  ) br_enc_countones_dealloc_count (
+      .in(dealloc_valid),
+      .count(dealloc_count_next)
+  );
+
+  // Need to delay the dealloc count by a cycle
+  // to match the delay to the allocation staging buffer.
+  `BR_REG(dealloc_count, dealloc_count_next)
+
   // Implementation Assertions
 
 `ifdef BR_ASSERT_ON
@@ -406,6 +424,9 @@ module br_tracker_freelist #(
           (alloc_valid[i] && alloc_valid[j]) |-> (alloc_entry_id[i] != alloc_entry_id[j]))
     end
   end
+
+  `BR_ASSERT_IMPL(dealloc_count_a, (|dealloc_valid) |=> (dealloc_count == $past
+                                   ($countones(dealloc_valid))))
 
   br_flow_checks_valid_data_impl #(
       .NumFlows(NumAllocPorts),

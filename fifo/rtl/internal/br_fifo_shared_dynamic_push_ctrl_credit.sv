@@ -58,7 +58,7 @@ module br_fifo_shared_dynamic_push_ctrl_credit #(
   localparam int PopCreditWidth = $clog2(NumFifos + 1);
   localparam int CombinedWidth = FifoIdWidth + Width;
 
-  logic [PopCreditWidth-1:0] pop_credit, pop_credit_next;
+  logic [PopCreditWidth-1:0] pop_credit;
   logic [NumWritePorts-1:0][CombinedWidth-1:0] push_data_comb;
   logic [NumWritePorts-1:0] internal_push_valid;
   logic [NumWritePorts-1:0][Width-1:0] internal_push_data;
@@ -97,30 +97,6 @@ module br_fifo_shared_dynamic_push_ctrl_credit #(
       .credit_count(credit_count_push)
   );
 
-  // Credit is returned when an entry is deallocated
-  // However, we need to delay the credit return by a cycle
-  // to account for the dealloc to alloc delay in the freelist
-  // TODO(zhemao): Move this logic into the freelist itself
-  localparam int DeallocationDelay = 1;
-
-  br_enc_countones #(
-      .Width(NumFifos)
-  ) br_enc_countones_pop_credit (
-      .in(dealloc_valid),
-      .count(pop_credit_next)
-  );
-
-  br_delay #(
-      .NumStages(DeallocationDelay),
-      .Width(PopCreditWidth)
-  ) br_delay_pop_credit (
-      .clk,
-      .rst,
-      .in(pop_credit_next),
-      .out(pop_credit),
-      .out_stages()
-  );
-
   // Base Push Control
   logic [NumWritePorts-1:0] internal_push_ready;
   logic either_rst;
@@ -147,7 +123,8 @@ module br_fifo_shared_dynamic_push_ctrl_credit #(
       .next_tail_valid,
       .next_tail,
       .dealloc_valid,
-      .dealloc_entry_id
+      .dealloc_entry_id,
+      .dealloc_count(pop_credit)
   );
 
   `BR_UNUSED(internal_push_ready)  // only used for assertions
