@@ -55,8 +55,10 @@ module br_shift_rotate #(
   `BR_ASSERT_STATIC(legal_symbol_width_a, SymbolWidth >= 1)
   `BR_ASSERT_STATIC(legal_max_rotate_a, MaxRotate >= 1)
 
-  // ri lint_check_waive ALWAYS_COMB
-  `BR_ASSERT_COMB_INTG(rotate_in_range_a, rotate <= MaxRotate)
+  if (!br_math::is_power_of_2(MaxRotate + 1)) begin : gen_rotate_in_range_check
+    // ri lint_check_waive ALWAYS_COMB
+    `BR_ASSERT_COMB_INTG(rotate_in_range_a, rotate <= MaxRotate)
+  end
 
   // Implementation
 

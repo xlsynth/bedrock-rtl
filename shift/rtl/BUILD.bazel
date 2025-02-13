@@ -27,7 +27,7 @@ verilog_library(
 )
 
 br_verilog_elab_and_lint_test_suite(
-    name = "br_shift_rotate_test",
+    name = "br_shift_rotate_test_suite",
     params = {
         "NumSymbols": [
             "2",
@@ -43,10 +43,114 @@ br_verilog_elab_and_lint_test_suite(
         "MaxRotate": [
             "1",
             "3",
-            "7",
+            "6",
         ],
     },
     deps = [
         ":br_shift_rotate",
+    ],
+)
+
+verilog_library(
+    name = "br_shift_right",
+    srcs = ["br_shift_right.sv"],
+    deps = [
+        "//macros:br_asserts_internal",
+        "//pkg:br_math_pkg",
+    ],
+)
+
+br_verilog_elab_and_lint_test_suite(
+    name = "br_shift_right_test_suite_symbol_sweep",
+    params = {
+        "NumSymbols": [
+            "2",
+            "3",
+            "5",
+            "8",
+        ],
+        "SymbolWidth": [
+            "1",
+            "5",
+            "8",
+        ],
+        "MaxShift": [
+            "1",
+        ],
+    },
+    deps = [
+        ":br_shift_right",
+    ],
+)
+
+br_verilog_elab_and_lint_test_suite(
+    name = "br_shift_right_test_suite_shift_amount_sweep",
+    params = {
+        "NumSymbols": [
+            "8",
+        ],
+        "SymbolWidth": [
+            "1",
+        ],
+        "MaxShift": [
+            "2",
+            "3",
+            "6",
+        ],
+    },
+    deps = [
+        ":br_shift_right",
+    ],
+)
+
+verilog_library(
+    name = "br_shift_left",
+    srcs = ["br_shift_left.sv"],
+    deps = [
+        "//macros:br_asserts_internal",
+        "//pkg:br_math_pkg",
+    ],
+)
+
+br_verilog_elab_and_lint_test_suite(
+    name = "br_shift_left_test_suite_symbol_sweep",
+    params = {
+        "NumSymbols": [
+            "2",
+            "3",
+            "5",
+            "8",
+        ],
+        "SymbolWidth": [
+            "1",
+            "5",
+            "8",
+        ],
+        "MaxShift": [
+            "1",
+        ],
+    },
+    deps = [
+        ":br_shift_left",
+    ],
+)
+
+br_verilog_elab_and_lint_test_suite(
+    name = "br_shift_left_test_suite_shift_amount_sweep",
+    params = {
+        "NumSymbols": [
+            "8",
+        ],
+        "SymbolWidth": [
+            "1",
+        ],
+        "MaxShift": [
+            "2",
+            "3",
+            "6",
+        ],
+    },
+    deps = [
+        ":br_shift_left",
     ],
 )
