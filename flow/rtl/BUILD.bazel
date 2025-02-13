@@ -141,6 +141,33 @@ verilog_library(
 )
 
 verilog_library(
+    name = "br_flow_mux_fixed_stable",
+    srcs = ["br_flow_mux_fixed_stable.sv"],
+    deps = [
+        "//arb/rtl/internal:br_arb_fixed_internal",
+        "//flow/rtl/internal:br_flow_mux_core_stable",
+    ],
+)
+
+verilog_library(
+    name = "br_flow_mux_rr_stable",
+    srcs = ["br_flow_mux_rr_stable.sv"],
+    deps = [
+        "//arb/rtl/internal:br_arb_rr_internal",
+        "//flow/rtl/internal:br_flow_mux_core_stable",
+    ],
+)
+
+verilog_library(
+    name = "br_flow_mux_lru_stable",
+    srcs = ["br_flow_mux_lru_stable.sv"],
+    deps = [
+        "//arb/rtl/internal:br_arb_lru_internal",
+        "//flow/rtl/internal:br_flow_mux_core_stable",
+    ],
+)
+
+verilog_library(
     name = "br_flow_reg_both",
     srcs = ["br_flow_reg_both.sv"],
     deps = [
@@ -358,6 +385,63 @@ br_verilog_elab_and_lint_test_suite(
         ],
     },
     deps = [":br_flow_mux_lru"],
+)
+
+br_verilog_elab_and_lint_test_suite(
+    name = "br_flow_mux_fixed_stable_test_suite",
+    params = {
+        "NumFlows": [
+            "2",
+            "3",
+        ],
+        "Width": [
+            "1",
+            "2",
+        ],
+        "RegisterPopReady": [
+            "0",
+            "1",
+        ],
+    },
+    deps = [":br_flow_mux_fixed_stable"],
+)
+
+br_verilog_elab_and_lint_test_suite(
+    name = "br_flow_mux_rr_stable_test_suite",
+    params = {
+        "NumFlows": [
+            "2",
+            "3",
+        ],
+        "Width": [
+            "1",
+            "2",
+        ],
+        "RegisterPopReady": [
+            "0",
+            "1",
+        ],
+    },
+    deps = [":br_flow_mux_rr_stable"],
+)
+
+br_verilog_elab_and_lint_test_suite(
+    name = "br_flow_mux_lru_stable_test_suite",
+    params = {
+        "NumFlows": [
+            "2",
+            "3",
+        ],
+        "Width": [
+            "1",
+            "2",
+        ],
+        "RegisterPopReady": [
+            "0",
+            "1",
+        ],
+    },
+    deps = [":br_flow_mux_lru_stable"],
 )
 
 br_verilog_elab_and_lint_test_suite(
