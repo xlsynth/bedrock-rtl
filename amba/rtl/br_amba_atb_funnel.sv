@@ -63,9 +63,9 @@ module br_amba_atb_funnel #(
       .push_valid(src_atvalid),
       .push_ready(src_atready),
       .push_data({src_atid, src_atdata, src_atbytes, src_atuser}),
-      .pop_valid(dst_atvalid),
+      .pop_valid_unstable(dst_atvalid),
       .pop_ready(dst_atready),
-      .pop_data({dst_atid, dst_atdata, dst_atbytes, dst_atuser})
+      .pop_data_unstable({dst_atid, dst_atdata, dst_atbytes, dst_atuser})
   );
 
 endmodule : br_amba_atb_funnel

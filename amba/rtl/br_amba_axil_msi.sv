@@ -134,10 +134,10 @@ module br_amba_axil_msi #(
       .rst,
       .push_ready(fifo_push_ready),
       .push_valid(fifo_push_valid),
-      .push_data (fifo_push_data),
-      .pop_ready (fifo_pop_ready),
-      .pop_valid (fifo_pop_valid),
-      .pop_data  (fifo_pop_data)
+      .push_data(fifo_push_data),
+      .pop_ready(fifo_pop_ready),
+      .pop_valid_unstable(fifo_pop_valid),
+      .pop_data_unstable(fifo_pop_data)
   );
   generate
     for (genvar i = 0; i < NumInterrupts; i++) begin : gen_loop
