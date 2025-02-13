@@ -14,6 +14,7 @@
 
 """Verilog rules for Bazel."""
 
+load("@bazel_skylib//rules:write_file.bzl", "write_file")
 load("@rules_hdl//verilog:providers.bzl", "VerilogInfo")
 
 def get_transitive(ctx, srcs_not_hdrs):
@@ -321,13 +322,14 @@ def verilog_elab_test(name, tags = [], custom_tcl_header_cmds = [], **kwargs):
         **kwargs: Other arguments to pass to the rule_verilog_elab_test rule.
     """
     custom_tcl_header = name + "_custom_header.tcl"
-    native.genrule(
+    write_file(
         name = "gen_" + name + "_custom_header_tcl",
-        outs = [custom_tcl_header],
-        cmd = """
-            echo 'setmsgtype -info VERI-1063' > $@
-            {}
-        """.format(" && ".join(["echo '{}' >> $@".format(cmd) for cmd in custom_tcl_header_cmds])),
+        out = custom_tcl_header,
+        content = [
+            # Demote VERI-1063 ("instantiating unknown module 'jasper_scoreboard_3") from warning to info.
+            # jasper_scoreboard_3 is encrypted from Cadence
+            "setmsgtype -info VERI-1063",
+        ] + custom_tcl_header_cmds,
     )
 
     extra_tags = [
