@@ -63,7 +63,8 @@ module br_tracker_freelist_tb;
       .alloc_entry_id,
 
       .dealloc_valid,
-      .dealloc_entry_id
+      .dealloc_entry_id,
+      .dealloc_count()
   );
 
   // Allocate all entries at the beginning without deallocation

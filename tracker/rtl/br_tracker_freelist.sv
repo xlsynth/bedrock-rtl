@@ -303,8 +303,7 @@ module br_tracker_freelist #(
 
       br_mux_bin #(
           .NumSymbolsIn(NumAllocPorts),
-          .SymbolWidth(EntryIdWidth),
-          .EnableSelectInRange(0)
+          .SymbolWidth (EntryIdWidth)
       ) br_mux_bin_alloc_entry_id (
           .select(push_entry_select),
           .in(push_entry_id),
