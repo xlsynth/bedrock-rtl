@@ -19,10 +19,16 @@
 `include "br_fv.svh"
 
 module br_credit_sender_fpv_monitor #(
+    // Number of data flows sharing this credit sender.
+    // Must be at least 1 and at most MaxCredit.
+    parameter int NumFlows = 1,
     // Width of the datapath in bits. Must be at least 1.
     parameter int Width = 1,
     // Maximum number of credits that can be stored (inclusive). Must be at least 1.
     parameter int MaxCredit = 1,
+    // Maximum number of credits that can be returned in a single cycle.
+    // Must be at least 1 but at most MaxCredit.
+    parameter int PopCreditMaxChange = 1,
     // If 1, add 1 cycle of retiming to pop outputs.
     parameter bit RegisterPopOutputs = 0,
     // If 1, cover that the push side experiences backpressure.
@@ -36,22 +42,24 @@ module br_credit_sender_fpv_monitor #(
     parameter bit EnableAssertPushDataStability = EnableAssertPushValidStability,
     // If 1, then assert there are no valid bits asserted at the end of the test.
     parameter bit EnableAssertFinalNotValid = 1,
-    localparam int CounterWidth = $clog2(MaxCredit + 1)
+
+    localparam int CounterWidth   = $clog2(MaxCredit + 1),
+    localparam int PopCreditWidth = $clog2(PopCreditMaxChange + 1)
 ) (
     input logic clk,
     input logic rst,
 
     // Ready/valid push interface.
-    input logic push_ready,
-    input logic push_valid,
-    input logic [Width-1:0] push_data,
+    input logic [NumFlows-1:0] push_ready,
+    input logic [NumFlows-1:0] push_valid,
+    input logic [NumFlows-1:0][Width-1:0] push_data,
 
     // Credit/valid pop interface.
     input logic pop_sender_in_reset,
     input logic pop_receiver_in_reset,
-    input logic pop_credit,
-    input logic pop_valid,
-    input logic [Width-1:0] pop_data,
+    input logic [PopCreditWidth-1:0] pop_credit,
+    input logic [NumFlows-1:0] pop_valid,
+    input logic [NumFlows-1:0][Width-1:0] pop_data,
 
     // Reset value for the credit counter
     input logic [CounterWidth-1:0] credit_initial,
@@ -64,26 +72,35 @@ module br_credit_sender_fpv_monitor #(
 );
 
   // ----------FV modeling code----------
+  localparam int N = NumFlows == 1 ? 1 : $clog2(NumFlows);
+  logic [N-1:0] fv_flow;
+  `BR_ASSUME(fv_flow_legal_a, $stable(fv_flow) && fv_flow < NumFlows)
+
   logic fv_rst;
   logic [CounterWidth-1:0] fv_pop_credit_cnt;
   logic [CounterWidth-1:0] fv_max_credit;
 
   assign fv_rst = rst | pop_receiver_in_reset;
-  `BR_REGIX(fv_pop_credit_cnt, fv_pop_credit_cnt + pop_credit - pop_valid, credit_initial, clk,
-            fv_rst)
+  `BR_REGIX(fv_pop_credit_cnt, fv_pop_credit_cnt + pop_credit - $countones(pop_valid),
+            credit_initial, clk, fv_rst)
   `BR_REGIX(fv_max_credit, fv_max_credit, credit_initial, clk, fv_rst)
 
   // ----------FV assumptions----------
   `BR_ASSUME(pop_receiver_in_reset_a, !pop_receiver_in_reset |=> !pop_receiver_in_reset)
   `BR_ASSUME(credit_withhold_a, credit_withhold <= MaxCredit)
   `BR_ASSUME(credit_withhold_liveness_a, s_eventually (credit_withhold < fv_max_credit))
-  `BR_ASSUME(push_valid_ready_a, push_valid && !push_ready |=> push_valid && $stable(push_data))
+  for (genvar n = 0; n < NumFlows; n++) begin : gen_asm
+    `BR_ASSUME(push_valid_ready_a, push_valid[n] && !push_ready[n] |=>
+               push_valid[n] && $stable(push_data[n]))
+  end
   `BR_ASSUME(no_spurious_pop_credit_a,
-             (fv_pop_credit_cnt == fv_max_credit) |-> pop_valid == pop_credit)
+             (fv_max_credit - fv_pop_credit_cnt + $countones(pop_valid)) >= pop_credit)
+  `BR_ASSUME(legal_pop_credit_a, pop_credit <= PopCreditMaxChange)
+  `BR_ASSUME(pop_credit_liveness_a, s_eventually |pop_credit)
 
   // ----------FV assertions----------
-  `BR_ASSERT(push_valid_deadlock_a, push_valid |-> s_eventually push_ready)
-  `BR_ASSERT(no_spurious_pop_valid_a, (fv_pop_credit_cnt == 'd0) && !pop_credit |-> !pop_valid)
+  `BR_ASSERT(push_valid_deadlock_a, push_valid[fv_flow] |-> s_eventually push_ready[fv_flow])
+  `BR_ASSERT(no_spurious_pop_valid_a, (fv_pop_credit_cnt + pop_credit) == 'd0 |-> pop_valid == 'd0)
   // ----------Data integrity Check----------
   jasper_scoreboard_3 #(
       .CHUNK_WIDTH(Width),
@@ -94,17 +111,19 @@ module br_credit_sender_fpv_monitor #(
   ) scoreboard (
       .clk(clk),
       .rstN(!rst),
-      .incoming_vld(push_valid & push_ready),
-      .incoming_data(push_data),
-      .outgoing_vld(pop_valid),
-      .outgoing_data(pop_data)
+      .incoming_vld(push_valid[fv_flow] & push_ready[fv_flow]),
+      .incoming_data(push_data[fv_flow]),
+      .outgoing_vld(pop_valid[fv_flow]),
+      .outgoing_data(pop_data[fv_flow])
   );
 
 endmodule : br_credit_sender_fpv_monitor
 
 bind br_credit_sender br_credit_sender_fpv_monitor #(
+    .NumFlows(NumFlows),
     .Width(Width),
     .MaxCredit(MaxCredit),
+    .PopCreditMaxChange(PopCreditMaxChange),
     .RegisterPopOutputs(RegisterPopOutputs),
     .EnableCoverPushBackpressure(EnableCoverPushBackpressure),
     .EnableAssertPushValidStability(EnableAssertPushValidStability),
