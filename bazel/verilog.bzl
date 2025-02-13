@@ -307,17 +307,28 @@ rule_verilog_elab_test = rule(
     test = True,
 )
 
-def verilog_elab_test(tags = [], **kwargs):
+def verilog_elab_test(name, tags = [], custom_tcl_header_cmds = [], **kwargs):
     """Wraps rule_verilog_elab_test with extra tags.
 
     Args:
+        name: test name
         tags: The tags to add to the test. If not provided, then defaults to:
             * no-sandbox -- Loosens some Bazel hermeticity features so that undeclared EDA tool test outputs are preserved for debugging.
             * resources:verilog_elab_test_tool_licenses:1 -- indicates that the test requires a elaboration tool license.
             * elab -- useful for test filtering, e.g., bazel test //... --test_tag_filters=elab
             * If the tool is provided in kwargs, then the tool name is added to the above tags.
+        custom_tcl_header_cmds: custom tcl commands
         **kwargs: Other arguments to pass to the rule_verilog_elab_test rule.
     """
+    custom_tcl_header = name + "_custom_header.tcl"
+    native.genrule(
+        name = "gen_" + name + "_custom_header_tcl",
+        outs = [custom_tcl_header],
+        cmd = """
+            echo 'setmsgtype -info VERI-1063' > $@
+            {}
+        """.format(" && ".join(["echo '{}' >> $@".format(cmd) for cmd in custom_tcl_header_cmds])),
+    )
 
     extra_tags = [
         "no-sandbox",  # Preserves miscellaneous undeclared EDA tool outputs for debugging
@@ -329,7 +340,9 @@ def verilog_elab_test(tags = [], **kwargs):
         extra_tags.append(kwargs["tool"])
 
     rule_verilog_elab_test(
+        name = name,
         tags = tags + extra_tags,
+        custom_tcl_header = ":" + custom_tcl_header,
         **kwargs
     )
 
