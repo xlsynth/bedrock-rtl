@@ -109,14 +109,14 @@ br_verilog_elab_and_lint_test_suite(
     params = {
         "NumFlows": [
             "2",
-            "3",
+            "5",
         ],
         "PopCreditMaxChange": [
             "2",
-            "3",
+            "5",
         ],
         "MaxCredit": [
-            "3",
+            "8",
         ],
         "RegisterPopOutputs": [
             "0",

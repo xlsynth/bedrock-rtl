@@ -163,7 +163,8 @@ module br_credit_sender #(
   // Implementation
   //------------------------------------------
   localparam int FlowCountWidth = $clog2(NumFlows + 1);
-  localparam int ChangeWidth = br_math::max2(PopCreditWidth, FlowCountWidth);
+  localparam int MaxChange = br_math::max2(PopCreditMaxChange, NumFlows);
+  localparam int ChangeWidth = $clog2(MaxChange + 1);
 
   logic either_rst;
   assign either_rst = rst || pop_receiver_in_reset;
@@ -179,9 +180,10 @@ module br_credit_sender #(
   assign credit_incr = ChangeWidth'(pop_credit);
 
   // Credit counter
+
   br_credit_counter #(
       .MaxValue(MaxCredit),
-      .MaxChange(NumFlows),
+      .MaxChange(MaxChange),
       .EnableAssertFinalNotValid(EnableAssertFinalNotValid)
   ) br_credit_counter (
       .clk,
@@ -211,6 +213,7 @@ module br_credit_sender #(
     // round-robin arbiter.
 
     logic [FlowCountWidth-1:0] grant_allowed;
+    logic [FlowCountWidth-1:0] grant_count;
 
     br_arb_multi_rr #(
         .NumRequesters(NumFlows),
@@ -223,10 +226,11 @@ module br_credit_sender #(
         .grant(push_ready),
         .grant_ordered(),
         .grant_allowed,
-        .grant_count(credit_decr)
+        .grant_count
     );
 
     assign credit_decr_valid = |push_valid;
+    assign credit_decr = ChangeWidth'(grant_count);
     assign grant_allowed =
         (credit_available < NumFlows) ? FlowCountWidth'(credit_available) : NumFlows;
 
