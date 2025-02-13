@@ -64,7 +64,6 @@ br_verilog_fpv_test_suite(
             "7",
         ],
     },
-    tags = ["manual"],
     tool = "jg",
     top = "br_tracker_freelist",
     deps = [":br_tracker_freelist_fpv_monitor"],

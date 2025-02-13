@@ -37,8 +37,6 @@ verilog_library(
 
 verilog_elab_test(
     name = "br_flow_reg_both_fpv_monitor_elab_test",
-    # TODO: need to demote warning
-    tags = ["manual"],
     deps = [":br_flow_reg_both_fpv_monitor"],
 )
 
@@ -76,7 +74,6 @@ br_verilog_fpv_test_suite(
             "4",
         ],
     },
-    tags = ["manual"],
     tool = "jg",
     top = "br_flow_reg_both",
     deps = [":br_flow_reg_both_fpv_monitor"],
@@ -95,8 +92,6 @@ verilog_library(
 
 verilog_elab_test(
     name = "br_flow_reg_fwd_fpv_monitor_elab_test",
-    # TODO: need to demote warning
-    tags = ["manual"],
     deps = [":br_flow_reg_fwd_fpv_monitor"],
 )
 
@@ -134,7 +129,6 @@ br_verilog_fpv_test_suite(
             "4",
         ],
     },
-    tags = ["manual"],
     tool = "jg",
     top = "br_flow_reg_fwd",
     deps = [":br_flow_reg_fwd_fpv_monitor"],
@@ -153,8 +147,6 @@ verilog_library(
 
 verilog_elab_test(
     name = "br_flow_reg_rev_fpv_monitor_elab_test",
-    # TODO: need to demote warning
-    tags = ["manual"],
     deps = [":br_flow_reg_rev_fpv_monitor"],
 )
 
@@ -192,7 +184,6 @@ br_verilog_fpv_test_suite(
             "4",
         ],
     },
-    tags = ["manual"],
     tool = "jg",
     top = "br_flow_reg_rev",
     deps = [":br_flow_reg_rev_fpv_monitor"],

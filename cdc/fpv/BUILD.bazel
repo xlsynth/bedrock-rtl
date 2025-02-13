@@ -51,8 +51,6 @@ verilog_library(
 
 verilog_elab_test(
     name = "br_cdc_fifo_flops_fpv_monitor_elab_test",
-    # TODO: need to demote warning
-    tags = ["manual"],
     deps = [":br_cdc_fifo_flops_fpv_monitor"],
 )
 
@@ -104,7 +102,6 @@ br_verilog_fpv_test_suite(
             "4",
         ],
     },
-    tags = ["manual"],
     tool = "jg",
     top = "br_cdc_fifo_flops_fpv_monitor",
     deps = [":br_cdc_fifo_flops_fpv_monitor"],
@@ -126,8 +123,6 @@ verilog_library(
 
 verilog_elab_test(
     name = "br_cdc_fifo_flops_push_credit_fpv_monitor_elab_test",
-    # TODO: need to demote warning
-    tags = ["manual"],
     deps = [":br_cdc_fifo_flops_push_credit_fpv_monitor"],
 )
 
@@ -173,7 +168,6 @@ br_verilog_fpv_test_suite(
             "4",
         ],
     },
-    tags = ["manual"],
     tool = "jg",
     top = "br_cdc_fifo_flops_push_credit_fpv_monitor",
     deps = [":br_cdc_fifo_flops_push_credit_fpv_monitor"],
@@ -194,8 +188,6 @@ verilog_library(
 
 verilog_elab_test(
     name = "br_cdc_fifo_ctrl_1r1w_fpv_monitor_elab_test",
-    # TODO: need to demote warning
-    tags = ["manual"],
     deps = [":br_cdc_fifo_ctrl_1r1w_fpv_monitor"],
 )
 
@@ -266,7 +258,6 @@ br_verilog_fpv_test_suite(
             "4",
         ],
     },
-    tags = ["manual"],
     tool = "jg",
     top = "br_cdc_fifo_ctrl_1r1w_fpv_monitor",
     deps = [":br_cdc_fifo_ctrl_1r1w_fpv_monitor"],
@@ -288,8 +279,6 @@ verilog_library(
 
 verilog_elab_test(
     name = "br_cdc_fifo_ctrl_1r1w_push_credit_fpv_monitor_elab_test",
-    # TODO: need to demote warning
-    tags = ["manual"],
     deps = [":br_cdc_fifo_ctrl_1r1w_push_credit_fpv_monitor"],
 )
 
@@ -354,7 +343,6 @@ br_verilog_fpv_test_suite(
             "4",
         ],
     },
-    tags = ["manual"],
     tool = "jg",
     top = "br_cdc_fifo_ctrl_1r1w_push_credit_fpv_monitor",
     deps = [":br_cdc_fifo_ctrl_1r1w_push_credit_fpv_monitor"],
@@ -378,8 +366,6 @@ verilog_library(
 
 verilog_elab_test(
     name = "br_cdc_fifo_ctrl_push_pop_1r1w_fpv_monitor_elab_test",
-    # TODO: need to demote warning
-    tags = ["manual"],
     deps = [":br_cdc_fifo_ctrl_push_pop_1r1w_fpv_monitor"],
 )
 
@@ -450,7 +436,6 @@ br_verilog_fpv_test_suite(
             "4",
         ],
     },
-    tags = ["manual"],
     tool = "jg",
     top = "br_cdc_fifo_ctrl_push_pop_1r1w_fpv_monitor",
     deps = [":br_cdc_fifo_ctrl_push_pop_1r1w_fpv_monitor"],
@@ -475,8 +460,6 @@ verilog_library(
 
 verilog_elab_test(
     name = "br_cdc_fifo_ctrl_push_pop_1r1w_push_credit_fpv_monitor_elab_test",
-    # TODO: need to demote warning
-    tags = ["manual"],
     deps = [":br_cdc_fifo_ctrl_push_pop_1r1w_push_credit_fpv_monitor"],
 )
 
@@ -541,7 +524,6 @@ br_verilog_fpv_test_suite(
             "4",
         ],
     },
-    tags = ["manual"],
     tool = "jg",
     top = "br_cdc_fifo_ctrl_push_pop_1r1w_push_credit_fpv_monitor",
     deps = [":br_cdc_fifo_ctrl_push_pop_1r1w_push_credit_fpv_monitor"],

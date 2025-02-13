@@ -58,7 +58,6 @@ br_verilog_fpv_test_suite(
             "6",
         ],
     },
-    tags = ["manual"],
     tool = "jg",
     top = "br_credit_counter",
     deps = [":br_credit_counter_fpv_monitor"],
@@ -77,8 +76,6 @@ verilog_library(
 
 verilog_elab_test(
     name = "br_credit_receiver_fpv_monitor_elab_test",
-    # TODO: need to demote warning
-    tags = ["manual"],
     deps = [":br_credit_receiver_fpv_monitor"],
 )
 
@@ -115,7 +112,6 @@ br_verilog_fpv_test_suite(
             "6",
         ],
     },
-    tags = ["manual"],
     tool = "jg",
     top = "br_credit_receiver",
     deps = [":br_credit_receiver_fpv_monitor"],
@@ -134,8 +130,6 @@ verilog_library(
 
 verilog_elab_test(
     name = "br_credit_sender_fpv_monitor_elab_test",
-    # TODO: need to demote warning
-    tags = ["manual"],
     deps = [":br_credit_sender_fpv_monitor"],
 )
 
@@ -162,7 +156,6 @@ br_verilog_fpv_test_suite(
             "6",
         ],
     },
-    tags = ["manual"],
     tool = "jg",
     top = "br_credit_sender",
     deps = [":br_credit_sender_fpv_monitor"],
