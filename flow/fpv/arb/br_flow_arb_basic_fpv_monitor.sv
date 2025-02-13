@@ -27,7 +27,7 @@ module br_flow_arb_basic_fpv_monitor #(
     input logic [NumFlows-1:0] push_ready,
     input logic [NumFlows-1:0] push_valid,
     input logic                pop_ready,
-    input logic                pop_valid
+    input logic                pop_valid_unstable
 );
 
   // ----------FV assumptions----------
@@ -41,11 +41,11 @@ module br_flow_arb_basic_fpv_monitor #(
 
   // ----------Sanity Check----------
   if (EnableAssertPushValidStability) begin : gen_pop_valid
-    `BR_ASSERT(pop_valid_stable_a, pop_valid && !pop_ready |=> pop_valid)
+    `BR_ASSERT(pop_valid_stable_a, pop_valid_unstable && !pop_ready |=> pop_valid_unstable)
   end
 
   // ----------Forward Progress Check----------
-  `BR_ASSERT(must_grant_a, |push_valid == pop_valid)
+  `BR_ASSERT(must_grant_a, |push_valid == pop_valid_unstable)
 
   // ----------Critical Covers----------
   `BR_COVER(all_push_valid_c, &push_valid)

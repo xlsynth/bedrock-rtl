@@ -48,7 +48,7 @@ module br_flow_arb_core #(
     output logic [NumFlows-1:0] push_ready,
     input logic [NumFlows-1:0] push_valid,
     input logic pop_ready,
-    output logic pop_valid
+    output logic pop_valid_unstable
 );
 
   //------------------------------------------
@@ -84,7 +84,7 @@ module br_flow_arb_core #(
   // only allow priority update if we actually grant
   assign enable_priority_update = pop_ready;
   assign push_ready = {NumFlows{pop_ready}} & can_grant;
-  assign pop_valid = |push_valid;
+  assign pop_valid_unstable = |push_valid;
 
   // grant is only used for assertions
   `BR_UNUSED(grant)
@@ -104,14 +104,14 @@ module br_flow_arb_core #(
       .clk,
       .rst,
       .ready(pop_ready),
-      .valid(pop_valid),
+      .valid(pop_valid_unstable),
       .data (1'b0)
   );
 
   `BR_ASSERT_IMPL(push_handshake_onehot0_a, $onehot0(push_valid & push_ready))
   `BR_ASSERT_IMPL(pop_ready_equals_push_ready_or_a, pop_ready == |push_ready)
   `BR_ASSERT_IMPL(push_handshake_implies_pop_handshake_a,
-                  |(push_valid & push_ready) |-> (pop_valid & pop_ready))
+                  |(push_valid & push_ready) |-> (pop_valid_unstable & pop_ready))
   for (genvar i = 0; i < NumFlows; i++) begin : gen_per_flow_impl_checks
     `BR_ASSERT_IMPL(only_accept_on_grant_a, (push_valid[i] & push_ready[i]) |-> grant[i])
   end

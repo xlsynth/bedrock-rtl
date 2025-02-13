@@ -20,6 +20,8 @@
 // and the grant (pop).
 //
 // Stateful arbiter, but 0 latency from push to pop.
+// The pop_data is thus unstable as a new requester with higher priority
+// will preempt an existing requester.
 
 `include "br_asserts.svh"
 `include "br_asserts_internal.svh"
@@ -53,8 +55,8 @@ module br_flow_mux_core #(
     input  logic [NumFlows-1:0]            push_valid,
     input  logic [NumFlows-1:0][Width-1:0] push_data,
     input  logic                           pop_ready,
-    output logic                           pop_valid,
-    output logic [   Width-1:0]            pop_data
+    output logic                           pop_valid_unstable,
+    output logic [   Width-1:0]            pop_data_unstable
 );
 
   //------------------------------------------
@@ -101,7 +103,7 @@ module br_flow_mux_core #(
       .push_ready,
       .push_valid,
       .pop_ready,
-      .pop_valid
+      .pop_valid_unstable
   );
 
   br_mux_onehot #(
@@ -110,7 +112,7 @@ module br_flow_mux_core #(
   ) br_mux_onehot (
       .select(grant),
       .in(push_data),
-      .out(pop_data)
+      .out(pop_data_unstable)
   );
 
   //------------------------------------------
@@ -121,19 +123,20 @@ module br_flow_mux_core #(
       .Width(Width),
       .EnableCoverBackpressure(1),
       .EnableAssertValidStability(EnableAssertPushValidStability),
-      .EnableAssertDataStability(EnableAssertPushDataStability),
+      // pop_data_unstable is unstable regardless of whether push_data is stable
+      .EnableAssertDataStability(0),
       .EnableAssertFinalNotValid(EnableAssertFinalNotValid)
   ) br_flow_checks_valid_data_impl (
       .clk,
       .rst,
       .ready(pop_ready),
-      .valid(pop_valid),
-      .data (pop_data)
+      .valid(pop_valid_unstable),
+      .data (pop_data_unstable)
   );
 
   for (genvar i = 0; i < NumFlows; i++) begin : gen_data_selected_assert
     `BR_ASSERT_IMPL(data_selected_when_granted_a,
-                    (push_valid[i] && push_ready[i]) |-> pop_data == push_data[i])
+                    (push_valid[i] && push_ready[i]) |-> pop_data_unstable == push_data[i])
   end
   // Additional implementation checks in submodules
 
