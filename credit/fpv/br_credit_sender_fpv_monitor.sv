@@ -94,12 +94,13 @@ module br_credit_sender_fpv_monitor #(
                push_valid[n] && $stable(push_data[n]))
   end
   `BR_ASSUME(no_spurious_pop_credit_a,
-             (fv_pop_credit_cnt == fv_max_credit) |-> $countones(pop_valid) == pop_credit)
+             (fv_max_credit - fv_pop_credit_cnt + $countones(pop_valid)) >= pop_credit)
+  `BR_ASSUME(legal_pop_credit_a, pop_credit <= PopCreditMaxChange)
+  `BR_ASSUME(pop_credit_liveness_a, s_eventually |pop_credit)
 
   // ----------FV assertions----------
   `BR_ASSERT(push_valid_deadlock_a, push_valid[fv_flow] |-> s_eventually push_ready[fv_flow])
-  `BR_ASSERT(no_spurious_pop_valid_a, (fv_pop_credit_cnt == 'd0) |->
-                                      pop_credit == $countones(pop_valid))
+  `BR_ASSERT(no_spurious_pop_valid_a, (fv_pop_credit_cnt + pop_credit) == 'd0 |-> pop_valid == 'd0)
   // ----------Data integrity Check----------
   jasper_scoreboard_3 #(
       .CHUNK_WIDTH(Width),

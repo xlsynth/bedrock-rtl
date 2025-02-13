@@ -86,14 +86,16 @@ module br_credit_receiver_fpv_monitor #(
   `BR_ASSUME(credit_withhold_a, credit_withhold <= MaxCredit)
   `BR_ASSUME(credit_withhold_liveness_a, s_eventually (credit_withhold < fv_max_credit))
   `BR_ASSUME(no_spurious_push_valid_a,
-            (fv_push_credit_cnt == 'd0) |-> push_credit == $countones(push_valid))
+            fv_push_credit_cnt + push_credit >= $countones(push_valid))
   `BR_ASSUME(no_spurious_pop_credit_a,
-             (fv_pop_credit_cnt == fv_max_credit) |-> $countones(pop_valid) == pop_credit)
+             (fv_max_credit - fv_pop_credit_cnt + $countones(pop_valid)) >= pop_credit)
+  `BR_ASSUME(legal_pop_credit_a, pop_credit <= PopCreditMaxChange)
 
   // ----------FV assertions----------
+  `BR_ASSERT(legal_push_credit_a, push_credit <= PushCreditMaxChange)
   `BR_ASSERT(fv_credit_sanity_a, fv_push_credit_cnt <= fv_max_credit)
   `BR_ASSERT(push_credit_deadlock_a,
-             |push_valid & !push_credit |-> s_eventually (fv_push_credit_cnt != 'd0))
+             |push_valid && (push_credit == 'd0) |-> s_eventually (fv_push_credit_cnt != 'd0))
   `BR_ASSERT(no_spurious_pop_valid_a, (fv_pop_credit_cnt + pop_credit) == 'd0 |-> pop_valid == 'd0)
   // ----------Data integrity Check----------
   jasper_scoreboard_3 #(
