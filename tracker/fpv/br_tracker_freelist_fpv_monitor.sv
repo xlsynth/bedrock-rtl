@@ -18,14 +18,15 @@
 `include "br_fv.svh"
 
 module br_tracker_freelist_fpv_monitor #(
-    // Number of entries in the freelist. Must be greater than 2 X NumAllocPorts.
+    // Number of entries in the freelist. Must be greater than NumAllocPorts.
     parameter int NumEntries = 2,
     // Number of allocation ports. Must be at least 1.
     parameter int NumAllocPorts = 1,
     // Number of deallocation ports. Must be at least 1.
     parameter int NumDeallocPorts = 1,
     parameter bit EnableAssertFinalNotDeallocValid = 1,
-    localparam int EntryIdWidth = $clog2(NumEntries)
+    localparam int EntryIdWidth = $clog2(NumEntries),
+    localparam int DeallocCountWidth = $clog2(NumDeallocPorts + 1)
 ) (
     input logic                                         clk,
     input logic                                         rst,
@@ -35,7 +36,8 @@ module br_tracker_freelist_fpv_monitor #(
     input logic [  NumAllocPorts-1:0][EntryIdWidth-1:0] alloc_entry_id,
     // Deallocation Interface
     input logic [NumDeallocPorts-1:0]                   dealloc_valid,
-    input logic [NumDeallocPorts-1:0][EntryIdWidth-1:0] dealloc_entry_id
+    input logic [NumDeallocPorts-1:0][EntryIdWidth-1:0] dealloc_entry_id,
+    input logic [DeallocCountWidth-1:0]                 dealloc_count
 );
 
   // pick random alloc port for assertions
@@ -113,6 +115,9 @@ module br_tracker_freelist_fpv_monitor #(
   // if freelist is not empty, next cycle, some alloc_port should allocate another free entry
   `BR_ASSERT(forward_progress_a,
              (fv_entry_used | fv_entry_alloc) != {NumEntries{1'b1}} |=> alloc_valid != 'd0)
+
+  // Number of deallocations performed last cycle
+  `BR_ASSERT(dealloc_count_a, ##1 dealloc_count == $past($countones(dealloc_valid)))
   // verilog_lint: waive-stop line-length
 
   // ----------Critical Covers----------

@@ -42,9 +42,8 @@ br_verilog_fpv_test_suite(
             "NumAllocPorts",
             "NumEntries",
         ): [
-            ("2", "3"),
-            ("3", "3"),
-            ("3", "5"),
+            ("2", "2"),
+            ("3", "2"),
         ],
     },
     params = {
@@ -59,7 +58,7 @@ br_verilog_fpv_test_suite(
             "5",
         ],
         "NumEntries": [
-            "3",
+            "2",
             "5",
             "7",
         ],
