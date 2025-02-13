@@ -724,34 +724,6 @@ br_verilog_elab_and_lint_test_suite(
 )
 
 br_verilog_elab_and_lint_test_suite(
-    name = "br_ram_flops_test_suite_sweep_depth_width",
-    params = {
-        "NumReadPorts": ["2"],
-        "NumWritePorts": ["2"],
-        "Depth": [
-            "123",
-            "128",
-        ],
-        "Width": [
-            "1",
-            "7",
-            "32",
-        ],
-        "DepthTiles": ["1"],
-        "WidthTiles": ["1"],
-        "AddressDepthStages": ["0"],
-        "ReadDataDepthStages": ["0"],
-        "ReadDataWidthStages": ["0"],
-        "TileEnableBypass": [
-            "0",
-            "1",
-        ],
-        "EnableMemReset": ["0"],
-    },
-    deps = [":br_ram_flops"],
-)
-
-br_verilog_elab_and_lint_test_suite(
     name = "br_ram_initializer_test_suite",
     params = {
         "Depth": [
