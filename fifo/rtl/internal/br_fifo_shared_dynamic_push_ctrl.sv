@@ -135,29 +135,23 @@ module br_fifo_shared_dynamic_push_ctrl #(
     // first allocated entry the last time.
 
     // alloc_mapping[i][j] = 1 if alloc port i is mapped to write port j
+    localparam int WritePortCountWidth = $clog2(NumWritePorts + 1);
     logic [NumWritePorts-1:0][NumWritePorts-1:0] alloc_mapping;
-    logic [NumWritePorts-1:0] alloc_lowest_prio;
-    logic [NumWritePorts-1:0] alloc_lowest_prio_init;
-    logic [NumWritePorts-1:0] alloc_lowest_prio_next;
-    logic alloc_prio_update;
+    logic [WritePortCountWidth-1:0] grant_allowed;
 
-    assign alloc_prio_update = |(push_valid & push_ready);
-    assign alloc_lowest_prio_init = {1'b1, (NumWritePorts - 1)'(1'b0)};
-    assign alloc_lowest_prio_next = alloc_mapping[0];
+    assign grant_allowed = NumWritePorts;
 
-    `BR_REGLI(alloc_lowest_prio, alloc_lowest_prio_next, alloc_prio_update, alloc_lowest_prio_init)
-
-    // Priority encoder maps lowest active port to alloc port 0,
-    // second most active to alloc port 1, etc.
-    br_enc_priority_dynamic #(
-        .NumRequesters(NumWritePorts),
-        .NumResults(NumWritePorts)
-    ) br_enc_priority_dynamic_alloc (
+    br_arb_multi_rr #(
+        .NumRequesters(NumWritePorts)
+    ) br_arb_multi_rr_alloc (
         .clk,
         .rst,
-        .in(push_valid),
-        .lowest_prio(alloc_lowest_prio),
-        .out(alloc_mapping)
+        .enable_priority_update(1'b1),
+        .request(push_valid),
+        .grant(),
+        .grant_ordered(alloc_mapping),
+        .grant_allowed,
+        .grant_count()
     );
 
     for (genvar i = 0; i < NumWritePorts; i++) begin : gen_data_ram_write
