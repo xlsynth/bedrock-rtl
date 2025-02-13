@@ -21,6 +21,7 @@ verilog_library(
     name = "br_tracker_freelist",
     srcs = ["br_tracker_freelist.sv"],
     deps = [
+        "//arb/rtl:br_arb_multi_rr",
         "//enc/rtl:br_enc_bin2onehot",
         "//enc/rtl:br_enc_countones",
         "//enc/rtl:br_enc_onehot2bin",
@@ -28,6 +29,8 @@ verilog_library(
         "//flow/rtl:br_flow_reg_fwd",
         "//mux/rtl:br_mux_bin",
         "//mux/rtl:br_mux_onehot",
+        "//shift/rtl:br_shift_left",
+        "//shift/rtl:br_shift_right",
     ],
 )
 

@@ -23,11 +23,15 @@
 // cannot be allocated again until it is deallocated.
 //
 // If there are multiple allocation ports and fewer free entries than ports,
-// entries will be assigned to the ports in fixed priority. That is, if there
-// are N free entries where N < NumAllocPorts, then only alloc_valid[0] through
-// alloc_valid[N-1] will be high. The alloc_valid will not be stable.
-// If one of the higher priority ports is allocated and there are not enough
-// free entries, entries will be shifted up from the lower priority ports.
+// the freelist will fairly distribute free entries to the allocation ports
+// that are ready to accept them using a round-robin arbitration scheme.
+// This implies some behavior of alloc_valid/alloc_ready that is different
+// from a typical ready/valid interface.
+//
+// 1. alloc_valid depends combinationally on the corresponding alloc_ready.
+//    i.e. alloc_valid[i] can only be asserted if alloc_ready[i] is asserted.
+// 2. alloc_valid is not stable. If a higher priority allocation port asserts alloc_ready,
+//    the alloc_valid for a lower priority port may be revoked.
 
 `include "br_asserts_internal.svh"
 `include "br_registers.svh"
@@ -181,152 +185,162 @@ module br_tracker_freelist #(
     assign unstaged_free_entries_le = (push_entry_id_valid[0] && push_ready) || (|dealloc_valid);
     assign unstaged_free_entries_clear = push_ready ? push_entry_id_onehot : '0;
   end else begin : gen_multi_alloc_ports
-    // If there are multiple allocation ports, we want a deterministic behavior
-    // when the number of free entries is less than the number of allocation ports.
-    // The ready/valid interface for each allocation port cannot be treated
-    // independently, since we want alloc_valid[i] to be high so long as
-    // there are more than i free entries. Because the remaining entries might all be
-    // buffered already, we cannot guarantee this if we exclusively pull from the
-    // unstaged free entries vector. The only way to guarantee this is to have the
-    // buffer for the higher priority alloc ports steal from the lower priority
-    // ports before pulling from the unstaged free entries vector.
     localparam int StagedCountWidth = $clog2(NumAllocPorts + 1);
     localparam int PortIdWidth = $clog2(NumAllocPorts);
 
-    logic [StagedCountWidth-1:0] pushable_unstaged_count;
+    logic [NumAllocPorts-1:0][NumAllocPorts-1:0] alloc_select;
+    logic [NumAllocPorts-1:0][NumAllocPorts-1:0] alloc_select_transposed;
+    logic [NumAllocPorts-1:0][EntryIdWidth-1:0] staged_entry_ids;
     logic [StagedCountWidth-1:0] staged_count;
-    logic [StagedCountWidth-1:0] staged_count_next;
-    logic [StagedCountWidth-1:0] staged_count_pop;
-    logic [StagedCountWidth-1:0] staged_count_push;
-    logic [StagedCountWidth-1:0] staged_count_after_pop;
-    logic [StagedCountWidth-1:0] staged_slots_after_pop;
-    logic [NumAllocPorts-1:0] alloc_beat;
-    logic [NumAllocPorts-1:0] alloc_valid_next;
-    logic [NumAllocPorts-1:0][EntryIdWidth-1:0] alloc_entry_id_next;
-    logic [NumAllocPorts-1:0] alloc_update;
+    logic [StagedCountWidth-1:0] allocated;
 
-    assign alloc_beat = alloc_valid & alloc_ready;
-
-    br_enc_countones #(
-        .Width(NumAllocPorts)
-    ) br_enc_countones_staged_count_pop (
-        .in(alloc_beat),
-        .count(staged_count_pop)
+    // Fairly allocate the available staged entries to the allocation ports that
+    // are ready.
+    br_arb_multi_rr #(
+        .NumRequesters(NumAllocPorts),
+        .MaxGrantPerCycle(NumAllocPorts)
+    ) br_arb_multi_rr_staged_entry_select (
+        .clk,
+        .rst,
+        .enable_priority_update(1'b1),
+        .request(alloc_ready),
+        .grant(alloc_valid),
+        .grant_ordered(alloc_select),
+        .grant_allowed(staged_count),
+        .grant_count(allocated)
     );
 
+    for (genvar i = 0; i < NumAllocPorts; i++) begin : gen_alloc_entry_id
+      // Grant ordered is buffer entry by alloc port
+      // We want alloc port by buffer entry, so we need to transpose
+      for (genvar j = 0; j < NumAllocPorts; j++) begin : gen_alloc_select_transposed
+        assign alloc_select_transposed[i][j] = alloc_select[j][i];
+      end
+
+      br_mux_onehot #(
+          .NumSymbolsIn(NumAllocPorts),
+          .SymbolWidth (EntryIdWidth)
+      ) br_mux_onehot_alloc_entry_id (
+          .select(alloc_select_transposed[i]),
+          .in(staged_entry_ids),
+          .out(alloc_entry_id[i])
+      );
+    end
+
+    // Staged entry IDs update
+    // Shift the entries down by the number that were allocated.
+    // If there are free slots, fill them from the unstaged free entries.
+
+    // Shift down the existing staged entries by the number that were allocated.
+    logic [NumAllocPorts-1:0][EntryIdWidth-1:0] staged_entry_ids_shifted;
+    logic [NumAllocPorts-1:0][EntryIdWidth-1:0] staged_entry_ids_shifted_qual;
+    // Only used in assertions
+    // ri lint_check_waive NOT_READ
+    logic staged_entry_ids_shifted_valid;
+    logic [PortIdWidth-1:0] staged_entry_ids_shift;
+    logic [StagedCountWidth-1:0] staged_count_after_alloc;
+    logic all_allocated;
+
+    assign staged_count_after_alloc = staged_count - allocated;
+    assign all_allocated = &(alloc_valid & alloc_ready);
+    assign staged_entry_ids_shift = PortIdWidth'(allocated);
+    assign staged_entry_ids_shifted_qual = (!all_allocated) ? staged_entry_ids_shifted : '0;
+
+    br_shift_right #(
+        .NumSymbols (NumAllocPorts),
+        .MaxShift   (NumAllocPorts-1),
+        .SymbolWidth(EntryIdWidth)
+    ) br_shift_right_staged_entry_ids (
+        .in(staged_entry_ids),
+        .shift(staged_entry_ids_shift),
+        .fill('0),
+        .out_valid(staged_entry_ids_shifted_valid),
+        .out(staged_entry_ids_shifted)
+    );
+
+    `BR_ASSERT_IMPL(staged_entry_ids_shifted_valid_a,
+                    !all_allocated |-> staged_entry_ids_shifted_valid)
+
+    // Shift the push entry IDs up to the first staged entry slot that won't
+    // be filled by a previously staged entry.
+    logic [NumAllocPorts-1:0][EntryIdWidth-1:0] push_entry_id_shifted;
+    logic [NumAllocPorts-1:0][EntryIdWidth-1:0] push_entry_id_shifted_qual;
+    logic [PortIdWidth-1:0] push_entry_id_shift;
+    logic [StagedCountWidth-1:0] push_count;
+    logic can_push;
+    // Only used in assertions
+    // ri lint_check_waive NOT_READ
+    logic push_entry_id_shifted_valid;
+
+    assign can_push = (staged_count_after_alloc != NumAllocPorts);
+    assign push_entry_id_shift = PortIdWidth'(staged_count_after_alloc);
+    assign push_entry_id_shifted_qual = can_push ? push_entry_id_shifted : '0;
+
+    br_shift_left #(
+        .NumSymbols (NumAllocPorts),
+        .MaxShift   (NumAllocPorts-1),
+        .SymbolWidth(EntryIdWidth)
+    ) br_shift_left_push_entry_id (
+        .in(push_entry_id),
+        .shift(push_entry_id_shift),
+        .fill('0),
+        .out_valid(push_entry_id_shifted_valid),
+        .out(push_entry_id_shifted)
+    );
+
+    `BR_ASSERT_IMPL(push_entry_id_shifted_valid_a, can_push |-> push_entry_id_shifted_valid)
+
     br_enc_countones #(
         .Width(NumAllocPorts)
-    ) br_enc_countones_pushable_unstaged_count (
+    ) br_enc_countones_push_count (
         .in(push_entry_id_valid),
-        .count(pushable_unstaged_count)
+        .count(push_count)
     );
 
-    assign staged_count_after_pop = staged_count - staged_count_pop;
-    assign staged_slots_after_pop = NumAllocPorts - staged_count_after_pop;
-    assign staged_count_push =
-        (pushable_unstaged_count < staged_slots_after_pop) ?
-        pushable_unstaged_count : staged_slots_after_pop;
-    assign staged_count_next = staged_count_after_pop + staged_count_push;
-    `BR_REGL(staged_count, staged_count_next, (unstaged_free_entries_le || (|alloc_beat)))
+    // Update the staged count and entry IDs.
+    logic [StagedCountWidth:0] staged_count_next_ext;
+    logic [StagedCountWidth-1:0] staged_count_next;
+    logic [StagedCountWidth-1:0] push_count_qual;
+    logic [NumAllocPorts-1:0][EntryIdWidth-1:0] staged_entry_ids_next;
+    logic staged_entry_ids_update;
 
+    assign staged_count_next_ext = staged_count_after_alloc + push_count;
+
+    always_comb begin
+      if (staged_count_next_ext > NumAllocPorts) begin
+        staged_count_next = NumAllocPorts;
+        push_count_qual   = NumAllocPorts - staged_count_after_alloc;
+      end else begin
+        staged_count_next = StagedCountWidth'(staged_count_next_ext);
+        push_count_qual   = push_count;
+      end
+    end
+
+    assign staged_entry_ids_next   = staged_entry_ids_shifted_qual | push_entry_id_shifted_qual;
+    assign staged_entry_ids_update = (allocated != '0) || (push_count_qual != '0);
+
+    `BR_REGL(staged_entry_ids, staged_entry_ids_next, staged_entry_ids_update)
+    `BR_REGL(staged_count, staged_count_next, staged_entry_ids_update)
+
+    // Clear the unstaged free entries that are being pushed into the staged buffer.
     logic [NumAllocPorts-1:0] push_entry_id_ready;
 
     for (genvar i = 0; i < NumAllocPorts; i++) begin : gen_push_entry_id_ready
-      assign push_entry_id_ready[i] = i < staged_count_push;
+      assign push_entry_id_ready[i] = (i < push_count_qual);
     end
 
-    assign unstaged_free_entries_le = (staged_count_push != '0) || (|dealloc_valid);
-    // If we are pushing N entries to the buffer,
-    // Clear the first N entries in the unstaged free entries vector.
+    assign unstaged_free_entries_le = (can_push && (|push_entry_id_valid)) || (|dealloc_valid);
     always_comb begin
       unstaged_free_entries_clear = '0;
-      for (int i = 0; i < NumAllocPorts; i++) begin
+      for (int i = 0; i < NumAllocPorts; i++) begin : gen_unstaged_free_entries_clear
         if (push_entry_id_ready[i]) begin
           unstaged_free_entries_clear |= push_entry_id_onehot[i];
         end
       end
     end
 
-    `BR_REG(alloc_valid, alloc_valid_next)
-
-    for (genvar i = 0; i < NumAllocPorts; i++) begin : gen_alloc_entry_id
-      logic can_steal;
-      logic [EntryIdWidth-1:0] stolen_entry_id;
-
-      if (i < NumAllocPorts - 2) begin : gen_multi_entry_stealing
-        localparam int NumLowerPorts = NumAllocPorts - i - 1;
-
-        logic [NumLowerPorts-1:0] stealable;
-        logic [NumLowerPorts-1:0] stealable_onehot;
-
-        // Steal entries from lower priority ports.
-        for (genvar j = 0; j < NumLowerPorts; j++) begin : gen_stealable
-          assign stealable[j] = alloc_valid[i+1+j] && !alloc_ready[i+1+j];
-        end
-
-        br_enc_priority_encoder #(
-            .NumRequesters(NumLowerPorts)
-        ) br_enc_priority_encoder (
-            .clk,
-            .rst,
-            .in (stealable),
-            .out(stealable_onehot)
-        );
-
-        br_mux_onehot #(
-            .NumSymbolsIn(NumLowerPorts),
-            .SymbolWidth (EntryIdWidth)
-        ) br_mux_onehot_stolen_entry_id (
-            .select(stealable_onehot),
-            .in(alloc_entry_id[NumAllocPorts-1:i+1]),
-            .out(stolen_entry_id)
-        );
-        assign can_steal = |stealable;
-      end else if (i == (NumAllocPorts - 2)) begin : gen_single_entry_stealing
-        // The second to last port can only steal from the last port.
-        assign can_steal = alloc_valid[NumAllocPorts-1] && !alloc_ready[NumAllocPorts-1];
-        assign stolen_entry_id = alloc_entry_id[NumAllocPorts-1];
-      end else begin : gen_no_stealing
-        // The MSB port has no lower priority ports to steal from.
-        assign can_steal = 1'b0;
-        assign stolen_entry_id = '0;
-      end
-
-      logic [ PortIdWidth-1:0] push_entry_select;
-      logic [EntryIdWidth-1:0] selected_entry_id;
-
-      // staged_entries_after_pop is the number of entries valid
-      // on this cycle that will still be valid on the next cycle.
-      // All entries with index >= staged_entries_after_pop will
-      // need to pull entries from the unstaged free entries vector.
-      assign push_entry_select = i - PortIdWidth'(staged_count_after_pop);
-
-      br_mux_bin #(
-          .NumSymbolsIn(NumAllocPorts),
-          .SymbolWidth (EntryIdWidth)
-      ) br_mux_bin_alloc_entry_id (
-          .select(push_entry_select),
-          .in(push_entry_id),
-          .out(selected_entry_id),
-          .out_valid()
-      );
-
-      assign alloc_valid_next[i] = (staged_count_next > i);
-      // We need to update if the currently held entry will not be valid
-      // in the next cycle. That can happen if
-      // 1. It's not valid now
-      // 2. It's being popped
-      // 3. It's being stolen by a higher priority port
-      if (i == 0) begin : gen_alloc_update_0
-        assign alloc_update[i] = alloc_valid_next[i] && (!alloc_valid[i] || alloc_ready[i]);
-      end else begin : gen_alloc_update_gt0
-        assign alloc_update[i] = alloc_valid_next[i] && (
-            !alloc_valid[i] || alloc_ready[i] || (|alloc_update[i-1:0]));
-      end
-
-      assign alloc_entry_id_next[i] = can_steal ? stolen_entry_id : selected_entry_id;
-      `BR_REGL(alloc_entry_id[i], alloc_entry_id_next[i], alloc_update[i])
-    end
+    `BR_ASSERT_IMPL(staged_entry_ids_next_no_conflict_a,
+                    (staged_entry_ids_shifted_qual & push_entry_id_shifted_qual) == '0)
   end
 
   // Deallocation Logic
@@ -410,10 +424,6 @@ module br_tracker_freelist #(
     `BR_ASSERT_IMPL(alloc_in_range_a, alloc_valid[i] |-> alloc_entry_id[i] < NumEntries)
     // Ensure that we don't allocate the same entry twice without deallocating it.
     `BR_ASSERT_IMPL(no_double_alloc_seq_a, alloc_valid[i] |-> !allocated_entries[alloc_entry_id[i]])
-
-    if (i > 0) begin : gen_alloc_priority_check
-      `BR_ASSERT_IMPL(alloc_priority_a, alloc_valid[i] |-> &alloc_valid[i-1:0])
-    end
 
     // ri lint_check_waive LOOP_NOT_ENTERED
     for (genvar j = i + 1; j < NumAllocPorts; j++) begin : gen_no_double_alloc_comb_assert
