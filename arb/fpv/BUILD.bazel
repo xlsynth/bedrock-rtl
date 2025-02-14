@@ -233,3 +233,49 @@ br_verilog_fpv_test_suite(
     top = "br_arb_weighted_rr",
     deps = [":br_arb_weighted_rr_fpv_monitor"],
 )
+
+# Bedrock-RTL Round-Robin Arbiter with multiple grants per cycle
+
+verilog_library(
+    name = "br_arb_multi_rr_fpv_monitor",
+    srcs = ["br_arb_multi_rr_fpv_monitor.sv"],
+    deps = [
+        "//arb/rtl:br_arb_multi_rr",
+        "//macros:br_fv",
+    ],
+)
+
+verilog_elab_test(
+    name = "br_arb_multi_rr_fpv_monitor_elab_test",
+    deps = [":br_arb_multi_rr_fpv_monitor"],
+)
+
+br_verilog_fpv_test_suite(
+    name = "br_arb_multi_rr_jg_test_suite",
+    custom_tcl_body = "br_arb_multi_rr_fpv.tcl",
+    # MaxGrantPerCycle must be at least 2 and at most NumRequesters.
+    illegal_param_combinations = {
+        (
+            "MaxGrantPerCycle",
+            "NumRequesters",
+        ): [
+            ("3", "2"),
+            ("5", "2"),
+        ],
+    },
+    params = {
+        "MaxGrantPerCycle": [
+            "2",
+            "3",
+            "5",
+        ],
+        "NumRequesters": [
+            "2",
+            "5",
+            "6",
+        ],
+    },
+    tool = "jg",
+    top = "br_arb_multi_rr",
+    deps = [":br_arb_multi_rr_fpv_monitor"],
+)
