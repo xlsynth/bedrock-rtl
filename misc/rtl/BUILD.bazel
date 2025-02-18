@@ -24,6 +24,7 @@ verilog_library(
 
 br_verilog_elab_and_lint_test_suite(
     name = "br_misc_unused_test_suite",
+    disable_lint_rules = ["NO_OUTPUT"],
     params = {"Width": [
         "1",
         "2",

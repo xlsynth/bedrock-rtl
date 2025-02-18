@@ -15,7 +15,7 @@
 """Verilog rules for Bazel."""
 
 load("@bazel_skylib//rules:write_file.bzl", "write_file")
-load("@rules_hdl//verilog:providers.bzl", "VerilogInfo")
+load("@rules_hdl//verilog:providers.bzl", "VerilogInfo", "verilog_library")
 
 def get_transitive(ctx, srcs_not_hdrs):
     """Returns a depset of all Verilog source or header files in the transitive closure of the deps attribute."""
@@ -682,7 +682,14 @@ def _make_test_name(base_name, suffix, param_keys, combination):
     parts.append(suffix)
     return "_".join(parts)
 
-def verilog_elab_and_lint_test_suite(name, defines = [], params = {}, **kwargs):
+def verilog_elab_and_lint_test_suite(
+        name,
+        top = None,
+        deps = [],
+        defines = [],
+        params = {},
+        disable_lint_rules = [],
+        **kwargs):
     """Creates a suite of Verilog elaboration and lint tests for each combination of the provided parameters.
 
     The function generates all possible combinations of the provided parameters and creates a verilog_elab_test
@@ -690,30 +697,50 @@ def verilog_elab_and_lint_test_suite(name, defines = [], params = {}, **kwargs):
     to the base name followed by the parameter key-values.
 
     Args:
+        top (str): The top-level module to instantiate. Can be left undefined if there is only one dependency.
+        deps (list): The dependencies of the test suite.
         name (str): The base name for the test suite.
         defines (list): A list of defines.
         params (dict): A dictionary where keys are parameter names and values are lists of possible values for those parameters.
+        disable_lint_rules (list): A list of lint rules to disable in the generated files.
         **kwargs: Additional common keyword arguments to be passed to the verilog_elab_test and verilog_lint_test functions.
     """
-    param_keys = sorted(params.keys())
-    param_values_list = [params[key] for key in param_keys]
-    param_combinations = _cartesian_product(param_values_list)
+    if not top:
+        if len(deps) != 1:
+            fail("top must be provided if there is more than one dependency")
+        top = deps[0][1:]
 
-    # Create a verilog_elab_test and verilog_lint_test for each combination of parameters
-    for param_combination in param_combinations:
-        params = dict(zip(param_keys, param_combination))
-        verilog_elab_test(
-            name = _make_test_name(name, "elab_test", param_keys, param_combination),
-            defines = defines,
-            params = params,
-            **kwargs
-        )
-        verilog_lint_test(
-            name = _make_test_name(name, "lint_test", param_keys, param_combination),
-            defines = defines,
-            params = params,
-            **kwargs
-        )
+    generate_parameter_file(
+        name = name + "_params",
+        params = params,
+    )
+
+    generate_instantiation_wrapper(
+        name = name + "_wrapper_src",
+        deps = deps,
+        top = top,
+        wrapper_name = name + "_wrapper",
+        param_file = ":" + name + "_params",
+        disable_lint_rules = disable_lint_rules,
+    )
+
+    verilog_library(
+        name = name + "_wrapper",
+        srcs = [":" + name + "_wrapper_src"],
+        deps = deps,
+    )
+
+    verilog_elab_test(
+        name = name + "_elab_test",
+        deps = [":" + name + "_wrapper"],
+        **kwargs
+    )
+
+    verilog_lint_test(
+        name = name + "_lint_test",
+        deps = [":" + name + "_wrapper"],
+        **kwargs
+    )
 
 def verilog_fpv_test_suite(name, defines = [], params = {}, illegal_param_combinations = {}, sandbox = True, **kwargs):
     """Creates a suite of Verilog fpv tests for each combination of the provided parameters.
@@ -786,3 +813,96 @@ def verilog_sim_test_suite(name, defines = [], params = {}, **kwargs):
             params = params,
             **kwargs
         )
+
+def _generate_parameter_file_impl(ctx):
+    """Implementation for the generate_parameter_file rule."""
+
+    params = ctx.attr.params
+    param_keys = sorted(params.keys())
+    param_values_list = [params[key] for key in param_keys]
+    param_combinations = [
+        dict(zip(param_keys, [int(x) for x in param_values]))
+        for param_values in _cartesian_product(param_values_list)
+    ]
+
+    contents = json.encode({"param_sets": param_combinations})
+    output_file = ctx.outputs.param_file
+    ctx.actions.write(
+        output = output_file,
+        content = contents,
+    )
+
+    return [DefaultInfo(files = depset([output_file]))]
+
+STITCH_TOOL_PATH = "//stitch:stitch_tool"
+
+generate_parameter_file = rule(
+    implementation = _generate_parameter_file_impl,
+    attrs = {
+        "params": attr.string_list_dict(mandatory = True),
+    },
+    outputs = {"param_file": "%{name}.json"},
+)
+
+def _generate_instantiation_wrapper_impl(ctx):
+    """Implementation for the generate_instantiation_wrapper rule."""
+
+    output_file_name = "%s.sv" % ctx.attr.name
+    output_file = ctx.actions.declare_file(output_file_name)
+
+    srcs = get_transitive(ctx = ctx, srcs_not_hdrs = True).to_list()
+    hdrs = get_transitive(ctx = ctx, srcs_not_hdrs = False).to_list()
+    param_files = ctx.attr.param_file.files.to_list()
+
+    common_args = []
+    disable_args = []
+
+    for src in srcs:
+        common_args.append("--sv-files")
+        common_args.append(src.path)
+
+    for hdr in hdrs:
+        common_args.append("--sv-headers")
+        common_args.append(hdr.path)
+
+    for rule in ctx.attr.disable_lint_rules:
+        disable_args.append("--disable-lint-rules")
+        disable_args.append(rule)
+
+    ctx.actions.run(
+        mnemonic = "GenStitchInstantiationWrapper",
+        executable = ctx.executable.stitch_tool,
+        inputs = srcs + hdrs + param_files,
+        outputs = [output_file],
+        arguments = common_args + [
+            "instantiate",
+            "--module-name",
+            ctx.attr.top,
+            "--param-file",
+            param_files[0].path,
+            "--output-file",
+            output_file.path,
+            "--wrapper-name",
+            ctx.attr.wrapper_name,
+        ] + disable_args,
+        use_default_shell_env = True,
+    )
+
+    return [DefaultInfo(files = depset([output_file]))]
+
+generate_instantiation_wrapper = rule(
+    implementation = _generate_instantiation_wrapper_impl,
+    attrs = {
+        "deps": attr.label_list(mandatory = True),
+        "top": attr.string(mandatory = True),
+        "param_file": attr.label(mandatory = True),
+        "stitch_tool": attr.label(
+            executable = True,
+            cfg = "exec",
+            default = Label(STITCH_TOOL_PATH),
+        ),
+        "wrapper_name": attr.string(mandatory = True),
+        "disable_lint_rules": attr.string_list(default = []),
+    },
+    outputs = {"wrapper_file": "%{name}.sv"},
+)

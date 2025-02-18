@@ -175,14 +175,13 @@ br_verilog_elab_and_lint_test_suite(
             "8",
         ],
         "Width": ["8"],
-        "RamWriteLatency": [
-            "1",
-            "2",
-        ],
-        "RamReadLatency": [
+        "FlopRamAddressDepthStages": [
             "0",
             "1",
-            "2",
+        ],
+        "FlopRamReadDataDepthStages": [
+            "0",
+            "1",
         ],
         "RegisterPopOutputs": [
             "0",
@@ -213,14 +212,13 @@ br_verilog_elab_and_lint_test_suite(
             "8",
         ],
         "Width": ["8"],
-        "RamWriteLatency": [
-            "1",
-            "2",
-        ],
-        "RamReadLatency": [
+        "FlopRamAddressDepthStages": [
             "0",
             "1",
-            "2",
+        ],
+        "FlopRamReadDataDepthStages": [
+            "0",
+            "1",
         ],
         "RegisterPopOutputs": [
             "0",

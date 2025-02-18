@@ -103,7 +103,7 @@ module br_flow_deserializer #(
     // If 0, the least significant bits are received first (little endian).
     // The order of bits within each flit is always the same that they
     // appear on the push interface.
-    parameter bit DeserializeMostSignificantFirst,
+    parameter bit DeserializeMostSignificantFirst = 0,
     // If 1, then assert there are no valid bits asserted at the end of the test.
     parameter bit EnableAssertFinalNotValid = 1,
     localparam int DeserializationRatio = PopWidth / PushWidth,

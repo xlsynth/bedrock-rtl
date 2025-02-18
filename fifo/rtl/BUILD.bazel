@@ -293,11 +293,11 @@ br_verilog_elab_and_lint_test_suite(
             "1",
             "2",
         ],
-        "PointerRamReadLatency": [
+        "PointerRamAddressDepthStages": [
             "0",
             "1",
         ],
-        "DataRamReadLatency": [
+        "DataRamAddressDepthStages": [
             "0",
             "1",
         ],
