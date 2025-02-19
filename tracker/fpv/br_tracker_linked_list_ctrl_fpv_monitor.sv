@@ -61,8 +61,8 @@ module br_tracker_linked_list_ctrl_fpv_monitor #(
   always_comb begin
     fv_entry_used_nxt = fv_entry_used;
     for (int i = 0; i < NumWritePorts; i++) begin
+        `BR_ASSUME(tail_unique_a, next_tail_valid[i] |-> !fv_entry_used_nxt[next_tail[i]])
         if (next_tail_valid[i]) begin
-            `BR_ASSUME(tail_unique_a, next_tail_valid[i] |-> !fv_entry_used_nxt[next_tail[i]])
             fv_entry_used_nxt[next_tail[i]] = 1'd1;
         end
     end
