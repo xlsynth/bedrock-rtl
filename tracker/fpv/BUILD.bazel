@@ -68,3 +68,55 @@ br_verilog_fpv_test_suite(
     top = "br_tracker_freelist",
     deps = [":br_tracker_freelist_fpv_monitor"],
 )
+
+# Bedrock-RTL Linked List Controller
+
+verilog_library(
+    name = "br_tracker_linked_list_ctrl_fpv_monitor",
+    srcs = ["br_tracker_linked_list_ctrl_fpv_monitor.sv"],
+    deps = [
+        "//tracker/rtl:br_tracker_linked_list_ctrl",
+    ],
+)
+
+verilog_elab_test(
+    name = "br_tracker_linked_list_ctrl_fpv_monitor_elab_test",
+    deps = [":br_tracker_linked_list_ctrl_fpv_monitor"],
+)
+
+br_verilog_fpv_test_suite(
+    name = "br_tracker_linked_list_ctrl_jg_test_suite",
+    illegal_param_combinations = {
+        (
+            "Depth",
+            "NumWritePorts",
+        ): [
+            ("2", "3"),
+        ],
+    },
+    params = {
+        "Depth": [
+            "2",
+            "3",
+            "4",
+        ],
+        "NumLinkedLists": [
+            "1",
+            "2",
+            "3",
+        ],
+        "NumWritePorts": [
+            "1",
+            "2",
+            "3",
+        ],
+        "RamReadLatency": [
+            "0",
+            "1",
+            "4",
+        ],
+    },
+    tool = "jg",
+    top = "br_tracker_linked_list_ctrl",
+    deps = [":br_tracker_linked_list_ctrl_fpv_monitor"],
+)
