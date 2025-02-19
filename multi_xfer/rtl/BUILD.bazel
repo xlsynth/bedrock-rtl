@@ -48,3 +48,34 @@ br_verilog_elab_and_lint_test_suite(
         ":br_multi_xfer_reg_fwd",
     ],
 )
+
+verilog_library(
+    name = "br_multi_xfer_distributor_rr",
+    srcs = ["br_multi_xfer_distributor_rr.sv"],
+    deps = [
+        "//arb/rtl:br_arb_multi_rr",
+        "//multi_xfer/rtl/internal:br_multi_xfer_distributor_core",
+    ],
+)
+
+br_verilog_elab_and_lint_test_suite(
+    name = "br_multi_xfer_distributor_rr_test_suite",
+    params = {
+        "NumSymbols": [
+            "2",
+            "3",
+        ],
+        "NumFlows": [
+            "3",
+            "4",
+        ],
+        "SymbolWidth": [
+            "1",
+            "3",
+            "8",
+        ],
+    },
+    deps = [
+        ":br_multi_xfer_distributor_rr",
+    ],
+)
