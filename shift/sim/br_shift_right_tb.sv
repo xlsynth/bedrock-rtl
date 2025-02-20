@@ -37,7 +37,8 @@ module br_shift_right_tb;
       .in,
       .shift,
       .fill,
-      .out
+      .out,
+      .out_valid()  // unused
   );
 
   br_test_driver td (
