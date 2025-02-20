@@ -94,11 +94,13 @@ module br_multi_xfer_distributor_core #(
 
   always_comb begin
     expected_grant_from_ordered = '0;
-    expected_count_from_grant   = '0;
-
     for (int i = 0; i < NumSymbols; i++) begin
       expected_grant_from_ordered |= grant_ordered[i];
     end
+  end
+
+  always_comb begin
+    expected_count_from_grant = '0;
     for (int i = 0; i < NumFlows; i++) begin
       expected_count_from_grant += grant[i];
     end

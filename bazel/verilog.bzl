@@ -733,12 +733,14 @@ def verilog_elab_and_lint_test_suite(
     verilog_elab_test(
         name = name + "_elab_test",
         deps = [":" + name + "_wrapper"],
+        defines = defines,
         **kwargs
     )
 
     verilog_lint_test(
         name = name + "_lint_test",
         deps = [":" + name + "_wrapper"],
+        defines = defines,
         **kwargs
     )
 
