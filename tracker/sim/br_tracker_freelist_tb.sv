@@ -15,12 +15,13 @@
 module br_tracker_freelist_tb;
 
   parameter int NumEntries = 16;
-  parameter int NumAllocPorts = 1;
+  parameter int NumAllocPerCycle = 1;
   parameter int NumDeallocPorts = 1;
-  parameter int NumAllocations = 100 / NumAllocPorts;
+  parameter int NumAllocations = 100;
   parameter int MaxDelay = 10;
 
   localparam int EntryIdWidth = $clog2(NumEntries);
+  localparam int AllocCountWidth = $clog2(NumAllocPerCycle + 1);
 
   // In the testbench, we create a queue for each deallocation port.  The
   // allocation thread will allocate entries and push them to a randomly
@@ -36,9 +37,9 @@ module br_tracker_freelist_tb;
   logic clk;
   logic rst;
 
-  logic [NumAllocPorts-1:0] alloc_valid;
-  logic [NumAllocPorts-1:0] alloc_ready;
-  logic [NumAllocPorts-1:0][EntryIdWidth-1:0] alloc_entry_id;
+  logic [AllocCountWidth-1:0] alloc_sendable;
+  logic [AllocCountWidth-1:0] alloc_receivable;
+  logic [NumAllocPerCycle-1:0][EntryIdWidth-1:0] alloc_entry_id;
 
   logic [NumDeallocPorts-1:0] dealloc_valid;
   logic [NumDeallocPorts-1:0][EntryIdWidth-1:0] dealloc_entry_id;
@@ -52,14 +53,14 @@ module br_tracker_freelist_tb;
 
   br_tracker_freelist #(
       .NumEntries(NumEntries),
-      .NumAllocPorts(NumAllocPorts),
+      .NumAllocPerCycle(NumAllocPerCycle),
       .NumDeallocPorts(NumDeallocPorts)
   ) dut (
       .clk,
       .rst,
 
-      .alloc_valid,
-      .alloc_ready,
+      .alloc_sendable,
+      .alloc_receivable,
       .alloc_entry_id,
 
       .dealloc_valid,
@@ -70,56 +71,72 @@ module br_tracker_freelist_tb;
   // Allocate all entries at the beginning without deallocation
   // and check that they come out in the expected order.
   task automatic init_allocate_entries();
-    alloc_ready = '1;
+    alloc_receivable = NumAllocPerCycle;
 
     // The entries are going to be allocated to the ports in round-robin
     // fashion initially.
-    for (int i = 0; i < NumEntries; i += NumAllocPorts) begin
+    for (int i = 0; i < NumEntries; i += NumAllocPerCycle) begin
       @(posedge clk);
-      for (int j = 0; j < NumAllocPorts; j++) begin
-        td.check(alloc_valid[j], "Cannot allocate an initial entry");
+      td.check_integer(alloc_sendable, NumAllocPerCycle, "Invalid number of allocatable entries");
+
+      for (int j = 0; j < NumAllocPerCycle; j++) begin
         td.check_integer(alloc_entry_id[j], i + j, "Allocated entry ID is incorrect");
         free_entries[i+j] = 1;
         entry_queues[0].push_back(i + j);
       end
     end
     @(negedge clk);
-    alloc_ready = '0;
+    alloc_receivable = 0;
   endtask
 
   // Randomly allocate entries to queues
-  task automatic random_allocate_entries(int aid);
+  task automatic random_allocate_entries();
     int delay;
     int qid;
+    int alloced;
+    int to_alloc;
+    int cycle_alloced;
 
-    $display("Randomly allocating entries for alloc port %0d", aid);
+    $display("Randomly allocating entries");
 
-    for (int i = 0; i < NumAllocations; i++) begin
+    alloced = 0;
+
+    while (alloced < NumAllocations) begin
       int timeout;
 
       delay = $urandom_range(MaxDelay);
       td.wait_cycles(delay);
 
-      alloc_ready[aid] = 1;
+      to_alloc = $urandom_range(1, NumAllocPerCycle);
+      to_alloc = br_math::min2(to_alloc, NumAllocations - alloced);
+
+      alloc_receivable = to_alloc;
       @(posedge clk);
 
-      timeout = (MaxDelay + 1) * NumAllocPorts * NumAllocations;
-      while (!alloc_valid[aid] && timeout > 0) begin
+      timeout = (MaxDelay + 1);
+      while (alloc_sendable == '0 && timeout > 0) begin
         @(posedge clk);
         timeout--;
       end
 
-      td.check(alloc_valid[aid], $sformatf("Timeout waiting for allocation on %0d", aid));
+      td.check(timeout != '0, $sformatf("Timeout waiting for allocation"));
 
-      td.check(free_entries[alloc_entry_id[aid]], $sformatf(
-               "Allocated entry %0d is not free", alloc_entry_id[aid]));
+      cycle_alloced = br_math::min2(to_alloc, alloc_sendable);
 
-      qid = $urandom_range(NumDeallocPorts - 1);
-      entry_queues[qid].push_back(alloc_entry_id[aid]);
-      free_entries[alloc_entry_id[aid]] = 0;
+      for (int i = 0; i < cycle_alloced; i++) begin
+        if (cycle_alloced > i) begin
+          td.check(free_entries[alloc_entry_id[i]], $sformatf(
+                   "Allocated entry %0d is not free", alloc_entry_id[i]));
+          qid = $urandom_range(NumDeallocPorts - 1);
+          entry_queues[qid].push_back(alloc_entry_id[i]);
+          free_entries[alloc_entry_id[i]] = 1;
+        end
+      end
 
       @(negedge clk);
-      alloc_ready[aid] = 0;
+
+      alloc_receivable = '0;
+      alloced += cycle_alloced;
     end
   endtask
 
@@ -173,7 +190,7 @@ module br_tracker_freelist_tb;
   endtask
 
   initial begin
-    alloc_ready = 0;
+    alloc_receivable = 0;
     dealloc_valid = 0;
     dealloc_entry_id = 0;
     free_entries = '1;
@@ -192,20 +209,7 @@ module br_tracker_freelist_tb;
       join_none
     end
 
-    fork
-      begin
-        // Need to wait for all the allocation threads to finish,
-        // but don't want to wait for the deallocation threads.
-        for (int i = 0; i < NumAllocPorts; i++) begin
-          automatic int aid;
-          aid = i;
-          fork
-            random_allocate_entries(aid);
-          join_none
-        end
-        wait fork;
-      end
-    join
+    random_allocate_entries();
 
     td.wait_cycles(1);
 

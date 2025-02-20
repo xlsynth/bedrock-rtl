@@ -21,11 +21,13 @@ verilog_library(
     name = "br_tracker_freelist",
     srcs = ["br_tracker_freelist.sv"],
     deps = [
+        "//delay/rtl:br_delay",
         "//enc/rtl:br_enc_bin2onehot",
         "//enc/rtl:br_enc_countones",
         "//enc/rtl:br_enc_onehot2bin",
         "//enc/rtl:br_enc_priority_encoder",
         "//flow/rtl:br_flow_reg_fwd",
+        "//multi_xfer/rtl:br_multi_xfer_reg_fwd",
         "//mux/rtl:br_mux_bin",
         "//mux/rtl:br_mux_onehot",
     ],
@@ -38,7 +40,7 @@ br_verilog_elab_and_lint_test_suite(
             "5",
             "8",
         ],
-        "NumAllocPorts": [
+        "NumAllocPerCycle": [
             "1",
             "2",
         ],
