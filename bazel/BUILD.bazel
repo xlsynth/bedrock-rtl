@@ -28,7 +28,10 @@ stardoc(
     name = "gen_verilog_rules",
     out = "gen_verilog_rules.md",
     input = "verilog.bzl",
-    deps = [":rules_hdl_providers"],
+    deps = [
+        ":rules_hdl_providers",
+        "@bazel_skylib//rules:write_file",
+    ],
 )
 
 diff_test(
