@@ -308,7 +308,12 @@ rule_verilog_elab_test = rule(
     test = True,
 )
 
-def verilog_elab_test(name, tags = [], custom_tcl_header_cmds = [], **kwargs):
+def verilog_elab_test(
+        name,
+        tags = [],
+        custom_tcl_header = None,
+        custom_tcl_header_cmds = [],
+        **kwargs):
     """Wraps rule_verilog_elab_test with extra tags.
 
     Args:
@@ -318,19 +323,21 @@ def verilog_elab_test(name, tags = [], custom_tcl_header_cmds = [], **kwargs):
             * resources:verilog_elab_test_tool_licenses:1 -- indicates that the test requires a elaboration tool license.
             * elab -- useful for test filtering, e.g., bazel test //... --test_tag_filters=elab
             * If the tool is provided in kwargs, then the tool name is added to the above tags.
+        custom_tcl_header: custom tcl header file. If not provided, then a default one will be generated.
         custom_tcl_header_cmds: custom tcl commands
         **kwargs: Other arguments to pass to the rule_verilog_elab_test rule.
     """
-    custom_tcl_header = name + "_custom_header.tcl"
-    write_file(
-        name = "gen_" + name + "_custom_header_tcl",
-        out = custom_tcl_header,
-        content = [
-            # Demote VERI-1063 ("instantiating unknown module 'jasper_scoreboard_3") from warning to info.
-            # jasper_scoreboard_3 is encrypted from Cadence
-            "setmsgtype -info VERI-1063",
-        ] + custom_tcl_header_cmds,
-    )
+    if not custom_tcl_header:
+        custom_tcl_header = name + "_custom_header.tcl"
+        write_file(
+            name = "gen_" + name + "_custom_header_tcl",
+            out = custom_tcl_header,
+            content = [
+                # Demote VERI-1063 ("instantiating unknown module 'jasper_scoreboard_3") from warning to info.
+                # jasper_scoreboard_3 is encrypted from Cadence
+                "setmsgtype -info VERI-1063",
+            ] + custom_tcl_header_cmds,
+        )
 
     extra_tags = [
         "no-sandbox",  # Preserves miscellaneous undeclared EDA tool outputs for debugging
