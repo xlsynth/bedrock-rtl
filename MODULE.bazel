@@ -25,7 +25,7 @@ rules_hdl_extension = use_extension("//dependency_support/rules_hdl:extension.bz
 use_repo(rules_hdl_extension, "rules_hdl")
 
 bazel_dep(name = "stardoc", version = "0.8.0")
-bazel_dep(name = "rules_python", version = "1.0.0-rc1")
+bazel_dep(name = "rules_python", version = "1.2.0-rc0")
 bazel_dep(name = "bazel_skylib", version = "1.7.1")
 
 python = use_extension("@rules_python//python/extensions:python.bzl", "python")
