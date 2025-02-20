@@ -149,6 +149,7 @@ br_verilog_sim_test_tools_suite(
 verilog_library(
     name = "br_fifo_shared_test_harness",
     srcs = ["br_fifo_shared_test_harness.sv"],
+    deps = ["//pkg:br_math_pkg"],
 )
 
 verilog_library(
