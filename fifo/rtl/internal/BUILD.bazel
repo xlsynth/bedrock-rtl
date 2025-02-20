@@ -257,10 +257,9 @@ verilog_library(
     name = "br_fifo_shared_dynamic_push_ctrl",
     srcs = ["br_fifo_shared_dynamic_push_ctrl.sv"],
     deps = [
-        "//arb/rtl:br_arb_multi_rr",
         "//demux/rtl:br_demux_bin",
         "//macros:br_asserts_internal",
-        "//mux/rtl:br_mux_onehot",
+        "//multi_xfer/rtl:br_multi_xfer_distributor_rr",
         "//pkg:br_math_pkg",
         "//tracker/rtl:br_tracker_freelist",
     ],
