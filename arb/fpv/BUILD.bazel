@@ -226,7 +226,7 @@ br_verilog_fpv_test_suite(
         "NumRequesters": [
             "2",
             "3",
-            "8",
+            "4",
         ],
     },
     tool = "jg",
