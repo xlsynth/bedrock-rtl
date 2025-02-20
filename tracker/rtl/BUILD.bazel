@@ -92,3 +92,78 @@ br_verilog_elab_and_lint_test_suite(
     },
     deps = [":br_tracker_linked_list_ctrl"],
 )
+
+verilog_library(
+    name = "br_tracker_reorder",
+    srcs = ["br_tracker_reorder.sv"],
+    deps = [
+        "//counter/rtl:br_counter",
+        "//counter/rtl:br_counter_incr",
+        "//macros:br_asserts",
+        "//macros:br_registers",
+    ],
+)
+
+br_verilog_elab_and_lint_test_suite(
+    name = "br_tracker_reorder_test_suite",
+    params = {
+        "NumEntries": [
+            "2",
+            "3",
+            "4",
+        ],
+        "EntryIdWidth": [
+            "2",
+        ],
+    },
+    deps = [":br_tracker_reorder"],
+)
+
+verilog_library(
+    name = "br_tracker_reorder_buffer_1r1w",
+    srcs = ["br_tracker_reorder_buffer_1r1w.sv"],
+    deps = [
+        "//fifo/rtl:br_fifo_flops",
+        ":br_tracker_reorder",
+        "//macros:br_asserts",
+    ],
+)
+
+br_verilog_elab_and_lint_test_suite(
+    name = "br_tracker_reorder_buffer_1r1w_test_suite",
+    params = {
+        "NumEntries": [
+            "2",
+            "3",
+            "4",
+        ],
+        "EntryIdWidth": [
+            "2",
+        ],
+    },
+    deps = [":br_tracker_reorder_buffer_1r1w"],
+)
+
+verilog_library(
+    name = "br_tracker_reorder_buffer_flops",
+    srcs = ["br_tracker_reorder_buffer_flops.sv"],
+    deps = [
+        ":br_tracker_reorder_buffer_1r1w",
+        "//ram/rtl:br_ram_flops",
+    ],
+)
+
+br_verilog_elab_and_lint_test_suite(
+    name = "br_tracker_reorder_buffer_flops_test_suite",
+    params = {
+        "NumEntries": [
+            "2",
+            "3",
+            "4",
+        ],
+        "EntryIdWidth": [
+            "2",
+        ],
+    },
+    deps = [":br_tracker_reorder_buffer_flops"],
+)
