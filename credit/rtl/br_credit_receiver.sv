@@ -179,7 +179,8 @@ module br_credit_receiver #(
   br_credit_counter #(
       .MaxValue(MaxCredit),
       .MaxChange(CreditCounterMaxChange),
-      .EnableAssertFinalNotValid(EnableAssertFinalNotValid)
+      // Since credit_decr_valid is tied to credit_stall, we disable the final not-valid check
+      .EnableAssertFinalNotValid(0)
   ) br_credit_counter (
       .clk,
       .rst(either_rst),
