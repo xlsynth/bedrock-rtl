@@ -84,14 +84,19 @@ module br_tracker_freelist #(
   // an entry that has not been allocated.
   logic [NumEntries-1:0] allocated_entries;
   logic [NumEntries-1:0] allocated_entries_next;
+  logic [NumAllocPerCycle-1:0] alloc_valid;
 
   `BR_REG(allocated_entries, allocated_entries_next)
+
+  for (genvar i = 0; i < NumAllocPerCycle; i++) begin : gen_alloc_valid
+    assign alloc_valid[i] = alloc_sendable > i && alloc_receivable > i;
+  end
 
   always_comb begin
     allocated_entries_next = allocated_entries;
 
     for (int i = 0; i < NumAllocPerCycle; i++) begin : gen_alloc_intg_asserts
-      if (alloc_sendable > i && alloc_receivable > i) begin
+      if (alloc_valid[i]) begin
         // ri lint_check_waive VAR_INDEX_WRITE
         allocated_entries_next[alloc_entry_id[i]] = 1'b1;
       end
@@ -295,7 +300,7 @@ module br_tracker_freelist #(
 
     // ri lint_check_waive ONE_IF_CASE
     for (int i = 0; i < NumAllocPerCycle; i++) begin : gen_staged_entries_next
-      if (alloc_sendable > i && alloc_receivable > i) begin
+      if (alloc_valid[i]) begin
         // ri lint_check_waive SEQ_COND_ASSIGNS VAR_INDEX_WRITE
         staged_entries_next[alloc_entry_id[i]] = 1'b0;
       end

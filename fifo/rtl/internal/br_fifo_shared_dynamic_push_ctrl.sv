@@ -185,7 +185,6 @@ module br_fifo_shared_dynamic_push_ctrl #(
   localparam int PortCountWidth = $clog2(NumWritePorts + 1);
 
   logic [PortCountWidth-1:0] request_count;
-  logic [PortCountWidth-1:0] alloc_count;
   logic [PortCountWidth-1:0] grant_count;
 
   // These are only used for assertions, so it's fine to use $countones
