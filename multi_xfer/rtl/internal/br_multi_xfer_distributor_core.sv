@@ -25,6 +25,7 @@ module br_multi_xfer_distributor_core #(
     parameter int SymbolWidth = 1,
     // The number of flows to distribute to. Must be at least NumSymbols.
     parameter int NumFlows = 2,
+    parameter bit EnableAssertPushDataStability = 1,
     parameter bit EnableAssertFinalNotSendable = 1,
 
     localparam int CountWidth = $clog2(NumSymbols + 1)
@@ -64,8 +65,9 @@ module br_multi_xfer_distributor_core #(
   `BR_ASSERT_STATIC(legal_num_flows_a, NumFlows >= NumSymbols)
 
   br_multi_xfer_checks_sendable_data_intg #(
-      .NumSymbols (NumSymbols),
-      .SymbolWidth(SymbolWidth)
+      .NumSymbols(NumSymbols),
+      .SymbolWidth(SymbolWidth),
+      .EnableAssertDataStability(EnableAssertPushDataStability)
   ) br_multi_xfer_checks_sendable_data_intg_push (
       .clk(clk),
       .rst(rst),
@@ -75,7 +77,7 @@ module br_multi_xfer_distributor_core #(
   );
 
   // Internal integration checks
-  `BR_ASSERT_IMPL(grant_count_lt_allowed_a, grant_count < grant_allowed)
+  `BR_ASSERT_IMPL(grant_count_lt_allowed_a, grant_count <= grant_allowed)
 
   for (genvar i = 0; i < NumFlows; i++) begin : gen_grant_ordered_transposed_checks
     `BR_ASSERT_IMPL(grant_ordered_transposed_onehot_a, $onehot0(grant_ordered_transposed[i]))
@@ -95,8 +97,10 @@ module br_multi_xfer_distributor_core #(
     expected_count_from_grant   = '0;
 
     for (int i = 0; i < NumSymbols; i++) begin
-      expected_grant_from_ordered[i] |= grant_ordered[i];
-      expected_count_from_grant[i] += grant[i];
+      expected_grant_from_ordered |= grant_ordered[i];
+    end
+    for (int i = 0; i < NumFlows; i++) begin
+      expected_count_from_grant += grant[i];
     end
   end
 

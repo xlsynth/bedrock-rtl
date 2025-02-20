@@ -45,6 +45,5 @@ br_verilog_sim_test_tools_suite(
         "iverilog",
         "vcs",
     ],
-    waves = True,
     deps = [":br_multi_xfer_reg_fwd_tb"],
 )

@@ -39,6 +39,9 @@ module br_multi_xfer_reg_fwd #(
     // The width of a single symbol.
     // Must be at least 1.
     parameter int SymbolWidth = 1,
+    // If 1, assert that push_data is stable when push_sendable > push_receivable.
+    // If 0, cover that push_data is unstable when push_sendable > push_receivable.
+    parameter bit EnableAssertPushDataStability = 1,
     // If 1, assert that the buffer is empty and push_sendable is 0
     // at end of simulation.
     parameter int EnableAssertFinalNotSendable = 1,
@@ -62,8 +65,9 @@ module br_multi_xfer_reg_fwd #(
   `BR_ASSERT_STATIC(legal_symbol_width_a, SymbolWidth >= 1)
 
   br_multi_xfer_checks_sendable_data_intg #(
-      .NumSymbols (NumSymbols),
-      .SymbolWidth(SymbolWidth)
+      .NumSymbols(NumSymbols),
+      .SymbolWidth(SymbolWidth),
+      .EnableAssertDataStability(EnableAssertPushDataStability)
   ) br_multi_xfer_checks_sendable_data_intg_push (
       .clk(clk),
       .rst(rst),
