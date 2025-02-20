@@ -68,9 +68,35 @@ verilog_elab_test(
 )
 
 br_verilog_fpv_test_suite(
-    # TODO
-    gui = True,
     name = "br_multi_xfer_distributor_rr_jg_test_suite",
+    # NumFlows >= NumSymbols
+    illegal_param_combinations = {
+        (
+            "NumFlows",
+            "NumSymbols",
+        ): [
+            ("2", "4"),
+            ("2", "6"),
+            ("4", "6"),
+        ],
+    },
+    params = {
+        "NumFlows": [
+            "2",
+            "4",
+            "6",
+        ],
+        "NumSymbols": [
+            "2",
+            "4",
+            "6",
+        ],
+        "SymbolWidth": [
+            "1",
+            "2",
+            "3",
+        ],
+    },
     tool = "jg",
     top = "br_multi_xfer_distributor_rr",
     deps = [":br_multi_xfer_distributor_rr_fpv_monitor"],

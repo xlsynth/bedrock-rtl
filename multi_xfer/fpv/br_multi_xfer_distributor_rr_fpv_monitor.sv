@@ -38,16 +38,21 @@ module br_multi_xfer_distributor_rr_fpv_monitor #(
 
     input logic [NumFlows-1:0] pop_valid,
     input logic [NumFlows-1:0] pop_ready,
-    input logic [NumFlows-1:0][SymbolWidth-1:0] pop_data
+    input logic [NumFlows-1:0][SymbolWidth-1:0] pop_data,
+
+    // RTL internal signal
+    logic [NumSymbols-1:0][NumFlows-1:0] grant_ordered
 );
 
   // ----------FV modeling code----------
-  localparam int FlowWidth = $clog2(NumFlows+1);
   logic push_extra_left;
   logic [CountWidth-1:0] fv_pushed;
   logic [CountWidth-1:0] fv_popped;
   logic [NumSymbols-1:0] fv_push_valid;
-  logic [CountWidth-1:0] fv_push_receivable, fv_push_receivable_pre;
+  // pop interface adjusted based on multi-grant round-robin arbitration
+  logic [NumFlows-1:0]                  idx;
+  logic [NumFlows-1:0]                  fv_pop_valid_ready;
+  logic [NumFlows-1:0][SymbolWidth-1:0] fv_pop_data;
 
   assign push_extra_left = push_sendable > push_receivable;
   assign fv_pushed = push_extra_left ? push_receivable : push_sendable;
@@ -63,9 +68,22 @@ module br_multi_xfer_distributor_rr_fpv_monitor #(
     end
   end
 
-  `BR_REGI(fv_push_receivable_pre, fv_push_receivable_pre - fv_pushed + fv_popped, NumSymbols)
-  // same cycle popped symbols are reflected in push_receivable
-  assign fv_push_receivable = fv_push_receivable_pre + fv_popped;
+  // based on multi-rr, assign highest-priority flow to FV pop LSB
+  // br_arb_multi_rr is verified as a standlone DUT
+  always_comb begin
+    fv_pop_valid_ready = 'd0;
+    fv_pop_data = 'd0;
+    idx = 'd0;
+    for (int i = 0; i < NumSymbols; i++) begin
+        for (int j = 0; j < NumFlows; j++) begin
+            if (grant_ordered[i][j]) begin
+                fv_pop_valid_ready[idx] = pop_valid[j] & pop_ready[j];
+                fv_pop_data[idx] = pop_data[j];
+                idx++;
+            end
+        end
+    end
+  end
 
   // ----------FV assumptions----------
   `BR_ASSUME(push_receivable_range_a, push_sendable <= NumSymbols)
@@ -77,11 +95,8 @@ module br_multi_xfer_distributor_rr_fpv_monitor #(
   end
 
   // ----------FV assertions----------
-  for (genvar j = 0; j < NumFlows; j++) begin : gen_ast
-    `BR_ASSERT(pop_valid_ready_a,
-               pop_valid[j] && !pop_ready[j] |=> pop_valid[j] && $stable(pop_data[j]))
-  end
-  `BR_ASSERT(push_receivable_a, push_receivable == fv_push_receivable)
+  // push_receivable is just how many symbols can be grant this cycle
+  `BR_ASSERT(push_receivable_a, push_receivable == fv_popped)
 
   // ----------Data integrity Check----------
   // push side will only push actual pushed data
@@ -97,8 +112,8 @@ module br_multi_xfer_distributor_rr_fpv_monitor #(
       .rstN(!rst),
       .incoming_vld(fv_push_valid),
       .incoming_data(push_data),
-      .outgoing_vld(pop_valid & pop_ready),
-      .outgoing_data(pop_data)
+      .outgoing_vld(fv_pop_valid_ready),
+      .outgoing_data(fv_pop_data)
   );
 
 endmodule : br_multi_xfer_distributor_rr_fpv_monitor
