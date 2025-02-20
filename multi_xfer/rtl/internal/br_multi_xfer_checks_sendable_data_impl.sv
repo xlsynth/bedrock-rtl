@@ -24,8 +24,9 @@
 
 // ri lint_check_off NO_OUTPUT
 module br_multi_xfer_checks_sendable_data_impl #(
-    parameter int NumSymbols  = 2,
+    parameter int NumSymbols = 2,
     parameter int SymbolWidth = 1,
+    parameter bit EnableAssertDataStability = 1,
 
     localparam int CountWidth = $clog2(NumSymbols + 1)
 ) (
@@ -43,17 +44,24 @@ module br_multi_xfer_checks_sendable_data_impl #(
   `BR_ASSERT_IMPL(sendable_no_revocation_a, (sendable > receivable) |=> (sendable >= $past
                                             (sendable - receivable)))
 
-  for (genvar i = 0; i < NumSymbols; i++) begin : gen_sendable_data_qual
-    // This isn't strictly needed for functionality, but if data is unknown,
-    // the data_shifted_a assertion below will not work since unknown values
-    // cannot be compared.
-    `BR_ASSERT_IMPL(data_known_a, (sendable > i) |-> !$isunknown(data[i]))
-    `BR_ASSERT_IMPL(data_shifted_a,
-                    ((sendable > receivable) && ((sendable - receivable) > i))
-        |=>
-        (data[i] == $past(
-                        data[i+receivable]
-                    )))
+  for (genvar i = 0; i < NumSymbols; i++) begin : gen_data_checks
+    if (EnableAssertDataStability) begin : gen_data_stability_checks
+      // This isn't strictly needed for functionality, but if data is unknown,
+      // the data_shifted_a assertion below will not work since unknown values
+      // cannot be compared.
+      `BR_ASSERT_IMPL(data_known_a, (sendable > i) |-> !$isunknown(data[i]))
+      `BR_ASSERT_IMPL(data_shifted_a,
+                      ((sendable > receivable) && ((sendable - receivable) > i))
+          |=>
+          (data[i] == $past(
+                          data[i+receivable]
+                      )))
+    end else begin : gen_data_instability_cover
+      `BR_COVER_IMPL(
+          data_instability_c,
+          ((sendable > receivable) && ((sendable - receivable) > i)) && (data[i] != $past(
+          data[i+receivable])))
+    end
   end
 
   `BR_UNUSED_NAMED(all_unused, {rst, receivable, sendable, data})

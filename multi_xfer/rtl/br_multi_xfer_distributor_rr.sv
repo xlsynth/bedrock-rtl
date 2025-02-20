@@ -33,6 +33,9 @@ module br_multi_xfer_distributor_rr #(
     parameter int SymbolWidth = 1,
     // The number of flows to distribute to. Must be at least NumSymbols.
     parameter int NumFlows = 2,
+    // If 1, assert that push_data is stable when push_sendable > push_receivable.
+    // If 0, cover that push_data is unstable when push_sendable > push_receivable.
+    parameter bit EnableAssertPushDataStability = 1,
     // If 1, assert that push_sendable is 0 at the end of simulation.
     parameter bit EnableAssertFinalNotSendable = 1,
 
@@ -61,6 +64,7 @@ module br_multi_xfer_distributor_rr #(
       .NumSymbols(NumSymbols),
       .SymbolWidth(SymbolWidth),
       .NumFlows(NumFlows),
+      .EnableAssertPushDataStability(EnableAssertPushDataStability),
       .EnableAssertFinalNotSendable(EnableAssertFinalNotSendable)
   ) br_multi_xfer_distributor_core_inst (
       .clk,
