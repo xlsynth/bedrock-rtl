@@ -48,6 +48,10 @@ br_verilog_fpv_test_suite(
         ],
     },
     params = {
+        "DeallocCountDelay": [
+            "2",
+            "3",
+        ],
         "NumAllocPerCycle": [
             "1",
             "2",
