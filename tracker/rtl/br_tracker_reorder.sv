@@ -146,7 +146,7 @@ module br_tracker_reorder #(
     assign clear_dealloc_pending = dealloc_complete_beat && (dealloc_complete_entry_id == i);
     `BR_ASSERT_IMPL(only_set_or_clear_a, $onehot0({set_dealloc_pending, clear_dealloc_pending}))
 
-    dealloc_pending_next[i] = set_dealloc_pending ? 1'b1 :
+    assign dealloc_pending_next[i] = set_dealloc_pending ? 1'b1 :
                               clear_dealloc_pending ? 1'b0 :
                               dealloc_pending[i];
 
