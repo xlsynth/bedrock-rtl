@@ -32,10 +32,13 @@ module br_tracker_reorder_buffer_ctrl_1r1w #(
     parameter int NumEntries = 2,
     // Width of the entry ID. Must be at least $clog2(NumEntries).
     parameter int EntryIdWidth = $clog2(NumEntries),
-    // Width of the data payload.
+    // Width of the data payload. Must be at least 1.
     parameter int DataWidth = 1,
-    // Number of clock cycles for the RAM read latency.
-    parameter int RamReadLatency = 1,
+    // Number of clock cycles for the RAM read latency. Must be >=0.
+    parameter int RamReadLatency = 0,
+    // If 1, ensure that reordered_resp_pop_data comes directly from a register,
+    // improving timing at the cost of an additional cycle of latency.
+    parameter bit RegisterPopOutputs = 0,
     // If 1, then assert unordered_resp_push_valid is low at the end of the test.
     parameter bit EnableAssertFinalNotDeallocValid = 1,
     localparam int MinEntryIdWidth = $clog2(NumEntries)
@@ -68,67 +71,82 @@ module br_tracker_reorder_buffer_ctrl_1r1w #(
     input logic ram_rd_data_valid
 );
 
+  `BR_ASSERT_STATIC(legal_num_entries_a, NumEntries >= 1)
   `BR_ASSERT_STATIC(legal_entry_id_width_a, EntryIdWidth >= MinEntryIdWidth)
+  `BR_ASSERT_STATIC(legal_data_width_a, DataWidth >= 1)
+  `BR_ASSERT_STATIC(legal_ram_read_latency_a, RamReadLatency >= 0)
 
   localparam int StagingFifoDepth = RamReadLatency + 2;
 
-  logic reordered_resp_pop_beat_int;
   logic reordered_resp_pop_valid_int;
   logic reordered_resp_pop_ready_int;
   logic [EntryIdWidth-1:0] reordered_resp_pop_entry_id_int;
-  logic id_skid_fifo_pop_ready;
-  logic id_skid_fifo_pop_valid;
-  logic data_skid_fifo_pop_ready;
-  logic data_skid_fifo_pop_valid;
+  logic [EntryIdWidth-1:0] ram_rd_addr_int;
 
-  // Token FIFO to ensure there is enough space in the data_skid_fifo to land
-  // data read from RAM.
-  br_fifo_flops #(
-      .Depth(StagingFifoDepth),
-      .Width(1'b1)
-  ) br_fifo_flops_id_skid (
+  // Credit sender ensures that we don't send read request until there is
+  // space in the staging buffer.
+  localparam int CreditWidth = $clog2(StagingFifoDepth + 1);
+  logic [CreditWidth-1:0] credit_sender_initial;
+  logic [CreditWidth-1:0] credit_sender_withhold;
+  logic credit_sender_in_reset;
+  logic [CreditWidth-1:0] credit_receiver_initial;
+  logic [CreditWidth-1:0] credit_receiver_withhold;
+  logic credit_receiver_in_reset;
+  logic ram_rd_data_credit;
+
+  assign credit_sender_initial = '0;
+  assign credit_sender_withhold = '0;
+  assign credit_receiver_initial = StagingFifoDepth;
+  assign credit_receiver_withhold = '0;
+
+  br_credit_sender #(
+      .MaxCredit(StagingFifoDepth),
+      .Width(EntryIdWidth)
+  ) br_credit_sender_ram_rd_addr (
       .clk,
       .rst,
-      //
-      .push_ready(reordered_resp_pop_ready_int),
       .push_valid(reordered_resp_pop_valid_int),
-      .push_data(1'b0),
-      //
-      .pop_ready(id_skid_fifo_pop_ready),
-      .pop_valid(id_skid_fifo_pop_valid),
-      .pop_data(),
-      //
-      .full(),
-      .full_next(),
-      .slots(),
-      .slots_next(),
-      //
-      .empty(),
-      .empty_next(),
-      .items(),
-      .items_next()
+      .push_ready(reordered_resp_pop_ready_int),
+      .push_data(reordered_resp_pop_entry_id_int),
+      .pop_sender_in_reset(credit_sender_in_reset),
+      .pop_receiver_in_reset(credit_receiver_in_reset),
+      .pop_credit(ram_rd_data_credit),
+      .pop_valid(ram_rd_addr_valid),
+      .pop_data(ram_rd_addr_int),
+
+      .credit_initial(credit_sender_initial),
+      .credit_withhold(credit_sender_withhold),
+      .credit_count(),
+      .credit_available()
   );
 
-  br_fifo_flops #(
+  assign ram_rd_addr = ram_rd_addr_int[MinEntryIdWidth-1:0];
+
+  br_fifo_flops_push_credit #(
       .Depth(StagingFifoDepth),
       .Width(DataWidth),
-      // This FIFO should never backpressure. The same-depth
-      // br_fifo_flops_id_skid FIFO provides necessary flow control because it
-      // is always popped at the same time, and is only pushed when a
-      // corresponding entry in the id_skid_fifo has been pushed successfully.
-      // Disabling this cover asserts that the data_skid_fifo will never
-      // backpressure.
-      .EnableCoverPushBackpressure(0)
+      // This is needed because the FIFO does not support bypass
+      // of credit to valid, but the credit sender does this.
+      // TODO(zhemao): Remove this once this limitation is removed.
+      .RegisterPushOutputs(1),
+      .RegisterPopOutputs(RegisterPopOutputs)
   ) br_fifo_flops_data_skid (
       .clk,
       .rst,
       //
-      .push_ready(),
+      .push_credit_stall(1'b0),
+      .push_sender_in_reset(credit_sender_in_reset),
+      .push_receiver_in_reset(credit_receiver_in_reset),
+      .push_credit(ram_rd_data_credit),
       .push_valid(ram_rd_data_valid),
       .push_data(ram_rd_data),
+      .credit_initial_push(credit_receiver_initial),
+      .credit_withhold_push(credit_receiver_withhold),
+      .credit_count_push(),
+      .credit_available_push(),
       //
-      .pop_ready(data_skid_fifo_pop_ready),
-      .pop_valid(data_skid_fifo_pop_valid),
+      .pop_ready(reordered_resp_pop_ready),
+      .pop_valid(reordered_resp_pop_valid),
       .pop_data(reordered_resp_pop_data),
       //
       .full(),
@@ -162,31 +180,12 @@ module br_tracker_reorder_buffer_ctrl_1r1w #(
       .dealloc_complete_entry_id(reordered_resp_pop_entry_id_int)
   );
 
-  br_flow_join #(
-      .NumFlows(2)
-  ) br_flow_join_combine_skid_fifos (
-      .clk,
-      .rst,
-      //
-      .push_ready({id_skid_fifo_pop_ready, data_skid_fifo_pop_ready}),
-      .push_valid({id_skid_fifo_pop_valid, data_skid_fifo_pop_valid}),
-      //
-      .pop_ready (reordered_resp_pop_ready),
-      .pop_valid (reordered_resp_pop_valid)
-  );
-
-  assign ram_wr_addr = unordered_resp_push_entry_id[MinEntryIdWidth-1:0];
+  assign ram_wr_addr  = unordered_resp_push_entry_id[MinEntryIdWidth-1:0];
   assign ram_wr_valid = unordered_resp_push_valid;
-  assign ram_wr_data = unordered_resp_push_data;
-
-  assign ram_rd_addr = reordered_resp_pop_entry_id_int[MinEntryIdWidth-1:0];
-  assign ram_rd_addr_valid = reordered_resp_pop_beat_int;
-
-  assign reordered_resp_pop_beat_int = reordered_resp_pop_valid_int && reordered_resp_pop_ready_int;
+  assign ram_wr_data  = unordered_resp_push_data;
 
   if (EntryIdWidth > MinEntryIdWidth) begin : gen_unused_upper_entry_id_bits
-    `BR_UNUSED_NAMED(unused_upper_entry_id_bits,
-                     reordered_resp_pop_entry_id_int[EntryIdWidth-1:MinEntryIdWidth])
+    `BR_UNUSED_NAMED(unused_upper_entry_id_bits, ram_rd_addr_int[EntryIdWidth-1:MinEntryIdWidth])
   end
 
 endmodule

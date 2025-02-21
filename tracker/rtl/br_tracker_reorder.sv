@@ -50,16 +50,20 @@ module br_tracker_reorder #(
     output logic [EntryIdWidth-1:0] dealloc_complete_entry_id
 );
 
+  // Deallocation Pending Bitmap
+  // Used in integration checks
+  logic [NumEntries-1:0] dealloc_pending;
+
   // Integration Assertions
   `BR_ASSERT_STATIC(legal_num_entries_a, NumEntries > 1)
   `BR_ASSERT_STATIC(legal_entry_id_width_a, EntryIdWidth >= $clog2(NumEntries))
   `BR_ASSERT_INTG(valid_dealloc_entry_id_a, dealloc_valid |-> (dealloc_entry_id < NumEntries))
+  `BR_ASSERT_INTG(dealloc_entry_is_pending_a,
+                  dealloc_complete_valid |-> dealloc_pending[dealloc_complete_entry_id])
 
   // Internal Counter Widths (in case narrower than EntryIdWidth)
   localparam int CounterValueWidth = $clog2(NumEntries);
 
-  // Deallocation Pending Bitmap
-  logic [NumEntries-1:0] dealloc_pending;
   logic [NumEntries-1:0] dealloc_pending_next;
 
   // Allocate Counter

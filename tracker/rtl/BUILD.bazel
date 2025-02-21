@@ -125,8 +125,8 @@ verilog_library(
     srcs = ["br_tracker_reorder_buffer_ctrl_1r1w.sv"],
     deps = [
         ":br_tracker_reorder",
-        "//fifo/rtl:br_fifo_flops",
-        "//flow/rtl:br_flow_join",
+        "//credit/rtl:br_credit_sender",
+        "//fifo/rtl:br_fifo_flops_push_credit",
         "//macros:br_asserts",
         "//macros:br_unused",
     ],
@@ -141,6 +141,11 @@ br_verilog_elab_and_lint_test_suite(
             "4",
         ],
         "EntryIdWidth": [
+            "2",
+        ],
+        "RamReadLatency": [
+            "0",
+            "1",
             "2",
         ],
     },
