@@ -100,3 +100,22 @@ br_verilog_sim_test_tools_suite(
     ],
     deps = [":br_tracker_linked_list_ctrl_tb"],
 )
+
+verilog_library(
+    name = "br_tracker_reorder_buffer_flops_tb",
+    srcs = ["br_tracker_reorder_buffer_flops_tb.sv"],
+    deps = ["//tracker/rtl:br_tracker_reorder_buffer_flops"],
+)
+
+verilog_elab_test(
+    name = "br_tracker_reorder_buffer_flops_tb_elab_test",
+    deps = [":br_tracker_reorder_buffer_flops_tb"],
+)
+
+br_verilog_sim_test_tools_suite(
+    name = "br_tracker_reorder_buffer_flops_sim_test_tools_suite",
+    tools = [
+        "vcs",
+    ],
+    deps = [":br_tracker_reorder_buffer_flops_tb"],
+)

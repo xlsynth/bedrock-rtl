@@ -135,7 +135,7 @@ module br_tracker_reorder #(
 
   // Dealloc Complete Logic
   `BR_ASSERT(valid_dealloc_entry_id_a, dealloc_valid |-> (dealloc_entry_id < NumEntries))
-  assign dealloc_complete_valid = dealloc_pending[dealloc_entry_id[CounterValueWidth-1:0]];
+  assign dealloc_complete_valid = dealloc_pending[dealloc_complete_counter_value];
   if ($clog2(NumEntries) < EntryIdWidth) begin : gen_unused_upper_addr_assert
     `BR_ASSERT(unused_upper_addr_a, dealloc_entry_id[EntryIdWidth-1:CounterValueWidth] == '0)
   end
