@@ -27,14 +27,14 @@ module br_tracker_reorder_buffer_flops_tb;
   logic alloc_valid;
   logic [EntryIdWidth-1:0] alloc_entry_id;
 
-  logic dealloc_valid;
-  logic [EntryIdWidth-1:0] dealloc_entry_id;
-  logic [DataWidth-1:0]    dealloc_data;
+  logic unordered_resp_push_valid;
+  logic [EntryIdWidth-1:0] unordered_resp_push_entry_id;
+  logic [DataWidth-1:0]    unordered_resp_push_data;
 
-  logic dealloc_complete_ready;
-  logic dealloc_complete_valid;
-  logic [EntryIdWidth-1:0] dealloc_complete_entry_id;
-  logic [DataWidth-1:0]    dealloc_complete_data;
+  logic reordered_resp_pop_ready;
+  logic reordered_resp_pop_valid;
+  logic [EntryIdWidth-1:0] reordered_resp_pop_entry_id;
+  logic [DataWidth-1:0]    reordered_resp_pop_data;
 
   // For capturing the allocated IDs (in the order they were allocated)
   logic [EntryIdWidth-1:0] allocated_ids [NumEntries];
@@ -54,14 +54,14 @@ module br_tracker_reorder_buffer_flops_tb;
       .alloc_valid   (alloc_valid),
       .alloc_entry_id(alloc_entry_id),
 
-      .dealloc_valid   (dealloc_valid),
-      .dealloc_entry_id(dealloc_entry_id),
-      .dealloc_data    (dealloc_data),
+      .unordered_resp_push_valid   (unordered_resp_push_valid),
+      .unordered_resp_push_entry_id(unordered_resp_push_entry_id),
+      .unordered_resp_push_data    (unordered_resp_push_data),
 
-      .dealloc_complete_ready   (dealloc_complete_ready),
-      .dealloc_complete_valid   (dealloc_complete_valid),
-      .dealloc_complete_entry_id(dealloc_complete_entry_id),
-      .dealloc_complete_data    (dealloc_complete_data)
+      .reordered_resp_pop_ready   (reordered_resp_pop_ready),
+      .reordered_resp_pop_valid   (reordered_resp_pop_valid),
+      .reordered_resp_pop_entry_id(reordered_resp_pop_entry_id),
+      .reordered_resp_pop_data    (reordered_resp_pop_data)
   );
 
   // Clock generation
@@ -73,13 +73,13 @@ module br_tracker_reorder_buffer_flops_tb;
   // Test procedure
   initial begin
     // Initialize signals
-    clk                    = 1'b0;
-    rst                    = 1'b1;
-    alloc_ready            = 1'b0;
-    dealloc_valid          = 1'b0;
-    dealloc_entry_id       = '0;
-    dealloc_data           = '0;
-    dealloc_complete_ready = 1'b0;
+    clk                          = 1'b0;
+    rst                          = 1'b1;
+    alloc_ready                  = 1'b0;
+    unordered_resp_push_valid    = 1'b0;
+    unordered_resp_push_entry_id = '0;
+    unordered_resp_push_data     = '0;
+    reordered_resp_pop_ready     = 1'b0;
 
     // Prepare some known unique data patterns for each entry
     for (int i = 0; i < NumEntries; i++) begin
@@ -133,52 +133,52 @@ module br_tracker_reorder_buffer_flops_tb;
 
       // Drive dealloc signals at negedge
       @(negedge clk);
-      dealloc_valid    = 1'b1;
-      dealloc_entry_id = allocated_ids[idx];
-      dealloc_data     = entry_data[allocated_ids[idx]];
+      unordered_resp_push_valid    = 1'b1;
+      unordered_resp_push_entry_id = allocated_ids[idx];
+      unordered_resp_push_data     = entry_data[allocated_ids[idx]];
 
       $display("  Dealloc cycle %0d: sending entry_id %0d, data 0x%0h", j, allocated_ids[idx],
-               dealloc_data);
+               unordered_resp_push_data);
 
       // De-assert at next negedge
       @(negedge clk);
-      dealloc_valid    = 1'b0;
-      dealloc_entry_id = '0;
-      dealloc_data     = '0;
+      unordered_resp_push_valid    = 1'b0;
+      unordered_resp_push_entry_id = '0;
+      unordered_resp_push_data     = '0;
 
       // Wait a few cycles
       repeat (1) @(posedge clk);
     end
 
-    // 3) Read them off the dealloc_complete interface in original order
+    // 3) Read them off the reordered_resp_pop interface in original order
     //    They should come off as allocated_ids[0], allocated_ids[1], etc.
     //    with the correct data from entry_data[].
-    $display("Reading from dealloc_complete interface and checking order/data");
+    $display("Reading from reordered_resp_pop interface and checking order/data");
     for (int k = 0; k < NumEntries; k++) begin
       // Wait for a valid cycle (DUT->TB)
-      wait (dealloc_complete_valid == 1'b1);
+      wait (reordered_resp_pop_valid == 1'b1);
 
       @(negedge clk);
 
       // Check ID at this point
-      if (dealloc_complete_entry_id !== allocated_ids[k]) begin
-        $display("ERROR: expected dealloc_complete_entry_id %0d, got %0d", allocated_ids[k],
-                 dealloc_complete_entry_id);
+      if (reordered_resp_pop_entry_id !== allocated_ids[k]) begin
+        $display("ERROR: expected reordered_resp_pop_entry_id %0d, got %0d", allocated_ids[k],
+                 reordered_resp_pop_entry_id);
         $fatal;
       end
-      if (dealloc_complete_data !== entry_data[allocated_ids[k]]) begin
+      if (reordered_resp_pop_data !== entry_data[allocated_ids[k]]) begin
         $display("ERROR: data mismatch for entry %0d. Expected: 0x%0h, Got: 0x%0h",
-                 allocated_ids[k], entry_data[allocated_ids[k]], dealloc_complete_data);
+                 allocated_ids[k], entry_data[allocated_ids[k]], reordered_resp_pop_data);
         $fatal;
       end
-      $display("  Received correct ID=%0d, data=0x%0h at cycle %0t", dealloc_complete_entry_id,
-               dealloc_complete_data, $time);
+      $display("  Received correct ID=%0d, data=0x%0h at cycle %0t", reordered_resp_pop_entry_id,
+               reordered_resp_pop_data, $time);
 
       // Consume it
       @(negedge clk);
-      dealloc_complete_ready = 1'b1;
+      reordered_resp_pop_ready = 1'b1;
       @(negedge clk);
-      dealloc_complete_ready = 1'b0;
+      reordered_resp_pop_ready = 1'b0;
 
       // Wait a few cycles
       repeat (1) @(posedge clk);
