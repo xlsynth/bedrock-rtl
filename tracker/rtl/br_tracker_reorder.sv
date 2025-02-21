@@ -1,14 +1,31 @@
+// Copyright 2024-2025 The Bedrock-RTL Authors
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
 // Issues tags on the allocate interface and receives tags on the
 // dealloc_request interface. The tags are then put back into the original
 // allocation order and returned on the dealloc_complete interface. Tags will
 // not be re-used on the alloc interface before they are returned on the
 // dealloc_complete interface.
 
+`include "br_asserts_internal.svh"
 `include "br_asserts.svh"
 `include "br_registers.svh"
 
 module br_tracker_reorder #(
+    // Number of entries in the reorder buffer. Must be at least 1.
     parameter int NumEntries = 2,
+    // Width of the entry ID. Must be at least $clog2(NumEntries).
     parameter int EntryIdWidth = $clog2(NumEntries),
     // If 1, then assert dealloc_valid is low at the end of the test.
     parameter bit EnableAssertFinalNotDeallocValid = 1
@@ -34,15 +51,14 @@ module br_tracker_reorder #(
   // Integration Assertions
   `BR_ASSERT_STATIC(legal_num_entries_a, NumEntries > 1)
   `BR_ASSERT_STATIC(legal_entry_id_width_a, EntryIdWidth >= $clog2(NumEntries))
+  `BR_ASSERT_INTG(valid_dealloc_entry_id_a, dealloc_valid |-> (dealloc_entry_id < NumEntries))
 
   // Internal Counter Widths (in case narrower than EntryIdWidth)
   localparam int CounterValueWidth = $clog2(NumEntries);
 
-  // Internal State
+  // Deallocation Pending Bitmap
   logic [NumEntries-1:0] dealloc_pending;
   logic [NumEntries-1:0] dealloc_pending_next;
-
-  `BR_REG(dealloc_pending, dealloc_pending_next)
 
   // Allocate Counter
   logic alloc_beat;
@@ -54,7 +70,7 @@ module br_tracker_reorder #(
       .MaxIncrement(1),
       .EnableSaturate(0),
       .EnableAssertFinalNotValid(0)
-  ) allocate_counter (
+  ) br_counter_incr_allocate_counter (
       .clk,
       .rst,
       .reinit(1'b0),
@@ -77,7 +93,7 @@ module br_tracker_reorder #(
       .MaxIncrement(1),
       .EnableSaturate(0),
       .EnableAssertFinalNotValid(EnableAssertFinalNotDeallocValid)
-  ) deallocate_counter (
+  ) br_counter_incr_deallocate_counter (
       .clk,
       .rst,
       .reinit(1'b0),
@@ -98,7 +114,7 @@ module br_tracker_reorder #(
       .MaxChange(1),
       .EnableWrap(0),
       .EnableSaturate(0)
-  ) free_entry_counter (
+  ) br_counter_free_entry_counter (
       .clk,
       .rst,
       .reinit(1'b0),
@@ -123,21 +139,22 @@ module br_tracker_reorder #(
   for (genvar i = 0; i < NumEntries; i++) begin : gen_dealloc_pending_next
     logic set_dealloc_pending;
     logic clear_dealloc_pending;
+    logic dealloc_pending_le;
 
     assign set_dealloc_pending   = dealloc_valid && (dealloc_entry_id == i);
     assign clear_dealloc_pending = dealloc_complete_beat && (dealloc_complete_entry_id == i);
-    `BR_ASSERT(no_reuse_before_complete_a, $onehot0({set_dealloc_pending, clear_dealloc_pending}))
+    `BR_ASSERT_IMPL(only_set_or_clear_a, $onehot0({set_dealloc_pending, clear_dealloc_pending}))
 
-    assign dealloc_pending_next[i] = clear_dealloc_pending ? 1'b0 :
-                                         set_dealloc_pending ? 1'b1 :
-                                         dealloc_pending[i];
+    assign dealloc_pending_le = clear_dealloc_pending || set_dealloc_pending;
+
+    `BR_REGL(dealloc_pending[i], set_dealloc_pending, dealloc_pending_le)
+
   end
 
   // Dealloc Complete Logic
-  `BR_ASSERT(valid_dealloc_entry_id_a, dealloc_valid |-> (dealloc_entry_id < NumEntries))
   assign dealloc_complete_valid = dealloc_pending[dealloc_complete_counter_value];
   if ($clog2(NumEntries) < EntryIdWidth) begin : gen_unused_upper_addr_assert
-    `BR_ASSERT(unused_upper_addr_a, dealloc_entry_id[EntryIdWidth-1:CounterValueWidth] == '0)
+    `BR_ASSERT_IMPL(unused_upper_addr_a, dealloc_entry_id[EntryIdWidth-1:CounterValueWidth] == '0)
   end
 
   // Allocate Logic

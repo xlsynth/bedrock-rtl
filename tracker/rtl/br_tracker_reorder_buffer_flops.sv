@@ -1,8 +1,25 @@
+// Copyright 2024-2025 The Bedrock-RTL Authors
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
 // Implements a reorder buffer using flops for storage.
 
 module br_tracker_reorder_buffer_flops #(
+    // Number of entries in the reorder buffer. Must be at least 1.
     parameter int NumEntries = 2,
+    // Width of the entry ID. Must be at least $clog2(NumEntries).
     parameter int EntryIdWidth = 1,
+    // Width of the data payload.
     parameter int DataWidth = 1,
     // If 1, then assert dealloc_valid is low at the end of the test.
     parameter bit EnableAssertFinalNotDeallocValid = 1
@@ -36,13 +53,13 @@ module br_tracker_reorder_buffer_flops #(
   logic [DataWidth-1:0] ram_rd_data;
   logic ram_rd_data_valid;
 
-  br_tracker_reorder_buffer_1r1w #(
+  br_tracker_reorder_buffer_ctrl_1r1w #(
       .NumEntries(NumEntries),
       .EntryIdWidth(EntryIdWidth),
       .DataWidth(DataWidth),
       .RamReadLatency(0),
       .EnableAssertFinalNotDeallocValid(EnableAssertFinalNotDeallocValid)
-  ) reorder_buffer (
+  ) br_tracker_reorder_buffer_ctrl_1r1w_inst (
       .clk,
       .rst,
       //
@@ -73,7 +90,7 @@ module br_tracker_reorder_buffer_flops #(
       .Width(DataWidth),
       .NumReadPorts(1),
       .NumWritePorts(1)
-  ) reorder_buffer_ram_flops (
+  ) br_ram_flops_reorder_buffer (
       .wr_clk(clk),  // ri lint_check_waive SAME_CLOCK_NAME
       .wr_rst(rst),
       .wr_valid(ram_wr_valid),
