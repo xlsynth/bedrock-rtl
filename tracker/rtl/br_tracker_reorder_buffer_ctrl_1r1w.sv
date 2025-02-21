@@ -25,6 +25,7 @@
 // (and associated IDs) in the original allocation order.
 
 `include "br_asserts.svh"
+`include "br_unused.svh"
 
 module br_tracker_reorder_buffer_ctrl_1r1w #(
     // Number of entries in the reorder buffer. Must be at least 1.
@@ -47,15 +48,14 @@ module br_tracker_reorder_buffer_ctrl_1r1w #(
     output logic alloc_valid,
     output logic [EntryIdWidth-1:0] alloc_entry_id,
 
-    // Deallocation Request Interface
+    // Unordered Response Interface
     input logic unordered_resp_push_valid,
     input logic [EntryIdWidth-1:0] unordered_resp_push_entry_id,
     input logic [DataWidth-1:0] unordered_resp_push_data,
 
-    // Deallocation Complete Interface
+    // Reordered Response Interface
     input logic reordered_resp_pop_ready,
     output logic reordered_resp_pop_valid,
-    output logic [EntryIdWidth-1:0] reordered_resp_pop_entry_id,
     output logic [DataWidth-1:0] reordered_resp_pop_data,
 
     // 1R1W RAM Interface
@@ -81,20 +81,22 @@ module br_tracker_reorder_buffer_ctrl_1r1w #(
   logic data_skid_fifo_pop_ready;
   logic data_skid_fifo_pop_valid;
 
+  // Token FIFO to ensure there is enough space in the data_skid_fifo to land
+  // data read from RAM.
   br_fifo_flops #(
       .Depth(StagingFifoDepth),
-      .Width(EntryIdWidth)
+      .Width(1'b1)
   ) br_fifo_flops_id_skid (
       .clk,
       .rst,
       //
       .push_ready(reordered_resp_pop_ready_int),
       .push_valid(reordered_resp_pop_valid_int),
-      .push_data(reordered_resp_pop_entry_id_int),
+      .push_data(1'b0),
       //
       .pop_ready(id_skid_fifo_pop_ready),
       .pop_valid(id_skid_fifo_pop_valid),
-      .pop_data(reordered_resp_pop_entry_id),
+      .pop_data(),
       //
       .full(),
       .full_next(),
@@ -181,5 +183,10 @@ module br_tracker_reorder_buffer_ctrl_1r1w #(
   assign ram_rd_addr_valid = reordered_resp_pop_beat_int;
 
   assign reordered_resp_pop_beat_int = reordered_resp_pop_valid_int && reordered_resp_pop_ready_int;
+
+  if (EntryIdWidth > MinEntryIdWidth) begin : gen_unused_upper_entry_id_bits
+    `BR_UNUSED_NAMED(unused_upper_entry_id_bits,
+                     reordered_resp_pop_entry_id_int[EntryIdWidth-1:MinEntryIdWidth])
+  end
 
 endmodule

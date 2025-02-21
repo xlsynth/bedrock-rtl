@@ -34,15 +34,14 @@ module br_tracker_reorder_buffer_flops #(
     output logic alloc_valid,
     output logic [EntryIdWidth-1:0] alloc_entry_id,
 
-    // Deallocation Request Interface
+    // Unordered Response Interface
     input logic unordered_resp_push_valid,
     input logic [EntryIdWidth-1:0] unordered_resp_push_entry_id,
     input logic [DataWidth-1:0] unordered_resp_push_data,
 
-    // Deallocation Complete Interface
+    // Reordered Response Interface
     input logic reordered_resp_pop_ready,
     output logic reordered_resp_pop_valid,
-    output logic [EntryIdWidth-1:0] reordered_resp_pop_entry_id,
     output logic [DataWidth-1:0] reordered_resp_pop_data
 );
   localparam int MinEntryIdWidth = $clog2(NumEntries);
@@ -75,7 +74,6 @@ module br_tracker_reorder_buffer_flops #(
       //
       .reordered_resp_pop_ready,
       .reordered_resp_pop_valid,
-      .reordered_resp_pop_entry_id,
       .reordered_resp_pop_data,
       //
       .ram_wr_addr,

@@ -128,6 +128,7 @@ verilog_library(
         "//fifo/rtl:br_fifo_flops",
         "//flow/rtl:br_flow_join",
         "//macros:br_asserts",
+        "//macros:br_unused",
     ],
 )
 
