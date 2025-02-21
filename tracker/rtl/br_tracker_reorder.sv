@@ -11,7 +11,9 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-
+//
+// Bedrock-RTL Reordering Tracker
+//
 // Issues tags on the allocate interface and receives tags on the
 // dealloc_request interface. The tags are then put back into the original
 // allocation order and returned on the dealloc_complete interface. Tags will

@@ -11,7 +11,9 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-
+//
+// Bedrock-RTL Reorder Buffer (Flops Storage)
+//
 // Implements a reorder buffer using flops for storage.
 
 module br_tracker_reorder_buffer_flops #(

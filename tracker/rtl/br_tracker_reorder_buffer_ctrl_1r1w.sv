@@ -11,10 +11,12 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-
+//
+// Bedrock-RTL 1R1W Reorder Buffer Controller
+//
 // Uses br_reorder_tracker to implement a reorder buffer. Tags are allocated
 // from the allocate interface (i.e. for requests) and responses returned on the
-// deallocate_request interface. The reordered responses are returned on the
+// unordered_resp_push interface. The reordered responses are returned on the
 // reordered_resp_pop interface. Data provided on the unordered_resp_push
 // interface is stored in a 1R1W RAM using the unordered_resp_push_entry_id as
 // the write address when the unordered_resp_push_valid is asserted. The
@@ -108,7 +110,12 @@ module br_tracker_reorder_buffer_ctrl_1r1w #(
   br_fifo_flops #(
       .Depth(StagingFifoDepth),
       .Width(DataWidth),
-      // Disabling this cover asserts that the data_skid_fifo will never backpressure.
+      // This FIFO should never backpressure. The same-depth
+      // br_fifo_flops_id_skid FIFO provides necessary flow control because it
+      // is always popped at the same time, and is only pushed when a
+      // corresponding entry in the id_skid_fifo has been pushed successfully.
+      // Disabling this cover asserts that the data_skid_fifo will never
+      // backpressure.
       .EnableCoverPushBackpressure(0)
   ) br_fifo_flops_data_skid (
       .clk,
