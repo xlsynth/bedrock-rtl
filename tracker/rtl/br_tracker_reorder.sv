@@ -58,7 +58,6 @@ module br_tracker_reorder #(
 
   // Deallocation Pending Bitmap
   logic [NumEntries-1:0] dealloc_pending;
-  logic [NumEntries-1:0] dealloc_pending_next;
 
   // Allocate Counter
   logic alloc_beat;
