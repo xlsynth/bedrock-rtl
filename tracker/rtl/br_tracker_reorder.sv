@@ -144,9 +144,8 @@ module br_tracker_reorder #(
     logic set_dealloc_pending;
     logic clear_dealloc_pending;
 
-    assign set_dealloc_pending   = dealloc_valid && (dealloc_entry_id == i);
+    assign set_dealloc_pending = dealloc_valid && (dealloc_entry_id == i);
     assign clear_dealloc_pending = dealloc_complete_beat && (dealloc_complete_entry_id == i);
-    `BR_ASSERT_IMPL(only_set_or_clear_a, $onehot0({set_dealloc_pending, clear_dealloc_pending}))
 
     assign dealloc_pending_next[i] = set_dealloc_pending ? 1'b1 :
                               clear_dealloc_pending ? 1'b0 :
@@ -156,11 +155,17 @@ module br_tracker_reorder #(
 
   // Dealloc Complete Logic
   assign dealloc_complete_valid = dealloc_pending[dealloc_complete_counter_value];
+
+  // Allocate Logic
+  assign alloc_valid = !free_entry_empty;
+
+  // Implementation Assertions
   if ($clog2(NumEntries) < EntryIdWidth) begin : gen_unused_upper_addr_assert
     `BR_ASSERT_IMPL(unused_upper_addr_a, dealloc_entry_id[EntryIdWidth-1:CounterValueWidth] == '0)
   end
 
-  // Allocate Logic
-  assign alloc_valid = !free_entry_empty;
+  `BR_ASSERT_IMPL(
+      no_request_and_complete_same_id_a,
+      (dealloc_valid && dealloc_complete_beat) |-> (dealloc_entry_id != dealloc_complete_entry_id))
 
 endmodule
