@@ -162,8 +162,8 @@ module br_tracker_reorder_buffer_ctrl_1r1w #(
       .push_ready({id_skid_fifo_pop_ready, data_skid_fifo_pop_ready}),
       .push_valid({id_skid_fifo_pop_valid, data_skid_fifo_pop_valid}),
       //
-      .pop_ready(reordered_resp_pop_ready),
-      .pop_valid(reordered_resp_pop_valid)
+      .pop_ready (reordered_resp_pop_ready),
+      .pop_valid (reordered_resp_pop_valid)
   );
 
   assign ram_wr_addr = unordered_resp_push_entry_id[MinEntryIdWidth-1:0];
