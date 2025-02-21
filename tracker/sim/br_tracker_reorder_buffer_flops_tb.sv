@@ -33,7 +33,6 @@ module br_tracker_reorder_buffer_flops_tb;
 
   logic reordered_resp_pop_ready;
   logic reordered_resp_pop_valid;
-  logic [EntryIdWidth-1:0] reordered_resp_pop_entry_id;
   logic [DataWidth-1:0]    reordered_resp_pop_data;
 
   // For capturing the allocated IDs (in the order they were allocated)
@@ -58,10 +57,9 @@ module br_tracker_reorder_buffer_flops_tb;
       .unordered_resp_push_entry_id(unordered_resp_push_entry_id),
       .unordered_resp_push_data    (unordered_resp_push_data),
 
-      .reordered_resp_pop_ready   (reordered_resp_pop_ready),
-      .reordered_resp_pop_valid   (reordered_resp_pop_valid),
-      .reordered_resp_pop_entry_id(reordered_resp_pop_entry_id),
-      .reordered_resp_pop_data    (reordered_resp_pop_data)
+      .reordered_resp_pop_ready(reordered_resp_pop_ready),
+      .reordered_resp_pop_valid(reordered_resp_pop_valid),
+      .reordered_resp_pop_data (reordered_resp_pop_data)
   );
 
   // Clock generation
@@ -160,19 +158,13 @@ module br_tracker_reorder_buffer_flops_tb;
 
       @(negedge clk);
 
-      // Check ID at this point
-      if (reordered_resp_pop_entry_id !== allocated_ids[k]) begin
-        $display("ERROR: expected reordered_resp_pop_entry_id %0d, got %0d", allocated_ids[k],
-                 reordered_resp_pop_entry_id);
-        $fatal;
-      end
+      // Check data at this point
       if (reordered_resp_pop_data !== entry_data[allocated_ids[k]]) begin
         $display("ERROR: data mismatch for entry %0d. Expected: 0x%0h, Got: 0x%0h",
                  allocated_ids[k], entry_data[allocated_ids[k]], reordered_resp_pop_data);
         $fatal;
       end
-      $display("  Received correct ID=%0d, data=0x%0h at cycle %0t", reordered_resp_pop_entry_id,
-               reordered_resp_pop_data, $time);
+      $display("  Received correct data=0x%0h at cycle %0t", reordered_resp_pop_data, $time);
 
       // Consume it
       @(negedge clk);
