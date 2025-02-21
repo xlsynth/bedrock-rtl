@@ -85,7 +85,7 @@ module br_tracker_freelist_fpv_monitor #(
   always_comb begin
     fv_entry_dealloc = 'd0;
     for (int i = 0; i < NumDeallocPorts; i++) begin
-      `BR_ASSUME(uniqie_dealloc_entry_id_a,
+      `BR_ASSUME(unique_dealloc_entry_id_a,
                  dealloc_valid[i] |-> !fv_entry_dealloc[dealloc_entry_id[i]])
       if (dealloc_valid[i]) begin
         fv_entry_dealloc[dealloc_entry_id[i]] = 1'd1;
@@ -98,7 +98,7 @@ module br_tracker_freelist_fpv_monitor #(
   always_comb begin
     fv_entry_alloc = 'd0;
     for (int i = 0; i < NumAllocPerCycle; i++) begin
-      `BR_ASSERT(uniqie_alloc_entry_id_a, fv_alloc_valid[i] |-> !fv_entry_alloc[alloc_entry_id[i]])
+      `BR_ASSERT(unique_alloc_entry_id_a, fv_alloc_valid[i] |-> !fv_entry_alloc[alloc_entry_id[i]])
       if (fv_alloc_valid[i]) begin
         fv_entry_alloc[alloc_entry_id[i]] = 1'd1;
       end
