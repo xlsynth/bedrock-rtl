@@ -18,6 +18,12 @@ load("//bazel:verilog.bzl", "verilog_elab_test")
 
 package(default_visibility = ["//visibility:public"])
 
+# Basic br_tracker_reorder checker
+verilog_library(
+    name = "br_tracker_reorder_basic_fpv_monitor",
+    srcs = ["br_tracker_reorder_basic_fpv_monitor.sv"],
+)
+
 # Bedrock-RTL Free List Manager
 
 verilog_library(
@@ -126,4 +132,77 @@ br_verilog_fpv_test_suite(
     tool = "jg",
     top = "br_tracker_linked_list_ctrl",
     deps = [":br_tracker_linked_list_ctrl_fpv_monitor"],
+)
+
+# Bedrock-RTL Reordering Tracker
+
+verilog_library(
+    name = "br_tracker_reorder_fpv_monitor",
+    srcs = ["br_tracker_reorder_fpv_monitor.sv"],
+    deps = [
+        ":br_tracker_reorder_basic_fpv_monitor",
+        "//tracker/rtl:br_tracker_reorder",
+    ],
+)
+
+verilog_elab_test(
+    name = "br_tracker_reorder_fpv_monitor_elab_test",
+    deps = [":br_tracker_reorder_fpv_monitor"],
+)
+
+br_verilog_fpv_test_suite(
+    name = "br_tracker_reorder_jg_test_suite",
+    custom_tcl_body = "br_tracker_reorder_fpv.tcl",
+    # EntryIdWidth >= $clog2(NumEntries)
+    illegal_param_combinations = {
+        (
+            "EntryIdWidth",
+            "NumEntries",
+        ): [
+            ("1", "4"),
+            ("1", "6"),
+            ("2", "6"),
+        ],
+    },
+    params = {
+        "EntryIdWidth": [
+            "1",
+            "2",
+            "3",
+        ],
+        "NumEntries": [
+            "2",
+            "4",
+            "6",
+        ],
+    },
+    tool = "jg",
+    top = "br_tracker_reorder",
+    deps = [":br_tracker_reorder_fpv_monitor"],
+)
+
+# Bedrock-RTL Reorder Buffer (Flops Storage)
+
+verilog_library(
+    name = "br_tracker_reorder_buffer_flops_fpv_monitor",
+    srcs = ["br_tracker_reorder_buffer_flops_fpv_monitor.sv"],
+    deps = [
+        ":br_tracker_reorder_basic_fpv_monitor",
+        "//tracker/rtl:br_tracker_reorder_buffer_flops",
+    ],
+)
+
+verilog_elab_test(
+    name = "br_tracker_reorder_buffer_flops_fpv_monitor_elab_test",
+    deps = [":br_tracker_reorder_buffer_flops_fpv_monitor"],
+)
+
+br_verilog_fpv_test_suite(
+    name = "br_tracker_reorder_buffer_flops_jg_test_suite",
+    custom_tcl_body = "br_tracker_reorder_fpv.tcl",
+    # TODO: temp check in to reproduce bug
+    gui = True,
+    tool = "jg",
+    top = "br_tracker_reorder_buffer_flops",
+    deps = [":br_tracker_reorder_buffer_flops_fpv_monitor"],
 )
