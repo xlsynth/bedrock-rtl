@@ -123,8 +123,8 @@ verilog_library(
     name = "br_tracker_reorder_buffer_1r1w",
     srcs = ["br_tracker_reorder_buffer_1r1w.sv"],
     deps = [
-        "//fifo/rtl:br_fifo_flops",
         ":br_tracker_reorder",
+        "//fifo/rtl:br_fifo_flops",
         "//macros:br_asserts",
     ],
 )
