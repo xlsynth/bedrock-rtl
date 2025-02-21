@@ -58,6 +58,7 @@ module br_tracker_reorder #(
 
   // Deallocation Pending Bitmap
   logic [NumEntries-1:0] dealloc_pending;
+  logic [NumEntries-1:0] dealloc_pending_next;
 
   // Allocate Counter
   logic alloc_beat;
@@ -135,18 +136,19 @@ module br_tracker_reorder #(
   // pending bitmap where they are visited in order according to the deallocation
   // counter (so they are released in order).
 
+  `BR_REGL(dealloc_pending, dealloc_pending_next, (dealloc_valid || dealloc_complete_beat))
+
   for (genvar i = 0; i < NumEntries; i++) begin : gen_dealloc_pending_next
     logic set_dealloc_pending;
     logic clear_dealloc_pending;
-    logic dealloc_pending_le;
 
     assign set_dealloc_pending   = dealloc_valid && (dealloc_entry_id == i);
     assign clear_dealloc_pending = dealloc_complete_beat && (dealloc_complete_entry_id == i);
     `BR_ASSERT_IMPL(only_set_or_clear_a, $onehot0({set_dealloc_pending, clear_dealloc_pending}))
 
-    assign dealloc_pending_le = clear_dealloc_pending || set_dealloc_pending;
-
-    `BR_REGL(dealloc_pending[i], set_dealloc_pending, dealloc_pending_le)
+    dealloc_pending_next[i] = set_dealloc_pending ? 1'b1 :
+                              clear_dealloc_pending ? 1'b0 :
+                              dealloc_pending[i];
 
   end
 
