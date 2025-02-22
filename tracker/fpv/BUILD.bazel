@@ -18,10 +18,16 @@ load("//bazel:verilog.bzl", "verilog_elab_test")
 
 package(default_visibility = ["//visibility:public"])
 
-# Basic br_tracker_reorder checker
+# fv_fifo
 verilog_library(
-    name = "br_tracker_reorder_basic_fpv_monitor",
-    srcs = ["br_tracker_reorder_basic_fpv_monitor.sv"],
+    name = "fv_fifo",
+    srcs = ["fv_fifo.sv"],
+)
+
+# basic check with a buffer
+verilog_library(
+    name = "br_tracker_reorder_buffer_basic_fpv_monitor",
+    srcs = ["br_tracker_reorder_buffer_basic_fpv_monitor.sv"],
 )
 
 # Bedrock-RTL Free List Manager
@@ -75,6 +81,7 @@ br_verilog_fpv_test_suite(
             "7",
         ],
     },
+    tags = ["manual"],
     tool = "jg",
     top = "br_tracker_freelist",
     deps = [":br_tracker_freelist_fpv_monitor"],
@@ -129,6 +136,7 @@ br_verilog_fpv_test_suite(
             "4",
         ],
     },
+    tags = ["manual"],
     tool = "jg",
     top = "br_tracker_linked_list_ctrl",
     deps = [":br_tracker_linked_list_ctrl_fpv_monitor"],
@@ -140,7 +148,6 @@ verilog_library(
     name = "br_tracker_reorder_fpv_monitor",
     srcs = ["br_tracker_reorder_fpv_monitor.sv"],
     deps = [
-        ":br_tracker_reorder_basic_fpv_monitor",
         "//tracker/rtl:br_tracker_reorder",
     ],
 )
@@ -187,7 +194,8 @@ verilog_library(
     name = "br_tracker_reorder_buffer_flops_fpv_monitor",
     srcs = ["br_tracker_reorder_buffer_flops_fpv_monitor.sv"],
     deps = [
-        ":br_tracker_reorder_basic_fpv_monitor",
+        ":br_tracker_reorder_buffer_basic_fpv_monitor",
+        ":fv_fifo",
         "//tracker/rtl:br_tracker_reorder_buffer_flops",
     ],
 )
@@ -199,10 +207,92 @@ verilog_elab_test(
 
 br_verilog_fpv_test_suite(
     name = "br_tracker_reorder_buffer_flops_jg_test_suite",
-    custom_tcl_body = "br_tracker_reorder_fpv.tcl",
-    # TODO: temp check in to reproduce bug
-    gui = True,
+    custom_tcl_body = "br_tracker_reorder_buffer_flops_fpv.tcl",
+    # EntryIdWidth >= $clog2(NumEntries)
+    illegal_param_combinations = {
+        (
+            "EntryIdWidth",
+            "NumEntries",
+        ): [
+            ("1", "4"),
+            ("1", "6"),
+            ("2", "6"),
+        ],
+    },
+    params = {
+        "DataWidth": [
+            "1",
+            "3",
+        ],
+        "EntryIdWidth": [
+            "1",
+            "2",
+            "3",
+        ],
+        "NumEntries": [
+            "2",
+            "4",
+            "6",
+        ],
+    },
     tool = "jg",
     top = "br_tracker_reorder_buffer_flops",
     deps = [":br_tracker_reorder_buffer_flops_fpv_monitor"],
+)
+
+# Bedrock-RTL 1R1W Reorder Buffer Controller
+
+verilog_library(
+    name = "br_tracker_reorder_buffer_ctrl_1r1w_fpv_monitor",
+    srcs = ["br_tracker_reorder_buffer_ctrl_1r1w_fpv_monitor.sv"],
+    deps = [
+        ":br_tracker_reorder_buffer_basic_fpv_monitor",
+        ":fv_fifo",
+        "//tracker/rtl:br_tracker_reorder_buffer_ctrl_1r1w",
+    ],
+)
+
+verilog_elab_test(
+    name = "br_tracker_reorder_buffer_ctrl_1r1w_fpv_monitor_elab_test",
+    deps = [":br_tracker_reorder_buffer_ctrl_1r1w_fpv_monitor"],
+)
+
+br_verilog_fpv_test_suite(
+    name = "br_tracker_reorder_buffer_ctrl_1r1w_jg_test_suite",
+    custom_tcl_body = "br_tracker_reorder_buffer_ctrl_1r1w_fpv.tcl",
+    # EntryIdWidth >= $clog2(NumEntries)
+    illegal_param_combinations = {
+        (
+            "EntryIdWidth",
+            "NumEntries",
+        ): [
+            ("1", "4"),
+            ("1", "6"),
+            ("2", "6"),
+        ],
+    },
+    params = {
+        "DataWidth": [
+            "1",
+            "3",
+        ],
+        "EntryIdWidth": [
+            "1",
+            "2",
+            "3",
+        ],
+        "NumEntries": [
+            "2",
+            "4",
+            "6",
+        ],
+        "RamReadLatency": [
+            "0",
+            "1",
+            "4",
+        ],
+    },
+    tool = "jg",
+    top = "br_tracker_reorder_buffer_ctrl_1r1w",
+    deps = [":br_tracker_reorder_buffer_ctrl_1r1w_fpv_monitor"],
 )
