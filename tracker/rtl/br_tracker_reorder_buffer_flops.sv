@@ -23,6 +23,10 @@ module br_tracker_reorder_buffer_flops #(
     parameter int EntryIdWidth = 1,
     // Width of the data payload.
     parameter int DataWidth = 1,
+    // If 1, ensure that the reordered_resp_pop_valid and reordered_resp_pop_data
+    // come directly from registers, improving timing at the cost of an
+    // additional cycle of latency.
+    parameter bit RegisterPopOutputs = 0,
     // If 1, then assert unordered_resp_push_valid is low at the end of the test.
     parameter bit EnableAssertFinalNotDeallocValid = 1
 ) (
@@ -59,6 +63,7 @@ module br_tracker_reorder_buffer_flops #(
       .EntryIdWidth(EntryIdWidth),
       .DataWidth(DataWidth),
       .RamReadLatency(0),
+      .RegisterPopOutputs(RegisterPopOutputs),
       .EnableAssertFinalNotDeallocValid(EnableAssertFinalNotDeallocValid)
   ) br_tracker_reorder_buffer_ctrl_1r1w_inst (
       .clk,
