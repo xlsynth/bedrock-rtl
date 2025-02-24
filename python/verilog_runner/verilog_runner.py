@@ -45,12 +45,13 @@ def main():
         "regardless of the environment variable setting."
     )
     plugin_dirs_env = os.environ.get("VERILOG_RUNNER_PLUGIN_PATH", "")
-    plugin_dirs = plugin_dirs_env.split(os.pathsep) + ["."]
-
-    if len(plugin_dirs) == 0 or plugin_dirs[0] == "":
-        raise ValueError("VERILOG_RUNNER_PLUGIN_PATH environment variable is not set.")
-
     logging.info(f"VERILOG_RUNNER_PLUGIN_PATH: {plugin_dirs_env}")
+    plugin_dirs = plugin_dirs_env.split(os.pathsep)
+    if plugin_dirs[0] == "":
+        plugin_dirs = plugin_dirs[1:]
+    if len(plugin_dirs) == 0:
+        raise ValueError("Found no directories in VERILOG_RUNNER_PLUGIN_PATH.")
+    plugin_dirs += ["."]
 
     allowed_subcommands = (Elab, Lint, Sim, Fpv)
     subcommand_name_to_class = {cls.name: cls for cls in allowed_subcommands}
