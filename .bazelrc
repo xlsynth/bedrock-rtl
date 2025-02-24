@@ -1,0 +1,16 @@
+# ACTION REQUIRED:
+# * Please implement verilog runner plugins for tools and then set:
+#
+#     common --action_env=VERILOG_RUNNER_PLUGIN_PATH=<some_paths>
+#
+#   in the list below. Otherwise, tests will fail due to missing elab, lint, sim, fpv plugins.
+#   See //python/verilog_runner/README.adoc.
+
+# The environment variable must be set to some string even if it's empty.
+common --action_env=VERILOG_RUNNER_PLUGIN_PATH=""
+
+# These flags are required -- otherwise the Verilog Bazel test rules will crash.
+common --local_resources=verilog_elab_test_tool_licenses=10000
+common --local_resources=verilog_lint_test_tool_licenses=10000
+common --local_resources=verilog_sim_test_tool_licenses=10000
+common --local_resources=verilog_fpv_test_tool_licenses=10000
