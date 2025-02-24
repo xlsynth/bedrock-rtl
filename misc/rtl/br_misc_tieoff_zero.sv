@@ -32,7 +32,7 @@ module br_misc_tieoff_zero #(
     output logic [Width-1:0] out
 );
 
-  `BR_ASSERT_STATIC(width_gte_0, Width >= 1)
+  `BR_ASSERT_STATIC(width_gte_1, Width >= 1)
 
   // ri lint_check_waive CONST_ASSIGN CONST_OUTPUT
   assign out = {Width{1'b0}};

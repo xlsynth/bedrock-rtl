@@ -31,7 +31,7 @@ module br_misc_unused #(
     input logic [Width-1:0] in
 );
 
-  `BR_ASSERT_STATIC(width_gte_0, Width >= 1)
+  `BR_ASSERT_STATIC(width_gte_1, Width >= 1)
 
   logic unused;  // ri lint_check_waive NOT_READ
   // cadence keep_signal_name unused
