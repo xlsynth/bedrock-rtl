@@ -30,7 +30,7 @@ For example:
 
 [source,shell]
 ----
-docker build . --target user --tag=bedrock-rtl:${USER}
+docker build . --tag=bedrock-rtl:${USER}
 docker run -v $(pwd):/src -w /src bedrock-rtl:${USER} <YOUR_COMMAND>
 ----
 
