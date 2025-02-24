@@ -48,9 +48,11 @@ def main():
     logging.info(f"VERILOG_RUNNER_PLUGIN_PATH: {plugin_dirs_env}")
     plugin_dirs = plugin_dirs_env.split(os.pathsep)
     if plugin_dirs[0] == "":
+        logging.info(
+            "Stripping off empty first element from VERILOG_RUNNER_PLUGIN_PATH."
+        )
         plugin_dirs = plugin_dirs[1:]
-    if len(plugin_dirs) == 0:
-        raise ValueError("Found no directories in VERILOG_RUNNER_PLUGIN_PATH.")
+    logging.info("Adding current directory to plugin search path.")
     plugin_dirs += ["."]
 
     allowed_subcommands = (Elab, Lint, Sim, Fpv)
