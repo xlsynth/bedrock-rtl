@@ -68,13 +68,14 @@ def collect_plugin_files(plugin_dirs: List[str]) -> List[str]:
     plugin_files = []
     for directory in plugin_dirs:
         if not os.path.exists(directory):
-            raise ValueError(f"{directory} does not exist.")
-        if not os.path.isdir(directory):
-            raise ValueError(f"{directory} is not a directory.")
-        for filename in os.listdir(directory):
-            if filename.endswith(".py") and not filename.startswith("__"):
-                file_path = os.path.join(directory, filename)
-                plugin_files.append(file_path)
+            logging.warning(f"{directory} does not exist. Skipping.")
+        elif not os.path.isdir(directory):
+            logging.warning(f"{directory} is not a directory. Skipping.")
+        else:
+            for filename in os.listdir(directory):
+                if filename.endswith(".py") and not filename.startswith("__"):
+                    file_path = os.path.join(directory, filename)
+                    plugin_files.append(file_path)
     return plugin_files
 
 
