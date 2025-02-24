@@ -41,9 +41,9 @@ module br_tracker_freelist_fpv_monitor #(
     input logic                                           clk,
     input logic                                           rst,
     // Allocation Interface
-    input logic [AllocCountWidth-1:0]                     alloc_receivable,
-    input logic [AllocCountWidth-1:0]                     alloc_sendable,
-    input logic [NumAllocPerCycle-1:0][EntryIdWidth-1:0]  alloc_entry_id,
+    input logic [  AllocCountWidth-1:0]                   alloc_receivable,
+    input logic [  AllocCountWidth-1:0]                   alloc_sendable,
+    input logic [ NumAllocPerCycle-1:0][EntryIdWidth-1:0] alloc_entry_id,
     // Deallocation Interface
     input logic [  NumDeallocPorts-1:0]                   dealloc_valid,
     input logic [  NumDeallocPorts-1:0][EntryIdWidth-1:0] dealloc_entry_id,
@@ -69,9 +69,9 @@ module br_tracker_freelist_fpv_monitor #(
   always_comb begin
     fv_alloc_valid = 'd0;
     for (int i = 0; i < NumAllocPerCycle; i++) begin
-        if (i < fv_allocated) begin
-            fv_alloc_valid[i] = 1'd1;
-        end
+      if (i < fv_allocated) begin
+        fv_alloc_valid[i] = 1'd1;
+      end
     end
   end
 
@@ -130,15 +130,15 @@ module br_tracker_freelist_fpv_monitor #(
 
   // when freelist is empty, no more alloc_sendable
   `BR_ASSERT(freelist_empty_no_alloc_a,
-            fv_entry_used == {NumEntries{1'b1}} |-> alloc_sendable == 'd0)
+             fv_entry_used == {NumEntries{1'b1}} |-> alloc_sendable == 'd0)
 
   // if freelist is not empty, next cycle, some alloc_port should allocate another free entry
   `BR_ASSERT(forward_progress_a,
              (fv_entry_used | fv_entry_alloc) != {NumEntries{1'b1}} |=> alloc_sendable != 'd0)
 
   // Number of deallocations performed last cycle
-  `BR_ASSERT(dealloc_count_a, ##DeallocCountDelay
-            dealloc_count == $past($countones(dealloc_valid),DeallocCountDelay))
+  `BR_ASSERT(dealloc_count_a, ##DeallocCountDelay dealloc_count == $past($countones(dealloc_valid),
+                                                                         DeallocCountDelay))
 
   // ----------Critical Covers----------
   `BR_COVER(all_alloc_valid_c, &fv_alloc_valid)
