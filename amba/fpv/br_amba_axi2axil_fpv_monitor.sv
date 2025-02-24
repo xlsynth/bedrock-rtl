@@ -16,7 +16,6 @@
 
 `include "br_asserts.svh"
 `include "br_registers.svh"
-`include "amba4_defines.svh"
 
 module br_amba_axi2axil_fpv_monitor #(
     parameter int AddrWidth = 12,  // Must be at least 12
@@ -98,9 +97,19 @@ module br_amba_axi2axil_fpv_monitor #(
     input logic                             axil_rready
 );
 
-/*
+
     // Instance of the AXI Slave DUV
-    axi_slave axi_duv_slave (
+    axi4_master #(
+      .ADDR_WIDTH(AddrWidth),
+      .DATA_WIDTH(DataWidth),
+      .ID_WIDTH(IdWidth),
+      .AWUSER_WIDTH(AWUserWidth),
+      .ARUSER_WIDTH(ARUserWidth),
+      .WUSER_WIDTH(WUserWidth),
+      .BUSER_WIDTH(BUserWidth),
+      .RUSER_WIDTH(RUserWidth),
+      .MAX_PENDING(MaxOutstandingReqs)
+  ) axi_input_slave (
         .aclk          (clk),
         .aresetn       (~rst),
         .awid          (axi_awid),
@@ -157,12 +166,94 @@ module br_amba_axi2axil_fpv_monitor #(
         .cactive       ('d0)
     );
 
-    defparam axi_duv_slave.ADDR_WIDTH              = AddrWidth;
-    defparam axi_duv_slave.DATA_WIDTH              = DataWidth;
-    defparam axi_duv_slave.ID_WIDTH                = IdWidth;
-    defparam axi_duv_slave.LEN_WIDTH               = br_amba::AxiBurstLenWidth;
-    defparam axi_duv_slave.MAX_PENDING             = MaxOutstandingReqs;
-*/
+  axi4_ace_slave #(
+      .ADDR_WIDTH(AddrWidth),
+      .DATA_WIDTH(DataWidth),
+      .ID_WIDTH(IdWidth),
+      .AWUSER_WIDTH(AWUserWidth),
+      .ARUSER_WIDTH(ARUserWidth),
+      .WUSER_WIDTH(WUserWidth),
+      .BUSER_WIDTH(BUserWidth),
+      .RUSER_WIDTH(RUserWidth),
+      .MAX_PENDING(MaxOutstandingReqs)
+  ) axi_output_master(
+    // Global signals
+    .aclk    (clk),
+    .aresetn (!rst),
+    .csysreq ('d0),
+    .csysack ('d0),
+    .cactive ('d0),
+    // Write Address Channel
+    .awid      ('d0),
+    .awaddr    (axil_awaddr),
+    .awlen     ('d0),
+    .awsize    ('d0),
+    .awburst   ('d0),
+    .awlock    ('d0),
+    .awcache   ('d0),
+    .awprot    (axil_awprot),
+    .awqos     ('d0),
+    .awregion  ('d0),
+    .awuser    (axil_awuser),
+    .awunique  ('d0),
+    .awvalid   (axil_awvalid),
+    .awready   (axil_awready),
+    .awdomain  ('d0),
+    .awsnoop   ('d0),
+    .awbar     ('d0),
+    // Write Channel
+    .wdata     (axil_wdata),
+    .wstrb     (axil_wstrb),
+    .wuser     (axil_wuser),
+    .wlast     ('d0),
+    .wvalid    (axil_wvalid),
+    .wready    (axil_wready),
+    .wack      ('d0),
+    // Write Response channel
+    .bid       ('d0),
+    .bresp     (axil_bresp),
+    .buser     (axil_buser),
+    .bvalid    (axil_bvalid),
+    .bready    (axil_bready),
+    // Read Address Channel
+    .arid      (),
+    .araddr    (axil_araddr),
+    .arlen     (),
+    .arsize    (),
+    .arburst   (),
+    .arlock    (axil_arprot),
+    .arcache   (),
+    .arprot    (),
+    .arqos     (),
+    .arregion  (),
+    .aruser    (axil_aruser),
+    .arvalid   (axil_arvalid),
+    .arready   (axil_arready),
+    .ardomain  (),
+    .arsnoop   (),
+    .arbar     (),
+    // Read Channel
+    .rid       (),
+    .rdata     (axil_rdata),
+    .rresp     (axil_rresp),
+    .rack      (),
+    .acvalid   (),
+    .acready   (),
+    .acaddr    (),
+    .acprot    (),
+    .acsnoop   (),
+    .cdvalid   (),
+    .cdready   (),
+    .cddata    (),
+    .cdlast    (),
+    .crvalid   (),
+    .crready   (),
+    .crresp    (),
+    .ruser     (axil_ruser),
+    .rlast     (),
+    .rvalid    (axil_rvalid),
+    .rready    (axil_rready)
+  );
 
 endmodule : br_amba_axi2axil_fpv_monitor
 
