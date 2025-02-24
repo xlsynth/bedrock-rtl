@@ -74,10 +74,11 @@ module br_arb_weighted_rr_fpv_monitor #(
   `BR_ASSERT(no_spurious_grant_a, grant[i] |-> request[i])
 
   // ----------Fairness Check----------
-    `BR_ASSERT(
+  // verilog_lint: waive-start line-length
+  `BR_ASSERT(
       weighted_rr_a,
-      (fv_weight_cnt[i] == 'd0) && (fv_weight_cnt_next[i] == 'd0) && enable_priority_update |->
-      !grant[i] || (request_weight[i] == 'd1))
+      (fv_weight_cnt[i] == 'd0) && (fv_weight_cnt_next[i] == 'd0) && enable_priority_update |-> !grant[i] || (request_weight[i] == 'd1))
+  // verilog_lint: waive-stop line-length
 
   // ----------Forward Progress Check----------
   `BR_ASSERT(must_grant_a, |request |-> |grant)

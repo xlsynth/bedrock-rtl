@@ -50,7 +50,7 @@ module br_flow_mux_fixed_fpv_monitor #(
       .push_data,
       .pop_ready,
       .pop_valid(pop_valid_unstable),
-      .pop_data(pop_data_unstable)
+      .pop_data (pop_data_unstable)
   );
 
   // ----------FV Modeling Code----------

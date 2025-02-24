@@ -61,9 +61,9 @@ module br_multi_xfer_reg_fwd_fpv_monitor #(
   always_comb begin
     fv_push_valid = 'd0;
     for (int i = 0; i < NumSymbols; i++) begin
-        if (i < fv_pushed) begin
-            fv_push_valid[i] = 1'd1;
-        end
+      if (i < fv_pushed) begin
+        fv_push_valid[i] = 1'd1;
+      end
     end
   end
 
@@ -71,9 +71,9 @@ module br_multi_xfer_reg_fwd_fpv_monitor #(
   always_comb begin
     fv_pop_valid = 'd0;
     for (int i = 0; i < NumSymbols; i++) begin
-        if (i < fv_popped) begin
-            fv_pop_valid[i] = 1'd1;
-        end
+      if (i < fv_popped) begin
+        fv_pop_valid[i] = 1'd1;
+      end
     end
   end
 
@@ -85,8 +85,8 @@ module br_multi_xfer_reg_fwd_fpv_monitor #(
   // ----------FV assumptions----------
   `BR_ASSUME(push_receivable_range_a, push_sendable <= NumSymbols)
   `BR_ASSUME(pop_receivable_range_a, pop_receivable <= NumSymbols)
-  `BR_ASSUME(push_receivable_increment_a,
-             push_extra_left |=> push_sendable >= $past(push_sendable - push_receivable))
+  `BR_ASSUME(push_receivable_increment_a, push_extra_left |=> push_sendable >= $past
+                                          (push_sendable - push_receivable))
   for (genvar i = 0; i < NumSymbols; i++) begin : gen_asm
     `BR_ASSUME(push_data_shift_down_a,
                push_extra_left |=> push_data[i] == $past(push_data[i+push_receivable]))

@@ -45,14 +45,14 @@ module br_multi_xfer_distributor_rr_fpv_monitor #(
 );
 
   // ----------FV modeling code----------
-  logic push_extra_left;
-  logic [CountWidth-1:0] fv_pushed;
-  logic [CountWidth-1:0] fv_popped;
-  logic [NumSymbols-1:0] fv_push_valid;
+  logic                                   push_extra_left;
+  logic [CountWidth-1:0]                  fv_pushed;
+  logic [CountWidth-1:0]                  fv_popped;
+  logic [NumSymbols-1:0]                  fv_push_valid;
   // pop interface adjusted based on multi-grant round-robin arbitration
-  logic [NumFlows-1:0]                  idx;
-  logic [NumFlows-1:0]                  fv_pop_valid_ready;
-  logic [NumFlows-1:0][SymbolWidth-1:0] fv_pop_data;
+  logic [  NumFlows-1:0]                  idx;
+  logic [  NumFlows-1:0]                  fv_pop_valid_ready;
+  logic [  NumFlows-1:0][SymbolWidth-1:0] fv_pop_data;
 
   assign push_extra_left = push_sendable > push_receivable;
   assign fv_pushed = push_extra_left ? push_receivable : push_sendable;
@@ -62,9 +62,9 @@ module br_multi_xfer_distributor_rr_fpv_monitor #(
   always_comb begin
     fv_push_valid = 'd0;
     for (int i = 0; i < NumSymbols; i++) begin
-        if (i < fv_pushed) begin
-            fv_push_valid[i] = 1'd1;
-        end
+      if (i < fv_pushed) begin
+        fv_push_valid[i] = 1'd1;
+      end
     end
   end
 
@@ -75,20 +75,20 @@ module br_multi_xfer_distributor_rr_fpv_monitor #(
     fv_pop_data = 'd0;
     idx = 'd0;
     for (int i = 0; i < NumSymbols; i++) begin
-        for (int j = 0; j < NumFlows; j++) begin
-            if (grant_ordered[i][j]) begin
-                fv_pop_valid_ready[idx] = pop_valid[j] & pop_ready[j];
-                fv_pop_data[idx] = pop_data[j];
-                idx++;
-            end
+      for (int j = 0; j < NumFlows; j++) begin
+        if (grant_ordered[i][j]) begin
+          fv_pop_valid_ready[idx] = pop_valid[j] & pop_ready[j];
+          fv_pop_data[idx] = pop_data[j];
+          idx++;
         end
+      end
     end
   end
 
   // ----------FV assumptions----------
   `BR_ASSUME(push_receivable_range_a, push_sendable <= NumSymbols)
-  `BR_ASSUME(push_receivable_increment_a,
-             push_extra_left |=> push_sendable >= $past(push_sendable - push_receivable))
+  `BR_ASSUME(push_receivable_increment_a, push_extra_left |=> push_sendable >= $past
+                                          (push_sendable - push_receivable))
   for (genvar i = 0; i < NumSymbols; i++) begin : gen_asm
     `BR_ASSUME(push_data_shift_down_a,
                push_extra_left |=> push_data[i] == $past(push_data[i+push_receivable]))

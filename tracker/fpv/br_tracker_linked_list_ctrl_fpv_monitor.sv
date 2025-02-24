@@ -1,4 +1,4 @@
-  // Copyright 2024-2025 The Bedrock-RTL Authors
+// Copyright 2024-2025 The Bedrock-RTL Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -61,13 +61,13 @@ module br_tracker_linked_list_ctrl_fpv_monitor #(
   always_comb begin
     fv_entry_used_nxt = fv_entry_used;
     for (int i = 0; i < NumWritePorts; i++) begin
-        `BR_ASSUME(tail_unique_a, next_tail_valid[i] |-> !fv_entry_used_nxt[next_tail[i]])
-        if (next_tail_valid[i]) begin
-            fv_entry_used_nxt[next_tail[i]] = 1'd1;
-        end
+      `BR_ASSUME(tail_unique_a, next_tail_valid[i] |-> !fv_entry_used_nxt[next_tail[i]])
+      if (next_tail_valid[i]) begin
+        fv_entry_used_nxt[next_tail[i]] = 1'd1;
+      end
     end
     if (head_valid & head_ready) begin
-        fv_entry_used_nxt[head] = 1'd0;
+      fv_entry_used_nxt[head] = 1'd0;
     end
   end
 
@@ -76,9 +76,9 @@ module br_tracker_linked_list_ctrl_fpv_monitor #(
   // model FV ram
   always_ff @(posedge clk) begin
     for (int i = 0; i < NumWritePorts; i++) begin
-        if (ptr_ram_wr_valid[i]) begin
-            fv_ram[ptr_ram_wr_addr[i]] <= ptr_ram_wr_data[i];
-        end
+      if (ptr_ram_wr_valid[i]) begin
+        fv_ram[ptr_ram_wr_addr[i]] <= ptr_ram_wr_data[i];
+      end
     end
   end
 
