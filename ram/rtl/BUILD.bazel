@@ -50,6 +50,11 @@ verilog_library(
         "//macros:br_unused",
         "//mux/rtl:br_mux_onehot",
         "//pkg:br_math_pkg",
+        # Omitting //mux/rtl:br_mux_bin_structured_gates and //mux/rtl:br_mux_bin_structured_gates_mock so
+        # that downstream targets (which may exist in another repo) can decide whether to use these behavioral
+        # models or swap them out for some other vendor models. Downstream targets should decide whether to add
+        # the //mux/rtl:br_mux_bin_structured_gates or //mux/rtl:br_mux_bin_structured_gates mock dependencies
+        # themselves.
     ],
 )
 
@@ -150,8 +155,7 @@ br_verilog_elab_and_lint_test_suite(
     top = "br_ram_flops_tile",
     deps = [
         ":br_ram_flops_tile",
-        "//gate/rtl:br_gate_mock",
-        "//mux/rtl:br_mux_bin_mock",
+        "//mux/rtl:br_mux_bin_structured_gates_mock",
     ],
 )
 
@@ -547,8 +551,7 @@ br_verilog_elab_and_lint_test_suite(
     top = "br_ram_flops",
     deps = [
         ":br_ram_flops",
-        "//gate/rtl:br_gate_mock",
-        "//mux/rtl:br_mux_bin_mock",
+        "//mux/rtl:br_mux_bin_structured_gates_mock",
     ],
 )
 

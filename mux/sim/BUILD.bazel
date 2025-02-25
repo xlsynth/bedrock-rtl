@@ -21,29 +21,16 @@ package(default_visibility = ["//visibility:private"])
 verilog_library(
     name = "br_mux_bin_tb",
     srcs = ["br_mux_bin_tb.sv"],
-    deps = ["//misc/sim:br_test_driver"],
-)
-
-verilog_elab_test(
-    name = "br_mux_bin_tb_elab_test",
-    tool = "verific",
-    top = "br_mux_bin_tb",
     deps = [
-        ":br_mux_bin_tb",
-        "//gate/rtl:br_gate_mock",
+        "//misc/sim:br_test_driver",
         "//mux/rtl:br_mux_bin",
     ],
 )
 
 verilog_elab_test(
-    name = "br_mux_bin_mock_tb_elab_test",
+    name = "br_mux_bin_tb_elab_test",
     tool = "verific",
-    top = "br_mux_bin_tb",
-    deps = [
-        ":br_mux_bin_tb",
-        "//gate/rtl:br_gate_mock",
-        "//mux/rtl:br_mux_bin_mock",
-    ],
+    deps = [":br_mux_bin_tb"],
 )
 
 br_verilog_sim_test_tools_suite(
@@ -63,26 +50,33 @@ br_verilog_sim_test_tools_suite(
         "SymbolWidth": [
             "8",
         ],
-        "UseStructuredGates": [
-            "0",
-            "1",
-        ],
     },
     tools = [
         "dsim",
         "iverilog",
         "vcs",
     ],
-    top = "br_mux_bin_tb",
+    deps = [":br_mux_bin_tb"],
+)
+
+verilog_library(
+    name = "br_mux_bin_structured_gates_tb",
+    srcs = ["br_mux_bin_structured_gates_tb.sv"],
     deps = [
-        ":br_mux_bin_tb",
         "//gate/rtl:br_gate_mock",
-        "//mux/rtl:br_mux_bin",
+        "//misc/sim:br_test_driver",
+        "//mux/rtl:br_mux_bin_structured_gates",
     ],
 )
 
+verilog_elab_test(
+    name = "br_mux_bin_structured_gates_tb_elab_test",
+    tool = "verific",
+    deps = [":br_mux_bin_structured_gates_tb"],
+)
+
 br_verilog_sim_test_tools_suite(
-    name = "br_mux_bin_mock_sim_test_tools_suite",
+    name = "br_mux_bin_structured_gates_sim_test_tools_suite",
     params = {
         "NumSymbolsIn": [
             "2",
@@ -98,20 +92,11 @@ br_verilog_sim_test_tools_suite(
         "SymbolWidth": [
             "8",
         ],
-        "UseStructuredGates": [
-            "0",
-            "1",
-        ],
     },
     tools = [
         "dsim",
         "iverilog",
         "vcs",
     ],
-    top = "br_mux_bin_tb",
-    deps = [
-        ":br_mux_bin_tb",
-        "//gate/rtl:br_gate_mock",
-        "//mux/rtl:br_mux_bin_mock",
-    ],
+    deps = [":br_mux_bin_structured_gates_tb"],
 )

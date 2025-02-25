@@ -154,6 +154,6 @@ br_verilog_elab_and_lint_test_suite(
     top = "br_arb_multi_rr",
     deps = [
         ":br_arb_multi_rr",
-        "//mux/rtl:br_mux_bin_mock",
+        "//mux/rtl:br_mux_bin",
     ],
 )

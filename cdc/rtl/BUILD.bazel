@@ -192,6 +192,7 @@ br_verilog_elab_and_lint_test_suite(
     deps = [
         ":br_cdc_fifo_flops",
         "//gate/rtl:br_gate_mock",
+        "//mux/rtl:br_mux_bin_structured_gates_mock",
     ],
 )
 
@@ -229,6 +230,7 @@ br_verilog_elab_and_lint_test_suite(
     deps = [
         ":br_cdc_fifo_flops_push_credit",
         "//gate/rtl:br_gate_mock",
+        "//mux/rtl:br_mux_bin_structured_gates_mock",
     ],
 )
 

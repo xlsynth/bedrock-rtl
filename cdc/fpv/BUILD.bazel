@@ -52,7 +52,12 @@ verilog_library(
 verilog_elab_test(
     name = "br_cdc_fifo_flops_fpv_monitor_elab_test",
     tool = "verific",
-    deps = [":br_cdc_fifo_flops_fpv_monitor"],
+    top = "br_cdc_fifo_flops_fpv_monitor",
+    deps = [
+        ":br_cdc_fifo_flops_fpv_monitor",
+        "//gate/rtl:br_gate_mock",
+        "//mux/rtl:br_mux_bin_structured_gates_mock",
+    ],
 )
 
 br_verilog_fpv_test_suite(
@@ -105,7 +110,11 @@ br_verilog_fpv_test_suite(
     },
     tool = "jg",
     top = "br_cdc_fifo_flops_fpv_monitor",
-    deps = [":br_cdc_fifo_flops_fpv_monitor"],
+    deps = [
+        ":br_cdc_fifo_flops_fpv_monitor",
+        "//gate/rtl:br_gate_mock",
+        "//mux/rtl:br_mux_bin_structured_gates_mock",
+    ],
 )
 
 # Bedrock-RTL CDC FIFO (Internal 1R1W Flop-RAM, Push Credit/Valid, Pop Ready/Valid Variant)
@@ -125,7 +134,12 @@ verilog_library(
 verilog_elab_test(
     name = "br_cdc_fifo_flops_push_credit_fpv_monitor_elab_test",
     tool = "verific",
-    deps = [":br_cdc_fifo_flops_push_credit_fpv_monitor"],
+    top = "br_cdc_fifo_flops_push_credit_fpv_monitor",
+    deps = [
+        ":br_cdc_fifo_flops_push_credit_fpv_monitor",
+        "//gate/rtl:br_gate_mock",
+        "//mux/rtl:br_mux_bin_structured_gates_mock",
+    ],
 )
 
 br_verilog_fpv_test_suite(
@@ -172,7 +186,11 @@ br_verilog_fpv_test_suite(
     },
     tool = "jg",
     top = "br_cdc_fifo_flops_push_credit_fpv_monitor",
-    deps = [":br_cdc_fifo_flops_push_credit_fpv_monitor"],
+    deps = [
+        ":br_cdc_fifo_flops_push_credit_fpv_monitor",
+        "//gate/rtl:br_gate_mock",
+        "//mux/rtl:br_mux_bin_structured_gates_mock",
+    ],
 )
 
 # Bedrock-RTL CDC FIFO Controller (1R1W, Push Ready/Valid, Pop Ready/Valid Variant)

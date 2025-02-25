@@ -48,11 +48,7 @@ br_verilog_elab_and_lint_test_suite(
             "2",
         ],
     },
-    top = "br_tracker_freelist",
-    deps = [
-        ":br_tracker_freelist",
-        "//mux/rtl:br_mux_bin_mock",
-    ],
+    deps = [":br_tracker_freelist"],
 )
 
 verilog_library(
