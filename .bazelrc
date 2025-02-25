@@ -1,4 +1,9 @@
 # ACTION REQUIRED:
+#
+# This file provides some defaults for required Bazel flags. You will probably want to override
+# them in your own user.bazelrc file.
+
+
 # * Please implement verilog runner plugins for tools and then set:
 #
 #     common --action_env=VERILOG_RUNNER_PLUGIN_PATH=<some_paths>
@@ -7,7 +12,6 @@
 #   See //python/verilog_runner/README.adoc.
 #
 # The environment variable must be set to some string even if it's empty.
-
 common --action_env=VERILOG_RUNNER_PLUGIN_PATH=""
 
 # The following flags are used by Bazel to self-throttle the number of concurrent
@@ -22,12 +26,12 @@ common --action_env=VERILOG_RUNNER_PLUGIN_PATH=""
 # If you don't want limits, set the values to some large positive number.
 #
 # See TOOLS_THAT_NEED_LICENSES in //bazel/verilog.bzl for the list of tools that need licenses.
-
 common --local_resources=verilog_test_tool_licenses_ascentlint=10000
 common --local_resources=verilog_test_tool_licenses_jg=10000
 common --local_resources=verilog_test_tool_licenses_vcf=10000
 common --local_resources=verilog_test_tool_licenses_vcs=10000
 common --local_resources=verilog_test_tool_licenses_xrun=10000
 
+# Import the user's custom .bazelrc file.
 # https://bazel.build/configure/best-practices#bazelrc-file
 try-import %workspace%/user.bazelrc
