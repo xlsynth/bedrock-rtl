@@ -28,7 +28,6 @@ verilog_library(
         "//enc/rtl:br_enc_priority_encoder",
         "//flow/rtl:br_flow_reg_fwd",
         "//multi_xfer/rtl:br_multi_xfer_reg_fwd",
-        "//mux/rtl:br_mux_bin",
         "//mux/rtl:br_mux_onehot",
     ],
 )
@@ -49,7 +48,11 @@ br_verilog_elab_and_lint_test_suite(
             "2",
         ],
     },
-    deps = [":br_tracker_freelist"],
+    top = "br_tracker_freelist",
+    deps = [
+        ":br_tracker_freelist",
+        "//mux/rtl:br_mux_bin_mock",
+    ],
 )
 
 verilog_library(

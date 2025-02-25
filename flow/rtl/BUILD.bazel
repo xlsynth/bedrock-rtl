@@ -207,7 +207,6 @@ verilog_library(
         "//macros:br_asserts",
         "//macros:br_asserts_internal",
         "//macros:br_unused",
-        "//mux/rtl:br_mux_bin",
     ],
 )
 
@@ -223,7 +222,6 @@ verilog_library(
         "//macros:br_asserts_internal",
         "//macros:br_registers",
         "//macros:br_tieoff",
-        "//mux/rtl:br_mux_bin",
     ],
 )
 
@@ -496,7 +494,11 @@ br_verilog_elab_and_lint_test_suite(
             "1",
         ],
     },
-    deps = [":br_flow_serializer"],
+    top = "br_flow_serializer",
+    deps = [
+        ":br_flow_serializer",
+        "//mux/rtl:br_mux_bin_mock",
+    ],
 )
 
 br_verilog_elab_and_lint_test_suite(
@@ -518,5 +520,9 @@ br_verilog_elab_and_lint_test_suite(
             "1",
         ],
     },
-    deps = [":br_flow_deserializer"],
+    top = "br_flow_deserializer",
+    deps = [
+        ":br_flow_deserializer",
+        "//mux/rtl:br_mux_bin_mock",
+    ],
 )

@@ -131,7 +131,7 @@ br_verilog_elab_and_lint_test_suite(
             "1",
         ],
     },
-    top = "br_mux_bin_mock",
+    top = "br_mux_bin",
     deps = [":br_mux_bin_mock"],
 )
 

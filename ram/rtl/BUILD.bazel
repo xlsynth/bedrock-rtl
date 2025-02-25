@@ -48,8 +48,8 @@ verilog_library(
         "//macros:br_asserts_internal",
         "//macros:br_registers",
         "//macros:br_unused",
-        "//mux/rtl:br_mux_bin",
         "//mux/rtl:br_mux_onehot",
+        "//pkg:br_math_pkg",
     ],
 )
 
@@ -113,6 +113,7 @@ br_verilog_elab_and_lint_test_suite(
     deps = [
         ":br_ram_flops_tile",
         "//gate/rtl:br_gate_mock",
+        "//mux/rtl:br_mux_bin_mock",
     ],
 )
 
@@ -140,6 +141,8 @@ br_verilog_elab_and_lint_test_suite(
     deps = [
         ":br_ram_flops_tile",
         "//gate/rtl:br_gate_mock",
+        "//mux/rtl:br_mux_bin_mock",
+        "//pkg:br_math_pkg",
     ],
 )
 
@@ -190,7 +193,10 @@ br_verilog_elab_and_lint_test_suite(
         ],
     },
     top = "br_ram_flops_tile",
-    deps = [":br_ram_flops_tile"],
+    deps = [
+        ":br_ram_flops_tile",
+        "//mux/rtl:br_mux_bin_mock",
+    ],
 )
 
 br_verilog_elab_and_lint_test_suite(
@@ -209,7 +215,10 @@ br_verilog_elab_and_lint_test_suite(
         "NumReadPorts": ["2"],
     },
     top = "br_ram_flops_tile",
-    deps = [":br_ram_flops_tile"],
+    deps = [
+        ":br_ram_flops_tile",
+        "//mux/rtl:br_mux_bin_mock",
+    ],
 )
 
 br_verilog_elab_and_lint_test_suite(
@@ -228,7 +237,10 @@ br_verilog_elab_and_lint_test_suite(
         "NumWritePorts": ["2"],
     },
     top = "br_ram_flops_tile",
-    deps = [":br_ram_flops_tile"],
+    deps = [
+        ":br_ram_flops_tile",
+        "//mux/rtl:br_mux_bin_mock",
+    ],
 )
 
 br_verilog_elab_and_lint_test_suite(
