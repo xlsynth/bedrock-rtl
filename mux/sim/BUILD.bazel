@@ -117,7 +117,7 @@ verilog_elab_test(
     top = "br_mux_bin_structured_gates_tb",
     deps = [
         ":br_mux_bin_structured_gates_tb",
-        "//mux/rtl:br_mux_bin_structured_gates_mock",
+        #"//mux/rtl:br_mux_bin_structured_gates_mock",
     ],
 )
 

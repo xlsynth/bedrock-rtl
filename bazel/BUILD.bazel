@@ -62,3 +62,20 @@ sh_binary(
         ":gen_verilog_rules.md",
     ],
 )
+
+JASPER_ELAB_TEST_CUSTOM_HEADER_TCL = "jg_elab_test_custom_header.tcl"
+
+write_file(
+    name = "gen_" + JASPER_ELAB_TEST_CUSTOM_HEADER_TCL,
+    out = JASPER_ELAB_TEST_CUSTOM_HEADER_TCL,
+    content = [
+        # Demote VERI-1063 ("instantiating unknown module") from warning to info.
+        # This is because the jasper_scoreboard_3 module is encrypted from Cadence and
+        # Verific cannot see it.
+        #
+        # NOTE: This is a hack -- we only want to exclude this specific module.
+        # But unfortunately it means anyone using this demotion will have Verific
+        # spuriously pass elab tests if any modules are unknown.
+        "setmsgtype -info VERI-1063",
+    ],
+)
