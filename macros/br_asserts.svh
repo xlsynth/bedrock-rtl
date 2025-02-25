@@ -16,6 +16,7 @@
 `define BR_ASSERTS_SVH
 
 `ifdef UVM_MAJOR_REV
+import uvm_pkg::*;
 `include "uvm_macros.svh"
 `endif
 
