@@ -53,6 +53,7 @@ verilog_library(
 
 verilog_elab_test(
     name = "br_arb_fixed_fpv_monitor_elab_test",
+    tool = "verific",
     deps = [":br_arb_fixed_fpv_monitor"],
 )
 
@@ -95,6 +96,7 @@ verilog_library(
 
 verilog_elab_test(
     name = "br_arb_rr_fpv_monitor_elab_test",
+    tool = "verific",
     deps = [":br_arb_rr_fpv_monitor"],
 )
 
@@ -128,6 +130,7 @@ verilog_library(
 
 verilog_elab_test(
     name = "br_arb_lru_fpv_monitor_elab_test",
+    tool = "verific",
     deps = [":br_arb_lru_fpv_monitor"],
 )
 
@@ -160,6 +163,7 @@ verilog_library(
 
 verilog_elab_test(
     name = "br_arb_pri_rr_fpv_monitor_elab_test",
+    tool = "verific",
     deps = [":br_arb_pri_rr_fpv_monitor"],
 )
 
@@ -196,6 +200,7 @@ verilog_library(
 
 verilog_elab_test(
     name = "br_arb_weighted_rr_fpv_monitor_elab_test",
+    tool = "verific",
     deps = [":br_arb_weighted_rr_fpv_monitor"],
 )
 
@@ -247,6 +252,7 @@ verilog_library(
 
 verilog_elab_test(
     name = "br_arb_multi_rr_fpv_monitor_elab_test",
+    tool = "verific",
     deps = [":br_arb_multi_rr_fpv_monitor"],
 )
 

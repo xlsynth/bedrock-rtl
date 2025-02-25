@@ -30,6 +30,7 @@ verilog_library(
 
 verilog_elab_test(
     name = "br_multi_xfer_reg_fwd_fpv_monitor_elab_test",
+    tool = "verific",
     deps = [":br_multi_xfer_reg_fwd_fpv_monitor"],
 )
 
@@ -64,6 +65,7 @@ verilog_library(
 
 verilog_elab_test(
     name = "br_multi_xfer_distributor_rr_fpv_monitor_elab_test",
+    tool = "verific",
     deps = [":br_multi_xfer_distributor_rr_fpv_monitor"],
 )
 

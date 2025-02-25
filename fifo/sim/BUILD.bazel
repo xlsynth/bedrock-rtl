@@ -25,6 +25,7 @@ verilog_library(
 
 verilog_elab_test(
     name = "br_fifo_test_harness_elab_test",
+    tool = "verific",
     deps = [":br_fifo_test_harness"],
 )
 
@@ -40,6 +41,7 @@ verilog_library(
 
 verilog_elab_test(
     name = "br_fifo_flops_tb_elab_test",
+    tool = "verific",
     deps = [":br_fifo_flops_tb"],
 )
 
@@ -113,6 +115,7 @@ verilog_library(
 
 verilog_elab_test(
     name = "br_fifo_flops_push_credit_tb_elab_test",
+    tool = "verific",
     deps = [":br_fifo_flops_push_credit_tb"],
 )
 
@@ -164,6 +167,7 @@ verilog_library(
 
 verilog_elab_test(
     name = "br_fifo_shared_dynamic_flops_tb_elab_test",
+    tool = "verific",
     deps = [":br_fifo_shared_dynamic_flops_tb"],
 )
 
@@ -214,6 +218,7 @@ verilog_library(
 
 verilog_elab_test(
     name = "br_fifo_shared_dynamic_flops_push_credit_tb_elab_test",
+    tool = "verific",
     deps = [":br_fifo_shared_dynamic_flops_push_credit_tb"],
 )
 
