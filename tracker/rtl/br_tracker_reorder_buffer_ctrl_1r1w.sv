@@ -23,6 +23,14 @@
 // reordered_resp_pop_entry_id is used as the read address to retrieve the data
 // when the reordered_resp_pop_valid is asserted, returning the data payloads
 // (and associated IDs) in the original allocation order.
+//
+// The free_entry_count and allocated_entry_count outputs provide the number of
+// free and allocated entries in the reorder buffer, respectively. Note that these
+// counts do not consider responses pending in the output buffer whose tags have
+// been retired but have not been popped from the reordered_resp_pop interface.
+// In order to check that there are no unhandled responses remaining, the
+// allocated_entry_count should be zero and the reordered_resp_pop_valid should
+// be low.
 
 `include "br_asserts.svh"
 `include "br_unused.svh"
@@ -41,7 +49,8 @@ module br_tracker_reorder_buffer_ctrl_1r1w #(
     parameter bit RegisterPopOutputs = 0,
     // If 1, then assert unordered_resp_push_valid is low at the end of the test.
     parameter bit EnableAssertFinalNotDeallocValid = 1,
-    localparam int MinEntryIdWidth = $clog2(NumEntries)
+    localparam int MinEntryIdWidth = $clog2(NumEntries),
+    localparam int EntryCountWidth = $clog2(NumEntries + 1)
 ) (
     input logic clk,
     input logic rst,
@@ -60,6 +69,10 @@ module br_tracker_reorder_buffer_ctrl_1r1w #(
     input logic reordered_resp_pop_ready,
     output logic reordered_resp_pop_valid,
     output logic [DataWidth-1:0] reordered_resp_pop_data,
+
+    // Count Information
+    output logic [EntryCountWidth-1:0] free_entry_count,
+    output logic [EntryCountWidth-1:0] allocated_entry_count,
 
     // 1R1W RAM Interface
     output logic [MinEntryIdWidth-1:0] ram_wr_addr,
@@ -177,7 +190,10 @@ module br_tracker_reorder_buffer_ctrl_1r1w #(
       //
       .dealloc_complete_ready(reordered_resp_pop_ready_int),
       .dealloc_complete_valid(reordered_resp_pop_valid_int),
-      .dealloc_complete_entry_id(reordered_resp_pop_entry_id_int)
+      .dealloc_complete_entry_id(reordered_resp_pop_entry_id_int),
+      //
+      .free_entry_count,
+      .allocated_entry_count
   );
 
   assign ram_wr_addr  = unordered_resp_push_entry_id[MinEntryIdWidth-1:0];

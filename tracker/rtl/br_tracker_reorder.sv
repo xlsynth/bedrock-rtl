@@ -30,7 +30,8 @@ module br_tracker_reorder #(
     // Width of the entry ID. Must be at least $clog2(NumEntries).
     parameter int EntryIdWidth = $clog2(NumEntries),
     // If 1, then assert dealloc_valid is low at the end of the test.
-    parameter bit EnableAssertFinalNotDeallocValid = 1
+    parameter bit EnableAssertFinalNotDeallocValid = 1,
+    localparam int EntryCountWidth = $clog2(NumEntries + 1)
 ) (
     input logic clk,
     input logic rst,
@@ -47,7 +48,11 @@ module br_tracker_reorder #(
     // Deallocation Complete Interface
     input logic dealloc_complete_ready,
     output logic dealloc_complete_valid,
-    output logic [EntryIdWidth-1:0] dealloc_complete_entry_id
+    output logic [EntryIdWidth-1:0] dealloc_complete_entry_id,
+
+    // Count Information
+    output logic [EntryCountWidth-1:0] free_entry_count,
+    output logic [EntryCountWidth-1:0] allocated_entry_count
 );
 
   // Deallocation Pending Bitmap
@@ -61,38 +66,37 @@ module br_tracker_reorder #(
   `BR_ASSERT_INTG(dealloc_entry_is_pending_a,
                   dealloc_complete_valid |-> dealloc_pending[dealloc_complete_entry_id])
 
+  logic [NumEntries-1:0] dealloc_pending_next;
+
   // Internal Counter Widths (in case narrower than EntryIdWidth)
   localparam int CounterValueWidth = $clog2(NumEntries);
 
-  logic [NumEntries-1:0] dealloc_pending_next;
+  // Sequence Number Tracker
+  logic dealloc_complete_beat;
+  assign dealloc_complete_beat = dealloc_complete_valid && dealloc_complete_ready;
 
-  // Allocate Counter
-  logic alloc_beat;
-  logic [CounterValueWidth-1:0] alloc_counter_value;
-  assign alloc_beat = alloc_valid && alloc_ready;
-
-  br_counter_incr #(
-      .MaxValue(NumEntries - 1),
-      .MaxIncrement(1),
-      .EnableSaturate(0),
-      .EnableAssertFinalNotValid(0)
-  ) br_counter_incr_allocate_counter (
+  br_tracker_sequence #(
+      .NumEntries(NumEntries),
+      .MaxAllocSize(1),
+      .EntryIdWidth(EntryIdWidth),
+      .EnableAssertFinalNotDeallocValid(0)
+  ) br_tracker_sequence_allocate_counter (
       .clk,
       .rst,
-      .reinit(1'b0),
-      .initial_value('0),
-      .incr_valid(alloc_beat),
-      .incr(1'b1),
-      .value(alloc_counter_value),
-      .value_next()
+      //
+      .alloc_receivable(alloc_ready),
+      .alloc_sendable(alloc_valid),
+      .alloc_entry_id,
+      //
+      .dealloc_valid(dealloc_complete_beat),
+      .dealloc_size(1'b1),
+      //
+      .free_entry_count,
+      .allocated_entry_count
   );
 
-  assign alloc_entry_id = EntryIdWidth'(alloc_counter_value);
-
   // Deallocate Counter
-  logic dealloc_complete_beat;
   logic [CounterValueWidth-1:0] dealloc_complete_counter_value;
-  assign dealloc_complete_beat = dealloc_complete_valid && dealloc_complete_ready;
 
   br_counter_incr #(
       .MaxValue(NumEntries - 1),
@@ -111,30 +115,6 @@ module br_tracker_reorder #(
   );
 
   assign dealloc_complete_entry_id = EntryIdWidth'(dealloc_complete_counter_value);
-
-  // Free Entry Counter
-  localparam int FreeEntryCountWidth = $clog2(NumEntries + 1);
-  logic [FreeEntryCountWidth-1:0] free_entry_count;
-  br_counter #(
-      .MaxValue(NumEntries),
-      .MaxChange(1),
-      .EnableWrap(0),
-      .EnableSaturate(0)
-  ) br_counter_free_entry_counter (
-      .clk,
-      .rst,
-      .reinit(1'b0),
-      .initial_value(FreeEntryCountWidth'($unsigned(NumEntries))),
-      .incr_valid(dealloc_complete_beat),
-      .incr(1'b1),
-      .decr_valid(alloc_beat),
-      .decr(1'b1),
-      .value(free_entry_count),
-      .value_next()
-  );
-
-  logic free_entry_empty;
-  assign free_entry_empty = (free_entry_count == 0);
 
   // Deallocate Pending Bitmap
   //
@@ -159,9 +139,6 @@ module br_tracker_reorder #(
 
   // Dealloc Complete Logic
   assign dealloc_complete_valid = dealloc_pending[dealloc_complete_counter_value];
-
-  // Allocate Logic
-  assign alloc_valid = !free_entry_empty;
 
   // Implementation Assertions
   if ($clog2(NumEntries) < EntryIdWidth) begin : gen_unused_upper_addr_assert

@@ -28,7 +28,8 @@ module br_tracker_reorder_buffer_flops #(
     // additional cycle of latency.
     parameter bit RegisterPopOutputs = 0,
     // If 1, then assert unordered_resp_push_valid is low at the end of the test.
-    parameter bit EnableAssertFinalNotDeallocValid = 1
+    parameter bit EnableAssertFinalNotDeallocValid = 1,
+    localparam int EntryCountWidth = $clog2(NumEntries + 1)
 ) (
     input logic clk,
     input logic rst,
@@ -46,7 +47,11 @@ module br_tracker_reorder_buffer_flops #(
     // Reordered Response Interface
     input logic reordered_resp_pop_ready,
     output logic reordered_resp_pop_valid,
-    output logic [DataWidth-1:0] reordered_resp_pop_data
+    output logic [DataWidth-1:0] reordered_resp_pop_data,
+
+    // Count Information
+    output logic [EntryCountWidth-1:0] free_entry_count,
+    output logic [EntryCountWidth-1:0] allocated_entry_count
 );
   localparam int MinEntryIdWidth = $clog2(NumEntries);
 
@@ -80,6 +85,9 @@ module br_tracker_reorder_buffer_flops #(
       .reordered_resp_pop_ready,
       .reordered_resp_pop_valid,
       .reordered_resp_pop_data,
+      //
+      .free_entry_count,
+      .allocated_entry_count,
       //
       .ram_wr_addr,
       .ram_wr_valid,

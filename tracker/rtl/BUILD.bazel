@@ -97,7 +97,7 @@ verilog_library(
     name = "br_tracker_reorder",
     srcs = ["br_tracker_reorder.sv"],
     deps = [
-        "//counter/rtl:br_counter",
+        ":br_tracker_sequence",
         "//counter/rtl:br_counter_incr",
         "//macros:br_asserts",
         "//macros:br_asserts_internal",
@@ -174,4 +174,34 @@ br_verilog_elab_and_lint_test_suite(
         ],
     },
     deps = [":br_tracker_reorder_buffer_flops"],
+)
+
+verilog_library(
+    name = "br_tracker_sequence",
+    srcs = ["br_tracker_sequence.sv"],
+    deps = [
+        "//counter/rtl:br_counter",
+        "//counter/rtl:br_counter_incr",
+        "//macros:br_asserts",
+        "//macros:br_asserts_internal",
+    ],
+)
+
+br_verilog_elab_and_lint_test_suite(
+    name = "br_tracker_sequence_test_suite",
+    params = {
+        "NumEntries": [
+            "3",
+            "4",
+        ],
+        "EntryIdWidth": [
+            "2",
+            "3",
+        ],
+        "MaxAllocSize": [
+            "1",
+            "2",
+        ],
+    },
+    deps = [":br_tracker_sequence"],
 )
