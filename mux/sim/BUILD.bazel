@@ -21,10 +21,7 @@ package(default_visibility = ["//visibility:private"])
 verilog_library(
     name = "br_mux_bin_tb",
     srcs = ["br_mux_bin_tb.sv"],
-    deps = [
-        "//misc/sim:br_test_driver",
-        "//mux/rtl:br_mux_bin",
-    ],
+    deps = ["//misc/sim:br_test_driver"],
 )
 
 verilog_elab_test(
@@ -34,6 +31,18 @@ verilog_elab_test(
     deps = [
         ":br_mux_bin_tb",
         "//gate/rtl:br_gate_mock",
+        "//mux/rtl:br_mux_bin",
+    ],
+)
+
+verilog_elab_test(
+    name = "br_mux_bin_mock_tb_elab_test",
+    tool = "verific",
+    top = "br_mux_bin_tb",
+    deps = [
+        ":br_mux_bin_tb",
+        "//gate/rtl:br_gate_mock",
+        "//mux/rtl:br_mux_bin_mock",
     ],
 )
 
@@ -68,24 +77,8 @@ br_verilog_sim_test_tools_suite(
     deps = [
         ":br_mux_bin_tb",
         "//gate/rtl:br_gate_mock",
+        "//mux/rtl:br_mux_bin",
     ],
-)
-
-# Same TB, but different RTL dependency.
-verilog_library(
-    name = "br_mux_bin_mock_tb",
-    srcs = ["br_mux_bin_tb.sv"],
-    deps = [
-        "//misc/sim:br_test_driver",
-        "//mux/rtl:br_mux_bin_mock",
-    ],
-)
-
-verilog_elab_test(
-    name = "br_mux_bin_mock_tb_elab_test",
-    tool = "verific",
-    top = "br_mux_bin_tb",
-    deps = [":br_mux_bin_mock_tb"],
 )
 
 br_verilog_sim_test_tools_suite(
@@ -116,5 +109,9 @@ br_verilog_sim_test_tools_suite(
         "vcs",
     ],
     top = "br_mux_bin_tb",
-    deps = [":br_mux_bin_mock_tb"],
+    deps = [
+        ":br_mux_bin_tb",
+        "//gate/rtl:br_gate_mock",
+        "//mux/rtl:br_mux_bin_mock",
+    ],
 )

@@ -40,7 +40,7 @@ module br_mux_bin #(
     // asynchronous path.
     // NOTE: Parameter is ignored -- it is only provided for instance
     // interchangability with br_mux_bin.sv.
-    // ri lint_check_off PARAM_NOT_USED
+    // ri lint_check_waive PARAM_NOT_USED
     parameter bit UseStructuredGates = 0,
     localparam int SelectWidth = $clog2(NumSymbolsIn)
 ) (
