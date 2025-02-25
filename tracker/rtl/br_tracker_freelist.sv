@@ -32,6 +32,7 @@
 
 `include "br_asserts_internal.svh"
 `include "br_registers.svh"
+`include "br_unused.svh"
 
 module br_tracker_freelist #(
     // Number of entries in the freelist. Must be greater than NumAllocPerCycle.
@@ -40,12 +41,22 @@ module br_tracker_freelist #(
     parameter int NumAllocPerCycle = 1,
     // Number of deallocation ports. Must be at least 1.
     parameter int NumDeallocPorts = 1,
+    // If 1, then register the alloc_sendable and alloc_entry_id outputs,
+    // improving timing at the cost of an additional cycle of cut-through latency.
+    // Note that if this is set to 0, the alloc_entry_id may be unstable
+    parameter bit RegisterAllocOutputs = 1,
+    // If 1, bypass deallocated entries to allocated entries.
+    parameter bit EnableBypass = 0,
+    // Cut-through latency of the tracker.
+    localparam int CutThroughLatency = RegisterAllocOutputs + (EnableBypass ? 0 : 1),
     // The delay between an entry being deallocated and when the deallocation
     // is indicated by dealloc_count.
     // If dealloc_count is being used to manage credit returns, this must be set
-    // so that allocation is not attemped until (2 - DeallocCountDelay) cycles
-    // after deallocation is indicated on dealloc_count. Must be >= 0.
-    parameter int DeallocCountDelay = 2,
+    // so that allocation is not attemped until (CutThroughLatency - DeallocCountDelay) cycles
+    // after deallocation is indicated on dealloc_count,
+    // where CutThroughLatency = RegisterAllocOutputs + (EnableBypass ? 0 : 1).
+    // Must be >= 0 and <= CutThroughLatency.
+    parameter int DeallocCountDelay = CutThroughLatency,
     // If 1, then assert there are no dealloc_valid bits asserted at the end of the test.
     // It is expected that alloc_valid could be 1 at end of the test because it's
     // a natural idle condition for this design.
@@ -76,7 +87,8 @@ module br_tracker_freelist #(
   `BR_ASSERT_STATIC(legal_num_entries_a, NumEntries > NumAllocPerCycle)
   `BR_ASSERT_STATIC(legal_num_alloc_per_cycle_a, NumAllocPerCycle >= 1)
   `BR_ASSERT_STATIC(legal_num_dealloc_ports_a, NumDeallocPorts >= 1)
-  `BR_ASSERT_STATIC(legal_dealloc_count_delay_a, DeallocCountDelay >= 0)
+  `BR_ASSERT_STATIC(legal_dealloc_count_delay_a,
+                    DeallocCountDelay >= 0 && DeallocCountDelay <= CutThroughLatency)
 
 `ifdef BR_ASSERT_ON
 `ifndef BR_DISABLE_INTG_CHECKS
@@ -127,19 +139,27 @@ module br_tracker_freelist #(
   logic [NumEntries-1:0] unstaged_free_entries_init;
   logic [NumEntries-1:0] unstaged_free_entries_set;
   logic [NumEntries-1:0] unstaged_free_entries_clear;
+  logic [NumEntries-1:0] unstaged_free_entries_post_set;
   logic                  unstaged_free_entries_le;
 
-  assign unstaged_free_entries_next =
-      (unstaged_free_entries | unstaged_free_entries_set) & ~unstaged_free_entries_clear;
+  assign unstaged_free_entries_post_set = unstaged_free_entries | unstaged_free_entries_set;
+  assign unstaged_free_entries_next = unstaged_free_entries_post_set & ~unstaged_free_entries_clear;
   assign unstaged_free_entries_init = {NumEntries{1'b1}};
 
   `BR_REGLI(unstaged_free_entries, unstaged_free_entries_next, unstaged_free_entries_le,
             unstaged_free_entries_init)
 
   // Push Interface of the output buffer.
+  logic [NumEntries-1:0] priority_encoder_in;
   logic [NumAllocPerCycle-1:0] push_entry_id_valid;
   logic [NumAllocPerCycle-1:0][EntryIdWidth-1:0] push_entry_id;
   logic [NumAllocPerCycle-1:0][NumEntries-1:0] push_entry_id_onehot;
+
+  if (EnableBypass) begin : gen_bypass_priority_encoder_in
+    assign priority_encoder_in = unstaged_free_entries_post_set;
+  end else begin : gen_non_bypass_priority_encoder_in
+    assign priority_encoder_in = unstaged_free_entries;
+  end
 
   br_enc_priority_encoder #(
       .NumResults(NumAllocPerCycle),
@@ -147,7 +167,7 @@ module br_tracker_freelist #(
   ) br_enc_priority_encoder_free_entries (
       .clk,
       .rst,
-      .in (unstaged_free_entries),
+      .in (priority_encoder_in),
       .out(push_entry_id_onehot)
   );
 
@@ -167,25 +187,31 @@ module br_tracker_freelist #(
   if (NumAllocPerCycle == 1) begin : gen_single_alloc_port
     logic push_ready;
 
-    // Staging buffer
-    br_flow_reg_fwd #(
-        .Width(EntryIdWidth),
-        .EnableAssertPushValidStability(1),
-        // Since the entry ID is coming from a priority encoder,
-        // it could be unstable if a higher priority entry is deallocated.
-        .EnableAssertPushDataStability(0),
-        // Expect that alloc_valid can be 1 at end of test (or when idle, in general)
-        .EnableAssertFinalNotValid(0)
-    ) br_flow_reg_fwd (
-        .clk,
-        .rst,
-        .push_valid(push_entry_id_valid),
-        .push_ready(push_ready),
-        .push_data (push_entry_id),
-        .pop_valid (alloc_sendable),
-        .pop_ready (alloc_receivable),
-        .pop_data  (alloc_entry_id)
-    );
+    if (RegisterAllocOutputs) begin : gen_reg_alloc
+      // Staging buffer
+      br_flow_reg_fwd #(
+          .Width(EntryIdWidth),
+          .EnableAssertPushValidStability(1),
+          // Since the entry ID is coming from a priority encoder,
+          // it could be unstable if a higher priority entry is deallocated.
+          .EnableAssertPushDataStability(0),
+          // Expect that alloc_valid can be 1 at end of test (or when idle, in general)
+          .EnableAssertFinalNotValid(0)
+      ) br_flow_reg_fwd (
+          .clk,
+          .rst,
+          .push_valid(push_entry_id_valid[0]),
+          .push_ready(push_ready),
+          .push_data (push_entry_id[0]),
+          .pop_valid (alloc_sendable),
+          .pop_ready (alloc_receivable),
+          .pop_data  (alloc_entry_id)
+      );
+    end else begin : gen_no_reg_alloc
+      assign alloc_sendable = push_entry_id_valid[0];
+      assign alloc_entry_id = push_entry_id[0];
+      assign push_ready = alloc_receivable;
+    end
 
     // Free entry vector is updated when a push or deallocation happens.
     assign unstaged_free_entries_le = (push_entry_id_valid[0] && push_ready) || (|dealloc_valid);
@@ -202,24 +228,30 @@ module br_tracker_freelist #(
         .count(push_sendable)
     );
 
-    br_multi_xfer_reg_fwd #(
-        .NumSymbols(NumAllocPerCycle),
-        .SymbolWidth(EntryIdWidth),
-        // Data can be unstable because deallocating a higher priority entry
-        // can supersede an existing free entry.
-        .EnableAssertPushDataStability(0),
-        // We expect unstaged_free_entries to be 1 at the end of the test.
-        .EnableAssertFinalNotSendable(0)
-    ) br_multi_xfer_reg_fwd (
-        .clk,
-        .rst,
-        .push_sendable,
-        .push_receivable,
-        .push_data(push_entry_id),
-        .pop_sendable(alloc_sendable),
-        .pop_receivable(alloc_receivable),
-        .pop_data(alloc_entry_id)
-    );
+    if (RegisterAllocOutputs) begin : gen_reg_alloc
+      br_multi_xfer_reg_fwd #(
+          .NumSymbols(NumAllocPerCycle),
+          .SymbolWidth(EntryIdWidth),
+          // Data can be unstable because deallocating a higher priority entry
+          // can supersede an existing free entry.
+          .EnableAssertPushDataStability(0),
+          // We expect unstaged_free_entries to be 1 at the end of the test.
+          .EnableAssertFinalNotSendable(0)
+      ) br_multi_xfer_reg_fwd (
+          .clk,
+          .rst,
+          .push_sendable,
+          .push_receivable,
+          .push_data(push_entry_id),
+          .pop_sendable(alloc_sendable),
+          .pop_receivable(alloc_receivable),
+          .pop_data(alloc_entry_id)
+      );
+    end else begin : gen_no_reg_alloc
+      assign alloc_sendable  = push_sendable;
+      assign alloc_entry_id  = push_entry_id;
+      assign push_receivable = alloc_receivable;
+    end
 
     // Free entry vector is updated when a push or deallocation happens.
     assign unstaged_free_entries_le =
@@ -339,6 +371,13 @@ module br_tracker_freelist #(
   end else begin : gen_dealloc_count_no_delay_check
     `BR_ASSERT_IMPL(dealloc_count_a,
                     (|dealloc_valid) |-> (dealloc_count == $countones(dealloc_valid)))
+  end
+
+  if (CutThroughLatency > 0) begin : gen_nonzero_cut_through_latency_check
+    `BR_ASSERT_IMPL(cut_through_latency_a,
+                    (|dealloc_valid) |-> ##CutThroughLatency(alloc_sendable != '0))
+  end else begin : gen_zero_cut_through_latency_check
+    `BR_ASSERT_IMPL(zero_cut_through_latency_a, (|dealloc_valid) |-> (alloc_sendable != '0))
   end
 
 `endif
