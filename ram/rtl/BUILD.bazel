@@ -109,12 +109,7 @@ br_verilog_elab_and_lint_test_suite(
         ],
         "EnablePartialWrite": ["0"],
     },
-    top = "br_ram_flops_tile",
-    deps = [
-        ":br_ram_flops_tile",
-        "//gate/rtl:br_gate_mock",
-        "//mux/rtl:br_mux_bin_mock",
-    ],
+    deps = [":br_ram_flops_tile"],
 )
 
 br_verilog_elab_and_lint_test_suite(
@@ -137,13 +132,7 @@ br_verilog_elab_and_lint_test_suite(
             "1",
         ],
     },
-    top = "br_ram_flops_tile",
-    deps = [
-        ":br_ram_flops_tile",
-        "//gate/rtl:br_gate_mock",
-        "//mux/rtl:br_mux_bin_mock",
-        "//pkg:br_math_pkg",
-    ],
+    deps = [":br_ram_flops_tile"],
 )
 
 br_verilog_elab_and_lint_test_suite(
@@ -193,11 +182,7 @@ br_verilog_elab_and_lint_test_suite(
             "2",
         ],
     },
-    top = "br_ram_flops_tile",
-    deps = [
-        ":br_ram_flops_tile",
-        "//mux/rtl:br_mux_bin_mock",
-    ],
+    deps = [":br_ram_flops_tile"],
 )
 
 br_verilog_elab_and_lint_test_suite(
@@ -215,11 +200,7 @@ br_verilog_elab_and_lint_test_suite(
         ],
         "NumReadPorts": ["2"],
     },
-    top = "br_ram_flops_tile",
-    deps = [
-        ":br_ram_flops_tile",
-        "//mux/rtl:br_mux_bin_mock",
-    ],
+    deps = [":br_ram_flops_tile"],
 )
 
 br_verilog_elab_and_lint_test_suite(
@@ -237,11 +218,7 @@ br_verilog_elab_and_lint_test_suite(
         ],
         "NumWritePorts": ["2"],
     },
-    top = "br_ram_flops_tile",
-    deps = [
-        ":br_ram_flops_tile",
-        "//mux/rtl:br_mux_bin_mock",
-    ],
+    deps = [":br_ram_flops_tile"],
 )
 
 br_verilog_elab_and_lint_test_suite(
@@ -414,12 +391,7 @@ br_verilog_elab_and_lint_test_suite(
         ],
         "EnableMemReset": ["0"],
     },
-    top = "br_ram_flops",
-    deps = [
-        ":br_ram_flops",
-        "//gate/rtl:br_gate_mock",
-        "//mux/rtl:br_mux_bin_mock",
-    ],
+    deps = [":br_ram_flops"],
 )
 
 br_verilog_elab_and_lint_test_suite(
@@ -457,12 +429,7 @@ br_verilog_elab_and_lint_test_suite(
             "1",
         ],
     },
-    top = "br_ram_flops",
-    deps = [
-        ":br_ram_flops",
-        "//gate/rtl:br_gate_mock",
-        "//mux/rtl:br_mux_bin_mock",
-    ],
+    deps = [":br_ram_flops"],
 )
 
 br_verilog_elab_and_lint_test_suite(
@@ -479,12 +446,7 @@ br_verilog_elab_and_lint_test_suite(
         "WidthTiles": ["1"],
         "EnableMemReset": ["0"],
     },
-    top = "br_ram_flops",
-    deps = [
-        ":br_ram_flops",
-        "//gate/rtl:br_gate_mock",
-        "//mux/rtl:br_mux_bin_mock",
-    ],
+    deps = [":br_ram_flops"],
 )
 
 br_verilog_elab_and_lint_test_suite(
@@ -501,11 +463,7 @@ br_verilog_elab_and_lint_test_suite(
         ],
     },
     top = "br_ram_flops",
-    deps = [
-        ":br_ram_flops",
-        "//gate/rtl:br_gate_mock",
-        "//mux/rtl:br_mux_bin_mock",
-    ],
+    deps = [":br_ram_flops"],
 )
 
 br_verilog_elab_and_lint_test_suite(
@@ -517,11 +475,7 @@ br_verilog_elab_and_lint_test_suite(
         "EnablePartialWrite": ["1"],
         "WordWidth": ["8"],
     },
-    top = "br_ram_flops",
-    deps = [
-        ":br_ram_flops",
-        "//mux/rtl:br_mux_bin_mock",
-    ],
+    deps = [":br_ram_flops"],
 )
 
 br_verilog_elab_and_lint_test_suite(
@@ -548,12 +502,7 @@ br_verilog_elab_and_lint_test_suite(
         ],
         "WordWidth": ["8"],
     },
-    top = "br_ram_flops",
-    deps = [
-        ":br_ram_flops",
-        "//gate/rtl:br_gate_mock",
-        "//mux/rtl:br_mux_bin_mock",
-    ],
+    deps = [":br_ram_flops"],
 )
 
 br_verilog_elab_and_lint_test_suite(
@@ -580,12 +529,7 @@ br_verilog_elab_and_lint_test_suite(
         ],
         "WordWidth": ["8"],
     },
-    top = "br_ram_flops",
-    deps = [
-        ":br_ram_flops",
-        "//gate/rtl:br_gate_mock",
-        "//mux/rtl:br_mux_bin_mock",
-    ],
+    deps = [":br_ram_flops"],
 )
 
 br_verilog_elab_and_lint_test_suite(
@@ -635,12 +579,7 @@ br_verilog_elab_and_lint_test_suite(
         "Width": ["8"],
         "WordWidth": ["2"],
     },
-    top = "br_ram_flops",
-    deps = [
-        ":br_ram_flops",
-        "//gate/rtl:br_gate_mock",
-        "//mux/rtl:br_mux_bin_mock",
-    ],
+    deps = [":br_ram_flops"],
 )
 
 br_verilog_elab_and_lint_test_suite(
@@ -672,12 +611,7 @@ br_verilog_elab_and_lint_test_suite(
         "Width": ["8"],
         "WordWidth": ["2"],
     },
-    top = "br_ram_flops",
-    deps = [
-        ":br_ram_flops",
-        "//gate/rtl:br_gate_mock",
-        "//mux/rtl:br_mux_bin_mock",
-    ],
+    deps = [":br_ram_flops"],
 )
 
 br_verilog_elab_and_lint_test_suite(
