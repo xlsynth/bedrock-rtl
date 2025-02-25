@@ -18,9 +18,11 @@
 //
 // The out signal is set to in[i] for which select == i.
 // Select must be in range of NumSymbolsIn.
+//
+// This module is a mock behavioral model and must not be used for synthesis,
+// because the UseStructuredGates parameter is ignored.
 
 `include "br_asserts_internal.svh"
-`include "br_unused.svh"
 
 `ifdef SYNTHESIS
 `BR_ASSERT_STATIC(do_not_synthesize_br_gate_mux_bin_mock_a, 0)
