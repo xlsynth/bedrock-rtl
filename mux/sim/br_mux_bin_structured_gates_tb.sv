@@ -1,4 +1,4 @@
-module br_mux_bin_tb;
+module br_mux_bin_structured_gates_tb;
 
   parameter int NumSymbolsIn = 2;
   parameter int SymbolWidth = 8;
@@ -10,7 +10,7 @@ module br_mux_bin_tb;
   logic [SymbolWidth-1:0] out;
   logic [$clog2(NumSymbolsIn)-1:0] select;
 
-  br_mux_bin #(
+  br_mux_bin_structured_gates #(
       .NumSymbolsIn(NumSymbolsIn),
       .SymbolWidth (SymbolWidth)
   ) dut (
@@ -44,4 +44,4 @@ module br_mux_bin_tb;
     td.finish();
   end
 
-endmodule : br_mux_bin_tb
+endmodule : br_mux_bin_structured_gates_tb

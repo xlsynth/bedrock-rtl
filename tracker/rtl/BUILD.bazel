@@ -28,7 +28,6 @@ verilog_library(
         "//enc/rtl:br_enc_priority_encoder",
         "//flow/rtl:br_flow_reg_fwd",
         "//multi_xfer/rtl:br_multi_xfer_reg_fwd",
-        "//mux/rtl:br_mux_bin",
         "//mux/rtl:br_mux_onehot",
     ],
 )
