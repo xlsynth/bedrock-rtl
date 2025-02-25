@@ -108,6 +108,34 @@ br_verilog_elab_and_lint_test_suite(
 )
 
 verilog_library(
+    name = "br_mux_bin_mock",
+    srcs = ["br_mux_bin_mock.sv"],
+    deps = ["//macros:br_asserts_internal"],
+)
+
+br_verilog_elab_and_lint_test_suite(
+    name = "br_mux_bin_mock_test_suite",
+    params = {
+        "NumSymbolsIn": [
+            "2",
+            "3",
+            "4",
+        ],
+        "SymbolWidth": [
+            "1",
+            "5",
+            "8",
+        ],
+        "UseStructuredGates": [
+            "0",
+            "1",
+        ],
+    },
+    top = "br_mux_bin_mock",
+    deps = [":br_mux_bin_mock"],
+)
+
+verilog_library(
     name = "br_mux_bin_array",
     srcs = ["br_mux_bin_array.sv"],
     deps = [
