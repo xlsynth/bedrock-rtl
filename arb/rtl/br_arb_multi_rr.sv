@@ -156,4 +156,8 @@ module br_arb_multi_rr #(
     `BR_ASSERT_IMPL(grant_ordered_subset_of_grant_a, (grant_ordered[i] & grant) == grant_ordered[i])
   end
 
+  `BR_ASSERT_IMPL(no_update_same_grants_A, !$past(enable_priority_update) && (request == $past
+                                           (request)) && (grant_allowed == $past(grant_allowed)
+                                           ) |-> grant == $past(grant))
+
 endmodule
