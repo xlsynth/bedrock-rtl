@@ -9,8 +9,20 @@
 # The environment variable must be set to some string even if it's empty.
 common --action_env=VERILOG_RUNNER_PLUGIN_PATH=""
 
-# These flags are required -- otherwise the Verilog Bazel test rules will crash.
-common --local_resources=verilog_elab_test_tool_licenses=10000
-common --local_resources=verilog_lint_test_tool_licenses=10000
-common --local_resources=verilog_sim_test_tool_licenses=10000
-common --local_resources=verilog_fpv_test_tool_licenses=10000
+# The following flags are used by Bazel to self-throttle the number of concurrent
+# jobs that can run for a given proprietary license-limited EDA tool.
+# However, this doesn't limit the use of licenses by other workflows that may exist
+# outside of this Bazel workspace.
+#
+# The values for each of these flags must be set to some integer >= 1 or the Bazel
+# Verilog test rules will crash.
+#
+# Set the values to match the number of EDA tool licenses available in your environment.
+# If you don't want limits, set the values to some large positive number.
+#
+# See TOOLS_THAT_NEED_LICENSES in //bazel/verilog.bzl for the list of tools that need licenses.
+common --local_resources=verilog_test_tool_licenses_ascentlint=10000
+common --local_resources=verilog_test_tool_licenses_jg=10000
+common --local_resources=verilog_test_tool_licenses_vcf=10000
+common --local_resources=verilog_test_tool_licenses_vcs=10000
+common --local_resources=verilog_test_tool_licenses_xrun=10000
