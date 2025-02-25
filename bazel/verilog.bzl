@@ -340,6 +340,12 @@ def verilog_elab_test(
         **kwargs):
     """Wraps rule_verilog_elab_test with a default tool and appends extra tags.
 
+    The following extra tags are unconditionally appended to the list of tags:
+        * elab -- useful for test filtering, e.g., bazel test //... --test_tag_filters=elab
+        * The tool name -- useful for test filtering, e.g., bazel test //... --test_tag_filters=<tool>
+        * resources:verilog_test_tool_licenses_<tool>:1 -- only if the tool appears in TOOLS_THAT_NEED_LICENSES.
+        * no-sandbox -- Loosens some Bazel hermeticity features so that undeclared EDA tool test outputs are preserved for debugging.
+
     Args:
         name: test name
         tool: The elaboration tool to use.
@@ -347,12 +353,6 @@ def verilog_elab_test(
         custom_tcl_header: custom tcl header file. If not provided, then a default one will be generated.
         custom_tcl_header_cmds: custom tcl commands
         **kwargs: Other arguments to pass to the rule_verilog_elab_test rule.
-
-    The following extra tags are unconditionally appended to the list of tags:
-        * elab -- useful for test filtering, e.g., bazel test //... --test_tag_filters=elab
-        * The tool name -- useful for test filtering, e.g., bazel test //... --test_tag_filters=<tool>
-        * resources:verilog_test_tool_licenses_<tool>:1 -- only if the tool appears in TOOLS_THAT_NEED_LICENSES.
-        * no-sandbox -- Loosens some Bazel hermeticity features so that undeclared EDA tool test outputs are preserved for debugging.
     """
     if not custom_tcl_header:
         custom_tcl_header = name + "_custom_header.tcl"
@@ -422,16 +422,16 @@ rule_verilog_lint_test = rule(
 def verilog_lint_test(tool, tags = [], **kwargs):
     """Wraps rule_verilog_lint_test with a default tool and appends extra tags.
 
-    Args:
-        tool: The lint tool to use.
-        tags: The tags to add to the test.
-        **kwargs: Other arguments to pass to the rule_verilog_lint_test rule.
-
     The following extra tags are unconditionally appended to the list of tags:
         * lint -- useful for test filtering, e.g., bazel test //... --test_tag_filters=lint
         * The tool name -- useful for test filtering, e.g., bazel test //... --test_tag_filters=<tool>
         * resources:verilog_test_tool_licenses_<tool>:1 -- only if the tool appears in TOOLS_THAT_NEED_LICENSES.
         * no-sandbox -- Loosens some Bazel hermeticity features so that undeclared EDA tool test outputs are preserved for debugging.
+
+    Args:
+        tool: The lint tool to use.
+        tags: The tags to add to the test.
+        **kwargs: Other arguments to pass to the rule_verilog_lint_test rule.
     """
 
     rule_verilog_lint_test(
@@ -508,17 +508,17 @@ rule_verilog_sim_test = rule(
 def verilog_sim_test(tool, opts = [], tags = [], **kwargs):
     """Wraps rule_verilog_sim_test with a default tool and appends extra tags.
 
-    Args:
-        tool: The simulation tool to use.
-        opts: Tool-specific options not covered by other arguments.
-        tags: The tags to add to the test.
-        **kwargs: Other arguments to pass to the rule_verilog_sim_test rule.
-
     The following extra tags are unconditionally appended to the list of tags:
         * sim -- useful for test filtering, e.g., bazel test //... --test_tag_filters=sim
         * The tool name -- useful for test filtering, e.g., bazel test //... --test_tag_filters=<tool>
         * resources:verilog_test_tool_licenses_<tool>:1 -- only if the tool appears in TOOLS_THAT_NEED_LICENSES.
         * no-sandbox -- Loosens some Bazel hermeticity features so that undeclared EDA tool test outputs are preserved for debugging.
+
+    Args:
+        tool: The simulation tool to use.
+        opts: Tool-specific options not covered by other arguments.
+        tags: The tags to add to the test.
+        **kwargs: Other arguments to pass to the rule_verilog_sim_test rule.
     """
 
     # Make sure we fail the test ASAP after any error occurs (assertion or otherwise).
@@ -601,16 +601,16 @@ rule_verilog_fpv_test = rule(
 def verilog_fpv_test(tool, tags = [], **kwargs):
     """Wraps rule_verilog_fpv_test with a default tool and appends extra tags.
 
-    Args:
-        tool: The formal verification tool to use.
-        tags: The tags to add to the test.
-        **kwargs: Other arguments to pass to the rule_verilog_fpv_test rule.
-
     The following extra tags are unconditionally appended to the list of tags:
         * fpv -- useful for test filtering, e.g., bazel test //... --test_tag_filters=fpv
         * The tool name -- useful for test filtering, e.g., bazel test //... --test_tag_filters=<tool>
         * resources:verilog_test_tool_licenses_<tool>:1 -- only if the tool appears in TOOLS_THAT_NEED_LICENSES.
         * no-sandbox -- Loosens some Bazel hermeticity features so that undeclared EDA tool test outputs are preserved for debugging.
+
+    Args:
+        tool: The formal verification tool to use.
+        tags: The tags to add to the test.
+        **kwargs: Other arguments to pass to the rule_verilog_fpv_test rule.
     """
     rule_verilog_fpv_test(
         tool = tool,
