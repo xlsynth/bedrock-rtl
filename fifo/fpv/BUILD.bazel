@@ -44,6 +44,7 @@ verilog_library(
 
 verilog_elab_test(
     name = "br_fifo_ctrl_1r1w_fpv_monitor_elab_test",
+    custom_tcl_header = "//:elab_test_jg_custom_header.verific.tcl",
     tool = "verific",
     deps = [":br_fifo_ctrl_1r1w_fpv_monitor"],
 )
@@ -94,6 +95,7 @@ verilog_library(
 
 verilog_elab_test(
     name = "br_fifo_flops_fpv_monitor_elab_test",
+    custom_tcl_header = "//:elab_test_jg_custom_header.verific.tcl",
     tool = "verific",
     deps = [":br_fifo_flops_fpv_monitor"],
 )
@@ -140,6 +142,7 @@ verilog_library(
 
 verilog_elab_test(
     name = "br_fifo_ctrl_1r1w_push_credit_fpv_monitor_elab_test",
+    custom_tcl_header = "//:elab_test_jg_custom_header.verific.tcl",
     tool = "verific",
     deps = [":br_fifo_ctrl_1r1w_push_credit_fpv_monitor"],
 )
@@ -195,6 +198,7 @@ verilog_library(
 
 verilog_elab_test(
     name = "br_fifo_flops_push_credit_fpv_monitor_elab_test",
+    custom_tcl_header = "//:elab_test_jg_custom_header.verific.tcl",
     tool = "verific",
     deps = [":br_fifo_flops_push_credit_fpv_monitor"],
 )
