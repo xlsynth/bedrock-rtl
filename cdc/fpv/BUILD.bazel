@@ -51,6 +51,7 @@ verilog_library(
 
 verilog_elab_test(
     name = "br_cdc_fifo_flops_fpv_monitor_elab_test",
+    custom_tcl_header = "//:elab_test_jg_custom_header.verific.tcl",
     tool = "verific",
     top = "br_cdc_fifo_flops_fpv_monitor",
     deps = [
@@ -62,7 +63,7 @@ verilog_elab_test(
 
 br_verilog_fpv_test_suite(
     name = "br_cdc_fifo_flops_jg_test_suite",
-    custom_tcl_body = "br_cdc_fifo_flops_fpv.tcl",
+    custom_tcl_body = "br_cdc_fifo_flops_fpv.jg.tcl",
     illegal_param_combinations = {
         (
             "EnableCoverPushBackpressure",
@@ -133,6 +134,7 @@ verilog_library(
 
 verilog_elab_test(
     name = "br_cdc_fifo_flops_push_credit_fpv_monitor_elab_test",
+    custom_tcl_header = "//:elab_test_jg_custom_header.verific.tcl",
     tool = "verific",
     top = "br_cdc_fifo_flops_push_credit_fpv_monitor",
     deps = [
@@ -144,7 +146,7 @@ verilog_elab_test(
 
 br_verilog_fpv_test_suite(
     name = "br_cdc_fifo_flops_push_credit_jg_test_suite",
-    custom_tcl_body = "br_cdc_fifo_flops_push_credit_fpv.tcl",
+    custom_tcl_body = "br_cdc_fifo_flops_push_credit_fpv.jg.tcl",
     illegal_param_combinations = {
         (
             "Depth",
@@ -208,13 +210,14 @@ verilog_library(
 
 verilog_elab_test(
     name = "br_cdc_fifo_ctrl_1r1w_fpv_monitor_elab_test",
+    custom_tcl_header = "//:elab_test_jg_custom_header.verific.tcl",
     tool = "verific",
     deps = [":br_cdc_fifo_ctrl_1r1w_fpv_monitor"],
 )
 
 br_verilog_fpv_test_suite(
     name = "br_cdc_fifo_ctrl_1r1w_jg_test_suite",
-    custom_tcl_body = "br_cdc_fifo_ctrl_1r1w_fpv.tcl",
+    custom_tcl_body = "br_cdc_fifo_ctrl_1r1w_fpv.jg.tcl",
     illegal_param_combinations = {
         (
             "EnableCoverPushBackpressure",
@@ -300,13 +303,14 @@ verilog_library(
 
 verilog_elab_test(
     name = "br_cdc_fifo_ctrl_1r1w_push_credit_fpv_monitor_elab_test",
+    custom_tcl_header = "//:elab_test_jg_custom_header.verific.tcl",
     tool = "verific",
     deps = [":br_cdc_fifo_ctrl_1r1w_push_credit_fpv_monitor"],
 )
 
 br_verilog_fpv_test_suite(
     name = "br_cdc_fifo_ctrl_1r1w_push_credit_jg_test_suite",
-    custom_tcl_body = "br_cdc_fifo_ctrl_1r1w_push_credit_fpv.tcl",
+    custom_tcl_body = "br_cdc_fifo_ctrl_1r1w_push_credit_fpv.jg.tcl",
     illegal_param_combinations = {
         (
             "Depth",
@@ -388,13 +392,14 @@ verilog_library(
 
 verilog_elab_test(
     name = "br_cdc_fifo_ctrl_push_pop_1r1w_fpv_monitor_elab_test",
+    custom_tcl_header = "//:elab_test_jg_custom_header.verific.tcl",
     tool = "verific",
     deps = [":br_cdc_fifo_ctrl_push_pop_1r1w_fpv_monitor"],
 )
 
 br_verilog_fpv_test_suite(
     name = "br_cdc_fifo_ctrl_push_pop_1r1w_jg_test_suite",
-    custom_tcl_body = "br_cdc_fifo_ctrl_push_pop_1r1w_fpv.tcl",
+    custom_tcl_body = "br_cdc_fifo_ctrl_push_pop_1r1w_fpv.jg.tcl",
     illegal_param_combinations = {
         (
             "EnableCoverPushBackpressure",
@@ -483,13 +488,14 @@ verilog_library(
 
 verilog_elab_test(
     name = "br_cdc_fifo_ctrl_push_pop_1r1w_push_credit_fpv_monitor_elab_test",
+    custom_tcl_header = "//:elab_test_jg_custom_header.verific.tcl",
     tool = "verific",
     deps = [":br_cdc_fifo_ctrl_push_pop_1r1w_push_credit_fpv_monitor"],
 )
 
 br_verilog_fpv_test_suite(
     name = "br_cdc_fifo_ctrl_push_pop_1r1w_push_credit_jg_test_suite",
-    custom_tcl_body = "br_cdc_fifo_ctrl_push_pop_1r1w_push_credit_fpv.tcl",
+    custom_tcl_body = "br_cdc_fifo_ctrl_push_pop_1r1w_push_credit_fpv.jg.tcl",
     illegal_param_combinations = {
         (
             "Depth",

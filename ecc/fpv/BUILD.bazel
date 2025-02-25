@@ -38,7 +38,7 @@ verilog_elab_test(
 
 br_verilog_fpv_test_suite(
     name = "br_ecc_sed_jg_test_suite",
-    custom_tcl_body = "br_ecc_sed_fpv.tcl",
+    custom_tcl_body = "br_ecc_sed_fpv.jg.tcl",
     params = {
         "DataWidth": [
             "1",
@@ -88,7 +88,7 @@ verilog_elab_test(
 
 br_verilog_fpv_test_suite(
     name = "br_ecc_secded_jg_test_suite",
-    custom_tcl_body = "br_ecc_secded_fpv.tcl",
+    custom_tcl_body = "br_ecc_secded_fpv.jg.tcl",
     elab_opts = [
         "-parameter DataWidth 120",
         "-parameter ParityWidth 9",

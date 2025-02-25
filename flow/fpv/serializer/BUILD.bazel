@@ -36,7 +36,7 @@ verilog_elab_test(
 
 br_verilog_fpv_test_suite(
     name = "br_flow_serializer_jg_test_suite",
-    custom_tcl_body = "br_flow_serializer_fpv.tcl",
+    custom_tcl_body = "br_flow_serializer_fpv.jg.tcl",
     params = {
         "MetadataWidth": [
             "1",
@@ -82,7 +82,7 @@ br_verilog_fpv_test_suite(
     name = "br_flow_deserializer_jg_test_suite",
     # TODO: temp check in so designer can debug
     gui = True,
-    #custom_tcl_body = "br_flow_deserializer_fpv.tcl",
+    #custom_tcl_body = "br_flow_deserializer_fpv.jg.tcl",
     params = {
         "DeserializeMostSignificantFirst": [
             "0",
