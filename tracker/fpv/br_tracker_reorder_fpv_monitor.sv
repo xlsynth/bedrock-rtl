@@ -23,7 +23,8 @@ module br_tracker_reorder_fpv_monitor #(
     // Width of the entry ID. Must be at least $clog2(NumEntries).
     parameter int EntryIdWidth = $clog2(NumEntries),
     // If 1, then assert dealloc_valid is low at the end of the test.
-    parameter bit EnableAssertFinalNotDeallocValid = 1
+    parameter bit EnableAssertFinalNotDeallocValid = 1,
+    localparam int EntryCountWidth = $clog2(NumEntries + 1)
 ) (
     input logic clk,
     input logic rst,
@@ -40,7 +41,11 @@ module br_tracker_reorder_fpv_monitor #(
     // Deallocation Complete Interface
     input logic dealloc_complete_ready,
     input logic dealloc_complete_valid,
-    input logic [EntryIdWidth-1:0] dealloc_complete_entry_id
+    input logic [EntryIdWidth-1:0] dealloc_complete_entry_id,
+
+    // Count Information
+    input logic [EntryCountWidth-1:0] free_entry_count,
+    input logic [EntryCountWidth-1:0] allocated_entry_count
 );
 
   // ----------FV modeling code----------
@@ -79,17 +84,17 @@ module br_tracker_reorder_fpv_monitor #(
   // ----------FV assumptions----------
   `BR_ASSUME(dealloc_range_a, dealloc_valid |-> dealloc_entry_id < NumEntries)
   `BR_ASSUME(legal_dealloc_a, dealloc_valid |-> fv_entry_allocated[dealloc_entry_id])
-  if (EntryIdWidth > EntryWidth) begin: gen_asm
+  if (EntryIdWidth > EntryWidth) begin : gen_asm
     `BR_ASSUME(legal_alloc_entry_id_a, alloc_entry_id[EntryIdWidth-1:EntryWidth] == '0)
     `BR_ASSUME(legal_dealloc_entry_id_a, dealloc_entry_id[EntryIdWidth-1:EntryWidth] == '0)
   end
 
   // ----------FV assertions----------
-  `BR_ASSERT(alloc_valid_ready_a,
-             alloc_valid && !alloc_ready |=> alloc_valid && $stable(alloc_entry_id))
+  `BR_ASSERT(alloc_valid_ready_a, alloc_valid && !alloc_ready |=> alloc_valid && $stable
+                                  (alloc_entry_id))
   `BR_ASSERT(dealloc_complete_valid_ready_a,
-             dealloc_complete_valid && !dealloc_complete_ready |=>
-             dealloc_complete_valid && $stable(dealloc_complete_entry_id))
+             dealloc_complete_valid && !dealloc_complete_ready |=> dealloc_complete_valid && $stable
+             (dealloc_complete_entry_id))
 
   `BR_ASSERT(no_entry_reuse_a, alloc_valid |-> !fv_entry_used[alloc_entry_id])
   `BR_ASSERT(no_spurious_complete_a,
@@ -100,6 +105,9 @@ module br_tracker_reorder_fpv_monitor #(
 
   `BR_ASSERT(entry_full_no_alloc_a, fv_entry_used == {NumEntries{1'b1}} |-> !alloc_valid)
   `BR_ASSERT(forward_progress_a, fv_entry_used_nxt != {NumEntries{1'b1}} |=> alloc_valid)
+
+  `BR_ASSERT(allocated_entry_count_a, $countones(fv_entry_used) == allocated_entry_count)
+  `BR_ASSERT(free_entry_count_a, (NumEntries - allocated_entry_count) == free_entry_count)
 
   // alloc and dealloc_complete are in order
   jasper_scoreboard_3 #(

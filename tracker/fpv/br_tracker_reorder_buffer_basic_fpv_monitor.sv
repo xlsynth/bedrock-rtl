@@ -25,7 +25,8 @@ module br_tracker_reorder_buffer_basic_fpv_monitor #(
     // Width of the data payload.
     parameter int DataWidth = 1,
     // Number of clock cycles for the RAM read latency.
-    parameter int RamReadLatency = 1
+    parameter int RamReadLatency = 1,
+    localparam int EntryCountWidth = $clog2(NumEntries + 1)
 ) (
     input logic clk,
     input logic rst,
@@ -43,7 +44,11 @@ module br_tracker_reorder_buffer_basic_fpv_monitor #(
     // Unordered Response Interface
     input logic reordered_resp_pop_ready,
     input logic reordered_resp_pop_valid,
-    input logic [DataWidth-1:0] reordered_resp_pop_data
+    input logic [DataWidth-1:0] reordered_resp_pop_data,
+
+    // Count Information
+    input logic [EntryCountWidth-1:0] free_entry_count,
+    input logic [EntryCountWidth-1:0] allocated_entry_count
 );
 
   // ----------FV modeling code----------
@@ -69,7 +74,7 @@ module br_tracker_reorder_buffer_basic_fpv_monitor #(
 
   // alloc and reordered_resp_pop are in order
   fv_fifo #(
-      .Depth(NumEntries*2+RamReadLatency),
+      .Depth(NumEntries * 2 + RamReadLatency),
       .DataWidth(EntryIdWidth),
       .Bypass(0)
   ) entry_id_fifo (
@@ -88,21 +93,25 @@ module br_tracker_reorder_buffer_basic_fpv_monitor #(
              unordered_resp_push_valid |-> unordered_resp_push_entry_id < NumEntries)
   `BR_ASSUME(legal_dealloc_a,
              unordered_resp_push_valid |-> fv_entry_allocated[unordered_resp_push_entry_id])
-  if (EntryIdWidth > EntryWidth) begin: gen_asm
+  if (EntryIdWidth > EntryWidth) begin : gen_asm
     `BR_ASSUME(legal_alloc_entry_id_a, alloc_entry_id[EntryIdWidth-1:EntryWidth] == '0)
     `BR_ASSUME(legal_unordered_resp_push_entry_id_a,
                unordered_resp_push_entry_id[EntryIdWidth-1:EntryWidth] == '0)
   end
 
   // ----------FV assertions----------
-  `BR_ASSERT(alloc_valid_ready_a,
-             alloc_valid && !alloc_ready |=> alloc_valid && $stable(alloc_entry_id))
-  `BR_ASSERT(reordered_resp_data_stable_a,
-             reordered_resp_pop_valid && !reordered_resp_pop_ready |=>
-             reordered_resp_pop_valid && $stable(reordered_resp_pop_data))
+  `BR_ASSERT(alloc_valid_ready_a, alloc_valid && !alloc_ready |=> alloc_valid && $stable
+                                  (alloc_entry_id))
+  `BR_ASSERT(
+      reordered_resp_data_stable_a,
+      reordered_resp_pop_valid && !reordered_resp_pop_ready |=> reordered_resp_pop_valid && $stable
+      (reordered_resp_pop_data))
   `BR_ASSERT(no_entry_reuse_a, alloc_valid |-> !fv_entry_allocated[alloc_entry_id])
 
   `BR_ASSERT(entry_full_no_alloc_a, fv_entry_allocated == {NumEntries{1'b1}} |-> !alloc_valid)
+
+  `BR_ASSERT(allocated_entry_count_a, $countones(fv_entry_allocated) == allocated_entry_count)
+  `BR_ASSERT(free_entry_count_a, (NumEntries - allocated_entry_count) == free_entry_count)
 
   // pick random entry to check data integrity and ordering
   logic [EntryIdWidth-1:0] fv_entry_id;
@@ -120,7 +129,7 @@ module br_tracker_reorder_buffer_basic_fpv_monitor #(
       .IN_CHUNKS(1),
       .OUT_CHUNKS(1),
       .SINGLE_CLOCK(1),
-      .MAX_PENDING(NumEntries+RamReadLatency)
+      .MAX_PENDING(NumEntries + RamReadLatency)
   ) data_sb (
       .clk(clk),
       .rstN(!rst),

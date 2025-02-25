@@ -24,8 +24,13 @@ module br_tracker_reorder_buffer_flops_fpv_monitor #(
     parameter int EntryIdWidth = 1,
     // Width of the data payload.
     parameter int DataWidth = 1,
+    // If 1, ensure that the reordered_resp_pop_valid and reordered_resp_pop_data
+    // come directly from registers, improving timing at the cost of an
+    // additional cycle of latency.
+    parameter bit RegisterPopOutputs = 0,
     // If 1, then assert unordered_resp_push_valid is low at the end of the test.
-    parameter bit EnableAssertFinalNotDeallocValid = 1
+    parameter bit EnableAssertFinalNotDeallocValid = 1,
+    localparam int EntryCountWidth = $clog2(NumEntries + 1)
 ) (
     input logic clk,
     input logic rst,
@@ -43,7 +48,11 @@ module br_tracker_reorder_buffer_flops_fpv_monitor #(
     // Unordered Response Interface
     input logic reordered_resp_pop_ready,
     input logic reordered_resp_pop_valid,
-    input logic [DataWidth-1:0] reordered_resp_pop_data
+    input logic [DataWidth-1:0] reordered_resp_pop_data,
+
+    // Count Information
+    input logic [EntryCountWidth-1:0] free_entry_count,
+    input logic [EntryCountWidth-1:0] allocated_entry_count
 );
 
   // ----------tracker reorder buffer basic checks----------
@@ -63,7 +72,9 @@ module br_tracker_reorder_buffer_flops_fpv_monitor #(
       .unordered_resp_push_data,
       .reordered_resp_pop_ready,
       .reordered_resp_pop_valid,
-      .reordered_resp_pop_data
+      .reordered_resp_pop_data,
+      .free_entry_count,
+      .allocated_entry_count
   );
 
 endmodule : br_tracker_reorder_buffer_flops_fpv_monitor
@@ -72,5 +83,6 @@ bind br_tracker_reorder_buffer_flops br_tracker_reorder_buffer_flops_fpv_monitor
     .NumEntries(NumEntries),
     .EntryIdWidth(EntryIdWidth),
     .DataWidth(DataWidth),
+    .RegisterPopOutputs(RegisterPopOutputs),
     .EnableAssertFinalNotDeallocValid(EnableAssertFinalNotDeallocValid)
 ) monitor (.*);
