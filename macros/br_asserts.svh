@@ -100,7 +100,7 @@ __name__ : assert property (@(posedge __clk__) disable iff (rst === 1'bx) (__exp
 // Reset: 'rst'
 `ifdef BR_ASSERT_ON
 `define BR_ASSERT(__name__, __expr__) \
-__name__ : assert property (@(posedge clk) disable iff (rst === 1'b1 || rst === 1'bx) (__expr__)) else $error($sformatf("Assertion failed: %s", `__FILE__, `__LINE__));
+__name__ : assert property (@(posedge clk) disable iff (rst === 1'b1 || rst === 1'bx) (__expr__)) else $error($sformatf("Assertion failed: %s:%s", `__FILE__, `__LINE__));
 `else  // BR_ASSERT_ON
 `define BR_ASSERT(__name__, __expr__) \
 `BR_NOOP
