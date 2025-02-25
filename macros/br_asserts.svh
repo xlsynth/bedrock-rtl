@@ -77,7 +77,7 @@ end
 // Reset: 'rst'
 `ifdef BR_ASSERT_ON
 `define BR_ASSERT_INCL_RST(__name__, __expr__) \
-__name__ : assert property (@(posedge clk) disable iff (rst === 1'bx) (__expr__));
+__name__ : assert property (@(posedge clk) disable iff (rst === 1'bx) (__expr__)) else $error($sformatf("Assertion failed: %s:%s", `__FILE__, `__LINE__));
 `else  // BR_ASSERT_ON
 `define BR_ASSERT_INCL_RST(__name__, __expr__) \
 `BR_NOOP
@@ -86,7 +86,7 @@ __name__ : assert property (@(posedge clk) disable iff (rst === 1'bx) (__expr__)
 // More expressive form of BR_ASSERT_INCL_RST that allows the use of a custom clock signal name.
 `ifdef BR_ASSERT_ON
 `define BR_ASSERT_INCL_RST_C(__name__, __expr__, __clk__) \
-__name__ : assert property (@(posedge __clk__) disable iff (rst === 1'bx) (__expr__));
+__name__ : assert property (@(posedge __clk__) disable iff (rst === 1'bx) (__expr__)) else $error($sformatf("Assertion failed: %s:%s", `__FILE__, `__LINE__));
 `else  // BR_ASSERT_ON
 `define BR_ASSERT_INCL_RST_C(__name__, __expr__, __clk__) \
 `BR_NOOP
@@ -109,7 +109,7 @@ __name__ : assert property (@(posedge clk) disable iff (rst === 1'b1 || rst === 
 // More expressive form of BR_ASSERT that allows the use of custom clock and reset signal names.
 `ifdef BR_ASSERT_ON
 `define BR_ASSERT_CR(__name__, __expr__, __clk__, __rst__) \
-__name__ : assert property (@(posedge __clk__) disable iff (__rst__ === 1'b1 || __rst__ === 1'bx) (__expr__));
+__name__ : assert property (@(posedge __clk__) disable iff (__rst__ === 1'b1 || __rst__ === 1'bx) (__expr__)) else $error($sformatf("Assertion failed: %s:%s", `__FILE__, `__LINE__));
 `else  // BR_ASSERT_ON
 `define BR_ASSERT_CR(__name__, __expr__, __clk__, __rst__) \
 `BR_NOOP
@@ -190,7 +190,7 @@ __name__ : assert property (@(posedge __clk__) disable iff (__rst__ === 1'b1 || 
 `ifdef BR_ASSERT_ON
 `ifndef BR_DISABLE_ASSERT_IMM
 `define BR_ASSERT_IMM(__name__, __expr__) \
-assert ($isunknown(__expr__) || (__expr__));
+assert ($isunknown(__expr__) || (__expr__)) else $error($sformatf("Assertion failed: %s:%s", `__FILE__, `__LINE__));
 `else  // BR_DISABLE_ASSERT_IMM
 `define BR_ASSERT_IMM(__name__, __expr__) \
 `BR_NOOP
@@ -237,7 +237,7 @@ end
 // Reset: 'rst'
 `ifdef BR_ASSERT_ON
 `define BR_COVER(__name__, __expr__) \
-__name__ : cover property (@(posedge clk) disable iff (rst === 1'b1 || rst === 1'bx) (__expr__));
+__name__ : cover property (@(posedge clk) disable iff (rst === 1'b1 || rst === 1'bx) (__expr__)) else $error($sformatf("Assertion failed: %s:%s", `__FILE__, `__LINE__));
 `else  // BR_ASSERT_ON
 `define BR_COVER(__name__, __expr__) \
 `BR_NOOP
@@ -246,7 +246,7 @@ __name__ : cover property (@(posedge clk) disable iff (rst === 1'b1 || rst === 1
 // More expressive form of BR_COVER that allows the use of custom clock and reset signal names.
 `ifdef BR_ASSERT_ON
 `define BR_COVER_CR(__name__, __expr__, __clk__, __rst__) \
-__name__ : cover property (@(posedge __clk__) disable iff (__rst__ === 1'b1 || __rst__ === 1'bx) (__expr__));
+__name__ : cover property (@(posedge __clk__) disable iff (__rst__ === 1'b1 || __rst__ === 1'bx) (__expr__)) else $error($sformatf("Assertion failed: %s:%s", `__FILE__, `__LINE__));
 `else  // BR_ASSERT_ON
 `define BR_COVER_CR(__name__, __expr__, __clk__, __rst__) \
 `BR_NOOP
@@ -333,7 +333,7 @@ end
 // Reset: 'rst'
 `ifdef BR_ASSERT_ON
 `define BR_ASSUME(__name__, __expr__) \
-__name__ : assume property (@(posedge clk) disable iff (rst === 1'b1 || rst === 1'bx) (__expr__));
+__name__ : assume property (@(posedge clk) disable iff (rst === 1'b1 || rst === 1'bx) (__expr__)) else $error($sformatf("Assertion failed: %s:%s", `__FILE__, `__LINE__));
 `else  // BR_ASSERT_ON
 `define BR_ASSUME(__name__, __expr__) \
 `BR_NOOP
@@ -342,7 +342,7 @@ __name__ : assume property (@(posedge clk) disable iff (rst === 1'b1 || rst === 
 // More expressive form of BR_ASSUME that allows the use of custom clock and reset signal names.
 `ifdef BR_ASSERT_ON
 `define BR_ASSUME_CR(__name__, __expr__, __clk__, __rst__) \
-__name__ : assume property (@(posedge __clk__) disable iff (__rst__ === 1'b1 || __rst__ === 1'bx) (__expr__));
+__name__ : assume property (@(posedge __clk__) disable iff (__rst__ === 1'b1 || __rst__ === 1'bx) (__expr__)) else $error($sformatf("Assertion failed: %s:%s", `__FILE__, `__LINE__));
 `else  // BR_ASSERT_ON
 `define BR_ASSUME_CR(__name__, __expr__, __clk__, __rst__) \
 `BR_NOOP
