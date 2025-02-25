@@ -14,6 +14,15 @@
 # The environment variable must be set to some string even if it's empty.
 common --action_env=VERILOG_RUNNER_PLUGIN_PATH=""
 
+# Set the path to the locally installed Slang tool.
+common --action_env=SLANG_PATH=/eda-tools/slang/v7.0/slang
+
+# Set the path to locally installed XLS libraries (needed by TopStitch to build some wrapper RTL files).
+#common --linkopt=-L/opt/xlsynth/lib
+#common --linkopt=-Wl,-rpath,/opt/xlsynth/lib
+#common --host_linkopt=-L/opt/xlsynth/lib
+#common --host_linkopt=-Wl,-rpath,/opt/xlsynth/lib
+
 # The following flags are used by Bazel to self-throttle the number of concurrent
 # jobs that can run for a given proprietary license-limited EDA tool.
 # However, this doesn't limit the use of licenses by other workflows that may exist
