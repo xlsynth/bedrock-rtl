@@ -76,6 +76,7 @@ verilog_library(
         "//enc/rtl:br_enc_priority_dynamic",
         "//macros:br_asserts_internal",
         "//macros:br_registers",
+        "//mux/rtl:br_mux_bin",
     ],
 )
 
@@ -151,9 +152,5 @@ br_verilog_elab_and_lint_test_suite(
             "3",
         ],
     },
-    top = "br_arb_multi_rr",
-    deps = [
-        ":br_arb_multi_rr",
-        "//mux/rtl:br_mux_bin",
-    ],
+    deps = [":br_arb_multi_rr"],
 )
