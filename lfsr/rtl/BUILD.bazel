@@ -50,5 +50,6 @@ verilog_library(
 verilog_elab_test(
     name = "br_lfsr_taps_elab_test",
     defines = ["BR_ASSERT_ON"],
+    tool = "verific",
     deps = [":br_lfsr_taps"],
 )

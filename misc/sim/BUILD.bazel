@@ -24,5 +24,6 @@ verilog_library(
 
 verilog_elab_test(
     name = "br_test_driver_elab_test",
+    tool = "verific",
     deps = [":br_test_driver"],
 )

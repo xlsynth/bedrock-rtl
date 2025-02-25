@@ -29,6 +29,7 @@ verilog_library(
 
 verilog_elab_test(
     name = "br_mux_bin_tb_elab_test",
+    tool = "verific",
     top = "br_mux_bin_tb",
     deps = [
         ":br_mux_bin_tb",

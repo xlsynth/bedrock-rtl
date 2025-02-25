@@ -26,6 +26,7 @@ verilog_library(
 
 verilog_elab_test(
     name = "br_ram_initializer_gen_sva_monitor_elab_test",
+    tool = "verific",
     top = "br_ram_initializer",
     deps = [":br_ram_initializer_gen_sva_monitor"],
 )
