@@ -203,6 +203,7 @@ br_verilog_sim_test_tools_suite(
         "vcs",
     ],
     deps = [":br_fifo_shared_dynamic_flops_tb"],
+    waves = True,
 )
 
 verilog_library(
