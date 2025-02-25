@@ -15,7 +15,7 @@
 common --action_env=VERILOG_RUNNER_PLUGIN_PATH=""
 
 # Set the path to the locally installed Slang tool.
-common --action_env=SLANG_PATH=/eda-tools/slang/v7.0/slang
+#common --action_env=SLANG_PATH=/opt/slang/v7.0/slang
 
 # Set the path to locally installed XLS libraries (needed by TopStitch to build some wrapper RTL files).
 #common --linkopt=-L/opt/xlsynth/lib
