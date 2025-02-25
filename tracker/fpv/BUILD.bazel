@@ -37,7 +37,7 @@ verilog_elab_test(
 
 br_verilog_fpv_test_suite(
     name = "br_tracker_freelist_jg_test_suite",
-    custom_tcl_body = "br_tracker_freelist_fpv.tcl",
+    custom_tcl_body = "br_tracker_freelist_fpv.jg.tcl",
     # NumEntries > NumAllocPerCycle
     illegal_param_combinations = {
         (

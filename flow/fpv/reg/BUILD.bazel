@@ -44,7 +44,7 @@ verilog_elab_test(
 
 br_verilog_fpv_test_suite(
     name = "br_flow_reg_both_jg_test_suite",
-    custom_tcl_body = "br_flow_reg_fpv.tcl",
+    custom_tcl_body = "br_flow_reg_fpv.jg.tcl",
     illegal_param_combinations = {
         (
             "EnableCoverPushBackpressure",
@@ -101,7 +101,7 @@ verilog_elab_test(
 
 br_verilog_fpv_test_suite(
     name = "br_flow_reg_fwd_jg_test_suite",
-    custom_tcl_body = "br_flow_reg_fpv.tcl",
+    custom_tcl_body = "br_flow_reg_fpv.jg.tcl",
     illegal_param_combinations = {
         (
             "EnableCoverPushBackpressure",
@@ -158,7 +158,7 @@ verilog_elab_test(
 
 br_verilog_fpv_test_suite(
     name = "br_flow_reg_rev_jg_test_suite",
-    custom_tcl_body = "br_flow_reg_fpv.tcl",
+    custom_tcl_body = "br_flow_reg_fpv.jg.tcl",
     illegal_param_combinations = {
         (
             "EnableCoverPushBackpressure",

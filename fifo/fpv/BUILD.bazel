@@ -51,7 +51,7 @@ verilog_elab_test(
 
 br_verilog_fpv_test_suite(
     name = "br_fifo_ctrl_1r1w_jg_test_suite",
-    custom_tcl_body = "br_fifo_ctrl_1r1w_fpv.tcl",
+    custom_tcl_body = "br_fifo_ctrl_1r1w_fpv.jg.tcl",
     params = {
         "Depth": [
             "2",
@@ -102,7 +102,7 @@ verilog_elab_test(
 
 br_verilog_fpv_test_suite(
     name = "br_fifo_flops_jg_test_suite",
-    custom_tcl_body = "br_fifo_flops_fpv.tcl",
+    custom_tcl_body = "br_fifo_flops_fpv.jg.tcl",
     params = {
         "Depth": [
             "2",
@@ -149,7 +149,7 @@ verilog_elab_test(
 
 br_verilog_fpv_test_suite(
     name = "br_fifo_ctrl_1r1w_push_credit_jg_test_suite",
-    custom_tcl_body = "br_fifo_ctrl_1r1w_push_credit_fpv.tcl",
+    custom_tcl_body = "br_fifo_ctrl_1r1w_push_credit_fpv.jg.tcl",
     params = {
         "Depth": [
             "2",
@@ -205,7 +205,7 @@ verilog_elab_test(
 
 br_verilog_fpv_test_suite(
     name = "br_fifo_flops_push_credit_jg_test_suite",
-    custom_tcl_body = "br_fifo_flops_push_credit_fpv.tcl",
+    custom_tcl_body = "br_fifo_flops_push_credit_fpv.jg.tcl",
     params = {
         "Depth": [
             "2",
