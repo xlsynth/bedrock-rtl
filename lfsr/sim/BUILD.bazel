@@ -30,6 +30,7 @@ verilog_library(
 
 verilog_elab_test(
     name = "br_lfsr_tb_elab_test",
+    tool = "verific",
     deps = [":br_lfsr_tb"],
 )
 

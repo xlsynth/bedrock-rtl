@@ -26,6 +26,7 @@ verilog_library(
 
 verilog_elab_test(
     name = "br_counter_incr_tb_elab_test",
+    tool = "verific",
     deps = [":br_counter_incr_tb"],
 )
 
@@ -68,6 +69,7 @@ verilog_library(
 
 verilog_elab_test(
     name = "br_counter_tb_elab_test",
+    tool = "verific",
     deps = [":br_counter_tb"],
 )
 
@@ -110,6 +112,7 @@ verilog_library(
 
 verilog_elab_test(
     name = "br_counter_decr_tb_elab_test",
+    tool = "verific",
     deps = [":br_counter_decr_tb"],
 )
 
