@@ -35,6 +35,9 @@ common --action_env=SLANG_PATH=/eda-tools/slang/v7.0/slang
 # If you don't want limits, set the values to some large positive number.
 #
 # See TOOLS_THAT_NEED_LICENSES in //bazel/verilog.bzl for the list of tools that need licenses.
+# The form of the flag is:
+#
+#     common --local_resources=verilog_test_tool_licenses_<tool_name>=<number>
 common --local_resources=verilog_test_tool_licenses_ascentlint=10000
 common --local_resources=verilog_test_tool_licenses_jg=10000
 common --local_resources=verilog_test_tool_licenses_vcf=10000
