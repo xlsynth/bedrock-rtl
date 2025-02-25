@@ -119,6 +119,11 @@ def br_verilog_fpv_test_suite(name, sandbox = True, **kwargs):
     if "defines" in kwargs:
         fail("Do not pass defines to br_verilog_fpv_test_suite. They are hard-coded in the macro.")
 
+    if kwargs["tool"] == "jg":
+        kwargs["custom_tcl_body"] = "jg/" + kwargs["custom_tcl_body"]
+    else:
+        kwargs["custom_tcl_body"] = "vcf/" + kwargs["custom_tcl_body"]
+
     verilog_fpv_test_suite(
         name = name,
         defines = ["BR_ASSERT_ON", "BR_ENABLE_IMPL_CHECKS", "BR_DISABLE_FINAL_CHECKS", "BR_ENABLE_FPV"],
