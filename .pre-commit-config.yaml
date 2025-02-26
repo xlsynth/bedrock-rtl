@@ -39,15 +39,15 @@ repos:
         exclude: \.patch$
 
   - repo: https://github.com/mgottscho/verible-py.git
-    rev: v0.0-3824
+    rev: v0.0-3946
     hooks:
       # Format Verilog files
       - id: verible-verilog-format
         args: [--inplace]
         # Skip ChipStack-generated files
-        exclude: ^.*/fpv/
+        exclude: ^.*/chipstack/
       # Style lint Verilog files
       - id: verible-verilog-lint
         args: [--ruleset=default]
         # Skip ChipStack-generated files
-        exclude: ^.*/fpv/
+        exclude: ^.*/chipstack/

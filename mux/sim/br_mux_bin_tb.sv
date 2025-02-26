@@ -2,7 +2,6 @@ module br_mux_bin_tb;
 
   parameter int NumSymbolsIn = 2;
   parameter int SymbolWidth = 8;
-  parameter bit UseStructuredGates = 0;
 
   logic clk;
   logic rst;
@@ -13,8 +12,7 @@ module br_mux_bin_tb;
 
   br_mux_bin #(
       .NumSymbolsIn(NumSymbolsIn),
-      .SymbolWidth(SymbolWidth),
-      .UseStructuredGates(UseStructuredGates)
+      .SymbolWidth (SymbolWidth)
   ) dut (
       .select,
       .in,

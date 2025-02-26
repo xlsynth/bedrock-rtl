@@ -29,6 +29,7 @@ verilog_library(
 
 verilog_elab_test(
     name = "br_multi_xfer_reg_fwd_tb_elab_test",
+    tool = "verific",
     deps = [":br_multi_xfer_reg_fwd_tb"],
 )
 

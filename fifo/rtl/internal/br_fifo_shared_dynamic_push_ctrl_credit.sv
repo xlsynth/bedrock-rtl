@@ -108,6 +108,7 @@ module br_fifo_shared_dynamic_push_ctrl_credit #(
       .NumFifos(NumFifos),
       .Depth(Depth),
       .Width(Width),
+      .DeallocCountDelay(2 - RegisterPushOutputs),
       .EnableCoverPushBackpressure(0),
       .EnableAssertFinalNotValid(EnableAssertFinalNotValid)
   ) br_fifo_shared_dynamic_push_ctrl (

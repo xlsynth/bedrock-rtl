@@ -1,10 +1,9 @@
 bazel-*
 MODULE.bazel.lock
-.bazelrc
+user.bazelrc
 .vscode
 chipstack_artifacts
-*.docbook
-*.docx
 *.f
 __pycache__
 target
+.spr.yml

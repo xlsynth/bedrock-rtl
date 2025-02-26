@@ -152,15 +152,18 @@ module br_ram_flops #(
   //------------------------------------------
   localparam int TileAddressWidth = br_math::clamped_clog2(TileDepth);
 
-  logic [DepthTiles-1:0][NumWritePorts-1:0] tile_wr_valid;
-  logic [DepthTiles-1:0][NumWritePorts-1:0][TileAddressWidth-1:0] tile_wr_addr;
-  logic [DepthTiles-1:0][WidthTiles-1:0][NumWritePorts-1:0][TileWidth-1:0] tile_wr_data;
-  logic [DepthTiles-1:0][WidthTiles-1:0][NumWritePorts-1:0][TileNumWords-1:0] tile_wr_word_en;
+  // Using unpacked arrays on outer tiling dimensions to help speed up simulation.
+  // ri lint_check_off ARRAY_LENGTH_ONE
+  logic [NumWritePorts-1:0] tile_wr_valid[DepthTiles];
+  logic [NumWritePorts-1:0][TileAddressWidth-1:0] tile_wr_addr[DepthTiles];
+  logic [NumWritePorts-1:0][TileWidth-1:0] tile_wr_data[DepthTiles][WidthTiles];
+  logic [NumWritePorts-1:0][TileNumWords-1:0] tile_wr_word_en[DepthTiles][WidthTiles];
 
-  logic [DepthTiles-1:0][NumReadPorts-1:0] tile_rd_addr_valid;
-  logic [DepthTiles-1:0][NumReadPorts-1:0][TileAddressWidth-1:0] tile_rd_addr;
-  logic [DepthTiles-1:0][WidthTiles-1:0][NumReadPorts-1:0] tile_rd_data_valid;
-  logic [DepthTiles-1:0][WidthTiles-1:0][NumReadPorts-1:0][TileWidth-1:0] tile_rd_data;
+  logic [NumReadPorts-1:0] tile_rd_addr_valid[DepthTiles];
+  logic [NumReadPorts-1:0][TileAddressWidth-1:0] tile_rd_addr[DepthTiles];
+  logic [NumReadPorts-1:0] tile_rd_data_valid[DepthTiles][WidthTiles];
+  logic [NumReadPorts-1:0][TileWidth-1:0] tile_rd_data[DepthTiles][WidthTiles];
+  // ri lint_check_on ARRAY_LENGTH_ONE
 
   for (genvar wport = 0; wport < NumWritePorts; wport++) begin : gen_write_decoder
     logic [DepthTiles-1:0] decoded_wr_valid;

@@ -29,6 +29,7 @@ verilog_library(
 
 verilog_elab_test(
     name = "br_credit_receiver_tb_elab_test",
+    tool = "verific",
     deps = [":br_credit_receiver_tb"],
 )
 

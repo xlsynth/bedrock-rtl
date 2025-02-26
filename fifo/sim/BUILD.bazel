@@ -25,6 +25,7 @@ verilog_library(
 
 verilog_elab_test(
     name = "br_fifo_test_harness_elab_test",
+    tool = "verific",
     deps = [":br_fifo_test_harness"],
 )
 
@@ -40,6 +41,7 @@ verilog_library(
 
 verilog_elab_test(
     name = "br_fifo_flops_tb_elab_test",
+    tool = "verific",
     deps = [":br_fifo_flops_tb"],
 )
 
@@ -113,6 +115,7 @@ verilog_library(
 
 verilog_elab_test(
     name = "br_fifo_flops_push_credit_tb_elab_test",
+    tool = "verific",
     deps = [":br_fifo_flops_push_credit_tb"],
 )
 
@@ -149,6 +152,7 @@ br_verilog_sim_test_tools_suite(
 verilog_library(
     name = "br_fifo_shared_test_harness",
     srcs = ["br_fifo_shared_test_harness.sv"],
+    deps = ["//pkg:br_math_pkg"],
 )
 
 verilog_library(
@@ -163,6 +167,7 @@ verilog_library(
 
 verilog_elab_test(
     name = "br_fifo_shared_dynamic_flops_tb_elab_test",
+    tool = "verific",
     deps = [":br_fifo_shared_dynamic_flops_tb"],
 )
 
@@ -193,8 +198,9 @@ br_verilog_sim_test_tools_suite(
             "1",
         ],
     },
+    # TODO(zhemao): dsim test is broken due to apparent simulator bug.
+    # Re-enable when the bug is fixed.
     tools = [
-        "dsim",
         "vcs",
     ],
     deps = [":br_fifo_shared_dynamic_flops_tb"],
@@ -213,6 +219,7 @@ verilog_library(
 
 verilog_elab_test(
     name = "br_fifo_shared_dynamic_flops_push_credit_tb_elab_test",
+    tool = "verific",
     deps = [":br_fifo_shared_dynamic_flops_push_credit_tb"],
 )
 
@@ -243,8 +250,9 @@ br_verilog_sim_test_tools_suite(
             "1",
         ],
     },
+    # TODO(zhemao): dsim test is broken due to apparent simulator bug.
+    # Re-enable when the bug is fixed.
     tools = [
-        "dsim",
         "vcs",
     ],
     deps = [":br_fifo_shared_dynamic_flops_push_credit_tb"],

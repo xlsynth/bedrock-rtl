@@ -29,11 +29,8 @@ verilog_library(
 
 verilog_elab_test(
     name = "br_mux_bin_tb_elab_test",
-    top = "br_mux_bin_tb",
-    deps = [
-        ":br_mux_bin_tb",
-        "//gate/rtl:br_gate_mock",
-    ],
+    tool = "verific",
+    deps = [":br_mux_bin_tb"],
 )
 
 br_verilog_sim_test_tools_suite(
@@ -53,9 +50,51 @@ br_verilog_sim_test_tools_suite(
         "SymbolWidth": [
             "8",
         ],
-        "UseStructuredGates": [
-            "0",
-            "1",
+    },
+    tools = [
+        "dsim",
+        "iverilog",
+        "vcs",
+    ],
+    deps = [":br_mux_bin_tb"],
+)
+
+verilog_library(
+    name = "br_mux_bin_structured_gates_tb",
+    srcs = ["br_mux_bin_structured_gates_tb.sv"],
+    deps = [
+        "//gate/rtl:br_gate_mock",
+        "//misc/sim:br_test_driver",
+    ],
+)
+
+verilog_elab_test(
+    name = "br_mux_bin_structured_gates_tb_elab_test",
+    tool = "verific",
+    top = "br_mux_bin_structured_gates_tb",
+    deps = [
+        ":br_mux_bin_structured_gates_tb",
+        "//gate/rtl:br_gate_mock",
+        "//mux/rtl:br_mux_bin_structured_gates",
+    ],
+)
+
+br_verilog_sim_test_tools_suite(
+    name = "br_mux_bin_structured_gates_sim_test_tools_suite",
+    params = {
+        "NumSymbolsIn": [
+            "2",
+            "3",
+            "4",
+            "5",
+            "6",
+            "8",
+            "10",
+            "13",
+            "14",
+        ],
+        "SymbolWidth": [
+            "8",
         ],
     },
     tools = [
@@ -63,9 +102,51 @@ br_verilog_sim_test_tools_suite(
         "iverilog",
         "vcs",
     ],
-    top = "br_mux_bin_tb",
+    top = "br_mux_bin_structured_gates_tb",
     deps = [
-        ":br_mux_bin_tb",
+        ":br_mux_bin_structured_gates_tb",
         "//gate/rtl:br_gate_mock",
+        "//mux/rtl:br_mux_bin_structured_gates",
+    ],
+)
+
+# Same TB, different RTL dep
+verilog_elab_test(
+    name = "br_mux_bin_structured_gates_mock_tb_elab_test",
+    tool = "verific",
+    top = "br_mux_bin_structured_gates_tb",
+    deps = [
+        ":br_mux_bin_structured_gates_tb",
+        "//mux/rtl:br_mux_bin_structured_gates_mock",
+    ],
+)
+
+br_verilog_sim_test_tools_suite(
+    name = "br_mux_bin_structured_gates_mock_sim_test_tools_suite",
+    params = {
+        "NumSymbolsIn": [
+            "2",
+            "3",
+            "4",
+            "5",
+            "6",
+            "8",
+            "10",
+            "13",
+            "14",
+        ],
+        "SymbolWidth": [
+            "8",
+        ],
+    },
+    tools = [
+        "dsim",
+        "iverilog",
+        "vcs",
+    ],
+    top = "br_mux_bin_structured_gates_tb",
+    deps = [
+        ":br_mux_bin_structured_gates_tb",
+        "//mux/rtl:br_mux_bin_structured_gates_mock",
     ],
 )

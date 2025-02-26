@@ -29,6 +29,7 @@ verilog_library(
 
 verilog_elab_test(
     name = "br_enc_bin2gray_gen_tb_elab_test",
+    tool = "verific",
     deps = [":br_enc_bin2gray_gen_tb"],
 )
 
@@ -53,6 +54,7 @@ verilog_library(
 
 verilog_elab_test(
     name = "br_enc_bin2onehot_gen_tb_elab_test",
+    tool = "verific",
     deps = [":br_enc_bin2onehot_gen_tb"],
 )
 
@@ -77,6 +79,7 @@ verilog_library(
 
 verilog_elab_test(
     name = "br_enc_countones_gen_tb_elab_test",
+    tool = "verific",
     deps = [":br_enc_countones_gen_tb"],
 )
 
@@ -101,6 +104,7 @@ verilog_library(
 
 verilog_elab_test(
     name = "br_enc_gray2bin_gen_tb_elab_test",
+    tool = "verific",
     deps = [":br_enc_gray2bin_gen_tb"],
 )
 
@@ -125,6 +129,7 @@ verilog_library(
 
 verilog_elab_test(
     name = "br_enc_onehot2bin_gen_tb_elab_test",
+    tool = "verific",
     deps = [":br_enc_onehot2bin_gen_tb"],
 )
 
@@ -149,6 +154,7 @@ verilog_library(
 
 verilog_elab_test(
     name = "br_enc_priority_encoder_gen_tb_elab_test",
+    tool = "verific",
     deps = [":br_enc_priority_encoder_gen_tb"],
 )
 

@@ -5,10 +5,6 @@ package(default_visibility = ["//visibility:public"])
 
 cc_library(
     name = "xls_lib",
-    linkopts = [
-        "-L/eda-tools/xlsynth/lib",
-        "-Wl,-rpath,/eda-tools/xlsynth/lib",
-    ],
     visibility = ["//visibility:public"],
 )
 

@@ -38,6 +38,7 @@ verilog_library(
 
 verilog_elab_test(
     name = "br_flow_arb_fixed_fpv_monitor_elab_test",
+    tool = "verific",
     deps = [":br_flow_arb_fixed_fpv_monitor"],
 )
 
@@ -86,6 +87,7 @@ verilog_library(
 
 verilog_elab_test(
     name = "br_flow_arb_lru_fpv_monitor_elab_test",
+    tool = "verific",
     deps = [":br_flow_arb_lru_fpv_monitor"],
 )
 
@@ -134,6 +136,7 @@ verilog_library(
 
 verilog_elab_test(
     name = "br_flow_arb_rr_fpv_monitor_elab_test",
+    tool = "verific",
     deps = [":br_flow_arb_rr_fpv_monitor"],
 )
 

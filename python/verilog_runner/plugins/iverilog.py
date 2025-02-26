@@ -18,7 +18,7 @@ from util import (
     print_summary,
 )
 
-PLUGIN_API_VERSION = "1.1"
+PLUGIN_API_VERSION = "2.0.0"
 
 
 @dataclass

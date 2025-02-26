@@ -24,11 +24,15 @@
 // We have separate modules for tie-to-zero and tie-to-one because
 // lint tools may complain about multiple parameters per line when wrapped up in a macro.
 
+`include "br_asserts.svh"
+
 module br_misc_tieoff_zero #(
     parameter int Width = 1  // Must be at least 1
 ) (
     output logic [Width-1:0] out
 );
+
+  `BR_ASSERT_STATIC(width_gte_1, Width >= 1)
 
   // ri lint_check_waive CONST_ASSIGN CONST_OUTPUT
   assign out = {Width{1'b0}};

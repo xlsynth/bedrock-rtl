@@ -90,11 +90,11 @@ module br_credit_sender_fpv_monitor #(
   `BR_ASSUME(credit_withhold_a, credit_withhold <= MaxCredit)
   `BR_ASSUME(credit_withhold_liveness_a, s_eventually (credit_withhold < fv_max_credit))
   for (genvar n = 0; n < NumFlows; n++) begin : gen_asm
-    `BR_ASSUME(push_valid_ready_a, push_valid[n] && !push_ready[n] |=>
-               push_valid[n] && $stable(push_data[n]))
+    `BR_ASSUME(push_valid_ready_a,
+               push_valid[n] && !push_ready[n] |=> push_valid[n] && $stable(push_data[n]))
   end
-  `BR_ASSUME(no_spurious_pop_credit_a,
-             (fv_max_credit - fv_pop_credit_cnt + $countones(pop_valid)) >= pop_credit)
+  `BR_ASSUME(no_spurious_pop_credit_a, (fv_max_credit - fv_pop_credit_cnt + $countones(pop_valid)
+             ) >= pop_credit)
   `BR_ASSUME(legal_pop_credit_a, pop_credit <= PopCreditMaxChange)
   `BR_ASSUME(pop_credit_liveness_a, s_eventually |pop_credit)
 

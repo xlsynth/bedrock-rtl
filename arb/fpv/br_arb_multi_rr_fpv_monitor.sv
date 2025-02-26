@@ -122,10 +122,11 @@ module br_arb_multi_rr_fpv_monitor #(
       |grant_ordered[x] && |grant_ordered[y] |-> cur_pri[high_pri_idx] > cur_pri[low_pri_idx])
 
   // ----------Fairness Check----------
+  // verilog_lint: waive-start line-length
   `BR_ASSERT(
       round_robin_a,
-      request[i] |-> not (!grant[i] && enable_priority_update && (grant_allowed != 'd0)
-                            throughout grant[j] [-> 2]))
+      request[i] |-> not (!grant[i] && enable_priority_update && (grant_allowed != 'd0) throughout grant[j] [-> 2]))
+  // verilog_lint: waive-stop line-length
 
   // ----------Forward Progress Check----------
   `BR_ASSERT(must_grant_a, |request && |grant_allowed |-> |grant)
