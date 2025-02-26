@@ -183,8 +183,8 @@ module br_arb_pri_rr #(
   `BR_ASSERT_IMPL(grant_onehot0_A, $onehot0(grant))
   `BR_ASSERT_IMPL(always_grant_A, |request |-> |grant)
   `BR_ASSERT_IMPL(grant_implies_request_A, (grant & request) == grant)
-  `BR_ASSERT_IMPL(no_update_same_grants_A, !$past(enable_priority_update) && (request == $past
-                                           (request)) |-> grant == $past(grant))
+  `BR_ASSERT_IMPL(no_update_same_grants_A, ##1 !$past(enable_priority_update) && $stable(request)
+                                           && $stable(request_priority) |-> $stable(grant))
   `BR_COVER_IMPL(grant_without_state_update_C, !enable_priority_update && |grant)
 
 endmodule : br_arb_pri_rr
