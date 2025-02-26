@@ -152,6 +152,7 @@ module br_ram_flops #(
   //------------------------------------------
   localparam int TileAddressWidth = br_math::clamped_clog2(TileDepth);
 
+  // Using unpacked arrays on outer tiling dimensions to help speed up simulation.
   // ri lint_check_off ARRAY_LENGTH_ONE
   logic [NumWritePorts-1:0] tile_wr_valid[DepthTiles];
   logic [NumWritePorts-1:0][TileAddressWidth-1:0] tile_wr_addr[DepthTiles];
