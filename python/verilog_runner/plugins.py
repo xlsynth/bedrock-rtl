@@ -28,9 +28,12 @@ from typing import Dict, List, Tuple, Type
 #
 # The version number is used as a simple semantic versioning check.
 #
-# Major version changes are definitely breaking.
-# Minor version changes are intended to be non-breaking but we don't guarantee it.
-PLUGIN_API_VERSION = "1.1"
+# From https://semver.org:
+#   Given a version number MAJOR.MINOR.PATCH, increment the:
+#   1. MAJOR version when you make incompatible API changes
+#   2. MINOR version when you add functionality in a backward compatible manner
+#   3. PATCH version when you make backward compatible bug fixes
+PLUGIN_API_VERSION = "2.0.0"
 
 
 def check_plugin_api_version(module: object) -> bool:
