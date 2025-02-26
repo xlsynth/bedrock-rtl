@@ -47,6 +47,15 @@ module br_tracker_sequence_fpv_monitor #(
 );
 
   // ----------FV modeling code----------
+  function automatic logic [EntryIdWidth-1:0] wrap(input logic [EntryIdWidth-1:0] base,
+                                                   input logic [MaxAllocSizeWidth-1:0] incr,
+                                                   input int MaxValue);
+    logic [EntryIdWidth:0] base_pad;
+    base_pad = {1'b0, base};
+    wrap = base_pad + incr >= MaxValue ? base + incr - MaxValue : base + incr;
+    return wrap;
+  endfunction
+
   localparam int EntryWidth = $clog2(NumEntries);
   logic alloc_extra_left;
   logic [MaxAllocSizeWidth-1:0] fv_allocated;
@@ -76,22 +85,23 @@ module br_tracker_sequence_fpv_monitor #(
   // if fv_dealloc_valid[i]=1, dealloc_entry_id[i] is actually deallocated this cycle
   always_comb begin
     fv_dealloc_valid = 'd0;
+    fv_dealloc_entry_id = 'd0;
     // dealloc size > 0
-    fv_dealloc_valid[0] = 'd1;
-    fv_dealloc_entry_id[0] = cur_dealloc_entry_id;
-    for (int i = 1; i < MaxAllocSize; i++) begin
-      if (i < dealloc_size) begin
-        fv_dealloc_valid[i] = 1'd1;
-        fv_dealloc_entry_id[i] = fv_dealloc_entry_id[i-1] + 'd1 < NumEntries ? (fv_dealloc_entry_id[i-1] + 'd1) : 'd0;
+    if (dealloc_valid) begin
+      fv_dealloc_valid[0] = 'd1;
+      fv_dealloc_entry_id[0] = cur_dealloc_entry_id;
+      for (int i = 1; i < MaxAllocSize; i++) begin
+        if (i < dealloc_size) begin
+          fv_dealloc_valid[i] = 1'd1;
+          fv_dealloc_entry_id[i] = wrap(fv_dealloc_entry_id[i-1], 'd1, NumEntries);
+        end
       end
     end
   end
   // verilog_lint: waive-stop line-length
 
-  `BR_REGL(
-      cur_dealloc_entry_id,
-      cur_dealloc_entry_id + dealloc_size < NumEntries ? cur_dealloc_entry_id + dealloc_size : 'd0,
-      dealloc_valid)
+  `BR_REGL(cur_dealloc_entry_id, wrap(cur_dealloc_entry_id, dealloc_size, NumEntries),
+           dealloc_valid)
 
   // Entry allocated not yet deallocated
   always_comb begin
@@ -119,9 +129,6 @@ module br_tracker_sequence_fpv_monitor #(
   `BR_ASSERT(alloc_sendable_increment_a, alloc_extra_left |=> alloc_sendable >= $past
                                          (alloc_sendable - alloc_receivable))
   for (genvar i = 0; i < MaxAllocSize; i++) begin : gen_ast
-    `BR_ASSERT(
-        push_data_shift_down_a,
-        alloc_extra_left |=> alloc_entry_id[i] == $past(alloc_extra_left[i+alloc_receivable]))
     `BR_ASSERT(no_entry_reuse_a, fv_alloc_valid[i] |-> !fv_entry_allocated[alloc_entry_id[i]])
   end
 

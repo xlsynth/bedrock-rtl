@@ -37,6 +37,7 @@ verilog_library(
 
 verilog_elab_test(
     name = "br_tracker_freelist_fpv_monitor_elab_test",
+    custom_tcl_header = "//:elab_test_jg_custom_header.verific.tcl",
     tool = "verific",
     deps = [":br_tracker_freelist_fpv_monitor"],
 )
@@ -149,14 +150,15 @@ verilog_library(
 verilog_elab_test(
     name = "br_tracker_sequence_fpv_monitor_elab_test",
     custom_tcl_header = "//:elab_test_jg_custom_header.verific.tcl",
+    tool = "verific",
     deps = [":br_tracker_sequence_fpv_monitor"],
 )
 
 br_verilog_fpv_test_suite(
     name = "br_tracker_sequence_jg_test_suite",
-    #custom_tcl_body = "br_tracker_sequence_fpv.tcl",
-    gui = True,
+    custom_tcl_body = "br_tracker_sequence_fpv.tcl",
     # EntryIdWidth >= $clog2(NumEntries)
+    # MaxAllocSize <= NumEntries - 1
     illegal_param_combinations = {
         (
             "EntryIdWidth",
@@ -165,6 +167,13 @@ br_verilog_fpv_test_suite(
             ("1", "4"),
             ("1", "6"),
             ("2", "6"),
+        ],
+        (
+            "MaxAllocSize",
+            "NumEntries",
+        ): [
+            ("2", "2"),
+            ("3", "2"),
         ],
     },
     params = {
@@ -175,8 +184,8 @@ br_verilog_fpv_test_suite(
         ],
         "MaxAllocSize": [
             "1",
+            "2",
             "3",
-            "4",
         ],
         "NumEntries": [
             "2",
@@ -201,6 +210,8 @@ verilog_library(
 
 verilog_elab_test(
     name = "br_tracker_reorder_fpv_monitor_elab_test",
+    custom_tcl_header = "//:elab_test_jg_custom_header.verific.tcl",
+    tool = "verific",
     deps = [":br_tracker_reorder_fpv_monitor"],
 )
 
@@ -250,6 +261,8 @@ verilog_library(
 
 verilog_elab_test(
     name = "br_tracker_reorder_buffer_flops_fpv_monitor_elab_test",
+    custom_tcl_header = "//:elab_test_jg_custom_header.verific.tcl",
+    tool = "verific",
     deps = [":br_tracker_reorder_buffer_flops_fpv_monitor"],
 )
 
@@ -303,6 +316,8 @@ verilog_library(
 
 verilog_elab_test(
     name = "br_tracker_reorder_buffer_ctrl_1r1w_fpv_monitor_elab_test",
+    custom_tcl_header = "//:elab_test_jg_custom_header.verific.tcl",
+    tool = "verific",
     deps = [":br_tracker_reorder_buffer_ctrl_1r1w_fpv_monitor"],
 )
 
