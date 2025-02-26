@@ -3,8 +3,6 @@ MODULE.bazel.lock
 user.bazelrc
 .vscode
 chipstack_artifacts
-*.docbook
-*.docx
 *.f
 __pycache__
 target
