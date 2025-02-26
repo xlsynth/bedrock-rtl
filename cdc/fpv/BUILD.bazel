@@ -18,21 +18,12 @@ load("//bazel:verilog.bzl", "verilog_elab_test")
 
 package(default_visibility = ["//visibility:public"])
 
-# Delays an input signal by a fixed number of clock cycles.
-verilog_library(
-    name = "fv_delay",
-    srcs = ["fv_delay.sv"],
-    deps = [
-        "//macros:br_registers",
-    ],
-)
-
 # Basic cdc FIFO checkers
 verilog_library(
     name = "br_cdc_fifo_basic_fpv_monitor",
     srcs = ["br_cdc_fifo_basic_fpv_monitor.sv"],
     deps = [
-        ":fv_delay",
+        "//fpv/lib:fv_delay",
     ],
 )
 
