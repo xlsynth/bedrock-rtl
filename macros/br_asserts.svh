@@ -56,20 +56,30 @@ typedef enum logic [1:0] { \
     __BR_ASSERT_STATIC_IN_PACKAGE_FAILED__``__name__ = 0 \
 } __br_static_assert_enum__``__name__;
 
+`define BR_ASSERT_UVM_ERROR(__name__, __expr__) \
+`uvm_error("BR_ASSERT", $sformatf("Assertion failed: %0s [%0s] (%0s:%0d)", `"__expr__`", `"__name__`", `__FILE__, `__LINE__))
+
+`define BR_ASSERT_ERROR(__name__, __expr__) \
+$error($sformatf("Assertion failed: %0s [%0s] (%0s:%0d)", `"__expr__`", `"__name__`", `__FILE__, `__LINE__));
+
 ////////////////////////////////////////////////////////////////////////////////
 // Final assertion macros (end of test)
 ////////////////////////////////////////////////////////////////////////////////
 `ifdef BR_ASSERT_ON
 `ifndef BR_DISABLE_FINAL_CHECKS
+`ifdef UVM_MAJOR_REV
 `define BR_ASSERT_FINAL(__name__, __expr__) \
 final begin : __name__ \
 assert (__expr__)  else \
-`ifdef UVM_MAJOR_REV \
-`uvm_error("BR_ASSERT", $sformatf("Assertion failed: %0s [%0s] (%0s:%0d)", `"__expr__`", `"__name__`", `__FILE__, `__LINE__)) \
-`else \
-$error($sformatf("Assertion failed: %0s [%0s] (%0s:%0d)", `"__expr__`", `"__name__`", `__FILE__, `__LINE__)); \
-`endif \
+`BR_ASSERT_UVM_ERROR(__name__, __expr__) \
 end
+`else // UVM_MAJOR_REV
+`define BR_ASSERT_FINAL(__name__, __expr__) \
+final begin : __name__ \
+assert (__expr__)  else \
+`BR_ASSERT_ERROR(__name__, __expr__) \
+end
+`endif // UVM_MAJOR_REV
 `else  // BR_DISABLE_FINAL_CHECKS
 `define BR_ASSERT_FINAL(__name__, __expr__) \
 `BR_NOOP
@@ -86,13 +96,15 @@ end
 // Clock: 'clk'
 // Reset: 'rst'
 `ifdef BR_ASSERT_ON
+`ifdef UVM_MAJOR_REV
 `define BR_ASSERT_INCL_RST(__name__, __expr__) \
 __name__ : assert property (@(posedge clk) disable iff (rst === 1'bx) (__expr__)) else \
-`ifdef UVM_MAJOR_REV \
-`uvm_error("BR_ASSERT", $sformatf("Assertion failed: %0s [%0s] (%0s:%0d)", `"__expr__`", `"__name__`", `__FILE__, `__LINE__)) \
-`else \
-$error($sformatf("Assertion failed: %0s [%0s] (%0s:%0d)", `"__expr__`", `"__name__`", `__FILE__, `__LINE__)); \
-`endif
+`BR_ASSERT_UVM_ERROR(__name__, __expr__)
+`else // UVM_MAJOR_REV
+`define BR_ASSERT_INCL_RST(__name__, __expr__) \
+__name__ : assert property (@(posedge clk) disable iff (rst === 1'bx) (__expr__)) else \
+`BR_ASSERT_ERROR(__name__, __expr__)
+`endif // UVM_MAJOR_REV
 `else  // BR_ASSERT_ON
 `define BR_ASSERT_INCL_RST(__name__, __expr__) \
 `BR_NOOP
@@ -100,13 +112,15 @@ $error($sformatf("Assertion failed: %0s [%0s] (%0s:%0d)", `"__expr__`", `"__name
 
 // More expressive form of BR_ASSERT_INCL_RST that allows the use of a custom clock signal name.
 `ifdef BR_ASSERT_ON
+`ifdef UVM_MAJOR_REV
 `define BR_ASSERT_INCL_RST_C(__name__, __expr__, __clk__) \
 __name__ : assert property (@(posedge __clk__) disable iff (rst === 1'bx) (__expr__)) else \
-`ifdef UVM_MAJOR_REV \
-`uvm_error("BR_ASSERT", $sformatf("Assertion failed: %0s [%0s] (%0s:%0d)", `"__expr__`", `"__name__`", `__FILE__, `__LINE__)) \
-`else \
-$error($sformatf("Assertion failed: %0s [%0s] (%0s:%0d)", `"__expr__`", `"__name__`", `__FILE__, `__LINE__)); \
-`endif
+`BR_ASSERT_UVM_ERROR(__name__, __expr__)
+`else // UVM_MAJOR_REV
+`define BR_ASSERT_INCL_RST_C(__name__, __expr__, __clk__) \
+__name__ : assert property (@(posedge __clk__) disable iff (rst === 1'bx) (__expr__)) else \
+`BR_ASSERT_ERROR(__name__, __expr__)
+`endif // UVM_MAJOR_REV
 `else  // BR_ASSERT_ON
 `define BR_ASSERT_INCL_RST_C(__name__, __expr__, __clk__) \
 `BR_NOOP
@@ -119,13 +133,15 @@ $error($sformatf("Assertion failed: %0s [%0s] (%0s:%0d)", `"__expr__`", `"__name
 // Clock: 'clk'
 // Reset: 'rst'
 `ifdef BR_ASSERT_ON
+`ifdef UVM_MAJOR_REV
 `define BR_ASSERT(__name__, __expr__) \
 __name__ : assert property (@(posedge clk) disable iff (rst === 1'b1 || rst === 1'bx) (__expr__)) else \
-`ifdef UVM_MAJOR_REV \
-`uvm_error("BR_ASSERT", $sformatf("Assertion failed: %0s [%0s] (%0s:%0d)", `"__expr__`", `"__name__`", `__FILE__, `__LINE__)) \
-`else \
-$error($sformatf("Assertion failed: %0s [%0s] (%0s:%0d)", `"__expr__`", `"__name__`", `__FILE__, `__LINE__)); \
-`endif
+`BR_ASSERT_UVM_ERROR(__name__, __expr__)
+`else // UVM_MAJOR_REV
+`define BR_ASSERT(__name__, __expr__) \
+__name__ : assert property (@(posedge clk) disable iff (rst === 1'b1 || rst === 1'bx) (__expr__)) else \
+`BR_ASSERT_ERROR(__name__, __expr__)
+`endif // UVM_MAJOR_REV
 `else  // BR_ASSERT_ON
 `define BR_ASSERT(__name__, __expr__) \
 `BR_NOOP
@@ -133,13 +149,15 @@ $error($sformatf("Assertion failed: %0s [%0s] (%0s:%0d)", `"__expr__`", `"__name
 
 // More expressive form of BR_ASSERT that allows the use of custom clock and reset signal names.
 `ifdef BR_ASSERT_ON
+`ifdef UVM_MAJOR_REV
 `define BR_ASSERT_CR(__name__, __expr__, __clk__, __rst__) \
 __name__ : assert property (@(posedge __clk__) disable iff (__rst__ === 1'b1 || __rst__ === 1'bx) (__expr__)) else \
-`ifdef UVM_MAJOR_REV \
-`uvm_error("BR_ASSERT", $sformatf("Assertion failed: %0s [%0s] (%0s:%0d)", `"__expr__`", `"__name__`", `__FILE__, `__LINE__)) \
-`else \
-$error($sformatf("Assertion failed: %0s [%0s] (%0s:%0d)", `"__expr__`", `"__name__`", `__FILE__, `__LINE__)); \
-`endif
+`BR_ASSERT_UVM_ERROR(__name__, __expr__)
+`else // UVM_MAJOR_REV
+`define BR_ASSERT_CR(__name__, __expr__, __clk__, __rst__) \
+__name__ : assert property (@(posedge __clk__) disable iff (__rst__ === 1'b1 || __rst__ === 1'bx) (__expr__)) else \
+`BR_ASSERT_ERROR(__name__, __expr__)
+`endif // UVM_MAJOR_REV
 `else  // BR_ASSERT_ON
 `define BR_ASSERT_CR(__name__, __expr__, __clk__, __rst__) \
 `BR_NOOP
@@ -147,13 +165,15 @@ $error($sformatf("Assertion failed: %0s [%0s] (%0s:%0d)", `"__expr__`", `"__name
 
 // Assert an expression is always known.
 `ifdef BR_ASSERT_ON
+`ifdef UVM_MAJOR_REV
 `define BR_ASSERT_KNOWN(__name__, __expr__) \
 __name__ : assert property (@(posedge clk) disable iff (rst === 1'b1 || rst === 1'bx) (!$isunknown(__expr__))) else \
-`ifdef UVM_MAJOR_REV \
-`uvm_error("BR_ASSERT", $sformatf("Assertion failed: %0s [%0s] (%0s:%0d)", `"__expr__`", `"__name__`", `__FILE__, `__LINE__)) \
-`else \
-$error($sformatf("Assertion failed: %0s [%0s] (%0s:%0d)", `"__expr__`", `"__name__`", `__FILE__, `__LINE__)); \
-`endif
+`BR_ASSERT_UVM_ERROR(__name__, __expr__)
+`else // UVM_MAJOR_REV
+`define BR_ASSERT_KNOWN(__name__, __expr__) \
+__name__ : assert property (@(posedge clk) disable iff (rst === 1'b1 || rst === 1'bx) (!$isunknown(__expr__))) else \
+`BR_ASSERT_ERROR(__name__, __expr__)
+`endif // UVM_MAJOR_REV
 `else  // BR_ASSERT_ON
 `define BR_ASSERT_KNOWN(__name__, __expr__) \
 `BR_NOOP
@@ -161,13 +181,15 @@ $error($sformatf("Assertion failed: %0s [%0s] (%0s:%0d)", `"__expr__`", `"__name
 
 // Assert an expression is known whenever a corresponding valid signal is 1.
 `ifdef BR_ASSERT_ON
+`ifdef UVM_MAJOR_REV
 `define BR_ASSERT_KNOWN_VALID(__name__, __valid__, __expr__) \
 __name__ : assert property (@(posedge clk) disable iff (rst === 1'b1 || rst === 1'bx) (__valid__ |-> !$isunknown(__expr__))) else \
-`ifdef UVM_MAJOR_REV \
-`uvm_error("BR_ASSERT", $sformatf("Assertion failed: %0s [%0s] (%0s:%0d)", `"__expr__`", `"__name__`", `__FILE__, `__LINE__)) \
-`else \
-$error($sformatf("Assertion failed: %0s [%0s] (%0s:%0d)", `"__expr__`", `"__name__`", `__FILE__, `__LINE__)); \
-`endif
+`BR_ASSERT_UVM_ERROR(__name__, __expr__)
+`else // UVM_MAJOR_REV
+`define BR_ASSERT_KNOWN_VALID(__name__, __valid__, __expr__) \
+__name__ : assert property (@(posedge clk) disable iff (rst === 1'b1 || rst === 1'bx) (__valid__ |-> !$isunknown(__expr__))) else \
+`BR_ASSERT_ERROR(__name__, __expr__)
+`endif // UVM_MAJOR_REV
 `else  // BR_ASSERT_ON
 `define BR_ASSERT_KNOWN_VALID(__name__, __valid__, __expr__) \
 `BR_NOOP
@@ -175,13 +197,15 @@ $error($sformatf("Assertion failed: %0s [%0s] (%0s:%0d)", `"__expr__`", `"__name
 
 // More expressive form of BR_ASSERT_KNOWN that allows the use of custom clock and reset signal names.
 `ifdef BR_ASSERT_ON
+`ifdef UVM_MAJOR_REV
 `define BR_ASSERT_KNOWN_CR(__name__, __expr__, __clk__, __rst__) \
 __name__ : assert property (@(posedge __clk__) disable iff (__rst__ === 1'b1 || __rst__ === 1'bx) (!$isunknown(__expr__))) else \
-`ifdef UVM_MAJOR_REV \
-`uvm_error("BR_ASSERT", $sformatf("Assertion failed: %0s [%0s] (%0s:%0d)", `"__expr__`", `"__name__`", `__FILE__, `__LINE__)) \
-`else \
-$error($sformatf("Assertion failed: %0s [%0s] (%0s:%0d)", `"__expr__`", `"__name__`", `__FILE__, `__LINE__)); \
-`endif
+`BR_ASSERT_UVM_ERROR(__name__, __expr__)
+`else // UVM_MAJOR_REV
+`define BR_ASSERT_KNOWN_CR(__name__, __expr__, __clk__, __rst__) \
+__name__ : assert property (@(posedge __clk__) disable iff (__rst__ === 1'b1 || __rst__ === 1'bx) (!$isunknown(__expr__))) else \
+`BR_ASSERT_ERROR(__name__, __expr__)
+`endif // UVM_MAJOR_REV
 `else  // BR_ASSERT_ON
 `define BR_ASSERT_KNOWN_CR(__name__, __expr__, __clk__, __rst__) \
 `BR_NOOP
@@ -189,13 +213,15 @@ $error($sformatf("Assertion failed: %0s [%0s] (%0s:%0d)", `"__expr__`", `"__name
 
 // More expressive form of BR_ASSERT_KNOWN_VALID that allows the use of custom clock and reset signal names.
 `ifdef BR_ASSERT_ON
+`ifdef UVM_MAJOR_REV
 `define BR_ASSERT_KNOWN_VALID_CR(__name__, __valid__, __expr__, __clk__, __rst__) \
 __name__ : assert property (@(posedge __clk__) disable iff (__rst__ === 1'b1 || __rst__ === 1'bx) (__valid__ |-> !$isunknown(__expr__))) else \
-`ifdef UVM_MAJOR_REV \
-`uvm_error("BR_ASSERT", $sformatf("Assertion failed: %0s [%0s] (%0s:%0d)", `"__expr__`", `"__name__`", `__FILE__, `__LINE__)) \
-`else \
-$error($sformatf("Assertion failed: %0s [%0s] (%0s:%0d)", `"__expr__`", `"__name__`", `__FILE__, `__LINE__)); \
-`endif
+`BR_ASSERT_UVM_ERROR(__name__, __expr__)
+`else // UVM_MAJOR_REV
+`define BR_ASSERT_KNOWN_VALID_CR(__name__, __valid__, __expr__, __clk__, __rst__) \
+__name__ : assert property (@(posedge __clk__) disable iff (__rst__ === 1'b1 || __rst__ === 1'bx) (__valid__ |-> !$isunknown(__expr__))) else \
+`BR_ASSERT_ERROR(__name__, __expr__)
+`endif // UVM_MAJOR_REV
 `else  // BR_ASSERT_ON
 `define BR_ASSERT_KNOWN_VALID_CR(__name__, __valid__, __expr__, __clk__, __rst__) \
 `BR_NOOP
@@ -239,13 +265,15 @@ $error($sformatf("Assertion failed: %0s [%0s] (%0s:%0d)", `"__expr__`", `"__name
 
 `ifdef BR_ASSERT_ON
 `ifndef BR_DISABLE_ASSERT_IMM
+`ifdef UVM_MAJOR_REV
 `define BR_ASSERT_IMM(__name__, __expr__) \
 assert ($isunknown(__expr__) || (__expr__)) else \
-`ifdef UVM_MAJOR_REV \
-`uvm_error("BR_ASSERT", $sformatf("Assertion failed: %0s [%0s] (%0s:%0d)", `"__expr__`", `"__name__`", `__FILE__, `__LINE__)) \
-`else \
-$error($sformatf("Assertion failed: %0s [%0s] (%0s:%0d)", `"__expr__`", `"__name__`", `__FILE__, `__LINE__)); \
-`endif
+`BR_ASSERT_UVM_ERROR(__name__, __expr__)
+`else // UVM_MAJOR_REV
+`define BR_ASSERT_IMM(__name__, __expr__) \
+assert ($isunknown(__expr__) || (__expr__)) else \
+`BR_ASSERT_ERROR(__name__, __expr__)
+`endif // UVM_MAJOR_REV
 `else  // BR_DISABLE_ASSERT_IMM
 `define BR_ASSERT_IMM(__name__, __expr__) \
 `BR_NOOP
