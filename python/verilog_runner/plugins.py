@@ -18,6 +18,7 @@ import logging
 import inspect
 import importlib.util
 import os
+import re
 import sys
 from eda_tool import EdaTool
 from cli import Subcommand
