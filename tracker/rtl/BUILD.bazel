@@ -28,7 +28,6 @@ verilog_library(
         "//enc/rtl:br_enc_priority_encoder",
         "//flow/rtl:br_flow_reg_fwd",
         "//multi_xfer/rtl:br_multi_xfer_reg_fwd",
-        "//mux/rtl:br_mux_bin",
         "//mux/rtl:br_mux_onehot",
     ],
 )
@@ -47,6 +46,14 @@ br_verilog_elab_and_lint_test_suite(
         "NumDeallocPorts": [
             "1",
             "2",
+        ],
+        "RegisterAllocOutputs": [
+            "0",
+            "1",
+        ],
+        "EnableBypass": [
+            "0",
+            "1",
         ],
     },
     deps = [":br_tracker_freelist"],

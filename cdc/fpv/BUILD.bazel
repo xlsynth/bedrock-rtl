@@ -51,13 +51,19 @@ verilog_library(
 
 verilog_elab_test(
     name = "br_cdc_fifo_flops_fpv_monitor_elab_test",
+    custom_tcl_header = "//:elab_test_jg_custom_header.verific.tcl",
     tool = "verific",
-    deps = [":br_cdc_fifo_flops_fpv_monitor"],
+    top = "br_cdc_fifo_flops_fpv_monitor",
+    deps = [
+        ":br_cdc_fifo_flops_fpv_monitor",
+        "//gate/rtl:br_gate_mock",
+        "//mux/rtl:br_mux_bin_structured_gates_mock",
+    ],
 )
 
 br_verilog_fpv_test_suite(
     name = "br_cdc_fifo_flops_jg_test_suite",
-    custom_tcl_body = "br_cdc_fifo_flops_fpv.tcl",
+    custom_tcl_body = "br_cdc_fifo_flops_fpv.jg.tcl",
     illegal_param_combinations = {
         (
             "EnableCoverPushBackpressure",
@@ -105,7 +111,11 @@ br_verilog_fpv_test_suite(
     },
     tool = "jg",
     top = "br_cdc_fifo_flops_fpv_monitor",
-    deps = [":br_cdc_fifo_flops_fpv_monitor"],
+    deps = [
+        ":br_cdc_fifo_flops_fpv_monitor",
+        "//gate/rtl:br_gate_mock",
+        "//mux/rtl:br_mux_bin_structured_gates_mock",
+    ],
 )
 
 # Bedrock-RTL CDC FIFO (Internal 1R1W Flop-RAM, Push Credit/Valid, Pop Ready/Valid Variant)
@@ -124,13 +134,19 @@ verilog_library(
 
 verilog_elab_test(
     name = "br_cdc_fifo_flops_push_credit_fpv_monitor_elab_test",
+    custom_tcl_header = "//:elab_test_jg_custom_header.verific.tcl",
     tool = "verific",
-    deps = [":br_cdc_fifo_flops_push_credit_fpv_monitor"],
+    top = "br_cdc_fifo_flops_push_credit_fpv_monitor",
+    deps = [
+        ":br_cdc_fifo_flops_push_credit_fpv_monitor",
+        "//gate/rtl:br_gate_mock",
+        "//mux/rtl:br_mux_bin_structured_gates_mock",
+    ],
 )
 
 br_verilog_fpv_test_suite(
     name = "br_cdc_fifo_flops_push_credit_jg_test_suite",
-    custom_tcl_body = "br_cdc_fifo_flops_push_credit_fpv.tcl",
+    custom_tcl_body = "br_cdc_fifo_flops_push_credit_fpv.jg.tcl",
     illegal_param_combinations = {
         (
             "Depth",
@@ -172,7 +188,11 @@ br_verilog_fpv_test_suite(
     },
     tool = "jg",
     top = "br_cdc_fifo_flops_push_credit_fpv_monitor",
-    deps = [":br_cdc_fifo_flops_push_credit_fpv_monitor"],
+    deps = [
+        ":br_cdc_fifo_flops_push_credit_fpv_monitor",
+        "//gate/rtl:br_gate_mock",
+        "//mux/rtl:br_mux_bin_structured_gates_mock",
+    ],
 )
 
 # Bedrock-RTL CDC FIFO Controller (1R1W, Push Ready/Valid, Pop Ready/Valid Variant)
@@ -190,13 +210,14 @@ verilog_library(
 
 verilog_elab_test(
     name = "br_cdc_fifo_ctrl_1r1w_fpv_monitor_elab_test",
+    custom_tcl_header = "//:elab_test_jg_custom_header.verific.tcl",
     tool = "verific",
     deps = [":br_cdc_fifo_ctrl_1r1w_fpv_monitor"],
 )
 
 br_verilog_fpv_test_suite(
     name = "br_cdc_fifo_ctrl_1r1w_jg_test_suite",
-    custom_tcl_body = "br_cdc_fifo_ctrl_1r1w_fpv.tcl",
+    custom_tcl_body = "br_cdc_fifo_ctrl_1r1w_fpv.jg.tcl",
     illegal_param_combinations = {
         (
             "EnableCoverPushBackpressure",
@@ -282,13 +303,14 @@ verilog_library(
 
 verilog_elab_test(
     name = "br_cdc_fifo_ctrl_1r1w_push_credit_fpv_monitor_elab_test",
+    custom_tcl_header = "//:elab_test_jg_custom_header.verific.tcl",
     tool = "verific",
     deps = [":br_cdc_fifo_ctrl_1r1w_push_credit_fpv_monitor"],
 )
 
 br_verilog_fpv_test_suite(
     name = "br_cdc_fifo_ctrl_1r1w_push_credit_jg_test_suite",
-    custom_tcl_body = "br_cdc_fifo_ctrl_1r1w_push_credit_fpv.tcl",
+    custom_tcl_body = "br_cdc_fifo_ctrl_1r1w_push_credit_fpv.jg.tcl",
     illegal_param_combinations = {
         (
             "Depth",
@@ -370,13 +392,14 @@ verilog_library(
 
 verilog_elab_test(
     name = "br_cdc_fifo_ctrl_push_pop_1r1w_fpv_monitor_elab_test",
+    custom_tcl_header = "//:elab_test_jg_custom_header.verific.tcl",
     tool = "verific",
     deps = [":br_cdc_fifo_ctrl_push_pop_1r1w_fpv_monitor"],
 )
 
 br_verilog_fpv_test_suite(
     name = "br_cdc_fifo_ctrl_push_pop_1r1w_jg_test_suite",
-    custom_tcl_body = "br_cdc_fifo_ctrl_push_pop_1r1w_fpv.tcl",
+    custom_tcl_body = "br_cdc_fifo_ctrl_push_pop_1r1w_fpv.jg.tcl",
     illegal_param_combinations = {
         (
             "EnableCoverPushBackpressure",
@@ -465,13 +488,14 @@ verilog_library(
 
 verilog_elab_test(
     name = "br_cdc_fifo_ctrl_push_pop_1r1w_push_credit_fpv_monitor_elab_test",
+    custom_tcl_header = "//:elab_test_jg_custom_header.verific.tcl",
     tool = "verific",
     deps = [":br_cdc_fifo_ctrl_push_pop_1r1w_push_credit_fpv_monitor"],
 )
 
 br_verilog_fpv_test_suite(
     name = "br_cdc_fifo_ctrl_push_pop_1r1w_push_credit_jg_test_suite",
-    custom_tcl_body = "br_cdc_fifo_ctrl_push_pop_1r1w_push_credit_fpv.tcl",
+    custom_tcl_body = "br_cdc_fifo_ctrl_push_pop_1r1w_push_credit_fpv.jg.tcl",
     illegal_param_combinations = {
         (
             "Depth",

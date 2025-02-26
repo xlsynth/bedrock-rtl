@@ -31,13 +31,14 @@ verilog_library(
 
 verilog_elab_test(
     name = "br_credit_counter_fpv_monitor_elab_test",
+    custom_tcl_header = "//:elab_test_jg_custom_header.verific.tcl",
     tool = "verific",
     deps = [":br_credit_counter_fpv_monitor"],
 )
 
 br_verilog_fpv_test_suite(
     name = "br_credit_counter_jg_test_suite",
-    custom_tcl_body = "br_credit_counter_fpv.tcl",
+    custom_tcl_body = "br_credit_counter_fpv.jg.tcl",
     illegal_param_combinations = {
         (
             "MaxChange",
@@ -77,13 +78,14 @@ verilog_library(
 
 verilog_elab_test(
     name = "br_credit_receiver_fpv_monitor_elab_test",
+    custom_tcl_header = "//:elab_test_jg_custom_header.verific.tcl",
     tool = "verific",
     deps = [":br_credit_receiver_fpv_monitor"],
 )
 
 br_verilog_fpv_test_suite(
     name = "br_credit_receiver_jg_test_suite",
-    custom_tcl_body = "br_credit_receiver_fpv.tcl",
+    custom_tcl_body = "br_credit_receiver_fpv.jg.tcl",
     illegal_param_combinations = {
         (
             "PopCreditMaxChange",
@@ -156,13 +158,14 @@ verilog_library(
 
 verilog_elab_test(
     name = "br_credit_sender_fpv_monitor_elab_test",
+    custom_tcl_header = "//:elab_test_jg_custom_header.verific.tcl",
     tool = "verific",
     deps = [":br_credit_sender_fpv_monitor"],
 )
 
 br_verilog_fpv_test_suite(
     name = "br_credit_sender_jg_test_suite",
-    custom_tcl_body = "br_credit_sender_fpv.tcl",
+    custom_tcl_body = "br_credit_sender_fpv.jg.tcl",
     illegal_param_combinations = {
         (
             "EnableCoverPushBackpressure",

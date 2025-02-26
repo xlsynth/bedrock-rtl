@@ -12,19 +12,30 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 //
-// Bedrock-RTL Binary Select Multiplexer
+// Bedrock-RTL Binary Select Multiplexer with Structured Gates (MOCK version)
 //
 // An N-to-1 multiplexer with a binary select.
 //
 // The out signal is set to in[i] for which select == i.
 // Select must be in range of NumSymbolsIn.
 //
-// If you need a structured datapath for physical design reasons,
-// use br_mux_bin_structured_gates instead.
+// Implementation wraps br_mux_bin, i.e., does not actually implement
+// the structured gates. We need a duplicate/wrapper module because in simulation
+// builds we want to use a mock version and in synthesis builds we want to use
+// the real version, but the RTL parameterization must not be affected.
+//
+// For synthesis, make sure you include br_mux_bin_structured_gates_mock.sv
+// in the filelist instead of this file!!
+
+`ifdef SYNTHESIS
+`BR_ASSERT_STATIC(do_not_synthesize_br_mux_bin_structured_gates_mock_a, 0)
+`endif
 
 `include "br_asserts_internal.svh"
 
-module br_mux_bin #(
+// verilog_lint: waive-start module-filename
+// ri lint_check_waive FILE_NAME
+module br_mux_bin_structured_gates #(
     // Number of inputs to select among. Must be >= 2.
     parameter  int NumSymbolsIn = 2,
     // The width of each symbol in bits. Must be >= 1.
@@ -37,23 +48,16 @@ module br_mux_bin #(
     output logic                                     out_valid
 );
 
-  //------------------------------------------
-  // Integration checks
-  //------------------------------------------
-  `BR_ASSERT_STATIC(legal_num_symbols_in_a, NumSymbolsIn >= 2)
-  `BR_ASSERT_STATIC(legal_symbol_width_a, SymbolWidth >= 1)
+  br_mux_bin #(
+      .NumSymbolsIn(NumSymbolsIn),
+      .SymbolWidth (SymbolWidth)
+  ) br_mux_bin (
+      .select,
+      .in,
+      .out,
+      .out_valid
+  );
 
-  //------------------------------------------
-  // Implementation
-  //------------------------------------------
-  always_comb begin
-    out = '0;
+endmodule : br_mux_bin_structured_gates
 
-    for (int i = 0; i < NumSymbolsIn; i++) begin
-      out |= ({SymbolWidth{select == i}} & in[i]);
-    end
-  end
-
-  assign out_valid = select < NumSymbolsIn;  // ri lint_check_waive INVALID_COMPARE
-
-endmodule : br_mux_bin
+// verilog_lint: waive-stop module-filename

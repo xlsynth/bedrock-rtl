@@ -36,6 +36,7 @@ verilog_elab_test(
     deps = [
         ":br_cdc_fifo_flops_tb",
         "//gate/rtl:br_gate_mock",
+        "//mux/rtl:br_mux_bin_structured_gates_mock",
     ],
 )
 
@@ -73,6 +74,7 @@ br_verilog_sim_test_tools_suite(
     deps = [
         ":br_cdc_fifo_flops_tb",
         "//gate/rtl:br_gate_mock",
+        "//mux/rtl:br_mux_bin_structured_gates_mock",
     ],
 )
 
@@ -95,6 +97,7 @@ verilog_elab_test(
     deps = [
         ":br_cdc_fifo_flops_push_credit_tb",
         "//gate/rtl:br_gate_mock",
+        "//mux/rtl:br_mux_bin_structured_gates_mock",
     ],
 )
 
@@ -131,5 +134,6 @@ br_verilog_sim_test_tools_suite(
     deps = [
         ":br_cdc_fifo_flops_push_credit_tb",
         "//gate/rtl:br_gate_mock",
+        "//mux/rtl:br_mux_bin_structured_gates_mock",
     ],
 )

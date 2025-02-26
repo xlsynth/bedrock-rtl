@@ -73,7 +73,7 @@ verilog_elab_test(
 
 br_verilog_fpv_test_suite(
     name = "br_delay_nr_jg_test_suite",
-    custom_tcl_body = "br_delay_nr_fpv.tcl",
+    custom_tcl_body = "br_delay_nr_fpv.jg.tcl",
     params = {
         "NumStages": [
             "0",
@@ -181,7 +181,7 @@ verilog_elab_test(
 
 br_verilog_fpv_test_suite(
     name = "br_delay_valid_next_nr_jg_test_suite",
-    custom_tcl_body = "br_delay_nr_fpv.tcl",
+    custom_tcl_body = "br_delay_nr_fpv.jg.tcl",
     params = {
         "NumStages": [
             "0",

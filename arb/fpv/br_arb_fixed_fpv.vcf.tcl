@@ -12,12 +12,23 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-load("@python_versions//3.12:defs.bzl", compile_pip_requirements_3_12 = "compile_pip_requirements")
+# clock/reset set up
+create_clock clk -period 100
+create_reset rst -high
+#design infomation
+report_fv_complexity
 
-compile_pip_requirements_3_12(
-    name = "requirements_3_12",
-    src = "requirements_3_12.in",
-    requirements_txt = "requirements_lock_3_12.txt",
-)
+# primary output control signal should be legal during reset
+fvassert fv_rst_check_grant -expr {rst |-> grant == 'd0}
 
-exports_files(["elab_test_jg_custom_header.verific.tcl"])
+# If index i > j, and request[j] is always high, request[i] will hang
+# This is RTL intention
+fvdisable {*no_deadlock_a*}
+
+#reset simulation
+sim_run -stable
+sim_save_reset
+
+#run properties
+check_fv -block
+report_fv -list

@@ -251,3 +251,61 @@ def check_simulation_success(
     if not elab_only:
         step_success["'TEST PASSED' in output"] = "TEST PASSED" in stdout
     return step_success
+
+
+def format_table(headers: List[str], rows: List[List[str]]) -> str:
+    """
+    Helper method to format a table in grid style using textwrap and manual string formatting.
+    Generates similar results to tabulate.tabulate(), but without needing the pip dependency.
+    """
+    # Determine maximum width for each column based on header and cell content.
+    col_widths = [len(header) for header in headers]
+    for row in rows:
+        for i, cell in enumerate(row):
+            for line in cell.splitlines():
+                col_widths[i] = max(col_widths[i], len(line))
+
+    def hline() -> str:
+        return "+" + "+".join("-" * (w + 2) for w in col_widths) + "+"
+
+    # Build header row.
+    header_row = (
+        "|"
+        + "|".join(
+            " " + headers[i].ljust(col_widths[i]) + " " for i in range(len(headers))
+        )
+        + "|"
+    )
+
+    table_lines = [hline(), header_row, hline()]
+
+    # Process each data row.
+    for row in rows:
+        # Wrap each cell's text.
+        wrapped_cells = []
+        for i, cell in enumerate(row):
+            # textwrap.wrap returns a list of wrapped lines.
+            lines = textwrap.wrap(cell, width=col_widths[i]) if cell else [""]
+            if not lines:
+                lines = [""]
+            wrapped_cells.append(lines)
+        # Determine how many lines this row occupies.
+        max_lines = max(len(lines) for lines in wrapped_cells)
+        # Pad cells with fewer lines.
+        for i in range(len(wrapped_cells)):
+            if len(wrapped_cells[i]) < max_lines:
+                wrapped_cells[i].extend([""] * (max_lines - len(wrapped_cells[i])))
+        # Add each line of the wrapped row.
+        for line_idx in range(max_lines):
+            row_line = (
+                "|"
+                + "|".join(
+                    " " + wrapped_cells[i][line_idx].ljust(col_widths[i]) + " "
+                    for i in range(len(headers))
+                )
+                + "|"
+            )
+            table_lines.append(row_line)
+        table_lines.append(hline())
+
+    return "\n".join(table_lines)

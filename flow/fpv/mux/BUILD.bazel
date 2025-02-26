@@ -44,7 +44,7 @@ verilog_elab_test(
 
 br_verilog_fpv_test_suite(
     name = "br_flow_mux_fixed_jg_test_suite",
-    custom_tcl_body = "br_flow_mux_fpv.tcl",
+    custom_tcl_body = "br_flow_mux_fpv.jg.tcl",
     illegal_param_combinations = {
         (
             "EnableCoverPushBackpressure",
@@ -101,13 +101,14 @@ verilog_library(
 
 verilog_elab_test(
     name = "br_flow_mux_lru_fpv_monitor_elab_test",
+    custom_tcl_header = "//:elab_test_jg_custom_header.verific.tcl",
     tool = "verific",
     deps = [":br_flow_mux_lru_fpv_monitor"],
 )
 
 br_verilog_fpv_test_suite(
     name = "br_flow_mux_lru_jg_test_suite",
-    custom_tcl_body = "br_flow_mux_fpv.tcl",
+    custom_tcl_body = "br_flow_mux_fpv.jg.tcl",
     illegal_param_combinations = {
         (
             "EnableCoverPushBackpressure",
@@ -164,13 +165,14 @@ verilog_library(
 
 verilog_elab_test(
     name = "br_flow_mux_rr_fpv_monitor_elab_test",
+    custom_tcl_header = "//:elab_test_jg_custom_header.verific.tcl",
     tool = "verific",
     deps = [":br_flow_mux_rr_fpv_monitor"],
 )
 
 br_verilog_fpv_test_suite(
     name = "br_flow_mux_rr_jg_test_suite",
-    custom_tcl_body = "br_flow_mux_fpv.tcl",
+    custom_tcl_body = "br_flow_mux_fpv.jg.tcl",
     illegal_param_combinations = {
         (
             "EnableCoverPushBackpressure",
@@ -232,7 +234,7 @@ verilog_elab_test(
 
 br_verilog_fpv_test_suite(
     name = "br_flow_mux_select_unstable_jg_test_suite",
-    custom_tcl_body = "br_flow_mux_select_unstable_fpv.tcl",
+    custom_tcl_body = "br_flow_mux_select_unstable_fpv.jg.tcl",
     illegal_param_combinations = {
         (
             "EnableCoverPushBackpressure",
@@ -294,7 +296,7 @@ verilog_elab_test(
 
 br_verilog_fpv_test_suite(
     name = "br_flow_mux_select_jg_test_suite",
-    custom_tcl_body = "br_flow_mux_select_fpv.tcl",
+    custom_tcl_body = "br_flow_mux_select_fpv.jg.tcl",
     illegal_param_combinations = {
         (
             "EnableCoverPushBackpressure",
@@ -356,7 +358,7 @@ verilog_elab_test(
 
 br_verilog_fpv_test_suite(
     name = "br_flow_mux_fixed_stable_jg_test_suite",
-    custom_tcl_body = "br_flow_mux_stable_fpv.tcl",
+    custom_tcl_body = "br_flow_mux_stable_fpv.jg.tcl",
     illegal_param_combinations = {
         (
             "EnableCoverPushBackpressure",
@@ -417,13 +419,14 @@ verilog_library(
 
 verilog_elab_test(
     name = "br_flow_mux_lru_stable_fpv_monitor_elab_test",
+    custom_tcl_header = "//:elab_test_jg_custom_header.verific.tcl",
     tool = "verific",
     deps = [":br_flow_mux_lru_stable_fpv_monitor"],
 )
 
 br_verilog_fpv_test_suite(
     name = "br_flow_mux_lru_stable_jg_test_suite",
-    custom_tcl_body = "br_flow_mux_stable_fpv.tcl",
+    custom_tcl_body = "br_flow_mux_stable_fpv.jg.tcl",
     illegal_param_combinations = {
         (
             "EnableCoverPushBackpressure",
@@ -484,13 +487,14 @@ verilog_library(
 
 verilog_elab_test(
     name = "br_flow_mux_rr_stable_fpv_monitor_elab_test",
+    custom_tcl_header = "//:elab_test_jg_custom_header.verific.tcl",
     tool = "verific",
     deps = [":br_flow_mux_rr_stable_fpv_monitor"],
 )
 
 br_verilog_fpv_test_suite(
     name = "br_flow_mux_rr_stable_jg_test_suite",
-    custom_tcl_body = "br_flow_mux_stable_fpv.tcl",
+    custom_tcl_body = "br_flow_mux_stable_fpv.jg.tcl",
     illegal_param_combinations = {
         (
             "EnableCoverPushBackpressure",
