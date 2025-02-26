@@ -142,7 +142,8 @@ module br_arb_weighted_rr #(
   // Implementation checks
   //------------------------------------------
 
-  `BR_ASSERT_IMPL(disable_priority_update_A,
-                  !enable_priority_update |=> accumulated_weight == $past(accumulated_weight))
-
+  `BR_ASSERT_IMPL(disable_priority_update_A, !enable_priority_update |=> $stable(accumulated_weight
+                                                                                    ))
+  `BR_ASSERT_IMPL(no_update_same_grants_A, ##1 !$past(enable_priority_update) && $stable(request)
+                                           |-> $stable(grant))
 endmodule
