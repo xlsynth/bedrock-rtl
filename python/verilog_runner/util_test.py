@@ -33,6 +33,7 @@ from python.verilog_runner.util import (
     write_and_dump_file,
     run_shell_script,
     check_simulation_success,
+    format_table,
 )
 
 
@@ -114,6 +115,59 @@ class TestUtilFunctions(unittest.TestCase):
         success_criteria = check_simulation_success(0, False, "TEST PASSED")
         self.assertTrue(success_criteria["Return code 0"])
         self.assertTrue(success_criteria["'TEST PASSED' in output"])
+
+    def test_format_table_simple(self):
+        headers = ["Name", "Age", "City"]
+        rows = [["Alice", "30", "New York"], ["Bob", "25", "San Francisco"]]
+        expected = (
+            "+-------+-----+---------------+\n"
+            "| Name  | Age | City          |\n"
+            "+-------+-----+---------------+\n"
+            "| Alice | 30  | New York      |\n"
+            "+-------+-----+---------------+\n"
+            "| Bob   | 25  | San Francisco |\n"
+            "+-------+-----+---------------+"
+        )
+        result = format_table(headers, rows)
+        self.assertEqual(result, expected)
+
+    def test_format_table_empty_cell(self):
+        headers = ["Col1", "Col2"]
+        rows = [["", "Test"]]
+        expected = (
+            "+------+------+\n"
+            "| Col1 | Col2 |\n"
+            "+------+------+\n"
+            "|      | Test |\n"
+            "+------+------+"
+        )
+        result = format_table(headers, rows)
+        self.assertEqual(result, expected)
+
+    def test_format_table_multiline(self):
+        headers = ["Description"]
+        # This cell contains an explicit newline.
+        rows = [["Line one.\nLine two is longer."]]
+        # The header "Description" (11 characters) and the two lines from the cell:
+        # "Line one." is 9 characters and "Line two is longer." is 19 characters.
+        # Thus, the column width is 19.
+        #
+        # Note: textwrap.wrap will treat the entire string as a single paragraph,
+        # so it will collapse the newline into a space and re-wrap:
+        # The combined text becomes: "Line one. Line two is longer."
+        # which will be wrapped into two lines:
+        #   "Line one. Line two"  (18 characters)
+        #   "is longer."          (10 characters)
+        expected = (
+            "+---------------------+\n"
+            "| Description         |\n"
+            "+---------------------+\n"
+            "| Line one. Line two  |\n"
+            "| is longer.          |\n"
+            "+---------------------+"
+        )
+        result = format_table(headers, rows)
+        self.assertEqual(result, expected)
 
 
 if __name__ == "__main__":
