@@ -31,12 +31,13 @@ verilog_library(
 
 verilog_elab_test(
     name = "br_counter_fpv_monitor_elab_test",
+    tool = "verific",
     deps = [":br_counter_fpv_monitor"],
 )
 
 br_verilog_fpv_test_suite(
     name = "br_counter_jg_test_suite",
-    custom_tcl_body = "br_counter_fpv.tcl",
+    custom_tcl_body = "br_counter_fpv.jg.tcl",
     illegal_param_combinations = {
         (
             "MaxChange",
@@ -93,12 +94,13 @@ verilog_library(
 
 verilog_elab_test(
     name = "br_counter_decr_fpv_monitor_elab_test",
+    tool = "verific",
     deps = [":br_counter_decr_fpv_monitor"],
 )
 
 br_verilog_fpv_test_suite(
     name = "br_counter_decr_jg_test_suite",
-    custom_tcl_body = "br_counter_fpv.tcl",
+    custom_tcl_body = "br_counter_fpv.jg.tcl",
     illegal_param_combinations = {
         (
             "MaxDecrement",
@@ -145,12 +147,13 @@ verilog_library(
 
 verilog_elab_test(
     name = "br_counter_incr_fpv_monitor_elab_test",
+    tool = "verific",
     deps = [":br_counter_incr_fpv_monitor"],
 )
 
 br_verilog_fpv_test_suite(
     name = "br_counter_incr_jg_test_suite",
-    custom_tcl_body = "br_counter_fpv.tcl",
+    custom_tcl_body = "br_counter_fpv.jg.tcl",
     illegal_param_combinations = {
         (
             "MaxIncrement",

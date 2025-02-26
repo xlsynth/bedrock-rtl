@@ -32,6 +32,7 @@ verilog_library(
 
 verilog_elab_test(
     name = "br_ecc_sed_encoder_decoder_tb_elab_test",
+    tool = "verific",
     deps = [":br_ecc_sed_encoder_decoder_tb"],
 )
 
@@ -45,9 +46,9 @@ br_verilog_sim_test_tools_suite(
     deps = [":br_ecc_sed_encoder_decoder_tb"],
 )
 
-##################3
+##################
 # SECDED
-##################3
+##################
 verilog_library(
     name = "br_ecc_secded_encoder_decoder_tb",
     srcs = ["br_ecc_secded_encoder_decoder_tb.sv"],
@@ -59,6 +60,7 @@ verilog_library(
 
 verilog_elab_test(
     name = "br_ecc_secded_encoder_decoder_tb_elab_test",
+    tool = "verific",
     deps = [":br_ecc_secded_encoder_decoder_tb"],
 )
 

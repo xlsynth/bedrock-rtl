@@ -31,12 +31,13 @@ verilog_library(
 
 verilog_elab_test(
     name = "br_tracker_freelist_fpv_monitor_elab_test",
+    tool = "verific",
     deps = [":br_tracker_freelist_fpv_monitor"],
 )
 
 br_verilog_fpv_test_suite(
     name = "br_tracker_freelist_jg_test_suite",
-    custom_tcl_body = "br_tracker_freelist_fpv.tcl",
+    custom_tcl_body = "br_tracker_freelist_fpv.jg.tcl",
     # NumEntries > NumAllocPerCycle
     illegal_param_combinations = {
         (
@@ -85,6 +86,8 @@ verilog_library(
 
 verilog_elab_test(
     name = "br_tracker_linked_list_ctrl_fpv_monitor_elab_test",
+    custom_tcl_header = "//:elab_test_jg_custom_header.verific.tcl",
+    tool = "verific",
     deps = [":br_tracker_linked_list_ctrl_fpv_monitor"],
 )
 

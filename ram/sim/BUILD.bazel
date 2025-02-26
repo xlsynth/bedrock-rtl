@@ -29,12 +29,14 @@ verilog_library(
 
 verilog_elab_test(
     name = "br_ram_flops_1r1w_tb_elab_test",
+    tool = "verific",
     deps = [":br_ram_flops_1r1w_tb"],
 )
 
 verilog_elab_test(
     name = "br_ram_flops_1r1w_tb_mock_elab_test",
     params = {"EnableMock": "1"},
+    tool = "verific",
     deps = [":br_ram_flops_1r1w_tb"],
 )
 

@@ -105,44 +105,36 @@ def br_verilog_sim_test_tools_suite(name, tools = [], **kwargs):
             **kwargs
         )
 
-def br_verilog_fpv_test_tools_suite(name, tools = [], **kwargs):
+def br_verilog_fpv_test_tools_suite(name, tools = {}, **kwargs):
     """Wraps br_verilog_fpv_test_suite with multiple formal tools.
 
     Args:
         name (str): The base name of the test suite.
-        tools (list of strings): formal tools to use.
+        tools (dict[str, label]): formal tools to use and their corresponding custom tcl body files.
         **kwargs: Additional keyword arguments passed to br_verilog_fpv_test_suite.
     """
 
-    for tool in tools:
+    for tool, custom_tcl_body in tools.items():
         br_verilog_fpv_test_suite(
             name = name + "_" + tool,
             tool = tool,
+            custom_tcl_body = custom_tcl_body,
             **kwargs
         )
 
-def br_verilog_fpv_test_suite(name, tool, sandbox = True, **kwargs):
+def br_verilog_fpv_test_suite(**kwargs):
     """Wraps verilog_fpv_test_suite with Bedrock-internal settings. Not intended to be called by Bedrock users.
 
     * Defines `BR_ASSERT_ON`, `BR_ENABLE_IMPL_CHECKS`, `BR_DISABLE_FINAL_CHECKS` and `BR_ENABLE_FPV`.
 
     Args:
-        name (str): The base name of the test suite.
-        tool (str): The formal tool to use.
-        sandbox (bool): Whether to create a sandbox for fpv test
         **kwargs: Additional keyword arguments passed to verilog_fpv_test_suite. Do not pass defines.
     """
 
     if "defines" in kwargs:
         fail("Do not pass defines to br_verilog_fpv_test_suite. They are hard-coded in the macro.")
 
-    # custom tcl is in <DUT>/fpv/tool directory
-    kwargs["custom_tcl_body"] = tool + "/" + kwargs["custom_tcl_body"]
-
     verilog_fpv_test_suite(
-        name = name,
-        tool = tool,
         defines = ["BR_ASSERT_ON", "BR_ENABLE_IMPL_CHECKS", "BR_DISABLE_FINAL_CHECKS", "BR_ENABLE_FPV"],
-        sandbox = sandbox,
         **kwargs
     )

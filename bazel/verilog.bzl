@@ -14,8 +14,36 @@
 
 """Verilog rules for Bazel."""
 
-load("@bazel_skylib//rules:write_file.bzl", "write_file")
 load("@rules_hdl//verilog:providers.bzl", "VerilogInfo", "verilog_library")
+
+TOOLS_THAT_NEED_LICENSES = [
+    "ascentlint",
+    "jg",
+    "vcf",
+    "vcs",
+    "xrun",
+]
+
+def extra_tags(kind, tool):
+    """Returns a list of extra tags that should be added to a target.
+
+    Args:
+        kind: The kind of target.
+        tool: The tool name.
+
+    Returns:
+        A list of extra tags. Specifically:
+            * The kind of target -- useful for test filtering, e.g., bazel test //... --test_tag_filters=<kind>
+            * The tool name -- useful for test filtering, e.g., bazel test //... --test_tag_filters=<tool>
+            * resources:verilog_test_tool_licenses_<tool>:1 -- only if the tool appears in TOOLS_THAT_NEED_LICENSES.
+    """
+    extra_tags = [
+        kind,
+        tool,
+    ]
+    if tool in TOOLS_THAT_NEED_LICENSES:
+        extra_tags.append("resources:verilog_test_tool_licenses_" + tool + ":1")
+    return extra_tags
 
 def get_transitive(ctx, srcs_not_hdrs):
     """Returns a depset of all Verilog source or header files in the transitive closure of the deps attribute."""
@@ -91,8 +119,7 @@ def _verilog_base_impl(ctx, subcmd, test = True, extra_args = [], extra_runfiles
     args.append("--tcl=" + tcl)
     args.append("--script=" + script)
     args.append("--log=" + log)
-    if ctx.attr.tool:
-        args.append("--tool='" + ctx.attr.tool + "'")
+    args.append("--tool='" + ctx.attr.tool + "'")
     if not test:
         args.append("--dry-run")
     if ctx.attr.custom_tcl_header:
@@ -226,9 +253,6 @@ def _verilog_sim_test_impl(ctx):
     extra_args.append("--seed='" + str(ctx.attr.seed) + "'")
     if ctx.attr.waves:
         extra_args.append("--waves")
-    if len(ctx.attr.opts) > 0 and ctx.attr.tool == "":
-        fail("If opts are provided, then tool must also be set.")
-
     for opt in ctx.attr.opts:
         extra_args.append("--opt='" + opt + "'")
 
@@ -244,8 +268,6 @@ def _verilog_fpv_args(ctx):
         extra_args.append("--elab_only")
     if ctx.attr.gui:
         extra_args.append("--gui")
-    if len(ctx.attr.opts) > 0 and ctx.attr.tool == "":
-        fail("If opts are provided, then tool must also be set.")
     for opt in ctx.attr.opts:
         extra_args.append("--opt='" + opt + "'")
     for opt in ctx.attr.elab_opts:
@@ -291,7 +313,7 @@ rule_verilog_elab_test = rule(
             allow_files = True,
             doc = "Verilog runner plugins to load from this workspace, in addition to those loaded from VERILOG_RUNNER_PLUGIN_PATH.",
         ),
-        "tool": attr.string(doc = "Elaboration tool to use. If not provided, default is decided by the Verilog Runner tool implementation with available plugins."),
+        "tool": attr.string(doc = "Elaboration tool to use.", mandatory = True),
         "custom_tcl_header": attr.label(
             doc = ("Tcl script file containing custom tool-specific commands to insert at the beginning of the generated tcl script." +
                    "The tcl header (custom or not) is unconditionally followed by analysis and elaborate commands, and then the tcl body." +
@@ -310,48 +332,28 @@ rule_verilog_elab_test = rule(
 
 def verilog_elab_test(
         name,
+        tool,
         tags = [],
-        custom_tcl_header = None,
-        custom_tcl_header_cmds = [],
         **kwargs):
-    """Wraps rule_verilog_elab_test with extra tags.
+    """Wraps rule_verilog_elab_test with a default tool and appends extra tags.
+
+    The following extra tags are unconditionally appended to the list of tags:
+        * elab -- useful for test filtering, e.g., bazel test //... --test_tag_filters=elab
+        * The tool name -- useful for test filtering, e.g., bazel test //... --test_tag_filters=<tool>
+        * resources:verilog_test_tool_licenses_<tool>:1 -- only if the tool appears in TOOLS_THAT_NEED_LICENSES.
+        * no-sandbox -- Loosens some Bazel hermeticity features so that undeclared EDA tool test outputs are preserved for debugging.
 
     Args:
         name: test name
-        tags: The tags to add to the test. If not provided, then defaults to:
-            * no-sandbox -- Loosens some Bazel hermeticity features so that undeclared EDA tool test outputs are preserved for debugging.
-            * resources:verilog_elab_test_tool_licenses:1 -- indicates that the test requires a elaboration tool license.
-            * elab -- useful for test filtering, e.g., bazel test //... --test_tag_filters=elab
-            * If the tool is provided in kwargs, then the tool name is added to the above tags.
-        custom_tcl_header: custom tcl header file. If not provided, then a default one will be generated.
-        custom_tcl_header_cmds: custom tcl commands
+        tool: The elaboration tool to use.
+        tags: The tags to add to the test.
         **kwargs: Other arguments to pass to the rule_verilog_elab_test rule.
     """
-    if not custom_tcl_header:
-        custom_tcl_header = name + "_custom_header.tcl"
-        write_file(
-            name = "gen_" + name + "_custom_header_tcl",
-            out = custom_tcl_header,
-            content = [
-                # Demote VERI-1063 ("instantiating unknown module 'jasper_scoreboard_3") from warning to info.
-                # jasper_scoreboard_3 is encrypted from Cadence
-                "setmsgtype -info VERI-1063",
-            ] + custom_tcl_header_cmds,
-        )
-
-    extra_tags = [
-        "no-sandbox",  # Preserves miscellaneous undeclared EDA tool outputs for debugging
-        "resources:verilog_elab_test_tool_licenses:1",
-        "elab",
-    ]
-
-    if "tool" in kwargs:
-        extra_tags.append(kwargs["tool"])
 
     rule_verilog_elab_test(
         name = name,
-        tags = tags + extra_tags,
-        custom_tcl_header = ":" + custom_tcl_header,
+        tool = tool,
+        tags = tags + extra_tags("elab", tool) + ["no-sandbox"],
         **kwargs
     )
 
@@ -383,7 +385,7 @@ rule_verilog_lint_test = rule(
             allow_files = True,
             doc = "Verilog runner plugins to load from this workspace, in addition to those loaded from VERILOG_RUNNER_PLUGIN_PATH.",
         ),
-        "tool": attr.string(doc = "Lint tool to use. If not provided, default is decided by the Verilog Runner tool implementation with available plugins."),
+        "tool": attr.string(doc = "Lint tool to use.", mandatory = True),
         "custom_tcl_header": attr.label(
             doc = ("Tcl script file containing custom tool-specific commands to insert at the beginning of the generated tcl script." +
                    "The tcl header (custom or not) is unconditionally followed by analysis and elaborate commands, and then the tcl body." +
@@ -400,29 +402,24 @@ rule_verilog_lint_test = rule(
     test = True,
 )
 
-def verilog_lint_test(tags = [], **kwargs):
-    """Wraps rule_verilog_lint_test with extra tags.
+def verilog_lint_test(tool, tags = [], **kwargs):
+    """Wraps rule_verilog_lint_test with a default tool and appends extra tags.
+
+    The following extra tags are unconditionally appended to the list of tags:
+        * lint -- useful for test filtering, e.g., bazel test //... --test_tag_filters=lint
+        * The tool name -- useful for test filtering, e.g., bazel test //... --test_tag_filters=<tool>
+        * resources:verilog_test_tool_licenses_<tool>:1 -- only if the tool appears in TOOLS_THAT_NEED_LICENSES.
+        * no-sandbox -- Loosens some Bazel hermeticity features so that undeclared EDA tool test outputs are preserved for debugging.
 
     Args:
-        tags: The tags to add to the test. If not provided, then defaults to:
-            * no-sandbox -- Loosens some Bazel hermeticity features so that undeclared EDA tool test outputs are preserved for debugging.
-            * resources:verilog_lint_test_tool_licenses:1 -- indicates that the test requires a lint tool license.
-            * lint -- useful for test filtering, e.g., bazel test //... --test_tag_filters=lint
-            * If the tool is provided in kwargs, then the tool name is added to the above tags.
+        tool: The lint tool to use.
+        tags: The tags to add to the test.
         **kwargs: Other arguments to pass to the rule_verilog_lint_test rule.
     """
 
-    extra_tags = [
-        "no-sandbox",  # Preserves miscellaneous undeclared EDA tool outputs for debugging
-        "resources:verilog_lint_test_tool_licenses:1",
-        "lint",
-    ]
-
-    if "tool" in kwargs:
-        extra_tags.append(kwargs["tool"])
-
     rule_verilog_lint_test(
-        tags = tags + extra_tags,
+        tool = tool,
+        tags = tags + extra_tags("lint", tool) + ["no-sandbox"],
         **kwargs
     )
 
@@ -464,7 +461,8 @@ rule_verilog_sim_test = rule(
             doc = "Verilog runner plugins to load from this workspace, in addition to those loaded from VERILOG_RUNNER_PLUGIN_PATH.",
         ),
         "tool": attr.string(
-            doc = "Simulator tool to use. If not provided, default is decided by the Verilog Runner tool implementation with available plugins.",
+            doc = "Simulator tool to use.",
+            mandatory = True,
         ),
         "custom_tcl_header": attr.label(
             doc = ("Tcl script file containing custom tool-specific commands to insert at the beginning of the generated tcl script." +
@@ -490,26 +488,21 @@ rule_verilog_sim_test = rule(
     test = True,
 )
 
-def verilog_sim_test(tool = None, opts = [], tags = [], **kwargs):
-    """Wraps rule_verilog_sim_test with extra tags.
+def verilog_sim_test(tool, opts = [], tags = [], **kwargs):
+    """Wraps rule_verilog_sim_test with a default tool and appends extra tags.
+
+    The following extra tags are unconditionally appended to the list of tags:
+        * sim -- useful for test filtering, e.g., bazel test //... --test_tag_filters=sim
+        * The tool name -- useful for test filtering, e.g., bazel test //... --test_tag_filters=<tool>
+        * resources:verilog_test_tool_licenses_<tool>:1 -- only if the tool appears in TOOLS_THAT_NEED_LICENSES.
+        * no-sandbox -- Loosens some Bazel hermeticity features so that undeclared EDA tool test outputs are preserved for debugging.
 
     Args:
         tool: The simulation tool to use.
         opts: Tool-specific options not covered by other arguments.
-        tags: The tags to add to the test. If not provided, then defaults to:
-            * no-sandbox -- Loosens some Bazel hermeticity features so that undeclared EDA tool test outputs are preserved for debugging.
-            * resources:verilog_sim_test_tool_licenses:1 -- indicates that the test requires a simulation tool license.
-            * sim -- useful for test filtering, e.g., bazel test //... --test_tag_filters=sim
-            * If the tool is provided, then the tool name is added to the above tags.
+        tags: The tags to add to the test.
         **kwargs: Other arguments to pass to the rule_verilog_sim_test rule.
     """
-
-    extra_tags = [
-        "no-sandbox",  # Preserves miscellaneous undeclared EDA tool outputs for debugging
-        "resources:verilog_sim_test_tool_licenses:1",
-        "sim",
-        tool,
-    ]
 
     # Make sure we fail the test ASAP after any error occurs (assertion or otherwise).
     extra_opts = []
@@ -521,7 +514,7 @@ def verilog_sim_test(tool = None, opts = [], tags = [], **kwargs):
     rule_verilog_sim_test(
         tool = tool,
         opts = opts + extra_opts,
-        tags = tags + extra_tags,
+        tags = tags + extra_tags("sim", tool) + ["no-sandbox"],
         **kwargs
     )
 
@@ -565,7 +558,8 @@ rule_verilog_fpv_test = rule(
             doc = "Verilog runner plugins to load from this workspace, in addition to those loaded from VERILOG_RUNNER_PLUGIN_PATH.",
         ),
         "tool": attr.string(
-            doc = "Formal tool to use. If not provided, default is decided by the Verilog Runner tool implementation with available plugins.",
+            doc = "Formal tool to use.",
+            mandatory = True,
         ),
         "custom_tcl_header": attr.label(
             doc = ("Tcl script file containing custom tool-specific commands to insert at the beginning of the generated tcl script." +
@@ -587,27 +581,23 @@ rule_verilog_fpv_test = rule(
     test = True,
 )
 
-def verilog_fpv_test(tags = [], **kwargs):
-    """Wraps rule_verilog_fpv_test with extra tags.
+def verilog_fpv_test(tool, tags = [], **kwargs):
+    """Wraps rule_verilog_fpv_test with a default tool and appends extra tags.
+
+    The following extra tags are unconditionally appended to the list of tags:
+        * fpv -- useful for test filtering, e.g., bazel test //... --test_tag_filters=fpv
+        * The tool name -- useful for test filtering, e.g., bazel test //... --test_tag_filters=<tool>
+        * resources:verilog_test_tool_licenses_<tool>:1 -- only if the tool appears in TOOLS_THAT_NEED_LICENSES.
+        * no-sandbox -- Loosens some Bazel hermeticity features so that undeclared EDA tool test outputs are preserved for debugging.
 
     Args:
-        tags: The tags to add to the test. If not provided, then defaults to:
-            * no-sandbox -- Loosens some Bazel hermeticity features so that undeclared EDA tool test outputs are preserved for debugging.
-            * resources:verilog_fpv_test_tool_licenses:1 -- indicates that the test requires a formal tool license.
-            * fpv -- useful for test filtering, e.g., bazel test //... --test_tag_filters=fpv
-            * If the tool is provided in kwargs, then the tool name is added to the above tags.
+        tool: The formal verification tool to use.
+        tags: The tags to add to the test.
         **kwargs: Other arguments to pass to the rule_verilog_fpv_test rule.
     """
-    extra_tags = [
-        "no-sandbox",  # Preserves miscellaneous undeclared EDA tool outputs for debugging
-        "resources:verilog_fpv_test_tool_licenses:1",
-        "fpv",
-    ]
-    if "tool" in kwargs:
-        extra_tags.append(kwargs["tool"])
-
     rule_verilog_fpv_test(
-        tags = tags + extra_tags,
+        tool = tool,
+        tags = tags + extra_tags("fpv", tool) + ["no-sandbox"],
         **kwargs
     )
 
@@ -630,7 +620,7 @@ rule_verilog_fpv_sandbox = rule(
             doc = "The top-level module; if not provided and there exists one dependency, then defaults to that dep's label name.",
         ),
         "opts": attr.string_list(
-            doc = "Tool-specific options not covered by other arguments. If provided, then 'tool' must also be set.",
+            doc = "Tool-specific options not covered by other arguments.",
         ),
         "elab_opts": attr.string_list(
             doc = "custom elab options",
@@ -649,7 +639,8 @@ rule_verilog_fpv_sandbox = rule(
             doc = "Verilog runner plugins to load from this workspace, in addition to those loaded from VERILOG_RUNNER_PLUGIN_PATH.",
         ),
         "tool": attr.string(
-            doc = "Tool to use. If not provided, default is decided by the Verilog Runner tool implementation with available plugins.",
+            doc = "Formal tool to use.",
+            mandatory = True,
         ),
         "custom_tcl_header": attr.label(
             doc = ("Tcl script file containing custom tool-specific commands to insert at the beginning of the generated tcl script." +
@@ -695,6 +686,8 @@ def verilog_elab_and_lint_test_suite(
         deps = [],
         defines = [],
         params = {},
+        elab_tool = "verific",
+        lint_tool = "ascentlint",
         disable_lint_rules = [],
         **kwargs):
     """Creates a suite of Verilog elaboration and lint tests for each combination of the provided parameters.
@@ -709,6 +702,8 @@ def verilog_elab_and_lint_test_suite(
         name (str): The base name for the test suite.
         defines (list): A list of defines.
         params (dict): A dictionary where keys are parameter names and values are lists of possible values for those parameters.
+        elab_tool (str): The tool to use for elaboration.
+        lint_tool (str): The tool to use for linting.
         disable_lint_rules (list): A list of lint rules to disable in the generated files.
         **kwargs: Additional common keyword arguments to be passed to the verilog_elab_test and verilog_lint_test functions.
     """
@@ -739,6 +734,7 @@ def verilog_elab_and_lint_test_suite(
 
     verilog_elab_test(
         name = name + "_elab_test",
+        tool = elab_tool,
         deps = [":" + name + "_wrapper"],
         defines = defines,
         **kwargs
@@ -746,6 +742,7 @@ def verilog_elab_and_lint_test_suite(
 
     verilog_lint_test(
         name = name + "_lint_test",
+        tool = lint_tool,
         deps = [":" + name + "_wrapper"],
         defines = defines,
         **kwargs

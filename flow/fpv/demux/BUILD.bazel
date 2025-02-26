@@ -38,12 +38,13 @@ verilog_library(
 
 verilog_elab_test(
     name = "br_flow_demux_select_unstable_fpv_monitor_elab_test",
+    tool = "verific",
     deps = [":br_flow_demux_select_unstable_fpv_monitor"],
 )
 
 br_verilog_fpv_test_suite(
     name = "br_flow_demux_select_unstable_jg_test_suite",
-    custom_tcl_body = "br_flow_demux_select_unstable_fpv.tcl",
+    custom_tcl_body = "br_flow_demux_select_unstable_fpv.jg.tcl",
     illegal_param_combinations = {
         (
             "EnableCoverPushBackpressure",
@@ -99,12 +100,13 @@ verilog_library(
 
 verilog_elab_test(
     name = "br_flow_demux_select_fpv_monitor_elab_test",
+    tool = "verific",
     deps = [":br_flow_demux_select_fpv_monitor"],
 )
 
 br_verilog_fpv_test_suite(
     name = "br_flow_demux_select_jg_test_suite",
-    custom_tcl_body = "br_flow_demux_select_fpv.tcl",
+    custom_tcl_body = "br_flow_demux_select_fpv.jg.tcl",
     illegal_param_combinations = {
         (
             "EnableCoverPushBackpressure",
