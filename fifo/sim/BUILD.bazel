@@ -198,8 +198,9 @@ br_verilog_sim_test_tools_suite(
             "1",
         ],
     },
+    # TODO(zhemao): dsim test is broken due to apparent simulator bug.
+    # Re-enable when the bug is fixed.
     tools = [
-        "dsim",
         "vcs",
     ],
     deps = [":br_fifo_shared_dynamic_flops_tb"],
@@ -249,8 +250,9 @@ br_verilog_sim_test_tools_suite(
             "1",
         ],
     },
+    # TODO(zhemao): dsim test is broken due to apparent simulator bug.
+    # Re-enable when the bug is fixed.
     tools = [
-        "dsim",
         "vcs",
     ],
     deps = [":br_fifo_shared_dynamic_flops_push_credit_tb"],
