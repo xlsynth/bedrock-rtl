@@ -24,6 +24,14 @@ verilog_library(
     srcs = ["br_fifo_basic_fpv_monitor.sv"],
 )
 
+verilog_library(
+    name = "br_fifo_shared_dynamic_basic_fpv_monitor",
+    srcs = ["br_fifo_shared_dynamic_basic_fpv_monitor.sv"],
+    deps = [
+        "//pkg:br_math_pkg",
+    ],
+)
+
 # credit_receiver checkers
 verilog_library(
     name = "br_credit_receiver_fpv_monitor",
@@ -233,4 +241,94 @@ br_verilog_fpv_test_suite(
     tool = "jg",
     top = "br_fifo_flops_push_credit",
     deps = [":br_fifo_flops_push_credit_fpv_monitor"],
+)
+
+# Bedrock-RTL Shared Dynamic Multi-FIFO with Flop-based Storage (Push Valid/Ready Interface)
+verilog_library(
+    name = "br_fifo_shared_dynamic_flops_fpv_monitor",
+    srcs = ["br_fifo_shared_dynamic_flops_fpv_monitor.sv"],
+    deps = [
+        ":br_fifo_shared_dynamic_basic_fpv_monitor",
+        "//fifo/rtl:br_fifo_shared_dynamic_flops",
+        "//macros:br_fv",
+    ],
+)
+
+verilog_elab_test(
+    name = "br_fifo_shared_dynamic_flops_fpv_monitor_elab_test",
+    custom_tcl_header = "//:elab_test_jg_custom_header.verific.tcl",
+    tool = "verific",
+    deps = [":br_fifo_shared_dynamic_flops_fpv_monitor"],
+)
+
+br_verilog_fpv_test_suite(
+    name = "br_fifo_shared_dynamic_flops_jg_test_suite",
+    #TODO: temp check in to debug
+    gui = True,
+    #custom_tcl_body = "br_fifo_shared_dynamic_flops_fpv.jg.tcl",
+    #illegal_param_combinations = {
+    #    (
+    #        "EnableCoverPushBackpressure",
+    #        "EnableAssertPushValidStability",
+    #        "EnableAssertPushDataStability",
+    #    ): [
+    #        ("0", "0", "1"),
+    #        ("0", "1", "0"),
+    #        ("0", "1", "1"),
+    #        ("1", "0", "1"),
+    #    ],
+    #},
+    params = {
+        #"Depth": [
+        #    "3",
+        #    "5",
+        #    "8",
+        #],
+        #"EnableAssertPushDataStability": [
+        #    "0",
+        #    "1",
+        #],
+        #"EnableAssertPushValidStability": [
+        #    "0",
+        #    "1",
+        #],
+        #"EnableCoverPushBackpressure": [
+        #    "0",
+        #    "1",
+        #],
+        "NumFifos": [
+            "1",
+            "2",
+            "3",
+        ],
+        #"NumReadPorts": [
+        #    "1",
+        #    "2",
+        #    "4",
+        #],
+        #"NumWritePorts": [
+        #    "1",
+        #    "2",
+        #    "3",
+        #],
+        #"RegisterDeallocation": [
+        #    "1",
+        #    "0",
+        #],
+        #"RegisterPopOutputs": [
+        #    "1",
+        #    "0",
+        #],
+        #"StagingBufferDepth": [
+        #    "1",
+        #    "2",
+        #],
+        #"Width": [
+        #    "1",
+        #    "2",
+        #],
+    },
+    tool = "jg",
+    top = "br_fifo_shared_dynamic_flops",
+    deps = [":br_fifo_shared_dynamic_flops_fpv_monitor"],
 )
