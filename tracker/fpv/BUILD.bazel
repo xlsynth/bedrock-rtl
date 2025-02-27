@@ -18,12 +18,6 @@ load("//bazel:verilog.bzl", "verilog_elab_test")
 
 package(default_visibility = ["//visibility:public"])
 
-# fv_fifo
-verilog_library(
-    name = "fv_fifo",
-    srcs = ["fv_fifo.sv"],
-)
-
 # basic check with a buffer
 verilog_library(
     name = "br_tracker_reorder_buffer_basic_fpv_monitor",
@@ -81,7 +75,6 @@ br_verilog_fpv_test_suite(
             "7",
         ],
     },
-    tags = ["manual"],
     tool = "jg",
     top = "br_tracker_freelist",
     deps = [":br_tracker_freelist_fpv_monitor"],
@@ -136,7 +129,6 @@ br_verilog_fpv_test_suite(
             "4",
         ],
     },
-    tags = ["manual"],
     tool = "jg",
     top = "br_tracker_linked_list_ctrl",
     deps = [":br_tracker_linked_list_ctrl_fpv_monitor"],
@@ -195,7 +187,7 @@ verilog_library(
     srcs = ["br_tracker_reorder_buffer_flops_fpv_monitor.sv"],
     deps = [
         ":br_tracker_reorder_buffer_basic_fpv_monitor",
-        ":fv_fifo",
+        "//fpv/lib:fv_fifo",
         "//tracker/rtl:br_tracker_reorder_buffer_flops",
     ],
 )
@@ -247,7 +239,7 @@ verilog_library(
     srcs = ["br_tracker_reorder_buffer_ctrl_1r1w_fpv_monitor.sv"],
     deps = [
         ":br_tracker_reorder_buffer_basic_fpv_monitor",
-        ":fv_fifo",
+        "//fpv/lib:fv_fifo",
         "//tracker/rtl:br_tracker_reorder_buffer_ctrl_1r1w",
     ],
 )
