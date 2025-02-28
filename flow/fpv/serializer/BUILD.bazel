@@ -80,9 +80,15 @@ verilog_elab_test(
 
 br_verilog_fpv_test_suite(
     name = "br_flow_deserializer_jg_test_suite",
-    # TODO: temp check in so designer can debug
-    gui = True,
-    #custom_tcl_body = "br_flow_deserializer_fpv.jg.tcl",
+    custom_tcl_body = "br_flow_deserializer_fpv.jg.tcl",
+    illegal_param_combinations = {
+        (
+            "PopWidth",
+            "PushWidth",
+        ): [
+            ("2", "3"),
+        ],
+    },
     params = {
         "DeserializeMostSignificantFirst": [
             "0",
