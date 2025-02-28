@@ -30,14 +30,94 @@ verilog_library(
 
 verilog_elab_test(
     name = "br_amba_axi2axil_fpv_monitor_elab_test",
+    tool = "verific",
     deps = [":br_amba_axi2axil_fpv_monitor"],
 )
 
 br_verilog_fpv_test_suite(
     name = "br_amba_axi2axil_jg_test_suite",
-    custom_tcl_body = "br_amba_axi2axil_fpv.tcl",
+    # example: how to overwrite ABVIP parameter
+    #elab_opts = [
+    #    "-parameter monitor.axi_output_master.CONFIG_STABLE_CHECKS 0",
+    #],
+    # TODO: in debug stage now
     gui = True,
     tool = "jg",
     top = "br_amba_axi2axil",
     deps = [":br_amba_axi2axil_fpv_monitor"],
+)
+
+# Bedrock-RTL AXI4-Lite 1:2 Split
+
+verilog_library(
+    name = "br_amba_axil_split_fpv_monitor",
+    srcs = ["br_amba_axil_split_fpv_monitor.sv"],
+    deps = [
+        "//amba/rtl:br_amba_axil_split",
+    ],
+)
+
+verilog_elab_test(
+    name = "br_amba_axil_split_fpv_monitor_elab_test",
+    tool = "verific",
+    deps = [":br_amba_axil_split_fpv_monitor"],
+)
+
+br_verilog_fpv_test_suite(
+    name = "br_amba_axil_split_jg_test_suite",
+    # TODO: in debug stage now
+    gui = True,
+    tool = "jg",
+    top = "br_amba_axil_split",
+    deps = [":br_amba_axil_split_fpv_monitor"],
+)
+
+# AXI4 Timing Slice
+
+verilog_library(
+    name = "br_amba_axi_timing_slice_fpv_monitor",
+    srcs = ["br_amba_axi_timing_slice_fpv_monitor.sv"],
+    deps = [
+        "//amba/rtl:br_amba_axi_timing_slice",
+    ],
+)
+
+verilog_elab_test(
+    name = "br_amba_axi_timing_slice_fpv_monitor_elab_test",
+    tool = "verific",
+    deps = [":br_amba_axi_timing_slice_fpv_monitor"],
+)
+
+br_verilog_fpv_test_suite(
+    name = "br_amba_axi_timing_slice_jg_test_suite",
+    # TODO: in debug stage now
+    gui = True,
+    tool = "jg",
+    top = "br_amba_axi_timing_slice",
+    deps = [":br_amba_axi_timing_slice_fpv_monitor"],
+)
+
+# AXI4-Lite Timing Slice
+
+verilog_library(
+    name = "br_amba_axil_timing_slice_fpv_monitor",
+    srcs = ["br_amba_axil_timing_slice_fpv_monitor.sv"],
+    deps = [
+        "//amba/rtl:br_amba_axil_timing_slice",
+    ],
+)
+
+verilog_elab_test(
+    name = "br_amba_axil_timing_slice_fpv_monitor_elab_test",
+    tool = "verific",
+    deps = [":br_amba_axil_timing_slice_fpv_monitor"],
+)
+
+br_verilog_fpv_test_suite(
+    name = "br_amba_axil_timing_slice_jg_test_suite",
+    # TODO: in debug stage now
+    gui = True,
+    tool = "jg",
+    top = "br_amba_axil_timing_slice",
+    deps = [":br_amba_axil_timing_slice_fpv_monitor"],
 )
