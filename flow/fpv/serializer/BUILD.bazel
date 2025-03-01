@@ -37,6 +37,14 @@ verilog_elab_test(
 br_verilog_fpv_test_suite(
     name = "br_flow_serializer_jg_test_suite",
     custom_tcl_body = "br_flow_serializer_fpv.jg.tcl",
+    illegal_param_combinations = {
+        (
+            "PopWidth",
+            "PushWidth",
+        ): [
+            ("3", "2"),
+        ],
+    },
     params = {
         "MetadataWidth": [
             "1",
