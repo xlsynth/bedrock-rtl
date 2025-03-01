@@ -24,8 +24,7 @@ cover -disable {*br_counter_incr_push_flit_id.gen_wrap_impl_check.maxvalue_plus_
 cover -disable {*br_counter_incr_push_flit_id.plus_zero_a*}
 cover -disable {*br_counter_incr_push_flit_id.value_temp_oob_c*}
 cover -disable {*br_counter_incr_push_flit_id.reinit_and_incr_c*}
-cover -disable {*monitor.gen_ast[0].fv_pop_data_stable_a*}
-cover -disable {*monitor.dont_care_c*}
+cover -disable {*monitor.*fv_pop_data_stable_a*}
 
 # prove command
 prove -all
