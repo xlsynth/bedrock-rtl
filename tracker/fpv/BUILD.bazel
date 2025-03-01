@@ -46,6 +46,8 @@ br_verilog_fpv_test_suite(
     name = "br_tracker_freelist_jg_test_suite",
     custom_tcl_body = "br_tracker_freelist_fpv.jg.tcl",
     # NumEntries > NumAllocPerCycle
+    # CutThroughLatency = RegisterAllocOutputs + (EnableBypass ? 0 : 1)
+    # DeallocCountDelay >= 0 and <= CutThroughLatency
     illegal_param_combinations = {
         (
             "NumAllocPerCycle",
@@ -54,11 +56,26 @@ br_verilog_fpv_test_suite(
             ("2", "2"),
             ("3", "2"),
         ],
+        (
+            "DeallocCountDelay",
+            "RegisterAllocOutputs",
+            "EnableBypass",
+        ): [
+            ("1", "0", "1"),
+            ("2", "0", "0"),
+            ("2", "0", "1"),
+            ("2", "1", "1"),
+        ],
     },
     params = {
         "DeallocCountDelay": [
+            "0",
+            "1",
             "2",
-            "3",
+        ],
+        "EnableBypass": [
+            "0",
+            "1",
         ],
         "NumAllocPerCycle": [
             "1",
@@ -75,8 +92,11 @@ br_verilog_fpv_test_suite(
             "5",
             "7",
         ],
+        "RegisterAllocOutputs": [
+            "0",
+            "1",
+        ],
     },
-    tags = ["manual"],
     tool = "jg",
     top = "br_tracker_freelist",
     deps = [":br_tracker_freelist_fpv_monitor"],
@@ -131,7 +151,6 @@ br_verilog_fpv_test_suite(
             "4",
         ],
     },
-    tags = ["manual"],
     tool = "jg",
     top = "br_tracker_linked_list_ctrl",
     deps = [":br_tracker_linked_list_ctrl_fpv_monitor"],
@@ -241,7 +260,6 @@ br_verilog_fpv_test_suite(
             "6",
         ],
     },
-    tags = ["manual"],
     tool = "jg",
     top = "br_tracker_reorder",
     deps = [":br_tracker_reorder_fpv_monitor"],
@@ -296,7 +314,6 @@ br_verilog_fpv_test_suite(
             "6",
         ],
     },
-    tags = ["manual"],
     tool = "jg",
     top = "br_tracker_reorder_buffer_flops",
     deps = [":br_tracker_reorder_buffer_flops_fpv_monitor"],
@@ -356,7 +373,6 @@ br_verilog_fpv_test_suite(
             "4",
         ],
     },
-    tags = ["manual"],
     tool = "jg",
     top = "br_tracker_reorder_buffer_ctrl_1r1w",
     deps = [":br_tracker_reorder_buffer_ctrl_1r1w_fpv_monitor"],
