@@ -139,7 +139,7 @@ module br_tracker_freelist_fpv_monitor #(
 
   // verilog_lint: waive-start line-length
   // Once an entry is allocated, the same entry cannot be allocated again until it is deallocated.
-  if (EnableBypass) begin : gen_bypass
+  if (EnableBypass && !RegisterAllocOutputs) begin : gen_bypass
     `BR_ASSERT(no_entry_reuse_a,
                fv_alloc_valid[fv_idx] && !fv_entry_dealloc[alloc_entry_id[fv_idx]] |-> !fv_entry_used[alloc_entry_id[fv_idx]])
     // when freelist is empty, no more alloc_sendable
