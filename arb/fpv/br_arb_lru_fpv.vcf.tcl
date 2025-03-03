@@ -18,14 +18,23 @@ create_reset rst -high
 #design infomation
 report_fv_complexity
 
-# If index i > j, and request[j] is always high, request[i] will hang
-# This is RTL intention
-fvdisable {*no_deadlock_a*}
-
 #reset simulation
 sim_run -stable
 sim_save_reset
 
+# standard use case: request will hold until grant
+fvtask -create standard -copy FPV
+
+# non-standard use case: request will NOT hold until grant
+fvtask -create special -copy FPV
+fvdisable {special::*req_hold_until_grant_a}
+fvdisable {special::*no_deadlock_a}
+
 #run properties
+fvtask standard
 check_fv -block
-report_fv -list
+report_fv
+
+fvtask special
+check_fv -block
+report_fv
