@@ -13,7 +13,7 @@
 # limitations under the License.
 
 load("@rules_hdl//verilog:providers.bzl", "verilog_library")
-load("//bazel:br_verilog.bzl", "br_verilog_fpv_test_suite")
+load("//bazel:br_verilog.bzl", "br_verilog_fpv_test_tools_suite")
 load("//bazel:verilog.bzl", "verilog_elab_test")
 
 package(default_visibility = ["//visibility:public"])
@@ -34,11 +34,14 @@ verilog_elab_test(
     deps = [":br_amba_axil_default_target_fpv_monitor"],
 )
 
-br_verilog_fpv_test_suite(
-    name = "br_amba_axil_default_target_jg_test_suite",
+br_verilog_fpv_test_tools_suite(
+    name = "br_amba_axil_default_target_test_suite",
     # TODO: in debug stage now
     gui = True,
-    tool = "jg",
+    tools = {
+        "jg": "",
+        "vcf": "",
+    },
     top = "br_amba_axil_default_target",
     deps = [":br_amba_axil_default_target_fpv_monitor"],
 )
@@ -59,15 +62,18 @@ verilog_elab_test(
     deps = [":br_amba_axi2axil_fpv_monitor"],
 )
 
-br_verilog_fpv_test_suite(
-    name = "br_amba_axi2axil_jg_test_suite",
+br_verilog_fpv_test_tools_suite(
+    name = "br_amba_axi2axil_test_suite",
     # example: how to overwrite ABVIP parameter
     #elab_opts = [
     #    "-parameter monitor.axi_output_master.CONFIG_STABLE_CHECKS 0",
     #],
     # TODO: in debug stage now
     gui = True,
-    tool = "jg",
+    tools = {
+        "jg": "",
+        "vcf": "",
+    },
     top = "br_amba_axi2axil",
     deps = [":br_amba_axi2axil_fpv_monitor"],
 )
@@ -88,11 +94,14 @@ verilog_elab_test(
     deps = [":br_amba_axil_split_fpv_monitor"],
 )
 
-br_verilog_fpv_test_suite(
-    name = "br_amba_axil_split_jg_test_suite",
+br_verilog_fpv_test_tools_suite(
+    name = "br_amba_axil_split_test_suite",
     # TODO: in debug stage now
     gui = True,
-    tool = "jg",
+    tools = {
+        "jg": "",
+        "vcf": "",
+    },
     top = "br_amba_axil_split",
     deps = [":br_amba_axil_split_fpv_monitor"],
 )
@@ -113,11 +122,14 @@ verilog_elab_test(
     deps = [":br_amba_axi_timing_slice_fpv_monitor"],
 )
 
-br_verilog_fpv_test_suite(
-    name = "br_amba_axi_timing_slice_jg_test_suite",
+br_verilog_fpv_test_tools_suite(
+    name = "br_amba_axi_timing_slice_test_suite",
     # TODO: in debug stage now
     gui = True,
-    tool = "jg",
+    tools = {
+        "jg": "",
+        "vcf": "",
+    },
     top = "br_amba_axi_timing_slice",
     deps = [":br_amba_axi_timing_slice_fpv_monitor"],
 )
@@ -138,11 +150,14 @@ verilog_elab_test(
     deps = [":br_amba_axil_timing_slice_fpv_monitor"],
 )
 
-br_verilog_fpv_test_suite(
-    name = "br_amba_axil_timing_slice_jg_test_suite",
+br_verilog_fpv_test_tools_suite(
+    name = "br_amba_axil_timing_slice_test_suite",
     # TODO: in debug stage now
     gui = True,
-    tool = "jg",
+    tools = {
+        "jg": "",
+        "vcf": "",
+    },
     top = "br_amba_axil_timing_slice",
     deps = [":br_amba_axil_timing_slice_fpv_monitor"],
 )

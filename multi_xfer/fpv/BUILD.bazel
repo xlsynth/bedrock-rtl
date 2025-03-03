@@ -13,7 +13,7 @@
 # limitations under the License.
 
 load("@rules_hdl//verilog:providers.bzl", "verilog_library")
-load("//bazel:br_verilog.bzl", "br_verilog_fpv_test_suite")
+load("//bazel:br_verilog.bzl", "br_verilog_fpv_test_tools_suite")
 load("//bazel:verilog.bzl", "verilog_elab_test")
 
 package(default_visibility = ["//visibility:public"])
@@ -35,8 +35,8 @@ verilog_elab_test(
     deps = [":br_multi_xfer_reg_fwd_fpv_monitor"],
 )
 
-br_verilog_fpv_test_suite(
-    name = "br_multi_xfer_reg_fwd_jg_test_suite",
+br_verilog_fpv_test_tools_suite(
+    name = "br_multi_xfer_reg_fwd_test_suite",
     params = {
         "NumSymbols": [
             "2",
@@ -49,7 +49,10 @@ br_verilog_fpv_test_suite(
             "3",
         ],
     },
-    tool = "jg",
+    tools = {
+        "jg": "",
+        "vcf": "",
+    },
     top = "br_multi_xfer_reg_fwd",
     deps = [":br_multi_xfer_reg_fwd_fpv_monitor"],
 )
@@ -71,8 +74,8 @@ verilog_elab_test(
     deps = [":br_multi_xfer_distributor_rr_fpv_monitor"],
 )
 
-br_verilog_fpv_test_suite(
-    name = "br_multi_xfer_distributor_rr_jg_test_suite",
+br_verilog_fpv_test_tools_suite(
+    name = "br_multi_xfer_distributor_rr_test_suite",
     # NumFlows >= NumSymbols
     illegal_param_combinations = {
         (
@@ -101,7 +104,10 @@ br_verilog_fpv_test_suite(
             "3",
         ],
     },
-    tool = "jg",
+    tools = {
+        "jg": "",
+        "vcf": "",
+    },
     top = "br_multi_xfer_distributor_rr",
     deps = [":br_multi_xfer_distributor_rr_fpv_monitor"],
 )

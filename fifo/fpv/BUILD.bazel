@@ -13,7 +13,7 @@
 # limitations under the License.
 
 load("@rules_hdl//verilog:providers.bzl", "verilog_library")
-load("//bazel:br_verilog.bzl", "br_verilog_fpv_test_suite")
+load("//bazel:br_verilog.bzl", "br_verilog_fpv_test_tools_suite")
 load("//bazel:verilog.bzl", "verilog_elab_test")
 
 package(default_visibility = ["//visibility:public"])
@@ -57,9 +57,8 @@ verilog_elab_test(
     deps = [":br_fifo_ctrl_1r1w_fpv_monitor"],
 )
 
-br_verilog_fpv_test_suite(
-    name = "br_fifo_ctrl_1r1w_jg_test_suite",
-    custom_tcl_body = "br_fifo_ctrl_1r1w_fpv.jg.tcl",
+br_verilog_fpv_test_tools_suite(
+    name = "br_fifo_ctrl_1r1w_test_suite",
     params = {
         "Depth": [
             "2",
@@ -85,7 +84,10 @@ br_verilog_fpv_test_suite(
             "6",
         ],
     },
-    tool = "jg",
+    tools = {
+        "jg": "br_fifo_ctrl_1r1w_fpv.jg.tcl",
+        "vcf": "",
+    },
     top = "br_fifo_ctrl_1r1w",
     deps = [":br_fifo_ctrl_1r1w_fpv_monitor"],
 )
@@ -108,9 +110,8 @@ verilog_elab_test(
     deps = [":br_fifo_flops_fpv_monitor"],
 )
 
-br_verilog_fpv_test_suite(
-    name = "br_fifo_flops_jg_test_suite",
-    custom_tcl_body = "br_fifo_flops_fpv.jg.tcl",
+br_verilog_fpv_test_tools_suite(
+    name = "br_fifo_flops_test_suite",
     params = {
         "Depth": [
             "2",
@@ -131,7 +132,10 @@ br_verilog_fpv_test_suite(
             "6",
         ],
     },
-    tool = "jg",
+    tools = {
+        "jg": "br_fifo_flops_fpv.jg.tcl",
+        "vcf": "",
+    },
     top = "br_fifo_flops",
     deps = [":br_fifo_flops_fpv_monitor"],
 )
@@ -155,9 +159,8 @@ verilog_elab_test(
     deps = [":br_fifo_ctrl_1r1w_push_credit_fpv_monitor"],
 )
 
-br_verilog_fpv_test_suite(
-    name = "br_fifo_ctrl_1r1w_push_credit_jg_test_suite",
-    custom_tcl_body = "br_fifo_ctrl_1r1w_push_credit_fpv.jg.tcl",
+br_verilog_fpv_test_tools_suite(
+    name = "br_fifo_ctrl_1r1w_push_credit_test_suite",
     params = {
         "Depth": [
             "2",
@@ -187,7 +190,10 @@ br_verilog_fpv_test_suite(
             "6",
         ],
     },
-    tool = "jg",
+    tools = {
+        "jg": "br_fifo_ctrl_1r1w_push_credit_fpv.jg.tcl",
+        "vcf": "",
+    },
     top = "br_fifo_ctrl_1r1w_push_credit",
     deps = [":br_fifo_ctrl_1r1w_push_credit_fpv_monitor"],
 )
@@ -211,9 +217,8 @@ verilog_elab_test(
     deps = [":br_fifo_flops_push_credit_fpv_monitor"],
 )
 
-br_verilog_fpv_test_suite(
-    name = "br_fifo_flops_push_credit_jg_test_suite",
-    custom_tcl_body = "br_fifo_flops_push_credit_fpv.jg.tcl",
+br_verilog_fpv_test_tools_suite(
+    name = "br_fifo_flops_push_credit_test_suite",
     params = {
         "Depth": [
             "2",
@@ -238,7 +243,10 @@ br_verilog_fpv_test_suite(
             "6",
         ],
     },
-    tool = "jg",
+    tools = {
+        "jg": "br_fifo_flops_push_credit_fpv.jg.tcl",
+        "vcf": "",
+    },
     top = "br_fifo_flops_push_credit",
     deps = [":br_fifo_flops_push_credit_fpv_monitor"],
 )
@@ -261,8 +269,8 @@ verilog_elab_test(
     deps = [":br_fifo_shared_dynamic_flops_fpv_monitor"],
 )
 
-br_verilog_fpv_test_suite(
-    name = "br_fifo_shared_dynamic_flops_jg_test_suite",
+br_verilog_fpv_test_tools_suite(
+    name = "br_fifo_shared_dynamic_flops_test_suite",
     #TODO: temp check in to debug
     gui = True,
     #custom_tcl_body = "br_fifo_shared_dynamic_flops_fpv.jg.tcl",
@@ -328,7 +336,10 @@ br_verilog_fpv_test_suite(
         #    "2",
         #],
     },
-    tool = "jg",
+    tools = {
+        "jg": "",
+        "vcf": "",
+    },
     top = "br_fifo_shared_dynamic_flops",
     deps = [":br_fifo_shared_dynamic_flops_fpv_monitor"],
 )
