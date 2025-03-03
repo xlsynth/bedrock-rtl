@@ -13,7 +13,7 @@
 # limitations under the License.
 
 load("@rules_hdl//verilog:providers.bzl", "verilog_library")
-load("//bazel:br_verilog.bzl", "br_verilog_fpv_test_suite")
+load("//bazel:br_verilog.bzl", "br_verilog_fpv_test_tools_suite")
 load("//bazel:verilog.bzl", "verilog_elab_test")
 
 package(default_visibility = ["//visibility:public"])
@@ -34,9 +34,8 @@ verilog_elab_test(
     deps = [":br_flow_serializer_fpv_monitor"],
 )
 
-br_verilog_fpv_test_suite(
-    name = "br_flow_serializer_jg_test_suite",
-    custom_tcl_body = "br_flow_serializer_fpv.jg.tcl",
+br_verilog_fpv_test_tools_suite(
+    name = "br_flow_serializer_test_suite",
     illegal_param_combinations = {
         (
             "PopWidth",
@@ -65,7 +64,10 @@ br_verilog_fpv_test_suite(
             "1",
         ],
     },
-    tool = "jg",
+    tools = {
+        "jg": "br_flow_serializer_fpv.jg.tcl",
+        "vcf": "",
+    },
     top = "br_flow_serializer",
     deps = [":br_flow_serializer_fpv_monitor"],
 )
@@ -86,9 +88,8 @@ verilog_elab_test(
     deps = [":br_flow_deserializer_fpv_monitor"],
 )
 
-br_verilog_fpv_test_suite(
-    name = "br_flow_deserializer_jg_test_suite",
-    custom_tcl_body = "br_flow_deserializer_fpv.jg.tcl",
+br_verilog_fpv_test_tools_suite(
+    name = "br_flow_deserializer_test_suite",
     illegal_param_combinations = {
         (
             "PopWidth",
@@ -117,7 +118,10 @@ br_verilog_fpv_test_suite(
             "3",
         ],
     },
-    tool = "jg",
+    tools = {
+        "jg": "br_flow_deserializer_fpv.jg.tcl",
+        "vcf": "",
+    },
     top = "br_flow_deserializer",
     deps = [":br_flow_deserializer_fpv_monitor"],
 )

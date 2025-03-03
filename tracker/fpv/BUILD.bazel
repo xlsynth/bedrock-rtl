@@ -13,7 +13,7 @@
 # limitations under the License.
 
 load("@rules_hdl//verilog:providers.bzl", "verilog_library")
-load("//bazel:br_verilog.bzl", "br_verilog_fpv_test_suite")
+load("//bazel:br_verilog.bzl", "br_verilog_fpv_test_tools_suite")
 load("//bazel:verilog.bzl", "verilog_elab_test")
 
 package(default_visibility = ["//visibility:public"])
@@ -42,9 +42,8 @@ verilog_elab_test(
     deps = [":br_tracker_freelist_fpv_monitor"],
 )
 
-br_verilog_fpv_test_suite(
-    name = "br_tracker_freelist_jg_test_suite",
-    custom_tcl_body = "br_tracker_freelist_fpv.jg.tcl",
+br_verilog_fpv_test_tools_suite(
+    name = "br_tracker_freelist_test_suite",
     # NumEntries > NumAllocPerCycle
     # CutThroughLatency = RegisterAllocOutputs + (EnableBypass ? 0 : 1)
     # DeallocCountDelay >= 0 and <= CutThroughLatency
@@ -97,7 +96,10 @@ br_verilog_fpv_test_suite(
             "1",
         ],
     },
-    tool = "jg",
+    tools = {
+        "jg": "br_tracker_freelist_fpv.jg.tcl",
+        "vcf": "",
+    },
     top = "br_tracker_freelist",
     deps = [":br_tracker_freelist_fpv_monitor"],
 )
@@ -119,8 +121,8 @@ verilog_elab_test(
     deps = [":br_tracker_linked_list_ctrl_fpv_monitor"],
 )
 
-br_verilog_fpv_test_suite(
-    name = "br_tracker_linked_list_ctrl_jg_test_suite",
+br_verilog_fpv_test_tools_suite(
+    name = "br_tracker_linked_list_ctrl_test_suite",
     illegal_param_combinations = {
         (
             "Depth",
@@ -151,7 +153,10 @@ br_verilog_fpv_test_suite(
             "4",
         ],
     },
-    tool = "jg",
+    tools = {
+        "jg": "",
+        "vcf": "",
+    },
     top = "br_tracker_linked_list_ctrl",
     deps = [":br_tracker_linked_list_ctrl_fpv_monitor"],
 )
@@ -173,9 +178,8 @@ verilog_elab_test(
     deps = [":br_tracker_sequence_fpv_monitor"],
 )
 
-br_verilog_fpv_test_suite(
-    name = "br_tracker_sequence_jg_test_suite",
-    custom_tcl_body = "br_tracker_sequence_fpv.tcl",
+br_verilog_fpv_test_tools_suite(
+    name = "br_tracker_sequence_test_suite",
     # EntryIdWidth >= $clog2(NumEntries)
     # MaxAllocSize <= NumEntries - 1
     illegal_param_combinations = {
@@ -212,7 +216,10 @@ br_verilog_fpv_test_suite(
             "6",
         ],
     },
-    tool = "jg",
+    tools = {
+        "jg": "br_tracker_sequence_fpv.tcl",
+        "vcf": "",
+    },
     top = "br_tracker_sequence",
     deps = [":br_tracker_sequence_fpv_monitor"],
 )
@@ -234,9 +241,8 @@ verilog_elab_test(
     deps = [":br_tracker_reorder_fpv_monitor"],
 )
 
-br_verilog_fpv_test_suite(
-    name = "br_tracker_reorder_jg_test_suite",
-    custom_tcl_body = "br_tracker_reorder_fpv.tcl",
+br_verilog_fpv_test_tools_suite(
+    name = "br_tracker_reorder_test_suite",
     # EntryIdWidth >= $clog2(NumEntries)
     illegal_param_combinations = {
         (
@@ -260,7 +266,10 @@ br_verilog_fpv_test_suite(
             "6",
         ],
     },
-    tool = "jg",
+    tools = {
+        "jg": "br_tracker_reorder_fpv.tcl",
+        "vcf": "",
+    },
     top = "br_tracker_reorder",
     deps = [":br_tracker_reorder_fpv_monitor"],
 )
@@ -284,9 +293,8 @@ verilog_elab_test(
     deps = [":br_tracker_reorder_buffer_flops_fpv_monitor"],
 )
 
-br_verilog_fpv_test_suite(
-    name = "br_tracker_reorder_buffer_flops_jg_test_suite",
-    custom_tcl_body = "br_tracker_reorder_buffer_flops_fpv.tcl",
+br_verilog_fpv_test_tools_suite(
+    name = "br_tracker_reorder_buffer_flops_test_suite",
     # EntryIdWidth >= $clog2(NumEntries)
     illegal_param_combinations = {
         (
@@ -314,7 +322,10 @@ br_verilog_fpv_test_suite(
             "6",
         ],
     },
-    tool = "jg",
+    tools = {
+        "jg": "br_tracker_reorder_buffer_flops_fpv.tcl",
+        "vcf": "",
+    },
     top = "br_tracker_reorder_buffer_flops",
     deps = [":br_tracker_reorder_buffer_flops_fpv_monitor"],
 )
@@ -338,9 +349,8 @@ verilog_elab_test(
     deps = [":br_tracker_reorder_buffer_ctrl_1r1w_fpv_monitor"],
 )
 
-br_verilog_fpv_test_suite(
-    name = "br_tracker_reorder_buffer_ctrl_1r1w_jg_test_suite",
-    custom_tcl_body = "br_tracker_reorder_buffer_ctrl_1r1w_fpv.tcl",
+br_verilog_fpv_test_tools_suite(
+    name = "br_tracker_reorder_buffer_ctrl_1r1w_test_suite",
     # EntryIdWidth >= $clog2(NumEntries)
     illegal_param_combinations = {
         (
@@ -373,7 +383,10 @@ br_verilog_fpv_test_suite(
             "4",
         ],
     },
-    tool = "jg",
+    tools = {
+        "jg": "br_tracker_reorder_buffer_ctrl_1r1w_fpv.tcl",
+        "vcf": "",
+    },
     top = "br_tracker_reorder_buffer_ctrl_1r1w",
     deps = [":br_tracker_reorder_buffer_ctrl_1r1w_fpv_monitor"],
 )
