@@ -112,7 +112,7 @@ module br_amba_axi2axil_fpv_monitor #(
   ) axi4 (
       // Global signals
       .aclk    (clk),
-      .aresetn (~rst),
+      .aresetn (!rst),
       .csysreq ('d0),
       .csysack ('d0),
       .cactive ('d0),
@@ -167,7 +167,9 @@ module br_amba_axi2axil_fpv_monitor #(
       .rlast   (axi_rlast)
   );
 
-  axi4_ace_slave #(
+  // AXI4-Lite interface
+  axi4_slave #(
+      .AXI4_LITE(1),
       .ADDR_WIDTH(AddrWidth),
       .DATA_WIDTH(DataWidth),
       .ID_WIDTH(IdWidth),
@@ -181,79 +183,58 @@ module br_amba_axi2axil_fpv_monitor #(
       // Global signals
       .aclk    (clk),
       .aresetn (!rst),
-      .csysreq ('d0),
-      .csysack ('d0),
-      .cactive ('d0),
+      .csysreq (1'b1),
+      .csysack (1'b1),
+      .cactive (1'b1),
       // Write Address Channel
       .awvalid (axil_awvalid),
       .awready (axil_awready),
-      .awaddr  (axil_awaddr),
       .awuser  (axil_awuser),
+      .awaddr  (axil_awaddr),
       .awprot  (axil_awprot),
       .awid    ('d0),
       .awlen   ('d0),
-      .awsize  ('d0),
+      .awsize  (),              // (DataWidth> 8) ? $clog2(DataWidth/8) : 1
       .awburst ('d0),
       .awlock  ('d0),
       .awcache ('d0),
       .awqos   ('d0),
       .awregion('d0),
-      .awunique('d0),
-      .awdomain('d0),
-      .awsnoop ('d0),
-      .awbar   ('d0),
       // Write Channel
       .wvalid  (axil_wvalid),
       .wready  (axil_wready),
+      .wuser   (axil_wuser),
       .wdata   (axil_wdata),
       .wstrb   (axil_wstrb),
-      .wuser   (axil_wuser),
-      .wlast   ('d0),
-      .wack    ('d0),
+      .wlast   ('d1),
       // Write Response channel
       .bvalid  (axil_bvalid),
       .bready  (axil_bready),
-      .bresp   (axil_bresp),
       .buser   (axil_buser),
+      .bresp   (axil_bresp),
       .bid     ('d0),
       // Read Address Channel
       .arvalid (axil_arvalid),
       .arready (axil_arready),
       .araddr  (axil_araddr),
       .aruser  (axil_aruser),
-      .arlock  (axil_arprot),
-      .arlen   ('d0),
-      .arsize  ('d0),
-      .arburst ('d0),
+      .arprot  (axil_arprot),
       .arid    ('d0),
+      .arlen   ('d0),
+      .arsize  (),              // (DataWidth> 8) ? $clog2(DataWidth/8) : 1
+      .arburst ('d0),
+      .arlock  ('d0),
       .arcache ('d0),
-      .arprot  ('d0),
       .arqos   ('d0),
       .arregion('d0),
-      .ardomain('d0),
-      .arsnoop ('d0),
-      .arbar   ('d0),
       // Read Channel
       .rvalid  (axil_rvalid),
       .rready  (axil_rready),
+      .ruser   (axil_ruser),
       .rdata   (axil_rdata),
       .rresp   (axil_rresp),
-      .ruser   (axil_ruser),
       .rid     ('d0),
-      .rack    ('d0),
-      .acvalid ('d0),
-      .acready ('d0),
-      .acaddr  ('d0),
-      .acprot  ('d0),
-      .acsnoop ('d0),
-      .cdvalid ('d0),
-      .cdready ('d0),
-      .cddata  ('d0),
-      .cdlast  ('d0),
-      .crvalid ('d0),
-      .crready ('d0),
-      .crresp  ('d0),
-      .rlast   ('d0)
+      .rlast   ('d1)
   );
 
 endmodule : br_amba_axi2axil_fpv_monitor

@@ -81,69 +81,62 @@ module br_amba_axil_timing_slice_fpv_monitor #(
 );
 
   // AXI4-Lite target interface
-  axi4_ace_slave #(
-      .ADDR_WIDTH  (AddrWidth),
-      .DATA_WIDTH  (DataWidth),
+  axi4_master #(
+      .AXI4_LITE(1),
+      .ADDR_WIDTH(AddrWidth),
+      .DATA_WIDTH(DataWidth),
       .AWUSER_WIDTH(AWUserWidth),
+      .WUSER_WIDTH(WUserWidth),
       .ARUSER_WIDTH(ARUserWidth),
-      .WUSER_WIDTH (WUserWidth),
-      .RUSER_WIDTH (RUserWidth)
+      .RUSER_WIDTH(RUserWidth)
   ) target (
       // Global signals
       .aclk    (clk),
       .aresetn (!rst),
-      .csysreq ('d0),
-      .csysack ('d0),
-      .cactive ('d0),
+      .csysreq (1'b1),
+      .csysack (1'b1),
+      .cactive (1'b1),
       // Write Address Channel
       .awvalid (target_awvalid),
       .awready (target_awready),
-      .awaddr  (target_awaddr),
       .awuser  (target_awuser),
+      .awaddr  (target_awaddr),
       .awprot  (target_awprot),
       .awid    ('d0),
       .awlen   ('d0),
-      .awsize  ('d0),
+      .awsize  (),                // (DataWidth> 8) ? $clog2(DataWidth/8) : 1
       .awburst ('d0),
       .awlock  ('d0),
       .awcache ('d0),
       .awqos   ('d0),
       .awregion('d0),
-      .awunique('d0),
-      .awdomain('d0),
-      .awsnoop ('d0),
-      .awbar   ('d0),
       // Write Channel
       .wvalid  (target_wvalid),
       .wready  (target_wready),
+      .wuser   (target_wuser),
       .wdata   (target_wdata),
       .wstrb   (target_wstrb),
-      .wuser   (target_wuser),
-      .wlast   ('d0),
-      .wack    ('d0),
+      .wlast   ('d1),
       // Write Response channel
       .bvalid  (target_bvalid),
       .bready  (target_bready),
+      .buser   (target_buser),
       .bresp   (target_bresp),
       .bid     ('d0),
-      .buser   ('d0),
       // Read Address Channel
       .arvalid (target_arvalid),
       .arready (target_arready),
       .araddr  (target_araddr),
       .aruser  (target_aruser),
-      .arlock  (target_arprot),
+      .arprot  (target_arprot),
       .arid    ('d0),
       .arlen   ('d0),
-      .arsize  ('d0),
+      .arsize  (),                // (DataWidth> 8) ? $clog2(DataWidth/8) : 1
       .arburst ('d0),
+      .arlock  ('d0),
       .arcache ('d0),
-      .arprot  ('d0),
       .arqos   ('d0),
       .arregion('d0),
-      .ardomain('d0),
-      .arsnoop ('d0),
-      .arbar   ('d0),
       // Read Channel
       .rvalid  (target_rvalid),
       .rready  (target_rready),
@@ -151,86 +144,66 @@ module br_amba_axil_timing_slice_fpv_monitor #(
       .rdata   (target_rdata),
       .rresp   (target_rresp),
       .rid     ('d0),
-      .rack    ('d0),
-      .acvalid ('d0),
-      .acready ('d0),
-      .acaddr  ('d0),
-      .acprot  ('d0),
-      .acsnoop ('d0),
-      .cdvalid ('d0),
-      .cdready ('d0),
-      .cddata  ('d0),
-      .cdlast  ('d0),
-      .crvalid ('d0),
-      .crready ('d0),
-      .crresp  ('d0),
-      .rlast   ('d0)
+      .rlast   ('d1)
   );
 
   // AXI4-Lite initiator interface
-  axi4_ace_master #(
-      .ADDR_WIDTH  (AddrWidth),
-      .DATA_WIDTH  (DataWidth),
+  axi4_slave #(
+      .AXI4_LITE(1),
+      .ADDR_WIDTH(AddrWidth),
+      .DATA_WIDTH(DataWidth),
       .AWUSER_WIDTH(AWUserWidth),
+      .WUSER_WIDTH(WUserWidth),
       .ARUSER_WIDTH(ARUserWidth),
-      .WUSER_WIDTH (WUserWidth),
-      .RUSER_WIDTH (RUserWidth)
+      .RUSER_WIDTH(RUserWidth)
   ) init (
       // Global signals
       .aclk    (clk),
       .aresetn (!rst),
-      .csysreq ('d0),
-      .csysack ('d0),
-      .cactive ('d0),
+      .csysreq (1'b1),
+      .csysack (1'b1),
+      .cactive (1'b1),
       // Write Address Channel
       .awvalid (init_awvalid),
       .awready (init_awready),
-      .awaddr  (init_awaddr),
       .awuser  (init_awuser),
+      .awaddr  (init_awaddr),
       .awprot  (init_awprot),
       .awid    ('d0),
       .awlen   ('d0),
-      .awsize  ('d0),
+      .awsize  (),              // (DataWidth> 8) ? $clog2(DataWidth/8) : 1
       .awburst ('d0),
       .awlock  ('d0),
       .awcache ('d0),
       .awqos   ('d0),
       .awregion('d0),
-      .awunique('d0),
-      .awdomain('d0),
-      .awsnoop ('d0),
-      .awbar   ('d0),
       // Write Channel
       .wvalid  (init_wvalid),
       .wready  (init_wready),
+      .wuser   (init_wuser),
       .wdata   (init_wdata),
       .wstrb   (init_wstrb),
-      .wuser   (init_wuser),
-      .wlast   ('d0),
-      .wack    ('d0),
+      .wlast   ('d1),
       // Write Response channel
       .bvalid  (init_bvalid),
       .bready  (init_bready),
+      .buser   (init_buser),
       .bresp   (init_bresp),
       .bid     ('d0),
-      .buser   ('d0),
       // Read Address Channel
       .arvalid (init_arvalid),
       .arready (init_arready),
       .araddr  (init_araddr),
       .aruser  (init_aruser),
-      .arlock  (init_arprot),
+      .arprot  (init_arprot),
       .arid    ('d0),
       .arlen   ('d0),
-      .arsize  ('d0),
+      .arsize  (),              // (DataWidth> 8) ? $clog2(DataWidth/8) : 1
       .arburst ('d0),
+      .arlock  ('d0),
       .arcache ('d0),
-      .arprot  ('d0),
       .arqos   ('d0),
       .arregion('d0),
-      .ardomain('d0),
-      .arsnoop ('d0),
-      .arbar   ('d0),
       // Read Channel
       .rvalid  (init_rvalid),
       .rready  (init_rready),
@@ -238,20 +211,7 @@ module br_amba_axil_timing_slice_fpv_monitor #(
       .rdata   (init_rdata),
       .rresp   (init_rresp),
       .rid     ('d0),
-      .rack    ('d0),
-      .acvalid ('d0),
-      .acready ('d0),
-      .acaddr  ('d0),
-      .acprot  ('d0),
-      .acsnoop ('d0),
-      .cdvalid ('d0),
-      .cdready ('d0),
-      .cddata  ('d0),
-      .cdlast  ('d0),
-      .crvalid ('d0),
-      .crready ('d0),
-      .crresp  ('d0),
-      .rlast   ('d0)
+      .rlast   ('d1)
   );
 
 endmodule : br_amba_axil_timing_slice_fpv_monitor

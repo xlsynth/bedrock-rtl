@@ -18,6 +18,31 @@ load("//bazel:verilog.bzl", "verilog_elab_test")
 
 package(default_visibility = ["//visibility:public"])
 
+# AXI4-Lite Default Target
+
+verilog_library(
+    name = "br_amba_axil_default_target_fpv_monitor",
+    srcs = ["br_amba_axil_default_target_fpv_monitor.sv"],
+    deps = [
+        "//amba/rtl:br_amba_axil_default_target",
+    ],
+)
+
+verilog_elab_test(
+    name = "br_amba_axil_default_target_fpv_monitor_elab_test",
+    tool = "verific",
+    deps = [":br_amba_axil_default_target_fpv_monitor"],
+)
+
+br_verilog_fpv_test_suite(
+    name = "br_amba_axil_default_target_jg_test_suite",
+    # TODO: in debug stage now
+    gui = True,
+    tool = "jg",
+    top = "br_amba_axil_default_target",
+    deps = [":br_amba_axil_default_target_fpv_monitor"],
+)
+
 # Bedrock-RTL AXI4 to AXI4-Lite Bridge
 
 verilog_library(
