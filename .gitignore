@@ -1,6 +1,7 @@
 bazel-*
 MODULE.bazel.lock
 user.bazelrc
+ci.bazelrc
 .vscode
 chipstack_artifacts
 *.f
