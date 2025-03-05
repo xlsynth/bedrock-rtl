@@ -40,6 +40,7 @@ def get_plugin_dirs_from_env() -> list[str]:
         plugin_dirs = plugin_dirs[1:]
     logging.info("Adding current directory to plugin search path.")
     plugin_dirs += ["."]
+    return plugin_dirs
 
 
 def main():
