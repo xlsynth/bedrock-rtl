@@ -673,11 +673,18 @@ def _cartesian_product(lists):
         result = [x + [y] for x in result for y in pool]
     return result
 
+def _abbreviate_uppercase(input_str):
+    """Converts a string to one that contains only the lowercase versions of the original uppercase letters.
+
+    For example, "EnableAssertPushStability" becomes "eaps".
+    """
+    return "".join([c.lower() for c in input_str.elems() if c.isupper()])
+
 def _make_test_name(base_name, suffix, param_keys, combination):
     """Generate a unique test name based on a combination of parameter values."""
     parts = [base_name]
     for key, value in zip(param_keys, combination):
-        parts.append("%s%s" % (key, value))
+        parts.append("%s%s" % (_abbreviate_uppercase(key), value))
     parts.append(suffix)
     return "_".join(parts)
 
