@@ -39,7 +39,7 @@
 `include "br_fv.svh"
 
 module br_ecc_secded_fpv_monitor #(
-    parameter int DataWidth = 1,
+    parameter int DataWidth = 4,
     parameter int ParityWidth = 4,
     parameter bit EncRegisterInputs = 0,
     parameter bit EncRegisterOutputs = 0,

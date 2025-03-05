@@ -66,7 +66,7 @@
 `include "br_unused.svh"
 
 module br_ecc_secded_encoder #(
-    parameter int DataWidth = 1,  // Must be at least 1
+    parameter int DataWidth = 4,  // Must be at least 4
     parameter int ParityWidth = 4,  // Must be at least 4 and at most 12
     // If 1, then insert a pipeline register at the input.
     parameter bit RegisterInputs = 0,
@@ -98,7 +98,7 @@ module br_ecc_secded_encoder #(
   //------------------------------------------
   // Integration checks
   //------------------------------------------
-  `BR_ASSERT_STATIC(message_width_gte_1_a, DataWidth >= 1)
+  `BR_ASSERT_STATIC(message_width_gte_4_a, DataWidth >= 4)
   `BR_ASSERT_STATIC(parity_width_gte_4_a, ParityWidth >= 4)
   `BR_ASSERT_STATIC(parity_width_lte_12_a, ParityWidth <= 12)
 
