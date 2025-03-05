@@ -12,17 +12,20 @@ jobs:
       working-directory: ${{ github.workspace }}
       run: cp /home/gh-actions/bedrock-infra/ci.bazelrc ci.bazelrc
     - name: Build
-      working-directory: ${{ github.workspace }}
       run: bazel build //...
+    - name: Python tests
+      run: bazel test //python/...
+    - name: Stardoc tests
+      run: bazel test //bazel/...
     # Run cheaper tests first.
     - name: Elab tests
-      working-directory: ${{ github.workspace }}
+      # Suppress log output to protect sensitive EDA tool information.
       run: bazel test //... --test_tag_filters=elab --test_output=summary
     - name: Lint tests
-      working-directory: ${{ github.workspace }}
+      # Suppress log output to protect sensitive EDA tool information.
       run: bazel test //... --test_tag_filters=lint --test_output=summary
     - name: Sim tests (dsim only)
-      working-directory: ${{ github.workspace }}
+      # Suppress log output to protect sensitive EDA tool information.
       run: bazel test //... --test_tag_filters=dsim --test_output=summary
     # TODO: iverilog tests
     # TODO: VCS tests
