@@ -11,9 +11,20 @@ jobs:
     - name: Copy ci.bazelrc
       working-directory: ${{ github.workspace }}
       run: cp /home/gh-actions/bedrock-infra/ci.bazelrc ci.bazelrc
-    - name: Bazel build
+    - name: Build
       working-directory: ${{ github.workspace }}
       run: bazel build //...
-    - name: Bazel test (elab)
+    # Run cheaper tests first.
+    - name: Elab tests
       working-directory: ${{ github.workspace }}
       run: bazel test //... --test_tag_filters=elab --test_output=summary
+    - name: Lint tests
+      working-directory: ${{ github.workspace }}
+      run: bazel test //... --test_tag_filters=lint --test_output=summary
+    - name: Sim tests (dsim only)
+      working-directory: ${{ github.workspace }}
+      run: bazel test //... --test_tag_filters=dsim --test_output=summary
+    # TODO: iverilog tests
+    # TODO: VCS tests
+    # TODO: VCF tests
+    # TODO: JG tests
