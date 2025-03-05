@@ -44,6 +44,8 @@ common --local_resources=verilog_test_tool_licenses_vcf=10000
 common --local_resources=verilog_test_tool_licenses_vcs=10000
 common --local_resources=verilog_test_tool_licenses_xrun=10000
 
-# Import the user's custom .bazelrc file.
+# Import the user's custom .bazelrc file if it exists.
 # https://bazel.build/configure/best-practices#bazelrc-file
 try-import %workspace%/user.bazelrc
+# Import the CI's custom .bazelrc file if it exists.
+try-import %workspace%/ci.bazelrc
