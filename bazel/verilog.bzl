@@ -148,6 +148,7 @@ def _verilog_base_impl(ctx, subcmd, test = True, extra_args = [], extra_runfiles
             plugin_paths.append(plugin.dirname)
     verilog_runner_plugin_paths = ":".join(plugin_paths)
     env_exports = {
+        "VERILOG_RUNNER_EDA_TOOLS_ENV_SETUP": "${VERILOG_RUNNER_EDA_TOOLS_ENV_SETUP}",
         "VERILOG_RUNNER_PLUGIN_PATH": "${VERILOG_RUNNER_PLUGIN_PATH}:" + verilog_runner_plugin_paths,
     }
 
