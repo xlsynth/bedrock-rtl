@@ -309,7 +309,7 @@ to the base name followed by the parameter key-values.
 <pre>
 load("@bedrock-rtl//bazel:verilog.bzl", "verilog_elab_test")
 
-verilog_elab_test(<a href="#verilog_elab_test-name">name</a>, <a href="#verilog_elab_test-tool">tool</a>, <a href="#verilog_elab_test-tags">tags</a>, <a href="#verilog_elab_test-custom_tcl_header">custom_tcl_header</a>, <a href="#verilog_elab_test-custom_tcl_header_cmds">custom_tcl_header_cmds</a>, <a href="#verilog_elab_test-kwargs">kwargs</a>)
+verilog_elab_test(<a href="#verilog_elab_test-name">name</a>, <a href="#verilog_elab_test-tool">tool</a>, <a href="#verilog_elab_test-tags">tags</a>, <a href="#verilog_elab_test-kwargs">kwargs</a>)
 </pre>
 
 Wraps rule_verilog_elab_test with a default tool and appends extra tags.
@@ -329,8 +329,6 @@ The following extra tags are unconditionally appended to the list of tags:
 | <a id="verilog_elab_test-name"></a>name |  test name   |  none |
 | <a id="verilog_elab_test-tool"></a>tool |  The elaboration tool to use.   |  none |
 | <a id="verilog_elab_test-tags"></a>tags |  The tags to add to the test.   |  `[]` |
-| <a id="verilog_elab_test-custom_tcl_header"></a>custom_tcl_header |  custom tcl header file. If not provided, then a default one will be generated.   |  `None` |
-| <a id="verilog_elab_test-custom_tcl_header_cmds"></a>custom_tcl_header_cmds |  custom tcl commands   |  `[]` |
 | <a id="verilog_elab_test-kwargs"></a>kwargs |  Other arguments to pass to the rule_verilog_elab_test rule.   |  none |
 
 
