@@ -24,21 +24,7 @@ from plugins import discover_plugins
 from util import print_greeting, init_root_logger
 
 
-def main():
-    print_greeting()
-    init_root_logger()
-    logging.info("Working directory: " + os.getcwd())
-    logging.info("Python binary: " + sys.executable)
-    logging.info("Python version: " + sys.version)
-    logging.info("Python path: " + str(sys.path))
-
-    parser = argparse.ArgumentParser(
-        description="Run a Verilog/SystemVerilog test.",
-        allow_abbrev=False,
-    )
-    parent_parser = argparse.ArgumentParser(add_help=False)
-    add_common_args(parent_parser)
-
+def get_plugin_dirs_from_env() -> list[str]:
     logging.info(
         "Getting additional plugin directories from VERILOG_RUNNER_PLUGIN_PATH environment variable. "
         "Note that the current directory is always searched for plugins "
@@ -54,6 +40,24 @@ def main():
         plugin_dirs = plugin_dirs[1:]
     logging.info("Adding current directory to plugin search path.")
     plugin_dirs += ["."]
+
+
+def main():
+    print_greeting()
+    init_root_logger()
+    logging.info("Working directory: " + os.getcwd())
+    logging.info("Python binary: " + sys.executable)
+    logging.info("Python version: " + sys.version)
+    logging.info("Python path: " + str(sys.path))
+
+    parser = argparse.ArgumentParser(
+        description="Run a Verilog/SystemVerilog test.",
+        allow_abbrev=False,
+    )
+    parent_parser = argparse.ArgumentParser(add_help=False)
+    add_common_args(parent_parser)
+
+    plugin_dirs = get_plugin_dirs_from_env()
 
     allowed_subcommands = (Elab, Lint, Sim, Fpv)
     subcommand_name_to_class = {cls.name: cls for cls in allowed_subcommands}
