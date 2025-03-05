@@ -41,6 +41,8 @@ module br_fifo_shared_test_harness #(
     @(posedge clk);
     push_valid[wport] <= 1'b0;
 
+    $display("Pushing to wport %d", wport);
+
     for (int i = 0; i < TestSize; i++) begin
       fifo_id = $urandom_range(0, NumFifos - 1);
       data = $urandom_range(0, MaxRandomValue);
@@ -72,6 +74,8 @@ module br_fifo_shared_test_harness #(
     @(posedge clk);
     pop_ready[fifo_id] <= 1'b0;
 
+    $display("Popping from FIFO %d", fifo_id);
+
     forever begin
       delay = $urandom_range(0, MaxRandomDelay);
       repeat (delay) @(posedge clk);
@@ -84,12 +88,18 @@ module br_fifo_shared_test_harness #(
 
       actual = pop_data[fifo_id] >> WritePortIdWidth;
       wport = pop_data[fifo_id][WritePortIdWidth-1:0];
-      expected = expected_data[fifo_id][wport].pop_front();
 
-      if (actual !== expected) begin
-        $display("FIFO %d got wrong data from wport %d. Expected %0x, Got %0x", fifo_id, wport,
-                 expected, actual);
+      if (expected_data[fifo_id][wport].size() == 0) begin
+        $display("FIFO %d got data from wport %d, but no data was pushed", fifo_id, wport);
         error_count++;
+      end else begin
+        expected = expected_data[fifo_id][wport].pop_front();
+
+        if (actual !== expected) begin
+          $display("FIFO %d got wrong data from wport %d. Expected %0x, Got %0x", fifo_id, wport,
+                  expected, actual);
+          error_count++;
+        end
       end
     end
   endtask
