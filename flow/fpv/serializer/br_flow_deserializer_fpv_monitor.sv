@@ -112,9 +112,9 @@ module br_flow_deserializer_fpv_monitor #(
   // For these 4 cycles: fv_flit_cnt = 0,1,2,3
   // push_data will be assigned to pop_data[7:0],[15:8],[23:16],[31:24]
   for (genvar i = 0; i < DeserializationRatio; i++) begin : gen_ast
-    `BR_ASSUME(fv_pop_data_stable_a,
-               fv_flit_cnt != i |-> $stable(fv_pop_data[PushWidth*(MAX+1-i)-1:PushWidth*(MAX-i)]))
     if (DeserializeMostSignificantFirst) begin : gen_msb
+      `BR_ASSUME(fv_pop_data_stable_a,
+                 fv_flit_cnt != i |-> $stable(fv_pop_data[PushWidth*(MAX+1-i)-1:PushWidth*(MAX-i)]))
       `BR_ASSUME(
           fv_pop_data_a,
           fv_flit_cnt == i |-> fv_pop_data[PushWidth*(MAX+1-i)-1:PushWidth*(MAX-i)] == push_data)
@@ -122,6 +122,8 @@ module br_flow_deserializer_fpv_monitor #(
                  pop_valid && (pop_last_dont_care_count == i) |->
                  pop_data[PopWidth-1:PushWidth*i] == fv_pop_data[PopWidth-1:PushWidth*i])
     end else begin : gen_lsb
+      `BR_ASSUME(fv_pop_data_stable_a,
+                 fv_flit_cnt != i |-> $stable(fv_pop_data[PushWidth*(i+1)-1:PushWidth*i]))
       `BR_ASSUME(fv_pop_data_a,
                  fv_flit_cnt == i |-> fv_pop_data[PushWidth*(i+1)-1:PushWidth*i] == push_data)
       `BR_ASSERT(data_integrity_a,
@@ -147,7 +149,9 @@ module br_flow_deserializer_fpv_monitor #(
                                                                         pop_last_dont_care_count}))
 
   // ----------Critical Covers----------
-  `BR_COVER(dont_care_c, pop_valid & pop_last && (pop_last_dont_care_count != 'd0))
+  if (DeserializationRatio != 1) begin : gen_cov
+    `BR_COVER(dont_care_c, pop_valid & pop_last && (pop_last_dont_care_count != 'd0))
+  end
   `BR_COVER(fake_dont_care_c, pop_valid & pop_last && (pop_last_dont_care_count == 'd0))
 
 endmodule : br_flow_deserializer_fpv_monitor

@@ -115,11 +115,6 @@ def add_common_args(parser: argparse.ArgumentParser) -> None:
         "The tcl body (custom or not) is unconditionally followed by the tcl footer.",
     )
     parser.add_argument(
-        "--env_setup_commands",
-        type=sh_file,
-        help="A Bash script of custom environment setup commands that will be executed before invoking the tool.",
-    )
-    parser.add_argument(
         "--script",
         type=sh_file,
         help="Shell script file to write commands to.",
@@ -158,6 +153,22 @@ def parse_params(parser: argparse.ArgumentParser, params: List[str]) -> Dict[str
 
 
 def common_args(args: argparse.Namespace):
+    def get_env_setup_command_file_from_env() -> str:
+        import logging
+        import os
+
+        logging.info("Reading VERILOG_RUNNER_EDA_TOOLS_ENV_SETUP environment variable.")
+        var = os.environ.get("VERILOG_RUNNER_EDA_TOOLS_ENV_SETUP", "")
+        if var == "":
+            logging.info(
+                "VERILOG_RUNNER_EDA_TOOLS_ENV_SETUP environment variable is not set."
+            )
+        else:
+            logging.info(
+                f"VERILOG_RUNNER_EDA_TOOLS_ENV_SETUP environment variable is set to '{var}'."
+            )
+        return var
+
     return {
         "hdrs": args.hdr,
         "defines": args.define,
@@ -171,7 +182,9 @@ def common_args(args: argparse.Namespace):
         "filelist": args.filelist,
         "tclfile_custom_header": args.custom_tcl_header,
         "tclfile_custom_body": args.custom_tcl_body,
-        "env_setup_commands": args.env_setup_commands,
+        # Use an environment variable instead of CLI arg because Bazel doesn't know the value at
+        # analysis time (when the verilog runner command is constructed).
+        "env_setup_commands": get_env_setup_command_file_from_env(),
     }
 
 

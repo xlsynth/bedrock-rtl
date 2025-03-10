@@ -13,13 +13,29 @@
 # limitations under the License.
 
 # clock/reset set up
-clock clk
-reset rst
-get_design_info
+create_clock clk -period 100
+create_reset rst -high
+#design infomation
+report_fv_complexity
 
-# when alloc_valid is back pressured, it can not change next cycle
-cover -disable {*gen_single_alloc_port.*_unstable_c}
-cover -disable {*gen_multi_alloc_ports.*_instability_c}
+#reset simulation
+sim_run -stable
+sim_save_reset
 
-# prove command
-prove -all
+# standard use case: request will hold until grant
+fvtask -create standard -copy FPV
+
+# non-standard use case: request will NOT hold until grant
+fvtask -create special -copy FPV
+fvdisable {special::*req_hold_until_grant_a}
+fvdisable {special::*no_deadlock_a}
+fvdisable {special::*round_robin_a}
+
+#run properties
+fvtask standard
+check_fv -block
+report_fv
+
+fvtask special
+check_fv -block
+report_fv

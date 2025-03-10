@@ -12,14 +12,21 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# clock/reset set up
-clock clk
-reset rst
-get_design_info
+load("@rules_hdl//verilog:providers.bzl", "verilog_library")
 
-# when alloc_valid is back pressured, it can not change next cycle
-cover -disable {*gen_single_alloc_port.*_unstable_c}
-cover -disable {*gen_multi_alloc_ports.*_instability_c}
+package(default_visibility = ["//visibility:public"])
 
-# prove command
-prove -all
+# fv_fifo
+verilog_library(
+    name = "fv_fifo",
+    srcs = ["fv_fifo.sv"],
+)
+
+# Delays an input signal by a fixed number of clock cycles.
+verilog_library(
+    name = "fv_delay",
+    srcs = ["fv_delay.sv"],
+    deps = [
+        "//macros:br_registers",
+    ],
+)

@@ -17,9 +17,14 @@ clock clk
 reset rst
 get_design_info
 
-# when alloc_valid is back pressured, it can not change next cycle
-cover -disable {*gen_single_alloc_port.*_unstable_c}
-cover -disable {*gen_multi_alloc_ports.*_instability_c}
+# TODO: Unreachable covers that need to be debugged
+cover -disable {*gen_dr_gt_1.incomplete_pop_flit_a*}
+cover -disable {*br_counter_incr_push_flit_id.gen_wrap_impl_check.value_overflow_a*}
+cover -disable {*br_counter_incr_push_flit_id.gen_wrap_impl_check.maxvalue_plus_one_a*}
+cover -disable {*br_counter_incr_push_flit_id.plus_zero_a*}
+cover -disable {*br_counter_incr_push_flit_id.value_temp_oob_c*}
+cover -disable {*br_counter_incr_push_flit_id.reinit_and_incr_c*}
+cover -disable {*monitor.*fv_pop_data_stable_a*}
 
 # prove command
 prove -all

@@ -105,7 +105,7 @@ module br_flow_serializer_fpv_monitor #(
   // SerializeMostSignificantFirst = 1 as an example:
   //    For first 3-cyc, pop_data will be 89,AB,CD.
   //    Then last cyc, pop_data is a dont care.
-  assign fv_care_max = MAX - push_last_dont_care_count;
+  assign fv_care_max = SerializationRatio == 1 ? 0 : MAX - push_last_dont_care_count;
 
   // fv_flit_cnt will cap at fv_care_max
   `BR_REGL(fv_flit_cnt, fv_flit_cnt != fv_care_max ? fv_flit_cnt + 'd1 : 'd0, pop_valid & pop_ready)
@@ -137,7 +137,9 @@ module br_flow_serializer_fpv_monitor #(
                                                                         pop_last, pop_metadata}))
 
   // ----------Critical Covers----------
-  `BR_COVER(dont_care_c, push_valid && push_last && (push_last_dont_care_count != 'd0))
+  if (SerializationRatio != 1) begin : gen_cov
+    `BR_COVER(dont_care_c, push_valid && push_last && (push_last_dont_care_count != 'd0))
+  end
   `BR_COVER(fake_dont_care_c, push_valid && push_last && (push_last_dont_care_count == 'd0))
 
 endmodule : br_flow_serializer_fpv_monitor
