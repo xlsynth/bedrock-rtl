@@ -27,17 +27,17 @@ module br_amba_axil_default_target_fpv_monitor #(
 
     // Reduced AXI4-Lite target interface
     input logic                             target_awvalid,
-    inout logic                             target_awready,
+    input logic                             target_awready,
     input logic                             target_wvalid,
-    inout logic                             target_wready,
-    inout logic [br_amba::AxiRespWidth-1:0] target_bresp,
-    inout logic                             target_bvalid,
+    input logic                             target_wready,
+    input logic [br_amba::AxiRespWidth-1:0] target_bresp,
+    input logic                             target_bvalid,
     input logic                             target_bready,
     input logic                             target_arvalid,
-    inout logic                             target_arready,
-    inout logic [            DataWidth-1:0] target_rdata,
-    inout logic [br_amba::AxiRespWidth-1:0] target_rresp,
-    inout logic                             target_rvalid,
+    input logic                             target_arready,
+    input logic [            DataWidth-1:0] target_rdata,
+    input logic [br_amba::AxiRespWidth-1:0] target_rresp,
+    input logic                             target_rvalid,
     input logic                             target_rready
 );
 

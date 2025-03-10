@@ -113,9 +113,9 @@ module br_amba_axi2axil_fpv_monitor #(
       // Global signals
       .aclk    (clk),
       .aresetn (!rst),
-      .csysreq ('d0),
-      .csysack ('d0),
-      .cactive ('d0),
+      .csysreq ('d1),
+      .csysack ('d1),
+      .cactive ('d1),
       // Write Address Channel
       .awvalid (axi_awvalid),
       .awready (axi_awready),

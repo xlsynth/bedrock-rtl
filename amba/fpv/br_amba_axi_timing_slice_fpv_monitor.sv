@@ -127,9 +127,9 @@ module br_amba_axi_timing_slice_fpv_monitor #(
       // Global signals
       .aclk    (clk),
       .aresetn (~rst),
-      .csysreq ('d0),
-      .csysack ('d0),
-      .cactive ('d0),
+      .csysreq ('d1),
+      .csysack ('d1),
+      .cactive ('d1),
       // Write Address Channel
       .awvalid (target_awvalid),
       .awready (target_awready),
@@ -195,9 +195,9 @@ module br_amba_axi_timing_slice_fpv_monitor #(
       // Global signals
       .aclk    (clk),
       .aresetn (~rst),
-      .csysreq ('d0),
-      .csysack ('d0),
-      .cactive ('d0),
+      .csysreq ('d1),
+      .csysack ('d1),
+      .cactive ('d1),
       // Write Address Channel
       .awvalid (init_awvalid),
       .awready (init_awready),
