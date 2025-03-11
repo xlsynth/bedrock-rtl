@@ -109,6 +109,18 @@ module br_amba_axil_split_fpv_monitor #(
     input logic                             branch_rready
 );
 
+  // ----------FV assumptions----------
+  `BR_ASSUME(branch_start_end_addr_a, branch_start_addr < branch_end_addr)
+  // root
+  `BR_ASSUME(branch_start_addr_stable_during_root_awvalid_a, root_awvalid && !$rose(root_awvalid)
+                                                             |-> $stable(branch_start_addr))
+  `BR_ASSUME(branch_end_addr_stable_during_root_awvalid_a, root_awvalid && !$rose(root_awvalid)
+                                                           |-> $stable(branch_end_addr))
+  `BR_ASSUME(branch_start_addr_stable_during_root_arvalid_a, root_arvalid && !$rose(root_arvalid)
+                                                             |-> $stable(branch_start_addr))
+  `BR_ASSUME(branch_end_addr_stable_during_root_arvalid_a, root_arvalid && !$rose(root_arvalid)
+                                                           |-> $stable(branch_end_addr))
+
   // AXI4-Lite root target interface
   axi4_master #(
       .AXI4_LITE(1),

@@ -72,7 +72,7 @@ br_verilog_fpv_test_tools_suite(
     # TODO: in debug stage now
     gui = True,
     tools = {
-        "jg": "",
+        "jg": "br_amba_axi2axil_fpv.jg.tcl",
         "vcf": "",
     },
     top = "br_amba_axi2axil",
