@@ -31,7 +31,7 @@ module br_amba_axi2axil #(
     parameter int WUserWidth = 8,  // Must be at least 1
     parameter int BUserWidth = 8,  // Must be at least 1
     parameter int RUserWidth = 8,  // Must be at least 1
-    parameter int MaxOutstandingReqs = 16,  // Must be at least 3
+    parameter int MaxOutstandingReqs = 16,  // Must be at least 4
     localparam int StrobeWidth = DataWidth / 8
 ) (
     input clk,
@@ -115,7 +115,7 @@ module br_amba_axi2axil #(
   `BR_ASSERT_STATIC(wuser_width_must_be_at_least_1_a, WUserWidth >= 1)
   `BR_ASSERT_STATIC(buser_width_must_be_at_least_1_a, BUserWidth >= 1)
   `BR_ASSERT_STATIC(ruser_width_must_be_at_least_1_a, RUserWidth >= 1)
-  `BR_ASSERT_STATIC(max_outstanding_reqs_must_be_at_least_3_a, MaxOutstandingReqs >= 3)
+  `BR_ASSERT_STATIC(max_outstanding_reqs_must_be_at_least_4_a, MaxOutstandingReqs >= 4)
   // ri lint_check_on GENERATE_NAME
 
   //----------------------------------------------------------------------------

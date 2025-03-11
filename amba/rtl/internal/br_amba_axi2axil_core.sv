@@ -34,7 +34,7 @@ module br_amba_axi2axil_core #(
     parameter int ReqUserWidth = 8,  // Must be at least 1
     parameter int RespUserWidth = 8,  // Must be at least 1
     parameter int ReqDataUserWidth = 8,  // Must be at least 1
-    parameter int MaxOutstandingReqs = 16,  // Must be at least 3
+    parameter int MaxOutstandingReqs = 16,  // Must be at least 4
     parameter bit IsReadNotWrite = 0,  // Must be 0 or 1
     localparam int StrobeWidth = DataWidth / 8
 ) (
@@ -100,7 +100,7 @@ module br_amba_axi2axil_core #(
   `BR_ASSERT_STATIC(req_user_width_must_be_at_least_1_a, ReqUserWidth >= 1)
   `BR_ASSERT_STATIC(resp_user_width_must_be_at_least_1_a, RespUserWidth >= 1)
   `BR_ASSERT_STATIC(req_data_user_width_must_be_at_least_1_a, ReqDataUserWidth >= 1)
-  `BR_ASSERT_STATIC(max_outstanding_reqs_must_be_at_least_3_a, MaxOutstandingReqs >= 3)
+  `BR_ASSERT_STATIC(max_outstanding_reqs_must_be_at_least_4_a, MaxOutstandingReqs >= 4)
   // ri lint_check_on GENERATE_NAME
 
   // These signals are only read from in assertions.
@@ -294,7 +294,7 @@ module br_amba_axi2axil_core #(
   //----------------------------------------------------------------------------
 
   br_fifo_flops #(
-      .Depth(MaxOutstandingReqs - 1),  // br_flow_reg_both is already consuming one slot
+      .Depth(MaxOutstandingReqs - 2),  // br_flow_reg_both is already consuming two slots
       .Width(RespFifoWidth),
       .EnableBypass(0),
       .RegisterPopOutputs(0),
