@@ -17,7 +17,7 @@ clock clk
 reset rst
 get_design_info
 
-# non-standard use case: request will NOT hold until grant
+# These should be assumptions because signals are primary inputs
 assume -from_assert <embedded>::br_amba_axi2axil.monitor.axi4.genStableChksRDInf.genRStableChks.slave_r_rdata_stable
 assume -from_assert <embedded>::br_amba_axi2axil.monitor.axi4_lite.genPropChksWRInf.genNoWrDatTblOverflow.genMas.master_w_wr_tbl_no_overflow
 
