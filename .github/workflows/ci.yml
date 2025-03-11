@@ -1,8 +1,21 @@
 name: bazel build and tests (for PR)
 on:
+  push:
+    branches:
+      - main
   pull_request:
     types: [opened, reopened, synchronize]
+
 jobs:
+  # Run the cheapest checks first.
+  # 1. pre-commit
+  # 2. bazel
+  #    a. build
+  #    b. tests
+  #
+  # Run bazel build before bazel tests because the logging is not chronologically
+  # ordered if a build step fails while unrelated tests are running.
+
   pre-commit:
     runs-on: ubuntu-latest
     steps:
@@ -12,31 +25,37 @@ jobs:
 
   bazel:
     runs-on: self-hosted
+    needs: pre-commit
     steps:
     - name: Checkout repo
       uses: actions/checkout@v3
+
     - name: Copy ci.bazelrc
       working-directory: ${{ github.workspace }}
       run: cp /home/gh-actions/bedrock-infra/ci.bazelrc ci.bazelrc
-    # Run build before tests because the logging is not chronologically ordered
-    # if a build step fails while unrelated tests are running.
+
     - name: Build
       run: bazel build //...
-    # Run cheaper tests first.
-    - name: Python tests
-      run: bazel test //python/...
-    - name: Stardoc tests
-      run: bazel test //bazel/...
-    - name: Elab tests
+
+    - name: Python and Stardoc tests
+      run: bazel test //python/... //bazel/...
+
+    - name: Verilog elab tests (using Verific)
       # Suppress log output to protect sensitive EDA tool information.
-      run: bazel test //... --test_tag_filters=elab --test_output=summary
-    - name: Lint tests
+      run: bazel test //... --test_tag_filters=verific --test_output=summary
+
+    - name: Verilog lint tests (using AscentLint)
       # Suppress log output to protect sensitive EDA tool information.
-      run: bazel test //... --test_tag_filters=lint --test_output=summary
-    - name: Sim tests (dsim only)
+      run: bazel test //... --test_tag_filters=ascentlint --test_output=summary
+
+    - name: Verilog sim tests (using iverilog)
+      # iverilog is open source. Don't suppress its log output.
+      run: bazel test //... --test_tag_filters=iverilog
+
+    - name: Verilog sim tests (using dsim)
       # Suppress log output to protect sensitive EDA tool information.
       run: bazel test //... --test_tag_filters=dsim --test_output=summary
-    # TODO: iverilog tests
+
     # TODO: VCS tests
     # TODO: VCF tests
     # TODO: JG tests
