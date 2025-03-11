@@ -68,10 +68,10 @@ typedef enum logic [1:0] { \
 $error($sformatf("Assertion failed: %0s [%0s] (%0s:%0d)", `"__expr__`", `"__name__`", `__FILE__, `__LINE__));
 
 `ifdef UVM_MAJOR_REV
-`define `BR_ASSERT_ERROR(__name__, __expr__) \
+`define BR_ASSERT_ERROR(__name__, __expr__) \
 `BR_ASSERT_UVM_ERROR(__name__, __expr__)
 `else // UVM_MAJOR_REV
-`define `BR_ASSERT_ERROR(__name__, __expr__) \
+`define BR_ASSERT_ERROR(__name__, __expr__) \
 `BR_ASSERT_BUILTIN_ERROR(__name__, __expr__)
 `endif // UVM_MAJOR_REV
 
