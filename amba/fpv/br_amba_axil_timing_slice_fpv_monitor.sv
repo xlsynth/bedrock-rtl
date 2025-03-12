@@ -104,7 +104,7 @@ module br_amba_axil_timing_slice_fpv_monitor #(
       .awprot  (target_awprot),
       .awid    (),
       .awlen   (),
-      .awsize  (),                // (DataWidth> 8) ? $clog2(DataWidth/8) : 1
+      .awsize  (),
       .awburst (),
       .awlock  (),
       .awcache (),
