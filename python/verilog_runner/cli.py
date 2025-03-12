@@ -284,3 +284,8 @@ class Fpv(Subcommand):
             default=[],
             help="analysis options",
         )
+        parser.add_argument(
+            "--conn",
+            action="store_true",
+            help="Run in connectivity mode",
+        )

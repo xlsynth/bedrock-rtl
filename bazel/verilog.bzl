@@ -275,6 +275,8 @@ def _verilog_fpv_args(ctx):
         extra_args.append("--elab_opt='" + opt + "'")
     for opt in ctx.attr.analysis_opts:
         extra_args.append("--analysis_opt='" + opt + "'")
+    if ctx.attr.conn:
+        extra_args.append("--conn")
     return extra_args
 
 def _verilog_fpv_test_impl(ctx):
@@ -578,6 +580,10 @@ rule_verilog_fpv_test = rule(
             doc = "Enable GUI.",
             default = False,
         ),
+        "conn": attr.bool(
+            doc = "Switch to connectivity",
+            default = False,
+        ),
     },
     test = True,
 )
@@ -657,6 +663,10 @@ rule_verilog_fpv_sandbox = rule(
         ),
         "gui": attr.bool(
             doc = "Enable GUI.",
+            default = False,
+        ),
+        "conn": attr.bool(
+            doc = "Switch to connectivity",
             default = False,
         ),
     },
