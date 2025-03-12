@@ -70,6 +70,7 @@ verilog_library(
         ":br_amba_pkg",
         "//arb/rtl:br_arb_rr",
         "//counter/rtl:br_counter",
+        "//flow/rtl:br_flow_reg_both",
         "//macros:br_asserts_internal",
         "//macros:br_registers",
     ],

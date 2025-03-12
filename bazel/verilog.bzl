@@ -148,6 +148,7 @@ def _verilog_base_impl(ctx, subcmd, test = True, extra_args = [], extra_runfiles
             plugin_paths.append(plugin.dirname)
     verilog_runner_plugin_paths = ":".join(plugin_paths)
     env_exports = {
+        "VERILOG_RUNNER_EDA_TOOLS_ENV_SETUP": "${VERILOG_RUNNER_EDA_TOOLS_ENV_SETUP}",
         "VERILOG_RUNNER_PLUGIN_PATH": "${VERILOG_RUNNER_PLUGIN_PATH}:" + verilog_runner_plugin_paths,
     }
 
@@ -274,6 +275,8 @@ def _verilog_fpv_args(ctx):
         extra_args.append("--elab_opt='" + opt + "'")
     for opt in ctx.attr.analysis_opts:
         extra_args.append("--analysis_opt='" + opt + "'")
+    if ctx.attr.conn:
+        extra_args.append("--conn")
     return extra_args
 
 def _verilog_fpv_test_impl(ctx):
@@ -577,6 +580,10 @@ rule_verilog_fpv_test = rule(
             doc = "Enable GUI.",
             default = False,
         ),
+        "conn": attr.bool(
+            doc = "Switch to connectivity",
+            default = False,
+        ),
     },
     test = True,
 )
@@ -658,6 +665,10 @@ rule_verilog_fpv_sandbox = rule(
             doc = "Enable GUI.",
             default = False,
         ),
+        "conn": attr.bool(
+            doc = "Switch to connectivity",
+            default = False,
+        ),
     },
     outputs = {
         "tarball": "%{name}.tar.gz",
@@ -672,11 +683,18 @@ def _cartesian_product(lists):
         result = [x + [y] for x in result for y in pool]
     return result
 
+def _abbreviate_uppercase(input_str):
+    """Converts a string to one that contains only the lowercase versions of the original uppercase letters.
+
+    For example, "EnableAssertPushStability" becomes "eaps".
+    """
+    return "".join([c.lower() for c in input_str.elems() if c.isupper()])
+
 def _make_test_name(base_name, suffix, param_keys, combination):
     """Generate a unique test name based on a combination of parameter values."""
     parts = [base_name]
     for key, value in zip(param_keys, combination):
-        parts.append("%s%s" % (key, value))
+        parts.append("%s%s" % (_abbreviate_uppercase(key), value))
     parts.append(suffix)
     return "_".join(parts)
 

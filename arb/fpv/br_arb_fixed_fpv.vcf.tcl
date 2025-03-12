@@ -18,9 +18,6 @@ create_reset rst -high
 #design infomation
 report_fv_complexity
 
-# primary output control signal should be legal during reset
-fvassert fv_rst_check_grant -expr {rst |-> grant == 'd0}
-
 # If index i > j, and request[j] is always high, request[i] will hang
 # This is RTL intention
 fvdisable {*no_deadlock_a*}

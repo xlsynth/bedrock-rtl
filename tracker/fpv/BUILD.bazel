@@ -13,10 +13,16 @@
 # limitations under the License.
 
 load("@rules_hdl//verilog:providers.bzl", "verilog_library")
-load("//bazel:br_verilog.bzl", "br_verilog_fpv_test_suite")
+load("//bazel:br_verilog.bzl", "br_verilog_fpv_test_tools_suite")
 load("//bazel:verilog.bzl", "verilog_elab_test")
 
 package(default_visibility = ["//visibility:public"])
+
+# basic check with a buffer
+verilog_library(
+    name = "br_tracker_reorder_buffer_basic_fpv_monitor",
+    srcs = ["br_tracker_reorder_buffer_basic_fpv_monitor.sv"],
+)
 
 # Bedrock-RTL Free List Manager
 
@@ -31,14 +37,16 @@ verilog_library(
 
 verilog_elab_test(
     name = "br_tracker_freelist_fpv_monitor_elab_test",
+    custom_tcl_header = "//:elab_test_jg_custom_header.verific.tcl",
     tool = "verific",
     deps = [":br_tracker_freelist_fpv_monitor"],
 )
 
-br_verilog_fpv_test_suite(
-    name = "br_tracker_freelist_jg_test_suite",
-    custom_tcl_body = "br_tracker_freelist_fpv.jg.tcl",
+br_verilog_fpv_test_tools_suite(
+    name = "br_tracker_freelist_test_suite",
     # NumEntries > NumAllocPerCycle
+    # CutThroughLatency = RegisterAllocOutputs + (EnableBypass ? 0 : 1)
+    # DeallocCountDelay >= 0 and <= CutThroughLatency
     illegal_param_combinations = {
         (
             "NumAllocPerCycle",
@@ -47,11 +55,26 @@ br_verilog_fpv_test_suite(
             ("2", "2"),
             ("3", "2"),
         ],
+        (
+            "DeallocCountDelay",
+            "RegisterAllocOutputs",
+            "EnableBypass",
+        ): [
+            ("1", "0", "1"),
+            ("2", "0", "0"),
+            ("2", "0", "1"),
+            ("2", "1", "1"),
+        ],
     },
     params = {
         "DeallocCountDelay": [
+            "0",
+            "1",
             "2",
-            "3",
+        ],
+        "EnableBypass": [
+            "0",
+            "1",
         ],
         "NumAllocPerCycle": [
             "1",
@@ -68,8 +91,15 @@ br_verilog_fpv_test_suite(
             "5",
             "7",
         ],
+        "RegisterAllocOutputs": [
+            "0",
+            "1",
+        ],
     },
-    tool = "jg",
+    tools = {
+        "jg": "br_tracker_freelist_fpv.jg.tcl",
+        "vcf": "",
+    },
     top = "br_tracker_freelist",
     deps = [":br_tracker_freelist_fpv_monitor"],
 )
@@ -91,8 +121,8 @@ verilog_elab_test(
     deps = [":br_tracker_linked_list_ctrl_fpv_monitor"],
 )
 
-br_verilog_fpv_test_suite(
-    name = "br_tracker_linked_list_ctrl_jg_test_suite",
+br_verilog_fpv_test_tools_suite(
+    name = "br_tracker_linked_list_ctrl_test_suite",
     illegal_param_combinations = {
         (
             "Depth",
@@ -123,7 +153,240 @@ br_verilog_fpv_test_suite(
             "4",
         ],
     },
-    tool = "jg",
+    tools = {
+        "jg": "",
+        "vcf": "",
+    },
     top = "br_tracker_linked_list_ctrl",
     deps = [":br_tracker_linked_list_ctrl_fpv_monitor"],
+)
+
+# Bedrock-RTL Sequence Number Tracker
+
+verilog_library(
+    name = "br_tracker_sequence_fpv_monitor",
+    srcs = ["br_tracker_sequence_fpv_monitor.sv"],
+    deps = [
+        "//tracker/rtl:br_tracker_sequence",
+    ],
+)
+
+verilog_elab_test(
+    name = "br_tracker_sequence_fpv_monitor_elab_test",
+    custom_tcl_header = "//:elab_test_jg_custom_header.verific.tcl",
+    tool = "verific",
+    deps = [":br_tracker_sequence_fpv_monitor"],
+)
+
+br_verilog_fpv_test_tools_suite(
+    name = "br_tracker_sequence_test_suite",
+    # EntryIdWidth >= $clog2(NumEntries)
+    # MaxAllocSize <= NumEntries - 1
+    illegal_param_combinations = {
+        (
+            "EntryIdWidth",
+            "NumEntries",
+        ): [
+            ("1", "4"),
+            ("1", "6"),
+            ("2", "6"),
+        ],
+        (
+            "MaxAllocSize",
+            "NumEntries",
+        ): [
+            ("2", "2"),
+            ("3", "2"),
+        ],
+    },
+    params = {
+        "EntryIdWidth": [
+            "1",
+            "2",
+            "3",
+        ],
+        "MaxAllocSize": [
+            "1",
+            "2",
+            "3",
+        ],
+        "NumEntries": [
+            "2",
+            "4",
+            "6",
+        ],
+    },
+    tools = {
+        "jg": "br_tracker_sequence_fpv.tcl",
+        "vcf": "",
+    },
+    top = "br_tracker_sequence",
+    deps = [":br_tracker_sequence_fpv_monitor"],
+)
+
+# Bedrock-RTL Reordering Tracker
+
+verilog_library(
+    name = "br_tracker_reorder_fpv_monitor",
+    srcs = ["br_tracker_reorder_fpv_monitor.sv"],
+    deps = [
+        "//tracker/rtl:br_tracker_reorder",
+    ],
+)
+
+verilog_elab_test(
+    name = "br_tracker_reorder_fpv_monitor_elab_test",
+    custom_tcl_header = "//:elab_test_jg_custom_header.verific.tcl",
+    tool = "verific",
+    deps = [":br_tracker_reorder_fpv_monitor"],
+)
+
+br_verilog_fpv_test_tools_suite(
+    name = "br_tracker_reorder_test_suite",
+    # EntryIdWidth >= $clog2(NumEntries)
+    illegal_param_combinations = {
+        (
+            "EntryIdWidth",
+            "NumEntries",
+        ): [
+            ("1", "4"),
+            ("1", "6"),
+            ("2", "6"),
+        ],
+    },
+    params = {
+        "EntryIdWidth": [
+            "1",
+            "2",
+            "3",
+        ],
+        "NumEntries": [
+            "2",
+            "4",
+            "6",
+        ],
+    },
+    tools = {
+        "jg": "br_tracker_reorder_fpv.tcl",
+        "vcf": "",
+    },
+    top = "br_tracker_reorder",
+    deps = [":br_tracker_reorder_fpv_monitor"],
+)
+
+# Bedrock-RTL Reorder Buffer (Flops Storage)
+
+verilog_library(
+    name = "br_tracker_reorder_buffer_flops_fpv_monitor",
+    srcs = ["br_tracker_reorder_buffer_flops_fpv_monitor.sv"],
+    deps = [
+        ":br_tracker_reorder_buffer_basic_fpv_monitor",
+        "//fpv/lib:fv_fifo",
+        "//tracker/rtl:br_tracker_reorder_buffer_flops",
+    ],
+)
+
+verilog_elab_test(
+    name = "br_tracker_reorder_buffer_flops_fpv_monitor_elab_test",
+    custom_tcl_header = "//:elab_test_jg_custom_header.verific.tcl",
+    tool = "verific",
+    deps = [":br_tracker_reorder_buffer_flops_fpv_monitor"],
+)
+
+br_verilog_fpv_test_tools_suite(
+    name = "br_tracker_reorder_buffer_flops_test_suite",
+    # EntryIdWidth >= $clog2(NumEntries)
+    illegal_param_combinations = {
+        (
+            "EntryIdWidth",
+            "NumEntries",
+        ): [
+            ("1", "4"),
+            ("1", "6"),
+            ("2", "6"),
+        ],
+    },
+    params = {
+        "DataWidth": [
+            "1",
+            "3",
+        ],
+        "EntryIdWidth": [
+            "1",
+            "2",
+            "3",
+        ],
+        "NumEntries": [
+            "2",
+            "4",
+            "6",
+        ],
+    },
+    tools = {
+        "jg": "br_tracker_reorder_buffer_flops_fpv.tcl",
+        "vcf": "",
+    },
+    top = "br_tracker_reorder_buffer_flops",
+    deps = [":br_tracker_reorder_buffer_flops_fpv_monitor"],
+)
+
+# Bedrock-RTL 1R1W Reorder Buffer Controller
+
+verilog_library(
+    name = "br_tracker_reorder_buffer_ctrl_1r1w_fpv_monitor",
+    srcs = ["br_tracker_reorder_buffer_ctrl_1r1w_fpv_monitor.sv"],
+    deps = [
+        ":br_tracker_reorder_buffer_basic_fpv_monitor",
+        "//fpv/lib:fv_fifo",
+        "//tracker/rtl:br_tracker_reorder_buffer_ctrl_1r1w",
+    ],
+)
+
+verilog_elab_test(
+    name = "br_tracker_reorder_buffer_ctrl_1r1w_fpv_monitor_elab_test",
+    custom_tcl_header = "//:elab_test_jg_custom_header.verific.tcl",
+    tool = "verific",
+    deps = [":br_tracker_reorder_buffer_ctrl_1r1w_fpv_monitor"],
+)
+
+br_verilog_fpv_test_tools_suite(
+    name = "br_tracker_reorder_buffer_ctrl_1r1w_test_suite",
+    # EntryIdWidth >= $clog2(NumEntries)
+    illegal_param_combinations = {
+        (
+            "EntryIdWidth",
+            "NumEntries",
+        ): [
+            ("1", "4"),
+            ("1", "6"),
+            ("2", "6"),
+        ],
+    },
+    params = {
+        "DataWidth": [
+            "1",
+            "3",
+        ],
+        "EntryIdWidth": [
+            "1",
+            "2",
+            "3",
+        ],
+        "NumEntries": [
+            "2",
+            "4",
+            "6",
+        ],
+        "RamReadLatency": [
+            "0",
+            "1",
+            "4",
+        ],
+    },
+    tools = {
+        "jg": "br_tracker_reorder_buffer_ctrl_1r1w_fpv.tcl",
+        "vcf": "",
+    },
+    top = "br_tracker_reorder_buffer_ctrl_1r1w",
+    deps = [":br_tracker_reorder_buffer_ctrl_1r1w_fpv_monitor"],
 )
