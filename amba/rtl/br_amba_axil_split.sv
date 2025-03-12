@@ -156,7 +156,7 @@ module br_amba_axil_split #(
   // AXI handshake signals
   assign ar_handshake_valid = root_arvalid && root_arready;
   assign r_handshake_valid = root_rvalid && root_rready;
-  assign aw_handshake_valid = root_awvalid && root_wvalid;
+  assign aw_handshake_valid = root_awvalid && root_awready;
   assign b_handshake_valid = root_bvalid && root_bready;
 
   // ri lint_check_off INVALID_COMPARE
