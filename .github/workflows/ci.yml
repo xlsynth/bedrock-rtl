@@ -35,27 +35,24 @@ jobs:
       run: cp /home/gh-actions/bedrock-infra/ci.bazelrc ci.bazelrc
 
     - name: Build
-      run: bazel build //...
+      run: bazel build --noshow_progress --noshow_loading_progress //...
 
     - name: Python and Stardoc tests
-      run: bazel test //python/... //bazel/...
+      run: bazel test --noshow_progress --noshow_loading_progress //python/... //bazel/...
 
     - name: Verilog elab tests (using Verific)
       # Suppress log output to protect sensitive EDA tool information.
-      run: bazel test //... --test_tag_filters=verific --test_output=summary
+      run: bazel test --noshow_progress --noshow_loading_progress //... --test_tag_filters=verific --test_output=summary
 
     - name: Verilog lint tests (using AscentLint)
       # Suppress log output to protect sensitive EDA tool information.
-      run: bazel test //... --test_tag_filters=ascentlint --test_output=summary
-
-    - name: Verilog sim tests (using iverilog)
-      # iverilog is open source. Don't suppress its log output.
-      run: bazel test //... --test_tag_filters=iverilog
+      run: bazel test --noshow_progress --noshow_loading_progress //... --test_tag_filters=ascentlint --test_output=summary
 
     - name: Verilog sim tests (using dsim)
       # Suppress log output to protect sensitive EDA tool information.
-      run: bazel test //... --test_tag_filters=dsim --test_output=summary
+      run: bazel test --noshow_progress --noshow_loading_progress //... --test_tag_filters=dsim --test_output=summary
 
+    # TODO: iverilog tests
     # TODO: VCS tests
     # TODO: VCF tests
     # TODO: JG tests
