@@ -100,6 +100,7 @@ module br_flow_xbar_basic_fpv_monitor #(
   end
 
   // ----------Data integrity Check----------
+  // data from same src/dest pair should be in order
   jasper_scoreboard_3 #(
       .CHUNK_WIDTH(Width),
       .IN_CHUNKS(1),
