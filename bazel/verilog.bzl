@@ -578,6 +578,10 @@ rule_verilog_fpv_test = rule(
             doc = "Enable GUI.",
             default = False,
         ),
+        "conn": attr.bool(
+            doc = "Switch to connectivity",
+            default = False,
+        ),
     },
     test = True,
 )
@@ -657,6 +661,10 @@ rule_verilog_fpv_sandbox = rule(
         ),
         "gui": attr.bool(
             doc = "Enable GUI.",
+            default = False,
+        ),
+        "conn": attr.bool(
+            doc = "Switch to connectivity",
             default = False,
         ),
     },
