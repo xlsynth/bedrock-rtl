@@ -1,4 +1,4 @@
-name: bazel build and tests (for PR)
+name: CI
 on:
   push:
     branches:
