@@ -56,6 +56,10 @@ typedef enum logic [1:0] { \
     __BR_ASSERT_STATIC_IN_PACKAGE_FAILED__``__name__ = 0 \
 } __br_static_assert_enum__``__name__;
 
+////////////////////////////////////////////////////////////////////////////////
+// Assertion error printing macros
+////////////////////////////////////////////////////////////////////////////////
+
 `ifdef UVM_MAJOR_REV
 `define BR_ASSERT_UVM_ERROR(__name__, __expr__) \
 `uvm_error("BR_ASSERT", $sformatf("Assertion failed: %0s [%0s] (%0s:%0d)", `"__expr__`", `"__name__`", `__FILE__, `__LINE__))
@@ -142,7 +146,7 @@ __name__ : assert property (@(posedge __clk__) disable iff (__rst__ === 1'b1 || 
 // Assert an expression is always known.
 `ifdef BR_ASSERT_ON
 `define BR_ASSERT_KNOWN(__name__, __expr__) \
-__name__ : assert property (@(posedge clk) disable iff (rst === 1'b1 || rst === 1'bx) (!$isunknown(__expr__))) else `BR_ASSERT_ERROR(__name__, __expr__);
+__name__ : assert property (@(posedge clk) disable iff (rst === 1'b1 || rst === 1'bx) (!$isunknown(__expr__))) else `BR_ASSERT_ERROR(__name__, (!$isunknown(__expr__)));
 `else  // BR_ASSERT_ON
 `define BR_ASSERT_KNOWN(__name__, __expr__) \
 `BR_NOOP
@@ -151,7 +155,7 @@ __name__ : assert property (@(posedge clk) disable iff (rst === 1'b1 || rst === 
 // Assert an expression is known whenever a corresponding valid signal is 1.
 `ifdef BR_ASSERT_ON
 `define BR_ASSERT_KNOWN_VALID(__name__, __valid__, __expr__) \
-__name__ : assert property (@(posedge clk) disable iff (rst === 1'b1 || rst === 1'bx) (__valid__ |-> !$isunknown(__expr__))) else `BR_ASSERT_ERROR(__name__, __expr__);
+__name__ : assert property (@(posedge clk) disable iff (rst === 1'b1 || rst === 1'bx) (__valid__ |-> !$isunknown(__expr__))) else `BR_ASSERT_ERROR(__name__, (__valid__ |-> !$isunknown(__expr__)));
 `else  // BR_ASSERT_ON
 `define BR_ASSERT_KNOWN_VALID(__name__, __valid__, __expr__) \
 `BR_NOOP
@@ -160,7 +164,7 @@ __name__ : assert property (@(posedge clk) disable iff (rst === 1'b1 || rst === 
 // More expressive form of BR_ASSERT_KNOWN that allows the use of custom clock and reset signal names.
 `ifdef BR_ASSERT_ON
 `define BR_ASSERT_KNOWN_CR(__name__, __expr__, __clk__, __rst__) \
-__name__ : assert property (@(posedge __clk__) disable iff (__rst__ === 1'b1 || __rst__ === 1'bx) (!$isunknown(__expr__))) else `BR_ASSERT_ERROR(__name__, __expr__);
+__name__ : assert property (@(posedge __clk__) disable iff (__rst__ === 1'b1 || __rst__ === 1'bx) (!$isunknown(__expr__))) else `BR_ASSERT_ERROR(__name__, (!$isunknown(__expr__)));
 `else  // BR_ASSERT_ON
 `define BR_ASSERT_KNOWN_CR(__name__, __expr__, __clk__, __rst__) \
 `BR_NOOP
@@ -169,7 +173,7 @@ __name__ : assert property (@(posedge __clk__) disable iff (__rst__ === 1'b1 || 
 // More expressive form of BR_ASSERT_KNOWN_VALID that allows the use of custom clock and reset signal names.
 `ifdef BR_ASSERT_ON
 `define BR_ASSERT_KNOWN_VALID_CR(__name__, __valid__, __expr__, __clk__, __rst__) \
-__name__ : assert property (@(posedge __clk__) disable iff (__rst__ === 1'b1 || __rst__ === 1'bx) (__valid__ |-> !$isunknown(__expr__))) else `BR_ASSERT_ERROR(__name__, __expr__);
+__name__ : assert property (@(posedge __clk__) disable iff (__rst__ === 1'b1 || __rst__ === 1'bx) (__valid__ |-> !$isunknown(__expr__))) else `BR_ASSERT_ERROR(__name__, (__valid__ |-> !$isunknown(__expr__)));
 `else  // BR_ASSERT_ON
 `define BR_ASSERT_KNOWN_VALID_CR(__name__, __valid__, __expr__, __clk__, __rst__) \
 `BR_NOOP
@@ -214,7 +218,7 @@ __name__ : assert property (@(posedge __clk__) disable iff (__rst__ === 1'b1 || 
 `ifdef BR_ASSERT_ON
 `ifndef BR_DISABLE_ASSERT_IMM
 `define BR_ASSERT_IMM(__name__, __expr__) \
-assert ($isunknown(__expr__) || (__expr__)) else `BR_ASSERT_ERROR(__name__, __expr__);
+assert ($isunknown(__expr__) || (__expr__)) else `BR_ASSERT_ERROR(__name__, (!$isunknown(__expr__) || (__expr__)));
 `else  // BR_DISABLE_ASSERT_IMM
 `define BR_ASSERT_IMM(__name__, __expr__) \
 `BR_NOOP
