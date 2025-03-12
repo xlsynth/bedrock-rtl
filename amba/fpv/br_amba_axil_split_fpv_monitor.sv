@@ -109,6 +109,12 @@ module br_amba_axil_split_fpv_monitor #(
     input logic                             branch_rready
 );
 
+  // ----------FV assumptions----------
+  `BR_ASSUME(branch_start_end_addr_a, branch_start_addr < branch_end_addr)
+  // root
+  `BR_ASSUME(branch_start_addr_stable_a, $stable(branch_start_addr))
+  `BR_ASSUME(branch_end_addr_stable_a, $stable(branch_end_addr))
+
   // AXI4-Lite root target interface
   axi4_master #(
       .AXI4_LITE(1),
@@ -133,49 +139,49 @@ module br_amba_axil_split_fpv_monitor #(
       .awuser  (root_awuser),
       .awaddr  (root_awaddr),
       .awprot  (root_awprot),
-      .awid    ('d0),
-      .awlen   ('d0),
-      .awsize  (),              // (DataWidth> 8) ? $clog2(DataWidth/8) : 1
-      .awburst ('d0),
-      .awlock  ('d0),
-      .awcache ('d0),
-      .awqos   ('d0),
-      .awregion('d0),
+      .awid    (),
+      .awlen   (),
+      .awsize  (),
+      .awburst (),
+      .awlock  (),
+      .awcache (),
+      .awqos   (),
+      .awregion(),
       // Write Channel
       .wvalid  (root_wvalid),
       .wready  (root_wready),
       .wuser   (root_wuser),
       .wdata   (root_wdata),
       .wstrb   (root_wstrb),
-      .wlast   ('d1),
+      .wlast   (),
       // Write Response channel
       .bvalid  (root_bvalid),
       .bready  (root_bready),
       .buser   (root_buser),
       .bresp   (root_bresp),
-      .bid     ('d0),
+      .bid     (),
       // Read Address Channel
       .arvalid (root_arvalid),
       .arready (root_arready),
       .araddr  (root_araddr),
       .aruser  (root_aruser),
       .arprot  (root_arprot),
-      .arid    ('d0),
-      .arlen   ('d0),
-      .arsize  (),              // (DataWidth> 8) ? $clog2(DataWidth/8) : 1
-      .arburst ('d0),
-      .arlock  ('d0),
-      .arcache ('d0),
-      .arqos   ('d0),
-      .arregion('d0),
+      .arid    (),
+      .arlen   (),
+      .arsize  (),
+      .arburst (),
+      .arlock  (),
+      .arcache (),
+      .arqos   (),
+      .arregion(),
       // Read Channel
       .rvalid  (root_rvalid),
       .rready  (root_rready),
       .ruser   (root_ruser),
       .rdata   (root_rdata),
       .rresp   (root_rresp),
-      .rid     ('d0),
-      .rlast   ('d1)
+      .rid     (),
+      .rlast   ()
   );
 
   // AXI4-Lite trunk initiator interface
@@ -202,49 +208,49 @@ module br_amba_axil_split_fpv_monitor #(
       .awuser  (trunk_awuser),
       .awaddr  (trunk_awaddr),
       .awprot  (trunk_awprot),
-      .awid    ('d0),
-      .awlen   ('d0),
-      .awsize  (),               // (DataWidth> 8) ? $clog2(DataWidth/8) : 1
-      .awburst ('d0),
-      .awlock  ('d0),
-      .awcache ('d0),
-      .awqos   ('d0),
-      .awregion('d0),
+      .awid    (),
+      .awlen   (),
+      .awsize  (),
+      .awburst (),
+      .awlock  (),
+      .awcache (),
+      .awqos   (),
+      .awregion(),
       // Write Channel
       .wvalid  (trunk_wvalid),
       .wready  (trunk_wready),
       .wuser   (trunk_wuser),
       .wdata   (trunk_wdata),
       .wstrb   (trunk_wstrb),
-      .wlast   ('d1),
+      .wlast   (),
       // Write Response channel
       .bvalid  (trunk_bvalid),
       .bready  (trunk_bready),
       .buser   (trunk_buser),
       .bresp   (trunk_bresp),
-      .bid     ('d0),
+      .bid     (),
       // Read Address Channel
       .arvalid (trunk_arvalid),
       .arready (trunk_arready),
       .araddr  (trunk_araddr),
       .aruser  (trunk_aruser),
       .arprot  (trunk_arprot),
-      .arid    ('d0),
-      .arlen   ('d0),
-      .arsize  (),               // (DataWidth> 8) ? $clog2(DataWidth/8) : 1
-      .arburst ('d0),
-      .arlock  ('d0),
-      .arcache ('d0),
-      .arqos   ('d0),
-      .arregion('d0),
+      .arid    (),
+      .arlen   (),
+      .arsize  (),
+      .arburst (),
+      .arlock  (),
+      .arcache (),
+      .arqos   (),
+      .arregion(),
       // Read Channel
       .rvalid  (trunk_rvalid),
       .rready  (trunk_rready),
       .ruser   (trunk_ruser),
       .rdata   (trunk_rdata),
       .rresp   (trunk_rresp),
-      .rid     ('d0),
-      .rlast   ('d1)
+      .rid     (),
+      .rlast   ()
   );
 
   // AXI4-Lite branch initiator interface
