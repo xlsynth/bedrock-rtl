@@ -275,6 +275,8 @@ def _verilog_fpv_args(ctx):
         extra_args.append("--elab_opt='" + opt + "'")
     for opt in ctx.attr.analysis_opts:
         extra_args.append("--analysis_opt='" + opt + "'")
+    if ctx.attr.conn:
+        extra_args.append("--conn")
     return extra_args
 
 def _verilog_fpv_test_impl(ctx):
