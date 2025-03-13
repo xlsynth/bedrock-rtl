@@ -12,12 +12,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Bedrock-RTL Flow-Controlled Crossbar (Fixed Priority Arbitration) FPV checker
+// Bedrock-RTL Flow-Controlled Crossbar (Round-Robin Arbitration) FPV checker
 
 `include "br_asserts.svh"
 `include "br_fv.svh"
 
-module br_flow_xbar_fixed_fpv_monitor #(
+module br_flow_xbar_rr_fpv_monitor #(
     // The number of input flows. Must be >=2.
     parameter int NumPushFlows = 2,
     // The number of output flows. Must be >=2.
@@ -61,23 +61,18 @@ module br_flow_xbar_fixed_fpv_monitor #(
     input logic [NumPopFlows-1:0][Width-1:0] pop_data,
 
     // RTL internal signals
-    input logic [NumPopFlows-1:0][NumPushFlows-1:0] grant
+    input logic [NumPopFlows-1:0][NumPushFlows-1:0] request,
+    input logic [NumPopFlows-1:0][NumPushFlows-1:0] grant,
+    input logic [NumPopFlows-1:0] enable_priority_update
 );
 
   // ----------FV Modeling Code----------
   localparam int PushDestIdWidth = $clog2(NumPushFlows);
-  logic [$clog2(NumPushFlows)-1:0] i, j;
-  logic push_valid_i;
-  logic push_valid_j;
   // pick a random pair of input/outout flow to check
   logic [PushDestIdWidth-1:0] fv_push_id;
   logic [DestIdWidth-1:0] fv_pop_id;
   `BR_ASSUME(fv_push_id_stable_a, $stable(fv_push_id) && fv_push_id < NumPushFlows)
   `BR_ASSUME(fv_pop_id_stable_a, $stable(fv_pop_id) && fv_pop_id < NumPopFlows)
-
-  `BR_FV_2RAND_IDX(i, j, NumPushFlows)
-  assign push_valid_i = push_valid[i] && (push_dest_id[i] == fv_pop_id);
-  assign push_valid_j = push_valid[j] && (push_dest_id[j] == fv_pop_id);
 
   // ----------Instantiate basic checks----------
   br_flow_xbar_basic_fpv_monitor #(
@@ -103,16 +98,21 @@ module br_flow_xbar_fixed_fpv_monitor #(
       .fv_pop_id
   );
 
-  // ----------FV assertions----------
-  if (RegisterDemuxOutputs) begin : gen_lat
-    `BR_ASSERT(strict_priority_a, (i < j) && push_valid_i && push_valid_j |=> !grant[fv_pop_id][j])
-  end else begin : gen_lat0
-    `BR_ASSERT(strict_priority_a, (i < j) && push_valid_i && push_valid_j |-> !grant[fv_pop_id][j])
-  end
+  // ----------Round Robin checks----------
+  rr_basic_fpv_monitor #(
+      .NumRequesters(NumPushFlows),
+      .EnableAssertPushValidStability(EnableAssertPushValidStability)
+  ) rr_check (
+      .clk,
+      .rst,
+      .enable_priority_update(enable_priority_update[fv_pop_id]),
+      .request(request[fv_pop_id]),
+      .grant(grant[fv_pop_id])
+  );
 
-endmodule : br_flow_xbar_fixed_fpv_monitor
+endmodule : br_flow_xbar_rr_fpv_monitor
 
-bind br_flow_xbar_fixed br_flow_xbar_fixed_fpv_monitor #(
+bind br_flow_xbar_rr br_flow_xbar_rr_fpv_monitor #(
     .NumPushFlows(NumPushFlows),
     .NumPopFlows(NumPopFlows),
     .Width(Width),
