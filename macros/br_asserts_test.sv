@@ -147,4 +147,11 @@ module br_asserts_test;
   `BR_COVER_COMB(inputs_equal_a, (a == b))
   `BR_COVER_COMB_FPV(inputs_equal_fpv_a, (a == b))
 
+  final begin
+    // Unfortunately this will get printed even if an assertion fails :(
+    // No way to query the number of failing assertions from within the test.
+    $display("TEST PASSED");
+    $finish;
+  end
+
 endmodule : br_asserts_test

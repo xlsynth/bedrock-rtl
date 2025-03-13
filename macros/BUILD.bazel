@@ -13,7 +13,7 @@
 # limitations under the License.
 
 load("@rules_hdl//verilog:providers.bzl", "verilog_library")
-load("//bazel:verilog.bzl", "verilog_elab_test", "verilog_lint_test")
+load("//bazel:verilog.bzl", "verilog_elab_test", "verilog_lint_test", "verilog_sim_test")
 
 package(default_visibility = ["//visibility:private"])
 
@@ -104,7 +104,6 @@ verilog_lint_test(
 )
 
 # Macro unit tests
-# TODO(mgottscho): verilog_test simulation!
 verilog_library(
     name = "br_asserts_test",
     srcs = ["br_asserts_test.sv"],
@@ -124,6 +123,22 @@ verilog_elab_test(
 verilog_elab_test(
     name = "br_asserts_elab_noassert_test",
     tool = "verific",
+    deps = [":br_asserts_test"],
+)
+
+verilog_sim_test(
+    name = "br_asserts_sim_test",
+    defines = [
+        "BR_ASSERT_ON",
+        "BR_ENABLE_FPV",
+    ],
+    tool = "vcs",
+    deps = [":br_asserts_test"],
+)
+
+verilog_sim_test(
+    name = "br_asserts_sim_noassert_test",
+    tool = "vcs",
     deps = [":br_asserts_test"],
 )
 
