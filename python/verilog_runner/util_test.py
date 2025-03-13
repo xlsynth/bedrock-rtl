@@ -114,7 +114,12 @@ class TestUtilFunctions(unittest.TestCase):
     def test_check_simulation_success(self):
         success_criteria = check_simulation_success(0, False, "TEST PASSED")
         self.assertTrue(success_criteria["Return code 0"])
-        self.assertTrue(success_criteria["'TEST PASSED' in output"])
+        self.assertTrue(
+            success_criteria[
+                "Output does not contain 'Bedrock-RTL assertion macro failed'"
+            ]
+        )
+        self.assertTrue(success_criteria["Output contains 'TEST PASSED'"])
 
     def test_format_table_simple(self):
         headers = ["Name", "Age", "City"]
