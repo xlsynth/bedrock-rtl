@@ -158,6 +158,9 @@ module br_ecc_secded_encoder_decoder_tb;
       $error("TEST FAILED: %0d errors found.", error_counter);
     end
 
+    data_valid = 0;
+    repeat (10) @(negedge clk);
+
     $finish;
   end
 
