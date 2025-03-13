@@ -269,8 +269,7 @@ module br_flow_deserializer #(
 
       if (i < DrMinus1) begin : gen_mux
         logic passthru_this_slice;
-        assign passthru_this_slice =
-          (push_last && (push_flit_id == i)) || (push_flit_id == dr_minus_1);
+        assign passthru_this_slice = push_last && (push_flit_id == i);
 
         br_mux_bin #(
             .NumSymbolsIn(2),

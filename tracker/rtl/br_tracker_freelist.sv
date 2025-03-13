@@ -107,18 +107,22 @@ module br_tracker_freelist #(
   always_comb begin
     allocated_entries_next = allocated_entries;
 
-    for (int i = 0; i < NumAllocPerCycle; i++) begin : gen_alloc_intg_asserts
-      if (alloc_valid[i]) begin
+    for (int i = 0; i < NumDeallocPorts; i++) begin
+      if (dealloc_valid[i]) begin
         // ri lint_check_waive VAR_INDEX_WRITE
-        allocated_entries_next[alloc_entry_id[i]] = 1'b1;
+        allocated_entries_next[dealloc_entry_id[i]] = 1'b0;
       end
     end
 
+    // Allocation takes preference over deallocation
+    // i.e. if an entry is being simultaneously deallocated and allocated,
+    // it is considered allocated, since this is a bypass from dealloc
+    // to alloc.
     // ri lint_check_waive ONE_IF_CASE
-    for (int i = 0; i < NumDeallocPorts; i++) begin
-      if (dealloc_valid[i]) begin
+    for (int i = 0; i < NumAllocPerCycle; i++) begin : gen_alloc_intg_asserts
+      if (alloc_valid[i]) begin
         // ri lint_check_waive SEQ_COND_ASSIGNS VAR_INDEX_WRITE
-        allocated_entries_next[dealloc_entry_id[i]] = 1'b0;
+        allocated_entries_next[alloc_entry_id[i]] = 1'b1;
       end
     end
   end
@@ -351,9 +355,21 @@ module br_tracker_freelist #(
 
   for (genvar i = 0; i < NumAllocPerCycle; i++) begin : gen_per_port_checks
     `BR_ASSERT_IMPL(alloc_in_range_a, (alloc_sendable > i) |-> alloc_entry_id[i] < NumEntries)
-    // Ensure that we don't allocate the same entry twice without deallocating it.
-    `BR_ASSERT_IMPL(no_double_alloc_seq_a,
-                    (alloc_sendable > i) |-> !allocated_entries[alloc_entry_id[i]])
+    if (EnableBypass && !RegisterAllocOutputs) begin : gen_zero_latency_dealloc_check
+      logic [NumDeallocPorts-1:0] dealloc_match;
+      for (genvar j = 0; j < NumDeallocPorts; j++) begin : gen_dealloc_match
+        assign dealloc_match[j] = dealloc_valid[j] && dealloc_entry_id[j] == alloc_entry_id[i];
+      end
+      // Ensure that we don't allocate the same entry twice without deallocating it.
+      `BR_ASSERT_IMPL(
+          no_double_alloc_seq_a,
+          (alloc_sendable > i) |-> (|dealloc_match) || !allocated_entries[alloc_entry_id[i]])
+      `BR_COVER_IMPL(bypass_dealloc_c, (alloc_sendable > i) && (|dealloc_match))
+    end else begin : gen_positive_latency_dealloc_check
+      // Ensure that we don't allocate the same entry twice without deallocating it.
+      `BR_ASSERT_IMPL(no_double_alloc_seq_a,
+                      (alloc_sendable > i) |-> !allocated_entries[alloc_entry_id[i]])
+    end
 
     // ri lint_check_waive LOOP_NOT_ENTERED
     for (genvar j = i + 1; j < NumAllocPerCycle; j++) begin : gen_no_double_alloc_comb_assert

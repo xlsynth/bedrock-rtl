@@ -13,7 +13,7 @@
 # limitations under the License.
 
 load("@rules_hdl//verilog:providers.bzl", "verilog_library")
-load("//bazel:br_verilog.bzl", "br_verilog_fpv_test_suite")
+load("//bazel:br_verilog.bzl", "br_verilog_fpv_test_tools_suite")
 load("//bazel:verilog.bzl", "verilog_elab_test")
 
 package(default_visibility = ["//visibility:public"])
@@ -36,9 +36,8 @@ verilog_elab_test(
     deps = [":br_ecc_sed_fpv_monitor"],
 )
 
-br_verilog_fpv_test_suite(
-    name = "br_ecc_sed_jg_test_suite",
-    custom_tcl_body = "br_ecc_sed_fpv.jg.tcl",
+br_verilog_fpv_test_tools_suite(
+    name = "br_ecc_sed_test_suite",
     params = {
         "DataWidth": [
             "1",
@@ -62,7 +61,10 @@ br_verilog_fpv_test_suite(
             "0",
         ],
     },
-    tool = "jg",
+    tools = {
+        "jg": "br_ecc_sed_fpv.jg.tcl",
+        "vcf": "",
+    },
     top = "br_ecc_sed_fpv_monitor",
     deps = [":br_ecc_sed_fpv_monitor"],
 )
@@ -86,9 +88,8 @@ verilog_elab_test(
     deps = [":br_ecc_secded_fpv_monitor"],
 )
 
-br_verilog_fpv_test_suite(
-    name = "br_ecc_secded_jg_test_suite",
-    custom_tcl_body = "br_ecc_secded_fpv.jg.tcl",
+br_verilog_fpv_test_tools_suite(
+    name = "br_ecc_secded_test_suite",
     elab_opts = [
         "-parameter DataWidth 120",
         "-parameter ParityWidth 9",
@@ -115,7 +116,10 @@ br_verilog_fpv_test_suite(
             "0",
         ],
     },
-    tool = "jg",
+    tools = {
+        "jg": "br_ecc_secded_fpv.jg.tcl",
+        "vcf": "",
+    },
     top = "br_ecc_secded_fpv_monitor",
     deps = [":br_ecc_secded_fpv_monitor"],
 )
@@ -139,8 +143,8 @@ verilog_elab_test(
     deps = [":br_ecc_secded_error_fpv_monitor"],
 )
 
-br_verilog_fpv_test_suite(
-    name = "br_ecc_secded_error_jg_test_suite",
+br_verilog_fpv_test_tools_suite(
+    name = "br_ecc_secded_error_test_suite",
     elab_opts = [
         "-parameter DataWidth 8",
         "-parameter ParityWidth 5",
@@ -167,7 +171,10 @@ br_verilog_fpv_test_suite(
             "0",
         ],
     },
-    tool = "jg",
+    tools = {
+        "jg": "",
+        "vcf": "",
+    },
     top = "br_ecc_secded_error_fpv_monitor",
     deps = [":br_ecc_secded_error_fpv_monitor"],
 )

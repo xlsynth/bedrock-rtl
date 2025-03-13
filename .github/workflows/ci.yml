@@ -1,0 +1,58 @@
+name: CI
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    types: [opened, reopened, synchronize]
+
+jobs:
+  # Run the cheapest checks first.
+  # 1. pre-commit
+  # 2. bazel
+  #    a. build
+  #    b. tests
+  #
+  # Run bazel build before bazel tests because the logging is not chronologically
+  # ordered if a build step fails while unrelated tests are running.
+
+  pre-commit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-python@v3
+      - uses: pre-commit/action@v3.0.1
+
+  bazel:
+    runs-on: self-hosted
+    needs: pre-commit
+    steps:
+    - name: Checkout repo
+      uses: actions/checkout@v3
+
+    - name: Copy ci.bazelrc
+      working-directory: ${{ github.workspace }}
+      run: cp /home/gh-actions/bedrock-infra/ci.bazelrc ci.bazelrc
+
+    - name: Build
+      run: bazel build --noshow_loading_progress //...
+
+    - name: Python and Stardoc tests
+      run: bazel test --noshow_loading_progress //python/... //bazel/...
+
+    - name: Verilog elab tests (using Verific)
+      # Suppress log output to protect sensitive EDA tool information.
+      run: bazel test --noshow_loading_progress //... --test_tag_filters=verific --test_output=summary
+
+    - name: Verilog lint tests (using AscentLint)
+      # Suppress log output to protect sensitive EDA tool information.
+      run: bazel test --noshow_loading_progress //... --test_tag_filters=ascentlint --test_output=summary
+
+    - name: Verilog sim tests (using dsim)
+      # Suppress log output to protect sensitive EDA tool information.
+      run: bazel test --noshow_loading_progress //... --test_tag_filters=dsim --test_output=summary
+
+    # TODO: iverilog tests
+    # TODO: VCS tests
+    # TODO: VCF tests
+    # TODO: JG tests

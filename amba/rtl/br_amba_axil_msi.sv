@@ -55,6 +55,7 @@ module br_amba_axil_msi #(
     input logic [NumInterrupts-1:0] irq,
 
     // MSI Configuration
+    input logic [AddrWidth-1:0] msi_base_addr,
     input logic [NumInterrupts-1:0] msi_enable,
     input logic [NumInterrupts-1:0][DeviceIdWidth-1:0] device_id_per_irq,
     input logic [NumInterrupts-1:0][EventIdWidth-1:0] event_id_per_irq,
@@ -166,18 +167,11 @@ module br_amba_axil_msi #(
   assign clear_to_send = ~throttle_en || throttle_cntr_matches;
 
   // AXI4-Lite interface
-  assign init_awaddr =  // ri lint_check_waive CONST_OUTPUT
-      {
-        {AddrWidthPadding{1'b0}}, device_id_to_send, 2'b00
-      };
-  assign init_wdata =  // ri lint_check_waive CONST_OUTPUT
-      {
-        {DataWidthPadding{1'b0}}, event_id_to_send
-      };
-  assign init_wstrb =  // ri lint_check_waive CONST_OUTPUT
-      {
-        {StrobeWidthPadding{1'b0}}, {EventIdStrobeWidth{1'b1}}
-      };
+  // ri lint_check_off ZERO_EXT CONST_OUTPUT
+  assign init_awaddr = msi_base_addr + {{AddrWidthPadding{1'b0}}, device_id_to_send, 2'b00};
+  assign init_wdata = {{DataWidthPadding{1'b0}}, event_id_to_send};
+  assign init_wstrb = {{StrobeWidthPadding{1'b0}}, {EventIdStrobeWidth{1'b1}}};
+  // ri lint_check_on ZERO_EXT CONST_OUTPUT
   assign init_awvalid = fifo_pop_valid && clear_to_send;
   assign init_wvalid = fifo_pop_valid && clear_to_send;
   assign fifo_pop_ready = init_awready && init_wready && clear_to_send;

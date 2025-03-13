@@ -13,7 +13,7 @@
 # limitations under the License.
 
 load("@rules_hdl//verilog:providers.bzl", "verilog_library")
-load("//bazel:br_verilog.bzl", "br_verilog_fpv_test_suite", "br_verilog_fpv_test_tools_suite")
+load("//bazel:br_verilog.bzl", "br_verilog_fpv_test_tools_suite")
 load("//bazel:verilog.bzl", "verilog_elab_test")
 
 package(default_visibility = ["//visibility:public"])
@@ -92,9 +92,8 @@ verilog_elab_test(
     deps = [":br_arb_rr_fpv_monitor"],
 )
 
-br_verilog_fpv_test_suite(
-    name = "br_arb_rr_jg_test_suite",
-    custom_tcl_body = "br_arb_rr_fpv.jg.tcl",
+br_verilog_fpv_test_tools_suite(
+    name = "br_arb_rr_test_suite",
     params = {
         "NumRequesters": [
             "2",
@@ -102,7 +101,10 @@ br_verilog_fpv_test_suite(
             "6",
         ],
     },
-    tool = "jg",
+    tools = {
+        "jg": "br_arb_rr_fpv.jg.tcl",
+        "vcf": "br_arb_rr_fpv.vcf.tcl",
+    },
     top = "br_arb_rr",
     deps = [":br_arb_rr_fpv_monitor"],
 )
@@ -126,9 +128,8 @@ verilog_elab_test(
     deps = [":br_arb_lru_fpv_monitor"],
 )
 
-br_verilog_fpv_test_suite(
-    name = "br_arb_lru_jg_test_suite",
-    custom_tcl_body = "br_arb_lru_fpv.jg.tcl",
+br_verilog_fpv_test_tools_suite(
+    name = "br_arb_lru_test_suite",
     params = {
         "NumRequesters": [
             "2",
@@ -136,7 +137,10 @@ br_verilog_fpv_test_suite(
             "6",
         ],
     },
-    tool = "jg",
+    tools = {
+        "jg": "br_arb_lru_fpv.jg.tcl",
+        "vcf": "br_arb_lru_fpv.vcf.tcl",
+    },
     top = "br_arb_lru",
     deps = [":br_arb_lru_fpv_monitor"],
 )
@@ -159,9 +163,8 @@ verilog_elab_test(
     deps = [":br_arb_pri_rr_fpv_monitor"],
 )
 
-br_verilog_fpv_test_suite(
-    name = "br_arb_pri_rr_jg_test_suite",
-    custom_tcl_body = "br_arb_pri_rr_fpv.jg.tcl",
+br_verilog_fpv_test_tools_suite(
+    name = "br_arb_pri_rr_test_suite",
     params = {
         "NumPriorities": [
             "2",
@@ -174,7 +177,10 @@ br_verilog_fpv_test_suite(
             "8",
         ],
     },
-    tool = "jg",
+    tools = {
+        "jg": "br_arb_pri_rr_fpv.jg.tcl",
+        "vcf": "br_arb_pri_rr_fpv.vcf.tcl",
+    },
     top = "br_arb_pri_rr",
     deps = [":br_arb_pri_rr_fpv_monitor"],
 )
@@ -196,9 +202,8 @@ verilog_elab_test(
     deps = [":br_arb_weighted_rr_fpv_monitor"],
 )
 
-br_verilog_fpv_test_suite(
-    name = "br_arb_weighted_rr_jg_test_suite",
-    custom_tcl_body = "br_arb_weighted_rr_fpv.jg.tcl",
+br_verilog_fpv_test_tools_suite(
+    name = "br_arb_weighted_rr_test_suite",
     # MaxAccumulatedWeight >= MaxWeight
     illegal_param_combinations = {
         (
@@ -226,7 +231,10 @@ br_verilog_fpv_test_suite(
             "4",
         ],
     },
-    tool = "jg",
+    tools = {
+        "jg": "br_arb_weighted_rr_fpv.jg.tcl",
+        "vcf": "br_arb_weighted_rr_fpv.vcf.tcl",
+    },
     top = "br_arb_weighted_rr",
     deps = [":br_arb_weighted_rr_fpv_monitor"],
 )
@@ -248,9 +256,8 @@ verilog_elab_test(
     deps = [":br_arb_multi_rr_fpv_monitor"],
 )
 
-br_verilog_fpv_test_suite(
-    name = "br_arb_multi_rr_jg_test_suite",
-    custom_tcl_body = "br_arb_multi_rr_fpv.jg.tcl",
+br_verilog_fpv_test_tools_suite(
+    name = "br_arb_multi_rr_test_suite",
     # MaxGrantPerCycle must be at least 2 and at most NumRequesters.
     illegal_param_combinations = {
         (
@@ -273,7 +280,10 @@ br_verilog_fpv_test_suite(
             "6",
         ],
     },
-    tool = "jg",
+    tools = {
+        "jg": "br_arb_multi_rr_fpv.jg.tcl",
+        "vcf": "br_arb_multi_rr_fpv.vcf.tcl",
+    },
     top = "br_arb_multi_rr",
     deps = [":br_arb_multi_rr_fpv_monitor"],
 )

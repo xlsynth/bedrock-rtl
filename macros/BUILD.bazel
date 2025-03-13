@@ -13,6 +13,7 @@
 # limitations under the License.
 
 load("@rules_hdl//verilog:providers.bzl", "verilog_library")
+load("//bazel:br_verilog.bzl", "br_verilog_sim_test_tools_suite")
 load("//bazel:verilog.bzl", "verilog_elab_test", "verilog_lint_test")
 
 package(default_visibility = ["//visibility:private"])
@@ -104,7 +105,6 @@ verilog_lint_test(
 )
 
 # Macro unit tests
-# TODO(mgottscho): verilog_test simulation!
 verilog_library(
     name = "br_asserts_test",
     srcs = ["br_asserts_test.sv"],
@@ -125,6 +125,74 @@ verilog_elab_test(
     name = "br_asserts_elab_noassert_test",
     tool = "verific",
     deps = [":br_asserts_test"],
+)
+
+br_verilog_sim_test_tools_suite(
+    name = "br_asserts_sim_test_tools_suite",
+    defines = [
+        "BR_ASSERT_ON",
+        "BR_ENABLE_FPV",
+    ],
+    # iverilog support for SVA is not complete
+    tools = [
+        "dsim",
+        "vcs",
+    ],
+    deps = [":br_asserts_test"],
+)
+
+br_verilog_sim_test_tools_suite(
+    name = "br_asserts_sim_noassert_test_tools_suite",
+    # iverilog support for SVA is not complete
+    tools = [
+        "dsim",
+        "vcs",
+    ],
+    deps = [":br_asserts_test"],
+)
+
+verilog_library(
+    name = "br_asserts_in_pkg_test",
+    srcs = ["br_asserts_in_pkg_test.sv"],
+    deps = [":br_asserts"],
+)
+
+verilog_elab_test(
+    name = "br_asserts_in_pkg_elab_test",
+    defines = [
+        "BR_ASSERT_ON",
+        "BR_ENABLE_FPV",
+    ],
+    tool = "verific",
+    deps = [":br_asserts_in_pkg_test"],
+)
+
+verilog_elab_test(
+    name = "br_asserts_in_pkg_elab_noassert_test",
+    tool = "verific",
+    deps = [":br_asserts_in_pkg_test"],
+)
+
+br_verilog_sim_test_tools_suite(
+    name = "br_asserts_in_pkg_sim_test_tools_suite",
+    defines = [
+        "BR_ASSERT_ON",
+        "BR_ENABLE_FPV",
+    ],
+    elab_only = True,
+    # iverilog support for SVA is not complete
+    # TODO: dsim crashes on this test
+    tools = ["vcs"],
+    deps = [":br_asserts_in_pkg_test"],
+)
+
+br_verilog_sim_test_tools_suite(
+    name = "br_asserts_in_pkg_sim_noassert_test_tools_suite",
+    elab_only = True,
+    # iverilog support for SVA is not complete
+    # TODO: dsim crashes on this test
+    tools = ["vcs"],
+    deps = [":br_asserts_in_pkg_test"],
 )
 
 # TODO(mgottscho): verilog_test simulation!

@@ -1,23 +1,27 @@
 # ACTION REQUIRED:
 #
 # This file provides some defaults for required Bazel flags. You will probably want to override
-# them in your own user.bazelrc file.
+# them in your own custom user.bazelrc file (included at the end of this file).
 
+# Special environment setup commands that may be needed for your EDA tool environment.
+# The environment variable must be set to some string even if it's empty.
+common --action_env=VERILOG_RUNNER_EDA_TOOLS_ENV_SETUP=""
 
-# * Please implement verilog runner plugins for tools and then set:
+# Please implement verilog runner plugins for tools and then set in your user.bazelrc file:
 #
 #     common --action_env=VERILOG_RUNNER_PLUGIN_PATH=<some_paths>
 #
-#   in the list below. Otherwise, tests will fail due to missing elab, lint, sim, fpv plugins.
+#   Otherwise, tests will fail due to missing elab, lint, sim, fpv plugins.
 #   See //python/verilog_runner/README.adoc.
 #
 # The environment variable must be set to some string even if it's empty.
 common --action_env=VERILOG_RUNNER_PLUGIN_PATH=""
 
-# Set the path to the locally installed Slang tool.
-#common --action_env=SLANG_PATH=/opt/slang/v7.0/slang
+# If needed, set the path to the locally installed Slang tool.
+# Used by TopStitch to build some wrapper RTL files for elab and lint testing.
+common --action_env=SLANG_PATH=""
 
-# Set the path to locally installed XLS libraries (needed by TopStitch to build some wrapper RTL files).
+# If needed, set the path to locally installed XLS libraries (needed by TopStitch).
 #common --linkopt=-L/opt/xlsynth/lib
 #common --linkopt=-Wl,-rpath,/opt/xlsynth/lib
 #common --host_linkopt=-L/opt/xlsynth/lib
@@ -44,6 +48,8 @@ common --local_resources=verilog_test_tool_licenses_vcf=10000
 common --local_resources=verilog_test_tool_licenses_vcs=10000
 common --local_resources=verilog_test_tool_licenses_xrun=10000
 
-# Import the user's custom .bazelrc file.
+# Import the user's custom .bazelrc file if it exists.
 # https://bazel.build/configure/best-practices#bazelrc-file
 try-import %workspace%/user.bazelrc
+# Import the CI's custom .bazelrc file if it exists.
+try-import %workspace%/ci.bazelrc
