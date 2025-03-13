@@ -62,14 +62,14 @@ typedef enum logic [1:0] { \
 
 `ifdef UVM_MAJOR_REV
 `define BR_ASSERT_UVM_ERROR(__name__, __expr__) \
-`uvm_error("BR_ASSERT", $sformatf("Bedrock-RTL assertion macro failed (%0s:%0d) [%0s]: %0s", `__FILE__, `__LINE__, `"__name__`", `"__expr__`"));
+`uvm_error("BR_ASSERT", $sformatf("Bedrock-RTL assertion macro failed (%0s:%0d) [%0s]: %0s", `__FILE__, `__LINE__, `"__name__`", `"__expr__`"))
 `else  // UVM_MAJOR_REV
 `define BR_ASSERT_UVM_ERROR(__name__, __expr__) \
 `BR_NOOP
 `endif  // UVM_MAJOR_REV
 
 `define BR_ASSERT_BUILTIN_ERROR(__name__, __expr__) \
-$error($sformatf("Bedrock-RTL assertion macro failed (%0s:%0d) [%0s]: %0s", `__FILE__, `__LINE__, `"__name__`", `"__expr__`"));
+$error($sformatf("Bedrock-RTL assertion macro failed (%0s:%0d) [%0s]: %0s", `__FILE__, `__LINE__, `"__name__`", `"__expr__`"))
 
 `ifdef UVM_MAJOR_REV
 `define BR_ASSERT_ERROR(__name__, __expr__) \
