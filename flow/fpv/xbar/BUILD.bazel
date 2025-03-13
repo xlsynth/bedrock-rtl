@@ -94,9 +94,165 @@ br_verilog_fpv_test_tools_suite(
         ],
     },
     tools = {
-        "jg": "br_flow_xbar_fixed_fpv.jg.tcl",
+        "jg": "br_flow_xbar_fpv.jg.tcl",
         "vcf": "",
     },
     top = "br_flow_xbar_fixed",
     deps = [":br_flow_xbar_fixed_fpv_monitor"],
+)
+
+# Bedrock-RTL Flow-Controlled Crossbar (Round-Robin Arbitration)
+
+verilog_library(
+    name = "br_flow_xbar_rr_fpv_monitor",
+    srcs = ["br_flow_xbar_rr_fpv_monitor.sv"],
+    deps = [
+        "br_flow_xbar_basic_fpv_monitor",
+        "//arb/fpv:rr_basic_fpv_monitor",
+        "//flow/rtl:br_flow_xbar_rr",
+        "//macros:br_fv",
+    ],
+)
+
+verilog_elab_test(
+    name = "br_flow_xbar_rr_fpv_monitor_elab_test",
+    custom_tcl_header = "//:elab_test_jg_custom_header.verific.tcl",
+    tool = "verific",
+    deps = [":br_flow_xbar_rr_fpv_monitor"],
+)
+
+br_verilog_fpv_test_tools_suite(
+    name = "br_flow_xbar_rr_test_suite",
+    illegal_param_combinations = {
+        (
+            "EnableCoverPushBackpressure",
+            "EnableAssertPushValidStability",
+            "EnableAssertPushDataStability",
+        ): [
+            ("0", "0", "1"),
+            ("0", "1", "0"),
+            ("0", "1", "1"),
+            ("1", "0", "1"),
+        ],
+    },
+    params = {
+        "EnableAssertPushDataStability": [
+            "0",
+            "1",
+        ],
+        "EnableAssertPushValidStability": [
+            "0",
+            "1",
+        ],
+        "EnableCoverPushBackpressure": [
+            "0",
+            "1",
+        ],
+        "NumPopFlows": [
+            "2",
+            "3",
+            "4",
+        ],
+        "NumPushFlows": [
+            "2",
+            "3",
+            "4",
+        ],
+        "RegisterDemuxOutputs": [
+            "0",
+            "1",
+        ],
+        "RegisterPopOutputs": [
+            "0",
+            "1",
+        ],
+        "Width": [
+            "3",
+            "4",
+        ],
+    },
+    tools = {
+        "jg": "br_flow_xbar_fpv.jg.tcl",
+        "vcf": "",
+    },
+    top = "br_flow_xbar_rr",
+    deps = [":br_flow_xbar_rr_fpv_monitor"],
+)
+
+# Bedrock-RTL Flow-Controlled Crossbar (Least-Recently Used Arbitration)
+
+verilog_library(
+    name = "br_flow_xbar_lru_fpv_monitor",
+    srcs = ["br_flow_xbar_lru_fpv_monitor.sv"],
+    deps = [
+        "br_flow_xbar_basic_fpv_monitor",
+        "//arb/fpv:lru_basic_fpv_monitor",
+        "//flow/rtl:br_flow_xbar_lru",
+        "//macros:br_fv",
+    ],
+)
+
+verilog_elab_test(
+    name = "br_flow_xbar_lru_fpv_monitor_elab_test",
+    custom_tcl_header = "//:elab_test_jg_custom_header.verific.tcl",
+    tool = "verific",
+    deps = [":br_flow_xbar_lru_fpv_monitor"],
+)
+
+br_verilog_fpv_test_tools_suite(
+    name = "br_flow_xbar_lru_test_suite",
+    illegal_param_combinations = {
+        (
+            "EnableCoverPushBackpressure",
+            "EnableAssertPushValidStability",
+            "EnableAssertPushDataStability",
+        ): [
+            ("0", "0", "1"),
+            ("0", "1", "0"),
+            ("0", "1", "1"),
+            ("1", "0", "1"),
+        ],
+    },
+    params = {
+        "EnableAssertPushDataStability": [
+            "0",
+            "1",
+        ],
+        "EnableAssertPushValidStability": [
+            "0",
+            "1",
+        ],
+        "EnableCoverPushBackpressure": [
+            "0",
+            "1",
+        ],
+        "NumPopFlows": [
+            "2",
+            "3",
+            "4",
+        ],
+        "NumPushFlows": [
+            "2",
+            "3",
+            "4",
+        ],
+        "RegisterDemuxOutputs": [
+            "0",
+            "1",
+        ],
+        "RegisterPopOutputs": [
+            "0",
+            "1",
+        ],
+        "Width": [
+            "3",
+            "4",
+        ],
+    },
+    tools = {
+        "jg": "br_flow_xbar_fpv.jg.tcl",
+        "vcf": "",
+    },
+    top = "br_flow_xbar_lru",
+    deps = [":br_flow_xbar_lru_fpv_monitor"],
 )
