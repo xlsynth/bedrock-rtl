@@ -201,6 +201,9 @@ module br_ram_flops_1r1w_tb #(
     wr_valid = 0;
     rd_addr_valid = 0;
 
+    // Wait for potential pipeline delays
+    #100;
+
     // Final check
     if (error_count == 0) begin
       $display("TEST PASSED");

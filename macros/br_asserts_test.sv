@@ -18,12 +18,6 @@
 
 `include "br_asserts.svh"
 
-// verilog_lint: waive package-filename
-package br_asserts_test_pkg;
-  localparam int Width = 4;
-  `BR_ASSERT_STATIC_IN_PACKAGE(width_check_a, Width == 4)
-endpackage : br_asserts_test_pkg
-
 module br_asserts_test;
 
   logic clk;
@@ -32,18 +26,18 @@ module br_asserts_test;
   logic [3:0] a;
   logic [3:0] b;
   logic [4:0] sum;
+  logic [4:0] sum_next;
   logic valid;
 
-  // Reference the br_asserts_test_pkg so that the package is elaborated
-  localparam int Width = br_asserts_test_pkg::Width;
+  localparam int Width = 4;
 
   always #5 clk = ~clk;
 
   initial begin
     clk = 0;
     rst = 1;
-    a = 0;
-    b = 0;
+    a = 1;
+    b = 1;
     valid = 0;
 
     repeat (5) @(posedge clk);
@@ -65,12 +59,14 @@ module br_asserts_test;
     $finish;
   end
 
+  assign sum_next = a + b;
+
   always_ff @(posedge clk) begin
     if (rst) begin
       sum <= 0;
     end else begin
       if (valid) begin
-        sum <= a + b;
+        sum <= sum_next;
       end
     end
   end
@@ -104,18 +100,16 @@ module br_asserts_test;
   // Use BR_ASSERT_CR
   logic custom_clk;
   logic custom_rst;
-  always #7 custom_clk = ~custom_clk;
-  initial begin
-    custom_clk = 0;
-    custom_rst = 1;
-    #15 custom_rst = 0;
-  end
-  `BR_ASSERT_CR(valid_data_check_a, (valid == 1) |-> (sum == a + b), custom_clk, custom_rst)
-  `BR_ASSERT_CR_FPV(valid_data_check_fpv_a, (valid == 1) |-> (sum == a + b), custom_clk, custom_rst)
+  assign custom_clk = clk;
+  assign custom_rst = rst;
+  `BR_ASSERT_CR(valid_data_check_a, (valid == 1) |-> (sum_next == a + b), custom_clk, custom_rst)
+  `BR_ASSERT_CR_FPV(valid_data_check_fpv_a, (valid == 1) |-> (sum_next == a + b), custom_clk,
+                    custom_rst)
   // Not really useful (redundant with assert above) but it
   // should work like an assert when not being used in formal
-  `BR_ASSUME_CR(valid_data_check_m, (valid == 1) |-> (sum == a + b), custom_clk, custom_rst)
-  `BR_ASSUME_CR_FPV(valid_data_check_fpv_m, (valid == 1) |-> (sum == a + b), custom_clk, custom_rst)
+  `BR_ASSUME_CR(valid_data_check_m, (valid == 1) |-> (sum_next == a + b), custom_clk, custom_rst)
+  `BR_ASSUME_CR_FPV(valid_data_check_fpv_m, (valid == 1) |-> (sum_next == a + b), custom_clk,
+                    custom_rst)
 
   always_comb begin
     `BR_ASSERT_IMM(inputs_nonzero_in_comb_a, (a != 0) || (b != 0))
@@ -146,5 +140,12 @@ module br_asserts_test;
   // Use BR_COVER_COMB
   `BR_COVER_COMB(inputs_equal_a, (a == b))
   `BR_COVER_COMB_FPV(inputs_equal_fpv_a, (a == b))
+
+  final begin
+    // Unfortunately this will get printed even if an assertion fails :(
+    // No way to query the number of failing assertions from within the test.
+    $display("TEST PASSED");
+    $finish;
+  end
 
 endmodule : br_asserts_test

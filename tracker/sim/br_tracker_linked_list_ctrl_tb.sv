@@ -63,7 +63,7 @@ module br_tracker_linked_list_ctrl_tb;
       .wr_valid(ptr_ram_wr_valid),
       .wr_addr(ptr_ram_wr_addr),
       .wr_data(ptr_ram_wr_data),
-      .wr_word_en(1'b1),
+      .wr_word_en({NumWritePorts{1'b1}}),
       .rd_clk(clk),
       .rd_rst(rst),
       .rd_addr_valid(ptr_ram_rd_addr_valid),

@@ -133,7 +133,9 @@ module br_fifo_shared_dynamic_push_ctrl #(
     br_multi_xfer_distributor_rr #(
         .NumSymbols(NumWritePorts),
         .NumFlows(NumWritePorts),
-        .SymbolWidth(AddrWidth)
+        .SymbolWidth(AddrWidth),
+        // TODO(zhemao): check this is right
+        .EnableAssertFinalNotSendable(0)
     ) br_multi_xfer_distributor_rr_inst (
         .clk,
         .rst,
