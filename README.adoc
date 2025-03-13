@@ -14,7 +14,7 @@
 
 = Bedrock-RTL
 
-[![main](https://github.com/xlsynth/bedrock-rtl/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/xlsynth/bedrock-rtl/actions/workflows/ci.yml)
+image::https://github.com/xlsynth/bedrock-rtl/actions/workflows/ci.yml/badge.svg?branch=main["main branch CI tests", link="https://github.com/xlsynth/bedrock-rtl/actions/workflows/ci.yml"]
 
 WARNING: UNDER CONSTRUCTION. Many things are broken.
 
