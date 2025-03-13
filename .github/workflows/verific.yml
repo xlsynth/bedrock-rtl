@@ -1,0 +1,21 @@
+name: verilog elab tests - verific
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    types: [opened, reopened, synchronize]
+
+jobs:
+  bazel:
+    runs-on: self-hosted
+    steps:
+    - uses: actions/checkout@v3
+    - name: Copy ci.bazelrc
+      working-directory: ${{ github.workspace }}
+      run: cp /home/gh-actions/bedrock-infra/ci.bazelrc ci.bazelrc
+    - name: Build
+      run: bazel build --noshow_loading_progress //...
+    - name: Test
+      # Suppress log output to protect sensitive EDA tool information.
+      run: bazel test --noshow_loading_progress //... --test_tag_filters=elab,verific --test_output=summary

@@ -14,7 +14,12 @@
 
 = Bedrock-RTL
 
-image:https://img.shields.io/github/actions/workflow/status/xlsynth/bedrock-rtl/ci.yml?branch=main&label=CI[GitHub Actions Workflow Status]
+image:https://img.shields.io/github/actions/workflow/status/xlsynth/bedrock-rtl/verific.yml?branch=mgottscho/separate-workflows&label=verific[Verific CI Status]
+image:https://img.shields.io/github/actions/workflow/status/xlsynth/bedrock-rtl/ascentlint.yml?branch=mgottscho/separate-workflows&label=ascentlint[AscentLint CI Status]
+image:https://img.shields.io/github/actions/workflow/status/xlsynth/bedrock-rtl/dsim.yml?branch=mgottscho/separate-workflows&label=dsim[Dsim CI Status]
+image:https://img.shields.io/github/actions/workflow/status/xlsynth/bedrock-rtl/python.yml?branch=mgottscho/separate-workflows&label=python[Python CI Status]
+image:https://img.shields.io/github/actions/workflow/status/xlsynth/bedrock-rtl/stardoc.yml?branch=mgottscho/separate-workflows&label=stardoc[Stardoc CI Status]
+image:https://img.shields.io/github/actions/workflow/status/xlsynth/bedrock-rtl/pre-commit.yml?branch=mgottscho/separate-workflows&label=pre-commit[Pre-Commit CI Status]
 image:https://img.shields.io/github/license/xlsynth/bedrock-rtl[GitHub License]
 image:https://img.shields.io/badge/language-SystemVerilog-blue[SystemVerilog]
 image:https://img.shields.io/badge/build%20system-Bazel-blue[Bazel build]

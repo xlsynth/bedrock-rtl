@@ -1,0 +1,22 @@
+name: bazel stardoc tests
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    types: [opened, reopened, synchronize]
+
+jobs:
+  bazel:
+    runs-on: self-hosted
+    needs: pre-commit
+    steps:
+    - name: Checkout repo
+      uses: actions/checkout@v3
+
+    - name: Copy ci.bazelrc
+      working-directory: ${{ github.workspace }}
+      run: cp /home/gh-actions/bedrock-infra/ci.bazelrc ci.bazelrc
+
+    - name: Stardoc tests
+      run: bazel test --noshow_loading_progress //bazel/...
