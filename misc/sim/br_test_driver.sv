@@ -48,8 +48,10 @@ module br_test_driver #(
   endtask
 
   task automatic finish();
-    // Finish simulation
-    // TODO(zhemao, #130): Find a way to exit with failure if there were assertion failures.
+    // Wait some cycles for things to drain, then finish simulation.
+    // Cannot catch assertion failures here, so we rely on the test runner to report them.
+    // This means it's possible to have "TEST PASSED" and also have assertions that failed.
+    wait_cycles(100);
     if (error_count == 0) begin
       $display("TEST PASSED");
     end else begin
