@@ -1,4 +1,4 @@
-name: bazel stardoc tests
+name: stardoc tests
 on:
   push:
     branches:
@@ -9,7 +9,6 @@ on:
 jobs:
   bazel:
     runs-on: self-hosted
-    needs: pre-commit
     steps:
     - name: Checkout repo
       uses: actions/checkout@v3
