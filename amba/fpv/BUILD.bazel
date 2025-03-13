@@ -37,8 +37,6 @@ verilog_elab_test(
 
 br_verilog_fpv_test_tools_suite(
     name = "br_amba_axil_default_target_test_suite",
-    # TODO: in debug stage now
-    gui = True,
     tools = {
         "jg": "",
         "vcf": "",
@@ -69,8 +67,6 @@ br_verilog_fpv_test_tools_suite(
     elab_opts = [
         "-parameter MaxOutstandingReqs 4",
     ],
-    # TODO: in debug stage now
-    gui = True,
     tools = {
         "jg": "br_amba_axi2axil_fpv.jg.tcl",
         "vcf": "",
@@ -98,8 +94,6 @@ verilog_elab_test(
 
 br_verilog_fpv_test_tools_suite(
     name = "br_amba_axil_split_test_suite",
-    # TODO: in debug stage now
-    gui = True,
     tools = {
         "jg": "",
         "vcf": "",
@@ -130,7 +124,7 @@ br_verilog_fpv_test_tools_suite(
     # TODO: in debug stage now
     gui = True,
     tools = {
-        "jg": "",
+        "jg": "br_amba_axi_timing_slice_fpv.jg.tcl",
         "vcf": "",
     },
     top = "br_amba_axi_timing_slice",
@@ -156,10 +150,8 @@ verilog_elab_test(
 
 br_verilog_fpv_test_tools_suite(
     name = "br_amba_axil_timing_slice_test_suite",
-    # TODO: in debug stage now
-    gui = True,
     tools = {
-        "jg": "",
+        "jg": "br_amba_axil_timing_slice_fpv.jg.tcl",
         "vcf": "",
     },
     top = "br_amba_axil_timing_slice",
