@@ -62,14 +62,14 @@ typedef enum logic [1:0] { \
 
 `ifdef UVM_MAJOR_REV
 `define BR_ASSERT_UVM_ERROR(__name__, __expr__) \
-`uvm_error("BR_ASSERT", $sformatf("Assertion failed: %0s [%0s] (%0s:%0d)", `"__expr__`", `"__name__`", `__FILE__, `__LINE__))
+`uvm_error("BR_ASSERT", $sformatf("Bedrock-RTL assertion macro failed: %0s [%0s] (%0s:%0d)", `"__expr__`", `"__name__`", `__FILE__, `__LINE__));
 `else  // UVM_MAJOR_REV
 `define BR_ASSERT_UVM_ERROR(__name__, __expr__) \
 `BR_NOOP
 `endif  // UVM_MAJOR_REV
 
 `define BR_ASSERT_BUILTIN_ERROR(__name__, __expr__) \
-$error($sformatf("Assertion failed: %0s [%0s] (%0s:%0d)", `"__expr__`", `"__name__`", `__FILE__, `__LINE__));
+$error($sformatf("Bedrock-RTL assertion macro failed: %0s [%0s] (%0s:%0d)", `"__expr__`", `"__name__`", `__FILE__, `__LINE__));
 
 `ifdef UVM_MAJOR_REV
 `define BR_ASSERT_ERROR(__name__, __expr__) \
@@ -361,7 +361,7 @@ end
 // Reset: 'rst'
 `ifdef BR_ASSERT_ON
 `define BR_ASSUME(__name__, __expr__) \
-__name__ : assume property (@(posedge clk) disable iff (rst === 1'b1 || rst === 1'bx) (__expr__));
+__name__ : assume property (@(posedge clk) disable iff (rst === 1'b1 || rst === 1'bx) (__expr__)) else `BR_ASSERT_ERROR(__name__, __expr__);
 `else  // BR_ASSERT_ON
 `define BR_ASSUME(__name__, __expr__) \
 `BR_NOOP
@@ -370,7 +370,7 @@ __name__ : assume property (@(posedge clk) disable iff (rst === 1'b1 || rst === 
 // More expressive form of BR_ASSUME that allows the use of custom clock and reset signal names.
 `ifdef BR_ASSERT_ON
 `define BR_ASSUME_CR(__name__, __expr__, __clk__, __rst__) \
-__name__ : assume property (@(posedge __clk__) disable iff (__rst__ === 1'b1 || __rst__ === 1'bx) (__expr__));
+__name__ : assume property (@(posedge __clk__) disable iff (__rst__ === 1'b1 || __rst__ === 1'bx) (__expr__)) else `BR_ASSERT_ERROR(__name__, __expr__);
 `else  // BR_ASSERT_ON
 `define BR_ASSUME_CR(__name__, __expr__, __clk__, __rst__) \
 `BR_NOOP
