@@ -127,18 +127,19 @@ module br_amba_axil_msi #(
       ~(fifo_push_ready & fifo_push_valid);
 
   // Use round-robin arbitration to select the next irq to send
-  br_flow_mux_rr #(
+  br_flow_mux_rr_stable #(
+      .RegisterPopReady(1),
       .NumFlows(NumInterrupts),
       .Width(FifoWidth)
-  ) br_flow_mux_rr (
+  ) br_flow_mux_rr_stable (
       .clk,
       .rst,
       .push_ready(fifo_push_ready),
       .push_valid(fifo_push_valid),
-      .push_data(fifo_push_data),
-      .pop_ready(fifo_pop_ready),
-      .pop_valid_unstable(fifo_pop_valid),
-      .pop_data_unstable(fifo_pop_data)
+      .push_data (fifo_push_data),
+      .pop_ready (fifo_pop_ready),
+      .pop_valid (fifo_pop_valid),
+      .pop_data  (fifo_pop_data)
   );
   generate
     for (genvar i = 0; i < NumInterrupts; i++) begin : gen_loop
