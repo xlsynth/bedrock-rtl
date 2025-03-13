@@ -249,7 +249,11 @@ def check_simulation_success(
     """Returns a dict of simulation success criteria."""
     step_success = {f"Return code {return_code}": return_code == 0}
     if not elab_only:
-        step_success["'TEST PASSED' in output"] = "TEST PASSED" in stdout
+        ASSERT_ERROR_MSG = "Bedrock-RTL assertion macro failed"
+        step_success[f"Output does not contain '{ASSERT_ERROR_MSG}'"] = (
+            ASSERT_ERROR_MSG not in stdout
+        )
+        step_success["Output contains 'TEST PASSED'"] = "TEST PASSED" in stdout
     return step_success
 
 
