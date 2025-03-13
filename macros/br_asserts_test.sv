@@ -42,8 +42,8 @@ module br_asserts_test;
   initial begin
     clk = 0;
     rst = 1;
-    a = 0;
-    b = 0;
+    a = 1;
+    b = 1;
     valid = 0;
 
     repeat (5) @(posedge clk);
