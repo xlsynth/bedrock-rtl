@@ -510,7 +510,8 @@ def verilog_sim_test(tool, opts = [], tags = [], **kwargs):
     # Make sure we fail the test ASAP after any error occurs (assertion or otherwise).
     extra_opts = []
     if tool == "vcs":
-        extra_opts.append("-assert global_finish_maxfail=1+offending_values")
+        # Make sure we fail the test if any assertions fail.
+        extra_opts = ["-assert global_finish_maxfail=1+offending_values -error=TFIPC -error=PCWM-W -error=PCWM-L"]
     elif tool == "dsim":
         extra_opts.append("-exit-on-error 1")
 
