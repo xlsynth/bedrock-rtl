@@ -17,7 +17,7 @@
 image:https://img.shields.io/github/actions/workflow/status/xlsynth/bedrock-rtl/ci.yml?branch=main&label=CI[GitHub Actions Workflow Status]
 image:https://img.shields.io/github/license/xlsynth/bedrock-rtl[GitHub License]
 image:https://img.shields.io/badge/language-SystemVerilog-blue[SystemVerilog]
-image:https://img.shields.io/badge/build%20system-Bazel-blue[Static Badge]
+image:https://img.shields.io/badge/build%20system-Bazel-blue[Bazel build]
 
 
 WARNING: UNDER CONSTRUCTION. Many things are broken.
