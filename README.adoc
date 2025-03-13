@@ -14,7 +14,11 @@
 
 = Bedrock-RTL
 
-image::https://github.com/xlsynth/bedrock-rtl/actions/workflows/ci.yml/badge.svg?branch=main["main", link="https://github.com/xlsynth/bedrock-rtl/actions/workflows/ci.yml"]
+image:https://img.shields.io/github/actions/workflow/status/xlsynth/bedrock-rtl/ci.yml?branch=main&label=CI[GitHub Actions Workflow Status]
+image:https://img.shields.io/github/license/xlsynth/bedrock-rtl[GitHub License]
+image:https://img.shields.io/badge/language-SystemVerilog-blue[SystemVerilog]
+image:https://img.shields.io/badge/build%20system-Bazel-blue[Bazel build]
+
 
 WARNING: UNDER CONSTRUCTION. Many things are broken.
 
