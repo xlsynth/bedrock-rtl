@@ -51,6 +51,14 @@ br_verilog_elab_and_lint_test_suite(
 )
 
 br_verilog_elab_and_lint_test_suite(
+    name = "br_gate_clk_inv_test_suite",
+    top = "br_gate_clk_inv",
+    deps = [
+        ":br_gate_mock",
+    ],
+)
+
+br_verilog_elab_and_lint_test_suite(
     name = "br_gate_and2_test_suite",
     top = "br_gate_and2",
     deps = [
