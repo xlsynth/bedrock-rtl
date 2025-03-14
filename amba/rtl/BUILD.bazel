@@ -92,7 +92,7 @@ verilog_library(
     deps = [
         ":br_amba_pkg",
         "//counter/rtl:br_counter_decr",
-        "//flow/rtl:br_flow_mux_rr",
+        "//flow/rtl:br_flow_mux_rr_stable",
         "//macros:br_asserts_internal",
         "//macros:br_registers",
     ],
