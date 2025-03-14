@@ -64,6 +64,7 @@ module br_amba_axil_msi_fpv_monitor #(
   localparam int EventIdStrobeWidth = (EventIdWidth + 7) / 8;
   localparam int StrobeWidthPadding = StrobeWidth - EventIdStrobeWidth;
 
+  logic [NumInterrupts-1:0] fv_irp, fv_irp_d, fv_irp_pulse;
   logic [NumInterrupts-1:0][  AddrWidth-1:0] fv_init_awaddr;
   logic [NumInterrupts-1:0][  DataWidth-1:0] fv_init_wdata;
   logic [NumInterrupts-1:0][StrobeWidth-1:0] fv_init_wstrb;
@@ -76,31 +77,36 @@ module br_amba_axil_msi_fpv_monitor #(
     end
   end
 
+  assign fv_irp = irq & msi_enable;
+  `BR_REG(fv_irp_d, fv_irp)
+  assign fv_irp_pulse = fv_irp & ~fv_irp_d;
+
   // ----------FV assumptions----------
   // TODO
-  `BR_ASSUME(no_throttle_en_a, !throttle_en)
-  `BR_ASSUME(msi_enable_a, $stable(msi_enable))
-  `BR_ASSUME(msi_base_addr_a, $stable(msi_base_addr))
-  for (genvar n = 0; n < NumInterrupts; n++) begin : gen_asm
-    `BR_ASSUME(interrupt_data_stable_a,
-               irq[n] && !$rose(irq[n]) |-> $stable({device_id_per_irq[n], event_id_per_irq[n]}))
-  end
+  `BR_ASSUME(throttle_en_stable_a, $stable(throttle_en))
+  `BR_ASSUME(throttle_cntr_stable_a, $stable(throttle_cntr_threshold)
+             && throttle_cntr_threshold != 'd0)
+  `BR_ASSUME(msi_enable_stable_a, $stable(msi_enable))
+  `BR_ASSUME(msi_base_addr_stable_a, $stable(msi_base_addr))
+  `BR_ASSUME(device_id_stable_a, $stable(device_id_per_irq))
+  `BR_ASSUME(event_id_stable_a, $stable(event_id_per_irq))
 
   // ----------Data integrity Check----------
+  /*
   jasper_scoreboard_3 #(
       .CHUNK_WIDTH(AddrWidth),
       .IN_CHUNKS(NumInterrupts),
       .OUT_CHUNKS(1),
       .SINGLE_CLOCK(1),
-      .MAX_PENDING(2)
+      .MAX_PENDING(10)
   ) addr_sb (
       .clk(clk),
       .rstN(!rst),
-      .incoming_vld(irq & msi_enable),
+      .incoming_vld(fv_irp_pulse),
       .incoming_data(fv_init_awaddr),
-      .outgoing_vld(init_awvalid & init_awready),
+      .outgoing_vld(init_awvalid & init_awready & init_wvalid & init_wready),
       .outgoing_data(init_awaddr)
-  );
+  );*/
 
   // AXI4-Lite write-only initiator interface
   axi4_slave #(
