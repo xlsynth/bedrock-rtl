@@ -122,7 +122,8 @@ module br_amba_axi_timing_slice_fpv_monitor #(
       .ARUSER_WIDTH(ARUserWidth),
       .WUSER_WIDTH(WUserWidth),
       .BUSER_WIDTH(BUserWidth),
-      .RUSER_WIDTH(RUserWidth)
+      .RUSER_WIDTH(RUserWidth),
+      .CONFIG_WDATA_MASKED(0)
   ) target (
       // Global signals
       .aclk    (clk),
@@ -190,7 +191,8 @@ module br_amba_axi_timing_slice_fpv_monitor #(
       .ARUSER_WIDTH(ARUserWidth),
       .WUSER_WIDTH(WUserWidth),
       .BUSER_WIDTH(BUserWidth),
-      .RUSER_WIDTH(RUserWidth)
+      .RUSER_WIDTH(RUserWidth),
+      .CONFIG_RDATA_MASKED(0)
   ) init (
       // Global signals
       .aclk    (clk),
