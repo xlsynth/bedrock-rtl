@@ -21,7 +21,8 @@
 
 module br_amba_axil2apb #(
     parameter int AddrWidth = 12,  // Must be at least 12
-    parameter int DataWidth = 32   // Must be at least 32
+    parameter int DataWidth = 32,  // Must be at least 32
+    localparam int StrbWidth = DataWidth / 8
 ) (
     input clk,
     input rst,  // Synchronous, active-high reset
@@ -32,7 +33,7 @@ module br_amba_axil2apb #(
     input  logic                             awvalid,
     output logic                             awready,
     input  logic [            DataWidth-1:0] wdata,
-    input  logic [        (DataWidth/8)-1:0] wstrb,
+    input  logic [            StrbWidth-1:0] wstrb,
     input  logic                             wvalid,
     output logic                             wready,
     output logic [br_amba::AxiRespWidth-1:0] bresp,
@@ -52,7 +53,7 @@ module br_amba_axil2apb #(
     output logic                             psel,
     output logic                             penable,
     output logic [br_amba::ApbProtWidth-1:0] pprot,
-    output logic [        (DataWidth/8)-1:0] pstrb,
+    output logic [            StrbWidth-1:0] pstrb,
     output logic                             pwrite,
     output logic [            DataWidth-1:0] pwdata,
     input  logic [            DataWidth-1:0] prdata,
@@ -80,7 +81,7 @@ module br_amba_axil2apb #(
 
   logic [AddrWidth-1:0] addr_reg, addr_next;
   logic [DataWidth-1:0] data_reg;
-  logic [(DataWidth/8)-1:0] strb_reg;
+  logic [StrbWidth-1:0] strb_reg;
   logic [br_amba::AxiProtWidth-1:0] prot_reg, prot_next;
   logic resp_reg;
   logic write_reg;
@@ -91,7 +92,7 @@ module br_amba_axil2apb #(
   `BR_REGLN(addr_reg, addr_next, arb_any_grant)
   `BR_REGLN(data_reg, wdata, arb_any_grant)
   `BR_REGLN(write_reg, arb_write_grant, arb_any_grant)
-  `BR_REGLN(strb_reg, wstrb, arb_any_grant)
+  `BR_REGLN(strb_reg, wstrb & {StrbWidth{arb_write_grant}}, arb_any_grant)
   `BR_REGLN(prot_reg, prot_next, arb_any_grant)
   `BR_REGLN(resp_reg, pslverr, (apb_state == Access) && pready)
   `BR_REGLN(rdata, prdata, (apb_state == Access) && pready)
