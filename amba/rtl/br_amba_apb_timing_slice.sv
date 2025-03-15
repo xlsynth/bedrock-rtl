@@ -50,7 +50,10 @@ module br_amba_apb_timing_slice #(
     input  logic                             pslverr_in
 );
 
+  logic psel_out_next;
+  logic penable_out_next;
   logic pready_out_next;
+  logic valid_handshake, valid_handshake_d1;
 
   //------------------------------------------
   // Integration checks
@@ -69,9 +72,17 @@ module br_amba_apb_timing_slice #(
   `BR_REGN(pslverr_out, pslverr_in)
   `BR_REGN(prdata_out, prdata_in)
 
-  `BR_REG(psel_out, psel_in)
-  `BR_REG(penable_out, penable_in)
+  `BR_REG(psel_out, psel_out_next)
+  `BR_REG(penable_out, penable_out_next)
   `BR_REG(pready_out, pready_out_next)
+  `BR_REG(valid_handshake_d1, valid_handshake)
+
+  assign valid_handshake = psel_out && penable_out && pready_in;
+
+  // Reset psel_out and penable_out when a valid handshake is detected. Need to include two cycles
+  // of delay to account for the delay in the pready_out signal.
+  assign psel_out_next = psel_in && !valid_handshake && !valid_handshake_d1;
+  assign penable_out_next = penable_in && !valid_handshake && !valid_handshake_d1;
 
   // Because we are introducing delay to psel and penable, we need to reset the pready_out signal
   // to allow psel and penable to propagate to the target.
