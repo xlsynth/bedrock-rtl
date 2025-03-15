@@ -523,6 +523,7 @@ def verilog_sim_test(tool, opts = [], tags = [], waves = False, **kwargs):
         tool = tool,
         opts = opts + extra_opts,
         tags = test_tags,
+        waves = waves,
         **kwargs
     )
 
