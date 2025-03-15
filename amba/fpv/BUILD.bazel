@@ -175,8 +175,6 @@ verilog_elab_test(
 
 br_verilog_fpv_test_tools_suite(
     name = "br_amba_axil2apb_test_suite",
-    # TODO: in debug stage now
-    gui = True,
     tools = {
         "jg": "",
         "vcf": "",
@@ -204,8 +202,6 @@ verilog_elab_test(
 
 br_verilog_fpv_test_tools_suite(
     name = "br_amba_apb_timing_slice_test_suite",
-    # TODO: in debug stage now
-    gui = True,
     tools = {
         "jg": "",
         "vcf": "",
