@@ -68,6 +68,7 @@ verilog_library(
         ":br_cdc_fifo_push_flag_mgr",
         "//credit/rtl:br_credit_receiver",
         "//fifo/rtl/internal:br_fifo_push_ctrl_core",
+        "//gate/rtl:br_gate_mock",
         "//macros:br_asserts_internal",
         "//macros:br_registers",
     ],
