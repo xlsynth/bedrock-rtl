@@ -68,7 +68,6 @@ verilog_library(
         ":br_cdc_fifo_push_flag_mgr",
         "//credit/rtl:br_credit_receiver",
         "//fifo/rtl/internal:br_fifo_push_ctrl_core",
-        "//gate/rtl:br_gate_mock",
         "//macros:br_asserts_internal",
         "//macros:br_registers",
     ],
@@ -93,7 +92,11 @@ br_verilog_elab_and_lint_test_suite(
             "1",
         ],
     },
-    deps = [":br_cdc_fifo_push_ctrl_credit"],
+    top = "br_cdc_fifo_push_ctrl_credit",
+    deps = [
+        ":br_cdc_fifo_push_ctrl_credit",
+        "//gate/rtl:br_gate_mock",
+    ],
 )
 
 verilog_library(
