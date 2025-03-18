@@ -41,3 +41,28 @@ br_verilog_sim_test_tools_suite(
     top = "br_fifo_flops_gen_tb",
     deps = [":br_fifo_flops_gen_unittest"],
 )
+
+verilog_library(
+    name = "br_fifo_flops_push_credit_gen_unittest",
+    srcs = ["br_fifo_flops_push_credit_gen_unittest.sv"],
+    deps = ["//fifo/rtl:br_fifo_flops_push_credit"],
+)
+
+verilog_elab_test(
+    name = "br_fifo_flops_push_credit_gen_unittest_elab_test",
+    tool = "verific",
+    top = "br_fifo_flops_push_credit_gen_tb",
+    deps = [":br_fifo_flops_push_credit_gen_unittest"],
+)
+
+br_verilog_sim_test_tools_suite(
+    name = "br_fifo_flops_push_credit_gen_unittest_sim_test_tools_suite",
+    # TODO: Does not work with iverilog.
+    tools = [
+        "dsim",
+        "vcs",
+    ],
+    top = "br_fifo_flops_push_credit_gen_tb",
+    waves = True,
+    deps = [":br_fifo_flops_push_credit_gen_unittest"],
+)
