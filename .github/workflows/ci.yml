@@ -33,21 +33,21 @@ jobs:
     - name: Build
       run: bazel build --noshow_loading_progress //...
 
-  bazel-python:
+  bazel-test-python:
     runs-on: self-hosted
     needs: bazel-build
     steps:
     - name: Python tests
       run: bazel test --noshow_loading_progress //python/...
 
-  bazel-stardoc:
+  bazel-test-stardoc:
     runs-on: self-hosted
     needs: bazel-build
     steps:
     - name: Stardoc tests
       run: bazel test --noshow_loading_progress //bazel/...
 
-  bazel-verific:
+  bazel-test-verific:
     runs-on: self-hosted
     needs: bazel-build
     steps:
@@ -55,7 +55,7 @@ jobs:
       # Suppress log output to protect sensitive EDA tool information.
       run: bazel test --noshow_loading_progress //... --test_tag_filters=verific --test_output=summary
 
-  bazel-ascentlint:
+  bazel-test-ascentlint:
     runs-on: self-hosted
     needs: bazel-verific
     steps:
@@ -63,7 +63,7 @@ jobs:
       # Suppress log output to protect sensitive EDA tool information.
       run: bazel test --noshow_loading_progress //... --test_tag_filters=ascentlint --test_output=summary
 
-  bazel-dsim:
+  bazel-test-dsim:
     runs-on: self-hosted
     needs: bazel-build
     steps:
