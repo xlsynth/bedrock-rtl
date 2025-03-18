@@ -57,7 +57,10 @@ jobs:
 
   bazel-test-ascentlint:
     runs-on: self-hosted
-    needs: bazel-verific
+    # AscentLint licenses are fairly limited, and the RTL lint tests cannot
+    # pass if the separate Verific elaboration tests don't pass.
+    # Put this dependency to avoid wasting lint license checkouts.
+    needs: bazel-test-verific
     steps:
     - name: Verilog lint tests (using AscentLint)
       # Suppress log output to protect sensitive EDA tool information.
