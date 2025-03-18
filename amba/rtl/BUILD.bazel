@@ -81,7 +81,7 @@ verilog_library(
     srcs = ["br_amba_atb_funnel.sv"],
     deps = [
         ":br_amba_pkg",
-        "//flow/rtl:br_flow_mux_rr_stable",
+        "//flow/rtl:br_flow_mux_rr",
         "//macros:br_asserts_internal",
     ],
 )
