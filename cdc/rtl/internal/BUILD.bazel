@@ -92,7 +92,11 @@ br_verilog_elab_and_lint_test_suite(
             "1",
         ],
     },
-    deps = [":br_cdc_fifo_push_ctrl_credit"],
+    top = "br_cdc_fifo_push_ctrl_credit",
+    deps = [
+        ":br_cdc_fifo_push_ctrl_credit",
+        "//gate/rtl:br_gate_mock",
+    ],
 )
 
 verilog_library(
