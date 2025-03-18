@@ -42,17 +42,20 @@ module br_amba_atb_funnel_fpv_monitor #(
     input logic [UserWidth-1:0] dst_atuser
 );
 
-  // TODO: there is no user field in ABVIP, waiting for AE
-
   // ATB source interfaces
   for (genvar i = 0; i < NumSources; i++) begin : gen_src
+    // ABVIP doesn't have atuser field
+    `BR_ASSUME(atuser_stable_a, src_atvalid[i] && !src_atready[i] |=> $stable(src_atuser[i]))
+    // ABVIP properties are encrypted, so not possible to debug why assumptions are not working
+    `BR_ASSUME(atdata_stable_a, src_atvalid[i] && !src_atready[i] |=> $stable(src_atdata[i]))
+
     cdn_abvip_amba_atb_master #(
         .DATA_WIDTH(DataWidth),
         .ID_WIDTH(br_amba::AtbIdWidth),
         .BYTES_WIDTH(ByteCountWidth)
     ) src (
         .atclk   (clk),
-        .atclken (),
+        .atclken (1'b1),
         .atresetn(!rst),
         .atdata  (src_atdata[i]),
         .atbytes (src_atbytes[i]),
@@ -69,7 +72,7 @@ module br_amba_atb_funnel_fpv_monitor #(
       .BYTES_WIDTH(ByteCountWidth)
   ) dst (
       .atclk   (clk),
-      .atclken (),
+      .atclken (1'b1),
       .atresetn(!rst),
       .atdata  (dst_atdata),
       .atbytes (dst_atbytes),
