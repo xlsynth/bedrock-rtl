@@ -31,8 +31,8 @@ module br_fifo_shared_dynamic_flops_gen_tb;
   parameter int CLOCK_FREQ_NS_CONVERSION_FACTOR = 1000; // Conversion factor to nanoseconds
   parameter int NO_ASSERTS_ON_RESET = 1;  // Disable assertions during reset
   parameter int ENABLE_CHECKS = 1;  // Enable checks
-  
-    
+
+
   //===========================================================
   // DUT Parameters
   //===========================================================
@@ -82,7 +82,7 @@ module br_fifo_shared_dynamic_flops_gen_tb;
   // DUT Instantiation
   //===========================================================
 // Clock to DUT is inverted to avoid race condition between DUT and TB
-  br_fifo_shared_dynamic_flops 
+  br_fifo_shared_dynamic_flops
       #(
           .NumWritePorts(NumWritePorts),
           .NumReadPorts(NumReadPorts),
@@ -117,7 +117,7 @@ module br_fifo_shared_dynamic_flops_gen_tb;
           .pop_valid(pop_valid),
           .pop_data(pop_data)
       );
-      
+
 
   //===========================================================
   // Clock Generation
@@ -126,7 +126,7 @@ module br_fifo_shared_dynamic_flops_gen_tb;
     clk = 1'b0;
     forever #(CLOCK_FREQ_NS_CONVERSION_FACTOR/(2*CLOCK_FREQ)) clk = ~clk;
   end
-  
+
 
   //===========================================================
   // Reset Generation
@@ -138,7 +138,7 @@ module br_fifo_shared_dynamic_flops_gen_tb;
     push_data <= 'h0;
     push_fifo_id <= 'h0;
     pop_ready <= 'h0;
-  
+
     // Wiggling the reset signal.
     rst = 1'bx;
     #RESET_DURATION;
@@ -162,7 +162,7 @@ module br_fifo_shared_dynamic_flops_gen_tb;
     TotalTestsIdx
   } test_names_e;
   int err_count_arr[TotalTestsIdx] = '{default: '0};
-  
+
   `ifdef WAVES_AS_FSDB
      bit enable_fsdb;
   `endif
@@ -185,27 +185,27 @@ module br_fifo_shared_dynamic_flops_gen_tb;
       end
     end
   `endif
-    
-        
+
+
   //===========================================================
   // Initial Block to Call Tasks
   //===========================================================
   initial begin
     reset_dut();
     test_BasicPushAndPop();
-  
+
     reset_dut();
     test_PushWithBackpressure();
-  
+
     reset_dut();
     test_ConcurrentPushAndPop();
-  
+
     reset_dut();
     test_BoundaryConditionPush();
-  
+
     reset_dut();
     test_PopWithStagingBuffer();
-  
+
     if (err_count_arr[test_BasicPushAndPopIdx] == 0) begin
       $display("Test test_BasicPushAndPop PASSED");
     end else if (err_count_arr[test_BasicPushAndPopIdx] == -1) begin
@@ -213,7 +213,7 @@ module br_fifo_shared_dynamic_flops_gen_tb;
     end else begin
       $display("Test test_BasicPushAndPop FAILED");
     end
-  
+
     if (err_count_arr[test_PushWithBackpressureIdx] == 0) begin
       $display("Test test_PushWithBackpressure PASSED");
     end else if (err_count_arr[test_PushWithBackpressureIdx] == -1) begin
@@ -221,7 +221,7 @@ module br_fifo_shared_dynamic_flops_gen_tb;
     end else begin
       $display("Test test_PushWithBackpressure FAILED");
     end
-  
+
     if (err_count_arr[test_ConcurrentPushAndPopIdx] == 0) begin
       $display("Test test_ConcurrentPushAndPop PASSED");
     end else if (err_count_arr[test_ConcurrentPushAndPopIdx] == -1) begin
@@ -229,7 +229,7 @@ module br_fifo_shared_dynamic_flops_gen_tb;
     end else begin
       $display("Test test_ConcurrentPushAndPop FAILED");
     end
-  
+
     if (err_count_arr[test_BoundaryConditionPushIdx] == 0) begin
       $display("Test test_BoundaryConditionPush PASSED");
     end else if (err_count_arr[test_BoundaryConditionPushIdx] == -1) begin
@@ -237,7 +237,7 @@ module br_fifo_shared_dynamic_flops_gen_tb;
     end else begin
       $display("Test test_BoundaryConditionPush FAILED");
     end
-  
+
     if (err_count_arr[test_PopWithStagingBufferIdx] == 0) begin
       $display("Test test_PopWithStagingBuffer PASSED");
     end else if (err_count_arr[test_PopWithStagingBufferIdx] == -1) begin
@@ -245,8 +245,8 @@ module br_fifo_shared_dynamic_flops_gen_tb;
     end else begin
       $display("Test test_PopWithStagingBuffer FAILED");
     end
-  
-  
+
+
     if ( err_count_arr.or() !== 0) begin
       $display("TEST FAILED");
       $finish(1);
@@ -256,7 +256,7 @@ module br_fifo_shared_dynamic_flops_gen_tb;
     end
   end
 
-  
+
   task automatic test_BasicPushAndPop;
     fork
       begin
@@ -267,7 +267,7 @@ module br_fifo_shared_dynamic_flops_gen_tb;
       end
       begin
         // Task to verify basic push and pop operations in the FIFO, ensuring data integrity and correct functionality.
-        
+
         // Local variables declaration
         int test_failed = 0;
         logic[NumWritePorts-1:0] local_push_valid;
@@ -276,18 +276,18 @@ module br_fifo_shared_dynamic_flops_gen_tb;
         logic[NumFifos-1:0] local_pop_ready;
         logic[NumFifos-1:0] expected_pop_valid;
         logic[NumFifos-1:0][Width-1:0] expected_pop_data;
-        
+
         // Initialize expected values
         expected_pop_valid = '0;
         expected_pop_data = '0;
-        
+
         // Wait for a clock edge to ensure proper stimulus propagation
         @(posedge clk);
-        
+
         // Release reset and wait for the DUT to stabilize
         rst = 1'b0;
         @(posedge clk);
-        
+
         // Drive push signals to push data into the FIFO
         local_push_valid = 1'b1;
         local_push_data[0] = 8'hA5;
@@ -295,27 +295,27 @@ module br_fifo_shared_dynamic_flops_gen_tb;
         push_valid = local_push_valid;
         push_data[0] = local_push_data[0];
         push_fifo_id = local_push_fifo_id;
-        
+
         if (ENABLE_INFO_MESSAGES == 1)
           $display($sformatf({"Time: %0t, INFO: test_BasicPushAndPop - ","Driving push_valid=0x%h, push_data=0x%h,"," push_fifo_id=0x%h"}, $time, local_push_valid, local_push_data[0], local_push_fifo_id));
-        
+
         // Wait for push_ready to be asserted
         wait (push_ready[0] == 1'b1);
         if (ENABLE_INFO_MESSAGES == 1)
           $display($sformatf({"Time: %0t, INFO: test_BasicPushAndPop - ","push_ready asserted"}, $time));
-        
+
         // Drive pop_ready to pop data from the FIFO
         local_pop_ready = 1'b1;
         pop_ready = local_pop_ready;
-        
+
         if (ENABLE_INFO_MESSAGES == 1)
           $display($sformatf({"Time: %0t, INFO: test_BasicPushAndPop - ","Driving pop_ready=0x%h"}, $time, local_pop_ready));
-        
+
         // Wait for pop_valid to be asserted
         wait (pop_valid[0] == 1'b1);
         if (ENABLE_INFO_MESSAGES == 1)
           $display($sformatf({"Time: %0t, INFO: test_BasicPushAndPop - ","pop_valid asserted"}, $time));
-        
+
         // Check pop_data for expected value
         expected_pop_data[0] = 8'hA5;
         if (pop_data[0] !== expected_pop_data[0]) begin
@@ -325,7 +325,7 @@ module br_fifo_shared_dynamic_flops_gen_tb;
           if (ENABLE_INFO_MESSAGES == 1)
             $display($sformatf({"Time: %0t, INFO: test_BasicPushAndPop - ","Check passed. Expected value for ","pop_data is the same as the observed ","value (both are 0x%h)."}, $time, pop_data[0]));
         end
-        
+
         // Final test status
         if (test_failed == 0) begin
           $display($sformatf({"Time: %0t, PASSED: test_BasicPushAndPop"}, $time));
@@ -337,8 +337,8 @@ module br_fifo_shared_dynamic_flops_gen_tb;
     join_any
     disable fork;
   endtask
-  
-  
+
+
   task automatic test_PushWithBackpressure;
     fork
       begin
@@ -349,7 +349,7 @@ module br_fifo_shared_dynamic_flops_gen_tb;
       end
       begin
         // This task verifies the FIFO's handling of backpressure during push operations, ensuring data integrity and proper management of push requests when the FIFO is full.
-        
+
         // Local variables declaration
         int test_failed = 0;
         int push_data_sequence[Depth];
@@ -360,16 +360,16 @@ module br_fifo_shared_dynamic_flops_gen_tb;
         logic[NumWritePorts-1:0][Width-1:0] local_push_data;
         logic[NumWritePorts-1:0][FifoIdWidth-1:0] local_push_fifo_id;
         logic backpressure_detected = 0;
-        
+
         // Initialize push data and FIFO ID sequences
         for (int i = 0; i < Depth; i++) begin
           push_data_sequence[i] = $urandom_range(0, (1 << Width) - 1);
           push_fifo_id_sequence[i] = i % NumFifos;
         end
-        
+
         // Wait for reset deassertion
         @(negedge rst);
-        
+
         // Drive push_valid, push_data, and push_fifo_id continuously
         fork
           begin
@@ -390,7 +390,7 @@ module br_fifo_shared_dynamic_flops_gen_tb;
             end
           end
         join_none
-        
+
         // Monitor push_ready for backpressure detection
         while (!backpressure_detected) begin
           @(posedge clk);
@@ -400,12 +400,12 @@ module br_fifo_shared_dynamic_flops_gen_tb;
               $display($sformatf({"Time: %0t, INFO: ","test_PushWithBackpressure - Backpressure"," detected, push_ready=0x%h"}, $time, push_ready));
           end
         end
-        
+
         // Hold push_valid, push_data, and push_fifo_id stable during backpressure
         while (push_ready !== {NumWritePorts{1'b1}}) begin
           @(posedge clk);
         end
-        
+
         // Resume driving push_valid, push_data, and push_fifo_id after backpressure
         fork
           begin
@@ -424,10 +424,10 @@ module br_fifo_shared_dynamic_flops_gen_tb;
               $display($sformatf({"Time: %0t, INFO: ","test_PushWithBackpressure - Resumed ","driving push_valid=0x%h, push_data=0x%h,"," push_fifo_id=0x%h"}, $time, push_valid, push_data, push_fifo_id));
           end
         join_none
-        
+
         // Check if no data was lost during backpressure
         if (test_failed != 1) test_failed = 0;
-        
+
         if (test_failed == 0) begin
           $display($sformatf({"Time: %0t, PASSED: ","test_PushWithBackpressure"}, $time));
         end else begin
@@ -438,8 +438,8 @@ module br_fifo_shared_dynamic_flops_gen_tb;
     join_any
     disable fork;
   endtask
-  
-  
+
+
   task automatic test_ConcurrentPushAndPop;
     fork
       begin
@@ -450,23 +450,23 @@ module br_fifo_shared_dynamic_flops_gen_tb;
       end
       begin
         // This task tests concurrent push and pop operations across multiple logical FIFOs, ensuring data integrity and order.
-        
+
         // Local variables declaration
         int test_failed = 0;
         int fifo_id;
         int expected_data[NumFifos];
         int data;
         int wport;
-        
+
         // Initialize expected data array
         for (int i = 0; i < NumFifos; i++) begin
           expected_data[i] = 0;
         end
-        
+
         // Wait for reset to complete
         @(negedge rst);
         @(posedge clk);
-        
+
         // Drive push_valid, push_data, and push_fifo_id
         fork
           for (int i = 0; i < NumWritePorts; i++) begin
@@ -480,22 +480,22 @@ module br_fifo_shared_dynamic_flops_gen_tb;
               $display($sformatf({"Time: %0t, INFO: ","test_ConcurrentPushAndPop - Driving ","push_valid[%0d]=1, push_data[%0d]=0x%h, ","push_fifo_id[%0d]=%0d"}, $time, i, i, push_data[i], i, fifo_id));
           end
         join
-        
+
         // Wait for push_ready to be high for all write ports
         wait (push_ready == {NumWritePorts{1'b1}});
         if (ENABLE_INFO_MESSAGES == 1)
           $display($sformatf({"Time: %0t, INFO: ","test_ConcurrentPushAndPop - All ","push_ready signals are high"}, $time));
-        
+
         // Drive pop_ready for all FIFOs
         pop_ready = {NumFifos{1'b1}};
         if (ENABLE_INFO_MESSAGES == 1)
           $display($sformatf({"Time: %0t, INFO: ","test_ConcurrentPushAndPop - Driving ","pop_ready=0x%h"}, $time, pop_ready));
-        
+
         // Wait for pop_valid to be high for all FIFOs
         wait (pop_valid == {NumFifos{1'b1}});
         if (ENABLE_INFO_MESSAGES == 1)
           $display($sformatf({"Time: %0t, INFO: ","test_ConcurrentPushAndPop - All ","pop_valid signals are high"}, $time));
-        
+
         // Check pop_data for each FIFO
         for (int i = 0; i < NumFifos; i++) begin
           if (pop_data[i] !== expected_data[i]) begin
@@ -506,7 +506,7 @@ module br_fifo_shared_dynamic_flops_gen_tb;
               $display($sformatf({"Time: %0t, INFO: ","test_ConcurrentPushAndPop - Check passed"," for FIFO %0d. Expected and observed ","value is 0x%h"}, $time, i, pop_data[i]));
           end
         end
-        
+
         // Report test status
         if (test_failed == 0) begin
           $display($sformatf({"Time: %0t, PASSED: ","test_ConcurrentPushAndPop"}, $time));
@@ -518,8 +518,8 @@ module br_fifo_shared_dynamic_flops_gen_tb;
     join_any
     disable fork;
   endtask
-  
-  
+
+
   task automatic test_BoundaryConditionPush;
     fork
       begin
@@ -530,7 +530,7 @@ module br_fifo_shared_dynamic_flops_gen_tb;
       end
       begin
         // This task verifies the FIFO's ability to handle boundary conditions without data loss or corruption when pushed to its maximum capacity.
-        
+
         // Local variables declaration
         int test_failed = 0;
         int data_counter;
@@ -539,21 +539,21 @@ module br_fifo_shared_dynamic_flops_gen_tb;
         int pop_counter;
         logic [Width-1:0] temp_data;
         logic [FifoIdWidth-1:0] temp_fifo_id;
-        
+
         // Initialize expected data sequence
         for (int i = 0; i < Depth; i++) begin
           expected_data[i] = i;
         end
-        
+
         // Wait for a clock edge to ensure proper stimulus propagation
         @(posedge clk);
-        
+
         // Deassert reset and start normal operation
         rst = 1'b0;
         @(posedge clk);
         if (ENABLE_INFO_MESSAGES == 1)
           $display($sformatf({"Time: %0t, INFO: ","test_BoundaryConditionPush - Reset ","deasserted, starting normal operation."}, $time));
-        
+
         // Drive push_valid, push_data, and push_fifo_id until FIFO is full
         data_counter = 0;
         fifo_id_counter = 0;
@@ -571,7 +571,7 @@ module br_fifo_shared_dynamic_flops_gen_tb;
           data_counter++;
           fifo_id_counter++;
         end
-        
+
         // Check if FIFO is full
         if (push_ready == 0) begin
           if (ENABLE_INFO_MESSAGES == 1)
@@ -580,7 +580,7 @@ module br_fifo_shared_dynamic_flops_gen_tb;
           $display($sformatf({"Time: %0t, ERROR: ","test_BoundaryConditionPush - FIFO is not"," full as expected, push_ready=%b"}, $time, push_ready));
           test_failed = 1;
         end
-        
+
         // Verify data integrity using pop operations
         pop_counter = 0;
         while (pop_counter < Depth) begin
@@ -600,7 +600,7 @@ module br_fifo_shared_dynamic_flops_gen_tb;
             end
           end
         end
-        
+
         // Final test status
         if (test_failed == 0) begin
           $display($sformatf({"Time: %0t, PASSED: ","test_BoundaryConditionPush"}, $time));
@@ -612,8 +612,8 @@ module br_fifo_shared_dynamic_flops_gen_tb;
     join_any
     disable fork;
   endtask
-  
-  
+
+
   task automatic test_PopWithStagingBuffer;
     fork
       begin
@@ -624,7 +624,7 @@ module br_fifo_shared_dynamic_flops_gen_tb;
       end
       begin
         // This task verifies the FIFO's pop operation with staging buffer, ensuring correct data retrieval and expected latency.
-        
+
         // Local variables declaration
         int test_failed = 0;
         int constant_push_data;
@@ -633,24 +633,24 @@ module br_fifo_shared_dynamic_flops_gen_tb;
         int fifo_id;
         int cycle_count;
         logic [Width-1:0] observed_data;
-        
+
         // Calculate expected latency
         localparam int latency_divisor = PointerRamAddressDepthStages + PointerRamReadDataDepthStages + PointerRamReadDataWidthStages + 1;
         expected_latency = StagingBufferDepth / latency_divisor;
         if (RegisterPopOutputs) expected_latency += 1;
-        
+
         // Initialize variables
         constant_push_data = $urandom_range(0, (1 << Width) - 1);
         fifo_id = $urandom_range(0, NumFifos - 1);
         cycle_count = 0;
-        
+
         // Release reset and start normal operation
         @(posedge clk);
         rst = 1'b0;
         @(posedge clk);
         if (ENABLE_INFO_MESSAGES == 1)
           $display($sformatf({"Time: %0t, INFO: ","test_PopWithStagingBuffer - Reset ","released, starting normal operation."}, $time));
-        
+
         // Drive push_valid, push_data, and push_fifo_id to preload FIFO
         push_valid[0] = 1'b1;
         push_data[0] = constant_push_data;
@@ -658,25 +658,25 @@ module br_fifo_shared_dynamic_flops_gen_tb;
         @(posedge clk);
         if (ENABLE_INFO_MESSAGES == 1)
           $display($sformatf({"Time: %0t, INFO: ","test_PopWithStagingBuffer - Driving ","push_valid=0x%h, push_data=0x%h, ","push_fifo_id=0x%h."}, $time, push_valid, push_data, push_fifo_id));
-        
+
         // Wait for push_ready to be asserted
         while (!push_ready[0]) @(posedge clk);
-        
+
         // Drive pop_ready for the corresponding FIFO ID
         pop_ready[fifo_id] = 1'b1;
         @(posedge clk);
         if (ENABLE_INFO_MESSAGES == 1)
           $display($sformatf({"Time: %0t, INFO: ","test_PopWithStagingBuffer - Driving ","pop_ready=0x%h for FIFO ID %0d."}, $time, pop_ready, fifo_id));
-        
+
         // Wait for pop_valid to be asserted
         while (!pop_valid[fifo_id]) begin
           @(posedge clk);
           cycle_count++;
         end
-        
+
         // Capture observed data
         observed_data = pop_data[fifo_id];
-        
+
         // Verify data integrity
         if (observed_data !== constant_push_data) begin
           $display($sformatf({"Time: %0t, ERROR: ","test_PopWithStagingBuffer - Data ","integrity check failed. Expected 0x%h, ","got 0x%h."}, $time, constant_push_data, observed_data));
@@ -685,7 +685,7 @@ module br_fifo_shared_dynamic_flops_gen_tb;
           if (ENABLE_INFO_MESSAGES == 1)
             $display($sformatf({"Time: %0t, INFO: ","test_PopWithStagingBuffer - Data ","integrity check passed. Expected and ","observed data are both 0x%h."}, $time, observed_data));
         end
-        
+
         // Verify latency
         observed_latency = cycle_count;
         if (observed_latency !== expected_latency) begin
@@ -695,7 +695,7 @@ module br_fifo_shared_dynamic_flops_gen_tb;
           if (ENABLE_INFO_MESSAGES == 1)
             $display($sformatf({"Time: %0t, INFO: ","test_PopWithStagingBuffer - Latency ","check passed. Expected and observed ","latency are both %0d cycles."}, $time, observed_latency));
         end
-        
+
         // Final test status
         if (test_failed == 0) begin
           $display($sformatf({"Time: %0t, PASSED: ","test_PopWithStagingBuffer"}, $time));
@@ -707,6 +707,5 @@ module br_fifo_shared_dynamic_flops_gen_tb;
     join_any
     disable fork;
   endtask
-  
+
 endmodule
-  

@@ -31,8 +31,8 @@ module br_fifo_flops_gen_tb;
   parameter int CLOCK_FREQ_NS_CONVERSION_FACTOR = 1000; // Conversion factor to nanoseconds
   parameter int NO_ASSERTS_ON_RESET = 1;  // Disable assertions during reset
   parameter int ENABLE_CHECKS = 1;  // Enable checks
-  
-    
+
+
   //===========================================================
   // DUT Parameters
   //===========================================================
@@ -79,7 +79,7 @@ module br_fifo_flops_gen_tb;
   // DUT Instantiation
   //===========================================================
 // Clock to DUT is inverted to avoid race condition between DUT and TB
-  br_fifo_flops 
+  br_fifo_flops
       #(
           .Depth(Depth),
           .Width(Width),
@@ -112,7 +112,7 @@ module br_fifo_flops_gen_tb;
           .items(items),
           .items_next(items_next)
       );
-      
+
 
   //===========================================================
   // Clock Generation
@@ -121,7 +121,7 @@ module br_fifo_flops_gen_tb;
     clk = 1'b0;
     forever #(CLOCK_FREQ_NS_CONVERSION_FACTOR/(2*CLOCK_FREQ)) clk = ~clk;
   end
-  
+
 
   //===========================================================
   // Reset Generation
@@ -132,7 +132,7 @@ module br_fifo_flops_gen_tb;
     push_valid <= 'h0;
     push_data <= 'h0;
     pop_ready <= 'h0;
-  
+
     // Wiggling the reset signal.
     rst = 1'bx;
     #RESET_DURATION;
@@ -156,7 +156,7 @@ module br_fifo_flops_gen_tb;
     TotalTestsIdx
   } test_names_e;
   int err_count_arr[TotalTestsIdx] = '{default: '0};
-  
+
   `ifdef WAVES_AS_FSDB
      bit enable_fsdb;
   `endif
@@ -179,27 +179,27 @@ module br_fifo_flops_gen_tb;
       end
     end
   `endif
-    
-        
+
+
   //===========================================================
   // Initial Block to Call Tasks
   //===========================================================
   initial begin
     reset_dut();
     test_BasicPushPopFunctionality();
-  
+
     reset_dut();
     test_BypassModeVerification();
-  
+
     reset_dut();
     test_FullConditionHandling();
-  
+
     reset_dut();
     test_PushDataStabilityUnderBackpressure();
-  
+
     reset_dut();
     test_FinalStateAssertion();
-  
+
     if (err_count_arr[test_BasicPushPopFunctionalityIdx] == 0) begin
       $display($sformatf({"Test test_BasicPushPopFunctionality ","PASSED"}));
     end else if (err_count_arr[test_BasicPushPopFunctionalityIdx] == -1) begin
@@ -207,7 +207,7 @@ module br_fifo_flops_gen_tb;
     end else begin
       $display($sformatf({"Test test_BasicPushPopFunctionality ","FAILED"}));
     end
-  
+
     if (err_count_arr[test_BypassModeVerificationIdx] == 0) begin
       $display($sformatf({"Test test_BypassModeVerification PASSED"}));
     end else if (err_count_arr[test_BypassModeVerificationIdx] == -1) begin
@@ -215,7 +215,7 @@ module br_fifo_flops_gen_tb;
     end else begin
       $display($sformatf({"Test test_BypassModeVerification FAILED"}));
     end
-  
+
     if (err_count_arr[test_FullConditionHandlingIdx] == 0) begin
       $display("Test test_FullConditionHandling PASSED");
     end else if (err_count_arr[test_FullConditionHandlingIdx] == -1) begin
@@ -223,7 +223,7 @@ module br_fifo_flops_gen_tb;
     end else begin
       $display("Test test_FullConditionHandling FAILED");
     end
-  
+
     if (err_count_arr[test_PushDataStabilityUnderBackpressureIdx] == 0) begin
       $display($sformatf({"Test ","test_PushDataStabilityUnderBackpressure ","PASSED"}));
     end else if (err_count_arr[test_PushDataStabilityUnderBackpressureIdx] == -1) begin
@@ -231,7 +231,7 @@ module br_fifo_flops_gen_tb;
     end else begin
       $display($sformatf({"Test ","test_PushDataStabilityUnderBackpressure ","FAILED"}));
     end
-  
+
     if (err_count_arr[test_FinalStateAssertionIdx] == 0) begin
       $display("Test test_FinalStateAssertion PASSED");
     end else if (err_count_arr[test_FinalStateAssertionIdx] == -1) begin
@@ -239,8 +239,8 @@ module br_fifo_flops_gen_tb;
     end else begin
       $display("Test test_FinalStateAssertion FAILED");
     end
-  
-  
+
+
     if ( err_count_arr.or() !== 0) begin
       $display("TEST FAILED");
       $finish(1);
@@ -250,7 +250,7 @@ module br_fifo_flops_gen_tb;
     end
   end
 
-  
+
   task automatic test_BasicPushPopFunctionality;
     fork
       begin
@@ -261,7 +261,7 @@ module br_fifo_flops_gen_tb;
       end
       begin
         // This task tests the basic push and pop functionality of the FIFO, ensuring it adheres to the ready-valid handshake protocol and updates status flags accurately.
-        
+
         // Local variables declaration
         int test_failed = 0;
         int data_sequence[Depth];
@@ -269,16 +269,16 @@ module br_fifo_flops_gen_tb;
         int pushed_data;
         int popped_data;
         int error_count = 0;
-        
+
         // Initialize the data sequence with random values
         for (int i = 0; i < Depth; i++) begin
           data_sequence[i] = $urandom_range(0, (1 << Width) - 1);
         end
-        
+
         // Wait for a positive edge of the clock to ensure proper stimulus propagation
         @(posedge clk);
-        
-        
+
+
         // Check initial conditions
         if (full !== 1'b0 || empty !== 1'b1) begin
           $display($sformatf({"Time: %0t, ERROR: ","test_BasicPushPopFunctionality - Initial"," condition check failed. Expected ","full=0, empty=1, got full=%b, empty=%b"}, $time, full, empty));
@@ -287,12 +287,12 @@ module br_fifo_flops_gen_tb;
           if (ENABLE_INFO_MESSAGES == 1)
             $display($sformatf({"Time: %0t, INFO: ","test_BasicPushPopFunctionality - Initial"," condition check passed. full=0, empty=1"}, $time));
         end
-        
+
         // Step 2: Push data into the FIFO
         for (data_index = 0; data_index < Depth; data_index++) begin
           push_valid = 1'b1;
           push_data = data_sequence[data_index];
-          
+
           if (push_ready !== 1'b1) begin
             $display($sformatf({"Time: %0t, ERROR: ","test_BasicPushPopFunctionality - Push ","ready check failed. Expected ","push_ready=1, got push_ready=%b"}, $time, push_ready));
             test_failed = 1;
@@ -302,11 +302,11 @@ module br_fifo_flops_gen_tb;
           end
            @(posedge clk);
         end
-        
+
         // Deassert push_valid after pushing all data
         push_valid = 1'b0;
         @(posedge clk);
-        
+
         // Check if FIFO is full
         if (full !== 1'b1) begin
           $display($sformatf({"Time: %0t, ERROR: ","test_BasicPushPopFunctionality - FIFO ","full check failed. Expected full=1, got ","full=%b"}, $time, full));
@@ -315,11 +315,11 @@ module br_fifo_flops_gen_tb;
           if (ENABLE_INFO_MESSAGES == 1)
             $display($sformatf({"Time: %0t, INFO: ","test_BasicPushPopFunctionality - FIFO ","full check passed. full=1"}, $time));
         end
-        
+
         // Step 3: Pop data from the FIFO
         pop_ready = 1'b1;
         for (data_index = 0; data_index < Depth; data_index++) begin
-          
+
           if (pop_valid !== 1'b1) begin
             $display($sformatf({"Time: %0t, ERROR: ","test_BasicPushPopFunctionality - Pop ","valid check failed. Expected ","pop_valid=1, got pop_valid=%b"}, $time, pop_valid));
             test_failed = 1;
@@ -335,11 +335,11 @@ module br_fifo_flops_gen_tb;
           end
           @(posedge clk);
         end
-        
+
         // Deassert pop_ready after popping all data
         pop_ready = 1'b0;
         @(posedge clk);
-        
+
         // Check if FIFO is empty
         if (empty !== 1'b1) begin
           $display($sformatf({"Time: %0t, ERROR: ","test_BasicPushPopFunctionality - FIFO ","empty check failed. Expected empty=1, ","got empty=%b"}, $time, empty));
@@ -348,7 +348,7 @@ module br_fifo_flops_gen_tb;
           if (ENABLE_INFO_MESSAGES == 1)
             $display($sformatf({"Time: %0t, INFO: ","test_BasicPushPopFunctionality - FIFO ","empty check passed. empty=1"}, $time));
         end
-        
+
         // Final check for no valid bits asserted
         if (pop_valid !== 1'b0) begin
           $display($sformatf({"Time: %0t, ERROR: ","test_BasicPushPopFunctionality - Final ","valid bit check failed. Expected ","pop_valid=0, got pop_valid=%b"}, $time, pop_valid));
@@ -357,7 +357,7 @@ module br_fifo_flops_gen_tb;
           if (ENABLE_INFO_MESSAGES == 1)
             $display($sformatf({"Time: %0t, INFO: ","test_BasicPushPopFunctionality - Final ","valid bit check passed. pop_valid=0"}, $time));
         end
-        
+
         // Report test status
         if (test_failed == 0) begin
           $display($sformatf({"Time: %0t, PASSED: ","test_BasicPushPopFunctionality"}, $time));
@@ -369,8 +369,8 @@ module br_fifo_flops_gen_tb;
     join_any
     disable fork;
   endtask
-  
-  
+
+
   task automatic test_BypassModeVerification;
     fork
       begin
@@ -381,36 +381,36 @@ module br_fifo_flops_gen_tb;
       end
       begin
         // This task verifies that the bypass mode allows data to be transferred directly from the push interface to the pop interface with zero-cycle latency when the FIFO is empty and bypass is enabled.
-        
+
         // Local variables declaration
         int test_failed = 0;
         logic[Width-1:0] random_data;
-        
+
         // Wait for a clock edge to ensure proper stimulus propagation
         @(posedge clk);
-        
+
         // Step 1: Drive push_valid high with random data on push_data and wait for empty signal
         random_data = $urandom_range(0, (1 << Width) - 1);
         push_valid = 1'b1;
         push_data = random_data;
         if (ENABLE_INFO_MESSAGES == 1)
           $display($sformatf({"Time: %0t, INFO: ","test_BypassModeVerification - Driving ","push_valid=1, push_data=0x%h"}, $time, random_data));
-        
+
         // Wait for the FIFO to be empty
         while (!empty) begin
           @(posedge clk);
         end
-        
+
         // Step 2: Assert pop_ready and wait for pop_valid
         pop_ready = 1'b1;
         if (ENABLE_INFO_MESSAGES == 1)
           $display($sformatf({"Time: %0t, INFO: ","test_BypassModeVerification - Asserting ","pop_ready=1"}, $time));
-        
+
         // Wait for pop_valid to be asserted
         while (!pop_valid) begin
           @(posedge clk);
         end
-        
+
         // Step 3: Verify that pop_data matches push_data
         if (pop_data !== random_data) begin
           $display($sformatf({"Time: %0t, ERROR: ","test_BypassModeVerification - Check ","failed. Expected pop_data=0x%h, got 0x%h"}, $time, random_data, pop_data));
@@ -419,11 +419,11 @@ module br_fifo_flops_gen_tb;
           if (ENABLE_INFO_MESSAGES == 1)
             $display($sformatf({"Time: %0t, INFO: ","test_BypassModeVerification - Check ","passed. Expected value for pop_data is ","the same as the observed value (both are"," 0x%h)."}, $time, pop_data));
         end
-        
+
         // Reset the signals
         push_valid = 1'b0;
         pop_ready = 1'b0;
-        
+
         // Final test status
         if (test_failed == 0) begin
           $display($sformatf({"Time: %0t, PASSED: ","test_BypassModeVerification"}, $time));
@@ -435,8 +435,8 @@ module br_fifo_flops_gen_tb;
     join_any
     disable fork;
   endtask
-  
-  
+
+
   task automatic test_FullConditionHandling;
     fork
       begin
@@ -447,13 +447,13 @@ module br_fifo_flops_gen_tb;
       end
       begin
         // This task verifies the FIFO's handling of full conditions and backpressure, ensuring no additional data is accepted until space is available.
-        
+
         // Local variables declaration
         int test_failed = 0;
         int data;
         int cycle_count = 0;
         localparam int MAX_CYCLES = 1000; // Maximum cycles to prevent infinite loops
-        
+
         // Step 1: Drive `push_valid` high and provide data until `full` is asserted
         while (!full && cycle_count < MAX_CYCLES) begin
           data = $urandom_range(0, (1 << Width) - 1);
@@ -464,7 +464,7 @@ module br_fifo_flops_gen_tb;
           if (ENABLE_INFO_MESSAGES == 1)
             $display($sformatf({"Time: %0t, INFO: ","test_FullConditionHandling - Driving ","push_valid=1, push_data=0x%h"}, $time, data));
         end
-        
+
         // Check if `full` is asserted
         if (!full) begin
           $display($sformatf({"Time: %0t, ERROR: ","test_FullConditionHandling - FIFO did ","not become full as expected."}, $time));
@@ -472,14 +472,14 @@ module br_fifo_flops_gen_tb;
         end else if (ENABLE_INFO_MESSAGES == 1) begin
           $display($sformatf({"Time: %0t, INFO: ","test_FullConditionHandling - FIFO is ","full as expected."}, $time));
         end
-        
+
         // Step 2: Continue driving `push_valid` high and monitor `push_ready` for backpressure
         cycle_count = 0;
         while (push_ready && cycle_count < MAX_CYCLES) begin
           @(posedge clk);
           cycle_count++;
         end
-        
+
         // Check if `push_ready` is de-asserted
         if (push_ready) begin
           $display($sformatf({"Time: %0t, ERROR: ","test_FullConditionHandling - push_ready ","was not de-asserted as expected."}, $time));
@@ -487,18 +487,18 @@ module br_fifo_flops_gen_tb;
         end else if (ENABLE_INFO_MESSAGES == 1) begin
           $display($sformatf({"Time: %0t, INFO: ","test_FullConditionHandling - push_ready ","is de-asserted due to backpressure."}, $time));
         end
-        
+
         // Step 3: Assert `pop_ready` high to initiate a pop operation
         pop_ready = 1'b1;
         @(posedge clk);
-        
+
         // Wait for `full` to be de-asserted
         cycle_count = 0;
         while (full && cycle_count < MAX_CYCLES) begin
           @(posedge clk);
           cycle_count++;
         end
-        
+
         // Check if `full` is de-asserted
         if (full) begin
           $display($sformatf({"Time: %0t, ERROR: ","test_FullConditionHandling - full was ","not de-asserted after pop operation."}, $time));
@@ -506,7 +506,7 @@ module br_fifo_flops_gen_tb;
         end else if (ENABLE_INFO_MESSAGES == 1) begin
           $display($sformatf({"Time: %0t, INFO: ","test_FullConditionHandling - full is ","de-asserted, space is available in FIFO."}, $time));
         end
-        
+
         // Step 4: Verify `push_ready` is driven high after `full` is de-asserted
         @(posedge clk);
         if (!push_ready) begin
@@ -515,10 +515,10 @@ module br_fifo_flops_gen_tb;
         end else if (ENABLE_INFO_MESSAGES == 1) begin
           $display($sformatf({"Time: %0t, INFO: ","test_FullConditionHandling - push_ready ","is asserted, FIFO can accept new data."}, $time));
         end
-        
+
         // Reset `pop_ready` to low
         pop_ready = 1'b0;
-        
+
         // Final test status
         if (test_failed == 0) begin
           $display($sformatf({"Time: %0t, PASSED: ","test_FullConditionHandling"}, $time));
@@ -530,8 +530,8 @@ module br_fifo_flops_gen_tb;
     join_any
     disable fork;
   endtask
-  
-  
+
+
   task automatic test_PushDataStabilityUnderBackpressure;
     fork
       begin
@@ -542,32 +542,32 @@ module br_fifo_flops_gen_tb;
       end
       begin
         // This task verifies that the `push_data` signal remains stable during backpressure conditions.
-        
+
         // Local variables declaration
         int test_failed = 0;
         logic[Width-1:0] constant_push_data;
         logic[Width-1:0] observed_push_data;
         int backpressure_cycles = 0;
-        
+
         // Initialize constant push data
         constant_push_data = $urandom_range(0, (1 << Width) - 1);
-        
+
         // Drive push_valid high and constant value on push_data
         push_valid = 1'b1;
         push_data = constant_push_data;
         if (ENABLE_INFO_MESSAGES == 1)
           $display($sformatf({"Time: %0t, INFO: ","test_PushDataStabilityUnderBackpressure ","- Driving push_valid=1, push_data=0x%h"}, $time, constant_push_data));
-        
+
         // Wait for FIFO to become full
         while (!full) begin
           @(posedge clk);
         end
-        
+
         // Wait for push_ready to go low indicating backpressure
         while (push_ready) begin
           @(posedge clk);
         end
-        
+
         // Monitor push_data stability during backpressure
         while (!push_ready) begin
           observed_push_data = push_data;
@@ -582,13 +582,13 @@ module br_fifo_flops_gen_tb;
           pop_ready = 1'b1;
           @(posedge clk);
         end
-        
+
         // Check if backpressure was observed
         if (backpressure_cycles == 0) begin
           $display($sformatf({"Time: %0t, ERROR: ","test_PushDataStabilityUnderBackpressure ","- No backpressure observed"}, $time));
           test_failed = 1;
         end
-        
+
         // Final test status
         if (test_failed == 0) begin
           $display($sformatf({"Time: %0t, PASSED: ","test_PushDataStabilityUnderBackpressure"}, $time));
@@ -600,8 +600,8 @@ module br_fifo_flops_gen_tb;
     join_any
     disable fork;
   endtask
-  
-  
+
+
   task automatic test_FinalStateAssertion;
     fork
       begin
@@ -612,16 +612,16 @@ module br_fifo_flops_gen_tb;
       end
       begin
         // This task checks that the FIFO is empty and no valid bits are asserted at the end of the test, ensuring all data has been processed correctly.
-        
+
         // Local variables declaration
         int test_failed = 0;
         int data_to_push;
         int push_count = 0;
         int pop_count = 0;
         localparam int MAX_PUSHES = Depth;
-        
+
         @(posedge clk);
-        
+
         // Push data into the FIFO until it is full
         for (int i = 0; i < MAX_PUSHES; i++) begin
           data_to_push = $urandom_range(0, (1 << Width) - 1);
@@ -634,13 +634,13 @@ module br_fifo_flops_gen_tb;
               $display($sformatf({"Time: %0t, INFO: ","test_FinalStateAssertion - Pushed data: ","0x%h"}, $time, data_to_push));
           end
         end
-        
+
         // Deassert push_valid after the last push
         push_valid = 0;
         @(posedge clk);
         if (ENABLE_INFO_MESSAGES == 1)
           $display($sformatf({"Time: %0t, INFO: ","test_FinalStateAssertion - push_valid ","deasserted"}, $time));
-        
+
         // Assert pop_ready and pop data until FIFO is empty
         pop_ready = 1;
         while (items > 0) begin
@@ -651,7 +651,7 @@ module br_fifo_flops_gen_tb;
               $display($sformatf({"Time: %0t, INFO: ","test_FinalStateAssertion - Popped data: ","0x%h"}, $time, pop_data));
           end
         end
-        
+
         // Check if FIFO is empty
         @(posedge clk);
         if (empty !== 1) begin
@@ -661,7 +661,7 @@ module br_fifo_flops_gen_tb;
           if (ENABLE_INFO_MESSAGES == 1)
             $display($sformatf({"Time: %0t, INFO: ","test_FinalStateAssertion - FIFO is empty"," as expected."}, $time));
         end
-        
+
         // Check if FIFO is not full
         if (full !== 0) begin
           $display($sformatf({"Time: %0t, ERROR: ","test_FinalStateAssertion - FIFO is full."," Expected full=0, got full=%b"}, $time, full));
@@ -670,7 +670,7 @@ module br_fifo_flops_gen_tb;
           if (ENABLE_INFO_MESSAGES == 1)
             $display($sformatf({"Time: %0t, INFO: ","test_FinalStateAssertion - FIFO is not ","full as expected."}, $time));
         end
-        
+
         // Check if items count is zero
         if (items !== 0) begin
           $display($sformatf({"Time: %0t, ERROR: ","test_FinalStateAssertion - Items count ","not zero. Expected items=0, got ","items=%0d"}, $time, items));
@@ -679,7 +679,7 @@ module br_fifo_flops_gen_tb;
           if (ENABLE_INFO_MESSAGES == 1)
             $display($sformatf({"Time: %0t, INFO: ","test_FinalStateAssertion - Items count ","is zero as expected."}, $time));
         end
-        
+
         // Final test status
         if (test_failed == 0) begin
           $display($sformatf({"Time: %0t, PASSED: ","test_FinalStateAssertion"}, $time));
@@ -691,6 +691,5 @@ module br_fifo_flops_gen_tb;
     join_any
     disable fork;
   endtask
-  
+
 endmodule
-  

@@ -31,13 +31,13 @@ module br_fifo_shared_dynamic_ctrl_gen_tb;
   parameter int CLOCK_FREQ_NS_CONVERSION_FACTOR = 1000; // Conversion factor to nanoseconds
   parameter int NO_ASSERTS_ON_RESET = 1;  // Disable assertions during reset
   parameter int ENABLE_CHECKS = 1;  // Enable checks
-  
+
   //===========================================================
   // DUT Imports and Includes
   //===========================================================
-  
+
   `include "br_asserts_internal.svh"
-    
+
   //===========================================================
   // DUT Parameters
   //===========================================================
@@ -93,7 +93,7 @@ module br_fifo_shared_dynamic_ctrl_gen_tb;
   // DUT Instantiation
   //===========================================================
 // Clock to DUT is inverted to avoid race condition between DUT and TB
-  br_fifo_shared_dynamic_ctrl 
+  br_fifo_shared_dynamic_ctrl
       #(
           .NumWritePorts(NumWritePorts),
           .NumReadPorts(NumReadPorts),
@@ -134,7 +134,7 @@ module br_fifo_shared_dynamic_ctrl_gen_tb;
           .ptr_ram_rd_addr_valid(ptr_ram_rd_addr_valid),
           .ptr_ram_rd_addr(ptr_ram_rd_addr)
       );
-      
+
 
   //===========================================================
   // Clock Generation
@@ -143,7 +143,7 @@ module br_fifo_shared_dynamic_ctrl_gen_tb;
     clk = 1'b0;
     forever #(CLOCK_FREQ_NS_CONVERSION_FACTOR/(2*CLOCK_FREQ)) clk = ~clk;
   end
-  
+
 
   //===========================================================
   // Reset Generation
@@ -159,7 +159,7 @@ module br_fifo_shared_dynamic_ctrl_gen_tb;
     data_ram_rd_data <= 'h0;
     ptr_ram_rd_data_valid <= 'h0;
     ptr_ram_rd_data <= 'h0;
-  
+
     // Wiggling the reset signal.
     rst = 1'bx;
     #RESET_DURATION;
@@ -183,7 +183,7 @@ module br_fifo_shared_dynamic_ctrl_gen_tb;
     TotalTestsIdx
   } test_names_e;
   int err_count_arr[TotalTestsIdx] = '{default: '0};
-  
+
   `ifdef WAVES_AS_FSDB
      bit enable_fsdb;
   `endif
@@ -206,27 +206,27 @@ module br_fifo_shared_dynamic_ctrl_gen_tb;
       end
     end
   `endif
-    
-        
+
+
   //===========================================================
   // Initial Block to Call Tasks
   //===========================================================
   initial begin
     reset_dut();
     test_BasicPushAndPop();
-  
+
     reset_dut();
     test_PushBackpressureHandling();
-  
+
     reset_dut();
     test_ConcurrentPushAndPop();
-  
+
     reset_dut();
     test_DynamicFifoAllocation();
-  
+
     reset_dut();
     test_PointerRamReadWrite();
-  
+
     if (err_count_arr[test_BasicPushAndPopIdx] == 0) begin
       $display("Test test_BasicPushAndPop PASSED");
     end else if (err_count_arr[test_BasicPushAndPopIdx] == -1) begin
@@ -234,7 +234,7 @@ module br_fifo_shared_dynamic_ctrl_gen_tb;
     end else begin
       $display("Test test_BasicPushAndPop FAILED");
     end
-  
+
     if (err_count_arr[test_PushBackpressureHandlingIdx] == 0) begin
       $display($sformatf({"Test test_PushBackpressureHandling ","PASSED"}));
     end else if (err_count_arr[test_PushBackpressureHandlingIdx] == -1) begin
@@ -242,7 +242,7 @@ module br_fifo_shared_dynamic_ctrl_gen_tb;
     end else begin
       $display($sformatf({"Test test_PushBackpressureHandling ","FAILED"}));
     end
-  
+
     if (err_count_arr[test_ConcurrentPushAndPopIdx] == 0) begin
       $display("Test test_ConcurrentPushAndPop PASSED");
     end else if (err_count_arr[test_ConcurrentPushAndPopIdx] == -1) begin
@@ -250,7 +250,7 @@ module br_fifo_shared_dynamic_ctrl_gen_tb;
     end else begin
       $display("Test test_ConcurrentPushAndPop FAILED");
     end
-  
+
     if (err_count_arr[test_DynamicFifoAllocationIdx] == 0) begin
       $display("Test test_DynamicFifoAllocation PASSED");
     end else if (err_count_arr[test_DynamicFifoAllocationIdx] == -1) begin
@@ -258,7 +258,7 @@ module br_fifo_shared_dynamic_ctrl_gen_tb;
     end else begin
       $display("Test test_DynamicFifoAllocation FAILED");
     end
-  
+
     if (err_count_arr[test_PointerRamReadWriteIdx] == 0) begin
       $display("Test test_PointerRamReadWrite PASSED");
     end else if (err_count_arr[test_PointerRamReadWriteIdx] == -1) begin
@@ -266,8 +266,8 @@ module br_fifo_shared_dynamic_ctrl_gen_tb;
     end else begin
       $display("Test test_PointerRamReadWrite FAILED");
     end
-  
-  
+
+
     if ( err_count_arr.or() !== 0) begin
       $display("TEST FAILED");
       $finish(1);
@@ -277,7 +277,7 @@ module br_fifo_shared_dynamic_ctrl_gen_tb;
     end
   end
 
-  
+
   task automatic test_BasicPushAndPop;
     fork
       begin
@@ -288,22 +288,22 @@ module br_fifo_shared_dynamic_ctrl_gen_tb;
       end
       begin
         // This task tests the basic push and pop operations of the FIFO, ensuring data integrity and proper operation.
-        
+
         // Local variables declaration
         int test_failed = 0;
         int expected_data;
         int fifo_id;
         int push_data_value;
-        
+
         // Wait for a clock edge to ensure proper stimulus propagation
         @(posedge clk);
-        
+
         // Step 1: Release reset and start normal operation
         rst = 1'b0;
         @(posedge clk);
         if (ENABLE_INFO_MESSAGES == 1)
           $display($sformatf({"Time: %0t, INFO: test_BasicPushAndPop - ","Released reset, starting normal ","operation."}, $time));
-        
+
         // Step 2: Drive push_valid high for the first write port, provide valid push_data and push_fifo_id
         push_valid[0] = 1'b1;
         push_data_value = $urandom_range(0, (1 << Width) - 1);
@@ -313,27 +313,27 @@ module br_fifo_shared_dynamic_ctrl_gen_tb;
         @(posedge clk);
         if (ENABLE_INFO_MESSAGES == 1)
           $display($sformatf({"Time: %0t, INFO: test_BasicPushAndPop - ","Driving push_valid=1, push_data=0x%h, ","push_fifo_id=%0d"}, $time, push_data_value, fifo_id));
-        
+
         // Step 3: Monitor push_ready and wait for it to be high
         while (push_ready[0] != 1'b1) begin
           @(posedge clk);
         end
         if (ENABLE_INFO_MESSAGES == 1)
           $display($sformatf({"Time: %0t, INFO: test_BasicPushAndPop - ","push_ready is high, FIFO is ready to ","accept data."}, $time));
-        
+
         // Step 4: Drive pop_ready high for the corresponding FIFO ID
         pop_ready[fifo_id] = 1'b1;
         @(posedge clk);
         if (ENABLE_INFO_MESSAGES == 1)
           $display($sformatf({"Time: %0t, INFO: test_BasicPushAndPop - ","Driving pop_ready=1 for FIFO ID %0d"}, $time, fifo_id));
-        
+
         // Step 5: Monitor pop_valid and wait for it to be high
         while (pop_valid[fifo_id] != 1'b1) begin
           @(posedge clk);
         end
         if (ENABLE_INFO_MESSAGES == 1)
           $display($sformatf({"Time: %0t, INFO: test_BasicPushAndPop - ","pop_valid is high, valid data is ","available."}, $time));
-        
+
         // Step 6: Monitor pop_data and verify it matches the expected data
         expected_data = push_data_value;
         if (pop_data[fifo_id] !== expected_data) begin
@@ -343,7 +343,7 @@ module br_fifo_shared_dynamic_ctrl_gen_tb;
           if (ENABLE_INFO_MESSAGES == 1)
             $display($sformatf({"Time: %0t, INFO: test_BasicPushAndPop - ","Check passed. Expected pop_data=0x%h ","matches observed value."}, $time, expected_data));
         end
-        
+
         // Final test status
         if (test_failed == 0) begin
           $display($sformatf({"Time: %0t, PASSED: test_BasicPushAndPop"}, $time));
@@ -355,8 +355,8 @@ module br_fifo_shared_dynamic_ctrl_gen_tb;
     join_any
     disable fork;
   endtask
-  
-  
+
+
   task automatic test_PushBackpressureHandling;
     fork
       begin
@@ -367,7 +367,7 @@ module br_fifo_shared_dynamic_ctrl_gen_tb;
       end
       begin
         // This task tests the FIFO's ability to handle backpressure conditions and maintain data integrity when full.
-        
+
         // Local variables declaration
         int test_failed = 0;
         int random_data;
@@ -377,22 +377,22 @@ module br_fifo_shared_dynamic_ctrl_gen_tb;
         int stable_push_fifo_id;
         int push_ready_low_detected = 0;
         int push_ready_high_detected = 0;
-        
+
         // Wait for a clock edge to ensure proper stimulus propagation
         @(posedge clk);
-        
+
         // Step 1: Assert reset
         rst = 1'b1;
         @(posedge clk);
         if (ENABLE_INFO_MESSAGES == 1)
           $display($sformatf({"Time: %0t, INFO: ","test_PushBackpressureHandling - Reset ","asserted."}, $time));
-        
+
         // Step 2: Deassert reset
         rst = 1'b0;
         @(posedge clk);
         if (ENABLE_INFO_MESSAGES == 1)
           $display($sformatf({"Time: %0t, INFO: ","test_PushBackpressureHandling - Reset ","deasserted."}, $time));
-        
+
         // Step 3: Continuously assert push_valid high for all write ports with random data
         for (int i = 0; i < NumWritePorts; i++) begin
           random_data = $urandom();
@@ -404,7 +404,7 @@ module br_fifo_shared_dynamic_ctrl_gen_tb;
         @(posedge clk);
         if (ENABLE_INFO_MESSAGES == 1)
           $display($sformatf({"Time: %0t, INFO: ","test_PushBackpressureHandling - Driving ","push_valid high with random data and ","FIFO IDs."}, $time));
-        
+
         // Step 4: Monitor push_ready for backpressure
         while (!push_ready_low_detected) begin
           @(posedge clk);
@@ -419,7 +419,7 @@ module br_fifo_shared_dynamic_ctrl_gen_tb;
             end
           end
         end
-        
+
         // Step 5: Ensure push_valid remains stable
         for (int i = 0; i < NumWritePorts; i++) begin
           if (push_ready[i] == 1'b0) begin
@@ -431,13 +431,13 @@ module br_fifo_shared_dynamic_ctrl_gen_tb;
             end
           end
         end
-        
+
         // Step 6: Assert pop_ready high for one FIFO to create space
         pop_ready[0] = 1'b1;
         @(posedge clk);
         if (ENABLE_INFO_MESSAGES == 1)
           $display($sformatf({"Time: %0t, INFO: ","test_PushBackpressureHandling - ","pop_ready asserted high for FIFO 0."}, $time));
-        
+
         // Step 7: Monitor push_ready to detect when FIFO can accept new data
         while (!push_ready_high_detected) begin
           @(posedge clk);
@@ -449,7 +449,7 @@ module br_fifo_shared_dynamic_ctrl_gen_tb;
             end
           end
         end
-        
+
         // Final check for test pass/fail status
         if (test_failed == 0) begin
           $display($sformatf({"Time: %0t, PASSED: ","test_PushBackpressureHandling"}, $time));
@@ -461,8 +461,8 @@ module br_fifo_shared_dynamic_ctrl_gen_tb;
     join_any
     disable fork;
   endtask
-  
-  
+
+
   task automatic test_ConcurrentPushAndPop;
     fork
       begin
@@ -473,7 +473,7 @@ module br_fifo_shared_dynamic_ctrl_gen_tb;
       end
       begin
         // Task to test concurrent push and pop operations across multiple ports, ensuring data integrity and correct functionality.
-        
+
         // Local variables declaration
         int test_failed = 0;
         int expected_data[NumFifos];
@@ -483,21 +483,21 @@ module br_fifo_shared_dynamic_ctrl_gen_tb;
         int pop_ready_values[NumFifos];
         int pop_valid_values[NumFifos];
         int pop_data_values[NumFifos];
-        
+
         // Initialize expected data for FIFOs
         for (int i = 0; i < NumFifos; i++) begin
           expected_data[i] = $urandom_range(0, (1 << Width) - 1);
         end
-        
+
         // Wait for a clock edge to ensure proper stimulus propagation
         @(posedge clk);
-        
+
         // Deassert reset to start normal operation
         rst = 1'b0;
         @(posedge clk);
         if (ENABLE_INFO_MESSAGES == 1)
           $display($sformatf({"Time: %0t, INFO: ","test_ConcurrentPushAndPop - Reset ","deasserted, starting normal operation."}, $time));
-        
+
         // Drive push_valid, push_data, and push_fifo_id for multiple write ports
         for (int i = 0; i < NumWritePorts; i++) begin
           push_data_values[i] = $urandom_range(0, (1 << Width) - 1);
@@ -509,14 +509,14 @@ module br_fifo_shared_dynamic_ctrl_gen_tb;
         @(posedge clk);
         if (ENABLE_INFO_MESSAGES == 1)
           $display($sformatf({"Time: %0t, INFO: ","test_ConcurrentPushAndPop - Driving ","push_valid, push_data, and push_fifo_id."}, $time));
-        
+
         // Wait for push_ready to be asserted for each port
         for (int i = 0; i < NumWritePorts; i++) begin
           while (!push_ready[i]) @(posedge clk);
         end
         if (ENABLE_INFO_MESSAGES == 1)
           $display($sformatf({"Time: %0t, INFO: ","test_ConcurrentPushAndPop - push_ready ","asserted for all write ports."}, $time));
-        
+
         // Drive pop_ready for multiple FIFOs
         for (int i = 0; i < NumFifos; i++) begin
           pop_ready[i] = 1'b1;
@@ -524,7 +524,7 @@ module br_fifo_shared_dynamic_ctrl_gen_tb;
         @(posedge clk);
         if (ENABLE_INFO_MESSAGES == 1)
           $display($sformatf({"Time: %0t, INFO: ","test_ConcurrentPushAndPop - Driving ","pop_ready for multiple FIFOs."}, $time));
-        
+
         // Wait for pop_valid to be asserted for each FIFO
         for (int i = 0; i < NumFifos; i++) begin
           while (!pop_valid[i]) @(posedge clk);
@@ -532,7 +532,7 @@ module br_fifo_shared_dynamic_ctrl_gen_tb;
         end
         if (ENABLE_INFO_MESSAGES == 1)
           $display($sformatf({"Time: %0t, INFO: ","test_ConcurrentPushAndPop - pop_valid ","asserted for all FIFOs."}, $time));
-        
+
         // Capture pop_data and verify against expected values
         for (int i = 0; i < NumFifos; i++) begin
           observed_data[i] = pop_data[i];
@@ -544,7 +544,7 @@ module br_fifo_shared_dynamic_ctrl_gen_tb;
               $display($sformatf({"Time: %0t, INFO: ","test_ConcurrentPushAndPop - Data match ","for FIFO %0d. Expected and Got: 0x%h"}, $time, i, observed_data[i]));
           end
         end
-        
+
         // Final test status
         if (test_failed == 0) begin
           $display($sformatf({"Time: %0t, PASSED: ","test_ConcurrentPushAndPop"}, $time));
@@ -556,8 +556,8 @@ module br_fifo_shared_dynamic_ctrl_gen_tb;
     join_any
     disable fork;
   endtask
-  
-  
+
+
   task automatic test_DynamicFifoAllocation;
     fork
       begin
@@ -568,7 +568,7 @@ module br_fifo_shared_dynamic_ctrl_gen_tb;
       end
       begin
         // This task verifies the dynamic allocation capability of the FIFO, ensuring data can be pushed to and popped from different logical FIFOs without fixed allocation.
-        
+
         // Local variables declaration
         int test_failed = 0;
         int push_data_value;
@@ -576,16 +576,16 @@ module br_fifo_shared_dynamic_ctrl_gen_tb;
         int fifo_id;
         int write_port;
         int read_fifo;
-        
+
         // Wait for a clock edge to ensure proper stimulus propagation
         @(posedge clk);
-        
+
         // Step 1: Release reset and wait for 20 ns
         rst = 1'b0;
         #(20);
         if (ENABLE_INFO_MESSAGES == 1)
           $display($sformatf({"Time: %0t, INFO: ","test_DynamicFifoAllocation - Reset ","released."}, $time));
-        
+
         // Step 2: Drive push_valid high for a specific write port, provide valid push_data, and specify a push_fifo_id
         write_port = 0;
         push_data_value = $urandom_range(0, 2**Width-1);
@@ -595,7 +595,7 @@ module br_fifo_shared_dynamic_ctrl_gen_tb;
         push_fifo_id[write_port] = fifo_id;
         if (ENABLE_INFO_MESSAGES == 1)
           $display($sformatf({"Time: %0t, INFO: ","test_DynamicFifoAllocation - Driving ","push_valid[%0d]=1, push_data[%0d]=0x%h, ","push_fifo_id[%0d]=%0d"}, $time, write_port, write_port, push_data_value, write_port, fifo_id));
-        
+
         // Step 3: Monitor push_ready and wait for it to be high
         @(posedge clk);
         while (push_ready[write_port] != 1'b1) begin
@@ -603,7 +603,7 @@ module br_fifo_shared_dynamic_ctrl_gen_tb;
         end
         if (ENABLE_INFO_MESSAGES == 1)
           $display($sformatf({"Time: %0t, INFO: ","test_DynamicFifoAllocation - ","push_ready[%0d] is high, ready to accept"," data."}, $time, write_port));
-        
+
         // Step 4: Change push_fifo_id to a different FIFO and repeat the push operation
         fifo_id = 1;
         push_data_value = $urandom_range(0, 2**Width-1);
@@ -611,7 +611,7 @@ module br_fifo_shared_dynamic_ctrl_gen_tb;
         push_data[write_port] = push_data_value;
         if (ENABLE_INFO_MESSAGES == 1)
           $display($sformatf({"Time: %0t, INFO: ","test_DynamicFifoAllocation - Changing ","push_fifo_id[%0d]=%0d, ","push_data[%0d]=0x%h"}, $time, write_port, fifo_id, write_port, push_data_value));
-        
+
         // Step 5: Monitor push_ready for the new FIFO
         @(posedge clk);
         while (push_ready[write_port] != 1'b1) begin
@@ -619,20 +619,20 @@ module br_fifo_shared_dynamic_ctrl_gen_tb;
         end
         if (ENABLE_INFO_MESSAGES == 1)
           $display($sformatf({"Time: %0t, INFO: ","test_DynamicFifoAllocation - ","push_ready[%0d] is high for new FIFO."}, $time, write_port));
-        
+
         // Step 6: Drive pop_ready high for the first FIFO and monitor pop_valid
         read_fifo = 0;
         pop_ready[read_fifo] = 1'b1;
         if (ENABLE_INFO_MESSAGES == 1)
           $display($sformatf({"Time: %0t, INFO: ","test_DynamicFifoAllocation - Driving ","pop_ready[%0d]=1"}, $time, read_fifo));
-        
+
         @(posedge clk);
         while (pop_valid[read_fifo] != 1'b1) begin
           @(posedge clk);
         end
         if (ENABLE_INFO_MESSAGES == 1)
           $display($sformatf({"Time: %0t, INFO: ","test_DynamicFifoAllocation - ","pop_valid[%0d] is high, valid data ","available."}, $time, read_fifo));
-        
+
         // Step 7: Monitor pop_data and verify data integrity
         expected_pop_data = push_data_value;
         if (pop_data[read_fifo] !== expected_pop_data) begin
@@ -642,20 +642,20 @@ module br_fifo_shared_dynamic_ctrl_gen_tb;
           if (ENABLE_INFO_MESSAGES == 1)
             $display($sformatf({"Time: %0t, INFO: ","test_DynamicFifoAllocation - Data ","integrity verified for FIFO %0d. ","Expected and got 0x%h"}, $time, read_fifo, expected_pop_data));
         end
-        
+
         // Step 8: Repeat the pop operation for the second FIFO
         read_fifo = 1;
         pop_ready[read_fifo] = 1'b1;
         if (ENABLE_INFO_MESSAGES == 1)
           $display($sformatf({"Time: %0t, INFO: ","test_DynamicFifoAllocation - Driving ","pop_ready[%0d]=1"}, $time, read_fifo));
-        
+
         @(posedge clk);
         while (pop_valid[read_fifo] != 1'b1) begin
           @(posedge clk);
         end
         if (ENABLE_INFO_MESSAGES == 1)
           $display($sformatf({"Time: %0t, INFO: ","test_DynamicFifoAllocation - ","pop_valid[%0d] is high, valid data ","available."}, $time, read_fifo));
-        
+
         // Verify data integrity for the second FIFO
         expected_pop_data = push_data_value;
         if (pop_data[read_fifo] !== expected_pop_data) begin
@@ -665,7 +665,7 @@ module br_fifo_shared_dynamic_ctrl_gen_tb;
           if (ENABLE_INFO_MESSAGES == 1)
             $display($sformatf({"Time: %0t, INFO: ","test_DynamicFifoAllocation - Data ","integrity verified for FIFO %0d. ","Expected and got 0x%h"}, $time, read_fifo, expected_pop_data));
         end
-        
+
         // Final test status
         if (test_failed == 0) begin
           $display($sformatf({"Time: %0t, PASSED: ","test_DynamicFifoAllocation"}, $time));
@@ -677,8 +677,8 @@ module br_fifo_shared_dynamic_ctrl_gen_tb;
     join_any
     disable fork;
   endtask
-  
-  
+
+
   task automatic test_PointerRamReadWrite;
     fork
       begin
@@ -689,7 +689,7 @@ module br_fifo_shared_dynamic_ctrl_gen_tb;
       end
       begin
         // This task verifies the correct operation of pointer RAM read and write processes, ensuring accurate management of FIFO pointers.
-        
+
         // Local variables declaration
         int test_failed = 0;
         int wport;
@@ -700,62 +700,62 @@ module br_fifo_shared_dynamic_ctrl_gen_tb;
         logic [NumWritePorts-1:0][Width-1:0] local_push_data;
         logic [NumWritePorts-1:0][FifoIdWidth-1:0] local_push_fifo_id;
         logic [NumFifos-1:0] local_pop_ready;
-        
+
         // Wait for reset to complete
         @(negedge rst);
         @(posedge clk);
-        
+
         // Randomly select a write port
         wport = $urandom_range(0, NumWritePorts-1);
-        
+
         // Generate random data and FIFO ID for push operation
         local_push_valid = '0;
         local_push_data = '0;
         local_push_fifo_id = '0;
         local_pop_ready = '0;
-        
+
         local_push_valid[wport] = 1'b1;
         local_push_data[wport] = $urandom();
         local_push_fifo_id[wport] = $urandom_range(0, NumFifos-1);
-        
+
         // Drive push signals
         @(posedge clk);
         push_valid <= local_push_valid;
         push_data <= local_push_data;
         push_fifo_id <= local_push_fifo_id;
-        
+
         if (ENABLE_INFO_MESSAGES == 1)
           $display($sformatf({"Time: %0t, INFO: ","test_PointerRamReadWrite - Driving ","push_valid=0x%h, push_data=0x%h, ","push_fifo_id=0x%h"}, $time, local_push_valid, local_push_data, local_push_fifo_id));
-        
+
         // Wait for ptr_ram_wr_valid to be asserted
         wait (ptr_ram_wr_valid[wport] == 1'b1);
         expected_ptr_ram_wr_addr = ptr_ram_wr_addr[wport];
         expected_ptr_ram_wr_data = ptr_ram_wr_data[wport];
-        
+
         if (ENABLE_INFO_MESSAGES == 1)
           $display($sformatf({"Time: %0t, INFO: ","test_PointerRamReadWrite - Observed ","ptr_ram_wr_valid=1, ","ptr_ram_wr_addr=0x%h, ","ptr_ram_wr_data=0x%h"}, $time, expected_ptr_ram_wr_addr, expected_ptr_ram_wr_data));
-        
+
         // Drive pop_ready for the corresponding FIFO
         @(posedge clk);
         local_pop_ready[local_push_fifo_id[wport]] = 1'b1;
         pop_ready <= local_pop_ready;
-        
+
         if (ENABLE_INFO_MESSAGES == 1)
           $display($sformatf({"Time: %0t, INFO: ","test_PointerRamReadWrite - Driving ","pop_ready=0x%h"}, $time, local_pop_ready));
-        
+
         // Wait for ptr_ram_rd_addr_valid to be asserted
         wait (ptr_ram_rd_addr_valid[0] == 1'b1);
-        
+
         if (ENABLE_INFO_MESSAGES == 1)
           $display($sformatf({"Time: %0t, INFO: ","test_PointerRamReadWrite - Observed ","ptr_ram_rd_addr_valid=1"}, $time));
-        
+
         // Wait for ptr_ram_rd_data_valid to be asserted
         wait (ptr_ram_rd_data_valid[0] == 1'b1);
         expected_ptr_ram_rd_data = ptr_ram_rd_data[0];
-        
+
         if (ENABLE_INFO_MESSAGES == 1)
           $display($sformatf({"Time: %0t, INFO: ","test_PointerRamReadWrite - Observed ","ptr_ram_rd_data_valid=1, ","ptr_ram_rd_data=0x%h"}, $time, expected_ptr_ram_rd_data));
-        
+
         // Verify the expected pointer data
         if (expected_ptr_ram_rd_data != expected_ptr_ram_wr_data) begin
           $display($sformatf({"Time: %0t, ERROR: ","test_PointerRamReadWrite - Check failed."," Expected ptr_ram_rd_data=0x%h, got 0x%h"}, $time, expected_ptr_ram_wr_data, expected_ptr_ram_rd_data));
@@ -764,7 +764,7 @@ module br_fifo_shared_dynamic_ctrl_gen_tb;
           if (ENABLE_INFO_MESSAGES == 1)
             $display($sformatf({"Time: %0t, INFO: ","test_PointerRamReadWrite - Check passed."," Expected value for ptr_ram_rd_data is ","the same as the observed value (both are"," 0x%h)."}, $time, expected_ptr_ram_rd_data));
         end
-        
+
         // Final test status
         if (test_failed == 0) begin
           $display($sformatf({"Time: %0t, PASSED: ","test_PointerRamReadWrite"}, $time));
@@ -776,6 +776,5 @@ module br_fifo_shared_dynamic_ctrl_gen_tb;
     join_any
     disable fork;
   endtask
-  
+
 endmodule
-  

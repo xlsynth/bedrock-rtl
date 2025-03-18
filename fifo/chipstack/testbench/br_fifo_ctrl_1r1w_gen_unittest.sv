@@ -31,13 +31,13 @@ module br_fifo_ctrl_1r1w_gen_tb;
   parameter int CLOCK_FREQ_NS_CONVERSION_FACTOR = 1000; // Conversion factor to nanoseconds
   parameter int NO_ASSERTS_ON_RESET = 1;  // Disable assertions during reset
   parameter int ENABLE_CHECKS = 1;  // Enable checks
-  
+
   //===========================================================
   // DUT Imports and Includes
   //===========================================================
-  
+
   `include "br_asserts_internal.svh"
-    
+
   //===========================================================
   // DUT Parameters
   //===========================================================
@@ -89,7 +89,7 @@ module br_fifo_ctrl_1r1w_gen_tb;
   // DUT Instantiation
   //===========================================================
 // Clock to DUT is inverted to avoid race condition between DUT and TB
-  br_fifo_ctrl_1r1w 
+  br_fifo_ctrl_1r1w
       #(
           .Depth(Depth),
           .Width(Width),
@@ -126,7 +126,7 @@ module br_fifo_ctrl_1r1w_gen_tb;
           .ram_rd_addr_valid(ram_rd_addr_valid),
           .ram_rd_addr(ram_rd_addr)
       );
-      
+
 
   //===========================================================
   // Clock Generation
@@ -135,7 +135,7 @@ module br_fifo_ctrl_1r1w_gen_tb;
     clk = 1'b0;
     forever #(CLOCK_FREQ_NS_CONVERSION_FACTOR/(2*CLOCK_FREQ)) clk = ~clk;
   end
-  
+
 
   //===========================================================
   // Reset Generation
@@ -148,7 +148,7 @@ module br_fifo_ctrl_1r1w_gen_tb;
     pop_ready <= 'h0;
     ram_rd_data_valid <= 'h0;
     ram_rd_data <= 'h0;
-  
+
     // Wiggling the reset signal.
     rst = 1'bx;
     #RESET_DURATION;
@@ -172,7 +172,7 @@ module br_fifo_ctrl_1r1w_gen_tb;
     TotalTestsIdx
   } test_names_e;
   int err_count_arr[TotalTestsIdx] = '{default: '0};
-  
+
   `ifdef WAVES_AS_FSDB
      bit enable_fsdb;
   `endif
@@ -195,27 +195,27 @@ module br_fifo_ctrl_1r1w_gen_tb;
       end
     end
   `endif
-    
-        
+
+
   //===========================================================
   // Initial Block to Call Tasks
   //===========================================================
   initial begin
     reset_dut();
     test_BasicPushPopFunctionality();
-  
+
     reset_dut();
     test_BypassModeVerification();
-  
+
     reset_dut();
     test_FullAndEmptyStatusUpdate();
-  
+
     reset_dut();
     test_PushBackpressureHandling();
-  
+
     reset_dut();
     test_RamReadLatencyVerification();
-  
+
     if (err_count_arr[test_BasicPushPopFunctionalityIdx] == 0) begin
       $display($sformatf({"Test test_BasicPushPopFunctionality ","PASSED"}));
     end else if (err_count_arr[test_BasicPushPopFunctionalityIdx] == -1) begin
@@ -223,7 +223,7 @@ module br_fifo_ctrl_1r1w_gen_tb;
     end else begin
       $display($sformatf({"Test test_BasicPushPopFunctionality ","FAILED"}));
     end
-  
+
     if (err_count_arr[test_BypassModeVerificationIdx] == 0) begin
       $display($sformatf({"Test test_BypassModeVerification PASSED"}));
     end else if (err_count_arr[test_BypassModeVerificationIdx] == -1) begin
@@ -231,7 +231,7 @@ module br_fifo_ctrl_1r1w_gen_tb;
     end else begin
       $display($sformatf({"Test test_BypassModeVerification FAILED"}));
     end
-  
+
     if (err_count_arr[test_FullAndEmptyStatusUpdateIdx] == 0) begin
       $display($sformatf({"Test test_FullAndEmptyStatusUpdate ","PASSED"}));
     end else if (err_count_arr[test_FullAndEmptyStatusUpdateIdx] == -1) begin
@@ -239,7 +239,7 @@ module br_fifo_ctrl_1r1w_gen_tb;
     end else begin
       $display($sformatf({"Test test_FullAndEmptyStatusUpdate ","FAILED"}));
     end
-  
+
     if (err_count_arr[test_PushBackpressureHandlingIdx] == 0) begin
       $display($sformatf({"Test test_PushBackpressureHandling ","PASSED"}));
     end else if (err_count_arr[test_PushBackpressureHandlingIdx] == -1) begin
@@ -247,7 +247,7 @@ module br_fifo_ctrl_1r1w_gen_tb;
     end else begin
       $display($sformatf({"Test test_PushBackpressureHandling ","FAILED"}));
     end
-  
+
     if (err_count_arr[test_RamReadLatencyVerificationIdx] == 0) begin
       $display($sformatf({"Test test_RamReadLatencyVerification ","PASSED"}));
     end else if (err_count_arr[test_RamReadLatencyVerificationIdx] == -1) begin
@@ -255,8 +255,8 @@ module br_fifo_ctrl_1r1w_gen_tb;
     end else begin
       $display($sformatf({"Test test_RamReadLatencyVerification ","FAILED"}));
     end
-  
-  
+
+
     if ( err_count_arr.or() !== 0) begin
       $display("TEST FAILED");
       $finish(1);
@@ -266,7 +266,7 @@ module br_fifo_ctrl_1r1w_gen_tb;
     end
   end
 
-  
+
   task automatic test_BasicPushPopFunctionality;
     fork
       begin
@@ -277,20 +277,20 @@ module br_fifo_ctrl_1r1w_gen_tb;
       end
       begin
         // This task tests the basic push and pop functionality of the FIFO by pushing data until full and then popping until empty.
-        
+
         // Local variables declaration
         int test_failed = 0;
         int data_pushed;
         int data_popped;
         logic[Width-1:0] random_data;
-        
+
         // Wait for the positive edge of the clock to ensure proper stimulus propagation
         @(posedge clk);
-        
+
         // Initialize variables
         data_pushed = 0;
         data_popped = 0;
-        
+
         // Push data into the FIFO until it is full
         while (!full) begin
           random_data = $urandom();
@@ -303,7 +303,7 @@ module br_fifo_ctrl_1r1w_gen_tb;
               $display($sformatf({"Time: %0t, INFO: ","test_BasicPushPopFunctionality - Pushed ","data: 0x%h, Total pushed: %0d"}, $time, random_data, data_pushed));
           end
         end
-        
+
         // Check if FIFO is full
         if (!full) begin
           $display($sformatf({"Time: %0t, ERROR: ","test_BasicPushPopFunctionality - FIFO ","not full as expected."}, $time));
@@ -312,11 +312,11 @@ module br_fifo_ctrl_1r1w_gen_tb;
           if (ENABLE_INFO_MESSAGES == 1)
             $display($sformatf({"Time: %0t, INFO: ","test_BasicPushPopFunctionality - FIFO is"," full as expected."}, $time));
         end
-        
+
         // Deassert push_valid and start popping data
         push_valid = 0;
         pop_ready = 1;
-        
+
         // Pop data from the FIFO until it is empty
         while (!empty) begin
           @(posedge clk);
@@ -326,7 +326,7 @@ module br_fifo_ctrl_1r1w_gen_tb;
               $display($sformatf({"Time: %0t, INFO: ","test_BasicPushPopFunctionality - Popped ","data: 0x%h, Total popped: %0d"}, $time, pop_data, data_popped));
           end
         end
-        
+
         // Check if FIFO is empty
         if (!empty) begin
           $display($sformatf({"Time: %0t, ERROR: ","test_BasicPushPopFunctionality - FIFO ","not empty as expected."}, $time));
@@ -335,7 +335,7 @@ module br_fifo_ctrl_1r1w_gen_tb;
           if (ENABLE_INFO_MESSAGES == 1)
             $display($sformatf({"Time: %0t, INFO: ","test_BasicPushPopFunctionality - FIFO is"," empty as expected."}, $time));
         end
-        
+
         // Final test status
         if (test_failed == 0) begin
           $display($sformatf({"Time: %0t, PASSED: ","test_BasicPushPopFunctionality"}, $time));
@@ -347,8 +347,8 @@ module br_fifo_ctrl_1r1w_gen_tb;
     join_any
     disable fork;
   endtask
-  
-  
+
+
   task automatic test_BypassModeVerification;
     fork
       begin
@@ -364,30 +364,30 @@ module br_fifo_ctrl_1r1w_gen_tb;
         logic[Width-1:0] expected_data;
         logic[Width-1:0] observed_data;
         logic bypass_ready;
-        
+
         // Initial delay to ensure proper stimulus propagation
         @(posedge clk);
-        
+
         // Step 1: Set EnableBypass to 1 and assert push_valid with data on push_data
         push_valid = 1'b1;
         push_data = $urandom_range(0, (1 << Width) - 1);
         expected_data = push_data;
         $display($sformatf({"Time: %0t, INFO: ","test_BypassModeVerification - Driving ","push_valid=1, push_data=0x%h"}, $time, push_data));
-        
+
         // Wait for bypass_ready to be driven high by the design
         wait (push_ready == 1'b1);
         if (ENABLE_INFO_MESSAGES == 1)
           $display($sformatf({"Time: %0t, INFO: ","test_BypassModeVerification - Bypass ","ready detected"}, $time));
-        
+
         // Step 2: Assert pop_ready and monitor pop_valid
         pop_ready = 1'b1;
         $display($sformatf({"Time: %0t, INFO: ","test_BypassModeVerification - Driving ","pop_ready=1"}, $time));
-        
+
         // Wait for pop_valid to be driven high by the design
         wait (pop_valid == 1'b1);
         if (ENABLE_INFO_MESSAGES == 1)
           $display($sformatf({"Time: %0t, INFO: ","test_BypassModeVerification - pop_valid ","asserted"}, $time));
-        
+
         // Step 3: Read pop_data and verify it matches push_data
         observed_data = pop_data;
         if (observed_data !== expected_data) begin
@@ -397,11 +397,11 @@ module br_fifo_ctrl_1r1w_gen_tb;
           if (ENABLE_INFO_MESSAGES == 1)
             $display($sformatf({"Time: %0t, INFO: ","test_BypassModeVerification - Data match"," confirmed. Expected and observed data: ","0x%h"}, $time, observed_data));
         end
-        
+
         // Reset signals
         push_valid = 1'b0;
         pop_ready = 1'b0;
-        
+
         // Final test status
         if (test_failed == 0) begin
           $display($sformatf({"Time: %0t, PASSED: ","test_BypassModeVerification"}, $time));
@@ -413,8 +413,8 @@ module br_fifo_ctrl_1r1w_gen_tb;
     join_any
     disable fork;
   endtask
-  
-  
+
+
   task automatic test_FullAndEmptyStatusUpdate;
     fork
       begin
@@ -425,23 +425,23 @@ module br_fifo_ctrl_1r1w_gen_tb;
       end
       begin
         // This task verifies that the FIFO accurately updates its full and empty status flags based on push and pop operations, reflecting its occupancy state.
-        
+
         // Local variables declaration
         int test_failed = 0;
         int data_to_push;
         int push_count = 0;
         int pop_count = 0;
         int max_push_count = Depth;
-        
+
         // Initial delay to ensure reset is complete
         @(posedge clk);
-        
+
         // Step 1: Drive `push_valid` high and provide data on `push_data`
         while (push_count < max_push_count) begin
           data_to_push = $urandom_range(0, (1 << Width) - 1);
           push_valid = 1;
           push_data = data_to_push;
-          
+
           if (push_ready) begin
             push_count++;
             if (ENABLE_INFO_MESSAGES == 1)
@@ -449,20 +449,20 @@ module br_fifo_ctrl_1r1w_gen_tb;
           end
           @(posedge clk);
         end
-        
+
         // Wait for `full` to be asserted
         while (!full) begin
           @(posedge clk);
         end
-        
+
         if (ENABLE_INFO_MESSAGES == 1)
           $display($sformatf({"Time: %0t, INFO: ","test_FullAndEmptyStatusUpdate - FIFO is ","full"}, $time));
-        
+
         // Step 2: Deassert `push_valid` and assert `pop_ready`
         push_valid = 0;
         pop_ready = 1;
         @(posedge clk);
-        
+
         // Wait for `empty` to be asserted
         if (EnableBypass) begin
           while (!empty) begin
@@ -474,10 +474,10 @@ module br_fifo_ctrl_1r1w_gen_tb;
             @(posedge clk);
           end
         end
-        
+
         if (ENABLE_INFO_MESSAGES == 1)
           $display($sformatf({"Time: %0t, INFO: ","test_FullAndEmptyStatusUpdate - FIFO is ","empty"}, $time));
-        
+
         // Step 3: Verify `full_next` and `empty_next` signals
         if (full_next != 0) begin
           $display($sformatf({"Time: %0t, ERROR: ","test_FullAndEmptyStatusUpdate - Expected"," full_next to be 1, got %0b"}, $time, full_next));
@@ -485,14 +485,14 @@ module br_fifo_ctrl_1r1w_gen_tb;
         end else if (ENABLE_INFO_MESSAGES == 1) begin
           $display($sformatf({"Time: %0t, INFO: ","test_FullAndEmptyStatusUpdate - ","full_next is correctly 1"}, $time));
         end
-        
+
         if (empty_next != 1) begin
           $display($sformatf({"Time: %0t, ERROR: ","test_FullAndEmptyStatusUpdate - Expected"," empty_next to be 1, got %0b"}, $time, empty_next));
           test_failed = 1;
         end else if (ENABLE_INFO_MESSAGES == 1) begin
           $display($sformatf({"Time: %0t, INFO: ","test_FullAndEmptyStatusUpdate - ","empty_next is correctly 1"}, $time));
         end
-        
+
         // Final test status
         if (test_failed == 0) begin
           $display($sformatf({"Time: %0t, PASSED: ","test_FullAndEmptyStatusUpdate"}, $time));
@@ -504,8 +504,8 @@ module br_fifo_ctrl_1r1w_gen_tb;
     join_any
     disable fork;
   endtask
-  
-  
+
+
   task automatic test_PushBackpressureHandling;
     fork
       begin
@@ -516,14 +516,14 @@ module br_fifo_ctrl_1r1w_gen_tb;
       end
       begin
         // This task verifies that the FIFO correctly handles backpressure on the push interface by managing data flow when it is full and cannot accept new data.
-        
+
         // Local variables declaration
         int test_failed = 0;
         logic[Width-1:0] random_data;
-        
+
         // Initial delay to ensure proper stimulus propagation
         @(posedge clk);
-        
+
         // Step 1: Drive push_valid high and push_data with random values until FIFO is full
         while (!full) begin
           random_data = $urandom_range(0, (1 << Width) - 1);
@@ -533,14 +533,14 @@ module br_fifo_ctrl_1r1w_gen_tb;
           if (ENABLE_INFO_MESSAGES == 1)
             $display($sformatf({"Time: %0t, INFO: ","test_PushBackpressureHandling - Driving ","push_valid=1, push_data=0x%h"}, $time, random_data));
         end
-        
+
         // Step 2: Continue asserting push_valid and monitor push_ready for backpressure
         while (push_ready) begin
           @(posedge clk);
           if (ENABLE_INFO_MESSAGES == 1)
             $display($sformatf({"Time: %0t, INFO: ","test_PushBackpressureHandling - ","Monitoring push_ready for backpressure"}, $time));
         end
-        
+
         // Step 3: Verify push_valid remains high and push_data remains stable during backpressure
         if (push_valid !== 1'b1 || push_data !== random_data) begin
           $display($sformatf({"Time: %0t, ERROR: ","test_PushBackpressureHandling - Check ","failed. Expected push_valid=1, ","push_data=0x%h, got push_valid=%b, ","push_data=0x%h"}, $time, random_data, push_valid, push_data));
@@ -549,7 +549,7 @@ module br_fifo_ctrl_1r1w_gen_tb;
           if (ENABLE_INFO_MESSAGES == 1)
             $display($sformatf({"Time: %0t, INFO: ","test_PushBackpressureHandling - Check ","passed. push_valid and push_data are ","stable during backpressure."}, $time));
         end
-        
+
         // Final test status
         if (test_failed == 0) begin
           $display($sformatf({"Time: %0t, PASSED: ","test_PushBackpressureHandling"}, $time));
@@ -561,8 +561,8 @@ module br_fifo_ctrl_1r1w_gen_tb;
     join_any
     disable fork;
   endtask
-  
-  
+
+
   task automatic test_RamReadLatencyVerification;
     fork
       begin
@@ -573,31 +573,31 @@ module br_fifo_ctrl_1r1w_gen_tb;
       end
       begin
         // This task verifies that the FIFO correctly handles RAM read latency and synchronizes data availability at the pop interface based on the `RamReadLatency` parameter, which is set to 0.
-        
+
         // Local variables declaration
         int test_failed = 0;
         logic[Width-1:0] expected_data;
         logic[Width-1:0] observed_data;
         logic[Width-1:0] random_data;
-        
+
         // Initial delay to ensure proper stimulus propagation
         @(posedge clk);
-        
+
         // Generate random data for push_data
         random_data = $urandom();
-        
+
         // Drive push_valid high with random data on push_data
         push_valid = 1'b1;
         push_data = random_data;
         $display($sformatf({"Time: %0t, INFO: ","test_RamReadLatencyVerification - ","Driving push_valid=1, push_data=0x%h"}, $time, push_data));
-        
+
         // Wait for ram_rd_addr_valid to be driven high by the design
         @(posedge clk);
         while (!ram_wr_valid) begin
           @(posedge clk);
         end
         $display($sformatf({"Time: %0t, INFO: ","test_RamReadLatencyVerification - ","Detected ram_wr_valid=1"}, $time));
-        
+
         // Assert pop_ready and wait for pop_valid to be driven high
         pop_ready = 1'b1;
         @(posedge clk);
@@ -605,7 +605,7 @@ module br_fifo_ctrl_1r1w_gen_tb;
           @(posedge clk);
         end
         $display($sformatf({"Time: %0t, INFO: ","test_RamReadLatencyVerification - ","Detected pop_valid=1"}, $time));
-        
+
         // Read pop_data and verify it matches push_data
         observed_data = pop_data;
         expected_data = random_data;
@@ -616,11 +616,11 @@ module br_fifo_ctrl_1r1w_gen_tb;
           if (ENABLE_INFO_MESSAGES == 1)
             $display($sformatf({"Time: %0t, INFO: ","test_RamReadLatencyVerification - Check ","passed. Expected value for pop_data is ","the same as the observed value (both are"," 0x%h)."}, $time, observed_data));
         end
-        
+
         // Reset signals
         push_valid = 1'b0;
         pop_ready = 1'b0;
-        
+
         // Final test status
         if (test_failed == 0) begin
           $display($sformatf({"Time: %0t, PASSED: ","test_RamReadLatencyVerification"}, $time));
@@ -632,6 +632,5 @@ module br_fifo_ctrl_1r1w_gen_tb;
     join_any
     disable fork;
   endtask
-  
+
 endmodule
-  

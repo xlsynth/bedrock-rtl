@@ -31,8 +31,8 @@ module br_fifo_flops_push_credit_gen_tb;
   parameter int CLOCK_FREQ_NS_CONVERSION_FACTOR = 1000; // Conversion factor to nanoseconds
   parameter int NO_ASSERTS_ON_RESET = 1;  // Disable assertions during reset
   parameter int ENABLE_CHECKS = 1;  // Enable checks
-  
-    
+
+
   //===========================================================
   // DUT Parameters
   //===========================================================
@@ -86,7 +86,7 @@ module br_fifo_flops_push_credit_gen_tb;
   // DUT Instantiation
   //===========================================================
 // Clock to DUT is inverted to avoid race condition between DUT and TB
-  br_fifo_flops_push_credit 
+  br_fifo_flops_push_credit
       #(
           .Depth(Depth),
           .Width(Width),
@@ -125,7 +125,7 @@ module br_fifo_flops_push_credit_gen_tb;
           .items(items),
           .items_next(items_next)
       );
-      
+
 
   //===========================================================
   // Clock Generation
@@ -134,7 +134,7 @@ module br_fifo_flops_push_credit_gen_tb;
     clk = 1'b0;
     forever #(CLOCK_FREQ_NS_CONVERSION_FACTOR/(2*CLOCK_FREQ)) clk = ~clk;
   end
-  
+
 
   //===========================================================
   // Reset Generation
@@ -148,7 +148,7 @@ module br_fifo_flops_push_credit_gen_tb;
     pop_ready <= 'h0;
     credit_initial_push <= 'h0;
     credit_withhold_push <= 'h0;
-  
+
     // Wiggling the reset signal.
     rst = 1'bx;
     push_sender_in_reset = 1'bx;
@@ -175,7 +175,7 @@ module br_fifo_flops_push_credit_gen_tb;
     TotalTestsIdx
   } test_names_e;
   int err_count_arr[TotalTestsIdx] = '{default: '0};
-  
+
   `ifdef WAVES_AS_FSDB
      bit enable_fsdb;
   `endif
@@ -198,27 +198,27 @@ module br_fifo_flops_push_credit_gen_tb;
       end
     end
   `endif
-    
-        
+
+
   //===========================================================
   // Initial Block to Call Tasks
   //===========================================================
   initial begin
     reset_dut();
     test_BasicPushAndPop();
-  
+
     reset_dut();
     test_CreditManagementWithStall();
-  
+
     reset_dut();
     test_BypassModeVerification();
-  
+
     reset_dut();
     test_FullAndEmptyStatusManagement();
-  
+
     reset_dut();
     test_SlotsAndItemsTracking();
-  
+
     if (err_count_arr[test_BasicPushAndPopIdx] == 0) begin
       $display("Test test_BasicPushAndPop PASSED");
     end else if (err_count_arr[test_BasicPushAndPopIdx] == -1) begin
@@ -226,7 +226,7 @@ module br_fifo_flops_push_credit_gen_tb;
     end else begin
       $display("Test test_BasicPushAndPop FAILED");
     end
-  
+
     if (err_count_arr[test_CreditManagementWithStallIdx] == 0) begin
       $display($sformatf({"Test test_CreditManagementWithStall ","PASSED"}));
     end else if (err_count_arr[test_CreditManagementWithStallIdx] == -1) begin
@@ -234,7 +234,7 @@ module br_fifo_flops_push_credit_gen_tb;
     end else begin
       $display($sformatf({"Test test_CreditManagementWithStall ","FAILED"}));
     end
-  
+
     if (err_count_arr[test_BypassModeVerificationIdx] == 0) begin
       $display($sformatf({"Test test_BypassModeVerification PASSED"}));
     end else if (err_count_arr[test_BypassModeVerificationIdx] == -1) begin
@@ -242,7 +242,7 @@ module br_fifo_flops_push_credit_gen_tb;
     end else begin
       $display($sformatf({"Test test_BypassModeVerification FAILED"}));
     end
-  
+
     if (err_count_arr[test_FullAndEmptyStatusManagementIdx] == 0) begin
       $display($sformatf({"Test test_FullAndEmptyStatusManagement ","PASSED"}));
     end else if (err_count_arr[test_FullAndEmptyStatusManagementIdx] == -1) begin
@@ -250,7 +250,7 @@ module br_fifo_flops_push_credit_gen_tb;
     end else begin
       $display($sformatf({"Test test_FullAndEmptyStatusManagement ","FAILED"}));
     end
-  
+
     if (err_count_arr[test_SlotsAndItemsTrackingIdx] == 0) begin
       $display("Test test_SlotsAndItemsTracking PASSED");
     end else if (err_count_arr[test_SlotsAndItemsTrackingIdx] == -1) begin
@@ -258,8 +258,8 @@ module br_fifo_flops_push_credit_gen_tb;
     end else begin
       $display("Test test_SlotsAndItemsTracking FAILED");
     end
-  
-  
+
+
     if ( err_count_arr.or() !== 0) begin
       $display("TEST FAILED");
       $finish(1);
@@ -269,7 +269,7 @@ module br_fifo_flops_push_credit_gen_tb;
     end
   end
 
-  
+
   task automatic test_BasicPushAndPop;
     fork
       begin
@@ -280,16 +280,16 @@ module br_fifo_flops_push_credit_gen_tb;
       end
       begin
         // This task verifies the FIFO's ability to handle push and pop operations while maintaining data integrity and adhering to flow control protocols.
-        
+
         // Local variables declaration
         int test_failed = 0;
         int constant_push_data;
         int push_count = 0;
         int pop_count = 0;
-        
+
         // Initialize constant_push_data with a random value
         constant_push_data = $urandom_range(0, (1 << Width) - 1);
-        
+
         // Wait for the FIFO to be empty after reset
         @(posedge clk);
         while (!empty) begin
@@ -297,7 +297,7 @@ module br_fifo_flops_push_credit_gen_tb;
         end
         if (ENABLE_INFO_MESSAGES == 1)
           $display($sformatf({"Time: %0t, INFO: test_BasicPushAndPop - ","FIFO is empty after reset."}, $time));
-        
+
         // Deassert reset and set credit_initial_push to Depth
         credit_initial_push = Depth;
         @(posedge clk);
@@ -305,7 +305,7 @@ module br_fifo_flops_push_credit_gen_tb;
         push_sender_in_reset = 0;
         if (ENABLE_INFO_MESSAGES == 1)
           $display($sformatf({"Time: %0t, INFO: test_BasicPushAndPop - ","Reset deasserted and credit_initial_push"," set to Depth."}, $time));
-        
+
         // Assert push_valid and drive push_data with constant_push_data
         push_valid = 1;
         push_data = constant_push_data;
@@ -317,7 +317,7 @@ module br_fifo_flops_push_credit_gen_tb;
           end
           @(posedge clk);
         end
-        
+
         // Assert pop_ready and wait for pop_valid
         pop_ready = 1;
         push_valid = 0;
@@ -326,7 +326,7 @@ module br_fifo_flops_push_credit_gen_tb;
         end
         if (ENABLE_INFO_MESSAGES == 1)
           $display($sformatf({"Time: %0t, INFO: test_BasicPushAndPop - ","pop_valid asserted, data available for ","popping."}, $time));
-        
+
         // Read pop_data and verify it matches constant_push_data
         while (!empty) begin
           if (pop_valid && pop_ready) begin
@@ -341,7 +341,7 @@ module br_fifo_flops_push_credit_gen_tb;
           end
           @(posedge clk);
         end
-        
+
         // Check if FIFO is empty after all data is popped
         if (!empty) begin
           $display($sformatf({"Time: %0t, ERROR: test_BasicPushAndPop -"," FIFO not empty after popping all data."}, $time));
@@ -349,7 +349,7 @@ module br_fifo_flops_push_credit_gen_tb;
         end else if (ENABLE_INFO_MESSAGES == 1) begin
           $display($sformatf({"Time: %0t, INFO: test_BasicPushAndPop - ","FIFO is empty after all data is popped."}, $time));
         end
-        
+
         // Final test status
         if (test_failed == 0) begin
           $display($sformatf({"Time: %0t, PASSED: test_BasicPushAndPop"}, $time));
@@ -361,8 +361,8 @@ module br_fifo_flops_push_credit_gen_tb;
     join_any
     disable fork;
   endtask
-  
-  
+
+
   task automatic test_CreditManagementWithStall;
     fork
       begin
@@ -373,17 +373,17 @@ module br_fifo_flops_push_credit_gen_tb;
       end
       begin
         // This task tests the FIFO's credit management functionality, focusing on handling credit stalls and updating credit counts accurately.
-        
+
         // Local variables declaration
         int test_failed = 0;
         int random_data;
         int initial_credits;
         int expected_credit_count;
         int expected_credit_available;
-        
+
         // Initial delay to ensure stimulus propagation
         @(posedge clk);
-        
+
         // Step 1: Assert reset and wait for FIFO to be empty
         rst = 1'b1;
         push_sender_in_reset = 1'b1;
@@ -394,14 +394,14 @@ module br_fifo_flops_push_credit_gen_tb;
         while (empty !== 1'b1) @(posedge clk);
         if (ENABLE_INFO_MESSAGES == 1)
           $display($sformatf({"Time: %0t, INFO: ","test_CreditManagementWithStall - FIFO is"," empty after reset."}, $time));
-        
+
         // Step 2: Deassert reset and set initial credits
         initial_credits = 5;
         credit_initial_push = initial_credits;
         @(posedge clk);
         if (ENABLE_INFO_MESSAGES == 1)
           $display($sformatf({"Time: %0t, INFO: ","test_CreditManagementWithStall - Initial"," credits set to %0d."}, $time, initial_credits));
-        
+
         // Step 3: Assert push_valid and drive push_data with random value
         random_data = $urandom_range(0, (1 << Width) - 1);
         push_valid = 1'b1;
@@ -409,39 +409,39 @@ module br_fifo_flops_push_credit_gen_tb;
         @(posedge clk);
         if (ENABLE_INFO_MESSAGES == 1)
           $display($sformatf({"Time: %0t, INFO: ","test_CreditManagementWithStall - Driving"," push_valid=1, push_data=0x%h."}, $time, random_data));
-        
+
         // Step 4: Assert push_credit_stall and wait for push_credit to be deasserted
         push_credit_stall = 1'b1;
         @(posedge clk);
         while (push_credit !== 1'b0) @(posedge clk);
         if (ENABLE_INFO_MESSAGES == 1)
           $display($sformatf({"Time: %0t, INFO: ","test_CreditManagementWithStall - ","push_credit deasserted due to stall."}, $time));
-        
+
         // Step 5: Deassert push_credit_stall and wait for push_credit to be asserted
         push_credit_stall = 1'b0;
         @(posedge clk);
         while (push_credit !== 1'b1) @(posedge clk);
         if (ENABLE_INFO_MESSAGES == 1)
           $display($sformatf({"Time: %0t, INFO: ","test_CreditManagementWithStall - ","push_credit asserted, push operations ","can resume."}, $time));
-        
+
         // Step 6: Verify credit management
         expected_credit_count = initial_credits - 1;
         expected_credit_available = (expected_credit_count > 0) ? 1 : 0;
-        
+
         if (credit_count_push !== expected_credit_count) begin
           $display($sformatf({"Time: %0t, ERROR: ","test_CreditManagementWithStall - Credit ","count mismatch. Expected %0d, got %0d."}, $time, expected_credit_count, credit_count_push));
           test_failed = 1;
         end else if (ENABLE_INFO_MESSAGES == 1) begin
           $display($sformatf({"Time: %0t, INFO: ","test_CreditManagementWithStall - Credit ","count correct. Expected and observed ","value: %0d."}, $time, credit_count_push));
         end
-        
+
         if (credit_available_push !== expected_credit_available) begin
           $display($sformatf({"Time: %0t, ERROR: ","test_CreditManagementWithStall - Credit ","availability mismatch. Expected %0d, got"," %0d."}, $time, expected_credit_available, credit_available_push));
           test_failed = 1;
         end else if (ENABLE_INFO_MESSAGES == 1) begin
           $display($sformatf({"Time: %0t, INFO: ","test_CreditManagementWithStall - Credit ","availability correct. Expected and ","observed value: %0d."}, $time, credit_available_push));
         end
-        
+
         // Final test status
         if (test_failed == 0) begin
           $display($sformatf({"Time: %0t, PASSED: ","test_CreditManagementWithStall"}, $time));
@@ -453,8 +453,8 @@ module br_fifo_flops_push_credit_gen_tb;
     join_any
     disable fork;
   endtask
-  
-  
+
+
   task automatic test_BypassModeVerification;
     fork
       begin
@@ -465,34 +465,34 @@ module br_fifo_flops_push_credit_gen_tb;
       end
       begin
         // Task to verify the bypass mode functionality of the FIFO, ensuring zero-cycle latency from push to pop when the FIFO is empty.
-        
+
         // Local variables declaration
         int test_failed = 0;
         int data_value;
         int num_tests = 5;
-        
+
         // Wait for the FIFO to be reset and empty
         @(posedge clk);
         while (!empty) @(posedge clk);
         if (ENABLE_INFO_MESSAGES == 1)
           $display($sformatf({"Time: %0t, INFO: ","test_BypassModeVerification - FIFO is ","empty after reset."}, $time));
-        
+
         // Deassert reset and wait for a few clock cycles
         @(posedge clk);
         @(posedge clk);
         @(posedge clk);
-        
+
         // Repeat the test for multiple data values
         for (int i = 0; i < num_tests; i++) begin
           // Generate a random data value
           data_value = $urandom_range(0, (1 << Width) - 1);
-          
+
           // Drive push_valid and push_data
           push_valid = 1;
           push_data = data_value;
           if (ENABLE_INFO_MESSAGES == 1)
             $display($sformatf({"Time: %0t, INFO: ","test_BypassModeVerification - Driving ","push_valid=1, push_data=0x%h."}, $time, data_value));
-        
+
           // Assert pop_ready and check for immediate pop_valid
           pop_ready = 1;
           @(posedge clk);
@@ -503,13 +503,13 @@ module br_fifo_flops_push_credit_gen_tb;
             $display($sformatf({"Time: %0t, ERROR: ","test_BypassModeVerification - pop_valid ","not asserted or pop_data mismatch. ","Expected 0x%h, got 0x%h."}, $time, data_value, pop_data));
             test_failed = 1;
           end
-        
+
           // Deassert signals for the next iteration
           push_valid = 0;
           pop_ready = 0;
           @(posedge clk);
         end
-        
+
         // Check test result
         if (test_failed == 0) begin
           $display($sformatf({"Time: %0t, PASSED: ","test_BypassModeVerification"}, $time));
@@ -521,8 +521,8 @@ module br_fifo_flops_push_credit_gen_tb;
     join_any
     disable fork;
   endtask
-  
-  
+
+
   task automatic test_FullAndEmptyStatusManagement;
     fork
       begin
@@ -533,17 +533,17 @@ module br_fifo_flops_push_credit_gen_tb;
       end
       begin
         // Task to verify the FIFO's full and empty status management during push and pop operations.
-        
+
         // Local variables declaration
         int test_failed = 0;
         int random_data;
         int push_count = 0;
         int pop_count = 0;
         localparam int MAX_PUSH_COUNT = Depth;
-        
+
         // Ensure adequate stimulus propagation time
         @(posedge clk);
-        
+
         // Step 1: Assert reset and wait for FIFO to be empty
         rst = 1'b1;
         push_sender_in_reset = 1'b1;
@@ -551,14 +551,14 @@ module br_fifo_flops_push_credit_gen_tb;
         rst = 1'b0;
         push_sender_in_reset = 1'b0;
         @(posedge clk);
-        
+
         // Wait for the FIFO to be empty
         while (!empty) begin
           @(posedge clk);
         end
         if (ENABLE_INFO_MESSAGES == 1)
           $display($sformatf({"Time: %0t, INFO: ","test_FullAndEmptyStatusManagement - FIFO"," is empty after reset."}, $time));
-        
+
         // Step 2: Deassert reset, assert push_valid, and drive random data until FIFO is full
         push_valid = 1'b1;
         while (!full) begin
@@ -569,7 +569,7 @@ module br_fifo_flops_push_credit_gen_tb;
           if (ENABLE_INFO_MESSAGES == 1)
             $display($sformatf({"Time: %0t, INFO: ","test_FullAndEmptyStatusManagement - ","Pushed data: 0x%h, push_count: %0d"}, $time, random_data, push_count));
         end
-        
+
         // Check if FIFO is full
         if (!full) begin
           $display($sformatf({"Time: %0t, ERROR: ","test_FullAndEmptyStatusManagement - FIFO"," should be full but is not."}, $time));
@@ -577,7 +577,7 @@ module br_fifo_flops_push_credit_gen_tb;
         end else if (ENABLE_INFO_MESSAGES == 1) begin
           $display($sformatf({"Time: %0t, INFO: ","test_FullAndEmptyStatusManagement - FIFO"," is full."}, $time));
         end
-        
+
         // Step 3: Assert pop_ready and pop data until FIFO is empty
         pop_ready = 1'b1;
         push_valid = 0;
@@ -589,7 +589,7 @@ module br_fifo_flops_push_credit_gen_tb;
               $display($sformatf({"Time: %0t, INFO: ","test_FullAndEmptyStatusManagement - ","Popped data: 0x%h, pop_count: %0d"}, $time, pop_data, pop_count));
           end
         end
-        
+
         // Check if FIFO is empty
         if (!empty) begin
           $display($sformatf({"Time: %0t, ERROR: ","test_FullAndEmptyStatusManagement - FIFO"," should be empty but is not."}, $time));
@@ -597,7 +597,7 @@ module br_fifo_flops_push_credit_gen_tb;
         end else if (ENABLE_INFO_MESSAGES == 1) begin
           $display($sformatf({"Time: %0t, INFO: ","test_FullAndEmptyStatusManagement - FIFO"," is empty."}, $time));
         end
-        
+
         // Step 4: Verify full_next and empty_next signals
         if (full_next !== (push_count == MAX_PUSH_COUNT)) begin
           $display($sformatf({"Time: %0t, ERROR: ","test_FullAndEmptyStatusManagement - ","full_next signal incorrect. Expected: ","%0b, Got: %0b"}, $time, (push_count == MAX_PUSH_COUNT), full_next));
@@ -605,14 +605,14 @@ module br_fifo_flops_push_credit_gen_tb;
         end else if (ENABLE_INFO_MESSAGES == 1) begin
           $display($sformatf({"Time: %0t, INFO: ","test_FullAndEmptyStatusManagement - ","full_next signal correct."}, $time));
         end
-        
+
         if (empty_next !== (pop_count == MAX_PUSH_COUNT)) begin
           $display($sformatf({"Time: %0t, ERROR: ","test_FullAndEmptyStatusManagement - ","empty_next signal incorrect. Expected: ","%0b, Got: %0b"}, $time, (pop_count == MAX_PUSH_COUNT), empty_next));
           test_failed = 1;
         end else if (ENABLE_INFO_MESSAGES == 1) begin
           $display($sformatf({"Time: %0t, INFO: ","test_FullAndEmptyStatusManagement - ","empty_next signal correct."}, $time));
         end
-        
+
         // Final test status
         if (test_failed == 0) begin
           $display($sformatf({"Time: %0t, PASSED: ","test_FullAndEmptyStatusManagement"}, $time));
@@ -624,8 +624,8 @@ module br_fifo_flops_push_credit_gen_tb;
     join_any
     disable fork;
   endtask
-  
-  
+
+
   task automatic test_SlotsAndItemsTracking;
     fork
       begin
@@ -636,16 +636,16 @@ module br_fifo_flops_push_credit_gen_tb;
       end
       begin
         // This task verifies that the FIFO accurately tracks its occupancy and available space during push and pop operations.
-        
+
         // Local variables declaration
         int test_failed = 0;
         int data_word;
         int expected_slots;
         int expected_items;
-        
+
         // Initial delay to ensure reset propagation
         @(posedge clk);
-        
+
         // Step 1: Assert reset and wait for FIFO to be empty
         rst = 1'b1;
         push_sender_in_reset = 1'b1;
@@ -654,29 +654,29 @@ module br_fifo_flops_push_credit_gen_tb;
         rst = 1'b0;
         push_sender_in_reset = 1'b0;
         @(posedge clk);
-        
+
         if (ENABLE_INFO_MESSAGES == 1)
           $display($sformatf({"Time: %0t, INFO: ","test_SlotsAndItemsTracking - Reset ","asserted and deasserted."}, $time));
-        
+
         // Wait for FIFO to be empty
         while (!empty) begin
           @(posedge clk);
         end
-        
+
         if (ENABLE_INFO_MESSAGES == 1)
           $display($sformatf({"Time: %0t, INFO: ","test_SlotsAndItemsTracking - FIFO is ","empty."}, $time));
-        
+
         // Step 2: Deassert reset, assert push_valid, and drive push_data
         data_word = $urandom_range(0, (1 << Width) - 1);
         push_valid = 1'b1;
         push_data = data_word;
         expected_slots = slots - 1;
-        
+
         @(posedge clk);
-        
+
         if (ENABLE_INFO_MESSAGES == 1)
           $display($sformatf({"Time: %0t, INFO: ","test_SlotsAndItemsTracking - Driving ","push_valid=1, push_data=0x%h."}, $time, data_word));
-        
+
         // Check if slots decrease by one
         if (slots != expected_slots) begin
           $display($sformatf({"Time: %0t, ERROR: ","test_SlotsAndItemsTracking - Slots check"," failed. Expected %0d, got %0d."}, $time, expected_slots, slots));
@@ -685,30 +685,30 @@ module br_fifo_flops_push_credit_gen_tb;
           if (ENABLE_INFO_MESSAGES == 1)
             $display($sformatf({"Time: %0t, INFO: ","test_SlotsAndItemsTracking - Slots check"," passed. Expected and observed value is ","%0d."}, $time, slots));
         end
-        
+
         // Step 3: Wait for FIFO to be full
         while (!full) begin
           @(posedge clk);
         end
-        
+
         if (ENABLE_INFO_MESSAGES == 1)
           $display($sformatf({"Time: %0t, INFO: ","test_SlotsAndItemsTracking - FIFO is ","full."}, $time));
-        
+
         // Step 4: Assert pop_ready and wait for pop_valid
          // Step 5: Continue popping data and monitor items
         expected_items = items - 1;
         pop_ready = 1'b1;
         push_valid = 1'b0;
         @(posedge clk);
-        
+
         while (!pop_valid) begin
           @(posedge clk);
         end
-        
+
         if (ENABLE_INFO_MESSAGES == 1)
           $display($sformatf({"Time: %0t, INFO: ","test_SlotsAndItemsTracking - pop_valid ","is high, data available for popping."}, $time));
-        
-                
+
+
         if (items != expected_items) begin
           $display($sformatf({"Time: %0t, ERROR: ","test_SlotsAndItemsTracking - Items check"," failed. Expected %0d, got %0d."}, $time, expected_items, items));
           test_failed = 1;
@@ -716,15 +716,15 @@ module br_fifo_flops_push_credit_gen_tb;
           if (ENABLE_INFO_MESSAGES == 1)
             $display($sformatf({"Time: %0t, INFO: ","test_SlotsAndItemsTracking - Items check"," passed. Expected and observed value is ","%0d."}, $time, items));
         end
-        
+
         // Step 6: Wait for FIFO to be empty again
         while (!empty) begin
           @(posedge clk);
         end
-        
+
         if (ENABLE_INFO_MESSAGES == 1)
           $display($sformatf({"Time: %0t, INFO: ","test_SlotsAndItemsTracking - FIFO is ","empty again."}, $time));
-        
+
         // Final test status
         if (test_failed == 0) begin
           $display($sformatf({"Time: %0t, PASSED: ","test_SlotsAndItemsTracking"}, $time));
@@ -736,6 +736,5 @@ module br_fifo_flops_push_credit_gen_tb;
     join_any
     disable fork;
   endtask
-  
+
 endmodule
-  
