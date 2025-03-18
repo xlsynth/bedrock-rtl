@@ -396,22 +396,17 @@ module br_fifo_flops_gen_tb;
         if (ENABLE_INFO_MESSAGES == 1)
           $display($sformatf({"Time: %0t, INFO: ","test_BypassModeVerification - Driving ","push_valid=1, push_data=0x%h"}, $time, random_data));
 
-        // Wait for the FIFO to be empty
-        while (!empty) begin
-          @(posedge clk);
+        #1; // Allow for 0-cycle combinational delay from TB to DUT to TB
+
+        // Step 2: Verify that pop_valid == 1 and pop_data matches push_data
+        if (pop_valid !== 1'b1) begin
+          $display($sformatf({"Time: %0t, ERROR: ","test_BypassModeVerification - Check ","failed. Expected pop_valid=1, got pop_valid=%b"}, $time, pop_valid));
+          test_failed = 1;
+        end else begin
+          if (ENABLE_INFO_MESSAGES == 1)
+            $display($sformatf({"Time: %0t, INFO: ","test_BypassModeVerification - Check ","passed. Expected value for pop_valid is ","the same as the observed value (both are"," 0x%h)."}, $time, pop_valid));
         end
 
-        // Step 2: Assert pop_ready and wait for pop_valid
-        pop_ready = 1'b1;
-        if (ENABLE_INFO_MESSAGES == 1)
-          $display($sformatf({"Time: %0t, INFO: ","test_BypassModeVerification - Asserting ","pop_ready=1"}, $time));
-
-        // Wait for pop_valid to be asserted
-        while (!pop_valid) begin
-          @(posedge clk);
-        end
-
-        // Step 3: Verify that pop_data matches push_data
         if (pop_data !== random_data) begin
           $display($sformatf({"Time: %0t, ERROR: ","test_BypassModeVerification - Check ","failed. Expected pop_data=0x%h, got 0x%h"}, $time, random_data, pop_data));
           test_failed = 1;
