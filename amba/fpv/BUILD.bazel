@@ -1,4 +1,4 @@
-# Copyright 2024-2025 The Bedrock-RTL Authors
+# Copyright 2025 The Bedrock-RTL Authors
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -235,4 +235,31 @@ br_verilog_fpv_test_tools_suite(
     },
     top = "br_amba_atb_funnel",
     deps = [":br_amba_atb_funnel_fpv_monitor"],
+)
+
+# Bedrock-RTL AXI4-Lite MSI Generator
+
+verilog_library(
+    name = "br_amba_axil_msi_fpv_monitor",
+    srcs = ["br_amba_axil_msi_fpv_monitor.sv"],
+    deps = [
+        "//amba/rtl:br_amba_axil_msi",
+    ],
+)
+
+verilog_elab_test(
+    name = "br_amba_axil_msi_fpv_monitor_elab_test",
+    custom_tcl_header = "//:elab_test_jg_custom_header.verific.tcl",
+    tool = "verific",
+    deps = [":br_amba_axil_msi_fpv_monitor"],
+)
+
+br_verilog_fpv_test_tools_suite(
+    name = "br_amba_axil_msi_test_suite",
+    tools = {
+        "jg": "br_amba_axil_msi_fpv.jg.tcl",
+        "vcf": "",
+    },
+    top = "br_amba_axil_msi",
+    deps = [":br_amba_axil_msi_fpv_monitor"],
 )
