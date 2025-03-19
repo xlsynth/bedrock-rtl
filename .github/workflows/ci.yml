@@ -199,7 +199,7 @@ jobs:
         filename: python.json
         label: "python"
         message: ${{ needs.bazel-test-python.outputs.passing_tests }} of ${{ needs.bazel-test-python.outputs.total_tests }} passing
-        color: ${{ needs.bazel-test-python.outputs.exit_code == '0' && 'brightgreen' || 'brightred' }}
+        color: ${{ eq(needs.bazel-test-python.outputs.exit_code, '0') && 'brightgreen' || 'brightred' }}
 
   stardoc-badge:
     runs-on: ubuntu-latest
@@ -216,7 +216,7 @@ jobs:
         filename: stardoc.json
         label: "stardoc"
         message: ${{ needs.bazel-test-stardoc.outputs.passing_tests }} of ${{ needs.bazel-test-stardoc.outputs.total_tests }} passing
-        color: ${{ needs.bazel-test-stardoc.outputs.exit_code == '0' && 'brightgreen' || 'brightred' }}
+        color: ${{ eq(needs.bazel-test-stardoc.outputs.exit_code, '0') && 'brightgreen' || 'brightred' }}
 
   verific-badge:
     runs-on: ubuntu-latest
@@ -233,7 +233,7 @@ jobs:
         filename: verific.json
         label: "verific"
         message: ${{ needs.bazel-test-verific.outputs.passing_tests }} of ${{ needs.bazel-test-verific.outputs.total_tests }} passing
-        color: ${{ needs.bazel-test-verific.outputs.exit_code == '0' && 'brightgreen' || 'brightred' }}
+        color: ${{ eq(needs.bazel-test-verific.outputs.exit_code, '0') && 'brightgreen' || 'brightred' }}
 
   ascentlint-badge:
     runs-on: ubuntu-latest
@@ -250,7 +250,7 @@ jobs:
         filename: ascentlint.json
         label: "ascentlint"
         message: ${{ needs.bazel-test-ascentlint.outputs.passing_tests }} of ${{ needs.bazel-test-ascentlint.outputs.total_tests }} passing
-        color: ${{ needs.bazel-test-ascentlint.outputs.exit_code == '0' && 'brightgreen' || 'brightred' }}
+        color: ${{ eq(needs.bazel-test-ascentlint.outputs.exit_code, '0') && 'brightgreen' || 'brightred' }}
 
   dsim-badge:
     runs-on: ubuntu-latest
@@ -267,7 +267,7 @@ jobs:
         filename: dsim.json
         label: "dsim"
         message: ${{ needs.bazel-test-dsim.outputs.passing_tests }} of ${{ needs.bazel-test-dsim.outputs.total_tests }} passing
-        color: ${{ needs.bazel-test-dsim.outputs.exit_code == '0' && 'brightgreen' || 'brightred' }}
+        color: ${{ eq(needs.bazel-test-dsim.outputs.exit_code, '0') && 'brightgreen' || 'brightred' }}
 
   vcs-badge:
     runs-on: ubuntu-latest
@@ -284,7 +284,7 @@ jobs:
         filename: vcs.json
         label: "vcs"
         message: ${{ needs.bazel-test-vcs.outputs.passing_tests }} of ${{ needs.bazel-test-vcs.outputs.total_tests }} passing
-        color: ${{ needs.bazel-test-vcs.outputs.exit_code == '0' && 'brightgreen' || 'brightred' }}
+        color: ${{ eq(needs.bazel-test-vcs.outputs.exit_code, '0') && 'brightgreen' || 'brightred' }}
 
   iverilog-badge:
     runs-on: ubuntu-latest
@@ -301,4 +301,4 @@ jobs:
         filename: iverilog.json
         label: "iverilog"
         message: ${{ needs.bazel-test-iverilog.outputs.passing_tests }} of ${{ needs.bazel-test-iverilog.outputs.total_tests }} passing
-        color: ${{ needs.bazel-test-iverilog.outputs.exit_code == '0' && 'brightgreen' || 'brightred' }}
+        color: ${{ eq(needs.bazel-test-iverilog.outputs.exit_code, '0') && 'brightgreen' || 'brightred' }}
