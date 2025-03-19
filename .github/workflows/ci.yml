@@ -192,9 +192,7 @@ jobs:
         filename: python.json
         label: "python"
         message: ${{ needs.bazel-test-python.outputs.passing_tests }} of ${{ needs.bazel-test-python.outputs.total_tests }} passing
-        # Default color; if isError is true, it will get automatically overridden to red.
-        color: 'brightgreen'
-        isError: ${{ needs.bazel-test-python.result != 'success' }}
+        color: ${{ needs.bazel-test-python.result == 'success' && 'brightgreen' || 'brightred' }}
 
   bazel-test-stardoc-badge:
     runs-on: ubuntu-latest
@@ -211,9 +209,7 @@ jobs:
         filename: stardoc.json
         label: "stardoc"
         message: ${{ needs.bazel-test-stardoc.outputs.passing_tests }} of ${{ needs.bazel-test-stardoc.outputs.total_tests }} passing
-        # Default color; if isError is true, it will get automatically overridden to red.
-        color: 'brightgreen'
-        isError: ${{ needs.bazel-test-stardoc.result != 'success' }}
+        color: ${{ needs.bazel-test-stardoc.result == 'success' && 'brightgreen' || 'brightred' }}
 
   bazel-test-verific-badge:
     runs-on: ubuntu-latest
@@ -230,9 +226,7 @@ jobs:
         filename: verific.json
         label: "verific"
         message: ${{ needs.bazel-test-verific.outputs.passing_tests }} of ${{ needs.bazel-test-verific.outputs.total_tests }} passing
-        # Default color; if isError is true, it will get automatically overridden to red.
-        color: 'brightgreen'
-        isError: ${{ needs.bazel-test-verific.result != 'success' }}
+        color: ${{ needs.bazel-test-verific.result == 'success' && 'brightgreen' || 'brightred' }}
 
   bazel-test-ascentlint-badge:
     runs-on: ubuntu-latest
@@ -249,9 +243,7 @@ jobs:
         filename: ascentlint.json
         label: "ascentlint"
         message: ${{ needs.bazel-test-ascentlint.outputs.passing_tests }} of ${{ needs.bazel-test-ascentlint.outputs.total_tests }} passing
-        # Default color; if isError is true, it will get automatically overridden to red.
-        color: 'brightgreen'
-        isError: ${{ needs.bazel-test-ascentlint.result != 'success' }}
+        color: ${{ needs.bazel-test-ascentlint.result == 'success' && 'brightgreen' || 'brightred' }}
 
   bazel-test-dsim-badge:
     runs-on: ubuntu-latest
@@ -268,9 +260,7 @@ jobs:
         filename: dsim.json
         label: "dsim"
         message: ${{ needs.bazel-test-dsim.outputs.passing_tests }} of ${{ needs.bazel-test-dsim.outputs.total_tests }} passing
-        # Default color; if isError is true, it will get automatically overridden to red.
-        color: 'brightgreen'
-        isError: ${{ needs.bazel-test-dsim.result != 'success' }}
+        color: ${{ needs.bazel-test-dsim.result == 'success' && 'brightgreen' || 'brightred' }}
 
   bazel-test-vcs-badge:
     runs-on: ubuntu-latest
@@ -287,9 +277,7 @@ jobs:
         filename: vcs.json
         label: "vcs"
         message: ${{ needs.bazel-test-vcs.outputs.passing_tests }} of ${{ needs.bazel-test-vcs.outputs.total_tests }} passing
-        # Default color; if isError is true, it will get automatically overridden to red.
-        color: 'brightgreen'
-        isError: ${{ needs.bazel-test-vcs.result != 'success' }}
+        color: ${{ needs.bazel-test-vcs.result == 'success' && 'brightgreen' || 'brightred' }}
 
   bazel-test-iverilog-badge:
     runs-on: ubuntu-latest
@@ -306,6 +294,4 @@ jobs:
         filename: iverilog.json
         label: "iverilog"
         message: ${{ needs.bazel-test-iverilog.outputs.passing_tests }} of ${{ needs.bazel-test-iverilog.outputs.total_tests }} passing
-        # Default color; if isError is true, it will get automatically overridden to red.
-        color: 'brightgreen'
-        isError: ${{ needs.bazel-test-iverilog.result != 'success' }}
+        color: ${{ needs.bazel-test-iverilog.result == 'success' && 'brightgreen' || 'brightred' }}
