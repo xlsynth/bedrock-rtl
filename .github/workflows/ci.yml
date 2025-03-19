@@ -95,7 +95,7 @@ jobs:
         filename: bedrock-rtl-ci-dsim.json
         label: "dsim - pass"
         message: ${{ needs.bazel-test-dsim.outputs.dsim_num_passing_tests }}
-        color: ${{ (needs.bazel-test-dsim.result == 'success' && 'green') || 'red' }}
+        isError: ${{ needs.bazel-test-dsim.result == 'success' }}
 
   bazel-test-vcs:
     runs-on: self-hosted
