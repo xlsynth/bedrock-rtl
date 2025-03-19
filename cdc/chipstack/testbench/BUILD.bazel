@@ -21,7 +21,7 @@ package(default_visibility = ["//visibility:public"])
 verilog_library(
     name = "br_cdc_fifo_ctrl_1r1w_gen_unittest",
     srcs = ["br_cdc_fifo_ctrl_1r1w_gen_unittest.sv"],
-    deps = ["//fifo/rtl:br_cdc_fifo_ctrl_1r1w"],
+    deps = ["//cdc/rtl:br_cdc_fifo_ctrl_1r1w"],
 )
 
 verilog_elab_test(
@@ -45,7 +45,7 @@ br_verilog_sim_test_tools_suite(
 verilog_library(
     name = "br_cdc_fifo_flops_gen_unittest",
     srcs = ["br_cdc_fifo_flops_gen_unittest.sv"],
-    deps = ["//fifo/rtl:br_cdc_fifo_flops"],
+    deps = ["//cdc/rtl:br_cdc_fifo_flops"],
 )
 
 verilog_elab_test(
@@ -69,7 +69,7 @@ br_verilog_sim_test_tools_suite(
 verilog_library(
     name = "br_cdc_fifo_flops_push_credit_gen_unittest",
     srcs = ["br_cdc_fifo_flops_push_credit_gen_unittest.sv"],
-    deps = ["//fifo/rtl:br_cdc_fifo_flops_push_credit"],
+    deps = ["//cdc/rtl:br_cdc_fifo_flops_push_credit"],
 )
 
 verilog_elab_test(
@@ -94,7 +94,7 @@ br_verilog_sim_test_tools_suite(
 verilog_library(
     name = "br_cdc_fifo_shared_dynamic_ctrl_gen_unittest",
     srcs = ["br_cdc_fifo_shared_dynamic_ctrl_gen_unittest.sv"],
-    deps = ["//fifo/rtl:br_cdc_fifo_shared_dynamic_ctrl"],
+    deps = ["//cdc/rtl:br_cdc_fifo_shared_dynamic_ctrl"],
 )
 
 verilog_elab_test(
@@ -119,7 +119,7 @@ br_verilog_sim_test_tools_suite(
 verilog_library(
     name = "br_cdc_fifo_shared_dynamic_flops_gen_unittest",
     srcs = ["br_cdc_fifo_shared_dynamic_flops_gen_unittest.sv"],
-    deps = ["//fifo/rtl:br_cdc_fifo_shared_dynamic_flops"],
+    deps = ["//cdc/rtl:br_cdc_fifo_shared_dynamic_flops"],
 )
 
 verilog_elab_test(
