@@ -79,8 +79,7 @@ jobs:
     needs: bazel-build
     steps:
     - name: Verilog sim tests (using iverilog)
-      # Suppress log output to protect sensitive EDA tool information.
-      run: bazel test --noshow_loading_progress //... --test_tag_filters=iverilog --test_output=summary
+      run: bazel test --noshow_loading_progress //... --test_tag_filters=iverilog
 
     # TODO: VCS tests
     # TODO: VCF tests
