@@ -24,7 +24,7 @@ image:https://img.shields.io/github/check-runs/xlsynth/bedrock-rtl/main?nameFilt
 image:https://img.shields.io/github/check-runs/xlsynth/bedrock-rtl/main?nameFilter=bazel-test-stardoc&label=stardoc[bazel‑test‑stardoc,link="https://github.com/xlsynth/bedrock-rtl/actions/workflows/ci.yml?query=job%3Abazel-test-stardoc"]
 image:https://img.shields.io/github/check-runs/xlsynth/bedrock-rtl/main?nameFilter=bazel-test-verific&label=verific[bazel‑test‑verific,link="https://github.com/xlsynth/bedrock-rtl/actions/workflows/ci.yml?query=job%3Abazel-test-verific"]
 image:https://img.shields.io/github/check-runs/xlsynth/bedrock-rtl/main?nameFilter=bazel-test-ascentlint&label=ascentlint[bazel‑test‑ascentlint,link="https://github.com/xlsynth/bedrock-rtl/actions/workflows/ci.yml?query=job%3Abazel-test-ascentlint"]
-image:https://img.shields.io/github/check-runs/xlsynth/bedrock-rtl/main?nameFilter=bazel-test-dsim&label=dsim[bazel‑test‑dsim,link="https://github.com/xlsynth/bedrock-rtl/actions/workflows/ci.yml?query=job%3Abazel-test-dsim"]
+image:https://img.shields.io/endpoint?url=https://gist.githubusercontent.com/mgottscho/643181481f2cee698ca0b69f25667cd0/raw/bedrock-rtl-ci-dsim.json[bazel-test-dsim,link="https://github.com/xlsynth/bedrock-rtl/actions/workflows/ci.yml?query=job%3Abazel-test-dsim"]
 image:https://img.shields.io/github/check-runs/xlsynth/bedrock-rtl/main?nameFilter=bazel-test-vcs&label=vcs[bazel‑test‑vcs,link="https://github.com/xlsynth/bedrock-rtl/actions/workflows/ci.yml?query=job%3Abazel-test-vcs"]
 image:https://img.shields.io/github/check-runs/xlsynth/bedrock-rtl/main?nameFilter=bazel-test-iverilog&label=iverilog[bazel‑test‑iverilog,link="https://github.com/xlsynth/bedrock-rtl/actions/workflows/ci.yml?query=job%3Abazel-test-iverilog"]
 
