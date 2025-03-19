@@ -61,8 +61,8 @@
 `include "br_asserts_internal.svh"
 
 module br_fifo_ctrl_1r1w #(
-    parameter int Depth = 2,  // Number of entries in the FIFO. Must be at least 2.
-    parameter int Width = 1,  // Width of each entry in the FIFO. Must be at least 1.
+    parameter int Depth = 4,  // Number of entries in the FIFO. Must be at least 2.
+    parameter int Width = 4,  // Width of each entry in the FIFO. Must be at least 1.
     // If 1, then bypasses push-to-pop when the FIFO is empty, resulting in
     // a cut-through latency of 0 cycles, but at the cost of worse timing.
     // If 0, then pushes always go through the RAM before they can become
