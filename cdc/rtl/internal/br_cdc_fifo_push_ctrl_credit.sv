@@ -63,8 +63,14 @@ module br_cdc_fifo_push_ctrl_credit #(
     output logic                  reset_active_push
 );
 
+  // This signal is synchronized in the pop clock domain. Use an instantiated gate to reduce the
+  // chances of glitches.
   logic either_rst;
-  assign either_rst = rst || push_sender_in_reset;
+  br_gate_or2 br_gate_or2_either_rst (
+      .in0(rst),
+      .in1(push_sender_in_reset),
+      .out(either_rst)
+  );
 
   //------------------------------------------
   // Integration checks
