@@ -14,19 +14,19 @@
 
 = Bedrock-RTL
 
-image:https://img.shields.io/github/license/xlsynth/bedrock-rtl[GitHub License]
+image:https://img.shields.io/github/license/xlsynth/bedrock-rtl?color=blue[GitHub License]
 image:https://img.shields.io/badge/language-SystemVerilog-blue[language - SystemVerilog]
 image:https://img.shields.io/badge/build%20system-Bazel-blue[build system - Bazel]
 
-image:https://img.shields.io/github/check-runs/xlsynth/bedrock-rtl/main?nameFilter=pre-commit&label=pre‑commit[pre‑commit,link="https://github.com/xlsynth/bedrock-rtl/actions/workflows/ci.yml?query=job%3Apre-commit"]
+image:https://img.shields.io/github/check-runs/xlsynth/bedrock-rtl/main?nameFilter=pre-commit&label=pre-commit[pre-commit,link="https://github.com/xlsynth/bedrock-rtl/actions/workflows/ci.yml?query=job%3Apre-commit"]
 image:https://img.shields.io/github/check-runs/xlsynth/bedrock-rtl/main?nameFilter=bazel-build&label=build[bazel-build,link="https://github.com/xlsynth/bedrock-rtl/actions/workflows/ci.yml?query=job%3Abazel-build"]
-image:https://img.shields.io/github/check-runs/xlsynth/bedrock-rtl/main?nameFilter=bazel-test-python&label=python[bazel‑test‑python,link="https://github.com/xlsynth/bedrock-rtl/actions/workflows/ci.yml?query=job%3Abazel-test-python"]
-image:https://img.shields.io/github/check-runs/xlsynth/bedrock-rtl/main?nameFilter=bazel-test-stardoc&label=stardoc[bazel‑test‑stardoc,link="https://github.com/xlsynth/bedrock-rtl/actions/workflows/ci.yml?query=job%3Abazel-test-stardoc"]
-image:https://img.shields.io/github/check-runs/xlsynth/bedrock-rtl/main?nameFilter=bazel-test-verific&label=verific[bazel‑test‑verific,link="https://github.com/xlsynth/bedrock-rtl/actions/workflows/ci.yml?query=job%3Abazel-test-verific"]
-image:https://img.shields.io/github/check-runs/xlsynth/bedrock-rtl/main?nameFilter=bazel-test-ascentlint&label=ascentlint[bazel‑test‑ascentlint,link="https://github.com/xlsynth/bedrock-rtl/actions/workflows/ci.yml?query=job%3Abazel-test-ascentlint"]
-image:https://img.shields.io/github/check-runs/xlsynth/bedrock-rtl/main?nameFilter=bazel-test-dsim&label=dsim[bazel‑test‑dsim,link="https://github.com/xlsynth/bedrock-rtl/actions/workflows/ci.yml?query=job%3Abazel-test-dsim"]
-image:https://img.shields.io/github/check-runs/xlsynth/bedrock-rtl/main?nameFilter=bazel-test-vcs&label=vcs[bazel‑test‑vcs,link="https://github.com/xlsynth/bedrock-rtl/actions/workflows/ci.yml?query=job%3Abazel-test-vcs"]
-image:https://img.shields.io/github/check-runs/xlsynth/bedrock-rtl/main?nameFilter=bazel-test-iverilog&label=iverilog[bazel‑test‑iverilog,link="https://github.com/xlsynth/bedrock-rtl/actions/workflows/ci.yml?query=job%3Abazel-test-iverilog"]
+image:https://img.shields.io/endpoint?url=https://gist.githubusercontent.com/mgottscho/c66dc2ddc0e513ba06ce338620977b26/raw/python.json[bazel-test-python,link="https://github.com/xlsynth/bedrock-rtl/actions/workflows/ci.yml?query=job%3Abazel-test-python"]
+image:https://img.shields.io/endpoint?url=https://gist.githubusercontent.com/mgottscho/c66dc2ddc0e513ba06ce338620977b26/raw/stardoc.json[bazel-test-stardoc,link="https://github.com/xlsynth/bedrock-rtl/actions/workflows/ci.yml?query=job%3Abazel-test-stardoc"]
+image:https://img.shields.io/endpoint?url=https://gist.githubusercontent.com/mgottscho/c66dc2ddc0e513ba06ce338620977b26/raw/verific.json[bazel-test-verific,link="https://github.com/xlsynth/bedrock-rtl/actions/workflows/ci.yml?query=job%3Abazel-test-verific"]
+image:https://img.shields.io/endpoint?url=https://gist.githubusercontent.com/mgottscho/c66dc2ddc0e513ba06ce338620977b26/raw/ascentlint.json[bazel-test-ascentlint,link="https://github.com/xlsynth/bedrock-rtl/actions/workflows/ci.yml?query=job%3Abazel-test-ascentlint"]
+image:https://img.shields.io/endpoint?url=https://gist.githubusercontent.com/mgottscho/c66dc2ddc0e513ba06ce338620977b26/raw/dsim.json[bazel-test-dsim,link="https://github.com/xlsynth/bedrock-rtl/actions/workflows/ci.yml?query=job%3Abazel-test-dsim"]
+image:https://img.shields.io/endpoint?url=https://gist.githubusercontent.com/mgottscho/c66dc2ddc0e513ba06ce338620977b26/raw/vcs.json[bazel-test-vcs,link="https://github.com/xlsynth/bedrock-rtl/actions/workflows/ci.yml?query=job%3Abazel-test-vcs"]
+image:https://img.shields.io/endpoint?url=https://gist.githubusercontent.com/mgottscho/c66dc2ddc0e513ba06ce338620977b26/raw/iverilog.json[bazel-test-iverilog,link="https://github.com/xlsynth/bedrock-rtl/actions/workflows/ci.yml?query=job%3Abazel-test-iverilog"]
 
 
 WARNING: UNDER CONSTRUCTION. Many things are broken.
