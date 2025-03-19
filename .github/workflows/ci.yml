@@ -70,6 +70,7 @@ jobs:
     runs-on: self-hosted
     needs: bazel-build
     outputs:
+      dsim_num_tests: ${{ steps.test.outputs.dsim_num_tests }}
       dsim_num_passing_tests: ${{ steps.test.outputs.dsim_num_passing_tests }}
       result: ${{ job.status }}
     steps:
@@ -79,7 +80,9 @@ jobs:
       # Suppress log output to protect sensitive EDA tool information.
       run: |
         bazel test --test_output=streamed //... --test_tag_filters=dsim 2>&1 | tee .bazel-test-dsim.log
+        DSIM_NUM_TESTS=$(grep -Po '(?<=out of )\d+(?= tests)' .bazel-test-dsim.log)
         DSIM_NUM_PASSING_TESTS=$(grep -Po '\d+(?= tests pass)' .bazel-test-dsim.log)
+        echo "dsim_num_tests=$DSIM_NUM_TESTS" >> $GITHUB_OUTPUT
         echo "dsim_num_passing_tests=$DSIM_NUM_PASSING_TESTS" >> $GITHUB_OUTPUT
 
   bazel-test-dsim-badge:
@@ -93,8 +96,8 @@ jobs:
         auth: ${{ secrets.MGOTTSCHO_GISTS_SECRET }}
         gistID: 643181481f2cee698ca0b69f25667cd0
         filename: bedrock-rtl-ci-dsim.json
-        label: "dsim - pass"
-        message: ${{ needs.bazel-test-dsim.outputs.dsim_num_passing_tests }}
+        label: "dsim"
+        message: ${{ needs.bazel-test-dsim.outputs.dsim_num_passing_tests }} of ${{ needs.bazel-test-dsim.outputs.dsim_num_tests }} passing
         isError: ${{ needs.bazel-test-dsim.result != 'success' }}
 
   bazel-test-vcs:
