@@ -242,6 +242,10 @@ br_verilog_elab_and_lint_test_suite(
             "4",
             "16",
         ],
+        "NumBranchAddrRanges": [
+            "1",
+            "2",
+        ],
     },
     deps = [":br_amba_axil_split"],
 )
