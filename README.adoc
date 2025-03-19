@@ -14,7 +14,7 @@
 
 = Bedrock-RTL
 
-image:https://img.shields.io/github/license/xlsynth/bedrock-rtl&color=blue[GitHub License]
+image:https://img.shields.io/github/license/xlsynth/bedrock-rtl?color=blue[GitHub License]
 image:https://img.shields.io/badge/language-SystemVerilog-blue[language - SystemVerilog]
 image:https://img.shields.io/badge/build%20system-Bazel-blue[build system - Bazel]
 
