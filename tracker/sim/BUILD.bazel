@@ -62,7 +62,6 @@ br_verilog_sim_test_tools_suite(
         "dsim",
         "vcs",
     ],
-    waves = True,
     deps = [":br_tracker_freelist_tb"],
 )
 

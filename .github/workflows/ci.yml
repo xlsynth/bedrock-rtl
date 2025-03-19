@@ -74,6 +74,14 @@ jobs:
       # Suppress log output to protect sensitive EDA tool information.
       run: bazel test --noshow_loading_progress //... --test_tag_filters=dsim --test_output=summary
 
+  bazel-test-vcs:
+    runs-on: self-hosted
+    needs: bazel-build
+    steps:
+    - name: Verilog sim tests (using vcs)
+      # Suppress log output to protect sensitive EDA tool information.
+      run: bazel test --noshow_loading_progress //... --test_tag_filters=vcs --test_output=summary
+
   bazel-test-iverilog:
     runs-on: self-hosted
     needs: bazel-build
@@ -81,6 +89,5 @@ jobs:
     - name: Verilog sim tests (using iverilog)
       run: bazel test --noshow_loading_progress //... --test_tag_filters=iverilog
 
-    # TODO: VCS tests
     # TODO: VCF tests
     # TODO: JG tests
