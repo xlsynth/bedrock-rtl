@@ -100,6 +100,8 @@ jobs:
         filename: bedrock-rtl-ci-dsim.json
         label: "dsim"
         message: ${{ needs.bazel-test-dsim.outputs.dsim_num_passing_tests }} of ${{ needs.bazel-test-dsim.outputs.dsim_num_tests }} passing
+        # Default color; if isError is true, it will get automatically overridden to red.
+        color: 'green'
         isError: ${{ needs.bazel-test-dsim.result != 'success' }}
 
   bazel-test-vcs:
