@@ -37,13 +37,14 @@ jobs:
     steps:
     - name: python tests
       id: test
-      continue-on-error: true
       run: |
-        bazel test --noshow_loading_progress //bazel/... 2>&1 | tee .bazel-test-python.log
-        TOTAL_TESTS=$(grep -Po '(?<=out of )\d+(?= tests)' .bazel-test-python.log)
-        PASSING_TESTS=$(grep -Po '\d+(?= tests pass)' .bazel-test-python.log)
+        bazel test --noshow_loading_progress //python/... 2>&1 | tee .bazel-test-python.log
+        BAZEL_EXIT_CODE=${PIPESTATUS[0]}
+        TOTAL_TESTS=$(grep -Po '(?<=out of )\d+(?= test)' .bazel-test-python.log)
+        PASSING_TESTS=$(grep -Po '\d+(?= test passes?\.| tests pass)' .bazel-test-python.log)
         echo "total_tests=$TOTAL_TESTS" >> $GITHUB_OUTPUT
         echo "passing_tests=$PASSING_TESTS" >> $GITHUB_OUTPUT
+        exit $BAZEL_EXIT_CODE
 
   bazel-test-stardoc:
     runs-on: self-hosted
@@ -55,13 +56,14 @@ jobs:
     steps:
     - name: Stardoc tests
       id: test
-      continue-on-error: true
       run: |
         bazel test --noshow_loading_progress //bazel/... 2>&1 | tee .bazel-test-stardoc.log
-        TOTAL_TESTS=$(grep -Po '(?<=out of )\d+(?= tests)' .bazel-test-stardoc.log)
-        PASSING_TESTS=$(grep -Po '\d+(?= tests pass)' .bazel-test-stardoc.log)
+        BAZEL_EXIT_CODE=${PIPESTATUS[0]}
+        TOTAL_TESTS=$(grep -Po '(?<=out of )\d+(?= test)' .bazel-test-stardoc.log)
+        PASSING_TESTS=$(grep -Po '\d+(?= test passes?\.| tests pass)' .bazel-test-stardoc.log)
         echo "total_tests=$TOTAL_TESTS" >> $GITHUB_OUTPUT
         echo "passing_tests=$PASSING_TESTS" >> $GITHUB_OUTPUT
+        exit $BAZEL_EXIT_CODE
 
   bazel-test-verific:
     runs-on: self-hosted
@@ -73,14 +75,15 @@ jobs:
     steps:
     - name: Verilog elaboration tests (using Verific tclmain)
       id: test
-      continue-on-error: true
       # Use --test_output=summary to suppress log output, even on failure (proprietary EDA tool output may be sensitive).
       run: |
         bazel test --noshow_loading_progress --test_output=summary //... --test_tag_filters=verific 2>&1 | tee .bazel-test-verific.log
-        TOTAL_TESTS=$(grep -Po '(?<=out of )\d+(?= tests)' .bazel-test-verific.log)
-        PASSING_TESTS=$(grep -Po '\d+(?= tests pass)' .bazel-test-verific.log)
+        BAZEL_EXIT_CODE=${PIPESTATUS[0]}
+        TOTAL_TESTS=$(grep -Po '(?<=out of )\d+(?= test)' .bazel-test-verific.log)
+        PASSING_TESTS=$(grep -Po '\d+(?= test passes?\.| tests pass)' .bazel-test-verific.log)
         echo "total_tests=$TOTAL_TESTS" >> $GITHUB_OUTPUT
         echo "passing_tests=$PASSING_TESTS" >> $GITHUB_OUTPUT
+        exit $BAZEL_EXIT_CODE
 
   bazel-test-ascentlint:
     runs-on: self-hosted
@@ -95,14 +98,15 @@ jobs:
     steps:
     - name: Verilog lint tests (using RealIntent AscentLint)
       id: test
-      continue-on-error: true
       # Use --test_output=summary to suppress log output, even on failure (proprietary EDA tool output may be sensitive).
       run: |
         bazel test --noshow_loading_progress --test_output=summary //... --test_tag_filters=ascentlint 2>&1 | tee .bazel-test-ascentlint.log
-        TOTAL_TESTS=$(grep -Po '(?<=out of )\d+(?= tests)' .bazel-test-ascentlint.log)
-        PASSING_TESTS=$(grep -Po '\d+(?= tests pass)' .bazel-test-ascentlint.log)
+        BAZEL_EXIT_CODE=${PIPESTATUS[0]}
+        TOTAL_TESTS=$(grep -Po '(?<=out of )\d+(?= test)' .bazel-test-ascentlint.log)
+        PASSING_TESTS=$(grep -Po '\d+(?= test passes?\.| tests pass)' .bazel-test-ascentlint.log)
         echo "total_tests=$TOTAL_TESTS" >> $GITHUB_OUTPUT
         echo "passing_tests=$PASSING_TESTS" >> $GITHUB_OUTPUT
+        exit $BAZEL_EXIT_CODE
 
   bazel-test-dsim:
     runs-on: self-hosted
@@ -114,14 +118,15 @@ jobs:
     steps:
     - name: Verilog sim tests (using Altair Dsim)
       id: test
-      continue-on-error: true
       # Use --test_output=summary to suppress log output, even on failure (proprietary EDA tool output may be sensitive).
       run: |
         bazel test --noshow_loading_progress --test_output=summary //... --test_tag_filters=dsim 2>&1 | tee .bazel-test-dsim.log
-        TOTAL_TESTS=$(grep -Po '(?<=out of )\d+(?= tests)' .bazel-test-dsim.log)
-        PASSING_TESTS=$(grep -Po '\d+(?= tests pass)' .bazel-test-dsim.log)
+        BAZEL_EXIT_CODE=${PIPESTATUS[0]}
+        TOTAL_TESTS=$(grep -Po '(?<=out of )\d+(?= test)' .bazel-test-dsim.log)
+        PASSING_TESTS=$(grep -Po '\d+(?= test passes?\.| tests pass)' .bazel-test-dsim.log)
         echo "total_tests=$TOTAL_TESTS" >> $GITHUB_OUTPUT
         echo "passing_tests=$PASSING_TESTS" >> $GITHUB_OUTPUT
+        exit $BAZEL_EXIT_CODE
 
   bazel-test-vcs:
     runs-on: self-hosted
@@ -133,14 +138,15 @@ jobs:
     steps:
     - name: Verilog sim tests (using Synopsys VCS)
       id: test
-      continue-on-error: true
       # Use --test_output=summary to suppress log output, even on failure (proprietary EDA tool output may be sensitive).
       run: |
         bazel test --noshow_loading_progress --test_output=summary //... --test_tag_filters=vcs 2>&1 | tee .bazel-test-vcs.log
-        TOTAL_TESTS=$(grep -Po '(?<=out of )\d+(?= tests)' .bazel-test-vcs.log)
-        PASSING_TESTS=$(grep -Po '\d+(?= tests pass)' .bazel-test-vcs.log)
+        BAZEL_EXIT_CODE=${PIPESTATUS[0]}
+        TOTAL_TESTS=$(grep -Po '(?<=out of )\d+(?= test)' .bazel-test-vcs.log)
+        PASSING_TESTS=$(grep -Po '\d+(?= test passes?\.| tests pass)' .bazel-test-vcs.log)
         echo "total_tests=$TOTAL_TESTS" >> $GITHUB_OUTPUT
         echo "passing_tests=$PASSING_TESTS" >> $GITHUB_OUTPUT
+        exit $BAZEL_EXIT_CODE
 
   bazel-test-iverilog:
     runs-on: self-hosted
@@ -152,14 +158,15 @@ jobs:
     steps:
     - name: Verilog sim tests (using Icarus Verilog)
       id: test
-      continue-on-error: true
-      # Include all test output: iverilog is open source.
+      # Don't need --test_output=summary to suppress log output because iverilog is open source.
       run: |
         bazel test --noshow_loading_progress //... --test_tag_filters=iverilog 2>&1 | tee .bazel-test-iverilog.log
-        TOTAL_TESTS=$(grep -Po '(?<=out of )\d+(?= tests)' .bazel-test-iverilog.log)
-        PASSING_TESTS=$(grep -Po '\d+(?= tests pass)' .bazel-test-iverilog.log)
+        BAZEL_EXIT_CODE=${PIPESTATUS[0]}
+        TOTAL_TESTS=$(grep -Po '(?<=out of )\d+(?= test)' .bazel-test-iverilog.log)
+        PASSING_TESTS=$(grep -Po '\d+(?= test passes?\.| tests pass)' .bazel-test-iverilog.log)
         echo "total_tests=$TOTAL_TESTS" >> $GITHUB_OUTPUT
         echo "passing_tests=$PASSING_TESTS" >> $GITHUB_OUTPUT
+        exit $BAZEL_EXIT_CODE
 
   ##########################################
   ##########################################
