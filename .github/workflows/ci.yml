@@ -83,5 +83,12 @@ jobs:
       run: bazel test --noshow_loading_progress //... --test_tag_filters=vcs --test_output=summary
 
     # TODO: iverilog tests
+  bazel-test-iverilog:
+    runs-on: self-hosted
+    needs: bazel-build
+    steps:
+    - name: Verilog sim tests (using iverilog)
+      run: bazel test --noshow_loading_progress //... --test_tag_filters=iverilog
+
     # TODO: VCF tests
     # TODO: JG tests
