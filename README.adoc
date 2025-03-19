@@ -17,6 +17,7 @@
 image:https://img.shields.io/github/license/xlsynth/bedrock-rtl?color=blue[GitHub License]
 image:https://img.shields.io/badge/language-SystemVerilog-blue[language - SystemVerilog]
 image:https://img.shields.io/badge/build%20system-Bazel-blue[build system - Bazel]
+image:https://img.shields.io/endpoint?url=https://gist.githubusercontent.com/mgottscho/c66dc2ddc0e513ba06ce338620977b26/raw/rtl.json[rtl-files]
 
 image:https://img.shields.io/github/check-runs/xlsynth/bedrock-rtl/main?nameFilter=pre-commit&label=pre-commit[pre-commit,link="https://github.com/xlsynth/bedrock-rtl/actions/workflows/ci.yml?query=job%3Apre-commit"]
 image:https://img.shields.io/github/check-runs/xlsynth/bedrock-rtl/main?nameFilter=bazel-build&label=build[bazel-build,link="https://github.com/xlsynth/bedrock-rtl/actions/workflows/ci.yml?query=job%3Abazel-build"]
