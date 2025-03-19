@@ -18,7 +18,7 @@ image:https://img.shields.io/github/license/xlsynth/bedrock-rtl[GitHub License]
 image:https://img.shields.io/badge/language-SystemVerilog-blue[language - SystemVerilog]
 image:https://img.shields.io/badge/build%20system-Bazel-blue[build system - Bazel]
 
-image:https://img.shields.io/github/check-runs/xlsynth/bedrock-rtl/main?nameFilter=pre-commit&label=pre‑commit[pre‑commit,link="https://github.com/xlsynth/bedrock-rtl/actions/workflows/ci.yml?query=job%3Apre-commit"]
+image:https://img.shields.io/github/check-runs/xlsynth/bedrock-rtl/main?nameFilter=pre-commit&label=pre-commit[pre-commit,link="https://github.com/xlsynth/bedrock-rtl/actions/workflows/ci.yml?query=job%3Apre-commit"]
 image:https://img.shields.io/github/check-runs/xlsynth/bedrock-rtl/main?nameFilter=bazel-build&label=build[bazel-build,link="https://github.com/xlsynth/bedrock-rtl/actions/workflows/ci.yml?query=job%3Abazel-build"]
 image:https://img.shields.io/endpoint?url=https://gist.githubusercontent.com/mgottscho/643181481f2cee698ca0b69f25667cd0/raw/python.json[bazel-test-python,link="https://github.com/xlsynth/bedrock-rtl/actions/workflows/ci.yml?query=job%3Abazel-test-python"]
 image:https://img.shields.io/endpoint?url=https://gist.githubusercontent.com/mgottscho/643181481f2cee698ca0b69f25667cd0/raw/stardoc.json[bazel-test-stardoc,link="https://github.com/xlsynth/bedrock-rtl/actions/workflows/ci.yml?query=job%3Abazel-test-stardoc"]
