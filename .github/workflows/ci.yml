@@ -69,13 +69,13 @@ jobs:
   bazel-test-dsim:
     runs-on: self-hosted
     needs: bazel-build
+    outputs:
+      dsim_num_passing_tests: ${{ steps.test.outputs.dsim_num_passing_tests }}
+      result: ${{ job.status }}
     steps:
     - name: Verilog sim tests (using dsim)
       id: test
       continue-on-error: true
-      outputs:
-        dsim_num_passing_tests: ${{ steps.test.outputs.dsim_num_passing_tests }}
-        result: ${{ job.status }}
       # Suppress log output to protect sensitive EDA tool information.
       run: |
         bazel test --test_output=streamed //... --test_tag_filters=dsim 2>&1 | tee .bazel-test-dsim.log
