@@ -191,6 +191,13 @@ jobs:
     #if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
     if: always()
     steps:
+    - name: Determine badge color
+      run: |
+        if [[ "${{ needs.bazel-test-python.outputs.exit_code }}" == "0" ]]; then
+          echo "COLOR=brightgreen" >> $GITHUB_ENV
+        else
+          echo "COLOR=brightred" >> $GITHUB_ENV
+        fi
     - name: Create python badge
       uses: schneegans/dynamic-badges-action@v1.7.0
       with:
@@ -199,7 +206,7 @@ jobs:
         filename: python.json
         label: "python"
         message: ${{ needs.bazel-test-python.outputs.passing_tests }} of ${{ needs.bazel-test-python.outputs.total_tests }} passing
-        color: ${{ needs.bazel-test-python.outputs.exit_code == '0' && 'brightgreen' || 'brightred' }}
+        color: ${{ env.COLOR }}
 
   stardoc-badge:
     runs-on: ubuntu-latest
@@ -208,6 +215,13 @@ jobs:
     #if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
     if: always()
     steps:
+    - name: Determine badge color
+      run: |
+        if [[ "${{ needs.bazel-test-stardoc.outputs.exit_code }}" == "0" ]]; then
+          echo "COLOR=brightgreen" >> $GITHUB_ENV
+        else
+          echo "COLOR=brightred" >> $GITHUB_ENV
+        fi
     - name: Create stardoc badge
       uses: schneegans/dynamic-badges-action@v1.7.0
       with:
@@ -216,7 +230,7 @@ jobs:
         filename: stardoc.json
         label: "stardoc"
         message: ${{ needs.bazel-test-stardoc.outputs.passing_tests }} of ${{ needs.bazel-test-stardoc.outputs.total_tests }} passing
-        color: ${{ needs.bazel-test-stardoc.outputs.exit_code == '0' && 'brightgreen' || 'brightred' }}
+        color: ${{ env.COLOR }}
 
   verific-badge:
     runs-on: ubuntu-latest
@@ -225,6 +239,13 @@ jobs:
     #if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
     if: always()
     steps:
+    - name: Determine badge color
+      run: |
+        if [[ "${{ needs.bazel-test-verific.outputs.exit_code }}" == "0" ]]; then
+          echo "COLOR=brightgreen" >> $GITHUB_ENV
+        else
+          echo "COLOR=brightred" >> $GITHUB_ENV
+        fi
     - name: Create verific badge
       uses: schneegans/dynamic-badges-action@v1.7.0
       with:
@@ -233,7 +254,7 @@ jobs:
         filename: verific.json
         label: "verific"
         message: ${{ needs.bazel-test-verific.outputs.passing_tests }} of ${{ needs.bazel-test-verific.outputs.total_tests }} passing
-        color: ${{ needs.bazel-test-verific.outputs.exit_code == '0' && 'brightgreen' || 'brightred' }}
+        color: ${{ env.COLOR }}
 
   ascentlint-badge:
     runs-on: ubuntu-latest
@@ -242,6 +263,13 @@ jobs:
     #if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
     if: always()
     steps:
+    - name: Determine badge color
+      run: |
+        if [[ "${{ needs.bazel-test-ascentlint.outputs.exit_code }}" == "0" ]]; then
+          echo "COLOR=brightgreen" >> $GITHUB_ENV
+        else
+          echo "COLOR=brightred" >> $GITHUB_ENV
+        fi
     - name: Create ascentlint badge
       uses: schneegans/dynamic-badges-action@v1.7.0
       with:
@@ -250,7 +278,7 @@ jobs:
         filename: ascentlint.json
         label: "ascentlint"
         message: ${{ needs.bazel-test-ascentlint.outputs.passing_tests }} of ${{ needs.bazel-test-ascentlint.outputs.total_tests }} passing
-        color: ${{ needs.bazel-test-ascentlint.outputs.exit_code == '0' && 'brightgreen' || 'brightred' }}
+        color: ${{ env.COLOR }}
 
   dsim-badge:
     runs-on: ubuntu-latest
@@ -276,6 +304,13 @@ jobs:
     #if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
     if: always()
     steps:
+    - name: Determine badge color
+      run: |
+        if [[ "${{ needs.bazel-test-vcs.outputs.exit_code }}" == "0" ]]; then
+          echo "COLOR=brightgreen" >> $GITHUB_ENV
+        else
+          echo "COLOR=brightred" >> $GITHUB_ENV
+        fi
     - name: Create vcs badge
       uses: schneegans/dynamic-badges-action@v1.7.0
       with:
@@ -284,7 +319,7 @@ jobs:
         filename: vcs.json
         label: "vcs"
         message: ${{ needs.bazel-test-vcs.outputs.passing_tests }} of ${{ needs.bazel-test-vcs.outputs.total_tests }} passing
-        color: ${{ needs.bazel-test-vcs.outputs.exit_code == '0' && 'brightgreen' || 'brightred' }}
+        color: ${{ env.COLOR }}
 
   iverilog-badge:
     runs-on: ubuntu-latest
@@ -293,6 +328,13 @@ jobs:
     #if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
     if: always()
     steps:
+    - name: Determine badge color
+      run: |
+        if [[ "${{ needs.bazel-test-iverilog.outputs.exit_code }}" == "0" ]]; then
+          echo "COLOR=brightgreen" >> $GITHUB_ENV
+        else
+          echo "COLOR=brightred" >> $GITHUB_ENV
+        fi
     - name: Create iverilog badge
       uses: schneegans/dynamic-badges-action@v1.7.0
       with:
@@ -301,4 +343,4 @@ jobs:
         filename: iverilog.json
         label: "iverilog"
         message: ${{ needs.bazel-test-iverilog.outputs.passing_tests }} of ${{ needs.bazel-test-iverilog.outputs.total_tests }} passing
-        color: ${{ needs.bazel-test-iverilog.outputs.exit_code == '0' && 'brightgreen' || 'brightred' }}
+        color: ${{ env.COLOR }}
