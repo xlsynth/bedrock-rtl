@@ -30,7 +30,7 @@ image:https://img.shields.io/endpoint?url=https://gist.githubusercontent.com/mgo
 image:https://img.shields.io/endpoint?url=https://gist.githubusercontent.com/mgottscho/c66dc2ddc0e513ba06ce338620977b26/raw/iverilog.json[bazel-test-iverilog,link="https://github.com/xlsynth/bedrock-rtl/actions/workflows/ci.yml?query=job%3Abazel-test-iverilog"]
 
 
-WARNING: UNDER CONSTRUCTION. Many things are broken.
+WARNING: Under active development. Libraries may not yet be fully verified.
 
 High quality and composable base RTL libraries in Verilog
 
