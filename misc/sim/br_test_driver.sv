@@ -53,7 +53,7 @@ module br_test_driver #(
     // This means it's possible to have "TEST PASSED" and also have assertions that failed.
     wait_cycles(100);
     if (error_count == 0) begin
-      $display("FIXME");
+      $display("TEST PASSED");
     end else begin
       $display("Simulation failed with %0d errors.", error_count);
     end
