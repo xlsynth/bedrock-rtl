@@ -171,7 +171,7 @@ jobs:
   ##########################################
   ##########################################
   bazel-test-python-badge:
-    runs-on: ubuntu-latest
+    runs-on: node20
     needs: bazel-test-python
     # FIXME
     #if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
@@ -190,7 +190,7 @@ jobs:
         isError: ${{ needs.bazel-test-python.result != 'success' }}
 
   bazel-test-stardoc-badge:
-    runs-on: ubuntu-latest
+    runs-on: node20
     needs: bazel-test-stardoc
     # FIXME
     #if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
@@ -209,7 +209,7 @@ jobs:
         isError: ${{ needs.bazel-test-stardoc.result != 'success' }}
 
   bazel-test-verific-badge:
-    runs-on: ubuntu-latest
+    runs-on: node20
     needs: bazel-test-verific
     # FIXME
     #if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
@@ -228,7 +228,7 @@ jobs:
         isError: ${{ needs.bazel-test-verific.result != 'success' }}
 
   bazel-test-ascentlint-badge:
-    runs-on: ubuntu-latest
+    runs-on: node20
     needs: bazel-test-ascentlint
     # FIXME
     #if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
@@ -247,7 +247,7 @@ jobs:
         isError: ${{ needs.bazel-test-ascentlint.result != 'success' }}
 
   bazel-test-dsim-badge:
-    runs-on: ubuntu-latest
+    runs-on: node20
     needs: bazel-test-dsim
     # FIXME
     #if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
@@ -266,7 +266,7 @@ jobs:
         isError: ${{ needs.bazel-test-dsim.result != 'success' }}
 
   bazel-test-vcs-badge:
-    runs-on: ubuntu-latest
+    runs-on: node20
     needs: bazel-test-vcs
     # FIXME
     #if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
@@ -285,7 +285,7 @@ jobs:
         isError: ${{ needs.bazel-test-vcs.result != 'success' }}
 
   bazel-test-iverilog-badge:
-    runs-on: ubuntu-latest
+    runs-on: node20
     needs: bazel-test-iverilog
     # FIXME
     #if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
