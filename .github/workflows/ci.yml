@@ -91,11 +91,11 @@ jobs:
       uses: schneegans/dynamic-badges-action@v1.7.0
       with:
         auth: ${{ secrets.MGOTTSCHO_GISTS_SECRET }}
-          gistID: 643181481f2cee698ca0b69f25667cd0
-          filename: bedrock-rtl-ci-dsim.json
-          label: "dsim - pass"
-          message: ${{ needs.bazel-test-dsim.outputs.dsim_num_passing_tests }}
-          color: ${{ (needs.bazel-test-dsim.result == 'success' && 'green') || 'red' }}
+        gistID: 643181481f2cee698ca0b69f25667cd0
+        filename: bedrock-rtl-ci-dsim.json
+        label: "dsim - pass"
+        message: ${{ needs.bazel-test-dsim.outputs.dsim_num_passing_tests }}
+        color: ${{ (needs.bazel-test-dsim.result == 'success' && 'green') || 'red' }}
 
   bazel-test-vcs:
     runs-on: self-hosted
