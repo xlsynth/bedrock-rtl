@@ -28,7 +28,7 @@ image:https://img.shields.io/endpoint?url=https://gist.githubusercontent.com/mgo
 image:https://img.shields.io/endpoint?url=https://gist.githubusercontent.com/mgottscho/c66dc2ddc0e513ba06ce338620977b26/raw/dsim.json[bazel-test-dsim,link="https://github.com/xlsynth/bedrock-rtl/actions/workflows/ci.yml?query=job%3Abazel-test-dsim"]
 image:https://img.shields.io/endpoint?url=https://gist.githubusercontent.com/mgottscho/c66dc2ddc0e513ba06ce338620977b26/raw/vcs.json[bazel-test-vcs,link="https://github.com/xlsynth/bedrock-rtl/actions/workflows/ci.yml?query=job%3Abazel-test-vcs"]
 image:https://img.shields.io/endpoint?url=https://gist.githubusercontent.com/mgottscho/c66dc2ddc0e513ba06ce338620977b26/raw/iverilog.json[bazel-test-iverilog,link="https://github.com/xlsynth/bedrock-rtl/actions/workflows/ci.yml?query=job%3Abazel-test-iverilog"]
-image:https://img.shields.io/github/issues/xlsynth/bedrock-rtl/bug?label=open%20bugs[open bugs,link="https://github.com/xlsynth/bedrock-rtl/issues?q=is%3Aissue%20state%3Aopen%20label%3Abug"]
+image:https://img.shields.io/github/issues/xlsynth/bedrock-rtl/bug?label=bugs[open bugs,link="https://github.com/xlsynth/bedrock-rtl/issues?q=is%3Aissue%20state%3Aopen%20label%3Abug"]
 
 
 WARNING: Under active development. Libraries may not yet be fully verified.
