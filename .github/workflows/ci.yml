@@ -71,8 +71,31 @@ jobs:
     needs: bazel-build
     steps:
     - name: Verilog sim tests (using dsim)
+      id: test
+      continue-on-error: true
+      outputs:
+        dsim_num_passing_tests: ${{ steps.test.outputs.dsim_num_passing_tests }}
+        result: ${{ job.status }}
       # Suppress log output to protect sensitive EDA tool information.
-      run: bazel test --noshow_loading_progress //... --test_tag_filters=dsim --test_output=summary
+      run: |
+        bazel test --test_output=streamed //... --test_tag_filters=dsim 2>&1 | tee .bazel-test-dsim.log
+        DSIM_NUM_PASSING_TESTS=$(grep -Po '\d+(?= tests pass)' .bazel-test-dsim.log)
+        echo "dsim_num_passing_tests=$DSIM_NUM_PASSING_TESTS" >> $GITHUB_OUTPUT
+
+  bazel-test-dsim-badge:
+    runs-on: ubuntu-latest
+    needs: bazel-test-dsim
+    if: always()
+    steps:
+    - name: Create dsim badge
+      uses: schneegans/dynamic-badges-action@v1.7.0
+      with:
+        auth: ${{ secrets.MGOTTSCHO_GISTS_SECRET }}
+          gistID: 643181481f2cee698ca0b69f25667cd0
+          filename: bedrock-rtl-ci-dsim.json
+          label: "dsim - pass"
+          message: ${{ needs.bazel-test-dsim.outputs.dsim_num_passing_tests }}
+          color: ${{ (needs.bazel-test-dsim.result == 'success' && 'green') || 'red' }}
 
   bazel-test-vcs:
     runs-on: self-hosted
