@@ -71,8 +71,6 @@ br_verilog_fpv_test_tools_suite(
             "3",
         ],
     },
-    # TODO
-    tags = ["manual"],
     tools = {
         "jg": "",
         "vcf": "",
