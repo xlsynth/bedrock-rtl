@@ -15,7 +15,7 @@
 
 
 
-module br_cdc_bit_toggle_gen_unittest;
+module br_cdc_bit_toggle_gen_tb;
   timeunit 1ns; timeprecision 100ps;
 
   //===========================================================

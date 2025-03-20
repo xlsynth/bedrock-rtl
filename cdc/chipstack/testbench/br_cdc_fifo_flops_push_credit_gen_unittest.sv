@@ -13,7 +13,7 @@
 // Description: Unit test for br_cdc_fifo_flops_push_credit
 //=============================================================
 
-module br_cdc_fifo_flops_push_credit_gen_unittest;
+module br_cdc_fifo_flops_push_credit_gen_tb;
   timeunit 1ns; timeprecision 100ps;
 
   //===========================================================

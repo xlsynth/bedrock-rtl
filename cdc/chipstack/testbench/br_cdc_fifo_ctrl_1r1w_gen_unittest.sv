@@ -15,7 +15,7 @@
 
 
 
-module br_cdc_fifo_ctrl_1r1w_gen_unittest;
+module br_cdc_fifo_ctrl_1r1w_gen_tb;
   timeunit 1ns; timeprecision 100ps;
 
   //===========================================================
