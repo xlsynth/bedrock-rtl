@@ -19,7 +19,7 @@ load("//bazel:verilog.bzl", "verilog_elab_test")
 package(default_visibility = ["//visibility:public"])
 
 verilog_library(
-    name = "br_cdc_bit_toggle_gen_tb",
+    name = "br_cdc_bit_toggle_gen_unittest",
     srcs = ["br_cdc_bit_toggle_gen_unittest.sv"],
     deps = ["//cdc/rtl:br_cdc_bit_toggle"],
 )
@@ -28,7 +28,7 @@ verilog_elab_test(
     name = "br_cdc_bit_toggle_gen_unittest_elab_test",
     tool = "verific",
     top = "br_cdc_bit_toggle_gen_tb",
-    deps = [":br_cdc_bit_toggle_gen_tb"],
+    deps = [":br_cdc_bit_toggle_gen_unittest"],
 )
 
 br_verilog_sim_test_tools_suite(
@@ -39,7 +39,7 @@ br_verilog_sim_test_tools_suite(
         "vcs",
     ],
     top = "br_cdc_bit_toggle_gen_tb",
-    deps = [":br_cdc_bit_toggle_gen_tb"],
+    deps = [":br_cdc_bit_toggle_gen_unittest"],
 )
 
 verilog_library(
