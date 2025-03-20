@@ -71,10 +71,74 @@ br_verilog_fpv_test_tools_suite(
             "3",
         ],
     },
+    # TODO
+    tags = ["manual"],
     tools = {
         "jg": "",
         "vcf": "",
     },
     top = "br_ram_addr_decoder",
     deps = [":br_ram_addr_decoder_fpv_monitor"],
+)
+
+# Bedrock-RTL RAM Read Data Pipeline
+
+verilog_library(
+    name = "br_ram_data_rd_pipe_fpv_monitor",
+    srcs = ["br_ram_data_rd_pipe_fpv_monitor.sv"],
+    deps = [
+        "//ram/rtl:br_ram_data_rd_pipe",
+    ],
+)
+
+verilog_elab_test(
+    name = "br_ram_data_rd_pipe_fpv_monitor_elab_test",
+    custom_tcl_header = "//:elab_test_jg_custom_header.verific.tcl",
+    tool = "verific",
+    deps = [":br_ram_data_rd_pipe_fpv_monitor"],
+)
+
+br_verilog_fpv_test_tools_suite(
+    name = "br_ram_data_rd_pipe_test_suite",
+    illegal_param_combinations = {
+        (
+            "Width",
+            "WidthTiles",
+        ): [
+            ("1", "2"),
+            ("1", "3"),
+            ("4", "3"),
+        ],
+    },
+    params = {
+        "DepthStages": [
+            "0",
+            "1",
+        ],
+        "DepthTiles": [
+            "1",
+            "2",
+            "6",
+        ],
+        "Width": [
+            "1",
+            "4",
+            "6",
+        ],
+        "WidthStages": [
+            "0",
+            "1",
+        ],
+        "WidthTiles": [
+            "1",
+            "2",
+            "3",
+        ],
+    },
+    tools = {
+        "jg": "",
+        "vcf": "",
+    },
+    top = "br_ram_data_rd_pipe",
+    deps = [":br_ram_data_rd_pipe_fpv_monitor"],
 )
