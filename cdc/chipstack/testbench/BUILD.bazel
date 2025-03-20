@@ -42,7 +42,6 @@ br_verilog_sim_test_tools_suite(
     deps = [":br_cdc_bit_toggle_gen_unittest"],
 )
 
-
 verilog_library(
     name = "br_cdc_fifo_ctrl_1r1w_gen_tb",
     srcs = ["br_cdc_fifo_ctrl_1r1w_gen_unittest.sv"],
