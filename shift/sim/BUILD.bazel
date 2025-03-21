@@ -29,6 +29,7 @@ verilog_library(
 
 verilog_elab_test(
     name = "br_shift_rotate_tb_elab_test",
+    tool = "verific",
     deps = [":br_shift_rotate_tb"],
 )
 
@@ -52,4 +53,70 @@ br_verilog_sim_test_tools_suite(
         "vcs",
     ],
     deps = [":br_shift_rotate_tb"],
+)
+
+verilog_library(
+    name = "br_shift_right_tb",
+    srcs = ["br_shift_right_tb.sv"],
+    deps = [
+        "//misc/sim:br_test_driver",
+        "//shift/rtl:br_shift_right",
+    ],
+)
+
+verilog_elab_test(
+    name = "br_shift_right_tb_elab_test",
+    tool = "verific",
+    deps = [":br_shift_right_tb"],
+)
+
+br_verilog_sim_test_tools_suite(
+    name = "br_shift_right_sim_test_tools_suite",
+    params = {
+        "NumSymbols": [
+            "4",
+            "7",
+            "8",
+        ],
+        "SymbolWidth": ["8"],
+    },
+    tools = [
+        "dsim",
+        "iverilog",
+        "vcs",
+    ],
+    deps = [":br_shift_right_tb"],
+)
+
+verilog_library(
+    name = "br_shift_left_tb",
+    srcs = ["br_shift_left_tb.sv"],
+    deps = [
+        "//misc/sim:br_test_driver",
+        "//shift/rtl:br_shift_left",
+    ],
+)
+
+verilog_elab_test(
+    name = "br_shift_left_tb_elab_test",
+    tool = "verific",
+    deps = [":br_shift_left_tb"],
+)
+
+br_verilog_sim_test_tools_suite(
+    name = "br_shift_left_sim_test_tools_suite",
+    params = {
+        "NumSymbols": [
+            "4",
+            "7",
+            "8",
+        ],
+        "SymbolWidth": ["8"],
+    },
+    tools = [
+        "dsim",
+        "iverilog",
+        "vcs",
+    ],
+    deps = [":br_shift_left_tb"],
 )

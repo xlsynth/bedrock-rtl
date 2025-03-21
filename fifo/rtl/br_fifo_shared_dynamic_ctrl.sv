@@ -178,7 +178,8 @@ module br_fifo_shared_dynamic_ctrl #(
       .next_tail_valid,
       .next_tail,
       .dealloc_valid,
-      .dealloc_entry_id
+      .dealloc_entry_id,
+      .dealloc_count()
   );
 
   // Pointer Manager

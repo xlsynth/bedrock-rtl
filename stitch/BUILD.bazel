@@ -1,0 +1,21 @@
+load("@bedrock_stitch//:defs.bzl", "all_crate_deps")
+load("@rules_rust//rust:defs.bzl", "rust_binary")
+
+package(default_visibility = ["//visibility:public"])
+
+cc_library(
+    name = "xls_lib",
+    visibility = ["//visibility:public"],
+)
+
+rust_binary(
+    name = "stitch_tool",
+    srcs = [
+        "src/common.rs",
+        "src/instantiate.rs",
+        "src/main.rs",
+    ],
+    deps = [
+        ":xls_lib",
+    ] + all_crate_deps(normal = True),
+)

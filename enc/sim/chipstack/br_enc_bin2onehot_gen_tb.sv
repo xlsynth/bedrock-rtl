@@ -128,6 +128,7 @@ module br_enc_bin2onehot_gen_tb;
     reset_dut();
     test_InputRangeValidationWithinRange();
 
+    reset_dut();
     if (overall_tb_status == 1'b0) begin
       $display("TEST FAILED");
       $finish(1);

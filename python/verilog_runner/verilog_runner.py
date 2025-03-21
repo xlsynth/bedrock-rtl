@@ -24,6 +24,25 @@ from plugins import discover_plugins
 from util import print_greeting, init_root_logger
 
 
+def get_plugin_dirs_from_env() -> list[str]:
+    logging.info(
+        "Getting additional plugin directories from VERILOG_RUNNER_PLUGIN_PATH environment variable. "
+        "Note that the current directory is always searched for plugins "
+        "regardless of the environment variable setting."
+    )
+    plugin_dirs_env = os.environ.get("VERILOG_RUNNER_PLUGIN_PATH", "")
+    logging.info(f"VERILOG_RUNNER_PLUGIN_PATH: {plugin_dirs_env}")
+    plugin_dirs = plugin_dirs_env.split(os.pathsep)
+    if plugin_dirs[0] == "":
+        logging.info(
+            "Stripping off empty first element from VERILOG_RUNNER_PLUGIN_PATH."
+        )
+        plugin_dirs = plugin_dirs[1:]
+    logging.info("Adding current directory to plugin search path.")
+    plugin_dirs += ["."]
+    return plugin_dirs
+
+
 def main():
     print_greeting()
     init_root_logger()
@@ -39,18 +58,7 @@ def main():
     parent_parser = argparse.ArgumentParser(add_help=False)
     add_common_args(parent_parser)
 
-    logging.info(
-        "Getting additional plugin directories from VERILOG_RUNNER_PLUGIN_PATH environment variable. "
-        "Note that the current directory is always searched for plugins "
-        "regardless of the environment variable setting."
-    )
-    plugin_dirs_env = os.environ.get("VERILOG_RUNNER_PLUGIN_PATH", "")
-    plugin_dirs = plugin_dirs_env.split(os.pathsep) + ["."]
-
-    if len(plugin_dirs) == 0 or plugin_dirs[0] == "":
-        raise ValueError("VERILOG_RUNNER_PLUGIN_PATH environment variable is not set.")
-
-    logging.info(f"VERILOG_RUNNER_PLUGIN_PATH: {plugin_dirs_env}")
+    plugin_dirs = get_plugin_dirs_from_env()
 
     allowed_subcommands = (Elab, Lint, Sim, Fpv)
     subcommand_name_to_class = {cls.name: cls for cls in allowed_subcommands}

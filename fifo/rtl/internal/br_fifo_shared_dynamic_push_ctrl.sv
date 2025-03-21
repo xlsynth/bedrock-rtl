@@ -27,6 +27,9 @@ module br_fifo_shared_dynamic_push_ctrl #(
     parameter int Depth = 3,
     // Width of the data
     parameter int Width = 1,
+    // The delay between an entry being deallocated and when the deallocation
+    // is indicated by dealloc_count.
+    parameter int DeallocCountDelay = 2,
     // If 1, cover that the push side experiences backpressure.
     // If 0, assert that there is never backpressure.
     parameter bit EnableCoverPushBackpressure = 1,
@@ -43,7 +46,8 @@ module br_fifo_shared_dynamic_push_ctrl #(
     parameter bit EnableAssertFinalNotValid = 1,
 
     localparam int FifoIdWidth = br_math::clamped_clog2(NumFifos),
-    localparam int AddrWidth   = br_math::clamped_clog2(Depth)
+    localparam int AddrWidth = br_math::clamped_clog2(Depth),
+    localparam int FifoCountWidth = $clog2(NumFifos + 1)
 ) (
     input logic clk,
     input logic rst,
@@ -65,7 +69,8 @@ module br_fifo_shared_dynamic_push_ctrl #(
 
     // Entry deallocation from pop controller
     input logic [NumFifos-1:0] dealloc_valid,
-    input logic [NumFifos-1:0][AddrWidth-1:0] dealloc_entry_id
+    input logic [NumFifos-1:0][AddrWidth-1:0] dealloc_entry_id,
+    output logic [FifoCountWidth-1:0] dealloc_count
 );
 
   // Integration Assertions
@@ -98,91 +103,56 @@ module br_fifo_shared_dynamic_push_ctrl #(
 `endif  // BR_ASSERT_ON
 
   // Implementation
+  localparam int AllocCountWidth = $clog2(NumWritePorts + 1);
 
-  logic [NumWritePorts-1:0] alloc_valid;
-  logic [NumWritePorts-1:0] alloc_ready;
+  logic [AllocCountWidth-1:0] alloc_sendable;
+  logic [AllocCountWidth-1:0] alloc_receivable;
   logic [NumWritePorts-1:0][AddrWidth-1:0] alloc_entry_id;
 
   br_tracker_freelist #(
       .NumEntries(Depth),
-      .NumAllocPorts(NumWritePorts),
-      .NumDeallocPorts(NumFifos)
+      .NumAllocPerCycle(NumWritePorts),
+      .NumDeallocPorts(NumFifos),
+      .DeallocCountDelay(DeallocCountDelay)
   ) br_tracker_freelist_inst (
       .clk,
       .rst,
 
-      .alloc_valid,
-      .alloc_ready,
+      .alloc_sendable,
+      .alloc_receivable,
       .alloc_entry_id,
 
       .dealloc_valid,
-      .dealloc_entry_id
+      .dealloc_entry_id,
+      .dealloc_count
   );
 
   if (NumWritePorts > 1) begin : gen_alloc_mapping
-    // Map the allocations to the push ports. Entries are allocated to the freelist
-    // staging buffers in a fixed priority, so the lower priority ports may not
-    // get entries even if some are free if the FIFO is running nearly full.
-    // To have a fair allocation of entries to write ports, we implement a
-    // round-robin priority scheme. On a given cycle, the allocation
-    // ports are mapped to the write ports starting from the alloc port
-    // 0 and progressing to alloc port NumWritePorts-1. The alloc ports
-    // get assigned to the active write ports in a priority order,
-    // with the lowest priority going to the port that was given the
-    // first allocated entry the last time.
-
-    // alloc_mapping[i][j] = 1 if alloc port i is mapped to write port j
-    logic [NumWritePorts-1:0][NumWritePorts-1:0] alloc_mapping;
-    logic [NumWritePorts-1:0] alloc_lowest_prio;
-    logic [NumWritePorts-1:0] alloc_lowest_prio_init;
-    logic [NumWritePorts-1:0] alloc_lowest_prio_next;
-    logic alloc_prio_update;
-
-    assign alloc_prio_update = |(push_valid & push_ready);
-    assign alloc_lowest_prio_init = {1'b1, (NumWritePorts - 1)'(1'b0)};
-    assign alloc_lowest_prio_next = alloc_mapping[0];
-
-    `BR_REGLI(alloc_lowest_prio, alloc_lowest_prio_next, alloc_prio_update, alloc_lowest_prio_init)
-
-    // Priority encoder maps lowest active port to alloc port 0,
-    // second most active to alloc port 1, etc.
-    br_enc_priority_dynamic #(
-        .NumRequesters(NumWritePorts),
-        .NumResults(NumWritePorts)
-    ) br_enc_priority_dynamic_alloc (
+    // Distribute the allocatable entries to the active push ports using multi-grant
+    // round-robin arbitration.
+    br_multi_xfer_distributor_rr #(
+        .NumSymbols(NumWritePorts),
+        .NumFlows(NumWritePorts),
+        .SymbolWidth(AddrWidth),
+        // TODO(zhemao): check this is right
+        .EnableAssertFinalNotSendable(0)
+    ) br_multi_xfer_distributor_rr_inst (
         .clk,
         .rst,
-        .in(push_valid),
-        .lowest_prio(alloc_lowest_prio),
-        .out(alloc_mapping)
+        .push_sendable(alloc_sendable),
+        .push_receivable(alloc_receivable),
+        .push_data(alloc_entry_id),
+        // Ready/valid deliberately reversed here
+        .pop_ready(push_valid),
+        .pop_valid(push_ready),
+        .pop_data(data_ram_wr_addr)
     );
 
-    for (genvar i = 0; i < NumWritePorts; i++) begin : gen_data_ram_write
-      // One-hot select of the alloc ports for this write port.
-      logic [NumWritePorts-1:0] alloc_select;
-
-      for (genvar j = 0; j < NumWritePorts; j++) begin : gen_alloc_select
-        assign alloc_select[j] = alloc_mapping[j][i];
-      end
-
-      assign push_ready[i] = |(alloc_select & alloc_valid);
-      assign alloc_ready[i] = |(push_valid & alloc_mapping[i]);
-
-      assign data_ram_wr_valid[i] = push_valid[i] & push_ready[i];
-      assign data_ram_wr_data[i] = push_data[i];
-
-      br_mux_onehot #(
-          .NumSymbolsIn(NumWritePorts),
-          .SymbolWidth (AddrWidth)
-      ) br_mux_onehot_data_ram_wr_addr_inst (
-          .select(alloc_select),
-          .in(alloc_entry_id),
-          .out(data_ram_wr_addr[i])
-      );
-    end
+    assign data_ram_wr_valid = push_valid & push_ready;
+    assign data_ram_wr_data  = push_data;
   end else begin : gen_single_alloc
-    assign push_ready = alloc_valid;
-    assign alloc_ready = push_valid;
+    assign push_ready = alloc_sendable;
+    assign alloc_receivable = push_valid;
 
     assign data_ram_wr_valid = push_valid & push_ready;
     assign data_ram_wr_addr = alloc_entry_id;
@@ -217,21 +187,21 @@ module br_fifo_shared_dynamic_push_ctrl #(
   localparam int PortCountWidth = $clog2(NumWritePorts + 1);
 
   logic [PortCountWidth-1:0] request_count;
-  logic [PortCountWidth-1:0] alloc_count;
   logic [PortCountWidth-1:0] grant_count;
 
   // These are only used for assertions, so it's fine to use $countones
   // ri lint_check_off SYS_TF
   assign request_count = $unsigned($countones(push_valid));
-  assign alloc_count   = $unsigned($countones(alloc_valid));
   assign grant_count   = $unsigned($countones(push_valid & push_ready));
   // ri lint_check_on SYS_TF
 `endif
 `endif
 
-  `BR_ASSERT_IMPL(full_push_acceptance_a,
-                  (|push_valid && (alloc_count > request_count)) |-> (request_count == grant_count))
-  `BR_ASSERT_IMPL(partial_push_acceptance_a,
-                  (|push_valid && (alloc_count < request_count)) |-> (grant_count == alloc_count))
+  `BR_ASSERT_IMPL(
+      full_push_acceptance_a,
+      (|push_valid && (alloc_sendable > request_count)) |-> (request_count == grant_count))
+  `BR_ASSERT_IMPL(
+      partial_push_acceptance_a,
+      (|push_valid && (alloc_sendable < request_count)) |-> (grant_count == alloc_sendable))
 
 endmodule

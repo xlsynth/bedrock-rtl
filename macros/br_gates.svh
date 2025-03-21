@@ -38,6 +38,13 @@ br_gate_clk_buf br_gate_clk_buf_``__out__`` ( \
     .out(__out__) \
 );
 
+// Clock Inverter
+`define BR_GATE_CLK_INV(__out__, __in__) \
+br_gate_clk_inv br_gate_clk_inv_``__out__`` ( \
+    .in(__in__), \
+    .out(__out__) \
+);
+
 // Inverter
 `define BR_GATE_INV(__out__, __in__) \
 br_gate_inv br_gate_inv_``__out__`` ( \

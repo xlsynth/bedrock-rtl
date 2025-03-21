@@ -13,7 +13,7 @@
 # limitations under the License.
 
 load("@rules_hdl//verilog:providers.bzl", "verilog_library")
-load("//bazel:br_verilog.bzl", "br_verilog_fpv_test_suite")
+load("//bazel:br_verilog.bzl", "br_verilog_fpv_test_tools_suite")
 load("//bazel:verilog.bzl", "verilog_elab_test")
 
 package(default_visibility = ["//visibility:public"])
@@ -38,12 +38,12 @@ verilog_library(
 
 verilog_elab_test(
     name = "br_flow_demux_select_unstable_fpv_monitor_elab_test",
+    tool = "verific",
     deps = [":br_flow_demux_select_unstable_fpv_monitor"],
 )
 
-br_verilog_fpv_test_suite(
-    name = "br_flow_demux_select_unstable_jg_test_suite",
-    custom_tcl_body = "br_flow_demux_select_unstable_fpv.tcl",
+br_verilog_fpv_test_tools_suite(
+    name = "br_flow_demux_select_unstable_test_suite",
     illegal_param_combinations = {
         (
             "EnableCoverPushBackpressure",
@@ -80,8 +80,10 @@ br_verilog_fpv_test_suite(
             "4",
         ],
     },
-    tags = ["manual"],
-    tool = "jg",
+    tools = {
+        "jg": "br_flow_demux_select_unstable_fpv.jg.tcl",
+        "vcf": "",
+    },
     top = "br_flow_demux_select_unstable",
     deps = [":br_flow_demux_select_unstable_fpv_monitor"],
 )
@@ -100,12 +102,12 @@ verilog_library(
 
 verilog_elab_test(
     name = "br_flow_demux_select_fpv_monitor_elab_test",
+    tool = "verific",
     deps = [":br_flow_demux_select_fpv_monitor"],
 )
 
-br_verilog_fpv_test_suite(
-    name = "br_flow_demux_select_jg_test_suite",
-    custom_tcl_body = "br_flow_demux_select_fpv.tcl",
+br_verilog_fpv_test_tools_suite(
+    name = "br_flow_demux_select_test_suite",
     illegal_param_combinations = {
         (
             "EnableCoverPushBackpressure",
@@ -142,8 +144,10 @@ br_verilog_fpv_test_suite(
             "4",
         ],
     },
-    tags = ["manual"],
-    tool = "jg",
+    tools = {
+        "jg": "br_flow_demux_select_fpv.jg.tcl",
+        "vcf": "",
+    },
     top = "br_flow_demux_select",
     deps = [":br_flow_demux_select_fpv_monitor"],
 )

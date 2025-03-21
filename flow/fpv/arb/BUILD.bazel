@@ -13,7 +13,7 @@
 # limitations under the License.
 
 load("@rules_hdl//verilog:providers.bzl", "verilog_library")
-load("//bazel:br_verilog.bzl", "br_verilog_fpv_test_suite")
+load("//bazel:br_verilog.bzl", "br_verilog_fpv_test_tools_suite")
 load("//bazel:verilog.bzl", "verilog_elab_test")
 
 package(default_visibility = ["//visibility:public"])
@@ -38,11 +38,12 @@ verilog_library(
 
 verilog_elab_test(
     name = "br_flow_arb_fixed_fpv_monitor_elab_test",
+    tool = "verific",
     deps = [":br_flow_arb_fixed_fpv_monitor"],
 )
 
-br_verilog_fpv_test_suite(
-    name = "br_flow_arb_fixed_jg_test_suite",
+br_verilog_fpv_test_tools_suite(
+    name = "br_flow_arb_fixed_test_suite",
     illegal_param_combinations = {
         (
             "EnableAssertPushValidStability",
@@ -66,8 +67,10 @@ br_verilog_fpv_test_suite(
             "5",
         ],
     },
-    tags = ["manual"],
-    tool = "jg",
+    tools = {
+        "jg": "",
+        "vcf": "",
+    },
     top = "br_flow_arb_fixed",
     deps = [":br_flow_arb_fixed_fpv_monitor"],
 )
@@ -87,11 +90,12 @@ verilog_library(
 
 verilog_elab_test(
     name = "br_flow_arb_lru_fpv_monitor_elab_test",
+    tool = "verific",
     deps = [":br_flow_arb_lru_fpv_monitor"],
 )
 
-br_verilog_fpv_test_suite(
-    name = "br_flow_arb_lru_jg_test_suite",
+br_verilog_fpv_test_tools_suite(
+    name = "br_flow_arb_lru_test_suite",
     illegal_param_combinations = {
         (
             "EnableAssertPushValidStability",
@@ -115,8 +119,10 @@ br_verilog_fpv_test_suite(
             "5",
         ],
     },
-    tags = ["manual"],
-    tool = "jg",
+    tools = {
+        "jg": "",
+        "vcf": "",
+    },
     top = "br_flow_arb_lru",
     deps = [":br_flow_arb_lru_fpv_monitor"],
 )
@@ -136,11 +142,12 @@ verilog_library(
 
 verilog_elab_test(
     name = "br_flow_arb_rr_fpv_monitor_elab_test",
+    tool = "verific",
     deps = [":br_flow_arb_rr_fpv_monitor"],
 )
 
-br_verilog_fpv_test_suite(
-    name = "br_flow_arb_rr_jg_test_suite",
+br_verilog_fpv_test_tools_suite(
+    name = "br_flow_arb_rr_test_suite",
     illegal_param_combinations = {
         (
             "EnableAssertPushValidStability",
@@ -164,8 +171,10 @@ br_verilog_fpv_test_suite(
             "5",
         ],
     },
-    tags = ["manual"],
-    tool = "jg",
+    tools = {
+        "jg": "",
+        "vcf": "",
+    },
     top = "br_flow_arb_rr",
     deps = [":br_flow_arb_rr_fpv_monitor"],
 )

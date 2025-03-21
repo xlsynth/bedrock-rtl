@@ -99,8 +99,10 @@ module br_fifo_shared_read_xbar #(
     logic [NumFifos-1:0][TotalMuxWidth-1:0] mux_push_data;
 
     for (genvar j = 0; j < NumFifos; j++) begin : gen_mux_input
+      logic [FifoIdWidth-1:0] mux_push_fifo_id;
+      assign mux_push_fifo_id = j;
       assign mux_push_valid[j] = demuxed_rd_addr_valid[j][i];
-      assign mux_push_data[j] = {demuxed_rd_addr[j][i], FifoIdWidth'($unsigned(j))};
+      assign mux_push_data[j] = {demuxed_rd_addr[j][i], mux_push_fifo_id};
       assign demuxed_rd_addr_ready[j][i] = mux_push_ready[j];
     end
 
@@ -113,10 +115,10 @@ module br_fifo_shared_read_xbar #(
         .rst,
         .push_valid(mux_push_valid),
         .push_ready(mux_push_ready),
-        .push_data (mux_push_data),
-        .pop_valid (pop_rd_addr_valid[i]),
-        .pop_ready (1'b1),
-        .pop_data  ({pop_rd_addr[i], pop_rd_addr_fifo_id[i]})
+        .push_data(mux_push_data),
+        .pop_valid_unstable(pop_rd_addr_valid[i]),
+        .pop_ready(1'b1),
+        .pop_data_unstable({pop_rd_addr[i], pop_rd_addr_fifo_id[i]})
     );
 
     br_delay_valid #(

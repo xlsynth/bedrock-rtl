@@ -258,10 +258,8 @@ verilog_library(
     srcs = ["br_fifo_shared_dynamic_push_ctrl.sv"],
     deps = [
         "//demux/rtl:br_demux_bin",
-        "//enc/rtl:br_enc_countones",
-        "//enc/rtl:br_enc_priority_dynamic",
         "//macros:br_asserts_internal",
-        "//mux/rtl:br_mux_onehot",
+        "//multi_xfer/rtl:br_multi_xfer_distributor_rr",
         "//pkg:br_math_pkg",
         "//tracker/rtl:br_tracker_freelist",
     ],
@@ -356,4 +354,36 @@ br_verilog_elab_and_lint_test_suite(
         ],
     },
     deps = [":br_fifo_shared_pop_ctrl"],
+)
+
+verilog_library(
+    name = "br_fifo_shared_dynamic_push_ctrl_credit",
+    srcs = ["br_fifo_shared_dynamic_push_ctrl_credit.sv"],
+    deps = [
+        ":br_fifo_shared_dynamic_push_ctrl",
+        "//credit/rtl:br_credit_receiver",
+        "//delay/rtl:br_delay",
+        "//enc/rtl:br_enc_countones",
+    ],
+)
+
+br_verilog_elab_and_lint_test_suite(
+    name = "br_fifo_shared_dynamic_push_ctrl_credit_test_suite",
+    params = {
+        "NumFifos": [
+            "2",
+            "4",
+        ],
+        "NumWritePorts": [
+            "1",
+            "2",
+        ],
+        "Depth": ["5"],
+        "Width": ["8"],
+        "RegisterPushOutputs": [
+            "0",
+            "1",
+        ],
+    },
+    deps = [":br_fifo_shared_dynamic_push_ctrl_credit"],
 )

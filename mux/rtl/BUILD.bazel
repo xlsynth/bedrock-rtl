@@ -46,17 +46,13 @@ verilog_library(
     name = "br_mux_bin",
     srcs = ["br_mux_bin.sv"],
     deps = [
-        # Omitting //gate/rtl:br_gate_mock so that downstream targets (which may exist in another repo)
-        # can decide whether to use these behavioral models or swap them out for some other vendor models.
-        # Downstream targets should decide whether to add the //gate/rtl:br_gate_mock dependency themselves.
         "//macros:br_asserts_internal",
         "//macros:br_unused",
-        "//pkg:br_math_pkg",
     ],
 )
 
 br_verilog_elab_and_lint_test_suite(
-    name = "br_mux_bin_test_suite_unstructured",
+    name = "br_mux_bin_test_suite",
     params = {
         "NumSymbolsIn": [
             "2",
@@ -68,19 +64,22 @@ br_verilog_elab_and_lint_test_suite(
             "5",
             "8",
         ],
-        "UseStructuredGates": [
-            "0",
-        ],
     },
-    top = "br_mux_bin",
+    deps = [":br_mux_bin"],
+)
+
+verilog_library(
+    name = "br_mux_bin_structured_gates",
+    srcs = ["br_mux_bin_structured_gates.sv"],
     deps = [
-        ":br_mux_bin",
-        "//gate/rtl:br_gate_mock",
+        "//macros:br_asserts_internal",
+        "//macros:br_unused",
+        "//pkg:br_math_pkg",
     ],
 )
 
 br_verilog_elab_and_lint_test_suite(
-    name = "br_mux_bin_test_suite_structured",
+    name = "br_mux_bin_structured_gates_test_suite",
     params = {
         "NumSymbolsIn": [
             "2",
@@ -96,15 +95,41 @@ br_verilog_elab_and_lint_test_suite(
         "SymbolWidth": [
             "2",
         ],
-        "UseStructuredGates": [
-            "1",
+    },
+    top = "br_mux_bin_structured_gates",
+    deps = [
+        ":br_mux_bin_structured_gates",
+        "//gate/rtl:br_gate_mock",
+        "//pkg:br_math_pkg",
+    ],
+)
+
+verilog_library(
+    name = "br_mux_bin_structured_gates_mock",
+    srcs = ["br_mux_bin_structured_gates_mock.sv"],
+    deps = [":br_mux_bin"],
+)
+
+br_verilog_elab_and_lint_test_suite(
+    name = "br_mux_bin_structured_gates_mock_test_suite",
+    params = {
+        "NumSymbolsIn": [
+            "2",
+            "4",
+            "5",
+            "6",
+            "7",
+            "9",
+            "10",
+            "13",
+            "14",
+        ],
+        "SymbolWidth": [
+            "2",
         ],
     },
-    top = "br_mux_bin",
-    deps = [
-        ":br_mux_bin",
-        "//gate/rtl:br_gate_mock",
-    ],
+    top = "br_mux_bin_structured_gates",
+    deps = [":br_mux_bin_structured_gates_mock"],
 )
 
 verilog_library(
@@ -134,14 +159,6 @@ br_verilog_elab_and_lint_test_suite(
             "2",
             "3",
         ],
-        "UseStructuredGates": [
-            "0",
-            "1",
-        ],
     },
-    top = "br_mux_bin_array",
-    deps = [
-        ":br_mux_bin_array",
-        "//gate/rtl:br_gate_mock",
-    ],
+    deps = [":br_mux_bin_array"],
 )

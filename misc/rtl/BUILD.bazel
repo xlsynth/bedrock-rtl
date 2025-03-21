@@ -20,10 +20,12 @@ package(default_visibility = ["//visibility:public"])
 verilog_library(
     name = "br_misc_unused",
     srcs = ["br_misc_unused.sv"],
+    deps = ["//macros:br_asserts"],
 )
 
 br_verilog_elab_and_lint_test_suite(
     name = "br_misc_unused_test_suite",
+    disable_lint_rules = ["NO_OUTPUT"],
     params = {"Width": [
         "1",
         "2",
@@ -34,6 +36,7 @@ br_verilog_elab_and_lint_test_suite(
 verilog_library(
     name = "br_misc_tieoff_zero",
     srcs = ["br_misc_tieoff_zero.sv"],
+    deps = ["//macros:br_asserts"],
 )
 
 br_verilog_elab_and_lint_test_suite(
@@ -50,6 +53,7 @@ br_verilog_elab_and_lint_test_suite(
 verilog_library(
     name = "br_misc_tieoff_one",
     srcs = ["br_misc_tieoff_one.sv"],
+    deps = ["//macros:br_asserts"],
 )
 
 br_verilog_elab_and_lint_test_suite(

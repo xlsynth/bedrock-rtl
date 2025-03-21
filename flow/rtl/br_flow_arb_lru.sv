@@ -21,6 +21,8 @@
 //
 // 0-cycle latency, but clock and reset are still needed to manage
 // the internal arbiter priority state.
+// Pop valid can be unstable if push valid is unstable and all active push_valid
+// are withdrawn while pop_ready is low.
 //
 // TODO(mgottscho): Write spec
 
@@ -44,7 +46,9 @@ module br_flow_arb_lru #(
     output logic [NumFlows-1:0] push_ready,
     input logic [NumFlows-1:0] push_valid,
     input logic pop_ready,
-    output logic pop_valid
+    // Pop valid can be unstable if push valid is unstable
+    // and all active push_valid are withdrawn while pop_ready is low
+    output logic pop_valid_unstable
 );
 
   //------------------------------------------
@@ -88,7 +92,7 @@ module br_flow_arb_lru #(
       .push_ready,
       .push_valid,
       .pop_ready,
-      .pop_valid
+      .pop_valid_unstable
   );
 
   //------------------------------------------

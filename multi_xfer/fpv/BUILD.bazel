@@ -1,0 +1,113 @@
+# Copyright 2024-2025 The Bedrock-RTL Authors
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+load("@rules_hdl//verilog:providers.bzl", "verilog_library")
+load("//bazel:br_verilog.bzl", "br_verilog_fpv_test_tools_suite")
+load("//bazel:verilog.bzl", "verilog_elab_test")
+
+package(default_visibility = ["//visibility:public"])
+
+# Bedrock-RTL Multi-Transfer Register (Forward Variant)
+
+verilog_library(
+    name = "br_multi_xfer_reg_fwd_fpv_monitor",
+    srcs = ["br_multi_xfer_reg_fwd_fpv_monitor.sv"],
+    deps = [
+        "//multi_xfer/rtl:br_multi_xfer_reg_fwd",
+    ],
+)
+
+verilog_elab_test(
+    name = "br_multi_xfer_reg_fwd_fpv_monitor_elab_test",
+    custom_tcl_header = "//:elab_test_jg_custom_header.verific.tcl",
+    tool = "verific",
+    deps = [":br_multi_xfer_reg_fwd_fpv_monitor"],
+)
+
+br_verilog_fpv_test_tools_suite(
+    name = "br_multi_xfer_reg_fwd_test_suite",
+    params = {
+        "NumSymbols": [
+            "2",
+            "4",
+            "6",
+        ],
+        "SymbolWidth": [
+            "1",
+            "2",
+            "3",
+        ],
+    },
+    tools = {
+        "jg": "",
+        "vcf": "",
+    },
+    top = "br_multi_xfer_reg_fwd",
+    deps = [":br_multi_xfer_reg_fwd_fpv_monitor"],
+)
+
+# Bedrock-RTL Multi-Transfer Interface Distributor (Round-Robin)
+
+verilog_library(
+    name = "br_multi_xfer_distributor_rr_fpv_monitor",
+    srcs = ["br_multi_xfer_distributor_rr_fpv_monitor.sv"],
+    deps = [
+        "//multi_xfer/rtl:br_multi_xfer_distributor_rr",
+    ],
+)
+
+verilog_elab_test(
+    name = "br_multi_xfer_distributor_rr_fpv_monitor_elab_test",
+    custom_tcl_header = "//:elab_test_jg_custom_header.verific.tcl",
+    tool = "verific",
+    deps = [":br_multi_xfer_distributor_rr_fpv_monitor"],
+)
+
+br_verilog_fpv_test_tools_suite(
+    name = "br_multi_xfer_distributor_rr_test_suite",
+    # NumFlows >= NumSymbols
+    illegal_param_combinations = {
+        (
+            "NumFlows",
+            "NumSymbols",
+        ): [
+            ("2", "4"),
+            ("2", "6"),
+            ("4", "6"),
+        ],
+    },
+    params = {
+        "NumFlows": [
+            "2",
+            "4",
+            "6",
+        ],
+        "NumSymbols": [
+            "2",
+            "4",
+            "6",
+        ],
+        "SymbolWidth": [
+            "1",
+            "2",
+            "3",
+        ],
+    },
+    tools = {
+        "jg": "",
+        "vcf": "",
+    },
+    top = "br_multi_xfer_distributor_rr",
+    deps = [":br_multi_xfer_distributor_rr_fpv_monitor"],
+)

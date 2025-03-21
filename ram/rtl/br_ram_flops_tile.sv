@@ -359,11 +359,10 @@ module br_ram_flops_tile #(
           assign mem_packed[i] = mem[i];
         end
 
-        br_mux_bin #(
+        br_mux_bin_structured_gates #(
             .NumSymbolsIn(Depth),
-            .SymbolWidth(Width),
-            .UseStructuredGates(1)
-        ) br_mux_bin_inst (
+            .SymbolWidth (Width)
+        ) br_mux_bin_structured_gates_inst (
             .select(rd_addr[rport]),
             .in(mem_packed),
             .out(rd_data_mem),

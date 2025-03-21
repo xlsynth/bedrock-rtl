@@ -28,7 +28,7 @@ module br_flow_arb_lru_fpv_monitor #(
     input logic [NumFlows-1:0] push_ready,
     input logic [NumFlows-1:0] push_valid,
     input logic                pop_ready,
-    input logic                pop_valid,
+    input logic                pop_valid_unstable,
     // RTL internal signal
     input logic [NumFlows-1:0] grant
 );
@@ -44,7 +44,7 @@ module br_flow_arb_lru_fpv_monitor #(
       .push_ready,
       .push_valid,
       .pop_ready,
-      .pop_valid
+      .pop_valid_unstable
   );
 
   // ----------LRU checks----------

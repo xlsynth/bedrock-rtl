@@ -33,12 +33,16 @@ module br_amba_axil_split #(
     parameter int RUserWidth = 1,
     parameter int MaxOutstandingReads = 1,  // Must be at least 1
     parameter int MaxOutstandingWrites = 1,  // Must be at least 1
+    // The number of contiguous address ranges to check
+    // to see if a request should be routed to the branch.
+    // Must be at least 1.
+    parameter int NumBranchAddrRanges = 1,
     localparam int StrobeWidth = DataWidth / 8
 ) (
     input clk,
     input rst,  // Synchronous, active-high reset
-    input logic [AddrWidth-1:0] branch_start_addr,
-    input logic [AddrWidth-1:0] branch_end_addr,
+    input logic [NumBranchAddrRanges-1:0][AddrWidth-1:0] branch_start_addr,
+    input logic [NumBranchAddrRanges-1:0][AddrWidth-1:0] branch_end_addr,
 
     // AXI4-Lite root target interface
     input  logic [            AddrWidth-1:0] root_awaddr,
@@ -121,7 +125,9 @@ module br_amba_axil_split #(
   //------------------------------------------
   `BR_ASSERT_STATIC(addr_width_must_be_at_least_12_a, AddrWidth >= 12)
   `BR_ASSERT_STATIC(data_width_must_be_at_least_32_a, DataWidth >= 32)
-  `BR_ASSERT_INTG(branch_end_addr_after_start_addr_a, branch_end_addr > branch_start_addr)
+  for (genvar i = 0; i < NumBranchAddrRanges; i++) begin : gen_branch_addr_range_checks
+    `BR_ASSERT_INTG(branch_end_addr_after_start_addr_a, branch_end_addr[i] > branch_start_addr[i])
+  end
   `BR_ASSERT_STATIC(max_out_reads_must_be_at_least_1_a, MaxOutstandingReads >= 1)
   `BR_ASSERT_STATIC(max_out_writes_must_be_at_least_1_a, MaxOutstandingWrites >= 1)
 
@@ -132,7 +138,8 @@ module br_amba_axil_split #(
   localparam int ReadCounterWidth = $clog2(MaxOutstandingReads + 1);
   localparam int WriteCounterWidth = $clog2(MaxOutstandingWrites + 1);
 
-  logic branch_awaddr_in_range, branch_araddr_in_range;
+  logic [NumBranchAddrRanges-1:0] branch_awaddr_in_range, branch_araddr_in_range;
+  logic awaddr_is_branch, araddr_is_branch;
   logic [ ReadCounterWidth-1:0] outstanding_reads_count;
   logic [WriteCounterWidth-1:0] outstanding_writes_count;
   logic no_outstanding_reads, no_outstanding_writes;
@@ -140,17 +147,34 @@ module br_amba_axil_split #(
   logic ar_handshake_valid, aw_handshake_valid;
   logic r_handshake_valid, b_handshake_valid;
 
+  logic [AddrWidth-1:0] root_awaddr_reg;
+  logic [br_amba::AxiProtWidth-1:0] root_awprot_reg;
+  logic [AWUserWidth-1:0] root_awuser_reg;
+  logic [DataWidth-1:0] root_wdata_reg;
+  logic [StrobeWidth-1:0] root_wstrb_reg;
+  logic [WUserWidth-1:0] root_wuser_reg;
+  logic write_addr_flow_reg_is_branch;
+  logic write_data_flow_reg_is_branch;
+  logic write_addr_flow_reg_push_valid, write_addr_flow_reg_push_ready;
+  logic write_addr_flow_reg_pop_valid, write_addr_flow_reg_pop_ready;
+  logic write_data_flow_reg_push_valid, write_data_flow_reg_push_ready;
+  logic write_data_flow_reg_pop_valid, write_data_flow_reg_pop_ready;
+
   // AXI handshake signals
   assign ar_handshake_valid = root_arvalid && root_arready;
-  assign r_handshake_valid = root_rvalid && root_rready;
+  assign r_handshake_valid  = root_rvalid && root_rready;
   assign aw_handshake_valid = root_awvalid && root_awready;
-  assign b_handshake_valid = root_bvalid && root_bready;
+  assign b_handshake_valid  = root_bvalid && root_bready;
 
   // ri lint_check_off INVALID_COMPARE
-  assign branch_awaddr_in_range = (root_awaddr >= branch_start_addr) &&
-                                  (root_awaddr <= branch_end_addr);
-  assign branch_araddr_in_range = (root_araddr >= branch_start_addr) &&
-                                  (root_araddr <= branch_end_addr);
+  for (genvar i = 0; i < NumBranchAddrRanges; i++) begin : gen_branch_addr_ranges
+    assign branch_awaddr_in_range[i] = (root_awaddr >= branch_start_addr[i]) &&
+                                       (root_awaddr <= branch_end_addr[i]);
+    assign branch_araddr_in_range[i] = (root_araddr >= branch_start_addr[i]) &&
+                                       (root_araddr <= branch_end_addr[i]);
+  end
+  assign awaddr_is_branch = |branch_awaddr_in_range;
+  assign araddr_is_branch = |branch_araddr_in_range;
   // ri lint_check_on INVALID_COMPARE
 
   // Counters to track outstanding read transactions
@@ -174,12 +198,12 @@ module br_amba_axil_split #(
   assign no_outstanding_reads = (outstanding_reads_count == 0);
 
   // Track the last read transaction, if it was trunk or branch
-  `BR_REGLN(last_arvalid_is_branch, branch_araddr_in_range, ar_handshake_valid)
+  `BR_REGLN(last_arvalid_is_branch, araddr_is_branch, ar_handshake_valid)
 
   // Split the read address channel
-  assign trunk_arvalid = root_arvalid && !branch_araddr_in_range &&
+  assign trunk_arvalid = root_arvalid && !araddr_is_branch &&
                          (no_outstanding_reads || !last_arvalid_is_branch);
-  assign branch_arvalid = root_arvalid && branch_araddr_in_range &&
+  assign branch_arvalid = root_arvalid && araddr_is_branch &&
                           (no_outstanding_reads || last_arvalid_is_branch);
   assign root_arready = (trunk_arvalid && trunk_arready) || (branch_arvalid && branch_arready);
 
@@ -201,32 +225,78 @@ module br_amba_axil_split #(
       .value_next()  // ri lint_check_waive OPEN_OUTPUT
   );
 
-
   assign no_outstanding_writes = (outstanding_writes_count == 0);
 
-  // Track the last write transaction, if it was trunk or branch
-  `BR_REGLN(last_awvalid_is_branch, branch_awaddr_in_range, aw_handshake_valid)
+  // Since the write data can arrive before the write address, we need to hold write address and
+  // write data until both are valid so we know which branch to route the data to. However, since
+  // awready and wready are not guaranteed to be driven by registers, add a flow register to
+  // prevent combinational loops.
+  br_flow_reg_both #(
+      .Width(AddrWidth + br_amba::AxiProtWidth + AWUserWidth + 1)
+  ) br_flow_reg_both_write_addr (
+      .clk,
+      .rst,
 
-  // Split the write address and write data channels
-  // - Need to hold write address and write data until both are valid
-  assign trunk_awvalid = root_awvalid && root_wvalid && !branch_awaddr_in_range &&
-                          (no_outstanding_writes || !last_awvalid_is_branch);
-  assign branch_awvalid = root_awvalid && root_wvalid && branch_awaddr_in_range &&
-                          (no_outstanding_writes || last_awvalid_is_branch);
-  assign trunk_wvalid = root_awvalid && root_wvalid && !branch_awaddr_in_range &&
-                         (no_outstanding_writes || !last_awvalid_is_branch);
-  assign branch_wvalid = root_awvalid && root_wvalid && branch_awaddr_in_range &&
-                         (no_outstanding_writes || last_awvalid_is_branch);
-  assign root_awready = (trunk_awvalid && trunk_awready) || (branch_awvalid && branch_awready);
-  assign root_wready = (trunk_wvalid && trunk_wready) || (branch_wvalid && branch_wready);
+      .push_ready(write_addr_flow_reg_push_ready),
+      .push_valid(write_addr_flow_reg_push_valid),
+      .push_data ({root_awaddr, root_awprot, root_awuser, awaddr_is_branch}),
+
+      .pop_ready(write_addr_flow_reg_pop_ready),
+      .pop_valid(write_addr_flow_reg_pop_valid),
+      .pop_data ({root_awaddr_reg, root_awprot_reg, root_awuser_reg, write_addr_flow_reg_is_branch})
+  );
+
+  br_flow_reg_both #(
+      .Width(DataWidth + StrobeWidth + WUserWidth + 1)
+  ) br_flow_reg_both_write_data (
+      .clk,
+      .rst,
+
+      .push_ready(write_data_flow_reg_push_ready),
+      .push_valid(write_data_flow_reg_push_valid),
+      .push_data ({root_wdata, root_wstrb, root_wuser, awaddr_is_branch}),
+
+      .pop_ready(write_data_flow_reg_pop_ready),
+      .pop_valid(write_data_flow_reg_pop_valid),
+      .pop_data ({root_wdata_reg, root_wstrb_reg, root_wuser_reg, write_data_flow_reg_is_branch})
+  );
+
+  // Push to the flow register when both the write address and write data are valid and the flow
+  // register is ready to accept the data
+  assign write_addr_flow_reg_push_valid = root_awvalid && root_wvalid &&
+      write_addr_flow_reg_push_ready && write_data_flow_reg_push_ready &&
+      (no_outstanding_writes || (last_awvalid_is_branch == awaddr_is_branch));
+  assign write_data_flow_reg_push_valid = root_awvalid && root_wvalid &&
+      write_addr_flow_reg_push_ready && write_data_flow_reg_push_ready &&
+      (no_outstanding_writes || (last_awvalid_is_branch == awaddr_is_branch));
+
+  // Track the last write transaction, if it was trunk or branch
+  `BR_REGLN(last_awvalid_is_branch, awaddr_is_branch, aw_handshake_valid)
+
+  // Do not drive the ready signal until the write address and write data are valid and the flow
+  // register is ready to accept the data
+  assign root_awready = write_addr_flow_reg_push_valid;
+  assign root_wready = write_data_flow_reg_push_valid;
+
+  // Split the write address and write data channels based on the awaddr
+  assign trunk_awvalid = write_addr_flow_reg_pop_valid && !write_addr_flow_reg_is_branch;
+  assign branch_awvalid = write_addr_flow_reg_pop_valid && write_addr_flow_reg_is_branch;
+  assign trunk_wvalid = write_data_flow_reg_pop_valid && !write_data_flow_reg_is_branch;
+  assign branch_wvalid = write_data_flow_reg_pop_valid && write_data_flow_reg_is_branch;
+
+  // Pop from the flow register when the branch or trunk accepts the write address and write data
+  assign write_addr_flow_reg_pop_ready =
+      (trunk_awvalid && trunk_awready) || (branch_awvalid && branch_awready);
+  assign write_data_flow_reg_pop_ready =
+      (trunk_wvalid && trunk_wready) || (branch_wvalid && branch_wready);
 
   // Broadcast the write address, read address, and write data signals to the branch and trunk.
-  assign {trunk_awaddr, branch_awaddr} = {2{root_awaddr}};
-  assign {trunk_awprot, branch_awprot} = {2{root_awprot}};
-  assign {trunk_awuser, branch_awuser} = {2{root_awuser}};
-  assign {trunk_wdata, branch_wdata} = {2{root_wdata}};
-  assign {trunk_wstrb, branch_wstrb} = {2{root_wstrb}};
-  assign {trunk_wuser, branch_wuser} = {2{root_wuser}};
+  assign {trunk_awaddr, branch_awaddr} = {2{root_awaddr_reg}};
+  assign {trunk_awprot, branch_awprot} = {2{root_awprot_reg}};
+  assign {trunk_awuser, branch_awuser} = {2{root_awuser_reg}};
+  assign {trunk_wdata, branch_wdata} = {2{root_wdata_reg}};
+  assign {trunk_wstrb, branch_wstrb} = {2{root_wstrb_reg}};
+  assign {trunk_wuser, branch_wuser} = {2{root_wuser_reg}};
   assign {trunk_araddr, branch_araddr} = {2{root_araddr}};
   assign {trunk_arprot, branch_arprot} = {2{root_arprot}};
   assign {trunk_aruser, branch_aruser} = {2{root_aruser}};

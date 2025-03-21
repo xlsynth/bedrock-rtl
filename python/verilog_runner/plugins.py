@@ -18,6 +18,7 @@ import logging
 import inspect
 import importlib.util
 import os
+import re
 import sys
 from eda_tool import EdaTool
 from cli import Subcommand
@@ -28,9 +29,51 @@ from typing import Dict, List, Tuple, Type
 #
 # The version number is used as a simple semantic versioning check.
 #
-# Major version changes are definitely breaking.
-# Minor version changes are intended to be non-breaking but we don't guarantee it.
-PLUGIN_API_VERSION = "1.1"
+# From https://semver.org:
+#   Given a version number MAJOR.MINOR.PATCH, increment the:
+#   1. MAJOR version when you make incompatible API changes
+#   2. MINOR version when you add functionality in a backward compatible manner
+#   3. PATCH version when you make backward compatible bug fixes
+#
+# Plugins must satisfy the following constraints:
+#   - The plugin MAJOR version must match this runner's MAJOR version exactly.
+#   - The plugin MINOR version must match this runner's MINOR version exactly.
+#   - The plugin PATCH version must be greater than or equal to this runner's PATCH version.
+PLUGIN_API_VERSION = "2.0.0"
+
+
+def parse_plugin_api_version(version: str) -> Tuple[int, int, int]:
+    """
+    Parses a semantic version string (MAJOR.MINOR.PATCH) and returns a tuple of integers.
+    Raises ValueError if the version string is invalid.
+    """
+    match = re.match(r"^(\d+)\.(\d+)\.(\d+)$", version)
+    if not match:
+        raise ValueError(f"Invalid version string: {version}")
+    return tuple(int(part) for part in match.groups())
+
+
+def is_plugin_compatible(runner_version: str, plugin_version: str) -> bool:
+    """
+    Checks if the runner is compatible with a plugin using the semantic versioning rules outlined above.
+
+    Compatibility rule (per semantic versioning):
+      - The MAJOR versions must match.
+      - The MINOR versions must match.
+      - The plugin patch version must be greater than or equal to the runner's patch version.
+    """
+    runner_version_tuple = parse_plugin_api_version(runner_version)
+    plugin_version_tuple = parse_plugin_api_version(plugin_version)
+    # Check MAJOR version compatibility.
+    if runner_version_tuple[0] != plugin_version_tuple[0]:
+        return False
+    # Check MINOR version compatibility.
+    if runner_version_tuple[1] != plugin_version_tuple[1]:
+        return False
+    # Check PATCH version compatibility.
+    if runner_version_tuple[2] > plugin_version_tuple[2]:
+        return False
+    return True
 
 
 def check_plugin_api_version(module: object) -> bool:
@@ -40,9 +83,11 @@ def check_plugin_api_version(module: object) -> bool:
             f"Plugin module {module.__name__} does not have a PLUGIN_API_VERSION."
         )
         return False
-    if module.PLUGIN_API_VERSION != PLUGIN_API_VERSION:
+    if not is_plugin_compatible(
+        runner_version=PLUGIN_API_VERSION, plugin_version=module.PLUGIN_API_VERSION
+    ):
         logging.warning(
-            f"Plugin module {module.__name__} has an invalid PLUGIN_API_VERSION: {module.PLUGIN_API_VERSION}."
+            f"Plugin module {module.__name__} has an incompatible PLUGIN_API_VERSION: {module.PLUGIN_API_VERSION}."
         )
         return False
     return True
@@ -68,13 +113,14 @@ def collect_plugin_files(plugin_dirs: List[str]) -> List[str]:
     plugin_files = []
     for directory in plugin_dirs:
         if not os.path.exists(directory):
-            raise ValueError(f"{directory} does not exist.")
-        if not os.path.isdir(directory):
-            raise ValueError(f"{directory} is not a directory.")
-        for filename in os.listdir(directory):
-            if filename.endswith(".py") and not filename.startswith("__"):
-                file_path = os.path.join(directory, filename)
-                plugin_files.append(file_path)
+            logging.warning(f"{directory} does not exist. Skipping.")
+        elif not os.path.isdir(directory):
+            logging.warning(f"{directory} is not a directory. Skipping.")
+        else:
+            for filename in os.listdir(directory):
+                if filename.endswith(".py") and not filename.startswith("__"):
+                    file_path = os.path.join(directory, filename)
+                    plugin_files.append(file_path)
     return plugin_files
 
 

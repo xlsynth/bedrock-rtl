@@ -103,7 +103,7 @@ module br_flow_deserializer #(
     // If 0, the least significant bits are received first (little endian).
     // The order of bits within each flit is always the same that they
     // appear on the push interface.
-    parameter bit DeserializeMostSignificantFirst,
+    parameter bit DeserializeMostSignificantFirst = 0,
     // If 1, then assert there are no valid bits asserted at the end of the test.
     parameter bit EnableAssertFinalNotValid = 1,
     localparam int DeserializationRatio = PopWidth / PushWidth,
@@ -269,8 +269,7 @@ module br_flow_deserializer #(
 
       if (i < DrMinus1) begin : gen_mux
         logic passthru_this_slice;
-        assign passthru_this_slice =
-          (push_last && (push_flit_id == i)) || (push_flit_id == dr_minus_1);
+        assign passthru_this_slice = push_last && (push_flit_id == i);
 
         br_mux_bin #(
             .NumSymbolsIn(2),
@@ -305,7 +304,7 @@ module br_flow_deserializer #(
     logic not_done_building_pop_flit;
 
     assign completing_pop_flit = pop_ready && (pop_last || (push_flit_id == dr_minus_1));
-    assign not_done_building_pop_flit = push_flit_id < dr_minus_1;
+    assign not_done_building_pop_flit = !(push_valid && push_last) && (push_flit_id < dr_minus_1);
     assign push_ready = completing_pop_flit || not_done_building_pop_flit;
 
     `BR_ASSERT_IMPL(

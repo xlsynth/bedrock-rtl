@@ -109,8 +109,10 @@ module br_arb_weighted_rr #(
   // Track per-request accumulated weight
   logic any_high_priority_request;
   logic incr_accumulated_weight;
+  logic [NumRequesters-1:0] decr_accumulated_weight;
   assign any_high_priority_request = |(request & request_priority);
   assign incr_accumulated_weight = enable_priority_update && |request && !any_high_priority_request;
+  assign decr_accumulated_weight = enable_priority_update ? grant : '0;
 
   logic [NumRequesters-1:0][AccumulatedWeightWidth-1:0] accumulated_weight;
 
@@ -127,7 +129,7 @@ module br_arb_weighted_rr #(
         .initial_value({AccumulatedWeightWidth{1'b0}}),
         .incr_valid(incr_accumulated_weight),
         .incr(request_weight[i]),
-        .decr_valid(grant[i]),
+        .decr_valid(decr_accumulated_weight[i]),
         .decr(WeightWidth'(1'b1)),
         .value(accumulated_weight[i]),
         .value_next()
@@ -140,4 +142,8 @@ module br_arb_weighted_rr #(
   // Implementation checks
   //------------------------------------------
 
+  `BR_ASSERT_IMPL(disable_priority_update_A, !enable_priority_update |=> $stable(accumulated_weight
+                                                                                    ))
+  `BR_ASSERT_IMPL(no_update_same_grants_A, ##1 !$past(enable_priority_update) && $stable(request)
+                                           |-> $stable(grant))
 endmodule

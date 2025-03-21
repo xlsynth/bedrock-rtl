@@ -48,8 +48,13 @@ verilog_library(
         "//macros:br_asserts_internal",
         "//macros:br_registers",
         "//macros:br_unused",
-        "//mux/rtl:br_mux_bin",
         "//mux/rtl:br_mux_onehot",
+        "//pkg:br_math_pkg",
+        # Omitting //mux/rtl:br_mux_bin_structured_gates and //mux/rtl:br_mux_bin_structured_gates_mock so
+        # that downstream targets (which may exist in another repo) can decide whether to use these behavioral
+        # models or swap them out for some other vendor models. Downstream targets should decide whether to add
+        # the //mux/rtl:br_mux_bin_structured_gates or //mux/rtl:br_mux_bin_structured_gates mock dependencies
+        # themselves.
     ],
 )
 
@@ -109,11 +114,7 @@ br_verilog_elab_and_lint_test_suite(
         ],
         "EnablePartialWrite": ["0"],
     },
-    top = "br_ram_flops_tile",
-    deps = [
-        ":br_ram_flops_tile",
-        "//gate/rtl:br_gate_mock",
-    ],
+    deps = [":br_ram_flops_tile"],
 )
 
 br_verilog_elab_and_lint_test_suite(
@@ -136,11 +137,7 @@ br_verilog_elab_and_lint_test_suite(
             "1",
         ],
     },
-    top = "br_ram_flops_tile",
-    deps = [
-        ":br_ram_flops_tile",
-        "//gate/rtl:br_gate_mock",
-    ],
+    deps = [":br_ram_flops_tile"],
 )
 
 br_verilog_elab_and_lint_test_suite(
@@ -158,7 +155,7 @@ br_verilog_elab_and_lint_test_suite(
     top = "br_ram_flops_tile",
     deps = [
         ":br_ram_flops_tile",
-        "//gate/rtl:br_gate_mock",
+        "//mux/rtl:br_mux_bin_structured_gates_mock",
     ],
 )
 
@@ -189,7 +186,6 @@ br_verilog_elab_and_lint_test_suite(
             "2",
         ],
     },
-    top = "br_ram_flops_tile",
     deps = [":br_ram_flops_tile"],
 )
 
@@ -208,7 +204,6 @@ br_verilog_elab_and_lint_test_suite(
         ],
         "NumReadPorts": ["2"],
     },
-    top = "br_ram_flops_tile",
     deps = [":br_ram_flops_tile"],
 )
 
@@ -227,7 +222,6 @@ br_verilog_elab_and_lint_test_suite(
         ],
         "NumWritePorts": ["2"],
     },
-    top = "br_ram_flops_tile",
     deps = [":br_ram_flops_tile"],
 )
 
@@ -472,6 +466,7 @@ br_verilog_elab_and_lint_test_suite(
             "8",
         ],
     },
+    top = "br_ram_flops",
     deps = [":br_ram_flops"],
 )
 
@@ -556,7 +551,7 @@ br_verilog_elab_and_lint_test_suite(
     top = "br_ram_flops",
     deps = [
         ":br_ram_flops",
-        "//gate/rtl:br_gate_mock",
+        "//mux/rtl:br_mux_bin_structured_gates_mock",
     ],
 )
 
@@ -587,11 +582,7 @@ br_verilog_elab_and_lint_test_suite(
         "Width": ["8"],
         "WordWidth": ["2"],
     },
-    top = "br_ram_flops",
-    deps = [
-        ":br_ram_flops",
-        "//gate/rtl:br_gate_mock",
-    ],
+    deps = [":br_ram_flops"],
 )
 
 br_verilog_elab_and_lint_test_suite(
@@ -623,11 +614,7 @@ br_verilog_elab_and_lint_test_suite(
         "Width": ["8"],
         "WordWidth": ["2"],
     },
-    top = "br_ram_flops",
-    deps = [
-        ":br_ram_flops",
-        "//gate/rtl:br_gate_mock",
-    ],
+    deps = [":br_ram_flops"],
 )
 
 br_verilog_elab_and_lint_test_suite(
@@ -721,34 +708,6 @@ br_verilog_elab_and_lint_test_suite(
         "WordWidth": ["8"],
     },
     deps = [":br_ram_flops_1r1w_mock"],
-)
-
-br_verilog_elab_and_lint_test_suite(
-    name = "br_ram_flops_test_suite_sweep_depth_width",
-    params = {
-        "NumReadPorts": ["2"],
-        "NumWritePorts": ["2"],
-        "Depth": [
-            "123",
-            "128",
-        ],
-        "Width": [
-            "1",
-            "7",
-            "32",
-        ],
-        "DepthTiles": ["1"],
-        "WidthTiles": ["1"],
-        "AddressDepthStages": ["0"],
-        "ReadDataDepthStages": ["0"],
-        "ReadDataWidthStages": ["0"],
-        "TileEnableBypass": [
-            "0",
-            "1",
-        ],
-        "EnableMemReset": ["0"],
-    },
-    deps = [":br_ram_flops"],
 )
 
 br_verilog_elab_and_lint_test_suite(

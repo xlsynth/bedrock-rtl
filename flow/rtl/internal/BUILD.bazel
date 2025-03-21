@@ -42,6 +42,16 @@ verilog_library(
 )
 
 verilog_library(
+    name = "br_flow_mux_core_stable",
+    srcs = ["br_flow_mux_core_stable.sv"],
+    deps = [
+        ":br_flow_checks_valid_data_impl",
+        ":br_flow_mux_core",
+        "//flow/rtl:br_flow_reg_both",
+    ],
+)
+
+verilog_library(
     name = "br_flow_checks_valid_data_intg",
     srcs = ["br_flow_checks_valid_data_intg.sv"],
     # Users should never instance this directly in their design because
@@ -66,7 +76,53 @@ verilog_library(
 )
 
 br_verilog_elab_and_lint_test_suite(
+    name = "br_flow_arb_core_test_suite",
+    params = {
+        "NumFlows": [
+            "2",
+            "3",
+        ],
+    },
+    deps = [":br_flow_arb_core"],
+)
+
+br_verilog_elab_and_lint_test_suite(
+    name = "br_flow_mux_core_test_suite",
+    params = {
+        "NumFlows": [
+            "2",
+            "3",
+        ],
+        "Width": [
+            "5",
+            "8",
+        ],
+    },
+    deps = [":br_flow_mux_core"],
+)
+
+br_verilog_elab_and_lint_test_suite(
+    name = "br_flow_mux_core_stable_test_suite",
+    params = {
+        "NumFlows": [
+            "2",
+            "3",
+        ],
+        "Width": [
+            "5",
+            "8",
+        ],
+        "RegisterPopReady": [
+            "0",
+            "1",
+        ],
+    },
+    deps = [":br_flow_mux_core_stable"],
+)
+
+br_verilog_elab_and_lint_test_suite(
     name = "br_flow_checks_valid_data_intg_test_suite_valid_stable",
+    disable_lint_rules = ["NO_OUTPUT"],
     params = {
         "NumFlows": [
             "1",
@@ -88,6 +144,7 @@ br_verilog_elab_and_lint_test_suite(
 
 br_verilog_elab_and_lint_test_suite(
     name = "br_flow_checks_valid_data_intg_test_suite_valid_unstable",
+    disable_lint_rules = ["NO_OUTPUT"],
     params = {
         "NumFlows": [
             "1",
@@ -105,6 +162,7 @@ br_verilog_elab_and_lint_test_suite(
 
 br_verilog_elab_and_lint_test_suite(
     name = "br_flow_checks_valid_data_intg_test_suite_no_backpressure",
+    disable_lint_rules = ["NO_OUTPUT"],
     params = {
         "NumFlows": [
             "1",
@@ -119,6 +177,7 @@ br_verilog_elab_and_lint_test_suite(
 
 br_verilog_elab_and_lint_test_suite(
     name = "br_flow_checks_valid_data_impl_test_suite_valid_stable",
+    disable_lint_rules = ["NO_OUTPUT"],
     params = {
         "NumFlows": [
             "1",
@@ -140,6 +199,7 @@ br_verilog_elab_and_lint_test_suite(
 
 br_verilog_elab_and_lint_test_suite(
     name = "br_flow_checks_valid_data_impl_test_suite_valid_unstable",
+    disable_lint_rules = ["NO_OUTPUT"],
     params = {
         "NumFlows": [
             "1",
@@ -157,6 +217,7 @@ br_verilog_elab_and_lint_test_suite(
 
 br_verilog_elab_and_lint_test_suite(
     name = "br_flow_checks_valid_data_impl_test_suite_no_backpressure",
+    disable_lint_rules = ["NO_OUTPUT"],
     params = {
         "NumFlows": [
             "1",
@@ -167,4 +228,41 @@ br_verilog_elab_and_lint_test_suite(
         ],
     },
     deps = [":br_flow_checks_valid_data_impl"],
+)
+
+verilog_library(
+    name = "br_flow_xbar_core",
+    srcs = ["br_flow_xbar_core.sv"],
+    deps = [
+        ":br_flow_mux_core",
+        "//flow/rtl:br_flow_demux_select_unstable",
+        "//flow/rtl:br_flow_reg_fwd",
+    ],
+)
+
+br_verilog_elab_and_lint_test_suite(
+    name = "br_flow_xbar_core_test_suite",
+    params = {
+        "NumPushFlows": [
+            "2",
+            "4",
+        ],
+        "NumPopFlows": [
+            "2",
+            "4",
+        ],
+        "Width": [
+            "5",
+            "8",
+        ],
+        "RegisterDemuxOutputs": [
+            "0",
+            "1",
+        ],
+        "RegisterPopOutputs": [
+            "0",
+            "1",
+        ],
+    },
+    deps = [":br_flow_xbar_core"],
 )

@@ -13,7 +13,7 @@
 # limitations under the License.
 
 load("@rules_hdl//verilog:providers.bzl", "verilog_library")
-load("//bazel:br_verilog.bzl", "br_verilog_fpv_test_suite")
+load("//bazel:br_verilog.bzl", "br_verilog_fpv_test_tools_suite")
 load("//bazel:verilog.bzl", "verilog_elab_test")
 
 package(default_visibility = ["//visibility:public"])
@@ -31,12 +31,12 @@ verilog_library(
 
 verilog_elab_test(
     name = "br_counter_fpv_monitor_elab_test",
+    tool = "verific",
     deps = [":br_counter_fpv_monitor"],
 )
 
-br_verilog_fpv_test_suite(
-    name = "br_counter_jg_test_suite",
-    custom_tcl_body = "br_counter_fpv.tcl",
+br_verilog_fpv_test_tools_suite(
+    name = "br_counter_test_suite",
     illegal_param_combinations = {
         (
             "MaxChange",
@@ -76,8 +76,10 @@ br_verilog_fpv_test_suite(
             "8",
         ],
     },
-    tags = ["manual"],
-    tool = "jg",
+    tools = {
+        "jg": "br_counter_fpv.jg.tcl",
+        "vcf": "",
+    },
     top = "br_counter",
     deps = [":br_counter_fpv_monitor"],
 )
@@ -94,12 +96,12 @@ verilog_library(
 
 verilog_elab_test(
     name = "br_counter_decr_fpv_monitor_elab_test",
+    tool = "verific",
     deps = [":br_counter_decr_fpv_monitor"],
 )
 
-br_verilog_fpv_test_suite(
-    name = "br_counter_decr_jg_test_suite",
-    custom_tcl_body = "br_counter_fpv.tcl",
+br_verilog_fpv_test_tools_suite(
+    name = "br_counter_decr_test_suite",
     illegal_param_combinations = {
         (
             "MaxDecrement",
@@ -129,8 +131,10 @@ br_verilog_fpv_test_suite(
             "7",
         ],
     },
-    tags = ["manual"],
-    tool = "jg",
+    tools = {
+        "jg": "br_counter_fpv.jg.tcl",
+        "vcf": "",
+    },
     top = "br_counter_decr",
     deps = [":br_counter_decr_fpv_monitor"],
 )
@@ -147,12 +151,12 @@ verilog_library(
 
 verilog_elab_test(
     name = "br_counter_incr_fpv_monitor_elab_test",
+    tool = "verific",
     deps = [":br_counter_incr_fpv_monitor"],
 )
 
-br_verilog_fpv_test_suite(
-    name = "br_counter_incr_jg_test_suite",
-    custom_tcl_body = "br_counter_fpv.tcl",
+br_verilog_fpv_test_tools_suite(
+    name = "br_counter_incr_test_suite",
     illegal_param_combinations = {
         (
             "MaxIncrement",
@@ -182,8 +186,10 @@ br_verilog_fpv_test_suite(
             "7",
         ],
     },
-    tags = ["manual"],
-    tool = "jg",
+    tools = {
+        "jg": "br_counter_fpv.jg.tcl",
+        "vcf": "",
+    },
     top = "br_counter_incr",
     deps = [":br_counter_incr_fpv_monitor"],
 )

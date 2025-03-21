@@ -13,7 +13,7 @@
 # limitations under the License.
 
 load("@rules_hdl//verilog:providers.bzl", "verilog_library")
-load("//bazel:br_verilog.bzl", "br_verilog_fpv_test_suite")
+load("//bazel:br_verilog.bzl", "br_verilog_fpv_test_tools_suite")
 load("//bazel:verilog.bzl", "verilog_elab_test")
 
 package(default_visibility = ["//visibility:public"])
@@ -31,11 +31,12 @@ verilog_library(
 
 verilog_elab_test(
     name = "br_delay_fpv_monitor_elab_test",
+    tool = "verific",
     deps = [":br_delay_fpv_monitor"],
 )
 
-br_verilog_fpv_test_suite(
-    name = "br_delay_jg_test_suite",
+br_verilog_fpv_test_tools_suite(
+    name = "br_delay_test_suite",
     params = {
         "NumStages": [
             "0",
@@ -48,8 +49,10 @@ br_verilog_fpv_test_suite(
             "6",
         ],
     },
-    tags = ["manual"],
-    tool = "jg",
+    tools = {
+        "jg": "",
+        "vcf": "",
+    },
     top = "br_delay",
     deps = [":br_delay_fpv_monitor"],
 )
@@ -67,12 +70,12 @@ verilog_library(
 
 verilog_elab_test(
     name = "br_delay_nr_fpv_monitor_elab_test",
+    tool = "verific",
     deps = [":br_delay_nr_fpv_monitor"],
 )
 
-br_verilog_fpv_test_suite(
-    name = "br_delay_nr_jg_test_suite",
-    custom_tcl_body = "br_delay_nr_fpv.tcl",
+br_verilog_fpv_test_tools_suite(
+    name = "br_delay_nr_test_suite",
     params = {
         "NumStages": [
             "0",
@@ -85,8 +88,10 @@ br_verilog_fpv_test_suite(
             "6",
         ],
     },
-    tags = ["manual"],
-    tool = "jg",
+    tools = {
+        "jg": "br_delay_nr_fpv.jg.tcl",
+        "vcf": "",
+    },
     top = "br_delay_nr",
     deps = [":br_delay_nr_fpv_monitor"],
 )
@@ -104,11 +109,12 @@ verilog_library(
 
 verilog_elab_test(
     name = "br_delay_valid_fpv_monitor_elab_test",
+    tool = "verific",
     deps = [":br_delay_valid_fpv_monitor"],
 )
 
-br_verilog_fpv_test_suite(
-    name = "br_delay_valid_jg_test_suite",
+br_verilog_fpv_test_tools_suite(
+    name = "br_delay_valid_test_suite",
     params = {
         "NumStages": [
             "0",
@@ -121,8 +127,10 @@ br_verilog_fpv_test_suite(
             "6",
         ],
     },
-    tags = ["manual"],
-    tool = "jg",
+    tools = {
+        "jg": "",
+        "vcf": "",
+    },
     top = "br_delay_valid",
     deps = [":br_delay_valid_fpv_monitor"],
 )
@@ -140,11 +148,12 @@ verilog_library(
 
 verilog_elab_test(
     name = "br_delay_valid_next_fpv_monitor_elab_test",
+    tool = "verific",
     deps = [":br_delay_valid_next_fpv_monitor"],
 )
 
-br_verilog_fpv_test_suite(
-    name = "br_delay_valid_next_jg_test_suite",
+br_verilog_fpv_test_tools_suite(
+    name = "br_delay_valid_next_test_suite",
     params = {
         "NumStages": [
             "0",
@@ -157,8 +166,10 @@ br_verilog_fpv_test_suite(
             "6",
         ],
     },
-    tags = ["manual"],
-    tool = "jg",
+    tools = {
+        "jg": "",
+        "vcf": "",
+    },
     top = "br_delay_valid_next",
     deps = [":br_delay_valid_next_fpv_monitor"],
 )
@@ -175,12 +186,12 @@ verilog_library(
 
 verilog_elab_test(
     name = "br_delay_valid_next_nr_fpv_monitor_elab_test",
+    tool = "verific",
     deps = [":br_delay_valid_next_nr_fpv_monitor"],
 )
 
-br_verilog_fpv_test_suite(
-    name = "br_delay_valid_next_nr_jg_test_suite",
-    custom_tcl_body = "br_delay_nr_fpv.tcl",
+br_verilog_fpv_test_tools_suite(
+    name = "br_delay_valid_next_nr_test_suite",
     params = {
         "NumStages": [
             "0",
@@ -193,8 +204,10 @@ br_verilog_fpv_test_suite(
             "6",
         ],
     },
-    tags = ["manual"],
-    tool = "jg",
+    tools = {
+        "jg": "br_delay_nr_fpv.jg.tcl",
+        "vcf": "",
+    },
     top = "br_delay_valid_next_nr",
     deps = [":br_delay_valid_next_nr_fpv_monitor"],
 )

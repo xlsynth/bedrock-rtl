@@ -13,7 +13,7 @@
 # limitations under the License.
 
 load("@rules_hdl//verilog:providers.bzl", "verilog_library")
-load("//bazel:br_verilog.bzl", "br_verilog_fpv_test_suite")
+load("//bazel:br_verilog.bzl", "br_verilog_fpv_test_tools_suite")
 load("//bazel:verilog.bzl", "verilog_elab_test")
 
 package(default_visibility = ["//visibility:public"])
@@ -31,12 +31,13 @@ verilog_library(
 
 verilog_elab_test(
     name = "br_credit_counter_fpv_monitor_elab_test",
+    custom_tcl_header = "//:elab_test_jg_custom_header.verific.tcl",
+    tool = "verific",
     deps = [":br_credit_counter_fpv_monitor"],
 )
 
-br_verilog_fpv_test_suite(
-    name = "br_credit_counter_jg_test_suite",
-    custom_tcl_body = "br_credit_counter_fpv.tcl",
+br_verilog_fpv_test_tools_suite(
+    name = "br_credit_counter_test_suite",
     illegal_param_combinations = {
         (
             "MaxChange",
@@ -58,8 +59,10 @@ br_verilog_fpv_test_suite(
             "6",
         ],
     },
-    tags = ["manual"],
-    tool = "jg",
+    tools = {
+        "jg": "br_credit_counter_fpv.jg.tcl",
+        "vcf": "",
+    },
     top = "br_credit_counter",
     deps = [":br_credit_counter_fpv_monitor"],
 )
@@ -77,14 +80,13 @@ verilog_library(
 
 verilog_elab_test(
     name = "br_credit_receiver_fpv_monitor_elab_test",
-    # TODO: need to demote warning
-    tags = ["manual"],
+    custom_tcl_header = "//:elab_test_jg_custom_header.verific.tcl",
+    tool = "verific",
     deps = [":br_credit_receiver_fpv_monitor"],
 )
 
-br_verilog_fpv_test_suite(
-    name = "br_credit_receiver_jg_test_suite",
-    custom_tcl_body = "br_credit_receiver_fpv.tcl",
+br_verilog_fpv_test_tools_suite(
+    name = "br_credit_receiver_test_suite",
     illegal_param_combinations = {
         (
             "PopCreditMaxChange",
@@ -93,6 +95,20 @@ br_verilog_fpv_test_suite(
             ("2", "1"),
             ("3", "1"),
         ],
+        (
+            "PushCreditMaxChange",
+            "MaxCredit",
+        ): [
+            ("2", "1"),
+            ("3", "1"),
+        ],
+        (
+            "MaxCredit",
+            "NumFlows",
+        ): [
+            ("1", "2"),
+            ("1", "4"),
+        ],
     },
     params = {
         "MaxCredit": [
@@ -100,7 +116,17 @@ br_verilog_fpv_test_suite(
             "5",
             "6",
         ],
+        "NumFlows": [
+            "1",
+            "2",
+            "4",
+        ],
         "PopCreditMaxChange": [
+            "1",
+            "2",
+            "3",
+        ],
+        "PushCreditMaxChange": [
             "1",
             "2",
             "3",
@@ -115,8 +141,10 @@ br_verilog_fpv_test_suite(
             "6",
         ],
     },
-    tags = ["manual"],
-    tool = "jg",
+    tools = {
+        "jg": "br_credit_receiver_fpv.jg.tcl",
+        "vcf": "",
+    },
     top = "br_credit_receiver",
     deps = [":br_credit_receiver_fpv_monitor"],
 )
@@ -134,16 +162,49 @@ verilog_library(
 
 verilog_elab_test(
     name = "br_credit_sender_fpv_monitor_elab_test",
-    # TODO: need to demote warning
-    tags = ["manual"],
+    custom_tcl_header = "//:elab_test_jg_custom_header.verific.tcl",
+    tool = "verific",
     deps = [":br_credit_sender_fpv_monitor"],
 )
 
-br_verilog_fpv_test_suite(
-    name = "br_credit_sender_jg_test_suite",
-    custom_tcl_body = "br_credit_sender_fpv.tcl",
+br_verilog_fpv_test_tools_suite(
+    name = "br_credit_sender_test_suite",
+    illegal_param_combinations = {
+        (
+            "EnableCoverPushBackpressure",
+            "EnableAssertPushValidStability",
+            "EnableAssertPushDataStability",
+        ): [
+            ("0", "0", "1"),
+            ("0", "1", "0"),
+            ("0", "1", "1"),
+            ("1", "0", "1"),
+        ],
+        (
+            "PopCreditMaxChange",
+            "MaxCredit",
+        ): [
+            ("2", "1"),
+            ("3", "1"),
+        ],
+        (
+            "MaxCredit",
+            "NumFlows",
+        ): [
+            ("1", "2"),
+            ("1", "4"),
+        ],
+    },
     params = {
         "EnableCoverPushBackpressure": [
+            "0",
+            "1",
+        ],
+        "EnableAssertPushDataStability": [
+            "0",
+            "1",
+        ],
+        "EnableAssertPushValidStability": [
             "0",
             "1",
         ],
@@ -151,6 +212,16 @@ br_verilog_fpv_test_suite(
             "1",
             "5",
             "6",
+        ],
+        "NumFlows": [
+            "1",
+            "2",
+            "4",
+        ],
+        "PopCreditMaxChange": [
+            "1",
+            "2",
+            "3",
         ],
         "RegisterPopOutputs": [
             "0",
@@ -162,8 +233,10 @@ br_verilog_fpv_test_suite(
             "6",
         ],
     },
-    tags = ["manual"],
-    tool = "jg",
+    tools = {
+        "jg": "br_credit_sender_fpv.jg.tcl",
+        "vcf": "",
+    },
     top = "br_credit_sender",
     deps = [":br_credit_sender_fpv_monitor"],
 )
