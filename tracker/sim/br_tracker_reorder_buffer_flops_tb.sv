@@ -61,8 +61,7 @@ module br_tracker_reorder_buffer_flops_tb;
       .reordered_resp_pop_valid(reordered_resp_pop_valid),
       .reordered_resp_pop_data (reordered_resp_pop_data),
 
-      .free_entry_count(),
-      .allocated_entry_count()
+      .resp_pending()
   );
 
   // Clock generation
