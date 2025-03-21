@@ -60,8 +60,9 @@ module br_tracker_sequence #(
   localparam int AllocCounterValueWidth = $clog2(NumEntries);
 
   // Work around limitation of br_counter_incr where MaxAllocSize must be less than NumEntries
-  localparam int MaxIncrementAllocCounter = (MaxAllocSize == NumEntries) ? MaxAllocSize - 1 : MaxAllocSize;
-  localparam int AllocCounterIncrWidth = $clog2(MaxIncrementAllocCounter+1);
+  localparam int MaxIncrementAllocCounter = (MaxAllocSize == NumEntries) ? MaxAllocSize - 1
+                                                                            : MaxAllocSize;
+  localparam int AllocCounterIncrWidth = $clog2(MaxIncrementAllocCounter + 1);
 
   // Variable Declarations
   logic alloc_beat;
