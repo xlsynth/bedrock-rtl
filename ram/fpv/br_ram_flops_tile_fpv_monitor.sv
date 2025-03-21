@@ -143,7 +143,14 @@ module br_ram_flops_tile_fpv_monitor #(
 
   // ----------FV assertions----------
   if (EnableReset) begin : gen_rst
-    `BR_ASSERT_CR(memory_reset_a, fv_rd_valid && !fv_wr_seen |-> fv_rd_data == 'd0, rd_clk, rd_rst)
+    if (EnableBypass) begin : gen_bypass_rst
+      `BR_ASSERT_CR(memory_reset_a,
+                    fv_rd_valid && !fv_wr_seen && !fv_wr_valid |-> fv_rd_data == 'd0, rd_clk,
+                    rd_rst)
+    end else begin : gen_non_bypass_rst
+      `BR_ASSERT_CR(memory_reset_a, fv_rd_valid && !fv_wr_seen |-> fv_rd_data == 'd0, rd_clk,
+                    rd_rst)
+    end
   end
 
   `BR_ASSERT_CR(rd_data_valid_a, rd_addr_valid[fv_rd_port] |-> rd_data_valid[fv_rd_port], rd_clk,
