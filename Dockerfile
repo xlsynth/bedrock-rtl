@@ -113,7 +113,7 @@ RUN cd yosys && \
 RUN yosys --help
 
 # Install EQY
-RUN git clone https://github.com/YosysHQ/eqy.git eqy
+RUN git clone https://github.com/YosysHQ/eqy.git
 RUN cd eqy && \
     git checkout v0.48 && \
     make -j$(nproc) && \
@@ -123,14 +123,15 @@ RUN cd eqy && \
 RUN eqy --help
 
 # Install SBY
-RUN git clone https://github.com/YosysHQ/sby
-RUN cd sby && \
-    git checkout v0.48 && \
-    make -j$(nproc) && \
-    make install && \
-    cd .. && \
-    rm -rf sby
-RUN sby --help
+# TODO: debug
+#RUN git clone https://github.com/YosysHQ/sby
+#RUN cd sby && \
+#    git checkout v0.48 && \
+#    make -j$(nproc) && \
+#    make install && \
+#    cd .. && \
+#    rm -rf sby
+#RUN sby --help
 
 # Install boolector and yices2 to able to run LEC with Yosys
 # TODO: boolector is not able to build..
