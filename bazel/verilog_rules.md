@@ -429,7 +429,7 @@ The following extra tags are unconditionally appended to the list of tags:
 <pre>
 load("@bedrock-rtl//bazel:verilog.bzl", "verilog_sim_test")
 
-verilog_sim_test(<a href="#verilog_sim_test-tool">tool</a>, <a href="#verilog_sim_test-opts">opts</a>, <a href="#verilog_sim_test-tags">tags</a>, <a href="#verilog_sim_test-kwargs">kwargs</a>)
+verilog_sim_test(<a href="#verilog_sim_test-tool">tool</a>, <a href="#verilog_sim_test-opts">opts</a>, <a href="#verilog_sim_test-tags">tags</a>, <a href="#verilog_sim_test-waves">waves</a>, <a href="#verilog_sim_test-kwargs">kwargs</a>)
 </pre>
 
 Wraps rule_verilog_sim_test with a default tool and appends extra tags.
@@ -449,6 +449,7 @@ The following extra tags are unconditionally appended to the list of tags:
 | <a id="verilog_sim_test-tool"></a>tool |  The simulation tool to use.   |  none |
 | <a id="verilog_sim_test-opts"></a>opts |  Tool-specific options not covered by other arguments.   |  `[]` |
 | <a id="verilog_sim_test-tags"></a>tags |  The tags to add to the test.   |  `[]` |
+| <a id="verilog_sim_test-waves"></a>waves |  Enable waveform dumping.   |  `False` |
 | <a id="verilog_sim_test-kwargs"></a>kwargs |  Other arguments to pass to the rule_verilog_sim_test rule.   |  none |
 
 

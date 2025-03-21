@@ -59,6 +59,16 @@ module br_gate_inv (
 
 endmodule : br_gate_inv
 
+// Clock Inverter
+module br_gate_clk_inv (
+    input  logic in,
+    output logic out
+);
+
+  assign out = ~in;
+
+endmodule : br_gate_clk_inv
+
 // 2-input AND gate
 module br_gate_and2 (
     input  logic in0,

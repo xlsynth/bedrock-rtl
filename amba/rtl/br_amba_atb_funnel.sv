@@ -50,22 +50,32 @@ module br_amba_atb_funnel #(
   `BR_ASSERT_STATIC(num_sources_gte_2_a, NumSources >= 2)
   `BR_ASSERT_STATIC(datawidth_gte_1_a, DataWidth >= 1)
   `BR_ASSERT_STATIC(userwidth_gte_1_a, UserWidth >= 1)
+
   //------------------------------------------
   // Implementation
   //------------------------------------------
 
-  br_flow_mux_rr #(
+  localparam int PacketWidth = br_amba::AtbIdWidth + DataWidth + ByteCountWidth + UserWidth;
+
+  logic [NumSources-1:0][PacketWidth-1:0] src_packet;
+
+  // Pack the source ATB signals into a single packet
+  for (genvar i = 0; i < NumSources; i++) begin : gen_src_packet
+    assign src_packet[i] = {src_atid[i], src_atdata[i], src_atbytes[i], src_atuser[i]};
+  end
+
+  br_flow_mux_rr_stable #(
       .NumFlows(NumSources),
-      .Width(br_amba::AtbIdWidth + DataWidth + ByteCountWidth + UserWidth)
-  ) br_flow_mux_rr (
+      .Width(PacketWidth)
+  ) br_flow_mux_rr_stable (
       .clk(clk),
       .rst(rst),
       .push_valid(src_atvalid),
       .push_ready(src_atready),
-      .push_data({src_atid, src_atdata, src_atbytes, src_atuser}),
-      .pop_valid_unstable(dst_atvalid),
+      .push_data(src_packet),
+      .pop_valid(dst_atvalid),
       .pop_ready(dst_atready),
-      .pop_data_unstable({dst_atid, dst_atdata, dst_atbytes, dst_atuser})
+      .pop_data({dst_atid, dst_atdata, dst_atbytes, dst_atuser})
   );
 
 endmodule : br_amba_atb_funnel

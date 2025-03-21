@@ -127,7 +127,7 @@ module br_amba_axil_timing_slice #(
 
   // Read Address Channel Timing Slice
   br_flow_reg_both #(
-      .Width(AddrWidth + br_amba::AxiProtWidth + RUserWidth)
+      .Width(AddrWidth + br_amba::AxiProtWidth + ARUserWidth)
   ) br_flow_reg_both_ar_slice (
       .clk,
       .rst,

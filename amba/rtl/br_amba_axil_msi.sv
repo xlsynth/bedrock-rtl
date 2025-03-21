@@ -52,7 +52,7 @@ module br_amba_axil_msi #(
     input rst,  // Synchronous, active-high reset
 
     // Interrupt inputs
-    input logic [NumInterrupts-1:0] irq,
+    input logic [NumInterrupts-1:0] irq,  // synchronous
 
     // MSI Configuration
     input logic [AddrWidth-1:0] msi_base_addr,
@@ -98,6 +98,8 @@ module br_amba_axil_msi #(
   localparam int EventIdStrobeWidth = (EventIdWidth + 7) / 8;
   localparam int StrobeWidthPadding = StrobeWidth - EventIdStrobeWidth;
   localparam int FifoWidth = DeviceIdWidth + EventIdWidth;
+  localparam int WriteAddrFlowRegWidth = AddrWidth;
+  localparam int WriteDataFlowRegWidth = DataWidth + StrobeWidth;
 
   logic [NumInterrupts-1:0] irq_d;
   logic [NumInterrupts-1:0] irq_rising_edge;
@@ -114,6 +116,12 @@ module br_amba_axil_msi #(
   logic reinit_throttle_cntr;
   logic clear_to_send;
 
+  logic write_addr_flow_reg_push_ready, write_addr_flow_reg_push_valid;
+  logic [WriteAddrFlowRegWidth-1:0] write_addr_flow_reg_push_data;
+
+  logic write_data_flow_reg_push_ready, write_data_flow_reg_push_valid;
+  logic [WriteDataFlowRegWidth-1:0] write_data_flow_reg_push_data;
+
   // Detect rising edge of irq
   `BR_REG(irq_d, irq)
   assign irq_rising_edge = irq & ~irq_d;
@@ -127,18 +135,19 @@ module br_amba_axil_msi #(
       ~(fifo_push_ready & fifo_push_valid);
 
   // Use round-robin arbitration to select the next irq to send
-  br_flow_mux_rr #(
+  br_flow_mux_rr_stable #(
+      .RegisterPopReady(1),
       .NumFlows(NumInterrupts),
       .Width(FifoWidth)
-  ) br_flow_mux_rr (
+  ) br_flow_mux_rr_stable (
       .clk,
       .rst,
       .push_ready(fifo_push_ready),
       .push_valid(fifo_push_valid),
-      .push_data(fifo_push_data),
-      .pop_ready(fifo_pop_ready),
-      .pop_valid_unstable(fifo_pop_valid),
-      .pop_data_unstable(fifo_pop_data)
+      .push_data (fifo_push_data),
+      .pop_ready (fifo_pop_ready),
+      .pop_valid (fifo_pop_valid),
+      .pop_data  (fifo_pop_data)
   );
   generate
     for (genvar i = 0; i < NumInterrupts; i++) begin : gen_loop
@@ -151,6 +160,7 @@ module br_amba_axil_msi #(
   // Throttle counter
   br_counter_decr #(
       .MaxValue((2 ** ThrottleCntrWidth) - 1),
+      .EnableSaturate(1),
       .MaxDecrement(1)
   ) br_counter_decr_throttle (
       .clk,
@@ -162,19 +172,61 @@ module br_amba_axil_msi #(
       .value(throttle_cntr_value),
       .value_next()
   );
-  assign reinit_throttle_cntr = ~fifo_pop_valid || clear_to_send;
+  assign reinit_throttle_cntr = ~fifo_pop_valid || fifo_pop_ready;
   assign throttle_cntr_matches = throttle_cntr_value == {ThrottleCntrWidth{1'b0}};
   assign clear_to_send = ~throttle_en || throttle_cntr_matches;
 
-  // AXI4-Lite interface
+  // Create the data to be pushed into the flow registers
   // ri lint_check_off ZERO_EXT CONST_OUTPUT
-  assign init_awaddr = msi_base_addr + {{AddrWidthPadding{1'b0}}, device_id_to_send, 2'b00};
-  assign init_wdata = {{DataWidthPadding{1'b0}}, event_id_to_send};
-  assign init_wstrb = {{StrobeWidthPadding{1'b0}}, {EventIdStrobeWidth{1'b1}}};
+  assign write_addr_flow_reg_push_data =
+      msi_base_addr + {{AddrWidthPadding{1'b0}}, device_id_to_send, 2'b00};
+  assign write_data_flow_reg_push_data = {
+    {DataWidthPadding{1'b0}},
+    event_id_to_send,
+    {StrobeWidthPadding{1'b0}},
+    {EventIdStrobeWidth{1'b1}}
+  };
   // ri lint_check_on ZERO_EXT CONST_OUTPUT
-  assign init_awvalid = fifo_pop_valid && clear_to_send;
-  assign init_wvalid = fifo_pop_valid && clear_to_send;
-  assign fifo_pop_ready = init_awready && init_wready && clear_to_send;
+
+  // Create the valid/ready signals for the flow registers
+  assign write_addr_flow_reg_push_valid = fifo_pop_valid && clear_to_send &&
+      write_addr_flow_reg_push_ready && write_data_flow_reg_push_ready;
+  assign write_data_flow_reg_push_valid = fifo_pop_valid && clear_to_send &&
+      write_addr_flow_reg_push_ready && write_data_flow_reg_push_ready;
+  assign fifo_pop_ready = write_addr_flow_reg_push_valid && write_addr_flow_reg_push_ready &&
+      write_data_flow_reg_push_valid && write_data_flow_reg_push_ready;
+
+  // Use a flow register to decouple the AXI channels
+  br_flow_reg_both #(
+      .Width(WriteAddrFlowRegWidth)
+  ) br_flow_reg_both_write_addr (
+      .clk,
+      .rst,
+
+      .push_ready(write_addr_flow_reg_push_ready),
+      .push_valid(write_addr_flow_reg_push_valid),
+      .push_data (write_addr_flow_reg_push_data),
+
+      .pop_ready(init_awready),
+      .pop_valid(init_awvalid),
+      .pop_data (init_awaddr)
+  );
+
+  // Use a flow register to decouple the AXI channels
+  br_flow_reg_both #(
+      .Width(WriteDataFlowRegWidth)
+  ) br_flow_reg_both_write_data (
+      .clk,
+      .rst,
+
+      .push_ready(write_data_flow_reg_push_ready),
+      .push_valid(write_data_flow_reg_push_valid),
+      .push_data (write_data_flow_reg_push_data),
+
+      .pop_ready(init_wready),
+      .pop_valid(init_wvalid),
+      .pop_data ({init_wdata, init_wstrb})
+  );
 
   // Provide a registered error output
   `BR_REGL(error, error_next, init_bvalid && init_bready)

@@ -7,15 +7,6 @@ on:
     types: [opened, reopened, synchronize]
 
 jobs:
-  # Run the cheapest checks first.
-  # 1. pre-commit
-  # 2. bazel
-  #    a. build
-  #    b. tests
-  #
-  # Run bazel build before bazel tests because the logging is not chronologically
-  # ordered if a build step fails while unrelated tests are running.
-
   pre-commit:
     runs-on: ubuntu-latest
     steps:
@@ -23,36 +14,296 @@ jobs:
       - uses: actions/setup-python@v3
       - uses: pre-commit/action@v3.0.1
 
-  bazel:
+  # Run bazel build before bazel tests because the logging is not chronologically
+  # ordered if a build step fails while unrelated tests are running.
+  bazel-build:
     runs-on: self-hosted
-    needs: pre-commit
     steps:
     - name: Checkout repo
       uses: actions/checkout@v3
-
     - name: Copy ci.bazelrc
       working-directory: ${{ github.workspace }}
       run: cp /home/gh-actions/bedrock-infra/ci.bazelrc ci.bazelrc
-
     - name: Build
       run: bazel build --noshow_loading_progress //...
 
-    - name: Python and Stardoc tests
-      run: bazel test --noshow_loading_progress //python/... //bazel/...
+  bazel-test-python:
+    runs-on: self-hosted
+    needs: bazel-build
+    outputs:
+      total_tests: ${{ steps.test.outputs.total_tests }}
+      passing_tests: ${{ steps.test.outputs.passing_tests }}
+      exit_code: ${{ steps.test.outputs.exit_code }}
+    steps:
+    - name: python tests
+      id: test
+      run: |
+        bazel test --noshow_loading_progress //python/... 2>&1 | tee .bazel-test-python.log
+        BAZEL_EXIT_CODE=${PIPESTATUS[0]}
+        TOTAL_TESTS=$(grep -Po '(?<=out of )\d+(?= test)' .bazel-test-python.log)
+        PASSING_TESTS=$(grep -Po '\d+(?= test passes?\.| tests pass)' .bazel-test-python.log)
+        echo "total_tests=$TOTAL_TESTS" >> $GITHUB_OUTPUT
+        echo "passing_tests=$PASSING_TESTS" >> $GITHUB_OUTPUT
+        echo "exit_code=$BAZEL_EXIT_CODE" >> $GITHUB_OUTPUT
+        exit $BAZEL_EXIT_CODE
 
-    - name: Verilog elab tests (using Verific)
-      # Suppress log output to protect sensitive EDA tool information.
-      run: bazel test --noshow_loading_progress //... --test_tag_filters=verific --test_output=summary
+  bazel-test-stardoc:
+    runs-on: self-hosted
+    needs: bazel-build
+    outputs:
+      total_tests: ${{ steps.test.outputs.total_tests }}
+      passing_tests: ${{ steps.test.outputs.passing_tests }}
+      exit_code: ${{ steps.test.outputs.exit_code }}
+    steps:
+    - name: Stardoc tests
+      id: test
+      run: |
+        bazel test --noshow_loading_progress //bazel/... 2>&1 | tee .bazel-test-stardoc.log
+        BAZEL_EXIT_CODE=${PIPESTATUS[0]}
+        TOTAL_TESTS=$(grep -Po '(?<=out of )\d+(?= test)' .bazel-test-stardoc.log)
+        PASSING_TESTS=$(grep -Po '\d+(?= test passes?\.| tests pass)' .bazel-test-stardoc.log)
+        echo "total_tests=$TOTAL_TESTS" >> $GITHUB_OUTPUT
+        echo "passing_tests=$PASSING_TESTS" >> $GITHUB_OUTPUT
+        echo "exit_code=$BAZEL_EXIT_CODE" >> $GITHUB_OUTPUT
+        exit $BAZEL_EXIT_CODE
 
-    - name: Verilog lint tests (using AscentLint)
-      # Suppress log output to protect sensitive EDA tool information.
-      run: bazel test --noshow_loading_progress //... --test_tag_filters=ascentlint --test_output=summary
+  bazel-test-verific:
+    runs-on: self-hosted
+    needs: bazel-build
+    outputs:
+      total_tests: ${{ steps.test.outputs.total_tests }}
+      passing_tests: ${{ steps.test.outputs.passing_tests }}
+      exit_code: ${{ steps.test.outputs.exit_code }}
+    steps:
+    - name: Verilog elaboration tests (using Verific tclmain)
+      id: test
+      # Use --test_output=summary to suppress log output, even on failure (proprietary EDA tool output may be sensitive).
+      run: |
+        bazel test --noshow_loading_progress --test_output=summary //... --test_tag_filters=verific 2>&1 | tee .bazel-test-verific.log
+        BAZEL_EXIT_CODE=${PIPESTATUS[0]}
+        TOTAL_TESTS=$(grep -Po '(?<=out of )\d+(?= test)' .bazel-test-verific.log)
+        PASSING_TESTS=$(grep -Po '\d+(?= test passes?\.| tests pass)' .bazel-test-verific.log)
+        echo "total_tests=$TOTAL_TESTS" >> $GITHUB_OUTPUT
+        echo "passing_tests=$PASSING_TESTS" >> $GITHUB_OUTPUT
+        echo "exit_code=$BAZEL_EXIT_CODE" >> $GITHUB_OUTPUT
+        exit $BAZEL_EXIT_CODE
 
-    - name: Verilog sim tests (using dsim)
-      # Suppress log output to protect sensitive EDA tool information.
-      run: bazel test --noshow_loading_progress //... --test_tag_filters=dsim --test_output=summary
+  bazel-test-ascentlint:
+    runs-on: self-hosted
+    # AscentLint licenses are fairly limited, and the RTL lint tests cannot
+    # pass if the separate Verific elaboration tests don't pass.
+    # Put this dependency to avoid wasting lint license checkouts.
+    needs: bazel-test-verific
+    outputs:
+      total_tests: ${{ steps.test.outputs.total_tests }}
+      passing_tests: ${{ steps.test.outputs.passing_tests }}
+      exit_code: ${{ steps.test.outputs.exit_code }}
+    steps:
+    - name: Verilog lint tests (using RealIntent AscentLint)
+      id: test
+      # Use --test_output=summary to suppress log output, even on failure (proprietary EDA tool output may be sensitive).
+      run: |
+        bazel test --noshow_loading_progress --test_output=summary //... --test_tag_filters=ascentlint 2>&1 | tee .bazel-test-ascentlint.log
+        BAZEL_EXIT_CODE=${PIPESTATUS[0]}
+        TOTAL_TESTS=$(grep -Po '(?<=out of )\d+(?= test)' .bazel-test-ascentlint.log)
+        PASSING_TESTS=$(grep -Po '\d+(?= test passes?\.| tests pass)' .bazel-test-ascentlint.log)
+        echo "total_tests=$TOTAL_TESTS" >> $GITHUB_OUTPUT
+        echo "passing_tests=$PASSING_TESTS" >> $GITHUB_OUTPUT
+        echo "exit_code=$BAZEL_EXIT_CODE" >> $GITHUB_OUTPUT
+        exit $BAZEL_EXIT_CODE
 
-    # TODO: iverilog tests
-    # TODO: VCS tests
-    # TODO: VCF tests
-    # TODO: JG tests
+  bazel-test-dsim:
+    runs-on: self-hosted
+    needs: bazel-build
+    outputs:
+      total_tests: ${{ steps.test.outputs.total_tests }}
+      passing_tests: ${{ steps.test.outputs.passing_tests }}
+      exit_code: ${{ steps.test.outputs.exit_code }}
+    steps:
+    - name: Verilog sim tests (using Altair Dsim)
+      id: test
+      # Use --test_output=summary to suppress log output, even on failure (proprietary EDA tool output may be sensitive).
+      run: |
+        bazel test --noshow_loading_progress --test_output=summary //... --test_tag_filters=dsim 2>&1 | tee .bazel-test-dsim.log
+        BAZEL_EXIT_CODE=${PIPESTATUS[0]}
+        TOTAL_TESTS=$(grep -Po '(?<=out of )\d+(?= test)' .bazel-test-dsim.log)
+        PASSING_TESTS=$(grep -Po '\d+(?= test passes?\.| tests pass)' .bazel-test-dsim.log)
+        echo "total_tests=$TOTAL_TESTS" >> $GITHUB_OUTPUT
+        echo "passing_tests=$PASSING_TESTS" >> $GITHUB_OUTPUT
+        echo "exit_code=$BAZEL_EXIT_CODE" >> $GITHUB_OUTPUT
+        exit $BAZEL_EXIT_CODE
+
+  bazel-test-vcs:
+    runs-on: self-hosted
+    needs: bazel-build
+    outputs:
+      total_tests: ${{ steps.test.outputs.total_tests }}
+      passing_tests: ${{ steps.test.outputs.passing_tests }}
+      exit_code: ${{ steps.test.outputs.exit_code }}
+    steps:
+    - name: Verilog sim tests (using Synopsys VCS)
+      id: test
+      # Use --test_output=summary to suppress log output, even on failure (proprietary EDA tool output may be sensitive).
+      run: |
+        bazel test --noshow_loading_progress --test_output=summary //... --test_tag_filters=vcs 2>&1 | tee .bazel-test-vcs.log
+        BAZEL_EXIT_CODE=${PIPESTATUS[0]}
+        TOTAL_TESTS=$(grep -Po '(?<=out of )\d+(?= test)' .bazel-test-vcs.log)
+        PASSING_TESTS=$(grep -Po '\d+(?= test passes?\.| tests pass)' .bazel-test-vcs.log)
+        echo "total_tests=$TOTAL_TESTS" >> $GITHUB_OUTPUT
+        echo "passing_tests=$PASSING_TESTS" >> $GITHUB_OUTPUT
+        echo "exit_code=$BAZEL_EXIT_CODE" >> $GITHUB_OUTPUT
+        exit $BAZEL_EXIT_CODE
+
+  bazel-test-iverilog:
+    runs-on: self-hosted
+    needs: bazel-build
+    outputs:
+      total_tests: ${{ steps.test.outputs.total_tests }}
+      passing_tests: ${{ steps.test.outputs.passing_tests }}
+      exit_code: ${{ steps.test.outputs.exit_code }}
+    steps:
+    - name: Verilog sim tests (using Icarus Verilog)
+      id: test
+      # Don't need --test_output=summary to suppress log output because iverilog is open source.
+      run: |
+        bazel test --noshow_loading_progress //... --test_tag_filters=iverilog 2>&1 | tee .bazel-test-iverilog.log
+        BAZEL_EXIT_CODE=${PIPESTATUS[0]}
+        TOTAL_TESTS=$(grep -Po '(?<=out of )\d+(?= test)' .bazel-test-iverilog.log)
+        PASSING_TESTS=$(grep -Po '\d+(?= test passes?\.| tests pass)' .bazel-test-iverilog.log)
+        echo "total_tests=$TOTAL_TESTS" >> $GITHUB_OUTPUT
+        echo "passing_tests=$PASSING_TESTS" >> $GITHUB_OUTPUT
+        echo "exit_code=$BAZEL_EXIT_CODE" >> $GITHUB_OUTPUT
+        exit $BAZEL_EXIT_CODE
+
+  ##########################################
+  ##########################################
+  ##########################################
+  #
+  #                 BADGES
+  #
+  ##########################################
+  ##########################################
+  ##########################################
+  rtl-files-badge:
+    runs-on: ubuntu-latest
+    if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
+    steps:
+    - uses: actions/checkout@v3
+    - name: Count RTL files
+      run: |
+        NUM_RTL_FILES=$(find . -type d -name rtl -exec find {} -type f -name "*.sv" \; | wc -l)
+        echo "NUM_RTL_FILES=$NUM_RTL_FILES" >> $GITHUB_ENV
+    - name: Create RTL files badge
+      uses: schneegans/dynamic-badges-action@v1.7.0
+      with:
+        auth: ${{ secrets.MGOTTSCHO_GISTS_SECRET }}
+        gistID: c66dc2ddc0e513ba06ce338620977b26
+        filename: rtl.json
+        label: "rtl files"
+        message: ${{ env.NUM_RTL_FILES }}
+        color: "purple"
+
+  python-badge:
+    runs-on: ubuntu-latest
+    needs: bazel-test-python
+    if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
+    steps:
+    - name: Create python badge
+      uses: schneegans/dynamic-badges-action@v1.7.0
+      with:
+        auth: ${{ secrets.MGOTTSCHO_GISTS_SECRET }}
+        gistID: c66dc2ddc0e513ba06ce338620977b26
+        filename: python.json
+        label: "python"
+        message: ${{ needs.bazel-test-python.outputs.passing_tests }} of ${{ needs.bazel-test-python.outputs.total_tests }} passing
+        color: ${{ needs.bazel-test-python.outputs.exit_code == '0' && 'brightgreen' || 'red' }}
+
+  stardoc-badge:
+    runs-on: ubuntu-latest
+    needs: bazel-test-stardoc
+    if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
+    steps:
+    - name: Create stardoc badge
+      uses: schneegans/dynamic-badges-action@v1.7.0
+      with:
+        auth: ${{ secrets.MGOTTSCHO_GISTS_SECRET }}
+        gistID: c66dc2ddc0e513ba06ce338620977b26
+        filename: stardoc.json
+        label: "stardoc"
+        message: ${{ needs.bazel-test-stardoc.outputs.passing_tests }} of ${{ needs.bazel-test-stardoc.outputs.total_tests }} passing
+        color: ${{ needs.bazel-test-stardoc.outputs.exit_code == '0' && 'brightgreen' || 'red' }}
+
+  verific-badge:
+    runs-on: ubuntu-latest
+    needs: bazel-test-verific
+    if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
+    steps:
+    - name: Create verific badge
+      uses: schneegans/dynamic-badges-action@v1.7.0
+      with:
+        auth: ${{ secrets.MGOTTSCHO_GISTS_SECRET }}
+        gistID: c66dc2ddc0e513ba06ce338620977b26
+        filename: verific.json
+        label: "verific"
+        message: ${{ needs.bazel-test-verific.outputs.passing_tests }} of ${{ needs.bazel-test-verific.outputs.total_tests }} passing
+        color: ${{ needs.bazel-test-verific.outputs.exit_code == '0' && 'brightgreen' || 'red' }}
+
+  ascentlint-badge:
+    runs-on: ubuntu-latest
+    needs: bazel-test-ascentlint
+    if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
+    steps:
+    - name: Create ascentlint badge
+      uses: schneegans/dynamic-badges-action@v1.7.0
+      with:
+        auth: ${{ secrets.MGOTTSCHO_GISTS_SECRET }}
+        gistID: c66dc2ddc0e513ba06ce338620977b26
+        filename: ascentlint.json
+        label: "ascentlint"
+        message: ${{ needs.bazel-test-ascentlint.outputs.passing_tests }} of ${{ needs.bazel-test-ascentlint.outputs.total_tests }} passing
+        color: ${{ needs.bazel-test-ascentlint.outputs.exit_code == '0' && 'brightgreen' || 'red' }}
+
+  dsim-badge:
+    runs-on: ubuntu-latest
+    needs: bazel-test-dsim
+    if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
+    steps:
+    - name: Create dsim badge
+      uses: schneegans/dynamic-badges-action@v1.7.0
+      with:
+        auth: ${{ secrets.MGOTTSCHO_GISTS_SECRET }}
+        gistID: c66dc2ddc0e513ba06ce338620977b26
+        filename: dsim.json
+        label: "dsim"
+        message: ${{ needs.bazel-test-dsim.outputs.passing_tests }} of ${{ needs.bazel-test-dsim.outputs.total_tests }} passing
+        color: ${{ needs.bazel-test-dsim.outputs.exit_code == '0' && 'brightgreen' || 'red' }}
+
+  vcs-badge:
+    runs-on: ubuntu-latest
+    needs: bazel-test-vcs
+    if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
+    steps:
+    - name: Create vcs badge
+      uses: schneegans/dynamic-badges-action@v1.7.0
+      with:
+        auth: ${{ secrets.MGOTTSCHO_GISTS_SECRET }}
+        gistID: c66dc2ddc0e513ba06ce338620977b26
+        filename: vcs.json
+        label: "vcs"
+        message: ${{ needs.bazel-test-vcs.outputs.passing_tests }} of ${{ needs.bazel-test-vcs.outputs.total_tests }} passing
+        color: ${{ needs.bazel-test-vcs.outputs.exit_code == '0' && 'brightgreen' || 'red' }}
+
+  iverilog-badge:
+    runs-on: ubuntu-latest
+    needs: bazel-test-iverilog
+    if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
+    steps:
+    - name: Create iverilog badge
+      uses: schneegans/dynamic-badges-action@v1.7.0
+      with:
+        auth: ${{ secrets.MGOTTSCHO_GISTS_SECRET }}
+        gistID: c66dc2ddc0e513ba06ce338620977b26
+        filename: iverilog.json
+        label: "iverilog"
+        message: ${{ needs.bazel-test-iverilog.outputs.passing_tests }} of ${{ needs.bazel-test-iverilog.outputs.total_tests }} passing
+        color: ${{ needs.bazel-test-iverilog.outputs.exit_code == '0' && 'brightgreen' || 'red' }}

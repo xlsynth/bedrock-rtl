@@ -122,7 +122,8 @@ module br_amba_axi_timing_slice_fpv_monitor #(
       .ARUSER_WIDTH(ARUserWidth),
       .WUSER_WIDTH(WUserWidth),
       .BUSER_WIDTH(BUserWidth),
-      .RUSER_WIDTH(RUserWidth)
+      .RUSER_WIDTH(RUserWidth),
+      .CONFIG_WDATA_MASKED(0)
   ) target (
       // Global signals
       .aclk    (clk),
@@ -140,10 +141,10 @@ module br_amba_axi_timing_slice_fpv_monitor #(
       .awburst (target_awburst),
       .awuser  (target_awuser),
       .awprot  (target_awprot),
-      .awlock  ('d0),
-      .awcache ('d0),
-      .awqos   ('d0),
-      .awregion('d0),
+      .awlock  (),
+      .awcache (),
+      .awqos   (),
+      .awregion(),
       // Write Channel
       .wvalid  (target_wvalid),
       .wready  (target_wready),
@@ -167,10 +168,10 @@ module br_amba_axi_timing_slice_fpv_monitor #(
       .arburst (target_arburst),
       .aruser  (target_aruser),
       .arprot  (target_arprot),
-      .arlock  ('d0),
-      .arcache ('d0),
-      .arqos   ('d0),
-      .arregion('d0),
+      .arlock  (),
+      .arcache (),
+      .arqos   (),
+      .arregion(),
       // Read Channel
       .rvalid  (target_rvalid),
       .rready  (target_rready),
@@ -190,7 +191,8 @@ module br_amba_axi_timing_slice_fpv_monitor #(
       .ARUSER_WIDTH(ARUserWidth),
       .WUSER_WIDTH(WUserWidth),
       .BUSER_WIDTH(BUserWidth),
-      .RUSER_WIDTH(RUserWidth)
+      .RUSER_WIDTH(RUserWidth),
+      .CONFIG_RDATA_MASKED(0)
   ) init (
       // Global signals
       .aclk    (clk),
