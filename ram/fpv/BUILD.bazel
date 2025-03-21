@@ -227,3 +227,62 @@ br_verilog_fpv_test_tools_suite(
     top = "br_ram_flops_tile",
     deps = [":br_ram_flops_tile_fpv_monitor"],
 )
+
+# Bedrock-RTL Flop-RAM Tile (different wr/rd clocks)
+br_verilog_fpv_test_tools_suite(
+    name = "br_ram_flops_tile_2clk_test_suite",
+    elab_opts = [
+        "-parameter EnableBypass 0",
+        "-parameter UseStructuredGates 1",
+    ],
+    illegal_param_combinations = {
+        (
+            "Width",
+            "WordWidth",
+        ): [
+            ("1", "2"),
+            ("1", "3"),
+        ],
+    },
+    params = {
+        "Depth": [
+            "1",
+            "4",
+            "6",
+        ],
+        "EnablePartialWrite": [
+            "0",
+            "1",
+        ],
+        "EnableReset": [
+            "0",
+            "1",
+        ],
+        "NumReadPorts": [
+            "1",
+            "2",
+            "3",
+        ],
+        "NumWritePorts": [
+            "1",
+            "4",
+            "6",
+        ],
+        "Width": [
+            "1",
+            "6",
+            "12",
+        ],
+        "WordWidth": [
+            "1",
+            "2",
+            "3",
+        ],
+    },
+    tools = {
+        "jg": "br_ram_flops_tile_2clk_fpv.jg.tcl",
+        "vcf": "",
+    },
+    top = "br_ram_flops_tile",
+    deps = [":br_ram_flops_tile_fpv_monitor"],
+)
