@@ -31,8 +31,5 @@ clock -rate {rd_rst \
             rd_data \
             monitor.fv_addr} rd_clk
 
-#TODO
-cover -disable *
-
 # prove command
 prove -all
