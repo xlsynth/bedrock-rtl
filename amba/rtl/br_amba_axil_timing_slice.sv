@@ -71,7 +71,7 @@ module br_amba_axil_timing_slice #(
     output logic                             init_wvalid,
     input  logic                             init_wready,
     input  logic [br_amba::AxiRespWidth-1:0] init_bresp,
-    output logic [           BUserWidth-1:0] init_buser,
+    input  logic [           BUserWidth-1:0] init_buser,
     input  logic                             init_bvalid,
     output logic                             init_bready,
     output logic [            AddrWidth-1:0] init_araddr,
