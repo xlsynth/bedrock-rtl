@@ -181,7 +181,7 @@ verilog_elab_test(
 br_verilog_fpv_test_tools_suite(
     name = "br_tracker_sequence_test_suite",
     # EntryIdWidth >= $clog2(NumEntries)
-    # MaxAllocSize <= NumEntries - 1
+    # MaxAllocSize <= NumEntries
     illegal_param_combinations = {
         (
             "EntryIdWidth",
@@ -195,7 +195,6 @@ br_verilog_fpv_test_tools_suite(
             "MaxAllocSize",
             "NumEntries",
         ): [
-            ("2", "2"),
             ("3", "2"),
         ],
     },
