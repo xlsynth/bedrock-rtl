@@ -71,7 +71,6 @@ module br_tracker_reorder_buffer_basic_fpv_monitor #(
   end
 
   `BR_REG(fv_entry_allocated, fv_entry_allocated_nxt)
-  assign fv_resp_pending = (fv_entry_allocated != 'd0) || reordered_resp_pop_valid;
 
   // alloc and reordered_resp_pop are in order
   fv_fifo #(
@@ -88,6 +87,12 @@ module br_tracker_reorder_buffer_basic_fpv_monitor #(
       .empty(fv_fifo_empty),
       .full(fv_fifo_full)
   );
+
+  // The resp_pending output is asserted if there are allocated entries that
+  // have not been deallocated and there are responses pending in the output
+  // buffer whose tags have been retired but have not been popped from the
+  // reordered_resp_pop interface.
+  assign fv_resp_pending = (fv_entry_allocated != 'd0) || !fv_fifo_empty;
 
   // ----------FV assumptions----------
   `BR_ASSUME(dealloc_range_a,
