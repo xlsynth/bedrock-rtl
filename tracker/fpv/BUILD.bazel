@@ -355,6 +355,7 @@ verilog_elab_test(
 
 br_verilog_fpv_test_tools_suite(
     name = "br_tracker_reorder_buffer_ctrl_1r1w_test_suite",
+    gui = True,
     # EntryIdWidth >= $clog2(NumEntries)
     illegal_param_combinations = {
         (
