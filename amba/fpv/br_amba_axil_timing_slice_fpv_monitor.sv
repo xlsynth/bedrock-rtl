@@ -24,6 +24,7 @@ module br_amba_axil_timing_slice_fpv_monitor #(
     parameter  int WUserWidth  = 1,
     parameter  int ARUserWidth = 1,
     parameter  int RUserWidth  = 1,
+    parameter  int BUserWidth  = 1,
     localparam int StrobeWidth = DataWidth / 8
 ) (
     input clk,
@@ -41,6 +42,7 @@ module br_amba_axil_timing_slice_fpv_monitor #(
     input logic                             target_wvalid,
     input logic                             target_wready,
     input logic [br_amba::AxiRespWidth-1:0] target_bresp,
+    input logic [           BUserWidth-1:0] target_buser,
     input logic                             target_bvalid,
     input logic                             target_bready,
     input logic [            AddrWidth-1:0] target_araddr,
@@ -66,6 +68,7 @@ module br_amba_axil_timing_slice_fpv_monitor #(
     input logic                             init_wvalid,
     input logic                             init_wready,
     input logic [br_amba::AxiRespWidth-1:0] init_bresp,
+    input logic [           BUserWidth-1:0] init_buser,
     input logic                             init_bvalid,
     input logic                             init_bready,
     input logic [            AddrWidth-1:0] init_araddr,
@@ -88,7 +91,8 @@ module br_amba_axil_timing_slice_fpv_monitor #(
       .AWUSER_WIDTH(AWUserWidth),
       .WUSER_WIDTH(WUserWidth),
       .ARUSER_WIDTH(ARUserWidth),
-      .RUSER_WIDTH(RUserWidth)
+      .RUSER_WIDTH(RUserWidth),
+      .BUSER_WIDTH(BUserWidth)
   ) target (
       // Global signals
       .aclk    (clk),
@@ -155,7 +159,8 @@ module br_amba_axil_timing_slice_fpv_monitor #(
       .AWUSER_WIDTH(AWUserWidth),
       .WUSER_WIDTH(WUserWidth),
       .ARUSER_WIDTH(ARUserWidth),
-      .RUSER_WIDTH(RUserWidth)
+      .RUSER_WIDTH(RUserWidth),
+      .BUSER_WIDTH(BUserWidth)
   ) init (
       // Global signals
       .aclk    (clk),
