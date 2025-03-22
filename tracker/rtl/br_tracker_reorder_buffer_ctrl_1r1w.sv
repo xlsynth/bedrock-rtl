@@ -24,13 +24,10 @@
 // when the reordered_resp_pop_valid is asserted, returning the data payloads
 // (and associated IDs) in the original allocation order.
 //
-// The free_entry_count and allocated_entry_count outputs provide the number of
-// free and allocated entries in the reorder buffer, respectively. Note that these
-// counts do not consider responses pending in the output buffer whose tags have
-// been retired but have not been popped from the reordered_resp_pop interface.
-// In order to check that there are no unhandled responses remaining, the
-// allocated_entry_count should be zero and the reordered_resp_pop_valid should
-// be low.
+// The resp_pending output is asserted if there are allocated entries that
+// have not been deallocated and there are responses pending in the output
+// buffer whose tags have been retired but have not been popped from the
+// reordered_resp_pop interface.
 
 `include "br_asserts.svh"
 `include "br_unused.svh"
@@ -71,8 +68,7 @@ module br_tracker_reorder_buffer_ctrl_1r1w #(
     output logic [DataWidth-1:0] reordered_resp_pop_data,
 
     // Count Information
-    output logic [EntryCountWidth-1:0] free_entry_count,
-    output logic [EntryCountWidth-1:0] allocated_entry_count,
+    output logic resp_pending,
 
     // 1R1W RAM Interface
     output logic [MinEntryIdWidth-1:0] ram_wr_addr,
@@ -95,6 +91,7 @@ module br_tracker_reorder_buffer_ctrl_1r1w #(
   logic reordered_resp_pop_ready_int;
   logic [EntryIdWidth-1:0] reordered_resp_pop_entry_id_int;
   logic [EntryIdWidth-1:0] ram_rd_addr_int;
+  logic [EntryCountWidth-1:0] allocated_entry_count;
 
   // Credit sender ensures that we don't send read request until there is
   // space in the staging buffer.
@@ -192,9 +189,11 @@ module br_tracker_reorder_buffer_ctrl_1r1w #(
       .dealloc_complete_valid(reordered_resp_pop_valid_int),
       .dealloc_complete_entry_id(reordered_resp_pop_entry_id_int),
       //
-      .free_entry_count,
+      .free_entry_count(),
       .allocated_entry_count
   );
+
+  assign resp_pending = allocated_entry_count > 0 || reordered_resp_pop_valid;
 
   assign ram_wr_addr  = unordered_resp_push_entry_id[MinEntryIdWidth-1:0];
   assign ram_wr_valid = unordered_resp_push_valid;

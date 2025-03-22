@@ -53,8 +53,7 @@ module br_tracker_reorder_buffer_ctrl_1r1w_fpv_monitor #(
     input logic [DataWidth-1:0] reordered_resp_pop_data,
 
     // Count Information
-    input logic [EntryCountWidth-1:0] free_entry_count,
-    input logic [EntryCountWidth-1:0] allocated_entry_count,
+    input logic resp_pending,
 
     // 1R1W RAM Interface
     input logic [MinEntryIdWidth-1:0] ram_wr_addr,
@@ -99,8 +98,7 @@ module br_tracker_reorder_buffer_ctrl_1r1w_fpv_monitor #(
       .reordered_resp_pop_ready,
       .reordered_resp_pop_valid,
       .reordered_resp_pop_data,
-      .free_entry_count,
-      .allocated_entry_count
+      .resp_pending
   );
 
 endmodule : br_tracker_reorder_buffer_ctrl_1r1w_fpv_monitor
