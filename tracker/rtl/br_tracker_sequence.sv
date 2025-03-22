@@ -119,8 +119,7 @@ module br_tracker_sequence #(
   for (genvar i = 1; i < MaxAllocSize; i++) begin : gen_alloc_entry_id
     logic [NextValueWidth-1:0] next_value;
     logic [NextValueWidth-1:0] next_value_wrapped;
-    // ri lint_check_waive ARITH_EXTENSION
-    assign next_value = alloc_counter_value[0] + i;
+    assign next_value = NextValueWidth'(alloc_counter_value) + i;
     assign next_value_wrapped = (next_value >= NumEntries) ? (next_value - NumEntries) : next_value;
     assign alloc_entry_id[i] = EntryIdWidth'(next_value_wrapped);
   end
