@@ -115,15 +115,10 @@ module br_flow_serializer_fpv_monitor #(
   // For these 4 cycles: fv_flit_cnt = 0,1,2,3
   // corresponding push_data is: [7:0],[15:8],[23:16],[31:24]
   for (genvar i = 0; i < SerializationRatio; i++) begin : gen_ast
-    if (SerializeMostSignificantFirst) begin : gen_msb
-      `BR_ASSERT(data_integrity_a,
-                 pop_valid && (fv_flit_cnt == i) |->
-      pop_data == push_data[PopWidth*(MAX-i)+PopWidth-1:PopWidth*(MAX-i)])
-    end else begin : gen_lsb
-      `BR_ASSERT(data_integrity_a,
-                 pop_valid && (fv_flit_cnt == i) |->
-      pop_data == push_data[PopWidth*i+PopWidth-1:PopWidth*i])
-    end
+    localparam int Msb = SerializeMostSignificantFirst ? PopWidth*(MAX-i+1) : PopWidth*(i+1);
+    localparam int Lsb = SerializeMostSignificantFirst ? PopWidth * (MAX - i) : PopWidth * i;
+    `BR_ASSERT(data_integrity_a,
+               pop_valid && (fv_flit_cnt == i) |-> pop_data == push_data[Msb-1:Lsb])
   end
 
   // push_ready should be asserted for last flit.
