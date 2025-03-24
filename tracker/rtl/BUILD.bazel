@@ -133,6 +133,7 @@ verilog_library(
     deps = [
         ":br_tracker_reorder",
         "//credit/rtl:br_credit_sender",
+        "//delay/rtl:br_delay",
         "//fifo/rtl:br_fifo_flops_push_credit",
         "//macros:br_asserts",
         "//macros:br_unused",
