@@ -23,13 +23,13 @@ clock -rate {wr_rst \
             wr_addr \
             wr_data \
             wr_word_en \
-            monitor.fv_addr} wr_clk
+            monitor.fv_checker.fv_addr} wr_clk
 clock -rate {rd_rst \
             rd_addr_valid \
             rd_addr \
             rd_data_valid \
             rd_data \
-            monitor.fv_addr} rd_clk
+            monitor.fv_checker.fv_addr} rd_clk
 
 # prove command
 prove -all
