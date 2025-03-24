@@ -193,11 +193,25 @@ module br_tracker_reorder_buffer_ctrl_1r1w #(
       .allocated_entry_count
   );
 
-  assign resp_pending = allocated_entry_count > 0 || reordered_resp_pop_valid;
+  logic [RamReadLatency:0] ram_rd_addr_valid_pipe;
+  br_delay #(
+      .Width(1),
+      .NumStages(RamReadLatency)
+  ) br_delay_ram_rd_valid_pipe (
+      .clk,
+      .rst,
+      .in(ram_rd_addr_valid),
+      .out(),
+      .out_stages(ram_rd_addr_valid_pipe)
+  );
 
-  assign ram_wr_addr  = unordered_resp_push_entry_id[MinEntryIdWidth-1:0];
+  assign resp_pending = allocated_entry_count > 0
+                        || (|ram_rd_addr_valid_pipe)
+                        || reordered_resp_pop_valid;
+
+  assign ram_wr_addr = unordered_resp_push_entry_id[MinEntryIdWidth-1:0];
   assign ram_wr_valid = unordered_resp_push_valid;
-  assign ram_wr_data  = unordered_resp_push_data;
+  assign ram_wr_data = unordered_resp_push_data;
 
   if (EntryIdWidth > MinEntryIdWidth) begin : gen_unused_upper_entry_id_bits
     `BR_UNUSED_NAMED(unused_upper_entry_id_bits, ram_rd_addr_int[EntryIdWidth-1:MinEntryIdWidth])
