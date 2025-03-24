@@ -323,8 +323,10 @@ verilog_elab_test(
 
 br_verilog_fpv_test_tools_suite(
     name = "br_ram_flops_test_suite",
+    #TODO
     gui = True,
     illegal_param_combinations = {
+        # DepthTiles must be at least 1 and evenly divide Depth
         (
             "Depth",
             "DepthTiles",
@@ -332,6 +334,7 @@ br_verilog_fpv_test_tools_suite(
             ("1", "2"),
             ("1", "3"),
         ],
+        # WidthTiles must be at least 1 and evenly divide Width
         (
             "Width",
             "WidthTiles",
@@ -339,6 +342,7 @@ br_verilog_fpv_test_tools_suite(
             ("1", "2"),
             ("1", "3"),
         ],
+        # Width must be evenly divisible by WordWidth
         (
             "Width",
             "WordWidth",
@@ -346,6 +350,17 @@ br_verilog_fpv_test_tools_suite(
             ("1", "2"),
             ("1", "3"),
         ],
+        # WordWidth must be evenly divisible by WidthTiles
+        (
+            "WordWidth",
+            "WidthTiles",
+        ): [
+            ("1", "2"),
+            ("1", "3"),
+            ("2", "3"),
+            ("3", "2"),
+        ],
+        # WordWidth must be at least 1 and at most (Width / WidthTiles)
         (
             "Width",
             "WidthTiles",
@@ -425,6 +440,8 @@ br_verilog_fpv_test_tools_suite(
         #    "1",
         #],
     },
+    # TODO
+    tags = ["no-sandbox"],
     tools = {
         "jg": "br_ram_flops_tile_1clk_fpv.jg.tcl",
     },
