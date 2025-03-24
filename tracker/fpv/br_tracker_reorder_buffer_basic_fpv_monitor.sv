@@ -128,9 +128,6 @@ module br_tracker_reorder_buffer_basic_fpv_monitor #(
   assign fv_reordered_resp_valid = reordered_resp_pop_valid & reordered_resp_pop_ready &&
                                      (fv_reordered_resp_entry_id == fv_entry_id);
 
-  // TODO: comment out to test resp_pending
-  // runtime of this is long
-  /*
   jasper_scoreboard_3 #(
       .CHUNK_WIDTH(DataWidth),
       .IN_CHUNKS(1),
@@ -144,6 +141,6 @@ module br_tracker_reorder_buffer_basic_fpv_monitor #(
       .incoming_data(unordered_resp_push_data),
       .outgoing_vld(fv_reordered_resp_valid),
       .outgoing_data(reordered_resp_pop_data)
-  );*/
+  );
 
 endmodule
