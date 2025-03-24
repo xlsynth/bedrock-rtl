@@ -273,6 +273,7 @@ module br_ram_flops #(
           .NumWritePorts(NumWritePorts),
           .Depth(TileDepth),
           .Width(TileWidth),
+          .EnablePartialWrite(EnablePartialWrite),
           .WordWidth(WordWidth),
           .EnableBypass(TileEnableBypass),
           .EnableReset(EnableMemReset),
