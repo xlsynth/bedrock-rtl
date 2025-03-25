@@ -81,7 +81,6 @@ br_verilog_fpv_test_tools_suite(
             "3",
         ],
     },
-    tags = ["manual"],
     tools = {
         "jg": "",
         "vcf": "",
@@ -144,7 +143,6 @@ br_verilog_fpv_test_tools_suite(
             "3",
         ],
     },
-    tags = ["manual"],
     tools = {
         "jg": "",
         "vcf": "",
@@ -153,6 +151,7 @@ br_verilog_fpv_test_tools_suite(
     deps = [":br_ram_data_rd_pipe_fpv_monitor"],
 )
 
+#################################################################
 # Bedrock-RTL Flop-RAM Tile (same wr/rd clock)
 
 verilog_library(
@@ -173,8 +172,9 @@ verilog_elab_test(
     deps = [":br_ram_flops_tile_fpv_monitor"],
 )
 
+# Test focuses on testing all DepthTile and WidthTile combinations
 br_verilog_fpv_test_tools_suite(
-    name = "br_ram_flops_tile_test_suite",
+    name = "br_ram_flops_tile_test_tile",
     illegal_param_combinations = {
         (
             "Width",
@@ -208,16 +208,6 @@ br_verilog_fpv_test_tools_suite(
             "0",
             "1",
         ],
-        "NumReadPorts": [
-            "1",
-            "2",
-            "3",
-        ],
-        "NumWritePorts": [
-            "1",
-            "4",
-            "6",
-        ],
         "UseStructuredGates": [
             "0",
             "1",
@@ -233,7 +223,53 @@ br_verilog_fpv_test_tools_suite(
             "3",
         ],
     },
-    tags = ["manual"],
+    tools = {
+        "jg": "br_ram_flops_tile_1clk_fpv.jg.tcl",
+        "vcf": "br_ram_flops_tile_1clk_fpv.vcf.tcl",
+    },
+    top = "br_ram_flops_tile",
+    deps = [":br_ram_flops_tile_fpv_monitor"],
+)
+
+# Test focuses on testing NumWritePorts and NumReadPorts
+br_verilog_fpv_test_tools_suite(
+    name = "br_ram_flops_tile_test_port",
+    illegal_param_combinations = {
+        (
+            "EnableBypass",
+            "UseStructuredGates",
+        ): [
+            ("1", "1"),
+        ],
+    },
+    params = {
+        "EnableBypass": [
+            "0",
+            "1",
+        ],
+        "EnablePartialWrite": [
+            "0",
+            "1",
+        ],
+        "EnableReset": [
+            "0",
+            "1",
+        ],
+        "NumReadPorts": [
+            "1",
+            "2",
+            "3",
+        ],
+        "NumWritePorts": [
+            "1",
+            "4",
+            "6",
+        ],
+        "UseStructuredGates": [
+            "0",
+            "1",
+        ],
+    },
     tools = {
         "jg": "br_ram_flops_tile_1clk_fpv.jg.tcl",
         "vcf": "br_ram_flops_tile_1clk_fpv.vcf.tcl",
@@ -243,8 +279,9 @@ br_verilog_fpv_test_tools_suite(
 )
 
 # Bedrock-RTL Flop-RAM Tile (different wr/rd clocks)
+# Test focuses on testing all DepthTile and WidthTile combinations
 br_verilog_fpv_test_tools_suite(
-    name = "br_ram_flops_tile_2clk_test_suite",
+    name = "br_ram_flops_tile_2clk_test_tile",
     elab_opts = [
         "-parameter EnableBypass 0",
         "-parameter UseStructuredGates 1",
@@ -272,16 +309,6 @@ br_verilog_fpv_test_tools_suite(
             "0",
             "1",
         ],
-        "NumReadPorts": [
-            "1",
-            "2",
-            "3",
-        ],
-        "NumWritePorts": [
-            "1",
-            "4",
-            "6",
-        ],
         "Width": [
             "1",
             "6",
@@ -293,7 +320,6 @@ br_verilog_fpv_test_tools_suite(
             "3",
         ],
     },
-    tags = ["manual"],
     tools = {
         "jg": "br_ram_flops_tile_2clk_fpv.jg.tcl",
         "vcf": "",
@@ -302,6 +328,42 @@ br_verilog_fpv_test_tools_suite(
     deps = [":br_ram_flops_tile_fpv_monitor"],
 )
 
+# Test focuses on testing NumWritePorts and NumReadPorts
+br_verilog_fpv_test_tools_suite(
+    name = "br_ram_flops_tile_2clk_test_port",
+    elab_opts = [
+        "-parameter EnableBypass 0",
+        "-parameter UseStructuredGates 1",
+    ],
+    params = {
+        "EnablePartialWrite": [
+            "0",
+            "1",
+        ],
+        "EnableReset": [
+            "0",
+            "1",
+        ],
+        "NumReadPorts": [
+            "1",
+            "2",
+            "3",
+        ],
+        "NumWritePorts": [
+            "1",
+            "4",
+            "6",
+        ],
+    },
+    tools = {
+        "jg": "br_ram_flops_tile_2clk_fpv.jg.tcl",
+        "vcf": "",
+    },
+    top = "br_ram_flops_tile",
+    deps = [":br_ram_flops_tile_fpv_monitor"],
+)
+
+#################################################################
 # Bedrock-RTL Flop-RAM (multi-read/multi-write) (same wr/rd clock)
 
 verilog_library(
@@ -322,9 +384,9 @@ verilog_elab_test(
     deps = [":br_ram_flops_fpv_monitor"],
 )
 
+# Test focuses on testing all DepthTile and WidthTile combinations
 br_verilog_fpv_test_tools_suite(
-    name = "br_ram_flops_test_suite",
-    gui = True,
+    name = "br_ram_flops_test_tile",
     illegal_param_combinations = {
         # DepthTiles must be at least 1 and evenly divide Depth
         (
@@ -398,20 +460,6 @@ br_verilog_fpv_test_tools_suite(
             "0",
             "1",
         ],
-        #"EnableMemReset": [
-        #    "0",
-        #    "1",
-        #],
-        "NumReadPorts": [
-            "1",
-            "2",
-            "3",
-        ],
-        "NumWritePorts": [
-            "1",
-            "4",
-            "6",
-        ],
         "UseStructuredGates": [
             "0",
             "1",
@@ -431,6 +479,88 @@ br_verilog_fpv_test_tools_suite(
             "2",
             "3",
         ],
+    },
+    tools = {
+        "jg": "br_ram_flops_tile_1clk_fpv.jg.tcl",
+    },
+    top = "br_ram_flops",
+    deps = [":br_ram_flops_fpv_monitor"],
+)
+
+# Test focuses on testing NumWritePorts and NumReadPorts
+br_verilog_fpv_test_tools_suite(
+    name = "br_ram_flops_test_port",
+    illegal_param_combinations = {
+        (
+            "TileEnableBypass",
+            "UseStructuredGates",
+        ): [
+            ("1", "1"),
+        ],
+    },
+    params = {
+        "TileEnableBypass": [
+            "0",
+            "1",
+        ],
+        "EnablePartialWrite": [
+            "0",
+            "1",
+        ],
+        "EnableMemReset": [
+            "0",
+            "1",
+        ],
+        "NumReadPorts": [
+            "1",
+            "2",
+            "3",
+        ],
+        "NumWritePorts": [
+            "1",
+            "4",
+            "6",
+        ],
+        "UseStructuredGates": [
+            "0",
+            "1",
+        ],
+    },
+    tools = {
+        "jg": "br_ram_flops_tile_1clk_fpv.jg.tcl",
+    },
+    top = "br_ram_flops",
+    deps = [":br_ram_flops_fpv_monitor"],
+)
+
+# Test focuses on testing delays
+br_verilog_fpv_test_tools_suite(
+    name = "br_ram_flops_test_delay",
+    illegal_param_combinations = {
+        (
+            "TileEnableBypass",
+            "UseStructuredGates",
+        ): [
+            ("1", "1"),
+        ],
+    },
+    params = {
+        "TileEnableBypass": [
+            "0",
+            "1",
+        ],
+        "EnablePartialWrite": [
+            "0",
+            "1",
+        ],
+        "EnableMemReset": [
+            "0",
+            "1",
+        ],
+        "UseStructuredGates": [
+            "0",
+            "1",
+        ],
         "AddressDepthStages": [
             "0",
             "1",
@@ -444,8 +574,6 @@ br_verilog_fpv_test_tools_suite(
             "1",
         ],
     },
-    # TODO
-    tags = ["no-sandbox"],
     tools = {
         "jg": "br_ram_flops_tile_1clk_fpv.jg.tcl",
     },

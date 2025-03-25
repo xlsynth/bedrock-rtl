@@ -17,8 +17,5 @@ clock wr_clk rd_clk
 reset wr_rst rd_rst
 get_design_info
 
-#TODO
-cover -disable *
-
 # prove commandx
 prove -all

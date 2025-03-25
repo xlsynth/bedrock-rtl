@@ -24,8 +24,9 @@ module br_ram_flops_basic_fv_checker #(
     parameter int WordWidth = Width,
     parameter bit EnableBypass = 0,
     parameter bit EnableReset = 0,
-    parameter bit WriteLatency = 0,
-    parameter bit ReadLatency = 0,
+    parameter int WriteLatency = 0,
+    parameter int ReadLatency = 0,
+    localparam int Latency = WriteLatency + ReadLatency,
     localparam int AddrWidth = br_math::clamped_clog2(Depth),
     localparam int NumWords = Width / WordWidth
 ) (
@@ -73,7 +74,7 @@ module br_ram_flops_basic_fv_checker #(
                 rd_rst)
 
   // This is writing to fv_addr
-  logic fv_wr_valid, fv_wr_valid_d;
+  logic fv_wr_valid;
   logic [Width-1:0] fv_wr_data;
   logic [NumWords-1:0] fv_wr_word_en;
   // This is reading from fv_addr
@@ -82,11 +83,11 @@ module br_ram_flops_basic_fv_checker #(
 
   // FV memory only keeps tracking of traffic accessing fv_addr
   logic [Width-1:0] fv_mem_nxt, fv_mem_nxt_d;
-  logic [Width-1:0] fv_mem;
+  logic [Width-1:0] fv_mem, fv_mem_d;
 
   // write seen flag
   logic fv_wr_seen;
-  logic [NumWords-1:0] fv_word_written;
+  logic [NumWords-1:0] fv_word_written, fv_word_written_d;
 
   // Each cycle, write to fv_addr is onehot, read is not
   always_comb begin
@@ -108,19 +109,6 @@ module br_ram_flops_basic_fv_checker #(
     assign fv_mem_nxt[Msb-1:Lsb] = fv_wr_word_en[n] ? fv_wr_data[Msb-1:Lsb] : fv_mem[Msb-1:Lsb];
   end
 
-  fv_delay #(
-      .Width(Width + 1),
-      .NumStages(WriteLatency)
-  ) delay_pop_vr (
-      .clk(clk),
-      .rst(rst),
-      .in ({fv_wr_valid, fv_mem_nxt}),
-      .out({fv_wr_valid_d, fv_mem_nxt_d})
-  );
-
-  `BR_REGLX(fv_mem, fv_mem_nxt_d, fv_wr_valid_d, wr_clk, EnableReset & wr_rst)
-  `BR_REGLX(fv_wr_seen, 1'b1, fv_wr_valid_d, wr_clk, wr_rst)
-
   always_ff @(posedge wr_clk or posedge wr_rst) begin
     if (wr_rst) begin
       fv_word_written <= 'd0;
@@ -133,6 +121,31 @@ module br_ram_flops_basic_fv_checker #(
     end
   end
 
+  `BR_REGLX(fv_mem, fv_mem_nxt, fv_wr_valid, wr_clk, EnableReset & wr_rst)
+  `BR_REGLX(fv_wr_seen, 1'b1, fv_wr_valid, wr_clk, wr_rst)
+
+  // memory update delay due to WriteLatency
+  fv_delay #(
+      .Width(NumWords),
+      .NumStages(WriteLatency)
+  ) delay_wr2mem (
+      .clk(wr_clk),
+      .rst(wr_rst),
+      .in (fv_word_written),
+      .out(fv_word_written_d)
+  );
+
+  // rd_data delay due to WriteLatency + ReadLatency
+  fv_delay #(
+      .Width(Width * 2),
+      .NumStages(Latency)
+  ) delay_data (
+      .clk(wr_clk),
+      .rst(wr_rst),
+      .in ({fv_mem, fv_mem_nxt}),
+      .out({fv_mem_d, fv_mem_nxt_d})
+  );
+
   assign fv_rd_valid = rd_addr_valid[fv_rd_port] && (rd_addr[fv_rd_port] == fv_addr);
   assign fv_rd_data  = rd_data[fv_rd_port];
 
@@ -140,34 +153,34 @@ module br_ram_flops_basic_fv_checker #(
   if (EnableReset) begin : gen_rst
     if (EnableBypass) begin : gen_bypass_rst
       `BR_ASSERT_CR(memory_reset_a,
-                    fv_rd_valid && !fv_wr_seen && !fv_wr_valid |-> ##ReadLatency fv_rd_data == 'd0,
+                    fv_rd_valid && !fv_wr_seen && !fv_wr_valid |-> ##Latency fv_rd_data == 'd0,
                     rd_clk, rd_rst)
     end else begin : gen_non_bypass_rst
-      `BR_ASSERT_CR(memory_reset_a, fv_rd_valid && !fv_wr_seen |-> ##ReadLatency fv_rd_data == 'd0,
+      `BR_ASSERT_CR(memory_reset_a, fv_rd_valid && !fv_wr_seen |-> ##Latency fv_rd_data == 'd0,
                     rd_clk, rd_rst)
     end
   end
 
-  `BR_ASSERT_CR(rd_data_valid_a,
-                rd_addr_valid[fv_rd_port] |-> ##ReadLatency rd_data_valid[fv_rd_port], rd_clk,
-                rd_rst)
+  `BR_ASSERT_CR(rd_data_valid_a, rd_addr_valid[fv_rd_port] |-> ##Latency rd_data_valid[fv_rd_port],
+                rd_clk, rd_rst)
 
   // once a word has been written, fv_mem/RTL should not have uninitialized spurious data
   // otherwise, fv_mem and RTL mem unitialized initial data won't match
   for (genvar n = 0; n < NumWords; n++) begin : gen_ast
     localparam int FvLsb = n * WordWidth;
     localparam int FvMsb = (n + 1) * WordWidth;
+
     // verilog_lint: waive-start line-length
     if (EnableBypass) begin : gen_bypass
       `BR_ASSERT_CR(data_integrity_bypass_a,
-                    fv_rd_valid && fv_wr_valid && fv_wr_word_en[n] |-> ##ReadLatency fv_rd_data[FvMsb-1:FvLsb] == fv_mem_nxt[FvMsb-1:FvLsb],
+                    fv_rd_valid && fv_wr_valid && fv_wr_word_en[n] |-> ##Latency fv_rd_data[FvMsb-1:FvLsb] == fv_mem_nxt_d[FvMsb-1:FvLsb],
                     rd_clk, rd_rst)
       `BR_ASSERT_CR(data_integrity_a,
-                    fv_rd_valid && !fv_wr_valid && fv_word_written[n] |-> ##ReadLatency fv_rd_data[FvMsb-1:FvLsb] == fv_mem[FvMsb-1:FvLsb],
+                    fv_rd_valid && !fv_wr_valid && fv_word_written_d[n] |-> ##Latency fv_rd_data[FvMsb-1:FvLsb] == fv_mem_d[FvMsb-1:FvLsb],
                     rd_clk, rd_rst)
     end else begin : gen_no_bypass
       `BR_ASSERT_CR(data_integrity_a,
-                    fv_rd_valid && fv_word_written[n] |-> ##ReadLatency fv_rd_data[FvMsb-1:FvLsb] == fv_mem[FvMsb-1:FvLsb],
+                    fv_rd_valid && fv_word_written_d[n] |-> ##Latency fv_rd_data[FvMsb-1:FvLsb] == fv_mem_d[FvMsb-1:FvLsb],
                     rd_clk, rd_rst)
     end
     // verilog_lint: waive-stop line-length
