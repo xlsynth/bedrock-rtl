@@ -154,6 +154,7 @@ module br_amba_axi2axil_core #(
   //----------------------------------------------------------------------------
 
   localparam int RespFifoWidth = (IdWidth + 1);  // 1 bit to indicate if the burst is complete
+  localparam logic [AddrWidth-1:0] AddrAlignMask = ~(StrobeWidth - 1); // ri lint_check_waive ASSIGN_SIGN
 
   logic [br_amba::AxiBurstLenWidth-1:0] req_count;
   logic [br_amba::AxiRespWidth-1:0] resp, resp_next;
@@ -167,6 +168,7 @@ module br_amba_axi2axil_core #(
   logic is_last_req_beat;
   logic flow_reg_pop_valid;
   logic flow_reg_pop_ready;
+  logic [AddrWidth-1:0] axi_req_addr_aligned;
   logic [AddrWidth-1:0] axi_req_addr_reg;
   logic [IdWidth-1:0] axi_req_id_reg;
   logic [br_amba::AxiProtWidth-1:0] axi_req_prot_reg;
@@ -186,6 +188,9 @@ module br_amba_axi2axil_core #(
   // Flow Register to Capture the AXI4 Request
   //----------------------------------------------------------------------------
 
+  // Align the AXI4 request address to the bus width
+  assign axi_req_addr_aligned = axi_req_addr & AddrAlignMask;
+
   br_flow_reg_both #(
       .Width(
         AddrWidth +
@@ -202,7 +207,7 @@ module br_amba_axi2axil_core #(
       .push_ready(axi_req_ready),
       .push_valid(axi_req_valid),
       .push_data({
-        axi_req_addr,
+        axi_req_addr_aligned,
         axi_req_id,
         axi_req_len,
         axi_req_size,
