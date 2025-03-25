@@ -24,6 +24,8 @@ module br_ram_flops_basic_fv_checker #(
     parameter int WordWidth = Width,
     parameter bit EnableBypass = 0,
     parameter bit EnableReset = 0,
+    parameter bit WriteLatency = 0,
+    parameter bit ReadLatency = 0,
     localparam int AddrWidth = br_math::clamped_clog2(Depth),
     localparam int NumWords = Width / WordWidth
 ) (
@@ -71,7 +73,7 @@ module br_ram_flops_basic_fv_checker #(
                 rd_rst)
 
   // This is writing to fv_addr
-  logic fv_wr_valid;
+  logic fv_wr_valid, fv_wr_valid_d;
   logic [Width-1:0] fv_wr_data;
   logic [NumWords-1:0] fv_wr_word_en;
   // This is reading from fv_addr
@@ -79,7 +81,7 @@ module br_ram_flops_basic_fv_checker #(
   logic [Width-1:0] fv_rd_data;
 
   // FV memory only keeps tracking of traffic accessing fv_addr
-  logic [Width-1:0] fv_mem_nxt;
+  logic [Width-1:0] fv_mem_nxt, fv_mem_nxt_d;
   logic [Width-1:0] fv_mem;
 
   // write seen flag
@@ -106,9 +108,18 @@ module br_ram_flops_basic_fv_checker #(
     assign fv_mem_nxt[Msb-1:Lsb] = fv_wr_word_en[n] ? fv_wr_data[Msb-1:Lsb] : fv_mem[Msb-1:Lsb];
   end
 
+  fv_delay #(
+      .Width(Width + 1),
+      .NumStages(WriteLatency)
+  ) delay_pop_vr (
+      .clk(clk),
+      .rst(rst),
+      .in ({fv_wr_valid, fv_mem_nxt}),
+      .out({fv_wr_valid_d, fv_mem_nxt_d})
+  );
 
-  `BR_REGLX(fv_mem, fv_mem_nxt, fv_wr_valid, wr_clk, EnableReset & wr_rst)
-  `BR_REGLX(fv_wr_seen, 1'b1, fv_wr_valid, wr_clk, wr_rst)
+  `BR_REGLX(fv_mem, fv_mem_nxt_d, fv_wr_valid_d, wr_clk, EnableReset & wr_rst)
+  `BR_REGLX(fv_wr_seen, 1'b1, fv_wr_valid_d, wr_clk, wr_rst)
 
   always_ff @(posedge wr_clk or posedge wr_rst) begin
     if (wr_rst) begin
@@ -129,15 +140,16 @@ module br_ram_flops_basic_fv_checker #(
   if (EnableReset) begin : gen_rst
     if (EnableBypass) begin : gen_bypass_rst
       `BR_ASSERT_CR(memory_reset_a,
-                    fv_rd_valid && !fv_wr_seen && !fv_wr_valid |-> fv_rd_data == 'd0, rd_clk,
-                    rd_rst)
+                    fv_rd_valid && !fv_wr_seen && !fv_wr_valid |-> ##ReadLatency fv_rd_data == 'd0,
+                    rd_clk, rd_rst)
     end else begin : gen_non_bypass_rst
-      `BR_ASSERT_CR(memory_reset_a, fv_rd_valid && !fv_wr_seen |-> fv_rd_data == 'd0, rd_clk,
-                    rd_rst)
+      `BR_ASSERT_CR(memory_reset_a, fv_rd_valid && !fv_wr_seen |-> ##ReadLatency fv_rd_data == 'd0,
+                    rd_clk, rd_rst)
     end
   end
 
-  `BR_ASSERT_CR(rd_data_valid_a, rd_addr_valid[fv_rd_port] |-> rd_data_valid[fv_rd_port], rd_clk,
+  `BR_ASSERT_CR(rd_data_valid_a,
+                rd_addr_valid[fv_rd_port] |-> ##ReadLatency rd_data_valid[fv_rd_port], rd_clk,
                 rd_rst)
 
   // once a word has been written, fv_mem/RTL should not have uninitialized spurious data
@@ -148,18 +160,17 @@ module br_ram_flops_basic_fv_checker #(
     // verilog_lint: waive-start line-length
     if (EnableBypass) begin : gen_bypass
       `BR_ASSERT_CR(data_integrity_bypass_a,
-                    fv_rd_valid && fv_wr_valid && fv_wr_word_en[n] |-> fv_rd_data[FvMsb-1:FvLsb] == fv_mem_nxt[FvMsb-1:FvLsb],
+                    fv_rd_valid && fv_wr_valid && fv_wr_word_en[n] |-> ##ReadLatency fv_rd_data[FvMsb-1:FvLsb] == fv_mem_nxt[FvMsb-1:FvLsb],
                     rd_clk, rd_rst)
       `BR_ASSERT_CR(data_integrity_a,
-                    fv_rd_valid && !fv_wr_valid && fv_word_written[n] |-> fv_rd_data[FvMsb-1:FvLsb] == fv_mem[FvMsb-1:FvLsb],
+                    fv_rd_valid && !fv_wr_valid && fv_word_written[n] |-> ##ReadLatency fv_rd_data[FvMsb-1:FvLsb] == fv_mem[FvMsb-1:FvLsb],
                     rd_clk, rd_rst)
-      // verilog_lint: waive-stop line-length
     end else begin : gen_no_bypass
-      `BR_ASSERT_CR(
-          data_integrity_a,
-          fv_rd_valid && fv_word_written[n] |-> fv_rd_data[FvMsb-1:FvLsb] == fv_mem[FvMsb-1:FvLsb],
-          rd_clk, rd_rst)
+      `BR_ASSERT_CR(data_integrity_a,
+                    fv_rd_valid && fv_word_written[n] |-> ##ReadLatency fv_rd_data[FvMsb-1:FvLsb] == fv_mem[FvMsb-1:FvLsb],
+                    rd_clk, rd_rst)
     end
+    // verilog_lint: waive-stop line-length
   end
 
 endmodule

@@ -23,6 +23,7 @@ verilog_library(
     name = "br_ram_flops_basic_fv_checker",
     srcs = ["br_ram_flops_basic_fv_checker.sv"],
     deps = [
+        "//fpv/lib:fv_delay",
         "//pkg:br_math_pkg",
     ],
 )
@@ -323,7 +324,6 @@ verilog_elab_test(
 
 br_verilog_fpv_test_tools_suite(
     name = "br_ram_flops_test_suite",
-    #TODO
     gui = True,
     illegal_param_combinations = {
         # DepthTiles must be at least 1 and evenly divide Depth
@@ -333,6 +333,7 @@ br_verilog_fpv_test_tools_suite(
         ): [
             ("1", "2"),
             ("1", "3"),
+            ("4", "3"),
         ],
         # WidthTiles must be at least 1 and evenly divide Width
         (
@@ -361,12 +362,15 @@ br_verilog_fpv_test_tools_suite(
             ("3", "2"),
         ],
         # WordWidth must be at least 1 and at most (Width / WidthTiles)
+        # (Width / WidthTiles) % WordWidth == 0
         (
             "Width",
             "WidthTiles",
             "WordWidth",
         ): [
+            ("6", "2", "2"),
             ("6", "3", "3"),
+            ("12", "3", "3"),
         ],
         (
             "TileEnableBypass",
@@ -427,18 +431,18 @@ br_verilog_fpv_test_tools_suite(
             "2",
             "3",
         ],
-        #"AddressDepthStages": [
-        #    "0",
-        #    "1",
-        #],
-        #"ReadDataDepthStages": [
-        #    "0",
-        #    "1",
-        #],
-        #"ReadDataWidthStages": [
-        #    "0",
-        #    "1",
-        #],
+        "AddressDepthStages": [
+            "0",
+            "1",
+        ],
+        "ReadDataDepthStages": [
+            "0",
+            "1",
+        ],
+        "ReadDataWidthStages": [
+            "0",
+            "1",
+        ],
     },
     # TODO
     tags = ["no-sandbox"],

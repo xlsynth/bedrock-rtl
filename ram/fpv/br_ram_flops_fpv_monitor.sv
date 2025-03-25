@@ -90,7 +90,9 @@ module br_ram_flops_fpv_monitor #(
       .EnablePartialWrite(EnablePartialWrite),
       .WordWidth(WordWidth),
       .EnableBypass(TileEnableBypass),
-      .EnableReset(EnableMemReset)
+      .EnableReset(EnableMemReset),
+      .WriteLatency(AddressDepthStages),
+      .ReadLatency(ReadLatency)
   ) fv_checker (
       .wr_clk,
       .wr_rst,
