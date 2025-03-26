@@ -154,7 +154,7 @@ module br_amba_axi2axil_core #(
   //----------------------------------------------------------------------------
 
   localparam int RespFifoWidth = (IdWidth + 1);  // 1 bit to indicate if the burst is complete
-  localparam logic [AddrWidth-1:0] AddrAlignMask = ~(StrobeWidth - 1); // ri lint_check_waive ASSIGN_SIGN
+  localparam logic [AddrWidth-1:0] AddrAlignMask = {AddrWidth{1'b1}} << $clog2(StrobeWidth);
 
   logic [br_amba::AxiBurstLenWidth-1:0] req_count;
   logic [br_amba::AxiRespWidth-1:0] resp, resp_next;
