@@ -38,6 +38,11 @@ module br_fifo_staging_buffer #(
     // valid and data come directly from registers.
     // If 0, valid and data come combinationally from the read muxing logic.
     parameter bit RegisterPopOutputs = 0,
+    // If 1, total_items represents the total number of items in the FIFO,
+    // including entries in this staging buffer.
+    // If 0, total_items represents just the number of items in the RAM
+    // and excludes those in this staging buffer or inflight from the RAM.
+    parameter bit TotalItemsIncludesStaged = 1,
     // If 1, then assert there are no valid bits asserted and that the FIFO is
     // empty at the end of the test.
     parameter bit EnableAssertFinalNotValid = 1,
@@ -140,16 +145,24 @@ module br_fifo_staging_buffer #(
 
   assign pop_beat = pop_valid && pop_ready;
   assign space_available = (staged_items < BufferDepth) || pop_ready;
-  assign items_not_staged = TotalCountWidth'(staged_items) < total_items;
+  if (TotalItemsIncludesStaged) begin : gen_items_not_staged_inclusive
+    assign items_not_staged = TotalCountWidth'(staged_items) < total_items;
+  end else begin : gen_items_not_staged_exclusive
+    assign items_not_staged = total_items > '0;
+  end
   assign bypass_beat = bypass_valid_unstable && bypass_ready;
   assign ram_rd_addr_valid = space_available && items_not_staged && !bypass_ready;
   assign ram_rd_addr_beat = ram_rd_addr_valid && ram_rd_addr_ready;
 
   if (EnableBypass) begin : gen_bypass_push
-    // Bypass is allowed for the first BufferDepth entries to enter the FIFO.
-    assign bypass_ready = space_available && (
-        (total_items < BufferDepth) ||
-        ((total_items == BufferDepth) && pop_ready));
+    if (TotalItemsIncludesStaged) begin : gen_bypass_ready_inclusive
+      // Bypass is allowed for the first BufferDepth entries to enter the FIFO.
+      assign bypass_ready = space_available && (
+          (total_items < BufferDepth) ||
+          ((total_items == BufferDepth) && pop_ready));
+    end else begin : gen_bypass_ready_exclusive
+      assign bypass_ready = space_available && total_items == '0;
+    end
     assign push_valid = ram_rd_data_valid || bypass_beat;
     assign push_data = ram_rd_data_valid ? ram_rd_data : bypass_data_unstable;
     assign staged_items_incr = ram_rd_addr_beat || bypass_beat;

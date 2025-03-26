@@ -95,7 +95,8 @@ module br_fifo_shared_pop_ctrl #(
           .BufferDepth(StagingBufferDepth),
           .Width(Width),
           .RegisterPopOutputs(RegisterPopOutputs),
-          .RamReadLatency(RamReadLatency)
+          .RamReadLatency(RamReadLatency),
+          .TotalItemsIncludesStaged(0)
       ) br_fifo_staging_buffer (
           .clk,
           .rst,
