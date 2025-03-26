@@ -70,8 +70,10 @@ module br_ram_flops_basic_fv_checker #(
   // pick a random read port to check
   localparam int ReadPortWidth = NumReadPorts == 1 ? 1 : $clog2(NumReadPorts);
   logic [ReadPortWidth-1:0] fv_rd_port;
-  `BR_ASSUME_CR(fv_rd_port_stable_a, $stable(fv_rd_port) && (fv_rd_port < NumReadPorts), rd_clk,
+  `BR_ASSUME_CR(fv_rd_port_stable_r_a, $stable(fv_rd_port) && (fv_rd_port < NumReadPorts), rd_clk,
                 rd_rst)
+  `BR_ASSUME_CR(fv_rd_port_stable_w_a, $stable(fv_rd_port) && (fv_rd_port < NumReadPorts), wr_clk,
+                wr_rst)
 
   // This is writing to fv_addr
   logic fv_wr_valid;
@@ -82,8 +84,8 @@ module br_ram_flops_basic_fv_checker #(
   logic [Width-1:0] fv_rd_data;
 
   // FV memory only keeps tracking of traffic accessing fv_addr
-  logic [Width-1:0] fv_mem_nxt, fv_mem_nxt_d;
-  logic [Width-1:0] fv_mem, fv_mem_d;
+  logic [Width-1:0] fv_mem_nxt, fv_mem_nxt_d_pre, fv_mem_nxt_d;
+  logic [Width-1:0] fv_mem, fv_mem_d_pre, fv_mem_d;
 
   // write seen flag
   logic fv_wr_seen;
@@ -122,27 +124,27 @@ module br_ram_flops_basic_fv_checker #(
   end
 
   `BR_REGLX(fv_mem, fv_mem_nxt, fv_wr_valid, wr_clk, EnableReset & wr_rst)
-  `BR_REGLX(fv_wr_seen, 1'b1, fv_wr_valid, wr_clk, wr_rst)
+  `BR_REGLX(fv_wr_seen, 1'b1, |wr_valid, wr_clk, wr_rst)
 
   // memory update delay due to WriteLatency
   fv_delay #(
-      .Width(NumWords),
+      .Width(NumWords + Width * 2),
       .NumStages(WriteLatency)
-  ) delay_wr2mem (
+  ) delay_wr_lat (
       .clk(wr_clk),
       .rst(wr_rst),
-      .in (fv_word_written),
-      .out(fv_word_written_d)
+      .in ({fv_word_written, fv_mem, fv_mem_nxt}),
+      .out({fv_word_written_d, fv_mem_d_pre, fv_mem_nxt_d_pre})
   );
 
-  // rd_data delay due to WriteLatency + ReadLatency
+  // rd_data delay due to ReadLatency
   fv_delay #(
       .Width(Width * 2),
-      .NumStages(Latency)
-  ) delay_data (
-      .clk(wr_clk),
-      .rst(wr_rst),
-      .in ({fv_mem, fv_mem_nxt}),
+      .NumStages(ReadLatency)
+  ) delay_rd_lat (
+      .clk(rd_clk),
+      .rst(rd_rst),
+      .in ({fv_mem_d_pre, fv_mem_nxt_d_pre}),
       .out({fv_mem_d, fv_mem_nxt_d})
   );
 
@@ -153,11 +155,11 @@ module br_ram_flops_basic_fv_checker #(
   if (EnableReset) begin : gen_rst
     if (EnableBypass) begin : gen_bypass_rst
       `BR_ASSERT_CR(memory_reset_a,
-                    fv_rd_valid && !fv_wr_seen && !fv_wr_valid |-> ##Latency fv_rd_data == 'd0,
+                    |rd_data_valid && !fv_wr_seen && (wr_valid == 'd0) |-> fv_rd_data == 'd0,
                     rd_clk, rd_rst)
     end else begin : gen_non_bypass_rst
-      `BR_ASSERT_CR(memory_reset_a, fv_rd_valid && !fv_wr_seen |-> ##Latency fv_rd_data == 'd0,
-                    rd_clk, rd_rst)
+      `BR_ASSERT_CR(memory_reset_a, |rd_data_valid && !fv_wr_seen |-> fv_rd_data == 'd0, rd_clk,
+                    rd_rst)
     end
   end
 
