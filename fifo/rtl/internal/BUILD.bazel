@@ -219,6 +219,10 @@ br_verilog_elab_and_lint_test_suite(
             "0",
             "1",
         ],
+        "TotalItemsIncludesStaged": [
+            "0",
+            "1",
+        ],
     },
     deps = [":br_fifo_staging_buffer"],
 )
