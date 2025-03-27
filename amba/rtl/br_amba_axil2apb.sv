@@ -85,6 +85,7 @@ module br_amba_axil2apb #(
   logic [br_amba::AxiProtWidth-1:0] prot_reg, prot_next;
   logic resp_reg;
   logic write_reg;
+  logic penable_reg, penable_next;
   logic arb_write_req, arb_write_grant;
   logic arb_read_req, arb_read_grant;
   logic arb_any_grant;
@@ -96,6 +97,7 @@ module br_amba_axil2apb #(
   `BR_REGLN(prot_reg, prot_next, arb_any_grant)
   `BR_REGLN(resp_reg, pslverr, (apb_state == Access) && pready)
   `BR_REGLN(rdata, prdata, (apb_state == Access) && pready)
+  `BR_REGN(penable_reg, penable_next)
   `BR_REGI(apb_state, apb_state_next, Idle)
 
   // Arbitrate between read and write transactions
@@ -123,7 +125,7 @@ module br_amba_axil2apb #(
   always_comb begin
     // Default next state
     apb_state_next = apb_state;
-
+    penable_next   = 1'b0;
     unique case (apb_state)  // ri lint_check_waive FSM_DEFAULT_REQ
       Idle: begin
         if (arb_any_grant) begin
@@ -134,6 +136,7 @@ module br_amba_axil2apb #(
         apb_state_next = Access;
       end
       Access: begin
+        penable_next = 1'b1;
         if (pready) begin
           apb_state_next = Resp;
         end
@@ -162,7 +165,7 @@ module br_amba_axil2apb #(
   // APB signal generation
   `BR_ASSERT_IMPL(psel_state_a, psel == (apb_state == Setup) || (apb_state == Access))
   assign psel = apb_state[1];  // ri lint_check_waive ENUM_RHS ENUM_RANGE
-  assign penable = (apb_state == Access);
+  assign penable = penable_reg;
   assign paddr = addr_reg;
   assign pwdata = data_reg;
   assign pwrite = write_reg;
