@@ -28,6 +28,44 @@ verilog_library(
     ],
 )
 
+# Bedrock-RTL RAM Initializer
+
+verilog_library(
+    name = "br_ram_initializer_fpv_monitor",
+    srcs = ["br_ram_initializer_fpv_monitor.sv"],
+    deps = [
+        "//ram/rtl:br_ram_initializer",
+    ],
+)
+
+verilog_elab_test(
+    name = "br_ram_initializer_fpv_monitor_elab_test",
+    custom_tcl_header = "//:elab_test_jg_custom_header.verific.tcl",
+    tool = "verific",
+    deps = [":br_ram_initializer_fpv_monitor"],
+)
+
+br_verilog_fpv_test_tools_suite(
+    name = "br_ram_initializer_test_suite",
+    params = {
+        "Depth": [
+            "2",
+            "6",
+            "8",
+        ],
+        "Width": [
+            "1",
+            "3",
+        ],
+    },
+    tools = {
+        "jg": "",
+        "vcf": "",
+    },
+    top = "br_ram_initializer",
+    deps = [":br_ram_initializer_fpv_monitor"],
+)
+
 # Bedrock-RTL Address Decoder
 
 verilog_library(
