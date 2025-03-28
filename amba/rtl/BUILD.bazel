@@ -272,6 +272,10 @@ br_verilog_elab_and_lint_test_suite(
 br_verilog_elab_and_lint_test_suite(
     name = "br_amba_axil_msi_test_suite",
     params = {
+        "DataWidth": [
+            "32",
+            "64",
+        ],
         "NumInterrupts": [
             "2",
             "8",
