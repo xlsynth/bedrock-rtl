@@ -95,7 +95,7 @@ module br_amba_axil_msi #(
 
   localparam int AddrWidthPadding = (AddrWidth - DeviceIdWidth) - 2;  // lower 2 bits are always 00
   localparam int DataWidthPadding = DataWidth - EventIdWidth;
-  localparam int EventIdStrobeWidth = (EventIdWidth + 7) / 8;
+  localparam int EventIdStrobeWidth = 4;  // always 4 bytes
   localparam int StrobeWidthPadding = StrobeWidth - EventIdStrobeWidth;
   localparam int FifoWidth = DeviceIdWidth + EventIdWidth;
   localparam int WriteAddrFlowRegWidth = AddrWidth;
@@ -180,12 +180,18 @@ module br_amba_axil_msi #(
   // ri lint_check_off ZERO_EXT CONST_OUTPUT
   assign write_addr_flow_reg_push_data =
       msi_base_addr + {{AddrWidthPadding{1'b0}}, device_id_to_send, 2'b00};
-  assign write_data_flow_reg_push_data = {
-    {DataWidthPadding{1'b0}},
-    event_id_to_send,
-    {StrobeWidthPadding{1'b0}},
-    {EventIdStrobeWidth{1'b1}}
-  };
+  if (StrobeWidthPadding == 0) begin : gen_no_strb_padding
+    assign write_data_flow_reg_push_data = {
+      {DataWidthPadding{1'b0}}, event_id_to_send, {EventIdStrobeWidth{1'b1}}
+    };
+  end else begin : gen_strb_padding
+    assign write_data_flow_reg_push_data = {
+      {DataWidthPadding{1'b0}},
+      event_id_to_send,
+      {StrobeWidthPadding{1'b0}},
+      {EventIdStrobeWidth{1'b1}}
+    };
+  end
   // ri lint_check_on ZERO_EXT CONST_OUTPUT
 
   // Create the valid/ready signals for the flow registers
