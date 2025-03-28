@@ -70,7 +70,7 @@ module br_amba_axil_msi_fpv_monitor #(
   // ----------FV assertions----------
   localparam int AddrWidthPadding = (AddrWidth - DeviceIdWidth) - 2;
   localparam int DataWidthPadding = DataWidth - EventIdWidth;
-  localparam int EventIdStrobeWidth = (EventIdWidth + 7) / 8;
+  localparam int EventIdStrobeWidth = 4;
   localparam int StrobeWidthPadding = StrobeWidth - EventIdStrobeWidth;
 
   logic [NumInterrupts-1:0][AddrWidth-1:0] fv_init_awaddr;
