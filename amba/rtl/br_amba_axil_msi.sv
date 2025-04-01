@@ -94,7 +94,8 @@ module br_amba_axil_msi #(
   //------------------------------------------
 
   localparam int AddrWidthPadding = (AddrWidth - DeviceIdWidth) - 2;  // lower 2 bits are always 00
-  localparam int DataWidthPadding = DataWidth - EventIdWidth;
+  localparam int EventIdPadding = 32 - EventIdWidth;  // pad to 32 bits
+  localparam int DataWidthPadding = DataWidth - 32;
   localparam int EventIdStrobeWidth = 4;  // always 4 bytes
   localparam int StrobeWidthPadding = StrobeWidth - EventIdStrobeWidth;
   localparam int FifoWidth = DeviceIdWidth + EventIdWidth;
@@ -182,14 +183,23 @@ module br_amba_axil_msi #(
       msi_base_addr + {{AddrWidthPadding{1'b0}}, device_id_to_send, 2'b00};
   if (StrobeWidthPadding == 0) begin : gen_no_strb_padding
     assign write_data_flow_reg_push_data = {
-      {DataWidthPadding{1'b0}}, event_id_to_send, {EventIdStrobeWidth{1'b1}}
+      {EventIdPadding{1'b0}}, event_id_to_send, {EventIdStrobeWidth{1'b1}}
     };
   end else begin : gen_strb_padding
-    assign write_data_flow_reg_push_data = {
+    // Need to check the LSB of the device_id_to_send to determine if we need to realign the data
+    // and wstrb
+    assign write_data_flow_reg_push_data = (device_id_to_send[0] == 1'b0) ? {
       {DataWidthPadding{1'b0}},
+      {EventIdPadding{1'b0}},
       event_id_to_send,
       {StrobeWidthPadding{1'b0}},
       {EventIdStrobeWidth{1'b1}}
+    } : {
+      {EventIdPadding{1'b0}},
+      event_id_to_send,
+      {DataWidthPadding{1'b0}},
+      {EventIdStrobeWidth{1'b1}},
+      {StrobeWidthPadding{1'b0}}
     };
   end
   // ri lint_check_on ZERO_EXT CONST_OUTPUT
