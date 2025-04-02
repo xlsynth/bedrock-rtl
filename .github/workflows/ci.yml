@@ -175,6 +175,27 @@ jobs:
         echo "exit_code=$BAZEL_EXIT_CODE" >> $GITHUB_OUTPUT
         exit $BAZEL_EXIT_CODE
 
+  bazel-test-jg:
+    runs-on: self-hosted
+    needs: bazel-build
+    outputs:
+      total_tests: ${{ steps.test.outputs.total_tests }}
+      passing_tests: ${{ steps.test.outputs.passing_tests }}
+      exit_code: ${{ steps.test.outputs.exit_code }}
+    steps:
+    - name: Verilog formal tests (using Cadence JasperGold)
+      id: test
+      # Use --test_output=summary to suppress log output, even on failure (proprietary EDA tool output may be sensitive).
+      run: |
+        bazel test --noshow_loading_progress //... --test_tag_filters=jg 2>&1 | tee .bazel-test-jg.log
+        BAZEL_EXIT_CODE=${PIPESTATUS[0]}
+        TOTAL_TESTS=$(grep -Po '(?<=out of )\d+(?= test)' .bazel-test-jg.log)
+        PASSING_TESTS=$(grep -Po '\d+(?= test passes?\.| tests pass)' .bazel-test-jg.log)
+        echo "total_tests=$TOTAL_TESTS" >> $GITHUB_OUTPUT
+        echo "passing_tests=$PASSING_TESTS" >> $GITHUB_OUTPUT
+        echo "exit_code=$BAZEL_EXIT_CODE" >> $GITHUB_OUTPUT
+        exit $BAZEL_EXIT_CODE
+
   ##########################################
   ##########################################
   ##########################################
@@ -307,3 +328,18 @@ jobs:
         label: "iverilog"
         message: ${{ needs.bazel-test-iverilog.outputs.passing_tests }} of ${{ needs.bazel-test-iverilog.outputs.total_tests }} passing
         color: ${{ needs.bazel-test-iverilog.outputs.exit_code == '0' && 'brightgreen' || 'red' }}
+
+  jg-badge:
+    runs-on: ubuntu-latest
+    needs: bazel-test-jg
+    if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
+    steps:
+    - name: Create jg badge
+      uses: schneegans/dynamic-badges-action@v1.7.0
+      with:
+        auth: ${{ secrets.MGOTTSCHO_GISTS_SECRET }}
+        gistID: c66dc2ddc0e513ba06ce338620977b26
+        filename: jg.json
+        label: "jg"
+        message: ${{ needs.bazel-test-jg.outputs.passing_tests }} of ${{ needs.bazel-test-jg.outputs.total_tests }} passing
+        color: ${{ needs.bazel-test-jg.outputs.exit_code == '0' && 'brightgreen' || 'red' }}
