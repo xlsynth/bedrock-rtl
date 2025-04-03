@@ -34,8 +34,6 @@ fvdisable {special::*round_robin_a}
 #run properties
 fvtask standard
 check_fv -block
-report_fv
 
 fvtask special
 check_fv -block
-report_fv

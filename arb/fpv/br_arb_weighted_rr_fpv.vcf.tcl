@@ -40,8 +40,6 @@ fvdisable {special::*forward_progress_a}
 #run properties
 fvtask standard
 check_fv -block
-report_fv
 
 fvtask special
 check_fv -block
-report_fv
