@@ -13,20 +13,49 @@
 // limitations under the License.
 //
 // Bedrock-RTL Shared Multi-FIFO Pop Controller
+//
+// This module implements the pop-side control logic for a shared multi-FIFO.
+//
+// It manages multiple logical FIFOs that share a common storage RAM. Each logical FIFO
+// has its own pop interface (valid/ready/data). The module coordinates reading data
+// from the shared RAM, refilling per-FIFO staging buffers, and deallocating entries.
+//
+// The pop bandwidth per FIFO is determined by the staging buffer depth and the RAM read
+// latency. The module supports pipelined RAM reads and optional output registering.
+//
+// The module arbitrates RAM read requests among the logical FIFOs, tracks the head
+// pointers of each FIFO, and generates deallocation signals when entries are popped.
+//
+// The design assumes that the RAM and pointer management are handled externally.
 
 `include "br_asserts_internal.svh"
 `include "br_registers.svh"
 `include "br_unused.svh"
 
 module br_fifo_shared_pop_ctrl #(
+    // Number of read ports. Must be >=1 and a power of 2.
     parameter int NumReadPorts = 1,
+    // Number of logical FIFOs. Must be >=1.
     parameter int NumFifos = 1,
+    // Total depth of the FIFO.
+    // Must be greater than two times the number of write ports.
     parameter int Depth = 2,
+    // Width of the data. Must be >=1.
     parameter int Width = 1,
+    // The depth of the pop-side staging buffer.
+    // This affects the pop bandwidth of each logical FIFO.
+    // The bandwidth will be `StagingBufferDepth / (PointerRamAddressDepthStages
+    // + PointerRamReadDataDepthStages + PointerRamReadDataWidthStages + 1)`.
     parameter int StagingBufferDepth = 1,
+    // If 1, make sure pop_valid/pop_data are registered at the output
+    // of the staging buffer. This adds a cycle of cut-through latency.
     parameter bit RegisterPopOutputs = 0,
-    parameter int RamReadLatency = 0,
+    // If 1, place a register on the deallocation path from the pop-side
+    // staging buffer to the freelist. This improves timing at the cost of
+    // adding a cycle of backpressure latency.
     parameter bit RegisterDeallocation = 0,
+    // The number of cycles between data ram read address and read data. Must be >=0.
+    parameter int RamReadLatency = 0,
 
     localparam int AddrWidth  = $clog2(Depth),
     localparam int CountWidth = $clog2(Depth + 1)
