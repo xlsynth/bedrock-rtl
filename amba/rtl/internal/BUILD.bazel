@@ -43,3 +43,28 @@ br_verilog_elab_and_lint_test_suite(
     },
     deps = [":br_amba_axi2axil_core"],
 )
+
+verilog_library(
+    name = "br_amba_force_wdata_align",
+    srcs = ["br_amba_force_wdata_align.sv"],
+    deps = [
+        "//amba/rtl:br_amba_pkg",
+        "//counter/rtl:br_counter",
+        "//macros:br_asserts_internal",
+    ],
+)
+
+br_verilog_elab_and_lint_test_suite(
+    name = "br_amba_force_wdata_align_test_suite",
+    params = {
+        "MaxTransactionSkew": [
+            "2",
+            "3",
+        ],
+        "MaxAxiBurstLen": [
+            "1",
+            "256",
+        ],
+    },
+    deps = [":br_amba_force_wdata_align"],
+)
