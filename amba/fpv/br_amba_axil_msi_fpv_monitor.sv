@@ -151,9 +151,10 @@ module br_amba_axil_msi_fpv_monitor #(
 
   // AXI4-Lite write-only initiator interface
   axi4_slave #(
-      .AXI4_LITE (1),
+      .AXI4_LITE(1),
       .ADDR_WIDTH(AddrWidth),
-      .DATA_WIDTH(DataWidth)
+      .DATA_WIDTH(DataWidth),
+      .BYTE_STROBE_ON(1)
   ) axi (
       // Global signals
       .aclk   (clk),
@@ -182,6 +183,7 @@ module br_amba_axil_msi_fpv_monitor #(
       .rvalid ('d0),
       .rready ('d0)
   );
+
 
 endmodule : br_amba_axil_msi_fpv_monitor
 
