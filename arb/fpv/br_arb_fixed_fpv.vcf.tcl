@@ -28,4 +28,3 @@ sim_save_reset
 
 #run properties
 check_fv -block
-report_fv -list
