@@ -47,7 +47,7 @@ module br_ecc_secded_fpv_monitor #(
     parameter bit DecRegisterOutputs = 0,
     parameter bit RegisterSyndrome = 0,
     localparam int InputWidth = DataWidth + ParityWidth,
-    localparam int MessageWidth = 2 ** (ParityWidth - 2),
+    localparam int MessageWidth = 2 ** $clog2(DataWidth),
     localparam int CodewordWidth = MessageWidth + ParityWidth
 ) (
     input logic                 clk,
