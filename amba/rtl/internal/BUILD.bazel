@@ -68,3 +68,34 @@ br_verilog_elab_and_lint_test_suite(
     },
     deps = [":br_amba_force_wdata_align"],
 )
+
+verilog_library(
+    name = "br_amba_iso_resp_tracker",
+    srcs = ["br_amba_iso_resp_tracker.sv"],
+    deps = [
+        "//amba/rtl:br_amba_pkg",
+        "//arb/rtl:br_arb_rr",
+        "//counter/rtl:br_counter_incr",
+        "//fifo/rtl:br_fifo_flops",
+        "//fifo/rtl:br_fifo_shared_dynamic_flops",
+        "//macros:br_asserts_internal",
+        "//macros:br_registers",
+        "//macros:br_unused",
+    ],
+)
+
+br_verilog_elab_and_lint_test_suite(
+    name = "br_amba_iso_resp_tracker_test_suite",
+    params = {
+        "MaxAxiBurstLen": [
+            "1",
+            "256",
+        ],
+        "AxiIdCount": [
+            "1",
+            "2",
+            "128",
+        ],
+    },
+    deps = [":br_amba_iso_resp_tracker"],
+)
