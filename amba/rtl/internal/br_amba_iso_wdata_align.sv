@@ -37,7 +37,7 @@
 
 `include "br_asserts_internal.svh"
 
-module br_amba_force_wdata_align #(
+module br_amba_iso_wdata_align #(
     parameter int MaxTransactionSkew = 2,
     // can be set to 1 for AXI-Lite, otherwise should be set to br_amba::AxiBurstLenWidth
     parameter int MaxAxiBurstLen = 2 ** br_amba::AxiBurstLenWidth,

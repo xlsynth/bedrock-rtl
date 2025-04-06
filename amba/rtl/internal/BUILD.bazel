@@ -45,8 +45,8 @@ br_verilog_elab_and_lint_test_suite(
 )
 
 verilog_library(
-    name = "br_amba_force_wdata_align",
-    srcs = ["br_amba_force_wdata_align.sv"],
+    name = "br_amba_iso_wdata_align",
+    srcs = ["br_amba_iso_wdata_align.sv"],
     deps = [
         "//amba/rtl:br_amba_pkg",
         "//counter/rtl:br_counter",
@@ -55,7 +55,7 @@ verilog_library(
 )
 
 br_verilog_elab_and_lint_test_suite(
-    name = "br_amba_force_wdata_align_test_suite",
+    name = "br_amba_iso_wdata_align_test_suite",
     params = {
         "MaxTransactionSkew": [
             "2",
@@ -66,7 +66,7 @@ br_verilog_elab_and_lint_test_suite(
             "256",
         ],
     },
-    deps = [":br_amba_force_wdata_align"],
+    deps = [":br_amba_iso_wdata_align"],
 )
 
 verilog_library(
@@ -98,4 +98,18 @@ br_verilog_elab_and_lint_test_suite(
         ],
     },
     deps = [":br_amba_iso_resp_tracker"],
+)
+
+verilog_library(
+    name = "br_amba_iso_ds_fsm",
+    srcs = ["br_amba_iso_ds_fsm.sv"],
+    deps = [
+        "//macros:br_asserts",
+        "//macros:br_registers",
+    ],
+)
+
+br_verilog_elab_and_lint_test_suite(
+    name = "br_amba_iso_ds_fsm_test_suite",
+    deps = [":br_amba_iso_ds_fsm"],
 )
