@@ -9,6 +9,8 @@ module br_fifo_shared_dynamic_flops_tb;
   parameter int StagingBufferDepth = 1;
   parameter bit RegisterPopOutputs = 0;
   parameter bit RegisterDeallocation = 0;
+  parameter int DataRamAddressDepthStages = 0;
+  parameter int PointerRamAddressDepthStages = 0;
 
   localparam int FifoIdWidth = $clog2(NumFifos);
 
@@ -35,7 +37,9 @@ module br_fifo_shared_dynamic_flops_tb;
       .Width(Width),
       .StagingBufferDepth(StagingBufferDepth),
       .RegisterPopOutputs(RegisterPopOutputs),
-      .RegisterDeallocation(RegisterDeallocation)
+      .RegisterDeallocation(RegisterDeallocation),
+      .DataRamAddressDepthStages(DataRamAddressDepthStages),
+      .PointerRamAddressDepthStages(PointerRamAddressDepthStages)
   ) dut (
       .clk,
       .rst,
