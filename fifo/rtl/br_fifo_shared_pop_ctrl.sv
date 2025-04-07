@@ -83,12 +83,12 @@ module br_fifo_shared_pop_ctrl #(
     input logic [NumReadPorts-1:0][Width-1:0] data_ram_rd_data
 );
 
-  // Internal Integration Checks
+  // Integration Checks
 
-  br_flow_checks_valid_data_impl #(
+  br_flow_checks_valid_data_intg #(
       .NumFlows(NumFifos),
       .Width(AddrWidth)
-  ) br_flow_checks_valid_data_impl_head (
+  ) br_flow_checks_valid_data_intg_head (
       .clk,
       .rst,
       .valid(head_valid),
