@@ -59,8 +59,8 @@ module br_fifo_shared_dynamic_ctrl #(
     parameter int NumWritePorts = 1,
     // Number of read ports. Must be >=1 and a power of 2.
     parameter int NumReadPorts = 1,
-    // Number of logical FIFOs. Must be >=1.
-    parameter int NumFifos = 1,
+    // Number of logical FIFOs. Must be >=2.
+    parameter int NumFifos = 2,
     // Total depth of the FIFO.
     // Must be greater than two times the number of write ports.
     parameter int Depth = 3,
@@ -138,7 +138,7 @@ module br_fifo_shared_dynamic_ctrl #(
   `BR_ASSERT_STATIC(num_write_ports_in_range_a, NumWritePorts >= 1)
   `BR_ASSERT_STATIC(legal_num_read_ports_a, NumReadPorts >= 1 && br_math::is_power_of_2(
                     NumReadPorts))
-  `BR_ASSERT_STATIC(num_fifos_in_range_a, NumFifos >= 1)
+  `BR_ASSERT_STATIC(num_fifos_in_range_a, NumFifos >= 2)
   `BR_ASSERT_STATIC(depth_in_range_a, Depth > 2 * NumWritePorts)
   `BR_ASSERT_STATIC(width_in_range_a, Width >= 1)
   `BR_ASSERT_STATIC(staging_buffer_depth_in_range_a, StagingBufferDepth >= 1)

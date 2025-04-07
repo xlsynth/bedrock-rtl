@@ -61,8 +61,8 @@ module br_fifo_shared_dynamic_flops #(
     parameter int NumWritePorts = 1,
     // Number of read ports. Must be >=1 and a power of 2.
     parameter int NumReadPorts = 1,
-    // Number of logical FIFOs. Must be >=1.
-    parameter int NumFifos = 1,
+    // Number of logical FIFOs. Must be >=2.
+    parameter int NumFifos = 2,
     // Total depth of the FIFO.
     // Must be greater than two times the number of write ports.
     parameter int Depth = 3,
