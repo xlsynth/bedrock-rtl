@@ -21,7 +21,8 @@ module br_fifo_shared_read_xbar #(
     parameter int NumReadPorts = 1,
     parameter int RamReadLatency = 0,
     parameter int AddrWidth = 1,
-    parameter int Width = 1
+    parameter int Width = 1,
+    parameter bit EnableAssertPushValidStability = 0
 ) (
     // ri lint_check_waive HIER_NET_NOT_READ INPUT_NOT_READ
     input logic clk,
@@ -66,7 +67,8 @@ module br_fifo_shared_read_xbar #(
 
       br_flow_demux_select_unstable #(
           .NumFlows(NumReadPorts),
-          .Width(AddrWidth)
+          .Width(AddrWidth),
+          .EnableAssertPushValidStability(EnableAssertPushValidStability)
       ) br_flow_demux_select_unstable_inst (
           .clk,
           .rst,
@@ -109,7 +111,8 @@ module br_fifo_shared_read_xbar #(
     // TODO(zhemao): Allow selection of different arbitration policy.
     br_flow_mux_lru #(
         .NumFlows(NumFifos),
-        .Width(TotalMuxWidth)
+        .Width(TotalMuxWidth),
+        .EnableAssertPushValidStability(EnableAssertPushValidStability)
     ) br_flow_mux_lru_inst (
         .clk,
         .rst,

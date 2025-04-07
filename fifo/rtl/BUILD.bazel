@@ -105,6 +105,7 @@ verilog_library(
     deps = [
         "//fifo/rtl/internal:br_fifo_shared_read_xbar",
         "//fifo/rtl/internal:br_fifo_staging_buffer",
+        "//flow/rtl:br_flow_fork",
         "//flow/rtl:br_flow_join",
     ],
 )
