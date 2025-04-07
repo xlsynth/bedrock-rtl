@@ -12,7 +12,7 @@ module br_amba_iso_ds_fsm (
     input  logic align_and_hold_done,
     //
     output logic resp_tracker_isolate_req,
-    input  logic resp_tracker_empty
+    input  logic resp_tracker_fifo_empty
 );
 
   typedef enum logic [2:0] {
@@ -41,7 +41,7 @@ module br_amba_iso_ds_fsm (
         isolate_done = 1'b1;
       end
       Flush: begin
-        state_next = resp_tracker_empty ? Normal : state;
+        state_next = (align_and_hold_done && resp_tracker_fifo_empty) ? Normal : state;
         //
         align_and_hold_req = 1'b1;
         resp_tracker_isolate_req = 1'b1;

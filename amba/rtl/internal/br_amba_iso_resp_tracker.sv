@@ -76,9 +76,8 @@ module br_amba_iso_resp_tracker #(
     output logic upstream_xvalid,
     output logic [AxiIdWidth-1:0] upstream_xid,
     output br_amba::axi_resp_t upstream_xresp,
-    output logic [DataWidth-1:0] upstream_xdata,
     output logic upstream_xlast,
-    output logic upstream_is_iso_resp,
+    output logic [DataWidth-1:0] upstream_xdata,
     // R or B channel from downstream
     output logic downstream_xready,
     input logic downstream_xvalid,
@@ -88,7 +87,7 @@ module br_amba_iso_resp_tracker #(
     input logic downstream_xlast,
     //
     input logic isolate_req,
-    output logic isolate_done
+    output logic resp_fifo_empty
 );
 
   // Integration checks
@@ -96,9 +95,11 @@ module br_amba_iso_resp_tracker #(
   `BR_ASSERT_STATIC(max_axi_burst_len_1_or_amba_a,
                     MaxAxiBurstLen == 1 || MaxAxiBurstLen == 2 ** br_amba::AxiBurstLenWidth)
   `BR_ASSERT_STATIC(axi_id_width_gte_clog2_a, AxiIdWidth >= $clog2(AxiIdCount))
-  `BR_ASSERT_INTG(legal_request_rise_a, $rose(isolate_req) |-> $past(isolate_done) == 1'b0)
-  `BR_ASSERT_INTG(legal_request_fall_a, $fell(isolate_req) |-> $past(isolate_done) == 1'b1)
   `BR_ASSERT_INTG(axlen_legal_range_a, upstream_axvalid |-> upstream_axlen < MaxAxiBurstLen)
+  // Check that the isolate request can only fall when the tracker is empty and the upstream
+  // is not driving a new request (because it is held off outside of this module).
+  `BR_ASSERT_INTG(legal_request_fall_a, $fell(isolate_req) |-> $past(resp_fifo_empty) && !$past
+                                        (upstream_axvalid))
 
   // Local parameters
   localparam bit SingleBeatOnly = (MaxAxiBurstLen == 1);
@@ -128,9 +129,6 @@ module br_amba_iso_resp_tracker #(
   logic [AxiIdWidth-1:0] iso_arb_id;
   logic iso_any_gnt;
   logic tracker_fifo_push_ready;
-  logic tracker_fifo_empty;
-  logic hold_off_new_reqs;
-  logic isolate;
   logic final_count;
   logic zero_count;
 
@@ -219,7 +217,7 @@ module br_amba_iso_resp_tracker #(
 
     `BR_UNUSED(downstream_iso_xid)
     `BR_ASSERT(single_id_only_resp_info_a,
-               (downstream_iso_xvalid && !isolate) |-> (downstream_iso_xid == '0))
+               (downstream_iso_xvalid && !isolate_req) |-> (downstream_iso_xid == '0))
     `BR_UNUSED_NAMED(zero_count_unused_resp_info, zero_count)
   end else begin : gen_resp_info
     logic [AxiIdWidth-1:0] cur_resp_id_last, cur_resp_id_next;
@@ -319,17 +317,17 @@ module br_amba_iso_resp_tracker #(
   assign downstream_iso_xready = cur_resp_valid && upstream_xready;
 
   // Ignore downstream responses if isolating, use fixed IsolateResp and IsolateData.
-  assign downstream_iso_xresp = isolate ? IsolateResp : downstream_xresp;
-  assign downstream_iso_xdata = isolate ? IsolateData : downstream_xdata;
+  assign downstream_iso_xresp = isolate_req ? IsolateResp : downstream_xresp;
+  assign downstream_iso_xdata = isolate_req ? IsolateData : downstream_xdata;
 
   // When isolating, use the arbiter to pick the next transaction to generate (error) responses
   // for from the resp_tracker FIFO, since there's no downstream responses arriving anymore that
   // would indicate which one to pick.
-  assign downstream_iso_xid = isolate ? iso_arb_id : downstream_xid;
-  assign downstream_iso_xvalid = isolate ? iso_any_gnt : downstream_xvalid;
+  assign downstream_iso_xid = isolate_req ? iso_arb_id : downstream_xid;
+  assign downstream_iso_xvalid = isolate_req ? iso_any_gnt : downstream_xvalid;
 
   // When isolating, just accept and discard any arriving downstream responses.
-  assign downstream_xready = isolate ? 1'b1 : downstream_iso_xready;
+  assign downstream_xready = isolate_req ? 1'b1 : downstream_iso_xready;
 
   // When isolating, there's no downstream responses arriving. So we just arb over
   // the resp_tracker FIFO to get the next transaction to generate (error) responses
@@ -343,7 +341,7 @@ module br_amba_iso_resp_tracker #(
     logic iso_arb_accept;
 
     // Arbiter state is advanced on zero_count where a response is accepted upstream.
-    assign iso_arb_accept = isolate && x_beat && zero_count;
+    assign iso_arb_accept = isolate_req && x_beat && zero_count;
 
     br_arb_rr #(
         .NumRequesters(AxiIdCount)
@@ -384,43 +382,11 @@ module br_amba_iso_resp_tracker #(
   assign upstream_xid = cur_resp_id;
   assign upstream_xresp = downstream_iso_xresp;
   assign upstream_xdata = downstream_iso_xdata;
-  assign upstream_is_iso_resp = isolate;
 
-  assign upstream_axready = tracker_fifo_push_ready && !hold_off_new_reqs;
-
-  // Isolation State Machine
-  typedef enum logic {
-    Normal   = 1'b0,
-    Isolated = 1'b1
-  } iso_state_t;
-
-  // ri lint_check_waive ONE_BIT_STATE_REG
-  iso_state_t iso_state, iso_state_next;
-
-  `BR_REGI(iso_state, iso_state_next, Normal)
-
-  always_comb begin
-    // ri lint_check_waive FSM_DEFAULT_REQ
-    unique case (iso_state)
-      Normal: begin
-        iso_state_next = (isolate_req) ? Isolated : iso_state;
-      end
-      Isolated: begin
-        // Don't progress to Normal until the tracker FIFO is empty (all
-        // transactions from isolation have been reponded with error responses).
-        iso_state_next = (!isolate_req && tracker_fifo_empty) ? Normal : iso_state;
-      end
-    endcase
-  end
+  assign upstream_axready = tracker_fifo_push_ready;
 
   // TODO(bgelb): confirm !valid |-> empty for the multi-fifo
-  assign tracker_fifo_empty = !iso_any_gnt;
-
-  // We need to hold off new requests while we generate error responses for
-  // all previous transactions when we exit isolation.
-  assign hold_off_new_reqs = (iso_state == Isolated && !isolate_req);
-  assign isolate_done = (iso_state == Isolated);
-  assign isolate = (iso_state == Isolated) || isolate_req;
+  assign resp_fifo_empty = !iso_any_gnt;
 
   //
   // Assertions
@@ -428,9 +394,10 @@ module br_amba_iso_resp_tracker #(
 
   // Check that the downstream last beat matches the one generated by the counter
   // (unless isolating).
-  `BR_ASSERT(xlast_match_a, (upstream_xvalid && !isolate) |-> downstream_xlast == upstream_xlast)
+  `BR_ASSERT(xlast_match_a,
+             (upstream_xvalid && !isolate_req) |-> downstream_xlast == upstream_xlast)
   `BR_UNUSED(downstream_xlast)
 
   // Check that downstream ID matches the registered copy (i.e. no burst interleave allowed)
-  `BR_ASSERT(id_match_a, (upstream_xvalid && !isolate) |-> downstream_xid == upstream_xid)
+  `BR_ASSERT(id_match_a, (upstream_xvalid && !isolate_req) |-> downstream_xid == upstream_xid)
 endmodule : br_amba_iso_resp_tracker
