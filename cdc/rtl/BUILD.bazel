@@ -260,3 +260,28 @@ br_verilog_elab_and_lint_test_suite(
         "//gate/rtl:br_gate_mock",
     ],
 )
+
+verilog_library(
+    name = "br_cdc_pulse_stretch",
+    srcs = ["br_cdc_pulse_stretch.sv"],
+    deps = [
+        "//macros:br_asserts",
+        "//macros:br_gates",
+        "//macros:br_registers",
+    ],
+)
+
+br_verilog_elab_and_lint_test_suite(
+    name = "br_cdc_pulse_stretch_test_suite",
+    params = {
+        "NumStages": [
+            "2",
+            "3",
+        ],
+    },
+    top = "br_cdc_pulse_stretch",
+    deps = [
+        ":br_cdc_pulse_stretch",
+        "//gate/rtl:br_gate_mock",
+    ],
+)
