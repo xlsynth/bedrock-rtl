@@ -45,8 +45,9 @@
 `include "br_unused.svh"
 
 module br_counter_incr #(
-    parameter int MaxValue = 1,  // Must be at least 1. Inclusive.
-    parameter int MaxIncrement = 1,  // Must be at least 1 and at most MaxValue. Inclusive.
+    parameter longint unsigned MaxValue = 1,  // Must be at least 1. Inclusive.
+    // Must be at least 1 and at most MaxValue. Inclusive.
+    parameter longint unsigned MaxIncrement = 1,
     // If 1, then when reinit is asserted together with incr_valid,
     // the increment is applied to the initial value rather than the current value, i.e.,
     // value_next == initial_value + applicable incr.
@@ -58,8 +59,8 @@ module br_counter_incr #(
     parameter bit EnableSaturate = 0,
     // If 1, then assert there are no valid bits asserted at the end of the test.
     parameter bit EnableAssertFinalNotValid = 1,
-    localparam int ValueWidth = $clog2(MaxValue + 1),
-    localparam int IncrementWidth = $clog2(MaxIncrement + 1)
+    localparam bit [$clog2(MaxValue + 1)-1:0] ValueWidth = $clog2(MaxValue + 1),
+    localparam bit [$clog2(MaxIncrement + 1)-1:0] IncrementWidth = $clog2(MaxIncrement + 1)
 ) (
     // Posedge-triggered clock.
     input  logic                      clk,
@@ -90,9 +91,9 @@ module br_counter_incr #(
   //------------------------------------------
   // Implementation
   //------------------------------------------
-  localparam int MaxValueP1 = MaxValue + 1;
+  localparam bit [ValueWidth-1:0] MaxValueP1 = MaxValue + 1;
   localparam bit IsMaxValueP1PowerOf2 = (MaxValueP1 & (MaxValueP1 - 1)) == 0;
-  localparam int TempWidth = $clog2(MaxValue + MaxIncrement + 1);
+  localparam bit [ValueWidth+IncrementWidth-1:0] TempWidth = $clog2(MaxValue + MaxIncrement + 1);
 
   // TODO(mgottscho): Sometimes the MSbs may not be used. It'd be cleaner
   // to capture them more tightly using br_misc_unused.
