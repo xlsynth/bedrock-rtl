@@ -15,14 +15,14 @@ module br_amba_iso_ds_fsm (
     input  logic resp_tracker_fifo_empty
 );
 
-  typedef enum logic [2:0] {
-    Normal,
-    Isolate,
-    Flush
+  typedef enum logic [1:0] {
+    Normal = 2'b00,
+    Isolate = 2'b01,
+    Flush = 2'b10
   } iso_ds_fsm_state_t;
 
   iso_ds_fsm_state_t state, state_next;
-  `BR_REG(state, state_next)
+  `BR_REGI(state, state_next, Normal)
 
   always_comb begin
     case (state)
