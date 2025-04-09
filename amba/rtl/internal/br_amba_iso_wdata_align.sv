@@ -12,20 +12,22 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Bedrock-RTL AMBA Force WDATA Align
+// Bedrock-RTL AMBA WDATA Align and Hold
 //
 // This module is used in the context of an AXI isolator that disconnects
-// a downstream AXI subordinate from an upstream AXI manager. This module
-// is used to track the relative skew between the AW and W channels, and
-// then to force it into alignment (by holding off either channel until
-// they are aligned) and then finally holding off the upstream entirely.
+// a downstream AXI subordinate from an upstream AXI manager. This
+// module is used to track the relative skew between the AW and W
+// channels, and then to force it into alignment (by holding off either
+// channel until they are aligned) and then finally holding off the
+// upstream entirely.
 //
 // Alignment is initiated by asserting align_and_hold_req. This signal
 // must be kept asserted until align_and_hold_done is asserted,
-// indicating that the alignment is complete. Upstream ports will then
-// remain backpressured until align_and_hold_req is deasserted.
+// indicating that the alignment is complete and no new requests will be
+// accepted on either W or AW. Upstream ports will then remain
+// backpressured until align_and_hold_req is deasserted.
 //
-// Recovering alignment is necessary when re-connecting the downstream
+// Recovering alignment is necessary prior re-connecting the downstream
 // subordinate to the upstream manager after the subordinate has been
 // disconnected for some time. After the reconnect is made, the hold is
 // released, and transactions are allowed to flow to the downstream
@@ -38,6 +40,8 @@
 `include "br_asserts_internal.svh"
 
 module br_amba_iso_wdata_align #(
+    // Maximum allowed skew (measured in max-length transactions) that can be tracked
+    // without causing backpressure on the upstream ports.
     parameter int MaxTransactionSkew = 2,
     // can be set to 1 for AXI-Lite, otherwise should be set to br_amba::AxiBurstLenWidth
     parameter int MaxAxiBurstLen = 2 ** br_amba::AxiBurstLenWidth,

@@ -1,22 +1,88 @@
+// Copyright 2025 The Bedrock-RTL Authors
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+//
+// Bedrock-RTL AXI Downstream (Subordinate) Isolator
+//
+// This module is used to isolate a downstream AXI subordinate from an
+// upstream AXI manager such that the downstream subordinate can be reset
+// while maintaining the upstream AXI bus's protocol integrity.
+//
+// The isolator will generate responses for any transactions that are
+// pending on the downstream side when isolation is requested and continue
+// generating responses for any new transactions destined for the
+// subordinate while the subordinate is isolated.
+//
+// Isolation is requested by asserting the isolate_req signal and holding
+// it for the duration of the isolation. Isolation is complete (and
+// downstream subordinate may be safely reset) when the isolate_done
+// signal asserts in response to the assertion of isolate_req.
+//
+// Once the downstream subordinate is ready to re-connect, the isolate_req
+// signal may be deasserted and the subordinate will resume normal
+// operation. The isolate_done signal will deassert in response to the
+// deassertion of isolate_req. Any new transactions accepted after
+// isolate_done deasserts (as long as isolate_req remains low) are
+// guaranteed to pass to the downstream.
+//
+// Isolation is guaranteed to complete without any assumption about the
+// state of the downstream interface.
+
 module br_amba_axi_iso_ds #(
+    // Width of the AXI address field.
     parameter int AddrWidth = 12,
+    // Width of the AXI data field.
     parameter int DataWidth = 32,
+    // Width of the AXI ID field.
     parameter int IdWidth = 1,
+    // Width of the AXI AWUSER field.
     parameter int AWUserWidth = 1,
+    // Width of the AXI WUSER field.
     parameter int WUserWidth = 1,
+    // Width of the AXI ARUSER field.
     parameter int ARUserWidth = 1,
+    // Width of the AXI BUSER field.
     parameter int BUserWidth = 1,
+    // Width of the AXI RUSER field.
     parameter int RUserWidth = 1,
+    // Maximum number of outstanding requests that can be tracked
+    // without backpressuring the upstream request ports.
     parameter int MaxOutstanding = 128,
+    // Number of unique AXI IDs that can be tracked. Must be less
+    // than or equal to 2^IdWidth.
     parameter int AxiIdCount = 2 ** IdWidth,
+    // Maximum allowed skew (measured in max-length transactions)
+    // that can be tracked between AW and W channels without causing
+    // backpressure on the upstream ports.
     parameter int MaxTransactionSkew = 2,
+    // Maximum number of response beats per transaction. Can be set
+    // to 1 for AXI-Lite, otherwise must be set to
+    // br_amba::AxiBurstLenWidth.
     parameter int MaxAxiBurstLen = 2 ** br_amba::AxiBurstLenWidth,
+    // Response to generate for isolated transactions.
     parameter br_amba::AxiRespWidth IsolateResp = br_amba::AxiRespSlverr,
+    // BUSER data to generate for isolated transactions.
     parameter bit [BUserWidth-1:0] IsolateBUser = '0,
+    // RUSER data to generate for isolated transactions.
     parameter bit [RUserWidth-1:0] IsolateRUser = '0,
+    // RDATA data to generate for isolated transactions.
     parameter bit [DataWidth-1:0] IsolateRData = '0,
-    parameter bit FlopPtrRamRd = 1,
-    parameter bit FlopDataRamRd = 1,
+    // Number of pipeline stages to use for the pointer RAM read
+    // data. Has no effect if AxiIdCount == 1.
+    parameter bit FlopPtrRamRd = 0,
+    // Number of pipeline stages to use for the data RAM read data.
+    // Has no effect if AxiIdCount == 1.
+    parameter bit FlopDataRamRd = 0,
     localparam int StrobeWidth = DataWidth / 8
 ) (
     input  logic                                  clk,

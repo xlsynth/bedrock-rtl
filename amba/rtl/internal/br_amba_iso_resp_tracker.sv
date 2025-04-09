@@ -12,55 +12,57 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 //
-// Bedrock-RTL AXI Isolation Response Tracker
+// Bedrock-RTL AXI Isolation Response Tracker and Generator
 //
-// This module implements a response tracker for AXI transactions that
-// are isolated from the downstream. It tracks a FIFO list of
-// outstanding bursts for each supported AXI ID such that it is able to
-// maintain the AXI bus state of the upstream interface (by generating
-// error responses for all in-progress requests) while isolating the
-// downstream interface.
+// This module monitors the AXI request channel from upstream to
+// downstream and tracks the AxLEN values for every transaction
+// currently pending on the downstream interface. An ordered list is
+// maintained for each AXI ID and the tracked values are removed from
+// the tracking list when a response is received on the downstream
+// interface.
 //
 // When the isolate_req signal is asserted, the module will begin
-// ignoring responses arriving on the downstream interface and generate
-// error responses for all expected response beats of bursts that are
-// outstanding on the downstream interface. It will continue to respond
-// to new requests arriving on the upstream interface with error
-// responses as well. The isolate_req signal must be asserted
-// continuously until the isolate_done signal is asserted, indicating
-// that the downstream side has been isolated (and may now be reset
-// safely).
+// ignoring responses arriving on the downstream interface and instead
+// generate error responses for all expected response beats for any
+// transactions on the tracking lists. It will continue to accept new
+// requests while isolate_req is asserted as well, and will
+// continuously generate error responses on the pop side of the
+// tracking list.
 //
-// The isolate_req signal should be kept asserted continuously for as
-// long as isolation of the downstream interface is desired. Once the
-// isolate_req signal is deasserted, the module will hold off new
-// requests from entering on the upstream interface until all internally
-// tracked bursts have been responded to with an error response. Once
-// all internally tracked bursts have been terminated, the module
-// resumes accepting new requests from upstream and re-connects the
-// downstream interface. Once this occurs, the isolate_done signal is
-// deasserted.
+// The isolate_req signal may be safely deasserted when both of the
+// following are true: 1. The resp_fifo_empty signal is asserted (all
+// requests have been responded to) 2. The upstream_axvalid signal is
+// deasserted (no new request is currently pending)
 //
-// Once the isolate_req signal is high, it must be held high until the
-// isolate_done signal is asserted. Once the isolate_done signal is
-// asserted, the isolate_req signal may be deasserted. Once deasserted,
-// the isolate_req signal must remain deasserted until the isolate_done
-// signal is deasserted.
+// Once the isolate_req signal is deasserted, the module will resume
+// normal operation, forwarding requests to the downstream interface,
+// and forwarding downstream responses to the upstream interface.
 
 `include "br_asserts_internal.svh"
 `include "br_registers.svh"
 `include "br_unused.svh"
 
 module br_amba_iso_resp_tracker #(
+    // Maximum number of outstanding requests that can be tracked without
+    // backpressuring the upstream request ports.
     parameter int MaxOutstanding = 128,
+    // Width of the AXI ID field.
     parameter int AxiIdWidth = 7,
+    // Number of unique AXI IDs that can be tracked. Must be less than or
+    // equal to 2^AxiIdWidth.
     parameter int AxiIdCount = 2 ** AxiIdWidth,
+    // Width of the data field.
     parameter int DataWidth = 1,
+    // Number of pipeline stages to use for the pointer RAM read data.
     parameter int FlopPtrRamRd = 0,
+    // Number of pipeline stages to use for the data RAM read data.
     parameter int FlopDataRamRd = 0,
+    // Response to generate for isolated transactions.
     parameter br_amba::axi_resp_t IsolateResp = br_amba::AxiRespSlverr,
+    // Data to generate for isolated transactions.
     parameter bit [DataWidth-1:0] IsolateData = '0,
-    // can be set to 1 for AXI-Lite or write responses
+    // Can be set to 1 for AXI-Lite or write responses, otherwise should
+    // be set to br_amba::AxiBurstLenWidth.
     parameter int MaxAxiBurstLen = 2 ** br_amba::AxiBurstLenWidth,
     localparam int AxiBurstLenWidth = MaxAxiBurstLen == 1 ? 1 : $clog2(MaxAxiBurstLen)
 ) (
@@ -369,7 +371,9 @@ module br_amba_iso_resp_tracker #(
 
   assign iso_any_gnt = |tracker_fifo_pop_valid;
 
+  //
   // Output Assignment
+  //
 
   // The last beat of the burst is asserted when the counter matches the
   // current burst length.
