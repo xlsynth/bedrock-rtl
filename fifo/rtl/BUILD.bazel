@@ -265,6 +265,24 @@ br_verilog_elab_and_lint_test_suite(
 )
 
 br_verilog_elab_and_lint_test_suite(
+    name = "br_fifo_flops_test_suite_flop_ram_params",
+    params = {
+        "Depth": ["4"],
+        "Width": ["8"],
+        "EnableBypass": ["0"],  # Need this to make sure RamDepth=Depth
+        "FlopRamDepthTiles": [
+            "1",
+            "2",
+        ],
+        "FlopRamWidthTiles": [
+            "1",
+            "2",
+        ],
+    },
+    deps = [":br_fifo_flops"],
+)
+
+br_verilog_elab_and_lint_test_suite(
     name = "br_fifo_flops_push_credit_test_suite_zero_read_latency",
     params = {
         "Depth": [
@@ -317,6 +335,24 @@ br_verilog_elab_and_lint_test_suite(
             "1",
         ],
         "FlopRamAddressDepthStages": [
+            "1",
+            "2",
+        ],
+    },
+    deps = [":br_fifo_flops_push_credit"],
+)
+
+br_verilog_elab_and_lint_test_suite(
+    name = "br_fifo_flops_push_credit_test_suite_flop_ram_params",
+    params = {
+        "Depth": ["4"],
+        "Width": ["8"],
+        "EnableBypass": ["0"],  # Need this to make sure RamDepth=Depth
+        "FlopRamDepthTiles": [
+            "1",
+            "2",
+        ],
+        "FlopRamWidthTiles": [
             "1",
             "2",
         ],
@@ -425,10 +461,7 @@ br_verilog_elab_and_lint_test_suite(
         "Depth": ["16"],  # clog2(Depth) must be multiple of 2 for PointerRamDepthTiles=2
         "Width": ["8"],
         "NumFifos": ["2"],
-        "NumWritePorts": [
-            "1",
-            "2",
-        ],
+        "NumWritePorts": ["1", "2"],
         "DataRamDepthTiles": [
             "1",
             "2",
@@ -510,10 +543,7 @@ br_verilog_elab_and_lint_test_suite(
         "Depth": ["16"],  # clog2(Depth) must be multiple of 2 for PointerRamDepthTiles=2
         "Width": ["8"],
         "NumFifos": ["2"],
-        "NumWritePorts": [
-            "1",
-            "2",
-        ],
+        "NumWritePorts": ["1", "2"],
         "DataRamDepthTiles": [
             "1",
             "2",
