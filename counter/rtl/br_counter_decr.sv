@@ -45,8 +45,10 @@
 `include "br_unused.svh"
 
 module br_counter_decr #(
-    parameter int MaxValue = 1,  // Must be at least 1. Inclusive. Also the initial value.
-    parameter int MaxDecrement = 1,  // Must be at least 1 and at most MaxValue. Inclusive.
+    // Must be at least 1. Inclusive. Also the initial value.
+    parameter longint unsigned MaxValue = 1,
+    // Must be at least 1 and at most MaxValue. Inclusive.
+    parameter longint unsigned MaxDecrement = 1,
     // If 1, then when reinit is asserted together with decr_valid,
     // the decrement is applied to the initial value rather than the current value, i.e.,
     // value_next == initial_value - applicable decr.
@@ -58,8 +60,8 @@ module br_counter_decr #(
     parameter bit EnableSaturate = 0,
     // If 1, then assert there are no valid bits asserted at the end of the test.
     parameter bit EnableAssertFinalNotValid = 1,
-    localparam int ValueWidth = $clog2(MaxValue + 1),
-    localparam int DecrementWidth = $clog2(MaxDecrement + 1)
+    localparam bit [$clog2(MaxValue + 1)-1:0] ValueWidth = $clog2(MaxValue + 1),
+    localparam bit [$clog2(MaxDecrement + 1)-1:0] DecrementWidth = $clog2(MaxDecrement + 1)
 ) (
     // Posedge-triggered clock.
     input  logic                      clk,
@@ -90,7 +92,7 @@ module br_counter_decr #(
   //------------------------------------------
   // Implementation
   //------------------------------------------
-  localparam int MaxValueP1 = MaxValue + 1;
+  localparam bit [ValueWidth-1:0] MaxValueP1 = MaxValue + 1;
   localparam bit IsMaxValueP1PowerOf2 = (MaxValueP1 & (MaxValueP1 - 1)) == 0;
 
   logic [ValueWidth-1:0] value_temp;
@@ -118,7 +120,7 @@ module br_counter_decr #(
     `BR_UNUSED(underflow)
   end else begin : gen_non_power_of_2_wrap
     // For MaxValueP1 not being a power of 2, handle wrap-around explicitly
-    localparam int Margin = ((2 ** ValueWidth) - 1) - MaxValue;
+    localparam bit [ValueWidth-1:0] Margin = ((2 ** ValueWidth) - 1) - MaxValue;
     logic [ValueWidth-1:0] value_temp_wrapped;
     assign value_temp_wrapped = value_temp - Margin;
     assign value_next = underflow ? value_temp_wrapped : value_temp;
