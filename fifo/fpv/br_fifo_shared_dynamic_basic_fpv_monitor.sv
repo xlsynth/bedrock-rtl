@@ -1,4 +1,4 @@
-// Copyright 2024-2025 The Bedrock-RTL Authors
+// Copyright 2025 The Bedrock-RTL Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -108,7 +108,7 @@ module br_fifo_shared_dynamic_basic_fpv_monitor #(
       .IN_CHUNKS(NumWritePorts),
       .OUT_CHUNKS(1),
       .SINGLE_CLOCK(1),
-      .MAX_PENDING(Depth)
+      .MAX_PENDING(Depth + StagingBufferDepth)
   ) scoreboard (
       .clk(clk),
       .rstN(!rst),
