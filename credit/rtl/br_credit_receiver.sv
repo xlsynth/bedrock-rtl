@@ -130,23 +130,28 @@ module br_credit_receiver #(
 `ifdef BR_ASSERT_ON
 `ifndef BR_DISABLE_INTG_CHECKS
   logic [CounterWidth-1:0] occupancy;
-  logic [  CounterWidth:0] occupancy_next;
+  logic [CounterWidth:0] occupancy_next;
   logic [CounterWidth-1:0] occupancy_incr;
 
   always_comb begin
     occupancy_incr = '0;
+    occupancy_incr = '0;
     for (int i = 0; i < NumFlows; i++) begin
+      occupancy_incr += push_valid[i];
       occupancy_incr += push_valid[i];
     end
   end
 
   // ri lint_check_off ARITH_ARGS
   assign occupancy_next = occupancy + occupancy_incr - CounterWidth'(pop_credit);
+  assign occupancy_next = occupancy + occupancy_incr - CounterWidth'(pop_credit);
   // ri lint_check_on ARITH_ARGS
 
   `BR_REG(occupancy, occupancy_next[CounterWidth-1:0])
+  `BR_REG(occupancy, occupancy_next[CounterWidth-1:0])
 `endif  // BR_DISABLE_INTG_CHECKS
 `endif  // BR_ASSERT_ON
+  `BR_ASSERT_INTG(no_push_overflow_a, (|push_valid) |-> (occupancy_next <= MaxCredit))
   `BR_ASSERT_INTG(no_push_overflow_a, (|push_valid) |-> (occupancy_next <= MaxCredit))
   `BR_ASSERT_INTG(pop_credit_in_range_a, pop_credit <= PopCreditMaxChange)
 
