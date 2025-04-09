@@ -200,7 +200,7 @@ module br_fifo_flops #(
       .wr_valid(ram_wr_valid),
       .wr_addr(ram_wr_addr),
       .wr_data(ram_wr_data),
-      .wr_word_en(1'b1),  // no partial write
+      .wr_word_en({FlopRamWidthTiles{1'b1}}),  // no partial write
       .rd_clk(clk),  // ri lint_check_waive SAME_CLOCK_NAME
       .rd_rst(rst),
       .rd_addr_valid(ram_rd_addr_valid),

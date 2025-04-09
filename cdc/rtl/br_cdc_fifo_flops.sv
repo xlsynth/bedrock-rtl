@@ -193,7 +193,7 @@ module br_cdc_fifo_flops #(
       .wr_valid(push_ram_wr_valid),
       .wr_addr(push_ram_wr_addr),
       .wr_data(push_ram_wr_data),
-      .wr_word_en(1'b1),  // no partial write
+      .wr_word_en({FlopRamWidthTiles{1'b1}}),  // no partial write
       .rd_clk(pop_clk),  // ri lint_check_waive SAME_CLOCK_NAME
       .rd_rst(pop_rst),
       .rd_addr_valid(pop_ram_rd_addr_valid),
