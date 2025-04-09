@@ -24,7 +24,19 @@ module br_fifo_ctrl_1r1w_fpv_monitor #(
     parameter bit EnableBypass = 1,
     parameter bit RegisterPopOutputs = 0,
     parameter int RamReadLatency = 0,
-    localparam int AddrWidth = $clog2(Depth),
+    // The actual depth of the RAM. This may be smaller than the FIFO depth
+    // if EnableBypass is 1 and RamReadLatency is >0 or RegisterPopOutputs is 1.
+    // The minimum RAM depth would be (Depth - RamReadLatency - 1) or 1
+    // if Depth is less than or equal to RamReadLatency + 1.
+    // If bypass is disabled or RamReadLatency and RegisterPopOutputs are both 0,
+    // the minimum RAM depth is Depth.
+    // The RAM depth may be made larger than the minimum if convenient (e.g. the
+    // backing RAM is an SRAM of slightly larger depth than the FIFO depth).
+    parameter int RamDepth = Depth,
+    parameter bit EnableCoverPushBackpressure = 1,
+    parameter bit EnableAssertPushValidStability = EnableCoverPushBackpressure,
+    parameter bit EnableAssertPushDataStability = EnableAssertPushValidStability,
+    localparam int AddrWidth = br_math::clamped_clog2(RamDepth),
     localparam int CountWidth = $clog2(Depth + 1)
 ) (
     input logic clk,
@@ -63,7 +75,7 @@ module br_fifo_ctrl_1r1w_fpv_monitor #(
 );
 
   // ----------FV Modeling Code----------
-  logic [Depth-1:0][Width-1:0] fv_ram_data;
+  logic [RamDepth-1:0][Width-1:0] fv_ram_data;
 
   `BR_REGLN(fv_ram_data[ram_wr_addr], ram_wr_data, ram_wr_valid)
 
@@ -81,7 +93,10 @@ module br_fifo_ctrl_1r1w_fpv_monitor #(
   br_fifo_basic_fpv_monitor #(
       .Depth(Depth),
       .Width(Width),
-      .EnableBypass(EnableBypass)
+      .EnableBypass(EnableBypass),
+      .EnableCoverPushBackpressure(EnableCoverPushBackpressure),
+      .EnableAssertPushValidStability(EnableAssertPushValidStability),
+      .EnableAssertPushDataStability(EnableAssertPushDataStability)
   ) br_fifo_basic_fpv_monitor (
       .clk,
       .rst,
@@ -108,5 +123,9 @@ bind br_fifo_ctrl_1r1w br_fifo_ctrl_1r1w_fpv_monitor #(
     .Width(Width),
     .EnableBypass(EnableBypass),
     .RegisterPopOutputs(RegisterPopOutputs),
-    .RamReadLatency(RamReadLatency)
+    .RamReadLatency(RamReadLatency),
+    .RamDepth(RamDepth),
+    .EnableCoverPushBackpressure(EnableCoverPushBackpressure),
+    .EnableAssertPushValidStability(EnableAssertPushValidStability),
+    .EnableAssertPushDataStability(EnableAssertPushDataStability)
 ) monitor (.*);
