@@ -84,7 +84,7 @@ module br_fifo_ctrl_1r1w_fpv_monitor #(
     `BR_ASSUME(ram_rd_data_a, ram_rd_data == fv_ram_data[ram_rd_addr])
     `BR_ASSUME(ram_rd_data_addr_latency_a, ram_rd_data_valid == ram_rd_addr_valid)
   end else begin : gen_latency_non0
-    `BR_ASSUME(ram_rd_data_a, ram_rd_data == fv_ram_data[$past(ram_rd_addr, RamReadLatency)])
+    `BR_ASSUME(ram_rd_data_a, ram_rd_data == $past(fv_ram_data[ram_rd_addr], RamReadLatency))
     `BR_ASSUME(ram_rd_data_addr_latency_a, ram_rd_data_valid == $past(
                ram_rd_addr_valid, RamReadLatency))
   end
