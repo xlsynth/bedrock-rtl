@@ -197,8 +197,21 @@ verilog_elab_test(
     deps = [":br_fifo_flops_fpv_monitor"],
 )
 
+# Normal tests
 br_verilog_fpv_test_tools_suite(
     name = "br_fifo_flops_test_suite",
+    illegal_param_combinations = {
+        (
+            "EnableCoverPushBackpressure",
+            "EnableAssertPushValidStability",
+            "EnableAssertPushDataStability",
+        ): [
+            ("0", "0", "1"),
+            ("0", "1", "0"),
+            ("0", "1", "1"),
+            ("1", "0", "1"),
+        ],
+    },
     params = {
         "Depth": [
             "2",
@@ -208,6 +221,18 @@ br_verilog_fpv_test_tools_suite(
         "EnableBypass": [
             "1",
             "0",
+        ],
+        "EnableAssertPushDataStability": [
+            "0",
+            "1",
+        ],
+        "EnableAssertPushValidStability": [
+            "0",
+            "1",
+        ],
+        "EnableCoverPushBackpressure": [
+            "0",
+            "1",
         ],
         "RegisterPopOutputs": [
             "1",
@@ -219,7 +244,53 @@ br_verilog_fpv_test_tools_suite(
             "6",
         ],
     },
-    tags = ["manual"],
+    tools = {
+        "jg": "br_fifo_flops_fpv.jg.tcl",
+        "vcf": "",
+    },
+    top = "br_fifo_flops",
+    deps = [":br_fifo_flops_fpv_monitor"],
+)
+
+# tests focus on Ram latency and tiles
+br_verilog_fpv_test_tools_suite(
+    name = "br_fifo_flops_test_ram",
+    params = {
+        "Depth": [
+            "6",
+        ],
+        "EnableBypass": [
+            "1",
+            "0",
+        ],
+        "FlopRamDepthTiles": [
+            "2",
+            "3",
+        ],
+        "FlopRamWidthTiles": [
+            "2",
+            "3",
+        ],
+        "FlopRamAddressDepthStages": [
+            "1",
+            "0",
+        ],
+        "FlopRamReadDataDepthStages": [
+            "1",
+            "0",
+        ],
+        "FlopRamReadDataWidthStages": [
+            "1",
+            "0",
+        ],
+        "RegisterPopOutputs": [
+            "1",
+            "0",
+        ],
+        "Width": [
+            "6",
+        ],
+    },
     tools = {
         "jg": "br_fifo_flops_fpv.jg.tcl",
         "vcf": "",
@@ -289,6 +360,7 @@ br_verilog_fpv_test_tools_suite(
             "5",
         ],
     },
+    tags = ["manual"],
     tools = {
         "jg": "br_fifo_ctrl_1r1w_push_credit_fpv.jg.tcl",
         "vcf": "",
@@ -344,6 +416,7 @@ br_verilog_fpv_test_tools_suite(
             "0",
         ],
     },
+    tags = ["manual"],
     tools = {
         "jg": "br_fifo_ctrl_1r1w_push_credit_fpv.jg.tcl",
         "vcf": "",
@@ -372,6 +445,7 @@ verilog_elab_test(
     deps = [":br_fifo_flops_push_credit_fpv_monitor"],
 )
 
+# normal tests
 br_verilog_fpv_test_tools_suite(
     name = "br_fifo_flops_push_credit_test_suite",
     params = {
@@ -398,7 +472,57 @@ br_verilog_fpv_test_tools_suite(
             "6",
         ],
     },
-    tags = ["manual"],
+    tools = {
+        "jg": "br_fifo_flops_push_credit_fpv.jg.tcl",
+        "vcf": "",
+    },
+    top = "br_fifo_flops_push_credit",
+    deps = [":br_fifo_flops_push_credit_fpv_monitor"],
+)
+
+# tests focus on Ram latency and tiles
+br_verilog_fpv_test_tools_suite(
+    name = "br_fifo_flops_push_credit_test_ram",
+    params = {
+        "Depth": [
+            "6",
+        ],
+        "EnableBypass": [
+            "1",
+            "0",
+        ],
+        "FlopRamDepthTiles": [
+            "2",
+            "3",
+        ],
+        "FlopRamWidthTiles": [
+            "2",
+            "3",
+        ],
+        "FlopRamAddressDepthStages": [
+            "1",
+            "0",
+        ],
+        "FlopRamReadDataDepthStages": [
+            "1",
+            "0",
+        ],
+        "FlopRamReadDataWidthStages": [
+            "1",
+            "0",
+        ],
+        "RegisterPopOutputs": [
+            "1",
+            "0",
+        ],
+        "RegisterPushOutputs": [
+            "1",
+            "0",
+        ],
+        "Width": [
+            "6",
+        ],
+    },
     tools = {
         "jg": "br_fifo_flops_push_credit_fpv.jg.tcl",
         "vcf": "",
