@@ -16,7 +16,7 @@
 //
 // This module is used to isolate a downstream AXI subordinate from an
 // upstream AXI manager such that the downstream subordinate can be reset
-// while maintaining the upstream AXI bus's protocol integrity.
+// while maintaining the protocol integrity of the upstream interconnect.
 //
 // The isolator will generate responses for any transactions that are
 // pending on the downstream side when isolation is requested and continue
