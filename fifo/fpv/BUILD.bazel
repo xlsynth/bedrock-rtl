@@ -251,6 +251,7 @@ br_verilog_fpv_test_tools_suite(
     deps = [":br_fifo_flops_push_credit_fpv_monitor"],
 )
 
+#################################################################
 # Bedrock-RTL Shared Dynamic Multi-FIFO with Flop-based Storage (Push Valid/Ready Interface)
 verilog_library(
     name = "br_fifo_shared_dynamic_flops_fpv_monitor",
@@ -269,75 +270,137 @@ verilog_elab_test(
     deps = [":br_fifo_shared_dynamic_flops_fpv_monitor"],
 )
 
+# Test focuses on testing NumFifos and NumPorts
 br_verilog_fpv_test_tools_suite(
-    name = "br_fifo_shared_dynamic_flops_test_suite",
-    #TODO: temp check in to debug
-    gui = True,
-    #custom_tcl_body = "br_fifo_shared_dynamic_flops_fpv.jg.tcl",
-    #illegal_param_combinations = {
-    #    (
-    #        "EnableCoverPushBackpressure",
-    #        "EnableAssertPushValidStability",
-    #        "EnableAssertPushDataStability",
-    #    ): [
-    #        ("0", "0", "1"),
-    #        ("0", "1", "0"),
-    #        ("0", "1", "1"),
-    #        ("1", "0", "1"),
-    #    ],
-    #},
+    name = "br_fifo_shared_dynamic_flops_test_ports",
+    illegal_param_combinations = {
+        # Depth > 2 * NumWritePorts
+        (
+            "Depth",
+            "NumWritePorts",
+        ): [
+            ("3", "2"),
+            ("3", "3"),
+            ("5", "3"),
+        ],
+    },
     params = {
-        #"Depth": [
-        #    "3",
-        #    "5",
-        #    "8",
-        #],
-        #"EnableAssertPushDataStability": [
-        #    "0",
-        #    "1",
-        #],
-        #"EnableAssertPushValidStability": [
-        #    "0",
-        #    "1",
-        #],
-        #"EnableCoverPushBackpressure": [
-        #    "0",
-        #    "1",
-        #],
+        "Depth": [
+            "3",
+            "5",
+            "8",
+        ],
         "NumFifos": [
+            "2",
+            "3",
+        ],
+        "NumReadPorts": [
+            "1",
+            "2",
+            "4",
+        ],
+        "NumWritePorts": [
             "1",
             "2",
             "3",
         ],
-        #"NumReadPorts": [
-        #    "1",
-        #    "2",
-        #    "4",
-        #],
-        #"NumWritePorts": [
-        #    "1",
-        #    "2",
-        #    "3",
-        #],
-        #"RegisterDeallocation": [
-        #    "1",
-        #    "0",
-        #],
-        #"RegisterPopOutputs": [
-        #    "1",
-        #    "0",
-        #],
-        #"StagingBufferDepth": [
-        #    "1",
-        #    "2",
-        #],
-        #"Width": [
-        #    "1",
-        #    "2",
-        #],
+        "RegisterDeallocation": [
+            "1",
+            "0",
+        ],
+        "RegisterPopOutputs": [
+            "1",
+            "0",
+        ],
     },
     tools = {
-        "jg": "",
+        "jg": "br_fifo_shared_dynamic_flops_fpv.jg.tcl",
+        "vcf": "",
+    },
+    top = "br_fifo_shared_dynamic_flops",
+    deps = [":br_fifo_shared_dynamic_flops_fpv_monitor"],
+)
+
+# Test focuses on testing delays
+br_verilog_fpv_test_tools_suite(
+    name = "br_fifo_shared_dynamic_flops_test_delay",
+    params = {
+        "DataRamAddressDepthStages": [
+            "0",
+            "1",
+        ],
+        "DataRamReadDataDepthStages": [
+            "0",
+            "2",
+        ],
+        "DataRamReadDataWidthStages": [
+            "0",
+            "1",
+        ],
+        "PointerRamAddressDepthStages": [
+            "0",
+            "2",
+        ],
+        "PointerRamReadDataDepthStages": [
+            "0",
+            "1",
+        ],
+        "PointerRamReadDataWidthStages": [
+            "0",
+            "2",
+        ],
+        "RegisterDeallocation": [
+            "1",
+            "0",
+        ],
+        "RegisterPopOutputs": [
+            "1",
+            "0",
+        ],
+        "StagingBufferDepth": [
+            "1",
+            "2",
+        ],
+    },
+    tools = {
+        "jg": "br_fifo_shared_dynamic_flops_fpv.jg.tcl",
+        "vcf": "",
+    },
+    top = "br_fifo_shared_dynamic_flops",
+    deps = [":br_fifo_shared_dynamic_flops_fpv_monitor"],
+)
+
+# Test focuses on testing backpressure
+br_verilog_fpv_test_tools_suite(
+    name = "br_fifo_shared_dynamic_flops_test_backpressure",
+    illegal_param_combinations = {
+        (
+            "EnableCoverPushBackpressure",
+            "EnableAssertPushValidStability",
+            "EnableAssertPushDataStability",
+        ): [
+            ("0", "0", "1"),
+            ("0", "1", "0"),
+            ("0", "1", "1"),
+            ("1", "0", "1"),
+        ],
+    },
+    params = {
+        "EnableAssertPushDataStability": [
+            "0",
+            "1",
+        ],
+        "EnableAssertPushValidStability": [
+            "0",
+            "1",
+        ],
+        "EnableCoverPushBackpressure": [
+            "0",
+            "1",
+        ],
+    },
+    tools = {
+        "jg": "br_fifo_shared_dynamic_flops_fpv.jg.tcl",
         "vcf": "",
     },
     top = "br_fifo_shared_dynamic_flops",
