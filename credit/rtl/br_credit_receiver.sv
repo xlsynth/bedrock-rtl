@@ -129,27 +129,25 @@ module br_credit_receiver #(
 
 `ifdef BR_ASSERT_ON
 `ifndef BR_DISABLE_INTG_CHECKS
-  logic [CounterWidth-1:0] sender_credit_count;
-  logic [CounterWidth-1:0] sender_credit_count_decr;
-  logic [CounterWidth-1:0] sender_credit_count_next;
+  logic [CounterWidth-1:0] occupancy;
+  logic [  CounterWidth:0] occupancy_next;
+  logic [CounterWidth-1:0] occupancy_incr;
 
   always_comb begin
-    sender_credit_count_decr = '0;
+    occupancy_incr = '0;
     for (int i = 0; i < NumFlows; i++) begin
-      sender_credit_count_decr += push_valid[i];
+      occupancy_incr += push_valid[i];
     end
   end
 
   // ri lint_check_off ARITH_ARGS
-  assign sender_credit_count_next =
-      (sender_credit_count + CounterWidth'(push_credit)) - sender_credit_count_decr;
+  assign occupancy_next = occupancy + occupancy_incr - CounterWidth'(pop_credit);
   // ri lint_check_on ARITH_ARGS
 
-  `BR_REG(sender_credit_count, sender_credit_count_next)
+  `BR_REG(occupancy, occupancy_next[CounterWidth-1:0])
 `endif  // BR_DISABLE_INTG_CHECKS
 `endif  // BR_ASSERT_ON
-  `BR_ASSERT_INTG(no_push_valid_if_no_credit_released_a,
-                  ((sender_credit_count == '0) && (push_credit == '0)) |-> (push_valid == '0))
+  `BR_ASSERT_INTG(no_push_overflow_a, (|push_valid) |-> (occupancy_next <= MaxCredit))
   `BR_ASSERT_INTG(pop_credit_in_range_a, pop_credit <= PopCreditMaxChange)
 
   if (EnableAssertFinalNotValid) begin : gen_assert_final
