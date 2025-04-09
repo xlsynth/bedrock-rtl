@@ -79,7 +79,7 @@ br_verilog_fpv_test_tools_suite(
         ): [
             ("2", "1"),
             ("2", "2"),
-        ],        
+        ],
     },
     params = {
         "Depth": [
@@ -117,6 +117,7 @@ br_verilog_fpv_test_tools_suite(
             "5",
         ],
     },
+    tags = ["manual"],
     tools = {
         "jg": "br_fifo_ctrl_1r1w_fpv.jg.tcl",
         "vcf": "",
@@ -143,7 +144,7 @@ br_verilog_fpv_test_tools_suite(
             "RamReadLatency",
         ): [
             ("4", "3"),
-        ],  
+        ],
     },
     params = {
         "Depth": [
@@ -168,6 +169,7 @@ br_verilog_fpv_test_tools_suite(
             "0",
         ],
     },
+    tags = ["manual"],
     tools = {
         "jg": "br_fifo_ctrl_1r1w_fpv.jg.tcl",
         "vcf": "",
@@ -217,6 +219,7 @@ br_verilog_fpv_test_tools_suite(
             "6",
         ],
     },
+    tags = ["manual"],
     tools = {
         "jg": "br_fifo_flops_fpv.jg.tcl",
         "vcf": "",
@@ -245,8 +248,19 @@ verilog_elab_test(
     deps = [":br_fifo_ctrl_1r1w_push_credit_fpv_monitor"],
 )
 
+# Normal tests
 br_verilog_fpv_test_tools_suite(
     name = "br_fifo_ctrl_1r1w_push_credit_test_suite",
+    illegal_param_combinations = {
+        # Depth > RamReadLatency + 1
+        (
+            "Depth",
+            "RamReadLatency",
+        ): [
+            ("2", "1"),
+            ("2", "2"),
+        ],
+    },
     params = {
         "Depth": [
             "2",
@@ -273,7 +287,61 @@ br_verilog_fpv_test_tools_suite(
         "Width": [
             "1",
             "5",
+        ],
+    },
+    tools = {
+        "jg": "br_fifo_ctrl_1r1w_push_credit_fpv.jg.tcl",
+        "vcf": "",
+    },
+    top = "br_fifo_ctrl_1r1w_push_credit",
+    deps = [":br_fifo_ctrl_1r1w_push_credit_fpv_monitor"],
+)
+
+# Tests focus on RamDepth
+br_verilog_fpv_test_tools_suite(
+    name = "br_fifo_ctrl_1r1w_push_credit_test_ramdepth",
+    illegal_param_combinations = {
+        # if EnableBypass is 1 and RamReadLatency is >0 or RegisterPopOutputs is 1.
+        # The minimum RAM depth would be (Depth - RamReadLatency - 1) or 1
+        (
+            "Depth",
+            "RamDepth",
+        ): [
+            ("6", "2"),
+        ],
+        # Depth > RamReadLatency + 1
+        (
+            "Depth",
+            "RamReadLatency",
+        ): [
+            ("4", "3"),
+        ],
+    },
+    params = {
+        "Depth": [
+            "4",
+            "5",
             "6",
+        ],
+        "EnableBypass": [
+            "1",
+        ],
+        "RamReadLatency": [
+            "2",
+            "3",
+        ],
+        "RamDepth": [
+            "2",
+            "4",
+            "5",
+        ],
+        "RegisterPopOutputs": [
+            "1",
+            "0",
+        ],
+        "RegisterPushOutputs": [
+            "1",
+            "0",
         ],
     },
     tools = {
@@ -330,6 +398,7 @@ br_verilog_fpv_test_tools_suite(
             "6",
         ],
     },
+    tags = ["manual"],
     tools = {
         "jg": "br_fifo_flops_push_credit_fpv.jg.tcl",
         "vcf": "",
@@ -400,6 +469,7 @@ br_verilog_fpv_test_tools_suite(
             "0",
         ],
     },
+    tags = ["manual"],
     tools = {
         "jg": "br_fifo_shared_dynamic_flops_fpv.jg.tcl",
         "vcf": "",
@@ -449,6 +519,7 @@ br_verilog_fpv_test_tools_suite(
             "2",
         ],
     },
+    tags = ["manual"],
     tools = {
         "jg": "br_fifo_shared_dynamic_flops_fpv.jg.tcl",
         "vcf": "",
@@ -486,6 +557,7 @@ br_verilog_fpv_test_tools_suite(
             "1",
         ],
     },
+    tags = ["manual"],
     tools = {
         "jg": "br_fifo_shared_dynamic_flops_fpv.jg.tcl",
         "vcf": "",

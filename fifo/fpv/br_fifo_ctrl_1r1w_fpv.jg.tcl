@@ -30,7 +30,7 @@ assert -name fv_rst_check_ram_rd_addr_valid {rst |-> ram_rd_addr_valid == 'd0}
 # but the FIFO itself doesn't care and will work fine even if it's unstable
 assert -disable *br_fifo_push_ctrl.*valid_data_stable_when_backpressured_a
 
-# TODO: 
+# TODO:
 cover -disable *
 
 # prove command

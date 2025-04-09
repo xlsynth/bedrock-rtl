@@ -26,7 +26,16 @@ module br_fifo_ctrl_1r1w_push_credit_fpv_monitor #(
     parameter bit RegisterPushOutputs = 0,
     parameter bit RegisterPopOutputs = 0,
     parameter int RamReadLatency = 0,
-    localparam int AddrWidth = $clog2(Depth),
+    // The actual depth of the RAM. This may be smaller than the FIFO depth
+    // if EnableBypass is 1 and RamReadLatency is >0 or RegisterPopOutputs is 1.
+    // The minimum RAM depth would be (Depth - RamReadLatency - 1) or 1
+    // if Depth is less than or equal to RamReadLatency + 1.
+    // If bypass is disabled or RamReadLatency and RegisterPopOutputs are both 0,
+    // the minimum RAM depth is Depth.
+    // The RAM depth may be made larger than the minimum if convenient (e.g. the
+    // backing RAM is an SRAM of slightly larger depth than the FIFO depth).
+    parameter int RamDepth = Depth,
+    localparam int AddrWidth = br_math::clamped_clog2(RamDepth),
     localparam int CountWidth = $clog2(Depth + 1),
     localparam int CreditWidth = $clog2(MaxCredit + 1)
 ) (
@@ -97,7 +106,8 @@ module br_fifo_ctrl_1r1w_push_credit_fpv_monitor #(
       .Width(Width),
       .EnableBypass(EnableBypass),
       .RegisterPopOutputs(RegisterPopOutputs),
-      .RamReadLatency(RamReadLatency)
+      .RamReadLatency(RamReadLatency),
+      .RamDepth(RamDepth)
   ) br_fifo_ctrl_1r1w_fpv_monitor (
       .clk,
       .rst,
@@ -133,5 +143,6 @@ bind br_fifo_ctrl_1r1w_push_credit br_fifo_ctrl_1r1w_push_credit_fpv_monitor #(
     .MaxCredit(MaxCredit),
     .RegisterPushOutputs(RegisterPushOutputs),
     .RegisterPopOutputs(RegisterPopOutputs),
-    .RamReadLatency(RamReadLatency)
+    .RamReadLatency(RamReadLatency),
+    .RamDepth(RamDepth)
 ) monitor (.*);
