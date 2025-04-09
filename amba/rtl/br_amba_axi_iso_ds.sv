@@ -35,8 +35,12 @@
 // isolate_done deasserts (as long as isolate_req remains low) are
 // guaranteed to pass to the downstream.
 //
+// Read response data interleaving is not supported.
+//
 // Isolation is guaranteed to complete without any assumption about the
-// state of the downstream interface.
+// state of the downstream interface and may be used to recover in cases
+// where a subordinate becomes stuck or otherwise unable to make forward
+// progress.
 
 module br_amba_axi_iso_ds #(
     // Width of the AXI address field.
