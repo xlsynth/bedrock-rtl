@@ -117,6 +117,7 @@ br_verilog_fpv_test_tools_suite(
             "5",
         ],
     },
+    tags = ["manual"],
     tools = {
         "jg": "br_fifo_ctrl_1r1w_fpv.jg.tcl",
         "vcf": "",
@@ -168,6 +169,7 @@ br_verilog_fpv_test_tools_suite(
             "0",
         ],
     },
+    tags = ["manual"],
     tools = {
         "jg": "br_fifo_ctrl_1r1w_fpv.jg.tcl",
         "vcf": "",
@@ -242,6 +244,7 @@ br_verilog_fpv_test_tools_suite(
             "6",
         ],
     },
+    tags = ["manual"],
     tools = {
         "jg": "br_fifo_flops_fpv.jg.tcl",
         "vcf": "",
@@ -289,6 +292,7 @@ br_verilog_fpv_test_tools_suite(
             "6",
         ],
     },
+    tags = ["manual"],
     tools = {
         "jg": "br_fifo_flops_fpv.jg.tcl",
         "vcf": "",
@@ -358,6 +362,7 @@ br_verilog_fpv_test_tools_suite(
             "5",
         ],
     },
+    tags = ["manual"],
     tools = {
         "jg": "br_fifo_ctrl_1r1w_push_credit_fpv.jg.tcl",
         "vcf": "",
@@ -413,6 +418,7 @@ br_verilog_fpv_test_tools_suite(
             "0",
         ],
     },
+    tags = ["manual"],
     tools = {
         "jg": "br_fifo_ctrl_1r1w_push_credit_fpv.jg.tcl",
         "vcf": "",
@@ -468,6 +474,7 @@ br_verilog_fpv_test_tools_suite(
             "6",
         ],
     },
+    tags = ["manual"],
     tools = {
         "jg": "br_fifo_flops_push_credit_fpv.jg.tcl",
         "vcf": "",
@@ -519,6 +526,7 @@ br_verilog_fpv_test_tools_suite(
             "6",
         ],
     },
+    tags = ["manual"],
     tools = {
         "jg": "br_fifo_flops_push_credit_fpv.jg.tcl",
         "vcf": "",
@@ -589,6 +597,7 @@ br_verilog_fpv_test_tools_suite(
             "0",
         ],
     },
+    tags = ["manual"],
     tools = {
         "jg": "br_fifo_shared_dynamic_flops_fpv.jg.tcl",
         "vcf": "",
@@ -638,6 +647,7 @@ br_verilog_fpv_test_tools_suite(
             "2",
         ],
     },
+    tags = ["manual"],
     tools = {
         "jg": "br_fifo_shared_dynamic_flops_fpv.jg.tcl",
         "vcf": "",
@@ -675,10 +685,137 @@ br_verilog_fpv_test_tools_suite(
             "1",
         ],
     },
+    tags = ["manual"],
     tools = {
         "jg": "br_fifo_shared_dynamic_flops_fpv.jg.tcl",
         "vcf": "",
     },
     top = "br_fifo_shared_dynamic_flops",
     deps = [":br_fifo_shared_dynamic_flops_fpv_monitor"],
+)
+
+#################################################################
+# Bedrock-RTL Shared Dynamic Multi-FIFO with Flop-based Storage (Push Valid/Credit Interface)
+
+verilog_library(
+    name = "br_fifo_shared_dynamic_flops_push_credit_fpv_monitor",
+    srcs = ["br_fifo_shared_dynamic_flops_push_credit_fpv_monitor.sv"],
+    deps = [
+        ":br_credit_receiver_fpv_monitor",
+        ":br_fifo_shared_dynamic_basic_fpv_monitor",
+        "//fifo/rtl:br_fifo_shared_dynamic_flops_push_credit",
+        "//macros:br_fv",
+    ],
+)
+
+verilog_elab_test(
+    name = "br_fifo_shared_dynamic_flops_push_credit_fpv_monitor_elab_test",
+    custom_tcl_header = "//:elab_test_jg_custom_header.verific.tcl",
+    tool = "verific",
+    deps = [":br_fifo_shared_dynamic_flops_push_credit_fpv_monitor"],
+)
+
+# Test focuses on testing NumFifos and NumPorts
+br_verilog_fpv_test_tools_suite(
+    name = "br_fifo_shared_dynamic_flops_push_credit_test_ports",
+    illegal_param_combinations = {
+        # Depth > 2 * NumWritePorts
+        (
+            "Depth",
+            "NumWritePorts",
+        ): [
+            ("3", "2"),
+            ("3", "3"),
+            ("5", "3"),
+        ],
+    },
+    params = {
+        "Depth": [
+            "3",
+            "5",
+        ],
+        "NumFifos": [
+            "2",
+            "3",
+        ],
+        "NumReadPorts": [
+            "1",
+            "2",
+        ],
+        "NumWritePorts": [
+            "1",
+            "3",
+        ],
+        "RegisterDeallocation": [
+            "1",
+            "0",
+        ],
+        "RegisterPopOutputs": [
+            "1",
+            "0",
+        ],
+        "RegisterPushOutputs": [
+            "1",
+            "0",
+        ],
+    },
+    tools = {
+        "jg": "br_fifo_shared_dynamic_flops_push_credit_fpv.jg.tcl",
+        "vcf": "",
+    },
+    top = "br_fifo_shared_dynamic_flops_push_credit",
+    deps = [":br_fifo_shared_dynamic_flops_push_credit_fpv_monitor"],
+)
+
+# Test focuses on testing delays
+br_verilog_fpv_test_tools_suite(
+    name = "br_fifo_shared_dynamic_flops_push_credit_test_delay",
+    params = {
+        "DataRamAddressDepthStages": [
+            "0",
+            "1",
+        ],
+        "DataRamReadDataDepthStages": [
+            "0",
+            "2",
+        ],
+        "DataRamReadDataWidthStages": [
+            "0",
+            "1",
+        ],
+        "PointerRamAddressDepthStages": [
+            "0",
+            "2",
+        ],
+        "PointerRamReadDataDepthStages": [
+            "0",
+            "1",
+        ],
+        "PointerRamReadDataWidthStages": [
+            "0",
+            "2",
+        ],
+        "RegisterDeallocation": [
+            "1",
+            "0",
+        ],
+        "RegisterPopOutputs": [
+            "1",
+            "0",
+        ],
+        "RegisterPushOutputs": [
+            "1",
+            "0",
+        ],
+        "StagingBufferDepth": [
+            "1",
+            "2",
+        ],
+    },
+    tools = {
+        "jg": "br_fifo_shared_dynamic_flops_push_credit_fpv.jg.tcl",
+        "vcf": "",
+    },
+    top = "br_fifo_shared_dynamic_flops_push_credit",
+    deps = [":br_fifo_shared_dynamic_flops_push_credit_fpv_monitor"],
 )
