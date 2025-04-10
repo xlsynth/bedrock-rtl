@@ -187,6 +187,10 @@ br_verilog_elab_and_lint_test_suite(
             "0",
             "1",
         ],
+        "FlopRamWidthTiles": [
+            "1",
+            "2",
+        ],
     },
     top = "br_cdc_fifo_flops",
     deps = [
@@ -224,6 +228,10 @@ br_verilog_elab_and_lint_test_suite(
         "RegisterPopOutputs": [
             "0",
             "1",
+        ],
+        "FlopRamWidthTiles": [
+            "1",
+            "2",
         ],
     },
     top = "br_cdc_fifo_flops_push_credit",

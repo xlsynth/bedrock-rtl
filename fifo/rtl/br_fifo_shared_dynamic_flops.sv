@@ -162,7 +162,7 @@ module br_fifo_shared_dynamic_flops #(
       .wr_valid(data_ram_wr_valid),
       .wr_addr(data_ram_wr_addr),
       .wr_data(data_ram_wr_data),
-      .wr_word_en({NumWritePorts{1'b1}}),
+      .wr_word_en({(NumWritePorts * DataRamWidthTiles) {1'b1}}),
       .rd_clk(clk),  // ri lint_check_waive SAME_CLOCK_NAME
       .rd_rst(rst),
       .rd_addr_valid(data_ram_rd_addr_valid),
@@ -197,7 +197,7 @@ module br_fifo_shared_dynamic_flops #(
       .wr_valid(ptr_ram_wr_valid),
       .wr_addr(ptr_ram_wr_addr),
       .wr_data(ptr_ram_wr_data),
-      .wr_word_en({NumWritePorts{1'b1}}),
+      .wr_word_en({(NumWritePorts * PointerRamWidthTiles) {1'b1}}),
       .rd_clk(clk),  // ri lint_check_waive SAME_CLOCK_NAME
       .rd_rst(rst),
       .rd_addr_valid(ptr_ram_rd_addr_valid),
