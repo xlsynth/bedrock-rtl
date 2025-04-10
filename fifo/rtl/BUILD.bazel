@@ -251,7 +251,6 @@ br_verilog_elab_and_lint_test_suite(
     params = {
         "Depth": ["4"],
         "Width": ["8"],
-        "EnableBypass": ["0"],  # Need this to make sure RamDepth=Depth
         "FlopRamDepthTiles": [
             "1",
             "2",
@@ -329,7 +328,6 @@ br_verilog_elab_and_lint_test_suite(
     params = {
         "Depth": ["4"],
         "Width": ["8"],
-        "EnableBypass": ["0"],  # Need this to make sure RamDepth=Depth
         "FlopRamDepthTiles": [
             "1",
             "2",
