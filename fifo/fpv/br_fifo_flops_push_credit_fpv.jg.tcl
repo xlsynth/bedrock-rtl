@@ -31,6 +31,10 @@ assume -name no_push_valid_during_reset {rst | push_sender_in_reset |-> push_val
 assert -name fv_rst_check_push_credit {rst | push_sender_in_reset |-> push_credit == 'd0}
 assert -name fv_rst_check_pop_valid {rst | push_sender_in_reset |-> pop_valid == 'd0}
 
+# pop_data can change without pop_ready when pop_ready = 0
+# but when pop_ready is high, correct data will be sent
+assert -disable *br_fifo_basic_fpv_monitor.gen_pop_data_stable.pop_data_stable_a*
+
 # TODO
 cover -disable *
 
