@@ -85,7 +85,8 @@ module br_fifo_ctrl_1r1w_push_credit_fpv_monitor #(
 
   // ----------Instantiate credit FV checker----------
   br_credit_receiver_fpv_monitor #(
-      .MaxCredit(MaxCredit)
+      .MaxCredit(MaxCredit),
+      .NumWritePorts(1)
   ) br_credit_receiver_fpv_monitor (
       .clk,
       .rst,
