@@ -117,7 +117,6 @@ br_verilog_fpv_test_tools_suite(
             "5",
         ],
     },
-    tags = ["manual"],
     tools = {
         "jg": "br_fifo_ctrl_1r1w_fpv.jg.tcl",
         "vcf": "",
@@ -169,7 +168,6 @@ br_verilog_fpv_test_tools_suite(
             "0",
         ],
     },
-    tags = ["manual"],
     tools = {
         "jg": "br_fifo_ctrl_1r1w_fpv.jg.tcl",
         "vcf": "",
@@ -244,7 +242,6 @@ br_verilog_fpv_test_tools_suite(
             "6",
         ],
     },
-    tags = ["manual"],
     tools = {
         "jg": "br_fifo_flops_fpv.jg.tcl",
         "vcf": "",
@@ -292,7 +289,6 @@ br_verilog_fpv_test_tools_suite(
             "6",
         ],
     },
-    tags = ["manual"],
     tools = {
         "jg": "br_fifo_flops_fpv.jg.tcl",
         "vcf": "",
@@ -362,7 +358,6 @@ br_verilog_fpv_test_tools_suite(
             "5",
         ],
     },
-    tags = ["manual"],
     tools = {
         "jg": "br_fifo_ctrl_1r1w_push_credit_fpv.jg.tcl",
         "vcf": "",
@@ -418,7 +413,6 @@ br_verilog_fpv_test_tools_suite(
             "0",
         ],
     },
-    tags = ["manual"],
     tools = {
         "jg": "br_fifo_ctrl_1r1w_push_credit_fpv.jg.tcl",
         "vcf": "",
@@ -474,7 +468,6 @@ br_verilog_fpv_test_tools_suite(
             "6",
         ],
     },
-    tags = ["manual"],
     tools = {
         "jg": "br_fifo_flops_push_credit_fpv.jg.tcl",
         "vcf": "",
@@ -526,7 +519,6 @@ br_verilog_fpv_test_tools_suite(
             "6",
         ],
     },
-    tags = ["manual"],
     tools = {
         "jg": "br_fifo_flops_push_credit_fpv.jg.tcl",
         "vcf": "",
@@ -597,7 +589,6 @@ br_verilog_fpv_test_tools_suite(
             "0",
         ],
     },
-    tags = ["manual"],
     tools = {
         "jg": "br_fifo_shared_dynamic_flops_fpv.jg.tcl",
         "vcf": "",
@@ -647,7 +638,6 @@ br_verilog_fpv_test_tools_suite(
             "2",
         ],
     },
-    tags = ["manual"],
     tools = {
         "jg": "br_fifo_shared_dynamic_flops_fpv.jg.tcl",
         "vcf": "",
@@ -685,7 +675,6 @@ br_verilog_fpv_test_tools_suite(
             "1",
         ],
     },
-    tags = ["manual"],
     tools = {
         "jg": "br_fifo_shared_dynamic_flops_fpv.jg.tcl",
         "vcf": "",
