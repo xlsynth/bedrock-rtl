@@ -137,3 +137,50 @@ br_verilog_sim_test_tools_suite(
         "//mux/rtl:br_mux_bin_structured_gates_mock",
     ],
 )
+
+verilog_library(
+    name = "br_cdc_bit_pulse_tb",
+    srcs = ["br_cdc_bit_pulse_tb.sv"],
+    deps = [
+        "//cdc/rtl:br_cdc_bit_pulse",
+        "//gate/rtl:br_gate_mock",
+        "//pkg:br_math_pkg",
+    ],
+)
+
+verilog_elab_test(
+    name = "br_cdc_bit_pulse_tb_elab_test",
+    tool = "verific",
+    top = "br_cdc_bit_pulse_tb",
+    deps = [
+        ":br_cdc_bit_pulse_tb",
+    ],
+)
+
+br_verilog_sim_test_tools_suite(
+    name = "br_cdc_bit_pulse_sim_test_tools_suite",
+    params = {
+        "NumStages": [
+            "2",
+            "3",
+        ],
+        "RegisterOutput": [
+            "0",
+            "1",
+        ],
+        "SrcClkPeriod": [
+            "5",
+            "20",
+        ],
+        "DstClkPeriod": [
+            "10",
+            "30",
+        ],
+    },
+    tools = [
+        "dsim",
+        "iverilog",
+        "vcs",
+    ],
+    deps = [":br_cdc_bit_pulse_tb"],
+)
