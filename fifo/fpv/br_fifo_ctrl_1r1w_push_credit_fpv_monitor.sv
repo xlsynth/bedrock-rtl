@@ -101,18 +101,35 @@ module br_fifo_ctrl_1r1w_push_credit_fpv_monitor #(
       .credit_available_push
   );
 
-  // ----------Instantiate non-credit version FV checker----------
-  br_fifo_ctrl_1r1w_fpv_monitor #(
+  // ----------Data Ram FV model----------
+  br_fifo_fv_ram #(
+      .NumWritePorts(1),
+      .NumReadPorts(1),
+      .Depth(RamDepth),
+      .Width(Width),
+      .RamReadLatency(RamReadLatency)
+  ) fv_data_ram (
+      .clk,
+      .rst,
+      .ram_wr_valid(ram_wr_valid),
+      .ram_wr_addr(ram_wr_addr),
+      .ram_wr_data(ram_wr_data),
+      .ram_rd_addr_valid(ram_rd_addr_valid),
+      .ram_rd_addr(ram_rd_addr),
+      .ram_rd_data_valid(ram_rd_data_valid),
+      .ram_rd_data(ram_rd_data)
+  );
+
+  // ----------FIFO basic checks----------
+  br_fifo_basic_fpv_monitor #(
       .Depth(Depth),
       .Width(Width),
       .EnableBypass(EnableBypass),
-      .RegisterPopOutputs(RegisterPopOutputs),
-      .RamReadLatency(RamReadLatency),
-      .RamDepth(RamDepth)
-  ) br_fifo_ctrl_1r1w_fpv_monitor (
+      .EnableCoverPushBackpressure(1)
+  ) br_fifo_basic_fpv_monitor (
       .clk,
       .rst,
-      .push_ready(1'd1),
+      .push_ready(1'b1),
       .push_valid,
       .push_data,
       .pop_ready,
@@ -125,14 +142,7 @@ module br_fifo_ctrl_1r1w_push_credit_fpv_monitor #(
       .empty,
       .empty_next,
       .items,
-      .items_next,
-      .ram_wr_valid,
-      .ram_wr_addr,
-      .ram_wr_data,
-      .ram_rd_addr_valid,
-      .ram_rd_addr,
-      .ram_rd_data_valid,
-      .ram_rd_data
+      .items_next
   );
 
 endmodule : br_fifo_ctrl_1r1w_push_credit_fpv_monitor

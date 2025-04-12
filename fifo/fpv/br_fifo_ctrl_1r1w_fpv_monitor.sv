@@ -74,20 +74,24 @@ module br_fifo_ctrl_1r1w_fpv_monitor #(
     input logic [    Width-1:0] ram_rd_data
 );
 
-  // ----------FV Modeling Code----------
-  logic [RamDepth-1:0][Width-1:0] fv_ram_data;
-
-  `BR_REGLN(fv_ram_data[ram_wr_addr], ram_wr_data, ram_wr_valid)
-
-  // ----------FV assumptions----------
-  if (RamReadLatency == 0) begin : gen_latency0
-    `BR_ASSUME(ram_rd_data_a, ram_rd_data == fv_ram_data[ram_rd_addr])
-    `BR_ASSUME(ram_rd_data_addr_latency_a, ram_rd_data_valid == ram_rd_addr_valid)
-  end else begin : gen_latency_non0
-    `BR_ASSUME(ram_rd_data_a, ram_rd_data == $past(fv_ram_data[ram_rd_addr], RamReadLatency))
-    `BR_ASSUME(ram_rd_data_addr_latency_a, ram_rd_data_valid == $past(
-               ram_rd_addr_valid, RamReadLatency))
-  end
+  // ----------Data Ram FV model----------
+  br_fifo_fv_ram #(
+      .NumWritePorts(1),
+      .NumReadPorts(1),
+      .Depth(RamDepth),
+      .Width(Width),
+      .RamReadLatency(RamReadLatency)
+  ) fv_data_ram (
+      .clk,
+      .rst,
+      .ram_wr_valid(ram_wr_valid),
+      .ram_wr_addr(ram_wr_addr),
+      .ram_wr_data(ram_wr_data),
+      .ram_rd_addr_valid(ram_rd_addr_valid),
+      .ram_rd_addr(ram_rd_addr),
+      .ram_rd_data_valid(ram_rd_data_valid),
+      .ram_rd_data(ram_rd_data)
+  );
 
   // ----------FIFO basic checks----------
   br_fifo_basic_fpv_monitor #(
