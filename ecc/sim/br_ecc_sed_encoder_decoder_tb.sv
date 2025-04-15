@@ -138,6 +138,10 @@ module br_ecc_sed_encoder_decoder_tb;
         $error("Test %0d FAILED: error due when it was not supposed to", i);
         error_counter = error_counter + 1;
       end
+      if (dec_error_syndrome !== 0) begin
+        $error("Test %0d FAILED: error syndrome = 0x%0h", i, dec_error_syndrome);
+        error_counter = error_counter + 1;
+      end
 
       // Wait for a cycle before next test
       @(negedge clk);
@@ -166,6 +170,10 @@ module br_ecc_sed_encoder_decoder_tb;
         // single-bit errors (if the bit flip is in the parity bit)
         if (!dec_error_due) begin
           $error("Test %0d FAILED: error NOT due when it was supposed to", i);
+          error_counter = error_counter + 1;
+        end
+        if (dec_error_syndrome !== 1) begin
+          $error("Test %0d FAILED: error syndrome = 0x%0h", i, dec_error_syndrome);
           error_counter = error_counter + 1;
         end
 

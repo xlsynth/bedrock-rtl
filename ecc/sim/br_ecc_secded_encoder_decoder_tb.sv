@@ -160,6 +160,10 @@ module br_ecc_secded_encoder_decoder_tb;
         $error("Test %0d FAILED: error DUE when it was not supposed to", i);
         error_counter = error_counter + 1;
       end
+      if (dec_error_syndrome !== 0) begin
+        $error("Test %0d FAILED: error syndrome = 0x%0h", i, dec_error_syndrome);
+        error_counter = error_counter + 1;
+      end
 
       // Wait for a cycle before next test
       @(negedge clk);
@@ -195,6 +199,10 @@ module br_ecc_secded_encoder_decoder_tb;
         end
         if (dec_error_due) begin
           $error("Test %0d FAILED: error DUE when it was not supposed to", i);
+          error_counter = error_counter + 1;
+        end
+        if (($countones(dec_error_syndrome) % 2) != 1) begin
+          $error("Test %0d FAILED: error syndrome = 0x%0h", i, dec_error_syndrome);
           error_counter = error_counter + 1;
         end
 
@@ -235,6 +243,10 @@ module br_ecc_secded_encoder_decoder_tb;
           end
           if (!dec_error_due) begin
             $error("Test %0d FAILED: error not DUE when it was supposed to", i);
+            error_counter = error_counter + 1;
+          end
+          if (($countones(dec_error_syndrome) % 2) != 0) begin
+            $error("Test %0d FAILED: error syndrome = 0x%0h", i, dec_error_syndrome);
             error_counter = error_counter + 1;
           end
 
