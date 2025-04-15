@@ -34,6 +34,7 @@ module br_fifo_shared_dynamic_push_ctrl_credit #(
     input logic [NumWritePorts-1:0] push_valid,
     input logic [NumWritePorts-1:0][Width-1:0] push_data,
     input logic [NumWritePorts-1:0][FifoIdWidth-1:0] push_fifo_id,
+    output logic push_full,
 
     input  logic [CountWidth-1:0] credit_initial_push,
     input  logic [CountWidth-1:0] credit_withhold_push,
@@ -118,6 +119,7 @@ module br_fifo_shared_dynamic_push_ctrl_credit #(
       .push_ready(internal_push_ready),
       .push_data(internal_push_data),
       .push_fifo_id(internal_push_fifo_id),
+      .push_full,
       .data_ram_wr_valid,
       .data_ram_wr_addr,
       .data_ram_wr_data,

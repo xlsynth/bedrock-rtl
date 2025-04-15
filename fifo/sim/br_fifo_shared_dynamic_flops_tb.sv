@@ -47,9 +47,11 @@ module br_fifo_shared_dynamic_flops_tb;
       .push_valid,
       .push_data,
       .push_fifo_id,
+      .push_full(),
       .pop_ready,
       .pop_valid,
-      .pop_data
+      .pop_data,
+      .pop_empty()
   );
 
   br_test_driver td (

@@ -107,11 +107,13 @@ module br_fifo_shared_dynamic_ctrl #(
     output logic [NumWritePorts-1:0] push_ready,
     input logic [NumWritePorts-1:0][Width-1:0] push_data,
     input logic [NumWritePorts-1:0][FifoIdWidth-1:0] push_fifo_id,
+    output logic push_full,
 
     // Pop side
     output logic [NumFifos-1:0] pop_valid,
     input logic [NumFifos-1:0] pop_ready,
     output logic [NumFifos-1:0][Width-1:0] pop_data,
+    output logic [NumFifos-1:0] pop_empty,
 
     // Data RAM Ports
     output logic [NumWritePorts-1:0] data_ram_wr_valid,
@@ -172,6 +174,7 @@ module br_fifo_shared_dynamic_ctrl #(
       .push_ready,
       .push_data,
       .push_fifo_id,
+      .push_full,
       .data_ram_wr_valid,
       .data_ram_wr_addr,
       .data_ram_wr_data,
@@ -240,6 +243,7 @@ module br_fifo_shared_dynamic_ctrl #(
       .pop_valid,
       .pop_ready,
       .pop_data,
+      .pop_empty,
       .data_ram_rd_addr_valid,
       .data_ram_rd_addr,
       .data_ram_rd_data_valid,
