@@ -89,6 +89,7 @@ module br_enc_bin2onehot #(
   // Implementation checks
   //------------------------------------------
   if (EnableInputRangeCheck) begin : gen_out_onehot
-    `BR_ASSERT_IMPL(out_onehot_a, in_valid |-> $onehot(out))
+    `BR_ASSERT_IMPL(out_onehot0_a, $onehot0(out))
+    `BR_ASSERT_IMPL(out_onehot_when_valid_a, in_valid |-> $onehot(out))
   end
 endmodule : br_enc_bin2onehot
