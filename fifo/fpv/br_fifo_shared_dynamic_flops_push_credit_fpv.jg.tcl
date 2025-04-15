@@ -1,4 +1,4 @@
-# Copyright 2024-2025 The Bedrock-RTL Authors
+# Copyright 2025 The Bedrock-RTL Authors
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -23,18 +23,22 @@ get_design_info
 
 # primary input control signal should be legal during reset
 assume -name initial_value_during_reset {rst | push_sender_in_reset |-> \
-(credit_initial_push <= MaxCredit) && $stable(credit_initial_push)}
-assume -name no_ram_rd_data_valid_during_reset {rst | push_sender_in_reset |-> ram_rd_data_valid == 'd0}
+(credit_initial_push <= Depth) && $stable(credit_initial_push)}
 assume -name no_push_valid_during_reset {rst | push_sender_in_reset |-> push_valid == 'd0}
 
 # primary output control signal should be legal during reset
 assert -name fv_rst_check_push_credit {rst | push_sender_in_reset |-> push_credit == 'd0}
 assert -name fv_rst_check_pop_valid {rst | push_sender_in_reset |-> pop_valid == 'd0}
-assert -name fv_rst_check_ram_wr_valid {rst | push_sender_in_reset |-> ram_wr_valid == 'd0}
-assert -name fv_rst_check_ram_rd_addr_valid {rst | push_sender_in_reset |-> ram_rd_addr_valid == 'd0}
 
-# TODO:
+# TODO: disable due to many unreachable covers in RTL
 cover -disable *
+
+# If assertion bound - pre-condition reachable cycle >= 2:
+# it's marked as "bounded_proven (auto) instead of "undetermined"
+# this only affects the status report, not the proof
+set_prove_inferred_target_bound on
+# limit run time to 10-mins
+set_prove_time_limit 600s
 
 # prove command
 prove -all

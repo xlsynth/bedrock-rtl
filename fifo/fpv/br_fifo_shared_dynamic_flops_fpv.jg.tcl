@@ -1,4 +1,4 @@
-# Copyright 2024-2025 The Bedrock-RTL Authors
+# Copyright 2025 The Bedrock-RTL Authors
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -13,27 +13,19 @@
 # limitations under the License.
 
 # clock/reset set up
-create_clock clk -period 100
-create_reset rst -high
-#design infomation
-report_fv_complexity
+clock clk
+reset rst
+get_design_info
 
-#reset simulation
-sim_run -stable
-sim_save_reset
+# TODO: disable due to many unreachable covers in RTL
+cover -disable *
 
-# standard use case: request will hold until grant
-fvtask -create standard -copy FPV
+# If assertion bound - pre-condition reachable cycle >= 2:
+# it's marked as "bounded_proven (auto) instead of "undetermined"
+# this only affects the status report, not the proof
+set_prove_inferred_target_bound on
+# limit run time to 10-mins
+set_prove_time_limit 600s
 
-# non-standard use case: request will NOT hold until grant
-fvtask -create special -copy FPV
-fvdisable {special::*req_hold_until_grant_a}
-fvdisable {special::*no_deadlock_a}
-
-#run properties
-fvtask standard
-check_fv -block
-report_fv
-
-fvtask special
-check_fv -block
+# prove command
+prove -all

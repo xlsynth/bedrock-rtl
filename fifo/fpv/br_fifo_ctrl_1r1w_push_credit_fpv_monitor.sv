@@ -26,7 +26,16 @@ module br_fifo_ctrl_1r1w_push_credit_fpv_monitor #(
     parameter bit RegisterPushOutputs = 0,
     parameter bit RegisterPopOutputs = 0,
     parameter int RamReadLatency = 0,
-    localparam int AddrWidth = $clog2(Depth),
+    // The actual depth of the RAM. This may be smaller than the FIFO depth
+    // if EnableBypass is 1 and RamReadLatency is >0 or RegisterPopOutputs is 1.
+    // The minimum RAM depth would be (Depth - RamReadLatency - 1) or 1
+    // if Depth is less than or equal to RamReadLatency + 1.
+    // If bypass is disabled or RamReadLatency and RegisterPopOutputs are both 0,
+    // the minimum RAM depth is Depth.
+    // The RAM depth may be made larger than the minimum if convenient (e.g. the
+    // backing RAM is an SRAM of slightly larger depth than the FIFO depth).
+    parameter int RamDepth = Depth,
+    localparam int AddrWidth = br_math::clamped_clog2(RamDepth),
     localparam int CountWidth = $clog2(Depth + 1),
     localparam int CreditWidth = $clog2(MaxCredit + 1)
 ) (
@@ -76,7 +85,8 @@ module br_fifo_ctrl_1r1w_push_credit_fpv_monitor #(
 
   // ----------Instantiate credit FV checker----------
   br_credit_receiver_fpv_monitor #(
-      .MaxCredit(MaxCredit)
+      .MaxCredit(MaxCredit),
+      .NumWritePorts(1)
   ) br_credit_receiver_fpv_monitor (
       .clk,
       .rst,
@@ -91,17 +101,35 @@ module br_fifo_ctrl_1r1w_push_credit_fpv_monitor #(
       .credit_available_push
   );
 
-  // ----------Instantiate non-credit version FV checker----------
-  br_fifo_ctrl_1r1w_fpv_monitor #(
+  // ----------Data Ram FV model----------
+  br_fifo_fv_ram #(
+      .NumWritePorts(1),
+      .NumReadPorts(1),
+      .Depth(RamDepth),
+      .Width(Width),
+      .RamReadLatency(RamReadLatency)
+  ) fv_data_ram (
+      .clk,
+      .rst,
+      .ram_wr_valid(ram_wr_valid),
+      .ram_wr_addr(ram_wr_addr),
+      .ram_wr_data(ram_wr_data),
+      .ram_rd_addr_valid(ram_rd_addr_valid),
+      .ram_rd_addr(ram_rd_addr),
+      .ram_rd_data_valid(ram_rd_data_valid),
+      .ram_rd_data(ram_rd_data)
+  );
+
+  // ----------FIFO basic checks----------
+  br_fifo_basic_fpv_monitor #(
       .Depth(Depth),
       .Width(Width),
       .EnableBypass(EnableBypass),
-      .RegisterPopOutputs(RegisterPopOutputs),
-      .RamReadLatency(RamReadLatency)
-  ) br_fifo_ctrl_1r1w_fpv_monitor (
+      .EnableCoverPushBackpressure(1)
+  ) br_fifo_basic_fpv_monitor (
       .clk,
       .rst,
-      .push_ready(1'd1),
+      .push_ready(1'b1),
       .push_valid,
       .push_data,
       .pop_ready,
@@ -114,14 +142,7 @@ module br_fifo_ctrl_1r1w_push_credit_fpv_monitor #(
       .empty,
       .empty_next,
       .items,
-      .items_next,
-      .ram_wr_valid,
-      .ram_wr_addr,
-      .ram_wr_data,
-      .ram_rd_addr_valid,
-      .ram_rd_addr,
-      .ram_rd_data_valid,
-      .ram_rd_data
+      .items_next
   );
 
 endmodule : br_fifo_ctrl_1r1w_push_credit_fpv_monitor
@@ -133,5 +154,6 @@ bind br_fifo_ctrl_1r1w_push_credit br_fifo_ctrl_1r1w_push_credit_fpv_monitor #(
     .MaxCredit(MaxCredit),
     .RegisterPushOutputs(RegisterPushOutputs),
     .RegisterPopOutputs(RegisterPopOutputs),
-    .RamReadLatency(RamReadLatency)
+    .RamReadLatency(RamReadLatency),
+    .RamDepth(RamDepth)
 ) monitor (.*);

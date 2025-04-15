@@ -142,6 +142,10 @@ br_verilog_elab_and_lint_test_suite(
             "1",
             "2",
         ],
+        "FirstStageUngated": [
+            "0",
+            "1",
+        ],
     },
     deps = [":br_delay_valid"],
 )
@@ -157,6 +161,10 @@ br_verilog_elab_and_lint_test_suite(
             "0",
             "1",
             "2",
+        ],
+        "FirstStageUngated": [
+            "0",
+            "1",
         ],
     },
     deps = [":br_delay_valid_nr"],

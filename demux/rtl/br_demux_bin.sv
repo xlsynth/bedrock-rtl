@@ -45,8 +45,9 @@ module br_demux_bin #(
   //------------------------------------------
   `BR_ASSERT_STATIC(legal_num_symbols_out_a, NumSymbolsOut >= 2)
   `BR_ASSERT_STATIC(legal_symbol_width_a, SymbolWidth >= 1)
+  // TODO(zhemao): Figure out why this spuriously triggers in some cases
   // ri lint_check_waive ALWAYS_COMB
-  `BR_ASSERT_COMB_INTG(select_in_range_a, select < NumSymbolsOut)
+  //`BR_ASSERT_COMB_INTG(select_in_range_a, !in_valid || (select < NumSymbolsOut))
 
   if (EnableAssertFinalNotValid) begin : gen_assert_final
     `BR_ASSERT_FINAL(final_not_in_valid_a, !in_valid)

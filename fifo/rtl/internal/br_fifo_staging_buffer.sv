@@ -38,6 +38,11 @@ module br_fifo_staging_buffer #(
     // valid and data come directly from registers.
     // If 0, valid and data come combinationally from the read muxing logic.
     parameter bit RegisterPopOutputs = 0,
+    // If 1, total_items represents the total number of items in the FIFO,
+    // including entries in this staging buffer.
+    // If 0, total_items represents just the number of items in the RAM
+    // and excludes those in this staging buffer or inflight from the RAM.
+    parameter bit TotalItemsIncludesStaged = 1,
     // If 1, then assert there are no valid bits asserted and that the FIFO is
     // empty at the end of the test.
     parameter bit EnableAssertFinalNotValid = 1,
@@ -116,6 +121,7 @@ module br_fifo_staging_buffer #(
   logic                        items_not_staged;
   logic                        push_valid;
   logic [           Width-1:0] push_data;
+  logic                        pop_valid_nonbypass;
 
   br_counter #(
       .MaxValue(BufferDepth),
@@ -139,17 +145,38 @@ module br_fifo_staging_buffer #(
   );
 
   assign pop_beat = pop_valid && pop_ready;
-  assign space_available = (staged_items < BufferDepth) || pop_ready;
-  assign items_not_staged = TotalCountWidth'(staged_items) < total_items;
+
+  if (RamReadLatency == 0) begin : gen_zero_lat_space_available
+    // If there is no read latency, the cut-through latency is always 0,
+    // so we can always accept more data if pop_ready=1
+    assign space_available = (staged_items < BufferDepth) || pop_ready;
+    `BR_UNUSED(pop_valid_nonbypass)
+  end else begin : gen_nonzero_lat_space_available
+    // If read latency is non-zero, we can't assume pop_ready means an item is being
+    // popped, since reads might still be inflight from the RAM.
+    // We have to check pop_valid instead. To ensure there is no combinational path from
+    // push_valid to push_ready, we need to check pop_valid_nonbypass signal, which omits
+    // the bypass path.
+    assign space_available = (staged_items < BufferDepth) || (pop_ready && pop_valid_nonbypass);
+  end
+  if (TotalItemsIncludesStaged) begin : gen_items_not_staged_inclusive
+    assign items_not_staged = TotalCountWidth'(staged_items) < total_items;
+  end else begin : gen_items_not_staged_exclusive
+    assign items_not_staged = total_items > '0;
+  end
   assign bypass_beat = bypass_valid_unstable && bypass_ready;
   assign ram_rd_addr_valid = space_available && items_not_staged && !bypass_ready;
   assign ram_rd_addr_beat = ram_rd_addr_valid && ram_rd_addr_ready;
 
   if (EnableBypass) begin : gen_bypass_push
-    // Bypass is allowed for the first BufferDepth entries to enter the FIFO.
-    assign bypass_ready = space_available && (
-        (total_items < BufferDepth) ||
-        ((total_items == BufferDepth) && pop_ready));
+    if (TotalItemsIncludesStaged) begin : gen_bypass_ready_inclusive
+      // Bypass is allowed for the first BufferDepth entries to enter the FIFO.
+      assign bypass_ready = space_available && (
+          (total_items < BufferDepth) ||
+          ((total_items == BufferDepth) && pop_ready));
+    end else begin : gen_bypass_ready_exclusive
+      assign bypass_ready = space_available && total_items == '0;
+    end
     assign push_valid = ram_rd_data_valid || bypass_beat;
     assign push_data = ram_rd_data_valid ? ram_rd_data : bypass_data_unstable;
     assign staged_items_incr = ram_rd_addr_beat || bypass_beat;
@@ -166,6 +193,7 @@ module br_fifo_staging_buffer #(
   // Main Buffer Storage
   // ===================
   logic             internal_pop_valid;
+  logic             internal_pop_valid_nonbypass;
   logic             internal_pop_ready;
   logic [Width-1:0] internal_pop_data;
 
@@ -173,8 +201,9 @@ module br_fifo_staging_buffer #(
     // This can only be true if RegisterPopOutputs=1 and BufferDepth=1
     // Just pass the push_valid through to the flow register
 
+    assign internal_pop_valid_nonbypass = ram_rd_data_valid;
     assign internal_pop_valid = push_valid;
-    assign internal_pop_data  = push_data;
+    assign internal_pop_data = push_data;
 
     `BR_ASSERT_IMPL(no_double_push_a, !(ram_rd_data_valid && bypass_beat))
     `BR_ASSERT_IMPL(no_push_overflow_a, push_valid |-> internal_pop_ready)
@@ -194,6 +223,7 @@ module br_fifo_staging_buffer #(
     // have been issued in the previous cycle and the data is
     // returning on the same cycle. We just give priority to the
     // ram_rd_data and store the bypassed data in the buffer.
+    assign internal_pop_valid_nonbypass = buffer_valid || ram_rd_data_valid;
     assign internal_pop_valid = buffer_valid || push_valid;
     assign internal_pop_data = buffer_valid ? buffer_data : push_data;
 
@@ -400,6 +430,7 @@ module br_fifo_staging_buffer #(
       // This is true for read from the buffer or direct from read data,
       // since a slot is always allocated for a read.
       assign advance_rd_ptr = (head_valid || ram_rd_data_valid) && internal_pop_ready;
+      assign internal_pop_valid_nonbypass = head_valid || ram_rd_data_valid;
 
       `BR_ASSERT_IMPL(no_push_hazard_a, ~|(mem_wr_en_immediate & mem_wr_en_delayed))
       `BR_ASSERT_IMPL(no_push_overwrite_a, ~|(mem_wr_en & mem_valid & ~mem_rd_en))
@@ -420,6 +451,7 @@ module br_fifo_staging_buffer #(
       assign internal_pop_valid = !empty || push_valid;
       assign internal_pop_data = empty ? push_data : mem_rd_data;
       assign advance_rd_ptr = !empty && internal_pop_ready;
+      assign internal_pop_valid_nonbypass = internal_pop_valid;
     end
 
     // Not used in this configuration
@@ -445,10 +477,16 @@ module br_fifo_staging_buffer #(
         .pop_valid,
         .pop_data
     );
+    // If pop is registered, bypass path is broken up anyhow,
+    // so we don't need to do anything special to exclude bypass_valid
+    // from the combinational path.
+    assign pop_valid_nonbypass = pop_valid;
+    `BR_UNUSED(internal_pop_valid_nonbypass)
   end else begin : gen_pop_passthru
     assign pop_valid = internal_pop_valid;
     assign pop_data = internal_pop_data;
     assign internal_pop_ready = pop_ready;
+    assign pop_valid_nonbypass = internal_pop_valid_nonbypass;
   end
 
   // Implementation Checks

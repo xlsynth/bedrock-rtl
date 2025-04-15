@@ -27,6 +27,7 @@ module br_amba_axil_timing_slice #(
     parameter  int WUserWidth  = 1,
     parameter  int ARUserWidth = 1,
     parameter  int RUserWidth  = 1,
+    parameter  int BUserWidth  = 1,
     localparam int StrobeWidth = DataWidth / 8
 ) (
     input clk,
@@ -44,6 +45,7 @@ module br_amba_axil_timing_slice #(
     input  logic                             target_wvalid,
     output logic                             target_wready,
     output logic [br_amba::AxiRespWidth-1:0] target_bresp,
+    output logic [           BUserWidth-1:0] target_buser,
     output logic                             target_bvalid,
     input  logic                             target_bready,
     input  logic [            AddrWidth-1:0] target_araddr,
@@ -69,6 +71,7 @@ module br_amba_axil_timing_slice #(
     output logic                             init_wvalid,
     input  logic                             init_wready,
     input  logic [br_amba::AxiRespWidth-1:0] init_bresp,
+    input  logic [           BUserWidth-1:0] init_buser,
     input  logic                             init_bvalid,
     output logic                             init_bready,
     output logic [            AddrWidth-1:0] init_araddr,
@@ -113,16 +116,16 @@ module br_amba_axil_timing_slice #(
 
   // Write Response Channel Timing Slice
   br_flow_reg_both #(
-      .Width(br_amba::AxiRespWidth)
+      .Width(br_amba::AxiRespWidth + BUserWidth)
   ) b_slice (
       .clk,
       .rst,
       .push_ready(init_bready),
       .push_valid(init_bvalid),
-      .push_data (init_bresp),
+      .push_data ({init_bresp, init_buser}),
       .pop_ready (target_bready),
       .pop_valid (target_bvalid),
-      .pop_data  (target_bresp)
+      .pop_data  ({target_bresp, target_buser})
   );
 
   // Read Address Channel Timing Slice

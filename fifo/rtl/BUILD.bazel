@@ -63,9 +63,9 @@ verilog_library(
     name = "br_fifo_shared_dynamic_ctrl",
     srcs = ["br_fifo_shared_dynamic_ctrl.sv"],
     deps = [
+        ":br_fifo_shared_pop_ctrl",
         "//fifo/rtl/internal:br_fifo_shared_dynamic_ptr_mgr",
         "//fifo/rtl/internal:br_fifo_shared_dynamic_push_ctrl",
-        "//fifo/rtl/internal:br_fifo_shared_pop_ctrl",
         "//macros:br_asserts_internal",
     ],
 )
@@ -83,9 +83,9 @@ verilog_library(
     name = "br_fifo_shared_dynamic_ctrl_push_credit",
     srcs = ["br_fifo_shared_dynamic_ctrl_push_credit.sv"],
     deps = [
+        ":br_fifo_shared_pop_ctrl",
         "//fifo/rtl/internal:br_fifo_shared_dynamic_ptr_mgr",
         "//fifo/rtl/internal:br_fifo_shared_dynamic_push_ctrl_credit",
-        "//fifo/rtl/internal:br_fifo_shared_pop_ctrl",
         "//macros:br_asserts_internal",
     ],
 )
@@ -97,6 +97,50 @@ verilog_library(
         ":br_fifo_shared_dynamic_ctrl_push_credit",
         "//ram/rtl:br_ram_flops",
     ],
+)
+
+verilog_library(
+    name = "br_fifo_shared_pop_ctrl",
+    srcs = ["br_fifo_shared_pop_ctrl.sv"],
+    deps = [
+        "//fifo/rtl/internal:br_fifo_shared_read_xbar",
+        "//fifo/rtl/internal:br_fifo_staging_buffer",
+        "//flow/rtl:br_flow_fork",
+        "//flow/rtl:br_flow_join",
+    ],
+)
+
+br_verilog_elab_and_lint_test_suite(
+    name = "br_fifo_shared_pop_ctrl_test_suite",
+    params = {
+        "NumFifos": [
+            "2",
+            "4",
+        ],
+        "NumReadPorts": [
+            "1",
+            "2",
+        ],
+        "Depth": ["5"],
+        "Width": ["8"],
+        "StagingBufferDepth": [
+            "1",
+            "2",
+        ],
+        "RamReadLatency": [
+            "0",
+            "1",
+        ],
+        "RegisterDeallocation": [
+            "0",
+            "1",
+        ],
+        "RegisterPopOutputs": [
+            "0",
+            "1",
+        ],
+    },
+    deps = [":br_fifo_shared_pop_ctrl"],
 )
 
 br_verilog_elab_and_lint_test_suite(
@@ -203,6 +247,23 @@ br_verilog_elab_and_lint_test_suite(
 )
 
 br_verilog_elab_and_lint_test_suite(
+    name = "br_fifo_flops_test_suite_flop_ram_params",
+    params = {
+        "Depth": ["4"],
+        "Width": ["8"],
+        "FlopRamDepthTiles": [
+            "1",
+            "2",
+        ],
+        "FlopRamWidthTiles": [
+            "1",
+            "2",
+        ],
+    },
+    deps = [":br_fifo_flops"],
+)
+
+br_verilog_elab_and_lint_test_suite(
     name = "br_fifo_flops_push_credit_test_suite_zero_read_latency",
     params = {
         "Depth": [
@@ -255,6 +316,23 @@ br_verilog_elab_and_lint_test_suite(
             "1",
         ],
         "FlopRamAddressDepthStages": [
+            "1",
+            "2",
+        ],
+    },
+    deps = [":br_fifo_flops_push_credit"],
+)
+
+br_verilog_elab_and_lint_test_suite(
+    name = "br_fifo_flops_push_credit_test_suite_flop_ram_params",
+    params = {
+        "Depth": ["4"],
+        "Width": ["8"],
+        "FlopRamDepthTiles": [
+            "1",
+            "2",
+        ],
+        "FlopRamWidthTiles": [
             "1",
             "2",
         ],
@@ -340,6 +418,36 @@ br_verilog_elab_and_lint_test_suite(
 )
 
 br_verilog_elab_and_lint_test_suite(
+    name = "br_fifo_shared_dynamic_flops_test_suite_flop_ram_params",
+    params = {
+        "Depth": ["16"],  # clog2(Depth) must be multiple of 2 for PointerRamDepthTiles=2
+        "Width": ["8"],
+        "NumFifos": ["2"],
+        "NumWritePorts": [
+            "1",
+            "2",
+        ],
+        "DataRamDepthTiles": [
+            "1",
+            "2",
+        ],
+        "DataRamWidthTiles": [
+            "1",
+            "2",
+        ],
+        "PointerRamDepthTiles": [
+            "1",
+            "2",
+        ],
+        "PointerRamWidthTiles": [
+            "1",
+            "2",
+        ],
+    },
+    deps = [":br_fifo_shared_dynamic_flops"],
+)
+
+br_verilog_elab_and_lint_test_suite(
     name = "br_fifo_shared_dynamic_ctrl_push_credit_test_suite_fifo_port_sweep",
     params = {
         "Depth": ["5"],
@@ -389,6 +497,36 @@ br_verilog_elab_and_lint_test_suite(
         "RegisterPushOutputs": [
             "0",
             "1",
+        ],
+    },
+    deps = [":br_fifo_shared_dynamic_flops_push_credit"],
+)
+
+br_verilog_elab_and_lint_test_suite(
+    name = "br_fifo_shared_dynamic_flops_push_credit_test_suite_flop_ram_params",
+    params = {
+        "Depth": ["16"],  # clog2(Depth) must be multiple of 2 for PointerRamDepthTiles=2
+        "Width": ["8"],
+        "NumFifos": ["2"],
+        "NumWritePorts": [
+            "1",
+            "2",
+        ],
+        "DataRamDepthTiles": [
+            "1",
+            "2",
+        ],
+        "DataRamWidthTiles": [
+            "1",
+            "2",
+        ],
+        "PointerRamDepthTiles": [
+            "1",
+            "2",
+        ],
+        "PointerRamWidthTiles": [
+            "1",
+            "2",
         ],
     },
     deps = [":br_fifo_shared_dynamic_flops_push_credit"],
