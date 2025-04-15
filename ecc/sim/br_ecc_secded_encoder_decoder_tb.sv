@@ -34,6 +34,7 @@ module br_ecc_secded_encoder_decoder_tb;
   localparam int MessageWidth = 2 ** $clog2(DataWidth);
   localparam int CodewordWidth = MessageWidth + ParityWidth;
 
+  // TODO: have TB support E2E latency > 0
   localparam int E2ELatency =
       EncoderRegisterInputs +
       EncoderRegisterOutputs +
@@ -114,7 +115,7 @@ module br_ecc_secded_encoder_decoder_tb;
 
   // Test process
   logic [DataWidth-1:0] test_data;
-  int num_tests = 100;
+  int num_tests = 1000;
   int i;
   int error_counter = 0;
   int error_injection_index0 = -1;
@@ -168,78 +169,79 @@ module br_ecc_secded_encoder_decoder_tb;
     for (i = 0; i < num_tests; i = i + 1) begin
       test_data = $urandom;
 
-      // Apply data to encoder at negedge clk
-      // TODO: this only works when E2ELatency is 0.
-      @(negedge clk);
-      data_valid = 1;
-      data = test_data;
-      #1;
-      // Inject single-bit error on the received codeword and send to decoder
-      error_injection_index0 = $urandom() % CodewordWidth;
-      injected = pre_inject;
-      injected[error_injection_index0] = !injected[error_injection_index0];
-      #1;
-      if (!dec_valid) begin
-        $error("Test %0d FAILED: no dec_valid", i);
-        error_counter = error_counter + 1;
-      end
-      if (dec_data !== test_data) begin
-        $error("Test %0d FAILED: encoded data = 0x%0h, decoded data = 0x%0h", i, test_data,
-               dec_data);
-        error_counter = error_counter + 1;
-      end
-      if (!dec_error_ce) begin
-        $error("Test %0d FAILED: error NOT corrected when it was supposed to", i);
-        error_counter = error_counter + 1;
-      end
-      if (dec_error_due) begin
-        $error("Test %0d FAILED: error DUE when it was not supposed to", i);
-        error_counter = error_counter + 1;
-      end
+      for (int inj_index = 0; inj_index < CodewordWidth; inj_index = inj_index + 1) begin
+        // Apply data to encoder at negedge clk
+        // TODO: this only works when E2ELatency is 0.
+        @(negedge clk);
+        data_valid = 1;
+        data = test_data;
+        #1;
+        // Inject single-bit error on the received codeword and send to decoder
+        injected = pre_inject;
+        injected[inj_index] = !injected[inj_index];
+        #1;
+        if (!dec_valid) begin
+          $error("Test %0d FAILED: no dec_valid", i);
+          error_counter = error_counter + 1;
+        end
+        if (dec_data !== test_data) begin
+          $error("Test %0d FAILED: encoded data = 0x%0h, decoded data = 0x%0h", i, test_data,
+                 dec_data);
+          error_counter = error_counter + 1;
+        end
+        if (!dec_error_ce) begin
+          $error("Test %0d FAILED: error NOT corrected when it was supposed to", i);
+          error_counter = error_counter + 1;
+        end
+        if (dec_error_due) begin
+          $error("Test %0d FAILED: error DUE when it was not supposed to", i);
+          error_counter = error_counter + 1;
+        end
 
-      // Wait for a cycle before next test
-      @(negedge clk);
+        // Wait for a cycle before next test
+        @(negedge clk);
+      end
     end
 
     $display("Testing with double bit error injection.");
     for (i = 0; i < num_tests; i = i + 1) begin
       test_data = $urandom;
 
-      // Apply data to encoder at negedge clk
-      // TODO: this only works when E2ELatency is 0.
-      @(negedge clk);
-      data_valid = 1;
-      data = test_data;
-      #1;
-      // Inject double-bit error on the received codeword and send to decoder
-      error_injection_index0 = $urandom() % CodewordWidth;
-      error_injection_index1 = $urandom() % CodewordWidth;
-      // Don't inject twice at the same location.
-      while (error_injection_index1 == error_injection_index0) begin
-        error_injection_index1 = $urandom() % CodewordWidth;
-      end
-      injected = pre_inject;
-      injected[error_injection_index0] = !injected[error_injection_index0];
-      injected[error_injection_index1] = !injected[error_injection_index1];
-      #1;
-      if (!dec_valid) begin
-        $error("Test %0d FAILED: no dec_valid", i);
-        error_counter = error_counter + 1;
-      end
-      // Don't sample the decoded data. It might sometimes be correct even with double-bit errors
-      // because they could have been injected only in the parity bits (because the code is in
-      // systematic form).
-      if (dec_error_ce) begin
-        $error("Test %0d FAILED: error corrected when it was not supposed to", i);
-        error_counter = error_counter + 1;
-      end
-      if (!dec_error_due) begin
-        $error("Test %0d FAILED: error not DUE when it was supposed to", i);
-        error_counter = error_counter + 1;
-      end
+      for (int inj_index0 = 0; inj_index0 < CodewordWidth; inj_index0 = inj_index0 + 1) begin
+        for (int inj_index1 = 0; inj_index1 < CodewordWidth; inj_index1 = inj_index1 + 1) begin
+          // Don't inject twice at the same location.
+          if (inj_index0 == inj_index1) continue;
 
-      // Wait for a cycle before next test
-      @(negedge clk);
+          // Apply data to encoder at negedge clk
+          // TODO: this only works when E2ELatency is 0.
+          @(negedge clk);
+          data_valid = 1;
+          data = test_data;
+          #1;
+          injected = pre_inject;
+          injected[inj_index0] = !injected[inj_index0];
+          injected[inj_index1] = !injected[inj_index1];
+          #1;
+          if (!dec_valid) begin
+            $error("Test %0d FAILED: no dec_valid", i);
+            error_counter = error_counter + 1;
+          end
+          // Don't sample the decoded data. It might sometimes be correct even with double-bit errors
+          // because they could have been injected only in the parity bits (because the code is in
+          // systematic form).
+          if (dec_error_ce) begin
+            $error("Test %0d FAILED: error corrected when it was not supposed to", i);
+            error_counter = error_counter + 1;
+          end
+          if (!dec_error_due) begin
+            $error("Test %0d FAILED: error not DUE when it was supposed to", i);
+            error_counter = error_counter + 1;
+          end
+
+          // Wait for a cycle before next test
+          @(negedge clk);
+        end
+      end
     end
 
     // Print final result

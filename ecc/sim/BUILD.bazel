@@ -38,6 +38,14 @@ verilog_elab_test(
 
 br_verilog_sim_test_tools_suite(
     name = "br_ecc_sed_encoder_decoder_sim_test_tools_suite",
+    params = {
+        "DataWidth": [
+            "1",
+            "2",
+            "5",
+            "8",
+        ],
+    },
     tools = [
         "dsim",
         "iverilog",
@@ -65,7 +73,53 @@ verilog_elab_test(
 )
 
 br_verilog_sim_test_tools_suite(
-    name = "br_ecc_secded_encoder_decoder_sim_test_tools_suite",
+    name = "br_ecc_secded_encoder_decoder_dw4_pw4_sim_test_tools_suite",
+    params = {
+        "DataWidth": ["4"],
+        "ParityWidth": ["4"],
+    },
+    tools = [
+        "dsim",
+        "iverilog",
+        "vcs",
+    ],
+    deps = [":br_ecc_secded_encoder_decoder_tb"],
+)
+
+br_verilog_sim_test_tools_suite(
+    name = "br_ecc_secded_encoder_decoder_dw8_pw5_sim_test_tools_suite",
+    params = {
+        "DataWidth": ["8"],
+        "ParityWidth": ["5"],
+    },
+    tools = [
+        "dsim",
+        "iverilog",
+        "vcs",
+    ],
+    deps = [":br_ecc_secded_encoder_decoder_tb"],
+)
+
+br_verilog_sim_test_tools_suite(
+    name = "br_ecc_secded_encoder_decoder_dw32_pw7_sim_test_tools_suite",
+    params = {
+        "DataWidth": ["32"],
+        "ParityWidth": ["7"],
+    },
+    tools = [
+        "dsim",
+        "iverilog",
+        "vcs",
+    ],
+    deps = [":br_ecc_secded_encoder_decoder_tb"],
+)
+
+br_verilog_sim_test_tools_suite(
+    name = "br_ecc_secded_encoder_decoder_dw64_pw8_sim_test_tools_suite",
+    params = {
+        "DataWidth": ["64"],
+        "ParityWidth": ["8"],
+    },
     tools = [
         "dsim",
         "iverilog",
