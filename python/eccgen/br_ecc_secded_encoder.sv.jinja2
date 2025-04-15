@@ -38,9 +38,9 @@
 // but it can have up to 2 cycles of delay (RegisterInputs and RegisterOutputs).
 // The initiation interval is always 1 cycle.
 //
-// Any data width >= 1 is supported. It is internally zero-padded up to
-// the nearest power-of-2 message width before being encoded. The following
-// table outlines the number of parity bits required for different message widths.
+// Any data width >= 4 is supported, up to a maximum of 1024. It is internally zero-padded up to
+// the nearest power-of-2 message width before being encoded. The following table outlines the
+// number of parity bits required for different message widths.
 //
 // | Message Width (k) | Parity Width (r) | Codeword Width (n)|
 // |-------------------|------------------|-------------------|
@@ -98,7 +98,7 @@ module br_ecc_secded_encoder #(
   //------------------------------------------
   // Integration checks
   //------------------------------------------
-  `BR_ASSERT_STATIC(message_width_gte_4_a, DataWidth >= 4)
+  `BR_ASSERT_STATIC(data_width_gte_4_a, DataWidth >= 4)
   `BR_ASSERT_STATIC(parity_width_gte_4_a, ParityWidth >= 4)
   `BR_ASSERT_STATIC(parity_width_lte_12_a, ParityWidth <= 12)
 

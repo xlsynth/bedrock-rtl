@@ -40,9 +40,9 @@
 // but it can have up to 3 cycles of delay (RegisterInputs, RegisterSyndrome, and
 // RegisterOutputs). The initiation interval is always 1 cycle.
 //
-// Any data width >= 1 is supported. It is considered internally zero-padded up to
-// the nearest power-of-2 message width as part of decoding. The following
-// table outlines the number of parity bits required for different message widths.
+// Any data width >= 4 is supported, up to a maximum of 1024. It is considered
+// internally zero-padded up to the nearest power-of-2 message width as part of decoding.
+// The following table outlines the number of parity bits required for different message widths.
 //
 // | Message Width (k) | Parity Width (r) | Codeword Width (n)|
 // |-------------------|------------------|-------------------|
@@ -69,7 +69,7 @@
 
 // TODO(mgottscho): Pipeline the syndrome decoding and then correction with a parameter.
 module br_ecc_secded_decoder #(
-    parameter int DataWidth = 1,  // Must be at least 1
+    parameter int DataWidth = 4,  // Must be at least 4
     parameter int ParityWidth = 4,  // Must be at least 4 and at most 12
     // If 1, then insert a pipeline register at the input.
     parameter bit RegisterInputs = 0,
@@ -116,7 +116,7 @@ module br_ecc_secded_decoder #(
   //------------------------------------------
   // Integration checks
   //------------------------------------------
-  `BR_ASSERT_STATIC(message_width_gte_1_a, DataWidth >= 1)
+  `BR_ASSERT_STATIC(data_width_gte_1_a, DataWidth >= 4)
   `BR_ASSERT_STATIC(parity_width_gte_4_a, ParityWidth >= 4)
   `BR_ASSERT_STATIC(parity_width_lte_12_a, ParityWidth <= 12)
 
