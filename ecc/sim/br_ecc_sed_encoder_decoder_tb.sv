@@ -45,9 +45,12 @@ module br_ecc_sed_encoder_decoder_tb;
   logic data_valid;
   logic [DataWidth-1:0] data;
 
-  // Encoder outputs (directly connected to decoder inputs)
+  // Encoder outputs
   logic enc_valid;
   logic [CodewordWidth-1:0] enc_codeword;
+
+  // Point of error injection
+  logic [CodewordWidth-1:0] rcv_codeword;
 
   // Decoder outputs
   logic dec_valid;
@@ -79,7 +82,7 @@ module br_ecc_sed_encoder_decoder_tb;
       .clk,
       .rst,
       .rcv_valid(enc_valid),
-      .rcv_codeword(enc_codeword),
+      .rcv_codeword,
       .dec_valid,
       .dec_codeword,
       .dec_error_due,
@@ -96,11 +99,13 @@ module br_ecc_sed_encoder_decoder_tb;
   int num_tests = 100;
   int i;
   int error_counter = 0;
+  int error_injection_index = -1;
 
   initial begin
     rst = 1;
     data_valid = 0;
     data = 0;
+    rcv_codeword = 0;
     repeat (10) @(negedge clk);
     rst = 0;
     repeat (10) @(negedge clk);
@@ -115,6 +120,9 @@ module br_ecc_sed_encoder_decoder_tb;
       data_valid = 1;
       data = test_data;
       #1;
+      // Propagate the codeword to the decoder
+      rcv_codeword = enc_codeword;
+      #1;
       if (!dec_valid) begin
         $error("Test %0d FAILED: no dec_valid", i);
         error_counter = error_counter + 1;
@@ -126,6 +134,36 @@ module br_ecc_sed_encoder_decoder_tb;
       end
       if (dec_error_due) begin
         $error("Test %0d FAILED: error due when it was not supposed to", i);
+        error_counter = error_counter + 1;
+      end
+
+      // Wait for a cycle before next test
+      @(negedge clk);
+    end
+
+    $display("Testing with single bit error injection.");
+    for (i = 0; i < num_tests; i = i + 1) begin
+      test_data = $urandom;
+
+      // Apply data to encoder at negedge clk
+      // TODO: this only works when E2ELatency is 0.
+      @(negedge clk);
+      data_valid = 1;
+      data = test_data;
+      #1;
+      // Inject single-bit error on the received codeword and send to decoder
+      error_injection_index = $urandom() % CodewordWidth;
+      rcv_codeword = enc_codeword;
+      rcv_codeword[error_injection_index] = !rcv_codeword[error_injection_index];
+      #1;
+      if (!dec_valid) begin
+        $error("Test %0d FAILED: no dec_valid", i);
+        error_counter = error_counter + 1;
+      end
+      // Don't sample the decoded data. It might sometimes be correct even with
+      // single-bit errors (if the bit flip is in the parity bit)
+      if (!dec_error_due) begin
+        $error("Test %0d FAILED: error NOT due when it was supposed to", i);
         error_counter = error_counter + 1;
       end
 
