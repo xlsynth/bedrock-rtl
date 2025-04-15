@@ -49,7 +49,7 @@ module br_ecc_secded_encoder_decoder_tb;
   logic data_valid;
   logic [DataWidth-1:0] data;
 
-  // Encoder outputs (directly connected to decoder inputs)
+  // Encoder outputs
   logic enc_valid;
   logic [DataWidth-1:0] enc_data;
   logic [ParityWidth-1:0] enc_parity;
