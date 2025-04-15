@@ -313,7 +313,8 @@ def syndrome_to_sv(H: np.ndarray) -> str:
     assigns = []
     r = H.shape[0]
     for i in range(r):
-        assigns.append(syndrome_bit_to_sv(H[i, :], i))
+        # Reverse row index (r - i - 1)  because row 0 is actually the MSb of the syndrome
+        assigns.append(syndrome_bit_to_sv(H[i, :], r - i - 1))
     return "\n".join(assigns)
 
 
