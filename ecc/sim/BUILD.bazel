@@ -122,8 +122,9 @@ br_verilog_sim_test_tools_suite(
     },
     tools = [
         "dsim",
-        "iverilog",
         "vcs",
+        # So slow..
+        #"iverilog",
     ],
     deps = [":br_ecc_secded_encoder_decoder_tb"],
 )
