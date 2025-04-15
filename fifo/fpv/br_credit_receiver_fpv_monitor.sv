@@ -42,18 +42,23 @@ module br_credit_receiver_fpv_monitor #(
 
   // ----------FV modeling code----------
   logic fv_rst;
-  logic [CreditWidth-1:0] fv_credit_cnt;
+  logic [CreditWidth-1:0] fv_credit_cnt, fv_credit_cnt_nxt;
   logic [CreditWidth-1:0] fv_max_credit;
 
   assign fv_rst = rst | push_sender_in_reset;
-  `BR_REG(fv_credit_cnt, fv_credit_cnt + $countones(push_credit) - $countones(push_valid))
+  assign fv_credit_cnt_nxt = fv_credit_cnt + push_credit - $countones(push_valid);
+  `BR_REG(fv_credit_cnt, fv_credit_cnt_nxt)
   `BR_REGIX(fv_max_credit, fv_max_credit, credit_initial_push, clk, fv_rst)
 
   // ----------FV assumptions----------
   `BR_ASSUME(push_sender_in_reset_a, !push_sender_in_reset |=> !push_sender_in_reset)
   `BR_ASSUME(credit_withhold_push_a, credit_withhold_push <= MaxCredit)
   `BR_ASSUME(credit_withhold_liveness_a, s_eventually (credit_withhold_push < fv_max_credit))
-  `BR_ASSUME(no_spurious_push_valid_a, fv_credit_cnt == 'd0 |-> push_valid == 'd0)
+  `BR_ASSUME(no_credit_cnt_overflow_a, push_credit > $countones(push_valid)
+                                       |-> fv_credit_cnt_nxt > fv_credit_cnt)
+  `BR_ASSUME(no_credit_cnt_underflow_a, push_credit < $countones(push_valid)
+                                        |-> fv_credit_cnt_nxt < fv_credit_cnt)
+  `BR_ASSUME(no_spurious_push_valid_a, (fv_credit_cnt + push_credit) == 'd0 |-> push_valid == 'd0)
 
   // ----------FV assertions----------
   `BR_ASSERT(fv_credit_sanity_a, fv_credit_cnt <= fv_max_credit)
