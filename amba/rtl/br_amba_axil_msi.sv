@@ -33,6 +33,14 @@
 // per-interrupt enable is asserted, the interrupt is sent. When a per-interrupt
 // enable is not asserted, the interrupt is not sent.
 //
+// The GICv3 specification also allows for message-based Shared Peripheral
+// Interrupts (SPI). Messages are sent to the SETSPI register in the GIC
+// configuration space. There is a per-interrupt enable for SPI messages. If the
+// interrupt is configured as SPI, the message will be sent to the SETSPI
+// register and the event ID will be used as the interrupt ID. Otherwise, the
+// message will be sent to the GIC subordinate interface using the device ID
+// offset.
+//
 // This module also supports a throttle mechanism. When a throttle is enabled,
 // the interrupt is sent once every `throttle_cnt` cycles.
 
@@ -56,7 +64,9 @@ module br_amba_axil_msi #(
 
     // MSI Configuration
     input logic [AddrWidth-1:0] msi_base_addr,
+    input logic [AddrWidth-1:0] setspi_reg_addr,
     input logic [NumInterrupts-1:0] msi_enable,
+    input logic [NumInterrupts-1:0] msi_is_spi,
     input logic [NumInterrupts-1:0][DeviceIdWidth-1:0] device_id_per_irq,
     input logic [NumInterrupts-1:0][EventIdWidth-1:0] event_id_per_irq,
 
@@ -98,7 +108,8 @@ module br_amba_axil_msi #(
   localparam int DataWidthPadding = DataWidth - 32;
   localparam int EventIdStrobeWidth = 4;  // always 4 bytes
   localparam int StrobeWidthPadding = StrobeWidth - EventIdStrobeWidth;
-  localparam int FifoWidth = DeviceIdWidth + EventIdWidth;
+  localparam int IsSpiWidth = 1;
+  localparam int FifoWidth = DeviceIdWidth + EventIdWidth + IsSpiWidth;
   localparam int WriteAddrFlowRegWidth = AddrWidth;
   localparam int WriteDataFlowRegWidth = DataWidth + StrobeWidth;
 
@@ -107,6 +118,7 @@ module br_amba_axil_msi #(
   logic [NumInterrupts-1:0] pending_irq, pending_irq_next;
   logic [DeviceIdWidth-1:0] device_id_to_send;
   logic [EventIdWidth-1:0] event_id_to_send;
+  logic irq_is_spi;
   logic [NumInterrupts-1:0][FifoWidth-1:0] fifo_push_data;
   logic [NumInterrupts-1:0] fifo_push_ready, fifo_push_valid;
   logic [FifoWidth-1:0] fifo_pop_data;
@@ -152,11 +164,11 @@ module br_amba_axil_msi #(
   );
   generate
     for (genvar i = 0; i < NumInterrupts; i++) begin : gen_loop
-      assign fifo_push_data[i] = {device_id_per_irq[i], event_id_per_irq[i]};
+      assign fifo_push_data[i] = {msi_is_spi[i], device_id_per_irq[i], event_id_per_irq[i]};
     end
   endgenerate
   assign fifo_push_valid = pending_irq;
-  assign {device_id_to_send, event_id_to_send} = fifo_pop_data;
+  assign {irq_is_spi, device_id_to_send, event_id_to_send} = fifo_pop_data;
 
   // Throttle counter
   br_counter_decr #(
@@ -179,7 +191,8 @@ module br_amba_axil_msi #(
 
   // Create the data to be pushed into the flow registers
   // ri lint_check_off ZERO_EXT CONST_OUTPUT
-  assign write_addr_flow_reg_push_data =
+  assign write_addr_flow_reg_push_data = (irq_is_spi) ?
+      setspi_reg_addr :
       msi_base_addr + {{AddrWidthPadding{1'b0}}, device_id_to_send, 2'b00};
   if (StrobeWidthPadding == 0) begin : gen_no_strb_padding
     assign write_data_flow_reg_push_data = {
