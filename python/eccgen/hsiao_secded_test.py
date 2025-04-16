@@ -18,7 +18,6 @@ from parameterized import parameterized
 from python.eccgen.hsiao_secded import (
     hsiao_secded_code,
     get_r,
-    get_n,
     check_construction,
     encode,
     decode_syndrome,
@@ -58,16 +57,6 @@ class TestHsiaoSecdedCode(unittest.TestCase):
 
     @parameterized.expand(
         [
-            ("k4", 4, 3, 7),
-            ("k8", 8, 4, 12),
-            ("k16", 16, 5, 21),
-        ]
-    )
-    def test_get_n(self, name, k, r, expected_n):
-        self.assertEqual(get_n(k, r), expected_n)
-
-    @parameterized.expand(
-        [
             ("k4", 4, 4, 8),
             ("k8", 8, 5, 13),
             ("k15", 15, 6, 21),
@@ -79,7 +68,7 @@ class TestHsiaoSecdedCode(unittest.TestCase):
             ("k128", 128, 9, 137),
         ]
     )
-    def test_hsiao_secded_code_construction(self, k, expected_r, expected_n):
+    def test_hsiao_secded_code_construction(self, _, k, expected_r, expected_n):
         r, n, H, G = hsiao_secded_code(k)
         # Check the number of parity and codeword bits
         self.assertEqual(r, expected_r)
