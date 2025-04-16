@@ -19,13 +19,10 @@ from python.eccgen.hsiao_secded import (
     hsiao_secded_code,
     get_r,
     get_n,
-    check_columns_unique,
-    check_column_weights_are_odd,
     check_construction,
     encode,
     decode_syndrome,
     decode_message,
-    parity_check_message_columns,
 )
 
 
@@ -69,12 +66,6 @@ class TestHsiaoSecdedCode(unittest.TestCase):
     def test_get_n(self, name, k, r, expected_n):
         self.assertEqual(get_n(k, r), expected_n)
 
-    def test_parity_check_message_columns(self):
-        self.assertTrue(check_columns_unique(parity_check_message_columns(7, 32, 3)))
-        self.assertTrue(
-            check_column_weights_are_odd(parity_check_message_columns(7, 32, 3))
-        )
-
     @parameterized.expand(
         [
             ("k4", 4, 4, 8),
@@ -90,15 +81,13 @@ class TestHsiaoSecdedCode(unittest.TestCase):
     )
     def test_hsiao_secded_code_construction(self, k, expected_r, expected_n):
         r, n, H, G = hsiao_secded_code(k)
-
         # Check the number of parity and codeword bits
         self.assertEqual(r, expected_r)
         self.assertEqual(n, expected_n)
-
         # Check the dimensions of the matrices
         self.assertEqual(H.shape, (r, n))
         self.assertEqual(G.shape, (k, n))
-
+        # Raises a ValueError if the code construction is invalid
         check_construction(G, H)
 
     def test_invalid_k(self):

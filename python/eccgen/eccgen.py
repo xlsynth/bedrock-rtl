@@ -15,6 +15,7 @@
 import argparse
 from python.eccgen.hsiao_secded import (
     hsiao_secded_code,
+    check_construction,
     G_to_sv,
     syndrome_to_sv,
     H_to_sv,
@@ -95,6 +96,7 @@ def main():
     if args.scheme == "hsiao_secded":
         if args.k:
             r, n, H, G = hsiao_secded_code(args.k)
+            check_construction(G, H)
             print(f"Number of data bits (k): {args.k}")
             print(f"Number of parity bits (r): {r}")
             print(f"Total number of bits (n): {n}\n")
@@ -138,6 +140,7 @@ def main():
                 mapping = {}
                 for n, k in RTL_SUPPORTED_N_K:
                     r, n, H, G = hsiao_secded_code(k)
+                    check_construction(G, H)
                     mapping[f"secded_enc_{n}_{k}"] = G_to_sv(G)
                 rendered = template.render(mapping)
                 rendered += "\n"
@@ -165,6 +168,7 @@ def main():
                 mapping = {}
                 for n, k in RTL_SUPPORTED_N_K:
                     r, n, H, G = hsiao_secded_code(k)
+                    check_construction(G, H)
                     mapping[f"secded_dec_syndrome_{n}_{k}"] = syndrome_to_sv(H)
                     mapping[f"secded_dec_H_{n}_{k}"] = H_to_sv(H)
                 rendered = template.render(mapping)
