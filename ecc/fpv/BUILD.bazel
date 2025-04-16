@@ -139,7 +139,6 @@ verilog_library(
 verilog_elab_test(
     name = "br_ecc_secded_error_fpv_monitor_elab_test",
     tool = "verific",
-    #TODO: RTL has bug
     deps = [":br_ecc_secded_error_fpv_monitor"],
 )
 
@@ -172,7 +171,7 @@ br_verilog_fpv_test_tools_suite(
         ],
     },
     tools = {
-        "jg": "",
+        "jg": "br_ecc_secded_error_fpv.jg.tcl",
         "vcf": "",
     },
     top = "br_ecc_secded_error_fpv_monitor",
