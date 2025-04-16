@@ -21,9 +21,7 @@ from python.eccgen.hsiao_secded import (
     get_n,
     check_columns_unique,
     check_column_weights_are_odd,
-    check_matrix_is_binary,
-    check_row_sums_differ_by_at_most_one,
-    check_matrices_orthogonal,
+    check_construction,
     encode,
     decode_syndrome,
     decode_message,
@@ -90,7 +88,7 @@ class TestHsiaoSecdedCode(unittest.TestCase):
             ("k128", 128, 9, 137),
         ]
     )
-    def test_hsiao_secded_code_construction(self, name, k, expected_r, expected_n):
+    def test_hsiao_secded_code_construction(self, k, expected_r, expected_n):
         r, n, H, G = hsiao_secded_code(k)
 
         # Check the number of parity and codeword bits
@@ -101,22 +99,7 @@ class TestHsiaoSecdedCode(unittest.TestCase):
         self.assertEqual(H.shape, (r, n))
         self.assertEqual(G.shape, (k, n))
 
-        # Check that both matrices contain identity matrices in the right positions (suggesting systematic form)
-        I_k = np.identity(k, dtype=int)
-        I_r = np.identity(r, dtype=int)
-        self.assertTrue(np.array_equal(G[:, :k], I_k))
-        self.assertTrue(np.array_equal(H[:, k:], I_r))
-
-        self.assertTrue(check_columns_unique(H))
-        self.assertTrue(check_columns_unique(G))
-
-        self.assertTrue(check_matrix_is_binary(H))
-        self.assertTrue(check_matrix_is_binary(G))
-
-        self.assertTrue(check_column_weights_are_odd(H))
-        self.assertTrue(check_row_sums_differ_by_at_most_one(H))
-
-        self.assertTrue(check_matrices_orthogonal(H, G.T))
+        check_construction(G, H)
 
     def test_invalid_k(self):
         with self.assertRaises(ValueError):

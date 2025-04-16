@@ -178,73 +178,10 @@ def get_G(H: np.ndarray) -> np.ndarray:
     return G
 
 
-def check_columns_unique(matrix: np.ndarray) -> bool:
-    """Check that no columns are the same in the given matrix."""
-    for ci in range(matrix.shape[1]):
-        for cj in range(ci + 1, matrix.shape[1]):
-            assert not np.array_equal(matrix[:, ci], matrix[:, cj])
-    return True
-
-
-def check_columns_have_weight(matrix: np.ndarray, weight: int) -> bool:
-    """Check that all columns in the given matrix have the same weight."""
-    sum_over_rows = np.sum(matrix, axis=0)
-    return np.all(sum_over_rows == weight)
-
-
-def check_column_weights_are_odd(matrix: np.ndarray) -> bool:
-    """Check that all columns in the given matrix have an odd weight."""
-    sum_over_rows = np.sum(matrix, axis=0)
-    return np.all(sum_over_rows % 2 == 1)
-
-
-def check_row_sums_differ_by_at_most_one(matrix: np.ndarray) -> bool:
-    """Check that the row sums of the given matrix differ by at most one."""
-    sum_over_columns = np.sum(matrix, axis=1)
-    return np.all(np.abs(sum_over_columns - sum_over_columns[0]) <= 1)
-
-
-def check_matrix_is_binary(matrix: np.ndarray) -> None:
-    """Raise a ValueError if the given matrix is not binary (contains only 0s and 1s)."""
-    zeros = matrix == 0
-    ones = matrix == 1
-    if not np.all(zeros + ones):
-        matrix_str = np.array2string(
-            matrix, separator=", ", threshold=np.inf, max_line_width=np.inf
-        )
-        err_string = [
-            "Matrix contains non-binary values:",
-            f"{matrix_str}",
-        ]
-        raise ValueError("\n".join(err_string))
-
-
 def binary_matmul(A: np.ndarray, B: np.ndarray) -> np.ndarray:
     """Multiply two binary matrices (A @ B) and raise a ValueError if the result is not binary."""
     AB = (A @ B) % 2
     return AB
-
-
-def check_matrices_orthogonal(A: np.ndarray, B: np.ndarray) -> None:
-    """Raise a ValueError if two matrices are not orthogonal (A @ B != 0)."""
-    AB = binary_matmul(A, B)
-    if not np.all(AB == 0):
-        A_str = np.array2string(
-            A, separator=", ", threshold=np.inf, max_line_width=np.inf
-        )
-        B_str = np.array2string(
-            B, separator=", ", threshold=np.inf, max_line_width=np.inf
-        )
-        AB_str = np.array2string(
-            AB, separator=", ", threshold=np.inf, max_line_width=np.inf
-        )
-        err_string = [
-            "Matrices are not orthogonal.",
-            f"A =\n{A_str}",
-            f"B =\n{B_str}",
-            f"A @ B =\n{AB_str}",
-        ]
-        raise ValueError("\n".join(err_string))
 
 
 def hsiao_secded_code(k: int) -> tuple[int, int, np.ndarray, np.ndarray]:
@@ -387,3 +324,96 @@ def H_to_sv(H: np.ndarray) -> str:
     for i in range(H.shape[1]):
         assigns.append(H_col_to_sv(H[:, i], i))
     return "\n".join(assigns)
+
+
+def check_construction(G: np.ndarray, H: np.ndarray) -> None:
+    """Raises a ValueError if the given generator matrix G and parity-check matrix H are not a valid Hsiao SECDED code."""
+    check_matrix_is_binary(G)
+    check_matrix_is_binary(H)
+    check_columns_unique(G)
+    check_columns_unique(H)
+    check_column_weights_are_odd(H)
+    check_row_sums_differ_by_at_most_one(H)
+    check_G_systematic(G)
+    check_H_systematic(H)
+    check_matrices_orthogonal(G, H.T)
+
+
+def check_columns_unique(matrix: np.ndarray) -> None:
+    """Raises a ValueError if any columns are the same in the given matrix."""
+    for ci in range(matrix.shape[1]):
+        for cj in range(ci + 1, matrix.shape[1]):
+            if not np.array_equal(matrix[:, ci], matrix[:, cj]):
+                raise ValueError("Columns are not unique.")
+
+
+def check_columns_have_weight(matrix: np.ndarray, weight: int) -> None:
+    """Raises a ValueError if any columns in the given matrix do not have the specified weight."""
+    sum_over_rows = np.sum(matrix, axis=0)
+    if not np.all(sum_over_rows == weight):
+        raise ValueError(f"Columns do not have the specified weight {weight}.")
+
+
+def check_column_weights_are_odd(matrix: np.ndarray) -> None:
+    """Raises a ValueError if any columns in the given matrix do not have an odd weight."""
+    sum_over_rows = np.sum(matrix, axis=0)
+    if not np.all(sum_over_rows % 2 == 1):
+        raise ValueError("Columns do not have an odd weight.")
+
+
+def check_row_sums_differ_by_at_most_one(matrix: np.ndarray) -> None:
+    """Raises a ValueError if the row sums of the given matrix differ by more than one."""
+    sum_over_columns = np.sum(matrix, axis=1)
+    if not np.all(np.abs(sum_over_columns - sum_over_columns[0]) <= 1):
+        raise ValueError("Row sums differ by more than one.")
+
+
+def check_matrix_is_binary(matrix: np.ndarray) -> None:
+    """Raises a ValueError if the given matrix is not binary (contains only 0s and 1s)."""
+    zeros = matrix == 0
+    ones = matrix == 1
+    if not np.all(zeros + ones):
+        matrix_str = np.array2string(
+            matrix, separator=", ", threshold=np.inf, max_line_width=np.inf
+        )
+        err_string = [
+            "Matrix contains non-binary values:",
+            f"{matrix_str}",
+        ]
+        raise ValueError("\n".join(err_string))
+
+
+def check_matrices_orthogonal(A: np.ndarray, B: np.ndarray) -> None:
+    """Raises a ValueError if two matrices are not orthogonal (A @ B != 0)."""
+    AB = binary_matmul(A, B)
+    if not np.all(AB == 0):
+        A_str = np.array2string(
+            A, separator=", ", threshold=np.inf, max_line_width=np.inf
+        )
+        B_str = np.array2string(
+            B, separator=", ", threshold=np.inf, max_line_width=np.inf
+        )
+        AB_str = np.array2string(
+            AB, separator=", ", threshold=np.inf, max_line_width=np.inf
+        )
+        err_string = [
+            "Matrices are not orthogonal.",
+            f"A =\n{A_str}",
+            f"B =\n{B_str}",
+            f"A @ B =\n{AB_str}",
+        ]
+        raise ValueError("\n".join(err_string))
+
+
+def check_G_systematic(G: np.ndarray) -> bool:
+    """Raises a ValueError if the given generator matrix G is not in systematic form."""
+    I_k = np.identity(k, dtype=int)
+    if not np.array_equal(G[:, :k], I_k):
+        raise ValueError("Generator matrix G is not in systematic form.")
+
+
+def check_H_systematic(H: np.ndarray) -> None:
+    """Raises a ValueError if the given parity-check matrix H is not in systematic form."""
+    I_r = np.identity(r, dtype=int)
+    if not np.array_equal(H[:, k:], I_r):
+        raise ValueError("Parity-check matrix H is not in systematic form.")
