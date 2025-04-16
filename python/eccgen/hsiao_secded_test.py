@@ -21,6 +21,9 @@ from python.eccgen.hsiao_secded import (
     get_n,
     check_columns_unique,
     check_column_weights_are_odd,
+    check_matrix_is_binary,
+    check_row_sums_differ_by_at_most_one,
+    check_matrices_orthogonal,
     encode,
     decode_syndrome,
     decode_message,
@@ -104,11 +107,16 @@ class TestHsiaoSecdedCode(unittest.TestCase):
         self.assertTrue(np.array_equal(G[:, :k], I_k))
         self.assertTrue(np.array_equal(H[:, k:], I_r))
 
-        # Check that both matrices contain unique columns
         self.assertTrue(check_columns_unique(H))
         self.assertTrue(check_columns_unique(G))
 
+        self.assertTrue(check_matrix_is_binary(H))
+        self.assertTrue(check_matrix_is_binary(G))
+
         self.assertTrue(check_column_weights_are_odd(H))
+        self.assertTrue(check_row_sums_differ_by_at_most_one(H))
+
+        self.assertTrue(check_matrices_orthogonal(H, G.T))
 
     def test_invalid_k(self):
         with self.assertRaises(ValueError):

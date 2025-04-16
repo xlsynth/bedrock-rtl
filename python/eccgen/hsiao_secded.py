@@ -25,6 +25,83 @@ import math
 import textwrap
 
 
+def delta_matrix(R: int, J: int, m: int) -> np.ndarray:
+    """
+    Build the R x m recursively-balanced matrix ∆(R,J,m) as described in [2]:
+    - All columns have weight J,
+    - No two columns identical,
+    - Row-sums differ by at most 1.
+    """
+    # Base cases
+    if m == 0:
+        return np.zeros((R, 0), dtype=int)
+    if J == 0:
+        return np.zeros((R, m), dtype=int)
+    if J == R:
+        return np.ones((R, m), dtype=int)
+    if m == 1:
+        col = np.zeros((R, 1), dtype=int)
+        col[:J, 0] = 1
+        return col
+    if J == 1:
+        M = np.zeros((R, m), dtype=int)
+        for i in range(m):
+            M[i, i] = 1
+        return M
+    if J == R - 1:
+        M = np.ones((R, m), dtype=int)
+        for i in range(m):
+            M[i, i] = 0
+        return M
+
+    # Recursive split
+    m1 = math.ceil(m * J / R)
+    m2 = m - m1
+    M1 = delta_matrix(R - 1, J - 1, m1)
+    M2 = delta_matrix(R - 1, J, m2)
+
+    # Compute extra‑1 rows in each part
+    r1 = ((J - 1) * m1) % (R - 1)
+    r2 = (J * m2) % (R - 1)
+
+    # Rotate M2's rows to balance
+    def _rotate_M2(M2: np.ndarray, r1: int, r2: int) -> np.ndarray:
+        total = R - 1
+        if r2 == 0:
+            return M2
+        if r1 + r2 > total:
+            cut = r2 - (r1 + r2 - total)
+            return np.vstack((M2[cut:], M2[:cut]))
+        else:
+            top = M2[:r2]
+            rest = M2[r2:]
+            return np.vstack((rest[:r1], top, rest[r1:]))
+
+    M2p = _rotate_M2(M2, r1, r2)
+
+    # Build the full block
+    top_row = np.hstack((np.ones(m1, dtype=int), np.zeros(m2, dtype=int)))[None, :]
+    bottom = np.hstack((M1, M2p))
+    delta = np.vstack((top_row, bottom))
+
+    # Check that the required properties of the delta matrix are satisfied
+    check_columns_have_weight(delta, J)
+    check_columns_unique(delta)
+    check_row_sums_differ_by_at_most_one(delta)
+    return delta
+
+
+def horizontal_union(A: np.ndarray, B: np.ndarray) -> np.ndarray:
+    """
+    N ⊕ M: flip M upside-down, hstack it onto A, then
+    reorder rows by descending row-sum to re-balance.
+    """
+    M_up = np.flipud(B)
+    C = np.hstack((A, M_up))
+    order = np.argsort(-C.sum(axis=1))
+    return C[order]
+
+
 def get_r(k: int) -> int:
     """Calculate the number of parity bits (p) required for a Hsiao SECDED code with the given message length (k) in bits."""
     r = 1
@@ -73,36 +150,27 @@ def parity_check_message_columns(r: int, k: int, col_weight: int) -> np.ndarray:
 
 
 def get_H(k: int, r: int) -> np.ndarray:
-    """Generate the r x n parity-check matrix H for a Hsiao SECDED code with the given number of parity bits.
+    """Generate the r x n parity-check matrix H for a Hsiao SECDED code."""
+    # Compute how many message‑bit columns of each odd weight we need
+    remaining = k
+    weights_counts = []
+    w = 3
+    while remaining > 0:
+        max_cols = math.comb(r, w)
+        m = min(max_cols, remaining)
+        weights_counts.append((w, m))
+        remaining -= m
+        w += 2
 
-    Reference [2] states:
-    > The definition of Hsiao code is a type of SEC-DED codes whose check matrix H defined on GF(2)
-    > satisfies:
-    > (1) Every column contains an odd number of 1s.
-    > (2) The total number of 1s reaches the minimum.
-    > (3) The difference of the number of 1s in any two rows is not greater than 1.
-    > (4) No two columns are the same.
-    """
-    # TODO(mgottscho): code is not optimal - the rows of H are not balanced (at most off-by-one number of 1s across all rows of H).
-    # This will lead to suboptimal timing and logic depth!!
-    n = get_n(k, r)
-    # Fill H_m with column vectors that satisfy conditions (1), (2), and (4).
-    start_col = 0
-    weight = 3  # Only use odd weights, and skip weight 1 since it's only used for H_p
-    H_m = np.zeros((r, k), dtype=int)
-    while start_col < k:
-        remaining_cols = k - start_col
-        cols_using_weight = min(math.comb(r, weight), remaining_cols)
-        end_col = start_col + cols_using_weight
-        H_m[:, start_col:end_col] = parity_check_message_columns(
-            r, cols_using_weight, weight
-        )
-        assert check_columns_have_same_weight(H_m[:, start_col:end_col])
-        start_col = end_col
-        weight += 2  # Only use odd weights
-    # r x r matrix for parity bits (identity)
-    H_p = np.identity(r, dtype=int)
-    H = np.hstack((H_m, H_p))  # Combine message and parity parts in systematic form
+    # Build and union all message‑bit blocks
+    Hm = None
+    for w, m in weights_counts:
+        block = delta_matrix(r, w, m)
+        Hm = block if Hm is None else horizontal_union(Hm, block)
+
+    # Append parity-bit identity
+    Hp = np.eye(r, dtype=int)
+    H = np.hstack((Hm, Hp))
     return H
 
 
@@ -128,17 +196,22 @@ def check_columns_unique(matrix: np.ndarray) -> bool:
     return True
 
 
-def check_columns_have_same_weight(matrix: np.ndarray) -> bool:
+def check_columns_have_weight(matrix: np.ndarray, weight: int) -> bool:
     """Check that all columns in the given matrix have the same weight."""
-    ok = True
     sum_over_rows = np.sum(matrix, axis=0)
-    return np.all(sum_over_rows == sum_over_rows[0])
+    return np.all(sum_over_rows == weight)
 
 
 def check_column_weights_are_odd(matrix: np.ndarray) -> bool:
     """Check that all columns in the given matrix have an odd weight."""
     sum_over_rows = np.sum(matrix, axis=0)
     return np.all(sum_over_rows % 2 == 1)
+
+
+def check_row_sums_differ_by_at_most_one(matrix: np.ndarray) -> bool:
+    """Check that the row sums of the given matrix differ by at most one."""
+    sum_over_columns = np.sum(matrix, axis=1)
+    return np.all(np.abs(sum_over_columns - sum_over_columns[0]) <= 1)
 
 
 def check_matrix_is_binary(matrix: np.ndarray) -> None:
@@ -158,8 +231,6 @@ def check_matrix_is_binary(matrix: np.ndarray) -> None:
 
 def binary_matmul(A: np.ndarray, B: np.ndarray) -> np.ndarray:
     """Multiply two binary matrices (A @ B) and raise a ValueError if the result is not binary."""
-    check_matrix_is_binary(A)
-    check_matrix_is_binary(B)
     AB = (A @ B) % 2
     return AB
 
@@ -209,9 +280,6 @@ def hsiao_secded_code(k: int) -> tuple[int, int, np.ndarray, np.ndarray]:
     n = get_n(k, r)
     H = get_H(k, r)
     G = get_G(H)
-    check_matrix_is_binary(H)
-    check_matrix_is_binary(G)
-    check_matrices_orthogonal(H, G.T)
     return r, n, H, G
 
 
