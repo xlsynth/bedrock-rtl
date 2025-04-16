@@ -328,7 +328,7 @@ def check_construction(G: np.ndarray, H: np.ndarray) -> None:
         """Raises a ValueError if any columns are the same in the given matrix."""
         for ci in range(matrix.shape[1]):
             for cj in range(ci + 1, matrix.shape[1]):
-                if not np.array_equal(matrix[:, ci], matrix[:, cj]):
+                if np.array_equal(matrix[:, ci], matrix[:, cj]):
                     raise ValueError("Columns are not unique.")
 
     def check_columns_have_weight(matrix: np.ndarray, weight: int) -> None:
