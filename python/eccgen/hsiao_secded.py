@@ -110,16 +110,6 @@ def get_r(k: int) -> int:
     return r
 
 
-def get_n(k: int, r: int) -> int:
-    """Calculate the total number of bits in a codeword (n) for a Hsiao SECDED code with the given message length (k) and parity length (p) in bits."""
-    return k + r
-
-
-def get_k(n: int, r: int) -> int:
-    """Calculate the number of message bits (k) in a codeword for a Hsiao SECDED code with the given codeword length (n) and parity length (p) in bits."""
-    return n - r
-
-
 def uint_to_bit_vector(number: int, bit_length: int) -> np.ndarray:
     """Convert an unsigned integer to a vector of bits with a specified length."""
     if number < 0:
@@ -178,7 +168,7 @@ def get_G(H: np.ndarray) -> np.ndarray:
     """Generate the k x n generator matrix G for a Hsiao SECDED code with the given r x n parity-check matrix H."""
     r = H.shape[0]
     n = H.shape[1]
-    k = get_k(n, r)
+    k = n - r
     # Message part of G is identity matrix since we want systematic form.
     G_m = np.identity(k, dtype=int)
     H_m = H[:, :k]
@@ -277,7 +267,7 @@ def hsiao_secded_code(k: int) -> tuple[int, int, np.ndarray, np.ndarray]:
     if k <= 0:
         raise ValueError("k must be positive.")
     r = get_r(k)
-    n = get_n(k, r)
+    n = k + r
     H = get_H(k, r)
     G = get_G(H)
     return r, n, H, G
@@ -311,7 +301,7 @@ def decode_message(
     """
     n = c.shape[0]
     r = s.shape[0]
-    k = get_k(n, r)
+    k = n - r
     if H.shape[0] != r or H.shape[1] != n:
         raise ValueError("H must be r x n.")
 
