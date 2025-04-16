@@ -146,18 +146,18 @@ class TestHsiaoSecdedCode(unittest.TestCase):
         for _ in range(1000):
             m = np.random.randint(0, 2, k)
             c = encode(m, G)
-            # Inject a single bit flip
-            loc = np.random.randint(0, n)
-            rc = c.copy()
-            rc[loc] = 1 - c[loc]
-            # Decode the codeword and check that syndrome is odd
-            s = decode_syndrome(rc, H, k)
-            self.assertTrue((np.sum(s) % 2) == 1)
-            # Run the error correction algorithm and check that it corrects the error
-            m_prime, ce, due = decode_message(rc, s, H)
-            self.assertTrue(np.array_equal(m, m_prime))
-            self.assertTrue(ce)
-            self.assertFalse(due)
+            # Exhaustively inject a single bit flip at every location
+            for loc in range(n):
+                rc = c.copy()
+                rc[loc] = 1 - c[loc]
+                # Decode the codeword and check that syndrome is odd
+                s = decode_syndrome(rc, H, k)
+                self.assertTrue((np.sum(s) % 2) == 1)
+                # Run the error correction algorithm and check that it corrects the error
+                m_decoded, ce, due = decode_message(rc, s, H)
+                self.assertTrue(np.array_equal(m, m_decoded))
+                self.assertTrue(ce)
+                self.assertFalse(due)
 
     @parameterized.expand(
         [
@@ -180,18 +180,21 @@ class TestHsiaoSecdedCode(unittest.TestCase):
         for _ in range(1000):
             m = np.random.randint(0, 2, k)
             c = encode(m, G)
-            # Inject a double bit flip
-            locs = np.random.choice(n, 2, replace=False)
-            rc = c.copy()
-            for loc in locs:
-                rc[loc] = 1 - c[loc]
-            # Decode the codeword and check that syndrome is even
-            s = decode_syndrome(rc, H, k)
-            self.assertTrue((np.sum(s) % 2) == 0)
-            # Run the error correction algorithm and check that it detects but doesn't correct the error
-            _, ce, due = decode_message(rc, s, H)
-            self.assertFalse(ce)
-            self.assertTrue(due)
+            # Exhaustively inject all possible double bit flips
+            for loc0 in range(n):
+                for loc1 in range(n):
+                    if loc0 == loc1:
+                        continue
+                    rc = c.copy()
+                    rc[loc0] = 1 - c[loc0]
+                    rc[loc1] = 1 - c[loc1]
+                    # Decode the codeword and check that syndrome is even
+                    s = decode_syndrome(rc, H, k)
+                    self.assertTrue((np.sum(s) % 2) == 0)
+                    # Run the error correction algorithm and check that it detects but doesn't correct the error
+                    _, ce, due = decode_message(rc, s, H)
+                    self.assertFalse(ce)
+                    self.assertTrue(due)
 
     @parameterized.expand(
         [
@@ -214,7 +217,7 @@ class TestHsiaoSecdedCode(unittest.TestCase):
         for _ in range(1000):
             m = np.random.randint(0, 2, k)
             c = encode(m, G)
-            # Inject a triple bit flip
+            # Randomly inject a triple bit flip. Not feasible to do this exhaustively.
             locs = np.random.choice(n, 3, replace=False)
             rc = c.copy()
             for loc in locs:
