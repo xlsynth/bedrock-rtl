@@ -15,6 +15,7 @@
 import unittest
 import numpy as np
 from parameterized import parameterized
+from concurrent.futures import ProcessPoolExecutor
 from python.eccgen.hsiao_secded import (
     hsiao_secded_code,
     get_r,
@@ -23,6 +24,49 @@ from python.eccgen.hsiao_secded import (
     decode_syndrome,
     decode_message,
 )
+
+
+def _check_single_error(m, k, n, H, G):
+    c = encode(m, G)
+    for loc in range(n):
+        rc = c.copy()
+        rc[loc] = 1 - c[loc]
+        s = decode_syndrome(rc, H, k)
+        assert (np.sum(s) % 2) == 1
+        m_decoded, ce, due = decode_message(rc, s, H)
+        assert np.array_equal(m, m_decoded)
+        assert ce
+        assert not due
+
+
+def _check_double_error(m, k, n, H, G):
+    c = encode(m, G)
+    for loc0 in range(n):
+        for loc1 in range(n):
+            if loc0 == loc1:
+                continue
+            rc = c.copy()
+            rc[loc0] = 1 - rc[loc0]
+            rc[loc1] = 1 - rc[loc1]
+            s = decode_syndrome(rc, H, k)
+            assert (np.sum(s) % 2) == 0
+            _, ce, due = decode_message(rc, s, H)
+            assert not ce
+            assert due
+
+
+def _check_triple_error(m, k, n, H, G):
+    c = encode(m, G)
+    # Infeasible to do this exhaustively for large n
+    locs = np.random.choice(n, 3, replace=False)
+    rc = c.copy()
+    for loc in locs:
+        rc[loc] = 1 - rc[loc]
+    s = decode_syndrome(rc, H, k)
+    assert (np.sum(s) % 2) == 1
+    _, ce, due = decode_message(rc, s, H)
+    # Triple bit error must not go undetected
+    assert ce ^ due
 
 
 class TestHsiaoSecdedCode(unittest.TestCase):
@@ -143,21 +187,9 @@ class TestHsiaoSecdedCode(unittest.TestCase):
     def test_encode_decode_random_single_error_injection(self, name, k):
         r, n, H, G = hsiao_secded_code(k)
         np.random.seed(42)
-        for _ in range(1000):
-            m = np.random.randint(0, 2, k)
-            c = encode(m, G)
-            # Exhaustively inject a single bit flip at every location
-            for loc in range(n):
-                rc = c.copy()
-                rc[loc] = 1 - c[loc]
-                # Decode the codeword and check that syndrome is odd
-                s = decode_syndrome(rc, H, k)
-                self.assertTrue((np.sum(s) % 2) == 1)
-                # Run the error correction algorithm and check that it corrects the error
-                m_decoded, ce, due = decode_message(rc, s, H)
-                self.assertTrue(np.array_equal(m, m_decoded))
-                self.assertTrue(ce)
-                self.assertFalse(due)
+        messages = [np.random.randint(0, 2, k) for _ in range(1000)]
+        with ProcessPoolExecutor() as executor:
+            executor.map(lambda m: _check_single_error(m, k, n, H, G), messages)
 
     @parameterized.expand(
         [
@@ -177,24 +209,9 @@ class TestHsiaoSecdedCode(unittest.TestCase):
     def test_encode_decode_random_double_error_injection(self, name, k):
         r, n, H, G = hsiao_secded_code(k)
         np.random.seed(42)
-        for _ in range(1000):
-            m = np.random.randint(0, 2, k)
-            c = encode(m, G)
-            # Exhaustively inject all possible double bit flips
-            for loc0 in range(n):
-                for loc1 in range(n):
-                    if loc0 == loc1:
-                        continue
-                    rc = c.copy()
-                    rc[loc0] = 1 - c[loc0]
-                    rc[loc1] = 1 - c[loc1]
-                    # Decode the codeword and check that syndrome is even
-                    s = decode_syndrome(rc, H, k)
-                    self.assertTrue((np.sum(s) % 2) == 0)
-                    # Run the error correction algorithm and check that it detects but doesn't correct the error
-                    _, ce, due = decode_message(rc, s, H)
-                    self.assertFalse(ce)
-                    self.assertTrue(due)
+        messages = [np.random.randint(0, 2, k) for _ in range(100)]
+        with ProcessPoolExecutor() as executor:
+            executor.map(lambda m: _check_double_error(m, k, n, H, G), messages)
 
     @parameterized.expand(
         [
@@ -214,20 +231,9 @@ class TestHsiaoSecdedCode(unittest.TestCase):
     def test_encode_decode_random_triple_error_injection(self, name, k):
         r, n, H, G = hsiao_secded_code(k)
         np.random.seed(42)
-        for _ in range(1000):
-            m = np.random.randint(0, 2, k)
-            c = encode(m, G)
-            # Randomly inject a triple bit flip. Not feasible to do this exhaustively.
-            locs = np.random.choice(n, 3, replace=False)
-            rc = c.copy()
-            for loc in locs:
-                rc[loc] = 1 - c[loc]
-            # Decode the codeword and check that syndrome is odd
-            s = decode_syndrome(rc, H, k)
-            self.assertTrue((np.sum(s) % 2) == 1)
-            # Run the error correction algorithm and check that either (1) corrects the error or (2) detects but doesn't correct the error
-            _, ce, due = decode_message(rc, s, H)
-            self.assertTrue(ce ^ due)
+        messages = [np.random.randint(0, 2, k) for _ in range(1000)]
+        with ProcessPoolExecutor() as executor:
+            executor.map(lambda m: _check_triple_error(m, k, n, H, G), messages)
 
 
 if __name__ == "__main__":
