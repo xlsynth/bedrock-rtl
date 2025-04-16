@@ -307,20 +307,29 @@ def check_construction(G: np.ndarray, H: np.ndarray) -> None:
 
     def check_distance_ge_4(H: np.ndarray) -> None:
         """Raises a ValueError if the distance of the code is less than 4."""
-        r, n = H.shape
-        # Test every subset of 1, 2, or 3 columns
-        for t in (1, 2, 3):
-            for cols in combinations(range(n), t):
-                sub = H[:, cols]  # shape r x t
-                # over GF(2), independence means sub @ x = 0 only for x=0
-                # but with t<=r we can check rank = t:
-                if np.linalg.matrix_rank(sub % 2) < t:
-                    err_string = [
-                        "Columns are dependent -> distance < 4.",
-                        f"columns = {cols}",
-                        f"matrix = \n{matrix}",
-                    ]
-                    raise ValueError("\n".join(err_string))
+
+        def get_min_distance(H: np.ndarray) -> int:
+            """
+            Brute-force search for the minimum distance d of the code defined by parity-check H.
+            """
+            r, n = H.shape
+            # Look for the smallest t for which some t columns are dependent
+            for t in range(1, n + 1):
+                for cols in combinations(range(n), t):
+                    subH = H[:, cols]  # r × t
+                    # rank < t --> columns are dependent --> there is a codeword of weight t
+                    if np.linalg.matrix_rank(subH % 2) < t:
+                        return t
+            raise ValueError("Only the zero codeword found!")
+
+        d = get_min_distance(H)
+        if d < 4:
+            err_string = [
+                "Minimum distance of H is less than 4 (required for a SECDED code).",
+                f"distance = {d}",
+                f"H = \n{H}",
+            ]
+            raise ValueError("\n".join(err_string))
 
     def check_row_sums_differ_by_at_most_one(matrix: np.ndarray) -> None:
         """Raises a ValueError if the row sums of the given matrix differ by more than one."""
