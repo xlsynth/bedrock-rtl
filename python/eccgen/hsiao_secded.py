@@ -23,127 +23,141 @@ References:
 import numpy as np
 import math
 import textwrap
-
-
-def delta_matrix(R: int, J: int, m: int) -> np.ndarray:
-    """
-    Build the R x m recursively-balanced matrix ∆(R,J,m) as described in [2]:
-    - All columns have weight J,
-    - No two columns identical,
-    - Row-sums differ by at most 1.
-    """
-    # Base cases
-    if m == 0:
-        return np.zeros((R, 0), dtype=int)
-    if J == 0:
-        return np.zeros((R, m), dtype=int)
-    if J == R:
-        return np.ones((R, m), dtype=int)
-    if m == 1:
-        col = np.zeros((R, 1), dtype=int)
-        col[:J, 0] = 1
-        return col
-    if J == 1:
-        M = np.zeros((R, m), dtype=int)
-        for i in range(m):
-            M[i, i] = 1
-        return M
-    if J == R - 1:
-        M = np.ones((R, m), dtype=int)
-        for i in range(m):
-            M[i, i] = 0
-        return M
-
-    # Recursive split
-    m1 = math.ceil(m * J / R)
-    m2 = m - m1
-    M1 = delta_matrix(R - 1, J - 1, m1)
-    M2 = delta_matrix(R - 1, J, m2)
-
-    # Compute extra‑1 rows in each part
-    r1 = ((J - 1) * m1) % (R - 1)
-    r2 = (J * m2) % (R - 1)
-
-    # Rotate M2's rows to balance
-    def _rotate_M2(M2: np.ndarray, r1: int, r2: int) -> np.ndarray:
-        total = R - 1
-        if r2 == 0:
-            return M2
-        if r1 + r2 > total:
-            cut = r2 - (r1 + r2 - total)
-            return np.vstack((M2[cut:], M2[:cut]))
-        else:
-            top = M2[:r2]
-            rest = M2[r2:]
-            return np.vstack((rest[:r1], top, rest[r1:]))
-
-    M2p = _rotate_M2(M2, r1, r2)
-
-    # Build the full block
-    top_row = np.hstack((np.ones(m1, dtype=int), np.zeros(m2, dtype=int)))[None, :]
-    bottom = np.hstack((M1, M2p))
-    delta = np.vstack((top_row, bottom))
-
-    def check_columns_have_weight(matrix: np.ndarray, weight: int) -> None:
-        """Raises a ValueError if any columns in the given matrix do not have the specified weight."""
-        sum_over_rows = np.sum(matrix, axis=0)
-        if not np.all(sum_over_rows == weight):
-            raise ValueError(f"Columns do not have the specified weight {weight}.")
-
-    check_columns_have_weight(delta, J)
-    return delta
-
-
-def horizontal_union(A: np.ndarray, B: np.ndarray) -> np.ndarray:
-    """
-    N ⊕ M: flip M upside-down, hstack it onto A, then
-    reorder rows by descending row-sum to re-balance.
-    """
-    M_up = np.flipud(B)
-    C = np.hstack((A, M_up))
-    order = np.argsort(-C.sum(axis=1))
-    return C[order]
+from itertools import combinations
 
 
 def get_r(k: int) -> int:
-    """Calculate the number of parity bits (p) required for a Hsiao SECDED code with the given message length (k) in bits."""
+    """Calculate the number of parity bits r for a Hsiao SECDED code with k message bits."""
     r = 1
     while r < math.ceil(math.log2(k + r)) + 1:
         r += 1
     return r
 
 
-def uint_to_bit_vector(number: int, bit_length: int) -> np.ndarray:
-    """Convert an unsigned integer to a vector of bits with a specified length."""
-    if number < 0:
-        raise ValueError("Number must be non-negative.")
-    binary_str = format(number, f"0{bit_length}b")
-    return np.array([int(bit) for bit in binary_str])
+def _balanced_message_matrix_greedy(r: int, k: int) -> np.ndarray:
+    """
+    Build the r x k message-part Hm by greedy selection of the lowest-weight
+    odd columns to minimize row-sum imbalance.
+    """
+    # Generate all odd-weight column candidates (weight 3,5,...)
+    candidates: list[np.ndarray] = []
+    for J in range(3, r + 1, 2):
+        for combo in combinations(range(r - 1, -1, -1), J):
+            col = np.zeros(r, dtype=int)
+            col[list(combo)] = 1
+            candidates.append(col)
+    used = [False] * len(candidates)
+    row_sums = np.zeros(r, dtype=int)
+    selected_cols: list[np.ndarray] = []
+
+    for _ in range(k):
+        best_i = None
+        best_diff = None
+        best_min = None
+        # pick the column that yields minimal (max-min) row_sum difference,
+        # breaking ties by largest minimum row sum
+        for i, col in enumerate(candidates):
+            if used[i]:
+                continue
+            new_sums = row_sums + col
+            diff = int(new_sums.max() - new_sums.min())
+            mn = int(new_sums.min())
+            if (
+                best_i is None
+                or diff < best_diff
+                or (diff == best_diff and mn > best_min)
+            ):
+                best_i, best_diff, best_min = i, diff, mn
+        used[best_i] = True
+        selected_cols.append(candidates[best_i].reshape(r, 1))
+        row_sums += candidates[best_i]
+    Hm = np.hstack(selected_cols)
+    return Hm
 
 
-def bit_vector_to_uint(bit_vector: np.ndarray) -> int:
-    """Convert a bit vector to an unsigned integer."""
-    return int("".join(map(str, bit_vector)), 2)
+def _balanced_message_matrix_using_delta(r: int, k: int) -> np.ndarray:
+    """
+    Build the r x k message-part Hm by using the delta matrices [2].
+    """
 
+    def delta_matrix(R: int, J: int, m: int) -> np.ndarray:
+        """
+        Build the R x m recursively-balanced matrix ∆(R,J,m) as described in [2]:
+        - All columns have weight J,
+        - No two columns identical,
+        - Row-sums differ by at most 1.
+        """
+        # Base cases
+        if m == 0:
+            return np.zeros((R, 0), dtype=int)
+        if J == 0:
+            return np.zeros((R, m), dtype=int)
+        if J == R:
+            return np.ones((R, m), dtype=int)
+        if m == 1:
+            col = np.zeros((R, 1), dtype=int)
+            col[:J, 0] = 1
+            return col
+        if J == 1:
+            M = np.zeros((R, m), dtype=int)
+            for i in range(m):
+                M[i, i] = 1
+            return M
+        if J == R - 1:
+            M = np.ones((R, m), dtype=int)
+            for i in range(m):
+                M[i, i] = 0
+            return M
 
-def parity_check_message_columns(r: int, k: int, col_weight: int) -> np.ndarray:
-    """Returns a set of parity columns for the r x k message part of the r x n parity-check matrix."""
-    # This is not the most efficient way of finding the columns, but it works!
-    ret = np.zeros((r, k), dtype=int)
-    i = 0
-    c = 0
-    while c < k:
-        vec = uint_to_bit_vector(i, r)
-        vec_sum = np.sum(vec)
-        if vec_sum == col_weight:
-            ret[:, c] = vec
-            c += 1
-        i += 1
-    return ret
+        # Recursive split
+        m1 = math.ceil(m * J / R)
+        m2 = m - m1
+        M1 = delta_matrix(R - 1, J - 1, m1)
+        M2 = delta_matrix(R - 1, J, m2)
 
+        # Compute extra‑1 rows in each part
+        r1 = ((J - 1) * m1) % (R - 1)
+        r2 = (J * m2) % (R - 1)
 
-def get_H(k: int, r: int) -> np.ndarray:
-    """Generate the r x n parity-check matrix H for a Hsiao SECDED code."""
+        # Rotate M2's rows to balance
+        def _rotate_M2(M2: np.ndarray, r1: int, r2: int) -> np.ndarray:
+            total = R - 1
+            if r2 == 0:
+                return M2
+            if r1 + r2 > total:
+                cut = r2 - (r1 + r2 - total)
+                return np.vstack((M2[cut:], M2[:cut]))
+            else:
+                top = M2[:r2]
+                rest = M2[r2:]
+                return np.vstack((rest[:r1], top, rest[r1:]))
+
+        M2p = _rotate_M2(M2, r1, r2)
+
+        # Build the full block
+        top_row = np.hstack((np.ones(m1, dtype=int), np.zeros(m2, dtype=int)))[None, :]
+        bottom = np.hstack((M1, M2p))
+        delta = np.vstack((top_row, bottom))
+
+        def check_columns_have_weight(matrix: np.ndarray, weight: int) -> None:
+            """Raises a ValueError if any columns in the given matrix do not have the specified weight."""
+            sum_over_rows = np.sum(matrix, axis=0)
+            if not np.all(sum_over_rows == weight):
+                raise ValueError(f"Columns do not have the specified weight {weight}.")
+
+        check_columns_have_weight(delta, J)
+        return delta
+
+    def horizontal_union(A: np.ndarray, B: np.ndarray) -> np.ndarray:
+        """
+        N ⊕ M: flip M upside-down, hstack it onto A, then
+        reorder rows by descending row-sum to re-balance.
+        """
+        M_up = np.flipud(B)
+        C = np.hstack((A, M_up))
+        order = np.argsort(-C.sum(axis=1))
+        return C[order]
+
     # Compute how many message‑bit columns of each odd weight we need
     remaining = k
     weights_counts = []
@@ -160,7 +174,13 @@ def get_H(k: int, r: int) -> np.ndarray:
     for w, m in weights_counts:
         block = delta_matrix(r, w, m)
         Hm = block if Hm is None else horizontal_union(Hm, block)
+    return Hm
 
+
+def get_H(k: int, r: int) -> np.ndarray:
+    """Generate the r x n parity-check matrix H for a Hsiao SECDED code."""
+    # Build a perfectly row-balanced message matrix of k odd-weight columns
+    Hm = _balanced_message_matrix_greedy(r, k)
     # Append parity-bit identity
     Hp = np.eye(r, dtype=int)
     H = np.hstack((Hm, Hp))

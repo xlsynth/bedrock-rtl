@@ -99,6 +99,30 @@ class TestHsiaoSecdedCode(unittest.TestCase):
     def test_get_r_non_pow_of_2(self, name, k, expected_r):
         self.assertEqual(get_r(k), expected_r)
 
+    def test_hsiao_secded_k4(self):
+        _, _, H, G = hsiao_secded_code(4)
+        check_construction(G, H)
+        H_expected = np.array(
+            [
+                [0, 1, 1, 1, 1, 0, 0, 0],
+                [1, 0, 1, 1, 0, 1, 0, 0],
+                [1, 1, 0, 1, 0, 0, 1, 0],
+                [1, 1, 1, 0, 0, 0, 0, 1],
+            ]
+        )
+        G_expected = np.array(
+            [
+                [1, 0, 0, 0, 0, 1, 1, 1],
+                [0, 1, 0, 0, 1, 0, 1, 1],
+                [0, 0, 1, 0, 1, 1, 0, 1],
+                [0, 0, 0, 1, 1, 1, 1, 0],
+            ]
+        )
+        print(H)
+        print(H_expected)
+        self.assertTrue(np.array_equal(H, H_expected))
+        self.assertTrue(np.array_equal(G, G_expected))
+
     @parameterized.expand(
         [
             ("k4", 4, 4, 8),
