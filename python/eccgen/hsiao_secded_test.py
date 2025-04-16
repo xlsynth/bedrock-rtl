@@ -109,7 +109,10 @@ class TestHsiaoSecdedCode(unittest.TestCase):
             ("k32", 32, 7, 39),
             ("k59", 59, 8, 67),
             ("k64", 64, 8, 72),
+            ("k65", 65, 8, 73),
             ("k128", 128, 9, 137),
+            ("k129", 129, 9, 138),
+            ("k512", 512, 11, 523),
         ]
     )
     def test_hsiao_secded_code_construction(self, _, k, expected_r, expected_n):
