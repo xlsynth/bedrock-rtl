@@ -44,8 +44,8 @@
 `include "br_unused.svh"
 
 module br_counter #(
-    parameter int MaxValue = 1,  // Must be at least 1. Inclusive.
-    parameter int MaxChange = 1,  // Must be at least 1 and at most MaxValue. Inclusive.
+    parameter longint unsigned MaxValue = 1,  // Must be at least 1. Inclusive.
+    parameter longint unsigned MaxChange = 1, // Must be at least 1 and at most MaxValue. Inclusive.
     // If 1, allow the counter value to wrap around 0/MaxValue, adding additional correction
     // logic to do so if MaxValue is not 1 less than a power of two.
     // If 0, don't allow wrapping and omit overflow/underflow correction logic.
@@ -64,8 +64,8 @@ module br_counter #(
     parameter bit EnableSaturate = 0,
     // If 1, then assert there are no valid bits asserted at the end of the test.
     parameter bit EnableAssertFinalNotValid = 1,
-    localparam int ValueWidth = $clog2(MaxValue + 1),
-    localparam int ChangeWidth = $clog2(MaxChange + 1)
+    localparam bit [$clog2(MaxValue + 1)-1:0] ValueWidth = $clog2(MaxValue + 1),
+    localparam bit [$clog2(MaxChange + 1)-1:0] ChangeWidth = $clog2(MaxChange + 1)
 ) (
     // Posedge-triggered clock.
     input  logic                   clk,
@@ -96,7 +96,7 @@ module br_counter #(
   // Assertion-only helper logic for overflow/underflow detection
 `ifdef BR_ASSERT_ON
 `ifndef BR_DISABLE_INTG_CHECKS
-  localparam int ExtWidth = $clog2(MaxValue + ChangeWidth + 1);
+  localparam longint unsigned ExtWidth = $clog2(MaxValue + ChangeWidth + 1);
   logic [ExtWidth-1:0] value_extended;
   logic [ExtWidth-1:0] value_extended_next;
 
@@ -123,9 +123,9 @@ module br_counter #(
   //------------------------------------------
   // Implementation
   //------------------------------------------
-  localparam int MaxValueP1 = MaxValue + 1;
+  localparam bit [ValueWidth-1:0] MaxValueP1 = MaxValue + 1;
   localparam bit IsMaxValueP1PowerOf2 = (MaxValueP1 & (MaxValueP1 - 1)) == 0;
-  localparam int TempWidth = $clog2(MaxValue + MaxChange + 1);
+  localparam bit [ValueWidth+ChangeWidth-1:0] TempWidth = $clog2(MaxValue + MaxChange + 1);
 
   logic                   value_loaden;
   // The MSB might not be used
