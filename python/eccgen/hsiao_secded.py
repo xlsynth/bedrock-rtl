@@ -83,6 +83,14 @@ def delta_matrix(R: int, J: int, m: int) -> np.ndarray:
     top_row = np.hstack((np.ones(m1, dtype=int), np.zeros(m2, dtype=int)))[None, :]
     bottom = np.hstack((M1, M2p))
     delta = np.vstack((top_row, bottom))
+
+    def check_columns_have_weight(matrix: np.ndarray, weight: int) -> None:
+        """Raises a ValueError if any columns in the given matrix do not have the specified weight."""
+        sum_over_rows = np.sum(matrix, axis=0)
+        if not np.all(sum_over_rows == weight):
+            raise ValueError(f"Columns do not have the specified weight {weight}.")
+
+    check_columns_have_weight(delta, J)
     return delta
 
 
@@ -331,23 +339,27 @@ def check_construction(G: np.ndarray, H: np.ndarray) -> None:
                 if np.array_equal(matrix[:, ci], matrix[:, cj]):
                     raise ValueError("Columns are not unique.")
 
-    def check_columns_have_weight(matrix: np.ndarray, weight: int) -> None:
-        """Raises a ValueError if any columns in the given matrix do not have the specified weight."""
-        sum_over_rows = np.sum(matrix, axis=0)
-        if not np.all(sum_over_rows == weight):
-            raise ValueError(f"Columns do not have the specified weight {weight}.")
-
     def check_column_weights_are_odd(matrix: np.ndarray) -> None:
         """Raises a ValueError if any columns in the given matrix do not have an odd weight."""
         sum_over_rows = np.sum(matrix, axis=0)
         if not np.all(sum_over_rows % 2 == 1):
-            raise ValueError("Columns do not have an odd weight.")
+            err_string = [
+                "Columns do not have an odd weight.",
+                f"matrix = \n{matrix}",
+                f"sums = \n{sum_over_rows}",
+            ]
+            raise ValueError("\n".join(err_string))
 
     def check_row_sums_differ_by_at_most_one(matrix: np.ndarray) -> None:
         """Raises a ValueError if the row sums of the given matrix differ by more than one."""
         sum_over_columns = np.sum(matrix, axis=1)
         if not np.all(np.abs(sum_over_columns - sum_over_columns[0]) <= 1):
-            raise ValueError("Row sums differ by more than one.")
+            err_string = [
+                "Row sums differ by more than one.",
+                f"matrix = \n{matrix}",
+                f"row sums = \n{sum_over_columns}",
+            ]
+            raise ValueError("\n".join(err_string))
 
     def check_matrix_is_binary(matrix: np.ndarray) -> None:
         """Raises a ValueError if the given matrix is not binary (contains only 0s and 1s)."""
@@ -386,12 +398,15 @@ def check_construction(G: np.ndarray, H: np.ndarray) -> None:
 
     def check_G_systematic(G: np.ndarray) -> bool:
         """Raises a ValueError if the given generator matrix G is not in systematic form."""
+        k = G.shape[0]
         I_k = np.identity(k, dtype=int)
         if not np.array_equal(G[:, :k], I_k):
             raise ValueError("Generator matrix G is not in systematic form.")
 
     def check_H_systematic(H: np.ndarray) -> None:
         """Raises a ValueError if the given parity-check matrix H is not in systematic form."""
+        r, n = H.shape
+        k = n - r
         I_r = np.identity(r, dtype=int)
         if not np.array_equal(H[:, k:], I_r):
             raise ValueError("Parity-check matrix H is not in systematic form.")
