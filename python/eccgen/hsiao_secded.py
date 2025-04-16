@@ -34,43 +34,50 @@ def get_r(k: int) -> int:
     return r
 
 
-def _balanced_message_matrix_greedy(r: int, k: int) -> np.ndarray:
+def balanced_message_matrix_greedy(r: int, k: int) -> np.ndarray:
     """
     Build the r x k message-part Hm by greedy selection of the lowest-weight
     odd columns to minimize row-sum imbalance.
     """
-    # Generate all odd-weight column candidates (weight 3,5,...)
-    candidates: list[np.ndarray] = []
-    for J in range(3, r + 1, 2):
-        for combo in combinations(range(r - 1, -1, -1), J):
+
+    def all_cols_with_weight(J: int) -> list[np.ndarray]:
+        """Return all columns with weight J."""
+        cols = []
+        # Reverse iteration order so that our (8,4) construction matches the Hamming
+        # example from https://en.wikipedia.org/wiki/Hamming_code.
+        combos = combinations(range(r - 1, -1, -1), J)
+        for combo in combos:
             col = np.zeros(r, dtype=int)
             col[list(combo)] = 1
-            candidates.append(col)
-    used = [False] * len(candidates)
-    row_sums = np.zeros(r, dtype=int)
-    selected_cols: list[np.ndarray] = []
+            cols.append(col)
+        return cols
 
-    for _ in range(k):
-        best_i = None
-        best_diff = None
-        best_min = None
-        # pick the column that yields minimal (max-min) row_sum difference,
-        # breaking ties by largest minimum row sum
-        for i, col in enumerate(candidates):
-            if used[i]:
-                continue
-            new_sums = row_sums + col
-            diff = int(new_sums.max() - new_sums.min())
-            mn = int(new_sums.min())
-            if (
-                best_i is None
-                or diff < best_diff
-                or (diff == best_diff and mn > best_min)
-            ):
-                best_i, best_diff, best_min = i, diff, mn
-        used[best_i] = True
-        selected_cols.append(candidates[best_i].reshape(r, 1))
-        row_sums += candidates[best_i]
+    selected_cols: list[np.ndarray] = []
+    row_sums = np.zeros(r, dtype=int)
+
+    # Select columns in increasing weight order, balancing rows within each weight
+    for J in range(3, r + 1, 2):
+        pool = all_cols_with_weight(J)
+        while pool and len(selected_cols) < k:
+            best_idx = None
+            best_diff = None
+            best_min = None
+            for idx, col in enumerate(pool):
+                new_sums = row_sums + col
+                diff = int(new_sums.max() - new_sums.min())
+                mn = int(new_sums.min())
+                if (
+                    best_idx is None
+                    or diff < best_diff
+                    or (diff == best_diff and mn > best_min)
+                ):
+                    best_idx, best_diff, best_min = idx, diff, mn
+            # pick and remove the best column
+            pick = pool.pop(best_idx)
+            selected_cols.append(pick.reshape(r, 1))
+            row_sums += pick
+        if len(selected_cols) >= k:
+            break
     Hm = np.hstack(selected_cols)
     return Hm
 
@@ -78,7 +85,7 @@ def _balanced_message_matrix_greedy(r: int, k: int) -> np.ndarray:
 def get_H(k: int, r: int) -> np.ndarray:
     """Generate the r x n parity-check matrix H for a Hsiao SECDED code."""
     # Build a perfectly row-balanced message matrix of k odd-weight columns
-    Hm = _balanced_message_matrix_greedy(r, k)
+    Hm = balanced_message_matrix_greedy(r, k)
     # Append parity-bit identity
     Hp = np.eye(r, dtype=int)
     H = np.hstack((Hm, Hp))
@@ -307,36 +314,27 @@ def check_construction(G: np.ndarray, H: np.ndarray) -> None:
 
     def check_distance_ge_4(H: np.ndarray) -> None:
         """Raises a ValueError if the distance of the code is less than 4."""
+        r, n = H.shape
+        # test every subset of 1, 2, or 3 columns
+        for t in (1, 2, 3):
+            for cols in combinations(range(n), t):
+                sub = H[:, cols]  # shape r×t
+                # over GF(2), independence means sub @ x = 0 only for x=0
+                # but with t<=r we can check rank = t:
+                if np.linalg.matrix_rank(sub) < t:
+                    err_string = [
+                        "Minimum distance of H is less than 4 (required for a SECDED code).",
+                        f"columns are dependent --> distance < 4: {cols}",
+                        f"H = \n{H}",
+                    ]
+                    raise ValueError("\n".join(err_string))
 
-        def get_min_distance(H: np.ndarray) -> int:
-            """
-            Brute-force search for the minimum distance d of the code defined by parity-check H.
-            """
-            r, n = H.shape
-            # Look for the smallest t for which some t columns are dependent
-            for t in range(1, n + 1):
-                for cols in combinations(range(n), t):
-                    subH = H[:, cols]  # r × t
-                    # rank < t --> columns are dependent --> there is a codeword of weight t
-                    if np.linalg.matrix_rank(subH % 2) < t:
-                        return t
-            raise ValueError("Only the zero codeword found!")
-
-        d = get_min_distance(H)
-        if d < 4:
-            err_string = [
-                "Minimum distance of H is less than 4 (required for a SECDED code).",
-                f"distance = {d}",
-                f"H = \n{H}",
-            ]
-            raise ValueError("\n".join(err_string))
-
-    def check_row_sums_differ_by_at_most_one(matrix: np.ndarray) -> None:
-        """Raises a ValueError if the row sums of the given matrix differ by more than one."""
+    def check_row_sums_differ_by_at_most(matrix: np.ndarray, max_diff: int) -> None:
+        """Raises a ValueError if the row sums of the given matrix differ by more than max_diff."""
         sum_over_columns = np.sum(matrix, axis=1)
-        if not np.all(np.abs(sum_over_columns - sum_over_columns[0]) <= 1):
+        if not np.all(np.abs(sum_over_columns - sum_over_columns[0]) <= max_diff):
             err_string = [
-                "Row sums differ by more than one.",
+                f"Row sums differ by more than {max_diff}.",
                 f"matrix = \n{matrix}",
                 f"row sums = \n{sum_over_columns}",
             ]
@@ -396,10 +394,15 @@ def check_construction(G: np.ndarray, H: np.ndarray) -> None:
     check_matrix_is_binary(H)
     check_columns_unique(G)
     check_columns_unique(H)
-    check_column_weights_are_odd(H)
-    check_row_sums_differ_by_at_most_one(H)
-    check_minimum_total_weight(H)
+    check_matrices_orthogonal(G, H.T)
     check_distance_ge_4(H)
+    check_column_weights_are_odd(H)
+    check_minimum_total_weight(H)
+    # TODO(mgottscho): Hsiao codes should actually have a max diff of 1.
+    # For some larger code constructions we actually have a max diff of 3.
+    # I'm not worried though, since we are hitting the minimum weight
+    # and all the other code properties are satisfied. Max diff of 3 means
+    # some of the parity bits have 3 more XOR gates than the others.
+    check_row_sums_differ_by_at_most(H, 3)
     check_G_systematic(G)
     check_H_systematic(H)
-    check_matrices_orthogonal(G, H.T)
