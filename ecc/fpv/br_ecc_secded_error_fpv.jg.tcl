@@ -11,15 +11,14 @@
  # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  # See the License for the specific language governing permissions and
  # limitations under the License.
- 
+
  # clock/reset set up
  clock clk
  reset rst
  get_design_info
- 
+
  # TODO: disable covers for now
  cover -disable *
- 
+
  # prove command
  prove -all
- 
