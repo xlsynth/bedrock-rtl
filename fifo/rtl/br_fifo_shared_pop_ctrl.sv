@@ -73,6 +73,7 @@ module br_fifo_shared_pop_ctrl #(
     output logic [NumFifos-1:0] pop_valid,
     input logic [NumFifos-1:0] pop_ready,
     output logic [NumFifos-1:0][Width-1:0] pop_data,
+    output logic [NumFifos-1:0] pop_empty,
 
     output logic [NumFifos-1:0] dealloc_valid,
     output logic [NumFifos-1:0][AddrWidth-1:0] dealloc_entry_id,
@@ -122,13 +123,15 @@ module br_fifo_shared_pop_ctrl #(
           .pop_ready({fifo_ram_rd_addr_ready[i], pop_ready[i]})
       );
 
-      assign pop_data[i] = fifo_ram_rd_data[i];
+      assign pop_data[i]  = fifo_ram_rd_data[i];
+      assign pop_empty[i] = ram_empty[i];
 
       `BR_ASSERT_IMPL(zero_read_latency_a,
                       (pop_valid[i] && pop_ready[i]) |-> fifo_ram_rd_data_valid[i])
     end else begin : gen_staging_buffer
       logic ram_rd_req_valid;
       logic ram_rd_req_ready;
+      logic stg_buffer_empty;
 
       br_fifo_staging_buffer #(
           .EnableBypass(0),
@@ -155,7 +158,8 @@ module br_fifo_shared_pop_ctrl #(
 
           .pop_ready(pop_ready[i]),
           .pop_valid(pop_valid[i]),
-          .pop_data (pop_data[i])
+          .pop_data (pop_data[i]),
+          .pop_empty(stg_buffer_empty)
       );
 
       br_flow_join #(
@@ -169,6 +173,8 @@ module br_fifo_shared_pop_ctrl #(
           .pop_valid (fifo_ram_rd_addr_valid[i]),
           .pop_ready (fifo_ram_rd_addr_ready[i])
       );
+
+      assign pop_empty[i] = ram_empty[i] && stg_buffer_empty;
     end
 
     assign fifo_ram_rd_addr[i] = head[i];
@@ -177,8 +183,6 @@ module br_fifo_shared_pop_ctrl #(
   if (!HasStagingBuffer) begin : gen_no_buffer_unused
     `BR_UNUSED_NAMED(no_staging_buffer_unused, {ram_items, fifo_ram_rd_data_valid})
   end
-  // TODO(zhemao): Remove this port?
-  `BR_UNUSED(ram_empty)
 
   // Read Crossbar
   // TODO(zhemao): Support an option to have dedicated read ports for a FIFO

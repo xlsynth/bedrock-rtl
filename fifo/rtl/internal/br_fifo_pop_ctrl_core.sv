@@ -145,7 +145,8 @@ module br_fifo_pop_ctrl_core #(
 
         .pop_ready,
         .pop_valid,
-        .pop_data
+        .pop_data,
+        .pop_empty()
     );
     `BR_UNUSED(empty)
   end

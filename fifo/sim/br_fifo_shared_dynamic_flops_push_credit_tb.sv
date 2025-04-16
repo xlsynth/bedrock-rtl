@@ -100,13 +100,15 @@ module br_fifo_shared_dynamic_flops_push_credit_tb;
       .push_valid(dut_push_valid),
       .push_data(dut_push_data),
       .push_fifo_id(dut_push_fifo_id),
+      .push_full(),
       .credit_initial_push,
       .credit_withhold_push,
       .credit_available_push(),
       .credit_count_push(),
       .pop_ready,
       .pop_valid,
-      .pop_data
+      .pop_data,
+      .pop_empty()
   );
 
   br_test_driver td (

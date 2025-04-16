@@ -69,7 +69,8 @@ module br_fifo_staging_buffer #(
 
     input  logic             pop_ready,
     output logic             pop_valid,
-    output logic [Width-1:0] pop_data
+    output logic [Width-1:0] pop_data,
+    output logic             pop_empty
 );
   // ===================
   // Integration Checks
@@ -109,6 +110,7 @@ module br_fifo_staging_buffer #(
   // Staged items must increment when read is issued or data is bypassed
   // and decrement when popped.
   logic [BufferCountWidth-1:0] staged_items;
+  logic [BufferCountWidth-1:0] staged_items_next;
   logic                        staged_items_incr;
   logic                        bypass_beat;
   logic                        pop_beat;
@@ -140,11 +142,12 @@ module br_fifo_staging_buffer #(
       .decr_valid(pop_beat),
       .decr      (1'b1),
 
-      .value_next(),
+      .value_next(staged_items_next),
       .value     (staged_items)
   );
 
   assign pop_beat = pop_valid && pop_ready;
+  `BR_REGLI(pop_empty, staged_items_next == '0, staged_items_incr || pop_beat, 1'b1)
 
   if (RamReadLatency == 0) begin : gen_zero_lat_space_available
     // If there is no read latency, the cut-through latency is always 0,
