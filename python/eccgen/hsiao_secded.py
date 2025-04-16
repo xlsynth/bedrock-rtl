@@ -268,6 +268,60 @@ def check_construction(G: np.ndarray, H: np.ndarray) -> None:
             ]
             raise ValueError("\n".join(err_string))
 
+    def check_minimum_total_weight(H: np.ndarray) -> None:
+        """
+        Raise a ValueError if the total number of 1s in H exceeds the lower bound.
+        (Hsiao codes purport to achieve the lower bound.)
+        """
+
+        def minimal_total_weight(r: int, k: int) -> int:
+            """
+            Calculate the minimal total number of 1s for an r x n Hsiao parity-check matrix,
+            based on selecting the k odd-weight columns of smallest weight. n = r + k.
+            """
+            total = 0
+            remaining = k
+            for J in range(3, r + 1, 2):
+                count = math.comb(r, J)
+                take = min(count, remaining)
+                total += take * J
+                remaining -= take
+                if remaining == 0:
+                    break
+            # Add on the identity matrix of parity bits (systematic form)
+            total += r
+            return total
+
+        r, n = H.shape
+        k = n - r
+        actual = int(np.sum(H))
+        minimal = minimal_total_weight(r, k)
+        if actual != minimal:
+            err = [
+                "Total weight of H is not minimal.",
+                f"actual weight = {actual}",
+                f"minimal weight = {minimal}",
+                f"H = \n{H}",
+            ]
+            raise ValueError("\n".join(err))
+
+    def check_distance_ge_4(H: np.ndarray) -> None:
+        """Raises a ValueError if the distance of the code is less than 4."""
+        r, n = H.shape
+        # Test every subset of 1, 2, or 3 columns
+        for t in (1, 2, 3):
+            for cols in combinations(range(n), t):
+                sub = H[:, cols]  # shape r x t
+                # over GF(2), independence means sub @ x = 0 only for x=0
+                # but with t<=r we can check rank = t:
+                if np.linalg.matrix_rank(sub % 2) < t:
+                    err_string = [
+                        "Columns are dependent -> distance < 4.",
+                        f"columns = {cols}",
+                        f"matrix = \n{matrix}",
+                    ]
+                    raise ValueError("\n".join(err_string))
+
     def check_row_sums_differ_by_at_most_one(matrix: np.ndarray) -> None:
         """Raises a ValueError if the row sums of the given matrix differ by more than one."""
         sum_over_columns = np.sum(matrix, axis=1)
@@ -335,6 +389,8 @@ def check_construction(G: np.ndarray, H: np.ndarray) -> None:
     check_columns_unique(H)
     check_column_weights_are_odd(H)
     check_row_sums_differ_by_at_most_one(H)
+    check_minimum_total_weight(H)
+    check_distance_ge_4(H)
     check_G_systematic(G)
     check_H_systematic(H)
     check_matrices_orthogonal(G, H.T)
