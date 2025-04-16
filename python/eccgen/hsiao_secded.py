@@ -283,11 +283,6 @@ def hsiao_secded_code(k: int) -> tuple[int, int, np.ndarray, np.ndarray]:
     return r, n, H, G
 
 
-def gen_rtl_for_G(G: np.ndarray) -> str:
-    """Generate Verilog RTL code for the given generator matrix G."""
-    pass
-
-
 def encode(m: np.ndarray, G: np.ndarray) -> np.ndarray:
     """Encode a message m using the generator matrix G."""
     return binary_matmul(m, G)
