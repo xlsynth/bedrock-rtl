@@ -25,14 +25,14 @@ module br_ecc_secded_encoder_decoder_tb;
   // Parameters
   parameter int DataWidth = 8;
   parameter int ParityWidth = 5;
+  localparam int MessageWidth = br_ecc::get_max_message_width(ParityWidth);
+  localparam int CodewordWidth = MessageWidth + ParityWidth;
   // Separate RegisterOutputs parameters for encoder and decoder
   parameter bit EncoderRegisterInputs = 0;
   parameter bit EncoderRegisterOutputs = 0;
   parameter bit DecoderRegisterInputs = 0;
   parameter bit DecoderRegisterSyndrome = 0;
   parameter bit DecoderRegisterOutputs = 0;
-  localparam int MessageWidth = 2 ** $clog2(DataWidth);
-  localparam int CodewordWidth = MessageWidth + ParityWidth;
 
   // TODO: have TB support E2E latency > 0
   localparam int E2ELatency =
@@ -55,9 +55,11 @@ module br_ecc_secded_encoder_decoder_tb;
   logic [DataWidth-1:0] enc_data;
   logic [ParityWidth-1:0] enc_parity;
 
-  // Point of error injection
-  logic [ParityWidth + DataWidth-1:0] pre_inject;
-  logic [ParityWidth + DataWidth-1:0] injected;
+  // Point of error injection. ChannelWidth <= CodewordWidth because if DataWidth < MessageWidth
+  // there are 0 pads that are not transmitted from encoder to decoder.
+  localparam int ChannelWidth = DataWidth + ParityWidth;
+  logic [ChannelWidth-1:0] pre_inject;
+  logic [ChannelWidth-1:0] injected;
   logic [DataWidth-1:0] rcv_data;
   logic [ParityWidth-1:0] rcv_parity;
 
@@ -173,7 +175,7 @@ module br_ecc_secded_encoder_decoder_tb;
     for (i = 0; i < num_tests; i = i + 1) begin
       test_data = $urandom;
 
-      for (int inj_index = 0; inj_index < CodewordWidth; inj_index = inj_index + 1) begin
+      for (int inj_index = 0; inj_index < ChannelWidth; inj_index = inj_index + 1) begin
         // Apply data to encoder at negedge clk
         // TODO: this only works when E2ELatency is 0.
         @(negedge clk);
@@ -215,8 +217,8 @@ module br_ecc_secded_encoder_decoder_tb;
     for (i = 0; i < num_tests; i = i + 1) begin
       test_data = $urandom;
 
-      for (int inj_index0 = 0; inj_index0 < CodewordWidth; inj_index0 = inj_index0 + 1) begin
-        for (int inj_index1 = 0; inj_index1 < CodewordWidth; inj_index1 = inj_index1 + 1) begin
+      for (int inj_index0 = 0; inj_index0 < ChannelWidth; inj_index0 = inj_index0 + 1) begin
+        for (int inj_index1 = 0; inj_index1 < ChannelWidth; inj_index1 = inj_index1 + 1) begin
           // Don't inject twice at the same location.
           if (inj_index0 == inj_index1) continue;
 

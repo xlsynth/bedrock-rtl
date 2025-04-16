@@ -92,7 +92,7 @@ br_verilog_fpv_test_tools_suite(
     name = "br_ecc_secded_test_suite",
     elab_opts = [
         "-parameter DataWidth 120",
-        "-parameter ParityWidth 9",
+        "-parameter ParityWidth 8",
     ],
     params = {
         "DecRegisterInputs": [
@@ -139,7 +139,6 @@ verilog_library(
 verilog_elab_test(
     name = "br_ecc_secded_error_fpv_monitor_elab_test",
     tool = "verific",
-    #TODO: RTL has bug
     deps = [":br_ecc_secded_error_fpv_monitor"],
 )
 

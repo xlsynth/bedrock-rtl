@@ -91,4 +91,11 @@ package br_math;
     return (a > b) ? a : b;
   endfunction
 
+  // Returns 2^x.
+  // ri lint_check_waive TWO_STATE_TYPE
+  function automatic int exp2(input int x);
+    // ri lint_check_waive VAR_SHIFT
+    return 1 << x;
+  endfunction
+
 endpackage : br_math

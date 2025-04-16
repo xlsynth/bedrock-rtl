@@ -39,20 +39,20 @@
 // The initiation interval is always 1 cycle.
 //
 // Any data width >= 4 is supported, up to a maximum of 1024. It is internally zero-padded up to
-// the nearest power-of-2 message width before being encoded. The following table outlines the
-// number of parity bits required for different message widths.
+// the largest message width supported by the number of parity bits before being encoded.
+// The following table outlines the number of parity bits required for different message widths.
 //
 // | Message Width (k) | Parity Width (r) | Codeword Width (n)|
 // |-------------------|------------------|-------------------|
 // | 4                 | 4                | 8                 |
-// | 8                 | 5                | 13                |
-// | 16                | 6                | 22                |
-// | 32                | 7                | 39                |
-// | 64                | 8                | 72                |
-// | 128               | 9                | 137               |
-// | 256               | 10               | 266               |
-// | 512               | 11               | 523               |
-// | 1024              | 12               | 1036              |
+// | 11                | 5                | 16                |
+// | 26                | 6                | 32                |
+// | 57                | 7                | 64                |
+// | 120               | 8                | 128               |
+// | 247               | 9                | 256               |
+// | 502               | 10               | 512               |
+// | 1013              | 11               | 1024              |
+// | 2036              | 12               | 2048              |
 //
 // The number of parity bits must be one of the values in the table above
 // or the module will not elaborate.
@@ -75,7 +75,7 @@ module br_ecc_secded_encoder #(
     // If 1, then assert there are no valid bits asserted at the end of the test.
     parameter bit EnableAssertFinalNotValid = 1,
     localparam int OutputWidth = DataWidth + ParityWidth,
-    localparam int MessageWidth = 2 ** $clog2(DataWidth),
+    localparam int MessageWidth = br_ecc::get_max_message_width(ParityWidth),
     localparam int CodewordWidth = MessageWidth + ParityWidth
 ) (
     // Positive edge-triggered clock.
@@ -101,6 +101,9 @@ module br_ecc_secded_encoder #(
   `BR_ASSERT_STATIC(data_width_gte_4_a, DataWidth >= 4)
   `BR_ASSERT_STATIC(parity_width_gte_4_a, ParityWidth >= 4)
   `BR_ASSERT_STATIC(parity_width_lte_12_a, ParityWidth <= 12)
+  `BR_ASSERT_STATIC(codeword_width_pow_of_2_a, br_math::is_power_of_2(CodewordWidth))
+  `BR_ASSERT_STATIC(data_width_fits_in_message_width_a, DataWidth <= MessageWidth)
+  `BR_ASSERT_STATIC(right_sized_parity_bits_a, DataWidth > br_ecc::get_max_message_width(ParityWidth - 1))
 
   //------------------------------------------
   // Implementation
@@ -128,7 +131,7 @@ module br_ecc_secded_encoder #(
   );
 
   //------
-  // Pad the data to the nearest power of 2 message width.
+  // Pad the data to the message width.
   //------
 
   localparam int PadWidth = MessageWidth - DataWidth;
@@ -150,30 +153,30 @@ module br_ecc_secded_encoder #(
   if ((CodewordWidth == 8) && (MessageWidth == 4)) begin : gen_8_4
     `BR_ASSERT_STATIC(parity_width_matches_a, ParityWidth == 4)
 {{ secded_enc_8_4 }}
-  end else if ((CodewordWidth == 13) && (MessageWidth == 8)) begin : gen_13_8
+  end else if ((CodewordWidth == 16) && (MessageWidth == 11)) begin : gen_16_11
     `BR_ASSERT_STATIC(parity_width_matches_a, ParityWidth == 5)
-{{ secded_enc_13_8 }}
-  end else if ((CodewordWidth == 22) && (MessageWidth == 16)) begin : gen_22_16
+{{ secded_enc_16_11 }}
+  end else if ((CodewordWidth == 32) && (MessageWidth == 26)) begin : gen_32_26
     `BR_ASSERT_STATIC(parity_width_matches_a, ParityWidth == 6)
-{{ secded_enc_22_16 }}
-  end else if ((CodewordWidth == 39) && (MessageWidth == 32)) begin : gen_39_32
+{{ secded_enc_32_26 }}
+  end else if ((CodewordWidth == 64) && (MessageWidth == 57)) begin : gen_64_57
     `BR_ASSERT_STATIC(parity_width_matches_a, ParityWidth == 7)
-{{ secded_enc_39_32 }}
-  end else if ((CodewordWidth == 72) && (MessageWidth == 64)) begin : gen_72_64
+{{ secded_enc_64_57 }}
+  end else if ((CodewordWidth == 128) && (MessageWidth == 120)) begin : gen_128_120
     `BR_ASSERT_STATIC(parity_width_matches_a, ParityWidth == 8)
-{{ secded_enc_72_64 }}
-  end else if ((CodewordWidth == 137) && (MessageWidth == 128)) begin : gen_137_128
+{{ secded_enc_128_120 }}
+  end else if ((CodewordWidth == 256) && (MessageWidth == 247)) begin : gen_256_247
     `BR_ASSERT_STATIC(parity_width_matches_a, ParityWidth == 9)
-{{ secded_enc_137_128 }}
-  end else if ((CodewordWidth == 266) && (MessageWidth == 256)) begin : gen_266_256
+{{ secded_enc_256_247 }}
+  end else if ((CodewordWidth == 512) && (MessageWidth == 502)) begin : gen_512_502
     `BR_ASSERT_STATIC(parity_width_matches_a, ParityWidth == 10)
-{{ secded_enc_266_256 }}
-  end else if ((CodewordWidth == 523) && (MessageWidth == 512)) begin : gen_523_512
+{{ secded_enc_512_502 }}
+  end else if ((CodewordWidth == 1024) && (MessageWidth == 1013)) begin : gen_1024_1013
     `BR_ASSERT_STATIC(parity_width_matches_a, ParityWidth == 11)
-{{ secded_enc_523_512 }}
-  end else if ((CodewordWidth == 1036) && (MessageWidth == 1024)) begin : gen_1036_1024
+{{ secded_enc_1024_1013 }}
+  end else if ((CodewordWidth == 2048) && (MessageWidth == 2036)) begin : gen_2048_2036
     `BR_ASSERT_STATIC(parity_width_matches_a, ParityWidth == 12)
-{{ secded_enc_1036_1024 }}
+{{ secded_enc_2048_2036 }}
   end else begin : gen_default_parity
     `BR_ASSERT_STATIC(invalid_parity_width_a, 1'b0)
   end

@@ -18,6 +18,12 @@ load("//bazel:verilog.bzl", "verilog_elab_test")
 package(default_visibility = ["//visibility:private"])
 
 verilog_library(
+    name = "br_ecc_pkg",
+    srcs = ["br_ecc_pkg.sv"],
+    visibility = ["//visibility:public"],
+)
+
+verilog_library(
     name = "br_math_pkg",
     srcs = ["br_math_pkg.sv"],
     visibility = ["//visibility:public"],

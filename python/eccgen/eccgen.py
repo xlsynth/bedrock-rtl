@@ -126,14 +126,14 @@ def main():
 
             RTL_SUPPORTED_N_K = [
                 (8, 4),
-                (13, 8),
-                (22, 16),
-                (39, 32),
-                (72, 64),
-                (137, 128),
-                (266, 256),
-                (523, 512),
-                (1036, 1024),
+                (16, 11),
+                (32, 26),
+                (64, 57),
+                (128, 120),
+                (256, 247),
+                (512, 502),
+                (1024, 1013),
+                (2048, 2036),
             ]
             with open(args.rtl_encoder_template, "r") as template_file:
                 template = Template(template_file.read())
@@ -154,14 +154,14 @@ def main():
 
             RTL_SUPPORTED_N_K = [
                 (8, 4),
-                (13, 8),
-                (22, 16),
-                (39, 32),
-                (72, 64),
-                (137, 128),
-                (266, 256),
-                (523, 512),
-                (1036, 1024),
+                (16, 11),
+                (32, 26),
+                (64, 57),
+                (128, 120),
+                (256, 247),
+                (512, 502),
+                (1024, 1013),
+                (2048, 2036),
             ]
             with open(args.rtl_decoder_template, "r") as template_file:
                 template = Template(template_file.read())

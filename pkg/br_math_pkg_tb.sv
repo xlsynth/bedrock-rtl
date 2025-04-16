@@ -91,4 +91,9 @@ module br_math_pkg_tb;
   `BR_ASSERT_STATIC(is_even_maxint_a, br_math::is_even($bits(int)'((2 ** 31) - 1)) == 0)
   `BR_ASSERT_STATIC(is_even_minint_a, br_math::is_even($bits(int)'(-2 ** 31)) == 1)
 
+  `BR_ASSERT_STATIC(exp2_0_a, br_math::exp2(0) == 1)
+  `BR_ASSERT_STATIC(exp2_1_a, br_math::exp2(1) == 2)
+  `BR_ASSERT_STATIC(exp2_2_a, br_math::exp2(2) == 4)
+  `BR_ASSERT_STATIC(exp2_7_a, br_math::exp2(7) == 128)
+
 endmodule : br_math_pkg_tb

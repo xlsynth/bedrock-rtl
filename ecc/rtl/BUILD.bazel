@@ -73,35 +73,42 @@ verilog_library(
         "//macros:br_asserts_internal",
         "//macros:br_assign",
         "//macros:br_unused",
+        "//pkg:br_ecc_pkg",
         "//pkg:br_math_pkg",
     ],
 )
 
-br_verilog_elab_and_lint_test_suite(
-    name = "br_ecc_secded_encoder_test_suite_32_7",
-    params = {
-        "DataWidth": ["32"],
-        "ParityWidth": ["7"],
-        "RegisterOutputs": [
-            "0",
-            "1",
-        ],
-    },
-    deps = [":br_ecc_secded_encoder"],
-)
+K_R_PAIRS = [
+    # Max K per R
+    ("4", "4"),
+    ("11", "5"),
+    ("26", "6"),
+    ("57", "7"),
+    ("120", "8"),
+    ("247", "9"),
+    ("502", "10"),
+    ("1013", "11"),
+    ("2036", "12"),
+    # Less than max K per R
+    ("8", "5"),
+    ("64", "8"),
+]
 
-br_verilog_elab_and_lint_test_suite(
-    name = "br_ecc_secded_encoder_test_suite_61_8",
-    params = {
-        "DataWidth": ["61"],
-        "ParityWidth": ["8"],
-        "RegisterOutputs": [
-            "0",
-            "1",
-        ],
-    },
-    deps = [":br_ecc_secded_encoder"],
-)
+[
+    br_verilog_elab_and_lint_test_suite(
+        name = "br_ecc_secded_encoder_test_suite_" + k + "_" + r,
+        params = {
+            "DataWidth": [k],
+            "ParityWidth": [r],
+            "RegisterOutputs": [
+                "0",
+                "1",
+            ],
+        },
+        deps = [":br_ecc_secded_encoder"],
+    )
+    for (k, r) in K_R_PAIRS
+]
 
 diff_test(
     name = "br_ecc_secded_encoder_diff_test",
@@ -152,43 +159,26 @@ verilog_library(
         "//macros:br_asserts_internal",
         "//macros:br_assign",
         "//macros:br_unused",
+        "//pkg:br_ecc_pkg",
         "//pkg:br_math_pkg",
     ],
 )
 
-br_verilog_elab_and_lint_test_suite(
-    name = "br_ecc_secded_decoder_test_suite_32_7",
-    params = {
-        "DataWidth": ["32"],
-        "ParityWidth": ["7"],
-        "RegisterSyndrome": [
-            "0",
-            "1",
-        ],
-        "RegisterOutputs": [
-            "0",
-            "1",
-        ],
-    },
-    deps = [":br_ecc_secded_decoder"],
-)
-
-br_verilog_elab_and_lint_test_suite(
-    name = "br_ecc_secded_decoder_test_suite_157_10",
-    params = {
-        "DataWidth": ["157"],
-        "ParityWidth": ["10"],
-        "RegisterSyndrome": [
-            "0",
-            "1",
-        ],
-        "RegisterOutputs": [
-            "0",
-            "1",
-        ],
-    },
-    deps = [":br_ecc_secded_decoder"],
-)
+[
+    br_verilog_elab_and_lint_test_suite(
+        name = "br_ecc_secded_decoder_test_suite_" + k + "_" + r,
+        params = {
+            "DataWidth": [k],
+            "ParityWidth": [r],
+            "RegisterOutputs": [
+                "0",
+                "1",
+            ],
+        },
+        deps = [":br_ecc_secded_encoder"],
+    )
+    for (k, r) in K_R_PAIRS
+]
 
 diff_test(
     name = "br_ecc_secded_decoder_diff_test",

@@ -63,6 +63,7 @@ verilog_library(
     deps = [
         "//ecc/rtl:br_ecc_secded_decoder",
         "//ecc/rtl:br_ecc_secded_encoder",
+        "//pkg:br_ecc_pkg",
     ],
 )
 
@@ -119,6 +120,36 @@ br_verilog_sim_test_tools_suite(
     params = {
         "DataWidth": ["64"],
         "ParityWidth": ["8"],
+    },
+    tools = [
+        "dsim",
+        "vcs",
+        # So slow..
+        #"iverilog",
+    ],
+    deps = [":br_ecc_secded_encoder_decoder_tb"],
+)
+
+br_verilog_sim_test_tools_suite(
+    name = "br_ecc_secded_encoder_decoder_dw67_pw9_sim_test_tools_suite",
+    params = {
+        "DataWidth": ["67"],
+        "ParityWidth": ["8"],
+    },
+    tools = [
+        "dsim",
+        "vcs",
+        # So slow..
+        #"iverilog",
+    ],
+    deps = [":br_ecc_secded_encoder_decoder_tb"],
+)
+
+br_verilog_sim_test_tools_suite(
+    name = "br_ecc_secded_encoder_decoder_dw128_pw9_sim_test_tools_suite",
+    params = {
+        "DataWidth": ["128"],
+        "ParityWidth": ["9"],
     },
     tools = [
         "dsim",
