@@ -54,6 +54,8 @@ module br_fifo_shared_dynamic_push_ctrl_credit #(
     input logic [NumFifos-1:0] dealloc_valid,
     input logic [NumFifos-1:0][AddrWidth-1:0] dealloc_entry_id
 );
+  logic either_rst;
+  assign either_rst = push_sender_in_reset || rst;
 
   // Credit Receiver
   localparam int PopCreditWidth = $clog2(NumFifos + 1);
@@ -72,6 +74,31 @@ module br_fifo_shared_dynamic_push_ctrl_credit #(
     assign {internal_push_fifo_id[i], internal_push_data[i]} = internal_push_data_comb[i];
   end
 
+  // Because there is a staging buffer in the freelist, the first
+  // entry isn't available to be allocated until one cycle after
+  // reset. If credit return isn't registered, we need to stall
+  // credit return until allocation is available.
+  localparam int InitialCreditDelay = 1 - RegisterPushOutputs;
+  logic internal_push_credit_stall;
+
+  if (InitialCreditDelay > 0) begin : gen_initial_credit_delay
+    logic delayed_rst;
+
+    br_delay_nr #(
+        .NumStages(InitialCreditDelay),
+        .Width(1)
+    ) br_delay_nr_rst (
+        .clk,
+        .in(either_rst),
+        .out(delayed_rst),
+        .out_stages()
+    );
+
+    assign internal_push_credit_stall = push_credit_stall || delayed_rst;
+  end else begin : gen_no_initial_credit_delay
+    assign internal_push_credit_stall = push_credit_stall;
+  end
+
   br_credit_receiver #(
       .NumFlows(NumWritePorts),
       .Width(CombinedWidth),
@@ -85,7 +112,7 @@ module br_fifo_shared_dynamic_push_ctrl_credit #(
       .rst,
       .push_sender_in_reset,
       .push_receiver_in_reset,
-      .push_credit_stall,
+      .push_credit_stall(internal_push_credit_stall),
       .push_credit,
       .push_valid,
       .push_data(push_data_comb),
@@ -100,9 +127,6 @@ module br_fifo_shared_dynamic_push_ctrl_credit #(
 
   // Base Push Control
   logic [NumWritePorts-1:0] internal_push_ready;
-  logic either_rst;
-
-  assign either_rst = push_sender_in_reset || rst;
 
   br_fifo_shared_dynamic_push_ctrl #(
       .NumWritePorts(NumWritePorts),
