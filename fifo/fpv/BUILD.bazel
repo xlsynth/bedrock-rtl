@@ -987,7 +987,6 @@ verilog_elab_test(
 # Test focuses on testing NumFifos and NumPorts
 br_verilog_fpv_test_tools_suite(
     name = "br_fifo_shared_dynamic_ctrl_push_credit_test_ports",
-    gui = True,
     illegal_param_combinations = {
         # Depth > 2 * NumWritePorts
         (

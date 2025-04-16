@@ -324,7 +324,6 @@ verilog_library(
         ":br_fifo_shared_dynamic_push_ctrl",
         "//credit/rtl:br_credit_receiver",
         "//delay/rtl:br_delay",
-        "//delay/rtl:br_delay_nr",
         "//enc/rtl:br_enc_countones",
     ],
 )
