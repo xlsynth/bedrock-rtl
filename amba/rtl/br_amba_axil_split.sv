@@ -37,6 +37,11 @@ module br_amba_axil_split #(
     // to see if a request should be routed to the branch.
     // Must be at least 1.
     parameter int NumBranchAddrRanges = 1,
+    // If 1, branch_awaddr and branch_araddr are normalized by subtracting
+    // the first branch_start_addr from root_awaddr and root_araddr,
+    // respectively. This is useful if the AXI-Lite peripheral connected
+    // to the branch expects its own address space to start at zero.
+    parameter int NormalizeBranchAddress = 0,
     localparam int StrobeWidth = DataWidth / 8
 ) (
     input clk,
@@ -290,16 +295,27 @@ module br_amba_axil_split #(
   assign write_data_flow_reg_pop_ready =
       (trunk_wvalid && trunk_wready) || (branch_wvalid && branch_wready);
 
-  // Broadcast the write address, read address, and write data signals to the branch and trunk.
-  assign {trunk_awaddr, branch_awaddr} = {2{root_awaddr_reg}};
+  // Broadcast the prot, user, write data, and write strobe signals to the branch and trunk.
   assign {trunk_awprot, branch_awprot} = {2{root_awprot_reg}};
   assign {trunk_awuser, branch_awuser} = {2{root_awuser_reg}};
   assign {trunk_wdata, branch_wdata} = {2{root_wdata_reg}};
   assign {trunk_wstrb, branch_wstrb} = {2{root_wstrb_reg}};
   assign {trunk_wuser, branch_wuser} = {2{root_wuser_reg}};
-  assign {trunk_araddr, branch_araddr} = {2{root_araddr}};
   assign {trunk_arprot, branch_arprot} = {2{root_arprot}};
   assign {trunk_aruser, branch_aruser} = {2{root_aruser}};
+
+  // Addresses always pass through to trunk unchanged.
+  assign trunk_awaddr = root_awaddr_reg;
+  assign trunk_araddr = root_araddr;
+
+  // Forward the root address to the branch with optional normalization.
+  if (NormalizeBranchAddress) begin : gen_normalize_branch_address
+    assign branch_awaddr = root_awaddr_reg - branch_start_addr[0];
+    assign branch_araddr = root_araddr - branch_start_addr[0];
+  end else begin : gen_no_normalize_branch_address
+    assign branch_awaddr = root_awaddr_reg;
+    assign branch_araddr = root_araddr;
+  end
 
   // Read Response Channel Merge
   assign root_rvalid = branch_rvalid || trunk_rvalid;
