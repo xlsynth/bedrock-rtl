@@ -28,7 +28,17 @@ from python.eccgen.hsiao_secded import (
 # Cache code constructions to speed up tests on the same construction.
 # Key is message length (k)
 CODES = {
+    # RTL supported codes
     4: hsiao_secded_code(4),
+    11: hsiao_secded_code(11),
+    26: hsiao_secded_code(26),
+    57: hsiao_secded_code(57),
+    120: hsiao_secded_code(120),
+    247: hsiao_secded_code(247),
+    502: hsiao_secded_code(502),
+    1013: hsiao_secded_code(1013),
+    2036: hsiao_secded_code(2036),
+    # Other combos to try
     8: hsiao_secded_code(8),
     15: hsiao_secded_code(15),
     16: hsiao_secded_code(16),
@@ -37,10 +47,10 @@ CODES = {
     59: hsiao_secded_code(59),
     64: hsiao_secded_code(64),
     65: hsiao_secded_code(65),
-    67: hsiao_secded_code(67),
     120: hsiao_secded_code(120),
     128: hsiao_secded_code(128),
     129: hsiao_secded_code(129),
+    256: hsiao_secded_code(256),
 }
 
 
@@ -140,32 +150,9 @@ class TestHsiaoSecdedCode(unittest.TestCase):
         self.assertTrue(np.array_equal(H, H_expected))
         self.assertTrue(np.array_equal(G, G_expected))
 
-    @parameterized.expand(
-        [
-            (4, 4, 8),
-            (8, 5, 13),
-            (15, 6, 21),
-            (16, 6, 22),
-            (30, 7, 37),
-            (32, 7, 39),
-            (59, 8, 67),
-            (64, 8, 72),
-            (65, 8, 73),
-            (67, 8, 75),
-            (120, 8, 128),
-            (128, 9, 137),
-            (129, 9, 138),
-        ]
-    )
-    def test_hsiao_secded_code_construction(self, k, expected_r, expected_n):
-        r, n, H, G = CODES[k]
-        # Check the number of parity and codeword bits
-        self.assertEqual(r, expected_r)
-        self.assertEqual(n, expected_n)
-        # Check the dimensions of the matrices
-        self.assertEqual(H.shape, (r, n))
-        self.assertEqual(G.shape, (k, n))
-        # Raises a ValueError if the code construction is invalid
+    @parameterized.expand(CODES.keys())
+    def test_hsiao_secded_code_construction(self, k):
+        _, _, H, G = CODES[k]
         check_construction(G, H)
 
     def test_invalid_k(self):
@@ -184,7 +171,7 @@ class TestHsiaoSecdedCode(unittest.TestCase):
             s = decode_syndrome(c, H, k)
             self.assertTrue(np.array_equal(s, np.zeros(r, dtype=int)))
 
-    @parameterized.expand([30, 32, 59, 64, 128])
+    @parameterized.expand(CODES.keys())
     def test_encode_decode_syndrome_random(self, k):
         """Test a bunch of random messages. Note that doing it exhaustively is infeasible for large k."""
         r, n, H, G = CODES[k]
@@ -197,7 +184,7 @@ class TestHsiaoSecdedCode(unittest.TestCase):
             s = decode_syndrome(c, H, k)
             self.assertTrue(np.array_equal(s, np.zeros(r, dtype=int)))
 
-    @parameterized.expand([4, 8, 15, 16, 30, 32, 59, 64, 128])
+    @parameterized.expand(CODES.keys())
     def test_encode_decode_single_error_injection(self, k):
         _, n, H, G = CODES[k]
         np.random.seed(42)
@@ -209,7 +196,7 @@ class TestHsiaoSecdedCode(unittest.TestCase):
                 lambda m: _check_single_error_exhaustive(m, k, n, H, G), messages
             )
 
-    @parameterized.expand([4, 8, 15, 16, 30, 32, 59, 64, 128])
+    @parameterized.expand(CODES.keys())
     def test_encode_decode_double_error_injection(self, k):
         _, n, H, G = CODES[k]
         np.random.seed(42)
@@ -221,7 +208,7 @@ class TestHsiaoSecdedCode(unittest.TestCase):
                 lambda m: _check_double_error_exhaustive(m, k, n, H, G), messages
             )
 
-    @parameterized.expand([4, 8, 15, 16, 30, 32, 59, 64, 128])
+    @parameterized.expand(CODES.keys())
     def test_encode_decode_triple_error_injection(self, k):
         _, n, H, G = CODES[k]
         np.random.seed(42)
