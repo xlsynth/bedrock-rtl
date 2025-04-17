@@ -12,6 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+load("@bazel_skylib//rules:diff_test.bzl", "diff_test")
+load("@bazel_skylib//rules:write_file.bzl", "write_file")
 load("@rules_python//python:defs.bzl", "py_binary", "py_library", "py_test")
 
 package(default_visibility = ["//visibility:public"])
@@ -44,3 +46,55 @@ py_test(
         "@bedrock-rtl-pypi//parameterized:pkg",
     ],
 )
+
+# Write the G and H matrices for the maximum k per r for Hsiao SECDED codes up to k=502 (corresponding to r=10).
+K = [
+    "4",
+    "11",
+    "26",
+    "57",
+    "120",
+    "247",
+    "502",
+]
+
+[
+    [
+        diff_test(
+            name = "hsiao_G_k" + k + "_diff_test",
+            failure_message = """
+                Golden hsiao_G_k" + k + ".txt does not match the generated code.
+                Please run `bazel run //python/eccgen:update_hsiao_G_k" + k + "` to automatically update the golden.
+            """,
+            file1 = "hsiao_G_k" + k + ".txt",
+            file2 = ":gen_hsiao_G_k" + k + ".txt",
+        ),
+        genrule(
+            name = "gen_hsiao_k" + k + ".txt",
+            outs = [
+                "gen_hsiao_G_k" + k + ".txt",
+                "gen_hsiao_H_k" + k + ".txt",
+            ],
+            cmd = "$(location :eccgen) --k " + k + " --scheme hsiao_secded --generator-matrix-output=$(location gen_hsiao_G_k" + k + ".txt) --parity-check-matrix-output=$(location gen_hsiao_H_k" + k + ".txt)",
+            tools = [":eccgen"],
+        ),
+        write_file(
+            name = "gen_update_hsiao_G_k" + k,
+            out = "update_hsiao_G_k" + k + ".sh",
+            content = [
+                "#!/usr/bin/env bash",
+                "cd $BUILD_WORKSPACE_DIRECTORY",
+                "cp -fv bazel-bin/python/eccgen/gen_hsiao_G_k" + k + ".txt python/eccgen/hsiao_G_k" + k + ".txt",
+            ],
+        ),
+        sh_binary(
+            name = "update_hsiao_G_k" + k,
+            srcs = [":update_hsiao_G_k" + k + ".sh"],
+            data = [
+                "hsiao_G_k" + k + ".txt",
+                ":gen_hsiao_G_k" + k + ".txt",
+            ],
+        ),
+    ]
+    for k in K
+]

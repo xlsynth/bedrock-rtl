@@ -51,8 +51,6 @@
 // | 120               | 8                | 128               |
 // | 247               | 9                | 256               |
 // | 502               | 10               | 512               |
-// | 1013              | 11               | 1024              |
-// | 2036              | 12               | 2048              |
 //
 // The number of parity bits must be one of the values in the table above
 // or the module will not elaborate.
@@ -171,13 +169,7 @@ module br_ecc_secded_encoder #(
   end else if ((CodewordWidth == 512) && (MessageWidth == 502)) begin : gen_512_502
     `BR_ASSERT_STATIC(parity_width_matches_a, ParityWidth == 10)
 {{ secded_enc_512_502 }}
-  end else if ((CodewordWidth == 1024) && (MessageWidth == 1013)) begin : gen_1024_1013
-    `BR_ASSERT_STATIC(parity_width_matches_a, ParityWidth == 11)
-{{ secded_enc_1024_1013 }}
-  end else if ((CodewordWidth == 2048) && (MessageWidth == 2036)) begin : gen_2048_2036
-    `BR_ASSERT_STATIC(parity_width_matches_a, ParityWidth == 12)
-{{ secded_enc_2048_2036 }}
-  end else begin : gen_default_parity
+  end else begin : gen_default
     `BR_ASSERT_STATIC(invalid_parity_width_a, 1'b0)
   end
 

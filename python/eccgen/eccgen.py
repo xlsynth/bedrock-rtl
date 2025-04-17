@@ -19,9 +19,20 @@ from python.eccgen.hsiao_secded import (
     G_to_sv,
     syndrome_to_sv,
     H_to_sv,
+    DELTA_METHOD_MAX_K,
 )
 import numpy as np
 from jinja2 import Template
+
+RTL_SUPPORTED_N_K = [
+    (8, 4),
+    (16, 11),
+    (32, 26),
+    (64, 57),
+    (128, 120),
+    (256, 247),
+    (512, 502),
+]
 
 
 def check_filename_extension(filename: str, allowed_extensions: tuple[str]) -> str:
@@ -96,27 +107,28 @@ def main():
     if args.scheme == "hsiao_secded":
         if args.k:
             r, n, H, G = hsiao_secded_code(args.k)
-            check_construction(G, H)
-            print(f"Number of data bits (k): {args.k}")
-            print(f"Number of parity bits (r): {r}")
-            print(f"Total number of bits (n): {n}\n")
+            check_construction(G, H, perfect_balance=(args.k <= DELTA_METHOD_MAX_K))
+
+            file_header = "\n".join(
+                [
+                    f"Number of data bits (k): {args.k}",
+                    f"Number of parity bits (r): {r}",
+                    f"Number of codeword bits (n): {n}",
+                ]
+            )
 
             # Convert matrices to strings without ellipses
-            H_str = np.array2string(
-                H, separator=", ", threshold=np.inf, max_line_width=np.inf
-            ).replace("0", " " if args.print0 else "0")
             G_str = np.array2string(
                 G, separator=", ", threshold=np.inf, max_line_width=np.inf
             ).replace("0", " " if args.print0 else "0")
+            H_str = np.array2string(
+                H, separator=", ", threshold=np.inf, max_line_width=np.inf
+            ).replace("0", " " if args.print0 else "0")
 
-            print("\nGenerator Matrix G:")
-            print(G_str)
             if args.generator_matrix_output:
-                args.generator_matrix_output.write(G_str)
-            print("\nParity-Check Matrix H:")
-            print(H_str)
+                args.generator_matrix_output.write(file_header + "\nG = \n" + G_str)
             if args.parity_check_matrix_output:
-                args.parity_check_matrix_output.write(H_str)
+                args.parity_check_matrix_output.write(file_header + "\nH = \n" + H_str)
 
         if args.rtl_encoder_output:
             if not args.rtl_encoder_template:
@@ -124,17 +136,6 @@ def main():
                     "RTL encoder template file is required to generate the encoder."
                 )
 
-            RTL_SUPPORTED_N_K = [
-                (8, 4),
-                (16, 11),
-                (32, 26),
-                (64, 57),
-                (128, 120),
-                (256, 247),
-                (512, 502),
-                (1024, 1013),
-                (2048, 2036),
-            ]
             with open(args.rtl_encoder_template, "r") as template_file:
                 template = Template(template_file.read())
                 mapping = {}
@@ -152,17 +153,6 @@ def main():
                     "RTL decoder template file is required to generate the decoder."
                 )
 
-            RTL_SUPPORTED_N_K = [
-                (8, 4),
-                (16, 11),
-                (32, 26),
-                (64, 57),
-                (128, 120),
-                (256, 247),
-                (512, 502),
-                (1024, 1013),
-                (2048, 2036),
-            ]
             with open(args.rtl_decoder_template, "r") as template_file:
                 template = Template(template_file.read())
                 mapping = {}

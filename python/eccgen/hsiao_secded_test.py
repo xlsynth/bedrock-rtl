@@ -23,6 +23,7 @@ from python.eccgen.hsiao_secded import (
     encode,
     decode_syndrome,
     decode_message,
+    DELTA_METHOD_MAX_K,
 )
 
 # Cache code constructions to speed up tests on the same construction.
@@ -36,8 +37,6 @@ CODES = {
     120: hsiao_secded_code(120),
     247: hsiao_secded_code(247),
     502: hsiao_secded_code(502),
-    1013: hsiao_secded_code(1013),
-    2036: hsiao_secded_code(2036),
     # Other combos to try
     8: hsiao_secded_code(8),
     15: hsiao_secded_code(15),
@@ -51,6 +50,7 @@ CODES = {
     128: hsiao_secded_code(128),
     129: hsiao_secded_code(129),
     256: hsiao_secded_code(256),
+    512: hsiao_secded_code(512),
 }
 
 
@@ -153,7 +153,7 @@ class TestHsiaoSecdedCode(unittest.TestCase):
     @parameterized.expand(CODES.keys())
     def test_hsiao_secded_code_construction(self, k):
         _, _, H, G = CODES[k]
-        check_construction(G, H)
+        check_construction(G, H, perfect_balance=(k <= DELTA_METHOD_MAX_K))
 
     def test_invalid_k(self):
         with self.assertRaises(ValueError):

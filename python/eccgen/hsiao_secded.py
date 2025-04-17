@@ -25,6 +25,8 @@ import math
 import textwrap
 from itertools import combinations
 
+DELTA_METHOD_MAX_K = 256
+
 
 def get_r(k: int) -> int:
     """Calculate the number of parity bits r for a Hsiao SECDED code with k message bits."""
@@ -34,19 +36,125 @@ def get_r(k: int) -> int:
     return r
 
 
-def balanced_message_matrix_greedy(r: int, k: int) -> np.ndarray:
+def get_Hm(r: int, k: int) -> np.ndarray:
     """
-    Build the r x k message-part Hm by greedy selection of the lowest-weight
-    odd columns to minimize row-sum imbalance.
+    Find the message part H_m of the Hsiao parity-check matrix H using the
+    approach described in reference [2]: recursively balanced Δ-matrices.
     """
 
-    def all_cols_with_weight(J: int) -> list[np.ndarray]:
-        """Return all columns with weight J."""
+    def _delta_base(R: int, J: int, m: int) -> np.ndarray:
+        """
+        Handles the six special "ending state" base cases of generating Δ(R,J,m) described
+        in the paper; keeps more 1s at the top of the matrix.
+
+        Δ(R,J,m) is a binary R x m matrix with column weight J, for 0 <= J <= R and all
+        columns are unique.
+        """
+        # The order of the following cases is important to maintain.
+
+        # Empty matrix
+        if m == 0:
+            # Cannot return None because that would break the recursive construction.
+            # Instead, return an empty matrix with the correct shape.
+            return np.zeros((R, 0), dtype=int)
+        # Column weight of zero -> one column of zeros
+        if J == 0:
+            return np.zeros((R, 1), dtype=int)
+        # Column weight of R -> one column of ones
+        if J == R:
+            return np.ones((R, 1), dtype=int)
+        # Single column -> J ones at top, then R-J zeros
+        if m == 1:
+            return np.vstack(
+                (np.ones((J, 1), dtype=int), np.zeros((R - J, 1), dtype=int))
+            )
+        # Unit vectors
+        if J == 1:
+            M = np.zeros((R, m), dtype=int)
+            num_rows = min(m, R)
+            ones_rows = np.arange(num_rows)
+            M[ones_rows, np.arange(m)] = 1
+            return M
+        # Complements of unit vectors
+        if J == R - 1:
+            M = np.ones((R, m), dtype=int)
+            num_rows = min(m, R)
+            starting_row = R - num_rows
+            zeros_rows = np.arange(num_rows) + starting_row
+            M[zeros_rows, np.arange(m)] = 0
+            return M
+        # Not a base case
+        return None
+
+    def _delta_matrix_recursive(R: int, J: int, m: int) -> np.ndarray:
+        """
+        Recursively build Δ(R,J,m) with equal-weight columns and quasi-equal-weight rows
+        (row sums differ by ≤ 1).  Implements Algorithm A' + improved row-rotation (§4).
+
+        This algorithm is O(R * m * (log R + log m)) in the average case.
+        """
+        base = _delta_base(R, J, m)
+        if base is not None:
+            return base
+
+        # Step 2: choose split size  m1 = ⌊m·J/R + (R−1)/R⌋
+        m1 = math.floor(m * J / R + (R - 1) / R)
+        Δ1 = _delta_matrix_recursive(R - 1, J - 1, m1)
+        Δ2 = _delta_matrix_recursive(R - 1, J, m - m1)
+
+        # Improved row‑rotation for quasi‑balance (paper Sec. 4)
+        r1 = ((J - 1) * m1) % (R - 1)  # Equation (8)
+        r2 = (J * (m - m1)) % (R - 1)  # Equation (9)
+
+        if (r1 + r2) > (R - 1):
+            rprime = r1 + r2 - (R - 1)
+            assert r1 > rprime
+            assert r2 > rprime
+            shift = r2 - rprime
+            Δ2prime = np.vstack((Δ2[shift:], Δ2[:shift]))
+        else:
+            top, rest = Δ2[:r2], Δ2[r2:]
+            Δ2prime = np.vstack((rest[:r1], top, rest[r1:]))
+
+        # Assemble the R × m block as in Equation (6)
+        top_row = np.hstack((np.ones(m1, int), np.zeros(m - m1, int)))[None, :]
+        bottom = np.hstack((Δ1, Δ2prime))
+        return np.vstack((top_row, bottom))
+
+    remaining = k
+    Hm = None
+    for J in range(3, r + 1, 2):
+        max_cols = math.comb(r, J)
+        take = min(max_cols, remaining)
+        if take == 0:
+            continue
+        block = _delta_matrix_recursive(r, J, take)
+        Hm = block if Hm is None else np.hstack((Hm, block))
+        remaining -= take
+        if remaining == 0:
+            break
+    return Hm
+
+
+def get_Hm_imperfect_balance(r: int, k: int) -> np.ndarray:
+    """
+    Find the message part H_m of the Hsiao parity-check matrix H using a
+    greedy method that is doesn't perfectly balance the rows.
+
+    Recommend to use this only when k is large (> DELTA_METHOD_MAX_K) and the
+    get_Hm() approach is too slow.
+    """
+
+    def cols_with_weight(J: int, num_cols: int) -> list[np.ndarray]:
+        """Return some unique columns with weight J."""
         cols = []
         # Reverse iteration order so that our (8,4) construction matches the Hamming
         # example from https://en.wikipedia.org/wiki/Hamming_code.
         combos = combinations(range(r - 1, -1, -1), J)
         for combo in combos:
+            # Return early if we have enough columns.
+            if len(cols) >= num_cols:
+                return cols
             col = np.zeros(r, dtype=int)
             col[list(combo)] = 1
             cols.append(col)
@@ -55,9 +163,10 @@ def balanced_message_matrix_greedy(r: int, k: int) -> np.ndarray:
     selected_cols: list[np.ndarray] = []
     row_sums = np.zeros(r, dtype=int)
 
-    # Select columns in increasing weight order, balancing rows within each weight
+    # Select columns in increasing weight order, trying to balance rows within each weight
+    # (but no guarantees).
     for J in range(3, r + 1, 2):
-        pool = all_cols_with_weight(J)
+        pool = cols_with_weight(J, k)
         while pool and len(selected_cols) < k:
             best_idx = None
             best_diff = None
@@ -85,7 +194,10 @@ def balanced_message_matrix_greedy(r: int, k: int) -> np.ndarray:
 def get_H(k: int, r: int) -> np.ndarray:
     """Generate the r x n parity-check matrix H for a Hsiao SECDED code."""
     # Build a perfectly row-balanced message matrix of k odd-weight columns
-    Hm = balanced_message_matrix_greedy(r, k)
+    if k <= DELTA_METHOD_MAX_K:
+        Hm = get_Hm(r, k)
+    else:
+        Hm = get_Hm_imperfect_balance(r, k)
     # Append parity-bit identity
     Hp = np.eye(r, dtype=int)
     H = np.hstack((Hm, Hp))
@@ -254,7 +366,9 @@ def H_to_sv(H: np.ndarray) -> str:
     return "\n".join(assigns)
 
 
-def check_construction(G: np.ndarray, H: np.ndarray) -> None:
+def check_construction(
+    G: np.ndarray, H: np.ndarray, perfect_balance: bool = True
+) -> None:
     """Raises a ValueError if the given generator matrix G and parity-check matrix H are not a valid Hsiao SECDED code."""
 
     def check_columns_unique(matrix: np.ndarray) -> None:
@@ -398,11 +512,7 @@ def check_construction(G: np.ndarray, H: np.ndarray) -> None:
     check_distance_ge_4(H)
     check_column_weights_are_odd(H)
     check_minimum_total_weight(H)
-    # TODO(mgottscho): Hsiao codes should actually have a max diff of 1.
-    # For some larger code constructions we actually have a max diff of 3.
-    # I'm not worried though, since we are hitting the minimum weight
-    # and all the other code properties are satisfied. Max diff of 3 means
-    # some of the parity bits have 3 more XOR gates than the others.
-    check_row_sums_differ_by_at_most(H, 3)
+    if perfect_balance:
+        check_row_sums_differ_by_at_most(H, 1)
     check_G_systematic(G)
     check_H_systematic(H)
