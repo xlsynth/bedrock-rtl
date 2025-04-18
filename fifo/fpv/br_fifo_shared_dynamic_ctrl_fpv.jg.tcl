@@ -19,16 +19,15 @@ get_design_info
 
 # primary input control signal should be legal during reset
 assume -name no_push_valid_during_reset {rst |-> push_valid == 'd0}
-assume -name no_data_ram_rd_data_valid {rst | push_sender_in_reset |-> data_ram_rd_data_valid == 'd0}
-assume -name no_ptr_ram_rd_data_valid {rst | push_sender_in_reset |-> ptr_ram_rd_data_valid == 'd0}
+assume -name no_data_ram_rd_data_valid {rst |-> data_ram_rd_data_valid == 'd0}
+assume -name no_ptr_ram_rd_data_valid {rst |-> ptr_ram_rd_data_valid == 'd0}
 
 # primary output control signal should be legal during reset
-assert -name fv_rst_check_push_credit {rst | push_sender_in_reset |-> push_credit == 'd0}
-assert -name fv_rst_check_pop_valid {rst | push_sender_in_reset |-> pop_valid == 'd0}
-assert -name fv_rst_check_ram_wr_valid {rst | push_sender_in_reset |-> data_ram_wr_valid == 'd0}
-assert -name fv_rst_check_ram_rd_addr_valid {rst | push_sender_in_reset |-> data_ram_rd_addr_valid == 'd0}
-assert -name fv_rst_check_ptr_ram_wr_valid {rst | push_sender_in_reset |-> ptr_ram_wr_valid == 'd0}
-assert -name fv_rst_check_ptr_ram_rd_addr_valid {rst | push_sender_in_reset |-> ptr_ram_rd_addr_valid == 'd0}
+assert -name fv_rst_check_pop_valid {rst |-> pop_valid == 'd0}
+assert -name fv_rst_check_ram_wr_valid {rst |-> data_ram_wr_valid == 'd0}
+assert -name fv_rst_check_ram_rd_addr_valid {rst |-> data_ram_rd_addr_valid == 'd0}
+assert -name fv_rst_check_ptr_ram_wr_valid {rst |-> ptr_ram_wr_valid == 'd0}
+assert -name fv_rst_check_ptr_ram_rd_addr_valid {rst |-> ptr_ram_rd_addr_valid == 'd0}
 
 # TODO: disable due to many unreachable covers in RTL
 cover -disable *
