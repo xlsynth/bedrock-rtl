@@ -25,8 +25,6 @@ import math
 import textwrap
 from itertools import combinations
 
-DELTA_METHOD_MAX_K = 256
-
 
 def get_r(k: int) -> int:
     """Calculate the number of parity bits r for a Hsiao SECDED code with k message bits."""
@@ -136,68 +134,10 @@ def get_Hm(r: int, k: int) -> np.ndarray:
     return Hm
 
 
-def get_Hm_imperfect_balance(r: int, k: int) -> np.ndarray:
-    """
-    Find the message part H_m of the Hsiao parity-check matrix H using a
-    greedy method that is doesn't perfectly balance the rows.
-
-    Recommend to use this only when k is large (> DELTA_METHOD_MAX_K) and the
-    get_Hm() approach is too slow.
-    """
-
-    def cols_with_weight(J: int, num_cols: int) -> list[np.ndarray]:
-        """Return some unique columns with weight J."""
-        cols = []
-        # Reverse iteration order so that our (8,4) construction matches the Hamming
-        # example from https://en.wikipedia.org/wiki/Hamming_code.
-        combos = combinations(range(r - 1, -1, -1), J)
-        for combo in combos:
-            # Return early if we have enough columns.
-            if len(cols) >= num_cols:
-                return cols
-            col = np.zeros(r, dtype=int)
-            col[list(combo)] = 1
-            cols.append(col)
-        return cols
-
-    selected_cols: list[np.ndarray] = []
-    row_sums = np.zeros(r, dtype=int)
-
-    # Select columns in increasing weight order, trying to balance rows within each weight
-    # (but no guarantees).
-    for J in range(3, r + 1, 2):
-        pool = cols_with_weight(J, k)
-        while pool and len(selected_cols) < k:
-            best_idx = None
-            best_diff = None
-            best_min = None
-            for idx, col in enumerate(pool):
-                new_sums = row_sums + col
-                diff = int(new_sums.max() - new_sums.min())
-                mn = int(new_sums.min())
-                if (
-                    best_idx is None
-                    or diff < best_diff
-                    or (diff == best_diff and mn > best_min)
-                ):
-                    best_idx, best_diff, best_min = idx, diff, mn
-            # pick and remove the best column
-            pick = pool.pop(best_idx)
-            selected_cols.append(pick.reshape(r, 1))
-            row_sums += pick
-        if len(selected_cols) >= k:
-            break
-    Hm = np.hstack(selected_cols)
-    return Hm
-
-
 def get_H(k: int, r: int) -> np.ndarray:
     """Generate the r x n parity-check matrix H for a Hsiao SECDED code."""
     # Build a perfectly row-balanced message matrix of k odd-weight columns
-    if k <= DELTA_METHOD_MAX_K:
-        Hm = get_Hm(r, k)
-    else:
-        Hm = get_Hm_imperfect_balance(r, k)
+    Hm = get_Hm(r, k)
     # Append parity-bit identity
     Hp = np.eye(r, dtype=int)
     H = np.hstack((Hm, Hp))
@@ -366,9 +306,7 @@ def H_to_sv(H: np.ndarray) -> str:
     return "\n".join(assigns)
 
 
-def check_construction(
-    G: np.ndarray, H: np.ndarray, perfect_balance: bool = True
-) -> None:
+def check_construction(G: np.ndarray, H: np.ndarray) -> None:
     """Raises a ValueError if the given generator matrix G and parity-check matrix H are not a valid Hsiao SECDED code."""
 
     def check_columns_unique(matrix: np.ndarray) -> None:
@@ -512,7 +450,6 @@ def check_construction(
     check_distance_ge_4(H)
     check_column_weights_are_odd(H)
     check_minimum_total_weight(H)
-    if perfect_balance:
-        check_row_sums_differ_by_at_most(H, 1)
+    check_row_sums_differ_by_at_most(H, 1)
     check_G_systematic(G)
     check_H_systematic(H)

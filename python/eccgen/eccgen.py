@@ -19,19 +19,23 @@ from python.eccgen.hsiao_secded import (
     G_to_sv,
     syndrome_to_sv,
     H_to_sv,
-    DELTA_METHOD_MAX_K,
 )
 import numpy as np
 from jinja2 import Template
 
 RTL_SUPPORTED_N_K = [
     (8, 4),
+    (13, 8),
     (16, 11),
+    (22, 16),
     (32, 26),
+    (39, 32),
     (64, 57),
+    (72, 64),
     (128, 120),
+    (137, 128),
     (256, 247),
-    (512, 502),
+    (266, 256),
 ]
 
 
@@ -107,7 +111,7 @@ def main():
     if args.scheme == "hsiao_secded":
         if args.k:
             r, n, H, G = hsiao_secded_code(args.k)
-            check_construction(G, H, perfect_balance=(args.k <= DELTA_METHOD_MAX_K))
+            check_construction(G, H)
 
             file_header = "\n".join(
                 [

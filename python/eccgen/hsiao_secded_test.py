@@ -23,34 +23,24 @@ from python.eccgen.hsiao_secded import (
     encode,
     decode_syndrome,
     decode_message,
-    DELTA_METHOD_MAX_K,
 )
 
 # Cache code constructions to speed up tests on the same construction.
 # Key is message length (k)
+# RTL supported codes
 CODES = {
-    # RTL supported codes
     4: hsiao_secded_code(4),
-    11: hsiao_secded_code(11),
-    26: hsiao_secded_code(26),
-    57: hsiao_secded_code(57),
-    120: hsiao_secded_code(120),
-    247: hsiao_secded_code(247),
-    502: hsiao_secded_code(502),
-    # Other combos to try
     8: hsiao_secded_code(8),
-    15: hsiao_secded_code(15),
+    11: hsiao_secded_code(11),
     16: hsiao_secded_code(16),
-    30: hsiao_secded_code(30),
+    26: hsiao_secded_code(26),
     32: hsiao_secded_code(32),
-    59: hsiao_secded_code(59),
+    57: hsiao_secded_code(57),
     64: hsiao_secded_code(64),
-    65: hsiao_secded_code(65),
     120: hsiao_secded_code(120),
     128: hsiao_secded_code(128),
-    129: hsiao_secded_code(129),
+    247: hsiao_secded_code(247),
     256: hsiao_secded_code(256),
-    512: hsiao_secded_code(512),
 }
 
 
@@ -153,7 +143,7 @@ class TestHsiaoSecdedCode(unittest.TestCase):
     @parameterized.expand(CODES.keys())
     def test_hsiao_secded_code_construction(self, k):
         _, _, H, G = CODES[k]
-        check_construction(G, H, perfect_balance=(k <= DELTA_METHOD_MAX_K))
+        check_construction(G, H)
 
     def test_invalid_k(self):
         with self.assertRaises(ValueError):

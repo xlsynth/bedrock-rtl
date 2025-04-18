@@ -25,4 +25,10 @@ package br_ecc;
     return br_math::exp2(parity_width - 1) - parity_width;
   endfunction : get_max_message_width
 
+  // ri lint_check_waive TWO_STATE_TYPE
+  function automatic int get_message_width(input int message_width, input int parity_width);
+    return br_math::is_power_of_2(message_width) ? message_width :
+        get_max_message_width(parity_width);
+  endfunction : get_message_width
+
 endpackage : br_ecc

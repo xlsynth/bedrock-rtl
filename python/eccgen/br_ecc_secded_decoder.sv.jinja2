@@ -40,23 +40,34 @@
 // but it can have up to 3 cycles of delay (RegisterInputs, RegisterSyndrome, and
 // RegisterOutputs). The initiation interval is always 1 cycle.
 //
-// Any data width >= 4 is supported, up to a maximum of 1024. It is considered
-// internally zero-padded up to the largest message width supported by the number of parity bits
-// as part of decoding. The following table outlines the number of parity bits required for
-// different message widths.
+// Any DataWidth >= 4 is supported, up to a maximum of 256.
+// * If DataWidth is a power of 2, it benefits from a specifically generated ECC code construction
+//   and the MessageWidth is set to the DataWidth.
+// * If DataWidth is not a power of 2, it is treated as internally zero-padded up to the nearest
+//   supported MessageWidth before it is decoded.
 //
-// | Message Width (k) | Parity Width (r) | Codeword Width (n)|
-// |-------------------|------------------|-------------------|
-// | 4                 | 4                | 8                 |
-// | 11                | 5                | 16                |
-// | 26                | 6                | 32                |
-// | 57                | 7                | 64                |
-// | 120               | 8                | 128               |
-// | 247               | 9                | 256               |
-// | 502               | 10               | 512               |
+// The following table outlines the supported configurations. [x,y] notation indicates
+// an inclusive range from x to y. Notice that all power-of-2 DataWidth from 4 up to 256
+// and all power-of-2 CodewordWidth from 8 up to 256 get optimal constructions.
 //
-// The number of parity bits must be one of the values in the table above
-// or the module will not elaborate.
+// | DataWidth   | ParityWidth (r) | MessageWidth (k) | CodewordWidth (n = k + r) |
+// |-------------|-----------------|------------------|---------------------------|
+// | 4           | 4               | 4                | 8                         |
+// | [5,8]       | 5               | 8                | 13                        |
+// | [9,11]      | 5               | 11               | 16                        |
+// | [12,16]     | 6               | 16               | 22                        |
+// | [17,26]     | 6               | 26               | 32                        |
+// | [27,32]     | 7               | 32               | 39                        |
+// | [33,57]     | 7               | 57               | 64                        |
+// | [58,64]     | 8               | 64               | 72                        |
+// | [65,120]    | 8               | 120              | 128                       |
+// | [121,128]   | 9               | 128              | 137                       |
+// | [129,247]   | 9               | 247              | 256                       |
+// | [248,256] * | 10 *            | 256 *            | 266 *                     |
+//
+// * For r=10, the maximum MessageWidth is actually 502, but solving for a Hsiao code
+// this big has proven to be computationally difficult. Accordingly, we limit the maximum
+// overall MessageWidth to 256.
 //
 // References:
 // [1] https://ieeexplore.ieee.org/abstract/document/5391627
@@ -69,7 +80,7 @@
 // TODO(mgottscho): Pipeline the syndrome decoding and then correction with a parameter.
 module br_ecc_secded_decoder #(
     parameter int DataWidth = 4,  // Must be at least 4
-    parameter int ParityWidth = 4,  // Must be at least 4 and at most 12
+    parameter int ParityWidth = 4,  // Must be at least 4 and at most 10
     // If 1, then insert a pipeline register at the input.
     parameter bit RegisterInputs = 0,
     // If 1, then insert a pipeline register between syndrome computation and
@@ -80,7 +91,7 @@ module br_ecc_secded_decoder #(
     // If 1, then assert there are no valid bits asserted at the end of the test.
     parameter bit EnableAssertFinalNotValid = 1,
     localparam int InputWidth = DataWidth + ParityWidth,
-    localparam int MessageWidth = br_ecc::get_max_message_width(ParityWidth),
+    localparam int MessageWidth = br_ecc::get_message_width(DataWidth, ParityWidth),
     localparam int CodewordWidth = MessageWidth + ParityWidth,
     // ri lint_check_waive PARAM_NOT_USED
     localparam int Latency = RegisterInputs + RegisterSyndrome + RegisterOutputs
@@ -115,10 +126,10 @@ module br_ecc_secded_decoder #(
   //------------------------------------------
   // Integration checks
   //------------------------------------------
-  `BR_ASSERT_STATIC(data_width_gte_1_a, DataWidth >= 4)
+  `BR_ASSERT_STATIC(data_width_gte_4_a, DataWidth >= 4)
+  `BR_ASSERT_STATIC(data_width_lte_256_a, DataWidth <= 256)
   `BR_ASSERT_STATIC(parity_width_gte_4_a, ParityWidth >= 4)
-  `BR_ASSERT_STATIC(parity_width_lte_12_a, ParityWidth <= 12)
-  `BR_ASSERT_STATIC(codeword_width_pow_of_2_a, br_math::is_power_of_2(CodewordWidth))
+  `BR_ASSERT_STATIC(parity_width_lte_12_a, ParityWidth <= 10)
   `BR_ASSERT_STATIC(data_width_fits_in_message_width_a, DataWidth <= MessageWidth)
   `BR_ASSERT_STATIC(right_sized_parity_bits_a, DataWidth > br_ecc::get_max_message_width(ParityWidth - 1))
 
@@ -165,30 +176,50 @@ module br_ecc_secded_decoder #(
     `BR_ASSERT_STATIC(parity_width_matches_a, ParityWidth == 4)
 {{ secded_dec_syndrome_8_4 }}
 {{ secded_dec_H_8_4 }}
+  end else if ((CodewordWidth == 13) && (MessageWidth == 8)) begin : gen_13_8
+    `BR_ASSERT_STATIC(parity_width_matches_a, ParityWidth == 5)
+{{ secded_dec_syndrome_13_8 }}
+{{ secded_dec_H_13_8 }}
   end else if ((CodewordWidth == 16) && (MessageWidth == 11)) begin : gen_16_11
     `BR_ASSERT_STATIC(parity_width_matches_a, ParityWidth == 5)
 {{ secded_dec_syndrome_16_11 }}
 {{ secded_dec_H_16_11 }}
+  end else if ((CodewordWidth == 22) && (MessageWidth == 16)) begin : gen_22_16
+    `BR_ASSERT_STATIC(parity_width_matches_a, ParityWidth == 6)
+{{ secded_dec_syndrome_22_16 }}
+{{ secded_dec_H_22_16 }}
   end else if ((CodewordWidth == 32) && (MessageWidth == 26)) begin : gen_32_26
     `BR_ASSERT_STATIC(parity_width_matches_a, ParityWidth == 6)
 {{ secded_dec_syndrome_32_26 }}
 {{ secded_dec_H_32_26 }}
+  end else if ((CodewordWidth == 39) && (MessageWidth == 32)) begin : gen_39_32
+    `BR_ASSERT_STATIC(parity_width_matches_a, ParityWidth == 7)
+{{ secded_dec_syndrome_39_32 }}
+{{ secded_dec_H_39_32 }}
   end else if ((CodewordWidth == 64) && (MessageWidth == 57)) begin : gen_64_57
     `BR_ASSERT_STATIC(parity_width_matches_a, ParityWidth == 7)
 {{ secded_dec_syndrome_64_57 }}
 {{ secded_dec_H_64_57 }}
+  end else if ((CodewordWidth == 72) && (MessageWidth == 64)) begin : gen_72_64
+    `BR_ASSERT_STATIC(parity_width_matches_a, ParityWidth == 8)
+{{ secded_dec_syndrome_72_64 }}
+{{ secded_dec_H_72_64 }}
   end else if ((CodewordWidth == 128) && (MessageWidth == 120)) begin : gen_128_120
     `BR_ASSERT_STATIC(parity_width_matches_a, ParityWidth == 8)
 {{ secded_dec_syndrome_128_120 }}
 {{ secded_dec_H_128_120 }}
+  end else if ((CodewordWidth == 137) && (MessageWidth == 128)) begin : gen_137_128
+    `BR_ASSERT_STATIC(parity_width_matches_a, ParityWidth == 9)
+{{ secded_dec_syndrome_137_128 }}
+{{ secded_dec_H_137_128 }}
   end else if ((CodewordWidth == 256) && (MessageWidth == 247)) begin : gen_256_247
     `BR_ASSERT_STATIC(parity_width_matches_a, ParityWidth == 9)
 {{ secded_dec_syndrome_256_247 }}
 {{ secded_dec_H_256_247 }}
-  end else if ((CodewordWidth == 512) && (MessageWidth == 502)) begin : gen_512_502
+  end else if ((CodewordWidth == 266) && (MessageWidth == 256)) begin : gen_266_256
     `BR_ASSERT_STATIC(parity_width_matches_a, ParityWidth == 10)
-{{ secded_dec_syndrome_512_502 }}
-{{ secded_dec_H_512_502 }}
+{{ secded_dec_syndrome_266_256 }}
+{{ secded_dec_H_266_256 }}
   end else begin : gen_default
     `BR_ASSERT_STATIC(invalid_parity_width_a, 1'b0)
   end
