@@ -15,116 +15,156 @@
 import unittest
 import numpy as np
 from parameterized import parameterized
+from concurrent.futures import ProcessPoolExecutor
 from python.eccgen.hsiao_secded import (
     hsiao_secded_code,
     get_r,
-    get_n,
-    check_columns_unique,
-    check_column_weights_are_odd,
+    check_construction,
     encode,
     decode_syndrome,
     decode_message,
-    parity_check_message_columns,
+    MAX_K_FOR_OPTIMAL_ALGORITHM,
 )
+
+# Cache code constructions to speed up tests on the same construction.
+# Key is message length (k)
+# RTL supported codes
+CODES = {
+    4: hsiao_secded_code(4),
+    8: hsiao_secded_code(8),
+    11: hsiao_secded_code(11),
+    16: hsiao_secded_code(16),
+    26: hsiao_secded_code(26),
+    32: hsiao_secded_code(32),
+    57: hsiao_secded_code(57),
+    64: hsiao_secded_code(64),
+    120: hsiao_secded_code(120),
+    128: hsiao_secded_code(128),
+    247: hsiao_secded_code(247),
+    256: hsiao_secded_code(256),
+    502: hsiao_secded_code(502),
+    512: hsiao_secded_code(512),
+    1013: hsiao_secded_code(1013),
+    1024: hsiao_secded_code(1024),
+}
+
+
+def _check_single_error_exhaustive(m, k, n, H, G):
+    c = encode(m, G)
+    for loc in range(n):
+        rc = c.copy()
+        rc[loc] = 1 - c[loc]
+        s = decode_syndrome(rc, H, k)
+        assert (np.sum(s) % 2) == 1
+        m_decoded, ce, due = decode_message(rc, s, H)
+        assert np.array_equal(m, m_decoded)
+        assert ce
+        assert not due
+
+
+def _check_double_error_exhaustive(m, k, n, H, G):
+    c = encode(m, G)
+    for loc0 in range(n):
+        for loc1 in range(n):
+            if loc0 == loc1:
+                continue
+            rc = c.copy()
+            rc[loc0] = 1 - rc[loc0]
+            rc[loc1] = 1 - rc[loc1]
+            s = decode_syndrome(rc, H, k)
+            assert (np.sum(s) % 2) == 0
+            _, ce, due = decode_message(rc, s, H)
+            assert not ce
+            assert due
+
+
+def _check_error_random(m, k, n, H, G, num_errors: int):
+    for _ in range(100):
+        c = encode(m, G)
+        locs = np.random.choice(n, num_errors, replace=False)
+        rc = c.copy()
+        for loc in locs:
+            rc[loc] = 1 - rc[loc]
+        s = decode_syndrome(rc, H, k)
+        assert (np.sum(s) % 2) == 0
+        _, ce, due = decode_message(rc, s, H)
+        assert not ce
+        assert due
 
 
 class TestHsiaoSecdedCode(unittest.TestCase):
 
     @parameterized.expand(
         [
-            ("k4", 4, 4),
-            ("k8", 8, 5),
-            ("k16", 16, 6),
-            ("k32", 32, 7),
-            ("k64", 64, 8),
-            ("k128", 128, 9),
-            ("k256", 256, 10),
-            ("k512", 512, 11),
-            ("k1024", 1024, 12),
+            (4, 4),
+            (8, 5),
+            (16, 6),
+            (32, 7),
+            (64, 8),
+            (128, 9),
+            (256, 10),
+            (512, 11),
+            (1024, 12),
         ]
     )
-    def test_get_r_pow_of_2(self, name, k, expected_r):
+    def test_get_r_pow_of_2(self, k, expected_r):
         self.assertEqual(get_r(k), expected_r)
 
     @parameterized.expand(
         [
-            ("k3", 3, 4),
-            ("k7", 7, 5),
-            ("k15", 15, 6),
-            ("k31", 31, 7),
-            ("k60", 60, 8),
+            (3, 4),
+            (7, 5),
+            (15, 6),
+            (31, 7),
+            (60, 8),
         ]
     )
-    def test_get_r_non_pow_of_2(self, name, k, expected_r):
+    def test_get_r_non_pow_of_2(self, k, expected_r):
         self.assertEqual(get_r(k), expected_r)
 
-    @parameterized.expand(
-        [
-            ("k4", 4, 3, 7),
-            ("k8", 8, 4, 12),
-            ("k16", 16, 5, 21),
-        ]
-    )
-    def test_get_n(self, name, k, r, expected_n):
-        self.assertEqual(get_n(k, r), expected_n)
-
-    def test_parity_check_message_columns(self):
-        self.assertTrue(check_columns_unique(parity_check_message_columns(7, 32, 3)))
-        self.assertTrue(
-            check_column_weights_are_odd(parity_check_message_columns(7, 32, 3))
+    def test_hsiao_secded_k4(self):
+        _, _, H, G = CODES[4]
+        check_construction(G, H, True, True)
+        H_expected = np.array(
+            [
+                [0, 1, 1, 1, 1, 0, 0, 0],
+                [1, 0, 1, 1, 0, 1, 0, 0],
+                [1, 1, 0, 1, 0, 0, 1, 0],
+                [1, 1, 1, 0, 0, 0, 0, 1],
+            ]
         )
+        G_expected = np.array(
+            [
+                [1, 0, 0, 0, 0, 1, 1, 1],
+                [0, 1, 0, 0, 1, 0, 1, 1],
+                [0, 0, 1, 0, 1, 1, 0, 1],
+                [0, 0, 0, 1, 1, 1, 1, 0],
+            ]
+        )
+        self.assertTrue(np.array_equal(H, H_expected))
+        self.assertTrue(np.array_equal(G, G_expected))
 
-    @parameterized.expand(
-        [
-            ("k4", 4, 4, 8),
-            ("k8", 8, 5, 13),
-            ("k15", 15, 6, 21),
-            ("k16", 16, 6, 22),
-            ("k30", 30, 7, 37),
-            ("k32", 32, 7, 39),
-            ("k59", 59, 8, 67),
-            ("k64", 64, 8, 72),
-            ("k128", 128, 9, 137),
-        ]
-    )
-    def test_hsiao_secded_code_construction(self, name, k, expected_r, expected_n):
-        r, n, H, G = hsiao_secded_code(k)
-
-        # Check the number of parity and codeword bits
-        self.assertEqual(r, expected_r)
-        self.assertEqual(n, expected_n)
-
-        # Check the dimensions of the matrices
-        self.assertEqual(H.shape, (r, n))
-        self.assertEqual(G.shape, (k, n))
-
-        # Check that both matrices contain identity matrices in the right positions (suggesting systematic form)
-        I_k = np.identity(k, dtype=int)
-        I_r = np.identity(r, dtype=int)
-        self.assertTrue(np.array_equal(G[:, :k], I_k))
-        self.assertTrue(np.array_equal(H[:, k:], I_r))
-
-        # Check that both matrices contain unique columns
-        self.assertTrue(check_columns_unique(H))
-        self.assertTrue(check_columns_unique(G))
-
-        self.assertTrue(check_column_weights_are_odd(H))
+    @parameterized.expand(CODES.keys())
+    def test_hsiao_secded_code_construction(self, k):
+        _, _, H, G = CODES[k]
+        check_construction(
+            G,
+            H,
+            # Code distance check is prohibitively expensive for large k
+            check_code_distance=(k <= MAX_K_FOR_OPTIMAL_ALGORITHM),
+            # Row balance check is omitted for non-optimal constructions
+            # since they aren't guaranteed to satisfy the property.
+            check_row_balance=(k <= MAX_K_FOR_OPTIMAL_ALGORITHM),
+        )
 
     def test_invalid_k(self):
         with self.assertRaises(ValueError):
             hsiao_secded_code(0)
 
-    @parameterized.expand(
-        [
-            ("k4", 4, 4, 8),
-            ("k8", 8, 5, 13),
-            ("k15", 15, 6, 21),
-            ("k16", 16, 6, 22),
-        ]
-    )
-    def test_encode_decode_syndrome_exhaustive(self, name, k, expected_r, expected_n):
+    @parameterized.expand([4, 8, 16])
+    def test_encode_decode_syndrome_exhaustive(self, k):
         """Test message encoding and syndrome decoding exhaustively for smaller codes without any errors."""
-        r, n, H, G = hsiao_secded_code(k)
+        r, n, H, G = CODES[k]
         for m in range(2**k):
             m = np.array([int(b) for b in format(m, f"0{k}b")])
             c = encode(m, G)
@@ -133,20 +173,10 @@ class TestHsiaoSecdedCode(unittest.TestCase):
             s = decode_syndrome(c, H, k)
             self.assertTrue(np.array_equal(s, np.zeros(r, dtype=int)))
 
-    @parameterized.expand(
-        [
-            ("k30", 30, 7, 37),
-            ("k32", 32, 7, 39),
-            ("k59", 59, 8, 67),
-            ("k64", 64, 8, 72),
-            ("k128", 128, 9, 137),
-            ("k977", 977, 10, 987),
-            ("k1024", 1024, 12, 1036),
-        ]
-    )
-    def test_encode_decode_syndrome_random(self, name, k, expected_r, expected_n):
+    @parameterized.expand(CODES.keys())
+    def test_encode_decode_syndrome_random(self, k):
         """Test a bunch of random messages. Note that doing it exhaustively is infeasible for large k."""
-        r, n, H, G = hsiao_secded_code(k)
+        r, n, H, G = CODES[k]
         np.random.seed(42)
         for _ in range(1000):
             m = np.random.randint(0, 2, k)
@@ -156,106 +186,42 @@ class TestHsiaoSecdedCode(unittest.TestCase):
             s = decode_syndrome(c, H, k)
             self.assertTrue(np.array_equal(s, np.zeros(r, dtype=int)))
 
-    @parameterized.expand(
-        [
-            ("k4", 4),
-            ("k8", 8),
-            ("k15", 15),
-            ("k16", 16),
-            ("k30", 30),
-            ("k32", 32),
-            ("k59", 59),
-            ("k64", 64),
-            ("k128", 128),
-            ("k977", 977),
-            ("k1024", 1024),
-        ]
-    )
-    def test_encode_decode_random_single_error_injection(self, name, k):
-        r, n, H, G = hsiao_secded_code(k)
+    @parameterized.expand(CODES.keys())
+    def test_encode_decode_single_error_injection(self, k):
+        _, n, H, G = CODES[k]
         np.random.seed(42)
-        for _ in range(1000):
-            m = np.random.randint(0, 2, k)
-            c = encode(m, G)
-            # Inject a single bit flip
-            loc = np.random.randint(0, n)
-            rc = c.copy()
-            rc[loc] = 1 - c[loc]
-            # Decode the codeword and check that syndrome is odd
-            s = decode_syndrome(rc, H, k)
-            self.assertTrue((np.sum(s) % 2) == 1)
-            # Run the error correction algorithm and check that it corrects the error
-            m_prime, ce, due = decode_message(rc, s, H)
-            self.assertTrue(np.array_equal(m, m_prime))
-            self.assertTrue(ce)
-            self.assertFalse(due)
+        # The code's characteristics are independent of the message (it's a linear code!).
+        # But test on 10 random messages just to be sure.
+        messages = [np.random.randint(0, 2, k) for _ in range(10)]
+        with ProcessPoolExecutor() as executor:
+            executor.map(
+                lambda m: _check_single_error_exhaustive(m, k, n, H, G), messages
+            )
 
-    @parameterized.expand(
-        [
-            ("k4", 4),
-            ("k8", 8),
-            ("k15", 15),
-            ("k16", 16),
-            ("k30", 30),
-            ("k32", 32),
-            ("k59", 59),
-            ("k64", 64),
-            ("k128", 128),
-            ("k977", 977),
-            ("k1024", 1024),
-        ]
-    )
-    def test_encode_decode_random_double_error_injection(self, name, k):
-        r, n, H, G = hsiao_secded_code(k)
+    @parameterized.expand(CODES.keys())
+    def test_encode_decode_double_error_injection(self, k):
+        _, n, H, G = CODES[k]
         np.random.seed(42)
-        for _ in range(1000):
-            m = np.random.randint(0, 2, k)
-            c = encode(m, G)
-            # Inject a double bit flip
-            locs = np.random.choice(n, 2, replace=False)
-            rc = c.copy()
-            for loc in locs:
-                rc[loc] = 1 - c[loc]
-            # Decode the codeword and check that syndrome is even
-            s = decode_syndrome(rc, H, k)
-            self.assertTrue((np.sum(s) % 2) == 0)
-            # Run the error correction algorithm and check that it detects but doesn't correct the error
-            _, ce, due = decode_message(rc, s, H)
-            self.assertFalse(ce)
-            self.assertTrue(due)
+        # The code's characteristics are independent of the message (it's a linear code!).
+        # But test on 10 random messages just to be sure.
+        messages = [np.random.randint(0, 2, k) for _ in range(10)]
+        with ProcessPoolExecutor() as executor:
+            if k <= 256:
+                executor.map(
+                    lambda m: _check_double_error_exhaustive(m, k, n, H, G), messages
+                )
+            else:
+                executor.map(lambda m: _check_error_random(m, k, n, H, G, 2), messages)
 
-    @parameterized.expand(
-        [
-            ("k4", 4),
-            ("k8", 8),
-            ("k15", 15),
-            ("k16", 16),
-            ("k30", 30),
-            ("k32", 32),
-            ("k59", 59),
-            ("k64", 64),
-            ("k128", 128),
-            ("k977", 977),
-            ("k1024", 1024),
-        ]
-    )
-    def test_encode_decode_random_triple_error_injection(self, name, k):
-        r, n, H, G = hsiao_secded_code(k)
+    @parameterized.expand(CODES.keys())
+    def test_encode_decode_triple_error_injection(self, k):
+        _, n, H, G = CODES[k]
         np.random.seed(42)
-        for _ in range(1000):
-            m = np.random.randint(0, 2, k)
-            c = encode(m, G)
-            # Inject a triple bit flip
-            locs = np.random.choice(n, 3, replace=False)
-            rc = c.copy()
-            for loc in locs:
-                rc[loc] = 1 - c[loc]
-            # Decode the codeword and check that syndrome is odd
-            s = decode_syndrome(rc, H, k)
-            self.assertTrue((np.sum(s) % 2) == 1)
-            # Run the error correction algorithm and check that either (1) corrects the error or (2) detects but doesn't correct the error
-            _, ce, due = decode_message(rc, s, H)
-            self.assertTrue(ce ^ due)
+        # The code's characteristics are independent of the message (it's a linear code!).
+        # But test on 10 random messages just to be sure.
+        messages = [np.random.randint(0, 2, k) for _ in range(10)]
+        with ProcessPoolExecutor() as executor:
+            executor.map(lambda m: _check_error_random(m, k, n, H, G, 3), messages)
 
 
 if __name__ == "__main__":

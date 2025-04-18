@@ -18,9 +18,9 @@ load("//bazel:verilog.bzl", "verilog_elab_test")
 
 package(default_visibility = ["//visibility:private"])
 
-##################3
+##################
 # SED
-##################3
+##################
 verilog_library(
     name = "br_ecc_sed_encoder_decoder_tb",
     srcs = ["br_ecc_sed_encoder_decoder_tb.sv"],
@@ -63,6 +63,7 @@ verilog_library(
     deps = [
         "//ecc/rtl:br_ecc_secded_decoder",
         "//ecc/rtl:br_ecc_secded_encoder",
+        "//pkg:br_ecc_pkg",
     ],
 )
 
@@ -72,59 +73,43 @@ verilog_elab_test(
     deps = [":br_ecc_secded_encoder_decoder_tb"],
 )
 
-br_verilog_sim_test_tools_suite(
-    name = "br_ecc_secded_encoder_decoder_dw4_pw4_sim_test_tools_suite",
-    params = {
-        "DataWidth": ["4"],
-        "ParityWidth": ["4"],
-    },
-    tools = [
-        "dsim",
-        "iverilog",
-        "vcs",
-    ],
-    deps = [":br_ecc_secded_encoder_decoder_tb"],
-)
+K_R_PAIRS = [
+    # Generated configs
+    ("4", "4"),
+    ("8", "5"),
+    ("11", "5"),
+    ("16", "6"),
+    ("26", "6"),
+    ("32", "7"),
+    ("57", "7"),
+    ("64", "8"),
+    ("120", "8"),
+    ("128", "9"),
+    ("247", "9"),
+    ("256", "10"),
+    ("502", "10"),
+    ("512", "11"),
+    ("1013", "11"),
+    ("1024", "12"),
+    # Padded configs
+    ("9", "5"),
+    ("68", "8"),
+]
 
-br_verilog_sim_test_tools_suite(
-    name = "br_ecc_secded_encoder_decoder_dw8_pw5_sim_test_tools_suite",
-    params = {
-        "DataWidth": ["8"],
-        "ParityWidth": ["5"],
-    },
-    tools = [
-        "dsim",
-        "iverilog",
-        "vcs",
-    ],
-    deps = [":br_ecc_secded_encoder_decoder_tb"],
-)
-
-br_verilog_sim_test_tools_suite(
-    name = "br_ecc_secded_encoder_decoder_dw32_pw7_sim_test_tools_suite",
-    params = {
-        "DataWidth": ["32"],
-        "ParityWidth": ["7"],
-    },
-    tools = [
-        "dsim",
-        "iverilog",
-        "vcs",
-    ],
-    deps = [":br_ecc_secded_encoder_decoder_tb"],
-)
-
-br_verilog_sim_test_tools_suite(
-    name = "br_ecc_secded_encoder_decoder_dw64_pw8_sim_test_tools_suite",
-    params = {
-        "DataWidth": ["64"],
-        "ParityWidth": ["8"],
-    },
-    tools = [
-        "dsim",
-        "vcs",
-        # So slow..
-        #"iverilog",
-    ],
-    deps = [":br_ecc_secded_encoder_decoder_tb"],
-)
+[
+    br_verilog_sim_test_tools_suite(
+        name = "br_ecc_secded_encoder_decoder_sim_test_tools_suite",
+        params = {
+            "DataWidth": [k],
+            "ParityWidth": [r],
+        },
+        seed = 42,
+        tools = [
+            # iverilog is really slow on these tests :(
+            "dsim",
+            "vcs",
+        ],
+        deps = [":br_ecc_secded_encoder_decoder_tb"],
+    )
+    for (k, r) in K_R_PAIRS
+]
