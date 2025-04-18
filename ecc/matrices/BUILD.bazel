@@ -31,17 +31,25 @@ K = [
     "256",
 ]
 
+GOLDEN_HSIAO_G_K_FILES = ["hsiao_G_k" + k + ".txt" for k in K]
+
+GOLDEN_HSIAO_H_K_FILES = ["hsiao_H_k" + k + ".txt" for k in K]
+
+GENERATED_HSIAO_G_K_FILES = ["gen_hsiao_G_k" + k + ".txt" for k in K]
+
+GENERATED_HSIAO_H_K_FILES = ["gen_hsiao_H_k" + k + ".txt" for k in K]
+
 [
     [
         diff_test(
             name = "hsiao_G_k" + k + "_diff_test",
-            failure_message = "Golden hsiao_G_k" + k + ".txt does not match the generated code. Please run `bazel run //ecc/matrices:update_hsiao_G_k" + k + "` to automatically update the golden.",
+            failure_message = "Golden hsiao_G_k" + k + ".txt does not match the generated code. Please run `bazel run //ecc/matrices:update` to automatically update the golden.",
             file1 = "hsiao_G_k" + k + ".txt",
             file2 = ":gen_hsiao_G_k" + k + ".txt",
         ),
         diff_test(
             name = "hsiao_H_k" + k + "_diff_test",
-            failure_message = "Golden hsiao_H_k" + k + ".txt does not match the generated code. Please run `bazel run //ecc/matrices:update_hsiao_H_k" + k + "` to automatically update the golden.",
+            failure_message = "Golden hsiao_H_k" + k + ".txt does not match the generated code. Please run `bazel run //ecc/matrices:update` to automatically update the golden.",
             file1 = "hsiao_H_k" + k + ".txt",
             file2 = ":gen_hsiao_H_k" + k + ".txt",
         ),
@@ -54,40 +62,22 @@ K = [
             cmd = "$(location //python/eccgen) --k " + k + " --scheme hsiao_secded --generator-matrix-output=$(location gen_hsiao_G_k" + k + ".txt) --parity-check-matrix-output=$(location gen_hsiao_H_k" + k + ".txt)",
             tools = ["//python/eccgen"],
         ),
-        write_file(
-            name = "gen_update_hsiao_G_k" + k,
-            out = "update_hsiao_G_k" + k + ".sh",
-            content = [
-                "#!/usr/bin/env bash",
-                "cd $BUILD_WORKSPACE_DIRECTORY",
-                "cp -fv bazel-bin/ecc/matrices/gen_hsiao_G_k" + k + ".txt ecc/matrices/hsiao_G_k" + k + ".txt",
-            ],
-        ),
-        write_file(
-            name = "gen_update_hsiao_H_k" + k,
-            out = "update_hsiao_H_k" + k + ".sh",
-            content = [
-                "#!/usr/bin/env bash",
-                "cd $BUILD_WORKSPACE_DIRECTORY",
-                "cp -fv bazel-bin/ecc/matrices/gen_hsiao_H_k" + k + ".txt ecc/matrices/hsiao_H_k" + k + ".txt",
-            ],
-        ),
-        sh_binary(
-            name = "update_hsiao_G_k" + k,
-            srcs = [":update_hsiao_G_k" + k + ".sh"],
-            data = [
-                "hsiao_G_k" + k + ".txt",
-                ":gen_hsiao_G_k" + k + ".txt",
-            ],
-        ),
-        sh_binary(
-            name = "update_hsiao_H_k" + k,
-            srcs = [":update_hsiao_H_k" + k + ".sh"],
-            data = [
-                "hsiao_H_k" + k + ".txt",
-                ":gen_hsiao_H_k" + k + ".txt",
-            ],
-        ),
     ]
     for k in K
 ]
+
+write_file(
+    name = "gen_update.sh",
+    out = "update.sh",
+    content = [
+                  "#!/usr/bin/env bash",
+                  "cd $BUILD_WORKSPACE_DIRECTORY",
+              ] + ["cp -fv bazel-bin/ecc/matrices/gen_hsiao_G_k" + k + ".txt ecc/matrices/hsiao_G_k" + k + ".txt" for k in K] +
+              ["cp -fv bazel-bin/ecc/matrices/gen_hsiao_H_k" + k + ".txt ecc/matrices/hsiao_H_k" + k + ".txt" for k in K],
+)
+
+sh_binary(
+    name = "update",
+    srcs = [":update.sh"],
+    data = GOLDEN_HSIAO_G_K_FILES + GENERATED_HSIAO_G_K_FILES + GOLDEN_HSIAO_H_K_FILES + GENERATED_HSIAO_H_K_FILES,
+)

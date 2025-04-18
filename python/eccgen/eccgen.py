@@ -108,6 +108,7 @@ def main():
 
     args = parser.parse_args()
 
+    did_something = False
     if args.scheme == "hsiao_secded":
         if args.k:
             r, n, H, G = hsiao_secded_code(args.k)
@@ -130,48 +131,59 @@ def main():
             ).replace("0", " " if args.print0 else "0")
 
             if args.generator_matrix_output:
-                args.generator_matrix_output.write(file_header + "\nG = \n" + G_str)
+                args.generator_matrix_output.write(
+                    file_header + "\nG =\n" + G_str + "\n"
+                )
             if args.parity_check_matrix_output:
-                args.parity_check_matrix_output.write(file_header + "\nH = \n" + H_str)
-
-        if args.rtl_encoder_output:
-            if not args.rtl_encoder_template:
-                raise ValueError(
-                    "RTL encoder template file is required to generate the encoder."
+                args.parity_check_matrix_output.write(
+                    file_header + "\nH =\n" + H_str + "\n"
                 )
+            did_something = True
 
-            with open(args.rtl_encoder_template, "r") as template_file:
-                template = Template(template_file.read())
-                mapping = {}
-                for n, k in RTL_SUPPORTED_N_K:
-                    r, n, H, G = hsiao_secded_code(k)
-                    check_construction(G, H)
-                    mapping[f"secded_enc_{n}_{k}"] = G_to_sv(G)
-                rendered = template.render(mapping)
-                rendered += "\n"
-                args.rtl_encoder_output.write(rendered)
+        if args.rtl_encoder_output or args.rtl_decoder_output:
+            codes = {}
+            for n, k in RTL_SUPPORTED_N_K:
+                r, n, H, G = hsiao_secded_code(k)
+                check_construction(G, H)
+                codes[k] = (r, n, H, G)
 
-        if args.rtl_decoder_output:
-            if not args.rtl_decoder_template:
-                raise ValueError(
-                    "RTL decoder template file is required to generate the decoder."
-                )
+            if args.rtl_encoder_output:
+                if not args.rtl_encoder_template:
+                    raise ValueError(
+                        "RTL encoder template file is required to generate the encoder."
+                    )
+                with open(args.rtl_encoder_template, "r") as template_file:
+                    template = Template(template_file.read())
+                    mapping = {}
+                    for k in codes:
+                        r, n, H, G = codes[k]
+                        mapping[f"secded_enc_{n}_{k}"] = G_to_sv(G)
+                    rendered = template.render(mapping)
+                    rendered += "\n"
+                    args.rtl_encoder_output.write(rendered)
 
-            with open(args.rtl_decoder_template, "r") as template_file:
-                template = Template(template_file.read())
-                mapping = {}
-                for n, k in RTL_SUPPORTED_N_K:
-                    r, n, H, G = hsiao_secded_code(k)
-                    check_construction(G, H)
-                    mapping[f"secded_dec_syndrome_{n}_{k}"] = syndrome_to_sv(H)
-                    mapping[f"secded_dec_H_{n}_{k}"] = H_to_sv(H)
-                rendered = template.render(mapping)
-                rendered += "\n"
-                args.rtl_decoder_output.write(rendered)
+            if args.rtl_decoder_output:
+                if not args.rtl_decoder_template:
+                    raise ValueError(
+                        "RTL decoder template file is required to generate the decoder."
+                    )
 
-        if not args.k and not args.rtl_encoder_output and not args.rtl_decoder_output:
+                with open(args.rtl_decoder_template, "r") as template_file:
+                    template = Template(template_file.read())
+                    mapping = {}
+                    for k in codes:
+                        r, n, H, G = codes[k]
+                        mapping[f"secded_dec_syndrome_{n}_{k}"] = syndrome_to_sv(H)
+                        mapping[f"secded_dec_H_{n}_{k}"] = H_to_sv(H)
+                    rendered = template.render(mapping)
+                    rendered += "\n"
+                    args.rtl_decoder_output.write(rendered)
+
+            did_something = True
+
+        if not did_something:
             raise ValueError(
-                "Either k or rtl-encoder-output or rtl-decoder-output must be provided for Hsiao SEC-DED code generation."
+                "Either --k or --rtl-encoder-output or --rtl-decoder-output must be provided for Hsiao SEC-DED code generation."
             )
 
 

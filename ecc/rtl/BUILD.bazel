@@ -113,46 +113,6 @@ K_R_PAIRS = [
     for (k, r) in K_R_PAIRS
 ]
 
-diff_test(
-    name = "br_ecc_secded_encoder_diff_test",
-    failure_message = """
-        Golden br_ecc_secded_encoder.sv does not match the generated code.
-        Please run `bazel run //ecc/rtl:update_br_ecc_secded_encoder` to automatically update the golden.
-    """,
-    file1 = "br_ecc_secded_encoder.sv",
-    file2 = ":gen_br_ecc_secded_encoder.sv",
-)
-
-genrule(
-    name = "gen_br_ecc_secded_encoder",
-    srcs = ["//python/eccgen:br_ecc_secded_encoder.sv.jinja2"],
-    outs = ["gen_br_ecc_secded_encoder.sv"],
-    cmd = "$(location //python/eccgen:eccgen) --scheme=hsiao_secded --rtl-encoder-template=$(location //python/eccgen:br_ecc_secded_encoder.sv.jinja2) --rtl-encoder-output=$@",
-    tools = ["//python/eccgen"],
-)
-
-write_file(
-    name = "gen_update_br_ecc_secded_encoder",
-    out = "update_br_ecc_secded_encoder.sh",
-    content = [
-        "#!/usr/bin/env bash",
-        "cd $BUILD_WORKSPACE_DIRECTORY",
-        "cp -fv bazel-bin/ecc/rtl/gen_br_ecc_secded_encoder.sv ecc/rtl/br_ecc_secded_encoder.sv",
-    ],
-)
-
-sh_binary(
-    name = "update_br_ecc_secded_encoder",
-    srcs = [":update_br_ecc_secded_encoder.sh"],
-    data = [
-        "br_ecc_secded_encoder.sv",
-        ":gen_br_ecc_secded_encoder.sv",
-    ],
-)
-
-#########################################
-# SECDED Decoder
-#########################################
 verilog_library(
     name = "br_ecc_secded_decoder",
     srcs = ["br_ecc_secded_decoder.sv"],
@@ -183,39 +143,64 @@ verilog_library(
     for (k, r) in K_R_PAIRS
 ]
 
+# Diff test and codegen
+diff_test(
+    name = "br_ecc_secded_encoder_diff_test",
+    failure_message = """
+        Golden br_ecc_secded_encoder.sv does not match the generated code.
+        Please run `bazel run //ecc/rtl:update_secded` to automatically update the golden.
+    """,
+    file1 = "br_ecc_secded_encoder.sv",
+    file2 = ":gen_br_ecc_secded_encoder.sv",
+)
+
 diff_test(
     name = "br_ecc_secded_decoder_diff_test",
     failure_message = """
         Golden br_ecc_secded_decoder.sv does not match the generated code.
-        Please run `bazel run //ecc/rtl:update_br_ecc_secded_decoder` to automatically update the golden.
+        Please run `bazel run //ecc/rtl:update_secded` to automatically update the golden.
     """,
     file1 = "br_ecc_secded_decoder.sv",
     file2 = ":gen_br_ecc_secded_decoder.sv",
 )
 
 genrule(
-    name = "gen_br_ecc_secded_decoder",
-    srcs = ["//python/eccgen:br_ecc_secded_decoder.sv.jinja2"],
-    outs = ["gen_br_ecc_secded_decoder.sv"],
-    cmd = "$(location //python/eccgen:eccgen) --scheme=hsiao_secded --rtl-decoder-template=$(location //python/eccgen:br_ecc_secded_decoder.sv.jinja2) --rtl-decoder-output=$@",
+    name = "gen_secded",
+    srcs = [
+        "//python/eccgen:br_ecc_secded_encoder.sv.jinja2",
+        "//python/eccgen:br_ecc_secded_decoder.sv.jinja2",
+    ],
+    outs = [
+        "gen_br_ecc_secded_encoder.sv",
+        "gen_br_ecc_secded_decoder.sv",
+    ],
+    cmd = "$(location //python/eccgen:eccgen) \
+        --scheme=hsiao_secded \
+        --rtl-encoder-template=$(location //python/eccgen:br_ecc_secded_encoder.sv.jinja2) \
+        --rtl-encoder-output=$(location gen_br_ecc_secded_encoder.sv) \
+        --rtl-decoder-template=$(location //python/eccgen:br_ecc_secded_decoder.sv.jinja2) \
+        --rtl-decoder-output=$(location gen_br_ecc_secded_decoder.sv)",
     tools = ["//python/eccgen"],
 )
 
 write_file(
-    name = "gen_update_br_ecc_secded_decoder",
-    out = "update_br_ecc_secded_decoder.sh",
+    name = "gen_update_secded",
+    out = "update_secded.sh",
     content = [
         "#!/usr/bin/env bash",
         "cd $BUILD_WORKSPACE_DIRECTORY",
+        "cp -fv bazel-bin/ecc/rtl/gen_br_ecc_secded_encoder.sv ecc/rtl/br_ecc_secded_encoder.sv",
         "cp -fv bazel-bin/ecc/rtl/gen_br_ecc_secded_decoder.sv ecc/rtl/br_ecc_secded_decoder.sv",
     ],
 )
 
 sh_binary(
-    name = "update_br_ecc_secded_decoder",
-    srcs = [":update_br_ecc_secded_decoder.sh"],
+    name = "update_secded",
+    srcs = [":update_secded.sh"],
     data = [
         "br_ecc_secded_decoder.sv",
+        "br_ecc_secded_encoder.sv",
         ":gen_br_ecc_secded_decoder.sv",
+        ":gen_br_ecc_secded_encoder.sv",
     ],
 )
