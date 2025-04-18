@@ -79,7 +79,7 @@ verilog_library(
 )
 
 K_R_PAIRS = [
-    # Optimized configs
+    # Generated configs
     ("4", "4"),
     ("8", "5"),
     ("11", "5"),
@@ -92,6 +92,10 @@ K_R_PAIRS = [
     ("128", "9"),
     ("247", "9"),
     ("256", "10"),
+    ("502", "10"),
+    ("512", "11"),
+    ("1013", "11"),
+    ("1024", "12"),
     # Padded configs
     ("9", "5"),
     ("68", "8"),
@@ -103,6 +107,10 @@ K_R_PAIRS = [
         params = {
             "DataWidth": [k],
             "ParityWidth": [r],
+            "RegisterInputs": [
+                "0",
+                "1",
+            ],
             "RegisterOutputs": [
                 "0",
                 "1",
@@ -133,12 +141,20 @@ verilog_library(
         params = {
             "DataWidth": [k],
             "ParityWidth": [r],
+            "RegisterInputs": [
+                "0",
+                "1",
+            ],
+            "RegisterSyndrome": [
+                "0",
+                "1",
+            ],
             "RegisterOutputs": [
                 "0",
                 "1",
             ],
         },
-        deps = [":br_ecc_secded_encoder"],
+        deps = [":br_ecc_secded_decoder"],
     )
     for (k, r) in K_R_PAIRS
 ]

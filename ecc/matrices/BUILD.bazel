@@ -29,6 +29,10 @@ K = [
     "128",
     "247",
     "256",
+    "502",
+    "512",
+    "1013",
+    "1024",
 ]
 
 GOLDEN_HSIAO_G_K_FILES = ["hsiao_G_k" + k + ".txt" for k in K]
@@ -54,7 +58,7 @@ GENERATED_HSIAO_H_K_FILES = ["gen_hsiao_H_k" + k + ".txt" for k in K]
             file2 = ":gen_hsiao_H_k" + k + ".txt",
         ),
         genrule(
-            name = "gen_hsiao_k" + k + ".txt",
+            name = "gen_hsiao_k" + k,
             outs = [
                 "gen_hsiao_G_k" + k + ".txt",
                 "gen_hsiao_H_k" + k + ".txt",

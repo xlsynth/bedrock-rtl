@@ -19,6 +19,7 @@ from python.eccgen.hsiao_secded import (
     G_to_sv,
     syndrome_to_sv,
     H_to_sv,
+    MAX_K_FOR_OPTIMAL_ALGORITHM,
 )
 import numpy as np
 from jinja2 import Template
@@ -36,6 +37,10 @@ RTL_SUPPORTED_N_K = [
     (137, 128),
     (256, 247),
     (266, 256),
+    (512, 502),
+    (523, 512),
+    (1024, 1013),
+    (1036, 1024),
 ]
 
 
@@ -112,7 +117,15 @@ def main():
     if args.scheme == "hsiao_secded":
         if args.k:
             r, n, H, G = hsiao_secded_code(args.k)
-            check_construction(G, H)
+            check_construction(
+                G,
+                H,
+                # Code distance check is prohibitively expensive for large k
+                check_code_distance=(args.k <= MAX_K_FOR_OPTIMAL_ALGORITHM),
+                # Row balance check is omitted for non-optimal constructions
+                # since they aren't guaranteed to satisfy the property.
+                check_row_balance=(args.k <= MAX_K_FOR_OPTIMAL_ALGORITHM),
+            )
 
             file_header = "\n".join(
                 [
@@ -144,7 +157,8 @@ def main():
             codes = {}
             for n, k in RTL_SUPPORTED_N_K:
                 r, n, H, G = hsiao_secded_code(k)
-                check_construction(G, H)
+                # Don't bother checking the construction, we already cover all of the RTL
+                # supported combinations in hsiao_secded_test.py.
                 codes[k] = (r, n, H, G)
 
             if args.rtl_encoder_output:

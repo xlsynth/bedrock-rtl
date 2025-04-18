@@ -40,7 +40,7 @@
 // but it can have up to 3 cycles of delay (RegisterInputs, RegisterSyndrome, and
 // RegisterOutputs). The initiation interval is always 1 cycle.
 //
-// Any DataWidth >= 4 is supported, up to a maximum of 256.
+// Any DataWidth >= 4 is supported, up to a maximum of 1024.
 // * If DataWidth is a power of 2, it benefits from a specifically generated ECC code construction
 //   and the MessageWidth is set to the DataWidth.
 // * If DataWidth is not a power of 2, it is treated as internally zero-padded up to the nearest
@@ -50,27 +50,32 @@
 // an inclusive range from x to y. Notice that all power-of-2 DataWidth from 4 up to 256
 // and all power-of-2 CodewordWidth from 8 up to 256 get optimal constructions.
 //
-// | DataWidth   | ParityWidth (r) | MessageWidth (k) | CodewordWidth (n = k + r) |
-// |-------------|-----------------|------------------|---------------------------|
-// | 4           | 4               | 4                | 8                         |
-// | [5,8]       | 5               | 8                | 13                        |
-// | [9,11]      | 5               | 11               | 16                        |
-// | [12,16]     | 6               | 16               | 22                        |
-// | [17,26]     | 6               | 26               | 32                        |
-// | [27,32]     | 7               | 32               | 39                        |
-// | [33,57]     | 7               | 57               | 64                        |
-// | [58,64]     | 8               | 64               | 72                        |
-// | [65,120]    | 8               | 120              | 128                       |
-// | [121,128]   | 9               | 128              | 137                       |
-// | [129,247]   | 9               | 247              | 256                       |
-// | [248,256] * | 10 *            | 256 *            | 266 *                     |
+// The constructions for DataWidth > 256 are not optimal because they do not balance the rows of the
+// parity-check matrix. This is because the algorithm for finding an optimal construction is prohibitively
+// slow for large MessageWidth (k). However, these suboptimal constructions are still valid SECDED codes.
 //
-// * For r=10, the maximum MessageWidth is actually 502, but solving for a Hsiao code
-// this big has proven to be computationally difficult. Accordingly, we limit the maximum
-// overall MessageWidth to 256.
+// | DataWidth   | ParityWidth (r) | MessageWidth (k) | CodewordWidth (n = k + r) | Optimal Construction? |
+// |-------------|-----------------|------------------|---------------------------|-----------------------|
+// | 4           | 4               | 4                | 8                         | Yes                   |
+// | [5,8]       | 5               | 8                | 13                        | Yes                   |
+// | [9,11]      | 5               | 11               | 16                        | Yes                   |
+// | [12,16]     | 6               | 16               | 22                        | Yes                   |
+// | [17,26]     | 6               | 26               | 32                        | Yes                   |
+// | [27,32]     | 7               | 32               | 39                        | Yes                   |
+// | [33,57]     | 7               | 57               | 64                        | Yes                   |
+// | [58,64]     | 8               | 64               | 72                        | Yes                   |
+// | [65,120]    | 8               | 120              | 128                       | Yes                   |
+// | [121,128]   | 9               | 128              | 137                       | Yes                   |
+// | [129,247]   | 9               | 247              | 256                       | Yes                   |
+// | [248,256]   | 10              | 256              | 266                       | Yes                   |
+// | [257,502]   | 10              | 502              | 512                       | No                    |
+// | [503,512]   | 11              | 512              | 523                       | No                    |
+// | [513,1013]  | 11              | 1013             | 1024                      | No                    |
+// | [1014,1024] | 12              | 1024             | 1036                      | No                    |
 //
 // References:
 // [1] https://ieeexplore.ieee.org/abstract/document/5391627
+// [2] https://arxiv.org/pdf/0803.1217
 
 `include "br_asserts.svh"
 `include "br_asserts_internal.svh"
@@ -79,8 +84,8 @@
 
 // TODO(mgottscho): Pipeline the syndrome decoding and then correction with a parameter.
 module br_ecc_secded_decoder #(
-    parameter int DataWidth = 4,  // Must be at least 4
-    parameter int ParityWidth = 4,  // Must be at least 4 and at most 10
+    parameter int DataWidth = 4,  // Must be at least 4 and at most 1024
+    parameter int ParityWidth = 4,  // Must be at least 4 and at most 12
     // If 1, then insert a pipeline register at the input.
     parameter bit RegisterInputs = 0,
     // If 1, then insert a pipeline register between syndrome computation and
@@ -127,9 +132,9 @@ module br_ecc_secded_decoder #(
   // Integration checks
   //------------------------------------------
   `BR_ASSERT_STATIC(data_width_gte_4_a, DataWidth >= 4)
-  `BR_ASSERT_STATIC(data_width_lte_256_a, DataWidth <= 256)
+  `BR_ASSERT_STATIC(data_width_lte_1024_a, DataWidth <= 1024)
   `BR_ASSERT_STATIC(parity_width_gte_4_a, ParityWidth >= 4)
-  `BR_ASSERT_STATIC(parity_width_lte_12_a, ParityWidth <= 10)
+  `BR_ASSERT_STATIC(parity_width_lte_12_a, ParityWidth <= 12)
   `BR_ASSERT_STATIC(data_width_fits_in_message_width_a, DataWidth <= MessageWidth)
   `BR_ASSERT_STATIC(right_sized_parity_bits_a, DataWidth > br_ecc::get_max_message_width(ParityWidth - 1))
 
@@ -220,6 +225,22 @@ module br_ecc_secded_decoder #(
     `BR_ASSERT_STATIC(parity_width_matches_a, ParityWidth == 10)
 {{ secded_dec_syndrome_266_256 }}
 {{ secded_dec_H_266_256 }}
+  end else if ((CodewordWidth == 512) && (MessageWidth == 502)) begin : gen_512_502
+    `BR_ASSERT_STATIC(parity_width_matches_a, ParityWidth == 10)
+{{ secded_dec_syndrome_512_502 }}
+{{ secded_dec_H_512_502 }}
+  end else if ((CodewordWidth == 523) && (MessageWidth == 512)) begin : gen_523_512
+    `BR_ASSERT_STATIC(parity_width_matches_a, ParityWidth == 11)
+{{ secded_dec_syndrome_523_512 }}
+{{ secded_dec_H_523_512 }}
+  end else if ((CodewordWidth == 1024) && (MessageWidth == 1013)) begin : gen_1024_1013
+    `BR_ASSERT_STATIC(parity_width_matches_a, ParityWidth == 11)
+{{ secded_dec_syndrome_1024_1013 }}
+{{ secded_dec_H_1024_1013 }}
+  end else if ((CodewordWidth == 1036) && (MessageWidth == 1024)) begin : gen_1036_1024
+    `BR_ASSERT_STATIC(parity_width_matches_a, ParityWidth == 12)
+{{ secded_dec_syndrome_1036_1024 }}
+{{ secded_dec_H_1036_1024 }}
   end else begin : gen_default
     `BR_ASSERT_STATIC(invalid_parity_width_a, 1'b0)
   end

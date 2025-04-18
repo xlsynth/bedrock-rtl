@@ -23,6 +23,7 @@ from python.eccgen.hsiao_secded import (
     encode,
     decode_syndrome,
     decode_message,
+    MAX_K_FOR_OPTIMAL_ALGORITHM,
 )
 
 # Cache code constructions to speed up tests on the same construction.
@@ -41,6 +42,10 @@ CODES = {
     128: hsiao_secded_code(128),
     247: hsiao_secded_code(247),
     256: hsiao_secded_code(256),
+    502: hsiao_secded_code(502),
+    512: hsiao_secded_code(512),
+    1013: hsiao_secded_code(1013),
+    1024: hsiao_secded_code(1024),
 }
 
 
@@ -73,19 +78,18 @@ def _check_double_error_exhaustive(m, k, n, H, G):
             assert due
 
 
-def _check_triple_error_random(m, k, n, H, G):
+def _check_error_random(m, k, n, H, G, num_errors: int):
     for _ in range(100):
         c = encode(m, G)
-        # Infeasible to do this exhaustively for large n
-        locs = np.random.choice(n, 3, replace=False)
+        locs = np.random.choice(n, num_errors, replace=False)
         rc = c.copy()
         for loc in locs:
             rc[loc] = 1 - rc[loc]
         s = decode_syndrome(rc, H, k)
-        assert (np.sum(s) % 2) == 1
+        assert (np.sum(s) % 2) == 0
         _, ce, due = decode_message(rc, s, H)
-        # Triple bit error must not go undetected
-        assert ce ^ due
+        assert not ce
+        assert due
 
 
 class TestHsiaoSecdedCode(unittest.TestCase):
@@ -120,7 +124,7 @@ class TestHsiaoSecdedCode(unittest.TestCase):
 
     def test_hsiao_secded_k4(self):
         _, _, H, G = CODES[4]
-        check_construction(G, H)
+        check_construction(G, H, True, True)
         H_expected = np.array(
             [
                 [0, 1, 1, 1, 1, 0, 0, 0],
@@ -143,7 +147,15 @@ class TestHsiaoSecdedCode(unittest.TestCase):
     @parameterized.expand(CODES.keys())
     def test_hsiao_secded_code_construction(self, k):
         _, _, H, G = CODES[k]
-        check_construction(G, H)
+        check_construction(
+            G,
+            H,
+            # Code distance check is prohibitively expensive for large k
+            check_code_distance=(k <= MAX_K_FOR_OPTIMAL_ALGORITHM),
+            # Row balance check is omitted for non-optimal constructions
+            # since they aren't guaranteed to satisfy the property.
+            check_row_balance=(k <= MAX_K_FOR_OPTIMAL_ALGORITHM),
+        )
 
     def test_invalid_k(self):
         with self.assertRaises(ValueError):
@@ -194,9 +206,12 @@ class TestHsiaoSecdedCode(unittest.TestCase):
         # But test on 10 random messages just to be sure.
         messages = [np.random.randint(0, 2, k) for _ in range(10)]
         with ProcessPoolExecutor() as executor:
-            executor.map(
-                lambda m: _check_double_error_exhaustive(m, k, n, H, G), messages
-            )
+            if k <= 256:
+                executor.map(
+                    lambda m: _check_double_error_exhaustive(m, k, n, H, G), messages
+                )
+            else:
+                executor.map(lambda m: _check_error_random(m, k, n, H, G, 2), messages)
 
     @parameterized.expand(CODES.keys())
     def test_encode_decode_triple_error_injection(self, k):
@@ -206,7 +221,7 @@ class TestHsiaoSecdedCode(unittest.TestCase):
         # But test on 10 random messages just to be sure.
         messages = [np.random.randint(0, 2, k) for _ in range(10)]
         with ProcessPoolExecutor() as executor:
-            executor.map(lambda m: _check_triple_error_random(m, k, n, H, G), messages)
+            executor.map(lambda m: _check_error_random(m, k, n, H, G, 3), messages)
 
 
 if __name__ == "__main__":

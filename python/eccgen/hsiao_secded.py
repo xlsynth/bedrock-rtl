@@ -22,8 +22,11 @@ References:
 
 import numpy as np
 import math
-import textwrap
 from itertools import combinations
+
+# Ideally this would be infinity, but the optimal algorithm is prohibitively slow for large k.
+# We set this to 256 because that takes a couple minutes and going to 512 would probably take hours.
+MAX_K_FOR_OPTIMAL_ALGORITHM = 256
 
 
 def get_r(k: int) -> int:
@@ -34,10 +37,17 @@ def get_r(k: int) -> int:
     return r
 
 
-def get_Hm(r: int, k: int) -> np.ndarray:
+def get_Hm(k: int, r: int) -> np.ndarray:
     """
     Find the message part H_m of the Hsiao parity-check matrix H using the
     approach described in reference [2]: recursively balanced Δ-matrices.
+
+    It guarantees the following properties:
+
+    (1) Every column contains an odd number of 1s.
+    (2) The total number of 1s reaches the minimum.
+    (3) The difference of the number of 1s in any two rows is not greater than 1.
+    (4) No two columns are the same.
     """
 
     def _delta_base(R: int, J: int, m: int) -> np.ndarray:
@@ -134,10 +144,65 @@ def get_Hm(r: int, k: int) -> np.ndarray:
     return Hm
 
 
+def get_Hm_greedy_suboptimal(k: int, r: int) -> np.ndarray:
+    """
+    Generate the message part Hm of the Hsiao parity-check matrix H using a greedy algorithm
+    that guarantees the following properties described in reference [2]:
+
+    (1) Every column contains an odd number of 1s.
+    (2) The total number of 1s reaches the minimum.
+    (4) No two columns are the same.
+
+    It does NOT guarantee the following property:
+
+    (3) The difference of the number of 1s in any two rows is not greater than 1.
+
+    Because property (3) is not guaranteed, the algorithm is not optimal and therefore
+    this isn't technically a Hsiao code, but it is still a valid SECDED code.
+
+    You probably only want to use this if finding the optimal Hm is prohibitively slow,
+    e.g., when k is large.
+    """
+
+    def parity_check_message_columns(r: int, k: int, col_weight: int) -> np.ndarray:
+        """
+        Returns a set of parity columns for the r x k message part of the
+        r x n parity-check matrix, by walking the first k combinations
+        of r choose col_weight.
+        """
+        ret = np.zeros((r, k), dtype=int)
+        # itertools.combinations(range(r), col_weight) yields tuples of indices
+        # at which bits should be 1.  We just take the first k of them.
+        for c, ones in enumerate(combinations(range(r), col_weight)):
+            ret[list(ones), c] = 1
+            if c + 1 == k:
+                break
+        return ret
+
+    n = k + r
+    # Fill H_m with column vectors that satisfy conditions (1), (2), and (4).
+    start_col = 0
+    weight = 3  # Only use odd weights, and skip weight 1 since it's only used for H_p
+    Hm = np.zeros((r, k), dtype=int)
+    while start_col < k:
+        remaining_cols = k - start_col
+        cols_using_weight = min(math.comb(r, weight), remaining_cols)
+        end_col = start_col + cols_using_weight
+        Hm[:, start_col:end_col] = parity_check_message_columns(
+            r, cols_using_weight, weight
+        )
+        start_col = end_col
+        weight += 2  # Only use odd weights
+    return Hm
+
+
 def get_H(k: int, r: int) -> np.ndarray:
     """Generate the r x n parity-check matrix H for a Hsiao SECDED code."""
     # Build a perfectly row-balanced message matrix of k odd-weight columns
-    Hm = get_Hm(r, k)
+    if k <= MAX_K_FOR_OPTIMAL_ALGORITHM:
+        Hm = get_Hm(k, r)
+    else:
+        Hm = get_Hm_greedy_suboptimal(k, r)
     # Append parity-bit identity
     Hp = np.eye(r, dtype=int)
     H = np.hstack((Hm, Hp))
@@ -306,7 +371,12 @@ def H_to_sv(H: np.ndarray) -> str:
     return "\n".join(assigns)
 
 
-def check_construction(G: np.ndarray, H: np.ndarray) -> None:
+def check_construction(
+    G: np.ndarray,
+    H: np.ndarray,
+    check_code_distance: bool = True,
+    check_row_balance: bool = True,
+) -> None:
     """Raises a ValueError if the given generator matrix G and parity-check matrix H are not a valid Hsiao SECDED code."""
 
     def check_columns_unique(matrix: np.ndarray) -> None:
@@ -447,9 +517,11 @@ def check_construction(G: np.ndarray, H: np.ndarray) -> None:
     check_columns_unique(G)
     check_columns_unique(H)
     check_matrices_orthogonal(G, H.T)
-    check_distance_ge_4(H)
+    if check_code_distance:
+        check_distance_ge_4(H)
     check_column_weights_are_odd(H)
     check_minimum_total_weight(H)
-    check_row_sums_differ_by_at_most(H, 1)
+    if check_row_balance:
+        check_row_sums_differ_by_at_most(H, 1)
     check_G_systematic(G)
     check_H_systematic(H)
