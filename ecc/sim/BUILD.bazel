@@ -98,13 +98,14 @@ K_R_PAIRS = [
 
 [
     br_verilog_sim_test_tools_suite(
-        name = "br_ecc_secded_encoder_decoder_dw4_pw4_sim_test_tools_suite",
+        name = "br_ecc_secded_encoder_decoder_sim_test_tools_suite",
         params = {
             "DataWidth": [k],
             "ParityWidth": [r],
         },
+        seed = 42,
         tools = [
-            # iverilog too slow for large configs
+            # iverilog is really slow on these tests :(
             "dsim",
             "vcs",
         ],
