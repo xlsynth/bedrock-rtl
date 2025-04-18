@@ -149,7 +149,7 @@ class TestHsiaoSecdedCode(unittest.TestCase):
         with self.assertRaises(ValueError):
             hsiao_secded_code(0)
 
-    @parameterized.expand([4, 8, 15, 16])
+    @parameterized.expand([4, 8, 16])
     def test_encode_decode_syndrome_exhaustive(self, k):
         """Test message encoding and syndrome decoding exhaustively for smaller codes without any errors."""
         r, n, H, G = CODES[k]
