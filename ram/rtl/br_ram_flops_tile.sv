@@ -286,6 +286,10 @@ module br_ram_flops_tile #(
         logic mem_wr_en;
         logic [Width-1:0] mem_wr_data;
 
+        // This assertion is redundant with the one inside the br_mux_onehot modules in the generate branches
+        // below, but the "no write conflict" assertion name gives the user more clarity as to what went wrong :).
+        `BR_ASSERT_COMB_INTG(no_write_conflict_a, $onehot0(wr_addr_onehot_transpose[i]))
+
         // Select the write data based on which write port
         // has the matching address if any.
         if (NumWritePorts > 1) begin : gen_mux_onehot_wr_data
