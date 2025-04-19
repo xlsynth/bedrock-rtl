@@ -268,3 +268,32 @@ br_verilog_elab_and_lint_test_suite(
         "//gate/rtl:br_gate_mock",
     ],
 )
+
+verilog_library(
+    name = "br_cdc_bit_pulse",
+    srcs = ["br_cdc_bit_pulse.sv"],
+    deps = [
+        ":br_cdc_bit_toggle",
+        "//macros:br_asserts_internal",
+        "//macros:br_registers",
+    ],
+)
+
+br_verilog_elab_and_lint_test_suite(
+    name = "br_cdc_bit_pulse_test_suite",
+    params = {
+        "NumStages": [
+            "2",
+            "3",
+        ],
+        "RegisterDstOutput": [
+            "0",
+            "1",
+        ],
+    },
+    top = "br_cdc_bit_pulse",
+    deps = [
+        ":br_cdc_bit_pulse",
+        "//gate/rtl:br_gate_mock",
+    ],
+)
