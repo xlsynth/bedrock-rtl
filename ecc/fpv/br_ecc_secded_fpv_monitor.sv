@@ -18,21 +18,24 @@
 //      encoder has no encoding error
 //      decoer can correctly decode if enc_codeword has no error
 
-// Any data width >= 1 is supported. It is internally zero-padded up to
-// the nearest power-of-2 message width before being encoded. The following
-// table outlines the number of parity bits required for different message widths.
-
-// | Message Width (k) | Parity Width (r) | Codeword Width (n)|
-// |-------------------|------------------|-------------------|
-// | 4                 | 4                | 8                 |
-// | 11                | 5                | 16                |
-// | 26                | 6                | 32                |
-// | 57                | 7                | 64                |
-// | 120               | 8                | 128               |
-// | 247               | 9                | 256               |
-// | 502               | 10               | 512               |
-// | 1013              | 11               | 1024              |
-// | 2036              | 12               | 2048              |
+// | DataWidth   | ParityWidth (r) | MessageWidth (k) | CodewordWidth (n = k + r) | Optimal Construction? |
+// |-------------|-----------------|------------------|---------------------------|-----------------------|
+// | 4           | 4               | 4                | 8                         | Yes                   |
+// | [5,8]       | 5               | 8                | 13                        | Yes                   |
+// | [9,11]      | 5               | 11               | 16                        | Yes                   |
+// | [12,16]     | 6               | 16               | 22                        | Yes                   |
+// | [17,26]     | 6               | 26               | 32                        | Yes                   |
+// | [27,32]     | 7               | 32               | 39                        | Yes                   |
+// | [33,57]     | 7               | 57               | 64                        | Yes                   |
+// | [58,64]     | 8               | 64               | 72                        | Yes                   |
+// | [65,120]    | 8               | 120              | 128                       | Yes                   |
+// | [121,128]   | 9               | 128              | 137                       | Yes                   |
+// | [129,247]   | 9               | 247              | 256                       | Yes                   |
+// | [248,256]   | 10              | 256              | 266                       | Yes                   |
+// | [257,502]   | 10              | 502              | 512                       | No                    |
+// | [503,512]   | 11              | 512              | 523                       | No                    |
+// | [513,1013]  | 11              | 1013             | 1024                      | No                    |
+// | [1014,1024] | 12              | 1024             | 1036                      | No                    |
 
 `include "br_asserts.svh"
 `include "br_registers.svh"
@@ -47,7 +50,7 @@ module br_ecc_secded_fpv_monitor #(
     parameter bit DecRegisterOutputs = 0,
     parameter bit RegisterSyndrome = 0,
     localparam int InputWidth = DataWidth + ParityWidth,
-    localparam int MessageWidth = 2 ** $clog2(DataWidth),
+    localparam int MessageWidth = br_ecc::get_message_width(DataWidth, ParityWidth),
     localparam int CodewordWidth = MessageWidth + ParityWidth
 ) (
     input logic                 clk,
