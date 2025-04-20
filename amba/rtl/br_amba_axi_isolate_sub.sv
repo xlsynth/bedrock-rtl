@@ -42,7 +42,9 @@
 // where a subordinate becomes stuck or otherwise unable to make forward
 // progress.
 
-module br_amba_axi_iso_ds #(
+`include "br_registers.svh"
+
+module br_amba_axi_isolate_sub #(
     // Width of the AXI address field.
     parameter int AddrWidth = 12,
     // Width of the AXI data field.
@@ -74,7 +76,7 @@ module br_amba_axi_iso_ds #(
     // br_amba::AxiBurstLenWidth.
     parameter int MaxAxiBurstLen = 2 ** br_amba::AxiBurstLenWidth,
     // Response to generate for isolated transactions.
-    parameter br_amba::AxiRespWidth IsolateResp = br_amba::AxiRespSlverr,
+    parameter br_amba::axi_resp_t IsolateResp = br_amba::AxiRespSlverr,
     // BUSER data to generate for isolated transactions.
     parameter bit [BUserWidth-1:0] IsolateBUser = '0,
     // RUSER data to generate for isolated transactions.
@@ -87,6 +89,7 @@ module br_amba_axi_iso_ds #(
     // Number of pipeline stages to use for the data RAM read data.
     // Has no effect if AxiIdCount == 1.
     parameter bit FlopDataRamRd = 0,
+    localparam int AxiBurstLenWidth = MaxAxiBurstLen == 1 ? 1 : $clog2(MaxAxiBurstLen),
     localparam int StrobeWidth = DataWidth / 8
 ) (
     input  logic                                  clk,
@@ -97,7 +100,7 @@ module br_amba_axi_iso_ds #(
     //
     input  logic [                 AddrWidth-1:0] upstream_awaddr,
     input  logic [                   IdWidth-1:0] upstream_awid,
-    input  logic [ br_amba::AxiBurstLenWidth-1:0] upstream_awlen,
+    input  logic [ AxiBurstLenWidth-1:0] upstream_awlen,
     input  logic [br_amba::AxiBurstSizeWidth-1:0] upstream_awsize,
     input  logic [br_amba::AxiBurstTypeWidth-1:0] upstream_awburst,
     input  logic [     br_amba::AxiProtWidth-1:0] upstream_awprot,
@@ -117,7 +120,7 @@ module br_amba_axi_iso_ds #(
     input  logic                                  upstream_bready,
     input  logic [                 AddrWidth-1:0] upstream_araddr,
     input  logic [                   IdWidth-1:0] upstream_arid,
-    input  logic [ br_amba::AxiBurstLenWidth-1:0] upstream_arlen,
+    input  logic [ AxiBurstLenWidth-1:0] upstream_arlen,
     input  logic [br_amba::AxiBurstSizeWidth-1:0] upstream_arsize,
     input  logic [br_amba::AxiBurstTypeWidth-1:0] upstream_arburst,
     input  logic [     br_amba::AxiProtWidth-1:0] upstream_arprot,
@@ -134,7 +137,7 @@ module br_amba_axi_iso_ds #(
     //
     output logic [                 AddrWidth-1:0] downstream_awaddr,
     output logic [                   IdWidth-1:0] downstream_awid,
-    output logic [ br_amba::AxiBurstLenWidth-1:0] downstream_awlen,
+    output logic [ AxiBurstLenWidth-1:0] downstream_awlen,
     output logic [br_amba::AxiBurstSizeWidth-1:0] downstream_awsize,
     output logic [br_amba::AxiBurstTypeWidth-1:0] downstream_awburst,
     output logic [     br_amba::AxiProtWidth-1:0] downstream_awprot,
@@ -154,7 +157,7 @@ module br_amba_axi_iso_ds #(
     output logic                                  downstream_bready,
     output logic [                 AddrWidth-1:0] downstream_araddr,
     output logic [                   IdWidth-1:0] downstream_arid,
-    output logic [ br_amba::AxiBurstLenWidth-1:0] downstream_arlen,
+    output logic [ AxiBurstLenWidth-1:0] downstream_arlen,
     output logic [br_amba::AxiBurstSizeWidth-1:0] downstream_arsize,
     output logic [br_amba::AxiBurstTypeWidth-1:0] downstream_arburst,
     output logic [     br_amba::AxiProtWidth-1:0] downstream_arprot,
@@ -199,14 +202,14 @@ module br_amba_axi_iso_ds #(
       .align_and_hold_req(align_and_hold_req_w),
       .align_and_hold_done(align_and_hold_done_w),
       //
-      .isolate_req(isolate_req_w),
-      //
+      .resp_tracker_isolate_req(isolate_req_w),
       .resp_tracker_fifo_empty(resp_tracker_fifo_empty_w)
   );
 
   br_amba_iso_wdata_align #(
       .MaxTransactionSkew(MaxTransactionSkew),
-      .MaxAxiBurstLen(MaxAxiBurstLen)
+      .MaxAxiBurstLen(MaxAxiBurstLen),
+      .AxiBurstLenWidth(AxiBurstLenWidth)
   ) br_amba_iso_wdata_align_w (
       .clk,
       .rst,
@@ -225,7 +228,7 @@ module br_amba_axi_iso_ds #(
       .downstream_awvalid (upstream_awvalid_holdoff),
       //
       .downstream_wready  (downstream_wready_iso),
-      .downstream_wvalid  (downstream_wvalid_iso),
+      .downstream_wvalid  (downstream_wvalid_iso)
   );
 
   br_flow_fork #(
@@ -251,7 +254,7 @@ module br_amba_axi_iso_ds #(
       .IsolateResp(IsolateResp),
       .IsolateData(IsolateBUser),
       // Single write response beat per write transaction
-      .MaxAxiBurstLen(1),
+      .MaxAxiBurstLen(1)
   ) br_amba_iso_resp_tracker_w (
       .clk,
       .rst,
@@ -262,19 +265,20 @@ module br_amba_axi_iso_ds #(
       .upstream_axready(upstream_awready_tracker),
       .upstream_axvalid(upstream_awvalid_tracker),
       .upstream_axid(upstream_awid),
-      .upstream_axlen(upstream_awlen),
+      // write responses only have a single beat
+      .upstream_axlen(1'b0),
       //
       .upstream_xready(upstream_bready),
       .upstream_xvalid(upstream_bvalid),
       .upstream_xid(upstream_bid),
-      .upstream_xresp(upstream_bresp),
-      .upstream_xlast(upstream_bvalid),
+      .upstream_xresp({upstream_bresp}), // ri lint_check_waive ENUM_RHS
+      .upstream_xlast(),
       .upstream_xdata(upstream_buser),
       //
       .downstream_xready(downstream_bready),
       .downstream_xvalid(downstream_bvalid),
       .downstream_xid(downstream_bid),
-      .downstream_xresp(downstream_bresp),
+      .downstream_xresp(br_amba::axi_resp_t'(downstream_bresp)),
       .downstream_xlast(downstream_bvalid),
       .downstream_xdata(downstream_buser)
   );
@@ -327,8 +331,7 @@ module br_amba_axi_iso_ds #(
       .align_and_hold_req(align_and_hold_req_r),
       .align_and_hold_done(align_and_hold_done_r),
       //
-      .isolate_req(isolate_req_r),
-      //
+      .resp_tracker_isolate_req(isolate_req_r),
       .resp_tracker_fifo_empty(resp_tracker_fifo_empty_r)
   );
 
@@ -361,7 +364,7 @@ module br_amba_axi_iso_ds #(
       .IsolateResp(IsolateResp),
       .IsolateData({IsolateRUser, IsolateRData}),
       // MaxAxiBurstLen response beats per read transaction
-      .MaxAxiBurstLen(MaxAxiBurstLen),
+      .MaxAxiBurstLen(MaxAxiBurstLen)
   ) br_amba_iso_resp_tracker_r (
       .clk,
       .rst,
@@ -377,14 +380,14 @@ module br_amba_axi_iso_ds #(
       .upstream_xready(upstream_rready),
       .upstream_xvalid(upstream_rvalid),
       .upstream_xid(upstream_rid),
-      .upstream_xresp(upstream_rresp),
+      .upstream_xresp({upstream_rresp}), // ri lint_check_waive ENUM_RHS
       .upstream_xlast(upstream_rlast),
       .upstream_xdata({upstream_ruser, upstream_rdata}),
       //
       .downstream_xready(downstream_rready),
       .downstream_xvalid(downstream_rvalid),
       .downstream_xid(downstream_rid),
-      .downstream_xresp(downstream_rresp),
+      .downstream_xresp(br_amba::axi_resp_t'(downstream_rresp)),
       .downstream_xlast(downstream_rlast),
       .downstream_xdata({downstream_ruser, downstream_rdata})
   );

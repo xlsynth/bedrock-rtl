@@ -313,3 +313,27 @@ br_verilog_elab_and_lint_test_suite(
     },
     deps = [":br_amba_apb_timing_slice"],
 )
+
+verilog_library(
+    name = "br_amba_axi_isolate_sub",
+    srcs = ["br_amba_axi_isolate_sub.sv"],
+    deps = [
+        ":br_amba_pkg",
+        "//amba/rtl/internal:br_amba_iso_ds_fsm",
+        "//amba/rtl/internal:br_amba_iso_resp_tracker",
+        "//amba/rtl/internal:br_amba_iso_wdata_align",
+        "//macros:br_registers",
+    ],
+)
+
+br_verilog_elab_and_lint_test_suite(
+    name = "br_amba_axi_isolate_sub_test_suite",
+    params = {
+        "AddrWidth": ["64"],
+        #"DataWidth": ["128", "1024"],
+        #"AxiIdCount": ["1", "128"],
+        #"MaxOutstanding": ["1", "128"],
+        #"MaxAxiBurstLen": ["1", "128"],
+    },
+    deps = [":br_amba_axi_isolate_sub"],
+)

@@ -149,6 +149,8 @@ module br_amba_iso_resp_tracker #(
                upstream_axvalid |-> upstream_axid[AxiIdWidth-1:MinIdWidth] == '0)
   end
 
+  logic [AxiIdCount-1:0] tracker_fifo_pop_empty;
+
   if (SingleIdOnly) begin : gen_single_fifo
     br_fifo_flops #(
         .Depth(MaxOutstanding),
@@ -171,7 +173,7 @@ module br_amba_iso_resp_tracker #(
         .full_next(),
         .slots(),
         .slots_next(),
-        .empty(),
+        .empty(tracker_fifo_pop_empty),
         .empty_next(),
         .items(),
         .items_next()
@@ -195,12 +197,16 @@ module br_amba_iso_resp_tracker #(
         .push_data(ax_beat_len),
         .push_ready(tracker_fifo_push_ready),
         .push_fifo_id(ax_id),
+        .push_full(),
         //
         .pop_valid(tracker_fifo_pop_valid),
         .pop_data(tracker_fifo_pop_len),
-        .pop_ready(tracker_fifo_pop_ready)
+        .pop_ready(tracker_fifo_pop_ready),
+        .pop_empty(tracker_fifo_pop_empty)
     );
   end
+
+  assign resp_fifo_empty = &tracker_fifo_pop_empty;
 
 
   //
@@ -388,9 +394,6 @@ module br_amba_iso_resp_tracker #(
   assign upstream_xdata = downstream_iso_xdata;
 
   assign upstream_axready = tracker_fifo_push_ready;
-
-  // TODO(bgelb): confirm !valid |-> empty for the multi-fifo
-  assign resp_fifo_empty = !iso_any_gnt;
 
   //
   // Assertions
