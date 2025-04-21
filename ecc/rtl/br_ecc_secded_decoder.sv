@@ -85,7 +85,6 @@
 // TODO(mgottscho): Pipeline the syndrome decoding and then correction with a parameter.
 module br_ecc_secded_decoder #(
     parameter int DataWidth = 4,  // Must be at least 4 and at most 1024
-    parameter int ParityWidth = 4,  // Must be at least 4 and at most 12
     // If 1, then insert a pipeline register at the input.
     parameter bit RegisterInputs = 0,
     // If 1, then insert a pipeline register between syndrome computation and
@@ -95,6 +94,7 @@ module br_ecc_secded_decoder #(
     parameter bit RegisterOutputs = 0,
     // If 1, then assert there are no valid bits asserted at the end of the test.
     parameter bit EnableAssertFinalNotValid = 1,
+    localparam int ParityWidth = br_ecc::get_parity_width(DataWidth),
     localparam int InputWidth = DataWidth + ParityWidth,
     localparam int MessageWidth = br_ecc::get_message_width(DataWidth, ParityWidth),
     localparam int CodewordWidth = MessageWidth + ParityWidth,
@@ -136,7 +136,7 @@ module br_ecc_secded_decoder #(
   `BR_ASSERT_STATIC(parity_width_gte_4_a, ParityWidth >= 4)
   `BR_ASSERT_STATIC(parity_width_lte_12_a, ParityWidth <= 12)
   `BR_ASSERT_STATIC(data_width_fits_in_message_width_a, DataWidth <= MessageWidth)
-  `BR_ASSERT_STATIC(right_sized_parity_bits_a, DataWidth > br_ecc::get_max_message_width(ParityWidth - 1))
+  `BR_ASSERT_STATIC(right_sized_parity_bits_a, DataWidth > br_ecc::_get_max_message_width(ParityWidth - 1))
 
   //------------------------------------------
   // Implementation

@@ -21,7 +21,26 @@ verilog_library(
     name = "br_ecc_pkg",
     srcs = ["br_ecc_pkg.sv"],
     visibility = ["//visibility:public"],
-    deps = [":br_math_pkg"],
+    deps = [
+        ":br_math_pkg",
+        "//macros:br_asserts",
+    ],
+)
+
+verilog_library(
+    name = "br_ecc_pkg_tb",
+    srcs = ["br_ecc_pkg_tb.sv"],
+    deps = [
+        ":br_ecc_pkg",
+        "//macros:br_asserts_internal",
+    ],
+)
+
+verilog_elab_test(
+    name = "br_ecc_pkg_elab_test",
+    defines = ["BR_ASSERT_ON"],
+    tool = "verific",
+    deps = [":br_ecc_pkg_tb"],
 )
 
 verilog_library(
