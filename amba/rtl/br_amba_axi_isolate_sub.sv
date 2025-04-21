@@ -186,8 +186,6 @@ module br_amba_axi_isolate_sub #(
   `BR_ASSERT_STATIC(burst_len_legal_a,
                     MaxAxiBurstLen == 1 || MaxAxiBurstLen == 2 ** br_amba::AxiBurstLenWidth)
   if (MinIdWidth < IdWidth) begin : gen_id_width_lt_len_width
-    `BR_UNUSED_NAMED(upstream_awid_unused, upstream_awid[IdWidth-1:MinIdWidth])
-    `BR_UNUSED_NAMED(upstream_arid_unused, upstream_arid[IdWidth-1:MinIdWidth])
     `BR_ASSERT_INTG(unused_upper_awid_zero_a,
                     upstream_awvalid |-> upstream_awid[IdWidth-1:MinIdWidth] == '0)
     `BR_ASSERT_INTG(unused_upper_arid_zero_a,
@@ -281,10 +279,10 @@ module br_amba_axi_isolate_sub #(
       .upstream_xlast(),
       .upstream_xdata(upstream_buser),
       //
-      .downstream_awready(downstream_awready_iso),
-      .downstream_awvalid(downstream_awvalid_iso),
-      .downstream_awid(downstream_awid),
-      .downstream_awlen(downstream_awlen),
+      .downstream_axready(downstream_awready_iso),
+      .downstream_axvalid(downstream_awvalid_iso),
+      .downstream_axid(downstream_awid),
+      .downstream_axlen(),
       //
       .downstream_xready(downstream_bready),
       .downstream_xvalid(downstream_bvalid),
@@ -306,6 +304,7 @@ module br_amba_axi_isolate_sub #(
   assign downstream_awaddr = upstream_awaddr;
   assign downstream_awsize = upstream_awsize;
   assign downstream_awburst = upstream_awburst;
+  assign downstream_awlen = upstream_awlen;
   assign downstream_awprot = upstream_awprot;
   assign downstream_awuser = upstream_awuser;
   //
@@ -378,10 +377,10 @@ module br_amba_axi_isolate_sub #(
       .upstream_xlast(upstream_rlast),
       .upstream_xdata({upstream_ruser, upstream_rdata}),
       //
-      .downstream_awready(downstream_arready_iso),
-      .downstream_awvalid(downstream_arvalid_iso),
-      .downstream_awid(downstream_arid),
-      .downstream_awlen(downstream_arlen),
+      .downstream_axready(downstream_arready_iso),
+      .downstream_axvalid(downstream_arvalid_iso),
+      .downstream_axid(downstream_arid),
+      .downstream_axlen(downstream_arlen),
       //
       .downstream_xready(downstream_rready),
       .downstream_xvalid(downstream_rvalid),
