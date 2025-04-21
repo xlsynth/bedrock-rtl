@@ -47,9 +47,9 @@ module br_ecc_secded_error_fpv_monitor #(
     parameter bit DecRegisterInputs = 0,
     parameter bit DecRegisterOutputs = 0,
     parameter bit RegisterSyndrome = 0,
-    localparam int ParityWidth = br_ecc::get_parity_width(DataWidth),
+    localparam int ParityWidth = br_ecc_secded::get_parity_width(DataWidth),
     localparam int InputWidth = DataWidth + ParityWidth,
-    localparam int MessageWidth = br_ecc::get_message_width(DataWidth, ParityWidth),
+    localparam int MessageWidth = br_ecc_secded::get_message_width(DataWidth, ParityWidth),
     localparam int CodewordWidth = MessageWidth + ParityWidth
 ) (
     input logic                 clk,

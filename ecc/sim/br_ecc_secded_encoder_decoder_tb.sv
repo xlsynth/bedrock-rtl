@@ -24,8 +24,8 @@ module br_ecc_secded_encoder_decoder_tb;
 
   // Parameters
   parameter int DataWidth = 8;
-  localparam int ParityWidth = br_ecc::get_parity_width(DataWidth);
-  localparam int MessageWidth = br_ecc::get_message_width(DataWidth, ParityWidth);
+  localparam int ParityWidth = br_ecc_secded::get_parity_width(DataWidth);
+  localparam int MessageWidth = br_ecc_secded::get_message_width(DataWidth, ParityWidth);
   localparam int CodewordWidth = MessageWidth + ParityWidth;
   // Separate RegisterOutputs parameters for encoder and decoder
   parameter bit EncoderRegisterInputs = 0;

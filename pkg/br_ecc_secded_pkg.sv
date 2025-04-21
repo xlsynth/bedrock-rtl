@@ -24,7 +24,7 @@
 `include "br_asserts.svh"
 
 // ri lint_check_waive FILE_NAME
-package br_ecc;
+package br_ecc_secded;
 
   // Internal helper function for get_message_width. Don't use this directly.
   // ri lint_check_waive TWO_STATE_TYPE
@@ -86,4 +86,4 @@ package br_ecc;
   // ri lint_check_on CONST_BASE
   // ri lint_check_on MULTI_RETURN
 
-endpackage : br_ecc
+endpackage : br_ecc_secded

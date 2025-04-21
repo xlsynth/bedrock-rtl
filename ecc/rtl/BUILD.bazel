@@ -73,7 +73,7 @@ verilog_library(
         "//macros:br_asserts_internal",
         "//macros:br_assign",
         "//macros:br_unused",
-        "//pkg:br_ecc_pkg",
+        "//pkg:br_ecc_secded_pkg",
         "//pkg:br_math_pkg",
     ],
 )
@@ -129,7 +129,7 @@ verilog_library(
         "//macros:br_asserts_internal",
         "//macros:br_assign",
         "//macros:br_unused",
-        "//pkg:br_ecc_pkg",
+        "//pkg:br_ecc_secded_pkg",
         "//pkg:br_math_pkg",
     ],
 )
