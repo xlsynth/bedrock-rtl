@@ -20,10 +20,33 @@ pub fn load_module(
     files: &[String],
     headers: &[String],
 ) -> ModDef {
-    let sources: Vec<&str> = files.iter().map(|file| file.as_str()).collect();
-    let mut incdirs: Vec<&str> = headers.iter().map(
-        |hdr| Path::new(hdr).parent().unwrap().to_str().unwrap()
-    ).collect();
+    // To speed up parsing, only include source files that
+    // * are the top-level source file, indicated by the file stem, or
+    // * are packages, indicated by the presence of "endpackage", or
+    // * contain multiple module definitions (e.g., br_gate_mock.sv)
+    let file_stem_variants = [name.to_string(), format!("{name}_mock")];
+    let sources: Vec<&str> = files
+        .iter()
+        .map(|file| file.as_str())
+        .filter(|file| {
+            if Path::new(file)
+                .file_stem()
+                .and_then(|stem| stem.to_str())
+                .map(|stem| file_stem_variants.contains(&stem.to_string()))
+                .unwrap_or(false)
+            {
+                true
+            } else if let Ok(contents) = std::fs::read_to_string(file) {
+                contents.contains("endpackage") || contents.matches("endmodule").count() >= 2
+            } else {
+                false
+            }
+        })
+        .collect();
+    let mut incdirs: Vec<&str> = headers
+        .iter()
+        .map(|hdr| Path::new(hdr).parent().unwrap().to_str().unwrap())
+        .collect();
     incdirs.sort();
     incdirs.dedup();
 
