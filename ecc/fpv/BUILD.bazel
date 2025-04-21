@@ -91,11 +91,8 @@ verilog_elab_test(
 )
 
 br_verilog_fpv_test_tools_suite(
-    name = "br_ecc_secded_test_pw4",
-    elab_opts = [
-        "-parameter DataWidth 4",
-        "-parameter ParityWidth 4",
-    ],
+    name = "br_ecc_secded_test_dw4",
+    elab_opts = ["-parameter DataWidth 4"],
     params = {
         "DecRegisterInputs": [
             "1",
@@ -126,212 +123,82 @@ br_verilog_fpv_test_tools_suite(
     deps = [":br_ecc_secded_fpv_monitor"],
 )
 
-# DataWidth 5-11
-br_verilog_fpv_test_tools_suite(
-    name = "br_ecc_secded_test_pw5",
-    elab_opts = [
-        "-parameter ParityWidth 5",
-    ],
-    params = {
-        "DataWidth": [
-            "5",
-            "6",
-            "7",
-            "8",
-            "9",
-            "10",
-            "11",
-        ],
-    },
-    tools = {
-        "jg": "br_ecc_secded_fpv.jg.tcl",
-        "vcf": "",
-    },
-    top = "br_ecc_secded_fpv_monitor",
-    deps = [":br_ecc_secded_fpv_monitor"],
-)
+DATA_WIDTHS = [
+    "5",
+    "6",
+    "7",
+    "8",
+    "9",
+    "10",
+    "11",
+    "12",
+    "13",
+    "16",
+    "17",
+    "19",
+    "20",
+    "21",
+    "23",
+    "25",
+    "26",
+    "27",
+    "28",
+    "29",
+    "31",
+    "35",
+    "40",
+    "42",
+    "57",
+    "58",
+    "60",
+    "64",
+    "70",
+    "85",
+    "90",
+    "95",
+    "100",
+    "105",
+    "110",
+    "115",
+    "120",
+    "121",
+    "128",
+    "145",
+    "150",
+    "165",
+    "170",
+    "185",
+    "190",
+    "215",
+    "220",
+    "235",
+    "240",
+    "247",
+    "248",
+    "250",
+    "256",
+    "270",
+    "310",
+    "360",
+    "410",
+    "450",
+    "502",
+    "503",
+    "512",
+    "650",
+    "760",
+    "800",
+    "950",
+    "1000",
+    "1013",
+    "1014",
+    "1020",
+    "1024",
+]
 
-# DataWidth 12-26
 br_verilog_fpv_test_tools_suite(
-    name = "br_ecc_secded_test_pw6",
-    elab_opts = [
-        "-parameter ParityWidth 6",
-    ],
-    params = {
-        "DataWidth": [
-            "12",
-            "13",
-            "16",
-            "17",
-            "19",
-            "20",
-            "21",
-            "23",
-            "25",
-            "26",
-        ],
-    },
-    tools = {
-        "jg": "br_ecc_secded_fpv.jg.tcl",
-        "vcf": "",
-    },
-    top = "br_ecc_secded_fpv_monitor",
-    deps = [":br_ecc_secded_fpv_monitor"],
-)
-
-# DataWidth 27-57
-br_verilog_fpv_test_tools_suite(
-    name = "br_ecc_secded_test_pw7",
-    elab_opts = [
-        "-parameter ParityWidth 7",
-    ],
-    params = {
-        "DataWidth": [
-            "27",
-            "28",
-            "29",
-            "31",
-            "35",
-            "40",
-            "42",
-            "57",
-        ],
-    },
-    tools = {
-        "jg": "br_ecc_secded_fpv.jg.tcl",
-        "vcf": "",
-    },
-    top = "br_ecc_secded_fpv_monitor",
-    deps = [":br_ecc_secded_fpv_monitor"],
-)
-
-# DataWidth 58-120
-br_verilog_fpv_test_tools_suite(
-    name = "br_ecc_secded_test_pw8",
-    elab_opts = [
-        "-parameter ParityWidth 8",
-    ],
-    params = {
-        "DataWidth": [
-            "58",
-            "60",
-            "64",
-            "70",
-            "85",
-            "90",
-            "95",
-            "100",
-            "105",
-            "110",
-            "115",
-            "120",
-        ],
-    },
-    tools = {
-        "jg": "br_ecc_secded_fpv.jg.tcl",
-        "vcf": "",
-    },
-    top = "br_ecc_secded_fpv_monitor",
-    deps = [":br_ecc_secded_fpv_monitor"],
-)
-
-# DataWidth 121-247
-br_verilog_fpv_test_tools_suite(
-    name = "br_ecc_secded_test_pw9",
-    elab_opts = [
-        "-parameter ParityWidth 9",
-    ],
-    params = {
-        "DataWidth": [
-            "121",
-            "128",
-            "145",
-            "150",
-            "165",
-            "170",
-            "185",
-            "190",
-            "215",
-            "220",
-            "235",
-            "240",
-            "247",
-        ],
-    },
-    tools = {
-        "jg": "br_ecc_secded_fpv.jg.tcl",
-        "vcf": "",
-    },
-    top = "br_ecc_secded_fpv_monitor",
-    deps = [":br_ecc_secded_fpv_monitor"],
-)
-
-# DataWidth 248-502
-br_verilog_fpv_test_tools_suite(
-    name = "br_ecc_secded_test_pw10",
-    elab_opts = [
-        "-parameter ParityWidth 10",
-    ],
-    params = {
-        "DataWidth": [
-            "248",
-            "250",
-            "256",
-            "270",
-            "310",
-            "360",
-            "410",
-            "450",
-            "502",
-        ],
-    },
-    tools = {
-        "jg": "br_ecc_secded_fpv.jg.tcl",
-        "vcf": "",
-    },
-    top = "br_ecc_secded_fpv_monitor",
-    deps = [":br_ecc_secded_fpv_monitor"],
-)
-
-# DataWidth 503-1013
-br_verilog_fpv_test_tools_suite(
-    name = "br_ecc_secded_test_pw11",
-    elab_opts = [
-        "-parameter ParityWidth 11",
-    ],
-    params = {
-        "DataWidth": [
-            "503",
-            "512",
-            "650",
-            "760",
-            "800",
-            "950",
-            "1000",
-            "1013",
-        ],
-    },
-    tools = {
-        "jg": "br_ecc_secded_fpv.jg.tcl",
-        "vcf": "",
-    },
-    top = "br_ecc_secded_fpv_monitor",
-    deps = [":br_ecc_secded_fpv_monitor"],
-)
-
-# DataWidth 1014-1024
-br_verilog_fpv_test_tools_suite(
-    name = "br_ecc_secded_test_pw12",
-    elab_opts = [
-        "-parameter ParityWidth 12",
-    ],
-    params = {
-        "DataWidth": [
-            "1014",
-            "1020",
-            "1024",
-        ],
-    },
+    name = "br_ecc_secded_test",
+    params = {"DataWidth": DATA_WIDTHS},
     tools = {
         "jg": "br_ecc_secded_fpv.jg.tcl",
         "vcf": "",
@@ -360,11 +227,8 @@ verilog_elab_test(
 )
 
 br_verilog_fpv_test_tools_suite(
-    name = "br_ecc_secded_error_test_pw4",
-    elab_opts = [
-        "-parameter DataWidth 4",
-        "-parameter ParityWidth 4",
-    ],
+    name = "br_ecc_secded_error_test_dw4",
+    elab_opts = ["-parameter DataWidth 4"],
     params = {
         "DecRegisterInputs": [
             "1",
@@ -395,212 +259,9 @@ br_verilog_fpv_test_tools_suite(
     deps = [":br_ecc_secded_error_fpv_monitor"],
 )
 
-# DataWidth 5-11
 br_verilog_fpv_test_tools_suite(
-    name = "br_ecc_secded_error_test_pw5",
-    elab_opts = [
-        "-parameter ParityWidth 5",
-    ],
-    params = {
-        "DataWidth": [
-            "5",
-            "6",
-            "7",
-            "8",
-            "9",
-            "10",
-            "11",
-        ],
-    },
-    tools = {
-        "jg": "br_ecc_secded_error_fpv.jg.tcl",
-        "vcf": "",
-    },
-    top = "br_ecc_secded_error_fpv_monitor",
-    deps = [":br_ecc_secded_error_fpv_monitor"],
-)
-
-# DataWidth 12-26
-br_verilog_fpv_test_tools_suite(
-    name = "br_ecc_secded_error_test_pw6",
-    elab_opts = [
-        "-parameter ParityWidth 6",
-    ],
-    params = {
-        "DataWidth": [
-            "12",
-            "13",
-            "16",
-            "17",
-            "19",
-            "20",
-            "21",
-            "23",
-            "25",
-            "26",
-        ],
-    },
-    tools = {
-        "jg": "br_ecc_secded_error_fpv.jg.tcl",
-        "vcf": "",
-    },
-    top = "br_ecc_secded_error_fpv_monitor",
-    deps = [":br_ecc_secded_error_fpv_monitor"],
-)
-
-# DataWidth 27-57
-br_verilog_fpv_test_tools_suite(
-    name = "br_ecc_secded_error_test_pw7",
-    elab_opts = [
-        "-parameter ParityWidth 7",
-    ],
-    params = {
-        "DataWidth": [
-            "27",
-            "28",
-            "29",
-            "31",
-            "35",
-            "40",
-            "42",
-            "57",
-        ],
-    },
-    tools = {
-        "jg": "br_ecc_secded_error_fpv.jg.tcl",
-        "vcf": "",
-    },
-    top = "br_ecc_secded_error_fpv_monitor",
-    deps = [":br_ecc_secded_error_fpv_monitor"],
-)
-
-# DataWidth 58-120
-br_verilog_fpv_test_tools_suite(
-    name = "br_ecc_secded_error_test_pw8",
-    elab_opts = [
-        "-parameter ParityWidth 8",
-    ],
-    params = {
-        "DataWidth": [
-            "58",
-            "60",
-            "64",
-            "70",
-            "85",
-            "90",
-            "95",
-            "100",
-            "105",
-            "110",
-            "115",
-            "120",
-        ],
-    },
-    tools = {
-        "jg": "br_ecc_secded_error_fpv.jg.tcl",
-        "vcf": "",
-    },
-    top = "br_ecc_secded_error_fpv_monitor",
-    deps = [":br_ecc_secded_error_fpv_monitor"],
-)
-
-# DataWidth 121-247
-br_verilog_fpv_test_tools_suite(
-    name = "br_ecc_secded_error_test_pw9",
-    elab_opts = [
-        "-parameter ParityWidth 9",
-    ],
-    params = {
-        "DataWidth": [
-            "121",
-            "128",
-            "145",
-            "150",
-            "165",
-            "170",
-            "185",
-            "190",
-            "215",
-            "220",
-            "235",
-            "240",
-            "247",
-        ],
-    },
-    tools = {
-        "jg": "br_ecc_secded_error_fpv.jg.tcl",
-        "vcf": "",
-    },
-    top = "br_ecc_secded_error_fpv_monitor",
-    deps = [":br_ecc_secded_error_fpv_monitor"],
-)
-
-# DataWidth 248-502
-br_verilog_fpv_test_tools_suite(
-    name = "br_ecc_secded_error_test_pw10",
-    elab_opts = [
-        "-parameter ParityWidth 10",
-    ],
-    params = {
-        "DataWidth": [
-            "248",
-            "250",
-            "256",
-            "270",
-            "310",
-            "360",
-            "410",
-            "450",
-            "502",
-        ],
-    },
-    tools = {
-        "jg": "br_ecc_secded_error_fpv.jg.tcl",
-        "vcf": "",
-    },
-    top = "br_ecc_secded_error_fpv_monitor",
-    deps = [":br_ecc_secded_error_fpv_monitor"],
-)
-
-# DataWidth 503-1013
-br_verilog_fpv_test_tools_suite(
-    name = "br_ecc_secded_error_test_pw11",
-    elab_opts = [
-        "-parameter ParityWidth 11",
-    ],
-    params = {
-        "DataWidth": [
-            "503",
-            "512",
-            "650",
-            "760",
-            "800",
-            "950",
-            "1000",
-            "1013",
-        ],
-    },
-    tools = {
-        "jg": "br_ecc_secded_error_fpv.jg.tcl",
-        "vcf": "",
-    },
-    top = "br_ecc_secded_error_fpv_monitor",
-    deps = [":br_ecc_secded_error_fpv_monitor"],
-)
-
-# DataWidth 1014-1024
-br_verilog_fpv_test_tools_suite(
-    name = "br_ecc_secded_error_test_pw12",
-    elab_opts = [
-        "-parameter ParityWidth 12",
-    ],
-    params = {
-        "DataWidth": [
-            "1014",
-            "1020",
-            "1024",
-        ],
-    },
+    name = "br_ecc_secded_error_test",
+    params = {"DataWidth": DATA_WIDTHS},
     tools = {
         "jg": "br_ecc_secded_error_fpv.jg.tcl",
         "vcf": "",

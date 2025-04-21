@@ -24,7 +24,7 @@ module br_ecc_secded_encoder_decoder_tb;
 
   // Parameters
   parameter int DataWidth = 8;
-  parameter int ParityWidth = 5;
+  localparam int ParityWidth = br_ecc::get_parity_width(DataWidth);
   localparam int MessageWidth = br_ecc::get_message_width(DataWidth, ParityWidth);
   localparam int CodewordWidth = MessageWidth + ParityWidth;
   // Separate RegisterOutputs parameters for encoder and decoder
@@ -73,7 +73,6 @@ module br_ecc_secded_encoder_decoder_tb;
   // Instantiate encoder
   br_ecc_secded_encoder #(
       .DataWidth(DataWidth),
-      .ParityWidth(ParityWidth),
       .RegisterInputs(EncoderRegisterInputs),
       .RegisterOutputs(EncoderRegisterOutputs)
   ) br_ecc_secded_encoder (
@@ -93,7 +92,6 @@ module br_ecc_secded_encoder_decoder_tb;
   // Instantiate decoder (inputs connected directly to encoder outputs)
   br_ecc_secded_decoder #(
       .DataWidth(DataWidth),
-      .ParityWidth(ParityWidth),
       .RegisterInputs(DecoderRegisterInputs),
       .RegisterSyndrome(DecoderRegisterSyndrome),
       .RegisterOutputs(DecoderRegisterOutputs)
