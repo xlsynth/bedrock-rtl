@@ -26,11 +26,10 @@
 
 module br_mux_bin #(
     // Number of inputs to select among. Must be >= 2.
-    parameter int NumSymbolsIn = 2,
+    parameter  int NumSymbolsIn = 2,
     // The width of each symbol in bits. Must be >= 1.
-    parameter int SymbolWidth  = 1,
-    // The width of the select signal. Must be at least $clog2(NumSymbolsIn).
-    parameter int SelectWidth  = $clog2(NumSymbolsIn)
+    parameter  int SymbolWidth  = 1,
+    localparam int SelectWidth  = $clog2(NumSymbolsIn)
 ) (
     input  logic [ SelectWidth-1:0]                  select,
     input  logic [NumSymbolsIn-1:0][SymbolWidth-1:0] in,
@@ -43,7 +42,6 @@ module br_mux_bin #(
   //------------------------------------------
   `BR_ASSERT_STATIC(legal_num_symbols_in_a, NumSymbolsIn >= 2)
   `BR_ASSERT_STATIC(legal_symbol_width_a, SymbolWidth >= 1)
-  `BR_ASSERT_STATIC(legal_select_width_a, SelectWidth >= $clog2(NumSymbolsIn))
 
   //------------------------------------------
   // Implementation
