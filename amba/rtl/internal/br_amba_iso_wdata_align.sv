@@ -191,18 +191,22 @@ module br_amba_iso_wdata_align #(
   // is ahead (in excess) of the other.
   assign upstream_awready = downstream_awready
                                 && !excess_aw_full
-                                && !(align_and_hold_done && aw_beats_in_excess);
+                                && !(align_and_hold_req && aw_beats_in_excess)
+                                && !align_and_hold_done;
   assign upstream_wready = downstream_wready
                                 && !excess_w_full
-                                && !(align_and_hold_done && w_beats_in_excess);
+                                && !(align_and_hold_req && w_beats_in_excess)
+                                && !align_and_hold_done;
 
   // Downstream valid signals mirror behavior of upstream ready signals
   assign downstream_awvalid = upstream_awvalid
                                 && !excess_aw_full
-                                && !(align_and_hold_req && aw_beats_in_excess);
+                                && !(align_and_hold_req && aw_beats_in_excess)
+                                && !align_and_hold_done;
   assign downstream_wvalid = upstream_wvalid
                                 && !excess_w_full
-                                && !(align_and_hold_req && w_beats_in_excess);
+                                && !(align_and_hold_req && w_beats_in_excess)
+                                && !align_and_hold_done;
 
   assign align_and_hold_done = align_and_hold_req && aw_and_w_beats_aligned;
 

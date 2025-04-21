@@ -204,8 +204,6 @@ module br_amba_axi_isolate_sub #(
   logic downstream_awvalid_iso;
   logic upstream_awready_holdoff;
   logic upstream_awvalid_holdoff;
-  logic upstream_awready_tracker;
-  logic upstream_awvalid_tracker;
   //
   logic isolate_done_w;
   logic align_and_hold_req_w;
@@ -252,19 +250,6 @@ module br_amba_axi_isolate_sub #(
       .downstream_wvalid  (downstream_wvalid_iso)
   );
 
-  br_flow_fork #(
-      .NumFlows(2)
-  ) br_flow_fork_aw (
-      .clk,
-      .rst,
-      //
-      .push_ready(upstream_awready_holdoff),
-      .push_valid(upstream_awvalid_holdoff),
-      //
-      .pop_ready({downstream_awready_iso, upstream_awready_tracker}),
-      .pop_valid_unstable({downstream_awvalid_iso, upstream_awvalid_tracker})
-  );
-
   br_amba_iso_resp_tracker #(
       .MaxOutstanding(MaxOutstanding),
       .AxiIdCount(AxiIdCount),
@@ -283,8 +268,8 @@ module br_amba_axi_isolate_sub #(
       .isolate_req(isolate_req_w),
       .resp_fifo_empty(resp_tracker_fifo_empty_w),
       //
-      .upstream_axready(upstream_awready_tracker),
-      .upstream_axvalid(upstream_awvalid_tracker),
+      .upstream_axready(upstream_awready_holdoff),
+      .upstream_axvalid(upstream_awvalid_holdoff),
       .upstream_axid(upstream_awid),
       // write responses only have a single beat
       .upstream_axlen(1'b0),
@@ -295,6 +280,11 @@ module br_amba_axi_isolate_sub #(
       .upstream_xresp({upstream_bresp}),  // ri lint_check_waive ENUM_RHS
       .upstream_xlast(),
       .upstream_xdata(upstream_buser),
+      //
+      .downstream_awready(downstream_awready_iso),
+      .downstream_awvalid(downstream_awvalid_iso),
+      .downstream_awid(downstream_awid),
+      .downstream_awlen(downstream_awlen),
       //
       .downstream_xready(downstream_bready),
       .downstream_xvalid(downstream_bvalid),
@@ -314,8 +304,6 @@ module br_amba_axi_isolate_sub #(
 
   // Pass-through signals
   assign downstream_awaddr = upstream_awaddr;
-  assign downstream_awid = upstream_awid;
-  assign downstream_awlen = upstream_awlen;
   assign downstream_awsize = upstream_awsize;
   assign downstream_awburst = upstream_awburst;
   assign downstream_awprot = upstream_awprot;
@@ -333,8 +321,6 @@ module br_amba_axi_isolate_sub #(
   logic downstream_arvalid_iso;
   logic upstream_arready_holdoff;
   logic upstream_arvalid_holdoff;
-  logic upstream_arready_tracker;
-  logic upstream_arvalid_tracker;
   //
   logic isolate_done_r;
   logic align_and_hold_req_r;
@@ -362,19 +348,6 @@ module br_amba_axi_isolate_sub #(
   assign upstream_arready = upstream_arready_holdoff && !align_and_hold_req_r;
   assign align_and_hold_done_r = align_and_hold_req_r;
 
-  br_flow_fork #(
-      .NumFlows(2)
-  ) br_flow_fork_ar (
-      .clk,
-      .rst,
-      //
-      .push_ready(upstream_arready_holdoff),
-      .push_valid(upstream_arvalid_holdoff),
-      //
-      .pop_ready({downstream_arready_iso, upstream_arready_tracker}),
-      .pop_valid_unstable({downstream_arvalid_iso, upstream_arvalid_tracker})
-  );
-
   br_amba_iso_resp_tracker #(
       .MaxOutstanding(MaxOutstanding),
       .AxiIdCount(AxiIdCount),
@@ -393,8 +366,8 @@ module br_amba_axi_isolate_sub #(
       .isolate_req(isolate_req_r),
       .resp_fifo_empty(resp_tracker_fifo_empty_r),
       //
-      .upstream_axready(upstream_arready_tracker),
-      .upstream_axvalid(upstream_arvalid_tracker),
+      .upstream_axready(upstream_arready_holdoff),
+      .upstream_axvalid(upstream_arvalid_holdoff),
       .upstream_axid(upstream_arid),
       .upstream_axlen(upstream_arlen),
       //
@@ -404,6 +377,11 @@ module br_amba_axi_isolate_sub #(
       .upstream_xresp({upstream_rresp}),  // ri lint_check_waive ENUM_RHS
       .upstream_xlast(upstream_rlast),
       .upstream_xdata({upstream_ruser, upstream_rdata}),
+      //
+      .downstream_awready(downstream_arready_iso),
+      .downstream_awvalid(downstream_arvalid_iso),
+      .downstream_awid(downstream_arid),
+      .downstream_awlen(downstream_arlen),
       //
       .downstream_xready(downstream_rready),
       .downstream_xvalid(downstream_rvalid),
@@ -421,8 +399,6 @@ module br_amba_axi_isolate_sub #(
 
   // Pass-through signals
   assign downstream_araddr = upstream_araddr;
-  assign downstream_arid = upstream_arid;
-  assign downstream_arlen = upstream_arlen;
   assign downstream_arsize = upstream_arsize;
   assign downstream_arburst = upstream_arburst;
   assign downstream_arprot = upstream_arprot;
@@ -433,6 +409,9 @@ module br_amba_axi_isolate_sub #(
   //
 
   logic isolate_done_next;
+
+  // isolate_done is asserted when both write and read done signals rise
+  // and deasserted after both done signals fall
   assign isolate_done_next = isolate_req ?
                             (isolate_done_w && isolate_done_r)
                             : !(isolate_done_w || isolate_done_r);

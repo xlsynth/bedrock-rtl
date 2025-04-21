@@ -80,6 +80,11 @@ module br_amba_iso_resp_tracker #(
     output br_amba::axi_resp_t upstream_xresp,
     output logic upstream_xlast,
     output logic [DataWidth-1:0] upstream_xdata,
+    // AW or AR channel to downstream
+    input logic downstream_awready,
+    output logic downstream_awvalid,
+    output logic [AxiIdWidth-1:0] downstream_awid,
+    output logic [AxiBurstLenWidth-1:0] downstream_awlen,
     // R or B channel from downstream
     output logic downstream_xready,
     input logic downstream_xvalid,
@@ -376,7 +381,10 @@ module br_amba_iso_resp_tracker #(
   assign upstream_xresp = downstream_iso_xresp;
   assign upstream_xdata = downstream_iso_xdata;
 
-  assign upstream_axready = tracker_fifo_push_ready;
+  assign upstream_axready = tracker_fifo_push_ready && downstream_awready;
+  assign downstream_awvalid = upstream_axvalid && tracker_fifo_push_ready;
+  assign downstream_awid = cur_resp_id;
+  assign downstream_awlen = cur_resp_len;
 
   //
   // Assertions
