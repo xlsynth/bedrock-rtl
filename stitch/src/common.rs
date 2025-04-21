@@ -56,6 +56,10 @@ pub fn load_module(
         ignore_unknown_modules: true,
         skip_unsupported: true,
         timescale: None,
+        extra_arguments: &[
+            "--threads",
+            "1",
+        ],
         ..Default::default()
     };
 
