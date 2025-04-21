@@ -43,6 +43,8 @@
 // progress.
 
 `include "br_registers.svh"
+`include "br_asserts_internal.svh"
+`include "br_unused.svh"
 
 module br_amba_axi_isolate_sub #(
     // Width of the AXI address field.
@@ -62,10 +64,10 @@ module br_amba_axi_isolate_sub #(
     // Width of the AXI RUSER field.
     parameter int RUserWidth = 1,
     // Maximum number of outstanding requests that can be tracked
-    // without backpressuring the upstream request ports.
+    // without backpressuring the upstream request ports. Must be at least 2.
     parameter int MaxOutstanding = 128,
     // Number of unique AXI IDs that can be tracked. Must be less
-    // than or equal to 2^IdWidth.
+    // than or equal to 2^IdWidth. Valid ids are 0 to AxiIdCount-1.
     parameter int AxiIdCount = 2 ** IdWidth,
     // Maximum allowed skew (measured in max-length transactions)
     // that can be tracked between AW and W channels without causing
@@ -100,7 +102,7 @@ module br_amba_axi_isolate_sub #(
     //
     input  logic [                 AddrWidth-1:0] upstream_awaddr,
     input  logic [                   IdWidth-1:0] upstream_awid,
-    input  logic [ AxiBurstLenWidth-1:0] upstream_awlen,
+    input  logic [          AxiBurstLenWidth-1:0] upstream_awlen,
     input  logic [br_amba::AxiBurstSizeWidth-1:0] upstream_awsize,
     input  logic [br_amba::AxiBurstTypeWidth-1:0] upstream_awburst,
     input  logic [     br_amba::AxiProtWidth-1:0] upstream_awprot,
@@ -120,7 +122,7 @@ module br_amba_axi_isolate_sub #(
     input  logic                                  upstream_bready,
     input  logic [                 AddrWidth-1:0] upstream_araddr,
     input  logic [                   IdWidth-1:0] upstream_arid,
-    input  logic [ AxiBurstLenWidth-1:0] upstream_arlen,
+    input  logic [          AxiBurstLenWidth-1:0] upstream_arlen,
     input  logic [br_amba::AxiBurstSizeWidth-1:0] upstream_arsize,
     input  logic [br_amba::AxiBurstTypeWidth-1:0] upstream_arburst,
     input  logic [     br_amba::AxiProtWidth-1:0] upstream_arprot,
@@ -137,7 +139,7 @@ module br_amba_axi_isolate_sub #(
     //
     output logic [                 AddrWidth-1:0] downstream_awaddr,
     output logic [                   IdWidth-1:0] downstream_awid,
-    output logic [ AxiBurstLenWidth-1:0] downstream_awlen,
+    output logic [          AxiBurstLenWidth-1:0] downstream_awlen,
     output logic [br_amba::AxiBurstSizeWidth-1:0] downstream_awsize,
     output logic [br_amba::AxiBurstTypeWidth-1:0] downstream_awburst,
     output logic [     br_amba::AxiProtWidth-1:0] downstream_awprot,
@@ -157,7 +159,7 @@ module br_amba_axi_isolate_sub #(
     output logic                                  downstream_bready,
     output logic [                 AddrWidth-1:0] downstream_araddr,
     output logic [                   IdWidth-1:0] downstream_arid,
-    output logic [ AxiBurstLenWidth-1:0] downstream_arlen,
+    output logic [          AxiBurstLenWidth-1:0] downstream_arlen,
     output logic [br_amba::AxiBurstSizeWidth-1:0] downstream_arsize,
     output logic [br_amba::AxiBurstTypeWidth-1:0] downstream_arburst,
     output logic [     br_amba::AxiProtWidth-1:0] downstream_arprot,
@@ -172,6 +174,25 @@ module br_amba_axi_isolate_sub #(
     input  logic                                  downstream_rvalid,
     output logic                                  downstream_rready
 );
+
+  //
+  // Integration Checks
+  //
+
+  localparam int MinIdWidth = (AxiIdCount == 1) ? 1 : $clog2(AxiIdCount);
+
+  `BR_ASSERT_STATIC(max_outstanding_gt_1_a, MaxOutstanding > 1)
+  `BR_ASSERT_STATIC(have_enough_ids_a, AxiIdCount <= 2 ** IdWidth)
+  `BR_ASSERT_STATIC(burst_len_legal_a,
+                    MaxAxiBurstLen == 1 || MaxAxiBurstLen == 2 ** br_amba::AxiBurstLenWidth)
+  if (MinIdWidth < IdWidth) begin : gen_id_width_lt_len_width
+    `BR_UNUSED_NAMED(upstream_awid_unused, upstream_awid[IdWidth-1:MinIdWidth])
+    `BR_UNUSED_NAMED(upstream_arid_unused, upstream_arid[IdWidth-1:MinIdWidth])
+    `BR_ASSERT_INTG(unused_upper_awid_zero_a,
+                    upstream_awvalid |-> upstream_awid[IdWidth-1:MinIdWidth] == '0)
+    `BR_ASSERT_INTG(unused_upper_arid_zero_a,
+                    upstream_arvalid |-> upstream_arid[IdWidth-1:MinIdWidth] == '0)
+  end
 
   //
   // Write Path
@@ -271,7 +292,7 @@ module br_amba_axi_isolate_sub #(
       .upstream_xready(upstream_bready),
       .upstream_xvalid(upstream_bvalid),
       .upstream_xid(upstream_bid),
-      .upstream_xresp({upstream_bresp}), // ri lint_check_waive ENUM_RHS
+      .upstream_xresp({upstream_bresp}),  // ri lint_check_waive ENUM_RHS
       .upstream_xlast(),
       .upstream_xdata(upstream_buser),
       //
@@ -380,7 +401,7 @@ module br_amba_axi_isolate_sub #(
       .upstream_xready(upstream_rready),
       .upstream_xvalid(upstream_rvalid),
       .upstream_xid(upstream_rid),
-      .upstream_xresp({upstream_rresp}), // ri lint_check_waive ENUM_RHS
+      .upstream_xresp({upstream_rresp}),  // ri lint_check_waive ENUM_RHS
       .upstream_xlast(upstream_rlast),
       .upstream_xdata({upstream_ruser, upstream_rdata}),
       //
