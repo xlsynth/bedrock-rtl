@@ -43,4 +43,12 @@ module br_ecc_pkg_tb;
   `BR_ASSERT_STATIC(get_parity_width_120_a, br_ecc::get_parity_width(120) == 8)
   `BR_ASSERT_STATIC(get_parity_width_121_a, br_ecc::get_parity_width(121) == 9)
 
+  // Combo message and parity width functions
+  `BR_ASSERT_STATIC(data_width_4_a, br_ecc::get_message_width(4, br_ecc::get_parity_width(4)) == 4)
+  `BR_ASSERT_STATIC(data_width_15_a, br_ecc::get_message_width(15, br_ecc::get_parity_width(15)
+                    ) == 16)
+  `BR_ASSERT_STATIC(data_width_16_a, br_ecc::get_message_width(16, br_ecc::get_parity_width(16)
+                    ) == 16)
+  `BR_ASSERT_STATIC(data_width_17_a, br_ecc::get_message_width(17, br_ecc::get_parity_width(17)
+                    ) == 26)
 endmodule : br_ecc_pkg_tb

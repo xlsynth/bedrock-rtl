@@ -29,23 +29,27 @@ package br_ecc;
   // Internal helper function for get_message_width. Don't use this directly.
   // ri lint_check_waive TWO_STATE_TYPE
   function automatic int _get_max_message_width(input int parity_width);
-    `BR_ASSERT_IMM(parity_width_gte_4_a, parity_width >= 4);
+    assert (parity_width >= 4);
     return br_math::exp2(parity_width - 1) - parity_width;
   endfunction : _get_max_message_width
 
   // Given a data width and a parity width, returns the smallest RTL-supported message width that can fit the data.
+  // Only use this function in elaboration-time logic.
   // ri lint_check_waive TWO_STATE_TYPE
   function automatic int get_message_width(input int data_width, input int parity_width);
-    `BR_ASSERT_IMM(data_width_gte_4_a, data_width >= 4);
-    `BR_ASSERT_IMM(data_width_lte_1024_a, data_width <= 1024);
-    `BR_ASSERT_IMM(parity_width_gte_4_a, parity_width >= 4);
-    `BR_ASSERT_IMM(parity_width_lte_12_a, parity_width <= 12);
+    assert (data_width >= 4);
+    assert (data_width <= 1024);
+    assert (parity_width >= 4);
+    assert (parity_width <= 12);
     return br_math::min2(
         br_math::round_up_to_power_of_2(data_width), _get_max_message_width(parity_width)
     );
   endfunction : get_message_width
 
-  // Given a message width, returns the smallest parity width that can fit the message for any SECDED code.
+  // Given a message (or data) width, returns the smallest parity width that can fit the message for any SECDED code.
+  // Only use this function in elaboration-time logic.
+  // ri lint_check_off MULTI_RETURN
+  // ri lint_check_off CONST_BASE
   // ri lint_check_waive TWO_STATE_TYPE
   function automatic int get_parity_width(input int message_width);
     // No closed form equation. As per reference [2], we have:
@@ -75,9 +79,11 @@ package br_ecc;
       return 12;
     end else begin
       // Unimplemented
-      `BR_ASSERT_IMM(message_width_gte_4_and_lte_1024_a, 0);
+      assert (0);
       return 0;
     end
   endfunction : get_parity_width
+  // ri lint_check_on CONST_BASE
+  // ri lint_check_on MULTI_RETURN
 
 endpackage : br_ecc
