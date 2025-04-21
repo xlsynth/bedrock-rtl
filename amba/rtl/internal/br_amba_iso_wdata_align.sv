@@ -196,9 +196,13 @@ module br_amba_iso_wdata_align #(
                                 && !excess_w_full
                                 && !(align_and_hold_done && w_beats_in_excess);
 
-  // Downstream valid signals are gated off once align_and_hold_req is initiated
-  assign downstream_awvalid = upstream_awvalid && !align_and_hold_req;
-  assign downstream_wvalid = upstream_wvalid && !align_and_hold_req;
+  // Downstream valid signals mirror behavior of upstream ready signals
+  assign downstream_awvalid = upstream_awvalid
+                                && !excess_aw_full
+                                && !(align_and_hold_req && aw_beats_in_excess);
+  assign downstream_wvalid = upstream_wvalid
+                                && !excess_w_full
+                                && !(align_and_hold_req && w_beats_in_excess);
 
   assign align_and_hold_done = align_and_hold_req && aw_and_w_beats_aligned;
 
