@@ -1364,9 +1364,9 @@ dependencies = [
 
 [[package]]
 name = "slang-rs"
-version = "0.15.0"
+version = "0.19.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "8a65422aaa27a4ea676df4f6c3be91f8270b887a0884b4675d3e0789808b5a52"
+checksum = "721e227e81c968cb3f66be9a0ad2b133f57afbb82b38536b879e287f329dc308"
 dependencies = [
  "num-bigint",
  "num-traits",
@@ -1422,7 +1422,6 @@ dependencies = [
  "clap",
  "serde",
  "serde_json",
- "slang-rs",
  "topstitch",
 ]
 
@@ -1615,9 +1614,9 @@ dependencies = [
 
 [[package]]
 name = "topstitch"
-version = "0.48.0"
+version = "0.57.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "6a875d1dbb4810572b20f13d4fa47f6aeb116a4433e9a292757c32ae74eb9f8a"
+checksum = "4ec9279f9fabfb39b2ce70fab43893dbe390540603cc99db026611fc90ef0044"
 dependencies = [
  "indexmap",
  "itertools",

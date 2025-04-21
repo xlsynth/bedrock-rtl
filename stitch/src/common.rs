@@ -1,7 +1,6 @@
 use std::path::Path;
 
-use slang_rs::SlangConfig;
-use topstitch::ModDef;
+use topstitch::{ModDef, ParserConfig};
 use clap::Args;
 
 #[derive(Args)]
@@ -50,14 +49,15 @@ pub fn load_module(
     incdirs.sort();
     incdirs.dedup();
 
-    let config = SlangConfig {
+    let config = ParserConfig {
         sources: &sources,
         incdirs: &incdirs,
         tops: &[name],
         ignore_unknown_modules: true,
+        skip_unsupported: true,
         timescale: None,
         ..Default::default()
     };
 
-    ModDef::from_verilog_using_slang(name, &config, true)
+    ModDef::from_verilog_with_config(name, &config)
 }
