@@ -27,7 +27,7 @@
 // accepted on either W or AW. Upstream ports will then remain
 // backpressured until align_and_hold_req is deasserted.
 //
-// Recovering alignment is necessary prior re-connecting the downstream
+// Recovering alignment is necessary prior to reconnecting the downstream
 // subordinate to the upstream manager after the subordinate has been
 // disconnected for some time. After the reconnect is made, the hold is
 // released, and transactions are allowed to flow to the downstream
@@ -71,10 +71,8 @@ module br_amba_iso_wdata_align #(
   `BR_ASSERT_STATIC(max_transaction_skew_gte_1_a, MaxTransactionSkew > 1)
   `BR_ASSERT_STATIC(max_axi_burst_len_1_or_amba_a,
                     MaxAxiBurstLen == 1 || MaxAxiBurstLen == 2 ** br_amba::AxiBurstLenWidth)
-  `BR_ASSERT_INTG(legal_request_rise_a, $rose(align_and_hold_req) |-> $past(align_and_hold_done)
-                                        == 1'b0)
-  `BR_ASSERT_INTG(legal_request_fall_a, $fell(align_and_hold_req) |-> $past(align_and_hold_done)
-                                        == 1'b1)
+  `BR_ASSERT_INTG(legal_request_rise_a, $rose(align_and_hold_req) |-> !$past(align_and_hold_done))
+  `BR_ASSERT_INTG(legal_request_fall_a, $fell(align_and_hold_req) |-> $past(align_and_hold_done))
   `BR_ASSERT_INTG(awlen_legal_range_a, upstream_awvalid |-> upstream_awlen < MaxAxiBurstLen)
 
   localparam int MaxBurstLenWidth = $clog2(MaxAxiBurstLen + 1);

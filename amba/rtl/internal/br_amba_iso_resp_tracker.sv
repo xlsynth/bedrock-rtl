@@ -228,45 +228,28 @@ module br_amba_iso_resp_tracker #(
                (downstream_iso_xvalid && !isolate_req) |-> (downstream_iso_xid == '0))
     `BR_UNUSED_NAMED(zero_count_unused_resp_info, zero_count)
   end else begin : gen_resp_info
-    logic [AxiIdWidth-1:0] cur_resp_id_last, cur_resp_id_next;
+    logic [AxiIdWidth-1:0] cur_resp_id_prev, cur_resp_id_next;
     assign cur_resp_id_next = downstream_iso_xid;
-    assign cur_resp_id = zero_count ? cur_resp_id_next : cur_resp_id_last;
+    assign cur_resp_id = zero_count ? cur_resp_id_next : cur_resp_id_prev;
     // ri lint_check_waive CONST_IF_COND
-    `BR_REGL(cur_resp_id_last, cur_resp_id_next, zero_count)
+    `BR_REGL(cur_resp_id_prev, cur_resp_id_next, zero_count)
 
     // Mux the "current" response from the tracker fifo based on the ID received on the downstream.
-    br_mux_bin #(
-        .NumSymbolsIn(AxiIdCount),
-        .SymbolWidth (AxiBurstLenWidth),
-        .SelectWidth (AxiIdWidth)
-    ) br_mux_bin_resp_len (
-        .select(cur_resp_id),
-        .in(tracker_fifo_pop_len),
-        .out(cur_resp_len),
-        .out_valid()
-    );
-
-    br_mux_bin #(
-        .NumSymbolsIn(AxiIdCount),
-        .SymbolWidth (1),
-        .SelectWidth (AxiIdWidth)
-    ) br_mux_bin_resp_valid (
-        .select(cur_resp_id),
-        .in(tracker_fifo_pop_valid),
-        .out(cur_resp_valid),
-        .out_valid()
-    );
-
-    br_enc_bin2onehot #(
-        .NumValues(AxiIdCount),
-        .BinWidth (AxiIdWidth)
-    ) br_enc_bin2onehot_resp_ready (
+    br_flow_mux_select_unstable #(
+        .NumFlows(AxiIdCount),
+        .Width(AxiBurstLenWidth)
+    ) br_flow_mux_select_unstable_resp_len (
         .clk,
         .rst,
         //
-        .in(cur_resp_id),
-        .in_valid(cur_resp_do_pop),
-        .out(tracker_fifo_pop_ready)
+        .select(cur_resp_id[MinIdWidth-1:0]),
+        .push_valid(tracker_fifo_pop_valid),
+        .push_data(tracker_fifo_pop_len),
+        .push_ready(tracker_fifo_pop_ready),
+        //
+        .pop_valid_unstable(cur_resp_valid),
+        .pop_data_unstable(cur_resp_len),
+        .pop_ready(cur_resp_do_pop)
     );
   end
 

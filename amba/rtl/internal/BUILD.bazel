@@ -78,6 +78,7 @@ verilog_library(
         "//counter/rtl:br_counter_incr",
         "//fifo/rtl:br_fifo_flops",
         "//fifo/rtl:br_fifo_shared_dynamic_flops",
+        "//flow/rtl:br_flow_mux_select_unstable",
         "//macros:br_asserts_internal",
         "//macros:br_registers",
         "//macros:br_unused",
