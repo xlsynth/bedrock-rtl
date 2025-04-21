@@ -78,7 +78,6 @@ module br_ecc_secded_fpv_monitor #(
   // ----------Instantiate br_ecc_secded_encoder----------
   br_ecc_secded_encoder #(
       .DataWidth(DataWidth),
-      .ParityWidth(ParityWidth),
       .RegisterInputs(EncRegisterInputs),
       .RegisterOutputs(EncRegisterOutputs)
   ) br_ecc_secded_encoder (
@@ -95,7 +94,6 @@ module br_ecc_secded_fpv_monitor #(
   // ----------Instantiate br_ecc_secded_encoder----------
   br_ecc_secded_decoder #(
       .DataWidth(DataWidth),
-      .ParityWidth(ParityWidth),
       .RegisterInputs(DecRegisterInputs),
       .RegisterSyndrome(RegisterSyndrome),
       .RegisterOutputs(DecRegisterOutputs)

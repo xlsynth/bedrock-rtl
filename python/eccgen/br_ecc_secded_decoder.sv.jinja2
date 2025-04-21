@@ -136,7 +136,7 @@ module br_ecc_secded_decoder #(
   `BR_ASSERT_STATIC(parity_width_gte_4_a, ParityWidth >= 4)
   `BR_ASSERT_STATIC(parity_width_lte_12_a, ParityWidth <= 12)
   `BR_ASSERT_STATIC(data_width_fits_in_message_width_a, DataWidth <= MessageWidth)
-  `BR_ASSERT_STATIC(right_sized_parity_bits_a, DataWidth > br_ecc::_get_max_message_width(ParityWidth - 1))
+  `BR_ASSERT_STATIC(right_sized_parity_bits_a, ParityWidth == 4 || DataWidth > br_ecc::_get_max_message_width(ParityWidth - 1))
 
   //------------------------------------------
   // Implementation
