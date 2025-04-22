@@ -38,6 +38,7 @@
 // (MaxAxiBurstLen) transactions.
 
 `include "br_asserts_internal.svh"
+`include "br_unused.svh"
 
 module br_amba_iso_wdata_align #(
     // Maximum allowed skew (measured in max-length transactions) that can be tracked
@@ -91,13 +92,20 @@ module br_amba_iso_wdata_align #(
   logic w_beats_in_excess;
   logic aw_beats_in_excess;
   logic aw_and_w_beats_aligned;
+  logic holdoff_aw;
+  logic holdoff_w;
 
   // AWLEN is 0 based, so we need to add 1 to get the actual number of beats
-  assign aw_beat_len = (MaxAxiBurstLen == 1) ? 1'b1 : upstream_awlen + 1'b1;
+  if (MaxAxiBurstLen == 1) begin : gen_aw_len_single_beat
+    assign aw_beat_len = 1'b1;
+    `BR_UNUSED(upstream_awlen)
+  end else begin : gen_aw_len_multi_beat
+    assign aw_beat_len = upstream_awlen + 1'b1;
+  end
 
   // Counters track all upstream beats (regardless of what happens on downstream)
   assign aw_beat = upstream_awvalid && upstream_awready;
-  assign w_beat = upstream_wvalid && upstream_wready;
+  assign w_beat  = upstream_wvalid && upstream_wready;
 
   //
   // Excess AW data beat counter. Indicates how many excess WDATA beats implied
@@ -186,27 +194,21 @@ module br_amba_iso_wdata_align #(
   assign w_beats_in_excess = (excess_w_data_beats > excess_aw_data_beats);
   assign aw_and_w_beats_aligned = (excess_aw_data_beats == '0 && excess_w_data_beats == '0);
 
-  // Upstream ports are ready unless the counter space is exhausted (one of the ports is too far
-  // ahead of the other) or an operation is underway force alignment and one of the upstream ports
-  // is ahead (in excess) of the other.
-  assign upstream_awready = downstream_awready
-                                && !excess_aw_full
-                                && !(align_and_hold_req && aw_beats_in_excess)
-                                && !align_and_hold_done;
-  assign upstream_wready = downstream_wready
-                                && !excess_w_full
-                                && !(align_and_hold_req && w_beats_in_excess)
-                                && !align_and_hold_done;
+  // Hold off upstream->downstream transfer if the counter space is exhausted (one of the ports is
+  // too far ahead of the other) or an operation is underway force alignment and one of the upstream
+  // ports is ahead (in excess) of the other or if the alignment is complete.
+  assign holdoff_aw = excess_aw_full
+                        || (align_and_hold_req && aw_beats_in_excess)
+                        || align_and_hold_done;
+  assign holdoff_w = excess_w_full
+                        || (align_and_hold_req && w_beats_in_excess)
+                        || align_and_hold_done;
 
-  // Downstream valid signals mirror behavior of upstream ready signals
-  assign downstream_awvalid = upstream_awvalid
-                                && !excess_aw_full
-                                && !(align_and_hold_req && aw_beats_in_excess)
-                                && !align_and_hold_done;
-  assign downstream_wvalid = upstream_wvalid
-                                && !excess_w_full
-                                && !(align_and_hold_req && w_beats_in_excess)
-                                && !align_and_hold_done;
+  // Assign upstream->downstream ready/valid handshake signals.
+  assign upstream_awready = downstream_awready && !holdoff_aw;
+  assign upstream_wready = downstream_wready && !holdoff_w;
+  assign downstream_awvalid = upstream_awvalid && !holdoff_aw;
+  assign downstream_wvalid = upstream_wvalid && !holdoff_w;
 
   assign align_and_hold_done = align_and_hold_req && aw_and_w_beats_aligned;
 

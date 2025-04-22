@@ -114,9 +114,9 @@ module br_amba_iso_resp_tracker #(
   localparam int MinIdWidth = (AxiIdCount == 1) ? 1 : $clog2(AxiIdCount);
 
   // Local signals
-  logic [AxiBurstLenWidth-1:0] ax_beat_len;
-  logic [MinIdWidth-1:0] ax_id;
-  logic ax_beat;
+  logic [AxiBurstLenWidth-1:0] tracker_fifo_push_len;
+  logic [MinIdWidth-1:0] tracker_fifo_push_ax_id;
+  logic tracker_fifo_push_valid;
   logic [AxiIdCount-1:0] tracker_fifo_pop_valid;
   logic [AxiIdCount-1:0] tracker_fifo_pop_ready;
   logic [AxiIdCount-1:0][AxiBurstLenWidth-1:0] tracker_fifo_pop_len;
@@ -144,9 +144,9 @@ module br_amba_iso_resp_tracker #(
   // Stores ordered list of request lengths for each ID.
   //
 
-  assign ax_beat_len = SingleBeatOnly ? 1'b0 : upstream_axlen;
-  assign ax_id = SingleIdOnly ? '0 : upstream_axid[MinIdWidth-1:0];
-  assign ax_beat = upstream_axvalid && upstream_axready;
+  assign tracker_fifo_push_len   = SingleBeatOnly ? 1'b0 : upstream_axlen;
+  assign tracker_fifo_push_ax_id = SingleIdOnly ? '0 : upstream_axid[MinIdWidth-1:0];
+  assign tracker_fifo_push_valid = upstream_axvalid && upstream_axready;
 
   if (MinIdWidth < AxiIdWidth) begin : gen_id_width_lt_len_width
     `BR_UNUSED_NAMED(upstream_axid_unused, upstream_axid[AxiIdWidth-1:MinIdWidth])
@@ -166,8 +166,8 @@ module br_amba_iso_resp_tracker #(
         .clk,
         .rst,
         //
-        .push_valid(ax_beat),
-        .push_data(ax_beat_len),
+        .push_valid(tracker_fifo_push_valid),
+        .push_data(tracker_fifo_push_len),
         .push_ready(tracker_fifo_push_ready),
         //
         .pop_valid(tracker_fifo_pop_valid),
@@ -183,7 +183,7 @@ module br_amba_iso_resp_tracker #(
         .items(),
         .items_next()
     );
-    `BR_UNUSED(ax_id)
+    `BR_UNUSED(tracker_fifo_push_ax_id)
   end else begin : gen_multi_fifo
     br_fifo_shared_dynamic_flops #(
         .NumWritePorts(1),
@@ -198,10 +198,10 @@ module br_amba_iso_resp_tracker #(
         .clk,
         .rst,
         //
-        .push_valid(ax_beat),
-        .push_data(ax_beat_len),
+        .push_valid(tracker_fifo_push_valid),
+        .push_data(tracker_fifo_push_len),
         .push_ready(tracker_fifo_push_ready),
-        .push_fifo_id(ax_id),
+        .push_fifo_id(tracker_fifo_push_ax_id),
         .push_full(),
         //
         .pop_valid(tracker_fifo_pop_valid),

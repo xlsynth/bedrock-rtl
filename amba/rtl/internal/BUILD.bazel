@@ -51,6 +51,7 @@ verilog_library(
         "//amba/rtl:br_amba_pkg",
         "//counter/rtl:br_counter",
         "//macros:br_asserts_internal",
+        "//macros:br_unused",
     ],
 )
 
