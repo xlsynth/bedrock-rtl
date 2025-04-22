@@ -213,9 +213,11 @@ RUN slang -version
 # Cannot directly depend on XLS through Bazel to prevent future circular dependencies (we plan for XLS to depend on bedrock-rtl).
 RUN curl -L https://github.com/xlsynth/xlsynth/releases/download/v0.0.146/libxls-rocky8.so -o /usr/local/lib/libxls-v0.0.146-rocky8.so
 
-# Install Bazel
-# The Bazel image is implicitly linux/amd64: https://github.com/bazelbuild/continuous-integration/issues/2020
-COPY --from=gcr.io/bazel-public/bazel:7.3.1 /usr/local/bin/bazel /usr/local/bin/bazel
+# Use Bazelisk to manage Bazel versions
+# Makes it easier to upgrade by just changing .bazelversion file in the Bedrock-RTL repo.
+RUN curl -L https://github.com/bazelbuild/bazelisk/releases/download/v1.25.0/bazelisk-linux-amd64 -o /usr/local/bin/bazelisk
+RUN mv /usr/local/bin/bazelisk /usr/local/bin/bazel
+RUN chmod +x /usr/local/bin/bazel
 RUN bazel --version
 
 RUN useradd -m user
