@@ -146,7 +146,7 @@ module br_amba_iso_resp_tracker #(
 
   assign tracker_fifo_push_len   = SingleBeatOnly ? 1'b0 : upstream_axlen;
   assign tracker_fifo_push_ax_id = SingleIdOnly ? '0 : upstream_axid[MinIdWidth-1:0];
-  assign tracker_fifo_push_valid = upstream_axvalid && upstream_axready;
+  assign tracker_fifo_push_valid = upstream_axvalid && downstream_axready;
 
   if (MinIdWidth < AxiIdWidth) begin : gen_id_width_lt_len_width
     `BR_UNUSED_NAMED(upstream_axid_unused, upstream_axid[AxiIdWidth-1:MinIdWidth])
@@ -237,7 +237,7 @@ module br_amba_iso_resp_tracker #(
     assign cur_resp_id_next = downstream_iso_xid;
     assign cur_resp_id = zero_count ? cur_resp_id_next : cur_resp_id_prev;
     // ri lint_check_waive CONST_IF_COND
-    `BR_REGL(cur_resp_id_prev, cur_resp_id_next, zero_count)
+    `BR_REGL(cur_resp_id_prev, cur_resp_id_next, zero_count && x_beat)
 
     // Mux the "current" response from the tracker fifo based on the ID received on the downstream.
     br_flow_mux_select_unstable #(
