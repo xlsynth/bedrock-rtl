@@ -52,6 +52,7 @@ verilog_library(
         "//counter/rtl:br_counter",
         "//macros:br_asserts_internal",
         "//macros:br_unused",
+        "//pkg:br_math_pkg",
     ],
 )
 
@@ -83,6 +84,7 @@ verilog_library(
         "//macros:br_asserts_internal",
         "//macros:br_registers",
         "//macros:br_unused",
+        "//pkg:br_math_pkg",
     ],
 )
 

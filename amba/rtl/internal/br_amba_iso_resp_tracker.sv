@@ -64,7 +64,7 @@ module br_amba_iso_resp_tracker #(
     // Can be set to 1 for AXI-Lite or write responses, otherwise should
     // be set to br_amba::AxiBurstLenWidth.
     parameter int MaxAxiBurstLen = 2 ** br_amba::AxiBurstLenWidth,
-    localparam int AxiBurstLenWidth = MaxAxiBurstLen == 1 ? 1 : $clog2(MaxAxiBurstLen)
+    localparam int AxiBurstLenWidth = br_math::clamped_clog2(MaxAxiBurstLen)
 ) (
     input logic clk,
     input logic rst,
@@ -111,7 +111,7 @@ module br_amba_iso_resp_tracker #(
   // Local parameters
   localparam bit SingleBeatOnly = (MaxAxiBurstLen == 1);
   localparam bit SingleIdOnly = (AxiIdCount == 1);
-  localparam int MinIdWidth = (AxiIdCount == 1) ? 1 : $clog2(AxiIdCount);
+  localparam int MinIdWidth = br_math::clamped_clog2(AxiIdCount);
 
   // Local signals
   logic [AxiBurstLenWidth-1:0] tracker_fifo_push_len;

@@ -46,7 +46,7 @@ module br_amba_iso_wdata_align #(
     parameter int MaxTransactionSkew = 2,
     // can be set to 1 for AXI-Lite, otherwise should be set to br_amba::AxiBurstLenWidth
     parameter int MaxAxiBurstLen = 2 ** br_amba::AxiBurstLenWidth,
-    parameter int AxiBurstLenWidth = MaxAxiBurstLen == 1 ? 1 : $clog2(MaxAxiBurstLen)
+    parameter int AxiBurstLenWidth = br_math::clamped_clog2(MaxAxiBurstLen)
 ) (
     input logic clk,
     input logic rst,

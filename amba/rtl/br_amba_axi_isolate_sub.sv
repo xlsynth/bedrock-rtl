@@ -91,7 +91,7 @@ module br_amba_axi_isolate_sub #(
     // Number of pipeline stages to use for the data RAM read data.
     // Has no effect if AxiIdCount == 1.
     parameter bit FlopDataRamRd = 0,
-    localparam int AxiBurstLenWidth = MaxAxiBurstLen == 1 ? 1 : $clog2(MaxAxiBurstLen),
+    localparam int AxiBurstLenWidth = br_math::clamped_clog2(MaxAxiBurstLen),
     localparam int StrobeWidth = DataWidth / 8
 ) (
     input  logic                                  clk,
@@ -179,7 +179,7 @@ module br_amba_axi_isolate_sub #(
   // Integration Checks
   //
 
-  localparam int MinIdWidth = (AxiIdCount == 1) ? 1 : $clog2(AxiIdCount);
+  localparam int MinIdWidth = br_math::clamped_clog2(AxiIdCount);
 
   `BR_ASSERT_STATIC(max_outstanding_gt_1_a, MaxOutstanding > 1)
   `BR_ASSERT_STATIC(have_enough_ids_a, AxiIdCount <= 2 ** IdWidth)
