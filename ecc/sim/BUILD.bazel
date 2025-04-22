@@ -63,7 +63,7 @@ verilog_library(
     deps = [
         "//ecc/rtl:br_ecc_secded_decoder",
         "//ecc/rtl:br_ecc_secded_encoder",
-        "//pkg:br_ecc_pkg",
+        "//pkg:br_ecc_secded_pkg",
     ],
 )
 
@@ -73,36 +73,33 @@ verilog_elab_test(
     deps = [":br_ecc_secded_encoder_decoder_tb"],
 )
 
-K_R_PAIRS = [
+K = [
     # Generated configs
-    ("4", "4"),
-    ("8", "5"),
-    ("11", "5"),
-    ("16", "6"),
-    ("26", "6"),
-    ("32", "7"),
-    ("57", "7"),
-    ("64", "8"),
-    ("120", "8"),
-    ("128", "9"),
-    ("247", "9"),
-    ("256", "10"),
-    ("502", "10"),
-    ("512", "11"),
-    ("1013", "11"),
-    ("1024", "12"),
+    "4",
+    "8",
+    "11",
+    "16",
+    "26",
+    "32",
+    "57",
+    "64",
+    "120",
+    "128",
+    "247",
+    "256",
+    "502",
+    "512",
+    "1013",
+    "1024",
     # Padded configs
-    ("9", "5"),
-    ("68", "8"),
+    "9",
+    "68",
 ]
 
 [
     br_verilog_sim_test_tools_suite(
         name = "br_ecc_secded_encoder_decoder_sim_test_tools_suite",
-        params = {
-            "DataWidth": [k],
-            "ParityWidth": [r],
-        },
+        params = {"DataWidth": [k]},
         seed = 42,
         tools = [
             # iverilog is really slow on these tests :(
@@ -111,5 +108,5 @@ K_R_PAIRS = [
         ],
         deps = [":br_ecc_secded_encoder_decoder_tb"],
     )
-    for (k, r) in K_R_PAIRS
+    for k in K
 ]

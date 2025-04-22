@@ -96,4 +96,13 @@ module br_math_pkg_tb;
   `BR_ASSERT_STATIC(exp2_2_a, br_math::exp2(2) == 4)
   `BR_ASSERT_STATIC(exp2_7_a, br_math::exp2(7) == 128)
 
+  `BR_ASSERT_STATIC(round_up_to_power_of_2_1_a, br_math::round_up_to_power_of_2(1) == 1)
+  `BR_ASSERT_STATIC(round_up_to_power_of_2_2_a, br_math::round_up_to_power_of_2(2) == 2)
+  `BR_ASSERT_STATIC(round_up_to_power_of_2_3_a, br_math::round_up_to_power_of_2(3) == 4)
+  `BR_ASSERT_STATIC(round_up_to_power_of_2_4_a, br_math::round_up_to_power_of_2(4) == 4)
+  `BR_ASSERT_STATIC(round_up_to_power_of_2_5_a, br_math::round_up_to_power_of_2(5) == 8)
+  `BR_ASSERT_STATIC(round_up_to_power_of_2_7_a, br_math::round_up_to_power_of_2(7) == 8)
+  `BR_ASSERT_STATIC(round_up_to_power_of_2_8_a, br_math::round_up_to_power_of_2(8) == 8)
+  `BR_ASSERT_STATIC(round_up_to_power_of_2_121_a, br_math::round_up_to_power_of_2(121) == 128)
+
 endmodule : br_math_pkg_tb

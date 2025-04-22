@@ -42,14 +42,14 @@
 
 module br_ecc_secded_error_fpv_monitor #(
     parameter int DataWidth = 4,
-    parameter int ParityWidth = 4,
     parameter bit EncRegisterInputs = 0,
     parameter bit EncRegisterOutputs = 0,
     parameter bit DecRegisterInputs = 0,
     parameter bit DecRegisterOutputs = 0,
     parameter bit RegisterSyndrome = 0,
+    localparam int ParityWidth = br_ecc_secded::get_parity_width(DataWidth),
     localparam int InputWidth = DataWidth + ParityWidth,
-    localparam int MessageWidth = br_ecc::get_message_width(DataWidth, ParityWidth),
+    localparam int MessageWidth = br_ecc_secded::get_message_width(DataWidth, ParityWidth),
     localparam int CodewordWidth = MessageWidth + ParityWidth
 ) (
     input logic                 clk,
@@ -96,7 +96,6 @@ module br_ecc_secded_error_fpv_monitor #(
   // ----------Instantiate br_ecc_secded_encoder----------
   br_ecc_secded_encoder #(
       .DataWidth(DataWidth),
-      .ParityWidth(ParityWidth),
       .RegisterInputs(EncRegisterInputs),
       .RegisterOutputs(EncRegisterOutputs)
   ) br_ecc_secded_encoder (
@@ -114,7 +113,6 @@ module br_ecc_secded_error_fpv_monitor #(
   // Pass in codeword with single bit flipped
   br_ecc_secded_decoder #(
       .DataWidth(DataWidth),
-      .ParityWidth(ParityWidth),
       .RegisterInputs(DecRegisterInputs),
       .RegisterSyndrome(RegisterSyndrome),
       .RegisterOutputs(DecRegisterOutputs)
@@ -135,7 +133,6 @@ module br_ecc_secded_error_fpv_monitor #(
   // Pass in codeword with double bit flipped
   br_ecc_secded_decoder #(
       .DataWidth(DataWidth),
-      .ParityWidth(ParityWidth),
       .RegisterInputs(DecRegisterInputs),
       .RegisterSyndrome(RegisterSyndrome),
       .RegisterOutputs(DecRegisterOutputs)
