@@ -34,6 +34,20 @@ package br_math;
     return (numerator + denominator - 1) / denominator;
   endfunction
 
+  // Round a value down to the nearest multiple of the alignment.
+  // ri lint_check_waive TWO_STATE_TYPE
+  function automatic int align_down(input int value, input int alignment);
+    // ri lint_check_waive WIDE_MULT
+    return floor_div(value, alignment) * alignment;
+  endfunction
+
+  // Round a value up to the nearest multiple of the alignment.
+  // ri lint_check_waive TWO_STATE_TYPE
+  function automatic int align_up(input int value, input int alignment);
+    // ri lint_check_waive WIDE_MULT
+    return ceil_div(value, alignment) * alignment;
+  endfunction
+
   // Returns 1 if the value is a power of 2, 0 otherwise.
   // ri lint_check_waive TWO_STATE_TYPE
   function automatic bit is_power_of_2(input int value);
@@ -75,6 +89,19 @@ package br_math;
   // ri lint_check_waive TWO_STATE_TYPE
   function automatic int max2(input int a, input int b);
     return (a > b) ? a : b;
+  endfunction
+
+  // Returns 2^x.
+  // ri lint_check_waive TWO_STATE_TYPE
+  function automatic int exp2(input int x);
+    // ri lint_check_waive VAR_SHIFT
+    return 1 << x;
+  endfunction
+
+  // Rounds a value up to the nearest power of 2.
+  // ri lint_check_waive TWO_STATE_TYPE
+  function automatic int round_up_to_power_of_2(input int value);
+    return exp2($clog2(value));
   endfunction
 
 endpackage : br_math

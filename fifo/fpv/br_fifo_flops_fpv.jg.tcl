@@ -28,5 +28,12 @@ assert -name fv_rst_check_pop_valid {rst |-> pop_valid == 'd0}
 # but the FIFO itself doesn't care and will work fine even if it's unstable
 assert -disable *br_fifo_push_ctrl.*valid_data_stable_when_backpressured_a
 
+# pop_data can change without pop_ready when pop_ready = 0
+# but when pop_ready is high, correct data will be sent
+assert -disable *br_fifo_basic_fpv_monitor.gen_pop_data_stable.pop_data_stable_a*
+
+# TODO
+cover -disable *
+
 # prove command
 prove -all

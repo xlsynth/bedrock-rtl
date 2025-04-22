@@ -18,6 +18,7 @@ load("//bazel:verilog.bzl", "verilog_elab_test")
 
 package(default_visibility = ["//visibility:public"])
 
+#################################################################
 # Bedrock-RTL Single-Error-Detecting (SED - Even Parity)
 
 verilog_library(
@@ -69,6 +70,7 @@ br_verilog_fpv_test_tools_suite(
     deps = [":br_ecc_sed_fpv_monitor"],
 )
 
+#################################################################
 # Bedrock-RTL Single-Error-Correcting, Double-Error-Detecting (SECDED - Hsiao)
 # no ecc error set up
 
@@ -89,11 +91,8 @@ verilog_elab_test(
 )
 
 br_verilog_fpv_test_tools_suite(
-    name = "br_ecc_secded_test_suite",
-    elab_opts = [
-        "-parameter DataWidth 120",
-        "-parameter ParityWidth 9",
-    ],
+    name = "br_ecc_secded_test_dw4",
+    elab_opts = ["-parameter DataWidth 4"],
     params = {
         "DecRegisterInputs": [
             "1",
@@ -124,6 +123,91 @@ br_verilog_fpv_test_tools_suite(
     deps = [":br_ecc_secded_fpv_monitor"],
 )
 
+DATA_WIDTHS = [
+    "5",
+    "6",
+    "7",
+    "8",
+    "9",
+    "10",
+    "11",
+    "12",
+    "13",
+    "16",
+    "17",
+    "19",
+    "20",
+    "21",
+    "23",
+    "25",
+    "26",
+    "27",
+    "28",
+    "29",
+    "31",
+    "35",
+    "40",
+    "42",
+    "57",
+    "58",
+    "60",
+    "64",
+    "70",
+    "85",
+    "90",
+    "95",
+    "100",
+    "105",
+    "110",
+    "115",
+    "120",
+    "121",
+    "128",
+    "145",
+    "150",
+    "165",
+    "170",
+    "185",
+    "190",
+    "215",
+    "220",
+    "235",
+    "240",
+    "247",
+    "248",
+    "250",
+    "256",
+    "270",
+    "310",
+    "360",
+    "410",
+    "450",
+    "502",
+    "503",
+    "512",
+    "650",
+    "760",
+    "800",
+    "950",
+    "1000",
+    "1013",
+    "1014",
+    "1020",
+    "1024",
+]
+
+br_verilog_fpv_test_tools_suite(
+    name = "br_ecc_secded_test",
+    params = {"DataWidth": DATA_WIDTHS},
+    tools = {
+        "jg": "br_ecc_secded_fpv.jg.tcl",
+        "vcf": "",
+    },
+    top = "br_ecc_secded_fpv_monitor",
+    deps = [":br_ecc_secded_fpv_monitor"],
+)
+
+#################################################################
 # ecc error set up
 
 verilog_library(
@@ -139,16 +223,12 @@ verilog_library(
 verilog_elab_test(
     name = "br_ecc_secded_error_fpv_monitor_elab_test",
     tool = "verific",
-    #TODO: RTL has bug
     deps = [":br_ecc_secded_error_fpv_monitor"],
 )
 
 br_verilog_fpv_test_tools_suite(
-    name = "br_ecc_secded_error_test_suite",
-    elab_opts = [
-        "-parameter DataWidth 8",
-        "-parameter ParityWidth 5",
-    ],
+    name = "br_ecc_secded_error_test_dw4",
+    elab_opts = ["-parameter DataWidth 4"],
     params = {
         "DecRegisterInputs": [
             "1",
@@ -172,7 +252,18 @@ br_verilog_fpv_test_tools_suite(
         ],
     },
     tools = {
-        "jg": "",
+        "jg": "br_ecc_secded_error_fpv.jg.tcl",
+        "vcf": "",
+    },
+    top = "br_ecc_secded_error_fpv_monitor",
+    deps = [":br_ecc_secded_error_fpv_monitor"],
+)
+
+br_verilog_fpv_test_tools_suite(
+    name = "br_ecc_secded_error_test",
+    params = {"DataWidth": DATA_WIDTHS},
+    tools = {
+        "jg": "br_ecc_secded_error_fpv.jg.tcl",
         "vcf": "",
     },
     top = "br_ecc_secded_error_fpv_monitor",

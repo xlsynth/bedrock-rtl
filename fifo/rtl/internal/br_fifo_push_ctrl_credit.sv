@@ -173,7 +173,8 @@ module br_fifo_push_ctrl_credit #(
   //------------------------------------------
   // Implementation checks
   //------------------------------------------
-  `BR_ASSERT_CR_IMPL(ram_wr_addr_in_range_a, ram_wr_valid |-> ram_wr_addr < Depth, clk, either_rst)
+  `BR_ASSERT_CR_IMPL(ram_wr_addr_in_range_a, ram_wr_valid |-> ram_wr_addr < RamDepth, clk,
+                     either_rst)
 
   // Flow control and latency
   `BR_ASSERT_CR_IMPL(no_overflow_a, internal_valid |-> !full, clk, either_rst)

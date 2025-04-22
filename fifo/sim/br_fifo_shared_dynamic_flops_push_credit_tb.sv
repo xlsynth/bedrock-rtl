@@ -9,6 +9,8 @@ module br_fifo_shared_dynamic_flops_push_credit_tb;
   parameter int StagingBufferDepth = 1;
   parameter bit RegisterPopOutputs = 0;
   parameter bit RegisterDeallocation = 0;
+  parameter int DataRamAddressDepthStages = 0;
+  parameter int PointerRamAddressDepthStages = 0;
 
   localparam int FifoIdWidth = $clog2(NumFifos);
   localparam int CombinedWidth = Width + FifoIdWidth;
@@ -85,7 +87,9 @@ module br_fifo_shared_dynamic_flops_push_credit_tb;
       .StagingBufferDepth(StagingBufferDepth),
       .RegisterPopOutputs(RegisterPopOutputs),
       .RegisterDeallocation(RegisterDeallocation),
-      .RegisterPushOutputs(1)
+      .RegisterPushOutputs(1),
+      .DataRamAddressDepthStages(DataRamAddressDepthStages),
+      .PointerRamAddressDepthStages(PointerRamAddressDepthStages)
   ) dut (
       .clk,
       .rst,
@@ -96,13 +100,15 @@ module br_fifo_shared_dynamic_flops_push_credit_tb;
       .push_valid(dut_push_valid),
       .push_data(dut_push_data),
       .push_fifo_id(dut_push_fifo_id),
+      .push_full(),
       .credit_initial_push,
       .credit_withhold_push,
       .credit_available_push(),
       .credit_count_push(),
       .pop_ready,
       .pop_valid,
-      .pop_data
+      .pop_data,
+      .pop_empty()
   );
 
   br_test_driver td (
