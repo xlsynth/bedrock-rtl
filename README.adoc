@@ -40,7 +40,7 @@ High quality and composable base RTL libraries in Verilog
 
 At minimum, you need to have the following tools installed in your environment.
 
-* Bazel >= 7.6
+* Bazel == 7.6.1 (recommended to manage this using Bazelisk)
 * System Python interpreter >= 3.12
 
 Additionally, several tools are needed to build and run all of the tests:
