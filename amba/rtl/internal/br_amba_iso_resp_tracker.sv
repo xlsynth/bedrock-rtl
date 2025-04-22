@@ -334,6 +334,9 @@ module br_amba_iso_resp_tracker #(
     `BR_UNUSED_NAMED(zero_count_unused_arbiter, zero_count)
   end else begin : gen_arbiter
     logic [AxiIdCount-1:0] tracker_fifo_pop_iso_gnt;
+    logic [AxiIdCount-1:0] tracker_fifo_pop_iso_gnt_prev;
+    logic [AxiIdCount-1:0] tracker_fifo_pop_iso_gnt_cur;
+
     logic iso_arb_accept;
 
     // Arbiter state is advanced on zero_count where a response is accepted upstream.
@@ -346,9 +349,14 @@ module br_amba_iso_resp_tracker #(
         .rst,
         //
         .request(tracker_fifo_pop_valid),
-        .grant(tracker_fifo_pop_iso_gnt),
+        .grant(tracker_fifo_pop_iso_gnt_cur),
         .enable_priority_update(iso_arb_accept)
     );
+
+    // Grant is held through the end of the burst.
+    `BR_REGL(tracker_fifo_pop_iso_gnt_prev, tracker_fifo_pop_iso_gnt_cur, iso_arb_accept)
+    assign tracker_fifo_pop_iso_gnt = zero_count ? tracker_fifo_pop_iso_gnt_cur :
+                                     tracker_fifo_pop_iso_gnt_prev;
 
     br_enc_onehot2bin #(
         .NumValues(AxiIdCount),
