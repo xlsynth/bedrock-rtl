@@ -18,6 +18,21 @@ load("//bazel:verilog.bzl", "verilog_elab_test")
 
 package(default_visibility = ["//visibility:public"])
 
+test_suite(
+    name = "nightly-jg-tests",
+    tests = [
+        ":br_amba_apb_timing_slice_test_suite_jg_fpv_test",
+        ":br_amba_atb_funnel_test_suite_jg_fpv_test",
+        ":br_amba_axi2axil_test_suite_jg_fpv_test",
+        ":br_amba_axi_timing_slice_test_suite_jg_fpv_test",
+        ":br_amba_axil2apb_test_suite_jg_fpv_test",
+        ":br_amba_axil_default_target_test_suite_jg_fpv_test",
+        ":br_amba_axil_msi_test_suite_jg_fpv_test",
+        ":br_amba_axil_split_test_suite_jg_nbar2_fpv_test",
+        ":br_amba_axil_timing_slice_test_suite_jg_fpv_test",
+    ],
+)
+
 # AXI4-Lite Default Target
 
 verilog_library(
