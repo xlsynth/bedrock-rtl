@@ -24,7 +24,7 @@ verilog_library(
         # Omitting //gate/rtl:br_gate_mock so that downstream targets (which may exist in another repo)
         # can decide whether to use these behavioral models or swap them out for some other vendor models.
         # Downstream targets should decide whether to add the //gate/rtl:br_gate_mock dependency themselves.
-        "//macros:br_asserts",
+        "//macros:br_asserts_internal",
         "//macros:br_gates",
         "//macros:br_registers",
     ],
@@ -265,6 +265,35 @@ br_verilog_elab_and_lint_test_suite(
     top = "br_cdc_rst_sync",
     deps = [
         ":br_cdc_rst_sync",
+        "//gate/rtl:br_gate_mock",
+    ],
+)
+
+verilog_library(
+    name = "br_cdc_bit_pulse",
+    srcs = ["br_cdc_bit_pulse.sv"],
+    deps = [
+        ":br_cdc_bit_toggle",
+        "//macros:br_asserts_internal",
+        "//macros:br_registers",
+    ],
+)
+
+br_verilog_elab_and_lint_test_suite(
+    name = "br_cdc_bit_pulse_test_suite",
+    params = {
+        "NumStages": [
+            "2",
+            "3",
+        ],
+        "RegisterOutput": [
+            "0",
+            "1",
+        ],
+    },
+    top = "br_cdc_bit_pulse",
+    deps = [
+        ":br_cdc_bit_pulse",
         "//gate/rtl:br_gate_mock",
     ],
 )

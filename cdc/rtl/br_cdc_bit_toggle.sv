@@ -15,7 +15,7 @@
 // CDC synchronizer for a single bit level signal.
 
 `include "br_registers.svh"
-`include "br_asserts.svh"
+`include "br_asserts_internal.svh"
 `include "br_gates.svh"
 module br_cdc_bit_toggle #(
     // Number of synchronization stages. Must be at least 1.
@@ -35,6 +35,7 @@ module br_cdc_bit_toggle #(
     input logic src_rst,
     input logic src_bit,
 
+    // ri lint_check_waive ONE_LOCAL_CLOCK
     input  logic dst_clk,
     // Used for assertion only
     // ri lint_check_waive INPUT_NOT_READ NOT_READ HIER_NET_NOT_READ HIER_BRANCH_NOT_READ
@@ -44,6 +45,21 @@ module br_cdc_bit_toggle #(
 
   // Integration Assertions
   `BR_ASSERT_STATIC(num_stages_must_be_at_least_one_a, NumStages >= 1)
+
+`ifdef BR_ASSERT_ON
+`ifndef BR_DISABLE_INTG_CHECKS
+  logic dst_src_bit_d;
+  logic dst_src_bit_toggled;
+
+  `BR_REGNX(dst_src_bit_d, src_bit, dst_clk)
+
+  assign dst_src_bit_toggled = dst_src_bit_d != src_bit;
+
+  // The source bit cannot toggle more than once every two destination clock cycles
+  `BR_ASSERT_CR_INTG(src_bit_stability_a, dst_src_bit_toggled |=> !dst_src_bit_toggled, dst_clk,
+                     dst_rst)
+`endif
+`endif
 
   // Implementation
   logic src_bit_internal, src_bit_internal_maxdel;
