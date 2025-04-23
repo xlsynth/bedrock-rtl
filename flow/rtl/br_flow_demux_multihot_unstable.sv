@@ -144,9 +144,10 @@ module br_flow_demux_multihot_unstable #(
                           pop_ready[i]
                       ) && $fell(
                           pop_valid_unstable[i]
-                      ) |-> !$stable(
-                          multihot_select
+                      ) |-> $fell(
+                          multihot_select[i]
                       ))
+      // TODO(zhemao): check if this can actually happen
       if (EnableAssertPushDataStability) begin : gen_stable_push_data
         `BR_ASSERT_IMPL(pop_data_instability_caused_by_select_a,
                         ##1 !pop_ready[i] && pop_valid_unstable[i] && $stable(
