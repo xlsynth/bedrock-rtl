@@ -18,6 +18,13 @@ load("//bazel:verilog.bzl", "verilog_elab_test")
 
 package(default_visibility = ["//visibility:public"])
 
+test_suite(
+    name = "nightly-jg-tests",
+    tests = [
+        "//flow/fpv/reg:br_flow_reg_both_test_suite_jg_eapds0_eapvs0_ecpb0_w1_fpv_test",
+    ],
+)
+
 # Basic reg FV checker
 verilog_library(
     name = "br_flow_reg_basic_fpv_monitor",
