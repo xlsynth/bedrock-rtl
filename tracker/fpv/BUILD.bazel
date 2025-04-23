@@ -18,6 +18,19 @@ load("//bazel:verilog.bzl", "verilog_elab_test")
 
 package(default_visibility = ["//visibility:public"])
 
+# Nightly JG FPV test suite
+test_suite(
+    name = "nightly-jg-tests",
+    tests = [
+        ":br_tracker_freelist_test_suite_jg_dcd0_eb0_napc1_ndp1_ne2_rao1_fpv_test",
+        ":br_tracker_linked_list_ctrl_test_suite_jg_d3_nll2_nwp2_rrl1_fpv_test",
+        ":br_tracker_reorder_buffer_ctrl_1r1w_test_suite_jg_dw3_eiw2_ne4_rrl1_fpv_test",
+        ":br_tracker_reorder_buffer_flops_test_suite_jg_dw3_eiw2_ne4_fpv_test",
+        ":br_tracker_reorder_test_suite_jg_eiw2_ne4_fpv_test",
+        ":br_tracker_sequence_test_suite_jg_eiw2_mas2_ne4_fpv_test",
+    ],
+)
+
 # basic check with a buffer
 verilog_library(
     name = "br_tracker_reorder_buffer_basic_fpv_monitor",

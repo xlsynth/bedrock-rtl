@@ -18,6 +18,18 @@ load("//bazel:verilog.bzl", "verilog_elab_test")
 
 package(default_visibility = ["//visibility:public"])
 
+test_suite(
+    name = "nightly-jg-tests",
+    tests = [
+        ":br_arb_fixed_fpv_test_tools_suite_jg_nr5_fpv_test",
+        ":br_arb_lru_test_suite_jg_nr5_fpv_test",
+        ":br_arb_multi_rr_test_suite_jg_mgpc2_nr5_fpv_test",
+        ":br_arb_pri_rr_test_suite_jg_np2_nr5_fpv_test",
+        ":br_arb_rr_test_suite_jg_nr5_fpv_test",
+        ":br_arb_weighted_rr_test_suite_jg_maw7_mw3_nr3_fpv_test",
+    ],
+)
+
 # Basic arb checker
 verilog_library(
     name = "arb_basic_fpv_monitor",

@@ -21,3 +21,17 @@ compile_pip_requirements_3_12(
 )
 
 exports_files(["elab_test_jg_custom_header.verific.tcl"])
+
+test_suite(
+    name = "nightly-jg-tests",
+    tests = [
+        "//arb/fpv:nightly-jg-tests",
+        "//cdc/fpv:nightly-jg-tests",
+        "//counter/fpv:nightly-jg-tests",
+        "//credit/fpv:nightly-jg-tests",
+        "//delay/fpv:nightly-jg-tests",
+        "//ecc/fpv:nightly-jg-tests",
+        "//multi_xfer/fpv:nightly-jg-tests",
+        "//tracker/fpv:nightly-jg-tests",
+    ],
+)

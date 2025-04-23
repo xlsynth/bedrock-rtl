@@ -18,6 +18,15 @@ load("//bazel:verilog.bzl", "verilog_elab_test")
 
 package(default_visibility = ["//visibility:public"])
 
+test_suite(
+    name = "nightly-jg-tests",
+    tests = [
+        ":br_counter_decr_test_suite_jg_erad0_es0_md3_mv7_fpv_test",
+        ":br_counter_incr_test_suite_jg_erai0_es0_mi3_mv7_fpv_test",
+        ":br_counter_test_suite_jg_erac0_es0_ew0_mc3_mv5_fpv_test",
+    ],
+)
+
 # Bedrock-RTL Increment/Decrement Counter w/ Overflow Handling
 
 verilog_library(

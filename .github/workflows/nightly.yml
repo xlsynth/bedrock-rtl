@@ -32,9 +32,8 @@ jobs:
     - name: Verilog formal tests (using Cadence JasperGold)
       id: test
       # Use --test_output=summary to suppress log output, even on failure (proprietary EDA tool output may be sensitive).
-      # TODO(mgottscho): test everything, not just arb, once this workflow has been pipe cleaned.
       run: |
-        bazel test --noshow_loading_progress //arb/fpv/... --test_tag_filters=jg 2>&1 | tee .bazel-test-jg.log
+        bazel test --noshow_loading_progress //:nightly-jg-tests --test_timeout=10m --test_tag_filters=jg 2>&1 | tee .bazel-test-jg.log
         BAZEL_EXIT_CODE=${PIPESTATUS[0]}
         TOTAL_TESTS=$(grep -Po '(?<=out of )\d+(?= test)' .bazel-test-jg.log)
         PASSING_TESTS=$(grep -Po '\d+(?= test passes?\.| tests pass)' .bazel-test-jg.log)
