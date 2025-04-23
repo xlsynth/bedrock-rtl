@@ -46,4 +46,11 @@ pop_rst |-> pop_valid == 'd0}
 assert -name fv_rst_check_pop_ram_rd_addr_valid {@(posedge pop_clk) \
 pop_rst |-> pop_ram_rd_addr_valid == 'd0}
 
+# If assertion bound - pre-condition reachable cycle >= 2:
+# it's marked as "bounded_proven (auto) instead of "undetermined"
+# this only affects the status report, not the proof
+set_prove_inferred_target_bound on
+# limit run time to 10-mins
+set_prove_time_limit 600s
+
 prove -all
