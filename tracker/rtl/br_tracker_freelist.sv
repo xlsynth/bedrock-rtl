@@ -101,7 +101,7 @@ module br_tracker_freelist #(
   logic [NumEntries-1:0] allocated_entries_next;
   logic [NumAllocPerCycle-1:0] alloc_valid;
 
-  `BR_REG(allocated_entries, allocated_entries_next)
+  `BR_REGI(allocated_entries, allocated_entries_next, PreallocatedEntries)
 
   for (genvar i = 0; i < NumAllocPerCycle; i++) begin : gen_alloc_valid
     assign alloc_valid[i] = alloc_sendable > i && alloc_receivable > i;
