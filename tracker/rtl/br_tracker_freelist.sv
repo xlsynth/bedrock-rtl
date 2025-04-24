@@ -45,6 +45,9 @@ module br_tracker_freelist #(
     // improving timing at the cost of an additional cycle of cut-through latency.
     // Note that if this is set to 0, the alloc_entry_id may be unstable
     parameter bit RegisterAllocOutputs = 1,
+    // Multihot vector indicating which entries are preallocated out of reset.
+    // E.g. PreallocatedEntries[0] = 1'b1 indicates that entry 0 is preallocated.
+    parameter logic [NumEntries-1:0] PreallocatedEntries = '0,
     // If 1, bypass deallocated entries to allocated entries.
     parameter bit EnableBypass = 0,
     // Cut-through latency of the tracker.
@@ -98,7 +101,7 @@ module br_tracker_freelist #(
   logic [NumEntries-1:0] allocated_entries_next;
   logic [NumAllocPerCycle-1:0] alloc_valid;
 
-  `BR_REG(allocated_entries, allocated_entries_next)
+  `BR_REGI(allocated_entries, allocated_entries_next, PreallocatedEntries)
 
   for (genvar i = 0; i < NumAllocPerCycle; i++) begin : gen_alloc_valid
     assign alloc_valid[i] = alloc_sendable > i && alloc_receivable > i;
@@ -148,7 +151,7 @@ module br_tracker_freelist #(
 
   assign unstaged_free_entries_post_set = unstaged_free_entries | unstaged_free_entries_set;
   assign unstaged_free_entries_next = unstaged_free_entries_post_set & ~unstaged_free_entries_clear;
-  assign unstaged_free_entries_init = {NumEntries{1'b1}};
+  assign unstaged_free_entries_init = ~PreallocatedEntries;
 
   `BR_REGLI(unstaged_free_entries, unstaged_free_entries_next, unstaged_free_entries_le,
             unstaged_free_entries_init)
