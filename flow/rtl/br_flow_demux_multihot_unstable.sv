@@ -42,6 +42,9 @@ module br_flow_demux_multihot_unstable #(
     // If 1, cover that the push side experiences backpressure.
     // If 0, assert that there is never backpressure.
     parameter bit EnableCoverPushBackpressure = 1,
+    // If 1, cover that the select signal is multihot when valid is high.
+    // If 0, assert that the select signal is always onehot when valid is high.
+    parameter bit EnableCoverMultihotSelect = 1,
     // If 1, assert that push_valid is stable when backpressured.
     // If 0, cover that push_valid can be unstable.
     parameter bit EnableAssertPushValidStability = EnableCoverPushBackpressure,
@@ -82,9 +85,10 @@ module br_flow_demux_multihot_unstable #(
   `BR_ASSERT_STATIC(num_flows_must_be_at_least_two_a, NumFlows >= 2)
   `BR_ASSERT_STATIC(bit_width_must_be_at_least_one_a, Width >= 1)
 
+  `BR_ASSERT_INTG(select_not_0_when_valid_a, push_valid |-> (|multihot_select))
   br_flow_checks_valid_data_intg #(
       .NumFlows(1),
-      .Width(Width),
+      .Width(Width + NumFlows),
       .EnableCoverBackpressure(EnableCoverPushBackpressure),
       .EnableAssertValidStability(EnableAssertPushValidStability),
       .EnableAssertDataStability(EnableAssertPushDataStability),
@@ -94,8 +98,13 @@ module br_flow_demux_multihot_unstable #(
       .rst,
       .ready(push_ready),
       .valid(push_valid),
-      .data (push_data)
+      .data ({push_data, multihot_select})
   );
+  if (EnableCoverMultihotSelect) begin : gen_cover_multihot_select
+    `BR_COVER_INTG(select_multihot_c, push_valid && !($onehot(multihot_select)))
+  end else begin : gen_assert_onehot_select
+    `BR_ASSERT_INTG(select_onehot_a, push_valid |-> $onehot(multihot_select))
+  end
 
   //------------------------------------------
   // Implementation
