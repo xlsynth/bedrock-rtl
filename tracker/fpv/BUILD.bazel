@@ -21,6 +21,7 @@ package(default_visibility = ["//visibility:public"])
 test_suite(
     name = "nightly-jg-tests",
     tests = [
+        ":br_tracker_freelist_test_prealloc_jg_eb0_ne5_pe15_fpv_test",
         ":br_tracker_freelist_test_suite_jg_dcd0_eb0_napc1_ndp1_ne2_rao1_fpv_test",
         ":br_tracker_linked_list_ctrl_test_suite_jg_d3_nll2_nwp2_rrl1_fpv_test",
         ":br_tracker_reorder_buffer_ctrl_1r1w_test_suite_jg_dw3_eiw2_ne4_rrl1_fpv_test",
@@ -106,6 +107,40 @@ br_verilog_fpv_test_tools_suite(
         "RegisterAllocOutputs": [
             "0",
             "1",
+        ],
+    },
+    tools = {
+        "jg": "br_tracker_freelist_fpv.jg.tcl",
+        "vcf": "",
+    },
+    top = "br_tracker_freelist",
+    deps = [":br_tracker_freelist_fpv_monitor"],
+)
+
+# test PreallocatedEntries
+br_verilog_fpv_test_tools_suite(
+    name = "br_tracker_freelist_test_prealloc",
+    illegal_param_combinations = {
+        (
+            "NumEntries",
+            "PreallocatedEntries",
+        ): [
+            ("2", "15"),
+        ],
+    },
+    params = {
+        "EnableBypass": [
+            "0",
+            "1",
+        ],
+        "NumEntries": [
+            "2",
+            "5",
+            "7",
+        ],
+        "PreallocatedEntries": [
+            "3",
+            "15",
         ],
     },
     tools = {
