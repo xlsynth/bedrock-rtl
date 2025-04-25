@@ -71,6 +71,23 @@ br_verilog_elab_and_lint_test_suite(
     deps = [":br_amba_iso_wdata_align"],
 )
 
+br_verilog_elab_and_lint_test_suite(
+    name = "br_amba_iso_wdata_align_iso_upstream_test_suite",
+    params = {
+        "FakeWriteDataOnAlign": [
+            "1",
+        ],
+        "PreventExcessData": [
+            "1",
+        ],
+        "MaxAxiBurstLen": [
+            "1",
+            "256",
+        ],
+    },
+    deps = [":br_amba_iso_wdata_align"],
+)
+
 verilog_library(
     name = "br_amba_iso_resp_tracker",
     srcs = ["br_amba_iso_resp_tracker.sv"],
@@ -116,4 +133,32 @@ verilog_library(
 br_verilog_elab_and_lint_test_suite(
     name = "br_amba_iso_ds_fsm_test_suite",
     deps = [":br_amba_iso_ds_fsm"],
+)
+
+verilog_library(
+    name = "br_amba_iso_req_tracker",
+    srcs = ["br_amba_iso_req_tracker.sv"],
+    deps = [
+        "//amba/rtl:br_amba_pkg",
+        "//counter/rtl:br_counter",
+        "//macros:br_asserts_internal",
+        "//macros:br_registers",
+        "//macros:br_unused",
+        "//pkg:br_math_pkg",
+    ],
+)
+
+br_verilog_elab_and_lint_test_suite(
+    name = "br_amba_iso_req_tracker_test_suite",
+    params = {
+        "MaxAxiBurstLen": [
+            "1",
+            "256",
+        ],
+        "MaxOutstanding": [
+            "2",
+            "128",
+        ],
+    },
+    deps = [":br_amba_iso_req_tracker"],
 )
