@@ -54,7 +54,8 @@ module br_flow_fork_select_multihot #(
 
     // Pop-side interfaces
     //
-    // pop_valid signals are unstable because they must fall if another selected pop_ready falls, or a flow is unselected while backpressured.
+    // pop_valid signals are unstable because they must fall if another selected pop_ready
+    // falls, or a flow is unselected while backpressured.
     // There is no dependency between pop_valid_unstable[i] and pop_ready[i].
     input  logic [NumFlows-1:0] pop_ready,
     output logic [NumFlows-1:0] pop_valid_unstable
@@ -85,7 +86,7 @@ module br_flow_fork_select_multihot #(
   end else begin : gen_assert_onehot_select
     `BR_ASSERT_INTG(select_onehot_a, push_valid |-> $onehot(select_multihot))
   end
-  `BR_ASSERT_INTG(select_multihot_known_a, push_valid |-> !$isunknown(select_multihot))
+  `BR_ASSERT_INTG(select_multihot_known_a, push_valid |-> ($countones(select_multihot) > 1))
 
   //------------------------------------------
   // Implementation
@@ -93,7 +94,7 @@ module br_flow_fork_select_multihot #(
   always_comb begin
     push_ready = '1;
     for (int i = 0; i < NumFlows; i++) begin
-      push_ready &= select_multihot[i] ? pop_ready[i] : '1;
+      push_ready &= !select_multihot[i] || pop_ready[i];
     end
   end
 

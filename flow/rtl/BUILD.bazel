@@ -344,6 +344,11 @@ br_verilog_elab_and_lint_test_suite(
         "NumFlows": [
             "2",
             "3",
+            "7",
+        ],
+        "EnableCoverSelectMultihot": [
+            "0",
+            "1",
         ],
     },
     deps = [":br_flow_fork_select_multihot"],
