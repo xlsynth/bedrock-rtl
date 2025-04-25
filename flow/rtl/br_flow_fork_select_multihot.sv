@@ -55,7 +55,7 @@ module br_flow_fork_select_multihot #(
     // Pop-side interfaces
     //
     // pop_valid signals are unstable because they must fall if another selected pop_ready falls, or a flow is unselected while backpressured.
-    // There is no dependency between pop_valid[i] and pop_ready[i].
+    // There is no dependency between pop_valid_unstable[i] and pop_ready[i].
     input  logic [NumFlows-1:0] pop_ready,
     output logic [NumFlows-1:0] pop_valid_unstable
 );
