@@ -209,12 +209,14 @@ module br_amba_axi_isolate_mgr #(
       //
       .upstream_wready,
       .upstream_wvalid,
+      .upstream_wlast,
       //
       .downstream_awready (upstream_awready_iso),
       .downstream_awvalid (upstream_awvalid_iso),
       //
       .downstream_wready  (downstream_wready),
-      .downstream_wvalid  (downstream_wvalid)
+      .downstream_wvalid  (downstream_wvalid),
+      .downstream_wlast   (downstream_wlast)
   );
 
   br_amba_iso_req_tracker #(
@@ -244,9 +246,8 @@ module br_amba_axi_isolate_mgr #(
 
   // Need to insert fake data values on the downstream W channel during write alignment.
   logic use_fake_w_data;
-  assign use_fake_w_data = align_and_hold_req_w || align_and_hold_done_w;
+  assign use_fake_w_data = align_and_hold_req_w;
 
-  assign downstream_wlast = use_fake_w_data ? 1'b1 : upstream_wlast;  // TODO(bgelb): fix last
   assign downstream_wuser = use_fake_w_data ? IsolateWUser : upstream_wuser;
   assign downstream_wdata = use_fake_w_data ? IsolateWData : upstream_wdata;
   assign downstream_wstrb = use_fake_w_data ? IsolateWStrb : upstream_wstrb;
@@ -292,7 +293,7 @@ module br_amba_axi_isolate_mgr #(
   );
 
   // No alignment needed (since there is only a single read request channel),
-  // just simple backpressure.
+  // just simple backpressure of upstream read requests.
   logic upstream_blocked_r;
 
   assign upstream_blocked_r = align_and_hold_req_r || align_and_hold_done_r;
