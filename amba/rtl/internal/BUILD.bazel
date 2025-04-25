@@ -162,3 +162,16 @@ br_verilog_elab_and_lint_test_suite(
     },
     deps = [":br_amba_iso_req_tracker"],
 )
+
+verilog_library(
+    name = "br_amba_iso_us_fsm",
+    srcs = ["br_amba_iso_us_fsm.sv"],
+    deps = [
+        "//macros:br_registers",
+    ],
+)
+
+br_verilog_elab_and_lint_test_suite(
+    name = "br_amba_iso_us_fsm_test_suite",
+    deps = [":br_amba_iso_us_fsm"],
+)
