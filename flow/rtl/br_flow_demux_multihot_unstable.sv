@@ -29,8 +29,6 @@
 // to follow the ready-valid stability convention, because the multihot
 // valid input could change while the selected pop interfaces are
 // backpressuring.
-//
-// TODO(mgottscho): Write spec doc
 
 `include "br_asserts_internal.svh"
 
