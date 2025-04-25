@@ -28,6 +28,9 @@ module br_tracker_freelist_fpv_monitor #(
     // improving timing at the cost of an additional cycle of cut-through latency.
     // Note that if this is set to 0, the alloc_entry_id may be unstable
     parameter bit RegisterAllocOutputs = 1,
+    // Multihot vector indicating which entries are preallocated out of reset.
+    // E.g. PreallocatedEntries[0] = 1'b1 indicates that entry 0 is preallocated.
+    parameter logic [NumEntries-1:0] PreallocatedEntries = '0,
     // If 1, bypass deallocated entries to allocated entries.
     parameter bit EnableBypass = 0,
     // Cut-through latency of the tracker.
@@ -122,7 +125,7 @@ module br_tracker_freelist_fpv_monitor #(
   // entry is in progress: allocated not yet deallocated
   always_ff @(posedge clk) begin
     if (rst) begin
-      fv_entry_used <= '0;
+      fv_entry_used <= PreallocatedEntries;
     end else begin
       for (int j = 0; j < NumDeallocPorts; j++) begin
         if (dealloc_valid[j]) begin
@@ -181,6 +184,7 @@ bind br_tracker_freelist br_tracker_freelist_fpv_monitor #(
     .NumAllocPerCycle(NumAllocPerCycle),
     .NumDeallocPorts(NumDeallocPorts),
     .RegisterAllocOutputs(RegisterAllocOutputs),
+    .PreallocatedEntries(PreallocatedEntries),
     .EnableBypass(EnableBypass),
     .DeallocCountDelay(DeallocCountDelay),
     .EnableAssertFinalNotDeallocValid(EnableAssertFinalNotDeallocValid)

@@ -26,12 +26,16 @@ module br_amba_axil_split_fpv_monitor #(
     parameter int RUserWidth = 1,
     parameter int MaxOutstandingReads = 1,  // Must be at least 1
     parameter int MaxOutstandingWrites = 1,  // Must be at least 1
+    // The number of contiguous address ranges to check
+    // to see if a request should be routed to the branch.
+    // Must be at least 1.
+    parameter int NumBranchAddrRanges = 1,
     localparam int StrobeWidth = DataWidth / 8
 ) (
     input clk,
     input rst,  // Synchronous, active-high reset
-    input logic [AddrWidth-1:0] branch_start_addr,
-    input logic [AddrWidth-1:0] branch_end_addr,
+    input logic [NumBranchAddrRanges-1:0][AddrWidth-1:0] branch_start_addr,
+    input logic [NumBranchAddrRanges-1:0][AddrWidth-1:0] branch_end_addr,
 
     // AXI4-Lite root target interface
     input logic [            AddrWidth-1:0] root_awaddr,
@@ -110,8 +114,10 @@ module br_amba_axil_split_fpv_monitor #(
 );
 
   // ----------FV assumptions----------
-  `BR_ASSUME(branch_start_end_addr_a, branch_start_addr < branch_end_addr)
-  // root
+  for (genvar i = 0; i < NumBranchAddrRanges; i++) begin : gen_asm
+    `BR_ASSUME(branch_start_end_addr_a, branch_start_addr[i] <= branch_end_addr[i])
+  end
+
   `BR_ASSUME(branch_start_addr_stable_a, $stable(branch_start_addr))
   `BR_ASSUME(branch_end_addr_stable_a, $stable(branch_end_addr))
 
@@ -157,8 +163,8 @@ module br_amba_axil_split_fpv_monitor #(
       // Write Response channel
       .bvalid  (root_bvalid),
       .bready  (root_bready),
-      .buser   (root_buser),
       .bresp   (root_bresp),
+      .buser   (),
       .bid     (),
       // Read Address Channel
       .arvalid (root_arvalid),
@@ -226,8 +232,8 @@ module br_amba_axil_split_fpv_monitor #(
       // Write Response channel
       .bvalid  (trunk_bvalid),
       .bready  (trunk_bready),
-      .buser   (trunk_buser),
       .bresp   (trunk_bresp),
+      .buser   (),
       .bid     (),
       // Read Address Channel
       .arvalid (trunk_arvalid),
@@ -277,49 +283,49 @@ module br_amba_axil_split_fpv_monitor #(
       .awuser  (branch_awuser),
       .awaddr  (branch_awaddr),
       .awprot  (branch_awprot),
-      .awid    ('d0),
-      .awlen   ('d0),
-      .awsize  (),                // (DataWidth> 8) ? $clog2(DataWidth/8) : 1
-      .awburst ('d0),
-      .awlock  ('d0),
-      .awcache ('d0),
-      .awqos   ('d0),
-      .awregion('d0),
+      .awid    (),
+      .awlen   (),
+      .awsize  (),
+      .awburst (),
+      .awlock  (),
+      .awcache (),
+      .awqos   (),
+      .awregion(),
       // Write Channel
       .wvalid  (branch_wvalid),
       .wready  (branch_wready),
       .wuser   (branch_wuser),
       .wdata   (branch_wdata),
       .wstrb   (branch_wstrb),
-      .wlast   ('d1),
+      .wlast   (),
       // Write Response channel
       .bvalid  (branch_bvalid),
       .bready  (branch_bready),
-      .buser   (branch_buser),
       .bresp   (branch_bresp),
-      .bid     ('d0),
+      .buser   (),
+      .bid     (),
       // Read Address Channel
       .arvalid (branch_arvalid),
       .arready (branch_arready),
       .araddr  (branch_araddr),
       .aruser  (branch_aruser),
       .arprot  (branch_arprot),
-      .arid    ('d0),
-      .arlen   ('d0),
-      .arsize  (),                // (DataWidth> 8) ? $clog2(DataWidth/8) : 1
-      .arburst ('d0),
-      .arlock  ('d0),
-      .arcache ('d0),
-      .arqos   ('d0),
-      .arregion('d0),
+      .arid    (),
+      .arlen   (),
+      .arsize  (),
+      .arburst (),
+      .arlock  (),
+      .arcache (),
+      .arqos   (),
+      .arregion(),
       // Read Channel
       .rvalid  (branch_rvalid),
       .rready  (branch_rready),
       .ruser   (branch_ruser),
       .rdata   (branch_rdata),
       .rresp   (branch_rresp),
-      .rid     ('d0),
-      .rlast   ('d1)
+      .rid     (),
+      .rlast   ()
   );
 
 endmodule : br_amba_axil_split_fpv_monitor
@@ -332,5 +338,6 @@ bind br_amba_axil_split br_amba_axil_split_fpv_monitor #(
     .WUserWidth(WUserWidth),
     .RUserWidth(RUserWidth),
     .MaxOutstandingReads(MaxOutstandingReads),
-    .MaxOutstandingWrites(MaxOutstandingWrites)
+    .MaxOutstandingWrites(MaxOutstandingWrites),
+    .NumBranchAddrRanges(NumBranchAddrRanges)
 ) monitor (.*);

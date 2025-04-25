@@ -26,6 +26,10 @@
 module br_delay_valid #(
     parameter int Width = 1,  // Must be at least 1
     parameter int NumStages = 0,  // Must be at least 0
+    // If 1, the first data stage is not gated by the valid signal.
+    // This might be necessary for floorplan block inputs to avoid
+    // an In2Reg path on the in_valid signal.
+    parameter bit FirstStageUngated = 0,
     // If 1, then assert there are no valid bits asserted at the end of the test.
     parameter bit EnableAssertFinalNotValid = 1
 ) (
@@ -73,7 +77,16 @@ module br_delay_valid #(
     stage[0] = in;
   end
 
-  for (genvar i = 1; i <= NumStages; i++) begin : gen_stages
+  if (NumStages > 0 && FirstStageUngated) begin : gen_ungated_stage
+    // ri lint_check_waive BA_NBA_REG
+    `BR_REG(stage_valid[1], stage_valid[0])
+    // ri lint_check_waive BA_NBA_REG
+    `BR_REGN(stage[1], stage[0])
+  end
+
+  localparam int FirstGatedStage = FirstStageUngated ? 2 : 1;
+
+  for (genvar i = FirstGatedStage; i <= NumStages; i++) begin : gen_stages
     // ri lint_check_waive BA_NBA_REG
     `BR_REG(stage_valid[i], stage_valid[i-1])
     // ri lint_check_waive BA_NBA_REG

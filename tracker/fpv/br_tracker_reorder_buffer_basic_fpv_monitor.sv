@@ -47,8 +47,7 @@ module br_tracker_reorder_buffer_basic_fpv_monitor #(
     input logic [DataWidth-1:0] reordered_resp_pop_data,
 
     // Count Information
-    input logic [EntryCountWidth-1:0] free_entry_count,
-    input logic [EntryCountWidth-1:0] allocated_entry_count
+    input logic resp_pending
 );
 
   // ----------FV modeling code----------
@@ -58,6 +57,7 @@ module br_tracker_reorder_buffer_basic_fpv_monitor #(
   logic [EntryIdWidth-1:0] fv_reordered_resp_entry_id;
   logic fv_fifo_empty;
   logic fv_fifo_full;
+  logic fv_resp_pending;
 
   // Entry allocated not yet deallocated
   always_comb begin
@@ -88,6 +88,12 @@ module br_tracker_reorder_buffer_basic_fpv_monitor #(
       .full(fv_fifo_full)
   );
 
+  // The resp_pending output is asserted if there are allocated entries that
+  // have not been deallocated and there are responses pending in the output
+  // buffer whose tags have been retired but have not been popped from the
+  // reordered_resp_pop interface.
+  assign fv_resp_pending = (fv_entry_allocated != 'd0) || !fv_fifo_empty;
+
   // ----------FV assumptions----------
   `BR_ASSUME(dealloc_range_a,
              unordered_resp_push_valid |-> unordered_resp_push_entry_id < NumEntries)
@@ -109,9 +115,7 @@ module br_tracker_reorder_buffer_basic_fpv_monitor #(
   `BR_ASSERT(no_entry_reuse_a, alloc_valid |-> !fv_entry_allocated[alloc_entry_id])
 
   `BR_ASSERT(entry_full_no_alloc_a, fv_entry_allocated == {NumEntries{1'b1}} |-> !alloc_valid)
-
-  `BR_ASSERT(allocated_entry_count_a, $countones(fv_entry_allocated) == allocated_entry_count)
-  `BR_ASSERT(free_entry_count_a, (NumEntries - allocated_entry_count) == free_entry_count)
+  `BR_ASSERT(resp_pending_a, resp_pending == fv_resp_pending)
 
   // pick random entry to check data integrity and ordering
   logic [EntryIdWidth-1:0] fv_entry_id;

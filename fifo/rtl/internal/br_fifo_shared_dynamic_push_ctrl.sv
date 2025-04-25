@@ -57,6 +57,7 @@ module br_fifo_shared_dynamic_push_ctrl #(
     input logic [NumWritePorts-1:0] push_valid,
     input logic [NumWritePorts-1:0][Width-1:0] push_data,
     input logic [NumWritePorts-1:0][FifoIdWidth-1:0] push_fifo_id,
+    output logic push_full,
 
     // Data RAM write ports
     output logic [NumWritePorts-1:0] data_ram_wr_valid,
@@ -126,6 +127,8 @@ module br_fifo_shared_dynamic_push_ctrl #(
       .dealloc_entry_id,
       .dealloc_count
   );
+
+  assign push_full = alloc_sendable == '0;
 
   if (NumWritePorts > 1) begin : gen_alloc_mapping
     // Distribute the allocatable entries to the active push ports using multi-grant

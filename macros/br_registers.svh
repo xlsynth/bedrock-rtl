@@ -144,6 +144,54 @@ always_ff @(posedge clk or posedge arst) begin \
 end
 
 ////////////////////////////////////////////////////////////////////////////////
+// Asynchronous active-high reset registers -- custom clock, reset
+////////////////////////////////////////////////////////////////////////////////
+
+// Flip-flop register
+// * unconditional load
+// * initial value is 0
+// * asynchronous active-high reset
+// * positive-edge triggered clock
+`define BR_REGAX(__q__, __d__, __clk__, __arst__) \
+always_ff @(posedge __clk__ or posedge __arst__) begin \
+    if (__arst__) __q__ <= '0; \
+    else __q__ <= __d__; \
+end
+
+// Flip-flop register
+// * conditional load enable
+// * initial value is 0
+// * asynchronous active-high reset
+// * positive-edge triggered clock
+`define BR_REGALX(__q__, __d__, __en__, __clk__, __arst__) \
+always_ff @(posedge __clk__ or posedge __arst__) begin \
+    if (__arst__) __q__ <= '0; \
+    else if (__en__) __q__ <= __d__; \
+end
+
+// Flip-flop register
+// * unconditional load
+// * initial value given
+// * asynchronous active-high reset
+// * positive-edge triggered clock
+`define BR_REGAIX(__q__, __d__, __init__, __clk__, __arst__) \
+always_ff @(posedge __clk__ or posedge __arst__) begin \
+    if (__arst__) __q__ <= __init__; \
+    else __q__ <= __d__; \
+end
+
+// Flip-flop register
+// * conditional load enable
+// * initial value given
+// * asynchronous active-high reset
+// * positive-edge triggered clock
+`define BR_REGALIX(__q__, __d__, __en__, __init__, __clk__, __arst__) \
+always_ff @(posedge __clk__ or posedge __arst__) begin \
+    if (__arst__) __q__ <= __init__; \
+    else if (__en__) __q__ <= __d__; \
+end
+
+////////////////////////////////////////////////////////////////////////////////
 // Synchronous active-high reset registers -- custom clock, reset
 ////////////////////////////////////////////////////////////////////////////////
 

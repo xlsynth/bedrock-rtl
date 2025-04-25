@@ -15,12 +15,33 @@
 import argparse
 from python.eccgen.hsiao_secded import (
     hsiao_secded_code,
+    check_construction,
     G_to_sv,
     syndrome_to_sv,
     H_to_sv,
+    MAX_K_FOR_OPTIMAL_ALGORITHM,
 )
 import numpy as np
 from jinja2 import Template
+
+RTL_SUPPORTED_N_K = [
+    (8, 4),
+    (13, 8),
+    (16, 11),
+    (22, 16),
+    (32, 26),
+    (39, 32),
+    (64, 57),
+    (72, 64),
+    (128, 120),
+    (137, 128),
+    (256, 247),
+    (266, 256),
+    (512, 502),
+    (523, 512),
+    (1024, 1013),
+    (1036, 1024),
+]
 
 
 def check_filename_extension(filename: str, allowed_extensions: tuple[str]) -> str:
@@ -92,88 +113,91 @@ def main():
 
     args = parser.parse_args()
 
+    did_something = False
     if args.scheme == "hsiao_secded":
         if args.k:
             r, n, H, G = hsiao_secded_code(args.k)
-            print(f"Number of data bits (k): {args.k}")
-            print(f"Number of parity bits (r): {r}")
-            print(f"Total number of bits (n): {n}\n")
+            check_construction(
+                G,
+                H,
+                # Code distance check is prohibitively expensive for large k
+                check_code_distance=(args.k <= MAX_K_FOR_OPTIMAL_ALGORITHM),
+                # Row balance check is omitted for non-optimal constructions
+                # since they aren't guaranteed to satisfy the property.
+                check_row_balance=(args.k <= MAX_K_FOR_OPTIMAL_ALGORITHM),
+            )
+
+            file_header = "\n".join(
+                [
+                    f"Number of data bits (k): {args.k}",
+                    f"Number of parity bits (r): {r}",
+                    f"Number of codeword bits (n): {n}",
+                ]
+            )
 
             # Convert matrices to strings without ellipses
-            H_str = np.array2string(
-                H, separator=", ", threshold=np.inf, max_line_width=np.inf
-            ).replace("0", " " if args.print0 else "0")
             G_str = np.array2string(
                 G, separator=", ", threshold=np.inf, max_line_width=np.inf
             ).replace("0", " " if args.print0 else "0")
+            H_str = np.array2string(
+                H, separator=", ", threshold=np.inf, max_line_width=np.inf
+            ).replace("0", " " if args.print0 else "0")
 
-            print("\nGenerator Matrix G:")
-            print(G_str)
             if args.generator_matrix_output:
-                args.generator_matrix_output.write(G_str)
-            print("\nParity-Check Matrix H:")
-            print(H_str)
+                args.generator_matrix_output.write(
+                    file_header + "\nG =\n" + G_str + "\n"
+                )
             if args.parity_check_matrix_output:
-                args.parity_check_matrix_output.write(H_str)
-
-        if args.rtl_encoder_output:
-            if not args.rtl_encoder_template:
-                raise ValueError(
-                    "RTL encoder template file is required to generate the encoder."
+                args.parity_check_matrix_output.write(
+                    file_header + "\nH =\n" + H_str + "\n"
                 )
+            did_something = True
 
-            RTL_SUPPORTED_N_K = [
-                (8, 4),
-                (13, 8),
-                (22, 16),
-                (39, 32),
-                (72, 64),
-                (137, 128),
-                (266, 256),
-                (523, 512),
-                (1036, 1024),
-            ]
-            with open(args.rtl_encoder_template, "r") as template_file:
-                template = Template(template_file.read())
-                mapping = {}
-                for n, k in RTL_SUPPORTED_N_K:
-                    r, n, H, G = hsiao_secded_code(k)
-                    mapping[f"secded_enc_{n}_{k}"] = G_to_sv(G)
-                rendered = template.render(mapping)
-                rendered += "\n"
-                args.rtl_encoder_output.write(rendered)
+        if args.rtl_encoder_output or args.rtl_decoder_output:
+            codes = {}
+            for n, k in RTL_SUPPORTED_N_K:
+                r, n, H, G = hsiao_secded_code(k)
+                # Don't bother checking the construction, we already cover all of the RTL
+                # supported combinations in hsiao_secded_test.py.
+                codes[k] = (r, n, H, G)
 
-        if args.rtl_decoder_output:
-            if not args.rtl_decoder_template:
-                raise ValueError(
-                    "RTL decoder template file is required to generate the decoder."
-                )
+            if args.rtl_encoder_output:
+                if not args.rtl_encoder_template:
+                    raise ValueError(
+                        "RTL encoder template file is required to generate the encoder."
+                    )
+                with open(args.rtl_encoder_template, "r") as template_file:
+                    template = Template(template_file.read())
+                    mapping = {}
+                    for k in codes:
+                        r, n, H, G = codes[k]
+                        mapping[f"secded_enc_{n}_{k}"] = G_to_sv(G)
+                    rendered = template.render(mapping)
+                    rendered += "\n"
+                    args.rtl_encoder_output.write(rendered)
 
-            RTL_SUPPORTED_N_K = [
-                (8, 4),
-                (13, 8),
-                (22, 16),
-                (39, 32),
-                (72, 64),
-                (137, 128),
-                (266, 256),
-                (523, 512),
-                (1036, 1024),
-            ]
-            with open(args.rtl_decoder_template, "r") as template_file:
-                template = Template(template_file.read())
-                mapping = {}
-                for n, k in RTL_SUPPORTED_N_K:
-                    r, n, H, G = hsiao_secded_code(k)
-                    mapping[f"secded_dec_syndrome_{n}_{k}"] = syndrome_to_sv(H)
-                    mapping[f"secded_dec_H_{n}_{k}"] = H_to_sv(H)
-                rendered = template.render(mapping)
-                rendered += "\n"
-                args.rtl_decoder_output.write(rendered)
+            if args.rtl_decoder_output:
+                if not args.rtl_decoder_template:
+                    raise ValueError(
+                        "RTL decoder template file is required to generate the decoder."
+                    )
 
-        if not args.k and not args.rtl_encoder_output and not args.rtl_decoder_output:
+                with open(args.rtl_decoder_template, "r") as template_file:
+                    template = Template(template_file.read())
+                    mapping = {}
+                    for k in codes:
+                        r, n, H, G = codes[k]
+                        mapping[f"secded_dec_syndrome_{n}_{k}"] = syndrome_to_sv(H)
+                        mapping[f"secded_dec_H_{n}_{k}"] = H_to_sv(H)
+                    rendered = template.render(mapping)
+                    rendered += "\n"
+                    args.rtl_decoder_output.write(rendered)
+
+            did_something = True
+
+        if not did_something:
             raise ValueError(
-                "Either k or rtl-encoder-output or rtl-decoder-output must be provided for Hsiao SEC-DED code generation."
+                "Either --k or --rtl-encoder-output or --rtl-decoder-output must be provided for Hsiao SEC-DED code generation."
             )
 
 

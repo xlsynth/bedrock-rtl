@@ -94,6 +94,13 @@ verilog_elab_test(
 
 br_verilog_fpv_test_tools_suite(
     name = "br_amba_axil_split_test_suite",
+    params = {
+        "NumBranchAddrRanges": [
+            "1",
+            "2",
+            "3",
+        ],
+    },
     tools = {
         "jg": "",
         "vcf": "",

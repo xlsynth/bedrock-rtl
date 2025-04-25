@@ -68,7 +68,7 @@ module br_fifo_shared_dynamic_ptr_mgr #(
     end
   end else begin : gen_single_rport_checks
     // With only one read port, we can only pop one head at a time.
-    `BR_ASSERT_IMPL(onehot_head_pop_a, (|head_valid) |-> $onehot0(head_ready))
+    `BR_ASSERT_IMPL(onehot_head_pop_a, (|head_valid) |-> $onehot0(head_valid & head_ready))
   end
 
   // Implementation
