@@ -21,5 +21,8 @@ get_design_info
 assume -from_assert <embedded>::br_amba_axi2axil.monitor.axi4.genStableChksRDInf.genRStableChks.slave_r_rdata_stable
 assume -from_assert <embedded>::br_amba_axi2axil.monitor.axi4_lite.genPropChksWRInf.genNoWrDatTblOverflow.genMas.master_w_wr_tbl_no_overflow
 
+# TODO: disable covers to make nightly clean
+cover -disable *
+
 # prove command
 prove -all

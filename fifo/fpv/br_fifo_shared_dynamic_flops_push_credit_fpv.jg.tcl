@@ -30,7 +30,7 @@ assume -name no_push_valid_during_reset {rst | push_sender_in_reset |-> push_val
 assert -name fv_rst_check_push_credit {rst | push_sender_in_reset |-> push_credit == 'd0}
 assert -name fv_rst_check_pop_valid {rst | push_sender_in_reset |-> pop_valid == 'd0}
 
-# TODO: disable due to many unreachable covers in RTL
+# TODO: disable covers to make nightly clean
 cover -disable *
 
 # If assertion bound - pre-condition reachable cycle >= 2:

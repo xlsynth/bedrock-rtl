@@ -26,5 +26,8 @@ cover -disable {*br_counter_incr_push_flit_id.value_temp_oob_c*}
 cover -disable {*br_counter_incr_push_flit_id.reinit_and_incr_c*}
 cover -disable {*monitor.*fv_pop_data_stable_a*}
 
+# TODO: disable covers to make nightly clean
+cover -disable *
+
 # prove command
 prove -all

@@ -17,7 +17,7 @@ clock clk
 reset rst
 get_design_info
 
-# TODO: parameters are tied when instantiating sub-DUT, so there are many unreachable covers
+# TODO: disable covers to make nightly clean
 cover -disable *
 
 # prove command

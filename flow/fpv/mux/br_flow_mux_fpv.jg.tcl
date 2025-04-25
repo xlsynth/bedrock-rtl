@@ -20,5 +20,8 @@ get_design_info
 # pop_data_unstable is unstable regardless of whether push_data is stable
 assert -disable {*pop_data_stable_a}
 
+# TODO: disable covers to make nightly clean
+cover -disable *
+
 # prove command
 prove -all

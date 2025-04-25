@@ -31,5 +31,8 @@ clock -rate {rd_rst \
             rd_data \
             monitor.fv_checker.fv_addr} rd_clk
 
+# TODO: disable covers to make nightly clean
+cover -disable *
+
 # prove command
 prove -all

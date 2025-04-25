@@ -32,7 +32,7 @@ assert -disable *br_fifo_push_ctrl.*valid_data_stable_when_backpressured_a
 # but when pop_ready is high, correct data will be sent
 assert -disable *br_fifo_basic_fpv_monitor.gen_pop_data_stable.pop_data_stable_a*
 
-# TODO
+# TODO: disable covers to make nightly clean
 cover -disable *
 
 # prove command

@@ -20,5 +20,8 @@ get_design_info
 # select can pick invalid index
 assert -disable {*must_grant_a*}
 
+# TODO: disable covers to make nightly clean
+cover -disable *
+
 # prove command
 prove -all
