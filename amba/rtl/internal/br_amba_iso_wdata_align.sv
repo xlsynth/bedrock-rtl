@@ -46,7 +46,16 @@ module br_amba_iso_wdata_align #(
     parameter int MaxTransactionSkew = 2,
     // can be set to 1 for AXI-Lite, otherwise should be set to br_amba::AxiBurstLenWidth
     parameter int MaxAxiBurstLen = 2 ** br_amba::AxiBurstLenWidth,
-    parameter int AxiBurstLenWidth = br_math::clamped_clog2(MaxAxiBurstLen)
+    parameter int AxiBurstLenWidth = br_math::clamped_clog2(MaxAxiBurstLen),
+    // If set to 1, then the module will block pushes on the upstream W channel if it would
+    // result in excess data beats (i.e. data will never be forwarded unless it is associated with
+    // an AW request that has been forwarded previously or on the same cycle).
+    parameter bit PreventExcessData = 0,
+    // If set to 1, then the module will block pushes on the upstream W channel and insert fake
+    // write data on the downstream W channel until the alignment is complete. To be used in the
+    // case where the upstream side is going to be reset and we don't want to rely on the upstream
+    // to quiesce the interface properly.
+    parameter bit FakeWriteDataOnAlign = 0
 ) (
     input logic clk,
     input logic rst,
@@ -76,6 +85,9 @@ module br_amba_iso_wdata_align #(
   `BR_ASSERT_INTG(legal_request_fall_a, $fell(align_and_hold_req) |-> $past(align_and_hold_done))
   `BR_ASSERT_INTG(awlen_legal_range_a, upstream_awvalid |-> upstream_awlen < MaxAxiBurstLen)
 
+  // FakeWriteDataOnAlign requires PreventExcessData to be set to 1
+  `BR_ASSERT_STATIC(fake_write_data_on_align_req_a, PreventExcessData || !FakeWriteDataOnAlign)
+
   localparam int MaxBurstLenWidth = $clog2(MaxAxiBurstLen + 1);
   localparam int MaxExcessCount = MaxTransactionSkew * MaxAxiBurstLen;
   localparam int MaxExcessCountWidth = $clog2(MaxExcessCount + 1);
@@ -94,6 +106,7 @@ module br_amba_iso_wdata_align #(
   logic aw_and_w_beats_aligned;
   logic holdoff_aw;
   logic holdoff_w;
+  logic block_upstream_and_fake_w;
 
   // AWLEN is 0 based, so we need to add 1 to get the actual number of beats
   if (MaxAxiBurstLen == 1) begin : gen_aw_len_single_beat
@@ -105,7 +118,7 @@ module br_amba_iso_wdata_align #(
 
   // Counters track all upstream beats (regardless of what happens on downstream)
   assign aw_beat = upstream_awvalid && upstream_awready;
-  assign w_beat  = upstream_wvalid && upstream_wready;
+  assign w_beat  = (upstream_wvalid || block_upstream_and_fake_w) && upstream_wready;
 
   //
   // Excess AW data beat counter. Indicates how many excess WDATA beats implied
@@ -197,24 +210,45 @@ module br_amba_iso_wdata_align #(
   // Hold off upstream->downstream transfer if the counter space is exhausted (one of the ports is
   // too far ahead of the other) or an operation is underway force alignment and one of the upstream
   // ports is ahead (in excess) of the other or if the alignment is complete.
+  if (PreventExcessData) begin : gen_prevent_excess_data
+    assign holdoff_w = excess_w_full
+                        || (align_and_hold_req && w_beats_in_excess)
+                        || align_and_hold_done
+        // hold off if the data doesn't have an associated AW request
+        || !(aw_beats_in_excess || (downstream_awready && upstream_awvalid));
+  end else begin : gen_allow_excess_data
+    assign holdoff_w = excess_w_full
+                        || (align_and_hold_req && w_beats_in_excess)
+                        || align_and_hold_done;
+  end
+
   assign holdoff_aw = excess_aw_full
                         || (align_and_hold_req && aw_beats_in_excess)
                         || align_and_hold_done;
-  assign holdoff_w = excess_w_full
-                        || (align_and_hold_req && w_beats_in_excess)
-                        || align_and_hold_done;
+
+  // If FakeWriteDataOnAlign is set, then we need to block upstream W channel pushes and
+  // insert fake write data on the downstream W channel until the alignment is complete.
+  //
+  // When FakeWriteDataOnAlign is not set, we rely on the upstream AXI manager to
+  // supply valid W and AW streams to eventually bring things into alignment.
+  if (FakeWriteDataOnAlign) begin : gen_fake_write_data
+    assign block_upstream_and_fake_w = align_and_hold_req;
+  end else begin : gen_no_fake_write_data
+    assign block_upstream_and_fake_w = 1'b0;
+  end
 
   // Assign upstream->downstream ready/valid handshake signals.
-  assign upstream_awready = downstream_awready && !holdoff_aw;
-  assign upstream_wready = downstream_wready && !holdoff_w;
+  assign upstream_awready = downstream_awready && !holdoff_aw && !block_upstream_and_fake_w;
+  assign upstream_wready = downstream_wready && !holdoff_w && !block_upstream_and_fake_w;
   assign downstream_awvalid = upstream_awvalid && !holdoff_aw;
-  assign downstream_wvalid = upstream_wvalid && !holdoff_w;
+  assign downstream_wvalid = (upstream_wvalid || block_upstream_and_fake_w) && !holdoff_w;
 
   assign align_and_hold_done = align_and_hold_req && aw_and_w_beats_aligned;
 
   //
   // Assertions
   //
+
   // verilog_format: off
   `BR_ASSERT(if_counts_eq_then_zero_a, (excess_aw_data_beats == excess_w_data_beats)
         |-> (excess_aw_data_beats == '0 && excess_w_data_beats == '0))
