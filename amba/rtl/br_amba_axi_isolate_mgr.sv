@@ -13,6 +13,26 @@
 // limitations under the License.
 //
 // Bedrock-RTL AXI Upstream (Manager) Isolator
+//
+// This module is used to isolate an upstream AXI manager from a downstream
+// AXI subordinate such that the upstream manager can be reset while
+// maintaining the protocol integrity of the downstream interconnect.
+//
+// Isolation is requested by asserting the isolate_req signal and holding
+// it for the duration of the isolation. Isolation is complete (and
+// upstream manager may be safely reset) when the isolate_done signal
+// asserts in response to the assertion of isolate_req.
+//
+// Once the upstream manager is ready to re-connect, the isolate_req
+// signal may be deasserted and the manager will resume normal
+// operation. The isolate_done signal will deassert in response to the
+// deassertion of isolate_req, after which new transactions will be forwarded
+// from upstream->downstream normally.
+//
+// Isolation is guaranteed to complete without any assumption about the
+// state of the upstream interface and may be used to recover in cases
+// where a manager becomes stuck or otherwise unable to make forward
+// progress.
 
 `include "br_registers.svh"
 `include "br_asserts_internal.svh"
@@ -173,7 +193,9 @@ module br_amba_axi_isolate_mgr #(
   br_amba_iso_wdata_align #(
       .MaxTransactionSkew(MaxTransactionSkew),
       .MaxAxiBurstLen(MaxAxiBurstLen),
-      .AxiBurstLenWidth(AxiBurstLenWidth)
+      .AxiBurstLenWidth(AxiBurstLenWidth),
+      .PreventExcessData(1),
+      .FakeWriteDataOnAlign(1)
   ) br_amba_iso_wdata_align_w (
       .clk,
       .rst,
@@ -221,13 +243,13 @@ module br_amba_axi_isolate_mgr #(
   );
 
   // Need to insert fake data values on the downstream W channel during write alignment.
-  logic upstream_blocked_w;
-  assign upstream_blocked_w = align_and_hold_req_w;
+  logic use_fake_w_data;
+  assign use_fake_w_data = align_and_hold_req_w || align_and_hold_done_w;
 
-  assign downstream_wlast = upstream_blocked_w ? 1'b1 : upstream_wlast;  // TODO(bgelb): fix last
-  assign downstream_wuser = upstream_blocked_w ? IsolateWUser : upstream_wuser;
-  assign downstream_wdata = upstream_blocked_w ? IsolateWData : upstream_wdata;
-  assign downstream_wstrb = upstream_blocked_w ? IsolateWStrb : upstream_wstrb;
+  assign downstream_wlast = use_fake_w_data ? 1'b1 : upstream_wlast;  // TODO(bgelb): fix last
+  assign downstream_wuser = use_fake_w_data ? IsolateWUser : upstream_wuser;
+  assign downstream_wdata = use_fake_w_data ? IsolateWData : upstream_wdata;
+  assign downstream_wstrb = use_fake_w_data ? IsolateWStrb : upstream_wstrb;
 
   // Pass-through signals
   assign downstream_awaddr = upstream_awaddr;
@@ -273,7 +295,7 @@ module br_amba_axi_isolate_mgr #(
   // just simple backpressure.
   logic upstream_blocked_r;
 
-  assign upstream_blocked_r = align_and_hold_req_r;
+  assign upstream_blocked_r = align_and_hold_req_r || align_and_hold_done_r;
   assign align_and_hold_done_r = align_and_hold_req_r;
   assign upstream_arvalid_iso = upstream_arvalid && !upstream_blocked_r;
   assign upstream_arready = upstream_arready_iso && !upstream_blocked_r;
@@ -331,5 +353,10 @@ module br_amba_axi_isolate_mgr #(
                             : !(isolate_done_w || isolate_done_r);
 
   `BR_REG(isolate_done, isolate_done_next)
+
+  // Assertions
+  `BR_ASSERT(no_accept_ar_when_isolated_a, isolate_done_r |-> !upstream_arready)
+  `BR_ASSERT(no_accept_aw_when_isolated_a, isolate_done_w |-> !upstream_awready)
+  `BR_ASSERT(no_accept_w_when_isolated_a, isolate_done_w |-> !upstream_wready)
 
 endmodule
