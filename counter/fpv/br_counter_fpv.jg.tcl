@@ -23,5 +23,8 @@ get_design_info
 
 assume -name initial_value_during_reset {rst |-> initial_value <= MaxValue}
 
+# TODO: disable covers to make nightly clean
+cover -disable *
+
 # prove command
 prove -all

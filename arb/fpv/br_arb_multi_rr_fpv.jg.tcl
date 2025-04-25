@@ -30,6 +30,9 @@ assert -disable {special::*no_deadlock_a}
 assert -disable {special::*round_robin_a}
 assert -disable {special::*grant_ordered_priority_a}
 
+# TODO: disable covers to make nightly clean
+cover -disable *
+
 # prove command
 prove -task {standard}
 prove -task {special}

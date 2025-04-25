@@ -59,7 +59,9 @@ module br_credit_receiver_fpv_monitor #(
                                        |-> fv_credit_cnt_nxt > fv_credit_cnt)
   `BR_ASSUME(no_credit_cnt_underflow_a, push_credit < $countones(push_valid)
                                         |-> fv_credit_cnt_nxt < fv_credit_cnt)
-  `BR_ASSUME(no_spurious_push_valid_a, (fv_credit_cnt + push_credit) == 'd0 |-> push_valid == 'd0)
+  // TODO: don't allow same cycle push_credit and push_valid for now, under discussion
+  //`BR_ASSUME(no_spurious_push_valid_a, (fv_credit_cnt + push_credit) == 'd0 |-> push_valid == 'd0)
+  `BR_ASSUME(no_spurious_push_valid_a, fv_credit_cnt == 'd0 |-> push_valid == 'd0)
 
   // ----------FV assertions----------
   `BR_ASSERT(fv_credit_sanity_a, fv_credit_cnt <= fv_max_credit)

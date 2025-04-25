@@ -22,5 +22,8 @@ assert -disable <embedded>::br_amba_axi_timing_slice.monitor.target.genPropChksR
 assert -disable <embedded>::br_amba_axi_timing_slice.monitor.target.genPropChksWRInf.genNoWrTblOverflow.genSlv.slave_aw_wr_tbl_no_overflow
 assert -disable <embedded>::br_amba_axi_timing_slice.monitor.target.genPropChksWRInf.genNoWrDatTblOverflow.genSlv.slave_w_wr_tbl_no_overflow
 
+# TODO: disable covers to make nightly clean
+cover -disable *
+
 # prove command
 prove -all

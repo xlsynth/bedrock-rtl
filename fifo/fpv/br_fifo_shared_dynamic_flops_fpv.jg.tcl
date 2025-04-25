@@ -17,7 +17,7 @@ clock clk
 reset rst
 get_design_info
 
-# TODO: disable due to many unreachable covers in RTL
+# TODO: disable covers to make nightly clean
 cover -disable *
 
 # If assertion bound - pre-condition reachable cycle >= 2:
