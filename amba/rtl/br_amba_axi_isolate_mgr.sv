@@ -1,0 +1,335 @@
+// Copyright 2025 The Bedrock-RTL Authors
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+//
+// Bedrock-RTL AXI Upstream (Manager) Isolator
+
+`include "br_registers.svh"
+`include "br_asserts_internal.svh"
+
+module br_amba_axi_isolate_mgr #(
+    // Width of the AXI address field.
+    parameter int AddrWidth = 12,
+    // Width of the AXI data field.
+    parameter int DataWidth = 32,
+    // Width of the AXI ID field.
+    parameter int IdWidth = 1,
+    // Width of the AXI AWUSER field.
+    parameter int AWUserWidth = 1,
+    // Width of the AXI WUSER field.
+    parameter int WUserWidth = 1,
+    // Width of the AXI ARUSER field.
+    parameter int ARUserWidth = 1,
+    // Width of the AXI BUSER field.
+    parameter int BUserWidth = 1,
+    // Width of the AXI RUSER field.
+    parameter int RUserWidth = 1,
+    // Maximum number of outstanding requests that can be tracked
+    // without backpressuring the upstream request ports. Must be at least 2.
+    parameter int MaxOutstanding = 128,
+    // Maximum allowed skew (measured in max-length transactions)
+    // that can be tracked between AW and W channels without causing
+    // backpressure on the upstream ports.
+    parameter int MaxTransactionSkew = 2,
+    // Maximum number of response beats per transaction. Can be set
+    // to 1 for AXI-Lite, otherwise must be set to
+    // br_amba::AxiBurstLenWidth.
+    parameter int MaxAxiBurstLen = 2 ** br_amba::AxiBurstLenWidth,
+    // WUSER data to generate for isolated transactions.
+    parameter bit [WUserWidth-1:0] IsolateWUser = '0,
+    // WDATA data to generate for isolated transactions.
+    parameter bit [DataWidth-1:0] IsolateWData = '0,
+    // WSTRB data to generate for isolated transactions.
+    parameter bit [(DataWidth/8)-1:0] IsolateWStrb = '0,
+    localparam int AxiBurstLenWidth = br_math::clamped_clog2(MaxAxiBurstLen),
+    localparam int StrobeWidth = DataWidth / 8
+) (
+    input  logic                                  clk,
+    input  logic                                  rst,
+    //
+    input  logic                                  isolate_req,
+    output logic                                  isolate_done,
+    //
+    input  logic [                 AddrWidth-1:0] upstream_awaddr,
+    input  logic [                   IdWidth-1:0] upstream_awid,
+    input  logic [          AxiBurstLenWidth-1:0] upstream_awlen,
+    input  logic [br_amba::AxiBurstSizeWidth-1:0] upstream_awsize,
+    input  logic [br_amba::AxiBurstTypeWidth-1:0] upstream_awburst,
+    input  logic [     br_amba::AxiProtWidth-1:0] upstream_awprot,
+    input  logic [               AWUserWidth-1:0] upstream_awuser,
+    input  logic                                  upstream_awvalid,
+    output logic                                  upstream_awready,
+    input  logic [                 DataWidth-1:0] upstream_wdata,
+    input  logic [               StrobeWidth-1:0] upstream_wstrb,
+    input  logic [                WUserWidth-1:0] upstream_wuser,
+    input  logic                                  upstream_wlast,
+    input  logic                                  upstream_wvalid,
+    output logic                                  upstream_wready,
+    output logic [                   IdWidth-1:0] upstream_bid,
+    output logic [                BUserWidth-1:0] upstream_buser,
+    output logic [     br_amba::AxiRespWidth-1:0] upstream_bresp,
+    output logic                                  upstream_bvalid,
+    input  logic                                  upstream_bready,
+    input  logic [                 AddrWidth-1:0] upstream_araddr,
+    input  logic [                   IdWidth-1:0] upstream_arid,
+    input  logic [          AxiBurstLenWidth-1:0] upstream_arlen,
+    input  logic [br_amba::AxiBurstSizeWidth-1:0] upstream_arsize,
+    input  logic [br_amba::AxiBurstTypeWidth-1:0] upstream_arburst,
+    input  logic [     br_amba::AxiProtWidth-1:0] upstream_arprot,
+    input  logic [               ARUserWidth-1:0] upstream_aruser,
+    input  logic                                  upstream_arvalid,
+    output logic                                  upstream_arready,
+    output logic [                   IdWidth-1:0] upstream_rid,
+    output logic [                 DataWidth-1:0] upstream_rdata,
+    output logic [                RUserWidth-1:0] upstream_ruser,
+    output logic [     br_amba::AxiRespWidth-1:0] upstream_rresp,
+    output logic                                  upstream_rlast,
+    output logic                                  upstream_rvalid,
+    input  logic                                  upstream_rready,
+    //
+    output logic [                 AddrWidth-1:0] downstream_awaddr,
+    output logic [                   IdWidth-1:0] downstream_awid,
+    output logic [          AxiBurstLenWidth-1:0] downstream_awlen,
+    output logic [br_amba::AxiBurstSizeWidth-1:0] downstream_awsize,
+    output logic [br_amba::AxiBurstTypeWidth-1:0] downstream_awburst,
+    output logic [     br_amba::AxiProtWidth-1:0] downstream_awprot,
+    output logic [               AWUserWidth-1:0] downstream_awuser,
+    output logic                                  downstream_awvalid,
+    input  logic                                  downstream_awready,
+    output logic [                 DataWidth-1:0] downstream_wdata,
+    output logic [               StrobeWidth-1:0] downstream_wstrb,
+    output logic [                WUserWidth-1:0] downstream_wuser,
+    output logic                                  downstream_wlast,
+    output logic                                  downstream_wvalid,
+    input  logic                                  downstream_wready,
+    input  logic [                   IdWidth-1:0] downstream_bid,
+    input  logic [                BUserWidth-1:0] downstream_buser,
+    input  logic [     br_amba::AxiRespWidth-1:0] downstream_bresp,
+    input  logic                                  downstream_bvalid,
+    output logic                                  downstream_bready,
+    output logic [                 AddrWidth-1:0] downstream_araddr,
+    output logic [                   IdWidth-1:0] downstream_arid,
+    output logic [          AxiBurstLenWidth-1:0] downstream_arlen,
+    output logic [br_amba::AxiBurstSizeWidth-1:0] downstream_arsize,
+    output logic [br_amba::AxiBurstTypeWidth-1:0] downstream_arburst,
+    output logic [     br_amba::AxiProtWidth-1:0] downstream_arprot,
+    output logic [               ARUserWidth-1:0] downstream_aruser,
+    output logic                                  downstream_arvalid,
+    input  logic                                  downstream_arready,
+    input  logic [                   IdWidth-1:0] downstream_rid,
+    input  logic [                 DataWidth-1:0] downstream_rdata,
+    input  logic [                RUserWidth-1:0] downstream_ruser,
+    input  logic [     br_amba::AxiRespWidth-1:0] downstream_rresp,
+    input  logic                                  downstream_rlast,
+    input  logic                                  downstream_rvalid,
+    output logic                                  downstream_rready
+);
+
+  //
+  // Integration Checks
+  //
+
+  `BR_ASSERT_STATIC(max_outstanding_gt_1_a, MaxOutstanding > 1)
+  `BR_ASSERT_STATIC(burst_len_legal_a,
+                    MaxAxiBurstLen == 1 || MaxAxiBurstLen == 2 ** br_amba::AxiBurstLenWidth)
+
+  //
+  // Write Path
+  //
+
+  logic upstream_awready_iso;
+  logic upstream_awvalid_iso;
+  //
+  logic isolate_done_w;
+  logic align_and_hold_req_w;
+  logic align_and_hold_done_w;
+  logic req_tracker_isolate_req_w;
+  logic req_tracker_isolate_done_w;
+
+  br_amba_iso_us_fsm br_amba_iso_us_fsm_w (
+      .clk,
+      .rst,
+      //
+      .isolate_req,
+      .isolate_done(isolate_done_w),
+      //
+      .align_and_hold_req(align_and_hold_req_w),
+      .align_and_hold_done(align_and_hold_done_w),
+      //
+      .req_tracker_isolate_req(req_tracker_isolate_req_w),
+      .req_tracker_isolate_done(req_tracker_isolate_done_w)
+  );
+
+  br_amba_iso_wdata_align #(
+      .MaxTransactionSkew(MaxTransactionSkew),
+      .MaxAxiBurstLen(MaxAxiBurstLen),
+      .AxiBurstLenWidth(AxiBurstLenWidth)
+  ) br_amba_iso_wdata_align_w (
+      .clk,
+      .rst,
+      //
+      .align_and_hold_req (align_and_hold_req_w),
+      .align_and_hold_done(align_and_hold_done_w),
+      //
+      .upstream_awready,
+      .upstream_awvalid,
+      .upstream_awlen,
+      //
+      .upstream_wready,
+      .upstream_wvalid,
+      //
+      .downstream_awready (upstream_awready_iso),
+      .downstream_awvalid (upstream_awvalid_iso),
+      //
+      .downstream_wready  (downstream_wready),
+      .downstream_wvalid  (downstream_wvalid)
+  );
+
+  br_amba_iso_req_tracker #(
+      .MaxOutstanding(MaxOutstanding),
+      .MaxAxiBurstLen(MaxAxiBurstLen)
+  ) br_amba_iso_req_tracker_w (
+      .clk,
+      .rst,
+      //
+      .upstream_axready(upstream_awready_iso),
+      .upstream_axvalid(upstream_awvalid_iso),
+      .upstream_axlen(upstream_awlen),
+      //
+      .upstream_xready(upstream_bready),
+      .upstream_xvalid(upstream_bvalid),
+      //
+      .downstream_axready(downstream_awready),
+      .downstream_axvalid(downstream_awvalid),
+      .downstream_axlen(),
+      //
+      .downstream_xready(downstream_bready),
+      .downstream_xvalid(downstream_bvalid),
+      //
+      .isolate_req(req_tracker_isolate_req_w),
+      .isolate_done(req_tracker_isolate_done_w)
+  );
+
+  // Need to insert fake data values on the downstream W channel during write alignment.
+  logic upstream_blocked_w;
+  assign upstream_blocked_w = align_and_hold_req_w;
+
+  assign downstream_wlast = upstream_blocked_w ? 1'b1 : upstream_wlast;  // TODO(bgelb): fix last
+  assign downstream_wuser = upstream_blocked_w ? IsolateWUser : upstream_wuser;
+  assign downstream_wdata = upstream_blocked_w ? IsolateWData : upstream_wdata;
+  assign downstream_wstrb = upstream_blocked_w ? IsolateWStrb : upstream_wstrb;
+
+  // Pass-through signals
+  assign downstream_awaddr = upstream_awaddr;
+  assign downstream_awid = upstream_awid;
+  assign downstream_awsize = upstream_awsize;
+  assign downstream_awburst = upstream_awburst;
+  assign downstream_awlen = upstream_awlen;
+  assign downstream_awprot = upstream_awprot;
+  assign downstream_awuser = upstream_awuser;
+  //
+  assign upstream_bid = downstream_bid;
+  assign upstream_buser = downstream_buser;
+  assign upstream_bresp = downstream_bresp;
+
+  //
+  // Read Path
+  //
+
+  logic upstream_arready_iso;
+  logic upstream_arvalid_iso;
+  //
+  logic isolate_done_r;
+  logic align_and_hold_req_r;
+  logic align_and_hold_done_r;
+  logic req_tracker_isolate_req_r;
+  logic req_tracker_isolate_done_r;
+
+  br_amba_iso_us_fsm br_amba_iso_us_fsm_r (
+      .clk,
+      .rst,
+      //
+      .isolate_req,
+      .isolate_done(isolate_done_r),
+      //
+      .align_and_hold_req(align_and_hold_req_r),
+      .align_and_hold_done(align_and_hold_done_r),
+      //
+      .req_tracker_isolate_req(req_tracker_isolate_req_r),
+      .req_tracker_isolate_done(req_tracker_isolate_done_r)
+  );
+
+  // No alignment needed (since there is only a single read request channel),
+  // just simple backpressure.
+  logic upstream_blocked_r;
+
+  assign upstream_blocked_r = align_and_hold_req_r;
+  assign align_and_hold_done_r = align_and_hold_req_r;
+  assign upstream_arvalid_iso = upstream_arvalid && !upstream_blocked_r;
+  assign upstream_arready = upstream_arready_iso && !upstream_blocked_r;
+
+  br_amba_iso_req_tracker #(
+      .MaxOutstanding(MaxOutstanding),
+      .MaxAxiBurstLen(MaxAxiBurstLen)
+  ) br_amba_iso_req_tracker_r (
+      .clk,
+      .rst,
+      //
+      .upstream_axready(upstream_arready_iso),
+      .upstream_axvalid(upstream_arvalid_iso),
+      .upstream_axlen(upstream_arlen),
+      //
+      .upstream_xready(upstream_rready),
+      .upstream_xvalid(upstream_rvalid),
+      //
+      .downstream_axready(downstream_arready),
+      .downstream_axvalid(downstream_arvalid),
+      .downstream_axlen(),
+      //
+      .downstream_xready(downstream_rready),
+      .downstream_xvalid(downstream_rvalid),
+      //
+      .isolate_req(req_tracker_isolate_req_r),
+      .isolate_done(req_tracker_isolate_done_r)
+  );
+
+  // Pass-through signals
+  assign downstream_araddr = upstream_araddr;
+  assign downstream_arid = upstream_arid;
+  assign downstream_arsize = upstream_arsize;
+  assign downstream_arburst = upstream_arburst;
+  assign downstream_arlen = upstream_arlen;
+  assign downstream_arprot = upstream_arprot;
+  assign downstream_aruser = upstream_aruser;
+  //
+  assign upstream_rdata = downstream_rdata;
+  assign upstream_rresp = downstream_rresp;
+  assign upstream_rlast = downstream_rlast;
+  assign upstream_ruser = downstream_ruser;
+  assign upstream_rid = downstream_rid;
+
+  //
+  // Done Output
+  //
+
+  logic isolate_done_next;
+
+  // isolate_done is asserted when both write and read done signals rise
+  // and deasserted after both done signals fall
+  assign isolate_done_next = isolate_req ?
+                            (isolate_done_w && isolate_done_r)
+                            : !(isolate_done_w || isolate_done_r);
+
+  `BR_REG(isolate_done, isolate_done_next)
+
+endmodule
