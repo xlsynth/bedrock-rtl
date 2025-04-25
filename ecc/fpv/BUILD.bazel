@@ -18,17 +18,6 @@ load("//bazel:verilog.bzl", "verilog_elab_test")
 
 package(default_visibility = ["//visibility:public"])
 
-test_suite(
-    name = "nightly-jg-tests",
-    tests = [
-        ":br_ecc_secded_error_test_dw4_jg_dri1_dro1_eri1_ero1_rs1_fpv_test",
-        ":br_ecc_secded_error_test_jg_dw64_fpv_test",
-        ":br_ecc_secded_test_dw4_jg_dri1_dro1_eri1_ero1_rs1_fpv_test",
-        ":br_ecc_secded_test_jg_dw64_fpv_test",
-        ":br_ecc_sed_test_suite_jg_dw5_dri1_dro1_eri1_ero1_fpv_test",
-    ],
-)
-
 #################################################################
 # Bedrock-RTL Single-Error-Detecting (SED - Even Parity)
 

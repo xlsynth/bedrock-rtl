@@ -18,14 +18,6 @@ load("//bazel:verilog.bzl", "verilog_elab_test")
 
 package(default_visibility = ["//visibility:public"])
 
-test_suite(
-    name = "nightly-jg-tests",
-    tests = [
-        ":br_multi_xfer_distributor_rr_test_suite_jg_nf4_ns4_sw2_fpv_test",
-        ":br_multi_xfer_reg_fwd_test_suite_jg_ns4_sw2_fpv_test",
-    ],
-)
-
 # Bedrock-RTL Multi-Transfer Register (Forward Variant)
 
 verilog_library(

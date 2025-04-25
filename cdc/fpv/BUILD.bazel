@@ -18,14 +18,6 @@ load("//bazel:verilog.bzl", "verilog_elab_test")
 
 package(default_visibility = ["//visibility:public"])
 
-test_suite(
-    name = "nightly-jg-tests",
-    tests = [
-        ":br_cdc_fifo_ctrl_1r1w_push_credit_test_suite_jg_d2_mc2_nss2_rrl0_rwl1_rpo0_rpo0_w3_fpv_test",
-        ":br_cdc_fifo_flops_test_suite_jg_d5_eapds0_eapvs0_ecpb0_nss2_rpo0_w1_fpv_test",
-    ],
-)
-
 # Basic cdc FIFO checkers
 verilog_library(
     name = "br_cdc_fifo_basic_fpv_monitor",

@@ -18,15 +18,6 @@ load("//bazel:verilog.bzl", "verilog_elab_test")
 
 package(default_visibility = ["//visibility:public"])
 
-test_suite(
-    name = "nightly-jg-tests",
-    tests = [
-        ":br_credit_counter_test_suite_jg_mc2_mv5_fpv_test",
-        ":br_credit_receiver_test_suite_jg_mc1_nf1_pcmc1_pcmc1_rpo0_w6_fpv_test",
-        ":br_credit_sender_test_suite_jg_eapds1_eapvs1_ecpb1_mc5_nf1_pcmc2_rpo1_w1_fpv_test",
-    ],
-)
-
 # Bedrock-RTL Credit Counter
 
 verilog_library(

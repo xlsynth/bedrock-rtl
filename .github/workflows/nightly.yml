@@ -36,7 +36,7 @@ jobs:
       # Set a timeout of 60 seconds per test, since we have a lot to cover with only a few licenses.
       # This is easier than manually trying to determine which tests we can conceivably run in 1 minute.
       run: |
-        bazel test --noshow_loading_progress //:nightly-jg-tests --test_timeout=60 --test_tag_filters=jg 2>&1 | tee .bazel-test-jg.log
+        bazel test --noshow_loading_progress //... --test_tag_filters=jg --test_timeout=60 2>&1 | tee .bazel-test-jg.log
         BAZEL_EXIT_CODE=${PIPESTATUS[0]}
         TOTAL_TESTS=$(grep -Po '(?<=out of )\d+(?= test)' .bazel-test-jg.log)
         PASSING_TESTS=$(grep -Po '\d+(?= test passes?\.| tests pass)' .bazel-test-jg.log)
