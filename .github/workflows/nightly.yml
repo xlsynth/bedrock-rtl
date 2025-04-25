@@ -42,8 +42,9 @@ jobs:
         bazel query 'tests(//...) intersect attr(tags, "jg", //...)' \
           | grep -v -E '//fifo/fpv:|//cdc/fpv:' \
           | shuf -n 1000 \
-          | xargs -r bazel test --noshow_loading_progress --test_output=summary --test_timeout=60 2>&1 | tee .bazel-test-jg.log
-        BAZEL_EXIT_CODE=${PIPESTATUS[0]}
+          | xargs -r bazel test --noshow_loading_progress --test_output=summary --test_timeout=60 2>&1 \
+          | tee .bazel-test-jg.log
+        BAZEL_EXIT_CODE=${PIPESTATUS[3]}
         TOTAL_TESTS=$(grep -Po '(?<=out of )\d+(?= test)' .bazel-test-jg.log)
         PASSING_TESTS=$(grep -Po '\d+(?= test passes?\.| tests pass)' .bazel-test-jg.log)
         FAILING_TIMEOUT_TESTS=$(grep -c ' TIMEOUT in' .bazel-test-jg.log)
