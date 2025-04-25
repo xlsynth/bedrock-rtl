@@ -140,7 +140,7 @@ module br_fifo_push_ctrl #(
   //------------------------------------------
   // Implementation checks
   //------------------------------------------
-  `BR_ASSERT_IMPL(ram_wr_addr_in_range_a, ram_wr_valid |-> ram_wr_addr < Depth)
+  `BR_ASSERT_IMPL(ram_wr_addr_in_range_a, ram_wr_valid |-> ram_wr_addr < RamDepth)
 
   // Flow control and latency
   `BR_ASSERT_IMPL(push_backpressure_when_full_a, full |-> !push_ready)

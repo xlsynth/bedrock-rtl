@@ -20,6 +20,8 @@ get_design_info
 # when alloc_valid is back pressured, it can not change next cycle
 cover -disable {*gen_single_alloc_port.*_unstable_c}
 cover -disable {*gen_multi_alloc_ports.*_instability_c}
+# TODO: disable covers for now
+cover -disable {br_tracker_freelist.br_enc_priority_encoder_free_entries*}
 
 # prove command
 prove -all

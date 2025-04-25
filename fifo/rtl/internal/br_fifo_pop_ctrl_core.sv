@@ -81,6 +81,8 @@ module br_fifo_pop_ctrl_core #(
   assign pop_beat = pop_ready && pop_valid;
 
   // RAM path
+  logic ram_rd_addr_update;
+
   if (RamDepth > 1) begin : gen_ram_rd_addr_counter
     br_counter_incr #(
         .MaxValue(RamDepth - 1),
@@ -91,13 +93,14 @@ module br_fifo_pop_ctrl_core #(
         .rst,
         .reinit(1'b0),  // unused
         .initial_value(AddrWidth'(1'b0)),
-        .incr_valid(ram_rd_addr_valid),
+        .incr_valid(ram_rd_addr_update),
         .incr(1'b1),
         .value(ram_rd_addr),
         .value_next()  // unused
     );
   end else begin : gen_ram_rd_addr_const
     assign ram_rd_addr = 1'b0;
+    `BR_UNUSED(ram_rd_addr_update)
   end
 
   // Datapath
@@ -106,13 +109,15 @@ module br_fifo_pop_ctrl_core #(
       assign bypass_ready = empty && pop_ready;
       assign pop_valid = !empty || bypass_valid_unstable;
       assign pop_data = empty ? bypass_data_unstable : ram_rd_data;
-      assign ram_rd_addr_valid = pop_valid && pop_ready && !empty;
+      assign ram_rd_addr_valid = !empty;
+      assign ram_rd_addr_update = pop_beat && !empty;
     end else begin : gen_no_bypass
       // TODO(zhemao, #157): Replace this with BR_TIEOFF macros once they are fixed
       assign bypass_ready = '0;  // ri lint_check_waive CONST_ASSIGN CONST_OUTPUT
       assign pop_valid = !empty;
       assign pop_data = ram_rd_data;
-      assign ram_rd_addr_valid = pop_valid && pop_ready;
+      assign ram_rd_addr_valid = !empty;
+      assign ram_rd_addr_update = pop_beat;
 
       `BR_UNUSED_NAMED(bypass_signals, {bypass_valid_unstable, bypass_data_unstable})
     end
@@ -145,8 +150,12 @@ module br_fifo_pop_ctrl_core #(
 
         .pop_ready,
         .pop_valid,
-        .pop_data
+        .pop_data,
+        .pop_empty()
     );
+
+    assign ram_rd_addr_update = ram_rd_addr_valid;
+
     `BR_UNUSED(empty)
   end
 

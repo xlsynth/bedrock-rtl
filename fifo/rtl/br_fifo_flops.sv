@@ -121,11 +121,12 @@ module br_fifo_flops #(
       FlopRamAddressDepthStages + FlopRamReadDataDepthStages + FlopRamReadDataWidthStages;
   // If there is a bypass staging buffer, we can reduce the depth of the flop RAM
   // by the number of buffer entries.
-  localparam int RamDepth =
-      (EnableBypass && ((RamReadLatency > 0) || RegisterPopOutputs)) ?
-          br_math::max2(
-      1, Depth - RamReadLatency - 1
-  ) : Depth;
+  localparam int RamDepth = br_math::align_up(
+      (EnableBypass && ((RamReadLatency > 0) || RegisterPopOutputs)) ? br_math::max2(
+          1, Depth - RamReadLatency - 1
+      ) : Depth,
+      FlopRamDepthTiles
+  );
   localparam int AddrWidth = br_math::clamped_clog2(RamDepth);
 
   //------------------------------------------
@@ -200,7 +201,7 @@ module br_fifo_flops #(
       .wr_valid(ram_wr_valid),
       .wr_addr(ram_wr_addr),
       .wr_data(ram_wr_data),
-      .wr_word_en(1'b1),  // no partial write
+      .wr_word_en({FlopRamWidthTiles{1'b1}}),  // no partial write
       .rd_clk(clk),  // ri lint_check_waive SAME_CLOCK_NAME
       .rd_rst(rst),
       .rd_addr_valid(ram_rd_addr_valid),

@@ -18,6 +18,32 @@ load("//bazel:verilog.bzl", "verilog_elab_test")
 package(default_visibility = ["//visibility:private"])
 
 verilog_library(
+    name = "br_ecc_secded_pkg",
+    srcs = ["br_ecc_secded_pkg.sv"],
+    visibility = ["//visibility:public"],
+    deps = [
+        ":br_math_pkg",
+        "//macros:br_asserts",
+    ],
+)
+
+verilog_library(
+    name = "br_ecc_secded_pkg_tb",
+    srcs = ["br_ecc_secded_pkg_tb.sv"],
+    deps = [
+        ":br_ecc_secded_pkg",
+        "//macros:br_asserts_internal",
+    ],
+)
+
+verilog_elab_test(
+    name = "br_ecc_secded_pkg_elab_test",
+    defines = ["BR_ASSERT_ON"],
+    tool = "verific",
+    deps = [":br_ecc_secded_pkg_tb"],
+)
+
+verilog_library(
     name = "br_math_pkg",
     srcs = ["br_math_pkg.sv"],
     visibility = ["//visibility:public"],

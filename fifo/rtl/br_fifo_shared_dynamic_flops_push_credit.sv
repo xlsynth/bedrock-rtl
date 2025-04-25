@@ -61,8 +61,8 @@ module br_fifo_shared_dynamic_flops_push_credit #(
     parameter int NumWritePorts = 1,
     // Number of read ports. Must be >=1 and a power of 2.
     parameter int NumReadPorts = 1,
-    // Number of logical FIFOs. Must be >=1.
-    parameter int NumFifos = 1,
+    // Number of logical FIFOs. Must be >=2.
+    parameter int NumFifos = 2,
     // Total depth of the FIFO.
     // Must be greater than two times the number of write ports.
     parameter int Depth = 3,
@@ -124,6 +124,7 @@ module br_fifo_shared_dynamic_flops_push_credit #(
     input logic [NumWritePorts-1:0] push_valid,
     input logic [NumWritePorts-1:0][Width-1:0] push_data,
     input logic [NumWritePorts-1:0][FifoIdWidth-1:0] push_fifo_id,
+    output logic push_full,
 
     input  logic [CountWidth-1:0] credit_initial_push,
     input  logic [CountWidth-1:0] credit_withhold_push,
@@ -133,7 +134,8 @@ module br_fifo_shared_dynamic_flops_push_credit #(
     // Pop side
     output logic [NumFifos-1:0] pop_valid,
     input logic [NumFifos-1:0] pop_ready,
-    output logic [NumFifos-1:0][Width-1:0] pop_data
+    output logic [NumFifos-1:0][Width-1:0] pop_data,
+    output logic [NumFifos-1:0] pop_empty
 );
   // Integration Checks
   // Rely on checks in the submodules
@@ -168,7 +170,7 @@ module br_fifo_shared_dynamic_flops_push_credit #(
       .wr_valid(data_ram_wr_valid),
       .wr_addr(data_ram_wr_addr),
       .wr_data(data_ram_wr_data),
-      .wr_word_en({NumWritePorts{1'b1}}),
+      .wr_word_en({(NumWritePorts * DataRamWidthTiles) {1'b1}}),
       .rd_clk(clk),  // ri lint_check_waive SAME_CLOCK_NAME
       .rd_rst(either_rst),
       .rd_addr_valid(data_ram_rd_addr_valid),
@@ -203,7 +205,7 @@ module br_fifo_shared_dynamic_flops_push_credit #(
       .wr_valid(ptr_ram_wr_valid),
       .wr_addr(ptr_ram_wr_addr),
       .wr_data(ptr_ram_wr_data),
-      .wr_word_en({NumWritePorts{1'b1}}),
+      .wr_word_en({(NumWritePorts * PointerRamWidthTiles) {1'b1}}),
       .rd_clk(clk),  // ri lint_check_waive SAME_CLOCK_NAME
       .rd_rst(either_rst),
       .rd_addr_valid(ptr_ram_rd_addr_valid),
@@ -241,6 +243,7 @@ module br_fifo_shared_dynamic_flops_push_credit #(
       .push_valid,
       .push_data,
       .push_fifo_id,
+      .push_full,
       .credit_initial_push,
       .credit_withhold_push,
       .credit_available_push,
@@ -248,6 +251,7 @@ module br_fifo_shared_dynamic_flops_push_credit #(
       .pop_valid,
       .pop_ready,
       .pop_data,
+      .pop_empty,
       .data_ram_wr_valid,
       .data_ram_wr_addr,
       .data_ram_wr_data,

@@ -59,8 +59,8 @@ module br_fifo_shared_dynamic_ctrl_push_credit #(
     parameter int NumWritePorts = 1,
     // Number of read ports. Must be >=1 and a power of 2.
     parameter int NumReadPorts = 1,
-    // Number of logical FIFOs. Must be >=1.
-    parameter int NumFifos = 1,
+    // Number of logical FIFOs. Must be >=2.
+    parameter int NumFifos = 2,
     // Total depth of the FIFO.
     // Must be greater than two times the number of write ports.
     parameter int Depth = 3,
@@ -106,6 +106,7 @@ module br_fifo_shared_dynamic_ctrl_push_credit #(
     input logic [NumWritePorts-1:0] push_valid,
     input logic [NumWritePorts-1:0][Width-1:0] push_data,
     input logic [NumWritePorts-1:0][FifoIdWidth-1:0] push_fifo_id,
+    output logic push_full,
 
     input  logic [CountWidth-1:0] credit_initial_push,
     input  logic [CountWidth-1:0] credit_withhold_push,
@@ -116,6 +117,7 @@ module br_fifo_shared_dynamic_ctrl_push_credit #(
     output logic [NumFifos-1:0] pop_valid,
     input logic [NumFifos-1:0] pop_ready,
     output logic [NumFifos-1:0][Width-1:0] pop_data,
+    output logic [NumFifos-1:0] pop_empty,
 
     // Data RAM Ports
     output logic [NumWritePorts-1:0] data_ram_wr_valid,
@@ -142,7 +144,7 @@ module br_fifo_shared_dynamic_ctrl_push_credit #(
   `BR_ASSERT_STATIC(num_write_ports_in_range_a, NumWritePorts >= 1)
   `BR_ASSERT_STATIC(legal_num_read_ports_a, NumReadPorts >= 1 && br_math::is_power_of_2(
                     NumReadPorts))
-  `BR_ASSERT_STATIC(num_fifos_in_range_a, NumFifos >= 1)
+  `BR_ASSERT_STATIC(num_fifos_in_range_a, NumFifos >= 2)
   `BR_ASSERT_STATIC(depth_in_range_a, Depth > 2 * NumWritePorts)
   `BR_ASSERT_STATIC(width_in_range_a, Width >= 1)
   `BR_ASSERT_STATIC(staging_buffer_depth_in_range_a, StagingBufferDepth >= 1)
@@ -180,6 +182,7 @@ module br_fifo_shared_dynamic_ctrl_push_credit #(
       .push_valid,
       .push_data,
       .push_fifo_id,
+      .push_full,
       .credit_initial_push,
       .credit_withhold_push,
       .credit_available_push,
@@ -249,6 +252,7 @@ module br_fifo_shared_dynamic_ctrl_push_credit #(
       .pop_valid,
       .pop_ready,
       .pop_data,
+      .pop_empty,
       .data_ram_rd_addr_valid,
       .data_ram_rd_addr,
       .data_ram_rd_data_valid,

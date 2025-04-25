@@ -144,7 +144,7 @@ module br_fifo_pop_ctrl #(
   //------------------------------------------
   // Implementation checks
   //------------------------------------------
-  `BR_ASSERT_IMPL(ram_rd_addr_in_range_a, ram_rd_addr_valid |-> ram_rd_addr < Depth)
+  `BR_ASSERT_IMPL(ram_rd_addr_in_range_a, ram_rd_addr_valid |-> ram_rd_addr < RamDepth)
 
   // Flow control and latency
   if (EnableBypass) begin : gen_bypass_cut_through_latency_check

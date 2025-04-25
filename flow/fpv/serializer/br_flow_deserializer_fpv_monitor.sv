@@ -112,23 +112,23 @@ module br_flow_deserializer_fpv_monitor #(
   // For these 4 cycles: fv_flit_cnt = 0,1,2,3
   // push_data will be assigned to pop_data[7:0],[15:8],[23:16],[31:24]
   for (genvar i = 0; i < DeserializationRatio; i++) begin : gen_ast
+    localparam int Msb = DeserializeMostSignificantFirst ? PushWidth*(MAX+1-i) : PushWidth*(i+1);
+    localparam int Lsb = DeserializeMostSignificantFirst ? PushWidth * (MAX - i) : PushWidth * i;
+
+    `BR_ASSUME(fv_pop_data_stable_a, fv_flit_cnt != i |-> $stable(fv_pop_data[Msb-1:Lsb]))
+    `BR_ASSUME(fv_pop_data_a, fv_flit_cnt == i |-> fv_pop_data[Msb-1:Lsb] == push_data)
+
     if (DeserializeMostSignificantFirst) begin : gen_msb
-      `BR_ASSUME(fv_pop_data_stable_a,
-                 fv_flit_cnt != i |-> $stable(fv_pop_data[PushWidth*(MAX+1-i)-1:PushWidth*(MAX-i)]))
-      `BR_ASSUME(
-          fv_pop_data_a,
-          fv_flit_cnt == i |-> fv_pop_data[PushWidth*(MAX+1-i)-1:PushWidth*(MAX-i)] == push_data)
+      localparam int PopMsb = PopWidth;
+      localparam int PopLsb = PushWidth * i;
       `BR_ASSERT(data_integrity_a,
                  pop_valid && (pop_last_dont_care_count == i) |->
-                 pop_data[PopWidth-1:PushWidth*i] == fv_pop_data[PopWidth-1:PushWidth*i])
+                 pop_data[PopMsb-1:PopLsb] == fv_pop_data[PopMsb-1:PopLsb])
     end else begin : gen_lsb
-      `BR_ASSUME(fv_pop_data_stable_a,
-                 fv_flit_cnt != i |-> $stable(fv_pop_data[PushWidth*(i+1)-1:PushWidth*i]))
-      `BR_ASSUME(fv_pop_data_a,
-                 fv_flit_cnt == i |-> fv_pop_data[PushWidth*(i+1)-1:PushWidth*i] == push_data)
+      localparam int PopMsb = PushWidth * (MAX + 1 - i);
       `BR_ASSERT(data_integrity_a,
                  pop_valid && (pop_last_dont_care_count == i) |->
-                 pop_data[(MAX+1-i)*PushWidth-1:0] == fv_pop_data[(MAX+1-i)*PushWidth-1:0])
+                 pop_data[PopMsb-1:0] == fv_pop_data[PopMsb-1:0])
     end
   end
 

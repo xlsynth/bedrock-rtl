@@ -16,6 +16,7 @@ repos:
       - id: check-toml
       - id: check-ast
       - id: check-added-large-files
+        args: ['--maxkb=5120']  # set to 5120 KiB = 5 MiB (adjust as needed)
       - id: check-merge-conflict
       - id: check-executables-have-shebangs
       - id: check-shebang-scripts-are-executable

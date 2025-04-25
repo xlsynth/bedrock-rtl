@@ -23,6 +23,9 @@ module br_amba_atb_funnel #(
     parameter int NumSources = 2,  // Must be at least 2
     parameter int DataWidth = 32,  // Must be at least 1
     parameter int UserWidth = 1,  // Must be at least 1
+    // If 1, ensure that the dst_atready signal is registered. This ensures there is no
+    // combinational path from dst_atready to src_atready.
+    parameter bit RegisterAtReady = 0,
     localparam int ByteCountWidth = $clog2(DataWidth / 8)
 ) (
     input logic clk,
@@ -66,7 +69,8 @@ module br_amba_atb_funnel #(
 
   br_flow_mux_rr_stable #(
       .NumFlows(NumSources),
-      .Width(PacketWidth)
+      .Width(PacketWidth),
+      .RegisterPopReady(RegisterAtReady)
   ) br_flow_mux_rr_stable (
       .clk(clk),
       .rst(rst),

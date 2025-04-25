@@ -162,7 +162,7 @@ module br_amba_axil2apb #(
   // APB signal generation
   `BR_ASSERT_IMPL(psel_state_a, psel == (apb_state == Setup) || (apb_state == Access))
   assign psel = apb_state[1];  // ri lint_check_waive ENUM_RHS ENUM_RANGE
-  assign penable = (apb_state == Access);
+  assign penable = apb_state[2];  // ri lint_check_waive ENUM_RHS ENUM_RANGE
   assign paddr = addr_reg;
   assign pwdata = data_reg;
   assign pwrite = write_reg;
