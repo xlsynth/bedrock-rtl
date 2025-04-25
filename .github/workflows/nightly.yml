@@ -33,19 +33,53 @@ jobs:
     - name: Verilog formal tests (using Cadence JasperGold)
       id: test
       # Use --test_output=summary to suppress log output, even on failure (proprietary EDA tool output may be sensitive).
-      # Set a timeout of 60 seconds per test, since we have a lot to cover with only a few licenses.
-      # This is easier than manually trying to determine which tests we can conceivably run in 1 minute.
+      #
+      # Set a timeout of 60 seconds per test and randomly sample 1000 tests to run every night, since there are tens of
+      # thousands of tests and we have very few licenses.
+      #
+      # For now, exclude //fifo/fpv/... //cdc/fpv/... as they are known to be very slow.
       run: |
-        bazel test --noshow_loading_progress //:nightly-jg-tests --test_timeout=60 --test_tag_filters=jg 2>&1 | tee .bazel-test-jg.log
+        bazel query 'tests(//...) intersect attr(tags, "jg", //...)' \
+          | grep -v -E '//fifo/fpv:|//cdc/fpv:' \
+          | shuf -n 1000 \
+          | xargs -r bazel test --noshow_loading_progress --test_output=summary --test_timeout=60 2>&1 | tee .bazel-test-jg.log
         BAZEL_EXIT_CODE=${PIPESTATUS[0]}
         TOTAL_TESTS=$(grep -Po '(?<=out of )\d+(?= test)' .bazel-test-jg.log)
         PASSING_TESTS=$(grep -Po '\d+(?= test passes?\.| tests pass)' .bazel-test-jg.log)
-        FAILING_TIMEOUT_TESTS=$(grep -c 'TIMEOUT' .bazel-test-jg.log)
+        FAILING_TIMEOUT_TESTS=$(grep -c ' TIMEOUT in' .bazel-test-jg.log)
         echo "total_tests=$TOTAL_TESTS" >> $GITHUB_OUTPUT
         echo "passing_tests=$PASSING_TESTS" >> $GITHUB_OUTPUT
         echo "failing_timeout_tests=$FAILING_TIMEOUT_TESTS" >> $GITHUB_OUTPUT
         echo "exit_code=$BAZEL_EXIT_CODE" >> $GITHUB_OUTPUT
         exit $BAZEL_EXIT_CODE
+
+    - name: Post nightly test summary to GitHub Gist
+      if: always()
+      run: |
+        # Fetch current log via Gist API
+        EXISTING_CONTENT=$(
+          curl -s https://api.github.com/gists/4c1321baf4a3e4b67d12480df7fd2d0c \
+            | jq -r --arg f "jg-nightly-log.txt" '.files[$f].content'
+        )
+        echo "$EXISTING_CONTENT"
+
+        # Create summary line
+        TIMESTAMP=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
+        SUMMARY="[$TIMESTAMP] Passed: ${{ needs.bazel-test-jg.outputs.passing_tests }} | Timeouts: ${{ needs.bazel-test-jg.outputs.failing_timeout_tests }} | Total: ${{ needs.bazel-test-jg.outputs.total_tests }}"
+
+        # Combine existing content and new summary
+        UPDATED_CONTENT="$(printf "%s\n%s" "$EXISTING_CONTENT" "$SUMMARY")"
+
+        # Build JSON payload with jq
+        PATCH_DATA=$(jq -Rs --arg filename "jg-nightly-log.txt" \
+          '{ files: { ($filename): { content: . } } }' <<< "$UPDATED_CONTENT")
+
+        # Append and push updated content
+        echo "$PATCH_DATA" \
+          | curl -s -X PATCH \
+              -H "Authorization: token ${{ secrets.MGOTTSCHO_GISTS_SECRET }}" \
+              -H "Content-Type: application/json" \
+              --data @- https://api.github.com/gists/4c1321baf4a3e4b67d12480df7fd2d0c
 
   jg-badge:
     runs-on: ubuntu-latest

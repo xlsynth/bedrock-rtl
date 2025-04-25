@@ -18,15 +18,6 @@ load("//bazel:verilog.bzl", "verilog_elab_test")
 
 package(default_visibility = ["//visibility:public"])
 
-test_suite(
-    name = "nightly-jg-tests",
-    tests = [
-        "//flow/fpv/arb:br_flow_arb_fixed_test_suite_jg_eapvs0_ecpb0_nf2_fpv_test",
-        "//flow/fpv/arb:br_flow_arb_lru_test_suite_jg_eapvs0_ecpb0_nf2_fpv_test",
-        "//flow/fpv/arb:br_flow_arb_rr_test_suite_jg_eapvs0_ecpb0_nf2_fpv_test",
-    ],
-)
-
 # Basic arb FV checker
 verilog_library(
     name = "br_flow_arb_basic_fpv_monitor",

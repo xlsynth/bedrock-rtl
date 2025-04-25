@@ -18,13 +18,6 @@ load("//bazel:verilog.bzl", "verilog_elab_test")
 
 package(default_visibility = ["//visibility:public"])
 
-test_suite(
-    name = "nightly-jg-tests",
-    tests = [
-        "//flow/fpv/mux:br_flow_mux_fixed_stable_test_suite_jg_eapds0_eapvs0_ecpb0_nf2_rpr0_w1_fpv_test",
-    ],
-)
-
 # Basic mux FV checker
 verilog_library(
     name = "br_flow_mux_basic_fpv_monitor",

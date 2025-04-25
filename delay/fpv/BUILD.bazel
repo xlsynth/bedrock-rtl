@@ -18,17 +18,6 @@ load("//bazel:verilog.bzl", "verilog_elab_test")
 
 package(default_visibility = ["//visibility:public"])
 
-test_suite(
-    name = "nightly-jg-tests",
-    tests = [
-        ":br_delay_nr_test_suite_jg_ns1_w5_fpv_test",
-        ":br_delay_test_suite_jg_ns1_w5_fpv_test",
-        ":br_delay_valid_next_nr_test_suite_jg_ns1_w5_fpv_test",
-        ":br_delay_valid_next_test_suite_jg_ns1_w5_fpv_test",
-        ":br_delay_valid_test_suite_jg_ns1_w5_fpv_test",
-    ],
-)
-
 # Bedrock-RTL Delay Line
 
 verilog_library(

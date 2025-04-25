@@ -18,13 +18,6 @@ load("//bazel:verilog.bzl", "verilog_elab_test")
 
 package(default_visibility = ["//visibility:public"])
 
-test_suite(
-    name = "nightly-jg-tests",
-    tests = [
-        "//flow/fpv/demux:br_flow_demux_select_test_suite_jg_eapds0_eapvs0_ecpb0_nf2_w1_fpv_test",
-    ],
-)
-
 # Basic demux FV checker
 verilog_library(
     name = "br_flow_demux_basic_fpv_monitor",

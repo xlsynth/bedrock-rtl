@@ -18,13 +18,6 @@ load("//bazel:verilog.bzl", "verilog_elab_test")
 
 package(default_visibility = ["//visibility:public"])
 
-test_suite(
-    name = "nightly-jg-tests",
-    tests = [
-        "//flow/fpv/serializer:br_flow_serializer_test_suite_jg_mw1_pw1_pw12_smsf0_fpv_test",
-    ],
-)
-
 # Bedrock-RTL Flow Serializer
 
 verilog_library(
