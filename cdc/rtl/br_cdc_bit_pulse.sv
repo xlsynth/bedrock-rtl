@@ -67,10 +67,18 @@ module br_cdc_bit_pulse #(
     input  logic dst_rst,
     output logic dst_pulse
 );
-  // Integration Assertions
+
+  //------------------------------------------
+  // Integration checks
+  //------------------------------------------
   // Relying on checks in br_cdc_bit_toggle
 
+  `BR_ASSERT_CR_INTG(src_pulse_high_then_low_a, src_pulse |=> !src_pulse, src_clk, src_rst)
+  `BR_COVER_CR_INTG(back_to_back_src_pulse_c, src_pulse ##2 src_pulse, src_clk, src_rst)
+
+  //------------------------------------------
   // Implementation
+  //------------------------------------------
   logic src_level;
   logic dst_level;
   logic dst_level_d;
@@ -109,7 +117,10 @@ module br_cdc_bit_pulse #(
     assign dst_pulse = dst_pulse_internal;
   end
 
-  // Implementation assertions
-  // TODO(zhemao): Add some here
+  //------------------------------------------
+  // Implementation checks
+  //------------------------------------------
+  `BR_ASSERT_CR_IMPL(dst_pulse_high_then_low_a, dst_pulse |=> !dst_pulse, dst_clk, dst_rst)
+  `BR_COVER_CR_IMPL(back_to_back_dst_pulse_c, dst_pulse ##2 dst_pulse, dst_clk, dst_rst)
 
 endmodule
