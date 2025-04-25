@@ -85,20 +85,22 @@ module br_flow_fork_select_multihot #(
   end else begin : gen_assert_onehot_select
     `BR_ASSERT_INTG(select_onehot_a, push_valid |-> $onehot(select_multihot))
   end
+  `BR_ASSERT_INTG(select_multihot_known_a, push_valid |-> !$isunknown(select_multihot))
 
   //------------------------------------------
   // Implementation
   //------------------------------------------
+  always_comb begin
+    push_ready = '1;
+    for (int i = 0; i < NumFlows; i++) begin
+      push_ready &= select_multihot[i] ? pop_ready[i] : '1;
+    end
+  end
+
   logic [NumFlows-1:0] push_valid_multihot;
   // The ternary expression is needed to ensure pop_valid_unstable is 0 (and not X)
   // when select_multihot is X and push_valid is 0.
   assign push_valid_multihot = push_valid ? select_multihot : '0;
-  always_comb begin
-    push_ready = '1;
-    for (int i = 0; i < NumFlows; i++) begin
-      push_ready &= push_valid_multihot[i] ? pop_ready[i] : '1;
-    end
-  end
 
   for (genvar i = 0; i < NumFlows; i++) begin : gen_flows
     always_comb begin
