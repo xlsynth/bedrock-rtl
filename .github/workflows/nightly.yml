@@ -61,7 +61,6 @@ jobs:
           curl -s https://api.github.com/gists/4c1321baf4a3e4b67d12480df7fd2d0c \
             | jq -r --arg f "jg-nightly-log.txt" '.files[$f].content'
         )
-        echo "$EXISTING_CONTENT"
 
         # Create summary line
         TIMESTAMP=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
