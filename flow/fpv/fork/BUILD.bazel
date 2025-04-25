@@ -1,0 +1,117 @@
+# Copyright 2024-2025 The Bedrock-RTL Authors
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+load("@rules_hdl//verilog:providers.bzl", "verilog_library")
+load("//bazel:br_verilog.bzl", "br_verilog_fpv_test_tools_suite")
+load("//bazel:verilog.bzl", "verilog_elab_test")
+
+package(default_visibility = ["//visibility:public"])
+
+# Bedrock-RTL Flow Fork
+
+verilog_library(
+    name = "br_flow_fork_fpv_monitor",
+    srcs = ["br_flow_fork_fpv_monitor.sv"],
+    deps = [
+        "//flow/rtl:br_flow_fork",
+    ],
+)
+
+verilog_elab_test(
+    name = "br_flow_fork_fpv_monitor_elab_test",
+    tool = "verific",
+    deps = [":br_flow_fork_fpv_monitor"],
+)
+
+br_verilog_fpv_test_tools_suite(
+    name = "br_flow_fork_test_suite",
+    params = {
+        "EnableCoverPushBackpressure": [
+            "0",
+            "1",
+        ],
+        "NumFlows": [
+            "2",
+            "4",
+            "5",
+        ],
+    },
+    tools = {
+        "jg": "",
+        "vcf": "",
+    },
+    top = "br_flow_fork",
+    deps = [":br_flow_fork_fpv_monitor"],
+)
+
+# Bedrock-RTL Flow Fork With Multihot Select
+
+verilog_library(
+    name = "br_flow_fork_select_multihot_fpv_monitor",
+    srcs = ["br_flow_fork_select_multihot_fpv_monitor.sv"],
+    deps = [
+        "//flow/rtl:br_flow_fork_select_multihot",
+    ],
+)
+
+verilog_elab_test(
+    name = "br_flow_fork_select_multihot_fpv_monitor_elab_test",
+    tool = "verific",
+    deps = [":br_flow_fork_select_multihot_fpv_monitor"],
+)
+
+br_verilog_fpv_test_tools_suite(
+    name = "br_flow_fork_select_multihot_test_suite",
+    illegal_param_combinations = {
+        (
+            "EnableCoverPushBackpressure",
+            "EnableAssertPushValidStability",
+            "EnableAssertSelectMultihotStability",
+        ): [
+            ("0", "0", "1"),
+            ("0", "1", "0"),
+            ("0", "1", "1"),
+            ("1", "0", "1"),
+        ],
+    },
+    params = {
+        "EnableCoverSelectMultihot": [
+            "0",
+            "1",
+        ],
+        "EnableCoverPushBackpressure": [
+            "0",
+            "1",
+        ],
+        "EnableAssertPushValidStability": [
+            "0",
+            "1",
+        ],
+        "EnableAssertSelectMultihotStability": [
+            "0",
+            "1",
+        ],
+        "NumFlows": [
+            "2",
+            "4",
+            "5",
+        ],
+    },
+    tools = {
+        "jg": "br_flow_fork_select_multihot_fpv.jg.tcl",
+        "vcf": "",
+    },
+    top = "br_flow_fork_select_multihot",
+    deps = [":br_flow_fork_select_multihot_fpv_monitor"],
+)
