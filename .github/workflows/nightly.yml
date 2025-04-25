@@ -33,14 +33,20 @@ jobs:
     - name: Verilog formal tests (using Cadence JasperGold)
       id: test
       # Use --test_output=summary to suppress log output, even on failure (proprietary EDA tool output may be sensitive).
-      # Set a timeout of 60 seconds per test, since we have a lot to cover with only a few licenses.
-      # This is easier than manually trying to determine which tests we can conceivably run in 1 minute.
+      #
+      # Set a timeout of 60 seconds per test and randomly sample 1000 tests to run every night, since there are tens of
+      # thousands of tests and we have very few licenses.
+      #
+      # For now, exclude //fifo/fpv/... //cdc/fpv/... as they are known to be very slow.
       run: |
-        bazel test --noshow_loading_progress //... --test_tag_filters=jg --test_timeout=60 2>&1 | tee .bazel-test-jg.log
+        bazel query 'tests(//...) intersect attr(tags, "jg", //...)' \
+          | grep -v -E '//fifo/fpv:|//cdc/fpv:' \
+          | shuf -n 1000 \
+          | xargs -r bazel test --noshow_loading_progress --test_output=summary --test_timeout=60 2>&1 | tee .bazel-test-jg.log
         BAZEL_EXIT_CODE=${PIPESTATUS[0]}
         TOTAL_TESTS=$(grep -Po '(?<=out of )\d+(?= test)' .bazel-test-jg.log)
         PASSING_TESTS=$(grep -Po '\d+(?= test passes?\.| tests pass)' .bazel-test-jg.log)
-        FAILING_TIMEOUT_TESTS=$(grep -c 'TIMEOUT' .bazel-test-jg.log)
+        FAILING_TIMEOUT_TESTS=$(grep -c ' TIMEOUT in' .bazel-test-jg.log)
         echo "total_tests=$TOTAL_TESTS" >> $GITHUB_OUTPUT
         echo "passing_tests=$PASSING_TESTS" >> $GITHUB_OUTPUT
         echo "failing_timeout_tests=$FAILING_TIMEOUT_TESTS" >> $GITHUB_OUTPUT
