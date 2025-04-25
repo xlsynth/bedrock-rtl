@@ -36,6 +36,18 @@
 // The module is parameterized by the maximum skew between the AW and W
 // channels (MaxTransactionSkew) measured in number of maximum size
 // (MaxAxiBurstLen) transactions.
+//
+// If PreventExcessData is set to 1, then the module will block pushes on the
+// upstream W channel if it would result in excess data beats (i.e. data will
+// never be forwarded unless it is associated with an AW request that has been
+// forwarded previously or on the same cycle).
+//
+// If FakeWriteDataOnAlign is set to 1, then the module will block pushes on the
+// upstream W channel and insert fake pushes on the downstream W channel until
+// the alignment is complete. To be used in the case where the upstream side is
+// going to be reset and we don't want to rely on the upstream side to
+// quiesce the interface properly. If set to 1, then PreventExcessData must
+// also be set to 1.
 
 `include "br_asserts_internal.svh"
 `include "br_unused.svh"
@@ -248,6 +260,13 @@ module br_amba_iso_wdata_align #(
   //
   // Assertions
   //
+
+  `BR_ASSERT(prevent_excess_data_a, PreventExcessData |-> !w_beats_in_excess)
+  `BR_ASSERT(fake_write_data_aw_no_new_aw_a,
+             (FakeWriteDataOnAlign && align_and_hold_req) |-> !downstream_awvalid)
+  `BR_ASSERT(
+      fake_write_data_upstream_blocked_a,
+      (FakeWriteDataOnAlign && align_and_hold_req) |-> !(upstream_awready || upstream_wready))
 
   // verilog_format: off
   `BR_ASSERT(if_counts_eq_then_zero_a, (excess_aw_data_beats == excess_w_data_beats)
