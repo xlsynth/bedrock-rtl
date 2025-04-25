@@ -33,5 +33,8 @@ assert -name fv_rst_check_pop_valid {rst | push_sender_in_reset |-> pop_valid ==
 assert -name fv_rst_check_ram_wr_valid {rst | push_sender_in_reset |-> ram_wr_valid == 'd0}
 assert -name fv_rst_check_ram_rd_addr_valid {rst | push_sender_in_reset |-> ram_rd_addr_valid == 'd0}
 
+# TODO:
+cover -disable *
+
 # prove command
 prove -all

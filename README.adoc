@@ -28,6 +28,7 @@ image:https://img.shields.io/endpoint?url=https://gist.githubusercontent.com/mgo
 image:https://img.shields.io/endpoint?url=https://gist.githubusercontent.com/mgottscho/c66dc2ddc0e513ba06ce338620977b26/raw/dsim.json[bazel-test-dsim,link="https://github.com/xlsynth/bedrock-rtl/actions/workflows/ci.yml?query=job%3Abazel-test-dsim"]
 image:https://img.shields.io/endpoint?url=https://gist.githubusercontent.com/mgottscho/c66dc2ddc0e513ba06ce338620977b26/raw/vcs.json[bazel-test-vcs,link="https://github.com/xlsynth/bedrock-rtl/actions/workflows/ci.yml?query=job%3Abazel-test-vcs"]
 image:https://img.shields.io/endpoint?url=https://gist.githubusercontent.com/mgottscho/c66dc2ddc0e513ba06ce338620977b26/raw/iverilog.json[bazel-test-iverilog,link="https://github.com/xlsynth/bedrock-rtl/actions/workflows/ci.yml?query=job%3Abazel-test-iverilog"]
+image:https://img.shields.io/endpoint?url=https://gist.githubusercontent.com/mgottscho/c66dc2ddc0e513ba06ce338620977b26/raw/jg.json[bazel-test-jg,link="https://github.com/xlsynth/bedrock-rtl/actions/workflows/nightly.yml?query=job%3Abazel-test-jg"]
 image:https://img.shields.io/github/issues/xlsynth/bedrock-rtl/bug?label=bugs[open bugs,link="https://github.com/xlsynth/bedrock-rtl/issues?q=is%3Aissue%20state%3Aopen%20label%3Abug"]
 
 
@@ -39,19 +40,48 @@ High quality and composable base RTL libraries in Verilog
 
 At minimum, you need to have the following tools installed in your environment.
 
-* Bazel (tested with 7.3.1)
-* System Python interpreter (tested with 3.12.5)
+* Bazel == 7.6.1 (recommended to manage this using Bazelisk)
+* System Python interpreter >= 3.12
 
-You can use the provided Dockerfile to build a container image with the above dependencies installed.
-For example:
+Additionally, several tools are needed to build and run all of the tests:
+
+* **Open source**
+  ** Linting
+    *** Verible
+  ** Simulation
+    *** Icarus Verilog
+  ** RTL wrapper generation
+    *** TopStitch
+* **Proprietary** (not provided - purchase your own installation and licenses)
+  ** Elaboration
+    *** Verific tclmain
+  ** Linting
+    *** RealIntent AscentLint
+  ** Simulation
+    *** Synopsys VCS
+    *** Altair Dsim
+  ** Formal
+    *** Cadence JasperGold
+    *** Synopsys VCF
+
+The provided Dockerfile can be used to build an image with the minimum dependencies and open source tools.
+The Dockerfile uses RockyLinux 8 on x86-64 as the base image.
+If you want to run tests that leverage proprietary tools, you need to provide your own installations and licenses (which are typically compatible with RockyLinux 8 on x86-64).
+
+To build the Docker image:
 
 [source,shell]
 ----
-docker build . --tag=bedrock-rtl:${USER}
-docker run -v $(pwd):/src -w /src bedrock-rtl:${USER} <YOUR_COMMAND>
+docker build --platform=linux/amd64 --tag=bedrock-rtl:${USER} .
+docker run -v $(pwd):/src -w /src bedrock-rtl:${USER} /bin/bash
 ----
 
-You need to provide some of your own EDA tool plugins that implement the plugin API for `verilog_runner.py`.
+Then once inside the container, try `bazel build //... && bazel test //fifo/sim/... --test_tag_filters=iverilog`.
+
+If you bring your own EDA tools, you may need to provide a bit of your own Python code that implements the plugin API for `verilog_runner.py`.
+If you want to use a tool that isn't already supported, update `//bazel:verilog.bzl`, implement a new verilog runner plugin, and reference your new tool in the appropriate Bazel test targets.
+Not all tests necessarily work with every tool.
+Refer to the `BUILD.bazel` files for specifics.
 
 == Pre-Commit Hooks
 
@@ -103,7 +133,7 @@ The Bazel test rule implementations at `//bazel:verilog.bzl` shell out the `//py
 
 == Continuous Integration
 
-We run continuous integration tests with GitHub Actions.
+We run continuous integration tests with GitHub Actions using all of the supported tools.
 See the `.github/workflows/ci.yml` file for details.
 
 == Style Guide

@@ -59,6 +59,11 @@ module br_tracker_sequence #(
   // Internal Counter Widths (in case narrower than EntryIdWidth)
   localparam int AllocCounterValueWidth = $clog2(NumEntries);
 
+  // Work around limitation of br_counter_incr where MaxAllocSize must be less than NumEntries
+  localparam int MaxIncrementAllocCounter = (MaxAllocSize == NumEntries) ? MaxAllocSize - 1
+                                                                            : MaxAllocSize;
+  localparam int AllocCounterIncrWidth = $clog2(MaxIncrementAllocCounter + 1);
+
   // Variable Declarations
   logic alloc_beat;
   logic [AllocCounterValueWidth-1:0] alloc_counter_value;
@@ -67,19 +72,33 @@ module br_tracker_sequence #(
   assign alloc_size = (alloc_receivable > alloc_sendable) ? alloc_sendable : alloc_receivable;
 
   // Integration Assertions
+  `BR_ASSERT_STATIC(alloc_size_lte_num_entries_a, MaxAllocSize <= NumEntries)
   `BR_ASSERT_STATIC(legal_num_entries_a, NumEntries > 1)
   `BR_ASSERT_STATIC(legal_entry_id_width_a, EntryIdWidth >= $clog2(NumEntries))
   `BR_ASSERT_INTG(dealloc_size_lte_used_seqno_a,
                   dealloc_valid |-> (dealloc_size <= allocated_entry_count))
   `BR_ASSERT_INTG(dealloc_size_gt_zero_a, dealloc_valid |-> (dealloc_size > 0))
+  `BR_ASSERT_INTG(dealloc_size_lte_max_alloc_size_a,
+                  dealloc_valid |-> (dealloc_size <= MaxAllocSize))
   if (EnableAssertFinalNotDeallocValid) begin : gen_assert_final_not_dealloc_valid
     `BR_ASSERT_FINAL(final_not_dealloc_valid_a, !dealloc_valid)
   end
 
   // Allocate Counter
+
+  // the br_counter_incr doesn't support an incr amount that is greater than MaxValue,
+  // so we need to squash the increment if it's equal to NumEntries. This is functionally
+  // correct because NumEntries % NumEntries == 0, so the increment is equivalent to 0.
+  logic alloc_beat_squash_wrap;
+  if (MaxAllocSize == NumEntries) begin : gen_alloc_beat_squash_wrap
+    assign alloc_beat_squash_wrap = alloc_beat && (alloc_size != NumEntries);
+  end else begin : gen_alloc_beat_squash_wrap_false
+    assign alloc_beat_squash_wrap = alloc_beat;
+  end
+
   br_counter_incr #(
       .MaxValue(NumEntries - 1),
-      .MaxIncrement(MaxAllocSize),
+      .MaxIncrement(MaxIncrementAllocCounter),
       .EnableSaturate(0),
       .EnableAssertFinalNotValid(0)
   ) br_counter_incr_allocate_counter (
@@ -87,8 +106,8 @@ module br_tracker_sequence #(
       .rst,
       .reinit(1'b0),
       .initial_value('0),
-      .incr_valid(alloc_beat),
-      .incr(alloc_size),
+      .incr_valid(alloc_beat_squash_wrap),
+      .incr(AllocCounterIncrWidth'(alloc_size)),
       .value(alloc_counter_value),
       .value_next()
   );
@@ -100,7 +119,7 @@ module br_tracker_sequence #(
   for (genvar i = 1; i < MaxAllocSize; i++) begin : gen_alloc_entry_id
     logic [NextValueWidth-1:0] next_value;
     logic [NextValueWidth-1:0] next_value_wrapped;
-    assign next_value = alloc_entry_id[0] + i;
+    assign next_value = NextValueWidth'(alloc_counter_value) + i;
     assign next_value_wrapped = (next_value >= NumEntries) ? (next_value - NumEntries) : next_value;
     assign alloc_entry_id[i] = EntryIdWidth'(next_value_wrapped);
   end

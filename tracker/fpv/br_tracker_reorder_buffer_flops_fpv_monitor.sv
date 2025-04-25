@@ -29,8 +29,7 @@ module br_tracker_reorder_buffer_flops_fpv_monitor #(
     // additional cycle of latency.
     parameter bit RegisterPopOutputs = 0,
     // If 1, then assert unordered_resp_push_valid is low at the end of the test.
-    parameter bit EnableAssertFinalNotDeallocValid = 1,
-    localparam int EntryCountWidth = $clog2(NumEntries + 1)
+    parameter bit EnableAssertFinalNotDeallocValid = 1
 ) (
     input logic clk,
     input logic rst,
@@ -51,8 +50,7 @@ module br_tracker_reorder_buffer_flops_fpv_monitor #(
     input logic [DataWidth-1:0] reordered_resp_pop_data,
 
     // Count Information
-    input logic [EntryCountWidth-1:0] free_entry_count,
-    input logic [EntryCountWidth-1:0] allocated_entry_count
+    input logic resp_pending
 );
 
   // ----------tracker reorder buffer basic checks----------
@@ -73,8 +71,7 @@ module br_tracker_reorder_buffer_flops_fpv_monitor #(
       .reordered_resp_pop_ready,
       .reordered_resp_pop_valid,
       .reordered_resp_pop_data,
-      .free_entry_count,
-      .allocated_entry_count
+      .resp_pending
   );
 
 endmodule : br_tracker_reorder_buffer_flops_fpv_monitor

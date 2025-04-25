@@ -115,7 +115,7 @@ module br_amba_axil_split_fpv_monitor #(
 
   // ----------FV assumptions----------
   for (genvar i = 0; i < NumBranchAddrRanges; i++) begin : gen_asm
-    `BR_ASSUME(branch_start_end_addr_a, branch_start_addr[i] < branch_end_addr[i])
+    `BR_ASSUME(branch_start_end_addr_a, branch_start_addr[i] <= branch_end_addr[i])
   end
 
   `BR_ASSUME(branch_start_addr_stable_a, $stable(branch_start_addr))

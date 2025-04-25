@@ -1,4 +1,4 @@
-// Copyright 2024-2025 The Bedrock-RTL Authors
+// Copyright 2025 The Bedrock-RTL Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -22,8 +22,8 @@ module br_fifo_shared_dynamic_basic_fpv_monitor #(
     parameter int NumWritePorts = 1,
     // Number of read ports. Must be >=1 and a power of 2.
     parameter int NumReadPorts = 1,
-    // Number of logical FIFOs. Must be >=1.
-    parameter int NumFifos = 1,
+    // Number of logical FIFOs. Must be >=2.
+    parameter int NumFifos = 2,
     // Total depth of the FIFO.
     // Must be greater than two times the number of write ports.
     parameter int Depth = 3,
@@ -34,13 +34,6 @@ module br_fifo_shared_dynamic_basic_fpv_monitor #(
     // The bandwidth will be `StagingBufferDepth / (PointerRamAddressDepthStages
     // + PointerRamReadDataDepthStages + PointerRamReadDataWidthStages + 1)`.
     parameter int StagingBufferDepth = 1,
-    // If 1, make sure pop_valid/pop_data are registered at the output
-    // of the staging buffer. This adds a cycle of cut-through latency.
-    parameter bit RegisterPopOutputs = 0,
-    // If 1, place a register on the deallocation path from the pop-side
-    // staging buffer to the freelist. This improves timing at the cost of
-    // adding a cycle of backpressure latency.
-    parameter bit RegisterDeallocation = 0,
     parameter bit EnableCoverPushBackpressure = 1,
     parameter bit EnableAssertPushValidStability = EnableCoverPushBackpressure,
     parameter bit EnableAssertPushDataStability = EnableAssertPushValidStability,
@@ -83,6 +76,7 @@ module br_fifo_shared_dynamic_basic_fpv_monitor #(
 
   // ----------FV assumptions----------
   for (genvar i = 0; i < NumWritePorts; i++) begin : gen_asm
+    `BR_ASSUME(push_fifo_id_legal_a, push_fifo_id[i] < NumFifos)
     if (EnableAssertPushValidStability) begin : gen_push_valid_stable
       `BR_ASSUME(push_valid_stable_a, push_valid[i] && !push_ready[i] |=> push_valid[i])
     end
@@ -107,7 +101,7 @@ module br_fifo_shared_dynamic_basic_fpv_monitor #(
       .IN_CHUNKS(NumWritePorts),
       .OUT_CHUNKS(1),
       .SINGLE_CLOCK(1),
-      .MAX_PENDING(Depth)
+      .MAX_PENDING(Depth + StagingBufferDepth)
   ) scoreboard (
       .clk(clk),
       .rstN(!rst),

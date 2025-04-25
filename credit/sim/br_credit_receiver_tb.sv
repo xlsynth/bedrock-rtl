@@ -73,12 +73,17 @@ module br_credit_receiver_tb;
   // Need to keep this count to make sure we don't send push_valid when there should
   // be no credit available.
   logic [CounterWidth-1:0] send_credits;
+  // Need to keep this count to make sure we don't send pop_credit when no
+  // credits have been used.
+  logic [CounterWidth-1:0] recv_credits;
 
   always_ff @(posedge clk) begin
     if (rst) begin
       send_credits <= '0;
+      recv_credits <= '0;
     end else begin
       send_credits <= (send_credits + push_credit) - push_valid;
+      recv_credits <= (recv_credits + pop_valid) - pop_credit;
     end
   end
 
@@ -120,6 +125,9 @@ module br_credit_receiver_tb;
       if (pop_credit_next > pops_left) begin
         pop_credit_next = pops_left;
       end
+      if (pop_credit_next > recv_credits) begin
+        pop_credit_next = recv_credits;
+      end
       while (delay > '0 && credit_count > (MaxCredit - pop_credit_next)) begin
         pop_credit = 0;
         @(negedge clk);
@@ -140,7 +148,7 @@ module br_credit_receiver_tb;
     push_valid = 0;
     push_data = 0;
     pop_credit = 0;
-    credit_initial = $urandom_range(1, MaxCredit);
+    credit_initial = $urandom_range(PopCreditMaxChange, MaxCredit);
     credit_withhold = 0;
 
     td.reset_dut();

@@ -219,6 +219,10 @@ br_verilog_elab_and_lint_test_suite(
             "0",
             "1",
         ],
+        "TotalItemsIncludesStaged": [
+            "0",
+            "1",
+        ],
     },
     deps = [":br_fifo_staging_buffer"],
 )
@@ -314,55 +318,13 @@ br_verilog_elab_and_lint_test_suite(
 )
 
 verilog_library(
-    name = "br_fifo_shared_pop_ctrl",
-    srcs = ["br_fifo_shared_pop_ctrl.sv"],
-    deps = [
-        ":br_fifo_shared_read_xbar",
-        ":br_fifo_staging_buffer",
-        "//flow/rtl:br_flow_join",
-    ],
-)
-
-br_verilog_elab_and_lint_test_suite(
-    name = "br_fifo_shared_pop_ctrl_test_suite",
-    params = {
-        "NumFifos": [
-            "2",
-            "4",
-        ],
-        "NumReadPorts": [
-            "1",
-            "2",
-        ],
-        "Depth": ["5"],
-        "Width": ["8"],
-        "StagingBufferDepth": [
-            "1",
-            "2",
-        ],
-        "RamReadLatency": [
-            "0",
-            "1",
-        ],
-        "RegisterDeallocation": [
-            "0",
-            "1",
-        ],
-        "RegisterPopOutputs": [
-            "0",
-            "1",
-        ],
-    },
-    deps = [":br_fifo_shared_pop_ctrl"],
-)
-
-verilog_library(
     name = "br_fifo_shared_dynamic_push_ctrl_credit",
     srcs = ["br_fifo_shared_dynamic_push_ctrl_credit.sv"],
     deps = [
         ":br_fifo_shared_dynamic_push_ctrl",
         "//credit/rtl:br_credit_receiver",
         "//delay/rtl:br_delay",
+        "//delay/rtl:br_delay_nr",
         "//enc/rtl:br_enc_countones",
     ],
 )

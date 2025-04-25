@@ -197,6 +197,14 @@ br_verilog_sim_test_tools_suite(
             "0",
             "1",
         ],
+        "DataRamAddressDepthStages": [
+            "0",
+            "1",
+        ],
+        "PointerRamAddressDepthStages": [
+            "0",
+            "1",
+        ],
     },
     # TODO(zhemao): dsim test is broken due to apparent simulator bug.
     # Re-enable when the bug is fixed.
@@ -246,6 +254,14 @@ br_verilog_sim_test_tools_suite(
             "1",
         ],
         "RegisterDeallocation": [
+            "0",
+            "1",
+        ],
+        "DataRamAddressDepthStages": [
+            "0",
+            "1",
+        ],
+        "PointerRamAddressDepthStages": [
             "0",
             "1",
         ],
