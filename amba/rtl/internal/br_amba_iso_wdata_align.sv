@@ -329,6 +329,86 @@ module br_amba_iso_wdata_align #(
   end
 
   //
+  // Burst length tracking
+  //
+
+  // If FakeWriteDataOnAlign is set, then we need to track the burst length of write requests
+  // sent downstream so that we can correctly generate the wlast signal when driving fake pushes.
+  if (FakeWriteDataOnAlign) begin : gen_fake_write_data_wlast
+    logic pop_last;
+    logic [AxiBurstLenWidth-1:0] awlen_fifo_data;
+    logic awlen_fifo_valid;
+
+    assign pop_last = downstream_wvalid && downstream_wready && downstream_wlast;
+
+    br_fifo_flops #(
+        .Depth(MaxTransactionSkew),
+        .Width(AxiBurstLenWidth),
+        .EnableBypass(1)
+    ) br_fifo_flops_fake_write_data_wlast (
+        .clk(clk),
+        .rst(rst),
+        //
+        .push_valid(aw_beat),
+        .push_ready(wlast_fifo_ready),
+        .push_data(upstream_awlen),
+        //
+        .pop_valid(awlen_fifo_valid),
+        .pop_ready(pop_last),
+        .pop_data(awlen_fifo_data),
+        //
+        .full(),
+        .full_next(),
+        .slots(),
+        .slots_next(),
+        //
+        .empty(),
+        .empty_next(),
+        .items(),
+        .items_next()
+    );
+
+    // Because write data is not allowed to run ahead of AW requests, and because
+    // the FIFO has zero cut-through latency (bypass), we should always have a
+    // valid awlen available at the output of the FIFO when wvalid is asserted.
+    `BR_ASSERT(awlen_fifo_valid_a, downstream_wvalid |-> awlen_fifo_valid)
+    `BR_UNUSED(awlen_fifo_valid)
+
+    // Count beats in the current burst on W channel to generate the wlast signal.
+    if (MaxAxiBurstLen == 1) begin : gen_beat_count_single_beat
+      assign downstream_wlast = 1'b1;
+      `BR_UNUSED(awlen_fifo_data)
+    end else begin : gen_beat_count_multi_beat
+      logic [AxiBurstLenWidth-1:0] beat_count;
+      br_counter_incr #(
+          .MaxValue(MaxAxiBurstLen - 1),
+          .MaxIncrement(1),
+          .EnableReinitAndIncr(0),
+          .EnableSaturate(0)
+      ) br_counter_incr_fake_write_data_wlast (
+          .clk(clk),
+          .rst(rst),
+          .reinit(pop_last),
+          .initial_value('0),
+          .incr_valid(w_beat),
+          .incr(1'b1),
+          .value(beat_count),
+          .value_next()
+      );
+      // The downstream wlast signal should be asserted when the beat count matches the burst length.
+      assign downstream_wlast = (beat_count == awlen_fifo_data);
+    end
+
+    // The internally-generated wlast signal should match the one from upstream.
+    `BR_ASSERT(downstream_wlast_a, downstream_wvalid |-> downstream_wlast == upstream_wlast)
+    `BR_UNUSED(upstream_wlast)
+
+  end else begin : gen_no_fake_write_data_wlast
+    assign downstream_wlast = upstream_wlast;
+    assign wlast_fifo_ready = 1'b1;
+  end
+
+  //
   // Decision logic
   //
 
