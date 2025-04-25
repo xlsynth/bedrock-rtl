@@ -91,4 +91,17 @@ package br_math;
     return (a > b) ? a : b;
   endfunction
 
+  // Returns 2^x.
+  // ri lint_check_waive TWO_STATE_TYPE
+  function automatic int exp2(input int x);
+    // ri lint_check_waive VAR_SHIFT
+    return 1 << x;
+  endfunction
+
+  // Rounds a value up to the nearest power of 2.
+  // ri lint_check_waive TWO_STATE_TYPE
+  function automatic int round_up_to_power_of_2(input int value);
+    return exp2($clog2(value));
+  endfunction
+
 endpackage : br_math

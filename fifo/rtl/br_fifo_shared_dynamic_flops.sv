@@ -126,11 +126,13 @@ module br_fifo_shared_dynamic_flops #(
     output logic [NumWritePorts-1:0] push_ready,
     input logic [NumWritePorts-1:0][Width-1:0] push_data,
     input logic [NumWritePorts-1:0][FifoIdWidth-1:0] push_fifo_id,
+    output logic push_full,
 
     // Pop side
     output logic [NumFifos-1:0] pop_valid,
     input logic [NumFifos-1:0] pop_ready,
-    output logic [NumFifos-1:0][Width-1:0] pop_data
+    output logic [NumFifos-1:0][Width-1:0] pop_data,
+    output logic [NumFifos-1:0] pop_empty
 );
   // Integration Checks
   // Rely on checks in the submodules
@@ -234,9 +236,11 @@ module br_fifo_shared_dynamic_flops #(
       .push_ready,
       .push_data,
       .push_fifo_id,
+      .push_full,
       .pop_valid,
       .pop_ready,
       .pop_data,
+      .pop_empty,
       .data_ram_wr_valid,
       .data_ram_wr_addr,
       .data_ram_wr_data,

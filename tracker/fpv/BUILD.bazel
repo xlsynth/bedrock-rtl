@@ -104,6 +104,40 @@ br_verilog_fpv_test_tools_suite(
     deps = [":br_tracker_freelist_fpv_monitor"],
 )
 
+# test PreallocatedEntries
+br_verilog_fpv_test_tools_suite(
+    name = "br_tracker_freelist_test_prealloc",
+    illegal_param_combinations = {
+        (
+            "NumEntries",
+            "PreallocatedEntries",
+        ): [
+            ("2", "15"),
+        ],
+    },
+    params = {
+        "EnableBypass": [
+            "0",
+            "1",
+        ],
+        "NumEntries": [
+            "2",
+            "5",
+            "7",
+        ],
+        "PreallocatedEntries": [
+            "3",
+            "15",
+        ],
+    },
+    tools = {
+        "jg": "br_tracker_freelist_fpv.jg.tcl",
+        "vcf": "",
+    },
+    top = "br_tracker_freelist",
+    deps = [":br_tracker_freelist_fpv_monitor"],
+)
+
 # Bedrock-RTL Linked List Controller
 
 verilog_library(

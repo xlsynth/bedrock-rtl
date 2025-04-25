@@ -55,6 +55,10 @@ br_verilog_elab_and_lint_test_suite(
             "0",
             "1",
         ],
+        "PreallocatedEntries": [
+            "0",
+            "1",
+        ],
     },
     deps = [":br_tracker_freelist"],
 )
