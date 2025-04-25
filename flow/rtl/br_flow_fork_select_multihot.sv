@@ -97,17 +97,13 @@ module br_flow_fork_select_multihot #(
     end
   end
 
-  logic [NumFlows-1:0] push_valid_multihot;
-  // The ternary expression is needed to ensure pop_valid_unstable is 0 (and not X)
-  // when select_multihot is X and push_valid is 0.
-  assign push_valid_multihot = push_valid ? select_multihot : '0;
-
   for (genvar i = 0; i < NumFlows; i++) begin : gen_flows
     always_comb begin
-      pop_valid_unstable[i] = push_valid_multihot[i];
+      pop_valid_unstable[i] = push_valid && select_multihot[i];
       for (int j = 0; j < NumFlows; j++) begin
+        // Keep valid if all other valid flows are ready
         if (i != j) begin
-          pop_valid_unstable[i] &= !push_valid_multihot[j] || pop_ready[j];
+          pop_valid_unstable[i] &= !select_multihot[j] || pop_ready[j];
         end
       end
     end
