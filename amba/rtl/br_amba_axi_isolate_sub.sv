@@ -413,9 +413,9 @@ module br_amba_axi_isolate_sub #(
 
   // isolate_done is asserted when both write and read done signals rise
   // and deasserted after both done signals fall
-  assign isolate_done_next = isolate_req ?
-                            (isolate_done_w && isolate_done_r)
-                            : !(isolate_done_w || isolate_done_r);
+  assign isolate_done_next = isolate_done ?
+                            (isolate_done_w || isolate_done_r)
+                            : (isolate_done_w && isolate_done_r);
 
   `BR_REG(isolate_done, isolate_done_next)
 

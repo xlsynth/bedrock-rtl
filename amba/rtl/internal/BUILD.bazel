@@ -153,10 +153,6 @@ verilog_library(
 br_verilog_elab_and_lint_test_suite(
     name = "br_amba_iso_req_tracker_test_suite",
     params = {
-        "MaxAxiBurstLen": [
-            "1",
-            "256",
-        ],
         "MaxOutstanding": [
             "2",
             "128",
