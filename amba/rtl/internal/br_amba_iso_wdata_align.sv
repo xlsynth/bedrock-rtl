@@ -371,7 +371,7 @@ module br_amba_iso_wdata_align #(
     // Because write data is not allowed to run ahead of AW requests, and because
     // the FIFO has zero cut-through latency (bypass), we should always have a
     // valid awlen available at the output of the FIFO when wvalid is asserted.
-    `BR_ASSERT(awlen_fifo_valid_a, downstream_wvalid |-> awlen_fifo_valid)
+    `BR_ASSERT_IMPL(awlen_fifo_valid_a, downstream_wvalid |-> awlen_fifo_valid)
     `BR_UNUSED(awlen_fifo_valid)
 
     // Count beats in the current burst on W channel to generate the wlast signal.
@@ -400,7 +400,7 @@ module br_amba_iso_wdata_align #(
     end
 
     // The internally-generated wlast signal should match the one from upstream.
-    `BR_ASSERT(downstream_wlast_a, downstream_wvalid |-> downstream_wlast == upstream_wlast)
+    `BR_ASSERT_IMPL(downstream_wlast_a, downstream_wvalid |-> downstream_wlast == upstream_wlast)
     `BR_UNUSED(upstream_wlast)
 
   end else begin : gen_no_fake_write_data_wlast
