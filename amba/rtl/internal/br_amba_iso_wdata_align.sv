@@ -257,7 +257,7 @@ module br_amba_iso_wdata_align #(
     // Because write data is not allowed to run ahead of AW requests, and because
     // the FIFO has zero cut-through latency (bypass), we should always have a
     // valid awlen available at the output of the FIFO when wvalid is asserted.
-    `BR_ASSERT(awlen_fifo_valid_a, downstream_wvalid |-> awlen_fifo_valid)
+    `BR_ASSERT_IMPL(awlen_fifo_valid_a, downstream_wvalid |-> awlen_fifo_valid)
     `BR_UNUSED(awlen_fifo_valid)
 
     // Count beats in the current burst on W channel to generate the wlast signal.
@@ -286,7 +286,7 @@ module br_amba_iso_wdata_align #(
     end
 
     // The internally-generated wlast signal should match the one from upstream.
-    `BR_ASSERT(downstream_wlast_a, downstream_wvalid |-> downstream_wlast == upstream_wlast)
+    `BR_ASSERT_IMPL(downstream_wlast_a, downstream_wvalid |-> downstream_wlast == upstream_wlast)
     `BR_UNUSED(upstream_wlast)
 
   end else begin : gen_no_fake_write_data_wlast
@@ -310,7 +310,7 @@ module br_amba_iso_wdata_align #(
                         || (align_and_hold_req && w_beats_in_excess)
                         || align_and_hold_done
         // hold off if the data doesn't have an associated AW request
-        || !(aw_beats_in_excess || (downstream_awready && upstream_awvalid));
+        || !(aw_beats_in_excess || aw_beat);
   end else begin : gen_allow_excess_data
     assign holdoff_w = excess_w_full
                         || (align_and_hold_req && w_beats_in_excess)
@@ -345,15 +345,18 @@ module br_amba_iso_wdata_align #(
   // Assertions
   //
 
-  `BR_ASSERT(prevent_excess_data_a, PreventExcessData |-> !w_beats_in_excess)
-  `BR_ASSERT(fake_write_data_aw_no_new_aw_a,
-             (FakeWriteDataOnAlign && align_and_hold_req) |-> !downstream_awvalid)
-  `BR_ASSERT(
-      fake_write_data_upstream_blocked_a,
-      (FakeWriteDataOnAlign && align_and_hold_req) |-> !(upstream_awready || upstream_wready))
+  if (PreventExcessData) begin : gen_prevent_excess_data_assertions
+    `BR_ASSERT_IMPL(prevent_excess_data_a, !w_beats_in_excess)
+  end
+
+  if (FakeWriteDataOnAlign) begin : gen_fake_write_data_assertions
+    `BR_ASSERT_IMPL(fake_write_data_aw_no_new_aw_a, align_and_hold_req |-> !downstream_awvalid)
+    `BR_ASSERT_IMPL(fake_write_data_upstream_blocked_a,
+                    align_and_hold_req |-> !(upstream_awready || upstream_wready))
+  end
 
   // verilog_format: off
-  `BR_ASSERT(if_counts_eq_then_zero_a, (excess_aw_data_beats == excess_w_data_beats)
+  `BR_ASSERT_IMPL(if_counts_eq_then_zero_a, (excess_aw_data_beats == excess_w_data_beats)
         |-> (excess_aw_data_beats == '0 && excess_w_data_beats == '0))
   // verilog_format: on
 endmodule

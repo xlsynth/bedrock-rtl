@@ -220,25 +220,24 @@ module br_amba_axi_isolate_mgr #(
   );
 
   br_amba_iso_req_tracker #(
-      .MaxOutstanding(MaxOutstanding),
-      .MaxAxiBurstLen(MaxAxiBurstLen)
+      .MaxOutstanding(MaxOutstanding)
   ) br_amba_iso_req_tracker_w (
       .clk,
       .rst,
       //
       .upstream_axready(upstream_awready_iso),
       .upstream_axvalid(upstream_awvalid_iso),
-      .upstream_axlen(upstream_awlen),
       //
       .upstream_xready(upstream_bready),
       .upstream_xvalid(upstream_bvalid),
+      .upstream_xlast(),
       //
       .downstream_axready(downstream_awready),
       .downstream_axvalid(downstream_awvalid),
-      .downstream_axlen(),
       //
       .downstream_xready(downstream_bready),
       .downstream_xvalid(downstream_bvalid),
+      .downstream_xlast(1'b1),
       //
       .isolate_req(req_tracker_isolate_req_w),
       .isolate_done(req_tracker_isolate_done_w)
@@ -302,25 +301,24 @@ module br_amba_axi_isolate_mgr #(
   assign upstream_arready = upstream_arready_iso && !upstream_blocked_r;
 
   br_amba_iso_req_tracker #(
-      .MaxOutstanding(MaxOutstanding),
-      .MaxAxiBurstLen(MaxAxiBurstLen)
+      .MaxOutstanding(MaxOutstanding)
   ) br_amba_iso_req_tracker_r (
       .clk,
       .rst,
       //
       .upstream_axready(upstream_arready_iso),
       .upstream_axvalid(upstream_arvalid_iso),
-      .upstream_axlen(upstream_arlen),
       //
       .upstream_xready(upstream_rready),
       .upstream_xvalid(upstream_rvalid),
+      .upstream_xlast(upstream_rlast),
       //
       .downstream_axready(downstream_arready),
       .downstream_axvalid(downstream_arvalid),
-      .downstream_axlen(),
       //
       .downstream_xready(downstream_rready),
       .downstream_xvalid(downstream_rvalid),
+      .downstream_xlast(downstream_rlast),
       //
       .isolate_req(req_tracker_isolate_req_r),
       .isolate_done(req_tracker_isolate_done_r)
@@ -337,7 +335,6 @@ module br_amba_axi_isolate_mgr #(
   //
   assign upstream_rdata = downstream_rdata;
   assign upstream_rresp = downstream_rresp;
-  assign upstream_rlast = downstream_rlast;
   assign upstream_ruser = downstream_ruser;
   assign upstream_rid = downstream_rid;
 
@@ -349,9 +346,9 @@ module br_amba_axi_isolate_mgr #(
 
   // isolate_done is asserted when both write and read done signals rise
   // and deasserted after both done signals fall
-  assign isolate_done_next = isolate_req ?
-                            (isolate_done_w && isolate_done_r)
-                            : !(isolate_done_w || isolate_done_r);
+  assign isolate_done_next = isolate_done ?
+                            (isolate_done_w || isolate_done_r)
+                            : (isolate_done_w && isolate_done_r);
 
   `BR_REG(isolate_done, isolate_done_next)
 
