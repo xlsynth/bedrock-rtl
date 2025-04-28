@@ -50,7 +50,7 @@ module br_flow_fork_select_multihot #(
     // Push-side interface
     output logic push_ready,
     input logic push_valid,
-    input logic [NumFlows-1:0] select_multihot,
+    input logic [NumFlows-1:0] push_select_multihot,  // pop-side selection, but qualified by push_valid
 
     // Pop-side interfaces
     //
