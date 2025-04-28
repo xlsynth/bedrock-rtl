@@ -30,7 +30,7 @@ module br_flow_fork_select_multihot_fpv_monitor #(
     // Push-side interface
     input logic push_ready,
     input logic push_valid,
-    input logic [NumFlows-1:0] select_multihot,
+    input logic [NumFlows-1:0] push_select_multihot,
 
     // Pop-side interfaces
     // pop_valid signals are unstable because they must fall if another pop_ready falls.
@@ -48,21 +48,22 @@ module br_flow_fork_select_multihot_fpv_monitor #(
     `BR_ASSUME(push_valid_stable_a, push_valid && !push_ready |=> push_valid)
   end
   if (EnableAssertSelectMultihotStability) begin : gen_data
-    `BR_ASSUME(multihot_stable_a, push_valid && !push_ready |=> $stable(select_multihot))
+    `BR_ASSUME(multihot_stable_a, push_valid && !push_ready |=> $stable(push_select_multihot))
   end
 
   if (!EnableCoverSelectMultihot) begin : gen_1hot
-    `BR_ASSUME(select_onehot_a, push_valid |-> $onehot(select_multihot))
+    `BR_ASSUME(select_onehot_a, push_valid |-> $onehot(push_select_multihot))
   end
-  `BR_ASSUME(legal_select_a, push_valid |-> |select_multihot)
+  `BR_ASSUME(legal_select_a, push_valid |-> |push_select_multihot)
 
   // ----------FV assertions----------
   // pick a random constant for assertion
   logic [$clog2(NumFlows)-1:0] fv_idx;
   `BR_ASSUME(fv_idx_a, $stable(fv_idx) && fv_idx < NumFlows)
 
-  `BR_ASSERT(forward_progress_a,
-             push_valid && push_ready && select_multihot[fv_idx] |-> pop_valid_unstable[fv_idx])
+  `BR_ASSERT(
+      forward_progress_a,
+      push_valid && push_ready && push_select_multihot[fv_idx] |-> pop_valid_unstable[fv_idx])
 
 endmodule : br_flow_fork_select_multihot_fpv_monitor
 
