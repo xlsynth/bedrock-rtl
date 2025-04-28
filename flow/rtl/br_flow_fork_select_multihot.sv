@@ -87,11 +87,7 @@ module br_flow_fork_select_multihot #(
   end else begin : gen_assert_onehot_select
     `BR_ASSERT_INTG(select_onehot_a, push_valid |-> $onehot(push_select_multihot))
   end
-<<<<<<< HEAD
   `BR_ASSERT_INTG(select_multihot_known_a, push_valid |-> !$isunknown(push_select_multihot))
-=======
-  `BR_ASSERT_INTG(select_multihot_known_a, push_valid |-> ($countones(select_multihot) > 1))
->>>>>>> 55cd450 (update some coding style)
 
   //------------------------------------------
   // Implementation
@@ -99,11 +95,7 @@ module br_flow_fork_select_multihot #(
   always_comb begin
     push_ready = '1;
     for (int i = 0; i < NumFlows; i++) begin
-<<<<<<< HEAD
       push_ready &= !push_select_multihot[i] || pop_ready[i];
-=======
-      push_ready &= !select_multihot[i] || pop_ready[i];
->>>>>>> 55cd450 (update some coding style)
     end
   end
 
