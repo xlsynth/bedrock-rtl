@@ -280,7 +280,7 @@ br_verilog_elab_and_lint_test_suite(
             "2",
             "8",
         ],
-        "NumDestAddresses": [
+        "NumMsiDestAddr": [
             "1",
             "2",
         ],

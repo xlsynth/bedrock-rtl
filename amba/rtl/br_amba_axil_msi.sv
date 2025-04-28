@@ -49,11 +49,11 @@ module br_amba_axil_msi #(
     parameter int AddrWidth = 40,  // must be at least 12
     parameter int DataWidth = 64,  // must be 32 or 64
     parameter int NumInterrupts = 2,  // must be at least 2
-    parameter int NumDestAddresses = 1,  // must be at least 1
+    parameter int NumMsiDestAddr = 1,  // must be at least 1
     parameter int DeviceIdWidth = 16,  // must be less than or equal to AddrWidth
     parameter int EventIdWidth = 16,  // must be less than or equal to DataWidth
     parameter int ThrottleCntrWidth = 16,  // must be at least 1
-    localparam int DstAddrIdxWidth = (NumDestAddresses > 1) ? $clog2(NumDestAddresses) : 1,
+    localparam int MsiDstIdxWidth = (NumMsiDestAddr > 1) ? $clog2(NumMsiDestAddr) : 1,
     localparam int StrobeWidth = (DataWidth + 7) / 8
 ) (
     input clk,
@@ -63,9 +63,9 @@ module br_amba_axil_msi #(
     input logic [NumInterrupts-1:0] irq,  // synchronous
 
     // MSI Configuration
-    input logic [NumDestAddresses-1:0][AddrWidth-1:0] msi_dest_addr,
+    input logic [NumMsiDestAddr-1:0][AddrWidth-1:0] msi_dest_addr,
     input logic [NumInterrupts-1:0] msi_enable,
-    input logic [NumInterrupts-1:0][DstAddrIdxWidth-1:0] msi_dest_idx,
+    input logic [NumInterrupts-1:0][MsiDstIdxWidth-1:0] msi_dest_idx,
     input logic [NumInterrupts-1:0][DeviceIdWidth-1:0] device_id_per_irq,
     input logic [NumInterrupts-1:0][EventIdWidth-1:0] event_id_per_irq,
 
@@ -97,7 +97,7 @@ module br_amba_axil_msi #(
   `BR_ASSERT_STATIC(device_id_lte_addr_width_a, DeviceIdWidth <= AddrWidth)
   `BR_ASSERT_STATIC(event_id_lte_data_width_a, EventIdWidth <= DataWidth)
   `BR_ASSERT_STATIC(num_interrupts_gte_2_a, NumInterrupts >= 2)
-  `BR_ASSERT_STATIC(num_dest_addresses_gte_1_a, NumDestAddresses >= 1)
+  `BR_ASSERT_STATIC(num_msi_dest_addr_gte_1_a, NumMsiDestAddr >= 1)
   `BR_ASSERT_STATIC(throttle_cntr_width_gt_0_a, ThrottleCntrWidth > 0)
   //------------------------------------------
   // Implementation
@@ -108,7 +108,7 @@ module br_amba_axil_msi #(
   localparam int DataWidthPadding = DataWidth - 32;
   localparam int EventIdStrobeWidth = 4;  // always 4 bytes
   localparam int StrobeWidthPadding = StrobeWidth - EventIdStrobeWidth;
-  localparam int FifoWidth = DeviceIdWidth + EventIdWidth + DstAddrIdxWidth;
+  localparam int FifoWidth = DeviceIdWidth + EventIdWidth + MsiDstIdxWidth;
   localparam int WriteAddrFlowRegWidth = AddrWidth;
   localparam int WriteDataFlowRegWidth = DataWidth + StrobeWidth;
 
@@ -117,7 +117,7 @@ module br_amba_axil_msi #(
   logic [NumInterrupts-1:0] pending_irq, pending_irq_next;
   logic [DeviceIdWidth-1:0] device_id_to_send;
   logic [EventIdWidth-1:0] event_id_to_send;
-  logic [DstAddrIdxWidth-1:0] irq_dest_idx;
+  logic [MsiDstIdxWidth-1:0] irq_dest_idx;
   logic [AddrWidth-1:0] irq_dest_addr;
   logic [NumInterrupts-1:0][FifoWidth-1:0] fifo_push_data;
   logic [NumInterrupts-1:0] fifo_push_ready, fifo_push_valid;
