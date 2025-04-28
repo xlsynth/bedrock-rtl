@@ -164,6 +164,37 @@ module br_amba_axi_isolate_mgr #(
                     MaxAxiBurstLen == 1 || MaxAxiBurstLen == 2 ** br_amba::AxiBurstLenWidth)
 
   //
+  // Internal Signals
+  //
+
+  logic downstream_awready_int;
+  logic downstream_awvalid_int;
+  logic [AddrWidth-1:0] downstream_awaddr_int;
+  logic [IdWidth-1:0] downstream_awid_int;
+  logic [br_amba::AxiBurstSizeWidth-1:0] downstream_awsize_int;
+  logic [br_amba::AxiBurstTypeWidth-1:0] downstream_awburst_int;
+  logic [br_amba::AxiProtWidth-1:0] downstream_awprot_int;
+  logic [AWUserWidth-1:0] downstream_awuser_int;
+  logic [AxiBurstLenWidth-1:0] downstream_awlen_int;
+
+  logic downstream_wready_int;
+  logic downstream_wvalid_int;
+  logic [DataWidth-1:0] downstream_wdata_int;
+  logic [StrobeWidth-1:0] downstream_wstrb_int;
+  logic [WUserWidth-1:0] downstream_wuser_int;
+  logic downstream_wlast_int;
+
+  logic downstream_arready_int;
+  logic downstream_arvalid_int;
+  logic [AddrWidth-1:0] downstream_araddr_int;
+  logic [IdWidth-1:0] downstream_arid_int;
+  logic [br_amba::AxiBurstSizeWidth-1:0] downstream_arsize_int;
+  logic [br_amba::AxiBurstTypeWidth-1:0] downstream_arburst_int;
+  logic [br_amba::AxiProtWidth-1:0] downstream_arprot_int;
+  logic [ARUserWidth-1:0] downstream_aruser_int;
+  logic [AxiBurstLenWidth-1:0] downstream_arlen_int;
+
+  //
   // Write Path
   //
 
@@ -214,9 +245,9 @@ module br_amba_axi_isolate_mgr #(
       .downstream_awready (upstream_awready_iso),
       .downstream_awvalid (upstream_awvalid_iso),
       //
-      .downstream_wready  (downstream_wready),
-      .downstream_wvalid  (downstream_wvalid),
-      .downstream_wlast   (downstream_wlast)
+      .downstream_wready  (downstream_wready_int),
+      .downstream_wvalid  (downstream_wvalid_int),
+      .downstream_wlast   (downstream_wlast_int)
   );
 
   br_amba_iso_req_tracker #(
@@ -232,8 +263,8 @@ module br_amba_axi_isolate_mgr #(
       .upstream_xvalid(upstream_bvalid),
       .upstream_xlast(),
       //
-      .downstream_axready(downstream_awready),
-      .downstream_axvalid(downstream_awvalid),
+      .downstream_axready(downstream_awready_int),
+      .downstream_axvalid(downstream_awvalid_int),
       //
       .downstream_xready(downstream_bready),
       .downstream_xvalid(downstream_bvalid),
@@ -247,18 +278,18 @@ module br_amba_axi_isolate_mgr #(
   logic use_fake_w_data;
   assign use_fake_w_data = align_and_hold_req_w;
 
-  assign downstream_wuser = use_fake_w_data ? IsolateWUser : upstream_wuser;
-  assign downstream_wdata = use_fake_w_data ? IsolateWData : upstream_wdata;
-  assign downstream_wstrb = use_fake_w_data ? IsolateWStrb : upstream_wstrb;
+  assign downstream_wuser_int = use_fake_w_data ? IsolateWUser : upstream_wuser;
+  assign downstream_wdata_int = use_fake_w_data ? IsolateWData : upstream_wdata;
+  assign downstream_wstrb_int = use_fake_w_data ? IsolateWStrb : upstream_wstrb;
 
   // Pass-through signals
-  assign downstream_awaddr = upstream_awaddr;
-  assign downstream_awid = upstream_awid;
-  assign downstream_awsize = upstream_awsize;
-  assign downstream_awburst = upstream_awburst;
-  assign downstream_awlen = upstream_awlen;
-  assign downstream_awprot = upstream_awprot;
-  assign downstream_awuser = upstream_awuser;
+  assign downstream_awaddr_int = upstream_awaddr;
+  assign downstream_awid_int = upstream_awid;
+  assign downstream_awsize_int = upstream_awsize;
+  assign downstream_awburst_int = upstream_awburst;
+  assign downstream_awlen_int = upstream_awlen;
+  assign downstream_awprot_int = upstream_awprot;
+  assign downstream_awuser_int = upstream_awuser;
   //
   assign upstream_bid = downstream_bid;
   assign upstream_buser = downstream_buser;
@@ -313,8 +344,8 @@ module br_amba_axi_isolate_mgr #(
       .upstream_xvalid(upstream_rvalid),
       .upstream_xlast(upstream_rlast),
       //
-      .downstream_axready(downstream_arready),
-      .downstream_axvalid(downstream_arvalid),
+      .downstream_axready(downstream_arready_int),
+      .downstream_axvalid(downstream_arvalid_int),
       //
       .downstream_xready(downstream_rready),
       .downstream_xvalid(downstream_rvalid),
@@ -325,13 +356,13 @@ module br_amba_axi_isolate_mgr #(
   );
 
   // Pass-through signals
-  assign downstream_araddr = upstream_araddr;
-  assign downstream_arid = upstream_arid;
-  assign downstream_arsize = upstream_arsize;
-  assign downstream_arburst = upstream_arburst;
-  assign downstream_arlen = upstream_arlen;
-  assign downstream_arprot = upstream_arprot;
-  assign downstream_aruser = upstream_aruser;
+  assign downstream_araddr_int = upstream_araddr;
+  assign downstream_arid_int = upstream_arid;
+  assign downstream_arsize_int = upstream_arsize;
+  assign downstream_arburst_int = upstream_arburst;
+  assign downstream_arlen_int = upstream_arlen;
+  assign downstream_arprot_int = upstream_arprot;
+  assign downstream_aruser_int = upstream_aruser;
   //
   assign upstream_rdata = downstream_rdata;
   assign upstream_rresp = downstream_rresp;
@@ -356,5 +387,127 @@ module br_amba_axi_isolate_mgr #(
   `BR_ASSERT(no_accept_ar_when_isolated_a, isolate_done_r |-> !upstream_arready)
   `BR_ASSERT(no_accept_aw_when_isolated_a, isolate_done_w |-> !upstream_awready)
   `BR_ASSERT(no_accept_w_when_isolated_a, isolate_done_w |-> !upstream_wready)
+
+  //
+  // Downstream Output Register Stage
+  //
+
+  // This flop stage is needed to ensure that valid stability (required by AMBA protocol)
+  // is maintained on the downstream ports when entering isolation.
+
+  br_flow_reg_fwd #(
+      .Width($bits(
+          downstream_awaddr_int
+      ) + $bits(
+          downstream_awid_int
+      ) + $bits(
+          downstream_awsize_int
+      ) + $bits(
+          downstream_awburst_int
+      ) + $bits(
+          downstream_awlen_int
+      ) + $bits(
+          downstream_awprot_int
+      ) + $bits(
+          downstream_awuser_int
+      ))
+  ) br_flow_reg_fwd_ds_aw (
+      .clk,
+      .rst,
+      //
+      .push_valid(downstream_awvalid_int),
+      .push_data({
+        downstream_awaddr_int,
+        downstream_awid_int,
+        downstream_awsize_int,
+        downstream_awburst_int,
+        downstream_awlen_int,
+        downstream_awprot_int,
+        downstream_awuser_int
+      }),
+      .push_ready(downstream_awready_int),
+      //
+      .pop_valid(downstream_awvalid),
+      .pop_data({
+        downstream_awaddr,
+        downstream_awid,
+        downstream_awsize,
+        downstream_awburst,
+        downstream_awlen,
+        downstream_awprot,
+        downstream_awuser
+      }),
+      .pop_ready(downstream_awready)
+  );
+
+  br_flow_reg_fwd #(
+      .Width($bits(
+          downstream_wdata_int
+      ) + $bits(
+          downstream_wstrb_int
+      ) + $bits(
+          downstream_wuser_int
+      ) + $bits(
+          downstream_wlast_int
+      ))
+  ) br_flow_reg_fwd_ds_w (
+      .clk,
+      .rst,
+      //
+      .push_valid(downstream_wvalid_int),
+      .push_data({
+        downstream_wdata_int, downstream_wstrb_int, downstream_wuser_int, downstream_wlast_int
+      }),
+      .push_ready(downstream_wready_int),
+      //
+      .pop_valid(downstream_wvalid),
+      .pop_data({downstream_wdata, downstream_wstrb, downstream_wuser, downstream_wlast}),
+      .pop_ready(downstream_wready)
+  );
+
+  br_flow_reg_fwd #(
+      .Width($bits(
+          downstream_araddr_int
+      ) + $bits(
+          downstream_arid_int
+      ) + $bits(
+          downstream_arsize_int
+      ) + $bits(
+          downstream_arburst_int
+      ) + $bits(
+          downstream_arlen_int
+      ) + $bits(
+          downstream_arprot_int
+      ) + $bits(
+          downstream_aruser_int
+      ))
+  ) br_flow_reg_fwd_ds_ar (
+      .clk,
+      .rst,
+      //
+      .push_valid(downstream_arvalid_int),
+      .push_data({
+        downstream_araddr_int,
+        downstream_arid_int,
+        downstream_arsize_int,
+        downstream_arburst_int,
+        downstream_arlen_int,
+        downstream_arprot_int,
+        downstream_aruser_int
+      }),
+      .push_ready(downstream_arready_int),
+      //
+      .pop_valid(downstream_arvalid),
+      .pop_data({
+        downstream_araddr,
+        downstream_arid,
+        downstream_arsize,
+        downstream_arburst,
+        downstream_arlen,
+        downstream_arprot,
+        downstream_aruser
+      }),
+      .pop_ready(downstream_arready)
+  );
 
 endmodule
