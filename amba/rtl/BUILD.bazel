@@ -360,35 +360,3 @@ br_verilog_elab_and_lint_test_suite(
     },
     deps = [":br_amba_axi_isolate_sub"],
 )
-
-verilog_library(
-    name = "br_amba_axi_isolate_mgr",
-    srcs = ["br_amba_axi_isolate_mgr.sv"],
-    deps = [
-        ":br_amba_pkg",
-        "//amba/rtl/internal:br_amba_iso_req_tracker",
-        "//amba/rtl/internal:br_amba_iso_us_fsm",
-        "//amba/rtl/internal:br_amba_iso_wdata_align",
-        "//macros:br_asserts_internal",
-        "//macros:br_registers",
-        "//pkg:br_math_pkg",
-    ],
-)
-
-br_verilog_elab_and_lint_test_suite(
-    name = "br_amba_axi_isolate_mgr_test_suite",
-    params = {
-        "AddrWidth": ["64"],
-        "DataWidth": ["128"],
-        "IdWidth": ["8"],
-        "MaxOutstanding": [
-            "128",
-            "2",
-        ],
-        "MaxAxiBurstLen": [
-            "1",
-            "256",
-        ],
-    },
-    deps = [":br_amba_axi_isolate_mgr"],
-)
