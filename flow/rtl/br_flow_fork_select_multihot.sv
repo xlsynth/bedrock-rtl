@@ -25,8 +25,8 @@
 
 module br_flow_fork_select_multihot #(
     parameter int NumFlows = 2,  // Must be at least 2
-    // If 1, cover that the select_multihot signal is multihot when valid is high.
-    // If 0, assert that the select_multihot signal is always onehot when valid is high.
+    // If 1, cover that the push_select_multihot signal is multihot when valid is high.
+    // If 0, assert that the push_select_multihot signal is always onehot when valid is high.
     parameter bit EnableCoverSelectMultihot = 1,
     // If 1, cover that the push side experiences backpressure.
     // If 0, assert that there is never backpressure.
@@ -34,8 +34,8 @@ module br_flow_fork_select_multihot #(
     // If 1, assert that push_valid is stable when backpressured.
     // If 0, cover that push_valid can be unstable.
     parameter bit EnableAssertPushValidStability = EnableCoverPushBackpressure,
-    // If 1, assert that select_multihot is stable when backpressured.
-    // If 0, cover that select_multihot can be unstable.
+    // If 1, assert that push_select_multihot is stable when backpressured.
+    // If 0, cover that push_select_multihot can be unstable.
     parameter bit EnableAssertSelectMultihotStability = EnableAssertPushValidStability,
     // If 1, then assert there are no valid bits asserted at the end of the test.
     parameter bit EnableAssertFinalNotValid = 1
@@ -50,7 +50,8 @@ module br_flow_fork_select_multihot #(
     // Push-side interface
     output logic push_ready,
     input logic push_valid,
-    input logic [NumFlows-1:0] push_select_multihot,  // pop-side selection, but qualified by push_valid
+    // Pop-side selection, but qualified by push_valid
+    input logic [NumFlows-1:0] push_select_multihot,
 
     // Pop-side interfaces
     //
@@ -66,7 +67,7 @@ module br_flow_fork_select_multihot #(
   //------------------------------------------
   `BR_ASSERT_STATIC(num_flows_gte_2_a, NumFlows >= 2)
 
-  `BR_ASSERT_INTG(select_not_0_when_valid_a, push_valid |-> (|select_multihot))
+  `BR_ASSERT_INTG(select_not_0_when_valid_a, push_valid |-> (|push_select_multihot))
   br_flow_checks_valid_data_intg #(
       .NumFlows(1),
       .Width(NumFlows),
@@ -79,14 +80,14 @@ module br_flow_fork_select_multihot #(
       .rst,
       .ready(push_ready),
       .valid(push_valid),
-      .data (select_multihot)
+      .data (push_select_multihot)
   );
   if (EnableCoverSelectMultihot) begin : gen_cover_select_multihot
-    `BR_COVER_INTG(select_multihot_c, push_valid && !($onehot(select_multihot)))
+    `BR_COVER_INTG(select_multihot_c, push_valid && $countones(push_select_multihot) > 1)
   end else begin : gen_assert_onehot_select
-    `BR_ASSERT_INTG(select_onehot_a, push_valid |-> $onehot(select_multihot))
+    `BR_ASSERT_INTG(select_onehot_a, push_valid |-> $onehot(push_select_multihot))
   end
-  `BR_ASSERT_INTG(select_multihot_known_a, push_valid |-> ($countones(select_multihot) > 1))
+  `BR_ASSERT_INTG(select_multihot_known_a, push_valid |-> !$isunknown(push_select_multihot))
 
   //------------------------------------------
   // Implementation
@@ -94,17 +95,17 @@ module br_flow_fork_select_multihot #(
   always_comb begin
     push_ready = '1;
     for (int i = 0; i < NumFlows; i++) begin
-      push_ready &= !select_multihot[i] || pop_ready[i];
+      push_ready &= !push_select_multihot[i] || pop_ready[i];
     end
   end
 
   for (genvar i = 0; i < NumFlows; i++) begin : gen_flows
     always_comb begin
-      pop_valid_unstable[i] = push_valid && select_multihot[i];
+      pop_valid_unstable[i] = push_valid && push_select_multihot[i];
       for (int j = 0; j < NumFlows; j++) begin
         // Keep valid if all other valid flows are ready
         if (i != j) begin
-          pop_valid_unstable[i] &= !select_multihot[j] || pop_ready[j];
+          pop_valid_unstable[i] &= !push_select_multihot[j] || pop_ready[j];
         end
       end
     end
