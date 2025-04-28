@@ -240,14 +240,12 @@ module br_amba_axi_isolate_sub #(
       //
       .upstream_wready,
       .upstream_wvalid,
-      .upstream_wlast(1'b0),
       //
       .downstream_awready (upstream_awready_holdoff),
       .downstream_awvalid (upstream_awvalid_holdoff),
       //
       .downstream_wready  (downstream_wready_iso),
-      .downstream_wvalid  (downstream_wvalid_iso),
-      .downstream_wlast   ()
+      .downstream_wvalid  (downstream_wvalid_iso)
   );
 
   br_amba_iso_resp_tracker #(
@@ -413,9 +411,9 @@ module br_amba_axi_isolate_sub #(
 
   // isolate_done is asserted when both write and read done signals rise
   // and deasserted after both done signals fall
-  assign isolate_done_next = isolate_done ?
-                            (isolate_done_w || isolate_done_r)
-                            : (isolate_done_w && isolate_done_r);
+  assign isolate_done_next = isolate_req ?
+                            (isolate_done_w && isolate_done_r)
+                            : !(isolate_done_w || isolate_done_r);
 
   `BR_REG(isolate_done, isolate_done_next)
 

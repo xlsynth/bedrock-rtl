@@ -12,12 +12,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Bedrock-RTL AXI Downstream (Subordinate) Isolator
+// Bedrock-RTL AXI4 to AXI4-Lite Bridge FPV checks
 
 `include "br_asserts.svh"
 `include "br_registers.svh"
 
-module br_amba_axi_isolate_sub_fpv_monitor #(
+module br_amba_axi_isolate_mgr_fpv_monitor #(
     // Width of the AXI address field.
     parameter int AddrWidth = 12,
     // Width of the AXI data field.
@@ -37,9 +37,6 @@ module br_amba_axi_isolate_sub_fpv_monitor #(
     // Maximum number of outstanding requests that can be tracked
     // without backpressuring the upstream request ports. Must be at least 2.
     parameter int MaxOutstanding = 128,
-    // Number of unique AXI IDs that can be tracked. Must be less
-    // than or equal to 2^IdWidth. Valid ids are 0 to AxiIdCount-1.
-    parameter int AxiIdCount = 2 ** IdWidth,
     // Maximum allowed skew (measured in max-length transactions)
     // that can be tracked between AW and W channels without causing
     // backpressure on the upstream ports.
@@ -48,20 +45,12 @@ module br_amba_axi_isolate_sub_fpv_monitor #(
     // to 1 for AXI-Lite, otherwise must be set to
     // br_amba::AxiBurstLenWidth.
     parameter int MaxAxiBurstLen = 2 ** br_amba::AxiBurstLenWidth,
-    // Response to generate for isolated transactions.
-    parameter br_amba::axi_resp_t IsolateResp = br_amba::AxiRespSlverr,
-    // BUSER data to generate for isolated transactions.
-    parameter bit [BUserWidth-1:0] IsolateBUser = '0,
-    // RUSER data to generate for isolated transactions.
-    parameter bit [RUserWidth-1:0] IsolateRUser = '0,
-    // RDATA data to generate for isolated transactions.
-    parameter bit [DataWidth-1:0] IsolateRData = '0,
-    // Number of pipeline stages to use for the pointer RAM read
-    // data. Has no effect if AxiIdCount == 1.
-    parameter bit FlopPtrRamRd = 0,
-    // Number of pipeline stages to use for the data RAM read data.
-    // Has no effect if AxiIdCount == 1.
-    parameter bit FlopDataRamRd = 0,
+    // WUSER data to generate for isolated transactions.
+    parameter bit [WUserWidth-1:0] IsolateWUser = '0,
+    // WDATA data to generate for isolated transactions.
+    parameter bit [DataWidth-1:0] IsolateWData = '0,
+    // WSTRB data to generate for isolated transactions.
+    parameter bit [(DataWidth/8)-1:0] IsolateWStrb = '0,
     localparam int AxiBurstLenWidth = br_math::clamped_clog2(MaxAxiBurstLen),
     localparam int StrobeWidth = DataWidth / 8
 ) (
@@ -236,9 +225,10 @@ module br_amba_axi_isolate_sub_fpv_monitor #(
       .downstream_rready
   );
 
-endmodule : br_amba_axi_isolate_sub_fpv_monitor
 
-bind br_amba_axi_isolate_sub br_amba_axi_isolate_sub_fpv_monitor #(
+endmodule : br_amba_axi_isolate_mgr_fpv_monitor
+
+bind br_amba_axi_isolate_mgr br_amba_axi_isolate_mgr_fpv_monitor #(
     .AddrWidth(AddrWidth),
     .DataWidth(DataWidth),
     .IdWidth(IdWidth),
@@ -248,13 +238,9 @@ bind br_amba_axi_isolate_sub br_amba_axi_isolate_sub_fpv_monitor #(
     .BUserWidth(BUserWidth),
     .RUserWidth(RUserWidth),
     .MaxOutstanding(MaxOutstanding),
-    .AxiIdCount(AxiIdCount),
     .MaxTransactionSkew(MaxTransactionSkew),
     .MaxAxiBurstLen(MaxAxiBurstLen),
-    .IsolateResp(IsolateResp),
-    .IsolateBUser(IsolateBUser),
-    .IsolateRUser(IsolateRUser),
-    .IsolateRData(IsolateRData),
-    .FlopPtrRamRd(FlopPtrRamRd),
-    .FlopDataRamRd(FlopDataRamRd)
+    .IsolateWUser(IsolateWUser),
+    .IsolateWData(IsolateWData),
+    .IsolateWStrb(IsolateWStrb)
 ) monitor (.*);
