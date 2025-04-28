@@ -369,6 +369,7 @@ verilog_library(
         "//amba/rtl/internal:br_amba_iso_req_tracker",
         "//amba/rtl/internal:br_amba_iso_us_fsm",
         "//amba/rtl/internal:br_amba_iso_wdata_align",
+        "//flow/rtl:br_flow_reg_fwd",
         "//macros:br_asserts_internal",
         "//macros:br_registers",
         "//pkg:br_math_pkg",
