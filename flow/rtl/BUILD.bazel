@@ -79,6 +79,16 @@ verilog_library(
 )
 
 verilog_library(
+    name = "br_flow_fork_select_multihot",
+    srcs = ["br_flow_fork_select_multihot.sv"],
+    deps = [
+        "//flow/rtl/internal:br_flow_checks_valid_data_impl",
+        "//flow/rtl/internal:br_flow_checks_valid_data_intg",
+        "//macros:br_asserts_internal",
+    ],
+)
+
+verilog_library(
     name = "br_flow_join",
     srcs = ["br_flow_join.sv"],
     deps = [
@@ -326,6 +336,22 @@ br_verilog_elab_and_lint_test_suite(
         ],
     },
     deps = [":br_flow_fork"],
+)
+
+br_verilog_elab_and_lint_test_suite(
+    name = "br_flow_fork_select_multihot_test_suite",
+    params = {
+        "NumFlows": [
+            "2",
+            "3",
+            "7",
+        ],
+        "EnableCoverSelectMultihot": [
+            "0",
+            "1",
+        ],
+    },
+    deps = [":br_flow_fork_select_multihot"],
 )
 
 br_verilog_elab_and_lint_test_suite(
