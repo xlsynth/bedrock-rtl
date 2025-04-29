@@ -188,7 +188,7 @@ br_verilog_fpv_test_tools_suite(
         ],
     },
     tools = {
-        "jg": "",
+        "jg": "br_tracker_linked_list_ctrl_fpv.jg.tcl",
         "vcf": "",
     },
     top = "br_tracker_linked_list_ctrl",
