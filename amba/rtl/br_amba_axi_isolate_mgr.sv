@@ -12,41 +12,32 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 //
-// Bedrock-RTL AXI Downstream (Subordinate) Isolator
+// Bedrock-RTL AXI Upstream (Manager) Isolator
 //
-// This module is used to isolate a downstream AXI subordinate from an
-// upstream AXI manager such that the downstream subordinate can be reset
-// while maintaining the protocol integrity of the upstream interconnect.
-//
-// The isolator will generate responses for any transactions that are
-// pending on the downstream side when isolation is requested and continue
-// generating responses for any new transactions destined for the
-// subordinate while the subordinate is isolated.
+// This module is used to isolate an upstream AXI manager from a downstream
+// AXI subordinate such that the upstream manager can be reset while
+// maintaining the protocol integrity of the downstream interconnect.
 //
 // Isolation is requested by asserting the isolate_req signal and holding
 // it for the duration of the isolation. Isolation is complete (and
-// downstream subordinate may be safely reset) when the isolate_done
-// signal asserts in response to the assertion of isolate_req.
+// upstream manager may be safely reset) when the isolate_done signal
+// asserts in response to the assertion of isolate_req.
 //
-// Once the downstream subordinate is ready to re-connect, the isolate_req
-// signal may be deasserted and the subordinate will resume normal
+// Once the upstream manager is ready to re-connect, the isolate_req
+// signal may be deasserted and the manager will resume normal
 // operation. The isolate_done signal will deassert in response to the
-// deassertion of isolate_req. Any new transactions accepted after
-// isolate_done deasserts (as long as isolate_req remains low) are
-// guaranteed to pass to the downstream.
-//
-// Read response data interleaving is not supported.
+// deassertion of isolate_req, after which new transactions will be forwarded
+// from upstream->downstream normally.
 //
 // Isolation is guaranteed to complete without any assumption about the
-// state of the downstream interface and may be used to recover in cases
-// where a subordinate becomes stuck or otherwise unable to make forward
+// state of the upstream interface and may be used to recover in cases
+// where a manager becomes stuck or otherwise unable to make forward
 // progress.
 
 `include "br_registers.svh"
 `include "br_asserts_internal.svh"
-`include "br_unused.svh"
 
-module br_amba_axi_isolate_sub #(
+module br_amba_axi_isolate_mgr #(
     // Width of the AXI address field.
     parameter int AddrWidth = 12,
     // Width of the AXI data field.
@@ -66,9 +57,6 @@ module br_amba_axi_isolate_sub #(
     // Maximum number of outstanding requests that can be tracked
     // without backpressuring the upstream request ports. Must be at least 2.
     parameter int MaxOutstanding = 128,
-    // Number of unique AXI IDs that can be tracked. Must be less
-    // than or equal to 2^IdWidth. Valid ids are 0 to AxiIdCount-1.
-    parameter int AxiIdCount = 2 ** IdWidth,
     // Maximum allowed skew (measured in max-length transactions)
     // that can be tracked between AW and W channels without causing
     // backpressure on the upstream ports.
@@ -77,20 +65,12 @@ module br_amba_axi_isolate_sub #(
     // to 1 for AXI-Lite, otherwise must be set to
     // br_amba::AxiBurstLenWidth.
     parameter int MaxAxiBurstLen = 2 ** br_amba::AxiBurstLenWidth,
-    // Response to generate for isolated transactions.
-    parameter br_amba::axi_resp_t IsolateResp = br_amba::AxiRespSlverr,
-    // BUSER data to generate for isolated transactions.
-    parameter bit [BUserWidth-1:0] IsolateBUser = '0,
-    // RUSER data to generate for isolated transactions.
-    parameter bit [RUserWidth-1:0] IsolateRUser = '0,
-    // RDATA data to generate for isolated transactions.
-    parameter bit [DataWidth-1:0] IsolateRData = '0,
-    // Number of pipeline stages to use for the pointer RAM read
-    // data. Has no effect if AxiIdCount == 1.
-    parameter bit FlopPtrRamRd = 0,
-    // Number of pipeline stages to use for the data RAM read data.
-    // Has no effect if AxiIdCount == 1.
-    parameter bit FlopDataRamRd = 0,
+    // WUSER data to generate for isolated transactions.
+    parameter bit [WUserWidth-1:0] IsolateWUser = '0,
+    // WDATA data to generate for isolated transactions.
+    parameter bit [DataWidth-1:0] IsolateWData = '0,
+    // WSTRB data to generate for isolated transactions.
+    parameter bit [(DataWidth/8)-1:0] IsolateWStrb = '0,
     localparam int AxiBurstLenWidth = br_math::clamped_clog2(MaxAxiBurstLen),
     localparam int StrobeWidth = DataWidth / 8
 ) (
@@ -179,37 +159,59 @@ module br_amba_axi_isolate_sub #(
   // Integration Checks
   //
 
-  localparam int MinIdWidth = br_math::clamped_clog2(AxiIdCount);
-
   `BR_ASSERT_STATIC(max_outstanding_gt_1_a, MaxOutstanding > 1)
-  `BR_ASSERT_STATIC(have_enough_ids_a, AxiIdCount <= 2 ** IdWidth)
   `BR_ASSERT_STATIC(burst_len_legal_a,
                     MaxAxiBurstLen == 1 || MaxAxiBurstLen == 2 ** br_amba::AxiBurstLenWidth)
-  if (MinIdWidth < IdWidth) begin : gen_id_width_lt_len_width
-    `BR_ASSERT_INTG(unused_upper_awid_zero_a,
-                    upstream_awvalid |-> upstream_awid[IdWidth-1:MinIdWidth] == '0)
-    `BR_ASSERT_INTG(unused_upper_arid_zero_a,
-                    upstream_arvalid |-> upstream_arid[IdWidth-1:MinIdWidth] == '0)
-  end
+  // Check that the isolate request can only rise when isolate_done is false.
+  `BR_ASSERT_INTG(legal_request_rise_a, $rose(isolate_req) |-> !isolate_done)
+  // Check that the isolate request can only fall when isolate_done is true.
+  `BR_ASSERT_INTG(legal_request_fall_a, $fell(isolate_req) |-> isolate_done)
+
+  //
+  // Internal Signals
+  //
+
+  logic downstream_awready_int;
+  logic downstream_awvalid_int;
+  logic [AddrWidth-1:0] downstream_awaddr_int;
+  logic [IdWidth-1:0] downstream_awid_int;
+  logic [br_amba::AxiBurstSizeWidth-1:0] downstream_awsize_int;
+  logic [br_amba::AxiBurstTypeWidth-1:0] downstream_awburst_int;
+  logic [br_amba::AxiProtWidth-1:0] downstream_awprot_int;
+  logic [AWUserWidth-1:0] downstream_awuser_int;
+  logic [AxiBurstLenWidth-1:0] downstream_awlen_int;
+
+  logic downstream_wready_int;
+  logic downstream_wvalid_int;
+  logic [DataWidth-1:0] downstream_wdata_int;
+  logic [StrobeWidth-1:0] downstream_wstrb_int;
+  logic [WUserWidth-1:0] downstream_wuser_int;
+  logic downstream_wlast_int;
+
+  logic downstream_arready_int;
+  logic downstream_arvalid_int;
+  logic [AddrWidth-1:0] downstream_araddr_int;
+  logic [IdWidth-1:0] downstream_arid_int;
+  logic [br_amba::AxiBurstSizeWidth-1:0] downstream_arsize_int;
+  logic [br_amba::AxiBurstTypeWidth-1:0] downstream_arburst_int;
+  logic [br_amba::AxiProtWidth-1:0] downstream_arprot_int;
+  logic [ARUserWidth-1:0] downstream_aruser_int;
+  logic [AxiBurstLenWidth-1:0] downstream_arlen_int;
 
   //
   // Write Path
   //
 
-  logic downstream_wready_iso;
-  logic downstream_wvalid_iso;
-  logic downstream_awready_iso;
-  logic downstream_awvalid_iso;
-  logic upstream_awready_holdoff;
-  logic upstream_awvalid_holdoff;
+  logic upstream_awready_iso;
+  logic upstream_awvalid_iso;
   //
   logic isolate_done_w;
   logic align_and_hold_req_w;
   logic align_and_hold_done_w;
-  logic isolate_req_w;
-  logic resp_tracker_fifo_empty_w;
+  logic req_tracker_isolate_req_w;
+  logic req_tracker_isolate_done_w;
 
-  br_amba_iso_ds_fsm br_amba_iso_ds_fsm_w (
+  br_amba_iso_us_fsm br_amba_iso_us_fsm_w (
       .clk,
       .rst,
       //
@@ -219,14 +221,16 @@ module br_amba_axi_isolate_sub #(
       .align_and_hold_req(align_and_hold_req_w),
       .align_and_hold_done(align_and_hold_done_w),
       //
-      .resp_tracker_isolate_req(isolate_req_w),
-      .resp_tracker_fifo_empty(resp_tracker_fifo_empty_w)
+      .req_tracker_isolate_req(req_tracker_isolate_req_w),
+      .req_tracker_isolate_done(req_tracker_isolate_done_w)
   );
 
   br_amba_iso_wdata_align #(
       .MaxTransactionSkew(MaxTransactionSkew),
       .MaxAxiBurstLen(MaxAxiBurstLen),
-      .AxiBurstLenWidth(AxiBurstLenWidth)
+      .AxiBurstLenWidth(AxiBurstLenWidth),
+      .PreventExcessData(1),
+      .FakeWriteDataOnAlign(1)
   ) br_amba_iso_wdata_align_w (
       .clk,
       .rst,
@@ -240,96 +244,75 @@ module br_amba_axi_isolate_sub #(
       //
       .upstream_wready,
       .upstream_wvalid,
-      .upstream_wlast(1'b0),
+      .upstream_wlast,
       //
-      .downstream_awready (upstream_awready_holdoff),
-      .downstream_awvalid (upstream_awvalid_holdoff),
+      .downstream_awready (upstream_awready_iso),
+      .downstream_awvalid (upstream_awvalid_iso),
       //
-      .downstream_wready  (downstream_wready_iso),
-      .downstream_wvalid  (downstream_wvalid_iso),
-      .downstream_wlast   ()
+      .downstream_wready  (downstream_wready_int),
+      .downstream_wvalid  (downstream_wvalid_int),
+      .downstream_wlast   (downstream_wlast_int)
   );
 
-  br_amba_iso_resp_tracker #(
-      .MaxOutstanding(MaxOutstanding),
-      .AxiIdCount(AxiIdCount),
-      .AxiIdWidth(IdWidth),
-      .DataWidth(BUserWidth),
-      .FlopPtrRamRd(FlopPtrRamRd),
-      .FlopDataRamRd(FlopDataRamRd),
-      .IsolateResp(IsolateResp),
-      .IsolateData(IsolateBUser),
-      // Single write response beat per write transaction
-      .MaxAxiBurstLen(1)
-  ) br_amba_iso_resp_tracker_w (
+  br_amba_iso_req_tracker #(
+      .MaxOutstanding(MaxOutstanding)
+  ) br_amba_iso_req_tracker_w (
       .clk,
       .rst,
       //
-      .isolate_req(isolate_req_w),
-      .resp_fifo_empty(resp_tracker_fifo_empty_w),
-      //
-      .upstream_axready(upstream_awready_holdoff),
-      .upstream_axvalid(upstream_awvalid_holdoff),
-      .upstream_axid(upstream_awid),
-      // write responses only have a single beat
-      .upstream_axlen(1'b0),
+      .upstream_axready(upstream_awready_iso),
+      .upstream_axvalid(upstream_awvalid_iso),
       //
       .upstream_xready(upstream_bready),
       .upstream_xvalid(upstream_bvalid),
-      .upstream_xid(upstream_bid),
-      .upstream_xresp({upstream_bresp}),  // ri lint_check_waive ENUM_RHS
       .upstream_xlast(),
-      .upstream_xdata(upstream_buser),
       //
-      .downstream_axready(downstream_awready_iso),
-      .downstream_axvalid(downstream_awvalid_iso),
-      .downstream_axid(downstream_awid),
-      .downstream_axlen(),
+      .downstream_axready(downstream_awready_int),
+      .downstream_axvalid(downstream_awvalid_int),
       //
       .downstream_xready(downstream_bready),
       .downstream_xvalid(downstream_bvalid),
-      .downstream_xid(downstream_bid),
-      .downstream_xresp(br_amba::axi_resp_t'(downstream_bresp)),
-      .downstream_xlast(downstream_bvalid),
-      .downstream_xdata(downstream_buser)
+      .downstream_xlast(1'b1),
+      //
+      .isolate_req(req_tracker_isolate_req_w),
+      .isolate_done(req_tracker_isolate_done_w)
   );
 
-  // When isolating, downstream AW/W valid are forced to 1'b0, downstream
-  // ready are forced to 1'b1 (incoming requests are discarded instead of
-  // being passed downstream)
-  assign downstream_wvalid = downstream_wvalid_iso && !isolate_req_w;
-  assign downstream_wready_iso = downstream_wready || isolate_req_w;
-  assign downstream_awvalid = downstream_awvalid_iso && !isolate_req_w;
-  assign downstream_awready_iso = downstream_awready || isolate_req_w;
+  // Need to insert fake data values on the downstream W channel during write alignment.
+  logic use_fake_w_data;
+  assign use_fake_w_data = align_and_hold_req_w;
+
+  assign downstream_wuser_int = use_fake_w_data ? IsolateWUser : upstream_wuser;
+  assign downstream_wdata_int = use_fake_w_data ? IsolateWData : upstream_wdata;
+  assign downstream_wstrb_int = use_fake_w_data ? IsolateWStrb : upstream_wstrb;
 
   // Pass-through signals
-  assign downstream_awaddr = upstream_awaddr;
-  assign downstream_awsize = upstream_awsize;
-  assign downstream_awburst = upstream_awburst;
-  assign downstream_awlen = upstream_awlen;
-  assign downstream_awprot = upstream_awprot;
-  assign downstream_awuser = upstream_awuser;
+  assign downstream_awaddr_int = upstream_awaddr;
+  assign downstream_awid_int = upstream_awid;
+  assign downstream_awsize_int = upstream_awsize;
+  assign downstream_awburst_int = upstream_awburst;
+  assign downstream_awlen_int = upstream_awlen;
+  assign downstream_awprot_int = upstream_awprot;
+  assign downstream_awuser_int = upstream_awuser;
   //
-  assign downstream_wdata = upstream_wdata;
-  assign downstream_wstrb = upstream_wstrb;
-  assign downstream_wuser = upstream_wuser;
-  assign downstream_wlast = upstream_wlast;
+  assign upstream_bid = downstream_bid;
+  assign upstream_buser = downstream_buser;
+  assign upstream_bresp = downstream_bresp;
 
   //
   // Read Path
   //
-  logic downstream_arready_iso;
-  logic downstream_arvalid_iso;
-  logic upstream_arready_holdoff;
-  logic upstream_arvalid_holdoff;
+
+  logic upstream_arready_iso;
+  logic upstream_arvalid_iso;
   //
   logic isolate_done_r;
   logic align_and_hold_req_r;
   logic align_and_hold_done_r;
-  logic isolate_req_r;
-  logic resp_tracker_fifo_empty_r;
+  logic req_tracker_isolate_req_r;
+  logic req_tracker_isolate_done_r;
 
-  br_amba_iso_ds_fsm br_amba_iso_ds_fsm_r (
+  br_amba_iso_us_fsm br_amba_iso_us_fsm_r (
       .clk,
       .rst,
       //
@@ -339,71 +322,56 @@ module br_amba_axi_isolate_sub #(
       .align_and_hold_req(align_and_hold_req_r),
       .align_and_hold_done(align_and_hold_done_r),
       //
-      .resp_tracker_isolate_req(isolate_req_r),
-      .resp_tracker_fifo_empty(resp_tracker_fifo_empty_r)
+      .req_tracker_isolate_req(req_tracker_isolate_req_r),
+      .req_tracker_isolate_done(req_tracker_isolate_done_r)
   );
 
   // No alignment needed (since there is only a single read request channel),
-  // just simple backpressure.
-  assign upstream_arvalid_holdoff = upstream_arvalid && !align_and_hold_req_r;
-  assign upstream_arready = upstream_arready_holdoff && !align_and_hold_req_r;
-  assign align_and_hold_done_r = align_and_hold_req_r;
+  // just simple backpressure of upstream read requests.
+  logic upstream_blocked_r;
 
-  br_amba_iso_resp_tracker #(
-      .MaxOutstanding(MaxOutstanding),
-      .AxiIdCount(AxiIdCount),
-      .AxiIdWidth(IdWidth),
-      .DataWidth(RUserWidth + DataWidth),
-      .FlopPtrRamRd(FlopPtrRamRd),
-      .FlopDataRamRd(FlopDataRamRd),
-      .IsolateResp(IsolateResp),
-      .IsolateData({IsolateRUser, IsolateRData}),
-      // MaxAxiBurstLen response beats per read transaction
-      .MaxAxiBurstLen(MaxAxiBurstLen)
-  ) br_amba_iso_resp_tracker_r (
+  assign upstream_blocked_r = align_and_hold_req_r || align_and_hold_done_r;
+  assign align_and_hold_done_r = align_and_hold_req_r;
+  assign upstream_arvalid_iso = upstream_arvalid && !upstream_blocked_r;
+  assign upstream_arready = upstream_arready_iso && !upstream_blocked_r;
+
+  br_amba_iso_req_tracker #(
+      .MaxOutstanding(MaxOutstanding)
+  ) br_amba_iso_req_tracker_r (
       .clk,
       .rst,
       //
-      .isolate_req(isolate_req_r),
-      .resp_fifo_empty(resp_tracker_fifo_empty_r),
-      //
-      .upstream_axready(upstream_arready_holdoff),
-      .upstream_axvalid(upstream_arvalid_holdoff),
-      .upstream_axid(upstream_arid),
-      .upstream_axlen(upstream_arlen),
+      .upstream_axready(upstream_arready_iso),
+      .upstream_axvalid(upstream_arvalid_iso),
       //
       .upstream_xready(upstream_rready),
       .upstream_xvalid(upstream_rvalid),
-      .upstream_xid(upstream_rid),
-      .upstream_xresp({upstream_rresp}),  // ri lint_check_waive ENUM_RHS
       .upstream_xlast(upstream_rlast),
-      .upstream_xdata({upstream_ruser, upstream_rdata}),
       //
-      .downstream_axready(downstream_arready_iso),
-      .downstream_axvalid(downstream_arvalid_iso),
-      .downstream_axid(downstream_arid),
-      .downstream_axlen(downstream_arlen),
+      .downstream_axready(downstream_arready_int),
+      .downstream_axvalid(downstream_arvalid_int),
       //
       .downstream_xready(downstream_rready),
       .downstream_xvalid(downstream_rvalid),
-      .downstream_xid(downstream_rid),
-      .downstream_xresp(br_amba::axi_resp_t'(downstream_rresp)),
       .downstream_xlast(downstream_rlast),
-      .downstream_xdata({downstream_ruser, downstream_rdata})
+      //
+      .isolate_req(req_tracker_isolate_req_r),
+      .isolate_done(req_tracker_isolate_done_r)
   );
 
-  // When isolating, downstream AR valid are forced to 1'b0, downstream
-  // ready are forced to 1'b1 (incoming requests are discarded instead of
-  // being passed downstream)
-  assign downstream_arvalid = downstream_arvalid_iso && !isolate_req_r;
-  assign downstream_arready_iso = downstream_arready || isolate_req_r;
-
   // Pass-through signals
-  assign downstream_araddr = upstream_araddr;
-  assign downstream_arsize = upstream_arsize;
-  assign downstream_arburst = upstream_arburst;
-  assign downstream_arprot = upstream_arprot;
-  assign downstream_aruser = upstream_aruser;
+  assign downstream_araddr_int = upstream_araddr;
+  assign downstream_arid_int = upstream_arid;
+  assign downstream_arsize_int = upstream_arsize;
+  assign downstream_arburst_int = upstream_arburst;
+  assign downstream_arlen_int = upstream_arlen;
+  assign downstream_arprot_int = upstream_arprot;
+  assign downstream_aruser_int = upstream_aruser;
+  //
+  assign upstream_rdata = downstream_rdata;
+  assign upstream_rresp = downstream_rresp;
+  assign upstream_ruser = downstream_ruser;
+  assign upstream_rid = downstream_rid;
 
   //
   // Done Output
@@ -418,5 +386,138 @@ module br_amba_axi_isolate_sub #(
                             : (isolate_done_w && isolate_done_r);
 
   `BR_REG(isolate_done, isolate_done_next)
+
+  // Assertions
+  `BR_ASSERT(no_accept_ar_when_isolated_a, isolate_done_r |-> !upstream_arready)
+  `BR_ASSERT(no_accept_aw_when_isolated_a, isolate_done_w |-> !upstream_awready)
+  `BR_ASSERT(no_accept_w_when_isolated_a, isolate_done_w |-> !upstream_wready)
+
+  //
+  // Downstream Output Register Stage
+  //
+
+  // This flop stage is needed to ensure that valid stability (required by AMBA protocol)
+  // is maintained on the downstream ports when entering isolation.
+
+  br_flow_reg_fwd #(
+      .Width($bits(
+          downstream_awaddr_int
+      ) + $bits(
+          downstream_awid_int
+      ) + $bits(
+          downstream_awsize_int
+      ) + $bits(
+          downstream_awburst_int
+      ) + $bits(
+          downstream_awlen_int
+      ) + $bits(
+          downstream_awprot_int
+      ) + $bits(
+          downstream_awuser_int
+      )),
+      .EnableAssertPushValidStability(0),
+      .EnableAssertPushDataStability(0)
+  ) br_flow_reg_fwd_ds_aw (
+      .clk,
+      .rst,
+      //
+      .push_valid(downstream_awvalid_int),
+      .push_data({
+        downstream_awaddr_int,
+        downstream_awid_int,
+        downstream_awsize_int,
+        downstream_awburst_int,
+        downstream_awlen_int,
+        downstream_awprot_int,
+        downstream_awuser_int
+      }),
+      .push_ready(downstream_awready_int),
+      //
+      .pop_valid(downstream_awvalid),
+      .pop_data({
+        downstream_awaddr,
+        downstream_awid,
+        downstream_awsize,
+        downstream_awburst,
+        downstream_awlen,
+        downstream_awprot,
+        downstream_awuser
+      }),
+      .pop_ready(downstream_awready)
+  );
+
+  br_flow_reg_fwd #(
+      .Width($bits(
+          downstream_wdata_int
+      ) + $bits(
+          downstream_wstrb_int
+      ) + $bits(
+          downstream_wuser_int
+      ) + $bits(
+          downstream_wlast_int
+      )),
+      .EnableAssertPushValidStability(0),
+      .EnableAssertPushDataStability(0)
+  ) br_flow_reg_fwd_ds_w (
+      .clk,
+      .rst,
+      //
+      .push_valid(downstream_wvalid_int),
+      .push_data({
+        downstream_wdata_int, downstream_wstrb_int, downstream_wuser_int, downstream_wlast_int
+      }),
+      .push_ready(downstream_wready_int),
+      //
+      .pop_valid(downstream_wvalid),
+      .pop_data({downstream_wdata, downstream_wstrb, downstream_wuser, downstream_wlast}),
+      .pop_ready(downstream_wready)
+  );
+
+  br_flow_reg_fwd #(
+      .Width($bits(
+          downstream_araddr_int
+      ) + $bits(
+          downstream_arid_int
+      ) + $bits(
+          downstream_arsize_int
+      ) + $bits(
+          downstream_arburst_int
+      ) + $bits(
+          downstream_arlen_int
+      ) + $bits(
+          downstream_arprot_int
+      ) + $bits(
+          downstream_aruser_int
+      )),
+      .EnableAssertPushValidStability(0),
+      .EnableAssertPushDataStability(0)
+  ) br_flow_reg_fwd_ds_ar (
+      .clk,
+      .rst,
+      //
+      .push_valid(downstream_arvalid_int),
+      .push_data({
+        downstream_araddr_int,
+        downstream_arid_int,
+        downstream_arsize_int,
+        downstream_arburst_int,
+        downstream_arlen_int,
+        downstream_arprot_int,
+        downstream_aruser_int
+      }),
+      .push_ready(downstream_arready_int),
+      //
+      .pop_valid(downstream_arvalid),
+      .pop_data({
+        downstream_araddr,
+        downstream_arid,
+        downstream_arsize,
+        downstream_arburst,
+        downstream_arlen,
+        downstream_arprot,
+        downstream_aruser
+      }),
+      .pop_ready(downstream_arready)
+  );
 
 endmodule
