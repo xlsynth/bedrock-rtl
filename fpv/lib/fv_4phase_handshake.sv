@@ -12,6 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+`include "br_asserts.svh"
+
 module fv_4phase_handshake #(
     parameter bit Master = 1
 ) (
