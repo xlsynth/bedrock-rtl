@@ -162,6 +162,10 @@ module br_amba_axi_isolate_mgr #(
   `BR_ASSERT_STATIC(max_outstanding_gt_1_a, MaxOutstanding > 1)
   `BR_ASSERT_STATIC(burst_len_legal_a,
                     MaxAxiBurstLen == 1 || MaxAxiBurstLen == 2 ** br_amba::AxiBurstLenWidth)
+  // Check that the isolate request can only rise when isolate_done is false.
+  `BR_ASSERT_INTG(legal_request_rise_a, $rose(isolate_req) |-> !isolate_done)
+  // Check that the isolate request can only fall when isolate_done is true.
+  `BR_ASSERT_INTG(legal_request_fall_a, $fell(isolate_req) |-> isolate_done)
 
   //
   // Internal Signals
@@ -410,7 +414,9 @@ module br_amba_axi_isolate_mgr #(
           downstream_awprot_int
       ) + $bits(
           downstream_awuser_int
-      ))
+      )),
+      .EnableAssertPushValidStability(0),
+      .EnableAssertPushDataStability(0)
   ) br_flow_reg_fwd_ds_aw (
       .clk,
       .rst,
@@ -449,7 +455,9 @@ module br_amba_axi_isolate_mgr #(
           downstream_wuser_int
       ) + $bits(
           downstream_wlast_int
-      ))
+      )),
+      .EnableAssertPushValidStability(0),
+      .EnableAssertPushDataStability(0)
   ) br_flow_reg_fwd_ds_w (
       .clk,
       .rst,
@@ -480,7 +488,9 @@ module br_amba_axi_isolate_mgr #(
           downstream_arprot_int
       ) + $bits(
           downstream_aruser_int
-      ))
+      )),
+      .EnableAssertPushValidStability(0),
+      .EnableAssertPushDataStability(0)
   ) br_flow_reg_fwd_ds_ar (
       .clk,
       .rst,
