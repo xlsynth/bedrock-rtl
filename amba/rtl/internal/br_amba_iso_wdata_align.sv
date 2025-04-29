@@ -149,7 +149,7 @@ module br_amba_iso_wdata_align #(
 
   // Counters track all beats fowarded downstream
   assign aw_beat = downstream_awvalid && downstream_awready;
-  assign w_beat  = downstream_wvalid && downstream_wready;
+  assign w_beat = downstream_wvalid && downstream_wready;
 
   // Compute number of beats in the current AW and W bursts
   assign aw_incr = aw_beat ? aw_beat_len : '0;
@@ -192,7 +192,7 @@ module br_amba_iso_wdata_align #(
   // then we need to assert the excess_w_full signal
   assign excess_w_full = (excess_w_data_beats >= (MaxExcessCount - 1));
 
-   // Assertions
+  // Assertions
   `BR_ASSERT_IMPL(delta_direction_onehot_a, $onehot0({delta_incr_aw_valid, delta_incr_w_valid}))
   `BR_ASSERT_IMPL(aw_nonzero_means_w_zero_a, excess_aw_data_beats > 0 |-> excess_w_data_beats == 0)
   `BR_ASSERT_IMPL(w_nonzero_means_aw_zero_a, excess_w_data_beats > 0 |-> excess_aw_data_beats == 0)
@@ -318,8 +318,9 @@ module br_amba_iso_wdata_align #(
     end
 
     // The internally-generated wlast signal should match the one from upstream.
-    `BR_ASSERT_IMPL(downstream_wlast_a,
-      downstream_wvalid && !block_upstream_and_fake_w |-> downstream_wlast == upstream_wlast)
+    `BR_ASSERT_IMPL(
+        downstream_wlast_a,
+        downstream_wvalid && !block_upstream_and_fake_w |-> downstream_wlast == upstream_wlast)
     `BR_UNUSED(upstream_wlast)
 
   end else begin : gen_no_fake_write_data_wlast
