@@ -110,7 +110,15 @@ module isolate_axi_protocol_fv_check #(
     input logic                                  downstream_rready
 );
 
-  `BR_ASSUME(isolate_req_hold_until_done_a, isolate_req && !isolate_done |=> isolate_req)
+  // FV 4-phase handshake modeling
+  fv_4phase_handshake #(
+      .Master(1)
+  ) isolate_req_handshake (
+      .clk(clk),
+      .rst(rst),
+      .req(isolate_req),
+      .ack(isolate_done)
+  );
 
   // upstream
   axi4_master #(

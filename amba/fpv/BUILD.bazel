@@ -26,6 +26,7 @@ verilog_library(
     deps = [
         "//amba/rtl:br_amba_axi_isolate_mgr",
         "//amba/rtl:br_amba_axi_isolate_sub",
+        "//fpv/lib:fv_4phase_handshake",
     ],
 )
 
