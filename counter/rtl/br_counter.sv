@@ -44,8 +44,10 @@
 `include "br_unused.svh"
 
 module br_counter #(
-    parameter int MaxValue = 1,  // Must be at least 1. Inclusive.
-    parameter int MaxChange = 1,  // Must be at least 1 and at most MaxValue. Inclusive.
+    // Must be at least 1. Inclusive.
+    parameter longint unsigned MaxValue = 1,
+    // Must be at least 1 and at most MaxValue. Inclusive.
+    parameter longint unsigned MaxChange = 1,
     // If 1, allow the counter value to wrap around 0/MaxValue, adding additional correction
     // logic to do so if MaxValue is not 1 less than a power of two.
     // If 0, don't allow wrapping and omit overflow/underflow correction logic.
@@ -161,14 +163,14 @@ module br_counter #(
     logic would_overflow;
 
     assign is_net_decr = decr_qual > incr_qual;
-    assign would_out_of_bounds = value_temp > MaxValue;
+    assign would_out_of_bounds = value_temp > MaxValue;  // ri lint_check_waive ARITH_BITLEN
     assign would_underflow = would_out_of_bounds && is_net_decr;
     assign would_overflow = would_out_of_bounds && !is_net_decr;
 
     if (EnableSaturate) begin : gen_saturate
       logic [ValueWidth-1:0] value_next_saturated;
 
-      assign value_next_saturated = MaxValue;
+      assign value_next_saturated = MaxValue;  // ri lint_check_waive LHS_TOO_SHORT
       assign value_next = would_underflow ? '0 :
                           would_overflow ? value_next_saturated :
                           value_temp[ValueWidth-1:0];

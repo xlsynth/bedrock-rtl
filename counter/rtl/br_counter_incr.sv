@@ -45,8 +45,10 @@
 `include "br_unused.svh"
 
 module br_counter_incr #(
-    parameter int MaxValue = 1,  // Must be at least 1. Inclusive.
-    parameter int MaxIncrement = 1,  // Must be at least 1 and at most MaxValue. Inclusive.
+    // Must be at least 1. Inclusive.
+    parameter longint unsigned MaxValue = 1,
+    // Must be at least 1 and at most MaxValue. Inclusive.
+    parameter longint unsigned MaxIncrement = 1,
     // If 1, then when reinit is asserted together with incr_valid,
     // the increment is applied to the initial value rather than the current value, i.e.,
     // value_next == initial_value + applicable incr.
@@ -109,8 +111,8 @@ module br_counter_incr #(
   if (EnableSaturate) begin : gen_saturate
     logic [ValueWidth-1:0] value_next_saturated;
 
-    assign value_next_saturated = MaxValue;
-    assign value_next = (value_temp > MaxValue) ? value_next_saturated : value_temp[ValueWidth-1:0];
+    assign value_next_saturated = MaxValue;  // ri lint_check_waive LHS_TOO_SHORT
+    assign value_next = (value_temp > MaxValue) ? value_next_saturated : value_temp[ValueWidth-1:0];  // ri lint_check_waive ARITH_BITLEN
 
     // For MaxValueP1 being a power of 2, wrapping occurs naturally
   end else if (IsMaxValueP1PowerOf2) begin : gen_power_of_2_wrap
@@ -123,10 +125,10 @@ module br_counter_incr #(
     logic [TempWidth-1:0] value_temp_wrapped;
 
     // ri lint_check_waive ARITH_EXTENSION
-    assign value_temp_wrapped = (value_temp - MaxValue) - 1;
+    assign value_temp_wrapped = (value_temp - MaxValue) - 1; // ri lint_check_waive LHS_TOO_SHORT ARITH_BITLEN
     // ri lint_check_waive ARITH_EXTENSION
-    assign value_next = (value_temp > MaxValue) ?
-      value_temp_wrapped[ValueWidth-1:0] :  // ri lint_check_waive FULL_RANGE
+    assign value_next = (value_temp > MaxValue) ?  // ri lint_check_waive ARITH_BITLEN
+        value_temp_wrapped[ValueWidth-1:0] :  // ri lint_check_waive FULL_RANGE
         value_temp[ValueWidth-1:0];  // ri lint_check_waive FULL_RANGE
 
     if (TempWidth > ValueWidth) begin : gen_unused

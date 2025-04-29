@@ -45,8 +45,10 @@
 `include "br_unused.svh"
 
 module br_counter_decr #(
-    parameter int MaxValue = 1,  // Must be at least 1. Inclusive. Also the initial value.
-    parameter int MaxDecrement = 1,  // Must be at least 1 and at most MaxValue. Inclusive.
+    // Must be at least 1. Inclusive. Also the initial value.
+    parameter longint unsigned MaxValue = 1,
+    // Must be at least 1 and at most MaxValue. Inclusive.
+    parameter longint unsigned MaxDecrement = 1,
     // If 1, then when reinit is asserted together with decr_valid,
     // the decrement is applied to the initial value rather than the current value, i.e.,
     // value_next == initial_value - applicable decr.
@@ -150,7 +152,7 @@ module br_counter_decr #(
 
     // If there is an underflow, we can treat value_temp as a negative number.
     // By adding MaxValue + 1 to it, we should get to the correct wrap-around value.
-    assign value_temp_adjusted = value_temp + MaxValue + 1;
+    assign value_temp_adjusted = value_temp + MaxValue + 1;  // ri lint_check_waive LHS_TOO_SHORT ARITH_BITLEN
 `endif
 `endif
     `BR_ASSERT_IMPL(value_underflow_a,
