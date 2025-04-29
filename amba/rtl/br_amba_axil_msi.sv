@@ -108,7 +108,7 @@ module br_amba_axil_msi #(
   localparam int DataWidthPadding = DataWidth - 32;
   localparam int EventIdStrobeWidth = 4;  // always 4 bytes
   localparam int StrobeWidthPadding = StrobeWidth - EventIdStrobeWidth;
-  localparam int FifoWidth = DeviceIdWidth + EventIdWidth + MsiDstIdxWidth;
+  localparam int FlowRegWidth = DeviceIdWidth + EventIdWidth + MsiDstIdxWidth;
   localparam int WriteAddrFlowRegWidth = AddrWidth;
   localparam int WriteDataFlowRegWidth = DataWidth + StrobeWidth;
 
@@ -119,10 +119,10 @@ module br_amba_axil_msi #(
   logic [EventIdWidth-1:0] event_id_to_send;
   logic [MsiDstIdxWidth-1:0] irq_dest_idx;
   logic [AddrWidth-1:0] irq_dest_addr;
-  logic [NumInterrupts-1:0][FifoWidth-1:0] fifo_push_data;
-  logic [NumInterrupts-1:0] fifo_push_ready, fifo_push_valid;
-  logic [FifoWidth-1:0] fifo_pop_data;
-  logic fifo_pop_ready, fifo_pop_valid;
+  logic [NumInterrupts-1:0][FlowRegWidth-1:0] flow_reg_push_data;
+  logic [NumInterrupts-1:0] flow_reg_push_ready, flow_reg_push_valid;
+  logic [FlowRegWidth-1:0] flow_reg_pop_data;
+  logic flow_reg_pop_ready, flow_reg_pop_valid;
   logic error_next;
   logic [ThrottleCntrWidth-1:0] throttle_cntr_value;
   logic throttle_cntr_matches;
@@ -145,30 +145,30 @@ module br_amba_axil_msi #(
   assign pending_irq_next =
       msi_enable &
       (pending_irq | irq_rising_edge) &
-      ~(fifo_push_ready & fifo_push_valid);
+      ~(flow_reg_push_ready & flow_reg_push_valid);
 
   // Use round-robin arbitration to select the next irq to send
   br_flow_mux_rr_stable #(
       .RegisterPopReady(1),
       .NumFlows(NumInterrupts),
-      .Width(FifoWidth)
+      .Width(FlowRegWidth)
   ) br_flow_mux_rr_stable (
       .clk,
       .rst,
-      .push_ready(fifo_push_ready),
-      .push_valid(fifo_push_valid),
-      .push_data (fifo_push_data),
-      .pop_ready (fifo_pop_ready),
-      .pop_valid (fifo_pop_valid),
-      .pop_data  (fifo_pop_data)
+      .push_ready(flow_reg_push_ready),
+      .push_valid(flow_reg_push_valid),
+      .push_data (flow_reg_push_data),
+      .pop_ready (flow_reg_pop_ready),
+      .pop_valid (flow_reg_pop_valid),
+      .pop_data  (flow_reg_pop_data)
   );
   generate
     for (genvar i = 0; i < NumInterrupts; i++) begin : gen_loop
-      assign fifo_push_data[i] = {msi_dest_idx[i], device_id_per_irq[i], event_id_per_irq[i]};
+      assign flow_reg_push_data[i] = {msi_dest_idx[i], device_id_per_irq[i], event_id_per_irq[i]};
     end
   endgenerate
-  assign fifo_push_valid = pending_irq;
-  assign {irq_dest_idx, device_id_to_send, event_id_to_send} = fifo_pop_data;
+  assign flow_reg_push_valid = pending_irq;
+  assign {irq_dest_idx, device_id_to_send, event_id_to_send} = flow_reg_pop_data;
 
   // Throttle counter
   br_counter_decr #(
@@ -180,12 +180,12 @@ module br_amba_axil_msi #(
       .rst,
       .reinit(reinit_throttle_cntr),
       .initial_value(throttle_cntr_threshold),
-      .decr_valid(fifo_pop_valid),
+      .decr_valid(flow_reg_pop_valid),
       .decr(1'b1),
       .value(throttle_cntr_value),
       .value_next()
   );
-  assign reinit_throttle_cntr = ~fifo_pop_valid || fifo_pop_ready;
+  assign reinit_throttle_cntr = ~flow_reg_pop_valid || flow_reg_pop_ready;
   assign throttle_cntr_matches = throttle_cntr_value == {ThrottleCntrWidth{1'b0}};
   assign clear_to_send = ~throttle_en || throttle_cntr_matches;
 
@@ -218,11 +218,11 @@ module br_amba_axil_msi #(
   // ri lint_check_on ZERO_EXT CONST_OUTPUT
 
   // Create the valid/ready signals for the flow registers
-  assign write_addr_flow_reg_push_valid = fifo_pop_valid && clear_to_send &&
+  assign write_addr_flow_reg_push_valid = flow_reg_pop_valid && clear_to_send &&
       write_addr_flow_reg_push_ready && write_data_flow_reg_push_ready;
-  assign write_data_flow_reg_push_valid = fifo_pop_valid && clear_to_send &&
+  assign write_data_flow_reg_push_valid = flow_reg_pop_valid && clear_to_send &&
       write_addr_flow_reg_push_ready && write_data_flow_reg_push_ready;
-  assign fifo_pop_ready = write_addr_flow_reg_push_valid && write_addr_flow_reg_push_ready &&
+  assign flow_reg_pop_ready = write_addr_flow_reg_push_valid && write_addr_flow_reg_push_ready &&
       write_data_flow_reg_push_valid && write_data_flow_reg_push_ready;
 
   // Use a flow register to decouple the AXI channels
