@@ -238,7 +238,7 @@ module br_amba_iso_wdata_align #(
   // then we need to assert the excess_w_full signal
   assign excess_w_full = (excess_w_data_beats >= (MaxExcessCount - 1));
 
-   // Assertions
+  // Assertions
   `BR_ASSERT_IMPL(delta_direction_onehot_a, $onehot0({delta_incr_aw_valid, delta_incr_w_valid}))
   `BR_ASSERT_IMPL(aw_nonzero_means_w_zero_a, excess_aw_data_beats > 0 |-> excess_w_data_beats == 0)
   `BR_ASSERT_IMPL(w_nonzero_means_aw_zero_a, excess_w_data_beats > 0 |-> excess_aw_data_beats == 0)
