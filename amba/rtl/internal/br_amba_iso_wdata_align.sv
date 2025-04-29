@@ -131,9 +131,9 @@ module br_amba_iso_wdata_align #(
     assign aw_beat_len = upstream_awlen + 1'b1;
   end
 
-  // Counters track all upstream beats (regardless of what happens on downstream)
-  assign aw_beat = upstream_awvalid && upstream_awready;
-  assign w_beat  = (upstream_wvalid || block_upstream_and_fake_w) && upstream_wready;
+  // Counters track all beats fowarded downstream
+  assign aw_beat = downstream_awvalid && downstream_awready;
+  assign w_beat  = downstream_wvalid && downstream_wready;
 
   //
   // Excess AW data beat counter. Indicates how many excess WDATA beats implied
@@ -286,7 +286,8 @@ module br_amba_iso_wdata_align #(
     end
 
     // The internally-generated wlast signal should match the one from upstream.
-    `BR_ASSERT_IMPL(downstream_wlast_a, downstream_wvalid |-> downstream_wlast == upstream_wlast)
+    `BR_ASSERT_IMPL(downstream_wlast_a,
+      downstream_wvalid && !block_upstream_and_fake_w |-> downstream_wlast == upstream_wlast)
     `BR_UNUSED(upstream_wlast)
 
   end else begin : gen_no_fake_write_data_wlast
