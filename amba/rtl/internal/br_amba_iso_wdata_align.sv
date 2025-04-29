@@ -197,6 +197,52 @@ module br_amba_iso_wdata_align #(
   `BR_ASSERT_IMPL(aw_nonzero_means_w_zero_a, excess_aw_data_beats > 0 |-> excess_w_data_beats == 0)
   `BR_ASSERT_IMPL(w_nonzero_means_aw_zero_a, excess_w_data_beats > 0 |-> excess_aw_data_beats == 0)
 
+  // Compute number of beats in the current AW and W bursts
+  assign aw_incr = aw_beat ? aw_beat_len : '0;
+  assign w_incr = w_beat ? MaxBurstLenWidth'(1'b1) : '0;
+
+  // Determine (sign and magnitude) the total delta from current cycle
+  assign delta_mag = (aw_incr > w_incr) ? (aw_incr - w_incr) : (w_incr - aw_incr);
+  assign delta_incr_aw_valid = (aw_incr > w_incr);
+  assign delta_incr_w_valid = (w_incr > aw_incr);
+
+  // AW increasing case
+  // ri lint_check_waive ARITH_BITLEN
+  assign excess_aw_incr = delta_mag - (delta_mag < excess_w_data_beats ?
+                                                  delta_mag
+                                                  : MaxBurstLenWidth'(excess_w_data_beats));
+  // ri lint_check_waive ARITH_BITLEN
+  assign excess_w_decr = (delta_mag < excess_w_data_beats ?
+                                                  delta_mag
+                                                  : MaxBurstLenWidth'(excess_w_data_beats));
+  assign excess_aw_incr_valid = delta_incr_aw_valid && (excess_aw_incr != 0);
+  assign excess_w_decr_valid = delta_incr_aw_valid && (excess_w_decr != 0);
+
+  // W increasing case
+  // ri lint_check_waive ARITH_BITLEN
+  assign excess_w_incr = delta_mag - (delta_mag < excess_aw_data_beats ?
+                                                  delta_mag
+                                                  : MaxBurstLenWidth'(excess_aw_data_beats));
+  // ri lint_check_waive ARITH_BITLEN
+  assign excess_aw_decr = (delta_mag < excess_aw_data_beats ?
+                                                  delta_mag
+                                                  : MaxBurstLenWidth'(excess_aw_data_beats));
+  assign excess_w_incr_valid = delta_incr_w_valid && (excess_w_incr != 0);
+  assign excess_aw_decr_valid = delta_incr_w_valid && (excess_aw_decr != 0);
+
+  // When there is not enough counter space to hold an additional (max AWLEN) AW request,
+  // then we need to assert the excess_aw_full signal
+  assign excess_aw_full = (excess_aw_data_beats >= (MaxExcessCount - MaxAxiBurstLen));
+
+  // When there is not enough counter space to hold an additional WDATA beat,
+  // then we need to assert the excess_w_full signal
+  assign excess_w_full = (excess_w_data_beats >= (MaxExcessCount - 1));
+
+   // Assertions
+  `BR_ASSERT_IMPL(delta_direction_onehot_a, $onehot0({delta_incr_aw_valid, delta_incr_w_valid}))
+  `BR_ASSERT_IMPL(aw_nonzero_means_w_zero_a, excess_aw_data_beats > 0 |-> excess_w_data_beats == 0)
+  `BR_ASSERT_IMPL(w_nonzero_means_aw_zero_a, excess_w_data_beats > 0 |-> excess_aw_data_beats == 0)
+
   //
   // Excess AW data beat counter. Indicates how many excess WDATA beats implied
   // by the previously accepted AW requests in excess of the number of WDATA beats
