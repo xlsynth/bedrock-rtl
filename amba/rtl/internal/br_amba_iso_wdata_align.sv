@@ -123,6 +123,22 @@ module br_amba_iso_wdata_align #(
   logic wlast_fifo_ready;
   logic block_upstream_and_fake_w;
 
+  logic [MaxBurstLenWidth-1:0] aw_incr;
+  logic [MaxBurstLenWidth-1:0] w_incr;
+  logic [MaxBurstLenWidth-1:0] delta_mag;
+  logic delta_incr_aw_valid;
+  logic delta_incr_w_valid;
+
+  //
+  // AW/W Delta Counters
+  //
+
+  // A "delta" counter tracks the running difference between the number of requested beats in
+  // the AW request stream and the number of W beats that have been sent downstream. The delta
+  // is computed as the absolute difference between the number of beats requested on AW and the
+  // number of beats sent downstream on W. Two unsigned counters are used to implement this, but
+  // only one can be non-zero ("in excess") at any time.
+
   // AWLEN is 0 based, so we need to add 1 to get the actual number of beats
   if (MaxAxiBurstLen == 1) begin : gen_aw_len_single_beat
     assign aw_beat_len = 1'b1;
@@ -134,6 +150,52 @@ module br_amba_iso_wdata_align #(
   // Counters track all beats fowarded downstream
   assign aw_beat = downstream_awvalid && downstream_awready;
   assign w_beat  = downstream_wvalid && downstream_wready;
+
+  // Compute number of beats in the current AW and W bursts
+  assign aw_incr = aw_beat ? aw_beat_len : '0;
+  assign w_incr = w_beat ? MaxBurstLenWidth'(1'b1) : '0;
+
+  // Determine (sign and magnitude) the total delta from current cycle
+  assign delta_mag = (aw_incr > w_incr) ? (aw_incr - w_incr) : (w_incr - aw_incr);
+  assign delta_incr_aw_valid = (aw_incr > w_incr);
+  assign delta_incr_w_valid = (w_incr > aw_incr);
+
+  // AW increasing case
+  // ri lint_check_waive ARITH_BITLEN
+  assign excess_aw_incr = delta_mag - (delta_mag < excess_w_data_beats ?
+                                                  delta_mag
+                                                  : MaxBurstLenWidth'(excess_w_data_beats));
+  // ri lint_check_waive ARITH_BITLEN
+  assign excess_w_decr = (delta_mag < excess_w_data_beats ?
+                                                  delta_mag
+                                                  : MaxBurstLenWidth'(excess_w_data_beats));
+  assign excess_aw_incr_valid = delta_incr_aw_valid && (excess_aw_incr != 0);
+  assign excess_w_decr_valid = delta_incr_aw_valid && (excess_w_decr != 0);
+
+  // W increasing case
+  // ri lint_check_waive ARITH_BITLEN
+  assign excess_w_incr = delta_mag - (delta_mag < excess_aw_data_beats ?
+                                                  delta_mag
+                                                  : MaxBurstLenWidth'(excess_aw_data_beats));
+  // ri lint_check_waive ARITH_BITLEN
+  assign excess_aw_decr = (delta_mag < excess_aw_data_beats ?
+                                                  delta_mag
+                                                  : MaxBurstLenWidth'(excess_aw_data_beats));
+  assign excess_w_incr_valid = delta_incr_w_valid && (excess_w_incr != 0);
+  assign excess_aw_decr_valid = delta_incr_w_valid && (excess_aw_decr != 0);
+
+  // When there is not enough counter space to hold an additional (max AWLEN) AW request,
+  // then we need to assert the excess_aw_full signal
+  assign excess_aw_full = (excess_aw_data_beats >= (MaxExcessCount - MaxAxiBurstLen));
+
+  // When there is not enough counter space to hold an additional WDATA beat,
+  // then we need to assert the excess_w_full signal
+  assign excess_w_full = (excess_w_data_beats >= (MaxExcessCount - 1));
+
+   // Assertions
+  `BR_ASSERT_IMPL(delta_direction_onehot_a, $onehot0({delta_incr_aw_valid, delta_incr_w_valid}))
+  `BR_ASSERT_IMPL(aw_nonzero_means_w_zero_a, excess_aw_data_beats > 0 |-> excess_w_data_beats == 0)
+  `BR_ASSERT_IMPL(w_nonzero_means_aw_zero_a, excess_w_data_beats > 0 |-> excess_aw_data_beats == 0)
 
   //
   // Excess AW data beat counter. Indicates how many excess WDATA beats implied
@@ -159,27 +221,11 @@ module br_amba_iso_wdata_align #(
       .value_next()
   );
 
-  // Increment by the number of beats in the newly-accepted request, minus any excess
-  // data beats the new transaction consumes
-  // ri lint_check_waive LHS_TOO_SHORT ARITH_BITLEN
-  assign excess_aw_incr = aw_beat_len - excess_w_data_beats;
-  // ri lint_check_waive ARITH_BITLEN
-  assign excess_aw_incr_valid = aw_beat && (excess_w_data_beats <= aw_beat_len);
-
-  // Decrement by 1 for each newly-arriving data beat, if we have excess data beats
-  // to consume
-  assign excess_aw_decr = 1'b1;
-  assign excess_aw_decr_valid = w_beat && (excess_aw_data_beats > 0);
-
-  // When there is not enough counter space to hold an additional (max AWLEN) AW request,
-  // then we need to assert the excess_aw_full signal
-  assign excess_aw_full = (excess_aw_data_beats >= (MaxExcessCount - MaxAxiBurstLen));
-
   //
   // Excess W data beat counter. Indicates how many WDATA beats we have received
   // in excess of the number of beats expected from all of the previously accepted
   // AW requests (i.e. how many additional WDATA beats are expected to be requested
-  //in future AW requests).
+  // in future AW requests).
   //
 
   br_counter #(
@@ -199,20 +245,6 @@ module br_amba_iso_wdata_align #(
       .value(excess_w_data_beats),
       .value_next()
   );
-
-  // Increment by 1 if there is no excess AW data beats to consume
-  assign excess_w_incr = 1'b1;
-  assign excess_w_incr_valid = w_beat && (excess_aw_data_beats == 0);
-
-  // Decrement by the number of beats in the newly-accepted request or the
-  // amount of excess w beats available to consume, whichever is smaller
-  // ri lint_check_waive LHS_TOO_SHORT ARITH_BITLEN COND_OP_BITLEN
-  assign excess_w_decr = (aw_beat_len <= excess_w_data_beats) ? aw_beat_len : excess_w_data_beats;
-  assign excess_w_decr_valid = aw_beat && (excess_w_data_beats > 0);
-
-  // When there is not enough counter space to hold an additional WDATA beat,
-  // then we need to assert the excess_w_full signal
-  assign excess_w_full = (excess_w_data_beats >= (MaxExcessCount - 1));
 
   //
   // Burst length tracking
@@ -356,8 +388,4 @@ module br_amba_iso_wdata_align #(
                     align_and_hold_req |-> !(upstream_awready || upstream_wready))
   end
 
-  // verilog_format: off
-  `BR_ASSERT_IMPL(if_counts_eq_then_zero_a, (excess_aw_data_beats == excess_w_data_beats)
-        |-> (excess_aw_data_beats == '0 && excess_w_data_beats == '0))
-  // verilog_format: on
 endmodule
