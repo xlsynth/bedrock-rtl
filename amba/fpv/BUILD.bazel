@@ -102,7 +102,7 @@ br_verilog_fpv_test_tools_suite(
         ],
     },
     tools = {
-        "jg": "",
+        "jg": "br_amba_axil_split_fpv.jg.tcl",
         "vcf": "",
     },
     top = "br_amba_axil_split",
