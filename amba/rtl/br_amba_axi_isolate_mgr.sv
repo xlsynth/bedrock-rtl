@@ -199,37 +199,6 @@ module br_amba_axi_isolate_mgr #(
   logic [AxiBurstLenWidth-1:0] downstream_arlen_int;
 
   //
-  // Internal Signals
-  //
-
-  logic downstream_awready_int;
-  logic downstream_awvalid_int;
-  logic [AddrWidth-1:0] downstream_awaddr_int;
-  logic [IdWidth-1:0] downstream_awid_int;
-  logic [br_amba::AxiBurstSizeWidth-1:0] downstream_awsize_int;
-  logic [br_amba::AxiBurstTypeWidth-1:0] downstream_awburst_int;
-  logic [br_amba::AxiProtWidth-1:0] downstream_awprot_int;
-  logic [AWUserWidth-1:0] downstream_awuser_int;
-  logic [AxiBurstLenWidth-1:0] downstream_awlen_int;
-
-  logic downstream_wready_int;
-  logic downstream_wvalid_int;
-  logic [DataWidth-1:0] downstream_wdata_int;
-  logic [StrobeWidth-1:0] downstream_wstrb_int;
-  logic [WUserWidth-1:0] downstream_wuser_int;
-  logic downstream_wlast_int;
-
-  logic downstream_arready_int;
-  logic downstream_arvalid_int;
-  logic [AddrWidth-1:0] downstream_araddr_int;
-  logic [IdWidth-1:0] downstream_arid_int;
-  logic [br_amba::AxiBurstSizeWidth-1:0] downstream_arsize_int;
-  logic [br_amba::AxiBurstTypeWidth-1:0] downstream_arburst_int;
-  logic [br_amba::AxiProtWidth-1:0] downstream_arprot_int;
-  logic [ARUserWidth-1:0] downstream_aruser_int;
-  logic [AxiBurstLenWidth-1:0] downstream_arlen_int;
-
-  //
   // Write Path
   //
 
