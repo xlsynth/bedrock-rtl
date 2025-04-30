@@ -140,6 +140,12 @@ module br_amba_axi_isolate_mgr_fpv_monitor #(
   logic iso_flg;
   assign iso_flg = isolate_req && isolate_done;
 
+  // for AXI_LITE, there is no awlen.
+  // Therefore upstream_awlen is a random signal without any constraint from ABVIP
+  if (MaxAxiBurstLen == 1) begin : gen_axi_lite
+    `BR_ASSUME(upstream_awlen0_axilite_a, upstream_awvalid |-> upstream_awlen == 'd0)
+  end
+
   // deadlock check
   `BR_ASSERT(req_eventually_done_a, isolate_req |-> s_eventually isolate_done)
   `BR_ASSERT(eventually_back_to_normal_a, $fell(isolate_req) |-> s_eventually $fell(isolate_done))

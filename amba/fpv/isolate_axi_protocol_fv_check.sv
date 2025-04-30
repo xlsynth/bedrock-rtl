@@ -132,7 +132,8 @@ module isolate_axi_protocol_fv_check #(
       .WUSER_WIDTH(WUserWidth),
       .BUSER_WIDTH(BUserWidth),
       .RUSER_WIDTH(RUserWidth),
-      .MAX_PENDING(MaxOutstanding)
+      .MAX_PENDING(MaxOutstanding),
+      .AXI4_LITE(MaxAxiBurstLen == 1)
   ) upstream (
       // Global signals
       .aclk    (clk),
@@ -201,7 +202,8 @@ module isolate_axi_protocol_fv_check #(
       .WUSER_WIDTH(WUserWidth),
       .BUSER_WIDTH(BUserWidth),
       .RUSER_WIDTH(RUserWidth),
-      .MAX_PENDING(MaxOutstanding)
+      .MAX_PENDING(MaxOutstanding),
+      .AXI4_LITE(MaxAxiBurstLen == 1)
   ) downstream (
       // Global signals
       .aclk    (clk),

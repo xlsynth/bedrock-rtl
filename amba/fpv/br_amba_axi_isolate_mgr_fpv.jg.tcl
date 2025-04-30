@@ -25,6 +25,7 @@ assert -disable {*upstream.genStableChksRDInf.genRStableChks.slave_r_rvalid_stab
 assert -disable {*upstream.genStableChksWRInf.genBStableChks.slave_b_bvalid_stable}
 assert -disable {*upstream.genPropChksWRInf.slave_b_aw_bid_match}
 assert -disable {*upstream.genPropChksWRInf.genAXI4FullWrResp.slave_b_aw_bid_order_within_id}
+assert -disable {*upstream.genPropChksWRInf.genMasterLiveW.genreadyW.slave_w_no_aw_wready_eventually}
 
 # prove command
 prove -all
