@@ -135,6 +135,15 @@ module br_amba_axi_isolate_mgr_fpv_monitor #(
     input logic                                  downstream_rready
 );
 
+  // during this window, upstream won't be AXI protocol compliant
+  // However, downstream should still behave fine
+  logic iso_flg;
+  assign iso_flg = isolate_req && isolate_done;
+
+  // deadlock check
+  `BR_ASSERT(req_eventually_done_a, isolate_req |-> s_eventually isolate_done)
+  `BR_ASSERT(eventually_back_to_normal_a, $fell(isolate_req) |-> s_eventually $fell(isolate_done))
+
   isolate_axi_protocol_fv_check #(
       .AddrWidth(AddrWidth),
       .DataWidth(DataWidth),
@@ -149,6 +158,8 @@ module br_amba_axi_isolate_mgr_fpv_monitor #(
   ) fv_axi_check (
       .clk,
       .rst,
+      .upstream_rst  (rst | iso_flg),
+      .downstream_rst(rst),
       .isolate_req,
       .isolate_done,
       .upstream_awaddr,

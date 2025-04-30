@@ -20,5 +20,8 @@ get_design_info
 # TODO: disable covers to make nightly clean
 cover -disable *
 
+# during isolate_req & !isolate_done window, downstream assertions don't matter
+# TODO: add exclude when RTL is fixed
+
 # prove command
 prove -all

@@ -31,6 +31,8 @@ module isolate_axi_protocol_fv_check #(
 ) (
     input logic                                  clk,
     input logic                                  rst,
+    input logic                                  upstream_rst,
+    input logic                                  downstream_rst,
     //
     input logic                                  isolate_req,
     input logic                                  isolate_done,
@@ -134,7 +136,7 @@ module isolate_axi_protocol_fv_check #(
   ) upstream (
       // Global signals
       .aclk    (clk),
-      .aresetn (!rst),
+      .aresetn (!upstream_rst),
       .csysreq ('d1),
       .csysack ('d1),
       .cactive ('d1),
@@ -203,7 +205,7 @@ module isolate_axi_protocol_fv_check #(
   ) downstream (
       // Global signals
       .aclk    (clk),
-      .aresetn (!rst),
+      .aresetn (!downstream_rst),
       .csysreq ('d1),
       .csysack ('d1),
       .cactive ('d1),

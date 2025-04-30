@@ -303,8 +303,17 @@ verilog_elab_test(
 
 br_verilog_fpv_test_tools_suite(
     name = "br_amba_axi_isolate_mgr_test_suite",
-    elab_opts = ["-parameter MaxOutstanding 4"],
+    elab_opts = [
+        "-parameter MaxOutstanding 4",
+        "-sv09_strong_embedding",
+    ],
     gui = True,
+    params = {
+        "MaxAxiBurstLen": [
+            "1",
+            "256",
+        ],
+    },
     tools = {
         "jg": "br_amba_axi_isolate_mgr_fpv.jg.tcl",
         "vcf": "",
@@ -333,7 +342,10 @@ verilog_elab_test(
 
 br_verilog_fpv_test_tools_suite(
     name = "br_amba_axi_isolate_sub_test_suite",
-    elab_opts = ["-parameter MaxOutstanding 4"],
+    elab_opts = [
+        "-parameter MaxOutstanding 4",
+        "-sv09_strong_embedding",
+    ],
     gui = True,
     tools = {
         "jg": "br_amba_axi_isolate_sub_fpv.jg.tcl",

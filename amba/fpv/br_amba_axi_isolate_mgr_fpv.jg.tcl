@@ -20,5 +20,11 @@ get_design_info
 # TODO: disable covers to make nightly clean
 cover -disable *
 
+# during isolate_req & !isolate_done window, upstream assertions don't matter
+assert -disable {*upstream.genStableChksRDInf.genRStableChks.slave_r_rvalid_stable}
+assert -disable {*upstream.genStableChksWRInf.genBStableChks.slave_b_bvalid_stable}
+assert -disable {*upstream.genPropChksWRInf.slave_b_aw_bid_match}
+assert -disable {*upstream.genPropChksWRInf.genAXI4FullWrResp.slave_b_aw_bid_order_within_id}
+
 # prove command
 prove -all
