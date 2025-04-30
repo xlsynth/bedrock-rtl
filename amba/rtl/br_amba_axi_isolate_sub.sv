@@ -185,12 +185,34 @@ module br_amba_axi_isolate_sub #(
   `BR_ASSERT_STATIC(have_enough_ids_a, AxiIdCount <= 2 ** IdWidth)
   `BR_ASSERT_STATIC(burst_len_legal_a,
                     MaxAxiBurstLen == 1 || MaxAxiBurstLen == 2 ** br_amba::AxiBurstLenWidth)
+  // Check that the isolate request can only rise when isolate_done is false.
+  `BR_ASSERT_INTG(legal_request_rise_a, $rose(isolate_req) |-> !isolate_done)
+  // Check that the isolate request can only fall when isolate_done is true.
+  `BR_ASSERT_INTG(legal_request_fall_a, $fell(isolate_req) |-> isolate_done)
   if (MinIdWidth < IdWidth) begin : gen_id_width_lt_len_width
     `BR_ASSERT_INTG(unused_upper_awid_zero_a,
                     upstream_awvalid |-> upstream_awid[IdWidth-1:MinIdWidth] == '0)
     `BR_ASSERT_INTG(unused_upper_arid_zero_a,
                     upstream_arvalid |-> upstream_arid[IdWidth-1:MinIdWidth] == '0)
   end
+
+  //
+  // Internal Signals
+  //
+
+  logic upstream_bready_int;
+  logic upstream_bvalid_int;
+  logic [br_amba::AxiRespWidth-1:0] upstream_bresp_int;
+  logic [BUserWidth-1:0] upstream_buser_int;
+  logic [IdWidth-1:0] upstream_bid_int;
+  //
+  logic upstream_rready_int;
+  logic upstream_rvalid_int;
+  logic upstream_rlast_int;
+  logic [br_amba::AxiRespWidth-1:0] upstream_rresp_int;
+  logic [RUserWidth-1:0] upstream_ruser_int;
+  logic [IdWidth-1:0] upstream_rid_int;
+  logic [DataWidth-1:0] upstream_rdata_int;
 
   //
   // Write Path
@@ -274,12 +296,12 @@ module br_amba_axi_isolate_sub #(
       // write responses only have a single beat
       .upstream_axlen(1'b0),
       //
-      .upstream_xready(upstream_bready),
-      .upstream_xvalid(upstream_bvalid),
-      .upstream_xid(upstream_bid),
-      .upstream_xresp({upstream_bresp}),  // ri lint_check_waive ENUM_RHS
+      .upstream_xready(upstream_bready_int),
+      .upstream_xvalid(upstream_bvalid_int),
+      .upstream_xid(upstream_bid_int),
+      .upstream_xresp({upstream_bresp_int}),  // ri lint_check_waive ENUM_RHS
       .upstream_xlast(),
-      .upstream_xdata(upstream_buser),
+      .upstream_xdata(upstream_buser_int),
       //
       .downstream_axready(downstream_awready_iso),
       .downstream_axvalid(downstream_awvalid_iso),
@@ -372,12 +394,12 @@ module br_amba_axi_isolate_sub #(
       .upstream_axid(upstream_arid),
       .upstream_axlen(upstream_arlen),
       //
-      .upstream_xready(upstream_rready),
-      .upstream_xvalid(upstream_rvalid),
-      .upstream_xid(upstream_rid),
-      .upstream_xresp({upstream_rresp}),  // ri lint_check_waive ENUM_RHS
-      .upstream_xlast(upstream_rlast),
-      .upstream_xdata({upstream_ruser, upstream_rdata}),
+      .upstream_xready(upstream_rready_int),
+      .upstream_xvalid(upstream_rvalid_int),
+      .upstream_xid(upstream_rid_int),
+      .upstream_xresp({upstream_rresp_int}),  // ri lint_check_waive ENUM_RHS
+      .upstream_xlast(upstream_rlast_int),
+      .upstream_xdata({upstream_ruser_int, upstream_rdata_int}),
       //
       .downstream_axready(downstream_arready_iso),
       .downstream_axvalid(downstream_arvalid_iso),
@@ -419,4 +441,60 @@ module br_amba_axi_isolate_sub #(
 
   `BR_REG(isolate_done, isolate_done_next)
 
+  //
+  // Upstream Output Register Stage
+  //
+
+  // This flop stage is needed to ensure that valid stability (required by AMBA protocol)
+  // is maintained on the upstream ports when entering isolation.
+
+  br_flow_reg_fwd #(
+      .Width($bits(
+          upstream_rdata
+      ) + $bits(
+          upstream_rresp
+      ) + $bits(
+          upstream_rlast
+      ) + $bits(
+          upstream_ruser
+      ) + $bits(
+          upstream_rid
+      )),
+      .EnableAssertPushValidStability(0),
+      .EnableAssertPushDataStability(0)
+  ) br_flow_reg_fwd_us_r (
+      .clk,
+      .rst,
+      //
+      .push_ready(upstream_rready_int),
+      .push_valid(upstream_rvalid_int),
+      .push_data({
+        upstream_rdata_int,
+        upstream_rresp_int,
+        upstream_rlast_int,
+        upstream_ruser_int,
+        upstream_rid_int
+      }),
+      //
+      .pop_ready(upstream_rready),
+      .pop_valid(upstream_rvalid),
+      .pop_data({upstream_rdata, upstream_rresp, upstream_rlast, upstream_ruser, upstream_rid})
+  );
+
+  br_flow_reg_fwd #(
+      .Width($bits(upstream_bresp) + $bits(upstream_buser) + $bits(upstream_bid)),
+      .EnableAssertPushValidStability(0),
+      .EnableAssertPushDataStability(0)
+  ) br_flow_reg_fwd_us_aw (
+      .clk,
+      .rst,
+      //
+      .push_ready(upstream_bready_int),
+      .push_valid(upstream_bvalid_int),
+      .push_data ({upstream_bresp_int, upstream_buser_int, upstream_bid_int}),
+      //
+      .pop_ready (upstream_bready),
+      .pop_valid (upstream_bvalid),
+      .pop_data  ({upstream_bresp, upstream_buser, upstream_bid})
+  );
 endmodule
