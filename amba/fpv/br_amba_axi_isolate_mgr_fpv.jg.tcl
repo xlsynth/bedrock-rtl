@@ -21,6 +21,9 @@ get_design_info
 cover -disable *
 
 # during isolate_req & !isolate_done window, upstream assertions don't matter
+# TODO: don't know how to disable these assertions dynamically w.r.t a signal
+# Has tried tying off isolate_req, those assertions stop failing.
+# also checked each CEX, they all failed inside "isolate_req & !isolate_done" window
 assert -disable {*upstream.genStableChksRDInf.genRStableChks.slave_r_rvalid_stable}
 assert -disable {*upstream.genStableChksWRInf.genBStableChks.slave_b_bvalid_stable}
 assert -disable {*upstream.genPropChksWRInf.slave_b_aw_bid_match}
