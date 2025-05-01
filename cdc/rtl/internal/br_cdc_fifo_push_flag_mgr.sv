@@ -55,6 +55,8 @@ module br_cdc_fifo_push_flag_mgr #(
   logic [CountWidth-1:0] pop_count_visible;
 
   br_counter_incr #(
+      .ValueWidth(CountWidth),
+      .IncrementWidth(1),
       .MaxValue(MaxCount)
   ) br_counter_incr_push_count (
       .clk,
