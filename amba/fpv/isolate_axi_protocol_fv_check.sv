@@ -204,7 +204,7 @@ module isolate_axi_protocol_fv_check #(
       .RUSER_WIDTH(RUserWidth),
       .MAX_PENDING(MaxOutstanding),
       .AXI4_LITE(MaxAxiBurstLen == 1),
-      .READ_INTERLEAVE_ON(0) // not supported by br_amba_axi_isolate_sub
+      .READ_INTERLEAVE_ON(0)  // not supported by br_amba_axi_isolate_sub
   ) downstream (
       // Global signals
       .aclk    (clk),
