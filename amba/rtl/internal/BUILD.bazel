@@ -96,6 +96,7 @@ verilog_library(
     deps = [
         "//amba/rtl:br_amba_pkg",
         "//arb/rtl:br_arb_rr",
+        "//counter/rtl:br_counter",
         "//counter/rtl:br_counter_incr",
         "//fifo/rtl:br_fifo_flops",
         "//fifo/rtl:br_fifo_shared_dynamic_flops",

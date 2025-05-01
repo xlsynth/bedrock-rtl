@@ -110,6 +110,7 @@ module br_amba_iso_resp_tracker #(
 
   // Integration checks
   `BR_ASSERT_STATIC(max_outstanding_gte_1_a, MaxOutstanding > 1)
+  `BR_ASSERT_STATIC(max_outstanding_gt_skew_a, MaxOutstanding > MaxTransactionSkew)
   `BR_ASSERT_STATIC(max_axi_burst_len_1_or_amba_a,
                     MaxAxiBurstLen == 1 || MaxAxiBurstLen == 2 ** br_amba::AxiBurstLenWidth)
   `BR_ASSERT_STATIC(axi_id_width_gte_clog2_a, AxiIdWidth >= $clog2(AxiIdCount))
@@ -123,6 +124,7 @@ module br_amba_iso_resp_tracker #(
   localparam bit SingleBeatOnly = (MaxAxiBurstLen == 1);
   localparam bit SingleIdOnly = (AxiIdCount == 1);
   localparam int MinIdWidth = br_math::clamped_clog2(AxiIdCount);
+  localparam int OutstandingWidth = $clog2(MaxOutstanding + 1);
 
   // Local signals
   logic [AxiBurstLenWidth-1:0] tracker_fifo_push_len;
@@ -164,6 +166,10 @@ module br_amba_iso_resp_tracker #(
   logic [AxiIdCount-1:0] tracker_fifo_pop_empty;
   logic staging_fifo_pop_empty;
 
+  logic [OutstandingWidth-1:0] req_tracker_free_slots;
+  logic [$clog2(MaxTransactionSkew+1)-1:0] staging_fifo_items;
+  logic tracker_fifo_can_accept;
+
   //
   // Write Data Receipt Tracking
   // Ensures a WLAST is received for every AWVALID received, prior to inserting into the tracking
@@ -204,7 +210,7 @@ module br_amba_iso_resp_tracker #(
       .slots_next(),
       .empty(staging_fifo_pop_empty),
       .empty_next(),
-      .items(),
+      .items(staging_fifo_items),
       .items_next()
   );
 
@@ -291,7 +297,7 @@ module br_amba_iso_resp_tracker #(
         //
         .full(),
         .full_next(),
-        .slots(),
+        .slots(req_tracker_free_slots),
         .slots_next(),
         .empty(tracker_fifo_pop_empty),
         .empty_next(),
@@ -300,6 +306,31 @@ module br_amba_iso_resp_tracker #(
     );
     `BR_UNUSED(tracker_fifo_push_ax_id)
   end else begin : gen_multi_fifo
+
+    // slots counter
+    logic [$clog2(MaxOutstanding+1)-1:0] req_tracker_free_slots_init;
+    assign req_tracker_free_slots_init = MaxOutstanding;
+
+    br_counter #(
+        .MaxValue(MaxOutstanding),
+        .MaxChange(1),
+        .EnableWrap(0),
+        .EnableSaturate(0),
+        .EnableReinitAndChange(0)
+    ) br_counter_req_tracker (
+        .clk,
+        .rst,
+        //
+        .reinit(1'b0),
+        .initial_value(req_tracker_free_slots_init),
+        .incr_valid(|(tracker_fifo_pop_valid & tracker_fifo_pop_ready)),
+        .incr(1'b1),
+        .decr_valid(tracker_fifo_push_valid && tracker_fifo_push_ready),
+        .decr(1'b1),
+        .value(req_tracker_free_slots),
+        .value_next()
+    );
+
     br_fifo_shared_dynamic_flops #(
         .NumWritePorts(1),
         .NumReadPorts(1),
@@ -327,6 +358,10 @@ module br_amba_iso_resp_tracker #(
   end
 
   assign resp_fifo_empty = &tracker_fifo_pop_empty && staging_fifo_pop_empty;
+
+  // The tracker FIFO can accept a new item if there are enough free slots to absorb the current
+  // contents of the staging FIFO plus the new push item.
+  assign tracker_fifo_can_accept = req_tracker_free_slots > OutstandingWidth'(staging_fifo_items);
 
   //
   // Current Response ID
@@ -503,8 +538,12 @@ module br_amba_iso_resp_tracker #(
   assign upstream_xresp = downstream_iso_xresp;
   assign upstream_xdata = downstream_iso_xdata;
 
-  assign upstream_axready = staging_fifo_push_ready && downstream_axready;
-  assign downstream_axvalid = upstream_axvalid && staging_fifo_push_ready;
+  assign upstream_axready = downstream_axready
+                            && staging_fifo_push_ready
+                            && tracker_fifo_can_accept;
+  assign downstream_axvalid = upstream_axvalid
+                            && staging_fifo_push_ready
+                            && tracker_fifo_can_accept;
   assign downstream_axid = upstream_axid;
   assign downstream_axlen = upstream_axlen;
 
