@@ -99,6 +99,8 @@ module br_tracker_reorder #(
   logic [CounterValueWidth-1:0] dealloc_complete_counter_value;
 
   br_counter_incr #(
+      .ValueWidth(CounterValueWidth),
+      .IncrementWidth(1),
       .MaxValue(NumEntries - 1),
       .MaxIncrement(1),
       .EnableSaturate(0),
