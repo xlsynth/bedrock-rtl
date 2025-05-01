@@ -16,7 +16,7 @@
 // Contains just the bypass and RAM write logic, leaving occupancy tracking up to
 // the instantiating module.
 
-`include "br_asserts.svh"
+`include "br_asserts_internal.svh"
 `include "br_unused.svh"
 
 module br_fifo_push_ctrl_core #(
@@ -55,8 +55,14 @@ module br_fifo_push_ctrl_core #(
 
     // RAM interface
     output logic                 ram_wr_valid,
+    output logic [AddrWidth-1:0] ram_wr_addr_next,
     output logic [AddrWidth-1:0] ram_wr_addr,
     output logic [    Width-1:0] ram_wr_data,
+
+    // Address base and bound configuration
+    input logic [AddrWidth-1:0] addr_base,
+    // addr_bound is inclusive
+    input logic [AddrWidth-1:0] addr_bound,
 
     // Signals to/from internal logic
     input  logic full,
@@ -68,6 +74,8 @@ module br_fifo_push_ctrl_core #(
   //------------------------------------------
 
   `BR_ASSERT_STATIC(depth_must_be_at_least_one_a, Depth >= 1)
+  `BR_ASSERT_IMPL(addr_base_lte_addr_bound_a, addr_base <= addr_bound)
+  `BR_ASSERT_IMPL(addr_bound_in_range_a, addr_bound < Depth)
 
   br_flow_checks_valid_data_intg #(
       .NumFlows(1),
@@ -87,31 +95,36 @@ module br_fifo_push_ctrl_core #(
   //------------------------------------------
   // Implementation
   //------------------------------------------
-
   // Flow control
   assign push_beat  = push_ready && push_valid;
   assign push_ready = !full;
 
   // RAM path
   if (Depth > 1) begin : gen_wr_addr_counter
+    logic addr_wrap;
+
+    assign addr_wrap = ram_wr_valid && ram_wr_addr == addr_bound;
+
     br_counter_incr #(
         .ValueWidth(AddrWidth),
         .IncrementWidth(1),
         .MaxValue(Depth - 1),
         .MaxIncrement(1),
+        .EnableReinitAndIncr(0),
         .EnableAssertFinalNotValid(EnableAssertFinalNotValid)
     ) br_counter_incr_wr_addr (
         .clk,
         .rst,
-        .reinit(1'b0),  // unused
-        .initial_value(AddrWidth'(1'b0)),
+        .reinit(addr_wrap),
+        .initial_value(addr_base),
         .incr_valid(ram_wr_valid),
         .incr(1'b1),
         .value(ram_wr_addr),
-        .value_next()  // unused
+        .value_next(ram_wr_addr_next)
     );
   end else begin : gen_wr_addr_const
     assign ram_wr_addr = '0;
+    assign ram_wr_addr_next = '0;
   end
 
   // Datapath

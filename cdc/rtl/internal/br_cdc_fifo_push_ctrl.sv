@@ -93,6 +93,12 @@ module br_cdc_fifo_push_ctrl #(
   );
 
   // Core flow-control logic
+  logic [AddrWidth-1:0] addr_base;
+  logic [AddrWidth-1:0] addr_bound;
+
+  assign addr_base  = '0;
+  assign addr_bound = Depth - 1;
+
   br_fifo_push_ctrl_core #(
       .Depth(Depth),
       .Width(Width),
@@ -105,6 +111,9 @@ module br_cdc_fifo_push_ctrl #(
       .clk,
       .rst,
 
+      .addr_base,
+      .addr_bound,
+
       .push_ready,
       .push_valid,
       .push_data,
@@ -115,6 +124,7 @@ module br_cdc_fifo_push_ctrl #(
 
       .ram_wr_valid,
       .ram_wr_addr,
+      .ram_wr_addr_next(),
       .ram_wr_data,
 
       .full,
