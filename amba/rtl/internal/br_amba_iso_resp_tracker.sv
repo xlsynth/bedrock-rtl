@@ -43,6 +43,9 @@
 `include "br_unused.svh"
 
 module br_amba_iso_resp_tracker #(
+    // Maximum allowed skew (measured in transactions) that can be tracked
+    // without causing backpressure on the upstream ports.
+    parameter int MaxTransactionSkew = 2,
     // Maximum number of outstanding requests that can be tracked without
     // backpressuring the upstream request ports.
     parameter int MaxOutstanding = 128,
@@ -73,6 +76,10 @@ module br_amba_iso_resp_tracker #(
     input logic upstream_axvalid,
     input logic [AxiIdWidth-1:0] upstream_axid,
     input logic [AxiBurstLenWidth-1:0] upstream_axlen,
+    // W channel from upstream
+    output logic upstream_wready,
+    input logic upstream_wvalid,
+    input logic upstream_wlast,
     // R or B channel to upstream
     input logic upstream_xready,
     output logic upstream_xvalid,
@@ -85,6 +92,10 @@ module br_amba_iso_resp_tracker #(
     output logic downstream_axvalid,
     output logic [AxiIdWidth-1:0] downstream_axid,
     output logic [AxiBurstLenWidth-1:0] downstream_axlen,
+    // W channel to downstream
+    input logic downstream_wready,
+    output logic downstream_wvalid,
+    output logic downstream_wlast,
     // R or B channel from downstream
     output logic downstream_xready,
     input logic downstream_xvalid,
@@ -139,14 +150,30 @@ module br_amba_iso_resp_tracker #(
   logic final_count;
   logic zero_count;
 
+  logic staging_fifo_push_valid;
+  logic staging_fifo_push_ready;
+  logic staging_fifo_pop_valid;
+  logic staging_fifo_pop_ready;
+  logic [AxiBurstLenWidth-1:0] staging_fifo_push_len;
+  logic [MinIdWidth-1:0] staging_fifo_push_axid;
+  logic wlast_fifo_pop_valid;
+  logic wlast_fifo_pop_ready;
+  logic wlast_fifo_push_valid;
+  logic wlast_fifo_push_ready;
+
+  logic [AxiIdCount-1:0] tracker_fifo_pop_empty;
+  logic staging_fifo_pop_empty;
+
   //
-  // Per-ID Request Tracker FIFO
-  // Stores ordered list of request lengths for each ID.
+  // Write Data Receipt Tracking
+  // Ensures a WLAST is received for every AWVALID received, prior to inserting into the tracking
+  // FIFO. This is to ensure we can never generate (dummy, isolation) responses to writes where
+  // we have not yet received the last beat of data from upstream on the W channel.
   //
 
-  assign tracker_fifo_push_len   = SingleBeatOnly ? 1'b0 : upstream_axlen;
-  assign tracker_fifo_push_ax_id = SingleIdOnly ? '0 : upstream_axid[MinIdWidth-1:0];
-  assign tracker_fifo_push_valid = upstream_axvalid && downstream_axready;
+  assign staging_fifo_push_len   = SingleBeatOnly ? 1'b0 : upstream_axlen;
+  assign staging_fifo_push_axid  = SingleIdOnly ? '0 : upstream_axid[MinIdWidth-1:0];
+  assign staging_fifo_push_valid = upstream_axvalid && downstream_axready;
 
   if (MinIdWidth < AxiIdWidth) begin : gen_id_width_lt_len_width
     `BR_UNUSED_NAMED(upstream_axid_unused, upstream_axid[AxiIdWidth-1:MinIdWidth])
@@ -154,7 +181,88 @@ module br_amba_iso_resp_tracker #(
                     upstream_axvalid |-> upstream_axid[AxiIdWidth-1:MinIdWidth] == '0)
   end
 
-  logic [AxiIdCount-1:0] tracker_fifo_pop_empty;
+  br_fifo_flops #(
+      .Depth(MaxTransactionSkew),
+      .Width(AxiBurstLenWidth + MinIdWidth)
+  ) br_fifo_flops_aw_staging (
+      .clk,
+      .rst,
+      //
+      .push_valid(staging_fifo_push_valid),
+      .push_data({staging_fifo_push_axid, staging_fifo_push_len}),
+      .push_ready(staging_fifo_push_ready),
+      //
+      .pop_valid(staging_fifo_pop_valid),
+      .pop_data({tracker_fifo_push_ax_id, tracker_fifo_push_len}),
+      .pop_ready(staging_fifo_pop_ready),
+      //
+      .full(),
+      .full_next(),
+      .slots(),
+      .slots_next(),
+      .empty(staging_fifo_pop_empty),
+      .empty_next(),
+      .items(),
+      .items_next()
+  );
+
+  br_flow_fork #(
+      .NumFlows(2)
+  ) br_flow_fork_wlast_staging (
+      .clk,
+      .rst,
+      //
+      .push_valid(upstream_wvalid),
+      .push_ready(upstream_wready),
+      //
+      .pop_valid_unstable({downstream_wvalid, wlast_fifo_push_valid}),
+      .pop_ready({downstream_wready, wlast_fifo_push_ready})
+  );
+
+  assign downstream_wlast = upstream_wlast;
+
+  br_fifo_flops #(
+      .Depth(MaxTransactionSkew),
+      .Width(1)
+  ) br_fifo_flops_wlast_staging (
+      .clk,
+      .rst,
+      //
+      .push_valid(wlast_fifo_push_valid && upstream_wlast),
+      .push_data(1'b0),
+      .push_ready(wlast_fifo_push_ready),
+      //
+      .pop_valid(wlast_fifo_pop_valid),
+      .pop_data(),
+      .pop_ready(wlast_fifo_pop_ready),
+      //
+      .full(),
+      .full_next(),
+      .slots(),
+      .slots_next(),
+      .empty(),
+      .empty_next(),
+      .items(),
+      .items_next()
+  );
+
+  br_flow_join #(
+      .NumFlows(2)
+  ) br_flow_join_aw_staging (
+      .clk,
+      .rst,
+      //
+      .push_ready({staging_fifo_pop_ready, wlast_fifo_pop_ready}),
+      .push_valid({staging_fifo_pop_valid, wlast_fifo_pop_valid}),
+      //
+      .pop_ready (tracker_fifo_push_ready),
+      .pop_valid (tracker_fifo_push_valid)
+  );
+
+  //
+  // Per-ID Request Tracker FIFO
+  // Stores ordered list of request lengths for each ID.
+  //
 
   if (SingleIdOnly) begin : gen_single_fifo
     br_fifo_flops #(
@@ -215,8 +323,7 @@ module br_amba_iso_resp_tracker #(
     );
   end
 
-  assign resp_fifo_empty = &tracker_fifo_pop_empty;
-
+  assign resp_fifo_empty = &tracker_fifo_pop_empty && staging_fifo_pop_empty;
 
   //
   // Current Response ID
@@ -393,8 +500,8 @@ module br_amba_iso_resp_tracker #(
   assign upstream_xresp = downstream_iso_xresp;
   assign upstream_xdata = downstream_iso_xdata;
 
-  assign upstream_axready = tracker_fifo_push_ready && downstream_axready;
-  assign downstream_axvalid = upstream_axvalid && tracker_fifo_push_ready;
+  assign upstream_axready = staging_fifo_push_ready && downstream_axready;
+  assign downstream_axvalid = upstream_axvalid && staging_fifo_push_ready;
   assign downstream_axid = upstream_axid;
   assign downstream_axlen = upstream_axlen;
 
