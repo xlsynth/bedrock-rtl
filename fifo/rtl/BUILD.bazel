@@ -535,3 +535,43 @@ br_verilog_elab_and_lint_test_suite(
     },
     deps = [":br_fifo_shared_dynamic_flops_push_credit"],
 )
+
+verilog_library(
+    name = "br_fifo_shared_pstatic_ctrl",
+    srcs = ["br_fifo_shared_pstatic_ctrl.sv"],
+    deps = [
+        ":br_fifo_shared_pop_ctrl",
+        "//fifo/rtl/internal:br_fifo_shared_pstatic_ptr_mgr",
+        "//fifo/rtl/internal:br_fifo_shared_pstatic_push_ctrl",
+        "//fifo/rtl/internal:br_fifo_shared_pstatic_size_calc",
+        "//macros:br_asserts_internal",
+    ],
+)
+
+br_verilog_elab_and_lint_test_suite(
+    name = "br_fifo_shared_pstatic_ctrl_test_suite",
+    params = {
+        "NumFifos": [
+            "2",
+            "4",
+        ],
+        "Depth": [
+            "5",
+            "8",
+        ],
+        "Width": ["8"],
+        "StagingBufferDepth": [
+            "1",
+            "2",
+        ],
+        "RamReadLatency": [
+            "0",
+            "1",
+        ],
+        "RegisterPopOutputs": [
+            "0",
+            "1",
+        ],
+    },
+    deps = [":br_fifo_shared_pstatic_ctrl"],
+)
