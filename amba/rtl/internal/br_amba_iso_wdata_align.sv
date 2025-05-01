@@ -114,6 +114,8 @@ module br_amba_iso_wdata_align #(
   //
 
   br_counter #(
+      .ValueWidth(MaxExcessCountWidth),
+      .ChangeWidth(MaxBurstLenWidth),
       .MaxValue(MaxExcessCount),
       .MaxChange(MaxAxiBurstLen),
       .EnableWrap(0),
@@ -155,6 +157,8 @@ module br_amba_iso_wdata_align #(
   //
 
   br_counter #(
+      .ValueWidth(MaxExcessCountWidth),
+      .ChangeWidth(MaxBurstLenWidth),
       .MaxValue(MaxExcessCount),
       .MaxChange(MaxAxiBurstLen),
       .EnableWrap(0),

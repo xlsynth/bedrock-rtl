@@ -172,7 +172,9 @@ module br_amba_axil_msi #(
 
   // Throttle counter
   br_counter_decr #(
-      .MaxValue((2 ** ThrottleCntrWidth) - 1),
+      .ValueWidth(ThrottleCntrWidth),
+      .DecrementWidth(1),
+      .MaxValue({ThrottleCntrWidth{1'b1}}),
       .EnableSaturate(1),
       .MaxDecrement(1)
   ) br_counter_decr_throttle (

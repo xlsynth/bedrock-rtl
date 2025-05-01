@@ -95,6 +95,8 @@ module br_fifo_push_ctrl_core #(
   // RAM path
   if (Depth > 1) begin : gen_wr_addr_counter
     br_counter_incr #(
+        .ValueWidth(AddrWidth),
+        .IncrementWidth(1),
         .MaxValue(Depth - 1),
         .MaxIncrement(1),
         .EnableAssertFinalNotValid(EnableAssertFinalNotValid)
