@@ -45,9 +45,13 @@
 
 module br_counter #(
     // Must be at least 1. Inclusive.
-    parameter longint unsigned MaxValue = 1,
+    parameter int ValueWidth = 1,
+    // Must be at least 1. Inclusive.
+    parameter int ChangeWidth = 1,
+    // Must be at least 1. Inclusive.
+    parameter logic [ValueWidth-1:0] MaxValue = 1,
     // Must be at least 1 and at most MaxValue. Inclusive.
-    parameter longint unsigned MaxChange = 1,
+    parameter logic [ChangeWidth-1:0] MaxChange = 1,
     // If 1, allow the counter value to wrap around 0/MaxValue, adding additional correction
     // logic to do so if MaxValue is not 1 less than a power of two.
     // If 0, don't allow wrapping and omit overflow/underflow correction logic.
@@ -65,9 +69,7 @@ module br_counter #(
     // Must be 0 if EnableWrap is 1.
     parameter bit EnableSaturate = 0,
     // If 1, then assert there are no valid bits asserted at the end of the test.
-    parameter bit EnableAssertFinalNotValid = 1,
-    localparam int ValueWidth = $clog2(MaxValue + 1),
-    localparam int ChangeWidth = $clog2(MaxChange + 1)
+    parameter bit EnableAssertFinalNotValid = 1
 ) (
     // Posedge-triggered clock.
     input  logic                   clk,
@@ -86,6 +88,8 @@ module br_counter #(
   //------------------------------------------
   // Integration checks
   //------------------------------------------
+  `BR_ASSERT_STATIC(value_width_gte_1_a, ValueWidth >= 1)
+  `BR_ASSERT_STATIC(change_width_gte_1_a, ChangeWidth >= 1)
   `BR_ASSERT_STATIC(max_value_gte_1_a, MaxValue >= 1)
   `BR_ASSERT_STATIC(max_increment_gte_1_a, MaxChange >= 1)
   `BR_ASSERT_STATIC(max_increment_lte_max_value_a, MaxChange <= MaxValue)
@@ -170,7 +174,7 @@ module br_counter #(
     if (EnableSaturate) begin : gen_saturate
       logic [ValueWidth-1:0] value_next_saturated;
 
-      assign value_next_saturated = MaxValue;  // ri lint_check_waive LHS_TOO_SHORT
+      assign value_next_saturated = MaxValue;
       assign value_next = would_underflow ? '0 :
                           would_overflow ? value_next_saturated :
                           value_temp[ValueWidth-1:0];

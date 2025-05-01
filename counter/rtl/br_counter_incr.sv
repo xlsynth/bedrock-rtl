@@ -46,9 +46,13 @@
 
 module br_counter_incr #(
     // Must be at least 1. Inclusive.
-    parameter longint unsigned MaxValue = 1,
+    parameter int ValueWidth = 1,
+    // Must be at least 1. Inclusive.
+    parameter int IncrementWidth = 1,
+    // Must be at least 1. Inclusive.
+    parameter logic [ValueWidth-1:0] MaxValue = 1,
     // Must be at least 1 and at most MaxValue. Inclusive.
-    parameter longint unsigned MaxIncrement = 1,
+    parameter logic [IncrementWidth-1:0] MaxIncrement = 1,
     // If 1, then when reinit is asserted together with incr_valid,
     // the increment is applied to the initial value rather than the current value, i.e.,
     // value_next == initial_value + applicable incr.
@@ -59,9 +63,7 @@ module br_counter_incr #(
     // If 0, the counter value wraps around at MaxValue.
     parameter bit EnableSaturate = 0,
     // If 1, then assert there are no valid bits asserted at the end of the test.
-    parameter bit EnableAssertFinalNotValid = 1,
-    localparam int ValueWidth = $clog2(MaxValue + 1),
-    localparam int IncrementWidth = $clog2(MaxIncrement + 1)
+    parameter bit EnableAssertFinalNotValid = 1
 ) (
     // Posedge-triggered clock.
     input  logic                      clk,
@@ -78,6 +80,8 @@ module br_counter_incr #(
   //------------------------------------------
   // Integration checks
   //------------------------------------------
+  `BR_ASSERT_STATIC(value_width_gte_1_a, ValueWidth >= 1)
+  `BR_ASSERT_STATIC(increment_width_gte_1_a, IncrementWidth >= 1)
   `BR_ASSERT_STATIC(max_value_gte_1_a, MaxValue >= 1)
   `BR_ASSERT_STATIC(max_increment_gte_1_a, MaxIncrement >= 1)
   `BR_ASSERT_STATIC(max_increment_lte_max_value_a, MaxIncrement <= MaxValue)
@@ -111,7 +115,7 @@ module br_counter_incr #(
   if (EnableSaturate) begin : gen_saturate
     logic [ValueWidth-1:0] value_next_saturated;
 
-    assign value_next_saturated = MaxValue;  // ri lint_check_waive LHS_TOO_SHORT
+    assign value_next_saturated = MaxValue;
     assign value_next = (value_temp > MaxValue) ? value_next_saturated : value_temp[ValueWidth-1:0];  // ri lint_check_waive ARITH_BITLEN
 
     // For MaxValueP1 being a power of 2, wrapping occurs naturally
@@ -125,7 +129,7 @@ module br_counter_incr #(
     logic [TempWidth-1:0] value_temp_wrapped;
 
     // ri lint_check_waive ARITH_EXTENSION
-    assign value_temp_wrapped = (value_temp - MaxValue) - 1; // ri lint_check_waive LHS_TOO_SHORT ARITH_BITLEN
+    assign value_temp_wrapped = (value_temp - MaxValue) - 1;  // ri lint_check_waive ARITH_BITLEN
     // ri lint_check_waive ARITH_EXTENSION
     assign value_next = (value_temp > MaxValue) ?  // ri lint_check_waive ARITH_BITLEN
         value_temp_wrapped[ValueWidth-1:0] :  // ri lint_check_waive FULL_RANGE
