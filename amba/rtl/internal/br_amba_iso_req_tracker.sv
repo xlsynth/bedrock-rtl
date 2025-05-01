@@ -88,6 +88,8 @@ module br_amba_iso_req_tracker #(
   assign decr_valid = downstream_xvalid && downstream_xready && downstream_xlast;
 
   br_counter #(
+      .ValueWidth(RespCountWidth),
+      .ChangeWidth(1),
       .MaxValue(MaxOutstanding),
       .MaxChange(1),
       .EnableWrap(0),
