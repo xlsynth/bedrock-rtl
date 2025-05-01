@@ -21,10 +21,7 @@ verilog_library(
     name = "br_ecc_secded_pkg",
     srcs = ["br_ecc_secded_pkg.sv"],
     visibility = ["//visibility:public"],
-    deps = [
-        ":br_math_pkg",
-        "//macros:br_asserts",
-    ],
+    deps = [":br_math_pkg"],
 )
 
 verilog_library(
