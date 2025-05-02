@@ -204,6 +204,8 @@ module br_amba_iso_wdata_align #(
   //
 
   br_counter #(
+      .ValueWidth(MaxExcessCountWidth),
+      .ChangeWidth(MaxBurstLenWidth),
       .MaxValue(MaxExcessCount),
       .MaxChange(MaxAxiBurstLen),
       .EnableWrap(0),
@@ -229,6 +231,8 @@ module br_amba_iso_wdata_align #(
   //
 
   br_counter #(
+      .ValueWidth(MaxExcessCountWidth),
+      .ChangeWidth(MaxBurstLenWidth),
       .MaxValue(MaxExcessCount),
       .MaxChange(MaxAxiBurstLen),
       .EnableWrap(0),
@@ -299,6 +303,8 @@ module br_amba_iso_wdata_align #(
     end else begin : gen_beat_count_multi_beat
       logic [AxiBurstLenWidth-1:0] beat_count;
       br_counter_incr #(
+          .ValueWidth(AxiBurstLenWidth),
+          .IncrementWidth(1),
           .MaxValue(MaxAxiBurstLen - 1),
           .MaxIncrement(1),
           .EnableReinitAndIncr(0),

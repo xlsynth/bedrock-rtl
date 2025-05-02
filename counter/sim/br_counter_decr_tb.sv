@@ -38,6 +38,8 @@ module br_counter_decr_tb;
 
   // Instantiate the design under test (DUT)
   br_counter_decr #(
+      .ValueWidth(ValueWidth),
+      .DecrementWidth(DecrementWidth),
       .MaxValue(MaxValue),
       .MaxDecrement(MaxDecrement),
       .EnableSaturate(EnableSaturate),

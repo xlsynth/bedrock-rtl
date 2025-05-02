@@ -207,6 +207,8 @@ module br_flow_deserializer #(
     logic                      pop;
 
     br_counter_incr #(
+        .ValueWidth(SerFlitIdWidth),
+        .IncrementWidth(1),
         .MaxValue(DrMinus1),
         .MaxIncrement(1),
         .EnableAssertFinalNotValid(EnableAssertFinalNotValid)

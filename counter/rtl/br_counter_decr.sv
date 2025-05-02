@@ -45,8 +45,14 @@
 `include "br_unused.svh"
 
 module br_counter_decr #(
-    parameter int MaxValue = 1,  // Must be at least 1. Inclusive. Also the initial value.
-    parameter int MaxDecrement = 1,  // Must be at least 1 and at most MaxValue. Inclusive.
+    // Must be at least 1. Inclusive.
+    parameter int ValueWidth = 1,
+    // Must be at least 1. Inclusive.
+    parameter int DecrementWidth = 1,
+    // Must be at least 1. Inclusive. Also the initial value.
+    parameter logic [ValueWidth-1:0] MaxValue = 1,
+    // Must be at least 1 and at most MaxValue. Inclusive.
+    parameter logic [DecrementWidth-1:0] MaxDecrement = 1,
     // If 1, then when reinit is asserted together with decr_valid,
     // the decrement is applied to the initial value rather than the current value, i.e.,
     // value_next == initial_value - applicable decr.
@@ -57,9 +63,7 @@ module br_counter_decr #(
     // If 0, the counter value wraps around at 0.
     parameter bit EnableSaturate = 0,
     // If 1, then assert there are no valid bits asserted at the end of the test.
-    parameter bit EnableAssertFinalNotValid = 1,
-    localparam int ValueWidth = $clog2(MaxValue + 1),
-    localparam int DecrementWidth = $clog2(MaxDecrement + 1)
+    parameter bit EnableAssertFinalNotValid = 1
 ) (
     // Posedge-triggered clock.
     input  logic                      clk,
@@ -76,6 +80,8 @@ module br_counter_decr #(
   //------------------------------------------
   // Integration checks
   //------------------------------------------
+  `BR_ASSERT_STATIC(value_width_gte_1_a, ValueWidth >= 1)
+  `BR_ASSERT_STATIC(decrement_width_gte_1_a, DecrementWidth >= 1)
   `BR_ASSERT_STATIC(max_value_gte_1_a, MaxValue >= 1)
   `BR_ASSERT_STATIC(max_decrement_gte_1_a, MaxDecrement >= 1)
   `BR_ASSERT_STATIC(max_decrement_lte_max_value_a, MaxDecrement <= MaxValue)

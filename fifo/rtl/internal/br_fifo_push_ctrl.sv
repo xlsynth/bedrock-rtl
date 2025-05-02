@@ -115,6 +115,8 @@ module br_fifo_push_ctrl #(
 
   // Status flags
   br_counter #(
+      .ValueWidth(CountWidth),
+      .ChangeWidth(1),
       .MaxValue(Depth),
       .EnableAssertFinalNotValid(EnableAssertFinalNotValid)
   ) br_counter_slots (

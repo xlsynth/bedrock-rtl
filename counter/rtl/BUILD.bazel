@@ -50,6 +50,12 @@ verilog_library(
 br_verilog_elab_and_lint_test_suite(
     name = "br_counter_incr_test_suite0",
     params = {
+        "ValueWidth": [
+            "2",
+        ],
+        "IncrementWidth": [
+            "1",
+        ],
         "MaxValue": [
             "1",
             "2",
@@ -65,6 +71,12 @@ br_verilog_elab_and_lint_test_suite(
 br_verilog_elab_and_lint_test_suite(
     name = "br_counter_incr_test_suite1",
     params = {
+        "ValueWidth": [
+            "2",
+        ],
+        "IncrementWidth": [
+            "2",
+        ],
         "MaxValue": [
             "2",
             "3",
@@ -83,6 +95,12 @@ br_verilog_elab_and_lint_test_suite(
 br_verilog_elab_and_lint_test_suite(
     name = "br_counter_incr_test_suite2",
     params = {
+        "ValueWidth": [
+            "2",
+        ],
+        "IncrementWidth": [
+            "2",
+        ],
         "MaxValue": [
             "2",
             "3",
@@ -101,6 +119,12 @@ br_verilog_elab_and_lint_test_suite(
 br_verilog_elab_and_lint_test_suite(
     name = "br_counter_decr_test_suite0",
     params = {
+        "ValueWidth": [
+            "2",
+        ],
+        "DecrementWidth": [
+            "1",
+        ],
         "MaxValue": [
             "1",
             "2",
@@ -120,6 +144,12 @@ br_verilog_elab_and_lint_test_suite(
 br_verilog_elab_and_lint_test_suite(
     name = "br_counter_decr_test_suite1",
     params = {
+        "ValueWidth": [
+            "2",
+        ],
+        "DecrementWidth": [
+            "2",
+        ],
         "MaxValue": [
             "2",
             "3",
@@ -134,6 +164,12 @@ br_verilog_elab_and_lint_test_suite(
 br_verilog_elab_and_lint_test_suite(
     name = "br_counter_decr_test_suite2",
     params = {
+        "ValueWidth": [
+            "2",
+        ],
+        "DecrementWidth": [
+            "2",
+        ],
         "MaxValue": [
             "2",
             "3",
@@ -152,6 +188,12 @@ br_verilog_elab_and_lint_test_suite(
 br_verilog_elab_and_lint_test_suite(
     name = "br_counter_test_suite0",
     params = {
+        "ValueWidth": [
+            "2",
+        ],
+        "ChangeWidth": [
+            "1",
+        ],
         "MaxValue": [
             "1",
             "2",
@@ -171,6 +213,12 @@ br_verilog_elab_and_lint_test_suite(
 br_verilog_elab_and_lint_test_suite(
     name = "br_counter_test_suite1",
     params = {
+        "ValueWidth": [
+            "2",
+        ],
+        "ChangeWidth": [
+            "2",
+        ],
         "MaxValue": [
             "2",
             "3",
@@ -189,6 +237,12 @@ br_verilog_elab_and_lint_test_suite(
 br_verilog_elab_and_lint_test_suite(
     name = "br_counter_test_suite2",
     params = {
+        "ValueWidth": [
+            "2",
+        ],
+        "ChangeWidth": [
+            "2",
+        ],
         "MaxValue": [
             "2",
             "3",

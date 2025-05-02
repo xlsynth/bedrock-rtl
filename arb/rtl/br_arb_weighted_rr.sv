@@ -118,6 +118,8 @@ module br_arb_weighted_rr #(
 
   for (genvar i = 0; i < NumRequesters; i++) begin : gen_accumulated_weight
     br_counter #(
+        .ValueWidth(AccumulatedWeightWidth),
+        .ChangeWidth(WeightWidth),
         .MaxValue(MaxAccumulatedWeight),
         .MaxChange(MaxWeight),
         .EnableSaturate(1),
