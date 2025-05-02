@@ -132,6 +132,8 @@ module br_counter #(
   localparam int MaxValueP1 = MaxValue + 1;
   localparam bit IsMaxValueP1PowerOf2 = (MaxValueP1 & (MaxValueP1 - 1)) == 0;
   localparam int TempWidth = $clog2(MaxValue + MaxChange + 1);
+  localparam logic [TempWidth-1:0] MaxValueWithOverflow = (TempWidth > ValueWidth) ?
+      {1'b0, MaxValue} : MaxValue;
 
   logic                   value_loaden;
   // The MSB might not be used
@@ -167,7 +169,7 @@ module br_counter #(
     logic would_overflow;
 
     assign is_net_decr = decr_qual > incr_qual;
-    assign would_out_of_bounds = value_temp > MaxValue;  // ri lint_check_waive ARITH_BITLEN
+    assign would_out_of_bounds = value_temp > MaxValueWithOverflow;
     assign would_underflow = would_out_of_bounds && is_net_decr;
     assign would_overflow = would_out_of_bounds && !is_net_decr;
 

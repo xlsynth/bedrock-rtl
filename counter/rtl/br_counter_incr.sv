@@ -99,6 +99,8 @@ module br_counter_incr #(
   localparam int MaxValueP1 = MaxValue + 1;
   localparam bit IsMaxValueP1PowerOf2 = (MaxValueP1 & (MaxValueP1 - 1)) == 0;
   localparam int TempWidth = $clog2(MaxValue + MaxIncrement + 1);
+  localparam logic [TempWidth-1:0] MaxValueWithOverflow = (TempWidth > ValueWidth) ?
+      {1'b0, MaxValue} : MaxValue;
 
   // TODO(mgottscho): Sometimes the MSbs may not be used. It'd be cleaner
   // to capture them more tightly using br_misc_unused.
@@ -116,7 +118,8 @@ module br_counter_incr #(
     logic [ValueWidth-1:0] value_next_saturated;
 
     assign value_next_saturated = MaxValue;
-    assign value_next = (value_temp > MaxValue) ? value_next_saturated : value_temp[ValueWidth-1:0];  // ri lint_check_waive ARITH_BITLEN
+    assign value_next = (value_temp > MaxValueWithOverflow) ?
+        value_next_saturated : value_temp[ValueWidth-1:0];
 
     // For MaxValueP1 being a power of 2, wrapping occurs naturally
   end else if (IsMaxValueP1PowerOf2) begin : gen_power_of_2_wrap
@@ -129,9 +132,9 @@ module br_counter_incr #(
     logic [TempWidth-1:0] value_temp_wrapped;
 
     // ri lint_check_waive ARITH_EXTENSION
-    assign value_temp_wrapped = (value_temp - MaxValue) - 1;  // ri lint_check_waive ARITH_BITLEN
+    assign value_temp_wrapped = (value_temp - MaxValueWithOverflow) - 1;
     // ri lint_check_waive ARITH_EXTENSION
-    assign value_next = (value_temp > MaxValue) ?  // ri lint_check_waive ARITH_BITLEN
+    assign value_next = (value_temp > MaxValueWithOverflow) ?
         value_temp_wrapped[ValueWidth-1:0] :  // ri lint_check_waive FULL_RANGE
         value_temp[ValueWidth-1:0];  // ri lint_check_waive FULL_RANGE
 
