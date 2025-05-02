@@ -214,7 +214,7 @@ module br_counter #(
   // Value
   `BR_ASSERT_IMPL(value_in_range_a, value <= MaxValue)
   `BR_ASSERT_IMPL(value_next_in_range_a, value_next <= MaxValue)
-  `BR_ASSERT_IMPL(value_next_propagates_a, ##1 value == $past(value_next))
+  `BR_ASSERT_IMPL(value_next_propagates_a, ##1 !$past(rst) |-> value == $past(value_next))
 
   // Change corners
   `BR_COVER_IMPL(increment_max_c, incr_valid && incr == MaxChange)
