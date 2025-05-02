@@ -22,6 +22,9 @@
 // On average, round-robin arbitration is fair to all requesters so long as each requester
 // does not withdraw its request until it is granted.
 //
+// The enable_priority_update signal allows the priority state to update when a grant is made.
+// If low, grants can still be made, but the priority will remain unchanged for the next cycle.
+//
 // The grant_hold signal will cause the arbiter to disable further arbitration once the specified
 // requester is granted, and maintain the grant to that requester until the grant_hold signal for
 // that requester is deasserted. The grant combinationally depends on grant_hold.
@@ -37,6 +40,7 @@ module br_arb_hold_rr #(
 ) (
     input logic clk,
     input logic rst,
+    input logic enable_priority_update,
     input logic [NumRequesters-1:0] request,
     output logic [NumRequesters-1:0] grant,
 
@@ -53,7 +57,7 @@ module br_arb_hold_rr #(
   // Implementation
   //------------------------------------------
 
-  logic enable_priority_update;
+  logic enable_priority_update_int;
   logic [NumRequesters-1:0] grant_pre;
   logic [NumRequesters-1:0] grant_last;
   logic [NumRequesters-1:0] hold;
@@ -62,13 +66,13 @@ module br_arb_hold_rr #(
   ) br_arb_rr_inst (
       .clk,
       .rst,
-      .enable_priority_update,
+      .enable_priority_update(enable_priority_update_int),
       .request,
       .grant(grant_pre)
   );
 
   `BR_REG(grant_last, grant)
-  assign enable_priority_update = ~|hold;
+  assign enable_priority_update_int = !(|hold) && enable_priority_update;
   assign hold = grant_hold & grant_last;
   assign grant = |hold ? hold : grant_pre;
 
