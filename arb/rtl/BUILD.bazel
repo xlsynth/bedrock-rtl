@@ -52,6 +52,7 @@ verilog_library(
     srcs = ["br_arb_hold_rr.sv"],
     deps = [
         "//arb/rtl:br_arb_rr",
+        "//arb/rtl/internal:br_arb_hold_internal",
         "//macros:br_asserts_internal",
         "//macros:br_registers",
     ],
@@ -83,6 +84,7 @@ verilog_library(
     srcs = ["br_arb_hold_weighted_rr.sv"],
     deps = [
         "//arb/rtl:br_arb_weighted_rr",
+        "//arb/rtl/internal:br_arb_hold_internal",
         "//macros:br_asserts_internal",
         "//macros:br_registers",
     ],

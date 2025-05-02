@@ -19,16 +19,18 @@
 // index becomes the lowest priority and the next higher index (modulo NumRequesters)
 // becomes the highest priority.
 //
-// On average, round-robin arbitration is fair to all requesters so long as each requester
-// does not withdraw its request until it is granted.
+// On average, round-robin arbitration is fair to all requesters so long as
+// each requester does not withdraw its request until it is granted.
 //
-// The enable_priority_update signal allows the priority state to update when a grant is made.
-// If low, grants can still be made, but the priority will remain unchanged for the next cycle.
+// The enable_priority_update signal allows the priority state to update when a
+// grant is made. If low, grants can still be made, but the priority will remain
+// unchanged for the next cycle.
 //
-// The grant_hold signal will cause the arbiter to disable further arbitration once the specified
-// requester is granted, and maintain the grant to that requester until the grant_hold signal for
-// that requester is deasserted. The grant combinationally depends on grant_hold.
-// If grant_hold is asserted for a requester that is not granted, it has no effect on that grant.
+// The grant_hold signal will cause the arbiter to disable further arbitration
+// once the specified requester is granted, and maintain the grant to that
+// requester until the grant_hold signal for that requester is deasserted. The
+// grant combinationally depends on grant_hold. If grant_hold is asserted for a
+// requester that is not granted, it has no effect on that grant.
 //
 // There is zero latency from request to grant.
 
@@ -43,7 +45,6 @@ module br_arb_hold_rr #(
     input logic enable_priority_update,
     input logic [NumRequesters-1:0] request,
     output logic [NumRequesters-1:0] grant,
-
     input logic [NumRequesters-1:0] grant_hold
 );
 
@@ -59,8 +60,7 @@ module br_arb_hold_rr #(
 
   logic enable_priority_update_int;
   logic [NumRequesters-1:0] grant_pre;
-  logic [NumRequesters-1:0] grant_last;
-  logic [NumRequesters-1:0] hold;
+
   br_arb_rr #(
       .NumRequesters(NumRequesters)
   ) br_arb_rr_inst (
@@ -71,9 +71,16 @@ module br_arb_hold_rr #(
       .grant(grant_pre)
   );
 
-  `BR_REG(grant_last, grant)
-  assign enable_priority_update_int = !(|hold) && enable_priority_update;
-  assign hold = grant_hold & grant_last;
-  assign grant = |hold ? hold : grant_pre;
+  br_arb_hold_internal #(
+      .NumRequesters(NumRequesters)
+  ) br_arb_hold_internal_inst (
+      .clk,
+      .rst,
+      .grant_hold,
+      .enable_priority_update_pre_hold(enable_priority_update),
+      .grant_pre_hold(grant_pre),
+      .enable_priority_update_post_hold(enable_priority_update_int),
+      .grant_post_hold(grant)
+  );
 
 endmodule : br_arb_hold_rr

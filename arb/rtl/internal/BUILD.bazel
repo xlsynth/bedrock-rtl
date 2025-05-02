@@ -51,4 +51,12 @@ verilog_library(
     ],
 )
 
+verilog_library(
+    name = "br_arb_hold_internal",
+    srcs = ["br_arb_hold_internal.sv"],
+    deps = [
+        "//macros:br_registers",
+    ],
+)
+
 # Elab/Lint tests done on public modules
