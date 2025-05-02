@@ -434,3 +434,35 @@ br_verilog_elab_and_lint_test_suite(
     },
     deps = [":br_fifo_shared_pstatic_ptr_mgr"],
 )
+
+verilog_library(
+    name = "br_fifo_shared_pstatic_push_ctrl_credit",
+    srcs = ["br_fifo_shared_pstatic_push_ctrl_credit.sv"],
+    deps = [
+        ":br_fifo_shared_pstatic_push_ctrl",
+        "//credit/rtl:br_credit_receiver",
+        "//macros:br_asserts_internal",
+        "//macros:br_registers",
+        "//macros:br_unused",
+    ],
+)
+
+br_verilog_elab_and_lint_test_suite(
+    name = "br_fifo_shared_pstatic_push_ctrl_credit_test_suite",
+    params = {
+        "NumFifos": [
+            "2",
+            "4",
+        ],
+        "Depth": [
+            "5",
+            "8",
+        ],
+        "Width": ["8"],
+        "RegisterPushOutputs": [
+            "0",
+            "1",
+        ],
+    },
+    deps = [":br_fifo_shared_pstatic_push_ctrl_credit"],
+)
