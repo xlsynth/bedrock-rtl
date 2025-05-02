@@ -281,3 +281,49 @@ br_verilog_sim_test_tools_suite(
     ],
     deps = [":br_fifo_shared_dynamic_flops_push_credit_tb"],
 )
+
+verilog_library(
+    name = "br_fifo_shared_pstatic_flops_tb",
+    srcs = ["br_fifo_shared_pstatic_flops_tb.sv"],
+    deps = [
+        ":br_fifo_shared_test_harness",
+        "//fifo/rtl:br_fifo_shared_pstatic_flops",
+        "//misc/sim:br_test_driver",
+    ],
+)
+
+verilog_elab_test(
+    name = "br_fifo_shared_pstatic_flops_tb_elab_test",
+    tool = "verific",
+    deps = [":br_fifo_shared_pstatic_flops_tb"],
+)
+
+br_verilog_sim_test_tools_suite(
+    name = "br_fifo_shared_pstatic_flops_sim_test_tools_suite",
+    params = {
+        "Depth": ["8"],
+        "Width": ["8"],
+        "NumFifos": [
+            "2",
+            "4",
+        ],
+        "StagingBufferDepth": [
+            "1",
+            "2",
+        ],
+        "RegisterPopOutputs": [
+            "0",
+            "1",
+        ],
+        "RamAddressDepthStages": [
+            "0",
+            "1",
+        ],
+    },
+    # TODO(zhemao): dsim test is broken due to apparent simulator bug.
+    # Re-enable when the bug is fixed.
+    tools = [
+        "vcs",
+    ],
+    deps = [":br_fifo_shared_pstatic_flops_tb"],
+)
