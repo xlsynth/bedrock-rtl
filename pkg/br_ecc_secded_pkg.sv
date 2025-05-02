@@ -21,29 +21,25 @@
 // [1] https://ieeexplore.ieee.org/abstract/document/5391627
 // [2] https://arxiv.org/pdf/0803.1217
 
-`include "br_asserts.svh"
-
 // ri lint_check_waive FILE_NAME
 package br_ecc_secded;
 
   // Internal helper function for get_message_width. Don't use this directly.
   // ri lint_check_waive TWO_STATE_TYPE
   function automatic int _get_max_message_width(input int parity_width);
-    assert (parity_width >= 4);
     return br_math::exp2(parity_width - 1) - parity_width;
   endfunction : _get_max_message_width
 
   // Given a data width and a parity width, returns the smallest RTL-supported message width that can fit the data.
   // Only use this function in elaboration-time logic.
+  //
+  // This function does not check that the data width and parity width are actually within the ranges
+  // supported by the RTL. Rely on the RTL's static assertions for that.
+  //
   // ri lint_check_waive TWO_STATE_TYPE
   function automatic int get_message_width(input int data_width, input int parity_width);
-    assert (data_width >= 4);
-    assert (data_width <= 1024);
-    assert (parity_width >= 4);
-    assert (parity_width <= 12);
-    return br_math::min2(
-        br_math::round_up_to_power_of_2(data_width), _get_max_message_width(parity_width)
-    );
+    return br_math::min2(br_math::round_up_to_power_of_2(data_width),
+                         _get_max_message_width(parity_width));
   endfunction : get_message_width
 
   // Given a message (or data) width, returns the smallest parity width that can fit the message for any SECDED code.
@@ -79,7 +75,6 @@ package br_ecc_secded;
       return 12;
     end else begin
       // Unimplemented
-      assert (0);
       return 0;
     end
   endfunction : get_parity_width
