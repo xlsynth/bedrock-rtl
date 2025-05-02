@@ -371,6 +371,10 @@ br_verilog_elab_and_lint_test_suite(
             "1",
             "2",
         ],
+        "NumLinkedListsPerFifo": [
+            "1",
+            "2",
+        ],
         "PointerRamAddressDepthStages": [
             "0",
             "1",

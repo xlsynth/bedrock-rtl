@@ -189,6 +189,10 @@ br_verilog_sim_test_tools_suite(
             "1",
             "2",
         ],
+        "NumLinkedListsPerFifo": [
+            "1",
+            "2",
+        ],
         "RegisterPopOutputs": [
             "0",
             "1",
@@ -246,6 +250,10 @@ br_verilog_sim_test_tools_suite(
             "2",
         ],
         "StagingBufferDepth": [
+            "1",
+            "2",
+        ],
+        "NumLinkedListsPerFifo": [
             "1",
             "2",
         ],
