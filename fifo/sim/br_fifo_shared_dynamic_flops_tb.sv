@@ -7,6 +7,7 @@ module br_fifo_shared_dynamic_flops_tb;
   parameter int Depth = 5;
   parameter int Width = 8;
   parameter int StagingBufferDepth = 1;
+  parameter int NumLinkedListsPerFifo = 1;
   parameter bit RegisterPopOutputs = 0;
   parameter bit RegisterDeallocation = 0;
   parameter int DataRamAddressDepthStages = 0;
@@ -36,6 +37,7 @@ module br_fifo_shared_dynamic_flops_tb;
       .Depth(Depth),
       .Width(Width),
       .StagingBufferDepth(StagingBufferDepth),
+      .NumLinkedListsPerFifo(NumLinkedListsPerFifo),
       .RegisterPopOutputs(RegisterPopOutputs),
       .RegisterDeallocation(RegisterDeallocation),
       .DataRamAddressDepthStages(DataRamAddressDepthStages),
