@@ -48,6 +48,16 @@ verilog_library(
 )
 
 verilog_library(
+    name = "br_arb_hold_rr",
+    srcs = ["br_arb_hold_rr.sv"],
+    deps = [
+        "//arb/rtl:br_arb_rr",
+        "//macros:br_asserts_internal",
+        "//macros:br_registers",
+    ],
+)
+
+verilog_library(
     name = "br_arb_pri_rr",
     srcs = ["br_arb_pri_rr.sv"],
     deps = [
@@ -65,6 +75,16 @@ verilog_library(
         "//arb/rtl:br_arb_pri_rr",
         "//counter/rtl:br_counter",
         "//macros:br_asserts_internal",
+    ],
+)
+
+verilog_library(
+    name = "br_arb_hold_weighted_rr",
+    srcs = ["br_arb_hold_weighted_rr.sv"],
+    deps = [
+        "//arb/rtl:br_arb_weighted_rr",
+        "//macros:br_asserts_internal",
+        "//macros:br_registers",
     ],
 )
 
@@ -108,6 +128,15 @@ br_verilog_elab_and_lint_test_suite(
 )
 
 br_verilog_elab_and_lint_test_suite(
+    name = "br_arb_hold_rr_test_suite",
+    params = {"NumRequesters": [
+        "2",
+        "5",
+    ]},
+    deps = [":br_arb_hold_rr"],
+)
+
+br_verilog_elab_and_lint_test_suite(
     name = "br_arb_pri_rr_test_suite",
     params = {
         "NumRequesters": [
@@ -138,6 +167,24 @@ br_verilog_elab_and_lint_test_suite(
         ],
     },
     deps = [":br_arb_weighted_rr"],
+)
+
+br_verilog_elab_and_lint_test_suite(
+    name = "br_arb_hold_weighted_rr_test_suite",
+    params = {
+        "NumRequesters": [
+            "2",
+            "5",
+        ],
+        "MaxAccumulatedWeight": [
+            "8",
+        ],
+        "MaxWeight": [
+            "2",
+            "5",
+        ],
+    },
+    deps = [":br_arb_hold_weighted_rr"],
 )
 
 br_verilog_elab_and_lint_test_suite(
