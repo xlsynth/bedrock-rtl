@@ -55,7 +55,7 @@
 //
 // The grant_hold signal will cause the arbiter to disable further arbitration once the specified
 // requester is granted, and maintain the grant to that requester until the grant_hold signal for
-// that requester or the request is deasserted. The grant combinationally depends on grant_hold.
+// that requester is deasserted. The grant combinationally depends on grant_hold.
 // If grant_hold is asserted for a requester that is not granted, it has no effect on that grant.
 
 `include "br_asserts_internal.svh"
