@@ -102,7 +102,7 @@ module br_counter #(
   // Assertion-only helper logic for overflow/underflow detection
 `ifdef BR_ASSERT_ON
 `ifndef BR_DISABLE_INTG_CHECKS
-  localparam int ExtWidth = $clog2(MaxValue + ChangeWidth + 1);
+  localparam int ExtWidth = ValueWidth + 1;
   logic [ExtWidth-1:0] value_extended;
   logic [ExtWidth-1:0] value_extended_next;
 
@@ -129,11 +129,10 @@ module br_counter #(
   //------------------------------------------
   // Implementation
   //------------------------------------------
-  localparam int MaxValueP1 = MaxValue + 1;
-  localparam bit IsMaxValueP1PowerOf2 = (MaxValueP1 & (MaxValueP1 - 1)) == 0;
-  localparam int TempWidth = $clog2(MaxValue + MaxChange + 1);
-  localparam logic [TempWidth-1:0] MaxValueWithOverflow = (TempWidth > ValueWidth) ?
-      {1'b0, MaxValue} : MaxValue;
+  localparam int TempWidth = ValueWidth + 1;
+  localparam logic [TempWidth-1:0] MaxValueWithOverflow = {1'b0, MaxValue};
+  localparam logic [TempWidth-1:0] MaxValueP1 = MaxValue + 1;
+  localparam bit IsMaxValueP1PowerOf2 = (MaxValueP1 & MaxValueWithOverflow) == {TempWidth{1'b0}};
 
   logic                   value_loaden;
   // The MSB might not be used
@@ -190,7 +189,7 @@ module br_counter #(
       logic [TempWidth-1:0] max_value_p1;
       logic [TempWidth-1:0] value_temp_wrapped;
 
-      assign max_value_p1 = TempWidth'($unsigned(MaxValueP1));
+      assign max_value_p1 = MaxValueP1;
       assign value_temp_wrapped =
           would_underflow ? (value_temp + max_value_p1) :
           would_overflow  ? (value_temp - max_value_p1) :

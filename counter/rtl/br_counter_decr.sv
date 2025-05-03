@@ -96,8 +96,10 @@ module br_counter_decr #(
   //------------------------------------------
   // Implementation
   //------------------------------------------
-  localparam int MaxValueP1 = MaxValue + 1;
-  localparam bit IsMaxValueP1PowerOf2 = (MaxValueP1 & (MaxValueP1 - 1)) == 0;
+  localparam int TempWidth = ValueWidth + 1;
+  localparam logic [TempWidth-1:0] MaxValueWithOverflow = {1'b0, MaxValue};
+  localparam logic [TempWidth-1:0] MaxValueP1 = MaxValue + 1;
+  localparam bit IsMaxValueP1PowerOf2 = (MaxValueP1 & MaxValueWithOverflow) == {TempWidth{1'b0}};
 
   logic [ValueWidth-1:0] value_temp;
   logic underflow;
@@ -124,7 +126,7 @@ module br_counter_decr #(
     `BR_UNUSED(underflow)
   end else begin : gen_non_power_of_2_wrap
     // For MaxValueP1 not being a power of 2, handle wrap-around explicitly
-    localparam int Margin = ((2 ** ValueWidth) - 1) - MaxValue;
+    localparam logic [ValueWidth-1:0] Margin = ((2 ** ValueWidth) - 1) - MaxValue;
     logic [ValueWidth-1:0] value_temp_wrapped;
     assign value_temp_wrapped = value_temp - Margin;
     assign value_next = underflow ? value_temp_wrapped : value_temp;

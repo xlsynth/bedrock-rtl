@@ -96,11 +96,10 @@ module br_counter_incr #(
   //------------------------------------------
   // Implementation
   //------------------------------------------
-  localparam int MaxValueP1 = MaxValue + 1;
-  localparam bit IsMaxValueP1PowerOf2 = (MaxValueP1 & (MaxValueP1 - 1)) == 0;
-  localparam int TempWidth = $clog2(MaxValue + MaxIncrement + 1);
-  localparam logic [TempWidth-1:0] MaxValueWithOverflow = (TempWidth > ValueWidth) ?
-      {1'b0, MaxValue} : MaxValue;
+  localparam int TempWidth = ValueWidth + 1;
+  localparam logic [TempWidth-1:0] MaxValueWithOverflow = {1'b0, MaxValue};
+  localparam logic [TempWidth-1:0] MaxValueP1 = MaxValue + 1;
+  localparam bit IsMaxValueP1PowerOf2 = (MaxValueP1 & MaxValueWithOverflow) == {TempWidth{1'b0}};
 
   // TODO(mgottscho): Sometimes the MSbs may not be used. It'd be cleaner
   // to capture them more tightly using br_misc_unused.
