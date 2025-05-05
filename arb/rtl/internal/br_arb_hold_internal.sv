@@ -42,14 +42,11 @@ module br_arb_hold_internal #(
     output logic [NumRequesters-1:0] grant_post_hold
 );
 
-  logic [NumRequesters-1:0] hold;
-  logic [NumRequesters-1:0] grant_last;
-  logic [NumRequesters-1:0] grant_hold_reg;
+  logic [NumRequesters-1:0] hold, hold_next;
 
-  `BR_REGL(grant_last, grant_post_hold, enable_priority_update_pre_hold)
-  `BR_REGL(grant_hold_reg, grant_hold, enable_priority_update_pre_hold)
+  `BR_REGL(hold, hold_next, enable_priority_update_post_hold)
   assign enable_priority_update_post_hold = !(|hold) && enable_priority_update_pre_hold;
-  assign hold = grant_hold_reg & grant_last;
+  assign hold_next = grant_post_hold & grant_hold;
   assign grant_post_hold = |hold ? hold : grant_pre_hold;
 
 endmodule : br_arb_hold_internal
