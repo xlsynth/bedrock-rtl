@@ -150,12 +150,24 @@ module br_amba_axi_isolate_sub_fpv_monitor #(
   // However, upstream should still behave fine
   logic iso_flg;
   assign iso_flg = isolate_req && isolate_done;
+  // During isolate_req & !isolate_done window, downstream assertions don't matter
+  logic pre_iso_flg;
+  assign pre_iso_flg = isolate_req && !isolate_done;
 
   // deadlock check
   `BR_ASSERT(req_eventually_done_a, isolate_req |-> s_eventually isolate_done)
   `BR_ASSERT(eventually_back_to_normal_a, $fell(isolate_req) |-> s_eventually $fell(isolate_done))
 
+  // ABVIP assertions disabled, so adding them here
+  `BR_ASSERT(ar_stable_a,
+             !pre_iso_flg && downstream_arvalid && !downstream_arready |=> downstream_arvalid)
+  `BR_ASSERT(aw_stable_a,
+             !pre_iso_flg && downstream_awvalid && !downstream_awready |=> downstream_awvalid)
+  `BR_ASSERT(w_stable_a,
+             !pre_iso_flg && downstream_wvalid && !downstream_wready |=> downstream_wvalid)
+
   isolate_axi_protocol_fv_check #(
+      .ReadInterleaveOn(0),
       .AddrWidth(AddrWidth),
       .DataWidth(DataWidth),
       .IdWidth(IdWidth),

@@ -345,7 +345,6 @@ br_verilog_fpv_test_tools_suite(
         "-parameter MaxOutstanding 4",
         "-sv09_strong_embedding",
     ],
-    gui = True,
     params = {
         "MaxAxiBurstLen": [
             "1",
