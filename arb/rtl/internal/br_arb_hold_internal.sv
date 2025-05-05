@@ -17,8 +17,16 @@
 // The grant_hold signal will cause the arbiter to disable further arbitration
 // once the specified requester is granted, and maintain the grant to that
 // requester until the grant_hold signal for that requester is deasserted. The
-// grant combinationally depends on grant_hold. If grant_hold is asserted for a
-// requester that is not granted, it has no effect on that grant.
+// grant depends on a 1 cycle delayed version of grant_hold. If grant_hold is
+// asserted for a requester that is not granted, it has no effect on that grant.
+//
+// A common use case is to connect grant_hold to the !last signal in a
+// multi-beat request. In this case, after the first beat is arbitrated for,
+// the arbiter will not switch requesters until after the last beat where
+// grant_hold is deasserted.
+//
+// If enable_priority_update_pre_hold is asserted, the internal registers will
+// not be updated.
 
 `include "br_registers.svh"
 
@@ -36,10 +44,12 @@ module br_arb_hold_internal #(
 
   logic [NumRequesters-1:0] hold;
   logic [NumRequesters-1:0] grant_last;
+  logic [NumRequesters-1:0] grant_hold_reg;
 
-  `BR_REG(grant_last, grant_post_hold)
+  `BR_REGL(grant_last, grant_post_hold, enable_priority_update_pre_hold)
+  `BR_REGL(grant_hold_reg, grant_hold, enable_priority_update_pre_hold)
   assign enable_priority_update_post_hold = !(|hold) && enable_priority_update_pre_hold;
-  assign hold = grant_hold & grant_last;
+  assign hold = grant_hold_reg & grant_last;
   assign grant_post_hold = |hold ? hold : grant_pre_hold;
 
 endmodule : br_arb_hold_internal

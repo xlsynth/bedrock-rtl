@@ -29,8 +29,13 @@
 // The grant_hold signal will cause the arbiter to disable further arbitration
 // once the specified requester is granted, and maintain the grant to that
 // requester until the grant_hold signal for that requester is deasserted. The
-// grant combinationally depends on grant_hold. If grant_hold is asserted for a
-// requester that is not granted, it has no effect on that grant.
+// grant depends on a 1 cycle delayed version of grant_hold. If grant_hold is
+// asserted for a requester that is not granted, it has no effect on that grant.
+//
+// A common use case is to connect grant_hold to the !last signal in a
+// multi-beat request. In this case, after the first beat is arbitrated for,
+// the arbiter will not switch requesters until after the last beat where
+// grant_hold is deasserted.
 //
 // There is zero latency from request to grant.
 
