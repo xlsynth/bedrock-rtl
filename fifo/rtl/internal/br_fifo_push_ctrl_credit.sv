@@ -148,8 +148,6 @@ module br_fifo_push_ctrl_credit #(
 
   // Status flags
   br_counter #(
-      .ValueWidth(CountWidth),
-      .ChangeWidth(1),
       .MaxValue(Depth),
       .EnableAssertFinalNotValid(EnableAssertFinalNotValid)
   ) br_counter_slots (

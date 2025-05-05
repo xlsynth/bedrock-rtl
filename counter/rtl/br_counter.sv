@@ -44,14 +44,16 @@
 `include "br_unused.svh"
 
 module br_counter #(
+    // Width of the MaxValue parameter.
+    // You might need to override this if you need a counter that's larger than 32 bits.
+    parameter int MaxValueWidth = 32,
+    // Width of the MaxChange parameter.
+    // You might need to override this if you need a counter that's larger than 32 bits.
+    parameter int MaxChangeWidth = 32,
     // Must be at least 1. Inclusive.
-    parameter int ValueWidth = 1,
-    // Must be at least 1. Inclusive.
-    parameter int ChangeWidth = 1,
-    // Must be at least 1. Inclusive.
-    parameter logic [ValueWidth-1:0] MaxValue = 1,
+    parameter logic [MaxValueWidth-1:0] MaxValue = 1,
     // Must be at least 1 and at most MaxValue. Inclusive.
-    parameter logic [ChangeWidth-1:0] MaxChange = 1,
+    parameter logic [MaxChangeWidth-1:0] MaxChange = 1,
     // If 1, allow the counter value to wrap around 0/MaxValue, adding additional correction
     // logic to do so if MaxValue is not 1 less than a power of two.
     // If 0, don't allow wrapping and omit overflow/underflow correction logic.
@@ -69,7 +71,11 @@ module br_counter #(
     // Must be 0 if EnableWrap is 1.
     parameter bit EnableSaturate = 0,
     // If 1, then assert there are no valid bits asserted at the end of the test.
-    parameter bit EnableAssertFinalNotValid = 1
+    parameter bit EnableAssertFinalNotValid = 1,
+    localparam int MaxValueP1Width = MaxValueWidth + 1,
+    localparam int MaxChangeP1Width = MaxChangeWidth + 1,
+    localparam int ValueWidth = $clog2(MaxValueP1Width'(MaxValue) + 1),
+    localparam int ChangeWidth = $clog2(MaxChangeP1Width'(MaxChange) + 1)
 ) (
     // Posedge-triggered clock.
     input  logic                   clk,
@@ -129,11 +135,11 @@ module br_counter #(
   //------------------------------------------
   // Implementation
   //------------------------------------------
-  localparam int MaxValueP1 = MaxValue + 1;
+  localparam logic [MaxValueP1Width-1:0] MaxValueP1 = MaxValue + 1;
   localparam bit IsMaxValueP1PowerOf2 = (MaxValueP1 & (MaxValueP1 - 1)) == 0;
-  localparam int TempWidth = $clog2(MaxValue + MaxChange + 1);
-  localparam logic [TempWidth-1:0] MaxValueWithOverflow = (TempWidth > ValueWidth) ?
-      {1'b0, MaxValue} : MaxValue;
+  localparam int TempWidth = $clog2(MaxValueP1Width'(MaxValue) + MaxChangeP1Width'(MaxChange) + 1);
+  localparam logic [ValueWidth-1:0] MaxValueResized = ValueWidth'(MaxValue);
+  localparam logic [TempWidth-1:0] MaxValueWithOverflow = TempWidth'(MaxValue);
 
   logic                   value_loaden;
   // The MSB might not be used
@@ -176,7 +182,7 @@ module br_counter #(
     if (EnableSaturate) begin : gen_saturate
       logic [ValueWidth-1:0] value_next_saturated;
 
-      assign value_next_saturated = MaxValue;
+      assign value_next_saturated = MaxValueResized;
       assign value_next = would_underflow ? '0 :
                           would_overflow ? value_next_saturated :
                           value_temp[ValueWidth-1:0];
@@ -190,7 +196,7 @@ module br_counter #(
       logic [TempWidth-1:0] max_value_p1;
       logic [TempWidth-1:0] value_temp_wrapped;
 
-      assign max_value_p1 = TempWidth'($unsigned(MaxValueP1));
+      assign max_value_p1 = TempWidth'(MaxValueP1);
       assign value_temp_wrapped =
           would_underflow ? (value_temp + max_value_p1) :
           would_overflow  ? (value_temp - max_value_p1) :

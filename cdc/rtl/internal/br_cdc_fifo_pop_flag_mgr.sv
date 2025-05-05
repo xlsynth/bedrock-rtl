@@ -52,8 +52,6 @@ module br_cdc_fifo_pop_flag_mgr #(
   logic [CountWidth-1:0] push_count_visible;
 
   br_counter_incr #(
-      .ValueWidth(CountWidth),
-      .IncrementWidth(1),
       .MaxValue(MaxCount)
   ) br_counter_incr_pop_count (
       .clk,

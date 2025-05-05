@@ -40,8 +40,6 @@ module br_counter_tb;
 
   // Instantiate the design under test (DUT)
   br_counter #(
-      .ValueWidth(ValueWidth),
-      .ChangeWidth(ChangeWidth),
       .MaxValue(MaxValue),
       .MaxChange(MaxChange),
       .EnableSaturate(EnableSaturate),

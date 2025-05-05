@@ -185,10 +185,8 @@ module br_amba_axil_split #(
 
   // Counters to track outstanding read transactions
   br_counter #(
-      .ValueWidth(ReadCounterWidth),
-      .ChangeWidth(1),
-      .MaxValue(MaxOutstandingReads),
-      .MaxChange(1),
+      .MaxValue  (MaxOutstandingReads),
+      .MaxChange (1),
       .EnableWrap(0)
   ) br_counter_outstanding_reads (
       .clk,
@@ -218,10 +216,8 @@ module br_amba_axil_split #(
 
   // Counters to track outstanding write transactions
   br_counter #(
-      .ValueWidth(WriteCounterWidth),
-      .ChangeWidth(1),
-      .MaxValue(MaxOutstandingWrites),
-      .MaxChange(1),
+      .MaxValue  (MaxOutstandingWrites),
+      .MaxChange (1),
       .EnableWrap(0)
   ) br_counter_outstanding_writes (
       .clk,

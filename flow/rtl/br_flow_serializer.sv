@@ -200,8 +200,6 @@ module br_flow_serializer #(
     logic [SerFlitIdWidth-1:0] pop_flit_id;
 
     br_counter_incr #(
-        .ValueWidth(SerFlitIdWidth),
-        .IncrementWidth(1),
         .MaxValue(SrMinus1),
         .MaxIncrement(1),
         .EnableAssertFinalNotValid(EnableAssertFinalNotValid)

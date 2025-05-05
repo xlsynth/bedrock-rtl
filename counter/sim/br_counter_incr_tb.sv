@@ -38,8 +38,6 @@ module br_counter_incr_tb;
 
   // Instantiate the module under test (MUT)
   br_counter_incr #(
-      .ValueWidth(ValueWidth),
-      .IncrementWidth(IncrementWidth),
       .MaxValue(MaxValue),
       .MaxIncrement(MaxIncrement),
       .EnableSaturate(EnableSaturate),

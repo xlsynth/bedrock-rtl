@@ -85,8 +85,6 @@ module br_fifo_pop_ctrl_core #(
 
   if (RamDepth > 1) begin : gen_ram_rd_addr_counter
     br_counter_incr #(
-        .ValueWidth(AddrWidth),
-        .IncrementWidth(1),
         .MaxValue(RamDepth - 1),
         .MaxIncrement(1),
         .EnableAssertFinalNotValid(EnableAssertFinalNotValid)
