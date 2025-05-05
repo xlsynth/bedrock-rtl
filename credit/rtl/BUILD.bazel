@@ -180,3 +180,41 @@ br_verilog_elab_and_lint_test_suite(
     },
     deps = [":br_credit_receiver"],
 )
+
+verilog_library(
+    name = "br_credit_sender_vc",
+    srcs = ["br_credit_sender_vc.sv"],
+    deps = [
+        "//credit/rtl:br_credit_counter",
+        "//delay/rtl:br_delay_nr",
+        "//delay/rtl:br_delay_valid",
+        "//enc/rtl:br_enc_onehot2bin",
+        "//flow/rtl:br_flow_fork",
+        "//flow/rtl/internal:br_flow_mux_core",
+        "//macros:br_asserts_internal",
+    ],
+)
+
+br_verilog_elab_and_lint_test_suite(
+    name = "br_credit_sender_vc_test_suite",
+    params = {
+        "NumVcs": [
+            "2",
+            "3",
+        ],
+        "Width": ["8"],
+        "MaxCredit": [
+            "3",
+            "8",
+        ],
+        "PopCreditMaxChange": [
+            "1",
+            "3",
+        ],
+        "RegisterPopOutputs": [
+            "0",
+            "1",
+        ],
+    },
+    deps = [":br_credit_sender_vc"],
+)
