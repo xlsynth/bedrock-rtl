@@ -152,7 +152,7 @@ module br_counter_decr #(
   // Value
   `BR_ASSERT_IMPL(value_in_range_a, value <= MaxValue)
   `BR_ASSERT_IMPL(value_next_in_range_a, value_next <= MaxValue)
-  `BR_ASSERT_IMPL(value_next_propagates_a, ##1 value == $past(value_next))
+  `BR_ASSERT_IMPL(value_next_propagates_a, ##1 !$past(rst) |-> value == $past(value_next))
 
   // Underflow corners
   if (EnableSaturate) begin : gen_saturate_impl_checks
