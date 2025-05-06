@@ -148,6 +148,7 @@ module br_amba_axil_split #(
   logic [ ReadCounterWidth-1:0] outstanding_reads_count;
   logic [WriteCounterWidth-1:0] outstanding_writes_count;
   logic no_outstanding_reads, no_outstanding_writes;
+  logic free_outstanding_reads, free_outstanding_writes;
   logic last_arvalid_is_branch, last_awvalid_is_branch;
   logic ar_handshake_valid, aw_handshake_valid;
   logic r_handshake_valid, b_handshake_valid;
@@ -202,15 +203,16 @@ module br_amba_axil_split #(
       .value_next()  // ri lint_check_waive OPEN_OUTPUT
   );
 
-  assign no_outstanding_reads = (outstanding_reads_count == 0);
+  assign no_outstanding_reads   = (outstanding_reads_count == 0);
+  assign free_outstanding_reads = (outstanding_reads_count < MaxOutstandingReads);
 
   // Track the last read transaction, if it was trunk or branch
   `BR_REGLN(last_arvalid_is_branch, araddr_is_branch, ar_handshake_valid)
 
   // Split the read address channel
-  assign trunk_arvalid = root_arvalid && !araddr_is_branch &&
+  assign trunk_arvalid = root_arvalid && !araddr_is_branch && free_outstanding_reads &&
                          (no_outstanding_reads || !last_arvalid_is_branch);
-  assign branch_arvalid = root_arvalid && araddr_is_branch &&
+  assign branch_arvalid = root_arvalid && araddr_is_branch && free_outstanding_reads &&
                           (no_outstanding_reads || last_arvalid_is_branch);
   assign root_arready = (trunk_arvalid && trunk_arready) || (branch_arvalid && branch_arready);
 
@@ -234,7 +236,8 @@ module br_amba_axil_split #(
       .value_next()  // ri lint_check_waive OPEN_OUTPUT
   );
 
-  assign no_outstanding_writes = (outstanding_writes_count == 0);
+  assign no_outstanding_writes   = (outstanding_writes_count == 0);
+  assign free_outstanding_writes = (outstanding_writes_count < MaxOutstandingWrites);
 
   // Since the write data can arrive before the write address, we need to hold write address and
   // write data until both are valid so we know which branch to route the data to. However, since
@@ -274,10 +277,12 @@ module br_amba_axil_split #(
   // register is ready to accept the data
   assign write_addr_flow_reg_push_valid = root_awvalid && root_wvalid &&
       write_addr_flow_reg_push_ready && write_data_flow_reg_push_ready &&
-      (no_outstanding_writes || (last_awvalid_is_branch == awaddr_is_branch));
+      (no_outstanding_writes || (last_awvalid_is_branch == awaddr_is_branch)) &&
+      free_outstanding_writes;
   assign write_data_flow_reg_push_valid = root_awvalid && root_wvalid &&
       write_addr_flow_reg_push_ready && write_data_flow_reg_push_ready &&
-      (no_outstanding_writes || (last_awvalid_is_branch == awaddr_is_branch));
+      (no_outstanding_writes || (last_awvalid_is_branch == awaddr_is_branch)) &&
+      free_outstanding_writes;
 
   // Track the last write transaction, if it was trunk or branch
   `BR_REGLN(last_awvalid_is_branch, awaddr_is_branch, aw_handshake_valid)
