@@ -22,7 +22,8 @@ module br_fifo_shared_read_xbar #(
     parameter int RamReadLatency = 0,
     parameter int AddrWidth = 1,
     parameter int Width = 1,
-    parameter bit EnableAssertPushValidStability = 0
+    parameter bit EnableAssertPushValidStability = 0,
+    parameter int ArbiterIsExternal = 0
 ) (
     // ri lint_check_waive HIER_NET_NOT_READ INPUT_NOT_READ
     input logic clk,
@@ -109,20 +110,49 @@ module br_fifo_shared_read_xbar #(
     end
 
     // TODO(zhemao): Allow selection of different arbitration policy.
-    br_flow_mux_lru #(
-        .NumFlows(NumFifos),
-        .Width(TotalMuxWidth),
-        .EnableAssertPushValidStability(EnableAssertPushValidStability)
-    ) br_flow_mux_lru_inst (
-        .clk,
-        .rst,
-        .push_valid(mux_push_valid),
-        .push_ready(mux_push_ready),
-        .push_data(mux_push_data),
-        .pop_valid_unstable(pop_rd_addr_valid[i]),
-        .pop_ready(1'b1),
-        .pop_data_unstable({pop_rd_addr[i], pop_rd_addr_fifo_id[i]})
-    );
+    if (ArbiterIsExternal) begin : gen_arbiter_external
+      logic [FifoIdWidth-1:0] mux_push_select;
+      `BR_ASSERT_INTG(mux_push_valid_onehot_a, $onehot0(mux_push_valid))
+      br_enc_onehot2bin #(
+          .NumValues(NumFifos)
+      ) br_enc_onehot2bin_inst (
+          .clk,
+          .rst,
+          .in(mux_push_valid),
+          .out_valid(),
+          .out(mux_push_select)
+      );
+      br_flow_mux_select_unstable #(
+          .NumFlows(NumFifos),
+          .Width(TotalMuxWidth),
+          .EnableAssertPushValidStability(EnableAssertPushValidStability)
+      ) br_flow_mux_select_unstable_inst (
+          .clk,
+          .rst,
+          .select(mux_push_select),
+          .push_valid(mux_push_valid),
+          .push_ready(mux_push_ready),
+          .push_data(mux_push_data),
+          .pop_valid_unstable(pop_rd_addr_valid[i]),
+          .pop_ready(1'b1),
+          .pop_data_unstable({pop_rd_addr[i], pop_rd_addr_fifo_id[i]})
+      );
+    end else begin : gen_arbiter_internal
+      br_flow_mux_lru #(
+          .NumFlows(NumFifos),
+          .Width(TotalMuxWidth),
+          .EnableAssertPushValidStability(EnableAssertPushValidStability)
+      ) br_flow_mux_lru_inst (
+          .clk,
+          .rst,
+          .push_valid(mux_push_valid),
+          .push_ready(mux_push_ready),
+          .push_data(mux_push_data),
+          .pop_valid_unstable(pop_rd_addr_valid[i]),
+          .pop_ready(1'b1),
+          .pop_data_unstable({pop_rd_addr[i], pop_rd_addr_fifo_id[i]})
+      );
+    end
 
     br_delay_valid #(
         .NumStages(RamReadLatency),

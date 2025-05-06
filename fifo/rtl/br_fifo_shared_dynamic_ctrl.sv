@@ -102,6 +102,9 @@ module br_fifo_shared_dynamic_ctrl #(
     // empty at the end of the test.
     // ri lint_check_waive PARAM_NOT_USED
     parameter bit EnableAssertFinalNotValid = 1,
+    // If 1, it is assumed an external arbiter is used on the pop ready side,
+    // and requires a maximum of one asserted bit in pop_ready per cycle.
+    parameter bit PopArbiterIsExternal = 0,
 
     localparam int FifoIdWidth = br_math::clamped_clog2(NumFifos),
     localparam int AddrWidth   = br_math::clamped_clog2(Depth)
@@ -238,7 +241,8 @@ module br_fifo_shared_dynamic_ctrl #(
       .StagingBufferDepth(StagingBufferDepth),
       .RamReadLatency(DataRamReadLatency),
       .RegisterPopOutputs(RegisterPopOutputs),
-      .RegisterDeallocation(RegisterDeallocation)
+      .RegisterDeallocation(RegisterDeallocation),
+      .PopArbiterIsExternal(PopArbiterIsExternal)
   ) br_fifo_shared_pop_ctrl (
       .clk,
       .rst,

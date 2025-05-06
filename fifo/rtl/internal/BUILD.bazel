@@ -233,8 +233,10 @@ verilog_library(
     deps = [
         "//delay/rtl:br_delay_valid",
         "//demux/rtl:br_demux_bin",
+        "//enc/rtl:br_enc_onehot2bin",
         "//flow/rtl:br_flow_demux_select_unstable",
         "//flow/rtl:br_flow_mux_lru",
+        "//flow/rtl:br_flow_mux_select_unstable",
         "//macros:br_asserts_internal",
         "//mux/rtl:br_mux_onehot",
         "//pkg:br_math_pkg",
