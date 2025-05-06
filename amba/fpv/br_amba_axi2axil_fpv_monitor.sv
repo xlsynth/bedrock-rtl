@@ -97,6 +97,8 @@ module br_amba_axi2axil_fpv_monitor #(
     input logic                             axil_rready
 );
 
+  // ABVIP should send more than DUT to test backpressure
+  localparam int MaxPending = MaxOutstandingReqs + 2;
 
   // Instance of the AXI Slave DUV
   axi4_master #(
@@ -108,7 +110,7 @@ module br_amba_axi2axil_fpv_monitor #(
       .WUSER_WIDTH(WUserWidth),
       .BUSER_WIDTH(BUserWidth),
       .RUSER_WIDTH(RUserWidth),
-      .MAX_PENDING(MaxOutstandingReqs)
+      .MAX_PENDING(MaxPending)
   ) axi4 (
       // Global signals
       .aclk    (clk),
@@ -178,7 +180,7 @@ module br_amba_axi2axil_fpv_monitor #(
       .WUSER_WIDTH(WUserWidth),
       .BUSER_WIDTH(BUserWidth),
       .RUSER_WIDTH(RUserWidth),
-      .MAX_PENDING(MaxOutstandingReqs)
+      .MAX_PENDING(MaxPending)
   ) axi4_lite (
       // Global signals
       .aclk    (clk),
