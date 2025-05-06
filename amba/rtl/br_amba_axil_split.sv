@@ -352,5 +352,7 @@ module br_amba_axil_split #(
                   || no_outstanding_writes)
   `BR_ASSERT_IMPL(rvalid_is_onehot_a, !(branch_rvalid && trunk_rvalid))
   `BR_ASSERT_IMPL(bvalid_is_onehot_a, !(branch_bvalid && trunk_bvalid))
+  `BR_ASSERT_IMPL(max_outstanding_reads_a, !free_outstanding_reads |-> !root_arready)
+  `BR_ASSERT_IMPL(max_outstanding_writes_a, !free_outstanding_writes |-> !root_awready)
 
 endmodule : br_amba_axil_split
