@@ -113,6 +113,10 @@ module br_amba_axil_split_fpv_monitor #(
     input logic                             branch_rready
 );
 
+  // ABVIP should send more than DUT to test backpressure
+  localparam int MaxPendingRd = MaxOutstandingReads + 2;
+  localparam int MaxPendingWr = MaxOutstandingWrites + 2;
+
   // ----------FV assumptions----------
   for (genvar i = 0; i < NumBranchAddrRanges; i++) begin : gen_asm
     `BR_ASSUME(branch_start_end_addr_a, branch_start_addr[i] <= branch_end_addr[i])
@@ -130,8 +134,8 @@ module br_amba_axil_split_fpv_monitor #(
       .WUSER_WIDTH(WUserWidth),
       .ARUSER_WIDTH(ARUserWidth),
       .RUSER_WIDTH(RUserWidth),
-      .MAX_PENDING_RD(MaxOutstandingReads),
-      .MAX_PENDING_WR(MaxOutstandingWrites)
+      .MAX_PENDING_RD(MaxPendingRd),
+      .MAX_PENDING_WR(MaxPendingWr)
   ) root (
       // Global signals
       .aclk    (clk),
@@ -199,8 +203,8 @@ module br_amba_axil_split_fpv_monitor #(
       .WUSER_WIDTH(WUserWidth),
       .ARUSER_WIDTH(ARUserWidth),
       .RUSER_WIDTH(RUserWidth),
-      .MAX_PENDING_RD(MaxOutstandingReads),
-      .MAX_PENDING_WR(MaxOutstandingWrites)
+      .MAX_PENDING_RD(MaxPendingRd),
+      .MAX_PENDING_WR(MaxPendingWr)
   ) trunk (
       // Global signals
       .aclk    (clk),
@@ -268,8 +272,8 @@ module br_amba_axil_split_fpv_monitor #(
       .WUSER_WIDTH(WUserWidth),
       .ARUSER_WIDTH(ARUserWidth),
       .RUSER_WIDTH(RUserWidth),
-      .MAX_PENDING_RD(MaxOutstandingReads),
-      .MAX_PENDING_WR(MaxOutstandingWrites)
+      .MAX_PENDING_RD(MaxPendingRd),
+      .MAX_PENDING_WR(MaxPendingWr)
   ) branch (
       // Global signals
       .aclk    (clk),
