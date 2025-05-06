@@ -17,14 +17,16 @@
 // Delays an input signal by a fixed number of clock cycles.
 // There are NumStages pipeline registers. If NumStages is 0,
 // then the output is the input. The pipeline registers are reset
-// to 0.
+// to `InitValue`.
 
 `include "br_registers.svh"
 `include "br_asserts_internal.svh"
 
 module br_delay #(
     parameter int Width = 1,  // Must be at least 1
-    parameter int NumStages = 0  // Must be at least 0
+    parameter int NumStages = 0,  // Must be at least 0
+    // Initial value of the delay registers.
+    parameter logic [Width-1:0] InitValue = '0
 ) (
     // Positive edge-triggered. If NumStages is 0, then only used for assertions.
     // ri lint_check_waive INPUT_NOT_READ HIER_NET_NOT_READ HIER_BRANCH_NOT_READ
@@ -58,7 +60,7 @@ module br_delay #(
 
   for (genvar i = 1; i <= NumStages; i++) begin : gen_stages
     // ri lint_check_waive BA_NBA_REG
-    `BR_REG(stages[i], stages[i-1])
+    `BR_REGI(stages[i], stages[i-1], InitValue)
   end
 
   assign out = stages[NumStages];
