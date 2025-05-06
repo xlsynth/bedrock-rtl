@@ -14,6 +14,7 @@
 
 load("@rules_hdl//verilog:providers.bzl", "verilog_library")
 load("//bazel:br_verilog.bzl", "br_verilog_elab_and_lint_test_suite")
+load("//bazel:verilog.bzl", "verilog_elab_test", "verilog_lint_test")
 
 package(default_visibility = ["//visibility:public"])
 
@@ -50,12 +51,6 @@ verilog_library(
 br_verilog_elab_and_lint_test_suite(
     name = "br_counter_incr_test_suite0",
     params = {
-        "ValueWidth": [
-            "2",
-        ],
-        "IncrementWidth": [
-            "1",
-        ],
         "MaxValue": [
             "1",
             "2",
@@ -71,12 +66,6 @@ br_verilog_elab_and_lint_test_suite(
 br_verilog_elab_and_lint_test_suite(
     name = "br_counter_incr_test_suite1",
     params = {
-        "ValueWidth": [
-            "2",
-        ],
-        "IncrementWidth": [
-            "2",
-        ],
         "MaxValue": [
             "2",
             "3",
@@ -95,12 +84,6 @@ br_verilog_elab_and_lint_test_suite(
 br_verilog_elab_and_lint_test_suite(
     name = "br_counter_incr_test_suite2",
     params = {
-        "ValueWidth": [
-            "2",
-        ],
-        "IncrementWidth": [
-            "2",
-        ],
         "MaxValue": [
             "2",
             "3",
@@ -116,15 +99,36 @@ br_verilog_elab_and_lint_test_suite(
     deps = [":br_counter_incr"],
 )
 
+# Need to use the base verilog_elab_test/verilog_lint_test rules here
+# since topstitch doesn't support >32-bit parameter overrides.
+# TODO(zhemao): Switch back to topstitch-based sweeps once the issue is fixed.
+verilog_elab_test(
+    name = "br_counter_incr_64bit_elab_test",
+    params = {
+        "MaxValueWidth": "64",
+        "MaxIncrementWidth": "64",
+        "MaxValue": "64'd18446744073709551615",
+        "MaxIncrement": "64'd18446744073709551615",
+    },
+    tool = "verific",
+    deps = [":br_counter_incr"],
+)
+
+verilog_lint_test(
+    name = "br_counter_incr_64bit_lint_test",
+    params = {
+        "MaxValueWidth": "64",
+        "MaxIncrementWidth": "64",
+        "MaxValue": "64'd18446744073709551615",
+        "MaxIncrement": "64'd18446744073709551615",
+    },
+    tool = "ascentlint",
+    deps = [":br_counter_incr"],
+)
+
 br_verilog_elab_and_lint_test_suite(
     name = "br_counter_decr_test_suite0",
     params = {
-        "ValueWidth": [
-            "2",
-        ],
-        "DecrementWidth": [
-            "1",
-        ],
         "MaxValue": [
             "1",
             "2",
@@ -144,12 +148,6 @@ br_verilog_elab_and_lint_test_suite(
 br_verilog_elab_and_lint_test_suite(
     name = "br_counter_decr_test_suite1",
     params = {
-        "ValueWidth": [
-            "2",
-        ],
-        "DecrementWidth": [
-            "2",
-        ],
         "MaxValue": [
             "2",
             "3",
@@ -164,12 +162,6 @@ br_verilog_elab_and_lint_test_suite(
 br_verilog_elab_and_lint_test_suite(
     name = "br_counter_decr_test_suite2",
     params = {
-        "ValueWidth": [
-            "2",
-        ],
-        "DecrementWidth": [
-            "2",
-        ],
         "MaxValue": [
             "2",
             "3",
@@ -185,15 +177,36 @@ br_verilog_elab_and_lint_test_suite(
     deps = [":br_counter_decr"],
 )
 
+# Need to use the base verilog_elab_test/verilog_lint_test rules here
+# since topstitch doesn't support >32-bit parameter overrides.
+# TODO(zhemao): Switch back to topstitch-based sweeps once the issue is fixed.
+verilog_elab_test(
+    name = "br_counter_decr_64bit_elab_test",
+    params = {
+        "MaxValueWidth": "64",
+        "MaxDecrementWidth": "64",
+        "MaxValue": "64'd18446744073709551615",
+        "MaxDecrement": "64'd18446744073709551615",
+    },
+    tool = "verific",
+    deps = [":br_counter_decr"],
+)
+
+verilog_lint_test(
+    name = "br_counter_decr_64bit_lint_test",
+    params = {
+        "MaxValueWidth": "64",
+        "MaxDecrementWidth": "64",
+        "MaxValue": "64'd18446744073709551615",
+        "MaxDecrement": "64'd18446744073709551615",
+    },
+    tool = "ascentlint",
+    deps = [":br_counter_decr"],
+)
+
 br_verilog_elab_and_lint_test_suite(
     name = "br_counter_test_suite0",
     params = {
-        "ValueWidth": [
-            "2",
-        ],
-        "ChangeWidth": [
-            "1",
-        ],
         "MaxValue": [
             "1",
             "2",
@@ -213,12 +226,6 @@ br_verilog_elab_and_lint_test_suite(
 br_verilog_elab_and_lint_test_suite(
     name = "br_counter_test_suite1",
     params = {
-        "ValueWidth": [
-            "2",
-        ],
-        "ChangeWidth": [
-            "2",
-        ],
         "MaxValue": [
             "2",
             "3",
@@ -237,12 +244,6 @@ br_verilog_elab_and_lint_test_suite(
 br_verilog_elab_and_lint_test_suite(
     name = "br_counter_test_suite2",
     params = {
-        "ValueWidth": [
-            "2",
-        ],
-        "ChangeWidth": [
-            "2",
-        ],
         "MaxValue": [
             "2",
             "3",
@@ -257,5 +258,32 @@ br_verilog_elab_and_lint_test_suite(
             "1",
         ],
     },
+    deps = [":br_counter"],
+)
+
+# Need to use the base verilog_elab_test/verilog_lint_test rules here
+# since topstitch doesn't support >32-bit parameter overrides.
+# TODO(zhemao): Switch back to topstitch-based sweeps once the issue is fixed.
+verilog_elab_test(
+    name = "br_counter_64bit_elab_test",
+    params = {
+        "MaxValueWidth": "64",
+        "MaxChangeWidth": "64",
+        "MaxValue": "64'd18446744073709551615",
+        "MaxChange": "64'd18446744073709551615",
+    },
+    tool = "verific",
+    deps = [":br_counter"],
+)
+
+verilog_lint_test(
+    name = "br_counter_64bit_lint_test",
+    params = {
+        "MaxValueWidth": "64",
+        "MaxChangeWidth": "64",
+        "MaxValue": "64'd18446744073709551615",
+        "MaxChange": "64'd18446744073709551615",
+    },
+    tool = "ascentlint",
     deps = [":br_counter"],
 )

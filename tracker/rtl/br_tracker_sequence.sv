@@ -97,8 +97,6 @@ module br_tracker_sequence #(
   end
 
   br_counter_incr #(
-      .ValueWidth(AllocCounterValueWidth),
-      .IncrementWidth(AllocCounterIncrWidth),
       .MaxValue(NumEntries - 1),
       .MaxIncrement(MaxIncrementAllocCounter),
       .EnableSaturate(0),
@@ -129,8 +127,6 @@ module br_tracker_sequence #(
   // Free Entry Counter
 
   br_counter #(
-      .ValueWidth(EntryCountWidth),
-      .ChangeWidth(MaxAllocSizeWidth),
       .MaxValue(NumEntries),
       .MaxChange(MaxAllocSize),
       .EnableWrap(0),

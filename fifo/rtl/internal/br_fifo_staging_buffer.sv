@@ -126,8 +126,6 @@ module br_fifo_staging_buffer #(
   logic                        pop_valid_nonbypass;
 
   br_counter #(
-      .ValueWidth(BufferCountWidth),
-      .ChangeWidth(1),
       .MaxValue(BufferDepth),
       .EnableAssertFinalNotValid(EnableAssertFinalNotValid),
       .EnableWrap(0)

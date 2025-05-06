@@ -312,8 +312,6 @@ module br_amba_iso_resp_tracker #(
     assign req_tracker_free_slots_init = MaxOutstanding;
 
     br_counter #(
-        .ValueWidth(OutstandingWidth),
-        .ChangeWidth(1),
         .MaxValue(MaxOutstanding),
         .MaxChange(1),
         .EnableWrap(0),
@@ -435,8 +433,6 @@ module br_amba_iso_resp_tracker #(
     `BR_UNUSED(incr_count)
   end else begin : gen_counter
     br_counter_incr #(
-        .ValueWidth(AxiBurstLenWidth),
-        .IncrementWidth(1),
         .MaxValue(MaxAxiBurstLen - 1),
         .MaxIncrement(1),
         .EnableSaturate(0),

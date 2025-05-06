@@ -256,8 +256,6 @@ module br_amba_axi2axil_core #(
 
   // Request count
   br_counter_incr #(
-      .ValueWidth(br_amba::AxiBurstLenWidth),
-      .IncrementWidth(1),
       .MaxValue({br_amba::AxiBurstLenWidth{1'b1}}),
       .MaxIncrement(1),
       .EnableReinitAndIncr(0)

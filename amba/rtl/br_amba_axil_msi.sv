@@ -19,7 +19,7 @@
 // the address field of the MSI message (4-byte aligned), and the event ID is
 // encoded in the lower bits of the data field.
 //
-// The configuration of the MSI address and data fields are done through inputs.
+
 // It is expected that the configuration will be done through a register interface
 // which is not part of this module.
 //
@@ -172,8 +172,6 @@ module br_amba_axil_msi #(
 
   // Throttle counter
   br_counter_decr #(
-      .ValueWidth(ThrottleCntrWidth),
-      .DecrementWidth(1),
       .MaxValue({ThrottleCntrWidth{1'b1}}),
       .EnableSaturate(1),
       .MaxDecrement(1)

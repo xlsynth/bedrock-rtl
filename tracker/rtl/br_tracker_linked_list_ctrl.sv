@@ -255,10 +255,8 @@ module br_tracker_linked_list_ctrl #(
     assign counter_decr = ChangeWidth'(1'b1);
 
     br_counter #(
-        .ValueWidth(CountWidth),
-        .ChangeWidth(ChangeWidth),
-        .MaxValue(Depth),
-        .MaxChange(NumWritePorts),
+        .MaxValue  (Depth),
+        .MaxChange (NumWritePorts),
         .EnableWrap(0)
     ) br_counter_ll_count (
         .clk,
