@@ -115,6 +115,9 @@ module isolate_axi_protocol_fv_check #(
     input logic                                  downstream_rready
 );
 
+  // ABVIP should send more than DUT to test backpressure
+  localparam int MaxPending = MaxOutstanding + 2;
+
   // FV 4-phase handshake modeling
   fv_4phase_handshake #(
       .Master(1)
@@ -135,7 +138,7 @@ module isolate_axi_protocol_fv_check #(
       .WUSER_WIDTH(WUserWidth),
       .BUSER_WIDTH(BUserWidth),
       .RUSER_WIDTH(RUserWidth),
-      .MAX_PENDING(MaxOutstanding),
+      .MAX_PENDING(MaxPending),
       .AXI4_LITE(MaxAxiBurstLen == 1),
       .READ_INTERLEAVE_ON(ReadInterleaveOn),
       // not supported by br_amba_axi_isolate_mgr/sub
@@ -208,7 +211,7 @@ module isolate_axi_protocol_fv_check #(
       .WUSER_WIDTH(WUserWidth),
       .BUSER_WIDTH(BUserWidth),
       .RUSER_WIDTH(RUserWidth),
-      .MAX_PENDING(MaxOutstanding),
+      .MAX_PENDING(MaxPending),
       .AXI4_LITE(MaxAxiBurstLen == 1),
       .READ_INTERLEAVE_ON(ReadInterleaveOn),  // not supported by br_amba_axi_isolate_sub
       // not supported by br_amba_axi_isolate_mgr/sub
