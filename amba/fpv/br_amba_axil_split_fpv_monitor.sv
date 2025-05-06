@@ -130,8 +130,8 @@ module br_amba_axil_split_fpv_monitor #(
       .WUSER_WIDTH(WUserWidth),
       .ARUSER_WIDTH(ARUserWidth),
       .RUSER_WIDTH(RUserWidth),
-      .MAX_PENDING_RD(MaxOutstandingReads),
-      .MAX_PENDING_WR(MaxOutstandingWrites)
+      .MAX_PENDING_RD(MaxOutstandingReads + 2),
+      .MAX_PENDING_WR(MaxOutstandingWrites + 2)
   ) root (
       // Global signals
       .aclk    (clk),
@@ -199,8 +199,8 @@ module br_amba_axil_split_fpv_monitor #(
       .WUSER_WIDTH(WUserWidth),
       .ARUSER_WIDTH(ARUserWidth),
       .RUSER_WIDTH(RUserWidth),
-      .MAX_PENDING_RD(MaxOutstandingReads),
-      .MAX_PENDING_WR(MaxOutstandingWrites)
+      .MAX_PENDING_RD(MaxOutstandingReads + 2),
+      .MAX_PENDING_WR(MaxOutstandingWrites + 2)
   ) trunk (
       // Global signals
       .aclk    (clk),
@@ -268,8 +268,8 @@ module br_amba_axil_split_fpv_monitor #(
       .WUSER_WIDTH(WUserWidth),
       .ARUSER_WIDTH(ARUserWidth),
       .RUSER_WIDTH(RUserWidth),
-      .MAX_PENDING_RD(MaxOutstandingReads),
-      .MAX_PENDING_WR(MaxOutstandingWrites)
+      .MAX_PENDING_RD(MaxOutstandingReads + 2),
+      .MAX_PENDING_WR(MaxOutstandingWrites + 2)
   ) branch (
       // Global signals
       .aclk    (clk),
