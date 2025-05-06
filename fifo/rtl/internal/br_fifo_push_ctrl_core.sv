@@ -123,6 +123,7 @@ module br_fifo_push_ctrl_core #(
   end else begin : gen_wr_addr_const
     assign ram_wr_addr = '0;
     assign ram_wr_addr_next = '0;
+    `BR_UNUSED_NAMED(addr_base_bound, {addr_base, addr_bound})
   end
 
   // Datapath
