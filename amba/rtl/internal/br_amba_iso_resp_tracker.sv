@@ -161,12 +161,14 @@ module br_amba_iso_resp_tracker #(
   logic wlast_fifo_pop_valid;
   logic wlast_fifo_pop_ready;
   logic wlast_fifo_push_valid;
+  logic wlast_fifo_push_valid_is_last;
   logic wlast_fifo_push_ready;
 
   logic [AxiIdCount-1:0] tracker_fifo_pop_empty;
   logic staging_fifo_pop_empty;
 
   logic can_accept_new_req;
+  logic can_accept_new_wlast;
 
   //
   // Write Data Receipt Tracking
@@ -225,10 +227,14 @@ module br_amba_iso_resp_tracker #(
       .push_ready(upstream_wready),
       //
       .pop_valid_unstable({downstream_wvalid, wlast_fifo_push_valid}),
-      .pop_ready({downstream_wready, wlast_fifo_push_ready})
+      .pop_ready({downstream_wready, (wlast_fifo_push_ready && can_accept_new_wlast)})
   );
 
   assign downstream_wlast = upstream_wlast;
+
+  assign wlast_fifo_push_valid_is_last = wlast_fifo_push_valid
+                                        && upstream_wlast
+                                        && can_accept_new_wlast;
 
   br_fifo_flops #(
       .Depth(MaxTransactionSkew),
@@ -239,7 +245,7 @@ module br_amba_iso_resp_tracker #(
       .clk,
       .rst,
       //
-      .push_valid(wlast_fifo_push_valid && upstream_wlast),
+      .push_valid(wlast_fifo_push_valid_is_last),
       .push_data(1'b0),
       .push_ready(wlast_fifo_push_ready),
       //
@@ -332,16 +338,16 @@ module br_amba_iso_resp_tracker #(
 
   assign resp_fifo_empty = &tracker_fifo_pop_empty && staging_fifo_pop_empty;
 
-  // Total outstanding requests counter (in the staging+tracker FIFOs)
+  // Total outstanding requests counters (in the staging+tracker FIFOs)
   logic [OutstandingWidth-1:0] total_req_count;
-
+  logic [OutstandingWidth-1:0] total_wlast_count;
   br_counter #(
       .MaxValue(MaxOutstanding),
       .MaxChange(1),
       .EnableWrap(0),
       .EnableSaturate(0),
       .EnableReinitAndChange(0)
-  ) br_counter_total_req_tracker (
+  ) br_counter_total_req (
       .clk,
       .rst,
       //
@@ -355,13 +361,33 @@ module br_amba_iso_resp_tracker #(
       .value_next()
   );
 
+  br_counter #(
+      .MaxValue(MaxOutstanding),
+      .MaxChange(1),
+      .EnableWrap(0),
+      .EnableSaturate(0),
+      .EnableReinitAndChange(0)
+  ) br_counter_total_wlast (
+      .clk,
+      .rst,
+      //
+      .reinit(1'b0),
+      .initial_value('0),
+      .incr_valid(wlast_fifo_push_valid_is_last && wlast_fifo_push_ready),
+      .incr(1'b1),
+      .decr_valid(|(tracker_fifo_pop_valid & tracker_fifo_pop_ready)),
+      .decr(1'b1),
+      .value(total_wlast_count),
+      .value_next()
+  );
   // Need to ensure that the total outstanding requests held in the staging+tracker FIFOs
   // never exceeds the total amount of storage available in the tracker (multi-) FIFO. It
   // must be the case that everything in staging can eventually sink into the tracker FIFO
   // w/o requiring any pops from the tracker FIFO. Otherwise deadlock can result if a downstream
   // response arrives whose matching transaction is stuck in the staging FIFO (blocked by a
   // different ID).
-  assign can_accept_new_req = total_req_count < MaxOutstanding;
+  assign can_accept_new_req   = total_req_count < MaxOutstanding;
+  assign can_accept_new_wlast = total_wlast_count < MaxOutstanding;
 
   //
   // Current Response ID
