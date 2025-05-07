@@ -124,7 +124,7 @@ module br_fifo_push_ctrl_credit #(
   logic [AddrWidth-1:0] addr_bound;
 
   assign addr_base  = '0;
-  assign addr_bound = Depth - 1;
+  assign addr_bound = RamDepth - 1;
 
   br_fifo_push_ctrl_core #(
       .Depth(RamDepth),
