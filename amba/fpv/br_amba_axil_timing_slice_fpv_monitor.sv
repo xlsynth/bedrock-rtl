@@ -102,6 +102,7 @@ module br_amba_axil_timing_slice_fpv_monitor #(
       .ARUSER_WIDTH(ARUserWidth),
       .RUSER_WIDTH(RUserWidth),
       .BUSER_WIDTH(BUserWidth),
+      .CONFIG_WDATA_MASKED(0),
       .MAX_PENDING(MaxTarget)
   ) target (
       // Global signals
@@ -171,6 +172,7 @@ module br_amba_axil_timing_slice_fpv_monitor #(
       .ARUSER_WIDTH(ARUserWidth),
       .RUSER_WIDTH(RUserWidth),
       .BUSER_WIDTH(BUserWidth),
+      .CONFIG_RDATA_MASKED(0),
       .MAX_PENDING(MaxInit)
   ) init (
       // Global signals
