@@ -166,9 +166,7 @@ module br_amba_iso_resp_tracker #(
   logic [AxiIdCount-1:0] tracker_fifo_pop_empty;
   logic staging_fifo_pop_empty;
 
-  logic [OutstandingWidth-1:0] req_tracker_free_slots;
-  logic [$clog2(MaxTransactionSkew+1)-1:0] staging_fifo_items;
-  logic tracker_fifo_can_accept;
+  logic can_accept_new_req;
 
   //
   // Write Data Receipt Tracking
@@ -179,7 +177,7 @@ module br_amba_iso_resp_tracker #(
 
   assign staging_fifo_push_len   = SingleBeatOnly ? 1'b0 : upstream_axlen;
   assign staging_fifo_push_axid  = SingleIdOnly ? '0 : upstream_axid[MinIdWidth-1:0];
-  assign staging_fifo_push_valid = upstream_axvalid && downstream_axready;
+  assign staging_fifo_push_valid = upstream_axvalid && downstream_axready && can_accept_new_req;
 
   if (MinIdWidth < AxiIdWidth) begin : gen_id_width_lt_len_width
     `BR_UNUSED_NAMED(upstream_axid_unused, upstream_axid[AxiIdWidth-1:MinIdWidth])
@@ -210,7 +208,7 @@ module br_amba_iso_resp_tracker #(
       .slots_next(),
       .empty(staging_fifo_pop_empty),
       .empty_next(),
-      .items(staging_fifo_items),
+      .items(),
       .items_next()
   );
 
@@ -297,7 +295,7 @@ module br_amba_iso_resp_tracker #(
         //
         .full(),
         .full_next(),
-        .slots(req_tracker_free_slots),
+        .slots(),
         .slots_next(),
         .empty(tracker_fifo_pop_empty),
         .empty_next(),
@@ -306,31 +304,6 @@ module br_amba_iso_resp_tracker #(
     );
     `BR_UNUSED(tracker_fifo_push_ax_id)
   end else begin : gen_multi_fifo
-
-    // slots counter
-    logic [$clog2(MaxOutstanding+1)-1:0] req_tracker_free_slots_init;
-    assign req_tracker_free_slots_init = MaxOutstanding;
-
-    br_counter #(
-        .MaxValue(MaxOutstanding),
-        .MaxChange(1),
-        .EnableWrap(0),
-        .EnableSaturate(0),
-        .EnableReinitAndChange(0)
-    ) br_counter_req_tracker (
-        .clk,
-        .rst,
-        //
-        .reinit(1'b0),
-        .initial_value(req_tracker_free_slots_init),
-        .incr_valid(|(tracker_fifo_pop_valid & tracker_fifo_pop_ready)),
-        .incr(1'b1),
-        .decr_valid(tracker_fifo_push_valid && tracker_fifo_push_ready),
-        .decr(1'b1),
-        .value(req_tracker_free_slots),
-        .value_next()
-    );
-
     br_fifo_shared_dynamic_flops #(
         .NumWritePorts(1),
         .NumReadPorts(1),
@@ -359,9 +332,36 @@ module br_amba_iso_resp_tracker #(
 
   assign resp_fifo_empty = &tracker_fifo_pop_empty && staging_fifo_pop_empty;
 
-  // The tracker FIFO can accept a new item if there are enough free slots to absorb the current
-  // contents of the staging FIFO plus the new push item.
-  assign tracker_fifo_can_accept = req_tracker_free_slots > OutstandingWidth'(staging_fifo_items);
+  // Total outstanding requests counter (in the staging+tracker FIFOs)
+  logic [OutstandingWidth-1:0] total_req_count;
+
+  br_counter #(
+      .MaxValue(MaxOutstanding),
+      .MaxChange(1),
+      .EnableWrap(0),
+      .EnableSaturate(0),
+      .EnableReinitAndChange(0)
+  ) br_counter_total_req_tracker (
+      .clk,
+      .rst,
+      //
+      .reinit(1'b0),
+      .initial_value('0),
+      .incr_valid(staging_fifo_push_valid && staging_fifo_push_ready),
+      .incr(1'b1),
+      .decr_valid(|(tracker_fifo_pop_valid & tracker_fifo_pop_ready)),
+      .decr(1'b1),
+      .value(total_req_count),
+      .value_next()
+  );
+
+  // Need to ensure that the total outstanding requests held in the staging+tracker FIFOs
+  // never exceeds the total amount of storage available in the tracker (multi-) FIFO. It
+  // must be the case that everything in staging can eventually sink into the tracker FIFO
+  // w/o requiring any pops from the tracker FIFO. Otherwise deadlock can result if a downstream
+  // response arrives whose matching transaction is stuck in the staging FIFO (blocked by a
+  // different ID).
+  assign can_accept_new_req = total_req_count < MaxOutstanding;
 
   //
   // Current Response ID
@@ -538,12 +538,8 @@ module br_amba_iso_resp_tracker #(
   assign upstream_xresp = downstream_iso_xresp;
   assign upstream_xdata = downstream_iso_xdata;
 
-  assign upstream_axready = downstream_axready
-                            && staging_fifo_push_ready
-                            && tracker_fifo_can_accept;
-  assign downstream_axvalid = upstream_axvalid
-                            && staging_fifo_push_ready
-                            && tracker_fifo_can_accept;
+  assign upstream_axready = downstream_axready && staging_fifo_push_ready && can_accept_new_req;
+  assign downstream_axvalid = upstream_axvalid && staging_fifo_push_ready && can_accept_new_req;
   assign downstream_axid = upstream_axid;
   assign downstream_axlen = upstream_axlen;
 
