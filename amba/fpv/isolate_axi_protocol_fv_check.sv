@@ -141,7 +141,9 @@ module isolate_axi_protocol_fv_check #(
       .MAX_PENDING(MaxPending),
       .AXI4_LITE(MaxAxiBurstLen == 1),
       .READ_INTERLEAVE_ON(ReadInterleaveOn),
-      // not supported by br_amba_axi_isolate_mgr/sub
+      // when there is no valid, ready doesn't have to be high eventually
+      // This will only turn off assertion without precondition: `STRENGTH(##[0:$] arready
+      // (arvalid && !arready) |=> `STRENGTH(##[0:$] arready) is still enabled
       .CONFIG_WAIT_FOR_VALID_BEFORE_READY(ValidBeforeReady)
   ) upstream (
       // Global signals
@@ -214,7 +216,9 @@ module isolate_axi_protocol_fv_check #(
       .MAX_PENDING(MaxPending),
       .AXI4_LITE(MaxAxiBurstLen == 1),
       .READ_INTERLEAVE_ON(ReadInterleaveOn),  // not supported by br_amba_axi_isolate_sub
-      // not supported by br_amba_axi_isolate_mgr/sub
+      // when there is no valid, ready doesn't have to be high eventually
+      // This will only turn off assertion without precondition: `STRENGTH(##[0:$] arready
+      // (arvalid && !arready) |=> `STRENGTH(##[0:$] arready) is still enabled
       .CONFIG_WAIT_FOR_VALID_BEFORE_READY(ValidBeforeReady)
   ) downstream (
       // Global signals
