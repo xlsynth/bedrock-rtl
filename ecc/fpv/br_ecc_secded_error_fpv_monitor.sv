@@ -58,8 +58,9 @@ module br_ecc_secded_error_fpv_monitor #(
     input logic [DataWidth-1:0] data
 );
 
-  localparam int EncLatency = EncRegisterInputs + EncRegisterOutputs;
-  localparam int DecLatency = DecRegisterInputs + DecRegisterOutputs + RegisterSyndrome;
+  localparam int EncLatency = int'(EncRegisterInputs) + int'(EncRegisterOutputs);
+  localparam int DecLatency = int'(DecRegisterInputs) +
+    int'(DecRegisterOutputs) + int'(RegisterSyndrome);
   localparam int Latency = EncLatency + DecLatency;
 
   // FV helper signals

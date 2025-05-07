@@ -155,11 +155,11 @@ module br_fifo_pop_ctrl #(
     `BR_ASSERT_IMPL(bypass_cut_through_latency_a,
                     (bypass_valid_unstable && bypass_ready)
                     |->
-                    ##[RegisterPopOutputs:RegisterPopOutputs+RamReadLatency] pop_valid)
+                    ##[int'(RegisterPopOutputs):int'(RegisterPopOutputs)+RamReadLatency)] pop_valid)
   end
   `BR_ASSERT_IMPL(
       non_bypass_cut_through_latency_a,
-      (push_beat && !bypass_ready) |-> ##(1+RamReadLatency+RegisterPopOutputs) pop_valid)
+      (push_beat && !bypass_ready) |-> ##(1+RamReadLatency+int'(RegisterPopOutputs)) pop_valid)
 
   localparam bit ZeroCutThroughLatency =
       !RegisterPopOutputs && (EnableBypass || (RamReadLatency == 0));

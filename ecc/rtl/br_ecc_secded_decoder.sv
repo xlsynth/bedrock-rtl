@@ -98,8 +98,8 @@ module br_ecc_secded_decoder #(
     localparam int InputWidth = DataWidth + ParityWidth,
     localparam int MessageWidth = br_ecc_secded::get_message_width(DataWidth, ParityWidth),
     localparam int CodewordWidth = MessageWidth + ParityWidth,
-    // ri lint_check_waive PARAM_NOT_USED
-    localparam int Latency = RegisterInputs + RegisterSyndrome + RegisterOutputs
+    // ri lint_check_waive PARAM_NOT_USED TYPE_CAST_BITLEN
+    localparam int Latency = int'(RegisterInputs) + int'(RegisterSyndrome) + int'(RegisterOutputs)
 ) (
     // Positive edge-triggered clock.
     input  logic                     clk,
@@ -4500,7 +4500,7 @@ module br_ecc_secded_decoder #(
 
   br_delay_valid #(
       .Width(CodewordWidth + ParityWidth),
-      .NumStages(RegisterSyndrome),
+      .NumStages(RegisterSyndrome == 1 ? 1 : 0),
       .EnableAssertFinalNotValid(EnableAssertFinalNotValid)
   ) br_delay_valid_syndrome (
       .clk,
