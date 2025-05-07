@@ -17,17 +17,17 @@
 // This module is intended to be connected to an arbiter, and can be used to pause
 // arbitration and hold the grant for a given requester.
 //
-// When deasserted, the grant_ready signal will cause the arbiter to disable further
+// When asserted, the grant_hold signal will cause the arbiter to disable further
 // arbitration once the specified requester is granted, and maintain the grant to that
-// requester until the grant_ready signal for that requester is deasserted. On the cycle
-// following grant_ready asserted for the current grant, the arbitration is accepted
-// via enable_priority_update, and a new grant is passed through. If grant_ready is
-// deasserted for a requester that is not granted, it has no effect on that grant.
+// requester until the grant_hold signal for that requester is deasserted. On the cycle
+// following grant_hold asserted for the current grant, the arbitration is accepted
+// via enable_priority_update, and a new grant is passed through. If grant_hold is
+// asserted for a requester that is not granted, it has no effect on that grant.
 //
-// A common use case is to connect grant_ready to the last signal in a
+// A common use case is to connect grant_hold to the !last signal in a
 // multi-beat request. In this case, after the first beat is arbitrated for,
 // the arbiter will not switch requesters until after the last beat where
-// grant_ready is deasserted.
+// grant_hold is deasserted.
 //
 // If enable_priority_update is deasserted, the internal registers will
 // not be updated.
@@ -39,9 +39,9 @@ module br_arb_grant_hold #(
 ) (
     input logic clk,
     input logic rst,
-    // If a requester has grant_ready == 0 and is granted, the grant will be held until
-    // grant_ready for that requester is asserted.
-    input logic [NumRequesters-1:0] grant_ready,
+    // If a requester has grant_hold == 1 and is granted, the grant will be held until
+    // grant_hold for that requester is asserted.
+    input logic [NumRequesters-1:0] grant_hold,
     // Can be used with hierarchical arbiters. OK to tie to 1.
     input logic enable_priority_update,
     // Connections to the arbiter.
@@ -51,17 +51,11 @@ module br_arb_grant_hold #(
     output logic [NumRequesters-1:0] grant
 );
 
-`ifdef BR_ASSERT_ON
-`ifndef BR_DISABLE_INTG_CHECKS
-  `BR_COVER_INTG(grant_hold_multihot_c, !$onehot0(grant_hold))
-`endif  // BR_DISABLE_INTG_CHECKS
-`endif  // BR_ASSERT_ON
-
   logic [NumRequesters-1:0] hold, hold_next;
 
   `BR_REGL(hold, hold_next, enable_priority_update)
   assign enable_priority_update_to_arb = !(|hold) && enable_priority_update;
-  assign hold_next = grant & ~grant_ready;
+  assign hold_next = grant & grant_hold;
   assign grant = |hold ? hold : grant_from_arb;
-`BR_ASSERT_IMPL(grants_actually_hold_a, any_hold_grant |=> grant == $past(grant))
+  `BR_ASSERT_IMPL(grants_actually_hold_a, any_hold_grant |=> grant == $past(grant))
 endmodule : br_arb_grant_hold
