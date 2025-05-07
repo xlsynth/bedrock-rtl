@@ -63,5 +63,5 @@ module br_arb_grant_hold #(
   assign enable_priority_update_to_arb = !(|hold) && enable_priority_update;
   assign hold_next = grant & ~grant_ready;
   assign grant = |hold ? hold : grant_from_arb;
-
+`BR_ASSERT_IMPL(grants_actually_hold_a, any_hold_grant |=> grant == $past(grant))
 endmodule : br_arb_grant_hold
