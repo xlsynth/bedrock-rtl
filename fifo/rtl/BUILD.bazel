@@ -575,3 +575,40 @@ br_verilog_elab_and_lint_test_suite(
     },
     deps = [":br_fifo_shared_pstatic_ctrl"],
 )
+
+verilog_library(
+    name = "br_fifo_shared_pstatic_flops",
+    srcs = ["br_fifo_shared_pstatic_flops.sv"],
+    deps = [
+        ":br_fifo_shared_pstatic_ctrl",
+        "//ram/rtl:br_ram_flops",
+    ],
+)
+
+br_verilog_elab_and_lint_test_suite(
+    name = "br_fifo_shared_pstatic_flops_test_suite",
+    params = {
+        "NumFifos": [
+            "2",
+            "4",
+        ],
+        "Depth": [
+            "5",
+            "8",
+        ],
+        "Width": ["8"],
+        "StagingBufferDepth": [
+            "1",
+            "2",
+        ],
+        "RamAddressDepthStages": [
+            "0",
+            "1",
+        ],
+        "RegisterPopOutputs": [
+            "0",
+            "1",
+        ],
+    },
+    deps = [":br_fifo_shared_pstatic_flops"],
+)
