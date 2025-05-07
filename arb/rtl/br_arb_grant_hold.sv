@@ -32,6 +32,7 @@
 // If enable_priority_update is deasserted, the internal registers will
 // not be updated.
 
+`include "br_asserts_internal.svh"
 `include "br_registers.svh"
 
 module br_arb_grant_hold #(
@@ -57,5 +58,7 @@ module br_arb_grant_hold #(
   assign enable_priority_update_to_arb = !(|hold) && enable_priority_update;
   assign hold_next = grant & grant_hold;
   assign grant = |hold ? hold : grant_from_arb;
-  `BR_ASSERT_IMPL(grants_actually_hold_a, any_hold_grant |=> grant == $past(grant))
+  `BR_ASSERT_IMPL(grants_actually_hold_a, |hold |=> grant == $past(grant))
+  `BR_ASSERT_IMPL(enable_priority_update_mask_a,
+                  !enable_priority_update |-> !enable_priority_update_to_arb)
 endmodule : br_arb_grant_hold
