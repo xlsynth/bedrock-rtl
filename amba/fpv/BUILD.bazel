@@ -345,7 +345,16 @@ br_verilog_fpv_test_tools_suite(
         "-parameter MaxOutstanding 4",
         "-sv09_strong_embedding",
     ],
-    gui = True,
+    params = {
+        "MaxAxiBurstLen": [
+            "1",
+            "256",
+        ],
+        "IdWidth": [
+            "1",
+            "2",
+        ],
+    },
     tools = {
         "jg": "br_amba_axi_isolate_sub_fpv.jg.tcl",
         "vcf": "",

@@ -16,6 +16,9 @@
 `include "br_registers.svh"
 
 module isolate_axi_protocol_fv_check #(
+    parameter bit ReadInterleaveOn = 1,
+    // if there is no valid, ready doesn't have to be high eventually
+    parameter bit ValidBeforeReady = 1,
     parameter int AddrWidth = 12,
     parameter int DataWidth = 32,
     parameter int IdWidth = 1,
@@ -112,6 +115,9 @@ module isolate_axi_protocol_fv_check #(
     input logic                                  downstream_rready
 );
 
+  // ABVIP should send more than DUT to test backpressure
+  localparam int MaxPending = MaxOutstanding + 2;
+
   // FV 4-phase handshake modeling
   fv_4phase_handshake #(
       .Master(1)
@@ -132,8 +138,13 @@ module isolate_axi_protocol_fv_check #(
       .WUSER_WIDTH(WUserWidth),
       .BUSER_WIDTH(BUserWidth),
       .RUSER_WIDTH(RUserWidth),
-      .MAX_PENDING(MaxOutstanding),
-      .AXI4_LITE(MaxAxiBurstLen == 1)
+      .MAX_PENDING(MaxPending),
+      .AXI4_LITE(MaxAxiBurstLen == 1),
+      .READ_INTERLEAVE_ON(ReadInterleaveOn),
+      // when there is no valid, ready doesn't have to be high eventually
+      // This will only turn off assertion without precondition: `STRENGTH(##[0:$] arready
+      // (arvalid && !arready) |=> `STRENGTH(##[0:$] arready) is still enabled
+      .CONFIG_WAIT_FOR_VALID_BEFORE_READY(ValidBeforeReady)
   ) upstream (
       // Global signals
       .aclk    (clk),
@@ -202,9 +213,13 @@ module isolate_axi_protocol_fv_check #(
       .WUSER_WIDTH(WUserWidth),
       .BUSER_WIDTH(BUserWidth),
       .RUSER_WIDTH(RUserWidth),
-      .MAX_PENDING(MaxOutstanding),
+      .MAX_PENDING(MaxPending),
       .AXI4_LITE(MaxAxiBurstLen == 1),
-      .READ_INTERLEAVE_ON(0)  // not supported by br_amba_axi_isolate_sub
+      .READ_INTERLEAVE_ON(ReadInterleaveOn),  // not supported by br_amba_axi_isolate_sub
+      // when there is no valid, ready doesn't have to be high eventually
+      // This will only turn off assertion without precondition: `STRENGTH(##[0:$] arready
+      // (arvalid && !arready) |=> `STRENGTH(##[0:$] arready) is still enabled
+      .CONFIG_WAIT_FOR_VALID_BEFORE_READY(ValidBeforeReady)
   ) downstream (
       // Global signals
       .aclk    (clk),

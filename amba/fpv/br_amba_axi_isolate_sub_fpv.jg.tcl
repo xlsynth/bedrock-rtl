@@ -21,7 +21,10 @@ get_design_info
 cover -disable *
 
 # during isolate_req & !isolate_done window, downstream assertions don't matter
-# TODO: add exclude when RTL is fixed
+# Coded same assertion with precondition: isolate_req & !isolate_done in br_amba_axi_isolate_sub_fpv.sv
+assert -disable {*downstream.genStableChksRDInf.genARStableChks.master_ar_arvalid_stable}
+assert -disable {*downstream.genStableChksWRInf.genAWStableChks.master_aw_awvalid_stable}
+assert -disable {*downstream.genStableChksWRInf.genWStableChks.master_w_wvalid_stable}
 
 # prove command
 prove -all

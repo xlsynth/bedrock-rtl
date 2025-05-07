@@ -151,6 +151,7 @@ module br_amba_axi_isolate_mgr_fpv_monitor #(
   `BR_ASSERT(eventually_back_to_normal_a, $fell(isolate_req) |-> s_eventually $fell(isolate_done))
 
   isolate_axi_protocol_fv_check #(
+      .ReadInterleaveOn(1),
       .AddrWidth(AddrWidth),
       .DataWidth(DataWidth),
       .IdWidth(IdWidth),
