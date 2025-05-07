@@ -53,7 +53,7 @@ module br_arb_grant_hold #(
 
   logic [NumRequesters-1:0] hold, hold_next;
 
-  `BR_REGL(hold, hold_next, enable_priority_update)
+  `BR_REG(hold, hold_next)
   assign enable_priority_update_to_arb = !(|hold) && enable_priority_update;
   assign hold_next = grant & grant_hold;
   assign grant = |hold ? hold : grant_from_arb;
