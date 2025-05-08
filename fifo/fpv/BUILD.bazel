@@ -1161,6 +1161,12 @@ br_verilog_fpv_test_tools_suite(
             ("6", "2"),
             ("6", "5"),
         ],
+        (
+            "Depth",
+            "StagingBufferDepth",
+        ): [
+            ("2", "2"),
+        ],
     },
     params = {
         "NumFifos": [
