@@ -122,7 +122,8 @@ module br_cdc_fifo_push_ctrl_credit #(
   br_cdc_fifo_push_flag_mgr #(
       .Depth(Depth),
       .RamWriteLatency(RamWriteLatency),
-      .RegisterResetActive(RegisterResetActive)
+      .RegisterResetActive(RegisterResetActive),
+      .EnableAssertFinalNotValid(EnableAssertFinalNotValid)
   ) br_cdc_fifo_push_flag_mgr (
       .clk,
       .rst(either_rst),

@@ -25,6 +25,7 @@ module br_cdc_fifo_push_flag_mgr #(
     parameter int Depth = 2,
     parameter int RamWriteLatency = 1,
     parameter bit RegisterResetActive = 1,
+    parameter bit EnableAssertFinalNotValid = 1,
     localparam int CountWidth = $clog2(Depth + 1)
 ) (
     input  logic                  clk,
@@ -55,7 +56,8 @@ module br_cdc_fifo_push_flag_mgr #(
   logic [CountWidth-1:0] pop_count_visible;
 
   br_counter_incr #(
-      .MaxValue(MaxCount)
+      .MaxValue(MaxCount),
+      .EnableAssertFinalNotValid(EnableAssertFinalNotValid)
   ) br_counter_incr_push_count (
       .clk,
       .rst,
