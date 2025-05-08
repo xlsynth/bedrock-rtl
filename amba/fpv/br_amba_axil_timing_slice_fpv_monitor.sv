@@ -83,6 +83,15 @@ module br_amba_axil_timing_slice_fpv_monitor #(
     input logic                             init_rready
 );
 
+  // ABVIP should send more than DUT to test backpressure
+  localparam int MaxInit = 2;
+  localparam int MaxTarget = MaxInit + 2;
+  localparam int AwPayloadWidth = AddrWidth + br_amba::AxiProtWidth + AWUserWidth;
+  localparam int WPayloadWidth = DataWidth + StrobeWidth + WUserWidth;
+  localparam int BPayloadWidth = BUserWidth + br_amba::AxiRespWidth;
+  localparam int ARPayloadWidth = AddrWidth + br_amba::AxiProtWidth + ARUserWidth;
+  localparam int RPayloadWidth = DataWidth + RUserWidth + br_amba::AxiRespWidth;
+
   // AXI4-Lite target interface
   axi4_master #(
       .AXI4_LITE(1),
@@ -92,7 +101,9 @@ module br_amba_axil_timing_slice_fpv_monitor #(
       .WUSER_WIDTH(WUserWidth),
       .ARUSER_WIDTH(ARUserWidth),
       .RUSER_WIDTH(RUserWidth),
-      .BUSER_WIDTH(BUserWidth)
+      .BUSER_WIDTH(BUserWidth),
+      .CONFIG_WDATA_MASKED(0),
+      .MAX_PENDING(MaxTarget)
   ) target (
       // Global signals
       .aclk    (clk),
@@ -160,7 +171,9 @@ module br_amba_axil_timing_slice_fpv_monitor #(
       .WUSER_WIDTH(WUserWidth),
       .ARUSER_WIDTH(ARUserWidth),
       .RUSER_WIDTH(RUserWidth),
-      .BUSER_WIDTH(BUserWidth)
+      .BUSER_WIDTH(BUserWidth),
+      .CONFIG_RDATA_MASKED(0),
+      .MAX_PENDING(MaxInit)
   ) init (
       // Global signals
       .aclk    (clk),
@@ -217,6 +230,82 @@ module br_amba_axil_timing_slice_fpv_monitor #(
       .rresp   (init_rresp),
       .rid     (),
       .rlast   ()
+  );
+
+  // ----------across target and init, no command is dropped or reordered----------
+  jasper_scoreboard_3 #(
+      .CHUNK_WIDTH(AwPayloadWidth),
+      .IN_CHUNKS(1),
+      .OUT_CHUNKS(1),
+      .SINGLE_CLOCK(1),
+      .MAX_PENDING(MaxTarget)
+  ) aw_sb (
+      .clk(clk),
+      .rstN(!rst),
+      .incoming_vld(target_awvalid & target_awready),
+      .incoming_data({target_awaddr, target_awprot, target_awuser}),
+      .outgoing_vld(init_awvalid & init_awready),
+      .outgoing_data({init_awaddr, init_awprot, init_awuser})
+  );
+
+  jasper_scoreboard_3 #(
+      .CHUNK_WIDTH(WPayloadWidth),
+      .IN_CHUNKS(1),
+      .OUT_CHUNKS(1),
+      .SINGLE_CLOCK(1),
+      .MAX_PENDING(MaxTarget)
+  ) w_sb (
+      .clk(clk),
+      .rstN(!rst),
+      .incoming_vld(target_wvalid & target_wready),
+      .incoming_data({target_wdata, target_wstrb, target_wuser}),
+      .outgoing_vld(init_wvalid & init_wready),
+      .outgoing_data({init_wdata, init_wstrb, init_wuser})
+  );
+
+  jasper_scoreboard_3 #(
+      .CHUNK_WIDTH(BPayloadWidth),
+      .IN_CHUNKS(1),
+      .OUT_CHUNKS(1),
+      .SINGLE_CLOCK(1),
+      .MAX_PENDING(MaxTarget)
+  ) b_sb (
+      .clk(clk),
+      .rstN(!rst),
+      .incoming_vld(init_bvalid & init_bready),
+      .incoming_data({init_bresp, init_buser}),
+      .outgoing_vld(target_bvalid & target_bready),
+      .outgoing_data({target_bresp, target_buser})
+  );
+
+  jasper_scoreboard_3 #(
+      .CHUNK_WIDTH(ARPayloadWidth),
+      .IN_CHUNKS(1),
+      .OUT_CHUNKS(1),
+      .SINGLE_CLOCK(1),
+      .MAX_PENDING(MaxTarget)
+  ) ar_sb (
+      .clk(clk),
+      .rstN(!rst),
+      .incoming_vld(target_arvalid & target_arready),
+      .incoming_data({target_araddr, target_arprot, target_aruser}),
+      .outgoing_vld(init_arvalid & init_arready),
+      .outgoing_data({init_araddr, init_arprot, init_aruser})
+  );
+
+  jasper_scoreboard_3 #(
+      .CHUNK_WIDTH(RPayloadWidth),
+      .IN_CHUNKS(1),
+      .OUT_CHUNKS(1),
+      .SINGLE_CLOCK(1),
+      .MAX_PENDING(MaxTarget)
+  ) r_sb (
+      .clk(clk),
+      .rstN(!rst),
+      .incoming_vld(init_rvalid & init_rready),
+      .incoming_data({init_rdata, init_rresp, init_ruser}),
+      .outgoing_vld(target_rvalid & target_rready),
+      .outgoing_data({target_rdata, target_rresp, target_ruser})
   );
 
 endmodule : br_amba_axil_timing_slice_fpv_monitor
