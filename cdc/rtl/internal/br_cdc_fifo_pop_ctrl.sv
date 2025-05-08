@@ -104,7 +104,8 @@ module br_cdc_fifo_pop_ctrl #(
   // Status flags
   br_cdc_fifo_pop_flag_mgr #(
       .Depth(Depth),
-      .RegisterResetActive(RegisterResetActive)
+      .RegisterResetActive(RegisterResetActive),
+      .EnableAssertFinalNotValid(EnableAssertFinalNotValid)
   ) br_cdc_fifo_pop_flag_mgr (
       .clk,
       .rst,
