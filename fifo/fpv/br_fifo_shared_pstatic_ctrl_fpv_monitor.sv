@@ -122,6 +122,7 @@ module br_fifo_shared_pstatic_ctrl_fpv_monitor #(
       .Width(Width),
       .StagingBufferDepth(StagingBufferDepth),
       .RegisterPopOutputs(RegisterPopOutputs),
+      .RamReadLatency(RamReadLatency),
       .EnableCoverPushBackpressure(EnableCoverPushBackpressure),
       .EnableAssertPushValidStability(EnableAssertPushValidStability),
       .EnableAssertPushDataStability(EnableAssertPushDataStability)

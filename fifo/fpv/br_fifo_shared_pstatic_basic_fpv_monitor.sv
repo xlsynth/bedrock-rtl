@@ -23,6 +23,7 @@ module br_fifo_shared_pstatic_basic_fpv_monitor #(
     parameter int Width = 1,
     parameter int StagingBufferDepth = 1,
     parameter bit RegisterPopOutputs = 0,
+    parameter int RamReadLatency = 0,
     parameter bit EnableCoverPushBackpressure = 1,
     parameter bit EnableAssertPushValidStability = EnableCoverPushBackpressure,
     parameter bit EnableAssertPushDataStability = EnableAssertPushValidStability,
@@ -99,7 +100,7 @@ module br_fifo_shared_pstatic_basic_fpv_monitor #(
   end
 
   // ----------FV assertions----------
-  if (StagingBufferDepth != 0) begin : gen_pop
+  if ((RegisterPopOutputs != 0) || (RamReadLatency != 0)) begin : gen_pop
     if (EnableAssertPushValidStability) begin : gen_pop_valid_stable
       `BR_ASSERT(pop_valid_stable_a,
                  pop_valid[fv_fifo_id] && !pop_ready[fv_fifo_id] |=> pop_valid[fv_fifo_id])

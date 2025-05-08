@@ -1097,7 +1097,6 @@ verilog_elab_test(
 # Test focuses on testing backpressure
 br_verilog_fpv_test_tools_suite(
     name = "br_fifo_shared_pstatic_ctrl_test_backpressure",
-    gui = True,
     illegal_param_combinations = {
         (
             "EnableCoverPushBackpressure",
@@ -1153,7 +1152,6 @@ br_verilog_fpv_test_tools_suite(
 # Test focuses on testing backpressure
 br_verilog_fpv_test_tools_suite(
     name = "br_fifo_shared_pstatic_ctrl_test_numfifo",
-    gui = True,
     illegal_param_combinations = {
         (
             "NumFifos",
