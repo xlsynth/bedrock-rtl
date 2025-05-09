@@ -25,6 +25,8 @@
 // are less than the current round-robin priority---those in the range
 // [0, RR_ptr).
 
+`include "br_asserts.svh"
+
 module br_rr_state_internal #(
     // Must be at least 2
     parameter int NumRequesters = 2
@@ -36,6 +38,8 @@ module br_rr_state_internal #(
     output logic [NumRequesters-1:0] last_grant,
     output logic [NumRequesters-1:0] priority_mask
 );
+
+  `BR_ASSERT_STATIC(num_requesters_gte_2_A, NumRequesters >= 2)
 
   logic [NumRequesters-1:0] last_grant_init;
 

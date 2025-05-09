@@ -31,6 +31,8 @@
 // requests of higher priority.  The final grant signal is equivalent to
 // 'can_grant & request'.
 
+`include "br_asserts.svh"
+
 module br_arb_rr_internal #(
     // Must be at least 2
     parameter int NumRequesters = 2
@@ -42,6 +44,8 @@ module br_arb_rr_internal #(
     output logic [NumRequesters-1:0] can_grant,
     output logic [NumRequesters-1:0] grant
 );
+
+  `BR_ASSERT_STATIC(num_requesters_gte_2_A, NumRequesters >= 2)
 
   //------------------------------------------
   // Implementation

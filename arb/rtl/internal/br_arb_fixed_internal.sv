@@ -32,6 +32,8 @@ module br_arb_fixed_internal #(
     output logic [NumRequesters-1:0] grant
 );
 
+  `BR_ASSERT_STATIC(num_requesters_gte_2_A, NumRequesters >= 2)
+
   //------------------------------------------
   // Implementation
   //------------------------------------------
