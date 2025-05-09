@@ -88,6 +88,7 @@ module br_fifo_shared_pstatic_ctrl_push_credit_fpv_monitor #(
   // ----------Instantiate credit FV checker----------
   for (genvar i = 0; i < NumFifos; i++) begin : gen_credit_checker
     br_credit_receiver_fpv_monitor #(
+        .PStatic(1),
         .MaxCredit(Depth),
         .NumWritePorts(1)
     ) fv_credit (
@@ -101,7 +102,9 @@ module br_fifo_shared_pstatic_ctrl_push_credit_fpv_monitor #(
         .credit_initial_push(credit_initial_push[i]),
         .credit_withhold_push(credit_withhold_push[i]),
         .credit_count_push(credit_count_push[i]),
-        .credit_available_push(credit_available_push[i])
+        .credit_available_push(credit_available_push[i]),
+        .config_base(config_base[i]),
+        .config_bound(config_bound[i])
     );
   end
 

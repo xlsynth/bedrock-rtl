@@ -26,8 +26,7 @@ cover -disable *
 array set param_list [get_design_info -list parameter]
 set NumFifos $param_list(NumFifos)
 for {set i 0} {$i < $NumFifos} {incr i} {
-  assume -name initial_value_during_reset_$i "rst | push_sender_in_reset |-> \
-  (credit_initial_push\[$i\] <= Depth) && \$stable(credit_initial_push\[$i\])"
+  assume -name initial_value_during_reset_$i "\$stable(credit_initial_push\[$i\])"
 }
 
 # limit run time to 10-mins
