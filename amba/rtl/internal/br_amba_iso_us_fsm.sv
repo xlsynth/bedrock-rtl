@@ -22,6 +22,7 @@
 // expected responses from the downstream interface to arrive and then
 // will re-connect the upstream interface.
 
+`include "br_asserts.svh"
 `include "br_registers.svh"
 
 module br_amba_iso_us_fsm (
@@ -49,7 +50,7 @@ module br_amba_iso_us_fsm (
   `BR_REGI(state, state_next, Normal)
 
   always_comb begin
-    unique case (state)  // ri lint_check_waive FSM_DEFAULT_REQ
+    unique case (state)
       Normal: begin
         state_next = isolate_req ? AlignWrite : state;
         //
@@ -77,6 +78,14 @@ module br_amba_iso_us_fsm (
         align_and_hold_req = 1'b1;
         req_tracker_isolate_req = 1'b0;
         isolate_done = 1'b1;
+      end
+      default: begin
+        `BR_ASSERT_IMM(invalid_state_a, 0)
+        state_next = Normal; // ri lint_check_waive UNREACHABLE
+        //
+        align_and_hold_req = 1'b0;
+        req_tracker_isolate_req = 1'b0;
+        isolate_done = 1'b0;
       end
     endcase
   end

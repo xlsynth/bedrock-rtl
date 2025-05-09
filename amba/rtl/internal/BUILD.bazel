@@ -168,6 +168,7 @@ verilog_library(
     name = "br_amba_iso_us_fsm",
     srcs = ["br_amba_iso_us_fsm.sv"],
     deps = [
+        "//macros:br_asserts",
         "//macros:br_registers",
     ],
 )
