@@ -122,6 +122,9 @@ module br_amba_iso_resp_tracker #(
   // is not driving a new request (because it is held off outside of this module).
   `BR_ASSERT_INTG(legal_request_fall_a, $fell(isolate_req) |-> $past(resp_fifo_empty) && !$past
                                         (upstream_axvalid))
+  `BR_ASSERT_INTG(legal_axid_a, upstream_axvalid |-> upstream_axid < AxiIdCount)
+  `BR_ASSERT_INTG(legal_xid_a, downstream_xvalid |-> downstream_xid < AxiIdCount)
+
 
   // Local parameters
   localparam bit SingleBeatOnly = (MaxAxiBurstLen == 1);
@@ -441,7 +444,7 @@ module br_amba_iso_resp_tracker #(
     `BR_UNUSED_NAMED(zero_count_unused_resp_info, zero_count)
   end else begin : gen_resp_info
     logic [AxiIdWidth-1:0] cur_resp_id_prev, cur_resp_id_next;
-    assign cur_resp_id_next = downstream_iso_xid;
+    assign cur_resp_id_next = downstream_iso_xvalid ? downstream_iso_xid : '0;
     assign cur_resp_id = zero_count ? cur_resp_id_next : cur_resp_id_prev;
     // ri lint_check_waive CONST_IF_COND
     `BR_REGL(cur_resp_id_prev, cur_resp_id_next, zero_count && x_beat)
