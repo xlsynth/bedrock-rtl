@@ -223,7 +223,7 @@ module br_amba_iso_resp_tracker #(
   // w/o requiring any pops from the tracker FIFO. Otherwise deadlock can result if a downstream
   // response arrives whose matching transaction is stuck in the staging FIFO (blocked by a
   // different ID).
-  assign can_accept_new_req   = total_req_count < MaxOutstanding;
+  assign can_accept_new_req = total_req_count < MaxOutstanding;
 
   if (EnableWlastTracking) begin : gen_wlast_tracking
     logic staging_fifo_pop_valid;
@@ -357,10 +357,10 @@ module br_amba_iso_resp_tracker #(
     `BR_UNUSED(downstream_wready)
 
     assign tracker_fifo_push_valid = staging_fifo_push_valid;
-    assign tracker_fifo_push_len = staging_fifo_push_len;
-    assign tracker_fifo_push_axid = staging_fifo_push_axid;
+    assign tracker_fifo_push_len   = staging_fifo_push_len;
+    assign tracker_fifo_push_axid  = staging_fifo_push_axid;
     assign staging_fifo_push_ready = tracker_fifo_push_ready;
-    assign staging_fifo_pop_empty = 1'b1;
+    assign staging_fifo_pop_empty  = 1'b1;
   end
 
   //
