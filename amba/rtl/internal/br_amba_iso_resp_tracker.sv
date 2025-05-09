@@ -67,6 +67,9 @@ module br_amba_iso_resp_tracker #(
     // Can be set to 1 for AXI-Lite or write responses, otherwise should
     // be set to br_amba::AxiBurstLenWidth.
     parameter int MaxAxiBurstLen = 2 ** br_amba::AxiBurstLenWidth,
+    // Enable tracking of WLAST for write responses. Set to 1 for write
+    // tracking, 0 for read tracking.
+    parameter bit EnableWlastTracking = 1,
     localparam int AxiBurstLenWidth = br_math::clamped_clog2(MaxAxiBurstLen)
 ) (
     input logic clk,
@@ -119,6 +122,9 @@ module br_amba_iso_resp_tracker #(
   // is not driving a new request (because it is held off outside of this module).
   `BR_ASSERT_INTG(legal_request_fall_a, $fell(isolate_req) |-> $past(resp_fifo_empty) && !$past
                                         (upstream_axvalid))
+  `BR_ASSERT_INTG(legal_axid_a, upstream_axvalid |-> upstream_axid < AxiIdCount)
+  `BR_ASSERT_INTG(legal_xid_a, downstream_xvalid |-> downstream_xid < AxiIdCount)
+
 
   // Local parameters
   localparam bit SingleBeatOnly = (MaxAxiBurstLen == 1);
@@ -128,7 +134,7 @@ module br_amba_iso_resp_tracker #(
 
   // Local signals
   logic [AxiBurstLenWidth-1:0] tracker_fifo_push_len;
-  logic [MinIdWidth-1:0] tracker_fifo_push_ax_id;
+  logic [MinIdWidth-1:0] tracker_fifo_push_axid;
   logic tracker_fifo_push_valid;
   logic [AxiIdCount-1:0] tracker_fifo_pop_valid;
   logic [AxiIdCount-1:0] tracker_fifo_pop_ready;
@@ -152,23 +158,15 @@ module br_amba_iso_resp_tracker #(
   logic final_count;
   logic zero_count;
 
-  logic staging_fifo_push_valid;
-  logic staging_fifo_push_ready;
-  logic staging_fifo_pop_valid;
-  logic staging_fifo_pop_ready;
-  logic [AxiBurstLenWidth-1:0] staging_fifo_push_len;
-  logic [MinIdWidth-1:0] staging_fifo_push_axid;
-  logic wlast_fifo_pop_valid;
-  logic wlast_fifo_pop_ready;
-  logic wlast_fifo_push_valid;
-  logic wlast_fifo_push_valid_is_last;
-  logic wlast_fifo_push_ready;
-
   logic [AxiIdCount-1:0] tracker_fifo_pop_empty;
   logic staging_fifo_pop_empty;
 
+  logic staging_fifo_push_valid;
+  logic staging_fifo_push_ready;
+  logic [AxiBurstLenWidth-1:0] staging_fifo_push_len;
+  logic [MinIdWidth-1:0] staging_fifo_push_axid;
+
   logic can_accept_new_req;
-  logic can_accept_new_wlast;
 
   //
   // Write Data Receipt Tracking
@@ -177,8 +175,18 @@ module br_amba_iso_resp_tracker #(
   // we have not yet received the last beat of data from upstream on the W channel.
   //
 
-  assign staging_fifo_push_len   = SingleBeatOnly ? 1'b0 : upstream_axlen;
-  assign staging_fifo_push_axid  = SingleIdOnly ? '0 : upstream_axid[MinIdWidth-1:0];
+  if (SingleBeatOnly) begin : gen_single_beat_only_len
+    assign staging_fifo_push_len = 1'b0;
+  end else begin : gen_multi_beat_len
+    assign staging_fifo_push_len = upstream_axlen;
+  end
+
+  if (SingleIdOnly) begin : gen_single_id_only_axid
+    assign staging_fifo_push_axid = '0;
+  end else begin : gen_multi_id_only_axid
+    assign staging_fifo_push_axid = upstream_axid[MinIdWidth-1:0];
+  end
+
   assign staging_fifo_push_valid = upstream_axvalid && downstream_axready && can_accept_new_req;
 
   if (MinIdWidth < AxiIdWidth) begin : gen_id_width_lt_len_width
@@ -187,94 +195,173 @@ module br_amba_iso_resp_tracker #(
                     upstream_axvalid |-> upstream_axid[AxiIdWidth-1:MinIdWidth] == '0)
   end
 
-  br_fifo_flops #(
-      .Depth(MaxTransactionSkew),
-      .Width(AxiBurstLenWidth + MinIdWidth),
-      // valid can deassert if downstream_axready deasserts
-      .EnableAssertPushValidStability(0)
-  ) br_fifo_flops_aw_staging (
+  // Total outstanding requests counters (in the staging+tracker FIFOs)
+  logic [OutstandingWidth-1:0] total_req_count;
+  br_counter #(
+      .MaxValue(MaxOutstanding),
+      .MaxChange(1),
+      .EnableWrap(0),
+      .EnableSaturate(0),
+      .EnableReinitAndChange(0)
+  ) br_counter_total_req (
       .clk,
       .rst,
       //
-      .push_valid(staging_fifo_push_valid),
-      .push_data({staging_fifo_push_axid, staging_fifo_push_len}),
-      .push_ready(staging_fifo_push_ready),
-      //
-      .pop_valid(staging_fifo_pop_valid),
-      .pop_data({tracker_fifo_push_ax_id, tracker_fifo_push_len}),
-      .pop_ready(staging_fifo_pop_ready),
-      //
-      .full(),
-      .full_next(),
-      .slots(),
-      .slots_next(),
-      .empty(staging_fifo_pop_empty),
-      .empty_next(),
-      .items(),
-      .items_next()
+      .reinit(1'b0),
+      .initial_value('0),
+      .incr_valid(staging_fifo_push_valid && staging_fifo_push_ready),
+      .incr(1'b1),
+      .decr_valid(|(tracker_fifo_pop_valid & tracker_fifo_pop_ready)),
+      .decr(1'b1),
+      .value(total_req_count),
+      .value_next()
   );
 
-  br_flow_fork #(
-      .NumFlows(2),
-      // If W beats are in excess when wdata alignment (during isolation) is requested, the
-      // upstream valid can deassert without ready asserting.
-      .EnableAssertPushValidStability(0)
-  ) br_flow_fork_wlast_staging (
-      .clk,
-      .rst,
-      //
-      .push_valid(upstream_wvalid),
-      .push_ready(upstream_wready),
-      //
-      .pop_valid_unstable({downstream_wvalid, wlast_fifo_push_valid}),
-      .pop_ready({downstream_wready, (wlast_fifo_push_ready && can_accept_new_wlast)})
-  );
+  // Need to ensure that the total outstanding requests held in the staging+tracker FIFOs
+  // never exceeds the total amount of storage available in the tracker (multi-) FIFO. It
+  // must be the case that everything in staging can eventually sink into the tracker FIFO
+  // w/o requiring any pops from the tracker FIFO. Otherwise deadlock can result if a downstream
+  // response arrives whose matching transaction is stuck in the staging FIFO (blocked by a
+  // different ID).
+  assign can_accept_new_req = total_req_count < MaxOutstanding;
 
-  assign downstream_wlast = upstream_wlast;
+  if (EnableWlastTracking) begin : gen_wlast_tracking
+    logic staging_fifo_pop_valid;
+    logic staging_fifo_pop_ready;
+    logic wlast_fifo_pop_valid;
+    logic wlast_fifo_pop_ready;
+    logic wlast_fifo_push_valid;
+    logic wlast_fifo_push_valid_is_last;
+    logic wlast_fifo_push_ready;
+    logic can_accept_new_wlast;
 
-  assign wlast_fifo_push_valid_is_last = wlast_fifo_push_valid
-                                        && upstream_wlast
-                                        && can_accept_new_wlast;
+    assign downstream_wlast = upstream_wlast;
 
-  br_fifo_flops #(
-      .Depth(MaxTransactionSkew),
-      .Width(1),
-      // valid can deassert if downstream_wready deasserts
-      .EnableAssertPushValidStability(0)
-  ) br_fifo_flops_wlast_staging (
-      .clk,
-      .rst,
-      //
-      .push_valid(wlast_fifo_push_valid_is_last),
-      .push_data(1'b0),
-      .push_ready(wlast_fifo_push_ready),
-      //
-      .pop_valid(wlast_fifo_pop_valid),
-      .pop_data(),
-      .pop_ready(wlast_fifo_pop_ready),
-      //
-      .full(),
-      .full_next(),
-      .slots(),
-      .slots_next(),
-      .empty(),
-      .empty_next(),
-      .items(),
-      .items_next()
-  );
+    br_fifo_flops #(
+        .Depth(MaxTransactionSkew),
+        .Width(AxiBurstLenWidth + MinIdWidth),
+        // valid can deassert if downstream_axready deasserts
+        .EnableAssertPushValidStability(0)
+    ) br_fifo_flops_aw_staging (
+        .clk,
+        .rst,
+        //
+        .push_valid(staging_fifo_push_valid),
+        .push_data({staging_fifo_push_axid, staging_fifo_push_len}),
+        .push_ready(staging_fifo_push_ready),
+        //
+        .pop_valid(staging_fifo_pop_valid),
+        .pop_data({tracker_fifo_push_axid, tracker_fifo_push_len}),
+        .pop_ready(staging_fifo_pop_ready),
+        //
+        .full(),
+        .full_next(),
+        .slots(),
+        .slots_next(),
+        .empty(staging_fifo_pop_empty),
+        .empty_next(),
+        .items(),
+        .items_next()
+    );
 
-  br_flow_join #(
-      .NumFlows(2)
-  ) br_flow_join_aw_staging (
-      .clk,
-      .rst,
-      //
-      .push_ready({staging_fifo_pop_ready, wlast_fifo_pop_ready}),
-      .push_valid({staging_fifo_pop_valid, wlast_fifo_pop_valid}),
-      //
-      .pop_ready (tracker_fifo_push_ready),
-      .pop_valid (tracker_fifo_push_valid)
-  );
+    br_flow_fork #(
+        .NumFlows(2),
+        // If W beats are in excess when wdata alignment (during isolation) is requested, the
+        // upstream valid can deassert without ready asserting.
+        .EnableAssertPushValidStability(0)
+    ) br_flow_fork_wlast_staging (
+        .clk,
+        .rst,
+        //
+        .push_valid(upstream_wvalid),
+        .push_ready(upstream_wready),
+        //
+        .pop_valid_unstable({downstream_wvalid, wlast_fifo_push_valid}),
+        .pop_ready({downstream_wready, (wlast_fifo_push_ready && can_accept_new_wlast)})
+    );
+
+    assign wlast_fifo_push_valid_is_last = wlast_fifo_push_valid
+                                            && upstream_wlast
+                                            && can_accept_new_wlast;
+
+    br_fifo_flops #(
+        .Depth(MaxTransactionSkew),
+        .Width(1),
+        // valid can deassert if downstream_wready deasserts
+        .EnableAssertPushValidStability(0)
+    ) br_fifo_flops_wlast_staging (
+        .clk,
+        .rst,
+        //
+        .push_valid(wlast_fifo_push_valid_is_last),
+        .push_data(1'b0),
+        .push_ready(wlast_fifo_push_ready),
+        //
+        .pop_valid(wlast_fifo_pop_valid),
+        .pop_data(),
+        .pop_ready(wlast_fifo_pop_ready),
+        //
+        .full(),
+        .full_next(),
+        .slots(),
+        .slots_next(),
+        .empty(),
+        .empty_next(),
+        .items(),
+        .items_next()
+    );
+
+    br_flow_join #(
+        .NumFlows(2)
+    ) br_flow_join_aw_staging (
+        .clk,
+        .rst,
+        //
+        .push_ready({staging_fifo_pop_ready, wlast_fifo_pop_ready}),
+        .push_valid({staging_fifo_pop_valid, wlast_fifo_pop_valid}),
+        //
+        .pop_ready (tracker_fifo_push_ready),
+        .pop_valid (tracker_fifo_push_valid)
+    );
+
+    // Total outstanding requests counters (in the staging+tracker FIFOs) for wlast staging
+    logic [OutstandingWidth-1:0] total_wlast_count;
+    br_counter #(
+        .MaxValue(MaxOutstanding),
+        .MaxChange(1),
+        .EnableWrap(0),
+        .EnableSaturate(0),
+        .EnableReinitAndChange(0)
+    ) br_counter_total_wlast (
+        .clk,
+        .rst,
+        //
+        .reinit(1'b0),
+        .initial_value('0),
+        .incr_valid(wlast_fifo_push_valid_is_last && wlast_fifo_push_ready),
+        .incr(1'b1),
+        .decr_valid(|(tracker_fifo_pop_valid & tracker_fifo_pop_ready)),
+        .decr(1'b1),
+        .value(total_wlast_count),
+        .value_next()
+    );
+
+    assign can_accept_new_wlast = total_wlast_count < MaxOutstanding;
+
+  end else begin : gen_no_wlast_tracking
+    assign upstream_wready = 1'b0;
+    `BR_UNUSED(upstream_wvalid)
+    `BR_UNUSED(upstream_wlast)
+    assign downstream_wlast  = 1'b0;
+    assign downstream_wvalid = 1'b0;
+    `BR_UNUSED(downstream_wready)
+
+    assign tracker_fifo_push_valid = staging_fifo_push_valid;
+    assign tracker_fifo_push_len   = staging_fifo_push_len;
+    assign tracker_fifo_push_axid  = staging_fifo_push_axid;
+    assign staging_fifo_push_ready = tracker_fifo_push_ready;
+    assign staging_fifo_pop_empty  = 1'b1;
+  end
 
   //
   // Per-ID Request Tracker FIFO
@@ -286,7 +373,9 @@ module br_amba_iso_resp_tracker #(
         .Depth(MaxOutstanding),
         .Width(AxiBurstLenWidth),
         .EnableBypass(1),
-        .RegisterPopOutputs(1)
+        .RegisterPopOutputs(1),
+        // When EnableWlastTracking=0, valid can deassert if downstream_axready deasserts
+        .EnableAssertPushValidStability(EnableWlastTracking)
     ) br_fifo_flops_req_tracker (
         .clk,
         .rst,
@@ -308,7 +397,7 @@ module br_amba_iso_resp_tracker #(
         .items(),
         .items_next()
     );
-    `BR_UNUSED(tracker_fifo_push_ax_id)
+    `BR_UNUSED(tracker_fifo_push_axid)
   end else begin : gen_multi_fifo
     br_fifo_shared_dynamic_flops #(
         .NumWritePorts(1),
@@ -318,7 +407,9 @@ module br_amba_iso_resp_tracker #(
         .Width(AxiBurstLenWidth),
         .PointerRamReadDataDepthStages(FlopPtrRamRd),
         .DataRamReadDataDepthStages(FlopDataRamRd),
-        .RegisterPopOutputs(1)
+        .RegisterPopOutputs(1),
+        // When EnableWlastTracking=0, valid can deassert if downstream_axready deasserts
+        .EnableAssertPushValidStability(EnableWlastTracking)
     ) br_fifo_shared_dynamic_flops_req_tracker (
         .clk,
         .rst,
@@ -326,7 +417,7 @@ module br_amba_iso_resp_tracker #(
         .push_valid(tracker_fifo_push_valid),
         .push_data(tracker_fifo_push_len),
         .push_ready(tracker_fifo_push_ready),
-        .push_fifo_id(tracker_fifo_push_ax_id),
+        .push_fifo_id(tracker_fifo_push_axid),
         .push_full(),
         //
         .pop_valid(tracker_fifo_pop_valid),
@@ -337,57 +428,6 @@ module br_amba_iso_resp_tracker #(
   end
 
   assign resp_fifo_empty = &tracker_fifo_pop_empty && staging_fifo_pop_empty;
-
-  // Total outstanding requests counters (in the staging+tracker FIFOs)
-  logic [OutstandingWidth-1:0] total_req_count;
-  logic [OutstandingWidth-1:0] total_wlast_count;
-  br_counter #(
-      .MaxValue(MaxOutstanding),
-      .MaxChange(1),
-      .EnableWrap(0),
-      .EnableSaturate(0),
-      .EnableReinitAndChange(0)
-  ) br_counter_total_req (
-      .clk,
-      .rst,
-      //
-      .reinit(1'b0),
-      .initial_value('0),
-      .incr_valid(staging_fifo_push_valid && staging_fifo_push_ready),
-      .incr(1'b1),
-      .decr_valid(|(tracker_fifo_pop_valid & tracker_fifo_pop_ready)),
-      .decr(1'b1),
-      .value(total_req_count),
-      .value_next()
-  );
-
-  br_counter #(
-      .MaxValue(MaxOutstanding),
-      .MaxChange(1),
-      .EnableWrap(0),
-      .EnableSaturate(0),
-      .EnableReinitAndChange(0)
-  ) br_counter_total_wlast (
-      .clk,
-      .rst,
-      //
-      .reinit(1'b0),
-      .initial_value('0),
-      .incr_valid(wlast_fifo_push_valid_is_last && wlast_fifo_push_ready),
-      .incr(1'b1),
-      .decr_valid(|(tracker_fifo_pop_valid & tracker_fifo_pop_ready)),
-      .decr(1'b1),
-      .value(total_wlast_count),
-      .value_next()
-  );
-  // Need to ensure that the total outstanding requests held in the staging+tracker FIFOs
-  // never exceeds the total amount of storage available in the tracker (multi-) FIFO. It
-  // must be the case that everything in staging can eventually sink into the tracker FIFO
-  // w/o requiring any pops from the tracker FIFO. Otherwise deadlock can result if a downstream
-  // response arrives whose matching transaction is stuck in the staging FIFO (blocked by a
-  // different ID).
-  assign can_accept_new_req   = total_req_count < MaxOutstanding;
-  assign can_accept_new_wlast = total_wlast_count < MaxOutstanding;
 
   //
   // Current Response ID
@@ -409,7 +449,7 @@ module br_amba_iso_resp_tracker #(
     `BR_UNUSED_NAMED(zero_count_unused_resp_info, zero_count)
   end else begin : gen_resp_info
     logic [AxiIdWidth-1:0] cur_resp_id_prev, cur_resp_id_next;
-    assign cur_resp_id_next = downstream_iso_xid;
+    assign cur_resp_id_next = downstream_iso_xvalid ? downstream_iso_xid : '0;
     assign cur_resp_id = zero_count ? cur_resp_id_next : cur_resp_id_prev;
     // ri lint_check_waive CONST_IF_COND
     `BR_REGL(cur_resp_id_prev, cur_resp_id_next, zero_count && x_beat)
