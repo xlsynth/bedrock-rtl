@@ -40,24 +40,24 @@ module br_amba_axi_default_target #(
     // Reduced AXI4-Lite target interface
     input  logic                             target_awvalid,
     output logic                             target_awready,
-    input  logic [AxiIdWidth-1:0]             target_awid,
-    input  logic [AxiLenWidth-1:0]            target_awlen,
+    input  logic [           AxiIdWidth-1:0] target_awid,
+    input  logic [          AxiLenWidth-1:0] target_awlen,
     input  logic                             target_wvalid,
     output logic                             target_wready,
     input  logic                             target_wlast,
     output logic                             target_bvalid,
     input  logic                             target_bready,
-    output logic [AxiIdWidth-1:0]             target_bid,
+    output logic [           AxiIdWidth-1:0] target_bid,
     output logic [br_amba::AxiRespWidth-1:0] target_bresp,
     input  logic                             target_arvalid,
     output logic                             target_arready,
-    input  logic [AxiIdWidth-1:0]             target_arid,
-    input  logic [AxiLenWidth-1:0]            target_arlen,
+    input  logic [           AxiIdWidth-1:0] target_arid,
+    input  logic [          AxiLenWidth-1:0] target_arlen,
     output logic                             target_rvalid,
     input  logic                             target_rready,
     output logic [            DataWidth-1:0] target_rdata,
     output logic [br_amba::AxiRespWidth-1:0] target_rresp,
-    output logic [AxiIdWidth-1:0]             target_rid,
+    output logic [           AxiIdWidth-1:0] target_rid,
     output logic                             target_rlast
 );
 
@@ -75,16 +75,16 @@ module br_amba_axi_default_target #(
   logic [AxiIdWidth-1:0] awfifo_pop_awid;
   logic wfifo_pop_valid, wfifo_pop_ready;
   logic arfifo_pop_valid, arfifo_pop_ready;
-  logic [AxiIdWidth-1:0] arfifo_pop_arid;
+  logic [ AxiIdWidth-1:0] arfifo_pop_arid;
   logic [AxiLenWidth-1:0] arfifo_pop_arlen;
 
   // Response signals
   if (DecodeError) begin : gen_decode_error
-    assign target_bresp = br_amba::AxiRespDecerr; // ri lint_check_waive ENUM_RHS
-    assign target_rresp = br_amba::AxiRespDecerr; // ri lint_check_waive ENUM_RHS
+    assign target_bresp = br_amba::AxiRespDecerr;  // ri lint_check_waive ENUM_RHS
+    assign target_rresp = br_amba::AxiRespDecerr;  // ri lint_check_waive ENUM_RHS
   end else if (SlvErr) begin : gen_slv_err
-    assign target_bresp = br_amba::AxiRespSlverr; // ri lint_check_waive ENUM_RHS
-    assign target_rresp = br_amba::AxiRespSlverr; // ri lint_check_waive ENUM_RHS
+    assign target_bresp = br_amba::AxiRespSlverr;  // ri lint_check_waive ENUM_RHS
+    assign target_rresp = br_amba::AxiRespSlverr;  // ri lint_check_waive ENUM_RHS
   end else begin : gen_okay
     assign target_bresp = br_amba::AxiRespOkay;  // ri lint_check_waive ENUM_RHS
     assign target_rresp = br_amba::AxiRespOkay;  // ri lint_check_waive ENUM_RHS
@@ -105,7 +105,7 @@ module br_amba_axi_default_target #(
 
       .pop_ready(awfifo_pop_ready),
       .pop_valid(awfifo_pop_valid),
-      .pop_data(awfifo_pop_awid)
+      .pop_data (awfifo_pop_awid)
   );
   `BR_UNUSED(target_awlen)
 
@@ -125,7 +125,7 @@ module br_amba_axi_default_target #(
 
       .pop_ready(wfifo_pop_ready),
       .pop_valid(wfifo_pop_valid),
-      .pop_data()
+      .pop_data ()
   );
 
   // Only pop from write data channel when write response is ready and valid
@@ -148,14 +148,14 @@ module br_amba_axi_default_target #(
 
       .pop_ready(arfifo_pop_ready),
       .pop_valid(arfifo_pop_valid),
-      .pop_data({arfifo_pop_arid, arfifo_pop_arlen})
+      .pop_data ({arfifo_pop_arid, arfifo_pop_arlen})
   );
 
   if (SingleBeat) begin : gen_single_beat
     assign arfifo_pop_ready = target_rready;
     assign target_rvalid    = arfifo_pop_valid;
-    assign target_rid      = arfifo_pop_arid;
-    assign target_rlast    = 1'b1;
+    assign target_rid       = arfifo_pop_arid;
+    assign target_rlast     = 1'b1;
     `BR_UNUSED(arfifo_pop_arlen)
   end else begin : gen_multi_beat
     logic rbeat;
@@ -163,11 +163,11 @@ module br_amba_axi_default_target #(
     logic reinit;
     logic [AxiLenWidth-1:0] beat_count;
 
-    assign rbeat = target_rready && target_rvalid;
-    assign last = (beat_count == arfifo_pop_arlen);
+    assign rbeat  = target_rready && target_rvalid;
+    assign last   = (beat_count == arfifo_pop_arlen);
     assign reinit = last && rbeat;
     br_counter_incr #(
-        .MaxValue(2**AxiLenWidth-1),
+        .MaxValue(2 ** AxiLenWidth - 1),
         .MaxIncrement(1),
         .EnableReinitAndIncr(0),
         .EnableSaturate(0)
