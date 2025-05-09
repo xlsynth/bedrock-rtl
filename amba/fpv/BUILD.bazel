@@ -76,9 +76,18 @@ verilog_elab_test(
 
 br_verilog_fpv_test_tools_suite(
     name = "br_amba_axi_default_target_test_suite",
-    gui = True,
+    params = {
+        "AxiIdWidth": [
+            "1",
+            "3",
+        ],
+        "SingleBeat": [
+            "0",
+            "1",
+        ],
+    },
     tools = {
-        "jg": "",
+        "jg": "br_amba_axi_default_target_fpv.jg.tcl",
         "vcf": "",
     },
     top = "br_amba_axi_default_target",
@@ -372,7 +381,6 @@ br_verilog_fpv_test_tools_suite(
         "-parameter MaxOutstanding 4",
         "-parameter AxiIdCount 2",
     ],
-    gui = True,
     params = {
         "MaxAxiBurstLen": [
             "1",

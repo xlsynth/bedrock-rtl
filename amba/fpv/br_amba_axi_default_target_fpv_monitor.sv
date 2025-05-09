@@ -53,6 +53,12 @@ module br_amba_axi_default_target_fpv_monitor #(
     input logic                             target_rlast
 );
 
+  if (SingleBeat) begin : gen_asm
+    `BR_ASSUME(single_beat_arlen_a, target_arvalid |-> target_arlen == 'b0)
+    `BR_ASSUME(single_beat_awlen_a, target_awvalid |-> target_awlen == 'b0)
+    `BR_ASSUME(single_beat_wlast_a, target_wvalid |-> target_wlast == 'b1)
+  end
+
   axi4_master #(
       .ID_WIDTH(AxiIdWidth),
       .LEN_WIDTH(AxiLenWidth),
@@ -90,7 +96,7 @@ module br_amba_axi_default_target_fpv_monitor #(
       .bvalid  (target_bvalid),
       .bready  (target_bready),
       .bresp   (target_bresp),
-      .buser   (),
+      .buser   ('d0),
       .bid     (target_bid),
       // Read Address Channel
       .arvalid (target_arvalid),
@@ -111,7 +117,7 @@ module br_amba_axi_default_target_fpv_monitor #(
       .rready  (target_rready),
       .rdata   (target_rdata),
       .rresp   (target_rresp),
-      .ruser   (),
+      .ruser   ('d0),
       .rid     (target_rid),
       .rlast   (target_rlast)
   );
