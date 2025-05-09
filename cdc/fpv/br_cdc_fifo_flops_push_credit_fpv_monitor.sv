@@ -141,7 +141,9 @@ module br_cdc_fifo_flops_push_credit_fpv_monitor #(
       .credit_initial_push,
       .credit_withhold_push,
       .credit_count_push,
-      .credit_available_push
+      .credit_available_push,
+      .config_base('d0),
+      .config_bound('d0)
   );
 
   // ----------Instantiate CDC FIFO FV basic checks----------

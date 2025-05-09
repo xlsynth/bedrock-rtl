@@ -85,6 +85,7 @@ module br_fifo_ctrl_1r1w_push_credit_fpv_monitor #(
 
   // ----------Instantiate credit FV checker----------
   br_credit_receiver_fpv_monitor #(
+      .PStatic(0),
       .MaxCredit(MaxCredit),
       .NumWritePorts(1)
   ) br_credit_receiver_fpv_monitor (
@@ -98,7 +99,9 @@ module br_fifo_ctrl_1r1w_push_credit_fpv_monitor #(
       .credit_initial_push,
       .credit_withhold_push,
       .credit_count_push,
-      .credit_available_push
+      .credit_available_push,
+      .config_base ('d0),
+      .config_bound('d0)
   );
 
   // ----------Data Ram FV model----------
