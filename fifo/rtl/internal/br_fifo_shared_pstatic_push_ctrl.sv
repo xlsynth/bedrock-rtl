@@ -116,7 +116,10 @@ module br_fifo_shared_pstatic_push_ctrl #(
         // TODO(zhemao): Add bypass support.
         .EnableBypass(0),
         .EnableCoverPushBackpressure(EnableCoverPushBackpressure),
-        .EnableAssertPushValidStability(EnableAssertPushValidStability),
+        // Core can only have valid stability if the fifo_id is stable,
+        // so pass the data stability parameter instead of the
+        // valid stability parameter.
+        .EnableAssertPushValidStability(EnableAssertPushDataStability),
         .EnableAssertPushDataStability(EnableAssertPushDataStability),
         .EnableAssertFinalNotValid(EnableAssertFinalNotValid)
     ) br_fifo_push_ctrl_core_inst (
