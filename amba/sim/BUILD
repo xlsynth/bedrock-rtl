@@ -26,7 +26,6 @@ verilog_library(
 
 verilog_elab_test(
     name = "br_amba_axi_isolate_sub_tb_elab_test",
-    tool = "verific",
     deps = [":br_amba_axi_isolate_sub_tb"],
 )
 
@@ -49,7 +48,6 @@ verilog_library(
 
 verilog_elab_test(
     name = "br_amba_axi_isolate_mgr_tb_elab_test",
-    tool = "verific",
     deps = [":br_amba_axi_isolate_mgr_tb"],
 )
 
