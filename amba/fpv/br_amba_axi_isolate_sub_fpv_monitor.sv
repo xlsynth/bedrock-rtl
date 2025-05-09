@@ -76,6 +76,7 @@ module br_amba_axi_isolate_sub_fpv_monitor #(
     input logic [          AxiBurstLenWidth-1:0] upstream_awlen,
     input logic [br_amba::AxiBurstSizeWidth-1:0] upstream_awsize,
     input logic [br_amba::AxiBurstTypeWidth-1:0] upstream_awburst,
+    input logic [    br_amba::AxiCacheWidth-1:0] upstream_awcache,
     input logic [     br_amba::AxiProtWidth-1:0] upstream_awprot,
     input logic [               AWUserWidth-1:0] upstream_awuser,
     input logic                                  upstream_awvalid,
@@ -97,6 +98,7 @@ module br_amba_axi_isolate_sub_fpv_monitor #(
     input logic [br_amba::AxiBurstSizeWidth-1:0] upstream_arsize,
     input logic [br_amba::AxiBurstTypeWidth-1:0] upstream_arburst,
     input logic [     br_amba::AxiProtWidth-1:0] upstream_arprot,
+    input logic [    br_amba::AxiCacheWidth-1:0] upstream_arcache,
     input logic [               ARUserWidth-1:0] upstream_aruser,
     input logic                                  upstream_arvalid,
     input logic                                  upstream_arready,
@@ -113,6 +115,7 @@ module br_amba_axi_isolate_sub_fpv_monitor #(
     input logic [          AxiBurstLenWidth-1:0] downstream_awlen,
     input logic [br_amba::AxiBurstSizeWidth-1:0] downstream_awsize,
     input logic [br_amba::AxiBurstTypeWidth-1:0] downstream_awburst,
+    input logic [    br_amba::AxiCacheWidth-1:0] downstream_awcache,
     input logic [     br_amba::AxiProtWidth-1:0] downstream_awprot,
     input logic [               AWUserWidth-1:0] downstream_awuser,
     input logic                                  downstream_awvalid,
@@ -133,6 +136,7 @@ module br_amba_axi_isolate_sub_fpv_monitor #(
     input logic [          AxiBurstLenWidth-1:0] downstream_arlen,
     input logic [br_amba::AxiBurstSizeWidth-1:0] downstream_arsize,
     input logic [br_amba::AxiBurstTypeWidth-1:0] downstream_arburst,
+    input logic [    br_amba::AxiCacheWidth-1:0] downstream_arcache,
     input logic [     br_amba::AxiProtWidth-1:0] downstream_arprot,
     input logic [               ARUserWidth-1:0] downstream_aruser,
     input logic                                  downstream_arvalid,
@@ -145,6 +149,13 @@ module br_amba_axi_isolate_sub_fpv_monitor #(
     input logic                                  downstream_rvalid,
     input logic                                  downstream_rready
 );
+
+  // if AxiIdCount < 2 ** IdWidth
+  localparam int NewIdWidth = br_math::clamped_clog2(AxiIdCount);
+  `BR_ASSUME(legal_awid_a, upstream_awvalid |-> upstream_awid < AxiIdCount)
+  `BR_ASSUME(legal_bid_a, downstream_bvalid |-> downstream_bid < AxiIdCount)
+  `BR_ASSUME(legal_arid_a, upstream_arvalid |-> upstream_arid < AxiIdCount)
+  `BR_ASSUME(legal_rid_a, downstream_rvalid |-> downstream_rid < AxiIdCount)
 
   // during this window, downstream won't be AXI protocol compliant
   // However, upstream should still behave fine
@@ -170,7 +181,7 @@ module br_amba_axi_isolate_sub_fpv_monitor #(
       .ReadInterleaveOn(0),
       .AddrWidth(AddrWidth),
       .DataWidth(DataWidth),
-      .IdWidth(IdWidth),
+      .IdWidth(NewIdWidth),
       .AWUserWidth(AWUserWidth),
       .WUserWidth(WUserWidth),
       .ARUserWidth(ARUserWidth),
@@ -191,6 +202,7 @@ module br_amba_axi_isolate_sub_fpv_monitor #(
       .upstream_awsize,
       .upstream_awburst,
       .upstream_awprot,
+      .upstream_awcache,
       .upstream_awuser,
       .upstream_awvalid,
       .upstream_awready,
@@ -210,6 +222,7 @@ module br_amba_axi_isolate_sub_fpv_monitor #(
       .upstream_arlen,
       .upstream_arsize,
       .upstream_arburst,
+      .upstream_arcache,
       .upstream_arprot,
       .upstream_aruser,
       .upstream_arvalid,
@@ -226,6 +239,7 @@ module br_amba_axi_isolate_sub_fpv_monitor #(
       .downstream_awlen,
       .downstream_awsize,
       .downstream_awburst,
+      .downstream_awcache,
       .downstream_awprot,
       .downstream_awuser,
       .downstream_awvalid,
@@ -246,6 +260,7 @@ module br_amba_axi_isolate_sub_fpv_monitor #(
       .downstream_arlen,
       .downstream_arsize,
       .downstream_arburst,
+      .downstream_arcache,
       .downstream_arprot,
       .downstream_aruser,
       .downstream_arvalid,
