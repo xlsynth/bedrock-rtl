@@ -150,6 +150,13 @@ module br_amba_axi_isolate_sub_fpv_monitor #(
     input logic                                  downstream_rready
 );
 
+  // if AxiIdCount < 2 ** IdWidth
+  localparam int NewIdWidth = br_math::clamped_clog2(AxiIdCount);
+  `BR_ASSUME(legal_awid_a, upstream_awvalid |-> upstream_awid < AxiIdCount)
+  `BR_ASSUME(legal_bid_a, downstream_bvalid |-> downstream_bid < AxiIdCount)
+  `BR_ASSUME(legal_arid_a, upstream_arvalid |-> upstream_arid < AxiIdCount)
+  `BR_ASSUME(legal_rid_a, downstream_rvalid |-> downstream_rid < AxiIdCount)
+
   // during this window, downstream won't be AXI protocol compliant
   // However, upstream should still behave fine
   logic iso_flg;
@@ -174,7 +181,7 @@ module br_amba_axi_isolate_sub_fpv_monitor #(
       .ReadInterleaveOn(0),
       .AddrWidth(AddrWidth),
       .DataWidth(DataWidth),
-      .IdWidth(IdWidth),
+      .IdWidth(NewIdWidth),
       .AWUserWidth(AWUserWidth),
       .WUserWidth(WUserWidth),
       .ARUserWidth(ARUserWidth),
