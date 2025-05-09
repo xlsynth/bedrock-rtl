@@ -56,6 +56,9 @@ module br_fifo_shared_pop_ctrl #(
     parameter bit RegisterDeallocation = 0,
     // The number of cycles between data ram read address and read data. Must be >=0.
     parameter int RamReadLatency = 0,
+    // If 1, it is assumed an external arbiter is used on the pop ready side,
+    // and requires a maximum of one asserted bit in pop_ready per cycle.
+    parameter bit PopArbiterIsExternal = 0,
 
     localparam int AddrWidth  = $clog2(Depth),
     localparam int CountWidth = $clog2(Depth + 1)
@@ -195,7 +198,8 @@ module br_fifo_shared_pop_ctrl #(
       .RamReadLatency(RamReadLatency),
       // If there is no staging buffer, the read request can be revoked if
       // pop_ready becomes low.
-      .EnableAssertPushValidStability(HasStagingBuffer)
+      .EnableAssertPushValidStability(HasStagingBuffer),
+      .ArbiterIsExternal(PopArbiterIsExternal)
   ) br_fifo_shared_read_xbar (
       .clk,
       .rst,

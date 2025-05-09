@@ -116,6 +116,9 @@ module br_fifo_shared_dynamic_flops_push_credit #(
     // empty at the end of the test.
     // ri lint_check_waive PARAM_NOT_USED
     parameter bit EnableAssertFinalNotValid = 1,
+    // If 1, it is assumed an external arbiter is used on the pop ready side,
+    // and requires a maximum of one asserted bit in pop_ready per cycle.
+    parameter bit PopArbiterIsExternal = 0,
 
     localparam int PushCreditWidth = $clog2(NumWritePorts + 1),
     localparam int FifoIdWidth = br_math::clamped_clog2(NumFifos),
@@ -242,7 +245,8 @@ module br_fifo_shared_dynamic_flops_push_credit #(
       .DataRamReadLatency(DataRamReadLatency),
       .PointerRamReadLatency(PointerRamReadLatency),
       .RegisterPushOutputs(RegisterPushOutputs),
-      .EnableAssertFinalNotValid(EnableAssertFinalNotValid)
+      .EnableAssertFinalNotValid(EnableAssertFinalNotValid),
+      .PopArbiterIsExternal(PopArbiterIsExternal)
   ) br_fifo_shared_dynamic_ctrl (
       .clk,
       .rst,
