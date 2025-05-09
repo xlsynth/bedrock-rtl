@@ -289,8 +289,7 @@ module br_amba_axi_isolate_sub #(
       .IsolateData(IsolateBUser),
       // Single write response beat per write transaction
       .MaxAxiBurstLen(1),
-      .MaxTransactionSkew(MaxTransactionSkew),
-      .EnableWlastTracking(1)
+      .MaxTransactionSkew(MaxTransactionSkew)
   ) br_amba_iso_resp_tracker_w (
       .clk,
       .rst,
@@ -397,8 +396,7 @@ module br_amba_axi_isolate_sub #(
       .IsolateResp(IsolateResp),
       .IsolateData({IsolateRUser, IsolateRData}),
       // MaxAxiBurstLen response beats per read transaction
-      .MaxAxiBurstLen(MaxAxiBurstLen),
-      .EnableWlastTracking(0)
+      .MaxAxiBurstLen(MaxAxiBurstLen)
   ) br_amba_iso_resp_tracker_r (
       .clk,
       .rst,

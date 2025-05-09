@@ -49,7 +49,6 @@ module br_amba_iso_us_fsm (
   iso_us_fsm_state_t state, state_next;
   `BR_REGI(state, state_next, Normal)
 
-  `BR_ASSERT_KNOWN(fsm_state_known_a, state)
   always_comb begin
     unique case (state)
       Normal: begin
@@ -81,11 +80,12 @@ module br_amba_iso_us_fsm (
         isolate_done = 1'b1;
       end
       default: begin
-        state_next = Normal;  // ri lint_check_waive UNREACHABLE
+        `BR_ASSERT_IMM(invalid_state_a, 0)
+        state_next = iso_us_fsm_state_t'('x);  // ri lint_check_waive FSM_DEFAULT_REQ
         //
-        align_and_hold_req = 1'b0;
-        req_tracker_isolate_req = 1'b0;
-        isolate_done = 1'b0;
+        align_and_hold_req = 'x;
+        req_tracker_isolate_req = 'x;
+        isolate_done = 'x;
       end
     endcase
   end
