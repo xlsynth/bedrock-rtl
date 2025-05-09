@@ -81,11 +81,11 @@ module br_amba_iso_us_fsm (
       end
       default: begin
         `BR_ASSERT_IMM(invalid_state_a, 0)
-        state_next = Normal;  // ri lint_check_waive UNREACHABLE
+        state_next = iso_us_fsm_state_t'('x); // ri lint_check_waive FSM_DEFAULT_REQ
         //
-        align_and_hold_req = 1'b0;
-        req_tracker_isolate_req = 1'b0;
-        isolate_done = 1'b0;
+        align_and_hold_req = 'x;
+        req_tracker_isolate_req = 'x;
+        isolate_done = 'x;
       end
     endcase
   end
