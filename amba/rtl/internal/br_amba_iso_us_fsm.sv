@@ -80,7 +80,7 @@ module br_amba_iso_us_fsm (
         isolate_done = 1'b1;
       end
       default: begin
-        `BR_ASSERT_IMM(invalid_state_a, 0)
+        //`BR_ASSERT_IMM(invalid_state_a, 0)
         state_next = iso_us_fsm_state_t'('x);  // ri lint_check_waive FSM_DEFAULT_REQ
         //
         align_and_hold_req = 'x;

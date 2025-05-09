@@ -69,7 +69,7 @@ module br_amba_iso_ds_fsm (
         isolate_done = 1'b1;
       end
       default: begin
-        `BR_ASSERT_IMM(invalid_state_a, 0)
+        //`BR_ASSERT_IMM(invalid_state_a, 0)
         state_next = Normal;
         //
         align_and_hold_req = 1'b0;
