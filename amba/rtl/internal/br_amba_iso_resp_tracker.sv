@@ -372,7 +372,9 @@ module br_amba_iso_resp_tracker #(
         .Depth(MaxOutstanding),
         .Width(AxiBurstLenWidth),
         .EnableBypass(1),
-        .RegisterPopOutputs(1)
+        .RegisterPopOutputs(1),
+        // When EnableWlastTracking=0, valid can deassert if downstream_axready deasserts
+        .EnableAssertPushValidStability(EnableWlastTracking)
     ) br_fifo_flops_req_tracker (
         .clk,
         .rst,
@@ -404,7 +406,9 @@ module br_amba_iso_resp_tracker #(
         .Width(AxiBurstLenWidth),
         .PointerRamReadDataDepthStages(FlopPtrRamRd),
         .DataRamReadDataDepthStages(FlopDataRamRd),
-        .RegisterPopOutputs(1)
+        .RegisterPopOutputs(1),
+        // When EnableWlastTracking=0, valid can deassert if downstream_axready deasserts
+        .EnableAssertPushValidStability(EnableWlastTracking)
     ) br_fifo_shared_dynamic_flops_req_tracker (
         .clk,
         .rst,
