@@ -50,7 +50,7 @@ verilog_elab_test(
 br_verilog_fpv_test_tools_suite(
     name = "br_amba_axil_default_target_test_suite",
     tools = {
-        "jg": "",
+        "jg": "br_amba_axil_default_target_fpv.jg.tcl",
         "vcf": "",
     },
     top = "br_amba_axil_default_target",
