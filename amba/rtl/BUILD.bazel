@@ -59,8 +59,8 @@ verilog_library(
     srcs = ["br_amba_axi_default_target.sv"],
     deps = [
         ":br_amba_pkg",
-        "//flow/rtl:br_flow_reg_fwd",
         "//counter/rtl:br_counter_incr",
+        "//flow/rtl:br_flow_reg_fwd",
         "//macros:br_asserts_internal",
         "//macros:br_unused",
     ],
@@ -70,8 +70,8 @@ verilog_library(
     name = "br_amba_axil_default_target",
     srcs = ["br_amba_axil_default_target.sv"],
     deps = [
+        ":br_amba_axi_default_target",
         ":br_amba_pkg",
-        "//flow/rtl:br_flow_reg_fwd",
     ],
 )
 
@@ -233,7 +233,7 @@ br_verilog_elab_and_lint_test_suite(
         ],
         "SingleBeat": [
             "0",
-            "1"
+            "1",
         ],
         "AxiIdWidth": [
             "1",
@@ -242,6 +242,7 @@ br_verilog_elab_and_lint_test_suite(
     },
     deps = [":br_amba_axi_default_target"],
 )
+
 br_verilog_elab_and_lint_test_suite(
     name = "br_amba_axil_default_target_test_suite",
     params = {
