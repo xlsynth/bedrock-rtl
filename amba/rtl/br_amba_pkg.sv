@@ -36,6 +36,7 @@ package br_amba;
   } axi_burst_type_t;
 
   // AXI parameters
+  localparam int unsigned AxiCacheWidth = 4;
   localparam int unsigned AxiProtWidth = 3;
   localparam int unsigned AxiRespWidth = 2;
   localparam int unsigned AxiBurstLenWidth = 8;

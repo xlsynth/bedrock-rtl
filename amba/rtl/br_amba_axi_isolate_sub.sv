@@ -105,6 +105,7 @@ module br_amba_axi_isolate_sub #(
     input  logic [          AxiBurstLenWidth-1:0] upstream_awlen,
     input  logic [br_amba::AxiBurstSizeWidth-1:0] upstream_awsize,
     input  logic [br_amba::AxiBurstTypeWidth-1:0] upstream_awburst,
+    input  logic [    br_amba::AxiCacheWidth-1:0] upstream_awcache,
     input  logic [     br_amba::AxiProtWidth-1:0] upstream_awprot,
     input  logic [               AWUserWidth-1:0] upstream_awuser,
     input  logic                                  upstream_awvalid,
@@ -125,6 +126,7 @@ module br_amba_axi_isolate_sub #(
     input  logic [          AxiBurstLenWidth-1:0] upstream_arlen,
     input  logic [br_amba::AxiBurstSizeWidth-1:0] upstream_arsize,
     input  logic [br_amba::AxiBurstTypeWidth-1:0] upstream_arburst,
+    input  logic [    br_amba::AxiCacheWidth-1:0] upstream_arcache,
     input  logic [     br_amba::AxiProtWidth-1:0] upstream_arprot,
     input  logic [               ARUserWidth-1:0] upstream_aruser,
     input  logic                                  upstream_arvalid,
@@ -142,6 +144,7 @@ module br_amba_axi_isolate_sub #(
     output logic [          AxiBurstLenWidth-1:0] downstream_awlen,
     output logic [br_amba::AxiBurstSizeWidth-1:0] downstream_awsize,
     output logic [br_amba::AxiBurstTypeWidth-1:0] downstream_awburst,
+    output logic [    br_amba::AxiCacheWidth-1:0] downstream_awcache,
     output logic [     br_amba::AxiProtWidth-1:0] downstream_awprot,
     output logic [               AWUserWidth-1:0] downstream_awuser,
     output logic                                  downstream_awvalid,
@@ -162,6 +165,7 @@ module br_amba_axi_isolate_sub #(
     output logic [          AxiBurstLenWidth-1:0] downstream_arlen,
     output logic [br_amba::AxiBurstSizeWidth-1:0] downstream_arsize,
     output logic [br_amba::AxiBurstTypeWidth-1:0] downstream_arburst,
+    output logic [    br_amba::AxiCacheWidth-1:0] downstream_arcache,
     output logic [     br_amba::AxiProtWidth-1:0] downstream_arprot,
     output logic [               ARUserWidth-1:0] downstream_aruser,
     output logic                                  downstream_arvalid,
@@ -340,6 +344,7 @@ module br_amba_axi_isolate_sub #(
   assign downstream_awsize = upstream_awsize;
   assign downstream_awburst = upstream_awburst;
   assign downstream_awlen = upstream_awlen;
+  assign downstream_awcache = upstream_awcache;
   assign downstream_awprot = upstream_awprot;
   assign downstream_awuser = upstream_awuser;
   //
@@ -442,6 +447,7 @@ module br_amba_axi_isolate_sub #(
   assign downstream_araddr = upstream_araddr;
   assign downstream_arsize = upstream_arsize;
   assign downstream_arburst = upstream_arburst;
+  assign downstream_arcache = upstream_arcache;
   assign downstream_arprot = upstream_arprot;
   assign downstream_aruser = upstream_aruser;
 
