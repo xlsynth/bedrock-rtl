@@ -30,9 +30,11 @@
 `include "br_registers.svh"
 
 // Buffer
-module br_gate_buf (
-    input  logic in,
-    output logic out
+module br_gate_buf #(
+    parameter int Width = 1
+) (
+    input  logic [Width-1:0] in,
+    output logic [Width-1:0] out
 );
 
   assign out = in;
@@ -50,9 +52,11 @@ module br_gate_clk_buf (
 endmodule : br_gate_clk_buf
 
 // Inverter
-module br_gate_inv (
-    input  logic in,
-    output logic out
+module br_gate_inv #(
+    parameter int Width = 1
+) (
+    input  logic [Width-1:0] in,
+    output logic [Width-1:0] out
 );
 
   assign out = ~in;
@@ -70,32 +74,38 @@ module br_gate_clk_inv (
 endmodule : br_gate_clk_inv
 
 // 2-input AND gate
-module br_gate_and2 (
-    input  logic in0,
-    input  logic in1,
-    output logic out
+module br_gate_and2 #(
+    parameter int Width = 1
+) (
+    input  logic [Width-1:0] in0,
+    input  logic [Width-1:0] in1,
+    output logic [Width-1:0] out
 );
 
-  assign out = in0 && in1;
+  assign out = in0 & in1;
 
 endmodule : br_gate_and2
 
 // 2-input OR gate
-module br_gate_or2 (
-    input  logic in0,
-    input  logic in1,
-    output logic out
+module br_gate_or2 #(
+    parameter int Width = 1
+) (
+    input  logic [Width-1:0] in0,
+    input  logic [Width-1:0] in1,
+    output logic [Width-1:0] out
 );
 
-  assign out = in0 || in1;
+  assign out = in0 | in1;
 
 endmodule : br_gate_or2
 
 // 2-input XOR gate
-module br_gate_xor2 (
-    input  logic in0,
-    input  logic in1,
-    output logic out
+module br_gate_xor2 #(
+    parameter int Width = 1
+) (
+    input  logic [Width-1:0] in0,
+    input  logic [Width-1:0] in1,
+    output logic [Width-1:0] out
 );
 
   assign out = in0 ^ in1;
@@ -103,11 +113,13 @@ module br_gate_xor2 (
 endmodule : br_gate_xor2
 
 // 2-input MUX gate
-module br_gate_mux2 (
-    input  logic in0,
-    input  logic in1,
-    input  logic sel,
-    output logic out
+module br_gate_mux2 #(
+    parameter int Width = 1
+) (
+    input logic [Width-1:0] in0,
+    input logic [Width-1:0] in1,
+    input logic sel,
+    output logic [Width-1:0] out
 );
 
   assign out = sel ? in1 : in0;
