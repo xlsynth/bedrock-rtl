@@ -1200,50 +1200,194 @@ br_verilog_fpv_test_tools_suite(
 )
 
 #################################################################
-# Bedrock-RTL Shared Pseudo-Static Multi-FIFO Controller (Push Valid/Credit Interface)
+# Bedrock-RTL Shared Pseudo-Static Multi-FIFO with Flop-based Storage (Push Valid/Ready Interface)
+
 verilog_library(
-    name = "br_fifo_shared_pstatic_ctrl_push_credit_fpv_monitor",
-    srcs = ["br_fifo_shared_pstatic_ctrl_push_credit_fpv_monitor.sv"],
+    name = "br_fifo_shared_pstatic_flops_fpv_monitor",
+    srcs = ["br_fifo_shared_pstatic_flops_fpv_monitor.sv"],
     deps = [
-        ":br_credit_receiver_fpv_monitor",
         ":br_fifo_fv_ram",
         ":br_fifo_shared_pstatic_basic_fpv_monitor",
-        "//fifo/rtl:br_fifo_shared_pstatic_ctrl_push_credit",
+        "//fifo/rtl:br_fifo_shared_pstatic_flops",
         "//macros:br_fv",
     ],
 )
 
 verilog_elab_test(
-    name = "br_fifo_shared_pstatic_ctrl_push_credit_fpv_monitor_elab_test",
+    name = "br_fifo_shared_pstatic_flops_fpv_monitor_elab_test",
     custom_tcl_header = "//:elab_test_jg_custom_header.verific.tcl",
     tool = "verific",
-    deps = [":br_fifo_shared_pstatic_ctrl_push_credit_fpv_monitor"],
+    deps = [":br_fifo_shared_pstatic_flops_fpv_monitor"],
 )
 
 # Test focuses on testing backpressure
 br_verilog_fpv_test_tools_suite(
-    name = "br_fifo_shared_pstatic_ctrl_push_credit_test",
+    name = "br_fifo_shared_pstatic_flops_test_backpressure",
     illegal_param_combinations = {
         (
-            "NumFifos",
-            "Depth",
+            "EnableCoverPushBackpressure",
+            "EnableAssertPushValidStability",
+            "EnableAssertPushDataStability",
         ): [
-            ("4", "2"),
-        ],
-        (
-            "Depth",
-            "StagingBufferDepth",
-        ): [
-            ("2", "2"),
+            ("0", "0", "1"),
+            ("0", "1", "0"),
+            ("0", "1", "1"),
+            ("1", "0", "1"),
         ],
     },
     params = {
+        "EnableAssertPushDataStability": [
+            "0",
+            "1",
+        ],
+        "EnableAssertPushValidStability": [
+            "0",
+            "1",
+        ],
+        "EnableCoverPushBackpressure": [
+            "0",
+            "1",
+        ],
+    },
+    tools = {
+        "jg": "br_fifo_shared_pstatic_flops_fpv.jg.tcl",
+        "vcf": "",
+    },
+    top = "br_fifo_shared_pstatic_flops",
+    deps = [":br_fifo_shared_pstatic_flops_fpv_monitor"],
+)
+
+# Test focuses on testing numfifos
+br_verilog_fpv_test_tools_suite(
+    name = "br_fifo_shared_pstatic_flops_test_numfifo",
+    params = {
+        "Depth": [
+            "6",
+        ],
+        "Width": [
+            "6",
+        ],
         "NumFifos": [
             "2",
             "4",
         ],
-        "Depth": [
+        "RamDepthTiles": [
             "2",
+            "3",
+        ],
+        "RamWidthTiles": [
+            "2",
+            "3",
+        ],
+    },
+    tools = {
+        "jg": "br_fifo_shared_pstatic_flops_fpv.jg.tcl",
+        "vcf": "",
+    },
+    top = "br_fifo_shared_pstatic_flops",
+    deps = [":br_fifo_shared_pstatic_flops_fpv_monitor"],
+)
+
+# Test focuses on testing delay
+br_verilog_fpv_test_tools_suite(
+    name = "br_fifo_shared_pstatic_flops_test_delay",
+    params = {
+        "NumFifos": [
+            "2",
+        ],
+        "Depth": [
+            "5",
+        ],
+        "StagingBufferDepth": [
+            "1",
+            "2",
+        ],
+        "RegisterPopOutputs": [
+            "0",
+            "1",
+        ],
+        "RamAddressDepthStages": [
+            "0",
+            "1",
+        ],
+        "RamReadDataDepthStages": [
+            "0",
+            "1",
+        ],
+        "RamReadDataWidthStages": [
+            "0",
+            "1",
+        ],
+    },
+    tools = {
+        "jg": "br_fifo_shared_pstatic_flops_fpv.jg.tcl",
+        "vcf": "",
+    },
+    top = "br_fifo_shared_pstatic_flops",
+    deps = [":br_fifo_shared_pstatic_flops_fpv_monitor"],
+)
+
+#################################################################
+# Bedrock-RTL Shared Pseudo-Static Multi-FIFO with Flop-based Storage (Push Valid/Credit Interface)
+
+verilog_library(
+    name = "br_fifo_shared_pstatic_flops_push_credit_fpv_monitor",
+    srcs = ["br_fifo_shared_pstatic_flops_push_credit_fpv_monitor.sv"],
+    deps = [
+        ":br_credit_receiver_fpv_monitor",
+        ":br_fifo_fv_ram",
+        ":br_fifo_shared_pstatic_basic_fpv_monitor",
+        "//fifo/rtl:br_fifo_shared_pstatic_flops_push_credit",
+        "//macros:br_fv",
+    ],
+)
+
+verilog_elab_test(
+    name = "br_fifo_shared_pstatic_flops_push_credit_fpv_monitor_elab_test",
+    custom_tcl_header = "//:elab_test_jg_custom_header.verific.tcl",
+    tool = "verific",
+    deps = [":br_fifo_shared_pstatic_flops_push_credit_fpv_monitor"],
+)
+
+# Test focuses on testing numfifos
+br_verilog_fpv_test_tools_suite(
+    name = "br_fifo_shared_pstatic_flops_push_credit_test_numfifo",
+    params = {
+        "Depth": [
+            "6",
+        ],
+        "Width": [
+            "6",
+        ],
+        "NumFifos": [
+            "2",
+            "4",
+        ],
+        "RamDepthTiles": [
+            "2",
+            "3",
+        ],
+        "RamWidthTiles": [
+            "2",
+            "3",
+        ],
+    },
+    tools = {
+        "jg": "br_fifo_shared_pstatic_flops_push_credit_fpv.jg.tcl",
+        "vcf": "",
+    },
+    top = "br_fifo_shared_pstatic_flops_push_credit",
+    deps = [":br_fifo_shared_pstatic_flops_push_credit_fpv_monitor"],
+)
+
+# Test focuses on testing delay
+br_verilog_fpv_test_tools_suite(
+    name = "br_fifo_shared_pstatic_flops_push_credit_test_delay",
+    params = {
+        "NumFifos": [
+            "2",
+        ],
+        "Depth": [
             "5",
         ],
         "StagingBufferDepth": [
@@ -1258,15 +1402,23 @@ br_verilog_fpv_test_tools_suite(
             "0",
             "1",
         ],
-        "RamReadLatency": [
+        "RamAddressDepthStages": [
+            "0",
+            "1",
+        ],
+        "RamReadDataDepthStages": [
+            "0",
+            "1",
+        ],
+        "RamReadDataWidthStages": [
             "0",
             "1",
         ],
     },
     tools = {
-        "jg": "br_fifo_shared_pstatic_ctrl_push_credit_fpv.jg.tcl",
+        "jg": "br_fifo_shared_pstatic_flops_push_credit_fpv.jg.tcl",
         "vcf": "",
     },
-    top = "br_fifo_shared_pstatic_ctrl_push_credit",
-    deps = [":br_fifo_shared_pstatic_ctrl_push_credit_fpv_monitor"],
+    top = "br_fifo_shared_pstatic_flops_push_credit",
+    deps = [":br_fifo_shared_pstatic_flops_push_credit_fpv_monitor"],
 )
