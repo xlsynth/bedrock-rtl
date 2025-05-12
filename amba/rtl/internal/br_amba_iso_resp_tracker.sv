@@ -406,7 +406,11 @@ module br_amba_iso_resp_tracker #(
         .Depth(MaxOutstanding),
         .Width(AxiBurstLenWidth),
         .PointerRamReadDataDepthStages(FlopPtrRamRd),
+        .PointerRamAddressDepthStages(1),
+        .NumLinkedListsPerFifo(2),
         .DataRamReadDataDepthStages(FlopDataRamRd),
+        .DataRamAddressDepthStages(1),
+        .StagingBufferDepth(2),
         .RegisterPopOutputs(1),
         .RegisterDeallocation(1),
         // When EnableWlastTracking=0, valid can deassert if downstream_axready deasserts
