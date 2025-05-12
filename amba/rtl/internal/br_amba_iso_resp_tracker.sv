@@ -408,6 +408,7 @@ module br_amba_iso_resp_tracker #(
         .PointerRamReadDataDepthStages(FlopPtrRamRd),
         .DataRamReadDataDepthStages(FlopDataRamRd),
         .RegisterPopOutputs(1),
+        .RegisterDeallocation(1),
         // When EnableWlastTracking=0, valid can deassert if downstream_axready deasserts
         .EnableAssertPushValidStability(EnableWlastTracking)
     ) br_fifo_shared_dynamic_flops_req_tracker (
@@ -573,6 +574,13 @@ module br_amba_iso_resp_tracker #(
     assign tracker_fifo_pop_iso_gnt = zero_count ? tracker_fifo_pop_iso_gnt_cur :
                                      tracker_fifo_pop_iso_gnt_prev;
 
+    // Break up timing path from arbiter -> FIFO pop.
+    // Note this simple flop stage causes a 1-cycle bubble between bursts with different IDs
+    // when isolating and generating fake responses. But isolation is not performance critical,
+    // so this is acceptable.
+    logic [AxiIdCount-1:0] tracker_fifo_pop_iso_gnt_flopped;
+    `BR_REG(tracker_fifo_pop_iso_gnt_flopped, tracker_fifo_pop_iso_gnt)
+
     br_enc_onehot2bin #(
         .NumValues(AxiIdCount),
         .BinWidth (AxiIdWidth)
@@ -580,7 +588,7 @@ module br_amba_iso_resp_tracker #(
         .clk,
         .rst,
         //
-        .in(tracker_fifo_pop_iso_gnt),
+        .in(tracker_fifo_pop_iso_gnt_flopped),
         .out(iso_arb_id),
         .out_valid()
     );
