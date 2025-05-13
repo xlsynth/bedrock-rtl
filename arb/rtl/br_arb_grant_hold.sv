@@ -20,17 +20,16 @@
 // When asserted, the grant_hold signal will cause the arbiter to disable further
 // arbitration once the specified requester is granted, and maintain the grant to that
 // requester until the grant_hold signal for that requester is deasserted. On the cycle
-// following grant_hold asserted for the current grant, the arbitration is accepted
-// via enable_priority_update, and a new grant is passed through. If grant_hold is
-// asserted for a requester that is not granted, it has no effect on that grant.
+// following grant_hold asserted for the current grant, the grant_hold module deasserts
+// enable_priority_update, preventing the upstream arbiter from changing priority.
+//
+// If grant_hold is asserted for a requester that is not granted, it has no effect on
+// that grant.
 //
 // A common use case is to connect grant_hold to the !last signal in a
 // multi-beat request. In this case, after the first beat is arbitrated for,
 // the arbiter will not switch requesters until after the last beat where
 // grant_hold is deasserted.
-//
-// If enable_priority_update is deasserted, the internal registers will
-// not be updated.
 
 `include "br_asserts_internal.svh"
 `include "br_registers.svh"
@@ -41,9 +40,9 @@ module br_arb_grant_hold #(
     input logic clk,
     input logic rst,
     // If a requester has grant_hold == 1 and is granted, the grant will be held until
-    // grant_hold for that requester is asserted.
+    // grant_hold for that requester is deasserted.
     input logic [NumRequesters-1:0] grant_hold,
-    // Can be used with hierarchical arbiters. OK to tie to 1.
+    // If 1 and grant_hold is 0, then the arbiter's priority will update whenever it makes a grant.
     input logic enable_priority_update,
     // Connections to the arbiter.
     input logic [NumRequesters-1:0] grant_from_arb,
@@ -58,7 +57,6 @@ module br_arb_grant_hold #(
   assign enable_priority_update_to_arb = !(|hold) && enable_priority_update;
   assign hold_next = grant & grant_hold;
   assign grant = |hold ? hold : grant_from_arb;
-  `BR_ASSERT_IMPL(grants_actually_hold_a, |hold |=> grant == $past(grant))
-  `BR_ASSERT_IMPL(enable_priority_update_mask_a,
-                  !enable_priority_update |-> !enable_priority_update_to_arb)
+  `BR_ASSERT_IMPL(grants_actually_hold_a, |grant_hold |=> grant == $past(grant))
+  `BR_ASSERT_IMPL(enable_priority_update_mask_a, |grant_hold |=> !enable_priority_update_to_arb)
 endmodule : br_arb_grant_hold
