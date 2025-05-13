@@ -92,3 +92,28 @@ br_verilog_sim_test_tools_suite(
     ],
     deps = [":br_arb_rr_gen_tb"],
 )
+
+verilog_library(
+    name = "br_arb_grant_hold_gen_tb",
+    srcs = ["br_arb_grant_hold_gen_tb.sv"],
+    deps = [
+        "//arb/rtl:br_arb_grant_hold",
+        "//macros:br_asserts_internal",
+    ],
+)
+
+verilog_elab_test(
+    name = "br_arb_grant_hold_gen_tb_elab_test",
+    tool = "verific",
+    deps = [":br_arb_grant_hold_gen_tb"],
+)
+
+br_verilog_sim_test_tools_suite(
+    name = "br_arb_grant_hold_gen_tb_sim_test_tools_suite",
+    # TODO: Does not work with iverilog.
+    tools = [
+        "dsim",
+        "vcs",
+    ],
+    deps = [":br_arb_grant_hold_gen_tb"],
+)
