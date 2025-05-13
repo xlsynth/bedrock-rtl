@@ -86,11 +86,29 @@ module br_amba_axi_isolate_sub #(
     // RDATA data to generate for isolated transactions.
     parameter bit [DataWidth-1:0] IsolateRData = '0,
     // Number of pipeline stages to use for the pointer RAM read
-    // data. Has no effect if AxiIdCount == 1.
-    parameter bit FlopPtrRamRd = 0,
-    // Number of pipeline stages to use for the data RAM read data.
-    // Has no effect if AxiIdCount == 1.
-    parameter bit FlopDataRamRd = 0,
+    // data in the response tracker FIFO. Has no effect if AxiIdCount == 1.
+    parameter int FifoFlopPtrRamRd = 0,
+    // Number of pipeline stages to use for the data RAM read data
+    // in the response tracker FIFO. Has no effect if AxiIdCount == 1.
+    parameter int FifoFlopDataRamRd = 0,
+    // Number of pipeline stages to use for the pointer RAM address
+    // in the response tracker FIFO. Has no effect if AxiIdCount == 1.
+    parameter int FifoFlopPtrRamAddr = 1,
+    // Number of pipeline stages to use for the data RAM address
+    // in the response tracker FIFO. Has no effect if AxiIdCount == 1.
+    parameter int FifoFlopDataRamAddr = 1,
+    // Number of linked lists per FIFO in the response tracker FIFO. Has
+    // no effect if AxiIdCount == 1.
+    parameter int FifoLlPerFifo = 2,
+    // Number of pipeline stages to use for the staging buffer
+    // in the response tracker FIFO. Has no effect if AxiIdCount == 1.
+    parameter int FifoStagingBufferDepth = 2,
+    // Number of pipeline stages to use for the pop outputs
+    // in the response tracker FIFO. Has no effect if AxiIdCount == 1.
+    parameter int FifoRegisterPopOutputs = 1,
+    // Number of pipeline stages to use for the deallocation
+    // in the response tracker FIFO. Has no effect if AxiIdCount == 1.
+    parameter int FifoRegisterDeallocation = 1,
     localparam int AxiBurstLenWidth = br_math::clamped_clog2(MaxAxiBurstLen),
     localparam int StrobeWidth = DataWidth / 8
 ) (
@@ -283,8 +301,14 @@ module br_amba_axi_isolate_sub #(
       .AxiIdCount(AxiIdCount),
       .AxiIdWidth(IdWidth),
       .DataWidth(BUserWidth),
-      .FlopPtrRamRd(FlopPtrRamRd),
-      .FlopDataRamRd(FlopDataRamRd),
+      .FifoFlopPtrRamRd(FifoFlopPtrRamRd),
+      .FifoFlopPtrRamAddr(FifoFlopPtrRamAddr),
+      .FifoLlPerFifo(FifoLlPerFifo),
+      .FifoFlopDataRamRd(FifoFlopDataRamRd),
+      .FifoFlopDataRamAddr(FifoFlopDataRamAddr),
+      .FifoStagingBufferDepth(FifoStagingBufferDepth),
+      .FifoRegisterPopOutputs(FifoRegisterPopOutputs),
+      .FifoRegisterDeallocation(FifoRegisterDeallocation),
       .IsolateResp(IsolateResp),
       .IsolateData(IsolateBUser),
       // Single write response beat per write transaction
@@ -392,8 +416,14 @@ module br_amba_axi_isolate_sub #(
       .AxiIdCount(AxiIdCount),
       .AxiIdWidth(IdWidth),
       .DataWidth(RUserWidth + DataWidth),
-      .FlopPtrRamRd(FlopPtrRamRd),
-      .FlopDataRamRd(FlopDataRamRd),
+      .FifoFlopPtrRamRd(FifoFlopPtrRamRd),
+      .FifoFlopPtrRamAddr(FifoFlopPtrRamAddr),
+      .FifoLlPerFifo(FifoLlPerFifo),
+      .FifoFlopDataRamRd(FifoFlopDataRamRd),
+      .FifoFlopDataRamAddr(FifoFlopDataRamAddr),
+      .FifoStagingBufferDepth(FifoStagingBufferDepth),
+      .FifoRegisterPopOutputs(FifoRegisterPopOutputs),
+      .FifoRegisterDeallocation(FifoRegisterDeallocation),
       .IsolateResp(IsolateResp),
       .IsolateData({IsolateRUser, IsolateRData}),
       // MaxAxiBurstLen response beats per read transaction
