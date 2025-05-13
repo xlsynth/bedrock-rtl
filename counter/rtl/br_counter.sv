@@ -108,7 +108,7 @@ module br_counter #(
   // Assertion-only helper logic for overflow/underflow detection
 `ifdef BR_ASSERT_ON
 `ifndef BR_DISABLE_INTG_CHECKS
-  localparam int ExtWidth = $clog2(MaxValue + ChangeWidth + 1);
+  localparam int ExtWidth = $clog2(MaxValue + MaxChange + 1);
   logic [ExtWidth-1:0] value_extended;
   logic [ExtWidth-1:0] value_extended_next;
 
