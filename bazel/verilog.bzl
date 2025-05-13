@@ -851,7 +851,7 @@ def _generate_parameter_file_impl(ctx):
     param_keys = sorted(params.keys())
     param_values_list = [params[key] for key in param_keys]
     param_combinations = [
-        dict(zip(param_keys, [int(x) for x in param_values]))
+        dict(zip(param_keys, [x for x in param_values]))
         for param_values in _cartesian_product(param_values_list)
     ]
 
