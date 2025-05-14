@@ -57,9 +57,21 @@ module br_amba_iso_resp_tracker #(
     // Width of the data field.
     parameter int DataWidth = 1,
     // Number of pipeline stages to use for the pointer RAM read data.
-    parameter int FlopPtrRamRd = 0,
+    parameter int FifoPointerRamReadDataDepthStages = 0,
     // Number of pipeline stages to use for the data RAM read data.
-    parameter int FlopDataRamRd = 0,
+    parameter int FifoDataRamReadDataDepthStages = 0,
+    // Number of pipeline stages to use for the pointer RAM address.
+    parameter int FifoPointerRamAddressDepthStages = 1,
+    // Number of pipeline stages to use for the data RAM address.
+    parameter int FifoDataRamAddressDepthStages = 1,
+    // Number of linked lists per FIFO.
+    parameter int FifoNumLinkedListsPerFifo = 2,
+    // Number of pipeline stages to use for the staging buffer.
+    parameter int FifoStagingBufferDepth = 2,
+    // Number of pipeline stages to use for the pop outputs.
+    parameter int FifoRegisterPopOutputs = 1,
+    // Number of pipeline stages to use for the deallocation.
+    parameter int FifoRegisterDeallocation = 1,
     // Response to generate for isolated transactions.
     parameter br_amba::axi_resp_t IsolateResp = br_amba::AxiRespSlverr,
     // Data to generate for isolated transactions.
@@ -405,9 +417,14 @@ module br_amba_iso_resp_tracker #(
         .NumFifos(AxiIdCount),
         .Depth(MaxOutstanding),
         .Width(AxiBurstLenWidth),
-        .PointerRamReadDataDepthStages(FlopPtrRamRd),
-        .DataRamReadDataDepthStages(FlopDataRamRd),
-        .RegisterPopOutputs(1),
+        .PointerRamReadDataDepthStages(FifoPointerRamReadDataDepthStages),
+        .PointerRamAddressDepthStages(FifoPointerRamAddressDepthStages),
+        .NumLinkedListsPerFifo(FifoNumLinkedListsPerFifo),
+        .DataRamReadDataDepthStages(FifoDataRamReadDataDepthStages),
+        .DataRamAddressDepthStages(FifoDataRamAddressDepthStages),
+        .StagingBufferDepth(FifoStagingBufferDepth),
+        .RegisterPopOutputs(FifoRegisterPopOutputs),
+        .RegisterDeallocation(FifoRegisterDeallocation),
         // When EnableWlastTracking=0, valid can deassert if downstream_axready deasserts
         .EnableAssertPushValidStability(EnableWlastTracking)
     ) br_fifo_shared_dynamic_flops_req_tracker (
@@ -573,6 +590,13 @@ module br_amba_iso_resp_tracker #(
     assign tracker_fifo_pop_iso_gnt = zero_count ? tracker_fifo_pop_iso_gnt_cur :
                                      tracker_fifo_pop_iso_gnt_prev;
 
+    // Break up timing path from arbiter -> FIFO pop.
+    // Note this simple flop stage causes a 1-cycle bubble between bursts with different IDs
+    // when isolating and generating fake responses. But isolation is not performance critical,
+    // so this is acceptable.
+    logic [AxiIdCount-1:0] tracker_fifo_pop_iso_gnt_flopped;
+    `BR_REG(tracker_fifo_pop_iso_gnt_flopped, tracker_fifo_pop_iso_gnt)
+
     br_enc_onehot2bin #(
         .NumValues(AxiIdCount),
         .BinWidth (AxiIdWidth)
@@ -580,7 +604,7 @@ module br_amba_iso_resp_tracker #(
         .clk,
         .rst,
         //
-        .in(tracker_fifo_pop_iso_gnt),
+        .in(tracker_fifo_pop_iso_gnt_flopped),
         .out(iso_arb_id),
         .out_valid()
     );
