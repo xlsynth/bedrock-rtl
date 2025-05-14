@@ -57,15 +57,15 @@ module br_amba_iso_resp_tracker #(
     // Width of the data field.
     parameter int DataWidth = 1,
     // Number of pipeline stages to use for the pointer RAM read data.
-    parameter int FifoFlopPtrRamRd = 0,
+    parameter int FifoPointerRamReadDataDepthStages = 0,
     // Number of pipeline stages to use for the data RAM read data.
-    parameter int FifoFlopDataRamRd = 0,
+    parameter int FifoDataRamReadDataDepthStages = 0,
     // Number of pipeline stages to use for the pointer RAM address.
-    parameter int FifoFlopPtrRamAddr = 1,
+    parameter int FifoPointerRamAddressDepthStages = 1,
     // Number of pipeline stages to use for the data RAM address.
-    parameter int FifoFlopDataRamAddr = 1,
+    parameter int FifoDataRamAddressDepthStages = 1,
     // Number of linked lists per FIFO.
-    parameter int FifoLlPerFifo = 2,
+    parameter int FifoNumLinkedListsPerFifo = 2,
     // Number of pipeline stages to use for the staging buffer.
     parameter int FifoStagingBufferDepth = 2,
     // Number of pipeline stages to use for the pop outputs.
@@ -417,11 +417,11 @@ module br_amba_iso_resp_tracker #(
         .NumFifos(AxiIdCount),
         .Depth(MaxOutstanding),
         .Width(AxiBurstLenWidth),
-        .PointerRamReadDataDepthStages(FifoFlopPtrRamRd),
-        .PointerRamAddressDepthStages(FifoFlopPtrRamAddr),
-        .NumLinkedListsPerFifo(FifoLlPerFifo),
-        .DataRamReadDataDepthStages(FifoFlopDataRamRd),
-        .DataRamAddressDepthStages(FifoFlopDataRamAddr),
+        .PointerRamReadDataDepthStages(FifoPointerRamReadDataDepthStages),
+        .PointerRamAddressDepthStages(FifoPointerRamAddressDepthStages),
+        .NumLinkedListsPerFifo(FifoNumLinkedListsPerFifo),
+        .DataRamReadDataDepthStages(FifoDataRamReadDataDepthStages),
+        .DataRamAddressDepthStages(FifoDataRamAddressDepthStages),
         .StagingBufferDepth(FifoStagingBufferDepth),
         .RegisterPopOutputs(FifoRegisterPopOutputs),
         .RegisterDeallocation(FifoRegisterDeallocation),

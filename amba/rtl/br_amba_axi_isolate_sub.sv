@@ -87,19 +87,19 @@ module br_amba_axi_isolate_sub #(
     parameter bit [DataWidth-1:0] IsolateRData = '0,
     // Number of pipeline stages to use for the pointer RAM read
     // data in the response tracker FIFO. Has no effect if AxiIdCount == 1.
-    parameter int FifoFlopPtrRamRd = 0,
+    parameter int FifoPointerRamReadDataDepthStages = 0,
     // Number of pipeline stages to use for the data RAM read data
     // in the response tracker FIFO. Has no effect if AxiIdCount == 1.
-    parameter int FifoFlopDataRamRd = 0,
+    parameter int FifoDataRamReadDataDepthStages = 0,
     // Number of pipeline stages to use for the pointer RAM address
     // in the response tracker FIFO. Has no effect if AxiIdCount == 1.
-    parameter int FifoFlopPtrRamAddr = 1,
+    parameter int FifoPointerRamAddressDepthStages = 1,
     // Number of pipeline stages to use for the data RAM address
     // in the response tracker FIFO. Has no effect if AxiIdCount == 1.
-    parameter int FifoFlopDataRamAddr = 1,
+    parameter int FifoDataRamAddressDepthStages = 1,
     // Number of linked lists per FIFO in the response tracker FIFO. Has
     // no effect if AxiIdCount == 1.
-    parameter int FifoLlPerFifo = 2,
+    parameter int FifoNumLinkedListsPerFifo = 2,
     // Number of pipeline stages to use for the staging buffer
     // in the response tracker FIFO. Has no effect if AxiIdCount == 1.
     parameter int FifoStagingBufferDepth = 2,
@@ -301,11 +301,11 @@ module br_amba_axi_isolate_sub #(
       .AxiIdCount(AxiIdCount),
       .AxiIdWidth(IdWidth),
       .DataWidth(BUserWidth),
-      .FifoFlopPtrRamRd(FifoFlopPtrRamRd),
-      .FifoFlopPtrRamAddr(FifoFlopPtrRamAddr),
-      .FifoLlPerFifo(FifoLlPerFifo),
-      .FifoFlopDataRamRd(FifoFlopDataRamRd),
-      .FifoFlopDataRamAddr(FifoFlopDataRamAddr),
+      .FifoPointerRamReadDataDepthStages(FifoPointerRamReadDataDepthStages),
+      .FifoPointerRamAddressDepthStages(FifoPointerRamAddressDepthStages),
+      .FifoNumLinkedListsPerFifo(FifoNumLinkedListsPerFifo),
+      .FifoDataRamReadDataDepthStages(FifoDataRamReadDataDepthStages),
+      .FifoDataRamAddressDepthStages(FifoDataRamAddressDepthStages),
       .FifoStagingBufferDepth(FifoStagingBufferDepth),
       .FifoRegisterPopOutputs(FifoRegisterPopOutputs),
       .FifoRegisterDeallocation(FifoRegisterDeallocation),
@@ -416,11 +416,11 @@ module br_amba_axi_isolate_sub #(
       .AxiIdCount(AxiIdCount),
       .AxiIdWidth(IdWidth),
       .DataWidth(RUserWidth + DataWidth),
-      .FifoFlopPtrRamRd(FifoFlopPtrRamRd),
-      .FifoFlopPtrRamAddr(FifoFlopPtrRamAddr),
-      .FifoLlPerFifo(FifoLlPerFifo),
-      .FifoFlopDataRamRd(FifoFlopDataRamRd),
-      .FifoFlopDataRamAddr(FifoFlopDataRamAddr),
+      .FifoPointerRamReadDataDepthStages(FifoPointerRamReadDataDepthStages),
+      .FifoPointerRamAddressDepthStages(FifoPointerRamAddressDepthStages),
+      .FifoNumLinkedListsPerFifo(FifoNumLinkedListsPerFifo),
+      .FifoDataRamReadDataDepthStages(FifoDataRamReadDataDepthStages),
+      .FifoDataRamAddressDepthStages(FifoDataRamAddressDepthStages),
       .FifoStagingBufferDepth(FifoStagingBufferDepth),
       .FifoRegisterPopOutputs(FifoRegisterPopOutputs),
       .FifoRegisterDeallocation(FifoRegisterDeallocation),
