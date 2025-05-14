@@ -75,8 +75,8 @@ module br_fifo_shared_dynamic_flops #(
     parameter int Width = 1,
     // The depth of the pop-side staging buffer.
     // This affects the pop bandwidth of each logical FIFO.
-    // The bandwidth will be `StagingBufferDepth / (PointerRamAddressDepthStages
-    // + PointerRamReadDataDepthStages + PointerRamReadDataWidthStages + 1)`.
+    // The bandwidth will be `StagingBufferDepth / (DataRamAddressDepthStages
+    // + DataRamReadDataDepthStages + DataRamReadDataWidthStages + 1)`.
     parameter int StagingBufferDepth = 1,
     // The number of sub-linked lists used by each logical FIFO.
     // This affects the pop bandwidth of each logical FIFO.
