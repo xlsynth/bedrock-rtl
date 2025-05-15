@@ -37,7 +37,7 @@ module br_amba_axi_default_target #(
     input clk,
     input rst,  // Synchronous, active-high reset
 
-    // Reduced AXI4-Lite target interface
+    // Reduced AXI4 target interface
     input  logic                             target_awvalid,
     output logic                             target_awready,
     input  logic [           AxiIdWidth-1:0] target_awid,
