@@ -151,4 +151,8 @@ module br_flow_reg_none #(
                   (push_valid && push_ready && !pop_ready) |=> pop_valid && pop_data == $past
                   (push_data) && pop_data == buf_data)
 
+  // Check buffer state is always passed to the pop interface when valid
+  `BR_ASSERT_IMPL(buffer_valid_means_pop_matches_buffer_a,
+                  buf_valid |-> pop_valid && pop_data == buf_data)
+
 endmodule
