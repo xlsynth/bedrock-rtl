@@ -108,21 +108,35 @@ module br_amba_axi_demux_req_tracker #(
   //
 
   `BR_ASSERT_STATIC(num_subordinates_gte_2_a, NumSubordinates >= 2)
-  `BR_ASSERT_STATIC(max_outstanding_gte_1_a, MaxOutstanding >= 3)
+  `BR_ASSERT_STATIC(max_outstanding_gt_2_a, MaxOutstanding > 2)
   if (SingleIdOnly) begin : gen_single_id_only_checks
     `BR_ASSERT_INTG(axid_is_zero_a, upstream_axvalid |-> upstream_axid == '0)
-    `BR_ASSERT_INTG(xid_is_zero_a, downstream_xvalid |-> downstream_xid == '0)
+    for (genvar i = 0; i < NumSubordinates; i++) begin : gen_subordinate_id_only_check
+      `BR_ASSERT_INTG(xid_is_zero_a, downstream_xvalid[i] |-> downstream_xid[i] == '0)
+    end
   end
 
   //
   // Internal signals
   //
 
+  typedef struct packed {
+    logic [ReqPayloadWidth-1:0] payload;
+    logic [AxiIdWidth-1:0] id;
+  } req_payload_t;
+
+  typedef struct packed {
+    logic [RespPayloadWidth-1:0] payload;
+    logic [AxiIdWidth-1:0] id;
+    logic last;
+  } resp_payload_t;
+
   logic [SubIdWidth-1:0] upstream_ax_sub_select_int;
-  logic [ReqPayloadWidth-1:0] upstream_ax_payload_int;
-  logic [AxiIdWidth-1:0] upstream_axid_int;
+  req_payload_t upstream_ax_req_payload_int;
   logic upstream_axready_int;
   logic upstream_axvalid_int;
+
+  req_payload_t [NumSubordinates-1:0] downstream_ax_req_payload;
 
   logic upstream_axready_reg;
   logic upstream_axvalid_reg;
@@ -174,9 +188,9 @@ module br_amba_axi_demux_req_tracker #(
       .pop_valid_unstable({wdata_flow_valid, resp_tracking_fifo_push_valid, upstream_axvalid_int})
   );
 
-  assign upstream_ax_payload_int = upstream_ax_payload_reg;
   assign upstream_ax_sub_select_int = upstream_ax_sub_select_reg;
-  assign upstream_axid_int = upstream_axid_reg;
+  assign upstream_ax_req_payload_int.id = upstream_axid_reg;
+  assign upstream_ax_req_payload_int.payload = upstream_ax_payload_reg;
 
   assign wdata_flow_sub_select = upstream_ax_sub_select_reg;
 
@@ -267,12 +281,17 @@ module br_amba_axi_demux_req_tracker #(
       //
       .push_ready(upstream_axready_int),
       .push_valid(upstream_axvalid_int),
-      .push_data({upstream_axid_int, upstream_ax_payload_int}),
+      .push_data(upstream_ax_req_payload_int),
       //
       .pop_ready(downstream_axready),
       .pop_valid_unstable(downstream_axvalid),
-      .pop_data_unstable({downstream_axid, downstream_ax_payload})
+      .pop_data_unstable(downstream_ax_req_payload)
   );
+
+  for (genvar i = 0; i < NumSubordinates; i++) begin : gen_downstream_ax_payload
+    assign downstream_axid[i] = downstream_ax_req_payload[i].id;
+    assign downstream_ax_payload[i] = downstream_ax_req_payload[i].payload;
+  end
 
   //
   // Response Path
@@ -280,15 +299,11 @@ module br_amba_axi_demux_req_tracker #(
 
   logic [NumSubordinates-1:0] downstream_xready_reg;
   logic [NumSubordinates-1:0] downstream_xvalid_reg;
-  logic [NumSubordinates-1:0][AxiIdWidth-1:0] downstream_xid_reg;
-  logic [NumSubordinates-1:0][RespPayloadWidth-1:0] downstream_x_payload_reg;
-  logic [NumSubordinates-1:0] downstream_xlast_reg;
+  resp_payload_t [NumSubordinates-1:0] downstream_x_resp_payload_reg;
 
-  logic upstream_xready_reg;
-  logic upstream_xvalid_reg;
-  logic [AxiIdWidth-1:0] upstream_xid_reg;
-  logic [RespPayloadWidth-1:0] upstream_x_payload_reg;
-  logic upstream_xlast_reg;
+  logic upstream_xready_pre;
+  logic upstream_xvalid_pre;
+  resp_payload_t upstream_x_resp_payload_pre;
 
   // Buffer incoming responses to cut downstream_xvalid -> downstream_xready path
   for (genvar i = 0; i < NumSubordinates; i++) begin : gen_buffer_resp
@@ -300,11 +315,15 @@ module br_amba_axi_demux_req_tracker #(
         //
         .push_ready(downstream_xready[i]),
         .push_valid(downstream_xvalid[i]),
-        .push_data ({downstream_xid[i], downstream_x_payload[i], downstream_xlast[i]}),
+        .push_data({downstream_xid[i], downstream_x_payload[i], downstream_xlast[i]}),
         //
-        .pop_ready (downstream_xready_reg[i]),
-        .pop_valid (downstream_xvalid_reg[i]),
-        .pop_data  ({downstream_xid_reg[i], downstream_x_payload_reg[i], downstream_xlast_reg[i]})
+        .pop_ready(downstream_xready_reg[i]),
+        .pop_valid(downstream_xvalid_reg[i]),
+        .pop_data({
+          downstream_x_resp_payload_reg[i].id,
+          downstream_x_resp_payload_reg[i].payload,
+          downstream_x_resp_payload_reg[i].last
+        })
     );
   end
 
@@ -323,7 +342,7 @@ module br_amba_axi_demux_req_tracker #(
       assign next_port_for_id_valid = resp_tracking_fifo_pop_valid_per_id;
     end else begin : gen_multi_id_pop_mux
       logic [AxiIdWidth-1:0] mux_select;
-      assign mux_select = downstream_xvalid_reg[i] ? downstream_xid_reg[i] : '0;
+      assign mux_select = downstream_xvalid_reg[i] ? downstream_x_resp_payload_reg[i].id : '0;
 
       br_mux_bin #(
           .NumSymbolsIn(NumIds),
@@ -355,7 +374,9 @@ module br_amba_axi_demux_req_tracker #(
   // 1. The response is valid.
   // 2. The downstream port is at the head of the tracking FIFO for the presented response ID.
   assign ds_port_req = downstream_xvalid_reg & ds_port_id_match;
-  assign ds_port_gnt_hold = ~downstream_xlast_reg;
+  for (genvar i = 0; i < NumSubordinates; i++) begin : gen_ds_port_gnt_hold
+    assign ds_port_gnt_hold[i] = ~downstream_x_resp_payload_reg[i].last;
+  end
 
   // LRU arbiter w/ grant hold circuit
   logic [NumSubordinates-1:0] ds_port_gnt_from_arb;
@@ -368,7 +389,7 @@ module br_amba_axi_demux_req_tracker #(
       .rst,
       //
       .grant_hold(ds_port_gnt_hold),
-      .enable_priority_update(1'b1),
+      .enable_priority_update(upstream_xready_pre),
       //
       .grant_from_arb(ds_port_gnt_from_arb),
       .enable_priority_update_to_arb(ds_port_gnt_enable_priority_update_to_arb),
@@ -388,11 +409,11 @@ module br_amba_axi_demux_req_tracker #(
   );
 
   // Ready/valid joining
-  assign downstream_xready_reg = ds_port_gnt & {NumSubordinates{upstream_xready_reg}};
-  assign upstream_xvalid_reg = |ds_port_req;
-  assign resp_tracking_fifo_pop_ready = upstream_xlast_reg
-                                        && upstream_xvalid_reg
-                                        && upstream_xready_reg;
+  assign downstream_xready_reg = ds_port_gnt & {NumSubordinates{upstream_xready_pre}};
+  assign upstream_xvalid_pre = |ds_port_req;
+  assign resp_tracking_fifo_pop_ready = upstream_x_resp_payload_pre.last
+                                        && upstream_xvalid_pre
+                                        && upstream_xready_pre;
 
   if (SingleIdOnly) begin : gen_single_id_only_enc
     assign resp_tracking_fifo_pop_ready_per_id = resp_tracking_fifo_pop_ready;
@@ -403,7 +424,7 @@ module br_amba_axi_demux_req_tracker #(
         .clk,
         .rst,
         //
-        .in(upstream_xid_reg),
+        .in(upstream_x_resp_payload_pre.id),
         .in_valid(resp_tracking_fifo_pop_ready),
         .out(resp_tracking_fifo_pop_ready_per_id)
     );
@@ -415,8 +436,8 @@ module br_amba_axi_demux_req_tracker #(
       .SymbolWidth (AxiIdWidth + RespPayloadWidth + 1)
   ) br_mux_onehot_downstream_resp (
       .select(ds_port_gnt),
-      .in({downstream_xid_reg, downstream_x_payload_reg, downstream_xlast_reg}),
-      .out({upstream_xid_reg, upstream_x_payload_reg, upstream_xlast_reg})
+      .in(downstream_x_resp_payload_reg),
+      .out(upstream_x_resp_payload_pre)
   );
 
   // Output buffer (to cut upstream_xready -> upstream_xvalid path)
@@ -426,13 +447,17 @@ module br_amba_axi_demux_req_tracker #(
       .clk,
       .rst,
       //
-      .push_ready(upstream_xready_reg),
-      .push_valid(upstream_xvalid_reg),
-      .push_data ({upstream_xid_reg, upstream_x_payload_reg, upstream_xlast_reg}),
+      .push_ready(upstream_xready_pre),
+      .push_valid(upstream_xvalid_pre),
+      .push_data({
+        upstream_x_resp_payload_pre.id,
+        upstream_x_resp_payload_pre.payload,
+        upstream_x_resp_payload_pre.last
+      }),
       //
-      .pop_ready (upstream_xready),
-      .pop_valid (upstream_xvalid),
-      .pop_data  ({upstream_xid, upstream_x_payload, upstream_xlast})
+      .pop_ready(upstream_xready),
+      .pop_valid(upstream_xvalid),
+      .pop_data({upstream_xid, upstream_x_payload, upstream_xlast})
   );
 
   //
