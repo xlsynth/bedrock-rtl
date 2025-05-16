@@ -1,21 +1,65 @@
+// Copyright 2025 The Bedrock-RTL Authors
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+//
+// Bedrock-RTL AXI Demux Request Tracker
+//
+// This module is used to route the requests to the correct downstream port
+// and to track on which downstream port the next response should arrive for each
+// AXI ID.
+//
+// Read response data interleaving is not supported.
+
 `include "br_unused.svh"
 `include "br_asserts_internal.svh"
 
 module br_amba_axi_demux_req_tracker #(
+    // Number of downstream subordinates.
     parameter int NumSubordinates = 2,
+    // Width of the AXI ID field.
     parameter int AxiIdWidth = 1,
+    // Maximum number of outstanding write transactions.
     parameter int MaxOutstanding = 3,
+    // Width of the request payload.
     parameter int ReqPayloadWidth = 1,
+    // Width of the response payload.
     parameter int RespPayloadWidth = 1,
+    // If 1, then only a single ID is supported.
     parameter int SingleIdOnly = 0,
-    parameter int FifoStagingBufferDepth = 1,
-    parameter int FifoNumLinkedListsPerFifo = 1,
-    parameter int FifoRegisterPopOutputs = 1,
-    parameter int FifoRegisterDeallocation = 1,
-    parameter int FifoDataRamAddressDepthStages = 0,
-    parameter int FifoDataRamReadDataDepthStages = 0,
-    parameter int FifoPointerRamAddressDepthStages = 0,
+    // Number of pipeline stages to use for the pointer RAM read
+    // data in the response tracker FIFO. Has no effect if SingleIdOnly == 1.
     parameter int FifoPointerRamReadDataDepthStages = 0,
+    // Number of pipeline stages to use for the data RAM read data
+    // in the response tracker FIFO. Has no effect if SingleIdOnly == 1.
+    parameter int FifoDataRamReadDataDepthStages = 0,
+    // Number of pipeline stages to use for the pointer RAM address
+    // in the response tracker FIFO. Has no effect if SingleIdOnly == 1.
+    parameter int FifoPointerRamAddressDepthStages = 1,
+    // Number of pipeline stages to use for the data RAM address
+    // in the response tracker FIFO. Has no effect if SingleIdOnly == 1.
+    parameter int FifoDataRamAddressDepthStages = 1,
+    // Number of linked lists per FIFO in the response tracker FIFO. Has
+    // no effect if SingleIdOnly == 1.
+    parameter int FifoNumLinkedListsPerFifo = 2,
+    // Number of pipeline stages to use for the staging buffer
+    // in the response tracker FIFO. Has no effect if SingleIdOnly == 1.
+    parameter int FifoStagingBufferDepth = 2,
+    // Number of pipeline stages to use for the pop outputs
+    // in the response tracker FIFO. Has no effect if SingleIdOnly == 1.
+    parameter int FifoRegisterPopOutputs = 1,
+    // Number of pipeline stages to use for the deallocation
+    // in the response tracker FIFO. Has no effect if SingleIdOnly == 1.
+    parameter int FifoRegisterDeallocation = 1,
     //
     localparam int SubIdWidth = $clog2(NumSubordinates)
 ) (

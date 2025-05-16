@@ -398,3 +398,39 @@ br_verilog_elab_and_lint_test_suite(
     },
     deps = [":br_amba_axi_isolate_mgr"],
 )
+
+verilog_library(
+    name = "br_amba_axi_demux",
+    srcs = ["br_amba_axi_demux.sv"],
+    deps = [
+        ":br_amba_pkg",
+        "//amba/rtl/internal:br_amba_axi_demux_req_tracker",
+        "//fifo/rtl:br_fifo_flops",
+        "//flow/rtl:br_flow_demux_select_unstable",
+        "//flow/rtl/internal:br_flow_checks_valid_data_impl",
+        "//macros:br_asserts_internal",
+    ],
+)
+
+br_verilog_elab_and_lint_test_suite(
+    name = "br_amba_axi_demux_test_suite",
+    params = {
+        "SingleIdOnly": [
+            "1",
+            "0",
+        ],
+        "AwAxiIdWidth": [
+            "1",
+            "4",
+        ],
+        "ArAxiIdWidth": [
+            "1",
+            "4",
+        ],
+        "NumSubordinates": [
+            "2",
+            "3",
+        ],
+    },
+    deps = [":br_amba_axi_demux"],
+)
