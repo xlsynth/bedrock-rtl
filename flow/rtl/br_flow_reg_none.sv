@@ -64,7 +64,7 @@ module br_flow_reg_none #(
 
   //------------------------------------------
   // Integration checks
-  //------------------------------------------  
+  //------------------------------------------
   `BR_ASSERT_STATIC(bit_width_must_be_at_least_one_a, Width >= 1)
 
   br_flow_checks_valid_data_intg #(
