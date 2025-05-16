@@ -244,6 +244,13 @@ module br_amba_axi_demux #(
   // Write Path
   //
 
+  typedef struct packed {
+    logic [WUserWidth-1:0] user;
+    logic [DataWidth-1:0] data;
+    logic [StrobeWidth-1:0] strb;
+    logic last;
+  } wdata_req_t;
+
   logic wdata_flow_ready;
   logic wdata_flow_valid;
   logic [SubIdWidth-1:0] wdata_flow_sub_select;
@@ -254,13 +261,11 @@ module br_amba_axi_demux #(
 
   logic upstream_wvalid_buf;
   logic upstream_wready_buf;
-  logic upstream_wlast_buf;
-  logic [DataWidth-1:0] upstream_wdata_buf;
-  logic [StrobeWidth-1:0] upstream_wstrb_buf;
-  logic [WUserWidth-1:0] upstream_wuser_buf;
+  wdata_req_t upstream_wdata_req_buf;
 
   logic downstream_wvalid_int;
   logic downstream_wready_int;
+  wdata_req_t [NumSubordinates-1:0] downstream_wdata_req;
 
   br_amba_axi_demux_req_tracker #(
       .NumSubordinates(NumSubordinates),
@@ -344,7 +349,12 @@ module br_amba_axi_demux #(
       //
       .pop_valid(upstream_wvalid_buf),
       .pop_ready(upstream_wready_buf),
-      .pop_data({upstream_wuser_buf, upstream_wdata_buf, upstream_wstrb_buf, upstream_wlast_buf}),
+      .pop_data({
+        upstream_wdata_req_buf.user,
+        upstream_wdata_req_buf.data,
+        upstream_wdata_req_buf.strb,
+        upstream_wdata_req_buf.last
+      }),
       //
       .full(),
       .full_next(),
@@ -384,8 +394,10 @@ module br_amba_axi_demux #(
   );
 
   assign downstream_wvalid_int = upstream_wvalid_buf && wdata_flow_valid_buf;
-  assign upstream_wready_buf   = downstream_wready_int && wdata_flow_valid_buf;
-  assign wdata_flow_ready_buf  = downstream_wready_int && upstream_wvalid_buf && upstream_wlast_buf;
+  assign upstream_wready_buf = downstream_wready_int && wdata_flow_valid_buf;
+  assign wdata_flow_ready_buf  = downstream_wready_int
+                                && upstream_wvalid_buf
+                                && upstream_wdata_req_buf.last;
 
   logic [SubIdWidth-1:0] downstream_w_sub_select;
   assign downstream_w_sub_select = wdata_flow_valid_buf ? wdata_flow_sub_select_buf : '0;
@@ -401,12 +413,19 @@ module br_amba_axi_demux #(
       //
       .push_ready(downstream_wready_int),
       .push_valid(downstream_wvalid_int),
-      .push_data({upstream_wuser_buf, upstream_wdata_buf, upstream_wstrb_buf, upstream_wlast_buf}),
+      .push_data(upstream_wdata_req_buf),
       //
       .pop_ready(downstream_wready),
       .pop_valid_unstable(downstream_wvalid),
-      .pop_data_unstable({downstream_wuser, downstream_wdata, downstream_wstrb, downstream_wlast})
+      .pop_data_unstable(downstream_wdata_req)
   );
+
+  for (genvar i = 0; i < NumSubordinates; i++) begin : gen_downstream_wdata_unpack
+    assign downstream_wuser[i] = downstream_wdata_req[i].user;
+    assign downstream_wdata[i] = downstream_wdata_req[i].data;
+    assign downstream_wstrb[i] = downstream_wdata_req[i].strb;
+    assign downstream_wlast[i] = downstream_wdata_req[i].last;
+  end
 
   //
   // Implementation Checks
