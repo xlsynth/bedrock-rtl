@@ -177,6 +177,8 @@ module br_fifo_pop_ctrl #(
   `BR_ASSERT_IMPL(pop_items_a, !push_beat && pop_beat |-> items_next == items - 1)
   `BR_ASSERT_IMPL(empty_a, empty == (items == 0))
 
-  `BR_ASSERT_FINAL(final_empty_a, empty)
+  if (EnableAssertFinalNotValid) begin : gen_final_empty_check
+    `BR_ASSERT_FINAL(final_empty_a, empty)
+  end
 
 endmodule : br_fifo_pop_ctrl

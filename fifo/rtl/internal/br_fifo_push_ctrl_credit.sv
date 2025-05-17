@@ -119,6 +119,13 @@ module br_fifo_push_ctrl_credit #(
   );
 
   // Core flow-control logic
+
+  logic [AddrWidth-1:0] addr_base;
+  logic [AddrWidth-1:0] addr_bound;
+
+  assign addr_base  = '0;
+  assign addr_bound = RamDepth - 1;
+
   br_fifo_push_ctrl_core #(
       .Depth(RamDepth),
       .Width(Width),
@@ -130,6 +137,9 @@ module br_fifo_push_ctrl_credit #(
       .clk,
       .rst(either_rst),
 
+      .addr_base,
+      .addr_bound,
+
       .push_ready(),
       .push_valid(internal_valid),
       .push_data (internal_data),
@@ -139,6 +149,7 @@ module br_fifo_push_ctrl_credit #(
       .bypass_data_unstable,  // ri lint_check_waive CONST_OUTPUT
 
       .ram_wr_valid,
+      .ram_wr_addr_next(),
       .ram_wr_addr,
       .ram_wr_data,
 

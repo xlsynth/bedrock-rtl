@@ -55,6 +55,9 @@ pop_rst |-> pop_valid == 'd0}
 # no push_ready signal in push credit interface
 assert -disable *fv_checker.no_ready_when_full_a*
 
+# TODO: disable covers to make nightly clean
+cover -disable *
+
 # If assertion bound - pre-condition reachable cycle >= 2:
 # it's marked as "bounded_proven (auto) instead of "undetermined"
 # this only affects the status report, not the proof

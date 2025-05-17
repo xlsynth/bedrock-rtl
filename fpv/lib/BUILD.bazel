@@ -30,3 +30,9 @@ verilog_library(
         "//macros:br_registers",
     ],
 )
+
+# 4-phase handshake
+verilog_library(
+    name = "fv_4phase_handshake",
+    srcs = ["fv_4phase_handshake.sv"],
+)

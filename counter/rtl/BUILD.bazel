@@ -99,6 +99,20 @@ br_verilog_elab_and_lint_test_suite(
 )
 
 br_verilog_elab_and_lint_test_suite(
+    name = "br_counter_incr_test_suite3",
+    params = {
+        "MaxValueWidth": ["64"],
+        "MaxIncrementWidth": ["64"],
+        "MaxValue": [
+            "18446744073709551615",
+            "18446744073709551614",
+        ],
+        "MaxIncrement": ["18446744073709551614"],
+    },
+    deps = [":br_counter_incr"],
+)
+
+br_verilog_elab_and_lint_test_suite(
     name = "br_counter_decr_test_suite0",
     params = {
         "MaxValue": [
@@ -145,6 +159,20 @@ br_verilog_elab_and_lint_test_suite(
         "EnableSaturate": [
             "1",
         ],
+    },
+    deps = [":br_counter_decr"],
+)
+
+br_verilog_elab_and_lint_test_suite(
+    name = "br_counter_decr_test_suite3",
+    params = {
+        "MaxValueWidth": ["64"],
+        "MaxDecrementWidth": ["64"],
+        "MaxValue": [
+            "18446744073709551615",
+            "18446744073709551614",
+        ],
+        "MaxDecrement": ["18446744073709551614"],
     },
     deps = [":br_counter_decr"],
 )
@@ -202,6 +230,20 @@ br_verilog_elab_and_lint_test_suite(
         "EnableSaturate": [
             "1",
         ],
+    },
+    deps = [":br_counter"],
+)
+
+br_verilog_elab_and_lint_test_suite(
+    name = "br_counter_test_suite3",
+    params = {
+        "MaxValueWidth": ["64"],
+        "MaxChangeWidth": ["64"],
+        "MaxValue": [
+            "18446744073709551615",
+            "18446744073709551614",
+        ],
+        "MaxChange": ["18446744073709551614"],
     },
     deps = [":br_counter"],
 )

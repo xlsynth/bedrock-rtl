@@ -35,7 +35,7 @@ assert -name fv_rst_check_pop_valid {rst | push_sender_in_reset |-> pop_valid ==
 # but when pop_ready is high, correct data will be sent
 assert -disable *br_fifo_basic_fpv_monitor.gen_pop_data_stable.pop_data_stable_a*
 
-# TODO
+# TODO: disable covers to make nightly clean
 cover -disable *
 
 # prove command

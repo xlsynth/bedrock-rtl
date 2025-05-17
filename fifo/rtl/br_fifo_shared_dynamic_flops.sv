@@ -43,18 +43,23 @@
 //
 // Because the pop bandwidth of a linked list is limited by the pointer RAM read
 // latency, the multi-FIFO supports using multiple linked lists per logical
-// FIFO. The linked list controller will cycle through the linked list heads in
-// round-robin fashion. The number of linked lists per FIFO is determined by the
-// staging buffer depth.  The bandwidth of a single logical FIFO is thus
-// determined by the formula `StagingBufferDepth / (PointerRamReadLatency + 1)`,
-// where `PointerRamReadLatency = PointerRamAddressDepthStages +
-// PointerRamReadDataDepthStages + PointerRamReadDataWidthStages`. To get one
-// pop per cycle bandwidth for a single logical FIFO, the staging buffer depth
-// should be set to `PointerRamReadLatency + 1`.
+// FIFO, configured by the `NumLinkedListsPerFifo` parameter. The linked list
+// controller will cycle through the linked list heads in round-robin fashion.
+// The bandwidth is also limited by the staging buffer depth and data RAM read
+// latency. Up to `StagingBufferDepth` reads can be inflight to the RAM at any
+// time. Thus, the bandwidth of a single logical FIFO is capped at
+// the minimum of `NumLinkedListsPerFifo / (PointerRamReadLatency + 1)` and
+// `StagingBufferDepth / (DataRamReadLatency + 1)`. To get full bandwidth,
+// the number of linked lists per FIFO should be set to `PointerRamReadLatency +
+// 1` and the staging buffer depth should be set to `DataRamReadLatency + 1`.
+//
+// `PointerRamReadLatency = PointerRamAddressDepthStages + PointerRamReadDataDepthStages + PointerRamReadDataWidthStages`
+//
+// `DataRamReadLatency = DataRamReadAddressDepthStages + DataRamReadDataDepthStages + DataRamReadDataWidthStages`
 //
 // For example, to have zero retiming on the read path, full bandwidth, and
-// pop data registered at the output, set StagingBufferDepth = 1 and
-// RegisterPopOutputs = 1.
+// pop data registered at the output, set StagingBufferDepth = 1,
+// NumLinkedListsPerFifo = 1, and RegisterPopOutputs = 1.
 
 module br_fifo_shared_dynamic_flops #(
     // Number of write ports. Must be >=1.
@@ -70,9 +75,13 @@ module br_fifo_shared_dynamic_flops #(
     parameter int Width = 1,
     // The depth of the pop-side staging buffer.
     // This affects the pop bandwidth of each logical FIFO.
-    // The bandwidth will be `StagingBufferDepth / (PointerRamAddressDepthStages
-    // + PointerRamReadDataDepthStages + PointerRamReadDataWidthStages + 1)`.
+    // The bandwidth will be `StagingBufferDepth / (DataRamAddressDepthStages
+    // + DataRamReadDataDepthStages + DataRamReadDataWidthStages + 1)`.
     parameter int StagingBufferDepth = 1,
+    // The number of sub-linked lists used by each logical FIFO.
+    // This affects the pop bandwidth of each logical FIFO.
+    // The max bandwidth will be `NumLinkedListsPerFifo / (PointerRamReadLatency + 1)`.
+    parameter int NumLinkedListsPerFifo = 1,
     // If 1, make sure pop_valid/pop_data are registered at the output
     // of the staging buffer. This adds a cycle of cut-through latency.
     parameter bit RegisterPopOutputs = 0,
@@ -221,6 +230,7 @@ module br_fifo_shared_dynamic_flops #(
       .Depth(Depth),
       .Width(Width),
       .StagingBufferDepth(StagingBufferDepth),
+      .NumLinkedListsPerFifo(NumLinkedListsPerFifo),
       .RegisterPopOutputs(RegisterPopOutputs),
       .RegisterDeallocation(RegisterDeallocation),
       .DataRamReadLatency(DataRamReadLatency),

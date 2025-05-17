@@ -44,8 +44,16 @@
 `include "br_unused.svh"
 
 module br_counter #(
-    parameter int MaxValue = 1,  // Must be at least 1. Inclusive.
-    parameter int MaxChange = 1,  // Must be at least 1 and at most MaxValue. Inclusive.
+    // Width of the MaxValue parameter.
+    // You might need to override this if you need a counter that's larger than 32 bits.
+    parameter int MaxValueWidth = 32,
+    // Width of the MaxChange parameter.
+    // You might need to override this if you need a counter that's larger than 32 bits.
+    parameter int MaxChangeWidth = 32,
+    // Must be at least 1. Inclusive.
+    parameter logic [MaxValueWidth-1:0] MaxValue = 1,
+    // Must be at least 1 and at most MaxValue. Inclusive.
+    parameter logic [MaxChangeWidth-1:0] MaxChange = 1,
     // If 1, allow the counter value to wrap around 0/MaxValue, adding additional correction
     // logic to do so if MaxValue is not 1 less than a power of two.
     // If 0, don't allow wrapping and omit overflow/underflow correction logic.
@@ -64,8 +72,10 @@ module br_counter #(
     parameter bit EnableSaturate = 0,
     // If 1, then assert there are no valid bits asserted at the end of the test.
     parameter bit EnableAssertFinalNotValid = 1,
-    localparam int ValueWidth = $clog2(MaxValue + 1),
-    localparam int ChangeWidth = $clog2(MaxChange + 1)
+    localparam int MaxValueP1Width = MaxValueWidth + 1,
+    localparam int MaxChangeP1Width = MaxChangeWidth + 1,
+    localparam int ValueWidth = $clog2(MaxValueP1Width'(MaxValue) + 1),
+    localparam int ChangeWidth = $clog2(MaxChangeP1Width'(MaxChange) + 1)
 ) (
     // Posedge-triggered clock.
     input  logic                   clk,
@@ -84,6 +94,8 @@ module br_counter #(
   //------------------------------------------
   // Integration checks
   //------------------------------------------
+  `BR_ASSERT_STATIC(value_width_gte_1_a, ValueWidth >= 1)
+  `BR_ASSERT_STATIC(change_width_gte_1_a, ChangeWidth >= 1)
   `BR_ASSERT_STATIC(max_value_gte_1_a, MaxValue >= 1)
   `BR_ASSERT_STATIC(max_increment_gte_1_a, MaxChange >= 1)
   `BR_ASSERT_STATIC(max_increment_lte_max_value_a, MaxChange <= MaxValue)
@@ -96,7 +108,7 @@ module br_counter #(
   // Assertion-only helper logic for overflow/underflow detection
 `ifdef BR_ASSERT_ON
 `ifndef BR_DISABLE_INTG_CHECKS
-  localparam int ExtWidth = $clog2(MaxValue + ChangeWidth + 1);
+  localparam int ExtWidth = $clog2(MaxValue + MaxChange + 1);
   logic [ExtWidth-1:0] value_extended;
   logic [ExtWidth-1:0] value_extended_next;
 
@@ -123,9 +135,11 @@ module br_counter #(
   //------------------------------------------
   // Implementation
   //------------------------------------------
-  localparam int MaxValueP1 = MaxValue + 1;
+  localparam logic [MaxValueP1Width-1:0] MaxValueP1 = MaxValue + 1;
   localparam bit IsMaxValueP1PowerOf2 = (MaxValueP1 & (MaxValueP1 - 1)) == 0;
-  localparam int TempWidth = $clog2(MaxValue + MaxChange + 1);
+  localparam int TempWidth = $clog2(MaxValueP1Width'(MaxValue) + MaxChangeP1Width'(MaxChange) + 1);
+  localparam logic [ValueWidth-1:0] MaxValueResized = ValueWidth'(MaxValue);
+  localparam logic [TempWidth-1:0] MaxValueWithOverflow = TempWidth'(MaxValue);
 
   logic                   value_loaden;
   // The MSB might not be used
@@ -161,14 +175,14 @@ module br_counter #(
     logic would_overflow;
 
     assign is_net_decr = decr_qual > incr_qual;
-    assign would_out_of_bounds = value_temp > MaxValue;
+    assign would_out_of_bounds = value_temp > MaxValueWithOverflow;
     assign would_underflow = would_out_of_bounds && is_net_decr;
     assign would_overflow = would_out_of_bounds && !is_net_decr;
 
     if (EnableSaturate) begin : gen_saturate
       logic [ValueWidth-1:0] value_next_saturated;
 
-      assign value_next_saturated = MaxValue;
+      assign value_next_saturated = MaxValueResized;
       assign value_next = would_underflow ? '0 :
                           would_overflow ? value_next_saturated :
                           value_temp[ValueWidth-1:0];
@@ -182,7 +196,7 @@ module br_counter #(
       logic [TempWidth-1:0] max_value_p1;
       logic [TempWidth-1:0] value_temp_wrapped;
 
-      assign max_value_p1 = TempWidth'($unsigned(MaxValueP1));
+      assign max_value_p1 = TempWidth'(MaxValueP1);
       assign value_temp_wrapped =
           would_underflow ? (value_temp + max_value_p1) :
           would_overflow  ? (value_temp - max_value_p1) :
@@ -206,7 +220,7 @@ module br_counter #(
   // Value
   `BR_ASSERT_IMPL(value_in_range_a, value <= MaxValue)
   `BR_ASSERT_IMPL(value_next_in_range_a, value_next <= MaxValue)
-  `BR_ASSERT_IMPL(value_next_propagates_a, ##1 value == $past(value_next))
+  `BR_ASSERT_IMPL(value_next_propagates_a, ##1 !$past(rst) |-> value == $past(value_next))
 
   // Change corners
   `BR_COVER_IMPL(increment_max_c, incr_valid && incr == MaxChange)

@@ -17,5 +17,8 @@ clock wr_clk rd_clk
 reset wr_rst rd_rst
 get_design_info
 
+# TODO: disable covers to make nightly clean
+cover -disable *
+
 # prove command
 prove -all

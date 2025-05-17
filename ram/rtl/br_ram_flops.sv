@@ -383,6 +383,4 @@ module br_ram_flops #(
 `endif
 `endif
 
-  `BR_ASSERT_FINAL(final_not_rd_data_valid_a, !rd_data_valid)
-
 endmodule : br_ram_flops

@@ -50,6 +50,8 @@ verilog_library(
     deps = [
         "//amba/rtl:br_amba_pkg",
         "//counter/rtl:br_counter",
+        "//counter/rtl:br_counter_incr",
+        "//fifo/rtl:br_fifo_flops",
         "//macros:br_asserts_internal",
         "//macros:br_unused",
         "//pkg:br_math_pkg",
@@ -71,15 +73,35 @@ br_verilog_elab_and_lint_test_suite(
     deps = [":br_amba_iso_wdata_align"],
 )
 
+br_verilog_elab_and_lint_test_suite(
+    name = "br_amba_iso_wdata_align_iso_upstream_test_suite",
+    params = {
+        "FakeWriteDataOnAlign": [
+            "1",
+        ],
+        "PreventExcessData": [
+            "1",
+        ],
+        "MaxAxiBurstLen": [
+            "1",
+            "256",
+        ],
+    },
+    deps = [":br_amba_iso_wdata_align"],
+)
+
 verilog_library(
     name = "br_amba_iso_resp_tracker",
     srcs = ["br_amba_iso_resp_tracker.sv"],
     deps = [
         "//amba/rtl:br_amba_pkg",
         "//arb/rtl:br_arb_rr",
+        "//counter/rtl:br_counter",
         "//counter/rtl:br_counter_incr",
         "//fifo/rtl:br_fifo_flops",
         "//fifo/rtl:br_fifo_shared_dynamic_flops",
+        "//flow/rtl:br_flow_fork",
+        "//flow/rtl:br_flow_join",
         "//flow/rtl:br_flow_mux_select_unstable",
         "//macros:br_asserts_internal",
         "//macros:br_registers",
@@ -116,4 +138,83 @@ verilog_library(
 br_verilog_elab_and_lint_test_suite(
     name = "br_amba_iso_ds_fsm_test_suite",
     deps = [":br_amba_iso_ds_fsm"],
+)
+
+verilog_library(
+    name = "br_amba_iso_req_tracker",
+    srcs = ["br_amba_iso_req_tracker.sv"],
+    deps = [
+        "//amba/rtl:br_amba_pkg",
+        "//counter/rtl:br_counter",
+        "//macros:br_asserts_internal",
+        "//macros:br_registers",
+        "//macros:br_unused",
+        "//pkg:br_math_pkg",
+    ],
+)
+
+br_verilog_elab_and_lint_test_suite(
+    name = "br_amba_iso_req_tracker_test_suite",
+    params = {
+        "MaxOutstanding": [
+            "2",
+            "128",
+        ],
+    },
+    deps = [":br_amba_iso_req_tracker"],
+)
+
+verilog_library(
+    name = "br_amba_iso_us_fsm",
+    srcs = ["br_amba_iso_us_fsm.sv"],
+    deps = [
+        "//macros:br_asserts",
+        "//macros:br_registers",
+    ],
+)
+
+br_verilog_elab_and_lint_test_suite(
+    name = "br_amba_iso_us_fsm_test_suite",
+    deps = [":br_amba_iso_us_fsm"],
+)
+
+verilog_library(
+    name = "br_amba_axi_demux_req_tracker",
+    srcs = ["br_amba_axi_demux_req_tracker.sv"],
+    deps = [
+        "//amba/rtl:br_amba_pkg",
+        "//arb/rtl:br_arb_grant_hold",
+        "//arb/rtl:br_arb_lru",
+        "//enc/rtl:br_enc_bin2onehot",
+        "//fifo/rtl:br_fifo_flops",
+        "//fifo/rtl:br_fifo_shared_dynamic_flops",
+        "//flow/rtl:br_flow_demux_select_unstable",
+        "//flow/rtl:br_flow_fork",
+        "//flow/rtl:br_flow_reg_fwd",
+        "//flow/rtl:br_flow_reg_rev",
+        "//flow/rtl/internal:br_flow_checks_valid_data_impl",
+        "//macros:br_asserts_internal",
+        "//macros:br_unused",
+        "//mux/rtl:br_mux_bin",
+        "//mux/rtl:br_mux_onehot",
+    ],
+)
+
+br_verilog_elab_and_lint_test_suite(
+    name = "br_amba_axi_demux_req_tracker_test_suite",
+    params = {
+        "NumSubordinates": [
+            "2",
+            "3",
+        ],
+        "SingleIdOnly": [
+            "1",
+            "0",
+        ],
+        "AxiIdWidth": [
+            "1",
+            "4",
+        ],
+    },
+    deps = [":br_amba_axi_demux_req_tracker"],
 )

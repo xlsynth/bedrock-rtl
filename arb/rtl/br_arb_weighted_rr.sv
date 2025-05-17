@@ -76,7 +76,7 @@ module br_arb_weighted_rr #(
   //------------------------------------------
   // Integration checks
   //------------------------------------------
-  `BR_ASSERT_STATIC(min_num_requestors_a, NumRequesters >= 2)
+  `BR_ASSERT_STATIC(min_num_requesters_a, NumRequesters >= 2)
   `BR_ASSERT_STATIC(min_max_weight_a, MaxWeight >= 1)
   `BR_ASSERT_STATIC(max_accum_gte_max_weight_a, MaxAccumulatedWeight >= MaxWeight)
 

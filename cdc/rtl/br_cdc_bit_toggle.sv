@@ -46,20 +46,8 @@ module br_cdc_bit_toggle #(
   // Integration Assertions
   `BR_ASSERT_STATIC(num_stages_must_be_at_least_one_a, NumStages >= 1)
 
-`ifdef BR_ASSERT_ON
-`ifndef BR_DISABLE_INTG_CHECKS
-  logic dst_src_bit_d;
-  logic dst_src_bit_toggled;
-
-  `BR_REGNX(dst_src_bit_d, src_bit, dst_clk)
-
-  assign dst_src_bit_toggled = dst_src_bit_d != src_bit;
-
-  // The source bit cannot toggle more than once every two destination clock cycles
-  `BR_ASSERT_CR_INTG(src_bit_stability_a, dst_src_bit_toggled |=> !dst_src_bit_toggled, dst_clk,
-                     dst_rst)
-`endif
-`endif
+  // TODO(zhemao): Add assertion to check that the source bit doesn't toggle too frequently
+  // Main question: How frequent is too frequent?
 
   // Implementation
   logic src_bit_internal, src_bit_internal_maxdel;

@@ -57,3 +57,51 @@ br_verilog_sim_test_tools_suite(
     ],
     deps = [":br_credit_receiver_tb"],
 )
+
+verilog_library(
+    name = "br_credit_sender_vc_rr_tb",
+    srcs = ["br_credit_sender_vc_rr_tb.sv"],
+    deps = [
+        "//arb/rtl/internal:br_arb_rr_internal",
+        "//credit/rtl:br_credit_sender_vc",
+        "//misc/sim:br_test_driver",
+        "//pkg:br_math_pkg",
+    ],
+)
+
+verilog_elab_test(
+    name = "br_credit_sender_vc_rr_tb_elab_test",
+    tool = "verific",
+    deps = [":br_credit_sender_vc_rr_tb"],
+)
+
+br_verilog_sim_test_tools_suite(
+    name = "br_credit_sender_vc_rr_sim_test_tools_suite",
+    params = {
+        "NumVcs": [
+            "2",
+            "4",
+        ],
+        "Width": ["8"],
+        "MaxCredit": [
+            "4",
+            "7",
+        ],
+        "PopCreditMaxChange": [
+            "1",
+            "3",
+        ],
+        "RegisterPopOutputs": [
+            "0",
+            "1",
+        ],
+    },
+    tools = [
+        "dsim",
+        # This test is triggering an internal assertion failure in iverilog.
+        # TODO(zhemao): Figure out why this is happening.
+        #"iverilog",
+        "vcs",
+    ],
+    deps = [":br_credit_sender_vc_rr_tb"],
+)

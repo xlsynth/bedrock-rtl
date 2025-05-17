@@ -45,8 +45,16 @@
 `include "br_unused.svh"
 
 module br_counter_incr #(
-    parameter int MaxValue = 1,  // Must be at least 1. Inclusive.
-    parameter int MaxIncrement = 1,  // Must be at least 1 and at most MaxValue. Inclusive.
+    // Width of the MaxValue parameter.
+    // You might need to override this if you need a counter that's larger than 32 bits.
+    parameter int MaxValueWidth = 32,
+    // Width of the MaxIncrement parameter.
+    // You might need to override this if you need a counter that's larger than 32 bits.
+    parameter int MaxIncrementWidth = 32,
+    // Must be at least 1. Inclusive.
+    parameter logic [MaxValueWidth-1:0] MaxValue = 1,
+    // Must be at least 1 and at most MaxValue. Inclusive.
+    parameter logic [MaxIncrementWidth-1:0] MaxIncrement = 1,
     // If 1, then when reinit is asserted together with incr_valid,
     // the increment is applied to the initial value rather than the current value, i.e.,
     // value_next == initial_value + applicable incr.
@@ -58,8 +66,10 @@ module br_counter_incr #(
     parameter bit EnableSaturate = 0,
     // If 1, then assert there are no valid bits asserted at the end of the test.
     parameter bit EnableAssertFinalNotValid = 1,
-    localparam int ValueWidth = $clog2(MaxValue + 1),
-    localparam int IncrementWidth = $clog2(MaxIncrement + 1)
+    localparam int MaxValueP1Width = MaxValueWidth + 1,
+    localparam int MaxIncrementP1Width = MaxIncrementWidth + 1,
+    localparam int ValueWidth = $clog2(MaxValueP1Width'(MaxValue) + 1),
+    localparam int IncrementWidth = $clog2(MaxIncrementP1Width'(MaxIncrement) + 1)
 ) (
     // Posedge-triggered clock.
     input  logic                      clk,
@@ -76,6 +86,8 @@ module br_counter_incr #(
   //------------------------------------------
   // Integration checks
   //------------------------------------------
+  `BR_ASSERT_STATIC(max_value_width_gte_1_a, MaxValueWidth >= 1)
+  `BR_ASSERT_STATIC(max_increment_width_gte_1_a, MaxIncrementWidth >= 1)
   `BR_ASSERT_STATIC(max_value_gte_1_a, MaxValue >= 1)
   `BR_ASSERT_STATIC(max_increment_gte_1_a, MaxIncrement >= 1)
   `BR_ASSERT_STATIC(max_increment_lte_max_value_a, MaxIncrement <= MaxValue)
@@ -90,9 +102,13 @@ module br_counter_incr #(
   //------------------------------------------
   // Implementation
   //------------------------------------------
-  localparam int MaxValueP1 = MaxValue + 1;
+  localparam logic [MaxValueP1Width-1:0] MaxValueP1 = MaxValue + 1;
   localparam bit IsMaxValueP1PowerOf2 = (MaxValueP1 & (MaxValueP1 - 1)) == 0;
-  localparam int TempWidth = $clog2(MaxValue + MaxIncrement + 1);
+  localparam int TempWidth = $clog2(
+      MaxValueP1Width'(MaxValue) + MaxIncrementP1Width'(MaxIncrement) + 1
+  );
+  localparam logic [ValueWidth-1:0] MaxValueResized = ValueWidth'(MaxValue);
+  localparam logic [TempWidth-1:0] MaxValueWithOverflow = TempWidth'(MaxValue);
 
   // TODO(mgottscho): Sometimes the MSbs may not be used. It'd be cleaner
   // to capture them more tightly using br_misc_unused.
@@ -109,8 +125,9 @@ module br_counter_incr #(
   if (EnableSaturate) begin : gen_saturate
     logic [ValueWidth-1:0] value_next_saturated;
 
-    assign value_next_saturated = MaxValue;
-    assign value_next = (value_temp > MaxValue) ? value_next_saturated : value_temp[ValueWidth-1:0];
+    assign value_next_saturated = MaxValueResized;
+    assign value_next = (value_temp > MaxValueWithOverflow) ?
+        value_next_saturated : value_temp[ValueWidth-1:0];
 
     // For MaxValueP1 being a power of 2, wrapping occurs naturally
   end else if (IsMaxValueP1PowerOf2) begin : gen_power_of_2_wrap
@@ -123,10 +140,10 @@ module br_counter_incr #(
     logic [TempWidth-1:0] value_temp_wrapped;
 
     // ri lint_check_waive ARITH_EXTENSION
-    assign value_temp_wrapped = (value_temp - MaxValue) - 1;
+    assign value_temp_wrapped = (value_temp - MaxValueWithOverflow) - 1;
     // ri lint_check_waive ARITH_EXTENSION
-    assign value_next = (value_temp > MaxValue) ?
-      value_temp_wrapped[ValueWidth-1:0] :  // ri lint_check_waive FULL_RANGE
+    assign value_next = (value_temp > MaxValueWithOverflow) ?
+        value_temp_wrapped[ValueWidth-1:0] :  // ri lint_check_waive FULL_RANGE
         value_temp[ValueWidth-1:0];  // ri lint_check_waive FULL_RANGE
 
     if (TempWidth > ValueWidth) begin : gen_unused
@@ -143,7 +160,7 @@ module br_counter_incr #(
   // Value
   `BR_ASSERT_IMPL(value_in_range_a, value <= MaxValue)
   `BR_ASSERT_IMPL(value_next_in_range_a, value_next <= MaxValue)
-  `BR_ASSERT_IMPL(value_next_propagates_a, ##1 value == $past(value_next))
+  `BR_ASSERT_IMPL(value_next_propagates_a, ##1 !$past(rst) |-> value == $past(value_next))
 
   // Overflow corners
   if (EnableSaturate) begin : gen_saturate_impl_check

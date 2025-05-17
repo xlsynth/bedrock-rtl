@@ -45,8 +45,18 @@
 `include "br_unused.svh"
 
 module br_counter_decr #(
-    parameter int MaxValue = 1,  // Must be at least 1. Inclusive. Also the initial value.
-    parameter int MaxDecrement = 1,  // Must be at least 1 and at most MaxValue. Inclusive.
+    // Width of the MaxValue parameter.
+    // You might need to override this if you need a counter that's larger than 32 bits.
+    // Must be at least 1.
+    parameter int MaxValueWidth = 32,
+    // Width of the MaxDecrement parameter.
+    // You might need to override this if you need a counter that's larger than 32 bits.
+    // Must be at least 1.
+    parameter int MaxDecrementWidth = 32,
+    // Must be at least 1. Inclusive. Also the initial value.
+    parameter logic [MaxValueWidth-1:0] MaxValue = 1,
+    // Must be at least 1 and at most MaxValue. Inclusive.
+    parameter logic [MaxDecrementWidth-1:0] MaxDecrement = 1,
     // If 1, then when reinit is asserted together with decr_valid,
     // the decrement is applied to the initial value rather than the current value, i.e.,
     // value_next == initial_value - applicable decr.
@@ -58,8 +68,10 @@ module br_counter_decr #(
     parameter bit EnableSaturate = 0,
     // If 1, then assert there are no valid bits asserted at the end of the test.
     parameter bit EnableAssertFinalNotValid = 1,
-    localparam int ValueWidth = $clog2(MaxValue + 1),
-    localparam int DecrementWidth = $clog2(MaxDecrement + 1)
+    localparam int MaxValueP1Width = MaxValueWidth + 1,
+    localparam int MaxDecrementP1Width = MaxDecrementWidth + 1,
+    localparam int ValueWidth = $clog2(MaxValueP1Width'(MaxValue) + 1),
+    localparam int DecrementWidth = $clog2(MaxDecrementP1Width'(MaxDecrement) + 1)
 ) (
     // Posedge-triggered clock.
     input  logic                      clk,
@@ -76,6 +88,8 @@ module br_counter_decr #(
   //------------------------------------------
   // Integration checks
   //------------------------------------------
+  `BR_ASSERT_STATIC(max_value_width_gte_1_a, MaxValueWidth >= 1)
+  `BR_ASSERT_STATIC(max_decrement_width_gte_1_a, MaxDecrementWidth >= 1)
   `BR_ASSERT_STATIC(max_value_gte_1_a, MaxValue >= 1)
   `BR_ASSERT_STATIC(max_decrement_gte_1_a, MaxDecrement >= 1)
   `BR_ASSERT_STATIC(max_decrement_lte_max_value_a, MaxDecrement <= MaxValue)
@@ -90,7 +104,7 @@ module br_counter_decr #(
   //------------------------------------------
   // Implementation
   //------------------------------------------
-  localparam int MaxValueP1 = MaxValue + 1;
+  localparam logic [MaxValueP1Width-1:0] MaxValueP1 = MaxValue + 1;
   localparam bit IsMaxValueP1PowerOf2 = (MaxValueP1 & (MaxValueP1 - 1)) == 0;
 
   logic [ValueWidth-1:0] value_temp;
@@ -118,7 +132,7 @@ module br_counter_decr #(
     `BR_UNUSED(underflow)
   end else begin : gen_non_power_of_2_wrap
     // For MaxValueP1 not being a power of 2, handle wrap-around explicitly
-    localparam int Margin = ((2 ** ValueWidth) - 1) - MaxValue;
+    localparam logic [ValueWidth-1:0] Margin = ((2 ** ValueWidth) - 1) - MaxValue;
     logic [ValueWidth-1:0] value_temp_wrapped;
     assign value_temp_wrapped = value_temp - Margin;
     assign value_next = underflow ? value_temp_wrapped : value_temp;
@@ -138,7 +152,7 @@ module br_counter_decr #(
   // Value
   `BR_ASSERT_IMPL(value_in_range_a, value <= MaxValue)
   `BR_ASSERT_IMPL(value_next_in_range_a, value_next <= MaxValue)
-  `BR_ASSERT_IMPL(value_next_propagates_a, ##1 value == $past(value_next))
+  `BR_ASSERT_IMPL(value_next_propagates_a, ##1 !$past(rst) |-> value == $past(value_next))
 
   // Underflow corners
   if (EnableSaturate) begin : gen_saturate_impl_checks
@@ -150,7 +164,7 @@ module br_counter_decr #(
 
     // If there is an underflow, we can treat value_temp as a negative number.
     // By adding MaxValue + 1 to it, we should get to the correct wrap-around value.
-    assign value_temp_adjusted = value_temp + MaxValue + 1;
+    assign value_temp_adjusted = value_temp + ValueWidth'(MaxValue + 1);
 `endif
 `endif
     `BR_ASSERT_IMPL(value_underflow_a,

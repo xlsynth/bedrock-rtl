@@ -2,8 +2,10 @@ use std::collections::HashMap;
 use std::fs::File;
 use std::io::{BufReader, Write};
 use std::path::PathBuf;
+use std::str::FromStr;
 
 use clap::Args;
+use num_bigint::BigInt;
 use serde::{Deserialize, Serialize};
 use topstitch::ModDef;
 
@@ -34,7 +36,7 @@ pub struct InstantiateArgs {
 
 #[derive(Serialize, Deserialize)]
 struct Parameters {
-    param_sets: Vec<HashMap<String, i32>>
+    param_sets: Vec<HashMap<String, String>>
 }
 
 fn create_instantiation_wrapper(
@@ -51,8 +53,8 @@ fn create_instantiation_wrapper(
             let inst_name = module.get_name();
             (inst, inst_name)
         } else {
-            let parameters: Vec<(&str, i32)> = param_set.iter().map(
-                |(k, v)| (k.as_str(), v.clone())
+            let parameters: Vec<(&str, BigInt)> = param_set.iter().map(
+                |(k, v)| (k.as_str(), BigInt::from_str(v.as_str()).unwrap())
             ).collect();
             let parameterized_mod = module.parameterize(&parameters, None, None);
             let inst = wrapper.instantiate(&parameterized_mod, None, None);
