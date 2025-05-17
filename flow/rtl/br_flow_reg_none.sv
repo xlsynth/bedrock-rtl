@@ -145,11 +145,11 @@ module br_flow_reg_none #(
   `BR_ASSERT_IMPL(
       pipelined_push_has_1_delay_a,
       (push_valid && push_ready && pop_ready && buf_valid) |=> pop_valid && pop_data == $past
-      (push_data) && pop_data == buf_data)
+      (push_data))
 
   `BR_ASSERT_IMPL(backpressured_push_has_1_delay_a,
                   (push_valid && push_ready && !pop_ready) |=> pop_valid && pop_data == $past
-                  (push_data) && pop_data == buf_data)
+                  (push_data))
 
   // Check buffer state is always passed to the pop interface when valid
   `BR_ASSERT_IMPL(buffer_valid_means_pop_matches_buffer_a,
