@@ -28,8 +28,6 @@
 // It is called "unstable" because the pop interface is not guaranteed
 // to follow the ready-valid stability convention, because the select
 // input could change while the selected push interface is backpressured.
-//
-// TODO(mgottscho): Write spec doc
 
 `include "br_asserts_internal.svh"
 
