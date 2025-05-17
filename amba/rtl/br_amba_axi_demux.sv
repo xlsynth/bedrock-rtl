@@ -167,9 +167,44 @@ module br_amba_axi_demux #(
     output logic [NumSubordinates-1:0] downstream_rready
 );
 
+  typedef struct packed {
+    logic [AddrWidth-1:0] addr;
+    logic [br_amba::AxiBurstLenWidth-1:0] len;
+    logic [br_amba::AxiBurstSizeWidth-1:0] size;
+    logic [br_amba::AxiBurstTypeWidth-1:0] burst;
+    logic [br_amba::AxiCacheWidth-1:0] cache;
+    logic [br_amba::AxiProtWidth-1:0] prot;
+    logic [ARUserWidth-1:0] user;
+  } ar_req_t;
+
+  typedef struct packed {
+    logic [AddrWidth-1:0] addr;
+    logic [br_amba::AxiBurstLenWidth-1:0] len;
+    logic [br_amba::AxiBurstSizeWidth-1:0] size;
+    logic [br_amba::AxiBurstTypeWidth-1:0] burst;
+    logic [br_amba::AxiCacheWidth-1:0] cache;
+    logic [br_amba::AxiProtWidth-1:0] prot;
+    logic [AWUserWidth-1:0] user;
+  } aw_req_t;
+
+  ar_req_t upstream_ar_req;
+  ar_req_t [NumSubordinates-1:0] downstream_ar_req;
+  aw_req_t upstream_aw_req;
+  aw_req_t [NumSubordinates-1:0] downstream_aw_req;
+
   //
   // Read Path
   //
+  assign upstream_ar_req = '{
+          addr: upstream_araddr,
+          len: upstream_arlen,
+          size: upstream_arsize,
+          burst: upstream_arburst,
+          cache: upstream_arcache,
+          prot: upstream_arprot,
+          user: upstream_aruser
+      };
+
 
   br_amba_axi_demux_req_tracker #(
       .NumSubordinates(NumSubordinates),
@@ -200,28 +235,12 @@ module br_amba_axi_demux #(
       .upstream_axvalid(upstream_arvalid),
       .upstream_axid(upstream_arid),
       .upstream_ax_sub_select(upstream_ar_sub_select),
-      .upstream_ax_payload({
-        upstream_araddr,
-        upstream_arlen,
-        upstream_arsize,
-        upstream_arburst,
-        upstream_arcache,
-        upstream_arprot,
-        upstream_aruser
-      }),
+      .upstream_ax_payload(upstream_ar_req),
       //
       .downstream_axready(downstream_arready),
       .downstream_axvalid(downstream_arvalid),
       .downstream_axid(downstream_arid),
-      .downstream_ax_payload({
-        downstream_araddr,
-        downstream_arlen,
-        downstream_arsize,
-        downstream_arburst,
-        downstream_arcache,
-        downstream_arprot,
-        downstream_aruser
-      }),
+      .downstream_ax_payload(downstream_ar_req),
       //
       .upstream_xready(upstream_rready),
       .upstream_xvalid(upstream_rvalid),
@@ -240,9 +259,28 @@ module br_amba_axi_demux #(
       .wdata_flow_sub_select()
   );
 
+  for (genvar i = 0; i < NumSubordinates; i++) begin : gen_downstream_ar_unpack
+    assign downstream_araddr[i]  = downstream_ar_req[i].addr;
+    assign downstream_arlen[i]   = downstream_ar_req[i].len;
+    assign downstream_arsize[i]  = downstream_ar_req[i].size;
+    assign downstream_arburst[i] = downstream_ar_req[i].burst;
+    assign downstream_arcache[i] = downstream_ar_req[i].cache;
+    assign downstream_arprot[i]  = downstream_ar_req[i].prot;
+    assign downstream_aruser[i]  = downstream_ar_req[i].user;
+  end
+
   //
   // Write Path
   //
+  assign upstream_aw_req = '{
+          addr: upstream_awaddr,
+          len: upstream_awlen,
+          size: upstream_awsize,
+          burst: upstream_awburst,
+          cache: upstream_awcache,
+          prot: upstream_awprot,
+          user: upstream_awuser
+      };
 
   typedef struct packed {
     logic [WUserWidth-1:0] user;
@@ -296,28 +334,12 @@ module br_amba_axi_demux #(
       .upstream_axvalid(upstream_awvalid),
       .upstream_axid(upstream_awid),
       .upstream_ax_sub_select(upstream_aw_sub_select),
-      .upstream_ax_payload({
-        upstream_awaddr,
-        upstream_awlen,
-        upstream_awsize,
-        upstream_awburst,
-        upstream_awcache,
-        upstream_awprot,
-        upstream_awuser
-      }),
+      .upstream_ax_payload(upstream_aw_req),
       //
       .downstream_axready(downstream_awready),
       .downstream_axvalid(downstream_awvalid),
       .downstream_axid(downstream_awid),
-      .downstream_ax_payload({
-        downstream_awaddr,
-        downstream_awlen,
-        downstream_awsize,
-        downstream_awburst,
-        downstream_awcache,
-        downstream_awprot,
-        downstream_awuser
-      }),
+      .downstream_ax_payload(downstream_aw_req),
       //
       .upstream_xready(upstream_bready),
       .upstream_xvalid(upstream_bvalid),
@@ -335,6 +357,16 @@ module br_amba_axi_demux #(
       .wdata_flow_valid(wdata_flow_valid),
       .wdata_flow_sub_select(wdata_flow_sub_select)
   );
+
+  for (genvar i = 0; i < NumSubordinates; i++) begin : gen_downstream_aw_unpack
+    assign downstream_awaddr[i]  = downstream_aw_req[i].addr;
+    assign downstream_awlen[i]   = downstream_aw_req[i].len;
+    assign downstream_awsize[i]  = downstream_aw_req[i].size;
+    assign downstream_awburst[i] = downstream_aw_req[i].burst;
+    assign downstream_awcache[i] = downstream_aw_req[i].cache;
+    assign downstream_awprot[i]  = downstream_aw_req[i].prot;
+    assign downstream_awuser[i]  = downstream_aw_req[i].user;
+  end
 
   br_fifo_flops #(
       .Depth(WdataBufferDepth),
@@ -430,6 +462,7 @@ module br_amba_axi_demux #(
   //
   // Implementation Checks
   //
+
   for (genvar i = 0; i < NumSubordinates; i++) begin : gen_downstream_wdata_checks
     br_flow_checks_valid_data_impl #(
         .NumFlows(1),
