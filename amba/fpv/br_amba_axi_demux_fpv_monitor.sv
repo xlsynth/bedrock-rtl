@@ -176,6 +176,8 @@ module br_amba_axi_demux_fpv_monitor #(
   logic [AwAxiIdWidth-1:0] upstream_wid;  // create wid to tag transactions
   // w_buffer signals
   logic w_buffer_empty;
+  logic w_buffer_push;
+  logic w_buffer_pop;
   logic [AwAxiIdWidth-1:0] w_buffer_wid;
   // aw_buffer signals
   logic aw_buffer_empty;
@@ -190,11 +192,11 @@ module br_amba_axi_demux_fpv_monitor #(
   logic same_cyc_aw_w;
   logic same_cyc_ar_r;
 
-  assign buffer_pop = upstream_wvalid & upstream_wready & upstream_wlast && !aw_buffer_empty;
+  assign buffer_pop = !w_buffer_empty && !aw_buffer_empty;
 
   // RTL can accept WdataBufferDepth of wdata without awvalid
   fv_fifo #(
-      .Depth(WdataBufferDepth + MaxAwRunahead),
+      .Depth(WdataBufferDepth),
       .DataWidth(AwAxiIdWidth),
       .Bypass(1)
   ) w_buffer (
@@ -233,11 +235,12 @@ module br_amba_axi_demux_fpv_monitor #(
         w_sub_id[i] <= NumSubordinates;  // set to an impossible value
       end
     end else begin
+      // TODO: bug. if w came bafore aw, this doesn't work
       if (upstream_awvalid) begin
         w_sub_id[upstream_awid] <= upstream_aw_sub_select;
       end
       if (upstream_wvalid & upstream_wlast) begin
-        w_sub_id[upstream_wid] <= SubIdWidth;
+        w_sub_id[upstream_wid] <= NumSubordinates;
       end
     end
   end
@@ -250,7 +253,7 @@ module br_amba_axi_demux_fpv_monitor #(
     end else if (upstream_awvalid) begin
       b_sub_id[upstream_awid] <= upstream_aw_sub_select;
     end else if (upstream_bvalid) begin
-      b_sub_id[upstream_bid] <= SubIdWidth;
+      b_sub_id[upstream_bid] <= NumSubordinates;
     end
   end
 
@@ -262,7 +265,7 @@ module br_amba_axi_demux_fpv_monitor #(
     end else if (upstream_arvalid) begin
       r_sub_id[upstream_arid] <= upstream_ar_sub_select;
     end else if (upstream_rvalid & upstream_rlast) begin
-      r_sub_id[upstream_rid] <= SubIdWidth;
+      r_sub_id[upstream_rid] <= NumSubordinates;
     end
   end
 
@@ -289,7 +292,8 @@ module br_amba_axi_demux_fpv_monitor #(
       .MAX_PENDING_RD(ArMaxOutstanding),
       .MAX_PENDING_WR(AwMaxOutstanding),
       .CONFIG_WDATA_MASKED(0),
-      .CONFIG_RDATA_MASKED(0)
+      .CONFIG_RDATA_MASKED(0),
+      .DATA_BEFORE_CONTROL_ON(0)  //TODO: need to disable
   ) upstream (
       // Global signals
       .aclk    (clk),
