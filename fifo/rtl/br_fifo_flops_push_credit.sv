@@ -60,7 +60,7 @@ module br_fifo_flops_push_credit #(
     // at the cost of an additional cycle of cut-through latency.
     // If 0, pop_valid/pop_data comes directly from push_valid (if bypass is enabled)
     // and/or ram_wr_data.
-    parameter bit RegisterPopOutputs = 1,
+    parameter bit RegisterPopOutputs = 0,
     // Number of tiles in the depth (address) dimension. Must be at least 1 and evenly divide Depth.
     parameter int FlopRamDepthTiles = 1,
     // Number of tiles along the width (data) dimension. Must be at least 1 and evenly divide Width.

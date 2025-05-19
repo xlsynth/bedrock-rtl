@@ -72,7 +72,7 @@ module br_fifo_ctrl_1r1w_push_credit #(
     // at the cost of an additional cycle of cut-through latency.
     // If 0, pop_valid/pop_data comes directly from push_valid (if bypass is enabled)
     // and/or ram_wr_data.
-    parameter bit RegisterPopOutputs = 1,
+    parameter bit RegisterPopOutputs = 0,
     // The number of cycles between when ram_rd_addr_valid is asserted and
     // ram_rd_data_valid is asserted.
     parameter int RamReadLatency = 0,
