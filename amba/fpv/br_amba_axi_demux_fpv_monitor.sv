@@ -293,7 +293,7 @@ module br_amba_axi_demux_fpv_monitor #(
       .MAX_PENDING_WR(AwMaxOutstanding),
       .CONFIG_WDATA_MASKED(0),
       .CONFIG_RDATA_MASKED(0),
-      .DATA_BEFORE_CONTROL_ON(0)  //TODO: need to disable
+      .DATA_BEFORE_CONTROL_ON(0)  //TODO [temp, need to fix]: turn off "w can come before AW"
   ) upstream (
       // Global signals
       .aclk    (clk),
