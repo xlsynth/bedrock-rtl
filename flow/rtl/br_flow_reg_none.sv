@@ -157,7 +157,11 @@ module br_flow_reg_none #(
 
 <<<<<<< HEAD
   // Check buffer state is cleared when popped and not pushed
+<<<<<<< HEAD
   `BR_ASSERT_IMPL(buffer_cleared_when_popped_and_not_pushed_a,
+=======
+  `BR_ASSERT_IMPL(buffer_cleared_when_valid_is_0_a,
+>>>>>>> 4880db4 (Fix formatting)
                   pop_valid && pop_ready && !push_valid |=> !buf_valid)
 
 =======
