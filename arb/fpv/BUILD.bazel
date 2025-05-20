@@ -307,7 +307,6 @@ verilog_elab_test(
 
 br_verilog_fpv_test_tools_suite(
     name = "br_arb_grant_hold_fpv_test_tools_suite",
-    gui = True,
     params = {
         "NumRequesters": [
             "2",
