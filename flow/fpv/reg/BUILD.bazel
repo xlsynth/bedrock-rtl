@@ -200,3 +200,62 @@ br_verilog_fpv_test_tools_suite(
     top = "br_flow_reg_rev",
     deps = [":br_flow_reg_rev_fpv_monitor"],
 )
+
+# Bedrock-RTL Flow Register (None Variant)
+
+verilog_library(
+    name = "br_flow_reg_none_fpv_monitor",
+    srcs = ["br_flow_reg_none_fpv_monitor.sv"],
+    deps = [
+        ":br_flow_reg_basic_fpv_monitor",
+        "//flow/rtl:br_flow_reg_none",
+    ],
+)
+
+verilog_elab_test(
+    name = "br_flow_reg_none_fpv_monitor_elab_test",
+    custom_tcl_header = "//:elab_test_jg_custom_header.verific.tcl",
+    tool = "verific",
+    deps = [":br_flow_reg_none_fpv_monitor"],
+)
+
+br_verilog_fpv_test_tools_suite(
+    name = "br_flow_reg_none_test_suite",
+    illegal_param_combinations = {
+        (
+            "EnableCoverPushBackpressure",
+            "EnableAssertPushValidStability",
+            "EnableAssertPushDataStability",
+        ): [
+            ("0", "0", "1"),
+            ("0", "1", "0"),
+            ("0", "1", "1"),
+            ("1", "0", "1"),
+        ],
+    },
+    params = {
+        "EnableAssertPushDataStability": [
+            "0",
+            "1",
+        ],
+        "EnableAssertPushValidStability": [
+            "0",
+            "1",
+        ],
+        "EnableCoverPushBackpressure": [
+            "0",
+            "1",
+        ],
+        "Width": [
+            "1",
+            "3",
+            "4",
+        ],
+    },
+    tools = {
+        "jg": "br_flow_reg_fpv.jg.tcl",
+        "vcf": "",
+    },
+    top = "br_flow_reg_none",
+    deps = [":br_flow_reg_none_fpv_monitor"],
+)
