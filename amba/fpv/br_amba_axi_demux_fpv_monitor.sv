@@ -164,9 +164,8 @@ module br_amba_axi_demux_fpv_monitor #(
     input logic [NumSubordinates-1:0] downstream_rready
 );
 
-  // TODO: FV MAX_PENDING_RD, MAX_PENDING_WR should be bigger than RTL to test backpressure
-  // MAX_PENDING_WR shiuld be MaxAwRunahead + 1
-  // MAX_PENDING_RD should be ArMaxOutstanding + 1
+  localparam int MaxPendingWr = MaxAwRunahead + 2;
+  localparam int MaxPendingRd = ArMaxOutstanding + 2;
   `BR_ASSUME(aw_legal_awid_a, upstream_awid < AwMaxOutstanding)
   `BR_ASSUME(ar_legal_arid_a, upstream_arid < ArMaxOutstanding)
   `BR_ASSUME(aw_legal_subId_a, upstream_aw_sub_select < NumSubordinates)
@@ -189,8 +188,8 @@ module br_amba_axi_demux_fpv_monitor #(
       .BUSER_WIDTH(BUserWidth),
       .RUSER_WIDTH(RUserWidth),
       .BRESP_WIDTH(br_amba::AxiRespWidth),
-      .MAX_PENDING_RD(ArMaxOutstanding),
-      .MAX_PENDING_WR(AwMaxOutstanding),
+      .MAX_PENDING_RD(MaxPendingRd),
+      .MAX_PENDING_WR(MaxPendingWr),
       .CONFIG_WDATA_MASKED(0),
       .CONFIG_RDATA_MASKED(0),
       .READ_INTERLEAVE_ON(0)
@@ -271,8 +270,8 @@ module br_amba_axi_demux_fpv_monitor #(
         .BUSER_WIDTH(BUserWidth),
         .RUSER_WIDTH(RUserWidth),
         .BRESP_WIDTH(br_amba::AxiRespWidth),
-        .MAX_PENDING_RD(ArMaxOutstanding),
-        .MAX_PENDING_WR(AwMaxOutstanding),
+        .MAX_PENDING_RD(MaxPendingRd),
+        .MAX_PENDING_WR(MaxPendingWr),
         .CONFIG_WDATA_MASKED(0),
         .CONFIG_RDATA_MASKED(0),
         .READ_INTERLEAVE_ON(0)
