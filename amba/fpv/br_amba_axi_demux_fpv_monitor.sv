@@ -172,106 +172,6 @@ module br_amba_axi_demux_fpv_monitor #(
   `BR_ASSUME(aw_legal_subId_a, upstream_aw_sub_select < NumSubordinates)
   `BR_ASSUME(ar_legal_subId_a, upstream_ar_sub_select < NumSubordinates)
 
-  // track awid, arid going to which subordinate
-  logic [AwAxiIdWidth-1:0] upstream_wid;  // create wid to tag transactions
-  // w_buffer signals
-  logic w_buffer_empty;
-  logic w_buffer_push;
-  logic w_buffer_pop;
-  logic [AwAxiIdWidth-1:0] w_buffer_wid;
-  // aw_buffer signals
-  logic aw_buffer_empty;
-  logic [AwAxiIdWidth-1:0] aw_buffer_awid;
-  // pop both buffer together
-  logic buffer_pop;
-  // w_cntr tracks number of wvalids associated with a awvalid
-  logic [br_amba::AxiBurstLenWidth:0] w_cntr;
-  logic [AwMaxOutstanding-1:0][SubIdWidth:0] w_sub_id;
-  logic [AwMaxOutstanding-1:0][SubIdWidth:0] b_sub_id;
-  logic [ArMaxOutstanding-1:0][SubIdWidth:0] r_sub_id;
-  logic same_cyc_aw_w;
-  logic same_cyc_ar_r;
-
-  assign buffer_pop = !w_buffer_empty && !aw_buffer_empty;
-
-  // RTL can accept WdataBufferDepth of wdata without awvalid
-  fv_fifo #(
-      .Depth(WdataBufferDepth),
-      .DataWidth(AwAxiIdWidth),
-      .Bypass(1)
-  ) w_buffer (
-      .clk(clk),
-      .rst(rst),
-      .push(upstream_wvalid & upstream_wready & upstream_wlast),
-      .push_data(upstream_wid),
-      .pop(buffer_pop),
-      .pop_data(w_buffer_wid),
-      .empty(w_buffer_empty),
-      .full()
-  );
-
-  // RTL can accept MaxAwRunahead of awid without wvalid
-  fv_fifo #(
-      .Depth(MaxAwRunahead),
-      .DataWidth(AwAxiIdWidth),
-      .Bypass(1)
-  ) aw_buffer (
-      .clk(clk),
-      .rst(rst),
-      .push(upstream_awvalid & upstream_awready),
-      .push_data(upstream_awid),
-      .pop(buffer_pop),
-      .pop_data(aw_buffer_awid),
-      .empty(aw_buffer_empty),
-      .full()
-  );
-
-  `BR_ASSUME(create_upstream_awid_a, w_buffer_wid == aw_buffer_awid)
-
-  // create subordinate id for w,b,r
-  always_ff @(posedge clk) begin
-    if (rst) begin
-      for (int i = 0; i < AwMaxOutstanding; i++) begin
-        w_sub_id[i] <= NumSubordinates;  // set to an impossible value
-      end
-    end else begin
-      // TODO: bug. if w came bafore aw, this doesn't work
-      if (upstream_awvalid) begin
-        w_sub_id[upstream_awid] <= upstream_aw_sub_select;
-      end
-      if (upstream_wvalid & upstream_wlast) begin
-        w_sub_id[upstream_wid] <= NumSubordinates;
-      end
-    end
-  end
-
-  always_ff @(posedge clk) begin
-    if (rst) begin
-      for (int i = 0; i < AwMaxOutstanding; i++) begin
-        b_sub_id[i] <= NumSubordinates;  // set to an impossible value
-      end
-    end else if (upstream_awvalid) begin
-      b_sub_id[upstream_awid] <= upstream_aw_sub_select;
-    end else if (upstream_bvalid) begin
-      b_sub_id[upstream_bid] <= NumSubordinates;
-    end
-  end
-
-  always_ff @(posedge clk) begin
-    if (rst) begin
-      for (int i = 0; i < ArMaxOutstanding; i++) begin
-        r_sub_id[i] <= NumSubordinates;  // set to an impossible value
-      end
-    end else if (upstream_arvalid) begin
-      r_sub_id[upstream_arid] <= upstream_ar_sub_select;
-    end else if (upstream_rvalid & upstream_rlast) begin
-      r_sub_id[upstream_rid] <= NumSubordinates;
-    end
-  end
-
-  assign same_cyc_ar_r = (upstream_arvalid && upstream_rvalid && (upstream_arid == upstream_rid));
-  assign same_cyc_aw_w = (upstream_awvalid && upstream_wvalid && (upstream_awid == upstream_wid));
-
   // upstream itself should also be AXI compliant
   axi4_master #(
       .ID_WIDTH_W(AwAxiIdWidth),
@@ -293,8 +193,7 @@ module br_amba_axi_demux_fpv_monitor #(
       .MAX_PENDING_WR(AwMaxOutstanding),
       .CONFIG_WDATA_MASKED(0),
       .CONFIG_RDATA_MASKED(0),
-      .READ_INTERLEAVE_ON(0),
-      .DATA_BEFORE_CONTROL_ON(0)  //TODO [temp, need to fix]: turn off "w can come before AW"
+      .READ_INTERLEAVE_ON(0)
   ) upstream (
       // Global signals
       .aclk    (clk),
@@ -354,111 +253,85 @@ module br_amba_axi_demux_fpv_monitor #(
   );
 
   // for each upstream and downstream pair, they should be AXI compliant
-  for (genvar i = 0; i < NumSubordinates; i++) begin : gen_pair
-    up_down_fv_check #(
-        .AwAxiIdWidth(AwAxiIdWidth),
-        .ArAxiIdWidth(ArAxiIdWidth),
-        .AwMaxOutstanding(AwMaxOutstanding),
-        .ArMaxOutstanding(ArMaxOutstanding),
-        .SingleIdOnly(SingleIdOnly),
-        .WdataBufferDepth(WdataBufferDepth),
-        .MaxAwRunahead(MaxAwRunahead),
-        .AddrWidth(AddrWidth),
-        .DataWidth(DataWidth),
-        .AWUserWidth(AWUserWidth),
-        .WUserWidth(WUserWidth),
-        .ARUserWidth(ARUserWidth),
-        .BUserWidth(BUserWidth),
-        .RUserWidth(RUserWidth)
-    ) up_down_pair (
-        .clk,
-        .rst,
-        // aw
-        .upstream_awaddr,
-        .upstream_awid,
-        .upstream_awlen,
-        .upstream_awsize,
-        .upstream_awburst,
-        .upstream_awcache,
-        .upstream_awprot,
-        .upstream_awuser,
-        .upstream_awvalid(upstream_awvalid && (upstream_aw_sub_select == i)),
-        .upstream_awready,
-        // w
-        .upstream_wdata,
-        .upstream_wstrb,
-        .upstream_wuser,
-        .upstream_wlast,
-        .upstream_wvalid(upstream_wvalid &&
-                        (same_cyc_aw_w ? (upstream_aw_sub_select == i) :
-                        w_sub_id[upstream_wid] == i)),
-        .upstream_wready,
-        // b
-        .upstream_bid,
-        .upstream_buser,
-        .upstream_bresp,
-        .upstream_bvalid(upstream_bvalid && (b_sub_id[upstream_bid] == i)),
-        .upstream_bready,
-        // ar
-        .upstream_araddr,
-        .upstream_arid,
-        .upstream_arlen,
-        .upstream_arsize,
-        .upstream_arburst,
-        .upstream_arcache,
-        .upstream_arprot,
-        .upstream_aruser,
-        .upstream_arvalid(upstream_arvalid && (upstream_ar_sub_select == i)),
-        .upstream_arready,
-        // r
-        .upstream_rid,
-        .upstream_rdata,
-        .upstream_ruser,
-        .upstream_rresp,
-        .upstream_rlast,
-        .upstream_rvalid(upstream_rvalid &&
-                        (same_cyc_ar_r ? (upstream_ar_sub_select == i) :
-                        r_sub_id[upstream_rid] == i)),
-        .upstream_rready,
-        // downstream
-        .downstream_awaddr(downstream_awaddr[i]),
-        .downstream_awid(downstream_awid[i]),
-        .downstream_awlen(downstream_awlen[i]),
-        .downstream_awsize(downstream_awsize[i]),
-        .downstream_awburst(downstream_awburst[i]),
-        .downstream_awcache(downstream_awcache[i]),
-        .downstream_awprot(downstream_awprot[i]),
-        .downstream_awuser(downstream_awuser[i]),
-        .downstream_awvalid(downstream_awvalid[i]),
-        .downstream_awready(downstream_awready[i]),
-        .downstream_wdata(downstream_wdata[i]),
-        .downstream_wstrb(downstream_wstrb[i]),
-        .downstream_wuser(downstream_wuser[i]),
-        .downstream_wlast(downstream_wlast[i]),
-        .downstream_wvalid(downstream_wvalid[i]),
-        .downstream_wready(downstream_wready[i]),
-        .downstream_bid(downstream_bid[i]),
-        .downstream_buser(downstream_buser[i]),
-        .downstream_bresp(downstream_bresp[i]),
-        .downstream_bvalid(downstream_bvalid[i]),
-        .downstream_bready(downstream_bready[i]),
-        .downstream_araddr(downstream_araddr[i]),
-        .downstream_arid(downstream_arid[i]),
-        .downstream_arlen(downstream_arlen[i]),
-        .downstream_arsize(downstream_arsize[i]),
-        .downstream_arburst(downstream_arburst[i]),
-        .downstream_arcache(downstream_arcache[i]),
-        .downstream_arprot(downstream_arprot[i]),
-        .downstream_aruser(downstream_aruser[i]),
-        .downstream_arvalid(downstream_arvalid[i]),
-        .downstream_arready(downstream_arready[i]),
-        .downstream_rid(downstream_rid[i]),
-        .downstream_rdata(downstream_rdata[i]),
-        .downstream_ruser(downstream_ruser[i]),
-        .downstream_rresp(downstream_rresp[i]),
-        .downstream_rlast(downstream_rlast[i]),
-        .downstream_rvalid(downstream_rvalid[i]),
-        .downstream_rready(downstream_rready[i])
+  for (genvar i = 0; i < NumSubordinates; i++) begin : gen_sub
+    // downstream
+    axi4_slave #(
+        .ID_WIDTH_W(AwAxiIdWidth),
+        .ID_WIDTH_R(ArAxiIdWidth),
+        .ADDR_WIDTH(AddrWidth),
+        .LEN_WIDTH(br_amba::AxiBurstLenWidth),
+        .SIZE_WIDTH(br_amba::AxiBurstSizeWidth),
+        .BURST_WIDTH(br_amba::AxiBurstTypeWidth),
+        .PROT_WIDTH(br_amba::AxiProtWidth),
+        .CACHE_WIDTH(br_amba::AxiCacheWidth),
+        .DATA_WIDTH(DataWidth),
+        .AWUSER_WIDTH(AWUserWidth),
+        .ARUSER_WIDTH(ARUserWidth),
+        .WUSER_WIDTH(WUserWidth),
+        .BUSER_WIDTH(BUserWidth),
+        .RUSER_WIDTH(RUserWidth),
+        .BRESP_WIDTH(br_amba::AxiRespWidth),
+        .MAX_PENDING_RD(ArMaxOutstanding),
+        .MAX_PENDING_WR(AwMaxOutstanding),
+        .CONFIG_WDATA_MASKED(0),
+        .CONFIG_RDATA_MASKED(0),
+        .READ_INTERLEAVE_ON(0)
+    ) downstream (
+        // Global signals
+        .aclk    (clk),
+        .aresetn (!rst),
+        .csysreq ('d1),
+        .csysack ('d1),
+        .cactive ('d1),
+        // Write Address Channel
+        .awvalid (downstream_awvalid[i]),
+        .awready (downstream_awready[i]),
+        .awid    (downstream_awid[i]),
+        .awaddr  (downstream_awaddr[i]),
+        .awlen   (downstream_awlen[i]),
+        .awsize  (downstream_awsize[i]),
+        .awburst (downstream_awburst[i]),
+        .awuser  (downstream_awuser[i]),
+        .awprot  (downstream_awprot[i]),
+        .awlock  ('d0),
+        .awcache (downstream_awcache[i]),
+        .awqos   ('d0),
+        .awregion('d0),
+        // Write Channel
+        .wvalid  (downstream_wvalid[i]),
+        .wready  (downstream_wready[i]),
+        .wdata   (downstream_wdata[i]),
+        .wstrb   (downstream_wstrb[i]),
+        .wlast   (downstream_wlast[i]),
+        .wuser   (downstream_wuser[i]),
+        // Write Response channel
+        .bvalid  (downstream_bvalid[i]),
+        .bready  (downstream_bready[i]),
+        .bid     (downstream_bid[i]),
+        .bresp   (downstream_bresp[i]),
+        .buser   (downstream_buser[i]),
+        // Read Address Channel
+        .arvalid (downstream_arvalid[i]),
+        .arready (downstream_arready[i]),
+        .arid    (downstream_arid[i]),
+        .araddr  (downstream_araddr[i]),
+        .arlen   (downstream_arlen[i]),
+        .arsize  (downstream_arsize[i]),
+        .arburst (downstream_arburst[i]),
+        .aruser  (downstream_aruser[i]),
+        .arprot  (downstream_arprot[i]),
+        .arlock  ('d0),
+        .arcache (downstream_arcache[i]),
+        .arqos   ('d0),
+        .arregion('d0),
+        // Read Channel
+        .rvalid  (downstream_rvalid[i]),
+        .rready  (downstream_rready[i]),
+        .ruser   (downstream_ruser[i]),
+        .rid     (downstream_rid[i]),
+        .rdata   (downstream_rdata[i]),
+        .rresp   (downstream_rresp[i]),
+        .rlast   (downstream_rlast[i])
     );
   end
 

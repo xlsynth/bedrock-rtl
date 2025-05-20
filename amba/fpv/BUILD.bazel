@@ -415,7 +415,6 @@ verilog_library(
     name = "br_amba_axi_demux_fpv_monitor",
     srcs = ["br_amba_axi_demux_fpv_monitor.sv"],
     deps = [
-        ":up_down_fv_check",
         "//amba/rtl:br_amba_axi_demux",
         "//fpv/lib:fv_fifo",
     ],
