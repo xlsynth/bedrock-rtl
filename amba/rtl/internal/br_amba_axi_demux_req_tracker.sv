@@ -374,8 +374,11 @@ module br_amba_axi_demux_req_tracker #(
   // 1. The response is valid.
   // 2. The downstream port is at the head of the tracking FIFO for the presented response ID.
   assign ds_port_req = downstream_xvalid_reg & ds_port_id_match;
+
+  // Hold the grant unless last is asserted and the response is valid.
   for (genvar i = 0; i < NumSubordinates; i++) begin : gen_ds_port_gnt_hold
-    assign ds_port_gnt_hold[i] = ~downstream_x_resp_payload_reg[i].last;
+    assign ds_port_gnt_hold[i] = ~(downstream_x_resp_payload_reg[i].last
+                                  && downstream_xvalid_reg[i]);
   end
 
   // LRU arbiter w/ grant hold circuit
