@@ -410,7 +410,7 @@ module br_amba_axi_demux_req_tracker #(
 
   // Ready/valid joining
   assign downstream_xready_reg = ds_port_gnt & {NumSubordinates{upstream_xready_pre}};
-  assign upstream_xvalid_pre = |ds_port_req;
+  assign upstream_xvalid_pre = |(ds_port_req & ds_port_gnt);
   assign resp_tracking_fifo_pop_ready = upstream_x_resp_payload_pre.last
                                         && upstream_xvalid_pre
                                         && upstream_xready_pre;
@@ -442,7 +442,10 @@ module br_amba_axi_demux_req_tracker #(
 
   // Output buffer (to cut upstream_xready -> upstream_xvalid path)
   br_flow_reg_fwd #(
-      .Width(AxiIdWidth + RespPayloadWidth + 1)
+      .Width(AxiIdWidth + RespPayloadWidth + 1),
+      // If a higher-priority downstream port with a different ID becomes valid,
+      // the mux select can change, resulting in data not remaining stable.
+      .EnableAssertPushDataStability(0)
   ) br_flow_reg_fwd_upstream_resp (
       .clk,
       .rst,
