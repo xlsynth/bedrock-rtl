@@ -30,16 +30,6 @@ verilog_library(
     ],
 )
 
-# 1 pair of upstream, downstream basic checker
-
-verilog_library(
-    name = "up_down_fv_check",
-    srcs = ["up_down_fv_check.sv"],
-    deps = [
-        "//amba/rtl:br_amba_axi_demux",
-    ],
-)
-
 # AXI4-Lite Default Target
 
 verilog_library(
