@@ -287,3 +287,36 @@ br_verilog_fpv_test_tools_suite(
     top = "br_arb_multi_rr",
     deps = [":br_arb_multi_rr_fpv_monitor"],
 )
+
+# Bedrock-RTL Arbiter Grant Holder
+
+verilog_library(
+    name = "br_arb_grant_hold_fpv_monitor",
+    srcs = ["br_arb_grant_hold_fpv_monitor.sv"],
+    deps = [
+        "//arb/rtl:br_arb_grant_hold",
+        "//macros:br_fv",
+    ],
+)
+
+verilog_elab_test(
+    name = "br_arb_grant_hold_fpv_monitor_elab_test",
+    tool = "verific",
+    deps = [":br_arb_grant_hold_fpv_monitor"],
+)
+
+br_verilog_fpv_test_tools_suite(
+    name = "br_arb_grant_hold_fpv_test_tools_suite",
+    params = {
+        "NumRequesters": [
+            "2",
+            "5",
+            "6",
+        ],
+    },
+    tools = {
+        "jg": "",
+    },
+    top = "br_arb_grant_hold",
+    deps = [":br_arb_grant_hold_fpv_monitor"],
+)
