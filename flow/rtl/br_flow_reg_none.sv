@@ -156,7 +156,7 @@ module br_flow_reg_none #(
                   buf_valid |-> pop_valid && pop_data == buf_data)
 
   // Check buffer state is cleared when popped and not pushed
-  `BR_ASSERT_IMPL(buffer_cleared_when_valid_is_0_a,
+  `BR_ASSERT_IMPL(buffer_cleared_when_popped_and_not_pushed_a,
                   pop_valid && pop_ready && !push_valid |=> !buf_valid)
 
 endmodule
