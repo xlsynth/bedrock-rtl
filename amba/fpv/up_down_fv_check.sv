@@ -153,7 +153,8 @@ module up_down_fv_check #(
       .MAX_PENDING_RD(ArMaxOutstanding),
       .MAX_PENDING_WR(AwMaxOutstanding),
       .CONFIG_WDATA_MASKED(0),
-      .CONFIG_RDATA_MASKED(0)
+      .CONFIG_RDATA_MASKED(0),
+      .READ_INTERLEAVE_ON(0)
   ) upstream (
       // Global signals
       .aclk    (clk),
@@ -232,7 +233,8 @@ module up_down_fv_check #(
       .MAX_PENDING_RD(ArMaxOutstanding),
       .MAX_PENDING_WR(AwMaxOutstanding),
       .CONFIG_WDATA_MASKED(0),
-      .CONFIG_RDATA_MASKED(0)
+      .CONFIG_RDATA_MASKED(0),
+      .READ_INTERLEAVE_ON(0)
   ) downstream (
       // Global signals
       .aclk    (clk),
