@@ -29,19 +29,23 @@ module br_arb_grant_hold_fpv_monitor #(
     input logic enable_priority_update,
     // Connections to the arbiter.
     input logic [NumRequesters-1:0] grant_from_arb,
-    output logic enable_priority_update_to_arb,
+    input logic enable_priority_update_to_arb,
     // The final grant signal post-hold.
-    output logic [NumRequesters-1:0] grant
+    input logic [NumRequesters-1:0] grant
 );
 
+  // ----------FV assumptions----------
   // pick a random index for assertion
   logic [$clog2(NumRequesters)-1:0] i;
   `BR_ASSUME(index_stable_a, $stable(i) && (i < NumRequesters))
+  `BR_ASSUME(grant_onehot_a, $onehot0(grant_from_arb))
 
-  //`BR_ASSERT(grant_stable_if_hold_a, grant_hold[i] |->)
+  // ----------FV assertions----------
+  `BR_ASSERT(grant_stable_if_hold_a, ##1 grant_hold[i] && grant_from_arb[i] |=> $stable(grant))
+  `BR_ASSERT(enable_priority_hold_a, |grant_hold |=> enable_priority_update_to_arb == 1'b0)
+  `BR_ASSERT(enable_priority_a,
+             ~|grant_hold |=> enable_priority_update_to_arb == enable_priority_update)
 
 endmodule : br_arb_grant_hold_fpv_monitor
 
-bind br_arb_grant_hold_fpv br_arb_grant_hold_fpv_monitor #(
-    .NumRequesters(NumRequesters)
-) monitor (.*);
+bind br_arb_grant_hold br_arb_grant_hold_fpv_monitor #(.NumRequesters(NumRequesters)) monitor (.*);
