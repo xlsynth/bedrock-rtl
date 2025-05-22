@@ -83,7 +83,7 @@ module br_amba_axi_demux_req_tracker #(
 );
 
   localparam int NumIds = SingleIdOnly ? 1 : 2 ** AxiIdWidth;
-  localparam int MaxOutstandingWidth = $clog2(MaxOutstandingPerId);
+  localparam int MaxOutstandingWidth = $clog2(MaxOutstandingPerId+1);
 
   //
   // Integration checks
