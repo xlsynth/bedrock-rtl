@@ -28,9 +28,9 @@ module br_amba_axi_demux #(
     // Width of the AXI ID field for the read path.
     parameter int ArAxiIdWidth = 1,
     // Maximum number of outstanding write transactions per ID.
-    parameter int AwMaxOutstandingPerId = 1,
+    parameter int AwMaxOutstandingPerId = 3,
     // Maximum number of outstanding read transactions per ID.
-    parameter int ArMaxOutstandingPerId = 1,
+    parameter int ArMaxOutstandingPerId = 3,
     // If 1, then only a single ID is supported on both the write and read paths.
     parameter int SingleIdOnly = 0,
     // Depth of the write data buffer. This number of WDATA pushes can be buffered
