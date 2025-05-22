@@ -170,6 +170,11 @@ module br_amba_axi_demux_fpv_monitor #(
   `BR_ASSUME(ar_legal_arid_a, upstream_arid < ArMaxOutstanding)
   `BR_ASSUME(aw_legal_subId_a, upstream_aw_sub_select < NumSubordinates)
   `BR_ASSUME(ar_legal_subId_a, upstream_ar_sub_select < NumSubordinates)
+  // aw/ar select should be stable when upstream is not ready
+  `BR_ASSUME(aw_select_stable_a, upstream_awvalid && !upstream_awready |=> $stable
+                                 (upstream_aw_sub_select))
+  `BR_ASSUME(ar_select_stable_a, upstream_arvalid && !upstream_arready |=> $stable
+                                 (upstream_ar_sub_select))
 
   // upstream itself should also be AXI compliant
   axi4_master #(
