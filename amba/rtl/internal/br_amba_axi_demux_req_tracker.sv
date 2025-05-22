@@ -378,7 +378,8 @@ module br_amba_axi_demux_req_tracker #(
   // Hold the grant unless last is asserted and the response is valid.
   for (genvar i = 0; i < NumSubordinates; i++) begin : gen_ds_port_gnt_hold
     assign ds_port_gnt_hold[i] = ~(downstream_x_resp_payload_reg[i].last
-                                  && downstream_xvalid_reg[i]);
+                                  && downstream_xvalid_reg[i]
+                                  && upstream_xready_pre);
   end
 
   // LRU arbiter w/ grant hold circuit

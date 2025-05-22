@@ -205,6 +205,26 @@ module br_amba_axi_demux #(
           user: upstream_aruser
       };
 
+  typedef struct packed {
+    logic [RUserWidth-1:0] user;
+    logic [DataWidth-1:0] data;
+    logic [br_amba::AxiRespWidth-1:0] resp;
+  } rdata_bundle_t;
+
+  rdata_bundle_t upstream_rdata_bundle;
+  rdata_bundle_t [NumSubordinates-1:0] downstream_rdata_bundle;
+
+  for (genvar i = 0; i < NumSubordinates; i++) begin : gen_downstream_rdata_bundle
+    assign downstream_rdata_bundle[i] = '{
+            user: downstream_ruser[i],
+            data: downstream_rdata[i],
+            resp: downstream_rresp[i]
+        };
+  end
+
+  assign upstream_rdata = upstream_rdata_bundle.data;
+  assign upstream_ruser = upstream_rdata_bundle.user;
+  assign upstream_rresp = upstream_rdata_bundle.resp;
 
   br_amba_axi_demux_req_tracker #(
       .NumSubordinates(NumSubordinates),
@@ -246,13 +266,13 @@ module br_amba_axi_demux #(
       .upstream_xvalid(upstream_rvalid),
       .upstream_xid(upstream_rid),
       .upstream_xlast(upstream_rlast),
-      .upstream_x_payload({upstream_rdata, upstream_ruser, upstream_rresp}),
+      .upstream_x_payload(upstream_rdata_bundle),
       //
       .downstream_xready(downstream_rready),
       .downstream_xvalid(downstream_rvalid),
       .downstream_xid(downstream_rid),
       .downstream_xlast(downstream_rlast),
-      .downstream_x_payload({downstream_rdata, downstream_ruser, downstream_rresp}),
+      .downstream_x_payload(downstream_rdata_bundle),
       //
       .wdata_flow_ready(1'b1),
       .wdata_flow_valid(),
@@ -288,6 +308,21 @@ module br_amba_axi_demux #(
     logic [StrobeWidth-1:0] strb;
     logic last;
   } wdata_req_t;
+
+  typedef struct packed {
+    logic [BUserWidth-1:0] user;
+    logic [br_amba::AxiRespWidth-1:0] resp;
+  } bresp_bundle_t;
+
+  bresp_bundle_t upstream_bresp_bundle;
+  bresp_bundle_t [NumSubordinates-1:0] downstream_bresp_bundle;
+
+  for (genvar i = 0; i < NumSubordinates; i++) begin : gen_downstream_bresp_bundle
+    assign downstream_bresp_bundle[i] = '{user: downstream_buser[i], resp: downstream_bresp[i]};
+  end
+
+  assign upstream_bresp = upstream_bresp_bundle.resp;
+  assign upstream_buser = upstream_bresp_bundle.user;
 
   logic wdata_flow_ready;
   logic wdata_flow_valid;
@@ -345,13 +380,13 @@ module br_amba_axi_demux #(
       .upstream_xvalid(upstream_bvalid),
       .upstream_xid(upstream_bid),
       .upstream_xlast(),
-      .upstream_x_payload({upstream_buser, upstream_bresp}),
+      .upstream_x_payload(upstream_bresp_bundle),
       //
       .downstream_xready(downstream_bready),
       .downstream_xvalid(downstream_bvalid),
       .downstream_xid(downstream_bid),
       .downstream_xlast({NumSubordinates{1'b1}}),
-      .downstream_x_payload({downstream_buser, downstream_bresp}),
+      .downstream_x_payload(downstream_bresp_bundle),
       //
       .wdata_flow_ready(wdata_flow_ready),
       .wdata_flow_valid(wdata_flow_valid),
@@ -401,7 +436,9 @@ module br_amba_axi_demux #(
 
   br_fifo_flops #(
       .Depth(MaxAwRunahead),
-      .Width(SubIdWidth)
+      .Width(SubIdWidth),
+      // Valid can drop if downstream deasserts ready.
+      .EnableAssertPushValidStability(0)
   ) br_fifo_flops_wdata_flow_buffer (
       .clk,
       .rst,
