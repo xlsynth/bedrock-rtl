@@ -140,10 +140,14 @@ module br_amba_axi_demux_fpv_monitor #(
     input logic [NumSubordinates-1:0] downstream_rready
 );
 
-  localparam int MaxPendingWr = MaxAwRunahead + 2;
-  localparam int MaxPendingRd = ArMaxOutstandingPerId + 2;
-  `BR_ASSUME(aw_legal_awid_a, upstream_awid < AwMaxOutstandingPerId)
-  `BR_ASSUME(ar_legal_arid_a, upstream_arid < ArMaxOutstandingPerId)
+  // overall MaxOustanding
+  localparam int NumAwId = (2 << AwAxiIdWidth);
+  localparam int NumArId = (2 << ArAxiIdWidth);
+  localparam int MaxPendingWr = (NumAwId * AwMaxOutstandingPerId) + 2;
+  localparam int MaxPendingRd = (NumArId * ArMaxOutstandingPerId) + 2;
+  localparam int AwCntrWidth = $clog2(MaxPendingWr);
+  localparam int ArCntrWidth = $clog2(MaxPendingRd);
+
   `BR_ASSUME(aw_legal_subId_a, upstream_aw_sub_select < NumSubordinates)
   `BR_ASSUME(ar_legal_subId_a, upstream_ar_sub_select < NumSubordinates)
   // aw/ar select should be stable when upstream is not ready
@@ -152,7 +156,28 @@ module br_amba_axi_demux_fpv_monitor #(
   `BR_ASSUME(ar_select_stable_a, upstream_arvalid && !upstream_arready |=> $stable
                                  (upstream_ar_sub_select))
 
-  // upstream itself should also be AXI compliant
+
+  // for each Id, the number of outstanding transactions should be less than MaxOutstandingPerId
+  logic [NumAwId-1:0][AwCntrWidth-1:0] AwCntr;
+  logic [NumArId-1:0][ArCntrWidth-1:0] ArCntr;
+
+  for (genvar i = 0; i < NumAwId; i++) begin : gen_aw
+    `BR_REG(AwCntr[i],
+            AwCntr[i] +
+            (upstream_awvalid && upstream_awready && (upstream_awid == i)) -
+            (upstream_bvalid && upstream_bready && (upstream_bid == i)))
+    `BR_ASSUME(max_aw_perId_a, AwCntr[i] <= AwMaxOutstandingPerId)
+  end
+
+  for (genvar i = 0; i < NumArId; i++) begin : gen_ar
+    `BR_REG(ArCntr[i],
+            ArCntr[i] +
+            (upstream_arvalid && upstream_arready && (upstream_arid == i)) -
+            (upstream_rvalid && upstream_rready && upstream_rlast && (upstream_rid == i)))
+    `BR_ASSUME(max_ar_perId_a, ArCntr[i] <= ArMaxOutstandingPerId)
+  end
+
+  // upstream itself should also be AXI compliants
   axi4_master #(
       .ID_WIDTH_W(AwAxiIdWidth),
       .ID_WIDTH_R(ArAxiIdWidth),
