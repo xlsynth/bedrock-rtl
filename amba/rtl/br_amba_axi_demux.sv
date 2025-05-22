@@ -27,10 +27,10 @@ module br_amba_axi_demux #(
     parameter int AwAxiIdWidth = 1,
     // Width of the AXI ID field for the read path.
     parameter int ArAxiIdWidth = 1,
-    // Maximum number of outstanding write transactions.
-    parameter int AwMaxOutstanding = 3,
-    // Maximum number of outstanding read transactions.
-    parameter int ArMaxOutstanding = 3,
+    // Maximum number of outstanding write transactions per ID.
+    parameter int AwMaxOutstandingPerId = 1,
+    // Maximum number of outstanding read transactions per ID.
+    parameter int ArMaxOutstandingPerId = 1,
     // If 1, then only a single ID is supported on both the write and read paths.
     parameter int SingleIdOnly = 0,
     // Depth of the write data buffer. This number of WDATA pushes can be buffered
@@ -53,30 +53,7 @@ module br_amba_axi_demux #(
     parameter int BUserWidth = 1,
     // Width of the AXI RUSER field.
     parameter int RUserWidth = 1,
-    // Number of pipeline stages to use for the pointer RAM read
-    // data in the response tracker FIFO. Has no effect if SingleIdOnly == 1.
-    parameter int FifoPointerRamReadDataDepthStages = 0,
-    // Number of pipeline stages to use for the data RAM read data
-    // in the response tracker FIFO. Has no effect if SingleIdOnly == 1.
-    parameter int FifoDataRamReadDataDepthStages = 0,
-    // Number of pipeline stages to use for the pointer RAM address
-    // in the response tracker FIFO. Has no effect if SingleIdOnly == 1.
-    parameter int FifoPointerRamAddressDepthStages = 1,
-    // Number of pipeline stages to use for the data RAM address
-    // in the response tracker FIFO. Has no effect if SingleIdOnly == 1.
-    parameter int FifoDataRamAddressDepthStages = 1,
-    // Number of linked lists per FIFO in the response tracker FIFO. Has
-    // no effect if SingleIdOnly == 1.
-    parameter int FifoNumLinkedListsPerFifo = 2,
-    // Number of pipeline stages to use for the staging buffer
-    // in the response tracker FIFO. Has no effect if SingleIdOnly == 1.
-    parameter int FifoStagingBufferDepth = 2,
-    // Number of pipeline stages to use for the pop outputs
-    // in the response tracker FIFO. Has no effect if SingleIdOnly == 1.
-    parameter int FifoRegisterPopOutputs = 1,
-    // Number of pipeline stages to use for the deallocation
-    // in the response tracker FIFO. Has no effect if SingleIdOnly == 1.
-    parameter int FifoRegisterDeallocation = 1,
+    //
     localparam int StrobeWidth = DataWidth / 8,
     localparam int SubIdWidth = $clog2(NumSubordinates)
 ) (
@@ -229,7 +206,7 @@ module br_amba_axi_demux #(
   br_amba_axi_demux_req_tracker #(
       .NumSubordinates(NumSubordinates),
       .AxiIdWidth(ArAxiIdWidth),
-      .MaxOutstanding(ArMaxOutstanding),
+      .MaxOutstandingPerId(ArMaxOutstandingPerId),
       .ReqPayloadWidth(AddrWidth
                         + br_amba::AxiBurstLenWidth
                         + br_amba::AxiBurstSizeWidth
@@ -238,15 +215,7 @@ module br_amba_axi_demux #(
                         + br_amba::AxiProtWidth
                         + ARUserWidth),
       .RespPayloadWidth(DataWidth + RUserWidth + br_amba::AxiRespWidth),
-      .SingleIdOnly(SingleIdOnly),
-      .FifoPointerRamReadDataDepthStages(FifoPointerRamReadDataDepthStages),
-      .FifoDataRamReadDataDepthStages(FifoDataRamReadDataDepthStages),
-      .FifoPointerRamAddressDepthStages(FifoPointerRamAddressDepthStages),
-      .FifoDataRamAddressDepthStages(FifoDataRamAddressDepthStages),
-      .FifoNumLinkedListsPerFifo(FifoNumLinkedListsPerFifo),
-      .FifoStagingBufferDepth(FifoStagingBufferDepth),
-      .FifoRegisterPopOutputs(FifoRegisterPopOutputs),
-      .FifoRegisterDeallocation(FifoRegisterDeallocation)
+      .SingleIdOnly(SingleIdOnly)
   ) br_amba_axi_demux_req_tracker (
       .clk,
       .rst,
@@ -343,7 +312,7 @@ module br_amba_axi_demux #(
   br_amba_axi_demux_req_tracker #(
       .NumSubordinates(NumSubordinates),
       .AxiIdWidth(AwAxiIdWidth),
-      .MaxOutstanding(AwMaxOutstanding),
+      .MaxOutstandingPerId(AwMaxOutstandingPerId),
       .ReqPayloadWidth(AddrWidth
                         + br_amba::AxiBurstLenWidth
                         + br_amba::AxiBurstSizeWidth
@@ -352,15 +321,7 @@ module br_amba_axi_demux #(
                         + br_amba::AxiProtWidth
                         + AWUserWidth),
       .RespPayloadWidth(BUserWidth + br_amba::AxiRespWidth),
-      .SingleIdOnly(SingleIdOnly),
-      .FifoPointerRamReadDataDepthStages(FifoPointerRamReadDataDepthStages),
-      .FifoDataRamReadDataDepthStages(FifoDataRamReadDataDepthStages),
-      .FifoPointerRamAddressDepthStages(FifoPointerRamAddressDepthStages),
-      .FifoDataRamAddressDepthStages(FifoDataRamAddressDepthStages),
-      .FifoNumLinkedListsPerFifo(FifoNumLinkedListsPerFifo),
-      .FifoStagingBufferDepth(FifoStagingBufferDepth),
-      .FifoRegisterPopOutputs(FifoRegisterPopOutputs),
-      .FifoRegisterDeallocation(FifoRegisterDeallocation)
+      .SingleIdOnly(SingleIdOnly)
   ) br_amba_axi_demux_req_tracker_aw (
       .clk,
       .rst,

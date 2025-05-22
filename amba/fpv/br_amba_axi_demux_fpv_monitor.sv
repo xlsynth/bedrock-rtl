@@ -24,10 +24,10 @@ module br_amba_axi_demux_fpv_monitor #(
     parameter int AwAxiIdWidth = 1,
     // Width of the AXI ID field for the read path.
     parameter int ArAxiIdWidth = 1,
-    // Maximum number of outstanding write transactions.
-    parameter int AwMaxOutstanding = 3,
-    // Maximum number of outstanding read transactions.
-    parameter int ArMaxOutstanding = 3,
+    // Maximum number of outstanding write transactions per ID.
+    parameter int AwMaxOutstandingPerId = 1,
+    // Maximum number of outstanding read transactions per ID.
+    parameter int ArMaxOutstandingPerId = 1,
     // If 1, then only a single ID is supported on both the write and read paths.
     parameter int SingleIdOnly = 0,
     // Depth of the write data buffer. This number of WDATA pushes can be buffered
@@ -50,30 +50,6 @@ module br_amba_axi_demux_fpv_monitor #(
     parameter int BUserWidth = 1,
     // Width of the AXI RUSER field.
     parameter int RUserWidth = 1,
-    // Number of pipeline stages to use for the pointer RAM read
-    // data in the response tracker FIFO. Has no effect if SingleIdOnly == 1.
-    parameter int FifoPointerRamReadDataDepthStages = 0,
-    // Number of pipeline stages to use for the data RAM read data
-    // in the response tracker FIFO. Has no effect if SingleIdOnly == 1.
-    parameter int FifoDataRamReadDataDepthStages = 0,
-    // Number of pipeline stages to use for the pointer RAM address
-    // in the response tracker FIFO. Has no effect if SingleIdOnly == 1.
-    parameter int FifoPointerRamAddressDepthStages = 1,
-    // Number of pipeline stages to use for the data RAM address
-    // in the response tracker FIFO. Has no effect if SingleIdOnly == 1.
-    parameter int FifoDataRamAddressDepthStages = 1,
-    // Number of linked lists per FIFO in the response tracker FIFO. Has
-    // no effect if SingleIdOnly == 1.
-    parameter int FifoNumLinkedListsPerFifo = 2,
-    // Number of pipeline stages to use for the staging buffer
-    // in the response tracker FIFO. Has no effect if SingleIdOnly == 1.
-    parameter int FifoStagingBufferDepth = 2,
-    // Number of pipeline stages to use for the pop outputs
-    // in the response tracker FIFO. Has no effect if SingleIdOnly == 1.
-    parameter int FifoRegisterPopOutputs = 1,
-    // Number of pipeline stages to use for the deallocation
-    // in the response tracker FIFO. Has no effect if SingleIdOnly == 1.
-    parameter int FifoRegisterDeallocation = 1,
     localparam int StrobeWidth = DataWidth / 8,
     localparam int SubIdWidth = $clog2(NumSubordinates)
 ) (
@@ -165,9 +141,9 @@ module br_amba_axi_demux_fpv_monitor #(
 );
 
   localparam int MaxPendingWr = MaxAwRunahead + 2;
-  localparam int MaxPendingRd = ArMaxOutstanding + 2;
-  `BR_ASSUME(aw_legal_awid_a, upstream_awid < AwMaxOutstanding)
-  `BR_ASSUME(ar_legal_arid_a, upstream_arid < ArMaxOutstanding)
+  localparam int MaxPendingRd = ArMaxOutstandingPerId + 2;
+  `BR_ASSUME(aw_legal_awid_a, upstream_awid < AwMaxOutstandingPerId)
+  `BR_ASSUME(ar_legal_arid_a, upstream_arid < ArMaxOutstandingPerId)
   `BR_ASSUME(aw_legal_subId_a, upstream_aw_sub_select < NumSubordinates)
   `BR_ASSUME(ar_legal_subId_a, upstream_ar_sub_select < NumSubordinates)
   // aw/ar select should be stable when upstream is not ready
@@ -345,8 +321,8 @@ bind br_amba_axi_demux br_amba_axi_demux_fpv_monitor #(
     .NumSubordinates(NumSubordinates),
     .AwAxiIdWidth(AwAxiIdWidth),
     .ArAxiIdWidth(ArAxiIdWidth),
-    .AwMaxOutstanding(AwMaxOutstanding),
-    .ArMaxOutstanding(ArMaxOutstanding),
+    .AwMaxOutstandingPerId(AwMaxOutstandingPerId),
+    .ArMaxOutstandingPerId(ArMaxOutstandingPerId),
     .SingleIdOnly(SingleIdOnly),
     .WdataBufferDepth(WdataBufferDepth),
     .MaxAwRunahead(MaxAwRunahead),
@@ -356,13 +332,5 @@ bind br_amba_axi_demux br_amba_axi_demux_fpv_monitor #(
     .WUserWidth(WUserWidth),
     .ARUserWidth(ARUserWidth),
     .BUserWidth(BUserWidth),
-    .RUserWidth(RUserWidth),
-    .FifoPointerRamReadDataDepthStages(FifoPointerRamReadDataDepthStages),
-    .FifoDataRamReadDataDepthStages(FifoDataRamReadDataDepthStages),
-    .FifoPointerRamAddressDepthStages(FifoPointerRamAddressDepthStages),
-    .FifoDataRamAddressDepthStages(FifoDataRamAddressDepthStages),
-    .FifoNumLinkedListsPerFifo(FifoNumLinkedListsPerFifo),
-    .FifoStagingBufferDepth(FifoStagingBufferDepth),
-    .FifoRegisterPopOutputs(FifoRegisterPopOutputs),
-    .FifoRegisterDeallocation(FifoRegisterDeallocation)
+    .RUserWidth(RUserWidth)
 ) monitor (.*);

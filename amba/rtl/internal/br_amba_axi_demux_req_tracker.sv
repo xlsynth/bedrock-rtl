@@ -15,12 +15,17 @@
 // Bedrock-RTL AXI Demux Request Tracker
 //
 // This module is used to route the requests to the correct downstream port
-// and to track on which downstream port the next response should arrive for each
-// AXI ID.
+// and to track on which downstream port the next response should arrive
+// for each AXI ID.
+//
+// Implements a single-subordinate-per-ID tracking scheme. Transactions
+// with the same ID may not be outstanding on multiple subordinates at the
+// same time.
 //
 // Read response data interleaving is not supported.
 
 `include "br_unused.svh"
+`include "br_registers.svh"
 `include "br_asserts_internal.svh"
 
 module br_amba_axi_demux_req_tracker #(
@@ -28,38 +33,14 @@ module br_amba_axi_demux_req_tracker #(
     parameter int NumSubordinates = 2,
     // Width of the AXI ID field.
     parameter int AxiIdWidth = 1,
-    // Maximum number of outstanding write transactions.
-    parameter int MaxOutstanding = 3,
+    // Maximum number of outstanding transactions per ID.
+    parameter int MaxOutstandingPerId = 2,
     // Width of the request payload.
     parameter int ReqPayloadWidth = 1,
     // Width of the response payload.
     parameter int RespPayloadWidth = 1,
     // If 1, then only a single ID is supported.
     parameter int SingleIdOnly = 0,
-    // Number of pipeline stages to use for the pointer RAM read
-    // data in the response tracker FIFO. Has no effect if SingleIdOnly == 1.
-    parameter int FifoPointerRamReadDataDepthStages = 0,
-    // Number of pipeline stages to use for the data RAM read data
-    // in the response tracker FIFO. Has no effect if SingleIdOnly == 1.
-    parameter int FifoDataRamReadDataDepthStages = 0,
-    // Number of pipeline stages to use for the pointer RAM address
-    // in the response tracker FIFO. Has no effect if SingleIdOnly == 1.
-    parameter int FifoPointerRamAddressDepthStages = 1,
-    // Number of pipeline stages to use for the data RAM address
-    // in the response tracker FIFO. Has no effect if SingleIdOnly == 1.
-    parameter int FifoDataRamAddressDepthStages = 1,
-    // Number of linked lists per FIFO in the response tracker FIFO. Has
-    // no effect if SingleIdOnly == 1.
-    parameter int FifoNumLinkedListsPerFifo = 2,
-    // Number of pipeline stages to use for the staging buffer
-    // in the response tracker FIFO. Has no effect if SingleIdOnly == 1.
-    parameter int FifoStagingBufferDepth = 2,
-    // Number of pipeline stages to use for the pop outputs
-    // in the response tracker FIFO. Has no effect if SingleIdOnly == 1.
-    parameter int FifoRegisterPopOutputs = 1,
-    // Number of pipeline stages to use for the deallocation
-    // in the response tracker FIFO. Has no effect if SingleIdOnly == 1.
-    parameter int FifoRegisterDeallocation = 1,
     //
     localparam int SubIdWidth = $clog2(NumSubordinates)
 ) (
@@ -102,13 +83,14 @@ module br_amba_axi_demux_req_tracker #(
 );
 
   localparam int NumIds = SingleIdOnly ? 1 : 2 ** AxiIdWidth;
+  localparam int MaxOutstandingWidth = $clog2(MaxOutstandingPerId);
 
   //
   // Integration checks
   //
 
   `BR_ASSERT_STATIC(num_subordinates_gte_2_a, NumSubordinates >= 2)
-  `BR_ASSERT_STATIC(max_outstanding_gt_2_a, MaxOutstanding > 2)
+  `BR_ASSERT_STATIC(max_outstanding_per_id_gte_1_a, MaxOutstandingPerId >= 1)
   if (SingleIdOnly) begin : gen_single_id_only_checks
     `BR_ASSERT_INTG(axid_is_zero_a, upstream_axvalid |-> upstream_axid == '0)
     for (genvar i = 0; i < NumSubordinates; i++) begin : gen_subordinate_id_only_check
@@ -146,8 +128,6 @@ module br_amba_axi_demux_req_tracker #(
 
   logic resp_tracking_fifo_push_ready;
   logic resp_tracking_fifo_push_valid;
-  logic [AxiIdWidth-1:0] resp_tracking_fifo_push_id;
-  logic [SubIdWidth-1:0] resp_tracking_fifo_push_sub_select;
 
   logic [NumIds-1:0] resp_tracking_fifo_pop_ready_per_id;
   logic [NumIds-1:0] resp_tracking_fifo_pop_valid_per_id;
@@ -194,75 +174,58 @@ module br_amba_axi_demux_req_tracker #(
 
   assign wdata_flow_sub_select = upstream_ax_sub_select_reg;
 
-  assign resp_tracking_fifo_push_id = upstream_axid_reg;
-  assign resp_tracking_fifo_push_sub_select = upstream_ax_sub_select_reg;
+  // Single-ID-per-port tracking
+  // Transactions for a single ID may only be outstanding on a single port at a time. This is
+  // required to avoid deadlock and is a similar strategy used in commerically-available AXI
+  // interconnects.
 
-  // Request tracking FIFO
-  if (SingleIdOnly) begin : gen_single_id_only_fifo
-    `BR_UNUSED(resp_tracking_fifo_push_id)
+  logic [NumIds-1:0][MaxOutstandingWidth-1:0] outstanding_per_id;
+  logic [NumIds-1:0][SubIdWidth-1:0] active_port_per_id;
+  logic [NumIds-1:0] can_accept_per_id;
 
-    br_fifo_flops #(
-        .Depth(MaxOutstanding),
-        .Width(SubIdWidth),
-        // When downstream backpressures, push_valid can drop.
-        .EnableAssertPushValidStability(0)
-    ) br_fifo_flops_resp_tracking (
+  for (genvar i = 0; i < NumIds; i++) begin : gen_track_port_outstanding_per_id
+    logic zero_outstanding;
+    logic update_active_port;
+
+    assign zero_outstanding = (outstanding_per_id[i] == '0);
+
+    // Accept if the the incoming request targets the same subordinate as currently outstanding
+    // transactions for the same ID, or if there are no outstanding transactions for this ID.
+    assign can_accept_per_id[i] = upstream_axvalid_reg
+                        && (upstream_axid_reg == i)
+                        && (outstanding_per_id[i] < MaxOutstandingPerId)
+                        && ((upstream_ax_sub_select_reg == active_port_per_id[i])
+                            || zero_outstanding);
+
+    assign update_active_port = can_accept_per_id[i] && zero_outstanding;
+    `BR_REGL(active_port_per_id[i], upstream_ax_sub_select_reg, update_active_port)
+
+    br_counter #(
+        .MaxValue(MaxOutstandingPerId),
+        .MaxChange(1),
+        .EnableWrap(0),
+        .EnableReinitAndChange(0),
+        .EnableSaturate(0)
+    ) br_counter_outstanding_per_id (
         .clk,
         .rst,
         //
-        .push_ready(resp_tracking_fifo_push_ready),
-        .push_valid(resp_tracking_fifo_push_valid),
-        .push_data(resp_tracking_fifo_push_sub_select),
-        //
-        .pop_ready(resp_tracking_fifo_pop_ready_per_id),
-        .pop_valid(resp_tracking_fifo_pop_valid_per_id),
-        .pop_data(resp_tracking_fifo_pop_sub_select_per_id),
-        //
-        .full(),
-        .full_next(),
-        .slots(),
-        .slots_next(),
-        //
-        .empty(),
-        .empty_next(),
-        .items(),
-        .items_next()
+        .reinit(1'b0),
+        .initial_value('0),
+        .incr_valid(can_accept_per_id[i] && resp_tracking_fifo_push_valid),
+        .incr(1'b1),
+        .decr_valid(resp_tracking_fifo_pop_valid_per_id[i]
+                    && resp_tracking_fifo_pop_ready_per_id[i]),
+        .decr(1'b1),
+        .value(outstanding_per_id[i]),
+        .value_next()
     );
-  end else begin : gen_multi_id_fifo
-    br_fifo_shared_dynamic_flops #(
-        .NumFifos(NumIds),
-        .Depth(MaxOutstanding),
-        .Width(SubIdWidth),
-        .StagingBufferDepth(FifoStagingBufferDepth),
-        .NumLinkedListsPerFifo(FifoNumLinkedListsPerFifo),
-        .RegisterPopOutputs(FifoRegisterPopOutputs),
-        .RegisterDeallocation(FifoRegisterDeallocation),
-        .DataRamDepthTiles(1),
-        .DataRamAddressDepthStages(FifoDataRamAddressDepthStages),
-        .DataRamReadDataDepthStages(FifoDataRamReadDataDepthStages),
-        .DataRamReadDataWidthStages(1),
-        .PointerRamDepthTiles(1),
-        .PointerRamAddressDepthStages(FifoPointerRamAddressDepthStages),
-        .PointerRamReadDataDepthStages(FifoPointerRamReadDataDepthStages),
-        .PointerRamReadDataWidthStages(1),
-        // When downstream backpressures, push_valid can drop.
-        .EnableAssertPushValidStability(0)
-    ) br_fifo_shared_dynamic_flops_resp_tracking (
-        .clk,
-        .rst,
-        //
-        .push_valid(resp_tracking_fifo_push_valid),
-        .push_ready(resp_tracking_fifo_push_ready),
-        .push_data(resp_tracking_fifo_push_sub_select),
-        .push_fifo_id(resp_tracking_fifo_push_id),
-        .push_full(),
-        //
-        .pop_valid(resp_tracking_fifo_pop_valid_per_id),
-        .pop_ready(resp_tracking_fifo_pop_ready_per_id),
-        .pop_data(resp_tracking_fifo_pop_sub_select_per_id),
-        .pop_empty()
-    );
+
+    assign resp_tracking_fifo_pop_valid_per_id[i] = outstanding_per_id[i] > 0;
+    assign resp_tracking_fifo_pop_sub_select_per_id[i] = active_port_per_id[i];
   end
+
+  assign resp_tracking_fifo_push_ready = |can_accept_per_id;
 
   // Request output demux
   logic [SubIdWidth-1:0] flow_demux_select;
