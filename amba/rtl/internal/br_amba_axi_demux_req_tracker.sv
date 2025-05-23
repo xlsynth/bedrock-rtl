@@ -85,6 +85,9 @@ module br_amba_axi_demux_req_tracker #(
   localparam int NumIds = SingleIdOnly ? 1 : 2 ** AxiIdWidth;
   localparam int MaxOutstandingWidth = $clog2(MaxOutstandingPerId + 1);
 
+  logic [NumIds-1:0][MaxOutstandingWidth-1:0] outstanding_per_id;
+  logic [NumIds-1:0][SubIdWidth-1:0] active_port_per_id;
+
   //
   // Integration checks
   //
@@ -96,6 +99,12 @@ module br_amba_axi_demux_req_tracker #(
     for (genvar i = 0; i < NumSubordinates; i++) begin : gen_subordinate_id_only_check
       `BR_ASSERT_INTG(xid_is_zero_a, downstream_xvalid[i] |-> downstream_xid[i] == '0)
     end
+  end
+  for (genvar i = 0; i < NumSubordinates; i++) begin : gen_subordinate_id_checks
+    `BR_ASSERT_INTG(downstream_id_active_a,
+                    downstream_xvalid[i] |-> active_port_per_id[downstream_xid[i]] == i)
+    `BR_ASSERT_INTG(downstream_id_outstanding_a,
+                    downstream_xvalid[i] |-> outstanding_per_id[downstream_xid[i]] > 0)
   end
 
   //
@@ -129,10 +138,8 @@ module br_amba_axi_demux_req_tracker #(
   logic resp_tracker_push_ready;
   logic resp_tracker_push_valid;
 
-  logic [NumIds-1:0] resp_tracker_pop_ready_per_id;
-  logic [NumIds-1:0] resp_tracker_pop_valid_per_id;
-  logic [NumIds-1:0][SubIdWidth-1:0] resp_tracker_pop_sub_select_per_id;
-  logic resp_tracker_pop_ready;
+  logic [NumIds-1:0] resp_tracker_decr_per_id;
+  logic resp_tracker_decr;
 
   //
   // Request Path
@@ -179,8 +186,6 @@ module br_amba_axi_demux_req_tracker #(
   // required to avoid deadlock and is a similar strategy used in commercially-available AXI
   // interconnects.
 
-  logic [NumIds-1:0][MaxOutstandingWidth-1:0] outstanding_per_id;
-  logic [NumIds-1:0][SubIdWidth-1:0] active_port_per_id;
   logic [NumIds-1:0] resp_tracker_push_ready_per_id;
   logic [NumIds-1:0] resp_tracker_push_valid_per_id;
 
@@ -214,14 +219,11 @@ module br_amba_axi_demux_req_tracker #(
         .initial_value('0),
         .incr_valid(resp_tracker_push_ready_per_id[i] && resp_tracker_push_valid_per_id[i]),
         .incr(1'b1),
-        .decr_valid(resp_tracker_pop_valid_per_id[i] && resp_tracker_pop_ready_per_id[i]),
+        .decr_valid(resp_tracker_decr_per_id[i]),
         .decr(1'b1),
         .value(outstanding_per_id[i]),
         .value_next()
     );
-
-    assign resp_tracker_pop_valid_per_id[i] = outstanding_per_id[i] > 0;
-    assign resp_tracker_pop_sub_select_per_id[i] = active_port_per_id[i];
   end
 
   if (SingleIdOnly) begin : gen_single_id_only_resp_tracker_push
@@ -318,44 +320,6 @@ module br_amba_axi_demux_req_tracker #(
   logic [NumSubordinates-1:0] ds_port_req;
   logic [NumSubordinates-1:0] ds_port_gnt;
   logic [NumSubordinates-1:0] ds_port_gnt_hold;
-  logic [NumSubordinates-1:0] ds_port_id_match;
-
-  for (genvar i = 0; i < NumSubordinates; i++) begin : gen_ds_port_id_match
-    logic [SubIdWidth-1:0] next_port_for_id;
-    logic next_port_for_id_valid;
-
-    if (SingleIdOnly) begin : gen_single_id_only_no_pop_mux
-      assign next_port_for_id = resp_tracker_pop_sub_select_per_id;
-      assign next_port_for_id_valid = resp_tracker_pop_valid_per_id;
-    end else begin : gen_multi_id_pop_mux
-      logic [AxiIdWidth-1:0] mux_select;
-      assign mux_select = downstream_xvalid_reg[i] ? downstream_x_resp_payload_reg[i].id : '0;
-
-      br_mux_bin #(
-          .NumSymbolsIn(NumIds),
-          .SymbolWidth (SubIdWidth)
-      ) br_mux_bin_ds_port_id (
-          .select(mux_select),
-          .in(resp_tracker_pop_sub_select_per_id),
-          .out(next_port_for_id),
-          .out_valid()
-      );
-
-      br_mux_bin #(
-          .NumSymbolsIn(NumIds),
-          .SymbolWidth (1)
-      ) br_mux_bin_ds_port_id_valid (
-          .select(mux_select),
-          .in(resp_tracker_pop_valid_per_id),
-          .out(next_port_for_id_valid),
-          .out_valid()
-      );
-    end
-
-    assign ds_port_id_match[i] = downstream_xvalid_reg[i]
-                                    && next_port_for_id_valid
-                                    && (next_port_for_id == i);
-  end
 
   // A downstream port is eligible to be selected if:
   // 1. The response is valid.
@@ -364,9 +328,7 @@ module br_amba_axi_demux_req_tracker #(
   // Additionally, if the upstream is not ready, we force all request inputs to 0, and force the
   // grant_hold input to the current grant. This is to prevent the grant/hold circuit (and attached
   // arbiter) from changing the grant when the upstream is not ready.
-  assign ds_port_req = downstream_xvalid_reg
-                        & ds_port_id_match
-                        & {NumSubordinates{upstream_xready_pre}};
+  assign ds_port_req = downstream_xvalid_reg & {NumSubordinates{upstream_xready_pre}};
 
   // If upstream is ready, then grant hold is asserted unless a valid request is presented with
   // last=1. If upstream is not ready, then grant_hold is equal to the current grant (see above).
@@ -409,12 +371,13 @@ module br_amba_axi_demux_req_tracker #(
   // Ready/valid joining
   assign downstream_xready_reg = ds_port_gnt & {NumSubordinates{upstream_xready_pre}};
   assign upstream_xvalid_pre = |(ds_port_req & ds_port_gnt);
-  assign resp_tracker_pop_ready = upstream_x_resp_payload_pre.last
+
+  assign resp_tracker_decr = upstream_x_resp_payload_pre.last
                                         && upstream_xvalid_pre
                                         && upstream_xready_pre;
 
   if (SingleIdOnly) begin : gen_single_id_only_enc
-    assign resp_tracker_pop_ready_per_id = resp_tracker_pop_ready;
+    assign resp_tracker_decr_per_id = resp_tracker_decr;
   end else begin : gen_multi_id_pop_ready_enc
     br_enc_bin2onehot #(
         .NumValues(NumIds)
@@ -423,8 +386,8 @@ module br_amba_axi_demux_req_tracker #(
         .rst,
         //
         .in(upstream_x_resp_payload_pre.id),
-        .in_valid(resp_tracker_pop_ready),
-        .out(resp_tracker_pop_ready_per_id)
+        .in_valid(resp_tracker_decr),
+        .out(resp_tracker_decr_per_id)
     );
   end
 

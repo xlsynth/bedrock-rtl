@@ -195,7 +195,6 @@ verilog_library(
         "//macros:br_asserts_internal",
         "//macros:br_registers",
         "//macros:br_unused",
-        "//mux/rtl:br_mux_bin",
         "//mux/rtl:br_mux_onehot",
     ],
 )
