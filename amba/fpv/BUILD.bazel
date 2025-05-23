@@ -423,7 +423,16 @@ br_verilog_fpv_test_tools_suite(
         "-parameter AwAxiIdWidth 2",
         "-parameter ArAxiIdWidth 2",
     ],
-    gui = True,
+    params = {
+        "NumSubordinates": [
+            "2",
+            "3",
+        ],
+        "SingleIdOnly": [
+            "0",
+            "1",
+        ],
+    },
     tools = {
         "jg": "br_amba_axi_demux_fpv.jg.tcl",
         "vcf": "",

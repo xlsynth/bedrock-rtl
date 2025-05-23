@@ -140,13 +140,41 @@ module br_amba_axi_demux_fpv_monitor #(
     input logic [NumSubordinates-1:0] downstream_rready
 );
 
+  localparam int AwPayloadWidth = AddrWidth +
+                                  AwAxiIdWidth +
+                                  br_amba::AxiBurstLenWidth +
+                                  br_amba::AxiBurstSizeWidth +
+                                  br_amba::AxiBurstTypeWidth +
+                                  br_amba::AxiCacheWidth +
+                                  br_amba::AxiProtWidth +
+                                  AWUserWidth;
+  localparam int ARPayloadWidth = AddrWidth +
+                                  ArAxiIdWidth +
+                                  br_amba::AxiBurstLenWidth +
+                                  br_amba::AxiBurstSizeWidth +
+                                  br_amba::AxiBurstTypeWidth +
+                                  br_amba::AxiProtWidth +
+                                  br_amba::AxiCacheWidth +
+                                  ARUserWidth;
   // overall MaxOustanding
-  localparam int NumAwId = (2 << AwAxiIdWidth);
-  localparam int NumArId = (2 << ArAxiIdWidth);
+  localparam int NumAwId = SingleIdOnly ? 1 : (2 << AwAxiIdWidth);
+  localparam int NumArId = SingleIdOnly ? 1 : (2 << ArAxiIdWidth);
   localparam int MaxPendingWr = (NumAwId * AwMaxOutstandingPerId) + 2;
   localparam int MaxPendingRd = (NumArId * ArMaxOutstandingPerId) + 2;
   localparam int AwCntrWidth = $clog2(MaxPendingWr);
   localparam int ArCntrWidth = $clog2(MaxPendingRd);
+
+  // if SingleIdOnly = 1, read and write can only use ID = 0
+  if (SingleIdOnly) begin : gen_singleId
+    `BR_ASSUME(aw_singleidonly_a, upstream_awvalid |-> upstream_awid == 'd0)
+    `BR_ASSUME(ar_singleidonly_a, upstream_arvalid |-> upstream_arid == 'd0)
+  end
+
+  // pick a random subordinate for checkers
+  logic [SubIdWidth-1:0] fv_aw_select;
+  logic [SubIdWidth-1:0] fv_ar_select;
+  `BR_ASSUME(fv_aw_select_a, $stable(fv_aw_select) && (fv_aw_select < NumSubordinates))
+  `BR_ASSUME(fv_ar_select_a, $stable(fv_ar_select) && (fv_ar_select < NumSubordinates))
 
   `BR_ASSUME(aw_legal_subId_a, upstream_aw_sub_select < NumSubordinates)
   `BR_ASSUME(ar_legal_subId_a, upstream_ar_sub_select < NumSubordinates)
@@ -157,7 +185,7 @@ module br_amba_axi_demux_fpv_monitor #(
                                  (upstream_ar_sub_select))
 
 
-  // for each Id, the number of outstanding transactions should be less than MaxOutstandingPerId
+  // for each Id, the number of outstanding transactions should be <= MaxOutstandingPerId
   logic [NumAwId-1:0][AwCntrWidth-1:0] AwCntr;
   logic [NumArId-1:0][ArCntrWidth-1:0] ArCntr;
 
@@ -176,6 +204,78 @@ module br_amba_axi_demux_fpv_monitor #(
             (upstream_rvalid && upstream_rready && upstream_rlast && (upstream_rid == i)))
     `BR_ASSUME(max_ar_perId_a, ArCntr[i] <= ArMaxOutstandingPerId)
   end
+
+  // If upstream can send correct Aw/Ar traffic to correponding downstream,
+  // ABVIP will guarantee W, B, R channels behave correctly.
+  // ----------Aw----------
+  jasper_scoreboard_3 #(
+      .CHUNK_WIDTH(AwPayloadWidth),
+      .IN_CHUNKS(1),
+      .OUT_CHUNKS(1),
+      .SINGLE_CLOCK(1),
+      .MAX_PENDING(MaxPendingWr)
+  ) aw_sb (
+      .clk(clk),
+      .rstN(!rst),
+      .incoming_vld(upstream_awvalid && upstream_awready &&
+                    (upstream_aw_sub_select == fv_aw_select)),
+      .incoming_data({
+        upstream_awaddr,
+        upstream_awid,
+        upstream_awlen,
+        upstream_awsize,
+        upstream_awburst,
+        upstream_awprot,
+        upstream_awcache,
+        upstream_awuser
+      }),
+      .outgoing_vld(downstream_awvalid[fv_aw_select] & downstream_awready[fv_aw_select]),
+      .outgoing_data({
+        downstream_awaddr[fv_aw_select],
+        downstream_awid[fv_aw_select],
+        downstream_awlen[fv_aw_select],
+        downstream_awsize[fv_aw_select],
+        downstream_awburst[fv_aw_select],
+        downstream_awprot[fv_aw_select],
+        downstream_awcache[fv_aw_select],
+        downstream_awuser[fv_aw_select]
+      })
+  );
+
+  // ----------Ar----------
+  jasper_scoreboard_3 #(
+      .CHUNK_WIDTH(ARPayloadWidth),
+      .IN_CHUNKS(1),
+      .OUT_CHUNKS(1),
+      .SINGLE_CLOCK(1),
+      .MAX_PENDING(MaxPendingRd)
+  ) ar_sb (
+      .clk(clk),
+      .rstN(!rst),
+      .incoming_vld(upstream_arvalid && upstream_arready &&
+                      (upstream_ar_sub_select == fv_ar_select)),
+      .incoming_data({
+        upstream_araddr,
+        upstream_arid,
+        upstream_arlen,
+        upstream_arsize,
+        upstream_arburst,
+        upstream_arprot,
+        upstream_arcache,
+        upstream_aruser
+      }),
+      .outgoing_vld(downstream_arvalid[fv_ar_select] & downstream_arready[fv_ar_select]),
+      .outgoing_data({
+        downstream_araddr[fv_ar_select],
+        downstream_arid[fv_ar_select],
+        downstream_arlen[fv_ar_select],
+        downstream_arsize[fv_ar_select],
+        downstream_arburst[fv_ar_select],
+        downstream_arprot[fv_ar_select],
+        downstream_arcache[fv_ar_select],
+        downstream_aruser[fv_ar_select]
+      })
+  );
 
   // upstream itself should also be AXI compliants
   axi4_master #(
