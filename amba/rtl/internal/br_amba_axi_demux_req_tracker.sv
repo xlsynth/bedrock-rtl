@@ -181,7 +181,8 @@ module br_amba_axi_demux_req_tracker #(
 
   logic [NumIds-1:0][MaxOutstandingWidth-1:0] outstanding_per_id;
   logic [NumIds-1:0][SubIdWidth-1:0] active_port_per_id;
-  logic [NumIds-1:0] can_accept_per_id;
+  logic [NumIds-1:0] resp_tracker_push_ready_per_id;
+  logic [NumIds-1:0] resp_tracker_push_valid_per_id;
 
   for (genvar i = 0; i < NumIds; i++) begin : gen_track_port_outstanding_per_id
     logic zero_outstanding;
@@ -191,13 +192,12 @@ module br_amba_axi_demux_req_tracker #(
 
     // Accept if the the incoming request targets the same subordinate as currently outstanding
     // transactions for the same ID, or if there are no outstanding transactions for this ID.
-    assign can_accept_per_id[i] = upstream_axvalid_reg
-                        && (upstream_axid_reg == i)
+    assign resp_tracker_push_ready_per_id[i] = upstream_axvalid_reg
                         && (outstanding_per_id[i] < MaxOutstandingPerId)
                         && ((upstream_ax_sub_select_reg == active_port_per_id[i])
                             || zero_outstanding);
 
-    assign update_active_port = can_accept_per_id[i] && zero_outstanding;
+    assign update_active_port = resp_tracker_push_ready_per_id[i] && zero_outstanding;
     `BR_REGL(active_port_per_id[i], upstream_ax_sub_select_reg, update_active_port)
 
     br_counter #(
@@ -212,7 +212,7 @@ module br_amba_axi_demux_req_tracker #(
         //
         .reinit(1'b0),
         .initial_value('0),
-        .incr_valid(can_accept_per_id[i] && resp_tracker_push_valid),
+        .incr_valid(resp_tracker_push_ready_per_id[i] && resp_tracker_push_valid_per_id[i]),
         .incr(1'b1),
         .decr_valid(resp_tracker_pop_valid_per_id[i] && resp_tracker_pop_ready_per_id[i]),
         .decr(1'b1),
@@ -224,7 +224,32 @@ module br_amba_axi_demux_req_tracker #(
     assign resp_tracker_pop_sub_select_per_id[i] = active_port_per_id[i];
   end
 
-  assign resp_tracker_push_ready = |can_accept_per_id;
+  if (SingleIdOnly) begin : gen_single_id_only_resp_tracker_push
+    assign resp_tracker_push_ready = resp_tracker_push_ready_per_id;
+    assign resp_tracker_push_valid_per_id = resp_tracker_push_valid;
+  end else begin : gen_multi_id_resp_tracker_push
+    logic [AxiIdWidth-1:0] resp_tracker_push_mux_select;
+    assign resp_tracker_push_mux_select = upstream_axvalid_reg ? upstream_axid_reg : '0;
+
+    br_flow_demux_select_unstable #(
+        .NumFlows(NumIds),
+        .Width(1),
+        .EnableAssertPushValidStability(0)
+    ) br_flow_demux_select_unstable_resp_tracker_push (
+        .clk,
+        .rst,
+        //
+        .select(resp_tracker_push_mux_select),
+        //
+        .push_ready(resp_tracker_push_ready),
+        .push_valid(resp_tracker_push_valid),
+        .push_data(1'b0),
+        //
+        .pop_ready(resp_tracker_push_ready_per_id),
+        .pop_valid_unstable(resp_tracker_push_valid_per_id),
+        .pop_data_unstable()
+    );
+  end
 
   // Request output demux
   logic [SubIdWidth-1:0] flow_demux_select;
