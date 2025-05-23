@@ -336,13 +336,20 @@ module br_amba_axi_demux_req_tracker #(
   // A downstream port is eligible to be selected if:
   // 1. The response is valid.
   // 2. The downstream port is at the head of the tracking FIFO for the presented response ID.
-  assign ds_port_req = downstream_xvalid_reg & ds_port_id_match;
+  //
+  // Additionally, if the upstream is not ready, we force all request inputs to 0, and force the
+  // grant_hold input to the current grant. This is to prevent the grant/hold circuit (and attached
+  // arbiter) from changing the grant when the upstream is not ready.
+  assign ds_port_req = downstream_xvalid_reg
+                        & ds_port_id_match
+                        & {NumSubordinates{upstream_xready_pre}};
 
-  // Hold the grant unless last is asserted and the response is valid.
+  // If upstream is ready, then grant hold is asserted unless a valid request is presented with
+  // last=1. If upstream is not ready, then grant_hold is equal to the current grant (see above).
   for (genvar i = 0; i < NumSubordinates; i++) begin : gen_ds_port_gnt_hold
-    assign ds_port_gnt_hold[i] = ~(downstream_x_resp_payload_reg[i].last
-                                  && downstream_xvalid_reg[i]
-                                  && upstream_xready_pre);
+    assign ds_port_gnt_hold[i] = upstream_xready_pre
+                                    ? ~(ds_port_req[i] && downstream_x_resp_payload_reg[i].last)
+                                    : ds_port_gnt[i];
   end
 
   // LRU arbiter w/ grant hold circuit
@@ -356,7 +363,7 @@ module br_amba_axi_demux_req_tracker #(
       .rst,
       //
       .grant_hold(ds_port_gnt_hold),
-      .enable_priority_update(upstream_xready_pre),
+      .enable_priority_update(1'b1),
       //
       .grant_from_arb(ds_port_gnt_from_arb),
       .enable_priority_update_to_arb(ds_port_gnt_enable_priority_update_to_arb),
