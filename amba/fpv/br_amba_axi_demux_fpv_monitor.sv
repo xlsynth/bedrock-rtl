@@ -140,25 +140,35 @@ module br_amba_axi_demux_fpv_monitor #(
     input logic [NumSubordinates-1:0] downstream_rready
 );
 
-  localparam int AwPayloadWidth = AddrWidth +
-                                  AwAxiIdWidth +
-                                  br_amba::AxiBurstLenWidth +
-                                  br_amba::AxiBurstSizeWidth +
-                                  br_amba::AxiBurstTypeWidth +
-                                  br_amba::AxiCacheWidth +
-                                  br_amba::AxiProtWidth +
-                                  AWUserWidth;
-  localparam int ARPayloadWidth = AddrWidth +
-                                  ArAxiIdWidth +
-                                  br_amba::AxiBurstLenWidth +
-                                  br_amba::AxiBurstSizeWidth +
-                                  br_amba::AxiBurstTypeWidth +
-                                  br_amba::AxiProtWidth +
-                                  br_amba::AxiCacheWidth +
-                                  ARUserWidth;
-  // overall MaxOustanding
+  typedef struct packed {
+    logic [AddrWidth-1:0] awaddr;
+    logic [AwAxiIdWidth-1:0] awid;
+    logic [br_amba::AxiBurstLenWidth-1:0] awlen;
+    logic [br_amba::AxiBurstSizeWidth-1:0] awsize;
+    logic [br_amba::AxiBurstTypeWidth-1:0] awburst;
+    logic [br_amba::AxiCacheWidth-1:0] awcache;
+    logic [br_amba::AxiProtWidth-1:0] awprot;
+    logic [AWUserWidth-1:0] awuser;
+  } aw_payload_t;
+
+  typedef struct packed {
+    logic [AddrWidth-1:0] araddr;
+    logic [ArAxiIdWidth-1:0] arid;
+    logic [br_amba::AxiBurstLenWidth-1:0] arlen;
+    logic [br_amba::AxiBurstSizeWidth-1:0] arsize;
+    logic [br_amba::AxiBurstTypeWidth-1:0] arburst;
+    logic [br_amba::AxiCacheWidth-1:0] arcache;
+    logic [br_amba::AxiProtWidth-1:0] arprot;
+    logic [ARUserWidth-1:0] aruser;
+  } ar_payload_t;
+
+  localparam int AwPayloadWidth = $bits(aw_payload_t);
+  localparam int ArPayloadWidth = $bits(ar_payload_t);
+  // overall MaxOutstanding
   localparam int NumAwId = SingleIdOnly ? 1 : (2 << AwAxiIdWidth);
   localparam int NumArId = SingleIdOnly ? 1 : (2 << ArAxiIdWidth);
+  // usually +2 to allow ABVIP to send a few more to test backpressure
+  // +2 here to give a few extra slots since DUT has some margin before de-assert ready signal
   localparam int MaxPendingWr = (NumAwId * AwMaxOutstandingPerId) + 2;
   localparam int MaxPendingRd = (NumArId * ArMaxOutstandingPerId) + 2;
   localparam int AwCntrWidth = $clog2(MaxPendingWr);
@@ -207,6 +217,55 @@ module br_amba_axi_demux_fpv_monitor #(
 
   // If upstream can send correct Aw/Ar traffic to correponding downstream,
   // ABVIP will guarantee W, B, R channels behave correctly.
+  aw_payload_t upstream_awPayload;
+  aw_payload_t downstream_awPayload;
+  ar_payload_t upstream_arPayload;
+  ar_payload_t downstream_arPayload;
+
+  assign upstream_awPayload = {
+    upstream_awaddr,
+    upstream_awid,
+    upstream_awlen,
+    upstream_awsize,
+    upstream_awburst,
+    upstream_awcache,
+    upstream_awprot,
+    upstream_awuser
+  };
+
+  assign upstream_arPayload = {
+    upstream_araddr,
+    upstream_arid,
+    upstream_arlen,
+    upstream_arsize,
+    upstream_arburst,
+    upstream_arcache,
+    upstream_arprot,
+    upstream_aruser
+  };
+
+  assign downstream_awPayload = {
+    downstream_awaddr[fv_aw_select],
+    downstream_awid[fv_aw_select],
+    downstream_awlen[fv_aw_select],
+    downstream_awsize[fv_aw_select],
+    downstream_awburst[fv_aw_select],
+    downstream_awcache[fv_aw_select],
+    downstream_awprot[fv_aw_select],
+    downstream_awuser[fv_aw_select]
+  };
+
+  assign downstream_arPayload = {
+    downstream_araddr[fv_ar_select],
+    downstream_arid[fv_ar_select],
+    downstream_arlen[fv_ar_select],
+    downstream_arsize[fv_ar_select],
+    downstream_arburst[fv_ar_select],
+    downstream_arcache[fv_ar_select],
+    downstream_arprot[fv_ar_select],
+    downstream_aruser[fv_ar_select]
+  };
+
   // ----------Aw----------
   jasper_scoreboard_3 #(
       .CHUNK_WIDTH(AwPayloadWidth),
@@ -219,32 +278,14 @@ module br_amba_axi_demux_fpv_monitor #(
       .rstN(!rst),
       .incoming_vld(upstream_awvalid && upstream_awready &&
                     (upstream_aw_sub_select == fv_aw_select)),
-      .incoming_data({
-        upstream_awaddr,
-        upstream_awid,
-        upstream_awlen,
-        upstream_awsize,
-        upstream_awburst,
-        upstream_awprot,
-        upstream_awcache,
-        upstream_awuser
-      }),
+      .incoming_data(upstream_awPayload),
       .outgoing_vld(downstream_awvalid[fv_aw_select] & downstream_awready[fv_aw_select]),
-      .outgoing_data({
-        downstream_awaddr[fv_aw_select],
-        downstream_awid[fv_aw_select],
-        downstream_awlen[fv_aw_select],
-        downstream_awsize[fv_aw_select],
-        downstream_awburst[fv_aw_select],
-        downstream_awprot[fv_aw_select],
-        downstream_awcache[fv_aw_select],
-        downstream_awuser[fv_aw_select]
-      })
+      .outgoing_data(downstream_awPayload)
   );
 
   // ----------Ar----------
   jasper_scoreboard_3 #(
-      .CHUNK_WIDTH(ARPayloadWidth),
+      .CHUNK_WIDTH(ArPayloadWidth),
       .IN_CHUNKS(1),
       .OUT_CHUNKS(1),
       .SINGLE_CLOCK(1),
@@ -254,27 +295,9 @@ module br_amba_axi_demux_fpv_monitor #(
       .rstN(!rst),
       .incoming_vld(upstream_arvalid && upstream_arready &&
                       (upstream_ar_sub_select == fv_ar_select)),
-      .incoming_data({
-        upstream_araddr,
-        upstream_arid,
-        upstream_arlen,
-        upstream_arsize,
-        upstream_arburst,
-        upstream_arprot,
-        upstream_arcache,
-        upstream_aruser
-      }),
+      .incoming_data(upstream_arPayload),
       .outgoing_vld(downstream_arvalid[fv_ar_select] & downstream_arready[fv_ar_select]),
-      .outgoing_data({
-        downstream_araddr[fv_ar_select],
-        downstream_arid[fv_ar_select],
-        downstream_arlen[fv_ar_select],
-        downstream_arsize[fv_ar_select],
-        downstream_arburst[fv_ar_select],
-        downstream_arprot[fv_ar_select],
-        downstream_arcache[fv_ar_select],
-        downstream_aruser[fv_ar_select]
-      })
+      .outgoing_data(downstream_arPayload)
   );
 
   // upstream itself should also be AXI compliants
