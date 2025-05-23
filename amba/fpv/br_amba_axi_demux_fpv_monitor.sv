@@ -140,10 +140,76 @@ module br_amba_axi_demux_fpv_monitor #(
     input logic [NumSubordinates-1:0] downstream_rready
 );
 
-  localparam int MaxPendingWr = MaxAwRunahead + 2;
-  localparam int MaxPendingRd = ArMaxOutstandingPerId + 2;
-  `BR_ASSUME(aw_legal_awid_a, upstream_awid < AwMaxOutstandingPerId)
-  `BR_ASSUME(ar_legal_arid_a, upstream_arid < ArMaxOutstandingPerId)
+  typedef struct packed {
+    logic [AddrWidth-1:0] awaddr;
+    logic [AwAxiIdWidth-1:0] awid;
+    logic [br_amba::AxiBurstLenWidth-1:0] awlen;
+    logic [br_amba::AxiBurstSizeWidth-1:0] awsize;
+    logic [br_amba::AxiBurstTypeWidth-1:0] awburst;
+    logic [br_amba::AxiCacheWidth-1:0] awcache;
+    logic [br_amba::AxiProtWidth-1:0] awprot;
+    logic [AWUserWidth-1:0] awuser;
+  } aw_payload_t;
+
+  typedef struct packed {
+    logic [AddrWidth-1:0] araddr;
+    logic [ArAxiIdWidth-1:0] arid;
+    logic [br_amba::AxiBurstLenWidth-1:0] arlen;
+    logic [br_amba::AxiBurstSizeWidth-1:0] arsize;
+    logic [br_amba::AxiBurstTypeWidth-1:0] arburst;
+    logic [br_amba::AxiCacheWidth-1:0] arcache;
+    logic [br_amba::AxiProtWidth-1:0] arprot;
+    logic [ARUserWidth-1:0] aruser;
+  } ar_payload_t;
+
+  typedef struct packed {
+    logic [DataWidth-1:0] wdata;
+    logic [StrobeWidth-1:0] wstrb;
+    logic [WUserWidth-1:0] wuser;
+    logic wlast;
+  } w_payload_t;
+
+  typedef struct packed {
+    logic [AwAxiIdWidth-1:0] upstream_bid;
+    logic [BUserWidth-1:0] upstream_buser;
+    logic [br_amba::AxiRespWidth-1:0] upstream_bresp;
+  } b_payload_t;
+
+  typedef struct packed {
+    logic [DataWidth-1:0] rdata;
+    logic [RUserWidth-1:0] ruser;
+    logic [ArAxiIdWidth-1:0] rid;
+    logic [br_amba::AxiRespWidth-1:0] rresp;
+    logic rlast;
+  } r_payload_t;
+
+  localparam int AwPayloadWidth = $bits(aw_payload_t);
+  localparam int ArPayloadWidth = $bits(ar_payload_t);
+  localparam int WPayloadWidth = $bits(w_payload_t);
+  localparam int BPayloadWidth = $bits(b_payload_t);
+  localparam int RPayloadWidth = $bits(r_payload_t);
+  // overall MaxOutstanding
+  localparam int NumAwId = SingleIdOnly ? 1 : (2 << AwAxiIdWidth);
+  localparam int NumArId = SingleIdOnly ? 1 : (2 << ArAxiIdWidth);
+  // usually +2 to allow ABVIP to send a few more to test backpressure
+  // +2 here to give a few extra slots since DUT has some margin before de-assert ready signal
+  localparam int MaxPendingWr = (NumAwId * AwMaxOutstandingPerId) + 2;
+  localparam int MaxPendingRd = (NumArId * ArMaxOutstandingPerId) + 2;
+  localparam int AwCntrWidth = $clog2(MaxPendingWr);
+  localparam int ArCntrWidth = $clog2(MaxPendingRd);
+
+  // if SingleIdOnly = 1, read and write can only use ID = 0
+  if (SingleIdOnly) begin : gen_singleId
+    `BR_ASSUME(aw_singleidonly_a, upstream_awvalid |-> upstream_awid == 'd0)
+    `BR_ASSUME(ar_singleidonly_a, upstream_arvalid |-> upstream_arid == 'd0)
+  end
+
+  // pick a random subordinate for checkers
+  logic [SubIdWidth-1:0] fv_aw_select;
+  logic [SubIdWidth-1:0] fv_ar_select;
+  `BR_ASSUME(fv_aw_select_a, $stable(fv_aw_select) && (fv_aw_select < NumSubordinates))
+  `BR_ASSUME(fv_ar_select_a, $stable(fv_ar_select) && (fv_ar_select < NumSubordinates))
+
   `BR_ASSUME(aw_legal_subId_a, upstream_aw_sub_select < NumSubordinates)
   `BR_ASSUME(ar_legal_subId_a, upstream_ar_sub_select < NumSubordinates)
   // aw/ar select should be stable when upstream is not ready
@@ -152,7 +218,192 @@ module br_amba_axi_demux_fpv_monitor #(
   `BR_ASSUME(ar_select_stable_a, upstream_arvalid && !upstream_arready |=> $stable
                                  (upstream_ar_sub_select))
 
-  // upstream itself should also be AXI compliant
+
+  // for each Id, the number of outstanding transactions should be <= MaxOutstandingPerId
+  logic [NumAwId-1:0][AwCntrWidth-1:0] AwCntr;
+  logic [NumArId-1:0][ArCntrWidth-1:0] ArCntr;
+
+  for (genvar i = 0; i < NumAwId; i++) begin : gen_aw
+    `BR_REG(AwCntr[i],
+            AwCntr[i] +
+            (upstream_awvalid && upstream_awready && (upstream_awid == i)) -
+            (upstream_bvalid && upstream_bready && (upstream_bid == i)))
+    `BR_ASSUME(max_aw_perId_a, AwCntr[i] <= AwMaxOutstandingPerId)
+  end
+
+  for (genvar i = 0; i < NumArId; i++) begin : gen_ar
+    `BR_REG(ArCntr[i],
+            ArCntr[i] +
+            (upstream_arvalid && upstream_arready && (upstream_arid == i)) -
+            (upstream_rvalid && upstream_rready && upstream_rlast && (upstream_rid == i)))
+    `BR_ASSUME(max_ar_perId_a, ArCntr[i] <= ArMaxOutstandingPerId)
+  end
+
+  // If upstream can send correct Aw/Ar traffic to correponding downstream,
+  // ABVIP will guarantee W, B, R channels behave correctly.
+  aw_payload_t upstream_awPayload;
+  ar_payload_t upstream_arPayload;
+  w_payload_t upstream_wPayload;
+  b_payload_t upstream_bPayload;
+  r_payload_t upstream_rPayload;
+
+  aw_payload_t downstream_awPayload;
+  ar_payload_t downstream_arPayload;
+  w_payload_t [NumSubordinates-1:0] downstream_wPayload;
+  b_payload_t [NumSubordinates-1:0] downstream_bPayload;
+  r_payload_t [NumSubordinates-1:0] downstream_rPayload;
+
+  assign upstream_awPayload = {
+    upstream_awaddr,
+    upstream_awid,
+    upstream_awlen,
+    upstream_awsize,
+    upstream_awburst,
+    upstream_awcache,
+    upstream_awprot,
+    upstream_awuser
+  };
+
+  assign upstream_wPayload = {upstream_wdata, upstream_wstrb, upstream_wuser, upstream_wlast};
+
+  assign upstream_bPayload = {upstream_bid, upstream_buser, upstream_bresp};
+
+  assign upstream_rPayload = {
+    upstream_rdata, upstream_ruser, upstream_rid, upstream_rresp, upstream_rlast
+  };
+
+  assign upstream_arPayload = {
+    upstream_araddr,
+    upstream_arid,
+    upstream_arlen,
+    upstream_arsize,
+    upstream_arburst,
+    upstream_arcache,
+    upstream_arprot,
+    upstream_aruser
+  };
+
+  assign downstream_awPayload = {
+    downstream_awaddr[fv_aw_select],
+    downstream_awid[fv_aw_select],
+    downstream_awlen[fv_aw_select],
+    downstream_awsize[fv_aw_select],
+    downstream_awburst[fv_aw_select],
+    downstream_awcache[fv_aw_select],
+    downstream_awprot[fv_aw_select],
+    downstream_awuser[fv_aw_select]
+  };
+
+  assign downstream_arPayload = {
+    downstream_araddr[fv_ar_select],
+    downstream_arid[fv_ar_select],
+    downstream_arlen[fv_ar_select],
+    downstream_arsize[fv_ar_select],
+    downstream_arburst[fv_ar_select],
+    downstream_arcache[fv_ar_select],
+    downstream_arprot[fv_ar_select],
+    downstream_aruser[fv_ar_select]
+  };
+
+  for (genvar i = 0; i < NumSubordinates; i++) begin : gen_payload
+    assign downstream_wPayload[i] = {
+      downstream_wdata[i], downstream_wstrb[i], downstream_wuser[i], downstream_wlast[i]
+    };
+    assign downstream_bPayload[i] = {downstream_bid[i], downstream_buser[i], downstream_bresp[i]};
+    assign downstream_rPayload[i] = {
+      downstream_rdata[i],
+      downstream_ruser[i],
+      downstream_rid[i],
+      downstream_rresp[i],
+      downstream_rlast[i]
+    };
+  end
+
+  // ----------Aw----------
+  jasper_scoreboard_3 #(
+      .CHUNK_WIDTH(AwPayloadWidth),
+      .IN_CHUNKS(1),
+      .OUT_CHUNKS(1),
+      .SINGLE_CLOCK(1),
+      .MAX_PENDING(MaxPendingWr)
+  ) aw_sb (
+      .clk(clk),
+      .rstN(!rst),
+      .incoming_vld(upstream_awvalid && upstream_awready &&
+                    (upstream_aw_sub_select == fv_aw_select)),
+      .incoming_data(upstream_awPayload),
+      .outgoing_vld(downstream_awvalid[fv_aw_select] & downstream_awready[fv_aw_select]),
+      .outgoing_data(downstream_awPayload)
+  );
+
+  // ----------Ar----------
+  jasper_scoreboard_3 #(
+      .CHUNK_WIDTH(ArPayloadWidth),
+      .IN_CHUNKS(1),
+      .OUT_CHUNKS(1),
+      .SINGLE_CLOCK(1),
+      .MAX_PENDING(MaxPendingRd)
+  ) ar_sb (
+      .clk(clk),
+      .rstN(!rst),
+      .incoming_vld(upstream_arvalid && upstream_arready &&
+                      (upstream_ar_sub_select == fv_ar_select)),
+      .incoming_data(upstream_arPayload),
+      .outgoing_vld(downstream_arvalid[fv_ar_select] & downstream_arready[fv_ar_select]),
+      .outgoing_data(downstream_arPayload)
+  );
+
+  // ----------W data integrity----------
+  jasper_scoreboard_3 #(
+      .CHUNK_WIDTH(WPayloadWidth),
+      .IN_CHUNKS(1),
+      .OUT_CHUNKS(NumSubordinates),
+      .SINGLE_CLOCK(1),
+      .MAX_PENDING(MaxPendingWr),
+      .ORDERING(`JS3_OUT_OF_ORDER)
+  ) w_sb (
+      .clk(clk),
+      .rstN(!rst),
+      .incoming_vld(upstream_wvalid && upstream_wready),
+      .incoming_data(upstream_wPayload),
+      .outgoing_vld(downstream_wvalid & downstream_wready),
+      .outgoing_data(downstream_wPayload)
+  );
+  // ----------B data integrity----------
+  jasper_scoreboard_3 #(
+      .CHUNK_WIDTH(BPayloadWidth),
+      .IN_CHUNKS(NumSubordinates),
+      .OUT_CHUNKS(1),
+      .SINGLE_CLOCK(1),
+      .MAX_PENDING(MaxPendingWr),
+      .ORDERING(`JS3_OUT_OF_ORDER)
+  ) b_sb (
+      .clk(clk),
+      .rstN(!rst),
+      .incoming_vld(downstream_bvalid & downstream_bready),
+      .incoming_data(downstream_bPayload),
+      .outgoing_vld(upstream_bvalid && upstream_bready),
+      .outgoing_data(upstream_bPayload)
+  );
+
+  // ----------R data integrity----------
+  jasper_scoreboard_3 #(
+      .CHUNK_WIDTH(RPayloadWidth),
+      .IN_CHUNKS(NumSubordinates),
+      .OUT_CHUNKS(1),
+      .SINGLE_CLOCK(1),
+      .MAX_PENDING(MaxPendingRd),
+      .ORDERING(`JS3_OUT_OF_ORDER)
+  ) r_sb (
+      .clk(clk),
+      .rstN(!rst),
+      .incoming_vld(downstream_rvalid & downstream_rready),
+      .incoming_data(downstream_rPayload),
+      .outgoing_vld(upstream_rvalid && upstream_rready),
+      .outgoing_data(upstream_rPayload)
+  );
+
+  // upstream itself should also be AXI compliants
   axi4_master #(
       .ID_WIDTH_W(AwAxiIdWidth),
       .ID_WIDTH_R(ArAxiIdWidth),
