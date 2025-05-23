@@ -61,3 +61,26 @@ br_verilog_sim_test_tools_suite(
     ],
     deps = [":br_amba_axi_isolate_mgr_tb"],
 )
+
+verilog_library(
+    name = "br_amba_axi_demux_tb",
+    srcs = ["br_amba_axi_demux_tb.sv"],
+    deps = [
+        "//amba/rtl:br_amba_axi_demux",
+    ],
+)
+
+verilog_elab_test(
+    name = "br_amba_axi_demux_tb_elab_test",
+    tool = "verific",
+    deps = [":br_amba_axi_demux_tb"],
+)
+
+br_verilog_sim_test_tools_suite(
+    name = "br_amba_axi_demux_tb_sim_test_tools_suite",
+    tools = [
+        "dsim",
+        "vcs",
+    ],
+    deps = [":br_amba_axi_demux_tb"],
+)
