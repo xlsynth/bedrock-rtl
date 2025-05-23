@@ -126,13 +126,13 @@ module br_amba_axi_demux_req_tracker #(
   logic [SubIdWidth-1:0] upstream_ax_sub_select_reg;
   logic [ReqPayloadWidth-1:0] upstream_ax_payload_reg;
 
-  logic resp_tracking_fifo_push_ready;
-  logic resp_tracking_fifo_push_valid;
+  logic resp_tracker_push_ready;
+  logic resp_tracker_push_valid;
 
-  logic [NumIds-1:0] resp_tracking_fifo_pop_ready_per_id;
-  logic [NumIds-1:0] resp_tracking_fifo_pop_valid_per_id;
-  logic [NumIds-1:0][SubIdWidth-1:0] resp_tracking_fifo_pop_sub_select_per_id;
-  logic resp_tracking_fifo_pop_ready;
+  logic [NumIds-1:0] resp_tracker_pop_ready_per_id;
+  logic [NumIds-1:0] resp_tracker_pop_valid_per_id;
+  logic [NumIds-1:0][SubIdWidth-1:0] resp_tracker_pop_sub_select_per_id;
+  logic resp_tracker_pop_ready;
 
   //
   // Request Path
@@ -164,8 +164,8 @@ module br_amba_axi_demux_req_tracker #(
       .push_ready(upstream_axready_reg),
       .push_valid(upstream_axvalid_reg),
       //
-      .pop_ready({wdata_flow_ready, resp_tracking_fifo_push_ready, upstream_axready_int}),
-      .pop_valid_unstable({wdata_flow_valid, resp_tracking_fifo_push_valid, upstream_axvalid_int})
+      .pop_ready({wdata_flow_ready, resp_tracker_push_ready, upstream_axready_int}),
+      .pop_valid_unstable({wdata_flow_valid, resp_tracker_push_valid, upstream_axvalid_int})
   );
 
   assign upstream_ax_sub_select_int = upstream_ax_sub_select_reg;
@@ -212,20 +212,19 @@ module br_amba_axi_demux_req_tracker #(
         //
         .reinit(1'b0),
         .initial_value('0),
-        .incr_valid(can_accept_per_id[i] && resp_tracking_fifo_push_valid),
+        .incr_valid(can_accept_per_id[i] && resp_tracker_push_valid),
         .incr(1'b1),
-        .decr_valid(resp_tracking_fifo_pop_valid_per_id[i]
-                    && resp_tracking_fifo_pop_ready_per_id[i]),
+        .decr_valid(resp_tracker_pop_valid_per_id[i] && resp_tracker_pop_ready_per_id[i]),
         .decr(1'b1),
         .value(outstanding_per_id[i]),
         .value_next()
     );
 
-    assign resp_tracking_fifo_pop_valid_per_id[i] = outstanding_per_id[i] > 0;
-    assign resp_tracking_fifo_pop_sub_select_per_id[i] = active_port_per_id[i];
+    assign resp_tracker_pop_valid_per_id[i] = outstanding_per_id[i] > 0;
+    assign resp_tracker_pop_sub_select_per_id[i] = active_port_per_id[i];
   end
 
-  assign resp_tracking_fifo_push_ready = |can_accept_per_id;
+  assign resp_tracker_push_ready = |can_accept_per_id;
 
   // Request output demux
   logic [SubIdWidth-1:0] flow_demux_select;
@@ -301,8 +300,8 @@ module br_amba_axi_demux_req_tracker #(
     logic next_port_for_id_valid;
 
     if (SingleIdOnly) begin : gen_single_id_only_no_pop_mux
-      assign next_port_for_id = resp_tracking_fifo_pop_sub_select_per_id;
-      assign next_port_for_id_valid = resp_tracking_fifo_pop_valid_per_id;
+      assign next_port_for_id = resp_tracker_pop_sub_select_per_id;
+      assign next_port_for_id_valid = resp_tracker_pop_valid_per_id;
     end else begin : gen_multi_id_pop_mux
       logic [AxiIdWidth-1:0] mux_select;
       assign mux_select = downstream_xvalid_reg[i] ? downstream_x_resp_payload_reg[i].id : '0;
@@ -312,7 +311,7 @@ module br_amba_axi_demux_req_tracker #(
           .SymbolWidth (SubIdWidth)
       ) br_mux_bin_ds_port_id (
           .select(mux_select),
-          .in(resp_tracking_fifo_pop_sub_select_per_id),
+          .in(resp_tracker_pop_sub_select_per_id),
           .out(next_port_for_id),
           .out_valid()
       );
@@ -322,7 +321,7 @@ module br_amba_axi_demux_req_tracker #(
           .SymbolWidth (1)
       ) br_mux_bin_ds_port_id_valid (
           .select(mux_select),
-          .in(resp_tracking_fifo_pop_valid_per_id),
+          .in(resp_tracker_pop_valid_per_id),
           .out(next_port_for_id_valid),
           .out_valid()
       );
@@ -385,22 +384,22 @@ module br_amba_axi_demux_req_tracker #(
   // Ready/valid joining
   assign downstream_xready_reg = ds_port_gnt & {NumSubordinates{upstream_xready_pre}};
   assign upstream_xvalid_pre = |(ds_port_req & ds_port_gnt);
-  assign resp_tracking_fifo_pop_ready = upstream_x_resp_payload_pre.last
+  assign resp_tracker_pop_ready = upstream_x_resp_payload_pre.last
                                         && upstream_xvalid_pre
                                         && upstream_xready_pre;
 
   if (SingleIdOnly) begin : gen_single_id_only_enc
-    assign resp_tracking_fifo_pop_ready_per_id = resp_tracking_fifo_pop_ready;
+    assign resp_tracker_pop_ready_per_id = resp_tracker_pop_ready;
   end else begin : gen_multi_id_pop_ready_enc
     br_enc_bin2onehot #(
         .NumValues(NumIds)
-    ) br_enc_bin2onehot_resp_tracking_fifo_pop (
+    ) br_enc_bin2onehot_resp_tracker_pop (
         .clk,
         .rst,
         //
         .in(upstream_x_resp_payload_pre.id),
-        .in_valid(resp_tracking_fifo_pop_ready),
-        .out(resp_tracking_fifo_pop_ready_per_id)
+        .in_valid(resp_tracker_pop_ready),
+        .out(resp_tracker_pop_ready_per_id)
     );
   end
 
