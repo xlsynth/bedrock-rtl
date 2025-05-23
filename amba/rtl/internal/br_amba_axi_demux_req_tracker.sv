@@ -176,7 +176,7 @@ module br_amba_axi_demux_req_tracker #(
 
   // Single-ID-per-port tracking
   // Transactions for a single ID may only be outstanding on a single port at a time. This is
-  // required to avoid deadlock and is a similar strategy used in commerically-available AXI
+  // required to avoid deadlock and is a similar strategy used in commercially-available AXI
   // interconnects.
 
   logic [NumIds-1:0][MaxOutstandingWidth-1:0] outstanding_per_id;
