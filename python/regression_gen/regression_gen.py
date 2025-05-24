@@ -132,6 +132,24 @@ def _resolve_output_path(output_str: str | None, *, default_dir_label: str) -> P
 
 @click.command(context_settings={"help_option_names": ["-h", "--help"]})
 @click.option(
+    "--project",
+    default="bedrock",
+    show_default=True,
+    help="Bedrock project name to put in the generated YAML (required).",
+)
+@click.option(
+    "--flow-name",
+    default="flow",
+    show_default=True,
+    help="Flow name to put in the generated YAML (required).",
+)
+@click.option(
+    "--description",
+    default="Bedrock regression.",
+    show_default=True,
+    help="Description to put in the generated YAML (required).",
+)
+@click.option(
     "--block",
     required=True,
     help="Bedrock block name to put in the generated YAML (required).",
@@ -160,29 +178,11 @@ def _resolve_output_path(output_str: str | None, *, default_dir_label: str) -> P
         "'regr.yaml' is appended automatically.  Default: <--directory>/regr.yaml."
     ),
 )
+@click.option("--default-timeout-mins", default=30, show_default=True, type=int)
+@click.option("--default-cpus-per-task", default=4, show_default=True, type=int)
+@click.option("--default-mem-mb", default=32768, show_default=True, type=int)
 @click.option(
-    "--default-timeout-mins",
-    default=600,
-    show_default=True,
-    type=int,
-)
-@click.option(
-    "--default-cpus-per-task",
-    default=4,
-    show_default=True,
-    type=int,
-)
-@click.option(
-    "--default-mem-mb",
-    default=32768,
-    show_default=True,
-    type=int,
-)
-@click.option(
-    "--default-invocation-timeout-mins",
-    default=1440,
-    show_default=True,
-    type=int,
+    "--default-invocation-timeout-mins", default=1440, show_default=True, type=int
 )
 @click.option(
     "--dry-run",
@@ -190,6 +190,9 @@ def _resolve_output_path(output_str: str | None, *, default_dir_label: str) -> P
     help="Only list discovered targets and show the rendered YAML on stdout without writing the file.",
 )
 def cli(
+    project: str,
+    flow_name: str,
+    description: str,
     block: str,
     directory: str,
     rule_kind: str,
@@ -220,6 +223,9 @@ def cli(
 
     yaml_text = render_yaml(
         jobs,
+        project=project,
+        flow_name=flow_name,
+        description=description,
         default_timeout_mins=default_timeout_mins,
         default_cpus_per_task=default_cpus_per_task,
         default_mem_mb=default_mem_mb,
