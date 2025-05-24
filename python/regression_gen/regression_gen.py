@@ -212,7 +212,7 @@ def cli(
         sys.exit(1)
 
     query_expr = f'kind("{rule_kind} rule", {dir_label}/...)'
-    click.echo(f"Running Bazel query: {query_expr}")
+    # click.echo(f"Running Bazel query: {query_expr}")
 
     labels: list[str] = _run_bazel_query(query_expr)
     if not labels:
