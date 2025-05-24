@@ -214,6 +214,10 @@ br_verilog_elab_and_lint_test_suite(
             "1",
             "4",
         ],
+        "RegisterDownstreamOutputs": [
+            "1",
+            "0",
+        ],
     },
     deps = [":br_amba_axi_demux_req_tracker"],
 )
