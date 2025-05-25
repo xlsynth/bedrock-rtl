@@ -87,28 +87,34 @@ module br_amba_axi_isolate_sub #(
     parameter bit [DataWidth-1:0] IsolateRData = '0,
     // Number of pipeline stages to use for the pointer RAM read
     // data in the response tracker FIFO. Has no effect if AxiIdCount == 1.
-    parameter int FifoPointerRamReadDataDepthStages = 0,
+    parameter int DynamicFifoPointerRamReadDataDepthStages = 0,
     // Number of pipeline stages to use for the data RAM read data
     // in the response tracker FIFO. Has no effect if AxiIdCount == 1.
-    parameter int FifoDataRamReadDataDepthStages = 0,
+    parameter int DynamicFifoDataRamReadDataDepthStages = 0,
     // Number of pipeline stages to use for the pointer RAM address
     // in the response tracker FIFO. Has no effect if AxiIdCount == 1.
-    parameter int FifoPointerRamAddressDepthStages = 1,
+    parameter int DynamicFifoPointerRamAddressDepthStages = 1,
     // Number of pipeline stages to use for the data RAM address
     // in the response tracker FIFO. Has no effect if AxiIdCount == 1.
-    parameter int FifoDataRamAddressDepthStages = 1,
+    parameter int DynamicFifoDataRamAddressDepthStages = 1,
     // Number of linked lists per FIFO in the response tracker FIFO. Has
     // no effect if AxiIdCount == 1.
-    parameter int FifoNumLinkedListsPerFifo = 2,
+    parameter int DynamicFifoNumLinkedListsPerFifo = 2,
     // Number of pipeline stages to use for the staging buffer
     // in the response tracker FIFO. Has no effect if AxiIdCount == 1.
-    parameter int FifoStagingBufferDepth = 2,
+    parameter int DynamicFifoStagingBufferDepth = 2,
     // Number of pipeline stages to use for the pop outputs
     // in the response tracker FIFO. Has no effect if AxiIdCount == 1.
-    parameter int FifoRegisterPopOutputs = 1,
+    parameter int DynamicFifoRegisterPopOutputs = 1,
     // Number of pipeline stages to use for the deallocation
     // in the response tracker FIFO. Has no effect if AxiIdCount == 1.
-    parameter int FifoRegisterDeallocation = 1,
+    parameter int DynamicFifoRegisterDeallocation = 1,
+    //
+    // Set to 1 to use a dynamic storage shared FIFO for the read tracking list.
+    parameter bit UseDynamicFifoForReadTracker = 0,
+    // When UseDynamicFifoForReadTracker=0, this parameter controls the depth of the Per-ID
+    // tracking FIFO.
+    parameter int StaticPerIdReadTrackerFifoDepth = 2,
     localparam int AxiBurstLenWidth = br_math::clamped_clog2(MaxAxiBurstLen),
     localparam int StrobeWidth = DataWidth / 8
 ) (
@@ -301,20 +307,22 @@ module br_amba_axi_isolate_sub #(
       .AxiIdCount(AxiIdCount),
       .AxiIdWidth(IdWidth),
       .DataWidth(BUserWidth),
-      .FifoPointerRamReadDataDepthStages(FifoPointerRamReadDataDepthStages),
-      .FifoPointerRamAddressDepthStages(FifoPointerRamAddressDepthStages),
-      .FifoNumLinkedListsPerFifo(FifoNumLinkedListsPerFifo),
-      .FifoDataRamReadDataDepthStages(FifoDataRamReadDataDepthStages),
-      .FifoDataRamAddressDepthStages(FifoDataRamAddressDepthStages),
-      .FifoStagingBufferDepth(FifoStagingBufferDepth),
-      .FifoRegisterPopOutputs(FifoRegisterPopOutputs),
-      .FifoRegisterDeallocation(FifoRegisterDeallocation),
+      .DynamicFifoPointerRamReadDataDepthStages(DynamicFifoPointerRamReadDataDepthStages),
+      .DynamicFifoPointerRamAddressDepthStages(DynamicFifoPointerRamAddressDepthStages),
+      .DynamicFifoNumLinkedListsPerFifo(DynamicFifoNumLinkedListsPerFifo),
+      .DynamicFifoDataRamReadDataDepthStages(DynamicFifoDataRamReadDataDepthStages),
+      .DynamicFifoDataRamAddressDepthStages(DynamicFifoDataRamAddressDepthStages),
+      .DynamicFifoStagingBufferDepth(DynamicFifoStagingBufferDepth),
+      .DynamicFifoRegisterPopOutputs(DynamicFifoRegisterPopOutputs),
+      .DynamicFifoRegisterDeallocation(DynamicFifoRegisterDeallocation),
       .IsolateResp(IsolateResp),
       .IsolateData(IsolateBUser),
       // Single write response beat per write transaction
       .MaxAxiBurstLen(1),
       .MaxTransactionSkew(MaxTransactionSkew),
-      .EnableWlastTracking(1)
+      .EnableWlastTracking(1),
+      .UseDynamicFifo(0),
+      .PerIdFifoDepth(MaxOutstanding)
   ) br_amba_iso_resp_tracker_w (
       .clk,
       .rst,
@@ -416,19 +424,21 @@ module br_amba_axi_isolate_sub #(
       .AxiIdCount(AxiIdCount),
       .AxiIdWidth(IdWidth),
       .DataWidth(RUserWidth + DataWidth),
-      .FifoPointerRamReadDataDepthStages(FifoPointerRamReadDataDepthStages),
-      .FifoPointerRamAddressDepthStages(FifoPointerRamAddressDepthStages),
-      .FifoNumLinkedListsPerFifo(FifoNumLinkedListsPerFifo),
-      .FifoDataRamReadDataDepthStages(FifoDataRamReadDataDepthStages),
-      .FifoDataRamAddressDepthStages(FifoDataRamAddressDepthStages),
-      .FifoStagingBufferDepth(FifoStagingBufferDepth),
-      .FifoRegisterPopOutputs(FifoRegisterPopOutputs),
-      .FifoRegisterDeallocation(FifoRegisterDeallocation),
+      .DynamicFifoPointerRamReadDataDepthStages(DynamicFifoPointerRamReadDataDepthStages),
+      .DynamicFifoPointerRamAddressDepthStages(DynamicFifoPointerRamAddressDepthStages),
+      .DynamicFifoNumLinkedListsPerFifo(DynamicFifoNumLinkedListsPerFifo),
+      .DynamicFifoDataRamReadDataDepthStages(DynamicFifoDataRamReadDataDepthStages),
+      .DynamicFifoDataRamAddressDepthStages(DynamicFifoDataRamAddressDepthStages),
+      .DynamicFifoStagingBufferDepth(DynamicFifoStagingBufferDepth),
+      .DynamicFifoRegisterPopOutputs(DynamicFifoRegisterPopOutputs),
+      .DynamicFifoRegisterDeallocation(DynamicFifoRegisterDeallocation),
       .IsolateResp(IsolateResp),
       .IsolateData({IsolateRUser, IsolateRData}),
       // MaxAxiBurstLen response beats per read transaction
       .MaxAxiBurstLen(MaxAxiBurstLen),
-      .EnableWlastTracking(0)
+      .EnableWlastTracking(0),
+      .UseDynamicFifo(UseDynamicFifoForReadTracker),
+      .PerIdFifoDepth(StaticPerIdReadTrackerFifoDepth)
   ) br_amba_iso_resp_tracker_r (
       .clk,
       .rst,

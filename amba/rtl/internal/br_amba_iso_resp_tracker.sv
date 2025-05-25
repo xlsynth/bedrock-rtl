@@ -56,22 +56,27 @@ module br_amba_iso_resp_tracker #(
     parameter int AxiIdCount = 2 ** AxiIdWidth,
     // Width of the data field.
     parameter int DataWidth = 1,
+    // Set to 1 to use a dynamic storage shared FIFO for the tracking list.
+    parameter bit UseDynamicFifo = 1,
     // Number of pipeline stages to use for the pointer RAM read data.
-    parameter int FifoPointerRamReadDataDepthStages = 0,
+    parameter int DynamicFifoPointerRamReadDataDepthStages = 0,
     // Number of pipeline stages to use for the data RAM read data.
-    parameter int FifoDataRamReadDataDepthStages = 0,
+    parameter int DynamicFifoDataRamReadDataDepthStages = 0,
     // Number of pipeline stages to use for the pointer RAM address.
-    parameter int FifoPointerRamAddressDepthStages = 1,
+    parameter int DynamicFifoPointerRamAddressDepthStages = 1,
     // Number of pipeline stages to use for the data RAM address.
-    parameter int FifoDataRamAddressDepthStages = 1,
+    parameter int DynamicFifoDataRamAddressDepthStages = 1,
     // Number of linked lists per FIFO.
-    parameter int FifoNumLinkedListsPerFifo = 2,
+    parameter int DynamicFifoNumLinkedListsPerFifo = 2,
     // Number of pipeline stages to use for the staging buffer.
-    parameter int FifoStagingBufferDepth = 2,
+    parameter int DynamicFifoStagingBufferDepth = 2,
     // Number of pipeline stages to use for the pop outputs.
-    parameter int FifoRegisterPopOutputs = 1,
+    parameter int DynamicFifoRegisterPopOutputs = 1,
     // Number of pipeline stages to use for the deallocation.
-    parameter int FifoRegisterDeallocation = 1,
+    parameter int DynamicFifoRegisterDeallocation = 1,
+    // When UseDynamicFifo=0, this parameter controls the depth of the Per-ID
+    // tracking FIFO.
+    parameter int PerIdFifoDepth = 2,
     // Response to generate for isolated transactions.
     parameter br_amba::axi_resp_t IsolateResp = br_amba::AxiRespSlverr,
     // Data to generate for isolated transactions.
@@ -208,34 +213,80 @@ module br_amba_iso_resp_tracker #(
   end
 
   // Total outstanding requests counters (in the staging+tracker FIFOs)
-  logic [OutstandingWidth-1:0] total_req_count;
-  br_counter #(
-      .MaxValue(MaxOutstanding),
-      .MaxChange(1),
-      .EnableWrap(0),
-      .EnableSaturate(0),
-      .EnableReinitAndChange(0)
-  ) br_counter_total_req (
-      .clk,
-      .rst,
-      //
-      .reinit(1'b0),
-      .initial_value('0),
-      .incr_valid(staging_fifo_push_valid && staging_fifo_push_ready),
-      .incr(1'b1),
-      .decr_valid(|(tracker_fifo_pop_valid & tracker_fifo_pop_ready)),
-      .decr(1'b1),
-      .value(total_req_count),
-      .value_next()
-  );
+  if (UseDynamicFifo || SingleIdOnly) begin : gen_total_req_count
+    logic [OutstandingWidth-1:0] total_req_count;
+    br_counter #(
+        .MaxValue(MaxOutstanding),
+        .MaxChange(1),
+        .EnableWrap(0),
+        .EnableSaturate(0),
+        .EnableReinitAndChange(0)
+    ) br_counter_total_req (
+        .clk,
+        .rst,
+        //
+        .reinit(1'b0),
+        .initial_value('0),
+        .incr_valid(staging_fifo_push_valid && staging_fifo_push_ready),
+        .incr(1'b1),
+        .decr_valid(|(tracker_fifo_pop_valid & tracker_fifo_pop_ready)),
+        .decr(1'b1),
+        .value(total_req_count),
+        .value_next()
+    );
 
-  // Need to ensure that the total outstanding requests held in the staging+tracker FIFOs
-  // never exceeds the total amount of storage available in the tracker (multi-) FIFO. It
-  // must be the case that everything in staging can eventually sink into the tracker FIFO
-  // w/o requiring any pops from the tracker FIFO. Otherwise deadlock can result if a downstream
-  // response arrives whose matching transaction is stuck in the staging FIFO (blocked by a
-  // different ID).
-  assign can_accept_new_req = total_req_count < MaxOutstanding;
+    // Need to ensure that the total outstanding requests held in the staging+tracker FIFOs
+    // never exceeds the total amount of storage available in the tracker (multi-) FIFO. It
+    // must be the case that everything in staging can eventually sink into the tracker FIFO
+    // w/o requiring any pops from the tracker FIFO. Otherwise deadlock can result if a downstream
+    // response arrives whose matching transaction is stuck in the staging FIFO (blocked by a
+    // different ID).
+    assign can_accept_new_req = total_req_count < MaxOutstanding;
+  end else begin : gen_total_req_count_per_id
+    // With static FIFOs, since storage is not shared, need to count total requests per ID to ensure
+    // that all accepted requests can eventually sink into a (per-ID) tracker FIFO.
+    logic [AxiIdCount-1:0][$clog2(PerIdFifoDepth+1)-1:0] total_req_count;
+    logic [AxiIdCount-1:0] can_accept_new_req_per_id;
+
+    for (genvar i = 0; i < AxiIdCount; i++) begin : gen_counter_per_id
+      logic incr_valid;
+
+      assign incr_valid = staging_fifo_push_valid
+                          && staging_fifo_push_ready
+                          && (upstream_axid == i);
+
+      br_counter #(
+          .MaxValue(PerIdFifoDepth),
+          .MaxChange(1),
+          .EnableWrap(0),
+          .EnableSaturate(0),
+          .EnableReinitAndChange(0)
+      ) br_counter_total_req_per_id (
+          .clk,
+          .rst,
+          //
+          .reinit(1'b0),
+          .initial_value('0),
+          .incr_valid(incr_valid),
+          .incr(1'b1),
+          .decr_valid(tracker_fifo_pop_valid[i] && tracker_fifo_pop_ready[i]),
+          .decr(1'b1),
+          .value(total_req_count[i]),
+          .value_next()
+      );
+      assign can_accept_new_req_per_id[i] = total_req_count[i] < PerIdFifoDepth;
+    end
+
+    br_mux_bin #(
+        .NumSymbolsIn(AxiIdCount),
+        .SymbolWidth (1)
+    ) br_mux_bin_can_accept_new_req (
+        .select(upstream_axid[MinIdWidth-1:0]),
+        .in(can_accept_new_req_per_id),
+        .out(can_accept_new_req),
+        .out_valid()
+    );
+  end
 
   if (EnableWlastTracking) begin : gen_wlast_tracking
     logic staging_fifo_pop_valid;
@@ -411,37 +462,97 @@ module br_amba_iso_resp_tracker #(
     );
     `BR_UNUSED(tracker_fifo_push_axid)
   end else begin : gen_multi_fifo
-    br_fifo_shared_dynamic_flops #(
-        .NumWritePorts(1),
-        .NumReadPorts(1),
-        .NumFifos(AxiIdCount),
-        .Depth(MaxOutstanding),
-        .Width(AxiBurstLenWidth),
-        .PointerRamReadDataDepthStages(FifoPointerRamReadDataDepthStages),
-        .PointerRamAddressDepthStages(FifoPointerRamAddressDepthStages),
-        .NumLinkedListsPerFifo(FifoNumLinkedListsPerFifo),
-        .DataRamReadDataDepthStages(FifoDataRamReadDataDepthStages),
-        .DataRamAddressDepthStages(FifoDataRamAddressDepthStages),
-        .StagingBufferDepth(FifoStagingBufferDepth),
-        .RegisterPopOutputs(FifoRegisterPopOutputs),
-        .RegisterDeallocation(FifoRegisterDeallocation),
-        // When EnableWlastTracking=0, valid can deassert if downstream_axready deasserts
-        .EnableAssertPushValidStability(EnableWlastTracking)
-    ) br_fifo_shared_dynamic_flops_req_tracker (
-        .clk,
-        .rst,
-        //
-        .push_valid(tracker_fifo_push_valid),
-        .push_data(tracker_fifo_push_len),
-        .push_ready(tracker_fifo_push_ready),
-        .push_fifo_id(tracker_fifo_push_axid),
-        .push_full(),
-        //
-        .pop_valid(tracker_fifo_pop_valid),
-        .pop_data(tracker_fifo_pop_len),
-        .pop_ready(tracker_fifo_pop_ready),
-        .pop_empty(tracker_fifo_pop_empty)
-    );
+    if (UseDynamicFifo) begin : gen_dynamic_fifo
+      br_fifo_shared_dynamic_flops #(
+          .NumWritePorts(1),
+          .NumReadPorts(1),
+          .NumFifos(AxiIdCount),
+          .Depth(MaxOutstanding),
+          .Width(AxiBurstLenWidth),
+          .PointerRamReadDataDepthStages(DynamicFifoPointerRamReadDataDepthStages),
+          .PointerRamAddressDepthStages(DynamicFifoPointerRamAddressDepthStages),
+          .NumLinkedListsPerFifo(DynamicFifoNumLinkedListsPerFifo),
+          .DataRamReadDataDepthStages(DynamicFifoDataRamReadDataDepthStages),
+          .DataRamAddressDepthStages(DynamicFifoDataRamAddressDepthStages),
+          .StagingBufferDepth(DynamicFifoStagingBufferDepth),
+          .RegisterPopOutputs(DynamicFifoRegisterPopOutputs),
+          .RegisterDeallocation(DynamicFifoRegisterDeallocation),
+          // When EnableWlastTracking=0, valid can deassert if downstream_axready deasserts
+          .EnableAssertPushValidStability(EnableWlastTracking)
+      ) br_fifo_shared_dynamic_flops_req_tracker (
+          .clk,
+          .rst,
+          //
+          .push_valid(tracker_fifo_push_valid),
+          .push_data(tracker_fifo_push_len),
+          .push_ready(tracker_fifo_push_ready),
+          .push_fifo_id(tracker_fifo_push_axid),
+          .push_full(),
+          //
+          .pop_valid(tracker_fifo_pop_valid),
+          .pop_data(tracker_fifo_pop_len),
+          .pop_ready(tracker_fifo_pop_ready),
+          .pop_empty(tracker_fifo_pop_empty)
+      );
+    end else begin : gen_static_fifo
+      logic [AxiIdCount-1:0] static_fifo_push_valid;
+      logic [AxiIdCount-1:0] static_fifo_push_ready;
+      logic [AxiIdCount-1:0][AxiBurstLenWidth-1:0] static_fifo_push_data;
+      logic [MinIdWidth-1:0] static_fifo_mux_select;
+
+      assign static_fifo_mux_select = tracker_fifo_push_valid ? tracker_fifo_push_axid : '0;
+
+      br_flow_demux_select_unstable #(
+          .NumFlows(AxiIdCount),
+          .Width(AxiBurstLenWidth),
+          // When EnableWlastTracking=0, valid can deassert if downstream_axready deasserts
+          .EnableAssertPushValidStability(EnableWlastTracking)
+      ) br_flow_demux_select_unstable_req_tracker (
+          .clk,
+          .rst,
+          //
+          .select(static_fifo_mux_select),
+          //
+          .push_valid(tracker_fifo_push_valid),
+          .push_data(tracker_fifo_push_len),
+          .push_ready(tracker_fifo_push_ready),
+          //
+          .pop_valid_unstable(static_fifo_push_valid),
+          .pop_data_unstable(static_fifo_push_data),
+          .pop_ready(static_fifo_push_ready)
+      );
+
+      for (genvar i = 0; i < AxiIdCount; i++) begin : gen_fifo_per_id
+        br_fifo_flops #(
+            .Depth(PerIdFifoDepth),
+            .Width(AxiBurstLenWidth),
+            .EnableBypass(0),
+            .RegisterPopOutputs(0),
+            // When EnableWlastTracking=0, valid can deassert if downstream_axready deasserts
+            .EnableAssertPushValidStability(EnableWlastTracking)
+        ) br_fifo_flops_req_tracker (
+            .clk,
+            .rst,
+            //
+            .push_valid(static_fifo_push_valid[i]),
+            .push_data(static_fifo_push_data[i]),
+            .push_ready(static_fifo_push_ready[i]),
+            //
+            .pop_valid(tracker_fifo_pop_valid[i]),
+            .pop_data(tracker_fifo_pop_len[i]),
+            .pop_ready(tracker_fifo_pop_ready[i]),
+            //
+            .full(),
+            .full_next(),
+            .slots(),
+            .slots_next(),
+            .empty(tracker_fifo_pop_empty[i]),
+            .empty_next(),
+            .items(),
+            .items_next()
+        );
+      end
+    end
   end
 
   assign resp_fifo_empty = &tracker_fifo_pop_empty && staging_fifo_pop_empty;
