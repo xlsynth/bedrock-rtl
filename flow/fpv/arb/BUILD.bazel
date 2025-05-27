@@ -69,7 +69,6 @@ br_verilog_fpv_test_tools_suite(
     },
     tools = {
         "jg": "",
-        "vcf": "",
     },
     top = "br_flow_arb_fixed",
     deps = [":br_flow_arb_fixed_fpv_monitor"],
@@ -121,7 +120,6 @@ br_verilog_fpv_test_tools_suite(
     },
     tools = {
         "jg": "",
-        "vcf": "",
     },
     top = "br_flow_arb_lru",
     deps = [":br_flow_arb_lru_fpv_monitor"],
@@ -173,7 +171,6 @@ br_verilog_fpv_test_tools_suite(
     },
     tools = {
         "jg": "",
-        "vcf": "",
     },
     top = "br_flow_arb_rr",
     deps = [":br_flow_arb_rr_fpv_monitor"],

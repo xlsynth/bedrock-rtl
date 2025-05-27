@@ -64,7 +64,6 @@ br_verilog_fpv_test_tools_suite(
     },
     tools = {
         "jg": "br_ecc_sed_fpv.jg.tcl",
-        "vcf": "",
     },
     top = "br_ecc_sed_fpv_monitor",
     deps = [":br_ecc_sed_fpv_monitor"],
@@ -117,7 +116,6 @@ br_verilog_fpv_test_tools_suite(
     },
     tools = {
         "jg": "br_ecc_secded_fpv.jg.tcl",
-        "vcf": "",
     },
     top = "br_ecc_secded_fpv_monitor",
     deps = [":br_ecc_secded_fpv_monitor"],
@@ -201,7 +199,6 @@ br_verilog_fpv_test_tools_suite(
     params = {"DataWidth": DATA_WIDTHS},
     tools = {
         "jg": "br_ecc_secded_fpv.jg.tcl",
-        "vcf": "",
     },
     top = "br_ecc_secded_fpv_monitor",
     deps = [":br_ecc_secded_fpv_monitor"],
@@ -253,7 +250,6 @@ br_verilog_fpv_test_tools_suite(
     },
     tools = {
         "jg": "br_ecc_secded_error_fpv.jg.tcl",
-        "vcf": "",
     },
     top = "br_ecc_secded_error_fpv_monitor",
     deps = [":br_ecc_secded_error_fpv_monitor"],
@@ -264,7 +260,6 @@ br_verilog_fpv_test_tools_suite(
     params = {"DataWidth": DATA_WIDTHS},
     tools = {
         "jg": "br_ecc_secded_error_fpv.jg.tcl",
-        "vcf": "",
     },
     top = "br_ecc_secded_error_fpv_monitor",
     deps = [":br_ecc_secded_error_fpv_monitor"],

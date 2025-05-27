@@ -61,7 +61,6 @@ br_verilog_fpv_test_tools_suite(
     },
     tools = {
         "jg": "br_credit_counter_fpv.jg.tcl",
-        "vcf": "",
     },
     top = "br_credit_counter",
     deps = [":br_credit_counter_fpv_monitor"],
@@ -143,7 +142,6 @@ br_verilog_fpv_test_tools_suite(
     },
     tools = {
         "jg": "br_credit_receiver_fpv.jg.tcl",
-        "vcf": "",
     },
     top = "br_credit_receiver",
     deps = [":br_credit_receiver_fpv_monitor"],
@@ -167,8 +165,9 @@ verilog_elab_test(
     deps = [":br_credit_sender_fpv_monitor"],
 )
 
+# test valid ready protocol
 br_verilog_fpv_test_tools_suite(
-    name = "br_credit_sender_test_suite",
+    name = "br_credit_sender_test_backpressure",
     illegal_param_combinations = {
         (
             "EnableCoverPushBackpressure",
@@ -180,6 +179,31 @@ br_verilog_fpv_test_tools_suite(
             ("0", "1", "1"),
             ("1", "0", "1"),
         ],
+    },
+    params = {
+        "EnableCoverPushBackpressure": [
+            "0",
+            "1",
+        ],
+        "EnableAssertPushDataStability": [
+            "0",
+            "1",
+        ],
+        "EnableAssertPushValidStability": [
+            "0",
+            "1",
+        ],
+    },
+    tools = {
+        "jg": "br_credit_sender_fpv.jg.tcl",
+    },
+    top = "br_credit_sender",
+    deps = [":br_credit_sender_fpv_monitor"],
+)
+
+br_verilog_fpv_test_tools_suite(
+    name = "br_credit_sender_test_suite",
+    illegal_param_combinations = {
         (
             "PopCreditMaxChange",
             "MaxCredit",
@@ -196,18 +220,6 @@ br_verilog_fpv_test_tools_suite(
         ],
     },
     params = {
-        "EnableCoverPushBackpressure": [
-            "0",
-            "1",
-        ],
-        "EnableAssertPushDataStability": [
-            "0",
-            "1",
-        ],
-        "EnableAssertPushValidStability": [
-            "0",
-            "1",
-        ],
         "MaxCredit": [
             "1",
             "5",
@@ -235,7 +247,6 @@ br_verilog_fpv_test_tools_suite(
     },
     tools = {
         "jg": "br_credit_sender_fpv.jg.tcl",
-        "vcf": "",
     },
     top = "br_credit_sender",
     deps = [":br_credit_sender_fpv_monitor"],

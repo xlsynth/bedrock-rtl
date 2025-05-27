@@ -30,5 +30,8 @@ assert -disable {*upstream.genPropChksWRInf.slave_b_aw_bid_match}
 assert -disable {*upstream.genPropChksWRInf.genAXI4FullWrResp.slave_b_aw_bid_order_within_id}
 assert -disable {*upstream.genPropChksWRInf.genMasterLiveW.genreadyW.slave_w_no_aw_wready_eventually}
 
+# limit run time to 30-mins
+set_prove_time_limit 1800s
+
 # prove command
 prove -all

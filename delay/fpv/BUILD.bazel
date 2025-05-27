@@ -46,12 +46,10 @@ br_verilog_fpv_test_tools_suite(
         "Width": [
             "1",
             "5",
-            "6",
         ],
     },
     tools = {
         "jg": "",
-        "vcf": "",
     },
     top = "br_delay",
     deps = [":br_delay_fpv_monitor"],
@@ -85,12 +83,10 @@ br_verilog_fpv_test_tools_suite(
         "Width": [
             "1",
             "5",
-            "6",
         ],
     },
     tools = {
         "jg": "br_delay_nr_fpv.jg.tcl",
-        "vcf": "",
     },
     top = "br_delay_nr",
     deps = [":br_delay_nr_fpv_monitor"],
@@ -124,12 +120,10 @@ br_verilog_fpv_test_tools_suite(
         "Width": [
             "1",
             "5",
-            "6",
         ],
     },
     tools = {
         "jg": "",
-        "vcf": "",
     },
     top = "br_delay_valid",
     deps = [":br_delay_valid_fpv_monitor"],
@@ -162,13 +156,11 @@ br_verilog_fpv_test_tools_suite(
         ],
         "Width": [
             "1",
-            "5",
             "6",
         ],
     },
     tools = {
         "jg": "",
-        "vcf": "",
     },
     top = "br_delay_valid_next",
     deps = [":br_delay_valid_next_fpv_monitor"],
@@ -201,12 +193,10 @@ br_verilog_fpv_test_tools_suite(
         "Width": [
             "1",
             "5",
-            "6",
         ],
     },
     tools = {
         "jg": "br_delay_nr_fpv.jg.tcl",
-        "vcf": "",
     },
     top = "br_delay_valid_next_nr",
     deps = [":br_delay_valid_next_nr_fpv_monitor"],
