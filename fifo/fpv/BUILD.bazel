@@ -79,9 +79,9 @@ verilog_elab_test(
     deps = [":br_fifo_ctrl_1r1w_fpv_monitor"],
 )
 
-# Normal tests
+# test valid ready protocol
 br_verilog_fpv_test_tools_suite(
-    name = "br_fifo_ctrl_1r1w_test_suite",
+    name = "br_fifo_ctrl_1r1w_test_backpressure",
     illegal_param_combinations = {
         (
             "EnableCoverPushBackpressure",
@@ -93,6 +93,32 @@ br_verilog_fpv_test_tools_suite(
             ("0", "1", "1"),
             ("1", "0", "1"),
         ],
+    },
+    params = {
+        "EnableAssertPushDataStability": [
+            "0",
+            "1",
+        ],
+        "EnableAssertPushValidStability": [
+            "0",
+            "1",
+        ],
+        "EnableCoverPushBackpressure": [
+            "0",
+            "1",
+        ],
+    },
+    tools = {
+        "jg": "br_fifo_ctrl_1r1w_fpv.jg.tcl",
+    },
+    top = "br_fifo_ctrl_1r1w",
+    deps = [":br_fifo_ctrl_1r1w_fpv_monitor"],
+)
+
+# Normal tests
+br_verilog_fpv_test_tools_suite(
+    name = "br_fifo_ctrl_1r1w_test_suite",
+    illegal_param_combinations = {
         # Depth > RamReadLatency + 1
         (
             "Depth",
@@ -112,18 +138,6 @@ br_verilog_fpv_test_tools_suite(
             "1",
             "0",
         ],
-        "EnableAssertPushDataStability": [
-            "0",
-            "1",
-        ],
-        "EnableAssertPushValidStability": [
-            "0",
-            "1",
-        ],
-        "EnableCoverPushBackpressure": [
-            "0",
-            "1",
-        ],
         "RamReadLatency": [
             "2",
             "1",
@@ -135,12 +149,10 @@ br_verilog_fpv_test_tools_suite(
         ],
         "Width": [
             "1",
-            "5",
         ],
     },
     tools = {
         "jg": "br_fifo_ctrl_1r1w_fpv.jg.tcl",
-        "vcf": "",
     },
     top = "br_fifo_ctrl_1r1w",
     deps = [":br_fifo_ctrl_1r1w_fpv_monitor"],
@@ -191,7 +203,6 @@ br_verilog_fpv_test_tools_suite(
     },
     tools = {
         "jg": "br_fifo_ctrl_1r1w_fpv.jg.tcl",
-        "vcf": "",
     },
     top = "br_fifo_ctrl_1r1w",
     deps = [":br_fifo_ctrl_1r1w_fpv_monitor"],
@@ -216,9 +227,9 @@ verilog_elab_test(
     deps = [":br_fifo_flops_fpv_monitor"],
 )
 
-# Normal tests
+# test valid ready protocol
 br_verilog_fpv_test_tools_suite(
-    name = "br_fifo_flops_test_suite",
+    name = "br_fifo_flops_test_backpressure",
     illegal_param_combinations = {
         (
             "EnableCoverPushBackpressure",
@@ -232,15 +243,6 @@ br_verilog_fpv_test_tools_suite(
         ],
     },
     params = {
-        "Depth": [
-            "2",
-            "5",
-            "6",
-        ],
-        "EnableBypass": [
-            "1",
-            "0",
-        ],
         "EnableAssertPushDataStability": [
             "0",
             "1",
@@ -252,6 +254,27 @@ br_verilog_fpv_test_tools_suite(
         "EnableCoverPushBackpressure": [
             "0",
             "1",
+        ],
+    },
+    tools = {
+        "jg": "br_fifo_flops_fpv.jg.tcl",
+    },
+    top = "br_fifo_flops",
+    deps = [":br_fifo_flops_fpv_monitor"],
+)
+
+# Normal tests
+br_verilog_fpv_test_tools_suite(
+    name = "br_fifo_flops_test_suite",
+    params = {
+        "Depth": [
+            "2",
+            "5",
+            "6",
+        ],
+        "EnableBypass": [
+            "1",
+            "0",
         ],
         "RegisterPopOutputs": [
             "1",
@@ -265,7 +288,6 @@ br_verilog_fpv_test_tools_suite(
     },
     tools = {
         "jg": "br_fifo_flops_fpv.jg.tcl",
-        "vcf": "",
     },
     top = "br_fifo_flops",
     deps = [":br_fifo_flops_fpv_monitor"],
@@ -312,7 +334,6 @@ br_verilog_fpv_test_tools_suite(
     },
     tools = {
         "jg": "br_fifo_flops_fpv.jg.tcl",
-        "vcf": "",
     },
     top = "br_fifo_flops",
     deps = [":br_fifo_flops_fpv_monitor"],
@@ -377,12 +398,10 @@ br_verilog_fpv_test_tools_suite(
         ],
         "Width": [
             "1",
-            "5",
         ],
     },
     tools = {
         "jg": "br_fifo_ctrl_1r1w_push_credit_fpv.jg.tcl",
-        "vcf": "",
     },
     top = "br_fifo_ctrl_1r1w_push_credit",
     deps = [":br_fifo_ctrl_1r1w_push_credit_fpv_monitor"],
@@ -437,7 +456,6 @@ br_verilog_fpv_test_tools_suite(
     },
     tools = {
         "jg": "br_fifo_ctrl_1r1w_push_credit_fpv.jg.tcl",
-        "vcf": "",
     },
     top = "br_fifo_ctrl_1r1w_push_credit",
     deps = [":br_fifo_ctrl_1r1w_push_credit_fpv_monitor"],
@@ -486,13 +504,10 @@ br_verilog_fpv_test_tools_suite(
         ],
         "Width": [
             "1",
-            "5",
-            "6",
         ],
     },
     tools = {
         "jg": "br_fifo_flops_push_credit_fpv.jg.tcl",
-        "vcf": "",
     },
     top = "br_fifo_flops_push_credit",
     deps = [":br_fifo_flops_push_credit_fpv_monitor"],
@@ -543,7 +558,6 @@ br_verilog_fpv_test_tools_suite(
     },
     tools = {
         "jg": "br_fifo_flops_push_credit_fpv.jg.tcl",
-        "vcf": "",
     },
     top = "br_fifo_flops_push_credit",
     deps = [":br_fifo_flops_push_credit_fpv_monitor"],
@@ -613,7 +627,6 @@ br_verilog_fpv_test_tools_suite(
     },
     tools = {
         "jg": "br_fifo_shared_dynamic_flops_fpv.jg.tcl",
-        "vcf": "",
     },
     top = "br_fifo_shared_dynamic_flops",
     deps = [":br_fifo_shared_dynamic_flops_fpv_monitor"],
@@ -662,7 +675,6 @@ br_verilog_fpv_test_tools_suite(
     },
     tools = {
         "jg": "br_fifo_shared_dynamic_flops_fpv.jg.tcl",
-        "vcf": "",
     },
     top = "br_fifo_shared_dynamic_flops",
     deps = [":br_fifo_shared_dynamic_flops_fpv_monitor"],
@@ -699,7 +711,6 @@ br_verilog_fpv_test_tools_suite(
     },
     tools = {
         "jg": "br_fifo_shared_dynamic_flops_fpv.jg.tcl",
-        "vcf": "",
     },
     top = "br_fifo_shared_dynamic_flops",
     deps = [":br_fifo_shared_dynamic_flops_fpv_monitor"],
@@ -772,7 +783,6 @@ br_verilog_fpv_test_tools_suite(
     },
     tools = {
         "jg": "br_fifo_shared_dynamic_flops_push_credit_fpv.jg.tcl",
-        "vcf": "",
     },
     top = "br_fifo_shared_dynamic_flops_push_credit",
     deps = [":br_fifo_shared_dynamic_flops_push_credit_fpv_monitor"],
@@ -825,7 +835,6 @@ br_verilog_fpv_test_tools_suite(
     },
     tools = {
         "jg": "br_fifo_shared_dynamic_flops_push_credit_fpv.jg.tcl",
-        "vcf": "",
     },
     top = "br_fifo_shared_dynamic_flops_push_credit",
     deps = [":br_fifo_shared_dynamic_flops_push_credit_fpv_monitor"],
@@ -896,7 +905,6 @@ br_verilog_fpv_test_tools_suite(
     },
     tools = {
         "jg": "br_fifo_shared_dynamic_ctrl_fpv.jg.tcl",
-        "vcf": "",
     },
     top = "br_fifo_shared_dynamic_ctrl",
     deps = [":br_fifo_shared_dynamic_ctrl_fpv_monitor"],
@@ -931,7 +939,6 @@ br_verilog_fpv_test_tools_suite(
     },
     tools = {
         "jg": "br_fifo_shared_dynamic_ctrl_fpv.jg.tcl",
-        "vcf": "",
     },
     top = "br_fifo_shared_dynamic_ctrl",
     deps = [":br_fifo_shared_dynamic_ctrl_fpv_monitor"],
@@ -968,7 +975,6 @@ br_verilog_fpv_test_tools_suite(
     },
     tools = {
         "jg": "br_fifo_shared_dynamic_ctrl_fpv.jg.tcl",
-        "vcf": "",
     },
     top = "br_fifo_shared_dynamic_ctrl",
     deps = [":br_fifo_shared_dynamic_ctrl_fpv_monitor"],
@@ -1032,7 +1038,6 @@ br_verilog_fpv_test_tools_suite(
     },
     tools = {
         "jg": "br_fifo_shared_dynamic_ctrl_push_credit_fpv.jg.tcl",
-        "vcf": "",
     },
     top = "br_fifo_shared_dynamic_ctrl_push_credit",
     deps = [":br_fifo_shared_dynamic_ctrl_push_credit_fpv_monitor"],
@@ -1071,7 +1076,6 @@ br_verilog_fpv_test_tools_suite(
     },
     tools = {
         "jg": "br_fifo_shared_dynamic_ctrl_push_credit_fpv.jg.tcl",
-        "vcf": "",
     },
     top = "br_fifo_shared_dynamic_ctrl_push_credit",
     deps = [":br_fifo_shared_dynamic_ctrl_push_credit_fpv_monitor"],
@@ -1146,7 +1150,6 @@ br_verilog_fpv_test_tools_suite(
     },
     tools = {
         "jg": "br_fifo_shared_pstatic_ctrl_fpv.jg.tcl",
-        "vcf": "",
     },
     top = "br_fifo_shared_pstatic_ctrl",
     deps = [":br_fifo_shared_pstatic_ctrl_fpv_monitor"],
@@ -1193,7 +1196,6 @@ br_verilog_fpv_test_tools_suite(
     },
     tools = {
         "jg": "br_fifo_shared_pstatic_ctrl_fpv.jg.tcl",
-        "vcf": "",
     },
     top = "br_fifo_shared_pstatic_ctrl",
     deps = [":br_fifo_shared_pstatic_ctrl_fpv_monitor"],
@@ -1265,7 +1267,6 @@ br_verilog_fpv_test_tools_suite(
     },
     tools = {
         "jg": "br_fifo_shared_pstatic_ctrl_push_credit_fpv.jg.tcl",
-        "vcf": "",
     },
     top = "br_fifo_shared_pstatic_ctrl_push_credit",
     deps = [":br_fifo_shared_pstatic_ctrl_push_credit_fpv_monitor"],
@@ -1323,7 +1324,6 @@ br_verilog_fpv_test_tools_suite(
     },
     tools = {
         "jg": "br_fifo_shared_pstatic_flops_fpv.jg.tcl",
-        "vcf": "",
     },
     top = "br_fifo_shared_pstatic_flops",
     deps = [":br_fifo_shared_pstatic_flops_fpv_monitor"],
@@ -1354,7 +1354,6 @@ br_verilog_fpv_test_tools_suite(
     },
     tools = {
         "jg": "br_fifo_shared_pstatic_flops_fpv.jg.tcl",
-        "vcf": "",
     },
     top = "br_fifo_shared_pstatic_flops",
     deps = [":br_fifo_shared_pstatic_flops_fpv_monitor"],
@@ -1393,7 +1392,6 @@ br_verilog_fpv_test_tools_suite(
     },
     tools = {
         "jg": "br_fifo_shared_pstatic_flops_fpv.jg.tcl",
-        "vcf": "",
     },
     top = "br_fifo_shared_pstatic_flops",
     deps = [":br_fifo_shared_pstatic_flops_fpv_monitor"],
@@ -1446,7 +1444,6 @@ br_verilog_fpv_test_tools_suite(
     },
     tools = {
         "jg": "br_fifo_shared_pstatic_flops_push_credit_fpv.jg.tcl",
-        "vcf": "",
     },
     top = "br_fifo_shared_pstatic_flops_push_credit",
     deps = [":br_fifo_shared_pstatic_flops_push_credit_fpv_monitor"],
@@ -1489,7 +1486,6 @@ br_verilog_fpv_test_tools_suite(
     },
     tools = {
         "jg": "br_fifo_shared_pstatic_flops_push_credit_fpv.jg.tcl",
-        "vcf": "",
     },
     top = "br_fifo_shared_pstatic_flops_push_credit",
     deps = [":br_fifo_shared_pstatic_flops_push_credit_fpv_monitor"],

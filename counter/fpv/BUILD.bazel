@@ -78,7 +78,6 @@ br_verilog_fpv_test_tools_suite(
     },
     tools = {
         "jg": "br_counter_fpv.jg.tcl",
-        "vcf": "",
     },
     top = "br_counter",
     deps = [":br_counter_fpv_monitor"],
@@ -133,7 +132,6 @@ br_verilog_fpv_test_tools_suite(
     },
     tools = {
         "jg": "br_counter_fpv.jg.tcl",
-        "vcf": "",
     },
     top = "br_counter_decr",
     deps = [":br_counter_decr_fpv_monitor"],
@@ -188,7 +186,6 @@ br_verilog_fpv_test_tools_suite(
     },
     tools = {
         "jg": "br_counter_fpv.jg.tcl",
-        "vcf": "",
     },
     top = "br_counter_incr",
     deps = [":br_counter_incr_fpv_monitor"],

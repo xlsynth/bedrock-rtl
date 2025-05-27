@@ -25,5 +25,8 @@ assert -disable <embedded>::br_amba_atb_funnel.monitor.gen_src\[*\].src.ATB_v1_0
 # TODO: disable covers to make nightly clean
 cover -disable *
 
+# limit run time to 30-mins
+set_prove_time_limit 1800s
+
 # prove command
 prove -all

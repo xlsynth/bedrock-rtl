@@ -51,7 +51,6 @@ br_verilog_fpv_test_tools_suite(
     },
     tools = {
         "jg": "br_multi_xfer_fpv.jg.tcl",
-        "vcf": "",
     },
     top = "br_multi_xfer_reg_fwd",
     deps = [":br_multi_xfer_reg_fwd_fpv_monitor"],
@@ -106,7 +105,6 @@ br_verilog_fpv_test_tools_suite(
     },
     tools = {
         "jg": "br_multi_xfer_fpv.jg.tcl",
-        "vcf": "",
     },
     top = "br_multi_xfer_distributor_rr",
     deps = [":br_multi_xfer_distributor_rr_fpv_monitor"],

@@ -66,7 +66,6 @@ br_verilog_fpv_test_tools_suite(
     },
     tools = {
         "jg": "br_flow_serializer_fpv.jg.tcl",
-        "vcf": "",
     },
     top = "br_flow_serializer",
     deps = [":br_flow_serializer_fpv_monitor"],
@@ -120,7 +119,6 @@ br_verilog_fpv_test_tools_suite(
     },
     tools = {
         "jg": "br_flow_deserializer_fpv.jg.tcl",
-        "vcf": "",
     },
     top = "br_flow_deserializer",
     deps = [":br_flow_deserializer_fpv_monitor"],

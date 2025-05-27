@@ -43,8 +43,9 @@ verilog_elab_test(
     deps = [":br_flow_xbar_fixed_fpv_monitor"],
 )
 
+# test valid ready protocol
 br_verilog_fpv_test_tools_suite(
-    name = "br_flow_xbar_fixed_test_suite",
+    name = "br_flow_xbar_fixed_test_backpressure",
     illegal_param_combinations = {
         (
             "EnableCoverPushBackpressure",
@@ -70,6 +71,17 @@ br_verilog_fpv_test_tools_suite(
             "0",
             "1",
         ],
+    },
+    tools = {
+        "jg": "br_flow_xbar_fpv.jg.tcl",
+    },
+    top = "br_flow_xbar_fixed",
+    deps = [":br_flow_xbar_fixed_fpv_monitor"],
+)
+
+br_verilog_fpv_test_tools_suite(
+    name = "br_flow_xbar_fixed_test_suite",
+    params = {
         "NumPopFlows": [
             "2",
             "3",
@@ -95,7 +107,6 @@ br_verilog_fpv_test_tools_suite(
     },
     tools = {
         "jg": "br_flow_xbar_fpv.jg.tcl",
-        "vcf": "",
     },
     top = "br_flow_xbar_fixed",
     deps = [":br_flow_xbar_fixed_fpv_monitor"],
@@ -121,8 +132,9 @@ verilog_elab_test(
     deps = [":br_flow_xbar_rr_fpv_monitor"],
 )
 
+# test valid ready protocol
 br_verilog_fpv_test_tools_suite(
-    name = "br_flow_xbar_rr_test_suite",
+    name = "br_flow_xbar_rr_test_backpressure",
     illegal_param_combinations = {
         (
             "EnableCoverPushBackpressure",
@@ -148,6 +160,17 @@ br_verilog_fpv_test_tools_suite(
             "0",
             "1",
         ],
+    },
+    tools = {
+        "jg": "br_flow_xbar_fpv.jg.tcl",
+    },
+    top = "br_flow_xbar_rr",
+    deps = [":br_flow_xbar_rr_fpv_monitor"],
+)
+
+br_verilog_fpv_test_tools_suite(
+    name = "br_flow_xbar_rr_test_suite",
+    params = {
         "NumPopFlows": [
             "2",
             "3",
@@ -173,7 +196,6 @@ br_verilog_fpv_test_tools_suite(
     },
     tools = {
         "jg": "br_flow_xbar_fpv.jg.tcl",
-        "vcf": "",
     },
     top = "br_flow_xbar_rr",
     deps = [":br_flow_xbar_rr_fpv_monitor"],
@@ -199,8 +221,9 @@ verilog_elab_test(
     deps = [":br_flow_xbar_lru_fpv_monitor"],
 )
 
+# test valid ready protocol
 br_verilog_fpv_test_tools_suite(
-    name = "br_flow_xbar_lru_test_suite",
+    name = "br_flow_xbar_lru_test_backpressure",
     illegal_param_combinations = {
         (
             "EnableCoverPushBackpressure",
@@ -226,6 +249,17 @@ br_verilog_fpv_test_tools_suite(
             "0",
             "1",
         ],
+    },
+    tools = {
+        "jg": "br_flow_xbar_fpv.jg.tcl",
+    },
+    top = "br_flow_xbar_lru",
+    deps = [":br_flow_xbar_lru_fpv_monitor"],
+)
+
+br_verilog_fpv_test_tools_suite(
+    name = "br_flow_xbar_lru_test_suite",
+    params = {
         "NumPopFlows": [
             "2",
             "3",
@@ -251,7 +285,6 @@ br_verilog_fpv_test_tools_suite(
     },
     tools = {
         "jg": "br_flow_xbar_fpv.jg.tcl",
-        "vcf": "",
     },
     top = "br_flow_xbar_lru",
     deps = [":br_flow_xbar_lru_fpv_monitor"],

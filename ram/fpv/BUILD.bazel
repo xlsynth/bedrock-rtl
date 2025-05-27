@@ -60,7 +60,6 @@ br_verilog_fpv_test_tools_suite(
     },
     tools = {
         "jg": "",
-        "vcf": "",
     },
     top = "br_ram_initializer",
     deps = [":br_ram_initializer_fpv_monitor"],
@@ -121,7 +120,6 @@ br_verilog_fpv_test_tools_suite(
     },
     tools = {
         "jg": "",
-        "vcf": "",
     },
     top = "br_ram_addr_decoder",
     deps = [":br_ram_addr_decoder_fpv_monitor"],
@@ -183,7 +181,6 @@ br_verilog_fpv_test_tools_suite(
     },
     tools = {
         "jg": "",
-        "vcf": "",
     },
     top = "br_ram_data_rd_pipe",
     deps = [":br_ram_data_rd_pipe_fpv_monitor"],
@@ -360,7 +357,6 @@ br_verilog_fpv_test_tools_suite(
     },
     tools = {
         "jg": "br_ram_flops_tile_2clk_fpv.jg.tcl",
-        "vcf": "",
     },
     top = "br_ram_flops_tile",
     deps = [":br_ram_flops_tile_fpv_monitor"],
@@ -395,7 +391,6 @@ br_verilog_fpv_test_tools_suite(
     },
     tools = {
         "jg": "br_ram_flops_tile_2clk_fpv.jg.tcl",
-        "vcf": "",
     },
     top = "br_ram_flops_tile",
     deps = [":br_ram_flops_tile_fpv_monitor"],

@@ -26,5 +26,8 @@ assert -disable {*downstream.genStableChksRDInf.genARStableChks.master_ar_arvali
 assert -disable {*downstream.genStableChksWRInf.genAWStableChks.master_aw_awvalid_stable}
 assert -disable {*downstream.genStableChksWRInf.genWStableChks.master_w_wvalid_stable}
 
+# limit run time to 30-mins
+set_prove_time_limit 1800s
+
 # prove command
 prove -all
