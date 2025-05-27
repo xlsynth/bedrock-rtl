@@ -442,6 +442,7 @@ verilog_library(
         "//amba/rtl/internal:br_amba_axi_demux_req_tracker",
         "//fifo/rtl:br_fifo_flops",
         "//flow/rtl:br_flow_demux_select_unstable",
+        "//flow/rtl:br_flow_reg_fwd",
         "//flow/rtl/internal:br_flow_checks_valid_data_impl",
         "//macros:br_asserts_internal",
     ],
@@ -465,6 +466,14 @@ br_verilog_elab_and_lint_test_suite(
         "NumSubordinates": [
             "2",
             "3",
+        ],
+        "RegisterDownstreamAxOutputs": [
+            "1",
+            "0",
+        ],
+        "RegisterDownstreamWOutputs": [
+            "1",
+            "0",
         ],
     },
     deps = [":br_amba_axi_demux"],

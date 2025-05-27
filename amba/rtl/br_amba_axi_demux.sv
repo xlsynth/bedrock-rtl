@@ -39,6 +39,10 @@ module br_amba_axi_demux #(
     // Maximum number of outstanding write transactions that can be accepted before
     // corresponding WDATA pushes are accepted.
     parameter int MaxAwRunahead = 4,
+    // If 1, then downstream AW/AR outputs are registered.
+    parameter int RegisterDownstreamAxOutputs = 1,
+    // If 1, then downstream WDATA outputs are registered.
+    parameter int RegisterDownstreamWOutputs = 1,
     // Width of the AXI address field.
     parameter int AddrWidth = 12,
     // Width of the AXI data field.
@@ -215,8 +219,9 @@ module br_amba_axi_demux #(
                         + br_amba::AxiProtWidth
                         + ARUserWidth),
       .RespPayloadWidth(DataWidth + RUserWidth + br_amba::AxiRespWidth),
-      .SingleIdOnly(SingleIdOnly)
-  ) br_amba_axi_demux_req_tracker (
+      .SingleIdOnly(SingleIdOnly),
+      .RegisterDownstreamOutputs(RegisterDownstreamAxOutputs)
+  ) br_amba_axi_demux_req_tracker_ar (
       .clk,
       .rst,
       //
@@ -307,7 +312,6 @@ module br_amba_axi_demux #(
 
   logic downstream_wvalid_int;
   logic downstream_wready_int;
-  wdata_req_t [NumSubordinates-1:0] downstream_wdata_req;
 
   br_amba_axi_demux_req_tracker #(
       .NumSubordinates(NumSubordinates),
@@ -321,7 +325,8 @@ module br_amba_axi_demux #(
                         + br_amba::AxiProtWidth
                         + AWUserWidth),
       .RespPayloadWidth(BUserWidth + br_amba::AxiRespWidth),
-      .SingleIdOnly(SingleIdOnly)
+      .SingleIdOnly(SingleIdOnly),
+      .RegisterDownstreamOutputs(RegisterDownstreamAxOutputs)
   ) br_amba_axi_demux_req_tracker_aw (
       .clk,
       .rst,
@@ -432,6 +437,10 @@ module br_amba_axi_demux #(
   logic [SubIdWidth-1:0] downstream_w_sub_select;
   assign downstream_w_sub_select = wdata_flow_valid_buf ? wdata_flow_sub_select_buf : '0;
 
+  wdata_req_t [NumSubordinates-1:0] downstream_wdata_req_pre;
+  logic [NumSubordinates-1:0] downstream_wready_pre;
+  logic [NumSubordinates-1:0] downstream_wvalid_pre;
+
   br_flow_demux_select_unstable #(
       .NumFlows(NumSubordinates),
       .Width(DataWidth + WUserWidth + StrobeWidth + 1)
@@ -445,16 +454,44 @@ module br_amba_axi_demux #(
       .push_valid(downstream_wvalid_int),
       .push_data(upstream_wdata_req_buf),
       //
-      .pop_ready(downstream_wready),
-      .pop_valid_unstable(downstream_wvalid),
-      .pop_data_unstable(downstream_wdata_req)
+      .pop_ready(downstream_wready_pre),
+      .pop_valid_unstable(downstream_wvalid_pre),
+      .pop_data_unstable(downstream_wdata_req_pre)
   );
 
   for (genvar i = 0; i < NumSubordinates; i++) begin : gen_downstream_wdata_unpack
-    assign downstream_wuser[i] = downstream_wdata_req[i].user;
-    assign downstream_wdata[i] = downstream_wdata_req[i].data;
-    assign downstream_wstrb[i] = downstream_wdata_req[i].strb;
-    assign downstream_wlast[i] = downstream_wdata_req[i].last;
+    if (RegisterDownstreamWOutputs) begin : gen_register_downstream_wdata_outputs
+      br_flow_reg_fwd #(
+          .Width(DataWidth + WUserWidth + StrobeWidth + 1)
+      ) br_flow_reg_fwd_downstream_wdata (
+          .clk,
+          .rst,
+          //
+          .push_ready(downstream_wready_pre[i]),
+          .push_valid(downstream_wvalid_pre[i]),
+          .push_data({
+            downstream_wdata_req_pre[i].user,
+            downstream_wdata_req_pre[i].data,
+            downstream_wdata_req_pre[i].strb,
+            downstream_wdata_req_pre[i].last
+          }),
+          //
+          .pop_ready(downstream_wready[i]),
+          .pop_valid(downstream_wvalid[i]),
+          .pop_data({
+            downstream_wuser[i], downstream_wdata[i], downstream_wstrb[i], downstream_wlast[i]
+          })
+      );
+    end else begin : gen_no_register_downstream_wdata_outputs
+      assign downstream_wready_pre[i] = downstream_wready[i];
+      assign downstream_wvalid[i] = downstream_wvalid_pre[i];
+      assign downstream_wuser[i] = downstream_wdata_req_pre[i].user;
+      assign downstream_wdata[i] = downstream_wdata_req_pre[i].data;
+      assign downstream_wstrb[i] = downstream_wdata_req_pre[i].strb;
+      assign downstream_wlast[i] = downstream_wdata_req_pre[i].last;
+    end
+
+
   end
 
   //

@@ -41,6 +41,8 @@ module br_amba_axi_demux_req_tracker #(
     parameter int RespPayloadWidth = 1,
     // If 1, then only a single ID is supported.
     parameter int SingleIdOnly = 0,
+    // If 1, then downstream outputs are registered.
+    parameter int RegisterDownstreamOutputs = 1,
     //
     localparam int SubIdWidth = $clog2(NumSubordinates)
 ) (
@@ -126,8 +128,6 @@ module br_amba_axi_demux_req_tracker #(
   req_payload_t upstream_ax_req_payload_int;
   logic upstream_axready_int;
   logic upstream_axvalid_int;
-
-  req_payload_t [NumSubordinates-1:0] downstream_ax_req_payload;
 
   logic upstream_axready_reg;
   logic upstream_axvalid_reg;
@@ -253,6 +253,10 @@ module br_amba_axi_demux_req_tracker #(
     );
   end
 
+  req_payload_t [NumSubordinates-1:0] downstream_ax_req_payload_pre;
+  logic [NumSubordinates-1:0] downstream_axready_pre;
+  logic [NumSubordinates-1:0] downstream_axvalid_pre;
+
   // Request output demux
   logic [SubIdWidth-1:0] flow_demux_select;
 
@@ -272,14 +276,35 @@ module br_amba_axi_demux_req_tracker #(
       .push_valid(upstream_axvalid_int),
       .push_data(upstream_ax_req_payload_int),
       //
-      .pop_ready(downstream_axready),
-      .pop_valid_unstable(downstream_axvalid),
-      .pop_data_unstable(downstream_ax_req_payload)
+      .pop_ready(downstream_axready_pre),
+      .pop_valid_unstable(downstream_axvalid_pre),
+      .pop_data_unstable(downstream_ax_req_payload_pre)
   );
 
   for (genvar i = 0; i < NumSubordinates; i++) begin : gen_downstream_ax_payload
-    assign downstream_axid[i] = downstream_ax_req_payload[i].id;
-    assign downstream_ax_payload[i] = downstream_ax_req_payload[i].payload;
+    if (RegisterDownstreamOutputs) begin : gen_register_downstream_outputs
+      br_flow_reg_fwd #(
+          .Width(AxiIdWidth + ReqPayloadWidth)
+      ) br_flow_reg_fwd_downstream_req (
+          .clk,
+          .rst,
+          //
+          .push_ready(downstream_axready_pre[i]),
+          .push_valid(downstream_axvalid_pre[i]),
+          .push_data({
+            downstream_ax_req_payload_pre[i].id, downstream_ax_req_payload_pre[i].payload
+          }),
+          //
+          .pop_ready(downstream_axready[i]),
+          .pop_valid(downstream_axvalid[i]),
+          .pop_data({downstream_axid[i], downstream_ax_payload[i]})
+      );
+    end else begin : gen_no_register_downstream_outputs
+      assign downstream_axready_pre[i] = downstream_axready[i];
+      assign downstream_axvalid[i] = downstream_axvalid_pre[i];
+      assign downstream_axid[i] = downstream_ax_req_payload_pre[i].id;
+      assign downstream_ax_payload[i] = downstream_ax_req_payload_pre[i].payload;
+    end
   end
 
   //
