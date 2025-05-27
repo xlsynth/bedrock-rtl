@@ -1,0 +1,36 @@
+invocation_defaults:
+  timeout_mins: {{ default_invocation_timeout_mins }}
+  metadata:
+    project: "{{ project }}"
+    description: "{{ description }}"
+
+{# -------------------------------------------------------------
+   Flow defaults: one entry per distinct block found in the jobs
+   passed in from the render context. The Python helper maps the
+   list of job dictionaries to a sorted list of unique blocks and
+   exposes it as the variable `blocks`.
+   ------------------------------------------------------------- #}
+flow_defaults:
+{% for block in blocks %}
+  - name: {{ flow_name }}
+    project: "{{ project }}"
+    block: {{ block }}
+    timeout_mins: {{ default_timeout_mins }}
+    environment:
+      slurm:
+        cpus_per_task: {{ default_cpus_per_task }}
+        mem:
+          mb: {{ default_mem_mb }}
+{% endfor %}
+
+{# -------------------------------------------------------------
+   Jobs: one stanza per job dictionary coming from the caller.
+   Each dict is expected to contain the keys: name, path, block.
+   ------------------------------------------------------------- #}
+jobs:
+{% for job in jobs %}
+  - name: {{ job.name }}
+    flow: {{ project }}.{{ job.block }}.{{ flow_name }}
+    bazel_sandbox:
+      path: {{ job.path }}
+{% endfor %}
