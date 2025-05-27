@@ -523,34 +523,66 @@ module br_amba_iso_resp_tracker #(
       );
 
       for (genvar i = 0; i < AxiIdCount; i++) begin : gen_fifo_per_id
-        br_fifo_flops #(
-            .Depth(PerIdFifoDepth),
-            .Width(AxiBurstLenWidth),
-            .EnableBypass(0),
-            .RegisterPopOutputs(0),
-            // When EnableWlastTracking=0, valid can deassert if downstream_axready deasserts
-            .EnableAssertPushValidStability(EnableWlastTracking)
-        ) br_fifo_flops_req_tracker (
-            .clk,
-            .rst,
-            //
-            .push_valid(static_fifo_push_valid[i]),
-            .push_data(static_fifo_push_data[i]),
-            .push_ready(static_fifo_push_ready[i]),
-            //
-            .pop_valid(tracker_fifo_pop_valid[i]),
-            .pop_data(tracker_fifo_pop_len[i]),
-            .pop_ready(tracker_fifo_pop_ready[i]),
-            //
-            .full(),
-            .full_next(),
-            .slots(),
-            .slots_next(),
-            .empty(tracker_fifo_pop_empty[i]),
-            .empty_next(),
-            .items(),
-            .items_next()
-        );
+        if (SingleBeatOnly) begin : gen_single_beat_only_per_id
+          // In static FIFO mode, when SingleBeatOnly=1, the FIFO doesn't need to store anything.
+          // So we can replace it with a counter.
+          logic [$clog2(PerIdFifoDepth+1)-1:0] tracked_count_per_id;
+
+          br_counter #(
+              .MaxValue(PerIdFifoDepth),
+              .MaxChange(1),
+              .EnableWrap(0),
+              .EnableSaturate(0),
+              .EnableReinitAndChange(0)
+          ) br_counter_tracked_count_per_id (
+              .clk,
+              .rst,
+              //
+              .reinit(1'b0),
+              .initial_value('0),
+              .incr_valid(static_fifo_push_valid[i] && static_fifo_push_ready[i]),
+              .incr(1'b1),
+              .decr_valid(tracker_fifo_pop_valid[i] && tracker_fifo_pop_ready[i]),
+              .decr(1'b1),
+              .value(tracked_count_per_id),
+              .value_next()
+          );
+
+          assign static_fifo_push_ready[i] = tracked_count_per_id < PerIdFifoDepth;
+          assign tracker_fifo_pop_valid[i] = tracked_count_per_id > 0;
+          assign tracker_fifo_pop_empty[i] = tracked_count_per_id == 0;
+          assign tracker_fifo_pop_len[i]   = '0;
+          `BR_UNUSED_NAMED(static_fifo_push_data_unused, static_fifo_push_data[i])
+        end else begin : gen_multi_beat_per_id
+          br_fifo_flops #(
+              .Depth(PerIdFifoDepth),
+              .Width(AxiBurstLenWidth),
+              .EnableBypass(0),
+              .RegisterPopOutputs(0),
+              // When EnableWlastTracking=0, valid can deassert if downstream_axready deasserts
+              .EnableAssertPushValidStability(EnableWlastTracking)
+          ) br_fifo_flops_req_tracker (
+              .clk,
+              .rst,
+              //
+              .push_valid(static_fifo_push_valid[i]),
+              .push_data(static_fifo_push_data[i]),
+              .push_ready(static_fifo_push_ready[i]),
+              //
+              .pop_valid(tracker_fifo_pop_valid[i]),
+              .pop_data(tracker_fifo_pop_len[i]),
+              .pop_ready(tracker_fifo_pop_ready[i]),
+              //
+              .full(),
+              .full_next(),
+              .slots(),
+              .slots_next(),
+              .empty(tracker_fifo_pop_empty[i]),
+              .empty_next(),
+              .items(),
+              .items_next()
+          );
+        end
       end
     end
   end
