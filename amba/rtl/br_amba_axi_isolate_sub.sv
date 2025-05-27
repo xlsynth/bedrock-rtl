@@ -85,6 +85,14 @@ module br_amba_axi_isolate_sub #(
     parameter bit [RUserWidth-1:0] IsolateRUser = '0,
     // RDATA data to generate for isolated transactions.
     parameter bit [DataWidth-1:0] IsolateRData = '0,
+    // Set to 1 to use a dynamic storage shared FIFO for the read tracking
+    // list.
+    parameter bit UseDynamicFifoForReadTracker = 1,
+    // When UseDynamicFifoForReadTracker=0, this parameter controls the depth
+    // of the Per-ID tracking FIFO. This defaults to MaxOutstanding, but may
+    // need to be set to a smaller value as the storage will be replicated for
+    // each ID.
+    parameter int StaticPerIdReadTrackerFifoDepth = MaxOutstanding,
     // Number of pipeline stages to use for the pointer RAM read data in the
     // response tracker FIFO. Has no effect if AxiIdCount == 1 or
     // UseDynamicFifoForReadTracker == 0.
@@ -117,14 +125,6 @@ module br_amba_axi_isolate_sub #(
     // UseDynamicFifoForReadTracker == 0.
     parameter int DynamicFifoRegisterDeallocation = 1,
     //
-    // Set to 1 to use a dynamic storage shared FIFO for the read tracking
-    // list.
-    parameter bit UseDynamicFifoForReadTracker = 1,
-    // When UseDynamicFifoForReadTracker=0, this parameter controls the depth
-    // of the Per-ID tracking FIFO. This defaults to MaxOutstanding, but may
-    // need to be set to a smaller value as the storage will be replicated for
-    // each ID.
-    parameter int StaticPerIdReadTrackerFifoDepth = MaxOutstanding,
     localparam int AxiBurstLenWidth = br_math::clamped_clog2(MaxAxiBurstLen),
     localparam int StrobeWidth = DataWidth / 8
 ) (
@@ -331,6 +331,10 @@ module br_amba_axi_isolate_sub #(
       .MaxAxiBurstLen(1),
       .MaxTransactionSkew(MaxTransactionSkew),
       .EnableWlastTracking(1),
+      // When MaxAxiBurstLen=1, the static FIFO implementation becomes an
+      // array of counters (no actual FIFOs), which is always more efficient
+      // than a dynamic FIFO. So no external option is provided to select a
+      // dynamic FIFO.
       .UseDynamicFifo(0),
       .PerIdFifoDepth(MaxOutstanding)
   ) br_amba_iso_resp_tracker_w (

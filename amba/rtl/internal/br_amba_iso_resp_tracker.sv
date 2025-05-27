@@ -37,6 +37,9 @@
 // Once the isolate_req signal is deasserted, the module will resume
 // normal operation, forwarding requests to the downstream interface,
 // and forwarding downstream responses to the upstream interface.
+//
+// Can be configured to use a dynamic shared-storage FIFO for the tracking
+// list with UseDynamicFifo=1, otherwise a static FIFO per-ID is used.
 
 `include "br_asserts_internal.svh"
 `include "br_registers.svh"
