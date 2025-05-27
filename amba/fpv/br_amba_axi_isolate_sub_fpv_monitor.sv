@@ -58,10 +58,10 @@ module br_amba_axi_isolate_sub_fpv_monitor #(
     parameter bit [DataWidth-1:0] IsolateRData = '0,
     // Number of pipeline stages to use for the pointer RAM read
     // data. Has no effect if AxiIdCount == 1.
-    parameter int FifoPointerRamReadDataDepthStages = 0,
+    parameter int DynamicFifoPointerRamReadDataDepthStages = 0,
     // Number of pipeline stages to use for the data RAM read data.
     // Has no effect if AxiIdCount == 1.
-    parameter int FifoDataRamReadDataDepthStages = 0,
+    parameter int DynamicFifoDataRamReadDataDepthStages = 0,
     localparam int AxiBurstLenWidth = br_math::clamped_clog2(MaxAxiBurstLen),
     localparam int StrobeWidth = DataWidth / 8
 ) (
@@ -293,6 +293,6 @@ bind br_amba_axi_isolate_sub br_amba_axi_isolate_sub_fpv_monitor #(
     .IsolateBUser(IsolateBUser),
     .IsolateRUser(IsolateRUser),
     .IsolateRData(IsolateRData),
-    .FifoPointerRamReadDataDepthStages(FifoPointerRamReadDataDepthStages),
-    .FifoDataRamReadDataDepthStages(FifoDataRamReadDataDepthStages)
+    .DynamicFifoPointerRamReadDataDepthStages(DynamicFifoPointerRamReadDataDepthStages),
+    .DynamicFifoDataRamReadDataDepthStages(DynamicFifoDataRamReadDataDepthStages)
 ) monitor (.*);

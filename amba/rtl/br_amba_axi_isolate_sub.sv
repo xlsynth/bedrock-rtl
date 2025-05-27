@@ -85,36 +85,46 @@ module br_amba_axi_isolate_sub #(
     parameter bit [RUserWidth-1:0] IsolateRUser = '0,
     // RDATA data to generate for isolated transactions.
     parameter bit [DataWidth-1:0] IsolateRData = '0,
-    // Number of pipeline stages to use for the pointer RAM read
-    // data in the response tracker FIFO. Has no effect if AxiIdCount == 1.
+    // Number of pipeline stages to use for the pointer RAM read data in the
+    // response tracker FIFO. Has no effect if AxiIdCount == 1 or
+    // UseDynamicFifoForReadTracker == 0.
     parameter int DynamicFifoPointerRamReadDataDepthStages = 0,
-    // Number of pipeline stages to use for the data RAM read data
-    // in the response tracker FIFO. Has no effect if AxiIdCount == 1.
+    // Number of pipeline stages to use for the data RAM read data in the
+    // response tracker FIFO. Has no effect if AxiIdCount == 1 or
+    // UseDynamicFifoForReadTracker == 0.
     parameter int DynamicFifoDataRamReadDataDepthStages = 0,
-    // Number of pipeline stages to use for the pointer RAM address
-    // in the response tracker FIFO. Has no effect if AxiIdCount == 1.
+    // Number of pipeline stages to use for the pointer RAM address in the
+    // response tracker FIFO. Has no effect if AxiIdCount == 1 or
+    // UseDynamicFifoForReadTracker == 0.
     parameter int DynamicFifoPointerRamAddressDepthStages = 1,
-    // Number of pipeline stages to use for the data RAM address
-    // in the response tracker FIFO. Has no effect if AxiIdCount == 1.
+    // Number of pipeline stages to use for the data RAM address in the
+    // response tracker FIFO. Has no effect if AxiIdCount == 1 or
+    // UseDynamicFifoForReadTracker == 0.
     parameter int DynamicFifoDataRamAddressDepthStages = 1,
-    // Number of linked lists per FIFO in the response tracker FIFO. Has
-    // no effect if AxiIdCount == 1.
+    // Number of linked lists per FIFO in the response tracker FIFO. Has no
+    // effect if AxiIdCount == 1 or UseDynamicFifoForReadTracker == 0.
     parameter int DynamicFifoNumLinkedListsPerFifo = 2,
-    // Number of pipeline stages to use for the staging buffer
-    // in the response tracker FIFO. Has no effect if AxiIdCount == 1.
+    // Number of pipeline stages to use for the staging buffer in the response
+    // tracker FIFO. Has no effect if AxiIdCount == 1 or
+    // UseDynamicFifoForReadTracker == 0.
     parameter int DynamicFifoStagingBufferDepth = 2,
-    // Number of pipeline stages to use for the pop outputs
-    // in the response tracker FIFO. Has no effect if AxiIdCount == 1.
+    // Number of pipeline stages to use for the pop outputs in the response
+    // tracker FIFO. Has no effect if AxiIdCount == 1 or
+    // UseDynamicFifoForReadTracker == 0.
     parameter int DynamicFifoRegisterPopOutputs = 1,
-    // Number of pipeline stages to use for the deallocation
-    // in the response tracker FIFO. Has no effect if AxiIdCount == 1.
+    // Number of pipeline stages to use for the deallocation in the response
+    // tracker FIFO. Has no effect if AxiIdCount == 1 or
+    // UseDynamicFifoForReadTracker == 0.
     parameter int DynamicFifoRegisterDeallocation = 1,
     //
-    // Set to 1 to use a dynamic storage shared FIFO for the read tracking list.
-    parameter bit UseDynamicFifoForReadTracker = 0,
-    // When UseDynamicFifoForReadTracker=0, this parameter controls the depth of the Per-ID
-    // tracking FIFO.
-    parameter int StaticPerIdReadTrackerFifoDepth = 2,
+    // Set to 1 to use a dynamic storage shared FIFO for the read tracking
+    // list.
+    parameter bit UseDynamicFifoForReadTracker = 1,
+    // When UseDynamicFifoForReadTracker=0, this parameter controls the depth
+    // of the Per-ID tracking FIFO. This defaults to MaxOutstanding, but may
+    // need to be set to a smaller value as the storage will be replicated for
+    // each ID.
+    parameter int StaticPerIdReadTrackerFifoDepth = MaxOutstanding,
     localparam int AxiBurstLenWidth = br_math::clamped_clog2(MaxAxiBurstLen),
     localparam int StrobeWidth = DataWidth / 8
 ) (
