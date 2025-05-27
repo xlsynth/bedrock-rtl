@@ -287,7 +287,7 @@ module br_amba_iso_resp_tracker #(
         .NumSymbolsIn(AxiIdCount),
         .SymbolWidth (1)
     ) br_mux_bin_can_accept_new_req (
-        .select(upstream_axid[MinIdWidth-1:0]),
+        .select(can_accept_new_req_mux_select),
         .in(can_accept_new_req_per_id),
         .out(can_accept_new_req),
         .out_valid()
