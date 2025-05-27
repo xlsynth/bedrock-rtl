@@ -296,7 +296,6 @@ module br_amba_iso_resp_tracker #(
     logic wlast_fifo_push_valid;
     logic wlast_fifo_push_valid_is_last;
     logic wlast_fifo_push_ready;
-    logic can_accept_new_wlast;
 
     assign downstream_wlast = upstream_wlast;
 
@@ -340,12 +339,10 @@ module br_amba_iso_resp_tracker #(
         .push_ready(upstream_wready),
         //
         .pop_valid_unstable({downstream_wvalid, wlast_fifo_push_valid}),
-        .pop_ready({downstream_wready, (wlast_fifo_push_ready && can_accept_new_wlast)})
+        .pop_ready({downstream_wready, wlast_fifo_push_ready})
     );
 
-    assign wlast_fifo_push_valid_is_last = wlast_fifo_push_valid
-                                            && upstream_wlast
-                                            && can_accept_new_wlast;
+    assign wlast_fifo_push_valid_is_last = wlast_fifo_push_valid && upstream_wlast;
 
     br_fifo_flops #(
         .Depth(MaxTransactionSkew),
@@ -386,30 +383,6 @@ module br_amba_iso_resp_tracker #(
         .pop_ready (tracker_fifo_push_ready),
         .pop_valid (tracker_fifo_push_valid)
     );
-
-    // Total outstanding requests counters (in the staging+tracker FIFOs) for wlast staging
-    logic [OutstandingWidth-1:0] total_wlast_count;
-    br_counter #(
-        .MaxValue(MaxOutstanding),
-        .MaxChange(1),
-        .EnableWrap(0),
-        .EnableSaturate(0),
-        .EnableReinitAndChange(0)
-    ) br_counter_total_wlast (
-        .clk,
-        .rst,
-        //
-        .reinit(1'b0),
-        .initial_value('0),
-        .incr_valid(wlast_fifo_push_valid_is_last && wlast_fifo_push_ready),
-        .incr(1'b1),
-        .decr_valid(|(tracker_fifo_pop_valid & tracker_fifo_pop_ready)),
-        .decr(1'b1),
-        .value(total_wlast_count),
-        .value_next()
-    );
-
-    assign can_accept_new_wlast = total_wlast_count < MaxOutstanding;
 
   end else begin : gen_no_wlast_tracking
     assign upstream_wready = 1'b0;
