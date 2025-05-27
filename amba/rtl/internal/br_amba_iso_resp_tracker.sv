@@ -280,6 +280,9 @@ module br_amba_iso_resp_tracker #(
       assign can_accept_new_req_per_id[i] = total_req_count[i] < PerIdFifoDepth;
     end
 
+    logic [MinIdWidth-1:0] can_accept_new_req_mux_select;
+    assign can_accept_new_req_mux_select = upstream_axvalid ? upstream_axid[MinIdWidth-1:0] : '0;
+
     br_mux_bin #(
         .NumSymbolsIn(AxiIdCount),
         .SymbolWidth (1)
