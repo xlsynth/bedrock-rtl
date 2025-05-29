@@ -37,7 +37,7 @@ module br_cdc_rst_sync #(
   `BR_GATE_CDC_SYNC_ARST_STAGES(srst_n, 1'b1, clk, arst, NumStages)
 
   // The reset value of the synchronizer is 0, so we need to invert the output
-  // ri lint_check_waive ONE_CONN_PER_LINE
+  // ri lint_check_waive ONE_CONN_PER_LINE SAME_RESET_NAME
   `BR_GATE_INV(srst, srst_n)
 
 endmodule : br_cdc_rst_sync

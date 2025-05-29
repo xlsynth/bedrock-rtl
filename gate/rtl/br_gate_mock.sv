@@ -24,7 +24,7 @@
 `endif
 
 // verilog_lint: waive-start module-filename
-// ri lint_check_off ONE_PER_FILE FILE_NAME
+// ri lint_check_off ONE_PER_FILE FILE_NAME RESET_NAME RESET_DRIVER
 
 `include "br_asserts.svh"
 `include "br_registers.svh"
@@ -238,4 +238,4 @@ module br_gate_cdc_maxdel (
 endmodule : br_gate_cdc_maxdel
 
 // verilog_lint: waive-stop module-filename
-// ri lint_check_on ONE_PER_FILE FILE_NAME
+// ri lint_check_on ONE_PER_FILE FILE_NAME RESET_NAME RESET_DRIVER
