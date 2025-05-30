@@ -34,10 +34,10 @@ module br_ecc_sed_encoder_decoder_tb;
 
   // TODO: have TB support E2E latency > 0
   localparam int E2ELatency =
-      EncoderRegisterInputs +
-      EncoderRegisterOutputs +
-      DecoderRegisterInputs +
-      DecoderRegisterOutputs;
+      int'(EncoderRegisterInputs) +
+      int'(EncoderRegisterOutputs) +
+      int'(DecoderRegisterInputs) +
+      int'(DecoderRegisterOutputs);
 
   // Clock and reset
   logic clk;
