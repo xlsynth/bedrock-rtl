@@ -152,8 +152,10 @@ module br_amba_axi_isolate_sub_fpv_monitor #(
     input logic                                  downstream_rready
 );
 
-  localparam int MaxPending = AxiIdCount * StaticPerIdReadTrackerFifoDepth;
-  localparam int CntrWidth = $clog2(MaxPending);
+  localparam int MaxPendingRd = AxiIdCount * StaticPerIdReadTrackerFifoDepth;
+  localparam int RdCntrWidth = $clog2(MaxPendingRd);
+  localparam int MaxPendingWr = AxiIdCount * MaxOutstanding;
+  localparam int WrCntrWidth = $clog2(MaxPendingWr);
 
   // if AxiIdCount < 2 ** IdWidth
   `BR_ASSUME(legal_awid_a, upstream_awvalid |-> upstream_awid < AxiIdCount)
@@ -161,25 +163,26 @@ module br_amba_axi_isolate_sub_fpv_monitor #(
   `BR_ASSUME(legal_arid_a, upstream_arvalid |-> upstream_arid < AxiIdCount)
   `BR_ASSUME(legal_rid_a, downstream_rvalid |-> downstream_rid < AxiIdCount)
 
-  // for each Id, the number of outstanding transactions should be <= MaxOutstandingPerId
-  logic [AxiIdCount-1:0][CntrWidth-1:0] AwCntr;
-  logic [AxiIdCount-1:0][CntrWidth-1:0] ArCntr;
+  // for each write Id, the number of outstanding transactions should be <= MaxOutstanding
+  // for each read Id, the number of outstanding transactions should be <= StaticPerIdReadTrackerFifoDepth
+  logic [AxiIdCount-1:0][WrCntrWidth-1:0] aw_cntr;
+  logic [AxiIdCount-1:0][RdCntrWidth-1:0] ar_cntr;
+
+  for (genvar i = 0; i < AxiIdCount; i++) begin : gen_aw
+    `BR_REG(aw_cntr[i],
+            aw_cntr[i] +
+            (upstream_awvalid && upstream_awready && (upstream_awid == i)) -
+            (upstream_bvalid && upstream_bready && (upstream_bid == i)))
+    `BR_ASSUME(max_aw_perId_a, aw_cntr[i] <= MaxOutstanding)
+  end
 
   if (UseDynamicFifoForReadTracker == 0) begin : gen_perID
-    for (genvar i = 0; i < AxiIdCount; i++) begin : gen_aw
-      `BR_REG(AwCntr[i],
-              AwCntr[i] +
-              (upstream_awvalid && upstream_awready && (upstream_awid == i)) -
-              (upstream_bvalid && upstream_bready && (upstream_bid == i)))
-      `BR_ASSUME(max_aw_perId_a, AwCntr[i] <= StaticPerIdReadTrackerFifoDepth)
-    end
-
     for (genvar i = 0; i < AxiIdCount; i++) begin : gen_ar
-      `BR_REG(ArCntr[i],
-              ArCntr[i] +
+      `BR_REG(ar_cntr[i],
+              ar_cntr[i] +
               (upstream_arvalid && upstream_arready && (upstream_arid == i)) -
               (upstream_rvalid && upstream_rready && upstream_rlast && (upstream_rid == i)))
-      `BR_ASSUME(max_ar_perId_a, ArCntr[i] <= StaticPerIdReadTrackerFifoDepth)
+      `BR_ASSUME(max_ar_perId_a, ar_cntr[i] <= StaticPerIdReadTrackerFifoDepth)
     end
   end
 
@@ -213,7 +216,7 @@ module br_amba_axi_isolate_sub_fpv_monitor #(
       .ARUserWidth(ARUserWidth),
       .BUserWidth(BUserWidth),
       .RUserWidth(RUserWidth),
-      .MaxOutstanding(MaxOutstanding),
+      .MaxOutstanding(MaxPendingWr + MaxTransactionSkew),
       .MaxAxiBurstLen(MaxAxiBurstLen)
   ) fv_axi_check (
       .clk,
