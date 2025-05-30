@@ -369,6 +369,7 @@ br_verilog_fpv_test_tools_suite(
     elab_opts = [
         "-parameter MaxOutstanding 4",
         "-parameter AxiIdCount 2",
+        "-parameter StaticPerIdReadTrackerFifoDepth 2",
     ],
     params = {
         "MaxAxiBurstLen": [
@@ -378,6 +379,10 @@ br_verilog_fpv_test_tools_suite(
         "IdWidth": [
             "1",
             "2",
+        ],
+        "UseDynamicFifoForReadTracker": [
+            "0",
+            "1",
         ],
     },
     tools = {

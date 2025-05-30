@@ -56,12 +56,14 @@ module br_amba_axi_isolate_sub_fpv_monitor #(
     parameter bit [RUserWidth-1:0] IsolateRUser = '0,
     // RDATA data to generate for isolated transactions.
     parameter bit [DataWidth-1:0] IsolateRData = '0,
-    // Number of pipeline stages to use for the pointer RAM read
-    // data. Has no effect if AxiIdCount == 1.
-    parameter int DynamicFifoPointerRamReadDataDepthStages = 0,
-    // Number of pipeline stages to use for the data RAM read data.
-    // Has no effect if AxiIdCount == 1.
-    parameter int DynamicFifoDataRamReadDataDepthStages = 0,
+    // Set to 1 to use a dynamic storage shared FIFO for the read tracking
+    // list.
+    parameter bit UseDynamicFifoForReadTracker = 1,
+    // When UseDynamicFifoForReadTracker=0, this parameter controls the depth
+    // of the Per-ID tracking FIFO. This defaults to MaxOutstanding, but may
+    // need to be set to a smaller value as the storage will be replicated for
+    // each ID.
+    parameter int StaticPerIdReadTrackerFifoDepth = MaxOutstanding,
     localparam int AxiBurstLenWidth = br_math::clamped_clog2(MaxAxiBurstLen),
     localparam int StrobeWidth = DataWidth / 8
 ) (
@@ -150,12 +152,39 @@ module br_amba_axi_isolate_sub_fpv_monitor #(
     input logic                                  downstream_rready
 );
 
+  localparam int MaxPendingRd = AxiIdCount * StaticPerIdReadTrackerFifoDepth;
+  localparam int RdCntrWidth = $clog2(MaxPendingRd);
+  localparam int MaxPendingWr = AxiIdCount * MaxOutstanding;
+  localparam int WrCntrWidth = $clog2(MaxPendingWr);
+
   // if AxiIdCount < 2 ** IdWidth
-  localparam int NewIdWidth = br_math::clamped_clog2(AxiIdCount);
   `BR_ASSUME(legal_awid_a, upstream_awvalid |-> upstream_awid < AxiIdCount)
   `BR_ASSUME(legal_bid_a, downstream_bvalid |-> downstream_bid < AxiIdCount)
   `BR_ASSUME(legal_arid_a, upstream_arvalid |-> upstream_arid < AxiIdCount)
   `BR_ASSUME(legal_rid_a, downstream_rvalid |-> downstream_rid < AxiIdCount)
+
+  // for each write Id, the number of outstanding transactions should be <= MaxOutstanding
+  // for each read Id, the number of outstanding transactions should be <= StaticPerIdReadTrackerFifoDepth
+  logic [AxiIdCount-1:0][WrCntrWidth-1:0] aw_cntr;
+  logic [AxiIdCount-1:0][RdCntrWidth-1:0] ar_cntr;
+
+  for (genvar i = 0; i < AxiIdCount; i++) begin : gen_aw
+    `BR_REG(aw_cntr[i],
+            aw_cntr[i] +
+            (upstream_awvalid && upstream_awready && (upstream_awid == i)) -
+            (upstream_bvalid && upstream_bready && (upstream_bid == i)))
+    `BR_ASSUME(max_aw_perId_a, aw_cntr[i] <= MaxOutstanding)
+  end
+
+  if (UseDynamicFifoForReadTracker == 0) begin : gen_perID
+    for (genvar i = 0; i < AxiIdCount; i++) begin : gen_ar
+      `BR_REG(ar_cntr[i],
+              ar_cntr[i] +
+              (upstream_arvalid && upstream_arready && (upstream_arid == i)) -
+              (upstream_rvalid && upstream_rready && upstream_rlast && (upstream_rid == i)))
+      `BR_ASSUME(max_ar_perId_a, ar_cntr[i] <= StaticPerIdReadTrackerFifoDepth)
+    end
+  end
 
   // during this window, downstream won't be AXI protocol compliant
   // However, upstream should still behave fine
@@ -181,13 +210,13 @@ module br_amba_axi_isolate_sub_fpv_monitor #(
       .ReadInterleaveOn(0),
       .AddrWidth(AddrWidth),
       .DataWidth(DataWidth),
-      .IdWidth(NewIdWidth),
+      .IdWidth(IdWidth),
       .AWUserWidth(AWUserWidth),
       .WUserWidth(WUserWidth),
       .ARUserWidth(ARUserWidth),
       .BUserWidth(BUserWidth),
       .RUserWidth(RUserWidth),
-      .MaxOutstanding(MaxOutstanding),
+      .MaxOutstanding(MaxPendingWr + MaxTransactionSkew),
       .MaxAxiBurstLen(MaxAxiBurstLen)
   ) fv_axi_check (
       .clk,
@@ -293,6 +322,6 @@ bind br_amba_axi_isolate_sub br_amba_axi_isolate_sub_fpv_monitor #(
     .IsolateBUser(IsolateBUser),
     .IsolateRUser(IsolateRUser),
     .IsolateRData(IsolateRData),
-    .DynamicFifoPointerRamReadDataDepthStages(DynamicFifoPointerRamReadDataDepthStages),
-    .DynamicFifoDataRamReadDataDepthStages(DynamicFifoDataRamReadDataDepthStages)
+    .UseDynamicFifoForReadTracker(UseDynamicFifoForReadTracker),
+    .StaticPerIdReadTrackerFifoDepth(StaticPerIdReadTrackerFifoDepth)
 ) monitor (.*);
