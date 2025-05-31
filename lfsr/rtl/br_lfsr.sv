@@ -38,7 +38,17 @@
 
 module br_lfsr #(
     // Width of the LFSR state. Must be at least 2.
-    parameter int Width = 2
+    parameter int Width = 2,
+    // Enable check that MSB of taps is set. This is necessary, but not sufficient,
+    // for a maximal period LFSR. Disabling this checks allows the LFSR to be used
+    // more flexibly (e.g. supporting adjustable period LFSRs by changing the taps).
+    // ri lint_check_waive PARAM_NOT_USED
+    parameter bit EnableTapsMsbCheck = 1,
+    // Enable check that initial state is non-zero. If the LFSR is initialized to zero,
+    // it will never advance and the output will be zero forever. Generally, this is not
+    // the behavior intended, but may be useful to support "disabling" the LFSR.
+    // ri lint_check_waive PARAM_NOT_USED
+    parameter bit EnableInitialStateCheck = 1
 ) (
     // Posedge-triggered clock.
     input logic clk,
@@ -61,8 +71,8 @@ module br_lfsr #(
   // Integration checks
   //------------------------------------------
   `BR_ASSERT_STATIC(width_gte_two_a, Width >= 2)
-  `BR_ASSERT_INTG(taps_msb_set_a, taps[Width-1] == 1'b1)
-  `BR_ASSERT_INTG(initial_state_non_zero_a, initial_state != '0)
+  `BR_ASSERT_INTG(taps_msb_set_a, EnableTapsMsbCheck && taps[Width-1] == 1'b1)
+  `BR_ASSERT_INTG(initial_state_non_zero_a, EnableInitialStateCheck && initial_state != '0)
 
   //------------------------------------------
   // Implementation
