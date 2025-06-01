@@ -303,6 +303,7 @@ verilog_elab_test(
 
 br_verilog_fpv_test_tools_suite(
     name = "br_amba_axil_msi_test_suite",
+    gui = True,
     tools = {
         "jg": "br_amba_axil_msi_fpv.jg.tcl",
     },
