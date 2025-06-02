@@ -84,141 +84,41 @@ module br_fifo_shared_pop_ctrl #(
     input logic [NumReadPorts-1:0][Width-1:0] data_ram_rd_data
 );
 
-  // Integration Checks
-
-  br_flow_checks_valid_data_intg #(
-      .NumFlows(NumFifos),
-      .Width(AddrWidth)
-  ) br_flow_checks_valid_data_intg_head (
-      .clk,
-      .rst,
-      .valid(head_valid),
-      .ready(head_ready),
-      .data (head)
-  );
-
-  for (genvar i = 0; i < NumFifos; i++) begin : gen_per_fifo_intg_checks
-    `BR_ASSERT_INTG(no_head_valid_on_empty_a, ram_empty[i] |-> !head_valid[i])
-  end
-
-  // Implementation
-  localparam bit HasStagingBuffer = (RamReadLatency > 0) || RegisterPopOutputs;
-
-  logic [NumFifos-1:0] fifo_ram_rd_addr_valid;
-  logic [NumFifos-1:0] fifo_ram_rd_addr_ready;
-  logic [NumFifos-1:0][AddrWidth-1:0] fifo_ram_rd_addr;
-  logic [NumFifos-1:0] fifo_ram_rd_data_valid;
-  logic [NumFifos-1:0][Width-1:0] fifo_ram_rd_data;
-
-  for (genvar i = 0; i < NumFifos; i++) begin : gen_fifo_ram_read
-    if (!HasStagingBuffer) begin : gen_no_buffer
-      br_flow_fork #(
-          .NumFlows(2)
-      ) br_flow_fork_head (
-          .clk,
-          .rst,
-          .push_valid(head_valid[i]),
-          .push_ready(head_ready[i]),
-          .pop_valid_unstable({fifo_ram_rd_addr_valid[i], pop_valid[i]}),
-          .pop_ready({fifo_ram_rd_addr_ready[i], pop_ready[i]})
-      );
-
-      assign pop_data[i]  = fifo_ram_rd_data[i];
-      assign pop_empty[i] = ram_empty[i];
-
-      `BR_ASSERT_IMPL(zero_read_latency_a,
-                      (pop_valid[i] && pop_ready[i]) |-> fifo_ram_rd_data_valid[i])
-    end else begin : gen_staging_buffer
-      logic ram_rd_req_valid;
-      logic ram_rd_req_ready;
-      logic stg_buffer_empty;
-
-      br_fifo_staging_buffer #(
-          .EnableBypass(0),
-          .TotalDepth(Depth),
-          .BufferDepth(StagingBufferDepth),
-          .Width(Width),
-          .RegisterPopOutputs(RegisterPopOutputs),
-          .RamReadLatency(RamReadLatency),
-          .TotalItemsIncludesStaged(0)
-      ) br_fifo_staging_buffer (
-          .clk,
-          .rst,
-
-          .total_items(ram_items[i]),
-
-          .bypass_valid_unstable(1'b0),
-          .bypass_data_unstable(Width'(1'b0)),
-          .bypass_ready(),
-
-          .ram_rd_addr_ready(ram_rd_req_ready),
-          .ram_rd_addr_valid(ram_rd_req_valid),
-          .ram_rd_data_valid(fifo_ram_rd_data_valid[i]),
-          .ram_rd_data(fifo_ram_rd_data[i]),
-
-          .pop_ready(pop_ready[i]),
-          .pop_valid(pop_valid[i]),
-          .pop_data (pop_data[i]),
-          .pop_empty(stg_buffer_empty)
-      );
-
-      br_flow_join #(
-          .NumFlows(2)
-      ) br_flow_join_ram_rd_addr (
-          .clk,
-          .rst,
-
-          .push_valid({head_valid[i], ram_rd_req_valid}),
-          .push_ready({head_ready[i], ram_rd_req_ready}),
-          .pop_valid (fifo_ram_rd_addr_valid[i]),
-          .pop_ready (fifo_ram_rd_addr_ready[i])
-      );
-
-      assign pop_empty[i] = ram_empty[i] && stg_buffer_empty;
-    end
-
-    assign fifo_ram_rd_addr[i] = head[i];
-  end
-
-  if (!HasStagingBuffer) begin : gen_no_buffer_unused
-    `BR_UNUSED_NAMED(no_staging_buffer_unused, {ram_items, fifo_ram_rd_data_valid})
-  end
-
   logic [NumReadPorts-1:0][NumFifos-1:0] arb_request;
-  logic [NumReadPorts-1:0][NumFifos-1:0] arb_can_grant;
   logic [NumReadPorts-1:0][NumFifos-1:0] arb_grant;
+  logic [NumReadPorts-1:0][NumFifos-1:0] arb_can_grant;
   logic [NumReadPorts-1:0] arb_enable_priority_update;
 
-  // Read Crossbar
-  // TODO(zhemao): Support an option to have dedicated read ports for a FIFO
-  // or group of FIFOs instead of spreading reads across all read ports.
-  br_fifo_shared_read_xbar #(
-      .NumFifos(NumFifos),
+  br_fifo_shared_pop_ctrl_ext_arbiter #(
       .NumReadPorts(NumReadPorts),
-      .AddrWidth(AddrWidth),
+      .NumFifos(NumFifos),
+      .Depth(Depth),
       .Width(Width),
-      .RamReadLatency(RamReadLatency),
-      // If there is no staging buffer, the read request can be revoked if
-      // pop_ready becomes low.
-      .EnableAssertPushValidStability(HasStagingBuffer)
-  ) br_fifo_shared_read_xbar (
+      .StagingBufferDepth(StagingBufferDepth),
+      .RegisterPopOutputs(RegisterPopOutputs),
+      .RegisterDeallocation(RegisterDeallocation),
+      .RamReadLatency(RamReadLatency)
+  ) br_fifo_shared_pop_ctrl_ext_arbiter (
       .clk,
       .rst,
-
-      .push_rd_addr_valid(fifo_ram_rd_addr_valid),
-      .push_rd_addr_ready(fifo_ram_rd_addr_ready),
-      .push_rd_addr(fifo_ram_rd_addr),
-      .push_rd_data_valid(fifo_ram_rd_data_valid),
-      .push_rd_data(fifo_ram_rd_data),
-
-      .pop_rd_addr_valid(data_ram_rd_addr_valid),
-      .pop_rd_addr(data_ram_rd_addr),
-      .pop_rd_data_valid(data_ram_rd_data_valid),
-      .pop_rd_data(data_ram_rd_data),
-
+      .head_valid,
+      .head_ready,
+      .head,
+      .ram_empty,
+      .ram_items,
+      .pop_valid,
+      .pop_ready,
+      .pop_data,
+      .pop_empty,
+      .dealloc_valid,
+      .dealloc_entry_id,
+      .data_ram_rd_addr_valid,
+      .data_ram_rd_addr,
+      .data_ram_rd_data_valid,
+      .data_ram_rd_data,
       .arb_request,
-      .arb_can_grant,
       .arb_grant,
+      .arb_can_grant,
       .arb_enable_priority_update
   );
 
@@ -234,20 +134,6 @@ module br_fifo_shared_pop_ctrl #(
         .grant(arb_grant[i]),
         .enable_priority_update(arb_enable_priority_update[i])
     );
-  end
-
-  if (RegisterDeallocation) begin : gen_reg_dealloc
-    logic [NumFifos-1:0] dealloc_valid_next;
-
-    assign dealloc_valid_next = head_valid & head_ready;
-    `BR_REG(dealloc_valid, dealloc_valid_next)
-
-    for (genvar i = 0; i < NumFifos; i++) begin : gen_reg_dealloc_entry_id
-      `BR_REGL(dealloc_entry_id[i], head[i], dealloc_valid_next[i])
-    end
-  end else begin : gen_no_reg_dealloc
-    assign dealloc_valid = head_valid & head_ready;
-    assign dealloc_entry_id = head;
   end
 
 endmodule

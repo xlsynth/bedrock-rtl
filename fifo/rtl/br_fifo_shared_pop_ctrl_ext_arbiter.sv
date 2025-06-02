@@ -90,6 +90,7 @@ module br_fifo_shared_pop_ctrl_ext_arbiter #(
     // External arbiter interface
     output logic [NumReadPorts-1:0][NumFifos-1:0] arb_request,
     input logic [NumReadPorts-1:0][NumFifos-1:0] arb_grant,
+    input logic [NumReadPorts-1:0][NumFifos-1:0] arb_can_grant,
     output logic [NumReadPorts-1:0] arb_enable_priority_update
 );
 
@@ -221,7 +222,7 @@ module br_fifo_shared_pop_ctrl_ext_arbiter #(
       .pop_rd_data(data_ram_rd_data),
 
       .arb_request,
-      .arb_can_grant(arb_grant),
+      .arb_can_grant,
       .arb_grant,
       .arb_enable_priority_update
   );

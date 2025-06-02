@@ -268,6 +268,7 @@ module br_fifo_shared_dynamic_ctrl_ext_arbiter #(
       .dealloc_entry_id,
       .arb_request,
       .arb_grant,
+      .arb_can_grant(arb_grant),
       .arb_enable_priority_update
   );
 
