@@ -79,7 +79,7 @@ module br_flow_checks_valid_data_impl #(
           // module. In this case, we still want to check that the valid
           // is stable when backpressured.
           `BR_ASSERT_IMPL(valid_stable_when_backpressured_a, !ready[i] && valid[i] |=> valid[i])
-          `BR_COVER_IMPL(data_unstable_c, ##1 $past(!ready[i] && valid[i]) && !$stable(data[i]))
+          `BR_COVER_IMPL(data_unstable_c, (!ready[i] && valid[i]) ##1 !$stable(data[i]))
           // Assert that if valid is 1, then data must be known (not X).
           // This is not strictly a required integration check, because most modules
           // should still function correctly even if data is unknown (X).
@@ -90,7 +90,7 @@ module br_flow_checks_valid_data_impl #(
         end
       end else begin : gen_no_valid_stability_checks
         // Cover that valid can be unstable when backpressured.
-        `BR_COVER_IMPL(valid_unstable_c, ##1 $past(!ready[i] && valid[i]) && !valid[i])
+        `BR_COVER_IMPL(valid_unstable_c, (!ready[i] && valid[i]) ##1 !valid[i])
       end
     end
   end
