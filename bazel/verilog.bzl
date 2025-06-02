@@ -277,6 +277,10 @@ def _verilog_fpv_args(ctx):
         extra_args.append("--analysis_opt='" + opt + "'")
     if ctx.attr.conn:
         extra_args.append("--conn")
+    if ctx.attr.dump_to_central:
+        extra_args.append("--dump_to_central")
+    if ctx.attr.central_pm_dir:
+        extra_args.append("--central_pm_dir=" + ctx.attr.central_pm_dir)
     return extra_args
 
 def _verilog_fpv_test_impl(ctx):
@@ -590,6 +594,13 @@ rule_verilog_fpv_test = rule(
             doc = "Switch to connectivity",
             default = False,
         ),
+        "dump_to_central": attr.bool(
+            doc = "Dump proofmaster files to a central location.",
+            default = False,
+        ),
+        "central_pm_dir": attr.string(
+            doc = "Central directory for proofmaster files.",
+        ),
     },
     test = True,
 )
@@ -674,6 +685,13 @@ rule_verilog_fpv_sandbox = rule(
         "conn": attr.bool(
             doc = "Switch to connectivity",
             default = False,
+        ),
+        "dump_to_central": attr.bool(
+            doc = "Dump proofmaster files to a central location.",
+            default = False,
+        ),
+        "central_pm_dir": attr.string(
+            doc = "Central directory for proofmaster files.",
         ),
     },
     outputs = {
