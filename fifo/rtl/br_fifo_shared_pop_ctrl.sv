@@ -57,9 +57,8 @@ module br_fifo_shared_pop_ctrl #(
     // The number of cycles between data ram read address and read data. Must be >=0.
     parameter int RamReadLatency = 0,
 
-    localparam int AddrWidth = $clog2(Depth),
-    localparam int CountWidth = $clog2(Depth + 1),
-    localparam int ArbDataWidth = AddrWidth + $clog2(NumFifos)
+    localparam int AddrWidth  = $clog2(Depth),
+    localparam int CountWidth = $clog2(Depth + 1)
 ) (
     input logic clk,
     input logic rst,
@@ -185,12 +184,10 @@ module br_fifo_shared_pop_ctrl #(
     `BR_UNUSED_NAMED(no_staging_buffer_unused, {ram_items, fifo_ram_rd_data_valid})
   end
 
-  logic [NumReadPorts-1:0][NumFifos-1:0] arb_push_valid;
-  logic [NumReadPorts-1:0][NumFifos-1:0][ArbDataWidth-1:0] arb_push_data;
-  logic [NumReadPorts-1:0][NumFifos-1:0] arb_push_ready;
-  logic [NumReadPorts-1:0] arb_pop_valid;
-  logic [NumReadPorts-1:0][ArbDataWidth-1:0] arb_pop_data;
-  logic [NumReadPorts-1:0] arb_pop_ready;
+  logic [NumReadPorts-1:0][NumFifos-1:0] arb_request;
+  logic [NumReadPorts-1:0][NumFifos-1:0] arb_can_grant;
+  logic [NumReadPorts-1:0][NumFifos-1:0] arb_grant;
+  logic [NumReadPorts-1:0] arb_enable_priority_update;
 
   // Read Crossbar
   // TODO(zhemao): Support an option to have dedicated read ports for a FIFO
@@ -219,29 +216,23 @@ module br_fifo_shared_pop_ctrl #(
       .pop_rd_data_valid(data_ram_rd_data_valid),
       .pop_rd_data(data_ram_rd_data),
 
-      .arb_push_valid,
-      .arb_push_data,
-      .arb_push_ready,
-      .arb_pop_valid,
-      .arb_pop_data,
-      .arb_pop_ready
+      .arb_request,
+      .arb_can_grant,
+      .arb_grant,
+      .arb_enable_priority_update
   );
 
   for (genvar i = 0; i < NumReadPorts; i++) begin : gen_read_port_mux
     // Default arbitration policy is LRU. To use a different policy, use the _ext_arbiter variant.
-    br_flow_mux_lru #(
-        .NumFlows(NumFifos),
-        .Width(ArbDataWidth),
-        .EnableAssertPushValidStability(HasStagingBuffer)
-    ) br_flow_mux_lru_inst (
+    br_arb_lru_internal #(
+        .NumRequesters(NumFifos)
+    ) br_arb_lru_internal (
         .clk,
         .rst,
-        .push_valid(arb_push_valid[i]),
-        .push_ready(arb_push_ready[i]),
-        .push_data(arb_push_data[i]),
-        .pop_valid_unstable(arb_pop_valid[i]),
-        .pop_ready(arb_pop_ready[i]),
-        .pop_data_unstable(arb_pop_data[i])
+        .request(arb_request[i]),
+        .can_grant(arb_can_grant[i]),
+        .grant(arb_grant[i]),
+        .enable_priority_update(arb_enable_priority_update[i])
     );
   end
 

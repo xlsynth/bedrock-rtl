@@ -234,7 +234,7 @@ verilog_library(
         "//delay/rtl:br_delay_valid",
         "//demux/rtl:br_demux_bin",
         "//flow/rtl:br_flow_demux_select_unstable",
-        "//flow/rtl:br_flow_mux_lru",
+        "//flow/rtl/internal:br_flow_mux_core",
         "//macros:br_asserts_internal",
         "//mux/rtl:br_mux_onehot",
         "//pkg:br_math_pkg",

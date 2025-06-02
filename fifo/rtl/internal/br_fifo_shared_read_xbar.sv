@@ -42,15 +42,10 @@ module br_fifo_shared_read_xbar #(
     //----------------------------------------------------------
     // External arbitration interface
     //----------------------------------------------------------
-    // Requests presented to the external arbiter.
-    output logic [NumReadPorts-1:0][NumFifos-1:0] arb_push_valid,
-    output logic [NumReadPorts-1:0][NumFifos-1:0][AddrWidth+$clog2(NumFifos)-1:0] arb_push_data,
-    // Response from arbiter
-    input logic [NumReadPorts-1:0][NumFifos-1:0] arb_push_ready,
-    input logic [NumReadPorts-1:0] arb_pop_valid,
-    input logic [NumReadPorts-1:0][AddrWidth+$clog2(NumFifos)-1:0] arb_pop_data,
-    // Back-pressure towards arbiter (always ready in this implementation).
-    output logic [NumReadPorts-1:0] arb_pop_ready
+    output logic [NumReadPorts-1:0][NumFifos-1:0] arb_request,
+    input logic [NumReadPorts-1:0][NumFifos-1:0] arb_can_grant,
+    input logic [NumReadPorts-1:0][NumFifos-1:0] arb_grant,
+    output logic [NumReadPorts-1:0] arb_enable_priority_update
 );
 
   `BR_ASSERT_STATIC(legal_num_fifos_a, NumFifos >= 2)
@@ -121,16 +116,26 @@ module br_fifo_shared_read_xbar #(
       assign demuxed_rd_addr_ready[j][i] = mux_push_ready[j];
     end
 
-    // Export to external arbiter
-    assign arb_push_valid[i]                        = mux_push_valid;
-    assign arb_push_data[i]                         = mux_push_data;
-    assign mux_push_ready                           = arb_push_ready[i];
-
-    // Accept grant from arbiter
-    assign pop_rd_addr_valid[i]                     = arb_pop_valid[i];
-    assign {pop_rd_addr[i], pop_rd_addr_fifo_id[i]} = arb_pop_data[i];
-    // Always ready for grant in this implementation
-    assign arb_pop_ready[i]                         = 1'b1;
+    br_flow_mux_core #(
+        .NumFlows(NumFifos),
+        .Width(TotalMuxWidth),
+        .EnableAssertPushValidStability(EnableAssertPushValidStability),
+        .EnableAssertPushDataStability(EnableAssertPushValidStability)
+    ) br_flow_mux_core_inst (
+        .clk,
+        .rst,
+        // Interface to external arbiter
+        .request(arb_request[i]),
+        .can_grant(arb_can_grant[i]),
+        .grant(arb_grant[i]),
+        .enable_priority_update(arb_enable_priority_update[i]),
+        .push_valid(mux_push_valid),
+        .push_ready(mux_push_ready),
+        .push_data(mux_push_data),
+        .pop_valid_unstable(pop_rd_addr_valid[i]),
+        .pop_ready(1'b1),
+        .pop_data_unstable({pop_rd_addr[i], pop_rd_addr_fifo_id[i]})
+    );
 
     br_delay_valid #(
         .NumStages(RamReadLatency),

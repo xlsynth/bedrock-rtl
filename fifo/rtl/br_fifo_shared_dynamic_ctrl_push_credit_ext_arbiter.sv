@@ -105,8 +105,7 @@ module br_fifo_shared_dynamic_ctrl_push_credit_ext_arbiter #(
     localparam int PushCreditWidth = $clog2(NumWritePorts + 1),
     localparam int FifoIdWidth = br_math::clamped_clog2(NumFifos),
     localparam int AddrWidth = br_math::clamped_clog2(Depth),
-    localparam int CountWidth = $clog2(Depth + 1),
-    localparam int ArbDataWidth = AddrWidth + FifoIdWidth
+    localparam int CountWidth = $clog2(Depth + 1)
 ) (
     input logic clk,
     input logic rst,
@@ -153,12 +152,9 @@ module br_fifo_shared_dynamic_ctrl_push_credit_ext_arbiter #(
     input logic [NumReadPorts-1:0][AddrWidth-1:0] ptr_ram_rd_data,
 
     // External arbiter interface
-    output logic [NumReadPorts-1:0][NumFifos-1:0] arb_push_valid,
-    output logic [NumReadPorts-1:0][NumFifos-1:0][ArbDataWidth-1:0] arb_push_data,
-    input logic [NumReadPorts-1:0][NumFifos-1:0] arb_push_ready,
-    input logic [NumReadPorts-1:0] arb_pop_valid,
-    input logic [NumReadPorts-1:0][ArbDataWidth-1:0] arb_pop_data,
-    output logic [NumReadPorts-1:0] arb_pop_ready
+    output logic [NumReadPorts-1:0][NumFifos-1:0] arb_request,
+    input logic [NumReadPorts-1:0][NumFifos-1:0] arb_grant,
+    output logic [NumReadPorts-1:0] arb_enable_priority_update
 );
 
   // Integration Checks
@@ -280,11 +276,8 @@ module br_fifo_shared_dynamic_ctrl_push_credit_ext_arbiter #(
       .data_ram_rd_data,
       .dealloc_valid,
       .dealloc_entry_id,
-      .arb_push_valid,
-      .arb_push_data,
-      .arb_push_ready,
-      .arb_pop_valid,
-      .arb_pop_data,
-      .arb_pop_ready
+      .arb_request,
+      .arb_grant,
+      .arb_enable_priority_update
   );
 endmodule : br_fifo_shared_dynamic_ctrl_push_credit_ext_arbiter

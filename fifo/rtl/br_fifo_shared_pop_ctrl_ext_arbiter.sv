@@ -61,9 +61,8 @@ module br_fifo_shared_pop_ctrl_ext_arbiter #(
     // The number of cycles between data ram read address and read data. Must be >=0.
     parameter int RamReadLatency = 0,
 
-    localparam int AddrWidth = $clog2(Depth),
-    localparam int CountWidth = $clog2(Depth + 1),
-    localparam int ArbDataWidth = AddrWidth + $clog2(NumFifos)
+    localparam int AddrWidth  = $clog2(Depth),
+    localparam int CountWidth = $clog2(Depth + 1)
 ) (
     input logic clk,
     input logic rst,
@@ -89,12 +88,9 @@ module br_fifo_shared_pop_ctrl_ext_arbiter #(
     input logic [NumReadPorts-1:0][Width-1:0] data_ram_rd_data,
 
     // External arbiter interface
-    output logic [NumReadPorts-1:0][NumFifos-1:0] arb_push_valid,
-    output logic [NumReadPorts-1:0][NumFifos-1:0][ArbDataWidth-1:0] arb_push_data,
-    input logic [NumReadPorts-1:0][NumFifos-1:0] arb_push_ready,
-    input logic [NumReadPorts-1:0] arb_pop_valid,
-    input logic [NumReadPorts-1:0][ArbDataWidth-1:0] arb_pop_data,
-    output logic [NumReadPorts-1:0] arb_pop_ready
+    output logic [NumReadPorts-1:0][NumFifos-1:0] arb_request,
+    input logic [NumReadPorts-1:0][NumFifos-1:0] arb_grant,
+    output logic [NumReadPorts-1:0] arb_enable_priority_update
 );
 
   // Integration Checks
@@ -224,12 +220,10 @@ module br_fifo_shared_pop_ctrl_ext_arbiter #(
       .pop_rd_data_valid(data_ram_rd_data_valid),
       .pop_rd_data(data_ram_rd_data),
 
-      .arb_push_valid,
-      .arb_push_data,
-      .arb_push_ready,
-      .arb_pop_valid,
-      .arb_pop_data,
-      .arb_pop_ready
+      .arb_request,
+      .arb_can_grant(arb_grant),
+      .arb_grant,
+      .arb_enable_priority_update
   );
 
   if (RegisterDeallocation) begin : gen_reg_dealloc
