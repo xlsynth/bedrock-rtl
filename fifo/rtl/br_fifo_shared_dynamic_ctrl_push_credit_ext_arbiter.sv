@@ -12,7 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 //
-// Bedrock-RTL Shared Dynamic Multi-FIFO Controller (Push Valid/Credit Interface)
+// Bedrock-RTL Shared Dynamic Multi-FIFO Controller (Push Valid/Credit Interface) with external
+// arbiter interface
 //
 // This module implements the controller for a shared storage multi-FIFO
 // with dynamic allocation.
@@ -278,6 +279,7 @@ module br_fifo_shared_dynamic_ctrl_push_credit_ext_arbiter #(
       .dealloc_entry_id,
       .arb_request,
       .arb_grant,
+      .arb_can_grant(arb_grant),
       .arb_enable_priority_update
   );
 endmodule : br_fifo_shared_dynamic_ctrl_push_credit_ext_arbiter

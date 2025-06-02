@@ -12,7 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 //
-// Bedrock-RTL Shared Dynamic Multi-FIFO Controller (Push Valid/Ready Interface)
+// Bedrock-RTL Shared Dynamic Multi-FIFO Controller (Push Valid/Ready Interface) with external
+// arbiter interface
 //
 // This module implements the controller for a shared storage multi-FIFO
 // with dynamic allocation.

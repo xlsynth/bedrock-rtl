@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 //
-// Bedrock-RTL Shared Multi-FIFO Pop Controller
+// Bedrock-RTL Shared Multi-FIFO Pop Controller with external arbiter interface
 //
 // This module implements the pop-side control logic for a shared multi-FIFO.
 //
