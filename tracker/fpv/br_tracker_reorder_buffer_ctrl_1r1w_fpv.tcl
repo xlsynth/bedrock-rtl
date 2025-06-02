@@ -20,5 +20,8 @@ get_design_info
 # TODO: ignore many unreachable RTL inline covers for now
 cover -disable {*br_tracker_reorder_buffer_ctrl_1r1w*}
 
+# limit run time to 30-mins
+set_prove_time_limit 1800s
+
 # prove command
 prove -all
