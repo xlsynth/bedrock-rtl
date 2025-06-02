@@ -37,7 +37,15 @@ module br_fifo_shared_read_xbar #(
     output logic [NumReadPorts-1:0] pop_rd_addr_valid,
     output logic [NumReadPorts-1:0][AddrWidth-1:0] pop_rd_addr,
     input logic [NumReadPorts-1:0] pop_rd_data_valid,
-    input logic [NumReadPorts-1:0][Width-1:0] pop_rd_data
+    input logic [NumReadPorts-1:0][Width-1:0] pop_rd_data,
+
+    //----------------------------------------------------------
+    // External arbitration interface
+    //----------------------------------------------------------
+    output logic [NumReadPorts-1:0][NumFifos-1:0] arb_request,
+    input logic [NumReadPorts-1:0][NumFifos-1:0] arb_can_grant,
+    input logic [NumReadPorts-1:0][NumFifos-1:0] arb_grant,
+    output logic [NumReadPorts-1:0] arb_enable_priority_update
 );
 
   `BR_ASSERT_STATIC(legal_num_fifos_a, NumFifos >= 2)
@@ -108,14 +116,19 @@ module br_fifo_shared_read_xbar #(
       assign demuxed_rd_addr_ready[j][i] = mux_push_ready[j];
     end
 
-    // TODO(zhemao): Allow selection of different arbitration policy.
-    br_flow_mux_lru #(
+    br_flow_mux_core #(
         .NumFlows(NumFifos),
         .Width(TotalMuxWidth),
-        .EnableAssertPushValidStability(EnableAssertPushValidStability)
-    ) br_flow_mux_lru_inst (
+        .EnableAssertPushValidStability(EnableAssertPushValidStability),
+        .EnableAssertPushDataStability(EnableAssertPushValidStability)
+    ) br_flow_mux_core_inst (
         .clk,
         .rst,
+        // Interface to external arbiter
+        .request(arb_request[i]),
+        .can_grant(arb_can_grant[i]),
+        .grant(arb_grant[i]),
+        .enable_priority_update(arb_enable_priority_update[i]),
         .push_valid(mux_push_valid),
         .push_ready(mux_push_ready),
         .push_data(mux_push_data),
