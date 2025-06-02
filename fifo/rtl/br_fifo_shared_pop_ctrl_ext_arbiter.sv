@@ -27,12 +27,16 @@
 // pointers of each FIFO, and generates deallocation signals when entries are popped.
 //
 // The design assumes that the RAM and pointer management are handled externally.
+//
+// This is identical to br_fifo_shared_pop_ctrl, but with an external arbiter interface so
+// that an arbitrary arbitration policy can be chosen for the pop side of the FIFO (where
+// NumReadPorts < NumFifos).
 
 `include "br_asserts_internal.svh"
 `include "br_registers.svh"
 `include "br_unused.svh"
 
-module br_fifo_shared_pop_ctrl #(
+module br_fifo_shared_pop_ctrl_ext_arbiter #(
     // Number of read ports. Must be >=1 and a power of 2.
     parameter int NumReadPorts = 1,
     // Number of logical FIFOs. Must be >=1.
@@ -82,7 +86,15 @@ module br_fifo_shared_pop_ctrl #(
     output logic [NumReadPorts-1:0] data_ram_rd_addr_valid,
     output logic [NumReadPorts-1:0][AddrWidth-1:0] data_ram_rd_addr,
     input logic [NumReadPorts-1:0] data_ram_rd_data_valid,
-    input logic [NumReadPorts-1:0][Width-1:0] data_ram_rd_data
+    input logic [NumReadPorts-1:0][Width-1:0] data_ram_rd_data,
+
+    // External arbiter interface
+    output logic [NumReadPorts-1:0][NumFifos-1:0] arb_push_valid,
+    output logic [NumReadPorts-1:0][NumFifos-1:0][ArbDataWidth-1:0] arb_push_data,
+    input logic [NumReadPorts-1:0][NumFifos-1:0] arb_push_ready,
+    input logic [NumReadPorts-1:0] arb_pop_valid,
+    input logic [NumReadPorts-1:0][ArbDataWidth-1:0] arb_pop_data,
+    output logic [NumReadPorts-1:0] arb_pop_ready
 );
 
   // Integration Checks
@@ -185,13 +197,6 @@ module br_fifo_shared_pop_ctrl #(
     `BR_UNUSED_NAMED(no_staging_buffer_unused, {ram_items, fifo_ram_rd_data_valid})
   end
 
-  logic [NumReadPorts-1:0][NumFifos-1:0] arb_push_valid;
-  logic [NumReadPorts-1:0][NumFifos-1:0][ArbDataWidth-1:0] arb_push_data;
-  logic [NumReadPorts-1:0][NumFifos-1:0] arb_push_ready;
-  logic [NumReadPorts-1:0] arb_pop_valid;
-  logic [NumReadPorts-1:0][ArbDataWidth-1:0] arb_pop_data;
-  logic [NumReadPorts-1:0] arb_pop_ready;
-
   // Read Crossbar
   // TODO(zhemao): Support an option to have dedicated read ports for a FIFO
   // or group of FIFOs instead of spreading reads across all read ports.
@@ -226,24 +231,6 @@ module br_fifo_shared_pop_ctrl #(
       .arb_pop_data,
       .arb_pop_ready
   );
-
-  for (genvar i = 0; i < NumReadPorts; i++) begin : gen_read_port_mux
-    // Default arbitration policy is LRU. To use a different policy, use the _ext_arbiter variant.
-    br_flow_mux_lru #(
-        .NumFlows(NumFifos),
-        .Width(ArbDataWidth),
-        .EnableAssertPushValidStability(HasStagingBuffer)
-    ) br_flow_mux_lru_inst (
-        .clk,
-        .rst,
-        .push_valid(arb_push_valid[i]),
-        .push_ready(arb_push_ready[i]),
-        .push_data(arb_push_data[i]),
-        .pop_valid_unstable(arb_pop_valid[i]),
-        .pop_ready(arb_pop_ready[i]),
-        .pop_data_unstable(arb_pop_data[i])
-    );
-  end
 
   if (RegisterDeallocation) begin : gen_reg_dealloc
     logic [NumFifos-1:0] dealloc_valid_next;

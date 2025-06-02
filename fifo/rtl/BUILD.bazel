@@ -71,6 +71,17 @@ verilog_library(
 )
 
 verilog_library(
+    name = "br_fifo_shared_dynamic_ctrl_ext_arbiter",
+    srcs = ["br_fifo_shared_dynamic_ctrl_ext_arbiter.sv"],
+    deps = [
+        ":br_fifo_shared_pop_ctrl_ext_arbiter",
+        "//fifo/rtl/internal:br_fifo_shared_dynamic_ptr_mgr",
+        "//fifo/rtl/internal:br_fifo_shared_dynamic_push_ctrl",
+        "//macros:br_asserts_internal",
+    ],
+)
+
+verilog_library(
     name = "br_fifo_shared_dynamic_flops",
     srcs = ["br_fifo_shared_dynamic_flops.sv"],
     deps = [
@@ -84,6 +95,17 @@ verilog_library(
     srcs = ["br_fifo_shared_dynamic_ctrl_push_credit.sv"],
     deps = [
         ":br_fifo_shared_pop_ctrl",
+        "//fifo/rtl/internal:br_fifo_shared_dynamic_ptr_mgr",
+        "//fifo/rtl/internal:br_fifo_shared_dynamic_push_ctrl_credit",
+        "//macros:br_asserts_internal",
+    ],
+)
+
+verilog_library(
+    name = "br_fifo_shared_dynamic_ctrl_push_credit_ext_arbiter",
+    srcs = ["br_fifo_shared_dynamic_ctrl_push_credit_ext_arbiter.sv"],
+    deps = [
+        ":br_fifo_shared_pop_ctrl_ext_arbiter",
         "//fifo/rtl/internal:br_fifo_shared_dynamic_ptr_mgr",
         "//fifo/rtl/internal:br_fifo_shared_dynamic_push_ctrl_credit",
         "//macros:br_asserts_internal",
@@ -141,6 +163,51 @@ br_verilog_elab_and_lint_test_suite(
         ],
     },
     deps = [":br_fifo_shared_pop_ctrl"],
+)
+
+verilog_library(
+    name = "br_fifo_shared_pop_ctrl_ext_arbiter",
+    srcs = ["br_fifo_shared_pop_ctrl_ext_arbiter.sv"],
+    deps = [
+        "//fifo/rtl/internal:br_fifo_shared_read_xbar",
+        "//fifo/rtl/internal:br_fifo_staging_buffer",
+        "//flow/rtl:br_flow_fork",
+        "//flow/rtl:br_flow_join",
+        "//flow/rtl:br_flow_mux_lru",
+    ],
+)
+
+br_verilog_elab_and_lint_test_suite(
+    name = "br_fifo_shared_pop_ctrl_ext_arbiter_test_suite",
+    params = {
+        "NumFifos": [
+            "2",
+            "4",
+        ],
+        "NumReadPorts": [
+            "1",
+            "2",
+        ],
+        "Depth": ["5"],
+        "Width": ["8"],
+        "StagingBufferDepth": [
+            "1",
+            "2",
+        ],
+        "RamReadLatency": [
+            "0",
+            "1",
+        ],
+        "RegisterDeallocation": [
+            "0",
+            "1",
+        ],
+        "RegisterPopOutputs": [
+            "0",
+            "1",
+        ],
+    },
+    deps = [":br_fifo_shared_pop_ctrl_ext_arbiter"],
 )
 
 br_verilog_elab_and_lint_test_suite(
@@ -474,6 +541,52 @@ br_verilog_elab_and_lint_test_suite(
         ],
     },
     deps = [":br_fifo_shared_dynamic_ctrl_push_credit"],
+)
+
+br_verilog_elab_and_lint_test_suite(
+    name = "br_fifo_shared_dynamic_ctrl_ext_arbiter_test_suite_fifo_port_sweep",
+    params = {
+        "Depth": ["5"],
+        "Width": ["8"],
+        "NumFifos": [
+            "2",
+            "4",
+        ],
+        "NumWritePorts": [
+            "1",
+            "2",
+        ],
+        "NumReadPorts": [
+            "1",
+            "2",
+        ],
+    },
+    deps = [":br_fifo_shared_dynamic_ctrl_ext_arbiter"],
+)
+
+br_verilog_elab_and_lint_test_suite(
+    name = "br_fifo_shared_dynamic_ctrl_push_credit_ext_arbiter_test_suite_fifo_port_sweep",
+    params = {
+        "Depth": ["5"],
+        "Width": ["8"],
+        "NumFifos": [
+            "2",
+            "4",
+        ],
+        "NumWritePorts": [
+            "1",
+            "2",
+        ],
+        "NumReadPorts": [
+            "1",
+            "2",
+        ],
+        "RegisterPushOutputs": [
+            "0",
+            "1",
+        ],
+    },
+    deps = [":br_fifo_shared_dynamic_ctrl_push_credit_ext_arbiter"],
 )
 
 br_verilog_elab_and_lint_test_suite(
