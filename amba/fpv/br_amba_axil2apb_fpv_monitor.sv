@@ -58,11 +58,17 @@ module br_amba_axil2apb_fpv_monitor #(
     input logic                             pslverr
 );
 
+  // when there is no valid, ready doesn't have to be high eventually
+  // This will only turn off assertion without precondition: `STRENGTH(##[0:$] arready
+  // (arvalid && !arready) |=> `STRENGTH(##[0:$] arready) is still enabled
+  localparam bit ValidBeforeReady = 1;
+
   // AXI4-Lite interface
   axi4_master #(
-      .AXI4_LITE (1),
+      .AXI4_LITE(1),
       .ADDR_WIDTH(AddrWidth),
-      .DATA_WIDTH(DataWidth)
+      .DATA_WIDTH(DataWidth),
+      .CONFIG_WAIT_FOR_VALID_BEFORE_READY(ValidBeforeReady)
   ) axi (
       // Global signals
       .aclk    (clk),
