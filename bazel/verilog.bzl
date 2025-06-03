@@ -158,8 +158,7 @@ def _verilog_base_impl(ctx, subcmd, test = True, extra_args = [], extra_runfiles
             args.append("--custom_tcl_body=" + ctx.files.custom_tcl_body[0].path)
         runfiles += ctx.files.custom_tcl_body
     if ctx.attr.runner_flags:
-        for flag in ctx.attr.runner_flags[VerilogRunnerFlagsInfo].runner_flags:
-            args.append(flag)
+        args += ctx.attr.runner_flags[VerilogRunnerFlagsInfo].runner_flags
     args += extra_args
 
     # TODO: This is a hack. We should use the py_binary target directly, but I'm not sure how to get the environment

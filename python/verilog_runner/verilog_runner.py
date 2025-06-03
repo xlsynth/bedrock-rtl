@@ -83,10 +83,8 @@ def main():
         )
         # Add subcommand-specific (but not tool-specific) arguments
         subcommand.add_args(subcommand_parser)
-        # Only add these arguments for selected subcommands
-        if subcommand.name == "fpv":  # or whatever subcommand you want
-            subcommand_parser.add_argument("--dump_to_central", action="store_true")
-            subcommand_parser.add_argument("--central_pm_dir", type=str)
+        for _, plugin_class in tool_plugins.items():
+            plugin_class.add_args(subcommand_parser)
         # Add the '--tool' argument with choices based on available tools offered by plugins.
         tool_choices = list(tool_plugins.keys())
         subcommand_parser.add_argument(
