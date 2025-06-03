@@ -83,6 +83,8 @@ def main():
         )
         # Add subcommand-specific (but not tool-specific) arguments
         subcommand.add_args(subcommand_parser)
+        for _, plugin_class in tool_plugins.items():
+            plugin_class.add_args(subcommand_parser)
         # Add the '--tool' argument with choices based on available tools offered by plugins.
         tool_choices = list(tool_plugins.keys())
         subcommand_parser.add_argument(
