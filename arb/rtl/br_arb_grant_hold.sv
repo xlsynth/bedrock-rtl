@@ -43,7 +43,7 @@ module br_arb_grant_hold #(
     // grant_hold for that requester is deasserted.
     input logic [NumRequesters-1:0] grant_hold,
     // If 1 and grant_hold is 0, then the arbiter's priority will update whenever it makes a grant.
-    // If 0, then neither the arbiter's priority nor the next grant to be held will update.
+    // If 0, then neither the arbiter's priority nor the grant hold state will update.
     input logic enable_grant_hold_update,
     // Connections to the arbiter.
     input logic [NumRequesters-1:0] grant_from_arb,

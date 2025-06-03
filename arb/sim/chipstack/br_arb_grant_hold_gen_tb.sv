@@ -51,7 +51,7 @@ module br_arb_grant_hold_gen_tb;
   // Other Signals and Variables
   //===========================================================
   logic [NumRequesters-1:0] grant_hold;
-  logic enable_priority_update;
+  logic enable_grant_hold_update;
   logic [NumRequesters-1:0] grant_from_arb;
   logic enable_priority_update_to_arb;
   logic [NumRequesters-1:0] grant;
@@ -66,7 +66,7 @@ module br_arb_grant_hold_gen_tb;
       .clk(~clk),
       .rst(rst),
       .grant_hold(grant_hold),
-      .enable_priority_update(enable_priority_update),
+      .enable_grant_hold_update(enable_grant_hold_update),
       .grant_from_arb(grant_from_arb),
       .enable_priority_update_to_arb(enable_priority_update_to_arb),
       .grant(grant)
@@ -93,7 +93,7 @@ module br_arb_grant_hold_gen_tb;
       grant_hold[i] = 1'b0;  // Reset value for grant_hold
       grant_from_arb[i] = 1'b0;  // Reset value for grant_from_arb
     end
-    enable_priority_update = 1'b0;  // Reset value for enable_priority_update
+    enable_grant_hold_update = 1'b0;  // Reset value for enable_grant_hold_update
 
     // Wiggling the reset signal.
     rst = 1'bx;  // Setting to undefined before asserting
@@ -222,7 +222,7 @@ module br_arb_grant_hold_gen_tb;
         initial_grant_from_arb = 'h1;  // Assuming requester 0 is granted initially
         grant_from_arb = initial_grant_from_arb;
         grant_hold = 'h0;
-        enable_priority_update = 1'b1;
+        enable_grant_hold_update = 1'b1;
 
         // Drive initial grant_from_arb
         @(posedge clk);
@@ -325,12 +325,12 @@ module br_arb_grant_hold_gen_tb;
         // Wait for a clock edge to ensure proper stimulus propagation
         @(posedge clk);
 
-        // Step 1: Assert enable_priority_update to allow priority updates
-        enable_priority_update = 1'b1;
+        // Step 1: Assert enable_grant_hold_update to allow priority updates
+        enable_grant_hold_update = 1'b1;
         @(posedge clk);
         if (ENABLE_INFO_MESSAGES == 1)
           $display(
-              "Time: %0t, INFO: test_PriorityUpdateControl - Asserted enable_priority_update = 1",
+              "Time: %0t, INFO: test_PriorityUpdateControl - Asserted enable_grant_hold_update = 1",
               $time
           );
 
@@ -426,7 +426,7 @@ module br_arb_grant_hold_gen_tb;
         grant_from_arb = '0;
         grant_from_arb[granted_requester] = 1'b1;
         grant_hold = '0;
-        enable_priority_update = 1'b1;
+        enable_grant_hold_update = 1'b1;
         expected_grant = grant_from_arb;
 
         @(posedge clk);
@@ -523,11 +523,11 @@ module br_arb_grant_hold_gen_tb;
         // Initial delay to ensure proper stimulus propagation
         @(posedge clk);
 
-        // Step 1: Set enable_priority_update to 1
-        enable_priority_update = 1;
+        // Step 1: Set enable_grant_hold_update to 1
+        enable_grant_hold_update = 1;
         if (ENABLE_INFO_MESSAGES == 1)
           $display(
-              "Time: %0t, INFO: test_EnablePriorityUpdateToArbiter - Driving enable_priority_update=1",
+              "Time: %0t, INFO: test_EnablePriorityUpdateToArbiter - Driving enable_grant_hold_update=1",
               $time
           );
         @(posedge clk);
@@ -710,7 +710,7 @@ module br_arb_grant_hold_gen_tb;
 
         // Step 2: Drive inputs to known values (0).
         grant_hold = 'h0;
-        enable_priority_update = 1'b0;
+        enable_grant_hold_update = 1'b0;
         grant_from_arb = 'h0;
         @(posedge clk);
         if (ENABLE_INFO_MESSAGES == 1)
