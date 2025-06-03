@@ -16,11 +16,6 @@
 
 load("@rules_hdl//verilog:providers.bzl", "VerilogInfo", "verilog_library")
 
-VerilogRunnerFlagsInfo = provider(
-    fields = ["name", "runner_flags"],
-    doc = "FV mode provider",
-)
-
 TOOLS_THAT_NEED_LICENSES = [
     "ascentlint",
     "jg",
@@ -82,6 +77,29 @@ def _write_executable_shell_script(ctx, executable_file, cmd, verbose = True, en
         content = "\n".join(lines),
         is_executable = True,
     )
+
+VerilogRunnerFlagsInfo = provider(
+    fields = ["name", "runner_flags"],
+    doc = "Verilog Runner flags provider",
+)
+
+def _runner_flags_impl(ctx):
+    runner_flags = ctx.build_setting_value.split(" ")
+
+    return [
+        VerilogRunnerFlagsInfo(
+            name = ctx.label.name,
+            runner_flags = runner_flags,
+        ),
+    ]
+
+runner_flags = rule(
+    doc = """
+      Build configuration for Verilog Runner flags from command line
+    """,
+    implementation = _runner_flags_impl,
+    build_setting = config.string(flag = True),
+)
 
 def _verilog_base_impl(ctx, subcmd, test = True, extra_args = [], extra_runfiles = []):
     """Shared implementation for rule_verilog_elab_test, rule_verilog_lint_test, rule_verilog_sim_test, and rule_verilog_fpv_test.
@@ -271,24 +289,6 @@ def _verilog_sim_test_impl(ctx):
         extra_args = extra_args,
     )
 
-def _runner_flags_impl(ctx):
-    runner_flags = ctx.build_setting_value.split(" ")
-
-    return [
-        VerilogRunnerFlagsInfo(
-            name = ctx.label.name,
-            runner_flags = runner_flags,
-        ),
-    ]
-
-runner_flags = rule(
-    doc = """
-      Build configuration for Verilog Runner flags from command line
-    """,
-    implementation = _runner_flags_impl,
-    build_setting = config.string(flag = True),
-)
-
 def _verilog_fpv_args(ctx):
     extra_args = []
     if ctx.attr.elab_only:
@@ -354,6 +354,12 @@ rule_verilog_elab_test = rule(
                    "The tcl body (custom or not) is unconditionally followed by the tcl footer." +
                    "Do not include Tcl commands that manipulate sources, headers, defines, or parameters, as those will be handled by the rule implementation."),
             allow_single_file = [".tcl"],
+        ),
+        "runner_flags": attr.label(
+            doc = "command line flags",
+            allow_files = False,
+            providers = [VerilogRunnerFlagsInfo],
+            default = "//bazel:runner_flags",
         ),
     },
     test = True,
@@ -426,6 +432,12 @@ rule_verilog_lint_test = rule(
                    "The tcl body (custom or not) is unconditionally followed by the tcl footer." +
                    "Do not include Tcl commands that manipulate sources, headers, defines, or parameters, as those will be handled by the rule implementation."),
             allow_single_file = [".tcl"],
+        ),
+        "runner_flags": attr.label(
+            doc = "command line flags",
+            allow_files = False,
+            providers = [VerilogRunnerFlagsInfo],
+            default = "//bazel:runner_flags",
         ),
     },
     test = True,
@@ -514,7 +526,7 @@ rule_verilog_sim_test = rule(
             default = False,
         ),
         "runner_flags": attr.label(
-            doc = "jg flags",
+            doc = "command line flags",
             allow_files = False,
             providers = [VerilogRunnerFlagsInfo],
             default = "//bazel:runner_flags",
