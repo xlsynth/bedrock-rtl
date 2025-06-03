@@ -116,6 +116,10 @@ module br_amba_axil_split_fpv_monitor #(
   // ABVIP should send more than DUT to test backpressure
   localparam int MaxPendingRd = MaxOutstandingReads + 2;
   localparam int MaxPendingWr = MaxOutstandingWrites + 2;
+  // when there is no valid, ready doesn't have to be high eventually
+  // This will only turn off assertion without precondition: `STRENGTH(##[0:$] arready
+  // (arvalid && !arready) |=> `STRENGTH(##[0:$] arready) is still enabled
+  localparam bit ValidBeforeReady = 1;
 
   // ----------FV assumptions----------
   for (genvar i = 0; i < NumBranchAddrRanges; i++) begin : gen_asm
@@ -135,7 +139,8 @@ module br_amba_axil_split_fpv_monitor #(
       .ARUSER_WIDTH(ARUserWidth),
       .RUSER_WIDTH(RUserWidth),
       .MAX_PENDING_RD(MaxPendingRd),
-      .MAX_PENDING_WR(MaxPendingWr)
+      .MAX_PENDING_WR(MaxPendingWr),
+      .CONFIG_WAIT_FOR_VALID_BEFORE_READY(ValidBeforeReady)
   ) root (
       // Global signals
       .aclk    (clk),
@@ -204,7 +209,8 @@ module br_amba_axil_split_fpv_monitor #(
       .ARUSER_WIDTH(ARUserWidth),
       .RUSER_WIDTH(RUserWidth),
       .MAX_PENDING_RD(MaxPendingRd),
-      .MAX_PENDING_WR(MaxPendingWr)
+      .MAX_PENDING_WR(MaxPendingWr),
+      .CONFIG_WAIT_FOR_VALID_BEFORE_READY(ValidBeforeReady)
   ) trunk (
       // Global signals
       .aclk    (clk),
@@ -273,7 +279,8 @@ module br_amba_axil_split_fpv_monitor #(
       .ARUSER_WIDTH(ARUserWidth),
       .RUSER_WIDTH(RUserWidth),
       .MAX_PENDING_RD(MaxPendingRd),
-      .MAX_PENDING_WR(MaxPendingWr)
+      .MAX_PENDING_WR(MaxPendingWr),
+      .CONFIG_WAIT_FOR_VALID_BEFORE_READY(ValidBeforeReady)
   ) branch (
       // Global signals
       .aclk    (clk),
