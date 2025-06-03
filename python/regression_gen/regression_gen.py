@@ -178,11 +178,15 @@ def _resolve_output_path(output_str: str | None, *, default_dir_label: str) -> P
         "'regr.yaml' is appended automatically.  Default: <--directory>/regr.yaml."
     ),
 )
-@click.option("--default-timeout-mins", default=30, show_default=True, type=int)
+@click.option("--default-timeout-mins", default=40, show_default=True, type=int)
 @click.option("--default-cpus-per-task", default=4, show_default=True, type=int)
 @click.option("--default-mem-mb", default=32768, show_default=True, type=int)
 @click.option(
-    "--default-invocation-timeout-mins", default=1440, show_default=True, type=int
+    "--default-invocation-timeout-mins",
+    # 1400 mins = 23.33 hours
+    default=1400,
+    show_default=True,
+    type=int,
 )
 @click.option(
     "--dry-run",
