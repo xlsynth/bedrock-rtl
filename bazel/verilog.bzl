@@ -513,6 +513,12 @@ rule_verilog_sim_test = rule(
             doc = "Enable waveform dumping.",
             default = False,
         ),
+        "runner_flags": attr.label(
+            doc = "jg flags",
+            allow_files = False,
+            providers = [VerilogRunnerFlagsInfo],
+            default = "//bazel:runner_flags",
+        ),
     },
     test = True,
 )
