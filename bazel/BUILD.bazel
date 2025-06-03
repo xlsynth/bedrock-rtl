@@ -16,6 +16,7 @@ load("@bazel_skylib//:bzl_library.bzl", "bzl_library")
 load("@bazel_skylib//rules:diff_test.bzl", "diff_test")
 load("@bazel_skylib//rules:write_file.bzl", "write_file")
 load("@stardoc//stardoc:stardoc.bzl", "stardoc")
+load("//bazel:verilog.bzl", "runner_flags")
 
 package(default_visibility = ["//visibility:public"])
 
@@ -61,4 +62,9 @@ sh_binary(
         "verilog_rules.md",
         ":gen_verilog_rules.md",
     ],
+)
+
+runner_flags(
+    name = "runner_flags",
+    build_setting_default = "",
 )

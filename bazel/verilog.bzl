@@ -16,6 +16,11 @@
 
 load("@rules_hdl//verilog:providers.bzl", "VerilogInfo", "verilog_library")
 
+VerilogRunnerFlagsInfo = provider(
+    fields = ["name", "runner_flags"],
+    doc = "FV mode provider",
+)
+
 TOOLS_THAT_NEED_LICENSES = [
     "ascentlint",
     "jg",
@@ -134,6 +139,9 @@ def _verilog_base_impl(ctx, subcmd, test = True, extra_args = [], extra_runfiles
         else:
             args.append("--custom_tcl_body=" + ctx.files.custom_tcl_body[0].path)
         runfiles += ctx.files.custom_tcl_body
+    if ctx.attr.runner_flags:
+        for flag in ctx.attr.runner_flags[VerilogRunnerFlagsInfo].runner_flags:
+            args.append(flag)
     args += extra_args
 
     # TODO: This is a hack. We should use the py_binary target directly, but I'm not sure how to get the environment
@@ -263,6 +271,24 @@ def _verilog_sim_test_impl(ctx):
         extra_args = extra_args,
     )
 
+def _runner_flags_impl(ctx):
+    runner_flags = ctx.build_setting_value.split(" ")
+
+    return [
+        VerilogRunnerFlagsInfo(
+            name = ctx.label.name,
+            runner_flags = runner_flags,
+        ),
+    ]
+
+runner_flags = rule(
+    doc = """
+      Build configuration for Verilog Runner flags from command line
+    """,
+    implementation = _runner_flags_impl,
+    build_setting = config.string(flag = True),
+)
+
 def _verilog_fpv_args(ctx):
     extra_args = []
     if ctx.attr.elab_only:
@@ -277,10 +303,6 @@ def _verilog_fpv_args(ctx):
         extra_args.append("--analysis_opt='" + opt + "'")
     if ctx.attr.conn:
         extra_args.append("--conn")
-    if ctx.attr.dump_to_central:
-        extra_args.append("--dump_to_central")
-    if ctx.attr.central_pm_dir:
-        extra_args.append("--central_pm_dir=" + ctx.attr.central_pm_dir)
     return extra_args
 
 def _verilog_fpv_test_impl(ctx):
@@ -594,12 +616,11 @@ rule_verilog_fpv_test = rule(
             doc = "Switch to connectivity",
             default = False,
         ),
-        "dump_to_central": attr.bool(
-            doc = "Dump proofmaster files to a central location.",
-            default = False,
-        ),
-        "central_pm_dir": attr.string(
-            doc = "Central directory for proofmaster files.",
+        "runner_flags": attr.label(
+            doc = "jg flags",
+            allow_files = False,
+            providers = [VerilogRunnerFlagsInfo],
+            default = "//bazel:runner_flags",
         ),
     },
     test = True,
@@ -686,12 +707,11 @@ rule_verilog_fpv_sandbox = rule(
             doc = "Switch to connectivity",
             default = False,
         ),
-        "dump_to_central": attr.bool(
-            doc = "Dump proofmaster files to a central location.",
-            default = False,
-        ),
-        "central_pm_dir": attr.string(
-            doc = "Central directory for proofmaster files.",
+        "runner_flags": attr.label(
+            doc = "jg flags",
+            allow_files = False,
+            providers = [VerilogRunnerFlagsInfo],
+            default = "//bazel:runner_flags",
         ),
     },
     outputs = {

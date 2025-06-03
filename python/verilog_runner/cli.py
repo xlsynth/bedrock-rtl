@@ -289,14 +289,3 @@ class Fpv(Subcommand):
             action="store_true",
             help="Run in connectivity mode",
         )
-        parser.add_argument(
-            "--dump_to_central",
-            action="store_true",
-            help="Dump proofmaster files to a central location",
-        )
-        parser.add_argument(
-            "--central_pm_dir",
-            type=str,
-            default="",
-            help="Central proofmaster directory",
-        )
