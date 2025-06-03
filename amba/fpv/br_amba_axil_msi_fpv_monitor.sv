@@ -21,9 +21,11 @@ module br_amba_axil_msi_fpv_monitor #(
     parameter int AddrWidth = 40,  // must be at least 12
     parameter int DataWidth = 64,  // must be 32 or 64
     parameter int NumInterrupts = 2,  // must be at least 2
+    parameter int NumMsiDestAddr = 1,  // must be at least 1
     parameter int DeviceIdWidth = 16,  // must be less than or equal to AddrWidth
     parameter int EventIdWidth = 16,  // must be less than or equal to DataWidth
     parameter int ThrottleCntrWidth = 16,  // must be at least 1
+    localparam int MsiDstIdxWidth = (NumMsiDestAddr > 1) ? $clog2(NumMsiDestAddr) : 1,
     localparam int StrobeWidth = (DataWidth + 7) / 8
 ) (
     input clk,
@@ -33,8 +35,9 @@ module br_amba_axil_msi_fpv_monitor #(
     input logic [NumInterrupts-1:0] irq,
 
     // MSI Configuration
-    input logic [AddrWidth-1:0] msi_base_addr,
+    input logic [NumMsiDestAddr-1:0][AddrWidth-1:0] msi_dest_addr,
     input logic [NumInterrupts-1:0] msi_enable,
+    input logic [NumInterrupts-1:0][MsiDstIdxWidth-1:0] msi_dest_idx,
     input logic [NumInterrupts-1:0][DeviceIdWidth-1:0] device_id_per_irq,
     input logic [NumInterrupts-1:0][EventIdWidth-1:0] event_id_per_irq,
 
@@ -73,6 +76,7 @@ module br_amba_axil_msi_fpv_monitor #(
   localparam int EventIdStrobeWidth = 4;
   localparam int StrobeWidthPadding = StrobeWidth - EventIdStrobeWidth;
 
+  logic [AddrWidth-1:0] msi_base_addr;
   logic [NumInterrupts-1:0][AddrWidth-1:0] fv_init_awaddr;
   logic [NumInterrupts-1:0][DataWidth-1:0] fv_init_wdata;
   logic [NumInterrupts-1:0][StrobeWidth-1:0] fv_init_wstrb;
@@ -82,9 +86,10 @@ module br_amba_axil_msi_fpv_monitor #(
 
   always_comb begin
     for (int i = 0; i < NumInterrupts; i++) begin
+      msi_base_addr = msi_dest_addr[msi_dest_idx[i]];
       fv_init_awaddr[i] = msi_base_addr + {{AddrWidthPadding{1'b0}}, device_id_per_irq[i], 2'b00};
-      fv_init_wdata[i]  = {{DataWidthPadding{1'b0}}, event_id_per_irq[i]};
-      fv_init_wstrb[i]  = {{StrobeWidthPadding{1'b0}}, {EventIdStrobeWidth{1'b1}}};
+      fv_init_wdata[i] = {{DataWidthPadding{1'b0}}, event_id_per_irq[i]};
+      fv_init_wstrb[i] = {{StrobeWidthPadding{1'b0}}, {EventIdStrobeWidth{1'b1}}};
     end
   end
 
@@ -189,6 +194,7 @@ bind br_amba_axil_msi br_amba_axil_msi_fpv_monitor #(
     .AddrWidth(AddrWidth),
     .DataWidth(DataWidth),
     .NumInterrupts(NumInterrupts),
+    .NumMsiDestAddr(NumMsiDestAddr),
     .DeviceIdWidth(DeviceIdWidth),
     .EventIdWidth(EventIdWidth),
     .ThrottleCntrWidth(ThrottleCntrWidth)
