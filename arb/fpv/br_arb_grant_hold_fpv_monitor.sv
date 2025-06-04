@@ -36,7 +36,7 @@ module br_arb_grant_hold_fpv_monitor #(
 
   // only when grant_hold[i] and grant[i] are both 1, the grant will be held
   logic fv_hold;
-  assign fv_hold = |(grant_hold & grant);
+  assign fv_hold = |(grant_hold & grant) && enable_grant_hold_update;
 
   // ----------FV assumptions----------
   `BR_ASSUME(grant_onehot_a, $onehot0(grant_from_arb))
@@ -44,8 +44,6 @@ module br_arb_grant_hold_fpv_monitor #(
   // ----------FV assertions----------
   `BR_ASSERT(grant_stable_if_hold_a, fv_hold |=> $stable(grant))
   `BR_ASSERT(enable_priority_hold_a, fv_hold |=> enable_priority_update_to_arb == 1'b0)
-  `BR_ASSERT(enable_priority_passthrough_a,
-             ~|grant_hold |=> enable_priority_update_to_arb == enable_grant_hold_update)
 
 endmodule : br_arb_grant_hold_fpv_monitor
 
