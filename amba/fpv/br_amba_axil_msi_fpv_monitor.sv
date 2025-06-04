@@ -66,7 +66,8 @@ module br_amba_axil_msi_fpv_monitor #(
   `BR_ASSUME(throttle_cntr_stable_a, $stable(throttle_cntr_threshold)
              && throttle_cntr_threshold != 'd0)
   `BR_ASSUME(msi_enable_stable_a, $stable(msi_enable))
-  `BR_ASSUME(msi_base_addr_stable_a, $stable(msi_base_addr))
+  `BR_ASSUME(msi_dest_addr_stable_a, $stable(msi_dest_addr))
+  `BR_ASSUME(msi_dest_idx_stable_a, $stable(msi_dest_idx))
   `BR_ASSUME(device_id_stable_a, $stable(device_id_per_irq))
   `BR_ASSUME(event_id_stable_a, $stable(event_id_per_irq))
 
@@ -156,9 +157,10 @@ module br_amba_axil_msi_fpv_monitor #(
 
   // AXI4-Lite write-only initiator interface
   axi4_slave #(
-      .AXI4_LITE (1),
+      .AXI4_LITE(1),
       .ADDR_WIDTH(AddrWidth),
-      .DATA_WIDTH(DataWidth)
+      .DATA_WIDTH(DataWidth),
+      .CONFIG_WAIT_FOR_VALID_BEFORE_READY(1)
   ) axi (
       // Global signals
       .aclk   (clk),
