@@ -99,6 +99,11 @@ module br_amba_axil_msi #(
   `BR_ASSERT_STATIC(num_interrupts_gte_2_a, NumInterrupts >= 2)
   `BR_ASSERT_STATIC(num_msi_dest_addr_gte_1_a, NumMsiDestAddr >= 1)
   `BR_ASSERT_STATIC(throttle_cntr_width_gt_0_a, ThrottleCntrWidth > 0)
+
+  for (genvar i = 0; i < NumInterrupts; i++) begin : gen_num_interrupts_intg_checks
+    `BR_ASSERT_INTG(dest_idx_lt_num_msi_dest_addr_a, msi_dest_idx[i] < NumMsiDestAddr)
+  end
+
   //------------------------------------------
   // Implementation
   //------------------------------------------
