@@ -21,9 +21,11 @@ module br_amba_axil_msi_fpv_monitor #(
     parameter int AddrWidth = 40,  // must be at least 12
     parameter int DataWidth = 64,  // must be 32 or 64
     parameter int NumInterrupts = 2,  // must be at least 2
+    parameter int NumMsiDestAddr = 1,  // must be at least 1
     parameter int DeviceIdWidth = 16,  // must be less than or equal to AddrWidth
     parameter int EventIdWidth = 16,  // must be less than or equal to DataWidth
     parameter int ThrottleCntrWidth = 16,  // must be at least 1
+    localparam int MsiDstIdxWidth = (NumMsiDestAddr > 1) ? $clog2(NumMsiDestAddr) : 1,
     localparam int StrobeWidth = (DataWidth + 7) / 8
 ) (
     input clk,
@@ -33,8 +35,9 @@ module br_amba_axil_msi_fpv_monitor #(
     input logic [NumInterrupts-1:0] irq,
 
     // MSI Configuration
-    input logic [AddrWidth-1:0] msi_base_addr,
+    input logic [NumMsiDestAddr-1:0][AddrWidth-1:0] msi_dest_addr,
     input logic [NumInterrupts-1:0] msi_enable,
+    input logic [NumInterrupts-1:0][MsiDstIdxWidth-1:0] msi_dest_idx,
     input logic [NumInterrupts-1:0][DeviceIdWidth-1:0] device_id_per_irq,
     input logic [NumInterrupts-1:0][EventIdWidth-1:0] event_id_per_irq,
 
@@ -63,16 +66,22 @@ module br_amba_axil_msi_fpv_monitor #(
   `BR_ASSUME(throttle_cntr_stable_a, $stable(throttle_cntr_threshold)
              && throttle_cntr_threshold != 'd0)
   `BR_ASSUME(msi_enable_stable_a, $stable(msi_enable))
-  `BR_ASSUME(msi_base_addr_stable_a, $stable(msi_base_addr))
+  `BR_ASSUME(msi_dest_addr_stable_a, $stable(msi_dest_addr))
+  `BR_ASSUME(msi_dest_idx_stable_a, $stable(msi_dest_idx))
   `BR_ASSUME(device_id_stable_a, $stable(device_id_per_irq))
   `BR_ASSUME(event_id_stable_a, $stable(event_id_per_irq))
+  for (genvar i = 0; i < NumInterrupts; i++) begin : gen_id
+    `BR_ASSUME(msi_dest_idx_in_range_a, msi_dest_idx[i] < NumMsiDestAddr)
+  end
 
   // ----------FV assertions----------
   localparam int AddrWidthPadding = (AddrWidth - DeviceIdWidth) - 2;
-  localparam int DataWidthPadding = DataWidth - EventIdWidth;
+  localparam int EventIdPadding = 32 - EventIdWidth;
+  localparam int DataWidthPadding = DataWidth - 32;
   localparam int EventIdStrobeWidth = 4;
   localparam int StrobeWidthPadding = StrobeWidth - EventIdStrobeWidth;
 
+  logic [AddrWidth-1:0] msi_base_addr;
   logic [NumInterrupts-1:0][AddrWidth-1:0] fv_init_awaddr;
   logic [NumInterrupts-1:0][DataWidth-1:0] fv_init_wdata;
   logic [NumInterrupts-1:0][StrobeWidth-1:0] fv_init_wstrb;
@@ -82,9 +91,18 @@ module br_amba_axil_msi_fpv_monitor #(
 
   always_comb begin
     for (int i = 0; i < NumInterrupts; i++) begin
+      msi_base_addr = msi_dest_addr[msi_dest_idx[i]];
       fv_init_awaddr[i] = msi_base_addr + {{AddrWidthPadding{1'b0}}, device_id_per_irq[i], 2'b00};
-      fv_init_wdata[i]  = {{DataWidthPadding{1'b0}}, event_id_per_irq[i]};
-      fv_init_wstrb[i]  = {{StrobeWidthPadding{1'b0}}, {EventIdStrobeWidth{1'b1}}};
+      if (StrobeWidthPadding == 0) begin
+        fv_init_wdata[i] = {{EventIdPadding{1'b0}}, event_id_per_irq[i]};
+        fv_init_wstrb[i] = {EventIdStrobeWidth{1'b1}};
+      end else if (device_id_per_irq[i][0]) begin
+        fv_init_wdata[i] = {{EventIdPadding{1'b0}}, event_id_per_irq[i], {DataWidthPadding{1'b0}}};
+        fv_init_wstrb[i] = {{StrobeWidthPadding{1'b1}}, {EventIdStrobeWidth{1'b0}}};
+      end else begin
+        fv_init_wdata[i] = {{DataWidthPadding{1'b0}}, {EventIdPadding{1'b0}}, event_id_per_irq[i]};
+        fv_init_wstrb[i] = {{StrobeWidthPadding{1'b0}}, {EventIdStrobeWidth{1'b1}}};
+      end
     end
   end
 
@@ -151,9 +169,10 @@ module br_amba_axil_msi_fpv_monitor #(
 
   // AXI4-Lite write-only initiator interface
   axi4_slave #(
-      .AXI4_LITE (1),
+      .AXI4_LITE(1),
       .ADDR_WIDTH(AddrWidth),
-      .DATA_WIDTH(DataWidth)
+      .DATA_WIDTH(DataWidth),
+      .CONFIG_WAIT_FOR_VALID_BEFORE_READY(1)
   ) axi (
       // Global signals
       .aclk   (clk),
@@ -189,6 +208,7 @@ bind br_amba_axil_msi br_amba_axil_msi_fpv_monitor #(
     .AddrWidth(AddrWidth),
     .DataWidth(DataWidth),
     .NumInterrupts(NumInterrupts),
+    .NumMsiDestAddr(NumMsiDestAddr),
     .DeviceIdWidth(DeviceIdWidth),
     .EventIdWidth(EventIdWidth),
     .ThrottleCntrWidth(ThrottleCntrWidth)
