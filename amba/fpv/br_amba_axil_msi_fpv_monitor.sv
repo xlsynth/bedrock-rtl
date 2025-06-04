@@ -70,6 +70,9 @@ module br_amba_axil_msi_fpv_monitor #(
   `BR_ASSUME(msi_dest_idx_stable_a, $stable(msi_dest_idx))
   `BR_ASSUME(device_id_stable_a, $stable(device_id_per_irq))
   `BR_ASSUME(event_id_stable_a, $stable(event_id_per_irq))
+  for (genvar i = 0; i < NumInterrupts; i++) begin : gen_id
+    `BR_ASSUME(msi_dest_idx_in_range_a, msi_dest_idx[i] < NumMsiDestAddr)
+  end
 
   // ----------FV assertions----------
   localparam int AddrWidthPadding = (AddrWidth - DeviceIdWidth) - 2;
