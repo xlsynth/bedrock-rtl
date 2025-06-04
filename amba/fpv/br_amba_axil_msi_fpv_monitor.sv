@@ -98,7 +98,7 @@ module br_amba_axil_msi_fpv_monitor #(
         fv_init_wstrb[i] = {EventIdStrobeWidth{1'b1}};
       end else if (device_id_per_irq[i][0]) begin
         fv_init_wdata[i] = {{EventIdPadding{1'b0}}, event_id_per_irq[i], {DataWidthPadding{1'b0}}};
-        fv_init_wstrb[i] = {{StrobeWidthPadding{1'b1}}, {EventIdStrobeWidth{1'b0}}};
+        fv_init_wstrb[i] = {{EventIdStrobeWidth{1'b1}}, {StrobeWidthPadding{1'b0}}};
       end else begin
         fv_init_wdata[i] = {{DataWidthPadding{1'b0}}, {EventIdPadding{1'b0}}, event_id_per_irq[i]};
         fv_init_wstrb[i] = {{StrobeWidthPadding{1'b0}}, {EventIdStrobeWidth{1'b1}}};
