@@ -26,7 +26,7 @@ module br_arb_grant_hold_fpv_monitor #(
     // grant_hold for that requester is deasserted.
     input logic [NumRequesters-1:0] grant_hold,
     // If 1 and grant_hold is 0, then the arbiter's priority will update whenever it makes a grant.
-    input logic enable_priority_update,
+    input logic enable_grant_hold_update,
     // Connections to the arbiter.
     input logic [NumRequesters-1:0] grant_from_arb,
     input logic enable_priority_update_to_arb,
@@ -45,7 +45,7 @@ module br_arb_grant_hold_fpv_monitor #(
   `BR_ASSERT(grant_stable_if_hold_a, fv_hold |=> $stable(grant))
   `BR_ASSERT(enable_priority_hold_a, fv_hold |=> enable_priority_update_to_arb == 1'b0)
   `BR_ASSERT(enable_priority_passthrough_a,
-             ~|grant_hold |=> enable_priority_update_to_arb == enable_priority_update)
+             ~|grant_hold |=> enable_priority_update_to_arb == enable_grant_hold_update)
 
 endmodule : br_arb_grant_hold_fpv_monitor
 

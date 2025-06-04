@@ -374,7 +374,8 @@ module br_amba_axi_demux_req_tracker #(
       .rst,
       //
       .grant_hold(ds_port_gnt_hold),
-      .enable_priority_update(1'b1),
+      // TODO: make use of this port and remove glue on lines 353-363
+      .enable_grant_hold_update(1'b1),
       //
       .grant_from_arb(ds_port_gnt_from_arb),
       .enable_priority_update_to_arb(ds_port_gnt_enable_priority_update_to_arb),
