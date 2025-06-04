@@ -73,7 +73,8 @@ module br_amba_axil_msi_fpv_monitor #(
 
   // ----------FV assertions----------
   localparam int AddrWidthPadding = (AddrWidth - DeviceIdWidth) - 2;
-  localparam int DataWidthPadding = DataWidth - EventIdWidth;
+  localparam int EventIdPadding = 32 - EventIdWidth;
+  localparam int DataWidthPadding = DataWidth - 32;
   localparam int EventIdStrobeWidth = 4;
   localparam int StrobeWidthPadding = StrobeWidth - EventIdStrobeWidth;
 
@@ -89,8 +90,16 @@ module br_amba_axil_msi_fpv_monitor #(
     for (int i = 0; i < NumInterrupts; i++) begin
       msi_base_addr = msi_dest_addr[msi_dest_idx[i]];
       fv_init_awaddr[i] = msi_base_addr + {{AddrWidthPadding{1'b0}}, device_id_per_irq[i], 2'b00};
-      fv_init_wdata[i] = {{DataWidthPadding{1'b0}}, event_id_per_irq[i]};
-      fv_init_wstrb[i] = {{StrobeWidthPadding{1'b0}}, {EventIdStrobeWidth{1'b1}}};
+      if (StrobeWidthPadding == 0) begin
+        fv_init_wdata[i] = {{EventIdPadding{1'b0}}, event_id_per_irq[i]};
+        fv_init_wstrb[i] = {EventIdStrobeWidth{1'b1}};
+      end else if (device_id_per_irq[i][0]) begin
+        fv_init_wdata[i] = {{EventIdPadding{1'b0}}, event_id_per_irq[i], {DataWidthPadding{1'b0}}};
+        fv_init_wstrb[i] = {{StrobeWidthPadding{1'b1}}, {EventIdStrobeWidth{1'b0}}};
+      end else begin
+        fv_init_wdata[i] = {{DataWidthPadding{1'b0}}, {EventIdPadding{1'b0}}, event_id_per_irq[i]};
+        fv_init_wstrb[i] = {{StrobeWidthPadding{1'b0}}, {EventIdStrobeWidth{1'b1}}};
+      end
     end
   end
 
