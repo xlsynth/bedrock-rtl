@@ -68,8 +68,8 @@ module br_cdc_fifo_basic_fpv_monitor #(
   // Need to make sure that on push reset, the updated push_count is not visible
   // to the pop side before reset_active is.
   localparam int PushCountDelay = ExtraDelay +
-                                  (ResetActiveDelay + 1) >= RamWriteLatency ?
-                                  (ResetActiveDelay + 1) : RamWriteLatency;
+                                  ((ResetActiveDelay + 1) >= RamWriteLatency ?
+                                  (ResetActiveDelay + 1) : RamWriteLatency);
   // Need to make sure that on pop reset, the updated pop_count is not visible
   // to the push side before reset_active is.
   localparam int PopCountDelay = ResetActiveDelay + 1 + ExtraDelay;
