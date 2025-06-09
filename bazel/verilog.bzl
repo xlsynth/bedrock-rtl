@@ -827,7 +827,15 @@ def verilog_elab_and_lint_test_suite(
         **kwargs
     )
 
-def verilog_fpv_test_suite(name, defines = [], params = {}, illegal_param_combinations = {}, sandbox = True, **kwargs):
+def verilog_fpv_test_suite(
+        name,
+        defines = [],
+        params = {},
+        illegal_param_combinations = {},
+        sandbox = True,
+        verilog_fpv_test_func = None,
+        verilog_fpv_sandbox_func = None,
+        **kwargs):
     """Creates a suite of Verilog fpv tests for each combination of the provided parameters.
 
     The function generates all possible combinations of the provided parameters and creates a verilog_fpv_test
@@ -840,8 +848,17 @@ def verilog_fpv_test_suite(name, defines = [], params = {}, illegal_param_combin
         params (dict): A dictionary where keys are parameter names and values are lists of possible values for those parameters.
         illegal_param_combinations (dict): A dictionary where keys are parameter tuples and values are lists of illegal values for those parameters.
         sandbox (bool): Whether to create a sandbox for the test.
+        verilog_fpv_test_func (function): A function to use instead of verilog_fpv_test.
+        verilog_fpv_sandbox_func (function): A function to use instead of rule_verilog_fpv_sandbox.
         **kwargs: Additional keyword arguments to be passed to the verilog_elab_test and verilog_lint_test functions.
     """
+
+    # Set defaults if none provided
+    if verilog_fpv_test_func == None:
+        verilog_fpv_test_func = verilog_fpv_test
+    if verilog_fpv_sandbox_func == None:
+        verilog_fpv_sandbox_func = rule_verilog_fpv_sandbox
+
     param_keys = sorted(params.keys())
     param_values_list = [params[key] for key in param_keys]
     param_combinations = _cartesian_product(param_values_list)
@@ -858,14 +875,14 @@ def verilog_fpv_test_suite(name, defines = [], params = {}, illegal_param_combin
                 skip = True
                 break
         if not skip:
-            verilog_fpv_test(
+            verilog_fpv_test_func(
                 name = _make_test_name(name, "fpv_test", param_keys, param_combination),
                 defines = defines,
                 params = params,
                 **kwargs
             )
             if sandbox:
-                rule_verilog_fpv_sandbox(
+                verilog_fpv_sandbox_func(
                     name = _make_test_name(name, "fpv_sandbox", param_keys, param_combination),
                     defines = defines,
                     params = params,
