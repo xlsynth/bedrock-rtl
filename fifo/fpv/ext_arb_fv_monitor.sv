@@ -37,7 +37,6 @@ module ext_arb_fv_monitor #(
     `BR_ASSUME(same_cyc_arb_grant_a, |arb_request[r] |-> |arb_grant[r])
     for (genvar f = 0; f < NumFifos; f++) begin : gen_arb_request
       `BR_ASSUME(arb_legal_grant_a, arb_grant[r][f] |-> arb_request[r][f])
-      // TODO: still under discussion
       // sanity check:
       // assumption arb_grant_eventually_a can only be added
       // if assertion arb_req_hold_until_grant_a is true

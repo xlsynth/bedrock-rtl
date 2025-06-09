@@ -113,6 +113,14 @@ module br_fifo_shared_dynamic_ctrl_push_credit_ext_arbiter_fpv_monitor #(
     input logic [NumReadPorts-1:0] arb_enable_priority_update
 );
 
+  localparam bit HasStagingBuffer = (DataRamReadLatency > 0) || RegisterPopOutputs;
+  if (HasStagingBuffer == 0) begin : gen_no_staging_buffer
+    for (genvar i = 0; i < NumFifos; i++) begin : gen_asm
+      // pop_ready can't drop without its pop_valid
+      `BR_ASSUME(pop_ready_hold_a, pop_ready[i] && !pop_valid[i] |=> pop_ready[i])
+    end
+  end
+
   // ----------External arb model----------
   ext_arb_fv_monitor #(
       .NumReadPorts(NumReadPorts),
