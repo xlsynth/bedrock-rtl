@@ -160,6 +160,7 @@ module br_ram_flops #(
   logic [NumWritePorts-1:0][TileNumWords-1:0] tile_wr_word_en[DepthTiles][WidthTiles];
 
   logic [NumReadPorts-1:0] tile_rd_addr_valid[DepthTiles];
+  // ri lint_check_waive FANOUT_LIMIT
   logic [NumReadPorts-1:0][TileAddressWidth-1:0] tile_rd_addr[DepthTiles];
   logic [NumReadPorts-1:0] tile_rd_data_valid[DepthTiles][WidthTiles];
   logic [NumReadPorts-1:0][TileWidth-1:0] tile_rd_data[DepthTiles][WidthTiles];
