@@ -415,7 +415,8 @@ The following extra tags are unconditionally appended to the list of tags:
 <pre>
 load("@bedrock-rtl//bazel:verilog.bzl", "verilog_fpv_test_suite")
 
-verilog_fpv_test_suite(<a href="#verilog_fpv_test_suite-name">name</a>, <a href="#verilog_fpv_test_suite-defines">defines</a>, <a href="#verilog_fpv_test_suite-params">params</a>, <a href="#verilog_fpv_test_suite-illegal_param_combinations">illegal_param_combinations</a>, <a href="#verilog_fpv_test_suite-sandbox">sandbox</a>, <a href="#verilog_fpv_test_suite-kwargs">kwargs</a>)
+verilog_fpv_test_suite(<a href="#verilog_fpv_test_suite-name">name</a>, <a href="#verilog_fpv_test_suite-defines">defines</a>, <a href="#verilog_fpv_test_suite-params">params</a>, <a href="#verilog_fpv_test_suite-illegal_param_combinations">illegal_param_combinations</a>, <a href="#verilog_fpv_test_suite-sandbox">sandbox</a>,
+                       <a href="#verilog_fpv_test_suite-verilog_fpv_test_func">verilog_fpv_test_func</a>, <a href="#verilog_fpv_test_suite-verilog_fpv_sandbox_func">verilog_fpv_sandbox_func</a>, <a href="#verilog_fpv_test_suite-kwargs">kwargs</a>)
 </pre>
 
 Creates a suite of Verilog fpv tests for each combination of the provided parameters.
@@ -435,6 +436,8 @@ to the base name followed by the parameter key-values.
 | <a id="verilog_fpv_test_suite-params"></a>params |  A dictionary where keys are parameter names and values are lists of possible values for those parameters.   |  `{}` |
 | <a id="verilog_fpv_test_suite-illegal_param_combinations"></a>illegal_param_combinations |  A dictionary where keys are parameter tuples and values are lists of illegal values for those parameters.   |  `{}` |
 | <a id="verilog_fpv_test_suite-sandbox"></a>sandbox |  Whether to create a sandbox for the test.   |  `True` |
+| <a id="verilog_fpv_test_suite-verilog_fpv_test_func"></a>verilog_fpv_test_func |  A function to use instead of verilog_fpv_test.   |  `None` |
+| <a id="verilog_fpv_test_suite-verilog_fpv_sandbox_func"></a>verilog_fpv_sandbox_func |  A function to use instead of rule_verilog_fpv_sandbox.   |  `None` |
 | <a id="verilog_fpv_test_suite-kwargs"></a>kwargs |  Additional keyword arguments to be passed to the verilog_elab_test and verilog_lint_test functions.   |  none |
 
 
