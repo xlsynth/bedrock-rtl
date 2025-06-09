@@ -33,7 +33,7 @@ module br_cdc_rst_sync #(
   logic srst_n;
 
   // Instantiate a synchronizer with an async reset
-  // ri lint_check_waive RESET_LEVEL CONST_FF ONE_CONN_PER_LINE
+  // ri lint_check_waive RESET_LEVEL CONST_FF ONE_CONN_PER_LINE RESET_DRIVER
   `BR_GATE_CDC_SYNC_ARST_STAGES(srst_n, 1'b1, clk, arst, NumStages)
 
   // The reset value of the synchronizer is 0, so we need to invert the output

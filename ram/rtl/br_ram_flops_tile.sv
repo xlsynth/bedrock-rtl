@@ -75,6 +75,7 @@ module br_ram_flops_tile #(
     // ri lint_check_waive INPUT_NOT_READ HIER_NET_NOT_READ HIER_BRANCH_NOT_READ
     input  logic                                   rd_rst,
     input  logic [NumReadPorts-1:0]                rd_addr_valid,
+    // ri lint_check_waive FANOUT_LIMIT
     input  logic [NumReadPorts-1:0][AddrWidth-1:0] rd_addr,
     output logic [NumReadPorts-1:0]                rd_data_valid,
     output logic [NumReadPorts-1:0][    Width-1:0] rd_data

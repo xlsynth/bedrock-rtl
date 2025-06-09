@@ -34,6 +34,7 @@ module br_mux_bin_structured_gates #(
     parameter  int SymbolWidth  = 1,
     localparam int SelectWidth  = $clog2(NumSymbolsIn)
 ) (
+    // ri lint_check_waive FANOUT_LIMIT
     input  logic [ SelectWidth-1:0]                  select,
     input  logic [NumSymbolsIn-1:0][SymbolWidth-1:0] in,
     output logic [ SymbolWidth-1:0]                  out,
