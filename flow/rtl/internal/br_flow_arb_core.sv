@@ -109,7 +109,7 @@ module br_flow_arb_core #(
   );
 
   `BR_ASSERT_IMPL(push_handshake_onehot0_a, $onehot0(push_valid & push_ready))
-  `BR_ASSERT_IMPL(pop_ready_equals_push_ready_or_a, pop_ready == |push_ready)
+  `BR_ASSERT_IMPL(no_push_ready_without_pop_ready_a, (|push_ready) |-> pop_ready)
   `BR_ASSERT_IMPL(push_handshake_implies_pop_handshake_a,
                   |(push_valid & push_ready) |-> (pop_valid_unstable & pop_ready))
   for (genvar i = 0; i < NumFlows; i++) begin : gen_per_flow_impl_checks
