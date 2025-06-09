@@ -43,11 +43,14 @@ class Job:
     block
         Bedrock block identifier (used to decide which *flow* the job will
         invoke).
+    hierarchy
+        List of path components (str) representing the hierarchy, derived from the Bazel label path.
     """
 
     name: str
     path: str
     block: str
+    hierarchy: list[str]
 
 
 # ----------------------------------------------------------------------------

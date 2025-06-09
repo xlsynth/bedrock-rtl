@@ -57,19 +57,27 @@ def _run_bazel_query(expr: str) -> list[str]:
     return [line.strip() for line in completed.stdout.splitlines() if line.strip()]
 
 
-def _derive_job_from_label(label: str, block: str) -> Job:
-    """Convert a Bazel label (e.g., //foo/bar:sandbox) into a Job dataclass."""
+def _derive_job_from_label(label: str, block: str, add_hierarchy: bool) -> Job:
+    """Convert a Bazel label (e.g., //foo/bar:sandbox) into a Job dataclass, including hierarchy if requested."""
 
     if ":" in label:
         name = label.split(":", 1)[1]
+        path_part = label.split(":", 1)[0]
     else:  # Fallback – last path component
         name = Path(label).name
+        path_part = label
 
     # Strip trailing '_fpv_sandbox' if present
     if name.endswith("_fpv_sandbox"):
         name = name[: -len("_fpv_sandbox")]
 
-    return Job(name=name, path=label, block=block)
+    if add_hierarchy and label.startswith("//") and ":" in label:
+        hierarchy_str = label[2 : label.index(":")]
+        hierarchy = [x for x in hierarchy_str.split("/") if x]
+    else:
+        hierarchy = []
+
+    return Job(name=name, path=label, block=block, hierarchy=hierarchy)
 
 
 def _get_workspace_root() -> Path:
@@ -189,6 +197,12 @@ def _resolve_output_path(output_str: str | None, *, default_dir_label: str) -> P
     type=int,
 )
 @click.option(
+    "--add-hierarchy/--no-add-hierarchy",
+    default=True,
+    show_default=True,
+    help="Include folder hierarchy in each job entry in the YAML output.",
+)
+@click.option(
     "--dry-run",
     is_flag=True,
     help="Only list discovered targets and show the rendered YAML on stdout without writing the file.",
@@ -205,6 +219,7 @@ def cli(
     default_cpus_per_task: int,
     default_mem_mb: int,
     default_invocation_timeout_mins: int,
+    add_hierarchy: bool,
     dry_run: bool,
 ) -> None:
     """Discover FPV sandbox targets and generate *regr.yaml*."""
@@ -223,7 +238,9 @@ def cli(
         click.echo("No matching targets found. Exiting.", err=True)
         sys.exit(2)
 
-    jobs = [_derive_job_from_label(label, block) for label in sorted(labels)]
+    jobs = [
+        _derive_job_from_label(label, block, add_hierarchy) for label in sorted(labels)
+    ]
 
     yaml_text = render_yaml(
         jobs,

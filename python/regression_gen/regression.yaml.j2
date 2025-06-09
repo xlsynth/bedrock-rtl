@@ -33,4 +33,10 @@ jobs:
     flow: {{ project }}.{{ job.block }}.{{ flow_name }}
     bazel_sandbox:
       path: {{ job.path }}
+{% if job.hierarchy %}
+    hierarchy:
+{% for h in job.hierarchy %}
+      - {{ h }}
+{% endfor %}
+{% endif %}
 {% endfor %}
