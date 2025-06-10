@@ -50,7 +50,7 @@ class Job:
     name: str
     path: str
     block: str
-    hierarchy: list[str]
+    hierarchy: list[str] | None = None
 
 
 # ----------------------------------------------------------------------------
