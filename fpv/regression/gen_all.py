@@ -176,6 +176,7 @@ def main():
                 "jg_fpv",
                 "--description",
                 f"Bedrock {'flow' if is_flow else ''} FPV regression.",
+                # "--no-add-hierarchy",
                 "--output",
                 out_yaml,
             ]
