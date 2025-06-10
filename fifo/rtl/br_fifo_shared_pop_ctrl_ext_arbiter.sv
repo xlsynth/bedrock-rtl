@@ -111,8 +111,17 @@ module br_fifo_shared_pop_ctrl_ext_arbiter #(
     `BR_ASSERT_INTG(no_head_valid_on_empty_a, ram_empty[i] |-> !head_valid[i])
   end
 
-  // Implementation
   localparam bit HasStagingBuffer = (RamReadLatency > 0) || RegisterPopOutputs;
+
+  if (!HasStagingBuffer && NumFifos > 1) begin : gen_no_staging_buffer_checks
+    for (genvar i = 0; i < NumFifos; i++) begin : gen_pop_ready_stable
+      // If there is no staging buffer, pop_ready affects the arbiter request
+      // If ready is deasserted while waiting for valid, deadlock could occur.
+      `BR_ASSERT_INTG(pop_ready_stable_a, pop_ready[i] && !pop_valid[i] |=> pop_ready[i])
+    end
+  end
+
+  // Implementation
 
   logic [NumFifos-1:0] fifo_ram_rd_addr_valid;
   logic [NumFifos-1:0] fifo_ram_rd_addr_ready;
