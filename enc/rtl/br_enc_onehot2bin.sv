@@ -52,9 +52,9 @@
 `include "br_asserts_internal.svh"
 
 module br_enc_onehot2bin #(
-    parameter int NumValues = 2,  // Must be at least 2
+    parameter int NumValues = 2,  // Must be at least 1
     // Width of the binary-encoded value. Must be at least $clog2(NumValues).
-    parameter int BinWidth = $clog2(NumValues)
+    parameter int BinWidth = br_math::clamped_clog2(NumValues)
 ) (
     // ri lint_check_waive INPUT_NOT_READ HIER_NET_NOT_READ HIER_BRANCH_NOT_READ
     input  logic                 clk,        // Used only for assertions
@@ -68,8 +68,8 @@ module br_enc_onehot2bin #(
   //------------------------------------------
   // Integration checks
   //------------------------------------------
-  `BR_ASSERT_STATIC(num_values_gte_2_a, NumValues >= 2)
-  `BR_ASSERT_STATIC(binwidth_gte_log2_num_values_a, BinWidth >= $clog2(NumValues))
+  `BR_ASSERT_STATIC(num_values_gte_2_a, NumValues >= 1)
+  `BR_ASSERT_STATIC(binwidth_gte_log2_num_values_a, BinWidth >= br_math::clamped_clog2(NumValues))
   `BR_ASSERT_INTG(in_onehot_a, $onehot0(in))
 
   //------------------------------------------
@@ -78,6 +78,7 @@ module br_enc_onehot2bin #(
   assign out_valid = |in;
   always_comb begin
     out = '0;  // ri lint_check_waive CONST_OUTPUT
+    // ri lint_check_waive LOOP_NOT_ENTERED
     for (int i = 1; i < NumValues; i++) begin
       // If multiple bits are set, this is undefined behavior.
       if (in[i]) begin
