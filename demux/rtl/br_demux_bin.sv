@@ -23,13 +23,13 @@
 `include "br_asserts_internal.svh"
 
 module br_demux_bin #(
-    // Number of outputs to distribute among. Must be >= 2.
-    parameter int NumSymbolsOut = 2,
+    // Number of outputs to distribute among. Must be >= 1.
+    parameter int NumSymbolsOut = 1,
     // The width of each symbol in bits. Must be >= 1.
     parameter int SymbolWidth = 1,
     // If 1, then assert there are no valid bits asserted at the end of the test.
     parameter bit EnableAssertFinalNotValid = 1,
-    localparam int SelectWidth = $clog2(NumSymbolsOut)
+    localparam int SelectWidth = br_math::clamped_clog2(NumSymbolsOut)
 ) (
     // Binary-encoded select. Must be in range of NumSymbolsOut.
     input  logic [  SelectWidth-1:0]                  select,
@@ -43,7 +43,7 @@ module br_demux_bin #(
   //------------------------------------------
   // Integration checks
   //------------------------------------------
-  `BR_ASSERT_STATIC(legal_num_symbols_out_a, NumSymbolsOut >= 2)
+  `BR_ASSERT_STATIC(legal_num_symbols_out_a, NumSymbolsOut >= 1)
   `BR_ASSERT_STATIC(legal_symbol_width_a, SymbolWidth >= 1)
   // TODO(zhemao): Figure out why this spuriously triggers in some cases
   // ri lint_check_waive ALWAYS_COMB
