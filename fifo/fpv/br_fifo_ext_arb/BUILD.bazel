@@ -30,7 +30,7 @@ verilog_library(
     srcs = ["br_fifo_shared_dynamic_ctrl_ext_arbiter_fpv_monitor.sv"],
     deps = [
         ":ext_arb_fv_monitor",
-        "//fifo/fpv/br_fifo:br_fifo_fv_ram",
+        "//fifo/fpv:br_fifo_fv_ram",
         "//fifo/fpv/br_fifo_shared_dynamic:br_fifo_shared_dynamic_basic_fpv_monitor",
         "//fifo/rtl:br_fifo_shared_dynamic_ctrl_ext_arbiter",
         "//macros:br_fv",
@@ -60,8 +60,8 @@ verilog_library(
     srcs = ["br_fifo_shared_dynamic_ctrl_push_credit_ext_arbiter_fpv_monitor.sv"],
     deps = [
         ":ext_arb_fv_monitor",
-        "//fifo/fpv/br_fifo:br_credit_receiver_fpv_monitor",
-        "//fifo/fpv/br_fifo:br_fifo_fv_ram",
+        "//fifo/fpv:br_credit_receiver_fpv_monitor",
+        "//fifo/fpv:br_fifo_fv_ram",
         "//fifo/fpv/br_fifo_shared_dynamic:br_fifo_shared_dynamic_basic_fpv_monitor",
         "//fifo/rtl:br_fifo_shared_dynamic_ctrl_push_credit_ext_arbiter",
         "//macros:br_fv",
