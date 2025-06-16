@@ -14,19 +14,22 @@
 
 # clock/reset set up
 clock clk
-reset rst
+reset -none
+assume -reset -name set_rst_during_reset {rst}
+assume -bound 1 -name delay_rst {rst}
+assume -name deassert_rst {##1 !rst}
+
 get_design_info
 
 # primary input control signal should be legal during reset
-assume -name no_push_valid_during_reset {rst |-> push_valid == 'd0}
+assume -name initial_value_during_reset {rst | push_sender_in_reset |-> \
+(credit_initial_push <= MaxCredit) && $stable(credit_initial_push)}
+assume -name no_ram_rd_data_valid_during_reset {rst | push_sender_in_reset |-> ram_rd_data_valid == 'd0}
+assume -name no_push_valid_during_reset {rst | push_sender_in_reset |-> push_valid == 'd0}
 
 # primary output control signal should be legal during reset
-assert -name fv_rst_check_pop_valid {rst |-> pop_valid == 'd0}
-
-# disable primary input side RTL integration assertion
-# it's best practice to have valid/data stability when backpressured,
-# but the FIFO itself doesn't care and will work fine even if it's unstable
-assert -disable *br_fifo_push_ctrl.*valid_data_stable_when_backpressured_a
+assert -name fv_rst_check_push_credit {rst | push_sender_in_reset |-> push_credit == 'd0}
+assert -name fv_rst_check_pop_valid {rst | push_sender_in_reset |-> pop_valid == 'd0}
 
 # pop_data can change without pop_ready when pop_ready = 0
 # but when pop_ready is high, correct data will be sent
@@ -34,6 +37,9 @@ assert -disable *br_fifo_basic_fpv_monitor.gen_pop_data_stable.pop_data_stable_a
 
 # TODO: disable covers to make nightly clean
 cover -disable *
+
+# limit run time to 10-mins
+set_prove_time_limit 600s
 
 # prove command
 prove -all
