@@ -18,6 +18,7 @@ load("//bazel:verilog.bzl", "verilog_elab_test")
 
 package(default_visibility = ["//visibility:public"])
 
+##################################################################
 # Bedrock-RTL Increment/Decrement Counter w/ Overflow Handling
 
 verilog_library(
@@ -83,6 +84,35 @@ br_verilog_fpv_test_tools_suite(
     deps = [":br_counter_fpv_monitor"],
 )
 
+br_verilog_fpv_test_tools_suite(
+    name = "br_counter_test_max",
+    elab_opts = [
+        "-parameter MaxChange 4294967295",
+        "-parameter MaxValue 4294967295",
+    ],
+    tools = {
+        "jg": "br_counter_fpv.jg.tcl",
+    },
+    top = "br_counter",
+    deps = [":br_counter_fpv_monitor"],
+)
+
+br_verilog_fpv_test_tools_suite(
+    name = "br_counter_test_max_override",
+    elab_opts = [
+        "-parameter MaxValueWidth 64",
+        "-parameter MaxChangeWidth 64",
+        "-parameter MaxChange 18446744073709551615",
+        "-parameter MaxValue 18446744073709551615",
+    ],
+    tools = {
+        "jg": "br_counter_fpv.jg.tcl",
+    },
+    top = "br_counter",
+    deps = [":br_counter_fpv_monitor"],
+)
+
+##################################################################
 # Bedrock-RTL Decrementing Counter
 verilog_library(
     name = "br_counter_decr_fpv_monitor",
@@ -137,6 +167,35 @@ br_verilog_fpv_test_tools_suite(
     deps = [":br_counter_decr_fpv_monitor"],
 )
 
+br_verilog_fpv_test_tools_suite(
+    name = "br_counter_decr_test_max",
+    elab_opts = [
+        "-parameter MaxDecrement 4294967295",
+        "-parameter MaxValue 4294967295",
+    ],
+    tools = {
+        "jg": "br_counter_fpv.jg.tcl",
+    },
+    top = "br_counter_decr",
+    deps = [":br_counter_decr_fpv_monitor"],
+)
+
+br_verilog_fpv_test_tools_suite(
+    name = "br_counter_decr_test_max_override",
+    elab_opts = [
+        "-parameter MaxValueWidth 64",
+        "-parameter MaxDecrementWidth 64",
+        "-parameter MaxDecrement 18446744073709551615",
+        "-parameter MaxValue 18446744073709551615",
+    ],
+    tools = {
+        "jg": "br_counter_fpv.jg.tcl",
+    },
+    top = "br_counter_decr",
+    deps = [":br_counter_decr_fpv_monitor"],
+)
+
+##################################################################
 # Bedrock-RTL Incrementing Counter
 verilog_library(
     name = "br_counter_incr_fpv_monitor",
@@ -184,6 +243,34 @@ br_verilog_fpv_test_tools_suite(
             "7",
         ],
     },
+    tools = {
+        "jg": "br_counter_fpv.jg.tcl",
+    },
+    top = "br_counter_incr",
+    deps = [":br_counter_incr_fpv_monitor"],
+)
+
+br_verilog_fpv_test_tools_suite(
+    name = "br_counter_incr_test_max",
+    elab_opts = [
+        "-parameter MaxIncrement 4294967295",
+        "-parameter MaxValue 4294967295",
+    ],
+    tools = {
+        "jg": "br_counter_fpv.jg.tcl",
+    },
+    top = "br_counter_incr",
+    deps = [":br_counter_incr_fpv_monitor"],
+)
+
+br_verilog_fpv_test_tools_suite(
+    name = "br_counter_incr_test_max_override",
+    elab_opts = [
+        "-parameter MaxValueWidth 64",
+        "-parameter MaxIncrementWidth 64",
+        "-parameter MaxIncrement 18446744073709551615",
+        "-parameter MaxValue 18446744073709551615",
+    ],
     tools = {
         "jg": "br_counter_fpv.jg.tcl",
     },
