@@ -18,13 +18,17 @@
 `include "br_fv.svh"
 
 module br_counter_incr_fpv_monitor #(
-    parameter int MaxValue = 1,  // Must be at least 1. Inclusive. Also the initial value.
-    parameter int MaxIncrement = 1,  // Must be at least 1 and at most MaxValue. Inclusive.
+    parameter int MaxValueWidth = 32,
+    parameter int MaxIncrementWidth = 32,
+    parameter logic [MaxValueWidth-1:0] MaxValue = 1,
+    parameter logic [MaxIncrementWidth-1:0] MaxIncrement = 1,
     parameter bit EnableReinitAndIncr = 1,
     parameter bit EnableSaturate = 0,
     parameter bit EnableAssertFinalNotValid = 1,
-    localparam int ValueWidth = $clog2(MaxValue + 1),
-    localparam int IncrementWidth = $clog2(MaxIncrement + 1)
+    localparam int MaxValueP1Width = MaxValueWidth + 1,
+    localparam int MaxIncrementP1Width = MaxIncrementWidth + 1,
+    localparam int ValueWidth = $clog2(MaxValueP1Width'(MaxValue) + 1),
+    localparam int IncrementWidth = $clog2(MaxIncrementP1Width'(MaxIncrement) + 1)
 ) (
     input logic                      clk,
     input logic                      rst,
@@ -44,7 +48,7 @@ module br_counter_incr_fpv_monitor #(
   // If overflow, wrap around after MaxValue: MaxValue -> 0 -> 1
   function automatic logic [ValueWidth-1:0] adjust(input logic [ValueWidth-1:0] base,
                                                    input logic [IncrementWidth-1:0] incr,
-                                                   input int max_value);
+                                                   input logic [MaxValueWidth-1:0] max_value);
     logic [ValueWidth:0] base_pad;
     base_pad = {1'b0, base};
     adjust = base_pad + incr > MaxValue ?  // overflow
@@ -84,6 +88,8 @@ module br_counter_incr_fpv_monitor #(
 endmodule
 
 bind br_counter_incr br_counter_incr_fpv_monitor #(
+    .MaxValueWidth(MaxValueWidth),
+    .MaxIncrementWidth(MaxIncrementWidth),
     .MaxValue(MaxValue),
     .MaxIncrement(MaxIncrement),
     .EnableReinitAndIncr(EnableReinitAndIncr),

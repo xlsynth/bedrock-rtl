@@ -18,13 +18,17 @@
 `include "br_fv.svh"
 
 module br_counter_decr_fpv_monitor #(
-    parameter int MaxValue = 1,  // Must be at least 1. Inclusive. Also the initial value.
-    parameter int MaxDecrement = 1,  // Must be at least 1 and at most MaxValue. Inclusive.
+    parameter int MaxValueWidth = 32,
+    parameter int MaxDecrementWidth = 32,
+    parameter logic [MaxValueWidth-1:0] MaxValue = 1,
+    parameter logic [MaxDecrementWidth-1:0] MaxDecrement = 1,
     parameter bit EnableReinitAndDecr = 1,
     parameter bit EnableSaturate = 0,
     parameter bit EnableAssertFinalNotValid = 1,
-    localparam int ValueWidth = $clog2(MaxValue + 1),
-    localparam int DecrementWidth = $clog2(MaxDecrement + 1)
+    localparam int MaxValueP1Width = MaxValueWidth + 1,
+    localparam int MaxDecrementP1Width = MaxDecrementWidth + 1,
+    localparam int ValueWidth = $clog2(MaxValueP1Width'(MaxValue) + 1),
+    localparam int DecrementWidth = $clog2(MaxDecrementP1Width'(MaxDecrement) + 1)
 ) (
     input logic                      clk,
     input logic                      rst,
@@ -44,7 +48,7 @@ module br_counter_decr_fpv_monitor #(
   // If underflow, wrap around after 0: 0 -> MaxValue -> MaxValue-1
   function automatic logic [ValueWidth-1:0] adjust(input logic [ValueWidth-1:0] base,
                                                    input logic [DecrementWidth-1:0] decr,
-                                                   input int max_value);
+                                                   input logic [MaxValueWidth-1:0] max_value);
 
     adjust = base < decr ?  // underflow
     (EnableSaturate ? 'd0 : base - decr + max_value + 'd1) : base - decr;
@@ -83,6 +87,8 @@ module br_counter_decr_fpv_monitor #(
 endmodule
 
 bind br_counter_decr br_counter_decr_fpv_monitor #(
+    .MaxValueWidth(MaxValueWidth),
+    .MaxDecrementWidth(MaxDecrementWidth),
     .MaxValue(MaxValue),
     .MaxDecrement(MaxDecrement),
     .EnableReinitAndDecr(EnableReinitAndDecr),
