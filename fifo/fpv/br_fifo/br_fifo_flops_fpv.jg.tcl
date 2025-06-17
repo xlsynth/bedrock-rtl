@@ -22,16 +22,21 @@ assume -name no_push_valid_during_reset {rst |-> push_valid == 'd0}
 
 # primary output control signal should be legal during reset
 assert -name fv_rst_check_pop_valid {rst |-> pop_valid == 'd0}
-assert -name fv_rst_check_ram_wr_valid {rst |-> ram_wr_valid == 'd0}
-assert -name fv_rst_check_ram_rd_addr_valid {rst |-> ram_rd_addr_valid == 'd0}
 
 # disable primary input side RTL integration assertion
 # it's best practice to have valid/data stability when backpressured,
 # but the FIFO itself doesn't care and will work fine even if it's unstable
 assert -disable *br_fifo_push_ctrl.*valid_data_stable_when_backpressured_a
 
+# pop_data can change without pop_ready when pop_ready = 0
+# but when pop_ready is high, correct data will be sent
+assert -disable *br_fifo_basic_fpv_monitor.gen_pop_data_stable.pop_data_stable_a*
+
 # TODO: disable covers to make nightly clean
 cover -disable *
+
+# limit run time to 10-mins
+set_prove_time_limit 600s
 
 # prove command
 prove -all

@@ -36,5 +36,8 @@ assert -name fv_rst_check_ram_rd_addr_valid {rst | push_sender_in_reset |-> ram_
 # TODO: disable covers to make nightly clean
 cover -disable *
 
+# limit run time to 10-mins
+set_prove_time_limit 600s
+
 # prove command
 prove -all
