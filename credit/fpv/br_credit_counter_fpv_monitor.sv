@@ -19,11 +19,15 @@
 `include "br_fv.svh"
 
 module br_credit_counter_fpv_monitor #(
-    parameter int MaxValue = 1,
-    parameter int MaxChange = 1,
+    parameter int MaxValueWidth = 32,
+    parameter int MaxChangeWidth = 32,
+    parameter logic [MaxValueWidth-1:0] MaxValue = 1,
+    parameter logic [MaxChangeWidth-1:0] MaxChange = 1,
     parameter bit EnableAssertFinalNotValid = 1,
-    localparam int ValueWidth = $clog2(MaxValue + 1),
-    localparam int ChangeWidth = $clog2(MaxChange + 1)
+    localparam int MaxValueP1Width = MaxValueWidth + 1,
+    localparam int MaxChangeP1Width = MaxChangeWidth + 1,
+    localparam int ValueWidth = $clog2(MaxValueP1Width'(MaxValue) + 1),
+    localparam int ChangeWidth = $clog2(MaxChangeP1Width'(MaxChange) + 1)
 ) (
     input logic clk,
     input logic rst,
@@ -74,6 +78,8 @@ module br_credit_counter_fpv_monitor #(
 endmodule : br_credit_counter_fpv_monitor
 
 bind br_credit_counter br_credit_counter_fpv_monitor #(
+    .MaxValueWidth(MaxValueWidth),
+    .MaxChangeWidth(MaxChangeWidth),
     .MaxValue(MaxValue),
     .MaxChange(MaxChange),
     .EnableAssertFinalNotValid(EnableAssertFinalNotValid)

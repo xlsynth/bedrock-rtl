@@ -18,6 +18,7 @@ load("//bazel:verilog.bzl", "verilog_elab_test")
 
 package(default_visibility = ["//visibility:public"])
 
+##################################################################
 # Bedrock-RTL Credit Counter
 
 verilog_library(
@@ -66,6 +67,35 @@ br_verilog_fpv_test_tools_suite(
     deps = [":br_credit_counter_fpv_monitor"],
 )
 
+br_verilog_fpv_test_tools_suite(
+    name = "br_credit_counter_test_max",
+    elab_opts = [
+        "-parameter MaxValue 4294967295",
+        "-parameter MaxChange 4294967295",
+    ],
+    tools = {
+        "jg": "br_credit_counter_fpv.jg.tcl",
+    },
+    top = "br_credit_counter",
+    deps = [":br_credit_counter_fpv_monitor"],
+)
+
+br_verilog_fpv_test_tools_suite(
+    name = "br_credit_counter_test_max_override",
+    elab_opts = [
+        "-parameter MaxValueWidth 64",
+        "-parameter MaxChangeWidth 64",
+        "-parameter MaxChange 18446744073709551615",
+        "-parameter MaxValue 18446744073709551615",
+    ],
+    tools = {
+        "jg": "br_credit_counter_fpv.jg.tcl",
+    },
+    top = "br_credit_counter",
+    deps = [":br_credit_counter_fpv_monitor"],
+)
+
+##################################################################
 # Bedrock-RTL Credit Receiver
 verilog_library(
     name = "br_credit_receiver_fpv_monitor",
@@ -147,6 +177,7 @@ br_verilog_fpv_test_tools_suite(
     deps = [":br_credit_receiver_fpv_monitor"],
 )
 
+##################################################################
 # Bedrock-RTL Credit Sender
 verilog_library(
     name = "br_credit_sender_fpv_monitor",
