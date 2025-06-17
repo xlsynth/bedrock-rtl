@@ -71,6 +71,20 @@ br_verilog_elab_and_lint_test_suite(
     deps = [":br_credit_counter"],
 )
 
+br_verilog_elab_and_lint_test_suite(
+    name = "br_credit_counter_test_suite_large_maxes",
+    params = {
+        "MaxValueWidth": ["64"],
+        "MaxChangeWidth": ["64"],
+        "MaxValue": [
+            "18446744073709551615",
+            "18446744073709551614",
+        ],
+        "MaxChange": ["18446744073709551614"],
+    },
+    deps = [":br_credit_counter"],
+)
+
 verilog_library(
     name = "br_credit_sender",
     srcs = ["br_credit_sender.sv"],
