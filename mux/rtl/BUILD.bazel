@@ -48,6 +48,7 @@ verilog_library(
     deps = [
         "//macros:br_asserts_internal",
         "//macros:br_unused",
+        "//pkg:br_math_pkg",
     ],
 )
 
@@ -55,6 +56,7 @@ br_verilog_elab_and_lint_test_suite(
     name = "br_mux_bin_test_suite",
     params = {
         "NumSymbolsIn": [
+            "1",
             "2",
             "3",
             "4",

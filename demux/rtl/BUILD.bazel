@@ -22,6 +22,7 @@ verilog_library(
     srcs = ["br_demux_bin.sv"],
     deps = [
         "//macros:br_asserts_internal",
+        "//pkg:br_math_pkg",
     ],
 )
 
@@ -37,6 +38,7 @@ br_verilog_elab_and_lint_test_suite(
     name = "br_demux_bin_test_suite",
     params = {
         "NumSymbolsOut": [
+            "1",
             "2",
             "3",
             "4",

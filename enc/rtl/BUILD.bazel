@@ -32,6 +32,7 @@ verilog_library(
     deps = [
         "//macros:br_asserts_internal",
         "//macros:br_registers",
+        "//pkg:br_math_pkg",
     ],
 )
 
@@ -92,6 +93,7 @@ br_verilog_elab_and_lint_test_suite(
     name = "br_enc_onehot2bin_test_suite",
     params = {
         "NumValues": [
+            "1",
             "2",
             "3",
         ],
