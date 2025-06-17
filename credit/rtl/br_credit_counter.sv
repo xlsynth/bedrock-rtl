@@ -43,14 +43,22 @@
 `include "br_registers.svh"
 
 module br_credit_counter #(
+    // Width of the MaxValue parameter.
+    // You might need to override this if you need a counter that's larger than 32 bits.
+    parameter int MaxValueWidth = 32,
+    // Width of the MaxChange parameter.
+    // You might need to override this if you need a counter that's larger than 32 bits.
+    parameter int MaxChangeWidth = 32,
     // Maximum credit counter value (inclusive). Must be at least 1.
-    parameter int MaxValue = 1,
+    parameter logic [MaxValueWidth-1:0] MaxValue = 1,
     // Maximum increment/decrement amount (inclusive). Must be at least 1.
-    parameter int MaxChange = 1,
+    parameter logic [MaxChangeWidth-1:0] MaxChange = 1,
     // If 1, then assert there are no valid bits asserted at the end of the test.
     parameter bit EnableAssertFinalNotValid = 1,
-    localparam int ValueWidth = $clog2(MaxValue + 1),
-    localparam int ChangeWidth = $clog2(MaxChange + 1)
+    localparam int MaxValueP1Width = MaxValueWidth + 1,
+    localparam int MaxChangeP1Width = MaxChangeWidth + 1,
+    localparam int ValueWidth = $clog2(MaxValueP1Width'(MaxValue) + 1),
+    localparam int ChangeWidth = $clog2(MaxChangeP1Width'(MaxChange) + 1)
 ) (
     // Posedge-triggered clock.
     input  logic                   clk,
