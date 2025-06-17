@@ -63,7 +63,7 @@ def _derive_job_from_label(label: str, block: str, add_hierarchy: bool) -> Job:
     if ":" in label:
         name = label.split(":", 1)[1]
         path_part = label.split(":", 1)[0]
-    else:  # Fallback – last path component
+    else:  # Fallback - last path component
         name = Path(label).name
         path_part = label
 
@@ -203,6 +203,12 @@ def _resolve_output_path(output_str: str | None, *, default_dir_label: str) -> P
     help="Include folder hierarchy in each job entry in the YAML output.",
 )
 @click.option(
+    "--recursive/--non-recursive",
+    default=True,
+    show_default=True,
+    help="Include all targets or only top-level targets in the query.",
+)
+@click.option(
     "--dry-run",
     is_flag=True,
     help="Only list discovered targets and show the rendered YAML on stdout without writing the file.",
@@ -220,6 +226,7 @@ def cli(
     default_mem_mb: int,
     default_invocation_timeout_mins: int,
     add_hierarchy: bool,
+    recursive: bool,
     dry_run: bool,
 ) -> None:
     """Discover FPV sandbox targets and generate *regr.yaml*."""
@@ -230,8 +237,11 @@ def cli(
         click.echo("ERROR: --directory must start with '//' (Bazel label)", err=True)
         sys.exit(1)
 
-    query_expr = f'kind("{rule_kind} rule", {dir_label}/...)'
-    # click.echo(f"Running Bazel query: {query_expr}")
+    # Choose recursive or non-recursive Bazel query.
+    if recursive:
+        query_expr = f'kind("{rule_kind} rule", {dir_label}/...)'
+    else:
+        query_expr = f'kind("{rule_kind} rule", {dir_label}:all)'
 
     labels: list[str] = _run_bazel_query(query_expr)
     if not labels:
@@ -269,7 +279,7 @@ def cli(
     click.echo(f"Wrote {len(jobs)} jobs to {final_output_path}")
 
 
-def main() -> None:  # pragma: no cover – entry-point convenience
+def main() -> None:  # pragma: no cover - entry-point convenience
     cli()  # pylint: disable=no-value-for-parameter
 
 
