@@ -34,17 +34,62 @@ class Day(Enum):
     SUN = 7
 
 
-# Map block name regex patterns to days and attributes
-DAY_BLOCK_MAP = {
-    Day.MON: [r"^amba$", r"^arb$"],
-    Day.TUE: [r"^cdc$"],
-    Day.WED: [r"^ecc$", r"^counter$", r"^credit$", r"^delay$"],
-    Day.THU: [r"^flow_.*$"],
-    Day.FRI: [r"^fifo$"],
-    Day.SAT: [r"^ram$"],
-    # 'sun' is for unmatched
-}
+# Ordered mapping of (regex pattern → Day).
+# The order of patterns is significant: the first match wins.
+#
+# When adding new patterns, append them at the appropriate location to
+# express the desired priority.  In particular, put *more specific*
+# patterns before more generic ones that could otherwise match the same
+# block name.
+#
+# Examples illustrating the priority rules (requested by the user):
+#   • "br_fifo_ext_arb"           → Wednesday (Day.WED)
+#   • "br_fifo_shared_dynamic"   → Friday    (Day.FRI)
+#   • "br_fifo_shared_pstatic"   → Sunday    (Day.SUN)
+#   • "br_fifo"                  → Thursday  (Day.THU)
+#
+# Any block that does not match one of the patterns below is assigned to
+# Day.SUN by default.
+
+DAY_BLOCK_MAP = [
+    (r"^amba$", Day.MON),
+    (r"^arb$", Day.MON),
+    (r"^cdc$", Day.TUE),
+    (r"^ecc$", Day.WED),
+    (r"^counter$", Day.WED),
+    (r"^credit$", Day.WED),
+    (r"^delay$", Day.WED),
+    (r"^flow_.*$", Day.THU),
+    (r"^fifo$", Day.FRI),
+    (r"^fifo_.*$", Day.FRI),
+    (r"^ram$", Day.SAT),
+    # FIFO blocks:
+    (r"^br_fifo_shared_dynamic$", Day.FRI),
+    (r"^br_fifo_shared_pstatic$", Day.SUN),
+    (r"^br_fifo_ext_arb$", Day.WED),
+    (r"^br_fifo$", Day.THU),
+]
+
 DAYS = [Day.MON, Day.TUE, Day.WED, Day.THU, Day.FRI, Day.SAT, Day.SUN]
+
+# ----------------------------------------------------------------------------
+# Special (sub-project) FPV directories.
+#
+# List of tuples: (subdir, block_prefix, is_flow_flag)
+#   • subdir        - directory name under <git_root> containing an "fpv" subdir
+#   • block_prefix  - string prepended to each discovered block when forming
+#                     the logical block name (used for DAY_BLOCK_MAP matching)
+#   • is_flow_flag  - whether the discovered block should be treated as a
+#                     "flow" block for description purposes.
+#
+# Add more entries here in the future (e.g. "dma", "serdes", …) and the
+# discovery logic below will pick them up automatically without further
+# changes.
+
+SPECIAL_FPV_DIRS: list[tuple[str, str, bool]] = [
+    ("flow", "flow_", True),  # add prefix "flow_" to logical block name
+    ("fifo", "", False),  # keep original block name as-is
+]
 
 
 # --- Helper Functions ---
@@ -80,12 +125,15 @@ def get_bazel_bin_path():
         sys.exit(1)
 
 
-def match_day(block):
+def match_day(block: str) -> Day:
+    """Determine the day for a given *block* name by walking the ordered pattern list above.
+
+    The first regular-expression that fully matches the (case insensitive) block name determines the assigned day.
+    """
     block_lower = block.lower()
-    for day, patterns in DAY_BLOCK_MAP.items():
-        for pat in patterns:
-            if re.fullmatch(pat, block_lower):
-                return day
+    for pattern, day in DAY_BLOCK_MAP:
+        if re.fullmatch(pattern, block_lower):
+            return day
     return Day.SUN
 
 
@@ -123,40 +171,58 @@ def main():
     for d in day_dirs.values():
         ensure_dir(d)
 
-    # Collect all block info: {day: [(block, block_dir, is_flow)]}
+    # Collect all block info: {day: [(block, block_dir, is_flow, regr_yaml_path)]}
     day_blocks = defaultdict(list)
     block_yaml_paths = defaultdict(list)  # {day: [yaml_path, ...]}
 
-    # --- Pattern 1: <git root>/<block>/fpv ---
-    for root, dirs, files in os.walk(git_root):
-        # Only look for directories named 'fpv' at depth 2
-        rel_root = os.path.relpath(root, git_root)
-        parts = rel_root.split(os.sep)
-        if len(parts) == 2 and os.path.basename(root) == "fpv":
-            block = parts[0]
-            # Exclude flow/fpv
-            if not rel_root.startswith("flow/fpv"):
-                day = match_day(block)
-                day_blocks[day].append(
-                    (block, f"//{block}/fpv", False, os.path.join(root, "regr.yaml"))
-                )
+    # Track total jobs written across all blocks
+    total_jobs_written = 0
 
-    # --- Pattern 2: <git root>/flow/fpv/<block> ---
-    flow_fpv_dir = os.path.join(git_root, "flow", "fpv")
-    if os.path.isdir(flow_fpv_dir):
-        for block in os.listdir(flow_fpv_dir):
-            block_dir = os.path.join(flow_fpv_dir, block)
-            if os.path.isdir(block_dir):
-                # For flow_* blocks, match_day will assign them to Thursday (THU)
-                day = match_day(f"flow_{block}")
-                day_blocks[day].append(
-                    (
-                        f"flow_{block}",
-                        f"//flow/fpv/{block}",
-                        True,
-                        os.path.join(block_dir, "regr.yaml"),
-                    )
-                )
+    # ----------------------------------------------------------------------------
+    # Discover blocks
+    # ----------------------------------------------------------------------------
+
+    def discover_top_level_blocks():  # <block>/fpv
+        """Yield tuples for ordinary blocks residing at <git_root>/<block>/fpv."""
+        for root, _dirs, _files in os.walk(git_root):
+            rel_root = os.path.relpath(root, git_root)
+            parts = rel_root.split(os.sep)
+            if len(parts) != 2 or os.path.basename(root) != "fpv":
+                continue
+
+            # Skip directories handled by specialised collectors to avoid duplicates.
+            special_roots = tuple(f"{name}/fpv" for name, _, _ in SPECIAL_FPV_DIRS)
+            if rel_root.startswith(special_roots):
+                continue
+
+            block = parts[0]
+            yield block, f"//{block}/fpv", False, os.path.join(root, "regr.yaml")
+
+    def discover_special_blocks(special: str, prefix: str, is_flow: bool):
+        """Yield tuples for blocks under <git_root>/<special>/fpv/<block>."""
+        special_dir = os.path.join(git_root, special, "fpv")
+        if not os.path.isdir(special_dir):
+            return
+        for block in os.listdir(special_dir):
+            block_dir = os.path.join(special_dir, block)
+            if not os.path.isdir(block_dir):
+                continue
+            block_name = f"{prefix}{block}"
+            dir_label = f"//{special}/fpv/{block}"
+            yield block_name, dir_label, is_flow, os.path.join(block_dir, "regr.yaml")
+
+    # Aggregate discoveries
+    for blk, dir_lbl, is_flow, regr_yaml in discover_top_level_blocks():
+        day = match_day(blk)
+        day_blocks[day].append((blk, dir_lbl, is_flow, regr_yaml))
+
+    # Handle all specialised FPV directories declared in SPECIAL_FPV_DIRS.
+    for special, prefix, is_flow_flag in SPECIAL_FPV_DIRS:
+        for blk, dir_lbl, is_flow, regr_yaml in discover_special_blocks(
+            special, prefix, is_flow_flag
+        ):
+            day = match_day(blk)
+            day_blocks[day].append((blk, dir_lbl, is_flow, regr_yaml))
 
     # --- Generate per-block yamls in per-day directories ---
     for day, blocks in day_blocks.items():
@@ -180,15 +246,43 @@ def main():
                 "--output",
                 out_yaml,
             ]
-            # Run regression_gen
+
+            # For any block discovered from a special FPV directory, we want a
+            # non-recursive Bazel query because each BUILD file already
+            # enumerates the targets within that package.
+            if any(
+                block_dir.startswith(f"//{name}/fpv/")
+                for name, _, _ in SPECIAL_FPV_DIRS
+            ):
+                args.append("--non-recursive")
+
+            # Run regression_gen and capture its output so we can parse the job
+            # count written.  We still echo the output to the console for
+            # transparency.
             try:
-                subprocess.check_call(args)
-            except Exception as e:
+                completed = subprocess.run(
+                    args,
+                    check=True,
+                    text=True,
+                    stdout=subprocess.PIPE,
+                    stderr=subprocess.STDOUT,
+                )
+            except subprocess.CalledProcessError as e:
+                # Forward captured output before exiting.
+                print(e.stdout or "", end="", file=sys.stderr)
                 print(
                     f"Warning: regression_gen failed for block {block}: {e}",
                     file=sys.stderr,
                 )
                 continue
+
+            # Echo regression_gen output
+            print(completed.stdout, end="")
+
+            # Parse "Wrote N jobs" line
+            m = re.search(r"Wrote\s+(\d+)\s+jobs", completed.stdout)
+            if m:
+                total_jobs_written += int(m.group(1))
 
             # If the block's regr.yaml exists, add it to the list for import
             if os.path.exists(regr_yaml_path):
@@ -219,6 +313,36 @@ def main():
     print(
         f"Generated per-day yamls in {generated_dir} and per-block yamls in {generated_dir}/<day>/."
     )
+
+    # ---------------------------------------------------------------------
+    # Sanity-check: ensure total jobs == overall workspace jobs of the rule
+    # kind we care about.
+    # ---------------------------------------------------------------------
+
+    try:
+        workspace_labels = subprocess.check_output(
+            [
+                "bazel",
+                "query",
+                "--output=label",
+                'kind("rule_verilog_fpv_sandbox rule", //...)',
+            ],
+            encoding="utf-8",
+        )
+        total_jobs_workspace = len(
+            [l for l in workspace_labels.splitlines() if l.strip()]
+        )
+    except Exception:
+        total_jobs_workspace = None
+
+    if total_jobs_workspace is not None and total_jobs_written != total_jobs_workspace:
+        print(
+            f"Warning: job count mismatch - generated {total_jobs_written} jobs, "
+            f"but Bazel query found {total_jobs_workspace}.",
+            file=sys.stderr,
+        )
+    else:
+        print(f"Verified total job count: {total_jobs_written} jobs.")
 
 
 if __name__ == "__main__":

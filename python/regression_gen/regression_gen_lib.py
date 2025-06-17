@@ -67,7 +67,7 @@ _ENV = Environment(
     trim_blocks=True,
     lstrip_blocks=True,
 )
-# Cache the template – re-loading from disk every call is not necessary.
+# Cache the template - re-loading from disk every call is not necessary.
 _TEMPLATE_CACHE: dict[str, Template] = {}
 
 
@@ -158,7 +158,7 @@ def render_yaml(
     if not job_dicts:
         raise ValueError("Job list must contain at least one element.")
 
-    # Unique blocks – preserve deterministic ordering for reproducibility.
+    # Unique blocks - preserve deterministic ordering for reproducibility.
     blocks = sorted({job["block"] for job in job_dicts})
 
     context = {
