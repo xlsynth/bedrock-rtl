@@ -26,5 +26,8 @@ assume -name initial_value_during_reset {rst |-> initial_value <= MaxValue}
 # TODO: disable covers to make nightly clean
 cover -disable *
 
+# limit run time to 30-mins
+set_prove_time_limit 1800s
+
 # prove command
 prove -all
