@@ -84,9 +84,6 @@ module br_flow_checks_valid_data_intg #(
           // Assert that if valid is 1, then data must be known (not X).
           // This is not strictly a required integration check, because most modules
           // should still function correctly even if data is unknown (X).
-          // However, under the ready-valid protocol convention where data is stable while
-          // backpressured, unknown values are by definition not stable and therefore violate the
-          // protocol requirement.
           `BR_ASSERT_INTG(data_known_a, valid[i] |-> !$isunknown(data[i]))
         end
       end else begin : gen_no_valid_stability_checks
