@@ -93,6 +93,9 @@ module br_flow_checks_valid_data_intg #(
         // Cover that valid can be unstable when backpressured.
         `BR_COVER_INTG(valid_unstable_c, (!ready[i] && valid[i]) ##1 !valid[i])
       end
+    end else begin : gen_no_backpressure_checks
+      // Assert that backpressure never occurs.
+      `BR_ASSERT_INTG(no_backpressure_a, valid[i] |-> ready[i])
     end
   end
 `endif  // BR_DISABLE_INTG_CHECKS
