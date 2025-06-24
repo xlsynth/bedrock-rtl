@@ -42,6 +42,10 @@ module br_flow_checks_valid_data_intg #(
     // Can only be enabled if EnableAssertValidStability is also enabled.
     // ri lint_check_waive PARAM_NOT_USED
     parameter bit EnableAssertDataStability = EnableAssertValidStability,
+    // If 1, assert that data is known (not X) whenever valid is asserted.
+    // This is independent of stability checks; set to 0 to disable.
+    // ri lint_check_waive PARAM_NOT_USED
+    parameter bit EnableAssertDataKnown = 1,
     // If 1, then assert there are no valid bits asserted at the end of the test.
     parameter bit EnableAssertFinalNotValid = 1
 ) (
@@ -81,10 +85,6 @@ module br_flow_checks_valid_data_intg #(
           // is stable when backpressured.
           `BR_ASSERT_INTG(valid_stable_when_backpressured_a, !ready[i] && valid[i] |=> valid[i])
           `BR_COVER_INTG(data_unstable_c, (!ready[i] && valid[i]) ##1 !$stable(data[i]))
-          // Assert that if valid is 1, then data must be known (not X).
-          // This is not strictly a required integration check, because most modules
-          // should still function correctly even if data is unknown (X).
-          `BR_ASSERT_INTG(data_known_a, valid[i] |-> !$isunknown(data[i]))
         end
       end else begin : gen_no_valid_stability_checks
         // Cover that valid can be unstable when backpressured.
@@ -93,6 +93,10 @@ module br_flow_checks_valid_data_intg #(
     end else begin : gen_no_backpressure_checks
       // Assert that backpressure never occurs.
       `BR_ASSERT_INTG(no_backpressure_a, valid[i] |-> ready[i])
+    end
+    // Always assert that if valid is asserted, data is known (not X), if enabled.
+    if (EnableAssertDataKnown) begin : gen_data_known_checks
+      `BR_ASSERT_INTG(data_known_a, valid[i] |-> !$isunknown(data[i]))
     end
   end
 `endif  // BR_DISABLE_INTG_CHECKS
