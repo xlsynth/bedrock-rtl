@@ -190,6 +190,8 @@ module br_fifo_flops #(
       .AddressDepthStages(FlopRamAddressDepthStages),
       .ReadDataDepthStages(FlopRamReadDataDepthStages),
       .ReadDataWidthStages(FlopRamReadDataWidthStages),
+      // Skip this check as wr_clk/rd_clk are the same
+      .EnableSameClockCheck(0),
       // FIFO will never read and write same address on the same cycle
       .TileEnableBypass(0),
       // Flops don't need to be reset, since uninitialized cells will never be read

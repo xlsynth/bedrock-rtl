@@ -206,6 +206,8 @@ module br_fifo_shared_dynamic_flops_push_credit #(
       .NumReadPorts(NumReadPorts),
       .DepthTiles(PointerRamDepthTiles),
       .WidthTiles(PointerRamWidthTiles),
+      // Skip this check as wr_clk/rd_clk are the same
+      .EnableSameClockCheck(0),
       .AddressDepthStages(PointerRamAddressDepthStages),
       .ReadDataDepthStages(PointerRamReadDataDepthStages),
       .ReadDataWidthStages(PointerRamReadDataWidthStages)

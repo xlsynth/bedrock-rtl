@@ -151,6 +151,8 @@ module br_fifo_shared_pstatic_flops_push_credit #(
       .Depth(Depth),
       .DepthTiles(RamDepthTiles),
       .WidthTiles(RamWidthTiles),
+      // Skip this check as wr_clk/rd_clk are the same
+      .EnableSameClockCheck(0),
       .AddressDepthStages(RamAddressDepthStages),
       .ReadDataDepthStages(RamReadDataDepthStages),
       .ReadDataWidthStages(RamReadDataWidthStages)

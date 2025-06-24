@@ -66,6 +66,8 @@ module br_ram_flops #(
     parameter bit UseStructuredGates = 0,
     // If 1, then assert there are no valid bits asserted at the end of the test.
     parameter bit EnableAssertFinalNotValid = 1,
+    // If 1, then the write and read clocks are the same.
+    parameter bit EnableSameClockCheck = 1,
     localparam int AddressWidth = br_math::clamped_clog2(Depth),
     localparam int NumWords = Width / WordWidth,
     // Write latency in units of wr_clk cycles
@@ -279,6 +281,7 @@ module br_ram_flops #(
           .EnableBypass(TileEnableBypass),
           .EnableReset(EnableMemReset),
           .UseStructuredGates(UseStructuredGates),
+          .EnableSameClockCheck(EnableSameClockCheck),
           .EnableAssertFinalNotValid(EnableAssertFinalNotValid)
       ) br_ram_flops_tile (
           .wr_clk,

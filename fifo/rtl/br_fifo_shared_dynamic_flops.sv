@@ -164,6 +164,8 @@ module br_fifo_shared_dynamic_flops #(
       .NumReadPorts(NumReadPorts),
       .DepthTiles(DataRamDepthTiles),
       .WidthTiles(DataRamWidthTiles),
+      // Skip this check as wr_clk/rd_clk are the same
+      .EnableSameClockCheck(0),
       .AddressDepthStages(DataRamAddressDepthStages),
       .ReadDataDepthStages(DataRamReadDataDepthStages),
       .ReadDataWidthStages(DataRamReadDataWidthStages)

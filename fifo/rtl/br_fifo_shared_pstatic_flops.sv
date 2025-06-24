@@ -148,6 +148,8 @@ module br_fifo_shared_pstatic_flops #(
       .NumReadPorts(1),
       .DepthTiles(RamDepthTiles),
       .WidthTiles(RamWidthTiles),
+      // Skip this check as wr_clk/rd_clk are the same
+      .EnableSameClockCheck(0),
       .AddressDepthStages(RamAddressDepthStages),
       .ReadDataDepthStages(RamReadDataDepthStages),
       .ReadDataWidthStages(RamReadDataWidthStages)
