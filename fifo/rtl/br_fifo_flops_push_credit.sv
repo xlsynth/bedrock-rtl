@@ -206,6 +206,8 @@ module br_fifo_flops_push_credit #(
       .TileEnableBypass(0),
       // Flops don't need to be reset, since uninitialized cells will never be read
       .EnableMemReset(0),
+      // Skip this check as wr_clk/rd_clk are the same
+      .EnableSameClockCheck(0),
       .EnableAssertFinalNotValid(EnableAssertFinalNotValid)
   ) br_ram_flops (
       .wr_clk(clk),  // ri lint_check_waive SAME_CLOCK_NAME
