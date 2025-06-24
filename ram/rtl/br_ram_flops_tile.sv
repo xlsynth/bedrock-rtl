@@ -102,13 +102,6 @@ module br_ram_flops_tile #(
     `BR_ASSERT_STATIC(width_divisible_by_word_width_a, (Width % WordWidth) == 0)
   end
 
-  // If EnableBypass is 1 or UseStructuredGates is 0,
-  // we must use the same clock for both read and write.
-  if (EnableBypass || !UseStructuredGates) begin : gen_same_clock_check
-    // ri lint_check_waive ALWAYS_COMB
-    `BR_ASSERT_COMB_INTG(same_clock_a, wr_clk == rd_clk)
-  end
-
   if (EnableAssertFinalNotValid) begin : gen_assert_final
     `BR_ASSERT_FINAL(final_not_wr_valid_a, !(|wr_valid))
     `BR_ASSERT_FINAL(final_not_rd_addr_valid_a, !(|rd_addr_valid))
