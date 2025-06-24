@@ -58,11 +58,45 @@ module br_cdc_bit_toggle #(
     assign src_bit_internal = src_bit;
   end
 
+`ifdef SIMULATION
+  // The mux bit to select between src_bit_internal_maxdel and src_bit_delayed
+  logic src_bit_delay_sel;
+  initial begin
+    #0;  // Wait for time 0 TB threads to complete
+    case (br_cdc_pkg::cdc_delay_mode)
+      br_cdc_pkg::CdcDelayNone:     src_bit_delay_sel = 1'b0;
+      br_cdc_pkg::CdcDelayAlways:   src_bit_delay_sel = 1'b1;
+      br_cdc_pkg::CdcDelayRandOnce: src_bit_delay_sel = $urandom_range(0, 1);
+      br_cdc_pkg::CdcDelayRandAlways: begin
+        src_bit_delay_sel = $urandom_range(0, 1);
+        forever begin
+          @(src_bit_internal);
+          src_bit_delay_sel = $urandom_range(0, 1);
+        end
+      end
+      default: begin
+        $error("Invalid cdc_delay_mode %d", cdc_delay_mode);
+        $finish;
+      end
+    endcase
+  end
+
+  logic src_bit_internal_delayed;
+  logic src_bit_internal_final;
+
+  // Delay the source bit one dst clock
+  `BR_REGNX(src_bit_internal_delayed, src_bit_internal, dst_clk)
+
+  assign src_bit_internal_final = src_bit_delay_sel ? src_bit_internal_delayed : src_bit_internal;
+
+  // ri lint_check_off ONE_CONN_PER_LINE
+  `BR_GATE_CDC_MAXDEL(src_bit_internal_maxdel, src_bit_internal_final)
+  // ri lint_check_on ONE_CONN_PER_LINE
+`else
   // ri lint_check_off ONE_CONN_PER_LINE
   `BR_GATE_CDC_MAXDEL(src_bit_internal_maxdel, src_bit_internal)
   // ri lint_check_on ONE_CONN_PER_LINE
-
-  // TODO: Add simulation delay modeling
+`endif
 
   br_gate_cdc_sync #(
       .NumStages(NumStages)
