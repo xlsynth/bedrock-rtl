@@ -96,8 +96,8 @@ br_verilog_fpv_test_tools_suite(
     elab_opts = [
         "-parameter DataRamReadDataDepthStages 0",
         "-parameter DataRamReadDataWidthStages 1",
-        "-parameter PointerRamReadDataDepthStages 0",
-        "-parameter PointerRamReadDataWidthStages 1",
+        "-parameter PointerRamReadDataDepthStages 1",
+        "-parameter PointerRamReadDataWidthStages 0",
     ],
     params = {
         "DataRamAddressDepthStages": [
@@ -240,8 +240,8 @@ br_verilog_fpv_test_tools_suite(
 br_verilog_fpv_test_tools_suite(
     name = "br_fifo_shared_dynamic_flops_push_credit_test_delay",
     elab_opts = [
-        "-parameter DataRamReadDataDepthStages 0",
-        "-parameter DataRamReadDataWidthStages 1",
+        "-parameter DataRamReadDataDepthStages 1",
+        "-parameter DataRamReadDataWidthStages 0",
         "-parameter PointerRamReadDataDepthStages 0",
         "-parameter PointerRamReadDataWidthStages 1",
     ],
