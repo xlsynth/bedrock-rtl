@@ -93,28 +93,18 @@ br_verilog_fpv_test_tools_suite(
 # Test focuses on testing delays
 br_verilog_fpv_test_tools_suite(
     name = "br_fifo_shared_dynamic_flops_test_delay",
+    elab_opts = [
+        "-parameter DataRamReadDataDepthStages 0",
+        "-parameter DataRamReadDataWidthStages 1",
+        "-parameter PointerRamReadDataDepthStages 1",
+        "-parameter PointerRamReadDataWidthStages 0",
+    ],
     params = {
         "DataRamAddressDepthStages": [
             "0",
-            "1",
-        ],
-        "DataRamReadDataDepthStages": [
-            "0",
             "2",
-        ],
-        "DataRamReadDataWidthStages": [
-            "0",
-            "1",
         ],
         "PointerRamAddressDepthStages": [
-            "0",
-            "2",
-        ],
-        "PointerRamReadDataDepthStages": [
-            "0",
-            "1",
-        ],
-        "PointerRamReadDataWidthStages": [
             "0",
             "2",
         ],
@@ -249,28 +239,18 @@ br_verilog_fpv_test_tools_suite(
 # Test focuses on testing delays
 br_verilog_fpv_test_tools_suite(
     name = "br_fifo_shared_dynamic_flops_push_credit_test_delay",
+    elab_opts = [
+        "-parameter DataRamReadDataDepthStages 1",
+        "-parameter DataRamReadDataWidthStages 0",
+        "-parameter PointerRamReadDataDepthStages 0",
+        "-parameter PointerRamReadDataWidthStages 1",
+    ],
     params = {
         "DataRamAddressDepthStages": [
             "0",
-            "1",
-        ],
-        "DataRamReadDataDepthStages": [
-            "0",
             "2",
-        ],
-        "DataRamReadDataWidthStages": [
-            "0",
-            "1",
         ],
         "PointerRamAddressDepthStages": [
-            "0",
-            "2",
-        ],
-        "PointerRamReadDataDepthStages": [
-            "0",
-            "1",
-        ],
-        "PointerRamReadDataWidthStages": [
             "0",
             "2",
         ],
