@@ -47,8 +47,8 @@ module br_ecc_sed_decoder #(
     // Message width is the same as the data width (no internal padding)
     localparam int ParityWidth = 1,
     localparam int CodewordWidth = DataWidth + ParityWidth,
-    // ri lint_check_waive PARAM_NOT_USED
-    localparam int Latency = RegisterInputs + RegisterOutputs
+    // ri lint_check_waive PARAM_NOT_USED TYPE_CAST_BITLEN
+    localparam int Latency = int'(RegisterInputs) + int'(RegisterOutputs)
 ) (
     // Positive edge-triggered clock.
     input logic clk,
