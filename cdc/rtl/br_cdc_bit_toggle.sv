@@ -68,11 +68,7 @@ module br_cdc_bit_toggle #(
       br_cdc_pkg::CdcDelayAlways:   src_bit_delay_sel = 1'b1;
       br_cdc_pkg::CdcDelayRandOnce: src_bit_delay_sel = $urandom_range(0, 1);
       br_cdc_pkg::CdcDelayRandAlways: begin
-        src_bit_delay_sel = $urandom_range(0, 1);
-        forever begin
-          @(src_bit_internal);
-          src_bit_delay_sel = $urandom_range(0, 1);
-        end
+        // TODO(tao): Implement random delay mode
       end
       default: begin
         $error("Invalid cdc_delay_mode %d", cdc_delay_mode);
