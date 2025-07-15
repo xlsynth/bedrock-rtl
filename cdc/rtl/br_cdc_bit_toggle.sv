@@ -98,10 +98,11 @@ module br_cdc_bit_toggle #(
         forever begin
           @(posedge dst_clk);
           if (src_bit_delay_sel != src_bit_internal_delayed) begin
-            if (do_randomize) begin
+            // For back to back source signal toggle, the signal could be dropped if the 1st
+            // toggle chose the delayed version and the 2nd toggle chose the non-delayed version,
+            // Avoid this situation here
+            if (do_randomize || !src_bit_delay_sel) begin
               src_bit_delay_sel = $urandom_range(0, 1);
-              // Avoid back to back toggling delay_sel for back to back signal changes
-              // This may cause drop source signals in this delay model
               do_randomize = 0;
             end
           end else begin
