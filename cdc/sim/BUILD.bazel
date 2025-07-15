@@ -40,43 +40,53 @@ verilog_elab_test(
     ],
 )
 
-br_verilog_sim_test_tools_suite(
-    name = "br_cdc_fifo_flops_sim_test_tools_suite",
-    params = {
-        "Depth": [
-            # Minimum depth needed for full bandwidth at the maximum cut-through and backpressure latencies
-            "15",
+[
+    br_verilog_sim_test_tools_suite(
+        name = "br_cdc_fifo_flops_sim_test_tools_suite" + cdc_delay_mode,
+        opts = [
+            "+cdc_delay_mode=" + cdc_delay_mode,
+            "+define+SIMULATION",
         ],
-        "Width": ["8"],
-        "RegisterPopOutputs": [
-            "0",
-            "1",
+        params = {
+            "Depth": [
+                # Minimum depth needed for full bandwidth at the maximum cut-through and backpressure latencies
+                "15",
+            ],
+            "Width": ["8"],
+            "RegisterPopOutputs": [
+                "0",
+                "1",
+            ],
+            "FlopRamAddressDepthStages": [
+                "0",
+                "1",
+            ],
+            "FlopRamReadDataDepthStages": [
+                "0",
+                "1",
+            ],
+            "NumSyncStages": [
+                "2",
+                "3",
+            ],
+        },
+        tags = ["no-sandbox"],
+        tools = [
+            "vcs",
         ],
-        "FlopRamAddressDepthStages": [
-            "0",
-            "1",
+        top = "br_cdc_fifo_flops_tb",
+        deps = [
+            ":br_cdc_fifo_flops_tb",
+            "//gate/rtl:br_gate_mock",
+            "//mux/rtl:br_mux_bin_structured_gates_mock",
         ],
-        "FlopRamReadDataDepthStages": [
-            "0",
-            "1",
-        ],
-        "NumSyncStages": [
-            "2",
-            "3",
-        ],
-    },
-    tools = [
-        "dsim",
-        "iverilog",
-        "vcs",
-    ],
-    top = "br_cdc_fifo_flops_tb",
-    deps = [
-        ":br_cdc_fifo_flops_tb",
-        "//gate/rtl:br_gate_mock",
-        "//mux/rtl:br_mux_bin_structured_gates_mock",
-    ],
-)
+    )
+    for cdc_delay_mode in [
+        "0",
+        "1",
+        "2",
+    ]
+]
 
 verilog_library(
     name = "br_cdc_fifo_flops_push_credit_tb",
@@ -157,30 +167,40 @@ verilog_elab_test(
     ],
 )
 
-br_verilog_sim_test_tools_suite(
-    name = "br_cdc_bit_pulse_sim_test_tools_suite",
-    params = {
-        "NumStages": [
-            "2",
-            "3",
+[
+    br_verilog_sim_test_tools_suite(
+        name = "br_cdc_bit_pulse_sim_test_tools_suite_" + cdc_delay_mode,
+        opts = [
+            "+cdc_delay_mode=" + cdc_delay_mode,
+            "+define+SIMULATION",
         ],
-        "RegisterOutput": [
-            "0",
-            "1",
+        params = {
+            "NumStages": [
+                "2",
+                "3",
+            ],
+            "RegisterOutput": [
+                "0",
+                "1",
+            ],
+            "SrcClkPeriod": [
+                "5",
+                "20",
+            ],
+            "DstClkPeriod": [
+                "10",
+                "30",
+            ],
+        },
+        tags = ["no-sandbox"],
+        tools = [
+            "vcs",
         ],
-        "SrcClkPeriod": [
-            "5",
-            "20",
-        ],
-        "DstClkPeriod": [
-            "10",
-            "30",
-        ],
-    },
-    tools = [
-        "dsim",
-        "iverilog",
-        "vcs",
-    ],
-    deps = [":br_cdc_bit_pulse_tb"],
-)
+        deps = [":br_cdc_bit_pulse_tb"],
+    )
+    for cdc_delay_mode in [
+        "0",
+        "1",
+        "2",
+    ]
+]

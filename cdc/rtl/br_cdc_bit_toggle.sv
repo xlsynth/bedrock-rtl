@@ -62,6 +62,15 @@ module br_cdc_bit_toggle #(
   // The mux bit to select between src_bit_internal_maxdel and src_bit_delayed
   logic src_bit_delay_sel;
   initial begin
+    string hier;
+    int new_seed;
+    $sformat(hier, "%m");
+    new_seed = $urandom;
+    foreach (hier[i]) begin
+      new_seed += (hier[i] << (i % 4));
+    end
+    // Manually re-seed to avoid all instantiations having the same random behavior.
+    process::self().srandom(new_seed);
     #0;  // Wait for time 0 TB threads to complete
     case (br_cdc_pkg::cdc_delay_mode)
       br_cdc_pkg::CdcDelayNone:     src_bit_delay_sel = 1'b0;
@@ -71,7 +80,7 @@ module br_cdc_bit_toggle #(
         // TODO(tao): Implement random delay mode
       end
       default: begin
-        $error("Invalid cdc_delay_mode %d", cdc_delay_mode);
+        $error("Invalid cdc_delay_mode %d", br_cdc_pkg::cdc_delay_mode);
         $finish;
       end
     endcase
