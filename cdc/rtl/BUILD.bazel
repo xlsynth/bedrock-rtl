@@ -18,6 +18,11 @@ load("//bazel:br_verilog.bzl", "br_verilog_elab_and_lint_test_suite")
 package(default_visibility = ["//visibility:public"])
 
 verilog_library(
+    name = "br_cdc_pkg",
+    srcs = ["br_cdc_pkg.sv"],
+)
+
+verilog_library(
     name = "br_cdc_bit_toggle",
     srcs = ["br_cdc_bit_toggle.sv"],
     deps = [
@@ -27,6 +32,7 @@ verilog_library(
         "//macros:br_asserts_internal",
         "//macros:br_gates",
         "//macros:br_registers",
+        ":br_cdc_pkg",
     ],
 )
 
