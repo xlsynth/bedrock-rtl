@@ -61,31 +61,6 @@ module br_cdc_bit_toggle #(
 `ifdef SIMULATION
   // The mux bit to select between src_bit_internal_maxdel and src_bit_delayed
   logic src_bit_delay_sel;
-  initial begin
-    string hier;
-    int new_seed;
-    $sformat(hier, "%m");
-    new_seed = $urandom;
-    foreach (hier[i]) begin
-      new_seed += (hier[i] << (i % 4));
-    end
-    // Manually re-seed to avoid all instantiations having the same random behavior.
-    process::self().srandom(new_seed);
-    #0;  // Wait for time 0 TB threads to complete
-    case (br_cdc_pkg::cdc_delay_mode)
-      br_cdc_pkg::CdcDelayNone:     src_bit_delay_sel = 1'b0;
-      br_cdc_pkg::CdcDelayAlways:   src_bit_delay_sel = 1'b1;
-      br_cdc_pkg::CdcDelayRandOnce: src_bit_delay_sel = $urandom_range(0, 1);
-      br_cdc_pkg::CdcDelayRandAlways: begin
-        // TODO(tao): Implement random delay mode
-      end
-      default: begin
-        $error("Invalid cdc_delay_mode %d", br_cdc_pkg::cdc_delay_mode);
-        $finish;
-      end
-    endcase
-  end
-
   logic src_bit_internal_delayed;
   logic src_bit_internal_final;
 
@@ -97,6 +72,50 @@ module br_cdc_bit_toggle #(
   // ri lint_check_off ONE_CONN_PER_LINE
   `BR_GATE_CDC_MAXDEL(src_bit_internal_maxdel, src_bit_internal_final)
   // ri lint_check_on ONE_CONN_PER_LINE
+
+  initial begin
+    string hier;
+    int new_seed;
+    #0;  // Wait for time 0 TB threads to complete
+    if (br_cdc_pkg::cdc_delay_mode inside {br_cdc_pkg::CdcDelayRandOnce,
+                                           br_cdc_pkg::CdcDelayRandAlways}) begin
+      // Use the hierarchical name to generate a unique seed for each instantiation
+      // This is to avoid all instantiations having the same random behavior.
+      $sformat(hier, "%m");
+      new_seed = $urandom;
+      foreach (hier[i]) begin
+        new_seed += (hier[i] << (i % 4));
+      end
+      process::self().srandom(new_seed);
+    end
+    case (br_cdc_pkg::cdc_delay_mode)
+      br_cdc_pkg::CdcDelayNone:     src_bit_delay_sel = 1'b0;
+      br_cdc_pkg::CdcDelayAlways:   src_bit_delay_sel = 1'b1;
+      br_cdc_pkg::CdcDelayRandOnce: src_bit_delay_sel = $urandom_range(0, 1);
+      br_cdc_pkg::CdcDelayRandAlways: begin
+        bit do_randomize;
+        src_bit_delay_sel = $urandom_range(0, 1);
+        forever begin
+          @(posedge dst_clk);
+          if (src_bit_delay_sel != src_bit_internal_delayed) begin
+            if (do_randomize) begin
+              src_bit_delay_sel = $urandom_range(0, 1);
+              // Avoid back to back toggling delay_sel for back to back signal changes
+              // This may cause drop source signals in this delay model
+              do_randomize = 0;
+            end
+          end else begin
+            do_randomize = 1;
+          end
+        end
+      end
+      default: begin
+        $error("Invalid cdc_delay_mode %d", br_cdc_pkg::cdc_delay_mode);
+        $finish;
+      end
+    endcase
+  end
+
 `else
   // ri lint_check_off ONE_CONN_PER_LINE
   `BR_GATE_CDC_MAXDEL(src_bit_internal_maxdel, src_bit_internal)
