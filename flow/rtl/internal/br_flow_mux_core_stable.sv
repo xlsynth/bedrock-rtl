@@ -42,6 +42,8 @@ module br_flow_mux_core_stable #(
     // If 1, assert that push_data is stable when backpressured.
     // If 0, cover that push_data can be unstable.
     parameter bit EnableAssertPushDataStability = 1,
+    // If 1, assert that push_data is always known (not X) when push_valid is asserted.
+    parameter bit EnableAssertPushDataKnown = 1,
     // If 1, then assert there are no valid bits asserted at the end of the test.
     parameter bit EnableAssertFinalNotValid = 1
 ) (
@@ -83,6 +85,7 @@ module br_flow_mux_core_stable #(
       .EnableCoverPushBackpressure(EnableCoverPushBackpressure),
       .EnableAssertPushValidStability(EnableAssertPushValidStability),
       .EnableAssertPushDataStability(EnableAssertPushDataStability),
+      .EnableAssertPushDataKnown(EnableAssertPushDataKnown),
       .EnableAssertFinalNotValid(EnableAssertFinalNotValid)
   ) br_flow_mux_core (
       .clk,
@@ -106,6 +109,7 @@ module br_flow_mux_core_stable #(
         .EnableAssertPushValidStability(EnableAssertPushValidStability),
         // internal_pop_data cannot be stable
         .EnableAssertPushDataStability(0),
+        .EnableAssertPushDataKnown(EnableAssertPushDataKnown),
         .EnableAssertFinalNotValid(EnableAssertFinalNotValid)
     ) br_flow_reg_both (
         .clk,
@@ -124,6 +128,7 @@ module br_flow_mux_core_stable #(
         .EnableAssertPushValidStability(EnableAssertPushValidStability),
         // internal_pop_data cannot be stable
         .EnableAssertPushDataStability(0),
+        .EnableAssertPushDataKnown(EnableAssertPushDataKnown),
         .EnableAssertFinalNotValid(EnableAssertFinalNotValid)
     ) br_flow_reg_fwd (
         .clk,

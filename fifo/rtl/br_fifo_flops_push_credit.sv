@@ -74,6 +74,8 @@ module br_fifo_flops_push_credit #(
     // Number of pipeline register stages inserted along the read data path in the width dimension.
     // Must be at least 0.
     parameter int FlopRamReadDataWidthStages = 0,
+    // If 1, assert that push_data is always known (not X) when push_valid is asserted.
+    parameter bit EnableAssertPushDataKnown = 1,
     // If 1, then assert there are no valid bits asserted and that the FIFO is
     // empty at the end of the test.
     parameter bit EnableAssertFinalNotValid = 1,
@@ -155,6 +157,7 @@ module br_fifo_flops_push_credit #(
       .RegisterPopOutputs(RegisterPopOutputs),
       .RamReadLatency(RamReadLatency),
       .RamDepth(RamDepth),
+      .EnableAssertPushDataKnown(EnableAssertPushDataKnown),
       .EnableAssertFinalNotValid(EnableAssertFinalNotValid)
   ) br_fifo_ctrl_1r1w_push_credit (
       .clk,
