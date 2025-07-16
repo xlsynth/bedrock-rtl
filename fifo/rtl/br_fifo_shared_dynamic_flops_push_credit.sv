@@ -113,6 +113,8 @@ module br_fifo_shared_dynamic_flops_push_credit #(
     parameter int PointerRamReadDataDepthStages = 0,
     // Number of stages in the width dimension on the pointer flop RAM.
     parameter int PointerRamReadDataWidthStages = 0,
+    // If 1, assert that push_data is always known (not X) when push_valid is asserted.
+    parameter bit EnableAssertPushDataKnown = 1,
     // If 1, then assert there are no valid bits asserted and that the FIFO is
     // empty at the end of the test.
     // ri lint_check_waive PARAM_NOT_USED
@@ -243,6 +245,7 @@ module br_fifo_shared_dynamic_flops_push_credit #(
       .DataRamReadLatency(DataRamReadLatency),
       .PointerRamReadLatency(PointerRamReadLatency),
       .RegisterPushOutputs(RegisterPushOutputs),
+      .EnableAssertPushDataKnown(EnableAssertPushDataKnown),
       .EnableAssertFinalNotValid(EnableAssertFinalNotValid)
   ) br_fifo_shared_dynamic_ctrl (
       .clk,

@@ -25,6 +25,8 @@ module br_fifo_push_ctrl_credit #(
     parameter int MaxCredit = Depth,
     parameter bit RegisterPushOutputs = 0,
     parameter int RamDepth = Depth,
+    // If 1, assert that push_data is always known (not X) when push_valid is asserted.
+    parameter bit EnableAssertPushDataKnown = 1,
     // If 1, then assert there are no valid bits asserted and that the FIFO is
     // empty at the end of the test.
     parameter bit EnableAssertFinalNotValid = 1,
@@ -132,6 +134,7 @@ module br_fifo_push_ctrl_credit #(
       .EnableBypass(EnableBypass),
       // The core push control should never be backpressured.
       .EnableCoverPushBackpressure(0),
+      .EnableAssertPushDataKnown(EnableAssertPushDataKnown),
       .EnableAssertFinalNotValid(EnableAssertFinalNotValid)
   ) br_fifo_push_ctrl_core (
       .clk,

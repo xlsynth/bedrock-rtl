@@ -26,6 +26,8 @@ module br_flow_xbar_core #(
     parameter bit EnableAssertPushValidStability = EnableCoverPushBackpressure,
     parameter bit EnableAssertPushDataStability = EnableAssertPushValidStability,
     parameter bit EnableAssertPushDestinationStability = EnableAssertPushDataStability,
+    // If 1, assert that push_data is always known (not X) when push_valid is asserted.
+    parameter bit EnableAssertPushDataKnown = 1,
     parameter bit EnableAssertFinalNotValid = 1,
 
     localparam int DestIdWidth = $clog2(NumPopFlows)
@@ -86,6 +88,7 @@ module br_flow_xbar_core #(
         .EnableCoverPushBackpressure(EnableCoverPushBackpressure),
         .EnableAssertPushValidStability(EnableAssertPushValidStability),
         .EnableAssertPushDataStability(EnableAssertPushDataStability),
+        .EnableAssertPushDataKnown(EnableAssertPushDataKnown),
         .EnableAssertFinalNotValid(EnableAssertFinalNotValid)
     ) br_flow_demux_select_unstable_push (
         .clk,
@@ -108,6 +111,7 @@ module br_flow_xbar_core #(
                 EnableAssertPushValidStability && EnableAssertPushDestinationStability),
             .EnableAssertPushDataStability(
                 EnableAssertPushDataStability && EnableAssertPushDestinationStability),
+            .EnableAssertPushDataKnown(EnableAssertPushDataKnown),
             .EnableAssertFinalNotValid(EnableAssertFinalNotValid)
         ) br_flow_reg_fwd_demux_to_mux (
             .clk,
@@ -141,6 +145,7 @@ module br_flow_xbar_core #(
         .EnableAssertPushDataStability(
             (EnableAssertPushDataStability && EnableAssertPushDestinationStability) ||
             RegisterDemuxOutputs),
+        .EnableAssertPushDataKnown(EnableAssertPushDataKnown),
         .EnableAssertFinalNotValid(EnableAssertFinalNotValid)
     ) br_flow_mux_core_pop (
         .clk,
@@ -166,6 +171,7 @@ module br_flow_xbar_core #(
               RegisterDemuxOutputs),
           // Push data cannot be stable because it comes from the arbiter
           .EnableAssertPushDataStability(0),
+          .EnableAssertPushDataKnown(EnableAssertPushDataKnown),
           .EnableAssertFinalNotValid(EnableAssertFinalNotValid)
       ) br_flow_reg_fwd_mux_to_pop (
           .clk,

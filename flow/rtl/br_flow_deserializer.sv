@@ -104,6 +104,8 @@ module br_flow_deserializer #(
     // The order of bits within each flit is always the same that they
     // appear on the push interface.
     parameter bit DeserializeMostSignificantFirst = 0,
+    // If 1, assert that push_data is always known (not X) when push_valid is asserted.
+    parameter bit EnableAssertPushDataKnown = 1,
     // If 1, then assert there are no valid bits asserted at the end of the test.
     parameter bit EnableAssertFinalNotValid = 1,
     localparam int DeserializationRatio = PopWidth / PushWidth,
@@ -164,6 +166,7 @@ module br_flow_deserializer #(
       .EnableCoverBackpressure(1),
       .EnableAssertValidStability(1),
       .EnableAssertDataStability(1),
+      .EnableAssertDataKnown(EnableAssertPushDataKnown),
       .EnableAssertFinalNotValid(EnableAssertFinalNotValid)
   ) br_flow_checks_valid_data_intg (
       .clk,
