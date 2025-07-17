@@ -42,6 +42,13 @@ module br_amba_axil_split #(
     // respectively. This is useful if the AXI-Lite peripheral connected
     // to the branch expects its own address space to start at zero.
     parameter int NormalizeBranchAddress = 0,
+    // If 1, assert that root_wdata is known when root_wvalid is asserted.
+    parameter bit EnableAssertWriteDataKnown = 1,
+    // If 1, assert that trunk_rdata and branch_rdata are known when
+    // trunk_rvalid and branch_rvalid are asserted, respectively.
+    // TODO(tbunker): Add ready/valid checks for downstream rdata.
+    // ri lint_check_waive PARAM_NOT_USED
+    parameter bit EnableAssertReadDataKnown = 1,
     localparam int StrobeWidth = DataWidth / 8
 ) (
     input clk,
@@ -255,7 +262,8 @@ module br_amba_axil_split #(
   );
 
   br_flow_reg_both #(
-      .Width(DataWidth + StrobeWidth + WUserWidth + 1)
+      .Width(DataWidth + StrobeWidth + WUserWidth + 1),
+      .EnableAssertPushDataKnown(EnableAssertWriteDataKnown)
   ) br_flow_reg_both_write_data (
       .clk,
       .rst,

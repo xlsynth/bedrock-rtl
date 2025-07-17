@@ -57,6 +57,10 @@ module br_amba_axi_demux #(
     parameter int BUserWidth = 1,
     // Width of the AXI RUSER field.
     parameter int RUserWidth = 1,
+    // If 1, assert that upstream_wdata is known when upstream_wvalid is asserted.
+    parameter bit EnableAssertWriteDataKnown = 1,
+    // If 1, assert that downstream_rdata is known when downstream_rvalid is asserted.
+    parameter bit EnableAssertReadDataKnown = 1,
     //
     localparam int StrobeWidth = DataWidth / 8,
     localparam int SubIdWidth = $clog2(NumSubordinates)
@@ -220,7 +224,8 @@ module br_amba_axi_demux #(
                         + ARUserWidth),
       .RespPayloadWidth(DataWidth + RUserWidth + br_amba::AxiRespWidth),
       .SingleIdOnly(SingleIdOnly),
-      .RegisterDownstreamOutputs(RegisterDownstreamAxOutputs)
+      .RegisterDownstreamOutputs(RegisterDownstreamAxOutputs),
+      .EnableAssertRespPayloadKnown(EnableAssertReadDataKnown)
   ) br_amba_axi_demux_req_tracker_ar (
       .clk,
       .rst,
@@ -371,7 +376,8 @@ module br_amba_axi_demux #(
 
   br_fifo_flops #(
       .Depth(WdataBufferDepth),
-      .Width(DataWidth + WUserWidth + StrobeWidth + 1)
+      .Width(DataWidth + WUserWidth + StrobeWidth + 1),
+      .EnableAssertPushDataKnown(EnableAssertWriteDataKnown)
   ) br_fifo_flops_wdata_buffer (
       .clk,
       .rst,
@@ -443,7 +449,8 @@ module br_amba_axi_demux #(
 
   br_flow_demux_select_unstable #(
       .NumFlows(NumSubordinates),
-      .Width(DataWidth + WUserWidth + StrobeWidth + 1)
+      .Width(DataWidth + WUserWidth + StrobeWidth + 1),
+      .EnableAssertPushDataKnown(EnableAssertWriteDataKnown)
   ) br_flow_demux_select_unstable_downstream_wdata (
       .clk,
       .rst,
@@ -462,7 +469,8 @@ module br_amba_axi_demux #(
   for (genvar i = 0; i < NumSubordinates; i++) begin : gen_downstream_wdata_unpack
     if (RegisterDownstreamWOutputs) begin : gen_register_downstream_wdata_outputs
       br_flow_reg_fwd #(
-          .Width(DataWidth + WUserWidth + StrobeWidth + 1)
+          .Width(DataWidth + WUserWidth + StrobeWidth + 1),
+          .EnableAssertPushDataKnown(EnableAssertWriteDataKnown)
       ) br_flow_reg_fwd_downstream_wdata (
           .clk,
           .rst,

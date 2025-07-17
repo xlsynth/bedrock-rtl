@@ -35,6 +35,10 @@ module br_amba_axi_timing_slice #(
     parameter int ARSliceType = 2,  // 0: forward, 1: reverse, 2: full
     parameter int RSliceType = 2,  // 0: forward, 1: reverse, 2: full
     parameter int BSliceType = 2,  // 0: forward, 1: reverse, 2: full
+    // If 1, assert that target_wdata is known when target_wvalid is asserted.
+    parameter bit EnableAssertWriteDataKnown = 1,
+    // If 1, assert that target_rdata is known when target_rvalid is asserted.
+    parameter bit EnableAssertReadDataKnown = 1,
     localparam int StrobeWidth = DataWidth / 8
 ) (
     input clk,
@@ -247,7 +251,8 @@ module br_amba_axi_timing_slice #(
   // Write Data Channel Timing Slice
   if (WSliceType == 0) begin : gen_w_slice_forward
     br_flow_reg_fwd #(
-        .Width(DataWidth + WUserWidth + StrobeWidth + br_amba::AxiWLastWidth)
+        .Width(DataWidth + WUserWidth + StrobeWidth + br_amba::AxiWLastWidth),
+        .EnableAssertPushDataKnown(EnableAssertWriteDataKnown)
     ) br_flow_reg_fwd_w_slice (
         .clk,
         .rst,
@@ -262,7 +267,8 @@ module br_amba_axi_timing_slice #(
 
   if (WSliceType == 1) begin : gen_w_slice_reverse
     br_flow_reg_rev #(
-        .Width(DataWidth + WUserWidth + StrobeWidth + br_amba::AxiWLastWidth)
+        .Width(DataWidth + WUserWidth + StrobeWidth + br_amba::AxiWLastWidth),
+        .EnableAssertPushDataKnown(EnableAssertWriteDataKnown)
     ) br_flow_reg_rev_w_slice (
         .clk,
         .rst,
@@ -277,7 +283,8 @@ module br_amba_axi_timing_slice #(
 
   if (WSliceType == 2) begin : gen_w_slice_full
     br_flow_reg_both #(
-        .Width(DataWidth + WUserWidth + StrobeWidth + br_amba::AxiWLastWidth)
+        .Width(DataWidth + WUserWidth + StrobeWidth + br_amba::AxiWLastWidth),
+        .EnableAssertPushDataKnown(EnableAssertWriteDataKnown)
     ) br_flow_reg_both_w_slice (
         .clk,
         .rst,
@@ -438,7 +445,8 @@ module br_amba_axi_timing_slice #(
 
   if (RSliceType == 0) begin : gen_r_slice_forward
     br_flow_reg_fwd #(
-        .Width(IdWidth + DataWidth + br_amba::AxiRespWidth + RUserWidth + br_amba::AxiRLastWidth)
+        .Width(IdWidth + DataWidth + br_amba::AxiRespWidth + RUserWidth + br_amba::AxiRLastWidth),
+        .EnableAssertPushDataKnown(EnableAssertReadDataKnown)
     ) br_flow_reg_fwd_r_slice (
         .clk,
         .rst,
@@ -453,7 +461,8 @@ module br_amba_axi_timing_slice #(
 
   if (RSliceType == 1) begin : gen_r_slice_reverse
     br_flow_reg_rev #(
-        .Width(IdWidth + DataWidth + br_amba::AxiRespWidth + RUserWidth + br_amba::AxiRLastWidth)
+        .Width(IdWidth + DataWidth + br_amba::AxiRespWidth + RUserWidth + br_amba::AxiRLastWidth),
+        .EnableAssertPushDataKnown(EnableAssertReadDataKnown)
     ) br_flow_reg_rev_r_slice (
         .clk,
         .rst,
@@ -468,7 +477,8 @@ module br_amba_axi_timing_slice #(
 
   if (RSliceType == 2) begin : gen_r_slice_full
     br_flow_reg_both #(
-        .Width(IdWidth + DataWidth + br_amba::AxiRespWidth + RUserWidth + br_amba::AxiRLastWidth)
+        .Width(IdWidth + DataWidth + br_amba::AxiRespWidth + RUserWidth + br_amba::AxiRLastWidth),
+        .EnableAssertPushDataKnown(EnableAssertReadDataKnown)
     ) br_flow_reg_both_r_slice (
         .clk,
         .rst,

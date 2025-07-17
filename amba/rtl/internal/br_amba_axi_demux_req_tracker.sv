@@ -43,6 +43,8 @@ module br_amba_axi_demux_req_tracker #(
     parameter int SingleIdOnly = 0,
     // If 1, then downstream outputs are registered.
     parameter int RegisterDownstreamOutputs = 1,
+    // If 1, assert that downstream_x_payload is known when downstream_xvalid is asserted.
+    parameter bit EnableAssertRespPayloadKnown = 1,
     //
     localparam int SubIdWidth = $clog2(NumSubordinates)
 ) (
@@ -322,7 +324,8 @@ module br_amba_axi_demux_req_tracker #(
   // Buffer incoming responses to cut downstream_xvalid -> downstream_xready path
   for (genvar i = 0; i < NumSubordinates; i++) begin : gen_buffer_resp
     br_flow_reg_rev #(
-        .Width(AxiIdWidth + RespPayloadWidth + 1)
+        .Width(AxiIdWidth + RespPayloadWidth + 1),
+        .EnableAssertPushDataKnown(EnableAssertRespPayloadKnown)
     ) br_flow_reg_rev_downstream_resp (
         .clk,
         .rst,
@@ -432,7 +435,8 @@ module br_amba_axi_demux_req_tracker #(
       .Width(AxiIdWidth + RespPayloadWidth + 1),
       // If a higher-priority downstream port with a different ID becomes valid,
       // the mux select can change, resulting in data not remaining stable.
-      .EnableAssertPushDataStability(0)
+      .EnableAssertPushDataStability(0),
+      .EnableAssertPushDataKnown(EnableAssertRespPayloadKnown)
   ) br_flow_reg_fwd_upstream_resp (
       .clk,
       .rst,
