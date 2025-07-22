@@ -138,12 +138,11 @@ module br_fifo_push_ctrl_core #(
     assign ram_wr_data = push_data;
   end else begin : gen_no_bypass
     `BR_UNUSED(bypass_ready)
-    // TODO(zhemao, #157): Replace this with BR_TIEOFF macros once they are fixed
-    assign bypass_valid_unstable = '0;  // ri lint_check_waive CONST_ASSIGN CONST_OUTPUT
-    assign bypass_data_unstable = '0;  // ri lint_check_waive CONST_ASSIGN CONST_OUTPUT
+    `BR_TIEOFF_ZERO(bypass_valid_unstable)  // ri lint_check_waive CONST_OUTPUT
+    `BR_TIEOFF_ZERO(bypass_data_unstable)  // ri lint_check_waive CONST_OUTPUT
 
     assign ram_wr_valid = push_beat;
-    assign ram_wr_data = push_data;
+    assign ram_wr_data  = push_data;
   end
 
 endmodule
