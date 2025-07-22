@@ -18,6 +18,7 @@
 
 `include "br_asserts_internal.svh"
 `include "br_unused.svh"
+`include "br_tieoff.svh"
 
 module br_fifo_push_ctrl_core #(
     parameter int Depth = 1,
