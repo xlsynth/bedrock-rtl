@@ -42,6 +42,10 @@ module br_flow_checks_valid_data_impl #(
     // Can only be enabled if EnableAssertValidStability is also enabled.
     // ri lint_check_waive PARAM_NOT_USED
     parameter bit EnableAssertDataStability = EnableAssertValidStability,
+    // If 1, assert that data is known (not X) whenever valid is asserted.
+    // This is independent of stability checks; set to 0 to disable.
+    // ri lint_check_waive PARAM_NOT_USED
+    parameter bit EnableAssertDataKnown = 1,
     // If 1, then assert there are no valid bits asserted at the end of the test.
     parameter bit EnableAssertFinalNotValid = 1
 ) (
@@ -57,6 +61,7 @@ module br_flow_checks_valid_data_impl #(
                     !(EnableAssertValidStability && !EnableCoverBackpressure))
   `BR_ASSERT_STATIC(legal_assert_data_stability_a,
                     !(EnableAssertDataStability && !EnableAssertValidStability))
+
   if (EnableAssertFinalNotValid) begin : gen_assert_final
     `BR_ASSERT_FINAL(final_not_valid_a, !valid)
   end
@@ -80,23 +85,24 @@ module br_flow_checks_valid_data_impl #(
           // is stable when backpressured.
           `BR_ASSERT_IMPL(valid_stable_when_backpressured_a, !ready[i] && valid[i] |=> valid[i])
           `BR_COVER_IMPL(data_unstable_c, (!ready[i] && valid[i]) ##1 !$stable(data[i]))
-          // Assert that if valid is 1, then data must be known (not X).
-          // This is not strictly a required integration check, because most modules
-          // should still function correctly even if data is unknown (X).
-          // However, under the ready-valid protocol convention where data is stable while
-          // backpressured, unknown values are by definition not stable and therefore violate the
-          // protocol requirement.
-          `BR_ASSERT_IMPL(data_known_a, valid[i] |-> !$isunknown(data[i]))
         end
       end else begin : gen_no_valid_stability_checks
         // Cover that valid can be unstable when backpressured.
         `BR_COVER_IMPL(valid_unstable_c, (!ready[i] && valid[i]) ##1 !valid[i])
       end
+    end else begin : gen_no_backpressure_checks
+      // Assert that backpressure never occurs.
+      `BR_ASSERT_IMPL(no_backpressure_a, valid[i] |-> ready[i])
+    end
+    // Always assert that if valid is asserted, data is known (not X), if enabled.
+    if (EnableAssertDataKnown) begin : gen_data_known_checks
+      `BR_ASSERT_IMPL(data_known_a, valid[i] |-> !$isunknown(data[i]))
     end
   end
 `endif  // BR_ENABLE_IMPL_CHECKS
 `endif  // BR_ASSERT_ON
 
   `BR_UNUSED_NAMED(all_unused, {rst, valid, ready, data})
+
 endmodule
 // ri lint_check_on NO_OUTPUT
