@@ -119,11 +119,11 @@ module br_tracker_reorder_buffer_basic_fpv_monitor #(
 
   // pick random entry to check data integrity and ordering
   logic [EntryIdWidth-1:0] fv_entry_id;
-  logic fv_unordered_request_valid;
+  logic fv_unordered_resp_valid;
   logic fv_reordered_resp_valid;
 
   `BR_ASSUME(fv_entry_id_a, $stable(fv_entry_id) && fv_entry_id < NumEntries)
-  assign fv_unordered_request_valid = unordered_resp_push_valid &&
+  assign fv_unordered_resp_valid = unordered_resp_push_valid &&
                                     (unordered_resp_push_entry_id == fv_entry_id);
   assign fv_reordered_resp_valid = reordered_resp_pop_valid & reordered_resp_pop_ready &&
                                      (fv_reordered_resp_entry_id == fv_entry_id);
@@ -137,7 +137,7 @@ module br_tracker_reorder_buffer_basic_fpv_monitor #(
   ) data_sb (
       .clk(clk),
       .rstN(!rst),
-      .incoming_vld(fv_unordered_request_valid),
+      .incoming_vld(fv_unordered_resp_valid),
       .incoming_data(unordered_resp_push_data),
       .outgoing_vld(fv_reordered_resp_valid),
       .outgoing_data(reordered_resp_pop_data)
