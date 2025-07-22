@@ -92,7 +92,7 @@ module br_flow_serializer #(
     // If 0, the least significant bits are sent first (little endian).
     // The order of bits within each flit is always the same that they
     // appear on the push interface.
-    parameter bit SerializeMostSignificantFirst = 1,
+    parameter bit SerializeMostSignificantFirst = 0,
     // If 1, assert that push_data is always known (not X) when push_valid is asserted.
     parameter bit EnableAssertPushDataKnown = 1,
     // If 1, then assert there are no valid bits asserted at the end of the test.
