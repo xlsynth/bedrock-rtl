@@ -195,8 +195,18 @@ module br_ecc_secded_error_fpv_monitor #(
   // ----------FV assertions----------
   if (Latency == 0) begin : gen_latency0
     `BR_ASSERT(se_data_integrity_a, se_dec_valid |-> se_dec_data == data)
+    `BR_ASSERT(se_cw_integrity_a, de_dec_valid |-> se_dec_codeword == {enc_parity, data})
   end else begin : gen_latency_non0
     `BR_ASSERT(se_data_integrity_a, se_dec_valid |-> se_dec_data == $past(data, Latency))
+    `BR_ASSERT(se_cw_data_integrity_a,
+               de_dec_valid |-> se_dec_codeword[DataWidth-1:0] == $past(data, Latency))
+  end
+
+  if (DecLatency != 0) begin : gen_parity_ast
+    `BR_ASSERT(se_cw_parity_integrity_a,
+               de_dec_valid |-> se_dec_codeword[CodewordWidth-1:DataWidth] == $past(
+                   enc_parity, DecLatency
+               ))
   end
 
   // single bit flip is detectable and correctable
