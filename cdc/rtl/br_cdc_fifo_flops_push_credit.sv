@@ -30,7 +30,7 @@
 //
 // Let PushT and PopT be the push period and pop period, respectively.
 //
-// The cut-through latency is max(RegisterResetActive + 1, FlopRamAddressDepthStages + 2) * PushT +
+// The cut-through latency is max(RegisterResetActive + 1, FlopRamAddressDepthStages + 1) * PushT +
 // (NumSyncStages + FlopRamAddressDepthStages + FlopRamReadDataDepthStages +
 // FlopRamReadDataWidthStages + RegisterPopOutputs) * PopT.
 //
