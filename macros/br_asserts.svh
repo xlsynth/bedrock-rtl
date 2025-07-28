@@ -218,7 +218,7 @@ __name__ : assert property (@(posedge __clk__) disable iff (__rst__ === 1'b1 || 
 `ifdef BR_ASSERT_ON
 `ifndef BR_DISABLE_ASSERT_IMM
 `define BR_ASSERT_IMM(__name__, __expr__) \
-assert ($isunknown(__expr__) || (__expr__)) else `BR_ASSERT_ERROR(__name__, ($isunknown(__expr__) || (__expr__)));
+assert #0 ($isunknown(__expr__) || (__expr__)) else `BR_ASSERT_ERROR(__name__, ($isunknown(__expr__) || (__expr__)));
 `else  // BR_DISABLE_ASSERT_IMM
 `define BR_ASSERT_IMM(__name__, __expr__) \
 `BR_NOOP

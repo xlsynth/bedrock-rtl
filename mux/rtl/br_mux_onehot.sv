@@ -38,20 +38,8 @@ module br_mux_onehot #(
   //------------------------------------------
   `BR_ASSERT_STATIC(legal_num_symbols_in_a, NumSymbolsIn >= 2)
   `BR_ASSERT_STATIC(legal_symbol_width_a, SymbolWidth >= 1)
-
-  // We'd prefer to use BR_ASSERT_COMB_INTG here, but there seems to be a simulator bug
-  // with `$isunknown(some_particular_expression)` in immediate assertions? Root cause unknown.
-`ifdef BR_ASSERT_ON
-`ifndef BR_DISABLE_INTG_CHECKS
-`ifndef BR_DISABLE_ASSERT_IMM
   // ri lint_check_waive ALWAYS_COMB
-  always_comb begin
-    assert ($isunknown(select) || $onehot0(select))
-    else `BR_ASSERT_ERROR(select_onehot0_a, ($isunknown(select) || $onehot0(select)));
-  end
-`endif
-`endif
-`endif
+  `BR_ASSERT_COMB_INTG(select_onehot0_a, $onehot0(select))
 
   //------------------------------------------
   // Implementation

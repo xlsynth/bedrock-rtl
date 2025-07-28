@@ -45,22 +45,8 @@ module br_demux_bin #(
   //------------------------------------------
   `BR_ASSERT_STATIC(legal_num_symbols_out_a, NumSymbolsOut >= 1)
   `BR_ASSERT_STATIC(legal_symbol_width_a, SymbolWidth >= 1)
-
-  // We'd prefer to use BR_ASSERT_COMB_INTG here, but there seems to be a simulator bug
-  // with `$isunknown(some_particular_expression)` in immediate assertions? Root cause unknown.
-`ifdef BR_ASSERT_ON
-`ifndef BR_DISABLE_INTG_CHECKS
-`ifndef BR_DISABLE_ASSERT_IMM
   // ri lint_check_waive ALWAYS_COMB
-  always_comb begin
-    assert ($isunknown(in_valid) || !in_valid || select < NumSymbolsOut)
-    else
-      `BR_ASSERT_ERROR(select_in_range_a, ($isunknown(
-                       in_valid) || !in_valid || select < NumSymbolsOut));
-  end
-`endif
-`endif
-`endif
+  `BR_ASSERT_COMB_INTG(select_in_range_a, !in_valid || (select < NumSymbolsOut))
 
   if (EnableAssertFinalNotValid) begin : gen_assert_final
     `BR_ASSERT_FINAL(final_not_in_valid_a, !in_valid)
