@@ -273,7 +273,22 @@ module br_flow_serializer #(
   //------------------------------------------
   // Implementation checks
   //------------------------------------------
-  // TODO: standard ready-valid check modules
+  br_flow_checks_valid_data_impl #(
+      .NumFlows(1),
+      .Width(PopWidth + 1 + MetadataWidth),
+      .EnableCoverBackpressure(1),
+      .EnableAssertValidStability(1),
+      .EnableAssertDataStability(1),
+      .EnableAssertDataKnown(EnableAssertPushDataKnown),
+      .EnableAssertFinalNotValid(EnableAssertFinalNotValid)
+  ) br_flow_checks_valid_data_impl (
+      .clk,
+      .rst,
+      .ready(pop_ready),
+      .valid(pop_valid),
+      .data ({pop_data, pop_last, pop_metadata})
+  );
+
   `BR_ASSERT_IMPL(cut_through_latency_0_a, push_valid |-> pop_valid)
   `BR_ASSERT_IMPL(pop_last_a, pop_valid && pop_last |-> push_last)
   `BR_COVER_IMPL(dont_cares_c, push_valid && push_last && push_last_dont_care_count != 0)
