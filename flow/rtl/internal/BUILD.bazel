@@ -70,7 +70,6 @@ verilog_library(
     # it uses the Bedrock library-internal macros.
     visibility = ["//:__subpackages__"],
     deps = [
-        "//macros:br_asserts",
         "//macros:br_asserts_internal",
         "//macros:br_unused",
     ],

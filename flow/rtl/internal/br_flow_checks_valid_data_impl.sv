@@ -19,7 +19,6 @@
 // implementation check macros to ensure the valid and data signals
 // conform to the ready-valid interface protocol.
 
-`include "br_asserts.svh"
 `include "br_asserts_internal.svh"
 `include "br_unused.svh"
 
@@ -58,7 +57,6 @@ module br_flow_checks_valid_data_impl #(
                     !(EnableAssertValidStability && !EnableCoverBackpressure))
   `BR_ASSERT_STATIC(legal_assert_data_stability_a,
                     !(EnableAssertDataStability && !EnableAssertValidStability))
-
   if (EnableAssertFinalNotValid) begin : gen_assert_final
     `BR_ASSERT_FINAL(final_not_valid_a, !valid)
   end
@@ -96,7 +94,6 @@ module br_flow_checks_valid_data_impl #(
       end
     end
   end
-`endif  // BR_ENABLE_IMPL_CHECKS
 `endif  // BR_ENABLE_IMPL_CHECKS
 `endif  // BR_ASSERT_ON
 
