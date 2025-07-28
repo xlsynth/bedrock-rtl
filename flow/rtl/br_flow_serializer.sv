@@ -279,7 +279,6 @@ module br_flow_serializer #(
       .EnableCoverBackpressure(1),
       .EnableAssertValidStability(1),
       .EnableAssertDataStability(1),
-      .EnableAssertDataKnown(EnableAssertPushDataKnown),
       .EnableAssertFinalNotValid(EnableAssertFinalNotValid)
   ) br_flow_checks_valid_data_impl (
       .clk,
