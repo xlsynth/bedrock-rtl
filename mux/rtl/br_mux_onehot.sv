@@ -38,9 +38,7 @@ module br_mux_onehot #(
   `BR_ASSERT_STATIC(legal_num_symbols_in_a, NumSymbolsIn >= 2)
   `BR_ASSERT_STATIC(legal_symbol_width_a, SymbolWidth >= 1)
   // ri lint_check_waive ALWAYS_COMB
-  // TODO(mgottscho): Figure out why this is not working right. I think you
-  // can't use $onehot0() inside of isunknown().
-  //`BR_ASSERT_COMB_INTG(select_onehot0_a, $onehot0(select))
+  `BR_ASSERT_COMB_INTG(select_onehot0_a, $onehot0(select))
 
   //------------------------------------------
   // Implementation
