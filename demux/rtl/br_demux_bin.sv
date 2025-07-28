@@ -68,19 +68,7 @@ module br_demux_bin #(
   //------------------------------------------
   // ri lint_check_waive ALWAYS_COMB
   `BR_ASSERT_COMB_IMPL(out_valid_onehot0_a, $onehot0(out_valid))
-
-  // We'd prefer to use BR_ASSERT_COMB_IMPL here, but there seems to be a simulator bug
-  // with `$isunknown(some_particular_expression)` in immediate assertions? Root cause unknown.
-`ifdef BR_ASSERT_ON
-`ifdef BR_ENABLE_IMPL_CHECKS
-`ifndef BR_DISABLE_ASSERT_IMM
   // ri lint_check_waive ALWAYS_COMB
-  always_comb begin
-    assert ($isunknown(in_valid) || !in_valid || $onehot(out_valid))
-    else `BR_ASSERT_ERROR(out_valid_a, ($isunknown(in_valid) || !in_valid || $onehot(out_valid)));
-  end
-`endif
-`endif
-`endif
+  `BR_ASSERT_COMB_IMPL(out_valid_a, $onehot(out_valid) || !in_valid)
 
 endmodule : br_demux_bin
