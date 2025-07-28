@@ -103,5 +103,5 @@ module br_flow_checks_valid_data_impl #(
 `endif  // BR_ASSERT_ON
 
   `BR_UNUSED_NAMED(all_unused, {rst, valid, ready, data})
-
 endmodule
+// ri lint_check_on NO_OUTPUT
