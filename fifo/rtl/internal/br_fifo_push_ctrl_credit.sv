@@ -163,7 +163,8 @@ module br_fifo_push_ctrl_credit #(
   // Status flags
   br_counter #(
       .MaxValue(Depth),
-      .EnableAssertFinalNotValid(EnableAssertFinalNotValid)
+      .EnableAssertFinalNotValid(EnableAssertFinalNotValid),
+      .EnableWrap(0)
   ) br_counter_slots (
       .clk,
       .rst(either_rst),
