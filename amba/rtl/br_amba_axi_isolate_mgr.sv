@@ -71,6 +71,8 @@ module br_amba_axi_isolate_mgr #(
     parameter bit [DataWidth-1:0] IsolateWData = '0,
     // WSTRB data to generate for isolated transactions.
     parameter bit [(DataWidth/8)-1:0] IsolateWStrb = '0,
+    // If 1, assert that upstream_wdata is known when upstream_wvalid is asserted.
+    parameter bit EnableAssertWriteDataKnown = 1,
     localparam int AxiBurstLenWidth = br_math::clamped_clog2(MaxAxiBurstLen),
     localparam int StrobeWidth = DataWidth / 8
 ) (
@@ -469,7 +471,8 @@ module br_amba_axi_isolate_mgr #(
           downstream_wlast_int
       )),
       .EnableAssertPushValidStability(0),
-      .EnableAssertPushDataStability(0)
+      .EnableAssertPushDataStability(0),
+      .EnableAssertPushDataKnown(EnableAssertWriteDataKnown)
   ) br_flow_reg_fwd_ds_w (
       .clk,
       .rst,
