@@ -86,17 +86,18 @@ module br_enc_priority_encoder #(
   for (genvar out_idx = 0; out_idx < NumResults; out_idx++) begin : gen_out_internal
     logic [NumRequesters-1:0] in_masked;
 
-    // Generated the masked input
-    // Any bit that was set in a previous result
-    // should be cleared in the masked input.
-    always_comb begin
-      in_masked = in_internal;
-      // This for loop won't be entered if out_idx is 0
-      // This is expected since we just want in_masked to be in
-      // ri lint_check_waive LOOP_NOT_ENTERED
-      for (int prev_idx = 0; prev_idx < out_idx; prev_idx++) begin
-        in_masked &= ~out_internal[prev_idx];
+    if (out_idx > 0) begin : gen_masked_input
+      // Generated the masked input
+      // Any bit that was set in a previous result
+      // should be cleared in the masked input.
+      always_comb begin
+        in_masked = in_internal;
+        for (int prev_idx = 0; prev_idx < out_idx; prev_idx++) begin
+          in_masked &= ~out_internal[prev_idx];
+        end
       end
+    end else begin : gen_unmasked_input
+      assign in_masked = in_internal;
     end
 
     // in_masked[out_idx-1:0] will always be zero since
