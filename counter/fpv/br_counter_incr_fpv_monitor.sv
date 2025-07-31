@@ -83,7 +83,7 @@ module br_counter_incr_fpv_monitor #(
 
   // ----------Critical Covers----------
   `BR_COVER(reinit_and_change_c, reinit && incr_valid)
-  `BR_COVER(overflow_c, fv_counter + fv_incr > MaxValue)
+  `BR_COVER(overflow_c, fv_counter + fv_incr > MaxValueP1Width'(MaxValue))
 
 endmodule
 

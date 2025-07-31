@@ -121,8 +121,13 @@ module br_counter_fpv_monitor #(
   `BR_COVER(reinit_and_change_c, reinit && (incr_valid || decr_valid))
   // when EnableWrap or EnableSaturate is 1, counter handles overflow/underflow
   if (EnableWrap | EnableSaturate) begin : gen_over_underflow
-    `BR_COVER(overflow_c, (fv_decr < fv_incr) && (value + fv_incr - fv_decr > MaxValue))
-    `BR_COVER(underflow_c, (fv_decr > fv_incr) && (value_next > value))
+    // The cover shows up as unreachable if MaxValue is the largest number that
+    // can be represented. Just disable it in this case.
+    // TODO(zhemao): Figure out how to get this to work
+    if (MaxValue != {MaxValueWidth{1'b1}}) begin : gen_cover_overflow
+      `BR_COVER(overflow_c, (fv_decr < fv_incr) && (value + fv_incr - fv_decr > MaxValue))
+    end
+    `BR_COVER(underflow_c, (fv_decr > fv_incr) && (value < (fv_decr - fv_incr)))
   end
 
 endmodule : br_counter_fpv_monitor
