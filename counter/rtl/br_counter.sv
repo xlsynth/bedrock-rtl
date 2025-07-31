@@ -54,6 +54,10 @@ module br_counter #(
     parameter logic [MaxValueWidth-1:0] MaxValue = 1,
     // Must be at least 1 and at most MaxValue. Inclusive.
     parameter logic [MaxChangeWidth-1:0] MaxChange = 1,
+    // The actual maximum increment value. Must be >=1 and <=MaxValue.
+    parameter logic [MaxChangeWidth-1:0] MaxIncrement = MaxChange,
+    // The actual maximum decrement value. Must be >=1 and <=MaxValue.
+    parameter logic [MaxChangeWidth-1:0] MaxDecrement = MaxChange,
     // If 1, allow the counter value to wrap around 0/MaxValue, adding additional correction
     // logic to do so if MaxValue is not 1 less than a power of two.
     // If 0, don't allow wrapping and omit overflow/underflow correction logic.
@@ -72,6 +76,19 @@ module br_counter #(
     parameter bit EnableSaturate = 0,
     // If 1, then assert there are no valid bits asserted at the end of the test.
     parameter bit EnableAssertFinalNotValid = 1,
+    // If 1, cover the case where incr_valid or decr_valid is 1, but
+    // incr or decr is 0, respectively.
+    // Otherwise, assert that incr and decr are always non-zero when incr_valid or decr_valid is 1.
+    parameter bit EnableCoverZeroChange = 1,
+    // If 1, enable reinit-related coverage.
+    // If 0, assert that reinit is never asserted.
+    parameter bit EnableCoverReinit = 1,
+    // If 1, cover the cases where reinit is asserted together with incr_valid and/or decr_valid.
+    // Otherwise, assert that reinit is only asserted when incr_valid and decr_valid are both 0.
+    parameter bit EnableCoverReinitAndChange = EnableCoverReinit,
+    // If 1, cover the case where reinit is asserted when incr_valid and decr_valid are both 0.
+    // Otherwise, assert that reinit is never asserted when incr_valid and decr_valid are both 0.
+    parameter bit EnableCoverReinitNoChange = EnableCoverReinit,
     localparam int MaxValueP1Width = MaxValueWidth + 1,
     localparam int MaxChangeP1Width = MaxChangeWidth + 1,
     localparam int ValueWidth = $clog2(MaxValueP1Width'(MaxValue) + 1),
@@ -97,12 +114,16 @@ module br_counter #(
   `BR_ASSERT_STATIC(value_width_gte_1_a, ValueWidth >= 1)
   `BR_ASSERT_STATIC(change_width_gte_1_a, ChangeWidth >= 1)
   `BR_ASSERT_STATIC(max_value_gte_1_a, MaxValue >= 1)
-  `BR_ASSERT_STATIC(max_increment_gte_1_a, MaxChange >= 1)
-  `BR_ASSERT_STATIC(max_increment_lte_max_value_a, MaxChange <= MaxValue)
+  `BR_ASSERT_STATIC(max_change_gte_1_a, MaxChange >= 1)
+  `BR_ASSERT_STATIC(max_change_lte_max_value_a, MaxChange <= MaxValue)
+  `BR_ASSERT_STATIC(max_increment_gte_1_a, MaxIncrement >= 1)
+  `BR_ASSERT_STATIC(max_increment_lte_max_change_a, MaxIncrement <= MaxChange)
+  `BR_ASSERT_STATIC(max_decrement_gte_1_a, MaxDecrement >= 1)
+  `BR_ASSERT_STATIC(max_decrement_lte_max_change_a, MaxDecrement <= MaxChange)
   `BR_ASSERT_STATIC(no_wrap_and_saturate_a, !(EnableWrap && EnableSaturate))
 
-  `BR_ASSERT_INTG(incr_in_range_a, incr_valid |-> incr <= MaxChange)
-  `BR_ASSERT_INTG(decr_in_range_a, decr_valid |-> decr <= MaxChange)
+  `BR_ASSERT_INTG(incr_in_range_a, incr_valid |-> incr <= MaxIncrement)
+  `BR_ASSERT_INTG(decr_in_range_a, decr_valid |-> decr <= MaxDecrement)
   `BR_ASSERT_INTG(initial_value_in_range_a, initial_value <= MaxValue)
 
   // Assertion-only helper logic for overflow/underflow detection
@@ -223,13 +244,33 @@ module br_counter #(
   `BR_ASSERT_IMPL(value_next_propagates_a, ##1 !$past(rst) |-> value == $past(value_next))
 
   // Change corners
-  `BR_COVER_IMPL(increment_max_c, incr_valid && incr == MaxChange)
-  `BR_COVER_IMPL(increment_min_c, incr_valid && incr == '0)
-  `BR_COVER_IMPL(decrement_max_c, decr_valid && decr == MaxChange)
-  `BR_COVER_IMPL(decrement_min_c, decr_valid && decr == '0)
+  `BR_COVER_IMPL(increment_max_c, incr_valid && incr == MaxIncrement)
+  `BR_COVER_IMPL(decrement_max_c, decr_valid && decr == MaxDecrement)
+  if (EnableCoverZeroChange) begin : gen_cover_zero_change
+    `BR_COVER_IMPL(increment_zero_c, incr_valid && incr == '0)
+    `BR_COVER_IMPL(decrement_zero_c, decr_valid && decr == '0)
+  end else begin : gen_assert_no_zero_change
+    `BR_ASSERT_IMPL(no_zero_increment_a, !incr_valid |-> incr > '0)
+    `BR_ASSERT_IMPL(no_zero_decrement_a, !decr_valid |-> decr > '0)
+  end
   `BR_COVER_IMPL(increment_and_decrement_c, incr_valid && incr > '0 && decr_valid && decr > '0)
 
   // Reinit
-  `BR_COVER_IMPL(reinit_and_change_c, reinit && (incr_valid || decr_valid))
+  if (EnableCoverReinit) begin : gen_cover_reinit
+    if (EnableCoverReinitAndChange) begin : gen_cover_reinit_and_change
+      `BR_COVER_IMPL(reinit_and_change_c, reinit && (incr_valid || decr_valid))
+    end else begin : gen_assert_no_change_on_reinit
+      `BR_ASSERT_IMPL(no_change_on_reinit_a, reinit |-> !incr_valid && !decr_valid)
+    end
+
+    if (EnableCoverReinitNoChange) begin : gen_cover_reinit_no_change
+      `BR_ASSERT_IMPL(reinit_no_change_a,
+                      reinit && !incr_valid && !decr_valid |=> value == $past(initial_value))
+    end else begin : gen_assert_no_reinit_without_change
+      `BR_ASSERT_IMPL(no_reinit_without_change_a, reinit |-> (incr_valid || decr_valid))
+    end
+  end else begin : gen_assert_no_reinit
+    `BR_ASSERT_IMPL(no_reinit_a, !reinit)
+  end
 
 endmodule : br_counter

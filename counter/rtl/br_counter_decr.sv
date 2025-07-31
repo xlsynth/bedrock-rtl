@@ -68,6 +68,18 @@ module br_counter_decr #(
     parameter bit EnableSaturate = 0,
     // If 1, then assert there are no valid bits asserted at the end of the test.
     parameter bit EnableAssertFinalNotValid = 1,
+    // If 1, cover the cases where reinit is asserted
+    // If 0, assert that reinit is never asserted
+    parameter bit EnableCoverReinit = 1,
+    // If 1, then cover the cases where reinit is asserted together with incr_valid.
+    // Otherwise, assert that reinit is never asserted together with incr_valid.
+    parameter bit EnableCoverReinitAndDecr = EnableCoverReinit,
+    // If 1, then cover the cases where reinit is asserted when incr_valid is 0.
+    // If 0, assert that reinit always asserts along with incr_valid.
+    parameter bit EnableCoverReinitNoDecr = EnableCoverReinit,
+    // If 1, cover the case where decr_valid is 1 but decr is 0.
+    // If 0, assert that decr is always non-zero when decr_valid is 1.
+    parameter bit EnableCoverZeroDecrement = 1,
     localparam int MaxValueP1Width = MaxValueWidth + 1,
     localparam int MaxDecrementP1Width = MaxDecrementWidth + 1,
     localparam int ValueWidth = $clog2(MaxValueP1Width'(MaxValue) + 1),
@@ -175,12 +187,28 @@ module br_counter_decr #(
   end
 
   // Decrement corners
-  `BR_ASSERT_IMPL(plus_zero_a, (!reinit && decr_valid && decr == '0) |-> (value_next == value))
+  if (EnableCoverZeroDecrement) begin : gen_cover_zero_decrement
+    `BR_ASSERT_IMPL(plus_zero_a, (!reinit && decr_valid && decr == '0) |-> (value_next == value))
+  end else begin : gen_assert_no_zero_decrement
+    `BR_ASSERT_IMPL(no_plus_zero_a, decr_valid |-> decr > '0)
+  end
   `BR_COVER_IMPL(decrement_max_c, decr_valid && decr == MaxDecrement)
   `BR_COVER_IMPL(value_temp_oob_c, value_temp > MaxValue)
 
   // Reinit
-  `BR_ASSERT_IMPL(reinit_no_decr_a, reinit && !decr_valid |=> value == $past(initial_value))
-  `BR_COVER_IMPL(reinit_and_decr_c, reinit && decr_valid && decr > 0)
+  if (EnableCoverReinit) begin : gen_cover_reinit
+    if (EnableCoverReinitNoDecr) begin : gen_cover_reinit_no_decr
+      `BR_ASSERT_IMPL(reinit_no_decr_a, reinit && !decr_valid |=> value == $past(initial_value))
+    end else begin : gen_assert_no_reinit_without_decr
+      `BR_ASSERT_IMPL(no_reinit_without_decr_a, reinit |-> decr_valid)
+    end
+    if (EnableCoverReinitAndDecr) begin : gen_cover_reinit_and_decr
+      `BR_COVER_IMPL(reinit_and_decr_c, reinit && decr_valid && decr > 0)
+    end else begin : gen_assert_no_reinit_and_decr
+      `BR_ASSERT_IMPL(no_reinit_and_decr_a, reinit |-> !decr_valid)
+    end
+  end else begin : gen_assert_no_reinit
+    `BR_ASSERT_IMPL(no_reinit_a, !reinit)
+  end
 
 endmodule : br_counter_decr
