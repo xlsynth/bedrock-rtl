@@ -131,7 +131,9 @@ module br_fifo_push_ctrl #(
   br_counter #(
       .MaxValue(Depth),
       .EnableAssertFinalNotValid(EnableAssertFinalNotValid),
-      .EnableWrap(0)
+      .EnableWrap(0),
+      .EnableCoverZeroChange(0),
+      .EnableCoverReinit(0)
   ) br_counter_slots (
       .clk,
       .rst,

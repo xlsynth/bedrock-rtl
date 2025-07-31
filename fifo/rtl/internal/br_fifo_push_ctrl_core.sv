@@ -112,7 +112,12 @@ module br_fifo_push_ctrl_core #(
         .MaxValue(Depth - 1),
         .MaxIncrement(1),
         .EnableReinitAndIncr(0),
-        .EnableAssertFinalNotValid(EnableAssertFinalNotValid)
+        // There won't be any overflows since reinit will be asserted
+        // when the counter wraps around.
+        .EnableWrap(0),
+        .EnableAssertFinalNotValid(EnableAssertFinalNotValid),
+        .EnableCoverZeroIncrement(0),
+        .EnableCoverReinitNoIncr(0)
     ) br_counter_incr_wr_addr (
         .clk,
         .rst,

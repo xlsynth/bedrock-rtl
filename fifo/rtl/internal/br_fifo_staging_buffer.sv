@@ -128,7 +128,9 @@ module br_fifo_staging_buffer #(
   br_counter #(
       .MaxValue(BufferDepth),
       .EnableAssertFinalNotValid(EnableAssertFinalNotValid),
-      .EnableWrap(0)
+      .EnableWrap(0),
+      .EnableCoverZeroChange(0),
+      .EnableCoverReinit(0)
   ) br_counter (
       .clk,
       .rst,
@@ -312,7 +314,8 @@ module br_fifo_staging_buffer #(
     // shift_out becomes shift in
     br_delay_shift_reg #(
         .Width(1),
-        .NumStages(InternalDepth)
+        .NumStages(InternalDepth),
+        .EnableCoverReinit(0)
     ) br_delay_shift_reg_rd_ptr (
         .clk,
         .rst,
@@ -326,7 +329,8 @@ module br_fifo_staging_buffer #(
 
     br_delay_shift_reg #(
         .Width(1),
-        .NumStages(InternalDepth)
+        .NumStages(InternalDepth),
+        .EnableCoverReinit(0)
     ) br_delay_shift_reg_wr_ptr (
         .clk,
         .rst,

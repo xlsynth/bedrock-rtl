@@ -87,7 +87,9 @@ module br_fifo_pop_ctrl_core #(
     br_counter_incr #(
         .MaxValue(RamDepth - 1),
         .MaxIncrement(1),
-        .EnableAssertFinalNotValid(EnableAssertFinalNotValid)
+        .EnableAssertFinalNotValid(EnableAssertFinalNotValid),
+        .EnableCoverZeroIncrement(0),
+        .EnableCoverReinit(0)
     ) br_counter_incr_rd_addr (
         .clk,
         .rst,
