@@ -26,7 +26,10 @@
 
 module br_delay_shift_reg #(
     parameter int Width = 1,  // Must be at least 1
-    parameter int NumStages = 1  // Must be at least 1
+    parameter int NumStages = 1,  // Must be at least 1
+    // If 1, cover the cases where reinit is asserted.
+    // If 0, assert that reinit is never asserted.
+    parameter bit EnableCoverReinit = 1
 ) (
     input  logic                            clk,
     input  logic                            rst,
@@ -69,15 +72,21 @@ module br_delay_shift_reg #(
   //------------------------------------------
   // Implementation checks
   //------------------------------------------
-  `BR_ASSERT_IMPL(value_initialized_a, (!shift_en && reinit) |=> value == $past(initial_value))
+  if (EnableCoverReinit) begin : gen_cover_reinit
+    `BR_ASSERT_IMPL(value_initialized_a, (!shift_en && reinit) |=> value == $past(initial_value))
+  end else begin : gen_assert_no_reinit
+    `BR_ASSERT_IMPL(no_reinit_a, !reinit)
+  end
   `BR_ASSERT_IMPL(value_stable_a, (!shift_en && !reinit) |=> $stable(value))
 
   if (NumStages == 1) begin : gen_assert_one_stage
     `BR_ASSERT_IMPL(value_shifted_a, shift_en |=> value == $past(shift_in))
   end else begin : gen_assert_multi_stage
-    `BR_ASSERT_IMPL(
-        value_shifted_with_reinit_a,
-        (shift_en && reinit) |=> value == $past({initial_value[NumStages-2:0], shift_in}))
+    if (EnableCoverReinit) begin : gen_cover_reinit_with_shift
+      `BR_ASSERT_IMPL(
+          value_shifted_with_reinit_a,
+          (shift_en && reinit) |=> value == $past({initial_value[NumStages-2:0], shift_in}))
+    end
     `BR_ASSERT_IMPL(value_shifted_without_reinit_a,
                     (shift_en && !reinit) |=> value == $past({stages[NumStages-2:0], shift_in}))
   end
