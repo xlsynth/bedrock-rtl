@@ -1,0 +1,82 @@
+// Copyright 2025 The Bedrock-RTL Authors
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+fn _get_max_message_width(parity_width: u32) -> u32 {
+    2 ** (parity_width - 1) - parity_width
+}
+
+fn get_message_width(data_width: u32, parity_width: u32) -> u32 {
+    min(2 ** data_width.log2(), _get_max_message_width(parity_width))
+}
+
+fn br_ecc_secded_encoder_xls<DATA_WIDTH: u32, PARITY_WIDTH: u32>(data: bits[DATA_WIDTH]) -> bits[DATA_WIDTH + PARITY_WIDTH] {
+    const MESSAGE_WIDTH: u32 = get_message_width(DATA_WIDTH, PARITY_WIDTH);
+    const CODEWORD_WIDTH: u32 = MESSAGE_WIDTH + PARITY_WIDTH;
+
+    let message = data as bits[MESSAGE_WIDTH];
+    let parity = match (CODEWORD_WIDTH, MESSAGE_WIDTH) {
+        (8, 4) => {
+          {{ secded_enc_8_4 }}
+        }
+        (13, 8) => {
+          {{ secded_enc_13_8 }}
+        }
+        (16, 11) => {
+          {{ secded_enc_16_11 }}
+        }
+        (22, 16) => {
+          {{ secded_enc_22_16 }}
+        }
+        (32, 26) => {
+          {{ secded_enc_32_26 }}
+        }
+        (39, 32) => {
+          {{ secded_enc_39_32 }}
+        }
+        (64, 57) => {
+          {{ secded_enc_64_57 }}
+        }
+        (72, 64) => {
+          {{ secded_enc_72_64 }}
+        }
+        (128, 120) => {
+          {{ secded_enc_128_120 }}
+        }
+        (137, 128) => {
+          {{ secded_enc_137_128 }}
+        }
+        (256, 247) => {
+          {{ secded_enc_256_247 }}
+        }
+        (266, 256) => {
+          {{ secded_enc_266_256 }}
+        }
+        (512, 502) => {
+          {{ secded_enc_512_502 }}
+        }
+        (523, 512) => {
+          {{ secded_enc_523_512 }}
+        }
+        (1024, 1013) => {
+          {{ secded_enc_1024_1013 }}
+        }
+        (1036, 1024) => {
+          {{ secded_enc_1036_1024 }}
+        }
+        _ => fail!("Unsupported combination of CODEWORD_WIDTH and PARITY_WIDTH: {} and {}", CODEWORD_WIDTH, PARITY_WIDTH)
+    };
+
+    let codeword = parity ++ message;
+    (data, parity, codeword)
+}
