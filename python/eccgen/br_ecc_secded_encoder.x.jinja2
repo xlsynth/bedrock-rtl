@@ -12,71 +12,74 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+import std;
+
 fn _get_max_message_width(parity_width: u32) -> u32 {
-    2 ** (parity_width - 1) - parity_width
+    std::upow(u32:2, parity_width - u32:1) - parity_width
 }
 
 fn get_message_width(data_width: u32, parity_width: u32) -> u32 {
-    min(2 ** data_width.log2(), _get_max_message_width(parity_width))
+    let data_width_rounded_up_to_nearest_pow2 = std::upow(u32:2, std::clog2(data_width));
+    std::min(data_width_rounded_up_to_nearest_pow2, _get_max_message_width(parity_width))
 }
 
 fn br_ecc_secded_encoder_xls<DATA_WIDTH: u32, PARITY_WIDTH: u32>(data: bits[DATA_WIDTH]) -> bits[DATA_WIDTH + PARITY_WIDTH] {
     const MESSAGE_WIDTH: u32 = get_message_width(DATA_WIDTH, PARITY_WIDTH);
     const CODEWORD_WIDTH: u32 = MESSAGE_WIDTH + PARITY_WIDTH;
 
-    let message = data as bits[MESSAGE_WIDTH];
+    let m = data as bits[MESSAGE_WIDTH];
     let parity = match (CODEWORD_WIDTH, MESSAGE_WIDTH) {
         (8, 4) => {
-          {{ secded_enc_8_4 }}
-        }
+{{ secded_enc_8_4 }}
+        },
         (13, 8) => {
-          {{ secded_enc_13_8 }}
-        }
+{{ secded_enc_13_8 }}
+        },
         (16, 11) => {
-          {{ secded_enc_16_11 }}
-        }
+{{ secded_enc_16_11 }}
+        },
         (22, 16) => {
-          {{ secded_enc_22_16 }}
-        }
+{{ secded_enc_22_16 }}
+        },
         (32, 26) => {
-          {{ secded_enc_32_26 }}
-        }
+{{ secded_enc_32_26 }}
+        },
         (39, 32) => {
-          {{ secded_enc_39_32 }}
-        }
+{{ secded_enc_39_32 }}
+        },
         (64, 57) => {
-          {{ secded_enc_64_57 }}
-        }
+{{ secded_enc_64_57 }}
+        },
         (72, 64) => {
-          {{ secded_enc_72_64 }}
-        }
+{{ secded_enc_72_64 }}
+        },
         (128, 120) => {
-          {{ secded_enc_128_120 }}
-        }
+{{ secded_enc_128_120 }}
+        },
         (137, 128) => {
-          {{ secded_enc_137_128 }}
-        }
+{{ secded_enc_137_128 }}
+        },
         (256, 247) => {
-          {{ secded_enc_256_247 }}
-        }
+{{ secded_enc_256_247 }}
+        },
         (266, 256) => {
-          {{ secded_enc_266_256 }}
-        }
+{{ secded_enc_266_256 }}
+        },
         (512, 502) => {
-          {{ secded_enc_512_502 }}
-        }
+{{ secded_enc_512_502 }}
+        },
         (523, 512) => {
-          {{ secded_enc_523_512 }}
-        }
+{{ secded_enc_523_512 }}
+        },
         (1024, 1013) => {
-          {{ secded_enc_1024_1013 }}
-        }
+{{ secded_enc_1024_1013 }}
+        },
         (1036, 1024) => {
-          {{ secded_enc_1036_1024 }}
-        }
-        _ => fail!("Unsupported combination of CODEWORD_WIDTH and PARITY_WIDTH: {} and {}", CODEWORD_WIDTH, PARITY_WIDTH)
+{{ secded_enc_1036_1024 }}
+        },
+        _ => fail!("unsupported_combination_of_CODEWORD_WIDTH_and_PARITY_WIDTH", uN[PARITY_WIDTH]:0)
     };
 
-    let codeword = parity ++ message;
+    let codeword = parity ++ m;
     (data, parity, codeword)
 }

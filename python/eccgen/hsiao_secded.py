@@ -22,6 +22,7 @@ References:
 
 import numpy as np
 import math
+import textwrap
 from itertools import combinations
 
 # Ideally this would be infinity, but the optimal algorithm is prohibitively slow for large k.
@@ -313,17 +314,17 @@ def decode_message(
     return (c[:k], False, True)
 
 
-def G_col_to_sv(col: np.ndarray, col_idx: int) -> str:
-    """Generate a Verilog RTL assignment for a single column of the generator matrix G."""
-    xors = []
-    nonzero_indices = np.nonzero(col)[0]
-    for i in nonzero_indices:
-        xors.append(f"m[{i}]")
-    return f"    assign parity[{col_idx}] = " + " ^ ".join(xors) + ";"
-
-
 def G_to_sv(G: np.ndarray) -> str:
     """Generate Verilog RTL code for the given generator matrix G."""
+
+    def G_col_to_sv(col: np.ndarray, col_idx: int) -> str:
+        """Generate a Verilog RTL assignment for a single column of the generator matrix G."""
+        xors = []
+        nonzero_indices = np.nonzero(col)[0]
+        for i in nonzero_indices:
+            xors.append(f"m[{i}]")
+        return f"    assign parity[{col_idx}] = " + " ^ ".join(xors) + ";"
+
     assigns = []
     # Since we know G is in systematic form, we can just assign the message bits to the codeword bits.
     # We don't need to codegen that part.
@@ -332,6 +333,32 @@ def G_to_sv(G: np.ndarray) -> str:
     for i in range(r):
         assigns.append(G_col_to_sv(G[:, k + i], i))
     return "\n".join(assigns)
+
+
+def G_to_x(G: np.ndarray) -> str:
+    """Generate DSLX code for the given generator matrix G."""
+
+    def G_col_to_x(col: np.ndarray, col_idx: int) -> str:
+        """Generate a DSLX assignment for a single column of the generator matrix G."""
+        xors = []
+        nonzero_indices = np.nonzero(col)[0]
+        for i in nonzero_indices:
+            xors.append(f"m[{i}]")
+        return f"            let parity_{col_idx} = " + " ^ ".join(xors) + ";"
+
+    let_parity_bit = []
+    # Since we know G is in systematic form, we can just assign the message bits to the codeword bits.
+    # We don't need to codegen that part.
+    k = G.shape[0]
+    r = get_r(k)
+    for i in range(r):
+        let_parity_bit.append(G_col_to_x(G[:, k + i], i))
+    expr = []
+    for i in range(r):
+        expr.append(f"parity_{r - i - 1}")
+    expr = " ++ ".join(expr)
+    expr = textwrap.indent(expr, " " * 12)
+    return "\n".join(let_parity_bit + [expr])
 
 
 def syndrome_bit_to_sv(row: np.ndarray, row_idx: int) -> str:

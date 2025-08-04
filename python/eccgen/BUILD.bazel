@@ -28,6 +28,7 @@ py_binary(
     data = [
         "br_ecc_secded_decoder.sv.jinja2",
         "br_ecc_secded_encoder.sv.jinja2",
+        "br_ecc_secded_encoder.x.jinja2",
     ],
     deps = [
         ":hsiao_secded",

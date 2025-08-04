@@ -27,6 +27,12 @@ use_repo(rules_hdl_extension, "rules_hdl")
 bazel_dep(name = "stardoc", version = "0.8.0")
 bazel_dep(name = "rules_python", version = "1.2.0-rc0")
 bazel_dep(name = "bazel_skylib", version = "1.7.1")
+bazel_dep(name = "rules_xlsynth", version = "0.0.0")  # placeholder version
+git_override(
+    module_name = "rules_xlsynth",
+    commit = "a6e36b3d6f938706969398a2400efebfbe7b7843",
+    remote = "https://github.com/xlsynth/rules_xlsynth",
+)
 
 python = use_extension("@rules_python//python/extensions:python.bzl", "python")
 python.toolchain(python_version = "3.12")

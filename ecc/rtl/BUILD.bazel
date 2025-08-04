@@ -15,6 +15,7 @@
 load("@bazel_skylib//rules:diff_test.bzl", "diff_test")
 load("@bazel_skylib//rules:write_file.bzl", "write_file")
 load("@rules_hdl//verilog:providers.bzl", "verilog_library")
+load("@rules_xlsynth//:rules.bzl", "dslx_library", "dslx_test")
 load("//bazel:br_verilog.bzl", "br_verilog_elab_and_lint_test_suite")
 
 package(default_visibility = ["//visibility:public"])
@@ -157,6 +158,16 @@ verilog_library(
     for k in K
 ]
 
+dslx_library(
+    name = "br_ecc_secded_encoder_xls",
+    srcs = ["br_ecc_secded_encoder.x"],
+)
+
+dslx_test(
+    name = "br_ecc_secded_encoder_xls_test",
+    deps = [":br_ecc_secded_encoder_xls"],
+)
+
 # Diff test and codegen
 diff_test(
     name = "br_ecc_secded_encoder_diff_test",
@@ -182,18 +193,22 @@ genrule(
     name = "gen_secded",
     srcs = [
         "//python/eccgen:br_ecc_secded_encoder.sv.jinja2",
+        "//python/eccgen:br_ecc_secded_encoder.x.jinja2",
         "//python/eccgen:br_ecc_secded_decoder.sv.jinja2",
     ],
     outs = [
         "gen_br_ecc_secded_encoder.sv",
+        "gen_br_ecc_secded_encoder.x",
         "gen_br_ecc_secded_decoder.sv",
     ],
     cmd = "$(location //python/eccgen:eccgen) \
         --scheme=hsiao_secded \
-        --rtl-encoder-template=$(location //python/eccgen:br_ecc_secded_encoder.sv.jinja2) \
-        --rtl-encoder-output=$(location gen_br_ecc_secded_encoder.sv) \
-        --rtl-decoder-template=$(location //python/eccgen:br_ecc_secded_decoder.sv.jinja2) \
-        --rtl-decoder-output=$(location gen_br_ecc_secded_decoder.sv)",
+        --sv-encoder-template=$(location //python/eccgen:br_ecc_secded_encoder.sv.jinja2) \
+        --sv-encoder-output=$(location gen_br_ecc_secded_encoder.sv) \
+        --sv-decoder-template=$(location //python/eccgen:br_ecc_secded_decoder.sv.jinja2) \
+        --sv-decoder-output=$(location gen_br_ecc_secded_decoder.sv) \
+        --x-encoder-template=$(location //python/eccgen:br_ecc_secded_encoder.x.jinja2) \
+        --x-encoder-output=$(location gen_br_ecc_secded_encoder.x)",
     tools = ["//python/eccgen"],
 )
 
@@ -204,6 +219,7 @@ write_file(
         "#!/usr/bin/env bash",
         "cd $BUILD_WORKSPACE_DIRECTORY",
         "cp -fv bazel-bin/ecc/rtl/gen_br_ecc_secded_encoder.sv ecc/rtl/br_ecc_secded_encoder.sv",
+        "cp -fv bazel-bin/ecc/rtl/gen_br_ecc_secded_encoder.x ecc/rtl/br_ecc_secded_encoder.x",
         "cp -fv bazel-bin/ecc/rtl/gen_br_ecc_secded_decoder.sv ecc/rtl/br_ecc_secded_decoder.sv",
     ],
 )
@@ -214,7 +230,9 @@ sh_binary(
     data = [
         "br_ecc_secded_decoder.sv",
         "br_ecc_secded_encoder.sv",
+        "br_ecc_secded_encoder.x",
         ":gen_br_ecc_secded_decoder.sv",
         ":gen_br_ecc_secded_encoder.sv",
+        ":gen_br_ecc_secded_encoder.x",
     ],
 )

@@ -17,12 +17,14 @@ from python.eccgen.hsiao_secded import (
     hsiao_secded_code,
     check_construction,
     G_to_sv,
+    G_to_x,
     syndrome_to_sv,
     H_to_sv,
     MAX_K_FOR_OPTIMAL_ALGORITHM,
 )
 import numpy as np
 from jinja2 import Template
+from typing import Optional
 
 RTL_SUPPORTED_N_K = [
     (8, 4),
@@ -57,6 +59,43 @@ def sv_jinja2_file(filename: str) -> str:
     return check_filename_extension(filename, (".sv.jinja2"))
 
 
+def x_jinja2_file(filename: str) -> str:
+    return check_filename_extension(filename, (".x.jinja2"))
+
+
+def render_encoder_jinja2_template(
+    codes, G_codegen, template_file: Optional[str], output_file: str
+) -> None:
+    if not template_file:
+        raise ValueError("Template file is required to generate the encoder.")
+    with open(template_file, "r") as template_file:
+        template = Template(template_file.read())
+        mapping = {}
+        for k in codes:
+            r, n, H, G = codes[k]
+            mapping[f"secded_enc_{n}_{k}"] = G_codegen(G)
+        rendered = template.render(mapping)
+        rendered += "\n"
+        output_file.write(rendered)
+
+
+def render_decoder_jinja2_template(
+    codes, H_codegen, syndrome_codegen, template_file: Optional[str], output_file: str
+) -> None:
+    if not template_file:
+        raise ValueError("Template file is required to generate the decoder.")
+    with open(template_file, "r") as template_file:
+        template = Template(template_file.read())
+        mapping = {}
+        for k in codes:
+            r, n, H, G = codes[k]
+            mapping[f"secded_dec_syndrome_{n}_{k}"] = syndrome_codegen(H)
+            mapping[f"secded_dec_H_{n}_{k}"] = H_codegen(H)
+        rendered = template.render(mapping)
+        rendered += "\n"
+        output_file.write(rendered)
+
+
 def main():
     parser = argparse.ArgumentParser(description="Error Correction Code Generator")
     parser.add_argument(
@@ -87,25 +126,49 @@ def main():
         help="The output file to write the parity check matrix to",
     )
     parser.add_argument(
-        "--rtl-encoder-template",
+        "--sv-encoder-template",
         type=sv_jinja2_file,
         required=False,
         help="The input file containing the Jinja2 SystemVerilog RTL code template for the encoder.",
     )
     parser.add_argument(
-        "--rtl-encoder-output",
+        "--sv-encoder-output",
         type=argparse.FileType("w"),
         required=False,
         help="Dump the encoder implementation for all supported codes to the provided output file.",
     )
     parser.add_argument(
-        "--rtl-decoder-template",
+        "--sv-decoder-template",
         type=sv_jinja2_file,
         required=False,
         help="The input file containing the Jinja2 SystemVerilog RTL code template for the decoder.",
     )
     parser.add_argument(
-        "--rtl-decoder-output",
+        "--sv-decoder-output",
+        type=argparse.FileType("w"),
+        required=False,
+        help="Dump the decoder implementation for all supported codes to the provided output file.",
+    )
+    parser.add_argument(
+        "--x-encoder-template",
+        type=x_jinja2_file,
+        required=False,
+        help="The input file containing the Jinja2 DSLX code template for the encoder.",
+    )
+    parser.add_argument(
+        "--x-encoder-output",
+        type=argparse.FileType("w"),
+        required=False,
+        help="Dump the encoder implementation for all supported codes to the provided output file.",
+    )
+    parser.add_argument(
+        "--x-decoder-template",
+        type=x_jinja2_file,
+        required=False,
+        help="The input file containing the Jinja2 DSLX code template for the decoder.",
+    )
+    parser.add_argument(
+        "--x-decoder-output",
         type=argparse.FileType("w"),
         required=False,
         help="Dump the decoder implementation for all supported codes to the provided output file.",
@@ -153,51 +216,48 @@ def main():
                 )
             did_something = True
 
-        if args.rtl_encoder_output or args.rtl_decoder_output:
-            codes = {}
+        codes = {}
+        if (
+            args.sv_encoder_output
+            or args.sv_decoder_output
+            or args.x_encoder_output
+            or args.x_decoder_output
+        ):
+            did_something = True
             for n, k in RTL_SUPPORTED_N_K:
                 r, n, H, G = hsiao_secded_code(k)
                 # Don't bother checking the construction, we already cover all of the RTL
                 # supported combinations in hsiao_secded_test.py.
                 codes[k] = (r, n, H, G)
 
-            if args.rtl_encoder_output:
-                if not args.rtl_encoder_template:
-                    raise ValueError(
-                        "RTL encoder template file is required to generate the encoder."
-                    )
-                with open(args.rtl_encoder_template, "r") as template_file:
-                    template = Template(template_file.read())
-                    mapping = {}
-                    for k in codes:
-                        r, n, H, G = codes[k]
-                        mapping[f"secded_enc_{n}_{k}"] = G_to_sv(G)
-                    rendered = template.render(mapping)
-                    rendered += "\n"
-                    args.rtl_encoder_output.write(rendered)
-
-            if args.rtl_decoder_output:
-                if not args.rtl_decoder_template:
-                    raise ValueError(
-                        "RTL decoder template file is required to generate the decoder."
-                    )
-
-                with open(args.rtl_decoder_template, "r") as template_file:
-                    template = Template(template_file.read())
-                    mapping = {}
-                    for k in codes:
-                        r, n, H, G = codes[k]
-                        mapping[f"secded_dec_syndrome_{n}_{k}"] = syndrome_to_sv(H)
-                        mapping[f"secded_dec_H_{n}_{k}"] = H_to_sv(H)
-                    rendered = template.render(mapping)
-                    rendered += "\n"
-                    args.rtl_decoder_output.write(rendered)
-
-            did_something = True
+        if args.sv_encoder_output:
+            render_encoder_jinja2_template(
+                codes, G_to_sv, args.sv_encoder_template, args.sv_encoder_output
+            )
+        if args.sv_decoder_output:
+            render_decoder_jinja2_template(
+                codes,
+                H_to_sv,
+                syndrome_to_sv,
+                args.sv_decoder_template,
+                args.sv_decoder_output,
+            )
+        if args.x_encoder_output:
+            render_encoder_jinja2_template(
+                codes, G_to_x, args.x_encoder_template, args.x_encoder_output
+            )
+        if args.x_decoder_output:
+            render_decoder_jinja2_template(
+                codes,
+                H_to_sv,
+                syndrome_to_sv,
+                args.x_decoder_template,
+                args.x_decoder_output,
+            )
 
         if not did_something:
             raise ValueError(
-                "Either --k or --rtl-encoder-output or --rtl-decoder-output must be provided for Hsiao SEC-DED code generation."
+                "One of --k, --sv-encoder-output, --sv-decoder-output, --x-encoder-output or --x-decoder-output must be provided for Hsiao SEC-DED code generation."
             )
 
 
