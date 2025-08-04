@@ -13,6 +13,7 @@
 # limitations under the License.
 
 load("@rules_hdl//verilog:providers.bzl", "verilog_library")
+load("@rules_xlsynth//:rules.bzl", "dslx_library", "dslx_test")
 load("//bazel:br_verilog.bzl", "br_verilog_sim_test_tools_suite")
 load("//bazel:verilog.bzl", "verilog_elab_test")
 
@@ -110,3 +111,17 @@ K = [
     )
     for k in K
 ]
+
+dslx_library(
+    name = "br_ecc_secded_encoder_decoder_xls_test",
+    srcs = ["br_ecc_secded_encoder_decoder_xls_test.x"],
+)
+
+dslx_test(
+    name = "br_ecc_secded_encoder_decoder_xls_test_actual",
+    deps = [
+        ":br_ecc_secded_encoder_decoder_xls_test",
+        "//ecc/rtl:br_ecc_secded_decoder_xls",
+        "//ecc/rtl:br_ecc_secded_encoder_xls",
+    ],
+)

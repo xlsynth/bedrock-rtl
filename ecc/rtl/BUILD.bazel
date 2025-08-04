@@ -15,7 +15,7 @@
 load("@bazel_skylib//rules:diff_test.bzl", "diff_test")
 load("@bazel_skylib//rules:write_file.bzl", "write_file")
 load("@rules_hdl//verilog:providers.bzl", "verilog_library")
-load("@rules_xlsynth//:rules.bzl", "dslx_library", "dslx_test")
+load("@rules_xlsynth//:rules.bzl", "dslx_library")
 load("//bazel:br_verilog.bzl", "br_verilog_elab_and_lint_test_suite")
 
 package(default_visibility = ["//visibility:public"])
@@ -163,19 +163,9 @@ dslx_library(
     srcs = ["br_ecc_secded_encoder.x"],
 )
 
-dslx_test(
-    name = "br_ecc_secded_encoder_xls_test",
-    deps = [":br_ecc_secded_encoder_xls"],
-)
-
 dslx_library(
     name = "br_ecc_secded_decoder_xls",
     srcs = ["br_ecc_secded_decoder.x"],
-)
-
-dslx_test(
-    name = "br_ecc_secded_decoder_xls_test",
-    deps = [":br_ecc_secded_decoder_xls"],
 )
 
 # Diff test and codegen
