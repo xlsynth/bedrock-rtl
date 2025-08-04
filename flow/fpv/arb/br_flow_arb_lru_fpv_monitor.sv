@@ -49,7 +49,8 @@ module br_flow_arb_lru_fpv_monitor #(
 
   // ----------LRU checks----------
   lru_basic_fpv_monitor #(
-      .NumRequesters(NumFlows)
+      .NumRequesters(NumFlows),
+      .EnableCoverRequestMultihot(EnableCoverPushBackpressure)
   ) lru_check (
       .clk,
       .rst,

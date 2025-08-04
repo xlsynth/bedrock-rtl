@@ -95,7 +95,9 @@ module br_flow_arb_core #(
   br_flow_checks_valid_data_impl #(
       .NumFlows(1),
       .Width(1),
-      .EnableCoverBackpressure(1),
+      // Since push_ready can only be true if pop_ready is,
+      // pop side can only have backpressure if push side has backpressure.
+      .EnableCoverBackpressure(EnableCoverPushBackpressure),
       .EnableAssertValidStability(EnableAssertPushValidStability),
       // Data is always stable when valid is stable since it is constant.
       .EnableAssertDataStability(EnableAssertPushValidStability),
