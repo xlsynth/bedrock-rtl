@@ -43,10 +43,10 @@ module br_flow_reg_none #(
     parameter bit EnableCoverPushBackpressure = 1,
     // If 1, assert that push_valid is stable when backpressured.
     // If 0, cover that push_valid can be unstable.
-    parameter bit EnableAssertPushValidStability = 1,
+    parameter bit EnableAssertPushValidStability = EnableCoverPushBackpressure,
     // If 1, assert that push_data is stable when backpressured.
     // If 0, cover that push_data can be unstable.
-    parameter bit EnableAssertPushDataStability = 1,
+    parameter bit EnableAssertPushDataStability = EnableAssertPushValidStability,
     // If 1, assert that push_data is always known (not X) when push_valid is asserted.
     parameter bit EnableAssertPushDataKnown = 1,
     // If 1, then assert there are no valid bits asserted at the end of the test.
@@ -116,12 +116,10 @@ module br_flow_reg_none #(
   br_flow_checks_valid_data_impl #(
       .NumFlows(1),
       .Width(Width),
-      // TODO(obowen): This matches the other flow_regs, but check it makes sense.
       .EnableCoverBackpressure(1),
-      // If the push interface is unstable, the pop interface will be unstable too,
-      // because there are combinational paths on valid and data.
-      .EnableAssertValidStability(EnableAssertPushValidStability),
-      .EnableAssertDataStability(EnableAssertPushDataStability),
+      // Buffer stages ensure that pop_valid/data is stable even if push isn't
+      .EnableAssertValidStability(1),
+      .EnableAssertDataStability(1),
       .EnableAssertFinalNotValid(EnableAssertFinalNotValid)
   ) br_flow_checks_valid_data_impl (
       .clk,

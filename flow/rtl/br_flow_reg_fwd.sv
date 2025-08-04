@@ -40,10 +40,10 @@ module br_flow_reg_fwd #(
     parameter bit EnableCoverPushBackpressure = 1,
     // If 1, assert that push_valid is stable when backpressured.
     // If 0, cover that push_valid can be unstable.
-    parameter bit EnableAssertPushValidStability = 1,
+    parameter bit EnableAssertPushValidStability = EnableCoverPushBackpressure,
     // If 1, assert that push_data is stable when backpressured.
     // If 0, cover that push_data can be unstable.
-    parameter bit EnableAssertPushDataStability = 1,
+    parameter bit EnableAssertPushDataStability = EnableAssertPushValidStability,
     // If 1, assert that push_data is always known (not X) when push_valid is asserted.
     parameter bit EnableAssertPushDataKnown = 1,
     // If 1, then assert there are no valid bits asserted at the end of the test.
