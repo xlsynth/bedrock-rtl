@@ -95,7 +95,7 @@ module br_flow_fork #(
   br_flow_checks_valid_data_impl #(
       .NumFlows(NumFlows),
       .Width(1),
-      .EnableCoverBackpressure(1),
+      .EnableCoverBackpressure(EnableCoverPushBackpressure),
       // We know that the pop valids can be unstable.
       .EnableAssertValidStability(0),
       .EnableAssertFinalNotValid(EnableAssertFinalNotValid)

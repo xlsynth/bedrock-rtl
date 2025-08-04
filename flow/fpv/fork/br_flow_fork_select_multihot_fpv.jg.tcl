@@ -17,9 +17,5 @@ clock clk
 reset rst
 get_design_info
 
-# select aligns with push interface
-cover -disable {*}
-cover -enable {br_flow_fork_select_multihot.monitor*}
-
 # prove command
 prove -all
