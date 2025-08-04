@@ -19,7 +19,9 @@ from python.eccgen.hsiao_secded import (
     G_to_sv,
     G_to_x,
     syndrome_to_sv,
+    syndrome_to_x,
     H_to_sv,
+    H_to_x,
     MAX_K_FOR_OPTIMAL_ALGORITHM,
 )
 import numpy as np
@@ -249,8 +251,8 @@ def main():
         if args.x_decoder_output:
             render_decoder_jinja2_template(
                 codes,
-                H_to_sv,
-                syndrome_to_sv,
+                H_to_x,
+                syndrome_to_x,
                 args.x_decoder_template,
                 args.x_decoder_output,
             )

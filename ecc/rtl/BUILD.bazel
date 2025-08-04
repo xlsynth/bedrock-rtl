@@ -168,6 +168,16 @@ dslx_test(
     deps = [":br_ecc_secded_encoder_xls"],
 )
 
+dslx_library(
+    name = "br_ecc_secded_decoder_xls",
+    srcs = ["br_ecc_secded_decoder.x"],
+)
+
+dslx_test(
+    name = "br_ecc_secded_decoder_xls_test",
+    deps = [":br_ecc_secded_decoder_xls"],
+)
+
 # Diff test and codegen
 diff_test(
     name = "br_ecc_secded_encoder_diff_test",
@@ -195,11 +205,13 @@ genrule(
         "//python/eccgen:br_ecc_secded_encoder.sv.jinja2",
         "//python/eccgen:br_ecc_secded_encoder.x.jinja2",
         "//python/eccgen:br_ecc_secded_decoder.sv.jinja2",
+        "//python/eccgen:br_ecc_secded_decoder.x.jinja2",
     ],
     outs = [
         "gen_br_ecc_secded_encoder.sv",
         "gen_br_ecc_secded_encoder.x",
         "gen_br_ecc_secded_decoder.sv",
+        "gen_br_ecc_secded_decoder.x",
     ],
     cmd = "$(location //python/eccgen:eccgen) \
         --scheme=hsiao_secded \
@@ -208,7 +220,9 @@ genrule(
         --sv-decoder-template=$(location //python/eccgen:br_ecc_secded_decoder.sv.jinja2) \
         --sv-decoder-output=$(location gen_br_ecc_secded_decoder.sv) \
         --x-encoder-template=$(location //python/eccgen:br_ecc_secded_encoder.x.jinja2) \
-        --x-encoder-output=$(location gen_br_ecc_secded_encoder.x)",
+        --x-encoder-output=$(location gen_br_ecc_secded_encoder.x) \
+        --x-decoder-template=$(location //python/eccgen:br_ecc_secded_decoder.x.jinja2) \
+        --x-decoder-output=$(location gen_br_ecc_secded_decoder.x)",
     tools = ["//python/eccgen"],
 )
 
@@ -221,6 +235,7 @@ write_file(
         "cp -fv bazel-bin/ecc/rtl/gen_br_ecc_secded_encoder.sv ecc/rtl/br_ecc_secded_encoder.sv",
         "cp -fv bazel-bin/ecc/rtl/gen_br_ecc_secded_encoder.x ecc/rtl/br_ecc_secded_encoder.x",
         "cp -fv bazel-bin/ecc/rtl/gen_br_ecc_secded_decoder.sv ecc/rtl/br_ecc_secded_decoder.sv",
+        "cp -fv bazel-bin/ecc/rtl/gen_br_ecc_secded_decoder.x ecc/rtl/br_ecc_secded_decoder.x",
     ],
 )
 
@@ -229,9 +244,11 @@ sh_binary(
     srcs = [":update_secded.sh"],
     data = [
         "br_ecc_secded_decoder.sv",
+        "br_ecc_secded_decoder.x",
         "br_ecc_secded_encoder.sv",
         "br_ecc_secded_encoder.x",
         ":gen_br_ecc_secded_decoder.sv",
+        ":gen_br_ecc_secded_decoder.x",
         ":gen_br_ecc_secded_encoder.sv",
         ":gen_br_ecc_secded_encoder.x",
     ],

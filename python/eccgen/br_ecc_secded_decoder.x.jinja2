@@ -1,0 +1,158 @@
+// Copyright 2024-2025 The Bedrock-RTL Authors
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// Copyright 2024-2025 The Bedrock-RTL Authors
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+import std;
+
+fn _get_max_message_width(parity_width: u32) -> u32 {
+    std::upow(u32:2, parity_width - u32:1) - parity_width
+}
+
+fn get_message_width(data_width: u32, parity_width: u32) -> u32 {
+    let data_width_rounded_up_to_nearest_pow2 = std::upow(u32:2, std::clog2(data_width));
+    std::min(data_width_rounded_up_to_nearest_pow2, _get_max_message_width(parity_width))
+}
+
+fn get_parity_width(message_width: u32) -> u32 {
+    match (message_width) {
+      u32:4 => u32:4,
+      u32:5..=u32:11 => u32:5,
+      u32:12..=u32:26 => u32:6,
+      u32:27..=u32:57 => u32:7,
+      u32:58..=u32:120 => u32:8,
+      u32:121..=u32:247 => u32:9,
+      u32:248..=u32:502 => u32:10,
+      u32:503..=u32:1013 => u32:11,
+      u32:1014..=u32:1024 => u32:12,
+      _ => fail!("unsupported_message_width", u32:0)
+    }
+}
+
+// Returns (codeword, error_ce, error_due, syndrome, data)
+fn br_ecc_secded_encoder_xls<DATA_WIDTH: u32, PARITY_WIDTH: u32, CODEWORD_WIDTH: u32>(data: bits[DATA_WIDTH], parity: bits[PARITY_WIDTH]) -> (bits[CODEWORD_WIDTH], u1, u1, bits[PARITY_WIDTH], bits[DATA_WIDTH]) {
+    const INPUT_WIDTH: u32 = DATA_WIDTH + PARITY_WIDTH;
+    const MESSAGE_WIDTH: u32 = get_message_width(DATA_WIDTH, PARITY_WIDTH);
+    assert!(CODEWORD_WIDTH == MESSAGE_WIDTH + PARITY_WIDTH);
+    const PAD_WIDTH: u32 = MESSAGE_WIDTH - DATA_WIDTH;
+
+    let pad = uN[PAD_WIDTH]:0;
+    let cw = parity ++ pad ++ data;
+
+    let (syndrome, parity_check_matrix) = match (CODEWORD_WIDTH, MESSAGE_WIDTH) {
+        (8, 4) => {
+{{ secded_dec_syndrome_8_4 }}
+{{ secded_dec_H_8_4 }}
+            (syndrome, parity_check_matrix)
+        },
+        (13, 8) => {
+{{ secded_dec_syndrome_13_8 }}
+{{ secded_dec_H_13_8 }}
+            (syndrome, parity_check_matrix)
+        },
+        (16, 11) => {
+{{ secded_dec_syndrome_16_11 }}
+{{ secded_dec_H_16_11 }}
+            (syndrome, parity_check_matrix)
+        },
+        (22, 16) => {
+{{ secded_dec_syndrome_22_16 }}
+{{ secded_dec_H_22_16 }}
+            (syndrome, parity_check_matrix)
+        },
+        (32, 26) => {
+{{ secded_dec_syndrome_32_26 }}
+{{ secded_dec_H_32_26 }}
+            (syndrome, parity_check_matrix)
+        },
+        (39, 32) => {
+{{ secded_dec_syndrome_39_32 }}
+{{ secded_dec_H_39_32 }}
+            (syndrome, parity_check_matrix)
+        },
+        (64, 57) => {
+{{ secded_dec_syndrome_64_57 }}
+{{ secded_dec_H_64_57 }}
+            (syndrome, parity_check_matrix)
+        },
+        (72, 64) => {
+{{ secded_dec_syndrome_72_64 }}
+{{ secded_dec_H_72_64 }}
+            (syndrome, parity_check_matrix)
+        },
+        (128, 120) => {
+{{ secded_dec_syndrome_128_120 }}
+{{ secded_dec_H_128_120 }}
+            (syndrome, parity_check_matrix)
+        },
+        (137, 128) => {
+{{ secded_dec_syndrome_137_128 }}
+{{ secded_dec_H_137_128 }}
+            (syndrome, parity_check_matrix)
+        },
+        (256, 247) => {
+{{ secded_dec_syndrome_256_247 }}
+{{ secded_dec_H_256_247 }}
+            (syndrome, parity_check_matrix)
+        },
+        (266, 256) => {
+{{ secded_dec_syndrome_266_256 }}
+{{ secded_dec_H_266_256 }}
+            (syndrome, parity_check_matrix)
+        },
+        (512, 502) => {
+{{ secded_dec_syndrome_512_502 }}
+{{ secded_dec_H_512_502 }}
+            (syndrome, parity_check_matrix)
+        },
+        (523, 512) => {
+{{ secded_dec_syndrome_523_512 }}
+{{ secded_dec_H_523_512 }}
+            (syndrome, parity_check_matrix)
+        },
+        (1024, 1013) => {
+{{ secded_dec_syndrome_1024_1013 }}
+{{ secded_dec_H_1024_1013 }}
+            (syndrome, parity_check_matrix)
+        },
+        (1036, 1024) => {
+{{ secded_dec_syndrome_1036_1024 }}
+{{ secded_dec_H_1036_1024 }}
+            (syndrome, parity_check_matrix)
+        },
+        _ => fail!("unsupported_combination_of_CODEWORD_WIDTH_and_MESSAGE_WIDTH", uN[PARITY_WIDTH]:0)
+    };
+
+    let syndrome_parity  = xor_reduce(syndrome);
+    let syndrome_is_zero = syndrome == 0;
+    let syndrome_is_even = !syndrome_parity;
+    let syndrome_is_odd  = syndrome_parity;
+
+    let due_even = !syndrome_is_zero && syndrome_is_even;
+    let h_column_match =
+    for (i, acc): (u32, bool[CODEWORD_WIDTH]) in u32:0..CODEWORD_WIDTH {
+        let eq = syndrome == parity_check_matrix[i];
+        update(acc, i, eq)
+    }(bool[CODEWORD_WIDTH]:[false, ...]);
+
+    let due_odd = syndrome_is_odd && h_column_match == 0;
+    let due = due_even || due_odd;
+    let ce = syndrome_is_odd && h_column_match != 0;
+
+    let corrected_codeword = cw ^ h_column_match;
+    let data = corrected_codeword[:-DATA_WIDTH];
+
+    (corrected_codeword, due, ce, syndrome, data)
+}

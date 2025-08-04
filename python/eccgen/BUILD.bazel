@@ -27,6 +27,7 @@ py_binary(
     srcs = ["eccgen.py"],
     data = [
         "br_ecc_secded_decoder.sv.jinja2",
+        "br_ecc_secded_decoder.x.jinja2",
         "br_ecc_secded_encoder.sv.jinja2",
         "br_ecc_secded_encoder.x.jinja2",
     ],

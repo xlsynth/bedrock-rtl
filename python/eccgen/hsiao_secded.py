@@ -361,17 +361,17 @@ def G_to_x(G: np.ndarray) -> str:
     return "\n".join(let_parity_bit + [expr])
 
 
-def syndrome_bit_to_sv(row: np.ndarray, row_idx: int) -> str:
-    """Generate a Verilog RTL assignment for a single bit of the syndrome."""
-    xors = []
-    nonzero_indices = np.nonzero(row)[0]
-    for i in nonzero_indices:
-        xors.append(f"cw[{i}]")
-    return f"    assign syndrome[{row_idx}] = " + " ^ ".join(xors) + ";"
-
-
 def syndrome_to_sv(H: np.ndarray) -> str:
     """Generate Verilog RTL code for the syndrome of the given parity-check matrix H."""
+
+    def syndrome_bit_to_sv(row: np.ndarray, row_idx: int) -> str:
+        """Generate a Verilog RTL assignment for a single bit of the syndrome."""
+        xors = []
+        nonzero_indices = np.nonzero(row)[0]
+        for i in nonzero_indices:
+            xors.append(f"cw[{i}]")
+        return f"    assign syndrome[{row_idx}] = " + " ^ ".join(xors) + ";"
+
     assigns = []
     r = H.shape[0]
     for i in range(r):
@@ -380,22 +380,72 @@ def syndrome_to_sv(H: np.ndarray) -> str:
     return "\n".join(assigns)
 
 
-def H_col_to_sv(col: np.ndarray, col_idx: int) -> str:
-    """Generate a Verilog RTL assignment for a single column of the parity-check matrix H."""
-    r = col.shape[0]
-    return (
-        f"    assign parity_check_matrix[{col_idx}] = {r}'b"
-        + "".join(col.astype(str))
-        + ";"
-    )
-
-
 def H_to_sv(H: np.ndarray) -> str:
     """Generate Verilog RTL code for the columns of the given parity-check matrix H."""
+
+    def H_col_to_sv(col: np.ndarray, col_idx: int) -> str:
+        """Generate a Verilog RTL assignment for a single column of the parity-check matrix H."""
+        r = col.shape[0]
+        return (
+            f"    assign parity_check_matrix[{col_idx}] = {r}'b"
+            + "".join(col.astype(str))
+            + ";"
+        )
+
     assigns = []
     for i in range(H.shape[1]):
         assigns.append(H_col_to_sv(H[:, i], i))
     return "\n".join(assigns)
+
+
+def syndrome_to_x(H: np.ndarray) -> str:
+    """Generate DSLX code for the syndrome of the given parity-check matrix H."""
+
+    def syndrome_bit_to_x(row: np.ndarray, row_idx: int) -> str:
+        """Generate a DSLX assignment for a single bit of the syndrome."""
+        xors = []
+        nonzero_indices = np.nonzero(row)[0]
+        for i in nonzero_indices:
+            xors.append(f"cw[{i}]")
+        return f"            let syndrome_{row_idx} = " + " ^ ".join(xors) + ";"
+
+    lets = []
+    r = H.shape[0]
+    for i in range(r):
+        # Reverse row index (r - i - 1)  because row 0 is actually the MSb of the syndrome
+        lets.append(syndrome_bit_to_x(H[i, :], r - i - 1))
+    expr = []
+    for i in range(r):
+        expr.append(f"syndrome_{r - i - 1}")
+    expr = " ++ ".join(expr)
+    expr = "let syndrome = " + expr + ";"
+    expr = textwrap.indent(expr, " " * 12)
+    return "\n".join(lets + [expr])
+
+
+def H_to_x(H: np.ndarray) -> str:
+    """Generate Verilog RTL code for the columns of the given parity-check matrix H."""
+
+    def H_col_to_sv(col: np.ndarray, col_idx: int) -> str:
+        """Generate a Verilog RTL assignment for a single column of the parity-check matrix H."""
+        r = col.shape[0]
+        return (
+            f"            let parity_check_matrix_{col_idx} = u{r}:0b"
+            + "".join(col.astype(str))
+            + ";"
+        )
+
+    lets = []
+    n = H.shape[1]
+    for i in range(n):
+        lets.append(H_col_to_sv(H[:, i], i))
+    expr = []
+    for i in range(n):
+        expr.append(f"parity_check_matrix_{n - i - 1}")
+    expr = " ++ ".join(expr)
+    expr = "let parity_check_matrix = " + expr + ";"
+    expr = textwrap.indent(expr, " " * 12)
+    return "\n".join(lets + [expr])
 
 
 def check_construction(
