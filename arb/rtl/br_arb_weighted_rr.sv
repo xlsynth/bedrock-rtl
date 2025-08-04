@@ -120,8 +120,11 @@ module br_arb_weighted_rr #(
     br_counter #(
         .MaxValue(MaxAccumulatedWeight),
         .MaxChange(MaxWeight),
+        .MaxDecrement(1),
         .EnableSaturate(1),
-        .EnableWrap(0)
+        .EnableWrap(0),
+        .EnableCoverZeroChange(0),
+        .EnableCoverReinit(0)
     ) br_counter (
         .clk,
         .rst,
