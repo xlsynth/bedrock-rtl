@@ -41,7 +41,10 @@ module br_flow_mux_fixed_fpv_monitor #(
       .Width(Width),
       .EnableCoverPushBackpressure(EnableCoverPushBackpressure),
       .EnableAssertPushValidStability(EnableAssertPushValidStability),
-      .EnableAssertPushDataStability(EnableAssertPushDataStability)
+      .EnableAssertPushDataStability(EnableAssertPushDataStability),
+      .EnableCoverPopBackpressure(EnableCoverPushBackpressure),
+      // Pop data can never be stable
+      .EnableAssertPopDataStability(0)
   ) fv_checker (
       .clk,
       .rst,
@@ -59,10 +62,14 @@ module br_flow_mux_fixed_fpv_monitor #(
 
   // ----------Fairness Check----------
   // verilog_lint: waive-start line-length
-  `BR_ASSERT(
-      strict_priority_a,
-      (i < j) && push_valid[i] && push_valid[j] |-> (pop_data_unstable == push_data[i]) || !push_ready[i])
+  if (EnableCoverPushBackpressure) begin : gen_strict_priority_check
+    `BR_ASSERT(strict_priority_a,
+               (i < j) && push_valid[i] && push_valid[j] |-> (pop_data_unstable == push_data[i]) || !push_ready[i])
+  end else begin : gen_no_conflict_check
+    `BR_ASSERT(no_conflict_a, i != j |-> !(push_valid[i] && push_valid[j]))
+  end
   // verilog_lint: waive-stop line-length
+
 endmodule : br_flow_mux_fixed_fpv_monitor
 
 bind br_flow_mux_fixed br_flow_mux_fixed_fpv_monitor #(

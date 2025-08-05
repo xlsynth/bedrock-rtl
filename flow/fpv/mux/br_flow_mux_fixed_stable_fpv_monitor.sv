@@ -42,7 +42,11 @@ module br_flow_mux_fixed_stable_fpv_monitor #(
       .Width(Width),
       .EnableCoverPushBackpressure(EnableCoverPushBackpressure),
       .EnableAssertPushValidStability(EnableAssertPushValidStability),
-      .EnableAssertPushDataStability(EnableAssertPushDataStability)
+      .EnableAssertPushDataStability(EnableAssertPushDataStability),
+      .EnableCoverPopBackpressure(1),
+      .EnableAssertPopValidStability(1),
+      .EnableAssertPopDataStability(1),
+      .DelayedGrant(1)
   ) fv_checker (
       .clk,
       .rst,
@@ -59,11 +63,18 @@ module br_flow_mux_fixed_stable_fpv_monitor #(
   `BR_FV_2RAND_IDX(i, j, NumFlows)
 
   // ----------Fairness Check----------
-  `BR_ASSERT(strict_priority_a, (i < j) && push_valid[i] && push_valid[j] |=> (pop_data == $past
-                                (push_data[i])) || !$past(pop_ready) || !$past(push_ready[i]))
-
-  // ----------Forward Progress Check----------
-  `BR_ASSERT(must_grant_next_cyc_a, |push_valid |=> pop_valid)
+  if (EnableCoverPushBackpressure) begin : gen_fairness_checks
+    `BR_ASSERT(strict_priority_a,
+               (i < j) && push_valid[i] && push_valid[j] |=> (pop_data == $past(
+                   push_data[i]
+               )) || !$past(
+                   pop_ready
+               ) || !$past(
+                   push_ready[i]
+               ))
+  end else begin : gen_no_conflict_checks
+    `BR_ASSERT(no_conflict_a, (i != j) |-> !(push_valid[i] && push_valid[j]))
+  end
 
 endmodule : br_flow_mux_fixed_stable_fpv_monitor
 

@@ -130,7 +130,7 @@ module br_flow_mux_select_unstable #(
   br_flow_checks_valid_data_impl #(
       .NumFlows(1),
       .Width(Width),
-      .EnableCoverBackpressure(1),
+      .EnableCoverBackpressure(EnableCoverPushBackpressure),
       // We know that pop valid and pop data can be unstable.
       .EnableAssertValidStability(0),
       .EnableAssertDataStability(0),
