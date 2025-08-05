@@ -343,7 +343,7 @@ def G_to_x(G: np.ndarray) -> str:
         xors = []
         nonzero_indices = np.nonzero(col)[0]
         for i in nonzero_indices:
-            xors.append(f"m[{i}]")
+            xors.append(f"m[{i}+:u1]")
         return f"            let parity_{col_idx} = " + " ^ ".join(xors) + ";"
 
     let_parity_bit = []

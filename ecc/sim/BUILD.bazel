@@ -115,13 +115,13 @@ K = [
 dslx_library(
     name = "br_ecc_secded_encoder_decoder_xls_test",
     srcs = ["br_ecc_secded_encoder_decoder_xls_test.x"],
+    deps = [
+        "//ecc/rtl:br_ecc_secded_decoder_xls",
+        "//ecc/rtl:br_ecc_secded_encoder_xls",
+    ],
 )
 
 dslx_test(
     name = "br_ecc_secded_encoder_decoder_xls_test_actual",
-    deps = [
-        ":br_ecc_secded_encoder_decoder_xls_test",
-        "//ecc/rtl:br_ecc_secded_decoder_xls",
-        "//ecc/rtl:br_ecc_secded_encoder_xls",
-    ],
+    deps = [":br_ecc_secded_encoder_decoder_xls_test"],
 )

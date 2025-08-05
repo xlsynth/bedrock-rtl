@@ -45,7 +45,7 @@ fn get_parity_width(message_width: u32) -> u32 {
 pub fn br_ecc_secded_decoder_xls<DATA_WIDTH: u32, PARITY_WIDTH: u32, CODEWORD_WIDTH: u32>(data: bits[DATA_WIDTH], parity: bits[PARITY_WIDTH]) -> (bits[CODEWORD_WIDTH], u1, u1, bits[PARITY_WIDTH], bits[DATA_WIDTH]) {
     const INPUT_WIDTH: u32 = DATA_WIDTH + PARITY_WIDTH;
     const MESSAGE_WIDTH: u32 = get_message_width(DATA_WIDTH, PARITY_WIDTH);
-    assert!(CODEWORD_WIDTH == MESSAGE_WIDTH + PARITY_WIDTH);
+    assert!(CODEWORD_WIDTH == MESSAGE_WIDTH + PARITY_WIDTH, "codeword_width_must_equal_message_width_plus_parity_width");
     const PAD_WIDTH: u32 = MESSAGE_WIDTH - DATA_WIDTH;
 
     let pad = uN[PAD_WIDTH]:0;

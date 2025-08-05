@@ -17,33 +17,42 @@
 import ecc.rtl.br_ecc_secded_encoder_xls as enc;
 import ecc.rtl.br_ecc_secded_decoder_xls as dec;
 
+// TODO(mgottscho): generalize K to data width not just message width
+
 // Tests the encoder and decoder without any injected errors.
-fn no_errors<N: u32, K: u32>(message: bits[K]) -> bool {
-    let codeword = enc::br_ecc_secded_encoder_xls(message);
-    let (decoded_message, ce, due) = dec::br_ecc_secded_decoder_xls(codeword);
-    !ce && !due && message == decoded_message
+fn no_errors<N: u32, K: u32>(data: bits[K]) -> bool {
+    const R: u32 = N - K;
+    let (enc_data, enc_parity, _enc_codeword) = enc::br_ecc_secded_encoder_xls<K, R, N>(data);
+    let (_dec_codeword, ce, due, syndrome, dec_data) = dec::br_ecc_secded_decoder_xls<K, R, N>(enc_data, enc_parity);
+    !ce && !due && syndrome == 0 && data == dec_data
 }
 
 // Tests that all single-bit errors are corrected.
-fn single_bit_error_correction<N: u32, K: u32>(message: bits[K], pos: u32) -> bool {
-    let codeword = enc::br_ecc_secded_encoder_xls(message);
+fn single_bit_error_corrected<N: u32, K: u32>(data: bits[K], pos: u32) -> bool {
+    const R: u32 = N - K;
+    let (_enc_data, _enc_parity, enc_codeword) = enc::br_ecc_secded_encoder_xls<K, R, N>(data);
     if pos < N {
-        let received_codeword = bit_slice_update(codeword, pos, (!codeword[pos +: u1]) as u1);
-        let (decoded_message, ce, due) = dec::br_ecc_secded_decoder_xls(received_codeword);
-        ce && !due && decoded_message == message
+        let rcv_codeword = bit_slice_update(enc_codeword, pos, (!enc_codeword[pos +: u1]) as u1);
+        let rcv_data = rcv_codeword[0 +: uN[K]];
+        let rcv_parity = rcv_codeword[K +: uN[R]];
+        let (_dec_codeword, ce, due, syndrome, dec_data) = dec::br_ecc_secded_decoder_xls<K, R, N>(rcv_data, rcv_parity);
+        ce && !due && syndrome != 0 && data == dec_data
     } else {
         true
     }
 }
 
 // Tests that all double-bit errors are detected.
-fn double_bit_error_detection<N: u32, K: u32>(message: bits[K], pos0: u32, pos1: u32) -> bool {
-    let codeword = enc::br_ecc_secded_encoder_xls(message);
+fn double_bit_error_detected<N: u32, K: u32>(data: bits[K], pos0: u32, pos1: u32) -> bool {
+    const R: u32 = N - K;
+    let (_enc_data, _enc_parity, enc_codeword) = enc::br_ecc_secded_encoder_xls<K, R, N>(data);
     if pos0 < N && pos1 < N && pos0 < pos1 {
-        let flipped0 = bit_slice_update(codeword, pos0, (!codeword[pos0 +: u1]) as u1);
-        let received_codeword = bit_slice_update(flipped0, pos1, (!flipped0[pos1 +: u1]) as u1);
-        let (_, ce, due) = dec::br_ecc_secded_decoder_xls(received_codeword);
-        !ce && due
+        let flipped0 = bit_slice_update(enc_codeword, pos0, (!enc_codeword[pos0 +: u1]) as u1);
+        let rcv_codeword = bit_slice_update(flipped0, pos1, (!flipped0[pos1 +: u1]) as u1);
+        let rcv_data = rcv_codeword[0 +: uN[K]];
+        let rcv_parity = rcv_codeword[K +: uN[R]];
+        let (_dec_codeword, ce, due, syndrome, _dec_data) = dec::br_ecc_secded_decoder_xls<K, R, N>(rcv_data, rcv_parity);
+        !ce && due && syndrome != 0
     } else {
         true
     }
@@ -51,30 +60,35 @@ fn double_bit_error_detection<N: u32, K: u32>(message: bits[K], pos0: u32, pos1:
 
 // Tests that all triple-bit errors are detected. They may sometimes be corrected or miscorrected, but
 // must not be silently undetected.
-fn triple_bit_error_not_undetected<N: u32, K: u32>(message: bits[K], pos0: u32, pos1: u32, pos2: u32) -> bool {
-    let codeword = enc::br_ecc_secded_encoder_xls(message);
-    if pos0 < N && pos1 < N && pos2 < N && pos0 < pos1 && pos1 < pos2 {
-        let flipped0 = bit_slice_update(codeword, pos0, (!codeword[pos0 +: u1]) as u1);
+fn triple_bit_error_not_undetected<N: u32, K: u32>(data: bits[K], pos0: u32, pos1: u32, pos2: u32) -> bool {
+    const R: u32 = N - K;
+    let (_enc_data, _enc_parity, enc_codeword) = enc::br_ecc_secded_encoder_xls<K, R, N>(data);
+    if pos0 < N && pos1 < N && pos0 < pos1 {
+        let flipped0 = bit_slice_update(enc_codeword, pos0, (!enc_codeword[pos0 +: u1]) as u1);
         let flipped1 = bit_slice_update(flipped0, pos1, (!flipped0[pos1 +: u1]) as u1);
-        let received_codeword = bit_slice_update(flipped1, pos2, (!flipped1[pos2 +: u1]) as u1);
-        let (_, ce, due) = dec::br_ecc_secded_decoder_xls(received_codeword);
-        ce || due
+        let rcv_codeword = bit_slice_update(flipped1, pos2, (!flipped1[pos2 +: u1]) as u1);
+        let rcv_data = rcv_codeword[0 +: uN[K]];
+        let rcv_parity = rcv_codeword[K +: uN[R]];
+        let (_dec_codeword, ce, due, syndrome, _dec_data) = dec::br_ecc_secded_decoder_xls<K, R, N>(rcv_data, rcv_parity);
+        (ce || due) && syndrome != 0
+        // Cannot check that if CE the dec_data matches the data because a miscorrection is possible.
     } else {
         true
     }
 }
 
 // Tests that the code is in systematic form (first K bits of the encoded codeword match the message).
-fn systematic<N: u32, K: u32>(message: bits[K]) -> bool {
-    let codeword = enc::br_ecc_secded_encoder_xls(message);
-    message == codeword[0 +: uN[K]]
+fn systematic<N: u32, K: u32>(data: bits[K]) -> bool {
+    const R: u32 = N - K;
+    let (_enc_data, _enc_parity, enc_codeword) = enc::br_ecc_secded_encoder_xls<K, R, N>(data);
+    data == enc_codeword[0 +: uN[K]]
 }
 
 
 // No error injection
 #[quickcheck(exhaustive)]
-fn quickcheck_no_errors_n4_k4(message: bits[4]) -> bool {
-    no_errors<u32:4, u32:4>(message)
+fn quickcheck_no_errors_n8_k4(message: bits[4]) -> bool {
+    no_errors<u32:8, u32:4>(message)
 }
 #[quickcheck(exhaustive)]
 fn quickcheck_no_errors_n13_k8(message: bits[8]) -> bool {
