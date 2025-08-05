@@ -212,6 +212,9 @@ module br_flow_deserializer #(
     br_counter_incr #(
         .MaxValue(DrMinus1),
         .MaxIncrement(1),
+        .EnableWrap(0),
+        .EnableCoverZeroIncrement(0),
+        .EnableCoverReinitAndIncr(0),
         .EnableAssertFinalNotValid(EnableAssertFinalNotValid)
     ) br_counter_incr_push_flit_id (
         .clk,
@@ -312,7 +315,7 @@ module br_flow_deserializer #(
 
     `BR_ASSERT_IMPL(
         incomplete_pop_flit_a,
-        pop_valid && (not_done_building_pop_flit) |-> pop_last && pop_last_dont_care_count != 0)
+        pop_valid && (push_flit_id < dr_minus_1) |-> pop_last && pop_last_dont_care_count != 0)
 
   end
 
