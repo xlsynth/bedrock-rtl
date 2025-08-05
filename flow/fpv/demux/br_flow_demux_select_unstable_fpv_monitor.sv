@@ -42,7 +42,11 @@ module br_flow_demux_select_unstable_fpv_monitor #(
       .Width(Width),
       .EnableCoverPushBackpressure(EnableCoverPushBackpressure),
       .EnableAssertPushValidStability(EnableAssertPushValidStability),
-      .EnableAssertPushDataStability(EnableAssertPushDataStability)
+      .EnableAssertPushDataStability(EnableAssertPushDataStability),
+      // Pop valid and data cannot be stable because select can change
+      // while pop is backpressured.
+      .EnableAssertPopValidStability(0),
+      .EnableAssertPopDataStability(0)
   ) fv_checker (
       .clk,
       .rst,
