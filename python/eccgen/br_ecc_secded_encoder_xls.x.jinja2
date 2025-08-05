@@ -24,62 +24,81 @@ fn get_message_width(data_width: u32, parity_width: u32) -> u32 {
 }
 
 pub fn br_ecc_secded_encoder_xls<DATA_WIDTH: u32, PARITY_WIDTH: u32, CODEWORD_WIDTH: u32>(data: bits[DATA_WIDTH]) -> (bits[DATA_WIDTH], bits[PARITY_WIDTH], bits[CODEWORD_WIDTH]) {
+    const MAX_PARITY_WIDTH: u32 = u32:12;
     const MESSAGE_WIDTH: u32 = get_message_width(DATA_WIDTH, PARITY_WIDTH);
-    assert!(CODEWORD_WIDTH == MESSAGE_WIDTH + PARITY_WIDTH, "codeword_width_must_equal_message_width_plus_parity_width");
+    assert!(PARITY_WIDTH <= MAX_PARITY_WIDTH, "PARITY_WIDTH_must_be_less_than_or_equal_to_MAX_PARITY_WIDTH");
+    assert!(CODEWORD_WIDTH == MESSAGE_WIDTH + PARITY_WIDTH, "CODEWORD_WIDTH_must_equal_MESSAGE_WIDTH_plus_PARITY_WIDTH");
 
     let m = data as bits[MESSAGE_WIDTH];
-    let parity: bits[PARITY_WIDTH] = match (CODEWORD_WIDTH, MESSAGE_WIDTH) {
+    let parity: bits[MAX_PARITY_WIDTH] = match (CODEWORD_WIDTH, MESSAGE_WIDTH) {
         (u32:8, u32:4) => {
+            let m = m as u4;
 {{ secded_enc_8_4 }}
         },
         (u32:13, u32:8) => {
+            let m = m as u8;
 {{ secded_enc_13_8 }}
         },
         (u32:16, u32:11) => {
+            let m = m as u11;
 {{ secded_enc_16_11 }}
         },
         (u32:22, u32:16) => {
+            let m = m as u16;
 {{ secded_enc_22_16 }}
         },
         (u32:32, u32:26) => {
+            let m = m as u26;
 {{ secded_enc_32_26 }}
         },
         (u32:39, u32:32) => {
+            let m = m as u32;
 {{ secded_enc_39_32 }}
         },
         (u32:64, u32:57) => {
+            let m = m as u57;
 {{ secded_enc_64_57 }}
         },
         (u32:72, u32:64) => {
+            let m = m as u64;
 {{ secded_enc_72_64 }}
         },
         (u32:128, u32:120) => {
+            let m = m as uN[120];
 {{ secded_enc_128_120 }}
         },
         (u32:137, u32:128) => {
+            let m = m as uN[128];
 {{ secded_enc_137_128 }}
         },
         (u32:256, u32:247) => {
+            let m = m as uN[247];
 {{ secded_enc_256_247 }}
         },
         (u32:266, u32:256) => {
+            let m = m as uN[256];
 {{ secded_enc_266_256 }}
         },
         (u32:512, u32:502) => {
+            let m = m as uN[502];
 {{ secded_enc_512_502 }}
         },
         (u32:523, u32:512) => {
+            let m = m as uN[512];
 {{ secded_enc_523_512 }}
         },
         (u32:1024, u32:1013) => {
+            let m = m as uN[1013];
 {{ secded_enc_1024_1013 }}
         },
         (u32:1036, u32:1024) => {
+            let m = m as uN[1024];
 {{ secded_enc_1036_1024 }}
         },
-        _ => fail!("unsupported_combination_of_CODEWORD_WIDTH_and_PARITY_WIDTH", uN[PARITY_WIDTH]:0)
+        _ => fail!("unsupported_combination_of_CODEWORD_WIDTH_and_PARITY_WIDTH", uN[MAX_PARITY_WIDTH]:0)
     };
 
+    let parity = parity[0 +: uN[PARITY_WIDTH]];
     let codeword = parity ++ m;
     (data, parity, codeword)
 }

@@ -357,6 +357,7 @@ def G_to_x(G: np.ndarray) -> str:
     for i in range(r):
         expr.append(f"parity_{r - i - 1}")
     expr = " ++ ".join(expr)
+    expr = "(" + expr + ") as uN[MAX_PARITY_WIDTH]"
     expr = textwrap.indent(expr, " " * 12)
     return "\n".join(let_parity_bit + [expr])
 
