@@ -47,6 +47,9 @@ module br_flow_demux_select_unstable #(
     // If 1, assert that push_data is stable when backpressured.
     // If 0, cover that push_data can be unstable.
     parameter bit EnableAssertPushDataStability = EnableAssertPushValidStability,
+    // If 1, assert that select is stable when push is backpressured.
+    // If 0, cover that select can be unstable.
+    parameter bit EnableAssertSelectStability = 0,
     // If 1, assert that push_data is always known (not X) when push_valid is asserted.
     parameter bit EnableAssertPushDataKnown = 1,
     // If 1, then assert there are no valid bits asserted at the end of the test.
@@ -83,6 +86,8 @@ module br_flow_demux_select_unstable #(
   //------------------------------------------
   `BR_ASSERT_STATIC(num_flows_must_be_at_least_two_a, NumFlows >= 2)
   `BR_ASSERT_STATIC(bit_width_must_be_at_least_one_a, Width >= 1)
+  `BR_ASSERT_STATIC(select_stability_implies_valid_stability_a,
+                    !(EnableAssertSelectStability && !EnableAssertPushValidStability))
 
   br_flow_checks_valid_data_intg #(
       .NumFlows(1),
@@ -99,6 +104,15 @@ module br_flow_demux_select_unstable #(
       .valid(push_valid),
       .data (push_data)
   );
+
+  if (EnableCoverPushBackpressure) begin : gen_push_backpressure_intg_checks
+    if (EnableAssertSelectStability) begin : gen_select_stability_check
+      `BR_ASSERT_INTG(select_stable_a,
+                      (!push_ready && push_valid) |=> push_valid && $stable(select))
+    end else begin : gen_select_instability_cover
+      `BR_COVER_INTG(select_unstable_c, ##1 $past(!push_ready && push_valid) && !$stable(select))
+    end
+  end
 
   //------------------------------------------
   // Implementation
@@ -122,7 +136,8 @@ module br_flow_demux_select_unstable #(
   //------------------------------------------
   // Implementation checks
   //------------------------------------------
-  if (EnableCoverPushBackpressure && EnableAssertPushValidStability) begin : gen_stable_push_valid
+  if (EnableCoverPushBackpressure && EnableAssertPushValidStability && !EnableAssertSelectStability)
+  begin : gen_stable_push_valid
     for (genvar i = 0; i < NumFlows; i++) begin : gen_pop_unstable_checks
       `BR_ASSERT_IMPL(
           pop_valid_instability_caused_by_select_a,
@@ -134,9 +149,9 @@ module br_flow_demux_select_unstable #(
       .NumFlows(NumFlows),
       .Width(Width),
       .EnableCoverBackpressure(EnableCoverPushBackpressure),
-      // We know that the pop valid and data can be unstable.
-      .EnableAssertValidStability(0),
-      .EnableAssertDataStability(0),
+      // Pop valid and data can only be stable if select is stable.
+      .EnableAssertValidStability(EnableAssertPushValidStability && EnableAssertSelectStability),
+      .EnableAssertDataStability(EnableAssertPushDataStability && EnableAssertSelectStability),
       .EnableAssertFinalNotValid(EnableAssertFinalNotValid)
   ) br_flow_checks_valid_data_impl (
       .clk,

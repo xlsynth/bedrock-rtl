@@ -23,6 +23,7 @@ module br_flow_demux_select_unstable_fpv_monitor #(
     parameter bit EnableCoverPushBackpressure = 1,
     parameter bit EnableAssertPushValidStability = EnableCoverPushBackpressure,
     parameter bit EnableAssertPushDataStability = EnableAssertPushValidStability,
+    parameter bit EnableAssertSelectStability = 0,
     parameter bit EnableAssertFinalNotValid = 1
 ) (
     input logic                                   clk,
@@ -43,10 +44,9 @@ module br_flow_demux_select_unstable_fpv_monitor #(
       .EnableCoverPushBackpressure(EnableCoverPushBackpressure),
       .EnableAssertPushValidStability(EnableAssertPushValidStability),
       .EnableAssertPushDataStability(EnableAssertPushDataStability),
-      // Pop valid and data cannot be stable because select can change
-      // while pop is backpressured.
-      .EnableAssertPopValidStability(0),
-      .EnableAssertPopDataStability(0)
+      .EnableAssertSelectStability(EnableAssertSelectStability),
+      .EnableAssertPopValidStability(EnableAssertPushValidStability && EnableAssertSelectStability),
+      .EnableAssertPopDataStability(EnableAssertPushDataStability && EnableAssertSelectStability)
   ) fv_checker (
       .clk,
       .rst,
@@ -75,5 +75,6 @@ bind br_flow_demux_select_unstable br_flow_demux_select_unstable_fpv_monitor #(
     .EnableCoverPushBackpressure(EnableCoverPushBackpressure),
     .EnableAssertPushValidStability(EnableAssertPushValidStability),
     .EnableAssertPushDataStability(EnableAssertPushDataStability),
+    .EnableAssertSelectStability(EnableAssertSelectStability),
     .EnableAssertFinalNotValid(EnableAssertFinalNotValid)
 ) monitor (.*);
