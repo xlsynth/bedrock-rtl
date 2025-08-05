@@ -17,13 +17,13 @@
 
 import std;
 
-fn _get_max_message_width(parity_width: u32) -> u32 {
+fn get_max_message_width(parity_width: u32) -> u32 {
     std::upow(u32:2, parity_width - u32:1) - parity_width
 }
 
 fn get_message_width(data_width: u32, parity_width: u32) -> u32 {
     let data_width_rounded_up_to_nearest_pow2 = std::upow(u32:2, std::clog2(data_width));
-    std::min(data_width_rounded_up_to_nearest_pow2, _get_max_message_width(parity_width))
+    std::min(data_width_rounded_up_to_nearest_pow2, get_max_message_width(parity_width))
 }
 
 fn get_parity_width(message_width: u32) -> u32 {
@@ -42,7 +42,7 @@ fn get_parity_width(message_width: u32) -> u32 {
 }
 
 // Returns (codeword, error_ce, error_due, syndrome, data)
-fn br_ecc_secded_encoder_xls<DATA_WIDTH: u32, PARITY_WIDTH: u32, CODEWORD_WIDTH: u32>(data: bits[DATA_WIDTH], parity: bits[PARITY_WIDTH]) -> (bits[CODEWORD_WIDTH], u1, u1, bits[PARITY_WIDTH], bits[DATA_WIDTH]) {
+pub fn br_ecc_secded_decoder_xls<DATA_WIDTH: u32, PARITY_WIDTH: u32, CODEWORD_WIDTH: u32>(data: bits[DATA_WIDTH], parity: bits[PARITY_WIDTH]) -> (bits[CODEWORD_WIDTH], u1, u1, bits[PARITY_WIDTH], bits[DATA_WIDTH]) {
     const INPUT_WIDTH: u32 = DATA_WIDTH + PARITY_WIDTH;
     const MESSAGE_WIDTH: u32 = get_message_width(DATA_WIDTH, PARITY_WIDTH);
     assert!(CODEWORD_WIDTH == MESSAGE_WIDTH + PARITY_WIDTH);

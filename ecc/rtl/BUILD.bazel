@@ -160,12 +160,12 @@ verilog_library(
 
 dslx_library(
     name = "br_ecc_secded_encoder_xls",
-    srcs = ["br_ecc_secded_encoder.x"],
+    srcs = ["br_ecc_secded_encoder_xls.x"],
 )
 
 dslx_library(
     name = "br_ecc_secded_decoder_xls",
-    srcs = ["br_ecc_secded_decoder.x"],
+    srcs = ["br_ecc_secded_decoder_xls.x"],
 )
 
 # Diff test and codegen
@@ -189,19 +189,39 @@ diff_test(
     file2 = ":gen_br_ecc_secded_decoder.sv",
 )
 
+diff_test(
+    name = "br_ecc_secded_encoder_xls_diff_test",
+    failure_message = """
+        Golden br_ecc_secded_encoder_xls.x does not match the generated code.
+        Please run `bazel run //ecc/rtl:update_secded` to automatically update the golden.
+    """,
+    file1 = "br_ecc_secded_encoder_xls.x",
+    file2 = ":gen_br_ecc_secded_encoder_xls.x",
+)
+
+diff_test(
+    name = "br_ecc_secded_decoder_xls_diff_test",
+    failure_message = """
+        Golden br_ecc_secded_decoder_xls.x does not match the generated code.
+        Please run `bazel run //ecc/rtl:update_secded` to automatically update the golden.
+    """,
+    file1 = "br_ecc_secded_decoder_xls.x",
+    file2 = ":gen_br_ecc_secded_decoder_xls.x",
+)
+
 genrule(
     name = "gen_secded",
     srcs = [
         "//python/eccgen:br_ecc_secded_encoder.sv.jinja2",
-        "//python/eccgen:br_ecc_secded_encoder.x.jinja2",
+        "//python/eccgen:br_ecc_secded_encoder_xls.x.jinja2",
         "//python/eccgen:br_ecc_secded_decoder.sv.jinja2",
-        "//python/eccgen:br_ecc_secded_decoder.x.jinja2",
+        "//python/eccgen:br_ecc_secded_decoder_xls.x.jinja2",
     ],
     outs = [
         "gen_br_ecc_secded_encoder.sv",
-        "gen_br_ecc_secded_encoder.x",
+        "gen_br_ecc_secded_encoder_xls.x",
         "gen_br_ecc_secded_decoder.sv",
-        "gen_br_ecc_secded_decoder.x",
+        "gen_br_ecc_secded_decoder_xls.x",
     ],
     cmd = "$(location //python/eccgen:eccgen) \
         --scheme=hsiao_secded \
@@ -209,10 +229,10 @@ genrule(
         --sv-encoder-output=$(location gen_br_ecc_secded_encoder.sv) \
         --sv-decoder-template=$(location //python/eccgen:br_ecc_secded_decoder.sv.jinja2) \
         --sv-decoder-output=$(location gen_br_ecc_secded_decoder.sv) \
-        --x-encoder-template=$(location //python/eccgen:br_ecc_secded_encoder.x.jinja2) \
-        --x-encoder-output=$(location gen_br_ecc_secded_encoder.x) \
-        --x-decoder-template=$(location //python/eccgen:br_ecc_secded_decoder.x.jinja2) \
-        --x-decoder-output=$(location gen_br_ecc_secded_decoder.x)",
+        --x-encoder-template=$(location //python/eccgen:br_ecc_secded_encoder_xls.x.jinja2) \
+        --x-encoder-output=$(location gen_br_ecc_secded_encoder_xls.x) \
+        --x-decoder-template=$(location //python/eccgen:br_ecc_secded_decoder_xls.x.jinja2) \
+        --x-decoder-output=$(location gen_br_ecc_secded_decoder_xls.x)",
     tools = ["//python/eccgen"],
 )
 
@@ -223,9 +243,9 @@ write_file(
         "#!/usr/bin/env bash",
         "cd $BUILD_WORKSPACE_DIRECTORY",
         "cp -fv bazel-bin/ecc/rtl/gen_br_ecc_secded_encoder.sv ecc/rtl/br_ecc_secded_encoder.sv",
-        "cp -fv bazel-bin/ecc/rtl/gen_br_ecc_secded_encoder.x ecc/rtl/br_ecc_secded_encoder.x",
+        "cp -fv bazel-bin/ecc/rtl/gen_br_ecc_secded_encoder_xls.x ecc/rtl/br_ecc_secded_encoder_xls.x",
         "cp -fv bazel-bin/ecc/rtl/gen_br_ecc_secded_decoder.sv ecc/rtl/br_ecc_secded_decoder.sv",
-        "cp -fv bazel-bin/ecc/rtl/gen_br_ecc_secded_decoder.x ecc/rtl/br_ecc_secded_decoder.x",
+        "cp -fv bazel-bin/ecc/rtl/gen_br_ecc_secded_decoder_xls.x ecc/rtl/br_ecc_secded_decoder_xls.x",
     ],
 )
 
@@ -234,12 +254,12 @@ sh_binary(
     srcs = [":update_secded.sh"],
     data = [
         "br_ecc_secded_decoder.sv",
-        "br_ecc_secded_decoder.x",
+        "br_ecc_secded_decoder_xls.x",
         "br_ecc_secded_encoder.sv",
-        "br_ecc_secded_encoder.x",
+        "br_ecc_secded_encoder_xls.x",
         ":gen_br_ecc_secded_decoder.sv",
-        ":gen_br_ecc_secded_decoder.x",
+        ":gen_br_ecc_secded_decoder_xls.x",
         ":gen_br_ecc_secded_encoder.sv",
-        ":gen_br_ecc_secded_encoder.x",
+        ":gen_br_ecc_secded_encoder_xls.x",
     ],
 )
