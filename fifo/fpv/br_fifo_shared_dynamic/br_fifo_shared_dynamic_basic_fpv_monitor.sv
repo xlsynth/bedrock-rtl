@@ -85,6 +85,9 @@ module br_fifo_shared_dynamic_basic_fpv_monitor #(
           push_data_stable_a,
           push_valid[i] && !push_ready[i] |=> $stable(push_data[i]) && $stable(push_fifo_id[i]))
     end
+    if (!EnableCoverPushBackpressure) begin : gen_no_backpressure
+      `BR_ASSUME(no_backpressure_a, !push_ready[i] |-> !push_valid[i])
+    end
   end
 
   // ----------FV assertions----------
