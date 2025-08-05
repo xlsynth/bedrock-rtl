@@ -41,118 +41,195 @@ fn get_parity_width(message_width: u32) -> u32 {
     }
 }
 
+fn pad_parity_check_matrix<MAX_PARITY_WIDTH: u32, CODEWORD_WIDTH: u32, MAX_CODEWORD_WIDTH: u32>(parity_check_matrix: bits[MAX_PARITY_WIDTH][CODEWORD_WIDTH]) -> bits[MAX_PARITY_WIDTH][MAX_CODEWORD_WIDTH] {
+    assert!(MAX_CODEWORD_WIDTH >= CODEWORD_WIDTH, "MAX_CODEWORD_WIDTH_must_be_greater_than_or_equal_to_CODEWORD_WIDTH");
+    let parity_check_matrix = parity_check_matrix as uN[MAX_PARITY_WIDTH * CODEWORD_WIDTH];
+    let parity_check_matrix = parity_check_matrix as uN[MAX_PARITY_WIDTH * MAX_CODEWORD_WIDTH];
+    let parity_check_matrix = parity_check_matrix as uN[MAX_PARITY_WIDTH][MAX_CODEWORD_WIDTH];
+    parity_check_matrix
+}
+
+fn unpad_parity_check_matrix<MAX_PARITY_WIDTH: u32, CODEWORD_WIDTH: u32, MAX_CODEWORD_WIDTH: u32>(parity_check_matrix: bits[MAX_PARITY_WIDTH][MAX_CODEWORD_WIDTH]) -> bits[MAX_PARITY_WIDTH][CODEWORD_WIDTH] {
+    assert!(MAX_CODEWORD_WIDTH >= CODEWORD_WIDTH, "MAX_CODEWORD_WIDTH_must_be_greater_than_or_equal_to_CODEWORD_WIDTH");
+    let parity_check_matrix = parity_check_matrix as uN[MAX_PARITY_WIDTH * MAX_CODEWORD_WIDTH];
+    let parity_check_matrix = parity_check_matrix[0 +: uN[MAX_PARITY_WIDTH * CODEWORD_WIDTH]];
+    let parity_check_matrix = parity_check_matrix as uN[MAX_PARITY_WIDTH][CODEWORD_WIDTH];
+    parity_check_matrix
+}
+
 // Returns (codeword, error_ce, error_due, syndrome, data)
-pub fn br_ecc_secded_decoder_xls<DATA_WIDTH: u32, PARITY_WIDTH: u32, CODEWORD_WIDTH: u32>(data: bits[DATA_WIDTH], parity: bits[PARITY_WIDTH]) -> (bits[CODEWORD_WIDTH], u1, u1, bits[PARITY_WIDTH], bits[DATA_WIDTH]) {
+pub fn br_ecc_secded_decoder_xls<DATA_WIDTH: u32, PARITY_WIDTH: u32, CODEWORD_WIDTH: u32 = {get_message_width(DATA_WIDTH, PARITY_WIDTH) + PARITY_WIDTH }>(data: bits[DATA_WIDTH], parity: bits[PARITY_WIDTH]) -> (bits[CODEWORD_WIDTH], u1, u1, bits[PARITY_WIDTH], bits[DATA_WIDTH]) {
     const INPUT_WIDTH: u32 = DATA_WIDTH + PARITY_WIDTH;
     const MESSAGE_WIDTH: u32 = get_message_width(DATA_WIDTH, PARITY_WIDTH);
-    assert!(CODEWORD_WIDTH == MESSAGE_WIDTH + PARITY_WIDTH, "codeword_width_must_equal_message_width_plus_parity_width");
     const PAD_WIDTH: u32 = MESSAGE_WIDTH - DATA_WIDTH;
+
+    const MAX_PARITY_WIDTH: u32 = u32:12;
+    const MAX_CODEWORD_WIDTH: u32 = u32:1036;
+
+    const_assert!(PARITY_WIDTH <= MAX_PARITY_WIDTH);
+    const_assert!(CODEWORD_WIDTH == MESSAGE_WIDTH + PARITY_WIDTH);
 
     let pad = uN[PAD_WIDTH]:0;
     let cw = parity ++ pad ++ data;
 
     let (syndrome, parity_check_matrix) = match (CODEWORD_WIDTH, MESSAGE_WIDTH) {
-        (8, 4) => {
+        (u32:8, u32:4) => {
+            let cw = cw as u8;
 {{ secded_dec_syndrome_8_4 }}
 {{ secded_dec_H_8_4 }}
+            let parity_check_matrix = parity_check_matrix as uN[MAX_PARITY_WIDTH][8];
+            let parity_check_matrix = pad_parity_check_matrix<MAX_PARITY_WIDTH, u32:8, MAX_CODEWORD_WIDTH>(parity_check_matrix);
             (syndrome, parity_check_matrix)
         },
-        (13, 8) => {
+        (u32:13, u32:8) => {
+            let cw = cw as u13;
 {{ secded_dec_syndrome_13_8 }}
 {{ secded_dec_H_13_8 }}
+            let parity_check_matrix = parity_check_matrix as uN[MAX_PARITY_WIDTH][13];
+            let parity_check_matrix = pad_parity_check_matrix<MAX_PARITY_WIDTH, u32:13, MAX_CODEWORD_WIDTH>(parity_check_matrix);
             (syndrome, parity_check_matrix)
         },
-        (16, 11) => {
+        (u32:16, u32:11) => {
+            let cw = cw as u16;
 {{ secded_dec_syndrome_16_11 }}
 {{ secded_dec_H_16_11 }}
+            let parity_check_matrix = parity_check_matrix as uN[MAX_PARITY_WIDTH][16];
+            let parity_check_matrix = pad_parity_check_matrix<MAX_PARITY_WIDTH, u32:16, MAX_CODEWORD_WIDTH>(parity_check_matrix);
             (syndrome, parity_check_matrix)
         },
-        (22, 16) => {
+        (u32:22, u32:16) => {
+            let cw = cw as u22;
 {{ secded_dec_syndrome_22_16 }}
 {{ secded_dec_H_22_16 }}
+            let parity_check_matrix = parity_check_matrix as uN[MAX_PARITY_WIDTH][22];
+            let parity_check_matrix = pad_parity_check_matrix<MAX_PARITY_WIDTH, u32:22, MAX_CODEWORD_WIDTH>(parity_check_matrix);
             (syndrome, parity_check_matrix)
         },
-        (32, 26) => {
+        (u32:32, u32:26) => {
+            let cw = cw as u32;
 {{ secded_dec_syndrome_32_26 }}
 {{ secded_dec_H_32_26 }}
+            let parity_check_matrix = parity_check_matrix as uN[MAX_PARITY_WIDTH][32];
+            let parity_check_matrix = pad_parity_check_matrix<MAX_PARITY_WIDTH, u32:32, MAX_CODEWORD_WIDTH>(parity_check_matrix);
             (syndrome, parity_check_matrix)
         },
-        (39, 32) => {
+        (u32:39, u32:32) => {
+            let cw = cw as u39;
 {{ secded_dec_syndrome_39_32 }}
 {{ secded_dec_H_39_32 }}
+            let parity_check_matrix = parity_check_matrix as uN[MAX_PARITY_WIDTH][39];
+            let parity_check_matrix = pad_parity_check_matrix<MAX_PARITY_WIDTH, u32:39, MAX_CODEWORD_WIDTH>(parity_check_matrix);
             (syndrome, parity_check_matrix)
         },
-        (64, 57) => {
+        (u32:64, u32:57) => {
+            let cw = cw as u64;
 {{ secded_dec_syndrome_64_57 }}
 {{ secded_dec_H_64_57 }}
+            let parity_check_matrix = parity_check_matrix as uN[MAX_PARITY_WIDTH][64];
+            let parity_check_matrix = pad_parity_check_matrix<MAX_PARITY_WIDTH, u32:64, MAX_CODEWORD_WIDTH>(parity_check_matrix);
             (syndrome, parity_check_matrix)
         },
-        (72, 64) => {
+        (u32:72, u32:64) => {
+            let cw = cw as uN[72];
 {{ secded_dec_syndrome_72_64 }}
 {{ secded_dec_H_72_64 }}
+            let parity_check_matrix = parity_check_matrix as uN[MAX_PARITY_WIDTH][72];
+            let parity_check_matrix = pad_parity_check_matrix<MAX_PARITY_WIDTH, u32:72, MAX_CODEWORD_WIDTH>(parity_check_matrix);
             (syndrome, parity_check_matrix)
         },
-        (128, 120) => {
+        (u32:128, u32:120) => {
+            let cw = cw as uN[128];
 {{ secded_dec_syndrome_128_120 }}
 {{ secded_dec_H_128_120 }}
+            let parity_check_matrix = parity_check_matrix as uN[MAX_PARITY_WIDTH][128];
+            let parity_check_matrix = pad_parity_check_matrix<MAX_PARITY_WIDTH, u32:128, MAX_CODEWORD_WIDTH>(parity_check_matrix);
             (syndrome, parity_check_matrix)
         },
-        (137, 128) => {
+        (u32:137, u32:128) => {
+            let cw = cw as uN[137];
 {{ secded_dec_syndrome_137_128 }}
 {{ secded_dec_H_137_128 }}
+            let parity_check_matrix = parity_check_matrix as uN[MAX_PARITY_WIDTH][137];
+            let parity_check_matrix = pad_parity_check_matrix<MAX_PARITY_WIDTH, u32:137, MAX_CODEWORD_WIDTH>(parity_check_matrix);
             (syndrome, parity_check_matrix)
         },
-        (256, 247) => {
+        (u32:256, u32:247) => {
+            let cw = cw as uN[256];
 {{ secded_dec_syndrome_256_247 }}
 {{ secded_dec_H_256_247 }}
+            let parity_check_matrix = parity_check_matrix as uN[MAX_PARITY_WIDTH][256];
+            let parity_check_matrix = pad_parity_check_matrix<MAX_PARITY_WIDTH, u32:256, MAX_CODEWORD_WIDTH>(parity_check_matrix);
             (syndrome, parity_check_matrix)
         },
-        (266, 256) => {
+        (u32:266, u32:256) => {
+            let cw = cw as uN[266];
 {{ secded_dec_syndrome_266_256 }}
 {{ secded_dec_H_266_256 }}
+            let parity_check_matrix = parity_check_matrix as uN[MAX_PARITY_WIDTH][266];
+            let parity_check_matrix = pad_parity_check_matrix<MAX_PARITY_WIDTH, u32:266, MAX_CODEWORD_WIDTH>(parity_check_matrix);
             (syndrome, parity_check_matrix)
         },
-        (512, 502) => {
+        (u32:512, u32:502) => {
+            let cw = cw as uN[512];
 {{ secded_dec_syndrome_512_502 }}
 {{ secded_dec_H_512_502 }}
+            let parity_check_matrix = parity_check_matrix as uN[MAX_PARITY_WIDTH][512];
+            let parity_check_matrix = pad_parity_check_matrix<MAX_PARITY_WIDTH, u32:512, MAX_CODEWORD_WIDTH>(parity_check_matrix);
             (syndrome, parity_check_matrix)
         },
-        (523, 512) => {
+        (u32:523, u32:512) => {
+            let cw = cw as uN[523];
 {{ secded_dec_syndrome_523_512 }}
 {{ secded_dec_H_523_512 }}
+            let parity_check_matrix = parity_check_matrix as uN[MAX_PARITY_WIDTH][523];
+            let parity_check_matrix = pad_parity_check_matrix<MAX_PARITY_WIDTH, u32:523, MAX_CODEWORD_WIDTH>(parity_check_matrix);
             (syndrome, parity_check_matrix)
         },
-        (1024, 1013) => {
+        (u32:1024, u32:1013) => {
+            let cw = cw as uN[1024];
 {{ secded_dec_syndrome_1024_1013 }}
 {{ secded_dec_H_1024_1013 }}
+            let parity_check_matrix = parity_check_matrix as uN[MAX_PARITY_WIDTH][1024];
+            let parity_check_matrix = pad_parity_check_matrix<MAX_PARITY_WIDTH, u32:1024, MAX_CODEWORD_WIDTH>(parity_check_matrix);
             (syndrome, parity_check_matrix)
         },
-        (1036, 1024) => {
+        (u32:1036, u32:1024) => {
+            let cw = cw as uN[1036];
 {{ secded_dec_syndrome_1036_1024 }}
 {{ secded_dec_H_1036_1024 }}
+            let parity_check_matrix = parity_check_matrix as uN[MAX_PARITY_WIDTH][1036];
+            let parity_check_matrix = pad_parity_check_matrix<MAX_PARITY_WIDTH, u32:1036, MAX_CODEWORD_WIDTH>(parity_check_matrix);
             (syndrome, parity_check_matrix)
         },
-        _ => fail!("unsupported_combination_of_CODEWORD_WIDTH_and_MESSAGE_WIDTH", uN[PARITY_WIDTH]:0)
+        _ => {
+            let default_syndrome = uN[MAX_PARITY_WIDTH]:0;
+            let default_parity_check_matrix = uN[MAX_PARITY_WIDTH * MAX_CODEWORD_WIDTH]:0 as uN[MAX_PARITY_WIDTH][MAX_CODEWORD_WIDTH];
+            fail!("unsupported_combination_of_CODEWORD_WIDTH_and_MESSAGE_WIDTH", (default_syndrome, default_parity_check_matrix))
+        }
     };
 
+    let syndrome = syndrome[0 +: uN[PARITY_WIDTH]];
+    let parity_check_matrix = unpad_parity_check_matrix<MAX_PARITY_WIDTH, CODEWORD_WIDTH, MAX_CODEWORD_WIDTH>(parity_check_matrix);
+
     let syndrome_parity  = xor_reduce(syndrome);
-    let syndrome_is_zero = syndrome == 0;
+    let syndrome_is_zero = syndrome == uN[PARITY_WIDTH]:0;
     let syndrome_is_even = !syndrome_parity;
     let syndrome_is_odd  = syndrome_parity;
 
     let due_even = !syndrome_is_zero && syndrome_is_even;
-    let h_column_match =
-    for (i, acc): (u32, bool[CODEWORD_WIDTH]) in u32:0..CODEWORD_WIDTH {
-        let eq = syndrome == parity_check_matrix[i];
-        update(acc, i, eq)
-    }(bool[CODEWORD_WIDTH]:[false, ...]);
+    let h_column_match: u1[CODEWORD_WIDTH] =
+        for (i, acc): (u32, bool[CODEWORD_WIDTH]) in u32:0..CODEWORD_WIDTH {
+            let eq = syndrome == (parity_check_matrix[i][0 +: uN[PARITY_WIDTH]]);
+            update(acc, i, eq)
+        }(bool[CODEWORD_WIDTH]:[false, ...]);
+    let h_column_match = h_column_match as uN[CODEWORD_WIDTH];
 
-    let due_odd = syndrome_is_odd && h_column_match == 0;
+    let due_odd = syndrome_is_odd && h_column_match == uN[CODEWORD_WIDTH]:0;
     let due = due_even || due_odd;
-    let ce = syndrome_is_odd && h_column_match != 0;
+    let ce = syndrome_is_odd && h_column_match != uN[CODEWORD_WIDTH]:0;
 
     let corrected_codeword = cw ^ h_column_match;
-    let data = corrected_codeword[:-DATA_WIDTH];
+    let data = corrected_codeword[0 +: uN[DATA_WIDTH]];
 
     (corrected_codeword, due, ce, syndrome, data)
 }

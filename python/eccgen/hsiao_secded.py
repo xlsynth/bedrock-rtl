@@ -20,6 +20,7 @@ References:
 [2] https://arxiv.org/pdf/0803.1217
 """
 
+from ast import Expression
 import numpy as np
 import math
 import textwrap
@@ -407,7 +408,7 @@ def syndrome_to_x(H: np.ndarray) -> str:
         xors = []
         nonzero_indices = np.nonzero(row)[0]
         for i in nonzero_indices:
-            xors.append(f"cw[{i}]")
+            xors.append(f"cw[{i}+:u1]")
         return f"            let syndrome_{row_idx} = " + " ^ ".join(xors) + ";"
 
     lets = []
@@ -419,32 +420,33 @@ def syndrome_to_x(H: np.ndarray) -> str:
     for i in range(r):
         expr.append(f"syndrome_{r - i - 1}")
     expr = " ++ ".join(expr)
+    expr = "(" + expr + ") as uN[MAX_PARITY_WIDTH]"
     expr = "let syndrome = " + expr + ";"
     expr = textwrap.indent(expr, " " * 12)
     return "\n".join(lets + [expr])
 
 
 def H_to_x(H: np.ndarray) -> str:
-    """Generate Verilog RTL code for the columns of the given parity-check matrix H."""
+    """Generate DSLX code for the columns of the given parity-check matrix H."""
 
-    def H_col_to_sv(col: np.ndarray, col_idx: int) -> str:
-        """Generate a Verilog RTL assignment for a single column of the parity-check matrix H."""
+    def H_col_to_x(col: np.ndarray, col_idx: int) -> str:
+        """Generate a DSLX assignment for a single column of the parity-check matrix H."""
         r = col.shape[0]
         return (
             f"            let parity_check_matrix_{col_idx} = u{r}:0b"
             + "".join(col.astype(str))
-            + ";"
+            + " as uN[MAX_PARITY_WIDTH];"
         )
 
     lets = []
     n = H.shape[1]
     for i in range(n):
-        lets.append(H_col_to_sv(H[:, i], i))
+        lets.append(H_col_to_x(H[:, i], i))
     expr = []
     for i in range(n):
         expr.append(f"parity_check_matrix_{n - i - 1}")
     expr = " ++ ".join(expr)
-    expr = "let parity_check_matrix = " + expr + ";"
+    expr = f"let parity_check_matrix = {expr};"
     expr = textwrap.indent(expr, " " * 12)
     return "\n".join(lets + [expr])
 
