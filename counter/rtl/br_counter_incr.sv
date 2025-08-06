@@ -201,7 +201,7 @@ module br_counter_incr #(
   `BR_COVER_IMPL(increment_max_c, incr_valid && incr == MaxIncrement)
   if (!EnableSaturate && !EnableWrap) begin : gen_assert_no_overflow
     `BR_ASSERT_IMPL(no_value_overflow_a, value_temp <= MaxValue)
-  end else begin : gen_cover_overflow
+  end else if (!IsMaxValueP1PowerOf2) begin : gen_cover_overflow
     `BR_COVER_IMPL(value_temp_oob_c, value_temp > MaxValue)
   end
 
