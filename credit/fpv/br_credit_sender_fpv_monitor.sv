@@ -90,13 +90,34 @@ module br_credit_sender_fpv_monitor #(
   `BR_ASSUME(credit_withhold_a, credit_withhold <= MaxCredit)
   `BR_ASSUME(credit_withhold_liveness_a, s_eventually (credit_withhold < fv_max_credit))
   for (genvar n = 0; n < NumFlows; n++) begin : gen_asm
-    `BR_ASSUME(push_valid_ready_a,
-               push_valid[n] && !push_ready[n] |=> push_valid[n] && $stable(push_data[n]))
+    if (!EnableCoverPushBackpressure) begin : gen_no_push_backpressure
+      `BR_ASSUME(no_push_backpressure_a, !push_ready[n] |-> !push_valid[n])
+    end
+    if (EnableAssertPushValidStability) begin : gen_push_valid_stable
+      `BR_ASSUME(push_valid_stable_a, push_valid[n] && !push_ready[n] |=> push_valid[n])
+    end
+    if (EnableAssertPushDataStability) begin : gen_push_data_stable
+      `BR_ASSUME(push_data_stable_a, push_valid[n] && !push_ready[n] |=> $stable(push_data[n]))
+    end
   end
   `BR_ASSUME(no_spurious_pop_credit_a, (fv_max_credit - fv_pop_credit_cnt + $countones(pop_valid)
              ) >= pop_credit)
   `BR_ASSUME(legal_pop_credit_a, pop_credit <= PopCreditMaxChange)
   `BR_ASSUME(pop_credit_liveness_a, s_eventually |pop_credit)
+
+  if (EnableAssertPushValidStability) begin : gen_push_valid_stable
+    `BR_ASSUME(push_valid_stable_a,
+               push_valid[fv_flow] && !push_ready[fv_flow] |=> push_valid[fv_flow])
+  end
+
+  if (EnableAssertPushDataStability) begin : gen_push_data_stable
+    `BR_ASSUME(push_data_stable_a,
+               push_valid[fv_flow] && !push_ready[fv_flow] |=> $stable(push_data[fv_flow]))
+  end
+
+  if (!EnableCoverPushBackpressure) begin : gen_no_push_backpressure
+    `BR_ASSUME(no_push_backpressure_a, !push_ready[fv_flow] |-> !push_valid[fv_flow])
+  end
 
   // ----------FV assertions----------
   `BR_ASSERT(push_valid_deadlock_a, push_valid[fv_flow] |-> s_eventually push_ready[fv_flow])
