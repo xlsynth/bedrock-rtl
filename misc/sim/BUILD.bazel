@@ -20,6 +20,11 @@ package(default_visibility = ["//visibility:private"])
 verilog_library(
     name = "br_test_driver",
     srcs = ["br_test_driver.sv"],
+    visibility = [
+        "//counter/sim:__pkg__",
+        "//credit/sim:__pkg__",
+        "//enc/sim:__pkg__",
+    ],
 )
 
 verilog_elab_test(
