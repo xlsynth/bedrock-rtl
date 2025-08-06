@@ -21,6 +21,10 @@ package(default_visibility = ["//visibility:private"])
 verilog_library(
     name = "br_fifo_test_harness",
     srcs = ["br_fifo_test_harness.sv"],
+    visibility = [
+        "//cdc/sim:__pkg__",
+        "//fifo/sim:__pkg__",
+    ],
 )
 
 verilog_elab_test(

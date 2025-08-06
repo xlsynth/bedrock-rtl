@@ -21,9 +21,16 @@ verilog_library(
     name = "br_test_driver",
     srcs = ["br_test_driver.sv"],
     visibility = [
+        "//cdc/sim:__pkg__",
         "//counter/sim:__pkg__",
         "//credit/sim:__pkg__",
         "//enc/sim:__pkg__",
+        "//fifo/sim:__pkg__",
+        "//lfsr/sim:__pkg__",
+        "//multi_xfer/sim:__pkg__",
+        "//mux/sim:__pkg__",
+        "//shift/sim:__pkg__",
+        "//tracker/sim:__pkg__",
     ],
 )
 
