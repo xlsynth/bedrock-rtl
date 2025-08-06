@@ -114,12 +114,18 @@ module br_flow_fork_select_multihot #(
   //------------------------------------------
   // Implementation checks
   //------------------------------------------
+  // Pop valid can be unstable because it will be revoked if a pop_ready falls.
+  // The only configuration for which it could be stable is if the select is stable
+  // and guaranteed to be onehot.
+  localparam bit EnableAssertPopValidStability =
+      EnableAssertPushValidStability &&
+      EnableAssertSelectMultihotStability &&
+      !EnableCoverSelectMultihot;
   br_flow_checks_valid_data_impl #(
       .NumFlows(NumFlows),
       .Width(1),
-      .EnableCoverBackpressure(1),
-      // We know that the pop valids can be unstable.
-      .EnableAssertValidStability(0),
+      .EnableCoverBackpressure(EnableCoverPushBackpressure),
+      .EnableAssertValidStability(EnableAssertPopValidStability),
       .EnableAssertFinalNotValid(EnableAssertFinalNotValid)
   ) br_flow_checks_valid_data_impl (
       .clk,

@@ -56,6 +56,10 @@ module br_flow_fork_select_multihot_fpv_monitor #(
   end
   `BR_ASSUME(legal_select_a, push_valid |-> |push_select_multihot)
 
+  if (!EnableCoverPushBackpressure) begin : gen_no_backpressure
+    `BR_ASSUME(no_backpressure_a, !push_ready |-> !push_valid)
+  end
+
   // ----------FV assertions----------
   // pick a random constant for assertion
   logic [$clog2(NumFlows)-1:0] fv_idx;
