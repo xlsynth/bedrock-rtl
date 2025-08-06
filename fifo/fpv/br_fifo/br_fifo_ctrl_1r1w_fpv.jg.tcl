@@ -25,14 +25,6 @@ assert -name fv_rst_check_pop_valid {rst |-> pop_valid == 'd0}
 assert -name fv_rst_check_ram_wr_valid {rst |-> ram_wr_valid == 'd0}
 assert -name fv_rst_check_ram_rd_addr_valid {rst |-> ram_rd_addr_valid == 'd0}
 
-# disable primary input side RTL integration assertion
-# it's best practice to have valid/data stability when backpressured,
-# but the FIFO itself doesn't care and will work fine even if it's unstable
-assert -disable *br_fifo_push_ctrl.*valid_data_stable_when_backpressured_a
-
-# TODO: disable covers to make nightly clean
-cover -disable *
-
 # limit run time to 10-mins
 set_prove_time_limit 600s
 

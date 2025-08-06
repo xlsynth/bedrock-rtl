@@ -76,7 +76,10 @@ module br_fifo_pop_ctrl #(
                   ram_rd_addr_valid |-> ##RamReadLatency ram_rd_data_valid)
 
   // Internal integration checks
-  `BR_COVER_IMPL(bypass_unstable_c, !bypass_ready && bypass_valid_unstable)
+  if (EnableBypass) begin : gen_bypass_unstable_cover
+    `BR_COVER_IMPL(bypass_unstable_c,
+                   (!bypass_ready && bypass_valid_unstable) ##1 !bypass_valid_unstable)
+  end
 
   // This is not the tightest possible check, because we are planning to
   // support pipelined RAM access and CDC use cases that require supporting
@@ -164,8 +167,7 @@ module br_fifo_pop_ctrl #(
       non_bypass_cut_through_latency_a,
       (push_beat && !bypass_ready) |-> ##(1+RamReadLatency+RegisterPopOutputs) pop_valid)
 
-  localparam bit ZeroCutThroughLatency =
-      !RegisterPopOutputs && (EnableBypass || (RamReadLatency == 0));
+  localparam bit ZeroCutThroughLatency = !RegisterPopOutputs && EnableBypass;
 
   if (ZeroCutThroughLatency) begin : gen_zero_lat_impl_checks
     `BR_COVER_IMPL(pop_valid_when_empty_c, pop_valid && empty)
