@@ -1,8 +1,0 @@
-Number of data bits (k): 4
-Number of parity bits (r): 4
-Number of codeword bits (n): 8
-H =
-[[0, 1, 1, 1, 1, 0, 0, 0],
- [1, 0, 1, 1, 0, 1, 0, 0],
- [1, 1, 0, 1, 0, 0, 1, 0],
- [1, 1, 1, 0, 0, 0, 0, 1]]
