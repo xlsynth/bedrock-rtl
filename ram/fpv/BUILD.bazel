@@ -269,6 +269,11 @@ br_verilog_fpv_test_tools_suite(
 # Test focuses on testing NumWritePorts and NumReadPorts
 br_verilog_fpv_test_tools_suite(
     name = "br_ram_flops_tile_test_port",
+    elab_opts = [
+        # Make sure Depth >= NumWritePorts so that we can test simultaneous
+        # write on all ports without address conflicts
+        "-parameter Depth 6",
+    ],
     illegal_param_combinations = {
         (
             "EnableBypass",
@@ -368,6 +373,9 @@ br_verilog_fpv_test_tools_suite(
     elab_opts = [
         "-parameter EnableBypass 0",
         "-parameter UseStructuredGates 1",
+        # Make sure Depth >= NumWritePorts so that we can test simultaneous
+        # write on all ports without address conflicts
+        "-parameter Depth 6",
     ],
     params = {
         "EnablePartialWrite": [
@@ -523,6 +531,11 @@ br_verilog_fpv_test_tools_suite(
 # Test focuses on testing NumWritePorts and NumReadPorts
 br_verilog_fpv_test_tools_suite(
     name = "br_ram_flops_test_port",
+    elab_opts = [
+        # Make sure Depth >= NumWritePorts so that we can test simultaneous
+        # write on all ports without address conflicts
+        "-parameter Depth 6",
+    ],
     illegal_param_combinations = {
         (
             "TileEnableBypass",
@@ -681,15 +694,7 @@ br_verilog_fpv_test_tools_suite(
             "2",
             "3",
         ],
-        "TileEnableBypass": [
-            "0",
-            "1",
-        ],
         "EnablePartialWrite": [
-            "0",
-            "1",
-        ],
-        "UseStructuredGates": [
             "0",
             "1",
         ],
@@ -722,12 +727,11 @@ br_verilog_fpv_test_tools_suite(
     elab_opts = [
         "-parameter TileEnableBypass 0",
         "-parameter UseStructuredGates 1",
+        # Make sure Depth >= NumWritePorts so that we can test simultaneous
+        # write on all ports without address conflicts
+        "-parameter Depth 6",
     ],
     params = {
-        "TileEnableBypass": [
-            "0",
-            "1",
-        ],
         "EnablePartialWrite": [
             "0",
             "1",
@@ -745,10 +749,6 @@ br_verilog_fpv_test_tools_suite(
             "1",
             "4",
             "6",
-        ],
-        "UseStructuredGates": [
-            "0",
-            "1",
         ],
     },
     tools = {
