@@ -128,7 +128,7 @@ module br_fifo_ctrl_1r1w_push_credit_fpv_monitor #(
       .Depth(Depth),
       .Width(Width),
       .EnableBypass(EnableBypass),
-      .EnableCoverPushBackpressure(1)
+      .EnableCoverPushBackpressure(0)
   ) br_fifo_basic_fpv_monitor (
       .clk,
       .rst,
