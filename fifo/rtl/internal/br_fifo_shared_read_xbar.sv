@@ -23,7 +23,7 @@ module br_fifo_shared_read_xbar #(
     parameter int AddrWidth = 1,
     parameter int Width = 1,
     parameter bit EnableAssertPushValidStability = 0,
-    parameter bit ArbiterMayNotAlwaysGrant = 0
+    parameter bit ArbiterAlwaysGrants = 1
 ) (
     // ri lint_check_waive HIER_NET_NOT_READ INPUT_NOT_READ
     input logic clk,
@@ -122,7 +122,7 @@ module br_fifo_shared_read_xbar #(
         .Width(TotalMuxWidth),
         .EnableAssertPushValidStability(EnableAssertPushValidStability),
         .EnableAssertPushDataStability(EnableAssertPushValidStability),
-        .ArbiterMayNotAlwaysGrant(ArbiterMayNotAlwaysGrant)
+        .ArbiterAlwaysGrants(ArbiterAlwaysGrants)
     ) br_flow_mux_core_inst (
         .clk,
         .rst,
