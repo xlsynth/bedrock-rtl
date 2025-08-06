@@ -136,6 +136,12 @@ def br_verilog_fpv_test_suite(**kwargs):
         fail("Do not pass defines to br_verilog_fpv_test_suite. They are hard-coded in the macro.")
 
     verilog_fpv_test_suite(
-        defines = ["BR_ASSERT_ON", "BR_ENABLE_IMPL_CHECKS", "BR_DISABLE_FINAL_CHECKS", "BR_ENABLE_FPV"],
+        defines = [
+            "BR_ASSERT_ON",
+            "BR_ENABLE_IMPL_CHECKS",
+            "BR_DISABLE_FINAL_CHECKS",
+            "BR_ENABLE_FPV",
+            "BR_DISABLE_ASSERT_IMM",
+        ],
         **kwargs
     )
