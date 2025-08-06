@@ -129,7 +129,7 @@ module br_counter #(
   // Assertion-only helper logic for overflow/underflow detection
 `ifdef BR_ASSERT_ON
 `ifndef BR_DISABLE_INTG_CHECKS
-  localparam int ExtWidth = $clog2(MaxValue + MaxChange + 1);
+  localparam int ExtWidth = $clog2(MaxValueP1Width'(MaxValue) + MaxChangeP1Width'(MaxChange) + 1);
   logic [ExtWidth-1:0] value_extended;
   logic [ExtWidth-1:0] value_extended_next;
 
@@ -141,7 +141,8 @@ module br_counter #(
       value_extended + (incr_valid ? incr : '0) - (decr_valid ? decr : '0);
 
   if (EnableWrap || EnableSaturate) begin : gen_wrap_or_saturate_cover
-    `BR_COVER_INTG(wrap_or_saturate_c, value_extended_next > MaxValue)
+    localparam int MaxValueExtWidth = br_math::max2(ExtWidth, MaxValueP1Width);
+    `BR_COVER_INTG(wrap_or_saturate_c, value_extended_next > MaxValueExtWidth'(MaxValue))
   end else begin : gen_no_wrap_or_saturate_assert
     `BR_ASSERT_INTG(no_wrap_or_saturate_a, value_extended_next <= MaxValue)
   end
