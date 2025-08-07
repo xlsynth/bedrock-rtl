@@ -105,7 +105,6 @@ verilog_library(
         "//fifo/fpv:__subpackages__",
     ],
     deps = [
-        ":br_credit_counter_fpv_monitor",
         "//credit/rtl:br_credit_receiver",
         "//macros:br_fv",
     ],
@@ -187,7 +186,6 @@ verilog_library(
     name = "br_credit_sender_fpv_monitor",
     srcs = ["br_credit_sender_fpv_monitor.sv"],
     deps = [
-        ":br_credit_counter_fpv_monitor",
         "//credit/rtl:br_credit_sender",
         "//macros:br_fv",
     ],
