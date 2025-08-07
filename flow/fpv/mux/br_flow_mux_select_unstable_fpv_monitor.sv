@@ -42,7 +42,12 @@ module br_flow_mux_select_unstable_fpv_monitor #(
       .Width(Width),
       .EnableCoverPushBackpressure(EnableCoverPushBackpressure),
       .EnableAssertPushValidStability(EnableAssertPushValidStability),
-      .EnableAssertPushDataStability(EnableAssertPushDataStability)
+      .EnableAssertPushDataStability(EnableAssertPushDataStability),
+      // Select can switch flows without pop_ready
+      .EnableAssertPopValidStability(0),
+      .EnableAssertPopDataStability(0),
+      // Select can pick a flow that is not valid
+      .EnableAssertMustGrant(0)
   ) fv_checker (
       .clk,
       .rst,

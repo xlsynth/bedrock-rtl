@@ -127,7 +127,7 @@ module br_flow_mux_core #(
   br_flow_checks_valid_data_impl #(
       .NumFlows(1),
       .Width(Width),
-      .EnableCoverBackpressure(1),
+      .EnableCoverBackpressure(EnableCoverPushBackpressure),
       .EnableAssertValidStability(EnableAssertPushValidStability),
       // pop_data_unstable is unstable regardless of whether push_data is stable
       .EnableAssertDataStability(0),
