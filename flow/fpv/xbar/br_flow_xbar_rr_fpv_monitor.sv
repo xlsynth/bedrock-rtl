@@ -42,6 +42,9 @@ module br_flow_xbar_rr_fpv_monitor #(
     // If 1, assert that push_data is stable.
     // Otherwise, cover that push_data can be unstable.
     parameter bit EnableAssertPushDataStability = EnableAssertPushValidStability,
+    // If 1, assert that push_dest_id is stable.
+    // Otherwise, cover that push_dest_id can be unstable.
+    parameter bit EnableAssertPushDestinationStability = EnableAssertPushValidStability,
     // If 1, assert that push_valid is 1 and all intermediate
     // register stages are empty at end of simulation.
     parameter bit EnableAssertFinalNotValid = 1,
@@ -83,7 +86,8 @@ module br_flow_xbar_rr_fpv_monitor #(
       .RegisterPopOutputs(RegisterPopOutputs),
       .EnableCoverPushBackpressure(EnableCoverPushBackpressure),
       .EnableAssertPushValidStability(EnableAssertPushValidStability),
-      .EnableAssertPushDataStability(EnableAssertPushDataStability)
+      .EnableAssertPushDataStability(EnableAssertPushDataStability),
+      .EnableAssertPushDestinationStability(EnableAssertPushDestinationStability)
   ) fv_checker (
       .clk,
       .rst,
@@ -101,7 +105,8 @@ module br_flow_xbar_rr_fpv_monitor #(
   // ----------Round Robin checks----------
   rr_basic_fpv_monitor #(
       .NumRequesters(NumPushFlows),
-      .EnableAssertPushValidStability(EnableAssertPushValidStability)
+      // Valid won't be stable at the arbiters if push_dest_id is unstable
+      .EnableAssertPushValidStability(EnableAssertPushDestinationStability)
   ) rr_check (
       .clk,
       .rst,
@@ -121,5 +126,6 @@ bind br_flow_xbar_rr br_flow_xbar_rr_fpv_monitor #(
     .EnableCoverPushBackpressure(EnableCoverPushBackpressure),
     .EnableAssertPushValidStability(EnableAssertPushValidStability),
     .EnableAssertPushDataStability(EnableAssertPushDataStability),
+    .EnableAssertPushDestinationStability(EnableAssertPushDestinationStability),
     .EnableAssertFinalNotValid(EnableAssertFinalNotValid)
 ) monitor (.*);

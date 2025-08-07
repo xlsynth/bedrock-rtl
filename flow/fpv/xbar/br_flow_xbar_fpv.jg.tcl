@@ -17,8 +17,5 @@ clock clk
 reset rst
 get_design_info
 
-# TODO: disable covers for now due to many unreachable covers
-cover -disable {*}
-
 # prove command
 prove -all

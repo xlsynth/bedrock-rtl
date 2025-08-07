@@ -53,6 +53,9 @@ module br_flow_xbar_rr #(
     // If 1, assert that push_data is stable.
     // Otherwise, cover that push_data can be unstable.
     parameter bit EnableAssertPushDataStability = EnableAssertPushValidStability,
+    // If 1, assert that push_dest_id is stable.
+    // Otherwise, cover that push_dest_id can be unstable.
+    parameter bit EnableAssertPushDestinationStability = EnableAssertPushValidStability,
     // If 1, assert that push_data is always known (not X) when push_valid is asserted.
     parameter bit EnableAssertPushDataKnown = 1,
     // If 1, assert that push_valid is 1 and all intermediate
@@ -97,6 +100,7 @@ module br_flow_xbar_rr #(
       .EnableCoverPushBackpressure(EnableCoverPushBackpressure),
       .EnableAssertPushValidStability(EnableAssertPushValidStability),
       .EnableAssertPushDataStability(EnableAssertPushDataStability),
+      .EnableAssertPushDestinationStability(EnableAssertPushDestinationStability),
       .EnableAssertPushDataKnown(EnableAssertPushDataKnown),
       .EnableAssertFinalNotValid(EnableAssertFinalNotValid)
   ) br_flow_xbar_core_inst (
