@@ -85,7 +85,8 @@ module br_multi_xfer_distributor_rr #(
 
   br_arb_multi_rr #(
       .NumRequesters(NumFlows),
-      .MaxGrantPerCycle(NumSymbols)
+      .MaxGrantPerCycle(NumSymbols),
+      .EnableCoverBlockPriorityUpdate(0)
   ) br_arb_multi_rr_inst (
       .clk,
       .rst,
