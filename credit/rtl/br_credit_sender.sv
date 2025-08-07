@@ -187,6 +187,11 @@ module br_credit_sender #(
   br_credit_counter #(
       .MaxValue(MaxCredit),
       .MaxChange(MaxChange),
+      .MaxIncrement(PopCreditMaxChange),
+      .MaxDecrement(NumFlows),
+      .EnableCoverZeroIncrement(0),
+      .EnableCoverZeroDecrement(NumFlows > 1),
+      .EnableCoverDecrementBackpressure(NumFlows == 1 && EnableCoverPushBackpressure),
       .EnableAssertFinalNotValid(EnableAssertFinalNotValid)
   ) br_credit_counter (
       .clk,
@@ -220,7 +225,8 @@ module br_credit_sender #(
 
     br_arb_multi_rr #(
         .NumRequesters(NumFlows),
-        .MaxGrantPerCycle(NumFlows)
+        .MaxGrantPerCycle(NumFlows),
+        .EnableCoverBlockPriorityUpdate(0)
     ) br_arb_multi_rr (
         .clk,
         .rst,
