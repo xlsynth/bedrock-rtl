@@ -24,11 +24,11 @@ module(
 rules_hdl_extension = use_extension("//dependency_support/rules_hdl:extension.bzl", "rules_hdl_extension")
 use_repo(rules_hdl_extension, "rules_hdl")
 
-bazel_dep(name = "eccgen", version = "0.0.1")
+bazel_dep(name = "eccgen", version = "0.1.0")
 git_override(
     module_name = "eccgen",
     # Updated 2025-08-06
-    commit = "3bcbdef8d1d258ed25c55f3ad604f50549036dee",
+    commit = "3a91f82d48053d55820eac1b75cb554578d48d10",
     remote = "https://github.com/xlsynth/eccgen",
 )
 
