@@ -23,6 +23,7 @@ module br_flow_demux_basic_fpv_monitor #(
     parameter bit EnableCoverPushBackpressure = 1,
     parameter bit EnableAssertPushValidStability = EnableCoverPushBackpressure,
     parameter bit EnableAssertPushDataStability = EnableAssertPushValidStability,
+    parameter bit EnableAssertSelectStability = 0,
     parameter bit EnableAssertPopValidStability = 1,
     parameter bit EnableAssertPopDataStability = 1
 ) (
@@ -55,6 +56,10 @@ module br_flow_demux_basic_fpv_monitor #(
 
   if (!EnableCoverPushBackpressure) begin : gen_no_push_backpressure
     `BR_ASSUME(no_push_backpressure_a, !push_ready |-> !push_valid)
+  end
+
+  if (EnableAssertSelectStability) begin : gen_select_stability
+    `BR_ASSUME(select_stable_a, push_valid && !push_ready |=> $stable(select))
   end
 
   // ----------Sanity Check----------
