@@ -32,7 +32,9 @@ module br_enc_priority_encoder #(
     parameter int NumResults = 1,
     // If 1, in[NumRequesters-1] is the highest priority bit.
     // If 0, in[0] is the highest priority bit.
-    parameter bit MsbHighestPriority = 0
+    parameter bit MsbHighestPriority = 0,
+    // The maximum number of bits in in that will be set on a given cycle.
+    parameter int MaxInHot = NumRequesters
 ) (
     // ri lint_check_waive INPUT_NOT_READ HIER_NET_NOT_READ HIER_BRANCH_NOT_READ
     input logic clk,  // Used only for assertions
@@ -47,6 +49,7 @@ module br_enc_priority_encoder #(
   //------------------------------------------
   `BR_ASSERT_STATIC(legal_num_results_a, NumResults >= 1)
   `BR_ASSERT_STATIC(legal_num_requesters_a, NumRequesters > NumResults)
+  `BR_ASSERT_STATIC(max_in_hot_lte_num_requesters_a, MaxInHot <= NumRequesters)
 
 `ifdef BR_ASSERT_ON
 `ifndef BR_DISABLE_INTG_CHECKS
@@ -59,7 +62,12 @@ module br_enc_priority_encoder #(
     end
   end
 
-  `BR_COVER_INTG(more_in_hot_than_num_results_c, num_in_hot > NumResults)
+  if (MaxInHot < NumRequesters) begin : gen_check_max_in_hot
+    // Only need to check this if MaxInHot < NumRequesters
+    // Otherwise it must be true by construction
+    `BR_ASSERT_INTG(max_in_hot_a, num_in_hot <= MaxInHot)
+  end
+  `BR_COVER_INTG(max_in_hot_reached_c, num_in_hot == MaxInHot)
 `endif
 `endif
 

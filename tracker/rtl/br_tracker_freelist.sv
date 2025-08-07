@@ -168,9 +168,29 @@ module br_tracker_freelist #(
     assign priority_encoder_in = unstaged_free_entries;
   end
 
+  // Okay to use a non-synthesizable function here since it's for parameter only.
+  // ri lint_check_waive SYS_TF
+  localparam int NumPreallocatedEntries = $countones(PreallocatedEntries);
+  // This is the maximum number of entries that can be unstaged on any given cycle.
+  // It is the maximum of the following three numbers:
+  // 1. The number of entries set after reset (NumEntries - NumPreallocatedEntries)
+  // 2. The maximum number of entries that can be deallocated on a given cycle.
+  // (minimum of NumDeallocPorts and NumEntries)
+  // 3. The maximum number of entries that can be waiting to be staged at steady
+  // state when alloc is backpressured. (NumEntries minus staging buffer size)
+  localparam int PriorityEncoderMaxInHot = br_math::max2(
+      NumEntries - NumPreallocatedEntries,
+      br_math::max2(
+          br_math::min2(
+              NumDeallocPorts, NumEntries
+          ),
+          NumEntries - (RegisterAllocOutputs ? NumAllocPerCycle : 0))
+  );
+
   br_enc_priority_encoder #(
       .NumResults(NumAllocPerCycle),
-      .NumRequesters(NumEntries)
+      .NumRequesters(NumEntries),
+      .MaxInHot(PriorityEncoderMaxInHot)
   ) br_enc_priority_encoder_free_entries (
       .clk,
       .rst,
@@ -201,7 +221,10 @@ module br_tracker_freelist #(
           .EnableAssertPushValidStability(1),
           // Since the entry ID is coming from a priority encoder,
           // it could be unstable if a higher priority entry is deallocated.
-          .EnableAssertPushDataStability(0),
+          // This can only happen if there are more than two entries.
+          // If there are only two, only one entry can be unstaged when push_ready
+          // is low.
+          .EnableAssertPushDataStability(NumEntries <= 2),
           // Expect that alloc_valid can be 1 at end of test (or when idle, in general)
           .EnableAssertFinalNotValid(0)
       ) br_flow_reg_fwd (
@@ -241,7 +264,8 @@ module br_tracker_freelist #(
           .SymbolWidth(EntryIdWidth),
           // Data can be unstable because deallocating a higher priority entry
           // can supersede an existing free entry.
-          .EnableAssertPushDataStability(0),
+          // This can only happen if there are more than NumAllocPerCycle + 1 entries.
+          .EnableAssertPushDataStability(NumEntries <= NumAllocPerCycle + 1),
           // We expect unstaged_free_entries to be 1 at the end of the test.
           .EnableAssertFinalNotSendable(0)
       ) br_multi_xfer_reg_fwd (
