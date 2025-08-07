@@ -205,6 +205,8 @@ module br_flow_serializer #(
     br_counter_incr #(
         .MaxValue(SrMinus1),
         .MaxIncrement(1),
+        .EnableCoverZeroIncrement(0),
+        .EnableCoverReinitAndIncr(0),
         .EnableAssertFinalNotValid(EnableAssertFinalNotValid)
     ) br_counter_incr_pop_flit_id (
         .clk,
@@ -290,6 +292,8 @@ module br_flow_serializer #(
 
   `BR_ASSERT_IMPL(cut_through_latency_0_a, push_valid |-> pop_valid)
   `BR_ASSERT_IMPL(pop_last_a, pop_valid && pop_last |-> push_last)
-  `BR_COVER_IMPL(dont_cares_c, push_valid && push_last && push_last_dont_care_count != 0)
+  if (SerializationRatio > 1) begin : gen_nonzero_dont_care_cover
+    `BR_COVER_IMPL(dont_cares_c, push_valid && push_last && push_last_dont_care_count != 0)
+  end
 
 endmodule : br_flow_serializer
