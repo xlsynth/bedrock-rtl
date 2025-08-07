@@ -177,6 +177,13 @@ module br_credit_receiver #(
   br_credit_counter #(
       .MaxValue(MaxCredit),
       .MaxChange(CreditCounterMaxChange),
+      .MaxIncrement(PopCreditMaxChange),
+      .MaxDecrement(PushCreditMaxChange),
+      .EnableCoverZeroIncrement(0),
+      // If PushCreditMaxChange > 1, decr will never be larger
+      // than available. If ==1, decr will always be 1.
+      .EnableCoverZeroDecrement(PushCreditMaxChange > 1),
+      .EnableCoverDecrementBackpressure(PushCreditMaxChange == 1),
       // Since credit_decr_valid is tied to credit_stall, we disable the final not-valid check
       .EnableAssertFinalNotValid(0)
   ) br_credit_counter (
@@ -227,9 +234,12 @@ module br_credit_receiver #(
   // Implementation checks
   //------------------------------------------
   `BR_ASSERT_IMPL(push_credit_stall_a, push_credit_stall |-> !push_credit_internal)
-  `BR_COVER_IMPL(passthru_credit_c, pop_credit && push_credit_internal && credit_count == '0)
-  `BR_COVER_IMPL(passthru_credit_nonzero_count_c,
-                 pop_credit && push_credit_internal && credit_count > '0)
+  `BR_COVER_IMPL(passthru_credit_c,
+                 pop_credit > '0 && push_credit_internal > '0 && credit_count == '0)
+  if (MaxCredit > 1) begin : gen_passthru_credit_nonzero_count
+    `BR_COVER_IMPL(passthru_credit_nonzero_count_c,
+                   pop_credit > '0 && push_credit_internal > '0 && credit_count > '0)
+  end
   `BR_ASSERT_IMPL(over_withhold_a,
                   credit_withhold > (credit_count + pop_credit) |-> !push_credit_internal)
   `BR_ASSERT_IMPL(withhold_and_release_a,

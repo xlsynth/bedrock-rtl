@@ -30,8 +30,9 @@ assume -name no_push_during_reset {rst | push_sender_in_reset |-> push_valid == 
 assert -name fv_rst_check_push_credit {rst | push_sender_in_reset |-> push_credit == 'd0}
 assert -name fv_rst_check_pop_valid {rst | push_sender_in_reset |-> pop_valid == 'd0}
 
-# TODO: disable covers to make nightly clean
-cover -disable *
+# The precondition can't be met since incr on the credit counter is always
+# zero when incr_valid is zero.
+cover -disable *no_spurious_incr_valid*
 
 # prove command
 prove -all
