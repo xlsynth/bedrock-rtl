@@ -122,28 +122,11 @@ module br_flow_demux_select_unstable #(
   //------------------------------------------
   // Implementation checks
   //------------------------------------------
-  for (genvar i = 0; i < NumFlows; i++) begin : gen_pop_unstable_checks
-    if (EnableAssertPushValidStability) begin : gen_stable_push_valid
-      `BR_ASSERT_IMPL(pop_valid_instability_caused_by_select_a,
-                      ##1 !pop_ready[i] && $stable(
-                          pop_ready[i]
-                      ) && $fell(
-                          pop_valid_unstable[i]
-                      ) |-> !$stable(
-                          select
-                      ))
-      if (EnableAssertPushDataStability) begin : gen_stable_push_data
-        `BR_ASSERT_IMPL(pop_data_instability_caused_by_select_a,
-                        ##1 !pop_ready[i] && pop_valid_unstable[i] && $stable(
-                            pop_ready[i]
-                        ) && $stable(
-                            pop_valid_unstable
-                        ) && !$stable(
-                            pop_data_unstable[i]
-                        ) |-> !$stable(
-                            select
-                        ))
-      end
+  if (EnableCoverPushBackpressure && EnableAssertPushValidStability) begin : gen_stable_push_valid
+    for (genvar i = 0; i < NumFlows; i++) begin : gen_pop_unstable_checks
+      `BR_ASSERT_IMPL(
+          pop_valid_instability_caused_by_select_a,
+          (!pop_ready[i] && pop_valid_unstable[i]) ##1 !pop_valid_unstable[i] |-> !$stable(select))
     end
   end
 

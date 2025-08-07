@@ -43,7 +43,10 @@ module br_flow_demux_select_fpv_monitor #(
       .Width(Width),
       .EnableCoverPushBackpressure(EnableCoverPushBackpressure),
       .EnableAssertPushValidStability(EnableAssertPushValidStability),
-      .EnableAssertPushDataStability(EnableAssertPushDataStability)
+      .EnableAssertPushDataStability(EnableAssertPushDataStability),
+      // Output flow reg ensures that pop is always stable
+      .EnableAssertPopValidStability(1),
+      .EnableAssertPopDataStability(1)
   ) fv_checker (
       .clk,
       .rst,
