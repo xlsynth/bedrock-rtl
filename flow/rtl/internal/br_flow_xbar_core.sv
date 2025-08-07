@@ -55,15 +55,7 @@ module br_flow_xbar_core #(
   //------------------------------------------
   // Integration Assertions
   //------------------------------------------
-  for (genvar i = 0; i < NumPushFlows; i++) begin : gen_push_flow_checks
-    if (EnableAssertPushDestinationStability) begin : gen_dest_stability_assert
-      `BR_ASSERT_INTG(push_dest_id_stable_when_backpressured_a,
-                      push_valid[i] && !push_ready[i] |=> push_valid[i] && $stable(push_dest_id[i]))
-    end else begin : gen_dest_instability_cover
-      `BR_COVER_INTG(push_dest_id_unstable_when_backpressured_c,
-                     ##1 $past(push_valid[i] && !push_ready[i]) && !$stable(push_dest_id[i]))
-    end
-  end
+  // Rely on assertions in submodules
 
   //------------------------------------------
   // Implementation
@@ -88,6 +80,7 @@ module br_flow_xbar_core #(
         .EnableCoverPushBackpressure(EnableCoverPushBackpressure),
         .EnableAssertPushValidStability(EnableAssertPushValidStability),
         .EnableAssertPushDataStability(EnableAssertPushDataStability),
+        .EnableAssertSelectStability(EnableAssertPushDestinationStability),
         .EnableAssertPushDataKnown(EnableAssertPushDataKnown),
         .EnableAssertFinalNotValid(EnableAssertFinalNotValid)
     ) br_flow_demux_select_unstable_push (

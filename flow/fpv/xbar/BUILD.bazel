@@ -51,11 +51,18 @@ br_verilog_fpv_test_tools_suite(
             "EnableCoverPushBackpressure",
             "EnableAssertPushValidStability",
             "EnableAssertPushDataStability",
+            "EnableAssertPushDestinationStability",
         ): [
-            ("0", "0", "1"),
-            ("0", "1", "0"),
-            ("0", "1", "1"),
-            ("1", "0", "1"),
+            ("0", "0", "0", "1"),
+            ("0", "0", "1", "0"),
+            ("0", "0", "1", "1"),
+            ("0", "1", "0", "0"),
+            ("0", "1", "0", "1"),
+            ("0", "1", "1", "0"),
+            ("0", "1", "1", "1"),
+            ("1", "0", "0", "1"),
+            ("1", "0", "1", "0"),
+            ("1", "0", "1", "1"),
         ],
     },
     params = {
@@ -71,6 +78,12 @@ br_verilog_fpv_test_tools_suite(
             "0",
             "1",
         ],
+        "EnableAssertPushDestinationStability": [
+            "0",
+            "1",
+        ],
+        # Need this override to ensure data can actually be unstable
+        "Width": ["2"],
     },
     tools = {
         "jg": "br_flow_xbar_fpv.jg.tcl",
@@ -140,11 +153,18 @@ br_verilog_fpv_test_tools_suite(
             "EnableCoverPushBackpressure",
             "EnableAssertPushValidStability",
             "EnableAssertPushDataStability",
+            "EnableAssertPushDestinationStability",
         ): [
-            ("0", "0", "1"),
-            ("0", "1", "0"),
-            ("0", "1", "1"),
-            ("1", "0", "1"),
+            ("0", "0", "0", "1"),
+            ("0", "0", "1", "0"),
+            ("0", "0", "1", "1"),
+            ("0", "1", "0", "0"),
+            ("0", "1", "0", "1"),
+            ("0", "1", "1", "0"),
+            ("0", "1", "1", "1"),
+            ("1", "0", "0", "1"),
+            ("1", "0", "1", "0"),
+            ("1", "0", "1", "1"),
         ],
     },
     params = {
@@ -160,6 +180,12 @@ br_verilog_fpv_test_tools_suite(
             "0",
             "1",
         ],
+        "EnableAssertPushDestinationStability": [
+            "0",
+            "1",
+        ],
+        # Need this override to ensure data can actually be unstable
+        "Width": ["2"],
     },
     tools = {
         "jg": "br_flow_xbar_fpv.jg.tcl",
@@ -229,11 +255,18 @@ br_verilog_fpv_test_tools_suite(
             "EnableCoverPushBackpressure",
             "EnableAssertPushValidStability",
             "EnableAssertPushDataStability",
+            "EnableAssertPushDestinationStability",
         ): [
-            ("0", "0", "1"),
-            ("0", "1", "0"),
-            ("0", "1", "1"),
-            ("1", "0", "1"),
+            ("0", "0", "0", "1"),
+            ("0", "0", "1", "0"),
+            ("0", "0", "1", "1"),
+            ("0", "1", "0", "0"),
+            ("0", "1", "0", "1"),
+            ("0", "1", "1", "0"),
+            ("0", "1", "1", "1"),
+            ("1", "0", "0", "1"),
+            ("1", "0", "1", "0"),
+            ("1", "0", "1", "1"),
         ],
     },
     params = {
@@ -249,6 +282,12 @@ br_verilog_fpv_test_tools_suite(
             "0",
             "1",
         ],
+        "EnableAssertPushDestinationStability": [
+            "0",
+            "1",
+        ],
+        # Need this override to ensure data can actually be unstable
+        "Width": ["2"],
     },
     tools = {
         "jg": "br_flow_xbar_fpv.jg.tcl",
