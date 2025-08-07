@@ -49,11 +49,9 @@ module br_ram_flops_basic_fv_checker #(
   // ----------FV assumptions----------
   for (genvar i = 0; i < NumWritePorts; i++) begin : gen_i
     `BR_ASSUME_CR(legal_wr_addr_a, wr_valid[i] |-> wr_addr[i] < Depth, wr_clk, wr_rst)
-    for (genvar j = 0; j < NumWritePorts; j++) begin : gen_j
-      if (i != j) begin : gen_asm
-        `BR_ASSUME_CR(unique_wr_addr_a, wr_valid[i] && wr_valid[j] |-> wr_addr[i] != wr_addr[j],
-                      wr_clk, wr_rst)
-      end
+    for (genvar j = 0; j < i; j++) begin : gen_j
+      `BR_ASSUME_CR(unique_wr_addr_a, wr_valid[i] && wr_valid[j] |-> wr_addr[i] != wr_addr[j],
+                    wr_clk, wr_rst)
     end
   end
 
@@ -81,6 +79,7 @@ module br_ram_flops_basic_fv_checker #(
   logic [NumWords-1:0] fv_wr_word_en;
   // This is reading from fv_addr
   logic fv_rd_valid;
+  logic fv_rd_data_valid;
   logic [Width-1:0] fv_rd_data;
 
   // FV memory only keeps tracking of traffic accessing fv_addr
@@ -149,16 +148,17 @@ module br_ram_flops_basic_fv_checker #(
   );
 
   assign fv_rd_valid = rd_addr_valid[fv_rd_port] && (rd_addr[fv_rd_port] == fv_addr);
-  assign fv_rd_data  = rd_data[fv_rd_port];
+  assign fv_rd_data_valid = rd_data_valid[fv_rd_port];
+  assign fv_rd_data = rd_data[fv_rd_port];
 
   // ----------FV assertions----------
   if (EnableReset) begin : gen_rst
     if (EnableBypass) begin : gen_bypass_rst
       `BR_ASSERT_CR(memory_reset_a,
-                    |rd_data_valid && !fv_wr_seen && (wr_valid == 'd0) |-> fv_rd_data == 'd0,
+                    fv_rd_data_valid && !fv_wr_seen && (wr_valid == 'd0) |-> fv_rd_data == 'd0,
                     rd_clk, rd_rst)
     end else begin : gen_non_bypass_rst
-      `BR_ASSERT_CR(memory_reset_a, |rd_data_valid && !fv_wr_seen |-> fv_rd_data == 'd0, rd_clk,
+      `BR_ASSERT_CR(memory_reset_a, fv_rd_data_valid && !fv_wr_seen |-> fv_rd_data == 'd0, rd_clk,
                     rd_rst)
     end
   end
