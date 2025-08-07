@@ -16,7 +16,7 @@ load("@rules_hdl//verilog:providers.bzl", "verilog_library")
 load("//bazel:br_verilog.bzl", "br_verilog_fpv_test_tools_suite")
 load("//bazel:verilog.bzl", "verilog_elab_test")
 
-package(default_visibility = ["//visibility:public"])
+package(default_visibility = ["//visibility:private"])
 
 ##################################################################
 # Bedrock-RTL Credit Counter
@@ -100,6 +100,10 @@ br_verilog_fpv_test_tools_suite(
 verilog_library(
     name = "br_credit_receiver_fpv_monitor",
     srcs = ["br_credit_receiver_fpv_monitor.sv"],
+    visibility = [
+        "//cdc/fpv:__subpackages__",
+        "//fifo/fpv:__subpackages__",
+    ],
     deps = [
         ":br_credit_counter_fpv_monitor",
         "//credit/rtl:br_credit_receiver",

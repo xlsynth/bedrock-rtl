@@ -16,7 +16,7 @@ load("@rules_hdl//verilog:providers.bzl", "verilog_library")
 load("//bazel:br_verilog.bzl", "br_verilog_fpv_test_tools_suite")
 load("//bazel:verilog.bzl", "verilog_elab_test")
 
-package(default_visibility = ["//visibility:public"])
+package(default_visibility = ["//visibility:private"])
 
 # Basic arb checker
 verilog_library(
@@ -31,12 +31,14 @@ verilog_library(
 verilog_library(
     name = "lru_basic_fpv_monitor",
     srcs = ["lru_basic_fpv_monitor.sv"],
+    visibility = ["//flow/fpv:__subpackages__"],
 )
 
 # Basic Round Robin checker
 verilog_library(
     name = "rr_basic_fpv_monitor",
     srcs = ["rr_basic_fpv_monitor.sv"],
+    visibility = ["//flow/fpv:__subpackages__"],
 )
 
 # Fixed priority arbiter
@@ -44,6 +46,7 @@ verilog_library(
 verilog_library(
     name = "br_arb_fixed_fpv_monitor",
     srcs = ["br_arb_fixed_fpv_monitor.sv"],
+    visibility = ["//flow/fpv:__subpackages__"],
     deps = [
         ":arb_basic_fpv_monitor",
         "//arb/rtl:br_arb_fixed",
