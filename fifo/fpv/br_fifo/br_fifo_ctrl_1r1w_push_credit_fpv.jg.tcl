@@ -33,8 +33,8 @@ assert -name fv_rst_check_pop_valid {rst | push_sender_in_reset |-> pop_valid ==
 assert -name fv_rst_check_ram_wr_valid {rst | push_sender_in_reset |-> ram_wr_valid == 'd0}
 assert -name fv_rst_check_ram_rd_addr_valid {rst | push_sender_in_reset |-> ram_rd_addr_valid == 'd0}
 
-# TODO: disable covers to make nightly clean
-cover -disable *
+# The push_ready is tied to 1, so the precondition of the assumption won't be met
+cover -disable *br_fifo_basic_fpv_monitor.gen_push_backpressure_assume.no_push_backpressure*
 
 # limit run time to 10-mins
 set_prove_time_limit 600s

@@ -197,7 +197,6 @@ module br_fifo_push_ctrl_credit #(
   `BR_ASSERT_CR_IMPL(no_overflow_a, internal_valid |-> !full, clk, either_rst)
   `BR_ASSERT_CR_IMPL(ram_push_and_bypass_mutually_exclusive_a,
                      !(ram_wr_valid && bypass_ready && bypass_valid_unstable), clk, either_rst)
-  `BR_COVER_CR_IMPL(bypass_unstable_c, !bypass_ready && bypass_valid_unstable, clk, either_rst)
 
   // Flags
   `BR_ASSERT_CR_IMPL(slots_in_range_a, slots <= Depth, clk, either_rst)
