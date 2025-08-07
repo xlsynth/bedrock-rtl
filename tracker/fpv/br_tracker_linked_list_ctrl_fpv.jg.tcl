@@ -17,9 +17,6 @@ clock clk
 reset rst
 get_design_info
 
-# TODO: disable covers to make nightly clean
-cover -disable *
-
 # limit run time to 30-mins
 set_prove_time_limit 1800s
 
