@@ -41,7 +41,9 @@ module br_flow_mux_core #(
     // If 1, assert that push_data is always known (not X) when push_valid is asserted.
     parameter bit EnableAssertPushDataKnown = 1,
     // If 1, then assert there are no valid bits asserted at the end of the test.
-    parameter bit EnableAssertFinalNotValid = 1
+    parameter bit EnableAssertFinalNotValid = 1,
+    // Set to 1 if the arbiter is guaranteed to grant in a cycle when any request is asserted.
+    parameter bit ArbiterAlwaysGrants = 1
 ) (
     // ri lint_check_waive HIER_NET_NOT_READ HIER_BRANCH_NOT_READ INPUT_NOT_READ
     input  logic                           clk,                     // Used for assertions only
@@ -95,7 +97,8 @@ module br_flow_mux_core #(
       .NumFlows(NumFlows),
       .EnableCoverPushBackpressure(EnableCoverPushBackpressure),
       .EnableAssertPushValidStability(EnableAssertPushValidStability),
-      .EnableAssertFinalNotValid(EnableAssertFinalNotValid)
+      .EnableAssertFinalNotValid(EnableAssertFinalNotValid),
+      .ArbiterAlwaysGrants(ArbiterAlwaysGrants)
   ) br_flow_arb_core (
       .clk,
       .rst,
