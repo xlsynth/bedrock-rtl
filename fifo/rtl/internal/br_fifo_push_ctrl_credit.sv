@@ -27,6 +27,15 @@ module br_fifo_push_ctrl_credit #(
     parameter int RamDepth = Depth,
     // If 1, assert that push_data is always known (not X) when push_valid is asserted.
     parameter bit EnableAssertPushDataKnown = 1,
+    // If 1, cover that credit_withhold can be non-zero.
+    // Otherwise, assert that it is always zero.
+    parameter bit EnableCoverCreditWithhold = 1,
+    // If 1, cover that push_sender_in_reset can be asserted
+    // Otherwise, assert that it is never asserted.
+    parameter bit EnableCoverPushSenderInReset = 1,
+    // If 1, cover that push_credit_stall can be asserted
+    // Otherwise, assert that it is never asserted.
+    parameter bit EnableCoverPushCreditStall = 1,
     // If 1, then assert there are no valid bits asserted and that the FIFO is
     // empty at the end of the test.
     parameter bit EnableAssertFinalNotValid = 1,
@@ -96,10 +105,13 @@ module br_fifo_push_ctrl_credit #(
   logic [Width-1:0] internal_data;
 
   br_credit_receiver #(
-      .Width                    (Width),
-      .MaxCredit                (MaxCredit),
-      .RegisterPushOutputs      (RegisterPushOutputs),
-      .EnableAssertFinalNotValid(EnableAssertFinalNotValid)
+      .Width                       (Width),
+      .MaxCredit                   (MaxCredit),
+      .RegisterPushOutputs         (RegisterPushOutputs),
+      .EnableCoverCreditWithhold   (EnableCoverCreditWithhold),
+      .EnableCoverPushSenderInReset(EnableCoverPushSenderInReset),
+      .EnableCoverPushCreditStall  (EnableCoverPushCreditStall),
+      .EnableAssertFinalNotValid   (EnableAssertFinalNotValid)
   ) br_credit_receiver (
       .clk,
       // Not using either_rst here so that there is no path from

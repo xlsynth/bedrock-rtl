@@ -79,6 +79,15 @@ module br_cdc_fifo_flops_push_credit #(
     // Number of pipeline register stages inserted along the read data path in the width dimension.
     // Must be at least 0.
     parameter int FlopRamReadDataWidthStages = 0,
+    // If 1, cover that credit_withhold can be non-zero.
+    // Otherwise, assert that it is always zero.
+    parameter bit EnableCoverCreditWithhold = 1,
+    // If 1, cover that push_sender_in_reset can be asserted
+    // Otherwise, assert that it is never asserted.
+    parameter bit EnableCoverPushSenderInReset = 1,
+    // If 1, cover that push_credit_stall can be asserted
+    // Otherwise, assert that it is never asserted.
+    parameter bit EnableCoverPushCreditStall = 1,
     // If 1, then assert there are no valid bits asserted and that the FIFO is
     // empty at the end of the test.
     parameter bit EnableAssertFinalNotValid = 1,
@@ -155,6 +164,9 @@ module br_cdc_fifo_flops_push_credit #(
       .RamWriteLatency(RamWriteLatency),
       .RamReadLatency(RamReadLatency),
       .NumSyncStages(NumSyncStages),
+      .EnableCoverCreditWithhold(EnableCoverCreditWithhold),
+      .EnableCoverPushSenderInReset(EnableCoverPushSenderInReset),
+      .EnableCoverPushCreditStall(EnableCoverPushCreditStall),
       .EnableAssertFinalNotValid(EnableAssertFinalNotValid)
   ) br_cdc_fifo_ctrl_1r1w_push_credit (
       .push_clk,

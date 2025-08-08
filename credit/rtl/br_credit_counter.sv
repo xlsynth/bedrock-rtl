@@ -66,6 +66,13 @@ module br_credit_counter #(
     // If 1, cover the case where decr_valid is high and decr_ready is low.
     // Otherwise, assert that doesn't happen.
     parameter bit EnableCoverDecrementBackpressure = 1,
+    // If 1, cover that withhold can be non-zero.
+    // Otherwise, assert that it is always zero.
+    parameter bit EnableCoverWithhold = 1,
+    // If 1, assert that decr_valid is always high.
+    // Otherwise, cover that it can be low.
+    // Generally, this should not be enabled unless decr_valid is tied high.
+    parameter bit EnableAssertAlwaysDecr = 0,
     // If 1, then assert there are no valid bits asserted at the end of the test.
     parameter bit EnableAssertFinalNotValid = 1,
     localparam int MaxValueP1Width = MaxValueWidth + 1,
@@ -108,6 +115,12 @@ module br_credit_counter #(
     `BR_ASSERT_FINAL(final_not_decr_valid_a, !decr_valid)
   end
 
+  if (EnableAssertAlwaysDecr) begin : gen_assert_always_decr
+    `BR_ASSERT_INTG(always_decr_a, decr_valid)
+  end else begin : gen_cover_sometimes_no_decr
+    `BR_COVER_INTG(no_decr_c, !decr_valid)
+  end
+
   // Ensure increments and decrements are in range
   `BR_ASSERT_INTG(incr_in_range_a, incr_valid |-> (incr <= MaxIncrement))
   `BR_ASSERT_INTG(decr_in_range_a, decr_valid |-> (decr <= MaxDecrement))
@@ -143,7 +156,12 @@ module br_credit_counter #(
 
   // Withhold and available
   `BR_ASSERT_INTG(withhold_in_range_a, withhold <= MaxValue)
-  `BR_COVER_INTG(withhold_c, withhold > 0)
+  if (EnableCoverWithhold) begin : gen_cover_withhold_nonzero
+    `BR_COVER_INTG(withhold_nonzero_c, withhold > 0)
+  end else begin : gen_assert_withhold_zero
+    `BR_ASSERT_INTG(withhold_zero_a, withhold == 0)
+  end
+
   if (EnableCoverDecrementBackpressure) begin : gen_cover_decr_gt_available
     `BR_COVER_INTG(decr_gt_available_c, decr_valid && decr > available)
   end else begin : gen_assert_decr_lte_available
@@ -210,17 +228,23 @@ module br_credit_counter #(
 
   // Increment/decrement combination corner cases
   `BR_COVER_IMPL(incr_and_decr_c, incr_valid && decr_valid)
-  `BR_ASSERT_IMPL(incr_and_no_decr_c, incr_valid && !decr_valid |-> value_next >= value)
+  if (!EnableAssertAlwaysDecr) begin : gen_assert_incr_and_no_decr
+    `BR_ASSERT_IMPL(incr_and_no_decr_c, incr_valid && !decr_valid |-> value_next >= value)
+  end
   `BR_ASSERT_IMPL(no_incr_and_decr_c, !incr_valid && decr_valid |-> value_next <= value)
 
   // No-op corners
-  `BR_ASSERT_IMPL(idle_noop_a, !incr_valid && !decr_valid |-> value == value_next)
+  if (!EnableAssertAlwaysDecr) begin : gen_assert_idle_noop
+    `BR_ASSERT_IMPL(idle_noop_a, !incr_valid && !decr_valid |-> value == value_next)
+  end
   `BR_ASSERT_IMPL(active_noop_a,
                   incr_valid && decr_valid && decr_ready && incr == decr |-> value == value_next)
 
   // Withhold and available
   `BR_COVER_IMPL(value_lt_available_c, value < available)
-  `BR_COVER_IMPL(value_gt_available_c, value > available)
-  `BR_COVER_IMPL(withhold_gt_value_c, withhold > value)
+  if (EnableCoverWithhold) begin : gen_cover_withhold_gt_value
+    `BR_COVER_IMPL(value_gt_available_c, value > available)
+    `BR_COVER_IMPL(withhold_gt_value_c, withhold > value)
+  end
 
 endmodule : br_credit_counter
