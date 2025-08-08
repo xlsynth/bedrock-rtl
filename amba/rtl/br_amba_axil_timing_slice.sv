@@ -21,13 +21,17 @@
 //       forward, reverse, or full timing slices.
 
 module br_amba_axil_timing_slice #(
-    parameter  int AddrWidth   = 40,
-    parameter  int DataWidth   = 64,
-    parameter  int AWUserWidth = 1,
-    parameter  int WUserWidth  = 1,
-    parameter  int ARUserWidth = 1,
-    parameter  int RUserWidth  = 1,
-    parameter  int BUserWidth  = 1,
+    parameter int AddrWidth = 40,
+    parameter int DataWidth = 64,
+    parameter int AWUserWidth = 1,
+    parameter int WUserWidth = 1,
+    parameter int ARUserWidth = 1,
+    parameter int RUserWidth = 1,
+    parameter int BUserWidth = 1,
+    // If 1, assert that target_wdata is known when target_wvalid is asserted.
+    parameter bit EnableAssertWriteDataKnown = 1,
+    // If 1, assert that target_rdata is known when target_rvalid is asserted.
+    parameter bit EnableAssertReadDataKnown = 1,
     localparam int StrobeWidth = DataWidth / 8
 ) (
     input clk,
@@ -102,7 +106,9 @@ module br_amba_axil_timing_slice #(
 
   // Write Data Channel Timing Slice
   br_flow_reg_both #(
-      .Width(DataWidth + WUserWidth + StrobeWidth)
+      .Width(DataWidth + WUserWidth + StrobeWidth),
+      // TODO(zhemao): Make sure wstrb and wuser always checked to be known
+      .EnableAssertPushDataKnown(EnableAssertWriteDataKnown)
   ) br_flow_reg_both_w_slice (
       .clk,
       .rst,
@@ -144,7 +150,9 @@ module br_amba_axil_timing_slice #(
 
   // Read Data Channel Timing Slice
   br_flow_reg_both #(
-      .Width(DataWidth + br_amba::AxiRespWidth + RUserWidth)
+      .Width(DataWidth + br_amba::AxiRespWidth + RUserWidth),
+      // TODO(zhemao): Make sure rresp and ruser always checked to be known
+      .EnableAssertPushDataKnown(EnableAssertReadDataKnown)
   ) br_flow_reg_both_r_slice (
       .clk,
       .rst,
