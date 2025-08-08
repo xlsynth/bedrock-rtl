@@ -162,6 +162,14 @@ br_verilog_fpv_test_tools_suite(
         ): [
             ("2", "3"),
         ],
+        (
+            "Depth",
+            "NumLinkedLists",
+        ): [
+            ("2", "2"),
+            ("2", "3"),
+            ("3", "3"),
+        ],
     },
     params = {
         "Depth": [
