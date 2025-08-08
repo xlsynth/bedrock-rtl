@@ -251,8 +251,8 @@ module br_counter #(
     `BR_COVER_IMPL(increment_zero_c, incr_valid && incr == '0)
     `BR_COVER_IMPL(decrement_zero_c, decr_valid && decr == '0)
   end else begin : gen_assert_no_zero_change
-    `BR_ASSERT_IMPL(no_zero_increment_a, !incr_valid |-> incr > '0)
-    `BR_ASSERT_IMPL(no_zero_decrement_a, !decr_valid |-> decr > '0)
+    `BR_ASSERT_IMPL(no_zero_increment_a, incr_valid |-> incr > '0)
+    `BR_ASSERT_IMPL(no_zero_decrement_a, decr_valid |-> decr > '0)
   end
   `BR_COVER_IMPL(increment_and_decrement_c, incr_valid && incr > '0 && decr_valid && decr > '0)
 
