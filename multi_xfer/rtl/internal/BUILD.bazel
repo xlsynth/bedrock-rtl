@@ -22,6 +22,7 @@ verilog_library(
     srcs = ["br_multi_xfer_checks_sendable_data_intg.sv"],
     deps = [
         "//macros:br_asserts_internal",
+        "//macros:br_registers",
         "//macros:br_unused",
     ],
 )
@@ -51,6 +52,7 @@ verilog_library(
     srcs = ["br_multi_xfer_checks_sendable_data_impl.sv"],
     deps = [
         "//macros:br_asserts_internal",
+        "//macros:br_registers",
         "//macros:br_unused",
     ],
 )
