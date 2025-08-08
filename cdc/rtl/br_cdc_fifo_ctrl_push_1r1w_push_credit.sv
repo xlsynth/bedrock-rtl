@@ -54,6 +54,15 @@ module br_cdc_fifo_ctrl_push_1r1w_push_credit #(
     // before synchronization to the pop clock domain. You also cannot set this
     // to 0 if push_sender_in_reset is not tied to 0.
     parameter bit RegisterResetActive = 1,
+    // If 1, cover that credit_withhold can be non-zero.
+    // Otherwise, assert that it is always zero.
+    parameter bit EnableCoverCreditWithhold = 1,
+    // If 1, cover that push_sender_in_reset can be asserted
+    // Otherwise, assert that it is never asserted.
+    parameter bit EnableCoverPushSenderInReset = 1,
+    // If 1, cover that push_credit_stall can be asserted
+    // Otherwise, assert that it is never asserted.
+    parameter bit EnableCoverPushCreditStall = 1,
     // If 1, then assert there are no valid bits asserted and that the FIFO is
     // empty at the end of the test.
     parameter bit EnableAssertFinalNotValid = 1,
@@ -120,6 +129,9 @@ module br_cdc_fifo_ctrl_push_1r1w_push_credit #(
       .RegisterPushOutputs(RegisterPushOutputs),
       .RegisterResetActive(RegisterResetActive),
       .MaxCredit(MaxCredit),
+      .EnableCoverCreditWithhold(EnableCoverCreditWithhold),
+      .EnableCoverPushSenderInReset(EnableCoverPushSenderInReset),
+      .EnableCoverPushCreditStall(EnableCoverPushCreditStall),
       .EnableAssertFinalNotValid(EnableAssertFinalNotValid)
   ) br_cdc_fifo_push_ctrl_credit (
       .clk              (push_clk),               // ri lint_check_waive SAME_CLOCK_NAME

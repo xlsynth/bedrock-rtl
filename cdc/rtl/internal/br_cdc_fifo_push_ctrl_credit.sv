@@ -23,6 +23,15 @@ module br_cdc_fifo_push_ctrl_credit #(
     parameter int MaxCredit = Depth,
     parameter bit RegisterPushOutputs = 0,
     parameter bit RegisterResetActive = 1,
+    // If 1, cover that credit_withhold can be non-zero.
+    // Otherwise, assert that it is always zero.
+    parameter bit EnableCoverCreditWithhold = 1,
+    // If 1, cover that push_sender_in_reset can be asserted
+    // Otherwise, assert that it is never asserted.
+    parameter bit EnableCoverPushSenderInReset = 1,
+    // If 1, cover that push_credit_stall can be asserted
+    // Otherwise, assert that it is never asserted.
+    parameter bit EnableCoverPushCreditStall = 1,
     parameter bit EnableAssertFinalNotValid = 1,
     localparam int AddrWidth = $clog2(Depth),
     localparam int CountWidth = $clog2(Depth + 1),
@@ -94,11 +103,14 @@ module br_cdc_fifo_push_ctrl_credit #(
   logic [CountWidth-1:0] pop_count_delta;
 
   br_credit_receiver #(
-      .Width                    (Width),
-      .MaxCredit                (MaxCredit),
-      .RegisterPushOutputs      (RegisterPushOutputs),
-      .PopCreditMaxChange       (Depth),
-      .EnableAssertFinalNotValid(EnableAssertFinalNotValid)
+      .Width                       (Width),
+      .MaxCredit                   (MaxCredit),
+      .RegisterPushOutputs         (RegisterPushOutputs),
+      .PopCreditMaxChange          (Depth),
+      .EnableCoverCreditWithhold   (EnableCoverCreditWithhold),
+      .EnableCoverPushSenderInReset(EnableCoverPushSenderInReset),
+      .EnableCoverPushCreditStall  (EnableCoverPushCreditStall),
+      .EnableAssertFinalNotValid   (EnableAssertFinalNotValid)
   ) br_credit_receiver (
       .clk,
       // Not using either_rst here so that there is no path from

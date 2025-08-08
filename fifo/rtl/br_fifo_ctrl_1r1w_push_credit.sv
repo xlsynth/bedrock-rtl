@@ -89,6 +89,15 @@ module br_fifo_ctrl_1r1w_push_credit #(
     parameter bit EnableAssertPushDataKnown = 1,
     // If 1, then assert there are no valid bits asserted and that the FIFO is
     // empty at the end of the test.
+    // If 1, cover that credit_withhold can be non-zero.
+    // Otherwise, assert that it is always zero.
+    parameter bit EnableCoverCreditWithhold = 1,
+    // If 1, cover that push_sender_in_reset can be asserted
+    // Otherwise, assert that it is never asserted.
+    parameter bit EnableCoverPushSenderInReset = 1,
+    // If 1, cover that push_credit_stall can be asserted
+    // Otherwise, assert that it is never asserted.
+    parameter bit EnableCoverPushCreditStall = 1,
     parameter bit EnableAssertFinalNotValid = 1,
     localparam int AddrWidth = br_math::clamped_clog2(RamDepth),
     localparam int CountWidth = $clog2(Depth + 1),
@@ -163,6 +172,9 @@ module br_fifo_ctrl_1r1w_push_credit #(
       .RegisterPushOutputs(RegisterPushOutputs),
       .RamDepth(RamDepth),
       .EnableAssertPushDataKnown(EnableAssertPushDataKnown),
+      .EnableCoverCreditWithhold(EnableCoverCreditWithhold),
+      .EnableCoverPushSenderInReset(EnableCoverPushSenderInReset),
+      .EnableCoverPushCreditStall(EnableCoverPushCreditStall),
       .EnableAssertFinalNotValid(EnableAssertFinalNotValid)
   ) br_fifo_push_ctrl_credit (
       .clk,
