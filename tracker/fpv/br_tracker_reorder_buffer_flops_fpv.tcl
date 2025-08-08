@@ -17,9 +17,8 @@ clock clk
 reset rst
 get_design_info
 
-# TODO: ignore many unreachable RTL inline covers for now
-#cover -disable {*br_tracker_reorder_buffer_flops.br_tracker_reorder_buffer_ctrl_1r1w_inst*}
-cover -disable *
+# TODO(masai): Figure out why this is unreachable
+cover -disable *fv_checker.entry_id_fifo.gen_ast.no_push_full_a*
 
 # prove command
 prove -all
