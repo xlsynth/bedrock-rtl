@@ -17,14 +17,10 @@ clock clk
 reset rst
 get_design_info
 
-## when alloc_valid is back pressured, it can not change next cycle
-#cover -disable {*gen_single_alloc_port.*_unstable_c}
-#cover -disable {*gen_multi_alloc_ports.*_instability_c}
-## TODO: disable covers for now
-#cover -disable {br_tracker_freelist.br_enc_priority_encoder_free_entries*}
-
-# TODO: disable covers to make nightly clean
-cover -disable *
+# These implementation assertions can't always have their preconditions reached depending on the parameters
+# TODO(zhemao): Find a way to disable these with more granularity
+cover -disable {br_tracker_freelist.br_enc_priority_encoder_free_entries*no_out_if_higher_prio_in_a*}
+cover -disable {br_tracker_freelist.br_enc_priority_encoder_free_entries*out_lower_prio_than_prev_out_a*}
 
 # prove command
 prove -all
