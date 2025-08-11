@@ -100,6 +100,8 @@ module br_tracker_sequence #(
       .MaxValue(NumEntries - 1),
       .MaxIncrement(MaxIncrementAllocCounter),
       .EnableSaturate(0),
+      .EnableCoverReinit(0),
+      .EnableCoverZeroIncrement(0),
       .EnableAssertFinalNotValid(0)
   ) br_counter_incr_allocate_counter (
       .clk,
@@ -130,7 +132,9 @@ module br_tracker_sequence #(
       .MaxValue(NumEntries),
       .MaxChange(MaxAllocSize),
       .EnableWrap(0),
-      .EnableSaturate(0)
+      .EnableSaturate(0),
+      .EnableCoverReinit(0),
+      .EnableCoverZeroChange(0)
   ) br_counter_free_entry_counter (
       .clk,
       .rst,

@@ -17,11 +17,11 @@ clock clk
 reset rst
 get_design_info
 
-# TODO: ignore many unreachable RTL inline covers for now
-cover -disable {*br_tracker_reorder_buffer_ctrl_1r1w*}
-
 # limit run time to 30-mins
 set_prove_time_limit 1800s
+
+# TODO(masai): Figure out why this is unreachable
+cover -disable *fv_checker.entry_id_fifo.gen_ast.no_push_full_a*
 
 # prove command
 prove -all

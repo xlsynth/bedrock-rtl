@@ -111,7 +111,8 @@ module br_tracker_reorder_buffer_ctrl_1r1w #(
 
   br_credit_sender #(
       .MaxCredit(StagingFifoDepth),
-      .Width(EntryIdWidth)
+      .Width(EntryIdWidth),
+      .EnableCoverCreditWithhold(0)
   ) br_credit_sender_ram_rd_addr (
       .clk,
       .rst,
@@ -139,7 +140,9 @@ module br_tracker_reorder_buffer_ctrl_1r1w #(
       // of credit to valid, but the credit sender does this.
       // TODO(zhemao): Remove this once this limitation is removed.
       .RegisterPushOutputs(1),
-      .RegisterPopOutputs(RegisterPopOutputs)
+      .RegisterPopOutputs(RegisterPopOutputs),
+      .EnableCoverCreditWithhold(0),
+      .EnableCoverPushCreditStall(0)
   ) br_fifo_flops_data_skid (
       .clk,
       .rst,

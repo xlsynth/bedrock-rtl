@@ -102,6 +102,8 @@ module br_tracker_reorder #(
       .MaxValue(NumEntries - 1),
       .MaxIncrement(1),
       .EnableSaturate(0),
+      .EnableCoverZeroIncrement(0),
+      .EnableCoverReinit(0),
       .EnableAssertFinalNotValid(EnableAssertFinalNotDeallocValid)
   ) br_counter_incr_deallocate_counter (
       .clk,
