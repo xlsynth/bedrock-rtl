@@ -77,9 +77,12 @@ def br_verilog_sim_test_suite(name, tool, defines = [], opts = [], **kwargs):
     if tool == "vcs":
         opts = opts + ["-assert global_finish_maxfail=1+offending_values"]
 
-    # Don't enable assertions with iverilog because it doesn't handle them well, even in -g2012 mode.
-    if tool != "iverilog" and len(defines) == 0:
-        defines = ["BR_ASSERT_ON", "BR_ENABLE_IMPL_CHECKS"]
+    if len(defines) == 0:
+        # Don't enable assertions with iverilog because it doesn't handle them well, even in -g2012 mode.
+        if tool != "iverilog":
+            defines = ["BR_ASSERT_ON", "BR_ENABLE_IMPL_CHECKS", "SIMULATION"]
+        else:
+            defines = ["SIMULATION"]
 
     verilog_sim_test_suite(
         name = name,

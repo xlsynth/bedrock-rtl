@@ -150,3 +150,34 @@ br_verilog_sim_test_tools_suite(
         "//mux/rtl:br_mux_bin_structured_gates_mock",
     ],
 )
+
+verilog_library(
+    name = "br_mux_onehot_tb",
+    srcs = ["br_mux_onehot_tb.sv"],
+    deps = [
+        "//misc/sim:br_test_driver",
+        "//mux/rtl:br_mux_onehot",
+    ],
+)
+
+verilog_elab_test(
+    name = "br_mux_onehot_tb_elab_test",
+    tool = "verific",
+    deps = [":br_mux_onehot_tb"],
+)
+
+br_verilog_sim_test_tools_suite(
+    name = "br_mux_onehot_sim_test_tools_suite",
+    params = {
+        "NumSymbolsIn": [
+            "2",
+            "3",
+        ],
+    },
+    tools = [
+        "dsim",
+        "iverilog",
+        "vcs",
+    ],
+    deps = [":br_mux_onehot_tb"],
+)
