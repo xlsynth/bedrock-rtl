@@ -42,6 +42,9 @@ module br_flow_mux_core #(
     parameter bit EnableAssertPushDataKnown = 1,
     // If 1, then assert there are no valid bits asserted at the end of the test.
     parameter bit EnableAssertFinalNotValid = 1,
+    // If 1, then cover cases in which pop is backpressured.
+    // Otherwise, assert that pop is never backpressured.
+    parameter bit EnableCoverPopBackpressure = EnableCoverPushBackpressure,
     // Set to 1 if the arbiter is guaranteed to grant in a cycle when any request is asserted.
     parameter bit ArbiterAlwaysGrants = 1
 ) (
@@ -68,6 +71,8 @@ module br_flow_mux_core #(
   //------------------------------------------
   `BR_ASSERT_STATIC(numflows_gte_2_a, NumFlows >= 2)
   `BR_ASSERT_STATIC(datawidth_gte_1_a, Width >= 1)
+  `BR_ASSERT_STATIC(pop_backpressure_implies_push_backpressure_a,
+                    !EnableCoverPopBackpressure || EnableCoverPushBackpressure)
 
   // This is a bit redundant with the integration checks in br_flow_arb_core,
   // but we need this to check data stability.
@@ -98,6 +103,7 @@ module br_flow_mux_core #(
       .EnableCoverPushBackpressure(EnableCoverPushBackpressure),
       .EnableAssertPushValidStability(EnableAssertPushValidStability),
       .EnableAssertFinalNotValid(EnableAssertFinalNotValid),
+      .EnableCoverPopBackpressure(EnableCoverPopBackpressure),
       .ArbiterAlwaysGrants(ArbiterAlwaysGrants)
   ) br_flow_arb_core (
       .clk,
@@ -124,11 +130,15 @@ module br_flow_mux_core #(
   //------------------------------------------
   // Implementation checks
   //------------------------------------------
+  localparam bit EnableAssertPopValidStability =
+    EnableCoverPopBackpressure &&
+    EnableAssertPushValidStability;
+
   br_flow_checks_valid_data_impl #(
       .NumFlows(1),
       .Width(Width),
-      .EnableCoverBackpressure(EnableCoverPushBackpressure),
-      .EnableAssertValidStability(EnableAssertPushValidStability),
+      .EnableCoverBackpressure(EnableCoverPopBackpressure),
+      .EnableAssertValidStability(EnableAssertPopValidStability),
       // pop_data_unstable is unstable regardless of whether push_data is stable
       .EnableAssertDataStability(0),
       .EnableAssertFinalNotValid(EnableAssertFinalNotValid)

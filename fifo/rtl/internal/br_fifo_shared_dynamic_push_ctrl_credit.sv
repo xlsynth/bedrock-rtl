@@ -4,6 +4,8 @@
 module br_fifo_shared_dynamic_push_ctrl_credit #(
     // Number of write ports
     parameter int NumWritePorts = 1,
+    // Number of read ports.
+    parameter int NumReadPorts = 1,
     // Number of logical FIFOs
     parameter int NumFifos = 1,
     // Total depth of the FIFO
@@ -60,7 +62,8 @@ module br_fifo_shared_dynamic_push_ctrl_credit #(
   assign either_rst = push_sender_in_reset || rst;
 
   // Credit Receiver
-  localparam int PopCreditWidth = $clog2(NumFifos + 1);
+  localparam int PopCreditMaxChange = br_math::min2(NumReadPorts, NumFifos);
+  localparam int PopCreditWidth = $clog2(PopCreditMaxChange + 1);
   localparam int CombinedWidth = FifoIdWidth + Width;
 
   logic [PopCreditWidth-1:0] pop_credit;
@@ -106,7 +109,7 @@ module br_fifo_shared_dynamic_push_ctrl_credit #(
       .Width(CombinedWidth),
       .MaxCredit(Depth),
       .PushCreditMaxChange(NumWritePorts),
-      .PopCreditMaxChange(NumFifos),
+      .PopCreditMaxChange(PopCreditMaxChange),
       .RegisterPushOutputs(RegisterPushOutputs),
       .EnableAssertFinalNotValid(EnableAssertFinalNotValid)
   ) br_credit_receiver (
@@ -128,7 +131,9 @@ module br_fifo_shared_dynamic_push_ctrl_credit #(
   );
 
   // Base Push Control
+  localparam int DeallocCountWidth = $clog2(NumFifos + 1);
   logic [NumWritePorts-1:0] internal_push_ready;
+  logic [DeallocCountWidth-1:0] dealloc_count;
 
   br_fifo_shared_dynamic_push_ctrl #(
       .NumWritePorts(NumWritePorts),
@@ -154,8 +159,15 @@ module br_fifo_shared_dynamic_push_ctrl_credit #(
       .next_tail,
       .dealloc_valid,
       .dealloc_entry_id,
-      .dealloc_count(pop_credit)
+      .dealloc_count
   );
+
+  if (PopCreditWidth < DeallocCountWidth) begin : gen_trunc_pop_credit
+    assign pop_credit = dealloc_count[PopCreditWidth-1:0];
+    `BR_UNUSED_NAMED(dealloc_count_msb, dealloc_count[DeallocCountWidth-1:PopCreditWidth])
+  end else begin : gen_no_trunc_pop_credit
+    assign pop_credit = dealloc_count;
+  end
 
   `BR_UNUSED(internal_push_ready)  // only used for assertions
 
@@ -163,4 +175,5 @@ module br_fifo_shared_dynamic_push_ctrl_credit #(
   for (genvar i = 0; i < NumWritePorts; i++) begin : gen_wport_impl_asserts
     `BR_ASSERT_IMPL(no_internal_push_overflow_a, internal_push_valid[i] |-> internal_push_ready[i])
   end
+  `BR_ASSERT_IMPL(dealloc_count_lte_max_pop_credit_a, dealloc_count <= PopCreditMaxChange)
 endmodule

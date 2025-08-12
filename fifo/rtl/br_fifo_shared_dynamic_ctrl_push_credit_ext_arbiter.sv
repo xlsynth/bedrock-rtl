@@ -189,6 +189,7 @@ module br_fifo_shared_dynamic_ctrl_push_credit_ext_arbiter #(
 
   br_fifo_shared_dynamic_push_ctrl_credit #(
       .NumWritePorts(NumWritePorts),
+      .NumReadPorts(NumReadPorts),
       .NumFifos(NumFifos),
       .Depth(Depth),
       .Width(Width),

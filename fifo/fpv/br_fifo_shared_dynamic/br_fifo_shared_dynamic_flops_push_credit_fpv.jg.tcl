@@ -30,11 +30,13 @@ assume -name no_push_valid_during_reset {rst | push_sender_in_reset |-> push_val
 assert -name fv_rst_check_push_credit {rst | push_sender_in_reset |-> push_credit == 'd0}
 assert -name fv_rst_check_pop_valid {rst | push_sender_in_reset |-> pop_valid == 'd0}
 
-# TODO: disable covers to make nightly clean
-cover -disable *
-
 # limit run time to 10-mins
 set_prove_time_limit 600s
+
+# The output of this flow fork will not be unstable because we constrain the
+# ready to hold until valid is asserted.
+# TODO(zhemao): Find a way to disable in RTL
+cover -disable *br_flow_fork_head.br_flow_checks_valid_data_impl.*valid_unstable_c
 
 # prove command
 prove -all
