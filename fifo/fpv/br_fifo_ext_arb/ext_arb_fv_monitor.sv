@@ -44,6 +44,8 @@ module ext_arb_fv_monitor #(
                  arb_request[r][f] && !arb_grant[r][f] |=> arb_request[r][f])
       `BR_ASSUME(arb_grant_eventually_a, arb_request[r][f] |-> s_eventually arb_grant[r][f])
     end
+
+    `BR_COVER(arb_request_multihot_a, !$onehot0(arb_request[r]))
   end
 
 endmodule

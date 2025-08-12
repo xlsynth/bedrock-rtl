@@ -96,6 +96,7 @@ module br_fifo_shared_dynamic_ctrl_fpv_monitor #(
     input logic [NumReadPorts-1:0] ptr_ram_rd_data_valid,
     input logic [NumReadPorts-1:0][AddrWidth-1:0] ptr_ram_rd_data
 );
+  localparam bit HasStagingBuffer = (DataRamReadLatency > 0) || RegisterPopOutputs;
 
   // ----------Data Ram FV model----------
   br_fifo_fv_ram #(
@@ -143,6 +144,7 @@ module br_fifo_shared_dynamic_ctrl_fpv_monitor #(
       .Depth(Depth),
       .Width(Width),
       .StagingBufferDepth(StagingBufferDepth),
+      .HasStagingBuffer(HasStagingBuffer),
       .EnableCoverPushBackpressure(EnableCoverPushBackpressure),
       .EnableAssertPushValidStability(EnableAssertPushValidStability),
       .EnableAssertPushDataStability(EnableAssertPushDataStability)

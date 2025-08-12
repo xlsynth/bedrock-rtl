@@ -95,6 +95,8 @@ module br_fifo_shared_dynamic_flops_fpv_monitor #(
 );
 
   // ----------FIFO basic checks----------
+  localparam bit HasStagingBuffer = (DataRamReadLatency > 0) || RegisterPopOutputs;
+
   br_fifo_shared_dynamic_basic_fpv_monitor #(
       .NumWritePorts(NumWritePorts),
       .NumReadPorts(NumReadPorts),
@@ -102,6 +104,7 @@ module br_fifo_shared_dynamic_flops_fpv_monitor #(
       .Depth(Depth),
       .Width(Width),
       .StagingBufferDepth(StagingBufferDepth),
+      .HasStagingBuffer(HasStagingBuffer),
       .EnableCoverPushBackpressure(EnableCoverPushBackpressure),
       .EnableAssertPushValidStability(EnableAssertPushValidStability),
       .EnableAssertPushDataStability(EnableAssertPushDataStability)

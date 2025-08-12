@@ -34,6 +34,9 @@ module br_flow_arb_core #(
     parameter bit EnableAssertPushValidStability = 1,
     // If 1, then assert there are no valid bits asserted at the end of the test.
     parameter bit EnableAssertFinalNotValid = 1,
+    // If 1, cover that the pop side experiences backpressure.
+    // If 0, assert that there is never pop backpressure.
+    parameter bit EnableCoverPopBackpressure = EnableCoverPushBackpressure,
     // Set to 1 if the arbiter is guaranteed to grant in a cycle when any request is asserted.
     parameter bit ArbiterAlwaysGrants = 1
 ) (
@@ -100,15 +103,19 @@ module br_flow_arb_core #(
   //------------------------------------------
   // Implementation checks
   //------------------------------------------
+  localparam bit EnableAssertPopValidStability =
+    EnableCoverPopBackpressure &&
+    EnableAssertPushValidStability;
+
   br_flow_checks_valid_data_impl #(
       .NumFlows(1),
       .Width(1),
       // Since push_ready can only be true if pop_ready is,
       // pop side can only have backpressure if push side has backpressure.
-      .EnableCoverBackpressure(EnableCoverPushBackpressure),
-      .EnableAssertValidStability(EnableAssertPushValidStability),
+      .EnableCoverBackpressure(EnableCoverPopBackpressure),
+      .EnableAssertValidStability(EnableAssertPopValidStability),
       // Data is always stable when valid is stable since it is constant.
-      .EnableAssertDataStability(EnableAssertPushValidStability),
+      .EnableAssertDataStability(EnableAssertPopValidStability),
       .EnableAssertFinalNotValid(EnableAssertFinalNotValid)
   ) br_flow_checks_valid_data_impl (
       .clk,
