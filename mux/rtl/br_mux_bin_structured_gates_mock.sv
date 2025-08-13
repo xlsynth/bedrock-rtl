@@ -24,7 +24,7 @@
 // builds we want to use a mock version and in synthesis builds we want to use
 // the real version, but the RTL parameterization must not be affected.
 //
-// For synthesis, make sure you include br_mux_bin_structured_gates_mock.sv
+// For synthesis, make sure you include br_mux_bin_structured_gates.sv
 // in the filelist instead of this file!!
 
 `ifdef SYNTHESIS
