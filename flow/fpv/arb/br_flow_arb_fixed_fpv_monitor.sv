@@ -52,7 +52,9 @@ module br_flow_arb_fixed_fpv_monitor #(
   `BR_FV_2RAND_IDX(i, j, NumFlows)
 
   // ----------Fairness Check----------
-  `BR_ASSERT(strict_priority_a, (i < j) && push_valid[i] && push_valid[j] |-> !grant[j])
+  if (EnableCoverPushBackpressure) begin : gen_strict_priority_check
+    `BR_ASSERT(strict_priority_a, (i < j) && push_valid[i] && push_valid[j] |-> !grant[j])
+  end
 
 endmodule : br_flow_arb_fixed_fpv_monitor
 

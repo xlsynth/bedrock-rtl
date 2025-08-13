@@ -63,7 +63,10 @@ module br_fifo_flops_fpv_monitor #(
   br_fifo_basic_fpv_monitor #(
       .Depth(Depth),
       .Width(Width),
-      .EnableBypass(EnableBypass)
+      .EnableBypass(EnableBypass),
+      .EnableCoverPushBackpressure(EnableCoverPushBackpressure),
+      .EnableAssertPushValidStability(EnableAssertPushValidStability),
+      .EnableAssertPushDataStability(EnableAssertPushDataStability)
   ) br_fifo_basic_fpv_monitor (
       .clk,
       .rst,

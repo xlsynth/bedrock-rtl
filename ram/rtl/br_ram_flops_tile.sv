@@ -108,6 +108,10 @@ module br_ram_flops_tile #(
     `BR_ASSERT_FINAL(final_not_rd_data_valid_a, !(|rd_data_valid))
   end
 
+  if (NumReadPorts > 1) begin : gen_multi_read_checks
+    `BR_COVER_CR_INTG(all_rd_ports_active_a, &rd_addr_valid, rd_clk, rd_rst)
+  end
+
   if (NumWritePorts > 1) begin : gen_write_conflict_checks
     for (genvar porta = 0; porta < (NumWritePorts - 1); porta++) begin : gen_write_conflict_check_a
       for (
@@ -119,6 +123,7 @@ module br_ram_flops_tile #(
             wr_rst)
       end
     end
+    `BR_COVER_CR_INTG(all_wr_ports_active_a, &wr_valid, wr_clk, wr_rst)
   end
 
   //------------------------------------------

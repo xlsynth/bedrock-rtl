@@ -128,7 +128,9 @@ module br_fifo_staging_buffer #(
   br_counter #(
       .MaxValue(BufferDepth),
       .EnableAssertFinalNotValid(EnableAssertFinalNotValid),
-      .EnableWrap(0)
+      .EnableWrap(0),
+      .EnableCoverZeroChange(0),
+      .EnableCoverReinit(0)
   ) br_counter (
       .clk,
       .rst,
@@ -255,26 +257,29 @@ module br_fifo_staging_buffer #(
     `BR_REG(buffer_valid, buffer_valid_next)
     `BR_REGL(buffer_data, buffer_data_next, buffer_data_le)
 
-    `BR_ASSERT_IMPL(no_double_push_overflow_a,
-                    (ram_rd_data_valid && bypass_beat) |-> (!buffer_valid && internal_pop_ready))
+    if (EnableBypass && RamReadLatency > 0) begin : gen_no_double_push_overflow_assert
+      `BR_ASSERT_IMPL(no_double_push_overflow_a,
+                      (ram_rd_data_valid && bypass_beat) |-> (!buffer_valid && internal_pop_ready))
+    end
     `BR_ASSERT_IMPL(no_single_push_overflow_a, push_valid |-> (!buffer_valid || internal_pop_ready))
 
 `ifdef BR_ASSERT_ON
 `ifdef BR_ENABLE_IMPL_CHECKS
     logic buffer_rd_data;
-    logic buffer_bypass_data;
-
     assign buffer_rd_data = ram_rd_data_valid && (buffer_valid || !internal_pop_ready);
-    assign buffer_bypass_data =
-        bypass_beat && (ram_rd_data_valid || buffer_valid || !internal_pop_ready);
-`endif
-`endif
-
     `BR_ASSERT_IMPL(rd_data_buffered_correctly_a,
                     buffer_rd_data |=> (buffer_valid && buffer_data == $past(ram_rd_data)))
-    `BR_ASSERT_IMPL(
-        bypass_data_buffered_correctly_a,
-        buffer_bypass_data |=> (buffer_valid && buffer_data == $past(bypass_data_unstable)))
+
+    if (EnableBypass) begin : gen_bypass_buffered_correctly_assert
+      logic buffer_bypass_data;
+      assign buffer_bypass_data =
+          bypass_beat && (ram_rd_data_valid || buffer_valid || !internal_pop_ready);
+      `BR_ASSERT_IMPL(
+          bypass_data_buffered_correctly_a,
+          buffer_bypass_data |=> (buffer_valid && buffer_data == $past(bypass_data_unstable)))
+    end
+`endif
+`endif
   end else begin : gen_circ_buffer
     // TODO(zhemao): Consider separating the pointer management logic into a standalone module
     logic [InternalDepth-1:0][Width-1:0] mem;
@@ -312,7 +317,8 @@ module br_fifo_staging_buffer #(
     // shift_out becomes shift in
     br_delay_shift_reg #(
         .Width(1),
-        .NumStages(InternalDepth)
+        .NumStages(InternalDepth),
+        .EnableCoverReinit(0)
     ) br_delay_shift_reg_rd_ptr (
         .clk,
         .rst,
@@ -326,7 +332,8 @@ module br_fifo_staging_buffer #(
 
     br_delay_shift_reg #(
         .Width(1),
-        .NumStages(InternalDepth)
+        .NumStages(InternalDepth),
+        .EnableCoverReinit(0)
     ) br_delay_shift_reg_wr_ptr (
         .clk,
         .rst,
@@ -424,10 +431,19 @@ module br_fifo_staging_buffer #(
       // internal_pop_valid can come from the head of the buffer
       // or be bypassed directly from the read data or the bypass data
       // For bypass data, we can only do direct bypass when the buffer is empty
-      assign internal_pop_valid = head_valid ||
-                                  ram_rd_data_valid ||
-                                  (empty && bypass_valid_unstable);
-      assign internal_pop_data = head_valid ? mem_rd_data : push_data;
+      if (RamReadLatency >= InternalDepth) begin : gen_with_rd_data_bypass
+        assign internal_pop_valid = head_valid ||
+                                    ram_rd_data_valid ||
+                                    (empty && bypass_valid_unstable);
+        assign internal_pop_data = head_valid ? mem_rd_data : push_data;
+        `BR_ASSERT_IMPL(rd_data_to_pop_correct_address_a,
+                        (!head_valid && ram_rd_data_valid) |-> (wr_ptr_onehot_d == rd_ptr_onehot))
+      end else begin : gen_no_rd_data_bypass
+        assign internal_pop_valid = head_valid || (empty && bypass_valid_unstable);
+        assign internal_pop_data  = head_valid ? mem_rd_data : bypass_data_unstable;
+        `BR_UNUSED(push_data)
+        `BR_ASSERT_IMPL(no_rd_data_when_buffer_empty_a, ram_rd_data_valid |-> head_valid)
+      end
       // Only advance the read pointer if the write pointer was advanced
       // to provide the data currently being consumed.
       // This is true for read from the buffer or direct from read data,
@@ -441,8 +457,6 @@ module br_fifo_staging_buffer #(
                       (!head_valid && !ram_rd_data_valid && internal_pop_valid)
                       |->
                       (bypass_valid_unstable && (wr_ptr_onehot == rd_ptr_onehot)))
-      `BR_ASSERT_IMPL(rd_data_to_pop_correct_address_a,
-                      (!head_valid && ram_rd_data_valid) |-> (wr_ptr_onehot_d == rd_ptr_onehot))
     end else begin : gen_nonbypass_mem_wr
       // When ram_rd_data_valid comes back, two things can happen:
       // 1. If the buffer is empty and internal_pop_ready is asserted,
@@ -469,6 +483,10 @@ module br_fifo_staging_buffer #(
   if (RegisterPopOutputs) begin : gen_pop_reg
     br_flow_reg_fwd #(
         .Width(Width),
+        // If there is no buffer ahead of this flow reg,
+        // we can't get backpressure, since we would only allow
+        // bypass or send a read if the flow reg is empty or being popped.
+        .EnableCoverPushBackpressure(InternalDepth > 0),
         .EnableAssertFinalNotValid(EnableAssertFinalNotValid)
     ) br_flow_reg_fwd (
         .clk,
@@ -495,6 +513,10 @@ module br_fifo_staging_buffer #(
   // Implementation Checks
   if (EnableBypass) begin : gen_bypass_impl_checks
     `BR_ASSERT_IMPL(no_alloc_hazard_a, !(ram_rd_addr_beat && bypass_beat))
-    `BR_COVER_IMPL(bypass_and_rd_data_same_cycle_c, bypass_beat && ram_rd_data_valid)
+    if (RamReadLatency > 0) begin : gen_bypass_and_read_same_cycle_cover
+      `BR_COVER_IMPL(bypass_and_rd_data_same_cycle_c, bypass_beat && ram_rd_data_valid)
+    end else begin : gen_no_bypass_and_read_same_cycle_assert
+      `BR_ASSERT_IMPL(no_bypass_and_read_same_cycle_a, bypass_beat |-> !ram_rd_data_valid)
+    end
   end
 endmodule

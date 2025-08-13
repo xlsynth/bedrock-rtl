@@ -33,7 +33,9 @@ module br_flow_arb_core #(
     // If 0, cover that push_valid can be unstable when backpressured.
     parameter bit EnableAssertPushValidStability = 1,
     // If 1, then assert there are no valid bits asserted at the end of the test.
-    parameter bit EnableAssertFinalNotValid = 1
+    parameter bit EnableAssertFinalNotValid = 1,
+    // Set to 1 if the arbiter is guaranteed to grant in a cycle when any request is asserted.
+    parameter bit ArbiterAlwaysGrants = 1
 ) (
     // ri lint_check_waive HIER_NET_NOT_READ HIER_BRANCH_NOT_READ INPUT_NOT_READ
     input logic clk,  // Only used for assertions
@@ -72,9 +74,11 @@ module br_flow_arb_core #(
   );
 
   // Internal integration checks
-  `BR_ASSERT_IMPL(request_implies_grant_a, |request |-> |grant)
+  if (ArbiterAlwaysGrants) begin : gen_arbiter_always_grants_asserts
+    `BR_ASSERT_IMPL(request_implies_grant_a, |request |-> |grant)
+    `BR_ASSERT_IMPL(grant_is_request_and_can_grant_a, grant == (request & can_grant))
+  end
   `BR_ASSERT_IMPL(grant_onehot0_a, $onehot0(grant))
-  `BR_ASSERT_IMPL(grant_is_request_and_can_grant_a, grant == (request & can_grant))
 
   //------------------------------------------
   // Implementation
@@ -84,7 +88,11 @@ module br_flow_arb_core #(
   // only allow priority update if we actually grant
   assign enable_priority_update = pop_ready;
   assign push_ready = {NumFlows{pop_ready}} & can_grant;
-  assign pop_valid_unstable = |push_valid;
+  if (ArbiterAlwaysGrants) begin : gen_arbiter_always_grants
+    assign pop_valid_unstable = |push_valid;
+  end else begin : gen_arbiter_may_not_always_grant
+    assign pop_valid_unstable = |(push_valid & can_grant);
+  end
 
   // grant is only used for assertions
   `BR_UNUSED(grant)
@@ -95,7 +103,9 @@ module br_flow_arb_core #(
   br_flow_checks_valid_data_impl #(
       .NumFlows(1),
       .Width(1),
-      .EnableCoverBackpressure(1),
+      // Since push_ready can only be true if pop_ready is,
+      // pop side can only have backpressure if push side has backpressure.
+      .EnableCoverBackpressure(EnableCoverPushBackpressure),
       .EnableAssertValidStability(EnableAssertPushValidStability),
       // Data is always stable when valid is stable since it is constant.
       .EnableAssertDataStability(EnableAssertPushValidStability),

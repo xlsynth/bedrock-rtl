@@ -27,6 +27,11 @@ assume -name initial_value_during_reset {rst | push_sender_in_reset |-> \
 assume -name no_push_valid_during_reset {rst | push_sender_in_reset |-> push_valid == 'd0}
 assume -name no_data_ram_rd_data_valid {rst | push_sender_in_reset |-> data_ram_rd_data_valid == 'd0}
 assume -name no_ptr_ram_rd_data_valid {rst | push_sender_in_reset |-> ptr_ram_rd_data_valid == 'd0}
+array set param_list [get_design_info -list parameter]
+set NumReadPorts $param_list(NumReadPorts)
+for {set i 0} {$i < $NumReadPorts} {incr i} {
+  assume -name grant_onehot_during_reset_$i "\$onehot0(arb_grant\[$i\])"
+}
 
 # primary output control signal should be legal during reset
 assert -name fv_rst_check_push_credit {rst | push_sender_in_reset |-> push_credit == 'd0}
@@ -40,7 +45,7 @@ assert -name fv_rst_check_ptr_ram_rd_addr_valid {rst | push_sender_in_reset |-> 
 cover -disable *
 
 # limit run time to 10-mins
-#set_prove_time_limit 600s
+set_prove_time_limit 600s
 
 # prove command
 prove -all

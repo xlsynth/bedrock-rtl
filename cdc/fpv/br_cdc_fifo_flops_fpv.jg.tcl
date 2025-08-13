@@ -32,9 +32,6 @@ push_rst |-> push_valid == 'd0}
 assert -name fv_rst_check_pop_valid {@(posedge pop_clk) \
 pop_rst |-> pop_valid == 'd0}
 
-# TODO: disable covers to make nightly clean
-cover -disable *
-
 # If assertion bound - pre-condition reachable cycle >= 2:
 # it's marked as "bounded_proven (auto) instead of "undetermined"
 # this only affects the status report, not the proof

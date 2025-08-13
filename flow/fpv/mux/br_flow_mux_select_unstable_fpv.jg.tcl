@@ -17,15 +17,5 @@ clock clk
 reset rst
 get_design_info
 
-# EnableAssertPushValidStability and EnableAssertPushDataStability
-# doesn't apply to DUT pop_valid and pop_data
-assert -disable {*pop_valid_stable_a}
-assert -disable {*pop_data_stable_a}
-# select can pick invalid index
-assert -disable {*must_grant_a*}
-
-# TODO: disable covers to make nightly clean
-cover -disable *
-
 # prove command
 prove -all

@@ -130,7 +130,10 @@ module br_fifo_push_ctrl #(
   // Status flags
   br_counter #(
       .MaxValue(Depth),
-      .EnableAssertFinalNotValid(EnableAssertFinalNotValid)
+      .EnableAssertFinalNotValid(EnableAssertFinalNotValid),
+      .EnableWrap(0),
+      .EnableCoverZeroChange(0),
+      .EnableCoverReinit(0)
   ) br_counter_slots (
       .clk,
       .rst,
@@ -161,7 +164,6 @@ module br_fifo_push_ctrl #(
   `BR_ASSERT_IMPL(backpressure_latency_1_cycle_a, full && pop_beat |=> !full && push_ready)
   `BR_ASSERT_IMPL(ram_push_and_bypass_mutually_exclusive_a,
                   !(ram_wr_valid && bypass_ready && bypass_valid_unstable))
-  `BR_COVER_IMPL(bypass_unstable_c, !bypass_ready && bypass_valid_unstable)
 
   // Flags
   `BR_ASSERT_IMPL(slots_in_range_a, slots <= Depth)

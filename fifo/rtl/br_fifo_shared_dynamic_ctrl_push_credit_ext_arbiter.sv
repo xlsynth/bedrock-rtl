@@ -104,6 +104,8 @@ module br_fifo_shared_dynamic_ctrl_push_credit_ext_arbiter #(
     // empty at the end of the test.
     // ri lint_check_waive PARAM_NOT_USED
     parameter bit EnableAssertFinalNotValid = 1,
+    // Set to 1 if the arbiter is guaranteed to grant in a cycle when any request is asserted.
+    parameter bit ArbiterAlwaysGrants = 1,
 
     localparam int PushCreditWidth = $clog2(NumWritePorts + 1),
     localparam int FifoIdWidth = br_math::clamped_clog2(NumFifos),
@@ -261,7 +263,8 @@ module br_fifo_shared_dynamic_ctrl_push_credit_ext_arbiter #(
       .StagingBufferDepth(StagingBufferDepth),
       .RamReadLatency(DataRamReadLatency),
       .RegisterPopOutputs(RegisterPopOutputs),
-      .RegisterDeallocation(RegisterDeallocation)
+      .RegisterDeallocation(RegisterDeallocation),
+      .ArbiterAlwaysGrants(ArbiterAlwaysGrants)
   ) br_fifo_shared_pop_ctrl_ext_arbiter (
       .clk,
       .rst(either_rst),

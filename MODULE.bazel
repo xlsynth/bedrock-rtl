@@ -24,6 +24,14 @@ module(
 rules_hdl_extension = use_extension("//dependency_support/rules_hdl:extension.bzl", "rules_hdl_extension")
 use_repo(rules_hdl_extension, "rules_hdl")
 
+bazel_dep(name = "eccgen", version = "0.1.0")
+git_override(
+    module_name = "eccgen",
+    # Updated 2025-08-06
+    commit = "3a91f82d48053d55820eac1b75cb554578d48d10",
+    remote = "https://github.com/xlsynth/eccgen",
+)
+
 bazel_dep(name = "stardoc", version = "0.8.0")
 bazel_dep(name = "rules_python", version = "1.2.0-rc0")
 bazel_dep(name = "bazel_skylib", version = "1.7.1")

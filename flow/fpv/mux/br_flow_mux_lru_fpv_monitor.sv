@@ -43,7 +43,9 @@ module br_flow_mux_lru_fpv_monitor #(
       .Width(Width),
       .EnableCoverPushBackpressure(EnableCoverPushBackpressure),
       .EnableAssertPushValidStability(EnableAssertPushValidStability),
-      .EnableAssertPushDataStability(EnableAssertPushDataStability)
+      .EnableAssertPushDataStability(EnableAssertPushDataStability),
+      .EnableCoverPopBackpressure(EnableCoverPushBackpressure),
+      .EnableAssertPopDataStability(0)
   ) fv_checker (
       .clk,
       .rst,
@@ -57,7 +59,8 @@ module br_flow_mux_lru_fpv_monitor #(
 
   // ----------LRU checks----------
   lru_basic_fpv_monitor #(
-      .NumRequesters(NumFlows)
+      .NumRequesters(NumFlows),
+      .EnableCoverRequestMultihot(EnableCoverPushBackpressure)
   ) lru_check (
       .clk,
       .rst,

@@ -26,6 +26,7 @@ module br_flow_xbar_basic_fpv_monitor #(
     parameter bit EnableCoverPushBackpressure = 1,
     parameter bit EnableAssertPushValidStability = EnableCoverPushBackpressure,
     parameter bit EnableAssertPushDataStability = EnableAssertPushValidStability,
+    parameter bit EnableAssertPushDestinationStability = EnableAssertPushValidStability,
     localparam int PushDestIdWidth = $clog2(NumPushFlows),
     localparam int DestIdWidth = $clog2(NumPopFlows)
 ) (
@@ -66,13 +67,19 @@ module br_flow_xbar_basic_fpv_monitor #(
     // push_data[3][1:0] == 2'b11
     // but higher bits can be random value
     `BR_ASSUME(color_push_data_a, push_valid[i] |-> push_data[i][PushDestIdWidth-1:0] == i)
-    if (EnableAssertPushValidStability) begin : gen_push_valid
-      `BR_ASSUME(push_valid_stable_a, push_valid[i] && !push_ready[i] |=> push_valid[i])
-      `BR_ASSUME(push_dest_id_stable_a,
-                 push_valid[i] && !push_ready[i] |=> $stable(push_dest_id[i]))
-    end
-    if (EnableAssertPushDataStability) begin : gen_push_data
-      `BR_ASSUME(push_data_stable_a, push_valid[i] && !push_ready[i] |=> $stable(push_data[i]))
+    if (EnableCoverPushBackpressure) begin : gen_push_backpressure
+      if (EnableAssertPushValidStability) begin : gen_push_valid
+        `BR_ASSUME(push_valid_stable_a, push_valid[i] && !push_ready[i] |=> push_valid[i])
+      end
+      if (EnableAssertPushDataStability) begin : gen_push_data
+        `BR_ASSUME(push_data_stable_a, push_valid[i] && !push_ready[i] |=> $stable(push_data[i]))
+      end
+      if (EnableAssertPushDestinationStability) begin : gen_push_dest_id
+        `BR_ASSUME(push_dest_id_stable_a,
+                   push_valid[i] && !push_ready[i] |=> $stable(push_dest_id[i]))
+      end
+    end else begin : gen_no_push_backpressure
+      `BR_ASSUME(no_backpressure_a, !push_ready[i] |-> !push_valid[i])
     end
   end
 
@@ -81,12 +88,14 @@ module br_flow_xbar_basic_fpv_monitor #(
   end
 
   // ----------Sanity Check----------
-  // if RegisterPopOutputs = 0, pop_valid/pop_data come directly from the muxes and may be unstable
-  if (EnableAssertPushValidStability && RegisterPopOutputs) begin : gen_pop_valid
+  // if RegisterPopOutputs = 0, pop_valid could be unstable if push_valid or push_dest_id is unstable
+  if ((EnableAssertPushValidStability && EnableAssertPushDestinationStability) ||
+      RegisterPopOutputs) begin : gen_pop_valid
     `BR_ASSERT(pop_valid_stable_a,
                pop_valid[fv_pop_id] && !pop_ready[fv_pop_id] |=> pop_valid[fv_pop_id])
   end
-  if (EnableAssertPushDataStability && RegisterPopOutputs) begin : gen_pop_data
+  // pop_data can only be stable if it is registered at the output
+  if (RegisterPopOutputs) begin : gen_pop_data
     `BR_ASSERT(pop_data_stable_a,
                pop_valid[fv_pop_id] && !pop_ready[fv_pop_id] |=> $stable(pop_data[fv_pop_id]))
   end

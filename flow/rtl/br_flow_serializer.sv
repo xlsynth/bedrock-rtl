@@ -92,7 +92,7 @@ module br_flow_serializer #(
     // If 0, the least significant bits are sent first (little endian).
     // The order of bits within each flit is always the same that they
     // appear on the push interface.
-    parameter bit SerializeMostSignificantFirst = 1,
+    parameter bit SerializeMostSignificantFirst = 0,
     // If 1, assert that push_data is always known (not X) when push_valid is asserted.
     parameter bit EnableAssertPushDataKnown = 1,
     // If 1, then assert there are no valid bits asserted at the end of the test.
@@ -205,6 +205,8 @@ module br_flow_serializer #(
     br_counter_incr #(
         .MaxValue(SrMinus1),
         .MaxIncrement(1),
+        .EnableCoverZeroIncrement(0),
+        .EnableCoverReinitAndIncr(0),
         .EnableAssertFinalNotValid(EnableAssertFinalNotValid)
     ) br_counter_incr_pop_flit_id (
         .clk,
@@ -273,9 +275,25 @@ module br_flow_serializer #(
   //------------------------------------------
   // Implementation checks
   //------------------------------------------
-  // TODO: standard ready-valid check modules
+  br_flow_checks_valid_data_impl #(
+      .NumFlows(1),
+      .Width(PopWidth + 1 + MetadataWidth),
+      .EnableCoverBackpressure(1),
+      .EnableAssertValidStability(1),
+      .EnableAssertDataStability(1),
+      .EnableAssertFinalNotValid(EnableAssertFinalNotValid)
+  ) br_flow_checks_valid_data_impl (
+      .clk,
+      .rst,
+      .ready(pop_ready),
+      .valid(pop_valid),
+      .data ({pop_data, pop_last, pop_metadata})
+  );
+
   `BR_ASSERT_IMPL(cut_through_latency_0_a, push_valid |-> pop_valid)
   `BR_ASSERT_IMPL(pop_last_a, pop_valid && pop_last |-> push_last)
-  `BR_COVER_IMPL(dont_cares_c, push_valid && push_last && push_last_dont_care_count != 0)
+  if (SerializationRatio > 1) begin : gen_nonzero_dont_care_cover
+    `BR_COVER_IMPL(dont_cares_c, push_valid && push_last && push_last_dont_care_count != 0)
+  end
 
 endmodule : br_flow_serializer

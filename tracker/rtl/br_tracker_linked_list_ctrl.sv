@@ -39,9 +39,9 @@
 module br_tracker_linked_list_ctrl #(
     // Depth of the RAM. Must be at least 2.
     parameter int Depth = 2,
-    // Number of write ports. Must be at least 1.
+    // Number of write ports. Must be at least 1 and at most Depth.
     parameter int NumWritePorts = 1,
-    // Number of linked lists. Must be at least 1.
+    // Number of linked lists. Must be at least 1 and less than Depth.
     parameter int NumLinkedLists = 1,
     // Number of cycles to read from the pointer RAM. Must be at least 0.
     parameter int RamReadLatency = 0,
@@ -75,7 +75,7 @@ module br_tracker_linked_list_ctrl #(
   // Integration assertions
   `BR_ASSERT_STATIC(legal_depth_a, Depth >= 2)
   `BR_ASSERT_STATIC(legal_num_write_ports_a, NumWritePorts >= 1 && NumWritePorts <= Depth)
-  `BR_ASSERT_STATIC(legal_num_linked_lists_a, NumLinkedLists >= 1)
+  `BR_ASSERT_STATIC(legal_num_linked_lists_a, NumLinkedLists >= 1 && NumLinkedLists < Depth)
   `BR_ASSERT_STATIC(legal_ram_read_latency_a, RamReadLatency >= 0)
 
   for (genvar i = 0; i < NumWritePorts; i++) begin : gen_next_tail_checks
@@ -119,7 +119,8 @@ module br_tracker_linked_list_ctrl #(
 
     // ll_head_select_read rotates by 1 for each head pop
     br_delay_shift_reg #(
-        .NumStages(NumLinkedLists)
+        .NumStages(NumLinkedLists),
+        .EnableCoverReinit(0)
     ) br_delay_shift_reg_head (
         .clk,
         .rst,
@@ -186,6 +187,11 @@ module br_tracker_linked_list_ctrl #(
     assign ll_head_select_read = 1'b1;
     assign ll_head_select_write = 1'b1;
   end
+
+  // Because we cycle through linked lists, the maximum number of writes
+  // on a given cycle to a single linked list is the ceiling division
+  // of the number of write ports by the number of linked lists.
+  localparam int MaxWritesPerLLPerCycle = br_math::ceil_div(NumWritePorts, NumLinkedLists);
 
   if (NumWritePorts > 1) begin : gen_multi_wport_ll_next_tail_valid
     if (NumLinkedLists > 1) begin : gen_multi_ll_next_tail_valid
@@ -255,9 +261,16 @@ module br_tracker_linked_list_ctrl #(
     assign counter_decr = ChangeWidth'(1'b1);
 
     br_counter #(
-        .MaxValue  (Depth),
-        .MaxChange (NumWritePorts),
-        .EnableWrap(0)
+        .MaxValue(Depth),
+        .MaxChange(NumWritePorts),
+        // Because writes have to cycle through linked lists,
+        // you can't actually have NumWritePorts all pushing to the same
+        // list on a given cycle.
+        .MaxIncrement(br_math::ceil_div(NumWritePorts, NumLinkedLists)),
+        .MaxDecrement(1),
+        .EnableWrap(0),
+        .EnableCoverReinit(0),
+        .EnableCoverZeroChange(0)
     ) br_counter_ll_count (
         .clk,
         .rst,
@@ -343,12 +356,18 @@ module br_tracker_linked_list_ctrl #(
         for (genvar j = 2; j < NumWritePorts; j++) begin : gen_ll_ptr_ram_write
           // Need to pick the previous tail to use for the address
           // based on the last previous port to get a tail update.
+          // The write ports ahead of the current one are rotating through
+          // the linked lists, so the maximum number that could be pushing
+          // to the same linked list as this is the ceiling division of the
+          // number of write ports before this by the number of linked lists.
+          localparam int MaxInHot = br_math::ceil_div(j, NumLinkedLists);
           logic [j-1:0] prev_tail_select;
           logic [AddressWidth-1:0] prev_tail;
 
           br_enc_priority_encoder #(
               .NumRequesters(j),
-              .MsbHighestPriority(1)
+              .MsbHighestPriority(1),
+              .MaxInHot(MaxInHot)
           ) br_enc_priority_encoder_prev_tail_select (
               .clk,
               .rst,
@@ -380,7 +399,8 @@ module br_tracker_linked_list_ctrl #(
 
       br_enc_priority_encoder #(
           .NumRequesters(NumWritePorts),
-          .MsbHighestPriority(1)
+          .MsbHighestPriority(1),
+          .MaxInHot(MaxWritesPerLLPerCycle)
       ) br_enc_priority_encoder_ll_tail_next_select (
           .clk,
           .rst,
@@ -399,7 +419,8 @@ module br_tracker_linked_list_ctrl #(
 
       br_enc_priority_encoder #(
           .NumRequesters(NumWritePorts),
-          .MsbHighestPriority(0)
+          .MsbHighestPriority(0),
+          .MaxInHot(MaxWritesPerLLPerCycle)
       ) br_enc_priority_encoder_ll_head_next_select (
           .clk,
           .rst,

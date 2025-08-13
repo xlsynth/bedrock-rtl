@@ -30,8 +30,5 @@ assume -name no_push_during_reset {rst | pop_receiver_in_reset |-> push_valid ==
 # primary output control signal should be legal during reset
 assert -name fv_rst_check_pop_valid {rst | pop_receiver_in_reset |-> pop_valid == 'd0}
 
-# TODO: disable covers to make nightly clean
-cover -disable *
-
 # prove command
 prove -all

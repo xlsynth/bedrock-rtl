@@ -43,7 +43,11 @@ module br_flow_mux_select_fpv_monitor #(
       .Width(Width),
       .EnableCoverPushBackpressure(EnableCoverPushBackpressure),
       .EnableAssertPushValidStability(EnableAssertPushValidStability),
-      .EnableAssertPushDataStability(EnableAssertPushDataStability)
+      .EnableAssertPushDataStability(EnableAssertPushDataStability),
+      // Final flow mux stage ensures output is always stable
+      .EnableAssertPopValidStability(1),
+      .EnableAssertPopDataStability(1),
+      .EnableAssertMustGrant(0)
   ) fv_checker (
       .clk,
       .rst,

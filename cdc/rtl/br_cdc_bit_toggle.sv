@@ -64,8 +64,10 @@ module br_cdc_bit_toggle #(
   logic src_bit_internal_delayed;
   logic src_bit_internal_final;
 
-  // Delay the source bit one dst clock
-  `BR_REGNX(src_bit_internal_delayed, src_bit_internal, dst_clk)
+  // Delay the source bit by one source or destination clock
+  always @(posedge src_clk or posedge dst_clk) begin
+    src_bit_internal_delayed <= src_bit_internal;
+  end
 
   assign src_bit_internal_final = src_bit_delay_sel ? src_bit_internal_delayed : src_bit_internal;
 

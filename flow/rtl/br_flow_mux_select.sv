@@ -97,6 +97,7 @@ module br_flow_mux_select #(
 
   br_flow_reg_fwd #(
       .Width(Width),
+      .EnableCoverPushBackpressure(EnableCoverPushBackpressure),
       // We know that valid and data can be unstable internally.
       // This register hides that instability from the pop interface.
       .EnableAssertPushValidStability(0),

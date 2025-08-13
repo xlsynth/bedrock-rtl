@@ -81,7 +81,6 @@ module br_flow_deserializer_fpv_monitor #(
   localparam int MAX = DeserializationRatio - 1;
   logic [SerFlitIdWidth-1:0] fv_care_max;
   logic [SerFlitIdWidth-1:0] fv_flit_cnt;
-  logic [PopWidth-1:0] fv_pop_data;
 
   // ----------FV assumptions----------
   // push payload must be held stable until push_ready is 1.
@@ -107,29 +106,34 @@ module br_flow_deserializer_fpv_monitor #(
   `BR_REGL(fv_flit_cnt, fv_flit_cnt != fv_care_max ? fv_flit_cnt + 'd1 : 'd0,
            push_valid & push_ready)
 
-  // lower index and higher index of pop_data.
-  // DeserializeMostSignificantFirst = 0 as an example:
-  // For these 4 cycles: fv_flit_cnt = 0,1,2,3
-  // push_data will be assigned to pop_data[7:0],[15:8],[23:16],[31:24]
-  for (genvar i = 0; i < DeserializationRatio; i++) begin : gen_ast
-    localparam int Msb = DeserializeMostSignificantFirst ? PushWidth*(MAX+1-i) : PushWidth*(i+1);
-    localparam int Lsb = DeserializeMostSignificantFirst ? PushWidth * (MAX - i) : PushWidth * i;
+  if (DeserializationRatio > 1) begin : gen_deserialized
+    logic [PopWidth-1:0] fv_pop_data;
+    // lower index and higher index of pop_data.
+    // DeserializeMostSignificantFirst = 0 as an example:
+    // For these 4 cycles: fv_flit_cnt = 0,1,2,3
+    // push_data will be assigned to pop_data[7:0],[15:8],[23:16],[31:24]
+    for (genvar i = 0; i < DeserializationRatio; i++) begin : gen_ast
+      localparam int Msb = DeserializeMostSignificantFirst ? PushWidth*(MAX+1-i) : PushWidth*(i+1);
+      localparam int Lsb = DeserializeMostSignificantFirst ? PushWidth * (MAX - i) : PushWidth * i;
 
-    `BR_ASSUME(fv_pop_data_stable_a, fv_flit_cnt != i |-> $stable(fv_pop_data[Msb-1:Lsb]))
-    `BR_ASSUME(fv_pop_data_a, fv_flit_cnt == i |-> fv_pop_data[Msb-1:Lsb] == push_data)
+      `BR_ASSUME(fv_pop_data_stable_a, fv_flit_cnt != i |-> $stable(fv_pop_data[Msb-1:Lsb]))
+      `BR_ASSUME(fv_pop_data_a, fv_flit_cnt == i |-> fv_pop_data[Msb-1:Lsb] == push_data)
 
-    if (DeserializeMostSignificantFirst) begin : gen_msb
-      localparam int PopMsb = PopWidth;
-      localparam int PopLsb = PushWidth * i;
-      `BR_ASSERT(data_integrity_a,
-                 pop_valid && (pop_last_dont_care_count == i) |->
-                 pop_data[PopMsb-1:PopLsb] == fv_pop_data[PopMsb-1:PopLsb])
-    end else begin : gen_lsb
-      localparam int PopMsb = PushWidth * (MAX + 1 - i);
-      `BR_ASSERT(data_integrity_a,
-                 pop_valid && (pop_last_dont_care_count == i) |->
-                 pop_data[PopMsb-1:0] == fv_pop_data[PopMsb-1:0])
+      if (DeserializeMostSignificantFirst) begin : gen_msb
+        localparam int PopMsb = PopWidth;
+        localparam int PopLsb = PushWidth * i;
+        `BR_ASSERT(data_integrity_a,
+                   pop_valid && (pop_last_dont_care_count == i) |->
+                  pop_data[PopMsb-1:PopLsb] == fv_pop_data[PopMsb-1:PopLsb])
+      end else begin : gen_lsb
+        localparam int PopMsb = PushWidth * (MAX + 1 - i);
+        `BR_ASSERT(data_integrity_a,
+                   pop_valid && (pop_last_dont_care_count == i) |->
+                  pop_data[PopMsb-1:0] == fv_pop_data[PopMsb-1:0])
+      end
     end
+  end else begin : gen_pass_through
+    `BR_ASSERT(data_integrity_a, pop_valid |-> pop_data == push_data)
   end
 
   // Number of dont_care flits should not exceed DeserializationRatio

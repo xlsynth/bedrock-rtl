@@ -233,6 +233,16 @@
 `BR_NOOP
 `endif  // BR_DISABLE_INTG_CHECKS
 
+// Clock: 'clk'
+// Reset: 'rst'
+`ifndef BR_DISABLE_INTG_CHECKS
+`define BR_COVER_INCL_RST_INTG(__name__, __expr__) \
+`BR_COVER_INCL_RST(__name__, __expr__)
+`else  // BR_DISABLE_INTG_CHECKS
+`define BR_COVER_INCL_RST_INTG(__name__, __expr__) \
+`BR_NOOP
+`endif  // BR_DISABLE_INTG_CHECKS
+
 // More expressive form of BR_COVER_INTG that allows the use of custom clock and reset signal names.
 `ifndef BR_DISABLE_INTG_CHECKS
 `define BR_COVER_CR_INTG(__name__, __expr__, __clk__, __rst__) \
@@ -249,6 +259,16 @@
 `BR_COVER(__name__, __expr__)
 `else  // BR_ENABLE_IMPL_CHECKS
 `define BR_COVER_IMPL(__name__, __expr__) \
+`BR_NOOP
+`endif  // BR_ENABLE_IMPL_CHECKS
+
+// Clock: 'clk'
+// Reset: 'rst'
+`ifdef BR_ENABLE_IMPL_CHECKS
+`define BR_COVER_INCL_RST_IMPL(__name__, __expr__) \
+`BR_COVER_INCL_RST(__name__, __expr__)
+`else  // BR_ENABLE_IMPL_CHECKS
+`define BR_COVER_INCL_RST_IMPL(__name__, __expr__) \
 `BR_NOOP
 `endif  // BR_ENABLE_IMPL_CHECKS
 

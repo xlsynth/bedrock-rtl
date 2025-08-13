@@ -40,7 +40,7 @@
 //
 // Let PushT and PopT be the push period and pop period, respectively.
 //
-// The cut-through latency is max(RegisterResetActive + 1, RamWriteLatency + 1)
+// The cut-through latency is max(RegisterResetActive + 1, RamWriteLatency)
 // * PushT + (NumSyncStages + RamReadLatency + RegisterPopOutputs) * PopT.
 //
 // The backpressure latency is (RegisterResetActive + 1) * PopT + (NumSyncStages
@@ -84,6 +84,15 @@ module br_cdc_fifo_ctrl_1r1w_push_credit #(
     // Do not set this to 0 unless push_rst and pop_rst are driven directly by
     // registers. If set to 0, push_sender_in_reset must be tied to 0.
     parameter bit RegisterResetActive = 1,
+    // If 1, cover that credit_withhold can be non-zero.
+    // Otherwise, assert that it is always zero.
+    parameter bit EnableCoverCreditWithhold = 1,
+    // If 1, cover that push_sender_in_reset can be asserted
+    // Otherwise, assert that it is never asserted.
+    parameter bit EnableCoverPushSenderInReset = 1,
+    // If 1, cover that push_credit_stall can be asserted
+    // Otherwise, assert that it is never asserted.
+    parameter bit EnableCoverPushCreditStall = 1,
     // If 1, then assert there are no valid bits asserted and that the FIFO is
     // empty at the end of the test.
     parameter bit EnableAssertFinalNotValid = 1,
@@ -162,6 +171,9 @@ module br_cdc_fifo_ctrl_1r1w_push_credit #(
       .RegisterResetActive(RegisterResetActive),
       .MaxCredit(MaxCredit),
       .NumSyncStages(NumSyncStages),
+      .EnableCoverCreditWithhold(EnableCoverCreditWithhold),
+      .EnableCoverPushSenderInReset(EnableCoverPushSenderInReset),
+      .EnableCoverPushCreditStall(EnableCoverPushCreditStall),
       .EnableAssertFinalNotValid(EnableAssertFinalNotValid)
   ) br_cdc_fifo_ctrl_push_1r1w_push_credit_inst (
       .push_clk,

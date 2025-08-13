@@ -42,6 +42,20 @@ br_verilog_elab_and_lint_test_suite(
     deps = [":br_mux_onehot"],
 )
 
+br_verilog_elab_and_lint_test_suite(
+    name = "br_mux_onehot_test_suite_no_assert_select_onehot",
+    params = {
+        "EnableAssertSelectOnehot": [
+            "0",
+        ],
+        "NumSymbolsIn": [
+            "2",
+            "3",
+        ],
+    },
+    deps = [":br_mux_onehot"],
+)
+
 verilog_library(
     name = "br_mux_bin",
     srcs = ["br_mux_bin.sv"],

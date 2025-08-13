@@ -40,7 +40,7 @@
 //
 // Let PushT and PopT be the push period and pop period, respectively.
 //
-// The cut-through latency is max(RegisterResetActive + 1, RamWriteLatency + 1)
+// The cut-through latency is max(RegisterResetActive + 1, RamWriteLatency)
 // * PushT + (NumSyncStages + RamReadLatency + RegisterPopOutputs) * PopT.
 //
 // The backpressure latency is (RegisterResetActive + 1) * PopT + (NumSyncStages

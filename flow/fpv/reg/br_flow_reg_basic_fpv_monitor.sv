@@ -35,6 +35,10 @@ module br_flow_reg_basic_fpv_monitor #(
   // ----------FV assumptions----------
   `BR_ASSUME(pop_ready_liveness_a, s_eventually (pop_ready))
 
+  if (!EnableCoverPushBackpressure) begin : gen_no_backpressure
+    `BR_ASSUME(no_backpressure_a, !push_ready |-> !push_valid)
+  end
+
   if (EnableAssertPushValidStability) begin : gen_push_valid
     `BR_ASSUME(push_valid_stable_a, push_valid && !push_ready |=> push_valid)
   end

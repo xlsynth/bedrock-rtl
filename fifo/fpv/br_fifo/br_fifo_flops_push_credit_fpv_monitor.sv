@@ -95,6 +95,7 @@ module br_fifo_flops_push_credit_fpv_monitor #(
       .Depth(Depth),
       .Width(Width),
       .EnableBypass(EnableBypass),
+      .EnableCoverPushBackpressure(0),
       .RegisterPopOutputs(RegisterPopOutputs),
       .FlopRamDepthTiles(FlopRamDepthTiles),
       .FlopRamWidthTiles(FlopRamWidthTiles),

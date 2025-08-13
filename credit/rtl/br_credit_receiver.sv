@@ -75,6 +75,15 @@ module br_credit_receiver #(
     // Maximum pop credits that can be returned in a single cycle.
     // Must be at least 1 but cannot be greater than MaxCredit.
     parameter int PopCreditMaxChange = 1,
+    // If 1, cover that credit_withhold can be non-zero.
+    // Otherwise, assert that it is always zero.
+    parameter bit EnableCoverCreditWithhold = 1,
+    // If 1, cover that push_sender_in_reset can be asserted
+    // Otherwise, assert that it is never asserted.
+    parameter bit EnableCoverPushSenderInReset = 1,
+    // If 1, cover that push_credit_stall can be asserted
+    // Otherwise, assert that it is never asserted.
+    parameter bit EnableCoverPushCreditStall = 1,
     // If 1, then assert there are no valid bits asserted at the end of the test.
     parameter bit EnableAssertFinalNotValid = 1,
     localparam int CounterWidth = $clog2(MaxCredit + 1),
@@ -150,6 +159,18 @@ module br_credit_receiver #(
   `BR_ASSERT_INTG(no_push_overflow_a, (|push_valid) |-> (occupancy_next <= MaxCredit))
   `BR_ASSERT_INTG(pop_credit_in_range_a, pop_credit <= PopCreditMaxChange)
 
+  if (EnableCoverPushSenderInReset) begin : gen_cover_push_sender_in_reset
+    `BR_COVER_INCL_RST_INTG(push_sender_in_reset_a, push_sender_in_reset)
+  end else begin : gen_assert_no_push_sender_in_reset
+    `BR_ASSERT_INCL_RST_INTG(no_push_sender_in_reset_a, !push_sender_in_reset)
+  end
+
+  if (EnableCoverPushCreditStall) begin : gen_cover_push_credit_stall
+    `BR_COVER_INCL_RST_INTG(push_credit_stall_a, push_credit_stall)
+  end else begin : gen_assert_no_push_credit_stall
+    `BR_ASSERT_INCL_RST_INTG(no_push_credit_stall_a, !push_credit_stall)
+  end
+
   if (EnableAssertFinalNotValid) begin : gen_assert_final
     `BR_ASSERT_FINAL(final_not_push_valid_a, push_valid == '0)
     `BR_ASSERT_FINAL(final_not_pop_valid_a, pop_valid == '0)
@@ -177,6 +198,15 @@ module br_credit_receiver #(
   br_credit_counter #(
       .MaxValue(MaxCredit),
       .MaxChange(CreditCounterMaxChange),
+      .MaxIncrement(PopCreditMaxChange),
+      .MaxDecrement(PushCreditMaxChange),
+      .EnableCoverZeroIncrement(0),
+      // If PushCreditMaxChange > 1, decr will never be larger
+      // than available. If ==1, decr will always be 1.
+      .EnableCoverZeroDecrement(PushCreditMaxChange > 1),
+      .EnableCoverDecrementBackpressure(PushCreditMaxChange == 1),
+      .EnableCoverWithhold(EnableCoverCreditWithhold),
+      .EnableAssertAlwaysDecr(!EnableCoverPushCreditStall),
       // Since credit_decr_valid is tied to credit_stall, we disable the final not-valid check
       .EnableAssertFinalNotValid(0)
   ) br_credit_counter (
@@ -226,27 +256,51 @@ module br_credit_receiver #(
   //------------------------------------------
   // Implementation checks
   //------------------------------------------
-  `BR_ASSERT_IMPL(push_credit_stall_a, push_credit_stall |-> !push_credit_internal)
-  `BR_COVER_IMPL(passthru_credit_c, pop_credit && push_credit_internal && credit_count == '0)
-  `BR_COVER_IMPL(passthru_credit_nonzero_count_c,
-                 pop_credit && push_credit_internal && credit_count > '0)
-  `BR_ASSERT_IMPL(over_withhold_a,
-                  credit_withhold > (credit_count + pop_credit) |-> !push_credit_internal)
-  `BR_ASSERT_IMPL(withhold_and_release_a,
-                  credit_count == credit_withhold && push_credit_internal |-> pop_credit)
+  if (EnableCoverPushCreditStall) begin : gen_push_credit_stall_impl_checks
+    `BR_ASSERT_IMPL(push_credit_stall_a, push_credit_stall |-> !push_credit_internal)
+  end
+
+  `BR_COVER_IMPL(passthru_credit_c,
+                 pop_credit > '0 && push_credit_internal > '0 && credit_count == '0)
+  // Credits can pass through the counter combinationally with nonzero count
+  // only if push_credit_stall is asserted or credits are withheld.
+  if (MaxCredit > 1 && (EnableCoverPushCreditStall || EnableCoverCreditWithhold))
+  begin : gen_passthru_credit_nonzero_count
+    `BR_COVER_IMPL(passthru_credit_nonzero_count_c,
+                   pop_credit > '0 && push_credit_internal > '0 && credit_count > '0)
+  end else begin : gen_assert_no_passthru_nonzero_count
+    `BR_ASSERT_IMPL(passthru_only_on_zero_a,
+                    pop_credit > '0 && push_credit_internal > '0 |-> credit_count == '0)
+  end
+  if (EnableCoverCreditWithhold) begin : gen_credit_withhold_impl_checks
+    `BR_ASSERT_IMPL(over_withhold_a,
+                    credit_withhold > (credit_count + pop_credit) |-> !push_credit_internal)
+    `BR_ASSERT_IMPL(withhold_and_release_a,
+                    credit_count == credit_withhold && push_credit_internal |-> pop_credit)
+  end
+
   `BR_ASSERT_IMPL(push_credit_in_range_a, push_credit <= PushCreditMaxChange)
 
   // Reset
   `BR_ASSERT_INCL_RST_IMPL(pop_valid_0_in_reset_a, rst |-> !pop_valid)
-  `BR_ASSERT_IMPL(push_sender_in_reset_no_pop_valid_a, push_sender_in_reset |-> !pop_valid)
+  if (EnableCoverPushSenderInReset) begin : gen_push_sender_in_reset_impl_checks
+    `BR_ASSERT_INCL_RST_IMPL(push_sender_in_reset_no_pop_valid_a,
+                             push_sender_in_reset |-> !pop_valid)
+  end
   if (RegisterPushOutputs) begin : gen_assert_push_reg
     `BR_ASSERT_INCL_RST_IMPL(push_receiver_in_reset_a, rst |=> push_receiver_in_reset)
     `BR_ASSERT_INCL_RST_IMPL(push_credit_0_in_reset_a, rst |=> !push_credit)
-    `BR_ASSERT_IMPL(push_sender_in_reset_no_push_credit_a, push_sender_in_reset |=> !push_credit)
+    if (EnableCoverPushSenderInReset) begin : gen_push_sender_in_reset_no_push_credit
+      `BR_ASSERT_INCL_RST_IMPL(push_sender_in_reset_no_push_credit_a,
+                               push_sender_in_reset |=> !push_credit)
+    end
   end else begin : gen_assert_push_no_reg
     `BR_ASSERT_INCL_RST_IMPL(push_receiver_in_reset_a, rst |-> push_receiver_in_reset)
     `BR_ASSERT_INCL_RST_IMPL(push_credit_0_in_reset_a, rst |-> !push_credit)
-    `BR_ASSERT_IMPL(push_sender_in_reset_no_push_credit_a, push_sender_in_reset |-> !push_credit)
+    if (EnableCoverPushSenderInReset) begin : gen_push_sender_in_reset_no_push_credit
+      `BR_ASSERT_INCL_RST_IMPL(push_sender_in_reset_no_push_credit_a,
+                               push_sender_in_reset |-> !push_credit)
+    end
   end
 
   // Rely on submodule implementation checks

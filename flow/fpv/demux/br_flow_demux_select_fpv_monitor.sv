@@ -24,6 +24,7 @@ module br_flow_demux_select_fpv_monitor #(
     parameter bit EnableCoverPushBackpressure = 1,
     parameter bit EnableAssertPushValidStability = EnableCoverPushBackpressure,
     parameter bit EnableAssertPushDataStability = EnableAssertPushValidStability,
+    parameter bit EnableAssertSelectStability = 0,
     parameter bit EnableAssertFinalNotValid = 1
 ) (
     input logic                                   clk,
@@ -43,7 +44,11 @@ module br_flow_demux_select_fpv_monitor #(
       .Width(Width),
       .EnableCoverPushBackpressure(EnableCoverPushBackpressure),
       .EnableAssertPushValidStability(EnableAssertPushValidStability),
-      .EnableAssertPushDataStability(EnableAssertPushDataStability)
+      .EnableAssertPushDataStability(EnableAssertPushDataStability),
+      .EnableAssertSelectStability(EnableAssertSelectStability),
+      // Output flow reg ensures that pop is always stable
+      .EnableAssertPopValidStability(1),
+      .EnableAssertPopDataStability(1)
   ) fv_checker (
       .clk,
       .rst,
@@ -75,5 +80,6 @@ bind br_flow_demux_select br_flow_demux_select_fpv_monitor #(
     .EnableCoverPushBackpressure(EnableCoverPushBackpressure),
     .EnableAssertPushValidStability(EnableAssertPushValidStability),
     .EnableAssertPushDataStability(EnableAssertPushDataStability),
+    .EnableAssertSelectStability(EnableAssertSelectStability),
     .EnableAssertFinalNotValid(EnableAssertFinalNotValid)
 ) monitor (.*);

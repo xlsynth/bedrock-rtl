@@ -98,6 +98,12 @@ module br_credit_sender #(
     parameter bit EnableAssertPushDataStability = EnableAssertPushValidStability,
     // If 1, assert that push_data is always known (not X) when push_valid is asserted.
     parameter bit EnableAssertPushDataKnown = 1,
+    // If 1, cover that credit_withhold can be non-zero.
+    // Otherwise, assert that it is always zero.
+    parameter bit EnableCoverCreditWithhold = 1,
+    // If 1, cover that pop_receiver_in_reset can be asserted
+    // Otherwise, assert that it is never asserted.
+    parameter bit EnableCoverPopReceiverInReset = 1,
     // If 1, then assert there are no valid bits asserted at the end of the test.
     parameter bit EnableAssertFinalNotValid = 1,
 
@@ -160,6 +166,12 @@ module br_credit_sender #(
       .data (push_data)
   );
 
+  if (EnableCoverPopReceiverInReset) begin : gen_cover_pop_receiver_in_reset
+    `BR_COVER_INCL_RST_INTG(pop_receiver_in_reset_a, pop_receiver_in_reset)
+  end else begin : gen_assert_no_pop_receiver_in_reset
+    `BR_ASSERT_INCL_RST_INTG(no_pop_receiver_in_reset_a, !pop_receiver_in_reset)
+  end
+
   // Rely on submodule integration checks
 
   //------------------------------------------
@@ -187,6 +199,12 @@ module br_credit_sender #(
   br_credit_counter #(
       .MaxValue(MaxCredit),
       .MaxChange(MaxChange),
+      .MaxIncrement(PopCreditMaxChange),
+      .MaxDecrement(NumFlows),
+      .EnableCoverZeroIncrement(0),
+      .EnableCoverZeroDecrement(NumFlows > 1),
+      .EnableCoverDecrementBackpressure(NumFlows == 1 && EnableCoverPushBackpressure),
+      .EnableCoverWithhold(EnableCoverCreditWithhold),
       .EnableAssertFinalNotValid(EnableAssertFinalNotValid)
   ) br_credit_counter (
       .clk,
@@ -220,7 +238,8 @@ module br_credit_sender #(
 
     br_arb_multi_rr #(
         .NumRequesters(NumFlows),
-        .MaxGrantPerCycle(NumFlows)
+        .MaxGrantPerCycle(NumFlows),
+        .EnableCoverBlockPriorityUpdate(0)
     ) br_arb_multi_rr (
         .clk,
         .rst,
@@ -270,23 +289,36 @@ module br_credit_sender #(
   `BR_ASSERT_IMPL(push_pop_unchanged_credit_count_a, $countones(internal_pop_valid)
                                                      == pop_credit |=> credit_count == $past
                                                      (credit_count))
-  `BR_ASSERT_IMPL(withhold_and_spend_a,
-                  credit_count == credit_withhold && (|internal_pop_valid) |-> (pop_credit != '0))
+
+  if (EnableCoverCreditWithhold) begin : gen_credit_withhold_impl_checks
+    `BR_ASSERT_IMPL(withhold_and_spend_a,
+                    credit_count == credit_withhold && (|internal_pop_valid) |-> (pop_credit != '0))
+  end
+
   `BR_COVER_IMPL(pop_valid_and_pop_credit_c, (|pop_valid) && (pop_credit != '0))
   `BR_ASSERT_IMPL(pop_only_avail_credit_a, (credit_available < NumFlows) |-> ($countones
                                            (push_valid & push_ready) <= credit_available))
 
   // Reset
   `BR_ASSERT_INCL_RST_IMPL(push_ready_0_in_reset_a, rst |-> !push_ready)
-  `BR_ASSERT_IMPL(pop_receiver_in_reset_no_push_ready_a, pop_receiver_in_reset |-> !push_ready)
+  if (EnableCoverPopReceiverInReset) begin : gen_pop_receiver_in_reset_impl_checks
+    `BR_ASSERT_INCL_RST_IMPL(pop_receiver_in_reset_no_push_ready_a,
+                             pop_receiver_in_reset |-> !push_ready)
+  end
   if (RegisterPopOutputs) begin : gen_assert_pop_reg
     `BR_ASSERT_INCL_RST_IMPL(pop_sender_in_reset_a, rst |=> pop_sender_in_reset)
     `BR_ASSERT_INCL_RST_IMPL(pop_valid_0_in_reset_a, rst |=> !pop_valid)
-    `BR_ASSERT_IMPL(pop_receiver_in_reset_no_pop_valid_a, pop_receiver_in_reset |=> !pop_valid)
+    if (EnableCoverPopReceiverInReset) begin : gen_pop_receiver_in_reset_no_pop_valid
+      `BR_ASSERT_INCL_RST_IMPL(pop_receiver_in_reset_no_pop_valid_a,
+                               pop_receiver_in_reset |=> !pop_valid)
+    end
   end else begin : gen_assert_pop_no_reg
     `BR_ASSERT_INCL_RST_IMPL(pop_sender_in_reset_a, rst |-> pop_sender_in_reset)
     `BR_ASSERT_INCL_RST_IMPL(pop_valid_0_in_reset_a, rst |-> !pop_valid)
-    `BR_ASSERT_IMPL(pop_receiver_in_reset_no_pop_valid_a, pop_receiver_in_reset |-> !pop_valid)
+    if (EnableCoverPopReceiverInReset) begin : gen_pop_receiver_in_reset_no_pop_valid
+      `BR_ASSERT_INCL_RST_IMPL(pop_receiver_in_reset_no_pop_valid_a,
+                               pop_receiver_in_reset |-> !pop_valid)
+    end
   end
 
   // Rely on submodule implementation checks
