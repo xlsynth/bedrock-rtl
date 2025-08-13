@@ -50,26 +50,35 @@ module br_mux_bin_structured_gates #(
   //------------------------------------------
   // Implementation
   //------------------------------------------
-  localparam int NumLevels = $clog2(NumSymbolsIn);
+
+  // Round up number of input symbols to a power of 2, padding with 0s.
+  // When select is out of range, the output will be 0, which matches the behavior of br_mux_bin.
+  localparam int PaddedNumSymbolsIn = 2 ** $clog2(NumSymbolsIn);
+  localparam int NumLevels = $clog2(PaddedNumSymbolsIn);
 
   // The final output is computed through a tree of mux2 gates.
   // The number of stages is clog2(NumSymbolsIn).
   // This signal contains the intermediate results of each stage.
   // Stage 0 is the input and stage NumLevels is the output.
-  logic [NumLevels:0][NumSymbolsIn-1:0][SymbolWidth-1:0] in_stages;
+  logic [NumLevels:0][PaddedNumSymbolsIn-1:0][SymbolWidth-1:0] in_stages;
 
-  assign in_stages[0] = in;
+  for (genvar s = 0; s < PaddedNumSymbolsIn; s++) begin : gen_in_stages_0
+    if (s < NumSymbolsIn) begin : gen_connected
+      assign in_stages[0][s] = in[s];
+    end else begin : gen_padded
+      assign in_stages[0][s] = '0;
+    end
+  end
 
   for (genvar i = 0; i < NumLevels; i++) begin : gen_level
-    // We have to account for non-power-of-2 NumSymbolsIn.
     // At each stage, each mux2 will cover 2x the number of input
     // symbols as the previous stage.
     localparam int LastStageNumSymbolsInPerMux = 2 ** i;
     localparam int LastStageNumSymbols = br_math::ceil_div(
-        NumSymbolsIn, LastStageNumSymbolsInPerMux
+        PaddedNumSymbolsIn, LastStageNumSymbolsInPerMux
     );
     localparam int NumSymbolsInPerMux = 2 ** (i + 1);
-    localparam int NumMuxes = br_math::ceil_div(NumSymbolsIn, NumSymbolsInPerMux);
+    localparam int NumMuxes = br_math::ceil_div(PaddedNumSymbolsIn, NumSymbolsInPerMux);
 
     for (genvar j = 0; j < NumMuxes; j++) begin : gen_mux
       // Each output of the stage may depend on up to two inputs from the
@@ -92,15 +101,15 @@ module br_mux_bin_structured_gates #(
     end
 
     // Tie-off unused upper part of this stage's output.
-    assign in_stages[i+1][NumSymbolsIn-1:NumMuxes] = '0;
+    assign in_stages[i+1][PaddedNumSymbolsIn-1:NumMuxes] = '0;
     // Mark as unread the unused upper part of this stage's input.
     if (i != 0) begin : gen_last_stage_unused
-      `BR_UNUSED_NAMED(last_stage_unused, in_stages[i][NumSymbolsIn-1:LastStageNumSymbols])
+      `BR_UNUSED_NAMED(last_stage_unused, in_stages[i][PaddedNumSymbolsIn-1:LastStageNumSymbols])
     end
   end
 
   assign out = in_stages[NumLevels][0];
-  `BR_UNUSED_NAMED(final_stage_unused, in_stages[NumLevels][NumSymbolsIn-1:1])
+  `BR_UNUSED_NAMED(final_stage_unused, in_stages[NumLevels][PaddedNumSymbolsIn-1:1])
 
   assign out_valid = select < NumSymbolsIn;  // ri lint_check_waive INVALID_COMPARE
 
