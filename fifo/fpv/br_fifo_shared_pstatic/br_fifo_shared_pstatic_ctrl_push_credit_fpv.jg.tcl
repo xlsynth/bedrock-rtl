@@ -19,7 +19,7 @@ assume -reset -name set_rst_during_reset {rst}
 assume -bound 1 -name delay_rst {rst}
 assume -name deassert_rst {##1 !rst}
 
-# TODO: disable covers to make nightly clean
+# TODO(zhemao): disable covers to make nightly clean
 cover -disable *
 
 # primary input control signal should be legal during reset
