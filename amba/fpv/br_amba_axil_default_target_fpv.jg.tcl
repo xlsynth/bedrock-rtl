@@ -17,8 +17,15 @@ clock clk
 reset rst
 get_design_info
 
-# TODO: disable covers to make nightly clean
-cover -disable *
+# disable AXI ABVIP cover properties
+# ABVIP Max_pending default is 2, if overwritten to 1, those covers are reachable (then bunch of other covers are unreachable).
+# TODO(bgelb): please double check, RTL probably has no back pressure
+cover -disable *genPropChksRDInf.genNoRdTblOverflow.master_ar_rd_tbl_no_overflow:precondition1
+cover -disable *genPropChksRDInf.genNoRdTblOverflow.genSlv.slave_ar_rd_tbl_no_overflow:precondition1
+cover -disable *genPropChksWRInf.genNoWrTblOverflow.master_aw_wr_tbl_no_overflow:precondition1
+cover -disable *genPropChksWRInf.genNoWrTblOverflow.genSlv.slave_aw_wr_tbl_no_overflow:precondition1
+cover -disable *genPropChksWRInf.genNoWrDatTblOverflow.master_w_wr_tbl_no_overflow:precondition1
+cover -disable *genPropChksWRInf.genNoWrDatTblOverflow.genSlv.slave_w_wr_tbl_no_overflow:precondition1
 
 # limit run time to 30-mins
 set_prove_time_limit 1800s

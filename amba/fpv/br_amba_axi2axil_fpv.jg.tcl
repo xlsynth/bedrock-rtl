@@ -23,6 +23,7 @@ assume -from_assert <embedded>::br_amba_axi2axil.monitor.axi4_lite.genPropChksWR
 
 # TODO: disable covers to make nightly clean
 cover -disable *
+cover -enable *br_amba_axi2axil.monitor*
 
 # limit run time to 30-mins
 set_prove_time_limit 1800s

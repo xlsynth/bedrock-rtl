@@ -75,6 +75,7 @@ verilog_elab_test(
 
 br_verilog_fpv_test_tools_suite(
     name = "br_amba_axi_default_target_test_suite",
+    gui = True,
     params = {
         "AxiIdWidth": [
             "1",
@@ -114,6 +115,7 @@ br_verilog_fpv_test_tools_suite(
     elab_opts = [
         "-parameter MaxOutstandingReqs 4",
     ],
+    gui = True,
     tools = {
         "jg": "br_amba_axi2axil_fpv.jg.tcl",
     },
@@ -140,6 +142,7 @@ verilog_elab_test(
 
 br_verilog_fpv_test_tools_suite(
     name = "br_amba_axil_split_test_suite",
+    gui = True,
     params = {
         "NumBranchAddrRanges": [
             "1",
@@ -173,6 +176,7 @@ verilog_elab_test(
 
 br_verilog_fpv_test_tools_suite(
     name = "br_amba_axi_timing_slice_test_suite",
+    gui = True,
     tools = {
         "jg": "br_amba_axi_timing_slice_fpv.jg.tcl",
     },
@@ -199,6 +203,7 @@ verilog_elab_test(
 
 br_verilog_fpv_test_tools_suite(
     name = "br_amba_axil_timing_slice_test_suite",
+    gui = True,
     tools = {
         "jg": "br_amba_axil_timing_slice_fpv.jg.tcl",
     },
@@ -225,6 +230,7 @@ verilog_elab_test(
 
 br_verilog_fpv_test_tools_suite(
     name = "br_amba_axil2apb_test_suite",
+    gui = True,
     tools = {
         "jg": "br_amba_axil2apb_fpv.jg.tcl",
     },
@@ -251,6 +257,7 @@ verilog_elab_test(
 
 br_verilog_fpv_test_tools_suite(
     name = "br_amba_apb_timing_slice_test_suite",
+    gui = True,
     tools = {
         "jg": "",
     },
@@ -277,6 +284,7 @@ verilog_elab_test(
 
 br_verilog_fpv_test_tools_suite(
     name = "br_amba_atb_funnel_test_suite",
+    gui = True,
     tools = {
         "jg": "br_amba_atb_funnel_fpv.jg.tcl",
     },
@@ -303,6 +311,7 @@ verilog_elab_test(
 
 br_verilog_fpv_test_tools_suite(
     name = "br_amba_axil_msi_test_suite",
+    gui = True,
     tools = {
         "jg": "br_amba_axil_msi_fpv.jg.tcl",
     },
@@ -333,6 +342,7 @@ br_verilog_fpv_test_tools_suite(
     elab_opts = [
         "-parameter MaxOutstanding 4",
     ],
+    gui = True,
     params = {
         "MaxAxiBurstLen": [
             "1",
@@ -371,6 +381,7 @@ br_verilog_fpv_test_tools_suite(
         "-parameter AxiIdCount 2",
         "-parameter StaticPerIdReadTrackerFifoDepth 2",
     ],
+    gui = True,
     params = {
         "MaxAxiBurstLen": [
             "1",
@@ -406,7 +417,7 @@ verilog_library(
 verilog_elab_test(
     name = "br_amba_axi_demux_fpv_monitor_elab_test",
     custom_tcl_header = "//:elab_test_jg_custom_header.verific.tcl",
-    #TODO: elab complains about: use of undefined macro 'JS3_OUT_OF_ORDER'
+    # elab complains about: use of undefined macro 'JS3_OUT_OF_ORDER'
     # needs to disable those spurious warnings for regression
     tags = ["manual"],
     tool = "verific",
@@ -419,6 +430,7 @@ br_verilog_fpv_test_tools_suite(
         "-parameter AwAxiIdWidth 2",
         "-parameter ArAxiIdWidth 2",
     ],
+    gui = True,
     params = {
         "NumSubordinates": [
             "2",

@@ -19,6 +19,7 @@ get_design_info
 
 # TODO: disable covers to make nightly clean
 cover -disable *
+cover -enable *br_amba_axi_isolate_sub.monitor*
 
 # during isolate_req & !isolate_done window, downstream assertions don't matter
 # Coded same assertion with precondition: isolate_req & !isolate_done in br_amba_axi_isolate_sub_fpv.sv

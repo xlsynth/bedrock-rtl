@@ -19,6 +19,7 @@ get_design_info
 
 # TODO: disable covers to make nightly clean
 cover -disable *
+cover -enable *br_amba_axil2apb.monitor*
 
 # prove command
 prove -all

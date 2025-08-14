@@ -32,6 +32,7 @@ assume -disable <embedded>::br_amba_axil_msi.monitor.axi.genPropChksRDInf.genSla
 
 # TODO: disable covers to make nightly clean
 cover -disable *
+cover -enable *br_amba_axil_msi.monitor*
 
 # limit run time to 30-mins
 set_prove_time_limit 1800s

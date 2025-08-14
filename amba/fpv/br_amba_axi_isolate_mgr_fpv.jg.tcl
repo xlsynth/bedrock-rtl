@@ -19,9 +19,10 @@ get_design_info
 
 # TODO: disable covers to make nightly clean
 cover -disable *
+cover -enable *br_amba_axi_isolate_mgr.monitor*
 
 # during isolate_req & !isolate_done window, upstream assertions don't matter
-# TODO: don't know how to disable these assertions dynamically w.r.t a signal
+# There is no way to disable these assertions dynamically w.r.t a signal
 # Has tried tying off isolate_req, those assertions stop failing.
 # also checked each CEX, they all failed inside "isolate_req & !isolate_done" window
 assert -disable {*upstream.genStableChksRDInf.genRStableChks.slave_r_rvalid_stable}
