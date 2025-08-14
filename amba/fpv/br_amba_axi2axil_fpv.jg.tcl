@@ -21,9 +21,20 @@ get_design_info
 assume -from_assert <embedded>::br_amba_axi2axil.monitor.axi4.genStableChksRDInf.genRStableChks.slave_r_rdata_stable
 assume -from_assert <embedded>::br_amba_axi2axil.monitor.axi4_lite.genPropChksWRInf.genNoWrDatTblOverflow.genMas.master_w_wr_tbl_no_overflow
 
-# TODO: disable covers to make nightly clean
-cover -disable *
-cover -enable *br_amba_axi2axil.monitor*
+# TODO(bgelb): disable RTL unreachable covers
+cover -disable *br_amba_axi2axil_core_write.br_counter_incr_req.gen_wrap_impl_check.value_overflow_a:precondition1
+cover -disable *br_amba_axi2axil_core_write.br_counter_incr_req.gen_wrap_impl_check.maxvalue_plus_one_a:precondition1
+cover -disable *br_amba_axi2axil_core_write.br_counter_incr_req.gen_cover_zero_increment.plus_zero_a:precondition1
+cover -disable *br_amba_axi2axil_core_write.br_counter_incr_req.gen_cover_reinit.gen_cover_reinit_no_incr.reinit_no_incr_a:precondition1
+cover -disable *br_amba_axi2axil_core_write.br_fifo_flops_resp_tracker.br_fifo_ctrl_1r1w.br_fifo_push_ctrl.br_fifo_push_ctrl_core.br_flow_checks_valid_data_intg.gen_flow_checks\[0\].gen_backpressure_checks.gen_valid_stability_checks.gen_valid_data_stability_checks.valid_data_stable_when_backpressured_a:precondition1
+cover -disable *br_amba_axi2axil_core_read.br_counter_incr_req.gen_cover_zero_increment.plus_zero_a:precondition1
+cover -disable *br_amba_axi2axil_core_read.br_counter_incr_req.gen_cover_reinit.gen_cover_reinit_no_incr.reinit_no_incr_a:precondition1
+cover -disable *br_amba_axi2axil_core_read.br_fifo_flops_resp_tracker.br_fifo_ctrl_1r1w.br_fifo_push_ctrl.br_fifo_push_ctrl_core.br_flow_checks_valid_data_intg.gen_flow_checks\[0\].gen_backpressure_checks.gen_valid_stability_checks.gen_valid_data_stability_checks.valid_data_stable_when_backpressured_a:precondition1
+
+# disable ABVIP unreachable covers
+# FV set ABVIP Max_Pending to be RTL_OutstandingReq + 2 to test RTL backpressure
+# Therefore, ABVIP overflow precondition is unreachable
+cover -disable *monitor*tbl_no_overflow:precondition1
 
 # limit run time to 30-mins
 set_prove_time_limit 1800s

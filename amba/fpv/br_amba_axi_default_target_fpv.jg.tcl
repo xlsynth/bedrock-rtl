@@ -20,7 +20,7 @@ get_design_info
 array set param_list [get_design_info -list parameter]
 set SingleBeat $param_list(SingleBeat)
 # TODO(bgelb): disable RTL unreachable covers
-if {$SingleBeat == 0} {
+if {$SingleBeat eq "1'b0"} {
   cover -disable *br_amba_axi_default_target.gen_multi_beat.br_counter_incr_arlen.gen_wrap_impl_check.value_overflow_a:precondition1
   cover -disable *br_amba_axi_default_target.gen_multi_beat.br_counter_incr_arlen.gen_wrap_impl_check.maxvalue_plus_one_a:precondition1
   cover -disable *br_amba_axi_default_target.gen_multi_beat.br_counter_incr_arlen.gen_cover_zero_increment.plus_zero_a:precondition1
@@ -36,7 +36,7 @@ cover -disable *genPropChksWRInf.genNoWrTblOverflow.master_aw_wr_tbl_no_overflow
 cover -disable *genPropChksWRInf.genNoWrTblOverflow.genSlv.slave_aw_wr_tbl_no_overflow:precondition1
 cover -disable *genPropChksWRInf.genNoWrDatTblOverflow.master_w_wr_tbl_no_overflow:precondition1
 cover -disable *genPropChksWRInf.genNoWrDatTblOverflow.genSlv.slave_w_wr_tbl_no_overflow:precondition1
-if {$SingleBeat == 1} {
+if {$SingleBeat eq "1'b1"} {
   # these covers require multi-burst
   cover -disable *genPropChksRDInf.genAXI4Full.genChkMaxLen.genBurstWrap.master_ar_araddr_wrap_aligned:precondition1
   cover -disable *genPropChksRDInf.genAXI4Full.genChkMaxLen.genBurstWrap.master_ar_araddr_wrap_arlen:precondition1
