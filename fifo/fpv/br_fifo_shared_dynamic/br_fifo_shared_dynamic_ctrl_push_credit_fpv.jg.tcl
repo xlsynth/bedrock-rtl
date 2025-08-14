@@ -39,10 +39,6 @@ assert -name fv_rst_check_ptr_ram_rd_addr_valid {rst | push_sender_in_reset |-> 
 # TODO: disable covers to make nightly clean
 cover -disable *
 
-# If assertion bound - pre-condition reachable cycle >= 2:
-# it's marked as "bounded_proven (auto) instead of "undetermined"
-# this only affects the status report, not the proof
-set_prove_inferred_target_bound on
 # limit run time to 10-mins
 set_prove_time_limit 600s
 
