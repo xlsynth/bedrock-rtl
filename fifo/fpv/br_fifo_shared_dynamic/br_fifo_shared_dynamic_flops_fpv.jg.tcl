@@ -17,7 +17,7 @@ clock clk
 reset rst
 get_design_info
 
-# TODO(zhemao): disable covers to make nightly clean
+# TODO: disable covers to make nightly clean
 cover -disable *
 
 # limit run time to 10-mins

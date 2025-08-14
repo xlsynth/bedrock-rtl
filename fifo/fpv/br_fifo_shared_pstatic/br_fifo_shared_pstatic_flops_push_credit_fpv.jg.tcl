@@ -26,7 +26,7 @@ for {set i 0} {$i < $NumFifos} {incr i} {
   assume -name initial_value_during_reset_$i "\$stable(credit_initial_push\[$i\])"
 }
 
-# TODO(zhemao): disable covers to make nightly clean
+# TODO: disable covers to make nightly clean
 cover -disable *
 
 # limit run time to 10-mins

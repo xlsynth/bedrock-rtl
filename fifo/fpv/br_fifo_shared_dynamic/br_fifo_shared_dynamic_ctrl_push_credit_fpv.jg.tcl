@@ -36,7 +36,7 @@ assert -name fv_rst_check_ram_rd_addr_valid {rst | push_sender_in_reset |-> data
 assert -name fv_rst_check_ptr_ram_wr_valid {rst | push_sender_in_reset |-> ptr_ram_wr_valid == 'd0}
 assert -name fv_rst_check_ptr_ram_rd_addr_valid {rst | push_sender_in_reset |-> ptr_ram_rd_addr_valid == 'd0}
 
-# TODO(zhemao): disable covers to make nightly clean
+# TODO: disable covers to make nightly clean
 cover -disable *
 
 # limit run time to 10-mins
