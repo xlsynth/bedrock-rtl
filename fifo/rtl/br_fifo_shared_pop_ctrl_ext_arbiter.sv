@@ -214,9 +214,7 @@ module br_fifo_shared_pop_ctrl_ext_arbiter #(
       .AddrWidth(AddrWidth),
       .Width(Width),
       .RamReadLatency(RamReadLatency),
-      // If there is no staging buffer, the read request can be revoked if
-      // pop_ready becomes low.
-      .EnableAssertPushValidStability(HasStagingBuffer),
+      .EnableAssertPushValidStability(1),
       .ArbiterAlwaysGrants(ArbiterAlwaysGrants)
   ) br_fifo_shared_read_xbar (
       .clk,

@@ -34,6 +34,7 @@ module br_fifo_shared_dynamic_basic_fpv_monitor #(
     // The bandwidth will be `StagingBufferDepth / (PointerRamAddressDepthStages
     // + PointerRamReadDataDepthStages + PointerRamReadDataWidthStages + 1)`.
     parameter int StagingBufferDepth = 1,
+    parameter bit HasStagingBuffer = 1,
     parameter bit EnableCoverPushBackpressure = 1,
     parameter bit EnableAssertPushValidStability = EnableCoverPushBackpressure,
     parameter bit EnableAssertPushDataStability = EnableAssertPushValidStability,
@@ -86,7 +87,13 @@ module br_fifo_shared_dynamic_basic_fpv_monitor #(
           push_valid[i] && !push_ready[i] |=> $stable(push_data[i]) && $stable(push_fifo_id[i]))
     end
     if (!EnableCoverPushBackpressure) begin : gen_no_backpressure
-      `BR_ASSUME(no_backpressure_a, !push_ready[i] |-> !push_valid[i])
+      `BR_ASSUME(no_backpressure_a, !push_valid[i] || push_ready[i])
+    end
+  end
+  if (!HasStagingBuffer) begin : gen_no_staging_buffer
+    for (genvar i = 0; i < NumFifos; i++) begin : gen_pop_ready_hold
+      // pop_ready can't drop without its pop_valid
+      `BR_ASSUME(pop_ready_hold_a, pop_ready[i] && !pop_valid[i] |=> pop_ready[i])
     end
   end
 
