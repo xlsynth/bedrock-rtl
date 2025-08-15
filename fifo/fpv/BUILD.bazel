@@ -14,10 +14,7 @@
 
 load("@rules_hdl//verilog:providers.bzl", "verilog_library")
 
-package(default_visibility = [
-    ":__subpackages__",
-    "//cdc/fpv:__subpackages__",
-])
+package(default_visibility = ["//visibility:public"])
 
 # credit_receiver checkers
 verilog_library(
