@@ -16,12 +16,13 @@ load("@rules_hdl//verilog:providers.bzl", "verilog_library")
 load("//bazel:br_verilog.bzl", "br_verilog_fpv_test_tools_suite")
 load("//bazel:verilog.bzl", "verilog_elab_test")
 
-package(default_visibility = ["//visibility:public"])
+package(default_visibility = ["//visibility:private"])
 
 # Basic cdc FIFO checkers
 verilog_library(
     name = "br_cdc_fifo_basic_fpv_monitor",
     srcs = ["br_cdc_fifo_basic_fpv_monitor.sv"],
+    visibility = ["//visibility:public"],
     deps = [
         "//fpv/lib:fv_delay",
     ],
@@ -33,6 +34,7 @@ verilog_library(
 verilog_library(
     name = "br_cdc_fifo_flops_fpv_monitor",
     srcs = ["br_cdc_fifo_flops_fpv_monitor.sv"],
+    visibility = ["//visibility:public"],
     deps = [
         ":br_cdc_fifo_basic_fpv_monitor",
         "//cdc/rtl:br_cdc_fifo_flops",
@@ -131,6 +133,7 @@ br_verilog_fpv_test_tools_suite(
 verilog_library(
     name = "br_cdc_fifo_flops_push_credit_fpv_monitor",
     srcs = ["br_cdc_fifo_flops_push_credit_fpv_monitor.sv"],
+    visibility = ["//visibility:public"],
     deps = [
         ":br_cdc_fifo_basic_fpv_monitor",
         "//cdc/rtl:br_cdc_fifo_flops_push_credit",
@@ -227,6 +230,7 @@ br_verilog_fpv_test_tools_suite(
 verilog_library(
     name = "br_cdc_fifo_ctrl_1r1w_fpv_monitor",
     srcs = ["br_cdc_fifo_ctrl_1r1w_fpv_monitor.sv"],
+    visibility = ["//visibility:public"],
     deps = [
         ":br_cdc_fifo_basic_fpv_monitor",
         "//cdc/rtl:br_cdc_fifo_ctrl_1r1w",
@@ -329,6 +333,7 @@ br_verilog_fpv_test_tools_suite(
 verilog_library(
     name = "br_cdc_fifo_ctrl_1r1w_push_credit_fpv_monitor",
     srcs = ["br_cdc_fifo_ctrl_1r1w_push_credit_fpv_monitor.sv"],
+    visibility = ["//visibility:public"],
     deps = [
         ":br_cdc_fifo_basic_fpv_monitor",
         "//cdc/rtl:br_cdc_fifo_ctrl_1r1w_push_credit",
@@ -424,6 +429,7 @@ br_verilog_fpv_test_tools_suite(
 verilog_library(
     name = "br_cdc_fifo_ctrl_push_pop_1r1w_fpv_monitor",
     srcs = ["br_cdc_fifo_ctrl_push_pop_1r1w_fpv_monitor.sv"],
+    visibility = ["//visibility:public"],
     deps = [
         ":br_cdc_fifo_basic_fpv_monitor",
         "//cdc/rtl:br_cdc_fifo_ctrl_pop_1r1w",
@@ -529,6 +535,7 @@ br_verilog_fpv_test_tools_suite(
 verilog_library(
     name = "br_cdc_fifo_ctrl_push_pop_1r1w_push_credit_fpv_monitor",
     srcs = ["br_cdc_fifo_ctrl_push_pop_1r1w_push_credit_fpv_monitor.sv"],
+    visibility = ["//visibility:public"],
     deps = [
         ":br_cdc_fifo_basic_fpv_monitor",
         "//cdc/rtl:br_cdc_fifo_ctrl_pop_1r1w",
