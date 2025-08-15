@@ -68,7 +68,8 @@ module br_amba_axil2apb_fpv_monitor #(
       .AXI4_LITE(1),
       .ADDR_WIDTH(AddrWidth),
       .DATA_WIDTH(DataWidth),
-      .CONFIG_WAIT_FOR_VALID_BEFORE_READY(ValidBeforeReady)
+      .CONFIG_WAIT_FOR_VALID_BEFORE_READY(ValidBeforeReady),
+      .MAX_PENDING(1)
   ) axi (
       // Global signals
       .aclk    (clk),
