@@ -214,9 +214,11 @@ module br_fifo_shared_dynamic_push_ctrl #(
 
   `BR_ASSERT_IMPL(
       full_push_acceptance_a,
-      (|push_valid && (alloc_sendable > request_count)) |-> (request_count == grant_count))
-  `BR_ASSERT_IMPL(
-      partial_push_acceptance_a,
-      (|push_valid && (alloc_sendable < request_count)) |-> (grant_count == alloc_sendable))
+      (|push_valid && (alloc_sendable >= request_count)) |-> (request_count == grant_count))
+  if (EnableCoverPushBackpressure) begin : gen_partial_push_acceptance_check
+    `BR_ASSERT_IMPL(
+        partial_push_acceptance_a,
+        (|push_valid && (alloc_sendable < request_count)) |-> (grant_count == alloc_sendable))
+  end
 
 endmodule

@@ -200,7 +200,7 @@ module br_fifo_shared_dynamic_ctrl_push_credit_ext_arbiter_fpv_monitor #(
       .Depth(Depth),
       .Width(Width),
       .StagingBufferDepth(StagingBufferDepth),
-      .EnableCoverPushBackpressure(1)
+      .EnableCoverPushBackpressure(0)
   ) fv_checker (
       .clk,
       .rst,

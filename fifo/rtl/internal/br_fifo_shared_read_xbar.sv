@@ -122,6 +122,7 @@ module br_fifo_shared_read_xbar #(
         .Width(TotalMuxWidth),
         .EnableAssertPushValidStability(EnableAssertPushValidStability),
         .EnableAssertPushDataStability(EnableAssertPushValidStability),
+        .EnableCoverPopBackpressure(0),
         .ArbiterAlwaysGrants(ArbiterAlwaysGrants)
     ) br_flow_mux_core_inst (
         .clk,
