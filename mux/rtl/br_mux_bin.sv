@@ -47,6 +47,7 @@ module br_mux_bin #(
   //------------------------------------------
   // Implementation
   //------------------------------------------
+  logic unused;
   always_comb begin
     out = '0;
 
