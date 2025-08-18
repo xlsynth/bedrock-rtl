@@ -21,6 +21,7 @@
 //
 // If you need a structured datapath for physical design reasons,
 // use br_mux_bin_structured_gates instead.
+// Nonsense changes
 
 `include "br_asserts_internal.svh"
 
