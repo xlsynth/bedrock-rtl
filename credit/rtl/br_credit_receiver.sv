@@ -84,6 +84,8 @@ module br_credit_receiver #(
     // If 1, cover that push_credit_stall can be asserted
     // Otherwise, assert that it is never asserted.
     parameter bit EnableCoverPushCreditStall = 1,
+    // The maximum credit count value that will be checked by covers.
+    parameter int CoverMaxCredit = MaxCredit,
     // If 1, then assert there are no valid bits asserted at the end of the test.
     parameter bit EnableAssertFinalNotValid = 1,
     localparam int CounterWidth = $clog2(MaxCredit + 1),
@@ -207,6 +209,7 @@ module br_credit_receiver #(
       .EnableCoverDecrementBackpressure(PushCreditMaxChange == 1),
       .EnableCoverWithhold(EnableCoverCreditWithhold),
       .EnableAssertAlwaysDecr(!EnableCoverPushCreditStall),
+      .CoverMaxValue(CoverMaxCredit),
       // Since credit_decr_valid is tied to credit_stall, we disable the final not-valid check
       .EnableAssertFinalNotValid(0)
   ) br_credit_counter (
@@ -264,7 +267,7 @@ module br_credit_receiver #(
                  pop_credit > '0 && push_credit_internal > '0 && credit_count == '0)
   // Credits can pass through the counter combinationally with nonzero count
   // only if push_credit_stall is asserted or credits are withheld.
-  if (MaxCredit > 1 && (EnableCoverPushCreditStall || EnableCoverCreditWithhold))
+  if (CoverMaxCredit > 1 && (EnableCoverPushCreditStall || EnableCoverCreditWithhold))
   begin : gen_passthru_credit_nonzero_count
     `BR_COVER_IMPL(passthru_credit_nonzero_count_c,
                    pop_credit > '0 && push_credit_internal > '0 && credit_count > '0)

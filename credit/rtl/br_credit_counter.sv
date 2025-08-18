@@ -75,6 +75,8 @@ module br_credit_counter #(
     parameter bit EnableAssertAlwaysDecr = 0,
     // If 1, then assert there are no valid bits asserted at the end of the test.
     parameter bit EnableAssertFinalNotValid = 1,
+    // The maximum credit count value that will be checked by covers.
+    parameter int CoverMaxValue = MaxValue,
     localparam int MaxValueP1Width = MaxValueWidth + 1,
     localparam int MaxChangeP1Width = MaxChangeWidth + 1,
     localparam int ValueWidth = $clog2(MaxValueP1Width'(MaxValue) + 1),
@@ -109,6 +111,7 @@ module br_credit_counter #(
   `BR_ASSERT_STATIC(max_change_lte_max_value_a, MaxChange <= MaxValue)
   `BR_ASSERT_STATIC(legal_max_increment_a, MaxIncrement >= 1 && MaxIncrement <= MaxChange)
   `BR_ASSERT_STATIC(legal_max_decrement_a, MaxDecrement >= 1 && MaxDecrement <= MaxChange)
+  `BR_ASSERT_STATIC(cover_max_value_lte_max_value_a, CoverMaxValue <= MaxValue)
 
   if (EnableAssertFinalNotValid) begin : gen_assert_final
     `BR_ASSERT_FINAL(final_not_incr_valid_a, !incr_valid)
@@ -149,7 +152,7 @@ module br_credit_counter #(
   // Ensure the credit counter goes through the full range to help ensure
   // flow control corners are hit outside the module.
   `BR_COVER_INTG(value_reaches_zero_c, value == 0)
-  `BR_COVER_INTG(value_reaches_max_c, value == MaxValue)
+  `BR_COVER_INTG(value_reaches_max_c, value == CoverMaxValue)
 
   // Ensure the initial value was within the valid range on the last cycle when exiting reset
   `BR_ASSERT_INTG(initial_value_in_range_a, $fell(rst) |-> $past(initial_value) <= MaxValue)

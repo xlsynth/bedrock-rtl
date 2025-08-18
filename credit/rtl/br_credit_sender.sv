@@ -106,6 +106,8 @@ module br_credit_sender #(
     parameter bit EnableCoverPopReceiverInReset = 1,
     // If 1, then assert there are no valid bits asserted at the end of the test.
     parameter bit EnableAssertFinalNotValid = 1,
+    // The maximum credit count value that will be checked by covers.
+    parameter int CoverMaxCredit = MaxCredit,
 
     localparam int CounterWidth   = $clog2(MaxCredit + 1),
     localparam int PopCreditWidth = $clog2(PopCreditMaxChange + 1)
@@ -205,7 +207,8 @@ module br_credit_sender #(
       .EnableCoverZeroDecrement(NumFlows > 1),
       .EnableCoverDecrementBackpressure(NumFlows == 1 && EnableCoverPushBackpressure),
       .EnableCoverWithhold(EnableCoverCreditWithhold),
-      .EnableAssertFinalNotValid(EnableAssertFinalNotValid)
+      .EnableAssertFinalNotValid(EnableAssertFinalNotValid),
+      .CoverMaxValue(CoverMaxCredit)
   ) br_credit_counter (
       .clk,
       .rst(either_rst),
