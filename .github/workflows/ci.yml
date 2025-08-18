@@ -6,6 +6,11 @@ on:
   pull_request:
     types: [opened, reopened, synchronize]
 
+# Only allow one pipeline to run at a time.
+concurrency:
+  group: ${{ github.repository }}
+  cancel-in-progress: false
+
 jobs:
   pre-commit:
     runs-on: ubuntu-latest
@@ -17,17 +22,10 @@ jobs:
   # Run bazel build before bazel tests because the logging is not chronologically
   # ordered if a build step fails while unrelated tests are running.
   #
-  # Additionally, we rely on the fact that we only have one self-hosted runner
-  # that has a Bazel shared disk cache.
-  #
-  # So if we build once up front, all the subsequent test jobs need only check out
-  # the repo and run their respective tests, and they should hit the shared disk cache for
-  # build artifacts.
-  #
-  # Note that the GitHub Actions scheduler is free to interleave the test jobs in any order
-  # (including across different PR triggers), so we cannot assume that the current
-  # working directory has the correct commit checked out. We must do that for each
-  # job.
+  # Additionally, we rely on the fact that we disabled any pipeline concurrency and that there is
+  # a single self-hosted runner. So each job can assume the working directory is preserved
+  # from the previous job (bazel-build). This is fine for now since our CI throughput demands are not
+  # very high.
   bazel-build:
     runs-on: self-hosted
     steps:
@@ -46,10 +44,6 @@ jobs:
       passing_tests: ${{ steps.test.outputs.passing_tests }}
       exit_code: ${{ steps.test.outputs.exit_code }}
     steps:
-    - uses: actions/checkout@v3
-    - name: Copy ci.bazelrc
-      working-directory: ${{ github.workspace }}
-      run: cp /home/gh-actions/bedrock-infra/ci.bazelrc ci.bazelrc
     - name: python tests
       id: test
       run: |
@@ -70,10 +64,6 @@ jobs:
       passing_tests: ${{ steps.test.outputs.passing_tests }}
       exit_code: ${{ steps.test.outputs.exit_code }}
     steps:
-    - uses: actions/checkout@v3
-    - name: Copy ci.bazelrc
-      working-directory: ${{ github.workspace }}
-      run: cp /home/gh-actions/bedrock-infra/ci.bazelrc ci.bazelrc
     - name: Stardoc tests
       id: test
       run: |
@@ -94,10 +84,6 @@ jobs:
       passing_tests: ${{ steps.test.outputs.passing_tests }}
       exit_code: ${{ steps.test.outputs.exit_code }}
     steps:
-    - uses: actions/checkout@v3
-    - name: Copy ci.bazelrc
-      working-directory: ${{ github.workspace }}
-      run: cp /home/gh-actions/bedrock-infra/ci.bazelrc ci.bazelrc
     - name: Verilog elaboration tests (using Verific tclmain)
       id: test
       # Use --test_output=summary to suppress log output, even on failure (proprietary EDA tool output may be sensitive).
@@ -122,10 +108,6 @@ jobs:
       passing_tests: ${{ steps.test.outputs.passing_tests }}
       exit_code: ${{ steps.test.outputs.exit_code }}
     steps:
-    - uses: actions/checkout@v3
-    - name: Copy ci.bazelrc
-      working-directory: ${{ github.workspace }}
-      run: cp /home/gh-actions/bedrock-infra/ci.bazelrc ci.bazelrc
     - name: Verilog lint tests (using RealIntent AscentLint)
       id: test
       # Use --test_output=summary to suppress log output, even on failure (proprietary EDA tool output may be sensitive).
@@ -147,10 +129,6 @@ jobs:
       passing_tests: ${{ steps.test.outputs.passing_tests }}
       exit_code: ${{ steps.test.outputs.exit_code }}
     steps:
-    - uses: actions/checkout@v3
-    - name: Copy ci.bazelrc
-      working-directory: ${{ github.workspace }}
-      run: cp /home/gh-actions/bedrock-infra/ci.bazelrc ci.bazelrc
     - name: Verilog sim tests (using Altair Dsim)
       id: test
       # Use --test_output=summary to suppress log output, even on failure (proprietary EDA tool output may be sensitive).
@@ -172,10 +150,6 @@ jobs:
       passing_tests: ${{ steps.test.outputs.passing_tests }}
       exit_code: ${{ steps.test.outputs.exit_code }}
     steps:
-    - uses: actions/checkout@v3
-    - name: Copy ci.bazelrc
-      working-directory: ${{ github.workspace }}
-      run: cp /home/gh-actions/bedrock-infra/ci.bazelrc ci.bazelrc
     - name: Verilog sim tests (using Synopsys VCS)
       id: test
       # Use --test_output=summary to suppress log output, even on failure (proprietary EDA tool output may be sensitive).
@@ -197,10 +171,6 @@ jobs:
       passing_tests: ${{ steps.test.outputs.passing_tests }}
       exit_code: ${{ steps.test.outputs.exit_code }}
     steps:
-    - uses: actions/checkout@v3
-    - name: Copy ci.bazelrc
-      working-directory: ${{ github.workspace }}
-      run: cp /home/gh-actions/bedrock-infra/ci.bazelrc ci.bazelrc
     - name: Verilog sim tests (using Icarus Verilog)
       id: test
       # Don't need --test_output=summary to suppress log output because iverilog is open source.
