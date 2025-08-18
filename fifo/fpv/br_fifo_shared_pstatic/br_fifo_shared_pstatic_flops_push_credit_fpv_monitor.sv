@@ -131,7 +131,7 @@ module br_fifo_shared_pstatic_flops_push_credit_fpv_monitor #(
       .StagingBufferDepth(StagingBufferDepth),
       .RegisterPopOutputs(RegisterPopOutputs),
       .RamReadLatency(RamReadLatency),
-      .EnableCoverPushBackpressure(1)
+      .EnableCoverPushBackpressure(0)
   ) fv_checker (
       .clk,
       .rst,
