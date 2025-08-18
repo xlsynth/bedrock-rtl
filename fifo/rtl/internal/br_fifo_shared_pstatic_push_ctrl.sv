@@ -151,6 +151,8 @@ module br_fifo_shared_pstatic_push_ctrl #(
       .Width(Width),
       .EnableCoverPushBackpressure(EnableCoverPushBackpressure),
       .EnableAssertPushValidStability(EnableAssertPushValidStability),
+      // push_fifo_id should always be stable if valid is stable.
+      .EnableAssertSelectStability(EnableAssertPushDataStability),
       .EnableAssertPushDataStability(EnableAssertPushDataStability),
       .EnableAssertPushDataKnown(EnableAssertPushDataKnown),
       .EnableAssertFinalNotValid(EnableAssertFinalNotValid)

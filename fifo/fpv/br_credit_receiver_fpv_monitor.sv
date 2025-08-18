@@ -61,7 +61,7 @@ module br_credit_receiver_fpv_monitor #(
   // ----------FV assumptions----------
   `BR_ASSUME(push_sender_in_reset_a, !push_sender_in_reset |=> !push_sender_in_reset)
   if (PStatic == 1) begin : gen_pstatic
-    `BR_ASSUME(credit_withhold_push_a, credit_withhold_push < config_max)
+    `BR_ASSUME(credit_withhold_push_a, credit_withhold_push <= config_max)
     `BR_ASSUME(credit_initial_push_a, credit_initial_push <= config_max)
   end else begin : gen_static
     `BR_ASSUME(credit_withhold_push_a, credit_withhold_push <= MaxCredit)

@@ -85,7 +85,7 @@ module br_fifo_shared_pstatic_push_ctrl_credit #(
   for (genvar i = 0; i < NumFifos; i++) begin : gen_per_fifo_intg_checks
     `BR_ASSERT_INTG(credit_initial_lte_size_a,
                     $fell(rst) |-> $past(credit_initial_push[i]) <= config_size[i])
-    `BR_ASSERT_INTG(credit_withhold_lt_size_a, credit_withhold_push[i] < config_size[i])
+    `BR_ASSERT_INTG(credit_withhold_lt_size_a, credit_withhold_push[i] <= config_size[i])
   end
   `BR_UNUSED(config_size)  // Only used for assertions
 
@@ -114,7 +114,11 @@ module br_fifo_shared_pstatic_push_ctrl_credit #(
         .Width(Width),
         .MaxCredit(Depth),
         .RegisterPushOutputs(RegisterPushOutputs),
-        .EnableAssertFinalNotValid(EnableAssertFinalNotValid)
+        .EnableAssertFinalNotValid(EnableAssertFinalNotValid),
+        // Each FIFO must have at least one entry assigned to it,
+        // so the actual number of credits available to each is
+        // Depth - (NumFifos - 1).
+        .CoverMaxCredit(Depth - (NumFifos - 1))
     ) br_credit_receiver_inst (
         .clk,
         .rst,
