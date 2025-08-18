@@ -31,6 +31,9 @@ jobs:
       exit_code: ${{ steps.test.outputs.exit_code }}
     steps:
     - uses: actions/checkout@v3
+    - name: Copy ci.bazelrc
+      working-directory: ${{ github.workspace }}
+      run: cp /home/gh-actions/bedrock-infra/ci.bazelrc ci.bazelrc
     - name: Verilog formal tests (using Cadence JasperGold)
       id: test
       # Use --test_output=summary to suppress log output, even on failure (proprietary EDA tool output may be sensitive).
