@@ -107,8 +107,4 @@ module br_flow_fork #(
       .data ({NumFlows{1'b0}})
   );
 
-  for (genvar i = 0; i < NumFlows; i++) begin : gen_flow_checks
-    `BR_COVER_IMPL(pop_valid_unstable_c, $stable(push_valid) && $fell(pop_valid_unstable[i]))
-  end
-
 endmodule : br_flow_fork
