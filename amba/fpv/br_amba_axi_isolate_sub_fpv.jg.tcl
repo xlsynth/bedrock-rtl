@@ -17,8 +17,15 @@ clock clk
 reset rst
 get_design_info
 
-# TODO: disable covers to make nightly clean
+array set param_list [get_design_info -list parameter]
+set MaxAxiBurstLen $param_list(MaxAxiBurstLen)
+# TODO(bgelb): disable RTL covers to make nightly clean
 cover -disable *
+cover -enable *br_amba_axi_isolate_sub.monitor*
+# disable ABVIP unreachable covers
+# FV set ABVIP Max_Pending to be RTL_OutstandingReq + 2 to test RTL backpressure
+# Therefore, ABVIP overflow precondition is unreachable
+cover -disable *monitor*tbl_no_overflow:precondition1
 
 # during isolate_req & !isolate_done window, downstream assertions don't matter
 # Coded same assertion with precondition: isolate_req & !isolate_done in br_amba_axi_isolate_sub_fpv.sv

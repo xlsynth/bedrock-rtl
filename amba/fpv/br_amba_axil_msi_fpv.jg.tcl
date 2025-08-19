@@ -30,7 +30,7 @@ assert -disable <embedded>::br_amba_axil_msi.monitor.axi.genPropChksWRInf.genNoW
 # this means: It is impossible to satisfy all fairness constraints infinitely often.
 assume -disable <embedded>::br_amba_axil_msi.monitor.axi.genPropChksRDInf.genSlaveLiveAR.slave_ar_no_arvalid_arready_eventually
 
-# TODO: disable covers to make nightly clean
+# TODO(masai, bgelb): disable covers to make nightly clean
 cover -disable *
 
 # limit run time to 30-mins

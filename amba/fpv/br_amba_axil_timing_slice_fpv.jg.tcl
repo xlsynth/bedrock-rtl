@@ -27,9 +27,6 @@ assert -disable <embedded>::br_amba_axil_timing_slice.monitor.init.genPropChksRD
 assert -disable <embedded>::br_amba_axil_timing_slice.monitor.init.genPropChksWRInf.genNoWrTblOverflow.genMas.master_aw_wr_tbl_no_overflow
 assert -disable <embedded>::br_amba_axil_timing_slice.monitor.init.genPropChksWRInf.genNoWrDatTblOverflow.genMas.master_w_wr_tbl_no_overflow
 
-# TODO: disable covers to make nightly clean
-cover -disable *
-
 # limit run time to 30-mins
 set_prove_time_limit 1800s
 

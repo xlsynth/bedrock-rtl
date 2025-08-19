@@ -17,11 +17,22 @@ clock clk
 reset rst
 get_design_info
 
-# TODO: disable covers to make nightly clean
+array set param_list [get_design_info -list parameter]
+set MaxAxiBurstLen $param_list(MaxAxiBurstLen)
+# TODO(bgelb): disable RTL covers to make nightly clean
 cover -disable *
+cover -enable *br_amba_axi_isolate_mgr.monitor*
+# disable ABVIP unreachable covers
+# FV set ABVIP Max_Pending to be RTL_OutstandingReq + 2 to test RTL backpressure
+# Therefore, ABVIP overflow precondition is unreachable
+cover -disable *monitor*tbl_no_overflow:precondition1
+# aw/w has no skew when max burst is 1
+if {$MaxAxiBurstLen eq "1"} {
+  cover -disable *monitor.fv_axi_check.downstream.genPropChksWRInf.genDBCLive.genSlaveLiveAW.genLiveAW.master_aw_awvalid_eventually:precondition1
+}
 
 # during isolate_req & !isolate_done window, upstream assertions don't matter
-# TODO: don't know how to disable these assertions dynamically w.r.t a signal
+# There is no way to disable these assertions dynamically w.r.t a signal
 # Has tried tying off isolate_req, those assertions stop failing.
 # also checked each CEX, they all failed inside "isolate_req & !isolate_done" window
 assert -disable {*upstream.genStableChksRDInf.genRStableChks.slave_r_rvalid_stable}
