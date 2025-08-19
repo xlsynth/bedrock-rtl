@@ -242,13 +242,21 @@ module br_amba_axi2axil_core #(
   //----------------------------------------------------------------------------
   // Request Handshake Logic
   //----------------------------------------------------------------------------
+  logic flow_reg_pop_ready_unqual;
+
+  br_flow_fork #(
+      .NumFlows(2)
+  ) br_flow_fork_flow_reg_pop (
+      .clk,
+      .rst,
+      .push_ready(flow_reg_pop_ready_unqual),
+      .push_valid(flow_reg_pop_valid),
+      .pop_valid_unstable({axil_req_valid, resp_fifo_push_valid}),
+      .pop_ready({axil_req_ready, resp_fifo_push_ready})
+  );
 
   // Pop the flow reg when the last AXI4-Lite request is issued
-  assign flow_reg_pop_ready = axil_req_handshake && is_last_req_beat;
-
-  // Issue AXI4-Lite requests as long as the response FIFO is ready
-  assign axil_req_valid = flow_reg_pop_valid && resp_fifo_push_ready;
-
+  assign flow_reg_pop_ready = flow_reg_pop_ready_unqual && is_last_req_beat;
 
   //----------------------------------------------------------------------------
   // Request Counter
@@ -258,7 +266,10 @@ module br_amba_axi2axil_core #(
   br_counter_incr #(
       .MaxValue({br_amba::AxiBurstLenWidth{1'b1}}),
       .MaxIncrement(1),
-      .EnableReinitAndIncr(0)
+      .EnableReinitAndIncr(0),
+      .EnableWrap(0),
+      .EnableCoverZeroIncrement(0),
+      .EnableCoverReinitNoIncr(0)
   ) br_counter_incr_req (
       .clk,
       .rst,
@@ -336,9 +347,6 @@ module br_amba_axi2axil_core #(
   );
 
   assign resp_fifo_push_data = {axi_req_id_reg, is_last_req_beat};
-  assign resp_fifo_push_valid = axil_req_handshake;
-
-  assign resp_fifo_pop_ready = axil_resp_handshake;
 
   //----------------------------------------------------------------------------
   // Response Signals
@@ -356,19 +364,33 @@ module br_amba_axi2axil_core #(
       (axil_resp_resp != br_amba::AxiRespOkay) ?  // ri lint_check_waive ENUM_COMPARE
       axil_resp_resp : resp;
 
+  logic axi_resp_valid_unqual;
+  logic axi_resp_ready_unqual;
+
+  br_flow_join #(
+      .NumFlows(2)
+  ) br_flow_join_axi_resp (
+      .clk,
+      .rst,
+      .push_ready({axil_resp_ready, resp_fifo_pop_ready}),
+      .push_valid({axil_resp_valid, resp_fifo_pop_valid}),
+      .pop_valid (axi_resp_valid_unqual),
+      .pop_ready (axi_resp_ready_unqual)
+  );
+
   // The handling of read and write responses is different. For read responses, we need to
   // generate an AXI4 response for each AXI4-Lite response. For write responses, we only need to
   // generate an AXI4 response for the last beat as indicated by axi_resp_data_last.
   generate
     if (IsReadNotWrite) begin : gen_read_response
-      assign axi_resp_valid  = axil_resp_valid;
-      assign axi_resp_resp   = axil_resp_resp;
-      assign axil_resp_ready = axi_resp_ready;
+      assign axi_resp_valid = axi_resp_valid_unqual;
+      assign axi_resp_resp = axil_resp_resp;
+      assign axi_resp_ready_unqual = axi_resp_ready;
     end else begin : gen_write_response
-      assign axi_resp_valid = (axi_resp_data_last && axil_resp_valid);
+      assign axi_resp_valid = (axi_resp_data_last && axi_resp_valid_unqual);
       assign axi_resp_resp = (axil_resp_resp != br_amba::AxiRespOkay) ?  // ri lint_check_waive ENUM_COMPARE
           axil_resp_resp : resp;
-      assign axil_resp_ready = (!axi_resp_data_last || axi_resp_ready);
+      assign axi_resp_ready_unqual = (!axi_resp_data_last || axi_resp_ready);
     end
   endgenerate
 
