@@ -17,9 +17,8 @@ clock clk
 reset rst
 get_design_info
 
-# TODO(bgelb): disable RTL covers
-cover -disable *
-cover -enable *br_amba_axil_split.monitor*
+# Unreachable RTL implementation covers
+cover -disable *br_flow_reg_both_write_*.br_flow_reg_rev.br_flow_checks_valid_data_impl.gen_backpressure_checks.gen_valid_stability_checks.gen_valid_data_stability_checks.gen_valid_data_stability_per_flow*.valid_data_stable_when_backpressured_a:precondition1
 
 # disable ABVIP covers
 # FV set ABVIP Max_Pending to be RTL_OutstandingReq + 2 to test RTL backpressure
