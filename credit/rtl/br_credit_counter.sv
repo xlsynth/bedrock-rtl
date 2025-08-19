@@ -76,7 +76,7 @@ module br_credit_counter #(
     // If 1, then assert there are no valid bits asserted at the end of the test.
     parameter bit EnableAssertFinalNotValid = 1,
     // The maximum credit count value that will be checked by covers.
-    parameter int CoverMaxValue = MaxValue,
+    parameter logic [MaxValueWidth-1:0] CoverMaxValue = MaxValue,
     localparam int MaxValueP1Width = MaxValueWidth + 1,
     localparam int MaxChangeP1Width = MaxChangeWidth + 1,
     localparam int ValueWidth = $clog2(MaxValueP1Width'(MaxValue) + 1),
