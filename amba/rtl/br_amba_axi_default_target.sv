@@ -170,7 +170,10 @@ module br_amba_axi_default_target #(
         .MaxValue(2 ** AxiLenWidth - 1),
         .MaxIncrement(1),
         .EnableReinitAndIncr(0),
-        .EnableSaturate(0)
+        .EnableSaturate(0),
+        .EnableWrap(0),
+        .EnableCoverZeroIncrement(0),
+        .EnableCoverReinitNoIncr(0)
     ) br_counter_incr_arlen (
         .clk,
         .rst,

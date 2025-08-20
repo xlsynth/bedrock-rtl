@@ -19,13 +19,6 @@ get_design_info
 
 array set param_list [get_design_info -list parameter]
 set SingleBeat $param_list(SingleBeat)
-# TODO(bgelb): disable RTL unreachable covers
-if {$SingleBeat eq "1'b0"} {
-  cover -disable *br_amba_axi_default_target.gen_multi_beat.br_counter_incr_arlen.gen_wrap_impl_check.value_overflow_a:precondition1
-  cover -disable *br_amba_axi_default_target.gen_multi_beat.br_counter_incr_arlen.gen_wrap_impl_check.maxvalue_plus_one_a:precondition1
-  cover -disable *br_amba_axi_default_target.gen_multi_beat.br_counter_incr_arlen.gen_cover_zero_increment.plus_zero_a:precondition1
-  cover -disable *br_amba_axi_default_target.gen_multi_beat.br_counter_incr_arlen.gen_cover_reinit.gen_cover_reinit_no_incr.reinit_no_incr_a:precondition1
-}
 
 # disable AXI ABVIP covers
 # ABVIP Max_pending default is 2, if overwritten to 1, those covers are reachable (then bunch of other covers are unreachable).
