@@ -109,7 +109,7 @@ module br_amba_axil2apb #(
   ) br_arb_rr (
       .clk(clk),
       .rst(rst),
-      .enable_priority_update(1'b0),
+      .enable_priority_update(1'b1),
       .request({arb_write_req, arb_read_req}),
       .grant({arb_write_grant, arb_read_grant})
   );

@@ -17,9 +17,5 @@ clock clk
 reset rst
 get_design_info
 
-# TODO(bgelb): disable RTL unreachable cover
-# This cover is unreachable because enable_priority_update is tired to 0 in RTL
-cover -disable <embedded>::br_amba_axil2apb.br_arb_rr.br_arb_rr_internal.rr_state_internal.grant_onehot_A:precondition1
-
 # prove command
 prove -all
