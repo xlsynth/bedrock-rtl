@@ -89,6 +89,9 @@ module br_counter #(
     // If 1, cover the case where reinit is asserted when incr_valid and decr_valid are both 0.
     // Otherwise, assert that reinit is never asserted when incr_valid and decr_valid are both 0.
     parameter bit EnableCoverReinitNoChange = EnableCoverReinit,
+    // If 1, cover that we get simultaneous increment and decrement.
+    // Otherwise, assert that this never happens.
+    parameter bit EnableCoverIncrementAndDecrement = 1,
     localparam int MaxValueP1Width = MaxValueWidth + 1,
     localparam int MaxChangeP1Width = MaxChangeWidth + 1,
     localparam int ValueWidth = $clog2(MaxValueP1Width'(MaxValue) + 1),
@@ -148,6 +151,13 @@ module br_counter #(
   end
 `endif  // BR_DISABLE_INTG_CHECKS
 `endif  // BR_ASSERT_ON
+
+  if (EnableCoverIncrementAndDecrement) begin : gen_cover_increment_and_decrement
+    `BR_COVER_INTG(increment_and_decrement_c, incr_valid && incr > '0 && decr_valid && decr > '0)
+  end else begin : gen_assert_no_increment_and_decrement
+    `BR_ASSERT_INTG(no_increment_and_decrement_a,
+                    !(incr_valid && incr > '0 && decr_valid && decr > '0))
+  end
 
   if (EnableAssertFinalNotValid) begin : gen_assert_final
     `BR_ASSERT_FINAL(final_not_incr_valid_a, !incr_valid)
@@ -254,7 +264,6 @@ module br_counter #(
     `BR_ASSERT_IMPL(no_zero_increment_a, incr_valid |-> incr > '0)
     `BR_ASSERT_IMPL(no_zero_decrement_a, decr_valid |-> decr > '0)
   end
-  `BR_COVER_IMPL(increment_and_decrement_c, incr_valid && incr > '0 && decr_valid && decr > '0)
 
   // Reinit
   if (EnableCoverReinit) begin : gen_cover_reinit

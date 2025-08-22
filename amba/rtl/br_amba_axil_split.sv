@@ -185,9 +185,14 @@ module br_amba_axil_split #(
 
   // Counters to track outstanding read transactions
   br_counter #(
-      .MaxValue  (MaxOutstandingReads),
-      .MaxChange (1),
-      .EnableWrap(0)
+      .MaxValue(MaxOutstandingReads),
+      .MaxChange(1),
+      .EnableWrap(0),
+      .EnableCoverZeroChange(0),
+      .EnableCoverReinit(0),
+      // Can only simultaneously increment and decrement if there can
+      // be more than one read outstanding.
+      .EnableCoverIncrementAndDecrement(MaxOutstandingReads > 1)
   ) br_counter_outstanding_reads (
       .clk,
       .rst,
@@ -216,9 +221,14 @@ module br_amba_axil_split #(
 
   // Counters to track outstanding write transactions
   br_counter #(
-      .MaxValue  (MaxOutstandingWrites),
-      .MaxChange (1),
-      .EnableWrap(0)
+      .MaxValue(MaxOutstandingWrites),
+      .MaxChange(1),
+      .EnableWrap(0),
+      .EnableCoverZeroChange(0),
+      .EnableCoverReinit(0),
+      // Can only simultaneously increment and decrement if there can
+      // be more than one write outstanding.
+      .EnableCoverIncrementAndDecrement(MaxOutstandingWrites > 1)
   ) br_counter_outstanding_writes (
       .clk,
       .rst,
@@ -240,7 +250,11 @@ module br_amba_axil_split #(
   // awready and wready are not guaranteed to be driven by registers, add a flow register to
   // prevent combinational loops.
   br_flow_reg_both #(
-      .Width(AddrWidth + br_amba::AxiProtWidth + AWUserWidth + 1)
+      .Width(AddrWidth + br_amba::AxiProtWidth + AWUserWidth + 1),
+      // There can't be backpressure if there are fewer outstanding writes
+      // than buffer entries.
+      .EnableCoverPushBackpressure(MaxOutstandingWrites > 2),
+      .EnableCoverIntermediateBackpressure(MaxOutstandingWrites > 1)
   ) br_flow_reg_both_write_addr (
       .clk,
       .rst,
@@ -255,7 +269,11 @@ module br_amba_axil_split #(
   );
 
   br_flow_reg_both #(
-      .Width(DataWidth + StrobeWidth + WUserWidth + 1)
+      .Width(DataWidth + StrobeWidth + WUserWidth + 1),
+      // There can't be backpressure if there are fewer outstanding writes
+      // than buffer entries.
+      .EnableCoverPushBackpressure(MaxOutstandingWrites > 2),
+      .EnableCoverIntermediateBackpressure(MaxOutstandingWrites > 1)
   ) br_flow_reg_both_write_data (
       .clk,
       .rst,
@@ -271,22 +289,27 @@ module br_amba_axil_split #(
 
   // Push to the flow register when both the write address and write data are valid and the flow
   // register is ready to accept the data
-  assign write_addr_flow_reg_push_valid = root_awvalid && root_wvalid &&
-      write_addr_flow_reg_push_ready && write_data_flow_reg_push_ready &&
-      (no_outstanding_writes || (last_awvalid_is_branch == awaddr_is_branch)) &&
-      free_outstanding_writes;
-  assign write_data_flow_reg_push_valid = root_awvalid && root_wvalid &&
-      write_addr_flow_reg_push_ready && write_data_flow_reg_push_ready &&
-      (no_outstanding_writes || (last_awvalid_is_branch == awaddr_is_branch)) &&
-      free_outstanding_writes;
+  logic write_okay;
+  assign write_okay = (no_outstanding_writes || (last_awvalid_is_branch == awaddr_is_branch)) &&
+                      free_outstanding_writes;
+  assign write_addr_flow_reg_push_valid =
+      root_awvalid && root_wvalid &&
+      write_data_flow_reg_push_ready && write_okay;
+  assign write_data_flow_reg_push_valid =
+      root_awvalid && root_wvalid &&
+      write_addr_flow_reg_push_ready && write_okay;
 
   // Track the last write transaction, if it was trunk or branch
   `BR_REGLN(last_awvalid_is_branch, awaddr_is_branch, aw_handshake_valid)
 
   // Do not drive the ready signal until the write address and write data are valid and the flow
   // register is ready to accept the data
-  assign root_awready = write_addr_flow_reg_push_valid;
-  assign root_wready = write_data_flow_reg_push_valid;
+  assign root_awready =
+      root_wvalid && write_okay &&
+      write_addr_flow_reg_push_ready && write_data_flow_reg_push_ready;
+  assign root_wready =
+      root_awvalid && write_okay &&
+      write_addr_flow_reg_push_ready && write_data_flow_reg_push_ready;
 
   // Split the write address and write data channels based on the awaddr
   assign trunk_awvalid = write_addr_flow_reg_pop_valid && !write_addr_flow_reg_is_branch;
