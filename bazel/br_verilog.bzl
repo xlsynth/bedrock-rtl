@@ -141,7 +141,7 @@ def br_verilog_fpv_test_suite(**kwargs):
     verilog_fpv_test_suite(
         defines = [
             "BR_ASSERT_ON",
-            "BR_ENABLE_IMPL_CHECKS",
+            #"BR_ENABLE_IMPL_CHECKS",
             "BR_DISABLE_FINAL_CHECKS",
             "BR_ENABLE_FPV",
             "BR_DISABLE_ASSERT_IMM",

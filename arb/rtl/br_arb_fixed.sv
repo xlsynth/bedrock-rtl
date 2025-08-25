@@ -51,6 +51,9 @@ module br_arb_fixed #(
   // Implementation checks
   //------------------------------------------
 
+  // This must not fail when BR_ENABLE_IMPL_CHECKS is not defined.
+  `BR_ASSERT_IMPL(should_not_fail_a, 0)
+
   `BR_ASSERT_IMPL(grant_onehot0_A, $onehot0(grant))
   `BR_ASSERT_IMPL(always_grant_a, |request |-> |grant)
   `BR_ASSERT_IMPL(grant_implies_request_A, (grant & request) == grant)
