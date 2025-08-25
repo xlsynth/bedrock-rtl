@@ -80,7 +80,7 @@ def br_verilog_sim_test_suite(name, tool, defines = [], opts = [], **kwargs):
     if len(defines) == 0:
         # Don't enable assertions with iverilog because it doesn't handle them well, even in -g2012 mode.
         if tool != "iverilog":
-            defines = ["BR_ASSERT_ON", "BR_DISABLE_INTG_CHECKS", "SIMULATION"]
+            defines = ["BR_ASSERT_ON", "BR_ENABLE_IMPL_CHECKS", "SIMULATION"]
         else:
             defines = ["SIMULATION"]
 
@@ -129,7 +129,7 @@ def br_verilog_fpv_test_tools_suite(name, tools = {}, **kwargs):
 def br_verilog_fpv_test_suite(**kwargs):
     """Wraps verilog_fpv_test_suite with Bedrock-internal settings. Not intended to be called by Bedrock users.
 
-    * Defines `BR_ASSERT_ON`, `BR_DISABLE_FINAL_CHECKS` and `BR_ENABLE_FPV`.
+    * Defines `BR_ASSERT_ON`, `BR_ENABLE_IMPL_CHECKS`, `BR_DISABLE_FINAL_CHECKS` and `BR_ENABLE_FPV`.
 
     Args:
         **kwargs: Additional keyword arguments passed to verilog_fpv_test_suite. Do not pass defines.
@@ -141,7 +141,7 @@ def br_verilog_fpv_test_suite(**kwargs):
     verilog_fpv_test_suite(
         defines = [
             "BR_ASSERT_ON",
-            "BR_DISABLE_INTG_CHECKS",
+            "BR_ENABLE_IMPL_CHECKS",
             "BR_DISABLE_FINAL_CHECKS",
             "BR_ENABLE_FPV",
             "BR_DISABLE_ASSERT_IMM",
