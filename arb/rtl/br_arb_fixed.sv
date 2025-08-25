@@ -36,6 +36,9 @@ module br_arb_fixed #(
   //------------------------------------------
   `BR_COVER_INTG(request_multihot_c, !$onehot0(request))
 
+  // This should not fail when BR_DISABLE_INTG_CHECKS is defined.
+  `BR_ASSERT_INTG(intg_should_not_fail_a, 0)
+
   //------------------------------------------
   // Implementation
   //------------------------------------------
@@ -51,8 +54,8 @@ module br_arb_fixed #(
   // Implementation checks
   //------------------------------------------
 
-  // This must not fail when BR_ENABLE_IMPL_CHECKS is not defined.
-  `BR_ASSERT_IMPL(should_not_fail_a, 0)
+  // This should not fail when BR_ENABLE_IMPL_CHECKS is not defined.
+  `BR_ASSERT_IMPL(impl_should_not_fail_a, 0)
 
   `BR_ASSERT_IMPL(grant_onehot0_A, $onehot0(grant))
   `BR_ASSERT_IMPL(always_grant_a, |request |-> |grant)

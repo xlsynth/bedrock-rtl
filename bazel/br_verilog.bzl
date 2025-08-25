@@ -37,15 +37,8 @@ def br_verilog_elab_and_lint_test_suite(name, **kwargs):
         fail("Do not pass defines to br_verilog_elab_and_lint_test_suite. They are hard-coded in the macro.")
 
     verilog_elab_and_lint_test_suite(
-        name = name,
-        defines = ["BR_ASSERT_ON"],
-        tags = ["assert"],
-        **kwargs
-    )
-
-    verilog_elab_and_lint_test_suite(
-        name = name + "_allassert",
-        defines = ["BR_ASSERT_ON", "BR_ENABLE_IMPL_CHECKS"],
+        name = name + "_no_br_internal_asserts",
+        defines = ["BR_ASSERT_ON", "BR_DISABLE_INTG_CHECKS"],
         tags = ["allassert"],
         **kwargs
     )
@@ -142,6 +135,7 @@ def br_verilog_fpv_test_suite(**kwargs):
     verilog_fpv_test_suite(
         defines = [
             "BR_ASSERT_ON",
+            "BR_DISABLE_INTG_CHECKS",
             #"BR_ENABLE_IMPL_CHECKS",
             "BR_DISABLE_FINAL_CHECKS",
             "BR_ENABLE_FPV",
