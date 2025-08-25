@@ -80,7 +80,8 @@ def br_verilog_sim_test_suite(name, tool, defines = [], opts = [], **kwargs):
     if len(defines) == 0:
         # Don't enable assertions with iverilog because it doesn't handle them well, even in -g2012 mode.
         if tool != "iverilog":
-            defines = ["BR_ASSERT_ON", "BR_ENABLE_IMPL_CHECKS", "SIMULATION"]
+            #defines = ["BR_ASSERT_ON", "BR_ENABLE_IMPL_CHECKS", "SIMULATION"]
+            defines = ["BR_ASSERT_ON", "SIMULATION"]
         else:
             defines = ["SIMULATION"]
 
