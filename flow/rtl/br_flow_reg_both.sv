@@ -30,6 +30,8 @@
 // The backpressure latency (minimum delay from pop_ready to push_ready) is 1 cycle.
 // The steady-state throughput is 1 transaction per cycle.
 
+`include "br_unused.svh"
+
 module br_flow_reg_both #(
     // Must be at least 1
     parameter int Width = 1,
@@ -76,28 +78,37 @@ module br_flow_reg_both #(
   // instantiated upstream of the forward register to achieve the design goal of having
   // all output signals driven directly from flops. This provides for a clean timing
   // interface and allows for easy integration with other ready-valid components.
-
   logic             internal_valid;
   logic             internal_ready;
   logic [Width-1:0] internal_data;
 
-  br_flow_reg_rev #(
-      .Width(Width),
-      .EnableCoverPushBackpressure(EnableCoverPushBackpressure),
-      .EnableAssertPushValidStability(EnableAssertPushValidStability),
-      .EnableAssertPushDataStability(EnableAssertPushDataStability),
-      .EnableAssertPushDataKnown(EnableAssertPushDataKnown),
-      .EnableAssertFinalNotValid(EnableAssertFinalNotValid)
-  ) br_flow_reg_rev (
-      .clk,
-      .rst,
-      .push_ready,
-      .push_valid,
-      .push_data,
-      .pop_ready(internal_ready),
-      .pop_valid(internal_valid),
-      .pop_data (internal_data)
-  );
+  if (EnableCoverIntermediateBackpressure) begin : gen_flow_reg_rev
+    br_flow_reg_rev #(
+        .Width(Width),
+        .EnableCoverPushBackpressure(EnableCoverPushBackpressure),
+        .EnableAssertPushValidStability(EnableAssertPushValidStability),
+        .EnableAssertPushDataStability(EnableAssertPushDataStability),
+        .EnableAssertPushDataKnown(EnableAssertPushDataKnown),
+        .EnableAssertFinalNotValid(EnableAssertFinalNotValid)
+    ) br_flow_reg_rev (
+        .clk,
+        .rst,
+        .push_ready,
+        .push_valid,
+        .push_data,
+        .pop_ready(internal_ready),
+        .pop_valid(internal_valid),
+        .pop_data (internal_data)
+    );
+  end else begin : gen_no_flow_reg_rev
+    // If the flow_reg_fwd stage never backpressures, we don't actually need a
+    // flow_reg_rev stage. Data will always flow through to the fwd stage and
+    // the rev buffer would never be written.
+    assign push_ready = 1'b1;
+    assign internal_valid = push_valid;
+    assign internal_data = push_data;
+    `BR_UNUSED(internal_ready)
+  end
 
   br_flow_reg_fwd #(
       .Width(Width),
