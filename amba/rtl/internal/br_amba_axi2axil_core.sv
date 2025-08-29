@@ -361,9 +361,11 @@ module br_amba_axi2axil_core #(
   assign {axi_resp_id, axi_resp_data_last} = resp_fifo_pop_data;
 
   // For write responses, we need to aggregate the responses from each beat. We need to
-  // reset it after each response.
+  // reset it after each response. According to the AXI spec (Section B1.3), if an AXI burst is
+  // converted to multiple AXI4-Lite transactions, the aggregated response should be the first error
+  // (non-OKAY) response.
   assign resp_next = (axi_resp_handshake) ? br_amba::AxiRespOkay :  // ri lint_check_waive ENUM_RHS
-      (axil_resp_resp != br_amba::AxiRespOkay) ?  // ri lint_check_waive ENUM_COMPARE
+      (resp == br_amba::AxiRespOkay && axil_resp_resp != br_amba::AxiRespOkay) ?  // ri lint_check_waive ENUM_COMPARE
       axil_resp_resp : resp;
 
   logic axi_resp_valid_unqual;
