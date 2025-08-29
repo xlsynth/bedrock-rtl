@@ -41,6 +41,9 @@ module br_flow_mux_select #(
     // If 1, assert that push_data is stable when backpressured.
     // If 0, cover that push_data can be unstable.
     parameter bit EnableAssertPushDataStability = EnableAssertPushValidStability,
+    // If 1, assert that select will not change when the selected push flow is backpressured.
+    // Otherwise, cover that select can be unstable.
+    parameter bit EnableAssertSelectStability = 0,
     // If 1, assert that push_data is always known (not X) when push_valid is asserted.
     parameter bit EnableAssertPushDataKnown = 1,
     // If 1, then assert there are no valid bits asserted at the end of the test.
@@ -81,6 +84,7 @@ module br_flow_mux_select #(
       .EnableCoverPushBackpressure(EnableCoverPushBackpressure),
       .EnableAssertPushValidStability(EnableAssertPushValidStability),
       .EnableAssertPushDataStability(EnableAssertPushDataStability),
+      .EnableAssertSelectStability(EnableAssertSelectStability),
       .EnableAssertPushDataKnown(EnableAssertPushDataKnown),
       .EnableAssertFinalNotValid(EnableAssertFinalNotValid)
   ) br_flow_mux_select_unstable (
@@ -95,13 +99,17 @@ module br_flow_mux_select #(
       .pop_data_unstable (internal_data_unstable)
   );
 
+  // internal_valid could be unstable if push_valid or select is unstable.
+  localparam bit EnableAssertInternalValidStability =
+      EnableAssertPushValidStability && EnableAssertSelectStability;
+  localparam bit EnableAssertInternalDataStability =
+      EnableAssertInternalValidStability && EnableAssertPushDataStability;
+
   br_flow_reg_fwd #(
       .Width(Width),
       .EnableCoverPushBackpressure(EnableCoverPushBackpressure),
-      // We know that valid and data can be unstable internally.
-      // This register hides that instability from the pop interface.
-      .EnableAssertPushValidStability(0),
-      .EnableAssertPushDataStability(0),
+      .EnableAssertPushValidStability(EnableAssertInternalValidStability),
+      .EnableAssertPushDataStability(EnableAssertInternalDataStability),
       .EnableAssertPushDataKnown(EnableAssertPushDataKnown),
       .EnableAssertFinalNotValid(EnableAssertFinalNotValid)
   ) br_flow_reg_fwd (
