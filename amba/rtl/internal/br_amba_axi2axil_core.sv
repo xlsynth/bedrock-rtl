@@ -363,8 +363,9 @@ module br_amba_axi2axil_core #(
   // For write responses, we need to aggregate the responses from each beat. We need to
   // reset it after each response.
   assign resp_next = (axi_resp_handshake) ? br_amba::AxiRespOkay :  // ri lint_check_waive ENUM_RHS
-      (axil_resp_resp != br_amba::AxiRespOkay) ?  // ri lint_check_waive ENUM_COMPARE
-      axil_resp_resp : resp;
+      br_amba::get_worst_error_response(
+          axil_resp_resp, resp
+      );
 
   logic axi_resp_valid_unqual;
   logic axi_resp_ready_unqual;

@@ -27,6 +27,11 @@ package br_amba;
     AxiRespDecerr = 2'b11   // Decode error
   } axi_resp_t;
 
+  // According to AXI spec, we need to pick the worst error response (i.e., DECERR > SLVERR > OKAY).
+  function automatic logic [1:0] get_worst_error_response(logic [1:0] resp1, logic [1:0] resp2);
+    return (resp1 > resp2) ? resp1 : resp2;  // ri lint_check_waive ENUM_RHS
+  endfunction
+
   // AXI Burst types
   typedef enum logic [1:0] {
     AxiBurstFixed    = 2'b00,  // Fixed burst
