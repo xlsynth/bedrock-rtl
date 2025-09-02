@@ -24,6 +24,7 @@ module br_flow_mux_select_fpv_monitor #(
     parameter bit EnableCoverPushBackpressure = 1,
     parameter bit EnableAssertPushValidStability = EnableCoverPushBackpressure,
     parameter bit EnableAssertPushDataStability = EnableAssertPushValidStability,
+    parameter bit EnableAssertSelectStability = EnableAssertPushValidStability,
     parameter bit EnableAssertFinalNotValid = 1
 ) (
     input logic                                   clk,
@@ -62,6 +63,10 @@ module br_flow_mux_select_fpv_monitor #(
   // ----------FV assumptions----------
   `BR_ASSUME(select_range_a, select < NumFlows)
 
+  if (EnableAssertSelectStability) begin : gen_stable_select
+    `BR_ASSUME(select_stable_a, push_valid[select] && !push_ready[select] |=> $stable(select))
+  end
+
   // ----------select check----------
   logic [Width-1:0] fv_data;
   `BR_REGLN(fv_data, push_data[select], push_valid[select] & push_ready[select])
@@ -78,5 +83,6 @@ bind br_flow_mux_select br_flow_mux_select_fpv_monitor #(
     .EnableCoverPushBackpressure(EnableCoverPushBackpressure),
     .EnableAssertPushValidStability(EnableAssertPushValidStability),
     .EnableAssertPushDataStability(EnableAssertPushDataStability),
+    .EnableAssertSelectStability(EnableAssertSelectStability),
     .EnableAssertFinalNotValid(EnableAssertFinalNotValid)
 ) monitor (.*);

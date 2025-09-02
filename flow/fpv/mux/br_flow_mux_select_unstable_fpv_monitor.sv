@@ -23,6 +23,7 @@ module br_flow_mux_select_unstable_fpv_monitor #(
     parameter bit EnableCoverPushBackpressure = 1,
     parameter bit EnableAssertPushValidStability = EnableCoverPushBackpressure,
     parameter bit EnableAssertPushDataStability = EnableAssertPushValidStability,
+    parameter bit EnableAssertSelectStability = 0,
     parameter bit EnableAssertFinalNotValid = 1
 ) (
     input logic                                   clk,
@@ -37,15 +38,19 @@ module br_flow_mux_select_unstable_fpv_monitor #(
 );
 
   // ----------Instantiate basic checks----------
+  localparam bit EnableAssertPopValidStability =
+      EnableAssertPushValidStability && EnableAssertSelectStability;
+  localparam bit EnableAssertPopDataStability =
+      EnableAssertPopValidStability && EnableAssertPushDataStability;
+
   br_flow_mux_basic_fpv_monitor #(
       .NumFlows(NumFlows),
       .Width(Width),
       .EnableCoverPushBackpressure(EnableCoverPushBackpressure),
       .EnableAssertPushValidStability(EnableAssertPushValidStability),
       .EnableAssertPushDataStability(EnableAssertPushDataStability),
-      // Select can switch flows without pop_ready
-      .EnableAssertPopValidStability(0),
-      .EnableAssertPopDataStability(0),
+      .EnableAssertPopValidStability(EnableAssertPopValidStability),
+      .EnableAssertPopDataStability(EnableAssertPopDataStability),
       // Select can pick a flow that is not valid
       .EnableAssertMustGrant(0)
   ) fv_checker (
@@ -62,6 +67,10 @@ module br_flow_mux_select_unstable_fpv_monitor #(
   // ----------FV assumptions----------
   `BR_ASSUME(select_range_a, select < NumFlows)
 
+  if (EnableAssertSelectStability) begin : gen_stable_select
+    `BR_ASSUME(select_stable_a, push_valid[select] && !push_ready[select] |=> $stable(select))
+  end
+
   // ----------select check----------
   `BR_ASSERT(select_data_check_a, pop_valid_unstable |-> pop_data_unstable == push_data[select])
   `BR_ASSERT(forward_progress_a, push_valid[select] |-> pop_valid_unstable)
@@ -74,5 +83,6 @@ bind br_flow_mux_select_unstable br_flow_mux_select_unstable_fpv_monitor #(
     .EnableCoverPushBackpressure(EnableCoverPushBackpressure),
     .EnableAssertPushValidStability(EnableAssertPushValidStability),
     .EnableAssertPushDataStability(EnableAssertPushDataStability),
+    .EnableAssertSelectStability(EnableAssertSelectStability),
     .EnableAssertFinalNotValid(EnableAssertFinalNotValid)
 ) monitor (.*);
