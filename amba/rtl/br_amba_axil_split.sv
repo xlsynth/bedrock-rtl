@@ -249,43 +249,90 @@ module br_amba_axil_split #(
   // write data until both are valid so we know which branch to route the data to. However, since
   // awready and wready are not guaranteed to be driven by registers, add a flow register to
   // prevent combinational loops.
-  br_flow_reg_both #(
-      .Width(AddrWidth + br_amba::AxiProtWidth + AWUserWidth + 1),
-      // There can't be backpressure if there are fewer outstanding writes
-      // than buffer entries.
-      .EnableCoverPushBackpressure(MaxOutstandingWrites > 2),
-      .EnableCoverIntermediateBackpressure(MaxOutstandingWrites > 1)
-  ) br_flow_reg_both_write_addr (
-      .clk,
-      .rst,
+  if (MaxOutstandingWrites > 1) begin : gen_flow_reg_both_write
+    br_flow_reg_both #(
+        .Width(AddrWidth + br_amba::AxiProtWidth + AWUserWidth + 1),
+        // There can't be backpressure if there are fewer outstanding writes
+        // than buffer entries.
+        .EnableCoverPushBackpressure(MaxOutstandingWrites > 2)
+    ) br_flow_reg_both_write_addr (
+        .clk,
+        .rst,
 
-      .push_ready(write_addr_flow_reg_push_ready),
-      .push_valid(write_addr_flow_reg_push_valid),
-      .push_data ({root_awaddr, root_awprot, root_awuser, awaddr_is_branch}),
+        .push_ready(write_addr_flow_reg_push_ready),
+        .push_valid(write_addr_flow_reg_push_valid),
+        .push_data ({root_awaddr, root_awprot, root_awuser, awaddr_is_branch}),
 
-      .pop_ready(write_addr_flow_reg_pop_ready),
-      .pop_valid(write_addr_flow_reg_pop_valid),
-      .pop_data ({root_awaddr_reg, root_awprot_reg, root_awuser_reg, write_addr_flow_reg_is_branch})
-  );
+        .pop_ready(write_addr_flow_reg_pop_ready),
+        .pop_valid(write_addr_flow_reg_pop_valid),
+        .pop_data({
+          root_awaddr_reg, root_awprot_reg, root_awuser_reg, write_addr_flow_reg_is_branch
+        })
+    );
 
-  br_flow_reg_both #(
-      .Width(DataWidth + StrobeWidth + WUserWidth + 1),
-      // There can't be backpressure if there are fewer outstanding writes
-      // than buffer entries.
-      .EnableCoverPushBackpressure(MaxOutstandingWrites > 2),
-      .EnableCoverIntermediateBackpressure(MaxOutstandingWrites > 1)
-  ) br_flow_reg_both_write_data (
-      .clk,
-      .rst,
+    br_flow_reg_both #(
+        .Width(DataWidth + StrobeWidth + WUserWidth + 1),
+        // There can't be backpressure if there are fewer outstanding writes
+        // than buffer entries.
+        .EnableCoverPushBackpressure(MaxOutstandingWrites > 2)
+    ) br_flow_reg_both_write_data (
+        .clk,
+        .rst,
 
-      .push_ready(write_data_flow_reg_push_ready),
-      .push_valid(write_data_flow_reg_push_valid),
-      .push_data ({root_wdata, root_wstrb, root_wuser, awaddr_is_branch}),
+        .push_ready(write_data_flow_reg_push_ready),
+        .push_valid(write_data_flow_reg_push_valid),
+        .push_data ({root_wdata, root_wstrb, root_wuser, awaddr_is_branch}),
 
-      .pop_ready(write_data_flow_reg_pop_ready),
-      .pop_valid(write_data_flow_reg_pop_valid),
-      .pop_data ({root_wdata_reg, root_wstrb_reg, root_wuser_reg, write_data_flow_reg_is_branch})
-  );
+        .pop_ready(write_data_flow_reg_pop_ready),
+        .pop_valid(write_data_flow_reg_pop_valid),
+        .pop_data ({root_wdata_reg, root_wstrb_reg, root_wuser_reg, write_data_flow_reg_is_branch})
+    );
+  end else begin : gen_flow_reg_fwd_write
+    // If there is only one outstanding write, flow_reg_both would be unnecessary, as only
+    // one of the register stages could be filled.
+    // To break the ready timing path, just tie write_*_flow_reg_push_ready to 1.
+
+    assign write_addr_flow_reg_push_ready = 1'b1;
+    assign write_data_flow_reg_push_ready = 1'b1;
+
+    br_flow_reg_fwd #(
+        .Width(AddrWidth + br_amba::AxiProtWidth + AWUserWidth + 1),
+        // There can't be backpressure if there are fewer outstanding writes
+        // than buffer entries.
+        .EnableCoverPushBackpressure(0)
+    ) br_flow_reg_fwd_write_addr (
+        .clk,
+        .rst,
+
+        .push_ready(),  // unused; internal assertion checks that there is no backpressure
+        .push_valid(write_addr_flow_reg_push_valid),
+        .push_data({root_awaddr, root_awprot, root_awuser, awaddr_is_branch}),
+
+        .pop_ready(write_addr_flow_reg_pop_ready),
+        .pop_valid(write_addr_flow_reg_pop_valid),
+        .pop_data({
+          root_awaddr_reg, root_awprot_reg, root_awuser_reg, write_addr_flow_reg_is_branch
+        })
+    );
+
+    br_flow_reg_fwd #(
+        .Width(DataWidth + StrobeWidth + WUserWidth + 1),
+        // There can't be backpressure if there are fewer outstanding writes
+        // than buffer entries.
+        .EnableCoverPushBackpressure(0)
+    ) br_flow_reg_fwd_write_data (
+        .clk,
+        .rst,
+
+        .push_ready(),  // unused; internal assertion checks that there is no backpressure
+        .push_valid(write_data_flow_reg_push_valid),
+        .push_data({root_wdata, root_wstrb, root_wuser, awaddr_is_branch}),
+
+        .pop_ready(write_data_flow_reg_pop_ready),
+        .pop_valid(write_data_flow_reg_pop_valid),
+        .pop_data ({root_wdata_reg, root_wstrb_reg, root_wuser_reg, write_data_flow_reg_is_branch})
+    );
+  end
 
   // Push to the flow register when both the write address and write data are valid and the flow
   // register is ready to accept the data
