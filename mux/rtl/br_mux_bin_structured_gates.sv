@@ -62,12 +62,9 @@ module br_mux_bin_structured_gates #(
   // Stage 0 is the input and stage NumLevels is the output.
   logic [NumLevels:0][PaddedNumSymbolsIn-1:0][SymbolWidth-1:0] in_stages;
 
-  for (genvar s = 0; s < PaddedNumSymbolsIn; s++) begin : gen_in_stages_0
-    if (s < NumSymbolsIn) begin : gen_connected
-      assign in_stages[0][s] = in[s];
-    end else begin : gen_padded
-      assign in_stages[0][s] = '0;
-    end
+  always_comb begin
+    in_stages[0] = '0;  // ri lint_check_waive OVERWRITTEN
+    in_stages[0][NumSymbolsIn-1:0] = in;
   end
 
   for (genvar i = 0; i < NumLevels; i++) begin : gen_level
@@ -81,22 +78,14 @@ module br_mux_bin_structured_gates #(
     localparam int NumMuxes = br_math::ceil_div(PaddedNumSymbolsIn, NumSymbolsInPerMux);
 
     for (genvar j = 0; j < NumMuxes; j++) begin : gen_mux
-      // Each output of the stage may depend on up to two inputs from the
-      // previous stage. If the number of inputs is odd, the last output
-      // will just pass through the corresponding input. Otherwise,
-      // the two inputs from the last stage are muxed based on one bit of
-      // the select signal.
-      if (((j * 2) + 1) < LastStageNumSymbols) begin : gen_mux2
-        for (genvar k = 0; k < SymbolWidth; k++) begin : gen_mux2_gate
-          br_gate_mux2 br_gate_mux2_inst (
-              .sel(select[i]),
-              .in0(in_stages[i][(j*2)+0][k]),
-              .in1(in_stages[i][(j*2)+1][k]),
-              .out(in_stages[i+1][j][k])
-          );
-        end
-      end else begin : gen_pass_through
-        assign in_stages[i+1][j] = in_stages[i][j*2];
+      // Each output of the stage depends on two inputs from the previous stage.
+      for (genvar k = 0; k < SymbolWidth; k++) begin : gen_mux2_gate
+        br_gate_mux2 br_gate_mux2_inst (
+            .sel(select[i]),
+            .in0(in_stages[i][(j*2)+0][k]),
+            .in1(in_stages[i][(j*2)+1][k]),
+            .out(in_stages[i+1][j][k])
+        );
       end
     end
 
