@@ -27,11 +27,11 @@
 // For synthesis, make sure you include br_mux_bin_structured_gates.sv
 // in the filelist instead of this file!!
 
+`include "br_asserts.svh"
+
 `ifdef SYNTHESIS
 `BR_ASSERT_STATIC(do_not_synthesize_br_mux_bin_structured_gates_mock_a, 0)
 `endif
-
-`include "br_asserts_internal.svh"
 
 // verilog_lint: waive-start module-filename
 // ri lint_check_waive FILE_NAME
