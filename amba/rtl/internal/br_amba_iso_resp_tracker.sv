@@ -666,18 +666,26 @@ module br_amba_iso_resp_tracker #(
   // is ready.
   assign downstream_iso_xready = cur_resp_valid && upstream_xready;
 
-  // Ignore downstream responses if isolating, use fixed IsolateResp and IsolateData.
-  assign downstream_iso_xresp = isolate_req ? IsolateResp : downstream_xresp;
-  assign downstream_iso_xdata = isolate_req ? IsolateData : downstream_xdata;
-
-  // When isolating, use the arbiter to pick the next transaction to generate (error) responses
-  // for from the resp_tracker FIFO, since there's no downstream responses arriving anymore that
-  // would indicate which one to pick.
-  assign downstream_iso_xid = isolate_req ? iso_arb_id : downstream_xid;
-  assign downstream_iso_xvalid = isolate_req ? iso_any_gnt : downstream_xvalid;
-
-  // When isolating, just accept and discard any arriving downstream responses.
-  assign downstream_xready = isolate_req ? 1'b1 : downstream_iso_xready;
+  always_comb begin
+    if (isolate_req) begin
+      // Ignore downstream responses if isolating, use fixed IsolateResp and IsolateData.
+      downstream_iso_xresp = IsolateResp;
+      downstream_iso_xdata = IsolateData;
+      // When isolating, use the arbiter to pick the next transaction to generate (error) responses
+      // for from the resp_tracker FIFO, since there's no downstream responses arriving anymore that
+      // would indicate which one to pick.
+      downstream_iso_xid = iso_arb_id;
+      downstream_iso_xvalid = iso_any_gnt;
+      // When isolating, just accept and discard any arriving downstream responses.
+      downstream_xready = 1'b1;
+    end else begin
+      downstream_iso_xresp = downstream_xresp;
+      downstream_iso_xdata = downstream_xdata;
+      downstream_iso_xid = downstream_xid;
+      downstream_iso_xvalid = downstream_xvalid;
+      downstream_xready = downstream_iso_xready;
+    end
+  end
 
   // When isolating, there's no downstream responses arriving. So we just arb over
   // the resp_tracker FIFO to get the next transaction to generate (error) responses
