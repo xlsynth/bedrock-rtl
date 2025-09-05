@@ -78,7 +78,7 @@ module br_fifo_shared_read_xbar #(
           .NumFlows(NumReadPorts),
           .Width(AddrWidth),
           .EnableAssertPushValidStability(EnableAssertPushValidStability),
-          .EnableAssertSelectStability(1)
+          .EnableAssertSelectStability(EnableAssertPushValidStability)
       ) br_flow_demux_select_unstable_inst (
           .clk,
           .rst,
