@@ -15,6 +15,9 @@ module br_fifo_shared_dynamic_push_ctrl_credit #(
     // If 1, register the push credit return path, which adds an extra cycle
     // of round trip latency.
     parameter bit RegisterPushOutputs = 0,
+    // If 1, cover that push_credit_stall can be asserted
+    // Otherwise, assert that it is never asserted.
+    parameter bit EnableCoverPushCreditStall = 1,
     // If 1, assert that push_data is always known (not X) when push_valid is asserted.
     parameter bit EnableAssertPushDataKnown = 1,
     // If 1, then assert there are no valid bits asserted and that the FIFO is
@@ -111,6 +114,7 @@ module br_fifo_shared_dynamic_push_ctrl_credit #(
       .PushCreditMaxChange(NumWritePorts),
       .PopCreditMaxChange(PopCreditMaxChange),
       .RegisterPushOutputs(RegisterPushOutputs),
+      .EnableCoverPushCreditStall(EnableCoverPushCreditStall),
       .EnableAssertFinalNotValid(EnableAssertFinalNotValid)
   ) br_credit_receiver (
       .clk,
