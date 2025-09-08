@@ -97,6 +97,9 @@ module br_flow_serializer #(
     parameter bit EnableAssertPushDataKnown = 1,
     // If 1, then assert there are no valid bits asserted at the end of the test.
     parameter bit EnableAssertFinalNotValid = 1,
+    // If 1, cover scenarios where push_last is asserted, if 0, assert that push_last
+    // is never asserted.
+    parameter bit EnableCoverPushLast = 1,
     localparam int SerializationRatio = PushWidth / PopWidth,
     // Vector widths cannot be 0, so we need to special-case when SerializationRatio == 1
     // even though the push_last_dont_care_count port won't be used in that case.
@@ -145,8 +148,12 @@ module br_flow_serializer #(
   `BR_ASSERT_STATIC(metadata_width_gte_1_a, MetadataWidth >= 1)
   `BR_ASSERT_STATIC(serialization_ratio_gte_1_a, SerializationRatio >= 1)
 
-  `BR_ASSERT_INTG(push_last_dont_care_count_in_range_a,
-                  push_valid && push_last |-> push_last_dont_care_count < SerializationRatio)
+  if (EnableCoverPushLast) begin : gen_push_last_checks
+    `BR_ASSERT_INTG(push_last_dont_care_count_in_range_a,
+                    push_valid && push_last |-> push_last_dont_care_count < SerializationRatio)
+  end else begin : gen_push_last_cover
+    `BR_ASSERT_INTG(push_last_always_zero_a, push_valid |-> !push_last)
+  end
   `BR_ASSERT_INTG(push_last_dont_care_count_zero_a,
                   push_valid && !push_last |-> push_last_dont_care_count == 0)
 
@@ -292,7 +299,7 @@ module br_flow_serializer #(
 
   `BR_ASSERT_IMPL(cut_through_latency_0_a, push_valid |-> pop_valid)
   `BR_ASSERT_IMPL(pop_last_a, pop_valid && pop_last |-> push_last)
-  if (SerializationRatio > 1) begin : gen_nonzero_dont_care_cover
+  if (SerializationRatio > 1 && EnableCoverPushLast) begin : gen_nonzero_dont_care_cover
     `BR_COVER_IMPL(dont_cares_c, push_valid && push_last && push_last_dont_care_count != 0)
   end
 
