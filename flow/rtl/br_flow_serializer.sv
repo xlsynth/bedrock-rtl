@@ -148,10 +148,10 @@ module br_flow_serializer #(
   `BR_ASSERT_STATIC(metadata_width_gte_1_a, MetadataWidth >= 1)
   `BR_ASSERT_STATIC(serialization_ratio_gte_1_a, SerializationRatio >= 1)
 
-  if (EnableCoverPushLast) begin : gen_push_last_checks
+  if (EnableCoverPushLast) begin : gen_push_last_covered
     `BR_ASSERT_INTG(push_last_dont_care_count_in_range_a,
                     push_valid && push_last |-> push_last_dont_care_count < SerializationRatio)
-  end else begin : gen_push_last_cover
+  end else begin : gen_push_last_not_covered
     `BR_ASSERT_INTG(push_last_always_zero_a, push_valid |-> !push_last)
   end
   `BR_ASSERT_INTG(push_last_dont_care_count_zero_a,
