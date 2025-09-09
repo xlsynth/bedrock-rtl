@@ -64,9 +64,9 @@ module br_tracker_freelist #(
     // It is expected that alloc_valid could be 1 at end of the test because it's
     // a natural idle condition for this design.
     parameter bit EnableAssertFinalNotDeallocValid = 1,
-    // If 1, then assert that the allocated entries are the same as the preallocated entries at the
-    // end of the test. Normally, this means that there are no allocated entries at the end of the
-    // test.
+    // If 1, then assert that the number of allocated entries is the same as the number of
+    // preallocated entries at the end of the test. Normally, this means that there are no allocated
+    // entries at the end of the test.
     parameter bit EnableAssertFinalAllocatedInitial = 1,
 
     localparam int EntryIdWidth = $clog2(NumEntries),
@@ -108,7 +108,8 @@ module br_tracker_freelist #(
   `BR_REGI(allocated_entries, allocated_entries_next, PreallocatedEntries)
 
   if (EnableAssertFinalAllocatedInitial) begin : gen_assert_final
-    `BR_ASSERT_FINAL(final_allocated_initial_a, allocated_entries == PreallocatedEntries)
+    `BR_ASSERT_FINAL(final_allocated_initial_a, $countones(allocated_entries
+                     ) == NumPreallocatedEntries)
   end
 
   for (genvar i = 0; i < NumAllocPerCycle; i++) begin : gen_alloc_valid
