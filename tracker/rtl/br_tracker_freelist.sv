@@ -67,6 +67,7 @@ module br_tracker_freelist #(
     // If 1, then assert that the number of allocated entries is the same as the number of
     // preallocated entries at the end of the test. Normally, this means that there are no allocated
     // entries at the end of the test.
+    // ri lint_check_waive PARAM_NOT_USED
     parameter bit EnableAssertFinalAllocatedInitial = 1,
 
     localparam int EntryIdWidth = $clog2(NumEntries),
@@ -96,6 +97,10 @@ module br_tracker_freelist #(
   `BR_ASSERT_STATIC(legal_num_dealloc_ports_a, NumDeallocPorts >= 1)
   `BR_ASSERT_STATIC(legal_dealloc_count_delay_a,
                     DeallocCountDelay >= 0 && DeallocCountDelay <= CutThroughLatency)
+
+  // Okay to use a non-synthesizable function here since it's for parameter only.
+  // ri lint_check_waive SYS_TF
+  localparam int NumPreallocatedEntries = $countones(PreallocatedEntries);
 
 `ifdef BR_ASSERT_ON
 `ifndef BR_DISABLE_INTG_CHECKS
@@ -177,9 +182,6 @@ module br_tracker_freelist #(
     assign priority_encoder_in = unstaged_free_entries;
   end
 
-  // Okay to use a non-synthesizable function here since it's for parameter only.
-  // ri lint_check_waive SYS_TF
-  localparam int NumPreallocatedEntries = $countones(PreallocatedEntries);
   // This is the maximum number of entries that can be unstaged on any given cycle.
   // It is the maximum of the following three numbers:
   // 1. The number of entries set after reset (NumEntries - NumPreallocatedEntries)
