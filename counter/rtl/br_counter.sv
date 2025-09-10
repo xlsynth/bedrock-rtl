@@ -94,7 +94,6 @@ module br_counter #(
     parameter bit EnableCoverIncrementAndDecrement = 1,
     // If 1, then assert that the counter returns to the initial value at the end of the test.
     // The initial_value used for this assertion is latched on reset or reinit.
-    // ri lint_check_waive PARAM_NOT_USED
     parameter bit EnableAssertFinalInitialValue = 1,
     localparam int MaxValueP1Width = MaxValueWidth + 1,
     localparam int MaxChangeP1Width = MaxChangeWidth + 1,
@@ -153,14 +152,19 @@ module br_counter #(
   end else begin : gen_no_wrap_or_saturate_assert
     `BR_ASSERT_INTG(no_wrap_or_saturate_a, value_extended_next <= MaxValue)
   end
-
-  if (EnableAssertFinalInitialValue) begin : gen_assert_final_initial_value
-    logic [ValueWidth-1:0] initial_value_latched;
-    `BR_REGLI(initial_value_latched, initial_value, reinit, initial_value)
-    `BR_ASSERT_FINAL(final_initial_value_a, value == initial_value_latched)
-  end
 `endif  // BR_DISABLE_INTG_CHECKS
 `endif  // BR_ASSERT_ON
+
+  if (EnableAssertFinalInitialValue) begin : gen_assert_final_initial_value
+`ifdef BR_ASSERT_ON
+`ifndef BR_DISABLE_FINAL_CHECKS
+    logic [ValueWidth-1:0] initial_value_latched;
+    // ri lint_check_waive IFDEF_CODE
+    `BR_REGLI(initial_value_latched, initial_value, reinit, initial_value)
+    `BR_ASSERT_FINAL(final_initial_value_a, value == initial_value_latched)
+`endif  // BR_DISABLE_FINAL_CHECKS
+`endif  // BR_ASSERT_ON
+  end
 
   if (EnableCoverIncrementAndDecrement) begin : gen_cover_increment_and_decrement
     `BR_COVER_INTG(increment_and_decrement_c, incr_valid && incr > '0 && decr_valid && decr > '0)
