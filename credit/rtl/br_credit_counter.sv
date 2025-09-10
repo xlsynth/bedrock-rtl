@@ -77,6 +77,14 @@ module br_credit_counter #(
     parameter bit EnableAssertFinalNotValid = 1,
     // The maximum credit count value that will be checked by covers.
     parameter logic [MaxValueWidth-1:0] CoverMaxValue = MaxValue,
+    // If 1, then assert that the credit counter returns to the maximum number of credits received
+    // at the end of the test.
+    // ri lint_check_waive PARAM_NOT_USED
+    parameter bit EnableAssertFinalMaxValue = 0,
+    // If 1, then assert that the credit counter returns to the minimum number of credits held
+    // at the end of the test.
+    // ri lint_check_waive PARAM_NOT_USED
+    parameter bit EnableAssertFinalMinValue = 0,
     localparam int MaxValueP1Width = MaxValueWidth + 1,
     localparam int MaxChangeP1Width = MaxChangeWidth + 1,
     localparam int ValueWidth = $clog2(MaxValueP1Width'(MaxValue) + 1),
@@ -142,6 +150,19 @@ module br_credit_counter #(
     if (incr_valid) value_extended_next = value_extended_next + CalcWidth'(incr);
     // ri lint_check_waive SEQ_COND_ASSIGNS ONE_IF_CASE
     if (decr_valid && decr_ready) value_extended_next = value_extended_next - CalcWidth'(decr);
+  end
+
+  if (EnableAssertFinalMaxValue) begin : gen_assert_final_max_value
+    logic [ValueWidth-1:0] max_credit_value, max_credit_value_next;
+    `BR_REG(max_credit_value, max_credit_value_next)
+    assign max_credit_value_next = br_math::max2(max_credit_value, value);
+    `BR_ASSERT_FINAL(final_max_value_a, value == max_credit_value)
+  end
+  if (EnableAssertFinalMinValue) begin : gen_assert_final_min_value
+    logic [ValueWidth-1:0] min_credit_value, min_credit_value_next;
+    `BR_REG(min_credit_value, min_credit_value_next)
+    assign min_credit_value_next = br_math::min2(min_credit_value, value);
+    `BR_ASSERT_FINAL(final_min_value_a, value == min_credit_value)
   end
 
 `endif  // BR_DISABLE_INTG_CHECKS

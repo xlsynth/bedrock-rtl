@@ -88,6 +88,12 @@ module br_credit_receiver #(
     parameter int CoverMaxCredit = MaxCredit,
     // If 1, then assert there are no valid bits asserted at the end of the test.
     parameter bit EnableAssertFinalNotValid = 1,
+    // If 1, then assert that the credit counter returns to the maximum number of credits received
+    // at the end of the test.
+    parameter bit EnableAssertFinalMaxValue = 0,
+    // If 1, then assert that the credit counter returns to the minimum number of credits held
+    // at the end of the test.
+    parameter bit EnableAssertFinalMinValue = 1,
     localparam int CounterWidth = $clog2(MaxCredit + 1),
     localparam int PushCreditWidth = $clog2(PushCreditMaxChange + 1),
     localparam int PopCreditChangeWidth = $clog2(PopCreditMaxChange + 1)
@@ -209,6 +215,8 @@ module br_credit_receiver #(
       .EnableCoverDecrementBackpressure(PushCreditMaxChange == 1),
       .EnableCoverWithhold(EnableCoverCreditWithhold),
       .EnableAssertAlwaysDecr(!EnableCoverPushCreditStall),
+      .EnableAssertFinalMaxValue(EnableAssertFinalMaxValue),
+      .EnableAssertFinalMinValue(EnableAssertFinalMinValue),
       .CoverMaxValue(CoverMaxCredit),
       // Since credit_decr_valid is tied to credit_stall, we disable the final not-valid check
       .EnableAssertFinalNotValid(0)
