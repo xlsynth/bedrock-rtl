@@ -120,6 +120,8 @@ module br_credit_counter #(
   `BR_ASSERT_STATIC(legal_max_increment_a, MaxIncrement >= 1 && MaxIncrement <= MaxChange)
   `BR_ASSERT_STATIC(legal_max_decrement_a, MaxDecrement >= 1 && MaxDecrement <= MaxChange)
   `BR_ASSERT_STATIC(cover_max_value_lte_max_value_a, CoverMaxValue <= MaxValue)
+  `BR_ASSERT_STATIC(assert_final_max_value_and_min_value_mutually_exclusive_a,
+                    !(EnableAssertFinalMaxValue && EnableAssertFinalMinValue))
 
   if (EnableAssertFinalNotValid) begin : gen_assert_final
     `BR_ASSERT_FINAL(final_not_incr_valid_a, !incr_valid)
