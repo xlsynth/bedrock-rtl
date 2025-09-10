@@ -23,7 +23,6 @@ verilog_library(
     deps = [
         "//macros:br_asserts_internal",
         "//macros:br_registers",
-        "//pkg:br_math_pkg",
     ],
 )
 

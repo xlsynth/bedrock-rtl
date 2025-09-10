@@ -155,13 +155,13 @@ module br_credit_counter #(
   if (EnableAssertFinalMaxValue) begin : gen_assert_final_max_value
     logic [ValueWidth-1:0] max_credit_value, max_credit_value_next;
     `BR_REG(max_credit_value, max_credit_value_next)
-    assign max_credit_value_next = br_math::max2(max_credit_value, value);
+    assign max_credit_value_next = value > max_credit_value ? value : max_credit_value;
     `BR_ASSERT_FINAL(final_max_value_a, value == max_credit_value)
   end
   if (EnableAssertFinalMinValue) begin : gen_assert_final_min_value
     logic [ValueWidth-1:0] min_credit_value, min_credit_value_next;
     `BR_REG(min_credit_value, min_credit_value_next)
-    assign min_credit_value_next = br_math::min2(min_credit_value, value);
+    assign min_credit_value_next = value < min_credit_value ? value : min_credit_value;
     `BR_ASSERT_FINAL(final_min_value_a, value == min_credit_value)
   end
 
