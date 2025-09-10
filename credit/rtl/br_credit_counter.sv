@@ -162,7 +162,7 @@ module br_credit_counter #(
   end
   if (EnableAssertFinalMinValue) begin : gen_assert_final_min_value
     logic [ValueWidth-1:0] min_credit_value, min_credit_value_next;
-    `BR_REG(min_credit_value, min_credit_value_next)
+    `BR_REGI(min_credit_value, min_credit_value_next, initial_value)
     assign min_credit_value_next = value < min_credit_value ? value : min_credit_value;
     `BR_ASSERT_FINAL(final_min_value_a, value == min_credit_value)
   end
