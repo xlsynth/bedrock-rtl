@@ -97,7 +97,7 @@ module br_tracker_sequence #(
   end
 
   br_counter_incr #(
-      .MaxValue(NumEntries - 1),  // ri lint_check_waive ARITH_EXTENSION
+      .MaxValue(NumEntries - 1),
       .MaxIncrement(MaxIncrementAllocCounter),
       .EnableSaturate(0),
       .EnableCoverReinit(0),
