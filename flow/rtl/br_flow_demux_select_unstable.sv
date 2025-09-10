@@ -114,6 +114,9 @@ module br_flow_demux_select_unstable #(
     end
   end
 
+  `BR_ASSERT_INTG(select_known_and_in_range_a,
+                  push_valid |-> (!$isunknown(select) && select < NumFlows))
+
   //------------------------------------------
   // Implementation
   //------------------------------------------
