@@ -77,13 +77,13 @@ module br_credit_counter #(
     parameter bit EnableAssertFinalNotValid = 1,
     // The maximum credit count value that will be checked by covers.
     parameter logic [MaxValueWidth-1:0] CoverMaxValue = MaxValue,
-    // If 1, then assert that the credit counter returns to the maximum number of credits received
-    // at the end of the test.
-    // ri lint_check_waive PARAM_NOT_USED
+    // If 1, then at the end of simulation, assert that the credit counter value equals
+    // the maximum number of credits that it stored at any point during the test.
+    // Mutually exclusive with EnableAssertFinalMinValue.
     parameter bit EnableAssertFinalMaxValue = 0,
-    // If 1, then assert that the credit counter returns to the minimum number of credits held
-    // at the end of the test.
-    // ri lint_check_waive PARAM_NOT_USED
+    // If 1, then at the end of simulation, assert that the credit counter value equals
+    // the minimum number of credits that it stored at any point during the test.
+    // Mutually exclusive with EnableAssertFinalMaxValue.
     parameter bit EnableAssertFinalMinValue = 0,
     localparam int MaxValueP1Width = MaxValueWidth + 1,
     localparam int MaxChangeP1Width = MaxChangeWidth + 1,
