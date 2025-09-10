@@ -44,6 +44,8 @@ module br_counter_tb;
       .MaxChange(MaxChange),
       .EnableSaturate(EnableSaturate),
       .EnableReinitAndChange(EnableReinitAndChange),
+      // This test does not return counter to the initial value.
+      .EnableAssertFinalInitialValue(0),
       .EnableWrap(!EnableSaturate)
   ) dut (
       .clk(clk),
