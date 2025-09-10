@@ -212,7 +212,6 @@ module br_credit_receiver #(
       .EnableCoverDecrementBackpressure(PushCreditMaxChange == 1),
       .EnableCoverWithhold(EnableCoverCreditWithhold),
       .EnableAssertAlwaysDecr(!EnableCoverPushCreditStall),
-      .EnableAssertFinalMaxValue(EnableAssertFinalMaxValue),
       .EnableAssertFinalMinValue(EnableAssertFinalMinValue),
       .CoverMaxValue(CoverMaxCredit),
       // Since credit_decr_valid is tied to credit_stall, we disable the final not-valid check

@@ -134,8 +134,7 @@ module br_credit_sender_vc #(
         .MaxValue(MaxCredit),
         .MaxChange(PopCreditMaxChange),
         .EnableAssertFinalNotValid(EnableAssertFinalNotValid),
-        .EnableAssertFinalMaxValue(EnableAssertFinalMaxValue),
-        .EnableAssertFinalMinValue(EnableAssertFinalMinValue)
+        .EnableAssertFinalMaxValue(EnableAssertFinalMaxValue)
     ) br_credit_counter (
         .clk,
         .rst(either_rst),
