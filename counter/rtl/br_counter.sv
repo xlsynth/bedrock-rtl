@@ -161,9 +161,9 @@ module br_counter #(
     logic [ValueWidth-1:0] initial_value_latched;
     // ri lint_check_waive IFDEF_CODE
     `BR_REGLI(initial_value_latched, initial_value, reinit, initial_value)
-    `BR_ASSERT_FINAL(final_initial_value_a, value == initial_value_latched)
 `endif  // BR_DISABLE_FINAL_CHECKS
 `endif  // BR_ASSERT_ON
+    `BR_ASSERT_FINAL(final_initial_value_a, value == initial_value_latched)
   end
 
   if (EnableCoverIncrementAndDecrement) begin : gen_cover_increment_and_decrement
