@@ -77,6 +77,9 @@ module br_credit_counter #(
     parameter bit EnableAssertFinalNotValid = 1,
     // The maximum credit count value that will be checked by covers.
     parameter logic [MaxValueWidth-1:0] CoverMaxValue = MaxValue,
+    // If 1, then assert that the credit counter returns to the initial value at the end of the
+    // test.
+    parameter bit EnableAssertFinalInitialValue = 1,
     localparam int MaxValueP1Width = MaxValueWidth + 1,
     localparam int MaxChangeP1Width = MaxChangeWidth + 1,
     localparam int ValueWidth = $clog2(MaxValueP1Width'(MaxValue) + 1),
@@ -144,6 +147,11 @@ module br_credit_counter #(
     if (decr_valid && decr_ready) value_extended_next = value_extended_next - CalcWidth'(decr);
   end
 
+  if (EnableAssertFinalInitialValue) begin : gen_assert_final_initial_value
+    logic [ValueWidth-1:0] initial_value_latched;
+    `BR_REGI(initial_value_latched, initial_value_latched, initial_value)
+    `BR_ASSERT_FINAL(final_initial_value_a, value == initial_value_latched)
+  end
 `endif  // BR_DISABLE_INTG_CHECKS
 `endif  // BR_ASSERT_ON
 

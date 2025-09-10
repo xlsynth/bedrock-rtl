@@ -92,6 +92,9 @@ module br_counter #(
     // If 1, cover that we get simultaneous increment and decrement.
     // Otherwise, assert that this never happens.
     parameter bit EnableCoverIncrementAndDecrement = 1,
+    // If 1, then assert that the counter returns to the initial value at the end of the test.
+    // The initial_value used for this assertion is latched on reset or reinit.
+    parameter bit EnableAssertFinalInitialValue = 1,
     localparam int MaxValueP1Width = MaxValueWidth + 1,
     localparam int MaxChangeP1Width = MaxChangeWidth + 1,
     localparam int ValueWidth = $clog2(MaxValueP1Width'(MaxValue) + 1),
@@ -148,6 +151,12 @@ module br_counter #(
     `BR_COVER_INTG(wrap_or_saturate_c, value_extended_next > MaxValueExtWidth'(MaxValue))
   end else begin : gen_no_wrap_or_saturate_assert
     `BR_ASSERT_INTG(no_wrap_or_saturate_a, value_extended_next <= MaxValue)
+  end
+
+  if (EnableAssertFinalInitialValue) begin : gen_assert_final_initial_value
+    logic [ValueWidth-1:0] initial_value_latched;
+    `BR_REGLI(initial_value_latched, initial_value, reinit, initial_value)
+    `BR_ASSERT_FINAL(final_initial_value_a, value == initial_value_latched)
   end
 `endif  // BR_DISABLE_INTG_CHECKS
 `endif  // BR_ASSERT_ON
