@@ -64,6 +64,10 @@ module br_tracker_freelist #(
     // It is expected that alloc_valid could be 1 at end of the test because it's
     // a natural idle condition for this design.
     parameter bit EnableAssertFinalNotDeallocValid = 1,
+    // If 1, then assert that the number of allocated entries is the same as the number of
+    // preallocated entries at the end of the test.
+    // ri lint_check_waive PARAM_NOT_USED
+    parameter bit EnableAssertFinalAllocatedInitial = 1,
 
     localparam int EntryIdWidth = $clog2(NumEntries),
     localparam int DeallocCountWidth = $clog2(NumDeallocPorts + 1),
@@ -93,6 +97,10 @@ module br_tracker_freelist #(
   `BR_ASSERT_STATIC(legal_dealloc_count_delay_a,
                     DeallocCountDelay >= 0 && DeallocCountDelay <= CutThroughLatency)
 
+  // Okay to use a non-synthesizable function here since it's for parameter only.
+  // ri lint_check_waive SYS_TF
+  localparam int NumPreallocatedEntries = $countones(PreallocatedEntries);
+
 `ifdef BR_ASSERT_ON
 `ifndef BR_DISABLE_INTG_CHECKS
   // Track the set of allocated entries and make sure we don't deallocate
@@ -102,6 +110,11 @@ module br_tracker_freelist #(
   logic [NumAllocPerCycle-1:0] alloc_valid;
 
   `BR_REGI(allocated_entries, allocated_entries_next, PreallocatedEntries)
+
+  if (EnableAssertFinalAllocatedInitial) begin : gen_assert_final
+    `BR_ASSERT_FINAL(final_allocated_initial_a, $countones(allocated_entries
+                     ) == NumPreallocatedEntries)
+  end
 
   for (genvar i = 0; i < NumAllocPerCycle; i++) begin : gen_alloc_valid
     assign alloc_valid[i] = alloc_sendable > i && alloc_receivable > i;
@@ -168,9 +181,6 @@ module br_tracker_freelist #(
     assign priority_encoder_in = unstaged_free_entries;
   end
 
-  // Okay to use a non-synthesizable function here since it's for parameter only.
-  // ri lint_check_waive SYS_TF
-  localparam int NumPreallocatedEntries = $countones(PreallocatedEntries);
   // This is the maximum number of entries that can be unstaged on any given cycle.
   // It is the maximum of the following three numbers:
   // 1. The number of entries set after reset (NumEntries - NumPreallocatedEntries)
