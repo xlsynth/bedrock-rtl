@@ -50,7 +50,7 @@ module br_flow_mux_select_unstable #(
     parameter bit EnableAssertPushDataStability = EnableAssertPushValidStability,
     // If 1, assert that select will not change when the selected push flow is backpressured.
     // Otherwise, cover that select can be unstable.
-    parameter bit EnableAssertSelectStability = 0,
+    parameter bit EnableAssertSelectStability = EnableAssertPushValidStability,
     // If 1, assert that push_data is always known (not X) when push_valid is asserted.
     parameter bit EnableAssertPushDataKnown = 1,
     // If 1, then assert there are no valid bits asserted at the end of the test.
@@ -104,7 +104,7 @@ module br_flow_mux_select_unstable #(
       .data (push_data)
   );
 
-  if (EnableCoverPushBackpressure) begin : gen_backpressure_select_checks
+  if (EnableCoverPushBackpressure && EnableAssertValidStability) begin : gen_select_checks
     if (EnableAssertSelectStability) begin : gen_stable_select
       `BR_ASSERT_INTG(select_stable_a,
                       push_valid[select] && !push_ready[select] |=> $stable(select))
