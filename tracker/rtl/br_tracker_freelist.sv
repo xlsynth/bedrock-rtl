@@ -65,8 +65,7 @@ module br_tracker_freelist #(
     // a natural idle condition for this design.
     parameter bit EnableAssertFinalNotDeallocValid = 1,
     // If 1, then assert that the number of allocated entries is the same as the number of
-    // preallocated entries at the end of the test. Normally, this means that there are no allocated
-    // entries at the end of the test.
+    // preallocated entries at the end of the test.
     // ri lint_check_waive PARAM_NOT_USED
     parameter bit EnableAssertFinalAllocatedInitial = 1,
 
