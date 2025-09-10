@@ -77,6 +77,14 @@ module br_credit_counter #(
     parameter bit EnableAssertFinalNotValid = 1,
     // The maximum credit count value that will be checked by covers.
     parameter logic [MaxValueWidth-1:0] CoverMaxValue = MaxValue,
+    // If 1, then at the end of simulation, assert that the credit counter value equals
+    // the maximum number of credits that it stored at any point during the test.
+    // Mutually exclusive with EnableAssertFinalMinValue.
+    parameter bit EnableAssertFinalMaxValue = 0,
+    // If 1, then at the end of simulation, assert that the credit counter value equals
+    // the minimum number of credits that it stored at any point during the test.
+    // Mutually exclusive with EnableAssertFinalMaxValue.
+    parameter bit EnableAssertFinalMinValue = 0,
     localparam int MaxValueP1Width = MaxValueWidth + 1,
     localparam int MaxChangeP1Width = MaxChangeWidth + 1,
     localparam int ValueWidth = $clog2(MaxValueP1Width'(MaxValue) + 1),
@@ -112,6 +120,8 @@ module br_credit_counter #(
   `BR_ASSERT_STATIC(legal_max_increment_a, MaxIncrement >= 1 && MaxIncrement <= MaxChange)
   `BR_ASSERT_STATIC(legal_max_decrement_a, MaxDecrement >= 1 && MaxDecrement <= MaxChange)
   `BR_ASSERT_STATIC(cover_max_value_lte_max_value_a, CoverMaxValue <= MaxValue)
+  `BR_ASSERT_STATIC(assert_final_value_mutually_exclusive_a,
+                    !(EnableAssertFinalMaxValue && EnableAssertFinalMinValue))
 
   if (EnableAssertFinalNotValid) begin : gen_assert_final
     `BR_ASSERT_FINAL(final_not_incr_valid_a, !incr_valid)
@@ -142,6 +152,19 @@ module br_credit_counter #(
     if (incr_valid) value_extended_next = value_extended_next + CalcWidth'(incr);
     // ri lint_check_waive SEQ_COND_ASSIGNS ONE_IF_CASE
     if (decr_valid && decr_ready) value_extended_next = value_extended_next - CalcWidth'(decr);
+  end
+
+  if (EnableAssertFinalMaxValue) begin : gen_assert_final_max_value
+    logic [ValueWidth-1:0] max_credit_value, max_credit_value_next;
+    `BR_REG(max_credit_value, max_credit_value_next)
+    assign max_credit_value_next = value > max_credit_value ? value : max_credit_value;
+    `BR_ASSERT_FINAL(final_max_value_a, value == max_credit_value)
+  end
+  if (EnableAssertFinalMinValue) begin : gen_assert_final_min_value
+    logic [ValueWidth-1:0] min_credit_value, min_credit_value_next;
+    `BR_REG(min_credit_value, min_credit_value_next)
+    assign min_credit_value_next = value < min_credit_value ? value : min_credit_value;
+    `BR_ASSERT_FINAL(final_min_value_a, value == min_credit_value)
   end
 
 `endif  // BR_DISABLE_INTG_CHECKS

@@ -50,6 +50,9 @@ module br_credit_sender_vc #(
     parameter bit EnableAssertPushDataStability = EnableAssertPushValidStability,
     // If 1, then assert there are no valid bits asserted at the end of the test.
     parameter bit EnableAssertFinalNotValid = 1,
+    // If 1, then at the end of simulation, assert that the credit counter value equals
+    // the maximum number of credits that it stored at any point during the test.
+    parameter bit EnableAssertFinalMaxValue = 1,
 
     localparam int VcWidth = $clog2(NumVcs),
     localparam int CounterWidth = $clog2(MaxCredit + 1),
@@ -130,7 +133,8 @@ module br_credit_sender_vc #(
     br_credit_counter #(
         .MaxValue(MaxCredit),
         .MaxChange(PopCreditMaxChange),
-        .EnableAssertFinalNotValid(EnableAssertFinalNotValid)
+        .EnableAssertFinalNotValid(EnableAssertFinalNotValid),
+        .EnableAssertFinalMaxValue(EnableAssertFinalMaxValue)
     ) br_credit_counter (
         .clk,
         .rst(either_rst),
