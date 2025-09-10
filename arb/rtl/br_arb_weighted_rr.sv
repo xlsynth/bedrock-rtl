@@ -124,7 +124,8 @@ module br_arb_weighted_rr #(
         .EnableSaturate(1),
         .EnableWrap(0),
         .EnableCoverZeroChange(0),
-        .EnableCoverReinit(0)
+        .EnableCoverReinit(0),
+        .EnableAssertFinalInitialValue(0)
     ) br_counter (
         .clk,
         .rst,
