@@ -105,12 +105,13 @@ module br_flow_demux_select_unstable #(
       .data (push_data)
   );
 
-  if (EnableCoverPushBackpressure) begin : gen_push_backpressure_intg_checks
+  if (EnableCoverPushBackpressure && EnableAssertPushValidStability) begin : gen_select_checks
     if (EnableAssertSelectStability) begin : gen_select_stability_check
       `BR_ASSERT_INTG(select_stable_a,
                       (!push_ready && push_valid) |=> push_valid && $stable(select))
     end else begin : gen_select_instability_cover
-      `BR_COVER_INTG(select_unstable_c, ##1 $past(!push_ready && push_valid) && !$stable(select))
+      `BR_COVER_INTG(select_unstable_c,
+                     !push_ready && push_valid ##1 push_valid && !$stable(select))
     end
   end
 

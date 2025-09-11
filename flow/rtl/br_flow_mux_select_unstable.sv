@@ -104,7 +104,7 @@ module br_flow_mux_select_unstable #(
       .data (push_data)
   );
 
-  if (EnableCoverPushBackpressure) begin : gen_backpressure_select_checks
+  if (EnableCoverPushBackpressure && EnableAssertPushValidStability) begin : gen_select_checks
     if (EnableAssertSelectStability) begin : gen_stable_select
       `BR_ASSERT_INTG(select_stable_a,
                       push_valid[select] && !push_ready[select] |=> $stable(select))
