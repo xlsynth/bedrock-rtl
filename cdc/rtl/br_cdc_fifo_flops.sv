@@ -1,47 +1,4 @@
-// Copyright 2024-2025 The Bedrock-RTL Authors
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//     http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
-
-// Bedrock-RTL CDC FIFO (Internal 1R1W Flop-RAM, Push Ready/Valid, Pop Ready/Valid Variant)
-//
-// A one-read/one-write (1R1W) asynchronous FIFO that uses the AMBA-inspired
-// ready-valid handshake protocol for synchronizing pipeline stages and stalling
-// when encountering backpressure hazards.
-//
-// This module includes an internal flop-RAM.
-//
-// Data progresses from one stage to another when both
-// the corresponding ready signal and valid signal are
-// both 1 on the same cycle. Otherwise, the stage is stalled.
-//
-// The RegisterPopOutputs parameter can be set to 1 to add an additional br_flow_reg_fwd
-// before the pop interface of the FIFO. This may improve timing of paths dependent on
-// the pop interface at the expense of an additional pop cycle of cut-through latency.
-
-// The cut-through latency (push_valid to pop_valid latency) and backpressure
-// latency (pop_ready to push_ready) can be calculated as follows:
-//
-// Let PushT and PopT be the push period and pop period, respectively.
-//
-// The cut-through latency is max(RegisterResetActive + 1, FlopRamAddressDepthStages + 1) * PushT +
-// (NumSyncStages + FlopRamAddressDepthStages + FlopRamReadDataDepthStages +
-// FlopRamReadDataWidthStages + RegisterPopOutputs) * PopT.
-//
-// The backpressure latency is (RegisterResetActive + 1) * PopT +
-// (NumSyncStages + RegisterPushOutputs) * PushT.
-//
-// To achieve full bandwidth, the depth of the FIFO must be at least
-// (CutThroughLatency + BackpressureLatency) / max(PushT, PopT).
+// SPDX-License-Identifier: Apache-2.0
 
 module br_cdc_fifo_flops #(
     parameter int Depth = 2,  // Number of entries in the FIFO. Must be at least 2.

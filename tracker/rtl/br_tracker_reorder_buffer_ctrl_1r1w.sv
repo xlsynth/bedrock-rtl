@@ -1,33 +1,4 @@
-// Copyright 2024-2025 The Bedrock-RTL Authors
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//     http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
-//
-// Bedrock-RTL 1R1W Reorder Buffer Controller
-//
-// Uses br_reorder_tracker to implement a reorder buffer. Tags are allocated
-// from the allocate interface (i.e. for requests) and responses returned on the
-// unordered_resp_push interface. The reordered responses are returned on the
-// reordered_resp_pop interface. Data provided on the unordered_resp_push
-// interface is stored in a 1R1W RAM using the unordered_resp_push_entry_id as
-// the write address when the unordered_resp_push_valid is asserted. The
-// reordered_resp_pop_entry_id is used as the read address to retrieve the data
-// when the reordered_resp_pop_valid is asserted, returning the data payloads
-// (and associated IDs) in the original allocation order.
-//
-// The resp_pending output is asserted if there are allocated entries that
-// have not been deallocated and there are responses pending in the output
-// buffer whose tags have been retired but have not been popped from the
-// reordered_resp_pop interface.
+// SPDX-License-Identifier: Apache-2.0
 
 `include "br_asserts.svh"
 `include "br_unused.svh"

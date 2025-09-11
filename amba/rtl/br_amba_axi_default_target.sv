@@ -1,26 +1,4 @@
-// Copyright 2024-2025 The Bedrock-RTL Authors
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//     http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
-
-// AXI4 Default Target
-//
-// This module acts as an AXI4 default target.
-//
-// The DecodeError and SlvErr parameters determine the response that the target
-// will return. If DecodeError is 1, the target will respond with a DECERR
-// response. If SlvErr is 1, the target will respond with a SLVERR response.
-// If both DecodeError and SlvErr are 0, the target will respond with an OKAY
-// response.
+// SPDX-License-Identifier: Apache-2.0
 
 `include "br_asserts_internal.svh"
 `include "br_unused.svh"

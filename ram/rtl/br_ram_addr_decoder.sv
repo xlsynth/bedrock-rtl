@@ -1,33 +1,4 @@
-// Copyright 2024-2025 The Bedrock-RTL Authors
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//     http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
-
-// Bedrock-RTL Address Decoder
-//
-// Decodes and steers an input address and data to one output tile based on the
-// most-significant bits of the address.
-//
-// Works for any RAM depth >= 2 and any number of output tiles >= 1 that evenly
-// divides the RAM depth. If RAM depth is a power-of-2 then the implementation is optimized.
-//
-// The latency is given by Stages. If Stages is 0, then the module is purely combinational;
-// if 1, then there is a single pipeline register stage. Values greater than 1 work but don't
-// pipeline the logic inside the decoding tree, they just retime the decoded outputs.
-//
-// If EnableDatapath is 1, then the datapath is implemented. The in_data_valid signal
-// must be in lockstep with in_valid; it is provided separately so that the datapath
-// can be clock gated when not used (e.g., for accessing a shared read-write RAM port)
-// If EnableDatapath is 0, then asserts that in_data_valid is always 0.
+// SPDX-License-Identifier: Apache-2.0
 
 `include "br_asserts_internal.svh"
 `include "br_tieoff.svh"

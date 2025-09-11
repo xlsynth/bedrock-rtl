@@ -1,37 +1,4 @@
-// Copyright 2025 The Bedrock-RTL Authors
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//     http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
-//
-// Bedrock-RTL Linked List Controller
-//
-// This controller manages the head/tail pointers of a linked list
-// stored in an external RAM. When pushing to the linked list,
-// the tail pointers are pushed through the next_tail interface.
-// The controller updates the tail pointers in RAM and reads
-// them back again in the same order.
-//
-// Multiple write ports are supported. If there are multiple
-// writes on the same cycle, the order will be from least
-// significant write port to most significant.
-//
-// The controller supports a variable number of sub-linked lists.
-// Tail and head pointers cycle through the sub-linked lists
-// in round-robin fashion so that they form a single logical
-// linked list.
-//
-// This is necessary to improve bandwidth on the head interface
-// if there is latency in the pointer RAM.
-// The read bandwidth will be NumLinkedLists / (RamReadLatency + 1).
+// SPDX-License-Identifier: Apache-2.0
 
 `include "br_asserts_internal.svh"
 `include "br_registers.svh"

@@ -1,23 +1,4 @@
-// Copyright 2025 The Bedrock-RTL Authors
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//     http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
-//
-// Bedrock-RTL Shared Pseudo-Static Multi-FIFO Size Calculation
-//
-// This is a simple module that computes the size of each logical FIFO
-// from its base and bound addresses.
-// It also performs error checking on the base and bound addresses to ensure that
-// there is no misconfiguration. An error signal is asserted if there is.
+// SPDX-License-Identifier: Apache-2.0
 
 `include "br_asserts_internal.svh"
 

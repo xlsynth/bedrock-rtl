@@ -1,29 +1,4 @@
-// Copyright 2024-2025 The Bedrock-RTL Authors
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//     http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
-
-// Bedrock-RTL Flop-RAM Tile
-//
-// A flop-based RAM tile that can support multiple read and write ports.
-// The read and write ports may be clocked by different clocks.
-// Read latency is zero cycles. Write latency is one cycle.
-// By default, write-to-read latency is therefore one cycle.
-// If the bypass is enabled, then the write-to-read latency is zero cycles, but
-// at the cost of a combinational timing path from the write ports to the read ports.
-// Bypassing is only permissible if the read and write clocks are the same.
-// If bypass is enabled, all write ports can bypass to all read ports.
-// If multiple write ports are enabled, write address conflicts are not handled.
-// There must not be writes to the same address issued on the same clock cycle.
+// SPDX-License-Identifier: Apache-2.0
 
 `include "br_asserts_internal.svh"
 `include "br_registers.svh"

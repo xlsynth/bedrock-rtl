@@ -1,48 +1,4 @@
-// Copyright 2024-2025 The Bedrock-RTL Authors
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//     http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
-
-// Bedrock-RTL Binary to Onehot Encoder
-//
-// Converts a 0-based multihot binary-encoded input to a onehot-encoded output.
-// Purely combinational (zero delay and stateless).
-//
-// The in_valid input can be used to qualify the input (all outputs are driven
-// to 0 when in_valid is 0). It can be tied to 1'b1 when not needed.
-//
-// For example:
-//
-// NumValues = 5
-//
-// in      |       out
-// -------------------
-//  3'b000 |  5'b00001
-//  3'b001 |  5'b00010
-//  3'b010 |  5'b00100
-//  3'b011 |  5'b01000
-//  3'b100 |  5'b10000
-// -------------------
-//  3'b101 | undefined
-//  3'b110 | undefined
-//  3'b111 | undefined
-//
-//
-// The BinWidth parameter sets the width of the binary-encoded value.
-// It must be at least $clog2(NumValues) but may be set larger than the minimum
-// width. Irrespective of the width, the input binary must be in the allowed range
-// 0 <= in < NumValues.
-//
-// TODO(mgottscho): Write spec
+// SPDX-License-Identifier: Apache-2.0
 
 `include "br_asserts_internal.svh"
 

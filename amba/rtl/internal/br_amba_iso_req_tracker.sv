@@ -1,33 +1,4 @@
-// Copyright 2025 The Bedrock-RTL Authors
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//     http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
-//
-// Bedrock-RTL AXI Isolation Request Tracker and Generator
-//
-// This module monitors the AXI request channel from upstream to downstream
-// and keeps count of the number of expected responses from the downstream side.
-// When the isolate_req signal is asserted, the module will begin ignoring
-// requests from the upstream side (and stop forwarding responses upstream), and
-// unconditionally accepting (and discarding) responses from downstream. The
-// isolate_done signal is asserted to indicate that the upstream is isolated and
-// may be reset.
-//
-// After an upstream component has been reset, the isolate_req signal may be
-// deasserted. Once deasserted the module will continue to block new upstream
-// requests from upstream until all expected responses have been received from
-// downstream. At this point the isolate_done signal is deasserted and normal
-// operation resumes (i.e. the upstream component is reconnected to the
-// downstream side).
+// SPDX-License-Identifier: Apache-2.0
 
 `include "br_asserts_internal.svh"
 `include "br_registers.svh"

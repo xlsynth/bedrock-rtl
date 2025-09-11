@@ -1,26 +1,4 @@
-// Copyright 2024-2025 The Bedrock-RTL Authors
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//     http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
-
-// Bedrock-RTL AMBA AXI Upstream (Manager) Isolator State Machine
-//
-// This module is used to control the state of the AXI isolation
-// upstream interface. It first blocks the upstream interface and forces
-// alignment of the WDATA and AW channels. Once the alignment is complete,
-// it continues to hold off the upstream interface until isolate_req is
-// deasserted. Once isolate_req is deasserted, the module will wait for
-// expected responses from the downstream interface to arrive and then
-// will re-connect the upstream interface.
+// SPDX-License-Identifier: Apache-2.0
 
 `include "br_asserts.svh"
 `include "br_registers.svh"

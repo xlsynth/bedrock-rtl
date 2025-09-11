@@ -1,30 +1,4 @@
-// Copyright 2024-2025 The Bedrock-RTL Authors
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//     http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
-
-// Pop-side of Bedrock-RTL CDC FIFO Controller (1R1W, Ready/Valid Variant)
-//
-// The pop side of a one-read/one-write (1R1W) asynchronous FIFO controller
-// that uses the AMBA-inspired ready-valid handshake protocol for synchronizing
-// pipeline stages and stalling when encountering backpressure hazards.
-//
-// This module is intended to connect to an instance of br_cdc_fifo_ctrl_push_1r1w
-// or br_cdc_fifo_ctrl_push_1r1w_push_credit, as well as a 1R1W RAM module.
-//
-// Ordinarily the push and pop sides of the FIFO controller can be connected
-// together directly. If necessary, they can be separated, for example to
-// implement a CDC crossing across a boundary where the sending and receiving
-// flops must be separated or logic needs to be placed in between the two sides.
+// SPDX-License-Identifier: Apache-2.0
 
 `include "br_asserts_internal.svh"
 `include "br_gates.svh"

@@ -1,40 +1,4 @@
-// Copyright 2024-2025 The Bedrock-RTL Authors
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//     http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
-
-// Bedrock-RTL Flow Serializer
-// Examples (where the ready signals are not shown and are assumed to always be 1; X denotes an unknown value):
-//
-//     Packet length = 32 bits (4 push flits), not using last bit
-//     PushWidth = 32, PopWidth = 8, MetadataWidth = 3, (SerializationRatio = 4), SerializeMostSignificantFirst = 1
-//     Cycle | push_valid | push_data    | push_last | push_last_dont_care_count | push_metadata | pop_valid | pop_data | pop_last | pop_metadata
-//     ------|------------|--------------|-----------|---------------------------|---------------|-----------|----------|----------|------------
-//     0     | 1'b1       | 32'hBAADF00D | 1'b0      | 2'd0                      | 3'd6          | 1'b1      | 8'hBA    | 1'b0     | 3'd6
-//     1     | stable     | stable       | stable    | stable                    | stable        | 1'b1      | 8'hAD    | 1'b0     | 3'd6
-//     2     | stable     | stable       | stable    | stable                    | stable        | 1'b1      | 8'hF0    | 1'b0     | 3'd6
-//     3     | stable     | stable       | stable    | stable                    | stable        | 1'b1      | 8'h0D    | 1'b0     | 3'd6
-//
-//     Packet length = 56 bits (7 pop flits), using last bit
-//     PushWidth = 32, PopWidth = 8, MetadataWidth = 3, (SerializationRatio = 4), SerializeMostSignificantFirst = 0
-//     Cycle | push_valid | push_data    | push_last | push_last_dont_care_count | push_metadata | pop_valid | pop_data | pop_last | pop_metadata
-//     ------|------------|--------------|-----------|---------------------------|---------------|-----------|----------|----------|------------
-//     0     | 1'b1       | 32'h01234567 | 1'b0      | 2'd0                      | 3'd2          | 1'b1      | 8'h67    | 1'b0     | 3'd2
-//     1     | stable     | stable       | stable    | stable                    | stable        | 1'b1      | 8'h45    | 1'b0     | 3'd2
-//     2     | stable     | stable       | stable    | stable                    | stable        | 1'b1      | 8'h23    | 1'b0     | 3'd2
-//     3     | stable     | stable       | stable    | stable                    | stable        | 1'b1      | 8'h01    | 1'b0     | 3'd2
-//     4     | 1'b1       | 32'hXXADF00D | 1'b1      | 2'd1                      | 3'd5          | 1'b1      | 8'h0D    | 1'b0     | 3'd5
-//     5     | stable     | stable       | stable    | stable                    | stable        | 1'b1      | 8'hF0    | 1'b0     | 3'd5
-//     6     | stable     | stable       | stable    | stable                    | stable        | 1'b1      | 8'hAD    | 1'b1     | 3'd5
+// SPDX-License-Identifier: Apache-2.0
 
 `include "br_asserts.svh"
 `include "br_registers.svh"

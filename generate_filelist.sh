@@ -1,45 +1,7 @@
 #!/bin/bash
+# SPDX-License-Identifier: Apache-2.0
 
-# Copyright 2024-2025 The Bedrock-RTL Authors
-#
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
-#
-#     http://www.apache.org/licenses/LICENSE-2.0
-#
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
-
-# ===============================================
-# Script to generate a list of source files (.sv and .svh)
-# Usage:
-#   ./generate_filelist.sh <target> [output_path]
-#
-# Arguments:
-#   <target>       : Bazel target for which to generate the file list (required).
-#   [output_path]  : (Optional) Directory where the output file will be saved.
-#                    If not provided, the file will be saved in the current directory.
-#
-# Output:
-#   Generates a filelist with the name `filelist_paths_<sanitized_target>.f`
-#   containing a list of paths to the source files (.sv and .svh) related to the given target.
-#   The file starts with `+incdir+./macros` and includes `./` for each file.
-#
-# Examples:
-#   1. Default behavior (current directory):
-#      ./generate_filelist.sh //arb/rtl:br_arb_fixed_elab_test
-#      Output file: ./filelist_paths_arb_rtl_br_arb_fixed_elab_test.f
-#
-#   2. Custom output path:
-#      ./generate_filelist.sh //arb/rtl:br_arb_fixed_elab_test /path/to/output
-#      Output file: /path/to/output/filelist_paths_arb_rtl_br_arb_fixed_elab_test.f
-# ===============================================
-
-# Check if target argument is provided
+#!/bin/bash
 if [ -z "$1" ]; then
   echo "Usage: $0 <target> [output_path]"
   exit 1

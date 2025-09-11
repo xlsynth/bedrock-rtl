@@ -1,42 +1,4 @@
-// Copyright 2024-2025 The Bedrock-RTL Authors
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//     http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
-
-// Bedrock-RTL FIFO (Internal 1R1W Flop-RAM, Push Credit/Valid, Pop Ready/Valid Variant)
-//
-// A one-read/one-write (1R1W) FIFO controller that uses a credit-valid
-// push interface and an AMBA-inspired ready-valid pop interface
-// for synchronizing pipeline stages and stalling
-// when encountering backpressure hazards.
-//
-// This module includes an internal flop-RAM.
-//
-// The FIFO can be parameterized in bypass mode or non-bypass mode.
-// In bypass mode (default), then pushes forward directly to the pop
-// interface when the FIFO is empty, resulting in a cut-through latency of 0 cycles.
-// This comes at the cost of a combinational timing path from the push
-// interface to the pop interface. Conversely, when bypass is disabled,
-// then pushes always go through the RAM before they can become
-// visible at the pop interface. This results in a cut-through latency of
-// 1 cycle, but improves static timing by eliminating any combinational paths
-// from push to pop.
-//
-// The RegisterPopOutputs parameter can be set to 1 to add an additional br_flow_reg_fwd
-// before the pop interface of the FIFO. This may improve timing of paths dependent on
-// the pop interface at the expense of an additional cycle of cut-through latency.
-//
-// Bypass is enabled by default to minimize latency accumulation throughout a design.
-// It is recommended to disable the bypass only when necessary to close timing.
+// SPDX-License-Identifier: Apache-2.0
 
 module br_fifo_flops_push_credit #(
     parameter int Depth = 2,  // Number of entries in the FIFO. Must be at least 2.

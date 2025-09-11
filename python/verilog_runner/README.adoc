@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+
 = Verilog Runner
 
 Verilog Runner is a command-line tool designed to facilitate the execution of Verilog and SystemVerilog tests. It supports various subcommands for elaboration, linting, simulation, and formal property verification, and is extensible through plugins.

@@ -1,36 +1,4 @@
-// Copyright 2025 The Bedrock-RTL Authors
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//     http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
-//
-// Bedrock-RTL Shared Multi-FIFO Pop Controller with external arbiter interface
-//
-// This module implements the pop-side control logic for a shared multi-FIFO.
-//
-// It manages multiple logical FIFOs that share a common storage RAM. Each logical FIFO
-// has its own pop interface (valid/ready/data). The module coordinates reading data
-// from the shared RAM, refilling per-FIFO staging buffers, and deallocating entries.
-//
-// The pop bandwidth per FIFO is determined by the staging buffer depth and the RAM read
-// latency. The module supports pipelined RAM reads and optional output registering.
-//
-// The module arbitrates RAM read requests among the logical FIFOs, tracks the head
-// pointers of each FIFO, and generates deallocation signals when entries are popped.
-//
-// The design assumes that the RAM and pointer management are handled externally.
-//
-// This is identical to br_fifo_shared_pop_ctrl, but with an external arbiter interface so
-// that an arbitrary arbitration policy can be chosen for the pop side of the FIFO (where
-// NumReadPorts < NumFifos).
+// SPDX-License-Identifier: Apache-2.0
 
 `include "br_asserts_internal.svh"
 `include "br_registers.svh"

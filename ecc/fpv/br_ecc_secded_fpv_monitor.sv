@@ -1,41 +1,4 @@
-// Copyright 2024-2025 The Bedrock-RTL Authors
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//     http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
-
-// Bedrock-RTL Single-Error-Correcting, Double-Error-Detecting (SECDED - Hsiao)
-// This FV TB focuses on:
-//      basic protocols
-//      encoder has no encoding error
-//      decoder can correctly decode if enc_codeword has no error
-
-// | DataWidth   | ParityWidth (r) | MessageWidth (k) | CodewordWidth (n = k + r) | Optimal Construction? |
-// |-------------|-----------------|------------------|---------------------------|-----------------------|
-// | 4           | 4               | 4                | 8                         | Yes                   |
-// | [5,8]       | 5               | 8                | 13                        | Yes                   |
-// | [9,11]      | 5               | 11               | 16                        | Yes                   |
-// | [12,16]     | 6               | 16               | 22                        | Yes                   |
-// | [17,26]     | 6               | 26               | 32                        | Yes                   |
-// | [27,32]     | 7               | 32               | 39                        | Yes                   |
-// | [33,57]     | 7               | 57               | 64                        | Yes                   |
-// | [58,64]     | 8               | 64               | 72                        | Yes                   |
-// | [65,120]    | 8               | 120              | 128                       | Yes                   |
-// | [121,128]   | 9               | 128              | 137                       | Yes                   |
-// | [129,247]   | 9               | 247              | 256                       | Yes                   |
-// | [248,256]   | 10              | 256              | 266                       | Yes                   |
-// | [257,502]   | 10              | 502              | 512                       | No                    |
-// | [503,512]   | 11              | 512              | 523                       | No                    |
-// | [513,1013]  | 11              | 1013             | 1024                      | No                    |
-// | [1014,1024] | 12              | 1024             | 1036                      | No                    |
+// SPDX-License-Identifier: Apache-2.0
 
 `include "br_asserts.svh"
 `include "br_registers.svh"

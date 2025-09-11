@@ -1,43 +1,4 @@
-// Copyright 2024-2025 The Bedrock-RTL Authors
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//     http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
-
-// Bedrock-RTL Increment/Decrement Counter w/ Overflow Handling
-//
-// A simple counter that increments and/or decrements by a potentially variable
-// amount each cycle, where the maximum change is given by MaxChange
-// (inclusive).
-//
-// Overflows (wraps around past 0) at MaxValue (inclusive), and Underflows up
-// to MaxValue even if MaxValue + 1 isn't a power-of-2. In the common case
-// where MaxValue + 1 is a power-of-2, the implementation is simplified.
-//
-// The counter state is exposed in two ways.
-// (1) value holds the current counter state. There is a latency of 1 cycle from
-//     a valid change to the counter state being updated.
-// (2) value_next is what value will be on the next cycle. It is conditioned on
-//     incr_valid and decr_valid: if both are low, then value_next == value.
-//     This is useful for constructing single-cycle chains of counters.
-// value and value_next are always valid.
-//
-// The counter value resets to initial_value.
-//
-// The reinit port reinitializes the counter to initial_value.
-// This does *nearly* the same thing as rst but is likely to be driven by completely different
-// logic. Rather than having the user mix together an expression involving both rst and reinit,
-// a separate port helps keep the user's reset code clean and correct. Also, unlike reset, the
-// reinit can accommodate a change on the same cycle, i.e., the change
-// applies to the initial value rather than the old value.
+// SPDX-License-Identifier: Apache-2.0
 
 `include "br_asserts_internal.svh"
 `include "br_registers.svh"

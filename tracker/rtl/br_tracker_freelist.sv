@@ -1,34 +1,4 @@
-// Copyright 2024-2025 The Bedrock-RTL Authors
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//     http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
-//
-// Bedrock-RTL Free List Manager
-//
-// This module tracks a set of entries that can be dynamically allocated. It
-// allows multiple entries to be allocated per cycle and multiple entries to be
-// deallocated per cycle.
-//
-// Allocations are presented through a multi-transfer interface.
-// alloc_sendable indicates the number of allocations that can be sent on a
-// cycle, and alloc_entry_id from 0 to alloc_sendable-1 will be valid.
-// The user indicates how many allocated entries they will take using the
-// alloc_receivable signal.
-//
-// There is a two cycle delay between an entry being deallocated and
-// when it can be reallocated.
-//
-// The freelist manager ensures that once an entry is allocated, the same entry
-// cannot be allocated again until it is deallocated.
+// SPDX-License-Identifier: Apache-2.0
 
 `include "br_asserts_internal.svh"
 `include "br_registers.svh"

@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: Apache-2.0
+
 repos:
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v4.4.0
@@ -46,9 +48,21 @@ repos:
       - id: verible-verilog-format
         args: [--inplace]
         # Skip ChipStack-generated files
-        exclude: ^.*/chipstack/
+        # Skip generated SECDED encoder and decoder
+        exclude: |
+          (?x)(
+            ^.*/chipstack/|
+            ^ecc/rtl/br_ecc_secded_encoder.sv$|
+            ^ecc/rtl/br_ecc_secded_decoder.sv$
+          )
       # Style lint Verilog files
       - id: verible-verilog-lint
         args: [--ruleset=default]
         # Skip ChipStack-generated files
-        exclude: ^.*/chipstack/
+        # Skip generated SECDED encoder and decoder
+        exclude: |
+          (?x)(
+            ^.*/chipstack/|
+            ^ecc/rtl/br_ecc_secded_encoder.sv$|
+            ^ecc/rtl/br_ecc_secded_decoder.sv$
+          )

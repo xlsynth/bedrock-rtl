@@ -1,36 +1,4 @@
-// Copyright 2024-2025 The Bedrock-RTL Authors
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//     http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
-
-// Bedrock-RTL Flow Mux with Select (Unstable)
-//
-// A dataflow pipeline mux with explicit binary select.
-// Uses the AMBA-inspired ready-valid handshake protocol
-// for synchronizing pipeline stages and stalling when
-// encountering backpressure hazards.
-//
-// Data progresses from one stage to another when both
-// the corresponding ready signal and valid signal are
-// both 1 on the same cycle. Otherwise, the stage is stalled.
-//
-// This is a purely combinational module with 0 delay.
-//
-// It is called "unstable" because the pop interface is not guaranteed
-// to follow the ready-valid stability convention, because the select
-// input could change while the selected push interface is backpressured.
-// If the select signal is actually stable (meaning that the select will not
-// be changed while the selected push flow is backpressured), then the pop valid
-// will be stable.
+// SPDX-License-Identifier: Apache-2.0
 
 `include "br_asserts_internal.svh"
 

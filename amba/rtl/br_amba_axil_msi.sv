@@ -1,46 +1,4 @@
-// Copyright 2024-2025 The Bedrock-RTL Authors
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//     http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
-
-// Bedrock-RTL AXI4-Lite MSI Generator
-//
-// This module creates MSI messages for a configurable number of interrupts. The
-// messages are meant to be compatible with GICv3. The device ID is encoded in
-// the address field of the MSI message (4-byte aligned), and the event ID is
-// encoded in the lower bits of the data field.
-//
-
-// It is expected that the configuration will be done through a register interface
-// which is not part of this module.
-//
-// This module supports high-asserted, level-triggered interrupts. The module
-// watches for rising edges of the interrupts and latches them. Then, if enabled,
-// it sends the interrupt via the AXI4-Lite initiator interface. It is assumed
-// that the interrupt will remain asserted until the interrupt is cleared by SW.
-// If the interrupt pulses, a message will be sent again.
-//
-// This module also supports a per-interrupt enable/disable mechanism. When a
-// per-interrupt enable is asserted, the interrupt is sent. When a per-interrupt
-// enable is not asserted, the interrupt is not sent.
-//
-// This module supports a parameterizable number of destination addresses. The
-// addresses are input signals. There is a per-interrupt destination index
-// which selects which address to use for a given interrupt. The final computed
-// address also includes the device ID as a word offset. The user can use device
-// ID 0 to not include an offset.
-//
-// This module also supports a throttle mechanism. When a throttle is enabled,
-// the interrupt is sent once every `throttle_cnt` cycles.
+// SPDX-License-Identifier: Apache-2.0
 
 `include "br_registers.svh"
 `include "br_asserts_internal.svh"

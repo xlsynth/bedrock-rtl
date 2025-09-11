@@ -1,46 +1,4 @@
-// Copyright 2025 The Bedrock-RTL Authors
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//     http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
-//
-// Bedrock-RTL AXI Downstream (Subordinate) Isolator
-//
-// This module is used to isolate a downstream AXI subordinate from an
-// upstream AXI manager such that the downstream subordinate can be reset
-// while maintaining the protocol integrity of the upstream interconnect.
-//
-// The isolator will generate responses for any transactions that are
-// pending on the downstream side when isolation is requested and continue
-// generating responses for any new transactions destined for the
-// subordinate while the subordinate is isolated.
-//
-// Isolation is requested by asserting the isolate_req signal and holding
-// it for the duration of the isolation. Isolation is complete (and
-// downstream subordinate may be safely reset) when the isolate_done
-// signal asserts in response to the assertion of isolate_req.
-//
-// Once the downstream subordinate is ready to re-connect, the isolate_req
-// signal may be deasserted and the subordinate will resume normal
-// operation. The isolate_done signal will deassert in response to the
-// deassertion of isolate_req. Any new transactions accepted after
-// isolate_done deasserts (as long as isolate_req remains low) are
-// guaranteed to pass to the downstream.
-//
-// Read response data interleaving is not supported.
-//
-// Isolation is guaranteed to complete without any assumption about the
-// state of the downstream interface and may be used to recover in cases
-// where a subordinate becomes stuck or otherwise unable to make forward
-// progress.
+// SPDX-License-Identifier: Apache-2.0
 
 `include "br_registers.svh"
 `include "br_asserts_internal.svh"

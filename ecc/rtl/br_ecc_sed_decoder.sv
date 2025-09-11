@@ -1,38 +1,4 @@
-// Copyright 2024-2025 The Bedrock-RTL Authors
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//     http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
-
-// Bedrock-RTL Single-Error-Detecting (SED - Even Parity) Decoder
-//
-// Decodes a message using a single-error-detecting linear block code
-// in systematic form (in layperson's terms: a simple even parity decoder).
-//
-// Even parity means that the total number of 1s in a valid codeword is even.
-// If the codeword has an odd number of 1s, then the decoder will detect it as
-// an invalid codeword and report an error.
-//
-// Systematic form means that the codeword is formed by appending the
-// calculated parity bits to the message, i.e., the code has the property
-// that the message bits are 1:1 with a slice of bits in the codeword (if they
-// have not been corrupted).
-//
-// In Bedrock ECC libs, our convention is to always append the parity bits on
-// the MSbs:
-//     codeword == {parity, message}
-//
-// This module has parameterizable latency. By default, it is purely combinational,
-// but it can have up to 2 cycles of delay (RegisterInputs and RegisterOutputs).
-// The initiation interval is always 1 cycle.
+// SPDX-License-Identifier: Apache-2.0
 
 `include "br_asserts_internal.svh"
 

@@ -1,27 +1,4 @@
-// Copyright 2024-2025 The Bedrock-RTL Authors
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//     http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
-
-// Bedrock-RTL AXI4 to AXI4-Lite Bridge Core
-//
-// This module is the core of the AXI4 to AXI4-Lite bridge. It handles the unrolling of AXI4 bursts
-// into AXI4-Lite transactions, and the aggregation of AXI4-Lite responses.
-//
-// The `MaxOutstandingReqs` parameter controls the depth of the response FIFO and determines the
-// maximum number of outstanding AXI4-Lite requests.
-//
-// This module is instantiated twice in the br_amba_axi2axil module to support both read and write
-// requests separately. The `IsReadNotWrite` parameter controls which side is instantiated.
+// SPDX-License-Identifier: Apache-2.0
 
 `include "br_asserts_internal.svh"
 `include "br_registers.svh"

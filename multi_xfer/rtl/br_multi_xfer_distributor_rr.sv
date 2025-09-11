@@ -1,29 +1,4 @@
-// Copyright 2025 The Bedrock-RTL Authors
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//     http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
-
-// Bedrock-RTL Multi-Transfer Interface Distributor (Round-Robin)
-//
-// This module takes a multi-transfer sendable/receivable interface of
-// NumSymbols size and fans out the data to NumSymbols ready/valid
-// flows. If data is sendable from the push interface, the distributor
-// will send the data to the pop flows that are ready to accept.
-// If there are more ready flows than sendable data, the flows to
-// which data will be sent will be selected by multi-grant
-// round-robin arbitration. If there are fewer ready flows than
-// sendable data, only the lower data symbols will be sent.
-// The remaining undistributed symbols must be shifted down by the sender
-// according to the multi-transfer interface specification.
+// SPDX-License-Identifier: Apache-2.0
 
 module br_multi_xfer_distributor_rr #(
     // The number of symbols that can be transferred in a single cycle.

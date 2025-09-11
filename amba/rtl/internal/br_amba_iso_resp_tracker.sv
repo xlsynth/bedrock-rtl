@@ -1,45 +1,4 @@
-// Copyright 2025 The Bedrock-RTL Authors
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//     http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
-//
-// Bedrock-RTL AXI Isolation Response Tracker and Generator
-//
-// This module monitors the AXI request channel from upstream to
-// downstream and tracks the AxLEN values for every transaction
-// currently pending on the downstream interface. An ordered list is
-// maintained for each AXI ID and the tracked values are removed from
-// the tracking list when a response is received on the downstream
-// interface.
-//
-// When the isolate_req signal is asserted, the module will begin
-// ignoring responses arriving on the downstream interface and instead
-// generate error responses for all expected response beats for any
-// transactions on the tracking lists. It will continue to accept new
-// requests while isolate_req is asserted as well, and will
-// continuously generate error responses on the pop side of the
-// tracking list.
-//
-// The isolate_req signal may be safely deasserted when both of the
-// following are true: 1. The resp_fifo_empty signal is asserted (all
-// requests have been responded to) 2. The upstream_axvalid signal is
-// deasserted (no new request is currently pending)
-//
-// Once the isolate_req signal is deasserted, the module will resume
-// normal operation, forwarding requests to the downstream interface,
-// and forwarding downstream responses to the upstream interface.
-//
-// Can be configured to use a dynamic shared-storage FIFO for the tracking
-// list with UseDynamicFifo=1, otherwise a static FIFO per-ID is used.
+// SPDX-License-Identifier: Apache-2.0
 
 `include "br_asserts_internal.svh"
 `include "br_registers.svh"

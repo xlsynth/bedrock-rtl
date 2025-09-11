@@ -1,25 +1,4 @@
-// Copyright 2024-2025 The Bedrock-RTL Authors
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//     http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
-
-// Bedrock-RTL AXI4-Lite 1:2 Split
-//
-// This module splits an AXI4-Lite interface into two separate AXI4-Lite
-// interfaces. The intended use case is to create a "narrow" branch that
-// is controlled by configuration parameters. If a transaction address
-// falls within the range of the branch, it is routed to the branch. If
-// the transaction address does not fall within the range of the branch, it
-// is routed to the "trunk" interface.
+// SPDX-License-Identifier: Apache-2.0
 
 `include "br_asserts_internal.svh"
 `include "br_registers.svh"
