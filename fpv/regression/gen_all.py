@@ -1,4 +1,6 @@
 #!/usr/bin/env python3
+# SPDX-License-Identifier: Apache-2.0
+
 r"""This script generates per-day yamls in fpv/regression/generated/ and
 per-block yamls in fpv/regression/generated/<day>/.
 

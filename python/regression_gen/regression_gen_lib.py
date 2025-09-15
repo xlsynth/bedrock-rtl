@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: Apache-2.0
+
 """Helper library for generating regression YAML files.
 
 This library is intentionally kept lightweight so that it can be used in
