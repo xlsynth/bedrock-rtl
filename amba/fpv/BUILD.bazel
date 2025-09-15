@@ -114,6 +114,7 @@ br_verilog_fpv_test_tools_suite(
     elab_opts = [
         "-parameter MaxOutstandingReqs 4",
     ],
+    gui = True,
     tools = {
         "jg": "br_amba_axi2axil_fpv.jg.tcl",
     },

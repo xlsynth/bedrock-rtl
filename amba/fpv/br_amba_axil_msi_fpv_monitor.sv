@@ -172,7 +172,9 @@ module br_amba_axil_msi_fpv_monitor #(
       .AXI4_LITE(1),
       .ADDR_WIDTH(AddrWidth),
       .DATA_WIDTH(DataWidth),
-      .CONFIG_WAIT_FOR_VALID_BEFORE_READY(1)
+      .CONFIG_WAIT_FOR_VALID_BEFORE_READY(1),
+      .ALLOW_SPARSE_STROBE(1),
+      .BYTE_STROBE_ON(1)
   ) axi (
       // Global signals
       .aclk   (clk),

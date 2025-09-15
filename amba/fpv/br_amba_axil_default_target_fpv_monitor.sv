@@ -42,8 +42,10 @@ module br_amba_axil_default_target_fpv_monitor #(
 );
 
   axi4_master #(
-      .AXI4_LITE (1),
-      .DATA_WIDTH(DataWidth)
+      .AXI4_LITE(1),
+      .DATA_WIDTH(DataWidth),
+      .ALLOW_SPARSE_STROBE(1),
+      .BYTE_STROBE_ON(1)
   ) root (
       // Global signals
       .aclk    (clk),

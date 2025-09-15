@@ -110,7 +110,11 @@ module br_amba_axi2axil_fpv_monitor #(
       .WUSER_WIDTH(WUserWidth),
       .BUSER_WIDTH(BUserWidth),
       .RUSER_WIDTH(RUserWidth),
-      .MAX_PENDING(MaxPending)
+      .MAX_PENDING(MaxPending),
+      .CONFIG_WAIT_FOR_VALID_BEFORE_READY(1),
+      .ALLOW_SPARSE_STROBE(1),
+      .BYTE_STROBE_ON(1),
+      .BRIDGE_DUT(1)
   ) axi4 (
       // Global signals
       .aclk    (clk),
@@ -180,7 +184,11 @@ module br_amba_axi2axil_fpv_monitor #(
       .WUSER_WIDTH(WUserWidth),
       .BUSER_WIDTH(BUserWidth),
       .RUSER_WIDTH(RUserWidth),
-      .MAX_PENDING(MaxPending)
+      .MAX_PENDING(MaxPending),
+      .CONFIG_WAIT_FOR_VALID_BEFORE_READY(1),
+      .ALLOW_SPARSE_STROBE(1),
+      .BYTE_STROBE_ON(1),
+      .BRIDGE_DUT(1)
   ) axi4_lite (
       // Global signals
       .aclk    (clk),

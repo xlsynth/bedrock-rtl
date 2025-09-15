@@ -154,7 +154,10 @@ module isolate_axi_protocol_fv_check #(
       // when there is no valid, ready doesn't have to be high eventually
       // This will only turn off assertion without precondition: `STRENGTH(##[0:$] arready
       // (arvalid && !arready) |=> `STRENGTH(##[0:$] arready) is still enabled
-      .CONFIG_WAIT_FOR_VALID_BEFORE_READY(ValidBeforeReady)
+      .CONFIG_WAIT_FOR_VALID_BEFORE_READY(ValidBeforeReady),
+      .ALLOW_SPARSE_STROBE(1),
+      .BYTE_STROBE_ON(1),
+      .BRIDGE_DUT(1)
   ) upstream (
       // Global signals
       .aclk    (clk),
@@ -235,7 +238,10 @@ module isolate_axi_protocol_fv_check #(
       // when there is no valid, ready doesn't have to be high eventually
       // This will only turn off assertion without precondition: `STRENGTH(##[0:$] arready
       // (arvalid && !arready) |=> `STRENGTH(##[0:$] arready) is still enabled
-      .CONFIG_WAIT_FOR_VALID_BEFORE_READY(ValidBeforeReady)
+      .CONFIG_WAIT_FOR_VALID_BEFORE_READY(ValidBeforeReady),
+      .ALLOW_SPARSE_STROBE(1),
+      .BYTE_STROBE_ON(1),
+      .BRIDGE_DUT(1)
   ) downstream (
       // Global signals
       .aclk    (clk),

@@ -103,7 +103,10 @@ module br_amba_axil_timing_slice_fpv_monitor #(
       .RUSER_WIDTH(RUserWidth),
       .BUSER_WIDTH(BUserWidth),
       .CONFIG_WDATA_MASKED(0),
-      .MAX_PENDING(MaxTarget)
+      .MAX_PENDING(MaxTarget),
+      .ALLOW_SPARSE_STROBE(1),
+      .BYTE_STROBE_ON(1),
+      .BRIDGE_DUT(1)
   ) target (
       // Global signals
       .aclk    (clk),
@@ -173,7 +176,10 @@ module br_amba_axil_timing_slice_fpv_monitor #(
       .RUSER_WIDTH(RUserWidth),
       .BUSER_WIDTH(BUserWidth),
       .CONFIG_RDATA_MASKED(0),
-      .MAX_PENDING(MaxInit)
+      .MAX_PENDING(MaxInit),
+      .ALLOW_SPARSE_STROBE(1),
+      .BYTE_STROBE_ON(1),
+      .BRIDGE_DUT(1)
   ) init (
       // Global signals
       .aclk    (clk),
