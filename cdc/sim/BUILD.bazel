@@ -63,7 +63,6 @@ verilog_elab_test(
             ],
             "FlopRamReadDataDepthStages": [
                 "0",
-                "1",
             ],
             "NumSyncStages": [
                 "2",
@@ -130,7 +129,6 @@ verilog_elab_test(
             ],
             "FlopRamReadDataDepthStages": [
                 "0",
-                "1",
             ],
             "NumSyncStages": [
                 "2",
