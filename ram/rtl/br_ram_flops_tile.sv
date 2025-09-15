@@ -357,6 +357,7 @@ module br_ram_flops_tile #(
 
       if (UseStructuredGates) begin : gen_structured_read
         logic [Depth-1:0][Width-1:0] mem_packed;
+        // ri lint_check_waive VAR_NAME
         logic [NumWords-1:0][WordWidth-1:0] _BR_CDC_PRESERVE_NET__rd_data_mem_unqual;
 
 
