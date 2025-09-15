@@ -52,6 +52,10 @@ module br_ram_flops_tile #(
     // If 1, use structured mux2 gates for the read mux instead of relying on synthesis.
     // This is required if write and read clocks are different.
     parameter bit UseStructuredGates = 0,
+    // If 1 and UseStructuredGates is 1, then the read data is qualified with the
+    // rd_data_valid signal, 0 when not valid. Should generally always be 1 for CDC
+    // use cases.
+    parameter bit EnableStructuredGatesDataQualification = 1,
     // If 1, then assert there are no valid bits asserted at the end of the test.
     parameter bit EnableAssertFinalNotValid = 1,
     localparam int AddrWidth = br_math::clamped_clog2(Depth),
@@ -364,9 +368,21 @@ module br_ram_flops_tile #(
         ) br_mux_bin_structured_gates_inst (
             .select(rd_addr[rport]),
             .in(mem_packed),
-            .out(rd_data_mem),
+            .out(rd_data_mem_unqual),
             .out_valid()
         );
+
+        if (EnableStructuredGatesDataQualification) begin : gen_data_qualification
+          for (genvar i = 0; i < Width; i++) begin : gen_data_qualification_word
+            br_gate_and2 br_gate_and2_inst (
+                .in0(rd_data_mem_unqual[i]),
+                .in1(rd_data_valid),
+                .out(rd_data_mem[i])
+            );
+          end
+        end else begin : gen_no_data_qualification
+          assign rd_data_mem = rd_data_mem_unqual;
+        end
       end else begin : gen_behavioral_read
         // This coding style is more friendly for emulation than using br_mux_bin.
         // ri lint_check_waive VAR_INDEX_READ

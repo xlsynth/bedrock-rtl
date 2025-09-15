@@ -122,6 +122,17 @@ module br_ram_flops #(
   `BR_ASSERT_STATIC(width_tiles_gte1_a, WidthTiles >= 1)
   `BR_ASSERT_STATIC(width_tiles_evenly_divides_width_a, (WidthTiles * TileWidth) == Width)
 
+  // Structured gates checks (CDC use cases)
+  // Multi-tile configurations are not supported with structured gates.
+  `BR_ASSERT_STATIC(no_depth_tiles_if_structured_gates_a, (DepthTiles == 1) || !UseStructuredGates)
+  `BR_ASSERT_STATIC(no_width_tiles_if_structured_gates_a, (WidthTiles == 1) || !UseStructuredGates)
+  // Multi-stage read data pipelines are not supported with structured gates, data must be
+  // qualified before destination flop (which is not supported).
+  `BR_ASSERT_STATIC(no_read_depth_stages_if_structured_gates_a,
+                    (ReadDataDepthStages == 0) || !UseStructuredGates)
+  `BR_ASSERT_STATIC(no_read_width_stages_if_structured_gates_a,
+                    (ReadDataWidthStages == 0) || !UseStructuredGates)
+
   // Address stages checks
   `BR_ASSERT_STATIC(address_depth_stages_gte0_a, AddressDepthStages >= 0)
 
