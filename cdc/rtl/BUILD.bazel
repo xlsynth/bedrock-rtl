@@ -183,15 +183,14 @@ br_verilog_elab_and_lint_test_suite(
         "Width": ["8"],
         "FlopRamAddressDepthStages": [
             "0",
+            "1",
         ],
-        "FlopRamReadDataDepthStages": [
-            "0",
-        ],
-        "RegisterPopOutputs": [
+        "EnableStructuredGatesDataQualification": [
             "0",
             "1",
         ],
-        "FlopRamWidthTiles": [
+        "RegisterPopOutputs": [
+            "0",
             "1",
         ],
     },
@@ -222,15 +221,14 @@ br_verilog_elab_and_lint_test_suite(
         "Width": ["8"],
         "FlopRamAddressDepthStages": [
             "0",
+            "1",
         ],
-        "FlopRamReadDataDepthStages": [
-            "0",
-        ],
-        "RegisterPopOutputs": [
+        "EnableStructuredGatesDataQualification": [
             "0",
             "1",
         ],
-        "FlopRamWidthTiles": [
+        "RegisterPopOutputs": [
+            "0",
             "1",
         ],
     },
