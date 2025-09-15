@@ -357,7 +357,7 @@ module br_ram_flops_tile #(
 
       if (UseStructuredGates) begin : gen_structured_read
         logic [Depth-1:0][Width-1:0] mem_packed;
-        logic [NumWords-1:0][WordWidth-1:0] rd_data_mem_unqual;
+        logic [NumWords-1:0][WordWidth-1:0] _BR_CDC_PRESERVE_NET__rd_data_mem_unqual;
 
 
         for (genvar i = 0; i < Depth; i++) begin : gen_mem_packed
@@ -370,7 +370,7 @@ module br_ram_flops_tile #(
         ) br_mux_bin_structured_gates_inst (
             .select(rd_addr[rport]),
             .in(mem_packed),
-            .out(rd_data_mem_unqual),
+            .out(_BR_CDC_PRESERVE_NET__rd_data_mem_unqual),
             .out_valid()
         );
 
@@ -378,14 +378,14 @@ module br_ram_flops_tile #(
           for (genvar j = 0; j < NumWords; j++) begin : gen_data_qualification_word
             for (genvar k = 0; k < WordWidth; k++) begin : gen_data_qualification_word_bit
               br_gate_and2 br_gate_and2_inst (
-                  .in0(rd_data_mem_unqual[j][k]),
+                  .in0(_BR_CDC_PRESERVE_NET__rd_data_mem_unqual[j][k]),
                   .in1(rd_data_valid[rport]),
                   .out(rd_data_mem[j][k])
               );
             end
           end
         end else begin : gen_no_data_qualification
-          assign rd_data_mem = rd_data_mem_unqual;
+          assign rd_data_mem = _BR_CDC_PRESERVE_NET__rd_data_mem_unqual;
         end
       end else begin : gen_behavioral_read
         // This coding style is more friendly for emulation than using br_mux_bin.
