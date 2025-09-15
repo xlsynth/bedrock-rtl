@@ -155,6 +155,7 @@ br_verilog_elab_and_lint_test_suite(
     top = "br_ram_flops_tile",
     deps = [
         ":br_ram_flops_tile",
+        "//gate/rtl:br_gate_mock",
         "//mux/rtl:br_mux_bin_structured_gates_mock",
     ],
 )
@@ -551,6 +552,7 @@ br_verilog_elab_and_lint_test_suite(
     top = "br_ram_flops",
     deps = [
         ":br_ram_flops",
+        "//gate/rtl:br_gate_mock",
         "//mux/rtl:br_mux_bin_structured_gates_mock",
     ],
 )

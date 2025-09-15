@@ -353,10 +353,12 @@ module br_ram_flops_tile #(
     assign rd_data_valid = rd_addr_valid;
 
     for (genvar rport = 0; rport < NumReadPorts; rport++) begin : gen_read_port
-      logic [NumWords-1:0][WordWidth-1:0] rd_data_mem, rd_data_mem_unqual;
+      logic [NumWords-1:0][WordWidth-1:0] rd_data_mem;
 
       if (UseStructuredGates) begin : gen_structured_read
         logic [Depth-1:0][Width-1:0] mem_packed;
+        logic [NumWords-1:0][WordWidth-1:0] rd_data_mem_unqual;
+
 
         for (genvar i = 0; i < Depth; i++) begin : gen_mem_packed
           assign mem_packed[i] = mem[i];
@@ -373,12 +375,14 @@ module br_ram_flops_tile #(
         );
 
         if (EnableStructuredGatesDataQualification) begin : gen_data_qualification
-          for (genvar j = 0; j < Width; j++) begin : gen_data_qualification_word
-            br_gate_and2 br_gate_and2_inst (
-                .in0(rd_data_mem_unqual[j]),
-                .in1(rd_data_valid[rport]),
-                .out(rd_data_mem[j])
-            );
+          for (genvar j = 0; j < NumWords; j++) begin : gen_data_qualification_word
+            for (genvar k = 0; k < WordWidth; k++) begin : gen_data_qualification_word_bit
+              br_gate_and2 br_gate_and2_inst (
+                  .in0(rd_data_mem_unqual[j][k]),
+                  .in1(rd_data_valid[rport]),
+                  .out(rd_data_mem[j][k])
+              );
+            end
           end
         end else begin : gen_no_data_qualification
           assign rd_data_mem = rd_data_mem_unqual;
