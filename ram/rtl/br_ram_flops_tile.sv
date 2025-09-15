@@ -52,6 +52,10 @@ module br_ram_flops_tile #(
     // If 1, use structured mux2 gates for the read mux instead of relying on synthesis.
     // This is required if write and read clocks are different.
     parameter bit UseStructuredGates = 0,
+    // If 1 and UseStructuredGates is 1, then the read data is qualified with the
+    // rd_data_valid signal, 0 when not valid. Should generally always be 1 for CDC
+    // use cases.
+    parameter bit EnableStructuredGatesDataQualification = 1,
     // If 1, then assert there are no valid bits asserted at the end of the test.
     parameter bit EnableAssertFinalNotValid = 1,
     localparam int AddrWidth = br_math::clamped_clog2(Depth),
@@ -353,6 +357,9 @@ module br_ram_flops_tile #(
 
       if (UseStructuredGates) begin : gen_structured_read
         logic [Depth-1:0][Width-1:0] mem_packed;
+        // ri lint_check_waive VAR_NAME
+        logic [NumWords-1:0][WordWidth-1:0] _BR_CDC_PRESERVE_NET__rd_data_mem_unqual;
+
 
         for (genvar i = 0; i < Depth; i++) begin : gen_mem_packed
           assign mem_packed[i] = mem[i];
@@ -364,9 +371,23 @@ module br_ram_flops_tile #(
         ) br_mux_bin_structured_gates_inst (
             .select(rd_addr[rport]),
             .in(mem_packed),
-            .out(rd_data_mem),
+            .out(_BR_CDC_PRESERVE_NET__rd_data_mem_unqual),
             .out_valid()
         );
+
+        if (EnableStructuredGatesDataQualification) begin : gen_data_qualification
+          for (genvar j = 0; j < NumWords; j++) begin : gen_data_qualification_word
+            for (genvar k = 0; k < WordWidth; k++) begin : gen_data_qualification_word_bit
+              br_gate_and2 br_gate_and2_inst (
+                  .in0(_BR_CDC_PRESERVE_NET__rd_data_mem_unqual[j][k]),
+                  .in1(rd_data_valid[rport]),
+                  .out(rd_data_mem[j][k])
+              );
+            end
+          end
+        end else begin : gen_no_data_qualification
+          assign rd_data_mem = _BR_CDC_PRESERVE_NET__rd_data_mem_unqual;
+        end
       end else begin : gen_behavioral_read
         // This coding style is more friendly for emulation than using br_mux_bin.
         // ri lint_check_waive VAR_INDEX_READ
