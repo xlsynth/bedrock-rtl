@@ -353,7 +353,7 @@ module br_ram_flops_tile #(
     assign rd_data_valid = rd_addr_valid;
 
     for (genvar rport = 0; rport < NumReadPorts; rport++) begin : gen_read_port
-      logic [NumWords-1:0][WordWidth-1:0] rd_data_mem;
+      logic [NumWords-1:0][WordWidth-1:0] rd_data_mem, rd_data_mem_unqual;
 
       if (UseStructuredGates) begin : gen_structured_read
         logic [Depth-1:0][Width-1:0] mem_packed;
@@ -373,11 +373,11 @@ module br_ram_flops_tile #(
         );
 
         if (EnableStructuredGatesDataQualification) begin : gen_data_qualification
-          for (genvar i = 0; i < Width; i++) begin : gen_data_qualification_word
+          for (genvar j = 0; j < Width; j++) begin : gen_data_qualification_word
             br_gate_and2 br_gate_and2_inst (
-                .in0(rd_data_mem_unqual[i]),
-                .in1(rd_data_valid),
-                .out(rd_data_mem[i])
+                .in0(rd_data_mem_unqual[j]),
+                .in1(rd_data_valid[rport]),
+                .out(rd_data_mem[j])
             );
           end
         end else begin : gen_no_data_qualification
