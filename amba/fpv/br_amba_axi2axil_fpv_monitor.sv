@@ -100,6 +100,12 @@ module br_amba_axi2axil_fpv_monitor #(
   // ABVIP should send more than DUT to test backpressure
   localparam int MaxPending = MaxOutstandingReqs + 2;
 
+  // TODO(masai): JAL-2596: multi-burst narrow access is not working.
+  // However, there is no multi-burst narrow access for our use case.
+  // Filed JIRA for enhancement, but disable multi-burst narrow access for now.
+  `BR_ASSUME(no_multi_burst_narrow_access_a, axi_awvalid && (axi_awsize != $clog2(StrobeWidth)
+                                             ) |-> axi_awlen == 'd0)
+
   // Instance of the AXI Slave DUV
   axi4_master #(
       .ADDR_WIDTH(AddrWidth),

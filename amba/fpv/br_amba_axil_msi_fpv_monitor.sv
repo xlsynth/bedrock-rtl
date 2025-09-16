@@ -80,6 +80,7 @@ module br_amba_axil_msi_fpv_monitor #(
   localparam int DataWidthPadding = DataWidth - 32;
   localparam int EventIdStrobeWidth = 4;
   localparam int StrobeWidthPadding = StrobeWidth - EventIdStrobeWidth;
+  localparam int StrobeBitWidth = $clog2(StrobeWidth);
 
   logic [AddrWidth-1:0] msi_base_addr;
   logic [NumInterrupts-1:0][AddrWidth-1:0] fv_init_awaddr;
@@ -102,6 +103,11 @@ module br_amba_axil_msi_fpv_monitor #(
       end else begin
         fv_init_wdata[i] = {{DataWidthPadding{1'b0}}, {EventIdPadding{1'b0}}, event_id_per_irq[i]};
         fv_init_wstrb[i] = {{StrobeWidthPadding{1'b0}}, {EventIdStrobeWidth{1'b1}}};
+      end
+      for (int j = 0; j < StrobeWidth; j++) begin : gen_asm
+        if (j != fv_init_awaddr[i][StrobeBitWidth-1:0]) begin
+          `BR_ASSUME(legal_narrow_access_a, fv_init_wstrb[i][j] == 1'b0)
+        end
       end
     end
   end
