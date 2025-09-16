@@ -29,6 +29,13 @@ cover -disable *monitor*tbl_no_overflow:precondition1
 # aw/w has no skew when max burst is 1
 if {$MaxAxiBurstLen eq "1"} {
   cover -disable *monitor.fv_axi_check.downstream.genPropChksWRInf.genDBCLive.genSlaveLiveAW.genLiveAW.master_aw_awvalid_eventually:precondition1
+  # TODO(masai): ABVIP covers are fully encrypted, impossible to debug
+  # OK to disable for now since those dbc related covers are checking data before control
+  # I realize these covers are unreachable for AXI-Lite
+  cover -disable *monitor.fv_axi_check.upstream.genPropChksWRInf.genByStrb.genDbcl.genDatAcpt.assume_master_aw_dbc_latched_addr2:precondition1
+  cover -disable *monitor.fv_axi_check.upstream.genPropChksWRInf.genByStrb.genDbcl.genDatAcpt.assume_master_aw_dbc_latched_burst2:precondition1
+  cover -disable *monitor.fv_axi_check.upstream.genPropChksWRInf.genByStrb.genDbcl.genDatAcpt.assume_master_aw_dbc_latched_size2:precondition1
+  cover -disable *monitor.fv_axi_check.upstream.genPropChksWRInf.genByStrb.genDbcl.genDatAcpt.assume_master_aw_dbc_latched_len2:precondition1
 }
 
 # during isolate_req & !isolate_done window, upstream assertions don't matter
