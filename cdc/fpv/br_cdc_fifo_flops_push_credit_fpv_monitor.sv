@@ -38,6 +38,10 @@ module br_cdc_fifo_flops_push_credit_fpv_monitor #(
     // Number of pipeline register stages inserted along the read data path in the width dimension.
     // Must be at least 0.
     parameter int FlopRamReadDataWidthStages = 0,
+    // If 1 then the read data is qualified with the rd_data_valid signal, 0 when not valid. Should
+    // generally always be 1, unless gating logic is managed externally (including netlist-level
+    // concerns!).
+    parameter bit EnableStructuredGatesDataQualification = 1,
     // If 1, then assert there are no valid bits asserted and that the FIFO is
     // empty at the end of the test.
     parameter bit EnableAssertFinalNotValid = 1,
@@ -102,6 +106,7 @@ module br_cdc_fifo_flops_push_credit_fpv_monitor #(
       .FlopRamAddressDepthStages(FlopRamAddressDepthStages),
       .FlopRamReadDataDepthStages(FlopRamReadDataDepthStages),
       .FlopRamReadDataWidthStages(FlopRamReadDataWidthStages),
+      .EnableStructuredGatesDataQualification(EnableStructuredGatesDataQualification),
       .EnableAssertFinalNotValid(EnableAssertFinalNotValid)
   ) dut (
       .push_clk,
@@ -174,5 +179,8 @@ module br_cdc_fifo_flops_push_credit_fpv_monitor #(
       .pop_empty,
       .pop_items
   );
+
+  `BR_ASSERT_CR(no_valid_data_stable_a, !pop_valid && !$fell(pop_valid) |-> $stable(pop_data),
+                pop_clk, pop_rst)
 
 endmodule : br_cdc_fifo_flops_push_credit_fpv_monitor

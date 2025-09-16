@@ -57,7 +57,9 @@ module br_cdc_fifo_push_flag_mgr #(
 
   br_counter_incr #(
       .MaxValue(MaxCount),
-      .EnableAssertFinalNotValid(EnableAssertFinalNotValid)
+      .EnableAssertFinalNotValid(EnableAssertFinalNotValid),
+      .EnableCoverZeroIncrement(0),
+      .EnableCoverReinit(0)
   ) br_counter_incr_push_count (
       .clk,
       .rst,
