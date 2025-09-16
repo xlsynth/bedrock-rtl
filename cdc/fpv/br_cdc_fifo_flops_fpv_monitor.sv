@@ -154,7 +154,7 @@ module br_cdc_fifo_flops_fpv_monitor #(
       .pop_items
   );
 
-  `BR_ASSERT_CR(no_valid_data_stable_a, !pop_valid && !$fell(pop_valid) |-> $stable(pop_data),
+  `BR_ASSERT_CR(no_valid_data_stable_a, ##1 !pop_valid && !$fell(pop_valid) |-> $stable(pop_data),
                 pop_clk, pop_rst)
 
 endmodule : br_cdc_fifo_flops_fpv_monitor
