@@ -18,6 +18,8 @@
 // multiple AXI4-Lite transactions. All write responses will be aggregated into a single AXI4 write
 // response.
 //
+// This does not support narrow bursts.
+//
 
 `include "br_asserts_internal.svh"
 `include "br_unused.svh"
