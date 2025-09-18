@@ -63,7 +63,9 @@ module br_amba_axi_default_target_fpv_monitor #(
       .ID_WIDTH(AxiIdWidth),
       .LEN_WIDTH(AxiLenWidth),
       .BRESP_WIDTH(br_amba::AxiRespWidth),
-      .DATA_WIDTH(DataWidth)
+      .DATA_WIDTH(DataWidth),
+      .ALLOW_SPARSE_STROBE(1),
+      .BYTE_STROBE_ON(1)
   ) root (
       // Global signals
       .aclk    (clk),

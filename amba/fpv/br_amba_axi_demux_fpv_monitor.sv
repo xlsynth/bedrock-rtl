@@ -424,7 +424,9 @@ module br_amba_axi_demux_fpv_monitor #(
       .MAX_PENDING_WR(MaxPendingWr),
       .CONFIG_WDATA_MASKED(0),
       .CONFIG_RDATA_MASKED(0),
-      .READ_INTERLEAVE_ON(0)
+      .READ_INTERLEAVE_ON(0),
+      .ALLOW_SPARSE_STROBE(1),
+      .BYTE_STROBE_ON(1)
   ) upstream (
       // Global signals
       .aclk    (clk),
@@ -506,7 +508,9 @@ module br_amba_axi_demux_fpv_monitor #(
         .MAX_PENDING_WR(MaxPendingWr),
         .CONFIG_WDATA_MASKED(0),
         .CONFIG_RDATA_MASKED(0),
-        .READ_INTERLEAVE_ON(0)
+        .READ_INTERLEAVE_ON(0),
+        .ALLOW_SPARSE_STROBE(1),
+        .BYTE_STROBE_ON(1)
     ) downstream (
         // Global signals
         .aclk    (clk),
