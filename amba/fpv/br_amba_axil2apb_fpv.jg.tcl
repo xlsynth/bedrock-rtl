@@ -17,7 +17,7 @@ clock clk
 reset rst
 get_design_info
 
-# TODO(bgelb):
+# TODO(bgelb): please check unreachable RTL covers
 cover -disable *br_amba_axil2apb.br_arb_rr.no_update_same_grants_A:precondition1
 cover -disable *br_amba_axil2apb.br_arb_rr.grant_without_state_update_c
 

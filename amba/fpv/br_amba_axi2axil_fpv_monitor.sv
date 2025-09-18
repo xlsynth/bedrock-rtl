@@ -117,6 +117,9 @@ module br_amba_axi2axil_fpv_monitor #(
       .BUSER_WIDTH(BUserWidth),
       .RUSER_WIDTH(RUserWidth),
       .MAX_PENDING(MaxPending),
+      // when there is no valid, ready doesn't have to be high eventually
+      // This will only turn off assertion without precondition: `STRENGTH(##[0:$] arready
+      // (arvalid && !arready) |=> `STRENGTH(##[0:$] arready) is still enabled
       .CONFIG_WAIT_FOR_VALID_BEFORE_READY(1),
       .ALLOW_SPARSE_STROBE(1),
       .BYTE_STROBE_ON(1),
@@ -191,6 +194,9 @@ module br_amba_axi2axil_fpv_monitor #(
       .BUSER_WIDTH(BUserWidth),
       .RUSER_WIDTH(RUserWidth),
       .MAX_PENDING(MaxPending),
+      // when there is no valid, ready doesn't have to be high eventually
+      // This will only turn off assertion without precondition: `STRENGTH(##[0:$] arready
+      // (arvalid && !arready) |=> `STRENGTH(##[0:$] arready) is still enabled
       .CONFIG_WAIT_FOR_VALID_BEFORE_READY(1),
       .ALLOW_SPARSE_STROBE(1),
       .BYTE_STROBE_ON(1),
