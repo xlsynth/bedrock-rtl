@@ -105,10 +105,10 @@ module br_amba_axil_msi_fpv_monitor #(
         fv_init_wstrb[i] = {{StrobeWidthPadding{1'b0}}, {EventIdStrobeWidth{1'b1}}};
       end
       for (int j = 0; j < StrobeWidth; j++) begin : gen_asm
-        // if index is not address[StrobeBitWidth-1:0], wstrb must be 0
+        // if index < address[StrobeBitWidth-1:0], wstrb must be 0
         // e.g. if StrobeWidth=8, then StrobeBitWidth=3
-        // if awaddr[2:0] == 3'b010, then only wstrb[2] can be 1, others must be 0
-        if (j != fv_init_awaddr[i][StrobeBitWidth-1:0]) begin
+        // if awaddr[2:0] == 3'b010, then wstrb[7:2] can be 1, lower bits must be 0
+        if (j < fv_init_awaddr[i][StrobeBitWidth-1:0]) begin
           `BR_ASSUME(legal_narrow_access_a, fv_init_wstrb[i][j] == 1'b0)
         end
       end
