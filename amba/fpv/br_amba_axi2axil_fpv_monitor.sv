@@ -122,8 +122,7 @@ module br_amba_axi2axil_fpv_monitor #(
       // (arvalid && !arready) |=> `STRENGTH(##[0:$] arready) is still enabled
       .CONFIG_WAIT_FOR_VALID_BEFORE_READY(1),
       .ALLOW_SPARSE_STROBE(1),
-      .BYTE_STROBE_ON(1),
-      .BRIDGE_DUT(1)
+      .BYTE_STROBE_ON(1)
   ) axi4 (
       // Global signals
       .aclk    (clk),
@@ -199,8 +198,7 @@ module br_amba_axi2axil_fpv_monitor #(
       // (arvalid && !arready) |=> `STRENGTH(##[0:$] arready) is still enabled
       .CONFIG_WAIT_FOR_VALID_BEFORE_READY(1),
       .ALLOW_SPARSE_STROBE(1),
-      .BYTE_STROBE_ON(1),
-      .BRIDGE_DUT(1)
+      .BYTE_STROBE_ON(1)
   ) axi4_lite (
       // Global signals
       .aclk    (clk),

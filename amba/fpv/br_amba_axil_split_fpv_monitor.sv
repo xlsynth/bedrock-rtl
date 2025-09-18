@@ -142,8 +142,7 @@ module br_amba_axil_split_fpv_monitor #(
       .MAX_PENDING_WR(MaxPendingWr),
       .CONFIG_WAIT_FOR_VALID_BEFORE_READY(ValidBeforeReady),
       .ALLOW_SPARSE_STROBE(1),
-      .BYTE_STROBE_ON(1),
-      .BRIDGE_DUT(1)
+      .BYTE_STROBE_ON(1)
   ) root (
       // Global signals
       .aclk    (clk),
@@ -215,8 +214,7 @@ module br_amba_axil_split_fpv_monitor #(
       .MAX_PENDING_WR(MaxPendingWr),
       .CONFIG_WAIT_FOR_VALID_BEFORE_READY(ValidBeforeReady),
       .ALLOW_SPARSE_STROBE(1),
-      .BYTE_STROBE_ON(1),
-      .BRIDGE_DUT(1)
+      .BYTE_STROBE_ON(1)
   ) trunk (
       // Global signals
       .aclk    (clk),
@@ -288,8 +286,7 @@ module br_amba_axil_split_fpv_monitor #(
       .MAX_PENDING_WR(MaxPendingWr),
       .CONFIG_WAIT_FOR_VALID_BEFORE_READY(ValidBeforeReady),
       .ALLOW_SPARSE_STROBE(1),
-      .BYTE_STROBE_ON(1),
-      .BRIDGE_DUT(1)
+      .BYTE_STROBE_ON(1)
   ) branch (
       // Global signals
       .aclk    (clk),
