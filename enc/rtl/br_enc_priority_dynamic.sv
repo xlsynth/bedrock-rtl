@@ -86,7 +86,8 @@ module br_enc_priority_dynamic #(
   // low priority inputs in the upper half.
   br_enc_priority_encoder #(
       .NumRequesters(InternalNumRequesters),
-      .NumResults(InternalNumResults)
+      .NumResults(InternalNumResults),
+      .MaxInHot(NumRequesters)
   ) br_enc_priority_encoder_inst (
       .clk,
       .rst,
