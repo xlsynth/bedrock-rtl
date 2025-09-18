@@ -18,7 +18,8 @@
 // multiple AXI4-Lite transactions. All write responses will be aggregated into a single AXI4 write
 // response.
 //
-// This does not support narrow bursts.
+// This does not support narrow transfers with burst length > 1. Single-beat narrow transfers are
+// supported.
 //
 
 `include "br_asserts_internal.svh"
