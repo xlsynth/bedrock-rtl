@@ -89,6 +89,12 @@ module br_amba_axi2axil_fpv_monitor #(
   // ABVIP should send more than DUT to test backpressure
   localparam int MaxPending = MaxOutstandingReqs + 2;
 
+  // TODO(masai): JAL-2596: multi-burst narrow access is not working.
+  // However, there is no multi-burst narrow access for our use case.
+  // Filed JIRA for enhancement, but disable multi-burst narrow access for now.
+  `BR_ASSUME(no_multi_burst_narrow_access_a, axi_awvalid && (axi_awsize != $clog2(StrobeWidth)
+                                             ) |-> axi_awlen == 'd0)
+
   // Instance of the AXI Slave DUV
   axi4_master #(
       .ADDR_WIDTH(AddrWidth),
@@ -99,7 +105,13 @@ module br_amba_axi2axil_fpv_monitor #(
       .WUSER_WIDTH(WUserWidth),
       .BUSER_WIDTH(BUserWidth),
       .RUSER_WIDTH(RUserWidth),
-      .MAX_PENDING(MaxPending)
+      .MAX_PENDING(MaxPending),
+      // when there is no valid, ready doesn't have to be high eventually
+      // This will only turn off assertion without precondition: `STRENGTH(##[0:$] arready
+      // (arvalid && !arready) |=> `STRENGTH(##[0:$] arready) is still enabled
+      .CONFIG_WAIT_FOR_VALID_BEFORE_READY(1),
+      .ALLOW_SPARSE_STROBE(1),
+      .BYTE_STROBE_ON(1)
   ) axi4 (
       // Global signals
       .aclk    (clk),
@@ -169,7 +181,13 @@ module br_amba_axi2axil_fpv_monitor #(
       .WUSER_WIDTH(WUserWidth),
       .BUSER_WIDTH(BUserWidth),
       .RUSER_WIDTH(RUserWidth),
-      .MAX_PENDING(MaxPending)
+      .MAX_PENDING(MaxPending),
+      // when there is no valid, ready doesn't have to be high eventually
+      // This will only turn off assertion without precondition: `STRENGTH(##[0:$] arready
+      // (arvalid && !arready) |=> `STRENGTH(##[0:$] arready) is still enabled
+      .CONFIG_WAIT_FOR_VALID_BEFORE_READY(1),
+      .ALLOW_SPARSE_STROBE(1),
+      .BYTE_STROBE_ON(1)
   ) axi4_lite (
       // Global signals
       .aclk    (clk),

@@ -68,6 +68,10 @@ module br_cdc_fifo_flops_push_credit #(
     // Number of pipeline register stages inserted along the read data path in the width dimension.
     // Must be at least 0.
     parameter int FlopRamReadDataWidthStages = 0,
+    // If 1 then the read data is qualified with the rd_data_valid signal, 0 when not valid. Should
+    // generally always be 1, unless gating logic is managed externally (including netlist-level
+    // concerns!).
+    parameter bit EnableStructuredGatesDataQualification = 1,
     // If 1, cover that credit_withhold can be non-zero.
     // Otherwise, assert that it is always zero.
     parameter bit EnableCoverCreditWithhold = 1,
@@ -206,6 +210,7 @@ module br_cdc_fifo_flops_push_credit #(
       // Since there is an asynchronous path on the read,
       // we need to use structured gates for the read mux.
       .UseStructuredGates(1),
+      .EnableStructuredGatesDataQualification(EnableStructuredGatesDataQualification),
       .EnableAssertFinalNotValid(EnableAssertFinalNotValid)
   ) br_ram_flops (
       .wr_clk(push_clk),  // ri lint_check_waive SAME_CLOCK_NAME

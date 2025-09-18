@@ -20,6 +20,14 @@ cover -disable *trunk.genPropChksWRInf.genDBCLive.genSlaveLiveAW.genLiveAW.maste
 cover -disable *trunk.genPropChksWRInf.genSlaveLiveW.genLiveW.master_w_wvalid_eventually:precondition1
 cover -disable *branch.genPropChksWRInf.genDBCLive.genSlaveLiveAW.genLiveAW.master_aw_awvalid_eventually:precondition1
 cover -disable *branch.genPropChksWRInf.genSlaveLiveW.genLiveW.master_w_wvalid_eventually:precondition1
+# TODO(masai): ABVIP covers are fully encrypted, impossible to debug
+# OK to disable for now since those dbc related covers are checking data before control
+# I realize these covers are unreachable for AXI-Lite
+cover -disable *monitor.root.genPropChksWRInf.genByStrb.genDbcl.genDatAcpt.assume_master_aw_dbc_latched_addr2:precondition1
+cover -disable *monitor.root.genPropChksWRInf.genByStrb.genDbcl.genDatAcpt.assume_master_aw_dbc_latched_burst2:precondition1
+cover -disable *monitor.root.genPropChksWRInf.genByStrb.genDbcl.genDatAcpt.assume_master_aw_dbc_latched_size2:precondition1
+cover -disable *monitor.root.genPropChksWRInf.genByStrb.genDbcl.genDatAcpt.assume_master_aw_dbc_latched_len2:precondition1
+cover -disable *monitor.root.genPropChksWRInf.genByStrb.master_w_aw_wstrb_valid_non_dbc:precondition1
 
 # limit run time to 30-mins
 set_prove_time_limit 1800s

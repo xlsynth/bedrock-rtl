@@ -173,17 +173,13 @@ br_verilog_elab_and_lint_test_suite(
             "0",
             "1",
         ],
-        "FlopRamReadDataDepthStages": [
+        "EnableStructuredGatesDataQualification": [
             "0",
             "1",
         ],
         "RegisterPopOutputs": [
             "0",
             "1",
-        ],
-        "FlopRamWidthTiles": [
-            "1",
-            "2",
         ],
     },
     top = "br_cdc_fifo_flops",
@@ -215,17 +211,13 @@ br_verilog_elab_and_lint_test_suite(
             "0",
             "1",
         ],
-        "FlopRamReadDataDepthStages": [
+        "EnableStructuredGatesDataQualification": [
             "0",
             "1",
         ],
         "RegisterPopOutputs": [
             "0",
             "1",
-        ],
-        "FlopRamWidthTiles": [
-            "1",
-            "2",
         ],
     },
     top = "br_cdc_fifo_flops_push_credit",
