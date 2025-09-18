@@ -79,6 +79,8 @@ module br_cdc_fifo_basic_fpv_monitor #(
   `BR_ASSUME_CR(pop_ready_liveness_a, s_eventually (pop_ready), pop_clk, pop_rst)
   if (EnableAssertPushValidStability) begin : gen_push_valid_stable
     `BR_ASSUME_CR(push_valid_stable_a, push_valid && !push_ready |=> push_valid, push_clk, push_rst)
+  end else begin : gen_no_back_pressure
+    `BR_ASSUME_CR(push_valid_no_back_pressure_a, push_valid |-> push_ready, push_clk, push_rst)
   end
   if (EnableAssertPushDataStability) begin : gen_push_data_stable
     `BR_ASSUME_CR(push_data_stable_a, push_valid && !push_ready |=> $stable(push_data), push_clk,
