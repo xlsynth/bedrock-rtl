@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+
 // Very simple test to release reset and exercise end-of-test checks
 // that are not easily exercised with FPV (which is used for the bulk of verification).
 

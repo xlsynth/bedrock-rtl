@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+
 module br_tracker_linked_list_ctrl_tb;
   parameter int NumLinkedLists = 1;
   parameter int Depth = 5;

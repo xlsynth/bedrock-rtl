@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+
 `include "br_assign.svh"
 
 module br_assign_test #(
