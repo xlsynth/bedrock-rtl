@@ -119,8 +119,8 @@ module br_amba_axi2axil_core #(
   `BR_ASSERT_INTG(resp_fifo_not_empty_when_resp_valid_a, axil_resp_valid |-> resp_fifo_pop_valid)
 
   // Assert to reject narrow bursts
-  `BR_ASSERT_INTG(reject_narrow_bursts_a, axi_req_valid |-> ((axi_req_size >= $clog2(StrobeWidth)
-                                          ) || (axi_req_len == 0)))
+  `BR_ASSERT_INTG(reject_narrow_bursts_a, (axi_req_valid && (axi_req_size < $clog2(StrobeWidth)
+                                          )) |-> (axi_req_len == 'd0))
 
   //----------------------------------------------------------------------------
   // Functions
