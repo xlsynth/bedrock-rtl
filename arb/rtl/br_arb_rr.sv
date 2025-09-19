@@ -74,7 +74,4 @@ module br_arb_rr #(
                                            |-> $stable(grant))
   `BR_COVER_IMPL(grant_without_state_update_c, !enable_priority_update && |grant)
 
-  // TODO(mgottscho): Add more cases
-  // TODO(mgottscho): Add covers on masked and unmasked cases
-
 endmodule : br_arb_rr
