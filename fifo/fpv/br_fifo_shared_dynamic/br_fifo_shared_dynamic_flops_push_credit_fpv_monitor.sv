@@ -40,6 +40,15 @@ module br_fifo_shared_dynamic_flops_push_credit_fpv_monitor #(
     // driven directly from a flop. This comes at the expense of one additional
     // cycle of credit loop latency.
     parameter bit RegisterPushOutputs = 0,
+    // If 1, cover that push_credit_stall can be asserted
+    // Otherwise, assert that it is never asserted.
+    parameter bit EnableCoverPushCreditStall = 1,
+    // If 1, cover that credit_withhold can be non-zero.
+    // Otherwise, assert that it is always zero.
+    parameter bit EnableCoverCreditWithhold = 1,
+    // If 1, cover that push_sender_in_reset can be asserted
+    // Otherwise, assert that it is never asserted.
+    parameter bit EnableCoverPushSenderInReset = 1,
     // If 1, place a register on the deallocation path from the pop-side
     // staging buffer to the freelist. This improves timing at the cost of
     // adding a cycle of backpressure latency.
@@ -101,7 +110,10 @@ module br_fifo_shared_dynamic_flops_push_credit_fpv_monitor #(
   br_credit_receiver_fpv_monitor #(
       .PStatic(0),
       .MaxCredit(Depth),
-      .NumWritePorts(NumWritePorts)
+      .NumWritePorts(NumWritePorts),
+      .EnableCoverPushCreditStall(EnableCoverPushCreditStall),
+      .EnableCoverCreditWithhold(EnableCoverCreditWithhold),
+      .EnableCoverPushSenderInReset(EnableCoverPushSenderInReset)
   ) fv_credit (
       .clk,
       .rst,
@@ -131,7 +143,7 @@ module br_fifo_shared_dynamic_flops_push_credit_fpv_monitor #(
       .Width(Width),
       .StagingBufferDepth(StagingBufferDepth),
       .HasStagingBuffer(HasStagingBuffer),
-      .EnableCoverPushBackpressure(1)
+      .EnableCoverPushBackpressure(0)
   ) fv_checker (
       .clk,
       .rst,
@@ -156,6 +168,9 @@ bind br_fifo_shared_dynamic_flops_push_credit
     .StagingBufferDepth(StagingBufferDepth),
     .RegisterPopOutputs(RegisterPopOutputs),
     .RegisterPushOutputs(RegisterPushOutputs),
+    .EnableCoverPushCreditStall(EnableCoverPushCreditStall),
+    .EnableCoverCreditWithhold(EnableCoverCreditWithhold),
+    .EnableCoverPushSenderInReset(EnableCoverPushSenderInReset),
     .RegisterDeallocation(RegisterDeallocation),
     .DataRamDepthTiles(DataRamDepthTiles),
     .DataRamWidthTiles(DataRamWidthTiles),
