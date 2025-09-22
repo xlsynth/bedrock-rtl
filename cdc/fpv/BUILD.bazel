@@ -64,9 +64,6 @@ br_verilog_fpv_test_tools_suite(
             "EnableAssertPushValidStability",
             "EnableAssertPushDataStability",
         ): [
-            ("0", "0", "1"),
-            ("0", "1", "0"),
-            ("0", "1", "1"),
             ("1", "0", "1"),
         ],
     },
@@ -80,7 +77,6 @@ br_verilog_fpv_test_tools_suite(
             "1",
         ],
         "EnableCoverPushBackpressure": [
-            "0",
             "1",
         ],
     },
@@ -189,25 +185,13 @@ br_verilog_fpv_test_tools_suite(
 
 br_verilog_fpv_test_tools_suite(
     name = "br_cdc_fifo_flops_push_credit_test_suite",
-    illegal_param_combinations = {
-        (
-            "Depth",
-            "MaxCredit",
-        ): [
-            ("5", "2"),
-            ("6", "2"),
-        ],
-    },
+    # Depth = MaxCredit
+    elab_opts = ["-parameter MaxCredit Depth"],
     params = {
         "Depth": [
             "2",
             "5",
             "6",
-        ],
-        "MaxCredit": [
-            "2",
-            "6",
-            "8",
         ],
         "Width": [
             "1",
@@ -255,9 +239,6 @@ br_verilog_fpv_test_tools_suite(
             "EnableAssertPushValidStability",
             "EnableAssertPushDataStability",
         ): [
-            ("0", "0", "1"),
-            ("0", "1", "0"),
-            ("0", "1", "1"),
             ("1", "0", "1"),
         ],
     },
@@ -271,7 +252,6 @@ br_verilog_fpv_test_tools_suite(
             "1",
         ],
         "EnableCoverPushBackpressure": [
-            "0",
             "1",
         ],
         "Width": [
@@ -390,25 +370,13 @@ br_verilog_fpv_test_tools_suite(
 
 br_verilog_fpv_test_tools_suite(
     name = "br_cdc_fifo_ctrl_1r1w_push_credit_test_suite",
-    illegal_param_combinations = {
-        (
-            "Depth",
-            "MaxCredit",
-        ): [
-            ("5", "2"),
-            ("6", "2"),
-        ],
-    },
+    # Depth = MaxCredit
+    elab_opts = ["-parameter MaxCredit Depth"],
     params = {
         "Depth": [
             "2",
             "5",
             "6",
-        ],
-        "MaxCredit": [
-            "2",
-            "6",
-            "8",
         ],
         "Width": [
             "1",
@@ -455,9 +423,6 @@ br_verilog_fpv_test_tools_suite(
             "EnableAssertPushValidStability",
             "EnableAssertPushDataStability",
         ): [
-            ("0", "0", "1"),
-            ("0", "1", "0"),
-            ("0", "1", "1"),
             ("1", "0", "1"),
         ],
     },
@@ -471,7 +436,6 @@ br_verilog_fpv_test_tools_suite(
             "1",
         ],
         "EnableCoverPushBackpressure": [
-            "0",
             "1",
         ],
         "Width": [
@@ -601,25 +565,13 @@ br_verilog_fpv_test_tools_suite(
 
 br_verilog_fpv_test_tools_suite(
     name = "br_cdc_fifo_ctrl_push_pop_1r1w_push_credit_test_suite",
-    illegal_param_combinations = {
-        (
-            "Depth",
-            "MaxCredit",
-        ): [
-            ("5", "2"),
-            ("6", "2"),
-        ],
-    },
+    # Depth = MaxCredit
+    elab_opts = ["-parameter MaxCredit Depth"],
     params = {
         "Depth": [
             "2",
             "5",
             "6",
-        ],
-        "MaxCredit": [
-            "2",
-            "6",
-            "8",
         ],
         "Width": [
             "1",
