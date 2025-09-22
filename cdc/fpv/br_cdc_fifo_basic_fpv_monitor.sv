@@ -84,6 +84,9 @@ module br_cdc_fifo_basic_fpv_monitor #(
     `BR_ASSUME_CR(push_data_stable_a, push_valid && !push_ready |=> $stable(push_data), push_clk,
                   push_rst)
   end
+  if (!EnableCoverPushBackpressure) begin : gen_no_back_pressure
+    `BR_ASSUME_CR(no_back_pressure_a, push_valid |-> push_ready, push_clk, push_rst)
+  end
 
   // ----------FV Modeling Code----------
   logic push_vr;
