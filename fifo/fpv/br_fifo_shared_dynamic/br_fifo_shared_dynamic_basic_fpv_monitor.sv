@@ -78,16 +78,17 @@ module br_fifo_shared_dynamic_basic_fpv_monitor #(
   // ----------FV assumptions----------
   for (genvar i = 0; i < NumWritePorts; i++) begin : gen_asm
     `BR_ASSUME(push_fifo_id_legal_a, push_fifo_id[i] < NumFifos)
-    if (EnableAssertPushValidStability) begin : gen_push_valid_stable
-      `BR_ASSUME(push_valid_stable_a, push_valid[i] && !push_ready[i] |=> push_valid[i])
-    end
-    if (EnableAssertPushDataStability) begin : gen_push_data_stable
-      `BR_ASSUME(
-          push_data_stable_a,
-          push_valid[i] && !push_ready[i] |=> $stable(push_data[i]) && $stable(push_fifo_id[i]))
-    end
-    if (!EnableCoverPushBackpressure) begin : gen_no_backpressure
-      `BR_ASSUME(no_backpressure_a, !push_valid[i] || push_ready[i])
+    if (EnableCoverPushBackpressure) begin : gen_back_pressure
+      if (EnableAssertPushValidStability) begin : gen_push_valid_stable
+        `BR_ASSUME(push_valid_stable_a, push_valid[i] && !push_ready[i] |=> push_valid[i])
+      end
+      if (EnableAssertPushDataStability) begin : gen_push_data_stable
+        `BR_ASSUME(
+            push_data_stable_a,
+            push_valid[i] && !push_ready[i] |=> $stable(push_data[i]) && $stable(push_fifo_id[i]))
+      end
+    end else begin : gen_no_backpressure
+      `BR_ASSUME(no_backpressure_a, push_valid[i] |-> push_ready[i])
     end
   end
   if (!HasStagingBuffer) begin : gen_no_staging_buffer
