@@ -40,6 +40,7 @@ if {$SingleBeat eq "1'b1"} {
   cover -disable *genPropChksWRInf.genAXI4Full.genAwlenMaxLenGr1.genAwlenDatAcpt.genChkDBC.master_aw_w_awlen_exact_len_collision_dbc_data_cont:precondition1
   cover -disable *genPropChksWRInf.genDbcW.genAXI4Full.genWlastExactLenDbc.master_w_aw_wlast_exact_len_dbc:precondition1
   cover -disable *genPropChksWRInf.genNoLite.genWlastCol.master_w_aw_wlast_exact_len_collision:precondition1
+  cover -disable *genPropChksWRInf.genByStrb.genDbc.master_w_aw_wstrb_valid_dbc:precondition1
 }
 
 # limit run time to 30-mins
