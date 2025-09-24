@@ -25,6 +25,7 @@ module br_multi_xfer_distributor_core #(
     parameter int SymbolWidth = 1,
     // The number of flows to distribute to. Must be at least NumSymbols.
     parameter int NumFlows = 2,
+    parameter bit EnableCoverPushBackpressure = 1,
     parameter bit EnableAssertPushDataStability = 1,
     parameter bit EnableAssertFinalNotSendable = 1,
 
@@ -67,6 +68,7 @@ module br_multi_xfer_distributor_core #(
   br_multi_xfer_checks_sendable_data_intg #(
       .NumSymbols(NumSymbols),
       .SymbolWidth(SymbolWidth),
+      .EnableCoverBackpressure(EnableCoverPushBackpressure),
       .EnableAssertDataStability(EnableAssertPushDataStability)
   ) br_multi_xfer_checks_sendable_data_intg_push (
       .clk(clk),
