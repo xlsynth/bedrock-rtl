@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+
 module br_fifo_shared_dynamic_flops_push_credit_tb;
   parameter int MaxRandomDelay = 4;
   parameter int TestSize = 1000;
