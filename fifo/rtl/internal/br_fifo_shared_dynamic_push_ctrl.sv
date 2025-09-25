@@ -149,6 +149,7 @@ module br_fifo_shared_dynamic_push_ctrl #(
         .NumSymbols(NumWritePorts),
         .NumFlows(NumWritePorts),
         .SymbolWidth(AddrWidth),
+        .EnableCoverMorePopReadyThanSendable(EnableCoverPushBackpressure),
         // TODO(zhemao): check this is right
         .EnableAssertFinalNotSendable(0)
     ) br_multi_xfer_distributor_rr_inst (
