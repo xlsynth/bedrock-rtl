@@ -36,6 +36,11 @@ module br_multi_xfer_distributor_rr #(
     // If 1, cover that push_sendable can be greater than push_receivable.
     // If 0, assert that push_sendable is always less than or equal to push_receivable.
     parameter bit EnableCoverPushBackpressure = 1,
+    // If 1, cover that there are more pop flows ready to accept than
+    // sendable symbols.
+    // Otherwise, assert that there are never more pop flows ready to accept
+    // than sendable symbols.
+    parameter bit EnableCoverMorePopReadyThanSendable = 1,
     // If 1, assert that push_data is stable when push_sendable > push_receivable.
     // If 0, cover that push_data is unstable when push_sendable > push_receivable.
     parameter bit EnableAssertPushDataStability = 1,
@@ -69,6 +74,7 @@ module br_multi_xfer_distributor_rr #(
       .NumFlows(NumFlows),
       .EnableCoverPushBackpressure(EnableCoverPushBackpressure),
       .EnableAssertPushDataStability(EnableAssertPushDataStability),
+      .EnableCoverMorePopReadyThanSendable(EnableCoverMorePopReadyThanSendable),
       .EnableAssertFinalNotSendable(EnableAssertFinalNotSendable)
   ) br_multi_xfer_distributor_core_inst (
       .clk,
@@ -90,7 +96,8 @@ module br_multi_xfer_distributor_rr #(
   br_arb_multi_rr #(
       .NumRequesters(NumFlows),
       .MaxGrantPerCycle(NumSymbols),
-      .EnableCoverBlockPriorityUpdate(0)
+      .EnableCoverBlockPriorityUpdate(0),
+      .EnableCoverMoreRequestThanAllowed(EnableCoverMorePopReadyThanSendable)
   ) br_arb_multi_rr_inst (
       .clk,
       .rst,
