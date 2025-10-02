@@ -310,6 +310,13 @@ br_verilog_fpv_test_tools_suite(
             ("3", "3"),
             ("5", "3"),
         ],
+        # Depth >= NumReadPorts
+        (
+            "Depth",
+            "NumReadPorts",
+        ): [
+            ("3", "4"),
+        ],
     },
     params = {
         "Depth": [
