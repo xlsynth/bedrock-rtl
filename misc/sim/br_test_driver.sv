@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+
 // Basic test driver module that generates clock and reset for the testbench.
 // Also contains helpful functions for test assertions
 

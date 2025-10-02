@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+
 module br_mux_bin_structured_gates_tb;
 
   parameter int NumSymbolsIn = 2;

@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: Apache-2.0
+
 load("@bedrock_stitch//:defs.bzl", "all_crate_deps")
 load("@rules_rust//rust:defs.bzl", "rust_binary")
 

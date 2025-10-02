@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+
 module br_multi_xfer_reg_fwd_tb;
   parameter int NumSymbols = 2;
   parameter int SymbolWidth = 8;

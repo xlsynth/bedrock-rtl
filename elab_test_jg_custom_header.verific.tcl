@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: Apache-2.0
+
 # This file contains custom Tcl commands to run at the beginning of a Verific elaboration
 # test on an FPV monitor intended for use with JasperGold.
 
