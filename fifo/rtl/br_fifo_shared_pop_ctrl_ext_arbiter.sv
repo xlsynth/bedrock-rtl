@@ -211,7 +211,7 @@ module br_fifo_shared_pop_ctrl_ext_arbiter #(
   br_fifo_shared_read_xbar #(
       .NumFifos(NumFifos),
       .NumReadPorts(NumReadPorts),
-      .AddrWidth(AddrWidth),
+      .Depth(Depth),
       .Width(Width),
       .RamReadLatency(RamReadLatency),
       .EnableAssertPushValidStability(1),
