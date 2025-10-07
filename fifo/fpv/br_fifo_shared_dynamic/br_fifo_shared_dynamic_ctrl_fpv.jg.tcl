@@ -30,7 +30,7 @@ assert -name fv_rst_check_ptr_ram_wr_valid {rst |-> ptr_ram_wr_valid == 'd0}
 assert -name fv_rst_check_ptr_ram_rd_addr_valid {rst |-> ptr_ram_rd_addr_valid == 'd0}
 
 # limit run time to 10-mins
-set_prove_time_limit 600s
+set_prove_time_limit 10m
 
 # The output of this flow fork will not be unstable because we constrain the
 # ready to hold until valid is asserted.
@@ -45,7 +45,6 @@ set NumReadPorts $param_list(NumReadPorts)
 set Depth $param_list(Depth)
 if {$Depth < 2 * $NumReadPorts} {
   cover -disable *br_fifo_shared_read_xbar*br_flow_demux_select_unstable*br_flow_checks_valid_data_impl.*stable*
-  cover -disable *br_ram_flops_tile.gen_multi_read_checks.all_rd_ports_active_a
 }
 
 # prove command
