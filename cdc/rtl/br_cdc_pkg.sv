@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+
 package br_cdc_pkg;
 
   typedef enum logic [1:0] {

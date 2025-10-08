@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: Apache-2.0
+
 FROM rockylinux:8.9.20231119
 ARG TARGETPLATFORM
 LABEL description="Docker image for building and testing Bedrock-RTL using open source tools."
