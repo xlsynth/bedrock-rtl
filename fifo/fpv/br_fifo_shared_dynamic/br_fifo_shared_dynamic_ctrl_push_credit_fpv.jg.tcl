@@ -37,7 +37,7 @@ assert -name fv_rst_check_ptr_ram_wr_valid {rst | push_sender_in_reset |-> ptr_r
 assert -name fv_rst_check_ptr_ram_rd_addr_valid {rst | push_sender_in_reset |-> ptr_ram_rd_addr_valid == 'd0}
 
 # limit run time to 10-mins
-set_prove_time_limit 600s
+set_prove_time_limit 10m
 
 # The output of this flow fork will not be unstable because we constrain the
 # ready to hold until valid is asserted.
