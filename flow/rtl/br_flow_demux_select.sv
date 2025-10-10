@@ -43,7 +43,7 @@ module br_flow_demux_select #(
     parameter bit EnableAssertPushDataStability = EnableAssertPushValidStability,
     // If 1, assert that select is stable when backpressured.
     // If 0, cover that select can be unstable.
-    parameter bit EnableAssertSelectStability = 0,
+    parameter bit EnableAssertSelectStability = EnableAssertPushDataStability,
     // If 1, assert that push_data is always known (not X) when push_valid is asserted.
     parameter bit EnableAssertPushDataKnown = 1,
     // If 1, then assert there are no valid bits asserted at the end of the test.
