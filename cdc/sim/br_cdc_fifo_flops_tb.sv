@@ -124,16 +124,18 @@ module br_cdc_fifo_flops_tb;
       .rst
   );
 
-  // Test Sequence
+`ifdef SIMULATION
   initial begin
-    integer timeout;
-
-    // Set delay mode
     static br_cdc_pkg::cdc_delay_mode_t cdc_delay_mode = br_cdc_pkg::CdcDelayNone;
     void'($value$plusargs("cdc_delay_mode=%d", cdc_delay_mode));
     $display("set cdc_delay_mode = %0s", cdc_delay_mode.name());
     br_cdc_pkg::cdc_delay_mode = cdc_delay_mode;
+  end
+`endif
 
+  // Test Sequence
+  initial begin
+    integer timeout;
     start = 0;
 
     td.reset_dut();
