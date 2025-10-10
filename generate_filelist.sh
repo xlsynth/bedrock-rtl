@@ -66,8 +66,11 @@ PATHS_OUTPUT_FILE="${OUTPUT_PATH}/filelist_paths_${TARGET_SANITIZED}.f"
 # Add `+incdir+./macros` at the top of the file
 echo "+incdir+./macros" > "$PATHS_OUTPUT_FILE"
 
-# Run the bazel query command, filter for .sv and .svh files, format the paths, and append `./` to each line
-bazel query "kind('source file', deps(${TARGET}))" --output=label | grep -E "\\.sv$|\\.svh$" | sed 's|//|/|g; s|:|/|g; s|^|.|' >> "$PATHS_OUTPUT_FILE"
+# Use --order_output=deps to preserve the dependency order
+bazel query --order_output=deps "kind('source file', deps(${TARGET}))" --output=label \
+  | grep -E "\\.sv$|\\.svh$" \
+  | sed 's|//|/|g; s|:|/|g; s|^|.|' \
+  >> "$PATHS_OUTPUT_FILE"
 
 # Notify the user
 echo "File list generated and saved to ${PATHS_OUTPUT_FILE}"
