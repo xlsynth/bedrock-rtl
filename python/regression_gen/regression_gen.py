@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: Apache-2.0
+
 """CLI tool that discovers rules with Bazel and emits regression
 *regr.yaml* file using `render_yaml`.
 

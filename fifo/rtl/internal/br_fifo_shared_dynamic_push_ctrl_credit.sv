@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+
 `include "br_asserts_internal.svh"
 `include "br_unused.svh"
 
