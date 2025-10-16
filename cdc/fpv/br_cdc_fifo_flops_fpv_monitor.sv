@@ -7,6 +7,7 @@
 `include "br_registers.svh"
 
 module br_cdc_fifo_flops_fpv_monitor #(
+    parameter bit Jasper = 1,  // If 1 use Jasper scoreboard, else use Synopsys FML scoreboard
     parameter int Depth = 2,  // Number of entries in the FIFO. Must be at least 2.
     parameter int Width = 1,  // Width of each entry in the FIFO. Must be at least 1.
     // If 1, then ensure pop_valid/pop_data always come directly from a register
@@ -116,6 +117,7 @@ module br_cdc_fifo_flops_fpv_monitor #(
 
   // ----------Instantiate CDC FIFO FV basic checks----------
   br_cdc_fifo_basic_fpv_monitor #(
+      .Jasper(Jasper),
       .Depth(Depth),
       .Width(Width),
       .NumSyncStages(NumSyncStages),

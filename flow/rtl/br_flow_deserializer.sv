@@ -88,6 +88,9 @@ module br_flow_deserializer #(
     parameter int PopWidth = 2,
     // Width of the sideband metadata (not serialized). Must be at least 1.
     parameter int MetadataWidth = 1,
+    // If 1, cover that the push side experiences backpressure.
+    // If 0, assert that there is never backpressure.
+    parameter bit EnableCoverPushBackpressure = 1,
     // If 1, the most significant bits of the packet are received first (big endian).
     // If 0, the least significant bits are received first (little endian).
     // The order of bits within each flit is always the same that they
@@ -152,9 +155,9 @@ module br_flow_deserializer #(
       // That's because it serially receives the valid push data until the entire packet
       // has been received. If the push data is unstable during reception, then the data
       // integrity is compromised.
-      .EnableCoverBackpressure(1),
-      .EnableAssertValidStability(1),
-      .EnableAssertDataStability(1),
+      .EnableCoverBackpressure(EnableCoverPushBackpressure),
+      .EnableAssertValidStability(EnableCoverPushBackpressure),
+      .EnableAssertDataStability(EnableCoverPushBackpressure),
       .EnableAssertDataKnown(EnableAssertPushDataKnown),
       .EnableAssertFinalNotValid(EnableAssertFinalNotValid)
   ) br_flow_checks_valid_data_intg (

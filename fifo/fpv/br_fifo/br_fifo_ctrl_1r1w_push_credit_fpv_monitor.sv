@@ -24,6 +24,15 @@ module br_fifo_ctrl_1r1w_push_credit_fpv_monitor #(
     // The RAM depth may be made larger than the minimum if convenient (e.g. the
     // backing RAM is an SRAM of slightly larger depth than the FIFO depth).
     parameter int RamDepth = Depth,
+    // If 1, cover that credit_withhold can be non-zero.
+    // Otherwise, assert that it is always zero.
+    parameter bit EnableCoverCreditWithhold = 1,
+    // If 1, cover that push_sender_in_reset can be asserted
+    // Otherwise, assert that it is never asserted.
+    parameter bit EnableCoverPushSenderInReset = 1,
+    // If 1, cover that push_credit_stall can be asserted
+    // Otherwise, assert that it is never asserted.
+    parameter bit EnableCoverPushCreditStall = 1,
     localparam int AddrWidth = br_math::clamped_clog2(RamDepth),
     localparam int CountWidth = $clog2(Depth + 1),
     localparam int CreditWidth = $clog2(MaxCredit + 1)
@@ -76,7 +85,10 @@ module br_fifo_ctrl_1r1w_push_credit_fpv_monitor #(
   br_credit_receiver_fpv_monitor #(
       .PStatic(0),
       .MaxCredit(MaxCredit),
-      .NumWritePorts(1)
+      .NumWritePorts(1),
+      .EnableCoverPushCreditStall(EnableCoverPushCreditStall),
+      .EnableCoverCreditWithhold(EnableCoverCreditWithhold),
+      .EnableCoverPushSenderInReset(EnableCoverPushSenderInReset)
   ) br_credit_receiver_fpv_monitor (
       .clk,
       .rst,
@@ -147,5 +159,8 @@ bind br_fifo_ctrl_1r1w_push_credit br_fifo_ctrl_1r1w_push_credit_fpv_monitor #(
     .RegisterPushOutputs(RegisterPushOutputs),
     .RegisterPopOutputs(RegisterPopOutputs),
     .RamReadLatency(RamReadLatency),
-    .RamDepth(RamDepth)
+    .RamDepth(RamDepth),
+    .EnableCoverCreditWithhold(EnableCoverCreditWithhold),
+    .EnableCoverPushSenderInReset(EnableCoverPushSenderInReset),
+    .EnableCoverPushCreditStall(EnableCoverPushCreditStall)
 ) monitor (.*);

@@ -44,14 +44,15 @@ module br_fifo_basic_fpv_monitor #(
 
   // ----------FV assumptions----------
   `BR_ASSUME(pop_ready_liveness_a, s_eventually (pop_ready))
-  if (!EnableCoverPushBackpressure) begin : gen_push_backpressure_assume
-    `BR_ASSUME(no_push_backpressure_a, !push_ready |-> !push_valid)
-  end
-  if (EnableAssertPushValidStability) begin : gen_push_valid_stable
-    `BR_ASSUME(push_valid_stable_a, push_valid && !push_ready |=> push_valid)
-  end
-  if (EnableAssertPushDataStability) begin : gen_push_data_stable
-    `BR_ASSUME(push_data_stable_a, push_valid && !push_ready |=> $stable(push_data))
+  if (EnableCoverPushBackpressure) begin : gen_backpressure
+    if (EnableAssertPushValidStability) begin : gen_push_valid_stable
+      `BR_ASSUME(push_valid_stable_a, push_valid && !push_ready |=> push_valid)
+    end
+    if (EnableAssertPushDataStability) begin : gen_push_data_stable
+      `BR_ASSUME(push_data_stable_a, push_valid && !push_ready |=> $stable(push_data))
+    end
+  end else begin : gen_no_back_pressure
+    `BR_ASSUME(no_backpressure_a, push_valid |-> push_ready)
   end
 
   // ----------FV Modeling Code----------

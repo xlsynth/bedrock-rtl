@@ -7,6 +7,7 @@
 `include "br_registers.svh"
 
 module br_cdc_fifo_basic_fpv_monitor #(
+    parameter bit Jasper = 1,  // If 1 use Jasper scoreboard, else use Synopsys FML scoreboard
     parameter int Depth = 2,  // Number of entries in the FIFO. Must be at least 2.
     parameter int Width = 1,  // Width of each entry in the FIFO. Must be at least 1.
     // Number of synchronization stages to use for the gray counts. Must be >=2.
@@ -66,12 +67,17 @@ module br_cdc_fifo_basic_fpv_monitor #(
 
   // ----------FV assumptions----------
   `BR_ASSUME_CR(pop_ready_liveness_a, s_eventually (pop_ready), pop_clk, pop_rst)
-  if (EnableAssertPushValidStability) begin : gen_push_valid_stable
-    `BR_ASSUME_CR(push_valid_stable_a, push_valid && !push_ready |=> push_valid, push_clk, push_rst)
-  end
-  if (EnableAssertPushDataStability) begin : gen_push_data_stable
-    `BR_ASSUME_CR(push_data_stable_a, push_valid && !push_ready |=> $stable(push_data), push_clk,
-                  push_rst)
+  if (EnableCoverPushBackpressure) begin : gen_back_pressure
+    if (EnableAssertPushValidStability) begin : gen_push_valid_stable
+      `BR_ASSUME_CR(push_valid_stable_a, push_valid && !push_ready |=> push_valid, push_clk,
+                    push_rst)
+    end
+    if (EnableAssertPushDataStability) begin : gen_push_data_stable
+      `BR_ASSUME_CR(push_data_stable_a, push_valid && !push_ready |=> $stable(push_data), push_clk,
+                    push_rst)
+    end
+  end else begin : gen_no_back_pressure
+    `BR_ASSUME_CR(no_back_pressure_a, push_valid |-> push_ready, push_clk, push_rst)
   end
 
   // ----------FV Modeling Code----------
@@ -163,21 +169,44 @@ module br_cdc_fifo_basic_fpv_monitor #(
   `BR_ASSERT_CR(push_slots_a, fv_push_slots == push_slots, push_clk, push_rst)
 
   // ----------Data integrity Check----------
-  jasper_scoreboard_3 #(
-      .CHUNK_WIDTH(Width),
-      .IN_CHUNKS(1),
-      .OUT_CHUNKS(1),
-      .SINGLE_CLOCK(0),
-      .MAX_PENDING(Depth)
-  ) scoreboard (
-      .incoming_clk(push_clk),
-      .outgoing_clk(pop_clk),
-      .rstN(!rst),
-      .incoming_vld(push_vr),
-      .incoming_data(push_data),
-      .outgoing_vld(pop_vr),
-      .outgoing_data(pop_data)
-  );
+  if (Jasper) begin : gen_jasper
+    jasper_scoreboard_3 #(
+        .CHUNK_WIDTH(Width),
+        .IN_CHUNKS(1),
+        .OUT_CHUNKS(1),
+        .SINGLE_CLOCK(0),
+        .MAX_PENDING(Depth)
+    ) scoreboard (
+        .incoming_clk(push_clk),
+        .outgoing_clk(pop_clk),
+        .rstN(!rst),
+        .incoming_vld(push_vr),
+        .incoming_data(push_data),
+        .outgoing_vld(pop_vr),
+        .outgoing_data(pop_data)
+    );
+  end else begin : gen_snps
+    snps_fml_scoreboard #(
+        .DATA_CHUNK_WIDTH   (Width),
+        .NUM_OF_IN_CHUNKS   (1),
+        .NUM_OF_OUT_CHUNKS   (1),
+        .MAX_OUTSTANDING_CHUNKS  (Depth),
+        .ENABLE_INORDER (1),
+        //       .CHKLT   (0),
+        //       .MAXLT   (0),
+        //       .CHKFL   (0),
+        .ENABLE_DUAL_CLOCKS (1),
+        .SCBMODE (0)
+    ) scoreboard (
+        .Resetn  (!rst),
+        .ClkIn   (push_clk),
+        .ValidIn (push_vr),
+        .DataIn  (push_data),
+        .ClkOut  (pop_clk),
+        .ValidOut(pop_vr),
+        .DataOut (pop_data)
+    );
+  end
 
   // ----------Forward Progress Check----------
   if (EnableAssertPushValidStability) begin : gen_stable
