@@ -22,10 +22,6 @@ create_reset rd_rst -high
 #design infomation
 report_fv_complexity
 
-#reset simulation
-sim_run -stable
-sim_save_reset
-
 #run properties
 check_fv -block
 report_fv -list
