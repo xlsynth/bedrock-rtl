@@ -22,9 +22,5 @@ report_fv_complexity
 # This is RTL intention
 fvdisable {*no_deadlock_a*}
 
-#reset simulation
-sim_run -stable
-sim_save_reset
-
 #run properties
 check_fv -block
