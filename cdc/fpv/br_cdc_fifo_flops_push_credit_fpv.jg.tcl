@@ -12,10 +12,18 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+proc create_random_clock {clk main_clk} {
+  set clk_en ${clk}_en
+  virtual_net $clk_en
+  replace_driver $clk -expression "$main_clk && $clk_en" -env
+  assume -reset $clk_en
+  assume "s_eventually $clk_en"
+}
+
 # clock/reset set up
 clock clk
-clock push_clk -from 1 -to 10 -both_edges
-clock pop_clk -from 1 -to 10 -both_edges
+create_random_clock push_clk clk
+create_random_clock pop_clk clk
 
 reset -none
 assume -reset -name set_rst_during_reset {rst}
@@ -55,11 +63,7 @@ pop_rst |-> pop_valid == 'd0}
 # no push_ready signal in push credit interface
 assert -disable *fv_checker.no_ready_when_full_a*
 
-# If assertion bound - pre-condition reachable cycle >= 2:
-# it's marked as "bounded_proven (auto) instead of "undetermined"
-# this only affects the status report, not the proof
-set_prove_inferred_target_bound on
 # limit run time to 10-mins
-set_prove_time_limit 600s
+set_prove_time_limit 10m
 
 prove -all
