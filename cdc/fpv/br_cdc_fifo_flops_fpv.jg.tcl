@@ -12,10 +12,25 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+proc create_random_clock {clk main_clk} {
+  set clk_en ${clk}_en
+  virtual_net $clk_en
+  replace_driver $clk -expression "$main_clk && $clk_en" -env
+  assume -reset $clk_en
+  assume "s_eventually $clk_en"
+}
+
 # clock/reset set up
 clock clk
-clock push_clk -from 1 -to 10 -both_edges
-clock pop_clk -from 1 -to 10 -both_edges
+# random clock experiment:
+ create_random_clock push_clk clk
+ create_random_clock pop_clk clk
+# tot set up:
+# clock push_clk -from 1 -to 10 -both_edges
+# clock pop_clk -from 1 -to 10 -both_edges
+# quick 3:5 ratio test
+# clock push_clk -factor 3
+# clock pop_clk -factor 5
 reset rst push_rst pop_rst
 
 # push/pop side primary input signals only toggle w.r.t its clock
