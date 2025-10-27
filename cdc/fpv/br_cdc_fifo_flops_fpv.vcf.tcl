@@ -19,8 +19,11 @@
 
 # clock/reset set up
 create_clock clk -period 10
-create_random_clock -clock push_clk -period 10
-create_random_clock -clock pop_clk -period 10
+#create_random_clock -clock push_clk -period 10
+#create_random_clock -clock pop_clk -period 10
+# create clock with ratio 3:5
+create_clock push_clk -period 30
+create_clock pop_clk -period 50
 # Synopsys AE claims:
 # create_random_clock is implemented by driving clock through a clock gater with enable being x
 # therefore, user needs to add liveness assumptions to ensure clock will eventually toggle
