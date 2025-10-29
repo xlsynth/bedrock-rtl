@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+
 module br_cdc_bit_pulse_tb;
 
   parameter int NumStages = 3;
