@@ -30,8 +30,6 @@
 // It must be at least $clog2(NumValues) but may be set larger than the minimum
 // width. Irrespective of the width, the input binary must be in the allowed range
 // 0 <= in < NumValues.
-//
-// TODO(mgottscho): Write spec
 
 `include "br_asserts_internal.svh"
 
