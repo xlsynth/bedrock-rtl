@@ -7,10 +7,6 @@ create_reset rst -high
 #design infomation
 report_fv_complexity
 
-#reset simulation
-sim_run -stable
-sim_save_reset
-
 # standard use case: request will hold until grant
 fvtask -create standard -copy FPV
 

@@ -21,6 +21,11 @@
 create_clock clk -period 10
 create_random_clock -clock push_clk -period 10
 create_random_clock -clock pop_clk -period 10
+# Synopsys AE claims:
+# create_random_clock is implemented by driving clock through a clock gater with enable being x
+# therefore, user needs to add liveness assumptions to ensure clock will eventually toggle
+fvassume push_clk_live -expr {!push_clk |-> s_eventually $rose(push_clk)} -clock clk
+fvassume pop_clk_live -expr {!pop_clk |-> s_eventually $rose(pop_clk)} -clock clk
 
 create_reset rst -value high
 create_reset push_rst -value high

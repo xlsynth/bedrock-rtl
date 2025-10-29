@@ -7,10 +7,6 @@ create_reset rst -high
 #design infomation
 report_fv_complexity
 
-#reset simulation
-sim_run -stable
-sim_save_reset
-
 # disable unreachable RTL inline covers
 fvdisable br_arb_weighted_rr.gen_accumulated_weight\[*\].br_counter.increment_min_c
 fvdisable br_arb_weighted_rr.gen_accumulated_weight\[*\].br_counter.decrement_min_c
