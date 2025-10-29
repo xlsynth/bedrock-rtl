@@ -30,6 +30,15 @@ module br_fifo_flops_push_credit_fpv_monitor #(
     parameter int FlopRamAddressDepthStages = 0,
     parameter int FlopRamReadDataDepthStages = 0,
     parameter int FlopRamReadDataWidthStages = 0,
+    // If 1, cover that credit_withhold can be non-zero.
+    // Otherwise, assert that it is always zero.
+    parameter bit EnableCoverCreditWithhold = 1,
+    // If 1, cover that push_sender_in_reset can be asserted
+    // Otherwise, assert that it is never asserted.
+    parameter bit EnableCoverPushSenderInReset = 1,
+    // If 1, cover that push_credit_stall can be asserted
+    // Otherwise, assert that it is never asserted.
+    parameter bit EnableCoverPushCreditStall = 1,
     localparam int AddrWidth = $clog2(Depth),
     localparam int CountWidth = $clog2(Depth + 1),
     localparam int CreditWidth = $clog2(MaxCredit + 1)
@@ -73,7 +82,10 @@ module br_fifo_flops_push_credit_fpv_monitor #(
   br_credit_receiver_fpv_monitor #(
       .PStatic(0),
       .MaxCredit(MaxCredit),
-      .NumWritePorts(1)
+      .NumWritePorts(1),
+      .EnableCoverCreditWithhold(EnableCoverCreditWithhold),
+      .EnableCoverPushSenderInReset(EnableCoverPushSenderInReset),
+      .EnableCoverPushCreditStall(EnableCoverPushCreditStall)
   ) br_credit_receiver_fpv_monitor (
       .clk,
       .rst,
@@ -134,5 +146,8 @@ bind br_fifo_flops_push_credit br_fifo_flops_push_credit_fpv_monitor #(
     .FlopRamWidthTiles(FlopRamWidthTiles),
     .FlopRamAddressDepthStages(FlopRamAddressDepthStages),
     .FlopRamReadDataDepthStages(FlopRamReadDataDepthStages),
-    .FlopRamReadDataWidthStages(FlopRamReadDataWidthStages)
+    .FlopRamReadDataWidthStages(FlopRamReadDataWidthStages),
+    .EnableCoverCreditWithhold(EnableCoverCreditWithhold),
+    .EnableCoverPushSenderInReset(EnableCoverPushSenderInReset),
+    .EnableCoverPushCreditStall(EnableCoverPushCreditStall)
 ) monitor (.*);

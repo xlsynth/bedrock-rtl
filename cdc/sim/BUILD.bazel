@@ -61,7 +61,7 @@ verilog_elab_test(
                 "0",
                 "1",
             ],
-            "FlopRamReadDataDepthStages": [
+            "EnableStructuredGatesDataQualification": [
                 "0",
                 "1",
             ],
@@ -128,7 +128,7 @@ verilog_elab_test(
                 "0",
                 "1",
             ],
-            "FlopRamReadDataDepthStages": [
+            "EnableStructuredGatesDataQualification": [
                 "0",
                 "1",
             ],

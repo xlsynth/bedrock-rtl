@@ -182,6 +182,31 @@ module br_credit_sender_vc_rr_tb;
     end
   endtask
 
+  task automatic drain_credits();
+    int any_left;
+
+    $display("Draining remaining credits back to sender");
+    pop_credit = 0;
+
+    do begin
+      any_left = 0;
+
+      @(negedge clk);
+      for (int i = 0; i < NumVcs; i++) begin
+        int credit_to_return = br_math::min2(recv_credit[i], PopCreditMaxChange);
+        pop_credit[i] = credit_to_return;
+        recv_credit[i] -= credit_to_return;
+        if (recv_credit[i] > 0) any_left = 1;
+      end
+
+      @(posedge clk);
+
+      // De-assert after one cycle
+      @(negedge clk);
+      pop_credit = 0;
+    end while (any_left);
+  endtask
+
   initial begin
     push_valid = 0;
     push_data = 0;
@@ -203,6 +228,9 @@ module br_credit_sender_vc_rr_tb;
     end
 
     wait fork;
+
+    // Ensure all outstanding credits are returned to the sender
+    drain_credits();
 
     td.finish();
   end

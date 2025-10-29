@@ -424,7 +424,9 @@ module br_amba_axi_demux_fpv_monitor #(
       .MAX_PENDING_WR(MaxPendingWr),
       .CONFIG_WDATA_MASKED(0),
       .CONFIG_RDATA_MASKED(0),
-      .READ_INTERLEAVE_ON(0)
+      .READ_INTERLEAVE_ON(0),
+      .ALLOW_SPARSE_STROBE(1),
+      .BYTE_STROBE_ON(1)
   ) upstream (
       // Global signals
       .aclk    (clk),
@@ -506,7 +508,14 @@ module br_amba_axi_demux_fpv_monitor #(
         .MAX_PENDING_WR(MaxPendingWr),
         .CONFIG_WDATA_MASKED(0),
         .CONFIG_RDATA_MASKED(0),
-        .READ_INTERLEAVE_ON(0)
+        .READ_INTERLEAVE_ON(0),
+        .ALLOW_SPARSE_STROBE(1),
+        .BYTE_STROBE_ON(1),
+        // upstream_aw_sub_select will decide which downstream to pick
+        // therefore, before aw is available, we can't decide which downstream to pick
+        // Therefore, downstream DBC (data before control) precondition is unreachable
+        // Meaning: downstream can't have w before aw
+        .DATA_BEFORE_CONTROL_ON(0)
     ) downstream (
         // Global signals
         .aclk    (clk),

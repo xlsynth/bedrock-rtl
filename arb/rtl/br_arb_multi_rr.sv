@@ -40,6 +40,9 @@ module br_arb_multi_rr #(
     // If 1, cover that that enable_priority_update can be low
     // Otherwise, assert that it is always high.
     parameter bit EnableCoverBlockPriorityUpdate = 1,
+    // If 1, cover that the number of requests is greater than the number of allowed grants.
+    // Otherwise, assert that there are never more requests than allowed grants.
+    parameter bit EnableCoverMoreRequestThanAllowed = 1,
     localparam int GrantCountWidth = $clog2(MaxGrantPerCycle + 1)
 ) (
     input logic clk,
@@ -64,7 +67,11 @@ module br_arb_multi_rr #(
                     MaxGrantPerCycle >= 2 && MaxGrantPerCycle <= NumRequesters)
 
   `BR_ASSERT_INTG(grant_allowed_in_range_a, grant_allowed <= MaxGrantPerCycle)
-  `BR_COVER_INTG(more_request_than_allowed_a, $countones(request) > grant_allowed)
+  if (EnableCoverMoreRequestThanAllowed) begin : gen_more_request_than_allowed_cover
+    `BR_COVER_INTG(more_request_than_allowed_c, $countones(request) > grant_allowed)
+  end else begin : gen_more_request_than_allowed_assert
+    `BR_ASSERT_INTG(no_more_request_than_allowed_a, $countones(request) <= grant_allowed)
+  end
 
   if (EnableCoverBlockPriorityUpdate) begin : gen_block_priority_update_cover
     `BR_COVER_INTG(block_priority_update_a, !enable_priority_update && |request)

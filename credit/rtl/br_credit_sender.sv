@@ -106,6 +106,9 @@ module br_credit_sender #(
     parameter bit EnableCoverPopReceiverInReset = 1,
     // If 1, then assert there are no valid bits asserted at the end of the test.
     parameter bit EnableAssertFinalNotValid = 1,
+    // If 1, then at the end of simulation, assert that the credit counter value equals
+    // the maximum number of credits that it stored at any point during the test.
+    parameter bit EnableAssertFinalMaxValue = 1,
     // The maximum credit count value that will be checked by covers.
     parameter int CoverMaxCredit = MaxCredit,
 
@@ -208,7 +211,8 @@ module br_credit_sender #(
       .EnableCoverDecrementBackpressure(NumFlows == 1 && EnableCoverPushBackpressure),
       .EnableCoverWithhold(EnableCoverCreditWithhold),
       .EnableAssertFinalNotValid(EnableAssertFinalNotValid),
-      .CoverMaxValue(CoverMaxCredit)
+      .CoverMaxValue(CoverMaxCredit),
+      .EnableAssertFinalMaxValue(EnableAssertFinalMaxValue)
   ) br_credit_counter (
       .clk,
       .rst(either_rst),

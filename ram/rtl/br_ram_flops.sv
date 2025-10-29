@@ -29,8 +29,10 @@ module br_ram_flops #(
     parameter int Depth = 2,  // Number of entries in the RAM. Must be at least 2.
     parameter int Width = 1,  // Width of each entry in the RAM. Must be at least 1.
     // Number of tiles along the depth (address) dimension. Must be at least 1 and evenly divide Depth.
+    // Must be 1 if UseStructuredGates is 1.
     parameter int DepthTiles = 1,
     // Number of tiles along the width (data) dimension. Must be at least 1 and evenly divide Width.
+    // Must be 1 if UseStructuredGates is 1.
     parameter int WidthTiles = 1,
     // If 1, allow partial writes to the memory using the wr_word_en signal.
     // If 0, only full writes are allowed and wr_word_en is ignored.
@@ -45,10 +47,10 @@ module br_ram_flops #(
     // in the depth dimension. Must be at least 0.
     parameter int AddressDepthStages = 0,
     // Number of pipeline register stages inserted along the read data path in the depth dimension.
-    // Must be at least 0.
+    // Must be at least 0. Must be 0 if UseStructuredGates is 1.
     parameter int ReadDataDepthStages = 0,
     // Number of pipeline register stages inserted along the read data path in the width dimension.
-    // Must be at least 0.
+    // Must be at least 0. Must be 0 if UseStructuredGates is 1.
     parameter int ReadDataWidthStages = 0,
     // If 1, then each memory tile has a read-after-write hazard latency of 0 cycles, i.e.,
     // if the tile read and write address are valid and equal on the same cycle then the tile
@@ -64,6 +66,10 @@ module br_ram_flops #(
     // If 1, use structured mux2 gates for the read mux instead of relying on synthesis.
     // This is required if write and read clocks are different.
     parameter bit UseStructuredGates = 0,
+    // If 1 and UseStructuredGates is 1, then the read data is qualified with the
+    // rd_data_valid signal, 0 when not valid. Should generally always be 1 for CDC
+    // use cases.
+    parameter bit EnableStructuredGatesDataQualification = 1,
     // If 1, then assert there are no valid bits asserted at the end of the test.
     parameter bit EnableAssertFinalNotValid = 1,
     localparam int AddressWidth = br_math::clamped_clog2(Depth),
@@ -121,6 +127,17 @@ module br_ram_flops #(
   // WidthTiles checks
   `BR_ASSERT_STATIC(width_tiles_gte1_a, WidthTiles >= 1)
   `BR_ASSERT_STATIC(width_tiles_evenly_divides_width_a, (WidthTiles * TileWidth) == Width)
+
+  // Structured gates checks (CDC use cases)
+  // Multi-tile configurations are not supported with structured gates.
+  `BR_ASSERT_STATIC(no_depth_tiles_if_structured_gates_a, (DepthTiles == 1) || !UseStructuredGates)
+  `BR_ASSERT_STATIC(no_width_tiles_if_structured_gates_a, (WidthTiles == 1) || !UseStructuredGates)
+  // Multi-stage read data pipelines are not supported with structured gates, data must be
+  // qualified before destination flop (which is not supported).
+  `BR_ASSERT_STATIC(no_read_depth_stages_if_structured_gates_a,
+                    (ReadDataDepthStages == 0) || !UseStructuredGates)
+  `BR_ASSERT_STATIC(no_read_width_stages_if_structured_gates_a,
+                    (ReadDataWidthStages == 0) || !UseStructuredGates)
 
   // Address stages checks
   `BR_ASSERT_STATIC(address_depth_stages_gte0_a, AddressDepthStages >= 0)
@@ -279,6 +296,7 @@ module br_ram_flops #(
           .EnableBypass(TileEnableBypass),
           .EnableReset(EnableMemReset),
           .UseStructuredGates(UseStructuredGates),
+          .EnableStructuredGatesDataQualification(EnableStructuredGatesDataQualification),
           .EnableAssertFinalNotValid(EnableAssertFinalNotValid)
       ) br_ram_flops_tile (
           .wr_clk,

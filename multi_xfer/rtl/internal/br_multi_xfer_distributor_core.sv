@@ -25,7 +25,9 @@ module br_multi_xfer_distributor_core #(
     parameter int SymbolWidth = 1,
     // The number of flows to distribute to. Must be at least NumSymbols.
     parameter int NumFlows = 2,
+    parameter bit EnableCoverPushBackpressure = 1,
     parameter bit EnableAssertPushDataStability = 1,
+    parameter bit EnableCoverMorePopReadyThanSendable = 1,
     parameter bit EnableAssertFinalNotSendable = 1,
 
     localparam int CountWidth = $clog2(NumSymbols + 1)
@@ -67,6 +69,7 @@ module br_multi_xfer_distributor_core #(
   br_multi_xfer_checks_sendable_data_intg #(
       .NumSymbols(NumSymbols),
       .SymbolWidth(SymbolWidth),
+      .EnableCoverBackpressure(EnableCoverPushBackpressure),
       .EnableAssertDataStability(EnableAssertPushDataStability)
   ) br_multi_xfer_checks_sendable_data_intg_push (
       .clk(clk),
@@ -75,6 +78,12 @@ module br_multi_xfer_distributor_core #(
       .receivable(push_receivable),
       .data(push_data)
   );
+
+  if (EnableCoverMorePopReadyThanSendable) begin : gen_more_pop_ready_than_sendable_cover
+    `BR_COVER_INTG(more_pop_ready_than_sendable_c, $countones(pop_ready) > push_sendable)
+  end else begin : gen_no_more_pop_ready_than_sendable_assert
+    `BR_ASSERT_INTG(no_more_pop_ready_than_sendable_a, $countones(pop_ready) <= push_sendable)
+  end
 
   // Internal integration checks
   `BR_ASSERT_IMPL(grant_count_lt_allowed_a, grant_count <= grant_allowed)
