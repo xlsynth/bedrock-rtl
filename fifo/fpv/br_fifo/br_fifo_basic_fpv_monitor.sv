@@ -8,6 +8,7 @@
 `include "br_fv.svh"
 
 module br_fifo_basic_fpv_monitor #(
+    parameter bit WolperColorEn = 0,
     parameter int Depth = 2,  // Number of entries in the FIFO. Must be at least 2.
     parameter int Width = 1,  // Width of each entry in the FIFO. Must be at least 1.
     parameter bit EnableBypass = 1,
@@ -18,6 +19,7 @@ module br_fifo_basic_fpv_monitor #(
 ) (
     input logic clk,
     input logic rst,
+    input logic [$clog2(Width)-1:0] magic_bit,
 
     // Push-side interface
     input logic             push_ready,
@@ -92,20 +94,45 @@ module br_fifo_basic_fpv_monitor #(
   `BR_ASSERT(slots_a, fv_slots == slots)
 
   // ----------Data integrity Check----------
-  jasper_scoreboard_3 #(
-      .CHUNK_WIDTH(Width),
-      .IN_CHUNKS(1),
-      .OUT_CHUNKS(1),
-      .SINGLE_CLOCK(1),
-      .MAX_PENDING(Depth)
-  ) scoreboard (
-      .clk(clk),
-      .rstN(!rst),
-      .incoming_vld(push_valid & push_ready),
-      .incoming_data(push_data),
-      .outgoing_vld(pop_valid & pop_ready),
-      .outgoing_data(pop_data)
-  );
+  if (WolperColorEn == 0) begin : gen_scoreboard
+    jasper_scoreboard_3 #(
+        .CHUNK_WIDTH(Width),
+        .IN_CHUNKS(1),
+        .OUT_CHUNKS(1),
+        .SINGLE_CLOCK(1),
+        .MAX_PENDING(Depth)
+    ) scoreboard (
+        .clk(clk),
+        .rstN(!rst),
+        .incoming_vld(push_valid & push_ready),
+        .incoming_data(push_data),
+        .outgoing_vld(pop_valid & pop_ready),
+        .outgoing_data(pop_data)
+    );
+  end else begin : gen_wolper_coloring
+    // ----------FV wolper coloring checker----------
+    fv_wolper_coloring #(
+        .CheckMode(0),
+        .DataWidth(Width)
+    ) push_wolper_coloring (
+        .clk(clk),
+        .rst(rst),
+        .magic_bit(magic_bit),
+        .valid(push_valid & push_ready),
+        .data(push_data)
+    );
+
+    fv_wolper_coloring #(
+        .CheckMode(1),
+        .DataWidth(Width)
+    ) pop_wolper_coloring (
+        .clk(clk),
+        .rst(rst),
+        .magic_bit(magic_bit),
+        .valid(pop_valid & pop_ready),
+        .data(pop_data)
+    );
+  end
 
   // ----------Forward Progress Check----------
   `BR_ASSERT(no_deadlock_pop_a, push_valid |-> s_eventually pop_valid)

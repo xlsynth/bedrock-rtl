@@ -24,3 +24,12 @@ verilog_library(
     name = "fv_4phase_handshake",
     srcs = ["fv_4phase_handshake.sv"],
 )
+
+# FV wolper coloring generator
+verilog_library(
+    name = "fv_wolper_coloring",
+    srcs = ["fv_wolper_coloring.sv"],
+    deps = [
+        "//macros:br_registers",
+    ],
+)

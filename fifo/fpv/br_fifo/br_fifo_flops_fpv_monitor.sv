@@ -49,7 +49,30 @@ module br_fifo_flops_fpv_monitor #(
     input logic [CountWidth-1:0] items_next
 );
 
+  localparam bit WolperColorEn = 1;
+  logic [$clog2(Width)-1:0] magic_bit;
+  `BR_ASSUME(magic_bit_range_a, $stable(magic_bit) && (magic_bit < Width))
+
+  // Instantiate RAM invariant monitor
+  br_fifo_ram_invariant #(
+      .Depth(Depth),
+      .Width(Width),
+      .WolperColorEn(WolperColorEn),
+      .EnableBypass(EnableBypass),
+      .RegisterPopOutputs(RegisterPopOutputs),
+      .FlopRamDepthTiles(FlopRamDepthTiles),
+      .FlopRamWidthTiles(FlopRamWidthTiles),
+      .FlopRamAddressDepthStages(FlopRamAddressDepthStages),
+      .FlopRamReadDataDepthStages(FlopRamReadDataDepthStages),
+      .FlopRamReadDataWidthStages(FlopRamReadDataWidthStages)
+  ) br_fifo_ram_invariant (
+      .clk,
+      .rst,
+      .magic_bit
+  );
+
   br_fifo_basic_fpv_monitor #(
+      .WolperColorEn(1),
       .Depth(Depth),
       .Width(Width),
       .EnableBypass(EnableBypass),
@@ -59,6 +82,7 @@ module br_fifo_flops_fpv_monitor #(
   ) br_fifo_basic_fpv_monitor (
       .clk,
       .rst,
+      .magic_bit,
       .push_ready,
       .push_valid,
       .push_data,

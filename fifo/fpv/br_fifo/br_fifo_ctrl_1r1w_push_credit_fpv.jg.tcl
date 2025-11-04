@@ -26,7 +26,8 @@ assert -name fv_rst_check_ram_rd_addr_valid {rst | push_sender_in_reset |-> ram_
 cover -disable *br_fifo_basic_fpv_monitor.gen_push_backpressure_assume.no_push_backpressure*
 
 # limit run time to 10-mins
-set_prove_time_limit 600s
+set_prove_time_limit 10m
 
 # prove command
-prove -all
+prove -all -time_limit 1m
+prove -all -with_proven

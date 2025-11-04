@@ -21,3 +21,12 @@ verilog_library(
         "//pkg:br_math_pkg",
     ],
 )
+
+# br_ram invariant
+verilog_library(
+    name = "br_fifo_ram_invariant",
+    srcs = ["br_fifo_ram_invariant.sv"],
+    deps = [
+        "//pkg:br_math_pkg",
+    ],
+)
