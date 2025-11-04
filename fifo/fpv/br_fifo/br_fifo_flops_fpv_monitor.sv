@@ -49,7 +49,12 @@ module br_fifo_flops_fpv_monitor #(
     input logic [CountWidth-1:0] items_next
 );
 
+  localparam bit WolperColorEn = 1;
+  logic [$clog2(Width)-1:0] magic_bit_index;
+  `BR_ASSUME(magic_bit_index_range_a, $stable(magic_bit_index) && (magic_bit_index < Width))
+
   br_fifo_basic_fpv_monitor #(
+      .WolperColorEn(1),
       .Depth(Depth),
       .Width(Width),
       .EnableBypass(EnableBypass),
@@ -59,6 +64,7 @@ module br_fifo_flops_fpv_monitor #(
   ) br_fifo_basic_fpv_monitor (
       .clk,
       .rst,
+      .magic_bit_index,
       .push_ready,
       .push_valid,
       .push_data,

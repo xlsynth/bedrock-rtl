@@ -7,6 +7,7 @@
 `include "br_registers.svh"
 
 module br_fifo_shared_pstatic_basic_fpv_monitor #(
+    parameter bit WolperColorEn = 0,
     parameter int NumFifos = 2,
     parameter int Depth = 2,
     parameter int Width = 1,

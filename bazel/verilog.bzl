@@ -102,7 +102,8 @@ def _verilog_base_impl(ctx, subcmd, test = True, extra_args = [], extra_runfiles
     Returns:
         DefaultInfo for the rule that describes the runfiles, depset, and executable
     """
-    runfiles = []
+    data_files = getattr(ctx.files, "data", [])
+    runfiles = list(data_files)
     runfiles += ctx.files.verilog_runner_tool
     runfiles += ctx.files.verilog_runner_plugins
     srcs = get_transitive(ctx = ctx, srcs_not_hdrs = True).to_list()
@@ -597,6 +598,10 @@ rule_verilog_fpv_test = rule(
             allow_files = True,
             doc = "Verilog runner plugins to load from this workspace, in addition to those loaded from VERILOG_RUNNER_PLUGIN_PATH.",
         ),
+        "data": attr.label_list(
+            doc = "Additional files to copy into the runfiles tree for the FPV job.",
+            allow_files = True,
+        ),
         "tool": attr.string(
             doc = "Formal tool to use.",
             mandatory = True,
@@ -687,6 +692,10 @@ rule_verilog_fpv_sandbox = rule(
             default = ["//python/verilog_runner/plugins:iverilog.py"],
             allow_files = True,
             doc = "Verilog runner plugins to load from this workspace, in addition to those loaded from VERILOG_RUNNER_PLUGIN_PATH.",
+        ),
+        "data": attr.label_list(
+            doc = "Additional files to copy into the sandbox tarball.",
+            allow_files = True,
         ),
         "tool": attr.string(
             doc = "Formal tool to use.",

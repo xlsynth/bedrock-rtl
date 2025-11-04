@@ -10,6 +10,9 @@ package(default_visibility = ["//fifo/fpv:__subpackages__"])
 verilog_library(
     name = "br_fifo_basic_fpv_monitor",
     srcs = ["br_fifo_basic_fpv_monitor.sv"],
+    deps = [
+        "//fpv/lib:fv_wolper_coloring",
+    ],
 )
 
 #################################################################
@@ -182,6 +185,7 @@ verilog_elab_test(
 # test valid ready protocol
 br_verilog_fpv_test_tools_suite(
     name = "br_fifo_flops_test_backpressure",
+    data = ["//fifo/fpv:br_ram_invariant_tcl"],
     illegal_param_combinations = {
         (
             "EnableCoverPushBackpressure",
@@ -218,6 +222,7 @@ br_verilog_fpv_test_tools_suite(
 # Normal tests
 br_verilog_fpv_test_tools_suite(
     name = "br_fifo_flops_test_suite",
+    data = ["//fifo/fpv:br_ram_invariant_tcl"],
     params = {
         "Depth": [
             "2",
@@ -245,6 +250,7 @@ br_verilog_fpv_test_tools_suite(
 # tests focus on Ram latency and tiles
 br_verilog_fpv_test_tools_suite(
     name = "br_fifo_flops_test_ram",
+    data = ["//fifo/fpv:br_ram_invariant_tcl"],
     params = {
         "Depth": [
             "6",
@@ -431,6 +437,7 @@ verilog_elab_test(
 # normal tests
 br_verilog_fpv_test_tools_suite(
     name = "br_fifo_flops_push_credit_test_suite",
+    data = ["//fifo/fpv:br_ram_invariant_tcl"],
     params = {
         "Depth": [
             "2",
@@ -462,6 +469,7 @@ br_verilog_fpv_test_tools_suite(
 # tests focus on Ram latency and tiles
 br_verilog_fpv_test_tools_suite(
     name = "br_fifo_flops_push_credit_test_ram",
+    data = ["//fifo/fpv:br_ram_invariant_tcl"],
     params = {
         "Depth": [
             "6",

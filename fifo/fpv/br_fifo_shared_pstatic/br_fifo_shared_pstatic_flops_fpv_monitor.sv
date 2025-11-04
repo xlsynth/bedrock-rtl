@@ -84,12 +84,17 @@ module br_fifo_shared_pstatic_flops_fpv_monitor #(
     input logic [NumFifos-1:0]            pop_empty
 );
 
+  localparam bit WolperColorEn = 0;
+  logic [$clog2(Width)-1:0] magic_bit_index;
+  `BR_ASSUME(magic_bit_index_range_a, $stable(magic_bit_index) && (magic_bit_index < Width))
+
   localparam int RamReadLatency = RamAddressDepthStages +
                                   RamReadDataDepthStages +
                                   RamReadDataWidthStages;
 
   // ----------FIFO basic checks----------
   br_fifo_shared_pstatic_basic_fpv_monitor #(
+      .WolperColorEn(WolperColorEn),
       .NumFifos(NumFifos),
       .Depth(Depth),
       .Width(Width),

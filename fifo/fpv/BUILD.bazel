@@ -21,3 +21,8 @@ verilog_library(
         "//pkg:br_math_pkg",
     ],
 )
+
+filegroup(
+    name = "br_ram_invariant_tcl",
+    srcs = ["br_ram_invariant.tcl"],
+)

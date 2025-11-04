@@ -95,6 +95,10 @@ module br_fifo_shared_dynamic_flops_push_credit_fpv_monitor #(
     input logic [NumFifos-1:0][Width-1:0] pop_data
 );
 
+  localparam bit WolperColorEn = 0;
+  logic [$clog2(Width)-1:0] magic_bit_index;
+  `BR_ASSUME(magic_bit_index_range_a, $stable(magic_bit_index) && (magic_bit_index < Width))
+
   // ----------Instantiate credit FV checker----------
   br_credit_receiver_fpv_monitor #(
       .PStatic(0),
@@ -125,6 +129,7 @@ module br_fifo_shared_dynamic_flops_push_credit_fpv_monitor #(
   localparam bit HasStagingBuffer = (DataRamReadLatency > 0) || RegisterPopOutputs;
 
   br_fifo_shared_dynamic_basic_fpv_monitor #(
+      .WolperColorEn(WolperColorEn),
       .NumWritePorts(NumWritePorts),
       .NumReadPorts(NumReadPorts),
       .NumFifos(NumFifos),
