@@ -23,14 +23,12 @@ assert -name fv_rst_check_pop_valid {rst | push_sender_in_reset |-> pop_valid ==
 # The push_ready is tied to 1, so the precondition of the assumption won't be met
 cover -disable *br_fifo_basic_fpv_monitor.gen_push_backpressure_assume.no_push_backpressure*
 
-array set param_list [get_design_info -list parameter]
-set Depth $param_list(FlopRamDepthTiles)
-set Width $param_list(FlopRamWidthTiles)
-for {set r 0} {$r < $Depth} {incr r} {
-    for {set c 0} {$c < $Width} {incr c} {
-        # initalize ram to 0 so we don't get spurious 1s
-        assume -name init_ram_to_0_row${r}_col${c} "\$fell(rst) |-> br_ram_flops.gen_row\[$r\].gen_col\[$c\].br_ram_flops_tile.mem == '0"
-    }
+# source ram invariant properties
+array set local_param_list [get_design_info -instance monitor -list local_parameter]
+set WolperColorEn $local_param_list(WolperColorEn)
+if {[string index $WolperColorEn end] eq "1"} {
+    set invariant_path [file join $::env(TEST_SRCDIR) $::env(TEST_WORKSPACE) fifo fpv br_ram_invariant.tcl]
+    source $invariant_path
 }
 
 # limit run time to 10-mins

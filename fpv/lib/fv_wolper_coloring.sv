@@ -1,23 +1,32 @@
 // SPDX-License-Identifier: Apache-2.0
 
-
+// Reference: https://semiwiki.com/x-subscriber/oski-technology/7537-the-wolper-method/
+// FV wolper coloring module
+// This module checks/assumes (decided by parameter CheckMode) that in the input data stream,
+// a specific bit (indicated by magic_bit_index) follows the pattern of 0000...11...0000.
+// That is, two consecutive 1s will be injected at any random time in the data stream,
+// Besides these two 1s, all other bits at magic_bit_index position should be 0.
+// The module also includes coverage to count the number of valid data inputs.
 `include "br_asserts.svh"
 `include "br_registers.svh"
 
 module fv_wolper_coloring #(
+    // If CheckMode is 1, the module checks the property using assertions.
+    // If CheckMode is 0, the module assumes the property using assumptions.
     parameter bit CheckMode = 1,
     parameter int DataWidth = 4,
+    // Number of coverage points to be generated for valid data inputs
     parameter int NumCover  = 2
 ) (
     input logic clk,
     input logic rst,
-    input logic [$clog2(DataWidth)-1:0] magic_bit,
+    input logic [$clog2(DataWidth)-1:0] magic_bit_index,
     input logic valid,
     input logic [DataWidth-1:0] data
 );
 
   // Integration Check
-  `BR_ASSERT(magic_bit_range_a, $stable(magic_bit) && (magic_bit < DataWidth))
+  `BR_ASSERT(magic_bit_index_range_a, $stable(magic_bit_index) && (magic_bit_index < DataWidth))
 
   typedef enum logic [1:0] {
     S0,      // start state: only 0 has been received
@@ -40,17 +49,17 @@ module fv_wolper_coloring #(
     unique case (state)
       S0: begin
         if (valid) begin
-          state_n = data[magic_bit] ? S1 : S0;
+          state_n = data[magic_bit_index] ? S1 : S0;
         end
       end
       S1: begin
         if (valid) begin
-          state_n = data[magic_bit] ? S2 : S_ERROR;
+          state_n = data[magic_bit_index] ? S2 : S_ERROR;
         end
       end
       S2: begin
         if (valid) begin
-          state_n = data[magic_bit] ? S_ERROR : S2;
+          state_n = data[magic_bit_index] ? S_ERROR : S2;
         end
       end
       S_ERROR: begin

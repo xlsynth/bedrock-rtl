@@ -64,8 +64,8 @@ module br_fifo_ctrl_1r1w_fpv_monitor #(
 );
 
   localparam bit WolperColorEn = 1;
-  logic [$clog2(Width)-1:0] magic_bit;
-  `BR_ASSUME(magic_bit_range_a, $stable(magic_bit) && (magic_bit < Width))
+  logic [$clog2(Width)-1:0] magic_bit_index;
+  `BR_ASSUME(magic_bit_index_range_a, $stable(magic_bit_index) && (magic_bit_index < Width))
 
   // ----------Data Ram FV model----------
   br_fifo_fv_ram #(
@@ -78,7 +78,7 @@ module br_fifo_ctrl_1r1w_fpv_monitor #(
   ) fv_data_ram (
       .clk,
       .rst,
-      .magic_bit(magic_bit),
+      .magic_bit_index(magic_bit_index),
       .ram_wr_valid(ram_wr_valid),
       .ram_wr_addr(ram_wr_addr),
       .ram_wr_data(ram_wr_data),
@@ -100,7 +100,7 @@ module br_fifo_ctrl_1r1w_fpv_monitor #(
   ) br_fifo_basic_fpv_monitor (
       .clk,
       .rst,
-      .magic_bit,
+      .magic_bit_index,
       .push_ready,
       .push_valid,
       .push_data,

@@ -22,11 +22,7 @@ verilog_library(
     ],
 )
 
-# br_ram invariant
-verilog_library(
-    name = "br_fifo_ram_invariant",
-    srcs = ["br_fifo_ram_invariant.sv"],
-    deps = [
-        "//pkg:br_math_pkg",
-    ],
+filegroup(
+    name = "br_ram_invariant_tcl",
+    srcs = ["br_ram_invariant.tcl"],
 )

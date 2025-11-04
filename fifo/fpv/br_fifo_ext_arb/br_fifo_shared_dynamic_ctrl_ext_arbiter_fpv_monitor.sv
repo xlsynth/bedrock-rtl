@@ -97,6 +97,9 @@ module br_fifo_shared_dynamic_ctrl_ext_arbiter_fpv_monitor #(
     input logic [NumReadPorts-1:0][NumFifos-1:0] arb_grant,
     input logic [NumReadPorts-1:0] arb_enable_priority_update
 );
+  localparam bit WolperColorEn = 0;
+  logic [$clog2(Width)-1:0] magic_bit_index;
+  `BR_ASSUME(magic_bit_index_range_a, $stable(magic_bit_index) && (magic_bit_index < Width))
 
   localparam bit HasStagingBuffer = (DataRamReadLatency > 0) || RegisterPopOutputs;
 
@@ -114,6 +117,7 @@ module br_fifo_shared_dynamic_ctrl_ext_arbiter_fpv_monitor #(
 
   // ----------Data Ram FV model----------
   br_fifo_fv_ram #(
+      .WolperColorEn(WolperColorEn),
       .NumWritePorts(NumWritePorts),
       .NumReadPorts(NumReadPorts),
       .Depth(Depth),
@@ -122,6 +126,7 @@ module br_fifo_shared_dynamic_ctrl_ext_arbiter_fpv_monitor #(
   ) fv_data_ram (
       .clk,
       .rst,
+      .magic_bit_index,
       .ram_wr_valid(data_ram_wr_valid),
       .ram_wr_addr(data_ram_wr_addr),
       .ram_wr_data(data_ram_wr_data),
@@ -133,6 +138,7 @@ module br_fifo_shared_dynamic_ctrl_ext_arbiter_fpv_monitor #(
 
   // ----------Ptr Ram FV model----------
   br_fifo_fv_ram #(
+      .WolperColorEn(0),
       .NumWritePorts(NumWritePorts),
       .NumReadPorts(NumReadPorts),
       .Depth(Depth),
@@ -141,6 +147,7 @@ module br_fifo_shared_dynamic_ctrl_ext_arbiter_fpv_monitor #(
   ) fv_ptr_ram (
       .clk,
       .rst,
+      .magic_bit_index('0),  // Not used
       .ram_wr_valid(ptr_ram_wr_valid),
       .ram_wr_addr(ptr_ram_wr_addr),
       .ram_wr_data(ptr_ram_wr_data),
@@ -152,6 +159,7 @@ module br_fifo_shared_dynamic_ctrl_ext_arbiter_fpv_monitor #(
 
   // ----------FIFO basic checks----------
   br_fifo_shared_dynamic_basic_fpv_monitor #(
+      .WolperColorEn(WolperColorEn),
       .NumWritePorts(NumWritePorts),
       .NumReadPorts(NumReadPorts),
       .NumFifos(NumFifos),

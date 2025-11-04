@@ -85,8 +85,13 @@ module br_fifo_shared_pstatic_ctrl_fpv_monitor #(
     input logic [    Width-1:0] ram_rd_data
 );
 
+  localparam bit WolperColorEn = 0;
+  logic [$clog2(Width)-1:0] magic_bit_index;
+  `BR_ASSUME(magic_bit_index_range_a, $stable(magic_bit_index) && (magic_bit_index < Width))
+
   // ----------Data Ram FV model----------
   br_fifo_fv_ram #(
+      .WolperColorEn(WolperColorEn),
       .NumWritePorts(1),
       .NumReadPorts(1),
       .Depth(Depth),
@@ -95,6 +100,7 @@ module br_fifo_shared_pstatic_ctrl_fpv_monitor #(
   ) fv_ram (
       .clk,
       .rst,
+      .magic_bit_index(magic_bit_index),
       .ram_wr_valid(ram_wr_valid),
       .ram_wr_addr(ram_wr_addr),
       .ram_wr_data(ram_wr_data),
@@ -106,6 +112,7 @@ module br_fifo_shared_pstatic_ctrl_fpv_monitor #(
 
   // ----------FIFO basic checks----------
   br_fifo_shared_pstatic_basic_fpv_monitor #(
+      .WolperColorEn(WolperColorEn),
       .NumFifos(NumFifos),
       .Depth(Depth),
       .Width(Width),

@@ -17,7 +17,7 @@ module br_fifo_fv_ram #(
 ) (
     input logic clk,
     input logic rst,
-    input logic [$clog2(Width)-1:0] magic_bit,
+    input logic [$clog2(Width)-1:0] magic_bit_index,
 
     // Data RAM Ports
     input logic [NumWritePorts-1:0] ram_wr_valid,
@@ -48,7 +48,7 @@ module br_fifo_fv_ram #(
 
   for (genvar d = 0; d < Depth; d++) begin : gen_magic_coloring
     always_comb begin
-      fv_magic_col[d] = fv_ram_data[d][magic_bit];
+      fv_magic_col[d] = fv_ram_data[d][magic_bit_index];
     end
   end
 

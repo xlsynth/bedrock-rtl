@@ -19,7 +19,7 @@ module br_fifo_basic_fpv_monitor #(
 ) (
     input logic clk,
     input logic rst,
-    input logic [$clog2(Width)-1:0] magic_bit,
+    input logic [$clog2(Width)-1:0] magic_bit_index,
 
     // Push-side interface
     input logic             push_ready,
@@ -117,7 +117,7 @@ module br_fifo_basic_fpv_monitor #(
     ) push_wolper_coloring (
         .clk(clk),
         .rst(rst),
-        .magic_bit(magic_bit),
+        .magic_bit_index(magic_bit_index),
         .valid(push_valid & push_ready),
         .data(push_data)
     );
@@ -128,7 +128,7 @@ module br_fifo_basic_fpv_monitor #(
     ) pop_wolper_coloring (
         .clk(clk),
         .rst(rst),
-        .magic_bit(magic_bit),
+        .magic_bit_index(magic_bit_index),
         .valid(pop_valid & pop_ready),
         .data(pop_data)
     );

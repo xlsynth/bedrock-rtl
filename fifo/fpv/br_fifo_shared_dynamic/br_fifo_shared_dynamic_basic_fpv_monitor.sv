@@ -7,6 +7,8 @@
 `include "br_registers.svh"
 
 module br_fifo_shared_dynamic_basic_fpv_monitor #(
+    // Enable Wolper colorization
+    parameter bit WolperColorEn = 0,
     // Number of write ports. Must be >=1.
     parameter int NumWritePorts = 1,
     // Number of read ports. Must be >=1 and a power of 2.

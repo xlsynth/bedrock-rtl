@@ -12,14 +12,12 @@ assume -name no_push_valid_during_reset {rst |-> push_valid == 'd0}
 # primary output control signal should be legal during reset
 assert -name fv_rst_check_pop_valid {rst |-> pop_valid == 'd0}
 
-array set param_list [get_design_info -list parameter]
-set Depth $param_list(FlopRamDepthTiles)
-set Width $param_list(FlopRamWidthTiles)
-for {set r 0} {$r < $Depth} {incr r} {
-    for {set c 0} {$c < $Width} {incr c} {
-        # initalize ram to 0 so we don't get spurious 1s
-        assume -name init_ram_to_0_row${r}_col${c} "\$fell(rst) |-> br_ram_flops.gen_row\[$r\].gen_col\[$c\].br_ram_flops_tile.mem == '0"
-    }
+# source ram invariant properties
+array set local_param_list [get_design_info -instance monitor -list local_parameter]
+set WolperColorEn $local_param_list(WolperColorEn)
+if {$WolperColorEn eq "1'b1"} {
+    set invariant_path [file join $::env(TEST_SRCDIR) $::env(TEST_WORKSPACE) fifo fpv br_ram_invariant.tcl]
+    source $invariant_path
 }
 
 # limit run time to 10-mins
