@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: Apache-2.0
+
 """iverilog plugin for Verilog Runner."""
 
 import argparse
