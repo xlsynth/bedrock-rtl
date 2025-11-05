@@ -19,7 +19,7 @@ module br_fifo_shared_pstatic_flops_push_credit_fpv_monitor #(
     parameter bit RegisterPushOutputs = 1,
     // The depth of the pop-side staging buffer.
     // This affects the pop bandwidth of each logical FIFO.
-    // The bandwidth will be `StagingBufferDepth / (PointerRamReadLatency + 1)`.
+    // The bandwidth will be `StagingBufferDepth / (RamReadLatency + 1)`.
     parameter int StagingBufferDepth = 1,
     // If 1, make sure pop_valid/pop_data are registered at the output
     // of the staging buffer. This adds a cycle of cut-through latency.
