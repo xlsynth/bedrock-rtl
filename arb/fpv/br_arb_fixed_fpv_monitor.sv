@@ -7,7 +7,7 @@
 `include "br_fv.svh"
 
 module br_arb_fixed_fpv_monitor #(
-    // Must be at least 2
+    // Must be at least 1
     parameter int NumRequesters = 2
 ) (
     input logic clk,
@@ -28,8 +28,19 @@ module br_arb_fixed_fpv_monitor #(
   );
 
   // ----------Fixed-Priority Check----------
-  logic [$clog2(NumRequesters)-1:0] i, j;
-  `BR_FV_2RAND_IDX(i, j, NumRequesters)
+  localparam int IdxWidth = (NumRequesters > 1) ? $clog2(NumRequesters) : 1;
+  logic [IdxWidth-1:0] i, j;
+
+  generate
+    if (NumRequesters > 1) begin : gen_multi_requester_idxs
+      `BR_FV_2RAND_IDX(i, j, NumRequesters)
+    end else begin : gen_single_requester_idx
+      always_comb begin
+        i = '0;
+        j = '0;
+      end
+    end
+  endgenerate
 
   `BR_ASSERT(strict_priority_a, (i < j) && request[i] && request[j] |-> !grant[j])
 

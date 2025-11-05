@@ -9,7 +9,7 @@
 `include "br_asserts_internal.svh"
 
 module br_arb_fixed #(
-    // Must be at least 2
+    // Must be at least 1
     parameter int NumRequesters = 2
 ) (
     // ri lint_check_waive HIER_NET_NOT_READ HIER_BRANCH_NOT_READ INPUT_NOT_READ
