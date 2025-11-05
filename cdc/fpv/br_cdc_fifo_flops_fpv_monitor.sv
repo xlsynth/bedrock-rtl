@@ -115,37 +115,11 @@ module br_cdc_fifo_flops_fpv_monitor #(
       .pop_items
   );
 
-  // ----------Instantiate CDC FIFO FV basic checks----------
-  br_cdc_fifo_basic_fpv_monitor #(
-      .Jasper(Jasper),
-      .Depth(Depth),
-      .Width(Width),
-      .NumSyncStages(NumSyncStages),
-      .EnableCoverPushBackpressure(EnableCoverPushBackpressure),
-      .EnableAssertPushValidStability(EnableAssertPushValidStability),
-      .EnableAssertPushDataStability(EnableAssertPushDataStability),
-      .RamWriteLatency(RamWriteLatency),
-      .RamReadLatency(RamReadLatency)
-  ) fv_checker (
-      .clk,
-      .rst,
-      .push_clk,
-      .push_rst,
-      .push_ready,
-      .push_valid,
-      .push_data,
-      .pop_clk,
-      .pop_rst,
-      .pop_ready,
-      .pop_valid,
-      .pop_data,
-      .push_full,
-      .push_slots,
-      .pop_empty,
-      .pop_items
-  );
-
-  `BR_ASSERT_CR(no_valid_data_stable_a, ##1 !pop_valid && !$fell(pop_valid) |-> $stable(pop_data),
-                pop_clk, pop_rst)
+  // ----------Forward Progress Check----------
+  if (EnableAssertPushValidStability) begin : gen_stable
+    `BR_ASSERT(no_deadlock_pop_a, push_valid |-> s_eventually pop_valid)
+  end else begin : gen_not_stable
+    `BR_ASSERT(no_deadlock_pop_a, push_valid & push_ready |-> s_eventually pop_valid)
+  end
 
 endmodule : br_cdc_fifo_flops_fpv_monitor

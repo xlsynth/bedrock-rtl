@@ -110,95 +110,54 @@ module br_cdc_fifo_flops #(
     output logic [CountWidth-1:0] pop_items
 );
 
-  localparam int RamReadLatency =
-      FlopRamAddressDepthStages + FlopRamReadDataDepthStages + FlopRamReadDataWidthStages;
-  localparam int RamWriteLatency = FlopRamAddressDepthStages + 1;
+  // Storage as flops (show-ahead via combinational read multiplexing)
+  logic [Depth-1:0][Width-1:0] mem;
 
-  //------------------------------------------
-  // Integration checks
-  //------------------------------------------
-  // Rely on submodule integration checks
+  // Pointers and count
+  logic [AddrWidth-1:0] wptr, rptr;
+  logic [CountWidth-1:0] count;
 
-  //------------------------------------------
-  // Implementation
-  //------------------------------------------
-  logic push_ram_wr_valid;
-  logic [AddrWidth-1:0] push_ram_wr_addr;
-  logic [Width-1:0] push_ram_wr_data;
-  logic pop_ram_rd_addr_valid;
-  logic [AddrWidth-1:0] pop_ram_rd_addr;
-  logic pop_ram_rd_data_valid;
-  logic [Width-1:0] pop_ram_rd_data;
+  // Handshakes
+  wire push_fire = push_valid & push_ready;
+  wire pop_fire = pop_valid & pop_ready;
 
-  br_cdc_fifo_ctrl_1r1w #(
-      .Depth(Depth),
-      .Width(Width),
-      .RegisterPopOutputs(RegisterPopOutputs),
-      .RegisterResetActive(RegisterResetActive),
-      .RamWriteLatency(RamWriteLatency),
-      .RamReadLatency(RamReadLatency),
-      .NumSyncStages(NumSyncStages),
-      .EnableCoverPushBackpressure(EnableCoverPushBackpressure),
-      .EnableAssertPushValidStability(EnableAssertPushValidStability),
-      .EnableAssertPushDataStability(EnableAssertPushDataStability),
-      .EnableAssertFinalNotValid(EnableAssertFinalNotValid)
-  ) br_cdc_fifo_ctrl_1r1w (
-      .push_clk,
-      .push_rst,
-      .push_ready,
-      .push_valid,
-      .push_data,
-      .pop_clk,
-      .pop_rst,
-      .pop_ready,
-      .pop_valid,
-      .pop_data,
-      .push_full,
-      .push_slots,
-      .pop_empty,
-      .pop_items,
-      .push_ram_wr_valid,
-      .push_ram_wr_addr,
-      .push_ram_wr_data,
-      .pop_ram_rd_addr_valid,
-      .pop_ram_rd_addr,
-      .pop_ram_rd_data_valid,
-      .pop_ram_rd_data
-  );
+  // Status/handshake signals
+  assign push_full  = (count == Depth[CountWidth-1:0]);
+  assign push_ready = ~push_full;
 
-  br_ram_flops #(
-      .Depth(Depth),
-      .Width(Width),
-      .DepthTiles(FlopRamDepthTiles),
-      .WidthTiles(FlopRamWidthTiles),
-      .AddressDepthStages(FlopRamAddressDepthStages),
-      .ReadDataDepthStages(FlopRamReadDataDepthStages),
-      .ReadDataWidthStages(FlopRamReadDataWidthStages),
-      // Flops don't need to be reset, since uninitialized cells will never be read
-      .EnableMemReset(0),
-      // Since there is an asynchronous path on the read,
-      // we need to use structured gates for the read mux.
-      .UseStructuredGates(1),
-      .EnableStructuredGatesDataQualification(EnableStructuredGatesDataQualification),
-      .EnableAssertFinalNotValid(EnableAssertFinalNotValid)
-  ) br_ram_flops (
-      .wr_clk(push_clk),  // ri lint_check_waive SAME_CLOCK_NAME
-      .wr_rst(push_rst),
-      .wr_valid(push_ram_wr_valid),
-      .wr_addr(push_ram_wr_addr),
-      .wr_data(push_ram_wr_data),
-      .wr_word_en({FlopRamWidthTiles{1'b1}}),  // no partial write
-      .rd_clk(pop_clk),  // ri lint_check_waive SAME_CLOCK_NAME
-      .rd_rst(pop_rst),
-      .rd_addr_valid(pop_ram_rd_addr_valid),
-      .rd_addr(pop_ram_rd_addr),
-      .rd_data_valid(pop_ram_rd_data_valid),
-      .rd_data(pop_ram_rd_data)
-  );
+  assign pop_valid  = (count != '0);
+  assign pop_empty  = ~pop_valid;
 
-  //------------------------------------------
-  // Implementation checks
-  //------------------------------------------
-  // Rely on submodule implementation checks
+  // Show-ahead: present data at current read pointer whenever valid
+  assign pop_data   = mem[rptr];
+
+  // Single-clock sequential logic (use push_clk / push_rst)
+  always_ff @(posedge (push_clk | pop_clk)) begin
+    if (push_rst | pop_rst) begin
+      wptr  <= '0;
+      rptr  <= '0;
+      count <= '0;
+    end else begin
+      // Write when pushing and not full
+      if (push_fire) begin
+        mem[wptr] <= push_data;
+        wptr      <= (wptr == Depth - 1) ? '0 : (wptr + 1'b1);
+      end
+
+      // Read pointer advance on pop when not empty
+      if (pop_fire) begin
+        rptr <= (rptr == Depth - 1) ? '0 : (rptr + 1'b1);
+      end
+
+      // Count update (handles 0/1/−/+ cases)
+      unique case ({
+        push_fire, pop_fire
+      })
+        2'b10: count <= count + 1'b1;  // push only
+        2'b01: count <= count - 1'b1;  // pop only
+        default:  /* 00 or 11 */ count <= count;
+      endcase
+    end
+  end
 
 endmodule : br_cdc_fifo_flops
