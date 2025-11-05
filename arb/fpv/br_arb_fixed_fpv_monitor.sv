@@ -33,12 +33,11 @@ module br_arb_fixed_fpv_monitor #(
 
   if (NumRequesters > 1) begin : gen_multi_requester_idxs
     `BR_FV_2RAND_IDX(i, j, NumRequesters)
+    `BR_ASSERT(strict_priority_a, (i < j) && request[i] && request[j] |-> !grant[j])
   end else begin : gen_single_requester_idx
     assign i = 1'b0;
     assign j = 1'b0;
   end
-
-  `BR_ASSERT(strict_priority_a, (i < j) && request[i] && request[j] |-> !grant[j])
 
 endmodule : br_arb_fixed_fpv_monitor
 
