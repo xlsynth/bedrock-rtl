@@ -37,30 +37,15 @@ module br_mux_bin_structured_gates #(
     output logic                                     out_valid
 );
 
-  //------------------------------------------
-  // Integration checks
-  //------------------------------------------
-  `BR_ASSERT_STATIC(legal_num_symbols_in_a, NumSymbolsIn >= 1)
-  `BR_ASSERT_STATIC(legal_symbol_width_a, SymbolWidth >= 1)
-
-  //------------------------------------------
-  // Implementation
-  //------------------------------------------
-  logic [SymbolWidth-1:0] out_internal;
-  always_comb begin
-    out_internal = '0;
-
-    for (int i = 0; i < NumSymbolsIn; i++) begin
-      out_internal |= ({SymbolWidth{select == i}} & in[i]);
-    end
-  end
-
-  assign out_valid = select < NumSymbolsIn;  // ri lint_check_waive INVALID_COMPARE
-  // This is terrible practice, but required to pass LEC against the synthesizable version
-  // TODO(mgottscho): fix the synthesizable version and revert this manual X assignment
-  // (switch implementation back to being a wrapper on br_mux_bin).
-  // ri lint_check_waive X_USE
-  assign out = out_valid ? out_internal : 'x;
+  br_mux_bin #(
+      .NumSymbolsIn(NumSymbolsIn),
+      .SymbolWidth (SymbolWidth)
+  ) br_mux_bin (
+      .select,
+      .in,
+      .out,
+      .out_valid
+  );
 
 endmodule : br_mux_bin_structured_gates
 
