@@ -14,7 +14,7 @@
 
 module br_arb_fixed_internal #(
     // Must be at least 1
-    parameter int NumRequesters = 2
+    parameter int NumRequesters = 1
 ) (
     input  logic [NumRequesters-1:0] request,
     output logic [NumRequesters-1:0] can_grant,

@@ -10,7 +10,7 @@
 
 module br_arb_fixed #(
     // Must be at least 1
-    parameter int NumRequesters = 2
+    parameter int NumRequesters = 1
 ) (
     // ri lint_check_waive HIER_NET_NOT_READ HIER_BRANCH_NOT_READ INPUT_NOT_READ
     input logic clk,  // Only used for assertions
@@ -23,7 +23,9 @@ module br_arb_fixed #(
   //------------------------------------------
   // Integration checks
   //------------------------------------------
-  `BR_COVER_INTG(request_multihot_c, !$onehot0(request))
+  if (NumRequesters > 1) begin : gen_multi_requester_checks
+    `BR_COVER_INTG(request_multihot_c, !$onehot0(request))
+  end
 
   //------------------------------------------
   // Implementation

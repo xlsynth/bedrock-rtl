@@ -12,6 +12,7 @@ verilog_library(
     srcs = ["arb_basic_fpv_monitor.sv"],
     deps = [
         "//macros:br_registers",
+        "//pkg:br_math",
     ],
 )
 
@@ -39,6 +40,7 @@ verilog_library(
         ":arb_basic_fpv_monitor",
         "//arb/rtl:br_arb_fixed",
         "//macros:br_fv",
+        "//pkg:br_math",
     ],
 )
 
