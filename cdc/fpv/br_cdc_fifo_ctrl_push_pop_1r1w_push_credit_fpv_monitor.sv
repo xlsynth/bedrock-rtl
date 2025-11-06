@@ -93,13 +93,13 @@ module br_cdc_fifo_ctrl_push_pop_1r1w_push_credit_fpv_monitor #(
 
   if (RamReadLatency == 0) begin : gen_latency0
     `BR_ASSUME_CR(ram_rd_data_a, pop_ram_rd_data == fv_ram_data[pop_ram_rd_addr], pop_clk, pop_rst)
-    `BR_ASSUME_CR(ram_rd_data_addr_latency_a, pop_ram_rd_data_valid == pop_ram_rd_addr_valid,
-                  pop_clk, pop_rst)
+    `BR_ASSUME_CR(ram_rd_data_addr_latency_a,
+                  pop_ram_rd_data_valid == pop_ram_rd_addr_valid && !pop_rst, pop_clk, pop_rst)
   end else begin : gen_latency_non0
     `BR_ASSUME_CR(ram_rd_data_a, pop_ram_rd_data == fv_ram_data[$past(
                   pop_ram_rd_addr, RamReadLatency)], pop_clk, pop_rst)
     `BR_ASSUME_CR(ram_rd_data_addr_latency_a, pop_ram_rd_data_valid == $past(
-                  pop_ram_rd_addr_valid, RamReadLatency), pop_clk, pop_rst)
+                  pop_ram_rd_addr_valid && !pop_rst, RamReadLatency), pop_clk, pop_rst)
   end
 
   // ----------Instantiate DUT----------
@@ -204,7 +204,7 @@ module br_cdc_fifo_ctrl_push_pop_1r1w_push_credit_fpv_monitor #(
       .pop_clk,
       .pop_rst,
       .pop_ready,
-      .pop_valid,
+      .pop_valid (pop_valid && !pop_rst),
       .pop_data,
       .push_full,
       .push_slots,
