@@ -137,7 +137,7 @@ module br_cdc_fifo_flops_fpv_monitor #(
       .pop_clk,
       .pop_rst,
       .pop_ready,
-      .pop_valid,
+      .pop_valid(pop_valid && !pop_rst),
       .pop_data,
       .push_full,
       .push_slots,

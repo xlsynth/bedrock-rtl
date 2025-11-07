@@ -111,7 +111,7 @@ module br_cdc_fifo_basic_fpv_monitor #(
       .NumStages(PopCountDelay - 1)  // -1 since fv_pop_cnt is flopped
   ) delay_pop_vr (
       .clk(pop_clk),
-      .rst(pop_rst),
+      .rst(rst),
       .in (fv_pop_cnt),
       .out(fv_pop_sync)
   );
@@ -121,7 +121,7 @@ module br_cdc_fifo_basic_fpv_monitor #(
       .NumStages(NumSyncStages)
   ) delay_pop_sync (
       .clk(push_clk),
-      .rst(push_rst),
+      .rst(rst),
       .in (fv_pop_sync),
       .out(fv_pop_sync_cnt)
   );
@@ -132,7 +132,7 @@ module br_cdc_fifo_basic_fpv_monitor #(
       .NumStages(PushCountDelay - 1)  // -1 since fv_push_cnt is flopped
   ) delay_push_vr (
       .clk(push_clk),
-      .rst(push_rst),
+      .rst(rst),
       .in (fv_push_cnt),
       .out(fv_push_sync)
   );
@@ -142,7 +142,7 @@ module br_cdc_fifo_basic_fpv_monitor #(
       .NumStages(NumSyncStages)
   ) delay_push_sync (
       .clk(pop_clk),
-      .rst(pop_rst),
+      .rst(rst),
       .in (fv_push_sync),
       .out(fv_push_sync_cnt)
   );
