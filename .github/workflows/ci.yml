@@ -36,7 +36,9 @@ jobs:
     - name: Build
       run: bazel build --noshow_loading_progress //...
     - name: Check environment
-      run: bazel test //:check_env
+      run: |
+        bazel run //:check_env
+        bazel test //:check_env
 
   bazel-test-python:
     runs-on: self-hosted
