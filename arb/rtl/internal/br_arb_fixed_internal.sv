@@ -13,15 +13,15 @@
 `include "br_asserts_internal.svh"
 
 module br_arb_fixed_internal #(
-    // Must be at least 2
-    parameter int NumRequesters = 2
+    // Must be at least 1
+    parameter int NumRequesters = 1
 ) (
     input  logic [NumRequesters-1:0] request,
     output logic [NumRequesters-1:0] can_grant,
     output logic [NumRequesters-1:0] grant
 );
 
-  `BR_ASSERT_STATIC(num_requesters_gte_2_A, NumRequesters >= 2)
+  `BR_ASSERT_STATIC(num_requesters_gte_1_A, NumRequesters >= 1)
 
   //------------------------------------------
   // Implementation

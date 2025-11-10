@@ -12,6 +12,7 @@ verilog_library(
     srcs = ["arb_basic_fpv_monitor.sv"],
     deps = [
         "//macros:br_registers",
+        "//pkg:br_math_pkg",
     ],
 )
 
@@ -39,6 +40,7 @@ verilog_library(
         ":arb_basic_fpv_monitor",
         "//arb/rtl:br_arb_fixed",
         "//macros:br_fv",
+        "//pkg:br_math_pkg",
     ],
 )
 
@@ -52,6 +54,7 @@ br_verilog_fpv_test_tools_suite(
     name = "br_arb_fixed_fpv_test_tools_suite",
     params = {
         "NumRequesters": [
+            "1",
             "2",
             "5",
             "6",

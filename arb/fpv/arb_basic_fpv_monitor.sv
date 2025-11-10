@@ -8,8 +8,8 @@
 `include "br_fv.svh"
 
 module arb_basic_fpv_monitor #(
-    // Must be at least 2
-    parameter int NumRequesters = 2
+    // Must be at least 1
+    parameter int NumRequesters = 1
 ) (
     input logic clk,
     input logic rst,
@@ -19,8 +19,15 @@ module arb_basic_fpv_monitor #(
 );
 
   // ----------FV Modeling Code----------
-  logic [$clog2(NumRequesters)-1:0] i, j;
-  `BR_FV_2RAND_IDX(i, j, NumRequesters)
+  localparam int IdxWidth = br_math::clamped_clog2(NumRequesters);
+  logic [IdxWidth-1:0] i, j;
+
+  if (NumRequesters > 1) begin : gen_multi_requester_idxs
+    `BR_FV_2RAND_IDX(i, j, NumRequesters)
+  end else begin : gen_single_requester_idx
+    assign i = 1'b0;
+    assign j = 1'b0;
+  end
 
   // ----------Sanity Check----------
   `BR_ASSERT(onehot_grant_a, $onehot0(grant))
