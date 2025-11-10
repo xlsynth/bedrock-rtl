@@ -34,6 +34,12 @@ module br_cdc_fifo_reset_overlap_checks #(
 `ifdef BR_ASSERT_ON
 `ifndef BR_DISABLE_INTG_CHECKS
 
+`ifdef SYNTHESIS
+  // We have to be extra careful not to try to synthesize these checks.
+  // We do funky things like 4-state comparisons.
+  `BR_ASSERT_STATIC(do_not_synthesize_reset_overlap_checks_a, 0)
+`endif  // SYNTHESIS
+
   localparam int MaxValue = 1 << 31;
   localparam int CounterWidth = $clog2(MaxValue + 1);
 
@@ -42,8 +48,10 @@ module br_cdc_fifo_reset_overlap_checks #(
 
   `BR_REGN(overlap, overlap_next)
   assign overlap_next = reset_active_push && reset_active_pop;
+  // ri lint_check_waive FOURSTATE_COMP
   assign counter_rst = (reset_active_push === 1'b1 && reset_active_pop !== 1'b1) ||
-    (reset_active_push !== 1'b1 && reset_active_pop === 1'b1);
+      // ri lint_check_waive FOURSTATE_COMP
+      (reset_active_push !== 1'b1 && reset_active_pop === 1'b1);
 
   // Not using br_counter_incr because it has implementation assertions
   // that assume we won't drive Xes into its inputs when it's not in reset.
