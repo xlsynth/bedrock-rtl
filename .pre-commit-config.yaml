@@ -42,7 +42,7 @@ repos:
         exclude: \.patch$
 
   - repo: https://github.com/mgottscho/verible-py.git
-    rev: v0.0-3946
+    rev: v0.0-4023
     hooks:
       # Format Verilog files
       - id: verible-verilog-format
