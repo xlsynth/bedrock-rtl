@@ -9,6 +9,7 @@ verilog_library(
     name = "br_cdc_fifo_push_flag_mgr",
     srcs = ["br_cdc_fifo_push_flag_mgr.sv"],
     deps = [
+        ":br_cdc_fifo_reset_overlap_checks",
         "//counter/rtl:br_counter_incr",
         "//delay/rtl:br_delay",
         "//delay/rtl:br_delay_nr",
@@ -91,6 +92,7 @@ verilog_library(
     name = "br_cdc_fifo_pop_flag_mgr",
     srcs = ["br_cdc_fifo_pop_flag_mgr.sv"],
     deps = [
+        ":br_cdc_fifo_reset_overlap_checks",
         "//counter/rtl:br_counter_incr",
         "//delay/rtl:br_delay",
         "//delay/rtl:br_delay_nr",
@@ -166,10 +168,9 @@ br_verilog_elab_and_lint_test_suite(
 )
 
 verilog_library(
-    name = "br_cdc_fifo_reset_overlap_checker",
-    srcs = ["br_cdc_fifo_reset_overlap_checker.sv"],
+    name = "br_cdc_fifo_reset_overlap_checks",
+    srcs = ["br_cdc_fifo_reset_overlap_checks.sv"],
     deps = [
-        "//counter/rtl:br_counter_incr",
         "//macros:br_asserts",
         "//macros:br_asserts_internal",
         "//macros:br_registers",
@@ -177,7 +178,7 @@ verilog_library(
 )
 
 br_verilog_elab_and_lint_test_suite(
-    name = "br_cdc_fifo_reset_overlap_checker_test_suite",
+    name = "br_cdc_fifo_reset_overlap_checks_test_suite",
     disable_lint_rules = ["NO_OUTPUT"],
     params = {
         "MinOverlapCycles": [
@@ -185,6 +186,6 @@ br_verilog_elab_and_lint_test_suite(
             "10",
         ],
     },
-    top = "br_cdc_fifo_reset_overlap_checker",
-    deps = [":br_cdc_fifo_reset_overlap_checker"],
+    top = "br_cdc_fifo_reset_overlap_checks",
+    deps = [":br_cdc_fifo_reset_overlap_checks"],
 )

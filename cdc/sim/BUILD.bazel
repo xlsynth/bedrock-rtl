@@ -60,9 +60,11 @@ verilog_elab_test(
         },
         tags = ["no-sandbox"],
         tools = [
+            "dsim",
             "vcs",
         ],
         top = "br_cdc_fifo_flops_tb",
+        waves = True,
         deps = [
             ":br_cdc_fifo_flops_tb",
             "//gate/rtl:br_gate_mock",
@@ -130,6 +132,7 @@ verilog_elab_test(
             ],
         },
         tools = [
+            "dsim",
             "vcs",
         ],
         top = "br_cdc_fifo_flops_push_credit_tb",
