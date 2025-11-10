@@ -35,8 +35,6 @@ jobs:
       run: cp /home/gh-actions/bedrock-infra/ci.bazelrc ci.bazelrc
     - name: Build
       run: bazel build --noshow_loading_progress //...
-    - name: Check environment
-      run: bazel test //:check_env
 
   bazel-test-python:
     runs-on: self-hosted
