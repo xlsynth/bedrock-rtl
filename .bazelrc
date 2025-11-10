@@ -17,8 +17,7 @@ common --action_env=VERILOG_RUNNER_EDA_TOOLS_ENV_SETUP=""
 # The environment variable must be set to some string even if it's empty.
 common --action_env=VERILOG_RUNNER_PLUGIN_PATH=""
 
-# If needed, set the path to the locally installed Slang tool.
-# Used by TopStitch to build some wrapper RTL files for elab and lint testing.
+# Slang is used by TopStitch to build some wrapper RTL files for elab and lint testing.
 common --action_env=SLANG_PATH=""
 
 # If needed, set the path to locally installed XLS libraries (needed by TopStitch).
