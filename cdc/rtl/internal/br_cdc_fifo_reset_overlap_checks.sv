@@ -43,25 +43,45 @@ module br_cdc_fifo_reset_overlap_checks #(
   localparam int MaxValue = 1 << 31;
   localparam int CounterWidth = $clog2(MaxValue + 1);
 
-  logic overlap, overlap_next, counter_rst;
+  logic overlap, overlap_next, counter_rst, reset_active_push_d, reset_active_pop_d;
   logic [CounterWidth-1:0] overlap_cycles, overlap_cycles_next;
+
+  `BR_REGN(reset_active_push_d, reset_active_push)
+  `BR_REGN(reset_active_pop_d, reset_active_pop)
 
   `BR_REGN(overlap, overlap_next)
   assign overlap_next = reset_active_push && reset_active_pop;
+
+  // Reset the overlap counter on the rising edge of either reset, when both resets are known.
   // ri lint_check_waive FOURSTATE_COMP
-  assign counter_rst = (reset_active_push === 1'b1 && reset_active_pop !== 1'b1) ||
+  assign counter_rst = (reset_active_push !== 1'bx && reset_active_pop !== 1'bx) &&
       // ri lint_check_waive FOURSTATE_COMP
-      (reset_active_push !== 1'b1 && reset_active_pop === 1'b1);
+      ((reset_active_push === 1'b1 && reset_active_push_d !== 1'b1) ||
+      // ri lint_check_waive FOURSTATE_COMP
+      (reset_active_pop === 1'b1 && reset_active_pop_d !== 1'b1));
 
   // Not using br_counter_incr because it has implementation assertions
   // that assume we won't drive Xes into its inputs when it's not in reset.
-  `BR_REGLX(overlap_cycles, overlap_cycles_next, overlap_next, clk, counter_rst)
-  assign overlap_cycles_next = overlap_cycles + 1'b1;
+  `BR_REGN(overlap_cycles, overlap_cycles_next)
+  always_comb begin
+    overlap_cycles_next = overlap_cycles;
+    if (counter_rst) begin
+      if (overlap_next) begin
+        overlap_cycles_next = CounterWidth'(1'b1);
+      end else begin
+        overlap_cycles_next = '0;
+      end
+    end else if (overlap_next) begin
+      overlap_cycles_next = overlap_cycles + 1;
+    end
+  end
 
 `endif  // BR_DISABLE_INTG_CHECKS
 `endif  // BR_ASSERT_ON
 
-  `BR_ASSERT_CR_INTG(reset_overlap_a,
-                     overlap && !overlap_next |-> overlap_cycles >= MinOverlapCycles, clk, 1'b0)
+  `BR_ASSERT_CR_INTG(known_reset_overlap_a, $fell(reset_active_push) || $fell(reset_active_pop)
+                                            |-> !$isunknown(overlap_cycles), clk, 1'b0)
+  `BR_ASSERT_CR_INTG(reset_overlap_duration_a, $fell(reset_active_push) || $fell(reset_active_pop)
+                                               |-> overlap_cycles >= MinOverlapCycles, clk, 1'b0)
 
 endmodule : br_cdc_fifo_reset_overlap_checks

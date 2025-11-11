@@ -107,7 +107,7 @@ module br_cdc_fifo_flops_tb;
   );
 
   br_test_driver #(
-      .ResetCycles(10)
+      .ResetCycles(30)
   ) td (
       .clk,
       .rst
