@@ -78,7 +78,7 @@ module br_cdc_fifo_flops_tb;
   // Gray count CDC
   NumSyncStages +
   // Pop-side retiming
-  1 + RamReadLatency + int'(RegisterPopOutputs);
+  1 + RamReadLatency + 32'(RegisterPopOutputs);
   localparam int BackpressureLatency = ResetActiveDelay + 1 +  // Pop-side
   NumSyncStages + 1;  // Push-side
 

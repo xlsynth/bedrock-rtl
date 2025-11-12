@@ -142,7 +142,7 @@ module br_fifo_pop_ctrl #(
   `BR_ASSERT_IMPL(ram_rd_addr_in_range_a, ram_rd_addr_valid |-> ram_rd_addr < RamDepth)
 
   // Flow control and latency
-  localparam int RegisterPopOutputsInt = int'(RegisterPopOutputs);
+  localparam int RegisterPopOutputsInt = 32'(RegisterPopOutputs);
   if (EnableBypass) begin : gen_bypass_cut_through_latency_check
     // If a RAM read is inflight when the bypass occurs, pop_valid will not
     // be asserted until the RAM read completes. So the range of the latency

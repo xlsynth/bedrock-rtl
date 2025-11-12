@@ -85,7 +85,7 @@ module br_ecc_secded_decoder #(
     localparam int MessageWidth = br_ecc_secded::get_message_width(DataWidth, ParityWidth),
     localparam int CodewordWidth = MessageWidth + ParityWidth,
     // ri lint_check_waive PARAM_NOT_USED TYPE_CAST_BITLEN
-    localparam int Latency = int'(RegisterInputs) + int'(RegisterSyndrome) + int'(RegisterOutputs)
+    localparam int Latency = 32'(RegisterInputs) + 32'(RegisterSyndrome) + 32'(RegisterOutputs)
 ) (
     // Positive edge-triggered clock.
     input  logic                     clk,
@@ -136,7 +136,7 @@ module br_ecc_secded_decoder #(
 
   br_delay_valid #(
       .Width(InputWidth),
-      .NumStages(RegisterInputs == 1 ? 1 : 0),
+      .NumStages(32'(RegisterInputs)),
       .EnableAssertFinalNotValid(EnableAssertFinalNotValid)
   ) br_delay_valid_inputs (
       .clk,
@@ -4486,7 +4486,7 @@ module br_ecc_secded_decoder #(
 
   br_delay_valid #(
       .Width(CodewordWidth + ParityWidth),
-      .NumStages(RegisterSyndrome == 1 ? 1 : 0),
+      .NumStages(32'(RegisterSyndrome)),
       .EnableAssertFinalNotValid(EnableAssertFinalNotValid)
   ) br_delay_valid_syndrome (
       .clk,
@@ -4584,7 +4584,7 @@ module br_ecc_secded_decoder #(
   end
   br_delay_valid #(
       .Width(InputWidth + 2 + ParityWidth),
-      .NumStages(RegisterOutputs == 1 ? 1 : 0),
+      .NumStages(32'(RegisterOutputs)),
       .EnableAssertFinalNotValid(EnableAssertFinalNotValid)
   ) br_delay_valid_outputs (
       .clk,

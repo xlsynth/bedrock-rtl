@@ -19,9 +19,8 @@ module br_cdc_fifo_flops_push_credit_tb ();
   localparam int CutThroughLatency = PropDelay + br_math::max2(
       2, RamWriteLatency + 1
   ) +  // push-side latency
-  NumSyncStages + 1 + RamReadLatency + int'(RegisterPopOutputs);  // pop-side latency
-  localparam int BackpressureLatency = 2 + NumSyncStages + 1 +
-    int'(RegisterPushOutputs) + PropDelay;
+  NumSyncStages + 1 + RamReadLatency + 32'(RegisterPopOutputs);  // pop-side latency
+  localparam int BackpressureLatency = 2 + NumSyncStages + 1 + 32'(RegisterPushOutputs) + PropDelay;
   localparam int Depth = CutThroughLatency + BackpressureLatency + 1;
   localparam int NData = 100;
 

@@ -136,10 +136,9 @@ module br_fifo_ctrl_1r1w #(
   localparam int ReadAfterWriteHazardLatency = 1;
   // Cut-through latency is the number of cycles between push_valid and pop_valid
   // when the FIFO is initially empty.
-  // ri lint_check_waive TYPE_CAST_BITLEN
   localparam int CutThroughLatency =
-      EnableBypass ? int'(RegisterPopOutputs)
-                   : (RamReadLatency + int'(RegisterPopOutputs) + ReadAfterWriteHazardLatency);
+      EnableBypass ? 32'(RegisterPopOutputs)
+                   : (RamReadLatency + 32'(RegisterPopOutputs) + ReadAfterWriteHazardLatency);
 
   //------------------------------------------
   // Integration checks

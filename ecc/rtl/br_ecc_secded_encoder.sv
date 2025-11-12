@@ -94,7 +94,7 @@ module br_ecc_secded_encoder #(
 );
 
   // ri lint_check_waive PARAM_NOT_USED TYPE_CAST_BITLEN
-  localparam int Latency = int'(RegisterInputs) + int'(RegisterOutputs);
+  localparam int Latency = 32'(RegisterInputs) + 32'(RegisterOutputs);
 
   //------------------------------------------
   // Integration checks
@@ -118,7 +118,7 @@ module br_ecc_secded_encoder #(
 
   br_delay_valid #(
       .Width(DataWidth),
-      .NumStages(RegisterInputs == 1 ? 1 : 0),
+      .NumStages(32'(RegisterInputs)),
       .EnableAssertFinalNotValid(EnableAssertFinalNotValid)
   ) br_delay_valid_inputs (
       .clk,
@@ -328,7 +328,7 @@ module br_ecc_secded_encoder #(
   //------
   br_delay_valid #(
       .Width(CodewordWidth),
-      .NumStages(RegisterOutputs == 1 ? 1 : 0),
+      .NumStages(32'(RegisterOutputs)),
       .EnableAssertFinalNotValid(EnableAssertFinalNotValid)
   ) br_delay_valid_outputs (
       .clk,
