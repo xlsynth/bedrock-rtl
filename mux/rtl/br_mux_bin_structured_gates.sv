@@ -1,16 +1,5 @@
-// Copyright 2024-2025 The Bedrock-RTL Authors
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//     http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
+// SPDX-License-Identifier: Apache-2.0
+
 //
 // Bedrock-RTL Binary Select Multiplexer with Structured Gates
 //
@@ -50,57 +39,55 @@ module br_mux_bin_structured_gates #(
   //------------------------------------------
   // Implementation
   //------------------------------------------
-  localparam int NumLevels = $clog2(NumSymbolsIn);
+
+  // Round up number of input symbols to a power of 2, padding with 0s.
+  // When select is out of range, the output will be 0, which matches the behavior of br_mux_bin.
+  localparam int PaddedNumSymbolsIn = 2 ** $clog2(NumSymbolsIn);
+  localparam int NumLevels = $clog2(PaddedNumSymbolsIn);
 
   // The final output is computed through a tree of mux2 gates.
   // The number of stages is clog2(NumSymbolsIn).
   // This signal contains the intermediate results of each stage.
   // Stage 0 is the input and stage NumLevels is the output.
-  logic [NumLevels:0][NumSymbolsIn-1:0][SymbolWidth-1:0] in_stages;
+  logic [NumLevels:0][PaddedNumSymbolsIn-1:0][SymbolWidth-1:0] in_stages;
 
-  assign in_stages[0] = in;
+  always_comb begin
+    in_stages[0] = '0;  // ri lint_check_waive OVERWRITTEN
+    in_stages[0][NumSymbolsIn-1:0] = in;
+  end
 
   for (genvar i = 0; i < NumLevels; i++) begin : gen_level
-    // We have to account for non-power-of-2 NumSymbolsIn.
     // At each stage, each mux2 will cover 2x the number of input
     // symbols as the previous stage.
     localparam int LastStageNumSymbolsInPerMux = 2 ** i;
     localparam int LastStageNumSymbols = br_math::ceil_div(
-        NumSymbolsIn, LastStageNumSymbolsInPerMux
+        PaddedNumSymbolsIn, LastStageNumSymbolsInPerMux
     );
     localparam int NumSymbolsInPerMux = 2 ** (i + 1);
-    localparam int NumMuxes = br_math::ceil_div(NumSymbolsIn, NumSymbolsInPerMux);
+    localparam int NumMuxes = br_math::ceil_div(PaddedNumSymbolsIn, NumSymbolsInPerMux);
 
     for (genvar j = 0; j < NumMuxes; j++) begin : gen_mux
-      // Each output of the stage may depend on up to two inputs from the
-      // previous stage. If the number of inputs is odd, the last output
-      // will just pass through the corresponding input. Otherwise,
-      // the two inputs from the last stage are muxed based on one bit of
-      // the select signal.
-      if (((j * 2) + 1) < LastStageNumSymbols) begin : gen_mux2
-        for (genvar k = 0; k < SymbolWidth; k++) begin : gen_mux2_gate
-          br_gate_mux2 br_gate_mux2_inst (
-              .sel(select[i]),
-              .in0(in_stages[i][(j*2)+0][k]),
-              .in1(in_stages[i][(j*2)+1][k]),
-              .out(in_stages[i+1][j][k])
-          );
-        end
-      end else begin : gen_pass_through
-        assign in_stages[i+1][j] = in_stages[i][j*2];
+      // Each output of the stage depends on two inputs from the previous stage.
+      for (genvar k = 0; k < SymbolWidth; k++) begin : gen_mux2_gate
+        br_gate_mux2 br_gate_mux2_inst (
+            .sel(select[i]),
+            .in0(in_stages[i][(j*2)+0][k]),
+            .in1(in_stages[i][(j*2)+1][k]),
+            .out(in_stages[i+1][j][k])
+        );
       end
     end
 
     // Tie-off unused upper part of this stage's output.
-    assign in_stages[i+1][NumSymbolsIn-1:NumMuxes] = '0;
+    assign in_stages[i+1][PaddedNumSymbolsIn-1:NumMuxes] = '0;
     // Mark as unread the unused upper part of this stage's input.
     if (i != 0) begin : gen_last_stage_unused
-      `BR_UNUSED_NAMED(last_stage_unused, in_stages[i][NumSymbolsIn-1:LastStageNumSymbols])
+      `BR_UNUSED_NAMED(last_stage_unused, in_stages[i][PaddedNumSymbolsIn-1:LastStageNumSymbols])
     end
   end
 
   assign out = in_stages[NumLevels][0];
-  `BR_UNUSED_NAMED(final_stage_unused, in_stages[NumLevels][NumSymbolsIn-1:1])
+  `BR_UNUSED_NAMED(final_stage_unused, in_stages[NumLevels][PaddedNumSymbolsIn-1:1])
 
   assign out_valid = select < NumSymbolsIn;  // ri lint_check_waive INVALID_COMPARE
 

@@ -1,16 +1,5 @@
-// Copyright 2025 The Bedrock-RTL Authors
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//     http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
+// SPDX-License-Identifier: Apache-2.0
+
 
 // Bedrock-RTL Dynamic Priority Encoder
 //
@@ -28,6 +17,7 @@
 // priority encoder with `MsbHighestPriority` set to 0.
 
 `include "br_asserts_internal.svh"
+`include "br_unused.svh"
 
 module br_enc_priority_dynamic #(
     parameter int NumRequesters = 2,
@@ -73,28 +63,36 @@ module br_enc_priority_dynamic #(
   // priority encoder. The last result will just be the
   // input with all the previous results masked off.
   localparam int InternalNumResults = br_math::min2(NumResults, NumRequesters - 1);
+  // Internally, use a double-wide priority encoder.
+  // However, the lowest bit of in_high_prio can never be set,
+  // so ignore that one.
+  localparam int InternalNumRequesters = 2 * NumRequesters - 1;
 
-  logic [InternalNumResults-1:0][2*NumRequesters-1:0] out_internal;
+  logic [InternalNumResults-1:0][InternalNumRequesters-1:0] out_internal;
 
   // Create a double-wide priority encoder with the
   // high priority inputs in the lower half and the
   // low priority inputs in the upper half.
   br_enc_priority_encoder #(
-      .NumRequesters(2 * NumRequesters),
-      .NumResults(InternalNumResults)
+      .NumRequesters(InternalNumRequesters),
+      .NumResults(InternalNumResults),
+      .MaxInHot(NumRequesters)
   ) br_enc_priority_encoder_inst (
       .clk,
       .rst,
-      .in ({in_low_prio, in_high_prio}),
+      .in ({in_low_prio, in_high_prio[NumRequesters-1:1]}),
       .out(out_internal)
   );
+
+  `BR_UNUSED_NAMED(in_high_prio_lsb, in_high_prio[0])
+  `BR_ASSERT_IMPL(in_high_prio_lsb_zero_a, !in_high_prio[0])
 
   // To get the final result, fold the double-wide results
   // together using bitwise OR.
   for (genvar i = 0; i < InternalNumResults; i++) begin : gen_out
     assign out[i] =
-        out_internal[i][2*NumRequesters-1:NumRequesters] |
-        out_internal[i][NumRequesters-1:0];
+        out_internal[i][2*NumRequesters-2:NumRequesters-1] |
+        {out_internal[i][NumRequesters-2:0], 1'b0};
   end
 
   // If there are as many results as requesters, the last result just gets

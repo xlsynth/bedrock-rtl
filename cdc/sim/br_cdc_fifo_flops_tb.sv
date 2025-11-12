@@ -1,16 +1,5 @@
-// Copyright 2024-2025 The Bedrock-RTL Authors
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//     http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
+// SPDX-License-Identifier: Apache-2.0
+
 
 `timescale 1ns / 1ps
 
@@ -89,7 +78,7 @@ module br_cdc_fifo_flops_tb;
   // Gray count CDC
   NumSyncStages +
   // Pop-side retiming
-  1 + RamReadLatency + RegisterPopOutputs;
+  1 + RamReadLatency + 32'(RegisterPopOutputs);
   localparam int BackpressureLatency = ResetActiveDelay + 1 +  // Pop-side
   NumSyncStages + 1;  // Push-side
 
@@ -118,7 +107,7 @@ module br_cdc_fifo_flops_tb;
   );
 
   br_test_driver #(
-      .ResetCycles(10)
+      .ResetCycles(30)
   ) td (
       .clk,
       .rst

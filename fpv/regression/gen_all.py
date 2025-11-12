@@ -1,4 +1,6 @@
 #!/usr/bin/env python3
+# SPDX-License-Identifier: Apache-2.0
+
 r"""This script generates per-day yamls in fpv/regression/generated/ and
 per-block yamls in fpv/regression/generated/<day>/.
 
@@ -21,6 +23,8 @@ from pathlib import Path
 import re
 import subprocess
 import sys
+
+REGR_TIMEOUT_MINS = 24 * 60  # 24 hours
 
 
 # --- Configuration ---
@@ -54,8 +58,12 @@ class Day(Enum):
 DAY_BLOCK_MAP = [
     (r"^amba$", Day.MON),
     (r"^arb$", Day.MON),
+    (r"^ecc$", Day.MON),
+    (r"^flow_mux$", Day.MON),
+    (r"^flow_serializer$", Day.MON),
+    (r"^flow_xbar$", Day.MON),
     (r"^cdc$", Day.TUE),
-    (r"^ecc$", Day.WED),
+    (r"^tracker$", Day.TUE),
     (r"^counter$", Day.WED),
     (r"^credit$", Day.WED),
     (r"^delay$", Day.WED),
@@ -150,6 +158,12 @@ def write_yaml_imports(yaml_path, rel_yaml_paths):
         f.write("import_yaml:\n")
         for rel_path in sorted(rel_yaml_paths):
             f.write(f"- {rel_path}\n")
+        f.write("\n")
+        f.write("invocation_defaults:\n")
+        f.write(f"  timeout_mins: {REGR_TIMEOUT_MINS}\n")
+        f.write("  metadata:\n")
+        f.write('    project: "bedrock"\n')
+        f.write('    description: "Bedrock FPV regression."\n')
 
 
 # --- Main Logic ---

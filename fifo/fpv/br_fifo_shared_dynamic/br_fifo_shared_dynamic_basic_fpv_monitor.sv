@@ -1,16 +1,5 @@
-// Copyright 2025 The Bedrock-RTL Authors
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//     http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
+// SPDX-License-Identifier: Apache-2.0
+
 
 // br_fifo_shared_dynamic basic FPV monitor
 
@@ -18,6 +7,8 @@
 `include "br_registers.svh"
 
 module br_fifo_shared_dynamic_basic_fpv_monitor #(
+    // Enable Wolper colorization
+    parameter bit WolperColorEn = 0,
     // Number of write ports. Must be >=1.
     parameter int NumWritePorts = 1,
     // Number of read ports. Must be >=1 and a power of 2.
@@ -31,9 +22,10 @@ module br_fifo_shared_dynamic_basic_fpv_monitor #(
     parameter int Width = 1,
     // The depth of the pop-side staging buffer.
     // This affects the pop bandwidth of each logical FIFO.
-    // The bandwidth will be `StagingBufferDepth / (PointerRamAddressDepthStages
-    // + PointerRamReadDataDepthStages + PointerRamReadDataWidthStages + 1)`.
+    // The bandwidth will be `StagingBufferDepth / (DataRamAddressDepthStages
+    // + DataRamReadDataDepthStages + DataRamReadDataWidthStages + 1)`.
     parameter int StagingBufferDepth = 1,
+    parameter bit HasStagingBuffer = 1,
     parameter bit EnableCoverPushBackpressure = 1,
     parameter bit EnableAssertPushValidStability = EnableCoverPushBackpressure,
     parameter bit EnableAssertPushDataStability = EnableAssertPushValidStability,
@@ -77,13 +69,23 @@ module br_fifo_shared_dynamic_basic_fpv_monitor #(
   // ----------FV assumptions----------
   for (genvar i = 0; i < NumWritePorts; i++) begin : gen_asm
     `BR_ASSUME(push_fifo_id_legal_a, push_fifo_id[i] < NumFifos)
-    if (EnableAssertPushValidStability) begin : gen_push_valid_stable
-      `BR_ASSUME(push_valid_stable_a, push_valid[i] && !push_ready[i] |=> push_valid[i])
+    if (EnableCoverPushBackpressure) begin : gen_back_pressure
+      if (EnableAssertPushValidStability) begin : gen_push_valid_stable
+        `BR_ASSUME(push_valid_stable_a, push_valid[i] && !push_ready[i] |=> push_valid[i])
+      end
+      if (EnableAssertPushDataStability) begin : gen_push_data_stable
+        `BR_ASSUME(
+            push_data_stable_a,
+            push_valid[i] && !push_ready[i] |=> $stable(push_data[i]) && $stable(push_fifo_id[i]))
+      end
+    end else begin : gen_no_backpressure
+      `BR_ASSUME(no_backpressure_a, push_valid[i] |-> push_ready[i])
     end
-    if (EnableAssertPushDataStability) begin : gen_push_data_stable
-      `BR_ASSUME(
-          push_data_stable_a,
-          push_valid[i] && !push_ready[i] |=> $stable(push_data[i]) && $stable(push_fifo_id[i]))
+  end
+  if (!HasStagingBuffer) begin : gen_no_staging_buffer
+    for (genvar i = 0; i < NumFifos; i++) begin : gen_pop_ready_hold
+      // pop_ready can't drop without its pop_valid
+      `BR_ASSUME(pop_ready_hold_a, pop_ready[i] && !pop_valid[i] |=> pop_ready[i])
     end
   end
 

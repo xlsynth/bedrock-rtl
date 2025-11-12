@@ -1,16 +1,5 @@
-// Copyright 2025 The Bedrock-RTL Authors
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//     http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
+// SPDX-License-Identifier: Apache-2.0
+
 //
 // Bedrock-RTL Shared Pseudo-Static Multi-FIFO Push Controller
 //
@@ -85,7 +74,7 @@ module br_fifo_shared_pstatic_push_ctrl_credit #(
   for (genvar i = 0; i < NumFifos; i++) begin : gen_per_fifo_intg_checks
     `BR_ASSERT_INTG(credit_initial_lte_size_a,
                     $fell(rst) |-> $past(credit_initial_push[i]) <= config_size[i])
-    `BR_ASSERT_INTG(credit_withhold_lt_size_a, credit_withhold_push[i] < config_size[i])
+    `BR_ASSERT_INTG(credit_withhold_lt_size_a, credit_withhold_push[i] <= config_size[i])
   end
   `BR_UNUSED(config_size)  // Only used for assertions
 
@@ -114,7 +103,11 @@ module br_fifo_shared_pstatic_push_ctrl_credit #(
         .Width(Width),
         .MaxCredit(Depth),
         .RegisterPushOutputs(RegisterPushOutputs),
-        .EnableAssertFinalNotValid(EnableAssertFinalNotValid)
+        .EnableAssertFinalNotValid(EnableAssertFinalNotValid),
+        // Each FIFO must have at least one entry assigned to it,
+        // so the actual number of credits available to each is
+        // Depth - (NumFifos - 1).
+        .CoverMaxCredit(Depth - (NumFifos - 1))
     ) br_credit_receiver_inst (
         .clk,
         .rst,

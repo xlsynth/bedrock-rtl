@@ -1,16 +1,5 @@
-// Copyright 2024-2025 The Bedrock-RTL Authors
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//     http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
+// SPDX-License-Identifier: Apache-2.0
+
 
 // Combined FV env of br_cdc_fifo_ctrl_push_1r1w_push_credit and br_cdc_fifo_ctrl_pop_1r1w
 
@@ -104,13 +93,13 @@ module br_cdc_fifo_ctrl_push_pop_1r1w_push_credit_fpv_monitor #(
 
   if (RamReadLatency == 0) begin : gen_latency0
     `BR_ASSUME_CR(ram_rd_data_a, pop_ram_rd_data == fv_ram_data[pop_ram_rd_addr], pop_clk, pop_rst)
-    `BR_ASSUME_CR(ram_rd_data_addr_latency_a, pop_ram_rd_data_valid == pop_ram_rd_addr_valid,
-                  pop_clk, pop_rst)
+    `BR_ASSUME_CR(ram_rd_data_addr_latency_a,
+                  pop_ram_rd_data_valid == pop_ram_rd_addr_valid && !pop_rst, pop_clk, pop_rst)
   end else begin : gen_latency_non0
     `BR_ASSUME_CR(ram_rd_data_a, pop_ram_rd_data == fv_ram_data[$past(
                   pop_ram_rd_addr, RamReadLatency)], pop_clk, pop_rst)
     `BR_ASSUME_CR(ram_rd_data_addr_latency_a, pop_ram_rd_data_valid == $past(
-                  pop_ram_rd_addr_valid, RamReadLatency), pop_clk, pop_rst)
+                  pop_ram_rd_addr_valid && !pop_rst, RamReadLatency), pop_clk, pop_rst)
   end
 
   // ----------Instantiate DUT----------
@@ -215,7 +204,7 @@ module br_cdc_fifo_ctrl_push_pop_1r1w_push_credit_fpv_monitor #(
       .pop_clk,
       .pop_rst,
       .pop_ready,
-      .pop_valid,
+      .pop_valid (pop_valid && !pop_rst),
       .pop_data,
       .push_full,
       .push_slots,

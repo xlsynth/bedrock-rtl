@@ -1,16 +1,5 @@
-// Copyright 2024-2025 The Bedrock-RTL Authors
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//     http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
+// SPDX-License-Identifier: Apache-2.0
+
 
 // Bedrock-RTL Flow-Controlled Arbiter Core
 //
@@ -33,7 +22,12 @@ module br_flow_arb_core #(
     // If 0, cover that push_valid can be unstable when backpressured.
     parameter bit EnableAssertPushValidStability = 1,
     // If 1, then assert there are no valid bits asserted at the end of the test.
-    parameter bit EnableAssertFinalNotValid = 1
+    parameter bit EnableAssertFinalNotValid = 1,
+    // If 1, cover that the pop side experiences backpressure.
+    // If 0, assert that there is never pop backpressure.
+    parameter bit EnableCoverPopBackpressure = EnableCoverPushBackpressure,
+    // Set to 1 if the arbiter is guaranteed to grant in a cycle when any request is asserted.
+    parameter bit ArbiterAlwaysGrants = 1
 ) (
     // ri lint_check_waive HIER_NET_NOT_READ HIER_BRANCH_NOT_READ INPUT_NOT_READ
     input logic clk,  // Only used for assertions
@@ -72,9 +66,11 @@ module br_flow_arb_core #(
   );
 
   // Internal integration checks
-  `BR_ASSERT_IMPL(request_implies_grant_a, |request |-> |grant)
+  if (ArbiterAlwaysGrants) begin : gen_arbiter_always_grants_asserts
+    `BR_ASSERT_IMPL(request_implies_grant_a, |request |-> |grant)
+    `BR_ASSERT_IMPL(grant_is_request_and_can_grant_a, grant == (request & can_grant))
+  end
   `BR_ASSERT_IMPL(grant_onehot0_a, $onehot0(grant))
-  `BR_ASSERT_IMPL(grant_is_request_and_can_grant_a, grant == (request & can_grant))
 
   //------------------------------------------
   // Implementation
@@ -84,7 +80,11 @@ module br_flow_arb_core #(
   // only allow priority update if we actually grant
   assign enable_priority_update = pop_ready;
   assign push_ready = {NumFlows{pop_ready}} & can_grant;
-  assign pop_valid_unstable = |push_valid;
+  if (ArbiterAlwaysGrants) begin : gen_arbiter_always_grants
+    assign pop_valid_unstable = |push_valid;
+  end else begin : gen_arbiter_may_not_always_grant
+    assign pop_valid_unstable = |(push_valid & can_grant);
+  end
 
   // grant is only used for assertions
   `BR_UNUSED(grant)
@@ -92,13 +92,19 @@ module br_flow_arb_core #(
   //------------------------------------------
   // Implementation checks
   //------------------------------------------
+  localparam bit EnableAssertPopValidStability =
+    EnableCoverPopBackpressure &&
+    EnableAssertPushValidStability;
+
   br_flow_checks_valid_data_impl #(
       .NumFlows(1),
       .Width(1),
-      .EnableCoverBackpressure(1),
-      .EnableAssertValidStability(EnableAssertPushValidStability),
+      // Since push_ready can only be true if pop_ready is,
+      // pop side can only have backpressure if push side has backpressure.
+      .EnableCoverBackpressure(EnableCoverPopBackpressure),
+      .EnableAssertValidStability(EnableAssertPopValidStability),
       // Data is always stable when valid is stable since it is constant.
-      .EnableAssertDataStability(EnableAssertPushValidStability),
+      .EnableAssertDataStability(EnableAssertPopValidStability),
       .EnableAssertFinalNotValid(EnableAssertFinalNotValid)
   ) br_flow_checks_valid_data_impl (
       .clk,

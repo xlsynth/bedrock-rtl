@@ -1,16 +1,5 @@
-// Copyright 2024-2025 The Bedrock-RTL Authors
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//     http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
+// SPDX-License-Identifier: Apache-2.0
+
 //
 // Bedrock-RTL Free List Manager
 //
@@ -64,6 +53,10 @@ module br_tracker_freelist #(
     // It is expected that alloc_valid could be 1 at end of the test because it's
     // a natural idle condition for this design.
     parameter bit EnableAssertFinalNotDeallocValid = 1,
+    // If 1, then assert that the number of allocated entries is the same as the number of
+    // preallocated entries at the end of the test.
+    // ri lint_check_waive PARAM_NOT_USED
+    parameter bit EnableAssertFinalAllocatedInitial = 1,
 
     localparam int EntryIdWidth = $clog2(NumEntries),
     localparam int DeallocCountWidth = $clog2(NumDeallocPorts + 1),
@@ -93,6 +86,10 @@ module br_tracker_freelist #(
   `BR_ASSERT_STATIC(legal_dealloc_count_delay_a,
                     DeallocCountDelay >= 0 && DeallocCountDelay <= CutThroughLatency)
 
+  // Okay to use a non-synthesizable function here since it's for parameter only.
+  // ri lint_check_waive SYS_TF
+  localparam int NumPreallocatedEntries = $countones(PreallocatedEntries);
+
 `ifdef BR_ASSERT_ON
 `ifndef BR_DISABLE_INTG_CHECKS
   // Track the set of allocated entries and make sure we don't deallocate
@@ -102,6 +99,11 @@ module br_tracker_freelist #(
   logic [NumAllocPerCycle-1:0] alloc_valid;
 
   `BR_REGI(allocated_entries, allocated_entries_next, PreallocatedEntries)
+
+  if (EnableAssertFinalAllocatedInitial) begin : gen_assert_final
+    `BR_ASSERT_FINAL(final_allocated_initial_a, $countones(allocated_entries
+                     ) == NumPreallocatedEntries)
+  end
 
   for (genvar i = 0; i < NumAllocPerCycle; i++) begin : gen_alloc_valid
     assign alloc_valid[i] = alloc_sendable > i && alloc_receivable > i;
@@ -168,9 +170,26 @@ module br_tracker_freelist #(
     assign priority_encoder_in = unstaged_free_entries;
   end
 
+  // This is the maximum number of entries that can be unstaged on any given cycle.
+  // It is the maximum of the following three numbers:
+  // 1. The number of entries set after reset (NumEntries - NumPreallocatedEntries)
+  // 2. The maximum number of entries that can be deallocated on a given cycle.
+  // (minimum of NumDeallocPorts and NumEntries)
+  // 3. The maximum number of entries that can be waiting to be staged at steady
+  // state when alloc is backpressured. (NumEntries minus staging buffer size)
+  localparam int PriorityEncoderMaxInHot = br_math::max2(
+      NumEntries - NumPreallocatedEntries,
+      br_math::max2(
+          br_math::min2(
+              NumDeallocPorts, NumEntries
+          ),
+          NumEntries - (RegisterAllocOutputs ? NumAllocPerCycle : 0))
+  );
+
   br_enc_priority_encoder #(
       .NumResults(NumAllocPerCycle),
-      .NumRequesters(NumEntries)
+      .NumRequesters(NumEntries),
+      .MaxInHot(PriorityEncoderMaxInHot)
   ) br_enc_priority_encoder_free_entries (
       .clk,
       .rst,
@@ -201,7 +220,10 @@ module br_tracker_freelist #(
           .EnableAssertPushValidStability(1),
           // Since the entry ID is coming from a priority encoder,
           // it could be unstable if a higher priority entry is deallocated.
-          .EnableAssertPushDataStability(0),
+          // This can only happen if there are more than two entries.
+          // If there are only two, only one entry can be unstaged when push_ready
+          // is low.
+          .EnableAssertPushDataStability(NumEntries <= 2),
           // Expect that alloc_valid can be 1 at end of test (or when idle, in general)
           .EnableAssertFinalNotValid(0)
       ) br_flow_reg_fwd (
@@ -241,7 +263,8 @@ module br_tracker_freelist #(
           .SymbolWidth(EntryIdWidth),
           // Data can be unstable because deallocating a higher priority entry
           // can supersede an existing free entry.
-          .EnableAssertPushDataStability(0),
+          // This can only happen if there are more than NumAllocPerCycle + 1 entries.
+          .EnableAssertPushDataStability(NumEntries <= NumAllocPerCycle + 1),
           // We expect unstaged_free_entries to be 1 at the end of the test.
           .EnableAssertFinalNotSendable(0)
       ) br_multi_xfer_reg_fwd (

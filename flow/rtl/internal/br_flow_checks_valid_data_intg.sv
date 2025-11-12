@@ -1,16 +1,5 @@
-// Copyright 2024-2025 The Bedrock-RTL Authors
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//     http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
+// SPDX-License-Identifier: Apache-2.0
+
 
 // Bedrock-RTL Ready-Valid Interface Checks (Integration)
 //
@@ -21,6 +10,7 @@
 
 `include "br_asserts_internal.svh"
 `include "br_unused.svh"
+`include "br_registers.svh"
 
 // ri lint_check_off NO_OUTPUT
 module br_flow_checks_valid_data_intg #(
@@ -68,34 +58,54 @@ module br_flow_checks_valid_data_intg #(
 
 `ifdef BR_ASSERT_ON
 `ifndef BR_DISABLE_INTG_CHECKS
-  for (genvar i = 0; i < NumFlows; i++) begin : gen_flow_checks  // ri lint_check_waive IFDEF_CODE
-    if (EnableCoverBackpressure) begin : gen_backpressure_checks
-      if (EnableAssertValidStability) begin : gen_valid_stability_checks
+  if (EnableCoverBackpressure) begin : gen_backpressure_checks
+    if (EnableAssertValidStability) begin : gen_valid_stability_checks
+      if (EnableAssertDataStability) begin : gen_valid_data_stability_checks
         // Assert that under backpressure conditions, the upstream properly
         // maintains the stability guarantee of the ready-valid protocol. That is,
         // on any given cycle, if valid is 1 and ready is 0, then assert that on
         // the following cycle valid is still 1 and data has not changed.
-        if (EnableAssertDataStability) begin : gen_valid_data_stability_checks
+        for (genvar i = 0; i < NumFlows; i++) begin : gen_valid_data_stability_per_flow
           `BR_ASSERT_INTG(valid_data_stable_when_backpressured_a,
                           !ready[i] && valid[i] |=> valid[i] && $stable(data[i]))
-        end else begin : gen_valid_only_stability_checks
+        end
+      end else begin : gen_valid_only_stability_checks
+        for (genvar i = 0; i < NumFlows; i++) begin : gen_valid_only_stability_per_flow
           // In some cases, the data may be expected to be unstable when
           // backpressured. For instance, at the output of a br_flow_mux_*
           // module. In this case, we still want to check that the valid
           // is stable when backpressured.
           `BR_ASSERT_INTG(valid_stable_when_backpressured_a, !ready[i] && valid[i] |=> valid[i])
-          `BR_COVER_INTG(data_unstable_c, (!ready[i] && valid[i]) ##1 !$stable(data[i]))
         end
-      end else begin : gen_no_valid_stability_checks
-        // Cover that valid can be unstable when backpressured.
-        `BR_COVER_INTG(valid_unstable_c, (!ready[i] && valid[i]) ##1 !valid[i])
+        logic [NumFlows-1:0] valid_not_ready;
+        logic [NumFlows-1:0][Width-1:0] data_d;
+        logic [NumFlows-1:0] data_unstable;
+
+        assign valid_not_ready = valid & ~ready;
+        `BR_REG(data_d, data)
+
+        for (genvar i = 0; i < NumFlows; i++) begin : gen_data_unstable
+          assign data_unstable[i] = data[i] != data_d[i];
+        end
+
+        `BR_COVER_INTG(data_unstable_c, ##1 |($past(valid_not_ready) & data_unstable))
       end
-    end else begin : gen_no_backpressure_checks
-      // Assert that backpressure never occurs.
+    end else begin : gen_no_valid_stability_checks
+      logic [NumFlows-1:0] valid_not_ready;
+
+      assign valid_not_ready = valid & ~ready;
+
+      // Cover that valid can be unstable when backpressured.
+      `BR_COVER_INTG(valid_unstable_c, ##1 |($past(valid_not_ready) & ~valid))
+    end
+  end else begin : gen_no_backpressure_checks
+    for (genvar i = 0; i < NumFlows; i++) begin : gen_no_backpressure_per_flow
       `BR_ASSERT_INTG(no_backpressure_a, valid[i] |-> ready[i])
     end
-    // Always assert that if valid is asserted, data is known (not X), if enabled.
-    if (EnableAssertDataKnown) begin : gen_data_known_checks
+  end
+  // Always assert that if valid is asserted, data is known (not X), if enabled.
+  if (EnableAssertDataKnown) begin : gen_data_known_checks
+    for (genvar i = 0; i < NumFlows; i++) begin : gen_data_known_per_flow
       `BR_ASSERT_INTG(data_known_a, valid[i] |-> !$isunknown(data[i]))
     end
   end

@@ -1,16 +1,5 @@
-// Copyright 2024-2025 The Bedrock-RTL Authors
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//     http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
+// SPDX-License-Identifier: Apache-2.0
+
 
 `timescale 1ns / 1ps
 
@@ -25,8 +14,8 @@ module br_fifo_flops_push_credit_tb ();
   localparam int PropDelay = 3;
   localparam int Width = 8;
   localparam int CutThroughLatency =
-      PropDelay + (EnableBypass ? 0 : (FlopRamAddressDepthStages + 1)) + RegisterPopOutputs;
-  localparam int BackpressureLatency = PropDelay + 1 + RegisterPushOutputs;
+      PropDelay + (EnableBypass ? 0 : (FlopRamAddressDepthStages + 1)) + 32'(RegisterPopOutputs);
+  localparam int BackpressureLatency = PropDelay + 1 + 32'(RegisterPushOutputs);
   localparam int Depth = CutThroughLatency + BackpressureLatency + 1;
   localparam int NData = 100;
 

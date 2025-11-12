@@ -1,16 +1,5 @@
-// Copyright 2025 The Bedrock-RTL Authors
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//     http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
+// SPDX-License-Identifier: Apache-2.0
+
 
 // Bedrock-RTL AXI Demux
 
@@ -424,7 +413,9 @@ module br_amba_axi_demux_fpv_monitor #(
       .MAX_PENDING_WR(MaxPendingWr),
       .CONFIG_WDATA_MASKED(0),
       .CONFIG_RDATA_MASKED(0),
-      .READ_INTERLEAVE_ON(0)
+      .READ_INTERLEAVE_ON(0),
+      .ALLOW_SPARSE_STROBE(1),
+      .BYTE_STROBE_ON(1)
   ) upstream (
       // Global signals
       .aclk    (clk),
@@ -506,7 +497,14 @@ module br_amba_axi_demux_fpv_monitor #(
         .MAX_PENDING_WR(MaxPendingWr),
         .CONFIG_WDATA_MASKED(0),
         .CONFIG_RDATA_MASKED(0),
-        .READ_INTERLEAVE_ON(0)
+        .READ_INTERLEAVE_ON(0),
+        .ALLOW_SPARSE_STROBE(1),
+        .BYTE_STROBE_ON(1),
+        // upstream_aw_sub_select will decide which downstream to pick
+        // therefore, before aw is available, we can't decide which downstream to pick
+        // Therefore, downstream DBC (data before control) precondition is unreachable
+        // Meaning: downstream can't have w before aw
+        .DATA_BEFORE_CONTROL_ON(0)
     ) downstream (
         // Global signals
         .aclk    (clk),

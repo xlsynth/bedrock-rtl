@@ -1,16 +1,5 @@
-// Copyright 2025 The Bedrock-RTL Authors
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//     http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
+// SPDX-License-Identifier: Apache-2.0
+
 
 // Bedrock-RTL Shared Dynamic Multi-FIFO Controller (Push Valid/Ready Interface) FPV monitor
 
@@ -31,7 +20,7 @@ module br_fifo_shared_dynamic_ctrl_fpv_monitor #(
     parameter int Width = 1,
     // The depth of the pop-side staging buffer.
     // This affects the pop bandwidth of each logical FIFO.
-    // The bandwidth will be `StagingBufferDepth / (PointerRamReadLatency + 1)`.
+    // The bandwidth will be `StagingBufferDepth / (DataRamReadLatency + 1)`.
     parameter int StagingBufferDepth = 1,
     // If 1, make sure pop_valid/pop_data are registered at the output
     // of the staging buffer. This adds a cycle of cut-through latency.
@@ -97,8 +86,15 @@ module br_fifo_shared_dynamic_ctrl_fpv_monitor #(
     input logic [NumReadPorts-1:0][AddrWidth-1:0] ptr_ram_rd_data
 );
 
+  localparam bit WolperColorEn = 0;
+  logic [$clog2(Width)-1:0] magic_bit_index;
+  `BR_ASSUME(magic_bit_index_range_a, $stable(magic_bit_index) && (magic_bit_index < Width))
+
+  localparam bit HasStagingBuffer = (DataRamReadLatency > 0) || RegisterPopOutputs;
+
   // ----------Data Ram FV model----------
   br_fifo_fv_ram #(
+      .WolperColorEn(WolperColorEn),
       .NumWritePorts(NumWritePorts),
       .NumReadPorts(NumReadPorts),
       .Depth(Depth),
@@ -107,6 +103,7 @@ module br_fifo_shared_dynamic_ctrl_fpv_monitor #(
   ) fv_data_ram (
       .clk,
       .rst,
+      .magic_bit_index(magic_bit_index),
       .ram_wr_valid(data_ram_wr_valid),
       .ram_wr_addr(data_ram_wr_addr),
       .ram_wr_data(data_ram_wr_data),
@@ -118,6 +115,7 @@ module br_fifo_shared_dynamic_ctrl_fpv_monitor #(
 
   // ----------Ptr Ram FV model----------
   br_fifo_fv_ram #(
+      .WolperColorEn(0),
       .NumWritePorts(NumWritePorts),
       .NumReadPorts(NumReadPorts),
       .Depth(Depth),
@@ -126,6 +124,7 @@ module br_fifo_shared_dynamic_ctrl_fpv_monitor #(
   ) fv_ptr_ram (
       .clk,
       .rst,
+      .magic_bit_index('0),  // Not used
       .ram_wr_valid(ptr_ram_wr_valid),
       .ram_wr_addr(ptr_ram_wr_addr),
       .ram_wr_data(ptr_ram_wr_data),
@@ -137,12 +136,14 @@ module br_fifo_shared_dynamic_ctrl_fpv_monitor #(
 
   // ----------FIFO basic checks----------
   br_fifo_shared_dynamic_basic_fpv_monitor #(
+      .WolperColorEn(WolperColorEn),
       .NumWritePorts(NumWritePorts),
       .NumReadPorts(NumReadPorts),
       .NumFifos(NumFifos),
       .Depth(Depth),
       .Width(Width),
       .StagingBufferDepth(StagingBufferDepth),
+      .HasStagingBuffer(HasStagingBuffer),
       .EnableCoverPushBackpressure(EnableCoverPushBackpressure),
       .EnableAssertPushValidStability(EnableAssertPushValidStability),
       .EnableAssertPushDataStability(EnableAssertPushDataStability)

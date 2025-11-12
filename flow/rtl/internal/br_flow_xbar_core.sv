@@ -1,16 +1,5 @@
-// Copyright 2025 The Bedrock-RTL Authors
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//     http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
+// SPDX-License-Identifier: Apache-2.0
+
 
 // Bedrock-RTL Flow-Controlled Crossbar Core
 
@@ -55,15 +44,7 @@ module br_flow_xbar_core #(
   //------------------------------------------
   // Integration Assertions
   //------------------------------------------
-  for (genvar i = 0; i < NumPushFlows; i++) begin : gen_push_flow_checks
-    if (EnableAssertPushDestinationStability) begin : gen_dest_stability_assert
-      `BR_ASSERT_INTG(push_dest_id_stable_when_backpressured_a,
-                      push_valid[i] && !push_ready[i] |=> push_valid[i] && $stable(push_dest_id[i]))
-    end else begin : gen_dest_instability_cover
-      `BR_COVER_INTG(push_dest_id_unstable_when_backpressured_c,
-                     ##1 $past(push_valid[i] && !push_ready[i]) && !$stable(push_dest_id[i]))
-    end
-  end
+  // Rely on assertions in submodules
 
   //------------------------------------------
   // Implementation
@@ -88,6 +69,7 @@ module br_flow_xbar_core #(
         .EnableCoverPushBackpressure(EnableCoverPushBackpressure),
         .EnableAssertPushValidStability(EnableAssertPushValidStability),
         .EnableAssertPushDataStability(EnableAssertPushDataStability),
+        .EnableAssertSelectStability(EnableAssertPushDestinationStability),
         .EnableAssertPushDataKnown(EnableAssertPushDataKnown),
         .EnableAssertFinalNotValid(EnableAssertFinalNotValid)
     ) br_flow_demux_select_unstable_push (

@@ -1,16 +1,5 @@
-// Copyright 2024-2025 The Bedrock-RTL Authors
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//     http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
+// SPDX-License-Identifier: Apache-2.0
+
 
 // Bedrock-RTL Flow-Controlled Stable Multiplexer (Fixed-Priority) FPV monitor
 
@@ -42,7 +31,11 @@ module br_flow_mux_fixed_stable_fpv_monitor #(
       .Width(Width),
       .EnableCoverPushBackpressure(EnableCoverPushBackpressure),
       .EnableAssertPushValidStability(EnableAssertPushValidStability),
-      .EnableAssertPushDataStability(EnableAssertPushDataStability)
+      .EnableAssertPushDataStability(EnableAssertPushDataStability),
+      .EnableCoverPopBackpressure(1),
+      .EnableAssertPopValidStability(1),
+      .EnableAssertPopDataStability(1),
+      .DelayedGrant(1)
   ) fv_checker (
       .clk,
       .rst,
@@ -59,11 +52,18 @@ module br_flow_mux_fixed_stable_fpv_monitor #(
   `BR_FV_2RAND_IDX(i, j, NumFlows)
 
   // ----------Fairness Check----------
-  `BR_ASSERT(strict_priority_a, (i < j) && push_valid[i] && push_valid[j] |=> (pop_data == $past
-                                (push_data[i])) || !$past(pop_ready) || !$past(push_ready[i]))
-
-  // ----------Forward Progress Check----------
-  `BR_ASSERT(must_grant_next_cyc_a, |push_valid |=> pop_valid)
+  if (EnableCoverPushBackpressure) begin : gen_fairness_checks
+    `BR_ASSERT(strict_priority_a,
+               (i < j) && push_valid[i] && push_valid[j] |=> (pop_data == $past(
+                   push_data[i]
+               )) || !$past(
+                   pop_ready
+               ) || !$past(
+                   push_ready[i]
+               ))
+  end else begin : gen_no_conflict_checks
+    `BR_ASSERT(no_conflict_a, (i != j) |-> !(push_valid[i] && push_valid[j]))
+  end
 
 endmodule : br_flow_mux_fixed_stable_fpv_monitor
 

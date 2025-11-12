@@ -1,16 +1,5 @@
-// Copyright 2024-2025 The Bedrock-RTL Authors
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//     http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
+// SPDX-License-Identifier: Apache-2.0
+
 
 `ifndef BR_ASSERTS_SVH
 `define BR_ASSERTS_SVH
@@ -104,8 +93,13 @@ end
 // Clock: 'clk'
 // Reset: 'rst'
 `ifdef BR_ASSERT_ON
+`ifndef BR_ENABLE_FPV // FPV cannot check properties during reset
 `define BR_ASSERT_INCL_RST(__name__, __expr__) \
 __name__ : assert property (@(posedge clk) disable iff (rst === 1'bx) (__expr__)) else `BR_ASSERT_ERROR(__name__, __expr__);
+`else  // BR_ENABLE_FPV
+`define BR_ASSERT_INCL_RST(__name__, __expr__) \
+`BR_NOOP
+`endif  // BR_ENABLE_FPV
 `else  // BR_ASSERT_ON
 `define BR_ASSERT_INCL_RST(__name__, __expr__) \
 `BR_NOOP
@@ -113,8 +107,13 @@ __name__ : assert property (@(posedge clk) disable iff (rst === 1'bx) (__expr__)
 
 // More expressive form of BR_ASSERT_INCL_RST that allows the use of a custom clock signal name.
 `ifdef BR_ASSERT_ON
+`ifndef BR_ENABLE_FPV // FPV cannot check properties during reset
 `define BR_ASSERT_INCL_RST_C(__name__, __expr__, __clk__) \
 __name__ : assert property (@(posedge __clk__) disable iff (rst === 1'bx) (__expr__)) else `BR_ASSERT_ERROR(__name__, __expr__);
+`else  // BR_ENABLE_FPV
+`define BR_ASSERT_INCL_RST_C(__name__, __expr__, __clk__) \
+`BR_NOOP
+`endif  // BR_ENABLE_FPV
 `else  // BR_ASSERT_ON
 `define BR_ASSERT_INCL_RST_C(__name__, __expr__, __clk__) \
 `BR_NOOP
@@ -268,6 +267,21 @@ end
 __name__ : cover property (@(posedge clk) disable iff (rst === 1'b1 || rst === 1'bx) (__expr__));
 `else  // BR_ASSERT_ON
 `define BR_COVER(__name__, __expr__) \
+`BR_NOOP
+`endif  // BR_ASSERT_ON
+
+// Clock: 'clk'
+// Reset: 'rst'
+`ifdef BR_ASSERT_ON
+`ifndef BR_ENABLE_FPV // FPV cannot check properties during reset
+`define BR_COVER_INCL_RST(__name__, __expr__) \
+__name__ : cover property (@(posedge clk) disable iff (rst === 1'bx) (__expr__));
+`else // BR_ENABLE_FPV
+`define BR_COVER_INCL_RST(__name__, __expr__) \
+`BR_NOOP
+`endif  // BR_ENABLE_FPV
+`else  // BR_ASSERT_ON
+`define BR_COVER_INCL_RST(__name__, __expr__) \
 `BR_NOOP
 `endif  // BR_ASSERT_ON
 

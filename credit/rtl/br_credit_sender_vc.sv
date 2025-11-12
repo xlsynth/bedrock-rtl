@@ -1,16 +1,5 @@
-// Copyright 2025 The Bedrock-RTL Authors
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//     http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
+// SPDX-License-Identifier: Apache-2.0
+
 
 // Bedrock-RTL VC-based Credit Sender
 //
@@ -50,6 +39,9 @@ module br_credit_sender_vc #(
     parameter bit EnableAssertPushDataStability = EnableAssertPushValidStability,
     // If 1, then assert there are no valid bits asserted at the end of the test.
     parameter bit EnableAssertFinalNotValid = 1,
+    // If 1, then at the end of simulation, assert that the credit counter value equals
+    // the maximum number of credits that it stored at any point during the test.
+    parameter bit EnableAssertFinalMaxValue = 1,
 
     localparam int VcWidth = $clog2(NumVcs),
     localparam int CounterWidth = $clog2(MaxCredit + 1),
@@ -130,7 +122,8 @@ module br_credit_sender_vc #(
     br_credit_counter #(
         .MaxValue(MaxCredit),
         .MaxChange(PopCreditMaxChange),
-        .EnableAssertFinalNotValid(EnableAssertFinalNotValid)
+        .EnableAssertFinalNotValid(EnableAssertFinalNotValid),
+        .EnableAssertFinalMaxValue(EnableAssertFinalMaxValue)
     ) br_credit_counter (
         .clk,
         .rst(either_rst),

@@ -1,16 +1,5 @@
-// Copyright 2025 The Bedrock-RTL Authors
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//     http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
+// SPDX-License-Identifier: Apache-2.0
+
 
 // Bedrock-RTL Shared Dynamic Multi-FIFO Controller (Push Valid/Ready Interface) FPV monitor
 
@@ -18,6 +7,7 @@
 `include "br_registers.svh"
 
 module br_fifo_fv_ram #(
+    parameter bit WolperColorEn = 0,
     parameter int NumWritePorts = 1,
     parameter int NumReadPorts = 1,
     parameter int Depth = 3,
@@ -27,6 +17,7 @@ module br_fifo_fv_ram #(
 ) (
     input logic clk,
     input logic rst,
+    input logic [$clog2(Width)-1:0] magic_bit_index,
 
     // Data RAM Ports
     input logic [NumWritePorts-1:0] ram_wr_valid,
@@ -41,12 +32,23 @@ module br_fifo_fv_ram #(
 
   // ----------FV Modeling Code----------
   logic [Depth-1:0][Width-1:0] fv_ram_data;
+  logic [Depth-1:0] fv_magic_col;
 
   always_ff @(posedge clk) begin
-    for (int w = 0; w < NumWritePorts; w++) begin
-      if (ram_wr_valid[w]) begin
-        fv_ram_data[ram_wr_addr[w]] <= ram_wr_data[w];
+    if (WolperColorEn && rst) begin
+      fv_ram_data <= '0;
+    end else begin
+      for (int w = 0; w < NumWritePorts; w++) begin
+        if (ram_wr_valid[w]) begin
+          fv_ram_data[ram_wr_addr[w]] <= ram_wr_data[w];
+        end
       end
+    end
+  end
+
+  for (genvar d = 0; d < Depth; d++) begin : gen_magic_coloring
+    always_comb begin
+      fv_magic_col[d] = fv_ram_data[d][magic_bit_index];
     end
   end
 
@@ -61,6 +63,11 @@ module br_fifo_fv_ram #(
       `BR_ASSUME(ram_rd_data_addr_latency_a, ram_rd_data_valid[r] == $past(
                  ram_rd_addr_valid[r], RamReadLatency))
     end
+  end
+
+  // ----------wolper coloring invariant----------
+  if (WolperColorEn) begin : gen_invariant
+    `BR_ASSERT(fv_invariant_at_most_two_ones_a, $countones(fv_magic_col) <= 2)
   end
 
 endmodule

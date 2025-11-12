@@ -1,16 +1,5 @@
-// Copyright 2025 The Bedrock-RTL Authors
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//     http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
+// SPDX-License-Identifier: Apache-2.0
+
 
 // Bedrock-RTL Shared Dynamic Multi-FIFO with Flop-based Storage (Push Valid/Ready Interface) FPV monitor
 
@@ -31,7 +20,8 @@ module br_fifo_shared_dynamic_flops_push_credit_fpv_monitor #(
     parameter int Width = 1,
     // The depth of the pop-side staging buffer.
     // This affects the pop bandwidth of each logical FIFO.
-    // The bandwidth will be `StagingBufferDepth / (PointerRamReadLatency + 1)`.
+    // The bandwidth will be `StagingBufferDepth / (DataRamAddressDepthStages
+    // + DataRamReadDataDepthStages + DataRamReadDataWidthStages + 1)`.
     parameter int StagingBufferDepth = 1,
     // If 1, make sure pop_valid/pop_data are registered at the output
     // of the staging buffer. This adds a cycle of cut-through latency.
@@ -40,6 +30,15 @@ module br_fifo_shared_dynamic_flops_push_credit_fpv_monitor #(
     // driven directly from a flop. This comes at the expense of one additional
     // cycle of credit loop latency.
     parameter bit RegisterPushOutputs = 0,
+    // If 1, cover that push_credit_stall can be asserted
+    // Otherwise, assert that it is never asserted.
+    parameter bit EnableCoverPushCreditStall = 1,
+    // If 1, cover that credit_withhold can be non-zero.
+    // Otherwise, assert that it is always zero.
+    parameter bit EnableCoverCreditWithhold = 1,
+    // If 1, cover that push_sender_in_reset can be asserted
+    // Otherwise, assert that it is never asserted.
+    parameter bit EnableCoverPushSenderInReset = 1,
     // If 1, place a register on the deallocation path from the pop-side
     // staging buffer to the freelist. This improves timing at the cost of
     // adding a cycle of backpressure latency.
@@ -97,11 +96,18 @@ module br_fifo_shared_dynamic_flops_push_credit_fpv_monitor #(
     input logic [NumFifos-1:0][Width-1:0] pop_data
 );
 
+  localparam bit WolperColorEn = 0;
+  logic [$clog2(Width)-1:0] magic_bit_index;
+  `BR_ASSUME(magic_bit_index_range_a, $stable(magic_bit_index) && (magic_bit_index < Width))
+
   // ----------Instantiate credit FV checker----------
   br_credit_receiver_fpv_monitor #(
       .PStatic(0),
       .MaxCredit(Depth),
-      .NumWritePorts(NumWritePorts)
+      .NumWritePorts(NumWritePorts),
+      .EnableCoverCreditWithhold(EnableCoverCreditWithhold),
+      .EnableCoverPushSenderInReset(EnableCoverPushSenderInReset),
+      .EnableCoverPushCreditStall(EnableCoverPushCreditStall)
   ) fv_credit (
       .clk,
       .rst,
@@ -119,14 +125,20 @@ module br_fifo_shared_dynamic_flops_push_credit_fpv_monitor #(
   );
 
   // ----------FIFO basic checks----------
+  localparam int DataRamReadLatency =
+      DataRamAddressDepthStages + DataRamReadDataDepthStages + DataRamReadDataWidthStages;
+  localparam bit HasStagingBuffer = (DataRamReadLatency > 0) || RegisterPopOutputs;
+
   br_fifo_shared_dynamic_basic_fpv_monitor #(
+      .WolperColorEn(WolperColorEn),
       .NumWritePorts(NumWritePorts),
       .NumReadPorts(NumReadPorts),
       .NumFifos(NumFifos),
       .Depth(Depth),
       .Width(Width),
       .StagingBufferDepth(StagingBufferDepth),
-      .EnableCoverPushBackpressure(1)
+      .HasStagingBuffer(HasStagingBuffer),
+      .EnableCoverPushBackpressure(0)
   ) fv_checker (
       .clk,
       .rst,
@@ -151,6 +163,9 @@ bind br_fifo_shared_dynamic_flops_push_credit
     .StagingBufferDepth(StagingBufferDepth),
     .RegisterPopOutputs(RegisterPopOutputs),
     .RegisterPushOutputs(RegisterPushOutputs),
+    .EnableCoverPushCreditStall(EnableCoverPushCreditStall),
+    .EnableCoverCreditWithhold(EnableCoverCreditWithhold),
+    .EnableCoverPushSenderInReset(EnableCoverPushSenderInReset),
     .RegisterDeallocation(RegisterDeallocation),
     .DataRamDepthTiles(DataRamDepthTiles),
     .DataRamWidthTiles(DataRamWidthTiles),

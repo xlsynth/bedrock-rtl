@@ -1,16 +1,5 @@
-// Copyright 2025 The Bedrock-RTL Authors
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//     http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
+// SPDX-License-Identifier: Apache-2.0
+
 
 // Bedrock-RTL Round-Robin Arbiter with multiple grants per cycle
 //
@@ -37,6 +26,12 @@ module br_arb_multi_rr #(
     parameter int NumRequesters = 2,
     // Maximum number of grants per cycle. Must be at least 2 and at most NumRequesters.
     parameter int MaxGrantPerCycle = NumRequesters,
+    // If 1, cover that that enable_priority_update can be low
+    // Otherwise, assert that it is always high.
+    parameter bit EnableCoverBlockPriorityUpdate = 1,
+    // If 1, cover that the number of requests is greater than the number of allowed grants.
+    // Otherwise, assert that there are never more requests than allowed grants.
+    parameter bit EnableCoverMoreRequestThanAllowed = 1,
     localparam int GrantCountWidth = $clog2(MaxGrantPerCycle + 1)
 ) (
     input logic clk,
@@ -61,7 +56,17 @@ module br_arb_multi_rr #(
                     MaxGrantPerCycle >= 2 && MaxGrantPerCycle <= NumRequesters)
 
   `BR_ASSERT_INTG(grant_allowed_in_range_a, grant_allowed <= MaxGrantPerCycle)
-  `BR_COVER_INTG(more_request_than_allowed_a, $countones(request) > grant_allowed)
+  if (EnableCoverMoreRequestThanAllowed) begin : gen_more_request_than_allowed_cover
+    `BR_COVER_INTG(more_request_than_allowed_c, $countones(request) > grant_allowed)
+  end else begin : gen_more_request_than_allowed_assert
+    `BR_ASSERT_INTG(no_more_request_than_allowed_a, $countones(request) <= grant_allowed)
+  end
+
+  if (EnableCoverBlockPriorityUpdate) begin : gen_block_priority_update_cover
+    `BR_COVER_INTG(block_priority_update_a, !enable_priority_update && |request)
+  end else begin : gen_priority_update_always_enabled_assert
+    `BR_ASSERT_INTG(priority_update_always_enabled_a, |request |-> enable_priority_update)
+  end
 
   //------------------------------------------
   // Implementation
@@ -156,7 +161,17 @@ module br_arb_multi_rr #(
     `BR_ASSERT_IMPL(grant_ordered_subset_of_grant_a, (grant_ordered[i] & grant) == grant_ordered[i])
   end
 
-  `BR_ASSERT_IMPL(no_update_same_grants_A, ##1 !$past(enable_priority_update) && $stable(request)
-                                           && $stable(grant_allowed) |-> $stable(grant))
+  if (EnableCoverBlockPriorityUpdate) begin : gen_no_update_same_grants_assert
+    `BR_ASSERT_IMPL(no_update_same_grants_A,
+                    ##1 !$past(
+                        enable_priority_update
+                    ) && $stable(
+                        request
+                    ) && $stable(
+                        grant_allowed
+                    ) |-> $stable(
+                        grant
+                    ))
+  end
 
 endmodule

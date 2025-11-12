@@ -1,16 +1,5 @@
-// Copyright 2024-2025 The Bedrock-RTL Authors
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//     http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
+// SPDX-License-Identifier: Apache-2.0
+
 
 // Bedrock-RTL Onehot to Binary Encoder
 //
@@ -68,24 +57,26 @@ module br_enc_onehot2bin #(
   //------------------------------------------
   // Integration checks
   //------------------------------------------
-  `BR_ASSERT_STATIC(num_values_gte_2_a, NumValues >= 1)
+  `BR_ASSERT_STATIC(num_values_gte_1_a, NumValues >= 1)
   `BR_ASSERT_STATIC(binwidth_gte_log2_num_values_a, BinWidth >= br_math::clamped_clog2(NumValues))
+  // This is necessary to avoid an integer overflow in the for-loop below.
+  `BR_ASSERT_STATIC(binwidth_lt_32_a, BinWidth < 32)
   `BR_ASSERT_INTG(in_onehot_a, $onehot0(in))
 
   //------------------------------------------
   // Implementation
   //------------------------------------------
   assign out_valid = |in;
-  always_comb begin
-    out = '0;  // ri lint_check_waive CONST_OUTPUT
-    // ri lint_check_waive LOOP_NOT_ENTERED
-    for (int i = 1; i < NumValues; i++) begin
-      // If multiple bits are set, this is undefined behavior.
-      if (in[i]) begin
-        // This waiver is not a problem so long as we are not doing
-        // anything close to a 32-bit onehot2bin..
-        // ri lint_check_waive INTEGER ASSIGN_SIGN SIGNED_SIZE_CAST
-        out |= BinWidth'(i);  // ri lint_check_waive CONST_OUTPUT
+  if (NumValues == 1) begin : gen_single_value
+    assign out = '0;
+  end else begin : gen_multi_value
+    always_comb begin
+      out = '0;
+      for (int i = 1; i < NumValues; i++) begin
+        // If multiple bits are set, this is undefined behavior.
+        if (in[i]) begin
+          out |= BinWidth'($unsigned(i));
+        end
       end
     end
   end

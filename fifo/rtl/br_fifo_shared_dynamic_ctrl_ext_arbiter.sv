@@ -1,16 +1,5 @@
-// Copyright 2025 The Bedrock-RTL Authors
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//     http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
+// SPDX-License-Identifier: Apache-2.0
+
 //
 // Bedrock-RTL Shared Dynamic Multi-FIFO Controller (Push Valid/Ready Interface) with external
 // arbiter interface
@@ -109,6 +98,8 @@ module br_fifo_shared_dynamic_ctrl_ext_arbiter #(
     // empty at the end of the test.
     // ri lint_check_waive PARAM_NOT_USED
     parameter bit EnableAssertFinalNotValid = 1,
+    // Set to 1 if the arbiter is guaranteed to grant in a cycle when any request is asserted.
+    parameter bit ArbiterAlwaysGrants = 1,
 
     localparam int FifoIdWidth = br_math::clamped_clog2(NumFifos),
     localparam int AddrWidth   = br_math::clamped_clog2(Depth)
@@ -160,7 +151,7 @@ module br_fifo_shared_dynamic_ctrl_ext_arbiter #(
   `BR_ASSERT_STATIC(legal_num_read_ports_a, NumReadPorts >= 1 && br_math::is_power_of_2(
                     NumReadPorts))
   `BR_ASSERT_STATIC(num_fifos_in_range_a, NumFifos >= 2)
-  `BR_ASSERT_STATIC(depth_in_range_a, Depth > 2 * NumWritePorts)
+  `BR_ASSERT_STATIC(depth_in_range_a, Depth > 2 * NumWritePorts && Depth >= NumReadPorts)
   `BR_ASSERT_STATIC(width_in_range_a, Width >= 1)
   `BR_ASSERT_STATIC(staging_buffer_depth_in_range_a, StagingBufferDepth >= 1)
   `BR_ASSERT_STATIC(pointer_ram_read_latency_in_range_a, PointerRamReadLatency >= 0)
@@ -251,7 +242,8 @@ module br_fifo_shared_dynamic_ctrl_ext_arbiter #(
       .StagingBufferDepth(StagingBufferDepth),
       .RamReadLatency(DataRamReadLatency),
       .RegisterPopOutputs(RegisterPopOutputs),
-      .RegisterDeallocation(RegisterDeallocation)
+      .RegisterDeallocation(RegisterDeallocation),
+      .ArbiterAlwaysGrants(ArbiterAlwaysGrants)
   ) br_fifo_shared_pop_ctrl_ext_arbiter (
       .clk,
       .rst,

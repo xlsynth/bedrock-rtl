@@ -1,16 +1,5 @@
-// Copyright 2025 The Bedrock-RTL Authors
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//     http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
+// SPDX-License-Identifier: Apache-2.0
+
 //
 // Bedrock-RTL Shared Multi-FIFO RAM Read Crossbar
 
@@ -20,9 +9,11 @@ module br_fifo_shared_read_xbar #(
     parameter int NumFifos = 2,
     parameter int NumReadPorts = 1,
     parameter int RamReadLatency = 0,
-    parameter int AddrWidth = 1,
+    parameter int Depth = 2,
     parameter int Width = 1,
-    parameter bit EnableAssertPushValidStability = 0
+    parameter bit EnableAssertPushValidStability = 0,
+    parameter bit ArbiterAlwaysGrants = 1,
+    localparam int AddrWidth = $clog2(Depth)
 ) (
     // ri lint_check_waive HIER_NET_NOT_READ INPUT_NOT_READ
     input logic clk,
@@ -53,7 +44,7 @@ module br_fifo_shared_read_xbar #(
   // TODO(zhemao): Remove this restriction once we have efficient modulo block.
   `BR_ASSERT_STATIC(legal_num_read_ports_a, NumReadPorts >= 1 && br_math::is_power_of_2(
                     NumReadPorts))
-  `BR_ASSERT_STATIC(legal_addr_width_a, AddrWidth >= $clog2(NumReadPorts))
+  `BR_ASSERT_STATIC(legal_depth_a, Depth >= NumReadPorts)
 
   // Read Address Demux per FIFO
 
@@ -76,7 +67,8 @@ module br_fifo_shared_read_xbar #(
       br_flow_demux_select_unstable #(
           .NumFlows(NumReadPorts),
           .Width(AddrWidth),
-          .EnableAssertPushValidStability(EnableAssertPushValidStability)
+          .EnableAssertPushValidStability(EnableAssertPushValidStability),
+          .EnableAssertSelectStability(EnableAssertPushValidStability)
       ) br_flow_demux_select_unstable_inst (
           .clk,
           .rst,
@@ -104,6 +96,16 @@ module br_fifo_shared_read_xbar #(
   logic [NumReadPorts-1:0] pop_rd_data_fifo_id_valid;
 
   for (genvar i = 0; i < NumReadPorts; i++) begin : gen_read_port_mux
+    // The number of entries mapped to this read port
+    localparam int ReadPortEntries =
+        ((Depth & NumReadPorts) == 0) ? (Depth / NumReadPorts) :
+        (i < Depth % NumReadPorts) ? (Depth / NumReadPorts + 1) : (Depth / NumReadPorts);
+    // If there is only one entry mapped to a port, it's impossible for more than one
+    // FIFO to request to that port
+    localparam bit EnableCoverMuxPushBackpressure = ReadPortEntries > 1;
+    localparam bit EnableAssertMuxPushValidStability =
+        EnableAssertPushValidStability && EnableCoverMuxPushBackpressure;
+
     logic [NumFifos-1:0] mux_push_ready;
     logic [NumFifos-1:0] mux_push_valid;
     logic [NumFifos-1:0][TotalMuxWidth-1:0] mux_push_data;
@@ -119,8 +121,11 @@ module br_fifo_shared_read_xbar #(
     br_flow_mux_core #(
         .NumFlows(NumFifos),
         .Width(TotalMuxWidth),
-        .EnableAssertPushValidStability(EnableAssertPushValidStability),
-        .EnableAssertPushDataStability(EnableAssertPushValidStability)
+        .EnableCoverPushBackpressure(EnableCoverMuxPushBackpressure),
+        .EnableAssertPushValidStability(EnableAssertMuxPushValidStability),
+        .EnableAssertPushDataStability(EnableAssertMuxPushValidStability),
+        .EnableCoverPopBackpressure(0),
+        .ArbiterAlwaysGrants(ArbiterAlwaysGrants)
     ) br_flow_mux_core_inst (
         .clk,
         .rst,

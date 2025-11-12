@@ -1,16 +1,5 @@
-# Copyright 2024-2025 The Bedrock-RTL Authors
-#
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
-#
-#     http://www.apache.org/licenses/LICENSE-2.0
-#
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
+# SPDX-License-Identifier: Apache-2.0
+
 
 # clock/reset set up
 clock clk
@@ -31,15 +20,20 @@ assume -name no_push_valid_during_reset {rst | push_sender_in_reset |-> push_val
 assert -name fv_rst_check_push_credit {rst | push_sender_in_reset |-> push_credit == 'd0}
 assert -name fv_rst_check_pop_valid {rst | push_sender_in_reset |-> pop_valid == 'd0}
 
-# pop_data can change without pop_ready when pop_ready = 0
-# but when pop_ready is high, correct data will be sent
-assert -disable *br_fifo_basic_fpv_monitor.gen_pop_data_stable.pop_data_stable_a*
+# The push_ready is tied to 1, so the precondition of the assumption won't be met
+cover -disable *br_fifo_basic_fpv_monitor.gen_push_backpressure_assume.no_push_backpressure*
 
-# TODO: disable covers to make nightly clean
-cover -disable *
+# source ram invariant properties
+array set local_param_list [get_design_info -instance monitor -list local_parameter]
+set WolperColorEn $local_param_list(WolperColorEn)
+if {[string index $WolperColorEn end] eq "1"} {
+    set invariant_path [file join $::env(TEST_SRCDIR) $::env(TEST_WORKSPACE) fifo fpv br_ram_invariant.tcl]
+    source $invariant_path
+}
 
 # limit run time to 10-mins
-set_prove_time_limit 600s
+set_prove_time_limit 10m
 
 # prove command
-prove -all
+prove -all -time_limit 1m
+prove -all -with_proven

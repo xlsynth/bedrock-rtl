@@ -1,16 +1,5 @@
-# Copyright 2025 The Bedrock-RTL Authors
-#
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
-#
-#     http://www.apache.org/licenses/LICENSE-2.0
-#
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
+# SPDX-License-Identifier: Apache-2.0
+
 
 # clock/reset set up
 clock clk
@@ -19,11 +8,13 @@ assume -reset -name set_rst_during_reset {rst}
 assume -bound 1 -name delay_rst {rst}
 assume -name deassert_rst {##1 !rst}
 
-# TODO: disable covers to make nightly clean
-cover -disable *
-
 # limit run time to 10-mins
 set_prove_time_limit 600s
+
+# The output of this flow fork will not be unstable because we constrain the
+# ready to hold until valid is asserted.
+# TODO(zhemao): Find a way to disable in RTL
+cover -disable *br_flow_fork_head.br_flow_checks_valid_data_impl.*valid_unstable_c
 
 # prove command
 prove -all
