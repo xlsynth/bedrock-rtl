@@ -64,6 +64,7 @@ verilog_elab_test(
             "vcs",
         ],
         top = "br_cdc_fifo_flops_tb",
+        waves = True,
         deps = [
             ":br_cdc_fifo_flops_tb",
             "//gate/rtl:br_gate_mock",
