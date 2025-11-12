@@ -138,7 +138,7 @@ module br_fifo_ctrl_1r1w #(
   // when the FIFO is initially empty.
   localparam int CutThroughLatency =
       EnableBypass ? 32'(RegisterPopOutputs)
-                   : (RamReadLatency + RegisterPopOutputs + ReadAfterWriteHazardLatency);
+                   : (RamReadLatency + 32'(RegisterPopOutputs) + ReadAfterWriteHazardLatency);
 
   //------------------------------------------
   // Integration checks

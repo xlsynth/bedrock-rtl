@@ -37,7 +37,7 @@ module br_ecc_sed_decoder #(
     localparam int ParityWidth = 1,
     localparam int CodewordWidth = DataWidth + ParityWidth,
     // ri lint_check_waive PARAM_NOT_USED
-    localparam int Latency = RegisterInputs + RegisterOutputs
+    localparam int Latency = 32'(RegisterInputs) + 32'(RegisterOutputs)
 ) (
     // Positive edge-triggered clock.
     input logic clk,
@@ -73,7 +73,7 @@ module br_ecc_sed_decoder #(
 
   br_delay_valid #(
       .Width(CodewordWidth),
-      .NumStages(RegisterInputs == 1 ? 1 : 0),
+      .NumStages(32'(RegisterInputs)),
       .EnableAssertFinalNotValid(EnableAssertFinalNotValid)
   ) br_delay_valid_inputs (
       .clk,
@@ -104,7 +104,7 @@ module br_ecc_sed_decoder #(
   //------
   br_delay_valid #(
       .Width(CodewordWidth + 2),
-      .NumStages(RegisterOutputs == 1 ? 1 : 0),
+      .NumStages(32'(RegisterOutputs)),
       .EnableAssertFinalNotValid(EnableAssertFinalNotValid)
   ) br_delay_valid_outputs (
       .clk,
