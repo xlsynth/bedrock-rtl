@@ -5,7 +5,7 @@
 //
 // This is an internal assertion-only module that can be reused in all
 // modules with ready-valid interfaces. It uses the Bedrock-internal
-// integration check macros to ensure the valid and data signals
+// implementation check macros to ensure the valid and data signals
 // conform to the ready-valid interface protocol.
 
 `include "br_asserts_internal.svh"
