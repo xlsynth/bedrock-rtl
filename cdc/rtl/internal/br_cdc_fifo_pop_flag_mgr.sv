@@ -39,6 +39,12 @@ module br_cdc_fifo_pop_flag_mgr #(
 );
   `BR_ASSERT_STATIC(legal_depth_A, Depth >= 2)
 
+  br_cdc_fifo_reset_overlap_checks br_cdc_fifo_reset_overlap_checks (
+      .clk,
+      .reset_active_push,
+      .reset_active_pop
+  );
+
   localparam int MaxCountP1 = 1 << CountWidth;
   localparam int MaxCount = MaxCountP1 - 1;
   // Need to make sure that on pop reset, the updated pop_count is not visible
