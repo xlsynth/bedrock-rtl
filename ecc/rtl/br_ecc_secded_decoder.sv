@@ -84,7 +84,7 @@ module br_ecc_secded_decoder #(
     localparam int InputWidth = DataWidth + ParityWidth,
     localparam int MessageWidth = br_ecc_secded::get_message_width(DataWidth, ParityWidth),
     localparam int CodewordWidth = MessageWidth + ParityWidth,
-    // ri lint_check_waive PARAM_NOT_USED TYPE_CAST_BITLEN
+    // ri lint_check_waive PARAM_NOT_USED
     localparam int Latency = 32'(RegisterInputs) + 32'(RegisterSyndrome) + 32'(RegisterOutputs)
 ) (
     // Positive edge-triggered clock.

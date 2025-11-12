@@ -104,7 +104,7 @@ module br_ecc_secded_encoder #(
     output logic [CodewordWidth-1:0] enc_codeword
 );
 
-  // ri lint_check_waive PARAM_NOT_USED TYPE_CAST_BITLEN
+  // ri lint_check_waive PARAM_NOT_USED
   localparam int Latency = 32'(RegisterInputs) + 32'(RegisterOutputs);
 
   //------------------------------------------
