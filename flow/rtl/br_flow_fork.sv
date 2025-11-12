@@ -96,4 +96,8 @@ module br_flow_fork #(
       .data ({NumFlows{1'b0}})
   );
 
+  if (EnableCoverPushBackpressure) begin : gen_push_backpressure_cover
+    `BR_COVER_IMPL(pop_valid_unstable_c, !$stable(pop_valid_unstable))
+  end
+
 endmodule : br_flow_fork
