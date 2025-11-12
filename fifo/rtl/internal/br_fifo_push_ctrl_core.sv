@@ -1,22 +1,11 @@
-// Copyright 2024-2025 The Bedrock-RTL Authors
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//     http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
+// SPDX-License-Identifier: Apache-2.0
+
 
 // Core FIFO push control logic that will be reused across different variants.
 // Contains just the bypass and RAM write logic, leaving occupancy tracking up to
 // the instantiating module.
 
-`include "br_asserts.svh"
+`include "br_asserts_internal.svh"
 `include "br_unused.svh"
 
 module br_fifo_push_ctrl_core #(
@@ -32,6 +21,8 @@ module br_fifo_push_ctrl_core #(
     // If 1, assert that push_data is stable when backpressured.
     // If 0, cover that push_data can be unstable.
     parameter bit EnableAssertPushDataStability = EnableAssertPushValidStability,
+    // If 1, assert that push_data is always known (not X) when push_valid is asserted.
+    parameter bit EnableAssertPushDataKnown = 1,
     // If 1, then assert there are no valid bits asserted and that the FIFO is
     // empty at the end of the test.
     parameter bit EnableAssertFinalNotValid = 1,
@@ -55,8 +46,14 @@ module br_fifo_push_ctrl_core #(
 
     // RAM interface
     output logic                 ram_wr_valid,
+    output logic [AddrWidth-1:0] ram_wr_addr_next,
     output logic [AddrWidth-1:0] ram_wr_addr,
     output logic [    Width-1:0] ram_wr_data,
+
+    // Address base and bound configuration
+    input logic [AddrWidth-1:0] addr_base,
+    // addr_bound is inclusive
+    input logic [AddrWidth-1:0] addr_bound,
 
     // Signals to/from internal logic
     input  logic full,
@@ -68,6 +65,8 @@ module br_fifo_push_ctrl_core #(
   //------------------------------------------
 
   `BR_ASSERT_STATIC(depth_must_be_at_least_one_a, Depth >= 1)
+  `BR_ASSERT_IMPL(addr_base_lte_addr_bound_a, addr_base <= addr_bound)
+  `BR_ASSERT_IMPL(addr_bound_in_range_a, addr_bound < Depth)
 
   br_flow_checks_valid_data_intg #(
       .NumFlows(1),
@@ -75,6 +74,7 @@ module br_fifo_push_ctrl_core #(
       .EnableCoverBackpressure(EnableCoverPushBackpressure),
       .EnableAssertValidStability(EnableAssertPushValidStability),
       .EnableAssertDataStability(EnableAssertPushDataStability),
+      .EnableAssertDataKnown(EnableAssertPushDataKnown),
       .EnableAssertFinalNotValid(EnableAssertFinalNotValid)
   ) br_flow_checks_valid_data_intg (
       .clk,
@@ -87,29 +87,40 @@ module br_fifo_push_ctrl_core #(
   //------------------------------------------
   // Implementation
   //------------------------------------------
-
   // Flow control
   assign push_beat  = push_ready && push_valid;
   assign push_ready = !full;
 
   // RAM path
   if (Depth > 1) begin : gen_wr_addr_counter
+    logic addr_wrap;
+
+    assign addr_wrap = ram_wr_valid && ram_wr_addr == addr_bound;
+
     br_counter_incr #(
         .MaxValue(Depth - 1),
         .MaxIncrement(1),
-        .EnableAssertFinalNotValid(EnableAssertFinalNotValid)
+        .EnableReinitAndIncr(0),
+        // There won't be any overflows since reinit will be asserted
+        // when the counter wraps around.
+        .EnableWrap(0),
+        .EnableAssertFinalNotValid(EnableAssertFinalNotValid),
+        .EnableCoverZeroIncrement(0),
+        .EnableCoverReinitNoIncr(0)
     ) br_counter_incr_wr_addr (
         .clk,
         .rst,
-        .reinit(1'b0),  // unused
-        .initial_value(AddrWidth'(1'b0)),
+        .reinit(addr_wrap),
+        .initial_value(addr_base),
         .incr_valid(ram_wr_valid),
         .incr(1'b1),
         .value(ram_wr_addr),
-        .value_next()  // unused
+        .value_next(ram_wr_addr_next)
     );
   end else begin : gen_wr_addr_const
     assign ram_wr_addr = '0;
+    assign ram_wr_addr_next = '0;
+    `BR_UNUSED_NAMED(addr_base_bound, {addr_base, addr_bound})
   end
 
   // Datapath

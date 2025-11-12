@@ -1,16 +1,5 @@
-// Copyright 2024-2025 The Bedrock-RTL Authors
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//     http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
+// SPDX-License-Identifier: Apache-2.0
+
 //
 // This module manages the push-side flags for a CDC FIFO.
 // It takes in the pop count as a gray code, decodes it to binary,
@@ -25,6 +14,7 @@ module br_cdc_fifo_push_flag_mgr #(
     parameter int Depth = 2,
     parameter int RamWriteLatency = 1,
     parameter bit RegisterResetActive = 1,
+    parameter bit EnableAssertFinalNotValid = 1,
     localparam int CountWidth = $clog2(Depth + 1)
 ) (
     input  logic                  clk,
@@ -41,6 +31,12 @@ module br_cdc_fifo_push_flag_mgr #(
   `BR_ASSERT_STATIC(legal_depth_A, Depth >= 2)
   `BR_ASSERT_STATIC(legal_ram_write_latency_A, RamWriteLatency >= 1)
 
+  br_cdc_fifo_reset_overlap_checks br_cdc_fifo_reset_overlap_checks (
+      .clk,
+      .reset_active_push,
+      .reset_active_pop
+  );
+
   localparam int MaxCountP1 = 1 << CountWidth;
   localparam int MaxCount = MaxCountP1 - 1;
   // Need to make sure that on push reset, the updated push_count is not visible
@@ -55,7 +51,10 @@ module br_cdc_fifo_push_flag_mgr #(
   logic [CountWidth-1:0] pop_count_visible;
 
   br_counter_incr #(
-      .MaxValue(MaxCount)
+      .MaxValue(MaxCount),
+      .EnableAssertFinalNotValid(EnableAssertFinalNotValid),
+      .EnableCoverZeroIncrement(0),
+      .EnableCoverReinit(0)
   ) br_counter_incr_push_count (
       .clk,
       .rst,

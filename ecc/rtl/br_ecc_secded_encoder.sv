@@ -1,19 +1,5 @@
-// Copyright 2024-2025 The Bedrock-RTL Authors
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// Copyright 2024-2025 The Bedrock-RTL Authors
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//     http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
+// SPDX-License-Identifier: Apache-2.0
+
 
 
 // verilog_format: off
@@ -108,7 +94,7 @@ module br_ecc_secded_encoder #(
 );
 
   // ri lint_check_waive PARAM_NOT_USED
-  localparam int Latency = RegisterInputs + RegisterOutputs;
+  localparam int Latency = 32'(RegisterInputs) + 32'(RegisterOutputs);
 
   //------------------------------------------
   // Integration checks
@@ -132,7 +118,7 @@ module br_ecc_secded_encoder #(
 
   br_delay_valid #(
       .Width(DataWidth),
-      .NumStages(RegisterInputs == 1 ? 1 : 0),
+      .NumStages(32'(RegisterInputs)),
       .EnableAssertFinalNotValid(EnableAssertFinalNotValid)
   ) br_delay_valid_inputs (
       .clk,
@@ -342,7 +328,7 @@ module br_ecc_secded_encoder #(
   //------
   br_delay_valid #(
       .Width(CodewordWidth),
-      .NumStages(RegisterOutputs == 1 ? 1 : 0),
+      .NumStages(32'(RegisterOutputs)),
       .EnableAssertFinalNotValid(EnableAssertFinalNotValid)
   ) br_delay_valid_outputs (
       .clk,

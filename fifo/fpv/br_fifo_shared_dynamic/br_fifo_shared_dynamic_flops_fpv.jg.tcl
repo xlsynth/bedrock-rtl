@@ -1,0 +1,29 @@
+# SPDX-License-Identifier: Apache-2.0
+
+
+# clock/reset set up
+clock clk
+reset rst
+get_design_info
+
+# limit run time to 10-mins
+set_prove_time_limit 10m
+
+# The output of this flow fork will not be unstable because we constrain the
+# ready to hold until valid is asserted.
+# TODO(zhemao): Find a way to disable in RTL
+cover -disable *br_flow_fork_head.br_flow_checks_valid_data_impl.*valid_unstable_c
+# There are certain cases where the backpressure precondition on these checks are unreachable.
+# Annoying to disable in RTL because only certain output ports are affected.
+# These are redundant with the push integration checks on the muxes, so just disable them all
+# TODO(masai): Figure out a more fine-grained waiver
+array set param_list [get_design_info -list parameter]
+set NumReadPorts $param_list(NumReadPorts)
+set Depth $param_list(Depth)
+if {$Depth < 2 * $NumReadPorts} {
+  cover -disable *br_fifo_shared_read_xbar*br_flow_demux_select_unstable*br_flow_checks_valid_data_impl.*stable*
+  cover -disable *br_ram_flops_pointer*br_ram_flops_tile.gen_multi_read_checks.all_rd_ports_active_a
+}
+
+# prove command
+prove -all

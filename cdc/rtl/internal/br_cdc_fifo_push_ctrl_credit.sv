@@ -1,16 +1,5 @@
-// Copyright 2024-2025 The Bedrock-RTL Authors
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//     http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
+// SPDX-License-Identifier: Apache-2.0
+
 //
 // Push Controller for CDC FIFO with Credit/Valid interface
 
@@ -23,6 +12,15 @@ module br_cdc_fifo_push_ctrl_credit #(
     parameter int MaxCredit = Depth,
     parameter bit RegisterPushOutputs = 0,
     parameter bit RegisterResetActive = 1,
+    // If 1, cover that credit_withhold can be non-zero.
+    // Otherwise, assert that it is always zero.
+    parameter bit EnableCoverCreditWithhold = 1,
+    // If 1, cover that push_sender_in_reset can be asserted
+    // Otherwise, assert that it is never asserted.
+    parameter bit EnableCoverPushSenderInReset = 1,
+    // If 1, cover that push_credit_stall can be asserted
+    // Otherwise, assert that it is never asserted.
+    parameter bit EnableCoverPushCreditStall = 1,
     parameter bit EnableAssertFinalNotValid = 1,
     localparam int AddrWidth = $clog2(Depth),
     localparam int CountWidth = $clog2(Depth + 1),
@@ -94,11 +92,14 @@ module br_cdc_fifo_push_ctrl_credit #(
   logic [CountWidth-1:0] pop_count_delta;
 
   br_credit_receiver #(
-      .Width                    (Width),
-      .MaxCredit                (MaxCredit),
-      .RegisterPushOutputs      (RegisterPushOutputs),
-      .PopCreditMaxChange       (Depth),
-      .EnableAssertFinalNotValid(EnableAssertFinalNotValid)
+      .Width                       (Width),
+      .MaxCredit                   (MaxCredit),
+      .RegisterPushOutputs         (RegisterPushOutputs),
+      .PopCreditMaxChange          (Depth),
+      .EnableCoverCreditWithhold   (EnableCoverCreditWithhold),
+      .EnableCoverPushSenderInReset(EnableCoverPushSenderInReset),
+      .EnableCoverPushCreditStall  (EnableCoverPushCreditStall),
+      .EnableAssertFinalNotValid   (EnableAssertFinalNotValid)
   ) br_credit_receiver (
       .clk,
       // Not using either_rst here so that there is no path from
@@ -122,7 +123,8 @@ module br_cdc_fifo_push_ctrl_credit #(
   br_cdc_fifo_push_flag_mgr #(
       .Depth(Depth),
       .RamWriteLatency(RamWriteLatency),
-      .RegisterResetActive(RegisterResetActive)
+      .RegisterResetActive(RegisterResetActive),
+      .EnableAssertFinalNotValid(EnableAssertFinalNotValid)
   ) br_cdc_fifo_push_flag_mgr (
       .clk,
       .rst(either_rst),
@@ -137,6 +139,12 @@ module br_cdc_fifo_push_ctrl_credit #(
   );
 
   // Core flow-control logic
+  logic [AddrWidth-1:0] addr_base;
+  logic [AddrWidth-1:0] addr_bound;
+
+  assign addr_base  = '0;
+  assign addr_bound = Depth - 1;
+
   br_fifo_push_ctrl_core #(
       .Depth(Depth),
       .Width(Width),
@@ -148,6 +156,9 @@ module br_cdc_fifo_push_ctrl_credit #(
       .clk,
       .rst(either_rst),
 
+      .addr_base,
+      .addr_bound,
+
       .push_ready(),
       .push_valid(internal_valid),
       .push_data (internal_data),
@@ -157,6 +168,7 @@ module br_cdc_fifo_push_ctrl_credit #(
       .bypass_data_unstable(),  // Bypass not used
 
       .ram_wr_valid,
+      .ram_wr_addr_next(),
       .ram_wr_addr,
       .ram_wr_data,
 

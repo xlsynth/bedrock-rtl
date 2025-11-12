@@ -1,0 +1,103 @@
+# SPDX-License-Identifier: Apache-2.0
+
+load("@rules_hdl//verilog:providers.bzl", "verilog_library")
+load("//bazel:br_verilog.bzl", "br_verilog_fpv_test_tools_suite")
+load("//bazel:verilog.bzl", "verilog_elab_test")
+
+package(default_visibility = ["//visibility:private"])
+
+# Bedrock-RTL Flow Fork
+
+verilog_library(
+    name = "br_flow_fork_fpv_monitor",
+    srcs = ["br_flow_fork_fpv_monitor.sv"],
+    deps = [
+        "//flow/rtl:br_flow_fork",
+    ],
+)
+
+verilog_elab_test(
+    name = "br_flow_fork_fpv_monitor_elab_test",
+    tool = "verific",
+    deps = [":br_flow_fork_fpv_monitor"],
+)
+
+br_verilog_fpv_test_tools_suite(
+    name = "br_flow_fork_test_suite",
+    params = {
+        "EnableCoverPushBackpressure": [
+            "0",
+            "1",
+        ],
+        "NumFlows": [
+            "2",
+            "4",
+            "5",
+        ],
+    },
+    tools = {
+        "jg": "",
+    },
+    top = "br_flow_fork",
+    deps = [":br_flow_fork_fpv_monitor"],
+)
+
+# Bedrock-RTL Flow Fork With Multihot Select
+
+verilog_library(
+    name = "br_flow_fork_select_multihot_fpv_monitor",
+    srcs = ["br_flow_fork_select_multihot_fpv_monitor.sv"],
+    deps = [
+        "//flow/rtl:br_flow_fork_select_multihot",
+    ],
+)
+
+verilog_elab_test(
+    name = "br_flow_fork_select_multihot_fpv_monitor_elab_test",
+    tool = "verific",
+    deps = [":br_flow_fork_select_multihot_fpv_monitor"],
+)
+
+br_verilog_fpv_test_tools_suite(
+    name = "br_flow_fork_select_multihot_test_suite",
+    illegal_param_combinations = {
+        (
+            "EnableCoverPushBackpressure",
+            "EnableAssertPushValidStability",
+            "EnableAssertSelectMultihotStability",
+        ): [
+            ("0", "0", "1"),
+            ("0", "1", "0"),
+            ("0", "1", "1"),
+            ("1", "0", "1"),
+        ],
+    },
+    params = {
+        "EnableCoverSelectMultihot": [
+            "0",
+            "1",
+        ],
+        "EnableCoverPushBackpressure": [
+            "0",
+            "1",
+        ],
+        "EnableAssertPushValidStability": [
+            "0",
+            "1",
+        ],
+        "EnableAssertSelectMultihotStability": [
+            "0",
+            "1",
+        ],
+        "NumFlows": [
+            "2",
+            "4",
+            "5",
+        ],
+    },
+    tools = {
+        "jg": "br_flow_fork_select_multihot_fpv.jg.tcl",
+    },
+    top = "br_flow_fork_select_multihot",
+    deps = [":br_flow_fork_select_multihot_fpv_monitor"],
+)

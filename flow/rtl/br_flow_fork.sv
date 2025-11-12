@@ -1,16 +1,5 @@
-// Copyright 2024-2025 The Bedrock-RTL Authors
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//     http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
+// SPDX-License-Identifier: Apache-2.0
+
 
 // Bedrock-RTL Flow Fork
 //
@@ -95,7 +84,7 @@ module br_flow_fork #(
   br_flow_checks_valid_data_impl #(
       .NumFlows(NumFlows),
       .Width(1),
-      .EnableCoverBackpressure(1),
+      .EnableCoverBackpressure(EnableCoverPushBackpressure),
       // We know that the pop valids can be unstable.
       .EnableAssertValidStability(0),
       .EnableAssertFinalNotValid(EnableAssertFinalNotValid)
@@ -106,9 +95,5 @@ module br_flow_fork #(
       .valid(pop_valid_unstable),
       .data ({NumFlows{1'b0}})
   );
-
-  for (genvar i = 0; i < NumFlows; i++) begin : gen_flow_checks
-    `BR_COVER_IMPL(pop_valid_unstable_c, $stable(push_valid) && $fell(pop_valid_unstable[i]))
-  end
 
 endmodule : br_flow_fork

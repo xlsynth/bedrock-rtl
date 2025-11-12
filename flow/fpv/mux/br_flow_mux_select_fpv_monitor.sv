@@ -1,16 +1,5 @@
-// Copyright 2024-2025 The Bedrock-RTL Authors
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//     http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
+// SPDX-License-Identifier: Apache-2.0
+
 
 // Bedrock-RTL Flow-Controlled Multiplexer (Round-Robin)
 
@@ -24,6 +13,7 @@ module br_flow_mux_select_fpv_monitor #(
     parameter bit EnableCoverPushBackpressure = 1,
     parameter bit EnableAssertPushValidStability = EnableCoverPushBackpressure,
     parameter bit EnableAssertPushDataStability = EnableAssertPushValidStability,
+    parameter bit EnableAssertSelectStability = EnableAssertPushValidStability,
     parameter bit EnableAssertFinalNotValid = 1
 ) (
     input logic                                   clk,
@@ -43,7 +33,11 @@ module br_flow_mux_select_fpv_monitor #(
       .Width(Width),
       .EnableCoverPushBackpressure(EnableCoverPushBackpressure),
       .EnableAssertPushValidStability(EnableAssertPushValidStability),
-      .EnableAssertPushDataStability(EnableAssertPushDataStability)
+      .EnableAssertPushDataStability(EnableAssertPushDataStability),
+      // Final flow mux stage ensures output is always stable
+      .EnableAssertPopValidStability(1),
+      .EnableAssertPopDataStability(1),
+      .EnableAssertMustGrant(0)
   ) fv_checker (
       .clk,
       .rst,
@@ -57,6 +51,10 @@ module br_flow_mux_select_fpv_monitor #(
 
   // ----------FV assumptions----------
   `BR_ASSUME(select_range_a, select < NumFlows)
+
+  if (EnableAssertSelectStability) begin : gen_stable_select
+    `BR_ASSUME(select_stable_a, push_valid[select] && !push_ready[select] |=> $stable(select))
+  end
 
   // ----------select check----------
   logic [Width-1:0] fv_data;
@@ -74,5 +72,6 @@ bind br_flow_mux_select br_flow_mux_select_fpv_monitor #(
     .EnableCoverPushBackpressure(EnableCoverPushBackpressure),
     .EnableAssertPushValidStability(EnableAssertPushValidStability),
     .EnableAssertPushDataStability(EnableAssertPushDataStability),
+    .EnableAssertSelectStability(EnableAssertSelectStability),
     .EnableAssertFinalNotValid(EnableAssertFinalNotValid)
 ) monitor (.*);

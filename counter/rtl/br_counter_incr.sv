@@ -1,16 +1,5 @@
-// Copyright 2024-2025 The Bedrock-RTL Authors
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//     http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
+// SPDX-License-Identifier: Apache-2.0
+
 
 // Bedrock-RTL Incrementing Counter
 //
@@ -45,8 +34,16 @@
 `include "br_unused.svh"
 
 module br_counter_incr #(
-    parameter int MaxValue = 1,  // Must be at least 1. Inclusive.
-    parameter int MaxIncrement = 1,  // Must be at least 1 and at most MaxValue. Inclusive.
+    // Width of the MaxValue parameter.
+    // You might need to override this if you need a counter that's larger than 32 bits.
+    parameter int MaxValueWidth = 32,
+    // Width of the MaxIncrement parameter.
+    // You might need to override this if you need a counter that's larger than 32 bits.
+    parameter int MaxIncrementWidth = 32,
+    // Must be at least 1. Inclusive.
+    parameter logic [MaxValueWidth-1:0] MaxValue = 1,
+    // Must be at least 1 and at most MaxValue. Inclusive.
+    parameter logic [MaxIncrementWidth-1:0] MaxIncrement = 1,
     // If 1, then when reinit is asserted together with incr_valid,
     // the increment is applied to the initial value rather than the current value, i.e.,
     // value_next == initial_value + applicable incr.
@@ -56,10 +53,29 @@ module br_counter_incr #(
     // If 1, the counter value saturates at MaxValue.
     // If 0, the counter value wraps around at MaxValue.
     parameter bit EnableSaturate = 0,
+    // If 1, the counter wraps around at MaxValue.
+    // If 0, the counter is assumed to never overflow and special handling is
+    // not needed.
+    // Cannot be set if EnableSaturate is 1.
+    parameter bit EnableWrap = !EnableSaturate,
     // If 1, then assert there are no valid bits asserted at the end of the test.
     parameter bit EnableAssertFinalNotValid = 1,
-    localparam int ValueWidth = $clog2(MaxValue + 1),
-    localparam int IncrementWidth = $clog2(MaxIncrement + 1)
+    // If 1, then cover the cases where incr_valid is 1, but incr is 0.
+    // Otherwise, assert that incr is always non-zero when incr_valid is 1.
+    parameter bit EnableCoverZeroIncrement = 1,
+    // If 1, enable reinit-related coverage.
+    // If 0, assert that reinit is never asserted.
+    parameter bit EnableCoverReinit = 1,
+    // If 1, then cover the cases where reinit is asserted together with incr_valid.
+    // Otherwise, assert that reinit is never asserted together with incr_valid.
+    parameter bit EnableCoverReinitAndIncr = EnableCoverReinit,
+    // If 1, then cover the cases where reinit is asserted when incr_valid is 0.
+    // If 0, assert that reinit always asserts along with incr_valid.
+    parameter bit EnableCoverReinitNoIncr = EnableCoverReinit,
+    localparam int MaxValueP1Width = MaxValueWidth + 1,
+    localparam int MaxIncrementP1Width = MaxIncrementWidth + 1,
+    localparam int ValueWidth = $clog2(MaxValueP1Width'(MaxValue) + 1),
+    localparam int IncrementWidth = $clog2(MaxIncrementP1Width'(MaxIncrement) + 1)
 ) (
     // Posedge-triggered clock.
     input  logic                      clk,
@@ -76,6 +92,8 @@ module br_counter_incr #(
   //------------------------------------------
   // Integration checks
   //------------------------------------------
+  `BR_ASSERT_STATIC(max_value_width_gte_1_a, MaxValueWidth >= 1)
+  `BR_ASSERT_STATIC(max_increment_width_gte_1_a, MaxIncrementWidth >= 1)
   `BR_ASSERT_STATIC(max_value_gte_1_a, MaxValue >= 1)
   `BR_ASSERT_STATIC(max_increment_gte_1_a, MaxIncrement >= 1)
   `BR_ASSERT_STATIC(max_increment_lte_max_value_a, MaxIncrement <= MaxValue)
@@ -90,9 +108,13 @@ module br_counter_incr #(
   //------------------------------------------
   // Implementation
   //------------------------------------------
-  localparam int MaxValueP1 = MaxValue + 1;
+  localparam logic [MaxValueP1Width-1:0] MaxValueP1 = MaxValue + 1;
   localparam bit IsMaxValueP1PowerOf2 = (MaxValueP1 & (MaxValueP1 - 1)) == 0;
-  localparam int TempWidth = $clog2(MaxValue + MaxIncrement + 1);
+  localparam int TempWidth = $clog2(
+      MaxValueP1Width'(MaxValue) + MaxIncrementP1Width'(MaxIncrement) + 1
+  );
+  localparam logic [ValueWidth-1:0] MaxValueResized = ValueWidth'(MaxValue);
+  localparam logic [TempWidth-1:0] MaxValueWithOverflow = TempWidth'(MaxValue);
 
   // TODO(mgottscho): Sometimes the MSbs may not be used. It'd be cleaner
   // to capture them more tightly using br_misc_unused.
@@ -109,11 +131,12 @@ module br_counter_incr #(
   if (EnableSaturate) begin : gen_saturate
     logic [ValueWidth-1:0] value_next_saturated;
 
-    assign value_next_saturated = MaxValue;
-    assign value_next = (value_temp > MaxValue) ? value_next_saturated : value_temp[ValueWidth-1:0];
+    assign value_next_saturated = MaxValueResized;
+    assign value_next = (value_temp > MaxValueWithOverflow) ?
+        value_next_saturated : value_temp[ValueWidth-1:0];
 
     // For MaxValueP1 being a power of 2, wrapping occurs naturally
-  end else if (IsMaxValueP1PowerOf2) begin : gen_power_of_2_wrap
+  end else if (IsMaxValueP1PowerOf2 || !EnableWrap) begin : gen_power_of_2_wrap
     assign value_next = value_temp[ValueWidth-1:0];
 
     // For MaxValueP1 not being a power of 2, handle wrap-around explicitly
@@ -123,10 +146,10 @@ module br_counter_incr #(
     logic [TempWidth-1:0] value_temp_wrapped;
 
     // ri lint_check_waive ARITH_EXTENSION
-    assign value_temp_wrapped = (value_temp - MaxValue) - 1;
+    assign value_temp_wrapped = (value_temp - MaxValueWithOverflow) - 1;
     // ri lint_check_waive ARITH_EXTENSION
-    assign value_next = (value_temp > MaxValue) ?
-      value_temp_wrapped[ValueWidth-1:0] :  // ri lint_check_waive FULL_RANGE
+    assign value_next = (value_temp > MaxValueWithOverflow) ?
+        value_temp_wrapped[ValueWidth-1:0] :  // ri lint_check_waive FULL_RANGE
         value_temp[ValueWidth-1:0];  // ri lint_check_waive FULL_RANGE
 
     if (TempWidth > ValueWidth) begin : gen_unused
@@ -143,13 +166,13 @@ module br_counter_incr #(
   // Value
   `BR_ASSERT_IMPL(value_in_range_a, value <= MaxValue)
   `BR_ASSERT_IMPL(value_next_in_range_a, value_next <= MaxValue)
-  `BR_ASSERT_IMPL(value_next_propagates_a, ##1 value == $past(value_next))
+  `BR_ASSERT_IMPL(value_next_propagates_a, ##1 !$past(rst) |-> value == $past(value_next))
 
   // Overflow corners
   if (EnableSaturate) begin : gen_saturate_impl_check
     `BR_ASSERT_IMPL(value_saturate_a,
                     (incr_valid && value_temp > MaxValue) |-> (value_next == MaxValue))
-  end else begin : gen_wrap_impl_check
+  end else if (EnableWrap) begin : gen_wrap_impl_check
     `BR_ASSERT_IMPL(
         value_overflow_a,
         (incr_valid && value_temp > MaxValue) |-> (value_next == (value_temp - MaxValue - 1)))
@@ -159,12 +182,33 @@ module br_counter_incr #(
   end
 
   // Increment corners
-  `BR_ASSERT_IMPL(plus_zero_a, (!reinit && incr_valid && incr == '0) |-> (value_next == value))
+  if (EnableCoverZeroIncrement) begin : gen_cover_zero_increment
+    `BR_ASSERT_IMPL(plus_zero_a, (!reinit && incr_valid && incr == '0) |-> (value_next == value))
+  end else begin : gen_assert_no_zero_increment
+    `BR_ASSERT_IMPL(no_plus_zero_a, incr_valid |-> incr > '0)
+  end
   `BR_COVER_IMPL(increment_max_c, incr_valid && incr == MaxIncrement)
-  `BR_COVER_IMPL(value_temp_oob_c, value_temp > MaxValue)
+  if (!EnableSaturate && !EnableWrap) begin : gen_assert_no_overflow
+    `BR_ASSERT_IMPL(no_value_overflow_a, value_temp <= MaxValue)
+  end else if (!IsMaxValueP1PowerOf2) begin : gen_cover_overflow
+    `BR_COVER_IMPL(value_temp_oob_c, value_temp > MaxValue)
+  end
 
   // Reinit
-  `BR_ASSERT_IMPL(reinit_no_incr_a, reinit && !incr_valid |=> value == $past(initial_value))
-  `BR_COVER_IMPL(reinit_and_incr_c, reinit && incr_valid && incr > 0)
+  if (EnableCoverReinit) begin : gen_cover_reinit
+    if (EnableCoverReinitAndIncr) begin : gen_cover_reinit_and_incr
+      `BR_COVER_IMPL(reinit_and_incr_c, reinit && incr_valid && incr > 0)
+    end else begin : gen_assert_no_reinit_and_incr
+      `BR_ASSERT_IMPL(no_reinit_and_incr_a, reinit |-> !incr_valid)
+    end
+
+    if (EnableCoverReinitNoIncr) begin : gen_cover_reinit_no_incr
+      `BR_ASSERT_IMPL(reinit_no_incr_a, reinit && !incr_valid |=> value == $past(initial_value))
+    end else begin : gen_assert_no_reinit_without_incr
+      `BR_ASSERT_IMPL(no_reinit_without_incr_a, reinit |-> incr_valid)
+    end
+  end else begin : gen_assert_no_reinit
+    `BR_ASSERT_IMPL(no_reinit_a, !reinit)
+  end
 
 endmodule : br_counter_incr

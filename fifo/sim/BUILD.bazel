@@ -1,26 +1,18 @@
-# Copyright 2024-2025 The Bedrock-RTL Authors
-#
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
-#
-#     http://www.apache.org/licenses/LICENSE-2.0
-#
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
+# SPDX-License-Identifier: Apache-2.0
 
 load("@rules_hdl//verilog:providers.bzl", "verilog_library")
 load("//bazel:br_verilog.bzl", "br_verilog_sim_test_tools_suite")
 load("//bazel:verilog.bzl", "verilog_elab_test")
 
-package(default_visibility = ["//visibility:public"])
+package(default_visibility = ["//visibility:private"])
 
 verilog_library(
     name = "br_fifo_test_harness",
     srcs = ["br_fifo_test_harness.sv"],
+    visibility = [
+        "//cdc/sim:__pkg__",
+        "//fifo/sim:__pkg__",
+    ],
 )
 
 verilog_elab_test(
@@ -189,6 +181,10 @@ br_verilog_sim_test_tools_suite(
             "1",
             "2",
         ],
+        "NumLinkedListsPerFifo": [
+            "1",
+            "2",
+        ],
         "RegisterPopOutputs": [
             "0",
             "1",
@@ -249,6 +245,10 @@ br_verilog_sim_test_tools_suite(
             "1",
             "2",
         ],
+        "NumLinkedListsPerFifo": [
+            "1",
+            "2",
+        ],
         "RegisterPopOutputs": [
             "0",
             "1",
@@ -272,4 +272,103 @@ br_verilog_sim_test_tools_suite(
         "vcs",
     ],
     deps = [":br_fifo_shared_dynamic_flops_push_credit_tb"],
+)
+
+verilog_library(
+    name = "br_fifo_shared_pstatic_flops_tb",
+    srcs = ["br_fifo_shared_pstatic_flops_tb.sv"],
+    deps = [
+        ":br_fifo_shared_test_harness",
+        "//fifo/rtl:br_fifo_shared_pstatic_flops",
+        "//misc/sim:br_test_driver",
+    ],
+)
+
+verilog_elab_test(
+    name = "br_fifo_shared_pstatic_flops_tb_elab_test",
+    tool = "verific",
+    deps = [":br_fifo_shared_pstatic_flops_tb"],
+)
+
+br_verilog_sim_test_tools_suite(
+    name = "br_fifo_shared_pstatic_flops_sim_test_tools_suite",
+    params = {
+        "Depth": ["8"],
+        "Width": ["8"],
+        "NumFifos": [
+            "2",
+            "4",
+        ],
+        "StagingBufferDepth": [
+            "1",
+            "2",
+        ],
+        "RegisterPopOutputs": [
+            "0",
+            "1",
+        ],
+        "RamAddressDepthStages": [
+            "0",
+            "1",
+        ],
+    },
+    # TODO(zhemao): dsim test is broken due to apparent simulator bug.
+    # Re-enable when the bug is fixed.
+    tools = [
+        "vcs",
+    ],
+    deps = [":br_fifo_shared_pstatic_flops_tb"],
+)
+
+verilog_library(
+    name = "br_fifo_shared_pstatic_flops_push_credit_tb",
+    srcs = ["br_fifo_shared_pstatic_flops_push_credit_tb.sv"],
+    deps = [
+        ":br_fifo_shared_test_harness",
+        "//arb/rtl/internal:br_arb_rr_internal",
+        "//credit/rtl:br_credit_sender_vc",
+        "//fifo/rtl:br_fifo_shared_pstatic_flops_push_credit",
+        "//flow/rtl:br_flow_demux_select_unstable",
+        "//misc/sim:br_test_driver",
+    ],
+)
+
+verilog_elab_test(
+    name = "br_fifo_shared_pstatic_flops_push_credit_tb_elab_test",
+    tool = "verific",
+    deps = [":br_fifo_shared_pstatic_flops_push_credit_tb"],
+)
+
+br_verilog_sim_test_tools_suite(
+    name = "br_fifo_shared_pstatic_flops_push_credit_sim_test_tools_suite",
+    params = {
+        "Depth": ["8"],
+        "Width": ["8"],
+        "NumFifos": [
+            "2",
+            "4",
+        ],
+        "StagingBufferDepth": [
+            "1",
+            "2",
+        ],
+        "RegisterPopOutputs": [
+            "0",
+            "1",
+        ],
+        "RegisterPushOutputs": [
+            "0",
+            "1",
+        ],
+        "RamAddressDepthStages": [
+            "0",
+            "1",
+        ],
+    },
+    # TODO(zhemao): dsim test is broken due to apparent simulator bug.
+    # Re-enable when the bug is fixed.
+    tools = [
+        "vcs",
+    ],
+    deps = [":br_fifo_shared_pstatic_flops_push_credit_tb"],
 )

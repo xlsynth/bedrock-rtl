@@ -1,16 +1,5 @@
-// Copyright 2025 The Bedrock-RTL Authors
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//     http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
+// SPDX-License-Identifier: Apache-2.0
+
 //
 // Bedrock-RTL Shared Dynamic Multi-FIFO with Flop-based Storage (Push Valid/Credit Interface)
 //
@@ -43,18 +32,23 @@
 //
 // Because the pop bandwidth of a linked list is limited by the pointer RAM read
 // latency, the multi-FIFO supports using multiple linked lists per logical
-// FIFO. The linked list controller will cycle through the linked list heads in
-// round-robin fashion. The number of linked lists per FIFO is determined by the
-// staging buffer depth.  The bandwidth of a single logical FIFO is thus
-// determined by the formula `StagingBufferDepth / (PointerRamReadLatency + 1)`,
-// where `PointerRamReadLatency = PointerRamAddressDepthStages +
-// PointerRamReadDataDepthStages + PointerRamReadDataWidthStages`. To get one
-// pop per cycle bandwidth for a single logical FIFO, the staging buffer depth
-// should be set to `PointerRamReadLatency + 1`.
+// FIFO, configured by the `NumLinkedListsPerFifo` parameter. The linked list
+// controller will cycle through the linked list heads in round-robin fashion.
+// The bandwidth is also limited by the staging buffer depth and data RAM read
+// latency. Up to `StagingBufferDepth` reads can be inflight to the RAM at any
+// time. Thus, the bandwidth of a single logical FIFO is capped at
+// the minimum of `NumLinkedListsPerFifo / (PointerRamReadLatency + 1)` and
+// `StagingBufferDepth / (DataRamReadLatency + 1)`. To get full bandwidth,
+// the number of linked lists per FIFO should be set to `PointerRamReadLatency +
+// 1` and the staging buffer depth should be set to `DataRamReadLatency + 1`.
+//
+// `PointerRamReadLatency = PointerRamAddressDepthStages + PointerRamReadDataDepthStages + PointerRamReadDataWidthStages`
+//
+// `DataRamReadLatency = DataRamReadAddressDepthStages + DataRamReadDataDepthStages + DataRamReadDataWidthStages`
 //
 // For example, to have zero retiming on the read path, full bandwidth, and
-// pop data registered at the output, set StagingBufferDepth = 1 and
-// RegisterPopOutputs = 1.
+// pop data registered at the output, set StagingBufferDepth = 1,
+// NumLinkedListsPerFifo = 1, and RegisterPopOutputs = 1.
 
 module br_fifo_shared_dynamic_flops_push_credit #(
     // Number of write ports. Must be >=1.
@@ -70,8 +64,13 @@ module br_fifo_shared_dynamic_flops_push_credit #(
     parameter int Width = 1,
     // The depth of the pop-side staging buffer.
     // This affects the pop bandwidth of each logical FIFO.
-    // The bandwidth will be `StagingBufferDepth / (PointerRamReadLatency + 1)`.
+    // The bandwidth will be `StagingBufferDepth / (DataRamAddressDepthStages
+    // + DataRamReadDataDepthStages + DataRamReadDataWidthStages + 1)`.
     parameter int StagingBufferDepth = 1,
+    // The number of sub-linked lists used by each logical FIFO.
+    // This affects the pop bandwidth of each logical FIFO.
+    // The max bandwidth will be `NumLinkedListsPerFifo / (PointerRamReadLatency + 1)`.
+    parameter int NumLinkedListsPerFifo = 1,
     // If 1, make sure pop_valid/pop_data are registered at the output
     // of the staging buffer. This adds a cycle of cut-through latency.
     parameter bit RegisterPopOutputs = 0,
@@ -79,6 +78,15 @@ module br_fifo_shared_dynamic_flops_push_credit #(
     // driven directly from a flop. This comes at the expense of one additional
     // cycle of credit loop latency.
     parameter bit RegisterPushOutputs = 0,
+    // If 1, cover that push_credit_stall can be asserted
+    // Otherwise, assert that it is never asserted.
+    parameter bit EnableCoverPushCreditStall = 1,
+    // If 1, cover that credit_withhold can be non-zero.
+    // Otherwise, assert that it is always zero.
+    parameter bit EnableCoverCreditWithhold = 1,
+    // If 1, cover that push_sender_in_reset can be asserted
+    // Otherwise, assert that it is never asserted.
+    parameter bit EnableCoverPushSenderInReset = 1,
     // If 1, place a register on the deallocation path from the pop-side
     // staging buffer to the freelist. This improves timing at the cost of
     // adding a cycle of backpressure latency.
@@ -103,6 +111,8 @@ module br_fifo_shared_dynamic_flops_push_credit #(
     parameter int PointerRamReadDataDepthStages = 0,
     // Number of stages in the width dimension on the pointer flop RAM.
     parameter int PointerRamReadDataWidthStages = 0,
+    // If 1, assert that push_data is always known (not X) when push_valid is asserted.
+    parameter bit EnableAssertPushDataKnown = 1,
     // If 1, then assert there are no valid bits asserted and that the FIFO is
     // empty at the end of the test.
     // ri lint_check_waive PARAM_NOT_USED
@@ -227,11 +237,16 @@ module br_fifo_shared_dynamic_flops_push_credit #(
       .Depth(Depth),
       .Width(Width),
       .StagingBufferDepth(StagingBufferDepth),
+      .NumLinkedListsPerFifo(NumLinkedListsPerFifo),
       .RegisterPopOutputs(RegisterPopOutputs),
       .RegisterDeallocation(RegisterDeallocation),
       .DataRamReadLatency(DataRamReadLatency),
       .PointerRamReadLatency(PointerRamReadLatency),
       .RegisterPushOutputs(RegisterPushOutputs),
+      .EnableCoverPushCreditStall(EnableCoverPushCreditStall),
+      .EnableCoverCreditWithhold(EnableCoverCreditWithhold),
+      .EnableCoverPushSenderInReset(EnableCoverPushSenderInReset),
+      .EnableAssertPushDataKnown(EnableAssertPushDataKnown),
       .EnableAssertFinalNotValid(EnableAssertFinalNotValid)
   ) br_fifo_shared_dynamic_ctrl (
       .clk,

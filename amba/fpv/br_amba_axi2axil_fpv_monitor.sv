@@ -1,16 +1,5 @@
-// Copyright 2024-2025 The Bedrock-RTL Authors
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//     http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
+// SPDX-License-Identifier: Apache-2.0
+
 
 // Bedrock-RTL AXI4 to AXI4-Lite Bridge FPV checks
 
@@ -97,6 +86,14 @@ module br_amba_axi2axil_fpv_monitor #(
     input logic                             axil_rready
 );
 
+  // ABVIP should send more than DUT to test backpressure
+  localparam int MaxPending = MaxOutstandingReqs + 2;
+
+  // multi-beat narrow access is NOT supported.
+  `BR_ASSUME(no_multi_beat_narrow_access_write_a, axi_awvalid && (axi_awsize != $clog2(StrobeWidth)
+                                                  ) |-> axi_awlen == 'd0)
+  `BR_ASSUME(no_multi_beat_narrow_access_read_a, axi_arvalid && (axi_arsize != $clog2(StrobeWidth)
+                                                 ) |-> axi_arlen == 'd0)
 
   // Instance of the AXI Slave DUV
   axi4_master #(
@@ -108,7 +105,13 @@ module br_amba_axi2axil_fpv_monitor #(
       .WUSER_WIDTH(WUserWidth),
       .BUSER_WIDTH(BUserWidth),
       .RUSER_WIDTH(RUserWidth),
-      .MAX_PENDING(MaxOutstandingReqs)
+      .MAX_PENDING(MaxPending),
+      // when there is no valid, ready doesn't have to be high eventually
+      // This will only turn off assertion without precondition: `STRENGTH(##[0:$] arready
+      // (arvalid && !arready) |=> `STRENGTH(##[0:$] arready) is still enabled
+      .CONFIG_WAIT_FOR_VALID_BEFORE_READY(1),
+      .ALLOW_SPARSE_STROBE(1),
+      .BYTE_STROBE_ON(1)
   ) axi4 (
       // Global signals
       .aclk    (clk),
@@ -178,7 +181,13 @@ module br_amba_axi2axil_fpv_monitor #(
       .WUSER_WIDTH(WUserWidth),
       .BUSER_WIDTH(BUserWidth),
       .RUSER_WIDTH(RUserWidth),
-      .MAX_PENDING(MaxOutstandingReqs)
+      .MAX_PENDING(MaxPending),
+      // when there is no valid, ready doesn't have to be high eventually
+      // This will only turn off assertion without precondition: `STRENGTH(##[0:$] arready
+      // (arvalid && !arready) |=> `STRENGTH(##[0:$] arready) is still enabled
+      .CONFIG_WAIT_FOR_VALID_BEFORE_READY(1),
+      .ALLOW_SPARSE_STROBE(1),
+      .BYTE_STROBE_ON(1)
   ) axi4_lite (
       // Global signals
       .aclk    (clk),

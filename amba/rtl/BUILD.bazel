@@ -1,16 +1,4 @@
-# Copyright 2024-2025 The Bedrock-RTL Authors
-#
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
-#
-#     http://www.apache.org/licenses/LICENSE-2.0
-#
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
+# SPDX-License-Identifier: Apache-2.0
 
 load("@rules_hdl//verilog:providers.bzl", "verilog_library")
 load("//bazel:br_verilog.bzl", "br_verilog_elab_and_lint_test_suite")
@@ -55,11 +43,23 @@ verilog_library(
 )
 
 verilog_library(
+    name = "br_amba_axi_default_target",
+    srcs = ["br_amba_axi_default_target.sv"],
+    deps = [
+        ":br_amba_pkg",
+        "//counter/rtl:br_counter_incr",
+        "//flow/rtl:br_flow_reg_fwd",
+        "//macros:br_asserts_internal",
+        "//macros:br_unused",
+    ],
+)
+
+verilog_library(
     name = "br_amba_axil_default_target",
     srcs = ["br_amba_axil_default_target.sv"],
     deps = [
+        ":br_amba_axi_default_target",
         ":br_amba_pkg",
-        "//flow/rtl:br_flow_reg_fwd",
     ],
 )
 
@@ -209,6 +209,29 @@ br_verilog_elab_and_lint_test_suite(
 )
 
 br_verilog_elab_and_lint_test_suite(
+    name = "br_amba_axi_default_target_test_suite",
+    params = {
+        "DataWidth": [
+            "32",
+            "64",
+        ],
+        "DecodeError": [
+            "0",
+            "1",
+        ],
+        "SingleBeat": [
+            "0",
+            "1",
+        ],
+        "AxiIdWidth": [
+            "1",
+            "8",
+        ],
+    },
+    deps = [":br_amba_axi_default_target"],
+)
+
+br_verilog_elab_and_lint_test_suite(
     name = "br_amba_axil_default_target_test_suite",
     params = {
         "DataWidth": [
@@ -280,6 +303,10 @@ br_verilog_elab_and_lint_test_suite(
             "2",
             "8",
         ],
+        "NumMsiDestAddr": [
+            "1",
+            "2",
+        ],
         "ThrottleCntrWidth": [
             "2",
             "4",
@@ -322,6 +349,7 @@ verilog_library(
         "//amba/rtl/internal:br_amba_iso_ds_fsm",
         "//amba/rtl/internal:br_amba_iso_resp_tracker",
         "//amba/rtl/internal:br_amba_iso_wdata_align",
+        "//flow/rtl:br_flow_reg_fwd",
         "//macros:br_asserts_internal",
         "//macros:br_registers",
         "//macros:br_unused",
@@ -359,4 +387,82 @@ br_verilog_elab_and_lint_test_suite(
         "MaxAxiBurstLen": ["1"],
     },
     deps = [":br_amba_axi_isolate_sub"],
+)
+
+verilog_library(
+    name = "br_amba_axi_isolate_mgr",
+    srcs = ["br_amba_axi_isolate_mgr.sv"],
+    deps = [
+        ":br_amba_pkg",
+        "//amba/rtl/internal:br_amba_iso_req_tracker",
+        "//amba/rtl/internal:br_amba_iso_us_fsm",
+        "//amba/rtl/internal:br_amba_iso_wdata_align",
+        "//flow/rtl:br_flow_reg_fwd",
+        "//macros:br_asserts_internal",
+        "//macros:br_registers",
+        "//pkg:br_math_pkg",
+    ],
+)
+
+br_verilog_elab_and_lint_test_suite(
+    name = "br_amba_axi_isolate_mgr_test_suite",
+    params = {
+        "AddrWidth": ["64"],
+        "DataWidth": ["128"],
+        "IdWidth": ["8"],
+        "MaxOutstanding": [
+            "128",
+            "2",
+        ],
+        "MaxAxiBurstLen": [
+            "1",
+            "256",
+        ],
+    },
+    deps = [":br_amba_axi_isolate_mgr"],
+)
+
+verilog_library(
+    name = "br_amba_axi_demux",
+    srcs = ["br_amba_axi_demux.sv"],
+    deps = [
+        ":br_amba_pkg",
+        "//amba/rtl/internal:br_amba_axi_demux_req_tracker",
+        "//fifo/rtl:br_fifo_flops",
+        "//flow/rtl:br_flow_demux_select_unstable",
+        "//flow/rtl:br_flow_reg_fwd",
+        "//flow/rtl/internal:br_flow_checks_valid_data_impl",
+        "//macros:br_asserts_internal",
+    ],
+)
+
+br_verilog_elab_and_lint_test_suite(
+    name = "br_amba_axi_demux_test_suite",
+    params = {
+        "SingleIdOnly": [
+            "1",
+            "0",
+        ],
+        "AwAxiIdWidth": [
+            "1",
+            "4",
+        ],
+        "ArAxiIdWidth": [
+            "1",
+            "4",
+        ],
+        "NumSubordinates": [
+            "2",
+            "3",
+        ],
+        "RegisterDownstreamAxOutputs": [
+            "1",
+            "0",
+        ],
+        "RegisterDownstreamWOutputs": [
+            "1",
+            "0",
+        ],
+    },
+    deps = [":br_amba_axi_demux"],
 )

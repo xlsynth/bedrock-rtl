@@ -1,19 +1,5 @@
-// Copyright 2024-2025 The Bedrock-RTL Authors
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// Copyright 2024-2025 The Bedrock-RTL Authors
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//     http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
+// SPDX-License-Identifier: Apache-2.0
+
 
 
 // Testbench for br_ecc_sed_encoder and br_ecc_sed_decoder
@@ -34,10 +20,10 @@ module br_ecc_sed_encoder_decoder_tb;
 
   // TODO: have TB support E2E latency > 0
   localparam int E2ELatency =
-      EncoderRegisterInputs +
-      EncoderRegisterOutputs +
-      DecoderRegisterInputs +
-      DecoderRegisterOutputs;
+      32'(EncoderRegisterInputs) +
+      32'(EncoderRegisterOutputs) +
+      32'(DecoderRegisterInputs) +
+      32'(DecoderRegisterOutputs);
 
   // Clock and reset
   logic clk;

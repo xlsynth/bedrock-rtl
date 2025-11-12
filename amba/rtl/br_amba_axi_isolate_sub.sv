@@ -1,16 +1,5 @@
-// Copyright 2025 The Bedrock-RTL Authors
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//     http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
+// SPDX-License-Identifier: Apache-2.0
+
 //
 // Bedrock-RTL AXI Downstream (Subordinate) Isolator
 //
@@ -85,12 +74,46 @@ module br_amba_axi_isolate_sub #(
     parameter bit [RUserWidth-1:0] IsolateRUser = '0,
     // RDATA data to generate for isolated transactions.
     parameter bit [DataWidth-1:0] IsolateRData = '0,
-    // Number of pipeline stages to use for the pointer RAM read
-    // data. Has no effect if AxiIdCount == 1.
-    parameter bit FlopPtrRamRd = 0,
-    // Number of pipeline stages to use for the data RAM read data.
-    // Has no effect if AxiIdCount == 1.
-    parameter bit FlopDataRamRd = 0,
+    // Set to 1 to use a dynamic storage shared FIFO for the read tracking
+    // list.
+    parameter bit UseDynamicFifoForReadTracker = 1,
+    // When UseDynamicFifoForReadTracker=0, this parameter controls the depth
+    // of the Per-ID tracking FIFO. This defaults to MaxOutstanding, but may
+    // need to be set to a smaller value as the storage will be replicated for
+    // each ID.
+    parameter int StaticPerIdReadTrackerFifoDepth = MaxOutstanding,
+    // Number of pipeline stages to use for the pointer RAM read data in the
+    // response tracker FIFO. Has no effect if AxiIdCount == 1 or
+    // UseDynamicFifoForReadTracker == 0.
+    parameter int DynamicFifoPointerRamReadDataDepthStages = 0,
+    // Number of pipeline stages to use for the data RAM read data in the
+    // response tracker FIFO. Has no effect if AxiIdCount == 1 or
+    // UseDynamicFifoForReadTracker == 0.
+    parameter int DynamicFifoDataRamReadDataDepthStages = 0,
+    // Number of pipeline stages to use for the pointer RAM address in the
+    // response tracker FIFO. Has no effect if AxiIdCount == 1 or
+    // UseDynamicFifoForReadTracker == 0.
+    parameter int DynamicFifoPointerRamAddressDepthStages = 1,
+    // Number of pipeline stages to use for the data RAM address in the
+    // response tracker FIFO. Has no effect if AxiIdCount == 1 or
+    // UseDynamicFifoForReadTracker == 0.
+    parameter int DynamicFifoDataRamAddressDepthStages = 1,
+    // Number of linked lists per FIFO in the response tracker FIFO. Has no
+    // effect if AxiIdCount == 1 or UseDynamicFifoForReadTracker == 0.
+    parameter int DynamicFifoNumLinkedListsPerFifo = 2,
+    // Number of pipeline stages to use for the staging buffer in the response
+    // tracker FIFO. Has no effect if AxiIdCount == 1 or
+    // UseDynamicFifoForReadTracker == 0.
+    parameter int DynamicFifoStagingBufferDepth = 2,
+    // Number of pipeline stages to use for the pop outputs in the response
+    // tracker FIFO. Has no effect if AxiIdCount == 1 or
+    // UseDynamicFifoForReadTracker == 0.
+    parameter int DynamicFifoRegisterPopOutputs = 1,
+    // Number of pipeline stages to use for the deallocation in the response
+    // tracker FIFO. Has no effect if AxiIdCount == 1 or
+    // UseDynamicFifoForReadTracker == 0.
+    parameter int DynamicFifoRegisterDeallocation = 1,
+    //
     localparam int AxiBurstLenWidth = br_math::clamped_clog2(MaxAxiBurstLen),
     localparam int StrobeWidth = DataWidth / 8
 ) (
@@ -105,6 +128,7 @@ module br_amba_axi_isolate_sub #(
     input  logic [          AxiBurstLenWidth-1:0] upstream_awlen,
     input  logic [br_amba::AxiBurstSizeWidth-1:0] upstream_awsize,
     input  logic [br_amba::AxiBurstTypeWidth-1:0] upstream_awburst,
+    input  logic [    br_amba::AxiCacheWidth-1:0] upstream_awcache,
     input  logic [     br_amba::AxiProtWidth-1:0] upstream_awprot,
     input  logic [               AWUserWidth-1:0] upstream_awuser,
     input  logic                                  upstream_awvalid,
@@ -125,6 +149,7 @@ module br_amba_axi_isolate_sub #(
     input  logic [          AxiBurstLenWidth-1:0] upstream_arlen,
     input  logic [br_amba::AxiBurstSizeWidth-1:0] upstream_arsize,
     input  logic [br_amba::AxiBurstTypeWidth-1:0] upstream_arburst,
+    input  logic [    br_amba::AxiCacheWidth-1:0] upstream_arcache,
     input  logic [     br_amba::AxiProtWidth-1:0] upstream_arprot,
     input  logic [               ARUserWidth-1:0] upstream_aruser,
     input  logic                                  upstream_arvalid,
@@ -142,6 +167,7 @@ module br_amba_axi_isolate_sub #(
     output logic [          AxiBurstLenWidth-1:0] downstream_awlen,
     output logic [br_amba::AxiBurstSizeWidth-1:0] downstream_awsize,
     output logic [br_amba::AxiBurstTypeWidth-1:0] downstream_awburst,
+    output logic [    br_amba::AxiCacheWidth-1:0] downstream_awcache,
     output logic [     br_amba::AxiProtWidth-1:0] downstream_awprot,
     output logic [               AWUserWidth-1:0] downstream_awuser,
     output logic                                  downstream_awvalid,
@@ -162,6 +188,7 @@ module br_amba_axi_isolate_sub #(
     output logic [          AxiBurstLenWidth-1:0] downstream_arlen,
     output logic [br_amba::AxiBurstSizeWidth-1:0] downstream_arsize,
     output logic [br_amba::AxiBurstTypeWidth-1:0] downstream_arburst,
+    output logic [    br_amba::AxiCacheWidth-1:0] downstream_arcache,
     output logic [     br_amba::AxiProtWidth-1:0] downstream_arprot,
     output logic [               ARUserWidth-1:0] downstream_aruser,
     output logic                                  downstream_arvalid,
@@ -185,12 +212,34 @@ module br_amba_axi_isolate_sub #(
   `BR_ASSERT_STATIC(have_enough_ids_a, AxiIdCount <= 2 ** IdWidth)
   `BR_ASSERT_STATIC(burst_len_legal_a,
                     MaxAxiBurstLen == 1 || MaxAxiBurstLen == 2 ** br_amba::AxiBurstLenWidth)
+  // Check that the isolate request can only rise when isolate_done is false.
+  `BR_ASSERT_INTG(legal_request_rise_a, $rose(isolate_req) |-> !isolate_done)
+  // Check that the isolate request can only fall when isolate_done is true.
+  `BR_ASSERT_INTG(legal_request_fall_a, $fell(isolate_req) |-> isolate_done)
   if (MinIdWidth < IdWidth) begin : gen_id_width_lt_len_width
     `BR_ASSERT_INTG(unused_upper_awid_zero_a,
                     upstream_awvalid |-> upstream_awid[IdWidth-1:MinIdWidth] == '0)
     `BR_ASSERT_INTG(unused_upper_arid_zero_a,
                     upstream_arvalid |-> upstream_arid[IdWidth-1:MinIdWidth] == '0)
   end
+
+  //
+  // Internal Signals
+  //
+
+  logic upstream_bready_int;
+  logic upstream_bvalid_int;
+  logic [br_amba::AxiRespWidth-1:0] upstream_bresp_int;
+  logic [BUserWidth-1:0] upstream_buser_int;
+  logic [IdWidth-1:0] upstream_bid_int;
+  //
+  logic upstream_rready_int;
+  logic upstream_rvalid_int;
+  logic upstream_rlast_int;
+  logic [br_amba::AxiRespWidth-1:0] upstream_rresp_int;
+  logic [RUserWidth-1:0] upstream_ruser_int;
+  logic [IdWidth-1:0] upstream_rid_int;
+  logic [DataWidth-1:0] upstream_rdata_int;
 
   //
   // Write Path
@@ -202,6 +251,8 @@ module br_amba_axi_isolate_sub #(
   logic downstream_awvalid_iso;
   logic upstream_awready_holdoff;
   logic upstream_awvalid_holdoff;
+  logic upstream_wready_holdoff;
+  logic upstream_wvalid_holdoff;
   //
   logic isolate_done_w;
   logic align_and_hold_req_w;
@@ -240,12 +291,14 @@ module br_amba_axi_isolate_sub #(
       //
       .upstream_wready,
       .upstream_wvalid,
+      .upstream_wlast(1'b0),
       //
       .downstream_awready (upstream_awready_holdoff),
       .downstream_awvalid (upstream_awvalid_holdoff),
       //
-      .downstream_wready  (downstream_wready_iso),
-      .downstream_wvalid  (downstream_wvalid_iso)
+      .downstream_wready  (upstream_wready_holdoff),
+      .downstream_wvalid  (upstream_wvalid_holdoff),
+      .downstream_wlast   ()
   );
 
   br_amba_iso_resp_tracker #(
@@ -253,12 +306,26 @@ module br_amba_axi_isolate_sub #(
       .AxiIdCount(AxiIdCount),
       .AxiIdWidth(IdWidth),
       .DataWidth(BUserWidth),
-      .FlopPtrRamRd(FlopPtrRamRd),
-      .FlopDataRamRd(FlopDataRamRd),
+      .DynamicFifoPointerRamReadDataDepthStages(DynamicFifoPointerRamReadDataDepthStages),
+      .DynamicFifoPointerRamAddressDepthStages(DynamicFifoPointerRamAddressDepthStages),
+      .DynamicFifoNumLinkedListsPerFifo(DynamicFifoNumLinkedListsPerFifo),
+      .DynamicFifoDataRamReadDataDepthStages(DynamicFifoDataRamReadDataDepthStages),
+      .DynamicFifoDataRamAddressDepthStages(DynamicFifoDataRamAddressDepthStages),
+      .DynamicFifoStagingBufferDepth(DynamicFifoStagingBufferDepth),
+      .DynamicFifoRegisterPopOutputs(DynamicFifoRegisterPopOutputs),
+      .DynamicFifoRegisterDeallocation(DynamicFifoRegisterDeallocation),
       .IsolateResp(IsolateResp),
       .IsolateData(IsolateBUser),
       // Single write response beat per write transaction
-      .MaxAxiBurstLen(1)
+      .MaxAxiBurstLen(1),
+      .MaxTransactionSkew(MaxTransactionSkew),
+      .EnableWlastTracking(1),
+      // When MaxAxiBurstLen=1, the static FIFO implementation becomes an
+      // array of counters (no actual FIFOs), which is always more efficient
+      // than a dynamic FIFO. So no external option is provided to select a
+      // dynamic FIFO.
+      .UseDynamicFifo(0),
+      .PerIdFifoDepth(MaxOutstanding)
   ) br_amba_iso_resp_tracker_w (
       .clk,
       .rst,
@@ -272,17 +339,25 @@ module br_amba_axi_isolate_sub #(
       // write responses only have a single beat
       .upstream_axlen(1'b0),
       //
-      .upstream_xready(upstream_bready),
-      .upstream_xvalid(upstream_bvalid),
-      .upstream_xid(upstream_bid),
-      .upstream_xresp({upstream_bresp}),  // ri lint_check_waive ENUM_RHS
+      .upstream_xready(upstream_bready_int),
+      .upstream_xvalid(upstream_bvalid_int),
+      .upstream_xid(upstream_bid_int),
+      .upstream_xresp({upstream_bresp_int}),  // ri lint_check_waive ENUM_RHS
       .upstream_xlast(),
-      .upstream_xdata(upstream_buser),
+      .upstream_xdata(upstream_buser_int),
+      //
+      .upstream_wready(upstream_wready_holdoff),
+      .upstream_wvalid(upstream_wvalid_holdoff),
+      .upstream_wlast(upstream_wlast),
       //
       .downstream_axready(downstream_awready_iso),
       .downstream_axvalid(downstream_awvalid_iso),
       .downstream_axid(downstream_awid),
       .downstream_axlen(),
+      //
+      .downstream_wready(downstream_wready_iso),
+      .downstream_wvalid(downstream_wvalid_iso),
+      .downstream_wlast(downstream_wlast),
       //
       .downstream_xready(downstream_bready),
       .downstream_xvalid(downstream_bvalid),
@@ -305,13 +380,13 @@ module br_amba_axi_isolate_sub #(
   assign downstream_awsize = upstream_awsize;
   assign downstream_awburst = upstream_awburst;
   assign downstream_awlen = upstream_awlen;
+  assign downstream_awcache = upstream_awcache;
   assign downstream_awprot = upstream_awprot;
   assign downstream_awuser = upstream_awuser;
   //
   assign downstream_wdata = upstream_wdata;
   assign downstream_wstrb = upstream_wstrb;
   assign downstream_wuser = upstream_wuser;
-  assign downstream_wlast = upstream_wlast;
 
   //
   // Read Path
@@ -352,12 +427,21 @@ module br_amba_axi_isolate_sub #(
       .AxiIdCount(AxiIdCount),
       .AxiIdWidth(IdWidth),
       .DataWidth(RUserWidth + DataWidth),
-      .FlopPtrRamRd(FlopPtrRamRd),
-      .FlopDataRamRd(FlopDataRamRd),
+      .DynamicFifoPointerRamReadDataDepthStages(DynamicFifoPointerRamReadDataDepthStages),
+      .DynamicFifoPointerRamAddressDepthStages(DynamicFifoPointerRamAddressDepthStages),
+      .DynamicFifoNumLinkedListsPerFifo(DynamicFifoNumLinkedListsPerFifo),
+      .DynamicFifoDataRamReadDataDepthStages(DynamicFifoDataRamReadDataDepthStages),
+      .DynamicFifoDataRamAddressDepthStages(DynamicFifoDataRamAddressDepthStages),
+      .DynamicFifoStagingBufferDepth(DynamicFifoStagingBufferDepth),
+      .DynamicFifoRegisterPopOutputs(DynamicFifoRegisterPopOutputs),
+      .DynamicFifoRegisterDeallocation(DynamicFifoRegisterDeallocation),
       .IsolateResp(IsolateResp),
       .IsolateData({IsolateRUser, IsolateRData}),
       // MaxAxiBurstLen response beats per read transaction
-      .MaxAxiBurstLen(MaxAxiBurstLen)
+      .MaxAxiBurstLen(MaxAxiBurstLen),
+      .EnableWlastTracking(0),
+      .UseDynamicFifo(UseDynamicFifoForReadTracker),
+      .PerIdFifoDepth(StaticPerIdReadTrackerFifoDepth)
   ) br_amba_iso_resp_tracker_r (
       .clk,
       .rst,
@@ -370,17 +454,25 @@ module br_amba_axi_isolate_sub #(
       .upstream_axid(upstream_arid),
       .upstream_axlen(upstream_arlen),
       //
-      .upstream_xready(upstream_rready),
-      .upstream_xvalid(upstream_rvalid),
-      .upstream_xid(upstream_rid),
-      .upstream_xresp({upstream_rresp}),  // ri lint_check_waive ENUM_RHS
-      .upstream_xlast(upstream_rlast),
-      .upstream_xdata({upstream_ruser, upstream_rdata}),
+      .upstream_wready(),
+      .upstream_wvalid(1'b1),
+      .upstream_wlast(1'b1),
+      //
+      .upstream_xready(upstream_rready_int),
+      .upstream_xvalid(upstream_rvalid_int),
+      .upstream_xid(upstream_rid_int),
+      .upstream_xresp({upstream_rresp_int}),  // ri lint_check_waive ENUM_RHS
+      .upstream_xlast(upstream_rlast_int),
+      .upstream_xdata({upstream_ruser_int, upstream_rdata_int}),
       //
       .downstream_axready(downstream_arready_iso),
       .downstream_axvalid(downstream_arvalid_iso),
       .downstream_axid(downstream_arid),
       .downstream_axlen(downstream_arlen),
+      //
+      .downstream_wready(1'b1),
+      .downstream_wvalid(),
+      .downstream_wlast(),
       //
       .downstream_xready(downstream_rready),
       .downstream_xvalid(downstream_rvalid),
@@ -400,6 +492,7 @@ module br_amba_axi_isolate_sub #(
   assign downstream_araddr = upstream_araddr;
   assign downstream_arsize = upstream_arsize;
   assign downstream_arburst = upstream_arburst;
+  assign downstream_arcache = upstream_arcache;
   assign downstream_arprot = upstream_arprot;
   assign downstream_aruser = upstream_aruser;
 
@@ -411,10 +504,66 @@ module br_amba_axi_isolate_sub #(
 
   // isolate_done is asserted when both write and read done signals rise
   // and deasserted after both done signals fall
-  assign isolate_done_next = isolate_req ?
-                            (isolate_done_w && isolate_done_r)
-                            : !(isolate_done_w || isolate_done_r);
+  assign isolate_done_next = isolate_done ?
+                            (isolate_done_w || isolate_done_r)
+                            : (isolate_done_w && isolate_done_r);
 
   `BR_REG(isolate_done, isolate_done_next)
 
+  //
+  // Upstream Output Register Stage
+  //
+
+  // This flop stage is needed to ensure that valid stability (required by AMBA protocol)
+  // is maintained on the upstream ports when entering isolation.
+
+  br_flow_reg_fwd #(
+      .Width($bits(
+          upstream_rdata
+      ) + $bits(
+          upstream_rresp
+      ) + $bits(
+          upstream_rlast
+      ) + $bits(
+          upstream_ruser
+      ) + $bits(
+          upstream_rid
+      )),
+      .EnableAssertPushValidStability(0),
+      .EnableAssertPushDataStability(0)
+  ) br_flow_reg_fwd_us_r (
+      .clk,
+      .rst,
+      //
+      .push_ready(upstream_rready_int),
+      .push_valid(upstream_rvalid_int),
+      .push_data({
+        upstream_rdata_int,
+        upstream_rresp_int,
+        upstream_rlast_int,
+        upstream_ruser_int,
+        upstream_rid_int
+      }),
+      //
+      .pop_ready(upstream_rready),
+      .pop_valid(upstream_rvalid),
+      .pop_data({upstream_rdata, upstream_rresp, upstream_rlast, upstream_ruser, upstream_rid})
+  );
+
+  br_flow_reg_fwd #(
+      .Width($bits(upstream_bresp) + $bits(upstream_buser) + $bits(upstream_bid)),
+      .EnableAssertPushValidStability(0),
+      .EnableAssertPushDataStability(0)
+  ) br_flow_reg_fwd_us_aw (
+      .clk,
+      .rst,
+      //
+      .push_ready(upstream_bready_int),
+      .push_valid(upstream_bvalid_int),
+      .push_data ({upstream_bresp_int, upstream_buser_int, upstream_bid_int}),
+      //
+      .pop_ready (upstream_bready),
+      .pop_valid (upstream_bvalid),
+      .pop_data  ({upstream_bresp, upstream_buser, upstream_bid})
+  );
 endmodule

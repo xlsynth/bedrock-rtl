@@ -1,16 +1,5 @@
-// Copyright 2024-2025 The Bedrock-RTL Authors
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//     http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
+// SPDX-License-Identifier: Apache-2.0
+
 
 // Bedrock-RTL FIFO Push Controller (Ready/Valid)
 
@@ -32,6 +21,8 @@ module br_fifo_push_ctrl #(
     // If 1, assert that push_data is stable when backpressured.
     // If 0, cover that push_data can be unstable.
     parameter bit EnableAssertPushDataStability = 1,
+    // If 1, assert that push_data is always known (not X) when push_valid is asserted.
+    parameter bit EnableAssertPushDataKnown = 1,
     // If 1, then assert there are no valid bits asserted and that the FIFO is
     // empty at the end of the test.
     parameter bit EnableAssertFinalNotValid = 1,
@@ -85,6 +76,13 @@ module br_fifo_push_ctrl #(
   //------------------------------------------
 
   // Core flow-control logic
+
+  logic [AddrWidth-1:0] addr_base;
+  logic [AddrWidth-1:0] addr_bound;
+
+  assign addr_base  = '0;
+  assign addr_bound = RamDepth - 1;
+
   br_fifo_push_ctrl_core #(
       .Depth(RamDepth),
       .Width(Width),
@@ -92,10 +90,14 @@ module br_fifo_push_ctrl #(
       .EnableCoverPushBackpressure(EnableCoverPushBackpressure),
       .EnableAssertPushValidStability(EnableAssertPushValidStability),
       .EnableAssertPushDataStability(EnableAssertPushDataStability),
+      .EnableAssertPushDataKnown(EnableAssertPushDataKnown),
       .EnableAssertFinalNotValid(EnableAssertFinalNotValid)
   ) br_fifo_push_ctrl_core (
       .clk,
       .rst,
+
+      .addr_base,
+      .addr_bound,
 
       .push_ready,
       .push_valid,
@@ -106,6 +108,7 @@ module br_fifo_push_ctrl #(
       .bypass_data_unstable,  // ri lint_check_waive CONST_OUTPUT
 
       .ram_wr_valid,
+      .ram_wr_addr_next(),
       .ram_wr_addr,
       .ram_wr_data,
 
@@ -116,7 +119,10 @@ module br_fifo_push_ctrl #(
   // Status flags
   br_counter #(
       .MaxValue(Depth),
-      .EnableAssertFinalNotValid(EnableAssertFinalNotValid)
+      .EnableAssertFinalNotValid(EnableAssertFinalNotValid),
+      .EnableWrap(0),
+      .EnableCoverZeroChange(0),
+      .EnableCoverReinit(0)
   ) br_counter_slots (
       .clk,
       .rst,
@@ -147,7 +153,6 @@ module br_fifo_push_ctrl #(
   `BR_ASSERT_IMPL(backpressure_latency_1_cycle_a, full && pop_beat |=> !full && push_ready)
   `BR_ASSERT_IMPL(ram_push_and_bypass_mutually_exclusive_a,
                   !(ram_wr_valid && bypass_ready && bypass_valid_unstable))
-  `BR_COVER_IMPL(bypass_unstable_c, !bypass_ready && bypass_valid_unstable)
 
   // Flags
   `BR_ASSERT_IMPL(slots_in_range_a, slots <= Depth)

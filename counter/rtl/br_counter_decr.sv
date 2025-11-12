@@ -1,16 +1,5 @@
-// Copyright 2024-2025 The Bedrock-RTL Authors
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//     http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
+// SPDX-License-Identifier: Apache-2.0
+
 
 // Bedrock-RTL Decrementing Counter
 //
@@ -45,8 +34,18 @@
 `include "br_unused.svh"
 
 module br_counter_decr #(
-    parameter int MaxValue = 1,  // Must be at least 1. Inclusive. Also the initial value.
-    parameter int MaxDecrement = 1,  // Must be at least 1 and at most MaxValue. Inclusive.
+    // Width of the MaxValue parameter.
+    // You might need to override this if you need a counter that's larger than 32 bits.
+    // Must be at least 1.
+    parameter int MaxValueWidth = 32,
+    // Width of the MaxDecrement parameter.
+    // You might need to override this if you need a counter that's larger than 32 bits.
+    // Must be at least 1.
+    parameter int MaxDecrementWidth = 32,
+    // Must be at least 1. Inclusive. Also the initial value.
+    parameter logic [MaxValueWidth-1:0] MaxValue = 1,
+    // Must be at least 1 and at most MaxValue. Inclusive.
+    parameter logic [MaxDecrementWidth-1:0] MaxDecrement = 1,
     // If 1, then when reinit is asserted together with decr_valid,
     // the decrement is applied to the initial value rather than the current value, i.e.,
     // value_next == initial_value - applicable decr.
@@ -58,8 +57,22 @@ module br_counter_decr #(
     parameter bit EnableSaturate = 0,
     // If 1, then assert there are no valid bits asserted at the end of the test.
     parameter bit EnableAssertFinalNotValid = 1,
-    localparam int ValueWidth = $clog2(MaxValue + 1),
-    localparam int DecrementWidth = $clog2(MaxDecrement + 1)
+    // If 1, cover the cases where reinit is asserted
+    // If 0, assert that reinit is never asserted
+    parameter bit EnableCoverReinit = 1,
+    // If 1, then cover the cases where reinit is asserted together with incr_valid.
+    // Otherwise, assert that reinit is never asserted together with incr_valid.
+    parameter bit EnableCoverReinitAndDecr = EnableCoverReinit,
+    // If 1, then cover the cases where reinit is asserted when incr_valid is 0.
+    // If 0, assert that reinit always asserts along with incr_valid.
+    parameter bit EnableCoverReinitNoDecr = EnableCoverReinit,
+    // If 1, cover the case where decr_valid is 1 but decr is 0.
+    // If 0, assert that decr is always non-zero when decr_valid is 1.
+    parameter bit EnableCoverZeroDecrement = 1,
+    localparam int MaxValueP1Width = MaxValueWidth + 1,
+    localparam int MaxDecrementP1Width = MaxDecrementWidth + 1,
+    localparam int ValueWidth = $clog2(MaxValueP1Width'(MaxValue) + 1),
+    localparam int DecrementWidth = $clog2(MaxDecrementP1Width'(MaxDecrement) + 1)
 ) (
     // Posedge-triggered clock.
     input  logic                      clk,
@@ -76,6 +89,8 @@ module br_counter_decr #(
   //------------------------------------------
   // Integration checks
   //------------------------------------------
+  `BR_ASSERT_STATIC(max_value_width_gte_1_a, MaxValueWidth >= 1)
+  `BR_ASSERT_STATIC(max_decrement_width_gte_1_a, MaxDecrementWidth >= 1)
   `BR_ASSERT_STATIC(max_value_gte_1_a, MaxValue >= 1)
   `BR_ASSERT_STATIC(max_decrement_gte_1_a, MaxDecrement >= 1)
   `BR_ASSERT_STATIC(max_decrement_lte_max_value_a, MaxDecrement <= MaxValue)
@@ -90,7 +105,7 @@ module br_counter_decr #(
   //------------------------------------------
   // Implementation
   //------------------------------------------
-  localparam int MaxValueP1 = MaxValue + 1;
+  localparam logic [MaxValueP1Width-1:0] MaxValueP1 = MaxValue + 1;
   localparam bit IsMaxValueP1PowerOf2 = (MaxValueP1 & (MaxValueP1 - 1)) == 0;
 
   logic [ValueWidth-1:0] value_temp;
@@ -118,7 +133,7 @@ module br_counter_decr #(
     `BR_UNUSED(underflow)
   end else begin : gen_non_power_of_2_wrap
     // For MaxValueP1 not being a power of 2, handle wrap-around explicitly
-    localparam int Margin = ((2 ** ValueWidth) - 1) - MaxValue;
+    localparam logic [ValueWidth-1:0] Margin = ((2 ** ValueWidth) - 1) - MaxValue;
     logic [ValueWidth-1:0] value_temp_wrapped;
     assign value_temp_wrapped = value_temp - Margin;
     assign value_next = underflow ? value_temp_wrapped : value_temp;
@@ -138,35 +153,56 @@ module br_counter_decr #(
   // Value
   `BR_ASSERT_IMPL(value_in_range_a, value <= MaxValue)
   `BR_ASSERT_IMPL(value_next_in_range_a, value_next <= MaxValue)
-  `BR_ASSERT_IMPL(value_next_propagates_a, ##1 value == $past(value_next))
+  `BR_ASSERT_IMPL(value_next_propagates_a, ##1 !$past(rst) |-> value == $past(value_next))
 
   // Underflow corners
   if (EnableSaturate) begin : gen_saturate_impl_checks
-    `BR_ASSERT_IMPL(value_saturate_a, (decr_valid && value_temp > MaxValue) |-> (value_next == '0))
+    `BR_ASSERT_IMPL(value_saturate_a,
+                    (decr_valid && decr > value && !reinit) |-> (value_next == '0))
   end else begin : gen_overflow_impl_checks
+    if (!IsMaxValueP1PowerOf2) begin : gen_value_underflow_assert
 `ifdef BR_ASSERT_ON
 `ifdef BR_ENABLE_IMPL_CHECKS
-    logic [ValueWidth-1:0] value_temp_adjusted;
+      logic [ValueWidth-1:0] value_temp_adjusted;
 
-    // If there is an underflow, we can treat value_temp as a negative number.
-    // By adding MaxValue + 1 to it, we should get to the correct wrap-around value.
-    assign value_temp_adjusted = value_temp + MaxValue + 1;
+      // If there is an underflow, we can treat value_temp as a negative number.
+      // By adding MaxValue + 1 to it, we should get to the correct wrap-around value.
+      assign value_temp_adjusted = value_temp + ValueWidth'(MaxValue + 1);
 `endif
 `endif
-    `BR_ASSERT_IMPL(value_underflow_a,
-                    (decr_valid && value_temp > MaxValue) |-> (value_next == value_temp_adjusted))
+      `BR_ASSERT_IMPL(value_underflow_a,
+                      (decr_valid && value_temp > MaxValue) |-> (value_next == value_temp_adjusted))
+    end
     `BR_ASSERT_IMPL(
         zero_minus_one_a,
         (!reinit && value == 0 && decr_valid && decr == 1'b1) |-> (value_next == MaxValue))
   end
 
   // Decrement corners
-  `BR_ASSERT_IMPL(plus_zero_a, (!reinit && decr_valid && decr == '0) |-> (value_next == value))
+  if (EnableCoverZeroDecrement) begin : gen_cover_zero_decrement
+    `BR_ASSERT_IMPL(plus_zero_a, (!reinit && decr_valid && decr == '0) |-> (value_next == value))
+  end else begin : gen_assert_no_zero_decrement
+    `BR_ASSERT_IMPL(no_plus_zero_a, decr_valid |-> decr > '0)
+  end
   `BR_COVER_IMPL(decrement_max_c, decr_valid && decr == MaxDecrement)
-  `BR_COVER_IMPL(value_temp_oob_c, value_temp > MaxValue)
+  if (!IsMaxValueP1PowerOf2) begin : gen_value_temp_oob_cover
+    `BR_COVER_IMPL(value_temp_oob_c, value_temp > MaxValue)
+  end
 
   // Reinit
-  `BR_ASSERT_IMPL(reinit_no_decr_a, reinit && !decr_valid |=> value == $past(initial_value))
-  `BR_COVER_IMPL(reinit_and_decr_c, reinit && decr_valid && decr > 0)
+  if (EnableCoverReinit) begin : gen_cover_reinit
+    if (EnableCoverReinitNoDecr) begin : gen_cover_reinit_no_decr
+      `BR_ASSERT_IMPL(reinit_no_decr_a, reinit && !decr_valid |=> value == $past(initial_value))
+    end else begin : gen_assert_no_reinit_without_decr
+      `BR_ASSERT_IMPL(no_reinit_without_decr_a, reinit |-> decr_valid)
+    end
+    if (EnableCoverReinitAndDecr) begin : gen_cover_reinit_and_decr
+      `BR_COVER_IMPL(reinit_and_decr_c, reinit && decr_valid && decr > 0)
+    end else begin : gen_assert_no_reinit_and_decr
+      `BR_ASSERT_IMPL(no_reinit_and_decr_a, reinit |-> !decr_valid)
+    end
+  end else begin : gen_assert_no_reinit
+    `BR_ASSERT_IMPL(no_reinit_a, !reinit)
+  end
 
 endmodule : br_counter_decr

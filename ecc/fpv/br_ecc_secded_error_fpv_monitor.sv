@@ -1,16 +1,5 @@
-// Copyright 2024-2025 The Bedrock-RTL Authors
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//     http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
+// SPDX-License-Identifier: Apache-2.0
+
 
 // Bedrock-RTL Single-Error-Correcting, Double-Error-Detecting (SECDED - Hsiao)
 // This FV TB focuses on:
@@ -58,12 +47,11 @@ module br_ecc_secded_error_fpv_monitor #(
     input logic [DataWidth-1:0] data
 );
 
-  localparam int EncLatency = EncRegisterInputs + EncRegisterOutputs;
-  localparam int DecLatency = DecRegisterInputs + DecRegisterOutputs + RegisterSyndrome;
+  localparam int EncLatency = 32'(EncRegisterInputs) + 32'(EncRegisterOutputs);
+  localparam int DecLatency = 32'(DecRegisterInputs) +
+    32'(DecRegisterOutputs) + 32'(RegisterSyndrome);
   localparam int Latency = EncLatency + DecLatency;
 
-  // FV helper signals
-  logic [$clog2(InputWidth)-1:0] magic_bit0, magic_bit1;
   // encoder outputs
   logic                     enc_valid;
   logic [    DataWidth-1:0] enc_data;
@@ -74,6 +62,8 @@ module br_ecc_secded_error_fpv_monitor #(
   logic [  ParityWidth-1:0] se_rcv_parity;
   logic [    DataWidth-1:0] de_rcv_data;
   logic [  ParityWidth-1:0] de_rcv_parity;
+  logic [    DataWidth-1:0] te_rcv_data;
+  logic [  ParityWidth-1:0] te_rcv_parity;
   // decoder outputs with single error
   logic                     se_dec_valid;
   logic [   InputWidth-1:0] se_dec_codeword;
@@ -88,10 +78,18 @@ module br_ecc_secded_error_fpv_monitor #(
   logic                     de_dec_error_due;  // detected-but-uncorrectable error
   logic [  ParityWidth-1:0] de_dec_error_syndrome;
   logic [    DataWidth-1:0] de_dec_data;
+  // decoder outputs with triple error
+  logic                     te_dec_valid;
+  logic [   InputWidth-1:0] te_dec_codeword;
+  logic                     te_dec_error_ce;  // corrected error
+  logic                     te_dec_error_due;  // detected-but-uncorrectable error
+  logic [  ParityWidth-1:0] te_dec_error_syndrome;
+  logic [    DataWidth-1:0] te_dec_data;
   // FV signals
   logic [   InputWidth-1:0] rcv_codeword;
-  logic [   InputWidth-1:0] se_rcv_codeword;
-  logic [   InputWidth-1:0] de_rcv_codeword;
+  logic [   InputWidth-1:0] se_rcv_codeword;  // 1 bit flipped
+  logic [   InputWidth-1:0] de_rcv_codeword;  // 2 bits flipped
+  logic [   InputWidth-1:0] te_rcv_codeword;  // 3 bits flipped
 
   // ----------Instantiate br_ecc_secded_encoder----------
   br_ecc_secded_encoder #(
@@ -130,7 +128,7 @@ module br_ecc_secded_error_fpv_monitor #(
       .dec_data(se_dec_data)
   );
 
-  // Pass in codeword with double bit flipped
+  // Pass in codeword with 2 bits flipped
   br_ecc_secded_decoder #(
       .DataWidth(DataWidth),
       .RegisterInputs(DecRegisterInputs),
@@ -150,32 +148,62 @@ module br_ecc_secded_error_fpv_monitor #(
       .dec_data(de_dec_data)
   );
 
+  // Pass in codeword with 3 bits flipped
+  br_ecc_secded_decoder #(
+      .DataWidth(DataWidth),
+      .RegisterInputs(DecRegisterInputs),
+      .RegisterSyndrome(RegisterSyndrome),
+      .RegisterOutputs(DecRegisterOutputs)
+  ) te_decoder (
+      .clk,
+      .rst,
+      .rcv_valid(enc_valid),
+      .rcv_data(te_rcv_data),
+      .rcv_parity(te_rcv_parity),
+      .dec_valid(te_dec_valid),
+      .dec_codeword(te_dec_codeword),
+      .dec_error_ce(te_dec_error_ce),
+      .dec_error_due(te_dec_error_due),
+      .dec_error_syndrome(te_dec_error_syndrome),
+      .dec_data(te_dec_data)
+  );
+
   // ----------FV modeling----------
   assign rcv_codeword  = {enc_parity, enc_data};
   assign se_rcv_data   = se_rcv_codeword[DataWidth-1:0];
   assign se_rcv_parity = se_rcv_codeword[InputWidth-1:DataWidth];
   assign de_rcv_data   = de_rcv_codeword[DataWidth-1:0];
   assign de_rcv_parity = de_rcv_codeword[InputWidth-1:DataWidth];
-
-  always_comb begin
-    for (int i = 0; i < InputWidth; i++) begin
-      se_rcv_codeword[i] = (i == magic_bit0) ? !rcv_codeword[i] : rcv_codeword[i];
-      de_rcv_codeword[i] = (i == magic_bit0 || i == magic_bit1) ?
-                            !rcv_codeword[i] : rcv_codeword[i];
-    end
-  end
+  assign te_rcv_data   = te_rcv_codeword[DataWidth-1:0];
+  assign te_rcv_parity = te_rcv_codeword[InputWidth-1:DataWidth];
 
   // ----------FV assumptions----------
-  `BR_FV_2RAND_IDX(magic_bit0, magic_bit1, InputWidth)
+  `BR_ASSUME(se_rcv_codeword_a, $countones(se_rcv_codeword ^ rcv_codeword) == 1)
+  `BR_ASSUME(de_rcv_codeword_a, $countones(de_rcv_codeword ^ rcv_codeword) == 2)
+  `BR_ASSUME(te_rcv_codeword_a, $countones(te_rcv_codeword ^ rcv_codeword) == 3)
 
   // ----------FV assertions----------
   if (Latency == 0) begin : gen_latency0
     `BR_ASSERT(se_data_integrity_a, se_dec_valid |-> se_dec_data == data)
+    `BR_ASSERT(se_cw_integrity_a, de_dec_valid |-> se_dec_codeword == {enc_parity, data})
   end else begin : gen_latency_non0
     `BR_ASSERT(se_data_integrity_a, se_dec_valid |-> se_dec_data == $past(data, Latency))
+    `BR_ASSERT(se_cw_data_integrity_a,
+               de_dec_valid |-> se_dec_codeword[DataWidth-1:0] == $past(data, Latency))
   end
 
-  `BR_ASSERT(dec_error_ce_a, se_dec_valid |-> se_dec_error_ce && !se_dec_error_due)
-  `BR_ASSERT(dec_error_due_a, de_dec_valid |-> !de_dec_error_ce && de_dec_error_due)
+  if (DecLatency != 0) begin : gen_parity_ast
+    `BR_ASSERT(se_cw_parity_integrity_a,
+               de_dec_valid |-> se_dec_codeword[CodewordWidth-1:DataWidth] == $past(
+                   enc_parity, DecLatency
+               ))
+  end
+
+  // single bit flip is detectable and correctable
+  `BR_ASSERT(single_error_check_a, se_dec_valid |-> se_dec_error_ce && !se_dec_error_due)
+  // double bit flip is detectable and not correctable
+  `BR_ASSERT(double_error_check_a, de_dec_valid |-> !de_dec_error_ce && de_dec_error_due)
+  // triple bit flip is unpredictable, but it should not be totally silent
+  `BR_ASSERT(triple_error_check_a, te_dec_valid |-> (te_dec_error_ce | te_dec_error_due))
 
 endmodule : br_ecc_secded_error_fpv_monitor

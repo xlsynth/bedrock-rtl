@@ -1,37 +1,28 @@
-# Copyright 2024-2025 The Bedrock-RTL Authors
-#
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
-#
-#     http://www.apache.org/licenses/LICENSE-2.0
-#
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
+# SPDX-License-Identifier: Apache-2.0
 
 load("@rules_hdl//verilog:providers.bzl", "verilog_library")
 load("//bazel:br_verilog.bzl", "br_verilog_fpv_test_tools_suite")
 load("//bazel:verilog.bzl", "verilog_elab_test")
 
-package(default_visibility = ["//visibility:public"])
+package(default_visibility = ["//visibility:private"])
 
 # Basic cdc FIFO checkers
 verilog_library(
     name = "br_cdc_fifo_basic_fpv_monitor",
     srcs = ["br_cdc_fifo_basic_fpv_monitor.sv"],
+    visibility = ["//visibility:public"],
     deps = [
         "//fpv/lib:fv_delay",
     ],
 )
 
+####################################################################################
 # Bedrock-RTL CDC FIFO (Internal 1R1W Flop-RAM, Push Ready/Valid, Pop Ready/Valid Variant)
 
 verilog_library(
     name = "br_cdc_fifo_flops_fpv_monitor",
     srcs = ["br_cdc_fifo_flops_fpv_monitor.sv"],
+    visibility = ["//visibility:public"],
     deps = [
         ":br_cdc_fifo_basic_fpv_monitor",
         "//cdc/rtl:br_cdc_fifo_flops",
@@ -52,8 +43,9 @@ verilog_elab_test(
     ],
 )
 
+# test valid ready protocol
 br_verilog_fpv_test_tools_suite(
-    name = "br_cdc_fifo_flops_test_suite",
+    name = "br_cdc_fifo_flops_test_backpressure",
     illegal_param_combinations = {
         (
             "EnableCoverPushBackpressure",
@@ -67,11 +59,6 @@ br_verilog_fpv_test_tools_suite(
         ],
     },
     params = {
-        "Depth": [
-            "2",
-            "5",
-            "6",
-        ],
         "EnableAssertPushDataStability": [
             "0",
             "1",
@@ -84,6 +71,26 @@ br_verilog_fpv_test_tools_suite(
             "0",
             "1",
         ],
+    },
+    tools = {
+        "jg": "br_cdc_fifo_flops_fpv.jg.tcl",
+    },
+    top = "br_cdc_fifo_flops_fpv_monitor",
+    deps = [
+        ":br_cdc_fifo_flops_fpv_monitor",
+        "//gate/rtl:br_gate_mock",
+        "//mux/rtl:br_mux_bin_structured_gates_mock",
+    ],
+)
+
+br_verilog_fpv_test_tools_suite(
+    name = "br_cdc_fifo_flops_test_suite",
+    params = {
+        "Depth": [
+            "2",
+            "5",
+            "6",
+        ],
         "NumSyncStages": [
             "2",
             "3",
@@ -95,13 +102,10 @@ br_verilog_fpv_test_tools_suite(
         ],
         "Width": [
             "1",
-            "3",
-            "4",
         ],
     },
     tools = {
         "jg": "br_cdc_fifo_flops_fpv.jg.tcl",
-        "vcf": "",
     },
     top = "br_cdc_fifo_flops_fpv_monitor",
     deps = [
@@ -111,11 +115,13 @@ br_verilog_fpv_test_tools_suite(
     ],
 )
 
+####################################################################################
 # Bedrock-RTL CDC FIFO (Internal 1R1W Flop-RAM, Push Credit/Valid, Pop Ready/Valid Variant)
 
 verilog_library(
     name = "br_cdc_fifo_flops_push_credit_fpv_monitor",
     srcs = ["br_cdc_fifo_flops_push_credit_fpv_monitor.sv"],
+    visibility = ["//visibility:public"],
     deps = [
         ":br_cdc_fifo_basic_fpv_monitor",
         "//cdc/rtl:br_cdc_fifo_flops_push_credit",
@@ -137,28 +143,10 @@ verilog_elab_test(
     ],
 )
 
+# test focuses on delay
 br_verilog_fpv_test_tools_suite(
-    name = "br_cdc_fifo_flops_push_credit_test_suite",
-    illegal_param_combinations = {
-        (
-            "Depth",
-            "MaxCredit",
-        ): [
-            ("5", "2"),
-            ("6", "2"),
-        ],
-    },
+    name = "br_cdc_fifo_flops_push_credit_test_delay",
     params = {
-        "Depth": [
-            "2",
-            "5",
-            "6",
-        ],
-        "MaxCredit": [
-            "2",
-            "6",
-            "8",
-        ],
         "NumSyncStages": [
             "2",
             "3",
@@ -174,13 +162,10 @@ br_verilog_fpv_test_tools_suite(
         ],
         "Width": [
             "1",
-            "3",
-            "4",
         ],
     },
     tools = {
         "jg": "br_cdc_fifo_flops_push_credit_fpv.jg.tcl",
-        "vcf": "",
     },
     top = "br_cdc_fifo_flops_push_credit_fpv_monitor",
     deps = [
@@ -190,11 +175,38 @@ br_verilog_fpv_test_tools_suite(
     ],
 )
 
+br_verilog_fpv_test_tools_suite(
+    name = "br_cdc_fifo_flops_push_credit_test_suite",
+    # Depth = MaxCredit
+    elab_opts = ["-parameter MaxCredit Depth"],
+    params = {
+        "Depth": [
+            "2",
+            "5",
+            "6",
+        ],
+        "Width": [
+            "1",
+        ],
+    },
+    tools = {
+        "jg": "br_cdc_fifo_flops_push_credit_fpv.jg.tcl",
+    },
+    top = "br_cdc_fifo_flops_push_credit_fpv_monitor",
+    deps = [
+        ":br_cdc_fifo_flops_push_credit_fpv_monitor",
+        "//gate/rtl:br_gate_mock",
+        "//mux/rtl:br_mux_bin_structured_gates_mock",
+    ],
+)
+
+####################################################################################
 # Bedrock-RTL CDC FIFO Controller (1R1W, Push Ready/Valid, Pop Ready/Valid Variant)
 
 verilog_library(
     name = "br_cdc_fifo_ctrl_1r1w_fpv_monitor",
     srcs = ["br_cdc_fifo_ctrl_1r1w_fpv_monitor.sv"],
+    visibility = ["//visibility:public"],
     deps = [
         ":br_cdc_fifo_basic_fpv_monitor",
         "//cdc/rtl:br_cdc_fifo_ctrl_1r1w",
@@ -210,8 +222,9 @@ verilog_elab_test(
     deps = [":br_cdc_fifo_ctrl_1r1w_fpv_monitor"],
 )
 
+# test valid ready protocol
 br_verilog_fpv_test_tools_suite(
-    name = "br_cdc_fifo_ctrl_1r1w_test_suite",
+    name = "br_cdc_fifo_ctrl_1r1w_test_backpressure",
     illegal_param_combinations = {
         (
             "EnableCoverPushBackpressure",
@@ -223,22 +236,8 @@ br_verilog_fpv_test_tools_suite(
             ("0", "1", "1"),
             ("1", "0", "1"),
         ],
-        (
-            "Depth",
-            "RamReadLatency",
-        ): [
-            ("2", "3"),
-            ("2", "5"),
-            ("5", "5"),
-            ("6", "5"),
-        ],
     },
     params = {
-        "Depth": [
-            "2",
-            "5",
-            "6",
-        ],
         "EnableAssertPushDataStability": [
             "0",
             "1",
@@ -251,20 +250,43 @@ br_verilog_fpv_test_tools_suite(
             "0",
             "1",
         ],
+        "Width": [
+            "1",
+        ],
+    },
+    tools = {
+        "jg": "br_cdc_fifo_ctrl_1r1w_fpv.jg.tcl",
+    },
+    top = "br_cdc_fifo_ctrl_1r1w_fpv_monitor",
+    deps = [":br_cdc_fifo_ctrl_1r1w_fpv_monitor"],
+)
+
+br_verilog_fpv_test_tools_suite(
+    name = "br_cdc_fifo_ctrl_1r1w_test_suite",
+    illegal_param_combinations = {
+        (
+            "Depth",
+            "RamReadLatency",
+        ): [
+            ("2", "3"),
+        ],
+    },
+    params = {
+        "Depth": [
+            "2",
+            "6",
+        ],
         "NumSyncStages": [
             "2",
             "3",
-            "4",
         ],
         "RamReadLatency": [
             "0",
             "3",
-            "5",
         ],
         "RamWriteLatency": [
             "1",
             "3",
-            "5",
         ],
         "RegisterPopOutputs": [
             "0",
@@ -272,23 +294,22 @@ br_verilog_fpv_test_tools_suite(
         ],
         "Width": [
             "1",
-            "3",
-            "4",
         ],
     },
     tools = {
         "jg": "br_cdc_fifo_ctrl_1r1w_fpv.jg.tcl",
-        "vcf": "",
     },
     top = "br_cdc_fifo_ctrl_1r1w_fpv_monitor",
     deps = [":br_cdc_fifo_ctrl_1r1w_fpv_monitor"],
 )
 
+####################################################################################
 # Bedrock-RTL CDC FIFO Controller (1R1W, Push Ready/Valid, Pop Credit/Valid Variant)
 
 verilog_library(
     name = "br_cdc_fifo_ctrl_1r1w_push_credit_fpv_monitor",
     srcs = ["br_cdc_fifo_ctrl_1r1w_push_credit_fpv_monitor.sv"],
+    visibility = ["//visibility:public"],
     deps = [
         ":br_cdc_fifo_basic_fpv_monitor",
         "//cdc/rtl:br_cdc_fifo_ctrl_1r1w_push_credit",
@@ -305,51 +326,24 @@ verilog_elab_test(
     deps = [":br_cdc_fifo_ctrl_1r1w_push_credit_fpv_monitor"],
 )
 
+# test delay
 br_verilog_fpv_test_tools_suite(
-    name = "br_cdc_fifo_ctrl_1r1w_push_credit_test_suite",
-    illegal_param_combinations = {
-        (
-            "Depth",
-            "RamReadLatency",
-        ): [
-            ("2", "3"),
-            ("2", "5"),
-            ("5", "5"),
-            ("6", "5"),
-        ],
-        (
-            "Depth",
-            "MaxCredit",
-        ): [
-            ("5", "2"),
-            ("6", "2"),
-        ],
-    },
+    name = "br_cdc_fifo_ctrl_1r1w_push_credit_test_delay",
     params = {
         "Depth": [
-            "2",
-            "5",
             "6",
-        ],
-        "MaxCredit": [
-            "2",
-            "6",
-            "8",
         ],
         "NumSyncStages": [
             "2",
-            "3",
             "4",
         ],
         "RamReadLatency": [
             "0",
             "3",
-            "5",
         ],
         "RamWriteLatency": [
             "1",
             "3",
-            "5",
         ],
         "RegisterPopOutputs": [
             "0",
@@ -361,18 +355,37 @@ br_verilog_fpv_test_tools_suite(
         ],
         "Width": [
             "1",
-            "3",
-            "4",
         ],
     },
     tools = {
         "jg": "br_cdc_fifo_ctrl_1r1w_push_credit_fpv.jg.tcl",
-        "vcf": "",
     },
     top = "br_cdc_fifo_ctrl_1r1w_push_credit_fpv_monitor",
     deps = [":br_cdc_fifo_ctrl_1r1w_push_credit_fpv_monitor"],
 )
 
+br_verilog_fpv_test_tools_suite(
+    name = "br_cdc_fifo_ctrl_1r1w_push_credit_test_suite",
+    # Depth = MaxCredit
+    elab_opts = ["-parameter MaxCredit Depth"],
+    params = {
+        "Depth": [
+            "2",
+            "5",
+            "6",
+        ],
+        "Width": [
+            "1",
+        ],
+    },
+    tools = {
+        "jg": "br_cdc_fifo_ctrl_1r1w_push_credit_fpv.jg.tcl",
+    },
+    top = "br_cdc_fifo_ctrl_1r1w_push_credit_fpv_monitor",
+    deps = [":br_cdc_fifo_ctrl_1r1w_push_credit_fpv_monitor"],
+)
+
+####################################################################################
 # Combined FV env:
 # Push-side of Bedrock-RTL CDC FIFO Controller (1R1W, Ready/Valid Variant)
 # Pop-side of Bedrock-RTL CDC FIFO Controller (1R1W, Ready/Valid Variant)
@@ -380,6 +393,7 @@ br_verilog_fpv_test_tools_suite(
 verilog_library(
     name = "br_cdc_fifo_ctrl_push_pop_1r1w_fpv_monitor",
     srcs = ["br_cdc_fifo_ctrl_push_pop_1r1w_fpv_monitor.sv"],
+    visibility = ["//visibility:public"],
     deps = [
         ":br_cdc_fifo_basic_fpv_monitor",
         "//cdc/rtl:br_cdc_fifo_ctrl_pop_1r1w",
@@ -396,8 +410,9 @@ verilog_elab_test(
     deps = [":br_cdc_fifo_ctrl_push_pop_1r1w_fpv_monitor"],
 )
 
+# test valid ready protocol
 br_verilog_fpv_test_tools_suite(
-    name = "br_cdc_fifo_ctrl_push_pop_1r1w_test_suite",
+    name = "br_cdc_fifo_ctrl_push_pop_1r1w_test_backpressure",
     illegal_param_combinations = {
         (
             "EnableCoverPushBackpressure",
@@ -409,22 +424,8 @@ br_verilog_fpv_test_tools_suite(
             ("0", "1", "1"),
             ("1", "0", "1"),
         ],
-        (
-            "Depth",
-            "RamReadLatency",
-        ): [
-            ("2", "3"),
-            ("2", "5"),
-            ("5", "5"),
-            ("6", "5"),
-        ],
     },
     params = {
-        "Depth": [
-            "2",
-            "5",
-            "6",
-        ],
         "EnableAssertPushDataStability": [
             "0",
             "1",
@@ -437,20 +438,43 @@ br_verilog_fpv_test_tools_suite(
             "0",
             "1",
         ],
+        "Width": [
+            "1",
+        ],
+    },
+    tools = {
+        "jg": "br_cdc_fifo_ctrl_push_pop_1r1w_fpv.jg.tcl",
+    },
+    top = "br_cdc_fifo_ctrl_push_pop_1r1w_fpv_monitor",
+    deps = [":br_cdc_fifo_ctrl_push_pop_1r1w_fpv_monitor"],
+)
+
+br_verilog_fpv_test_tools_suite(
+    name = "br_cdc_fifo_ctrl_push_pop_1r1w_test_suite",
+    illegal_param_combinations = {
+        (
+            "Depth",
+            "RamReadLatency",
+        ): [
+            ("2", "3"),
+        ],
+    },
+    params = {
+        "Depth": [
+            "2",
+            "5",
+        ],
         "NumSyncStages": [
             "2",
             "3",
-            "4",
         ],
         "RamReadLatency": [
             "0",
             "3",
-            "5",
         ],
         "RamWriteLatency": [
             "1",
             "3",
-            "5",
         ],
         "RegisterPopOutputs": [
             "0",
@@ -458,18 +482,16 @@ br_verilog_fpv_test_tools_suite(
         ],
         "Width": [
             "1",
-            "3",
-            "4",
         ],
     },
     tools = {
         "jg": "br_cdc_fifo_ctrl_push_pop_1r1w_fpv.jg.tcl",
-        "vcf": "",
     },
     top = "br_cdc_fifo_ctrl_push_pop_1r1w_fpv_monitor",
     deps = [":br_cdc_fifo_ctrl_push_pop_1r1w_fpv_monitor"],
 )
 
+####################################################################################
 # Combined FV env:
 # Push-side of Bedrock-RTL CDC FIFO Controller (1R1W, Push Credit/Valid)
 # Pop-side of Bedrock-RTL CDC FIFO Controller (1R1W, Ready/Valid Variant)
@@ -477,6 +499,7 @@ br_verilog_fpv_test_tools_suite(
 verilog_library(
     name = "br_cdc_fifo_ctrl_push_pop_1r1w_push_credit_fpv_monitor",
     srcs = ["br_cdc_fifo_ctrl_push_pop_1r1w_push_credit_fpv_monitor.sv"],
+    visibility = ["//visibility:public"],
     deps = [
         ":br_cdc_fifo_basic_fpv_monitor",
         "//cdc/rtl:br_cdc_fifo_ctrl_pop_1r1w",
@@ -494,51 +517,32 @@ verilog_elab_test(
     deps = [":br_cdc_fifo_ctrl_push_pop_1r1w_push_credit_fpv_monitor"],
 )
 
+# test delay
 br_verilog_fpv_test_tools_suite(
-    name = "br_cdc_fifo_ctrl_push_pop_1r1w_push_credit_test_suite",
+    name = "br_cdc_fifo_ctrl_push_pop_1r1w_push_credit_test_delay",
     illegal_param_combinations = {
         (
             "Depth",
             "RamReadLatency",
         ): [
             ("2", "3"),
-            ("2", "5"),
-            ("5", "5"),
-            ("6", "5"),
-        ],
-        (
-            "Depth",
-            "MaxCredit",
-        ): [
-            ("5", "2"),
-            ("6", "2"),
         ],
     },
     params = {
         "Depth": [
-            "2",
             "5",
-            "6",
-        ],
-        "MaxCredit": [
-            "2",
-            "6",
-            "8",
         ],
         "NumSyncStages": [
             "2",
             "3",
-            "4",
         ],
         "RamReadLatency": [
             "0",
             "3",
-            "5",
         ],
         "RamWriteLatency": [
             "1",
             "3",
-            "5",
         ],
         "RegisterPopOutputs": [
             "0",
@@ -550,14 +554,51 @@ br_verilog_fpv_test_tools_suite(
         ],
         "Width": [
             "1",
-            "3",
-            "4",
         ],
     },
     tools = {
         "jg": "br_cdc_fifo_ctrl_push_pop_1r1w_push_credit_fpv.jg.tcl",
-        "vcf": "",
     },
     top = "br_cdc_fifo_ctrl_push_pop_1r1w_push_credit_fpv_monitor",
     deps = [":br_cdc_fifo_ctrl_push_pop_1r1w_push_credit_fpv_monitor"],
+)
+
+br_verilog_fpv_test_tools_suite(
+    name = "br_cdc_fifo_ctrl_push_pop_1r1w_push_credit_test_suite",
+    # Depth = MaxCredit
+    elab_opts = ["-parameter MaxCredit Depth"],
+    params = {
+        "Depth": [
+            "2",
+            "5",
+            "6",
+        ],
+        "Width": [
+            "1",
+        ],
+    },
+    tools = {
+        "jg": "br_cdc_fifo_ctrl_push_pop_1r1w_push_credit_fpv.jg.tcl",
+    },
+    top = "br_cdc_fifo_ctrl_push_pop_1r1w_push_credit_fpv_monitor",
+    deps = [":br_cdc_fifo_ctrl_push_pop_1r1w_push_credit_fpv_monitor"],
+)
+
+# VCF experiment
+br_verilog_fpv_test_tools_suite(
+    name = "br_cdc_fifo_flops_test_vcf",
+    params = {
+        "Jasper": [
+            "0",
+        ],
+    },
+    tools = {
+        "vcf": "br_cdc_fifo_flops_fpv.vcf.tcl",
+    },
+    top = "br_cdc_fifo_flops_fpv_monitor",
+    deps = [
+        ":br_cdc_fifo_flops_fpv_monitor",
+        "//gate/rtl:br_gate_mock",
+        "//mux/rtl:br_mux_bin_structured_gates_mock",
+    ],
 )

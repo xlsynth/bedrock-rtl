@@ -1,16 +1,5 @@
-// Copyright 2024-2025 The Bedrock-RTL Authors
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//     http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
+// SPDX-License-Identifier: Apache-2.0
+
 
 // Bedrock-RTL FIFO Controller (1R1W, Push Credit/Valid, Pop Ready/Valid Variant)
 //
@@ -72,7 +61,7 @@ module br_fifo_ctrl_1r1w_push_credit #(
     // at the cost of an additional cycle of cut-through latency.
     // If 0, pop_valid/pop_data comes directly from push_valid (if bypass is enabled)
     // and/or ram_wr_data.
-    parameter bit RegisterPopOutputs = 1,
+    parameter bit RegisterPopOutputs = 0,
     // The number of cycles between when ram_rd_addr_valid is asserted and
     // ram_rd_data_valid is asserted.
     parameter int RamReadLatency = 0,
@@ -85,8 +74,19 @@ module br_fifo_ctrl_1r1w_push_credit #(
     // The RAM depth may be made larger than the minimum if convenient (e.g. the
     // backing RAM is an SRAM of slightly larger depth than the FIFO depth).
     parameter int RamDepth = Depth,
+    // If 1, assert that push_data is always known (not X) when push_valid is asserted.
+    parameter bit EnableAssertPushDataKnown = 1,
     // If 1, then assert there are no valid bits asserted and that the FIFO is
     // empty at the end of the test.
+    // If 1, cover that credit_withhold can be non-zero.
+    // Otherwise, assert that it is always zero.
+    parameter bit EnableCoverCreditWithhold = 1,
+    // If 1, cover that push_sender_in_reset can be asserted
+    // Otherwise, assert that it is never asserted.
+    parameter bit EnableCoverPushSenderInReset = 1,
+    // If 1, cover that push_credit_stall can be asserted
+    // Otherwise, assert that it is never asserted.
+    parameter bit EnableCoverPushCreditStall = 1,
     parameter bit EnableAssertFinalNotValid = 1,
     localparam int AddrWidth = br_math::clamped_clog2(RamDepth),
     localparam int CountWidth = $clog2(Depth + 1),
@@ -160,6 +160,10 @@ module br_fifo_ctrl_1r1w_push_credit #(
       .MaxCredit(MaxCredit),
       .RegisterPushOutputs(RegisterPushOutputs),
       .RamDepth(RamDepth),
+      .EnableAssertPushDataKnown(EnableAssertPushDataKnown),
+      .EnableCoverCreditWithhold(EnableCoverCreditWithhold),
+      .EnableCoverPushSenderInReset(EnableCoverPushSenderInReset),
+      .EnableCoverPushCreditStall(EnableCoverPushCreditStall),
       .EnableAssertFinalNotValid(EnableAssertFinalNotValid)
   ) br_fifo_push_ctrl_credit (
       .clk,

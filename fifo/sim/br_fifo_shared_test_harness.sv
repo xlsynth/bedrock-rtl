@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+
 module br_fifo_shared_test_harness #(
     parameter int TestSize = 1000,
     parameter int MaxRandomDelay = 4,

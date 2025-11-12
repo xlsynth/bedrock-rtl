@@ -7,14 +7,23 @@ on:
     - cron: '0 7 * * *'  # Daily at 07:00 UTC → 00:00 PDT
   workflow_dispatch:     # Allow manual triggering
 
+# Only allow one pipeline to run at a time.
+concurrency:
+  group: ${{ github.repository }}
+  cancel-in-progress: false
+
 jobs:
   # Run bazel build before bazel tests because the logging is not chronologically
   # ordered if a build step fails while unrelated tests are running.
+  #
+  # Additionally, we rely on the fact that we disabled any pipeline concurrency and that there is
+  # a single self-hosted runner. So each job can assume the working directory is preserved
+  # from the previous job (bazel-build). This is fine for now since our CI throughput demands are not
+  # very high.
   bazel-build:
     runs-on: self-hosted
     steps:
-    - name: Checkout repo
-      uses: actions/checkout@v3
+    - uses: actions/checkout@v3
     - name: Copy ci.bazelrc
       working-directory: ${{ github.workspace }}
       run: cp /home/gh-actions/bedrock-infra/ci.bazelrc ci.bazelrc
@@ -42,8 +51,9 @@ jobs:
         bazel query 'tests(//...) intersect attr(tags, "jg", //...)' \
           | grep -v -E '//fifo/fpv:|//cdc/fpv:' \
           | shuf -n 1000 \
-          | xargs -r bazel test --noshow_loading_progress --test_output=summary --test_timeout=60 2>&1 | tee .bazel-test-jg.log
-        BAZEL_EXIT_CODE=${PIPESTATUS[0]}
+          | xargs -r bazel test --noshow_loading_progress --test_output=summary --test_timeout=60 2>&1 \
+          | tee .bazel-test-jg.log
+        BAZEL_EXIT_CODE=${PIPESTATUS[3]}
         TOTAL_TESTS=$(grep -Po '(?<=out of )\d+(?= test)' .bazel-test-jg.log)
         PASSING_TESTS=$(grep -Po '\d+(?= test passes?\.| tests pass)' .bazel-test-jg.log)
         FAILING_TIMEOUT_TESTS=$(grep -c ' TIMEOUT in' .bazel-test-jg.log)
@@ -70,9 +80,15 @@ jobs:
         # Combine existing content and new summary
         UPDATED_CONTENT="$(printf "%s\n%s" "$EXISTING_CONTENT" "$SUMMARY")"
 
-        # Build JSON payload with jq
-        PATCH_DATA=$(jq -Rs --arg filename "jg-nightly-log.txt" \
-          '{ files: { ($filename): { content: . } } }' <<< "$UPDATED_CONTENT")
+        # Escape UPDATED_CONTENT for JSON:
+        # - Replace all literal \ with \\
+        # - Replace all literal " with \"
+        # - Replace all literal newlines with \n
+        # Thus we obtain one long string that we can embed into a JSON "content" field.
+        escaped=$(sed -e 's/\\/\\\\/g' -e 's/"/\\"/g' -e ':a;N;$!ba;s/\n/\\n/g' <<< "$UPDATED_CONTENT")
+
+        # Build JSON payload by hand
+        PATCH_DATA=$(printf '{"files":{"jg-nightly-log.txt":{"content":"%s"}}}' "$escaped")
 
         # Append and push updated content
         echo "$PATCH_DATA" \
