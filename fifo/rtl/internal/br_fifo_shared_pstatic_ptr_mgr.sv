@@ -1,16 +1,5 @@
-// Copyright 2025 The Bedrock-RTL Authors
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//     http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
+// SPDX-License-Identifier: Apache-2.0
+
 //
 // Bedrock-RTL Shared Pseudo-Static Multi-FIFO Pointer Manager
 //
@@ -83,6 +72,9 @@ module br_fifo_shared_pstatic_ptr_mgr #(
         .MaxValue(Depth - 1),
         .MaxIncrement(1),
         .EnableReinitAndIncr(0),
+        .EnableWrap(0),
+        .EnableCoverZeroIncrement(0),
+        .EnableCoverReinitNoIncr(0),
         .EnableAssertFinalNotValid(EnableAssertFinalNotValid)
     ) br_counter_incr_head (
         .clk,
@@ -154,12 +146,16 @@ module br_fifo_shared_pstatic_ptr_mgr #(
   end
 
   // Implementation Assertions
+  localparam int MaxPerFifoDepth = Depth - (NumFifos - 1);
+
   for (genvar i = 0; i < NumFifos; i++) begin : gen_per_fifo_impl_checks
     `BR_ASSERT_IMPL(ram_empty_means_no_items_a, ram_empty[i] |-> (ram_items[i] == 0))
     `BR_ASSERT_IMPL(ram_empty_on_ptr_match_a, ram_empty[i] |-> (head[i] == tail[i]))
     `BR_ASSERT_IMPL(push_full_on_ptr_match_a, push_full[i] |-> (head[i] == tail[i]))
-    `BR_ASSERT_IMPL(dual_advance_ram_items_stable_a,
-                    (advance_head[i] && advance_tail[i]) |=> $stable(ram_items[i]))
+    if (MaxPerFifoDepth > 1) begin : gen_dual_advance_assert
+      `BR_ASSERT_IMPL(dual_advance_ram_items_stable_a,
+                      (advance_head[i] && advance_tail[i]) |=> $stable(ram_items[i]))
+    end
     `BR_ASSERT_IMPL(
         head_advance_ram_items_decr_a,
         (advance_head[i] && !advance_tail[i]) |=> (ram_items[i] == $past(ram_items[i]) - 1))

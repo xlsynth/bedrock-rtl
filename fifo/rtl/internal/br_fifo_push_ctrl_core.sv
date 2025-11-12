@@ -1,16 +1,5 @@
-// Copyright 2024-2025 The Bedrock-RTL Authors
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//     http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
+// SPDX-License-Identifier: Apache-2.0
+
 
 // Core FIFO push control logic that will be reused across different variants.
 // Contains just the bypass and RAM write logic, leaving occupancy tracking up to
@@ -32,6 +21,8 @@ module br_fifo_push_ctrl_core #(
     // If 1, assert that push_data is stable when backpressured.
     // If 0, cover that push_data can be unstable.
     parameter bit EnableAssertPushDataStability = EnableAssertPushValidStability,
+    // If 1, assert that push_data is always known (not X) when push_valid is asserted.
+    parameter bit EnableAssertPushDataKnown = 1,
     // If 1, then assert there are no valid bits asserted and that the FIFO is
     // empty at the end of the test.
     parameter bit EnableAssertFinalNotValid = 1,
@@ -83,6 +74,7 @@ module br_fifo_push_ctrl_core #(
       .EnableCoverBackpressure(EnableCoverPushBackpressure),
       .EnableAssertValidStability(EnableAssertPushValidStability),
       .EnableAssertDataStability(EnableAssertPushDataStability),
+      .EnableAssertDataKnown(EnableAssertPushDataKnown),
       .EnableAssertFinalNotValid(EnableAssertFinalNotValid)
   ) br_flow_checks_valid_data_intg (
       .clk,
@@ -109,7 +101,12 @@ module br_fifo_push_ctrl_core #(
         .MaxValue(Depth - 1),
         .MaxIncrement(1),
         .EnableReinitAndIncr(0),
-        .EnableAssertFinalNotValid(EnableAssertFinalNotValid)
+        // There won't be any overflows since reinit will be asserted
+        // when the counter wraps around.
+        .EnableWrap(0),
+        .EnableAssertFinalNotValid(EnableAssertFinalNotValid),
+        .EnableCoverZeroIncrement(0),
+        .EnableCoverReinitNoIncr(0)
     ) br_counter_incr_wr_addr (
         .clk,
         .rst,

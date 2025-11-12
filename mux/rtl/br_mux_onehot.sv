@@ -1,16 +1,5 @@
-// Copyright 2024-2025 The Bedrock-RTL Authors
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//     http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
+// SPDX-License-Identifier: Apache-2.0
+
 //
 // Bedrock-RTL onehot select multiplexer
 //
@@ -25,7 +14,11 @@ module br_mux_onehot #(
     // Number of inputs to select among. Must be >= 2.
     parameter int NumSymbolsIn = 2,
     // The width of each symbol in bits. Must be >= 1.
-    parameter int SymbolWidth  = 1
+    parameter int SymbolWidth = 1,
+    // If 1, assert that the select is, in fact, onehot.
+    // If 0, the select can be multi-hot, but in this case,
+    // the output will be undefined and driven to X in simulation.
+    parameter bit EnableAssertSelectOnehot = 1
 ) (
     input  logic [NumSymbolsIn-1:0]                  select,
     input  logic [NumSymbolsIn-1:0][SymbolWidth-1:0] in,
@@ -37,21 +30,39 @@ module br_mux_onehot #(
   //------------------------------------------
   `BR_ASSERT_STATIC(legal_num_symbols_in_a, NumSymbolsIn >= 2)
   `BR_ASSERT_STATIC(legal_symbol_width_a, SymbolWidth >= 1)
-  // ri lint_check_waive ALWAYS_COMB
-  // TODO(mgottscho): Figure out why this is not working right. I think you
-  // can't use $onehot0() inside of isunknown().
-  //`BR_ASSERT_COMB_INTG(select_onehot0_a, $onehot0(select))
+  if (EnableAssertSelectOnehot) begin : gen_assert_select_onehot
+    // ri lint_check_waive ALWAYS_COMB
+    `BR_ASSERT_COMB_INTG(select_onehot0_a, $onehot0(select))
+  end
 
   //------------------------------------------
   // Implementation
   //------------------------------------------
+  logic [SymbolWidth-1:0] out_internal;
+
   always_comb begin
-    out = '0;
+    out_internal = '0;
 
     for (int i = 0; i < NumSymbolsIn; i++) begin
-      out |= ({SymbolWidth{select[i]}} & in[i]);
+      out_internal |= ({SymbolWidth{select[i]}} & in[i]);
     end
   end
+
+`ifdef SIMULATION
+  if (EnableAssertSelectOnehot) begin : gen_onehot_out
+    assign out = out_internal;
+  end else begin : gen_multihot_out
+    always_comb begin
+      if ($onehot0(select)) begin
+        out = out_internal;
+      end else begin
+        out = 'X;
+      end
+    end
+  end
+`else
+  assign out = out_internal;
+`endif
 
   //------------------------------------------
   // Implementation checks

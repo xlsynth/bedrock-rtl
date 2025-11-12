@@ -1,16 +1,5 @@
-// Copyright 2024-2025 The Bedrock-RTL Authors
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//     http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
+// SPDX-License-Identifier: Apache-2.0
+
 
 // Bedrock-RTL Credit Counter
 
@@ -19,11 +8,15 @@
 `include "br_fv.svh"
 
 module br_credit_counter_fpv_monitor #(
-    parameter int MaxValue = 1,
-    parameter int MaxChange = 1,
+    parameter int MaxValueWidth = 32,
+    parameter int MaxChangeWidth = 32,
+    parameter logic [MaxValueWidth-1:0] MaxValue = 1,
+    parameter logic [MaxChangeWidth-1:0] MaxChange = 1,
     parameter bit EnableAssertFinalNotValid = 1,
-    localparam int ValueWidth = $clog2(MaxValue + 1),
-    localparam int ChangeWidth = $clog2(MaxChange + 1)
+    localparam int MaxValueP1Width = MaxValueWidth + 1,
+    localparam int MaxChangeP1Width = MaxChangeWidth + 1,
+    localparam int ValueWidth = $clog2(MaxValueP1Width'(MaxValue) + 1),
+    localparam int ChangeWidth = $clog2(MaxChangeP1Width'(MaxChange) + 1)
 ) (
     input logic clk,
     input logic rst,
@@ -74,6 +67,8 @@ module br_credit_counter_fpv_monitor #(
 endmodule : br_credit_counter_fpv_monitor
 
 bind br_credit_counter br_credit_counter_fpv_monitor #(
+    .MaxValueWidth(MaxValueWidth),
+    .MaxChangeWidth(MaxChangeWidth),
     .MaxValue(MaxValue),
     .MaxChange(MaxChange),
     .EnableAssertFinalNotValid(EnableAssertFinalNotValid)

@@ -1,16 +1,5 @@
-// Copyright 2024-2025 The Bedrock-RTL Authors
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//     http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
+// SPDX-License-Identifier: Apache-2.0
+
 
 // AXI4 Default Target
 //
@@ -170,7 +159,10 @@ module br_amba_axi_default_target #(
         .MaxValue(2 ** AxiLenWidth - 1),
         .MaxIncrement(1),
         .EnableReinitAndIncr(0),
-        .EnableSaturate(0)
+        .EnableSaturate(0),
+        .EnableWrap(0),
+        .EnableCoverZeroIncrement(0),
+        .EnableCoverReinitNoIncr(0)
     ) br_counter_incr_arlen (
         .clk,
         .rst,

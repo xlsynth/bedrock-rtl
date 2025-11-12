@@ -1,16 +1,5 @@
-// Copyright 2025 The Bedrock-RTL Authors
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//     http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
+// SPDX-License-Identifier: Apache-2.0
+
 //
 // Bedrock-RTL Shared Pseudo-Static Multi-FIFO Controller (Push Valid/Credit Interface)
 //
@@ -65,13 +54,15 @@ module br_fifo_shared_pstatic_ctrl_push_credit #(
     parameter bit RegisterPushOutputs = 1,
     // The depth of the pop-side staging buffer.
     // This affects the pop bandwidth of each logical FIFO.
-    // The bandwidth will be `StagingBufferDepth / (PointerRamReadLatency + 1)`.
+    // The bandwidth will be `StagingBufferDepth / (RamReadLatency + 1)`.
     parameter int StagingBufferDepth = 1,
     // If 1, make sure pop_valid/pop_data are registered at the output
     // of the staging buffer. This adds a cycle of cut-through latency.
     parameter bit RegisterPopOutputs = 0,
     // The number of cycles between ram read address and read data. Must be >=0.
     parameter int RamReadLatency = 0,
+    // If 1, assert that push_data is always known (not X) when push_valid is asserted.
+    parameter bit EnableAssertPushDataKnown = 1,
     // If 1, then assert there are no valid bits asserted and that the FIFO is
     // empty at the end of the test.
     // ri lint_check_waive PARAM_NOT_USED
@@ -167,6 +158,7 @@ module br_fifo_shared_pstatic_ctrl_push_credit #(
       .Depth(Depth),
       .Width(Width),
       .RegisterPushOutputs(RegisterPushOutputs),
+      .EnableAssertPushDataKnown(EnableAssertPushDataKnown),
       .EnableAssertFinalNotValid(EnableAssertFinalNotValid)
   ) br_fifo_shared_pstatic_push_ctrl (
       .clk,

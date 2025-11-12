@@ -1,16 +1,5 @@
-// Copyright 2025 The Bedrock-RTL Authors
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//     http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
+// SPDX-License-Identifier: Apache-2.0
+
 //
 // Bedrock-RTL Shared Dynamic Multi-FIFO Push Controller
 
@@ -40,6 +29,9 @@ module br_fifo_shared_dynamic_push_ctrl #(
     // If 0, cover that push_data can be unstable.
     // ri lint_check_waive PARAM_NOT_USED
     parameter bit EnableAssertPushDataStability = EnableAssertPushValidStability,
+    // If 1, assert that push_data is always known (not X) when push_valid is asserted.
+    // ri lint_check_waive PARAM_NOT_USED
+    parameter bit EnableAssertPushDataKnown = 1,
     // If 1, then assert there are no valid bits asserted and that the FIFO is
     // empty at the end of the test.
     // ri lint_check_waive PARAM_NOT_USED
@@ -91,6 +83,7 @@ module br_fifo_shared_dynamic_push_ctrl #(
       .EnableCoverBackpressure(EnableCoverPushBackpressure),
       .EnableAssertValidStability(EnableAssertPushValidStability),
       .EnableAssertDataStability(EnableAssertPushDataStability),
+      .EnableAssertDataKnown(EnableAssertPushDataKnown),
       .EnableAssertFinalNotValid(EnableAssertFinalNotValid)
   ) br_flow_checks_valid_data_intg_inst (
       .clk,
@@ -99,6 +92,14 @@ module br_fifo_shared_dynamic_push_ctrl #(
       .ready(push_ready),
       .data (push_comb_data)
   );
+
+  // Push data could be unknown, but fifo_id must always be known.
+  // Add the check specifically in case the data check is disabled.
+  if (!EnableAssertPushDataKnown) begin : gen_fifo_id_known_check
+    for (genvar i = 0; i < NumWritePorts; i++) begin : gen_fifo_id_known_check_port
+      `BR_ASSERT_INTG(fifo_id_known_a, push_valid[i] |-> !$isunknown(push_fifo_id[i]))
+    end
+  end
 
 `endif  // BR_DISABLE_INTG_CHECKS
 `endif  // BR_ASSERT_ON
@@ -137,6 +138,7 @@ module br_fifo_shared_dynamic_push_ctrl #(
         .NumSymbols(NumWritePorts),
         .NumFlows(NumWritePorts),
         .SymbolWidth(AddrWidth),
+        .EnableCoverMorePopReadyThanSendable(EnableCoverPushBackpressure),
         // TODO(zhemao): check this is right
         .EnableAssertFinalNotSendable(0)
     ) br_multi_xfer_distributor_rr_inst (
@@ -202,9 +204,11 @@ module br_fifo_shared_dynamic_push_ctrl #(
 
   `BR_ASSERT_IMPL(
       full_push_acceptance_a,
-      (|push_valid && (alloc_sendable > request_count)) |-> (request_count == grant_count))
-  `BR_ASSERT_IMPL(
-      partial_push_acceptance_a,
-      (|push_valid && (alloc_sendable < request_count)) |-> (grant_count == alloc_sendable))
+      (|push_valid && (alloc_sendable >= request_count)) |-> (request_count == grant_count))
+  if (EnableCoverPushBackpressure) begin : gen_partial_push_acceptance_check
+    `BR_ASSERT_IMPL(
+        partial_push_acceptance_a,
+        (|push_valid && (alloc_sendable < request_count)) |-> (grant_count == alloc_sendable))
+  end
 
 endmodule

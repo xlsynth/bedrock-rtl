@@ -1,16 +1,5 @@
-// Copyright 2024-2025 The Bedrock-RTL Authors
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//     http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
+// SPDX-License-Identifier: Apache-2.0
+
 
 // Bedrock-RTL Flow Serializer
 //
@@ -92,9 +81,14 @@ module br_flow_serializer #(
     // If 0, the least significant bits are sent first (little endian).
     // The order of bits within each flit is always the same that they
     // appear on the push interface.
-    parameter bit SerializeMostSignificantFirst = 1,
+    parameter bit SerializeMostSignificantFirst = 0,
+    // If 1, assert that push_data is always known (not X) when push_valid is asserted.
+    parameter bit EnableAssertPushDataKnown = 1,
     // If 1, then assert there are no valid bits asserted at the end of the test.
     parameter bit EnableAssertFinalNotValid = 1,
+    // If 1, cover scenarios where push_last is asserted, if 0, assert that push_last
+    // is never asserted.
+    parameter bit EnableCoverPushLast = 1,
     localparam int SerializationRatio = PushWidth / PopWidth,
     // Vector widths cannot be 0, so we need to special-case when SerializationRatio == 1
     // even though the push_last_dont_care_count port won't be used in that case.
@@ -143,8 +137,12 @@ module br_flow_serializer #(
   `BR_ASSERT_STATIC(metadata_width_gte_1_a, MetadataWidth >= 1)
   `BR_ASSERT_STATIC(serialization_ratio_gte_1_a, SerializationRatio >= 1)
 
-  `BR_ASSERT_INTG(push_last_dont_care_count_in_range_a,
-                  push_valid && push_last |-> push_last_dont_care_count < SerializationRatio)
+  if (EnableCoverPushLast) begin : gen_push_last_covered
+    `BR_ASSERT_INTG(push_last_dont_care_count_in_range_a,
+                    push_valid && push_last |-> push_last_dont_care_count < SerializationRatio)
+  end else begin : gen_push_last_not_covered
+    `BR_ASSERT_INTG(push_last_always_zero_a, push_valid |-> !push_last)
+  end
   `BR_ASSERT_INTG(push_last_dont_care_count_zero_a,
                   push_valid && !push_last |-> push_last_dont_care_count == 0)
 
@@ -159,6 +157,7 @@ module br_flow_serializer #(
       .EnableCoverBackpressure(1),
       .EnableAssertValidStability(1),
       .EnableAssertDataStability(1),
+      .EnableAssertDataKnown(EnableAssertPushDataKnown),
       .EnableAssertFinalNotValid(EnableAssertFinalNotValid)
   ) br_flow_checks_valid_data_intg (
       .clk,
@@ -202,6 +201,8 @@ module br_flow_serializer #(
     br_counter_incr #(
         .MaxValue(SrMinus1),
         .MaxIncrement(1),
+        .EnableCoverZeroIncrement(0),
+        .EnableCoverReinitAndIncr(0),
         .EnableAssertFinalNotValid(EnableAssertFinalNotValid)
     ) br_counter_incr_pop_flit_id (
         .clk,
@@ -270,9 +271,25 @@ module br_flow_serializer #(
   //------------------------------------------
   // Implementation checks
   //------------------------------------------
-  // TODO: standard ready-valid check modules
+  br_flow_checks_valid_data_impl #(
+      .NumFlows(1),
+      .Width(PopWidth + 1 + MetadataWidth),
+      .EnableCoverBackpressure(1),
+      .EnableAssertValidStability(1),
+      .EnableAssertDataStability(1),
+      .EnableAssertFinalNotValid(EnableAssertFinalNotValid)
+  ) br_flow_checks_valid_data_impl (
+      .clk,
+      .rst,
+      .ready(pop_ready),
+      .valid(pop_valid),
+      .data ({pop_data, pop_last, pop_metadata})
+  );
+
   `BR_ASSERT_IMPL(cut_through_latency_0_a, push_valid |-> pop_valid)
   `BR_ASSERT_IMPL(pop_last_a, pop_valid && pop_last |-> push_last)
-  `BR_COVER_IMPL(dont_cares_c, push_valid && push_last && push_last_dont_care_count != 0)
+  if (SerializationRatio > 1 && EnableCoverPushLast) begin : gen_nonzero_dont_care_cover
+    `BR_COVER_IMPL(dont_cares_c, push_valid && push_last && push_last_dont_care_count != 0)
+  end
 
 endmodule : br_flow_serializer

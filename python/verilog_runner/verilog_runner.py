@@ -1,16 +1,5 @@
-# Copyright 2024-2025 The Bedrock-RTL Authors
-#
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
-#
-#     http://www.apache.org/licenses/LICENSE-2.0
-#
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
+# SPDX-License-Identifier: Apache-2.0
+
 
 """Main entry point for Verilog Runner."""
 
@@ -83,6 +72,8 @@ def main():
         )
         # Add subcommand-specific (but not tool-specific) arguments
         subcommand.add_args(subcommand_parser)
+        for _, plugin_class in tool_plugins.items():
+            plugin_class.add_args(subcommand_parser)
         # Add the '--tool' argument with choices based on available tools offered by plugins.
         tool_choices = list(tool_plugins.keys())
         subcommand_parser.add_argument(

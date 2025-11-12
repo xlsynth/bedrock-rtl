@@ -1,16 +1,5 @@
-// Copyright 2024-2025 The Bedrock-RTL Authors
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//     http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
+// SPDX-License-Identifier: Apache-2.0
+
 
 // Bedrock-RTL Flow Fork With Multihot Select
 
@@ -55,6 +44,10 @@ module br_flow_fork_select_multihot_fpv_monitor #(
     `BR_ASSUME(select_onehot_a, push_valid |-> $onehot(push_select_multihot))
   end
   `BR_ASSUME(legal_select_a, push_valid |-> |push_select_multihot)
+
+  if (!EnableCoverPushBackpressure) begin : gen_no_backpressure
+    `BR_ASSUME(no_backpressure_a, !push_ready |-> !push_valid)
+  end
 
   // ----------FV assertions----------
   // pick a random constant for assertion

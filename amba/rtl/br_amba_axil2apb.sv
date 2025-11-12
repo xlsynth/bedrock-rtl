@@ -1,16 +1,5 @@
-// Copyright 2024-2025 The Bedrock-RTL Authors
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//     http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
+// SPDX-License-Identifier: Apache-2.0
+
 
 // Bedrock-RTL AXI4-Lite to APB Bridge
 //
@@ -85,8 +74,11 @@ module br_amba_axil2apb #(
   logic [br_amba::AxiProtWidth-1:0] prot_reg, prot_next;
   logic resp_reg;
   logic write_reg;
+  logic write_req_ready;
+  logic read_req_ready;
   logic arb_write_req, arb_write_grant;
   logic arb_read_req, arb_read_grant;
+  logic [1:0] last_grant;
   logic arb_any_grant;
 
   `BR_REGLN(addr_reg, addr_next, arb_any_grant)
@@ -96,7 +88,9 @@ module br_amba_axil2apb #(
   `BR_REGLN(prot_reg, prot_next, arb_any_grant)
   `BR_REGLN(resp_reg, pslverr, (apb_state == Access) && pready)
   `BR_REGLN(rdata, prdata, (apb_state == Access) && pready)
+  `BR_REGL(last_grant, {arb_write_grant, arb_read_grant}, arb_any_grant)
   `BR_REGI(apb_state, apb_state_next, Idle)
+
 
   // Arbitrate between read and write transactions
   br_arb_rr #(
@@ -104,14 +98,16 @@ module br_amba_axil2apb #(
   ) br_arb_rr (
       .clk(clk),
       .rst(rst),
-      .enable_priority_update(1'b0),
+      .enable_priority_update(1'b1),
       .request({arb_write_req, arb_read_req}),
       .grant({arb_write_grant, arb_read_grant})
   );
 
   // Arbiter request signals
-  assign arb_write_req = awvalid && wvalid && (apb_state == Idle);
-  assign arb_read_req = arvalid && (apb_state == Idle);
+  assign write_req_ready = awvalid && wvalid && (apb_state == Idle);
+  assign read_req_ready = arvalid && (apb_state == Idle);
+  assign arb_write_req = write_req_ready && (!last_grant[1] || !read_req_ready);
+  assign arb_read_req = read_req_ready && (!last_grant[0] || !write_req_ready);
   assign arb_any_grant = arb_write_grant || arb_read_grant;
 
   // Save the address and data for the transaction

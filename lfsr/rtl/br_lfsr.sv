@@ -1,16 +1,5 @@
-// Copyright 2025 The Bedrock-RTL Authors
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//     http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
+// SPDX-License-Identifier: Apache-2.0
+
 
 // Bedrock-RTL Fibonacci LFSR
 //
@@ -38,7 +27,17 @@
 
 module br_lfsr #(
     // Width of the LFSR state. Must be at least 2.
-    parameter int Width = 2
+    parameter int Width = 2,
+    // Enable check that MSB of taps is set. This is necessary, but not sufficient,
+    // for a maximal period LFSR. Disabling this checks allows the LFSR to be used
+    // more flexibly (e.g. supporting adjustable period LFSRs by changing the taps).
+    // ri lint_check_waive PARAM_NOT_USED
+    parameter bit EnableAssertTapsMsbIsSet = 1,
+    // Enable check that initial state is non-zero. If the LFSR is initialized to zero,
+    // it will never advance and the output will be zero forever. Generally, this is not
+    // the behavior intended, but may be useful to support "disabling" the LFSR.
+    // ri lint_check_waive PARAM_NOT_USED
+    parameter bit EnableAssertInitialStateNonZero = 1
 ) (
     // Posedge-triggered clock.
     input logic clk,
@@ -61,8 +60,12 @@ module br_lfsr #(
   // Integration checks
   //------------------------------------------
   `BR_ASSERT_STATIC(width_gte_two_a, Width >= 2)
-  `BR_ASSERT_INTG(taps_msb_set_a, taps[Width-1] == 1'b1)
-  `BR_ASSERT_INTG(initial_state_non_zero_a, initial_state != '0)
+  if (EnableAssertTapsMsbIsSet) begin : gen_taps_msb_check
+    `BR_ASSERT_INTG(taps_msb_set_a, taps[Width-1] == 1'b1)
+  end
+  if (EnableAssertInitialStateNonZero) begin : gen_initial_state_check
+    `BR_ASSERT_INTG(initial_state_non_zero_a, initial_state != '0)
+  end
 
   //------------------------------------------
   // Implementation

@@ -1,16 +1,5 @@
-// Copyright 2024-2025 The Bedrock-RTL Authors
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//     http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
+// SPDX-License-Identifier: Apache-2.0
+
 
 // AXI4 Timing Slice FPV checks
 
@@ -146,7 +135,9 @@ module br_amba_axi_timing_slice_fpv_monitor #(
       .BUSER_WIDTH(BUserWidth),
       .RUSER_WIDTH(RUserWidth),
       .CONFIG_WDATA_MASKED(0),
-      .MAX_PENDING(MaxTarget)
+      .MAX_PENDING(MaxTarget),
+      .ALLOW_SPARSE_STROBE(1),
+      .BYTE_STROBE_ON(1)
   ) target (
       // Global signals
       .aclk    (clk),
@@ -216,7 +207,9 @@ module br_amba_axi_timing_slice_fpv_monitor #(
       .BUSER_WIDTH(BUserWidth),
       .RUSER_WIDTH(RUserWidth),
       .CONFIG_RDATA_MASKED(0),
-      .MAX_PENDING(MaxInit)
+      .MAX_PENDING(MaxInit),
+      .ALLOW_SPARSE_STROBE(1),
+      .BYTE_STROBE_ON(1)
   ) init (
       // Global signals
       .aclk    (clk),

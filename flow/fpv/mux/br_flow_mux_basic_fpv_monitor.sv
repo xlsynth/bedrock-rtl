@@ -1,16 +1,5 @@
-// Copyright 2024-2025 The Bedrock-RTL Authors
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//     http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
+// SPDX-License-Identifier: Apache-2.0
+
 
 // Basic checker of br_flow_mux
 
@@ -22,7 +11,12 @@ module br_flow_mux_basic_fpv_monitor #(
     parameter int Width = 1,  // Must be at least 1
     parameter bit EnableCoverPushBackpressure = 1,
     parameter bit EnableAssertPushValidStability = EnableCoverPushBackpressure,
-    parameter bit EnableAssertPushDataStability = EnableAssertPushValidStability
+    parameter bit EnableAssertPushDataStability = EnableAssertPushValidStability,
+    parameter bit EnableCoverPopBackpressure = EnableCoverPushBackpressure,
+    parameter bit EnableAssertPopValidStability = EnableAssertPushValidStability,
+    parameter bit EnableAssertPopDataStability = 0,
+    parameter bit EnableAssertMustGrant = 1,
+    parameter bit DelayedGrant = 0
 ) (
     input logic                           clk,
     input logic                           rst,
@@ -38,6 +32,9 @@ module br_flow_mux_basic_fpv_monitor #(
   `BR_ASSUME(pop_ready_liveness_a, s_eventually (pop_ready))
 
   for (genvar n = 0; n < NumFlows; n++) begin : gen_asm
+    if (!EnableCoverPushBackpressure) begin : gen_no_backpressure
+      `BR_ASSUME(no_backpressure_a, !push_ready[n] |-> !push_valid[n])
+    end
     if (EnableAssertPushValidStability) begin : gen_push_valid
       `BR_ASSUME(push_valid_stable_a, push_valid[n] && !push_ready[n] |=> push_valid[n])
     end
@@ -47,17 +44,29 @@ module br_flow_mux_basic_fpv_monitor #(
   end
 
   // ----------Sanity Check----------
-  if (EnableAssertPushValidStability) begin : gen_pop_valid
+  if (EnableAssertPopValidStability) begin : gen_pop_valid
     `BR_ASSERT(pop_valid_stable_a, pop_valid && !pop_ready |=> pop_valid)
   end
-  if (EnableAssertPushDataStability) begin : gen_pop_data
-    `BR_ASSERT(pop_data_stable_a, pop_valid && !pop_ready |=> $stable(pop_data))
+  if (EnableCoverPopBackpressure) begin : gen_pop_backpressure
+    if (EnableAssertPopDataStability) begin : gen_pop_data_stable
+      `BR_ASSERT(pop_data_stable_a, pop_valid && !pop_ready |=> pop_valid && $stable(pop_data))
+    end else begin : gen_pop_data_unstable
+      `BR_COVER(pop_data_unstable_c, (pop_valid && !pop_ready) ##1 !$stable(pop_data))
+    end
+  end
+
+  // ----------Critical Covers----------
+  if (EnableCoverPushBackpressure) begin : gen_cover_all_push_valid
+    `BR_COVER(all_push_valid_c, &push_valid)
   end
 
   // ----------Forward Progress Check----------
-  `BR_ASSERT(must_grant_a, |push_valid == pop_valid)
-
-  // ----------Critical Covers----------
-  `BR_COVER(all_push_valid_c, &push_valid)
+  if (EnableAssertMustGrant) begin : gen_must_grant
+    if (DelayedGrant) begin : gen_delayed_grant
+      `BR_ASSERT(must_grant_a, |push_valid |=> pop_valid)
+    end else begin : gen_immediate_grant
+      `BR_ASSERT(must_grant_a, |push_valid == pop_valid)
+    end
+  end
 
 endmodule : br_flow_mux_basic_fpv_monitor

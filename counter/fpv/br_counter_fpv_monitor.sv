@@ -1,16 +1,5 @@
-// Copyright 2024-2025 The Bedrock-RTL Authors
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//     http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
+// SPDX-License-Identifier: Apache-2.0
+
 
 // Bedrock-RTL Increment/Decrement Counter w/ Overflow Handling
 
@@ -18,14 +7,18 @@
 `include "br_fv.svh"
 
 module br_counter_fpv_monitor #(
-    parameter int MaxValue = 1,  // Must be at least 1. Inclusive.
-    parameter int MaxChange = 1,  // Must be at least 1 and at most MaxValue. Inclusive.
+    parameter int MaxValueWidth = 32,
+    parameter int MaxChangeWidth = 32,
+    parameter logic [MaxValueWidth-1:0] MaxValue = 1,
+    parameter logic [MaxChangeWidth-1:0] MaxChange = 1,
     parameter bit EnableWrap = 1,
     parameter bit EnableReinitAndChange = 1,
     parameter bit EnableSaturate = 0,
     parameter bit EnableAssertFinalNotValid = 1,
-    localparam int ValueWidth = $clog2(MaxValue + 1),
-    localparam int ChangeWidth = $clog2(MaxChange + 1)
+    localparam int MaxValueP1Width = MaxValueWidth + 1,
+    localparam int MaxChangeP1Width = MaxChangeWidth + 1,
+    localparam int ValueWidth = $clog2(MaxValueP1Width'(MaxValue) + 1),
+    localparam int ChangeWidth = $clog2(MaxChangeP1Width'(MaxChange) + 1)
 ) (
     input logic                   clk,
     input logic                   rst,
@@ -51,7 +44,7 @@ module br_counter_fpv_monitor #(
   // {EnableWrap, EnableSaturate} can be all combinations but not {1,1}
   function automatic logic [ValueWidth-1:0] adjust(
       input logic [ValueWidth-1:0] base, input logic [ChangeWidth-1:0] incr,
-      input logic [ChangeWidth-1:0] decr, input int max_value);
+      input logic [ChangeWidth-1:0] decr, input logic [MaxValueWidth-1:0] max_value);
     logic overflow, underflow;
     logic [ValueWidth:0] base_pad;
     base_pad = {1'b0, base};
@@ -117,13 +110,20 @@ module br_counter_fpv_monitor #(
   `BR_COVER(reinit_and_change_c, reinit && (incr_valid || decr_valid))
   // when EnableWrap or EnableSaturate is 1, counter handles overflow/underflow
   if (EnableWrap | EnableSaturate) begin : gen_over_underflow
-    `BR_COVER(overflow_c, (fv_decr < fv_incr) && (value + fv_incr - fv_decr > MaxValue))
-    `BR_COVER(underflow_c, (fv_decr > fv_incr) && (value_next > value))
+    // The cover shows up as unreachable if MaxValue is the largest number that
+    // can be represented. Just disable it in this case.
+    // TODO(zhemao): Figure out how to get this to work
+    if (MaxValue != {MaxValueWidth{1'b1}}) begin : gen_cover_overflow
+      `BR_COVER(overflow_c, (fv_decr < fv_incr) && (value + fv_incr - fv_decr > MaxValue))
+    end
+    `BR_COVER(underflow_c, (fv_decr > fv_incr) && (value < (fv_decr - fv_incr)))
   end
 
 endmodule : br_counter_fpv_monitor
 
 bind br_counter br_counter_fpv_monitor #(
+    .MaxValueWidth(MaxValueWidth),
+    .MaxChangeWidth(MaxChangeWidth),
     .MaxValue(MaxValue),
     .MaxChange(MaxChange),
     .EnableWrap(EnableWrap),

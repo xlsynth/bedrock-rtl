@@ -1,16 +1,5 @@
-// Copyright 2025 The Bedrock-RTL Authors
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//     http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
+// SPDX-License-Identifier: Apache-2.0
+
 
 // Bedrock-RTL VC-based Credit Sender Testbench
 module br_credit_sender_vc_rr_tb;
@@ -182,6 +171,31 @@ module br_credit_sender_vc_rr_tb;
     end
   endtask
 
+  task automatic drain_credits();
+    int any_left;
+
+    $display("Draining remaining credits back to sender");
+    pop_credit = 0;
+
+    do begin
+      any_left = 0;
+
+      @(negedge clk);
+      for (int i = 0; i < NumVcs; i++) begin
+        int credit_to_return = br_math::min2(recv_credit[i], PopCreditMaxChange);
+        pop_credit[i] = credit_to_return;
+        recv_credit[i] -= credit_to_return;
+        if (recv_credit[i] > 0) any_left = 1;
+      end
+
+      @(posedge clk);
+
+      // De-assert after one cycle
+      @(negedge clk);
+      pop_credit = 0;
+    end while (any_left);
+  endtask
+
   initial begin
     push_valid = 0;
     push_data = 0;
@@ -203,6 +217,9 @@ module br_credit_sender_vc_rr_tb;
     end
 
     wait fork;
+
+    // Ensure all outstanding credits are returned to the sender
+    drain_credits();
 
     td.finish();
   end

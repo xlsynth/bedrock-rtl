@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: Apache-2.0
+
 FROM rockylinux:8.9.20231119
 ARG TARGETPLATFORM
 LABEL description="Docker image for building and testing Bedrock-RTL using open source tools."
@@ -93,12 +95,12 @@ RUN cd verilator && \
 RUN verilator --version
 
 # Install Verible
-RUN curl -L https://github.com/chipsalliance/verible/releases/download/v0.0-3946-g851d3ff4/verible-v0.0-3946-g851d3ff4-linux-static-x86_64.tar.gz -o verible-v0.0-3946-g851d3ff4-linux-static-x86_64.tar.gz
-RUN tar -xzf verible-v0.0-3946-g851d3ff4-linux-static-x86_64.tar.gz && \
-    cp verible-v0.0-3946-g851d3ff4/bin/* /usr/local/bin/ && \
+RUN curl -L https://github.com/chipsalliance/verible/releases/download/v0.0-4023-gc1271a00/verible-v0.0-4023-gc1271a00-linux-static-x86_64.tar.gz -o verible-v0.0-4023-gc1271a00-linux-static-x86_64.tar.gz
+RUN tar -xzf verible-v0.0-4023-gc1271a00-linux-static-x86_64.tar.gz && \
+    cp verible-v0.0-4023-gc1271a00/bin/* /usr/local/bin/ && \
     verible-verilog-lint --version && \
-    rm verible-v0.0-3946-g851d3ff4-linux-static-x86_64.tar.gz && \
-    rm -rf verible-v0.0-3946-g851d3ff4
+    rm verible-v0.0-4023-gc1271a00-linux-static-x86_64.tar.gz && \
+    rm -rf verible-v0.0-4023-gc1271a00
 
 # Install Yosys
 RUN git clone https://github.com/YosysHQ/yosys.git

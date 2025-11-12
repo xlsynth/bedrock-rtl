@@ -1,23 +1,12 @@
-# Copyright 2024-2025 The Bedrock-RTL Authors
-#
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
-#
-#     http://www.apache.org/licenses/LICENSE-2.0
-#
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
+# SPDX-License-Identifier: Apache-2.0
 
 load("@rules_hdl//verilog:providers.bzl", "verilog_library")
 load("//bazel:br_verilog.bzl", "br_verilog_fpv_test_tools_suite")
 load("//bazel:verilog.bzl", "verilog_elab_test")
 
-package(default_visibility = ["//visibility:public"])
+package(default_visibility = ["//visibility:private"])
 
+##################################################################
 # Bedrock-RTL Credit Counter
 
 verilog_library(
@@ -61,18 +50,49 @@ br_verilog_fpv_test_tools_suite(
     },
     tools = {
         "jg": "br_credit_counter_fpv.jg.tcl",
-        "vcf": "",
     },
     top = "br_credit_counter",
     deps = [":br_credit_counter_fpv_monitor"],
 )
 
+br_verilog_fpv_test_tools_suite(
+    name = "br_credit_counter_test_max",
+    elab_opts = [
+        "-parameter MaxValue 4294967295",
+        "-parameter MaxChange 4294967295",
+    ],
+    tools = {
+        "jg": "br_credit_counter_fpv.jg.tcl",
+    },
+    top = "br_credit_counter",
+    deps = [":br_credit_counter_fpv_monitor"],
+)
+
+br_verilog_fpv_test_tools_suite(
+    name = "br_credit_counter_test_max_override",
+    elab_opts = [
+        "-parameter MaxValueWidth 64",
+        "-parameter MaxChangeWidth 64",
+        "-parameter MaxChange 18446744073709551615",
+        "-parameter MaxValue 18446744073709551615",
+    ],
+    tools = {
+        "jg": "br_credit_counter_fpv.jg.tcl",
+    },
+    top = "br_credit_counter",
+    deps = [":br_credit_counter_fpv_monitor"],
+)
+
+##################################################################
 # Bedrock-RTL Credit Receiver
 verilog_library(
     name = "br_credit_receiver_fpv_monitor",
     srcs = ["br_credit_receiver_fpv_monitor.sv"],
+    visibility = [
+        "//cdc/fpv:__subpackages__",
+        "//fifo/fpv:__subpackages__",
+    ],
     deps = [
-        ":br_credit_counter_fpv_monitor",
         "//credit/rtl:br_credit_receiver",
         "//macros:br_fv",
     ],
@@ -143,18 +163,17 @@ br_verilog_fpv_test_tools_suite(
     },
     tools = {
         "jg": "br_credit_receiver_fpv.jg.tcl",
-        "vcf": "",
     },
     top = "br_credit_receiver",
     deps = [":br_credit_receiver_fpv_monitor"],
 )
 
+##################################################################
 # Bedrock-RTL Credit Sender
 verilog_library(
     name = "br_credit_sender_fpv_monitor",
     srcs = ["br_credit_sender_fpv_monitor.sv"],
     deps = [
-        ":br_credit_counter_fpv_monitor",
         "//credit/rtl:br_credit_sender",
         "//macros:br_fv",
     ],
@@ -167,8 +186,9 @@ verilog_elab_test(
     deps = [":br_credit_sender_fpv_monitor"],
 )
 
+# test valid ready protocol
 br_verilog_fpv_test_tools_suite(
-    name = "br_credit_sender_test_suite",
+    name = "br_credit_sender_test_backpressure",
     illegal_param_combinations = {
         (
             "EnableCoverPushBackpressure",
@@ -180,6 +200,31 @@ br_verilog_fpv_test_tools_suite(
             ("0", "1", "1"),
             ("1", "0", "1"),
         ],
+    },
+    params = {
+        "EnableCoverPushBackpressure": [
+            "0",
+            "1",
+        ],
+        "EnableAssertPushDataStability": [
+            "0",
+            "1",
+        ],
+        "EnableAssertPushValidStability": [
+            "0",
+            "1",
+        ],
+    },
+    tools = {
+        "jg": "br_credit_sender_fpv.jg.tcl",
+    },
+    top = "br_credit_sender",
+    deps = [":br_credit_sender_fpv_monitor"],
+)
+
+br_verilog_fpv_test_tools_suite(
+    name = "br_credit_sender_test_suite",
+    illegal_param_combinations = {
         (
             "PopCreditMaxChange",
             "MaxCredit",
@@ -196,18 +241,6 @@ br_verilog_fpv_test_tools_suite(
         ],
     },
     params = {
-        "EnableCoverPushBackpressure": [
-            "0",
-            "1",
-        ],
-        "EnableAssertPushDataStability": [
-            "0",
-            "1",
-        ],
-        "EnableAssertPushValidStability": [
-            "0",
-            "1",
-        ],
         "MaxCredit": [
             "1",
             "5",
@@ -235,7 +268,6 @@ br_verilog_fpv_test_tools_suite(
     },
     tools = {
         "jg": "br_credit_sender_fpv.jg.tcl",
-        "vcf": "",
     },
     top = "br_credit_sender",
     deps = [":br_credit_sender_fpv_monitor"],

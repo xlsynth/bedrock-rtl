@@ -1,30 +1,29 @@
-# Copyright 2024-2025 The Bedrock-RTL Authors
-#
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
-#
-#     http://www.apache.org/licenses/LICENSE-2.0
-#
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
+# SPDX-License-Identifier: Apache-2.0
+
 
 # clock/reset set up
 clock clk
 reset rst
 get_design_info
 
-# TODO: disable covers to make nightly clean
+array set param_list [get_design_info -list parameter]
+set MaxAxiBurstLen $param_list(MaxAxiBurstLen)
+# TODO(bgelb): disable RTL covers to make nightly clean
 cover -disable *
+cover -enable *br_amba_axi_isolate_sub.monitor*
+# disable ABVIP unreachable covers
+# FV set ABVIP Max_Pending to be RTL_OutstandingReq + 2 to test RTL backpressure
+# Therefore, ABVIP overflow precondition is unreachable
+cover -disable *monitor*tbl_no_overflow:precondition1
 
 # during isolate_req & !isolate_done window, downstream assertions don't matter
 # Coded same assertion with precondition: isolate_req & !isolate_done in br_amba_axi_isolate_sub_fpv.sv
 assert -disable {*downstream.genStableChksRDInf.genARStableChks.master_ar_arvalid_stable}
 assert -disable {*downstream.genStableChksWRInf.genAWStableChks.master_aw_awvalid_stable}
 assert -disable {*downstream.genStableChksWRInf.genWStableChks.master_w_wvalid_stable}
+
+# limit run time to 30-mins
+set_prove_time_limit 1800s
 
 # prove command
 prove -all

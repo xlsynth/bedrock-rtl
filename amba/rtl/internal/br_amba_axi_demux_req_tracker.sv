@@ -1,26 +1,20 @@
-// Copyright 2025 The Bedrock-RTL Authors
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//     http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
+// SPDX-License-Identifier: Apache-2.0
+
 //
 // Bedrock-RTL AXI Demux Request Tracker
 //
 // This module is used to route the requests to the correct downstream port
-// and to track on which downstream port the next response should arrive for each
-// AXI ID.
+// and to track on which downstream port the next response should arrive
+// for each AXI ID.
+//
+// Implements a single-subordinate-per-ID tracking scheme. Transactions
+// with the same ID may not be outstanding on multiple subordinates at the
+// same time.
 //
 // Read response data interleaving is not supported.
 
 `include "br_unused.svh"
+`include "br_registers.svh"
 `include "br_asserts_internal.svh"
 
 module br_amba_axi_demux_req_tracker #(
@@ -28,38 +22,16 @@ module br_amba_axi_demux_req_tracker #(
     parameter int NumSubordinates = 2,
     // Width of the AXI ID field.
     parameter int AxiIdWidth = 1,
-    // Maximum number of outstanding write transactions.
-    parameter int MaxOutstanding = 3,
+    // Maximum number of outstanding transactions per ID.
+    parameter int MaxOutstandingPerId = 2,
     // Width of the request payload.
     parameter int ReqPayloadWidth = 1,
     // Width of the response payload.
     parameter int RespPayloadWidth = 1,
     // If 1, then only a single ID is supported.
     parameter int SingleIdOnly = 0,
-    // Number of pipeline stages to use for the pointer RAM read
-    // data in the response tracker FIFO. Has no effect if SingleIdOnly == 1.
-    parameter int FifoPointerRamReadDataDepthStages = 0,
-    // Number of pipeline stages to use for the data RAM read data
-    // in the response tracker FIFO. Has no effect if SingleIdOnly == 1.
-    parameter int FifoDataRamReadDataDepthStages = 0,
-    // Number of pipeline stages to use for the pointer RAM address
-    // in the response tracker FIFO. Has no effect if SingleIdOnly == 1.
-    parameter int FifoPointerRamAddressDepthStages = 1,
-    // Number of pipeline stages to use for the data RAM address
-    // in the response tracker FIFO. Has no effect if SingleIdOnly == 1.
-    parameter int FifoDataRamAddressDepthStages = 1,
-    // Number of linked lists per FIFO in the response tracker FIFO. Has
-    // no effect if SingleIdOnly == 1.
-    parameter int FifoNumLinkedListsPerFifo = 2,
-    // Number of pipeline stages to use for the staging buffer
-    // in the response tracker FIFO. Has no effect if SingleIdOnly == 1.
-    parameter int FifoStagingBufferDepth = 2,
-    // Number of pipeline stages to use for the pop outputs
-    // in the response tracker FIFO. Has no effect if SingleIdOnly == 1.
-    parameter int FifoRegisterPopOutputs = 1,
-    // Number of pipeline stages to use for the deallocation
-    // in the response tracker FIFO. Has no effect if SingleIdOnly == 1.
-    parameter int FifoRegisterDeallocation = 1,
+    // If 1, then downstream outputs are registered.
+    parameter int RegisterDownstreamOutputs = 1,
     //
     localparam int SubIdWidth = $clog2(NumSubordinates)
 ) (
@@ -102,18 +74,28 @@ module br_amba_axi_demux_req_tracker #(
 );
 
   localparam int NumIds = SingleIdOnly ? 1 : 2 ** AxiIdWidth;
+  localparam int MaxOutstandingWidth = $clog2(MaxOutstandingPerId + 1);
+
+  logic [NumIds-1:0][MaxOutstandingWidth-1:0] outstanding_per_id;
+  logic [NumIds-1:0][SubIdWidth-1:0] active_port_per_id;
 
   //
   // Integration checks
   //
 
   `BR_ASSERT_STATIC(num_subordinates_gte_2_a, NumSubordinates >= 2)
-  `BR_ASSERT_STATIC(max_outstanding_gt_2_a, MaxOutstanding > 2)
+  `BR_ASSERT_STATIC(max_outstanding_per_id_gte_1_a, MaxOutstandingPerId >= 1)
   if (SingleIdOnly) begin : gen_single_id_only_checks
     `BR_ASSERT_INTG(axid_is_zero_a, upstream_axvalid |-> upstream_axid == '0)
     for (genvar i = 0; i < NumSubordinates; i++) begin : gen_subordinate_id_only_check
       `BR_ASSERT_INTG(xid_is_zero_a, downstream_xvalid[i] |-> downstream_xid[i] == '0)
     end
+  end
+  for (genvar i = 0; i < NumSubordinates; i++) begin : gen_subordinate_id_checks
+    `BR_ASSERT_INTG(downstream_id_active_a,
+                    downstream_xvalid[i] |-> active_port_per_id[downstream_xid[i]] == i)
+    `BR_ASSERT_INTG(downstream_id_outstanding_a,
+                    downstream_xvalid[i] |-> outstanding_per_id[downstream_xid[i]] > 0)
   end
 
   //
@@ -136,23 +118,17 @@ module br_amba_axi_demux_req_tracker #(
   logic upstream_axready_int;
   logic upstream_axvalid_int;
 
-  req_payload_t [NumSubordinates-1:0] downstream_ax_req_payload;
-
   logic upstream_axready_reg;
   logic upstream_axvalid_reg;
   logic [AxiIdWidth-1:0] upstream_axid_reg;
   logic [SubIdWidth-1:0] upstream_ax_sub_select_reg;
   logic [ReqPayloadWidth-1:0] upstream_ax_payload_reg;
 
-  logic resp_tracking_fifo_push_ready;
-  logic resp_tracking_fifo_push_valid;
-  logic [AxiIdWidth-1:0] resp_tracking_fifo_push_id;
-  logic [SubIdWidth-1:0] resp_tracking_fifo_push_sub_select;
+  logic resp_tracker_push_ready;
+  logic resp_tracker_push_valid;
 
-  logic [NumIds-1:0] resp_tracking_fifo_pop_ready_per_id;
-  logic [NumIds-1:0] resp_tracking_fifo_pop_valid_per_id;
-  logic [NumIds-1:0][SubIdWidth-1:0] resp_tracking_fifo_pop_sub_select_per_id;
-  logic resp_tracking_fifo_pop_ready;
+  logic [NumIds-1:0] resp_tracker_decr_per_id;
+  logic resp_tracker_decr;
 
   //
   // Request Path
@@ -184,8 +160,8 @@ module br_amba_axi_demux_req_tracker #(
       .push_ready(upstream_axready_reg),
       .push_valid(upstream_axvalid_reg),
       //
-      .pop_ready({wdata_flow_ready, resp_tracking_fifo_push_ready, upstream_axready_int}),
-      .pop_valid_unstable({wdata_flow_valid, resp_tracking_fifo_push_valid, upstream_axvalid_int})
+      .pop_ready({wdata_flow_ready, resp_tracker_push_ready, upstream_axready_int}),
+      .pop_valid_unstable({wdata_flow_valid, resp_tracker_push_valid, upstream_axvalid_int})
   );
 
   assign upstream_ax_sub_select_int = upstream_ax_sub_select_reg;
@@ -194,75 +170,81 @@ module br_amba_axi_demux_req_tracker #(
 
   assign wdata_flow_sub_select = upstream_ax_sub_select_reg;
 
-  assign resp_tracking_fifo_push_id = upstream_axid_reg;
-  assign resp_tracking_fifo_push_sub_select = upstream_ax_sub_select_reg;
+  // Single-ID-per-port tracking
+  // Transactions for a single ID may only be outstanding on a single port at a time. This is
+  // required to avoid deadlock and is a similar strategy used in commercially-available AXI
+  // interconnects.
 
-  // Request tracking FIFO
-  if (SingleIdOnly) begin : gen_single_id_only_fifo
-    `BR_UNUSED(resp_tracking_fifo_push_id)
+  logic [NumIds-1:0] resp_tracker_push_ready_per_id;
+  logic [NumIds-1:0] resp_tracker_push_valid_per_id;
 
-    br_fifo_flops #(
-        .Depth(MaxOutstanding),
-        .Width(SubIdWidth),
-        // When downstream backpressures, push_valid can drop.
-        .EnableAssertPushValidStability(0)
-    ) br_fifo_flops_resp_tracking (
+  for (genvar i = 0; i < NumIds; i++) begin : gen_track_port_outstanding_per_id
+    logic zero_outstanding;
+    logic update_active_port;
+
+    assign zero_outstanding = (outstanding_per_id[i] == '0);
+
+    // Accept if the the incoming request targets the same subordinate as currently outstanding
+    // transactions for the same ID, or if there are no outstanding transactions for this ID.
+    assign resp_tracker_push_ready_per_id[i] = upstream_axvalid_reg
+                        && (outstanding_per_id[i] < MaxOutstandingPerId)
+                        && ((upstream_ax_sub_select_reg == active_port_per_id[i])
+                            || zero_outstanding);
+
+    assign update_active_port = resp_tracker_push_ready_per_id[i] && zero_outstanding;
+    `BR_REGL(active_port_per_id[i], upstream_ax_sub_select_reg, update_active_port)
+
+    br_counter #(
+        .MaxValue(MaxOutstandingPerId),
+        .MaxChange(1),
+        .EnableWrap(0),
+        .EnableReinitAndChange(0),
+        .EnableSaturate(0)
+    ) br_counter_outstanding_per_id (
         .clk,
         .rst,
         //
-        .push_ready(resp_tracking_fifo_push_ready),
-        .push_valid(resp_tracking_fifo_push_valid),
-        .push_data(resp_tracking_fifo_push_sub_select),
-        //
-        .pop_ready(resp_tracking_fifo_pop_ready_per_id),
-        .pop_valid(resp_tracking_fifo_pop_valid_per_id),
-        .pop_data(resp_tracking_fifo_pop_sub_select_per_id),
-        //
-        .full(),
-        .full_next(),
-        .slots(),
-        .slots_next(),
-        //
-        .empty(),
-        .empty_next(),
-        .items(),
-        .items_next()
-    );
-  end else begin : gen_multi_id_fifo
-    br_fifo_shared_dynamic_flops #(
-        .NumFifos(NumIds),
-        .Depth(MaxOutstanding),
-        .Width(SubIdWidth),
-        .StagingBufferDepth(FifoStagingBufferDepth),
-        .NumLinkedListsPerFifo(FifoNumLinkedListsPerFifo),
-        .RegisterPopOutputs(FifoRegisterPopOutputs),
-        .RegisterDeallocation(FifoRegisterDeallocation),
-        .DataRamDepthTiles(1),
-        .DataRamAddressDepthStages(FifoDataRamAddressDepthStages),
-        .DataRamReadDataDepthStages(FifoDataRamReadDataDepthStages),
-        .DataRamReadDataWidthStages(1),
-        .PointerRamDepthTiles(1),
-        .PointerRamAddressDepthStages(FifoPointerRamAddressDepthStages),
-        .PointerRamReadDataDepthStages(FifoPointerRamReadDataDepthStages),
-        .PointerRamReadDataWidthStages(1),
-        // When downstream backpressures, push_valid can drop.
-        .EnableAssertPushValidStability(0)
-    ) br_fifo_shared_dynamic_flops_resp_tracking (
-        .clk,
-        .rst,
-        //
-        .push_valid(resp_tracking_fifo_push_valid),
-        .push_ready(resp_tracking_fifo_push_ready),
-        .push_data(resp_tracking_fifo_push_sub_select),
-        .push_fifo_id(resp_tracking_fifo_push_id),
-        .push_full(),
-        //
-        .pop_valid(resp_tracking_fifo_pop_valid_per_id),
-        .pop_ready(resp_tracking_fifo_pop_ready_per_id),
-        .pop_data(resp_tracking_fifo_pop_sub_select_per_id),
-        .pop_empty()
+        .reinit(1'b0),
+        .initial_value('0),
+        .incr_valid(resp_tracker_push_ready_per_id[i] && resp_tracker_push_valid_per_id[i]),
+        .incr(1'b1),
+        .decr_valid(resp_tracker_decr_per_id[i]),
+        .decr(1'b1),
+        .value(outstanding_per_id[i]),
+        .value_next()
     );
   end
+
+  if (SingleIdOnly) begin : gen_single_id_only_resp_tracker_push
+    assign resp_tracker_push_ready = resp_tracker_push_ready_per_id;
+    assign resp_tracker_push_valid_per_id = resp_tracker_push_valid;
+  end else begin : gen_multi_id_resp_tracker_push
+    logic [AxiIdWidth-1:0] resp_tracker_push_mux_select;
+    assign resp_tracker_push_mux_select = upstream_axvalid_reg ? upstream_axid_reg : '0;
+
+    br_flow_demux_select_unstable #(
+        .NumFlows(NumIds),
+        .Width(1),
+        .EnableAssertPushValidStability(0)
+    ) br_flow_demux_select_unstable_resp_tracker_push (
+        .clk,
+        .rst,
+        //
+        .select(resp_tracker_push_mux_select),
+        //
+        .push_ready(resp_tracker_push_ready),
+        .push_valid(resp_tracker_push_valid),
+        .push_data(1'b0),
+        //
+        .pop_ready(resp_tracker_push_ready_per_id),
+        .pop_valid_unstable(resp_tracker_push_valid_per_id),
+        .pop_data_unstable()
+    );
+  end
+
+  req_payload_t [NumSubordinates-1:0] downstream_ax_req_payload_pre;
+  logic [NumSubordinates-1:0] downstream_axready_pre;
+  logic [NumSubordinates-1:0] downstream_axvalid_pre;
 
   // Request output demux
   logic [SubIdWidth-1:0] flow_demux_select;
@@ -283,14 +265,35 @@ module br_amba_axi_demux_req_tracker #(
       .push_valid(upstream_axvalid_int),
       .push_data(upstream_ax_req_payload_int),
       //
-      .pop_ready(downstream_axready),
-      .pop_valid_unstable(downstream_axvalid),
-      .pop_data_unstable(downstream_ax_req_payload)
+      .pop_ready(downstream_axready_pre),
+      .pop_valid_unstable(downstream_axvalid_pre),
+      .pop_data_unstable(downstream_ax_req_payload_pre)
   );
 
   for (genvar i = 0; i < NumSubordinates; i++) begin : gen_downstream_ax_payload
-    assign downstream_axid[i] = downstream_ax_req_payload[i].id;
-    assign downstream_ax_payload[i] = downstream_ax_req_payload[i].payload;
+    if (RegisterDownstreamOutputs) begin : gen_register_downstream_outputs
+      br_flow_reg_fwd #(
+          .Width(AxiIdWidth + ReqPayloadWidth)
+      ) br_flow_reg_fwd_downstream_req (
+          .clk,
+          .rst,
+          //
+          .push_ready(downstream_axready_pre[i]),
+          .push_valid(downstream_axvalid_pre[i]),
+          .push_data({
+            downstream_ax_req_payload_pre[i].id, downstream_ax_req_payload_pre[i].payload
+          }),
+          //
+          .pop_ready(downstream_axready[i]),
+          .pop_valid(downstream_axvalid[i]),
+          .pop_data({downstream_axid[i], downstream_ax_payload[i]})
+      );
+    end else begin : gen_no_register_downstream_outputs
+      assign downstream_axready_pre[i] = downstream_axready[i];
+      assign downstream_axvalid[i] = downstream_axvalid_pre[i];
+      assign downstream_axid[i] = downstream_ax_req_payload_pre[i].id;
+      assign downstream_ax_payload[i] = downstream_ax_req_payload_pre[i].payload;
+    end
   end
 
   //
@@ -331,51 +334,22 @@ module br_amba_axi_demux_req_tracker #(
   logic [NumSubordinates-1:0] ds_port_req;
   logic [NumSubordinates-1:0] ds_port_gnt;
   logic [NumSubordinates-1:0] ds_port_gnt_hold;
-  logic [NumSubordinates-1:0] ds_port_id_match;
-
-  for (genvar i = 0; i < NumSubordinates; i++) begin : gen_ds_port_id_match
-    logic [SubIdWidth-1:0] next_port_for_id;
-    logic next_port_for_id_valid;
-
-    if (SingleIdOnly) begin : gen_single_id_only_no_pop_mux
-      assign next_port_for_id = resp_tracking_fifo_pop_sub_select_per_id;
-      assign next_port_for_id_valid = resp_tracking_fifo_pop_valid_per_id;
-    end else begin : gen_multi_id_pop_mux
-      logic [AxiIdWidth-1:0] mux_select;
-      assign mux_select = downstream_xvalid_reg[i] ? downstream_x_resp_payload_reg[i].id : '0;
-
-      br_mux_bin #(
-          .NumSymbolsIn(NumIds),
-          .SymbolWidth (SubIdWidth)
-      ) br_mux_bin_ds_port_id (
-          .select(mux_select),
-          .in(resp_tracking_fifo_pop_sub_select_per_id),
-          .out(next_port_for_id),
-          .out_valid()
-      );
-
-      br_mux_bin #(
-          .NumSymbolsIn(NumIds),
-          .SymbolWidth (1)
-      ) br_mux_bin_ds_port_id_valid (
-          .select(mux_select),
-          .in(resp_tracking_fifo_pop_valid_per_id),
-          .out(next_port_for_id_valid),
-          .out_valid()
-      );
-    end
-
-    assign ds_port_id_match[i] = downstream_xvalid_reg[i]
-                                    && next_port_for_id_valid
-                                    && (next_port_for_id == i);
-  end
 
   // A downstream port is eligible to be selected if:
   // 1. The response is valid.
   // 2. The downstream port is at the head of the tracking FIFO for the presented response ID.
-  assign ds_port_req = downstream_xvalid_reg & ds_port_id_match;
+  //
+  // Additionally, if the upstream is not ready, we force all request inputs to 0, and force the
+  // grant_hold input to the current grant. This is to prevent the grant/hold circuit (and attached
+  // arbiter) from changing the grant when the upstream is not ready.
+  assign ds_port_req = downstream_xvalid_reg & {NumSubordinates{upstream_xready_pre}};
+
+  // If upstream is ready, then grant hold is asserted unless a valid request is presented with
+  // last=1. If upstream is not ready, then grant_hold is equal to the current grant (see above).
   for (genvar i = 0; i < NumSubordinates; i++) begin : gen_ds_port_gnt_hold
-    assign ds_port_gnt_hold[i] = ~downstream_x_resp_payload_reg[i].last;
+    assign ds_port_gnt_hold[i] = upstream_xready_pre
+                                    ? ~(ds_port_req[i] && downstream_x_resp_payload_reg[i].last)
+                                    : ds_port_gnt[i];
   end
 
   // LRU arbiter w/ grant hold circuit
@@ -389,7 +363,8 @@ module br_amba_axi_demux_req_tracker #(
       .rst,
       //
       .grant_hold(ds_port_gnt_hold),
-      .enable_priority_update(upstream_xready_pre),
+      // TODO: make use of this port and remove glue on lines 353-363
+      .enable_grant_hold_update(1'b1),
       //
       .grant_from_arb(ds_port_gnt_from_arb),
       .enable_priority_update_to_arb(ds_port_gnt_enable_priority_update_to_arb),
@@ -410,23 +385,24 @@ module br_amba_axi_demux_req_tracker #(
 
   // Ready/valid joining
   assign downstream_xready_reg = ds_port_gnt & {NumSubordinates{upstream_xready_pre}};
-  assign upstream_xvalid_pre = |ds_port_req;
-  assign resp_tracking_fifo_pop_ready = upstream_x_resp_payload_pre.last
+  assign upstream_xvalid_pre = |(ds_port_req & ds_port_gnt);
+
+  assign resp_tracker_decr = upstream_x_resp_payload_pre.last
                                         && upstream_xvalid_pre
                                         && upstream_xready_pre;
 
   if (SingleIdOnly) begin : gen_single_id_only_enc
-    assign resp_tracking_fifo_pop_ready_per_id = resp_tracking_fifo_pop_ready;
+    assign resp_tracker_decr_per_id = resp_tracker_decr;
   end else begin : gen_multi_id_pop_ready_enc
     br_enc_bin2onehot #(
         .NumValues(NumIds)
-    ) br_enc_bin2onehot_resp_tracking_fifo_pop (
+    ) br_enc_bin2onehot_resp_tracker_pop (
         .clk,
         .rst,
         //
         .in(upstream_x_resp_payload_pre.id),
-        .in_valid(resp_tracking_fifo_pop_ready),
-        .out(resp_tracking_fifo_pop_ready_per_id)
+        .in_valid(resp_tracker_decr),
+        .out(resp_tracker_decr_per_id)
     );
   end
 
@@ -442,7 +418,10 @@ module br_amba_axi_demux_req_tracker #(
 
   // Output buffer (to cut upstream_xready -> upstream_xvalid path)
   br_flow_reg_fwd #(
-      .Width(AxiIdWidth + RespPayloadWidth + 1)
+      .Width(AxiIdWidth + RespPayloadWidth + 1),
+      // If a higher-priority downstream port with a different ID becomes valid,
+      // the mux select can change, resulting in data not remaining stable.
+      .EnableAssertPushDataStability(0)
   ) br_flow_reg_fwd_upstream_resp (
       .clk,
       .rst,

@@ -1,16 +1,5 @@
-// Copyright 2024-2025 The Bedrock-RTL Authors
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//     http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
+// SPDX-License-Identifier: Apache-2.0
+
 
 // br_credit_sender FPV checks
 
@@ -90,13 +79,34 @@ module br_credit_sender_fpv_monitor #(
   `BR_ASSUME(credit_withhold_a, credit_withhold <= MaxCredit)
   `BR_ASSUME(credit_withhold_liveness_a, s_eventually (credit_withhold < fv_max_credit))
   for (genvar n = 0; n < NumFlows; n++) begin : gen_asm
-    `BR_ASSUME(push_valid_ready_a,
-               push_valid[n] && !push_ready[n] |=> push_valid[n] && $stable(push_data[n]))
+    if (!EnableCoverPushBackpressure) begin : gen_no_push_backpressure
+      `BR_ASSUME(no_push_backpressure_a, !push_ready[n] |-> !push_valid[n])
+    end
+    if (EnableAssertPushValidStability) begin : gen_push_valid_stable
+      `BR_ASSUME(push_valid_stable_a, push_valid[n] && !push_ready[n] |=> push_valid[n])
+    end
+    if (EnableAssertPushDataStability) begin : gen_push_data_stable
+      `BR_ASSUME(push_data_stable_a, push_valid[n] && !push_ready[n] |=> $stable(push_data[n]))
+    end
   end
   `BR_ASSUME(no_spurious_pop_credit_a, (fv_max_credit - fv_pop_credit_cnt + $countones(pop_valid)
              ) >= pop_credit)
   `BR_ASSUME(legal_pop_credit_a, pop_credit <= PopCreditMaxChange)
   `BR_ASSUME(pop_credit_liveness_a, s_eventually |pop_credit)
+
+  if (EnableAssertPushValidStability) begin : gen_push_valid_stable
+    `BR_ASSUME(push_valid_stable_a,
+               push_valid[fv_flow] && !push_ready[fv_flow] |=> push_valid[fv_flow])
+  end
+
+  if (EnableAssertPushDataStability) begin : gen_push_data_stable
+    `BR_ASSUME(push_data_stable_a,
+               push_valid[fv_flow] && !push_ready[fv_flow] |=> $stable(push_data[fv_flow]))
+  end
+
+  if (!EnableCoverPushBackpressure) begin : gen_no_push_backpressure
+    `BR_ASSUME(no_push_backpressure_a, !push_ready[fv_flow] |-> !push_valid[fv_flow])
+  end
 
   // ----------FV assertions----------
   `BR_ASSERT(push_valid_deadlock_a, push_valid[fv_flow] |-> s_eventually push_ready[fv_flow])

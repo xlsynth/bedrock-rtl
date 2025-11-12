@@ -1,16 +1,5 @@
-// Copyright 2024-2025 The Bedrock-RTL Authors
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//     http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
+// SPDX-License-Identifier: Apache-2.0
+
 
 // Bedrock-RTL Flow Deserializer
 //
@@ -99,11 +88,16 @@ module br_flow_deserializer #(
     parameter int PopWidth = 2,
     // Width of the sideband metadata (not serialized). Must be at least 1.
     parameter int MetadataWidth = 1,
+    // If 1, cover that the push side experiences backpressure.
+    // If 0, assert that there is never backpressure.
+    parameter bit EnableCoverPushBackpressure = 1,
     // If 1, the most significant bits of the packet are received first (big endian).
     // If 0, the least significant bits are received first (little endian).
     // The order of bits within each flit is always the same that they
     // appear on the push interface.
     parameter bit DeserializeMostSignificantFirst = 0,
+    // If 1, assert that push_data is always known (not X) when push_valid is asserted.
+    parameter bit EnableAssertPushDataKnown = 1,
     // If 1, then assert there are no valid bits asserted at the end of the test.
     parameter bit EnableAssertFinalNotValid = 1,
     localparam int DeserializationRatio = PopWidth / PushWidth,
@@ -161,9 +155,10 @@ module br_flow_deserializer #(
       // That's because it serially receives the valid push data until the entire packet
       // has been received. If the push data is unstable during reception, then the data
       // integrity is compromised.
-      .EnableCoverBackpressure(1),
-      .EnableAssertValidStability(1),
-      .EnableAssertDataStability(1),
+      .EnableCoverBackpressure(EnableCoverPushBackpressure),
+      .EnableAssertValidStability(EnableCoverPushBackpressure),
+      .EnableAssertDataStability(EnableCoverPushBackpressure),
+      .EnableAssertDataKnown(EnableAssertPushDataKnown),
       .EnableAssertFinalNotValid(EnableAssertFinalNotValid)
   ) br_flow_checks_valid_data_intg (
       .clk,
@@ -209,6 +204,9 @@ module br_flow_deserializer #(
     br_counter_incr #(
         .MaxValue(DrMinus1),
         .MaxIncrement(1),
+        .EnableWrap(0),
+        .EnableCoverZeroIncrement(0),
+        .EnableCoverReinitAndIncr(0),
         .EnableAssertFinalNotValid(EnableAssertFinalNotValid)
     ) br_counter_incr_push_flit_id (
         .clk,
@@ -309,7 +307,7 @@ module br_flow_deserializer #(
 
     `BR_ASSERT_IMPL(
         incomplete_pop_flit_a,
-        pop_valid && (not_done_building_pop_flit) |-> pop_last && pop_last_dont_care_count != 0)
+        pop_valid && (push_flit_id < dr_minus_1) |-> pop_last && pop_last_dont_care_count != 0)
 
   end
 

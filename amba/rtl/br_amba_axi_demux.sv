@@ -1,16 +1,5 @@
-// Copyright 2025 The Bedrock-RTL Authors
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//     http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
+// SPDX-License-Identifier: Apache-2.0
+
 //
 // Bedrock-RTL AXI Demux
 //
@@ -27,10 +16,10 @@ module br_amba_axi_demux #(
     parameter int AwAxiIdWidth = 1,
     // Width of the AXI ID field for the read path.
     parameter int ArAxiIdWidth = 1,
-    // Maximum number of outstanding write transactions.
-    parameter int AwMaxOutstanding = 3,
-    // Maximum number of outstanding read transactions.
-    parameter int ArMaxOutstanding = 3,
+    // Maximum number of outstanding write transactions per ID.
+    parameter int AwMaxOutstandingPerId = 3,
+    // Maximum number of outstanding read transactions per ID.
+    parameter int ArMaxOutstandingPerId = 3,
     // If 1, then only a single ID is supported on both the write and read paths.
     parameter int SingleIdOnly = 0,
     // Depth of the write data buffer. This number of WDATA pushes can be buffered
@@ -39,6 +28,10 @@ module br_amba_axi_demux #(
     // Maximum number of outstanding write transactions that can be accepted before
     // corresponding WDATA pushes are accepted.
     parameter int MaxAwRunahead = 4,
+    // If 1, then downstream AW/AR outputs are registered.
+    parameter int RegisterDownstreamAxOutputs = 1,
+    // If 1, then downstream WDATA outputs are registered.
+    parameter int RegisterDownstreamWOutputs = 1,
     // Width of the AXI address field.
     parameter int AddrWidth = 12,
     // Width of the AXI data field.
@@ -53,30 +46,7 @@ module br_amba_axi_demux #(
     parameter int BUserWidth = 1,
     // Width of the AXI RUSER field.
     parameter int RUserWidth = 1,
-    // Number of pipeline stages to use for the pointer RAM read
-    // data in the response tracker FIFO. Has no effect if SingleIdOnly == 1.
-    parameter int FifoPointerRamReadDataDepthStages = 0,
-    // Number of pipeline stages to use for the data RAM read data
-    // in the response tracker FIFO. Has no effect if SingleIdOnly == 1.
-    parameter int FifoDataRamReadDataDepthStages = 0,
-    // Number of pipeline stages to use for the pointer RAM address
-    // in the response tracker FIFO. Has no effect if SingleIdOnly == 1.
-    parameter int FifoPointerRamAddressDepthStages = 1,
-    // Number of pipeline stages to use for the data RAM address
-    // in the response tracker FIFO. Has no effect if SingleIdOnly == 1.
-    parameter int FifoDataRamAddressDepthStages = 1,
-    // Number of linked lists per FIFO in the response tracker FIFO. Has
-    // no effect if SingleIdOnly == 1.
-    parameter int FifoNumLinkedListsPerFifo = 2,
-    // Number of pipeline stages to use for the staging buffer
-    // in the response tracker FIFO. Has no effect if SingleIdOnly == 1.
-    parameter int FifoStagingBufferDepth = 2,
-    // Number of pipeline stages to use for the pop outputs
-    // in the response tracker FIFO. Has no effect if SingleIdOnly == 1.
-    parameter int FifoRegisterPopOutputs = 1,
-    // Number of pipeline stages to use for the deallocation
-    // in the response tracker FIFO. Has no effect if SingleIdOnly == 1.
-    parameter int FifoRegisterDeallocation = 1,
+    //
     localparam int StrobeWidth = DataWidth / 8,
     localparam int SubIdWidth = $clog2(NumSubordinates)
 ) (
@@ -205,11 +175,31 @@ module br_amba_axi_demux #(
           user: upstream_aruser
       };
 
+  typedef struct packed {
+    logic [RUserWidth-1:0] user;
+    logic [DataWidth-1:0] data;
+    logic [br_amba::AxiRespWidth-1:0] resp;
+  } rdata_bundle_t;
+
+  rdata_bundle_t upstream_rdata_bundle;
+  rdata_bundle_t [NumSubordinates-1:0] downstream_rdata_bundle;
+
+  for (genvar i = 0; i < NumSubordinates; i++) begin : gen_downstream_rdata_bundle
+    assign downstream_rdata_bundle[i] = '{
+            user: downstream_ruser[i],
+            data: downstream_rdata[i],
+            resp: downstream_rresp[i]
+        };
+  end
+
+  assign upstream_rdata = upstream_rdata_bundle.data;
+  assign upstream_ruser = upstream_rdata_bundle.user;
+  assign upstream_rresp = upstream_rdata_bundle.resp;
 
   br_amba_axi_demux_req_tracker #(
       .NumSubordinates(NumSubordinates),
       .AxiIdWidth(ArAxiIdWidth),
-      .MaxOutstanding(ArMaxOutstanding),
+      .MaxOutstandingPerId(ArMaxOutstandingPerId),
       .ReqPayloadWidth(AddrWidth
                         + br_amba::AxiBurstLenWidth
                         + br_amba::AxiBurstSizeWidth
@@ -219,15 +209,8 @@ module br_amba_axi_demux #(
                         + ARUserWidth),
       .RespPayloadWidth(DataWidth + RUserWidth + br_amba::AxiRespWidth),
       .SingleIdOnly(SingleIdOnly),
-      .FifoPointerRamReadDataDepthStages(FifoPointerRamReadDataDepthStages),
-      .FifoDataRamReadDataDepthStages(FifoDataRamReadDataDepthStages),
-      .FifoPointerRamAddressDepthStages(FifoPointerRamAddressDepthStages),
-      .FifoDataRamAddressDepthStages(FifoDataRamAddressDepthStages),
-      .FifoNumLinkedListsPerFifo(FifoNumLinkedListsPerFifo),
-      .FifoStagingBufferDepth(FifoStagingBufferDepth),
-      .FifoRegisterPopOutputs(FifoRegisterPopOutputs),
-      .FifoRegisterDeallocation(FifoRegisterDeallocation)
-  ) br_amba_axi_demux_req_tracker (
+      .RegisterDownstreamOutputs(RegisterDownstreamAxOutputs)
+  ) br_amba_axi_demux_req_tracker_ar (
       .clk,
       .rst,
       //
@@ -246,13 +229,13 @@ module br_amba_axi_demux #(
       .upstream_xvalid(upstream_rvalid),
       .upstream_xid(upstream_rid),
       .upstream_xlast(upstream_rlast),
-      .upstream_x_payload({upstream_rdata, upstream_ruser, upstream_rresp}),
+      .upstream_x_payload(upstream_rdata_bundle),
       //
       .downstream_xready(downstream_rready),
       .downstream_xvalid(downstream_rvalid),
       .downstream_xid(downstream_rid),
       .downstream_xlast(downstream_rlast),
-      .downstream_x_payload({downstream_rdata, downstream_ruser, downstream_rresp}),
+      .downstream_x_payload(downstream_rdata_bundle),
       //
       .wdata_flow_ready(1'b1),
       .wdata_flow_valid(),
@@ -289,6 +272,21 @@ module br_amba_axi_demux #(
     logic last;
   } wdata_req_t;
 
+  typedef struct packed {
+    logic [BUserWidth-1:0] user;
+    logic [br_amba::AxiRespWidth-1:0] resp;
+  } bresp_bundle_t;
+
+  bresp_bundle_t upstream_bresp_bundle;
+  bresp_bundle_t [NumSubordinates-1:0] downstream_bresp_bundle;
+
+  for (genvar i = 0; i < NumSubordinates; i++) begin : gen_downstream_bresp_bundle
+    assign downstream_bresp_bundle[i] = '{user: downstream_buser[i], resp: downstream_bresp[i]};
+  end
+
+  assign upstream_bresp = upstream_bresp_bundle.resp;
+  assign upstream_buser = upstream_bresp_bundle.user;
+
   logic wdata_flow_ready;
   logic wdata_flow_valid;
   logic [SubIdWidth-1:0] wdata_flow_sub_select;
@@ -303,12 +301,11 @@ module br_amba_axi_demux #(
 
   logic downstream_wvalid_int;
   logic downstream_wready_int;
-  wdata_req_t [NumSubordinates-1:0] downstream_wdata_req;
 
   br_amba_axi_demux_req_tracker #(
       .NumSubordinates(NumSubordinates),
       .AxiIdWidth(AwAxiIdWidth),
-      .MaxOutstanding(AwMaxOutstanding),
+      .MaxOutstandingPerId(AwMaxOutstandingPerId),
       .ReqPayloadWidth(AddrWidth
                         + br_amba::AxiBurstLenWidth
                         + br_amba::AxiBurstSizeWidth
@@ -318,14 +315,7 @@ module br_amba_axi_demux #(
                         + AWUserWidth),
       .RespPayloadWidth(BUserWidth + br_amba::AxiRespWidth),
       .SingleIdOnly(SingleIdOnly),
-      .FifoPointerRamReadDataDepthStages(FifoPointerRamReadDataDepthStages),
-      .FifoDataRamReadDataDepthStages(FifoDataRamReadDataDepthStages),
-      .FifoPointerRamAddressDepthStages(FifoPointerRamAddressDepthStages),
-      .FifoDataRamAddressDepthStages(FifoDataRamAddressDepthStages),
-      .FifoNumLinkedListsPerFifo(FifoNumLinkedListsPerFifo),
-      .FifoStagingBufferDepth(FifoStagingBufferDepth),
-      .FifoRegisterPopOutputs(FifoRegisterPopOutputs),
-      .FifoRegisterDeallocation(FifoRegisterDeallocation)
+      .RegisterDownstreamOutputs(RegisterDownstreamAxOutputs)
   ) br_amba_axi_demux_req_tracker_aw (
       .clk,
       .rst,
@@ -345,13 +335,13 @@ module br_amba_axi_demux #(
       .upstream_xvalid(upstream_bvalid),
       .upstream_xid(upstream_bid),
       .upstream_xlast(),
-      .upstream_x_payload({upstream_buser, upstream_bresp}),
+      .upstream_x_payload(upstream_bresp_bundle),
       //
       .downstream_xready(downstream_bready),
       .downstream_xvalid(downstream_bvalid),
       .downstream_xid(downstream_bid),
       .downstream_xlast({NumSubordinates{1'b1}}),
-      .downstream_x_payload({downstream_buser, downstream_bresp}),
+      .downstream_x_payload(downstream_bresp_bundle),
       //
       .wdata_flow_ready(wdata_flow_ready),
       .wdata_flow_valid(wdata_flow_valid),
@@ -401,7 +391,9 @@ module br_amba_axi_demux #(
 
   br_fifo_flops #(
       .Depth(MaxAwRunahead),
-      .Width(SubIdWidth)
+      .Width(SubIdWidth),
+      // Valid can drop if downstream deasserts ready.
+      .EnableAssertPushValidStability(0)
   ) br_fifo_flops_wdata_flow_buffer (
       .clk,
       .rst,
@@ -434,6 +426,10 @@ module br_amba_axi_demux #(
   logic [SubIdWidth-1:0] downstream_w_sub_select;
   assign downstream_w_sub_select = wdata_flow_valid_buf ? wdata_flow_sub_select_buf : '0;
 
+  wdata_req_t [NumSubordinates-1:0] downstream_wdata_req_pre;
+  logic [NumSubordinates-1:0] downstream_wready_pre;
+  logic [NumSubordinates-1:0] downstream_wvalid_pre;
+
   br_flow_demux_select_unstable #(
       .NumFlows(NumSubordinates),
       .Width(DataWidth + WUserWidth + StrobeWidth + 1)
@@ -447,16 +443,44 @@ module br_amba_axi_demux #(
       .push_valid(downstream_wvalid_int),
       .push_data(upstream_wdata_req_buf),
       //
-      .pop_ready(downstream_wready),
-      .pop_valid_unstable(downstream_wvalid),
-      .pop_data_unstable(downstream_wdata_req)
+      .pop_ready(downstream_wready_pre),
+      .pop_valid_unstable(downstream_wvalid_pre),
+      .pop_data_unstable(downstream_wdata_req_pre)
   );
 
   for (genvar i = 0; i < NumSubordinates; i++) begin : gen_downstream_wdata_unpack
-    assign downstream_wuser[i] = downstream_wdata_req[i].user;
-    assign downstream_wdata[i] = downstream_wdata_req[i].data;
-    assign downstream_wstrb[i] = downstream_wdata_req[i].strb;
-    assign downstream_wlast[i] = downstream_wdata_req[i].last;
+    if (RegisterDownstreamWOutputs) begin : gen_register_downstream_wdata_outputs
+      br_flow_reg_fwd #(
+          .Width(DataWidth + WUserWidth + StrobeWidth + 1)
+      ) br_flow_reg_fwd_downstream_wdata (
+          .clk,
+          .rst,
+          //
+          .push_ready(downstream_wready_pre[i]),
+          .push_valid(downstream_wvalid_pre[i]),
+          .push_data({
+            downstream_wdata_req_pre[i].user,
+            downstream_wdata_req_pre[i].data,
+            downstream_wdata_req_pre[i].strb,
+            downstream_wdata_req_pre[i].last
+          }),
+          //
+          .pop_ready(downstream_wready[i]),
+          .pop_valid(downstream_wvalid[i]),
+          .pop_data({
+            downstream_wuser[i], downstream_wdata[i], downstream_wstrb[i], downstream_wlast[i]
+          })
+      );
+    end else begin : gen_no_register_downstream_wdata_outputs
+      assign downstream_wready_pre[i] = downstream_wready[i];
+      assign downstream_wvalid[i] = downstream_wvalid_pre[i];
+      assign downstream_wuser[i] = downstream_wdata_req_pre[i].user;
+      assign downstream_wdata[i] = downstream_wdata_req_pre[i].data;
+      assign downstream_wstrb[i] = downstream_wdata_req_pre[i].strb;
+      assign downstream_wlast[i] = downstream_wdata_req_pre[i].last;
+    end
+
+
   end
 
   //
