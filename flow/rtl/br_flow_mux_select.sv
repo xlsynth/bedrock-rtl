@@ -11,8 +11,6 @@
 // Data progresses from one stage to another when both
 // the corresponding ready signal and valid signal are
 // both 1 on the same cycle. Otherwise, the stage is stalled.
-//
-// TODO(mgottscho): Write spec doc
 
 `include "br_registers.svh"
 

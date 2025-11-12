@@ -12,8 +12,6 @@
 // the internal arbiter priority state.
 // Pop valid can be unstable if push valid is unstable and all active push_valid
 // are withdrawn while pop_ready is low.
-//
-// TODO(mgottscho): Write spec
 
 `include "br_registers.svh"
 `include "br_asserts_internal.svh"
@@ -44,8 +42,6 @@ module br_flow_arb_rr #(
   // Integration checks
   //------------------------------------------
   // Rely on submodule integration checks
-
-  // TODO(mgottscho): Add more
 
   //------------------------------------------
   // Implementation

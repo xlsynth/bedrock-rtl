@@ -3,7 +3,8 @@
 
 // Bedrock-RTL RAM Read Data Pipeline
 //
-// TODO(mgottscho): description
+// Muxes read data from one RAM tile to the output over zero or more pipeline
+// stages with an initiation interval of one cycle.
 
 `include "br_asserts_internal.svh"
 `include "br_tieoff.svh"
