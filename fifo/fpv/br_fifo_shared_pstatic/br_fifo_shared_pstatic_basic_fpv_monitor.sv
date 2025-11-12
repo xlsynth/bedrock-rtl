@@ -1,16 +1,5 @@
-// Copyright 2025 The Bedrock-RTL Authors
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//     http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
+// SPDX-License-Identifier: Apache-2.0
+
 
 // Shared Pseudo-Static Multi-FIFO basic FPV monitor
 
@@ -18,6 +7,7 @@
 `include "br_registers.svh"
 
 module br_fifo_shared_pstatic_basic_fpv_monitor #(
+    parameter bit WolperColorEn = 0,
     parameter int NumFifos = 2,
     parameter int Depth = 2,
     parameter int Width = 1,
@@ -80,15 +70,16 @@ module br_fifo_shared_pstatic_basic_fpv_monitor #(
   // ----------FV assumptions----------
   `BR_ASSUME(push_fifo_id_legal_a, push_fifo_id < NumFifos)
 
-  if (!EnableCoverPushBackpressure) begin : gen_no_push_backpressure
-    `BR_ASSUME(no_push_backpressure_a, !(push_valid && !push_ready))
-  end
-  if (EnableAssertPushValidStability) begin : gen_push_valid_stable
-    `BR_ASSUME(push_valid_stable_a, push_valid && !push_ready |=> push_valid)
-  end
-  if (EnableAssertPushDataStability) begin : gen_push_data_stable
-    `BR_ASSUME(push_data_stable_a,
-               push_valid && !push_ready |=> $stable(push_data) && $stable(push_fifo_id))
+  if (EnableCoverPushBackpressure) begin : gen_backpressure
+    if (EnableAssertPushValidStability) begin : gen_push_valid_stable
+      `BR_ASSUME(push_valid_stable_a, push_valid && !push_ready |=> push_valid)
+    end
+    if (EnableAssertPushDataStability) begin : gen_push_data_stable
+      `BR_ASSUME(push_data_stable_a,
+                 push_valid && !push_ready |=> $stable(push_data) && $stable(push_fifo_id))
+    end
+  end else begin : gen_no_back_pressure
+    `BR_ASSUME(no_backpressure_a, push_valid |-> push_ready)
   end
   if (!HasStagingBuffer) begin : gen_pop_ready_stable
     for (genvar i = 0; i < NumFifos; i++) begin : gen_pop_ready_stable_per_fifo

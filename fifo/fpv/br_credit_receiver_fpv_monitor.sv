@@ -1,16 +1,5 @@
-// Copyright 2024-2025 The Bedrock-RTL Authors
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//     http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
+// SPDX-License-Identifier: Apache-2.0
+
 
 // FIFO br_credit_receiver FPV checks
 
@@ -21,6 +10,15 @@ module br_credit_receiver_fpv_monitor #(
     parameter bit PStatic = 0,
     parameter int MaxCredit = 1,
     parameter int NumWritePorts = 1,
+    // If 1, cover that push_credit_stall can be asserted
+    // Otherwise, assert that it is never asserted.
+    parameter bit EnableCoverPushCreditStall = 1,
+    // If 1, cover that credit_withhold can be non-zero.
+    // Otherwise, assert that it is always zero.
+    parameter bit EnableCoverCreditWithhold = 1,
+    // If 1, cover that push_sender_in_reset can be asserted
+    // Otherwise, assert that it is never asserted.
+    parameter bit EnableCoverPushSenderInReset = 1,
     localparam int PushCreditWidth = $clog2(NumWritePorts + 1),
     localparam int CreditWidth = $clog2(MaxCredit + 1),
     localparam int AddrWidth = br_math::clamped_clog2(MaxCredit)
@@ -73,6 +71,21 @@ module br_credit_receiver_fpv_monitor #(
   `BR_ASSUME(no_credit_cnt_underflow_a, push_credit < $countones(push_valid)
                                         |-> fv_credit_cnt_nxt < fv_credit_cnt)
   `BR_ASSUME(no_spurious_push_valid_a, fv_credit_cnt == 'd0 |-> push_valid == 'd0)
+  if (EnableCoverPushCreditStall) begin : gen_stall
+    `BR_COVER(push_credit_stall_a, push_credit_stall)
+  end else begin : gen_no_stall
+    `BR_ASSUME(no_push_credit_stall_a, !push_credit_stall)
+  end
+  if (EnableCoverCreditWithhold) begin : gen_withhold
+    `BR_COVER(credit_withhold_nonzero_a, credit_withhold_push != 'd0)
+  end else begin : gen_no_withhold
+    `BR_ASSUME(credit_withhold_zero_a, credit_withhold_push == 'd0)
+  end
+  if (EnableCoverPushSenderInReset) begin : gen_reset
+    `BR_COVER(push_sender_in_reset_a, push_sender_in_reset)
+  end else begin : gen_no_reset
+    `BR_ASSUME(no_push_sender_in_reset_a, !push_sender_in_reset)
+  end
 
   // ----------FV assertions----------
   `BR_ASSERT(fv_credit_sanity_a, fv_credit_cnt <= fv_max_credit)

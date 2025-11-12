@@ -1,16 +1,5 @@
-# Copyright 2024-2025 The Bedrock-RTL Authors
-#
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
-#
-#     http://www.apache.org/licenses/LICENSE-2.0
-#
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
+# SPDX-License-Identifier: Apache-2.0
+
 
 # clock/reset set up
 clock clk
@@ -29,6 +18,13 @@ cover -disable *monitor*tbl_no_overflow:precondition1
 # aw/w has no skew when max burst is 1
 if {$MaxAxiBurstLen eq "1"} {
   cover -disable *monitor.fv_axi_check.downstream.genPropChksWRInf.genDBCLive.genSlaveLiveAW.genLiveAW.master_aw_awvalid_eventually:precondition1
+  # TODO(masai): ABVIP covers are fully encrypted, impossible to debug
+  # OK to disable for now since those dbc related covers are checking data before control
+  # I realize these covers are unreachable for AXI-Lite
+  cover -disable *monitor.fv_axi_check.upstream.genPropChksWRInf.genByStrb.genDbcl.genDatAcpt.assume_master_aw_dbc_latched_addr2:precondition1
+  cover -disable *monitor.fv_axi_check.upstream.genPropChksWRInf.genByStrb.genDbcl.genDatAcpt.assume_master_aw_dbc_latched_burst2:precondition1
+  cover -disable *monitor.fv_axi_check.upstream.genPropChksWRInf.genByStrb.genDbcl.genDatAcpt.assume_master_aw_dbc_latched_size2:precondition1
+  cover -disable *monitor.fv_axi_check.upstream.genPropChksWRInf.genByStrb.genDbcl.genDatAcpt.assume_master_aw_dbc_latched_len2:precondition1
 }
 
 # during isolate_req & !isolate_done window, upstream assertions don't matter

@@ -1,16 +1,4 @@
-# Copyright 2025 The Bedrock-RTL Authors
-#
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
-#
-#     http://www.apache.org/licenses/LICENSE-2.0
-#
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
+# SPDX-License-Identifier: Apache-2.0
 
 load("@rules_hdl//verilog:providers.bzl", "verilog_library")
 load("//bazel:br_verilog.bzl", "br_verilog_fpv_test_tools_suite")
@@ -481,6 +469,22 @@ br_verilog_fpv_test_tools_suite(
         ): [
             ("1", "1"),
         ],
+        # when UseStructuredGates = 1,
+        # DepthTiles and WidthTiles must be 1
+        (
+            "DepthTiles",
+            "UseStructuredGates",
+        ): [
+            ("2", "1"),
+            ("3", "1"),
+        ],
+        (
+            "WidthTiles",
+            "UseStructuredGates",
+        ): [
+            ("2", "1"),
+            ("3", "1"),
+        ],
     },
     params = {
         "Depth": [
@@ -536,14 +540,6 @@ br_verilog_fpv_test_tools_suite(
         # write on all ports without address conflicts
         "-parameter Depth 6",
     ],
-    illegal_param_combinations = {
-        (
-            "TileEnableBypass",
-            "UseStructuredGates",
-        ): [
-            ("1", "1"),
-        ],
-    },
     params = {
         "TileEnableBypass": [
             "0",
@@ -567,10 +563,6 @@ br_verilog_fpv_test_tools_suite(
             "4",
             "6",
         ],
-        "UseStructuredGates": [
-            "0",
-            "1",
-        ],
     },
     tools = {
         "jg": "br_ram_flops_tile_1clk_fpv.jg.tcl",
@@ -585,6 +577,20 @@ br_verilog_fpv_test_tools_suite(
     illegal_param_combinations = {
         (
             "TileEnableBypass",
+            "UseStructuredGates",
+        ): [
+            ("1", "1"),
+        ],
+        # when UseStructuredGates = 1,
+        # ReadDataDepthStages and ReadDataWidthStages must be 0
+        (
+            "ReadDataDepthStages",
+            "UseStructuredGates",
+        ): [
+            ("1", "1"),
+        ],
+        (
+            "ReadDataWidthStages",
             "UseStructuredGates",
         ): [
             ("1", "1"),
@@ -633,7 +639,7 @@ br_verilog_fpv_test_tools_suite(
     name = "br_ram_flops_2clk_test_tile",
     elab_opts = [
         "-parameter TileEnableBypass 0",
-        "-parameter UseStructuredGates 1",
+        "-parameter UseStructuredGates 0",
     ],
     illegal_param_combinations = {
         # DepthTiles must be at least 1 and evenly divide Depth
@@ -763,8 +769,23 @@ br_verilog_fpv_test_tools_suite(
     name = "br_ram_flops_2clk_test_delay",
     elab_opts = [
         "-parameter TileEnableBypass 0",
-        "-parameter UseStructuredGates 1",
     ],
+    illegal_param_combinations = {
+        # when UseStructuredGates = 1,
+        # ReadDataDepthStages and ReadDataWidthStages must be 0
+        (
+            "ReadDataDepthStages",
+            "UseStructuredGates",
+        ): [
+            ("1", "1"),
+        ],
+        (
+            "ReadDataWidthStages",
+            "UseStructuredGates",
+        ): [
+            ("1", "1"),
+        ],
+    },
     params = {
         "TileEnableBypass": [
             "0",

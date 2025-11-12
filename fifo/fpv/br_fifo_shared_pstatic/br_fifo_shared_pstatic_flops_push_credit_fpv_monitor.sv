@@ -1,16 +1,5 @@
-// Copyright 2025 The Bedrock-RTL Authors
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//     http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
+// SPDX-License-Identifier: Apache-2.0
+
 
 // Bedrock-RTL Shared Pseudo-Static Multi-FIFO with Flop-based Storage (Push Valid/Credit Interface)
 
@@ -30,7 +19,7 @@ module br_fifo_shared_pstatic_flops_push_credit_fpv_monitor #(
     parameter bit RegisterPushOutputs = 1,
     // The depth of the pop-side staging buffer.
     // This affects the pop bandwidth of each logical FIFO.
-    // The bandwidth will be `StagingBufferDepth / (PointerRamReadLatency + 1)`.
+    // The bandwidth will be `StagingBufferDepth / (RamReadLatency + 1)`.
     parameter int StagingBufferDepth = 1,
     // If 1, make sure pop_valid/pop_data are registered at the output
     // of the staging buffer. This adds a cycle of cut-through latency.
@@ -96,6 +85,10 @@ module br_fifo_shared_pstatic_flops_push_credit_fpv_monitor #(
     input logic [NumFifos-1:0]            pop_empty
 );
 
+  localparam bit WolperColorEn = 0;
+  logic [$clog2(Width)-1:0] magic_bit_index;
+  `BR_ASSUME(magic_bit_index_range_a, $stable(magic_bit_index) && (magic_bit_index < Width))
+
   localparam int RamReadLatency = RamAddressDepthStages +
                                   RamReadDataDepthStages +
                                   RamReadDataWidthStages;
@@ -125,6 +118,7 @@ module br_fifo_shared_pstatic_flops_push_credit_fpv_monitor #(
 
   // ----------FIFO basic checks----------
   br_fifo_shared_pstatic_basic_fpv_monitor #(
+      .WolperColorEn(WolperColorEn),
       .NumFifos(NumFifos),
       .Depth(Depth),
       .Width(Width),

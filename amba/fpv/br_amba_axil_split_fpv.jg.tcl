@@ -1,16 +1,5 @@
-# Copyright 2024-2025 The Bedrock-RTL Authors
-#
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
-#
-#     http://www.apache.org/licenses/LICENSE-2.0
-#
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
+# SPDX-License-Identifier: Apache-2.0
+
 
 # clock/reset set up
 clock clk
@@ -31,6 +20,14 @@ cover -disable *trunk.genPropChksWRInf.genDBCLive.genSlaveLiveAW.genLiveAW.maste
 cover -disable *trunk.genPropChksWRInf.genSlaveLiveW.genLiveW.master_w_wvalid_eventually:precondition1
 cover -disable *branch.genPropChksWRInf.genDBCLive.genSlaveLiveAW.genLiveAW.master_aw_awvalid_eventually:precondition1
 cover -disable *branch.genPropChksWRInf.genSlaveLiveW.genLiveW.master_w_wvalid_eventually:precondition1
+# TODO(masai): ABVIP covers are fully encrypted, impossible to debug
+# OK to disable for now since those dbc related covers are checking data before control
+# I realize these covers are unreachable for AXI-Lite
+cover -disable *monitor.root.genPropChksWRInf.genByStrb.genDbcl.genDatAcpt.assume_master_aw_dbc_latched_addr2:precondition1
+cover -disable *monitor.root.genPropChksWRInf.genByStrb.genDbcl.genDatAcpt.assume_master_aw_dbc_latched_burst2:precondition1
+cover -disable *monitor.root.genPropChksWRInf.genByStrb.genDbcl.genDatAcpt.assume_master_aw_dbc_latched_size2:precondition1
+cover -disable *monitor.root.genPropChksWRInf.genByStrb.genDbcl.genDatAcpt.assume_master_aw_dbc_latched_len2:precondition1
+cover -disable *monitor.root.genPropChksWRInf.genByStrb.master_w_aw_wstrb_valid_non_dbc:precondition1
 
 # limit run time to 30-mins
 set_prove_time_limit 1800s

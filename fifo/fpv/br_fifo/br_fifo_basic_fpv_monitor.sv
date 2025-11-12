@@ -1,16 +1,5 @@
-// Copyright 2024-2025 The Bedrock-RTL Authors
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//     http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
+// SPDX-License-Identifier: Apache-2.0
+
 
 // Basic FPV checks for all FIFO variations
 
@@ -19,6 +8,7 @@
 `include "br_fv.svh"
 
 module br_fifo_basic_fpv_monitor #(
+    parameter bit WolperColorEn = 0,
     parameter int Depth = 2,  // Number of entries in the FIFO. Must be at least 2.
     parameter int Width = 1,  // Width of each entry in the FIFO. Must be at least 1.
     parameter bit EnableBypass = 1,
@@ -29,6 +19,7 @@ module br_fifo_basic_fpv_monitor #(
 ) (
     input logic clk,
     input logic rst,
+    input logic [$clog2(Width)-1:0] magic_bit_index,
 
     // Push-side interface
     input logic             push_ready,
@@ -55,14 +46,15 @@ module br_fifo_basic_fpv_monitor #(
 
   // ----------FV assumptions----------
   `BR_ASSUME(pop_ready_liveness_a, s_eventually (pop_ready))
-  if (!EnableCoverPushBackpressure) begin : gen_push_backpressure_assume
-    `BR_ASSUME(no_push_backpressure_a, !push_ready |-> !push_valid)
-  end
-  if (EnableAssertPushValidStability) begin : gen_push_valid_stable
-    `BR_ASSUME(push_valid_stable_a, push_valid && !push_ready |=> push_valid)
-  end
-  if (EnableAssertPushDataStability) begin : gen_push_data_stable
-    `BR_ASSUME(push_data_stable_a, push_valid && !push_ready |=> $stable(push_data))
+  if (EnableCoverPushBackpressure) begin : gen_backpressure
+    if (EnableAssertPushValidStability) begin : gen_push_valid_stable
+      `BR_ASSUME(push_valid_stable_a, push_valid && !push_ready |=> push_valid)
+    end
+    if (EnableAssertPushDataStability) begin : gen_push_data_stable
+      `BR_ASSUME(push_data_stable_a, push_valid && !push_ready |=> $stable(push_data))
+    end
+  end else begin : gen_no_back_pressure
+    `BR_ASSUME(no_backpressure_a, push_valid |-> push_ready)
   end
 
   // ----------FV Modeling Code----------
@@ -102,20 +94,45 @@ module br_fifo_basic_fpv_monitor #(
   `BR_ASSERT(slots_a, fv_slots == slots)
 
   // ----------Data integrity Check----------
-  jasper_scoreboard_3 #(
-      .CHUNK_WIDTH(Width),
-      .IN_CHUNKS(1),
-      .OUT_CHUNKS(1),
-      .SINGLE_CLOCK(1),
-      .MAX_PENDING(Depth)
-  ) scoreboard (
-      .clk(clk),
-      .rstN(!rst),
-      .incoming_vld(push_valid & push_ready),
-      .incoming_data(push_data),
-      .outgoing_vld(pop_valid & pop_ready),
-      .outgoing_data(pop_data)
-  );
+  if (WolperColorEn == 0) begin : gen_scoreboard
+    jasper_scoreboard_3 #(
+        .CHUNK_WIDTH(Width),
+        .IN_CHUNKS(1),
+        .OUT_CHUNKS(1),
+        .SINGLE_CLOCK(1),
+        .MAX_PENDING(Depth)
+    ) scoreboard (
+        .clk(clk),
+        .rstN(!rst),
+        .incoming_vld(push_valid & push_ready),
+        .incoming_data(push_data),
+        .outgoing_vld(pop_valid & pop_ready),
+        .outgoing_data(pop_data)
+    );
+  end else begin : gen_wolper_coloring
+    // ----------FV wolper coloring checker----------
+    fv_wolper_coloring #(
+        .CheckMode(0),
+        .DataWidth(Width)
+    ) push_wolper_coloring (
+        .clk(clk),
+        .rst(rst),
+        .magic_bit_index(magic_bit_index),
+        .valid(push_valid & push_ready),
+        .data(push_data)
+    );
+
+    fv_wolper_coloring #(
+        .CheckMode(1),
+        .DataWidth(Width)
+    ) pop_wolper_coloring (
+        .clk(clk),
+        .rst(rst),
+        .magic_bit_index(magic_bit_index),
+        .valid(pop_valid & pop_ready),
+        .data(pop_data)
+    );
+  end
 
   // ----------Forward Progress Check----------
   `BR_ASSERT(no_deadlock_pop_a, push_valid |-> s_eventually pop_valid)

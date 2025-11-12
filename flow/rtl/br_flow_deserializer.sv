@@ -1,16 +1,5 @@
-// Copyright 2024-2025 The Bedrock-RTL Authors
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//     http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
+// SPDX-License-Identifier: Apache-2.0
+
 
 // Bedrock-RTL Flow Deserializer
 //
@@ -99,6 +88,9 @@ module br_flow_deserializer #(
     parameter int PopWidth = 2,
     // Width of the sideband metadata (not serialized). Must be at least 1.
     parameter int MetadataWidth = 1,
+    // If 1, cover that the push side experiences backpressure.
+    // If 0, assert that there is never backpressure.
+    parameter bit EnableCoverPushBackpressure = 1,
     // If 1, the most significant bits of the packet are received first (big endian).
     // If 0, the least significant bits are received first (little endian).
     // The order of bits within each flit is always the same that they
@@ -163,9 +155,9 @@ module br_flow_deserializer #(
       // That's because it serially receives the valid push data until the entire packet
       // has been received. If the push data is unstable during reception, then the data
       // integrity is compromised.
-      .EnableCoverBackpressure(1),
-      .EnableAssertValidStability(1),
-      .EnableAssertDataStability(1),
+      .EnableCoverBackpressure(EnableCoverPushBackpressure),
+      .EnableAssertValidStability(EnableCoverPushBackpressure),
+      .EnableAssertDataStability(EnableCoverPushBackpressure),
       .EnableAssertDataKnown(EnableAssertPushDataKnown),
       .EnableAssertFinalNotValid(EnableAssertFinalNotValid)
   ) br_flow_checks_valid_data_intg (

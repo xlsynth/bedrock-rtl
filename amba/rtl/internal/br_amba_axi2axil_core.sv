@@ -1,16 +1,5 @@
-// Copyright 2024-2025 The Bedrock-RTL Authors
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//     http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
+// SPDX-License-Identifier: Apache-2.0
+
 
 // Bedrock-RTL AXI4 to AXI4-Lite Bridge Core
 //
@@ -117,6 +106,10 @@ module br_amba_axi2axil_core #(
 
   // We should only get responses when the response FIFO is not empty
   `BR_ASSERT_INTG(resp_fifo_not_empty_when_resp_valid_a, axil_resp_valid |-> resp_fifo_pop_valid)
+
+  // Assert to reject narrow bursts
+  `BR_ASSERT_INTG(reject_narrow_bursts_a, (axi_req_valid && (axi_req_size < $clog2(StrobeWidth)
+                                          )) |-> (axi_req_len == 'd0))
 
   //----------------------------------------------------------------------------
   // Functions

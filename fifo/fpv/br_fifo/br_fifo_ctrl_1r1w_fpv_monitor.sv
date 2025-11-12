@@ -1,16 +1,5 @@
-// Copyright 2024-2025 The Bedrock-RTL Authors
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//     http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
+// SPDX-License-Identifier: Apache-2.0
+
 
 // FIFO Controller (1R1W, Push Ready/Valid, Pop Ready/Valid Variant)
 
@@ -74,8 +63,13 @@ module br_fifo_ctrl_1r1w_fpv_monitor #(
     input logic [    Width-1:0] ram_rd_data
 );
 
+  localparam bit WolperColorEn = 1;
+  logic [$clog2(Width)-1:0] magic_bit_index;
+  `BR_ASSUME(magic_bit_index_range_a, $stable(magic_bit_index) && (magic_bit_index < Width))
+
   // ----------Data Ram FV model----------
   br_fifo_fv_ram #(
+      .WolperColorEn(WolperColorEn),
       .NumWritePorts(1),
       .NumReadPorts(1),
       .Depth(RamDepth),
@@ -84,6 +78,7 @@ module br_fifo_ctrl_1r1w_fpv_monitor #(
   ) fv_data_ram (
       .clk,
       .rst,
+      .magic_bit_index(magic_bit_index),
       .ram_wr_valid(ram_wr_valid),
       .ram_wr_addr(ram_wr_addr),
       .ram_wr_data(ram_wr_data),
@@ -95,6 +90,7 @@ module br_fifo_ctrl_1r1w_fpv_monitor #(
 
   // ----------FIFO basic checks----------
   br_fifo_basic_fpv_monitor #(
+      .WolperColorEn(WolperColorEn),
       .Depth(Depth),
       .Width(Width),
       .EnableBypass(EnableBypass),
@@ -104,6 +100,7 @@ module br_fifo_ctrl_1r1w_fpv_monitor #(
   ) br_fifo_basic_fpv_monitor (
       .clk,
       .rst,
+      .magic_bit_index,
       .push_ready,
       .push_valid,
       .push_data,

@@ -1,16 +1,5 @@
-// Copyright 2025 The Bedrock-RTL Authors
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//     http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
+// SPDX-License-Identifier: Apache-2.0
+
 
 // Bedrock-RTL Multi-Transfer Interface Distributor Core
 
@@ -25,7 +14,9 @@ module br_multi_xfer_distributor_core #(
     parameter int SymbolWidth = 1,
     // The number of flows to distribute to. Must be at least NumSymbols.
     parameter int NumFlows = 2,
+    parameter bit EnableCoverPushBackpressure = 1,
     parameter bit EnableAssertPushDataStability = 1,
+    parameter bit EnableCoverMorePopReadyThanSendable = 1,
     parameter bit EnableAssertFinalNotSendable = 1,
 
     localparam int CountWidth = $clog2(NumSymbols + 1)
@@ -67,6 +58,7 @@ module br_multi_xfer_distributor_core #(
   br_multi_xfer_checks_sendable_data_intg #(
       .NumSymbols(NumSymbols),
       .SymbolWidth(SymbolWidth),
+      .EnableCoverBackpressure(EnableCoverPushBackpressure),
       .EnableAssertDataStability(EnableAssertPushDataStability)
   ) br_multi_xfer_checks_sendable_data_intg_push (
       .clk(clk),
@@ -75,6 +67,12 @@ module br_multi_xfer_distributor_core #(
       .receivable(push_receivable),
       .data(push_data)
   );
+
+  if (EnableCoverMorePopReadyThanSendable) begin : gen_more_pop_ready_than_sendable_cover
+    `BR_COVER_INTG(more_pop_ready_than_sendable_c, $countones(pop_ready) > push_sendable)
+  end else begin : gen_no_more_pop_ready_than_sendable_assert
+    `BR_ASSERT_INTG(no_more_pop_ready_than_sendable_a, $countones(pop_ready) <= push_sendable)
+  end
 
   // Internal integration checks
   `BR_ASSERT_IMPL(grant_count_lt_allowed_a, grant_count <= grant_allowed)

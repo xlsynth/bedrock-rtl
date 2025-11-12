@@ -1,16 +1,5 @@
-// Copyright 2024-2025 The Bedrock-RTL Authors
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//     http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
+// SPDX-License-Identifier: Apache-2.0
+
 
 // Bedrock-RTL CDC FIFO (Internal 1R1W Flop-RAM, Push Credit/Valid, Pop Ready/Valid Variant)
 
@@ -38,6 +27,10 @@ module br_cdc_fifo_flops_push_credit_fpv_monitor #(
     // Number of pipeline register stages inserted along the read data path in the width dimension.
     // Must be at least 0.
     parameter int FlopRamReadDataWidthStages = 0,
+    // If 1 then the read data is qualified with the rd_data_valid signal, 0 when not valid. Should
+    // generally always be 1, unless gating logic is managed externally (including netlist-level
+    // concerns!).
+    parameter bit EnableStructuredGatesDataQualification = 1,
     // If 1, then assert there are no valid bits asserted and that the FIFO is
     // empty at the end of the test.
     parameter bit EnableAssertFinalNotValid = 1,
@@ -102,6 +95,7 @@ module br_cdc_fifo_flops_push_credit_fpv_monitor #(
       .FlopRamAddressDepthStages(FlopRamAddressDepthStages),
       .FlopRamReadDataDepthStages(FlopRamReadDataDepthStages),
       .FlopRamReadDataWidthStages(FlopRamReadDataWidthStages),
+      .EnableStructuredGatesDataQualification(EnableStructuredGatesDataQualification),
       .EnableAssertFinalNotValid(EnableAssertFinalNotValid)
   ) dut (
       .push_clk,
@@ -167,12 +161,15 @@ module br_cdc_fifo_flops_push_credit_fpv_monitor #(
       .pop_clk,
       .pop_rst,
       .pop_ready,
-      .pop_valid,
+      .pop_valid (pop_valid && !pop_rst),
       .pop_data,
       .push_full,
       .push_slots,
       .pop_empty,
       .pop_items
   );
+
+  `BR_ASSERT_CR(no_valid_data_stable_a, ##1 !pop_valid && !$fell(pop_valid) |-> $stable(pop_data),
+                pop_clk, pop_rst)
 
 endmodule : br_cdc_fifo_flops_push_credit_fpv_monitor

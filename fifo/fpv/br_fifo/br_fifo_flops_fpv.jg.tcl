@@ -1,16 +1,5 @@
-# Copyright 2024-2025 The Bedrock-RTL Authors
-#
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
-#
-#     http://www.apache.org/licenses/LICENSE-2.0
-#
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
+# SPDX-License-Identifier: Apache-2.0
+
 
 # clock/reset set up
 clock clk
@@ -23,8 +12,17 @@ assume -name no_push_valid_during_reset {rst |-> push_valid == 'd0}
 # primary output control signal should be legal during reset
 assert -name fv_rst_check_pop_valid {rst |-> pop_valid == 'd0}
 
+# source ram invariant properties
+array set local_param_list [get_design_info -instance monitor -list local_parameter]
+set WolperColorEn $local_param_list(WolperColorEn)
+if {$WolperColorEn eq "1'b1"} {
+    set invariant_path [file join $::env(TEST_SRCDIR) $::env(TEST_WORKSPACE) fifo fpv br_ram_invariant.tcl]
+    source $invariant_path
+}
+
 # limit run time to 10-mins
-set_prove_time_limit 600s
+set_prove_time_limit 10m
 
 # prove command
-prove -all
+prove -all -time_limit 1m
+prove -all -with_proven
