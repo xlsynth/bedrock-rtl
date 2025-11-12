@@ -8,7 +8,6 @@
 // The out signal will be set to in[i] for which select[i] is 1.
 // The select must have at most one bit set.
 
-`include "br_asserts.svh"
 `include "br_asserts_internal.svh"
 
 module br_mux_onehot #(
