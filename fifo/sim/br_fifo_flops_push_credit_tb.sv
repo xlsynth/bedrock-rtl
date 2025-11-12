@@ -14,8 +14,8 @@ module br_fifo_flops_push_credit_tb ();
   localparam int PropDelay = 3;
   localparam int Width = 8;
   localparam int CutThroughLatency =
-      PropDelay + (EnableBypass ? 0 : (FlopRamAddressDepthStages + 1)) + RegisterPopOutputs;
-  localparam int BackpressureLatency = PropDelay + 1 + RegisterPushOutputs;
+      PropDelay + (EnableBypass ? 0 : (FlopRamAddressDepthStages + 1)) + 32'(RegisterPopOutputs);
+  localparam int BackpressureLatency = PropDelay + 1 + 32'(RegisterPushOutputs);
   localparam int Depth = CutThroughLatency + BackpressureLatency + 1;
   localparam int NData = 100;
 

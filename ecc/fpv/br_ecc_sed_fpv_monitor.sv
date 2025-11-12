@@ -22,8 +22,8 @@ module br_ecc_sed_fpv_monitor #(
     input logic [DataWidth-1:0] data
 );
 
-  localparam int EncLatency = EncRegisterInputs + EncRegisterOutputs;
-  localparam int DecLatency = DecRegisterInputs + DecRegisterOutputs;
+  localparam int EncLatency = 32'(EncRegisterInputs) + 32'(EncRegisterOutputs);
+  localparam int DecLatency = 32'(DecRegisterInputs) + 32'(DecRegisterOutputs);
   localparam int Latency = EncLatency + DecLatency;
   // encoder outputs
   logic enc_valid;
