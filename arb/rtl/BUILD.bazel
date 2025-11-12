@@ -99,6 +99,7 @@ br_verilog_elab_and_lint_test_suite(
 br_verilog_elab_and_lint_test_suite(
     name = "br_arb_rr_test_suite",
     params = {"NumRequesters": [
+        "1",
         "2",
         "5",
     ]},
