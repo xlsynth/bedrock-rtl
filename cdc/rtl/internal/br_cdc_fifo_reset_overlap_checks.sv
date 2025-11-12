@@ -49,7 +49,7 @@ module br_cdc_fifo_reset_overlap_checks #(
   `BR_REGN(reset_active_push_d, reset_active_push)
   `BR_REGN(reset_active_pop_d, reset_active_pop)
 
-  assign overlap_next = reset_active_push && reset_active_pop;
+  assign overlap_next = reset_active_push === 1'b1 && reset_active_pop === 1'b1;
 
   // Reset the overlap counter on the rising edge of either reset, when both resets are known.
   // ri lint_check_waive FOURSTATE_COMP X_USE
