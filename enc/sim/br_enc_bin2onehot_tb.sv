@@ -81,9 +81,6 @@ module br_enc_bin2onehot_tb;
     // Finish simulation
     #10;
 
-    // TODO(mgottscho): not enough information to know if test passed.
-    // If DUT asserts fire, we can't see that here.
-    // Need to determine pass/fail outside of this TB?
     if (errors) begin
       $display("Number of errors: %0d", errors);
       $display("TEST FAILED");
