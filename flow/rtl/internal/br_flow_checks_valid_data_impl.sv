@@ -32,10 +32,6 @@ module br_flow_checks_valid_data_impl #(
     // Can only be enabled if EnableAssertValidStability is also enabled.
     // ri lint_check_waive PARAM_NOT_USED
     parameter bit EnableAssertDataStability = EnableAssertValidStability,
-    // If 1, assert that data is known (not X) whenever valid is asserted.
-    // This is independent of stability checks; set to 0 to disable.
-    // ri lint_check_waive PARAM_NOT_USED
-    parameter bit EnableAssertDataKnown = 1,
     // If 1, then assert there are no valid bits asserted at the end of the test.
     parameter bit EnableAssertFinalNotValid = 1
 ) (
@@ -51,7 +47,6 @@ module br_flow_checks_valid_data_impl #(
                     !(EnableAssertValidStability && !EnableCoverBackpressure))
   `BR_ASSERT_STATIC(legal_assert_data_stability_a,
                     !(EnableAssertDataStability && !EnableAssertValidStability))
-
   if (EnableAssertFinalNotValid) begin : gen_assert_final
     `BR_ASSERT_FINAL(final_not_valid_a, !valid)
   end
@@ -107,6 +102,5 @@ module br_flow_checks_valid_data_impl #(
 `endif  // BR_ASSERT_ON
 
   `BR_UNUSED_NAMED(all_unused, {rst, valid, ready, data})
-
 endmodule
 // ri lint_check_on NO_OUTPUT
