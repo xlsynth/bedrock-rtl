@@ -142,6 +142,8 @@ module br_fifo_pop_ctrl #(
   `BR_ASSERT_IMPL(ram_rd_addr_in_range_a, ram_rd_addr_valid |-> ram_rd_addr < RamDepth)
 
   // Flow control and latency
+  // ri lint_check_waive PARAM_NOT_USED
+  localparam int RegisterPopOutputsInt = 32'(RegisterPopOutputs);
   if (EnableBypass) begin : gen_bypass_cut_through_latency_check
     // If a RAM read is inflight when the bypass occurs, pop_valid will not
     // be asserted until the RAM read completes. So the range of the latency
@@ -150,11 +152,11 @@ module br_fifo_pop_ctrl #(
     `BR_ASSERT_IMPL(bypass_cut_through_latency_a,
                     (bypass_valid_unstable && bypass_ready)
                     |->
-                    ##[RegisterPopOutputs:RegisterPopOutputs+RamReadLatency] pop_valid)
+                    ##[RegisterPopOutputsInt:RegisterPopOutputsInt+RamReadLatency] pop_valid)
   end
   `BR_ASSERT_IMPL(
       non_bypass_cut_through_latency_a,
-      (push_beat && !bypass_ready) |-> ##(1+RamReadLatency+RegisterPopOutputs) pop_valid)
+      (push_beat && !bypass_ready) |-> ##(1+RamReadLatency+RegisterPopOutputsInt) pop_valid)
 
   localparam bit ZeroCutThroughLatency = !RegisterPopOutputs && EnableBypass;
 
