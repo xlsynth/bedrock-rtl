@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+
 `include "br_asserts_internal.svh"
 `include "br_registers.svh"
 
@@ -12,8 +14,6 @@
 // Unless required by applicable law or agreed to in writing, software
 // distributed under the License is distributed on an "AS IS" BASIS,
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
 
 // Bedrock-RTL Round-Robin State
 //
@@ -24,6 +24,8 @@
 // The priority_mask output contains a mask of all request indices that
 // are less than the current round-robin priority---those in the range
 // [0, RR_ptr).
+
+`include "br_asserts.svh"
 
 module br_rr_state_internal #(
     // Must be at least 2
@@ -36,6 +38,8 @@ module br_rr_state_internal #(
     output logic [NumRequesters-1:0] last_grant,
     output logic [NumRequesters-1:0] priority_mask
 );
+
+  `BR_ASSERT_STATIC(num_requesters_gte_2_A, NumRequesters >= 2)
 
   logic [NumRequesters-1:0] last_grant_init;
 

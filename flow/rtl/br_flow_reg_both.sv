@@ -1,16 +1,5 @@
-// Copyright 2024-2025 The Bedrock-RTL Authors
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//     http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
+// SPDX-License-Identifier: Apache-2.0
+
 
 // Bedrock-RTL Flow Register (Combined Forward & Reverse Variant)
 //
@@ -42,6 +31,8 @@ module br_flow_reg_both #(
     // If 1, assert that push_data is stable when backpressured.
     // If 0, cover that push_data can be unstable.
     parameter bit EnableAssertPushDataStability = EnableAssertPushValidStability,
+    // If 1, assert that push_data is always known (not X) when push_valid is asserted.
+    parameter bit EnableAssertPushDataKnown = 1,
     // If 1, then assert there are no valid bits asserted at the end of the test.
     parameter bit EnableAssertFinalNotValid = 1
 ) (
@@ -81,6 +72,7 @@ module br_flow_reg_both #(
       .EnableCoverPushBackpressure(EnableCoverPushBackpressure),
       .EnableAssertPushValidStability(EnableAssertPushValidStability),
       .EnableAssertPushDataStability(EnableAssertPushDataStability),
+      .EnableAssertPushDataKnown(EnableAssertPushDataKnown),
       .EnableAssertFinalNotValid(EnableAssertFinalNotValid)
   ) br_flow_reg_rev (
       .clk,
@@ -95,14 +87,13 @@ module br_flow_reg_both #(
 
   br_flow_reg_fwd #(
       .Width(Width),
-      // The fwd stage can still backpressure the rev stage
-      // without backpressuring the input.
+      // The fwd stage can still backpressure the rev stage without
+      // backpressuring the input. The rev stage will shield the fwd stage from
+      // instability on the push interface.
       .EnableCoverPushBackpressure(1),
-      // The rev stage has combinational paths on valid and data, so any instability on the
-      // push interface will also cause instability on the internal signals.
-      // But the output of the fwd stage is guaranteed to be stable either way.
-      .EnableAssertPushValidStability(EnableAssertPushValidStability),
-      .EnableAssertPushDataStability(EnableAssertPushDataStability),
+      .EnableAssertPushValidStability(1),
+      .EnableAssertPushDataStability(1),
+      .EnableAssertPushDataKnown(EnableAssertPushDataKnown),
       .EnableAssertFinalNotValid(EnableAssertFinalNotValid)
   ) br_flow_reg_fwd (
       .clk,

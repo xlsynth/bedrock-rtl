@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+
 module br_cdc_bit_pulse_tb;
 
   parameter int NumStages = 3;
@@ -74,13 +76,18 @@ module br_cdc_bit_pulse_tb;
   endtask
 
   initial begin
+    static br_cdc_pkg::cdc_delay_mode_t cdc_delay_mode = br_cdc_pkg::CdcDelayNone;
     int src_reset_cycles;
     int dst_reset_cycles;
+    void'($value$plusargs("cdc_delay_mode=%d", cdc_delay_mode));
+    $display("set cdc_delay_mode = %0s", cdc_delay_mode.name());
+    br_cdc_pkg::cdc_delay_mode = cdc_delay_mode;
 
-    src_clk   = 0;
-    dst_clk   = 0;
-    src_rst   = 1;
-    dst_rst   = 1;
+
+    src_clk = 0;
+    dst_clk = 0;
+    src_rst = 1;
+    dst_rst = 1;
     src_pulse = 0;
 
     #MinResetTime;

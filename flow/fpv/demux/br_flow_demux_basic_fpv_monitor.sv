@@ -1,16 +1,5 @@
-// Copyright 2024-2025 The Bedrock-RTL Authors
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//     http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
+// SPDX-License-Identifier: Apache-2.0
+
 
 // Basic checker of br_flow_demux
 
@@ -22,7 +11,10 @@ module br_flow_demux_basic_fpv_monitor #(
     parameter int Width = 1,  // Must be at least 1
     parameter bit EnableCoverPushBackpressure = 1,
     parameter bit EnableAssertPushValidStability = EnableCoverPushBackpressure,
-    parameter bit EnableAssertPushDataStability = EnableAssertPushValidStability
+    parameter bit EnableAssertPushDataStability = EnableAssertPushValidStability,
+    parameter bit EnableAssertSelectStability = 0,
+    parameter bit EnableAssertPopValidStability = 1,
+    parameter bit EnableAssertPopDataStability = 1
 ) (
     input logic                                   clk,
     input logic                                   rst,
@@ -51,11 +43,19 @@ module br_flow_demux_basic_fpv_monitor #(
     `BR_ASSUME(push_data_stable_a, push_valid && !push_ready |=> $stable(push_data))
   end
 
+  if (!EnableCoverPushBackpressure) begin : gen_no_push_backpressure
+    `BR_ASSUME(no_push_backpressure_a, !push_ready |-> !push_valid)
+  end
+
+  if (EnableAssertSelectStability) begin : gen_select_stability
+    `BR_ASSUME(select_stable_a, push_valid && !push_ready |=> $stable(select))
+  end
+
   // ----------Sanity Check----------
-  if (EnableAssertPushValidStability) begin : gen_pop_valid
+  if (EnableAssertPopValidStability) begin : gen_pop_valid
     `BR_ASSERT(pop_valid_stable_a, pop_valid[fv_idx] && !pop_ready[fv_idx] |=> pop_valid[fv_idx])
   end
-  if (EnableAssertPushDataStability) begin : gen_pop_data
+  if (EnableAssertPopDataStability) begin : gen_pop_data
     `BR_ASSERT(pop_data_stable_a,
                pop_valid[fv_idx] && !pop_ready[fv_idx] |=> $stable(pop_data[fv_idx]))
   end

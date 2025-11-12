@@ -1,16 +1,5 @@
-// Copyright 2024-2025 The Bedrock-RTL Authors
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//     http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
+// SPDX-License-Identifier: Apache-2.0
+
 
 // Bedrock-RTL AXI4-Lite 1:2 Split
 //
@@ -185,9 +174,14 @@ module br_amba_axil_split #(
 
   // Counters to track outstanding read transactions
   br_counter #(
-      .MaxValue  (MaxOutstandingReads),
-      .MaxChange (1),
-      .EnableWrap(0)
+      .MaxValue(MaxOutstandingReads),
+      .MaxChange(1),
+      .EnableWrap(0),
+      .EnableCoverZeroChange(0),
+      .EnableCoverReinit(0),
+      // Can only simultaneously increment and decrement if there can
+      // be more than one read outstanding.
+      .EnableCoverIncrementAndDecrement(MaxOutstandingReads > 1)
   ) br_counter_outstanding_reads (
       .clk,
       .rst,
@@ -216,9 +210,14 @@ module br_amba_axil_split #(
 
   // Counters to track outstanding write transactions
   br_counter #(
-      .MaxValue  (MaxOutstandingWrites),
-      .MaxChange (1),
-      .EnableWrap(0)
+      .MaxValue(MaxOutstandingWrites),
+      .MaxChange(1),
+      .EnableWrap(0),
+      .EnableCoverZeroChange(0),
+      .EnableCoverReinit(0),
+      // Can only simultaneously increment and decrement if there can
+      // be more than one write outstanding.
+      .EnableCoverIncrementAndDecrement(MaxOutstandingWrites > 1)
   ) br_counter_outstanding_writes (
       .clk,
       .rst,
@@ -239,54 +238,114 @@ module br_amba_axil_split #(
   // write data until both are valid so we know which branch to route the data to. However, since
   // awready and wready are not guaranteed to be driven by registers, add a flow register to
   // prevent combinational loops.
-  br_flow_reg_both #(
-      .Width(AddrWidth + br_amba::AxiProtWidth + AWUserWidth + 1)
-  ) br_flow_reg_both_write_addr (
-      .clk,
-      .rst,
+  if (MaxOutstandingWrites > 1) begin : gen_flow_reg_both_write
+    br_flow_reg_both #(
+        .Width(AddrWidth + br_amba::AxiProtWidth + AWUserWidth + 1),
+        // There can't be backpressure if there are fewer outstanding writes
+        // than buffer entries.
+        .EnableCoverPushBackpressure(MaxOutstandingWrites > 2)
+    ) br_flow_reg_both_write_addr (
+        .clk,
+        .rst,
 
-      .push_ready(write_addr_flow_reg_push_ready),
-      .push_valid(write_addr_flow_reg_push_valid),
-      .push_data ({root_awaddr, root_awprot, root_awuser, awaddr_is_branch}),
+        .push_ready(write_addr_flow_reg_push_ready),
+        .push_valid(write_addr_flow_reg_push_valid),
+        .push_data ({root_awaddr, root_awprot, root_awuser, awaddr_is_branch}),
 
-      .pop_ready(write_addr_flow_reg_pop_ready),
-      .pop_valid(write_addr_flow_reg_pop_valid),
-      .pop_data ({root_awaddr_reg, root_awprot_reg, root_awuser_reg, write_addr_flow_reg_is_branch})
-  );
+        .pop_ready(write_addr_flow_reg_pop_ready),
+        .pop_valid(write_addr_flow_reg_pop_valid),
+        .pop_data({
+          root_awaddr_reg, root_awprot_reg, root_awuser_reg, write_addr_flow_reg_is_branch
+        })
+    );
 
-  br_flow_reg_both #(
-      .Width(DataWidth + StrobeWidth + WUserWidth + 1)
-  ) br_flow_reg_both_write_data (
-      .clk,
-      .rst,
+    br_flow_reg_both #(
+        .Width(DataWidth + StrobeWidth + WUserWidth + 1),
+        // There can't be backpressure if there are fewer outstanding writes
+        // than buffer entries.
+        .EnableCoverPushBackpressure(MaxOutstandingWrites > 2)
+    ) br_flow_reg_both_write_data (
+        .clk,
+        .rst,
 
-      .push_ready(write_data_flow_reg_push_ready),
-      .push_valid(write_data_flow_reg_push_valid),
-      .push_data ({root_wdata, root_wstrb, root_wuser, awaddr_is_branch}),
+        .push_ready(write_data_flow_reg_push_ready),
+        .push_valid(write_data_flow_reg_push_valid),
+        .push_data ({root_wdata, root_wstrb, root_wuser, awaddr_is_branch}),
 
-      .pop_ready(write_data_flow_reg_pop_ready),
-      .pop_valid(write_data_flow_reg_pop_valid),
-      .pop_data ({root_wdata_reg, root_wstrb_reg, root_wuser_reg, write_data_flow_reg_is_branch})
-  );
+        .pop_ready(write_data_flow_reg_pop_ready),
+        .pop_valid(write_data_flow_reg_pop_valid),
+        .pop_data ({root_wdata_reg, root_wstrb_reg, root_wuser_reg, write_data_flow_reg_is_branch})
+    );
+  end else begin : gen_flow_reg_fwd_write
+    // If there is only one outstanding write, flow_reg_both would be unnecessary, as only
+    // one of the register stages could be filled.
+    // To break the ready timing path, just tie write_*_flow_reg_push_ready to 1.
+
+    assign write_addr_flow_reg_push_ready = 1'b1;
+    assign write_data_flow_reg_push_ready = 1'b1;
+
+    br_flow_reg_fwd #(
+        .Width(AddrWidth + br_amba::AxiProtWidth + AWUserWidth + 1),
+        // There can't be backpressure if there are fewer outstanding writes
+        // than buffer entries.
+        .EnableCoverPushBackpressure(0)
+    ) br_flow_reg_fwd_write_addr (
+        .clk,
+        .rst,
+
+        .push_ready(),  // unused; internal assertion checks that there is no backpressure
+        .push_valid(write_addr_flow_reg_push_valid),
+        .push_data({root_awaddr, root_awprot, root_awuser, awaddr_is_branch}),
+
+        .pop_ready(write_addr_flow_reg_pop_ready),
+        .pop_valid(write_addr_flow_reg_pop_valid),
+        .pop_data({
+          root_awaddr_reg, root_awprot_reg, root_awuser_reg, write_addr_flow_reg_is_branch
+        })
+    );
+
+    br_flow_reg_fwd #(
+        .Width(DataWidth + StrobeWidth + WUserWidth + 1),
+        // There can't be backpressure if there are fewer outstanding writes
+        // than buffer entries.
+        .EnableCoverPushBackpressure(0)
+    ) br_flow_reg_fwd_write_data (
+        .clk,
+        .rst,
+
+        .push_ready(),  // unused; internal assertion checks that there is no backpressure
+        .push_valid(write_data_flow_reg_push_valid),
+        .push_data({root_wdata, root_wstrb, root_wuser, awaddr_is_branch}),
+
+        .pop_ready(write_data_flow_reg_pop_ready),
+        .pop_valid(write_data_flow_reg_pop_valid),
+        .pop_data ({root_wdata_reg, root_wstrb_reg, root_wuser_reg, write_data_flow_reg_is_branch})
+    );
+  end
 
   // Push to the flow register when both the write address and write data are valid and the flow
   // register is ready to accept the data
-  assign write_addr_flow_reg_push_valid = root_awvalid && root_wvalid &&
-      write_addr_flow_reg_push_ready && write_data_flow_reg_push_ready &&
-      (no_outstanding_writes || (last_awvalid_is_branch == awaddr_is_branch)) &&
-      free_outstanding_writes;
-  assign write_data_flow_reg_push_valid = root_awvalid && root_wvalid &&
-      write_addr_flow_reg_push_ready && write_data_flow_reg_push_ready &&
-      (no_outstanding_writes || (last_awvalid_is_branch == awaddr_is_branch)) &&
-      free_outstanding_writes;
+  logic write_okay;
+  assign write_okay = (no_outstanding_writes || (last_awvalid_is_branch == awaddr_is_branch)) &&
+                      free_outstanding_writes;
+  assign write_addr_flow_reg_push_valid =
+      root_awvalid && root_wvalid &&
+      write_data_flow_reg_push_ready && write_okay;
+  assign write_data_flow_reg_push_valid =
+      root_awvalid && root_wvalid &&
+      write_addr_flow_reg_push_ready && write_okay;
 
   // Track the last write transaction, if it was trunk or branch
   `BR_REGLN(last_awvalid_is_branch, awaddr_is_branch, aw_handshake_valid)
 
   // Do not drive the ready signal until the write address and write data are valid and the flow
   // register is ready to accept the data
-  assign root_awready = write_addr_flow_reg_push_valid;
-  assign root_wready = write_data_flow_reg_push_valid;
+  assign root_awready =
+      root_wvalid && write_okay &&
+      write_addr_flow_reg_push_ready && write_data_flow_reg_push_ready;
+  assign root_wready =
+      root_awvalid && write_okay &&
+      write_addr_flow_reg_push_ready && write_data_flow_reg_push_ready;
 
   // Split the write address and write data channels based on the awaddr
   assign trunk_awvalid = write_addr_flow_reg_pop_valid && !write_addr_flow_reg_is_branch;

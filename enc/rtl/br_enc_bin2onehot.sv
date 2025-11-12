@@ -1,16 +1,5 @@
-// Copyright 2024-2025 The Bedrock-RTL Authors
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//     http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
+// SPDX-License-Identifier: Apache-2.0
+
 
 // Bedrock-RTL Binary to Onehot Encoder
 //
@@ -47,12 +36,12 @@
 `include "br_asserts_internal.svh"
 
 module br_enc_bin2onehot #(
-    parameter int NumValues = 2,  // Must be at least 2
+    parameter int NumValues = 2,  // Must be at least 1
     parameter int EnableInputRangeCheck = 1,
     // If 1, then assert there are no valid bits asserted at the end of the test.
     parameter bit EnableAssertFinalNotValid = 1,
     // Width of the binary-encoded value. Must be at least $clog2(NumValues).
-    parameter int BinWidth = $clog2(NumValues)
+    parameter int BinWidth = br_math::clamped_clog2(NumValues)
 ) (
     // ri lint_check_waive INPUT_NOT_READ HIER_NET_NOT_READ HIER_BRANCH_NOT_READ
     input logic clk,  // Used only for assertions
@@ -66,8 +55,8 @@ module br_enc_bin2onehot #(
   //------------------------------------------
   // Integration checks
   //------------------------------------------
-  `BR_ASSERT_STATIC(num_values_gte_2_a, NumValues >= 2)
-  `BR_ASSERT_STATIC(binwidth_gte_log2_num_values_a, BinWidth >= $clog2(NumValues))
+  `BR_ASSERT_STATIC(num_values_gte_2_a, NumValues >= 1)
+  `BR_ASSERT_STATIC(binwidth_gte_log2_num_values_a, BinWidth >= br_math::clamped_clog2(NumValues))
   if (EnableInputRangeCheck) begin : gen_in_range_check
     `BR_ASSERT_INTG(in_within_range_a, in_valid |-> in < NumValues)
   end

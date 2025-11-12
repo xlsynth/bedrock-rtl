@@ -1,16 +1,5 @@
-// Copyright 2025 The Bedrock-RTL Authors
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//     http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
+// SPDX-License-Identifier: Apache-2.0
+
 
 // Bedrock-RTL Weighted Round-Robin Arbiter
 //
@@ -76,7 +65,7 @@ module br_arb_weighted_rr #(
   //------------------------------------------
   // Integration checks
   //------------------------------------------
-  `BR_ASSERT_STATIC(min_num_requestors_a, NumRequesters >= 2)
+  `BR_ASSERT_STATIC(min_num_requesters_a, NumRequesters >= 2)
   `BR_ASSERT_STATIC(min_max_weight_a, MaxWeight >= 1)
   `BR_ASSERT_STATIC(max_accum_gte_max_weight_a, MaxAccumulatedWeight >= MaxWeight)
 
@@ -120,8 +109,12 @@ module br_arb_weighted_rr #(
     br_counter #(
         .MaxValue(MaxAccumulatedWeight),
         .MaxChange(MaxWeight),
+        .MaxDecrement(1),
         .EnableSaturate(1),
-        .EnableWrap(0)
+        .EnableWrap(0),
+        .EnableCoverZeroChange(0),
+        .EnableCoverReinit(0),
+        .EnableAssertFinalInitialValue(0)
     ) br_counter (
         .clk,
         .rst,

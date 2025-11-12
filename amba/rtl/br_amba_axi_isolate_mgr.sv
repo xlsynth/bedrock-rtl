@@ -1,16 +1,5 @@
-// Copyright 2025 The Bedrock-RTL Authors
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//     http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
+// SPDX-License-Identifier: Apache-2.0
+
 //
 // Bedrock-RTL AXI Upstream (Manager) Isolator
 //
@@ -85,6 +74,7 @@ module br_amba_axi_isolate_mgr #(
     input  logic [          AxiBurstLenWidth-1:0] upstream_awlen,
     input  logic [br_amba::AxiBurstSizeWidth-1:0] upstream_awsize,
     input  logic [br_amba::AxiBurstTypeWidth-1:0] upstream_awburst,
+    input  logic [    br_amba::AxiCacheWidth-1:0] upstream_awcache,
     input  logic [     br_amba::AxiProtWidth-1:0] upstream_awprot,
     input  logic [               AWUserWidth-1:0] upstream_awuser,
     input  logic                                  upstream_awvalid,
@@ -106,6 +96,7 @@ module br_amba_axi_isolate_mgr #(
     input  logic [br_amba::AxiBurstSizeWidth-1:0] upstream_arsize,
     input  logic [br_amba::AxiBurstTypeWidth-1:0] upstream_arburst,
     input  logic [     br_amba::AxiProtWidth-1:0] upstream_arprot,
+    input  logic [    br_amba::AxiCacheWidth-1:0] upstream_arcache,
     input  logic [               ARUserWidth-1:0] upstream_aruser,
     input  logic                                  upstream_arvalid,
     output logic                                  upstream_arready,
@@ -122,6 +113,7 @@ module br_amba_axi_isolate_mgr #(
     output logic [          AxiBurstLenWidth-1:0] downstream_awlen,
     output logic [br_amba::AxiBurstSizeWidth-1:0] downstream_awsize,
     output logic [br_amba::AxiBurstTypeWidth-1:0] downstream_awburst,
+    output logic [    br_amba::AxiCacheWidth-1:0] downstream_awcache,
     output logic [     br_amba::AxiProtWidth-1:0] downstream_awprot,
     output logic [               AWUserWidth-1:0] downstream_awuser,
     output logic                                  downstream_awvalid,
@@ -142,6 +134,7 @@ module br_amba_axi_isolate_mgr #(
     output logic [          AxiBurstLenWidth-1:0] downstream_arlen,
     output logic [br_amba::AxiBurstSizeWidth-1:0] downstream_arsize,
     output logic [br_amba::AxiBurstTypeWidth-1:0] downstream_arburst,
+    output logic [    br_amba::AxiCacheWidth-1:0] downstream_arcache,
     output logic [     br_amba::AxiProtWidth-1:0] downstream_arprot,
     output logic [               ARUserWidth-1:0] downstream_aruser,
     output logic                                  downstream_arvalid,
@@ -178,6 +171,7 @@ module br_amba_axi_isolate_mgr #(
   logic [br_amba::AxiBurstSizeWidth-1:0] downstream_awsize_int;
   logic [br_amba::AxiBurstTypeWidth-1:0] downstream_awburst_int;
   logic [br_amba::AxiProtWidth-1:0] downstream_awprot_int;
+  logic [br_amba::AxiCacheWidth-1:0] downstream_awcache_int;
   logic [AWUserWidth-1:0] downstream_awuser_int;
   logic [AxiBurstLenWidth-1:0] downstream_awlen_int;
 
@@ -195,6 +189,7 @@ module br_amba_axi_isolate_mgr #(
   logic [br_amba::AxiBurstSizeWidth-1:0] downstream_arsize_int;
   logic [br_amba::AxiBurstTypeWidth-1:0] downstream_arburst_int;
   logic [br_amba::AxiProtWidth-1:0] downstream_arprot_int;
+  logic [br_amba::AxiCacheWidth-1:0] downstream_arcache_int;
   logic [ARUserWidth-1:0] downstream_aruser_int;
   logic [AxiBurstLenWidth-1:0] downstream_arlen_int;
 
@@ -293,6 +288,7 @@ module br_amba_axi_isolate_mgr #(
   assign downstream_awburst_int = upstream_awburst;
   assign downstream_awlen_int = upstream_awlen;
   assign downstream_awprot_int = upstream_awprot;
+  assign downstream_awcache_int = upstream_awcache;
   assign downstream_awuser_int = upstream_awuser;
   //
   assign upstream_bid = downstream_bid;
@@ -366,6 +362,7 @@ module br_amba_axi_isolate_mgr #(
   assign downstream_arburst_int = upstream_arburst;
   assign downstream_arlen_int = upstream_arlen;
   assign downstream_arprot_int = upstream_arprot;
+  assign downstream_arcache_int = upstream_arcache;
   assign downstream_aruser_int = upstream_aruser;
   //
   assign upstream_rdata = downstream_rdata;
@@ -409,6 +406,8 @@ module br_amba_axi_isolate_mgr #(
       ) + $bits(
           downstream_awburst_int
       ) + $bits(
+          downstream_awcache_int
+      ) + $bits(
           downstream_awlen_int
       ) + $bits(
           downstream_awprot_int
@@ -427,6 +426,7 @@ module br_amba_axi_isolate_mgr #(
         downstream_awid_int,
         downstream_awsize_int,
         downstream_awburst_int,
+        downstream_awcache_int,
         downstream_awlen_int,
         downstream_awprot_int,
         downstream_awuser_int
@@ -439,6 +439,7 @@ module br_amba_axi_isolate_mgr #(
         downstream_awid,
         downstream_awsize,
         downstream_awburst,
+        downstream_awcache,
         downstream_awlen,
         downstream_awprot,
         downstream_awuser
@@ -483,6 +484,8 @@ module br_amba_axi_isolate_mgr #(
       ) + $bits(
           downstream_arburst_int
       ) + $bits(
+          downstream_arcache_int
+      ) + $bits(
           downstream_arlen_int
       ) + $bits(
           downstream_arprot_int
@@ -501,6 +504,7 @@ module br_amba_axi_isolate_mgr #(
         downstream_arid_int,
         downstream_arsize_int,
         downstream_arburst_int,
+        downstream_arcache_int,
         downstream_arlen_int,
         downstream_arprot_int,
         downstream_aruser_int
@@ -513,6 +517,7 @@ module br_amba_axi_isolate_mgr #(
         downstream_arid,
         downstream_arsize,
         downstream_arburst,
+        downstream_arcache,
         downstream_arlen,
         downstream_arprot,
         downstream_aruser

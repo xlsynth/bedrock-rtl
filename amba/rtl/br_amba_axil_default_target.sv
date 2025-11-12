@@ -1,16 +1,5 @@
-// Copyright 2024-2025 The Bedrock-RTL Authors
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//     http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
+// SPDX-License-Identifier: Apache-2.0
+
 
 // AXI4-Lite Default Target
 //
@@ -24,6 +13,7 @@
 module br_amba_axil_default_target #(
     parameter int DataWidth = 64,
     parameter int DecodeError = 1,
+    parameter int SlvErr = 0,
     parameter logic [DataWidth-1:0] DefaultReadData = '0
 ) (
     input clk,
@@ -45,70 +35,37 @@ module br_amba_axil_default_target #(
     input  logic                             target_rready
 );
 
-  // Internal signals
-  logic awfifo_pop_valid, awfifo_pop_ready;
-  logic wfifo_pop_valid, wfifo_pop_ready;
-
-  // Response signals
-  assign target_bresp = DecodeError ? br_amba::AxiRespDecerr : br_amba::AxiRespOkay;  // ri lint_check_waive ENUM_RHS CONST_ASSIGN CONST_OUTPUT
-  assign target_rdata = DefaultReadData;  // ri lint_check_waive CONST_ASSIGN CONST_OUTPUT
-  assign target_rresp = DecodeError ? br_amba::AxiRespDecerr : br_amba::AxiRespOkay;  // ri lint_check_waive ENUM_RHS CONST_ASSIGN CONST_OUTPUT
-
-  // Write address channel
-  br_flow_reg_fwd #(
-      .Width(1)
-  ) br_flow_reg_fwd_aw (
+  br_amba_axi_default_target #(
+      .DataWidth(DataWidth),
+      .DecodeError(DecodeError),
+      .SlvErr(SlvErr),
+      .DefaultReadData(DefaultReadData),
+      .AxiIdWidth(1),
+      .SingleBeat(1)
+  ) br_amba_axi_default_target_inst (
       .clk,
       .rst,
-
-      .push_ready(target_awready),
-      .push_valid(target_awvalid),
-      .push_data (1'b0),
-
-      .pop_ready(awfifo_pop_ready),
-      .pop_valid(awfifo_pop_valid),
-      .pop_data()  // ri lint_check_waive OPEN_OUTPUT
-  );
-
-  // Only pop from write address channel when write response is ready and valid
-  assign awfifo_pop_ready = target_bready && target_bvalid;
-
-  // Write data channel
-  br_flow_reg_fwd #(
-      .Width(1)
-  ) br_flow_reg_fwd_w (
-      .clk,
-      .rst,
-
-      .push_ready(target_wready),
-      .push_valid(target_wvalid),
-      .push_data (1'b0),
-
-      .pop_ready(wfifo_pop_ready),
-      .pop_valid(wfifo_pop_valid),
-      .pop_data()  // ri lint_check_waive OPEN_OUTPUT
-  );
-
-  // Only pop from write data channel when write response is ready and valid
-  assign wfifo_pop_ready = target_bready && target_bvalid;
-
-  // Generate write response when both address and data channels have valid signals
-  assign target_bvalid   = awfifo_pop_valid && wfifo_pop_valid;
-
-  // Read address and response channels
-  br_flow_reg_fwd #(
-      .Width(1)
-  ) br_flow_reg_fwd_ar (
-      .clk,
-      .rst,
-
-      .push_ready(target_arready),
-      .push_valid(target_arvalid),
-      .push_data (1'b0),
-
-      .pop_ready(target_rready),
-      .pop_valid(target_rvalid),
-      .pop_data()  // ri lint_check_waive OPEN_OUTPUT
+      .target_awvalid,
+      .target_awready,
+      .target_awid (1'b0),
+      .target_awlen(1'b0),
+      .target_wvalid,
+      .target_wready,
+      .target_wlast(1'b1),
+      .target_bresp,
+      .target_bvalid,
+      .target_bready,
+      .target_bid  (),
+      .target_arvalid,
+      .target_arready,
+      .target_arid (1'b0),
+      .target_arlen(1'b0),
+      .target_rvalid,
+      .target_rready,
+      .target_rdata,
+      .target_rresp,
+      .target_rid  (),
+      .target_rlast()
   );
 
 endmodule : br_amba_axil_default_target

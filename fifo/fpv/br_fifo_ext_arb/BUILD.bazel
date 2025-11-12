@@ -1,0 +1,216 @@
+# SPDX-License-Identifier: Apache-2.0
+
+load("@rules_hdl//verilog:providers.bzl", "verilog_library")
+load("//bazel:br_verilog.bzl", "br_verilog_fpv_test_tools_suite")
+load("//bazel:verilog.bzl", "verilog_elab_test")
+
+package(default_visibility = ["//fifo/fpv:__subpackages__"])
+
+verilog_library(
+    name = "ext_arb_fv_monitor",
+    srcs = ["ext_arb_fv_monitor.sv"],
+)
+
+#################################################################
+# Bedrock-RTL Shared Dynamic Multi-FIFO Controller (Push Valid/Ready Interface) with external arbiter interface
+verilog_library(
+    name = "br_fifo_shared_dynamic_ctrl_ext_arbiter_fpv_monitor",
+    srcs = ["br_fifo_shared_dynamic_ctrl_ext_arbiter_fpv_monitor.sv"],
+    deps = [
+        ":ext_arb_fv_monitor",
+        "//fifo/fpv:br_fifo_fv_ram",
+        "//fifo/fpv/br_fifo_shared_dynamic:br_fifo_shared_dynamic_basic_fpv_monitor",
+        "//fifo/rtl:br_fifo_shared_dynamic_ctrl_ext_arbiter",
+        "//macros:br_fv",
+    ],
+)
+
+verilog_elab_test(
+    name = "br_fifo_shared_dynamic_ctrl_ext_arbiter_fpv_monitor_elab_test",
+    custom_tcl_header = "//:elab_test_jg_custom_header.verific.tcl",
+    tool = "verific",
+    deps = [":br_fifo_shared_dynamic_ctrl_ext_arbiter_fpv_monitor"],
+)
+
+br_verilog_fpv_test_tools_suite(
+    name = "br_fifo_shared_dynamic_ctrl_ext_arbiter_test_port",
+    params = {
+        "NumWritePorts": [
+            "1",
+            "2",
+        ],
+        "NumReadPorts": [
+            "1",
+            "2",
+        ],
+        "NumFifos": [
+            "2",
+            "3",
+        ],
+        "Depth": [
+            "5",
+        ],
+        "NumLinkedListsPerFifo": [
+            "1",
+            "2",
+        ],
+    },
+    tools = {
+        "jg": "br_fifo_shared_dynamic_ctrl_ext_arbiter_fpv.jg.tcl",
+    },
+    top = "br_fifo_shared_dynamic_ctrl_ext_arbiter",
+    deps = [":br_fifo_shared_dynamic_ctrl_ext_arbiter_fpv_monitor"],
+)
+
+br_verilog_fpv_test_tools_suite(
+    name = "br_fifo_shared_dynamic_ctrl_ext_arbiter_test_latency",
+    params = {
+        "StagingBufferDepth": [
+            "1",
+            "2",
+        ],
+        "RegisterPopOutputs": [
+            "0",
+            "1",
+        ],
+        "RegisterDeallocation": [
+            "0",
+            "1",
+        ],
+        "DataRamReadLatency": [
+            "0",
+            "2",
+        ],
+        "PointerRamReadLatency": [
+            "0",
+            "1",
+        ],
+    },
+    tools = {
+        "jg": "br_fifo_shared_dynamic_ctrl_ext_arbiter_fpv.jg.tcl",
+    },
+    top = "br_fifo_shared_dynamic_ctrl_ext_arbiter",
+    deps = [":br_fifo_shared_dynamic_ctrl_ext_arbiter_fpv_monitor"],
+)
+
+br_verilog_fpv_test_tools_suite(
+    name = "br_fifo_shared_dynamic_ctrl_ext_arbiter_test_backpressure",
+    illegal_param_combinations = {
+        (
+            "EnableCoverPushBackpressure",
+            "EnableAssertPushValidStability",
+            "EnableAssertPushDataStability",
+        ): [
+            ("0", "0", "1"),
+            ("0", "1", "0"),
+            ("0", "1", "1"),
+            ("1", "0", "1"),
+        ],
+    },
+    params = {
+        "EnableCoverPushBackpressure": [
+            "0",
+            "1",
+        ],
+        "EnableAssertPushValidStability": [
+            "0",
+            "1",
+        ],
+        "EnableAssertPushDataStability": [
+            "0",
+            "1",
+        ],
+    },
+    tools = {
+        "jg": "br_fifo_shared_dynamic_ctrl_ext_arbiter_fpv.jg.tcl",
+    },
+    top = "br_fifo_shared_dynamic_ctrl_ext_arbiter",
+    deps = [":br_fifo_shared_dynamic_ctrl_ext_arbiter_fpv_monitor"],
+)
+
+#################################################################
+# Bedrock-RTL Shared Dynamic Multi-FIFO Controller (Push Valid/Ready Interface) with external arbiter interface
+verilog_library(
+    name = "br_fifo_shared_dynamic_ctrl_push_credit_ext_arbiter_fpv_monitor",
+    srcs = ["br_fifo_shared_dynamic_ctrl_push_credit_ext_arbiter_fpv_monitor.sv"],
+    deps = [
+        ":ext_arb_fv_monitor",
+        "//fifo/fpv:br_credit_receiver_fpv_monitor",
+        "//fifo/fpv:br_fifo_fv_ram",
+        "//fifo/fpv/br_fifo_shared_dynamic:br_fifo_shared_dynamic_basic_fpv_monitor",
+        "//fifo/rtl:br_fifo_shared_dynamic_ctrl_push_credit_ext_arbiter",
+        "//macros:br_fv",
+    ],
+)
+
+verilog_elab_test(
+    name = "br_fifo_shared_dynamic_ctrl_push_credit_ext_arbiter_fpv_monitor_elab_test",
+    custom_tcl_header = "//:elab_test_jg_custom_header.verific.tcl",
+    tool = "verific",
+    deps = [":br_fifo_shared_dynamic_ctrl_push_credit_ext_arbiter_fpv_monitor"],
+)
+
+br_verilog_fpv_test_tools_suite(
+    name = "br_fifo_shared_dynamic_ctrl_push_credit_ext_arbiter_test_port",
+    params = {
+        "NumWritePorts": [
+            "1",
+            "2",
+        ],
+        "NumReadPorts": [
+            "1",
+            "2",
+        ],
+        "NumFifos": [
+            "2",
+            "3",
+        ],
+        "Depth": [
+            "5",
+        ],
+        "NumLinkedListsPerFifo": [
+            "1",
+            "2",
+        ],
+    },
+    tools = {
+        "jg": "br_fifo_shared_dynamic_ctrl_push_credit_ext_arbiter_fpv.jg.tcl",
+    },
+    top = "br_fifo_shared_dynamic_ctrl_push_credit_ext_arbiter",
+    deps = [":br_fifo_shared_dynamic_ctrl_push_credit_ext_arbiter_fpv_monitor"],
+)
+
+br_verilog_fpv_test_tools_suite(
+    name = "br_fifo_shared_dynamic_ctrl_push_credit_ext_arbiter_test_latency",
+    params = {
+        "StagingBufferDepth": [
+            "1",
+            "2",
+        ],
+        "RegisterPopOutputs": [
+            "0",
+            "1",
+        ],
+        "RegisterPushOutputs": [
+            "0",
+            "1",
+        ],
+        "RegisterDeallocation": [
+            "0",
+            "1",
+        ],
+        "DataRamReadLatency": [
+            "0",
+            "2",
+        ],
+        "PointerRamReadLatency": [
+            "0",
+            "1",
+        ],
+    },
+    tools = {
+        "jg": "br_fifo_shared_dynamic_ctrl_push_credit_ext_arbiter_fpv.jg.tcl",
+    },
+    top = "br_fifo_shared_dynamic_ctrl_push_credit_ext_arbiter",
+    deps = [":br_fifo_shared_dynamic_ctrl_push_credit_ext_arbiter_fpv_monitor"],
+)

@@ -1,21 +1,13 @@
-// Copyright 2024-2025 The Bedrock-RTL Authors
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//     http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
+// SPDX-License-Identifier: Apache-2.0
+
 
 `include "br_asserts.svh"
 `include "br_registers.svh"
 
 module isolate_axi_protocol_fv_check #(
+    parameter bit ReadInterleaveOn = 1,
+    // if there is no valid, ready doesn't have to be high eventually
+    parameter bit ValidBeforeReady = 1,
     parameter int AddrWidth = 12,
     parameter int DataWidth = 32,
     parameter int IdWidth = 1,
@@ -42,6 +34,7 @@ module isolate_axi_protocol_fv_check #(
     input logic [          AxiBurstLenWidth-1:0] upstream_awlen,
     input logic [br_amba::AxiBurstSizeWidth-1:0] upstream_awsize,
     input logic [br_amba::AxiBurstTypeWidth-1:0] upstream_awburst,
+    input logic [    br_amba::AxiCacheWidth-1:0] upstream_awcache,
     input logic [     br_amba::AxiProtWidth-1:0] upstream_awprot,
     input logic [               AWUserWidth-1:0] upstream_awuser,
     input logic                                  upstream_awvalid,
@@ -62,6 +55,7 @@ module isolate_axi_protocol_fv_check #(
     input logic [          AxiBurstLenWidth-1:0] upstream_arlen,
     input logic [br_amba::AxiBurstSizeWidth-1:0] upstream_arsize,
     input logic [br_amba::AxiBurstTypeWidth-1:0] upstream_arburst,
+    input logic [    br_amba::AxiCacheWidth-1:0] upstream_arcache,
     input logic [     br_amba::AxiProtWidth-1:0] upstream_arprot,
     input logic [               ARUserWidth-1:0] upstream_aruser,
     input logic                                  upstream_arvalid,
@@ -79,6 +73,7 @@ module isolate_axi_protocol_fv_check #(
     input logic [          AxiBurstLenWidth-1:0] downstream_awlen,
     input logic [br_amba::AxiBurstSizeWidth-1:0] downstream_awsize,
     input logic [br_amba::AxiBurstTypeWidth-1:0] downstream_awburst,
+    input logic [    br_amba::AxiCacheWidth-1:0] downstream_awcache,
     input logic [     br_amba::AxiProtWidth-1:0] downstream_awprot,
     input logic [               AWUserWidth-1:0] downstream_awuser,
     input logic                                  downstream_awvalid,
@@ -99,6 +94,7 @@ module isolate_axi_protocol_fv_check #(
     input logic [          AxiBurstLenWidth-1:0] downstream_arlen,
     input logic [br_amba::AxiBurstSizeWidth-1:0] downstream_arsize,
     input logic [br_amba::AxiBurstTypeWidth-1:0] downstream_arburst,
+    input logic [    br_amba::AxiCacheWidth-1:0] downstream_arcache,
     input logic [     br_amba::AxiProtWidth-1:0] downstream_arprot,
     input logic [               ARUserWidth-1:0] downstream_aruser,
     input logic                                  downstream_arvalid,
@@ -112,6 +108,9 @@ module isolate_axi_protocol_fv_check #(
     input logic                                  downstream_rready
 );
 
+  // ABVIP should send more than DUT to test backpressure
+  localparam int MaxPending = MaxOutstanding + 2;
+
   // FV 4-phase handshake modeling
   fv_4phase_handshake #(
       .Master(1)
@@ -124,16 +123,29 @@ module isolate_axi_protocol_fv_check #(
 
   // upstream
   axi4_master #(
-      .ADDR_WIDTH(AddrWidth),
-      .DATA_WIDTH(DataWidth),
       .ID_WIDTH(IdWidth),
+      .ADDR_WIDTH(AddrWidth),
+      .LEN_WIDTH(AxiBurstLenWidth),
+      .SIZE_WIDTH(br_amba::AxiBurstSizeWidth),
+      .BURST_WIDTH(br_amba::AxiBurstTypeWidth),
+      .PROT_WIDTH(br_amba::AxiProtWidth),
+      .CACHE_WIDTH(br_amba::AxiCacheWidth),
+      .DATA_WIDTH(DataWidth),
       .AWUSER_WIDTH(AWUserWidth),
       .ARUSER_WIDTH(ARUserWidth),
       .WUSER_WIDTH(WUserWidth),
       .BUSER_WIDTH(BUserWidth),
       .RUSER_WIDTH(RUserWidth),
-      .MAX_PENDING(MaxOutstanding),
-      .AXI4_LITE(MaxAxiBurstLen == 1)
+      .BRESP_WIDTH(br_amba::AxiRespWidth),
+      .MAX_PENDING(MaxPending),
+      .AXI4_LITE(MaxAxiBurstLen == 1),
+      .READ_INTERLEAVE_ON(ReadInterleaveOn),
+      // when there is no valid, ready doesn't have to be high eventually
+      // This will only turn off assertion without precondition: `STRENGTH(##[0:$] arready
+      // (arvalid && !arready) |=> `STRENGTH(##[0:$] arready) is still enabled
+      .CONFIG_WAIT_FOR_VALID_BEFORE_READY(ValidBeforeReady),
+      .ALLOW_SPARSE_STROBE(1),
+      .BYTE_STROBE_ON(1)
   ) upstream (
       // Global signals
       .aclk    (clk),
@@ -152,7 +164,7 @@ module isolate_axi_protocol_fv_check #(
       .awuser  (upstream_awuser),
       .awprot  (upstream_awprot),
       .awlock  (),
-      .awcache (),
+      .awcache (upstream_awcache),
       .awqos   (),
       .awregion(),
       // Write Channel
@@ -179,7 +191,7 @@ module isolate_axi_protocol_fv_check #(
       .aruser  (upstream_aruser),
       .arprot  (upstream_arprot),
       .arlock  (),
-      .arcache (),
+      .arcache (upstream_arcache),
       .arqos   (),
       .arregion(),
       // Read Channel
@@ -194,17 +206,29 @@ module isolate_axi_protocol_fv_check #(
 
   // downstream
   axi4_slave #(
-      .ADDR_WIDTH(AddrWidth),
-      .DATA_WIDTH(DataWidth),
       .ID_WIDTH(IdWidth),
+      .ADDR_WIDTH(AddrWidth),
+      .LEN_WIDTH(AxiBurstLenWidth),
+      .SIZE_WIDTH(br_amba::AxiBurstSizeWidth),
+      .BURST_WIDTH(br_amba::AxiBurstTypeWidth),
+      .PROT_WIDTH(br_amba::AxiProtWidth),
+      .CACHE_WIDTH(br_amba::AxiCacheWidth),
+      .DATA_WIDTH(DataWidth),
       .AWUSER_WIDTH(AWUserWidth),
       .ARUSER_WIDTH(ARUserWidth),
       .WUSER_WIDTH(WUserWidth),
       .BUSER_WIDTH(BUserWidth),
       .RUSER_WIDTH(RUserWidth),
-      .MAX_PENDING(MaxOutstanding),
+      .BRESP_WIDTH(br_amba::AxiRespWidth),
+      .MAX_PENDING(MaxPending),
       .AXI4_LITE(MaxAxiBurstLen == 1),
-      .READ_INTERLEAVE_ON(0)  // not supported by br_amba_axi_isolate_sub
+      .READ_INTERLEAVE_ON(ReadInterleaveOn),  // not supported by br_amba_axi_isolate_sub
+      // when there is no valid, ready doesn't have to be high eventually
+      // This will only turn off assertion without precondition: `STRENGTH(##[0:$] arready
+      // (arvalid && !arready) |=> `STRENGTH(##[0:$] arready) is still enabled
+      .CONFIG_WAIT_FOR_VALID_BEFORE_READY(ValidBeforeReady),
+      .ALLOW_SPARSE_STROBE(1),
+      .BYTE_STROBE_ON(1)
   ) downstream (
       // Global signals
       .aclk    (clk),
@@ -223,7 +247,7 @@ module isolate_axi_protocol_fv_check #(
       .awuser  (downstream_awuser),
       .awprot  (downstream_awprot),
       .awlock  ('d0),
-      .awcache ('d0),
+      .awcache (downstream_awcache),
       .awqos   ('d0),
       .awregion('d0),
       // Write Channel
@@ -250,7 +274,7 @@ module isolate_axi_protocol_fv_check #(
       .aruser  (downstream_aruser),
       .arprot  (downstream_arprot),
       .arlock  ('d0),
-      .arcache ('d0),
+      .arcache (downstream_arcache),
       .arqos   ('d0),
       .arregion('d0),
       // Read Channel

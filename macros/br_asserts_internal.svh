@@ -1,16 +1,5 @@
-// Copyright 2024-2025 The Bedrock-RTL Authors
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//     http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
+// SPDX-License-Identifier: Apache-2.0
+
 
 `ifndef BR_ASSERTS_INTERNAL_SVH
 `define BR_ASSERTS_INTERNAL_SVH
@@ -233,6 +222,16 @@
 `BR_NOOP
 `endif  // BR_DISABLE_INTG_CHECKS
 
+// Clock: 'clk'
+// Reset: 'rst'
+`ifndef BR_DISABLE_INTG_CHECKS
+`define BR_COVER_INCL_RST_INTG(__name__, __expr__) \
+`BR_COVER_INCL_RST(__name__, __expr__)
+`else  // BR_DISABLE_INTG_CHECKS
+`define BR_COVER_INCL_RST_INTG(__name__, __expr__) \
+`BR_NOOP
+`endif  // BR_DISABLE_INTG_CHECKS
+
 // More expressive form of BR_COVER_INTG that allows the use of custom clock and reset signal names.
 `ifndef BR_DISABLE_INTG_CHECKS
 `define BR_COVER_CR_INTG(__name__, __expr__, __clk__, __rst__) \
@@ -249,6 +248,16 @@
 `BR_COVER(__name__, __expr__)
 `else  // BR_ENABLE_IMPL_CHECKS
 `define BR_COVER_IMPL(__name__, __expr__) \
+`BR_NOOP
+`endif  // BR_ENABLE_IMPL_CHECKS
+
+// Clock: 'clk'
+// Reset: 'rst'
+`ifdef BR_ENABLE_IMPL_CHECKS
+`define BR_COVER_INCL_RST_IMPL(__name__, __expr__) \
+`BR_COVER_INCL_RST(__name__, __expr__)
+`else  // BR_ENABLE_IMPL_CHECKS
+`define BR_COVER_INCL_RST_IMPL(__name__, __expr__) \
 `BR_NOOP
 `endif  // BR_ENABLE_IMPL_CHECKS
 

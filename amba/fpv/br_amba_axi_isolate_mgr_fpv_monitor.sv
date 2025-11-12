@@ -1,16 +1,5 @@
-// Copyright 2024-2025 The Bedrock-RTL Authors
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//     http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
+// SPDX-License-Identifier: Apache-2.0
+
 
 // Bedrock-RTL AXI4 to AXI4-Lite Bridge FPV checks
 
@@ -65,6 +54,7 @@ module br_amba_axi_isolate_mgr_fpv_monitor #(
     input logic [          AxiBurstLenWidth-1:0] upstream_awlen,
     input logic [br_amba::AxiBurstSizeWidth-1:0] upstream_awsize,
     input logic [br_amba::AxiBurstTypeWidth-1:0] upstream_awburst,
+    input logic [    br_amba::AxiCacheWidth-1:0] upstream_awcache,
     input logic [     br_amba::AxiProtWidth-1:0] upstream_awprot,
     input logic [               AWUserWidth-1:0] upstream_awuser,
     input logic                                  upstream_awvalid,
@@ -85,6 +75,7 @@ module br_amba_axi_isolate_mgr_fpv_monitor #(
     input logic [          AxiBurstLenWidth-1:0] upstream_arlen,
     input logic [br_amba::AxiBurstSizeWidth-1:0] upstream_arsize,
     input logic [br_amba::AxiBurstTypeWidth-1:0] upstream_arburst,
+    input logic [    br_amba::AxiCacheWidth-1:0] upstream_arcache,
     input logic [     br_amba::AxiProtWidth-1:0] upstream_arprot,
     input logic [               ARUserWidth-1:0] upstream_aruser,
     input logic                                  upstream_arvalid,
@@ -102,6 +93,7 @@ module br_amba_axi_isolate_mgr_fpv_monitor #(
     input logic [          AxiBurstLenWidth-1:0] downstream_awlen,
     input logic [br_amba::AxiBurstSizeWidth-1:0] downstream_awsize,
     input logic [br_amba::AxiBurstTypeWidth-1:0] downstream_awburst,
+    input logic [    br_amba::AxiCacheWidth-1:0] downstream_awcache,
     input logic [     br_amba::AxiProtWidth-1:0] downstream_awprot,
     input logic [               AWUserWidth-1:0] downstream_awuser,
     input logic                                  downstream_awvalid,
@@ -122,6 +114,7 @@ module br_amba_axi_isolate_mgr_fpv_monitor #(
     input logic [          AxiBurstLenWidth-1:0] downstream_arlen,
     input logic [br_amba::AxiBurstSizeWidth-1:0] downstream_arsize,
     input logic [br_amba::AxiBurstTypeWidth-1:0] downstream_arburst,
+    input logic [    br_amba::AxiCacheWidth-1:0] downstream_arcache,
     input logic [     br_amba::AxiProtWidth-1:0] downstream_arprot,
     input logic [               ARUserWidth-1:0] downstream_aruser,
     input logic                                  downstream_arvalid,
@@ -151,6 +144,7 @@ module br_amba_axi_isolate_mgr_fpv_monitor #(
   `BR_ASSERT(eventually_back_to_normal_a, $fell(isolate_req) |-> s_eventually $fell(isolate_done))
 
   isolate_axi_protocol_fv_check #(
+      .ReadInterleaveOn(1),
       .AddrWidth(AddrWidth),
       .DataWidth(DataWidth),
       .IdWidth(IdWidth),
@@ -173,6 +167,7 @@ module br_amba_axi_isolate_mgr_fpv_monitor #(
       .upstream_awlen,
       .upstream_awsize,
       .upstream_awburst,
+      .upstream_awcache,
       .upstream_awprot,
       .upstream_awuser,
       .upstream_awvalid,
@@ -193,6 +188,7 @@ module br_amba_axi_isolate_mgr_fpv_monitor #(
       .upstream_arlen,
       .upstream_arsize,
       .upstream_arburst,
+      .upstream_arcache,
       .upstream_arprot,
       .upstream_aruser,
       .upstream_arvalid,
@@ -209,6 +205,7 @@ module br_amba_axi_isolate_mgr_fpv_monitor #(
       .downstream_awlen,
       .downstream_awsize,
       .downstream_awburst,
+      .downstream_awcache,
       .downstream_awprot,
       .downstream_awuser,
       .downstream_awvalid,
@@ -229,6 +226,7 @@ module br_amba_axi_isolate_mgr_fpv_monitor #(
       .downstream_arlen,
       .downstream_arsize,
       .downstream_arburst,
+      .downstream_arcache,
       .downstream_arprot,
       .downstream_aruser,
       .downstream_arvalid,

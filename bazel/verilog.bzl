@@ -1,16 +1,4 @@
-# Copyright 2024-2025 The Bedrock-RTL Authors
-#
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
-#
-#     http://www.apache.org/licenses/LICENSE-2.0
-#
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
+# SPDX-License-Identifier: Apache-2.0
 
 """Verilog rules for Bazel."""
 
@@ -78,6 +66,29 @@ def _write_executable_shell_script(ctx, executable_file, cmd, verbose = True, en
         is_executable = True,
     )
 
+VerilogRunnerFlagsInfo = provider(
+    fields = ["name", "runner_flags"],
+    doc = "Verilog Runner flags provider",
+)
+
+def _runner_flags_impl(ctx):
+    runner_flags = ctx.build_setting_value.split(" ")
+
+    return [
+        VerilogRunnerFlagsInfo(
+            name = ctx.label.name,
+            runner_flags = runner_flags,
+        ),
+    ]
+
+runner_flags = rule(
+    doc = """
+      Build configuration for Verilog Runner flags from command line
+    """,
+    implementation = _runner_flags_impl,
+    build_setting = config.string(flag = True),
+)
+
 def _verilog_base_impl(ctx, subcmd, test = True, extra_args = [], extra_runfiles = []):
     """Shared implementation for rule_verilog_elab_test, rule_verilog_lint_test, rule_verilog_sim_test, and rule_verilog_fpv_test.
 
@@ -91,7 +102,8 @@ def _verilog_base_impl(ctx, subcmd, test = True, extra_args = [], extra_runfiles
     Returns:
         DefaultInfo for the rule that describes the runfiles, depset, and executable
     """
-    runfiles = []
+    data_files = getattr(ctx.files, "data", [])
+    runfiles = list(data_files)
     runfiles += ctx.files.verilog_runner_tool
     runfiles += ctx.files.verilog_runner_plugins
     srcs = get_transitive(ctx = ctx, srcs_not_hdrs = True).to_list()
@@ -134,6 +146,8 @@ def _verilog_base_impl(ctx, subcmd, test = True, extra_args = [], extra_runfiles
         else:
             args.append("--custom_tcl_body=" + ctx.files.custom_tcl_body[0].path)
         runfiles += ctx.files.custom_tcl_body
+    if ctx.attr.runner_flags:
+        args += ctx.attr.runner_flags[VerilogRunnerFlagsInfo].runner_flags
     args += extra_args
 
     # TODO: This is a hack. We should use the py_binary target directly, but I'm not sure how to get the environment
@@ -329,6 +343,12 @@ rule_verilog_elab_test = rule(
                    "Do not include Tcl commands that manipulate sources, headers, defines, or parameters, as those will be handled by the rule implementation."),
             allow_single_file = [".tcl"],
         ),
+        "runner_flags": attr.label(
+            doc = "command line flags",
+            allow_files = False,
+            providers = [VerilogRunnerFlagsInfo],
+            default = "//bazel:runner_flags",
+        ),
     },
     test = True,
 )
@@ -400,6 +420,12 @@ rule_verilog_lint_test = rule(
                    "The tcl body (custom or not) is unconditionally followed by the tcl footer." +
                    "Do not include Tcl commands that manipulate sources, headers, defines, or parameters, as those will be handled by the rule implementation."),
             allow_single_file = [".tcl"],
+        ),
+        "runner_flags": attr.label(
+            doc = "command line flags",
+            allow_files = False,
+            providers = [VerilogRunnerFlagsInfo],
+            default = "//bazel:runner_flags",
         ),
     },
     test = True,
@@ -487,6 +513,12 @@ rule_verilog_sim_test = rule(
             doc = "Enable waveform dumping.",
             default = False,
         ),
+        "runner_flags": attr.label(
+            doc = "command line flags",
+            allow_files = False,
+            providers = [VerilogRunnerFlagsInfo],
+            default = "//bazel:runner_flags",
+        ),
     },
     test = True,
 )
@@ -566,6 +598,10 @@ rule_verilog_fpv_test = rule(
             allow_files = True,
             doc = "Verilog runner plugins to load from this workspace, in addition to those loaded from VERILOG_RUNNER_PLUGIN_PATH.",
         ),
+        "data": attr.label_list(
+            doc = "Additional files to copy into the runfiles tree for the FPV job.",
+            allow_files = True,
+        ),
         "tool": attr.string(
             doc = "Formal tool to use.",
             mandatory = True,
@@ -589,6 +625,12 @@ rule_verilog_fpv_test = rule(
         "conn": attr.bool(
             doc = "Switch to connectivity",
             default = False,
+        ),
+        "runner_flags": attr.label(
+            doc = "jg flags",
+            allow_files = False,
+            providers = [VerilogRunnerFlagsInfo],
+            default = "//bazel:runner_flags",
         ),
     },
     test = True,
@@ -651,6 +693,10 @@ rule_verilog_fpv_sandbox = rule(
             allow_files = True,
             doc = "Verilog runner plugins to load from this workspace, in addition to those loaded from VERILOG_RUNNER_PLUGIN_PATH.",
         ),
+        "data": attr.label_list(
+            doc = "Additional files to copy into the sandbox tarball.",
+            allow_files = True,
+        ),
         "tool": attr.string(
             doc = "Formal tool to use.",
             mandatory = True,
@@ -674,6 +720,12 @@ rule_verilog_fpv_sandbox = rule(
         "conn": attr.bool(
             doc = "Switch to connectivity",
             default = False,
+        ),
+        "runner_flags": attr.label(
+            doc = "jg flags",
+            allow_files = False,
+            providers = [VerilogRunnerFlagsInfo],
+            default = "//bazel:runner_flags",
         ),
     },
     outputs = {
@@ -772,7 +824,15 @@ def verilog_elab_and_lint_test_suite(
         **kwargs
     )
 
-def verilog_fpv_test_suite(name, defines = [], params = {}, illegal_param_combinations = {}, sandbox = True, **kwargs):
+def verilog_fpv_test_suite(
+        name,
+        defines = [],
+        params = {},
+        illegal_param_combinations = {},
+        sandbox = True,
+        verilog_fpv_test_func = None,
+        verilog_fpv_sandbox_func = None,
+        **kwargs):
     """Creates a suite of Verilog fpv tests for each combination of the provided parameters.
 
     The function generates all possible combinations of the provided parameters and creates a verilog_fpv_test
@@ -785,8 +845,17 @@ def verilog_fpv_test_suite(name, defines = [], params = {}, illegal_param_combin
         params (dict): A dictionary where keys are parameter names and values are lists of possible values for those parameters.
         illegal_param_combinations (dict): A dictionary where keys are parameter tuples and values are lists of illegal values for those parameters.
         sandbox (bool): Whether to create a sandbox for the test.
+        verilog_fpv_test_func (function): A function to use instead of verilog_fpv_test.
+        verilog_fpv_sandbox_func (function): A function to use instead of rule_verilog_fpv_sandbox.
         **kwargs: Additional keyword arguments to be passed to the verilog_elab_test and verilog_lint_test functions.
     """
+
+    # Set defaults if none provided
+    if verilog_fpv_test_func == None:
+        verilog_fpv_test_func = verilog_fpv_test
+    if verilog_fpv_sandbox_func == None:
+        verilog_fpv_sandbox_func = rule_verilog_fpv_sandbox
+
     param_keys = sorted(params.keys())
     param_values_list = [params[key] for key in param_keys]
     param_combinations = _cartesian_product(param_values_list)
@@ -803,14 +872,14 @@ def verilog_fpv_test_suite(name, defines = [], params = {}, illegal_param_combin
                 skip = True
                 break
         if not skip:
-            verilog_fpv_test(
+            verilog_fpv_test_func(
                 name = _make_test_name(name, "fpv_test", param_keys, param_combination),
                 defines = defines,
                 params = params,
                 **kwargs
             )
             if sandbox:
-                rule_verilog_fpv_sandbox(
+                verilog_fpv_sandbox_func(
                     name = _make_test_name(name, "fpv_sandbox", param_keys, param_combination),
                     defines = defines,
                     params = params,
@@ -851,7 +920,7 @@ def _generate_parameter_file_impl(ctx):
     param_keys = sorted(params.keys())
     param_values_list = [params[key] for key in param_keys]
     param_combinations = [
-        dict(zip(param_keys, [int(x) for x in param_values]))
+        dict(zip(param_keys, [x for x in param_values]))
         for param_values in _cartesian_product(param_values_list)
     ]
 

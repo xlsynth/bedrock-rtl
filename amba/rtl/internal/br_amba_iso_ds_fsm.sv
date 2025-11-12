@@ -1,16 +1,5 @@
-// Copyright 2024-2025 The Bedrock-RTL Authors
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//     http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
+// SPDX-License-Identifier: Apache-2.0
+
 
 // Bedrock-RTL AMBA AXI Downstream (Subordinate) Isolator State Machine
 //
@@ -45,6 +34,7 @@ module br_amba_iso_ds_fsm (
   iso_ds_fsm_state_t state, state_next;
   `BR_REGI(state, state_next, Normal)
 
+  `BR_ASSERT(fsm_state_legal_a, state == Normal || state == Isolate || state == Flush)
   always_comb begin
     case (state)
       Normal: begin
@@ -69,7 +59,6 @@ module br_amba_iso_ds_fsm (
         isolate_done = 1'b1;
       end
       default: begin
-        `BR_ASSERT_IMM(invalid_state_a, 0)
         state_next = Normal;
         //
         align_and_hold_req = 1'b0;

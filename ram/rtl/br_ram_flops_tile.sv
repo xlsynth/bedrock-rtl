@@ -1,16 +1,5 @@
-// Copyright 2024-2025 The Bedrock-RTL Authors
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//     http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
+// SPDX-License-Identifier: Apache-2.0
+
 
 // Bedrock-RTL Flop-RAM Tile
 //
@@ -52,6 +41,10 @@ module br_ram_flops_tile #(
     // If 1, use structured mux2 gates for the read mux instead of relying on synthesis.
     // This is required if write and read clocks are different.
     parameter bit UseStructuredGates = 0,
+    // If 1 and UseStructuredGates is 1, then the read data is qualified with the
+    // rd_data_valid signal, 0 when not valid. Should generally always be 1 for CDC
+    // use cases.
+    parameter bit EnableStructuredGatesDataQualification = 1,
     // If 1, then assert there are no valid bits asserted at the end of the test.
     parameter bit EnableAssertFinalNotValid = 1,
     localparam int AddrWidth = br_math::clamped_clog2(Depth),
@@ -75,6 +68,7 @@ module br_ram_flops_tile #(
     // ri lint_check_waive INPUT_NOT_READ HIER_NET_NOT_READ HIER_BRANCH_NOT_READ
     input  logic                                   rd_rst,
     input  logic [NumReadPorts-1:0]                rd_addr_valid,
+    // ri lint_check_waive FANOUT_LIMIT
     input  logic [NumReadPorts-1:0][AddrWidth-1:0] rd_addr,
     output logic [NumReadPorts-1:0]                rd_data_valid,
     output logic [NumReadPorts-1:0][    Width-1:0] rd_data
@@ -101,17 +95,14 @@ module br_ram_flops_tile #(
     `BR_ASSERT_STATIC(width_divisible_by_word_width_a, (Width % WordWidth) == 0)
   end
 
-  // If EnableBypass is 1 or UseStructuredGates is 0,
-  // we must use the same clock for both read and write.
-  if (EnableBypass || !UseStructuredGates) begin : gen_same_clock_check
-    // ri lint_check_waive ALWAYS_COMB
-    `BR_ASSERT_COMB_INTG(same_clock_a, wr_clk == rd_clk)
-  end
-
   if (EnableAssertFinalNotValid) begin : gen_assert_final
     `BR_ASSERT_FINAL(final_not_wr_valid_a, !(|wr_valid))
     `BR_ASSERT_FINAL(final_not_rd_addr_valid_a, !(|rd_addr_valid))
     `BR_ASSERT_FINAL(final_not_rd_data_valid_a, !(|rd_data_valid))
+  end
+
+  if (NumReadPorts > 1) begin : gen_multi_read_checks
+    `BR_COVER_CR_INTG(all_rd_ports_active_a, &rd_addr_valid, rd_clk, rd_rst)
   end
 
   if (NumWritePorts > 1) begin : gen_write_conflict_checks
@@ -125,6 +116,7 @@ module br_ram_flops_tile #(
             wr_rst)
       end
     end
+    `BR_COVER_CR_INTG(all_wr_ports_active_a, &wr_valid, wr_clk, wr_rst)
   end
 
   //------------------------------------------
@@ -354,6 +346,9 @@ module br_ram_flops_tile #(
 
       if (UseStructuredGates) begin : gen_structured_read
         logic [Depth-1:0][Width-1:0] mem_packed;
+        // ri lint_check_waive VAR_NAME
+        logic [NumWords-1:0][WordWidth-1:0] _BR_CDC_PRESERVE_NET__rd_data_mem_unqual;
+
 
         for (genvar i = 0; i < Depth; i++) begin : gen_mem_packed
           assign mem_packed[i] = mem[i];
@@ -365,9 +360,23 @@ module br_ram_flops_tile #(
         ) br_mux_bin_structured_gates_inst (
             .select(rd_addr[rport]),
             .in(mem_packed),
-            .out(rd_data_mem),
+            .out(_BR_CDC_PRESERVE_NET__rd_data_mem_unqual),
             .out_valid()
         );
+
+        if (EnableStructuredGatesDataQualification) begin : gen_data_qualification
+          for (genvar j = 0; j < NumWords; j++) begin : gen_data_qualification_word
+            for (genvar k = 0; k < WordWidth; k++) begin : gen_data_qualification_word_bit
+              br_gate_and2 br_gate_and2_inst (
+                  .in0(_BR_CDC_PRESERVE_NET__rd_data_mem_unqual[j][k]),
+                  .in1(rd_data_valid[rport]),
+                  .out(rd_data_mem[j][k])
+              );
+            end
+          end
+        end else begin : gen_no_data_qualification
+          assign rd_data_mem = _BR_CDC_PRESERVE_NET__rd_data_mem_unqual;
+        end
       end else begin : gen_behavioral_read
         // This coding style is more friendly for emulation than using br_mux_bin.
         // ri lint_check_waive VAR_INDEX_READ

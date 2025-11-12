@@ -1,16 +1,5 @@
-// Copyright 2024-2025 The Bedrock-RTL Authors
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//     http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
+// SPDX-License-Identifier: Apache-2.0
+
 
 // Bedrock-RTL CDC FIFO (Internal 1R1W Flop-RAM, Push Ready/Valid, Pop Ready/Valid Variant)
 
@@ -18,6 +7,7 @@
 `include "br_registers.svh"
 
 module br_cdc_fifo_flops_fpv_monitor #(
+    parameter bit Jasper = 1,  // If 1 use Jasper scoreboard, else use Synopsys FML scoreboard
     parameter int Depth = 2,  // Number of entries in the FIFO. Must be at least 2.
     parameter int Width = 1,  // Width of each entry in the FIFO. Must be at least 1.
     // If 1, then ensure pop_valid/pop_data always come directly from a register
@@ -40,6 +30,10 @@ module br_cdc_fifo_flops_fpv_monitor #(
     // Number of pipeline register stages inserted along the read data path in the width dimension.
     // Must be at least 0.
     parameter int FlopRamReadDataWidthStages = 0,
+    // If 1 then the read data is qualified with the rd_data_valid signal, 0 when not valid. Should
+    // generally always be 1, unless gating logic is managed externally (including netlist-level
+    // concerns!).
+    parameter bit EnableStructuredGatesDataQualification = 1,
     // If 1, cover that the push side experiences backpressure.
     // If 0, assert that there is never backpressure.
     parameter bit EnableCoverPushBackpressure = 1,
@@ -99,6 +93,7 @@ module br_cdc_fifo_flops_fpv_monitor #(
       .FlopRamAddressDepthStages(FlopRamAddressDepthStages),
       .FlopRamReadDataDepthStages(FlopRamReadDataDepthStages),
       .FlopRamReadDataWidthStages(FlopRamReadDataWidthStages),
+      .EnableStructuredGatesDataQualification(EnableStructuredGatesDataQualification),
       .EnableCoverPushBackpressure(EnableCoverPushBackpressure),
       .EnableAssertPushValidStability(EnableAssertPushValidStability),
       .EnableAssertPushDataStability(EnableAssertPushDataStability),
@@ -122,6 +117,7 @@ module br_cdc_fifo_flops_fpv_monitor #(
 
   // ----------Instantiate CDC FIFO FV basic checks----------
   br_cdc_fifo_basic_fpv_monitor #(
+      .Jasper(Jasper),
       .Depth(Depth),
       .Width(Width),
       .NumSyncStages(NumSyncStages),
@@ -141,12 +137,15 @@ module br_cdc_fifo_flops_fpv_monitor #(
       .pop_clk,
       .pop_rst,
       .pop_ready,
-      .pop_valid,
+      .pop_valid(pop_valid && !pop_rst),
       .pop_data,
       .push_full,
       .push_slots,
       .pop_empty,
       .pop_items
   );
+
+  `BR_ASSERT_CR(no_valid_data_stable_a, ##1 !pop_valid && !$fell(pop_valid) |-> $stable(pop_data),
+                pop_clk, pop_rst)
 
 endmodule : br_cdc_fifo_flops_fpv_monitor

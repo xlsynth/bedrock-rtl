@@ -1,16 +1,5 @@
-// Copyright 2025 The Bedrock-RTL Authors
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//     http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
+// SPDX-License-Identifier: Apache-2.0
+
 //
 // Bedrock-RTL AXI Downstream (Subordinate) Isolator
 //
@@ -85,12 +74,46 @@ module br_amba_axi_isolate_sub #(
     parameter bit [RUserWidth-1:0] IsolateRUser = '0,
     // RDATA data to generate for isolated transactions.
     parameter bit [DataWidth-1:0] IsolateRData = '0,
-    // Number of pipeline stages to use for the pointer RAM read
-    // data. Has no effect if AxiIdCount == 1.
-    parameter bit FlopPtrRamRd = 0,
-    // Number of pipeline stages to use for the data RAM read data.
-    // Has no effect if AxiIdCount == 1.
-    parameter bit FlopDataRamRd = 0,
+    // Set to 1 to use a dynamic storage shared FIFO for the read tracking
+    // list.
+    parameter bit UseDynamicFifoForReadTracker = 1,
+    // When UseDynamicFifoForReadTracker=0, this parameter controls the depth
+    // of the Per-ID tracking FIFO. This defaults to MaxOutstanding, but may
+    // need to be set to a smaller value as the storage will be replicated for
+    // each ID.
+    parameter int StaticPerIdReadTrackerFifoDepth = MaxOutstanding,
+    // Number of pipeline stages to use for the pointer RAM read data in the
+    // response tracker FIFO. Has no effect if AxiIdCount == 1 or
+    // UseDynamicFifoForReadTracker == 0.
+    parameter int DynamicFifoPointerRamReadDataDepthStages = 0,
+    // Number of pipeline stages to use for the data RAM read data in the
+    // response tracker FIFO. Has no effect if AxiIdCount == 1 or
+    // UseDynamicFifoForReadTracker == 0.
+    parameter int DynamicFifoDataRamReadDataDepthStages = 0,
+    // Number of pipeline stages to use for the pointer RAM address in the
+    // response tracker FIFO. Has no effect if AxiIdCount == 1 or
+    // UseDynamicFifoForReadTracker == 0.
+    parameter int DynamicFifoPointerRamAddressDepthStages = 1,
+    // Number of pipeline stages to use for the data RAM address in the
+    // response tracker FIFO. Has no effect if AxiIdCount == 1 or
+    // UseDynamicFifoForReadTracker == 0.
+    parameter int DynamicFifoDataRamAddressDepthStages = 1,
+    // Number of linked lists per FIFO in the response tracker FIFO. Has no
+    // effect if AxiIdCount == 1 or UseDynamicFifoForReadTracker == 0.
+    parameter int DynamicFifoNumLinkedListsPerFifo = 2,
+    // Number of pipeline stages to use for the staging buffer in the response
+    // tracker FIFO. Has no effect if AxiIdCount == 1 or
+    // UseDynamicFifoForReadTracker == 0.
+    parameter int DynamicFifoStagingBufferDepth = 2,
+    // Number of pipeline stages to use for the pop outputs in the response
+    // tracker FIFO. Has no effect if AxiIdCount == 1 or
+    // UseDynamicFifoForReadTracker == 0.
+    parameter int DynamicFifoRegisterPopOutputs = 1,
+    // Number of pipeline stages to use for the deallocation in the response
+    // tracker FIFO. Has no effect if AxiIdCount == 1 or
+    // UseDynamicFifoForReadTracker == 0.
+    parameter int DynamicFifoRegisterDeallocation = 1,
+    //
     localparam int AxiBurstLenWidth = br_math::clamped_clog2(MaxAxiBurstLen),
     localparam int StrobeWidth = DataWidth / 8
 ) (
@@ -105,6 +128,7 @@ module br_amba_axi_isolate_sub #(
     input  logic [          AxiBurstLenWidth-1:0] upstream_awlen,
     input  logic [br_amba::AxiBurstSizeWidth-1:0] upstream_awsize,
     input  logic [br_amba::AxiBurstTypeWidth-1:0] upstream_awburst,
+    input  logic [    br_amba::AxiCacheWidth-1:0] upstream_awcache,
     input  logic [     br_amba::AxiProtWidth-1:0] upstream_awprot,
     input  logic [               AWUserWidth-1:0] upstream_awuser,
     input  logic                                  upstream_awvalid,
@@ -125,6 +149,7 @@ module br_amba_axi_isolate_sub #(
     input  logic [          AxiBurstLenWidth-1:0] upstream_arlen,
     input  logic [br_amba::AxiBurstSizeWidth-1:0] upstream_arsize,
     input  logic [br_amba::AxiBurstTypeWidth-1:0] upstream_arburst,
+    input  logic [    br_amba::AxiCacheWidth-1:0] upstream_arcache,
     input  logic [     br_amba::AxiProtWidth-1:0] upstream_arprot,
     input  logic [               ARUserWidth-1:0] upstream_aruser,
     input  logic                                  upstream_arvalid,
@@ -142,6 +167,7 @@ module br_amba_axi_isolate_sub #(
     output logic [          AxiBurstLenWidth-1:0] downstream_awlen,
     output logic [br_amba::AxiBurstSizeWidth-1:0] downstream_awsize,
     output logic [br_amba::AxiBurstTypeWidth-1:0] downstream_awburst,
+    output logic [    br_amba::AxiCacheWidth-1:0] downstream_awcache,
     output logic [     br_amba::AxiProtWidth-1:0] downstream_awprot,
     output logic [               AWUserWidth-1:0] downstream_awuser,
     output logic                                  downstream_awvalid,
@@ -162,6 +188,7 @@ module br_amba_axi_isolate_sub #(
     output logic [          AxiBurstLenWidth-1:0] downstream_arlen,
     output logic [br_amba::AxiBurstSizeWidth-1:0] downstream_arsize,
     output logic [br_amba::AxiBurstTypeWidth-1:0] downstream_arburst,
+    output logic [    br_amba::AxiCacheWidth-1:0] downstream_arcache,
     output logic [     br_amba::AxiProtWidth-1:0] downstream_arprot,
     output logic [               ARUserWidth-1:0] downstream_aruser,
     output logic                                  downstream_arvalid,
@@ -279,13 +306,26 @@ module br_amba_axi_isolate_sub #(
       .AxiIdCount(AxiIdCount),
       .AxiIdWidth(IdWidth),
       .DataWidth(BUserWidth),
-      .FlopPtrRamRd(FlopPtrRamRd),
-      .FlopDataRamRd(FlopDataRamRd),
+      .DynamicFifoPointerRamReadDataDepthStages(DynamicFifoPointerRamReadDataDepthStages),
+      .DynamicFifoPointerRamAddressDepthStages(DynamicFifoPointerRamAddressDepthStages),
+      .DynamicFifoNumLinkedListsPerFifo(DynamicFifoNumLinkedListsPerFifo),
+      .DynamicFifoDataRamReadDataDepthStages(DynamicFifoDataRamReadDataDepthStages),
+      .DynamicFifoDataRamAddressDepthStages(DynamicFifoDataRamAddressDepthStages),
+      .DynamicFifoStagingBufferDepth(DynamicFifoStagingBufferDepth),
+      .DynamicFifoRegisterPopOutputs(DynamicFifoRegisterPopOutputs),
+      .DynamicFifoRegisterDeallocation(DynamicFifoRegisterDeallocation),
       .IsolateResp(IsolateResp),
       .IsolateData(IsolateBUser),
       // Single write response beat per write transaction
       .MaxAxiBurstLen(1),
-      .MaxTransactionSkew(MaxTransactionSkew)
+      .MaxTransactionSkew(MaxTransactionSkew),
+      .EnableWlastTracking(1),
+      // When MaxAxiBurstLen=1, the static FIFO implementation becomes an
+      // array of counters (no actual FIFOs), which is always more efficient
+      // than a dynamic FIFO. So no external option is provided to select a
+      // dynamic FIFO.
+      .UseDynamicFifo(0),
+      .PerIdFifoDepth(MaxOutstanding)
   ) br_amba_iso_resp_tracker_w (
       .clk,
       .rst,
@@ -340,6 +380,7 @@ module br_amba_axi_isolate_sub #(
   assign downstream_awsize = upstream_awsize;
   assign downstream_awburst = upstream_awburst;
   assign downstream_awlen = upstream_awlen;
+  assign downstream_awcache = upstream_awcache;
   assign downstream_awprot = upstream_awprot;
   assign downstream_awuser = upstream_awuser;
   //
@@ -386,12 +427,21 @@ module br_amba_axi_isolate_sub #(
       .AxiIdCount(AxiIdCount),
       .AxiIdWidth(IdWidth),
       .DataWidth(RUserWidth + DataWidth),
-      .FlopPtrRamRd(FlopPtrRamRd),
-      .FlopDataRamRd(FlopDataRamRd),
+      .DynamicFifoPointerRamReadDataDepthStages(DynamicFifoPointerRamReadDataDepthStages),
+      .DynamicFifoPointerRamAddressDepthStages(DynamicFifoPointerRamAddressDepthStages),
+      .DynamicFifoNumLinkedListsPerFifo(DynamicFifoNumLinkedListsPerFifo),
+      .DynamicFifoDataRamReadDataDepthStages(DynamicFifoDataRamReadDataDepthStages),
+      .DynamicFifoDataRamAddressDepthStages(DynamicFifoDataRamAddressDepthStages),
+      .DynamicFifoStagingBufferDepth(DynamicFifoStagingBufferDepth),
+      .DynamicFifoRegisterPopOutputs(DynamicFifoRegisterPopOutputs),
+      .DynamicFifoRegisterDeallocation(DynamicFifoRegisterDeallocation),
       .IsolateResp(IsolateResp),
       .IsolateData({IsolateRUser, IsolateRData}),
       // MaxAxiBurstLen response beats per read transaction
-      .MaxAxiBurstLen(MaxAxiBurstLen)
+      .MaxAxiBurstLen(MaxAxiBurstLen),
+      .EnableWlastTracking(0),
+      .UseDynamicFifo(UseDynamicFifoForReadTracker),
+      .PerIdFifoDepth(StaticPerIdReadTrackerFifoDepth)
   ) br_amba_iso_resp_tracker_r (
       .clk,
       .rst,
@@ -442,6 +492,7 @@ module br_amba_axi_isolate_sub #(
   assign downstream_araddr = upstream_araddr;
   assign downstream_arsize = upstream_arsize;
   assign downstream_arburst = upstream_arburst;
+  assign downstream_arcache = upstream_arcache;
   assign downstream_arprot = upstream_arprot;
   assign downstream_aruser = upstream_aruser;
 

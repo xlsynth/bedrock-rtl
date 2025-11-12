@@ -1,0 +1,36 @@
+# SPDX-License-Identifier: Apache-2.0
+
+load("@rules_python//python:defs.bzl", "py_binary", "py_library", "py_test")
+
+package(default_visibility = ["//visibility:public"])
+
+py_library(
+    name = "regression_gen_lib",
+    srcs = ["regression_gen_lib.py"],
+    data = [
+        "regression.yaml.j2",
+    ],
+    deps = [
+        "@bedrock-rtl-pypi//jinja2",
+        "@bedrock-rtl-pypi//pyyaml",
+    ],
+)
+
+py_binary(
+    name = "regression_gen",
+    srcs = ["regression_gen.py"],
+    deps = [
+        ":regression_gen_lib",
+        "@bedrock-rtl-pypi//click",
+    ],
+)
+
+py_test(
+    name = "regression_gen_lib_test",
+    srcs = ["regression_gen_lib_test.py"],
+    deps = [
+        ":regression_gen_lib",
+        "@bedrock-rtl-pypi//click",
+        "@bedrock-rtl-pypi//parameterized:pkg",
+    ],
+)

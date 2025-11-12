@@ -1,16 +1,5 @@
-// Copyright 2024-2025 The Bedrock-RTL Authors
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//     http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
+// SPDX-License-Identifier: Apache-2.0
+
 
 // Bedrock-RTL AMBA AXI Upstream (Manager) Isolator State Machine
 //
@@ -22,6 +11,7 @@
 // expected responses from the downstream interface to arrive and then
 // will re-connect the upstream interface.
 
+`include "br_asserts.svh"
 `include "br_registers.svh"
 
 module br_amba_iso_us_fsm (
@@ -48,8 +38,9 @@ module br_amba_iso_us_fsm (
   iso_us_fsm_state_t state, state_next;
   `BR_REGI(state, state_next, Normal)
 
+  `BR_ASSERT_KNOWN(fsm_state_known_a, state)
   always_comb begin
-    unique case (state)  // ri lint_check_waive FSM_DEFAULT_REQ
+    unique case (state)
       Normal: begin
         state_next = isolate_req ? AlignWrite : state;
         //
@@ -77,6 +68,13 @@ module br_amba_iso_us_fsm (
         align_and_hold_req = 1'b1;
         req_tracker_isolate_req = 1'b0;
         isolate_done = 1'b1;
+      end
+      default: begin
+        state_next = Normal;  // ri lint_check_waive UNREACHABLE
+        //
+        align_and_hold_req = 1'b0;
+        req_tracker_isolate_req = 1'b0;
+        isolate_done = 1'b0;
       end
     endcase
   end

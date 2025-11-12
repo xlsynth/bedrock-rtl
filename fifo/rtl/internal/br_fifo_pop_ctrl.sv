@@ -1,16 +1,5 @@
-// Copyright 2024-2025 The Bedrock-RTL Authors
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//     http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
+// SPDX-License-Identifier: Apache-2.0
+
 
 // Bedrock-RTL FIFO Pop Controller (Ready/Valid)
 
@@ -76,7 +65,10 @@ module br_fifo_pop_ctrl #(
                   ram_rd_addr_valid |-> ##RamReadLatency ram_rd_data_valid)
 
   // Internal integration checks
-  `BR_COVER_IMPL(bypass_unstable_c, !bypass_ready && bypass_valid_unstable)
+  if (EnableBypass) begin : gen_bypass_unstable_cover
+    `BR_COVER_IMPL(bypass_unstable_c,
+                   (!bypass_ready && bypass_valid_unstable) ##1 !bypass_valid_unstable)
+  end
 
   // This is not the tightest possible check, because we are planning to
   // support pipelined RAM access and CDC use cases that require supporting
@@ -121,7 +113,10 @@ module br_fifo_pop_ctrl #(
   // Status flags
   br_counter #(
       .MaxValue(Depth),
-      .EnableAssertFinalNotValid(EnableAssertFinalNotValid)
+      .EnableAssertFinalNotValid(EnableAssertFinalNotValid),
+      .EnableWrap(0),
+      .EnableCoverZeroChange(0),
+      .EnableCoverReinit(0)
   ) br_counter_items (
       .clk,
       .rst,
@@ -162,8 +157,7 @@ module br_fifo_pop_ctrl #(
       non_bypass_cut_through_latency_a,
       (push_beat && !bypass_ready) |-> ##(1+RamReadLatency+RegisterPopOutputsInt) pop_valid)
 
-  localparam bit ZeroCutThroughLatency =
-      !RegisterPopOutputs && (EnableBypass || (RamReadLatency == 0));
+  localparam bit ZeroCutThroughLatency = !RegisterPopOutputs && EnableBypass;
 
   if (ZeroCutThroughLatency) begin : gen_zero_lat_impl_checks
     `BR_COVER_IMPL(pop_valid_when_empty_c, pop_valid && empty)
@@ -178,6 +172,8 @@ module br_fifo_pop_ctrl #(
   `BR_ASSERT_IMPL(pop_items_a, !push_beat && pop_beat |-> items_next == items - 1)
   `BR_ASSERT_IMPL(empty_a, empty == (items == 0))
 
-  `BR_ASSERT_FINAL(final_empty_a, empty)
+  if (EnableAssertFinalNotValid) begin : gen_final_empty_check
+    `BR_ASSERT_FINAL(final_empty_a, empty)
+  end
 
 endmodule : br_fifo_pop_ctrl

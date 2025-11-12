@@ -1,16 +1,5 @@
-// Copyright 2024-2025 The Bedrock-RTL Authors
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//     http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
+// SPDX-License-Identifier: Apache-2.0
+
 
 // Bedrock-RTL AXI4-Lite MSI Generator
 //
@@ -99,6 +88,11 @@ module br_amba_axil_msi #(
   `BR_ASSERT_STATIC(num_interrupts_gte_2_a, NumInterrupts >= 2)
   `BR_ASSERT_STATIC(num_msi_dest_addr_gte_1_a, NumMsiDestAddr >= 1)
   `BR_ASSERT_STATIC(throttle_cntr_width_gt_0_a, ThrottleCntrWidth > 0)
+
+  for (genvar i = 0; i < NumInterrupts; i++) begin : gen_num_interrupts_intg_checks
+    `BR_ASSERT_INTG(dest_idx_lt_num_msi_dest_addr_a, msi_dest_idx[i] < NumMsiDestAddr)
+  end
+
   //------------------------------------------
   // Implementation
   //------------------------------------------

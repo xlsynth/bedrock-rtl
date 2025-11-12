@@ -1,16 +1,5 @@
-// Copyright 2024-2025 The Bedrock-RTL Authors
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//     http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
+// SPDX-License-Identifier: Apache-2.0
+
 
 // Bedrock-RTL AXI Downstream (Subordinate) Isolator
 
@@ -56,12 +45,14 @@ module br_amba_axi_isolate_sub_fpv_monitor #(
     parameter bit [RUserWidth-1:0] IsolateRUser = '0,
     // RDATA data to generate for isolated transactions.
     parameter bit [DataWidth-1:0] IsolateRData = '0,
-    // Number of pipeline stages to use for the pointer RAM read
-    // data. Has no effect if AxiIdCount == 1.
-    parameter bit FlopPtrRamRd = 0,
-    // Number of pipeline stages to use for the data RAM read data.
-    // Has no effect if AxiIdCount == 1.
-    parameter bit FlopDataRamRd = 0,
+    // Set to 1 to use a dynamic storage shared FIFO for the read tracking
+    // list.
+    parameter bit UseDynamicFifoForReadTracker = 1,
+    // When UseDynamicFifoForReadTracker=0, this parameter controls the depth
+    // of the Per-ID tracking FIFO. This defaults to MaxOutstanding, but may
+    // need to be set to a smaller value as the storage will be replicated for
+    // each ID.
+    parameter int StaticPerIdReadTrackerFifoDepth = MaxOutstanding,
     localparam int AxiBurstLenWidth = br_math::clamped_clog2(MaxAxiBurstLen),
     localparam int StrobeWidth = DataWidth / 8
 ) (
@@ -76,6 +67,7 @@ module br_amba_axi_isolate_sub_fpv_monitor #(
     input logic [          AxiBurstLenWidth-1:0] upstream_awlen,
     input logic [br_amba::AxiBurstSizeWidth-1:0] upstream_awsize,
     input logic [br_amba::AxiBurstTypeWidth-1:0] upstream_awburst,
+    input logic [    br_amba::AxiCacheWidth-1:0] upstream_awcache,
     input logic [     br_amba::AxiProtWidth-1:0] upstream_awprot,
     input logic [               AWUserWidth-1:0] upstream_awuser,
     input logic                                  upstream_awvalid,
@@ -97,6 +89,7 @@ module br_amba_axi_isolate_sub_fpv_monitor #(
     input logic [br_amba::AxiBurstSizeWidth-1:0] upstream_arsize,
     input logic [br_amba::AxiBurstTypeWidth-1:0] upstream_arburst,
     input logic [     br_amba::AxiProtWidth-1:0] upstream_arprot,
+    input logic [    br_amba::AxiCacheWidth-1:0] upstream_arcache,
     input logic [               ARUserWidth-1:0] upstream_aruser,
     input logic                                  upstream_arvalid,
     input logic                                  upstream_arready,
@@ -113,6 +106,7 @@ module br_amba_axi_isolate_sub_fpv_monitor #(
     input logic [          AxiBurstLenWidth-1:0] downstream_awlen,
     input logic [br_amba::AxiBurstSizeWidth-1:0] downstream_awsize,
     input logic [br_amba::AxiBurstTypeWidth-1:0] downstream_awburst,
+    input logic [    br_amba::AxiCacheWidth-1:0] downstream_awcache,
     input logic [     br_amba::AxiProtWidth-1:0] downstream_awprot,
     input logic [               AWUserWidth-1:0] downstream_awuser,
     input logic                                  downstream_awvalid,
@@ -133,6 +127,7 @@ module br_amba_axi_isolate_sub_fpv_monitor #(
     input logic [          AxiBurstLenWidth-1:0] downstream_arlen,
     input logic [br_amba::AxiBurstSizeWidth-1:0] downstream_arsize,
     input logic [br_amba::AxiBurstTypeWidth-1:0] downstream_arburst,
+    input logic [    br_amba::AxiCacheWidth-1:0] downstream_arcache,
     input logic [     br_amba::AxiProtWidth-1:0] downstream_arprot,
     input logic [               ARUserWidth-1:0] downstream_aruser,
     input logic                                  downstream_arvalid,
@@ -146,16 +141,62 @@ module br_amba_axi_isolate_sub_fpv_monitor #(
     input logic                                  downstream_rready
 );
 
+  localparam int MaxPendingRd = AxiIdCount * StaticPerIdReadTrackerFifoDepth;
+  localparam int RdCntrWidth = $clog2(MaxPendingRd);
+  localparam int MaxPendingWr = AxiIdCount * MaxOutstanding;
+  localparam int WrCntrWidth = $clog2(MaxPendingWr);
+
+  // if AxiIdCount < 2 ** IdWidth
+  `BR_ASSUME(legal_awid_a, upstream_awvalid |-> upstream_awid < AxiIdCount)
+  `BR_ASSUME(legal_bid_a, downstream_bvalid |-> downstream_bid < AxiIdCount)
+  `BR_ASSUME(legal_arid_a, upstream_arvalid |-> upstream_arid < AxiIdCount)
+  `BR_ASSUME(legal_rid_a, downstream_rvalid |-> downstream_rid < AxiIdCount)
+
+  // for each write Id, the number of outstanding transactions should be <= MaxOutstanding
+  // for each read Id, the number of outstanding transactions should be <= StaticPerIdReadTrackerFifoDepth
+  logic [AxiIdCount-1:0][WrCntrWidth-1:0] aw_cntr;
+  logic [AxiIdCount-1:0][RdCntrWidth-1:0] ar_cntr;
+
+  for (genvar i = 0; i < AxiIdCount; i++) begin : gen_aw
+    `BR_REG(aw_cntr[i],
+            aw_cntr[i] +
+            (upstream_awvalid && upstream_awready && (upstream_awid == i)) -
+            (upstream_bvalid && upstream_bready && (upstream_bid == i)))
+    `BR_ASSUME(max_aw_perId_a, aw_cntr[i] <= MaxOutstanding)
+  end
+
+  if (UseDynamicFifoForReadTracker == 0) begin : gen_perID
+    for (genvar i = 0; i < AxiIdCount; i++) begin : gen_ar
+      `BR_REG(ar_cntr[i],
+              ar_cntr[i] +
+              (upstream_arvalid && upstream_arready && (upstream_arid == i)) -
+              (upstream_rvalid && upstream_rready && upstream_rlast && (upstream_rid == i)))
+      `BR_ASSUME(max_ar_perId_a, ar_cntr[i] <= StaticPerIdReadTrackerFifoDepth)
+    end
+  end
+
   // during this window, downstream won't be AXI protocol compliant
   // However, upstream should still behave fine
   logic iso_flg;
   assign iso_flg = isolate_req && isolate_done;
+  // During isolate_req & !isolate_done window, downstream assertions don't matter
+  logic pre_iso_flg;
+  assign pre_iso_flg = isolate_req && !isolate_done;
 
   // deadlock check
   `BR_ASSERT(req_eventually_done_a, isolate_req |-> s_eventually isolate_done)
   `BR_ASSERT(eventually_back_to_normal_a, $fell(isolate_req) |-> s_eventually $fell(isolate_done))
 
+  // ABVIP assertions disabled, so adding them here
+  `BR_ASSERT(ar_stable_a,
+             !pre_iso_flg && downstream_arvalid && !downstream_arready |=> downstream_arvalid)
+  `BR_ASSERT(aw_stable_a,
+             !pre_iso_flg && downstream_awvalid && !downstream_awready |=> downstream_awvalid)
+  `BR_ASSERT(w_stable_a,
+             !pre_iso_flg && downstream_wvalid && !downstream_wready |=> downstream_wvalid)
+
   isolate_axi_protocol_fv_check #(
+      .ReadInterleaveOn(0),
       .AddrWidth(AddrWidth),
       .DataWidth(DataWidth),
       .IdWidth(IdWidth),
@@ -164,7 +205,7 @@ module br_amba_axi_isolate_sub_fpv_monitor #(
       .ARUserWidth(ARUserWidth),
       .BUserWidth(BUserWidth),
       .RUserWidth(RUserWidth),
-      .MaxOutstanding(MaxOutstanding),
+      .MaxOutstanding(MaxPendingWr + MaxTransactionSkew),
       .MaxAxiBurstLen(MaxAxiBurstLen)
   ) fv_axi_check (
       .clk,
@@ -179,6 +220,7 @@ module br_amba_axi_isolate_sub_fpv_monitor #(
       .upstream_awsize,
       .upstream_awburst,
       .upstream_awprot,
+      .upstream_awcache,
       .upstream_awuser,
       .upstream_awvalid,
       .upstream_awready,
@@ -198,6 +240,7 @@ module br_amba_axi_isolate_sub_fpv_monitor #(
       .upstream_arlen,
       .upstream_arsize,
       .upstream_arburst,
+      .upstream_arcache,
       .upstream_arprot,
       .upstream_aruser,
       .upstream_arvalid,
@@ -214,6 +257,7 @@ module br_amba_axi_isolate_sub_fpv_monitor #(
       .downstream_awlen,
       .downstream_awsize,
       .downstream_awburst,
+      .downstream_awcache,
       .downstream_awprot,
       .downstream_awuser,
       .downstream_awvalid,
@@ -234,6 +278,7 @@ module br_amba_axi_isolate_sub_fpv_monitor #(
       .downstream_arlen,
       .downstream_arsize,
       .downstream_arburst,
+      .downstream_arcache,
       .downstream_arprot,
       .downstream_aruser,
       .downstream_arvalid,
@@ -266,6 +311,6 @@ bind br_amba_axi_isolate_sub br_amba_axi_isolate_sub_fpv_monitor #(
     .IsolateBUser(IsolateBUser),
     .IsolateRUser(IsolateRUser),
     .IsolateRData(IsolateRData),
-    .FlopPtrRamRd(FlopPtrRamRd),
-    .FlopDataRamRd(FlopDataRamRd)
+    .UseDynamicFifoForReadTracker(UseDynamicFifoForReadTracker),
+    .StaticPerIdReadTrackerFifoDepth(StaticPerIdReadTrackerFifoDepth)
 ) monitor (.*);
