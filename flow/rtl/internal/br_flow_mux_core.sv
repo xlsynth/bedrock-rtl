@@ -22,10 +22,8 @@ module br_flow_mux_core #(
     // If 0, assert that there is never backpressure.
     parameter bit EnableCoverPushBackpressure = 1,
     // If 1, assert that push_valid is stable when backpressured.
-    // If 0, cover that push_valid can be unstable.
     parameter bit EnableAssertPushValidStability = 1,
     // If 1, assert that push_data is stable when backpressured.
-    // If 0, cover that push_data can be unstable.
     parameter bit EnableAssertPushDataStability = 1,
     // If 1, assert that push_data is always known (not X) when push_valid is asserted.
     parameter bit EnableAssertPushDataKnown = 1,
@@ -138,6 +136,10 @@ module br_flow_mux_core #(
       .valid(pop_valid_unstable),
       .data (pop_data_unstable)
   );
+
+  if (EnableCoverPopBackpressure) begin : gen_pop_data_unstable_cover
+    `BR_COVER_IMPL(pop_data_unstable_c, !$stable(pop_data_unstable))
+  end
 
   for (genvar i = 0; i < NumFlows; i++) begin : gen_data_selected_assert
     `BR_ASSERT_IMPL(data_selected_when_granted_a,

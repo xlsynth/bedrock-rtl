@@ -17,7 +17,6 @@ module br_flow_fork #(
     // If 0, assert that there is never backpressure.
     parameter bit EnableCoverPushBackpressure = 1,
     // If 1, assert that push_valid is stable when backpressured.
-    // If 0, cover that push_valid can be unstable.
     parameter bit EnableAssertPushValidStability = EnableCoverPushBackpressure,
     // If 1, then assert there are no valid bits asserted at the end of the test.
     parameter bit EnableAssertFinalNotValid = 1
@@ -95,5 +94,9 @@ module br_flow_fork #(
       .valid(pop_valid_unstable),
       .data ({NumFlows{1'b0}})
   );
+
+  if (EnableCoverPushBackpressure) begin : gen_push_backpressure_cover
+    `BR_COVER_IMPL(pop_valid_unstable_c, !$stable(pop_valid_unstable))
+  end
 
 endmodule : br_flow_fork

@@ -32,10 +32,8 @@ module br_flow_mux_select_unstable #(
     // If 0, assert that there is never backpressure.
     parameter bit EnableCoverPushBackpressure = 1,
     // If 1, assert that push_valid is stable when backpressured.
-    // If 0, cover that push_valid can be unstable.
     parameter bit EnableAssertPushValidStability = EnableCoverPushBackpressure,
     // If 1, assert that push_data is stable when backpressured.
-    // If 0, cover that push_data can be unstable.
     parameter bit EnableAssertPushDataStability = EnableAssertPushValidStability,
     // If 1, assert that select will not change when the selected push flow is backpressured.
     // Otherwise, cover that select can be unstable.

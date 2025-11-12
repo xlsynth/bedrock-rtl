@@ -69,10 +69,8 @@ module br_fifo_shared_pstatic_flops #(
     // If 0, assert that there is never backpressure.
     parameter bit EnableCoverPushBackpressure = 1,
     // If 1, assert that push_valid is stable when backpressured.
-    // If 0, cover that push_valid can be unstable.
     parameter bit EnableAssertPushValidStability = EnableCoverPushBackpressure,
     // If 1, assert that push_data is stable when backpressured.
-    // If 0, cover that push_data can be unstable.
     // ri lint_check_waive PARAM_NOT_USED
     parameter bit EnableAssertPushDataStability = EnableAssertPushValidStability,
     // If 1, assert that push_data is always known (not X) when push_valid is asserted.
