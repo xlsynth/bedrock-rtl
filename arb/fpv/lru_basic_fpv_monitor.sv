@@ -23,7 +23,11 @@ module lru_basic_fpv_monitor #(
 
   // ----------FV Modeling Code----------
   logic [$clog2(NumRequesters)-1:0] x, y;
-  `BR_FV_2RAND_IDX(x, y, NumRequesters)
+  if (NumRequesters > 1) begin : gen_multi_req
+    `BR_FV_2RAND_IDX(x, y, NumRequesters)
+  end else begin : gen_single_req
+    assign x = 1'b0;
+  end
 
   logic [NumRequesters-1:0][$clog2(NumRequesters):0] arb_priority;
   logic [$clog2(NumRequesters):0] granted_priority;
@@ -52,7 +56,7 @@ module lru_basic_fpv_monitor #(
           arb_priority[i] <= 0;
         end else if (enable_priority_update && (grant != 0) &&
                     (arb_priority[i] < granted_priority)) begin
-          arb_priority[i] <= arb_priority[i] + $clog2(NumRequesters)'(1);
+          arb_priority[i] <= arb_priority[i] + 'd1;
         end
       end
     end
@@ -69,7 +73,7 @@ module lru_basic_fpv_monitor #(
           if (grant[i]) begin
             wait_count[i] <= 0;
           end else if (enable_priority_update && (grant != 0) && request[i] && !grant[i]) begin
-            wait_count[i] <= wait_count[i] + $clog2(NumRequesters)'(1);
+            wait_count[i] <= wait_count[i] + 'd1;
           end
         end
         `BR_COVER(wait_count_c, wait_count[i] == NumRequesters - 1)
@@ -83,24 +87,28 @@ module lru_basic_fpv_monitor #(
   // Grant must be returned to the requester after all other requesters are granted once
   `BR_ASSERT(grant_latency_a, request[x] && (wait_count[x] == NumRequesters - 1) |-> grant[x])
 
-  // ----------Fairness Check----------
-  // Check correct arbitration priority
-  `BR_ASSERT(arb_priority_a, grant[y] |-> !request[x] || (arb_priority[x] < arb_priority[y]) ||
-                             // When two requests have the same priority, the
-                             // lower index request should be granted
-                             (arb_priority[x] == arb_priority[y]) && (y < x))
+  if (NumRequesters > 1) begin : gen_fairness_checks
+    // ----------Fairness Check----------
+    // Check correct arbitration priority
+    `BR_ASSERT(arb_priority_a,
+               grant[y] |-> !request[x] || (arb_priority[x] < arb_priority[y]) ||
+               // When two requests have the same priority, the
+               // lower index request should be granted
+               (arb_priority[x] == arb_priority[y]) && (y < x))
 
-  // ----------Critical Covers----------
-  if (EnableCoverRequestMultihot) begin : gen_priority_covers
-    for (i = 0; i < NumRequesters; i++) begin : gen_req_0
-      for (j = 0; j < NumRequesters; j++) begin : gen_req_1
-        if (i != j) begin : gen_reqs
-          // Cover all combinations of priorities
-          `BR_COVER(same_priority_c,
-                    request[i] && request[j] && (arb_priority[i] == arb_priority[j]))
-          `BR_COVER(low_priority_c, request[i] && request[j] && (arb_priority[i] < arb_priority[j]))
-          `BR_COVER(high_priority_c,
-                    request[i] && request[j] && (arb_priority[i] > arb_priority[j]))
+    // ----------Critical Covers----------
+    if (EnableCoverRequestMultihot) begin : gen_priority_covers
+      for (i = 0; i < NumRequesters; i++) begin : gen_req_0
+        for (j = 0; j < NumRequesters; j++) begin : gen_req_1
+          if (i != j) begin : gen_reqs
+            // Cover all combinations of priorities
+            `BR_COVER(same_priority_c,
+                      request[i] && request[j] && (arb_priority[i] == arb_priority[j]))
+            `BR_COVER(low_priority_c,
+                      request[i] && request[j] && (arb_priority[i] < arb_priority[j]))
+            `BR_COVER(high_priority_c,
+                      request[i] && request[j] && (arb_priority[i] > arb_priority[j]))
+          end
         end
       end
     end

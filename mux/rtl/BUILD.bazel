@@ -10,6 +10,7 @@ verilog_library(
     srcs = ["br_mux_onehot.sv"],
     deps = [
         "//macros:br_asserts_internal",
+        "//macros:br_unused",
     ],
 )
 
@@ -17,6 +18,7 @@ br_verilog_elab_and_lint_test_suite(
     name = "br_mux_onehot_test_suite",
     params = {
         "NumSymbolsIn": [
+            "1",
             "2",
             "3",
             "4",
@@ -86,6 +88,7 @@ br_verilog_elab_and_lint_test_suite(
     name = "br_mux_bin_structured_gates_test_suite",
     params = {
         "NumSymbolsIn": [
+            "1",
             "2",
             "4",
             "5",
@@ -111,13 +114,17 @@ br_verilog_elab_and_lint_test_suite(
 verilog_library(
     name = "br_mux_bin_structured_gates_mock",
     srcs = ["br_mux_bin_structured_gates_mock.sv"],
-    deps = [":br_mux_bin"],
+    deps = [
+        ":br_mux_bin",
+        "//pkg:br_math_pkg",
+    ],
 )
 
 br_verilog_elab_and_lint_test_suite(
     name = "br_mux_bin_structured_gates_mock_test_suite",
     params = {
         "NumSymbolsIn": [
+            "1",
             "2",
             "4",
             "5",
@@ -142,6 +149,7 @@ verilog_library(
     deps = [
         ":br_mux_bin",
         "//macros:br_asserts_internal",
+        "//pkg:br_math_pkg",
     ],
 )
 
@@ -149,6 +157,7 @@ br_verilog_elab_and_lint_test_suite(
     name = "br_mux_bin_array_test_suite",
     params = {
         "NumSymbolsIn": [
+            "1",
             "2",
             "3",
             "4",

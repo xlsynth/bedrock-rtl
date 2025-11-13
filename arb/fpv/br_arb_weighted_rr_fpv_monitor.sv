@@ -8,8 +8,8 @@
 `include "br_fv.svh"
 
 module br_arb_weighted_rr_fpv_monitor #(
-    // Must be at least 2
-    parameter int NumRequesters = 2,
+    // Must be at least 1
+    parameter int NumRequesters = 1,
     // Must be at least 1
     parameter int MaxWeight = 1,
     // Maximum accumulated weight per requester. Must be at least MaxWeight.
@@ -28,11 +28,10 @@ module br_arb_weighted_rr_fpv_monitor #(
   localparam int Latency = (MaxAccumulatedWeight + 1) * (NumRequesters - 1);
 
   // ----------FV Modeling Code----------
-  logic [$clog2(NumRequesters)-1:0] i, j;
-  logic [NumRequesters-1:0][AccumulatedWeightWidth-1:0] fv_weight_cnt, fv_weight_cnt_next;
+  logic [$clog2(NumRequesters)-1:0] i;
+  `BR_ASSUME(index_stable_a, $stable(i) && (i < NumRequesters))
 
-  // pick two random indices
-  `BR_FV_2RAND_IDX(i, j, NumRequesters)
+  logic [NumRequesters-1:0][AccumulatedWeightWidth-1:0] fv_weight_cnt, fv_weight_cnt_next;
 
   for (genvar n = 0; n < NumRequesters; n++) begin : gen_fv
     always_comb begin
@@ -53,9 +52,11 @@ module br_arb_weighted_rr_fpv_monitor #(
     // req_hold_until_grant_a is ONLY enabled in standard use case:
     // request won't drop without all of its grant
     // If request drop without its grant, forward_progress_a FAILs
-    `BR_ASSUME(
-        req_hold_until_grant_a,
-        request[n] && (fv_weight_cnt_next[n] != 'd0) |=> request[n] && $stable(request_weight[n]))
+    if (NumRequesters > 1) begin : gen_multi_req
+      `BR_ASSUME(
+          req_hold_until_grant_a,
+          request[n] && (fv_weight_cnt_next[n] != 'd0) |=> request[n] && $stable(request_weight[n]))
+    end
   end
 
   // ----------Sanity Check----------
