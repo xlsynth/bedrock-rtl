@@ -41,7 +41,6 @@ module br_mux_bin_structured_gates #(
   //------------------------------------------
 
   if (NumSymbolsIn == 1) begin : gen_base
-    `BR_UNUSED(select);
     assign out = in;
     assign out_valid = select == 1'b0;
 
