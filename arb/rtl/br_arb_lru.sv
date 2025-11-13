@@ -13,8 +13,8 @@
 `include "br_unused.svh"
 
 module br_arb_lru #(
-    // Must be at least 2
-    parameter int NumRequesters = 2
+    // Must be at least 1
+    parameter int NumRequesters = 1
 ) (
     input logic clk,
     input logic rst,  // Synchronous active-high
