@@ -36,7 +36,7 @@ pub struct InstantiateArgs {
     disable_lint_rules: Vec<String>,
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Debug)]
 struct Parameters {
     param_sets: Vec<HashMap<String, String>>
 }
@@ -49,22 +49,22 @@ fn create_instantiation_wrapper(
     let wrapper = ModDef::new(wrapper_name);
 
     for param_set in params.param_sets.iter() {
-        let (inst, inst_name) = if param_set.is_empty() {
-            // Don't create a new module if there are no parameter overrides
-            let inst = wrapper.instantiate(module, None, None);
-            let inst_name = module.get_name();
-            (inst, inst_name)
+        let parameters: Vec<(&str, BigInt)> = param_set.iter().map(
+            |(k, v)| (k.as_str(), BigInt::from_str(v.as_str()).unwrap())
+        ).collect();
+        let module = if parameters.is_empty() {
+            module
         } else {
-            let parameters: Vec<(&str, BigInt)> = param_set.iter().map(
-                |(k, v)| (k.as_str(), BigInt::from_str(v.as_str()).unwrap())
-            ).collect();
-            let parameterized_mod = module.parameterize(&parameters, None, None);
-            let inst = wrapper.instantiate(&parameterized_mod, None, None);
-            let inst_name = parameterized_mod.get_name();
-            (inst, inst_name)
+            let mut def_name = module.get_name().clone();
+            for (param_name, param_value) in &parameters {
+                def_name.push_str(&format!("_{}_{}", param_name, param_value));
+            }
+            &module.parameterize(&parameters).wrap(Some(&def_name), None)
         };
+        let inst = wrapper.instantiate(module, None, None);
 
         for port in inst.get_ports(None) {
+            let inst_name = inst.name();
             let port_name = port.name();
             port.export_as(format!("{inst_name}__{port_name}"));
         }
@@ -114,16 +114,16 @@ pub fn instantiate_main(
     let out_path = PathBuf::from(&args.output_file);
     let mut out_file = File::create(&out_path).expect("Failed to create output file");
 
-    write!(out_file, "{SV_HEADER_COMMENT}\n")
+    writeln!(out_file, "{SV_HEADER_COMMENT}")
         .expect("Failed to write header comment");
 
     for rule in COMMON_DISABLED_LINT_RULES.iter() {
-        write!(out_file, "// ri lint_check_off {rule}\n")
+        writeln!(out_file, "// ri lint_check_off {rule}")
             .expect("Failed to write lint off comment");
     }
 
     for rule in args.disable_lint_rules.iter() {
-        write!(out_file, "// ri lint_check_off {rule}\n")
+        writeln!(out_file, "// ri lint_check_off {rule}")
             .expect("Failed to write lint off comment");
     }
 
@@ -131,12 +131,12 @@ pub fn instantiate_main(
     write!(out_file, "{sv_body}").expect("Failed to write module body");
 
     for rule in args.disable_lint_rules.iter().rev() {
-        write!(out_file, "// ri lint_check_on {rule}\n")
+        writeln!(out_file, "// ri lint_check_on {rule}")
             .expect("Failed to write lint on comment");
     }
 
     for rule in COMMON_DISABLED_LINT_RULES.iter().rev() {
-        write!(out_file, "// ri lint_check_on {rule}\n")
+        writeln!(out_file, "// ri lint_check_on {rule}")
             .expect("Failed to write lint on comment");
     }
 
