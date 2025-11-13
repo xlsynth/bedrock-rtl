@@ -26,8 +26,9 @@ module br_arb_lru #(
   //------------------------------------------
   // Integration checks
   //------------------------------------------
-
-  `BR_COVER_INTG(request_multihot_c, !$onehot0(request))
+  if (NumRequesters > 1) begin : gen_multi_req
+    `BR_COVER_INTG(request_multihot_c, !$onehot0(request))
+  end
 
   //------------------------------------------
   // Implementation

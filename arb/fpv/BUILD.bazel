@@ -126,6 +126,7 @@ br_verilog_fpv_test_tools_suite(
     name = "br_arb_lru_test_suite",
     params = {
         "NumRequesters": [
+            "1",
             "2",
             "5",
             "6",
@@ -220,6 +221,7 @@ br_verilog_fpv_test_tools_suite(
             "5",
         ],
         "NumRequesters": [
+            "1",
             "2",
             "3",
             "4",
