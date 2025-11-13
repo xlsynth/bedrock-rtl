@@ -13,7 +13,7 @@
 
 module br_demux_bin #(
     // Number of outputs to distribute among. Must be >= 1.
-    parameter int NumSymbolsOut = 2,
+    parameter int NumSymbolsOut = 1,
     // The width of each symbol in bits. Must be >= 1.
     parameter int SymbolWidth = 1,
     // If 1, then assert there are no valid bits asserted at the end of the test.
