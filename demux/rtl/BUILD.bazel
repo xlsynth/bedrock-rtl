@@ -44,6 +44,7 @@ br_verilog_elab_and_lint_test_suite(
     name = "br_demux_onehot_test_suite",
     params = {
         "NumSymbolsOut": [
+            "1",
             "2",
             "3",
             "4",

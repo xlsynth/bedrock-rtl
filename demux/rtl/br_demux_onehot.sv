@@ -14,8 +14,8 @@
 `include "br_asserts_internal.svh"
 
 module br_demux_onehot #(
-    // Number of outputs to distribute among. Must be >= 2.
-    parameter int NumSymbolsOut = 2,
+    // Number of outputs to distribute among. Must be >= 1.
+    parameter int NumSymbolsOut = 1,
     // The width of each symbol in bits. Must be >= 1.
     parameter int SymbolWidth = 1,
     // If 1, then assert there are no valid bits asserted at the end of the test.
@@ -33,7 +33,7 @@ module br_demux_onehot #(
   //------------------------------------------
   // Integration checks
   //------------------------------------------
-  `BR_ASSERT_STATIC(legal_num_symbols_out_a, NumSymbolsOut >= 2)
+  `BR_ASSERT_STATIC(legal_num_symbols_out_a, NumSymbolsOut >= 1)
   `BR_ASSERT_STATIC(legal_symbol_width_a, SymbolWidth >= 1)
   // ri lint_check_waive ALWAYS_COMB
   `BR_ASSERT_COMB_INTG(select_onehot0_a, $onehot0(select))
