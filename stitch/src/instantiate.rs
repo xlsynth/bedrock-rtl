@@ -48,7 +48,7 @@ fn create_instantiation_wrapper(
 ) -> Result<ModDef, &'static str> {
     let wrapper = ModDef::new(wrapper_name);
 
-    for (i, param_set) in params.param_sets.iter().enumerate() {
+    for param_set in params.param_sets.iter() {
         let inst = {
             let parameters: Vec<(&str, BigInt)> = param_set.iter().map(
                 |(k, v)| (k.as_str(), BigInt::from_str(v.as_str()).unwrap())
@@ -116,16 +116,16 @@ pub fn instantiate_main(
     let out_path = PathBuf::from(&args.output_file);
     let mut out_file = File::create(&out_path).expect("Failed to create output file");
 
-    write!(out_file, "{SV_HEADER_COMMENT}\n")
+    writeln!(out_file, "{SV_HEADER_COMMENT}")
         .expect("Failed to write header comment");
 
     for rule in COMMON_DISABLED_LINT_RULES.iter() {
-        write!(out_file, "// ri lint_check_off {rule}\n")
+        writeln!(out_file, "// ri lint_check_off {rule}")
             .expect("Failed to write lint off comment");
     }
 
     for rule in args.disable_lint_rules.iter() {
-        write!(out_file, "// ri lint_check_off {rule}\n")
+        writeln!(out_file, "// ri lint_check_off {rule}")
             .expect("Failed to write lint off comment");
     }
 
@@ -133,12 +133,12 @@ pub fn instantiate_main(
     write!(out_file, "{sv_body}").expect("Failed to write module body");
 
     for rule in args.disable_lint_rules.iter().rev() {
-        write!(out_file, "// ri lint_check_on {rule}\n")
+        writeln!(out_file, "// ri lint_check_on {rule}")
             .expect("Failed to write lint on comment");
     }
 
     for rule in COMMON_DISABLED_LINT_RULES.iter().rev() {
-        write!(out_file, "// ri lint_check_on {rule}\n")
+        writeln!(out_file, "// ri lint_check_on {rule}")
             .expect("Failed to write lint on comment");
     }
 
