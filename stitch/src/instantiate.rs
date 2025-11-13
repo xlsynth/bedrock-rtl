@@ -62,8 +62,7 @@ fn create_instantiation_wrapper(
                 }
                 &module.parameterize(&parameters).wrap(Some(&def_name), None)
             };
-            let inst = wrapper.instantiate(module, None, None);
-            inst
+            wrapper.instantiate(module, None, None)
         };
 
         for port in inst.get_ports(None) {
