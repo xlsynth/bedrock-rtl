@@ -41,8 +41,22 @@ module br_mux_onehot #(
   //------------------------------------------
 
   if (NumSymbolsIn == 1) begin : gen_base
+`ifdef SIMULATION
+    if (EnableAssertSelectOnehot) begin : gen_onehot_out
+      assign out = in;
+    end else begin : gen_multihot_out
+      always_comb begin
+        if (select == 1'b0) begin
+          out = in;
+        end else begin
+          out = 'X;
+        end
+      end
+    end
+`else  // SIMULATION
     `BR_UNUSED(select);
     assign out = in;
+`endif  // SIMULATION
 
   end else begin : gen_n
 
