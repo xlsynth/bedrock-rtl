@@ -8,8 +8,8 @@
 `include "br_fv.svh"
 
 module br_arb_lru_fpv_monitor #(
-    // Must be at least 2
-    parameter int NumRequesters = 2
+    // Must be at least 1
+    parameter int NumRequesters = 1
 ) (
     input logic clk,
     input logic rst,
@@ -23,8 +23,10 @@ module br_arb_lru_fpv_monitor #(
   // If request drop without its grant, these checks FAIL
   //      no_deadlock_a
   //      lru_a
-  for (genvar i = 0; i < NumRequesters; i++) begin : gen_asm
-    `BR_ASSUME(req_hold_until_grant_a, request[i] && !grant[i] |=> request[i])
+  if (NumRequesters > 1) begin : gen_multi_req
+    for (genvar i = 0; i < NumRequesters; i++) begin : gen_asm
+      `BR_ASSUME(req_hold_until_grant_a, request[i] && !grant[i] |=> request[i])
+    end
   end
 
   // ----------arb checks----------
