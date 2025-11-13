@@ -214,7 +214,7 @@ RUN slang -version
 # Needed by TopStitch, which is used during Bazel build of xlsynth/bedrock-rtl repo.
 # Cannot directly depend on XLS through Bazel to prevent future circular dependencies (we plan for XLS to depend on bedrock-rtl).
 RUN curl -L https://github.com/xlsynth/xlsynth/releases/download/v0.17.0/libxls-rocky8.so.gz -o /usr/local/lib/libxls-v0.17.0-rocky8.so.gz
-RUN tar -xzf /usr/local/lib/libxls-v0.17.0-rocky8.so.gz -C /usr/local/lib/
+RUN gunzip /usr/local/lib/libxls-v0.17.0-rocky8.so.gz
 RUN rm /usr/local/lib/libxls-v0.17.0-rocky8.so.gz
 
 # Use Bazelisk to manage Bazel versions
