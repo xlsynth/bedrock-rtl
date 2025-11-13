@@ -18,7 +18,7 @@
 `include "br_asserts.svh"
 
 module br_flow_mux_fixed #(
-    parameter int NumFlows = 2,  // Must be at least 2
+    parameter int NumFlows = 1,  // Must be at least 1
     parameter int Width = 1,  // Must be at least 1
     // If 1, cover that the push side experiences backpressure.
     // If 0, assert that there is never backpressure.
@@ -51,7 +51,7 @@ module br_flow_mux_fixed #(
   //------------------------------------------
   // Integration checks
   //------------------------------------------
-  `BR_ASSERT_STATIC(num_requesters_gte_2_a, NumFlows >= 2)
+  `BR_ASSERT_STATIC(num_requesters_gte_1_a, NumFlows >= 1)
   `BR_ASSERT_STATIC(datawidth_gte_1_a, Width >= 1)
 
   // Rely on submodule integration checks

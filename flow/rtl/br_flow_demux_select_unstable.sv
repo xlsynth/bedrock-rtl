@@ -21,8 +21,8 @@
 `include "br_asserts_internal.svh"
 
 module br_flow_demux_select_unstable #(
-    // Must be at least 2
-    parameter int NumFlows = 2,
+    // Must be at least 1
+    parameter int NumFlows = 1,
     // Must be at least 1
     parameter int Width = 1,
     // If 1, cover that the push side experiences backpressure.
@@ -39,7 +39,7 @@ module br_flow_demux_select_unstable #(
     parameter bit EnableAssertPushDataKnown = 1,
     // If 1, then assert there are no valid bits asserted at the end of the test.
     parameter bit EnableAssertFinalNotValid = 1,
-    localparam int SelectWidth = $clog2(NumFlows)
+    localparam int SelectWidth = br_math::clamped_clog2(NumFlows)
 ) (
     // Used only for assertions
     // ri lint_check_waive INPUT_NOT_READ HIER_NET_NOT_READ HIER_BRANCH_NOT_READ
@@ -69,7 +69,7 @@ module br_flow_demux_select_unstable #(
   //------------------------------------------
   // Integration checks
   //------------------------------------------
-  `BR_ASSERT_STATIC(num_flows_must_be_at_least_two_a, NumFlows >= 2)
+  `BR_ASSERT_STATIC(num_flows_must_be_at_least_one_a, NumFlows >= 1)
   `BR_ASSERT_STATIC(bit_width_must_be_at_least_one_a, Width >= 1)
   `BR_ASSERT_STATIC(select_stability_implies_valid_stability_a,
                     !(EnableAssertSelectStability && !EnableAssertPushValidStability))
