@@ -98,7 +98,4 @@ module br_cdc_bit_pulse #(
     assign dst_pulse = dst_pulse_internal;
   end
 
-  // Implementation assertions
-  // TODO(zhemao): Add some here
-
 endmodule

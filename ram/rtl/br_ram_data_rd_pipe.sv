@@ -3,8 +3,22 @@
 
 // Bedrock-RTL RAM Read Data Pipeline
 //
-// Muxes read data from one RAM tile to the output over zero or more pipeline
-// stages with an initiation interval of one cycle.
+// br_ram_data_rd_pipe is a configurable pipeline stage for RAM read data paths,
+// designed to join and optionally pipeline data from a tiled RAM organization.
+// It accepts multiple "tiles" of data and valid signals along both the depth
+// and width dimensions, allowing for flexible RAM tiling schemes.
+//
+// The module first optionally pipelines the data and valid signals along the
+// width dimension (WidthStages), then concatenates the width tiles for each
+// depth tile into a full-width data word. It then optionally pipelines the
+// resulting data and valid signals along the depth dimension (DepthStages).
+// Finally, it outputs the valid signal and data word, with a total pipeline
+// latency of (DepthStages + WidthStages).
+//
+// Only one depth tile is allowed to be valid at a time (onehot0 encoding).
+// All width tiles within a depth tile must have their valid signals in lockstep.
+// The module asserts integration and implementation checks to ensure correct
+// usage and propagation of valid/data signals.
 
 `include "br_asserts_internal.svh"
 `include "br_tieoff.svh"
