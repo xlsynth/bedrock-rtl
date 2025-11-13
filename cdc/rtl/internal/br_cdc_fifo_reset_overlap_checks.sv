@@ -3,6 +3,7 @@
 `include "br_asserts.svh"
 `include "br_asserts_internal.svh"
 `include "br_registers.svh"
+`include "br_unused.svh"
 
 // Integration assertion-only module that checks the push and pop-clock domain
 // resets of a CDC FIFO overlap for each a minimum number of cycles within a
@@ -22,10 +23,8 @@ module br_cdc_fifo_reset_overlap_checks #(
     // ri lint_check_waive INPUT_NOT_READ
     input logic clk,
     // Reset that originates from the push clock domain. Must be synchronous to clk.
-    // ri lint_check_waive INPUT_NOT_READ
     input logic reset_active_push,
     // Reset that originates from the pop clock domain. Must be synchronous to clk.
-    // ri lint_check_waive INPUT_NOT_READ
     input logic reset_active_pop
 );
 
@@ -83,5 +82,8 @@ module br_cdc_fifo_reset_overlap_checks #(
 
   `BR_ASSERT_CR_INTG(reset_overlap_a, $fell(reset_active_push) || $fell(reset_active_pop)
                                       |-> overlap_cycles >= MinOverlapCycles, clk, 1'b0)
+
+  `BR_UNUSED(reset_active_push)
+  `BR_UNUSED(reset_active_pop)
 
 endmodule : br_cdc_fifo_reset_overlap_checks

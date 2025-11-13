@@ -7,6 +7,7 @@
 
 `include "br_asserts.svh"
 `include "br_unused.svh"
+`include "br_tieoff.svh"
 
 module br_fifo_pop_ctrl_core #(
     parameter int Depth = 2,
@@ -103,8 +104,7 @@ module br_fifo_pop_ctrl_core #(
       assign ram_rd_addr_valid = !empty;
       assign ram_rd_addr_update = pop_beat && !empty;
     end else begin : gen_no_bypass
-      // TODO(zhemao, #157): Replace this with BR_TIEOFF macros once they are fixed
-      assign bypass_ready = '0;  // ri lint_check_waive CONST_ASSIGN CONST_OUTPUT
+      `BR_TIEOFF_ZERO(bypass_ready)  // ri lint_check_waive CONST_OUTPUT
       assign pop_valid = !empty;
       assign pop_data = ram_rd_data;
       assign ram_rd_addr_valid = !empty;
@@ -127,7 +127,6 @@ module br_fifo_pop_ctrl_core #(
         .rst,
 
         // If bypass is disabled, bypass_ready will be driven by constant
-        // TODO(zhemao, #157): Remove this once lint waiver issue is fixed
         .bypass_ready,  // ri lint_check_waive CONST_OUTPUT
         .bypass_valid_unstable,
         .bypass_data_unstable,
