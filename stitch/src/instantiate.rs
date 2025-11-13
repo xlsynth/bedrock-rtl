@@ -36,7 +36,7 @@ pub struct InstantiateArgs {
     disable_lint_rules: Vec<String>,
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Debug)]
 struct Parameters {
     param_sets: Vec<HashMap<String, String>>
 }
@@ -48,7 +48,10 @@ fn create_instantiation_wrapper(
 ) -> Result<ModDef, &'static str> {
     let wrapper = ModDef::new(wrapper_name);
 
-    for param_set in params.param_sets.iter() {
+    println!("{wrapper_name}");
+    println!("{params:?}");
+
+    for (i, param_set) in params.param_sets.iter().enumerate() {
         let (inst, inst_name) = if param_set.is_empty() {
             // Don't create a new module if there are no parameter overrides
             let inst = wrapper.instantiate(module, None, None);
@@ -58,9 +61,10 @@ fn create_instantiation_wrapper(
             let parameters: Vec<(&str, BigInt)> = param_set.iter().map(
                 |(k, v)| (k.as_str(), BigInt::from_str(v.as_str()).unwrap())
             ).collect();
-            let parameterized_mod = module.parameterize(&parameters, None, None);
-            let inst = wrapper.instantiate(&parameterized_mod, None, None);
-            let inst_name = parameterized_mod.get_name();
+            let parameterized_mod = module.parameterize(&parameters);
+            let parameterized_mod_name = format!("{}_{}", module.get_name(), i);
+            let inst = wrapper.instantiate(&parameterized_mod, Some(&parameterized_mod_name), None);
+            let inst_name = parameterized_mod_name;
             (inst, inst_name)
         };
 
