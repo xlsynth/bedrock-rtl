@@ -87,7 +87,8 @@ br_verilog_sim_test_tools_suite(
     },
     tools = [
         "dsim",
-        "iverilog",
+        # Does not work
+        #"iverilog",
         "vcs",
     ],
     top = "br_mux_bin_structured_gates_tb",

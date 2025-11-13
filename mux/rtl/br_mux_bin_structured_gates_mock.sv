@@ -25,11 +25,11 @@
 // verilog_lint: waive-start module-filename
 // ri lint_check_waive FILE_NAME
 module br_mux_bin_structured_gates #(
-    // Number of inputs to select among. Must be >= 2.
-    parameter  int NumSymbolsIn = 2,
+    // Number of inputs to select among. Must be >= 1.
+    parameter  int NumSymbolsIn = 1,
     // The width of each symbol in bits. Must be >= 1.
     parameter  int SymbolWidth  = 1,
-    localparam int SelectWidth  = $clog2(NumSymbolsIn)
+    localparam int SelectWidth  = br_math::clamped_clog2(NumSymbolsIn)
 ) (
     input  logic [ SelectWidth-1:0]                  select,
     input  logic [NumSymbolsIn-1:0][SymbolWidth-1:0] in,

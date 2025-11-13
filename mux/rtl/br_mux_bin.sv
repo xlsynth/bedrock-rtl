@@ -15,7 +15,7 @@
 
 module br_mux_bin #(
     // Number of inputs to select among. Must be >= 1.
-    parameter  int NumSymbolsIn = 2,
+    parameter  int NumSymbolsIn = 1,
     // The width of each symbol in bits. Must be >= 1.
     parameter  int SymbolWidth  = 1,
     localparam int SelectWidth  = br_math::clamped_clog2(NumSymbolsIn)

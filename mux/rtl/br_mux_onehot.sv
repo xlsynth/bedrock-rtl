@@ -9,10 +9,11 @@
 // The select must have at most one bit set.
 
 `include "br_asserts_internal.svh"
+`include "br_unused.svh"
 
 module br_mux_onehot #(
-    // Number of inputs to select among. Must be >= 2.
-    parameter int NumSymbolsIn = 2,
+    // Number of inputs to select among. Must be >= 1.
+    parameter int NumSymbolsIn = 1,
     // The width of each symbol in bits. Must be >= 1.
     parameter int SymbolWidth = 1,
     // If 1, assert that the select is, in fact, onehot.
@@ -28,7 +29,7 @@ module br_mux_onehot #(
   //------------------------------------------
   // Integration checks
   //------------------------------------------
-  `BR_ASSERT_STATIC(legal_num_symbols_in_a, NumSymbolsIn >= 2)
+  `BR_ASSERT_STATIC(legal_num_symbols_in_a, NumSymbolsIn >= 1)
   `BR_ASSERT_STATIC(legal_symbol_width_a, SymbolWidth >= 1)
   if (EnableAssertSelectOnehot) begin : gen_assert_select_onehot
     // ri lint_check_waive ALWAYS_COMB
@@ -38,34 +39,52 @@ module br_mux_onehot #(
   //------------------------------------------
   // Implementation
   //------------------------------------------
-  logic [SymbolWidth-1:0] out_internal;
 
-  always_comb begin
-    out_internal = '0;
-
-    for (int i = 0; i < NumSymbolsIn; i++) begin
-      out_internal |= ({SymbolWidth{select[i]}} & in[i]);
-    end
-  end
-
+  if (NumSymbolsIn == 1) begin : gen_base
 `ifdef SIMULATION
-  if (EnableAssertSelectOnehot) begin : gen_onehot_out
-    assign out = out_internal;
-  end else begin : gen_multihot_out
-    always_comb begin
-      if ($onehot0(select)) begin
-        out = out_internal;
-      end else begin
-        out = 'X;
+    if (EnableAssertSelectOnehot) begin : gen_onehot_out
+      assign out = in;
+    end else begin : gen_multihot_out
+      always_comb begin
+        if (select == 1'b0) begin
+          out = in;
+        end else begin
+          out = 'X;
+        end
       end
     end
-  end
-`else
-  assign out = out_internal;
-`endif
+`else  // SIMULATION
+    `BR_UNUSED(select);
+    assign out = in;
+`endif  // SIMULATION
 
-  //------------------------------------------
-  // Implementation checks
-  //------------------------------------------
+  end else begin : gen_n
+
+    logic [SymbolWidth-1:0] out_internal;
+
+    always_comb begin
+      out_internal = '0;
+
+      for (int i = 0; i < NumSymbolsIn; i++) begin
+        out_internal |= ({SymbolWidth{select[i]}} & in[i]);
+      end
+    end
+
+`ifdef SIMULATION
+    if (EnableAssertSelectOnehot) begin : gen_onehot_out
+      assign out = out_internal;
+    end else begin : gen_multihot_out
+      always_comb begin
+        if ($onehot0(select)) begin
+          out = out_internal;
+        end else begin
+          out = 'X;
+        end
+      end
+    end
+`else
+    assign out = out_internal;
+`endif
+  end
 
 endmodule : br_mux_onehot
