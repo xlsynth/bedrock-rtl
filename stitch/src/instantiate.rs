@@ -49,22 +49,25 @@ fn create_instantiation_wrapper(
     let wrapper = ModDef::new(wrapper_name);
 
     for (i, param_set) in params.param_sets.iter().enumerate() {
-        let (inst, inst_name) = {
-            let module = if param_set.is_empty() {
+        let inst = {
+            let parameters: Vec<(&str, BigInt)> = param_set.iter().map(
+                |(k, v)| (k.as_str(), BigInt::from_str(v.as_str()).unwrap())
+            ).collect();
+            let module = if parameters.is_empty() {
                 module
             } else {
-                let parameters: Vec<(&str, BigInt)> = param_set.iter().map(
-                    |(k, v)| (k.as_str(), BigInt::from_str(v.as_str()).unwrap())
-                ).collect();
-                &module.parameterize(&parameters)
+                let mut def_name = module.get_name().clone();
+                for (param_name, param_value) in &parameters {
+                    def_name.push_str(&format!("_{}_{}", param_name, param_value));
+                }
+                &module.parameterize(&parameters).wrap(Some(&def_name), None)
             };
-            let inst_name = format!("{}_{}", module.get_name(), i);
-            let inst = wrapper.instantiate(module, Some(&inst_name), None);
-            (inst, inst_name)
+            let inst = wrapper.instantiate(module, None, None);
+            inst
         };
 
-        // TODO: consider using wrap() instead
         for port in inst.get_ports(None) {
+            let inst_name = inst.name();
             let port_name = port.name();
             port.export_as(format!("{inst_name}__{port_name}"));
         }
