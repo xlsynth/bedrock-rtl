@@ -48,9 +48,6 @@ fn create_instantiation_wrapper(
 ) -> Result<ModDef, &'static str> {
     let wrapper = ModDef::new(wrapper_name);
 
-    println!("{wrapper_name}");
-    println!("{params:?}");
-
     for (i, param_set) in params.param_sets.iter().enumerate() {
         let (inst, inst_name) = if param_set.is_empty() {
             // Don't create a new module if there are no parameter overrides
