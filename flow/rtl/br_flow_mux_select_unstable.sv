@@ -22,6 +22,7 @@
 // will be stable.
 
 `include "br_asserts_internal.svh"
+`include "br_unused.svh"
 
 module br_flow_mux_select_unstable #(
     // Must be at least 1
@@ -106,14 +107,21 @@ module br_flow_mux_select_unstable #(
   //------------------------------------------
   // Implementation
   //------------------------------------------
+  if (NumFlows == 1) begin : gen_single_flow
+    assign push_ready         = pop_ready;
+    assign pop_valid_unstable = push_valid;
+    assign pop_data_unstable  = push_data;
+    `BR_UNUSED(select)
 
-  // Lint waivers are safe because we assert select is always in range.
-  // ri lint_check_waive VAR_SHIFT TRUNC_LSHIFT
-  assign push_ready = pop_ready << select;
-  // ri lint_check_waive VAR_INDEX_READ
-  assign pop_valid_unstable = push_valid[select];
-  // ri lint_check_waive VAR_INDEX_READ
-  assign pop_data_unstable = push_data[select];
+  end else begin : gen_multi_flow
+    // Lint waivers are safe because we assert select is always in range.
+    // ri lint_check_waive VAR_SHIFT TRUNC_LSHIFT
+    assign push_ready = pop_ready << select;
+    // ri lint_check_waive VAR_INDEX_READ
+    assign pop_valid_unstable = push_valid[select];
+    // ri lint_check_waive VAR_INDEX_READ
+    assign pop_data_unstable = push_data[select];
+  end
 
   //------------------------------------------
   // Implementation checks

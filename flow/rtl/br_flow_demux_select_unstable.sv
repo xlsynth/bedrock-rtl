@@ -19,6 +19,7 @@
 // input could change while the selected pop interface is backpressuring.
 
 `include "br_asserts_internal.svh"
+`include "br_unused.svh"
 
 module br_flow_demux_select_unstable #(
     // Must be at least 1
@@ -107,18 +108,26 @@ module br_flow_demux_select_unstable #(
   // Implementation
   //------------------------------------------
 
-  // Lint waivers are safe because we assert select is always in range.
-  // ri lint_check_waive VAR_INDEX_READ
-  assign push_ready = pop_ready[select];
-  // The ternary expression is needed to ensure pop_valid_unstable is 0 (and not X)
-  // when select is X and push_valid is 0.
-  // ri lint_check_waive VAR_SHIFT TRUNC_LSHIFT
-  assign pop_valid_unstable = push_valid ? (push_valid << select) : '0;
-  // Replicate pop_data to all flows; this is okay since pop_data[i]
-  // is only valid when pop_valid_unstable[i] is high.
-  always_comb begin
-    for (int i = 0; i < NumFlows; i++) begin
-      pop_data_unstable[i] = push_data;
+  if (NumFlows == 1) begin : gen_single_flow
+    assign push_ready         = pop_ready;
+    assign pop_valid_unstable = push_valid;
+    assign pop_data_unstable  = push_data;
+    `BR_UNUSED(select)
+
+  end else begin : gen_multi_flow
+    // Lint waivers are safe because we assert select is always in range.
+    // ri lint_check_waive VAR_INDEX_READ
+    assign push_ready = pop_ready[select];
+    // The ternary expression is needed to ensure pop_valid_unstable is 0 (and not X)
+    // when select is X and push_valid is 0.
+    // ri lint_check_waive VAR_SHIFT TRUNC_LSHIFT
+    assign pop_valid_unstable = push_valid ? (push_valid << select) : '0;
+    // Replicate pop_data to all flows; this is okay since pop_data[i]
+    // is only valid when pop_valid_unstable[i] is high.
+    always_comb begin
+      for (int i = 0; i < NumFlows; i++) begin
+        pop_data_unstable[i] = push_data;
+      end
     end
   end
 

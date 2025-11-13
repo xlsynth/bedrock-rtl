@@ -6,8 +6,8 @@
 `include "br_asserts_internal.svh"
 
 module br_flow_xbar_core #(
-    parameter int NumPushFlows = 2,
-    parameter int NumPopFlows = 2,
+    parameter int NumPushFlows = 1,
+    parameter int NumPopFlows = 1,
     parameter int Width = 1,
     parameter bit RegisterDemuxOutputs = 0,
     parameter bit RegisterPopOutputs = 0,
@@ -19,7 +19,7 @@ module br_flow_xbar_core #(
     parameter bit EnableAssertPushDataKnown = 1,
     parameter bit EnableAssertFinalNotValid = 1,
 
-    localparam int DestIdWidth = $clog2(NumPopFlows)
+    localparam int DestIdWidth = br_math::clamped_clog2(NumPopFlows)
 ) (
     input logic clk,
     input logic rst,

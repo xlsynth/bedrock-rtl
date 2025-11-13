@@ -105,6 +105,7 @@ verilog_library(
         "//flow/rtl/internal:br_flow_checks_valid_data_impl",
         "//flow/rtl/internal:br_flow_checks_valid_data_intg",
         "//macros:br_asserts_internal",
+        "//macros:br_unused",
         "//pkg:br_math_pkg",
     ],
 )
@@ -247,6 +248,7 @@ verilog_library(
     deps = [
         "//arb/rtl/internal:br_arb_fixed_internal",
         "//flow/rtl/internal:br_flow_xbar_core",
+        "//pkg:br_math_pkg",
     ],
 )
 
@@ -256,6 +258,7 @@ verilog_library(
     deps = [
         "//arb/rtl/internal:br_arb_rr_internal",
         "//flow/rtl/internal:br_flow_xbar_core",
+        "//pkg:br_math_pkg",
     ],
 )
 
@@ -265,6 +268,7 @@ verilog_library(
     deps = [
         "//arb/rtl/internal:br_arb_lru_internal",
         "//flow/rtl/internal:br_flow_xbar_core",
+        "//pkg:br_math_pkg",
     ],
 )
 
@@ -609,10 +613,12 @@ br_verilog_elab_and_lint_test_suite(
     name = "br_flow_xbar_fixed_test_suite",
     params = {
         "NumPushFlows": [
+            "1",
             "2",
             "4",
         ],
         "NumPopFlows": [
+            "1",
             "2",
             "4",
         ],
@@ -636,10 +642,12 @@ br_verilog_elab_and_lint_test_suite(
     name = "br_flow_xbar_rr_test_suite",
     params = {
         "NumPushFlows": [
+            "1",
             "2",
             "4",
         ],
         "NumPopFlows": [
+            "1",
             "2",
             "4",
         ],
@@ -663,10 +671,12 @@ br_verilog_elab_and_lint_test_suite(
     name = "br_flow_xbar_lru_test_suite",
     params = {
         "NumPushFlows": [
+            "1",
             "2",
             "4",
         ],
         "NumPopFlows": [
+            "1",
             "2",
             "4",
         ],

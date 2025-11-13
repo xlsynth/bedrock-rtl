@@ -11,7 +11,7 @@
 `include "br_asserts_internal.svh"
 
 module br_flow_join #(
-    parameter int NumFlows = 2,  // Must be at least 2
+    parameter int NumFlows = 1,  // Must be at least 1
     // If 1, cover that the push side experiences backpressure.
     // If 0, assert that there is never backpressure.
     parameter bit EnableCoverPushBackpressure = 1,
@@ -38,7 +38,7 @@ module br_flow_join #(
   //------------------------------------------
   // Integration checks
   //------------------------------------------
-  `BR_ASSERT_STATIC(num_flows_gte2_a, NumFlows >= 2)
+  `BR_ASSERT_STATIC(num_flows_gte1_a, NumFlows >= 1)
 
 
   br_flow_checks_valid_data_intg #(
