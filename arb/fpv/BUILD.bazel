@@ -220,6 +220,7 @@ br_verilog_fpv_test_tools_suite(
             "5",
         ],
         "NumRequesters": [
+            "1",
             "2",
             "3",
             "4",

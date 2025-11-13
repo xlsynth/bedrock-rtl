@@ -8,8 +8,8 @@
 `include "br_fv.svh"
 
 module br_arb_weighted_rr_fpv_monitor #(
-    // Must be at least 2
-    parameter int NumRequesters = 2,
+    // Must be at least 1
+    parameter int NumRequesters = 1,
     // Must be at least 1
     parameter int MaxWeight = 1,
     // Maximum accumulated weight per requester. Must be at least MaxWeight.
@@ -29,10 +29,14 @@ module br_arb_weighted_rr_fpv_monitor #(
 
   // ----------FV Modeling Code----------
   logic [$clog2(NumRequesters)-1:0] i, j;
-  logic [NumRequesters-1:0][AccumulatedWeightWidth-1:0] fv_weight_cnt, fv_weight_cnt_next;
+  if (NumRequesters > 1) begin : gen_multi_req
+    // pick two random indices
+    `BR_FV_2RAND_IDX(i, j, NumRequesters)
+  end else begin : gen_single_req
+    assign i = 1'b0;
+  end
 
-  // pick two random indices
-  `BR_FV_2RAND_IDX(i, j, NumRequesters)
+  logic [NumRequesters-1:0][AccumulatedWeightWidth-1:0] fv_weight_cnt, fv_weight_cnt_next;
 
   for (genvar n = 0; n < NumRequesters; n++) begin : gen_fv
     always_comb begin
