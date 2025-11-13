@@ -62,6 +62,7 @@ verilog_library(
         "//arb/rtl:br_arb_pri_rr",
         "//counter/rtl:br_counter",
         "//macros:br_asserts_internal",
+        "//macros:br_unused",
     ],
 )
 
@@ -90,6 +91,7 @@ br_verilog_elab_and_lint_test_suite(
 br_verilog_elab_and_lint_test_suite(
     name = "br_arb_lru_test_suite",
     params = {"NumRequesters": [
+        "1",
         "2",
         "5",
     ]},
@@ -99,6 +101,7 @@ br_verilog_elab_and_lint_test_suite(
 br_verilog_elab_and_lint_test_suite(
     name = "br_arb_rr_test_suite",
     params = {"NumRequesters": [
+        "1",
         "2",
         "5",
     ]},
@@ -133,6 +136,7 @@ br_verilog_elab_and_lint_test_suite(
     name = "br_arb_weighted_rr_test_suite",
     params = {
         "NumRequesters": [
+            "1",
             "2",
             "5",
         ],

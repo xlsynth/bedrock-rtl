@@ -34,10 +34,8 @@ module br_flow_xbar_lru #(
     // If 0, assert that push backpressure is not possible.
     parameter bit EnableCoverPushBackpressure = 1,
     // If 1, assert that push_valid is stable.
-    // Otherwise, cover that push_valid can be unstable.
     parameter bit EnableAssertPushValidStability = EnableCoverPushBackpressure,
     // If 1, assert that push_data is stable.
-    // Otherwise, cover that push_data can be unstable.
     parameter bit EnableAssertPushDataStability = EnableAssertPushValidStability,
     // If 1, assert that push_dest_id is stable.
     // Otherwise, cover that push_dest_id can be unstable.

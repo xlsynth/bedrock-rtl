@@ -30,6 +30,7 @@ verilog_library(
     deps = [
         ":br_rr_state_internal",
         "//macros:br_asserts",
+        "//macros:br_unused",
     ],
 )
 
