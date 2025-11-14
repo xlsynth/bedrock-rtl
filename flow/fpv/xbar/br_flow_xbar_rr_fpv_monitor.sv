@@ -25,15 +25,12 @@ module br_flow_xbar_rr_fpv_monitor #(
     // If 1, cover that the push_ready signal can be backpressured.
     // If 0, assert that push backpressure is not possible.
     parameter bit EnableCoverPushBackpressure = 1,
-    // If 1, assert that push_valid is stable.
-    // Otherwise, cover that push_valid can be unstable.
-    parameter bit EnableAssertPushValidStability = EnableCoverPushBackpressure,
-    // If 1, assert that push_data is stable.
-    // Otherwise, cover that push_data can be unstable.
-    parameter bit EnableAssertPushDataStability = EnableAssertPushValidStability,
-    // If 1, assert that push_dest_id is stable.
-    // Otherwise, cover that push_dest_id can be unstable.
-    parameter bit EnableAssertPushDestinationStability = EnableAssertPushValidStability,
+    // If 1, assume that push_valid is stable.
+    parameter bit EnableAssumePushValidStability = EnableCoverPushBackpressure,
+    // If 1, assume that push_data is stable.
+    parameter bit EnableAssumePushDataStability = EnableAssumePushValidStability,
+    // If 1, assume that push_dest_id is stable.
+    parameter bit EnableAssumePushDestinationStability = EnableAssumePushValidStability,
     // If 1, assert that push_valid is 1 and all intermediate
     // register stages are empty at end of simulation.
     parameter bit EnableAssertFinalNotValid = 1,
@@ -74,9 +71,9 @@ module br_flow_xbar_rr_fpv_monitor #(
       .RegisterDemuxOutputs(RegisterDemuxOutputs),
       .RegisterPopOutputs(RegisterPopOutputs),
       .EnableCoverPushBackpressure(EnableCoverPushBackpressure),
-      .EnableAssertPushValidStability(EnableAssertPushValidStability),
-      .EnableAssertPushDataStability(EnableAssertPushDataStability),
-      .EnableAssertPushDestinationStability(EnableAssertPushDestinationStability)
+      .EnableAssumePushValidStability(EnableAssumePushValidStability),
+      .EnableAssumePushDataStability(EnableAssumePushDataStability),
+      .EnableAssumePushDestinationStability(EnableAssumePushDestinationStability)
   ) fv_checker (
       .clk,
       .rst,
@@ -95,7 +92,7 @@ module br_flow_xbar_rr_fpv_monitor #(
   rr_basic_fpv_monitor #(
       .NumRequesters(NumPushFlows),
       // Valid won't be stable at the arbiters if push_dest_id is unstable
-      .EnableAssertPushValidStability(EnableAssertPushDestinationStability)
+      .EnableAssumeRequestStability(EnableAssumePushDestinationStability)
   ) rr_check (
       .clk,
       .rst,
@@ -113,8 +110,5 @@ bind br_flow_xbar_rr br_flow_xbar_rr_fpv_monitor #(
     .RegisterDemuxOutputs(RegisterDemuxOutputs),
     .RegisterPopOutputs(RegisterPopOutputs),
     .EnableCoverPushBackpressure(EnableCoverPushBackpressure),
-    .EnableAssertPushValidStability(EnableAssertPushValidStability),
-    .EnableAssertPushDataStability(EnableAssertPushDataStability),
-    .EnableAssertPushDestinationStability(EnableAssertPushDestinationStability),
     .EnableAssertFinalNotValid(EnableAssertFinalNotValid)
 ) monitor (.*);

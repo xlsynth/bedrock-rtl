@@ -34,14 +34,14 @@ br_verilog_fpv_test_tools_suite(
     name = "br_flow_arb_fixed_test_suite",
     illegal_param_combinations = {
         (
-            "EnableAssertPushValidStability",
+            "EnableAssumePushValidStability",
             "EnableCoverPushBackpressure",
         ): [
             ("1", "0"),
         ],
     },
     params = {
-        "EnableAssertPushValidStability": [
+        "EnableAssumePushValidStability": [
             "0",
             "1",
         ],
@@ -85,14 +85,14 @@ br_verilog_fpv_test_tools_suite(
     name = "br_flow_arb_lru_test_suite",
     illegal_param_combinations = {
         (
-            "EnableAssertPushValidStability",
+            "EnableAssumePushValidStability",
             "EnableCoverPushBackpressure",
         ): [
             ("1", "0"),
         ],
     },
     params = {
-        "EnableAssertPushValidStability": [
+        "EnableAssumePushValidStability": [
             "0",
             "1",
         ],
@@ -136,14 +136,14 @@ br_verilog_fpv_test_tools_suite(
     name = "br_flow_arb_rr_test_suite",
     illegal_param_combinations = {
         (
-            "EnableAssertPushValidStability",
+            "EnableAssumePushValidStability",
             "EnableCoverPushBackpressure",
         ): [
             ("1", "0"),
         ],
     },
     params = {
-        "EnableAssertPushValidStability": [
+        "EnableAssumePushValidStability": [
             "0",
             "1",
         ],

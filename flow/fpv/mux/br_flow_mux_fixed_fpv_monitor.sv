@@ -10,8 +10,8 @@ module br_flow_mux_fixed_fpv_monitor #(
     parameter int NumFlows = 2,  // Must be at least 2
     parameter int Width = 1,  // Must be at least 1
     parameter bit EnableCoverPushBackpressure = 1,
-    parameter bit EnableAssertPushValidStability = EnableCoverPushBackpressure,
-    parameter bit EnableAssertPushDataStability = EnableAssertPushValidStability,
+    parameter bit EnableAssumePushValidStability = EnableCoverPushBackpressure,
+    parameter bit EnableAssumePushDataStability = EnableAssumePushValidStability,
     parameter bit EnableAssertFinalNotValid = 1
 ) (
     input logic                           clk,
@@ -29,8 +29,8 @@ module br_flow_mux_fixed_fpv_monitor #(
       .NumFlows(NumFlows),
       .Width(Width),
       .EnableCoverPushBackpressure(EnableCoverPushBackpressure),
-      .EnableAssertPushValidStability(EnableAssertPushValidStability),
-      .EnableAssertPushDataStability(EnableAssertPushDataStability),
+      .EnableAssumePushValidStability(EnableAssumePushValidStability),
+      .EnableAssumePushDataStability(EnableAssumePushDataStability),
       .EnableCoverPopBackpressure(EnableCoverPushBackpressure),
       // Pop data can never be stable
       .EnableAssertPopDataStability(0)
@@ -65,7 +65,5 @@ bind br_flow_mux_fixed br_flow_mux_fixed_fpv_monitor #(
     .NumFlows(NumFlows),
     .Width(Width),
     .EnableCoverPushBackpressure(EnableCoverPushBackpressure),
-    .EnableAssertPushValidStability(EnableAssertPushValidStability),
-    .EnableAssertPushDataStability(EnableAssertPushDataStability),
     .EnableAssertFinalNotValid(EnableAssertFinalNotValid)
 ) monitor (.*);

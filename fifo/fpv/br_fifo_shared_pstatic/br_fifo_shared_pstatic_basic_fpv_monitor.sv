@@ -15,8 +15,8 @@ module br_fifo_shared_pstatic_basic_fpv_monitor #(
     parameter bit RegisterPopOutputs = 0,
     parameter int RamReadLatency = 0,
     parameter bit EnableCoverPushBackpressure = 1,
-    parameter bit EnableAssertPushValidStability = EnableCoverPushBackpressure,
-    parameter bit EnableAssertPushDataStability = EnableAssertPushValidStability,
+    parameter bit EnableAssumePushValidStability = EnableCoverPushBackpressure,
+    parameter bit EnableAssumePushDataStability = EnableAssumePushValidStability,
     localparam int FifoIdWidth = br_math::clamped_clog2(NumFifos),
     localparam int AddrWidth = br_math::clamped_clog2(Depth)
 ) (
@@ -71,10 +71,10 @@ module br_fifo_shared_pstatic_basic_fpv_monitor #(
   `BR_ASSUME(push_fifo_id_legal_a, push_fifo_id < NumFifos)
 
   if (EnableCoverPushBackpressure) begin : gen_backpressure
-    if (EnableAssertPushValidStability) begin : gen_push_valid_stable
+    if (EnableAssumePushValidStability) begin : gen_push_valid_stable
       `BR_ASSUME(push_valid_stable_a, push_valid && !push_ready |=> push_valid)
     end
-    if (EnableAssertPushDataStability) begin : gen_push_data_stable
+    if (EnableAssumePushDataStability) begin : gen_push_data_stable
       `BR_ASSUME(push_data_stable_a,
                  push_valid && !push_ready |=> $stable(push_data) && $stable(push_fifo_id))
     end
@@ -101,11 +101,11 @@ module br_fifo_shared_pstatic_basic_fpv_monitor #(
 
   // ----------FV assertions----------
   if ((RegisterPopOutputs != 0) || (RamReadLatency != 0)) begin : gen_pop
-    if (EnableAssertPushValidStability) begin : gen_pop_valid_stable
+    if (EnableAssumePushValidStability) begin : gen_pop_valid_stable
       `BR_ASSERT(pop_valid_stable_a,
                  pop_valid[fv_fifo_id] && !pop_ready[fv_fifo_id] |=> pop_valid[fv_fifo_id])
     end
-    if (EnableAssertPushDataStability) begin : gen_pop_data_stable
+    if (EnableAssumePushDataStability) begin : gen_pop_data_stable
       `BR_ASSERT(pop_data_stable_a,
                  pop_valid[fv_fifo_id] && !pop_ready[fv_fifo_id] |=> $stable(pop_data[fv_fifo_id]))
     end

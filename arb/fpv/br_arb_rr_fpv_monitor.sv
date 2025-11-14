@@ -40,7 +40,7 @@ module br_arb_rr_fpv_monitor #(
   // ----------Round Robin checks----------
   rr_basic_fpv_monitor #(
       .NumRequesters(NumRequesters),
-      .EnableAssertPushValidStability(1)
+      .EnableAssumeRequestStability(1)
   ) rr_check (
       .clk,
       .rst,

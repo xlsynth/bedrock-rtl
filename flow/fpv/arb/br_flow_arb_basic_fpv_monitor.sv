@@ -9,7 +9,7 @@
 module br_flow_arb_basic_fpv_monitor #(
     parameter int NumFlows = 2,  // Must be at least 2
     parameter bit EnableCoverPushBackpressure = 1,
-    parameter bit EnableAssertPushValidStability = EnableCoverPushBackpressure
+    parameter bit EnableAssumePushValidStability = EnableCoverPushBackpressure
 ) (
     input logic                clk,
     input logic                rst,
@@ -26,13 +26,13 @@ module br_flow_arb_basic_fpv_monitor #(
     if (!EnableCoverPushBackpressure) begin : gen_no_backpressure
       `BR_ASSUME(no_backpressure_a, !push_ready[n] |-> !push_valid[n])
     end
-    if (EnableAssertPushValidStability) begin : gen_push_valid
+    if (EnableAssumePushValidStability) begin : gen_push_valid
       `BR_ASSUME(push_valid_stable_a, push_valid[n] && !push_ready[n] |=> push_valid[n])
     end
   end
 
   // ----------Sanity Check----------
-  if (EnableAssertPushValidStability) begin : gen_pop_valid
+  if (EnableAssumePushValidStability) begin : gen_pop_valid
     `BR_ASSERT(pop_valid_stable_a, pop_valid_unstable && !pop_ready |=> pop_valid_unstable)
   end
 

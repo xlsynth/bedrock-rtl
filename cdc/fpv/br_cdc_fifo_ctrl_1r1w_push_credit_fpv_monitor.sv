@@ -157,8 +157,6 @@ module br_cdc_fifo_ctrl_1r1w_push_credit_fpv_monitor #(
       .Width(Width),
       .NumSyncStages(NumSyncStages),
       .EnableCoverPushBackpressure(0),
-      .EnableAssertPushValidStability(0),
-      .EnableAssertPushDataStability(0),
       .RamWriteLatency(RamWriteLatency),
       .RamReadLatency(RamReadLatency)
   ) fv_checker (

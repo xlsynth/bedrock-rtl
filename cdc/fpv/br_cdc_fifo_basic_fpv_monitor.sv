@@ -15,12 +15,6 @@ module br_cdc_fifo_basic_fpv_monitor #(
     // If 1, cover that the push side experiences backpressure.
     // If 0, assert that there is never backpressure.
     parameter bit EnableCoverPushBackpressure = 1,
-    // If 1, assert that push_valid is stable when backpressured.
-    // If 0, cover that push_valid can be unstable.
-    parameter bit EnableAssertPushValidStability = EnableCoverPushBackpressure,
-    // If 1, assert that push_data is stable when backpressured.
-    // If 0, cover that push_data can be unstable.
-    parameter bit EnableAssertPushDataStability = EnableAssertPushValidStability,
     parameter int RamWriteLatency = 1,
     parameter int RamReadLatency = 1,
     parameter int PushExtraDelay = 0,
@@ -67,16 +61,7 @@ module br_cdc_fifo_basic_fpv_monitor #(
 
   // ----------FV assumptions----------
   `BR_ASSUME_CR(pop_ready_liveness_a, s_eventually (pop_ready), pop_clk, pop_rst)
-  if (EnableCoverPushBackpressure) begin : gen_back_pressure
-    if (EnableAssertPushValidStability) begin : gen_push_valid_stable
-      `BR_ASSUME_CR(push_valid_stable_a, push_valid && !push_ready |=> push_valid, push_clk,
-                    push_rst)
-    end
-    if (EnableAssertPushDataStability) begin : gen_push_data_stable
-      `BR_ASSUME_CR(push_data_stable_a, push_valid && !push_ready |=> $stable(push_data), push_clk,
-                    push_rst)
-    end
-  end else begin : gen_no_back_pressure
+  if (!EnableCoverPushBackpressure) begin : gen_no_back_pressure
     `BR_ASSUME_CR(no_back_pressure_a, push_valid |-> push_ready, push_clk, push_rst)
   end
 
@@ -209,11 +194,7 @@ module br_cdc_fifo_basic_fpv_monitor #(
   end
 
   // ----------Forward Progress Check----------
-  if (EnableAssertPushValidStability) begin : gen_stable
-    `BR_ASSERT(no_deadlock_pop_a, push_valid |-> s_eventually pop_valid)
-  end else begin : gen_not_stable
-    `BR_ASSERT(no_deadlock_pop_a, push_vr |-> s_eventually pop_valid)
-  end
+  `BR_ASSERT(no_deadlock_pop_a, push_vr |-> s_eventually pop_valid)
 
   // ----------Critical Covers----------
   `BR_COVER_CR(fifo_full_c, push_full, push_clk, push_rst)
