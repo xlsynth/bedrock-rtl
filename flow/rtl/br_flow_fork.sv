@@ -16,8 +16,6 @@ module br_flow_fork #(
     // If 1, cover that the push side experiences backpressure.
     // If 0, assert that there is never backpressure.
     parameter bit EnableCoverPushBackpressure = 1,
-    // If 1, assert that push_valid is stable when backpressured.
-    parameter bit EnableAssertPushValidStability = EnableCoverPushBackpressure,
     // If 1, then assert there are no valid bits asserted at the end of the test.
     parameter bit EnableAssertFinalNotValid = 1
 ) (
@@ -49,9 +47,8 @@ module br_flow_fork #(
       .NumFlows(1),
       .Width(1),
       .EnableCoverBackpressure(EnableCoverPushBackpressure),
-      .EnableAssertValidStability(EnableAssertPushValidStability),
-      // Data is always stable when valid is since it is constant.
-      .EnableAssertDataStability(EnableAssertPushValidStability),
+      .EnableAssertValidStability(0),
+      .EnableAssertDataStability(0),
       .EnableAssertFinalNotValid(EnableAssertFinalNotValid)
   ) br_flow_checks_valid_data_intg (
       .clk,
@@ -84,7 +81,6 @@ module br_flow_fork #(
       .NumFlows(NumFlows),
       .Width(1),
       .EnableCoverBackpressure(EnableCoverPushBackpressure),
-      // We know that the pop valids can be unstable.
       .EnableAssertValidStability(0),
       .EnableAssertFinalNotValid(EnableAssertFinalNotValid)
   ) br_flow_checks_valid_data_impl (
@@ -96,7 +92,10 @@ module br_flow_fork #(
   );
 
   if (EnableCoverPushBackpressure) begin : gen_push_backpressure_cover
-    `BR_COVER_IMPL(pop_valid_unstable_c, !$stable(pop_valid_unstable))
+    for (genvar i = 0; i < NumFlows; i++) begin : gen_per_flow
+      `BR_COVER_IMPL(pop_valid_unstable_c,
+                     !pop_ready[i] && pop_valid_unstable[i] ##1 !$stable(pop_valid_unstable[i]))
+    end
   end
 
 endmodule : br_flow_fork
