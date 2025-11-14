@@ -13,9 +13,9 @@ module br_flow_xbar_basic_fpv_monitor #(
     parameter bit RegisterDemuxOutputs = 0,
     parameter bit RegisterPopOutputs = 0,
     parameter bit EnableCoverPushBackpressure = 1,
-    parameter bit EnableAssertPushValidStability = EnableCoverPushBackpressure,
-    parameter bit EnableAssertPushDataStability = EnableAssertPushValidStability,
-    parameter bit EnableAssertPushDestinationStability = EnableAssertPushValidStability,
+    parameter bit EnableAssumePushValidStability = EnableCoverPushBackpressure,
+    parameter bit EnableAssumePushDataStability = EnableAssumePushValidStability,
+    parameter bit EnableAssumePushDestinationStability = EnableAssumePushValidStability,
     localparam int PushDestIdWidth = $clog2(NumPushFlows),
     localparam int DestIdWidth = $clog2(NumPopFlows)
 ) (
@@ -57,13 +57,13 @@ module br_flow_xbar_basic_fpv_monitor #(
     // but higher bits can be random value
     `BR_ASSUME(color_push_data_a, push_valid[i] |-> push_data[i][PushDestIdWidth-1:0] == i)
     if (EnableCoverPushBackpressure) begin : gen_push_backpressure
-      if (EnableAssertPushValidStability) begin : gen_push_valid
+      if (EnableAssumePushValidStability) begin : gen_push_valid
         `BR_ASSUME(push_valid_stable_a, push_valid[i] && !push_ready[i] |=> push_valid[i])
       end
-      if (EnableAssertPushDataStability) begin : gen_push_data
+      if (EnableAssumePushDataStability) begin : gen_push_data
         `BR_ASSUME(push_data_stable_a, push_valid[i] && !push_ready[i] |=> $stable(push_data[i]))
       end
-      if (EnableAssertPushDestinationStability) begin : gen_push_dest_id
+      if (EnableAssumePushDestinationStability) begin : gen_push_dest_id
         `BR_ASSUME(push_dest_id_stable_a,
                    push_valid[i] && !push_ready[i] |=> $stable(push_dest_id[i]))
       end
@@ -78,7 +78,7 @@ module br_flow_xbar_basic_fpv_monitor #(
 
   // ----------Sanity Check----------
   // if RegisterPopOutputs = 0, pop_valid could be unstable if push_valid or push_dest_id is unstable
-  if ((EnableAssertPushValidStability && EnableAssertPushDestinationStability) ||
+  if ((EnableAssumePushValidStability && EnableAssumePushDestinationStability) ||
       RegisterPopOutputs) begin : gen_pop_valid
     `BR_ASSERT(pop_valid_stable_a,
                pop_valid[fv_pop_id] && !pop_ready[fv_pop_id] |=> pop_valid[fv_pop_id])

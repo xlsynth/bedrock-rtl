@@ -9,7 +9,6 @@
 module br_flow_arb_rr_fpv_monitor #(
     parameter int NumFlows = 2,  // Must be at least 2
     parameter bit EnableCoverPushBackpressure = 1,
-    parameter bit EnableAssertPushValidStability = EnableCoverPushBackpressure,
     parameter bit EnableAssertFinalNotValid = 1
 ) (
     input logic                clk,
@@ -25,8 +24,7 @@ module br_flow_arb_rr_fpv_monitor #(
   // ----------Instantiate basic checks----------
   br_flow_arb_basic_fpv_monitor #(
       .NumFlows(NumFlows),
-      .EnableCoverPushBackpressure(EnableCoverPushBackpressure),
-      .EnableAssertPushValidStability(EnableAssertPushValidStability)
+      .EnableCoverPushBackpressure(EnableCoverPushBackpressure)
   ) fv_checker (
       .clk,
       .rst,
@@ -39,7 +37,7 @@ module br_flow_arb_rr_fpv_monitor #(
   // ----------Round Robin checks----------
   rr_basic_fpv_monitor #(
       .NumRequesters(NumFlows),
-      .EnableAssertPushValidStability(EnableAssertPushValidStability)
+      .EnableAssumeRequestStability(EnableCoverPushBackpressure)
   ) rr_check (
       .clk,
       .rst,
@@ -53,6 +51,5 @@ endmodule : br_flow_arb_rr_fpv_monitor
 bind br_flow_arb_rr br_flow_arb_rr_fpv_monitor #(
     .NumFlows(NumFlows),
     .EnableCoverPushBackpressure(EnableCoverPushBackpressure),
-    .EnableAssertPushValidStability(EnableAssertPushValidStability),
     .EnableAssertFinalNotValid(EnableAssertFinalNotValid)
 ) monitor (.*);

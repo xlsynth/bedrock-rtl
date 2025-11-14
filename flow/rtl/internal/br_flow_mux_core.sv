@@ -21,10 +21,6 @@ module br_flow_mux_core #(
     // If 1, cover that the push side experiences backpressure.
     // If 0, assert that there is never backpressure.
     parameter bit EnableCoverPushBackpressure = 1,
-    // If 1, assert that push_valid is stable when backpressured.
-    parameter bit EnableAssertPushValidStability = 1,
-    // If 1, assert that push_data is stable when backpressured.
-    parameter bit EnableAssertPushDataStability = 1,
     // If 1, assert that push_data is always known (not X) when push_valid is asserted.
     parameter bit EnableAssertPushDataKnown = 1,
     // If 1, then assert there are no valid bits asserted at the end of the test.
@@ -69,8 +65,8 @@ module br_flow_mux_core #(
       .NumFlows(NumFlows),
       .Width(Width),
       .EnableCoverBackpressure(EnableCoverPushBackpressure),
-      .EnableAssertValidStability(EnableAssertPushValidStability),
-      .EnableAssertDataStability(EnableAssertPushDataStability),
+      .EnableAssertValidStability(0),
+      .EnableAssertDataStability(0),
       .EnableAssertDataKnown(EnableAssertPushDataKnown),
       .EnableAssertFinalNotValid(EnableAssertFinalNotValid)
   ) br_flow_checks_valid_data_intg (
@@ -88,7 +84,6 @@ module br_flow_mux_core #(
   br_flow_arb_core #(
       .NumFlows(NumFlows),
       .EnableCoverPushBackpressure(EnableCoverPushBackpressure),
-      .EnableAssertPushValidStability(EnableAssertPushValidStability),
       .EnableAssertFinalNotValid(EnableAssertFinalNotValid),
       .EnableCoverPopBackpressure(EnableCoverPopBackpressure),
       .ArbiterAlwaysGrants(ArbiterAlwaysGrants)
@@ -117,16 +112,11 @@ module br_flow_mux_core #(
   //------------------------------------------
   // Implementation checks
   //------------------------------------------
-  localparam bit EnableAssertPopValidStability =
-    EnableCoverPopBackpressure &&
-    EnableAssertPushValidStability;
-
   br_flow_checks_valid_data_impl #(
       .NumFlows(1),
       .Width(Width),
       .EnableCoverBackpressure(EnableCoverPopBackpressure),
-      .EnableAssertValidStability(EnableAssertPopValidStability),
-      // pop_data_unstable is unstable regardless of whether push_data is stable
+      .EnableAssertValidStability(0),
       .EnableAssertDataStability(0),
       .EnableAssertFinalNotValid(EnableAssertFinalNotValid)
   ) br_flow_checks_valid_data_impl (
@@ -138,7 +128,10 @@ module br_flow_mux_core #(
   );
 
   if (EnableCoverPopBackpressure) begin : gen_pop_data_unstable_cover
-    `BR_COVER_IMPL(pop_data_unstable_c, !$stable(pop_data_unstable))
+    `BR_COVER_IMPL(pop_valid_unstable_c,
+                   !pop_ready && pop_valid_unstable ##1 !$stable(pop_valid_unstable))
+    `BR_COVER_IMPL(pop_data_unstable_c,
+                   !pop_ready && pop_valid_unstable ##1 !$stable(pop_data_unstable))
   end
 
   for (genvar i = 0; i < NumFlows; i++) begin : gen_data_selected_assert

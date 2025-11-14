@@ -311,9 +311,7 @@ module br_amba_axi2axil_core #(
       .FlopRamWidthTiles(1),
       .FlopRamAddressDepthStages(0),
       .FlopRamReadDataDepthStages(0),
-      .FlopRamReadDataWidthStages(0),
-      // Valid from br_flow_fork is unstable
-      .EnableAssertPushValidStability(0)
+      .FlopRamReadDataWidthStages(0)
   ) br_fifo_flops_resp_tracker (
       .clk,
       .rst,

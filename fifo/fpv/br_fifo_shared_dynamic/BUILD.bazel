@@ -22,6 +22,7 @@ verilog_library(
     deps = [
         ":br_fifo_shared_dynamic_basic_fpv_monitor",
         "//fifo/rtl:br_fifo_shared_dynamic_flops",
+        "//macros:br_asserts",
         "//macros:br_fv",
     ],
 )
@@ -122,8 +123,8 @@ br_verilog_fpv_test_tools_suite(
     illegal_param_combinations = {
         (
             "EnableCoverPushBackpressure",
-            "EnableAssertPushValidStability",
-            "EnableAssertPushDataStability",
+            "EnableAssumePushValidStability",
+            "EnableAssumePushDataStability",
         ): [
             ("0", "0", "1"),
             ("0", "1", "0"),
@@ -132,11 +133,11 @@ br_verilog_fpv_test_tools_suite(
         ],
     },
     params = {
-        "EnableAssertPushDataStability": [
+        "EnableAssumePushDataStability": [
             "0",
             "1",
         ],
-        "EnableAssertPushValidStability": [
+        "EnableAssumePushValidStability": [
             "0",
             "1",
         ],
@@ -377,8 +378,8 @@ br_verilog_fpv_test_tools_suite(
     illegal_param_combinations = {
         (
             "EnableCoverPushBackpressure",
-            "EnableAssertPushValidStability",
-            "EnableAssertPushDataStability",
+            "EnableAssumePushValidStability",
+            "EnableAssumePushDataStability",
         ): [
             ("0", "0", "1"),
             ("0", "1", "0"),
@@ -387,11 +388,11 @@ br_verilog_fpv_test_tools_suite(
         ],
     },
     params = {
-        "EnableAssertPushDataStability": [
+        "EnableAssumePushDataStability": [
             "0",
             "1",
         ],
-        "EnableAssertPushValidStability": [
+        "EnableAssumePushValidStability": [
             "0",
             "1",
         ],

@@ -24,8 +24,6 @@ module br_cdc_fifo_ctrl_push_pop_1r1w_fpv_monitor #(
     parameter int NumSyncStages = 3,
     parameter bit RegisterPopOutputs = 0,
     parameter bit EnableCoverPushBackpressure = 1,
-    parameter bit EnableAssertPushValidStability = EnableCoverPushBackpressure,
-    parameter bit EnableAssertPushDataStability = EnableAssertPushValidStability,
     parameter bit EnableAssertFinalNotValid = 1,
     localparam int AddrWidth = $clog2(Depth),
     localparam int CountWidth = $clog2(Depth + 1)
@@ -100,8 +98,6 @@ module br_cdc_fifo_ctrl_push_pop_1r1w_fpv_monitor #(
       .RamWriteLatency(RamWriteLatency),
       .NumSyncStages(NumSyncStages),
       .EnableCoverPushBackpressure(EnableCoverPushBackpressure),
-      .EnableAssertPushValidStability(EnableAssertPushValidStability),
-      .EnableAssertPushDataStability(EnableAssertPushDataStability),
       .EnableAssertFinalNotValid(EnableAssertFinalNotValid)
   ) push_dut (
       .push_clk,
@@ -155,8 +151,6 @@ module br_cdc_fifo_ctrl_push_pop_1r1w_fpv_monitor #(
       .Width(Width),
       .NumSyncStages(NumSyncStages),
       .EnableCoverPushBackpressure(EnableCoverPushBackpressure),
-      .EnableAssertPushValidStability(EnableAssertPushValidStability),
-      .EnableAssertPushDataStability(EnableAssertPushDataStability),
       .RamWriteLatency(RamWriteLatency),
       .RamReadLatency(RamReadLatency)
   ) fv_checker (

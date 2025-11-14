@@ -23,12 +23,6 @@ module br_credit_sender_fpv_monitor #(
     // If 1, cover that the push side experiences backpressure.
     // If 0, assert that there is never backpressure.
     parameter bit EnableCoverPushBackpressure = 1,
-    // If 1, assert that push_valid is stable when backpressured.
-    // If 0, cover that push_valid can be unstable.
-    parameter bit EnableAssertPushValidStability = EnableCoverPushBackpressure,
-    // If 1, assert that push_data is stable when backpressured.
-    // If 0, cover that push_data can be unstable.
-    parameter bit EnableAssertPushDataStability = EnableAssertPushValidStability,
     // If 1, then assert there are no valid bits asserted at the end of the test.
     parameter bit EnableAssertFinalNotValid = 1,
 
@@ -82,27 +76,11 @@ module br_credit_sender_fpv_monitor #(
     if (!EnableCoverPushBackpressure) begin : gen_no_push_backpressure
       `BR_ASSUME(no_push_backpressure_a, !push_ready[n] |-> !push_valid[n])
     end
-    if (EnableAssertPushValidStability) begin : gen_push_valid_stable
-      `BR_ASSUME(push_valid_stable_a, push_valid[n] && !push_ready[n] |=> push_valid[n])
-    end
-    if (EnableAssertPushDataStability) begin : gen_push_data_stable
-      `BR_ASSUME(push_data_stable_a, push_valid[n] && !push_ready[n] |=> $stable(push_data[n]))
-    end
   end
   `BR_ASSUME(no_spurious_pop_credit_a, (fv_max_credit - fv_pop_credit_cnt + $countones(pop_valid)
              ) >= pop_credit)
   `BR_ASSUME(legal_pop_credit_a, pop_credit <= PopCreditMaxChange)
   `BR_ASSUME(pop_credit_liveness_a, s_eventually |pop_credit)
-
-  if (EnableAssertPushValidStability) begin : gen_push_valid_stable
-    `BR_ASSUME(push_valid_stable_a,
-               push_valid[fv_flow] && !push_ready[fv_flow] |=> push_valid[fv_flow])
-  end
-
-  if (EnableAssertPushDataStability) begin : gen_push_data_stable
-    `BR_ASSUME(push_data_stable_a,
-               push_valid[fv_flow] && !push_ready[fv_flow] |=> $stable(push_data[fv_flow]))
-  end
 
   if (!EnableCoverPushBackpressure) begin : gen_no_push_backpressure
     `BR_ASSUME(no_push_backpressure_a, !push_ready[fv_flow] |-> !push_valid[fv_flow])
@@ -136,7 +114,5 @@ bind br_credit_sender br_credit_sender_fpv_monitor #(
     .PopCreditMaxChange(PopCreditMaxChange),
     .RegisterPopOutputs(RegisterPopOutputs),
     .EnableCoverPushBackpressure(EnableCoverPushBackpressure),
-    .EnableAssertPushValidStability(EnableAssertPushValidStability),
-    .EnableAssertPushDataStability(EnableAssertPushDataStability),
     .EnableAssertFinalNotValid(EnableAssertFinalNotValid)
 ) monitor (.*);

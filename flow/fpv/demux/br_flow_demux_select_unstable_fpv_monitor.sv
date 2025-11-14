@@ -10,9 +10,9 @@ module br_flow_demux_select_unstable_fpv_monitor #(
     parameter int NumFlows = 2,  // Must be at least 2
     parameter int Width = 1,  // Must be at least 1
     parameter bit EnableCoverPushBackpressure = 1,
-    parameter bit EnableAssertPushValidStability = EnableCoverPushBackpressure,
-    parameter bit EnableAssertPushDataStability = EnableAssertPushValidStability,
-    parameter bit EnableAssertSelectStability = 0,
+    parameter bit EnableAssumePushValidStability = EnableCoverPushBackpressure,
+    parameter bit EnableAssumePushDataStability = EnableAssumePushValidStability,
+    parameter bit EnableAssumeSelectStability = 0,
     parameter bit EnableAssertFinalNotValid = 1
 ) (
     input logic                                   clk,
@@ -31,11 +31,11 @@ module br_flow_demux_select_unstable_fpv_monitor #(
       .NumFlows(NumFlows),
       .Width(Width),
       .EnableCoverPushBackpressure(EnableCoverPushBackpressure),
-      .EnableAssertPushValidStability(EnableAssertPushValidStability),
-      .EnableAssertPushDataStability(EnableAssertPushDataStability),
-      .EnableAssertSelectStability(EnableAssertSelectStability),
-      .EnableAssertPopValidStability(EnableAssertPushValidStability && EnableAssertSelectStability),
-      .EnableAssertPopDataStability(EnableAssertPushDataStability && EnableAssertSelectStability)
+      .EnableAssumePushValidStability(EnableAssumePushValidStability),
+      .EnableAssumePushDataStability(EnableAssumePushDataStability),
+      .EnableAssumeSelectStability(EnableAssumeSelectStability),
+      .EnableAssertPopValidStability(EnableAssumePushValidStability && EnableAssumeSelectStability),
+      .EnableAssertPopDataStability(EnableAssumePushDataStability && EnableAssumeSelectStability)
   ) fv_checker (
       .clk,
       .rst,
@@ -62,8 +62,5 @@ bind br_flow_demux_select_unstable br_flow_demux_select_unstable_fpv_monitor #(
     .NumFlows(NumFlows),
     .Width(Width),
     .EnableCoverPushBackpressure(EnableCoverPushBackpressure),
-    .EnableAssertPushValidStability(EnableAssertPushValidStability),
-    .EnableAssertPushDataStability(EnableAssertPushDataStability),
-    .EnableAssertSelectStability(EnableAssertSelectStability),
     .EnableAssertFinalNotValid(EnableAssertFinalNotValid)
 ) monitor (.*);

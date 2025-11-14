@@ -25,10 +25,6 @@ module br_flow_reg_both #(
     // If 1, cover that the push side experiences backpressure.
     // If 0, assert that there is never backpressure.
     parameter bit EnableCoverPushBackpressure = 1,
-    // If 1, assert that push_valid is stable when backpressured.
-    parameter bit EnableAssertPushValidStability = EnableCoverPushBackpressure,
-    // If 1, assert that push_data is stable when backpressured.
-    parameter bit EnableAssertPushDataStability = EnableAssertPushValidStability,
     // If 1, assert that push_data is always known (not X) when push_valid is asserted.
     parameter bit EnableAssertPushDataKnown = 1,
     // If 1, then assert there are no valid bits asserted at the end of the test.
@@ -68,8 +64,6 @@ module br_flow_reg_both #(
   br_flow_reg_rev #(
       .Width(Width),
       .EnableCoverPushBackpressure(EnableCoverPushBackpressure),
-      .EnableAssertPushValidStability(EnableAssertPushValidStability),
-      .EnableAssertPushDataStability(EnableAssertPushDataStability),
       .EnableAssertPushDataKnown(EnableAssertPushDataKnown),
       .EnableAssertFinalNotValid(EnableAssertFinalNotValid)
   ) br_flow_reg_rev (
@@ -89,8 +83,6 @@ module br_flow_reg_both #(
       // backpressuring the input. The rev stage will shield the fwd stage from
       // instability on the push interface.
       .EnableCoverPushBackpressure(1),
-      .EnableAssertPushValidStability(1),
-      .EnableAssertPushDataStability(1),
       .EnableAssertPushDataKnown(EnableAssertPushDataKnown),
       .EnableAssertFinalNotValid(EnableAssertFinalNotValid)
   ) br_flow_reg_fwd (

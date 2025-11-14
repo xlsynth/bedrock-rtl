@@ -35,10 +35,6 @@ module br_cdc_fifo_ctrl_push_1r1w #(
     // If 1, cover that the push side experiences backpressure.
     // If 0, assert that there is never backpressure.
     parameter bit EnableCoverPushBackpressure = 1,
-    // If 1, assert that push_valid is stable when backpressured.
-    parameter bit EnableAssertPushValidStability = EnableCoverPushBackpressure,
-    // If 1, assert that push_data is stable when backpressured.
-    parameter bit EnableAssertPushDataStability = EnableAssertPushValidStability,
     // If 1, then assert there are no valid bits asserted and that the FIFO is
     // empty at the end of the test.
     parameter bit EnableAssertFinalNotValid = 1,
@@ -93,8 +89,6 @@ module br_cdc_fifo_ctrl_push_1r1w #(
       .RamWriteLatency(RamWriteLatency),
       .RegisterResetActive(RegisterResetActive),
       .EnableCoverPushBackpressure(EnableCoverPushBackpressure),
-      .EnableAssertPushValidStability(EnableAssertPushValidStability),
-      .EnableAssertPushDataStability(EnableAssertPushDataStability),
       .EnableAssertFinalNotValid(EnableAssertFinalNotValid)
   ) br_cdc_fifo_push_ctrl (
       .clk              (push_clk),               // ri lint_check_waive SAME_CLOCK_NAME
