@@ -224,8 +224,7 @@ module br_amba_axi_demux_req_tracker #(
 
     br_flow_demux_select_unstable #(
         .NumFlows(NumIds),
-        .Width(1),
-        .EnableAssertPushValidStability(0)
+        .Width(1)
     ) br_flow_demux_select_unstable_resp_tracker_push (
         .clk,
         .rst,
@@ -418,10 +417,7 @@ module br_amba_axi_demux_req_tracker #(
 
   // Output buffer (to cut upstream_xready -> upstream_xvalid path)
   br_flow_reg_fwd #(
-      .Width(AxiIdWidth + RespPayloadWidth + 1),
-      // If a higher-priority downstream port with a different ID becomes valid,
-      // the mux select can change, resulting in data not remaining stable.
-      .EnableAssertPushDataStability(0)
+      .Width(AxiIdWidth + RespPayloadWidth + 1)
   ) br_flow_reg_fwd_upstream_resp (
       .clk,
       .rst,

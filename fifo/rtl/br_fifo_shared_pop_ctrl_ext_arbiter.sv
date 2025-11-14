@@ -202,7 +202,6 @@ module br_fifo_shared_pop_ctrl_ext_arbiter #(
       .Depth(Depth),
       .Width(Width),
       .RamReadLatency(RamReadLatency),
-      .EnableAssertPushValidStability(1),
       .ArbiterAlwaysGrants(ArbiterAlwaysGrants)
   ) br_fifo_shared_read_xbar (
       .clk,

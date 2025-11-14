@@ -413,9 +413,7 @@ module br_amba_axi_isolate_mgr #(
           downstream_awprot_int
       ) + $bits(
           downstream_awuser_int
-      )),
-      .EnableAssertPushValidStability(0),
-      .EnableAssertPushDataStability(0)
+      ))
   ) br_flow_reg_fwd_ds_aw (
       .clk,
       .rst,
@@ -456,9 +454,7 @@ module br_amba_axi_isolate_mgr #(
           downstream_wuser_int
       ) + $bits(
           downstream_wlast_int
-      )),
-      .EnableAssertPushValidStability(0),
-      .EnableAssertPushDataStability(0)
+      ))
   ) br_flow_reg_fwd_ds_w (
       .clk,
       .rst,
@@ -491,9 +487,7 @@ module br_amba_axi_isolate_mgr #(
           downstream_arprot_int
       ) + $bits(
           downstream_aruser_int
-      )),
-      .EnableAssertPushValidStability(0),
-      .EnableAssertPushDataStability(0)
+      ))
   ) br_flow_reg_fwd_ds_ar (
       .clk,
       .rst,

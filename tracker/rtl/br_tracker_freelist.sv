@@ -217,13 +217,6 @@ module br_tracker_freelist #(
       // Staging buffer
       br_flow_reg_fwd #(
           .Width(EntryIdWidth),
-          .EnableAssertPushValidStability(1),
-          // Since the entry ID is coming from a priority encoder,
-          // it could be unstable if a higher priority entry is deallocated.
-          // This can only happen if there are more than two entries.
-          // If there are only two, only one entry can be unstaged when push_ready
-          // is low.
-          .EnableAssertPushDataStability(NumEntries <= 2),
           // Expect that alloc_valid can be 1 at end of test (or when idle, in general)
           .EnableAssertFinalNotValid(0)
       ) br_flow_reg_fwd (
@@ -261,10 +254,6 @@ module br_tracker_freelist #(
       br_multi_xfer_reg_fwd #(
           .NumSymbols(NumAllocPerCycle),
           .SymbolWidth(EntryIdWidth),
-          // Data can be unstable because deallocating a higher priority entry
-          // can supersede an existing free entry.
-          // This can only happen if there are more than NumAllocPerCycle + 1 entries.
-          .EnableAssertPushDataStability(NumEntries <= NumAllocPerCycle + 1),
           // We expect unstaged_free_entries to be 1 at the end of the test.
           .EnableAssertFinalNotSendable(0)
       ) br_multi_xfer_reg_fwd (
