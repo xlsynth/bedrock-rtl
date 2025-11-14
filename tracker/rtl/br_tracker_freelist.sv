@@ -254,6 +254,10 @@ module br_tracker_freelist #(
       br_multi_xfer_reg_fwd #(
           .NumSymbols(NumAllocPerCycle),
           .SymbolWidth(EntryIdWidth),
+          // Data can be unstable because deallocating a higher priority entry
+          // can supersede an existing free entry.
+          // This can only happen if there are more than NumAllocPerCycle + 1 entries.
+          .EnableAssertPushDataStability(NumEntries <= NumAllocPerCycle + 1),
           // We expect unstaged_free_entries to be 1 at the end of the test.
           .EnableAssertFinalNotSendable(0)
       ) br_multi_xfer_reg_fwd (
