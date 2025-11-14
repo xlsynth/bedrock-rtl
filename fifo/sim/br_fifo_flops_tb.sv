@@ -46,10 +46,7 @@ module br_fifo_flops_tb;
       .Width(Width),
       .RegisterPopOutputs(RegisterPopOutputs),
       .EnableBypass(EnableBypass),
-      .FlopRamAddressDepthStages(FlopRamAddressDepthStages),
-      // The test harness causes instability on the push_valid,
-      // so need to disable the stability check
-      .EnableAssertPushValidStability(0)
+      .FlopRamAddressDepthStages(FlopRamAddressDepthStages)
   ) dut (
       .clk(clk),
       .rst(rst),
