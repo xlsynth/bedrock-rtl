@@ -72,6 +72,7 @@ module br_flow_checks_valid_data_impl #(
       for (genvar i = 0; i < NumFlows; i++) begin : gen_per_flow
         `BR_COVER_IMPL(backpressure_c, !ready[i] && valid[i])
       end
+    end
   end else begin : gen_no_backpressure_checks
     for (genvar i = 0; i < NumFlows; i++) begin : gen_no_backpressure_per_flow
       `BR_ASSERT_IMPL(no_backpressure_a, valid[i] |-> ready[i])
