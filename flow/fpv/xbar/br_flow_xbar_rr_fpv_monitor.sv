@@ -7,10 +7,10 @@
 `include "br_fv.svh"
 
 module br_flow_xbar_rr_fpv_monitor #(
-    // The number of input flows. Must be >=2.
-    parameter int NumPushFlows = 2,
-    // The number of output flows. Must be >=2.
-    parameter int NumPopFlows = 2,
+    // The number of input flows. Must be >=1.
+    parameter int NumPushFlows = 1,
+    // The number of output flows. Must be >=1.
+    parameter int NumPopFlows = 1,
     // The width of the data bus.
     parameter int Width = 1,
     // If 1, registers are inserted between the demux and mux to break up the

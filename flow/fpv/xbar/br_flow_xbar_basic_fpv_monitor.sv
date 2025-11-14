@@ -7,8 +7,8 @@
 `include "br_registers.svh"
 
 module br_flow_xbar_basic_fpv_monitor #(
-    parameter int NumPushFlows = 2,
-    parameter int NumPopFlows = 2,
+    parameter int NumPushFlows = 1,
+    parameter int NumPopFlows = 1,
     parameter int Width = 1,
     parameter bit RegisterDemuxOutputs = 0,
     parameter bit RegisterPopOutputs = 0,
@@ -16,8 +16,8 @@ module br_flow_xbar_basic_fpv_monitor #(
     parameter bit EnableAssertPushValidStability = EnableCoverPushBackpressure,
     parameter bit EnableAssertPushDataStability = EnableAssertPushValidStability,
     parameter bit EnableAssertPushDestinationStability = EnableAssertPushValidStability,
-    localparam int PushDestIdWidth = $clog2(NumPushFlows),
-    localparam int DestIdWidth = $clog2(NumPopFlows)
+    localparam int PushDestIdWidth = br_math::clamped_clog2(NumPushFlows),
+    localparam int DestIdWidth = br_math::clamped_clog2(NumPopFlows)
 ) (
     input logic clk,
     input logic rst,

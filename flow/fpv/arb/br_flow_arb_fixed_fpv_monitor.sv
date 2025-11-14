@@ -7,7 +7,7 @@
 `include "br_fv.svh"
 
 module br_flow_arb_fixed_fpv_monitor #(
-    parameter int NumFlows = 2,  // Must be at least 2
+    parameter int NumFlows = 1,  // Must be at least 1
     parameter bit EnableCoverPushBackpressure = 1,
     parameter bit EnableAssertPushValidStability = EnableCoverPushBackpressure,
     parameter bit EnableAssertFinalNotValid = 1
@@ -36,13 +36,15 @@ module br_flow_arb_fixed_fpv_monitor #(
       .pop_valid_unstable
   );
 
-  // ----------FV Modeling Code----------
-  logic [$clog2(NumFlows)-1:0] i, j;
-  `BR_FV_2RAND_IDX(i, j, NumFlows)
+  if (NumFlows > 1) begin : gen_multi_req
+    // ----------FV Modeling Code----------
+    logic [$clog2(NumFlows)-1:0] i, j;
+    `BR_FV_2RAND_IDX(i, j, NumFlows)
 
-  // ----------Fairness Check----------
-  if (EnableCoverPushBackpressure) begin : gen_strict_priority_check
-    `BR_ASSERT(strict_priority_a, (i < j) && push_valid[i] && push_valid[j] |-> !grant[j])
+    // ----------Fairness Check----------
+    if (EnableCoverPushBackpressure) begin : gen_strict_priority_check
+      `BR_ASSERT(strict_priority_a, (i < j) && push_valid[i] && push_valid[j] |-> !grant[j])
+    end
   end
 
 endmodule : br_flow_arb_fixed_fpv_monitor

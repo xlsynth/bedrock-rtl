@@ -7,10 +7,10 @@
 `include "br_fv.svh"
 
 module br_flow_xbar_fixed_fpv_monitor #(
-    // The number of input flows. Must be >=2.
-    parameter int NumPushFlows = 2,
-    // The number of output flows. Must be >=2.
-    parameter int NumPopFlows = 2,
+    // The number of input flows. Must be >=1.
+    parameter int NumPushFlows = 1,
+    // The number of output flows. Must be >=1.
+    parameter int NumPopFlows = 1,
     // The width of the data bus.
     parameter int Width = 1,
     // If 1, registers are inserted between the demux and mux to break up the
@@ -67,7 +67,13 @@ module br_flow_xbar_fixed_fpv_monitor #(
   `BR_ASSUME(fv_push_id_stable_a, $stable(fv_push_id) && fv_push_id < NumPushFlows)
   `BR_ASSUME(fv_pop_id_stable_a, $stable(fv_pop_id) && fv_pop_id < NumPopFlows)
 
-  `BR_FV_2RAND_IDX(i, j, NumPushFlows)
+  if (NumPushFlows > 1) begin : gen_ij
+    `BR_FV_2RAND_IDX(i, j, NumPushFlows)
+  end else begin : gen_ij0
+    assign i = 0;
+    assign j = 0;
+  end
+
   assign push_valid_i = push_valid[i] && (push_dest_id[i] == fv_pop_id);
   assign push_valid_j = push_valid[j] && (push_dest_id[j] == fv_pop_id);
 
@@ -97,16 +103,18 @@ module br_flow_xbar_fixed_fpv_monitor #(
   );
 
   // ----------FV assertions----------
-  if (EnableCoverPushBackpressure) begin : gen_priority_checks
-    if (RegisterDemuxOutputs) begin : gen_lat
-      `BR_ASSERT(strict_priority_a,
-                 (i < j) && push_valid_i && push_valid_j |=> !grant[fv_pop_id][j])
-    end else begin : gen_lat0
-      `BR_ASSERT(strict_priority_a,
-                 (i < j) && push_valid_i && push_valid_j |-> !grant[fv_pop_id][j])
+  if (NumPushFlows > 1) begin : gen_multiple_req
+    if (EnableCoverPushBackpressure) begin : gen_priority_checks
+      if (RegisterDemuxOutputs) begin : gen_lat
+        `BR_ASSERT(strict_priority_a,
+                   (i < j) && push_valid_i && push_valid_j |=> !grant[fv_pop_id][j])
+      end else begin : gen_lat0
+        `BR_ASSERT(strict_priority_a,
+                   (i < j) && push_valid_i && push_valid_j |-> !grant[fv_pop_id][j])
+      end
+    end else begin : gen_check_no_conflict
+      `BR_ASSERT(no_conflict_a, !(push_valid_i && push_valid_j))
     end
-  end else begin : gen_check_no_conflict
-    `BR_ASSERT(no_conflict_a, !(push_valid_i && push_valid_j))
   end
 
 endmodule : br_flow_xbar_fixed_fpv_monitor
