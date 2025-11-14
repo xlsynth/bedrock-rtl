@@ -160,6 +160,6 @@ br_verilog_fpv_test_tools_suite(
     tools = {
         "jg": "",
     },
-    top = "br_flow_arb_rr",
+    top = "br_flow_arb_rr_fpv_monitor",
     deps = [":br_flow_arb_rr_fpv_monitor"],
 )

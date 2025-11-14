@@ -14,13 +14,29 @@ module br_flow_arb_rr_fpv_monitor #(
 ) (
     input logic                clk,
     input logic                rst,
-    input logic [NumFlows-1:0] push_ready,
     input logic [NumFlows-1:0] push_valid,
-    input logic                pop_ready,
-    input logic                pop_valid_unstable,
-    // RTL internal signal
-    input logic [NumFlows-1:0] grant
+    input logic                pop_ready
 );
+
+  // ----------Instantiate RTL----------
+  logic [NumFlows-1:0] push_ready;
+  logic                pop_valid_unstable;
+  // RTL internal signal
+  logic [NumFlows-1:0] grant;
+  assign grant = dut.grant;
+
+  br_flow_arb_rr #(
+      .NumFlows(NumFlows),
+      .EnableCoverPushBackpressure(EnableCoverPushBackpressure),
+      .EnableAssertFinalNotValid(EnableAssertFinalNotValid)
+  ) dut (
+      .clk,
+      .rst,
+      .push_ready,
+      .push_valid,
+      .pop_ready,
+      .pop_valid_unstable
+  );
 
   // ----------Instantiate basic checks----------
   br_flow_arb_basic_fpv_monitor #(
@@ -49,9 +65,3 @@ module br_flow_arb_rr_fpv_monitor #(
   );
 
 endmodule : br_flow_arb_rr_fpv_monitor
-
-bind br_flow_arb_rr br_flow_arb_rr_fpv_monitor #(
-    .NumFlows(NumFlows),
-    .EnableCoverPushBackpressure(EnableCoverPushBackpressure),
-    .EnableAssertFinalNotValid(EnableAssertFinalNotValid)
-) monitor (.*);
