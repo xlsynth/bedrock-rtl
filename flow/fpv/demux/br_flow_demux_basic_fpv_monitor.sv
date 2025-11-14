@@ -7,7 +7,7 @@
 `include "br_fv.svh"
 
 module br_flow_demux_basic_fpv_monitor #(
-    parameter int NumFlows = 2,  // Must be at least 2
+    parameter int NumFlows = 1,  // Must be at least 1
     parameter int Width = 1,  // Must be at least 1
     parameter bit EnableCoverPushBackpressure = 1,
     parameter bit EnableAssertPushValidStability = EnableCoverPushBackpressure,

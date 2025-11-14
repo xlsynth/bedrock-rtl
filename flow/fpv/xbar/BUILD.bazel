@@ -10,6 +10,7 @@ package(default_visibility = ["//visibility:private"])
 verilog_library(
     name = "br_flow_xbar_basic_fpv_monitor",
     srcs = ["br_flow_xbar_basic_fpv_monitor.sv"],
+    deps = ["//pkg:br_math_pkg"],
 )
 
 # Bedrock-RTL Flow-Controlled Crossbar (Fixed Priority Arbitration)
@@ -84,11 +85,13 @@ br_verilog_fpv_test_tools_suite(
     name = "br_flow_xbar_fixed_test_suite",
     params = {
         "NumPopFlows": [
+            "1",
             "2",
             "3",
             "4",
         ],
         "NumPushFlows": [
+            "1",
             "2",
             "3",
             "4",
@@ -186,11 +189,13 @@ br_verilog_fpv_test_tools_suite(
     name = "br_flow_xbar_rr_test_suite",
     params = {
         "NumPopFlows": [
+            "1",
             "2",
             "3",
             "4",
         ],
         "NumPushFlows": [
+            "1",
             "2",
             "3",
             "4",
@@ -288,11 +293,13 @@ br_verilog_fpv_test_tools_suite(
     name = "br_flow_xbar_lru_test_suite",
     params = {
         "NumPopFlows": [
+            "1",
             "2",
             "3",
             "4",
         ],
         "NumPushFlows": [
+            "1",
             "2",
             "3",
             "4",

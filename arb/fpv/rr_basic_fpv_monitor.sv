@@ -8,8 +8,8 @@
 `include "br_fv.svh"
 
 module rr_basic_fpv_monitor #(
-    // Must be at least 2
-    parameter int NumRequesters = 2,
+    // Must be at least 1
+    parameter int NumRequesters = 1,
     parameter bit EnableAssertPushValidStability = 1
 ) (
     input logic clk,
@@ -21,11 +21,14 @@ module rr_basic_fpv_monitor #(
 
   // ----------FV Modeling Code----------
   logic [$clog2(NumRequesters)-1:0] i, j;
+  if (NumRequesters > 1) begin : gen_ij
+    `BR_FV_2RAND_IDX(i, j, NumRequesters)
+  end else begin : gen_i
+    assign i = 0;
+  end
   logic [NumRequesters-1:0] high_priority_request;
 
-  `BR_FV_2RAND_IDX(i, j, NumRequesters)
-  `BR_REGL(high_priority_request,
-           (grant == 1 << (NumRequesters - 1)) ? NumRequesters'(1) : grant << 1,
+  `BR_REGL(high_priority_request, (grant == 1 << (NumRequesters - 1)) ? 'd1 : grant << 1,
            (grant != 0) && enable_priority_update)
 
   // ----------Sanity Check----------
@@ -33,17 +36,20 @@ module rr_basic_fpv_monitor #(
   `BR_ASSERT(high_priority_grant_a, request[i] && high_priority_request[i] |-> grant[i])
 
   // ----------Fairness Check----------
-  `BR_ASSERT(arb_priority_a,
-             grant[j] |-> !request[i] ||  // high_priority ... j ... i
-             ((2 ** j >= high_priority_request) && (2 ** i > high_priority_request) && (j < i)) ||
-             // i ... high_priority ... j
-             ((2 ** j >= high_priority_request) && (2 ** i < high_priority_request)) ||
-             // j ... i ... high_priority ...
-             ((2 ** j <= high_priority_request) && (2 ** i < high_priority_request) && (j < i)))
+  if (NumRequesters > 1) begin : gen_multi_req
+    `BR_ASSERT(arb_priority_a,
+               grant[j] |-> !request[i] ||  // high_priority ... j ... i
+               ((2 ** j >= high_priority_request) && (2 ** i > high_priority_request) && (j < i)) ||
+               // i ... high_priority ... j
+               ((2 ** j >= high_priority_request) && (2 ** i < high_priority_request)) ||
+               // j ... i ... high_priority ...
+               ((2 ** j <= high_priority_request) && (2 ** i < high_priority_request) && (j < i)))
 
-  if (EnableAssertPushValidStability) begin : gen_req_stable
-    `BR_ASSERT(round_robin_a,
-               request[i] |-> not (!grant[i] && enable_priority_update throughout grant[j] [-> 2]))
+    if (EnableAssertPushValidStability) begin : gen_req_stable
+      `BR_ASSERT(
+          round_robin_a,
+          request[i] |-> not (!grant[i] && enable_priority_update throughout grant[j] [-> 2]))
+    end
   end
 
   // ----------Critical Covers----------
