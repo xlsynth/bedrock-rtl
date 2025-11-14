@@ -69,6 +69,7 @@ br_verilog_fpv_test_tools_suite(
             "1",
         ],
         "NumFlows": [
+            "1",
             "2",
             "4",
             "5",
@@ -143,6 +144,7 @@ br_verilog_fpv_test_tools_suite(
             "1",
         ],
         "NumFlows": [
+            "1",
             "2",
             "4",
             "5",

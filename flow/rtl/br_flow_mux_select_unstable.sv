@@ -22,10 +22,11 @@
 // will be stable.
 
 `include "br_asserts_internal.svh"
+`include "br_unused.svh"
 
 module br_flow_mux_select_unstable #(
-    // Must be at least 2
-    parameter int NumFlows = 2,
+    // Must be at least 1
+    parameter int NumFlows = 1,
     // Must be at least 1
     parameter int Width = 1,
     // If 1, cover that the push side experiences backpressure.
@@ -41,7 +42,9 @@ module br_flow_mux_select_unstable #(
     // If 1, assert that push_data is always known (not X) when push_valid is asserted.
     parameter bit EnableAssertPushDataKnown = 1,
     // If 1, then assert there are no valid bits asserted at the end of the test.
-    parameter bit EnableAssertFinalNotValid = 1
+    parameter bit EnableAssertFinalNotValid = 1,
+    localparam int SelectWidth = br_math::clamped_clog2(NumFlows)
+
 ) (
     // Used only for assertions
     // ri lint_check_waive INPUT_NOT_READ HIER_NET_NOT_READ HIER_BRANCH_NOT_READ
@@ -50,7 +53,7 @@ module br_flow_mux_select_unstable #(
     // ri lint_check_waive INPUT_NOT_READ HIER_NET_NOT_READ HIER_BRANCH_NOT_READ
     input logic rst,
 
-    input logic [$clog2(NumFlows)-1:0] select,
+    input logic [SelectWidth-1:0] select,
 
     output logic [NumFlows-1:0]            push_ready,
     input  logic [NumFlows-1:0]            push_valid,
@@ -68,7 +71,7 @@ module br_flow_mux_select_unstable #(
   //------------------------------------------
   // Integration checks
   //------------------------------------------
-  `BR_ASSERT_STATIC(num_flows_must_be_at_least_two_a, NumFlows >= 2)
+  `BR_ASSERT_STATIC(num_flows_must_be_at_least_one_a, NumFlows >= 1)
   `BR_ASSERT_STATIC(width_gte_1_a, Width >= 1)
   `BR_ASSERT_STATIC(select_only_stable_if_valid_stable_a,
                     EnableAssertPushValidStability || !EnableAssertSelectStability)
@@ -104,14 +107,21 @@ module br_flow_mux_select_unstable #(
   //------------------------------------------
   // Implementation
   //------------------------------------------
+  if (NumFlows == 1) begin : gen_single_flow
+    assign push_ready         = pop_ready;
+    assign pop_valid_unstable = push_valid;
+    assign pop_data_unstable  = push_data;
+    `BR_UNUSED(select)
 
-  // Lint waivers are safe because we assert select is always in range.
-  // ri lint_check_waive VAR_SHIFT TRUNC_LSHIFT
-  assign push_ready = pop_ready << select;
-  // ri lint_check_waive VAR_INDEX_READ
-  assign pop_valid_unstable = push_valid[select];
-  // ri lint_check_waive VAR_INDEX_READ
-  assign pop_data_unstable = push_data[select];
+  end else begin : gen_multi_flow
+    // Lint waivers are safe because we assert select is always in range.
+    // ri lint_check_waive VAR_SHIFT TRUNC_LSHIFT
+    assign push_ready = pop_ready << select;
+    // ri lint_check_waive VAR_INDEX_READ
+    assign pop_valid_unstable = push_valid[select];
+    // ri lint_check_waive VAR_INDEX_READ
+    assign pop_data_unstable = push_data[select];
+  end
 
   //------------------------------------------
   // Implementation checks

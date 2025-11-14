@@ -16,10 +16,10 @@
 // input flow has the highest priority.
 
 module br_flow_xbar_fixed #(
-    // The number of input flows. Must be >=2.
-    parameter int NumPushFlows = 2,
-    // The number of output flows. Must be >=2.
-    parameter int NumPopFlows = 2,
+    // The number of input flows. Must be >=1.
+    parameter int NumPushFlows = 1,
+    // The number of output flows. Must be >=1.
+    parameter int NumPopFlows = 1,
     // The width of the data bus.
     parameter int Width = 1,
     // If 1, registers are inserted between the demux and mux to break up the
@@ -47,7 +47,7 @@ module br_flow_xbar_fixed #(
     // register stages are empty at end of simulation.
     parameter bit EnableAssertFinalNotValid = 1,
 
-    localparam int DestIdWidth = $clog2(NumPopFlows)
+    localparam int DestIdWidth = br_math::clamped_clog2(NumPopFlows)
 ) (
     input logic clk,
     input logic rst,

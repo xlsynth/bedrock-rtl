@@ -16,7 +16,7 @@
 `include "br_asserts_internal.svh"
 
 module br_flow_mux_core_stable #(
-    parameter int NumFlows = 2,  // Must be at least 2
+    parameter int NumFlows = 1,  // Must be at least 1
     parameter int Width = 1,  // Must be at least 1
     // If 1, ensure that the pop ready signal is registered
     // at the input. This ensures there is no combinational path

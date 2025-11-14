@@ -15,8 +15,8 @@
 `include "br_registers.svh"
 
 module br_flow_mux_select #(
-    // Must be at least 2
-    parameter int NumFlows = 2,
+    // Must be at least 1
+    parameter int NumFlows = 1,
     // Must be at least 1
     parameter int Width = 1,
     // If 1, cover that the push side experiences backpressure.
@@ -32,12 +32,13 @@ module br_flow_mux_select #(
     // If 1, assert that push_data is always known (not X) when push_valid is asserted.
     parameter bit EnableAssertPushDataKnown = 1,
     // If 1, then assert there are no valid bits asserted at the end of the test.
-    parameter bit EnableAssertFinalNotValid = 1
+    parameter bit EnableAssertFinalNotValid = 1,
+    localparam int SelectWidth = br_math::clamped_clog2(NumFlows)
 ) (
     input logic clk,
     input logic rst,  // Synchronous active-high
 
-    input logic [$clog2(NumFlows)-1:0] select,
+    input logic [SelectWidth-1:0] select,
 
     output logic [NumFlows-1:0]            push_ready,
     input  logic [NumFlows-1:0]            push_valid,
