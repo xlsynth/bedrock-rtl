@@ -134,19 +134,7 @@ verilog_elab_test(
 
 br_verilog_fpv_test_tools_suite(
     name = "br_flow_arb_rr_test_suite",
-    illegal_param_combinations = {
-        (
-            "EnableAssumePushValidStability",
-            "EnableCoverPushBackpressure",
-        ): [
-            ("1", "0"),
-        ],
-    },
     params = {
-        "EnableAssumePushValidStability": [
-            "0",
-            "1",
-        ],
         "EnableCoverPushBackpressure": [
             "0",
             "1",
@@ -160,6 +148,6 @@ br_verilog_fpv_test_tools_suite(
     tools = {
         "jg": "",
     },
-    top = "br_flow_arb_rr_fpv_monitor",
+    top = "br_flow_arb_rr",
     deps = [":br_flow_arb_rr_fpv_monitor"],
 )
