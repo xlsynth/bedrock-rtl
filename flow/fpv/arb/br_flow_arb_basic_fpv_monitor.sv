@@ -23,9 +23,10 @@ module br_flow_arb_basic_fpv_monitor #(
 
   for (genvar n = 0; n < NumFlows; n++) begin : gen_asm
     if (!EnableCoverPushBackpressure) begin : gen_no_backpressure
-      `BR_ASSUME(no_backpressure_a, !push_ready[n] |-> !push_valid[n])
-    end else begin : gen_backpressure
+      // The design does not require stability, but the stateful arbiter model does.
       `BR_ASSUME(push_valid_stable_a, push_valid[n] && !push_ready[n] |=> push_valid[n])
+    end else begin : gen_backpressure
+      `BR_ASSUME(no_backpressure_a, !push_ready[n] |-> !push_valid[n])
     end
   end
 
