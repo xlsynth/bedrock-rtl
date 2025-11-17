@@ -111,8 +111,10 @@ module br_flow_arb_core #(
                   |(push_valid & push_ready) |-> (pop_valid_unstable & pop_ready))
   for (genvar i = 0; i < NumFlows; i++) begin : gen_per_flow_impl_checks
     `BR_ASSERT_IMPL(only_accept_on_grant_a, (push_valid[i] & push_ready[i]) |-> grant[i])
-    `BR_COVER_IMPL(pop_unstable_c,
-                   !pop_ready && pop_valid_unstable ##1 !$stable(pop_valid_unstable))
+    if (EnableCoverPopBackpressure) begin : gen_cover_pop_unstable
+      `BR_COVER_IMPL(pop_unstable_c,
+                     !pop_ready && pop_valid_unstable ##1 !$stable(pop_valid_unstable))
+    end
   end
 
 endmodule : br_flow_arb_core
