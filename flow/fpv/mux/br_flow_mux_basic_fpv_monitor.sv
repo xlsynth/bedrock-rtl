@@ -10,10 +10,10 @@ module br_flow_mux_basic_fpv_monitor #(
     parameter int NumFlows = 2,  // Must be at least 2
     parameter int Width = 1,  // Must be at least 1
     parameter bit EnableCoverPushBackpressure = 1,
-    parameter bit EnableAssertPushValidStability = EnableCoverPushBackpressure,
-    parameter bit EnableAssertPushDataStability = EnableAssertPushValidStability,
+    parameter bit EnableAssumePushValidStability = EnableCoverPushBackpressure,
+    parameter bit EnableAssumePushDataStability = EnableAssumePushValidStability,
     parameter bit EnableCoverPopBackpressure = EnableCoverPushBackpressure,
-    parameter bit EnableAssertPopValidStability = EnableAssertPushValidStability,
+    parameter bit EnableAssertPopValidStability = EnableAssumePushValidStability,
     parameter bit EnableAssertPopDataStability = 0,
     parameter bit EnableAssertMustGrant = 1,
     parameter bit DelayedGrant = 0
@@ -35,10 +35,10 @@ module br_flow_mux_basic_fpv_monitor #(
     if (!EnableCoverPushBackpressure) begin : gen_no_backpressure
       `BR_ASSUME(no_backpressure_a, !push_ready[n] |-> !push_valid[n])
     end
-    if (EnableAssertPushValidStability) begin : gen_push_valid
+    if (EnableAssumePushValidStability) begin : gen_push_valid
       `BR_ASSUME(push_valid_stable_a, push_valid[n] && !push_ready[n] |=> push_valid[n])
     end
-    if (EnableAssertPushDataStability) begin : gen_push_data
+    if (EnableAssumePushDataStability) begin : gen_push_data
       `BR_ASSUME(push_data_stable_a, push_valid[n] && !push_ready[n] |=> $stable(push_data[n]))
     end
   end

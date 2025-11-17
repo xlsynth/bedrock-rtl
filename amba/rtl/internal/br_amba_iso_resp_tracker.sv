@@ -296,9 +296,7 @@ module br_amba_iso_resp_tracker #(
 
     br_fifo_flops #(
         .Depth(MaxTransactionSkew),
-        .Width(AxiBurstLenWidth + MinIdWidth),
-        // valid can deassert if downstream_axready deasserts
-        .EnableAssertPushValidStability(0)
+        .Width(AxiBurstLenWidth + MinIdWidth)
     ) br_fifo_flops_aw_staging (
         .clk,
         .rst,
@@ -322,10 +320,7 @@ module br_amba_iso_resp_tracker #(
     );
 
     br_flow_fork #(
-        .NumFlows(2),
-        // If W beats are in excess when wdata alignment (during isolation) is requested, the
-        // upstream valid can deassert without ready asserting.
-        .EnableAssertPushValidStability(0)
+        .NumFlows(2)
     ) br_flow_fork_wlast_staging (
         .clk,
         .rst,
@@ -341,9 +336,7 @@ module br_amba_iso_resp_tracker #(
 
     br_fifo_flops #(
         .Depth(MaxTransactionSkew),
-        .Width(1),
-        // valid can deassert if downstream_wready deasserts
-        .EnableAssertPushValidStability(0)
+        .Width(1)
     ) br_fifo_flops_wlast_staging (
         .clk,
         .rst,
@@ -404,9 +397,7 @@ module br_amba_iso_resp_tracker #(
         .Depth(MaxOutstanding),
         .Width(AxiBurstLenWidth),
         .EnableBypass(1),
-        .RegisterPopOutputs(1),
-        // When EnableWlastTracking=0, valid can deassert if downstream_axready deasserts
-        .EnableAssertPushValidStability(EnableWlastTracking)
+        .RegisterPopOutputs(1)
     ) br_fifo_flops_req_tracker (
         .clk,
         .rst,
@@ -444,9 +435,7 @@ module br_amba_iso_resp_tracker #(
           .DataRamAddressDepthStages(DynamicFifoDataRamAddressDepthStages),
           .StagingBufferDepth(DynamicFifoStagingBufferDepth),
           .RegisterPopOutputs(DynamicFifoRegisterPopOutputs),
-          .RegisterDeallocation(DynamicFifoRegisterDeallocation),
-          // When EnableWlastTracking=0, valid can deassert if downstream_axready deasserts
-          .EnableAssertPushValidStability(EnableWlastTracking)
+          .RegisterDeallocation(DynamicFifoRegisterDeallocation)
       ) br_fifo_shared_dynamic_flops_req_tracker (
           .clk,
           .rst,
@@ -472,9 +461,7 @@ module br_amba_iso_resp_tracker #(
 
       br_flow_demux_select_unstable #(
           .NumFlows(AxiIdCount),
-          .Width(AxiBurstLenWidth),
-          // When EnableWlastTracking=0, valid can deassert if downstream_axready deasserts
-          .EnableAssertPushValidStability(EnableWlastTracking)
+          .Width(AxiBurstLenWidth)
       ) br_flow_demux_select_unstable_req_tracker (
           .clk,
           .rst,
@@ -526,9 +513,7 @@ module br_amba_iso_resp_tracker #(
               .Depth(PerIdFifoDepth),
               .Width(AxiBurstLenWidth),
               .EnableBypass(0),
-              .RegisterPopOutputs(0),
-              // When EnableWlastTracking=0, valid can deassert if downstream_axready deasserts
-              .EnableAssertPushValidStability(EnableWlastTracking)
+              .RegisterPopOutputs(0)
           ) br_fifo_flops_req_tracker (
               .clk,
               .rst,

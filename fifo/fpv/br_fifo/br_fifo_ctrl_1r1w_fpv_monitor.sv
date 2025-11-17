@@ -23,8 +23,6 @@ module br_fifo_ctrl_1r1w_fpv_monitor #(
     // backing RAM is an SRAM of slightly larger depth than the FIFO depth).
     parameter int RamDepth = Depth,
     parameter bit EnableCoverPushBackpressure = 1,
-    parameter bit EnableAssertPushValidStability = EnableCoverPushBackpressure,
-    parameter bit EnableAssertPushDataStability = EnableAssertPushValidStability,
     localparam int AddrWidth = br_math::clamped_clog2(RamDepth),
     localparam int CountWidth = $clog2(Depth + 1)
 ) (
@@ -94,9 +92,7 @@ module br_fifo_ctrl_1r1w_fpv_monitor #(
       .Depth(Depth),
       .Width(Width),
       .EnableBypass(EnableBypass),
-      .EnableCoverPushBackpressure(EnableCoverPushBackpressure),
-      .EnableAssertPushValidStability(EnableAssertPushValidStability),
-      .EnableAssertPushDataStability(EnableAssertPushDataStability)
+      .EnableCoverPushBackpressure(EnableCoverPushBackpressure)
   ) br_fifo_basic_fpv_monitor (
       .clk,
       .rst,
@@ -126,7 +122,5 @@ bind br_fifo_ctrl_1r1w br_fifo_ctrl_1r1w_fpv_monitor #(
     .RegisterPopOutputs(RegisterPopOutputs),
     .RamReadLatency(RamReadLatency),
     .RamDepth(RamDepth),
-    .EnableCoverPushBackpressure(EnableCoverPushBackpressure),
-    .EnableAssertPushValidStability(EnableAssertPushValidStability),
-    .EnableAssertPushDataStability(EnableAssertPushDataStability)
+    .EnableCoverPushBackpressure(EnableCoverPushBackpressure)
 ) monitor (.*);

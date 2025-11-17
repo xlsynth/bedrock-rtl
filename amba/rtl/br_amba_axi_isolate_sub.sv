@@ -528,9 +528,7 @@ module br_amba_axi_isolate_sub #(
           upstream_ruser
       ) + $bits(
           upstream_rid
-      )),
-      .EnableAssertPushValidStability(0),
-      .EnableAssertPushDataStability(0)
+      ))
   ) br_flow_reg_fwd_us_r (
       .clk,
       .rst,
@@ -551,9 +549,7 @@ module br_amba_axi_isolate_sub #(
   );
 
   br_flow_reg_fwd #(
-      .Width($bits(upstream_bresp) + $bits(upstream_buser) + $bits(upstream_bid)),
-      .EnableAssertPushValidStability(0),
-      .EnableAssertPushDataStability(0)
+      .Width($bits(upstream_bresp) + $bits(upstream_buser) + $bits(upstream_bid))
   ) br_flow_reg_fwd_us_aw (
       .clk,
       .rst,

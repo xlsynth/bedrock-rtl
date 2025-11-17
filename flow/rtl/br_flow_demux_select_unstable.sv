@@ -28,13 +28,6 @@ module br_flow_demux_select_unstable #(
     // If 1, cover that the push side experiences backpressure.
     // If 0, assert that there is never backpressure.
     parameter bit EnableCoverPushBackpressure = 1,
-    // If 1, assert that push_valid is stable when backpressured.
-    parameter bit EnableAssertPushValidStability = EnableCoverPushBackpressure,
-    // If 1, assert that push_data is stable when backpressured.
-    parameter bit EnableAssertPushDataStability = EnableAssertPushValidStability,
-    // If 1, assert that select is stable when push is backpressured.
-    // If 0, cover that select can be unstable.
-    parameter bit EnableAssertSelectStability = 0,
     // If 1, assert that push_data is always known (not X) when push_valid is asserted.
     parameter bit EnableAssertPushDataKnown = 1,
     // If 1, then assert there are no valid bits asserted at the end of the test.
@@ -71,15 +64,11 @@ module br_flow_demux_select_unstable #(
   //------------------------------------------
   `BR_ASSERT_STATIC(num_flows_must_be_at_least_two_a, NumFlows >= 2)
   `BR_ASSERT_STATIC(bit_width_must_be_at_least_one_a, Width >= 1)
-  `BR_ASSERT_STATIC(select_stability_implies_valid_stability_a,
-                    !(EnableAssertSelectStability && !EnableAssertPushValidStability))
 
   br_flow_checks_valid_data_intg #(
       .NumFlows(1),
       .Width(Width),
       .EnableCoverBackpressure(EnableCoverPushBackpressure),
-      .EnableAssertValidStability(EnableAssertPushValidStability),
-      .EnableAssertDataStability(EnableAssertPushDataStability),
       .EnableAssertDataKnown(EnableAssertPushDataKnown),
       .EnableAssertFinalNotValid(EnableAssertFinalNotValid)
   ) br_flow_checks_valid_data_intg (
@@ -89,16 +78,6 @@ module br_flow_demux_select_unstable #(
       .valid(push_valid),
       .data (push_data)
   );
-
-  if (EnableCoverPushBackpressure && EnableAssertPushValidStability) begin : gen_select_checks
-    if (EnableAssertSelectStability) begin : gen_select_stability_check
-      `BR_ASSERT_INTG(select_stable_a,
-                      (!push_ready && push_valid) |=> push_valid && $stable(select))
-    end else begin : gen_select_instability_cover
-      `BR_COVER_INTG(select_unstable_c,
-                     !push_ready && push_valid ##1 push_valid && !$stable(select))
-    end
-  end
 
   `BR_ASSERT_INTG(select_known_and_in_range_a, push_valid |-> (!$isunknown(select)
                                                && select < NumFlows))
@@ -125,22 +104,12 @@ module br_flow_demux_select_unstable #(
   //------------------------------------------
   // Implementation checks
   //------------------------------------------
-  if (EnableCoverPushBackpressure && EnableAssertPushValidStability && !EnableAssertSelectStability)
-  begin : gen_stable_push_valid
-    for (genvar i = 0; i < NumFlows; i++) begin : gen_pop_unstable_checks
-      `BR_ASSERT_IMPL(
-          pop_valid_instability_caused_by_select_a,
-          (!pop_ready[i] && pop_valid_unstable[i]) ##1 !pop_valid_unstable[i] |-> !$stable(select))
-    end
-  end
-
   br_flow_checks_valid_data_impl #(
       .NumFlows(NumFlows),
       .Width(Width),
       .EnableCoverBackpressure(EnableCoverPushBackpressure),
-      // Pop valid and data can only be stable if select is stable.
-      .EnableAssertValidStability(EnableAssertPushValidStability && EnableAssertSelectStability),
-      .EnableAssertDataStability(EnableAssertPushDataStability && EnableAssertSelectStability),
+      .EnableAssertValidStability(0),
+      .EnableAssertDataStability(0),
       .EnableAssertFinalNotValid(EnableAssertFinalNotValid)
   ) br_flow_checks_valid_data_impl (
       .clk,
@@ -149,5 +118,14 @@ module br_flow_demux_select_unstable #(
       .valid(pop_valid_unstable),
       .data (pop_data_unstable)
   );
+
+  if (EnableCoverPushBackpressure) begin : gen_impl_checks
+    for (genvar i = 0; i < NumFlows; i++) begin : gen_select_stability_asserts
+      `BR_COVER_IMPL(pop_valid_unstable_c,
+                     !pop_ready[i] && pop_valid_unstable[i] ##1 !$stable(pop_valid_unstable[i]))
+      `BR_COVER_IMPL(pop_data_unstable_c,
+                     !pop_ready[i] && pop_valid_unstable[i] ##1 !$stable(pop_data_unstable[i]))
+    end
+  end
 
 endmodule : br_flow_demux_select_unstable

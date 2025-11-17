@@ -13,8 +13,8 @@ module br_fifo_basic_fpv_monitor #(
     parameter int Width = 1,  // Width of each entry in the FIFO. Must be at least 1.
     parameter bit EnableBypass = 1,
     parameter bit EnableCoverPushBackpressure = 1,
-    parameter bit EnableAssertPushValidStability = EnableCoverPushBackpressure,
-    parameter bit EnableAssertPushDataStability = EnableAssertPushValidStability,
+    parameter bit EnableAssumePushValidStability = EnableCoverPushBackpressure,
+    parameter bit EnableAssumePushDataStability = EnableAssumePushValidStability,
     localparam int CountWidth = $clog2(Depth + 1)
 ) (
     input logic clk,
@@ -47,10 +47,10 @@ module br_fifo_basic_fpv_monitor #(
   // ----------FV assumptions----------
   `BR_ASSUME(pop_ready_liveness_a, s_eventually (pop_ready))
   if (EnableCoverPushBackpressure) begin : gen_backpressure
-    if (EnableAssertPushValidStability) begin : gen_push_valid_stable
+    if (EnableAssumePushValidStability) begin : gen_push_valid_stable
       `BR_ASSUME(push_valid_stable_a, push_valid && !push_ready |=> push_valid)
     end
-    if (EnableAssertPushDataStability) begin : gen_push_data_stable
+    if (EnableAssumePushDataStability) begin : gen_push_data_stable
       `BR_ASSUME(push_data_stable_a, push_valid && !push_ready |=> $stable(push_data))
     end
   end else begin : gen_no_back_pressure
@@ -72,10 +72,10 @@ module br_fifo_basic_fpv_monitor #(
   end
 
   // valid ready protocol check
-  if (EnableAssertPushValidStability) begin : gen_pop_valid_stable
+  if (EnableAssumePushValidStability) begin : gen_pop_valid_stable
     `BR_ASSERT(pop_valid_stable_a, pop_valid && !pop_ready |=> pop_valid)
   end
-  if (EnableAssertPushDataStability) begin : gen_pop_data_stable
+  if (EnableAssumePushDataStability) begin : gen_pop_data_stable
     `BR_ASSERT(pop_data_stable_a, pop_valid && !pop_ready |=> $stable(pop_data))
   end
 

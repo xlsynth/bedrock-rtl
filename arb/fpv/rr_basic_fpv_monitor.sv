@@ -10,7 +10,7 @@
 module rr_basic_fpv_monitor #(
     // Must be at least 2
     parameter int NumRequesters = 2,
-    parameter bit EnableAssertPushValidStability = 1
+    parameter bit EnableAssumeRequestStability = 1
 ) (
     input logic clk,
     input logic rst,
@@ -41,7 +41,7 @@ module rr_basic_fpv_monitor #(
              // j ... i ... high_priority ...
              ((2 ** j <= high_priority_request) && (2 ** i < high_priority_request) && (j < i)))
 
-  if (EnableAssertPushValidStability) begin : gen_req_stable
+  if (EnableAssumeRequestStability) begin : gen_req_stable
     `BR_ASSERT(round_robin_a,
                request[i] |-> not (!grant[i] && enable_priority_update throughout grant[j] [-> 2]))
   end
