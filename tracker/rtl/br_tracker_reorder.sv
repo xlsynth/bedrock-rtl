@@ -15,9 +15,9 @@
 
 module br_tracker_reorder #(
     // Number of entries in the reorder buffer. Must be at least 1.
-    parameter int NumEntries = 2,
+    parameter int NumEntries = 1,
     // Width of the entry ID. Must be at least $clog2(NumEntries).
-    parameter int EntryIdWidth = $clog2(NumEntries),
+    parameter int EntryIdWidth = br_math::clamped_clog2(NumEntries),
     // If 1, then assert dealloc_valid is low at the end of the test.
     parameter bit EnableAssertFinalNotDeallocValid = 1,
     localparam int EntryCountWidth = $clog2(NumEntries + 1)
@@ -49,7 +49,7 @@ module br_tracker_reorder #(
   logic [NumEntries-1:0] dealloc_pending;
 
   // Integration Assertions
-  `BR_ASSERT_STATIC(legal_num_entries_a, NumEntries > 1)
+  `BR_ASSERT_STATIC(legal_num_entries_a, NumEntries >= 1)
   `BR_ASSERT_STATIC(legal_entry_id_width_a, EntryIdWidth >= $clog2(NumEntries))
   `BR_ASSERT_INTG(valid_dealloc_entry_id_a, dealloc_valid |-> (dealloc_entry_id < NumEntries))
   `BR_ASSERT_INTG(dealloc_entry_is_pending_a,
@@ -64,48 +64,62 @@ module br_tracker_reorder #(
   logic dealloc_complete_beat;
   assign dealloc_complete_beat = dealloc_complete_valid && dealloc_complete_ready;
 
-  br_tracker_sequence #(
-      .NumEntries(NumEntries),
-      .MaxAllocSize(1),
-      .EntryIdWidth(EntryIdWidth),
-      .EnableAssertFinalNotDeallocValid(0)
-  ) br_tracker_sequence_allocate_counter (
-      .clk,
-      .rst,
-      //
-      .alloc_receivable(alloc_ready),
-      .alloc_sendable(alloc_valid),
-      .alloc_entry_id,
-      //
-      .dealloc_valid(dealloc_complete_beat),
-      .dealloc_size(1'b1),
-      //
-      .free_entry_count,
-      .allocated_entry_count
-  );
+  if (NumEntries > 1) begin : gen_counters
+    br_tracker_sequence #(
+        .NumEntries(NumEntries),
+        .MaxAllocSize(1),
+        .EntryIdWidth(EntryIdWidth),
+        .EnableAssertFinalNotDeallocValid(0)
+    ) br_tracker_sequence_allocate_counter (
+        .clk,
+        .rst,
+        //
+        .alloc_receivable(alloc_ready),
+        .alloc_sendable(alloc_valid),
+        .alloc_entry_id,
+        //
+        .dealloc_valid(dealloc_complete_beat),
+        .dealloc_size(1'b1),
+        //
+        .free_entry_count,
+        .allocated_entry_count
+    );
 
-  // Deallocate Counter
-  logic [CounterValueWidth-1:0] dealloc_complete_counter_value;
+    // Deallocate Counter
+    logic [CounterValueWidth-1:0] dealloc_complete_counter_value;
 
-  br_counter_incr #(
-      .MaxValue(NumEntries - 1),
-      .MaxIncrement(1),
-      .EnableSaturate(0),
-      .EnableCoverZeroIncrement(0),
-      .EnableCoverReinit(0),
-      .EnableAssertFinalNotValid(EnableAssertFinalNotDeallocValid)
-  ) br_counter_incr_deallocate_counter (
-      .clk,
-      .rst,
-      .reinit(1'b0),
-      .initial_value('0),
-      .incr_valid(dealloc_complete_beat),
-      .incr(1'b1),
-      .value(dealloc_complete_counter_value),
-      .value_next()
-  );
+    br_counter_incr #(
+        .MaxValue(NumEntries - 1),
+        .MaxIncrement(1),
+        .EnableSaturate(0),
+        .EnableCoverZeroIncrement(0),
+        .EnableCoverReinit(0),
+        .EnableAssertFinalNotValid(EnableAssertFinalNotDeallocValid)
+    ) br_counter_incr_deallocate_counter (
+        .clk,
+        .rst,
+        .reinit(1'b0),
+        .initial_value('0),
+        .incr_valid(dealloc_complete_beat),
+        .incr(1'b1),
+        .value(dealloc_complete_counter_value),
+        .value_next()
+    );
 
-  assign dealloc_complete_entry_id = EntryIdWidth'(dealloc_complete_counter_value);
+    assign dealloc_complete_entry_id = EntryIdWidth'(dealloc_complete_counter_value);
+  end else begin : gen_no_dealloc_counter
+    logic active, active_next;
+
+    assign alloc_valid = !active;
+    assign alloc_entry_id = '0;
+    assign dealloc_complete_entry_id = '0;
+    assign free_entry_count = active ? 1'b0 : 1'b1;
+    assign allocated_entry_count = active ? 1'b1 : 1'b0;
+
+    assign active_next = active ? !dealloc_complete_beat : alloc_ready;
+
+    `BR_REG(active, active_next)
+  end
 
   // Deallocate Pending Bitmap
   //
@@ -129,7 +143,9 @@ module br_tracker_reorder #(
   end
 
   // Dealloc Complete Logic
-  assign dealloc_complete_valid = dealloc_pending[dealloc_complete_counter_value];
+  // We know dealloc_complete_entry_id must be in range because it comes from counter.
+  // ri lint_check_waive VAR_INDEX_RANGE
+  assign dealloc_complete_valid = dealloc_pending[dealloc_complete_entry_id];
 
   // Implementation Assertions
   if ($clog2(NumEntries) < EntryIdWidth) begin : gen_unused_upper_addr_assert

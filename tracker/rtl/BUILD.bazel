@@ -108,6 +108,7 @@ br_verilog_elab_and_lint_test_suite(
     name = "br_tracker_reorder_test_suite",
     params = {
         "NumEntries": [
+            "1",
             "2",
             "3",
             "4",
@@ -136,6 +137,7 @@ br_verilog_elab_and_lint_test_suite(
     name = "br_tracker_reorder_buffer_ctrl_1r1w_test_suite",
     params = {
         "NumEntries": [
+            "1",
             "2",
             "3",
             "4",
@@ -165,6 +167,7 @@ br_verilog_elab_and_lint_test_suite(
     name = "br_tracker_reorder_buffer_flops_test_suite",
     params = {
         "NumEntries": [
+            "1",
             "2",
             "3",
             "4",
