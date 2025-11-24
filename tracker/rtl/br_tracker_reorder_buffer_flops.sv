@@ -40,7 +40,7 @@ module br_tracker_reorder_buffer_flops #(
     // Count Information
     output logic resp_pending
 );
-  localparam int MinEntryIdWidth = $clog2(NumEntries);
+  localparam int MinEntryIdWidth = br_math::clamped_clog2(NumEntries);
 
   logic [MinEntryIdWidth-1:0] ram_wr_addr;
   logic ram_wr_valid;

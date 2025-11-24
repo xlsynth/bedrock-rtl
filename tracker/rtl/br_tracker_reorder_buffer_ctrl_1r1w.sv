@@ -35,7 +35,7 @@ module br_tracker_reorder_buffer_ctrl_1r1w #(
     parameter bit RegisterPopOutputs = 0,
     // If 1, then assert unordered_resp_push_valid is low at the end of the test.
     parameter bit EnableAssertFinalNotDeallocValid = 1,
-    localparam int MinEntryIdWidth = $clog2(NumEntries),
+    localparam int MinEntryIdWidth = br_math::clamped_clog2(NumEntries),
     localparam int EntryCountWidth = $clog2(NumEntries + 1)
 ) (
     input logic clk,
