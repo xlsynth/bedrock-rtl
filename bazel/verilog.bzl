@@ -293,6 +293,14 @@ def _verilog_fpv_args(ctx):
         extra_args.append("--conn")
     return extra_args
 
+def _verilog_chipstack_args(ctx):
+    extra_args = []
+    if ctx.attr.agent:
+        extra_args.append("--agent='" + ctx.attr.agent + "'")
+    if ctx.attr.flow:
+        extra_args.append("--flow='" + ctx.attr.flow + "'")
+    return extra_args
+
 def _verilog_fpv_test_impl(ctx):
     """Implementation of the verilog_fpv_test rule."""
     return _verilog_base_impl(
@@ -313,6 +321,14 @@ def _verilog_fpv_sandbox_impl(ctx):
         subcmd = "fpv",
         test = False,
         extra_args = _verilog_fpv_args(ctx),
+    )
+
+def _verilog_chipstack_test_impl(ctx):
+    """Implementation of the verilog_chipstack_test rule."""
+    return _verilog_base_impl(
+        ctx = ctx,
+        subcmd = "chipstack",
+        extra_args = _verilog_chipstack_args(ctx),
     )
 
 # Rule definitions
@@ -734,6 +750,82 @@ rule_verilog_fpv_sandbox = rule(
     },
 )
 
+rule_verilog_chipstack_test = rule(
+    doc = """
+    Runs chipstack in one command.
+    """,
+    implementation = _verilog_chipstack_test_impl,
+    attrs = {
+        "deps": attr.label_list(
+            doc = "The dependencies of the test.",
+            allow_files = False,
+            providers = [VerilogInfo],
+        ),
+        "defines": attr.string_list(
+            doc = "Preprocessor defines to pass to the Verilog compiler.",
+        ),
+        "params": attr.string_dict(
+            doc = "Verilog module parameters to set in the instantiation of the top-level module.",
+        ),
+        "top": attr.string(
+            doc = "The top-level module; if not provided and there exists one dependency, then defaults to that dep's label name.",
+        ),
+        "tool": attr.string(
+            doc = "Chipstack tool to use (defaults to chipstack).",
+            default = "chipstack",
+        ),
+        "agent": attr.string(
+            doc = "Chipstack agent to use (defaults to formal-agent).",
+            default = "formal-agent",
+        ),
+        "flow": attr.string(
+            doc = "Chipstack flow to use (defaults to launch-full-flow).",
+            default = "launch-full-flow",
+        ),
+        "verilog_runner_tool": attr.label(doc = "The Verilog Runner tool to use.", default = "//python/verilog_runner:verilog_runner.py", allow_files = True),
+        "verilog_runner_plugins": attr.label_list(
+            default = ["//python/verilog_runner/plugins:iverilog.py"],
+            allow_files = True,
+            doc = "Verilog runner plugins to load from this workspace, in addition to those loaded from VERILOG_RUNNER_PLUGIN_PATH.",
+        ),
+        "custom_tcl_header": attr.label(
+            doc = ("Tcl script file containing custom tool-specific commands to insert at the beginning of the generated tcl script." +
+                   "The tcl header (custom or not) is unconditionally followed by analysis and elaborate commands, and then the tcl body." +
+                   "Do not include Tcl commands that manipulate sources, headers, defines, or parameters, as those will be handled by the rule implementation."),
+            allow_single_file = [".tcl"],
+        ),
+        "custom_tcl_body": attr.label(
+            doc = ("Tcl script file containing custom tool-specific commands to insert in the middle of the generated tcl script after the elaboration step." +
+                   "The tcl body (custom or not) is unconditionally followed by the tcl footer." +
+                   "Do not include Tcl commands that manipulate sources, headers, defines, or parameters, as those will be handled by the rule implementation."),
+            allow_single_file = [".tcl"],
+        ),
+        "runner_flags": attr.label(
+            doc = "jg flags",
+            allow_files = False,
+            providers = [VerilogRunnerFlagsInfo],
+            default = "//bazel:runner_flags",
+        ),
+    },
+    test = True,
+)
+
+def verilog_chipstack_test(**kwargs):
+    """Wraps rule_verilog_chipstack_test with a default tool and appends extra tags.
+
+    The following extra tags are unconditionally appended to the list of tags:
+        * chipstack -- useful for test filtering, e.g., bazel test //... --test_tag_filters=chipstack
+        * The tool name -- useful for test filtering, e.g., bazel test //... --test_tag_filters=<tool>
+        * resources:verilog_test_tool_licenses_<tool>:1 -- only if the tool appears in TOOLS_THAT_NEED_LICENSES.
+        * no-sandbox -- Loosens some Bazel hermeticity features so that undeclared EDA tool test outputs are preserved for debugging.
+
+    Args:
+        **kwargs: Other arguments to pass to the rule_verilog_chipstack_test rule.
+    """
+    rule_verilog_chipstack_test(
+        **kwargs
+    )
+
 def _cartesian_product(lists):
     """Return the cartesian product of a list of lists."""
     result = [[]]
@@ -885,6 +977,25 @@ def verilog_fpv_test_suite(
                     params = params,
                     **kwargs
                 )
+
+def verilog_chipstack_test_suite(
+        name,
+        defines = [],
+        **kwargs):
+    """Creates a suite of Verilog chipstack tests.
+
+    Args:
+        name (str): The base name for the test suite.
+        defines (list): A list of defines.
+        **kwargs: Additional keyword arguments to be passed to the verilog_elab_test and verilog_lint_test functions.
+    """
+
+    # Create a verilog_chipstack_test
+    verilog_chipstack_test(
+        name = _make_test_name(name, "chipstack_test"),
+        defines = defines,
+        **kwargs
+    )
 
 def verilog_sim_test_suite(name, defines = [], params = {}, **kwargs):
     """Creates a suite of Verilog sim tests for each combination of the provided parameters.

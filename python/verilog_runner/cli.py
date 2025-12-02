@@ -278,3 +278,23 @@ class Fpv(Subcommand):
             action="store_true",
             help="Run in connectivity mode",
         )
+
+
+class Chipstack(Subcommand):
+    name = "chipstack"
+    help = "Chipstack test"
+
+    @staticmethod
+    def add_args(parser: argparse.ArgumentParser) -> None:
+        parser.add_argument(
+            "--agent",
+            type=str,
+            default="formal-agent",
+            help="Chipstack agent to run (e.g., formal-agent or sim-agent).",
+        )
+        parser.add_argument(
+            "--flow",
+            type=str,
+            default="launch-full-flow",
+            help="Chipstack flow to launch (e.g., launch-full-flow).",
+        )

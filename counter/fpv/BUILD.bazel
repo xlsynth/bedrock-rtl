@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: Apache-2.0
 
 load("@rules_hdl//verilog:providers.bzl", "verilog_library")
-load("//bazel:br_verilog.bzl", "br_verilog_fpv_test_tools_suite")
+load("//bazel:br_verilog.bzl", "br_verilog_chipstack_test", "br_verilog_fpv_test_tools_suite")
 load("//bazel:verilog.bzl", "verilog_elab_test")
 
 package(default_visibility = ["//visibility:private"])
@@ -264,4 +264,16 @@ br_verilog_fpv_test_tools_suite(
     },
     top = "br_counter_incr",
     deps = [":br_counter_incr_fpv_monitor"],
+)
+
+##################################################################
+# Chipstack example
+br_verilog_chipstack_test(
+    name = "br_counter_chipstack_test",
+    agent = "formal-agent",
+    flow = "launch-full-flow",
+    top = "br_counter",
+    deps = [
+        "//counter/rtl:br_counter",
+    ],
 )
