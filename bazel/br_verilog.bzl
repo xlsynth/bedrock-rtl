@@ -2,7 +2,13 @@
 
 """Bedrock-internal Verilog rules for Bazel."""
 
-load("//bazel:verilog.bzl", "verilog_elab_and_lint_test_suite", "verilog_fpv_test_suite", "verilog_sim_test_suite")
+load(
+    "//bazel:verilog.bzl",
+    "verilog_chipstack_test",
+    "verilog_elab_and_lint_test_suite",
+    "verilog_fpv_test_suite",
+    "verilog_sim_test_suite",
+)
 
 def br_verilog_elab_and_lint_test_suite(name, **kwargs):
     """Wraps three instances of verilog_elab_and_lint_test_suite.
@@ -134,5 +140,16 @@ def br_verilog_fpv_test_suite(**kwargs):
             "BR_ENABLE_FPV",
             "BR_DISABLE_ASSERT_IMM",
         ],
+        **kwargs
+    )
+
+def br_verilog_chipstack_test(**kwargs):
+    """Wraps verilog_chipstack_test with Bedrock-internal settings. Not intended to be called by Bedrock users.
+
+    Args:
+        **kwargs: Additional keyword arguments passed to verilog_chipstack_test. Do not pass defines.
+    """
+
+    verilog_chipstack_test(
         **kwargs
     )

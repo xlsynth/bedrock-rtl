@@ -50,6 +50,40 @@ generate_parameter_file(<a href="#generate_parameter_file-name">name</a>, <a hre
 | <a id="generate_parameter_file-params"></a>params |  -   | <a href="https://bazel.build/rules/lib/dict">Dictionary: String -> List of strings</a> | required |  |
 
 
+<a id="rule_verilog_chipstack_test"></a>
+
+## rule_verilog_chipstack_test
+
+<pre>
+load("@bedrock-rtl//bazel:verilog.bzl", "rule_verilog_chipstack_test")
+
+rule_verilog_chipstack_test(<a href="#rule_verilog_chipstack_test-name">name</a>, <a href="#rule_verilog_chipstack_test-deps">deps</a>, <a href="#rule_verilog_chipstack_test-agent">agent</a>, <a href="#rule_verilog_chipstack_test-custom_tcl_body">custom_tcl_body</a>, <a href="#rule_verilog_chipstack_test-custom_tcl_header">custom_tcl_header</a>, <a href="#rule_verilog_chipstack_test-defines">defines</a>, <a href="#rule_verilog_chipstack_test-flow">flow</a>,
+                            <a href="#rule_verilog_chipstack_test-params">params</a>, <a href="#rule_verilog_chipstack_test-runner_flags">runner_flags</a>, <a href="#rule_verilog_chipstack_test-tool">tool</a>, <a href="#rule_verilog_chipstack_test-top">top</a>, <a href="#rule_verilog_chipstack_test-verilog_runner_plugins">verilog_runner_plugins</a>,
+                            <a href="#rule_verilog_chipstack_test-verilog_runner_tool">verilog_runner_tool</a>)
+</pre>
+
+Runs chipstack in one command.
+
+**ATTRIBUTES**
+
+
+| Name  | Description | Type | Mandatory | Default |
+| :------------- | :------------- | :------------- | :------------- | :------------- |
+| <a id="rule_verilog_chipstack_test-name"></a>name |  A unique name for this target.   | <a href="https://bazel.build/concepts/labels#target-names">Name</a> | required |  |
+| <a id="rule_verilog_chipstack_test-deps"></a>deps |  The dependencies of the test.   | <a href="https://bazel.build/concepts/labels">List of labels</a> | optional |  `[]`  |
+| <a id="rule_verilog_chipstack_test-agent"></a>agent |  Chipstack agent to use (defaults to formal-agent).   | String | optional |  `"formal-agent"`  |
+| <a id="rule_verilog_chipstack_test-custom_tcl_body"></a>custom_tcl_body |  Tcl script file containing custom tool-specific commands to insert in the middle of the generated tcl script after the elaboration step.The tcl body (custom or not) is unconditionally followed by the tcl footer.Do not include Tcl commands that manipulate sources, headers, defines, or parameters, as those will be handled by the rule implementation.   | <a href="https://bazel.build/concepts/labels">Label</a> | optional |  `None`  |
+| <a id="rule_verilog_chipstack_test-custom_tcl_header"></a>custom_tcl_header |  Tcl script file containing custom tool-specific commands to insert at the beginning of the generated tcl script.The tcl header (custom or not) is unconditionally followed by analysis and elaborate commands, and then the tcl body.Do not include Tcl commands that manipulate sources, headers, defines, or parameters, as those will be handled by the rule implementation.   | <a href="https://bazel.build/concepts/labels">Label</a> | optional |  `None`  |
+| <a id="rule_verilog_chipstack_test-defines"></a>defines |  Preprocessor defines to pass to the Verilog compiler.   | List of strings | optional |  `[]`  |
+| <a id="rule_verilog_chipstack_test-flow"></a>flow |  Chipstack flow to use (defaults to launch-full-flow).   | String | optional |  `"launch-full-flow"`  |
+| <a id="rule_verilog_chipstack_test-params"></a>params |  Verilog module parameters to set in the instantiation of the top-level module.   | <a href="https://bazel.build/rules/lib/dict">Dictionary: String -> String</a> | optional |  `{}`  |
+| <a id="rule_verilog_chipstack_test-runner_flags"></a>runner_flags |  jg flags   | <a href="https://bazel.build/concepts/labels">Label</a> | optional |  `"@bedrock-rtl//bazel:runner_flags"`  |
+| <a id="rule_verilog_chipstack_test-tool"></a>tool |  Chipstack tool to use (defaults to chipstack).   | String | optional |  `"chipstack"`  |
+| <a id="rule_verilog_chipstack_test-top"></a>top |  The top-level module; if not provided and there exists one dependency, then defaults to that dep's label name.   | String | optional |  `""`  |
+| <a id="rule_verilog_chipstack_test-verilog_runner_plugins"></a>verilog_runner_plugins |  Verilog runner plugins to load from this workspace, in addition to those loaded from VERILOG_RUNNER_PLUGIN_PATH.   | <a href="https://bazel.build/concepts/labels">List of labels</a> | optional |  `["@bedrock-rtl//python/verilog_runner/plugins:iverilog.py"]`  |
+| <a id="rule_verilog_chipstack_test-verilog_runner_tool"></a>verilog_runner_tool |  The Verilog Runner tool to use.   | <a href="https://bazel.build/concepts/labels">Label</a> | optional |  `"@bedrock-rtl//python/verilog_runner:verilog_runner.py"`  |
+
+
 <a id="rule_verilog_elab_test"></a>
 
 ## rule_verilog_elab_test
@@ -315,6 +349,55 @@ Returns a depset of all Verilog source or header files in the transitive closure
 | :------------- | :------------- | :------------- |
 | <a id="get_transitive-ctx"></a>ctx |  <p align="center"> - </p>   |  none |
 | <a id="get_transitive-srcs_not_hdrs"></a>srcs_not_hdrs |  <p align="center"> - </p>   |  none |
+
+
+<a id="verilog_chipstack_test"></a>
+
+## verilog_chipstack_test
+
+<pre>
+load("@bedrock-rtl//bazel:verilog.bzl", "verilog_chipstack_test")
+
+verilog_chipstack_test(<a href="#verilog_chipstack_test-kwargs">kwargs</a>)
+</pre>
+
+Wraps rule_verilog_chipstack_test with a default tool and appends extra tags.
+
+The following extra tags are unconditionally appended to the list of tags:
+    * chipstack -- useful for test filtering, e.g., bazel test //... --test_tag_filters=chipstack
+    * The tool name -- useful for test filtering, e.g., bazel test //... --test_tag_filters=<tool>
+    * resources:verilog_test_tool_licenses_<tool>:1 -- only if the tool appears in TOOLS_THAT_NEED_LICENSES.
+    * no-sandbox -- Loosens some Bazel hermeticity features so that undeclared EDA tool test outputs are preserved for debugging.
+
+
+**PARAMETERS**
+
+
+| Name  | Description | Default Value |
+| :------------- | :------------- | :------------- |
+| <a id="verilog_chipstack_test-kwargs"></a>kwargs |  Other arguments to pass to the rule_verilog_chipstack_test rule.   |  none |
+
+
+<a id="verilog_chipstack_test_suite"></a>
+
+## verilog_chipstack_test_suite
+
+<pre>
+load("@bedrock-rtl//bazel:verilog.bzl", "verilog_chipstack_test_suite")
+
+verilog_chipstack_test_suite(<a href="#verilog_chipstack_test_suite-name">name</a>, <a href="#verilog_chipstack_test_suite-defines">defines</a>, <a href="#verilog_chipstack_test_suite-kwargs">kwargs</a>)
+</pre>
+
+Creates a suite of Verilog chipstack tests.
+
+**PARAMETERS**
+
+
+| Name  | Description | Default Value |
+| :------------- | :------------- | :------------- |
+| <a id="verilog_chipstack_test_suite-name"></a>name |  The base name for the test suite.   |  none |
+| <a id="verilog_chipstack_test_suite-defines"></a>defines |  A list of defines.   |  `[]` |
+| <a id="verilog_chipstack_test_suite-kwargs"></a>kwargs |  Additional keyword arguments to be passed to the verilog_elab_test and verilog_lint_test functions.   |  none |
 
 
 <a id="verilog_elab_and_lint_test_suite"></a>
