@@ -63,7 +63,7 @@ br_verilog_fpv_test_tools_suite(
     illegal_param_combinations = {
         (
             "EnableCoverPushBackpressure",
-            "EnableAssertPushValidStability",
+            "EnableAssumePushValidStability",
             "EnableAssertSelectMultihotStability",
         ): [
             ("0", "0", "1"),
@@ -81,7 +81,7 @@ br_verilog_fpv_test_tools_suite(
             "0",
             "1",
         ],
-        "EnableAssertPushValidStability": [
+        "EnableAssumePushValidStability": [
             "0",
             "1",
         ],

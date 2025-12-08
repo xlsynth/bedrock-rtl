@@ -35,13 +35,6 @@ module br_fifo_shared_pstatic_flops_fpv_monitor #(
     // If 1, cover that the push side experiences backpressure.
     // If 0, assert that there is never backpressure.
     parameter bit EnableCoverPushBackpressure = 1,
-    // If 1, assert that push_valid is stable when backpressured.
-    // If 0, cover that push_valid can be unstable.
-    parameter bit EnableAssertPushValidStability = EnableCoverPushBackpressure,
-    // If 1, assert that push_data is stable when backpressured.
-    // If 0, cover that push_data can be unstable.
-    // ri lint_check_waive PARAM_NOT_USED
-    parameter bit EnableAssertPushDataStability = EnableAssertPushValidStability,
     // If 1, then assert there are no valid bits asserted and that the FIFO is
     // empty at the end of the test.
     // ri lint_check_waive PARAM_NOT_USED
@@ -101,9 +94,7 @@ module br_fifo_shared_pstatic_flops_fpv_monitor #(
       .StagingBufferDepth(StagingBufferDepth),
       .RegisterPopOutputs(RegisterPopOutputs),
       .RamReadLatency(RamReadLatency),
-      .EnableCoverPushBackpressure(EnableCoverPushBackpressure),
-      .EnableAssertPushValidStability(EnableAssertPushValidStability),
-      .EnableAssertPushDataStability(EnableAssertPushDataStability)
+      .EnableCoverPushBackpressure(EnableCoverPushBackpressure)
   ) fv_checker (
       .clk,
       .rst,
@@ -135,7 +126,5 @@ bind br_fifo_shared_pstatic_flops br_fifo_shared_pstatic_flops_fpv_monitor #(
     .RamReadDataDepthStages(RamReadDataDepthStages),
     .RamReadDataWidthStages(RamReadDataWidthStages),
     .EnableCoverPushBackpressure(EnableCoverPushBackpressure),
-    .EnableAssertPushValidStability(EnableAssertPushValidStability),
-    .EnableAssertPushDataStability(EnableAssertPushDataStability),
     .EnableAssertFinalNotValid(EnableAssertFinalNotValid)
 ) monitor (.*);

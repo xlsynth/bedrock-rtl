@@ -42,8 +42,8 @@ br_verilog_fpv_test_tools_suite(
     illegal_param_combinations = {
         (
             "EnableCoverPushBackpressure",
-            "EnableAssertPushValidStability",
-            "EnableAssertPushDataStability",
+            "EnableAssumePushValidStability",
+            "EnableAssumePushDataStability",
         ): [
             ("0", "0", "1"),
             ("0", "1", "0"),
@@ -52,11 +52,11 @@ br_verilog_fpv_test_tools_suite(
         ],
     },
     params = {
-        "EnableAssertPushDataStability": [
+        "EnableAssumePushDataStability": [
             "0",
             "1",
         ],
-        "EnableAssertPushValidStability": [
+        "EnableAssumePushValidStability": [
             "0",
             "1",
         ],
@@ -189,8 +189,8 @@ br_verilog_fpv_test_tools_suite(
     illegal_param_combinations = {
         (
             "EnableCoverPushBackpressure",
-            "EnableAssertPushValidStability",
-            "EnableAssertPushDataStability",
+            "EnableAssumePushValidStability",
+            "EnableAssumePushDataStability",
         ): [
             ("0", "0", "1"),
             ("0", "1", "0"),
@@ -199,11 +199,11 @@ br_verilog_fpv_test_tools_suite(
         ],
     },
     params = {
-        "EnableAssertPushDataStability": [
+        "EnableAssumePushDataStability": [
             "0",
             "1",
         ],
-        "EnableAssertPushValidStability": [
+        "EnableAssumePushValidStability": [
             "0",
             "1",
         ],

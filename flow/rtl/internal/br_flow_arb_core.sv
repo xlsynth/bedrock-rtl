@@ -18,9 +18,6 @@ module br_flow_arb_core #(
     // If 1, cover that the push side experiences backpressure.
     // If 0, assert that there is never backpressure.
     parameter bit EnableCoverPushBackpressure = 1,
-    // If 1, assert that push_valid is stable when backpressured.
-    // If 0, cover that push_valid can be unstable when backpressured.
-    parameter bit EnableAssertPushValidStability = 1,
     // If 1, then assert there are no valid bits asserted at the end of the test.
     parameter bit EnableAssertFinalNotValid = 1,
     // If 1, cover that the pop side experiences backpressure.
@@ -53,9 +50,8 @@ module br_flow_arb_core #(
       .NumFlows(NumFlows),
       .Width(1),
       .EnableCoverBackpressure(EnableCoverPushBackpressure),
-      .EnableAssertValidStability(EnableAssertPushValidStability),
-      // Data is always stable when valid is stable since it is constant.
-      .EnableAssertDataStability(EnableAssertPushValidStability),
+      .EnableAssertValidStability(0),
+      .EnableAssertDataStability(0),
       .EnableAssertFinalNotValid(EnableAssertFinalNotValid)
   ) br_flow_checks_valid_data_intg (
       .clk,
@@ -92,19 +88,14 @@ module br_flow_arb_core #(
   //------------------------------------------
   // Implementation checks
   //------------------------------------------
-  localparam bit EnableAssertPopValidStability =
-    EnableCoverPopBackpressure &&
-    EnableAssertPushValidStability;
-
   br_flow_checks_valid_data_impl #(
       .NumFlows(1),
       .Width(1),
       // Since push_ready can only be true if pop_ready is,
       // pop side can only have backpressure if push side has backpressure.
       .EnableCoverBackpressure(EnableCoverPopBackpressure),
-      .EnableAssertValidStability(EnableAssertPopValidStability),
-      // Data is always stable when valid is stable since it is constant.
-      .EnableAssertDataStability(EnableAssertPopValidStability),
+      .EnableAssertValidStability(0),
+      .EnableAssertDataStability(0),
       .EnableAssertFinalNotValid(EnableAssertFinalNotValid)
   ) br_flow_checks_valid_data_impl (
       .clk,
@@ -120,6 +111,10 @@ module br_flow_arb_core #(
                   |(push_valid & push_ready) |-> (pop_valid_unstable & pop_ready))
   for (genvar i = 0; i < NumFlows; i++) begin : gen_per_flow_impl_checks
     `BR_ASSERT_IMPL(only_accept_on_grant_a, (push_valid[i] & push_ready[i]) |-> grant[i])
+    if (EnableCoverPopBackpressure) begin : gen_cover_pop_unstable
+      `BR_COVER_IMPL(pop_unstable_c,
+                     !pop_ready && pop_valid_unstable ##1 !$stable(pop_valid_unstable))
+    end
   end
 
 endmodule : br_flow_arb_core

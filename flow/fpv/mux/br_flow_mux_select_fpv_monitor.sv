@@ -11,9 +11,9 @@ module br_flow_mux_select_fpv_monitor #(
     parameter int NumFlows = 2,  // Must be at least 2
     parameter int Width = 1,  // Must be at least 1
     parameter bit EnableCoverPushBackpressure = 1,
-    parameter bit EnableAssertPushValidStability = EnableCoverPushBackpressure,
-    parameter bit EnableAssertPushDataStability = EnableAssertPushValidStability,
-    parameter bit EnableAssertSelectStability = EnableAssertPushValidStability,
+    parameter bit EnableAssumePushValidStability = EnableCoverPushBackpressure,
+    parameter bit EnableAssumePushDataStability = EnableAssumePushValidStability,
+    parameter bit EnableAssumeSelectStability = EnableAssumePushValidStability,
     parameter bit EnableAssertFinalNotValid = 1
 ) (
     input logic                                   clk,
@@ -32,8 +32,8 @@ module br_flow_mux_select_fpv_monitor #(
       .NumFlows(NumFlows),
       .Width(Width),
       .EnableCoverPushBackpressure(EnableCoverPushBackpressure),
-      .EnableAssertPushValidStability(EnableAssertPushValidStability),
-      .EnableAssertPushDataStability(EnableAssertPushDataStability),
+      .EnableAssumePushValidStability(EnableAssumePushValidStability),
+      .EnableAssumePushDataStability(EnableAssumePushDataStability),
       // Final flow mux stage ensures output is always stable
       .EnableAssertPopValidStability(1),
       .EnableAssertPopDataStability(1),
@@ -52,7 +52,7 @@ module br_flow_mux_select_fpv_monitor #(
   // ----------FV assumptions----------
   `BR_ASSUME(select_range_a, select < NumFlows)
 
-  if (EnableAssertSelectStability) begin : gen_stable_select
+  if (EnableAssumeSelectStability) begin : gen_stable_select
     `BR_ASSUME(select_stable_a, push_valid[select] && !push_ready[select] |=> $stable(select))
   end
 
@@ -70,8 +70,5 @@ bind br_flow_mux_select br_flow_mux_select_fpv_monitor #(
     .NumFlows(NumFlows),
     .Width(Width),
     .EnableCoverPushBackpressure(EnableCoverPushBackpressure),
-    .EnableAssertPushValidStability(EnableAssertPushValidStability),
-    .EnableAssertPushDataStability(EnableAssertPushDataStability),
-    .EnableAssertSelectStability(EnableAssertSelectStability),
     .EnableAssertFinalNotValid(EnableAssertFinalNotValid)
 ) monitor (.*);

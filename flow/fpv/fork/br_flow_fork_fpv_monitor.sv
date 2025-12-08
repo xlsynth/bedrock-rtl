@@ -8,7 +8,6 @@
 module br_flow_fork_fpv_monitor #(
     parameter int NumFlows = 2,  // Must be at least 2
     parameter bit EnableCoverPushBackpressure = 1,
-    parameter bit EnableAssertPushValidStability = EnableCoverPushBackpressure,
     parameter bit EnableAssertFinalNotValid = 1
 ) (
     input logic clk,
@@ -30,10 +29,6 @@ module br_flow_fork_fpv_monitor #(
     `BR_ASSUME(pop_ready_liveness_a, s_eventually (pop_ready[n]))
   end
 
-  if (EnableAssertPushValidStability) begin : gen_push_valid
-    `BR_ASSUME(push_valid_stable_a, push_valid && !push_ready |=> push_valid)
-  end
-
   if (!EnableCoverPushBackpressure) begin : gen_no_backpressure
     `BR_ASSUME(no_backpressure_a, !push_ready |-> !push_valid)
   end
@@ -50,6 +45,5 @@ endmodule : br_flow_fork_fpv_monitor
 bind br_flow_fork br_flow_fork_fpv_monitor #(
     .NumFlows(NumFlows),
     .EnableCoverPushBackpressure(EnableCoverPushBackpressure),
-    .EnableAssertPushValidStability(EnableAssertPushValidStability),
     .EnableAssertFinalNotValid(EnableAssertFinalNotValid)
 ) monitor (.*);

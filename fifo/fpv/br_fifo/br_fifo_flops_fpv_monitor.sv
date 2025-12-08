@@ -18,8 +18,6 @@ module br_fifo_flops_fpv_monitor #(
     parameter int FlopRamReadDataDepthStages = 0,
     parameter int FlopRamReadDataWidthStages = 0,
     parameter bit EnableCoverPushBackpressure = 1,
-    parameter bit EnableAssertPushValidStability = EnableCoverPushBackpressure,
-    parameter bit EnableAssertPushDataStability = EnableAssertPushValidStability,
     localparam int AddrWidth = $clog2(Depth),
     localparam int CountWidth = $clog2(Depth + 1)
 ) (
@@ -58,9 +56,7 @@ module br_fifo_flops_fpv_monitor #(
       .Depth(Depth),
       .Width(Width),
       .EnableBypass(EnableBypass),
-      .EnableCoverPushBackpressure(EnableCoverPushBackpressure),
-      .EnableAssertPushValidStability(EnableAssertPushValidStability),
-      .EnableAssertPushDataStability(EnableAssertPushDataStability)
+      .EnableCoverPushBackpressure(EnableCoverPushBackpressure)
   ) br_fifo_basic_fpv_monitor (
       .clk,
       .rst,
@@ -93,7 +89,5 @@ bind br_fifo_flops br_fifo_flops_fpv_monitor #(
     .FlopRamAddressDepthStages(FlopRamAddressDepthStages),
     .FlopRamReadDataDepthStages(FlopRamReadDataDepthStages),
     .FlopRamReadDataWidthStages(FlopRamReadDataWidthStages),
-    .EnableCoverPushBackpressure(EnableCoverPushBackpressure),
-    .EnableAssertPushValidStability(EnableAssertPushValidStability),
-    .EnableAssertPushDataStability(EnableAssertPushDataStability)
+    .EnableCoverPushBackpressure(EnableCoverPushBackpressure)
 ) monitor (.*);

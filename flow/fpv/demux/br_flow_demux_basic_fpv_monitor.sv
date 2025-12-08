@@ -10,9 +10,9 @@ module br_flow_demux_basic_fpv_monitor #(
     parameter int NumFlows = 2,  // Must be at least 2
     parameter int Width = 1,  // Must be at least 1
     parameter bit EnableCoverPushBackpressure = 1,
-    parameter bit EnableAssertPushValidStability = EnableCoverPushBackpressure,
-    parameter bit EnableAssertPushDataStability = EnableAssertPushValidStability,
-    parameter bit EnableAssertSelectStability = 0,
+    parameter bit EnableAssumePushValidStability = EnableCoverPushBackpressure,
+    parameter bit EnableAssumePushDataStability = EnableAssumePushValidStability,
+    parameter bit EnableAssumeSelectStability = 0,
     parameter bit EnableAssertPopValidStability = 1,
     parameter bit EnableAssertPopDataStability = 1
 ) (
@@ -36,10 +36,10 @@ module br_flow_demux_basic_fpv_monitor #(
     `BR_ASSUME(pop_ready_liveness_a, s_eventually (pop_ready[n]))
   end
 
-  if (EnableAssertPushValidStability) begin : gen_push_valid
+  if (EnableAssumePushValidStability) begin : gen_push_valid
     `BR_ASSUME(push_valid_stable_a, push_valid && !push_ready |=> push_valid)
   end
-  if (EnableAssertPushDataStability) begin : gen_push_data
+  if (EnableAssumePushDataStability) begin : gen_push_data
     `BR_ASSUME(push_data_stable_a, push_valid && !push_ready |=> $stable(push_data))
   end
 
@@ -47,7 +47,7 @@ module br_flow_demux_basic_fpv_monitor #(
     `BR_ASSUME(no_push_backpressure_a, !push_ready |-> !push_valid)
   end
 
-  if (EnableAssertSelectStability) begin : gen_select_stability
+  if (EnableAssumeSelectStability) begin : gen_select_stability
     `BR_ASSUME(select_stable_a, push_valid && !push_ready |=> $stable(select))
   end
 

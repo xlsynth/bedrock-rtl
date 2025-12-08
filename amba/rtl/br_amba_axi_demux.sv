@@ -391,9 +391,7 @@ module br_amba_axi_demux #(
 
   br_fifo_flops #(
       .Depth(MaxAwRunahead),
-      .Width(SubIdWidth),
-      // Valid can drop if downstream deasserts ready.
-      .EnableAssertPushValidStability(0)
+      .Width(SubIdWidth)
   ) br_fifo_flops_wdata_flow_buffer (
       .clk,
       .rst,

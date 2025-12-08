@@ -21,12 +21,6 @@ module br_cdc_fifo_ctrl_1r1w_fpv_monitor #(
     // If 1, cover that the push side experiences backpressure.
     // If 0, assert that there is never backpressure.
     parameter bit EnableCoverPushBackpressure = 1,
-    // If 1, assert that push_valid is stable when backpressured.
-    // If 0, cover that push_valid can be unstable.
-    parameter bit EnableAssertPushValidStability = EnableCoverPushBackpressure,
-    // If 1, assert that push_data is stable when backpressured.
-    // If 0, cover that push_data can be unstable.
-    parameter bit EnableAssertPushDataStability = EnableAssertPushValidStability,
     // If 1, then assert there are no valid bits asserted and that the FIFO is
     // empty at the end of the test.
     parameter bit EnableAssertFinalNotValid = 1,
@@ -98,8 +92,6 @@ module br_cdc_fifo_ctrl_1r1w_fpv_monitor #(
       .RamReadLatency(RamReadLatency),
       .NumSyncStages(NumSyncStages),
       .EnableCoverPushBackpressure(EnableCoverPushBackpressure),
-      .EnableAssertPushValidStability(EnableAssertPushValidStability),
-      .EnableAssertPushDataStability(EnableAssertPushDataStability),
       .EnableAssertFinalNotValid(EnableAssertFinalNotValid)
   ) dut (
       .push_clk,
@@ -131,8 +123,6 @@ module br_cdc_fifo_ctrl_1r1w_fpv_monitor #(
       .Width(Width),
       .NumSyncStages(NumSyncStages),
       .EnableCoverPushBackpressure(EnableCoverPushBackpressure),
-      .EnableAssertPushValidStability(EnableAssertPushValidStability),
-      .EnableAssertPushDataStability(EnableAssertPushDataStability),
       .RamWriteLatency(RamWriteLatency),
       .RamReadLatency(RamReadLatency)
   ) fv_checker (

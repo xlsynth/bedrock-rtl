@@ -31,10 +31,6 @@ module br_credit_sender_vc #(
     // If 1, cover that the push side experiences backpressure.
     // If 0, assert that there is never backpressure.
     parameter bit EnableCoverPushBackpressure = 1,
-    // If 1, assert that push_valid is stable when backpressured.
-    parameter bit EnableAssertPushValidStability = EnableCoverPushBackpressure,
-    // If 1, assert that push_data is stable when backpressured.
-    parameter bit EnableAssertPushDataStability = EnableAssertPushValidStability,
     // If 1, then assert there are no valid bits asserted at the end of the test.
     parameter bit EnableAssertFinalNotValid = 1,
     // If 1, then at the end of simulation, assert that the credit counter value equals
@@ -139,7 +135,6 @@ module br_credit_sender_vc #(
     br_flow_fork #(
         .NumFlows(2),
         .EnableCoverPushBackpressure(EnableCoverPushBackpressure),
-        .EnableAssertPushValidStability(EnableAssertPushValidStability),
         .EnableAssertFinalNotValid(EnableAssertFinalNotValid)
     ) br_flow_fork_push (
         .clk,
@@ -159,8 +154,6 @@ module br_credit_sender_vc #(
       .NumFlows(NumVcs),
       .Width(Width),
       .EnableCoverPushBackpressure(EnableCoverPushBackpressure),
-      .EnableAssertPushValidStability(EnableAssertPushValidStability),
-      .EnableAssertPushDataStability(EnableAssertPushDataStability),
       .EnableAssertFinalNotValid(EnableAssertFinalNotValid)
   ) br_flow_mux_core_push (
       .clk,

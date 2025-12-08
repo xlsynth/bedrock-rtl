@@ -11,7 +11,6 @@ module br_fifo_shared_read_xbar #(
     parameter int RamReadLatency = 0,
     parameter int Depth = 2,
     parameter int Width = 1,
-    parameter bit EnableAssertPushValidStability = 0,
     parameter bit ArbiterAlwaysGrants = 1,
     localparam int AddrWidth = $clog2(Depth)
 ) (
@@ -66,9 +65,7 @@ module br_fifo_shared_read_xbar #(
 
       br_flow_demux_select_unstable #(
           .NumFlows(NumReadPorts),
-          .Width(AddrWidth),
-          .EnableAssertPushValidStability(EnableAssertPushValidStability),
-          .EnableAssertSelectStability(EnableAssertPushValidStability)
+          .Width(AddrWidth)
       ) br_flow_demux_select_unstable_inst (
           .clk,
           .rst,
@@ -103,8 +100,6 @@ module br_fifo_shared_read_xbar #(
     // If there is only one entry mapped to a port, it's impossible for more than one
     // FIFO to request to that port
     localparam bit EnableCoverMuxPushBackpressure = ReadPortEntries > 1;
-    localparam bit EnableAssertMuxPushValidStability =
-        EnableAssertPushValidStability && EnableCoverMuxPushBackpressure;
 
     logic [NumFifos-1:0] mux_push_ready;
     logic [NumFifos-1:0] mux_push_valid;
@@ -122,8 +117,6 @@ module br_fifo_shared_read_xbar #(
         .NumFlows(NumFifos),
         .Width(TotalMuxWidth),
         .EnableCoverPushBackpressure(EnableCoverMuxPushBackpressure),
-        .EnableAssertPushValidStability(EnableAssertMuxPushValidStability),
-        .EnableAssertPushDataStability(EnableAssertMuxPushValidStability),
         .EnableCoverPopBackpressure(0),
         .ArbiterAlwaysGrants(ArbiterAlwaysGrants)
     ) br_flow_mux_core_inst (
