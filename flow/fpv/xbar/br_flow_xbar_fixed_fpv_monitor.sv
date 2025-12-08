@@ -7,38 +7,17 @@
 `include "br_fv.svh"
 
 module br_flow_xbar_fixed_fpv_monitor #(
-    // The number of input flows. Must be >=2.
-    parameter int NumPushFlows = 2,
-    // The number of output flows. Must be >=2.
-    parameter int NumPopFlows = 2,
-    // The width of the data bus.
+    parameter int NumPushFlows = 1,
+    parameter int NumPopFlows = 1,
     parameter int Width = 1,
-    // If 1, registers are inserted between the demux and mux to break up the
-    // timing path, increasing the cut-through latency by 1. Note that this
-    // results in NumPushFlows x NumPopFlows x Width bits of registers being
-    // inserted.
     parameter bit RegisterDemuxOutputs = 0,
-    // If 1, registers are inserted at the output of the muxes, ensuring that
-    // pop_valid/pop_data come directly from registers.
-    // If 0, pop_valid/pop_data come directly from the muxes and may be unstable.
     parameter bit RegisterPopOutputs = 0,
-    // If 1, cover that the push_ready signal can be backpressured.
-    // If 0, assert that push backpressure is not possible.
     parameter bit EnableCoverPushBackpressure = 1,
-    // If 1, assert that push_valid is stable.
-    // Otherwise, cover that push_valid can be unstable.
     parameter bit EnableAssertPushValidStability = EnableCoverPushBackpressure,
-    // If 1, assert that push_data is stable.
-    // Otherwise, cover that push_data can be unstable.
     parameter bit EnableAssertPushDataStability = EnableAssertPushValidStability,
-    // If 1, assert that push_dest_id is stable.
-    // Otherwise, cover that push_dest_id can be unstable.
     parameter bit EnableAssertPushDestinationStability = EnableAssertPushValidStability,
-    // If 1, assert that push_valid is 1 and all intermediate
-    // register stages are empty at end of simulation.
     parameter bit EnableAssertFinalNotValid = 1,
-
-    localparam int DestIdWidth = $clog2(NumPopFlows)
+    localparam int DestIdWidth = br_math::clamped_clog2(NumPopFlows)
 ) (
     input logic clk,
     input logic rst,
@@ -57,17 +36,22 @@ module br_flow_xbar_fixed_fpv_monitor #(
 );
 
   // ----------FV Modeling Code----------
-  localparam int PushDestIdWidth = $clog2(NumPushFlows);
   logic [$clog2(NumPushFlows)-1:0] i, j;
   logic push_valid_i;
   logic push_valid_j;
   // pick a random pair of input/outout flow to check
-  logic [PushDestIdWidth-1:0] fv_push_id;
+  logic [DestIdWidth-1:0] fv_push_id;
   logic [DestIdWidth-1:0] fv_pop_id;
   `BR_ASSUME(fv_push_id_stable_a, $stable(fv_push_id) && fv_push_id < NumPushFlows)
   `BR_ASSUME(fv_pop_id_stable_a, $stable(fv_pop_id) && fv_pop_id < NumPopFlows)
 
-  `BR_FV_2RAND_IDX(i, j, NumPushFlows)
+  if (NumPushFlows > 1) begin : gen_ij
+    `BR_FV_2RAND_IDX(i, j, NumPushFlows)
+  end else begin : gen_ij0
+    assign i = 0;
+    assign j = 0;
+  end
+
   assign push_valid_i = push_valid[i] && (push_dest_id[i] == fv_pop_id);
   assign push_valid_j = push_valid[j] && (push_dest_id[j] == fv_pop_id);
 
@@ -97,16 +81,18 @@ module br_flow_xbar_fixed_fpv_monitor #(
   );
 
   // ----------FV assertions----------
-  if (EnableCoverPushBackpressure) begin : gen_priority_checks
-    if (RegisterDemuxOutputs) begin : gen_lat
-      `BR_ASSERT(strict_priority_a,
-                 (i < j) && push_valid_i && push_valid_j |=> !grant[fv_pop_id][j])
-    end else begin : gen_lat0
-      `BR_ASSERT(strict_priority_a,
-                 (i < j) && push_valid_i && push_valid_j |-> !grant[fv_pop_id][j])
+  if (NumPushFlows > 1) begin : gen_multiple_req
+    if (EnableCoverPushBackpressure) begin : gen_priority_checks
+      if (RegisterDemuxOutputs) begin : gen_lat
+        `BR_ASSERT(strict_priority_a,
+                   (i < j) && push_valid_i && push_valid_j |=> !grant[fv_pop_id][j])
+      end else begin : gen_lat0
+        `BR_ASSERT(strict_priority_a,
+                   (i < j) && push_valid_i && push_valid_j |-> !grant[fv_pop_id][j])
+      end
+    end else begin : gen_check_no_conflict
+      `BR_ASSERT(no_conflict_a, !(push_valid_i && push_valid_j))
     end
-  end else begin : gen_check_no_conflict
-    `BR_ASSERT(no_conflict_a, !(push_valid_i && push_valid_j))
   end
 
 endmodule : br_flow_xbar_fixed_fpv_monitor

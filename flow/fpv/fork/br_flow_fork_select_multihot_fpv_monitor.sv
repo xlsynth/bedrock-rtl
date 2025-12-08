@@ -6,7 +6,7 @@
 `include "br_asserts.svh"
 
 module br_flow_fork_select_multihot_fpv_monitor #(
-    parameter int NumFlows = 2,  // Must be at least 2
+    parameter int NumFlows = 1,
     parameter bit EnableCoverSelectMultihot = 1,
     parameter bit EnableCoverPushBackpressure = 1,
     parameter bit EnableAssertPushValidStability = EnableCoverPushBackpressure,

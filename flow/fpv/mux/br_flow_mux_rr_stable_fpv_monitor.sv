@@ -7,8 +7,8 @@
 `include "br_fv.svh"
 
 module br_flow_mux_rr_stable_fpv_monitor #(
-    parameter int NumFlows = 2,  // Must be at least 2
-    parameter int Width = 1,  // Must be at least 1
+    parameter int NumFlows = 1,
+    parameter int Width = 1,
     parameter bit RegisterPopReady = 0,
     parameter bit EnableCoverPushBackpressure = 1,
     parameter bit EnableAssertPushValidStability = EnableCoverPushBackpressure,
@@ -71,7 +71,7 @@ module br_flow_mux_rr_stable_fpv_monitor #(
       .IN_CHUNKS(1),
       .OUT_CHUNKS(1),
       .SINGLE_CLOCK(1),
-      .MAX_PENDING(NumFlows)
+      .MAX_PENDING(NumFlows == 1 ? 2 : NumFlows)
   ) scoreboard (
       .clk(clk),
       .rstN(!rst),

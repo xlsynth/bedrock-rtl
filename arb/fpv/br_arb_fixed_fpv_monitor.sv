@@ -7,7 +7,6 @@
 `include "br_fv.svh"
 
 module br_arb_fixed_fpv_monitor #(
-    // Must be at least 1
     parameter int NumRequesters = 1
 ) (
     input logic clk,

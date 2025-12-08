@@ -7,7 +7,7 @@
 `include "br_fv.svh"
 
 module br_flow_arb_rr_fpv_monitor #(
-    parameter int NumFlows = 2,  // Must be at least 2
+    parameter int NumFlows = 1,
     parameter bit EnableCoverPushBackpressure = 1,
     parameter bit EnableAssertPushValidStability = EnableCoverPushBackpressure,
     parameter bit EnableAssertFinalNotValid = 1

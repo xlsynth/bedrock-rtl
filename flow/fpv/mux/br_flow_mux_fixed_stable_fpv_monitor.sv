@@ -7,8 +7,8 @@
 `include "br_fv.svh"
 
 module br_flow_mux_fixed_stable_fpv_monitor #(
-    parameter int NumFlows = 2,  // Must be at least 2
-    parameter int Width = 1,  // Must be at least 1
+    parameter int NumFlows = 1,
+    parameter int Width = 1,
     parameter bit RegisterPopReady = 0,
     parameter bit EnableCoverPushBackpressure = 1,
     parameter bit EnableAssertPushValidStability = EnableCoverPushBackpressure,
@@ -49,20 +49,26 @@ module br_flow_mux_fixed_stable_fpv_monitor #(
 
   // ----------FV Modeling Code----------
   logic [$clog2(NumFlows)-1:0] i, j;
-  `BR_FV_2RAND_IDX(i, j, NumFlows)
+  if (NumFlows > 1) begin : gen_ij
+    `BR_FV_2RAND_IDX(i, j, NumFlows)
+  end else begin : gen_i
+    assign i = '0;
+  end
 
   // ----------Fairness Check----------
-  if (EnableCoverPushBackpressure) begin : gen_fairness_checks
-    `BR_ASSERT(strict_priority_a,
-               (i < j) && push_valid[i] && push_valid[j] |=> (pop_data == $past(
-                   push_data[i]
-               )) || !$past(
-                   pop_ready
-               ) || !$past(
-                   push_ready[i]
-               ))
-  end else begin : gen_no_conflict_checks
-    `BR_ASSERT(no_conflict_a, (i != j) |-> !(push_valid[i] && push_valid[j]))
+  if (NumFlows > 1) begin : gen_multi_req
+    if (EnableCoverPushBackpressure) begin : gen_fairness_checks
+      `BR_ASSERT(strict_priority_a,
+                 (i < j) && push_valid[i] && push_valid[j] |=> (pop_data == $past(
+                     push_data[i]
+                 )) || !$past(
+                     pop_ready
+                 ) || !$past(
+                     push_ready[i]
+                 ))
+    end else begin : gen_no_conflict_checks
+      `BR_ASSERT(no_conflict_a, (i != j) |-> !(push_valid[i] && push_valid[j]))
+    end
   end
 
 endmodule : br_flow_mux_fixed_stable_fpv_monitor
