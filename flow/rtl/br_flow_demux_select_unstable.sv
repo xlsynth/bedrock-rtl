@@ -19,10 +19,11 @@
 // input could change while the selected pop interface is backpressuring.
 
 `include "br_asserts_internal.svh"
+`include "br_unused.svh"
 
 module br_flow_demux_select_unstable #(
-    // Must be at least 2
-    parameter int NumFlows = 2,
+    // Must be at least 1
+    parameter int NumFlows = 1,
     // Must be at least 1
     parameter int Width = 1,
     // If 1, cover that the push side experiences backpressure.
@@ -32,7 +33,7 @@ module br_flow_demux_select_unstable #(
     parameter bit EnableAssertPushDataKnown = 1,
     // If 1, then assert there are no valid bits asserted at the end of the test.
     parameter bit EnableAssertFinalNotValid = 1,
-    localparam int SelectWidth = $clog2(NumFlows)
+    localparam int SelectWidth = br_math::clamped_clog2(NumFlows)
 ) (
     // Used only for assertions
     // ri lint_check_waive INPUT_NOT_READ HIER_NET_NOT_READ HIER_BRANCH_NOT_READ
@@ -62,7 +63,7 @@ module br_flow_demux_select_unstable #(
   //------------------------------------------
   // Integration checks
   //------------------------------------------
-  `BR_ASSERT_STATIC(num_flows_must_be_at_least_two_a, NumFlows >= 2)
+  `BR_ASSERT_STATIC(num_flows_must_be_at_least_one_a, NumFlows >= 1)
   `BR_ASSERT_STATIC(bit_width_must_be_at_least_one_a, Width >= 1)
 
   br_flow_checks_valid_data_intg #(
@@ -86,18 +87,26 @@ module br_flow_demux_select_unstable #(
   // Implementation
   //------------------------------------------
 
-  // Lint waivers are safe because we assert select is always in range.
-  // ri lint_check_waive VAR_INDEX_READ
-  assign push_ready = pop_ready[select];
-  // The ternary expression is needed to ensure pop_valid_unstable is 0 (and not X)
-  // when select is X and push_valid is 0.
-  // ri lint_check_waive VAR_SHIFT TRUNC_LSHIFT
-  assign pop_valid_unstable = push_valid ? (push_valid << select) : '0;
-  // Replicate pop_data to all flows; this is okay since pop_data[i]
-  // is only valid when pop_valid_unstable[i] is high.
-  always_comb begin
-    for (int i = 0; i < NumFlows; i++) begin
-      pop_data_unstable[i] = push_data;
+  if (NumFlows == 1) begin : gen_single_flow
+    assign push_ready         = pop_ready;
+    assign pop_valid_unstable = push_valid;
+    assign pop_data_unstable  = push_data;
+    `BR_UNUSED(select)
+
+  end else begin : gen_multi_flow
+    // Lint waivers are safe because we assert select is always in range.
+    // ri lint_check_waive VAR_INDEX_READ
+    assign push_ready = pop_ready[select];
+    // The ternary expression is needed to ensure pop_valid_unstable is 0 (and not X)
+    // when select is X and push_valid is 0.
+    // ri lint_check_waive VAR_SHIFT TRUNC_LSHIFT
+    assign pop_valid_unstable = push_valid ? (push_valid << select) : '0;
+    // Replicate pop_data to all flows; this is okay since pop_data[i]
+    // is only valid when pop_valid_unstable[i] is high.
+    always_comb begin
+      for (int i = 0; i < NumFlows; i++) begin
+        pop_data_unstable[i] = push_data;
+      end
     end
   end
 

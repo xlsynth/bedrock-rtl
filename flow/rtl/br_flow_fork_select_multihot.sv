@@ -13,7 +13,7 @@
 `include "br_asserts_internal.svh"
 
 module br_flow_fork_select_multihot #(
-    parameter int NumFlows = 2,  // Must be at least 2
+    parameter int NumFlows = 1,  // Must be at least 1
     // If 1, cover that the push_select_multihot signal is multihot when valid is high.
     // If 0, assert that the push_select_multihot signal is always onehot when valid is high.
     parameter bit EnableCoverSelectMultihot = 1,
@@ -48,7 +48,7 @@ module br_flow_fork_select_multihot #(
   //------------------------------------------
   // Integration checks
   //------------------------------------------
-  `BR_ASSERT_STATIC(num_flows_gte_2_a, NumFlows >= 2)
+  `BR_ASSERT_STATIC(num_flows_gte_1_a, NumFlows >= 1)
 
   `BR_ASSERT_INTG(select_not_0_when_valid_a, push_valid |-> (|push_select_multihot))
   br_flow_checks_valid_data_intg #(

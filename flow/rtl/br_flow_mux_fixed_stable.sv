@@ -15,7 +15,7 @@
 `include "br_asserts.svh"
 
 module br_flow_mux_fixed_stable #(
-    parameter int NumFlows = 2,  // Must be at least 2
+    parameter int NumFlows = 1,  // Must be at least 1
     parameter int Width = 1,  // Must be at least 1
     // If 1, ensure that the pop ready signal is registered
     // at the input. This ensures there is no combinational path
@@ -42,7 +42,7 @@ module br_flow_mux_fixed_stable #(
   //------------------------------------------
   // Integration checks
   //------------------------------------------
-  `BR_ASSERT_STATIC(num_requesters_gte_2_a, NumFlows >= 2)
+  `BR_ASSERT_STATIC(num_flows_gte_1_a, NumFlows >= 1)
   `BR_ASSERT_STATIC(datawidth_gte_1_a, Width >= 1)
 
   // Rely on submodule integration checks
