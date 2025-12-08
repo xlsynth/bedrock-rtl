@@ -6,7 +6,7 @@
 `include "br_asserts.svh"
 
 module br_flow_fork_fpv_monitor #(
-    parameter int NumFlows = 1,  // Must be at least 1
+    parameter int NumFlows = 1,
     parameter bit EnableCoverPushBackpressure = 1,
     parameter bit EnableAssertPushValidStability = EnableCoverPushBackpressure,
     parameter bit EnableAssertFinalNotValid = 1

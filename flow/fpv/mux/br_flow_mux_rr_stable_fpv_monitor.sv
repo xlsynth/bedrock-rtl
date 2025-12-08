@@ -7,8 +7,8 @@
 `include "br_fv.svh"
 
 module br_flow_mux_rr_stable_fpv_monitor #(
-    parameter int NumFlows = 1,  // Must be at least 1
-    parameter int Width = 1,  // Must be at least 1
+    parameter int NumFlows = 1,
+    parameter int Width = 1,
     parameter bit RegisterPopReady = 0,
     parameter bit EnableCoverPushBackpressure = 1,
     parameter bit EnableAssertPushValidStability = EnableCoverPushBackpressure,

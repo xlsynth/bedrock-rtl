@@ -8,8 +8,8 @@
 `include "br_fv.svh"
 
 module br_flow_mux_lru_stable_fpv_monitor #(
-    parameter int NumFlows = 1,  // Must be at least 1
-    parameter int Width = 1,  // Must be at least 1
+    parameter int NumFlows = 1,
+    parameter int Width = 1,
     parameter bit RegisterPopReady = 0,
     parameter bit EnableCoverPushBackpressure = 1,
     parameter bit EnableAssertPushValidStability = EnableCoverPushBackpressure,
@@ -28,6 +28,8 @@ module br_flow_mux_lru_stable_fpv_monitor #(
     input logic [NumFlows-1:0]            grant,
     input logic                           enable_priority_update
 );
+
+  localparam int MaxPending = NumFlows == 1 ? 2 : NumFlows;
 
   // ----------Instantiate basic checks----------
   br_flow_mux_basic_fpv_monitor #(
@@ -72,7 +74,7 @@ module br_flow_mux_lru_stable_fpv_monitor #(
       .IN_CHUNKS(1),
       .OUT_CHUNKS(1),
       .SINGLE_CLOCK(1),
-      .MAX_PENDING(NumFlows)
+      .MAX_PENDING(MaxPending)
   ) scoreboard (
       .clk(clk),
       .rstN(!rst),
