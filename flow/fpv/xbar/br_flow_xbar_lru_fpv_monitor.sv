@@ -38,9 +38,8 @@ module br_flow_xbar_lru_fpv_monitor #(
 );
 
   // ----------FV Modeling Code----------
-  localparam int PushDestIdWidth = $clog2(NumPushFlows);
   // pick a random pair of input/outout flow to check
-  logic [PushDestIdWidth-1:0] fv_push_id;
+  logic [DestIdWidth-1:0] fv_push_id;
   logic [DestIdWidth-1:0] fv_pop_id;
   `BR_ASSUME(fv_push_id_stable_a, $stable(fv_push_id) && fv_push_id < NumPushFlows)
   `BR_ASSUME(fv_pop_id_stable_a, $stable(fv_pop_id) && fv_pop_id < NumPopFlows)
