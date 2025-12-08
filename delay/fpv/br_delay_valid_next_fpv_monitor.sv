@@ -8,8 +8,8 @@
 `include "br_fv.svh"
 
 module br_delay_valid_next_fpv_monitor #(
-    parameter int Width = 1,  // Must be at least 1
-    parameter int NumStages = 0,  // Must be at least 0
+    parameter int Width = 1,
+    parameter int NumStages = 0,
     parameter bit EnableAssertFinalNotValid = 1
 ) (
     input logic                          clk,

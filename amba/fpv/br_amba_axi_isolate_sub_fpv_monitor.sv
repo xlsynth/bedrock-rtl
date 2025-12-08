@@ -7,51 +7,23 @@
 `include "br_registers.svh"
 
 module br_amba_axi_isolate_sub_fpv_monitor #(
-    // Width of the AXI address field.
     parameter int AddrWidth = 12,
-    // Width of the AXI data field.
     parameter int DataWidth = 32,
-    // Width of the AXI ID field.
     parameter int IdWidth = 1,
-    // Width of the AXI AWUSER field.
     parameter int AWUserWidth = 1,
-    // Width of the AXI WUSER field.
     parameter int WUserWidth = 1,
-    // Width of the AXI ARUSER field.
     parameter int ARUserWidth = 1,
-    // Width of the AXI BUSER field.
     parameter int BUserWidth = 1,
-    // Width of the AXI RUSER field.
     parameter int RUserWidth = 1,
-    // Maximum number of outstanding requests that can be tracked
-    // without backpressuring the upstream request ports. Must be at least 2.
     parameter int MaxOutstanding = 128,
-    // Number of unique AXI IDs that can be tracked. Must be less
-    // than or equal to 2^IdWidth. Valid ids are 0 to AxiIdCount-1.
     parameter int AxiIdCount = 2 ** IdWidth,
-    // Maximum allowed skew (measured in max-length transactions)
-    // that can be tracked between AW and W channels without causing
-    // backpressure on the upstream ports.
     parameter int MaxTransactionSkew = 2,
-    // Maximum number of response beats per transaction. Can be set
-    // to 1 for AXI-Lite, otherwise must be set to
-    // br_amba::AxiBurstLenWidth.
     parameter int MaxAxiBurstLen = 2 ** br_amba::AxiBurstLenWidth,
-    // Response to generate for isolated transactions.
     parameter br_amba::axi_resp_t IsolateResp = br_amba::AxiRespSlverr,
-    // BUSER data to generate for isolated transactions.
     parameter bit [BUserWidth-1:0] IsolateBUser = '0,
-    // RUSER data to generate for isolated transactions.
     parameter bit [RUserWidth-1:0] IsolateRUser = '0,
-    // RDATA data to generate for isolated transactions.
     parameter bit [DataWidth-1:0] IsolateRData = '0,
-    // Set to 1 to use a dynamic storage shared FIFO for the read tracking
-    // list.
     parameter bit UseDynamicFifoForReadTracker = 1,
-    // When UseDynamicFifoForReadTracker=0, this parameter controls the depth
-    // of the Per-ID tracking FIFO. This defaults to MaxOutstanding, but may
-    // need to be set to a smaller value as the storage will be replicated for
-    // each ID.
     parameter int StaticPerIdReadTrackerFifoDepth = MaxOutstanding,
     localparam int AxiBurstLenWidth = br_math::clamped_clog2(MaxAxiBurstLen),
     localparam int StrobeWidth = DataWidth / 8

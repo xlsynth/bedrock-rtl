@@ -7,9 +7,9 @@
 `include "br_registers.svh"
 
 module br_amba_atb_funnel_fpv_monitor #(
-    parameter int NumSources = 2,  // Must be at least 2
-    parameter int DataWidth = 32,  // Must be at least 1
-    parameter int UserWidth = 1,  // Must be at least 1
+    parameter int NumSources = 2,
+    parameter int DataWidth = 32,
+    parameter int UserWidth = 1,
     localparam int ByteCountWidth = $clog2(DataWidth / 8)
 ) (
     input logic clk,

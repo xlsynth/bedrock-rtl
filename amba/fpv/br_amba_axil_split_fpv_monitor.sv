@@ -7,17 +7,14 @@
 `include "br_registers.svh"
 
 module br_amba_axil_split_fpv_monitor #(
-    parameter int AddrWidth = 40,  // Must be at least 12
-    parameter int DataWidth = 64,  // Must be at least 32
+    parameter int AddrWidth = 40,
+    parameter int DataWidth = 64,
     parameter int AWUserWidth = 1,
     parameter int WUserWidth = 1,
     parameter int ARUserWidth = 1,
     parameter int RUserWidth = 1,
-    parameter int MaxOutstandingReads = 1,  // Must be at least 1
-    parameter int MaxOutstandingWrites = 1,  // Must be at least 1
-    // The number of contiguous address ranges to check
-    // to see if a request should be routed to the branch.
-    // Must be at least 1.
+    parameter int MaxOutstandingReads = 1,
+    parameter int MaxOutstandingWrites = 1,
     parameter int NumBranchAddrRanges = 1,
     localparam int StrobeWidth = DataWidth / 8
 ) (

@@ -7,19 +7,12 @@
 `include "br_registers.svh"
 
 module br_cdc_fifo_basic_fpv_monitor #(
-    parameter bit Jasper = 1,  // If 1 use Jasper scoreboard, else use Synopsys FML scoreboard
-    parameter int Depth = 2,  // Number of entries in the FIFO. Must be at least 2.
-    parameter int Width = 1,  // Width of each entry in the FIFO. Must be at least 1.
-    // Number of synchronization stages to use for the gray counts. Must be >=2.
+    parameter bit Jasper = 1,
+    parameter int Depth = 2,
+    parameter int Width = 1,
     parameter int NumSyncStages = 3,
-    // If 1, cover that the push side experiences backpressure.
-    // If 0, assert that there is never backpressure.
     parameter bit EnableCoverPushBackpressure = 1,
-    // If 1, assert that push_valid is stable when backpressured.
-    // If 0, cover that push_valid can be unstable.
     parameter bit EnableAssertPushValidStability = EnableCoverPushBackpressure,
-    // If 1, assert that push_data is stable when backpressured.
-    // If 0, cover that push_data can be unstable.
     parameter bit EnableAssertPushDataStability = EnableAssertPushValidStability,
     parameter int RamWriteLatency = 1,
     parameter int RamReadLatency = 1,

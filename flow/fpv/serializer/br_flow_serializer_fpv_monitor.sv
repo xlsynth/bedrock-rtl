@@ -29,23 +29,12 @@
 `include "br_registers.svh"
 
 module br_flow_serializer_fpv_monitor #(
-    // Width of the push side packet. Must be greater than PopWidth
-    // and evenly divisible by PopWidth.
     parameter int PushWidth = 2,
-    // Width of the pop side flit. Must be at least 1.
     parameter int PopWidth = 1,
-    // Width of the sideband metadata (not serialized). Must be at least 1.
     parameter int MetadataWidth = 1,
-    // If 1, the most significant bits of the packet are sent first (big endian).
-    // If 0, the least significant bits are sent first (little endian).
-    // The order of bits within each flit is always the same that they
-    // appear on the push interface.
     parameter bit SerializeMostSignificantFirst = 1,
-    // If 1, then assert there are no valid bits asserted at the end of the test.
     parameter bit EnableAssertFinalNotValid = 1,
     localparam int SerializationRatio = PushWidth / PopWidth,
-    // Vector widths cannot be 0, so we need to special-case when SerializationRatio == 1
-    // even though the push_last_dont_care_count port won't be used in that case.
     localparam int SerFlitIdWidth = SerializationRatio > 1 ? $clog2(SerializationRatio) : 1
 ) (
     input logic clk,

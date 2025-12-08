@@ -5,8 +5,8 @@
 `include "br_registers.svh"
 
 module br_ram_initializer_fpv_monitor #(
-    parameter int Depth = 2,  // Number of entries in the RAM. Must be at least 2.
-    parameter int Width = 1,  // Width of each entry in the RAM. Must be at least 1.
+    parameter int Depth = 2,
+    parameter int Width = 1,
     localparam int AddressWidth = $clog2(Depth)
 ) (
     input logic clk,

@@ -7,12 +7,8 @@
 `include "br_registers.svh"
 
 module br_fifo_shared_pstatic_ctrl_push_credit_fpv_monitor #(
-    // Number of logical FIFOs. Must be >=2.
     parameter int NumFifos = 2,
-    // Total depth of the FIFO.
-    // Must be greater than or equal to the number of logical FIFOs.
     parameter int Depth = 2,
-    // Width of the data. Must be >=1.
     parameter int Width = 1,
     parameter bit RegisterPushOutputs = 1,
     parameter int StagingBufferDepth = 1,

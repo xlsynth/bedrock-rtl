@@ -7,37 +7,20 @@
 `include "br_registers.svh"
 
 module br_amba_axi_demux_fpv_monitor #(
-    // Number of downstream subordinates.
     parameter int NumSubordinates = 2,
-    // Width of the AXI ID field for the write path.
     parameter int AwAxiIdWidth = 1,
-    // Width of the AXI ID field for the read path.
     parameter int ArAxiIdWidth = 1,
-    // Maximum number of outstanding write transactions per ID.
     parameter int AwMaxOutstandingPerId = 3,
-    // Maximum number of outstanding read transactions per ID.
     parameter int ArMaxOutstandingPerId = 3,
-    // If 1, then only a single ID is supported on both the write and read paths.
     parameter int SingleIdOnly = 0,
-    // Depth of the write data buffer. This number of WDATA pushes can be buffered
-    // before the write address is accepted.
     parameter int WdataBufferDepth = 2,
-    // Maximum number of outstanding write transactions that can be accepted before
-    // corresponding WDATA pushes are accepted.
     parameter int MaxAwRunahead = 4,
-    // Width of the AXI address field.
     parameter int AddrWidth = 12,
-    // Width of the AXI data field.
     parameter int DataWidth = 32,
-    // Width of the AXI AWUSER field.
     parameter int AWUserWidth = 1,
-    // Width of the AXI WUSER field.
     parameter int WUserWidth = 1,
-    // Width of the AXI ARUSER field.
     parameter int ARUserWidth = 1,
-    // Width of the AXI BUSER field.
     parameter int BUserWidth = 1,
-    // Width of the AXI RUSER field.
     parameter int RUserWidth = 1,
     localparam int StrobeWidth = DataWidth / 8,
     localparam int SubIdWidth = $clog2(NumSubordinates)

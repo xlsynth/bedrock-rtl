@@ -7,16 +7,9 @@
 `include "br_registers.svh"
 
 module br_multi_xfer_reg_fwd_fpv_monitor #(
-    // The number of symbols that can be transferred in a single cycle.
-    // Must be at least 2.
     parameter int NumSymbols = 2,
-    // The width of a single symbol.
-    // Must be at least 1.
     parameter int SymbolWidth = 1,
-    // If 1, assert that the buffer is empty and push_sendable is 0
-    // at end of simulation.
     parameter int EnableAssertFinalNotSendable = 1,
-
     localparam int CountWidth = $clog2(NumSymbols + 1)
 ) (
     input logic clk,

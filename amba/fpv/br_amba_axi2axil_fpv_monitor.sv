@@ -7,15 +7,15 @@
 `include "br_registers.svh"
 
 module br_amba_axi2axil_fpv_monitor #(
-    parameter int AddrWidth = 12,  // Must be at least 12
-    parameter int DataWidth = 32,  // Must be at least 32
-    parameter int IdWidth = 4,  // Must be at least 1
-    parameter int AWUserWidth = 8,  // Must be at least 1
-    parameter int ARUserWidth = 8,  // Must be at least 1
-    parameter int WUserWidth = 8,  // Must be at least 1
-    parameter int BUserWidth = 8,  // Must be at least 1
-    parameter int RUserWidth = 8,  // Must be at least 1
-    parameter int MaxOutstandingReqs = 16,  // Must be at least 2
+    parameter int AddrWidth = 12,
+    parameter int DataWidth = 32,
+    parameter int IdWidth = 4,
+    parameter int AWUserWidth = 8,
+    parameter int ARUserWidth = 8,
+    parameter int WUserWidth = 8,
+    parameter int BUserWidth = 8,
+    parameter int RUserWidth = 8,
+    parameter int MaxOutstandingReqs = 16,
     localparam int StrobeWidth = DataWidth / 8
 ) (
     input clk,

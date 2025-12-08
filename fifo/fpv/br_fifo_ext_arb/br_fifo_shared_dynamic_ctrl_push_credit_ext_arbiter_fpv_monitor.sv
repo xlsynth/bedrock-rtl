@@ -8,45 +8,19 @@
 `include "br_registers.svh"
 
 module br_fifo_shared_dynamic_ctrl_push_credit_ext_arbiter_fpv_monitor #(
-    // Number of write ports. Must be >=1.
     parameter int NumWritePorts = 1,
-    // Number of read ports. Must be >=1 and a power of 2.
     parameter int NumReadPorts = 1,
-    // Number of logical FIFOs. Must be >=2.
     parameter int NumFifos = 2,
-    // Total depth of the FIFO.
-    // Must be greater than two times the number of write ports.
     parameter int Depth = 3,
-    // Width of the data. Must be >=1.
     parameter int Width = 1,
-    // The depth of the pop-side staging buffer.
-    // This affects the pop bandwidth of each logical FIFO.
-    // The bandwidth will be `StagingBufferDepth / (DataRamReadLatency + 1)`.
     parameter int StagingBufferDepth = 1,
-    // The number of sub-linked lists used by each logical FIFO.
-    // This affects the pop bandwidth of each logical FIFO.
-    // The max bandwidth will be `NumLinkedListsPerFifo / (PointerRamReadLatency + 1)`.
     parameter int NumLinkedListsPerFifo = 1,
-    // If 1, make sure pop_valid/pop_data are registered at the output
-    // of the staging buffer. This adds a cycle of cut-through latency.
     parameter bit RegisterPopOutputs = 0,
-    // If 1, add a retiming stage to the push_credit signal so that it is
-    // driven directly from a flop. This comes at the expense of one additional
-    // cycle of credit loop latency.
     parameter bit RegisterPushOutputs = 0,
-    // If 1, place a register on the deallocation path from the pop-side
-    // staging buffer to the freelist. This improves timing at the cost of
-    // adding a cycle of backpressure latency.
     parameter bit RegisterDeallocation = 0,
-    // The number of cycles between data ram read address and read data. Must be >=0.
     parameter int DataRamReadLatency = 0,
-    // The number of cycles between pointer ram read address and read data. Must be >=0.
     parameter int PointerRamReadLatency = 0,
-    // If 1, then assert there are no valid bits asserted and that the FIFO is
-    // empty at the end of the test.
-    // ri lint_check_waive PARAM_NOT_USED
     parameter bit EnableAssertFinalNotValid = 1,
-
     localparam int PushCreditWidth = $clog2(NumWritePorts + 1),
     localparam int FifoIdWidth = br_math::clamped_clog2(NumFifos),
     localparam int AddrWidth = br_math::clamped_clog2(Depth),

@@ -7,8 +7,8 @@
 `include "br_registers.svh"
 
 module br_amba_axil2apb_fpv_monitor #(
-    parameter int AddrWidth = 12,  // Must be at least 12
-    parameter int DataWidth = 32   // Must be at least 32
+    parameter int AddrWidth = 12,
+    parameter int DataWidth = 32
 ) (
     input clk,
     input rst,  // Synchronous, active-high reset

@@ -8,10 +8,7 @@
 `include "br_fv.svh"
 
 module lru_basic_fpv_monitor #(
-    // Must be at least 1
     parameter int NumRequesters = 1,
-    // If 1, cover that request is multihot,
-    // Otherwise, assume that it is onehot
     parameter bit EnableCoverRequestMultihot = 1
 ) (
     input logic clk,

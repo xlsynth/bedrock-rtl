@@ -7,13 +7,13 @@
 `include "br_registers.svh"
 
 module br_amba_axil_msi_fpv_monitor #(
-    parameter int AddrWidth = 40,  // must be at least 12
-    parameter int DataWidth = 64,  // must be 32 or 64
-    parameter int NumInterrupts = 2,  // must be at least 2
-    parameter int NumMsiDestAddr = 1,  // must be at least 1
-    parameter int DeviceIdWidth = 16,  // must be less than or equal to AddrWidth
-    parameter int EventIdWidth = 16,  // must be less than or equal to DataWidth
-    parameter int ThrottleCntrWidth = 16,  // must be at least 1
+    parameter int AddrWidth = 40,
+    parameter int DataWidth = 64,
+    parameter int NumInterrupts = 2,
+    parameter int NumMsiDestAddr = 1,
+    parameter int DeviceIdWidth = 16,
+    parameter int EventIdWidth = 16,
+    parameter int ThrottleCntrWidth = 16,
     localparam int MsiDstIdxWidth = (NumMsiDestAddr > 1) ? $clog2(NumMsiDestAddr) : 1,
     localparam int StrobeWidth = (DataWidth + 7) / 8
 ) (

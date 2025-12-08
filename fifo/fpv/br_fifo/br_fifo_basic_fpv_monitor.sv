@@ -9,8 +9,8 @@
 
 module br_fifo_basic_fpv_monitor #(
     parameter bit WolperColorEn = 0,
-    parameter int Depth = 2,  // Number of entries in the FIFO. Must be at least 2.
-    parameter int Width = 1,  // Width of each entry in the FIFO. Must be at least 1.
+    parameter int Depth = 2,
+    parameter int Width = 1,
     parameter bit EnableBypass = 1,
     parameter bit EnableCoverPushBackpressure = 1,
     parameter bit EnableAssertPushValidStability = EnableCoverPushBackpressure,

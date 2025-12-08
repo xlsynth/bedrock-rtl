@@ -8,9 +8,7 @@
 `include "br_fv.svh"
 
 module br_arb_multi_rr_fpv_monitor #(
-    // Number of requesters. Must be at least 2.
     parameter int NumRequesters = 2,
-    // Maximum number of grants per cycle. Must be at least 2 and at most NumRequesters.
     parameter int MaxGrantPerCycle = NumRequesters,
     localparam int GrantCountWidth = $clog2(MaxGrantPerCycle + 1)
 ) (

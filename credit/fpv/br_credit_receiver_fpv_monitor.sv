@@ -8,21 +8,12 @@
 `include "br_fv.svh"
 
 module br_credit_receiver_fpv_monitor #(
-    // Number of data flows associated with this receiver. Must be at least 1.
     parameter int NumFlows = 1,
-    // Width of the datapath in bits. Must be at least 1.
     parameter int Width = 1,
-    // Maximum number of credits that can be stored (inclusive). Must be at least NumFlows.
     parameter int MaxCredit = 1,
-    // If 1, add 1 cycle of retiming to push outputs.
     parameter bit RegisterPushOutputs = 0,
-    // Maximum number of push credit that can be returned in a single cycle.
-    // Must be at least 1 but cannot be greater than MaxCredit.
     parameter int PushCreditMaxChange = 1,
-    // Maximum pop credits that can be returned in a single cycle.
-    // Must be at least 1 but cannot be greater than MaxCredit.
     parameter int PopCreditMaxChange = 1,
-    // If 1, then assert there are no valid bits asserted at the end of the test.
     parameter bit EnableAssertFinalNotValid = 1,
     localparam int CounterWidth = $clog2(MaxCredit + 1),
     localparam int PushCreditWidth = $clog2(PushCreditMaxChange + 1),
