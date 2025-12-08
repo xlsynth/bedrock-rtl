@@ -43,6 +43,7 @@ verilog_library(
     deps = [
         ":br_flow_demux_select_unstable",
         ":br_flow_reg_fwd",
+        "//pkg:br_math_pkg",
     ],
 )
 
@@ -53,6 +54,7 @@ verilog_library(
         "//flow/rtl/internal:br_flow_checks_valid_data_impl",
         "//flow/rtl/internal:br_flow_checks_valid_data_intg",
         "//macros:br_asserts_internal",
+        "//pkg:br_math_pkg",
     ],
 )
 
@@ -92,6 +94,7 @@ verilog_library(
     deps = [
         ":br_flow_mux_select_unstable",
         ":br_flow_reg_fwd",
+        "//pkg:br_math_pkg",
     ],
 )
 
@@ -102,6 +105,8 @@ verilog_library(
         "//flow/rtl/internal:br_flow_checks_valid_data_impl",
         "//flow/rtl/internal:br_flow_checks_valid_data_intg",
         "//macros:br_asserts_internal",
+        "//macros:br_unused",
+        "//pkg:br_math_pkg",
     ],
 )
 
@@ -243,6 +248,7 @@ verilog_library(
     deps = [
         "//arb/rtl/internal:br_arb_fixed_internal",
         "//flow/rtl/internal:br_flow_xbar_core",
+        "//pkg:br_math_pkg",
     ],
 )
 
@@ -252,6 +258,7 @@ verilog_library(
     deps = [
         "//arb/rtl/internal:br_arb_rr_internal",
         "//flow/rtl/internal:br_flow_xbar_core",
+        "//pkg:br_math_pkg",
     ],
 )
 
@@ -261,6 +268,7 @@ verilog_library(
     deps = [
         "//arb/rtl/internal:br_arb_lru_internal",
         "//flow/rtl/internal:br_flow_xbar_core",
+        "//pkg:br_math_pkg",
     ],
 )
 
@@ -268,6 +276,7 @@ br_verilog_elab_and_lint_test_suite(
     name = "br_flow_arb_fixed_test_suite",
     params = {
         "NumFlows": [
+            "1",
             "2",
             "3",
         ],
@@ -279,6 +288,7 @@ br_verilog_elab_and_lint_test_suite(
     name = "br_flow_arb_rr_test_suite",
     params = {
         "NumFlows": [
+            "1",
             "2",
             "3",
         ],
@@ -290,6 +300,7 @@ br_verilog_elab_and_lint_test_suite(
     name = "br_flow_arb_lru_test_suite",
     params = {
         "NumFlows": [
+            "1",
             "2",
             "3",
         ],
@@ -301,6 +312,7 @@ br_verilog_elab_and_lint_test_suite(
     name = "br_flow_demux_select_test_suite",
     params = {
         "NumFlows": [
+            "1",
             "2",
             "3",
         ],
@@ -316,6 +328,7 @@ br_verilog_elab_and_lint_test_suite(
     name = "br_flow_demux_select_unstable_test_suite",
     params = {
         "NumFlows": [
+            "1",
             "2",
             "3",
         ],
@@ -331,6 +344,7 @@ br_verilog_elab_and_lint_test_suite(
     name = "br_flow_fork_test_suite",
     params = {
         "NumFlows": [
+            "1",
             "2",
             "3",
         ],
@@ -342,6 +356,7 @@ br_verilog_elab_and_lint_test_suite(
     name = "br_flow_fork_select_multihot_test_suite",
     params = {
         "NumFlows": [
+            "1",
             "2",
             "3",
             "7",
@@ -358,6 +373,7 @@ br_verilog_elab_and_lint_test_suite(
     name = "br_flow_join_test_suite",
     params = {
         "NumFlows": [
+            "1",
             "2",
             "3",
         ],
@@ -369,6 +385,7 @@ br_verilog_elab_and_lint_test_suite(
     name = "br_flow_mux_select_test_suite",
     params = {
         "NumFlows": [
+            "1",
             "2",
             "3",
         ],
@@ -384,6 +401,7 @@ br_verilog_elab_and_lint_test_suite(
     name = "br_flow_mux_select_unstable_test_suite",
     params = {
         "NumFlows": [
+            "1",
             "2",
             "3",
         ],
@@ -399,6 +417,7 @@ br_verilog_elab_and_lint_test_suite(
     name = "br_flow_mux_fixed_test_suite",
     params = {
         "NumFlows": [
+            "1",
             "2",
             "3",
         ],
@@ -414,6 +433,7 @@ br_verilog_elab_and_lint_test_suite(
     name = "br_flow_mux_rr_test_suite",
     params = {
         "NumFlows": [
+            "1",
             "2",
             "3",
         ],
@@ -429,6 +449,7 @@ br_verilog_elab_and_lint_test_suite(
     name = "br_flow_mux_lru_test_suite",
     params = {
         "NumFlows": [
+            "1",
             "2",
             "3",
         ],
@@ -444,6 +465,7 @@ br_verilog_elab_and_lint_test_suite(
     name = "br_flow_mux_fixed_stable_test_suite",
     params = {
         "NumFlows": [
+            "1",
             "2",
             "3",
         ],
@@ -463,6 +485,7 @@ br_verilog_elab_and_lint_test_suite(
     name = "br_flow_mux_rr_stable_test_suite",
     params = {
         "NumFlows": [
+            "1",
             "2",
             "3",
         ],
@@ -482,6 +505,7 @@ br_verilog_elab_and_lint_test_suite(
     name = "br_flow_mux_lru_stable_test_suite",
     params = {
         "NumFlows": [
+            "1",
             "2",
             "3",
         ],
@@ -589,10 +613,12 @@ br_verilog_elab_and_lint_test_suite(
     name = "br_flow_xbar_fixed_test_suite",
     params = {
         "NumPushFlows": [
+            "1",
             "2",
             "4",
         ],
         "NumPopFlows": [
+            "1",
             "2",
             "4",
         ],
@@ -616,10 +642,12 @@ br_verilog_elab_and_lint_test_suite(
     name = "br_flow_xbar_rr_test_suite",
     params = {
         "NumPushFlows": [
+            "1",
             "2",
             "4",
         ],
         "NumPopFlows": [
+            "1",
             "2",
             "4",
         ],
@@ -643,10 +671,12 @@ br_verilog_elab_and_lint_test_suite(
     name = "br_flow_xbar_lru_test_suite",
     params = {
         "NumPushFlows": [
+            "1",
             "2",
             "4",
         ],
         "NumPopFlows": [
+            "1",
             "2",
             "4",
         ],
