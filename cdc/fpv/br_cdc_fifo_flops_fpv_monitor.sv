@@ -7,7 +7,7 @@
 `include "br_registers.svh"
 
 module br_cdc_fifo_flops_fpv_monitor #(
-    parameter bit Jasper = 1,
+    parameter bit Jasper = 1,  // If 1 use Jasper scoreboard, else use Synopsys FML scoreboard
     parameter int Depth = 2,
     parameter int Width = 1,
     parameter bit RegisterPopOutputs = 0,
