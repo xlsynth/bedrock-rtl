@@ -7,14 +7,9 @@
 `include "br_registers.svh"
 
 module br_multi_xfer_distributor_rr_fpv_monitor #(
-    // The number of symbols that can be transferred in a single cycle.
-    // Must be at least 2.
     parameter int NumSymbols = 2,
-    // The width of each symbol. Must be at least 1.
     parameter int SymbolWidth = 1,
-    // The number of flows to distribute to. Must be at least NumSymbols.
     parameter int NumFlows = 2,
-    // If 1, assert that push_sendable is 0 at the end of simulation.
     parameter bit EnableAssertFinalNotSendable = 1,
     localparam int CountWidth = $clog2(NumSymbols + 1)
 ) (

@@ -10,14 +10,8 @@ module br_credit_receiver_fpv_monitor #(
     parameter bit PStatic = 0,
     parameter int MaxCredit = 1,
     parameter int NumWritePorts = 1,
-    // If 1, cover that push_credit_stall can be asserted
-    // Otherwise, assert that it is never asserted.
     parameter bit EnableCoverPushCreditStall = 1,
-    // If 1, cover that credit_withhold can be non-zero.
-    // Otherwise, assert that it is always zero.
     parameter bit EnableCoverCreditWithhold = 1,
-    // If 1, cover that push_sender_in_reset can be asserted
-    // Otherwise, assert that it is never asserted.
     parameter bit EnableCoverPushSenderInReset = 1,
     localparam int PushCreditWidth = $clog2(NumWritePorts + 1),
     localparam int CreditWidth = $clog2(MaxCredit + 1),

@@ -8,9 +8,7 @@
 `include "br_fv.svh"
 
 module br_arb_pri_rr_fpv_monitor #(
-    // Must be at least 2
     parameter int NumRequesters = 2,
-    // Must be at least 2
     parameter int NumPriorities = 2
 ) (
     input logic clk,

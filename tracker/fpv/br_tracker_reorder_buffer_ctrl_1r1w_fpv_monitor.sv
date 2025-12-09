@@ -7,18 +7,11 @@
 `include "br_registers.svh"
 
 module br_tracker_reorder_buffer_ctrl_1r1w_fpv_monitor #(
-    // Number of entries in the reorder buffer. Must be at least 1.
     parameter int NumEntries = 2,
-    // Width of the entry ID. Must be at least $clog2(NumEntries).
     parameter int EntryIdWidth = $clog2(NumEntries),
-    // Width of the data payload. Must be at least 1.
     parameter int DataWidth = 1,
-    // Number of clock cycles for the RAM read latency. Must be >=0.
     parameter int RamReadLatency = 0,
-    // If 1, ensure that reordered_resp_pop_data comes directly from a register,
-    // improving timing at the cost of an additional cycle of latency.
     parameter bit RegisterPopOutputs = 0,
-    // If 1, then assert unordered_resp_push_valid is low at the end of the test.
     parameter bit EnableAssertFinalNotDeallocValid = 1,
     localparam int MinEntryIdWidth = $clog2(NumEntries),
     localparam int EntryCountWidth = $clog2(NumEntries + 1)

@@ -8,11 +8,8 @@
 `include "br_fv.svh"
 
 module br_arb_weighted_rr_fpv_monitor #(
-    // Must be at least 1
     parameter int NumRequesters = 1,
-    // Must be at least 1
     parameter int MaxWeight = 1,
-    // Maximum accumulated weight per requester. Must be at least MaxWeight.
     parameter int MaxAccumulatedWeight = MaxWeight,
     localparam int WeightWidth = $clog2(MaxWeight + 1),
     localparam int AccumulatedWeightWidth = $clog2(MaxAccumulatedWeight + 1)

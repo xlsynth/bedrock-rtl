@@ -7,19 +7,19 @@
 `include "br_registers.svh"
 
 module br_amba_axi_timing_slice_fpv_monitor #(
-    parameter int AddrWidth = 12,  // Must be at least 12
-    parameter int DataWidth = 32,  // Must be 32, 64, or 128
-    parameter int IdWidth = 1,  // Must be at least 1
-    parameter int AWUserWidth = 1,  // Must be at least 1
-    parameter int WUserWidth = 1,  // Must be at least 1
-    parameter int ARUserWidth = 1,  // Must be at least 1
-    parameter int BUserWidth = 1,  // Must be at least 1
-    parameter int RUserWidth = 1,  // Must be at least 1
-    parameter int AWSliceType = 2,  // 0: forward, 1: reverse, 2: full
-    parameter int WSliceType = 2,  // 0: forward, 1: reverse, 2: full
-    parameter int ARSliceType = 2,  // 0: forward, 1: reverse, 2: full
-    parameter int RSliceType = 2,  // 0: forward, 1: reverse, 2: full
-    parameter int BSliceType = 2,  // 0: forward, 1: reverse, 2: full
+    parameter int AddrWidth = 12,
+    parameter int DataWidth = 32,
+    parameter int IdWidth = 1,
+    parameter int AWUserWidth = 1,
+    parameter int WUserWidth = 1,
+    parameter int ARUserWidth = 1,
+    parameter int BUserWidth = 1,
+    parameter int RUserWidth = 1,
+    parameter int AWSliceType = 2,
+    parameter int WSliceType = 2,
+    parameter int ARSliceType = 2,
+    parameter int RSliceType = 2,
+    parameter int BSliceType = 2,
     localparam int StrobeWidth = DataWidth / 8
 ) (
     input clk,

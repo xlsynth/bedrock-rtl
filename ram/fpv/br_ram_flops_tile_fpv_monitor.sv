@@ -5,29 +5,15 @@
 `include "br_registers.svh"
 
 module br_ram_flops_tile_fpv_monitor #(
-    parameter int Depth = 1,  // Must be at least 1
-    parameter int Width = 1,  // Must be at least 1
-    parameter int NumWritePorts = 1,  // Must be at least 1
-    parameter int NumReadPorts = 1,  // Must be at least 1
-    // If 1, allow partial writes to the memory using the wr_word_en signal.
-    // If 0, only full writes are allowed and wr_word_en is ignored.
+    parameter int Depth = 1,
+    parameter int Width = 1,
+    parameter int NumWritePorts = 1,
+    parameter int NumReadPorts = 1,
     parameter bit EnablePartialWrite = 0,
-    // The width of a word in the memory. This is the smallest unit of data that
-    // can be written when partial write is enabled.
-    // Must be at least 1 and at most Width.
-    // Width must be evenly divisible by WordWidth.
     parameter int WordWidth = Width,
-    // If 1, then if the read and write ports access the same address on the same cycle,
-    // the write data is forwarded directly to the read data with zero delay.
-    // If 0, then if the read and write ports access the same address on the same cycle,
-    // then read data is the value stored in the memory prior to the write.
     parameter bit EnableBypass = 0,
-    // If 1, then the memory elements are cleared to 0 upon reset.
     parameter bit EnableReset = 0,
-    // If 1, use structured mux2 gates for the read mux instead of relying on synthesis.
-    // This is required if write and read clocks are different.
     parameter bit UseStructuredGates = 0,
-    // If 1, then assert there are no valid bits asserted at the end of the test.
     parameter bit EnableAssertFinalNotValid = 1,
     localparam int AddrWidth = br_math::clamped_clog2(Depth),
     localparam int NumWords = Width / WordWidth

@@ -7,34 +7,14 @@
 `include "br_fv.svh"
 
 module br_tracker_freelist_fpv_monitor #(
-    // Number of entries in the freelist. Must be greater than NumAllocPerCycle.
     parameter int NumEntries = 2,
-    // Number of allocations per cycle. Must be at least 1.
     parameter int NumAllocPerCycle = 1,
-    // Number of deallocation ports. Must be at least 1.
     parameter int NumDeallocPorts = 1,
-    // If 1, then register the alloc_sendable and alloc_entry_id outputs,
-    // improving timing at the cost of an additional cycle of cut-through latency.
-    // Note that if this is set to 0, the alloc_entry_id may be unstable
     parameter bit RegisterAllocOutputs = 1,
-    // Multihot vector indicating which entries are preallocated out of reset.
-    // E.g. PreallocatedEntries[0] = 1'b1 indicates that entry 0 is preallocated.
     parameter logic [NumEntries-1:0] PreallocatedEntries = '0,
-    // If 1, bypass deallocated entries to allocated entries.
     parameter bit EnableBypass = 0,
-    // Cut-through latency of the tracker.
     localparam int CutThroughLatency = RegisterAllocOutputs + (EnableBypass ? 0 : 1),
-    // The delay between an entry being deallocated and when the deallocation
-    // is indicated by dealloc_count.
-    // If dealloc_count is being used to manage credit returns, this must be set
-    // so that allocation is not attemped until (CutThroughLatency - DeallocCountDelay) cycles
-    // after deallocation is indicated on dealloc_count,
-    // where CutThroughLatency = RegisterAllocOutputs + (EnableBypass ? 0 : 1).
-    // Must be >= 0 and <= CutThroughLatency.
     parameter int DeallocCountDelay = CutThroughLatency,
-    // If 1, then assert there are no dealloc_valid bits asserted at the end of the test.
-    // It is expected that alloc_valid could be 1 at end of the test because it's
-    // a natural idle condition for this design.
     parameter bit EnableAssertFinalNotDeallocValid = 1,
     localparam int EntryIdWidth = $clog2(NumEntries),
     localparam int DeallocCountWidth = $clog2(NumDeallocPorts + 1),

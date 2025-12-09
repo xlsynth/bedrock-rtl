@@ -7,28 +7,15 @@
 `include "br_registers.svh"
 
 module br_cdc_fifo_ctrl_1r1w_fpv_monitor #(
-    parameter int Depth = 2,  // Number of entries in the FIFO. Must be at least 2.
-    parameter int Width = 1,  // Width of each entry in the FIFO. Must be at least 1.
+    parameter int Depth = 2,
+    parameter int Width = 1,
     parameter bit RegisterPopOutputs = 0,
-    // The number of push cycles after ram_wr_valid is asserted at which
-    // it is safe to read the newly written data.
     parameter int RamWriteLatency = 1,
-    // The number of pop cycles between when ram_rd_addr_valid is asserted and
-    // ram_rd_data_valid is asserted.
     parameter int RamReadLatency = 0,
-    // The number of synchronization stages to use for the gray counts.
     parameter int NumSyncStages = 3,
-    // If 1, cover that the push side experiences backpressure.
-    // If 0, assert that there is never backpressure.
     parameter bit EnableCoverPushBackpressure = 1,
-    // If 1, assert that push_valid is stable when backpressured.
-    // If 0, cover that push_valid can be unstable.
     parameter bit EnableAssertPushValidStability = EnableCoverPushBackpressure,
-    // If 1, assert that push_data is stable when backpressured.
-    // If 0, cover that push_data can be unstable.
     parameter bit EnableAssertPushDataStability = EnableAssertPushValidStability,
-    // If 1, then assert there are no valid bits asserted and that the FIFO is
-    // empty at the end of the test.
     parameter bit EnableAssertFinalNotValid = 1,
     localparam int AddrWidth = $clog2(Depth),
     localparam int CountWidth = $clog2(Depth + 1)

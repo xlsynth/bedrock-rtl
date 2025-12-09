@@ -8,31 +8,16 @@
 `include "br_fv.svh"
 
 module br_credit_sender_fpv_monitor #(
-    // Number of data flows sharing this credit sender.
-    // Must be at least 1 and at most MaxCredit.
     parameter int NumFlows = 1,
-    // Width of the datapath in bits. Must be at least 1.
     parameter int Width = 1,
-    // Maximum number of credits that can be stored (inclusive). Must be at least 1.
     parameter int MaxCredit = 1,
-    // Maximum number of credits that can be returned in a single cycle.
-    // Must be at least 1 but at most MaxCredit.
     parameter int PopCreditMaxChange = 1,
-    // If 1, add 1 cycle of retiming to pop outputs.
     parameter bit RegisterPopOutputs = 0,
-    // If 1, cover that the push side experiences backpressure.
-    // If 0, assert that there is never backpressure.
     parameter bit EnableCoverPushBackpressure = 1,
-    // If 1, assert that push_valid is stable when backpressured.
-    // If 0, cover that push_valid can be unstable.
     parameter bit EnableAssertPushValidStability = EnableCoverPushBackpressure,
-    // If 1, assert that push_data is stable when backpressured.
-    // If 0, cover that push_data can be unstable.
     parameter bit EnableAssertPushDataStability = EnableAssertPushValidStability,
-    // If 1, then assert there are no valid bits asserted at the end of the test.
     parameter bit EnableAssertFinalNotValid = 1,
-
-    localparam int CounterWidth   = $clog2(MaxCredit + 1),
+    localparam int CounterWidth = $clog2(MaxCredit + 1),
     localparam int PopCreditWidth = $clog2(PopCreditMaxChange + 1)
 ) (
     input logic clk,

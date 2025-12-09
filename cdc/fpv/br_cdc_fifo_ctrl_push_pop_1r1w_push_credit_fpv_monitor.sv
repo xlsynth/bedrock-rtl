@@ -17,8 +17,8 @@
 `include "br_registers.svh"
 
 module br_cdc_fifo_ctrl_push_pop_1r1w_push_credit_fpv_monitor #(
-    parameter int Depth = 2,  // Number of entries in the FIFO. Must be at least 2.
-    parameter int Width = 1,  // Width of each entry in the FIFO. Must be at least 1.
+    parameter int Depth = 2,
+    parameter int Width = 1,
     parameter int RamWriteLatency = 1,
     parameter int RamReadLatency = 0,
     parameter int NumSyncStages = 3,

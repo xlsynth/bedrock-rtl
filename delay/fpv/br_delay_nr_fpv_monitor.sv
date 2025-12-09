@@ -8,8 +8,8 @@
 `include "br_fv.svh"
 
 module br_delay_nr_fpv_monitor #(
-    parameter int Width = 1,  // Must be at least 1
-    parameter int NumStages = 0  // Must be at least 0
+    parameter int Width = 1,
+    parameter int NumStages = 0
 ) (
     input logic                          clk,
     input logic [  Width-1:0]            in,

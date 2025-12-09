@@ -5,21 +5,11 @@
 `include "br_registers.svh"
 
 module br_ram_data_rd_pipe_fpv_monitor #(
-    // Width of each entry in the RAM. Must be at least 1.
     parameter int Width = 1,
-    // Number of tiles along the depth dimension.
-    // Must be at least 1 and evenly divide Depth.
     parameter int DepthTiles = 1,
-    // Number of tiles along the width dimension.
-    // Must be at least 1 and evenly divide Width.
     parameter int WidthTiles = 1,
-    // Number of pipeline stages to join data along the depth dimension.
-    // Must be at least 0.
     parameter int DepthStages = 0,
-    // Number of pipeline stages to join data along the width dimension.
-    // Must be at least 0.
     parameter int WidthStages = 0,
-    // If 1, then assert there are no valid bits asserted at the end of the test.
     parameter bit EnableAssertFinalNotValid = 1,
     localparam int TileWidth = br_math::ceil_div(Width, WidthTiles),
     localparam int Latency = DepthStages + WidthStages

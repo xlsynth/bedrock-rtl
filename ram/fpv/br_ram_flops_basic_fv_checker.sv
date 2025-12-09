@@ -5,10 +5,10 @@
 `include "br_registers.svh"
 
 module br_ram_flops_basic_fv_checker #(
-    parameter int Depth = 1,  // Must be at least 1
-    parameter int Width = 1,  // Must be at least 1
-    parameter int NumWritePorts = 1,  // Must be at least 1
-    parameter int NumReadPorts = 1,  // Must be at least 1
+    parameter int Depth = 1,
+    parameter int Width = 1,
+    parameter int NumWritePorts = 1,
+    parameter int NumReadPorts = 1,
     parameter bit EnablePartialWrite = 0,
     parameter int WordWidth = Width,
     parameter bit EnableBypass = 0,

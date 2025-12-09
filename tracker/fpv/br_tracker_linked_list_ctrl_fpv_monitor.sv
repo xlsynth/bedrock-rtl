@@ -7,17 +7,12 @@
 `include "br_registers.svh"
 
 module br_tracker_linked_list_ctrl_fpv_monitor #(
-    // Depth of the RAM. Must be at least 2.
     parameter int Depth = 2,
-    // Number of write ports. Must be at least 1.
     parameter int NumWritePorts = 1,
-    // Number of linked lists. Must be at least 1.
     parameter int NumLinkedLists = 1,
-    // Number of cycles to read from the pointer RAM. Must be at least 0.
     parameter int RamReadLatency = 0,
-
     localparam int AddressWidth = $clog2(Depth),
-    localparam int CountWidth   = $clog2(Depth + 1)
+    localparam int CountWidth = $clog2(Depth + 1)
 ) (
     input logic clk,
     input logic rst,

@@ -7,13 +7,9 @@
 `include "br_registers.svh"
 
 module br_tracker_reorder_buffer_basic_fpv_monitor #(
-    // Number of entries in the reorder buffer. Must be at least 1.
     parameter int NumEntries = 2,
-    // Width of the entry ID. Must be at least $clog2(NumEntries).
     parameter int EntryIdWidth = 1,
-    // Width of the data payload.
     parameter int DataWidth = 1,
-    // Number of clock cycles for the RAM read latency.
     parameter int RamReadLatency = 1,
     localparam int EntryCountWidth = $clog2(NumEntries + 1)
 ) (

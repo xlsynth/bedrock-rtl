@@ -6,7 +6,6 @@
 
 module isolate_axi_protocol_fv_check #(
     parameter bit ReadInterleaveOn = 1,
-    // if there is no valid, ready doesn't have to be high eventually
     parameter bit ValidBeforeReady = 1,
     parameter int AddrWidth = 12,
     parameter int DataWidth = 32,

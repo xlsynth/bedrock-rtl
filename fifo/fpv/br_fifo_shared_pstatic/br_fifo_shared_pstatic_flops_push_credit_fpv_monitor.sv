@@ -7,41 +7,21 @@
 `include "br_registers.svh"
 
 module br_fifo_shared_pstatic_flops_push_credit_fpv_monitor #(
-    // Number of logical FIFOs. Must be >=2.
     parameter int NumFifos = 2,
-    // Total depth of the FIFO.
-    // Must be greater than or equal to the number of logical FIFOs.
     parameter int Depth = 2,
-    // Width of the data. Must be >=1.
     parameter int Width = 1,
-    // If 1, register is added on the credit returns,
-    // improving timing at the cost of additional latency.
     parameter bit RegisterPushOutputs = 1,
-    // The depth of the pop-side staging buffer.
-    // This affects the pop bandwidth of each logical FIFO.
-    // The bandwidth will be `StagingBufferDepth / (RamReadLatency + 1)`.
     parameter int StagingBufferDepth = 1,
-    // If 1, make sure pop_valid/pop_data are registered at the output
-    // of the staging buffer. This adds a cycle of cut-through latency.
     parameter bit RegisterPopOutputs = 0,
-    // Number of tiles in the depth dimension for the flop RAM.
     parameter int RamDepthTiles = 1,
-    // Number of tiles in the width dimension for the flop RAM.
     parameter int RamWidthTiles = 1,
-    // Number of stages on the address path for the flop RAM.
     parameter int RamAddressDepthStages = 0,
-    // Number of stages in the depth dimension on the flop RAM.
     parameter int RamReadDataDepthStages = 0,
-    // Number of stages in the width dimension on the flop RAM.
     parameter int RamReadDataWidthStages = 0,
-    // If 1, then assert there are no valid bits asserted and that the FIFO is
-    // empty at the end of the test.
-    // ri lint_check_waive PARAM_NOT_USED
     parameter bit EnableAssertFinalNotValid = 1,
-
     localparam int FifoIdWidth = br_math::clamped_clog2(NumFifos),
-    localparam int AddrWidth   = br_math::clamped_clog2(Depth),
-    localparam int CountWidth  = $clog2(Depth + 1)
+    localparam int AddrWidth = br_math::clamped_clog2(Depth),
+    localparam int CountWidth = $clog2(Depth + 1)
 ) (
     input logic clk,
     input logic rst,

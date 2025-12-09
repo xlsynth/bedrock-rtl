@@ -8,8 +8,8 @@
 `include "br_fv.svh"
 
 module br_fifo_flops_push_credit_fpv_monitor #(
-    parameter int Depth = 2,  // Number of entries in the FIFO. Must be at least 2.
-    parameter int Width = 1,  // Width of each entry in the FIFO. Must be at least 1.
+    parameter int Depth = 2,
+    parameter int Width = 1,
     parameter bit EnableBypass = 1,
     parameter int MaxCredit = Depth,
     parameter bit RegisterPushOutputs = 0,
@@ -19,14 +19,8 @@ module br_fifo_flops_push_credit_fpv_monitor #(
     parameter int FlopRamAddressDepthStages = 0,
     parameter int FlopRamReadDataDepthStages = 0,
     parameter int FlopRamReadDataWidthStages = 0,
-    // If 1, cover that credit_withhold can be non-zero.
-    // Otherwise, assert that it is always zero.
     parameter bit EnableCoverCreditWithhold = 1,
-    // If 1, cover that push_sender_in_reset can be asserted
-    // Otherwise, assert that it is never asserted.
     parameter bit EnableCoverPushSenderInReset = 1,
-    // If 1, cover that push_credit_stall can be asserted
-    // Otherwise, assert that it is never asserted.
     parameter bit EnableCoverPushCreditStall = 1,
     localparam int AddrWidth = $clog2(Depth),
     localparam int CountWidth = $clog2(Depth + 1),

@@ -5,9 +5,7 @@
 `include "br_registers.svh"
 
 module ext_arb_fv_monitor #(
-    // Number of read ports. Must be >=1 and a power of 2.
     parameter int NumReadPorts = 1,
-    // Number of logical FIFOs. Must be >=2.
     parameter int NumFifos = 2
 ) (
     input logic clk,

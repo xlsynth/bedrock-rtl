@@ -7,13 +7,9 @@
 `include "br_registers.svh"
 
 module br_tracker_sequence_fpv_monitor #(
-    // Number of sequence numbers that can be allocated.
     parameter int NumEntries = 2,
-    // Maximum number of sequence numbers that can be allocated/deallocated in a single beat.
     parameter int MaxAllocSize = 1,
-    // Width of the entry ID. Must be at least $clog2(NumEntries).
     parameter int EntryIdWidth = $clog2(NumEntries),
-    // If 1, then assert dealloc_valid is low at the end of the test.
     parameter bit EnableAssertFinalNotDeallocValid = 1,
     localparam int MaxAllocSizeWidth = $clog2(MaxAllocSize + 1),
     localparam int EntryCountWidth = $clog2(NumEntries + 1)

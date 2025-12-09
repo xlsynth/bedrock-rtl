@@ -8,7 +8,6 @@
 `include "br_fv.svh"
 
 module rr_basic_fpv_monitor #(
-    // Must be at least 1
     parameter int NumRequesters = 1,
     parameter bit EnableAssertPushValidStability = 1
 ) (

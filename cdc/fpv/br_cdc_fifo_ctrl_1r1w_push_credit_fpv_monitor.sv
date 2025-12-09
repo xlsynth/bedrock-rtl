@@ -7,16 +7,11 @@
 `include "br_registers.svh"
 
 module br_cdc_fifo_ctrl_1r1w_push_credit_fpv_monitor #(
-    parameter int Depth = 2,  // Number of entries in the FIFO. Must be at least 2.
-    parameter int Width = 1,  // Width of each entry in the FIFO. Must be at least 1.
+    parameter int Depth = 2,
+    parameter int Width = 1,
     parameter bit RegisterPopOutputs = 0,
-    // The number of push cycles after ram_wr_valid is asserted at which
-    // it is safe to read the newly written data.
     parameter int RamWriteLatency = 1,
-    // The number of pop cycles between when ram_rd_addr_valid is asserted and
-    // ram_rd_data_valid is asserted.
     parameter int RamReadLatency = 0,
-    // The number of synchronization stages to use for the gray counts.
     parameter int NumSyncStages = 3,
     parameter int MaxCredit = Depth,
     parameter bit RegisterPushOutputs = 0,
