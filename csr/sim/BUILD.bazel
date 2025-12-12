@@ -1,0 +1,36 @@
+# SPDX-License-Identifier: Apache-2.0
+
+load("@rules_hdl//verilog:providers.bzl", "verilog_library")
+load("//bazel:br_verilog.bzl", "br_verilog_sim_test_tools_suite")
+load("//bazel:verilog.bzl", "verilog_elab_test")
+
+package(default_visibility = ["//visibility:private"])
+
+verilog_library(
+    name = "br_csr_axil_widget_tb",
+    srcs = ["br_csr_axil_widget_tb.sv"],
+    deps = [
+        "//csr/rtl:br_csr_axil_widget",
+        "//misc/sim:br_test_driver",
+    ],
+)
+
+verilog_elab_test(
+    name = "br_csr_axil_widget_tb_elab_test",
+    tool = "verific",
+    deps = [":br_csr_axil_widget_tb"],
+)
+
+br_verilog_sim_test_tools_suite(
+    name = "br_csr_axil_widget_sim_test_tools_suite",
+    params = {
+        "AddrWidth": ["16"],
+        "DataWidth": ["32"],
+        "RegisterResponseOutputs": [
+            "0",
+            "1",
+        ],
+    },
+    tools = ["vcs"],
+    deps = [":br_csr_axil_widget_tb"],
+)
