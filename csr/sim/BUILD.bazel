@@ -34,3 +34,37 @@ br_verilog_sim_test_tools_suite(
     tools = ["vcs"],
     deps = [":br_csr_axil_widget_tb"],
 )
+
+verilog_library(
+    name = "br_csr_demux_tb",
+    srcs = ["br_csr_demux_tb.sv"],
+    deps = [
+        "//csr/rtl:br_csr_demux",
+        "//misc/sim:br_test_driver",
+    ],
+)
+
+verilog_elab_test(
+    name = "br_csr_demux_tb_elab_test",
+    tool = "verific",
+    deps = [":br_csr_demux_tb"],
+)
+
+br_verilog_sim_test_tools_suite(
+    name = "br_csr_demux_sim_test_tools_suite",
+    params = {
+        "AddrWidth": ["16"],
+        "DataWidth": ["32"],
+        "NumDownstreams": [
+            "2",
+            "4",
+        ],
+        "NumRetimeStagesPerDownstream": [
+            "0",
+            "1",
+            "2",
+        ],
+    },
+    tools = ["vcs"],
+    deps = [":br_csr_demux_tb"],
+)
