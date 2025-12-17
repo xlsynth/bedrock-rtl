@@ -206,3 +206,56 @@ verilog_elab_test(
         "3",
     ]
 ]
+
+verilog_library(
+    name = "br_cdc_reg_tb",
+    srcs = ["br_cdc_reg_tb.sv"],
+    deps = [
+        "//cdc/rtl:br_cdc_reg",
+        "//misc/sim:br_test_driver",
+        "//pkg:br_math_pkg",
+    ],
+)
+
+verilog_elab_test(
+    name = "br_cdc_reg_tb_elab_test",
+    tool = "verific",
+    top = "br_cdc_reg_tb",
+    deps = [
+        ":br_cdc_reg_tb",
+        "//gate/rtl:br_gate_mock",
+    ],
+)
+
+br_verilog_sim_test_tools_suite(
+    name = "br_cdc_reg_sim_test_tools_suite",
+    params = {
+        "Width": ["8"],
+        "RegisterPopOutputs": [
+            "0",
+            "1",
+        ],
+        "RegisterResetActive": [
+            "0",
+            "1",
+        ],
+        "PushClockPeriodNs": [
+            "10",
+            "16",
+            "20",
+        ],
+        "PopClockPeriodNs": [
+            "10",
+            "16",
+            "20",
+        ],
+    },
+    tools = [
+        "vcs",
+    ],
+    top = "br_cdc_reg_tb",
+    deps = [
+        ":br_cdc_reg_tb",
+        "//gate/rtl:br_gate_mock",
+    ],
+)
