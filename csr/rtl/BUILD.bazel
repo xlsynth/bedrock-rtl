@@ -67,3 +67,41 @@ br_verilog_elab_and_lint_test_suite(
     },
     deps = [":br_csr_demux"],
 )
+
+verilog_library(
+    name = "br_csr_cdc",
+    srcs = ["br_csr_cdc.sv"],
+    deps = [
+        "//cdc/rtl:br_cdc_bit_pulse",
+        "//cdc/rtl:br_cdc_reg",
+    ],
+)
+
+br_verilog_elab_and_lint_test_suite(
+    name = "br_csr_cdc_test_suite",
+    params = {
+        "AddrWidth": ["12"],
+        "DataWidth": ["32"],
+        "RegisterResetActive": [
+            "0",
+            "1",
+        ],
+        "RegisterDownstreamReqOutputs": [
+            "0",
+            "1",
+        ],
+        "RegisterUpstreamRespOutputs": [
+            "0",
+            "1",
+        ],
+        "RegisterDownstreamAbort": [
+            "0",
+            "1",
+        ],
+    },
+    top = "br_csr_cdc",
+    deps = [
+        ":br_csr_cdc",
+        "//gate/rtl:br_gate_mock",
+    ],
+)
