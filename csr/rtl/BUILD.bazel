@@ -39,3 +39,31 @@ br_verilog_elab_and_lint_test_suite(
     },
     deps = [":br_csr_axil_widget"],
 )
+
+verilog_library(
+    name = "br_csr_demux",
+    srcs = ["br_csr_demux.sv"],
+    deps = [
+        "//delay/rtl:br_delay",
+        "//delay/rtl:br_delay_valid",
+        "//macros:br_asserts_internal",
+        "//mux/rtl:br_mux_onehot",
+    ],
+)
+
+br_verilog_elab_and_lint_test_suite(
+    name = "br_csr_demux_test_suite",
+    params = {
+        "AddrWidth": ["4"],
+        "DataWidth": [
+            "32",
+            "64",
+        ],
+        "NumDownstreams": [
+            "1",
+            "2",
+            "3",
+        ],
+    },
+    deps = [":br_csr_demux"],
+)
