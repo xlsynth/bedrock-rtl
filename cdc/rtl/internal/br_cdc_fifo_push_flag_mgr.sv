@@ -90,12 +90,11 @@ module br_cdc_fifo_push_flag_mgr #(
       .out_stages()
   );
 
-  br_delay #(
+  br_delay_nr #(
       .Width(CountWidth),
       .NumStages(PushCountDelay)
-  ) br_delay_push_count_gray (
+  ) br_delay_nr_push_count_gray (
       .clk,
-      .rst,
       .in(push_count_next_gray),
       .out(push_count_gray),
       .out_stages()

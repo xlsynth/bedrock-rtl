@@ -11,7 +11,6 @@ verilog_library(
     deps = [
         ":br_cdc_fifo_reset_overlap_checks",
         "//counter/rtl:br_counter_incr",
-        "//delay/rtl:br_delay",
         "//delay/rtl:br_delay_nr",
         "//enc/rtl:br_enc_bin2gray",
         "//enc/rtl:br_enc_gray2bin",
@@ -94,7 +93,6 @@ verilog_library(
     deps = [
         ":br_cdc_fifo_reset_overlap_checks",
         "//counter/rtl:br_counter_incr",
-        "//delay/rtl:br_delay",
         "//delay/rtl:br_delay_nr",
         "//enc/rtl:br_enc_bin2gray",
         "//enc/rtl:br_enc_gray2bin",
