@@ -87,12 +87,11 @@ module br_cdc_fifo_pop_flag_mgr #(
       .out_stages()
   );
 
-  br_delay #(
+  br_delay_nr #(
       .Width(CountWidth),
       .NumStages(PopCountDelay)
-  ) br_delay_pop_count_gray (
+  ) br_delay_nr_pop_count_gray (
       .clk,
-      .rst,
       .in(pop_count_next_gray),
       .out(pop_count_gray),
       .out_stages()
