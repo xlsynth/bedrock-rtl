@@ -190,3 +190,58 @@ br_verilog_elab_and_lint_test_suite(
     top = "br_cdc_fifo_reset_overlap_checks",
     deps = [":br_cdc_fifo_reset_overlap_checks"],
 )
+
+verilog_library(
+    name = "br_cdc_reg_push",
+    srcs = ["br_cdc_reg_push.sv"],
+    deps = [
+        "//delay/rtl:br_delay_nr",
+        "//flow/rtl/internal:br_flow_checks_valid_data_intg",
+        "//macros:br_asserts_internal",
+        "//macros:br_registers",
+    ],
+)
+
+br_verilog_elab_and_lint_test_suite(
+    name = "br_cdc_reg_push_test_suite",
+    params = {
+        "Width": [
+            "8",
+        ],
+        "RegisterResetActive": [
+            "0",
+            "1",
+        ],
+    },
+    deps = [":br_cdc_reg_push"],
+)
+
+verilog_library(
+    name = "br_cdc_reg_pop",
+    srcs = ["br_cdc_reg_pop.sv"],
+    deps = [
+        "//delay/rtl:br_delay_nr",
+        "//flow/rtl:br_flow_reg_fwd",
+        "//flow/rtl/internal:br_flow_checks_valid_data_intg",
+        "//macros:br_asserts_internal",
+        "//macros:br_registers",
+    ],
+)
+
+br_verilog_elab_and_lint_test_suite(
+    name = "br_cdc_reg_pop_test_suite",
+    params = {
+        "Width": [
+            "8",
+        ],
+        "RegisterPopOutputs": [
+            "0",
+            "1",
+        ],
+        "RegisterResetActive": [
+            "0",
+            "1",
+        ],
+    },
+    deps = [":br_cdc_reg_pop"],
+)

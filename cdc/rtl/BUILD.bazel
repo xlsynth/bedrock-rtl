@@ -283,3 +283,35 @@ br_verilog_elab_and_lint_test_suite(
         "//gate/rtl:br_gate_mock",
     ],
 )
+
+verilog_library(
+    name = "br_cdc_reg",
+    srcs = ["br_cdc_reg.sv"],
+    deps = [
+        ":br_cdc_bit_toggle",
+        "//cdc/rtl/internal:br_cdc_reg_pop",
+        "//cdc/rtl/internal:br_cdc_reg_push",
+    ],
+)
+
+br_verilog_elab_and_lint_test_suite(
+    name = "br_cdc_reg_test_suite",
+    params = {
+        "Width": [
+            "8",
+        ],
+        "RegisterPopOutputs": [
+            "0",
+            "1",
+        ],
+        "RegisterResetActive": [
+            "0",
+            "1",
+        ],
+    },
+    top = "br_cdc_reg",
+    deps = [
+        ":br_cdc_reg",
+        "//gate/rtl:br_gate_mock",
+    ],
+)
