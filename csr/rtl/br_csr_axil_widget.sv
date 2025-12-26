@@ -47,7 +47,7 @@
 // When this occurs, the abort signal will be asserted for a single cycle.
 // The timer will then reset and count for another timeout period. If no response is received before the
 // second period expires, a response with code SLVERR is sent on the appropriate AXI-Lite channel,
-// and the timeout_expired signal is asserted for a single cycle.
+// and the request_aborted signal is asserted for a single cycle.
 // Changing `timeout_cycles` while a request is active is permitted. If it's changed to a value below the
 // current count, the timer will expire immediately.
 // Setting `timeout_cycles` to 0 disables the watchdog timer.
@@ -112,7 +112,7 @@ module br_csr_axil_widget #(
     input logic                 csr_resp_decerr,
 
     input  logic [TimerWidth-1:0] timeout_cycles,
-    output logic                  timeout_expired
+    output logic                  request_aborted
 );
 
   //----------------------------------------------------------------------------
@@ -200,9 +200,69 @@ module br_csr_axil_widget #(
   assign csr_req_secure = csr_req.secure;
   assign csr_req_privileged = csr_req.privileged;
 
-  // TODO(zhemao): Implement the watchdog timer and abort mechanism.
-  `BR_TIEOFF_ZERO_TODO(timeout_output, {csr_req_abort, timeout_expired})
-  `BR_UNUSED_TODO(timeout_input, timeout_cycles)
+  // Watchdog State Machine
+  typedef enum logic [1:0] {
+    Idle = 2'b00,
+    Active = 2'b01,
+    Expired = 2'b10,
+    Aborted = 2'b11
+  } watchdog_state_t;
+
+  watchdog_state_t wd_state, wd_state_next;
+  logic [TimerWidth-1:0] timer_count;
+  logic timer_active;
+  logic timer_expired;
+  logic timer_reset;
+  logic timeout_resp_valid;
+
+  assign timer_active = wd_state == Active || wd_state == Expired;
+  assign timer_expired = timer_count >= timeout_cycles;
+  assign timer_reset = (timer_active && timer_expired) || csr_resp_valid;
+
+  assign timeout_resp_valid = (wd_state == Aborted);
+  assign csr_req_abort = (wd_state == Active) && timer_expired;
+  assign request_aborted = (wd_state == Expired) && timer_expired && !csr_resp_valid;
+
+  br_counter_incr #(
+      .MaxValue(MaxTimeoutCycles)
+  ) br_counter_incr_timer (
+      .clk,
+      .rst,
+      .reinit(timer_reset),
+      .initial_value('0),
+      .incr_valid(timer_active),
+      .incr(1'b1),
+      .value(timer_count),
+      .value_next()
+  );
+
+  always_comb begin
+    wd_state_next = wd_state;
+    // ri lint_check_waive FSM_DEFAULT_REQ
+    unique case (wd_state)
+      Idle:
+      if (csr_req_valid) begin
+        wd_state_next = Active;
+      end
+      Active:
+      if (csr_resp_valid) begin
+        wd_state_next = Idle;
+      end else if (timer_expired) begin
+        wd_state_next = Expired;
+      end
+      Expired:
+      if (csr_resp_valid) begin
+        wd_state_next = Idle;
+      end else if (timer_expired) begin
+        wd_state_next = Aborted;
+      end
+      Aborted: begin
+        wd_state_next = Idle;
+      end
+    endcase
+  end
+
+  `BR_REGI(wd_state, wd_state_next, Idle)
 
   // Only allow one outstanding CSR request at a time
   typedef struct packed {
@@ -212,6 +272,10 @@ module br_csr_axil_widget #(
 
   logic inflight, inflight_next;
   logic inflight_write;
+  logic merged_resp_valid;
+  logic merged_resp_slverr;
+  logic merged_resp_decerr;
+  logic [DataWidth-1:0] merged_resp_rdata;
   logic buf_resp_valid, buf_resp_valid_next;
   logic buf_resp_ready;
   logic [DataWidth-1:0] buf_resp_rdata;
@@ -219,19 +283,24 @@ module br_csr_axil_widget #(
   logic buf_resp_decerr;
   resp_t buf_resp;
 
+  assign merged_resp_valid = csr_resp_valid || timeout_resp_valid;
+  assign merged_resp_rdata = timeout_resp_valid ? {DataWidth{1'b0}} : csr_resp_rdata;
+  assign merged_resp_slverr = timeout_resp_valid ? 1'b1 : csr_resp_slverr;
+  assign merged_resp_decerr = timeout_resp_valid ? 1'b0 : csr_resp_decerr;
+
   // Set inflight when request is sent out
   // Clear it when the response is accepted
   assign inflight_next = (inflight || csr_req_valid) && !(buf_resp_valid && buf_resp_ready);
   // Set buf_resp_valid when response is received from downstream
   // Clear it when the response is accepted
-  assign buf_resp_valid_next = (buf_resp_valid && !buf_resp_ready) || csr_resp_valid;
+  assign buf_resp_valid_next = (buf_resp_valid && !buf_resp_ready) || merged_resp_valid;
 
   `BR_REG(inflight, inflight_next)
   `BR_REGL(inflight_write, csr_req_write, csr_req_valid)
   `BR_REG(buf_resp_valid, buf_resp_valid_next)
-  `BR_REGLN(buf_resp_rdata, csr_resp_rdata, csr_resp_valid)
-  `BR_REGLN(buf_resp_slverr, csr_resp_slverr, csr_resp_valid)
-  `BR_REGLN(buf_resp_decerr, csr_resp_decerr, csr_resp_valid)
+  `BR_REGLN(buf_resp_rdata, merged_resp_rdata, merged_resp_valid)
+  `BR_REGLN(buf_resp_slverr, merged_resp_slverr, merged_resp_valid)
+  `BR_REGLN(buf_resp_decerr, merged_resp_decerr, merged_resp_valid)
 
   assign csr_unqual_req_ready = !inflight;
   assign buf_resp.data = buf_resp_rdata;
