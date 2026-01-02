@@ -21,7 +21,6 @@ verilog_elab_test(
 br_verilog_sim_test_tools_suite(
     name = "br_amba_axi_isolate_sub_tb_sim_test_tools_suite",
     tools = [
-        "dsim",
         "vcs",
     ],
     deps = [":br_amba_axi_isolate_sub_tb"],
@@ -44,7 +43,6 @@ verilog_elab_test(
 br_verilog_sim_test_tools_suite(
     name = "br_amba_axi_isolate_mgr_tb_sim_test_tools_suite",
     tools = [
-        "dsim",
         "vcs",
     ],
     deps = [":br_amba_axi_isolate_mgr_tb"],
@@ -67,7 +65,6 @@ verilog_elab_test(
 br_verilog_sim_test_tools_suite(
     name = "br_amba_axi_demux_tb_sim_test_tools_suite",
     tools = [
-        "dsim",
         "vcs",
     ],
     deps = [":br_amba_axi_demux_tb"],

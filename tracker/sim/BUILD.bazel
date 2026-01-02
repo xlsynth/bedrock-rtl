@@ -47,7 +47,6 @@ br_verilog_sim_test_tools_suite(
     },
     # TODO: iverilog does not work
     tools = [
-        "dsim",
         "vcs",
     ],
     deps = [":br_tracker_freelist_tb"],
@@ -91,7 +90,6 @@ br_verilog_sim_test_tools_suite(
         ],
     },
     tools = [
-        "dsim",
         "iverilog",
         "vcs",
     ],

@@ -36,7 +36,6 @@ br_verilog_sim_test_tools_suite(
         ],
     },
     tools = [
-        "dsim",
         "iverilog",
         "vcs",
     ],
@@ -69,7 +68,6 @@ br_verilog_sim_test_tools_suite(
         "SymbolWidth": ["8"],
     },
     tools = [
-        "dsim",
         "iverilog",
         "vcs",
     ],
@@ -102,7 +100,6 @@ br_verilog_sim_test_tools_suite(
         "SymbolWidth": ["8"],
     },
     tools = [
-        "dsim",
         "iverilog",
         "vcs",
     ],

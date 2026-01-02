@@ -56,7 +56,6 @@ br_verilog_sim_test_tools_suite(
         "FlopRamAddressDepthStages": ["0"],
     },
     tools = [
-        "dsim",
         "iverilog",
         "vcs",
     ],
@@ -86,7 +85,6 @@ br_verilog_sim_test_tools_suite(
         ],
     },
     tools = [
-        "dsim",
         "iverilog",
         "vcs",
     ],
@@ -134,7 +132,6 @@ br_verilog_sim_test_tools_suite(
         ],
     },
     tools = [
-        "dsim",
         "iverilog",
         "vcs",
     ],
@@ -202,8 +199,6 @@ br_verilog_sim_test_tools_suite(
             "1",
         ],
     },
-    # TODO(zhemao): dsim test is broken due to apparent simulator bug.
-    # Re-enable when the bug is fixed.
     tools = [
         "vcs",
     ],
@@ -266,8 +261,6 @@ br_verilog_sim_test_tools_suite(
             "1",
         ],
     },
-    # TODO(zhemao): dsim test is broken due to apparent simulator bug.
-    # Re-enable when the bug is fixed.
     tools = [
         "vcs",
     ],
@@ -312,8 +305,6 @@ br_verilog_sim_test_tools_suite(
             "1",
         ],
     },
-    # TODO(zhemao): dsim test is broken due to apparent simulator bug.
-    # Re-enable when the bug is fixed.
     tools = [
         "vcs",
     ],
@@ -365,8 +356,6 @@ br_verilog_sim_test_tools_suite(
             "1",
         ],
     },
-    # TODO(zhemao): dsim test is broken due to apparent simulator bug.
-    # Re-enable when the bug is fixed.
     tools = [
         "vcs",
     ],

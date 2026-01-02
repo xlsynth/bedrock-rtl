@@ -25,7 +25,6 @@ br_verilog_sim_test_tools_suite(
     name = "br_arb_fixed_gen_tb_sim_test_tools_suite",
     # TODO: Does not work with iverilog.
     tools = [
-        "dsim",
         "vcs",
     ],
     deps = [":br_arb_fixed_gen_tb"],
@@ -50,7 +49,6 @@ br_verilog_sim_test_tools_suite(
     name = "br_arb_lru_gen_tb_sim_test_tools_suite",
     # TODO: Does not work with iverilog.
     tools = [
-        "dsim",
         "vcs",
     ],
     deps = [":br_arb_lru_gen_tb"],
@@ -75,7 +73,6 @@ br_verilog_sim_test_tools_suite(
     name = "br_arb_rr_gen_tb_sim_test_tools_suite",
     # TODO: Does not work with iverilog.
     tools = [
-        "dsim",
         "vcs",
     ],
     deps = [":br_arb_rr_gen_tb"],
@@ -100,7 +97,6 @@ br_verilog_sim_test_tools_suite(
     name = "br_arb_grant_hold_gen_tb_sim_test_tools_suite",
     # TODO: Does not work with iverilog.
     tools = [
-        "dsim",
         "vcs",
     ],
     deps = [":br_arb_grant_hold_gen_tb"],

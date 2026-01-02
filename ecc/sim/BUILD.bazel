@@ -35,7 +35,6 @@ br_verilog_sim_test_tools_suite(
         ],
     },
     tools = [
-        "dsim",
         "iverilog",
         "vcs",
     ],
@@ -91,7 +90,6 @@ K = [
         seed = 42,
         tools = [
             # iverilog is really slow on these tests :(
-            "dsim",
             "vcs",
         ],
         deps = [":br_ecc_secded_encoder_decoder_tb"],

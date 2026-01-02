@@ -25,7 +25,6 @@ br_verilog_sim_test_tools_suite(
     name = "br_enc_bin2gray_gen_tb_sim_test_suite",
     # TODO: support iverilog
     tools = [
-        "dsim",
         "vcs",
     ],
     deps = [":br_enc_bin2gray_gen_tb"],
@@ -50,7 +49,6 @@ br_verilog_sim_test_tools_suite(
     name = "br_enc_bin2onehot_gen_tb_sim_test_suite",
     # TODO: support iverilog
     tools = [
-        "dsim",
         "vcs",
     ],
     deps = [":br_enc_bin2onehot_gen_tb"],
@@ -75,7 +73,6 @@ br_verilog_sim_test_tools_suite(
     name = "br_enc_countones_gen_tb_sim_test_suite",
     # TODO: support iverilog
     tools = [
-        "dsim",
         "vcs",
     ],
     deps = [":br_enc_countones_gen_tb"],
@@ -100,7 +97,6 @@ br_verilog_sim_test_tools_suite(
     name = "br_enc_gray2bin_gen_tb_sim_test_suite",
     # TODO: support iverilog
     tools = [
-        "dsim",
         "vcs",
     ],
     deps = [":br_enc_gray2bin_gen_tb"],
@@ -125,7 +121,6 @@ br_verilog_sim_test_tools_suite(
     name = "br_enc_onehot2bin_gen_tb_sim_test_suite",
     # TODO: support iverilog
     tools = [
-        "dsim",
         "vcs",
     ],
     deps = [":br_enc_onehot2bin_gen_tb"],
@@ -150,7 +145,6 @@ br_verilog_sim_test_tools_suite(
     name = "br_enc_priority_encoder_gen_tb_sim_test_suite",
     # TODO: support iverilog
     tools = [
-        "dsim",
         "vcs",
     ],
     deps = [":br_enc_priority_encoder_gen_tb"],
