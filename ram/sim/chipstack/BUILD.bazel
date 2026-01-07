@@ -21,9 +21,6 @@ verilog_elab_test(
 br_verilog_sim_test_tools_suite(
     name = "br_ram_initializer_sim_test_tools_suite_basic",
     # TODO(mgottscho): enable iverilog when it's fixed.
-    tools = [
-        "dsim",
-        "vcs",
-    ],
+    tools = ["vcs"],
     deps = [":br_ram_initializer_gen_unittest"],
 )

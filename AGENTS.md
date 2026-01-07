@@ -33,7 +33,7 @@ For example:
 bazel test //... --test_tag-filters=elab  # Run only elaboration tests
 bazel test //... --test_tag-filters=verific  # Run only tests that use the `verific` tool
 bazel test //... --test_tag-filters=sim  # Run only simulation tests, with all applicable tools
-bazel test //... --test_tag-filters=dsim  # Run only tests that use the `dsim` tool (subset of all simulation tests)
+bazel test //... --test_tag-filters=vcs  # Run only tests that use the `vcs` tool (subset of all simulation tests)
 ```
 
 Note that some Bazel tests do not require any EDA tools.

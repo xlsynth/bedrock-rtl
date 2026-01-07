@@ -121,27 +121,6 @@ jobs:
         echo "exit_code=$BAZEL_EXIT_CODE" >> $GITHUB_OUTPUT
         exit $BAZEL_EXIT_CODE
 
-  bazel-test-dsim:
-    runs-on: self-hosted
-    needs: bazel-build
-    outputs:
-      total_tests: ${{ steps.test.outputs.total_tests }}
-      passing_tests: ${{ steps.test.outputs.passing_tests }}
-      exit_code: ${{ steps.test.outputs.exit_code }}
-    steps:
-    - name: Verilog sim tests (using Altair Dsim)
-      id: test
-      # Use --test_output=summary to suppress log output, even on failure (proprietary EDA tool output may be sensitive).
-      run: |
-        bazel test --noshow_loading_progress --test_output=summary //... --test_tag_filters=dsim 2>&1 | tee .bazel-test-dsim.log
-        BAZEL_EXIT_CODE=${PIPESTATUS[0]}
-        TOTAL_TESTS=$(grep -Po '(?<=out of )\d+(?= test)' .bazel-test-dsim.log)
-        PASSING_TESTS=$(grep -Po '\d+(?= test passes?\.| tests pass)' .bazel-test-dsim.log)
-        echo "total_tests=$TOTAL_TESTS" >> $GITHUB_OUTPUT
-        echo "passing_tests=$PASSING_TESTS" >> $GITHUB_OUTPUT
-        echo "exit_code=$BAZEL_EXIT_CODE" >> $GITHUB_OUTPUT
-        exit $BAZEL_EXIT_CODE
-
   bazel-test-vcs:
     runs-on: self-hosted
     needs: bazel-build
@@ -271,21 +250,6 @@ jobs:
         label: "ascentlint"
         message: ${{ needs.bazel-test-ascentlint.outputs.passing_tests }} of ${{ needs.bazel-test-ascentlint.outputs.total_tests }} passing
         color: ${{ needs.bazel-test-ascentlint.outputs.exit_code == '0' && 'brightgreen' || 'red' }}
-
-  dsim-badge:
-    runs-on: ubuntu-latest
-    needs: bazel-test-dsim
-    if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
-    steps:
-    - name: Create dsim badge
-      uses: schneegans/dynamic-badges-action@v1.7.0
-      with:
-        auth: ${{ secrets.MGOTTSCHO_GISTS_SECRET }}
-        gistID: c66dc2ddc0e513ba06ce338620977b26
-        filename: dsim.json
-        label: "dsim"
-        message: ${{ needs.bazel-test-dsim.outputs.passing_tests }} of ${{ needs.bazel-test-dsim.outputs.total_tests }} passing
-        color: ${{ needs.bazel-test-dsim.outputs.exit_code == '0' && 'brightgreen' || 'red' }}
 
   vcs-badge:
     runs-on: ubuntu-latest

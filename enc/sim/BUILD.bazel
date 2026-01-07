@@ -47,7 +47,6 @@ br_verilog_sim_test_tools_suite(
         "5",
     ]},
     tools = [
-        "dsim",
         "iverilog",
         "vcs",
     ],
@@ -68,7 +67,6 @@ br_verilog_sim_test_tools_suite(
         "5",
     ]},
     tools = [
-        "dsim",
         "iverilog",
         "vcs",
     ],
@@ -95,10 +93,7 @@ br_verilog_sim_test_tools_suite(
         ],
     },
     # TODO: Does not work with iverilog.
-    tools = [
-        "dsim",
-        "vcs",
-    ],
+    tools = ["vcs"],
     deps = [":br_enc_priority_encoder_tb"],
 )
 
@@ -127,9 +122,6 @@ br_verilog_sim_test_tools_suite(
         ],
     },
     # TODO: Does not work with iverilog.
-    tools = [
-        "dsim",
-        "vcs",
-    ],
+    tools = ["vcs"],
     deps = [":br_enc_priority_dynamic_tb"],
 )

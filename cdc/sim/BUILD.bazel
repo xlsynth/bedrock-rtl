@@ -59,10 +59,7 @@ verilog_elab_test(
             ],
         },
         tags = ["no-sandbox"],
-        tools = [
-            "dsim",
-            "vcs",
-        ],
+        tools = ["vcs"],
         top = "br_cdc_fifo_flops_tb",
         deps = [
             ":br_cdc_fifo_flops_tb",
@@ -130,10 +127,7 @@ verilog_elab_test(
                 "1",
             ],
         },
-        tools = [
-            "dsim",
-            "vcs",
-        ],
+        tools = ["vcs"],
         top = "br_cdc_fifo_flops_push_credit_tb",
         deps = [
             ":br_cdc_fifo_flops_push_credit_tb",
