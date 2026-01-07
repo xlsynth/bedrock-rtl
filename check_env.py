@@ -16,7 +16,6 @@ REQUIRED_ENV_VARS = [
 
 REQUIRED_BINARIES = [
     "ascentlint",
-    "dsim",
     "iverilog",
     "jg",
     "pre-commit",

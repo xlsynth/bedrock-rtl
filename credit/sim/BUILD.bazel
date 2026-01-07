@@ -39,7 +39,6 @@ br_verilog_sim_test_tools_suite(
         ],
     },
     tools = [
-        "dsim",
         "iverilog",
         "vcs",
     ],
@@ -85,7 +84,6 @@ br_verilog_sim_test_tools_suite(
         ],
     },
     tools = [
-        "dsim",
         # This test is triggering an internal assertion failure in iverilog.
         # TODO(zhemao): Figure out why this is happening.
         #"iverilog",
