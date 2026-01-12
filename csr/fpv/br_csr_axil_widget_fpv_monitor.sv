@@ -63,7 +63,8 @@ module br_csr_axil_widget_fpv_monitor #(
       // when there is no valid, ready doesn't have to be high eventually
       // This will only turn off assertion without precondition: `STRENGTH(##[0:$] arready
       // (arvalid && !arready) |=> `STRENGTH(##[0:$] arready) is still enabled
-      .CONFIG_WAIT_FOR_VALID_BEFORE_READY(1)
+      .CONFIG_WAIT_FOR_VALID_BEFORE_READY(1),
+      .MAX_PENDING(RegisterResponseOutputs ? 3 : 2)
   ) axi4_lite (
       // Global signals
       .aclk    (clk),
