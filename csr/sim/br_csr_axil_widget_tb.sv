@@ -50,7 +50,7 @@ module br_csr_axil_widget_tb;
   logic csr_resp_decerr;
 
   logic [TimerWidth-1:0] timeout_cycles;
-  logic timeout_expired;
+  logic request_aborted;
 
   br_csr_axil_widget #(
       .AddrWidth(AddrWidth),
@@ -92,7 +92,7 @@ module br_csr_axil_widget_tb;
       .csr_resp_slverr,
       .csr_resp_decerr,
       .timeout_cycles,
-      .timeout_expired
+      .request_aborted
   );
 
   br_test_driver #(
@@ -326,6 +326,23 @@ module br_csr_axil_widget_tb;
         wait_csr_read(16'h0040, 1'b0, 1'b1);
         send_csr_response(32'hDEADBEEF, 1'b0, 1'b0);
       end
+    join
+
+    // Test timeout mechanism
+    // Set a short timeout period
+    timeout_cycles = 10;
+
+    send_axil_read(16'h0038, 3'b000);
+
+    // Wait for the abort signal to be asserted
+    @(posedge clk);
+    while (!csr_req_abort) @(posedge clk);
+
+    fork
+      // Wait for the error response
+      wait_axil_read_response(br_amba::AxiRespSlverr, 32'h00000000);
+      // Wait for the request_aborted signal to be asserted
+      while (!request_aborted) @(posedge clk);
     join
 
     td.wait_cycles(2);

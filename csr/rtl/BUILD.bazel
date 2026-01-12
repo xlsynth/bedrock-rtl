@@ -10,6 +10,7 @@ verilog_library(
     srcs = ["br_csr_axil_widget.sv"],
     deps = [
         "//amba/rtl:br_amba_pkg",
+        "//counter/rtl:br_counter_incr",
         "//flow/rtl:br_flow_demux_select_unstable",
         "//flow/rtl:br_flow_join",
         "//flow/rtl:br_flow_mux_rr_stable",
