@@ -145,10 +145,10 @@ module br_csr_axil_widget_fpv_monitor #(
     if (rst) begin
       csr_req_pending <= 1'b0;
       csr_write_req_pending <= 1'b0;
-    end else if (csr_req_valid && !csr_req_abort) begin
+    end else if (csr_req_valid) begin
       csr_req_pending <= 1'b1;
       csr_write_req_pending <= csr_req_write;
-    end else if (csr_resp_valid) begin
+    end else if (csr_resp_valid || request_aborted) begin
       csr_req_pending <= 1'b0;
       csr_write_req_pending <= 1'b0;
     end
@@ -172,6 +172,8 @@ module br_csr_axil_widget_fpv_monitor #(
   assign csr_resp = csr_resp_decerr ? 2'b11 : csr_resp_slverr ? 2'b10 : 2'b00;
 
   // ----------FV assumptions----------
+  // TODO(masai): https://github.com/xlsynth/bedrock-rtl/issues/955
+  `BR_ASSUME(timeout_cycles_non_zero_a, timeout_cycles != 'd0)
   `BR_ASSUME(legal_timeout_cycles_a, timeout_cycles <= MaxTimeoutCycles)
   `BR_ASSUME(legal_csr_resp_a, csr_resp_valid |-> !(csr_resp_decerr && csr_resp_slverr))
   `BR_ASSUME(no_spurious_csr_req_resp_a, !csr_req_pending |-> !csr_resp_valid);
@@ -228,6 +230,8 @@ module br_csr_axil_widget_fpv_monitor #(
       .outgoing_data({csr_req_addr, csr_req_secure, csr_req_privileged})
   );
 
+  // If no response is received before the second period expires,
+  // a response with code SLVERR is sent on the AXI B channel for write.
   jasper_scoreboard_3 #(
       .CHUNK_WIDTH(br_amba::AxiRespWidth),
       .IN_CHUNKS(1),
@@ -236,12 +240,15 @@ module br_csr_axil_widget_fpv_monitor #(
   ) b_sb (
       .clk(clk),
       .rstN(!rst),
-      .incoming_vld(csr_resp_valid & csr_write_req_pending),
-      .incoming_data(csr_resp),
+      .incoming_vld((csr_resp_valid | request_aborted) & csr_write_req_pending),
+      .incoming_data(request_aborted ? 2'b10 : csr_resp),
       .outgoing_vld(axil_bvalid & axil_bready),
       .outgoing_data(axil_bresp)
   );
 
+  // If no response is received before the second period expires,
+  // a response with code SLVERR is sent on the AXI R channel for read.
+  // axil_rdata is zeroed out in this case.
   jasper_scoreboard_3 #(
       .CHUNK_WIDTH(br_amba::AxiRespWidth + DataWidth),
       .IN_CHUNKS(1),
@@ -250,8 +257,8 @@ module br_csr_axil_widget_fpv_monitor #(
   ) r_sb (
       .clk(clk),
       .rstN(!rst),
-      .incoming_vld(csr_resp_valid & !csr_write_req_pending),
-      .incoming_data({csr_resp, csr_resp_rdata}),
+      .incoming_vld((csr_resp_valid | request_aborted) & !csr_write_req_pending),
+      .incoming_data(request_aborted ? {2'b10, {DataWidth{1'b0}}} : {csr_resp, csr_resp_rdata}),
       .outgoing_vld(axil_rvalid & axil_rready),
       .outgoing_data({axil_rresp, axil_rdata})
   );

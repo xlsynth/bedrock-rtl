@@ -224,7 +224,9 @@ module br_csr_axil_widget #(
   assign request_aborted = (wd_state == Expired) && timer_expired && !csr_resp_valid;
 
   br_counter_incr #(
-      .MaxValue(MaxTimeoutCycles)
+      .MaxValue(MaxTimeoutCycles),
+      .EnableCoverZeroIncrement(0),
+      .EnableCoverReinitNoIncr(0)
   ) br_counter_incr_timer (
       .clk,
       .rst,
