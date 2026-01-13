@@ -52,7 +52,7 @@ module br_csr_axil_widget_fpv_monitor #(
     input logic                 csr_resp_decerr,
 
     input logic [TimerWidth-1:0] timeout_cycles,
-    input logic                  timeout_expired
+    input logic                  request_aborted
 );
 
   // AXI4-Lite interface
