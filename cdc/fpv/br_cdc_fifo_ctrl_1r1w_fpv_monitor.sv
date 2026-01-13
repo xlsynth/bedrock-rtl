@@ -142,6 +142,7 @@ module br_cdc_fifo_ctrl_1r1w_fpv_monitor #(
   );
 
   // ----------assert reset again----------
+  localparam int ResetLen = NumSyncStages + 1;
   logic [1:0] push_rst_cnt, pop_rst_cnt;
   logic push_rst_flg, pop_rst_flg;
   logic push_rst_d, pop_rst_d;
@@ -157,5 +158,9 @@ module br_cdc_fifo_ctrl_1r1w_fpv_monitor #(
   `BR_ASSUME_CR(pop_rst_twice_a, pop_rst_cnt <= 2, pop_clk, rst)
   `BR_ASSUME_CR(push_rst_rise_once_a, push_rst_flg |-> !$rose(push_rst), push_clk, rst)
   `BR_ASSUME_CR(pop_rst_rise_once_a, pop_rst_flg |-> !$rose(pop_rst), pop_clk, rst)
+  `BR_ASSUME_CR(push_rst_propagate_a, $rose(push_rst) |-> push_rst [* ResetLen], push_clk, rst)
+  `BR_ASSUME_CR(pop_rst_propagate_a, $rose(pop_rst) |-> pop_rst [* ResetLen], pop_clk, rst)
+  `BR_ASSUME_CR(hold_push_rst_a, $rose(push_rst) |-> push_rst s_until pop_rst [* ResetLen],
+                push_clk, rst)
 
 endmodule : br_cdc_fifo_ctrl_1r1w_fpv_monitor
