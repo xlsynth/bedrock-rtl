@@ -263,7 +263,6 @@ br_verilog_fpv_test_tools_suite(
 
 br_verilog_fpv_test_tools_suite(
     name = "br_cdc_fifo_ctrl_1r1w_test_suite",
-    gui = True,
     illegal_param_combinations = {
         (
             "Depth",
