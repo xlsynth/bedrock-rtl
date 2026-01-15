@@ -212,10 +212,11 @@ module br_cdc_fifo_basic_fpv_monitor #(
   `BR_COVER_CR(fifo_full_c, push_full, push_clk, push_rst)
 
   // ----------assert reset again----------
+  /*
   localparam int ResetLen = NumSyncStages + 2;
   logic [1:0] push_rst_cnt, pop_rst_cnt;
-  logic push_rst_flg, pop_rst_flg;
   logic push_rst_d, pop_rst_d;
+  logic push_rst_flg, pop_rst_flg;
 
   `BR_REGNX(push_rst_d, push_rst, push_clk);
   `BR_REGNX(pop_rst_d, pop_rst, pop_clk);
@@ -228,11 +229,18 @@ module br_cdc_fifo_basic_fpv_monitor #(
   `BR_ASSUME_CR(pop_rst_twice_a, pop_rst_cnt <= 2, pop_clk, rst)
   `BR_ASSUME_CR(push_rst_rise_once_a, push_rst_flg |-> !$rose(push_rst), push_clk, rst)
   `BR_ASSUME_CR(pop_rst_rise_once_a, pop_rst_flg |-> !$rose(pop_rst), pop_clk, rst)
+  `BR_COVER_CR(push_rst_twice_c, push_rst_cnt == 2, push_clk, rst)
+  `BR_COVER_CR(pop_rst_twice_c, pop_rst_cnt == 2, pop_clk, rst)
+  // push and pop reset must overlap
+  `BR_ASSUME_CR(no_push_rst_rise_a, (pop_rst_cnt != 'd1) |-> !$rose(push_rst), push_clk, rst)
+  `BR_ASSUME_CR(no_pop_rst_rise_a, (push_rst_cnt != 'd1) |-> !$rose(pop_rst), pop_clk, rst)
+  `BR_ASSUME_CR(push_rst_rise_a, $rose(push_rst) |-> push_rst until_with pop_rst, push_clk, rst)
+  `BR_ASSUME_CR(pop_rst_rise_a, $rose(pop_rst) |-> pop_rst until_with push_rst, pop_clk, rst)
   // Don't assert reset until NumSyncStages + 2 cycles after the other side's reset is deasserted
-  `BR_ASSUME_CR(no_push_rst_a, !pop_rst |-> !$rose(push_rst) [* ResetLen], push_clk, rst)
-  `BR_ASSUME_CR(no_pop_rst_a, !push_rst |-> !$rose(pop_rst) [* ResetLen], pop_clk, rst)
+  `BR_ASSUME_CR(no_push_rst_a, $fell(pop_rst) |-> !$rose(push_rst) [* ResetLen], push_clk, rst)
+  `BR_ASSUME_CR(no_pop_rst_a, $fell(push_rst) |-> !$rose(pop_rst) [* ResetLen], pop_clk, rst)
   // Don't deassert reset until NumSyncStages + 2 cycles after the other side's reset is asserted
-  `BR_ASSUME_CR(hold_push_rst_a, pop_rst |-> !$fell(push_rst) [* ResetLen], push_clk, rst)
-  `BR_ASSUME_CR(hold_pop_rst_a, push_rst |-> !$fell(pop_rst) [* ResetLen], pop_clk, rst)
-
+  `BR_ASSUME_CR(hold_push_rst_a, $rose(pop_rst) |-> !$fell(push_rst) [* ResetLen], push_clk, rst)
+  `BR_ASSUME_CR(hold_pop_rst_a, $rose(push_rst) |-> !$fell(pop_rst) [* ResetLen], pop_clk, rst)
+  */
 endmodule : br_cdc_fifo_basic_fpv_monitor
