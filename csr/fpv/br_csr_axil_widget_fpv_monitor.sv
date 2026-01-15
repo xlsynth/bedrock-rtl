@@ -137,9 +137,12 @@ module br_csr_axil_widget_fpv_monitor #(
 
   logic csr_req_pending;
   logic csr_write_req_pending;
+  logic csr_req_aborting;
   araw_req_t csr_write_req, csr_read_req;
   w_t csr_write_data;
   logic [br_amba::AxiRespWidth-1:0] csr_resp;
+  logic [TimerWidth:0] timer;
+  logic timer_expired;
 
   always_ff @(posedge clk) begin
     if (rst) begin
@@ -153,6 +156,30 @@ module br_csr_axil_widget_fpv_monitor #(
       csr_write_req_pending <= 1'b0;
     end
   end
+
+  // when first period expired, csr_req_abort is sent.
+  // within timeout_cycles cycles, if no response is received, request is aborted.
+  always_ff @(posedge clk) begin
+    if (rst) begin
+      csr_req_aborting <= 1'b0;
+    end else if (csr_req_abort) begin
+      csr_req_aborting <= 1'b1;
+    end else if (csr_resp_valid || request_aborted) begin
+      csr_req_aborting <= 1'b0;
+    end
+  end
+
+  // when first period expired, csr_req_abort is sent.
+  // The timer will then reset and count for another timeout period.
+  // If no response is received before the second period expires, request_aborted is set.
+  always_ff @(posedge clk) begin
+    if (rst | csr_req_abort | csr_resp_valid | request_aborted) begin
+      timer <= 1'b0;
+    end else if (csr_write_req_pending) begin
+      timer <= timer + 1'b1;
+    end
+  end
+  assign timer_expired = (timer >= timeout_cycles);
 
   assign csr_write_req = '{
           addr: axil_awaddr,
@@ -187,6 +214,12 @@ module br_csr_axil_widget_fpv_monitor #(
   `BR_ASSERT(no_deadlock_b_a, csr_resp_valid && csr_write_req_pending |-> s_eventually axil_bvalid);
   `BR_ASSERT(no_deadlock_r_a,
              csr_resp_valid && !csr_write_req_pending |-> s_eventually axil_rvalid);
+  `BR_ASSERT(
+      csr_req_1st_timeout_a,
+      csr_req_pending && !csr_req_aborting && timer_expired && !csr_resp_valid |-> csr_req_abort);
+  `BR_ASSERT(
+      csr_req_2nd_timeout_a,
+      csr_req_pending && csr_req_aborting && timer_expired && !csr_resp_valid |-> request_aborted);
 
   jasper_scoreboard_3 #(
       .CHUNK_WIDTH($bits(araw_req_t)),
