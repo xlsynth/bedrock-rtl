@@ -226,7 +226,8 @@ module br_csr_axil_widget #(
   br_counter_incr #(
       .MaxValue(MaxTimeoutCycles),
       .EnableCoverZeroIncrement(0),
-      .EnableCoverReinitNoIncr(0)
+      .EnableCoverReinitNoIncr(0),
+      .EnableWrap(0)
   ) br_counter_incr_timer (
       .clk,
       .rst,

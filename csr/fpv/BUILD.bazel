@@ -29,7 +29,6 @@ verilog_elab_test(
 
 br_verilog_fpv_test_tools_suite(
     name = "br_csr_axil_widget_test_suite",
-    gui = True,
     params = {
         "RegisterResponseOutputs": [
             "0",
