@@ -1,0 +1,43 @@
+# SPDX-License-Identifier: Apache-2.0
+
+load("@rules_hdl//verilog:providers.bzl", "verilog_library")
+load("//bazel:br_verilog.bzl", "br_verilog_fpv_test_tools_suite")
+load("//bazel:verilog.bzl", "verilog_elab_test")
+
+package(default_visibility = ["//visibility:private"])
+
+####################################################################################
+# AXI4-Lite to SCB Widget FPV Monitor and Tests
+verilog_library(
+    name = "br_csr_axil_widget_fpv_monitor",
+    srcs = ["br_csr_axil_widget_fpv_monitor.sv"],
+    visibility = ["//visibility:public"],
+    deps = [
+        "//csr/rtl:br_csr_axil_widget",
+    ],
+)
+
+verilog_elab_test(
+    name = "br_csr_axil_widget_fpv_monitor_elab_test",
+    custom_tcl_header = "//:elab_test_jg_custom_header.verific.tcl",
+    tool = "verific",
+    top = "br_csr_axil_widget_fpv_monitor",
+    deps = [
+        ":br_csr_axil_widget_fpv_monitor",
+    ],
+)
+
+br_verilog_fpv_test_tools_suite(
+    name = "br_csr_axil_widget_test_suite",
+    params = {
+        "RegisterResponseOutputs": [
+            "0",
+            "1",
+        ],
+    },
+    tools = {
+        "jg": "br_csr_axil_widget_fpv.jg.tcl",
+    },
+    top = "br_csr_axil_widget",
+    deps = [":br_csr_axil_widget_fpv_monitor"],
+)

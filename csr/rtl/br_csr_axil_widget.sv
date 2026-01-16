@@ -220,11 +220,14 @@ module br_csr_axil_widget #(
   assign timer_reset = (timer_active && timer_expired) || csr_resp_valid;
 
   assign timeout_resp_valid = (wd_state == Aborted);
-  assign csr_req_abort = (wd_state == Active) && timer_expired;
+  assign csr_req_abort = (wd_state == Active) && timer_expired && !csr_resp_valid;
   assign request_aborted = (wd_state == Expired) && timer_expired && !csr_resp_valid;
 
   br_counter_incr #(
-      .MaxValue(MaxTimeoutCycles)
+      .MaxValue(MaxTimeoutCycles),
+      .EnableCoverZeroIncrement(0),
+      .EnableCoverReinitNoIncr(0),
+      .EnableWrap(0)
   ) br_counter_incr_timer (
       .clk,
       .rst,
