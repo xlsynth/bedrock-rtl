@@ -243,21 +243,24 @@ module br_csr_axil_widget #(
     wd_state_next = wd_state;
     // ri lint_check_waive FSM_DEFAULT_REQ
     unique case (wd_state)
-      Idle:
-      if (csr_req_valid) begin
-        wd_state_next = Active;
+      Idle: begin
+        if (csr_req_valid) begin
+          wd_state_next = Active;
+        end
       end
-      Active:
-      if (csr_resp_valid) begin
-        wd_state_next = Idle;
-      end else if (timer_expired) begin
-        wd_state_next = Expired;
+      Active: begin
+        if (csr_resp_valid) begin
+          wd_state_next = Idle;
+        end else if (timer_expired) begin
+          wd_state_next = Expired;
+        end
       end
-      Expired:
-      if (csr_resp_valid) begin
-        wd_state_next = Idle;
-      end else if (timer_expired) begin
-        wd_state_next = Aborted;
+      Expired: begin
+        if (csr_resp_valid) begin
+          wd_state_next = Idle;
+        end else if (timer_expired) begin
+          wd_state_next = Aborted;
+        end
       end
       Aborted: begin
         wd_state_next = Idle;
@@ -377,5 +380,7 @@ module br_csr_axil_widget #(
   // Implementation assertions
   `BR_ASSERT_IMPL(only_single_request_inflight_a, inflight |-> !csr_req_valid)
   `BR_ASSERT_IMPL(no_spurious_resp_a, csr_resp_valid |-> inflight && !buf_resp_valid)
+  `BR_ASSERT_IMPL(timer_resets_after_response_or_timeout_a,
+                  timer_active && (csr_resp_valid || timer_expired) |-> timer_reset)
 
 endmodule
