@@ -224,6 +224,8 @@ module br_csr_demux_fpv_monitor #(
   `BR_ASSERT(no_spurious_abort_a,
              (abort_cntr == 'd0) && !upstream_req_abort |-> !downstream_req_abort[d])
   `BR_ASSERT(resp_upstream_decerr_onehot_a, $onehot0(downstream_resp_vec))
+  `BR_ASSERT(only_one_outstanding_req_downstream_a,
+             downstream_req_pending[d] |-> !downstream_req_valid[d])
   `BR_ASSERT(no_deadlock_abort_a, upstream_req_abort |-> s_eventually downstream_req_abort[d])
   `BR_ASSERT(no_deadlock_downstream_req_a,
              magic_upstream_req_valid |-> s_eventually downstream_req_valid[d])
