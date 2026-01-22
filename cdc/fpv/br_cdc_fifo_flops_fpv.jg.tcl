@@ -38,10 +38,6 @@ assume -bound 1 {dut.br_cdc_fifo_ctrl_1r1w.br_cdc_fifo_ctrl_pop_1r1w_inst.br_cdc
 #assert -name fv_rst_check_pop_valid {@(posedge pop_clk) \
 #pop_rst |-> pop_valid == 'd0}
 
-# If assertion bound - pre-condition reachable cycle >= 2:
-# it's marked as "bounded_proven (auto) instead of "undetermined"
-# this only affects the status report, not the proof
-set_prove_inferred_target_bound on
 # limit run time to 10-mins
 set_prove_time_limit 600s
 
