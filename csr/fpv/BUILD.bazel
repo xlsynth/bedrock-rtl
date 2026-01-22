@@ -41,3 +41,69 @@ br_verilog_fpv_test_tools_suite(
     top = "br_csr_axil_widget",
     deps = [":br_csr_axil_widget_fpv_monitor"],
 )
+
+####################################################################################
+# Bedrock-RTL SCB Demux FPV Monitor and Tests
+verilog_library(
+    name = "br_csr_demux_fpv_monitor",
+    srcs = ["br_csr_demux_fpv_monitor.sv"],
+    visibility = ["//visibility:public"],
+    deps = [
+        "//csr/rtl:br_csr_demux",
+    ],
+)
+
+verilog_elab_test(
+    name = "br_csr_demux_fpv_monitor_elab_test",
+    custom_tcl_header = "//:elab_test_jg_custom_header.verific.tcl",
+    tool = "verific",
+    top = "br_csr_demux_fpv_monitor",
+    deps = [
+        ":br_csr_demux_fpv_monitor",
+    ],
+)
+
+br_verilog_fpv_test_tools_suite(
+    name = "br_csr_demux_num_downstream1",
+    elab_opts =
+        [
+            "-parameter AddrWidth 1",
+            "-parameter NumDownstreams 1",
+            "-parameter NumRetimeStages '\"'\"'{0}",
+        ],
+    tools = {
+        "jg": "",
+    },
+    top = "br_csr_demux",
+    deps = [":br_csr_demux_fpv_monitor"],
+)
+
+br_verilog_fpv_test_tools_suite(
+    name = "br_csr_demux_num_downstream3",
+    elab_opts =
+        [
+            "-parameter AddrWidth 5",
+            "-parameter NumDownstreams 3",
+            "-parameter NumRetimeStages '\"'\"'{6,4,2}",
+        ],
+    tools = {
+        "jg": "",
+    },
+    top = "br_csr_demux",
+    deps = [":br_csr_demux_fpv_monitor"],
+)
+
+br_verilog_fpv_test_tools_suite(
+    name = "br_csr_demux_num_downstream4",
+    elab_opts =
+        [
+            "-parameter AddrWidth 4",
+            "-parameter NumDownstreams 4",
+            "-parameter NumRetimeStages '\"'\"'{0,3,5,7}",
+        ],
+    tools = {
+        "jg": "",
+    },
+    top = "br_csr_demux",
+    deps = [":br_csr_demux_fpv_monitor"],
+)
