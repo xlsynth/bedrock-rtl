@@ -117,7 +117,7 @@ module br_cdc_fifo_pop_flag_mgr #(
 
   `BR_REGL(push_count_saved, push_count, !reset_active_push)
 
-  `BR_UNUSED_NAMED(items_msb, items_ext[CountWidth]);
+  `BR_UNUSED_NAMED(items_msb, items_ext[CountWidth])
 
   // Implementation checks
   `BR_ASSERT_IMPL(no_items_overflow_A, items_ext <= Depth)
