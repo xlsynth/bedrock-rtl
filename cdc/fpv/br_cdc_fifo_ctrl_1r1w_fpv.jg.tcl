@@ -52,10 +52,16 @@ assume -bound 1 {dut.br_cdc_fifo_ctrl_pop_1r1w_inst.br_cdc_fifo_pop_ctrl.br_cdc_
 #assert -name fv_rst_check_pop_ram_rd_addr_valid {@(posedge pop_clk) \
 #pop_rst |-> pop_ram_rd_addr_valid == 'd0}
 
-# If assertion bound - pre-condition reachable cycle >= 2:
-# it's marked as "bounded_proven (auto) instead of "undetermined"
-# this only affects the status report, not the proof
-set_prove_inferred_target_bound on
+# push_count_gray is not initialized, so it becomes a random value in FV.
+# It needs RamWriteLatency of push_clk cycles to be initialized to zero.
+# Since push_clk : pop_clk ratio can be 10:1 in current set up, instead of waiting for 10xRamWriteLatency cycles,
+# we just directly assume it to be zero at beginning.
+array set param_list [get_design_info -instance fv_checker -list parameter]
+set RamWriteLatency $param_list(RamWriteLatency)
+for {set i 0} {$i < $RamWriteLatency} {incr i} {
+  assume -bound 1 "dut.br_cdc_fifo_ctrl_push_1r1w.br_cdc_fifo_push_ctrl.br_cdc_fifo_push_flag_mgr.br_delay_nr_push_count_gray.stages\[$i\] == 'd0"
+}
+
 # limit run time to 10-mins
 set_prove_time_limit 600s
 

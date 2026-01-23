@@ -67,10 +67,6 @@ assume -bound 1 {pop_dut.br_cdc_fifo_pop_ctrl.br_cdc_fifo_pop_flag_mgr.br_cdc_fi
 # no push_ready signal in push credit interface
 assert -disable *fv_checker.no_ready_when_full_a*
 
-# If assertion bound - pre-condition reachable cycle >= 2:
-# it's marked as "bounded_proven (auto) instead of "undetermined"
-# this only affects the status report, not the proof
-set_prove_inferred_target_bound on
 # limit run time to 10-mins
 set_prove_time_limit 600s
 
