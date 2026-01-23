@@ -113,11 +113,11 @@ module br_cdc_fifo_pop_flag_mgr #(
       (push_count_visible_ext - pop_count_ext) :
       (push_count_adjusted - pop_count_ext);
   assign items = items_ext[CountWidth-1:0];
-  assign empty = rst || (items == '0);
+  assign empty = (items == '0);
 
   `BR_REGL(push_count_saved, push_count, !reset_active_push)
 
-  `BR_UNUSED_NAMED(items_msb, items_ext[CountWidth])
+  `BR_UNUSED_NAMED(items_msb, items_ext[CountWidth]);
 
   // Implementation checks
   `BR_ASSERT_IMPL(no_items_overflow_A, items_ext <= Depth)
