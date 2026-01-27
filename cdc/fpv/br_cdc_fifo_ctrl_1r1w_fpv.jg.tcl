@@ -14,8 +14,8 @@ assume -name deassert_rst {##1 !rst}
 # reset are ready at different times
 assume -env {rst |-> push_rst}
 assume -env {rst |-> pop_rst}
-assume -env {!push_rst |=> !push_rst}
-assume -env {!pop_rst |=> !pop_rst}
+#assume -env {!push_rst |=> !push_rst}
+#assume -env {!pop_rst |=> !pop_rst}
 assume -env {s_eventually !push_rst}
 assume -env {s_eventually !pop_rst}
 
@@ -41,14 +41,6 @@ pop_rst |-> pop_ram_rd_data_valid == 'd0}
 # add assumption to force it to zero during first system_clock cycle.
 assume -bound 1 {dut.br_cdc_fifo_ctrl_push_1r1w.br_cdc_fifo_push_ctrl.br_cdc_fifo_push_flag_mgr.br_cdc_fifo_reset_overlap_checks.overlap_cycles == 'd0}
 assume -bound 1 {dut.br_cdc_fifo_ctrl_pop_1r1w_inst.br_cdc_fifo_pop_ctrl.br_cdc_fifo_pop_flag_mgr.br_cdc_fifo_reset_overlap_checks.overlap_cycles == 'd0}
-
-# push_count_gray is not initialized, so it becomes a random value in FV.
-# It needs RamWriteLatency of push_clk cycles to be initialized to zero.
-# Since push_clk : pop_clk ratio can be 10:1 in current set up, instead of waiting for 10xRamWriteLatency cycles,
-# we just directly assume it to be zero at beginning.
-assume -bound 1 {dut.br_cdc_fifo_ctrl_push_1r1w.br_cdc_fifo_push_ctrl.br_cdc_fifo_push_flag_mgr.br_delay_nr_push_count_gray.stages[1] == 'd0}
-assume -bound 1 {dut.br_cdc_fifo_ctrl_push_1r1w.br_cdc_fifo_push_ctrl.br_cdc_fifo_push_flag_mgr.br_delay_nr_push_count_gray.stages[2] == 'd0}
-assume -bound 1 {dut.br_cdc_fifo_ctrl_push_1r1w.br_cdc_fifo_push_ctrl.br_cdc_fifo_push_flag_mgr.br_delay_nr_push_count_gray.stages[3] == 'd0}
 
 # primary output control signal should be legal during reset
 #assert -name fv_rst_check_push_ram_write_valid {@(posedge push_clk) \

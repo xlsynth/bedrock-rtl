@@ -212,7 +212,6 @@ module br_cdc_fifo_basic_fpv_monitor #(
   `BR_COVER_CR(fifo_full_c, push_full, push_clk, push_rst)
 
   // ----------assert reset again----------
-  /*
   localparam int ResetLen = NumSyncStages + 2;
   logic [1:0] push_rst_cnt, pop_rst_cnt;
   logic push_rst_d, pop_rst_d;
@@ -242,5 +241,5 @@ module br_cdc_fifo_basic_fpv_monitor #(
   // Don't deassert reset until NumSyncStages + 2 cycles after the other side's reset is asserted
   `BR_ASSUME_CR(hold_push_rst_a, $rose(pop_rst) |-> !$fell(push_rst) [* ResetLen], push_clk, rst)
   `BR_ASSUME_CR(hold_pop_rst_a, $rose(push_rst) |-> !$fell(pop_rst) [* ResetLen], pop_clk, rst)
-  */
+
 endmodule : br_cdc_fifo_basic_fpv_monitor
