@@ -136,7 +136,6 @@ br_verilog_fpv_test_tools_suite(
         [
             "-parameter AddrWidth 4",
         ],
-    gui = True,
     params = {
         "NumSyncStages": [
             "3",

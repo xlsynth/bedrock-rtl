@@ -48,6 +48,6 @@ assume -name no_resp_valid_during_reset {@(posedge downstream_clk) \
 downstream_rst |-> downstream_resp_valid == 'd0}
 
 # limit run time to 10-mins
-set_prove_time_limit 600s
+set_prove_time_limit 10m
 
 prove -all
