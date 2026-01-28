@@ -107,3 +107,60 @@ br_verilog_fpv_test_tools_suite(
     top = "br_csr_demux",
     deps = [":br_csr_demux_fpv_monitor"],
 )
+
+####################################################################################
+# Bedrock-RTL CSR CDC FPV Monitor and Tests
+verilog_library(
+    name = "br_csr_cdc_fpv_monitor",
+    srcs = ["br_csr_cdc_fpv_monitor.sv"],
+    visibility = ["//visibility:public"],
+    deps = [
+        "//csr/rtl:br_csr_cdc",
+        "//gate/rtl:br_gate_mock",
+    ],
+)
+
+verilog_elab_test(
+    name = "br_csr_cdc_fpv_monitor_elab_test",
+    custom_tcl_header = "//:elab_test_jg_custom_header.verific.tcl",
+    tool = "verific",
+    top = "br_csr_cdc_fpv_monitor",
+    deps = [
+        ":br_csr_cdc_fpv_monitor",
+    ],
+)
+
+br_verilog_fpv_test_tools_suite(
+    name = "br_csr_cdc_test_suite",
+    elab_opts =
+        [
+            "-parameter AddrWidth 4",
+        ],
+    params = {
+        "NumSyncStages": [
+            "3",
+            "4",
+        ],
+        "RegisterDownstreamAbort": [
+            "0",
+            "1",
+        ],
+        "RegisterDownstreamReqOutputs": [
+            "0",
+            "1",
+        ],
+        "RegisterResetActive": [
+            "0",
+            "1",
+        ],
+        "RegisterUpstreamRespOutputs": [
+            "0",
+            "1",
+        ],
+    },
+    tools = {
+        "jg": "br_csr_cdc_fpv.jg.tcl",
+    },
+    top = "br_csr_cdc_fpv_monitor",
+    deps = [":br_csr_cdc_fpv_monitor"],
+)
