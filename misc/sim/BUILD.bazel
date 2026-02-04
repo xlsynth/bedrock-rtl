@@ -23,8 +23,8 @@ verilog_library(
     srcs = ["br_test_rate_control.sv"],
     visibility = ["//visibility:public"],
     deps = [
-        "//macros:br_registers",
         "//macros:br_asserts",
+        "//macros:br_registers",
     ],
 )
 

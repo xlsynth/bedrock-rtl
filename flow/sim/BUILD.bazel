@@ -9,8 +9,8 @@ verilog_library(
     name = "br_test_flow_driver",
     srcs = ["br_test_flow_driver.sv"],
     deps = [
-        "//misc/sim:br_test_rate_control",
         "//macros:br_registers",
+        "//misc/sim:br_test_rate_control",
     ],
 )
 
@@ -24,8 +24,8 @@ verilog_library(
     name = "br_test_flow_sink",
     srcs = ["br_test_flow_sink.sv"],
     deps = [
-        "//misc/sim:br_test_rate_control",
         "//macros:br_registers",
+        "//misc/sim:br_test_rate_control",
     ],
 )
 
