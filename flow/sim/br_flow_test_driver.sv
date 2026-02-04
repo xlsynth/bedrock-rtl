@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// Bedrock-RTL Test Flow Driver
+// Bedrock-RTL Flow Test Driver
 //
 // Testbench module that drives a ready/valid data flow.
 //
@@ -12,7 +12,7 @@
 
 `include "br_registers.svh"
 
-module br_test_flow_driver #(
+module br_flow_test_driver #(
     parameter int Width = 8,
     parameter bit UseCounterPattern = 1,
     parameter int NumValues = 8,

@@ -6,8 +6,8 @@ load("//bazel:verilog.bzl", "verilog_elab_test")
 package(default_visibility = ["//visibility:public"])
 
 verilog_library(
-    name = "br_test_flow_driver",
-    srcs = ["br_test_flow_driver.sv"],
+    name = "br_flow_test_driver",
+    srcs = ["br_flow_test_driver.sv"],
     deps = [
         "//macros:br_registers",
         "//misc/sim:br_test_rate_control",
@@ -15,14 +15,14 @@ verilog_library(
 )
 
 verilog_elab_test(
-    name = "br_test_flow_driver_elab_test",
+    name = "br_flow_test_driver_elab_test",
     tool = "verific",
-    deps = [":br_test_flow_driver"],
+    deps = [":br_flow_test_driver"],
 )
 
 verilog_library(
-    name = "br_test_flow_sink",
-    srcs = ["br_test_flow_sink.sv"],
+    name = "br_flow_test_sink",
+    srcs = ["br_flow_test_sink.sv"],
     deps = [
         "//macros:br_registers",
         "//misc/sim:br_test_rate_control",
@@ -30,7 +30,7 @@ verilog_library(
 )
 
 verilog_elab_test(
-    name = "br_test_flow_sink_elab_test",
+    name = "br_flow_test_sink_elab_test",
     tool = "verific",
-    deps = [":br_test_flow_sink"],
+    deps = [":br_flow_test_sink"],
 )

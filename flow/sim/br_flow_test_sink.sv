@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// Bedrock-RTL Test Flow Sink
+// Bedrock-RTL Flow Test Sink
 //
 // Testbench module that consumes a ready/valid data flow.
 //
@@ -13,7 +13,7 @@
 
 `include "br_registers.svh"
 
-module br_test_flow_sink #(
+module br_flow_test_sink #(
     parameter int Width = 8,
     // If 1, count received data values and check against either a counter pattern
     // or the provided `expected_data` array.
