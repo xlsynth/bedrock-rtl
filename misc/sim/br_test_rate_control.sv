@@ -42,10 +42,10 @@ module br_test_rate_control #(
   end
 
   // Pseudo-random activation with hold-until-accepted semantics
-  real  rand_val;
   logic drive_internal;
 
   always_ff @(posedge clk) begin
+    real rand_val;
     if (rst) begin
       drive_internal <= 1'b0;
     end else if (!drive_internal || ack) begin
