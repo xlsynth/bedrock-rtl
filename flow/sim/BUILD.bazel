@@ -1,0 +1,36 @@
+# SPDX-License-Identifier: Apache-2.0
+
+load("@rules_hdl//verilog:providers.bzl", "verilog_library")
+load("//bazel:verilog.bzl", "verilog_elab_test")
+
+package(default_visibility = ["//visibility:public"])
+
+verilog_library(
+    name = "br_test_flow_driver",
+    srcs = ["br_test_flow_driver.sv"],
+    deps = [
+        "//misc/sim:br_test_rate_control",
+        "//macros:br_registers",
+    ],
+)
+
+verilog_elab_test(
+    name = "br_test_flow_driver_elab_test",
+    tool = "verific",
+    deps = [":br_test_flow_driver"],
+)
+
+verilog_library(
+    name = "br_test_flow_sink",
+    srcs = ["br_test_flow_sink.sv"],
+    deps = [
+        "//misc/sim:br_test_rate_control",
+        "//macros:br_registers",
+    ],
+)
+
+verilog_elab_test(
+    name = "br_test_flow_sink_elab_test",
+    tool = "verific",
+    deps = [":br_test_flow_sink"],
+)
