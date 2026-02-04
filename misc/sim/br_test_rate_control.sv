@@ -45,13 +45,10 @@ module br_test_rate_control #(
   logic drive_internal;
 
   always_ff @(posedge clk) begin
-    real rand_val;
     if (rst) begin
       drive_internal <= 1'b0;
     end else if (!drive_internal || ack) begin
-      // keep this inside the always_ff block so it triggers every clock cycle
-      rand_val = $urandom() / $pow(2.0, 32.0);
-      drive_internal <= (rand_val < Rate) ? 1'b1 : 1'b0;
+      drive_internal <= (($urandom() / $pow(2.0, 32.0)) < Rate);
     end
   end
 
