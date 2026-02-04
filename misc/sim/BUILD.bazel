@@ -17,3 +17,19 @@ verilog_elab_test(
     tool = "verific",
     deps = [":br_test_driver"],
 )
+
+verilog_library(
+    name = "br_test_rate_control",
+    srcs = ["br_test_rate_control.sv"],
+    visibility = ["//visibility:public"],
+    deps = [
+        "//macros:br_asserts",
+        "//macros:br_registers",
+    ],
+)
+
+verilog_elab_test(
+    name = "br_test_rate_control_elab_test",
+    tool = "verific",
+    deps = [":br_test_rate_control"],
+)
