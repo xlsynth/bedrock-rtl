@@ -5,8 +5,8 @@
 // Simple testbench helper that generates a throttled `drive` signal based on a `Rate`
 // parameter.
 //
-// After reset, the module waits `InitialDelay` cycles before becoming active.
-// When enabled, it asserts `drive` with probability `Rate` (0.0–1.0) whenever idle.
+// After reset, the module waits InitialDelay cycles before becoming active.
+// When enabled, it asserts `drive` with probability Rate (0.0–1.0) whenever idle.
 // Once asserted, `drive` remains high until acknowledged via `ack`.
 
 `include "br_registers.svh"

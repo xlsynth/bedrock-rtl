@@ -18,7 +18,7 @@ module br_test_flow_driver #(
     parameter int NumValues = 8,
     parameter real Rate = 1.0,  // probability of asserting pop_valid on an idle cycle [0.0 - 1.0]
     parameter int InitialDelay = 10,
-    parameter int Seed = 1
+    parameter int Seed = 1  // seed for the random number generator
 ) (
     input  logic             clk,
     input  logic             rst,

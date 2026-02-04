@@ -9,7 +9,7 @@
 // against either an internal counter pattern or a provided `expected_data` array.
 //
 // Asserts `done` after NumValues transfers when data checking is enabled, and flags
-// `error` on data mismatches or unexpected extra data
+// `error` on data mismatches or unexpected extra data.
 
 `include "br_registers.svh"
 
@@ -22,7 +22,7 @@ module br_test_flow_sink #(
     parameter int NumValues = 8,
     parameter real Rate = 1.0, // probability of asserting push_ready on an idle cycle [0.0 - 1.0]
     parameter int InitialDelay = 10, // cycles to wait before starting to accept data
-    parameter int Seed = 1
+    parameter int Seed = 1  // seed for the random number generator
 ) (
     input  logic             clk,
     input  logic             rst,
@@ -34,7 +34,7 @@ module br_test_flow_sink #(
     input  logic             push_valid,
     input  logic [Width-1:0] push_data,
 
-    output logic             done,  // Asserted once NumValues received and CheckData is 1
+    output logic             done,  // Asserted once NumValues received when CheckData is 1
     output logic             error  // Asserted on data mismatch or extra data when CheckData is 1
 );
   
@@ -61,7 +61,7 @@ module br_test_flow_sink #(
     // Expected data value for check
     logic [Width-1:0] expected_value;
     assign expected_value =
-        UseCounterPattern   ? Width'(count) : 
+        UseCounterPattern             ? Width'(count) : 
         (count < longint'(NumValues)) ? expected_data[int'(count)] : 'x;
   
     always_ff @(posedge clk) begin
