@@ -61,10 +61,27 @@ br_verilog_elab_and_lint_test_suite(
             "64",
         ],
         "NumDownstreams": [
-            "1",
             "2",
             "3",
         ],
+        "HasDefaultDownstream": [
+            "0",
+            "1",
+        ],
+    },
+    deps = [":br_csr_demux"],
+)
+
+br_verilog_elab_and_lint_test_suite(
+    name = "br_csr_demux_test_suite_single_downstream",
+    params = {
+        "AddrWidth": ["4"],
+        "DataWidth": [
+            "32",
+            "64",
+        ],
+        "NumDownstreams": ["1"],
+        "HasDefaultDownstream": ["0"],
     },
     deps = [":br_csr_demux"],
 )
