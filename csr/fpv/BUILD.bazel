@@ -86,6 +86,12 @@ br_verilog_fpv_test_tools_suite(
             "-parameter NumDownstreams 3",
             "-parameter NumRetimeStages '\"'\"'{6,4,2}",
         ],
+    params = {
+        "HasDefaultDownstream": [
+            "0",
+            "1",
+        ],
+    },
     tools = {
         "jg": "",
     },
@@ -101,6 +107,12 @@ br_verilog_fpv_test_tools_suite(
             "-parameter NumDownstreams 4",
             "-parameter NumRetimeStages '\"'\"'{0,3,5,7}",
         ],
+    params = {
+        "HasDefaultDownstream": [
+            "0",
+            "1",
+        ],
+    },
     tools = {
         "jg": "",
     },

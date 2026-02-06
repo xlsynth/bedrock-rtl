@@ -9,6 +9,8 @@ module br_csr_demux_fpv_monitor #(
     parameter int DataWidth = 32,
     parameter int NumDownstreams = 1,
     parameter int NumRetimeStages[NumDownstreams] = '{default: 0},
+    parameter bit HasDefaultDownstream = 0,
+    localparam int NumAddressRanges = HasDefaultDownstream ? NumDownstreams - 1 : NumDownstreams,
     localparam int StrobeWidth = DataWidth / 8
 ) (
     input logic clk,
@@ -29,8 +31,8 @@ module br_csr_demux_fpv_monitor #(
     input logic upstream_resp_slverr,
 
     // Inclusive min and max addresses for each downstream interface
-    input logic [NumDownstreams-1:0][AddrWidth-1:0] downstream_addr_base,
-    input logic [NumDownstreams-1:0][AddrWidth-1:0] downstream_addr_limit,
+    input logic [NumAddressRanges-1:0][AddrWidth-1:0] downstream_addr_base,
+    input logic [NumAddressRanges-1:0][AddrWidth-1:0] downstream_addr_limit,
 
     input logic [NumDownstreams-1:0] downstream_req_valid,
     input logic [NumDownstreams-1:0] downstream_req_write,
@@ -87,9 +89,23 @@ module br_csr_demux_fpv_monitor #(
     end
   end
 
+  logic addr_match_d;
+  logic d_is_default;
+
+  always_comb begin
+    addr_match_d = 1'b0;
+    for (int i = 0; i < NumAddressRanges; i++) begin
+      if (d == DownstreamWidth'(i)) begin
+        addr_match_d = (upstream_req_addr >= downstream_addr_base[i]) &&
+                       (upstream_req_addr <= downstream_addr_limit[i]);
+        break;
+      end
+    end
+  end
+
+  assign d_is_default = HasDefaultDownstream && (d == DownstreamWidth'(NumAddressRanges));
   assign magic_upstream_req_valid = upstream_req_valid &&
-                                   (upstream_req_addr >= downstream_addr_base[d]) &&
-                                   (upstream_req_addr <= downstream_addr_limit[d]);
+                                    (addr_match_d || (d_is_default && !upstream_addr_hit));
   // abort is broadcasted to all downstreams
   // If there is no active request on a branch, the abort signal will be ignored.
   `BR_REG(abort_cntr, abort_cntr + upstream_req_abort - downstream_req_abort[d])
@@ -97,7 +113,7 @@ module br_csr_demux_fpv_monitor #(
   // send a response with decerr=1.
   always_comb begin
     upstream_addr_hit = 1'b0;
-    for (int i = 0; i < NumDownstreams; i++) begin
+    for (int i = 0; i < NumAddressRanges; i++) begin
       if ((upstream_req_addr >= downstream_addr_base[i]) &&
           (upstream_req_addr <= downstream_addr_limit[i])) begin
         upstream_addr_hit = 1'b1;
@@ -105,7 +121,11 @@ module br_csr_demux_fpv_monitor #(
       end
     end
   end
-  assign upstream_decerr_valid = upstream_req_valid && !upstream_addr_hit;
+  if (HasDefaultDownstream) begin : gen_no_decerr
+    assign upstream_decerr_valid = 1'b0;
+  end else begin : gen_decerr
+    assign upstream_decerr_valid = upstream_req_valid && !upstream_addr_hit;
+  end
 
   assign downstream_resp_vec = {upstream_decerr_valid, downstream_resp_valid};
   assign fv_downstream_resp_valid = |downstream_resp_vec;
@@ -129,17 +149,20 @@ module br_csr_demux_fpv_monitor #(
 
   // ----------FV assumptions----------
   // pick a random downstream interface for assertions
-  `BR_ASSUME(constant_d_a, $stable(d) && d < DownstreamWidth)
+  `BR_ASSUME(constant_d_a, $stable(d) && d < NumDownstreams)
   `BR_ASSUME(only_one_outstanding_req_upstream_a, upstream_req_pending |-> !upstream_req_valid)
-  for (genvar i = 0; i < NumDownstreams; i++) begin : gen_addr
+  for (genvar i = 0; i < NumAddressRanges; i++) begin : gen_addr
     `BR_ASSUME(legal_addr_range_a, downstream_addr_base[i] <= downstream_addr_limit[i])
     `BR_ASSUME(static_addr_a, $stable(downstream_addr_base[i]) && $stable(downstream_addr_limit[i]))
+  end
+
+  for (genvar i = 0; i < NumDownstreams; i++) begin : gen_downstream_resp
     `BR_ASSUME(no_spurious_downstream_resp_a,
                downstream_resp_valid[i] |-> downstream_req_pending[i])
   end
 
-  for (genvar i = 0; i < NumDownstreams - 1; i++) begin : gen_i
-    for (genvar j = i + 1; j < NumDownstreams; j++) begin : gen_j
+  for (genvar i = 0; i < NumAddressRanges - 1; i++) begin : gen_i
+    for (genvar j = i + 1; j < NumAddressRanges; j++) begin : gen_j
       `BR_ASSUME(no_overlapping_addr_a,
                  downstream_addr_limit[i] < downstream_addr_base[j] ||
                 downstream_addr_base[i] > downstream_addr_limit[j])
@@ -238,5 +261,6 @@ bind br_csr_demux br_csr_demux_fpv_monitor #(
     .AddrWidth(AddrWidth),
     .DataWidth(DataWidth),
     .NumDownstreams(NumDownstreams),
-    .NumRetimeStages(NumRetimeStages)
+    .NumRetimeStages(NumRetimeStages),
+    .HasDefaultDownstream(HasDefaultDownstream)
 ) monitor (.*);
