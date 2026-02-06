@@ -18,7 +18,14 @@ module br_csr_demux #(
     parameter int NumDownstreams = 1,  // Must be at least 1
     // ri lint_check_waive ARRAY_LENGTH_ONE
     parameter int NumRetimeStages[NumDownstreams] = '{default: 0},
+    // If 1, the last downstream SCB request port (NumDownstreams-1)
+    // will take any request that doesn't match the address base and bound
+    // of any of the other downstream ports.
+    // If 0, a request with an address that doesn't match any downstream address range
+    // will result in a response with decerr=1.
+    parameter bit HasDefaultDownstream = 0,
 
+    localparam int NumAddressRanges = HasDefaultDownstream ? NumDownstreams - 1 : NumDownstreams,
     localparam int StrobeWidth = DataWidth / 8
 ) (
     input logic clk,
@@ -39,8 +46,8 @@ module br_csr_demux #(
     output logic upstream_resp_slverr,
 
     // Inclusive min and max addresses for each downstream interface
-    input logic [NumDownstreams-1:0][AddrWidth-1:0] downstream_addr_base,
-    input logic [NumDownstreams-1:0][AddrWidth-1:0] downstream_addr_limit,
+    input logic [NumAddressRanges-1:0][AddrWidth-1:0] downstream_addr_base,
+    input logic [NumAddressRanges-1:0][AddrWidth-1:0] downstream_addr_limit,
 
     output logic [NumDownstreams-1:0] downstream_req_valid,
     output logic [NumDownstreams-1:0] downstream_req_write,
@@ -58,17 +65,18 @@ module br_csr_demux #(
 );
   // Integration Checks
 
-  `BR_ASSERT_STATIC(legal_num_downstreams_a, NumDownstreams >= 1)
+  // There must be at least one non-default downstream port
+  `BR_ASSERT_STATIC(legal_num_downstreams_a, NumDownstreams >= 1 + HasDefaultDownstream)
   `BR_ASSERT_STATIC(legal_addr_width_a, AddrWidth >= 1)
   `BR_ASSERT_STATIC(legal_data_width_a, DataWidth == 32 || DataWidth == 64)
 
-  for (genvar i = 0; i < NumDownstreams; i++) begin : gen_positive_range_check
+  for (genvar i = 0; i < NumAddressRanges; i++) begin : gen_positive_range_check
     `BR_ASSERT_INTG(downstream_addr_range_positive_a,
                     $fell(rst) |-> downstream_addr_base[i] <= downstream_addr_limit[i])
   end
 
-  for (genvar i = 0; i < NumDownstreams - 1; i++) begin : gen_range_overlap_check_i
-    for (genvar j = i + 1; j < NumDownstreams; j++) begin : gen_range_overlap_check_j
+  for (genvar i = 0; i < NumAddressRanges - 1; i++) begin : gen_range_overlap_check_i
+    for (genvar j = i + 1; j < NumAddressRanges; j++) begin : gen_range_overlap_check_j
       `BR_ASSERT_INTG(downstream_addr_range_overlap_a,
                       $fell(
                           rst
@@ -90,10 +98,14 @@ module br_csr_demux #(
   logic [NumDownstreams-1:0] downstream_req_abort_int;
 
   // Request address decoding
-  for (genvar i = 0; i < NumDownstreams; i++) begin : gen_select
+  for (genvar i = 0; i < NumAddressRanges; i++) begin : gen_select
     assign select_onehot[i] =
         (upstream_req_addr >= downstream_addr_base[i]) &&
         (upstream_req_addr <= downstream_addr_limit[i]);
+  end
+
+  if (HasDefaultDownstream) begin : gen_default_downstream
+    assign select_onehot[NumAddressRanges] = !(|select_onehot[NumAddressRanges-1:0]);
   end
 
   assign downstream_req_valid_int = select_onehot & {NumDownstreams{upstream_req_valid}};
