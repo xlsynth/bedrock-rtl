@@ -112,7 +112,7 @@ module br_cdc_fifo_pop_flag_mgr #(
   assign items_ext = (push_count_visible_ext >= pop_count_ext) ?
       (push_count_visible_ext - pop_count_ext) :
       (push_count_adjusted - pop_count_ext);
-  assign items = items_ext[CountWidth-1:0];
+  assign items = rst ? '0 : items_ext[CountWidth-1:0];
   assign empty = (items == '0);
 
   `BR_REGL(push_count_saved, push_count, !reset_active_push)
