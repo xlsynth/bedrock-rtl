@@ -2,6 +2,7 @@
 
 package br_cdc_pkg;
 
+`ifdef SIMULATION
   typedef enum logic [1:0] {
     CdcDelayNone = 2'b00,
     CdcDelayAlways = 2'b01,
@@ -10,5 +11,6 @@ package br_cdc_pkg;
   } cdc_delay_mode_t;
 
   cdc_delay_mode_t cdc_delay_mode = CdcDelayNone;
+`endif
 
 endpackage
