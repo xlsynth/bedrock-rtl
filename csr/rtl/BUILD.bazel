@@ -123,3 +123,46 @@ br_verilog_elab_and_lint_test_suite(
         "//gate/rtl:br_gate_mock",
     ],
 )
+
+verilog_library(
+    name = "br_csr_mem_interface",
+    srcs = ["br_csr_mem_interface.sv"],
+    deps = [
+        "//csr/rtl/internal:br_csr_checks_intg",
+        "//csr/rtl/internal:br_csr_request_reg",
+        "//macros:br_asserts_internal",
+        "//macros:br_registers",
+        "//macros:br_unused",
+        "//mux/rtl:br_mux_onehot",
+        "//pkg:br_math_pkg",
+    ],
+)
+
+br_verilog_elab_and_lint_test_suite(
+    name = "br_csr_mem_interface_test_suite",
+    params = {
+        "CsrAddrWidth": ["12"],
+        "CsrDataWidth": [
+            "32",
+            "64",
+        ],
+        "MemDepth": [
+            "1",
+            "4",
+        ],
+        "MemWidth": [
+            "8",
+            "16",
+            "32",
+        ],
+        "RegisterMemOutputs": [
+            "0",
+            "1",
+        ],
+        "RegisterResponseOutputs": [
+            "0",
+            "1",
+        ],
+    },
+    deps = [":br_csr_mem_interface"],
+)
