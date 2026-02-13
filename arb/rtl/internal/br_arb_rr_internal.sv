@@ -43,8 +43,8 @@ module br_arb_rr_internal #(
   //------------------------------------------
 
   if (NumRequesters == 1) begin : gen_1_req
-    `BR_UNUSED(rst);
-    `BR_UNUSED(enable_priority_update);
+    `BR_UNUSED(rst)
+    `BR_UNUSED(enable_priority_update)
     assign can_grant = 1'b1;
     assign grant = request;
 

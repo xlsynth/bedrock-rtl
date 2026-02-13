@@ -81,13 +81,14 @@ module br_cdc_bit_pulse_tb;
     int dst_reset_cycles;
     void'($value$plusargs("cdc_delay_mode=%d", cdc_delay_mode));
     $display("set cdc_delay_mode = %0s", cdc_delay_mode.name());
+`ifdef SIMULATION
     br_cdc_pkg::cdc_delay_mode = cdc_delay_mode;
+`endif
 
-
-    src_clk = 0;
-    dst_clk = 0;
-    src_rst = 1;
-    dst_rst = 1;
+    src_clk   = 0;
+    dst_clk   = 0;
+    src_rst   = 1;
+    dst_rst   = 1;
     src_pulse = 0;
 
     #MinResetTime;

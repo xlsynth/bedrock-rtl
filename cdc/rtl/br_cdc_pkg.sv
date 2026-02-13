@@ -9,6 +9,8 @@ package br_cdc_pkg;
     CdcDelayRandAlways = 2'b11
   } cdc_delay_mode_t;
 
+`ifdef SIMULATION
   cdc_delay_mode_t cdc_delay_mode = CdcDelayNone;
+`endif
 
 endpackage

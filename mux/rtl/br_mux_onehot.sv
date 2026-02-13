@@ -54,7 +54,7 @@ module br_mux_onehot #(
       end
     end
 `else  // SIMULATION
-    `BR_UNUSED(select);
+    `BR_UNUSED(select)
     assign out = in;
 `endif  // SIMULATION
 
