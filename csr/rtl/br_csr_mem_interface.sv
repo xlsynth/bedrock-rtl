@@ -10,7 +10,8 @@
 // SCB requester signals the request should be aborted.
 //
 // This module also handles sending the response for SCB write requests so that
-// the downstream memory doesn't have to.
+// the downstream memory doesn't have to. The write response will be sent after
+// the write request is accepted by the memory interface.
 
 `include "br_asserts_internal.svh"
 `include "br_registers.svh"
@@ -32,6 +33,8 @@ module br_csr_mem_interface #(
     parameter bit RegisterResponseOutputs = 0,
     // If 1, allow partial writes to the memory.
     // If 0, partial writes will result in slverr responses.
+    // TODO(zhemao): Allow the interface to perform RMW if partial write is requested
+    // but memory interface doesn't support it.
     parameter bit EnablePartialWrites = 0,
     // If 1, check that the request address is in the range [0, MemDepth)
     parameter bit EnableAddressRangeCheck = 1,
