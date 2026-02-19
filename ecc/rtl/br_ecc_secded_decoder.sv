@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 
 
-
 // verilog_format: off
 // verilog_lint: waive-start line-length
 

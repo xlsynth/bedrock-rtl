@@ -50,7 +50,7 @@ jobs:
       id: python
       run: |
         set +e
-        bazel test --noshow_loading_progress //python/... 2>&1 | tee .bazel-test-python.log
+        bazel test --noshow_loading_progress //python/... //ecc/rtl/secded_codegen/... 2>&1 | tee .bazel-test-python.log
         BAZEL_EXIT_CODE=${PIPESTATUS[0]}
         TOTAL_TESTS=$(grep -Po '(?<=out of )\d+(?= test)' .bazel-test-python.log)
         PASSING_TESTS=$(grep -Po '\d+(?= test passes?\.| tests pass)' .bazel-test-python.log)
