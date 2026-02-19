@@ -49,8 +49,8 @@ rust = use_extension("@rules_rust//rust:extensions.bzl", "rust")
 
 # See https://bazelbuild.github.io/rules_rust/#specifying-rust-version.
 rust.toolchain(
-    edition = "2021",
-    versions = ["1.84.1"],
+    edition = "2024",
+    versions = ["1.93.1"],
 )
 use_repo(rust, "rust_toolchains")
 
