@@ -43,7 +43,7 @@ pip.parse(
 use_repo(pip, "bedrock-rtl-pypi")
 
 # Rust toolchain and TopStitch dependencies
-bazel_dep(name = "rules_rust", version = "0.57.1")
+bazel_dep(name = "rules_rust", version = "0.68.1")
 
 rust = use_extension("@rules_rust//rust:extensions.bzl", "rust")
 
