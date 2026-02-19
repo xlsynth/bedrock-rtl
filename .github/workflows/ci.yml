@@ -21,15 +21,29 @@ jobs:
       - uses: actions/setup-python@v3
       - uses: pre-commit/action@v3.0.1
 
-  # Run bazel build before bazel tests because the logging is not chronologically
-  # ordered if a build step fails while unrelated tests are running.
-  #
-  # Additionally, we rely on the fact that we disabled any pipeline concurrency and that there is
-  # a single self-hosted runner. So each job can assume the working directory is preserved
-  # from the previous job (bazel-build). This is fine for now since our CI throughput demands are not
-  # very high.
-  bazel-build:
+  # Run bazel build and tests in order in one job to avoid parallel jobs that make
+  # build logs appear out of sequence across the CI workflow.
+  bazel-build-and-test:
     runs-on: self-hosted
+    outputs:
+      python_total_tests: ${{ steps.python.outputs.total_tests }}
+      python_passing_tests: ${{ steps.python.outputs.passing_tests }}
+      python_exit_code: ${{ steps.python.outputs.exit_code }}
+      stardoc_total_tests: ${{ steps.stardoc.outputs.total_tests }}
+      stardoc_passing_tests: ${{ steps.stardoc.outputs.passing_tests }}
+      stardoc_exit_code: ${{ steps.stardoc.outputs.exit_code }}
+      verific_total_tests: ${{ steps.verific.outputs.total_tests }}
+      verific_passing_tests: ${{ steps.verific.outputs.passing_tests }}
+      verific_exit_code: ${{ steps.verific.outputs.exit_code }}
+      ascentlint_total_tests: ${{ steps.ascentlint.outputs.total_tests }}
+      ascentlint_passing_tests: ${{ steps.ascentlint.outputs.passing_tests }}
+      ascentlint_exit_code: ${{ steps.ascentlint.outputs.exit_code }}
+      vcs_total_tests: ${{ steps.vcs.outputs.total_tests }}
+      vcs_passing_tests: ${{ steps.vcs.outputs.passing_tests }}
+      vcs_exit_code: ${{ steps.vcs.outputs.exit_code }}
+      iverilog_total_tests: ${{ steps.iverilog.outputs.total_tests }}
+      iverilog_passing_tests: ${{ steps.iverilog.outputs.passing_tests }}
+      iverilog_exit_code: ${{ steps.iverilog.outputs.exit_code }}
     steps:
     - uses: actions/checkout@v3
     - name: Copy ci.bazelrc
@@ -37,17 +51,8 @@ jobs:
       run: cp /home/gh-actions/bedrock-infra/ci.bazelrc ci.bazelrc
     - name: Build
       run: bazel build --noshow_loading_progress //...
-
-  bazel-test-python:
-    runs-on: self-hosted
-    needs: bazel-build
-    outputs:
-      total_tests: ${{ steps.test.outputs.total_tests }}
-      passing_tests: ${{ steps.test.outputs.passing_tests }}
-      exit_code: ${{ steps.test.outputs.exit_code }}
-    steps:
     - name: python tests
-      id: test
+      id: python
       run: |
         bazel test --noshow_loading_progress //python/... 2>&1 | tee .bazel-test-python.log
         BAZEL_EXIT_CODE=${PIPESTATUS[0]}
@@ -57,17 +62,8 @@ jobs:
         echo "passing_tests=$PASSING_TESTS" >> $GITHUB_OUTPUT
         echo "exit_code=$BAZEL_EXIT_CODE" >> $GITHUB_OUTPUT
         exit $BAZEL_EXIT_CODE
-
-  bazel-test-stardoc:
-    runs-on: self-hosted
-    needs: bazel-build
-    outputs:
-      total_tests: ${{ steps.test.outputs.total_tests }}
-      passing_tests: ${{ steps.test.outputs.passing_tests }}
-      exit_code: ${{ steps.test.outputs.exit_code }}
-    steps:
     - name: Stardoc tests
-      id: test
+      id: stardoc
       run: |
         bazel test --noshow_loading_progress //bazel/... 2>&1 | tee .bazel-test-stardoc.log
         BAZEL_EXIT_CODE=${PIPESTATUS[0]}
@@ -77,17 +73,8 @@ jobs:
         echo "passing_tests=$PASSING_TESTS" >> $GITHUB_OUTPUT
         echo "exit_code=$BAZEL_EXIT_CODE" >> $GITHUB_OUTPUT
         exit $BAZEL_EXIT_CODE
-
-  bazel-test-verific:
-    runs-on: self-hosted
-    needs: bazel-build
-    outputs:
-      total_tests: ${{ steps.test.outputs.total_tests }}
-      passing_tests: ${{ steps.test.outputs.passing_tests }}
-      exit_code: ${{ steps.test.outputs.exit_code }}
-    steps:
     - name: Verilog elaboration tests (using Verific tclmain)
-      id: test
+      id: verific
       # Use --test_output=summary to suppress log output, even on failure (proprietary EDA tool output may be sensitive).
       run: |
         bazel test --noshow_loading_progress --test_output=summary //... --test_tag_filters=verific 2>&1 | tee .bazel-test-verific.log
@@ -98,20 +85,9 @@ jobs:
         echo "passing_tests=$PASSING_TESTS" >> $GITHUB_OUTPUT
         echo "exit_code=$BAZEL_EXIT_CODE" >> $GITHUB_OUTPUT
         exit $BAZEL_EXIT_CODE
-
-  bazel-test-ascentlint:
-    runs-on: self-hosted
-    # AscentLint licenses are fairly limited, and the RTL lint tests cannot
-    # pass if the separate Verific elaboration tests don't pass.
-    # Put this dependency to avoid wasting lint license checkouts.
-    needs: bazel-test-verific
-    outputs:
-      total_tests: ${{ steps.test.outputs.total_tests }}
-      passing_tests: ${{ steps.test.outputs.passing_tests }}
-      exit_code: ${{ steps.test.outputs.exit_code }}
-    steps:
+    # Keep AscentLint after Verific as before.
     - name: Verilog lint tests (using RealIntent AscentLint)
-      id: test
+      id: ascentlint
       # Use --test_output=summary to suppress log output, even on failure (proprietary EDA tool output may be sensitive).
       run: |
         bazel test --noshow_loading_progress --test_output=summary //... --test_tag_filters=ascentlint 2>&1 | tee .bazel-test-ascentlint.log
@@ -122,17 +98,8 @@ jobs:
         echo "passing_tests=$PASSING_TESTS" >> $GITHUB_OUTPUT
         echo "exit_code=$BAZEL_EXIT_CODE" >> $GITHUB_OUTPUT
         exit $BAZEL_EXIT_CODE
-
-  bazel-test-vcs:
-    runs-on: self-hosted
-    needs: bazel-build
-    outputs:
-      total_tests: ${{ steps.test.outputs.total_tests }}
-      passing_tests: ${{ steps.test.outputs.passing_tests }}
-      exit_code: ${{ steps.test.outputs.exit_code }}
-    steps:
     - name: Verilog sim tests (using Synopsys VCS)
-      id: test
+      id: vcs
       # Use --test_output=summary to suppress log output, even on failure (proprietary EDA tool output may be sensitive).
       run: |
         bazel test --noshow_loading_progress --test_output=summary //... --test_tag_filters=vcs 2>&1 | tee .bazel-test-vcs.log
@@ -143,17 +110,8 @@ jobs:
         echo "passing_tests=$PASSING_TESTS" >> $GITHUB_OUTPUT
         echo "exit_code=$BAZEL_EXIT_CODE" >> $GITHUB_OUTPUT
         exit $BAZEL_EXIT_CODE
-
-  bazel-test-iverilog:
-    runs-on: self-hosted
-    needs: bazel-build
-    outputs:
-      total_tests: ${{ steps.test.outputs.total_tests }}
-      passing_tests: ${{ steps.test.outputs.passing_tests }}
-      exit_code: ${{ steps.test.outputs.exit_code }}
-    steps:
     - name: Verilog sim tests (using Icarus Verilog)
-      id: test
+      id: iverilog
       # Don't need --test_output=summary to suppress log output because iverilog is open source.
       run: |
         bazel test --noshow_loading_progress //... --test_tag_filters=iverilog 2>&1 | tee .bazel-test-iverilog.log
@@ -195,7 +153,7 @@ jobs:
 
   python-badge:
     runs-on: ubuntu-latest
-    needs: bazel-test-python
+    needs: bazel-build-and-test
     if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
     steps:
     - name: Create python badge
@@ -205,12 +163,12 @@ jobs:
         gistID: c66dc2ddc0e513ba06ce338620977b26
         filename: python.json
         label: "python"
-        message: ${{ needs.bazel-test-python.outputs.passing_tests }} of ${{ needs.bazel-test-python.outputs.total_tests }} passing
-        color: ${{ needs.bazel-test-python.outputs.exit_code == '0' && 'brightgreen' || 'red' }}
+        message: ${{ needs.bazel-build-and-test.outputs.python_passing_tests }} of ${{ needs.bazel-build-and-test.outputs.python_total_tests }} passing
+        color: ${{ needs.bazel-build-and-test.outputs.python_exit_code == '0' && 'brightgreen' || 'red' }}
 
   stardoc-badge:
     runs-on: ubuntu-latest
-    needs: bazel-test-stardoc
+    needs: bazel-build-and-test
     if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
     steps:
     - name: Create stardoc badge
@@ -220,12 +178,12 @@ jobs:
         gistID: c66dc2ddc0e513ba06ce338620977b26
         filename: stardoc.json
         label: "stardoc"
-        message: ${{ needs.bazel-test-stardoc.outputs.passing_tests }} of ${{ needs.bazel-test-stardoc.outputs.total_tests }} passing
-        color: ${{ needs.bazel-test-stardoc.outputs.exit_code == '0' && 'brightgreen' || 'red' }}
+        message: ${{ needs.bazel-build-and-test.outputs.stardoc_passing_tests }} of ${{ needs.bazel-build-and-test.outputs.stardoc_total_tests }} passing
+        color: ${{ needs.bazel-build-and-test.outputs.stardoc_exit_code == '0' && 'brightgreen' || 'red' }}
 
   verific-badge:
     runs-on: ubuntu-latest
-    needs: bazel-test-verific
+    needs: bazel-build-and-test
     if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
     steps:
     - name: Create verific badge
@@ -235,12 +193,12 @@ jobs:
         gistID: c66dc2ddc0e513ba06ce338620977b26
         filename: verific.json
         label: "verific"
-        message: ${{ needs.bazel-test-verific.outputs.passing_tests }} of ${{ needs.bazel-test-verific.outputs.total_tests }} passing
-        color: ${{ needs.bazel-test-verific.outputs.exit_code == '0' && 'brightgreen' || 'red' }}
+        message: ${{ needs.bazel-build-and-test.outputs.verific_passing_tests }} of ${{ needs.bazel-build-and-test.outputs.verific_total_tests }} passing
+        color: ${{ needs.bazel-build-and-test.outputs.verific_exit_code == '0' && 'brightgreen' || 'red' }}
 
   ascentlint-badge:
     runs-on: ubuntu-latest
-    needs: bazel-test-ascentlint
+    needs: bazel-build-and-test
     if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
     steps:
     - name: Create ascentlint badge
@@ -250,12 +208,12 @@ jobs:
         gistID: c66dc2ddc0e513ba06ce338620977b26
         filename: ascentlint.json
         label: "ascentlint"
-        message: ${{ needs.bazel-test-ascentlint.outputs.passing_tests }} of ${{ needs.bazel-test-ascentlint.outputs.total_tests }} passing
-        color: ${{ needs.bazel-test-ascentlint.outputs.exit_code == '0' && 'brightgreen' || 'red' }}
+        message: ${{ needs.bazel-build-and-test.outputs.ascentlint_passing_tests }} of ${{ needs.bazel-build-and-test.outputs.ascentlint_total_tests }} passing
+        color: ${{ needs.bazel-build-and-test.outputs.ascentlint_exit_code == '0' && 'brightgreen' || 'red' }}
 
   vcs-badge:
     runs-on: ubuntu-latest
-    needs: bazel-test-vcs
+    needs: bazel-build-and-test
     if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
     steps:
     - name: Create vcs badge
@@ -265,12 +223,12 @@ jobs:
         gistID: c66dc2ddc0e513ba06ce338620977b26
         filename: vcs.json
         label: "vcs"
-        message: ${{ needs.bazel-test-vcs.outputs.passing_tests }} of ${{ needs.bazel-test-vcs.outputs.total_tests }} passing
-        color: ${{ needs.bazel-test-vcs.outputs.exit_code == '0' && 'brightgreen' || 'red' }}
+        message: ${{ needs.bazel-build-and-test.outputs.vcs_passing_tests }} of ${{ needs.bazel-build-and-test.outputs.vcs_total_tests }} passing
+        color: ${{ needs.bazel-build-and-test.outputs.vcs_exit_code == '0' && 'brightgreen' || 'red' }}
 
   iverilog-badge:
     runs-on: ubuntu-latest
-    needs: bazel-test-iverilog
+    needs: bazel-build-and-test
     if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
     steps:
     - name: Create iverilog badge
@@ -280,5 +238,5 @@ jobs:
         gistID: c66dc2ddc0e513ba06ce338620977b26
         filename: iverilog.json
         label: "iverilog"
-        message: ${{ needs.bazel-test-iverilog.outputs.passing_tests }} of ${{ needs.bazel-test-iverilog.outputs.total_tests }} passing
-        color: ${{ needs.bazel-test-iverilog.outputs.exit_code == '0' && 'brightgreen' || 'red' }}
+        message: ${{ needs.bazel-build-and-test.outputs.iverilog_passing_tests }} of ${{ needs.bazel-build-and-test.outputs.iverilog_total_tests }} passing
+        color: ${{ needs.bazel-build-and-test.outputs.iverilog_exit_code == '0' && 'brightgreen' || 'red' }}
