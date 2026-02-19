@@ -8,11 +8,6 @@ on:
   # Allow manual triggers
   workflow_dispatch: {}
 
-# Only allow one pipeline to run at a time.
-concurrency:
-  group: ${{ github.repository }}
-  cancel-in-progress: false
-
 jobs:
   pre-commit:
     runs-on: ubuntu-latest
