@@ -54,6 +54,7 @@ jobs:
     - name: python tests
       id: python
       run: |
+        set +e
         bazel test --noshow_loading_progress //python/... 2>&1 | tee .bazel-test-python.log
         BAZEL_EXIT_CODE=${PIPESTATUS[0]}
         TOTAL_TESTS=$(grep -Po '(?<=out of )\d+(?= test)' .bazel-test-python.log)
@@ -61,10 +62,10 @@ jobs:
         echo "total_tests=$TOTAL_TESTS" >> $GITHUB_OUTPUT
         echo "passing_tests=$PASSING_TESTS" >> $GITHUB_OUTPUT
         echo "exit_code=$BAZEL_EXIT_CODE" >> $GITHUB_OUTPUT
-        exit $BAZEL_EXIT_CODE
     - name: Stardoc tests
       id: stardoc
       run: |
+        set +e
         bazel test --noshow_loading_progress //bazel/... 2>&1 | tee .bazel-test-stardoc.log
         BAZEL_EXIT_CODE=${PIPESTATUS[0]}
         TOTAL_TESTS=$(grep -Po '(?<=out of )\d+(?= test)' .bazel-test-stardoc.log)
@@ -72,11 +73,11 @@ jobs:
         echo "total_tests=$TOTAL_TESTS" >> $GITHUB_OUTPUT
         echo "passing_tests=$PASSING_TESTS" >> $GITHUB_OUTPUT
         echo "exit_code=$BAZEL_EXIT_CODE" >> $GITHUB_OUTPUT
-        exit $BAZEL_EXIT_CODE
     - name: Verilog elaboration tests (using Verific tclmain)
       id: verific
       # Use --test_output=summary to suppress log output, even on failure (proprietary EDA tool output may be sensitive).
       run: |
+        set +e
         bazel test --noshow_loading_progress --test_output=summary //... --test_tag_filters=verific 2>&1 | tee .bazel-test-verific.log
         BAZEL_EXIT_CODE=${PIPESTATUS[0]}
         TOTAL_TESTS=$(grep -Po '(?<=out of )\d+(?= test)' .bazel-test-verific.log)
@@ -84,12 +85,12 @@ jobs:
         echo "total_tests=$TOTAL_TESTS" >> $GITHUB_OUTPUT
         echo "passing_tests=$PASSING_TESTS" >> $GITHUB_OUTPUT
         echo "exit_code=$BAZEL_EXIT_CODE" >> $GITHUB_OUTPUT
-        exit $BAZEL_EXIT_CODE
     # Keep AscentLint after Verific as before.
     - name: Verilog lint tests (using RealIntent AscentLint)
       id: ascentlint
       # Use --test_output=summary to suppress log output, even on failure (proprietary EDA tool output may be sensitive).
       run: |
+        set +e
         bazel test --noshow_loading_progress --test_output=summary //... --test_tag_filters=ascentlint 2>&1 | tee .bazel-test-ascentlint.log
         BAZEL_EXIT_CODE=${PIPESTATUS[0]}
         TOTAL_TESTS=$(grep -Po '(?<=out of )\d+(?= test)' .bazel-test-ascentlint.log)
@@ -97,11 +98,11 @@ jobs:
         echo "total_tests=$TOTAL_TESTS" >> $GITHUB_OUTPUT
         echo "passing_tests=$PASSING_TESTS" >> $GITHUB_OUTPUT
         echo "exit_code=$BAZEL_EXIT_CODE" >> $GITHUB_OUTPUT
-        exit $BAZEL_EXIT_CODE
     - name: Verilog sim tests (using Synopsys VCS)
       id: vcs
       # Use --test_output=summary to suppress log output, even on failure (proprietary EDA tool output may be sensitive).
       run: |
+        set +e
         bazel test --noshow_loading_progress --test_output=summary //... --test_tag_filters=vcs 2>&1 | tee .bazel-test-vcs.log
         BAZEL_EXIT_CODE=${PIPESTATUS[0]}
         TOTAL_TESTS=$(grep -Po '(?<=out of )\d+(?= test)' .bazel-test-vcs.log)
@@ -109,11 +110,11 @@ jobs:
         echo "total_tests=$TOTAL_TESTS" >> $GITHUB_OUTPUT
         echo "passing_tests=$PASSING_TESTS" >> $GITHUB_OUTPUT
         echo "exit_code=$BAZEL_EXIT_CODE" >> $GITHUB_OUTPUT
-        exit $BAZEL_EXIT_CODE
     - name: Verilog sim tests (using Icarus Verilog)
       id: iverilog
       # Don't need --test_output=summary to suppress log output because iverilog is open source.
       run: |
+        set +e
         bazel test --noshow_loading_progress //... --test_tag_filters=iverilog 2>&1 | tee .bazel-test-iverilog.log
         BAZEL_EXIT_CODE=${PIPESTATUS[0]}
         TOTAL_TESTS=$(grep -Po '(?<=out of )\d+(?= test)' .bazel-test-iverilog.log)
@@ -121,7 +122,18 @@ jobs:
         echo "total_tests=$TOTAL_TESTS" >> $GITHUB_OUTPUT
         echo "passing_tests=$PASSING_TESTS" >> $GITHUB_OUTPUT
         echo "exit_code=$BAZEL_EXIT_CODE" >> $GITHUB_OUTPUT
-        exit $BAZEL_EXIT_CODE
+
+    - name: Check bazel test suite results
+      run: |
+        if [ "${{ steps.python.outputs.exit_code }}" != "0" ] \
+          || [ "${{ steps.stardoc.outputs.exit_code }}" != "0" ] \
+          || [ "${{ steps.verific.outputs.exit_code }}" != "0" ] \
+          || [ "${{ steps.ascentlint.outputs.exit_code }}" != "0" ] \
+          || [ "${{ steps.vcs.outputs.exit_code }}" != "0" ] \
+          || [ "${{ steps.iverilog.outputs.exit_code }}" != "0" ]; then
+          echo "One or more Bazel suites failed."
+          exit 1
+        fi
 
   ##########################################
   ##########################################
