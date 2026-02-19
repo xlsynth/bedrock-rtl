@@ -104,6 +104,5 @@ br_verilog_sim_test_tools_suite(
         ],
     },
     tools = ["vcs"],
-    waves = True,
     deps = [":br_csr_mem_interface_tb"],
 )
