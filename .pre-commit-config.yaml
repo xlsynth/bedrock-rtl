@@ -41,6 +41,16 @@ repos:
         args: [--version, "v7.3.1", -mode=fix]
         exclude: \.patch$
 
+  # Ensure BUILD files end with .bazel
+  - repo: local
+    hooks:
+      - id: no-plain-build
+        name: BUILD.bazel filenames
+        entry: sh -c 'echo "BUILD files must be named BUILD.bazel"; exit 1' --
+        language: system
+        pass_filenames: true
+        files: (^|/)BUILD$
+
   - repo: https://github.com/mgottscho/verible-py.git
     rev: v0.0-4023
     hooks:
@@ -54,3 +64,15 @@ repos:
         args: [--ruleset=default]
         # Skip ChipStack-generated files
         exclude: ^.*/chipstack/
+
+  # Ensure that no tests have waves enabled. They're unnecessary to have on by default.
+  # And the CI environment currently cannot generate them anyway, nor can we view them
+  # if they were generated.
+  - repo: local
+    hooks:
+      - id: no-waves
+        name: no waves in tests
+        entry: sh -c 'grep -n "waves = True" "$@" && exit 1 || true' --
+        language: system
+        pass_filenames: true
+        files: (^|/)BUILD\.bazel$
