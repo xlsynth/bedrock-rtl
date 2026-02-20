@@ -1,0 +1,77 @@
+# SPDX-License-Identifier: Apache-2.0
+
+load("@rules_hdl//verilog:providers.bzl", "verilog_library")
+load("//bazel:br_verilog.bzl", "br_verilog_elab_and_lint_test_suite")
+
+package(default_visibility = ["//visibility:public"])
+
+verilog_library(
+    name = "br_csr_request_reg",
+    srcs = ["br_csr_request_reg.sv"],
+    deps = [
+        "//macros:br_asserts_internal",
+        "//macros:br_registers",
+    ],
+)
+
+br_verilog_elab_and_lint_test_suite(
+    name = "br_csr_request_reg_test_suite",
+    params = {
+        "RequestWidth": [
+            "1",
+            "8",
+        ],
+        "RegisterPopOutputs": [
+            "0",
+            "1",
+        ],
+    },
+    deps = [":br_csr_request_reg"],
+)
+
+verilog_library(
+    name = "br_csr_checks_intg",
+    srcs = ["br_csr_checks_intg.sv"],
+    deps = [
+        "//macros:br_asserts_internal",
+        "//macros:br_registers",
+        "//macros:br_unused",
+    ],
+)
+
+br_verilog_elab_and_lint_test_suite(
+    name = "br_csr_checks_intg_test_suite",
+    disable_lint_rules = ["NO_OUTPUT"],
+    params = {
+        "AddrWidth": ["12"],
+        "DataWidth": [
+            "32",
+            "64",
+        ],
+        "EnableAddressRangeCheck": ["0"],
+        "EnableWriteDataKnownCheck": [
+            "0",
+            "1",
+        ],
+    },
+    deps = [":br_csr_checks_intg"],
+)
+
+br_verilog_elab_and_lint_test_suite(
+    name = "br_csr_checks_intg_test_suite_range_check",
+    disable_lint_rules = ["NO_OUTPUT"],
+    params = {
+        "AddrWidth": ["12"],
+        "DataWidth": ["32"],
+        "EnableAddressRangeCheck": ["1"],
+        "AddrMin": [
+            "0",
+            "64",
+        ],
+        "AddrMax": [
+            "127",
+            "4095",
+        ],
+    },
+    deps = [":br_csr_checks_intg"],
+)

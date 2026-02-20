@@ -68,3 +68,41 @@ br_verilog_sim_test_tools_suite(
     tools = ["vcs"],
     deps = [":br_csr_demux_tb"],
 )
+
+verilog_library(
+    name = "br_csr_mem_interface_tb",
+    srcs = ["br_csr_mem_interface_tb.sv"],
+    deps = [
+        "//csr/rtl:br_csr_mem_interface",
+        "//misc/sim:br_test_driver",
+    ],
+)
+
+verilog_elab_test(
+    name = "br_csr_mem_interface_tb_elab_test",
+    tool = "verific",
+    deps = [":br_csr_mem_interface_tb"],
+)
+
+br_verilog_sim_test_tools_suite(
+    name = "br_csr_mem_interface_sim_test_tools_suite",
+    params = {
+        "CsrAddrWidth": ["16"],
+        "CsrDataWidth": [
+            "32",
+        ],
+        "MemWidth": [
+            "16",
+        ],
+        "RegisterMemOutputs": [
+            "0",
+            "1",
+        ],
+        "RegisterResponseOutputs": [
+            "0",
+            "1",
+        ],
+    },
+    tools = ["vcs"],
+    deps = [":br_csr_mem_interface_tb"],
+)
