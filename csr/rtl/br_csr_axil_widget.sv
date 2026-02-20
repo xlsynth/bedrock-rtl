@@ -241,7 +241,6 @@ module br_csr_axil_widget #(
 
   always_comb begin
     wd_state_next = wd_state;
-    // ri lint_check_waive FSM_DEFAULT_REQ
     unique case (wd_state)
       Idle: begin
         if (csr_req_valid) begin
@@ -264,6 +263,10 @@ module br_csr_axil_widget #(
       end
       Aborted: begin
         wd_state_next = Idle;
+      end
+      default: begin
+        // ri lint_check_waive FSM_DEFAULT_REQ
+        wd_state_next = watchdog_state_t'(2'bxx);
       end
     endcase
   end
