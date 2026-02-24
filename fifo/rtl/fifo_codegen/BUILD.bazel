@@ -13,6 +13,6 @@ py_binary(
 )
 
 filegroup(
-    name = "br_fifo_shared_ctrl_template",
-    srcs = ["br_fifo_shared_ctrl.sv.jinja2"],
+    name = "br_fifo_shared_template",
+    srcs = ["br_fifo_shared.sv.jinja2"],
 )

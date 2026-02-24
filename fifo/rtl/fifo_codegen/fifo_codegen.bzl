@@ -111,6 +111,7 @@ def shared_fifo_verilog_library(
             ":gen_" + name + "_formatted.sv",
             src,
         ],
+        tags = ["update_golden"],
     )
     diff_test(
         name = name + "_diff_test",
@@ -120,4 +121,5 @@ def shared_fifo_verilog_library(
         """,
         file1 = src,
         file2 = ":gen_" + name + "_formatted.sv",
+        tags = ["check_golden"],
     )

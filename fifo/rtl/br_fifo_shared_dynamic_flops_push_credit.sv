@@ -1,20 +1,23 @@
-// SPDX-License-Identifier: Apache-2.0
 
+// SPDX-License-Identifier: Apache-2.0
 //
-// Bedrock-RTL Shared Dynamic Multi-FIFO with Flop-based Storage (Push Valid/Credit Interface)
+// Bedrock-RTL Shared Dynamic Multi-FIFO with Flop-based Storage
+// (Push Valid/Credit Interface, Pop Ready/Valid Interface)
 //
-// This module implements a shared storage multi-FIFO with dynamic allocation
-// of storage from a flop-based RAM.
+// This module implements a shared storage multi-FIFO with flop-based storage
+// and dynamic allocation.
 //
 // The multi-FIFO contains multiple logical FIFOs. Space in the shared
 // data RAM is allocated to the logical FIFOs dynamically.
 // The order of RAM entries for a single logical FIFO is tracked via
 // singly-linked lists. The linked lists are stored in a separate
 // pointer RAM.
-//
+// The data and pointer RAMs are implemented as flops and instantiated
+// internally.
 // The push interface provides a valid/credit interface and a binary-encoded
 // FIFO ID. The push data is appended to the logical FIFO with the specified ID.
-// The multi-FIFO supports multiple write ports. Each write port has its own
+//
+// The FIFO controller supports multiple write ports. Each write port has its own
 // push_valid and push_data, but the push_credit return is shared by all push
 // ports and returns up to `NumWritePorts` credits every cycle. The sender can
 // send on every push_valid flow in the same cycle if it has sufficient credit,
@@ -24,9 +27,13 @@
 // read latency is non-zero or the RegisterPopOutputs parameter is set to 1, the
 // pop_data will be provided from a staging buffer per logical FIFO. The staging
 // buffers are refilled from the data RAM and arbitrate with each other for
-// access. The controller supports multiple read ports. In this case, each
-// logical FIFO can read from any of the read ports. The mapping of reads to
-// ports is based on the lower bits of the read address. Each logical FIFO can
+// access. The depth of each staging buffer can be configured with the
+// StagingBufferDepth parameter. The bandwidth of a single logical FIFO is
+// determined by the staging buffer depth and is equivalent to
+// `StagingBufferDepth / (DataRamReadLatency + 1)`.
+//
+// The controller supports multiple read ports. Each logical FIFO can use any of the read ports.
+// The mapping of reads to ports is based on the lower bits of the read address. Each logical FIFO can
 // only pop at most one item per cycle. Therefore, there must be at least as
 // many active logical FIFOs as read ports to fully utilize the read bandwidth.
 //
@@ -42,30 +49,35 @@
 // the number of linked lists per FIFO should be set to `PointerRamReadLatency +
 // 1` and the staging buffer depth should be set to `DataRamReadLatency + 1`.
 //
+// The design uses internal flop-based RAMs for the data and pointer storage.
+// The latency of the internal RAMs are determined from the retiming parameters as follows:
+//
 // `PointerRamReadLatency = PointerRamAddressDepthStages + PointerRamReadDataDepthStages + PointerRamReadDataWidthStages`
 //
 // `DataRamReadLatency = DataRamReadAddressDepthStages + DataRamReadDataDepthStages + DataRamReadDataWidthStages`
 //
-// For example, to have zero retiming on the read path, full bandwidth, and
-// pop data registered at the output, set StagingBufferDepth = 1,
-// NumLinkedListsPerFifo = 1, and RegisterPopOutputs = 1.
+//
+// The design uses internal arbiters to determine which logical FIFOs can use the RAM read ports
+// on a given cycle. The arbitration policy is least-recently used (LRU).
 
+`include "br_asserts_internal.svh"
+
+// ri lint_check_waive MOD_NAME
 module br_fifo_shared_dynamic_flops_push_credit #(
+    // Number of logical FIFOs. Must be >=2.
+    parameter int NumFifos = 2,
+    // Total depth of the FIFO.
+    // Must be greater than two times the number of write ports and at least the number of read ports.
+    parameter int Depth = 3,
+    // Width of the data. Must be >=1.
+    parameter int Width = 1,
     // Number of write ports. Must be >=1.
     parameter int NumWritePorts = 1,
     // Number of read ports. Must be >=1 and a power of 2.
     parameter int NumReadPorts = 1,
-    // Number of logical FIFOs. Must be >=2.
-    parameter int NumFifos = 2,
-    // Total depth of the FIFO.
-    // Must be greater than two times the number of write ports.
-    parameter int Depth = 3,
-    // Width of the data. Must be >=1.
-    parameter int Width = 1,
     // The depth of the pop-side staging buffer.
     // This affects the pop bandwidth of each logical FIFO.
-    // The bandwidth will be `StagingBufferDepth / (DataRamAddressDepthStages
-    // + DataRamReadDataDepthStages + DataRamReadDataWidthStages + 1)`.
+    // The max bandwidth will be `StagingBufferDepth / (DataRamReadLatency + 1)`.
     parameter int StagingBufferDepth = 1,
     // The number of sub-linked lists used by each logical FIFO.
     // This affects the pop bandwidth of each logical FIFO.
@@ -74,19 +86,6 @@ module br_fifo_shared_dynamic_flops_push_credit #(
     // If 1, make sure pop_valid/pop_data are registered at the output
     // of the staging buffer. This adds a cycle of cut-through latency.
     parameter bit RegisterPopOutputs = 0,
-    // If 1, add a retiming stage to the push_credit signal so that it is
-    // driven directly from a flop. This comes at the expense of one additional
-    // cycle of credit loop latency.
-    parameter bit RegisterPushOutputs = 0,
-    // If 1, cover that push_credit_stall can be asserted
-    // Otherwise, assert that it is never asserted.
-    parameter bit EnableCoverPushCreditStall = 1,
-    // If 1, cover that credit_withhold can be non-zero.
-    // Otherwise, assert that it is always zero.
-    parameter bit EnableCoverCreditWithhold = 1,
-    // If 1, cover that push_sender_in_reset can be asserted
-    // Otherwise, assert that it is never asserted.
-    parameter bit EnableCoverPushSenderInReset = 1,
     // If 1, place a register on the deallocation path from the pop-side
     // staging buffer to the freelist. This improves timing at the cost of
     // adding a cycle of backpressure latency.
@@ -111,17 +110,29 @@ module br_fifo_shared_dynamic_flops_push_credit #(
     parameter int PointerRamReadDataDepthStages = 0,
     // Number of stages in the width dimension on the pointer flop RAM.
     parameter int PointerRamReadDataWidthStages = 0,
+    // If 1, add a retiming stage to the push_credit signal so that it is
+    // driven directly from a flop. This comes at the expense of one additional
+    // cycle of credit loop latency.
+    parameter bit RegisterPushOutputs = 0,
+    // If 1, cover that push_credit_stall can be asserted
+    // Otherwise, assert that it is never asserted.
+    parameter bit EnableCoverPushCreditStall = 1,
+    // If 1, cover that credit_withhold can be non-zero.
+    // Otherwise, assert that it is always zero.
+    parameter bit EnableCoverCreditWithhold = 1,
+    // If 1, cover that push_sender_in_reset can be asserted
+    // Otherwise, assert that it is never asserted.
+    parameter bit EnableCoverPushSenderInReset = 1,
     // If 1, assert that push_data is always known (not X) when push_valid is asserted.
     parameter bit EnableAssertPushDataKnown = 1,
     // If 1, then assert there are no valid bits asserted and that the FIFO is
     // empty at the end of the test.
     // ri lint_check_waive PARAM_NOT_USED
     parameter bit EnableAssertFinalNotValid = 1,
-
     localparam int PushCreditWidth = $clog2(NumWritePorts + 1),
+    localparam int CountWidth = $clog2(Depth + 1),
     localparam int FifoIdWidth = br_math::clamped_clog2(NumFifos),
-    localparam int AddrWidth = br_math::clamped_clog2(Depth),
-    localparam int CountWidth = $clog2(Depth + 1)
+    localparam int AddrWidth = br_math::clamped_clog2(Depth)
 ) (
     input logic clk,
     input logic rst,
@@ -135,9 +146,8 @@ module br_fifo_shared_dynamic_flops_push_credit #(
     input logic [NumWritePorts-1:0][Width-1:0] push_data,
     input logic [NumWritePorts-1:0][FifoIdWidth-1:0] push_fifo_id,
     output logic push_full,
-
-    input  logic [CountWidth-1:0] credit_initial_push,
-    input  logic [CountWidth-1:0] credit_withhold_push,
+    input logic [CountWidth-1:0] credit_initial_push,
+    input logic [CountWidth-1:0] credit_withhold_push,
     output logic [CountWidth-1:0] credit_available_push,
     output logic [CountWidth-1:0] credit_count_push,
 
@@ -147,12 +157,14 @@ module br_fifo_shared_dynamic_flops_push_credit #(
     output logic [NumFifos-1:0][Width-1:0] pop_data,
     output logic [NumFifos-1:0] pop_empty
 );
+
   // Integration Checks
   // Rely on checks in the submodules
 
   // Implementation
   logic either_rst;
   assign either_rst = rst || push_sender_in_reset;
+
 
   // Data RAM
   logic [NumWritePorts-1:0] data_ram_wr_valid;
@@ -231,24 +243,24 @@ module br_fifo_shared_dynamic_flops_push_credit #(
       PointerRamAddressDepthStages + PointerRamReadDataDepthStages + PointerRamReadDataWidthStages;
 
   br_fifo_shared_dynamic_ctrl_push_credit #(
-      .NumWritePorts(NumWritePorts),
-      .NumReadPorts(NumReadPorts),
       .NumFifos(NumFifos),
       .Depth(Depth),
       .Width(Width),
+      .NumWritePorts(NumWritePorts),
+      .NumReadPorts(NumReadPorts),
       .StagingBufferDepth(StagingBufferDepth),
-      .NumLinkedListsPerFifo(NumLinkedListsPerFifo),
       .RegisterPopOutputs(RegisterPopOutputs),
-      .RegisterDeallocation(RegisterDeallocation),
+      .NumLinkedListsPerFifo(NumLinkedListsPerFifo),
       .DataRamReadLatency(DataRamReadLatency),
       .PointerRamReadLatency(PointerRamReadLatency),
+      .RegisterDeallocation(RegisterDeallocation),
       .RegisterPushOutputs(RegisterPushOutputs),
       .EnableCoverPushCreditStall(EnableCoverPushCreditStall),
       .EnableCoverCreditWithhold(EnableCoverCreditWithhold),
       .EnableCoverPushSenderInReset(EnableCoverPushSenderInReset),
       .EnableAssertPushDataKnown(EnableAssertPushDataKnown),
       .EnableAssertFinalNotValid(EnableAssertFinalNotValid)
-  ) br_fifo_shared_dynamic_ctrl (
+  ) br_fifo_shared_dynamic_ctrl_push_credit_inst (
       .clk,
       .rst,
       .push_sender_in_reset,
@@ -256,15 +268,15 @@ module br_fifo_shared_dynamic_flops_push_credit #(
       .push_credit_stall,
       .push_credit,
       .push_valid,
-      .push_data,
       .push_fifo_id,
+      .push_data,
       .push_full,
       .credit_initial_push,
       .credit_withhold_push,
       .credit_available_push,
       .credit_count_push,
-      .pop_valid,
       .pop_ready,
+      .pop_valid,
       .pop_data,
       .pop_empty,
       .data_ram_wr_valid,
@@ -286,5 +298,4 @@ module br_fifo_shared_dynamic_flops_push_credit #(
   // Implementation Checks
 
   // Rely on implementation checks in the controller
-
 endmodule : br_fifo_shared_dynamic_flops_push_credit
