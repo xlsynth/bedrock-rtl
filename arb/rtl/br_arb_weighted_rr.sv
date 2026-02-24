@@ -82,9 +82,9 @@ module br_arb_weighted_rr #(
   //------------------------------------------
 
   if (NumRequesters == 1) begin : gen_1_req
-    `BR_UNUSED(rst);
-    `BR_UNUSED(enable_priority_update);
-    `BR_UNUSED(request_weight);
+    `BR_UNUSED(rst)
+    `BR_UNUSED(enable_priority_update)
+    `BR_UNUSED(request_weight)
     assign grant = request;
 
   end else begin : gen_any_higher_pri_req
