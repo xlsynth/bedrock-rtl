@@ -150,7 +150,9 @@ module br_fifo_shared_pop_ctrl_credit_ext_arbiter #(
     );
 
     br_flow_join #(
-        .NumFlows(2)
+        .NumFlows(2),
+        // ram_rd_req_valid will be 1 at end of sim
+        .EnableAssertFinalNotValid(0)
     ) br_flow_join_ram_rd_addr (
         .clk,
         .rst(either_rst),
