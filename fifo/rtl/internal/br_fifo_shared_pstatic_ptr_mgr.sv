@@ -14,7 +14,7 @@ module br_fifo_shared_pstatic_ptr_mgr #(
     parameter int NumFifos = 2,
     parameter int Depth = 3,
     parameter bit EnableAssertFinalNotValid = 1,
-    // If 1, ram_items comes from counter registers
+    // If 1, items comes from counter registers
     // If 0, it is reconstructed from the head/tail pointers
     parameter bit RegisterRamItems = 0,
 
@@ -41,8 +41,8 @@ module br_fifo_shared_pstatic_ptr_mgr #(
     output logic [NumFifos-1:0][AddrWidth-1:0] head,
 
     // Empty/item count to pop controller
-    output logic [NumFifos-1:0] ram_empty,
-    output logic [NumFifos-1:0][CountWidth-1:0] ram_items
+    output logic [NumFifos-1:0] empty,
+    output logic [NumFifos-1:0][CountWidth-1:0] items
 );
 
   // Integration Assertions
@@ -57,13 +57,13 @@ module br_fifo_shared_pstatic_ptr_mgr #(
   logic [NumFifos-1:0] reinit_head;
   logic [NumFifos-1:0][AddrWidth-1:0] head_next;
   logic [NumFifos-1:0] push_full_next;
-  logic [NumFifos-1:0] ram_empty_next;
+  logic [NumFifos-1:0] empty_next;
 
   assign advance_head = head_ready & head_valid;
-  assign head_valid   = ~ram_empty;
+  assign head_valid   = ~empty;
 
   `BR_REG(push_full, push_full_next)
-  `BR_REGI(ram_empty, ram_empty_next, {NumFifos{1'b1}})
+  `BR_REGI(empty, empty_next, {NumFifos{1'b1}})
 
   for (genvar i = 0; i < NumFifos; i++) begin : gen_fifo_pointers
     assign reinit_head[i] = advance_head[i] && (head[i] == config_bound[i]);
@@ -90,30 +90,30 @@ module br_fifo_shared_pstatic_ptr_mgr #(
     always_comb begin
       if (advance_head[i] == advance_tail[i]) begin
         push_full_next[i] = push_full[i];
-        ram_empty_next[i] = ram_empty[i];
+        empty_next[i] = empty[i];
       end else if (advance_head[i]) begin
         // If the head is advancing without the tail,
         // full must be false and empty may be true
         // if the head catches up to the tail.
         push_full_next[i] = 1'b0;
-        ram_empty_next[i] = (head_next[i] == tail[i]);
+        empty_next[i] = (head_next[i] == tail[i]);
       end else begin
         // If the tail is advancing without the head,
         // full may be true if the tail catches up to the head
         // and empty must be false.
         push_full_next[i] = (tail_next[i] == head[i]);
-        ram_empty_next[i] = 1'b0;
+        empty_next[i] = 1'b0;
       end
     end
   end
 
-  if (RegisterRamItems) begin : gen_register_ram_items
-    for (genvar i = 0; i < NumFifos; i++) begin : gen_ram_items
+  if (RegisterRamItems) begin : gen_register_items
+    for (genvar i = 0; i < NumFifos; i++) begin : gen_items
       br_counter #(
           .MaxValue(Depth),
           .EnableWrap(0),
           .EnableAssertFinalNotValid(EnableAssertFinalNotValid)
-      ) br_counter_ram_items (
+      ) br_counter_items (
           .clk,
           .rst,
           .reinit(1'b0),
@@ -123,12 +123,12 @@ module br_fifo_shared_pstatic_ptr_mgr #(
           .decr_valid(advance_head[i]),
           .decr(1'b1),
           .value_next(),
-          .value(ram_items[i])
+          .value(items[i])
       );
     end
     `BR_UNUSED(config_size)
-  end else begin : gen_reconstruct_ram_items
-    for (genvar i = 0; i < NumFifos; i++) begin : gen_ram_items
+  end else begin : gen_reconstruct_items
+    for (genvar i = 0; i < NumFifos; i++) begin : gen_items
       logic [AddrWidth-1:0] tail_head_diff;
       logic [AddrWidth-1:0] head_tail_diff;
 
@@ -138,7 +138,7 @@ module br_fifo_shared_pstatic_ptr_mgr #(
       // FIFO.
       assign head_tail_diff = head[i] - tail[i];
 
-      assign ram_items[i] =
+      assign items[i] =
           push_full[i] ? config_size[i] :
           (tail[i] >= head[i]) ? CountWidth'(tail_head_diff) :
           (config_size[i] - CountWidth'(head_tail_diff));
@@ -149,20 +149,18 @@ module br_fifo_shared_pstatic_ptr_mgr #(
   localparam int MaxPerFifoDepth = Depth - (NumFifos - 1);
 
   for (genvar i = 0; i < NumFifos; i++) begin : gen_per_fifo_impl_checks
-    `BR_ASSERT_IMPL(ram_empty_means_no_items_a, ram_empty[i] |-> (ram_items[i] == 0))
-    `BR_ASSERT_IMPL(ram_empty_on_ptr_match_a, ram_empty[i] |-> (head[i] == tail[i]))
+    `BR_ASSERT_IMPL(empty_means_no_items_a, empty[i] |-> (items[i] == 0))
+    `BR_ASSERT_IMPL(empty_on_ptr_match_a, empty[i] |-> (head[i] == tail[i]))
     `BR_ASSERT_IMPL(push_full_on_ptr_match_a, push_full[i] |-> (head[i] == tail[i]))
     if (MaxPerFifoDepth > 1) begin : gen_dual_advance_assert
-      `BR_ASSERT_IMPL(dual_advance_ram_items_stable_a,
-                      (advance_head[i] && advance_tail[i]) |=> $stable(ram_items[i]))
+      `BR_ASSERT_IMPL(dual_advance_items_stable_a,
+                      (advance_head[i] && advance_tail[i]) |=> $stable(items[i]))
     end
-    `BR_ASSERT_IMPL(
-        head_advance_ram_items_decr_a,
-        (advance_head[i] && !advance_tail[i]) |=> (ram_items[i] == $past(ram_items[i]) - 1))
-    `BR_ASSERT_IMPL(
-        tail_advance_ram_items_incr_a,
-        (advance_tail[i] && !advance_head[i]) |=> (ram_items[i] == $past(ram_items[i]) + 1))
-    `BR_ASSERT_IMPL(no_ram_items_overflow_a, ram_items[i] <= config_size[i])
+    `BR_ASSERT_IMPL(head_advance_items_decr_a,
+                    (advance_head[i] && !advance_tail[i]) |=> (items[i] == $past(items[i]) - 1))
+    `BR_ASSERT_IMPL(tail_advance_items_incr_a,
+                    (advance_tail[i] && !advance_head[i]) |=> (items[i] == $past(items[i]) + 1))
+    `BR_ASSERT_IMPL(no_items_overflow_a, items[i] <= config_size[i])
   end
 
 endmodule

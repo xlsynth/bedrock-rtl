@@ -1,0 +1,18 @@
+# SPDX-License-Identifier: Apache-2.0
+
+load("@rules_python//python:defs.bzl", "py_binary")
+
+package(default_visibility = ["//visibility:public"])
+
+py_binary(
+    name = "fifo_codegen",
+    srcs = ["fifo_codegen.py"],
+    deps = [
+        "@bedrock-rtl-pypi//jinja2:pkg",
+    ],
+)
+
+filegroup(
+    name = "br_fifo_shared_ctrl_template",
+    srcs = ["br_fifo_shared_ctrl.sv.jinja2"],
+)
