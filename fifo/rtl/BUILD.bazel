@@ -796,3 +796,82 @@ br_verilog_elab_and_lint_test_suite(
     },
     deps = [":br_fifo_shared_pstatic_flops_push_credit"],
 )
+
+verilog_library(
+    name = "br_fifo_shared_pop_ctrl_credit_ext_arbiter",
+    srcs = ["br_fifo_shared_pop_ctrl_credit_ext_arbiter.sv"],
+    deps = [
+        "//credit/rtl:br_credit_counter",
+        "//delay/rtl:br_delay_valid",
+        "//enc/rtl:br_enc_onehot2bin",
+        "//fifo/rtl/internal:br_fifo_shared_read_xbar",
+        "//flow/rtl:br_flow_join",
+    ],
+)
+
+br_verilog_elab_and_lint_test_suite(
+    name = "br_fifo_shared_pop_ctrl_credit_ext_arbiter_test_suite",
+    params = {
+        "NumFifos": ["2"],
+        "Depth": [
+            "5",
+            "8",
+        ],
+        "Width": ["8"],
+        "NumReadPorts": [
+            "1",
+            "2",
+        ],
+        "PopMaxCredits": [
+            "1",
+            "4",
+        ],
+        "RamReadLatency": [
+            "0",
+            "1",
+        ],
+        "RegisterDeallocation": [
+            "0",
+            "1",
+        ],
+    },
+    deps = [":br_fifo_shared_pop_ctrl_credit_ext_arbiter"],
+)
+
+verilog_library(
+    name = "br_fifo_shared_pop_ctrl_credit",
+    srcs = ["br_fifo_shared_pop_ctrl_credit.sv"],
+    deps = [
+        ":br_fifo_shared_pop_ctrl_credit_ext_arbiter",
+        "//arb/rtl/internal:br_arb_lru_internal",
+    ],
+)
+
+br_verilog_elab_and_lint_test_suite(
+    name = "br_fifo_shared_pop_ctrl_credit_test_suite",
+    params = {
+        "NumFifos": ["2"],
+        "Depth": [
+            "5",
+            "8",
+        ],
+        "Width": ["8"],
+        "NumReadPorts": [
+            "1",
+            "2",
+        ],
+        "PopMaxCredits": [
+            "1",
+            "4",
+        ],
+        "RamReadLatency": [
+            "0",
+            "1",
+        ],
+        "RegisterDeallocation": [
+            "0",
+            "1",
+        ],
+    },
+    deps = [":br_fifo_shared_pop_ctrl_credit"],
+)
