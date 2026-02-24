@@ -1,26 +1,73 @@
-
+{#
+   This is a template for a shared FIFO controller with internal flop-based storage.
+   It is used to generate the following modules:
+   - br_fifo_shared_dynamic_flops
+   - br_fifo_shared_dynamic_flops_push_credit
+   - br_fifo_shared_pstatic_flops
+   - br_fifo_shared_pstatic_flops_push_credit
+#}
 // SPDX-License-Identifier: Apache-2.0
 //
-// Bedrock-RTL Shared Dynamic Multi-FIFO w/ Flop-based Storage
-// (Push Valid/Credit Interface, Pop Ready/Valid Interface)
+// Bedrock-RTL Shared {% if dynamic %}Dynamic{% else %}Pseudo-Static{% endif %} Multi-FIFO w/ Flop-based Storage
+// ({% if push_credit %}Push Valid/Credit Interface{%- else %}Push Valid/Ready Interface{% endif %}, {% if pop_credit %}Pop Credit/Valid Interface{%- else %}Pop Ready/Valid Interface{% endif %}{% if ext_arbiter %} with external arbiter interface{% endif %})
 //
 // This module implements a shared storage multi-FIFO with flop-based storage.
-// and dynamic allocation.
+// and {% if dynamic %}dynamic{% else %}pseudo-static{% endif %} allocation.
 //
+{%- if dynamic %}
 // The multi-FIFO contains multiple logical FIFOs. Space in the shared
 // data RAM is allocated to the logical FIFOs dynamically.
 // The order of RAM entries for a single logical FIFO is tracked via
 // singly-linked lists. The linked lists are stored in a separate
 // pointer RAM.
-// The push interface provides a valid/credit interface and a binary-encoded
+{%- else %}
+// The multi-FIFO contains multiple logical FIFOs. Space in the shared
+// data RAM is allocated to the logical FIFOs statically at initialization,
+// and a separate set of read/write pointers are kept per logical FIFO.
+// For instance, for a 4-FIFO design with a depth of 16, the sizes of the
+// logical FIFOs might be [6, 2, 3, 5]. In this case, you would configure
+// the base and bound addresses as [(0, 5), (6, 7), (8, 10), (11, 15)] and the
+// layout of the data RAM is as follows:
+//
+//  +----------------------------------------------------------------------------+
+//  | Addr | 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12 | 13 | 14 | 15 |
+//  |------|---|---|---|---|---|---|---|---|---|---|----|----|----|----|----|----|
+//  | FIFO | 0 | 0 | 0 | 0 | 0 | 0 | 1 | 1 | 2 | 2 | 2  | 3  | 3  | 3  | 3  | 3  |
+//  +----------------------------------------------------------------------------+
+//
+{%- endif %}
+// The push interface provides a {% if push_credit %}valid/credit{% else %}valid/ready{% endif %} interface and a binary-encoded
 // FIFO ID. The push data is appended to the logical FIFO with the specified ID.
 //
+{%- if dynamic %}
+{%- if push_credit %}
 // The FIFO controller supports multiple write ports. Each write port has its own
 // push_valid and push_data, but the push_credit return is shared by all push
 // ports and returns up to `NumWritePorts` credits every cycle. The sender can
 // send on every push_valid flow in the same cycle if it has sufficient credit,
 // even if multiple flows are destined for the same logical FIFO.
+{%- else %}
+// The FIFO controller supports multiple write ports. There will be one push
+// ready/valid interface for each write port. If there is sufficient space, the
+// multi-FIFO can accept an item from every push interface on the same cycle,
+// even if they are to the same logical FIFO.
+{%- endif %}
+{%- else %}{# pstatic #}
+{%- if push_credit %}
+// Since there is a separate allocation for each logical FIFO, each logical FIFO
+// has its own independent credit return.
+{%- endif %}
+{%- endif %}
 //
+{%- if pop_credit %}
+// The pop interface uses credit-based flow control. Each logical FIFO has its
+// own credit return and credit count. There will be one pop_valid and pop_data
+// for each read port, and any logical FIFO can use any read port. The pop_fifo_id
+// will indicate the logical FIFO the data is read from. A logical FIFO can be popped
+// as long as it has at least one credit available. The bandwidth of a single logical FIFO
+// is bounded by the maximum available credit and the RAM read latency.
+// That is, it is `PopMaxCredits / (RamReadLatency + 1)`.
+{%- else %}{# pop_ready #}
 // Every logical FIFO has its own ready/valid pop interface. If the data RAM
 // read latency is non-zero or the RegisterPopOutputs parameter is set to 1, the
 // pop_data will be provided from a staging buffer per logical FIFO. The staging
@@ -28,8 +75,10 @@
 // access. The depth of each staging buffer can be configured with the
 // StagingBufferDepth parameter. The bandwidth of a single logical FIFO is
 // determined by the staging buffer depth and is equivalent to
-// `StagingBufferDepth / (DataRamReadLatency + 1)`.
+// `StagingBufferDepth / ({% if dynamic %}DataRamReadLatency{% else %}RamReadLatency{% endif %} + 1)`.
+{%- endif %}
 //
+{%- if dynamic %}
 // The controller supports multiple read ports. Each logical FIFO can use any of the read ports.
 // The mapping of reads to ports is based on the lower bits of the read address. Each logical FIFO can
 // only pop at most one item per cycle. Therefore, there must be at least as
@@ -40,12 +89,12 @@
 // FIFO, configured by the `NumLinkedListsPerFifo` parameter. The linked list
 // controller will cycle through the linked list heads in round-robin fashion.
 // The bandwidth is also limited by the staging buffer depth and data RAM read
-// latency. Up to `StagingBufferDepth` reads can be inflight to the RAM at any
+// latency. Up to `{% if pop_credit %}PopMaxCredits{% else %}StagingBufferDepth{% endif %}` reads can be inflight to the RAM at any
 // time. Thus, the bandwidth of a single logical FIFO is capped at
 // the minimum of `NumLinkedListsPerFifo / (PointerRamReadLatency + 1)` and
-// `StagingBufferDepth / (DataRamReadLatency + 1)`. To get full bandwidth,
+// `{% if pop_credit %}PopMaxCredits / (DataRamReadLatency + 1){% else %}StagingBufferDepth / (DataRamReadLatency + 1){% endif %}`. To get full bandwidth,
 // the number of linked lists per FIFO should be set to `PointerRamReadLatency +
-// 1` and the staging buffer depth should be set to `DataRamReadLatency + 1`.
+// 1` and the {% if pop_credit %}maximum number of credits{% else %}staging buffer depth{% endif %} should be set to `DataRamReadLatency + 1`.
 //
 // The design uses internal flop-based RAMs for the data and pointer storage.
 // The latency of the internal RAMs are determined from the retiming parameters as follows:
@@ -54,14 +103,27 @@
 //
 // `DataRamReadLatency = DataRamReadAddressDepthStages + DataRamReadDataDepthStages + DataRamReadDataWidthStages`
 //
+{%- else %}{# pstatic #}
+// The design uses internal flop-based RAMs for the data storage.
+// The latency of the internal RAM is determined from the retiming parameters as follows:
 //
+// `RamReadLatency = RamAddressDepthStages + RamReadDataDepthStages + RamReadDataWidthStages`
+{%- endif %}
+//
+{%- if ext_arbiter %}
+// This design assumes there are external arbiters deciding the arbitration policy
+// for each read port. The arb_request, arb_grant, and arb_enable_priority_update
+// signals are used to connect to the external arbiters. The interface is compatible
+// to the standard arbiters like br_arb_fixed, br_arb_rr, and br_arb_lru.
+{%- else %}
 // The design uses internal arbiters to determine which logical FIFOs can use the RAM read ports
 // on a given cycle. The arbitration policy is least-recently used (LRU).
+{%- endif %}
 
 `include "br_asserts_internal.svh"
 
 // ri lint_check_waive MOD_NAME
-module br_fifo_shared_dynamic_flops_push_credit #(
+module {{ module_name }} #(
     // Number of logical FIFOs. Must be >=2.
     parameter int NumFifos = 2,
     // Total depth of the FIFO.
@@ -73,21 +135,31 @@ module br_fifo_shared_dynamic_flops_push_credit #(
     parameter int NumWritePorts = 1,
     // Number of read ports. Must be >=1 and a power of 2.
     parameter int NumReadPorts = 1,
+    {%- if pop_credit %}
+    // The maximum number of pop-side credits that can be available to a single FIFO.
+    parameter int PopMaxCredits = 1,
+    {%- else %}{# pop_credit #}
     // The depth of the pop-side staging buffer.
     // This affects the pop bandwidth of each logical FIFO.
     // The max bandwidth will be `StagingBufferDepth / (DataRamReadLatency + 1)`.
     parameter int StagingBufferDepth = 1,
+    {%- endif %}{# pop_credit #}
+    {%- if dynamic %}
     // The number of sub-linked lists used by each logical FIFO.
     // This affects the pop bandwidth of each logical FIFO.
     // The max bandwidth will be `NumLinkedListsPerFifo / (PointerRamReadLatency + 1)`.
     parameter int NumLinkedListsPerFifo = 1,
+    {%- endif %}
+    {%- if not pop_credit %}
     // If 1, make sure pop_valid/pop_data are registered at the output
     // of the staging buffer. This adds a cycle of cut-through latency.
     parameter bit RegisterPopOutputs = 0,
+    {%- endif %}
     // If 1, place a register on the deallocation path from the pop-side
     // staging buffer to the freelist. This improves timing at the cost of
     // adding a cycle of backpressure latency.
     parameter bit RegisterDeallocation = 0,
+    {%- if dynamic %}
     // Number of tiles in the depth dimension for the data flop RAM.
     parameter int DataRamDepthTiles = 1,
     // Number of tiles in the width dimension for the data flop RAM.
@@ -108,6 +180,19 @@ module br_fifo_shared_dynamic_flops_push_credit #(
     parameter int PointerRamReadDataDepthStages = 0,
     // Number of stages in the width dimension on the pointer flop RAM.
     parameter int PointerRamReadDataWidthStages = 0,
+    {%- else %}
+    // Number of tiles in the depth dimension for the data flop RAM.
+    parameter int RamDepthTiles = 1,
+    // Number of tiles in the width dimension for the data flop RAM.
+    parameter int RamWidthTiles = 1,
+    // Number of stages on the address path for the data flop RAM.
+    parameter int RamAddressDepthStages = 0,
+    // Number of stages in the depth dimension on the data flop RAM.
+    parameter int RamReadDataDepthStages = 0,
+    // Number of stages in the width dimension on the data flop RAM.
+    parameter int RamReadDataWidthStages = 0,
+    {%- endif %}
+    {%- if push_credit %}
     // If 1, add a retiming stage to the push_credit signal so that it is
     // driven directly from a flop. This comes at the expense of one additional
     // cycle of credit loop latency.
@@ -121,45 +206,127 @@ module br_fifo_shared_dynamic_flops_push_credit #(
     // If 1, cover that push_sender_in_reset can be asserted
     // Otherwise, assert that it is never asserted.
     parameter bit EnableCoverPushSenderInReset = 1,
+    {%- else %}
+    // If 1, cover that the push side experiences backpressure.
+    // If 0, assert that there is never backpressure.
+    parameter bit EnableCoverPushBackpressure = 1,
+    // If 1, assert that push_valid is stable when backpressured.
+    parameter bit EnableAssertPushValidStability = EnableCoverPushBackpressure,
+    // If 1, assert that push_data is stable when backpressured.
+    // ri lint_check_waive PARAM_NOT_USED
+    parameter bit EnableAssertPushDataStability = EnableAssertPushValidStability,
+    {%- endif %}
     // If 1, assert that push_data is always known (not X) when push_valid is asserted.
     parameter bit EnableAssertPushDataKnown = 1,
     // If 1, then assert there are no valid bits asserted and that the FIFO is
     // empty at the end of the test.
     // ri lint_check_waive PARAM_NOT_USED
     parameter bit EnableAssertFinalNotValid = 1,
+
+    {%- if push_credit %}
     localparam int PushCreditWidth = $clog2(NumWritePorts + 1),
     localparam int CountWidth = $clog2(Depth + 1),
+    {%- endif %}
+    {%- if pop_credit %}
+    localparam int PopCreditWidth = $clog2(PopMaxCredits + 1),
+    {%- endif %}
     localparam int FifoIdWidth = br_math::clamped_clog2(NumFifos),
-    localparam int AddrWidth = br_math::clamped_clog2(Depth)
+    localparam int AddrWidth   = br_math::clamped_clog2(Depth)
 ) (
     input logic clk,
     input logic rst,
 
+    {%- if not dynamic %}
+    // Fifo configuration
+    // These can come from straps or CSRs, but they must be set before reset is
+    // deasserted and then held stable until reset is asserted.
+    // The base and bound addresses determine the range of RAM addresses given
+    // to each logical FIFO. They are both inclusive, so logical FIFO i will
+    // increment from config_base[i] up to config_bound[i] before wrapping back
+    // around to config_base[i] again.
+    // The minimum size for a given logical FIFO is 1, meaning that
+    // config_bound[i] must be >= config_base[i] for all i.
+    // The address ranges must be in ascending order.
+    input logic [NumFifos-1:0][AddrWidth-1:0] config_base,
+    input logic [NumFifos-1:0][AddrWidth-1:0] config_bound,
+    // Error is asserted if the base and bound addresses are misconfigured.
+    // For instance, if any address is >= Depth, config_base[i] > config_bound[i],
+    // or config_base[i] <= config_bound[i-1] for i > 0.
+    output logic config_error,
+    {%- endif %}
+
     // Push side
+    {%- if push_credit %}
     input logic push_sender_in_reset,
     output logic push_receiver_in_reset,
-    input logic push_credit_stall,
+    {%- if dynamic %}
+    input  logic push_credit_stall,
     output logic [PushCreditWidth-1:0] push_credit,
+    {%- else %}{# pstatic #}
+    input logic [NumFifos-1:0] push_credit_stall,
+    output logic [NumFifos-1:0][PushCreditWidth-1:0] push_credit,
+    {%- endif %}{# dynamic #}
+    {%- else %}{# push_ready #}
+    output logic [NumWritePorts-1:0] push_ready,
+    {%- endif %}
     input logic [NumWritePorts-1:0] push_valid,
     input logic [NumWritePorts-1:0][Width-1:0] push_data,
     input logic [NumWritePorts-1:0][FifoIdWidth-1:0] push_fifo_id,
+    {%- if dynamic %}
     output logic push_full,
-    input logic [CountWidth-1:0] credit_initial_push,
-    input logic [CountWidth-1:0] credit_withhold_push,
+    {%- else %}{# pstatic #}
+    output logic [NumFifos-1:0] push_full,
+    {%- endif %}{# dynamic #}
+
+    {%- if push_credit %}
+    {%- if dynamic %}
+    input  logic [CountWidth-1:0] credit_initial_push,
+    input  logic [CountWidth-1:0] credit_withhold_push,
     output logic [CountWidth-1:0] credit_available_push,
     output logic [CountWidth-1:0] credit_count_push,
+    {%- else %}{# pstatic #}
+    input  logic [NumFifos-1:0][CountWidth-1:0] credit_initial_push,
+    input  logic [NumFifos-1:0][CountWidth-1:0] credit_withhold_push,
+    output logic [NumFifos-1:0][CountWidth-1:0] credit_available_push,
+    output logic [NumFifos-1:0][CountWidth-1:0] credit_count_push,
+    {%- endif %}{# dynamic #}
+    {%- endif %}{# push_credit #}
 
     // Pop side
+    {%- if pop_credit %}
+    output logic pop_sender_in_reset,
+    input logic pop_receiver_in_reset,
+    input logic [NumFifos-1:0] pop_credit,
+    output logic [NumReadPorts-1:0] pop_valid,
+    output logic [NumReadPorts-1:0][FifoIdWidth-1:0] pop_fifo_id,
+    output logic [NumReadPorts-1:0][Width-1:0] pop_data,
+    {%- else %}
     output logic [NumFifos-1:0] pop_valid,
     input logic [NumFifos-1:0] pop_ready,
     output logic [NumFifos-1:0][Width-1:0] pop_data,
+    {%- endif %}
     output logic [NumFifos-1:0] pop_empty
+    {%- if pop_credit %},
+    input  logic [NumFifos-1:0][PopCreditWidth-1:0] credit_initial_pop,
+    input  logic [NumFifos-1:0][PopCreditWidth-1:0] credit_withhold_pop,
+    output logic [NumFifos-1:0][PopCreditWidth-1:0] credit_available_pop,
+    output logic [NumFifos-1:0][PopCreditWidth-1:0] credit_count_pop
+    {%- endif %}{# pop_credit #}
+
+    {%- if ext_arbiter %},
+    // Arbiter interface
+    output logic [NumReadPorts-1:0][NumFifos-1:0] arb_request,
+    input logic [NumReadPorts-1:0][NumFifos-1:0] arb_grant,
+    output logic [NumReadPorts-1:0] arb_enable_priority_update
+    {%- endif %}
 );
 
   // Integration Checks
   // Rely on checks in the submodules
 
   // Implementation
+
+  {%- if dynamic %}
   // Data RAM
   logic [NumWritePorts-1:0] data_ram_wr_valid;
   logic [NumWritePorts-1:0][AddrWidth-1:0] data_ram_wr_addr;
@@ -235,43 +402,130 @@ module br_fifo_shared_dynamic_flops_push_credit #(
       DataRamAddressDepthStages + DataRamReadDataDepthStages + DataRamReadDataWidthStages;
   localparam int PointerRamReadLatency =
       PointerRamAddressDepthStages + PointerRamReadDataDepthStages + PointerRamReadDataWidthStages;
+  {%- else %}{# pstatic #}
+  // Data RAM
+  logic ram_wr_valid;
+  logic [AddrWidth-1:0] ram_wr_addr;
+  logic [Width-1:0] ram_wr_data;
 
-  br_fifo_shared_dynamic_ctrl_push_credit #(
+  logic ram_rd_addr_valid;
+  logic [AddrWidth-1:0] ram_rd_addr;
+  logic ram_rd_data_valid;
+  logic [Width-1:0] ram_rd_data;
+
+  br_ram_flops #(
+      .Depth(Depth),
+      .Width(Width),
+      .NumWritePorts(1),
+      .NumReadPorts(1),
+      .DepthTiles(RamDepthTiles),
+      .WidthTiles(RamWidthTiles),
+      .AddressDepthStages(RamAddressDepthStages),
+      .ReadDataDepthStages(RamReadDataDepthStages),
+      .ReadDataWidthStages(RamReadDataWidthStages)
+  ) br_ram_flops_data (
+      .wr_clk(clk),  // ri lint_check_waive SAME_CLOCK_NAME
+      .wr_rst(rst),
+      .wr_valid(ram_wr_valid),
+      .wr_addr(ram_wr_addr),
+      .wr_data(ram_wr_data),
+      .wr_word_en({RamWidthTiles{1'b1}}),
+      .rd_clk(clk),  // ri lint_check_waive SAME_CLOCK_NAME
+      .rd_rst(rst),
+      .rd_addr_valid(ram_rd_addr_valid),
+      .rd_addr(ram_rd_addr),
+      .rd_data_valid(ram_rd_data_valid),
+      .rd_data(ram_rd_data)
+  );
+
+  // Controller
+  localparam int RamReadLatency =
+      RamAddressDepthStages + RamReadDataDepthStages + RamReadDataWidthStages;
+  {%- endif %}
+
+  {{ ctrl_module }} #(
       .NumFifos(NumFifos),
       .Depth(Depth),
       .Width(Width),
       .NumWritePorts(NumWritePorts),
       .NumReadPorts(NumReadPorts),
+      {%- if pop_credit %}
+      .PopMaxCredits(PopMaxCredits),
+      .RegisterPushOutputs(RegisterPushOutputs),
+      {%- else %}{# pop_ready #}
       .StagingBufferDepth(StagingBufferDepth),
       .RegisterPopOutputs(RegisterPopOutputs),
+      {%- endif %}{# pop_credit #}
+      {%- if dynamic %}
       .NumLinkedListsPerFifo(NumLinkedListsPerFifo),
       .DataRamReadLatency(DataRamReadLatency),
       .PointerRamReadLatency(PointerRamReadLatency),
+      {%- else %}{# pstatic #}
+      .RamReadLatency(RamReadLatency),
+      {%- endif %}{# dynamic #}
       .RegisterDeallocation(RegisterDeallocation),
+      {%- if push_credit %}
       .EnableCoverPushCreditStall(EnableCoverPushCreditStall),
       .EnableCoverCreditWithhold(EnableCoverCreditWithhold),
       .EnableCoverPushSenderInReset(EnableCoverPushSenderInReset),
+      {%- else %}
+      .EnableCoverPushBackpressure(EnableCoverPushBackpressure),
+      .EnableAssertPushValidStability(EnableAssertPushValidStability),
+      .EnableAssertPushDataStability(EnableAssertPushDataStability),
+      {%- endif %}{# push_credit #}
       .EnableAssertPushDataKnown(EnableAssertPushDataKnown),
       .EnableAssertFinalNotValid(EnableAssertFinalNotValid)
-  ) br_fifo_shared_dynamic_ctrl_push_credit_inst (
+  ) {{ ctrl_module }}_inst (
       .clk,
       .rst,
+      {%- if not dynamic %}
+      .config_base,
+      .config_bound,
+      .config_error,
+      {%- endif %}{# pstatic #}
+      {%- if push_credit %}
       .push_sender_in_reset,
       .push_receiver_in_reset,
       .push_credit_stall,
       .push_credit,
+      {%- else %}
+      .push_ready,
+      {%- endif %}{# push_credit #}
       .push_valid,
       .push_fifo_id,
       .push_data,
       .push_full,
+      {%- if push_credit %}
       .credit_initial_push,
       .credit_withhold_push,
       .credit_available_push,
       .credit_count_push,
+      {%- endif %}{# push_credit #}
+      {%- if pop_credit %}
+      .pop_sender_in_reset,
+      .pop_receiver_in_reset,
+      .pop_credit,
+      .pop_valid,
+      .pop_fifo_id,
+      .pop_data,
+      {%- else %}{# pop_ready #}
       .pop_ready,
       .pop_valid,
       .pop_data,
+      {%- endif %}{# pop_credit #}
       .pop_empty,
+      {%- if pop_credit %}
+      .credit_initial_pop,
+      .credit_withhold_pop,
+      .credit_available_pop,
+      .credit_count_pop,
+      {%- endif %}{# pop_credit #}
+      {%- if ext_arbiter %}
+      .arb_request,
+      .arb_grant,
+      .arb_enable_priority_update,
+      {%- endif %}{# ext_arbiter #}
+      {%- if dynamic %}
       .data_ram_wr_valid,
       .data_ram_wr_addr,
       .data_ram_wr_data,
@@ -286,9 +540,19 @@ module br_fifo_shared_dynamic_flops_push_credit #(
       .ptr_ram_rd_addr,
       .ptr_ram_rd_data_valid,
       .ptr_ram_rd_data
+      {%- else %}{# pstatic #}
+      .ram_wr_valid,
+      .ram_wr_addr,
+      .ram_wr_data,
+      .ram_rd_addr_valid,
+      .ram_rd_addr,
+      .ram_rd_data_valid,
+      .ram_rd_data
+      {%- endif %}{# dynamic #}
   );
 
   // Implementation Checks
 
   // Rely on implementation checks in the controller
-endmodule : br_fifo_shared_dynamic_flops_push_credit
+endmodule : {{ module_name }}
+{# final newline #}

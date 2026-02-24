@@ -16,3 +16,8 @@ filegroup(
     name = "br_fifo_shared_ctrl_template",
     srcs = ["br_fifo_shared_ctrl.sv.jinja2"],
 )
+
+filegroup(
+    name = "br_fifo_shared_flops_template",
+    srcs = ["br_fifo_shared_flops.sv.jinja2"],
+)

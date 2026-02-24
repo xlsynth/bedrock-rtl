@@ -82,9 +82,15 @@ shared_fifo_verilog_library(
     ],
 )
 
-verilog_library(
+shared_fifo_verilog_library(
     name = "br_fifo_shared_dynamic_flops",
-    srcs = ["br_fifo_shared_dynamic_flops.sv"],
+    src = "br_fifo_shared_dynamic_flops.sv",
+    ctrl_only = False,
+    ext_arbiter = False,
+    pop_intf = "ready",
+    push_intf = "ready",
+    sharing_type = "dynamic",
+    template = "//fifo/rtl/fifo_codegen:br_fifo_shared_flops_template",
     deps = [
         ":br_fifo_shared_dynamic_ctrl",
         "//ram/rtl:br_ram_flops",
@@ -125,9 +131,15 @@ shared_fifo_verilog_library(
     ],
 )
 
-verilog_library(
+shared_fifo_verilog_library(
     name = "br_fifo_shared_dynamic_flops_push_credit",
-    srcs = ["br_fifo_shared_dynamic_flops_push_credit.sv"],
+    src = "br_fifo_shared_dynamic_flops_push_credit.sv",
+    ctrl_only = False,
+    ext_arbiter = False,
+    pop_intf = "ready",
+    push_intf = "credit",
+    sharing_type = "dynamic",
+    template = "//fifo/rtl/fifo_codegen:br_fifo_shared_flops_template",
     deps = [
         ":br_fifo_shared_dynamic_ctrl_push_credit",
         "//ram/rtl:br_ram_flops",
@@ -706,9 +718,15 @@ br_verilog_elab_and_lint_test_suite(
     deps = [":br_fifo_shared_pstatic_ctrl"],
 )
 
-verilog_library(
+shared_fifo_verilog_library(
     name = "br_fifo_shared_pstatic_flops",
-    srcs = ["br_fifo_shared_pstatic_flops.sv"],
+    src = "br_fifo_shared_pstatic_flops.sv",
+    ctrl_only = False,
+    ext_arbiter = False,
+    pop_intf = "ready",
+    push_intf = "ready",
+    sharing_type = "pseudo-static",
+    template = "//fifo/rtl/fifo_codegen:br_fifo_shared_flops_template",
     deps = [
         ":br_fifo_shared_pstatic_ctrl",
         "//ram/rtl:br_ram_flops",
@@ -793,9 +811,15 @@ br_verilog_elab_and_lint_test_suite(
     deps = [":br_fifo_shared_pstatic_ctrl_push_credit"],
 )
 
-verilog_library(
+shared_fifo_verilog_library(
     name = "br_fifo_shared_pstatic_flops_push_credit",
-    srcs = ["br_fifo_shared_pstatic_flops_push_credit.sv"],
+    src = "br_fifo_shared_pstatic_flops_push_credit.sv",
+    ctrl_only = False,
+    ext_arbiter = False,
+    pop_intf = "ready",
+    push_intf = "credit",
+    sharing_type = "pseudo-static",
+    template = "//fifo/rtl/fifo_codegen:br_fifo_shared_flops_template",
     deps = [
         ":br_fifo_shared_pstatic_ctrl_push_credit",
         "//ram/rtl:br_ram_flops",
