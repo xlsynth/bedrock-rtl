@@ -66,14 +66,13 @@ module br_fifo_shared_pop_ctrl_credit_ext_arbiter #(
 
     input logic [NumFifos-1:0] ram_empty,
 
-    output logic [NumFifos-1:0] pop_sender_in_reset,
-    input  logic [NumFifos-1:0] pop_receiver_in_reset,
-    input  logic [NumFifos-1:0] pop_credit,
-    output logic [NumFifos-1:0] pop_empty,
-
+    output logic pop_sender_in_reset,
+    input logic pop_receiver_in_reset,
+    input logic [NumFifos-1:0] pop_credit,
     output logic [NumReadPorts-1:0] pop_valid,
     output logic [NumReadPorts-1:0][FifoIdWidth-1:0] pop_fifo_id,
     output logic [NumReadPorts-1:0][Width-1:0] pop_data,
+    output logic [NumFifos-1:0] pop_empty,
 
     input  logic [NumFifos-1:0][CreditWidth-1:0] credit_initial_pop,
     input  logic [NumFifos-1:0][CreditWidth-1:0] credit_withhold_pop,
@@ -115,11 +114,11 @@ module br_fifo_shared_pop_ctrl_credit_ext_arbiter #(
   // Implementation
 
   // Reset handling
-  logic any_rst;
+  logic either_rst;
 
   // Make sure all state resets if receiver is in reset
-  assign any_rst = rst || (|pop_receiver_in_reset);
-  assign pop_sender_in_reset = {NumFifos{rst}};
+  assign either_rst = pop_receiver_in_reset || rst;
+  assign pop_sender_in_reset = rst;
 
   // Credit counters
 
@@ -135,7 +134,7 @@ module br_fifo_shared_pop_ctrl_credit_ext_arbiter #(
         .MaxValue(PopMaxCredits)
     ) br_credit_counter (
         .clk,
-        .rst(any_rst),
+        .rst(either_rst),
         .incr_valid(pop_credit[i]),
         .incr(1'b1),
         // These are in fact reversed on purpose
@@ -154,7 +153,7 @@ module br_fifo_shared_pop_ctrl_credit_ext_arbiter #(
         .NumFlows(2)
     ) br_flow_join_ram_rd_addr (
         .clk,
-        .rst(any_rst),
+        .rst(either_rst),
 
         .push_valid({head_valid[i], ram_rd_req_valid}),
         .push_ready({head_ready[i], ram_rd_req_ready}),
@@ -179,7 +178,7 @@ module br_fifo_shared_pop_ctrl_credit_ext_arbiter #(
       .ArbiterAlwaysGrants(ArbiterAlwaysGrants)
   ) br_fifo_shared_read_xbar (
       .clk,
-      .rst(any_rst),
+      .rst(either_rst),
 
       .push_rd_addr_valid(fifo_ram_rd_addr_valid),
       .push_rd_addr_ready(fifo_ram_rd_addr_ready),
@@ -207,7 +206,7 @@ module br_fifo_shared_pop_ctrl_credit_ext_arbiter #(
         .NumValues(NumFifos)
     ) br_enc_onehot2bin_ram_rd_fifo_id (
         .clk,
-        .rst(any_rst),
+        .rst(either_rst),
         .in(arb_grant[i]),
         .out_valid(),
         .out(ram_rd_fifo_id)
@@ -218,7 +217,7 @@ module br_fifo_shared_pop_ctrl_credit_ext_arbiter #(
         .Width(FifoIdWidth)
     ) br_delay_valid_pop_fifo_id (
         .clk,
-        .rst(any_rst),
+        .rst(either_rst),
         .in_valid(data_ram_rd_addr_valid[i]),
         .in(ram_rd_fifo_id),
         .out_valid(pop_fifo_id_valid),
@@ -240,10 +239,10 @@ module br_fifo_shared_pop_ctrl_credit_ext_arbiter #(
     logic [NumFifos-1:0] dealloc_valid_next;
 
     assign dealloc_valid_next = head_valid & head_ready;
-    `BR_REGX(dealloc_valid, dealloc_valid_next, clk, any_rst)
+    `BR_REGX(dealloc_valid, dealloc_valid_next, clk, either_rst)
 
     for (genvar i = 0; i < NumFifos; i++) begin : gen_reg_dealloc_entry_id
-      `BR_REGLX(dealloc_entry_id[i], head[i], dealloc_valid_next[i], clk, any_rst)
+      `BR_REGLX(dealloc_entry_id[i], head[i], dealloc_valid_next[i], clk, either_rst)
     end
   end else begin : gen_no_reg_dealloc
     assign dealloc_valid = head_valid & head_ready;
