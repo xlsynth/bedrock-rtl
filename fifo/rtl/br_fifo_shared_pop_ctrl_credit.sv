@@ -58,14 +58,15 @@ module br_fifo_shared_pop_ctrl_credit #(
 
     input logic [NumFifos-1:0] ram_empty,
 
-    output logic [NumFifos-1:0] pop_sender_in_reset,
-    input  logic [NumFifos-1:0] pop_receiver_in_reset,
+    output logic                pop_sender_in_reset,
+    input  logic                pop_receiver_in_reset,
     input  logic [NumFifos-1:0] pop_credit,
-    output logic [NumFifos-1:0] pop_empty,
 
     output logic [NumReadPorts-1:0] pop_valid,
     output logic [NumReadPorts-1:0][FifoIdWidth-1:0] pop_fifo_id,
     output logic [NumReadPorts-1:0][Width-1:0] pop_data,
+
+    output logic [NumFifos-1:0] pop_empty,
 
     input  logic [NumFifos-1:0][CreditWidth-1:0] credit_initial_pop,
     input  logic [NumFifos-1:0][CreditWidth-1:0] credit_withhold_pop,
@@ -88,9 +89,9 @@ module br_fifo_shared_pop_ctrl_credit #(
   // Implementation
 
   // Reset handling
-  logic any_rst;
+  logic either_rst;
   // Make sure all state resets if receiver is in reset
-  assign any_rst = rst || (|pop_receiver_in_reset);
+  assign either_rst = pop_receiver_in_reset || rst;
 
   // Core control logic w/o arbiters
 
@@ -143,7 +144,7 @@ module br_fifo_shared_pop_ctrl_credit #(
         .NumRequesters(NumFifos)
     ) br_arb_lru_internal (
         .clk,
-        .rst(any_rst),
+        .rst(either_rst),
         .request(arb_request[i]),
         .can_grant(arb_can_grant[i]),
         .grant(arb_grant[i]),
