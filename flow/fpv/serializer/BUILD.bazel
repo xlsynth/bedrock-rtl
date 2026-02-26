@@ -111,3 +111,85 @@ br_verilog_fpv_test_tools_suite(
     top = "br_flow_deserializer",
     deps = [":br_flow_deserializer_fpv_monitor"],
 )
+
+# Bedrock-RTL Flow Data Width Converter
+
+verilog_library(
+    name = "br_flow_data_width_converter_fpv_monitor",
+    srcs = ["br_flow_data_width_converter_fpv_monitor.sv"],
+    deps = [
+        "//flow/rtl:br_flow_data_width_converter",
+        "//pkg:br_math_pkg",
+    ],
+)
+
+verilog_elab_test(
+    name = "br_flow_data_width_converter_fpv_monitor_elab_test",
+    custom_tcl_header = "//:elab_test_jg_custom_header.verific.tcl",
+    tool = "verific",
+    deps = [":br_flow_data_width_converter_fpv_monitor"],
+)
+
+br_verilog_fpv_test_tools_suite(
+    name = "br_flow_data_width_converter_64_to_43_test_suite",
+    params = {
+        "PacketDataWidth": ["128"],
+        "PopFlitDataWidth": ["43"],
+        "PopFlitsPerPacket": ["3"],
+        "PushFlitDataWidth": ["64"],
+        "PushFlitsPerPacket": ["2"],
+    },
+    tools = {
+        "jg": "br_flow_data_width_converter_fpv.jg.tcl",
+    },
+    top = "br_flow_data_width_converter",
+    deps = [":br_flow_data_width_converter_fpv_monitor"],
+)
+
+br_verilog_fpv_test_tools_suite(
+    name = "br_flow_data_width_converter_43_to_64_test_suite",
+    params = {
+        "PacketDataWidth": ["128"],
+        "PopFlitDataWidth": ["64"],
+        "PopFlitsPerPacket": ["2"],
+        "PushFlitDataWidth": ["43"],
+        "PushFlitsPerPacket": ["3"],
+    },
+    tools = {
+        "jg": "br_flow_data_width_converter_fpv.jg.tcl",
+    },
+    top = "br_flow_data_width_converter",
+    deps = [":br_flow_data_width_converter_fpv_monitor"],
+)
+
+br_verilog_fpv_test_tools_suite(
+    name = "br_flow_data_width_converter_43_to_128_test_suite",
+    params = {
+        "PacketDataWidth": ["128"],
+        "PopFlitDataWidth": ["128"],
+        "PopFlitsPerPacket": ["1"],
+        "PushFlitDataWidth": ["43"],
+        "PushFlitsPerPacket": ["3"],
+    },
+    tools = {
+        "jg": "br_flow_data_width_converter_fpv.jg.tcl",
+    },
+    top = "br_flow_data_width_converter",
+    deps = [":br_flow_data_width_converter_fpv_monitor"],
+)
+
+br_verilog_fpv_test_tools_suite(
+    name = "br_flow_data_width_converter_128_to_43_test_suite",
+    params = {
+        "PacketDataWidth": ["128"],
+        "PopFlitDataWidth": ["43"],
+        "PopFlitsPerPacket": ["3"],
+        "PushFlitDataWidth": ["128"],
+        "PushFlitsPerPacket": ["1"],
+    },
+    tools = {
+        "jg": "br_flow_data_width_converter_fpv.jg.tcl",
+    },
+    top = "br_flow_data_width_converter",
+    deps = [":br_flow_data_width_converter_fpv_monitor"],
+)
