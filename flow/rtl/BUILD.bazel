@@ -243,6 +243,22 @@ verilog_library(
 )
 
 verilog_library(
+    name = "br_flow_data_width_converter",
+    srcs = ["br_flow_data_width_converter.sv"],
+    deps = [
+        ":br_flow_reg_both",
+        "//counter/rtl:br_counter",
+        "//counter/rtl:br_counter_incr",
+        "//flow/rtl/internal:br_flow_checks_valid_data_impl",
+        "//flow/rtl/internal:br_flow_checks_valid_data_intg",
+        "//macros:br_asserts_internal",
+        "//macros:br_assign",
+        "//macros:br_registers",
+        "//pkg:br_math_pkg",
+    ],
+)
+
+verilog_library(
     name = "br_flow_xbar_fixed",
     srcs = ["br_flow_xbar_fixed.sv"],
     deps = [
@@ -607,6 +623,54 @@ br_verilog_elab_and_lint_test_suite(
         ],
     },
     deps = [":br_flow_deserializer"],
+)
+
+br_verilog_elab_and_lint_test_suite(
+    name = "br_flow_data_width_converter_64_to_43_test_suite",
+    params = {
+        "PacketDataWidth": ["128"],
+        "PopFlitDataWidth": ["43"],
+        "PopFlitsPerPacket": ["3"],
+        "PushFlitDataWidth": ["64"],
+        "PushFlitsPerPacket": ["2"],
+    },
+    deps = [":br_flow_data_width_converter"],
+)
+
+br_verilog_elab_and_lint_test_suite(
+    name = "br_flow_data_width_converter_43_to_64_test_suite",
+    params = {
+        "PacketDataWidth": ["128"],
+        "PopFlitDataWidth": ["64"],
+        "PopFlitsPerPacket": ["2"],
+        "PushFlitDataWidth": ["43"],
+        "PushFlitsPerPacket": ["3"],
+    },
+    deps = [":br_flow_data_width_converter"],
+)
+
+br_verilog_elab_and_lint_test_suite(
+    name = "br_flow_data_width_converter_43_to_128_test_suite",
+    params = {
+        "PacketDataWidth": ["128"],
+        "PopFlitDataWidth": ["128"],
+        "PopFlitsPerPacket": ["1"],
+        "PushFlitDataWidth": ["43"],
+        "PushFlitsPerPacket": ["3"],
+    },
+    deps = [":br_flow_data_width_converter"],
+)
+
+br_verilog_elab_and_lint_test_suite(
+    name = "br_flow_data_width_converter_128_to_43_test_suite",
+    params = {
+        "PacketDataWidth": ["128"],
+        "PopFlitDataWidth": ["43"],
+        "PopFlitsPerPacket": ["3"],
+        "PushFlitDataWidth": ["128"],
+        "PushFlitsPerPacket": ["1"],
+    },
+    deps = [":br_flow_data_width_converter"],
 )
 
 br_verilog_elab_and_lint_test_suite(
