@@ -23,8 +23,9 @@
 //
 // The latency from the first accepted push flit of a packet to the first pop flit becoming valid
 // depends on how many push flits are needed to accumulate the first pop flit worth of payload bits.
-// The minimum cut-through latency is 1 cycle, and the maximum is PushFlitsPerPacket cycles when
-// the module must accumulate a full packet before it can emit the first pop flit.
+// The minimum cut-through latency is 0 cycles when the first pop flit can be formed immediately from
+// the first accepted push flit. The maximum is (PushFlitsPerPacket - 1) cycles when the module must
+// accumulate a full packet before it can emit the first pop flit.
 //
 // The implementation stores up to one packet plus one additional push flit of payload bits in a
 // circular reservoir so that push and pop widths can differ without breaking packet boundaries.
@@ -78,6 +79,7 @@ module br_flow_data_width_converter #(
   import br_math::*;
 
   localparam int unsigned BufferDataWidth = PacketDataWidth + PushFlitDataWidth;
+  localparam int unsigned BufferDataStorageWidth = BufferDataWidth + PushFlitDataWidth - 1;
   localparam int unsigned BufferCountWidth = $clog2(BufferDataWidth + 1);
   localparam int unsigned BufferPtrWidth = $clog2(BufferDataWidth);
   localparam int unsigned PushBitsWidth = $clog2(PushFlitDataWidth + 1);
@@ -89,12 +91,15 @@ module br_flow_data_width_converter #(
   localparam int unsigned PopTailDataWidth =
       PacketDataWidth - ((PopFlitsPerPacket - 1) * PopFlitDataWidth);
 
-  logic [                 BufferDataWidth-1:0] buffer_data;
-  logic [                 BufferDataWidth-1:0] buffer_data_next;
+  logic [          BufferDataStorageWidth-1:0] buffer_data;
+  logic [          BufferDataStorageWidth-1:0] buffer_data_next;
   logic [BufferDataWidth+PopFlitDataWidth-2:0] buffer_data_ext;
+  logic [BufferDataWidth+PopFlitDataWidth-2:0] buffer_data_next_ext;
+  logic [BufferDataWidth+PopFlitDataWidth-2:0] pop_data_source_ext;
   logic [                  BufferPtrWidth-1:0] wr_ptr;
   logic [                  BufferPtrWidth-1:0] rd_ptr;
   logic [                BufferCountWidth-1:0] total_bits_buffered;
+  logic [                BufferCountWidth-1:0] total_bits_buffered_with_push;
   logic [                 PushFlitIdWidth-1:0] push_flit_id;
   logic [                  PopFlitIdWidth-1:0] pop_flit_id;
   logic [                   PushBitsWidth-1:0] push_payload_bits;
@@ -102,11 +107,16 @@ module br_flow_data_width_converter #(
   logic [                BufferCountWidth-1:0] push_payload_bits_ext;
   logic [                BufferCountWidth-1:0] pop_payload_bits_ext;
   logic [                BufferCountWidth-1:0] buffer_space_available;
+  logic                                        pop_first_flit;
   logic                                        push_first_flit;
   logic                                        push_last_flit;
   logic                                        pop_last_flit;
+  logic                                        pop_has_payload_bits;
   logic                                        push;
   logic                                        pop;
+  logic                                        sideband_bypass_valid;
+  logic                                        sideband_bypass_consumes_packet;
+  logic                                        sideband_pop_valid_comb;
   logic                                        sideband_push_ready;
   logic                                        sideband_push_valid;
   logic                                        sideband_pop_ready;
@@ -116,7 +126,7 @@ module br_flow_data_width_converter #(
   //------------------------------------------
   // Integration checks
   //------------------------------------------
-  `BR_ASSERT_STATIC(push_flit_data_width_gte_1_a, PushFlitDataWidth >= 1)
+  `BR_ASSERT_STATIC(push_flit_data_width_gte_2_a, PushFlitDataWidth >= 2)
   `BR_ASSERT_STATIC(pop_flit_data_width_gte_2_a, PopFlitDataWidth >= 2)
   `BR_ASSERT_STATIC(packet_data_width_gte_1_a, PacketDataWidth >= 1)
   `BR_ASSERT_STATIC(sideband_width_gte_1_a, SidebandWidth >= 1)
@@ -153,6 +163,7 @@ module br_flow_data_width_converter #(
   //------------------------------------------
   // Implementation
   //------------------------------------------
+  assign pop_first_flit = pop_flit_id == '0;
   assign push_first_flit = push_flit_id == '0;
   assign push_last_flit = push_flit_id == PushFlitIdWidth'(PushFlitsPerPacket - 1);
   assign pop_last_flit = pop_flit_id == PopFlitIdWidth'(PopFlitsPerPacket - 1);
@@ -165,16 +176,26 @@ module br_flow_data_width_converter #(
   assign push_ready = (buffer_space_available >= push_payload_bits_ext) &&
                       (!push_first_flit || sideband_push_ready);
   assign push = push_valid && push_ready;
-  assign pop_valid = sideband_pop_valid && (total_bits_buffered >= pop_payload_bits_ext);
+  assign total_bits_buffered_with_push = total_bits_buffered + (push ? push_payload_bits_ext : '0);
+  assign pop_has_payload_bits = total_bits_buffered_with_push >= pop_payload_bits_ext;
+  assign sideband_bypass_valid = push && push_first_flit && pop_first_flit && !sideband_pop_valid;
+  assign sideband_pop_valid_comb = sideband_pop_valid || sideband_bypass_valid;
+  assign pop_valid = sideband_pop_valid_comb && pop_has_payload_bits;
   assign pop = pop_valid && pop_ready;
-  assign sideband_push_valid = push && push_first_flit;
-  assign sideband_pop_ready = pop && pop_last_flit;
-  assign pop_sideband = sideband_pop_data;
+  assign sideband_bypass_consumes_packet =
+      sideband_bypass_valid && pop_ready && pop_has_payload_bits && pop_last_flit;
+  assign sideband_push_valid = push && push_first_flit && !sideband_bypass_consumes_packet;
+  assign sideband_pop_ready = pop && pop_last_flit && !sideband_bypass_valid;
+  assign pop_sideband = sideband_bypass_valid ? push_sideband : sideband_pop_data;
 
   `BR_ASSIGN_MAYBE_ZERO_EXT(push_payload_bits_ext, push_payload_bits_ext, push_payload_bits)
   `BR_ASSIGN_MAYBE_ZERO_EXT(pop_payload_bits_ext, pop_payload_bits_ext, pop_payload_bits)
 
-  assign buffer_data_ext = {buffer_data[PopFlitDataWidth-2:0], buffer_data};
+  assign buffer_data_ext = {buffer_data[PopFlitDataWidth-2:0], buffer_data[BufferDataWidth-1:0]};
+  assign buffer_data_next_ext = {
+    buffer_data_next[PopFlitDataWidth-2:0], buffer_data_next[BufferDataWidth-1:0]
+  };
+  assign pop_data_source_ext = push ? buffer_data_next_ext : buffer_data_ext;
 
   br_counter #(
       .MaxValue(BufferDataWidth),
@@ -277,12 +298,15 @@ module br_flow_data_width_converter #(
   always_comb begin
     buffer_data_next = buffer_data;
     if (push) begin
+      // `buffer_data` includes a mirrored tail so a linear part-select write can wrap.
       // ri lint_check_waive VAR_INDEX_WRITE
       buffer_data_next[wr_ptr+:PushFlitDataWidth] = push_data;
     end
+    buffer_data_next[BufferDataWidth+:PushFlitDataWidth-1] =
+        buffer_data_next[0+:PushFlitDataWidth-1];
   end
 
-  assign pop_data = buffer_data_ext[rd_ptr+:PopFlitDataWidth];
+  assign pop_data = pop_data_source_ext[rd_ptr+:PopFlitDataWidth];
 
   br_flow_reg_both #(
       .Width(SidebandWidth),
@@ -324,6 +348,6 @@ module br_flow_data_width_converter #(
   `BR_ASSERT_IMPL(push_implies_buffer_has_space_a,
                   push |-> buffer_space_available >= push_payload_bits_ext)
   `BR_ASSERT_IMPL(pop_implies_buffer_has_data_a,
-                  pop |-> total_bits_buffered >= pop_payload_bits_ext)
+                  pop |-> total_bits_buffered_with_push >= pop_payload_bits_ext)
 
 endmodule : br_flow_data_width_converter
