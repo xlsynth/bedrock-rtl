@@ -22,6 +22,15 @@ module br_fifo_shared_pstatic_push_ctrl_credit #(
     // If 1, register is added on the credit returns,
     // improving timing at the cost of additional latency.
     parameter bit RegisterPushOutputs = 1,
+    // If 1, cover that push_credit_stall can be asserted
+    // Otherwise, assert that it is never asserted.
+    parameter bit EnableCoverPushCreditStall = 1,
+    // If 1, cover that credit_withhold can be non-zero.
+    // Otherwise, assert that it is always zero.
+    parameter bit EnableCoverCreditWithhold = 1,
+    // If 1, cover that push_sender_in_reset can be asserted
+    // Otherwise, assert that it is never asserted.
+    parameter bit EnableCoverPushSenderInReset = 1,
     // If 1, assert that push_data is always known (not X) when push_valid is asserted.
     parameter bit EnableAssertPushDataKnown = 1,
     // If 1, then assert there are no valid bits asserted and that the FIFO is
@@ -104,6 +113,9 @@ module br_fifo_shared_pstatic_push_ctrl_credit #(
         .MaxCredit(Depth),
         .RegisterPushOutputs(RegisterPushOutputs),
         .EnableAssertFinalNotValid(EnableAssertFinalNotValid),
+        .EnableCoverPushSenderInReset(EnableCoverPushSenderInReset),
+        .EnableCoverPushCreditStall(EnableCoverPushCreditStall),
+        .EnableCoverCreditWithhold(EnableCoverCreditWithhold),
         // Each FIFO must have at least one entry assigned to it,
         // so the actual number of credits available to each is
         // Depth - (NumFifos - 1).

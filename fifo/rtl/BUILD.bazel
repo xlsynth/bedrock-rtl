@@ -2,6 +2,7 @@
 
 load("@rules_hdl//verilog:providers.bzl", "verilog_library")
 load("//bazel:br_verilog.bzl", "br_verilog_elab_and_lint_test_suite")
+load("//fifo/rtl/fifo_codegen:fifo_codegen.bzl", "shared_fifo_verilog_library")
 
 package(default_visibility = ["//visibility:public"])
 
@@ -47,9 +48,15 @@ verilog_library(
     ],
 )
 
-verilog_library(
+shared_fifo_verilog_library(
     name = "br_fifo_shared_dynamic_ctrl",
-    srcs = ["br_fifo_shared_dynamic_ctrl.sv"],
+    src = "br_fifo_shared_dynamic_ctrl.sv",
+    ctrl_only = True,
+    ext_arbiter = False,
+    pop_intf = "ready",
+    push_intf = "ready",
+    sharing_type = "dynamic",
+    template = "//fifo/rtl/fifo_codegen:br_fifo_shared_ctrl_template",
     deps = [
         ":br_fifo_shared_pop_ctrl",
         "//fifo/rtl/internal:br_fifo_shared_dynamic_ptr_mgr",
@@ -58,9 +65,15 @@ verilog_library(
     ],
 )
 
-verilog_library(
+shared_fifo_verilog_library(
     name = "br_fifo_shared_dynamic_ctrl_ext_arbiter",
-    srcs = ["br_fifo_shared_dynamic_ctrl_ext_arbiter.sv"],
+    src = "br_fifo_shared_dynamic_ctrl_ext_arbiter.sv",
+    ctrl_only = True,
+    ext_arbiter = True,
+    pop_intf = "ready",
+    push_intf = "ready",
+    sharing_type = "dynamic",
+    template = "//fifo/rtl/fifo_codegen:br_fifo_shared_ctrl_template",
     deps = [
         ":br_fifo_shared_pop_ctrl_ext_arbiter",
         "//fifo/rtl/internal:br_fifo_shared_dynamic_ptr_mgr",
@@ -78,9 +91,15 @@ verilog_library(
     ],
 )
 
-verilog_library(
+shared_fifo_verilog_library(
     name = "br_fifo_shared_dynamic_ctrl_push_credit",
-    srcs = ["br_fifo_shared_dynamic_ctrl_push_credit.sv"],
+    src = "br_fifo_shared_dynamic_ctrl_push_credit.sv",
+    ctrl_only = True,
+    ext_arbiter = False,
+    pop_intf = "ready",
+    push_intf = "credit",
+    sharing_type = "dynamic",
+    template = "//fifo/rtl/fifo_codegen:br_fifo_shared_ctrl_template",
     deps = [
         ":br_fifo_shared_pop_ctrl",
         "//fifo/rtl/internal:br_fifo_shared_dynamic_ptr_mgr",
@@ -89,9 +108,15 @@ verilog_library(
     ],
 )
 
-verilog_library(
+shared_fifo_verilog_library(
     name = "br_fifo_shared_dynamic_ctrl_push_credit_ext_arbiter",
-    srcs = ["br_fifo_shared_dynamic_ctrl_push_credit_ext_arbiter.sv"],
+    src = "br_fifo_shared_dynamic_ctrl_push_credit_ext_arbiter.sv",
+    ctrl_only = True,
+    ext_arbiter = True,
+    pop_intf = "ready",
+    push_intf = "credit",
+    sharing_type = "dynamic",
+    template = "//fifo/rtl/fifo_codegen:br_fifo_shared_ctrl_template",
     deps = [
         ":br_fifo_shared_pop_ctrl_ext_arbiter",
         "//fifo/rtl/internal:br_fifo_shared_dynamic_ptr_mgr",
@@ -635,9 +660,15 @@ br_verilog_elab_and_lint_test_suite(
     deps = [":br_fifo_shared_dynamic_flops_push_credit"],
 )
 
-verilog_library(
+shared_fifo_verilog_library(
     name = "br_fifo_shared_pstatic_ctrl",
-    srcs = ["br_fifo_shared_pstatic_ctrl.sv"],
+    src = "br_fifo_shared_pstatic_ctrl.sv",
+    ctrl_only = True,
+    ext_arbiter = False,
+    pop_intf = "ready",
+    push_intf = "ready",
+    sharing_type = "pseudo-static",
+    template = "//fifo/rtl/fifo_codegen:br_fifo_shared_ctrl_template",
     deps = [
         ":br_fifo_shared_pop_ctrl",
         "//fifo/rtl/internal:br_fifo_shared_pstatic_ptr_mgr",
@@ -712,9 +743,15 @@ br_verilog_elab_and_lint_test_suite(
     deps = [":br_fifo_shared_pstatic_flops"],
 )
 
-verilog_library(
+shared_fifo_verilog_library(
     name = "br_fifo_shared_pstatic_ctrl_push_credit",
-    srcs = ["br_fifo_shared_pstatic_ctrl_push_credit.sv"],
+    src = "br_fifo_shared_pstatic_ctrl_push_credit.sv",
+    ctrl_only = True,
+    ext_arbiter = False,
+    pop_intf = "ready",
+    push_intf = "credit",
+    sharing_type = "pseudo-static",
+    template = "//fifo/rtl/fifo_codegen:br_fifo_shared_ctrl_template",
     deps = [
         ":br_fifo_shared_pop_ctrl",
         "//fifo/rtl/internal:br_fifo_shared_pstatic_ptr_mgr",
