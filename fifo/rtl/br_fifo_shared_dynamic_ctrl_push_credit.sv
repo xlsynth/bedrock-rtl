@@ -1,3 +1,4 @@
+
 // SPDX-License-Identifier: Apache-2.0
 //
 // Bedrock-RTL Shared Dynamic Multi-FIFO Controller
@@ -10,9 +11,9 @@
 // data RAM is allocated to the logical FIFOs dynamically.
 // The order of RAM entries for a single logical FIFO is tracked via
 // singly-linked lists. The linked lists are stored in a separate
-// pointer RAM. The data and pointer RAMs must be instantiated
-// externally to this module and connected to the `data_ram_*` and
-// `ptr_ram_*` ports.
+// pointer RAM.
+// The data and pointer RAMs must be instantiated externally to this module and
+// connected to the `data_ram_*` and `ptr_ram_*` ports.
 // The push interface provides a valid/credit interface and a binary-encoded
 // FIFO ID. The push data is appended to the logical FIFO with the specified ID.
 //
@@ -47,7 +48,7 @@
 // `StagingBufferDepth / (DataRamReadLatency + 1)`. To get full bandwidth,
 // the number of linked lists per FIFO should be set to `PointerRamReadLatency +
 // 1` and the staging buffer depth should be set to `DataRamReadLatency + 1`.
-
+//
 // The design assumes that the data and pointer RAMs and are instantiated externally.
 //
 // The design uses internal arbiters to determine which logical FIFOs can use the RAM read ports

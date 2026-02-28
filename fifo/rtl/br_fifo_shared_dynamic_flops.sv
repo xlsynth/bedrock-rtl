@@ -1,17 +1,19 @@
-// SPDX-License-Identifier: Apache-2.0
 
+// SPDX-License-Identifier: Apache-2.0
 //
-// Bedrock-RTL Shared Dynamic Multi-FIFO with Flop-based Storage (Push Valid/Ready Interface)
+// Bedrock-RTL Shared Dynamic Multi-FIFO with Flop-based Storage
+// (Push Valid/Ready Interface, Pop Ready/Valid Interface)
 //
-// This module implements a shared storage multi-FIFO with dynamic allocation
-// of storage from a flop-based RAM.
+// This module implements a shared storage multi-FIFO with flop-based storage
+// and dynamic allocation.
 //
 // The multi-FIFO contains multiple logical FIFOs. Space in the shared
 // data RAM is allocated to the logical FIFOs dynamically.
 // The order of RAM entries for a single logical FIFO is tracked via
 // singly-linked lists. The linked lists are stored in a separate
 // pointer RAM.
-//
+// The data and pointer RAMs are implemented as flops and instantiated
+// internally.
 // The push interface provides a valid/ready interface and a binary-encoded
 // FIFO ID. The push data is appended to the logical FIFO with the specified ID.
 //
@@ -24,9 +26,13 @@
 // read latency is non-zero or the RegisterPopOutputs parameter is set to 1, the
 // pop_data will be provided from a staging buffer per logical FIFO. The staging
 // buffers are refilled from the data RAM and arbitrate with each other for
-// access. The controller supports multiple read ports. In this case, each
-// logical FIFO can read from any of the read ports. The mapping of reads to
-// ports is based on the lower bits of the read address. Each logical FIFO can
+// access. The depth of each staging buffer can be configured with the
+// StagingBufferDepth parameter. The bandwidth of a single logical FIFO is
+// determined by the staging buffer depth and is equivalent to
+// `StagingBufferDepth / (DataRamReadLatency + 1)`.
+//
+// The controller supports multiple read ports. Each logical FIFO can use any of the read ports.
+// The mapping of reads to ports is based on the lower bits of the read address. Each logical FIFO can
 // only pop at most one item per cycle. Therefore, there must be at least as
 // many active logical FIFOs as read ports to fully utilize the read bandwidth.
 //
@@ -42,30 +48,35 @@
 // the number of linked lists per FIFO should be set to `PointerRamReadLatency +
 // 1` and the staging buffer depth should be set to `DataRamReadLatency + 1`.
 //
+// The design uses internal flop-based RAMs for the data and pointer storage.
+// The latency of the internal RAMs are determined from the retiming parameters as follows:
+//
 // `PointerRamReadLatency = PointerRamAddressDepthStages + PointerRamReadDataDepthStages + PointerRamReadDataWidthStages`
 //
 // `DataRamReadLatency = DataRamReadAddressDepthStages + DataRamReadDataDepthStages + DataRamReadDataWidthStages`
 //
-// For example, to have zero retiming on the read path, full bandwidth, and
-// pop data registered at the output, set StagingBufferDepth = 1,
-// NumLinkedListsPerFifo = 1, and RegisterPopOutputs = 1.
+//
+// The design uses internal arbiters to determine which logical FIFOs can use the RAM read ports
+// on a given cycle. The arbitration policy is least-recently used (LRU).
 
+`include "br_asserts_internal.svh"
+
+// ri lint_check_waive MOD_NAME
 module br_fifo_shared_dynamic_flops #(
+    // Number of logical FIFOs. Must be >=2.
+    parameter int NumFifos = 2,
+    // Total depth of the FIFO.
+    // Must be greater than two times the number of write ports and at least the number of read ports.
+    parameter int Depth = 3,
+    // Width of the data. Must be >=1.
+    parameter int Width = 1,
     // Number of write ports. Must be >=1.
     parameter int NumWritePorts = 1,
     // Number of read ports. Must be >=1 and a power of 2.
     parameter int NumReadPorts = 1,
-    // Number of logical FIFOs. Must be >=2.
-    parameter int NumFifos = 2,
-    // Total depth of the FIFO.
-    // Must be greater than two times the number of write ports.
-    parameter int Depth = 3,
-    // Width of the data. Must be >=1.
-    parameter int Width = 1,
     // The depth of the pop-side staging buffer.
     // This affects the pop bandwidth of each logical FIFO.
-    // The bandwidth will be `StagingBufferDepth / (DataRamAddressDepthStages
-    // + DataRamReadDataDepthStages + DataRamReadDataWidthStages + 1)`.
+    // The max bandwidth will be `StagingBufferDepth / (DataRamReadLatency + 1)`.
     parameter int StagingBufferDepth = 1,
     // The number of sub-linked lists used by each logical FIFO.
     // This affects the pop bandwidth of each logical FIFO.
@@ -112,16 +123,15 @@ module br_fifo_shared_dynamic_flops #(
     // empty at the end of the test.
     // ri lint_check_waive PARAM_NOT_USED
     parameter bit EnableAssertFinalNotValid = 1,
-
     localparam int FifoIdWidth = br_math::clamped_clog2(NumFifos),
-    localparam int AddrWidth   = br_math::clamped_clog2(Depth)
+    localparam int AddrWidth = br_math::clamped_clog2(Depth)
 ) (
     input logic clk,
     input logic rst,
 
     // Push side
-    input logic [NumWritePorts-1:0] push_valid,
     output logic [NumWritePorts-1:0] push_ready,
+    input logic [NumWritePorts-1:0] push_valid,
     input logic [NumWritePorts-1:0][Width-1:0] push_data,
     input logic [NumWritePorts-1:0][FifoIdWidth-1:0] push_fifo_id,
     output logic push_full,
@@ -132,10 +142,12 @@ module br_fifo_shared_dynamic_flops #(
     output logic [NumFifos-1:0][Width-1:0] pop_data,
     output logic [NumFifos-1:0] pop_empty
 );
+
   // Integration Checks
   // Rely on checks in the submodules
 
   // Implementation
+
   // Data RAM
   logic [NumWritePorts-1:0] data_ram_wr_valid;
   logic [NumWritePorts-1:0][AddrWidth-1:0] data_ram_wr_addr;
@@ -213,32 +225,32 @@ module br_fifo_shared_dynamic_flops #(
       PointerRamAddressDepthStages + PointerRamReadDataDepthStages + PointerRamReadDataWidthStages;
 
   br_fifo_shared_dynamic_ctrl #(
-      .NumWritePorts(NumWritePorts),
-      .NumReadPorts(NumReadPorts),
       .NumFifos(NumFifos),
       .Depth(Depth),
       .Width(Width),
+      .NumWritePorts(NumWritePorts),
+      .NumReadPorts(NumReadPorts),
       .StagingBufferDepth(StagingBufferDepth),
-      .NumLinkedListsPerFifo(NumLinkedListsPerFifo),
       .RegisterPopOutputs(RegisterPopOutputs),
-      .RegisterDeallocation(RegisterDeallocation),
+      .NumLinkedListsPerFifo(NumLinkedListsPerFifo),
       .DataRamReadLatency(DataRamReadLatency),
       .PointerRamReadLatency(PointerRamReadLatency),
+      .RegisterDeallocation(RegisterDeallocation),
       .EnableCoverPushBackpressure(EnableCoverPushBackpressure),
       .EnableAssertPushValidStability(EnableAssertPushValidStability),
       .EnableAssertPushDataStability(EnableAssertPushDataStability),
       .EnableAssertPushDataKnown(EnableAssertPushDataKnown),
       .EnableAssertFinalNotValid(EnableAssertFinalNotValid)
-  ) br_fifo_shared_dynamic_ctrl (
+  ) br_fifo_shared_dynamic_ctrl_inst (
       .clk,
       .rst,
-      .push_valid,
       .push_ready,
-      .push_data,
+      .push_valid,
       .push_fifo_id,
+      .push_data,
       .push_full,
-      .pop_valid,
       .pop_ready,
+      .pop_valid,
       .pop_data,
       .pop_empty,
       .data_ram_wr_valid,
@@ -260,5 +272,4 @@ module br_fifo_shared_dynamic_flops #(
   // Implementation Checks
 
   // Rely on implementation checks in the controller
-
-endmodule
+endmodule : br_fifo_shared_dynamic_flops

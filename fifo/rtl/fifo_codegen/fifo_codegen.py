@@ -108,8 +108,12 @@ def main():
             module_name += "_ext_arbiter"
             pop_ctrl_module += "_ext_arbiter"
 
+        ctrl_module = module_name.replace("flops", "ctrl")
+
         rendered = template.render(
             module_name=module_name,
+            ctrl_only=args.ctrl_only,
+            ctrl_module=ctrl_module,
             push_ctrl_module=push_ctrl_module,
             pop_ctrl_module=pop_ctrl_module,
             ptr_mgr_module=ptr_mgr_module,

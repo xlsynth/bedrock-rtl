@@ -1,19 +1,19 @@
-// SPDX-License-Identifier: Apache-2.0
 
+// SPDX-License-Identifier: Apache-2.0
 //
-// Bedrock-RTL Shared Pseudo-Static Multi-FIFO with Flop-based Storage (Push Valid/Ready Interface)
+// Bedrock-RTL Shared Pseudo-Static Multi-FIFO with Flop-based Storage
+// (Push Valid/Ready Interface, Pop Ready/Valid Interface)
 //
-// This module implements a shared storage multi-FIFO with pseudo-static allocation
-// of storage from a flop-based RAM.
+// This module implements a shared storage multi-FIFO with flop-based storage
+// and pseudo-static allocation.
 //
 // The multi-FIFO contains multiple logical FIFOs. Space in the shared
 // data RAM is allocated to the logical FIFOs statically at initialization,
 // and a separate set of read/write pointers are kept per logical FIFO.
-
 // For instance, for a 4-FIFO design with a depth of 16, the sizes of the
 // logical FIFOs might be [6, 2, 3, 5]. In this case, you would configure
 // the base and bound addresses as [(0, 5), (6, 7), (8, 10), (11, 15)] and the
-// layout of the flop storage is as follows:
+// layout of the data RAM is as follows:
 //
 //  +----------------------------------------------------------------------------+
 //  | Addr | 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12 | 13 | 14 | 15 |
@@ -24,46 +24,55 @@
 // The push interface provides a valid/ready interface and a binary-encoded
 // FIFO ID. The push data is appended to the logical FIFO with the specified ID.
 //
+//
 // Every logical FIFO has its own ready/valid pop interface. If the data RAM
 // read latency is non-zero or the RegisterPopOutputs parameter is set to 1, the
 // pop_data will be provided from a staging buffer per logical FIFO. The staging
 // buffers are refilled from the data RAM and arbitrate with each other for
-// access using a round-robin arbitration scheme. The depth of each staging
-// buffer can be configured with the StagingBufferDepth parameter. The
-// bandwidth of a single logical FIFO is determined by the staging buffer depth
-// and is equivalent to `StagingBufferDepth / (RamReadLatency + 1)`.
+// access. The depth of each staging buffer can be configured with the
+// StagingBufferDepth parameter. The bandwidth of a single logical FIFO is
+// determined by the staging buffer depth and is equivalent to
+// `StagingBufferDepth / (RamReadLatency + 1)`.
 //
-// The cut-through latency of the FIFO is `1 + RamReadLatency + RegisterPopOutputs`.
-// The backpressure latency of the FIFO is 1.
-// The maximum bandwidth across all logical FIFOs is `NumFifos * StagingBufferDepth / (RamReadLatency + 1)`.
+// The design uses internal flop-based RAMs for the data storage.
+// The latency of the internal RAM is determined from the retiming parameters as follows:
+//
+// `RamReadLatency = RamAddressDepthStages + RamReadDataDepthStages + RamReadDataWidthStages`
+//
+// The design uses internal arbiters to determine which logical FIFOs can use the RAM read ports
+// on a given cycle. The arbitration policy is least-recently used (LRU).
 
 `include "br_asserts_internal.svh"
 
+// ri lint_check_waive MOD_NAME
 module br_fifo_shared_pstatic_flops #(
     // Number of logical FIFOs. Must be >=2.
     parameter int NumFifos = 2,
     // Total depth of the FIFO.
-    // Must be greater than two times the number of write ports.
-    parameter int Depth = 2,
+    // Must be greater or equal to the number of logical FIFOs.
+    parameter int Depth = 3,
     // Width of the data. Must be >=1.
     parameter int Width = 1,
+    // Number of write ports. For now, this must be 1.
+    parameter int NumWritePorts = 1,
+    // Number of read ports. For now, this must be 1.
+    parameter int NumReadPorts = 1,
     // The depth of the pop-side staging buffer.
     // This affects the pop bandwidth of each logical FIFO.
-    // The bandwidth will be `StagingBufferDepth / (RamAddressDepthStages
-    // + RamReadDataDepthStages + RamReadDataWidthStages + 1)`.
+    // The max bandwidth will be `StagingBufferDepth / (RamReadLatency + 1)`.
     parameter int StagingBufferDepth = 1,
     // If 1, make sure pop_valid/pop_data are registered at the output
     // of the staging buffer. This adds a cycle of cut-through latency.
     parameter bit RegisterPopOutputs = 0,
-    // Number of tiles in the depth dimension for the flop RAM.
+    // Number of tiles in the depth dimension for the data flop RAM.
     parameter int RamDepthTiles = 1,
-    // Number of tiles in the width dimension for the flop RAM.
+    // Number of tiles in the width dimension for the data flop RAM.
     parameter int RamWidthTiles = 1,
-    // Number of stages on the address path for the flop RAM.
+    // Number of stages on the address path for the data flop RAM.
     parameter int RamAddressDepthStages = 0,
-    // Number of stages in the depth dimension on the flop RAM.
+    // Number of stages in the depth dimension on the data flop RAM.
     parameter int RamReadDataDepthStages = 0,
-    // Number of stages in the width dimension on the flop RAM.
+    // Number of stages in the width dimension on the data flop RAM.
     parameter int RamReadDataWidthStages = 0,
     // If 1, cover that the push side experiences backpressure.
     // If 0, assert that there is never backpressure.
@@ -79,14 +88,12 @@ module br_fifo_shared_pstatic_flops #(
     // empty at the end of the test.
     // ri lint_check_waive PARAM_NOT_USED
     parameter bit EnableAssertFinalNotValid = 1,
-
     localparam int FifoIdWidth = br_math::clamped_clog2(NumFifos),
-    localparam int AddrWidth   = br_math::clamped_clog2(Depth)
+    localparam int AddrWidth = br_math::clamped_clog2(Depth)
 ) (
     input logic clk,
     input logic rst,
-
-    // Size configuration
+    // Fifo configuration
     // These can come from straps or CSRs, but they must be set before reset is
     // deasserted and then held stable until reset is asserted.
     // The base and bound addresses determine the range of RAM addresses given
@@ -104,22 +111,24 @@ module br_fifo_shared_pstatic_flops #(
     output logic config_error,
 
     // Push side
-    input  logic                   push_valid,
-    output logic                   push_ready,
-    input  logic [      Width-1:0] push_data,
-    input  logic [FifoIdWidth-1:0] push_fifo_id,
-    output logic [   NumFifos-1:0] push_full,
+    output logic [NumWritePorts-1:0] push_ready,
+    input logic [NumWritePorts-1:0] push_valid,
+    input logic [NumWritePorts-1:0][Width-1:0] push_data,
+    input logic [NumWritePorts-1:0][FifoIdWidth-1:0] push_fifo_id,
+    output logic [NumFifos-1:0] push_full,
 
     // Pop side
-    output logic [NumFifos-1:0]            pop_valid,
-    input  logic [NumFifos-1:0]            pop_ready,
+    output logic [NumFifos-1:0] pop_valid,
+    input logic [NumFifos-1:0] pop_ready,
     output logic [NumFifos-1:0][Width-1:0] pop_data,
-    output logic [NumFifos-1:0]            pop_empty
+    output logic [NumFifos-1:0] pop_empty
 );
+
   // Integration Checks
   // Rely on checks in the submodules
 
   // Implementation
+
   // Data RAM
   logic ram_wr_valid;
   logic [AddrWidth-1:0] ram_wr_addr;
@@ -163,6 +172,8 @@ module br_fifo_shared_pstatic_flops #(
       .NumFifos(NumFifos),
       .Depth(Depth),
       .Width(Width),
+      .NumWritePorts(NumWritePorts),
+      .NumReadPorts(NumReadPorts),
       .StagingBufferDepth(StagingBufferDepth),
       .RegisterPopOutputs(RegisterPopOutputs),
       .RamReadLatency(RamReadLatency),
@@ -171,19 +182,19 @@ module br_fifo_shared_pstatic_flops #(
       .EnableAssertPushDataStability(EnableAssertPushDataStability),
       .EnableAssertPushDataKnown(EnableAssertPushDataKnown),
       .EnableAssertFinalNotValid(EnableAssertFinalNotValid)
-  ) br_fifo_shared_pstatic_ctrl (
+  ) br_fifo_shared_pstatic_ctrl_inst (
       .clk,
       .rst,
       .config_base,
       .config_bound,
       .config_error,
-      .push_valid,
       .push_ready,
-      .push_data,
+      .push_valid,
       .push_fifo_id,
+      .push_data,
       .push_full,
-      .pop_valid,
       .pop_ready,
+      .pop_valid,
       .pop_data,
       .pop_empty,
       .ram_wr_valid,
@@ -198,5 +209,4 @@ module br_fifo_shared_pstatic_flops #(
   // Implementation Checks
 
   // Rely on implementation checks in the controller
-
-endmodule
+endmodule : br_fifo_shared_pstatic_flops

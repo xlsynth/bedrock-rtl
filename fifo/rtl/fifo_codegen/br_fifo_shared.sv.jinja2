@@ -1,11 +1,15 @@
 {#-
-   This is a template for a shared FIFO controller. It is used to generate the following modules:
+   This is a template for a shared FIFO. It is used to generate the following modules:
    - br_fifo_shared_dynamic_ctrl
    - br_fifo_shared_dynamic_ctrl_ext_arbiter
    - br_fifo_shared_dynamic_ctrl_push_credit
    - br_fifo_shared_dynamic_ctrl_push_credit_ext_arbiter
    - br_fifo_shared_pstatic_ctrl
    - br_fifo_shared_pstatic_ctrl_push_credit
+   - br_fifo_shared_dynamic_flops
+   - br_fifo_shared_dynamic_flops_push_credit
+   - br_fifo_shared_pstatic_flops
+   - br_fifo_shared_pstatic_flops_push_credit
 -#}
 {%- if dynamic -%}
 {%-   set sharing_name_upper = "Dynamic" %}
@@ -29,22 +33,37 @@
 {%- else -%}{# ext_arbiter #}
 {%-   set ext_arbiter_text = "" %}
 {%- endif -%}
+{%- if ctrl_only -%}
+{%-   set storage_type_upper = "Controller" %}
+{%- else -%}
+{%-   set storage_type_upper = "with Flop-based Storage" %}
+{%- endif %}
 // SPDX-License-Identifier: Apache-2.0
 //
-// Bedrock-RTL Shared {{ sharing_name_upper }} Multi-FIFO Controller
+// Bedrock-RTL Shared {{ sharing_name_upper }} Multi-FIFO {{ storage_type_upper }}
 // (Push {{ push_intf_name }} Interface, Pop {{ pop_intf_name }} Interface{{ ext_arbiter_text }})
 //
+{%- if ctrl_only %}
 // This module implements the controller for a shared storage multi-FIFO
 // with {{ sharing_name_lower }} allocation.
+{%- else %}
+// This module implements a shared storage multi-FIFO with flop-based storage
+// and {{ sharing_name_lower }} allocation.
+{%- endif %}
 //
 {%- if dynamic %}
 // The multi-FIFO contains multiple logical FIFOs. Space in the shared
 // data RAM is allocated to the logical FIFOs dynamically.
 // The order of RAM entries for a single logical FIFO is tracked via
 // singly-linked lists. The linked lists are stored in a separate
-// pointer RAM. The data and pointer RAMs must be instantiated
-// externally to this module and connected to the `data_ram_*` and
-// `ptr_ram_*` ports.
+// pointer RAM.
+{%-   if ctrl_only %}
+// The data and pointer RAMs must be instantiated externally to this module and
+// connected to the `data_ram_*` and `ptr_ram_*` ports.
+{%-   else %}
+// The data and pointer RAMs are implemented as flops and instantiated
+// internally.
+{%-   endif %}{# ctrl_only #}
 {%- else %}
 // The multi-FIFO contains multiple logical FIFOs. Space in the shared
 // data RAM is allocated to the logical FIFOs statically at initialization,
@@ -120,10 +139,27 @@
 // `{% if pop_credit %}PopMaxCredits / (DataRamReadLatency + 1){% else %}StagingBufferDepth / (DataRamReadLatency + 1){% endif %}`. To get full bandwidth,
 // the number of linked lists per FIFO should be set to `PointerRamReadLatency +
 // 1` and the {% if pop_credit %}maximum number of credits{% else %}staging buffer depth{% endif %} should be set to `DataRamReadLatency + 1`.
-
+//
+{%-   if ctrl_only %}
 // The design assumes that the data and pointer RAMs and are instantiated externally.
+{%-   else %}
+// The design uses internal flop-based RAMs for the data and pointer storage.
+// The latency of the internal RAMs are determined from the retiming parameters as follows:
+//
+// `PointerRamReadLatency = PointerRamAddressDepthStages + PointerRamReadDataDepthStages + PointerRamReadDataWidthStages`
+//
+// `DataRamReadLatency = DataRamReadAddressDepthStages + DataRamReadDataDepthStages + DataRamReadDataWidthStages`
+//
+{%-   endif %}
 {%- else %}{# pstatic #}
+{%-   if ctrl_only %}
 // The design assumes that the RAM is instantiated externally.
+{%-   else %}
+// The design uses internal flop-based RAMs for the data storage.
+// The latency of the internal RAM is determined from the retiming parameters as follows:
+//
+// `RamReadLatency = RamAddressDepthStages + RamReadDataDepthStages + RamReadDataWidthStages`
+{%-   endif %}
 {%- endif %}
 //
 {%- if ext_arbiter %}
@@ -192,13 +228,49 @@ module {{ module_name }} #(
     // staging buffer to the freelist. This improves timing at the cost of
     // adding a cycle of backpressure latency.
     parameter bit RegisterDeallocation = 0,
+{%-   if ctrl_only %}
     // The number of cycles between data ram read address and read data. Must be >=0.
     parameter int DataRamReadLatency = 0,
     // The number of cycles between pointer ram read address and read data. Must be >=0.
     parameter int PointerRamReadLatency = 0,
-{%- else %}
+{%-   else %}{# flops #}
+    // Number of tiles in the depth dimension for the data flop RAM.
+    parameter int DataRamDepthTiles = 1,
+    // Number of tiles in the width dimension for the data flop RAM.
+    parameter int DataRamWidthTiles = 1,
+    // Number of stages on the address path for the data flop RAM.
+    parameter int DataRamAddressDepthStages = 0,
+    // Number of stages in the depth dimension on the data flop RAM.
+    parameter int DataRamReadDataDepthStages = 0,
+    // Number of stages in the width dimension on the data flop RAM.
+    parameter int DataRamReadDataWidthStages = 0,
+    // Number of tiles in the depth dimension for the pointer flop RAM.
+    parameter int PointerRamDepthTiles = 1,
+    // Number of tiles in the width dimension for the pointer flop RAM.
+    parameter int PointerRamWidthTiles = 1,
+    // Number of stages on the address path for the pointer flop RAM.
+    parameter int PointerRamAddressDepthStages = 0,
+    // Number of stages in the depth dimension on the pointer flop RAM.
+    parameter int PointerRamReadDataDepthStages = 0,
+    // Number of stages in the width dimension on the pointer flop RAM.
+    parameter int PointerRamReadDataWidthStages = 0,
+{%-   endif %}{# ctrl_only #}
+{%- else %}{# pstatic #}
+{%-   if ctrl_only %}
     // The number of cycles between ram read address and read data. Must be >=0.
     parameter int RamReadLatency = 0,
+{%-   else %}{# flops #}
+    // Number of tiles in the depth dimension for the data flop RAM.
+    parameter int RamDepthTiles = 1,
+    // Number of tiles in the width dimension for the data flop RAM.
+    parameter int RamWidthTiles = 1,
+    // Number of stages on the address path for the data flop RAM.
+    parameter int RamAddressDepthStages = 0,
+    // Number of stages in the depth dimension on the data flop RAM.
+    parameter int RamReadDataDepthStages = 0,
+    // Number of stages in the width dimension on the data flop RAM.
+    parameter int RamReadDataWidthStages = 0,
+{%-   endif %}{# ctrl_only #}
 {%- endif %}
 {%- if ext_arbiter %}
     // If 1, the arbiter is guaranteed to grant in a cycle when any request is asserted.`
@@ -242,7 +314,9 @@ module {{ module_name }} #(
 {%- if pop_credit %}
     localparam int PopCreditWidth = $clog2(PopMaxCredits + 1),
 {%- endif %}
+{%- if ctrl_only or push_credit %}
     localparam int CountWidth = $clog2(Depth + 1),
+{%- endif %}
     localparam int FifoIdWidth = br_math::clamped_clog2(NumFifos),
     localparam int AddrWidth   = br_math::clamped_clog2(Depth)
 ) (
@@ -318,23 +392,24 @@ module {{ module_name }} #(
     input logic [NumFifos-1:0] pop_ready,
     output logic [NumFifos-1:0][Width-1:0] pop_data,
 {%- endif %}
-    output logic [NumFifos-1:0] pop_empty,
+    output logic [NumFifos-1:0] pop_empty
 
-{%- if pop_credit %}
+{%- if pop_credit %},
     input  logic [NumFifos-1:0][PopCreditWidth-1:0] credit_initial_pop,
     input  logic [NumFifos-1:0][PopCreditWidth-1:0] credit_withhold_pop,
     output logic [NumFifos-1:0][PopCreditWidth-1:0] credit_available_pop,
-    output logic [NumFifos-1:0][PopCreditWidth-1:0] credit_count_pop,
+    output logic [NumFifos-1:0][PopCreditWidth-1:0] credit_count_pop
 {%- endif %}
 
-{%- if ext_arbiter %}
+{%- if ext_arbiter %},
     // Arbiter interface
     output logic [NumReadPorts-1:0][NumFifos-1:0] arb_request,
     input logic [NumReadPorts-1:0][NumFifos-1:0] arb_grant,
-    output logic [NumReadPorts-1:0] arb_enable_priority_update,
+    output logic [NumReadPorts-1:0] arb_enable_priority_update
 {%- endif %}
 
-{%- if dynamic %}
+{%- if ctrl_only %},
+{%-   if dynamic %}
     // Data RAM Ports
     output logic [NumWritePorts-1:0] data_ram_wr_valid,
     output logic [NumWritePorts-1:0][AddrWidth-1:0] data_ram_wr_addr,
@@ -354,7 +429,7 @@ module {{ module_name }} #(
     output logic [NumReadPorts-1:0][AddrWidth-1:0] ptr_ram_rd_addr,
     input logic [NumReadPorts-1:0] ptr_ram_rd_data_valid,
     input logic [NumReadPorts-1:0][AddrWidth-1:0] ptr_ram_rd_data
-{%- else %}
+{%-   else %}{# pstatic #}
     // RAM Ports
     output logic [NumWritePorts-1:0] ram_wr_valid,
     output logic [NumWritePorts-1:0][AddrWidth-1:0] ram_wr_addr,
@@ -364,45 +439,50 @@ module {{ module_name }} #(
     output logic [NumReadPorts-1:0][AddrWidth-1:0] ram_rd_addr,
     input logic [NumReadPorts-1:0] ram_rd_data_valid,
     input logic [NumReadPorts-1:0][Width-1:0] ram_rd_data
+{%-   endif %}{# ctrl_only #}
 {%- endif %}
 );
 
   // Integration Checks
-{%- if dynamic %}
+{%- if ctrl_only %}
+{%-   if dynamic %}
   `BR_ASSERT_STATIC(num_write_ports_in_range_a, NumWritePorts >= 1)
   `BR_ASSERT_STATIC(legal_num_read_ports_a, NumReadPorts >= 1 && br_math::is_power_of_2(
                     NumReadPorts))
   `BR_ASSERT_STATIC(pointer_ram_read_latency_in_range_a, PointerRamReadLatency >= 0)
   `BR_ASSERT_STATIC(data_ram_read_latency_in_range_a, DataRamReadLatency >= 0)
-{%- else %}
+{%-   else %}
   // TODO(zhemao): Support multiple read and write ports for pseudo-static FIFOs
   `BR_ASSERT_STATIC(one_write_port_a, NumWritePorts == 1)
   `BR_ASSERT_STATIC(one_read_port_a, NumReadPorts == 1)
   `BR_ASSERT_STATIC(ram_read_latency_in_range_a, RamReadLatency >= 0)
-{%- endif %}
+{%-   endif %}
   `BR_ASSERT_STATIC(num_fifos_in_range_a, NumFifos >= 2)
-{%- if dynamic %}
+{%-   if dynamic %}
   localparam int MinDepth = br_math::max2(2 * NumWritePorts + 1, NumReadPorts);
-{%- else %}
+{%-   else %}
   localparam int MinDepth = NumFifos;
-{%- endif %}
+{%-   endif %}
   `BR_ASSERT_STATIC(depth_in_range_a, Depth >= MinDepth)
   `BR_ASSERT_STATIC(width_in_range_a, Width >= 1)
-{%- if not pop_credit %}
+{%-   if not pop_credit %}
   `BR_ASSERT_STATIC(staging_buffer_depth_in_range_a, StagingBufferDepth >= 1)
-{%- endif %}
+{%-   endif %}
 
   // Other integration checks in submodules
+{%- else %}
+  // Rely on checks in the submodules
+{%- endif %}
 
   // Implementation
-
-{%- if dynamic %}
+{%- if ctrl_only %}
+{%-   if dynamic %}
   // Push Controller
   logic [NumFifos-1:0][NumWritePorts-1:0] next_tail_valid;
   logic [NumFifos-1:0][NumWritePorts-1:0][AddrWidth-1:0] next_tail;
   logic [NumFifos-1:0] dealloc_valid;
   logic [NumFifos-1:0][AddrWidth-1:0] dealloc_entry_id;
-{%- else %}{# pstatic #}
+{%-   else %}{# pstatic #}
   // Size Calculation
   logic [NumFifos-1:0][CountWidth-1:0] config_size;
 
@@ -422,90 +502,90 @@ module {{ module_name }} #(
   logic [NumFifos-1:0] advance_tail;
   logic [NumFifos-1:0][AddrWidth-1:0] tail_next;
   logic [NumFifos-1:0][AddrWidth-1:0] tail;
-{%-   if push_credit %}
+{%-     if push_credit %}
   logic [NumFifos-1:0] dealloc_valid;
-{%-   endif %}{# push_credit #}
-{%- endif %}{# dynamic #}
+{%-     endif %}{# push_credit #}
+{%-   endif %}{# dynamic #}
 
-{%- if push_credit and pop_credit %}
-{%-   set push_ctrl_rst = 'push_ctrl_rst' %}
-{%-   set ptr_mgr_rst = 'ptr_mgr_rst' %}
-{%-   set pop_ctrl_rst = 'pop_ctrl_rst' %}
+{%-   if push_credit and pop_credit %}
+{%-     set push_ctrl_rst = 'push_ctrl_rst' %}
+{%-     set ptr_mgr_rst = 'ptr_mgr_rst' %}
+{%-     set pop_ctrl_rst = 'pop_ctrl_rst' %}
   logic push_ctrl_rst;
   logic ptr_mgr_rst;
   logic pop_ctrl_rst;
   assign push_ctrl_rst = rst || pop_receiver_in_reset;
   assign ptr_mgr_rst = rst || pop_receiver_in_reset || push_sender_in_reset;
   assign pop_ctrl_rst = rst || push_sender_in_reset;
-{%- elif push_credit %}
-{%-   set push_ctrl_rst = 'rst' %}
-{%-   set ptr_mgr_rst = 'either_rst' %}
-{%-   set pop_ctrl_rst = 'either_rst' %}
+{%-   elif push_credit %}
+{%-     set push_ctrl_rst = 'rst' %}
+{%-     set ptr_mgr_rst = 'either_rst' %}
+{%-     set pop_ctrl_rst = 'either_rst' %}
   logic either_rst;
   assign either_rst = rst || push_sender_in_reset;
-{%- elif pop_credit %}
-{%-   set push_ctrl_rst = 'either_rst' %}
-{%-   set ptr_mgr_rst = 'either_rst' %}
-{%-   set pop_ctrl_rst = 'rst' %}
+{%-   elif pop_credit %}
+{%-     set push_ctrl_rst = 'either_rst' %}
+{%-     set ptr_mgr_rst = 'either_rst' %}
+{%-     set pop_ctrl_rst = 'rst' %}
   logic either_rst;
   assign either_rst = rst || pop_receiver_in_reset;
-{%- else %}{# push and pop ready #}
-{%-   set push_ctrl_rst = 'rst' %}
-{%-   set ptr_mgr_rst = 'rst' %}
-{%-   set pop_ctrl_rst = 'rst' %}
-{%- endif %}
+{%-   else %}{# push and pop ready #}
+{%-     set push_ctrl_rst = 'rst' %}
+{%-     set ptr_mgr_rst = 'rst' %}
+{%-     set pop_ctrl_rst = 'rst' %}
+{%-   endif %}
 
   {{ push_ctrl_module }} #(
-{%- if dynamic %}
+{%-   if dynamic %}
       .NumWritePorts(NumWritePorts),
-{%- endif %}
-{%- if dynamic and push_credit %}
+{%-   endif %}
+{%-   if dynamic and push_credit %}
       .NumReadPorts(NumReadPorts),
-{%- endif %}
+{%-   endif %}
       .NumFifos(NumFifos),
       .Depth(Depth),
       .Width(Width),
-{%- if push_credit %}
+{%-   if push_credit %}
       .RegisterPushOutputs(RegisterPushOutputs),
       .EnableCoverPushCreditStall(EnableCoverPushCreditStall),
       .EnableCoverCreditWithhold(EnableCoverCreditWithhold),
       .EnableCoverPushSenderInReset(EnableCoverPushSenderInReset),
-{%- else %}
+{%-   else %}
       .EnableCoverPushBackpressure(EnableCoverPushBackpressure),
       .EnableAssertPushValidStability(EnableAssertPushValidStability),
       .EnableAssertPushDataStability(EnableAssertPushDataStability),
-{%- endif %}
+{%-   endif %}
       .EnableAssertPushDataKnown(EnableAssertPushDataKnown),
       .EnableAssertFinalNotValid(EnableAssertFinalNotValid)
   ) {{ push_ctrl_module }}_inst (
       .clk,
       .rst({{ push_ctrl_rst }}),
-{%- if not dynamic %}
+{%-   if not dynamic %}
       .config_base,
       .config_bound,
-{%-   if push_credit %}
+{%-     if push_credit %}
       .config_size,
-{%-   endif %}{# push_credit #}
-{%- endif %}{# pstatic #}
-{%- if push_credit %}
+{%-     endif %}{# push_credit #}
+{%-   endif %}{# pstatic #}
+{%-   if push_credit %}
       .push_sender_in_reset,
       .push_receiver_in_reset,
       .push_credit_stall,
       .push_credit,
-{%- else %}
+{%-   else %}
       .push_ready,
-{%- endif %}
+{%-   endif %}
       .push_valid,
       .push_fifo_id,
       .push_data,
       .push_full,
-{%- if push_credit %}
+{%-   if push_credit %}
       .credit_initial_push,
       .credit_withhold_push,
       .credit_available_push,
       .credit_count_push,
-{%- endif %}
-{%- if dynamic %}
+{%-   endif %}
+{%-   if dynamic %}
       .data_ram_wr_valid,
       .data_ram_wr_addr,
       .data_ram_wr_data,
@@ -513,27 +593,27 @@ module {{ module_name }} #(
       .next_tail,
       .dealloc_valid,
       .dealloc_entry_id
-{%-   if not push_credit %},
+{%-     if not push_credit %},
       .dealloc_count()
-{%-   endif %}{# push_credit #}
-{%- else %}{# pstatic #}
+{%-     endif %}{# push_credit #}
+{%-   else %}{# pstatic #}
       .ram_wr_valid,
       .ram_wr_addr,
       .ram_wr_data,
       .advance_tail,
       .tail_next,
       .tail
-{%-   if push_credit %},
+{%-     if push_credit %},
       .dealloc_valid
-{%-   endif %}{# push_credit #}
-{%- endif %}{# dynamic #}
+{%-     endif %}{# push_credit #}
+{%-   endif %}{# dynamic #}
   );
 
   // Pointer Manager
   logic [NumFifos-1:0] ram_empty;
-{%- if not pop_credit %}
+{%-   if not pop_credit %}
   logic [NumFifos-1:0][CountWidth-1:0] ram_items;
-{%- endif %}
+{%-   endif %}
   logic [NumFifos-1:0] head_ready;
   logic [NumFifos-1:0] head_valid;
   logic [NumFifos-1:0][AddrWidth-1:0] head;
@@ -541,21 +621,21 @@ module {{ module_name }} #(
   {{ ptr_mgr_module }} #(
       .NumFifos(NumFifos),
       .Depth(Depth),
-{%- if dynamic %}
+{%-   if dynamic %}
       .NumWritePorts(NumWritePorts),
       .NumReadPorts(NumReadPorts),
       .NumLinkedListsPerFifo(NumLinkedListsPerFifo),
       .RamReadLatency(PointerRamReadLatency)
-{%- else %}
+{%-   else %}
       // Keep this at 0 for now to avoid introducing extra registers.
       // May expose this as a top-level parameter if there is a timing issue.
       .RegisterRamItems(0),
       .EnableAssertFinalNotValid(EnableAssertFinalNotValid)
-{%- endif %}
+{%-   endif %}
   ) {{ ptr_mgr_module }}_inst (
       .clk,
       .rst({{ ptr_mgr_rst }}),
-{%- if dynamic %}
+{%-   if dynamic %}
       .next_tail_valid,
       .next_tail,
       .ptr_ram_wr_valid,
@@ -565,7 +645,7 @@ module {{ module_name }} #(
       .ptr_ram_rd_addr,
       .ptr_ram_rd_data_valid,
       .ptr_ram_rd_data,
-{%- else %}{# pstatic #}
+{%-   else %}{# pstatic #}
       .config_base,
       .config_bound,
       .config_size,
@@ -573,16 +653,16 @@ module {{ module_name }} #(
       .tail_next,
       .tail,
       .push_full,
-{%- endif %}{# dynamic #}
+{%-   endif %}{# dynamic #}
       .head_valid,
       .head_ready,
       .head,
       .empty(ram_empty),
-{%- if pop_credit %}
+{%-   if pop_credit %}
       .items()  // Not used
-{%- else %}{# pop_ready #}
+{%-   else %}{# pop_ready #}
       .items(ram_items)
-{%- endif %}{# pop_credit #}
+{%-   endif %}{# pop_credit #}
   );
 
   // Pop Controller
@@ -591,23 +671,23 @@ module {{ module_name }} #(
       .NumFifos(NumFifos),
       .Depth(Depth),
       .Width(Width),
-{%- if pop_credit %}
+{%-   if pop_credit %}
       .PopMaxCredits(PopMaxCredits),
-{%- else %}
+{%-   else %}
       .StagingBufferDepth(StagingBufferDepth),
-{%- endif %}
-{%- if dynamic %}
+{%-   endif %}
+{%-   if dynamic %}
       .RamReadLatency(DataRamReadLatency),
       .RegisterDeallocation(RegisterDeallocation)
-{%- else %}
+{%-   else %}
       .RamReadLatency(RamReadLatency)
-{%- endif %}
-{%- if ext_arbiter %},
+{%-   endif %}
+{%-   if ext_arbiter %},
       .ArbiterAlwaysGrants(ArbiterAlwaysGrants)
-{%- endif %}
-{%- if not pop_credit %},
+{%-   endif %}
+{%-   if not pop_credit %},
       .RegisterPopOutputs(RegisterPopOutputs)
-{%- endif %}
+{%-   endif %}
   ) {{ pop_ctrl_module }}_inst (
       .clk,
       .rst({{ pop_ctrl_rst }}),
@@ -615,59 +695,309 @@ module {{ module_name }} #(
       .head_ready,
       .head,
       .ram_empty,
-{%- if pop_credit %}
+{%-   if pop_credit %}
       .pop_sender_in_reset,
       .pop_receiver_in_reset,
       .pop_credit,
       .pop_valid,
       .pop_fifo_id,
       .pop_data,
-{%- else %}{# pop_ready #}
+{%-   else %}{# pop_ready #}
       .ram_items,
       .pop_ready,
       .pop_valid,
       .pop_data,
-{%- endif %}{# pop_credit #}
+{%-   endif %}{# pop_credit #}
       .pop_empty,
 
-{%- if pop_credit %}
+{%-   if pop_credit %}
       .credit_initial_pop,
       .credit_withhold_pop,
       .credit_available_pop,
       .credit_count_pop,
-{%- endif %}{# pop_credit #}
+{%-   endif %}{# pop_credit #}
 
-{%- if ext_arbiter %}
+{%-   if ext_arbiter %}
       .arb_request,
       .arb_grant,
       .arb_can_grant(arb_grant),
       .arb_enable_priority_update,
-{%- endif %}
+{%-   endif %}
 
-{%- if dynamic %}
+{%-   if dynamic %}
       .dealloc_valid,
       .dealloc_entry_id,
       .data_ram_rd_addr_valid,
       .data_ram_rd_addr,
       .data_ram_rd_data_valid,
       .data_ram_rd_data
-{%- else %}
-{%-   if push_credit %}
+{%-   else %}{# pstatic #}
+{%-     if push_credit %}
       .dealloc_valid,
       .dealloc_entry_id(),  // Not used
-{%-   else %}
+{%-     else %}{# push_ready #}
       .dealloc_valid(),  // Not used
       .dealloc_entry_id(),  // Not used
-{%-   endif %}
+{%-     endif %}{# push_credit #}
       .data_ram_rd_addr_valid(ram_rd_addr_valid),
       .data_ram_rd_addr(ram_rd_addr),
       .data_ram_rd_data_valid(ram_rd_data_valid),
       .data_ram_rd_data(ram_rd_data)
-{%- endif %}
+{%-   endif %}{# ctrl_only #}
+  );
+{%- else %}{# flops #}
+{%-   if push_credit and pop_credit %}
+{%-     set ram_rst = "any_rst" %}
+  logic any_rst;
+  assign any_rst = rst || push_sender_in_reset || pop_receiver_in_reset;
+
+{%    elif push_credit %}
+{%-     set ram_rst = "either_rst" %}
+  logic either_rst;
+  assign either_rst = rst || push_sender_in_reset;
+
+{%    elif pop_credit %}
+{%-     set ram_rst = "either_rst" %}
+  logic either_rst;
+  assign either_rst = rst || pop_receiver_in_reset;
+
+{%    else %}{# push_ready and pop_ready #}
+{%-     set ram_rst = "rst" %}
+{%    endif %}
+
+{%-   if dynamic %}
+  // Data RAM
+  logic [NumWritePorts-1:0] data_ram_wr_valid;
+  logic [NumWritePorts-1:0][AddrWidth-1:0] data_ram_wr_addr;
+  logic [NumWritePorts-1:0][Width-1:0] data_ram_wr_data;
+
+  logic [NumReadPorts-1:0] data_ram_rd_addr_valid;
+  logic [NumReadPorts-1:0][AddrWidth-1:0] data_ram_rd_addr;
+  logic [NumReadPorts-1:0] data_ram_rd_data_valid;
+  logic [NumReadPorts-1:0][Width-1:0] data_ram_rd_data;
+
+  br_ram_flops #(
+      .Depth(Depth),
+      .Width(Width),
+      .NumWritePorts(NumWritePorts),
+      .NumReadPorts(NumReadPorts),
+      .DepthTiles(DataRamDepthTiles),
+      .WidthTiles(DataRamWidthTiles),
+      .AddressDepthStages(DataRamAddressDepthStages),
+      .ReadDataDepthStages(DataRamReadDataDepthStages),
+      .ReadDataWidthStages(DataRamReadDataWidthStages)
+  ) br_ram_flops_data (
+      .wr_clk(clk),  // ri lint_check_waive SAME_CLOCK_NAME
+      .wr_rst({{ ram_rst }}),
+      .wr_valid(data_ram_wr_valid),
+      .wr_addr(data_ram_wr_addr),
+      .wr_data(data_ram_wr_data),
+      .wr_word_en({(NumWritePorts * DataRamWidthTiles) {1'b1}}),
+      .rd_clk(clk),  // ri lint_check_waive SAME_CLOCK_NAME
+      .rd_rst({{ ram_rst }}),
+      .rd_addr_valid(data_ram_rd_addr_valid),
+      .rd_addr(data_ram_rd_addr),
+      .rd_data_valid(data_ram_rd_data_valid),
+      .rd_data(data_ram_rd_data)
   );
 
+  // Pointer RAM
+  logic [NumWritePorts-1:0] ptr_ram_wr_valid;
+  logic [NumWritePorts-1:0][AddrWidth-1:0] ptr_ram_wr_addr;
+  logic [NumWritePorts-1:0][AddrWidth-1:0] ptr_ram_wr_data;
+
+  logic [NumReadPorts-1:0] ptr_ram_rd_addr_valid;
+  logic [NumReadPorts-1:0][AddrWidth-1:0] ptr_ram_rd_addr;
+  logic [NumReadPorts-1:0] ptr_ram_rd_data_valid;
+  logic [NumReadPorts-1:0][AddrWidth-1:0] ptr_ram_rd_data;
+
+  br_ram_flops #(
+      .Depth(Depth),
+      .Width(AddrWidth),
+      .NumWritePorts(NumWritePorts),
+      .NumReadPorts(NumReadPorts),
+      .DepthTiles(PointerRamDepthTiles),
+      .WidthTiles(PointerRamWidthTiles),
+      .AddressDepthStages(PointerRamAddressDepthStages),
+      .ReadDataDepthStages(PointerRamReadDataDepthStages),
+      .ReadDataWidthStages(PointerRamReadDataWidthStages)
+  ) br_ram_flops_pointer (
+      .wr_clk(clk),  // ri lint_check_waive SAME_CLOCK_NAME
+      .wr_rst({{ ram_rst }}),
+      .wr_valid(ptr_ram_wr_valid),
+      .wr_addr(ptr_ram_wr_addr),
+      .wr_data(ptr_ram_wr_data),
+      .wr_word_en({(NumWritePorts * PointerRamWidthTiles) {1'b1}}),
+      .rd_clk(clk),  // ri lint_check_waive SAME_CLOCK_NAME
+      .rd_rst({{ ram_rst }}),
+      .rd_addr_valid(ptr_ram_rd_addr_valid),
+      .rd_addr(ptr_ram_rd_addr),
+      .rd_data_valid(ptr_ram_rd_data_valid),
+      .rd_data(ptr_ram_rd_data)
+  );
+
+  // Controller
+  localparam int DataRamReadLatency =
+      DataRamAddressDepthStages + DataRamReadDataDepthStages + DataRamReadDataWidthStages;
+  localparam int PointerRamReadLatency =
+      PointerRamAddressDepthStages + PointerRamReadDataDepthStages + PointerRamReadDataWidthStages;
+{%-   else %}{# pstatic #}
+  // Data RAM
+  logic ram_wr_valid;
+  logic [AddrWidth-1:0] ram_wr_addr;
+  logic [Width-1:0] ram_wr_data;
+
+  logic ram_rd_addr_valid;
+  logic [AddrWidth-1:0] ram_rd_addr;
+  logic ram_rd_data_valid;
+  logic [Width-1:0] ram_rd_data;
+
+  br_ram_flops #(
+      .Depth(Depth),
+      .Width(Width),
+      .NumWritePorts(1),
+      .NumReadPorts(1),
+      .DepthTiles(RamDepthTiles),
+      .WidthTiles(RamWidthTiles),
+      .AddressDepthStages(RamAddressDepthStages),
+      .ReadDataDepthStages(RamReadDataDepthStages),
+      .ReadDataWidthStages(RamReadDataWidthStages)
+  ) br_ram_flops_data (
+      .wr_clk(clk),  // ri lint_check_waive SAME_CLOCK_NAME
+      .wr_rst({{ ram_rst }}),
+      .wr_valid(ram_wr_valid),
+      .wr_addr(ram_wr_addr),
+      .wr_data(ram_wr_data),
+      .wr_word_en({RamWidthTiles{1'b1}}),
+      .rd_clk(clk),  // ri lint_check_waive SAME_CLOCK_NAME
+      .rd_rst({{ ram_rst }}),
+      .rd_addr_valid(ram_rd_addr_valid),
+      .rd_addr(ram_rd_addr),
+      .rd_data_valid(ram_rd_data_valid),
+      .rd_data(ram_rd_data)
+  );
+
+  // Controller
+  localparam int RamReadLatency =
+      RamAddressDepthStages + RamReadDataDepthStages + RamReadDataWidthStages;
+{%-   endif %}{# dynamic #}
+
+  {{ ctrl_module }} #(
+      .NumFifos(NumFifos),
+      .Depth(Depth),
+      .Width(Width),
+      .NumWritePorts(NumWritePorts),
+      .NumReadPorts(NumReadPorts),
+{%-   if pop_credit %}
+      .PopMaxCredits(PopMaxCredits),
+{%-   else %}{# pop_ready #}
+      .StagingBufferDepth(StagingBufferDepth),
+      .RegisterPopOutputs(RegisterPopOutputs),
+{%-   endif %}{# pop_credit #}
+{%-   if dynamic %}
+      .NumLinkedListsPerFifo(NumLinkedListsPerFifo),
+      .DataRamReadLatency(DataRamReadLatency),
+      .PointerRamReadLatency(PointerRamReadLatency),
+      .RegisterDeallocation(RegisterDeallocation),
+{%-   else %}{# pstatic #}
+      .RamReadLatency(RamReadLatency),
+{%-   endif %}{# dynamic #}
+{%-   if push_credit %}
+      .RegisterPushOutputs(RegisterPushOutputs),
+      .EnableCoverPushCreditStall(EnableCoverPushCreditStall),
+      .EnableCoverCreditWithhold(EnableCoverCreditWithhold),
+      .EnableCoverPushSenderInReset(EnableCoverPushSenderInReset),
+{%-   else %}
+      .EnableCoverPushBackpressure(EnableCoverPushBackpressure),
+      .EnableAssertPushValidStability(EnableAssertPushValidStability),
+      .EnableAssertPushDataStability(EnableAssertPushDataStability),
+{%-   endif %}{# push_credit #}
+      .EnableAssertPushDataKnown(EnableAssertPushDataKnown),
+      .EnableAssertFinalNotValid(EnableAssertFinalNotValid)
+  ) {{ ctrl_module }}_inst (
+      .clk,
+      .rst,
+{%-   if not dynamic %}
+      .config_base,
+      .config_bound,
+      .config_error,
+{%-   endif %}{# pstatic #}
+{%-   if push_credit %}
+      .push_sender_in_reset,
+      .push_receiver_in_reset,
+      .push_credit_stall,
+      .push_credit,
+{%-   else %}
+      .push_ready,
+{%-   endif %}{# push_credit #}
+      .push_valid,
+      .push_fifo_id,
+      .push_data,
+      .push_full,
+{%-   if push_credit %}
+      .credit_initial_push,
+      .credit_withhold_push,
+      .credit_available_push,
+      .credit_count_push,
+{%-   endif %}{# push_credit #}
+{%-   if pop_credit %}
+      .pop_sender_in_reset,
+      .pop_receiver_in_reset,
+      .pop_credit,
+      .pop_valid,
+      .pop_fifo_id,
+      .pop_data,
+{%-   else %}{# pop_ready #}
+      .pop_ready,
+      .pop_valid,
+      .pop_data,
+{%-   endif %}{# pop_credit #}
+      .pop_empty,
+{%-   if pop_credit %}
+      .credit_initial_pop,
+      .credit_withhold_pop,
+      .credit_available_pop,
+      .credit_count_pop,
+{%-   endif %}{# pop_credit #}
+{%-   if ext_arbiter %}
+      .arb_request,
+      .arb_grant,
+      .arb_enable_priority_update,
+{%-   endif %}{# ext_arbiter #}
+{%-   if dynamic %}
+      .data_ram_wr_valid,
+      .data_ram_wr_addr,
+      .data_ram_wr_data,
+      .data_ram_rd_addr_valid,
+      .data_ram_rd_addr,
+      .data_ram_rd_data_valid,
+      .data_ram_rd_data,
+      .ptr_ram_wr_valid,
+      .ptr_ram_wr_addr,
+      .ptr_ram_wr_data,
+      .ptr_ram_rd_addr_valid,
+      .ptr_ram_rd_addr,
+      .ptr_ram_rd_data_valid,
+      .ptr_ram_rd_data
+{%-   else %}{# pstatic #}
+      .ram_wr_valid,
+      .ram_wr_addr,
+      .ram_wr_data,
+      .ram_rd_addr_valid,
+      .ram_rd_addr,
+      .ram_rd_data_valid,
+      .ram_rd_data
+{%-   endif %}{# dynamic #}
+  );
+{%- endif %}{# ctrl_only #}
+
   // Implementation Checks
+{%- if ctrl_only %}
 
   // TODO(zhemao): Add the checks
+{%- else %}
+
+  // Rely on implementation checks in the controller
+{%- endif %}
 endmodule : {{ module_name }}
 {# final newline #}
