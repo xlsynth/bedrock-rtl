@@ -936,3 +936,133 @@ br_verilog_elab_and_lint_test_suite(
     },
     deps = [":br_fifo_shared_pop_ctrl_credit"],
 )
+
+shared_fifo_verilog_library(
+    name = "br_fifo_shared_dynamic_ctrl_push_credit_pop_credit",
+    src = "br_fifo_shared_dynamic_ctrl_push_credit_pop_credit.sv",
+    ctrl_only = True,
+    ext_arbiter = False,
+    pop_intf = "credit",
+    push_intf = "credit",
+    sharing_type = "dynamic",
+    template = "//fifo/rtl/fifo_codegen:br_fifo_shared_template",
+    deps = [
+        ":br_fifo_shared_pop_ctrl_credit",
+        "//fifo/rtl/internal:br_fifo_shared_dynamic_ptr_mgr",
+        "//fifo/rtl/internal:br_fifo_shared_dynamic_push_ctrl_credit",
+        "//macros:br_asserts_internal",
+    ],
+)
+
+br_verilog_elab_and_lint_test_suite(
+    name = "br_fifo_shared_dynamic_ctrl_push_credit_pop_credit_test_suite",
+    params = {
+        "NumFifos": ["2"],
+        "Depth": [
+            "5",
+            "8",
+        ],
+        "Width": ["8"],
+        # TODO(zhemao): Sweep read and write ports
+        "DataRamReadLatency": [
+            "0",
+            "1",
+        ],
+        "PointerRamReadLatency": [
+            "0",
+            "1",
+        ],
+        "RegisterDeallocation": [
+            "0",
+            "1",
+        ],
+        "RegisterPushOutputs": [
+            "0",
+            "1",
+        ],
+    },
+    deps = [":br_fifo_shared_dynamic_ctrl_push_credit_pop_credit"],
+)
+
+shared_fifo_verilog_library(
+    name = "br_fifo_shared_dynamic_ctrl_push_credit_pop_credit_ext_arbiter",
+    src = "br_fifo_shared_dynamic_ctrl_push_credit_pop_credit_ext_arbiter.sv",
+    ctrl_only = True,
+    ext_arbiter = True,
+    pop_intf = "credit",
+    push_intf = "credit",
+    sharing_type = "dynamic",
+    template = "//fifo/rtl/fifo_codegen:br_fifo_shared_template",
+    deps = [
+        ":br_fifo_shared_pop_ctrl_credit_ext_arbiter",
+        "//fifo/rtl/internal:br_fifo_shared_dynamic_ptr_mgr",
+        "//fifo/rtl/internal:br_fifo_shared_dynamic_push_ctrl_credit",
+        "//macros:br_asserts_internal",
+    ],
+)
+
+br_verilog_elab_and_lint_test_suite(
+    name = "br_fifo_shared_dynamic_ctrl_push_credit_pop_credit_ext_arbiter_test_suite",
+    params = {
+        "NumFifos": ["2"],
+        "Depth": [
+            "5",
+            "8",
+        ],
+        "Width": ["8"],
+        # TODO(zhemao): Sweep read and write ports
+        "DataRamReadLatency": [
+            "0",
+            "1",
+        ],
+        "PointerRamReadLatency": [
+            "0",
+            "1",
+        ],
+        "RegisterDeallocation": [
+            "0",
+            "1",
+        ],
+        "RegisterPushOutputs": [
+            "0",
+            "1",
+        ],
+    },
+    deps = [":br_fifo_shared_dynamic_ctrl_push_credit_pop_credit_ext_arbiter"],
+)
+
+shared_fifo_verilog_library(
+    name = "br_fifo_shared_dynamic_flops_push_credit_pop_credit",
+    src = "br_fifo_shared_dynamic_flops_push_credit_pop_credit.sv",
+    ctrl_only = False,
+    ext_arbiter = False,
+    pop_intf = "credit",
+    push_intf = "credit",
+    sharing_type = "dynamic",
+    template = "//fifo/rtl/fifo_codegen:br_fifo_shared_template",
+    deps = [
+        ":br_fifo_shared_dynamic_ctrl_push_credit_pop_credit",
+        "//ram/rtl:br_ram_flops",
+    ],
+)
+
+br_verilog_elab_and_lint_test_suite(
+    name = "br_fifo_shared_dynamic_flops_push_credit_pop_credit_test_suite",
+    params = {
+        "NumFifos": ["2"],
+        "Depth": [
+            "5",
+            "8",
+        ],
+        "Width": ["8"],
+        "RegisterDeallocation": [
+            "0",
+            "1",
+        ],
+        "RegisterPushOutputs": [
+            "0",
+            "1",
+        ],
+    },
+    deps = [":br_fifo_shared_dynamic_flops_push_credit_pop_credit"],
+)

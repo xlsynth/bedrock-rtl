@@ -4,12 +4,15 @@
    - br_fifo_shared_dynamic_ctrl_ext_arbiter
    - br_fifo_shared_dynamic_ctrl_push_credit
    - br_fifo_shared_dynamic_ctrl_push_credit_ext_arbiter
+   - br_fifo_shared_dynamic_ctrl_push_credit_pop_credit
+   - br_fifo_shared_dynamic_ctrl_push_credit_pop_credit_ext_arbiter
    - br_fifo_shared_pstatic_ctrl
    - br_fifo_shared_pstatic_ctrl_push_credit
    - br_fifo_shared_dynamic_flops
    - br_fifo_shared_dynamic_flops_push_credit
    - br_fifo_shared_pstatic_flops
    - br_fifo_shared_pstatic_flops_push_credit
+   - br_fifo_shared_pstatic_flops_push_credit_pop_credit
 -#}
 {%- if dynamic -%}
 {%-   set sharing_name_upper = "Dynamic" %}
@@ -465,9 +468,11 @@ module {{ module_name }} #(
 {%-   endif %}
   `BR_ASSERT_STATIC(depth_in_range_a, Depth >= MinDepth)
   `BR_ASSERT_STATIC(width_in_range_a, Width >= 1)
-{%-   if not pop_credit %}
+{%-   if pop_credit %}
+  `BR_ASSERT_STATIC(pop_max_credits_in_range_a, PopMaxCredits >= 1)
+{%-   else %}
   `BR_ASSERT_STATIC(staging_buffer_depth_in_range_a, StagingBufferDepth >= 1)
-{%-   endif %}
+{%-   endif %}{# pop_credit #}
 
   // Other integration checks in submodules
 {%- else %}
