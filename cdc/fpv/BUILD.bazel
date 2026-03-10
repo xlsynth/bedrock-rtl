@@ -649,3 +649,50 @@ br_verilog_fpv_test_tools_suite(
         "//gate/rtl:br_gate_mock",
     ],
 )
+
+verilog_library(
+    name = "br_cdc_stable_data_fpv_monitor",
+    srcs = ["br_cdc_stable_data_fpv_monitor.sv"],
+    visibility = ["//visibility:public"],
+    deps = [
+        "//cdc/rtl:br_cdc_stable_data",
+        "//macros:br_asserts",
+        "//macros:br_registers",
+    ],
+)
+
+verilog_elab_test(
+    name = "br_cdc_stable_data_fpv_monitor_elab_test",
+    custom_tcl_header = "//:elab_test_jg_custom_header.verific.tcl",
+    tool = "verific",
+    deps = [":br_cdc_stable_data_fpv_monitor"],
+)
+
+br_verilog_fpv_test_tools_suite(
+    name = "br_cdc_stable_data_test_suite",
+    params = {
+        "Width": [
+            "2",
+        ],
+        "InitValue": [
+            "0",
+            "1",
+        ],
+        "RegisterResetActive": [
+            "0",
+            "1",
+        ],
+        "NumSyncStages": [
+            "2",
+            "3",
+        ],
+    },
+    tools = {
+        "jg": "br_cdc_stable_data_fpv.jg.tcl",
+    },
+    top = "br_cdc_stable_data_fpv_monitor",
+    deps = [
+        ":br_cdc_stable_data_fpv_monitor",
+        "//gate/rtl:br_gate_mock",
+    ],
+)
