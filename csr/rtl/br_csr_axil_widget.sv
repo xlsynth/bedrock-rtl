@@ -66,7 +66,10 @@
 module br_csr_axil_widget #(
     parameter int AddrWidth = 1,  // Must be at least 1
     parameter int DataWidth = 32,  // Must be 32 or 64
+    // If 1, register the AXI-Lite response outputs at the cost of an extra cycle of latency.
     parameter bit RegisterResponseOutputs = 0,
+    // If 1, register the CSR request outputs at the cost of an extra cycle of latency.
+    parameter bit RegisterCsrRequestOutputs = 0,
     parameter int MaxTimeoutCycles = 1000,  // Must be at least 1
 
     localparam int StrobeWidth = DataWidth / 8,
@@ -178,21 +181,39 @@ module br_csr_axil_widget #(
   // SCB protocol doesn't distinguish between data and instruction access
   `BR_UNUSED_NAMED(axil_axprot_instr, {axil_awprot[2], axil_arprot[2]})
 
-  br_flow_mux_rr_stable #(
+  logic csr_req_valid_int;
+  csr_req_t csr_req_int;
+
+  br_flow_mux_rr #(
       .NumFlows(2),
       .Width($bits(csr_req_t))
-  ) br_flow_mux_rr_stable_csr_req (
+  ) br_flow_mux_rr_csr_req (
       .clk,
       .rst,
       .push_ready({csr_write_ready, axil_arready}),
       .push_valid({csr_write_valid, axil_arvalid}),
-      .push_data ({csr_write_req, csr_read_req}),
-      .pop_ready (csr_unqual_req_ready),
-      .pop_valid (csr_unqual_req_valid),
-      .pop_data  (csr_req)
+      .push_data({csr_write_req, csr_read_req}),
+      .pop_ready(csr_unqual_req_ready),
+      .pop_valid_unstable(csr_unqual_req_valid),
+      .pop_data_unstable(csr_req_int)
   );
 
-  assign csr_req_valid = csr_unqual_req_valid && csr_unqual_req_ready;
+  assign csr_req_valid_int = csr_unqual_req_valid && csr_unqual_req_ready;
+
+  br_delay_valid #(
+      .NumStages(RegisterCsrRequestOutputs),
+      .Width($bits(csr_req_t))
+  ) br_delay_valid_csr_req (
+      .clk,
+      .rst,
+      .in_valid(csr_req_valid_int),
+      .in(csr_req_int),
+      .out_valid(csr_req_valid),
+      .out(csr_req),
+      .out_valid_stages(),
+      .out_stages()
+  );
+
   assign csr_req_addr = csr_req.addr;
   assign csr_req_wdata = csr_req.wdata;
   assign csr_req_wstrb = csr_req.wstrb;
@@ -214,14 +235,24 @@ module br_csr_axil_widget #(
   logic timer_expired;
   logic timer_reset;
   logic timeout_resp_valid;
+  logic csr_req_abort_int;
+  logic request_aborted_int;
 
   assign timer_active = wd_state == Active || wd_state == Expired;
   assign timer_expired = timer_count >= timeout_cycles;
   assign timer_reset = (timer_active && timer_expired) || csr_resp_valid;
 
   assign timeout_resp_valid = (wd_state == Aborted);
-  assign csr_req_abort = (wd_state == Active) && timer_expired && !csr_resp_valid;
-  assign request_aborted = (wd_state == Expired) && timer_expired && !csr_resp_valid;
+  assign csr_req_abort_int = (wd_state == Active) && timer_expired && !csr_resp_valid;
+  assign request_aborted_int = (wd_state == Expired) && timer_expired && !csr_resp_valid;
+
+  if (RegisterCsrRequestOutputs) begin : gen_reg_csr_req_out
+    `BR_REG(csr_req_abort, csr_req_abort_int)
+    `BR_REG(request_aborted, request_aborted_int)
+  end else begin : gen_no_reg_csr_req_out
+    assign csr_req_abort   = csr_req_abort_int;
+    assign request_aborted = request_aborted_int;
+  end
 
   br_counter_incr #(
       .MaxValue(MaxTimeoutCycles),
@@ -299,13 +330,13 @@ module br_csr_axil_widget #(
 
   // Set inflight when request is sent out
   // Clear it when the response is accepted
-  assign inflight_next = (inflight || csr_req_valid) && !(buf_resp_valid && buf_resp_ready);
+  assign inflight_next = (inflight || csr_req_valid_int) && !(buf_resp_valid && buf_resp_ready);
   // Set buf_resp_valid when response is received from downstream
   // Clear it when the response is accepted
   assign buf_resp_valid_next = (buf_resp_valid && !buf_resp_ready) || merged_resp_valid;
 
   `BR_REG(inflight, inflight_next)
-  `BR_REGL(inflight_write, csr_req_write, csr_req_valid)
+  `BR_REGL(inflight_write, csr_req_int.write, csr_req_valid_int)
   `BR_REG(buf_resp_valid, buf_resp_valid_next)
   `BR_REGLN(buf_resp_rdata, merged_resp_rdata, merged_resp_valid)
   `BR_REGLN(buf_resp_slverr, merged_resp_slverr, merged_resp_valid)
@@ -381,7 +412,7 @@ module br_csr_axil_widget #(
   end
 
   // Implementation assertions
-  `BR_ASSERT_IMPL(only_single_request_inflight_a, inflight |-> !csr_req_valid)
+  `BR_ASSERT_IMPL(only_single_request_inflight_a, inflight |-> !csr_req_valid_int)
   `BR_ASSERT_IMPL(no_spurious_resp_a, csr_resp_valid |-> inflight && !buf_resp_valid)
   `BR_ASSERT_IMPL(timer_resets_after_response_or_timeout_a,
                   timer_active && (csr_resp_valid || timer_expired) |-> timer_reset)

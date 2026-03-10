@@ -30,6 +30,10 @@ br_verilog_sim_test_tools_suite(
             "0",
             "1",
         ],
+        "RegisterCsrRequestOutputs": [
+            "0",
+            "1",
+        ],
     },
     tools = ["vcs"],
     deps = [":br_csr_axil_widget_tb"],
