@@ -305,3 +305,55 @@ br_verilog_sim_test_tools_suite(
         "//gate/rtl:br_gate_mock",
     ],
 )
+
+verilog_library(
+    name = "br_cdc_stable_data_autoupdate_tb",
+    srcs = ["br_cdc_stable_data_autoupdate_tb.sv"],
+    deps = [
+        "//cdc/rtl:br_cdc_stable_data_autoupdate",
+        "//misc/sim:br_test_driver",
+    ],
+)
+
+verilog_elab_test(
+    name = "br_cdc_stable_data_autoupdate_tb_elab_test",
+    tool = "verific",
+    top = "br_cdc_stable_data_autoupdate_tb",
+    deps = [
+        ":br_cdc_stable_data_autoupdate_tb",
+        "//gate/rtl:br_gate_mock",
+    ],
+)
+
+br_verilog_sim_test_tools_suite(
+    name = "br_cdc_stable_data_autoupdate_sim_test_tools_suite",
+    params = {
+        "Width": ["8"],
+        "InitValue": [
+            "0",
+            "1",
+        ],
+        "RegisterResetActive": [
+            "0",
+            "1",
+        ],
+        "NumSyncStages": [
+            "2",
+            "3",
+        ],
+        "SrcClkPeriodNs": [
+            "10",
+            "16",
+        ],
+        "DstClkPeriodNs": [
+            "10",
+            "16",
+        ],
+    },
+    tools = ["vcs"],
+    top = "br_cdc_stable_data_autoupdate_tb",
+    deps = [
+        ":br_cdc_stable_data_autoupdate_tb",
+        "//gate/rtl:br_gate_mock",
+    ],
+)
