@@ -30,7 +30,17 @@ module br_cdc_reg #(
     // ensuring a low probability of metastability.
     // The recommended value is 3 for most technology nodes.
     // Do not decrease below that unless you have a good reason.
-    parameter int NumSyncStages = 3
+    parameter int NumSyncStages = 3,
+    // If 1, cover that the push side experiences backpressure.
+    // If 0, assert that there is never backpressure.
+    parameter bit EnableCoverPushBackpressure = 1,
+    // If 1, assert that push_valid is stable when backpressured.
+    parameter bit EnableAssertPushValidStability = EnableCoverPushBackpressure,
+    // If 1, assert that push_data is stable when backpressured.
+    parameter bit EnableAssertPushDataStability = EnableAssertPushValidStability,
+    // If 1, then assert there are no valid bits asserted and that the FIFO is
+    // empty at the end of the test.
+    parameter bit EnableAssertFinalNotValid = 1
 ) (
     // Push-side interface
     input  logic             push_clk,
@@ -64,7 +74,11 @@ module br_cdc_reg #(
   // Push side
   br_cdc_reg_push #(
       .Width(Width),
-      .RegisterResetActive(RegisterResetActive)
+      .RegisterResetActive(RegisterResetActive),
+      .EnableCoverPushBackpressure(EnableCoverPushBackpressure),
+      .EnableAssertPushValidStability(EnableAssertPushValidStability),
+      .EnableAssertPushDataStability(EnableAssertPushDataStability),
+      .EnableAssertFinalNotValid(EnableAssertFinalNotValid)
   ) br_cdc_reg_push (
       .clk(push_clk),  // ri lint_check_waive SAME_CLOCK_NAME
       .rst(push_rst),
