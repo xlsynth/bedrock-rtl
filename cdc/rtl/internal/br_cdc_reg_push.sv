@@ -7,7 +7,11 @@
 
 module br_cdc_reg_push #(
     parameter int Width = 1,
-    parameter bit RegisterResetActive = 1
+    parameter bit RegisterResetActive = 1,
+    parameter bit EnableCoverPushBackpressure = 1,
+    parameter bit EnableAssertPushValidStability = EnableCoverPushBackpressure,
+    parameter bit EnableAssertPushDataStability = EnableAssertPushValidStability,
+    parameter bit EnableAssertFinalNotValid = 1
 ) (
     input logic clk,
     input logic rst,
@@ -25,7 +29,11 @@ module br_cdc_reg_push #(
   // Integration Checks
   br_flow_checks_valid_data_intg #(
       .NumFlows(1),
-      .Width(Width)
+      .Width(Width),
+      .EnableCoverBackpressure(EnableCoverPushBackpressure),
+      .EnableAssertValidStability(EnableAssertPushValidStability),
+      .EnableAssertDataStability(EnableAssertPushDataStability),
+      .EnableAssertFinalNotValid(EnableAssertFinalNotValid)
   ) br_flow_checks_valid_data_intg (
       .clk,
       .rst,
