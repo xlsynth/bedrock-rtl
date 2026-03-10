@@ -11,9 +11,10 @@ verilog_library(
     deps = [
         "//amba/rtl:br_amba_pkg",
         "//counter/rtl:br_counter_incr",
+        "//delay/rtl:br_delay_valid",
         "//flow/rtl:br_flow_demux_select_unstable",
         "//flow/rtl:br_flow_join",
-        "//flow/rtl:br_flow_mux_rr_stable",
+        "//flow/rtl:br_flow_mux_rr",
         "//flow/rtl:br_flow_reg_fwd",
         "//macros:br_asserts_internal",
         "//macros:br_registers",
@@ -34,6 +35,10 @@ br_verilog_elab_and_lint_test_suite(
             "63",
         ],
         "RegisterResponseOutputs": [
+            "0",
+            "1",
+        ],
+        "RegisterCsrRequestOutputs": [
             "0",
             "1",
         ],
