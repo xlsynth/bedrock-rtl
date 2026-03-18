@@ -466,3 +466,58 @@ br_verilog_elab_and_lint_test_suite(
     },
     deps = [":br_amba_axi_demux"],
 )
+
+verilog_library(
+    name = "br_amba_axi_shrinker",
+    srcs = ["br_amba_axi_shrinker.sv"],
+    deps = [
+        ":br_amba_pkg",
+        "//amba/rtl/internal:br_amba_axi_resizer_beat_tracker",
+        "//enc/rtl:br_enc_bin2onehot",
+        "//fifo/rtl:br_fifo_flops",
+        "//flow/rtl:br_flow_fork",
+        "//flow/rtl:br_flow_join",
+        "//flow/rtl:br_flow_reg_fwd",
+        "//flow/rtl:br_flow_reg_none",
+        "//macros:br_asserts_internal",
+        "//macros:br_assign",
+        "//macros:br_registers",
+        "//mux/rtl:br_mux_bin",
+        "//pkg:br_math_pkg",
+        "//ram/rtl:br_ram_flops",
+        "//shift/rtl:br_shift_left",
+    ],
+)
+
+br_verilog_elab_and_lint_test_suite(
+    name = "br_amba_axi_shrinker_test_suite",
+    params = {
+        "AddrWidth": ["12"],
+        "WideDataWidth": [
+            "64",
+        ],
+        "NarrowDataWidth": [
+            "8",
+            "16",
+            "32",
+        ],
+        "IdWidth": ["5"],
+        "MaxOutstandingReqs": [
+            "1",
+            "8",
+        ],
+        "WriteFifoDepth": [
+            "1",
+            "2",
+        ],
+        "RegisterNarrowOutputs": [
+            "1",
+            "0",
+        ],
+        "RegisterWideOutputs": [
+            "1",
+            "0",
+        ],
+    },
+    deps = [":br_amba_axi_shrinker"],
+)
