@@ -215,3 +215,30 @@ br_verilog_elab_and_lint_test_suite(
     },
     deps = [":br_amba_axi_demux_req_tracker"],
 )
+
+verilog_library(
+    name = "br_amba_axi_resizer_beat_tracker",
+    srcs = ["br_amba_axi_resizer_beat_tracker.sv"],
+    deps = [
+        "//amba/rtl:br_amba_pkg",
+        "//counter/rtl:br_counter_incr",
+        "//macros:br_asserts_internal",
+        "//macros:br_registers",
+        "//pkg:br_math_pkg",
+    ],
+)
+
+br_verilog_elab_and_lint_test_suite(
+    name = "br_amba_axi_resizer_beat_tracker_test_suite",
+    params = {
+        "WideBytes": [
+            "4",
+            "8",
+        ],
+        "NarrowBytes": [
+            "1",
+            "2",
+        ],
+    },
+    deps = [":br_amba_axi_resizer_beat_tracker"],
+)

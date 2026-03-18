@@ -63,3 +63,24 @@ br_verilog_sim_test_tools_suite(
     tools = ["vcs"],
     deps = [":br_amba_axi_demux_tb"],
 )
+
+verilog_library(
+    name = "br_amba_axi_shrinker_tb",
+    srcs = ["br_amba_axi_shrinker_tb.sv"],
+    deps = [
+        "//amba/rtl:br_amba_axi_shrinker",
+        "//misc/sim:br_test_driver",
+    ],
+)
+
+verilog_elab_test(
+    name = "br_amba_axi_shrinker_tb_elab_test",
+    tool = "verific",
+    deps = [":br_amba_axi_shrinker_tb"],
+)
+
+br_verilog_sim_test_tools_suite(
+    name = "br_amba_axi_shrinker_sim_test_tools_suite",
+    tools = ["vcs"],
+    deps = [":br_amba_axi_shrinker_tb"],
+)
