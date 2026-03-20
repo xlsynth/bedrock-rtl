@@ -9,19 +9,19 @@ updates:
     directory: "/"
     schedule:
       interval: "monthly"
-  - package-ecosystem: "pip" 
+  - package-ecosystem: "pip"
     directory: "/"
     schedule:
       interval: "monthly"
-  - package-ecosystem: "pre-commit" 
+  - package-ecosystem: "pre-commit"
     directory: "/"
     schedule:
       interval: "monthly"
-  - package-ecosystem: "docker" 
+  - package-ecosystem: "docker"
     directory: "/"
     schedule:
       interval: "monthly"
-  - package-ecosystem: "cargo" 
+  - package-ecosystem: "cargo"
     directory: "/stitch"
     schedule:
       interval: "monthly"
