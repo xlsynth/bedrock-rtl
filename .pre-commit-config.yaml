@@ -35,7 +35,7 @@ repos:
 
   # Format Bazel files
   - repo: https://github.com/warchant/pre-commit-buildifier
-    rev: 0.1.1
+    rev: 0.1.5
     hooks:
     -   id: buildifier
         args: [--version, "v7.3.1", -mode=fix]
