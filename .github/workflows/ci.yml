@@ -13,7 +13,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
-      - uses: actions/setup-python@v3
+      - uses: actions/setup-python@v6
       - uses: pre-commit/action@v3.0.1
 
   # Run bazel build and tests in order in one job to avoid parallel jobs that make
