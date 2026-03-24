@@ -105,9 +105,68 @@ module br_amba_axi_shrinker_fpv_monitor #(
 
   localparam int WideSizeLog2 = $clog2(WideStrobeWidth);
   localparam int NarrowSizeLog2 = $clog2(NarrowStrobeWidth);
+  localparam int ArPayloadWidth = AddrWidth + IdWidth + br_amba::AxiBurstLenWidth +
+                                  br_amba::AxiBurstSizeWidth + br_amba::AxiBurstTypeWidth +
+                                  br_amba::AxiProtWidth + ARUserWidth;
 
   // ABVIP should send more than DUT to test backpressure.
   localparam int MaxPending = MaxOutstandingReqs + WriteFifoDepth + 2;
+
+  logic [br_amba::AxiBurstSizeWidth-1:0] fv_narrow_arsize;
+  logic [br_amba::AxiBurstLenWidth-1:0] fv_narrow_arlen;
+  logic [ArPayloadWidth-1:0] fv_narrow_ar_payload;
+  int unsigned ar_shift;
+  logic [br_amba::AxiBurstLenWidth:0] fv_narrow_arlen_ext;
+
+  always_comb begin
+    ar_shift = 0;
+    fv_narrow_arsize = wide_arsize;
+
+    if (wide_arsize > NarrowSizeLog2) begin
+      fv_narrow_arsize = NarrowSizeLog2;
+      ar_shift = wide_arsize - NarrowSizeLog2;
+    end
+
+    // AXI len encodes beats - 1, so after scaling the beat count by the width ratio
+    // we subtract 1 to convert back to the AXI burst-length encoding.
+    fv_narrow_arlen_ext = (({1'b0, wide_arlen} + 1'b1) << ar_shift) - 1'b1;
+    fv_narrow_arlen = fv_narrow_arlen_ext[br_amba::AxiBurstLenWidth-1:0];
+  end
+
+  assign fv_narrow_ar_payload = {
+    wide_araddr,
+    wide_arid,
+    fv_narrow_arlen,
+    fv_narrow_arsize,
+    wide_arburst,
+    wide_arprot,
+    wide_aruser
+  };
+
+  // Checks that the RTL narrow AR channel matches the monitor prediction for
+  // narrow arlen/arsize derived from each accepted wide AR request.
+  jasper_scoreboard_3 #(
+      .CHUNK_WIDTH(ArPayloadWidth),
+      .IN_CHUNKS(1),
+      .OUT_CHUNKS(1),
+      .SINGLE_CLOCK(1),
+      .MAX_PENDING(MaxPending)
+  ) ar_sb (
+      .clk(clk),
+      .rstN(!rst),
+      .incoming_vld(wide_arvalid && wide_arready),
+      .incoming_data(fv_narrow_ar_payload),
+      .outgoing_vld(narrow_arvalid && narrow_arready),
+      .outgoing_data({
+        narrow_araddr,
+        narrow_arid,
+        narrow_arlen,
+        narrow_arsize,
+        narrow_arburst,
+        narrow_arprot,
+        narrow_aruser
+      })
+  );
 
   `BR_ASSUME(
       shrinking_awburst_incr_a,
