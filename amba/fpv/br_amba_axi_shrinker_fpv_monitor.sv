@@ -106,7 +106,7 @@ module br_amba_axi_shrinker_fpv_monitor #(
   localparam int NarrowSizeLog2 = $clog2(NarrowStrobeWidth);
 
   // ABVIP should send more than DUT to test backpressure.
-  localparam int MaxPending = MaxOutstandingReqs + 2;
+  localparam int MaxPending = MaxOutstandingReqs + WriteFifoDepth + 2;
   // When there is no valid, ready does not need to rise eventually.
   localparam bit ValidBeforeReady = 1;
 
