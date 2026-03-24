@@ -99,12 +99,35 @@ verilog_library(
 )
 
 verilog_library(
+    name = "br_flow_burst_mux_select",
+    srcs = ["br_flow_burst_mux_select.sv"],
+    deps = [
+        ":br_flow_burst_mux_select_unstable",
+        ":br_flow_reg_fwd",
+        "//pkg:br_math_pkg",
+    ],
+)
+
+verilog_library(
     name = "br_flow_mux_select_unstable",
     srcs = ["br_flow_mux_select_unstable.sv"],
     deps = [
         "//flow/rtl/internal:br_flow_checks_valid_data_impl",
         "//flow/rtl/internal:br_flow_checks_valid_data_intg",
         "//macros:br_asserts_internal",
+        "//macros:br_unused",
+        "//pkg:br_math_pkg",
+    ],
+)
+
+verilog_library(
+    name = "br_flow_burst_mux_select_unstable",
+    srcs = ["br_flow_burst_mux_select_unstable.sv"],
+    deps = [
+        "//flow/rtl/internal:br_flow_checks_valid_data_impl",
+        "//flow/rtl/internal:br_flow_checks_valid_data_intg",
+        "//macros:br_asserts_internal",
+        "//macros:br_registers",
         "//macros:br_unused",
         "//pkg:br_math_pkg",
     ],
@@ -122,6 +145,17 @@ verilog_library(
 )
 
 verilog_library(
+    name = "br_flow_burst_mux_fixed",
+    srcs = ["br_flow_burst_mux_fixed.sv"],
+    deps = [
+        "//arb/rtl:br_arb_grant_hold",
+        "//arb/rtl/internal:br_arb_fixed_internal",
+        "//flow/rtl/internal:br_flow_mux_core",
+        "//macros:br_asserts_internal",
+    ],
+)
+
+verilog_library(
     name = "br_flow_mux_rr",
     srcs = ["br_flow_mux_rr.sv"],
     deps = [
@@ -129,6 +163,28 @@ verilog_library(
         "//flow/rtl/internal:br_flow_mux_core",
         "//macros:br_asserts_internal",
         "//macros:br_unused",
+    ],
+)
+
+verilog_library(
+    name = "br_flow_burst_mux_rr",
+    srcs = ["br_flow_burst_mux_rr.sv"],
+    deps = [
+        "//arb/rtl:br_arb_grant_hold",
+        "//arb/rtl/internal:br_arb_rr_internal",
+        "//flow/rtl/internal:br_flow_mux_core",
+        "//macros:br_asserts_internal",
+    ],
+)
+
+verilog_library(
+    name = "br_flow_burst_mux_lru",
+    srcs = ["br_flow_burst_mux_lru.sv"],
+    deps = [
+        "//arb/rtl:br_arb_grant_hold",
+        "//arb/rtl/internal:br_arb_lru_internal",
+        "//flow/rtl/internal:br_flow_mux_core",
+        "//macros:br_asserts_internal",
     ],
 )
 
@@ -144,6 +200,16 @@ verilog_library(
 )
 
 verilog_library(
+    name = "br_flow_burst_mux_fixed_stable",
+    srcs = ["br_flow_burst_mux_fixed_stable.sv"],
+    deps = [
+        "//arb/rtl:br_arb_grant_hold",
+        "//arb/rtl/internal:br_arb_fixed_internal",
+        "//flow/rtl/internal:br_flow_mux_core_stable",
+    ],
+)
+
+verilog_library(
     name = "br_flow_mux_fixed_stable",
     srcs = ["br_flow_mux_fixed_stable.sv"],
     deps = [
@@ -153,10 +219,30 @@ verilog_library(
 )
 
 verilog_library(
+    name = "br_flow_burst_mux_rr_stable",
+    srcs = ["br_flow_burst_mux_rr_stable.sv"],
+    deps = [
+        "//arb/rtl:br_arb_grant_hold",
+        "//arb/rtl/internal:br_arb_rr_internal",
+        "//flow/rtl/internal:br_flow_mux_core_stable",
+    ],
+)
+
+verilog_library(
     name = "br_flow_mux_rr_stable",
     srcs = ["br_flow_mux_rr_stable.sv"],
     deps = [
         "//arb/rtl/internal:br_arb_rr_internal",
+        "//flow/rtl/internal:br_flow_mux_core_stable",
+    ],
+)
+
+verilog_library(
+    name = "br_flow_burst_mux_lru_stable",
+    srcs = ["br_flow_burst_mux_lru_stable.sv"],
+    deps = [
+        "//arb/rtl:br_arb_grant_hold",
+        "//arb/rtl/internal:br_arb_lru_internal",
         "//flow/rtl/internal:br_flow_mux_core_stable",
     ],
 )
@@ -398,6 +484,22 @@ br_verilog_elab_and_lint_test_suite(
 )
 
 br_verilog_elab_and_lint_test_suite(
+    name = "br_flow_burst_mux_select_test_suite",
+    params = {
+        "NumFlows": [
+            "1",
+            "2",
+            "3",
+        ],
+        "Width": [
+            "1",
+            "2",
+        ],
+    },
+    deps = [":br_flow_burst_mux_select"],
+)
+
+br_verilog_elab_and_lint_test_suite(
     name = "br_flow_mux_select_unstable_test_suite",
     params = {
         "NumFlows": [
@@ -411,6 +513,22 @@ br_verilog_elab_and_lint_test_suite(
         ],
     },
     deps = [":br_flow_mux_select_unstable"],
+)
+
+br_verilog_elab_and_lint_test_suite(
+    name = "br_flow_burst_mux_select_unstable_test_suite",
+    params = {
+        "NumFlows": [
+            "1",
+            "2",
+            "3",
+        ],
+        "Width": [
+            "1",
+            "2",
+        ],
+    },
+    deps = [":br_flow_burst_mux_select_unstable"],
 )
 
 br_verilog_elab_and_lint_test_suite(
@@ -430,6 +548,22 @@ br_verilog_elab_and_lint_test_suite(
 )
 
 br_verilog_elab_and_lint_test_suite(
+    name = "br_flow_burst_mux_fixed_test_suite",
+    params = {
+        "NumFlows": [
+            "1",
+            "2",
+            "3",
+        ],
+        "Width": [
+            "1",
+            "2",
+        ],
+    },
+    deps = [":br_flow_burst_mux_fixed"],
+)
+
+br_verilog_elab_and_lint_test_suite(
     name = "br_flow_mux_rr_test_suite",
     params = {
         "NumFlows": [
@@ -443,6 +577,38 @@ br_verilog_elab_and_lint_test_suite(
         ],
     },
     deps = [":br_flow_mux_rr"],
+)
+
+br_verilog_elab_and_lint_test_suite(
+    name = "br_flow_burst_mux_rr_test_suite",
+    params = {
+        "NumFlows": [
+            "1",
+            "2",
+            "3",
+        ],
+        "Width": [
+            "1",
+            "2",
+        ],
+    },
+    deps = [":br_flow_burst_mux_rr"],
+)
+
+br_verilog_elab_and_lint_test_suite(
+    name = "br_flow_burst_mux_lru_test_suite",
+    params = {
+        "NumFlows": [
+            "1",
+            "2",
+            "3",
+        ],
+        "Width": [
+            "1",
+            "2",
+        ],
+    },
+    deps = [":br_flow_burst_mux_lru"],
 )
 
 br_verilog_elab_and_lint_test_suite(
@@ -482,6 +648,26 @@ br_verilog_elab_and_lint_test_suite(
 )
 
 br_verilog_elab_and_lint_test_suite(
+    name = "br_flow_burst_mux_fixed_stable_test_suite",
+    params = {
+        "NumFlows": [
+            "1",
+            "2",
+            "3",
+        ],
+        "Width": [
+            "1",
+            "2",
+        ],
+        "RegisterPopReady": [
+            "0",
+            "1",
+        ],
+    },
+    deps = [":br_flow_burst_mux_fixed_stable"],
+)
+
+br_verilog_elab_and_lint_test_suite(
     name = "br_flow_mux_rr_stable_test_suite",
     params = {
         "NumFlows": [
@@ -502,6 +688,26 @@ br_verilog_elab_and_lint_test_suite(
 )
 
 br_verilog_elab_and_lint_test_suite(
+    name = "br_flow_burst_mux_rr_stable_test_suite",
+    params = {
+        "NumFlows": [
+            "1",
+            "2",
+            "3",
+        ],
+        "Width": [
+            "1",
+            "2",
+        ],
+        "RegisterPopReady": [
+            "0",
+            "1",
+        ],
+    },
+    deps = [":br_flow_burst_mux_rr_stable"],
+)
+
+br_verilog_elab_and_lint_test_suite(
     name = "br_flow_mux_lru_stable_test_suite",
     params = {
         "NumFlows": [
@@ -519,6 +725,26 @@ br_verilog_elab_and_lint_test_suite(
         ],
     },
     deps = [":br_flow_mux_lru_stable"],
+)
+
+br_verilog_elab_and_lint_test_suite(
+    name = "br_flow_burst_mux_lru_stable_test_suite",
+    params = {
+        "NumFlows": [
+            "1",
+            "2",
+            "3",
+        ],
+        "Width": [
+            "1",
+            "2",
+        ],
+        "RegisterPopReady": [
+            "0",
+            "1",
+        ],
+    },
+    deps = [":br_flow_burst_mux_lru_stable"],
 )
 
 br_verilog_elab_and_lint_test_suite(
