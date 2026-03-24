@@ -423,3 +423,36 @@ br_verilog_fpv_test_tools_suite(
     top = "br_amba_axi_demux",
     deps = [":br_amba_axi_demux_fpv_monitor"],
 )
+
+# Bedrock-RTL AXI4 Shrinker
+
+verilog_library(
+    name = "br_amba_axi_shrinker_fpv_monitor",
+    srcs = ["br_amba_axi_shrinker_fpv_monitor.sv"],
+    deps = [
+        "//amba/rtl:br_amba_axi_shrinker",
+    ],
+)
+
+verilog_elab_test(
+    name = "br_amba_axi_shrinker_fpv_monitor_elab_test",
+    custom_tcl_header = "//:elab_test_jg_custom_header.verific.tcl",
+    tool = "verific",
+    deps = [":br_amba_axi_shrinker_fpv_monitor"],
+)
+
+br_verilog_fpv_test_tools_suite(
+    #TODO: uncomment to debug in GUI
+    #gui = True,
+    name = "br_amba_axi_shrinker_test_suite",
+    elab_opts = [
+        "-parameter WideDataWidth 16",
+        "-parameter MaxOutstandingReqs 8",
+        "-parameter IdWidth 3",
+    ],
+    tools = {
+        "jg": "br_amba_axi_shrinker_fpv.jg.tcl",
+    },
+    top = "br_amba_axi_shrinker",
+    deps = [":br_amba_axi_shrinker_fpv_monitor"],
+)
