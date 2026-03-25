@@ -28,41 +28,49 @@ module br_flow_burst_mux_fixed_fpv_monitor #(
     input logic [NumFlows-1:0]            grant
 );
 
-  localparam int IndexWidth = NumFlows == 1 ? 1 : $clog2(NumFlows);
-
-  logic [NumFlows-1:0][Width:0] push_payload;
-  logic [Width:0] pop_payload_unstable;
-  for (genvar i = 0; i < NumFlows; i++) begin : gen_push_payload
-    assign push_payload[i] = {push_last[i], push_data[i]};
-  end
-  assign pop_payload_unstable = {pop_last_unstable, pop_data_unstable};
-
   // ----------Instantiate basic checks----------
-  br_flow_mux_basic_fpv_monitor #(
+  br_flow_burst_mux_basic_fpv_monitor #(
       .NumFlows(NumFlows),
-      .Width(Width + 1),
+      .Width(Width),
       .EnableCoverPushBackpressure(EnableCoverPushBackpressure),
       .EnableAssertPushValidStability(EnableAssertPushValidStability),
       .EnableAssertPushDataStability(EnableAssertPushDataStability),
       .EnableCoverPopBackpressure(EnableCoverPushBackpressure),
-      .EnableAssertPopDataStability(0),
-      .EnableAssertMustGrant(0)
+      .EnableAssertPopDataStability(0)
   ) fv_checker (
       .clk,
       .rst,
       .push_ready,
       .push_valid,
-      .push_data(push_payload),
+      .push_last,
+      .push_data,
       .pop_ready,
       .pop_valid(pop_valid_unstable),
-      .pop_data (pop_payload_unstable)
+      .pop_last (pop_last_unstable),
+      .pop_data (pop_data_unstable)
   );
 
-  // ----------Payload integrity checks----------
-  logic [IndexWidth-1:0] index;
-  `BR_FV_IDX(index, grant, NumFlows)
-  `BR_ASSERT(grant_payload_integrity_a,
-             pop_valid_unstable |-> pop_payload_unstable == push_payload[index])
+  // ----------FV Modeling Code----------
+  logic [$clog2(NumFlows)-1:0] i, j;
+  if (NumFlows > 1) begin : gen_ij
+    `BR_FV_2RAND_IDX(i, j, NumFlows)
+  end else begin : gen_i
+    assign i = '0;
+  end
+
+  // ----------Fairness Check----------
+  // verilog_lint: waive-start line-length
+  if (NumFlows > 1) begin : gen_multi_req
+    if (EnableCoverPushBackpressure) begin : gen_strict_priority_check
+      `BR_ASSERT(strict_priority_a,
+                 (i < j) && push_valid[i] && push_valid[j] |->
+                     ((pop_data_unstable == push_data[i]) && (pop_last_unstable == push_last[i]))
+                     || !push_ready[i])
+    end else begin : gen_no_conflict_check
+      `BR_ASSERT(no_conflict_a, i != j |-> !(push_valid[i] && push_valid[j]))
+    end
+  end
+  // verilog_lint: waive-stop line-length
 
 endmodule : br_flow_burst_mux_fixed_fpv_monitor
 

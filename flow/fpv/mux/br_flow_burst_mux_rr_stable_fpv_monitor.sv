@@ -4,7 +4,6 @@
 // Bedrock-RTL Flow-Controlled Stable Burst Multiplexer (Round-Robin)
 
 `include "br_asserts.svh"
-`include "br_fv.svh"
 
 module br_flow_burst_mux_rr_stable_fpv_monitor #(
     parameter int NumFlows = 1,
@@ -13,9 +12,7 @@ module br_flow_burst_mux_rr_stable_fpv_monitor #(
     parameter bit EnableCoverPushBackpressure = 1,
     parameter bit EnableAssertPushValidStability = EnableCoverPushBackpressure,
     parameter bit EnableAssertPushDataStability = EnableAssertPushValidStability,
-    parameter bit EnableAssertFinalNotValid = 1,
-    localparam int IndexWidth = NumFlows == 1 ? 1 : $clog2(NumFlows),
-    localparam int MaxPending = NumFlows == 1 ? 2 : NumFlows
+    parameter bit EnableAssertFinalNotValid = 1
 ) (
     input logic                           clk,
     input logic                           rst,
@@ -32,38 +29,27 @@ module br_flow_burst_mux_rr_stable_fpv_monitor #(
     input logic                           enable_priority_update
 );
 
-  logic [NumFlows-1:0][Width:0] push_payload;
-  logic [Width:0] pop_payload;
-  logic [NumFlows-1:0] push_handshake;
-  logic [IndexWidth-1:0] index;
-
-  for (genvar i = 0; i < NumFlows; i++) begin : gen_push_payload
-    assign push_payload[i] = {push_last[i], push_data[i]};
-  end
-  assign pop_payload = {pop_last, pop_data};
-  assign push_handshake = push_valid & push_ready;
-  `BR_FV_IDX(index, push_handshake, NumFlows)
-
   // ----------Instantiate basic checks----------
-  br_flow_mux_basic_fpv_monitor #(
+  br_flow_burst_mux_basic_fpv_monitor #(
       .NumFlows(NumFlows),
-      .Width(Width + 1),
+      .Width(Width),
       .EnableCoverPushBackpressure(EnableCoverPushBackpressure),
       .EnableAssertPushValidStability(EnableAssertPushValidStability),
       .EnableAssertPushDataStability(EnableAssertPushDataStability),
       .EnableCoverPopBackpressure(1),
       .EnableAssertPopValidStability(1),
-      .EnableAssertPopDataStability(1),
-      .DelayedGrant(1)
+      .EnableAssertPopDataStability(1)
   ) fv_checker (
       .clk,
       .rst,
       .push_ready,
       .push_valid,
-      .push_data(push_payload),
+      .push_last,
+      .push_data,
       .pop_ready,
       .pop_valid,
-      .pop_data (pop_payload)
+      .pop_last,
+      .pop_data
   );
 
   // ----------Round Robin checks----------
@@ -78,19 +64,23 @@ module br_flow_burst_mux_rr_stable_fpv_monitor #(
       .grant
   );
 
+  // ----------Data integrity Check----------
+  logic [$clog2(NumFlows)-1:0] index;
+  `BR_FV_IDX(index, grant, NumFlows)
+
   jasper_scoreboard_3 #(
-      .CHUNK_WIDTH(Width + 1),
+      .CHUNK_WIDTH(Width),
       .IN_CHUNKS(1),
       .OUT_CHUNKS(1),
       .SINGLE_CLOCK(1),
-      .MAX_PENDING(MaxPending)
+      .MAX_PENDING(NumFlows == 1 ? 2 : NumFlows)
   ) scoreboard (
       .clk(clk),
       .rstN(!rst),
-      .incoming_vld(|push_handshake),
-      .incoming_data(push_payload[index]),
+      .incoming_vld(push_valid[index] & push_ready[index]),
+      .incoming_data(push_data[index]),
       .outgoing_vld(pop_valid & pop_ready),
-      .outgoing_data(pop_payload)
+      .outgoing_data(pop_data)
   );
 
 endmodule : br_flow_burst_mux_rr_stable_fpv_monitor

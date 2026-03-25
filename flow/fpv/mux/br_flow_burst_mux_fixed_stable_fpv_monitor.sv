@@ -13,9 +13,7 @@ module br_flow_burst_mux_fixed_stable_fpv_monitor #(
     parameter bit EnableCoverPushBackpressure = 1,
     parameter bit EnableAssertPushValidStability = EnableCoverPushBackpressure,
     parameter bit EnableAssertPushDataStability = EnableAssertPushValidStability,
-    parameter bit EnableAssertFinalNotValid = 1,
-    localparam int IndexWidth = NumFlows == 1 ? 1 : $clog2(NumFlows),
-    localparam int MaxPending = NumFlows == 1 ? 2 : NumFlows
+    parameter bit EnableAssertFinalNotValid = 1
 ) (
     input logic                           clk,
     input logic                           rst,
@@ -29,54 +27,54 @@ module br_flow_burst_mux_fixed_stable_fpv_monitor #(
     input logic [   Width-1:0]            pop_data
 );
 
-  logic [NumFlows-1:0][Width:0] push_payload;
-  logic [Width:0] pop_payload;
-  logic [NumFlows-1:0] push_handshake;
-  logic [IndexWidth-1:0] index;
-
-  for (genvar i = 0; i < NumFlows; i++) begin : gen_push_payload
-    assign push_payload[i] = {push_last[i], push_data[i]};
-  end
-  assign pop_payload = {pop_last, pop_data};
-  assign push_handshake = push_valid & push_ready;
-  `BR_FV_IDX(index, push_handshake, NumFlows)
-
   // ----------Instantiate basic checks----------
-  br_flow_mux_basic_fpv_monitor #(
+  br_flow_burst_mux_basic_fpv_monitor #(
       .NumFlows(NumFlows),
-      .Width(Width + 1),
+      .Width(Width),
       .EnableCoverPushBackpressure(EnableCoverPushBackpressure),
       .EnableAssertPushValidStability(EnableAssertPushValidStability),
       .EnableAssertPushDataStability(EnableAssertPushDataStability),
       .EnableCoverPopBackpressure(1),
       .EnableAssertPopValidStability(1),
-      .EnableAssertPopDataStability(1),
-      .DelayedGrant(1)
+      .EnableAssertPopDataStability(1)
   ) fv_checker (
       .clk,
       .rst,
       .push_ready,
       .push_valid,
-      .push_data(push_payload),
+      .push_last,
+      .push_data,
       .pop_ready,
       .pop_valid,
-      .pop_data (pop_payload)
+      .pop_last,
+      .pop_data
   );
 
-  jasper_scoreboard_3 #(
-      .CHUNK_WIDTH(Width + 1),
-      .IN_CHUNKS(1),
-      .OUT_CHUNKS(1),
-      .SINGLE_CLOCK(1),
-      .MAX_PENDING(MaxPending)
-  ) scoreboard (
-      .clk(clk),
-      .rstN(!rst),
-      .incoming_vld(|push_handshake),
-      .incoming_data(push_payload[index]),
-      .outgoing_vld(pop_valid & pop_ready),
-      .outgoing_data(pop_payload)
-  );
+  // ----------FV Modeling Code----------
+  logic [$clog2(NumFlows)-1:0] i, j;
+  if (NumFlows > 1) begin : gen_ij
+    `BR_FV_2RAND_IDX(i, j, NumFlows)
+  end else begin : gen_i
+    assign i = '0;
+  end
+
+  // ----------Fairness Check----------
+  if (NumFlows > 1) begin : gen_multi_req
+    if (EnableCoverPushBackpressure) begin : gen_fairness_checks
+      `BR_ASSERT(strict_priority_a,
+                 (i < j) && push_valid[i] && push_valid[j] |=> (((pop_data == $past(
+                     push_data[i]
+                 )) && (pop_last == $past(
+                     push_last[i]
+                 ))) || !$past(
+                     pop_ready
+                 ) || !$past(
+                     push_ready[i]
+                 )))
+    end else begin : gen_no_conflict_checks
+      `BR_ASSERT(no_conflict_a, (i != j) |-> !(push_valid[i] && push_valid[j]))
+    end
+  end
 
 endmodule : br_flow_burst_mux_fixed_stable_fpv_monitor
 
