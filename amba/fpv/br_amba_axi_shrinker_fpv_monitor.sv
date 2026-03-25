@@ -105,9 +105,12 @@ module br_amba_axi_shrinker_fpv_monitor #(
 
   localparam int WideSizeLog2 = $clog2(WideStrobeWidth);
   localparam int NarrowSizeLog2 = $clog2(NarrowStrobeWidth);
+  localparam int LanesPerWide = WideDataWidth / NarrowDataWidth;
+  localparam int LaneIdxWidth = br_math::clamped_clog2(LanesPerWide);
   localparam int ArPayloadWidth = AddrWidth + IdWidth + br_amba::AxiBurstLenWidth +
                                   br_amba::AxiBurstSizeWidth + br_amba::AxiBurstTypeWidth +
                                   br_amba::AxiProtWidth + ARUserWidth;
+  localparam int RPayloadWidth = IdWidth + WideDataWidth + RUserWidth + br_amba::AxiRespWidth + 1;
 
   // ABVIP should send more than DUT to test backpressure.
   localparam int MaxPending = MaxOutstandingReqs + WriteFifoDepth + 2;
@@ -117,6 +120,15 @@ module br_amba_axi_shrinker_fpv_monitor #(
   logic [ArPayloadWidth-1:0] fv_narrow_ar_payload;
   int unsigned ar_shift;
   logic [br_amba::AxiBurstLenWidth:0] fv_narrow_arlen_ext;
+  logic fv_narrow_r_hs;
+  logic fv_wide_rdata_vld;
+  logic [IdWidth-1:0] fv_rid_idx;
+  logic [MaxOutstandingReqs-1:0][LaneIdxWidth-1:0] fv_r_lane;
+  logic [MaxOutstandingReqs-1:0][LaneIdxWidth-1:0] fv_r_lane_next;
+  logic [MaxOutstandingReqs-1:0][WideDataWidth-1:0] fv_wide_rdata_saved;
+  logic [MaxOutstandingReqs-1:0][WideDataWidth-1:0] fv_wide_rdata_next;
+  logic [MaxOutstandingReqs-1:0][WideDataWidth-1:0] fv_wide_rdata_saved_next;
+  logic [RPayloadWidth-1:0] fv_wide_r_payload;
 
   always_comb begin
     ar_shift = 0;
@@ -166,6 +178,56 @@ module br_amba_axi_shrinker_fpv_monitor #(
         narrow_arprot,
         narrow_aruser
       })
+  );
+
+  // Reconstructs the wide read data from accepted narrow R beats.
+  // Stitch state is kept per tracked RID slot, and earlier beats fill lower
+  // byte lanes first within that slot.
+  assign fv_narrow_r_hs = narrow_rvalid && narrow_rready;
+  assign fv_wide_rdata_vld = fv_narrow_r_hs && narrow_rlast;
+  assign fv_rid_idx = narrow_rid;
+
+  always_comb begin
+    fv_r_lane_next = fv_r_lane;
+    fv_wide_rdata_next = fv_wide_rdata_saved;
+    fv_wide_rdata_saved_next = fv_wide_rdata_saved;
+
+    if (fv_narrow_r_hs) begin
+      fv_wide_rdata_next[fv_rid_idx]
+          [fv_r_lane[fv_rid_idx]*NarrowDataWidth +: NarrowDataWidth] = narrow_rdata;
+      fv_wide_rdata_saved_next = fv_wide_rdata_next;
+
+      if (narrow_rlast) begin
+        fv_r_lane_next[fv_rid_idx] = '0;
+        fv_wide_rdata_saved_next[fv_rid_idx] = '0;
+      end else begin
+        fv_r_lane_next[fv_rid_idx] = fv_r_lane[fv_rid_idx] + 1'b1;
+      end
+    end
+  end
+
+  `BR_REGLI(fv_r_lane, fv_r_lane_next, fv_narrow_r_hs, '0)
+  `BR_REGLI(fv_wide_rdata_saved, fv_wide_rdata_saved_next, fv_narrow_r_hs, '0)
+
+  assign fv_wide_r_payload = {
+    narrow_rid, fv_wide_rdata_next[fv_rid_idx], narrow_ruser, narrow_rresp, narrow_rlast
+  };
+
+  // Checks that the reconstructed wide R payload from the narrow interface
+  // matches the RTL wide R channel.
+  jasper_scoreboard_3 #(
+      .CHUNK_WIDTH(RPayloadWidth),
+      .IN_CHUNKS(1),
+      .OUT_CHUNKS(1),
+      .SINGLE_CLOCK(1),
+      .MAX_PENDING(MaxPending)
+  ) r_sb (
+      .clk(clk),
+      .rstN(!rst),
+      .incoming_vld(fv_wide_rdata_vld),
+      .incoming_data(fv_wide_r_payload),
+      .outgoing_vld(wide_rvalid && wide_rready),
+      .outgoing_data({wide_rid, wide_rdata, wide_ruser, wide_rresp, wide_rlast})
   );
 
   `BR_ASSUME(
