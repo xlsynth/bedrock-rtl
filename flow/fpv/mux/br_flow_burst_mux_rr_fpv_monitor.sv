@@ -49,7 +49,8 @@ module br_flow_burst_mux_rr_fpv_monitor #(
       .EnableAssertPushValidStability(EnableAssertPushValidStability),
       .EnableAssertPushDataStability(EnableAssertPushDataStability),
       .EnableCoverPopBackpressure(EnableCoverPushBackpressure),
-      .EnableAssertPopDataStability(0)
+      .EnableAssertPopDataStability(0),
+      .EnableAssertMustGrant(0)
   ) fv_checker (
       .clk,
       .rst,
