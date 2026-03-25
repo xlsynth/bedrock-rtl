@@ -87,4 +87,7 @@ bind br_flow_burst_mux_lru br_flow_burst_mux_lru_fpv_monitor #(
     .EnableAssertPushValidStability(EnableAssertPushValidStability),
     .EnableAssertPushDataStability(EnableAssertPushDataStability),
     .EnableAssertFinalNotValid(EnableAssertFinalNotValid)
-) monitor (.*);
+) monitor (
+    .*,
+    .grant(br_flow_burst_mux_core.grant)
+);

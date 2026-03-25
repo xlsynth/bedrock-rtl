@@ -90,19 +90,16 @@ module br_flow_burst_mux_select_unstable #(
   //------------------------------------------
   // Implementation
   //------------------------------------------
-  logic holding, holding_next;
-  logic [SelectWidth-1:0] held_select;
-
   if (NumFlows == 1) begin : gen_single_flow
     assign push_ready = pop_ready;
     assign pop_payload_unstable = push_payload[0];
 
-    assign holding = 1'b0;
-    assign holding_next = 1'b0;
-    assign held_select = '0;
-
     `BR_UNUSED(select)
   end else begin : gen_multi_flow
+
+    logic holding, holding_next;
+    logic [SelectWidth-1:0] held_select;
+
     logic accept;
     logic [SelectWidth-1:0] active_select;
 

@@ -54,23 +54,8 @@ module br_flow_burst_mux_lru #(
   // Implementation
   //------------------------------------------
   logic [NumFlows-1:0] request;
-  logic [NumFlows-1:0] can_grant;
-  logic [NumFlows-1:0] grant;
   logic [NumFlows-1:0] grant_from_arb;
-  logic [NumFlows-1:0] grant_hold;
   logic enable_priority_update;
-  logic enable_grant_hold_update;
-  logic enable_priority_update_from_mux;
-  logic [NumFlows-1:0][Width:0] push_payload;
-  logic [Width:0] pop_payload_unstable;
-
-  assign can_grant = grant;
-  assign grant_hold = ~(push_valid & push_last);
-  assign enable_grant_hold_update = enable_priority_update_from_mux && |(grant & push_valid);
-
-  for (genvar i = 0; i < NumFlows; i++) begin : gen_push_payload
-    assign push_payload[i] = {push_last[i], push_data[i]};
-  end
 
   br_arb_lru_internal #(
       .NumRequesters(NumFlows)
@@ -83,42 +68,28 @@ module br_flow_burst_mux_lru #(
       .enable_priority_update
   );
 
-  br_arb_grant_hold #(
-      .NumRequesters(NumFlows)
-  ) br_arb_grant_hold (
-      .clk,
-      .rst,
-      .grant_hold,
-      .enable_grant_hold_update,
-      .grant_from_arb,
-      .enable_priority_update_to_arb(enable_priority_update),
-      .grant
-  );
-
-  br_flow_mux_core #(
+  br_flow_burst_mux_core #(
       .NumFlows(NumFlows),
-      .Width(Width + 1),
+      .Width(Width),
       .EnableCoverPushBackpressure(EnableCoverPushBackpressure),
       .EnableAssertPushValidStability(EnableAssertPushValidStability),
       .EnableAssertPushDataStability(EnableAssertPushDataStability),
       .EnableAssertPushDataKnown(EnableAssertPushDataKnown),
-      .EnableAssertFinalNotValid(EnableAssertFinalNotValid),
-      .ArbiterAlwaysGrants(0)
-  ) br_flow_mux_core (
+      .EnableAssertFinalNotValid(EnableAssertFinalNotValid)
+  ) br_flow_burst_mux_core (
       .clk,
       .rst,
       .request,
-      .can_grant,
-      .grant,
-      .enable_priority_update(enable_priority_update_from_mux),
+      .grant_from_arb,
+      .enable_priority_update,
       .push_ready,
       .push_valid,
-      .push_data(push_payload),
+      .push_last,
+      .push_data,
       .pop_ready,
       .pop_valid_unstable,
-      .pop_data_unstable(pop_payload_unstable)
+      .pop_last_unstable,
+      .pop_data_unstable
   );
-
-  assign {pop_last_unstable, pop_data_unstable} = pop_payload_unstable;
 
 endmodule : br_flow_burst_mux_lru

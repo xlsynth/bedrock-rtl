@@ -148,9 +148,8 @@ verilog_library(
     name = "br_flow_burst_mux_fixed",
     srcs = ["br_flow_burst_mux_fixed.sv"],
     deps = [
-        "//arb/rtl:br_arb_grant_hold",
         "//arb/rtl/internal:br_arb_fixed_internal",
-        "//flow/rtl/internal:br_flow_mux_core",
+        "//flow/rtl/internal:br_flow_burst_mux_core",
         "//macros:br_asserts_internal",
     ],
 )
@@ -170,9 +169,8 @@ verilog_library(
     name = "br_flow_burst_mux_rr",
     srcs = ["br_flow_burst_mux_rr.sv"],
     deps = [
-        "//arb/rtl:br_arb_grant_hold",
         "//arb/rtl/internal:br_arb_rr_internal",
-        "//flow/rtl/internal:br_flow_mux_core",
+        "//flow/rtl/internal:br_flow_burst_mux_core",
         "//macros:br_asserts_internal",
     ],
 )
@@ -181,9 +179,8 @@ verilog_library(
     name = "br_flow_burst_mux_lru",
     srcs = ["br_flow_burst_mux_lru.sv"],
     deps = [
-        "//arb/rtl:br_arb_grant_hold",
         "//arb/rtl/internal:br_arb_lru_internal",
-        "//flow/rtl/internal:br_flow_mux_core",
+        "//flow/rtl/internal:br_flow_burst_mux_core",
         "//macros:br_asserts_internal",
     ],
 )
@@ -203,9 +200,8 @@ verilog_library(
     name = "br_flow_burst_mux_fixed_stable",
     srcs = ["br_flow_burst_mux_fixed_stable.sv"],
     deps = [
-        "//arb/rtl:br_arb_grant_hold",
         "//arb/rtl/internal:br_arb_fixed_internal",
-        "//flow/rtl/internal:br_flow_mux_core_stable",
+        "//flow/rtl/internal:br_flow_burst_mux_core_stable",
     ],
 )
 
@@ -222,9 +218,8 @@ verilog_library(
     name = "br_flow_burst_mux_rr_stable",
     srcs = ["br_flow_burst_mux_rr_stable.sv"],
     deps = [
-        "//arb/rtl:br_arb_grant_hold",
         "//arb/rtl/internal:br_arb_rr_internal",
-        "//flow/rtl/internal:br_flow_mux_core_stable",
+        "//flow/rtl/internal:br_flow_burst_mux_core_stable",
     ],
 )
 
@@ -241,9 +236,8 @@ verilog_library(
     name = "br_flow_burst_mux_lru_stable",
     srcs = ["br_flow_burst_mux_lru_stable.sv"],
     deps = [
-        "//arb/rtl:br_arb_grant_hold",
         "//arb/rtl/internal:br_arb_lru_internal",
-        "//flow/rtl/internal:br_flow_mux_core_stable",
+        "//flow/rtl/internal:br_flow_burst_mux_core_stable",
     ],
 )
 
