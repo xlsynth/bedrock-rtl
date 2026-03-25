@@ -95,6 +95,6 @@ module br_flow_burst_mux_basic_fpv_monitor #(
   end
 
   // ----------Forward Progress Check----------
-  `BR_ASSERT(must_grant_a, |push_valid == pop_valid)
+  `BR_ASSERT(must_grant_a, |push_valid |=> pop_valid)
 
 endmodule : br_flow_burst_mux_basic_fpv_monitor

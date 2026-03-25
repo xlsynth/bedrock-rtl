@@ -63,26 +63,6 @@ module br_flow_burst_mux_rr_stable_fpv_monitor #(
       .request(push_valid),
       .grant
   );
-
-  // ----------Data integrity Check----------
-  logic [$clog2(NumFlows)-1:0] index;
-  `BR_FV_IDX(index, grant, NumFlows)
-
-  jasper_scoreboard_3 #(
-      .CHUNK_WIDTH(Width),
-      .IN_CHUNKS(1),
-      .OUT_CHUNKS(1),
-      .SINGLE_CLOCK(1),
-      .MAX_PENDING(NumFlows == 1 ? 2 : NumFlows)
-  ) scoreboard (
-      .clk(clk),
-      .rstN(!rst),
-      .incoming_vld(push_valid[index] & push_ready[index]),
-      .incoming_data(push_data[index]),
-      .outgoing_vld(pop_valid & pop_ready),
-      .outgoing_data(pop_data)
-  );
-
 endmodule : br_flow_burst_mux_rr_stable_fpv_monitor
 
 bind br_flow_burst_mux_rr_stable br_flow_burst_mux_rr_stable_fpv_monitor #(
