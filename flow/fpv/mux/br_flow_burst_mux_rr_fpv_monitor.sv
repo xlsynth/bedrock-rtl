@@ -4,6 +4,7 @@
 // Bedrock-RTL Flow-Controlled Burst Multiplexer (Round-Robin)
 
 `include "br_asserts.svh"
+`include "br_fv.svh"
 
 module br_flow_burst_mux_rr_fpv_monitor #(
     parameter int NumFlows = 1,
