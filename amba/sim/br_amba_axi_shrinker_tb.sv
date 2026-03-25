@@ -713,14 +713,16 @@ module br_amba_axi_shrinker_tb;
 
     fork
       begin
+        // Interleaved responses
         send_narrow_r(2'b11, 8'h44, AxiRespOkay, 1'b0, 1'b0);
-        send_narrow_r(2'b11, 8'h55, AxiRespOkay, 1'b1, 1'b0);
         send_narrow_r(2'b10, 8'h66, AxiRespOkay, 1'b0, 1'b0);
+        send_narrow_r(2'b11, 8'h55, AxiRespOkay, 1'b1, 1'b0);
         send_narrow_r(2'b10, 8'h77, AxiRespOkay, 1'b1, 1'b0);
       end
       begin
-        expect_wide_r(2'b11, 32'h00005544, AxiRespOkay, 1'b1, 1'b0);
+        // Response for ID b11 should be held until the second narrow response arrives
         expect_wide_r(2'b10, 32'h00660000, AxiRespOkay, 1'b0, 1'b0);
+        expect_wide_r(2'b11, 32'h00005544, AxiRespOkay, 1'b1, 1'b0);
         expect_wide_r(2'b10, 32'h77000000, AxiRespOkay, 1'b1, 1'b0);
       end
     join

@@ -548,15 +548,20 @@ module br_amba_axi_shrinker #(
 
   `BR_UNUSED(read_table_rd_data_valid)
 
-  logic r_first;
+  // For each outstanding transaction, check if the current beat is the first beat of the transaction
+  logic [MaxOutstandingReqs-1:0] r_first, r_first_next;
   logic narrow_r_beat;
   logic narrow_r_new;
 
   assign narrow_r_beat = narrow_rvalid && narrow_rready;
-  assign narrow_r_new = narrow_r_beat && r_first;
+  assign narrow_r_new = narrow_r_beat && |(r_first & resp_index_onehot);
   assign narrow_r_int_beat = narrow_rvalid_int && narrow_rready_int;
+  // Set the first bit for the index if it's the last beat
+  // Clear the first bit if it's not the last beat
+  assign r_first_next = narrow_rlast ? (r_first | resp_index_onehot)
+                                     : (r_first & ~resp_index_onehot);
 
-  `BR_REGLI(r_first, narrow_rlast, narrow_r_beat, 1'b1)
+  `BR_REGLI(r_first, r_first_next, narrow_r_beat, '1)
 
   // Flow register to pipeline the RAM read result
   br_flow_reg_fwd #(
@@ -574,37 +579,22 @@ module br_amba_axi_shrinker #(
       })
   );
 
-  logic [LaneSelWidth-1:0] r_data_shift;
+  // Since R beats can be interleaved in AXI, we need tracking information for each outstanding transaction
+  // and then pick the correct tracking registers to use based on the response index.
+  logic [MaxOutstandingReqs-1:0] r_beat_last_per_req;
+  logic [MaxOutstandingReqs-1:0][LaneSelWidth-1:0] r_data_shift_per_req;
+  br_amba::axi_resp_t [MaxOutstandingReqs-1:0] wide_rresp_int_per_req;
+  logic [MaxOutstandingReqs-1:0][WideDataWidth-1:0] wide_rdata_int_per_req;
   logic r_beat_last;
-
-  br_amba_axi_resizer_beat_tracker #(
-      .WideBytes  (WideStrobeWidth),
-      .NarrowBytes(NarrowStrobeWidth)
-  ) br_amba_axi_resizer_beat_tracker_r (
-      .clk,
-      .rst,
-
-      .start_valid(narrow_r_new),
-      .start_offset(read_table_rd_data.offset),
-      .size(read_table_rd_data.size),
-      .burst(read_table_rd_data.burst),
-      .shift(read_table_rd_data.shift),
-      .beat_valid(narrow_r_int_beat),
-      .beat_lane(r_data_shift),
-      .beat_last(r_beat_last)
-  );
-
-  logic [WideDataWidth-1:0] wide_rdata_saved;
-  logic [WideDataWidth-1:0] wide_rdata_saved_next;
+  logic [LaneSelWidth-1:0] r_data_shift;
   logic [WideDataWidth-1:0] wide_rdata_new;
-  logic [WideDataWidth-1:0] narrow_rdata_int_ext;
   br_amba::axi_resp_t narrow_rresp_int_enum;
-  br_amba::axi_resp_t wide_rresp_saved, wide_rresp_saved_next;
-  br_amba::axi_resp_t wide_rresp_comb;
+  logic [WideDataWidth-1:0] narrow_rdata_int_ext;
+  logic [InternalIdWidth-1:0] r_beat_index;
 
-  assign wide_rvalid_int = narrow_rvalid_int && r_beat_last;
-  assign narrow_rready_int = !r_beat_last || wide_rready_int;
   assign `BR_ZERO_EXT(narrow_rdata_int_ext, narrow_rdata_int)
+  assign narrow_rresp_int_enum = br_amba::axi_resp_t'(narrow_rresp_int);
+  assign r_beat_index = narrow_rid_int[InternalIdWidth-1:0];
 
   br_shift_left #(
       .NumSymbols(LanesPerWide),
@@ -618,40 +608,106 @@ module br_amba_axi_shrinker #(
       .out_valid()
   );
 
-  assign narrow_rresp_int_enum = br_amba::axi_resp_t'(narrow_rresp_int);
-  // Send the wide response based on the highest precedence response among the narrow responses
-  // that compose it. The precdence is Decerr > Slverr > ExOkay > Okay.
-  always_comb begin
-    unique case (narrow_rresp_int_enum)
-      br_amba::AxiRespOkay: wide_rresp_comb = wide_rresp_saved;
-      br_amba::AxiRespExOkay:
-      if (wide_rresp_saved == br_amba::AxiRespOkay) begin
-        wide_rresp_comb = br_amba::AxiRespExOkay;
-      end else begin
-        wide_rresp_comb = wide_rresp_saved;
-      end
-      br_amba::AxiRespSlverr:
-      if (wide_rresp_saved == br_amba::AxiRespDecerr) begin
-        wide_rresp_comb = br_amba::AxiRespDecerr;
-      end else begin
-        wide_rresp_comb = br_amba::AxiRespSlverr;
-      end
-      br_amba::AxiRespDecerr: wide_rresp_comb = br_amba::AxiRespDecerr;
-      default: wide_rresp_comb = br_amba::axi_resp_t'('x);
-    endcase
+  assign wide_rvalid_int   = narrow_rvalid_int && r_beat_last;
+  assign narrow_rready_int = !r_beat_last || wide_rready_int;
+
+  typedef struct packed {
+    logic [LaneSelWidth-1:0] shift;
+    br_amba::axi_resp_t resp;
+    logic [WideDataWidth-1:0] data;
+    logic beat_last;
+  } rtracker_mux_payload_t;
+
+  rtracker_mux_payload_t [MaxOutstandingReqs-1:0] rtracker_mux_in;
+  rtracker_mux_payload_t rtracker_mux_out;
+
+  br_mux_bin #(
+      .NumSymbolsIn(MaxOutstandingReqs),
+      .SymbolWidth ($bits(rtracker_mux_payload_t))
+  ) br_mux_bin_rtracker_mux (
+      .select(r_beat_index),
+      .in(rtracker_mux_in),
+      .out(rtracker_mux_out),
+      .out_valid()
+  );
+
+  assign r_data_shift = rtracker_mux_out.shift;
+  assign r_beat_last  = rtracker_mux_out.beat_last;
+
+  // Per transaction tracking
+  // Need to keep track of the position in the beat, the offset, the accumulated data, and the coalesced response.
+  for (genvar i = 0; i < MaxOutstandingReqs; i++) begin : gen_r_data_tracking
+    logic tracker_start_valid;
+    logic tracker_beat_valid;
+    br_amba::axi_resp_t wide_rresp_saved, wide_rresp_saved_next;
+    br_amba::axi_resp_t wide_rresp_comb;
+
+    assign tracker_start_valid = narrow_r_new && resp_index_onehot[i];
+    assign tracker_beat_valid  = narrow_r_int_beat && r_beat_index == i;
+
+    br_amba_axi_resizer_beat_tracker #(
+        .WideBytes  (WideStrobeWidth),
+        .NarrowBytes(NarrowStrobeWidth)
+    ) br_amba_axi_resizer_beat_tracker_r (
+        .clk,
+        .rst,
+
+        .start_valid(tracker_start_valid),
+        .start_offset(read_table_rd_data.offset),
+        .size(read_table_rd_data.size),
+        .burst(read_table_rd_data.burst),
+        .shift(read_table_rd_data.shift),
+        .beat_valid(tracker_beat_valid),
+        .beat_lane(r_data_shift_per_req[i]),
+        .beat_last(r_beat_last_per_req[i])
+    );
+
+    logic [WideDataWidth-1:0] wide_rdata_saved;
+    logic [WideDataWidth-1:0] wide_rdata_saved_next;
+
+    // Send the wide response based on the highest precedence response among the narrow responses
+    // that compose it. The precdence is Decerr > Slverr > ExOkay > Okay.
+    always_comb begin
+      unique case (narrow_rresp_int_enum)
+        br_amba::AxiRespOkay: wide_rresp_comb = wide_rresp_saved;
+        br_amba::AxiRespExOkay:
+        if (wide_rresp_saved == br_amba::AxiRespOkay) begin
+          wide_rresp_comb = br_amba::AxiRespExOkay;
+        end else begin
+          wide_rresp_comb = wide_rresp_saved;
+        end
+        br_amba::AxiRespSlverr:
+        if (wide_rresp_saved == br_amba::AxiRespDecerr) begin
+          wide_rresp_comb = br_amba::AxiRespDecerr;
+        end else begin
+          wide_rresp_comb = br_amba::AxiRespSlverr;
+        end
+        br_amba::AxiRespDecerr: wide_rresp_comb = br_amba::AxiRespDecerr;
+        default: wide_rresp_comb = br_amba::axi_resp_t'('x);
+      endcase
+    end
+    assign wide_rresp_saved_next = r_beat_last_per_req[i] ? br_amba::AxiRespOkay : wide_rresp_comb;
+    assign wide_rresp_int_per_req[i] = wide_rresp_comb;
+    assign wide_rdata_int_per_req[i] = wide_rdata_new | wide_rdata_saved;
+    assign wide_rdata_saved_next =
+      (tracker_start_valid || r_beat_last_per_req[i]) ? '0 : wide_rdata_int_per_req[i];
+
+    `BR_REGL(wide_rdata_saved, wide_rdata_saved_next, tracker_start_valid || tracker_beat_valid)
+    `BR_REGLI(wide_rresp_saved, wide_rresp_saved_next, tracker_beat_valid, br_amba::AxiRespOkay)
+
+    assign rtracker_mux_in[i] = '{
+            shift: r_data_shift_per_req[i],
+            resp: wide_rresp_int_per_req[i],
+            data: wide_rdata_int_per_req[i],
+            beat_last: r_beat_last_per_req[i]
+        };
   end
-  assign wide_rresp_saved_next = r_beat_last ? br_amba::AxiRespOkay : wide_rresp_comb;
 
-  `BR_REGLI(wide_rresp_saved, wide_rresp_saved_next, narrow_r_int_beat, br_amba::AxiRespOkay)
-
-  assign wide_rid_int = narrow_rid_int;
-  assign wide_rresp_int = {wide_rresp_comb};  // flatten the enum
-  assign wide_rdata_int = wide_rdata_new | wide_rdata_saved;
+  assign wide_rid_int   = narrow_rid_int;
+  assign wide_rresp_int = {rtracker_mux_out.resp};  // flatten the enum
+  assign wide_rdata_int = rtracker_mux_out.data;
   assign wide_rlast_int = narrow_rlast_int;
   assign wide_ruser_int = narrow_ruser_int;
-
-  assign wide_rdata_saved_next = (narrow_r_new || r_beat_last) ? '0 : wide_rdata_int;
-  `BR_REGL(wide_rdata_saved, wide_rdata_saved_next, narrow_r_new || narrow_r_int_beat)
 
   if (RegisterNarrowOutputs) begin : gen_narrow_reg
     br_flow_reg_fwd #(
@@ -806,4 +862,6 @@ module br_amba_axi_shrinker #(
 
   // Implementation assertions
   `BR_ASSERT_IMPL(rd_data_valid_on_r_beat_a, narrow_r_beat |-> read_table_rd_data_valid)
+  `BR_ASSERT_IMPL(narrow_r_last_on_beat_last_a,
+                  narrow_rvalid_int && narrow_rlast_int |-> r_beat_last)
 endmodule
