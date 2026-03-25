@@ -83,7 +83,8 @@ module br_amba_axi_resizer_beat_tracker #(
       .MaxValue(WideBytes - 1),
       .MaxIncrement(NarrowBytes),
       // When initializing, we don't want to take the increment
-      .EnableReinitAndIncr(0)
+      .EnableReinitAndIncr(0),
+      .EnableCoverZeroIncrement(0)
   ) br_counter_incr_beat_offset (
       .clk,
       .rst,
@@ -114,7 +115,10 @@ module br_amba_axi_resizer_beat_tracker #(
   br_counter_incr #(
       .MaxValue(LanesPerWide - 1),
       .MaxIncrement(1),
-      .EnableReinitAndIncr(0)
+      .EnableReinitAndIncr(0),
+      .EnableCoverZeroIncrement(0),
+      // reinit will be always be asserted before the counter wraps around
+      .EnableWrap(0)
   ) br_counter_incr_beat_id (
       .clk,
       .rst,

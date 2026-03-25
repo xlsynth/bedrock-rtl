@@ -103,6 +103,7 @@ module br_amba_axi_shrinker_fpv_monitor #(
     input logic                                  narrow_rready
 );
 
+  localparam int WideSizeLog2 = $clog2(WideStrobeWidth);
   localparam int NarrowSizeLog2 = $clog2(NarrowStrobeWidth);
 
   // ABVIP should send more than DUT to test backpressure.
@@ -116,6 +117,66 @@ module br_amba_axi_shrinker_fpv_monitor #(
   `BR_ASSUME(
       shrinking_arburst_incr_a,
       (wide_arvalid && wide_arsize > NarrowSizeLog2) |-> wide_arburst == br_amba::AxiBurstIncr)
+
+  localparam int AWPayloadWidth =
+      AddrWidth + IdWidth + br_amba::AxiBurstLenWidth + br_amba::AxiBurstSizeWidth +
+      br_amba::AxiBurstTypeWidth + br_amba::AxiProtWidth + AWUserWidth;
+  localparam int ARPayloadWidth =
+      AddrWidth + IdWidth + br_amba::AxiBurstLenWidth + br_amba::AxiBurstSizeWidth +
+      br_amba::AxiBurstTypeWidth + br_amba::AxiProtWidth + ARUserWidth;
+  localparam int WideWPayloadWidth = WideDataWidth + WideStrobeWidth + WUserWidth + 1;
+  localparam int BPayloadWidth = IdWidth + BUserWidth + br_amba::AxiRespWidth;
+  localparam int NarrowRPayloadWidth =
+      IdWidth + NarrowDataWidth + RUserWidth + br_amba::AxiRespWidth + 1;
+
+  logic [AWPayloadWidth-1:0] wide_aw_payload;
+  logic [ARPayloadWidth-1:0] wide_ar_payload;
+  logic [WideWPayloadWidth-1:0] wide_w_payload;
+  logic [BPayloadWidth-1:0] narrow_b_payload;
+  logic [NarrowRPayloadWidth-1:0] narrow_r_payload;
+
+  assign wide_aw_payload = {
+    wide_awaddr, wide_awid, wide_awlen, wide_awsize, wide_awburst, wide_awprot, wide_awuser
+  };
+  assign wide_ar_payload = {
+    wide_araddr, wide_arid, wide_arlen, wide_arsize, wide_arburst, wide_arprot, wide_aruser
+  };
+  assign wide_w_payload = {wide_wdata, wide_wstrb, wide_wuser, wide_wlast};
+  assign narrow_b_payload = {narrow_bid, narrow_buser, narrow_bresp};
+  assign narrow_r_payload = {narrow_rid, narrow_rdata, narrow_ruser, narrow_rresp, narrow_rlast};
+
+  `BR_ASSUME(wide_awvalid_stable_a, wide_awvalid && !wide_awready |=> wide_awvalid && $stable
+                                    (wide_aw_payload))
+  `BR_ASSUME(wide_arvalid_stable_a, wide_arvalid && !wide_arready |=> wide_arvalid && $stable
+                                    (wide_ar_payload))
+  `BR_ASSUME(wide_wvalid_stable_a, wide_wvalid && !wide_wready |=> wide_wvalid && $stable
+                                   (wide_w_payload))
+  `BR_ASSUME(narrow_bvalid_stable_a, narrow_bvalid && !narrow_bready |=> narrow_bvalid && $stable
+                                     (narrow_b_payload))
+  `BR_ASSUME(narrow_rvalid_stable_a, narrow_rvalid && !narrow_rready |=> narrow_rvalid && $stable
+                                     (narrow_r_payload))
+
+  // Make sure wide len and size won't result in narrow len overflowing
+  localparam int ExtBurstLenWidth = br_amba::AxiBurstLenWidth + WideSizeLog2 - NarrowSizeLog2;
+  localparam int MaxBurstLen = 2 ** br_amba::AxiBurstLenWidth - 1;
+
+  logic [ExtBurstLenWidth-1:0] ext_wide_awlen;
+  logic [ExtBurstLenWidth-1:0] ext_wide_arlen;
+  logic [ExtBurstLenWidth-1:0] ext_narrow_awlen;
+  logic [ExtBurstLenWidth-1:0] ext_narrow_arlen;
+
+  assign ext_wide_awlen = ExtBurstLenWidth'(wide_awlen);
+  assign ext_wide_arlen = ExtBurstLenWidth'(wide_arlen);
+
+  assign ext_narrow_awlen =
+      (wide_awsize > NarrowSizeLog2) ?
+      ((ext_wide_awlen + 1'b1) << (wide_awsize - NarrowSizeLog2)) - 1'b1 : ext_wide_awlen;
+  assign ext_narrow_arlen =
+      (wide_arsize > NarrowSizeLog2) ?
+      ((ext_wide_arlen + 1'b1) << (wide_arsize - NarrowSizeLog2)) - 1'b1 : ext_wide_arlen;
+
+  `BR_ASSUME(narrow_awlen_no_overflow_a, wide_awvalid |-> ext_narrow_awlen <= MaxBurstLen)
+  `BR_ASSUME(narrow_arlen_no_overflow_a, wide_arvalid |-> ext_narrow_arlen <= MaxBurstLen)
 
   axi4_master #(
       .ADDR_WIDTH(AddrWidth),
