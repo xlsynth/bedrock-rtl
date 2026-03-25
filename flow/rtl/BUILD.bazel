@@ -99,35 +99,12 @@ verilog_library(
 )
 
 verilog_library(
-    name = "br_flow_burst_mux_select",
-    srcs = ["br_flow_burst_mux_select.sv"],
-    deps = [
-        ":br_flow_burst_mux_select_unstable",
-        ":br_flow_reg_fwd",
-        "//pkg:br_math_pkg",
-    ],
-)
-
-verilog_library(
     name = "br_flow_mux_select_unstable",
     srcs = ["br_flow_mux_select_unstable.sv"],
     deps = [
         "//flow/rtl/internal:br_flow_checks_valid_data_impl",
         "//flow/rtl/internal:br_flow_checks_valid_data_intg",
         "//macros:br_asserts_internal",
-        "//macros:br_unused",
-        "//pkg:br_math_pkg",
-    ],
-)
-
-verilog_library(
-    name = "br_flow_burst_mux_select_unstable",
-    srcs = ["br_flow_burst_mux_select_unstable.sv"],
-    deps = [
-        "//flow/rtl/internal:br_flow_checks_valid_data_impl",
-        "//flow/rtl/internal:br_flow_checks_valid_data_intg",
-        "//macros:br_asserts_internal",
-        "//macros:br_registers",
         "//macros:br_unused",
         "//pkg:br_math_pkg",
     ],
@@ -478,22 +455,6 @@ br_verilog_elab_and_lint_test_suite(
 )
 
 br_verilog_elab_and_lint_test_suite(
-    name = "br_flow_burst_mux_select_test_suite",
-    params = {
-        "NumFlows": [
-            "1",
-            "2",
-            "3",
-        ],
-        "Width": [
-            "1",
-            "2",
-        ],
-    },
-    deps = [":br_flow_burst_mux_select"],
-)
-
-br_verilog_elab_and_lint_test_suite(
     name = "br_flow_mux_select_unstable_test_suite",
     params = {
         "NumFlows": [
@@ -507,22 +468,6 @@ br_verilog_elab_and_lint_test_suite(
         ],
     },
     deps = [":br_flow_mux_select_unstable"],
-)
-
-br_verilog_elab_and_lint_test_suite(
-    name = "br_flow_burst_mux_select_unstable_test_suite",
-    params = {
-        "NumFlows": [
-            "1",
-            "2",
-            "3",
-        ],
-        "Width": [
-            "1",
-            "2",
-        ],
-    },
-    deps = [":br_flow_burst_mux_select_unstable"],
 )
 
 br_verilog_elab_and_lint_test_suite(
