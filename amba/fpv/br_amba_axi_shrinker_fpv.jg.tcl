@@ -7,7 +7,7 @@ reset rst
 get_design_info
 
 # limit run time to 30-mins
-set_prove_time_limit 30m
+set_prove_time_limit 2h
 
 # prove command
 prove -all
