@@ -15,15 +15,6 @@ cover -disable *monitor.lru_check.gen_fairness_checks.gen_priority_covers*.same_
 cover -disable *monitor.lru_check.gen_fairness_checks.gen_priority_covers*.low_priority_c
 cover -disable *monitor.lru_check.gen_fairness_checks.gen_priority_covers*.high_priority_c
 
-# With a single flow there is no pop-side arbitration/backpressure choice, so
-# the burst basic checker pop-data instability cover is unreachable.
-array set param_list [get_design_info -list parameter]
-set NumFlows $param_list(NumFlows)
-set EnableCoverPushBackpressure $param_list(EnableCoverPushBackpressure)
-if {$NumFlows == 1} {
-  cover -disable *monitor.fv_checker.gen_pop_backpressure.gen_pop_data_unstable.pop_data_unstable_c
-}
-
 # Assertion no_wait_a fails: grant == request
 # because grant intentionally holds across a burst until push_last.
 assert -disable *monitor.lru_check.gen_assert_no_wait.no_wait_a

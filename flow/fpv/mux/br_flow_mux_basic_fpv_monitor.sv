@@ -50,7 +50,7 @@ module br_flow_mux_basic_fpv_monitor #(
   if (EnableCoverPopBackpressure) begin : gen_pop_backpressure
     if (EnableAssertPopDataStability) begin : gen_pop_data_stable
       `BR_ASSERT(pop_data_stable_a, pop_valid && !pop_ready |=> pop_valid && $stable(pop_data))
-    end else begin : gen_pop_data_unstable
+    end else if (NumFlows != 1) begin : gen_pop_data_unstable
       `BR_COVER(pop_data_unstable_c, (pop_valid && !pop_ready) ##1 !$stable(pop_data))
     end
   end
