@@ -112,6 +112,9 @@ module br_amba_axi_shrinker_fpv_monitor #(
   localparam int BeatOffsetIncrWidth = $clog2(NarrowStrobeWidth + 1);
   localparam int BeatsPerWideWidth = br_math::clamped_clog2(LanesPerWide + 1);
   localparam int RespRankWidth = 2;
+  localparam int AwPayloadWidth = AddrWidth + IdWidth + br_amba::AxiBurstLenWidth +
+                                  br_amba::AxiBurstSizeWidth + br_amba::AxiBurstTypeWidth +
+                                  br_amba::AxiProtWidth + AWUserWidth;
   localparam int ArPayloadWidth = AddrWidth + IdWidth + br_amba::AxiBurstLenWidth +
                                   br_amba::AxiBurstSizeWidth + br_amba::AxiBurstTypeWidth +
                                   br_amba::AxiProtWidth + ARUserWidth;
@@ -123,7 +126,12 @@ module br_amba_axi_shrinker_fpv_monitor #(
   logic [br_amba::AxiBurstSizeWidth-1:0] fv_narrow_arsize;
   logic [br_amba::AxiBurstLenWidth-1:0] fv_narrow_arlen;
   logic [ArPayloadWidth-1:0] fv_narrow_ar_payload;
+  logic [br_amba::AxiBurstSizeWidth-1:0] fv_narrow_awsize;
+  logic [br_amba::AxiBurstLenWidth-1:0] fv_narrow_awlen;
+  logic [AwPayloadWidth-1:0] fv_narrow_aw_payload;
+  int unsigned aw_shift;
   int unsigned ar_shift;
+  logic [br_amba::AxiBurstLenWidth:0] fv_narrow_awlen_ext;
   logic [br_amba::AxiBurstLenWidth:0] fv_narrow_arlen_ext;
   logic fv_wide_ar_hs;
   logic fv_narrow_r_hs;
@@ -363,6 +371,57 @@ module br_amba_axi_shrinker_fpv_monitor #(
       .incoming_data(fv_wide_r_payload),
       .outgoing_vld(wide_rvalid && wide_rready),
       .outgoing_data({wide_rid, wide_rdata, wide_ruser, wide_rresp, wide_rlast})
+  );
+
+  // ----------AW channel----------
+  always_comb begin
+    aw_shift = 0;
+    fv_narrow_awsize = wide_awsize;
+
+    if (wide_awsize > NarrowSizeLog2) begin
+      fv_narrow_awsize = NarrowSizeLog2;
+      aw_shift = wide_awsize - NarrowSizeLog2;
+    end
+
+    // AXI len encodes beats - 1, so after scaling the beat count by the width ratio
+    // we subtract 1 to convert back to the AXI burst-length encoding.
+    fv_narrow_awlen_ext = (({1'b0, wide_awlen} + 1'b1) << aw_shift) - 1'b1;
+    fv_narrow_awlen = fv_narrow_awlen_ext[br_amba::AxiBurstLenWidth-1:0];
+  end
+
+  assign fv_narrow_aw_payload = {
+    wide_awaddr,
+    wide_awid,
+    fv_narrow_awlen,
+    fv_narrow_awsize,
+    wide_awburst,
+    wide_awprot,
+    wide_awuser
+  };
+
+  // Checks that the RTL narrow AW channel matches the monitor prediction for
+  // narrow awlen/awsize derived from each accepted wide AW request.
+  jasper_scoreboard_3 #(
+      .CHUNK_WIDTH(AwPayloadWidth),
+      .IN_CHUNKS(1),
+      .OUT_CHUNKS(1),
+      .SINGLE_CLOCK(1),
+      .MAX_PENDING(MaxPending)
+  ) aw_sb (
+      .clk(clk),
+      .rstN(!rst),
+      .incoming_vld(wide_awvalid && wide_awready),
+      .incoming_data(fv_narrow_aw_payload),
+      .outgoing_vld(narrow_awvalid && narrow_awready),
+      .outgoing_data({
+        narrow_awaddr,
+        narrow_awid,
+        narrow_awlen,
+        narrow_awsize,
+        narrow_awburst,
+        narrow_awprot,
+        narrow_awuser
+      })
   );
 
   // ----------AXI protocols----------
