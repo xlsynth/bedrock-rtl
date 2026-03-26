@@ -472,7 +472,7 @@ br_verilog_fpv_test_tools_suite(
         ],
     },
     tools = {
-        "jg": "",
+        "jg": "br_flow_mux_select_fpv.jg.tcl",
     },
     top = "br_flow_mux_select_unstable",
     deps = [":br_flow_mux_select_unstable_fpv_monitor"],
@@ -546,7 +546,7 @@ br_verilog_fpv_test_tools_suite(
         ],
     },
     tools = {
-        "jg": "",
+        "jg": "br_flow_mux_select_fpv.jg.tcl",
     },
     top = "br_flow_mux_select",
     deps = [":br_flow_mux_select_fpv_monitor"],
