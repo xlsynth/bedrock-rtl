@@ -43,6 +43,9 @@ module br_flow_burst_mux_basic_fpv_monitor #(
   `BR_ASSUME(magic_flow_stable_a, $stable(magic_flow) && (magic_flow < NumFlows))
 
   for (genvar n = 0; n < NumFlows; n++) begin : gen_asm
+    // push_last should eventually be asserted for each flow to ensure bursts complete,
+    // otherwise, DUT will hang
+    `BR_ASSUME(push_last_liveness_a, s_eventually (push_valid[n] && push_last[n]))
     // Color the low bits of each flow's payload with that flow's index.
     `BR_ASSUME(color_push_data_a, push_valid[n] |-> push_data[n][FlowIdWidth-1:0] == n)
     if (!EnableCoverPushBackpressure) begin : gen_no_backpressure
@@ -95,6 +98,6 @@ module br_flow_burst_mux_basic_fpv_monitor #(
   end
 
   // ----------Forward Progress Check----------
-  `BR_ASSERT(must_grant_a, |(push_valid & push_ready) |=> pop_valid)
+  `BR_ASSERT(must_grant_a, |push_valid |-> s_eventually pop_valid)
 
 endmodule : br_flow_burst_mux_basic_fpv_monitor
