@@ -268,7 +268,7 @@ br_verilog_fpv_test_tools_suite(
         ],
     },
     tools = {
-        "jg": "",
+        "jg": "br_flow_burst_mux_lru.jg.tcl",
     },
     top = "br_flow_burst_mux_lru",
     deps = [":br_flow_burst_mux_lru_fpv_monitor"],
@@ -819,7 +819,7 @@ br_verilog_fpv_test_tools_suite(
         ],
     },
     tools = {
-        "jg": "",
+        "jg": "br_flow_burst_mux_lru.jg.tcl",
     },
     top = "br_flow_burst_mux_lru_stable",
     deps = [":br_flow_burst_mux_lru_stable_fpv_monitor"],
