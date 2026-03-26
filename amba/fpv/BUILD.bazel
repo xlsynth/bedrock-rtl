@@ -448,6 +448,7 @@ br_verilog_fpv_test_tools_suite(
         "-parameter MaxOutstandingReqs 8",
         "-parameter IdWidth 3",
     ],
+    gui = True,
     tools = {
         "jg": "br_amba_axi_shrinker_fpv.jg.tcl",
     },

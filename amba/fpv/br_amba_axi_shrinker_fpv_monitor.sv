@@ -107,6 +107,9 @@ module br_amba_axi_shrinker_fpv_monitor #(
   localparam int NarrowSizeLog2 = $clog2(NarrowStrobeWidth);
   localparam int LanesPerWide = WideDataWidth / NarrowDataWidth;
   localparam int LaneIdxWidth = br_math::clamped_clog2(LanesPerWide);
+  localparam int ByteOffsetWidth = br_math::clamped_clog2(WideStrobeWidth);
+  localparam int InternalIdWidth = br_math::clamped_clog2(MaxOutstandingReqs);
+  localparam int BeatOffsetIncrWidth = $clog2(NarrowStrobeWidth + 1);
   localparam int ArPayloadWidth = AddrWidth + IdWidth + br_amba::AxiBurstLenWidth +
                                   br_amba::AxiBurstSizeWidth + br_amba::AxiBurstTypeWidth +
                                   br_amba::AxiProtWidth + ARUserWidth;
@@ -120,16 +123,95 @@ module br_amba_axi_shrinker_fpv_monitor #(
   logic [ArPayloadWidth-1:0] fv_narrow_ar_payload;
   int unsigned ar_shift;
   logic [br_amba::AxiBurstLenWidth:0] fv_narrow_arlen_ext;
+  logic fv_wide_ar_hs;
   logic fv_narrow_r_hs;
   logic fv_wide_rdata_vld;
-  logic [IdWidth-1:0] fv_rid_idx;
-  logic [MaxOutstandingReqs-1:0][LaneIdxWidth-1:0] fv_r_lane;
-  logic [MaxOutstandingReqs-1:0][LaneIdxWidth-1:0] fv_r_lane_next;
+  logic [InternalIdWidth-1:0] fv_wide_ar_idx;
+  logic [InternalIdWidth-1:0] fv_rid_idx;
+  logic [ByteOffsetWidth-1:0] fv_wide_ar_offset;
+  logic [BeatOffsetIncrWidth-1:0] fv_r_offset_incr_cfg;
+  logic [LaneIdxWidth:0] fv_r_beats_per_wide_ext;
+  logic [LaneIdxWidth:0] fv_r_beats_per_wide_m1_ext;
+  logic [LaneIdxWidth-1:0] fv_r_beats_per_wide_m1_cfg;
+  logic [LaneIdxWidth-1:0] fv_r_lane_cur;
+  logic [LaneIdxWidth-1:0] fv_r_beat_id_cur;
+  logic [BeatOffsetIncrWidth-1:0] fv_r_offset_incr_cur;
+  logic [ByteOffsetWidth-1:0] fv_r_offset_after_beat;
+  logic [br_amba::AxiRespWidth-1:0] fv_wide_rresp_cur;
+  logic fv_r_beat_last;
+  logic [MaxOutstandingReqs-1:0] fv_r_is_fixed;
+  logic [MaxOutstandingReqs-1:0] fv_r_is_fixed_next;
+  logic [MaxOutstandingReqs-1:0][ByteOffsetWidth-1:0] fv_r_offset;
+  logic [MaxOutstandingReqs-1:0][ByteOffsetWidth-1:0] fv_r_offset_next;
+  logic [MaxOutstandingReqs-1:0][BeatOffsetIncrWidth-1:0] fv_r_offset_incr;
+  logic [MaxOutstandingReqs-1:0][BeatOffsetIncrWidth-1:0] fv_r_offset_incr_next;
+  logic [MaxOutstandingReqs-1:0][LaneIdxWidth-1:0] fv_r_beats_per_wide_m1;
+  logic [MaxOutstandingReqs-1:0][LaneIdxWidth-1:0] fv_r_beats_per_wide_m1_next;
+  logic [MaxOutstandingReqs-1:0][LaneIdxWidth-1:0] fv_r_beat_id;
+  logic [MaxOutstandingReqs-1:0][LaneIdxWidth-1:0] fv_r_beat_id_next;
   logic [MaxOutstandingReqs-1:0][WideDataWidth-1:0] fv_wide_rdata_saved;
-  logic [MaxOutstandingReqs-1:0][WideDataWidth-1:0] fv_wide_rdata_next;
   logic [MaxOutstandingReqs-1:0][WideDataWidth-1:0] fv_wide_rdata_saved_next;
+  logic [WideDataWidth-1:0] fv_wide_rdata_cur;
+  logic [MaxOutstandingReqs-1:0][br_amba::AxiRespWidth-1:0] fv_wide_rresp_saved;
+  logic [MaxOutstandingReqs-1:0][br_amba::AxiRespWidth-1:0] fv_wide_rresp_saved_next;
   logic [RPayloadWidth-1:0] fv_wide_r_payload;
 
+  function automatic logic [br_amba::AxiRespWidth-1:0] fv_combine_rresp(
+      input logic [br_amba::AxiRespWidth-1:0] saved_resp,
+      input logic [br_amba::AxiRespWidth-1:0] narrow_resp);
+    begin
+      unique case (br_amba::axi_resp_t'(narrow_resp))
+        br_amba::AxiRespOkay: fv_combine_rresp = saved_resp;
+        br_amba::AxiRespExOkay:
+        if (saved_resp == br_amba::AxiRespOkay) begin
+          fv_combine_rresp = br_amba::AxiRespExOkay;
+        end else begin
+          fv_combine_rresp = saved_resp;
+        end
+        br_amba::AxiRespSlverr:
+        if (saved_resp == br_amba::AxiRespDecerr) begin
+          fv_combine_rresp = br_amba::AxiRespDecerr;
+        end else begin
+          fv_combine_rresp = br_amba::AxiRespSlverr;
+        end
+        br_amba::AxiRespDecerr: fv_combine_rresp = br_amba::AxiRespDecerr;
+        default: fv_combine_rresp = 'x;
+      endcase
+    end
+  endfunction
+
+  // ----------FV assumptions----------
+  `BR_ASSUME(
+      shrinking_awburst_incr_a,
+      (wide_awvalid && wide_awsize > NarrowSizeLog2) |-> wide_awburst == br_amba::AxiBurstIncr)
+  `BR_ASSUME(
+      shrinking_arburst_incr_a,
+      (wide_arvalid && wide_arsize > NarrowSizeLog2) |-> wide_arburst == br_amba::AxiBurstIncr)
+
+  // Make sure wide len and size won't result in narrow len overflowing
+  localparam int ExtBurstLenWidth = br_amba::AxiBurstLenWidth + WideSizeLog2 - NarrowSizeLog2;
+  localparam int MaxBurstLen = 2 ** br_amba::AxiBurstLenWidth - 1;
+
+  logic [ExtBurstLenWidth-1:0] ext_wide_awlen;
+  logic [ExtBurstLenWidth-1:0] ext_wide_arlen;
+  logic [ExtBurstLenWidth-1:0] ext_narrow_awlen;
+  logic [ExtBurstLenWidth-1:0] ext_narrow_arlen;
+
+  assign ext_wide_awlen = ExtBurstLenWidth'(wide_awlen);
+  assign ext_wide_arlen = ExtBurstLenWidth'(wide_arlen);
+
+  assign ext_narrow_awlen =
+      (wide_awsize > NarrowSizeLog2) ?
+      ((ext_wide_awlen + 1'b1) << (wide_awsize - NarrowSizeLog2)) - 1'b1 : ext_wide_awlen;
+  assign ext_narrow_arlen =
+      (wide_arsize > NarrowSizeLog2) ?
+      ((ext_wide_arlen + 1'b1) << (wide_arsize - NarrowSizeLog2)) - 1'b1 : ext_wide_arlen;
+
+  `BR_ASSUME(narrow_awlen_no_overflow_a, wide_awvalid |-> ext_narrow_awlen <= MaxBurstLen)
+  `BR_ASSUME(narrow_arlen_no_overflow_a, wide_arvalid |-> ext_narrow_arlen <= MaxBurstLen)
+
+  // ----------Shrink checks----------
+  // ----------AR channel----------
   always_comb begin
     ar_shift = 0;
     fv_narrow_arsize = wide_arsize;
@@ -180,37 +262,79 @@ module br_amba_axi_shrinker_fpv_monitor #(
       })
   );
 
+  // ----------R channel----------
   // Reconstructs the wide read data from accepted narrow R beats.
-  // Stitch state is kept per tracked RID slot, and earlier beats fill lower
-  // byte lanes first within that slot.
+  // Stitch state is kept per tracked RID slot using the original wide AR
+  // address and size so the monitor emits one reconstructed wide beat whenever
+  // the shrink ratio says that wide beat is complete.
+  assign fv_wide_ar_hs = wide_arvalid && wide_arready;
   assign fv_narrow_r_hs = narrow_rvalid && narrow_rready;
-  assign fv_wide_rdata_vld = fv_narrow_r_hs && narrow_rlast;
-  assign fv_rid_idx = narrow_rid;
+  assign fv_wide_ar_idx = wide_arid[InternalIdWidth-1:0];
+  assign fv_rid_idx = narrow_rid[InternalIdWidth-1:0];
+  assign fv_wide_ar_offset = wide_araddr[ByteOffsetWidth-1:0];
+  assign fv_r_offset_incr_cfg = BeatOffsetIncrWidth'(1'b1) << fv_narrow_arsize;
+  assign fv_r_beats_per_wide_ext = {{LaneIdxWidth{1'b0}}, 1'b1} << ar_shift;
+  assign fv_r_beats_per_wide_m1_ext = fv_r_beats_per_wide_ext - 1'b1;
+  assign fv_r_beats_per_wide_m1_cfg = fv_r_beats_per_wide_m1_ext[LaneIdxWidth-1:0];
+  assign fv_r_lane_cur = LaneIdxWidth'(fv_r_offset[fv_rid_idx] >> NarrowSizeLog2);
+  assign fv_r_beat_id_cur = fv_r_beat_id[fv_rid_idx];
+  assign fv_r_offset_incr_cur = fv_r_offset_incr[fv_rid_idx];
+  assign fv_r_offset_after_beat = fv_r_is_fixed[fv_rid_idx] ? fv_r_offset[fv_rid_idx]
+                                                            : fv_r_offset[fv_rid_idx] +
+                                                              fv_r_offset_incr_cur;
+  assign fv_r_beat_last = fv_r_beat_id_cur == fv_r_beats_per_wide_m1[fv_rid_idx];
+  assign fv_wide_rdata_vld = fv_narrow_r_hs && fv_r_beat_last;
 
   always_comb begin
-    fv_r_lane_next = fv_r_lane;
-    fv_wide_rdata_next = fv_wide_rdata_saved;
+    fv_r_is_fixed_next = fv_r_is_fixed;
+    fv_r_offset_next = fv_r_offset;
+    fv_r_offset_incr_next = fv_r_offset_incr;
+    fv_r_beats_per_wide_m1_next = fv_r_beats_per_wide_m1;
+    fv_r_beat_id_next = fv_r_beat_id;
+    fv_wide_rdata_cur = fv_wide_rdata_saved[fv_rid_idx];
     fv_wide_rdata_saved_next = fv_wide_rdata_saved;
+    fv_wide_rresp_cur = fv_wide_rresp_saved[fv_rid_idx];
+    fv_wide_rresp_saved_next = fv_wide_rresp_saved;
+
+    if (fv_wide_ar_hs) begin
+      fv_r_is_fixed_next[fv_wide_ar_idx] = wide_arburst == br_amba::AxiBurstFixed;
+      fv_r_offset_next[fv_wide_ar_idx] = fv_wide_ar_offset;
+      fv_r_offset_incr_next[fv_wide_ar_idx] = fv_r_offset_incr_cfg;
+      fv_r_beats_per_wide_m1_next[fv_wide_ar_idx] = fv_r_beats_per_wide_m1_cfg;
+      fv_r_beat_id_next[fv_wide_ar_idx] = '0;
+      fv_wide_rdata_saved_next[fv_wide_ar_idx] = '0;
+      fv_wide_rresp_saved_next[fv_wide_ar_idx] = br_amba::AxiRespOkay;
+    end
 
     if (fv_narrow_r_hs) begin
-      fv_wide_rdata_next[fv_rid_idx]
-          [fv_r_lane[fv_rid_idx]*NarrowDataWidth +: NarrowDataWidth] = narrow_rdata;
-      fv_wide_rdata_saved_next = fv_wide_rdata_next;
+      fv_wide_rdata_cur[fv_r_lane_cur*NarrowDataWidth+:NarrowDataWidth] = narrow_rdata;
+      fv_wide_rresp_cur = fv_combine_rresp(fv_wide_rresp_saved[fv_rid_idx], narrow_rresp);
+      fv_r_offset_next[fv_rid_idx] = fv_r_offset_after_beat;
 
-      if (narrow_rlast) begin
-        fv_r_lane_next[fv_rid_idx] = '0;
+      if (fv_r_beat_last) begin
+        fv_r_beat_id_next[fv_rid_idx] = '0;
         fv_wide_rdata_saved_next[fv_rid_idx] = '0;
+        fv_wide_rresp_saved_next[fv_rid_idx] = br_amba::AxiRespOkay;
       end else begin
-        fv_r_lane_next[fv_rid_idx] = fv_r_lane[fv_rid_idx] + 1'b1;
+        fv_r_beat_id_next[fv_rid_idx] = fv_r_beat_id_cur + 1'b1;
+        fv_wide_rdata_saved_next[fv_rid_idx] = fv_wide_rdata_cur;
+        fv_wide_rresp_saved_next[fv_rid_idx] = fv_wide_rresp_cur;
       end
     end
   end
 
-  `BR_REGLI(fv_r_lane, fv_r_lane_next, fv_narrow_r_hs, '0)
-  `BR_REGLI(fv_wide_rdata_saved, fv_wide_rdata_saved_next, fv_narrow_r_hs, '0)
+  `BR_REGLI(fv_r_is_fixed, fv_r_is_fixed_next, fv_wide_ar_hs || fv_narrow_r_hs, '0)
+  `BR_REGLI(fv_r_offset, fv_r_offset_next, fv_wide_ar_hs || fv_narrow_r_hs, '0)
+  `BR_REGLI(fv_r_offset_incr, fv_r_offset_incr_next, fv_wide_ar_hs || fv_narrow_r_hs, '0)
+  `BR_REGLI(fv_r_beats_per_wide_m1, fv_r_beats_per_wide_m1_next, fv_wide_ar_hs || fv_narrow_r_hs,
+            '0)
+  `BR_REGLI(fv_r_beat_id, fv_r_beat_id_next, fv_wide_ar_hs || fv_narrow_r_hs, '0)
+  `BR_REGLI(fv_wide_rdata_saved, fv_wide_rdata_saved_next, fv_wide_ar_hs || fv_narrow_r_hs, '0)
+  `BR_REGLI(fv_wide_rresp_saved, fv_wide_rresp_saved_next, fv_wide_ar_hs || fv_narrow_r_hs,
+            {MaxOutstandingReqs{br_amba::AxiRespOkay}})
 
   assign fv_wide_r_payload = {
-    narrow_rid, fv_wide_rdata_next[fv_rid_idx], narrow_ruser, narrow_rresp, narrow_rlast
+    narrow_rid, fv_wide_rdata_cur, narrow_ruser, fv_wide_rresp_cur, narrow_rlast
   };
 
   // Checks that the reconstructed wide R payload from the narrow interface
@@ -230,35 +354,7 @@ module br_amba_axi_shrinker_fpv_monitor #(
       .outgoing_data({wide_rid, wide_rdata, wide_ruser, wide_rresp, wide_rlast})
   );
 
-  `BR_ASSUME(
-      shrinking_awburst_incr_a,
-      (wide_awvalid && wide_awsize > NarrowSizeLog2) |-> wide_awburst == br_amba::AxiBurstIncr)
-  `BR_ASSUME(
-      shrinking_arburst_incr_a,
-      (wide_arvalid && wide_arsize > NarrowSizeLog2) |-> wide_arburst == br_amba::AxiBurstIncr)
-
-  // Make sure wide len and size won't result in narrow len overflowing
-  localparam int ExtBurstLenWidth = br_amba::AxiBurstLenWidth + WideSizeLog2 - NarrowSizeLog2;
-  localparam int MaxBurstLen = 2 ** br_amba::AxiBurstLenWidth - 1;
-
-  logic [ExtBurstLenWidth-1:0] ext_wide_awlen;
-  logic [ExtBurstLenWidth-1:0] ext_wide_arlen;
-  logic [ExtBurstLenWidth-1:0] ext_narrow_awlen;
-  logic [ExtBurstLenWidth-1:0] ext_narrow_arlen;
-
-  assign ext_wide_awlen = ExtBurstLenWidth'(wide_awlen);
-  assign ext_wide_arlen = ExtBurstLenWidth'(wide_arlen);
-
-  assign ext_narrow_awlen =
-      (wide_awsize > NarrowSizeLog2) ?
-      ((ext_wide_awlen + 1'b1) << (wide_awsize - NarrowSizeLog2)) - 1'b1 : ext_wide_awlen;
-  assign ext_narrow_arlen =
-      (wide_arsize > NarrowSizeLog2) ?
-      ((ext_wide_arlen + 1'b1) << (wide_arsize - NarrowSizeLog2)) - 1'b1 : ext_wide_arlen;
-
-  `BR_ASSUME(narrow_awlen_no_overflow_a, wide_awvalid |-> ext_narrow_awlen <= MaxBurstLen)
-  `BR_ASSUME(narrow_arlen_no_overflow_a, wide_arvalid |-> ext_narrow_arlen <= MaxBurstLen)
-
+  // ----------AXI protocols----------
   axi4_master #(
       .ADDR_WIDTH(AddrWidth),
       .DATA_WIDTH(WideDataWidth),
