@@ -108,8 +108,6 @@ module br_amba_axi_shrinker_fpv_monitor #(
 
   // ABVIP should send more than DUT to test backpressure.
   localparam int MaxPending = MaxOutstandingReqs + WriteFifoDepth + 2;
-  // When there is no valid, ready does not need to rise eventually.
-  localparam bit ValidBeforeReady = 1;
 
   `BR_ASSUME(
       shrinking_awburst_incr_a,
@@ -150,11 +148,19 @@ module br_amba_axi_shrinker_fpv_monitor #(
       .BUSER_WIDTH(BUserWidth),
       .RUSER_WIDTH(RUserWidth),
       .MAX_PENDING(MaxPending),
-      .CONFIG_WAIT_FOR_VALID_BEFORE_READY(ValidBeforeReady),
+      // When there is no valid, ready does not need to rise eventually.
+      .CONFIG_WAIT_FOR_VALID_BEFORE_READY(1),
       .ALLOW_SPARSE_STROBE(1),
       .BYTE_STROBE_ON(1),
+      // stable assumptions will be applied to data and mask, instead of mased_data (data & mask)
       .CONFIG_WDATA_MASKED(0),
-      .CONFIG_RDATA_MASKED(0)
+      .CONFIG_RDATA_MASKED(0),
+      // Confirmed with Howard, RTL doesn't restrict write at all.
+      // If no b_valid is returned after MaxPending writes, aw_ready won't de-assert.
+      .CDNS_READY_OVFLOW_CHECKS(0),
+      // To disable Dbc (Data before Control) checks
+      // for wide side, aw is always before w
+      .DATA_ACCEPT_WITH_OR_AFTER_CONTROL(1)
   ) wide (
       .aclk    (clk),
       .aresetn (!rst),
@@ -217,11 +223,18 @@ module br_amba_axi_shrinker_fpv_monitor #(
       .BUSER_WIDTH(BUserWidth),
       .RUSER_WIDTH(RUserWidth),
       .MAX_PENDING(MaxPending),
-      .CONFIG_WAIT_FOR_VALID_BEFORE_READY(ValidBeforeReady),
+      .MAX_PENDING_WR(MaxPending),
+      .MAX_PENDING_RD(MaxOutstandingReqs),
+      // When there is no valid, ready does not need to rise eventually.
+      .CONFIG_WAIT_FOR_VALID_BEFORE_READY(1),
       .ALLOW_SPARSE_STROBE(1),
       .BYTE_STROBE_ON(1),
+      // stable assertions will be applied to data and mask, instead of mased_data (data & mask)
       .CONFIG_WDATA_MASKED(0),
-      .CONFIG_RDATA_MASKED(0)
+      .CONFIG_RDATA_MASKED(0),
+      // To disable Dbc (Data before Control) checks
+      // some assertions' precondition is unreachable
+      .DATA_BEFORE_CONTROL_ON(0)
   ) narrow (
       .aclk    (clk),
       .aresetn (!rst),
