@@ -174,6 +174,33 @@ module br_amba_axi_shrinker #(
       shrinking_arburst_incr_a,
       (wide_arvalid && wide_arsize > NarrowSizeLog2) |-> wide_arburst == br_amba::AxiBurstIncr)
 
+`ifndef BR_DISABLE_INTG_CHECKS
+`ifdef BR_ASSERT_ON
+  localparam int ExtBurstLenWidth = br_amba::AxiBurstLenWidth + WideSizeLog2 - NarrowSizeLog2;
+  localparam int MaxBurstLen = 2 ** br_amba::AxiBurstLenWidth - 1;
+
+  logic [ExtBurstLenWidth-1:0] ext_wide_awlen;
+  logic [ExtBurstLenWidth-1:0] ext_wide_arlen;
+  logic [ExtBurstLenWidth-1:0] ext_narrow_awlen;
+  logic [ExtBurstLenWidth-1:0] ext_narrow_arlen;
+
+  assign ext_wide_awlen = ExtBurstLenWidth'(wide_awlen);
+  assign ext_wide_arlen = ExtBurstLenWidth'(wide_arlen);
+
+  // ri lint_check_off TRUNC_LSHIFT VAR_SHIFT
+  assign ext_narrow_awlen =
+      (wide_awsize > NarrowSizeLog2) ?
+      ((ext_wide_awlen + 1'b1) << (wide_awsize - NarrowSizeLog2)) - 1'b1 : ext_wide_awlen;
+  assign ext_narrow_arlen =
+      (wide_arsize > NarrowSizeLog2) ?
+      ((ext_wide_arlen + 1'b1) << (wide_arsize - NarrowSizeLog2)) - 1'b1 : ext_wide_arlen;
+  // ri lint_check_on TRUNC_LSHIFT VAR_SHIFT
+
+  `BR_ASSERT_INTG(narrow_awlen_no_overflow_a, wide_awvalid |-> ext_narrow_awlen <= MaxBurstLen)
+  `BR_ASSERT_INTG(narrow_arlen_no_overflow_a, wide_arvalid |-> ext_narrow_arlen <= MaxBurstLen)
+`endif
+`endif
+
   // Implementation
 
   logic [                 AddrWidth-1:0] narrow_awaddr_int;

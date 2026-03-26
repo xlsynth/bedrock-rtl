@@ -442,8 +442,6 @@ verilog_elab_test(
 )
 
 br_verilog_fpv_test_tools_suite(
-    #TODO: uncomment to debug in GUI
-    #gui = True,
     name = "br_amba_axi_shrinker_test_suite",
     elab_opts = [
         "-parameter WideDataWidth 16",

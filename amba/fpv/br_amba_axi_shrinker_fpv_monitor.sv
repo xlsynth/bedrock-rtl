@@ -103,12 +103,11 @@ module br_amba_axi_shrinker_fpv_monitor #(
     input logic                                  narrow_rready
 );
 
+  localparam int WideSizeLog2 = $clog2(WideStrobeWidth);
   localparam int NarrowSizeLog2 = $clog2(NarrowStrobeWidth);
 
   // ABVIP should send more than DUT to test backpressure.
   localparam int MaxPending = MaxOutstandingReqs + WriteFifoDepth + 2;
-  // When there is no valid, ready does not need to rise eventually.
-  localparam bit ValidBeforeReady = 1;
 
   `BR_ASSUME(
       shrinking_awburst_incr_a,
@@ -116,6 +115,28 @@ module br_amba_axi_shrinker_fpv_monitor #(
   `BR_ASSUME(
       shrinking_arburst_incr_a,
       (wide_arvalid && wide_arsize > NarrowSizeLog2) |-> wide_arburst == br_amba::AxiBurstIncr)
+
+  // Make sure wide len and size won't result in narrow len overflowing
+  localparam int ExtBurstLenWidth = br_amba::AxiBurstLenWidth + WideSizeLog2 - NarrowSizeLog2;
+  localparam int MaxBurstLen = 2 ** br_amba::AxiBurstLenWidth - 1;
+
+  logic [ExtBurstLenWidth-1:0] ext_wide_awlen;
+  logic [ExtBurstLenWidth-1:0] ext_wide_arlen;
+  logic [ExtBurstLenWidth-1:0] ext_narrow_awlen;
+  logic [ExtBurstLenWidth-1:0] ext_narrow_arlen;
+
+  assign ext_wide_awlen = ExtBurstLenWidth'(wide_awlen);
+  assign ext_wide_arlen = ExtBurstLenWidth'(wide_arlen);
+
+  assign ext_narrow_awlen =
+      (wide_awsize > NarrowSizeLog2) ?
+      ((ext_wide_awlen + 1'b1) << (wide_awsize - NarrowSizeLog2)) - 1'b1 : ext_wide_awlen;
+  assign ext_narrow_arlen =
+      (wide_arsize > NarrowSizeLog2) ?
+      ((ext_wide_arlen + 1'b1) << (wide_arsize - NarrowSizeLog2)) - 1'b1 : ext_wide_arlen;
+
+  `BR_ASSUME(narrow_awlen_no_overflow_a, wide_awvalid |-> ext_narrow_awlen <= MaxBurstLen)
+  `BR_ASSUME(narrow_arlen_no_overflow_a, wide_arvalid |-> ext_narrow_arlen <= MaxBurstLen)
 
   axi4_master #(
       .ADDR_WIDTH(AddrWidth),
@@ -127,9 +148,19 @@ module br_amba_axi_shrinker_fpv_monitor #(
       .BUSER_WIDTH(BUserWidth),
       .RUSER_WIDTH(RUserWidth),
       .MAX_PENDING(MaxPending),
-      .CONFIG_WAIT_FOR_VALID_BEFORE_READY(ValidBeforeReady),
+      // When there is no valid, ready does not need to rise eventually.
+      .CONFIG_WAIT_FOR_VALID_BEFORE_READY(1),
       .ALLOW_SPARSE_STROBE(1),
-      .BYTE_STROBE_ON(1)
+      .BYTE_STROBE_ON(1),
+      // stable assumptions will be applied to data and mask, instead of mased_data (data & mask)
+      .CONFIG_WDATA_MASKED(0),
+      .CONFIG_RDATA_MASKED(0),
+      // Confirmed with Howard, RTL doesn't restrict write at all.
+      // If no b_valid is returned after MaxPending writes, aw_ready won't de-assert.
+      .CDNS_READY_OVFLOW_CHECKS(0),
+      // To disable Dbc (Data before Control) checks
+      // for wide side, aw is always before w
+      .DATA_ACCEPT_WITH_OR_AFTER_CONTROL(1)
   ) wide (
       .aclk    (clk),
       .aresetn (!rst),
@@ -192,9 +223,18 @@ module br_amba_axi_shrinker_fpv_monitor #(
       .BUSER_WIDTH(BUserWidth),
       .RUSER_WIDTH(RUserWidth),
       .MAX_PENDING(MaxPending),
-      .CONFIG_WAIT_FOR_VALID_BEFORE_READY(ValidBeforeReady),
+      .MAX_PENDING_WR(MaxPending),
+      .MAX_PENDING_RD(MaxOutstandingReqs),
+      // When there is no valid, ready does not need to rise eventually.
+      .CONFIG_WAIT_FOR_VALID_BEFORE_READY(1),
       .ALLOW_SPARSE_STROBE(1),
-      .BYTE_STROBE_ON(1)
+      .BYTE_STROBE_ON(1),
+      // stable assertions will be applied to data and mask, instead of mased_data (data & mask)
+      .CONFIG_WDATA_MASKED(0),
+      .CONFIG_RDATA_MASKED(0),
+      // To disable Dbc (Data before Control) checks
+      // some assertions' precondition is unreachable
+      .DATA_BEFORE_CONTROL_ON(0)
   ) narrow (
       .aclk    (clk),
       .aresetn (!rst),
