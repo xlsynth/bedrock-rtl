@@ -60,7 +60,7 @@ module br_flow_burst_mux_rr_stable_fpv_monitor #(
       .clk,
       .rst,
       .enable_priority_update,
-      .request(push_valid),
+      .request(push_valid & push_ready),
       .grant
   );
 endmodule : br_flow_burst_mux_rr_stable_fpv_monitor

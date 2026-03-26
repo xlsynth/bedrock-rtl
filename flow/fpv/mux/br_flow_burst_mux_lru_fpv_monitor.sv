@@ -59,7 +59,7 @@ module br_flow_burst_mux_lru_fpv_monitor #(
       .clk,
       .rst,
       .enable_priority_update,
-      .request(push_valid),
+      .request(push_valid & push_ready),
       .grant  (grant_from_arb)
   );
 
