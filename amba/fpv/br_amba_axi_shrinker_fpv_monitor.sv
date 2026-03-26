@@ -118,6 +118,7 @@ module br_amba_axi_shrinker_fpv_monitor #(
   localparam int ArPayloadWidth = AddrWidth + IdWidth + br_amba::AxiBurstLenWidth +
                                   br_amba::AxiBurstSizeWidth + br_amba::AxiBurstTypeWidth +
                                   br_amba::AxiProtWidth + ARUserWidth;
+  localparam int BPayloadWidth = IdWidth + BUserWidth + br_amba::AxiRespWidth;
   localparam int RPayloadWidth = IdWidth + WideDataWidth + RUserWidth + br_amba::AxiRespWidth + 1;
 
   // ABVIP should send more than DUT to test backpressure.
@@ -422,6 +423,23 @@ module br_amba_axi_shrinker_fpv_monitor #(
         narrow_awprot,
         narrow_awuser
       })
+  );
+
+  // ----------B channel----------
+  // Checks that the wide B channel matches the narrow B channel response payload.
+  jasper_scoreboard_3 #(
+      .CHUNK_WIDTH(BPayloadWidth),
+      .IN_CHUNKS(1),
+      .OUT_CHUNKS(1),
+      .SINGLE_CLOCK(1),
+      .MAX_PENDING(MaxPending)
+  ) b_sb (
+      .clk(clk),
+      .rstN(!rst),
+      .incoming_vld(narrow_bvalid && narrow_bready),
+      .incoming_data({narrow_bid, narrow_buser, narrow_bresp}),
+      .outgoing_vld(wide_bvalid && wide_bready),
+      .outgoing_data({wide_bid, wide_buser, wide_bresp})
   );
 
   // ----------AXI protocols----------
