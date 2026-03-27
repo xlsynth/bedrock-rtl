@@ -132,6 +132,7 @@ module br_amba_axi_shrinker_fpv_monitor #(
   // ABVIP should send more than DUT to test backpressure.
   localparam int MaxPending = MaxOutstandingReqs + WriteFifoDepth + 2;
   localparam int WriteMaxPending = MaxOutstandingReqs + WriteFifoDepth;
+  localparam int WriteWMaxPending = WriteMaxPending * LanesPerWide;
 
   logic [br_amba::AxiBurstSizeWidth-1:0] fv_narrow_arsize;
   logic [br_amba::AxiBurstLenWidth-1:0] fv_narrow_arlen;
@@ -163,6 +164,7 @@ module br_amba_axi_shrinker_fpv_monitor #(
   fv_w_ctx_t fv_w_active_ctx;
   logic [ByteOffsetWidth-1:0] fv_w_active_offset_next;
   fv_w_ctx_t fv_w_ctx;
+  logic fv_w_beat_inflight;
   logic fv_w_beat_start;
   logic [ByteOffsetWidth-1:0] fv_w_offset_after_wide_beat;
   logic [LanesPerWide-1:0] fv_narrow_w_pred_vld;
@@ -496,7 +498,11 @@ module br_amba_axi_shrinker_fpv_monitor #(
   assign fv_w_ctx = fv_w_active_valid ? fv_w_active_ctx : fv_w_fifo_pop_ctx;
   assign fv_w_offset_after_wide_beat = fv_w_ctx.is_fixed ? fv_w_ctx.offset :
       ByteOffsetWidth'(fv_w_ctx.offset + (fv_w_ctx.beats_per_wide * fv_w_ctx.offset_incr));
-  assign fv_w_beat_start = fv_wide_w_hs;
+  // The RTL starts serializing a wide W beat as soon as an active write context
+  // exists and wide_wvalid is asserted; wide_wready is only raised on the final
+  // serialized narrow beat. Track whether the current wide beat has already
+  // been enqueued so prediction starts on the first send cycle, not on wide_w_hs.
+  assign fv_w_beat_start = fv_w_ctx_valid && wide_wvalid && !fv_w_beat_inflight;
   assign fv_w_active_done = fv_wide_w_hs && wide_wlast;
 
   fv_fifo #(
@@ -566,6 +572,7 @@ module br_amba_axi_shrinker_fpv_monitor #(
   end
 
   `BR_REG(fv_w_active_valid, fv_w_ctx_valid && !fv_w_active_done)
+  `BR_REG(fv_w_beat_inflight, (fv_w_beat_inflight || fv_w_beat_start) && !fv_wide_w_hs)
   `BR_REGL(fv_w_active_ctx.is_fixed, fv_w_fifo_pop_ctx.is_fixed, fv_w_active_load)
   `BR_REGL(fv_w_active_ctx.offset, fv_w_active_offset_next, fv_w_active_load || fv_wide_w_hs)
   `BR_REGL(fv_w_active_ctx.offset_incr, fv_w_fifo_pop_ctx.offset_incr, fv_w_active_load)
@@ -583,7 +590,7 @@ module br_amba_axi_shrinker_fpv_monitor #(
       .IN_CHUNKS(LanesPerWide),
       .OUT_CHUNKS(1),
       .SINGLE_CLOCK(1),
-      .MAX_PENDING(WriteMaxPending)
+      .MAX_PENDING(WriteWMaxPending)
   ) w_sb (
       .clk(clk),
       .rstN(!rst),
