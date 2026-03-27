@@ -458,12 +458,13 @@ verilog_elab_test(
 br_verilog_fpv_test_tools_suite(
     name = "br_amba_axi_shrinker_test_suite",
     elab_opts = [
-        "-parameter WideDataWidth 64",
+        "-parameter WideDataWidth 128",
         "-parameter MaxOutstandingReqs 4",
         "-parameter IdWidth 3",
     ],
     params = {
         "NarrowDataWidth": [
+            "32",
             "16",
             "8",
         ],
