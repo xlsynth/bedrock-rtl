@@ -431,6 +431,7 @@ verilog_library(
     srcs = ["br_amba_axi_shrinker_fpv_monitor.sv"],
     deps = [
         "//amba/rtl:br_amba_axi_shrinker",
+        "//fpv/lib:fv_fifo",
     ],
 )
 
@@ -444,10 +445,17 @@ verilog_elab_test(
 br_verilog_fpv_test_tools_suite(
     name = "br_amba_axi_shrinker_test_suite",
     elab_opts = [
-        "-parameter WideDataWidth 16",
-        "-parameter MaxOutstandingReqs 8",
+        "-parameter WideDataWidth 128",
+        "-parameter MaxOutstandingReqs 4",
         "-parameter IdWidth 3",
     ],
+    params = {
+        "NarrowDataWidth": [
+            "32",
+            "16",
+            "8",
+        ],
+    },
     tools = {
         "jg": "br_amba_axi_shrinker_fpv.jg.tcl",
     },
