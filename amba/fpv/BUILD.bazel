@@ -431,6 +431,7 @@ verilog_library(
     srcs = ["br_amba_axi_shrinker_fpv_monitor.sv"],
     deps = [
         "//amba/rtl:br_amba_axi_shrinker",
+        "//fpv/lib:fv_fifo",
     ],
 )
 

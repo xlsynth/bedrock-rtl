@@ -121,12 +121,10 @@ module br_amba_axi_shrinker_fpv_monitor #(
   localparam int BPayloadWidth = IdWidth + BUserWidth + br_amba::AxiRespWidth;
   localparam int WPayloadWidth = NarrowDataWidth + NarrowStrobeWidth + WUserWidth + 1;
   localparam int RPayloadWidth = IdWidth + WideDataWidth + RUserWidth + br_amba::AxiRespWidth + 1;
+  localparam int WFifoPayloadWidth = 1 + ByteOffsetWidth + BeatOffsetIncrWidth + BeatsPerWideWidth;
 
   // ABVIP should send more than DUT to test backpressure.
   localparam int MaxPending = MaxOutstandingReqs + WriteFifoDepth + 2;
-  localparam int WriteMaxPending = MaxOutstandingReqs + WriteFifoDepth;
-  localparam int WCfgPtrWidth = br_math::clamped_clog2(WriteMaxPending);
-  localparam int WCfgCountWidth = br_math::clamped_clog2(WriteMaxPending + 1);
 
   logic [br_amba::AxiBurstSizeWidth-1:0] fv_narrow_arsize;
   logic [br_amba::AxiBurstLenWidth-1:0] fv_narrow_arlen;
@@ -139,51 +137,35 @@ module br_amba_axi_shrinker_fpv_monitor #(
   logic [br_amba::AxiBurstLenWidth:0] fv_narrow_awlen_ext;
   logic [br_amba::AxiBurstLenWidth:0] fv_narrow_arlen_ext;
   logic fv_narrow_w_hs;
-  logic fv_narrow_w_model_valid;
-  logic fv_narrow_w_model_ready;
-  logic fv_narrow_w_model_hs;
   logic fv_wide_ar_hs;
   logic fv_narrow_r_hs;
   logic fv_wide_rdata_vld;
   logic fv_wide_w_hs;
-  logic fv_w_cfg_push;
-  logic fv_w_cfg_pop;
-  logic fv_w_cfg_available;
-  logic fv_w_cfg_bypass;
-  logic [WCfgPtrWidth-1:0] fv_w_cfg_head;
-  logic [WCfgPtrWidth-1:0] fv_w_cfg_head_inc;
-  logic [WCfgPtrWidth-1:0] fv_w_cfg_tail;
-  logic [WCfgPtrWidth-1:0] fv_w_cfg_tail_inc;
-  logic [WCfgCountWidth-1:0] fv_w_cfg_count;
-  logic [WCfgPtrWidth-1:0] fv_w_cfg_idx;
-  logic fv_w_pipe_full;
+  logic fv_w_fifo_push;
+  logic fv_w_fifo_empty;
+  logic [WFifoPayloadWidth-1:0] fv_w_fifo_push_data;
+  logic [WFifoPayloadWidth-1:0] fv_w_fifo_pop_data;
+  logic fv_w_active_load;
+  logic fv_w_active_valid;
+  logic fv_w_active_done;
+  logic fv_w_ctx_valid;
   logic [BeatOffsetIncrWidth-1:0] fv_w_offset_incr_cfg;
   logic [BeatsPerWideWidth-1:0] fv_w_beats_per_wide_cfg;
-  logic [WriteMaxPending-1:0] fv_w_is_fixed;
-  logic [WriteMaxPending-1:0] fv_w_is_fixed_next;
-  logic [WriteMaxPending-1:0][ByteOffsetWidth-1:0] fv_w_offset;
-  logic [WriteMaxPending-1:0][ByteOffsetWidth-1:0] fv_w_offset_next;
-  logic [WriteMaxPending-1:0][BeatOffsetIncrWidth-1:0] fv_w_offset_incr;
-  logic [WriteMaxPending-1:0][BeatOffsetIncrWidth-1:0] fv_w_offset_incr_next;
-  logic [WriteMaxPending-1:0][BeatsPerWideWidth-1:0] fv_w_beats_per_wide;
-  logic [WriteMaxPending-1:0][BeatsPerWideWidth-1:0] fv_w_beats_per_wide_next;
-  logic [WriteMaxPending-1:0][BeatsPerWideWidth-1:0] fv_w_beats_remaining;
-  logic [WriteMaxPending-1:0][BeatsPerWideWidth-1:0] fv_w_beats_remaining_next;
+  logic fv_w_fifo_pop_is_fixed;
+  logic [ByteOffsetWidth-1:0] fv_w_fifo_pop_offset;
+  logic [BeatOffsetIncrWidth-1:0] fv_w_fifo_pop_offset_incr;
+  logic [BeatsPerWideWidth-1:0] fv_w_fifo_pop_beats_per_wide;
+  logic fv_w_active_is_fixed;
+  logic [ByteOffsetWidth-1:0] fv_w_active_offset;
+  logic [ByteOffsetWidth-1:0] fv_w_active_offset_next;
+  logic [BeatOffsetIncrWidth-1:0] fv_w_active_offset_incr;
+  logic [BeatsPerWideWidth-1:0] fv_w_active_beats_per_wide;
+  logic fv_w_ctx_is_fixed;
+  logic [ByteOffsetWidth-1:0] fv_w_ctx_offset;
+  logic [BeatOffsetIncrWidth-1:0] fv_w_ctx_offset_incr;
+  logic [BeatsPerWideWidth-1:0] fv_w_ctx_beats_per_wide;
   logic fv_w_beat_start;
-  logic [ByteOffsetWidth-1:0] fv_w_offset_after_beat;
-  logic fv_w_beat_last;
-  logic [WideDataWidth-1:0] fv_wide_wdata_cur;
-  logic [WideDataWidth-1:0] fv_wide_wdata_saved;
-  logic [WideDataWidth-1:0] fv_wide_wdata_saved_next;
-  logic [WideStrobeWidth-1:0] fv_wide_wstrb_cur;
-  logic [WideStrobeWidth-1:0] fv_wide_wstrb_saved;
-  logic [WideStrobeWidth-1:0] fv_wide_wstrb_saved_next;
-  logic [WUserWidth-1:0] fv_wide_wuser_cur;
-  logic [WUserWidth-1:0] fv_wide_wuser_saved;
-  logic [WUserWidth-1:0] fv_wide_wuser_saved_next;
-  logic fv_wide_wlast_cur;
-  logic fv_wide_wlast_saved;
-  logic fv_wide_wlast_saved_next;
+  logic [ByteOffsetWidth-1:0] fv_w_offset_after_wide_beat;
   logic [LanesPerWide-1:0][ByteOffsetWidth-1:0] fv_w_chunk_offset;
   logic [LanesPerWide-1:0][LaneIdxWidth-1:0] fv_w_chunk_lane;
   logic [LanesPerWide-1:0] fv_w_chunk_last;
@@ -459,7 +441,7 @@ module br_amba_axi_shrinker_fpv_monitor #(
       .IN_CHUNKS(1),
       .OUT_CHUNKS(1),
       .SINGLE_CLOCK(1),
-      .MAX_PENDING(WriteMaxPending)
+      .MAX_PENDING(WriteFifoDepth)
   ) aw_sb (
       .clk(clk),
       .rstN(!rst),
@@ -484,7 +466,7 @@ module br_amba_axi_shrinker_fpv_monitor #(
       .IN_CHUNKS(1),
       .OUT_CHUNKS(1),
       .SINGLE_CLOCK(1),
-      .MAX_PENDING(WriteMaxPending)
+      .MAX_PENDING(WriteFifoDepth)
   ) b_sb (
       .clk(clk),
       .rstN(!rst),
@@ -495,42 +477,48 @@ module br_amba_axi_shrinker_fpv_monitor #(
   );
 
   // ----------W channel----------
-  // Queue accepted AW-derived write contexts, then use the head entry to
-  // predict how each wide W beat serializes onto the narrow W channel.
+  // Queue accepted AW-derived write contexts in a FIFO. The head context stays
+  // active across wide-W beats until its final wide_wlast handshake.
   assign fv_narrow_w_hs = narrow_wvalid && narrow_wready;
   assign fv_wide_w_hs = wide_wvalid && wide_wready;
-  assign fv_w_cfg_push = wide_awvalid && wide_awready;
+  assign fv_w_fifo_push = wide_awvalid && wide_awready;
   assign fv_w_offset_incr_cfg = BeatOffsetIncrWidth'(1'b1) << fv_narrow_awsize;
   assign fv_w_beats_per_wide_cfg = BeatsPerWideWidth'(1'b1) << aw_shift;
-  assign fv_w_cfg_available = fv_w_cfg_count != '0;
-  assign fv_w_cfg_bypass = !fv_w_cfg_available && fv_w_cfg_push;
-  assign fv_w_cfg_idx = fv_w_cfg_available ? fv_w_cfg_head : fv_w_cfg_tail;
-  assign fv_w_offset_after_beat = (fv_w_cfg_available ? fv_w_is_fixed[fv_w_cfg_head]
-                                                      : (wide_awburst == br_amba::AxiBurstFixed)) ?
-                                  (fv_w_cfg_available ? fv_w_offset[fv_w_cfg_head]
-                                                      : wide_awaddr[ByteOffsetWidth-1:0]) :
-                                  (fv_w_cfg_available ? fv_w_offset[fv_w_cfg_head] +
-                                                       fv_w_offset_incr[fv_w_cfg_head]
-                                                      : wide_awaddr[ByteOffsetWidth-1:0] +
-                                                        fv_w_offset_incr_cfg);
-  // The wide side only accepts one W beat when the DUT has finished
-  // serializing that beat internally, so the monitor should enqueue the full
-  // predicted narrow-beat set on wide-W acceptance.
-  assign fv_w_beat_last = 1'b1;
-  assign fv_narrow_w_model_valid = (fv_w_cfg_available || fv_w_cfg_push) && wide_wvalid;
-  assign fv_narrow_w_model_ready = RegisterNarrowOutputs ? (!fv_w_pipe_full || narrow_wready)
-                                                         : narrow_wready;
-  assign fv_narrow_w_model_hs = fv_narrow_w_model_valid && fv_narrow_w_model_ready;
-  assign fv_wide_wdata_cur = wide_wdata;
-  assign fv_wide_wstrb_cur = wide_wstrb;
-  assign fv_wide_wuser_cur = wide_wuser;
-  assign fv_wide_wlast_cur = wide_wlast;
+  assign fv_w_fifo_push_data = {
+    wide_awburst == br_amba::AxiBurstFixed,
+    wide_awaddr[ByteOffsetWidth-1:0],
+    fv_w_offset_incr_cfg,
+    fv_w_beats_per_wide_cfg
+  };
+  assign {fv_w_fifo_pop_is_fixed, fv_w_fifo_pop_offset, fv_w_fifo_pop_offset_incr,
+          fv_w_fifo_pop_beats_per_wide} = fv_w_fifo_pop_data;
+  assign fv_w_active_load = !fv_w_active_valid && (!fv_w_fifo_empty || fv_w_fifo_push);
+  assign fv_w_ctx_valid = fv_w_active_valid || fv_w_active_load;
+  assign fv_w_ctx_is_fixed = fv_w_active_valid ? fv_w_active_is_fixed : fv_w_fifo_pop_is_fixed;
+  assign fv_w_ctx_offset = fv_w_active_valid ? fv_w_active_offset : fv_w_fifo_pop_offset;
+  assign fv_w_ctx_offset_incr = fv_w_active_valid ? fv_w_active_offset_incr
+                                                  : fv_w_fifo_pop_offset_incr;
+  assign fv_w_ctx_beats_per_wide = fv_w_active_valid ? fv_w_active_beats_per_wide
+                                                      : fv_w_fifo_pop_beats_per_wide;
+  assign fv_w_offset_after_wide_beat = fv_w_ctx_is_fixed ? fv_w_ctx_offset :
+      ByteOffsetWidth'(fv_w_ctx_offset + (fv_w_ctx_beats_per_wide * fv_w_ctx_offset_incr));
   assign fv_w_beat_start = fv_wide_w_hs;
-  assign fv_w_cfg_pop = fv_wide_w_hs && wide_wlast;
-  assign fv_w_cfg_head_inc =
-      (fv_w_cfg_head == WCfgPtrWidth'(WriteMaxPending - 1)) ? '0 : fv_w_cfg_head + 'd1;
-  assign fv_w_cfg_tail_inc =
-      (fv_w_cfg_tail == WCfgPtrWidth'(WriteMaxPending - 1)) ? '0 : fv_w_cfg_tail + 'd1;
+  assign fv_w_active_done = fv_wide_w_hs && wide_wlast;
+
+  fv_fifo #(
+      .Depth(WriteFifoDepth + 1),
+      .DataWidth(WFifoPayloadWidth),
+      .Bypass(1)
+  ) w_fifo (
+      .clk(clk),
+      .rst(rst),
+      .push(fv_w_fifo_push),
+      .push_data(fv_w_fifo_push_data),
+      .pop(fv_w_active_load),
+      .pop_data(fv_w_fifo_pop_data),
+      .empty(fv_w_fifo_empty),
+      .full()
+  );
 
   always_comb begin
     fv_narrow_w_pred_vld = '0;
@@ -539,9 +527,8 @@ module br_amba_axi_shrinker_fpv_monitor #(
     fv_w_chunk_lane = '0;
     fv_w_chunk_last = '0;
 
-    if (fv_w_cfg_available || fv_w_cfg_push) begin
-      fv_w_chunk_offset[0] = fv_w_cfg_available ? fv_w_offset[fv_w_cfg_head]
-                                                : wide_awaddr[ByteOffsetWidth-1:0];
+    if (fv_w_ctx_valid) begin
+      fv_w_chunk_offset[0] = fv_w_ctx_offset;
 
       for (int i = 0; i < LanesPerWide; i++) begin
         // Multi-input scoreboard mode lets one wide W beat enqueue every
@@ -550,30 +537,21 @@ module br_amba_axi_shrinker_fpv_monitor #(
         // 2:1 example: chunk 0 is the first narrow beat sent, chunk 1 is the
         // second. For aligned INCR bursts that is low lane first, then high.
         fv_w_chunk_lane[i] = LaneIdxWidth'(fv_w_chunk_offset[i] >> NarrowSizeLog2);
-        fv_w_chunk_last[i] = fv_wide_wlast_cur &&
-                             (BeatsPerWideWidth'(i + 1) ==
-                              (fv_w_cfg_available ? fv_w_beats_per_wide[fv_w_cfg_head]
-                                                  : fv_w_beats_per_wide_cfg));
+        fv_w_chunk_last[i] = wide_wlast && (BeatsPerWideWidth'(i + 1) == fv_w_ctx_beats_per_wide);
 
-        if (fv_w_beat_start &&
-            (BeatsPerWideWidth'(i) <
-             (fv_w_cfg_available ? fv_w_beats_per_wide[fv_w_cfg_head]
-                                 : fv_w_beats_per_wide_cfg))) begin
+        if (fv_w_beat_start && (BeatsPerWideWidth'(i) < fv_w_ctx_beats_per_wide)) begin
           fv_narrow_w_pred_vld[i] = 1'b1;
           fv_narrow_w_pred_payloads[i] = {
-            fv_wide_wdata_cur[fv_w_chunk_lane[i]*NarrowDataWidth+:NarrowDataWidth],
-            fv_wide_wstrb_cur[fv_w_chunk_lane[i]*NarrowStrobeWidth+:NarrowStrobeWidth],
-            fv_wide_wuser_cur,
+            wide_wdata[fv_w_chunk_lane[i]*NarrowDataWidth+:NarrowDataWidth],
+            wide_wstrb[fv_w_chunk_lane[i]*NarrowStrobeWidth+:NarrowStrobeWidth],
+            wide_wuser,
             fv_w_chunk_last[i]
           };
         end
 
         if ((i + 1) < LanesPerWide) begin
-          if (fv_w_cfg_available ? !fv_w_is_fixed[fv_w_cfg_head]
-                                 : wide_awburst != br_amba::AxiBurstFixed) begin
-            fv_w_chunk_offset[i+1] = fv_w_chunk_offset[i] +
-                                     (fv_w_cfg_available ? fv_w_offset_incr[fv_w_cfg_head]
-                                                         : fv_w_offset_incr_cfg);
+          if (!fv_w_ctx_is_fixed) begin
+            fv_w_chunk_offset[i+1] = fv_w_chunk_offset[i] + fv_w_ctx_offset_incr;
           end else begin
             fv_w_chunk_offset[i+1] = fv_w_chunk_offset[i];
           end
@@ -583,53 +561,22 @@ module br_amba_axi_shrinker_fpv_monitor #(
   end
 
   always_comb begin
-    fv_w_is_fixed_next = fv_w_is_fixed;
-    fv_w_offset_next = fv_w_offset;
-    fv_w_offset_incr_next = fv_w_offset_incr;
-    fv_w_beats_per_wide_next = fv_w_beats_per_wide;
-    fv_w_beats_remaining_next = fv_w_beats_remaining;
-    if (fv_w_cfg_push) begin
-      fv_w_is_fixed_next[fv_w_cfg_tail] = wide_awburst == br_amba::AxiBurstFixed;
-      fv_w_offset_next[fv_w_cfg_tail] = wide_awaddr[ByteOffsetWidth-1:0];
-      fv_w_offset_incr_next[fv_w_cfg_tail] = fv_w_offset_incr_cfg;
-      fv_w_beats_per_wide_next[fv_w_cfg_tail] = fv_w_beats_per_wide_cfg;
-      fv_w_beats_remaining_next[fv_w_cfg_tail] = fv_w_beats_per_wide_cfg;
+    fv_w_active_offset_next = fv_w_active_offset;
+
+    if (fv_w_active_load) begin
+      fv_w_active_offset_next = fv_w_fifo_pop_offset;
     end
 
-    if (fv_wide_w_hs && !fv_w_cfg_pop) begin
-      // One accepted wide W beat consumes the entire predicted narrow-beat
-      // set for that beat, so advance directly to the next wide-beat starting
-      // offset within this transaction.
-      if (fv_w_cfg_available ? !fv_w_is_fixed[fv_w_cfg_head]
-                             : wide_awburst != br_amba::AxiBurstFixed) begin
-        fv_w_offset_next[fv_w_cfg_idx] =
-            ByteOffsetWidth'((fv_w_cfg_available ? fv_w_offset[fv_w_cfg_head]
-                                                 : wide_awaddr[ByteOffsetWidth-1:0]) +
-                             ((fv_w_cfg_available ? fv_w_beats_per_wide[fv_w_cfg_head]
-                                                  : fv_w_beats_per_wide_cfg) *
-                              (fv_w_cfg_available ? fv_w_offset_incr[fv_w_cfg_head]
-                                                  : fv_w_offset_incr_cfg)));
-      end
-      fv_w_beats_remaining_next[fv_w_cfg_idx] = fv_w_cfg_available
-                                                ? fv_w_beats_per_wide[fv_w_cfg_head]
-                                                : fv_w_beats_per_wide_cfg;
+    if (fv_wide_w_hs && !fv_w_active_done) begin
+      fv_w_active_offset_next = fv_w_offset_after_wide_beat;
     end
   end
 
-  if (RegisterNarrowOutputs) begin : gen_w_pipe_state
-    `BR_REGL(fv_w_pipe_full, fv_narrow_w_model_hs, fv_narrow_w_model_hs ^ fv_narrow_w_hs)
-  end else begin : gen_no_w_pipe_state
-    assign fv_w_pipe_full = 1'b0;
-  end
-
-  `BR_REG(fv_w_cfg_count, fv_w_cfg_count + fv_w_cfg_push - fv_w_cfg_pop)
-  `BR_REGL(fv_w_cfg_head, fv_w_cfg_head_inc, fv_w_cfg_pop && !(fv_w_cfg_bypass && fv_w_cfg_push))
-  `BR_REGL(fv_w_cfg_tail, fv_w_cfg_tail_inc, fv_w_cfg_push && !(fv_w_cfg_bypass && fv_w_cfg_pop))
-  `BR_REG(fv_w_is_fixed, fv_w_is_fixed_next)
-  `BR_REG(fv_w_offset, fv_w_offset_next)
-  `BR_REG(fv_w_offset_incr, fv_w_offset_incr_next)
-  `BR_REG(fv_w_beats_per_wide, fv_w_beats_per_wide_next)
-  `BR_REG(fv_w_beats_remaining, fv_w_beats_remaining_next)
+  `BR_REG(fv_w_active_valid, fv_w_ctx_valid && !fv_w_active_done)
+  `BR_REGL(fv_w_active_is_fixed, fv_w_fifo_pop_is_fixed, fv_w_active_load)
+  `BR_REGL(fv_w_active_offset, fv_w_active_offset_next, fv_w_active_load || fv_wide_w_hs)
+  `BR_REGL(fv_w_active_offset_incr, fv_w_fifo_pop_offset_incr, fv_w_active_load)
+  `BR_REGL(fv_w_active_beats_per_wide, fv_w_fifo_pop_beats_per_wide, fv_w_active_load)
 
   // Enqueue every narrow beat for one wide W beat at serializer start. The
   // scoreboard then drains them one per actual narrow-W handshake, absorbing
@@ -643,7 +590,7 @@ module br_amba_axi_shrinker_fpv_monitor #(
       .IN_CHUNKS(LanesPerWide),
       .OUT_CHUNKS(1),
       .SINGLE_CLOCK(1),
-      .MAX_PENDING(WriteMaxPending)
+      .MAX_PENDING(WriteFifoDepth)
   ) w_sb (
       .clk(clk),
       .rstN(!rst),
