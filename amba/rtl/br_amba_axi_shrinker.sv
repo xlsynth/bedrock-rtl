@@ -159,11 +159,9 @@ module br_amba_axi_shrinker #(
   `BR_ASSERT_STATIC(max_outstanding_reqs_in_range_a,
                     MaxOutstandingReqs >= 1 && MaxOutstandingReqs <= (2 ** IdWidth))
   `BR_ASSERT_STATIC(max_outstanding_reqs_must_be_pow2_a, br_math::is_power_of_2(MaxOutstandingReqs))
-  `BR_ASSERT_STATIC(wide_data_width_must_be_multiple_of_8_a, WideDataWidth % 8 == 0)
-  `BR_ASSERT_STATIC(narrow_data_width_must_be_multiple_of_8_a, NarrowDataWidth % 8 == 0)
-  `BR_ASSERT_STATIC(wide_data_width_must_be_greater_or_equal_a, WideDataWidth >= NarrowDataWidth)
-  `BR_ASSERT_STATIC(width_ratio_must_be_integer_a, WideDataWidth % NarrowDataWidth == 0)
-  `BR_ASSERT_STATIC(width_ratio_must_be_pow2_a, br_math::is_power_of_2(LanesPerWide))
+  `BR_ASSERT_STATIC(wide_data_width_must_be_pow2_a, br_math::is_power_of_2(WideDataWidth))
+  `BR_ASSERT_STATIC(narrow_data_width_must_be_pow2_a, br_math::is_power_of_2(NarrowDataWidth))
+  `BR_ASSERT_STATIC(wide_data_width_must_be_greater_than_narrow_a, WideDataWidth > NarrowDataWidth)
 
   `BR_ASSERT_INTG(wide_awsize_okay_a, wide_awvalid |-> wide_awsize <= WideSizeLog2)
   `BR_ASSERT_INTG(wide_arsize_okay_a, wide_arvalid |-> wide_arsize <= WideSizeLog2)
@@ -312,8 +310,10 @@ module br_amba_axi_shrinker #(
       .out(narrow_arlen_int)
   );
 
-  `BR_UNUSED_NAMED(awsize_diff_ext, awsize_diff_ext[br_amba::AxiBurstSizeWidth-1:ShiftWidth])
-  `BR_UNUSED_NAMED(arsize_diff_ext, arsize_diff_ext[br_amba::AxiBurstSizeWidth-1:ShiftWidth])
+  if (ShiftWidth < br_amba::AxiBurstSizeWidth) begin : gen_unused_size_diff_msbs
+    `BR_UNUSED_NAMED(awsize_diff_ext, awsize_diff_ext[br_amba::AxiBurstSizeWidth-1:ShiftWidth])
+    `BR_UNUSED_NAMED(arsize_diff_ext, arsize_diff_ext[br_amba::AxiBurstSizeWidth-1:ShiftWidth])
+  end
 
   // Write FIFO
   // Need to keep some information so that write data can be sent correctly
