@@ -112,6 +112,12 @@ module br_amba_axi_shrinker_fpv_monitor #(
   localparam int BeatOffsetIncrWidth = $clog2(NarrowStrobeWidth + 1);
   localparam int BeatsPerWideWidth = br_math::clamped_clog2(LanesPerWide + 1);
   localparam int RespRankWidth = 2;
+  typedef struct packed {
+    logic is_fixed;
+    logic [ByteOffsetWidth-1:0] offset;
+    logic [BeatOffsetIncrWidth-1:0] offset_incr;
+    logic [BeatsPerWideWidth-1:0] beats_per_wide;
+  } fv_w_ctx_t;
   localparam int AwPayloadWidth = AddrWidth + IdWidth + br_amba::AxiBurstLenWidth +
                                   br_amba::AxiBurstSizeWidth + br_amba::AxiBurstTypeWidth +
                                   br_amba::AxiProtWidth + AWUserWidth;
@@ -121,10 +127,11 @@ module br_amba_axi_shrinker_fpv_monitor #(
   localparam int BPayloadWidth = IdWidth + BUserWidth + br_amba::AxiRespWidth;
   localparam int WPayloadWidth = NarrowDataWidth + NarrowStrobeWidth + WUserWidth + 1;
   localparam int RPayloadWidth = IdWidth + WideDataWidth + RUserWidth + br_amba::AxiRespWidth + 1;
-  localparam int WFifoPayloadWidth = 1 + ByteOffsetWidth + BeatOffsetIncrWidth + BeatsPerWideWidth;
+  localparam int WFifoPayloadWidth = $bits(fv_w_ctx_t);
 
   // ABVIP should send more than DUT to test backpressure.
   localparam int MaxPending = MaxOutstandingReqs + WriteFifoDepth + 2;
+  localparam int WriteMaxPending = MaxOutstandingReqs + WriteFifoDepth;
 
   logic [br_amba::AxiBurstSizeWidth-1:0] fv_narrow_arsize;
   logic [br_amba::AxiBurstLenWidth-1:0] fv_narrow_arlen;
@@ -143,7 +150,9 @@ module br_amba_axi_shrinker_fpv_monitor #(
   logic fv_wide_w_hs;
   logic fv_w_fifo_push;
   logic fv_w_fifo_empty;
+  fv_w_ctx_t fv_w_fifo_push_ctx;
   logic [WFifoPayloadWidth-1:0] fv_w_fifo_push_data;
+  fv_w_ctx_t fv_w_fifo_pop_ctx;
   logic [WFifoPayloadWidth-1:0] fv_w_fifo_pop_data;
   logic fv_w_active_load;
   logic fv_w_active_valid;
@@ -151,24 +160,11 @@ module br_amba_axi_shrinker_fpv_monitor #(
   logic fv_w_ctx_valid;
   logic [BeatOffsetIncrWidth-1:0] fv_w_offset_incr_cfg;
   logic [BeatsPerWideWidth-1:0] fv_w_beats_per_wide_cfg;
-  logic fv_w_fifo_pop_is_fixed;
-  logic [ByteOffsetWidth-1:0] fv_w_fifo_pop_offset;
-  logic [BeatOffsetIncrWidth-1:0] fv_w_fifo_pop_offset_incr;
-  logic [BeatsPerWideWidth-1:0] fv_w_fifo_pop_beats_per_wide;
-  logic fv_w_active_is_fixed;
-  logic [ByteOffsetWidth-1:0] fv_w_active_offset;
+  fv_w_ctx_t fv_w_active_ctx;
   logic [ByteOffsetWidth-1:0] fv_w_active_offset_next;
-  logic [BeatOffsetIncrWidth-1:0] fv_w_active_offset_incr;
-  logic [BeatsPerWideWidth-1:0] fv_w_active_beats_per_wide;
-  logic fv_w_ctx_is_fixed;
-  logic [ByteOffsetWidth-1:0] fv_w_ctx_offset;
-  logic [BeatOffsetIncrWidth-1:0] fv_w_ctx_offset_incr;
-  logic [BeatsPerWideWidth-1:0] fv_w_ctx_beats_per_wide;
+  fv_w_ctx_t fv_w_ctx;
   logic fv_w_beat_start;
   logic [ByteOffsetWidth-1:0] fv_w_offset_after_wide_beat;
-  logic [LanesPerWide-1:0][ByteOffsetWidth-1:0] fv_w_chunk_offset;
-  logic [LanesPerWide-1:0][LaneIdxWidth-1:0] fv_w_chunk_lane;
-  logic [LanesPerWide-1:0] fv_w_chunk_last;
   logic [LanesPerWide-1:0] fv_narrow_w_pred_vld;
   logic [LanesPerWide-1:0][WPayloadWidth-1:0] fv_narrow_w_pred_payloads;
   logic [InternalIdWidth-1:0] fv_rid_idx;
@@ -177,8 +173,10 @@ module br_amba_axi_shrinker_fpv_monitor #(
   logic [LaneIdxWidth-1:0] fv_r_lane_cur;
   logic [ByteOffsetWidth-1:0] fv_r_offset_after_beat;
   logic [BeatsPerWideWidth-1:0] fv_r_beats_per_wide_cfg;
+  logic fv_r_beat_done;
   logic [br_amba::AxiRespWidth-1:0] fv_wide_rresp_cur;
   logic [RespRankWidth-1:0] fv_wide_rresp_rank_cur;
+  logic [RespRankWidth-1:0] fv_r_resp_rank_next;
   // Per-slot state for the abstract wide-R reconstruction model.
   logic [MaxOutstandingReqs-1:0] fv_r_is_fixed;
   logic [MaxOutstandingReqs-1:0] fv_r_is_fixed_next;
@@ -324,8 +322,13 @@ module br_amba_axi_shrinker_fpv_monitor #(
   assign fv_r_offset_after_beat = fv_r_is_fixed[fv_rid_idx] ? fv_r_offset[fv_rid_idx]
                                                             : fv_r_offset[fv_rid_idx] +
                                                               fv_r_offset_incr[fv_rid_idx];
-  assign fv_wide_rdata_vld = fv_narrow_r_hs &&
-                             (fv_r_beats_remaining[fv_rid_idx] == BeatsPerWideWidth'(1));
+  assign fv_r_beat_done = fv_r_beats_remaining[fv_rid_idx] == BeatsPerWideWidth'(1);
+  assign fv_wide_rdata_vld = fv_narrow_r_hs && fv_r_beat_done;
+  assign fv_r_resp_rank_next = (fv_wide_rresp_rank_saved[fv_rid_idx] >= fv_resp_rank(
+      narrow_rresp
+  )) ? fv_wide_rresp_rank_saved[fv_rid_idx] : fv_resp_rank(
+      narrow_rresp
+  );
 
   always_comb begin
     fv_r_is_fixed_next = fv_r_is_fixed;
@@ -354,14 +357,10 @@ module br_amba_axi_shrinker_fpv_monitor #(
       // Merge the current narrow beat into the slot's partial wide beat and
       // update the saved response severity if this beat is worse.
       fv_wide_rdata_cur[fv_r_lane_cur*NarrowDataWidth+:NarrowDataWidth] = narrow_rdata;
-      if (fv_wide_rresp_rank_saved[fv_rid_idx] >= fv_resp_rank(narrow_rresp)) begin
-        fv_wide_rresp_rank_cur = fv_wide_rresp_rank_saved[fv_rid_idx];
-      end else begin
-        fv_wide_rresp_rank_cur = fv_resp_rank(narrow_rresp);
-      end
+      fv_wide_rresp_rank_cur = fv_r_resp_rank_next;
       fv_r_offset_next[fv_rid_idx] = fv_r_offset_after_beat;
 
-      if (fv_r_beats_remaining[fv_rid_idx] == BeatsPerWideWidth'(1)) begin
+      if (fv_r_beat_done) begin
         // This beat completes the reconstructed wide beat, so reset the
         // partial data and reload the beat counter for the next wide beat.
         fv_r_beats_remaining_next[fv_rid_idx] = fv_r_beats_per_wide[fv_rid_idx];
@@ -441,7 +440,7 @@ module br_amba_axi_shrinker_fpv_monitor #(
       .IN_CHUNKS(1),
       .OUT_CHUNKS(1),
       .SINGLE_CLOCK(1),
-      .MAX_PENDING(WriteFifoDepth)
+      .MAX_PENDING(WriteMaxPending)
   ) aw_sb (
       .clk(clk),
       .rstN(!rst),
@@ -466,7 +465,7 @@ module br_amba_axi_shrinker_fpv_monitor #(
       .IN_CHUNKS(1),
       .OUT_CHUNKS(1),
       .SINGLE_CLOCK(1),
-      .MAX_PENDING(WriteFifoDepth)
+      .MAX_PENDING(WriteMaxPending)
   ) b_sb (
       .clk(clk),
       .rstN(!rst),
@@ -484,29 +483,24 @@ module br_amba_axi_shrinker_fpv_monitor #(
   assign fv_w_fifo_push = wide_awvalid && wide_awready;
   assign fv_w_offset_incr_cfg = BeatOffsetIncrWidth'(1'b1) << fv_narrow_awsize;
   assign fv_w_beats_per_wide_cfg = BeatsPerWideWidth'(1'b1) << aw_shift;
-  assign fv_w_fifo_push_data = {
-    wide_awburst == br_amba::AxiBurstFixed,
-    wide_awaddr[ByteOffsetWidth-1:0],
-    fv_w_offset_incr_cfg,
-    fv_w_beats_per_wide_cfg
-  };
-  assign {fv_w_fifo_pop_is_fixed, fv_w_fifo_pop_offset, fv_w_fifo_pop_offset_incr,
-          fv_w_fifo_pop_beats_per_wide} = fv_w_fifo_pop_data;
+  assign fv_w_fifo_push_ctx = '{
+          is_fixed: wide_awburst == br_amba::AxiBurstFixed,
+          offset: wide_awaddr[ByteOffsetWidth-1:0],
+          offset_incr: fv_w_offset_incr_cfg,
+          beats_per_wide: fv_w_beats_per_wide_cfg
+      };
+  assign fv_w_fifo_push_data = fv_w_fifo_push_ctx;
+  assign fv_w_fifo_pop_ctx = fv_w_fifo_pop_data;
   assign fv_w_active_load = !fv_w_active_valid && (!fv_w_fifo_empty || fv_w_fifo_push);
   assign fv_w_ctx_valid = fv_w_active_valid || fv_w_active_load;
-  assign fv_w_ctx_is_fixed = fv_w_active_valid ? fv_w_active_is_fixed : fv_w_fifo_pop_is_fixed;
-  assign fv_w_ctx_offset = fv_w_active_valid ? fv_w_active_offset : fv_w_fifo_pop_offset;
-  assign fv_w_ctx_offset_incr = fv_w_active_valid ? fv_w_active_offset_incr
-                                                  : fv_w_fifo_pop_offset_incr;
-  assign fv_w_ctx_beats_per_wide = fv_w_active_valid ? fv_w_active_beats_per_wide
-                                                      : fv_w_fifo_pop_beats_per_wide;
-  assign fv_w_offset_after_wide_beat = fv_w_ctx_is_fixed ? fv_w_ctx_offset :
-      ByteOffsetWidth'(fv_w_ctx_offset + (fv_w_ctx_beats_per_wide * fv_w_ctx_offset_incr));
+  assign fv_w_ctx = fv_w_active_valid ? fv_w_active_ctx : fv_w_fifo_pop_ctx;
+  assign fv_w_offset_after_wide_beat = fv_w_ctx.is_fixed ? fv_w_ctx.offset :
+      ByteOffsetWidth'(fv_w_ctx.offset + (fv_w_ctx.beats_per_wide * fv_w_ctx.offset_incr));
   assign fv_w_beat_start = fv_wide_w_hs;
   assign fv_w_active_done = fv_wide_w_hs && wide_wlast;
 
   fv_fifo #(
-      .Depth(WriteFifoDepth + 1),
+      .Depth(WriteMaxPending),
       .DataWidth(WFifoPayloadWidth),
       .Bypass(1)
   ) w_fifo (
@@ -521,14 +515,16 @@ module br_amba_axi_shrinker_fpv_monitor #(
   );
 
   always_comb begin
+    logic [ByteOffsetWidth-1:0] chunk_offset;
+    logic [LaneIdxWidth-1:0] chunk_lane;
+
     fv_narrow_w_pred_vld = '0;
     fv_narrow_w_pred_payloads = '0;
-    fv_w_chunk_offset = '0;
-    fv_w_chunk_lane = '0;
-    fv_w_chunk_last = '0;
+    chunk_offset = '0;
+    chunk_lane = '0;
 
     if (fv_w_ctx_valid) begin
-      fv_w_chunk_offset[0] = fv_w_ctx_offset;
+      chunk_offset = fv_w_ctx.offset;
 
       for (int i = 0; i < LanesPerWide; i++) begin
         // Multi-input scoreboard mode lets one wide W beat enqueue every
@@ -536,24 +532,21 @@ module br_amba_axi_shrinker_fpv_monitor #(
         // order, not lane order:
         // 2:1 example: chunk 0 is the first narrow beat sent, chunk 1 is the
         // second. For aligned INCR bursts that is low lane first, then high.
-        fv_w_chunk_lane[i] = LaneIdxWidth'(fv_w_chunk_offset[i] >> NarrowSizeLog2);
-        fv_w_chunk_last[i] = wide_wlast && (BeatsPerWideWidth'(i + 1) == fv_w_ctx_beats_per_wide);
+        chunk_lane = LaneIdxWidth'(chunk_offset >> NarrowSizeLog2);
 
-        if (fv_w_beat_start && (BeatsPerWideWidth'(i) < fv_w_ctx_beats_per_wide)) begin
+        if (fv_w_beat_start && (BeatsPerWideWidth'(i) < fv_w_ctx.beats_per_wide)) begin
           fv_narrow_w_pred_vld[i] = 1'b1;
           fv_narrow_w_pred_payloads[i] = {
-            wide_wdata[fv_w_chunk_lane[i]*NarrowDataWidth+:NarrowDataWidth],
-            wide_wstrb[fv_w_chunk_lane[i]*NarrowStrobeWidth+:NarrowStrobeWidth],
+            wide_wdata[chunk_lane*NarrowDataWidth+:NarrowDataWidth],
+            wide_wstrb[chunk_lane*NarrowStrobeWidth+:NarrowStrobeWidth],
             wide_wuser,
-            fv_w_chunk_last[i]
+            wide_wlast && (BeatsPerWideWidth'(i + 1) == fv_w_ctx.beats_per_wide)
           };
         end
 
         if ((i + 1) < LanesPerWide) begin
-          if (!fv_w_ctx_is_fixed) begin
-            fv_w_chunk_offset[i+1] = fv_w_chunk_offset[i] + fv_w_ctx_offset_incr;
-          end else begin
-            fv_w_chunk_offset[i+1] = fv_w_chunk_offset[i];
+          if (!fv_w_ctx.is_fixed) begin
+            chunk_offset = chunk_offset + fv_w_ctx.offset_incr;
           end
         end
       end
@@ -561,10 +554,10 @@ module br_amba_axi_shrinker_fpv_monitor #(
   end
 
   always_comb begin
-    fv_w_active_offset_next = fv_w_active_offset;
+    fv_w_active_offset_next = fv_w_active_ctx.offset;
 
     if (fv_w_active_load) begin
-      fv_w_active_offset_next = fv_w_fifo_pop_offset;
+      fv_w_active_offset_next = fv_w_fifo_pop_ctx.offset;
     end
 
     if (fv_wide_w_hs && !fv_w_active_done) begin
@@ -573,10 +566,10 @@ module br_amba_axi_shrinker_fpv_monitor #(
   end
 
   `BR_REG(fv_w_active_valid, fv_w_ctx_valid && !fv_w_active_done)
-  `BR_REGL(fv_w_active_is_fixed, fv_w_fifo_pop_is_fixed, fv_w_active_load)
-  `BR_REGL(fv_w_active_offset, fv_w_active_offset_next, fv_w_active_load || fv_wide_w_hs)
-  `BR_REGL(fv_w_active_offset_incr, fv_w_fifo_pop_offset_incr, fv_w_active_load)
-  `BR_REGL(fv_w_active_beats_per_wide, fv_w_fifo_pop_beats_per_wide, fv_w_active_load)
+  `BR_REGL(fv_w_active_ctx.is_fixed, fv_w_fifo_pop_ctx.is_fixed, fv_w_active_load)
+  `BR_REGL(fv_w_active_ctx.offset, fv_w_active_offset_next, fv_w_active_load || fv_wide_w_hs)
+  `BR_REGL(fv_w_active_ctx.offset_incr, fv_w_fifo_pop_ctx.offset_incr, fv_w_active_load)
+  `BR_REGL(fv_w_active_ctx.beats_per_wide, fv_w_fifo_pop_ctx.beats_per_wide, fv_w_active_load)
 
   // Enqueue every narrow beat for one wide W beat at serializer start. The
   // scoreboard then drains them one per actual narrow-W handshake, absorbing
@@ -590,7 +583,7 @@ module br_amba_axi_shrinker_fpv_monitor #(
       .IN_CHUNKS(LanesPerWide),
       .OUT_CHUNKS(1),
       .SINGLE_CLOCK(1),
-      .MAX_PENDING(WriteFifoDepth)
+      .MAX_PENDING(WriteMaxPending)
   ) w_sb (
       .clk(clk),
       .rstN(!rst),

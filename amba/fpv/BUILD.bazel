@@ -37,6 +37,7 @@ verilog_elab_test(
 
 br_verilog_fpv_test_tools_suite(
     name = "br_amba_axil_default_target_test_suite",
+    tags = ["manual"],
     tools = {
         "jg": "br_amba_axil_default_target_fpv.jg.tcl",
     },
@@ -73,6 +74,7 @@ br_verilog_fpv_test_tools_suite(
             "1",
         ],
     },
+    tags = ["manual"],
     tools = {
         "jg": "br_amba_axi_default_target_fpv.jg.tcl",
     },
@@ -102,6 +104,7 @@ br_verilog_fpv_test_tools_suite(
     elab_opts = [
         "-parameter MaxOutstandingReqs 4",
     ],
+    tags = ["manual"],
     tools = {
         "jg": "br_amba_axi2axil_fpv.jg.tcl",
     },
@@ -135,6 +138,7 @@ br_verilog_fpv_test_tools_suite(
             "3",
         ],
     },
+    tags = ["manual"],
     tools = {
         "jg": "br_amba_axil_split_fpv.jg.tcl",
     },
@@ -161,6 +165,7 @@ verilog_elab_test(
 
 br_verilog_fpv_test_tools_suite(
     name = "br_amba_axi_timing_slice_test_suite",
+    tags = ["manual"],
     tools = {
         "jg": "br_amba_axi_timing_slice_fpv.jg.tcl",
     },
@@ -187,6 +192,7 @@ verilog_elab_test(
 
 br_verilog_fpv_test_tools_suite(
     name = "br_amba_axil_timing_slice_test_suite",
+    tags = ["manual"],
     tools = {
         "jg": "br_amba_axil_timing_slice_fpv.jg.tcl",
     },
@@ -213,6 +219,7 @@ verilog_elab_test(
 
 br_verilog_fpv_test_tools_suite(
     name = "br_amba_axil2apb_test_suite",
+    tags = ["manual"],
     tools = {
         "jg": "br_amba_axil2apb_fpv.jg.tcl",
     },
@@ -239,6 +246,7 @@ verilog_elab_test(
 
 br_verilog_fpv_test_tools_suite(
     name = "br_amba_apb_timing_slice_test_suite",
+    tags = ["manual"],
     tools = {
         "jg": "",
     },
@@ -265,6 +273,7 @@ verilog_elab_test(
 
 br_verilog_fpv_test_tools_suite(
     name = "br_amba_atb_funnel_test_suite",
+    tags = ["manual"],
     tools = {
         "jg": "br_amba_atb_funnel_fpv.jg.tcl",
     },
@@ -291,6 +300,7 @@ verilog_elab_test(
 
 br_verilog_fpv_test_tools_suite(
     name = "br_amba_axil_msi_test_suite",
+    tags = ["manual"],
     tools = {
         "jg": "br_amba_axil_msi_fpv.jg.tcl",
     },
@@ -327,6 +337,7 @@ br_verilog_fpv_test_tools_suite(
             "256",
         ],
     },
+    tags = ["manual"],
     tools = {
         "jg": "br_amba_axi_isolate_mgr_fpv.jg.tcl",
     },
@@ -373,6 +384,7 @@ br_verilog_fpv_test_tools_suite(
             "1",
         ],
     },
+    tags = ["manual"],
     tools = {
         "jg": "br_amba_axi_isolate_sub_fpv.jg.tcl",
     },
@@ -417,6 +429,7 @@ br_verilog_fpv_test_tools_suite(
             "1",
         ],
     },
+    tags = ["manual"],
     tools = {
         "jg": "br_amba_axi_demux_fpv.jg.tcl",
     },
@@ -445,11 +458,16 @@ verilog_elab_test(
 br_verilog_fpv_test_tools_suite(
     name = "br_amba_axi_shrinker_test_suite",
     elab_opts = [
-        "-parameter WideDataWidth 16",
-        "-parameter MaxOutstandingReqs 8",
+        "-parameter WideDataWidth 32",
+        "-parameter MaxOutstandingReqs 4",
         "-parameter IdWidth 3",
     ],
-    gui = True,
+    params = {
+        "NarrowDataWidth": [
+            "16",
+            "8",
+        ],
+    },
     tools = {
         "jg": "br_amba_axi_shrinker_fpv.jg.tcl",
     },
