@@ -494,6 +494,7 @@ br_verilog_elab_and_lint_test_suite(
     params = {
         "AddrWidth": ["12"],
         "WideDataWidth": [
+            "128",
             "64",
         ],
         "NarrowDataWidth": [
