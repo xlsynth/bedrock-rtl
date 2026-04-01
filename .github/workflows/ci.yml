@@ -149,7 +149,7 @@ jobs:
         NUM_RTL_FILES=$(find . -type d -name rtl -exec find {} -type f -name "*.sv" \; | wc -l)
         echo "NUM_RTL_FILES=$NUM_RTL_FILES" >> $GITHUB_ENV
     - name: Create RTL files badge
-      uses: schneegans/dynamic-badges-action@v1.7.0
+      uses: schneegans/dynamic-badges-action@v1.8.0
       with:
         auth: ${{ secrets.MGOTTSCHO_GISTS_SECRET }}
         gistID: c66dc2ddc0e513ba06ce338620977b26
@@ -164,7 +164,7 @@ jobs:
     if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
     steps:
     - name: Create python badge
-      uses: schneegans/dynamic-badges-action@v1.7.0
+      uses: schneegans/dynamic-badges-action@v1.8.0
       with:
         auth: ${{ secrets.MGOTTSCHO_GISTS_SECRET }}
         gistID: c66dc2ddc0e513ba06ce338620977b26
@@ -179,7 +179,7 @@ jobs:
     if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
     steps:
     - name: Create stardoc badge
-      uses: schneegans/dynamic-badges-action@v1.7.0
+      uses: schneegans/dynamic-badges-action@v1.8.0
       with:
         auth: ${{ secrets.MGOTTSCHO_GISTS_SECRET }}
         gistID: c66dc2ddc0e513ba06ce338620977b26
@@ -194,7 +194,7 @@ jobs:
     if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
     steps:
     - name: Create verific badge
-      uses: schneegans/dynamic-badges-action@v1.7.0
+      uses: schneegans/dynamic-badges-action@v1.8.0
       with:
         auth: ${{ secrets.MGOTTSCHO_GISTS_SECRET }}
         gistID: c66dc2ddc0e513ba06ce338620977b26
@@ -209,7 +209,7 @@ jobs:
     if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
     steps:
     - name: Create ascentlint badge
-      uses: schneegans/dynamic-badges-action@v1.7.0
+      uses: schneegans/dynamic-badges-action@v1.8.0
       with:
         auth: ${{ secrets.MGOTTSCHO_GISTS_SECRET }}
         gistID: c66dc2ddc0e513ba06ce338620977b26
@@ -224,7 +224,7 @@ jobs:
     if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
     steps:
     - name: Create vcs badge
-      uses: schneegans/dynamic-badges-action@v1.7.0
+      uses: schneegans/dynamic-badges-action@v1.8.0
       with:
         auth: ${{ secrets.MGOTTSCHO_GISTS_SECRET }}
         gistID: c66dc2ddc0e513ba06ce338620977b26
@@ -239,7 +239,7 @@ jobs:
     if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
     steps:
     - name: Create iverilog badge
-      uses: schneegans/dynamic-badges-action@v1.7.0
+      uses: schneegans/dynamic-badges-action@v1.8.0
       with:
         auth: ${{ secrets.MGOTTSCHO_GISTS_SECRET }}
         gistID: c66dc2ddc0e513ba06ce338620977b26
