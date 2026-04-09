@@ -119,7 +119,9 @@ module br_counter #(
 
   `BR_ASSERT_INTG(incr_in_range_a, incr_valid |-> incr <= MaxIncrement)
   `BR_ASSERT_INTG(decr_in_range_a, decr_valid |-> decr <= MaxDecrement)
-  `BR_ASSERT_INTG(initial_value_in_range_a, initial_value <= MaxValue)
+  if (EnableCoverReinit) begin : gen_reinit
+    `BR_ASSERT_INTG(initial_value_in_range_a, reinit |-> initial_value <= MaxValue)
+  end
 
   // Assertion-only helper logic for overflow/underflow detection
 `ifdef BR_ASSERT_ON
