@@ -99,7 +99,9 @@ module br_counter_incr #(
   `BR_ASSERT_STATIC(max_increment_lte_max_value_a, MaxIncrement <= MaxValue)
 
   `BR_ASSERT_INTG(incr_in_range_a, incr_valid |-> incr <= MaxIncrement)
-  `BR_ASSERT_INTG(initial_value_in_range_a, reinit |-> initial_value <= MaxValue)
+  if (EnableCoverReinit) begin : gen_reinit
+    `BR_ASSERT_INTG(initial_value_in_range_a, reinit |-> initial_value <= MaxValue)
+  end
 
   if (EnableAssertFinalNotValid) begin : gen_assert_final
     `BR_ASSERT_FINAL(final_not_incr_valid_a, !incr_valid)
