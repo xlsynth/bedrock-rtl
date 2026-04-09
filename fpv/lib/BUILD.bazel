@@ -10,6 +10,26 @@ verilog_library(
     srcs = ["fv_fifo.sv"],
 )
 
+# fv_ram
+verilog_library(
+    name = "fv_ram",
+    srcs = ["fv_ram.sv"],
+    deps = [
+        "//macros:br_asserts",
+        "//macros:br_registers",
+        "//pkg:br_math_pkg",
+    ],
+)
+
+# valid ready protocol checker
+verilog_library(
+    name = "fv_valid_ready_check",
+    srcs = ["fv_valid_ready_check.sv"],
+    deps = [
+        "//macros:br_asserts",
+    ],
+)
+
 # Delays an input signal by a fixed number of clock cycles.
 verilog_library(
     name = "fv_delay",
