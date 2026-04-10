@@ -21,10 +21,10 @@ module fv_valid_ready_check #(
   if (Master) begin : gen_master
     if (EnableAssertValidStability) begin : gen_assume_valid_stable
       `BR_ASSUME(valid_stable_until_ready_a, valid && !ready |=> valid)
-    end 
+    end
     if (EnableAssertPayloadStability) begin : gen_assume_payload_stable
       `BR_ASSUME(payload_stable_until_ready_a, valid && !ready |=> $stable(payload))
-    end 
+    end
   end else begin : gen_slave
     if (EnableAssertValidStability) begin : gen_assert_valid_stable
       `BR_ASSERT(valid_stable_until_ready_a, valid && !ready |=> valid)
