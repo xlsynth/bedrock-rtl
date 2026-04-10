@@ -5,7 +5,7 @@
 module fv_valid_ready_check #(
     parameter bit Master = 1,
     parameter int PayloadWidth = 1,
-    // Assertion options only used when Master=0
+    // Stability check options.
     parameter bit EnableAssertValidStability = 1,
     parameter bit EnableAssertPayloadStability = 1
 ) (
@@ -19,8 +19,12 @@ module fv_valid_ready_check #(
   `BR_ASSERT_STATIC(payload_width_gte_1_a, PayloadWidth >= 1)
 
   if (Master) begin : gen_master
-    `BR_ASSUME(valid_stable_until_ready_a, valid && !ready |=> valid)
-    `BR_ASSUME(payload_stable_until_ready_a, valid && !ready |=> $stable(payload))
+    if (EnableAssertValidStability) begin : gen_assume_valid_stable
+      `BR_ASSUME(valid_stable_until_ready_a, valid && !ready |=> valid)
+    end 
+    if (EnableAssertPayloadStability) begin : gen_assume_payload_stable
+      `BR_ASSUME(payload_stable_until_ready_a, valid && !ready |=> $stable(payload))
+    end 
   end else begin : gen_slave
     if (EnableAssertValidStability) begin : gen_assert_valid_stable
       `BR_ASSERT(valid_stable_until_ready_a, valid && !ready |=> valid)
