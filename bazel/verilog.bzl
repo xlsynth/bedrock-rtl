@@ -105,6 +105,7 @@ def _verilog_base_impl(ctx, subcmd, test = True, extra_args = [], extra_runfiles
     data_files = getattr(ctx.files, "data", [])
     runfiles = list(data_files)
     runfiles += ctx.files.verilog_runner_tool
+    runfiles += ctx.files.verilog_runner_data
     runfiles += ctx.files.verilog_runner_plugins
     srcs = get_transitive(ctx = ctx, srcs_not_hdrs = True).to_list()
     hdrs = get_transitive(ctx = ctx, srcs_not_hdrs = False).to_list()
@@ -325,6 +326,11 @@ rule_verilog_elab_test = rule(
         "params": attr.string_dict(doc = "Verilog module parameters to set in the instantiation of the top-level module."),
         "top": attr.string(doc = "The top-level module; if not provided and there exists one dependency, then defaults to that dep's label name."),
         "verilog_runner_tool": attr.label(doc = "The Verilog Runner tool to use.", default = "//python/verilog_runner:verilog_runner.py", allow_files = True),
+        "verilog_runner_data": attr.label_list(
+            default = ["//python/verilog_runner:verilog_runner_data"],
+            allow_files = True,
+            doc = "Additional Verilog Runner files needed at runtime.",
+        ),
         "verilog_runner_plugins": attr.label_list(
             default = ["//python/verilog_runner/plugins:iverilog.py"],
             allow_files = True,
@@ -403,6 +409,11 @@ rule_verilog_lint_test = rule(
             doc = "The lint policy file to use. If not provided, then the default tool policy is used (typically provided through an environment variable).",
         ),
         "verilog_runner_tool": attr.label(doc = "The Verilog Runner tool to use.", default = "//python/verilog_runner:verilog_runner.py", allow_files = True),
+        "verilog_runner_data": attr.label_list(
+            default = ["//python/verilog_runner:verilog_runner_data"],
+            allow_files = True,
+            doc = "Additional Verilog Runner files needed at runtime.",
+        ),
         "verilog_runner_plugins": attr.label_list(
             default = ["//python/verilog_runner/plugins:iverilog.py"],
             allow_files = True,
@@ -484,6 +495,11 @@ rule_verilog_sim_test = rule(
             default = False,
         ),
         "verilog_runner_tool": attr.label(doc = "The Verilog Runner tool to use.", default = "//python/verilog_runner:verilog_runner.py", allow_files = True),
+        "verilog_runner_data": attr.label_list(
+            default = ["//python/verilog_runner:verilog_runner_data"],
+            allow_files = True,
+            doc = "Additional Verilog Runner files needed at runtime.",
+        ),
         "verilog_runner_plugins": attr.label_list(
             default = ["//python/verilog_runner/plugins:iverilog.py"],
             allow_files = True,
@@ -593,6 +609,11 @@ rule_verilog_fpv_test = rule(
             default = False,
         ),
         "verilog_runner_tool": attr.label(doc = "The Verilog Runner tool to use.", default = "//python/verilog_runner:verilog_runner.py", allow_files = True),
+        "verilog_runner_data": attr.label_list(
+            default = ["//python/verilog_runner:verilog_runner_data"],
+            allow_files = True,
+            doc = "Additional Verilog Runner files needed at runtime.",
+        ),
         "verilog_runner_plugins": attr.label_list(
             default = ["//python/verilog_runner/plugins:iverilog.py"],
             allow_files = True,
@@ -688,6 +709,11 @@ rule_verilog_fpv_sandbox = rule(
             default = False,
         ),
         "verilog_runner_tool": attr.label(doc = "The Verilog Runner tool to use.", default = "//python/verilog_runner:verilog_runner.py", allow_files = True),
+        "verilog_runner_data": attr.label_list(
+            default = ["//python/verilog_runner:verilog_runner_data"],
+            allow_files = True,
+            doc = "Additional Verilog Runner files needed at runtime.",
+        ),
         "verilog_runner_plugins": attr.label_list(
             default = ["//python/verilog_runner/plugins:iverilog.py"],
             allow_files = True,
