@@ -54,3 +54,28 @@ br_verilog_elab_and_lint_test_suite(
     },
     deps = [":br_misc_tieoff_one"],
 )
+
+verilog_library(
+    name = "br_misc_multicycle_path",
+    srcs = ["br_misc_multicycle_path.sv"],
+    deps = ["//macros:br_asserts_internal"],
+)
+
+br_verilog_elab_and_lint_test_suite(
+    name = "br_misc_multicycle_path_test_suite",
+    params = {
+        "AllowChangesOnlyInReset": [
+            "0",
+            "1",
+        ],
+        "Cycles": [
+            "1",
+            "2",
+        ],
+        "Width": [
+            "1",
+            "2",
+        ],
+    },
+    deps = [":br_misc_multicycle_path"],
+)
