@@ -12,8 +12,17 @@ exports_files([
     "eda_tool.py",
     "plugins.py",
     "util.py",
-    "iverilog.py",
 ])
+
+filegroup(
+    name = "verilog_runner_data",
+    srcs = [
+        "cli.py",
+        "eda_tool.py",
+        "plugins.py",
+        "util.py",
+    ],
+)
 
 py_library(
     name = "util",
