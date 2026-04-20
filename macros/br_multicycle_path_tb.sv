@@ -22,7 +22,7 @@ module br_multicycle_path_tb ();  // ri lint_check_waive NO_OUTPUT
   logic [1:0] named_out;  // ri lint_check_waive NOT_READ HIER_NET_NOT_READ
   logic [1:0] named_reset_only_out;  // ri lint_check_waive NOT_READ HIER_NET_NOT_READ
 
-  `BR_MCP_NAMED(2, named_path, {foo, bar}, named_out)
-  `BR_RESET_ONLY_MCP_NAMED(2, named_reset_only_path, {foo, bar}, named_reset_only_out)
+  `BR_MCP_NAMED(named_path, 2, {foo, bar}, named_out)
+  `BR_RESET_ONLY_MCP_NAMED(named_reset_only_path, 2, {foo, bar}, named_reset_only_out)
 
 endmodule : br_multicycle_path_tb

@@ -13,8 +13,8 @@
 `include "br_asserts_internal.svh"
 
 module br_misc_multicycle_path #(
-    parameter int Cycles = 2,  // Should be at least 1
     parameter int Width = 1,  // Must be at least 1
+    parameter int Cycles = 2,  // Should be at least 1
     parameter int AllowChangesOnlyInReset = 0
 ) (
     // Positive edge-triggered. Only used for assertions.
