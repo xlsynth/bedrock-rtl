@@ -10,10 +10,10 @@
 // Use this macro when a custom instance name suffix is required or desired.
 // For example, use when __out__ is a complex expression.
 `define BR_MCP_NAMED(__name__, __cycles__, __in__, __out__) \
-br_misc_multicycle_path #( \
+br_cdc_multicycle_path #( \
     .Cycles(__cycles__), \
     .Width($bits(__out__)) \
-) br_misc_multicycle_path_``__name__ ( \
+) br_cdc_multicycle_path_``__name__ ( \
     .clk(clk), \
     .rst(rst), \
     .in(__in__), \
@@ -21,11 +21,11 @@ br_misc_multicycle_path #( \
 );
 
 `define BR_RESET_ONLY_MCP_NAMED(__name__, __cycles__, __in__, __out__) \
-br_misc_multicycle_path #( \
+br_cdc_multicycle_path #( \
     .Cycles(__cycles__), \
     .Width($bits(__out__)), \
     .AllowChangesOnlyInReset(1) \
-) br_misc_multicycle_path_``__name__ ( \
+) br_cdc_multicycle_path_``__name__ ( \
     .clk(clk), \
     .rst(rst), \
     .in(__in__), \

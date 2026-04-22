@@ -96,7 +96,7 @@ verilog_library(
     name = "br_multicycle_path",
     hdrs = ["br_multicycle_path.svh"],
     visibility = ["//visibility:public"],
-    deps = ["//misc/rtl:br_misc_multicycle_path"],
+    deps = ["//cdc/rtl:br_cdc_multicycle_path"],
 )
 
 verilog_library(

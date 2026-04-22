@@ -44,6 +44,31 @@ br_verilog_elab_and_lint_test_suite(
 )
 
 verilog_library(
+    name = "br_cdc_multicycle_path",
+    srcs = ["br_cdc_multicycle_path.sv"],
+    deps = ["//macros:br_asserts_internal"],
+)
+
+br_verilog_elab_and_lint_test_suite(
+    name = "br_cdc_multicycle_path_test_suite",
+    params = {
+        "AllowChangesOnlyInReset": [
+            "0",
+            "1",
+        ],
+        "Cycles": [
+            "1",
+            "2",
+        ],
+        "Width": [
+            "1",
+            "2",
+        ],
+    },
+    deps = [":br_cdc_multicycle_path"],
+)
+
+verilog_library(
     name = "br_cdc_fifo_ctrl_1r1w",
     srcs = ["br_cdc_fifo_ctrl_1r1w.sv"],
     deps = [
