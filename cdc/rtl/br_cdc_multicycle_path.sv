@@ -55,7 +55,7 @@ module br_cdc_multicycle_path #(
 
 `ifdef SIMULATION
   // Model a delay of the input
-  logic [Width-1:0] in_delay[CaptureCycleDelay-1];
+  logic [Width-1:0] in_delay[CaptureCycleDelay];
 
   assign in_delay[0] = in;
 

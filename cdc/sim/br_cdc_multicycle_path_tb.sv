@@ -26,7 +26,7 @@ module br_cdc_multicycle_path_tb ();
   logic [Width-1:0] out_3_3;
   logic [Width-1:0] reset_only_out;
   logic [Width-1:0] named_reset_only_out;
-  logic [Width-1:0] in_history[MaxCaptureCycleDelay-1];
+  logic [Width-1:0] in_history[MaxCaptureCycleDelay];
   int cycle_count;
   int error_count;
 
