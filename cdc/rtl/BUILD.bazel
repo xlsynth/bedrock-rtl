@@ -46,7 +46,10 @@ br_verilog_elab_and_lint_test_suite(
 verilog_library(
     name = "br_cdc_multicycle_path",
     srcs = ["br_cdc_multicycle_path.sv"],
-    deps = ["//macros:br_asserts_internal"],
+    deps = [
+        "//macros:br_asserts_internal",
+        "//macros:br_registers",
+    ],
 )
 
 br_verilog_elab_and_lint_test_suite(
@@ -56,13 +59,14 @@ br_verilog_elab_and_lint_test_suite(
             "0",
             "1",
         ],
-        "Cycles": [
+        "CaptureCycleDelay": [
             "1",
             "2",
+            "3",
         ],
         "Width": [
             "1",
-            "2",
+            "8",
         ],
     },
     deps = [":br_cdc_multicycle_path"],

@@ -117,6 +117,14 @@ verilog_lint_test(
     deps = [":br_multicycle_path_tb"],
 )
 
+br_verilog_sim_test_tools_suite(
+    name = "br_multicycle_path_tb_sim_test_tools_suite",
+    opts = ["+define+SIMULATION"],
+    tools = ["vcs"],
+    top = "br_multicycle_path_tb",
+    deps = [":br_multicycle_path_tb"],
+)
+
 # Macro unit tests
 verilog_library(
     name = "br_asserts_test",
