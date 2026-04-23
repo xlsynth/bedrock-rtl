@@ -7,6 +7,27 @@ load("//bazel:verilog.bzl", "verilog_elab_test")
 package(default_visibility = ["//visibility:private"])
 
 verilog_library(
+    name = "br_cdc_multicycle_path_tb",
+    srcs = ["br_cdc_multicycle_path_tb.sv"],
+    deps = ["//macros:br_multicycle_path"],
+)
+
+verilog_elab_test(
+    name = "br_cdc_multicycle_path_tb_elab_test",
+    tool = "verific",
+    top = "br_cdc_multicycle_path_tb",
+    deps = [":br_cdc_multicycle_path_tb"],
+)
+
+br_verilog_sim_test_tools_suite(
+    name = "br_cdc_multicycle_path_tb_sim_test_tools_suite",
+    opts = ["+define+SIMULATION"],
+    tools = ["vcs"],
+    top = "br_cdc_multicycle_path_tb",
+    deps = [":br_cdc_multicycle_path_tb"],
+)
+
+verilog_library(
     name = "br_cdc_fifo_flops_tb",
     srcs = ["br_cdc_fifo_flops_tb.sv"],
     deps = [

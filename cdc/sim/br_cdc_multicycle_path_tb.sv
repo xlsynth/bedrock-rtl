@@ -7,7 +7,7 @@
 
 `include "br_multicycle_path.svh"
 
-module br_multicycle_path_tb ();  // ri lint_check_waive NO_OUTPUT
+module br_cdc_multicycle_path_tb ();
 
   localparam int Width = 4;
   localparam int ClkPeriod = 10;
@@ -148,7 +148,7 @@ module br_multicycle_path_tb ();  // ri lint_check_waive NO_OUTPUT
     error_count = 0;
 
 `ifndef SIMULATION
-    $fatal(1, "br_multicycle_path_tb requires SIMULATION to validate delay behavior");
+    $fatal(1, "br_cdc_multicycle_path_tb requires SIMULATION to validate delay behavior");
 `endif
 
     prime_duts();
@@ -163,11 +163,11 @@ module br_multicycle_path_tb ();  // ri lint_check_waive NO_OUTPUT
     drive_and_check(4'h4);
 
     if (error_count != 0) begin
-      $fatal(1, "br_multicycle_path_tb failed with %0d errors", error_count);
+      $fatal(1, "br_cdc_multicycle_path_tb failed with %0d errors", error_count);
     end
 
     $display("TEST PASSED");
     $finish;
   end
 
-endmodule : br_multicycle_path_tb
+endmodule : br_cdc_multicycle_path_tb
