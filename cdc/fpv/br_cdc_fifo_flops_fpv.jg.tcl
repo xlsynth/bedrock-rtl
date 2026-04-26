@@ -9,13 +9,13 @@ clock pop_clk -from 1 -to 10 -both_edges
 # declare always_in system clock
 reset -none
 assume -reset -name set_rst_during_reset {rst}
-assume -bound 1 -name delay_rst {rst}
-assume -name deassert_rst {##1 !rst}
+assume -bound 30 -name delay_rst {rst}
+assume -name deassert_rst {##30 !rst}
 # reset are ready at different times
 assume -env {rst |-> push_rst}
 assume -env {rst |-> pop_rst}
-assume -env {!push_rst |=> !push_rst}
-assume -env {!pop_rst |=> !pop_rst}
+#assume -env {!push_rst |=> !push_rst}
+#assume -env {!pop_rst |=> !pop_rst}
 assume -env {s_eventually !push_rst}
 assume -env {s_eventually !pop_rst}
 
