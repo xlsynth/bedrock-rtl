@@ -35,7 +35,11 @@ repos:
       - id: black
         language_version: python3.12
 
-  # Format Bazel files
+  # Format Bazel files.
+  #
+  # The pre-commit hook repo is pinned to a commit SHA. The hook itself downloads
+  # the buildifier release selected by --version; that binary is version-tagged
+  # but not SHA-verified by this repo.
   - repo: https://github.com/warchant/pre-commit-buildifier
     # 0.1.5
     rev: f8ce12ccaf29ba79d19c6a9d0643471372a8ba0f

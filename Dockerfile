@@ -181,6 +181,7 @@ RUN tar -xzf cudd-3.0.0.tar.gz && \
 
 # Build eigen 3.4.0 manually because yum only gave us 3.3.4, too low for OpenSTA
 #RUN curl -L https://gitlab.com/libeigen/eigen/-/archive/3.4.0/eigen-3.4.0.tar.gz -o eigen-3.4.0.tar.gz
+#RUN echo "8586084f71f9bde545ee7fa6d00288b264a2b7ac3607b974e54d13e7162c1c72  eigen-3.4.0.tar.gz" | sha256sum -c -
 #RUN tar -xzf eigen-3.4.0.tar.gz && \
 #    cd eigen-3.4.0 && \
 #    mkdir build && \
@@ -195,6 +196,7 @@ RUN tar -xzf cudd-3.0.0.tar.gz && \
 # TODO: not yet working because of missing eigen dependency
 #RUN git clone https://github.com/The-OpenROAD-Project/OpenSTA.git
 #RUN cd OpenSTA && \
+#    git checkout 543361765b78269402dba2656c7fca19459a7b7f && \
 #    mkdir build && \
 #    cd build && \
 #    cmake .. && \
