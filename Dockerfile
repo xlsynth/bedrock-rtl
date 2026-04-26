@@ -1,9 +1,10 @@
 # SPDX-License-Identifier: Apache-2.0
 
-FROM rockylinux:8.9.20231119
+FROM rockylinux:8.9.20231119@sha256:2d05a9266523bbf24f33ebc3a9832e4d5fd74b973c220f2204ca802286aa275d
 ARG TARGETPLATFORM
 LABEL description="Docker image for building and testing Bedrock-RTL using open source tools."
 WORKDIR /tmp
+COPY requirements_lock_3_12.txt /tmp/requirements_lock_3_12.txt
 
 RUN if [ "${TARGETPLATFORM}" != "linux/amd64" ]; then \
         echo "This Dockerfile does not yet support non-amd64 platforms because Bazel hasn't provided Docker images for them yet."; \
@@ -12,8 +13,7 @@ RUN if [ "${TARGETPLATFORM}" != "linux/amd64" ]; then \
     fi
 
 # Install build-time dependencies and other helpful yum packages.
-RUN yum update -y
-RUN yum install -y 'dnf-command(config-manager)'
+RUN yum install -y dnf-plugins-core-4.0.21-25.el8
 RUN yum config-manager --set-enabled \
     appstream-debuginfo \
     appstream-source \
@@ -23,7 +23,6 @@ RUN yum config-manager --set-enabled \
     powertools \
     powertools-debuginfo \
     powertools-source
-RUN yum update -y
 
 RUN yum install -y autoconf-2.69-29.el8_10.1
 RUN yum install -y bison-3.0.4-10.el8
@@ -67,7 +66,7 @@ RUN yum install -y vim-enhanced-2:8.0.1763-19.el8_6.4
 RUN yum install -y zlib-1.2.11-26.el8
 RUN yum install -y zlib-devel-1.2.11-26.el8
 
-RUN pip3.12 install click==8.1.8
+RUN pip3.12 install --require-hashes -r /tmp/requirements_lock_3_12.txt
 
 # Install iverilog
 # git SHA from: Jan 3, 2025
@@ -83,9 +82,10 @@ RUN cd iverilog && \
 RUN iverilog -V
 
 # Install Verilator
+# v5.032
 RUN git clone https://github.com/verilator/verilator
 RUN cd verilator && \
-    git checkout v5.032 && \
+    git checkout 8ff77e9d47351b0a59114929880687839a51840b && \
     autoconf && \
     ./configure && \
     make -j$(nproc) && \
@@ -96,6 +96,7 @@ RUN verilator --version
 
 # Install Verible
 RUN curl -L https://github.com/chipsalliance/verible/releases/download/v0.0-4023-gc1271a00/verible-v0.0-4023-gc1271a00-linux-static-x86_64.tar.gz -o verible-v0.0-4023-gc1271a00-linux-static-x86_64.tar.gz
+RUN echo "30c20385956f52ef892cb58f7f816f9f9a9dc37a0432848a49c6d9aa3a72a8b7  verible-v0.0-4023-gc1271a00-linux-static-x86_64.tar.gz" | sha256sum -c -
 RUN tar -xzf verible-v0.0-4023-gc1271a00-linux-static-x86_64.tar.gz && \
     cp verible-v0.0-4023-gc1271a00/bin/* /usr/local/bin/ && \
     verible-verilog-lint --version && \
@@ -103,10 +104,11 @@ RUN tar -xzf verible-v0.0-4023-gc1271a00-linux-static-x86_64.tar.gz && \
     rm -rf verible-v0.0-4023-gc1271a00
 
 # Install Yosys
+# v0.51
 RUN git clone https://github.com/YosysHQ/yosys.git
 RUN cd yosys && \
     git fetch --all && \
-    git checkout v0.51 && \
+    git checkout c4b5190229616f7ebf8197f43990b4429de3e420 && \
     git submodule update --init --recursive && \
     make -j$(nproc) && \
     make install && \
@@ -115,9 +117,10 @@ RUN cd yosys && \
 RUN yosys --help
 
 # Install EQY
+# v0.48
 RUN git clone https://github.com/YosysHQ/eqy.git
 RUN cd eqy && \
-    git checkout v0.48 && \
+    git checkout 93bf4dfb8b19c0f1e9d472fd8421cdfdc4fe85a0 && \
     make -j$(nproc) && \
     make install && \
     cd .. && \
@@ -128,7 +131,8 @@ RUN eqy --help
 # TODO: debug
 #RUN git clone https://github.com/YosysHQ/sby
 #RUN cd sby && \
-#    git checkout v0.48 && \
+#    # v0.48
+#    git checkout 26b387466d224cd9e83a6f97d0b69d9dd59e56b5 && \
 #    make -j$(nproc) && \
 #    make install && \
 #    cd .. && \
@@ -139,7 +143,8 @@ RUN eqy --help
 # TODO: boolector is not able to build..
 #RUN git clone https://github.com/boolector/boolector
 #RUN cd boolector && \
-#    git checkout 3.2.4 && \
+#    # 3.2.4
+#    git checkout 393cdfba3735d334bb4e6525500b8a0280dd41e6 && \
 #    ./contrib/setup-lingeling.sh && \
 #    ./contrib/setup-btor2tools.sh && \
 #    ./configure.sh && \
@@ -152,9 +157,10 @@ RUN eqy --help
 #    rm -rf boolector
 #RUN boolector --version
 
+# Yices-2.6.5
 RUN git clone https://github.com/SRI-CSL/yices2.git
 RUN cd yices2 && \
-    git checkout Yices-2.6.5 && \
+    git checkout 8e6297e233299631147f98659224c3118fc6a215 && \
     autoconf && \
     ./configure && \
     make -j$(nproc) && \
@@ -164,7 +170,8 @@ RUN cd yices2 && \
 RUN yices --version
 
 # Necessary for building OpenSTA
-RUN curl -L https://github.com/davidkebo/cudd/raw/refs/heads/main/cudd_versions/cudd-3.0.0.tar.gz -o cudd-3.0.0.tar.gz
+RUN curl -L https://github.com/davidkebo/cudd/raw/c8d587ef3fbcc115977fed48a867aa6664ca11d0/cudd_versions/cudd-3.0.0.tar.gz -o cudd-3.0.0.tar.gz
+RUN echo "b8e966b4562c96a03e7fbea239729587d7b395d53cadcc39a7203b49cf7eeb69  cudd-3.0.0.tar.gz" | sha256sum -c -
 RUN tar -xzf cudd-3.0.0.tar.gz && \
     cd cudd-3.0.0 && \
     ./configure --prefix=/usr/local && \
@@ -174,6 +181,7 @@ RUN tar -xzf cudd-3.0.0.tar.gz && \
 
 # Build eigen 3.4.0 manually because yum only gave us 3.3.4, too low for OpenSTA
 #RUN curl -L https://gitlab.com/libeigen/eigen/-/archive/3.4.0/eigen-3.4.0.tar.gz -o eigen-3.4.0.tar.gz
+#RUN echo "8586084f71f9bde545ee7fa6d00288b264a2b7ac3607b974e54d13e7162c1c72  eigen-3.4.0.tar.gz" | sha256sum -c -
 #RUN tar -xzf eigen-3.4.0.tar.gz && \
 #    cd eigen-3.4.0 && \
 #    mkdir build && \
@@ -188,6 +196,7 @@ RUN tar -xzf cudd-3.0.0.tar.gz && \
 # TODO: not yet working because of missing eigen dependency
 #RUN git clone https://github.com/The-OpenROAD-Project/OpenSTA.git
 #RUN cd OpenSTA && \
+#    git checkout 543361765b78269402dba2656c7fca19459a7b7f && \
 #    mkdir build && \
 #    cd build && \
 #    cmake .. && \
@@ -200,9 +209,10 @@ RUN tar -xzf cudd-3.0.0.tar.gz && \
 
 # Install Slang. Make sure to tell it to use clang,
 # because our gcc install in this image is too old for C++20 language features.
+# v7.0
 RUN git clone https://github.com/MikePopoloski/slang.git
 RUN cd slang && \
-    git checkout v7.0 && \
+    git checkout d56a39898b24208871ac936cd535f9daacef36a7 && \
     CC=clang CXX=clang++ cmake -B build && \
     cmake --build build -j$(nproc) && \
     cp build/bin/slang /usr/local/bin/slang && \
@@ -213,12 +223,14 @@ RUN slang -version
 #
 # Needed by TopStitch, which is used during Bazel build of xlsynth/bedrock-rtl repo.
 # Cannot directly depend on XLS through Bazel to prevent future circular dependencies (we plan for XLS to depend on bedrock-rtl).
-RUN curl -L https://github.com/xlsynth/xlsynth/releases/download/v0.22.0/libxls-rocky8.so.gz -o /usr/local/lib/libxls-v0.20.0-rocky8.so.gz
-RUN gunzip /usr/local/lib/libxls-v0.20.0-rocky8.so.gz
+RUN curl -L https://github.com/xlsynth/xlsynth/releases/download/v0.22.0/libxls-rocky8.so.gz -o /usr/local/lib/libxls-v0.22.0-rocky8.so.gz
+RUN echo "e0ddd5d519ecafb402c427bb769cd42cef0b944bd6c6b4dcc5c7926566d735e7  /usr/local/lib/libxls-v0.22.0-rocky8.so.gz" | sha256sum -c -
+RUN gunzip /usr/local/lib/libxls-v0.22.0-rocky8.so.gz
 
 # Use Bazelisk to manage Bazel versions
 # Makes it easier to upgrade by just changing .bazelversion file in the Bedrock-RTL repo.
 RUN curl -L https://github.com/bazelbuild/bazelisk/releases/download/v1.25.0/bazelisk-linux-amd64 -o /usr/local/bin/bazelisk
+RUN echo "fd8fdff418a1758887520fa42da7e6ae39aefc788cf5e7f7bb8db6934d279fc4  /usr/local/bin/bazelisk" | sha256sum -c -
 RUN mv /usr/local/bin/bazelisk /usr/local/bin/bazel
 RUN chmod +x /usr/local/bin/bazel
 RUN bazel --version

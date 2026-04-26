@@ -10,11 +10,14 @@ on:
 
 jobs:
   pre-commit:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@v6
-      - uses: actions/setup-python@v6
-      - uses: pre-commit/action@v3.0.1
+      # actions/checkout v6
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
+      # actions/setup-python v6
+      - uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405
+      # pre-commit/action v3.0.1
+      - uses: pre-commit/action@2c7b3805fd2a0fd8c1884dcaebf91fc102a13ecd
 
   # Run bazel build and tests in order in one job to avoid parallel jobs that make
   # build logs appear out of sequence across the CI workflow.
@@ -40,7 +43,8 @@ jobs:
       iverilog_passing_tests: ${{ steps.iverilog.outputs.passing_tests }}
       iverilog_exit_code: ${{ steps.iverilog.outputs.exit_code }}
     steps:
-    - uses: actions/checkout@v6
+    # actions/checkout v6
+    - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
     - name: Copy ci.bazelrc
       working-directory: ${{ github.workspace }}
       run: cp /home/gh-actions/bedrock-infra/ci.bazelrc ci.bazelrc
@@ -140,16 +144,18 @@ jobs:
   ##########################################
   ##########################################
   rtl-files-badge:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
     steps:
-    - uses: actions/checkout@v6
+    # actions/checkout v6
+    - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
     - name: Count RTL files
       run: |
         NUM_RTL_FILES=$(find . -type d -name rtl -exec find {} -type f -name "*.sv" \; | wc -l)
         echo "NUM_RTL_FILES=$NUM_RTL_FILES" >> $GITHUB_ENV
     - name: Create RTL files badge
-      uses: schneegans/dynamic-badges-action@v1.7.0
+      # schneegans/dynamic-badges-action v1.7.0
+      uses: schneegans/dynamic-badges-action@e9a478b16159b4d31420099ba146cdc50f134483
       with:
         auth: ${{ secrets.MGOTTSCHO_GISTS_SECRET }}
         gistID: c66dc2ddc0e513ba06ce338620977b26
@@ -159,12 +165,13 @@ jobs:
         color: "purple"
 
   python-badge:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     needs: bazel-build-and-test
     if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
     steps:
     - name: Create python badge
-      uses: schneegans/dynamic-badges-action@v1.7.0
+      # schneegans/dynamic-badges-action v1.7.0
+      uses: schneegans/dynamic-badges-action@e9a478b16159b4d31420099ba146cdc50f134483
       with:
         auth: ${{ secrets.MGOTTSCHO_GISTS_SECRET }}
         gistID: c66dc2ddc0e513ba06ce338620977b26
@@ -174,12 +181,13 @@ jobs:
         color: ${{ needs.bazel-build-and-test.outputs.python_exit_code == '0' && 'brightgreen' || 'red' }}
 
   stardoc-badge:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     needs: bazel-build-and-test
     if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
     steps:
     - name: Create stardoc badge
-      uses: schneegans/dynamic-badges-action@v1.7.0
+      # schneegans/dynamic-badges-action v1.7.0
+      uses: schneegans/dynamic-badges-action@e9a478b16159b4d31420099ba146cdc50f134483
       with:
         auth: ${{ secrets.MGOTTSCHO_GISTS_SECRET }}
         gistID: c66dc2ddc0e513ba06ce338620977b26
@@ -189,12 +197,13 @@ jobs:
         color: ${{ needs.bazel-build-and-test.outputs.stardoc_exit_code == '0' && 'brightgreen' || 'red' }}
 
   verific-badge:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     needs: bazel-build-and-test
     if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
     steps:
     - name: Create verific badge
-      uses: schneegans/dynamic-badges-action@v1.7.0
+      # schneegans/dynamic-badges-action v1.7.0
+      uses: schneegans/dynamic-badges-action@e9a478b16159b4d31420099ba146cdc50f134483
       with:
         auth: ${{ secrets.MGOTTSCHO_GISTS_SECRET }}
         gistID: c66dc2ddc0e513ba06ce338620977b26
@@ -204,12 +213,13 @@ jobs:
         color: ${{ needs.bazel-build-and-test.outputs.verific_exit_code == '0' && 'brightgreen' || 'red' }}
 
   ascentlint-badge:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     needs: bazel-build-and-test
     if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
     steps:
     - name: Create ascentlint badge
-      uses: schneegans/dynamic-badges-action@v1.7.0
+      # schneegans/dynamic-badges-action v1.7.0
+      uses: schneegans/dynamic-badges-action@e9a478b16159b4d31420099ba146cdc50f134483
       with:
         auth: ${{ secrets.MGOTTSCHO_GISTS_SECRET }}
         gistID: c66dc2ddc0e513ba06ce338620977b26
@@ -219,12 +229,13 @@ jobs:
         color: ${{ needs.bazel-build-and-test.outputs.ascentlint_exit_code == '0' && 'brightgreen' || 'red' }}
 
   vcs-badge:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     needs: bazel-build-and-test
     if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
     steps:
     - name: Create vcs badge
-      uses: schneegans/dynamic-badges-action@v1.7.0
+      # schneegans/dynamic-badges-action v1.7.0
+      uses: schneegans/dynamic-badges-action@e9a478b16159b4d31420099ba146cdc50f134483
       with:
         auth: ${{ secrets.MGOTTSCHO_GISTS_SECRET }}
         gistID: c66dc2ddc0e513ba06ce338620977b26
@@ -234,12 +245,13 @@ jobs:
         color: ${{ needs.bazel-build-and-test.outputs.vcs_exit_code == '0' && 'brightgreen' || 'red' }}
 
   iverilog-badge:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     needs: bazel-build-and-test
     if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
     steps:
     - name: Create iverilog badge
-      uses: schneegans/dynamic-badges-action@v1.7.0
+      # schneegans/dynamic-badges-action v1.7.0
+      uses: schneegans/dynamic-badges-action@e9a478b16159b4d31420099ba146cdc50f134483
       with:
         auth: ${{ secrets.MGOTTSCHO_GISTS_SECRET }}
         gistID: c66dc2ddc0e513ba06ce338620977b26
