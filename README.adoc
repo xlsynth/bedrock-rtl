@@ -26,7 +26,7 @@ image:bedrock-rtl-logo-light.jpg[Bedrock-RTL,width=300]
 
 At minimum, you need to have the following tools installed in your environment.
 
-* Bazel == 7.6.1 (recommended to manage this using Bazelisk)
+* Bazel == 7.7.1 (recommended to manage this using Bazelisk)
 * System Python interpreter >= 3.12
 
 Additionally, several tools are needed to build and run all of the tests:
@@ -38,6 +38,11 @@ Additionally, several tools are needed to build and run all of the tests:
     *** Icarus Verilog
   ** RTL wrapper generation
     *** TopStitch
+  ** Additional tools included in the Docker image
+    *** Verilator
+    *** Yosys, EQY, and Yices
+    *** Slang
+    *** XLS support libraries
 * **Proprietary** (not provided - purchase your own installation and licenses)
   ** Elaboration
     *** Verific tclmain
@@ -49,9 +54,9 @@ Additionally, several tools are needed to build and run all of the tests:
     *** Cadence JasperGold
     *** Synopsys VCF
 
-NOTE: We no longer support Altair Dsim in CI. Nevertheless, the build system should continue to support it if you wish to use it for your own tests.
+NOTE: We no longer support Altair DSim in CI. Nevertheless, the build system should continue to support it if you wish to use it for your own tests.
 
-The provided Dockerfile can be used to build an image with the minimum dependencies and open source tools.
+The provided Dockerfile can be used to build an image with the minimum dependencies and open source tools listed above.
 The Dockerfile uses RockyLinux 8 on x86-64 as the base image.
 If you want to run tests that leverage proprietary tools, you need to provide your own installations and licenses (which are typically compatible with RockyLinux 8 on x86-64).
 
@@ -106,22 +111,25 @@ bazel test //...
 [IMPORTANT]
 .Action required for tests to pass!
 ====
-By default, the Bazel tests will fail because the repository does not currently provide any EDA tool plugins for the `verilog_runner.py` tool.
-We do this because:
+The repository includes an Icarus Verilog plugin for open-source simulation tests, but most EDA tool plugins are intentionally not provided.
+Many Bazel tests will fail unless your local or CI environment provides plugins for the proprietary tools used by those tests.
+We keep those plugins outside the repository because:
 
 1. We want to keep test definitions as vendor-agnostic as possible.
 2. Certain vendors may have non-disclosure agreements that protect usage of their APIs or licensing agreements that restrict where and how the tools can be run.
 
-You will need to implement the plugin API by subclassing `//python/verilog_runner/eda_tool.py` for the tool(s) of interest and then point to them with the `VERILOG_RUNNER_PLUGIN_PATH` environment variable.
-You should also set this environment variable in the `.bazelrc` file so that it is used in all Bazel test invocations.
+For additional tools, implement the plugin API by subclassing `//python/verilog_runner/eda_tool.py` and point to the plugin module search directories with the `VERILOG_RUNNER_PLUGIN_PATH` environment variable.
+You can set this environment variable in `user.bazelrc` so that it is used in all Bazel test invocations.
 ====
 
 The Bazel test rule implementations at `//bazel:verilog.bzl` shell out the `//python/verilog_runner/verilog_runner.py` tool that presents a generic tool-agnostic API that actually implements the test.
 
 == Continuous Integration
 
-We run continuous integration tests with GitHub Actions using all of the supported tools.
-See the `.github/workflows/ci.yml` file for details.
+We run continuous integration tests with GitHub Actions.
+The main CI workflow currently covers pre-commit, build, Python/ecc codegen tests, Stardoc, Verific, AscentLint, VCS, and Icarus.
+Sampled JasperGold formal tests run in the nightly workflow.
+See `.github/workflows/ci.yml` and `.github/workflows/nightly.yml` for details.
 
 == Style Guide
 
@@ -339,80 +347,29 @@ Resets are always active-high.
 
 NOTE: The order of the suffices generally matches the order of the arguments to the macro.
 The suffices are also listed in alphabetical order, with the exception of `L` before `I`.
+The table below groups macros that share the same clock/reset behavior; the suffix convention above describes the load-enable and initial-value variants.
 
-[cols="1,4,1,1"]
+[cols="1,4"]
 |===
-| Macro/define | Description | Implemented | Tested
+| Macro/define | Description
 
-| `BR_REGA`
-| Flip-flop register with unconditional load, asynchronous active-high reset named `arst`, initial value 0, positive-edge triggered clock named `clk`.
-| Yes
-| Yes
+| `BR_REG`, `BR_REGL`, `BR_REGI`, `BR_REGLI`
+| Synchronous active-high reset named `rst`, positive-edge clock named `clk`; optional load enable and initial value.
 
-| `BR_REGALI`
-| Flip-flop register with conditional load enable, asynchronous active-high reset named `arst`, initial value given, positive-edge triggered clock named `clk`.
-| Yes
-| Yes
+| `BR_REGX`, `BR_REGLX`, `BR_REGIX`, `BR_REGLIX`
+| Synchronous active-high reset and positive-edge clock are explicit macro arguments; optional load enable and initial value.
 
-| `BR_REGAI`
-| Flip-flop register with unconditional load, asynchronous active-high reset named `arst`, initial value given, positive-edge triggered clock named `clk`.
-| Yes
-| Yes
+| `BR_REGA`, `BR_REGAL`, `BR_REGAI`, `BR_REGALI`
+| Asynchronous active-high reset named `arst`, positive-edge clock named `clk`; optional load enable and initial value.
 
-| `BR_REGAL`
-| Flip-flop register with conditional load enable, asynchronous active-high reset named `arst`, initial value 0, positive-edge triggered clock named `clk`.
-| Yes
-| Yes
+| `BR_REGAX`, `BR_REGALX`, `BR_REGAIX`, `BR_REGALIX`
+| Asynchronous active-high reset and positive-edge clock are explicit macro arguments; optional load enable and initial value.
 
-| `BR_REGLI`
-| Flip-flop register with conditional load enable, synchronous active-high reset named `rst`, initial value given, positive-edge triggered clock named `clk`.
-| Yes
-| Yes
+| `BR_REGN`, `BR_REGLN`
+| No reset, positive-edge clock named `clk`; optional load enable.
 
-| `BR_REGI`
-| Flip-flop register with unconditional load, synchronous active-high reset named `rst`, initial value given, positive-edge triggered clock named `clk`.
-| Yes
-| Yes
-
-| `BR_REGLIX`
-| Flip-flop register with conditional load enable, synchronous active-high given reset, initial value given, positive-edge triggered given clock.
-| Yes
-| Yes
-
-| `BR_REGIX`
-| Flip-flop register with unconditional load, synchronous active-high given reset, initial value given, positive-edge triggered given clock.
-| Yes
-| Yes
-
-| `BR_REGLN`
-| Flip-flop register with load enable, no reset, positive-edge triggered clock named `clk`.
-| Yes
-| Yes
-
-| `BR_REGLX`
-| Flip-flop register with conditional load enable, synchronous active-high reset, initial value 0, positive-edge triggered given clock.
-| Yes
-| Yes
-
-| `BR_REGL`
-| Flip-flop register with conditional load enable, synchronous active-high reset named `rst`, initial value 0, positive-edge triggered clock named `clk`.
-| Yes
-| Yes
-
-| `BR_REGN`
-| Flip-flop register with unconditional load, no reset, positive-edge triggered clock named `clk`.
-| Yes
-| Yes
-
-| `BR_REGX`
-| Flip-flop register with unconditional load, synchronous active-high given reset, initial value 0, positive-edge triggered given clock.
-| Yes
-| Yes
-
-| `BR_REG`
-| Flip-flop register with unconditional load, synchronous active-high reset named `rst`, initial value 0, positive-edge triggered clock named `clk`.
-| Yes
-| Yes
+| `BR_REGNX`, `BR_REGLNX`
+| No reset, positive-edge clock is an explicit macro argument; optional load enable.
 
 |===
 
@@ -426,7 +383,7 @@ They are guarded (enabled) by the following defines:
       are no-ops.
 * `BR_ENABLE_FPV` -- if not defined, then all `BR_*_FPV` macros are no-ops.
 * `BR_DISABLE_ASSERT_IMM` -- if defined, then all `BR_ASSERT_IMM*`, `BR_COVER_IMM*`,
-      `BR_ASSERT_COMB*`, and `BR_ASSERT_IMM*` macros are no-ops.
+      `BR_ASSERT_COMB*`, and `BR_COVER_COMB*` macros are no-ops.
 * `BR_DISABLE_FINAL_CHECKS` -- if defined, then all `BR_ASSERT_FINAL*` macros are no-ops.
 
 TIP: It is recommended that users simply define `BR_ASSERT_ON` when integrating Bedrock modules into their designs.
@@ -455,6 +412,18 @@ Disable by defining `BR_DISABLE_FINAL_CHECKS`.
 | `BR_ASSERT_CR`
 | Concurrent assertion with explicit clock and reset names.
 
+| `BR_ASSERT_KNOWN`
+| Concurrent assertion that an expression is known, with implicit `clk` and `rst` names.
+
+| `BR_ASSERT_KNOWN_VALID`
+| Concurrent assertion that an expression is known when a valid condition is true, with implicit `clk` and `rst` names.
+
+| `BR_ASSERT_KNOWN_CR`
+| Concurrent known-value assertion with explicit clock and reset names.
+
+| `BR_ASSERT_KNOWN_VALID_CR`
+| Concurrent known-value assertion with explicit clock and reset names and an explicit valid condition.
+
 | `BR_ASSERT_IMM`
 a| Immediate assertion.
 Also passes if the expression is unknown.
@@ -471,6 +440,9 @@ Disable by defining `BR_DISABLE_ASSERT_IMM`.
 | `BR_COVER_CR`
 | Concurrent cover with explicit clock and reset names.
 
+| `BR_COVER_INCL_RST`
+| Concurrent cover that is active both in reset and out of reset, with implicit `clk` name.
+
 | `BR_COVER_IMM`
 a| Immediate cover.
 Disable by defining `BR_DISABLE_ASSERT_IMM`.
@@ -485,11 +457,11 @@ Disable by defining `BR_DISABLE_ASSERT_IMM`.
 | `BR_ASSUME_CR`
 | Concurrent assumption with explicit clock and reset names.
 
-| `BR_ASSERT_IN_RESET`
+| `BR_ASSERT_INCL_RST`
 a| Concurrent assertion that is active in reset and out of reset
 (but specifically intended for checking the former), with implicit `clk` name.
 
-| `BR_ASSERT_IN_RESET_C`
+| `BR_ASSERT_INCL_RST_C`
 a| Concurrent assertion that is active in reset and out of reset
 (but specifically intended for checking the former), with explicit clock name.
 
@@ -578,11 +550,26 @@ Disable them globally by defining `BR_DISABLE_INTG_CHECKS`.
 | `BR_ASSERT_COMB_INTG`
 | Wraps `BR_ASSERT_COMB`.
 
+| `BR_ASSERT_INCL_RST_INTG`
+| Wraps `BR_ASSERT_INCL_RST`.
+
+| `BR_ASSERT_INCL_RST_C_INTG`
+| Wraps `BR_ASSERT_INCL_RST_C`.
+
+| `BR_ASSERT_IMM_INTG`
+| Wraps `BR_ASSERT_IMM`.
+
 | `BR_COVER_INTG`
 | Wraps `BR_COVER`.
 
+| `BR_COVER_INCL_RST_INTG`
+| Wraps `BR_COVER_INCL_RST`.
+
 | `BR_COVER_CR_INTG`
 | Wraps `BR_COVER_CR`.
+
+| `BR_COVER_IMM_INTG`
+| Wraps `BR_COVER_IMM`.
 
 | `BR_COVER_COMB_INTG`
 | Wraps `BR_COVER_COMB`.
@@ -620,11 +607,26 @@ Enable them globally by defining `BR_ENABLE_IMPL_CHECKS`.
 | `BR_ASSERT_COMB_IMPL`
 | Wraps `BR_ASSERT_COMB`.
 
+| `BR_ASSERT_INCL_RST_IMPL`
+| Wraps `BR_ASSERT_INCL_RST`.
+
+| `BR_ASSERT_INCL_RST_C_IMPL`
+| Wraps `BR_ASSERT_INCL_RST_C`.
+
+| `BR_ASSERT_IMM_IMPL`
+| Wraps `BR_ASSERT_IMM`.
+
 | `BR_COVER_IMPL`
 | Wraps `BR_COVER`.
 
+| `BR_COVER_INCL_RST_IMPL`
+| Wraps `BR_COVER_INCL_RST`.
+
 | `BR_COVER_CR_IMPL`
 | Wraps `BR_COVER_CR`.
+
+| `BR_COVER_IMM_IMPL`
+| Wraps `BR_COVER_IMM`.
 
 | `BR_COVER_COMB_IMPL`
 | Wraps `BR_COVER_COMB`.
@@ -644,6 +646,9 @@ These macros conveniently wrap module instantiations from the `gate` category.
 
 | `BR_GATE_CLK_BUF`
 | Instantiates `br_gate_clk_buf`.
+
+| `BR_GATE_CLK_INV`
+| Instantiates `br_gate_clk_inv`.
 
 | `BR_GATE_INV`
 | Instantiates `br_gate_inv`.
@@ -666,6 +671,71 @@ These macros conveniently wrap module instantiations from the `gate` category.
 | `BR_GATE_ICG`
 | Instantiates `br_gate_icg`.
 
+| `BR_GATE_ICG_RST`
+| Instantiates `br_gate_icg_rst`.
+
+| `BR_GATE_CDC_SYNC`
+| Instantiates `br_gate_cdc_sync`.
+
+| `BR_GATE_CDC_SYNC_STAGES`
+| Instantiates `br_gate_cdc_sync` with an explicit number of synchronizer stages.
+
+| `BR_GATE_CDC_SYNC_ARST`
+| Instantiates `br_gate_cdc_sync_arst`.
+
+| `BR_GATE_CDC_SYNC_ARST_STAGES`
+| Instantiates `br_gate_cdc_sync_arst` with an explicit number of synchronizer stages.
+
+| `BR_GATE_CDC_RST_SYNC`
+| Instantiates `br_cdc_rst_sync` as an asynchronous-reset to synchronous-reset synchronizer.
+
+| `BR_GATE_CDC_RST_SYNC_STAGES`
+| Instantiates the reset synchronizer with an explicit number of synchronizer stages.
+
+| `BR_GATE_CDC_PSEUDOSTATIC`, `BR_GATE_CDC_PSEUDOSTATIC_BUS`
+| Instantiates `br_gate_cdc_pseudostatic` for scalar or bus pseudo-static CDC nets.
+
+| `BR_GATE_CDC_MAXDEL`, `BR_GATE_CDC_MAXDEL_BUS`
+| Instantiates `br_gate_cdc_maxdel` for scalar or bus CDC nets that should be checked for max delay.
+
+|===
+
+=== `br_assign.svh`: Assignment Helpers
+
+These macros provide size-aware assignment helpers for common bit slicing and extension operations.
+
+[cols="2,4"]
+|===
+| Macro/define | Description
+
+| `BR_ZERO_EXT`
+| Zero-extend a smaller expression into a larger destination.
+
+| `BR_ASSIGN_MAYBE_ZERO_EXT`
+| Zero-extend when the destination is wider than the source, otherwise assign directly.
+
+| `BR_TRUNCATE_FROM_LSB`, `BR_TRUNCATE_FROM_MSB`
+| Assign the least-significant or most-significant bits of a wider expression into a narrower destination.
+
+| `BR_INSERT_TO_LSB`, `BR_INSERT_TO_MSB`
+| Insert a narrower expression into the least-significant or most-significant bits of a wider destination.
+
+|===
+
+=== `br_fv.svh`: Formal Verification Helpers
+
+These macros provide small helper patterns used by formal monitors.
+
+[cols="2,4"]
+|===
+| Macro/define | Description
+
+| `BR_FV_2RAND_IDX`
+| Constrains two symbolic indices to be stable, in range, and unique.
+
+| `BR_FV_IDX`
+| Computes the selected index for a one-hot vector.
+
 |===
 
 === `br_tieoff.svh`: Tie-off Convenience Wrappers
@@ -677,24 +747,24 @@ These macros conveniently wrap `br_misc_tieoff*` module instantiations.
 | Macro/define | Description
 
 | `BR_TIEOFF_ZERO_NAMED`
-| Instantiates `br_tieoff_zero` with a given submodule instance suffix.
+| Instantiates `br_misc_tieoff_zero` with a given submodule instance suffix.
 
 | `BR_TIEOFF_ONE_NAMED`
-| Instantiates `br_tieoff_one` with a given submodule instance suffix.
+| Instantiates `br_misc_tieoff_one` with a given submodule instance suffix.
 
 | `BR_TIEOFF_ZERO`
-| Instantiates `br_tieoff_zero` with a derived submodule instance suffix.
+| Instantiates `br_misc_tieoff_zero` with a derived submodule instance suffix.
 
 | `BR_TIEOFF_ONE`
-| Instantiates `br_tieoff_one` with a derived submodule instance suffix.
+| Instantiates `br_misc_tieoff_one` with a derived submodule instance suffix.
 
 | `BR_TIEOFF_ZERO_TODO`
 a| Provided for convenience of the user grepping for `TODO` in the codebase, to help prevent accidental tie-offs that result in bugs.
-Instantiates `br_tieoff_zero` with a derived submodule instance suffix.
+Instantiates `br_misc_tieoff_zero` with a derived submodule instance suffix.
 
 | `BR_TIEOFF_ONE_TODO`
 a| Provided for convenience of the user grepping for `TODO` in the codebase, to help prevent accidental tie-offs that result in bugs.
-Instantiates `br_tieoff_one` with a derived submodule instance suffix.
+Instantiates `br_misc_tieoff_one` with a derived submodule instance suffix.
 
 |===
 
@@ -721,488 +791,859 @@ Instantiates `br_misc_unused` with a derived submodule instance suffix.
 
 == Modules
 
+This section inventories public RTL modules under top-level `*/rtl` directories.
+Internal implementation modules under `*/rtl/internal` are intentionally omitted.
+The verification-artifact column reports repository evidence, not a promise that the tests pass in every local environment.
+`Elab/lint` means the module has Bazel elaboration/lint targets; `Sim` means there is a simulation testbench or generated simulation test; `FPV` means there is formal monitor or formal test collateral.
+
+=== `amba`: AMBA Protocol Components
+
+[cols="1,4,2"]
+|===
+| Module | Description | Verification artifacts
+
+| `br_amba_apb_timing_slice`
+| Inserts timing isolation on an APB channel.
+| Elab/lint, FPV.
+
+| `br_amba_atb_funnel`
+| Funnels multiple AMBA Trace Bus streams into one downstream stream.
+| Elab/lint, FPV.
+
+| `br_amba_axi2axil`
+| Converts an AXI subordinate interface into an AXI-Lite manager interface.
+| Elab/lint, FPV.
+
+| `br_amba_axi_default_target`
+| Terminates AXI requests with default target responses.
+| Elab/lint, FPV.
+
+| `br_amba_axi_demux`
+| Routes AXI transactions from one upstream interface to selected downstream interfaces.
+| Elab/lint, Sim, FPV.
+
+| `br_amba_axi_isolate_mgr`
+| Isolates the manager side of an AXI interface during reset or shutdown sequencing.
+| Elab/lint, Sim, FPV.
+
+| `br_amba_axi_isolate_sub`
+| Isolates the subordinate side of an AXI interface during reset or shutdown sequencing.
+| Elab/lint, Sim, FPV.
+
+| `br_amba_axi_shrinker`
+| Shrinks AXI data width while preserving AXI transaction semantics.
+| Elab/lint, Sim, FPV.
+
+| `br_amba_axi_timing_slice`
+| Inserts timing isolation on AXI channels.
+| Elab/lint, FPV.
+
+| `br_amba_axil2apb`
+| Bridges AXI-Lite transactions to APB.
+| Elab/lint, FPV.
+
+| `br_amba_axil_default_target`
+| Terminates AXI-Lite requests with default target responses.
+| Elab/lint, FPV.
+
+| `br_amba_axil_msi`
+| Generates AXI-Lite write transactions for message-signaled interrupts.
+| Elab/lint, FPV.
+
+| `br_amba_axil_split`
+| Splits AXI-Lite traffic across multiple downstream interfaces.
+| Elab/lint, FPV.
+
+| `br_amba_axil_timing_slice`
+| Inserts timing isolation on AXI-Lite channels.
+| Elab/lint, FPV.
+
+|===
+
 === `arb`: Arbiters
 
-[cols="1,4,1"]
+[cols="1,4,2"]
 |===
-| Module | Description | Verified
+| Module | Description | Verification artifacts
 
 | `br_arb_fixed`
-| Fixed priority
-| Yes
+| Grants the first eligible requester according to fixed priority.
+| Elab/lint, Sim, FPV.
+
+| `br_arb_grant_hold`
+| Holds an arbitration grant stable until the selected requester releases it.
+| Elab/lint, Sim, FPV.
 
 | `br_arb_lru`
-| Least-recently used
-| Yes
+| Grants using least-recently-used priority state.
+| Elab/lint, Sim, FPV.
+
+| `br_arb_multi_rr`
+| Produces multiple round-robin grants per arbitration cycle.
+| Elab/lint, FPV.
+
+| `br_arb_pri_rr`
+| Combines fixed-priority and round-robin arbitration behavior.
+| Elab/lint, FPV.
 
 | `br_arb_rr`
-| Round-robin
-| Yes
+| Grants using round-robin priority state.
+| Elab/lint, Sim, FPV.
+
+| `br_arb_weighted_rr`
+| Grants using weighted round-robin priority state.
+| Elab/lint, FPV.
 
 |===
 
 === `cdc`: Clock Domain Crossings
 
-[cols="1,4,1"]
+[cols="1,4,2"]
 |===
-| Module | Description | Verified
+| Module | Description | Verification artifacts
+
+| `br_cdc_bit_pulse`
+| Transfers a single-cycle pulse between clock domains.
+| Elab/lint, Sim.
 
 | `br_cdc_bit_toggle`
-| Single-bit toggle CDC
-|
+| Synchronizes a single-bit level signal between clock domains.
+| Elab/lint.
 
 | `br_cdc_fifo_ctrl_1r1w`
-a| Bus CDC using a dual-clock FIFO controller for a 1R1W dual-clock SRAM
-
-* Push flow control: ready/valid
-* Pop flow control: ready/valid
-|
+| Controls a dual-clock 1R1W external RAM FIFO with ready/valid push and pop flow control.
+| Elab/lint, FPV.
 
 | `br_cdc_fifo_ctrl_1r1w_push_credit`
-a| Bus CDC using a dual-clock FIFO controller for a 1R1W dual-clock SRAM
+| Controls a dual-clock 1R1W external RAM FIFO with credit/valid push and ready/valid pop flow control.
+| Elab/lint, FPV.
 
-* Push flow control: credit/valid
-* Pop flow control: ready/valid
-|
+| `br_cdc_fifo_ctrl_pop_1r1w`
+| Provides the pop-side controller for a split dual-clock 1R1W FIFO controller.
+| FPV through combined FIFO controller collateral.
+
+| `br_cdc_fifo_ctrl_push_1r1w`
+| Provides the ready/valid push-side controller for a split dual-clock 1R1W FIFO controller.
+| FPV through combined FIFO controller collateral.
+
+| `br_cdc_fifo_ctrl_push_1r1w_push_credit`
+| Provides the credit/valid push-side controller for a split dual-clock 1R1W FIFO controller.
+| FPV through combined FIFO controller collateral.
 
 | `br_cdc_fifo_flops`
-a| Bus CDC using a dual-clock FIFO with internal flop-RAM
-
-* Push flow control: ready/valid
-* Pop flow control: ready/valid
-|
+| Implements a dual-clock FIFO using internal flop storage and ready/valid flow control.
+| Elab/lint, Sim, FPV.
 
 | `br_cdc_fifo_flops_push_credit`
-a| Bus CDC using a dual-clock FIFO with internal flop-RAM
+| Implements a dual-clock FIFO using internal flop storage with credit/valid push flow control.
+| Elab/lint, Sim, FPV.
 
-* Push flow control: credit/valid
-* Pop flow control: ready/valid
-|
+| `br_cdc_reg`
+| Transfers a register-like value between clock domains.
+| Elab/lint, Sim.
+
+| `br_cdc_rst_sync`
+| Synchronizes an asynchronous reset into a destination clock domain.
+| Elab/lint.
+
+| `br_cdc_stable_data`
+| Transfers data that is stable while sampled across a clock-domain boundary.
+| Elab/lint, Sim.
+
+| `br_cdc_stable_data_autoupdate`
+| Transfers stable CDC data with automatic update handling.
+| Elab/lint, Sim.
 
 |===
 
 === `counter`: Wrapping and Saturating Counters
 
-[cols="1,4,1"]
+[cols="1,4,2"]
 |===
-| Module | Description | Verified
-
-| `br_counter_decr`
-| Decrementing counter
-|
-
-| `br_counter_incr`
-| Incrementing counter
-|
+| Module | Description | Verification artifacts
 
 | `br_counter`
-| Up-down counter
-|
+| Counts up and down with wrapping or saturation behavior.
+| Elab/lint, Sim, FPV.
+
+| `br_counter_decr`
+| Counts down with wrapping or saturation behavior.
+| Elab/lint, Sim, FPV.
+
+| `br_counter_incr`
+| Counts up with wrapping or saturation behavior.
+| Elab/lint, Sim, FPV.
 
 |===
 
 === `credit`: Credit/Valid Flow Control
 
-[cols="1,4,1"]
+[cols="1,4,2"]
 |===
-| Module | Description | Verified
+| Module | Description | Verification artifacts
 
 | `br_credit_counter`
-| Credit counter
-|
+| Tracks available credits for credit/valid flow control.
+| Elab/lint, FPV.
 
 | `br_credit_receiver`
-| Credit/valid to ready/valid converter (credit-loop receiver-side)
-|
+| Manages the receiver side of credit/valid flow control without adding datapath buffering.
+| Elab/lint, Sim, FPV.
 
 | `br_credit_sender`
-| Ready/valid to credit/valid converter (credit-loop sender-side)
-|
+| Converts ready/valid sender traffic into credit/valid receiver traffic.
+| Elab/lint, FPV.
+
+| `br_credit_sender_vc`
+| Sends credit/valid traffic across multiple virtual channels.
+| Elab/lint, Sim.
+
+|===
+
+=== `csr`: Control and Status Registers
+
+[cols="1,4,2"]
+|===
+| Module | Description | Verification artifacts
+
+| `br_csr_axil_widget`
+| Presents a CSR memory interface through an AXI-Lite subordinate port.
+| Elab/lint, Sim, FPV.
+
+| `br_csr_cdc`
+| Bridges CSR requests and responses across a clock-domain boundary.
+| Elab/lint, FPV.
+
+| `br_csr_demux`
+| Routes CSR requests to one of multiple downstream CSR interfaces.
+| Elab/lint, Sim, FPV.
+
+| `br_csr_mem_interface`
+| Adapts CSR requests to a simple memory-like interface.
+| Elab/lint, Sim.
 
 |===
 
 === `delay`: Fixed-Delay Pipelines
 
-[cols="1,4,1"]
+[cols="1,4,2"]
 |===
-| Module | Description | Verified
-
-| `br_delay_nr`
-| Without reset
-|
-
-| `br_delay_shift_reg`
-| Loadable shift register
-|
+| Module | Description | Verification artifacts
 
 | `br_delay`
-| With reset
-|
+| Delays a signal by a fixed number of stages with reset.
+| Elab/lint, FPV.
 
-| `br_delay_valid_next_nr`
-| With self-gating (valid-next) and without reset
-|
+| `br_delay_deskew`
+| Applies per-lane delay to deskew multiple related signals.
+| Elab/lint.
 
-| `br_delay_valid_next`
-| With self-gating (valid-next)
-|
+| `br_delay_nr`
+| Delays a signal by a fixed number of stages without reset.
+| Elab/lint, FPV.
 
-| `br_delay_valid_nr`
-| With self-gating (valid) and without reset
-|
+| `br_delay_shift_reg`
+| Implements a loadable shift register.
+| Elab/lint.
+
+| `br_delay_skew`
+| Applies per-lane delay to intentionally skew multiple related signals.
+| Elab/lint.
 
 | `br_delay_valid`
-| With self-gating (valid)
-|
+| Delays data using valid-based self-gating.
+| Elab/lint, FPV.
+
+| `br_delay_valid_next`
+| Delays data using valid-next self-gating.
+| Elab/lint, FPV.
+
+| `br_delay_valid_next_nr`
+| Delays data using valid-next self-gating without reset.
+| Elab/lint, FPV.
+
+| `br_delay_valid_nr`
+| Delays data using valid-based self-gating without reset.
+| Elab/lint.
 
 |===
 
 === `demux`: Simple Demultiplexers
 
-[cols="1,4,1"]
+[cols="1,4,2"]
 |===
-| Module | Description | Verified
-
-| `br_demux_onehot`
-| One-hot demultiplexer
-|
+| Module | Description | Verification artifacts
 
 | `br_demux_bin`
-| Binary-select demultiplexer
-|
+| Routes input data to one output selected by a binary index.
+| Elab/lint.
 
-|===
-
-=== `enc`: Combinational encoders
-
-[cols="1,4,1"]
-|===
-| Module | Description | Verified
-
-| `br_enc_bin2gray`
-| Binary to gray
-|
-
-| `br_enc_bin2onehot`
-| Binary to onehot
-|
-
-| `br_enc_countones`
-| Count the number of ones in a vector
-|
-
-| `br_enc_gray2bin`
-| Gray to binary
-|
-
-| `br_enc_onehot2bin`
-| One-hot to binary
-|
-
-| `br_enc_priority_encoder`
-| Priority encoder
-|
+| `br_demux_onehot`
+| Routes input data to outputs selected by a one-hot mask.
+| Elab/lint.
 
 |===
 
 === `ecc`: Error Correcting Codes
 
-[cols="1,4,1"]
+[cols="1,4,2"]
 |===
-| Module | Description | Verified
+| Module | Description | Verification artifacts
 
 | `br_ecc_secded_decoder`
-| Single-error-correcting, double-error-detecting (SECDED) decoder
-|
+| Decodes SECDED-protected data and reports/corrects errors.
+| Elab/lint, Sim, FPV.
 
 | `br_ecc_secded_encoder`
-| Single-error-correcting, double-error-detecting (SECDED) encoder
-|
+| Encodes data with single-error-correcting, double-error-detecting parity.
+| Elab/lint, Sim, FPV.
 
 | `br_ecc_sed_decoder`
-| Single-error-detecting (SED) decoder
-|
+| Decodes single-error-detecting protected data and reports errors.
+| Elab/lint, Sim, FPV.
 
 | `br_ecc_sed_encoder`
-| Single-error-detecting (SED) encoder
-|
+| Encodes data with single-error-detecting parity.
+| Elab/lint, Sim, FPV.
+
+|===
+
+=== `enc`: Combinational Encoders
+
+[cols="1,4,2"]
+|===
+| Module | Description | Verification artifacts
+
+| `br_enc_bin2gray`
+| Converts a binary value to Gray code.
+| Elab/lint, Sim.
+
+| `br_enc_bin2onehot`
+| Converts a binary index to a one-hot vector.
+| Elab/lint, Sim.
+
+| `br_enc_countones`
+| Counts the number of asserted bits in a vector.
+| Elab/lint, Sim.
+
+| `br_enc_gray2bin`
+| Converts a Gray-code value to binary.
+| Elab/lint, Sim.
+
+| `br_enc_onehot2bin`
+| Converts a one-hot vector to a binary index.
+| Elab/lint, Sim.
+
+| `br_enc_priority_dynamic`
+| Selects priority winners with a dynamic priority input.
+| Elab/lint, Sim.
+
+| `br_enc_priority_encoder`
+| Selects priority winners from a request vector.
+| Elab/lint, Sim.
 
 |===
 
 === `fifo`: First-In-First-Out Queues
 
-[cols="1,4,1"]
+[cols="1,4,2"]
 |===
-| Module | Description | Verified
-
-| `br_fifo_ctrl_1r1w_push_credit`
-a| FIFO controller with external RAM port for 1R1W
-
-* Push flow control: credit/valid
-* Pop flow control: ready/valid
-|
+| Module | Description | Verification artifacts
 
 | `br_fifo_ctrl_1r1w`
-a| FIFO controller with external RAM port for 1R1W
+| Controls a 1R1W external RAM FIFO with ready/valid push and pop flow control.
+| Elab/lint, FPV.
 
-* Push flow control: ready/valid
-* Pop flow control: ready/valid
-|
-
-| `br_fifo_flops_push_credit`
-a| FIFO with internal flop RAM
-
-* Push flow control: credit/valid
-* Pop flow control: ready/valid
-|
+| `br_fifo_ctrl_1r1w_push_credit`
+| Controls a 1R1W external RAM FIFO with credit/valid push and ready/valid pop flow control.
+| Elab/lint, FPV.
 
 | `br_fifo_flops`
-a| FIFO with internal flop RAM
+| Implements a FIFO using internal flop storage and ready/valid flow control.
+| Elab/lint, Sim, FPV.
 
-* Push flow control: ready/valid
-* Pop flow control: ready/valid
-|
+| `br_fifo_flops_push_credit`
+| Implements a FIFO using internal flop storage with credit/valid push flow control.
+| Elab/lint, Sim, FPV.
 
+| `br_fifo_shared_dynamic_ctrl`
+| Dynamically shares FIFO storage across multiple logical FIFOs.
+| Elab/lint, FPV.
+
+| `br_fifo_shared_dynamic_ctrl_ext_arbiter`
+| Dynamically shares FIFO storage using an externally supplied arbiter.
+| Elab/lint, FPV.
+
+| `br_fifo_shared_dynamic_ctrl_push_credit`
+| Dynamically shares FIFO storage with credit/valid push flow control.
+| Elab/lint, FPV.
+
+| `br_fifo_shared_dynamic_ctrl_push_credit_ext_arbiter`
+| Dynamically shares FIFO storage with credit/valid push flow control and an external arbiter.
+| Elab/lint, FPV.
+
+| `br_fifo_shared_dynamic_ctrl_push_credit_pop_credit`
+| Dynamically shares FIFO storage with credit/valid flow control on both push and pop sides.
+| Elab/lint.
+
+| `br_fifo_shared_dynamic_ctrl_push_credit_pop_credit_ext_arbiter`
+| Dynamically shares FIFO storage with push/pop credits and an external arbiter.
+| Elab/lint.
+
+| `br_fifo_shared_dynamic_flops`
+| Implements dynamically shared FIFO storage using internal flops.
+| Elab/lint, Sim, FPV.
+
+| `br_fifo_shared_dynamic_flops_push_credit`
+| Implements dynamically shared flop FIFOs with credit/valid push flow control.
+| Elab/lint, Sim, FPV.
+
+| `br_fifo_shared_dynamic_flops_push_credit_pop_credit`
+| Implements dynamically shared flop FIFOs with credit/valid push and pop flow control.
+| Elab/lint, Sim.
+
+| `br_fifo_shared_pop_ctrl`
+| Arbitrates pop access for shared FIFO storage.
+| Elab/lint.
+
+| `br_fifo_shared_pop_ctrl_credit`
+| Arbitrates pop access for shared FIFO storage with credit flow control.
+| Elab/lint.
+
+| `br_fifo_shared_pop_ctrl_credit_ext_arbiter`
+| Arbitrates credit-based pop access using an external arbiter.
+| Elab/lint.
+
+| `br_fifo_shared_pop_ctrl_ext_arbiter`
+| Arbitrates pop access using an external arbiter.
+| Elab/lint.
+
+| `br_fifo_shared_pstatic_ctrl`
+| Statically partitions shared FIFO storage across logical FIFOs.
+| Elab/lint, FPV.
+
+| `br_fifo_shared_pstatic_ctrl_push_credit`
+| Statically partitions shared FIFO storage with credit/valid push flow control.
+| Elab/lint, FPV.
+
+| `br_fifo_shared_pstatic_flops`
+| Implements statically partitioned shared FIFO storage using internal flops.
+| Elab/lint, Sim, FPV.
+
+| `br_fifo_shared_pstatic_flops_push_credit`
+| Implements statically partitioned shared flop FIFOs with credit/valid push flow control.
+| Elab/lint, Sim, FPV.
 
 |===
 
 === `flow`: Ready/Valid Flow Control
 
-[cols="1,4,1"]
+[cols="1,4,2"]
 |===
-| Module | Description | Verified
+| Module | Description | Verification artifacts
 
 | `br_flow_arb_fixed`
-| Fixed priority arbiter
-|
+| Arbitrates ready/valid flows with fixed priority.
+| Elab/lint, FPV.
 
 | `br_flow_arb_lru`
-| Least-recently used arbiter
-|
+| Arbitrates ready/valid flows with least-recently-used priority.
+| Elab/lint, FPV.
 
 | `br_flow_arb_rr`
-| Round-robin arbiter
-|
+| Arbitrates ready/valid flows with round-robin priority.
+| Elab/lint, FPV.
+
+| `br_flow_burst_mux_fixed`
+| Multiplexes bursty ready/valid flows with fixed-priority arbitration.
+| Elab/lint, FPV.
+
+| `br_flow_burst_mux_fixed_stable`
+| Multiplexes bursty stable-data ready/valid flows with fixed-priority arbitration.
+| Elab/lint, FPV.
+
+| `br_flow_burst_mux_lru`
+| Multiplexes bursty ready/valid flows with least-recently-used arbitration.
+| Elab/lint, FPV.
+
+| `br_flow_burst_mux_lru_stable`
+| Multiplexes bursty stable-data ready/valid flows with least-recently-used arbitration.
+| Elab/lint, FPV.
+
+| `br_flow_burst_mux_rr`
+| Multiplexes bursty ready/valid flows with round-robin arbitration.
+| Elab/lint, FPV.
+
+| `br_flow_burst_mux_rr_stable`
+| Multiplexes bursty stable-data ready/valid flows with round-robin arbitration.
+| Elab/lint, FPV.
 
 | `br_flow_demux_select`
-| Registered demultiplexer, external select
-|
+| Demultiplexes a ready/valid flow to a registered selected output.
+| Elab/lint, FPV.
 
 | `br_flow_demux_select_unstable`
-| Combinational demultiplexer, external select, with unstable flow control
-|
+| Demultiplexes a ready/valid flow to a combinational selected output.
+| Elab/lint, FPV.
 
 | `br_flow_deserializer`
-| Deserialize a packet from a many narrow flits to fewer wide flits
-|
+| Converts multiple narrow ready/valid flits into fewer wider flits.
+| Elab/lint, FPV.
 
 | `br_flow_fork`
-| Datapath flow control split
-|
+| Forks one ready/valid flow to multiple downstream consumers.
+| Elab/lint, FPV.
+
+| `br_flow_fork_select_multihot`
+| Forks one ready/valid flow to a multihot-selected subset of consumers.
+| Elab/lint, FPV.
 
 | `br_flow_join`
-| Datapath flow control join
-|
+| Joins multiple ready/valid control flows into one output flow.
+| Elab/lint.
 
 | `br_flow_mux_fixed`
-| Arbitrated multiplexer, fixed priority
-|
+| Multiplexes ready/valid flows with fixed-priority arbitration.
+| Elab/lint, FPV.
+
+| `br_flow_mux_fixed_stable`
+| Multiplexes stable-data ready/valid flows with fixed-priority arbitration.
+| Elab/lint, FPV.
 
 | `br_flow_mux_lru`
-| Arbitrated multiplexer, least-recently used
-|
+| Multiplexes ready/valid flows with least-recently-used arbitration.
+| Elab/lint, FPV.
+
+| `br_flow_mux_lru_stable`
+| Multiplexes stable-data ready/valid flows with least-recently-used arbitration.
+| Elab/lint, FPV.
 
 | `br_flow_mux_rr`
-| Arbitrated multiplexer, round-robin
-|
+| Multiplexes ready/valid flows with round-robin arbitration.
+| Elab/lint, FPV.
+
+| `br_flow_mux_rr_stable`
+| Multiplexes stable-data ready/valid flows with round-robin arbitration.
+| Elab/lint, FPV.
 
 | `br_flow_mux_select`
-| Registered multiplexer, user select
-|
+| Multiplexes ready/valid flows using an explicit external select and registered pop outputs.
+| Elab/lint, FPV.
 
 | `br_flow_mux_select_unstable`
-| Combinational multiplexer, external select, with unstable flow control
-|
+| Multiplexes ready/valid flows using a combinational external select.
+| Elab/lint, FPV.
 
 | `br_flow_reg_both`
-| Pipeline register, registered forward and reverse signals
-|
+| Registers both forward and reverse sides of a ready/valid flow.
+| Elab/lint, FPV.
 
 | `br_flow_reg_fwd`
-| Pipeline register, registered forward signals
-|
+| Registers the forward valid/data side of a ready/valid flow.
+| Elab/lint, FPV.
+
+| `br_flow_reg_none`
+| Passes a ready/valid flow through without registering it.
+| Elab/lint, FPV.
 
 | `br_flow_reg_rev`
-| Pipeline register, registered backward signals
-|
+| Registers the reverse ready side of a ready/valid flow.
+| Elab/lint, FPV.
 
 | `br_flow_serializer`
-| Serialize a packet from a few wide flits to many narrow flits
-|
+| Converts fewer wide ready/valid flits into multiple narrower flits.
+| Elab/lint, FPV.
+
+| `br_flow_xbar_fixed`
+| Crossbars ready/valid flows with fixed-priority arbitration.
+| Elab/lint, FPV.
+
+| `br_flow_xbar_lru`
+| Crossbars ready/valid flows with least-recently-used arbitration.
+| Elab/lint, FPV.
+
+| `br_flow_xbar_rr`
+| Crossbars ready/valid flows with round-robin arbitration.
+| Elab/lint, FPV.
 
 |===
 
 === `gate`: Behavioral Gate Primitives
 
-[cols="2,4"]
+[cols="1,4,2"]
 |===
-| Module | Description
+| Module | Description | Verification artifacts
 
 | `br_gate_buf`
-| Wire buffer/repeater
+| Buffers a scalar signal.
+| Elab/lint through gate macro tests.
 
 | `br_gate_clk_buf`
-| Clock wire buffer/repeater
+| Buffers a clock signal.
+| Elab/lint through gate macro tests.
 
 | `br_gate_inv`
-| Inverter
+| Inverts a scalar signal.
+| Elab/lint through gate macro tests.
+
+| `br_gate_clk_inv`
+| Inverts a clock signal.
+| Elab/lint through gate macro tests.
 
 | `br_gate_and2`
-| Two-input AND gate
+| Computes a two-input AND.
+| Elab/lint through gate macro tests.
 
 | `br_gate_or2`
-| Two-input OR gate
+| Computes a two-input OR.
+| Elab/lint through gate macro tests.
 
 | `br_gate_xor2`
-| Two-input XOR gate
+| Computes a two-input XOR.
+| Elab/lint through gate macro tests.
 
 | `br_gate_mux2`
-| Two-input multiplexer
+| Selects between two data inputs.
+| Elab/lint through gate macro tests.
 
 | `br_gate_clk_mux2`
-| Two-input clock multiplexer
+| Selects between two clock inputs.
+| Elab/lint through gate macro tests.
 
 | `br_gate_icg`
-| Integrated clock gate
+| Models an integrated clock gate.
+| Elab/lint through gate macro tests.
 
 | `br_gate_icg_rst`
-| Integrated clock gate with synchronous reset
+| Models an integrated clock gate with synchronous reset behavior.
+| Elab/lint through gate macro tests.
 
 | `br_gate_cdc_sync`
-| Clock domain crossing synchronizer cell
+| Models a CDC synchronizer cell.
+| Elab/lint through gate macro tests.
+
+| `br_gate_cdc_sync_arst`
+| Models a CDC synchronizer cell with asynchronous reset.
+| Elab/lint through gate macro tests.
 
 | `br_gate_cdc_pseudostatic`
-| Buffer for clock domain crossings of pseudo-static nets
+| Marks a pseudo-static CDC crossing.
+| Elab/lint through gate macro tests.
 
 | `br_gate_cdc_maxdel`
-| Buffer for clock domain crossings that indicate a given net should be checked for max delay (skew)
+| Marks a CDC crossing that should receive max-delay checking.
+| Elab/lint through gate macro tests.
+
+|===
+
+=== `lfsr`: Linear Feedback Shift Registers
+
+[cols="1,4,2"]
+|===
+| Module | Description | Verification artifacts
+
+| `br_lfsr`
+| Implements a configurable linear feedback shift register.
+| Elab/lint, Sim.
 
 |===
 
 === `misc`: Miscellaneous
 
-[cols="1,4,1,1"]
+[cols="1,4,2"]
 |===
-| Module | Description | Implemented | Verified
+| Module | Description | Verification artifacts
 
 | `br_misc_tieoff_one`
-| Drive an expression to constant 1s and internally waive relevant lint rules
-| Yes
-| Yes
+| Drives an expression to constant ones and waives related lint warnings internally.
+| Elab/lint.
 
 | `br_misc_tieoff_zero`
-| Drive an expression to constant 0s and internally waive relevant lint rules
-| Yes
-| Yes
+| Drives an expression to constant zeros and waives related lint warnings internally.
+| Elab/lint.
 
 | `br_misc_unused`
-| Sink an unused expression and internally waive relevant lint rules
-| Yes
-| Yes
+| Sinks an unused expression and waives related lint warnings internally.
+| Elab/lint.
+
+|===
+
+=== `multi_xfer`: Multiple-Transfer Flow Control
+
+[cols="1,4,2"]
+|===
+| Module | Description | Verification artifacts
+
+| `br_multi_xfer_distributor_rr`
+| Distributes multi-transfer work using round-robin selection.
+| Elab/lint, FPV.
+
+| `br_multi_xfer_reg_fwd`
+| Registers the forward side of a multi-transfer interface.
+| Elab/lint, Sim, FPV.
 
 |===
 
 === `mux`: Simple Multiplexers
 
-[cols="1,4,1,1"]
+[cols="1,4,2"]
 |===
-| Module | Description | Implemented | Verified
-
-| `br_mux_onehot`
-| One-hot multiplexer
-| Yes
-|
+| Module | Description | Verification artifacts
 
 | `br_mux_bin`
-| Binary-select multiplexer
-| Yes
-|
+| Selects one input using a binary index.
+| Elab/lint, Sim.
+
+| `br_mux_bin_array`
+| Selects one element from an unpacked input array using a binary index.
+| Elab/lint.
+
+| `br_mux_bin_structured_gates`
+| Builds a binary-select mux from structured gate primitives.
+| Elab/lint, Sim.
+
+| `br_mux_onehot`
+| Selects inputs using a one-hot select vector.
+| Elab/lint, Sim.
 
 |===
 
 === `ram`: Memories
 
-[cols="1,4,1"]
+[cols="1,4,2"]
 |===
-| Module | Description | Verified
+| Module | Description | Verification artifacts
 
 | `br_ram_addr_decoder`
-| Address decoder and optional write data steering for a tiled RAM
-|
+| Decodes RAM addresses and optionally steers write data for tiled RAMs.
+| Elab/lint, FPV.
 
 | `br_ram_data_rd_pipe`
-| Pipeline for reading data from a tiled RAM
-|
-
-| `br_ram_flops_1r1w_mock`
-a | Simplified version of `br_ram_flops` with single read port and single write
-port, but without physical-aware tiling and pipelining implementation (should
-not be synthesized)
-|
+| Pipelines read data returned from tiled RAMs.
+| Elab/lint, FPV.
 
 | `br_ram_flops`
-| Tiled flop-RAM with one or more read ports and one or more write ports
-|
+| Implements a tiled flop RAM with configurable read and write ports.
+| Elab/lint, FPV.
+
+| `br_ram_flops_1r1w_mock`
+| Provides a simplified one-read, one-write flop RAM mock that should not be synthesized.
+| Elab/lint, Sim collateral.
 
 | `br_ram_flops_tile`
-| One-tile flop-RAM with one or more read ports and one or more write ports
-|
+| Implements one physical tile of a flop RAM with configurable read and write ports.
+| Elab/lint, FPV.
+
+| `br_ram_initializer`
+| Initializes RAM contents through a write port after reset.
+| Elab/lint, Sim collateral, FPV.
+
+|===
+
+=== `shift`: Shifters
+
+[cols="1,4,2"]
+|===
+| Module | Description | Verification artifacts
+
+| `br_shift_left`
+| Shifts an input value left by a selected amount.
+| Elab/lint, Sim.
+
+| `br_shift_right`
+| Shifts an input value right by a selected amount.
+| Elab/lint, Sim.
+
+| `br_shift_rotate`
+| Rotates an input value by a selected amount.
+| Elab/lint, Sim.
 
 |===
 
 === `tracker`: Tracking Data Structures
 
-[cols="1,4,1"]
+[cols="1,4,2"]
 |===
-| Module | Description | Verified
+| Module | Description | Verification artifacts
 
 | `br_tracker_freelist`
-| Manages out-of-order allocation and deallocation of free list of identifiers/tags
-|
+| Manages allocation and deallocation of free identifiers or tags.
+| Elab/lint, Sim, FPV.
+
+| `br_tracker_linked_list_ctrl`
+| Manages linked-list pointers for tracker-style data structures.
+| Elab/lint, Sim, FPV.
+
+| `br_tracker_reorder`
+| Reorders completed operations back into sequence order.
+| Elab/lint, FPV.
+
+| `br_tracker_reorder_buffer_ctrl_1r1w`
+| Controls a reorder buffer backed by a one-read, one-write memory.
+| Elab/lint, FPV.
+
+| `br_tracker_reorder_buffer_flops`
+| Implements a flop-backed reorder buffer.
+| Elab/lint, Sim, FPV.
+
+| `br_tracker_sequence`
+| Tracks sequence numbers and wraparound ordering.
+| Elab/lint, FPV.
 
 |===
 
-== Packages
+== Packages and Formal Libraries
 
-=== `br_math`: Non-synthesizable Math Helper Functions
+=== RTL Packages
 
-[cols="1,4,1,1"]
+[cols="1,4,2"]
 |===
-| Function | Description | Implemented | Tested
+| Package | Public helpers | Verification artifacts
 
-| `ceil_div`
-| Return integer ceiling division
-| Yes
-| Yes
+| `br_amba`
+| AMBA protocol constants, typedefs, and helpers used by `amba/rtl`.
+| Elab/lint via AMBA module users.
 
-| `floor_div`
-| Return integer floor division
-| Yes
-| Yes
+| `br_cdc_pkg`
+| CDC helper declarations used by CDC FIFO and register modules.
+| Elab/lint via CDC module users.
 
-| `clogb`
-| Return integer ceiling of base-`b` logarithm where `b` is a power-of-2
-| Yes
-| Yes
+| `br_ecc_secded`
+| `_get_max_message_width`, `get_message_width`, `get_parity_width`
+| Package elaboration test.
 
-| `is_power_of_2`
-| Return 1 if an integer is a power of 2
-| Yes
-| Yes
+| `br_lfsr_taps`
+| LFSR tap helper package used by `br_lfsr`.
+| Package elaboration test; Sim through `br_lfsr_tb`.
 
-| `is_even`
-| Return 1 if an integer is even
-| Yes
-| Yes
+| `br_math`
+| `floor_div`, `ceil_div`, `align_down`, `align_up`, `is_power_of_2`, `is_even`, `clogb`, `clamped_clog2`, `min2`, `max2`, `exp2`, `round_up_to_power_of_2`
+| Package elaboration test.
+
+|===
+
+=== `fpv/lib`: Reusable Formal Monitors
+
+[cols="1,4"]
+|===
+| Module | Description
+
+| `fv_4phase_handshake`
+| Formal monitor for four-phase handshake behavior.
+
+| `fv_delay`
+| Formal monitor for delay-line behavior.
+
+| `fv_fifo`
+| Formal monitor for FIFO ordering and occupancy behavior.
+
+| `fv_ram`
+| Formal monitor for RAM behavior.
+
+| `fv_valid_ready_check`
+| Formal monitor for valid/ready protocol behavior.
+
+| `fv_wolper_coloring`
+| Formal helper for Wolper-style coloring arguments.
 
 |===
