@@ -796,89 +796,799 @@ Internal implementation modules under `*/rtl/internal` are intentionally omitted
 The verification-artifact column reports repository evidence, not a promise that the tests pass in every local environment.
 `Elab/lint` means the module has Bazel elaboration/lint targets; `Sim` means there is a simulation testbench or generated simulation test; `FPV` means there is formal monitor or formal test collateral.
 
+=== `amba`: AMBA Protocol Components
+
 [cols="1,4,2"]
 |===
-| Category | Public RTL modules | Verification artifacts
+| Module | Description | Verification artifacts
 
-| `amba`
-a| `br_amba_apb_timing_slice`, `br_amba_atb_funnel`, `br_amba_axi2axil`, `br_amba_axi_default_target`, `br_amba_axi_demux`, `br_amba_axi_isolate_mgr`, `br_amba_axi_isolate_sub`, `br_amba_axi_shrinker`, `br_amba_axi_timing_slice`, `br_amba_axil2apb`, `br_amba_axil_default_target`, `br_amba_axil_msi`, `br_amba_axil_split`, `br_amba_axil_timing_slice`
-| Elab/lint, FPV; selected AXI modules also have Sim.
+| `br_amba_apb_timing_slice`
+| Inserts timing isolation on an APB channel.
+| Elab/lint, FPV.
 
-| `arb`
-a| `br_arb_fixed`, `br_arb_grant_hold`, `br_arb_lru`, `br_arb_multi_rr`, `br_arb_pri_rr`, `br_arb_rr`, `br_arb_weighted_rr`
-| Elab/lint, FPV; several arbiters also have generated Sim tests.
+| `br_amba_atb_funnel`
+| Funnels multiple AMBA Trace Bus streams into one downstream stream.
+| Elab/lint, FPV.
 
-| `cdc`
-a| `br_cdc_bit_pulse`, `br_cdc_bit_toggle`, `br_cdc_fifo_ctrl_1r1w`, `br_cdc_fifo_ctrl_1r1w_push_credit`, `br_cdc_fifo_ctrl_pop_1r1w`, `br_cdc_fifo_ctrl_push_1r1w`, `br_cdc_fifo_ctrl_push_1r1w_push_credit`, `br_cdc_fifo_flops`, `br_cdc_fifo_flops_push_credit`, `br_cdc_reg`, `br_cdc_rst_sync`, `br_cdc_stable_data`, `br_cdc_stable_data_autoupdate`
-| Elab/lint; FIFO CDC modules have FPV; FIFO flops, pulse, register, and stable-data modules have Sim.
+| `br_amba_axi2axil`
+| Converts an AXI subordinate interface into an AXI-Lite manager interface.
+| Elab/lint, FPV.
 
-| `counter`
-a| `br_counter`, `br_counter_decr`, `br_counter_incr`
+| `br_amba_axi_default_target`
+| Terminates AXI requests with default target responses.
+| Elab/lint, FPV.
+
+| `br_amba_axi_demux`
+| Routes AXI transactions from one upstream interface to selected downstream interfaces.
 | Elab/lint, Sim, FPV.
 
-| `credit`
-a| `br_credit_counter`, `br_credit_receiver`, `br_credit_sender`, `br_credit_sender_vc`
-| Elab/lint, FPV; receiver and VC sender also have Sim.
+| `br_amba_axi_isolate_mgr`
+| Isolates the manager side of an AXI interface during reset or shutdown sequencing.
+| Elab/lint, Sim, FPV.
 
-| `csr`
-a| `br_csr_axil_widget`, `br_csr_cdc`, `br_csr_demux`, `br_csr_mem_interface`
-| Elab/lint; AXI-Lite widget and demux have Sim and FPV; CDC has FPV; memory interface has Sim.
+| `br_amba_axi_isolate_sub`
+| Isolates the subordinate side of an AXI interface during reset or shutdown sequencing.
+| Elab/lint, Sim, FPV.
 
-| `delay`
-a| `br_delay`, `br_delay_deskew`, `br_delay_nr`, `br_delay_shift_reg`, `br_delay_skew`, `br_delay_valid`, `br_delay_valid_next`, `br_delay_valid_next_nr`, `br_delay_valid_nr`
-| Elab/lint; main delay and valid-delay variants have FPV.
+| `br_amba_axi_shrinker`
+| Shrinks AXI data width while preserving AXI transaction semantics.
+| Elab/lint, Sim, FPV.
 
-| `demux`
-a| `br_demux_bin`, `br_demux_onehot`
+| `br_amba_axi_timing_slice`
+| Inserts timing isolation on AXI channels.
+| Elab/lint, FPV.
+
+| `br_amba_axil2apb`
+| Bridges AXI-Lite transactions to APB.
+| Elab/lint, FPV.
+
+| `br_amba_axil_default_target`
+| Terminates AXI-Lite requests with default target responses.
+| Elab/lint, FPV.
+
+| `br_amba_axil_msi`
+| Generates AXI-Lite write transactions for message-signaled interrupts.
+| Elab/lint, FPV.
+
+| `br_amba_axil_split`
+| Splits AXI-Lite traffic across multiple downstream interfaces.
+| Elab/lint, FPV.
+
+| `br_amba_axil_timing_slice`
+| Inserts timing isolation on AXI-Lite channels.
+| Elab/lint, FPV.
+
+|===
+
+=== `arb`: Arbiters
+
+[cols="1,4,2"]
+|===
+| Module | Description | Verification artifacts
+
+| `br_arb_fixed`
+| Grants the first eligible requester according to fixed priority.
+| Elab/lint, Sim, FPV.
+
+| `br_arb_grant_hold`
+| Holds an arbitration grant stable until the selected requester releases it.
+| Elab/lint, Sim, FPV.
+
+| `br_arb_lru`
+| Grants using least-recently-used priority state.
+| Elab/lint, Sim, FPV.
+
+| `br_arb_multi_rr`
+| Produces multiple round-robin grants per arbitration cycle.
+| Elab/lint, FPV.
+
+| `br_arb_pri_rr`
+| Combines fixed-priority and round-robin arbitration behavior.
+| Elab/lint, FPV.
+
+| `br_arb_rr`
+| Grants using round-robin priority state.
+| Elab/lint, Sim, FPV.
+
+| `br_arb_weighted_rr`
+| Grants using weighted round-robin priority state.
+| Elab/lint, FPV.
+
+|===
+
+=== `cdc`: Clock Domain Crossings
+
+[cols="1,4,2"]
+|===
+| Module | Description | Verification artifacts
+
+| `br_cdc_bit_pulse`
+| Transfers a single-cycle pulse between clock domains.
+| Elab/lint, Sim.
+
+| `br_cdc_bit_toggle`
+| Synchronizes a single-bit level signal between clock domains.
 | Elab/lint.
 
-| `ecc`
-a| `br_ecc_secded_decoder`, `br_ecc_secded_encoder`, `br_ecc_sed_decoder`, `br_ecc_sed_encoder`
+| `br_cdc_fifo_ctrl_1r1w`
+| Controls a dual-clock 1R1W external RAM FIFO with ready/valid push and pop flow control.
+| Elab/lint, FPV.
+
+| `br_cdc_fifo_ctrl_1r1w_push_credit`
+| Controls a dual-clock 1R1W external RAM FIFO with credit/valid push and ready/valid pop flow control.
+| Elab/lint, FPV.
+
+| `br_cdc_fifo_ctrl_pop_1r1w`
+| Provides the pop-side controller for a split dual-clock 1R1W FIFO controller.
+| FPV through combined FIFO controller collateral.
+
+| `br_cdc_fifo_ctrl_push_1r1w`
+| Provides the ready/valid push-side controller for a split dual-clock 1R1W FIFO controller.
+| FPV through combined FIFO controller collateral.
+
+| `br_cdc_fifo_ctrl_push_1r1w_push_credit`
+| Provides the credit/valid push-side controller for a split dual-clock 1R1W FIFO controller.
+| FPV through combined FIFO controller collateral.
+
+| `br_cdc_fifo_flops`
+| Implements a dual-clock FIFO using internal flop storage and ready/valid flow control.
 | Elab/lint, Sim, FPV.
 
-| `enc`
-a| `br_enc_bin2gray`, `br_enc_bin2onehot`, `br_enc_countones`, `br_enc_gray2bin`, `br_enc_onehot2bin`, `br_enc_priority_dynamic`, `br_enc_priority_encoder`
-| Elab/lint and Sim.
+| `br_cdc_fifo_flops_push_credit`
+| Implements a dual-clock FIFO using internal flop storage with credit/valid push flow control.
+| Elab/lint, Sim, FPV.
 
-| `fifo`
-a| `br_fifo_ctrl_1r1w`, `br_fifo_ctrl_1r1w_push_credit`, `br_fifo_flops`, `br_fifo_flops_push_credit`, `br_fifo_shared_dynamic_ctrl`, `br_fifo_shared_dynamic_ctrl_ext_arbiter`, `br_fifo_shared_dynamic_ctrl_push_credit`, `br_fifo_shared_dynamic_ctrl_push_credit_ext_arbiter`, `br_fifo_shared_dynamic_ctrl_push_credit_pop_credit`, `br_fifo_shared_dynamic_ctrl_push_credit_pop_credit_ext_arbiter`, `br_fifo_shared_dynamic_flops`, `br_fifo_shared_dynamic_flops_push_credit`, `br_fifo_shared_dynamic_flops_push_credit_pop_credit`, `br_fifo_shared_pop_ctrl`, `br_fifo_shared_pop_ctrl_credit`, `br_fifo_shared_pop_ctrl_credit_ext_arbiter`, `br_fifo_shared_pop_ctrl_ext_arbiter`, `br_fifo_shared_pstatic_ctrl`, `br_fifo_shared_pstatic_ctrl_push_credit`, `br_fifo_shared_pstatic_flops`, `br_fifo_shared_pstatic_flops_push_credit`
-| Elab/lint; most controller/flop families have FPV; flop-backed FIFO variants have Sim.
+| `br_cdc_reg`
+| Transfers a register-like value between clock domains.
+| Elab/lint, Sim.
 
-| `flow`
-a| `br_flow_arb_fixed`, `br_flow_arb_lru`, `br_flow_arb_rr`, `br_flow_burst_mux_fixed`, `br_flow_burst_mux_fixed_stable`, `br_flow_burst_mux_lru`, `br_flow_burst_mux_lru_stable`, `br_flow_burst_mux_rr`, `br_flow_burst_mux_rr_stable`, `br_flow_demux_select`, `br_flow_demux_select_unstable`, `br_flow_deserializer`, `br_flow_fork`, `br_flow_fork_select_multihot`, `br_flow_join`, `br_flow_mux_fixed`, `br_flow_mux_fixed_stable`, `br_flow_mux_lru`, `br_flow_mux_lru_stable`, `br_flow_mux_rr`, `br_flow_mux_rr_stable`, `br_flow_mux_select`, `br_flow_mux_select_unstable`, `br_flow_reg_both`, `br_flow_reg_fwd`, `br_flow_reg_none`, `br_flow_reg_rev`, `br_flow_serializer`, `br_flow_xbar_fixed`, `br_flow_xbar_lru`, `br_flow_xbar_rr`
-| Elab/lint; most flow families have FPV.
+| `br_cdc_rst_sync`
+| Synchronizes an asynchronous reset into a destination clock domain.
+| Elab/lint.
 
-| `gate`
-a| `br_gate_buf`, `br_gate_clk_buf`, `br_gate_inv`, `br_gate_clk_inv`, `br_gate_and2`, `br_gate_or2`, `br_gate_xor2`, `br_gate_mux2`, `br_gate_clk_mux2`, `br_gate_icg`, `br_gate_icg_rst`, `br_gate_cdc_sync`, `br_gate_cdc_sync_arst`, `br_gate_cdc_pseudostatic`, `br_gate_cdc_maxdel`
+| `br_cdc_stable_data`
+| Transfers data that is stable while sampled across a clock-domain boundary.
+| Elab/lint, Sim.
+
+| `br_cdc_stable_data_autoupdate`
+| Transfers stable CDC data with automatic update handling.
+| Elab/lint, Sim.
+
+|===
+
+=== `counter`: Wrapping and Saturating Counters
+
+[cols="1,4,2"]
+|===
+| Module | Description | Verification artifacts
+
+| `br_counter`
+| Counts up and down with wrapping or saturation behavior.
+| Elab/lint, Sim, FPV.
+
+| `br_counter_decr`
+| Counts down with wrapping or saturation behavior.
+| Elab/lint, Sim, FPV.
+
+| `br_counter_incr`
+| Counts up with wrapping or saturation behavior.
+| Elab/lint, Sim, FPV.
+
+|===
+
+=== `credit`: Credit/Valid Flow Control
+
+[cols="1,4,2"]
+|===
+| Module | Description | Verification artifacts
+
+| `br_credit_counter`
+| Tracks available credits for credit/valid flow control.
+| Elab/lint, FPV.
+
+| `br_credit_receiver`
+| Manages the receiver side of credit/valid flow control without adding datapath buffering.
+| Elab/lint, Sim, FPV.
+
+| `br_credit_sender`
+| Converts ready/valid sender traffic into credit/valid receiver traffic.
+| Elab/lint, FPV.
+
+| `br_credit_sender_vc`
+| Sends credit/valid traffic across multiple virtual channels.
+| Elab/lint, Sim.
+
+|===
+
+=== `csr`: Control and Status Registers
+
+[cols="1,4,2"]
+|===
+| Module | Description | Verification artifacts
+
+| `br_csr_axil_widget`
+| Presents a CSR memory interface through an AXI-Lite subordinate port.
+| Elab/lint, Sim, FPV.
+
+| `br_csr_cdc`
+| Bridges CSR requests and responses across a clock-domain boundary.
+| Elab/lint, FPV.
+
+| `br_csr_demux`
+| Routes CSR requests to one of multiple downstream CSR interfaces.
+| Elab/lint, Sim, FPV.
+
+| `br_csr_mem_interface`
+| Adapts CSR requests to a simple memory-like interface.
+| Elab/lint, Sim.
+
+|===
+
+=== `delay`: Fixed-Delay Pipelines
+
+[cols="1,4,2"]
+|===
+| Module | Description | Verification artifacts
+
+| `br_delay`
+| Delays a signal by a fixed number of stages with reset.
+| Elab/lint, FPV.
+
+| `br_delay_deskew`
+| Applies per-lane delay to deskew multiple related signals.
+| Elab/lint.
+
+| `br_delay_nr`
+| Delays a signal by a fixed number of stages without reset.
+| Elab/lint, FPV.
+
+| `br_delay_shift_reg`
+| Implements a loadable shift register.
+| Elab/lint.
+
+| `br_delay_skew`
+| Applies per-lane delay to intentionally skew multiple related signals.
+| Elab/lint.
+
+| `br_delay_valid`
+| Delays data using valid-based self-gating.
+| Elab/lint, FPV.
+
+| `br_delay_valid_next`
+| Delays data using valid-next self-gating.
+| Elab/lint, FPV.
+
+| `br_delay_valid_next_nr`
+| Delays data using valid-next self-gating without reset.
+| Elab/lint, FPV.
+
+| `br_delay_valid_nr`
+| Delays data using valid-based self-gating without reset.
+| Elab/lint.
+
+|===
+
+=== `demux`: Simple Demultiplexers
+
+[cols="1,4,2"]
+|===
+| Module | Description | Verification artifacts
+
+| `br_demux_bin`
+| Routes input data to one output selected by a binary index.
+| Elab/lint.
+
+| `br_demux_onehot`
+| Routes input data to outputs selected by a one-hot mask.
+| Elab/lint.
+
+|===
+
+=== `ecc`: Error Correcting Codes
+
+[cols="1,4,2"]
+|===
+| Module | Description | Verification artifacts
+
+| `br_ecc_secded_decoder`
+| Decodes SECDED-protected data and reports/corrects errors.
+| Elab/lint, Sim, FPV.
+
+| `br_ecc_secded_encoder`
+| Encodes data with single-error-correcting, double-error-detecting parity.
+| Elab/lint, Sim, FPV.
+
+| `br_ecc_sed_decoder`
+| Decodes single-error-detecting protected data and reports errors.
+| Elab/lint, Sim, FPV.
+
+| `br_ecc_sed_encoder`
+| Encodes data with single-error-detecting parity.
+| Elab/lint, Sim, FPV.
+
+|===
+
+=== `enc`: Combinational Encoders
+
+[cols="1,4,2"]
+|===
+| Module | Description | Verification artifacts
+
+| `br_enc_bin2gray`
+| Converts a binary value to Gray code.
+| Elab/lint, Sim.
+
+| `br_enc_bin2onehot`
+| Converts a binary index to a one-hot vector.
+| Elab/lint, Sim.
+
+| `br_enc_countones`
+| Counts the number of asserted bits in a vector.
+| Elab/lint, Sim.
+
+| `br_enc_gray2bin`
+| Converts a Gray-code value to binary.
+| Elab/lint, Sim.
+
+| `br_enc_onehot2bin`
+| Converts a one-hot vector to a binary index.
+| Elab/lint, Sim.
+
+| `br_enc_priority_dynamic`
+| Selects priority winners with a dynamic priority input.
+| Elab/lint, Sim.
+
+| `br_enc_priority_encoder`
+| Selects priority winners from a request vector.
+| Elab/lint, Sim.
+
+|===
+
+=== `fifo`: First-In-First-Out Queues
+
+[cols="1,4,2"]
+|===
+| Module | Description | Verification artifacts
+
+| `br_fifo_ctrl_1r1w`
+| Controls a 1R1W external RAM FIFO with ready/valid push and pop flow control.
+| Elab/lint, FPV.
+
+| `br_fifo_ctrl_1r1w_push_credit`
+| Controls a 1R1W external RAM FIFO with credit/valid push and ready/valid pop flow control.
+| Elab/lint, FPV.
+
+| `br_fifo_flops`
+| Implements a FIFO using internal flop storage and ready/valid flow control.
+| Elab/lint, Sim, FPV.
+
+| `br_fifo_flops_push_credit`
+| Implements a FIFO using internal flop storage with credit/valid push flow control.
+| Elab/lint, Sim, FPV.
+
+| `br_fifo_shared_dynamic_ctrl`
+| Dynamically shares FIFO storage across multiple logical FIFOs.
+| Elab/lint, FPV.
+
+| `br_fifo_shared_dynamic_ctrl_ext_arbiter`
+| Dynamically shares FIFO storage using an externally supplied arbiter.
+| Elab/lint, FPV.
+
+| `br_fifo_shared_dynamic_ctrl_push_credit`
+| Dynamically shares FIFO storage with credit/valid push flow control.
+| Elab/lint, FPV.
+
+| `br_fifo_shared_dynamic_ctrl_push_credit_ext_arbiter`
+| Dynamically shares FIFO storage with credit/valid push flow control and an external arbiter.
+| Elab/lint, FPV.
+
+| `br_fifo_shared_dynamic_ctrl_push_credit_pop_credit`
+| Dynamically shares FIFO storage with credit/valid flow control on both push and pop sides.
+| Elab/lint.
+
+| `br_fifo_shared_dynamic_ctrl_push_credit_pop_credit_ext_arbiter`
+| Dynamically shares FIFO storage with push/pop credits and an external arbiter.
+| Elab/lint.
+
+| `br_fifo_shared_dynamic_flops`
+| Implements dynamically shared FIFO storage using internal flops.
+| Elab/lint, Sim, FPV.
+
+| `br_fifo_shared_dynamic_flops_push_credit`
+| Implements dynamically shared flop FIFOs with credit/valid push flow control.
+| Elab/lint, Sim, FPV.
+
+| `br_fifo_shared_dynamic_flops_push_credit_pop_credit`
+| Implements dynamically shared flop FIFOs with credit/valid push and pop flow control.
+| Elab/lint, Sim.
+
+| `br_fifo_shared_pop_ctrl`
+| Arbitrates pop access for shared FIFO storage.
+| Elab/lint.
+
+| `br_fifo_shared_pop_ctrl_credit`
+| Arbitrates pop access for shared FIFO storage with credit flow control.
+| Elab/lint.
+
+| `br_fifo_shared_pop_ctrl_credit_ext_arbiter`
+| Arbitrates credit-based pop access using an external arbiter.
+| Elab/lint.
+
+| `br_fifo_shared_pop_ctrl_ext_arbiter`
+| Arbitrates pop access using an external arbiter.
+| Elab/lint.
+
+| `br_fifo_shared_pstatic_ctrl`
+| Statically partitions shared FIFO storage across logical FIFOs.
+| Elab/lint, FPV.
+
+| `br_fifo_shared_pstatic_ctrl_push_credit`
+| Statically partitions shared FIFO storage with credit/valid push flow control.
+| Elab/lint, FPV.
+
+| `br_fifo_shared_pstatic_flops`
+| Implements statically partitioned shared FIFO storage using internal flops.
+| Elab/lint, Sim, FPV.
+
+| `br_fifo_shared_pstatic_flops_push_credit`
+| Implements statically partitioned shared flop FIFOs with credit/valid push flow control.
+| Elab/lint, Sim, FPV.
+
+|===
+
+=== `flow`: Ready/Valid Flow Control
+
+[cols="1,4,2"]
+|===
+| Module | Description | Verification artifacts
+
+| `br_flow_arb_fixed`
+| Arbitrates ready/valid flows with fixed priority.
+| Elab/lint, FPV.
+
+| `br_flow_arb_lru`
+| Arbitrates ready/valid flows with least-recently-used priority.
+| Elab/lint, FPV.
+
+| `br_flow_arb_rr`
+| Arbitrates ready/valid flows with round-robin priority.
+| Elab/lint, FPV.
+
+| `br_flow_burst_mux_fixed`
+| Multiplexes bursty ready/valid flows with fixed-priority arbitration.
+| Elab/lint, FPV.
+
+| `br_flow_burst_mux_fixed_stable`
+| Multiplexes bursty stable-data ready/valid flows with fixed-priority arbitration.
+| Elab/lint, FPV.
+
+| `br_flow_burst_mux_lru`
+| Multiplexes bursty ready/valid flows with least-recently-used arbitration.
+| Elab/lint, FPV.
+
+| `br_flow_burst_mux_lru_stable`
+| Multiplexes bursty stable-data ready/valid flows with least-recently-used arbitration.
+| Elab/lint, FPV.
+
+| `br_flow_burst_mux_rr`
+| Multiplexes bursty ready/valid flows with round-robin arbitration.
+| Elab/lint, FPV.
+
+| `br_flow_burst_mux_rr_stable`
+| Multiplexes bursty stable-data ready/valid flows with round-robin arbitration.
+| Elab/lint, FPV.
+
+| `br_flow_demux_select`
+| Demultiplexes a ready/valid flow to a registered selected output.
+| Elab/lint, FPV.
+
+| `br_flow_demux_select_unstable`
+| Demultiplexes a ready/valid flow to a combinational selected output.
+| Elab/lint, FPV.
+
+| `br_flow_deserializer`
+| Converts multiple narrow ready/valid flits into fewer wider flits.
+| Elab/lint, FPV.
+
+| `br_flow_fork`
+| Forks one ready/valid flow to multiple downstream consumers.
+| Elab/lint, FPV.
+
+| `br_flow_fork_select_multihot`
+| Forks one ready/valid flow to a multihot-selected subset of consumers.
+| Elab/lint, FPV.
+
+| `br_flow_join`
+| Joins multiple ready/valid control flows into one output flow.
+| Elab/lint.
+
+| `br_flow_mux_fixed`
+| Multiplexes ready/valid flows with fixed-priority arbitration.
+| Elab/lint, FPV.
+
+| `br_flow_mux_fixed_stable`
+| Multiplexes stable-data ready/valid flows with fixed-priority arbitration.
+| Elab/lint, FPV.
+
+| `br_flow_mux_lru`
+| Multiplexes ready/valid flows with least-recently-used arbitration.
+| Elab/lint, FPV.
+
+| `br_flow_mux_lru_stable`
+| Multiplexes stable-data ready/valid flows with least-recently-used arbitration.
+| Elab/lint, FPV.
+
+| `br_flow_mux_rr`
+| Multiplexes ready/valid flows with round-robin arbitration.
+| Elab/lint, FPV.
+
+| `br_flow_mux_rr_stable`
+| Multiplexes stable-data ready/valid flows with round-robin arbitration.
+| Elab/lint, FPV.
+
+| `br_flow_mux_select`
+| Multiplexes ready/valid flows using an explicit external select and registered pop outputs.
+| Elab/lint, FPV.
+
+| `br_flow_mux_select_unstable`
+| Multiplexes ready/valid flows using a combinational external select.
+| Elab/lint, FPV.
+
+| `br_flow_reg_both`
+| Registers both forward and reverse sides of a ready/valid flow.
+| Elab/lint, FPV.
+
+| `br_flow_reg_fwd`
+| Registers the forward valid/data side of a ready/valid flow.
+| Elab/lint, FPV.
+
+| `br_flow_reg_none`
+| Passes a ready/valid flow through without registering it.
+| Elab/lint, FPV.
+
+| `br_flow_reg_rev`
+| Registers the reverse ready side of a ready/valid flow.
+| Elab/lint, FPV.
+
+| `br_flow_serializer`
+| Converts fewer wide ready/valid flits into multiple narrower flits.
+| Elab/lint, FPV.
+
+| `br_flow_xbar_fixed`
+| Crossbars ready/valid flows with fixed-priority arbitration.
+| Elab/lint, FPV.
+
+| `br_flow_xbar_lru`
+| Crossbars ready/valid flows with least-recently-used arbitration.
+| Elab/lint, FPV.
+
+| `br_flow_xbar_rr`
+| Crossbars ready/valid flows with round-robin arbitration.
+| Elab/lint, FPV.
+
+|===
+
+=== `gate`: Behavioral Gate Primitives
+
+[cols="1,4,2"]
+|===
+| Module | Description | Verification artifacts
+
+| `br_gate_buf`
+| Buffers a scalar signal.
 | Elab/lint through gate macro tests.
 
-| `lfsr`
-a| `br_lfsr`
-| Elab/lint and Sim.
+| `br_gate_clk_buf`
+| Buffers a clock signal.
+| Elab/lint through gate macro tests.
 
-| `misc`
-a| `br_misc_tieoff_one`, `br_misc_tieoff_zero`, `br_misc_unused`
+| `br_gate_inv`
+| Inverts a scalar signal.
+| Elab/lint through gate macro tests.
+
+| `br_gate_clk_inv`
+| Inverts a clock signal.
+| Elab/lint through gate macro tests.
+
+| `br_gate_and2`
+| Computes a two-input AND.
+| Elab/lint through gate macro tests.
+
+| `br_gate_or2`
+| Computes a two-input OR.
+| Elab/lint through gate macro tests.
+
+| `br_gate_xor2`
+| Computes a two-input XOR.
+| Elab/lint through gate macro tests.
+
+| `br_gate_mux2`
+| Selects between two data inputs.
+| Elab/lint through gate macro tests.
+
+| `br_gate_clk_mux2`
+| Selects between two clock inputs.
+| Elab/lint through gate macro tests.
+
+| `br_gate_icg`
+| Models an integrated clock gate.
+| Elab/lint through gate macro tests.
+
+| `br_gate_icg_rst`
+| Models an integrated clock gate with synchronous reset behavior.
+| Elab/lint through gate macro tests.
+
+| `br_gate_cdc_sync`
+| Models a CDC synchronizer cell.
+| Elab/lint through gate macro tests.
+
+| `br_gate_cdc_sync_arst`
+| Models a CDC synchronizer cell with asynchronous reset.
+| Elab/lint through gate macro tests.
+
+| `br_gate_cdc_pseudostatic`
+| Marks a pseudo-static CDC crossing.
+| Elab/lint through gate macro tests.
+
+| `br_gate_cdc_maxdel`
+| Marks a CDC crossing that should receive max-delay checking.
+| Elab/lint through gate macro tests.
+
+|===
+
+=== `lfsr`: Linear Feedback Shift Registers
+
+[cols="1,4,2"]
+|===
+| Module | Description | Verification artifacts
+
+| `br_lfsr`
+| Implements a configurable linear feedback shift register.
+| Elab/lint, Sim.
+
+|===
+
+=== `misc`: Miscellaneous
+
+[cols="1,4,2"]
+|===
+| Module | Description | Verification artifacts
+
+| `br_misc_tieoff_one`
+| Drives an expression to constant ones and waives related lint warnings internally.
 | Elab/lint.
 
-| `multi_xfer`
-a| `br_multi_xfer_distributor_rr`, `br_multi_xfer_reg_fwd`
-| Elab/lint, FPV; register-forward module also has Sim.
+| `br_misc_tieoff_zero`
+| Drives an expression to constant zeros and waives related lint warnings internally.
+| Elab/lint.
 
-| `mux`
-a| `br_mux_bin`, `br_mux_bin_array`, `br_mux_bin_structured_gates`, `br_mux_onehot`
-| Elab/lint; scalar and structured muxes have Sim.
+| `br_misc_unused`
+| Sinks an unused expression and waives related lint warnings internally.
+| Elab/lint.
 
-| `ram`
-a| `br_ram_addr_decoder`, `br_ram_data_rd_pipe`, `br_ram_flops`, `br_ram_flops_1r1w_mock`, `br_ram_flops_tile`, `br_ram_initializer`
-| Elab/lint, FPV; flop RAM mock and initializer also have Sim collateral.
+|===
 
-| `shift`
-a| `br_shift_left`, `br_shift_right`, `br_shift_rotate`
-| Elab/lint and Sim.
+=== `multi_xfer`: Multiple-Transfer Flow Control
 
-| `tracker`
-a| `br_tracker_freelist`, `br_tracker_linked_list_ctrl`, `br_tracker_reorder`, `br_tracker_reorder_buffer_ctrl_1r1w`, `br_tracker_reorder_buffer_flops`, `br_tracker_sequence`
-| Elab/lint, FPV; selected tracker modules also have Sim.
+[cols="1,4,2"]
+|===
+| Module | Description | Verification artifacts
+
+| `br_multi_xfer_distributor_rr`
+| Distributes multi-transfer work using round-robin selection.
+| Elab/lint, FPV.
+
+| `br_multi_xfer_reg_fwd`
+| Registers the forward side of a multi-transfer interface.
+| Elab/lint, Sim, FPV.
+
+|===
+
+=== `mux`: Simple Multiplexers
+
+[cols="1,4,2"]
+|===
+| Module | Description | Verification artifacts
+
+| `br_mux_bin`
+| Selects one input using a binary index.
+| Elab/lint, Sim.
+
+| `br_mux_bin_array`
+| Selects one element from an unpacked input array using a binary index.
+| Elab/lint.
+
+| `br_mux_bin_structured_gates`
+| Builds a binary-select mux from structured gate primitives.
+| Elab/lint, Sim.
+
+| `br_mux_onehot`
+| Selects inputs using a one-hot select vector.
+| Elab/lint, Sim.
+
+|===
+
+=== `ram`: Memories
+
+[cols="1,4,2"]
+|===
+| Module | Description | Verification artifacts
+
+| `br_ram_addr_decoder`
+| Decodes RAM addresses and optionally steers write data for tiled RAMs.
+| Elab/lint, FPV.
+
+| `br_ram_data_rd_pipe`
+| Pipelines read data returned from tiled RAMs.
+| Elab/lint, FPV.
+
+| `br_ram_flops`
+| Implements a tiled flop RAM with configurable read and write ports.
+| Elab/lint, FPV.
+
+| `br_ram_flops_1r1w_mock`
+| Provides a simplified one-read, one-write flop RAM mock that should not be synthesized.
+| Elab/lint, Sim collateral.
+
+| `br_ram_flops_tile`
+| Implements one physical tile of a flop RAM with configurable read and write ports.
+| Elab/lint, FPV.
+
+| `br_ram_initializer`
+| Initializes RAM contents through a write port after reset.
+| Elab/lint, Sim collateral, FPV.
+
+|===
+
+=== `shift`: Shifters
+
+[cols="1,4,2"]
+|===
+| Module | Description | Verification artifacts
+
+| `br_shift_left`
+| Shifts an input value left by a selected amount.
+| Elab/lint, Sim.
+
+| `br_shift_right`
+| Shifts an input value right by a selected amount.
+| Elab/lint, Sim.
+
+| `br_shift_rotate`
+| Rotates an input value by a selected amount.
+| Elab/lint, Sim.
+
+|===
+
+=== `tracker`: Tracking Data Structures
+
+[cols="1,4,2"]
+|===
+| Module | Description | Verification artifacts
+
+| `br_tracker_freelist`
+| Manages allocation and deallocation of free identifiers or tags.
+| Elab/lint, Sim, FPV.
+
+| `br_tracker_linked_list_ctrl`
+| Manages linked-list pointers for tracker-style data structures.
+| Elab/lint, Sim, FPV.
+
+| `br_tracker_reorder`
+| Reorders completed operations back into sequence order.
+| Elab/lint, FPV.
+
+| `br_tracker_reorder_buffer_ctrl_1r1w`
+| Controls a reorder buffer backed by a one-read, one-write memory.
+| Elab/lint, FPV.
+
+| `br_tracker_reorder_buffer_flops`
+| Implements a flop-backed reorder buffer.
+| Elab/lint, Sim, FPV.
+
+| `br_tracker_sequence`
+| Tracks sequence numbers and wraparound ordering.
+| Elab/lint, FPV.
 
 |===
 
@@ -904,7 +1614,7 @@ a| `br_tracker_freelist`, `br_tracker_linked_list_ctrl`, `br_tracker_reorder`, `
 
 | `br_lfsr_taps`
 | LFSR tap helper package used by `br_lfsr`.
-| Sim through `br_lfsr_tb`.
+| Package elaboration test; Sim through `br_lfsr_tb`.
 
 | `br_math`
 | `floor_div`, `ceil_div`, `align_down`, `align_up`, `is_power_of_2`, `is_even`, `clogb`, `clamped_clog2`, `min2`, `max2`, `exp2`, `round_up_to_power_of_2`
