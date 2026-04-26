@@ -126,6 +126,7 @@ module br_amba_iso_resp_tracker #(
   `BR_ASSERT_STATIC(max_axi_burst_len_1_or_amba_a,
                     MaxAxiBurstLen == 1 || MaxAxiBurstLen == 2 ** br_amba::AxiBurstLenWidth)
   `BR_ASSERT_STATIC(axi_id_width_gte_clog2_a, AxiIdWidth >= $clog2(AxiIdCount))
+  `BR_ASSERT_STATIC(per_id_fifo_depth_gte_1_a, PerIdFifoDepth >= 1)
   `BR_ASSERT_INTG(axlen_legal_range_a, upstream_axvalid |-> upstream_axlen < MaxAxiBurstLen)
   // Check that the isolate request can only fall when the tracker is empty and the upstream
   // is not driving a new request (because it is held off outside of this module).
@@ -521,6 +522,25 @@ module br_amba_iso_resp_tracker #(
           assign tracker_fifo_pop_empty[i] = tracked_count_per_id == 0;
           assign tracker_fifo_pop_len[i]   = '0;
           `BR_UNUSED_NAMED(static_fifo_push_data_unused, static_fifo_push_data[i])
+        end else if (PerIdFifoDepth == 1) begin : gen_single_entry_per_id
+          br_flow_reg_fwd #(
+              .Width(AxiBurstLenWidth),
+              // When EnableWlastTracking=0, valid can deassert if downstream_axready deasserts
+              .EnableAssertPushValidStability(EnableWlastTracking)
+          ) br_flow_reg_fwd_req_tracker (
+              .clk,
+              .rst,
+              //
+              .push_valid(static_fifo_push_valid[i]),
+              .push_data(static_fifo_push_data[i]),
+              .push_ready(static_fifo_push_ready[i]),
+              //
+              .pop_valid(tracker_fifo_pop_valid[i]),
+              .pop_data(tracker_fifo_pop_len[i]),
+              .pop_ready(tracker_fifo_pop_ready[i])
+          );
+
+          assign tracker_fifo_pop_empty[i] = !tracker_fifo_pop_valid[i];
         end else begin : gen_multi_beat_per_id
           br_fifo_flops #(
               .Depth(PerIdFifoDepth),
