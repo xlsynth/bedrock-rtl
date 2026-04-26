@@ -2,7 +2,8 @@
 
 repos:
   - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v6.0.0
+    # v6.0.0
+    rev: 3e8a8703264a2f4a69428a0aa4dcb512790b2c8c
     hooks:
       - id: check-symlinks
       - id: destroyed-symlinks
@@ -28,14 +29,20 @@ repos:
 
   # Format Python files
   - repo: https://github.com/psf/black-pre-commit-mirror
-    rev: 24.8.0
+    # 24.8.0
+    rev: f7aa1f9a50202a2cd7cef269f8d83f5ac91b2915
     hooks:
       - id: black
         language_version: python3.12
 
-  # Format Bazel files
+  # Format Bazel files.
+  #
+  # The pre-commit hook repo is pinned to a commit SHA. The hook itself downloads
+  # the buildifier release selected by --version; that binary is version-tagged
+  # but not SHA-verified by this repo.
   - repo: https://github.com/warchant/pre-commit-buildifier
-    rev: 0.1.5
+    # 0.1.5
+    rev: f8ce12ccaf29ba79d19c6a9d0643471372a8ba0f
     hooks:
     -   id: buildifier
         args: [--version, "v7.3.1", -mode=fix]
@@ -52,7 +59,8 @@ repos:
         files: (^|/)BUILD$
 
   - repo: https://github.com/mgottscho/verible-py.git
-    rev: v0.0-4051
+    # v0.0-4051
+    rev: 1fbc1299a75c1889d8b3a2552fdc16a4171ad679
     hooks:
       # Format Verilog files
       - id: verible-verilog-format
