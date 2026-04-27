@@ -111,6 +111,7 @@ br_verilog_elab_and_lint_test_suite(
         "AxiIdCount": [
             "1",
             "2",
+            "6",
             "128",
         ],
         "UseDynamicFifo": [
