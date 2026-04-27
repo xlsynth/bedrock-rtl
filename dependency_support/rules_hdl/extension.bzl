@@ -37,8 +37,8 @@ def _rules_hdl_extension_impl(_):
         # Patch verilog/providers.bzl so that we can use it with stardoc
         patch_args = ["-p1"],
         patches = [
-            "//dependency_support/rules_hdl:verilog/BUILD.bazel.patch",
-            "//dependency_support/rules_hdl:verilog/providers.bzl.patch",
+            ":verilog/BUILD.bazel.patch",
+            ":verilog/providers.bzl.patch",
         ],
     )
 
