@@ -205,6 +205,32 @@ use_repo(rules_hdl_extension, "rules_hdl")
 ----
 ====
 
+If you need to redirect the `rules_hdl` wrapper module in a larger Bazel dependency graph,
+load the extension through a root-module `rules_hdl` dependency instead:
+
+[source,bzl]
+----
+bazel_dep(name = "rules_hdl", version = "0.0.0", repo_name = "rules_hdl_wrapper_module")
+
+# Use an override only if your root module needs to provide the rules_hdl wrapper
+# from a local checkout or another non-registry source.
+local_path_override(
+    module_name = "rules_hdl",
+    path = "<path-to-rules-hdl-wrapper>",
+)
+
+rules_hdl_extension = use_extension("@rules_hdl_wrapper_module//:extension.bzl", "rules_hdl_extension")
+use_repo(rules_hdl_extension, "rules_hdl")
+----
+
+NOTE: Bazel only applies module overrides from the root module. If `rules_hdl` is available
+from your configured Bazel registries, no override is needed. Otherwise, your root
+`MODULE.bazel` must provide the `rules_hdl` module with an override such as
+`local_path_override`, `archive_override`, or `git_override`. The direct
+`@bedrock-rtl//dependency_support/rules_hdl:extension.bzl` load shown in the main example
+keeps `@rules_hdl//...` labels available, but root-module overrides for `rules_hdl` will not
+affect that direct extension load.
+
 Then suppose you have the following SystemVerilog module called `datapath_join.sv`:
 
 .`datapath_join.sv`
