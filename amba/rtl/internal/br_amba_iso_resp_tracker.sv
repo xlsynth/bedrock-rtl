@@ -532,12 +532,12 @@ module br_amba_iso_resp_tracker #(
               .rst,
               //
               .push_valid(static_fifo_push_valid[i]),
-              .push_data(static_fifo_push_data[i]),
+              .push_data (static_fifo_push_data[i]),
               .push_ready(static_fifo_push_ready[i]),
               //
-              .pop_valid(tracker_fifo_pop_valid[i]),
-              .pop_data(tracker_fifo_pop_len[i]),
-              .pop_ready(tracker_fifo_pop_ready[i])
+              .pop_valid (tracker_fifo_pop_valid[i]),
+              .pop_data  (tracker_fifo_pop_len[i]),
+              .pop_ready (tracker_fifo_pop_ready[i])
           );
 
           assign tracker_fifo_pop_empty[i] = !tracker_fifo_pop_valid[i];
