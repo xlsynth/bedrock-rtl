@@ -122,10 +122,12 @@ module br_amba_iso_resp_tracker #(
 
   // Integration checks
   `BR_ASSERT_STATIC(max_outstanding_gte_1_a, MaxOutstanding > 1)
-  `BR_ASSERT_STATIC(max_outstanding_gt_skew_a, MaxOutstanding > MaxTransactionSkew)
+  `BR_ASSERT_STATIC(max_outstanding_gt_skew_a,
+                    !EnableWlastTracking || MaxOutstanding > MaxTransactionSkew)
   `BR_ASSERT_STATIC(max_axi_burst_len_1_or_amba_a,
                     MaxAxiBurstLen == 1 || MaxAxiBurstLen == 2 ** br_amba::AxiBurstLenWidth)
-  `BR_ASSERT_STATIC(axi_id_width_gte_clog2_a, AxiIdWidth >= $clog2(AxiIdCount))
+  `BR_ASSERT_STATIC(axi_id_count_gte_1_a, AxiIdCount >= 1)
+  `BR_ASSERT_STATIC(axi_id_width_gte_clog2_a, AxiIdWidth >= br_math::clamped_clog2(AxiIdCount))
   `BR_ASSERT_STATIC(per_id_fifo_depth_gte_1_a, PerIdFifoDepth >= 1)
   `BR_ASSERT_INTG(axlen_legal_range_a, upstream_axvalid |-> upstream_axlen < MaxAxiBurstLen)
   // Check that the isolate request can only fall when the tracker is empty and the upstream
@@ -532,12 +534,12 @@ module br_amba_iso_resp_tracker #(
               .rst,
               //
               .push_valid(static_fifo_push_valid[i]),
-              .push_data(static_fifo_push_data[i]),
+              .push_data (static_fifo_push_data[i]),
               .push_ready(static_fifo_push_ready[i]),
               //
-              .pop_valid(tracker_fifo_pop_valid[i]),
-              .pop_data(tracker_fifo_pop_len[i]),
-              .pop_ready(tracker_fifo_pop_ready[i])
+              .pop_valid (tracker_fifo_pop_valid[i]),
+              .pop_data  (tracker_fifo_pop_len[i]),
+              .pop_ready (tracker_fifo_pop_ready[i])
           );
 
           assign tracker_fifo_pop_empty[i] = !tracker_fifo_pop_valid[i];
