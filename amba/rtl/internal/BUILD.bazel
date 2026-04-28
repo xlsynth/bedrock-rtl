@@ -93,6 +93,7 @@ verilog_library(
         "//flow/rtl:br_flow_fork",
         "//flow/rtl:br_flow_join",
         "//flow/rtl:br_flow_mux_select_unstable",
+        "//flow/rtl:br_flow_reg_fwd",
         "//macros:br_asserts_internal",
         "//macros:br_registers",
         "//macros:br_unused",
@@ -115,6 +116,10 @@ br_verilog_elab_and_lint_test_suite(
         "UseDynamicFifo": [
             "1",
             "0",
+        ],
+        "PerIdFifoDepth": [
+            "1",
+            "2",
         ],
     },
     deps = [":br_amba_iso_resp_tracker"],
