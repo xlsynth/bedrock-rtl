@@ -93,6 +93,7 @@ module br_lfsr_fpv_monitor #(
   logic                          period_done;
   logic [PeriodCounterWidth-1:0] state_a;
   logic [PeriodCounterWidth-1:0] state_b;
+  logic                          out_state_a_valid;
   logic [             Width-1:0] out_state_a;
 
   `BR_FV_2RAND_IDX(state_a, state_b, Period)
@@ -103,10 +104,12 @@ module br_lfsr_fpv_monitor #(
   always_ff @(posedge clk) begin
     if (rst || reinit) begin
       period_count <= '0;
-      period_done  <= 1'b0;
-      out_state_a  <= '0;
+      period_done <= 1'b0;
+      out_state_a_valid <= 1'b0;
+      out_state_a <= '0;
     end else begin
       if (period_count == state_a) begin
+        out_state_a_valid <= 1'b1;
         out_state_a <= out_state;
       end
 
@@ -123,7 +126,8 @@ module br_lfsr_fpv_monitor #(
 
   // Since state_a and state_b are arbitrary distinct period positions, this
   // proves any two positions in the period produce different LFSR states.
-  `BR_ASSERT(no_duplicate_states_a, period_count == state_b |-> out_state_a != out_state)
+  `BR_ASSERT(no_duplicate_states_a,
+             out_state_a_valid && (period_count == state_b) |-> out_state_a != out_state)
 
   `BR_COVER(full_period_done_c, period_done)
 
