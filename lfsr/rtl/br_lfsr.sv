@@ -86,9 +86,9 @@ module br_lfsr #(
 
   // Value
   `BR_ASSERT_IMPL(out_state_non_zero_a, out_state != '0)
-  `BR_ASSERT_IMPL(advance_changes_a, advance |=> out_state != $past(out_state))
-  `BR_ASSERT_IMPL(no_advance_holds_a, !advance |=> (out_state == $past(out_state)) && (out == $past
-                                      (out)))
+  `BR_ASSERT_IMPL(advance_changes_a, advance && !reinit |=> out_state != $past(out_state))
+  `BR_ASSERT_IMPL(no_advance_holds_a, !advance && !reinit |=> (out_state == $past(out_state)
+                                      ) && (out == $past(out)))
 
   // Reinit
   `BR_COVER_IMPL(reinit_c, reinit)
