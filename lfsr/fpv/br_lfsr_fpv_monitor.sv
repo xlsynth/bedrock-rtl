@@ -121,6 +121,8 @@ module br_lfsr_fpv_monitor #(
     end
   end
 
+  // Since state_a and state_b are arbitrary distinct period positions, this
+  // proves any two positions in the period produce different LFSR states.
   `BR_ASSERT(no_duplicate_states_a, period_count == state_b |-> out_state_a != out_state)
 
   `BR_COVER(full_period_done_c, period_done)
