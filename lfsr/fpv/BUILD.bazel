@@ -25,23 +25,7 @@ verilog_elab_test(
 br_verilog_fpv_test_tools_suite(
     name = "br_lfsr_test_suite",
     params = {
-        "Width": [
-            "2",
-            "3",
-            "4",
-            "5",
-            "6",
-            "7",
-            "8",
-            "9",
-            "10",
-            "11",
-            "12",
-            "13",
-            "14",
-            "15",
-            "16",
-        ],
+        "Width": [str(width) for width in range(2, 17)],
     },
     tools = {
         "jg": "br_lfsr_fpv.jg.tcl",

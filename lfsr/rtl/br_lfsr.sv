@@ -9,7 +9,7 @@
 // for a maximal period LFSR, is nearly equidistributed between 0 and 1. (A
 // maximal period has an odd length and contains one more 1 output than 0
 // output.) The full state output is the current state of the LFSR. For a
-// maximal period LFSR, each state in [1, 2^(Width-1)] is visited exactly
+// maximal period LFSR, each state in [1, 2^Width-1] is visited exactly
 // once during the period.
 //
 // See the br_lfsr_taps package for the taps that produce maximum-length LFSRs
