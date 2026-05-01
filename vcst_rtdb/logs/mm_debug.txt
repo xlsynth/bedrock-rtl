@@ -1,0 +1,19 @@
+2026-05-01 10:20:34 1777656034.546589 | INFO  | Process Limits
+	 Virual Memory -> no limit
+	 Time Limit -> no limit
+	 Stack Size -> no limit
+	 Data Segment -> no limit
+	 File Size -> no limit
+	 Lock Limit -> no limit
+	 CPU Time Limit -> no limit
+	 RSS  -> no limit
+	 Threads  -> 2060136 
+Available Cores : 128
+SystemInfo : totalram=515178 freeram=446737 sharedram=2241.63 bufferram=2428.02 totalswap=0 freeswap=0 procs= 2912
+Executable Args: /eda-tools/synopsys/vc_static/W-2024.09-SP2-3/linux64/vcst/bin/svi,-mode64,-no_color,-server,-client,masai-devboxmasai,-session,vcst_rtdb,-batch,-fmode,_default,-new_verdi_comm,-x,help get_attribute; help get_cells; help get_designs; exit,-y,,-pathmap,/tmp/specify_pathmap.txt89masai-devbox
+
+2026-05-01 10:20:34 1777656034.574268 | INFO  | Share License key => -2424668483869551943 for master run  Old Key => -2424668483869551943
+2026-05-01 10:20:35 1777656035.213403 | INFO  | checkForHostInfo :: /vcwrapmasterhost hostInfoExists: 0
+2026-05-01 10:20:35 1777656035.213426 | INFO  |  hostInfoFile not found
+2026-05-01 10:20:35 1777656035.213429 | INFO  | checkForMmFlow 
+2026-05-01 10:21:05 1777656065.213709 | INFO  | exitChilds

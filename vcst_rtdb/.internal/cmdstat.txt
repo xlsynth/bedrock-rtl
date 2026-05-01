@@ -1,0 +1,13 @@
+
+
+ ****************************Shell commands Recording************************
+
+
+ ****************************ThreadTask Recording************************
+Thread: CommonMgr Time: 0(s) Mem: 0(KB) MaxSize: 0
+
+
+ ****************************ProcessTask Recording************************
+
+
+ **************************** Command Stats (without vnrstat) ************************

@@ -1,0 +1,194 @@
+{ Category:HECTOR
+{ ID:CPP_COMP_EXE_NOT_FOUND,
+  CODE_ID:CPP_COMP_EXE_NOT_FOUND,
+  Severity:error,
+  Primary: "%s",
+  Secondary: "%s"
+}
+{ ID:CPP_COMP_FILE_NOT_FOUND,
+  CODE_ID:CPP_COMP_FILE_NOT_FOUND,
+  Severity:error,
+  Primary: "%s",
+  Secondary: "%s"
+}
+{ ID:CPP_COMP_READ_HEADER,
+  CODE_ID:CPP_COMP_READ_HEADER,
+  Severity:error,
+  Primary: "%s",
+  Secondary: "%s"
+}
+{ ID:CPP_COMP_INVALID_HEADER,
+  CODE_ID:CPP_COMP_INVALID_HEADER,
+  Severity:error,
+  Primary: "%s",
+  Secondary: "%s"
+}
+{ ID:CPP_COMP_INVALID_HCFG,
+  CODE_ID:CPP_COMP_INVALID_HCFG,
+  Severity:error,
+  Primary: "%s",
+  Secondary: "%s"
+}
+{ ID:CPP_COMP_HCFG_PROBLEM,
+  CODE_ID:CPP_COMP_HCFG_PROBLEM,
+  Severity:error,
+  Primary: "%s",
+  Secondary: "%s"
+}
+{ ID:CPP_COMP_INVALID_HEXTRACT,
+  CODE_ID:CPP_COMP_INVALID_HEXTRACT,
+  Severity:error,
+  Primary: "%s",
+  Secondary: "%s"
+}
+{ ID:CPP_COMP_HEXTRACT_PROBLEM,
+  CODE_ID:CPP_COMP_HEXTRACT_PROBLEM,
+  Severity:error,
+  Primary: "%s",
+  Secondary: "%s"
+}
+{ ID:CPP_COMP_NON_HECTOR_EXE,
+  CODE_ID:CPP_COMP_NON_HECTOR_EXE,
+  Severity:error,
+  Primary: "%s",
+  Secondary: "%s"
+}
+{ ID:CPP_COMP_INVALID_HLNK,
+  CODE_ID:CPP_COMP_INVALID_HLNK,
+  Severity:error,
+  Primary: "%s",
+  Secondary: "%s"
+}
+{ ID:CPP_COMP_LINK_PROBLEM,
+  CODE_ID:CPP_COMP_LINK_PROBLEM,
+  Severity:error,
+  Primary: "%s",
+  Secondary: "%s"
+}
+{ ID:CPP_COMP_INVALID_HLD,
+  CODE_ID:CPP_COMP_INVALID_HLD,
+  Severity:error,
+  Primary: "%s",
+  Secondary: "%s"
+}
+{ ID:CPP_COMP_MAIN_NOT_FOUND,
+  CODE_ID:CPP_COMP_MAIN_NOT_FOUND,
+  Severity:error,
+  Primary: "%s",
+  Secondary: "%s"
+}
+{ ID:CPP_COMP_TOP_NOT_FOUND,
+  CODE_ID:CPP_COMP_TOP_NOT_FOUND,
+  Severity:error,
+  Primary: "%s",
+  Secondary: "%s"
+}
+{ ID:CPP_COMP_LINK_INCOMPLETE,
+  CODE_ID:CPP_COMP_LINK_INCOMPLETE,
+  Severity:warning,
+  Primary: "%s",
+  Secondary: "%s"
+}
+{ ID:CPP_COMP_LINK_FAILED,
+  CODE_ID:CPP_COMP_LINK_FAILED,
+  Severity:warning,
+  Primary: "%s",
+  Secondary: "%s"
+}
+{ ID:CPP_COMP_MISMATCH_32_64,
+  CODE_ID:CPP_COMP_MISMATCH_32_64,
+  Severity:warning,
+  Primary: "%s",
+  Secondary: "%s"
+}
+{ ID:CPP_COMP_INVALID_HCC,
+  CODE_ID:CPP_COMP_INVALID_HCC,
+  Severity:error,
+  Primary: "%s",
+  Secondary: "%s"
+}
+{ ID:CPP_COMP_ONE_SOURCE,
+  CODE_ID:CPP_COMP_ONE_SOURCE,
+  Severity:error,
+  Primary: "%s",
+  Secondary: "%s"
+}
+{ ID:CPP_COMP_NO_SOURCE,
+  CODE_ID:CPP_COMP_NO_SOURCE,
+  Severity:warning,
+  Primary: "%s",
+  Secondary: "%s"
+}
+{ ID:CPP_COMP_SOFTFLOAT,
+  CODE_ID:CPP_COMP_SOFTFLOAT,
+  Severity:error,
+  Primary: "%s",
+  Secondary: "%s"
+}
+{ ID:CPP_COMP_FORMAT_UNSUPPORTED,
+  CODE_ID:CPP_COMP_FORMAT_UNSUPPORTED,
+  Severity:error,
+  Primary: "%s",
+  Secondary: "%s"
+}
+{ ID:CPP_COMP_INVALID_OBJCOPY,
+  CODE_ID:CPP_COMP_INVALID_OBJCOPY,
+  Severity:error,
+  Primary: "%s",
+  Secondary: "%s"
+}
+{ ID:CPP_COMP_EXPORT_FAILED,
+  CODE_ID:CPP_COMP_EXPORT_FAILED,
+  Severity:error,
+  Primary: "%s",
+  Secondary: "%s"
+}
+{ ID:CPP_COMP_INVALID_LIBRARY,
+  CODE_ID:CPP_COMP_INVALID_LIBRARY,
+  Severity:error,
+  Primary: "%s",
+  Secondary: "%s"
+}
+{ ID:CPP_COMP_LOG_FILE_NOT_FOUND,
+  CODE_ID:CPP_COMP_LOG_FILE_NOT_FOUND,
+  Severity:error,
+  Primary: "%s",
+  Secondary: "%s"
+}
+{ ID:CPP_COMP_GEN_SCRIPT_FAIL,
+  CODE_ID:CPP_COMP_GEN_SCRIPT_FAIL,
+  Severity:error,
+  Primary: "%s",
+  Secondary: "%s"
+}
+{ ID:CPP_COMP_INVALID_HECTOR,
+  CODE_ID:CPP_COMP_INVALID_HECTOR,
+  Severity:error,
+  Primary: "%s",
+  Secondary: "%s"
+}
+{ ID:CPP_COMP_HECTOR_HANDSHAKE_FAIL,
+  CODE_ID:CPP_COMP_HECTOR_HANDSHAKE_FAIL,
+  Severity:error,
+  Primary: "%s",
+  Secondary: "%s"
+}
+{ ID:CPP_COMP_HECTOR_EXEC_ERROR,
+  CODE_ID:CPP_COMP_HECTOR_EXEC_ERROR,
+  Severity:error,
+  Primary: "%s",
+  Secondary: "%s"
+}
+{ ID:CPP_COMP_HECTOR_LOG_ERROR,
+  CODE_ID:CPP_COMP_HECTOR_LOG_ERROR,
+  Severity:error,
+  Primary: "%s",
+  Secondary: "%s"
+}
+{ ID:CPP_COMP_EXE_NOT_FOUND,
+  CODE_ID:CPP_COMP_EXE_NOT_FOUND,
+  Severity:error,
+  Primary: "%s",
+  Secondary: "%s"
+}
+}
