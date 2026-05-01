@@ -9,7 +9,7 @@
 // for a maximal period LFSR, is nearly equidistributed between 0 and 1. (A
 // maximal period has an odd length and contains one more 1 output than 0
 // output.) The full state output is the current state of the LFSR. For a
-// maximal period LFSR, each state in [1, 2^(Width-1)] is visited exactly
+// maximal period LFSR, each state in [1, 2^Width-1] is visited exactly
 // once during the period.
 //
 // See the br_lfsr_taps package for the taps that produce maximum-length LFSRs
@@ -86,9 +86,9 @@ module br_lfsr #(
 
   // Value
   `BR_ASSERT_IMPL(out_state_non_zero_a, out_state != '0)
-  `BR_ASSERT_IMPL(advance_changes_a, advance |=> out_state != $past(out_state))
-  `BR_ASSERT_IMPL(no_advance_holds_a, !advance |=> (out_state == $past(out_state)) && (out == $past
-                                      (out)))
+  `BR_ASSERT_IMPL(advance_changes_a, advance && !reinit |=> out_state != $past(out_state))
+  `BR_ASSERT_IMPL(no_advance_holds_a, !advance && !reinit |=> (out_state == $past(out_state)
+                                      ) && (out == $past(out)))
 
   // Reinit
   `BR_COVER_IMPL(reinit_c, reinit)

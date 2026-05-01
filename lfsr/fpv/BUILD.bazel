@@ -1,0 +1,35 @@
+# SPDX-License-Identifier: Apache-2.0
+
+load("@rules_hdl//verilog:providers.bzl", "verilog_library")
+load("//bazel:br_verilog.bzl", "br_verilog_fpv_test_tools_suite")
+load("//bazel:verilog.bzl", "verilog_elab_test")
+
+package(default_visibility = ["//visibility:private"])
+
+verilog_library(
+    name = "br_lfsr_fpv_monitor",
+    srcs = ["br_lfsr_fpv_monitor.sv"],
+    deps = [
+        "//lfsr/rtl:br_lfsr",
+        "//lfsr/rtl:br_lfsr_taps",
+        "//macros:br_fv",
+    ],
+)
+
+verilog_elab_test(
+    name = "br_lfsr_fpv_monitor_elab_test",
+    tool = "verific",
+    deps = [":br_lfsr_fpv_monitor"],
+)
+
+br_verilog_fpv_test_tools_suite(
+    name = "br_lfsr_test_suite",
+    params = {
+        "Width": [str(width) for width in range(2, 17)],
+    },
+    tools = {
+        "jg": "br_lfsr_fpv.jg.tcl",
+    },
+    top = "br_lfsr",
+    deps = [":br_lfsr_fpv_monitor"],
+)
