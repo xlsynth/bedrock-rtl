@@ -51,6 +51,11 @@ fvassume no_push_valid_during_reset -expr {push_rst |-> push_valid == 'd0} -cloc
 fvassume push_overlap_cycles_init -expr {dut.br_cdc_fifo_ctrl_1r1w.br_cdc_fifo_ctrl_push_1r1w.br_cdc_fifo_push_ctrl.br_cdc_fifo_push_flag_mgr.br_cdc_fifo_reset_overlap_checks.overlap_cycles == 'd0} -clock clk -depth 1
 fvassume pop_overlap_cycles_init -expr {dut.br_cdc_fifo_ctrl_1r1w.br_cdc_fifo_ctrl_pop_1r1w_inst.br_cdc_fifo_pop_ctrl.br_cdc_fifo_pop_flag_mgr.br_cdc_fifo_reset_overlap_checks.overlap_cycles == 'd0} -clock clk -depth 1
 
+# push_count_gray is not initialized, so it becomes a random value in FV.
+# When pop_rst falls, constrain the first push-count bit entering the pop-side
+# CDC synchronizer to start at zero.
+fvassume push_count_gray_init -expr {$fell(pop_rst) |-> dut.br_cdc_fifo_ctrl_1r1w.br_cdc_fifo_ctrl_pop_1r1w_inst.br_cdc_fifo_gray_count_sync_push2pop.gen_cdc_sync[0].br_cdc_bit_toggle_inst.br_gate_cdc_sync.in_d == 'd0} -clock pop_clk
+
 report_fv_complexity
 
 #run properties

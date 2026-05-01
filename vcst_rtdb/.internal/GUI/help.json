@@ -1,0 +1,7250 @@
+{ "groups": [
+{ "name": "FAULT_ANALYSIS commands",
+"cmds": [
+{
+  "name": "check_faults",
+  "info": "Initiate the fault analysis flow. Setup commands should be executed priort to this command."
+}
+,
+{
+  "name": "fa_activity_data",
+  "info": "Specifies the simulation file for power estimation and reduction rules. VCD, FSDB and SAIF file can be specified using this constraint. This constraint takes the same set of information that was previously supported by spyParameter. However using spyParameter, the newer features like SAIF file input and multiple VCD is not supported. So it is advisable to use this constraint for all simulation inputs."
+}
+,
+{
+  "name": "fa_add_reliability_property",
+  "info": "Specifies fit rate, detection factor and correction factor for SSF rule."
+}
+,
+{
+  "name": "fa_configure_avf_statistical_analysis",
+  "info": "Specifies thresholds used to categorize crtical registers."
+}
+,
+{
+  "name": "fa_decompile_macro",
+  "info": "It is used to decompile the elements represented by the static/dynamic macros."
+}
+,
+{
+  "name": "fa_define_macro",
+  "info": "defines an object-set which can be directly used as -type in other constraints."
+}
+,
+{
+  "name": "fa_define_safety",
+  "info": "specifies modules, instances or primary ports and their safety types"
+}
+,
+{
+  "name": "fa_detection_point",
+  "info": "specifies safety mechanism which can be a net, pin or port"
+}
+,
+{
+  "name": "fa_error_code_sm",
+  "info": "specify safety mechanism attributes"
+}
+,
+{
+  "name": "fa_force_probability",
+  "info": "specifies probaility of controllabilities and/or observabilities for ports/pins."
+}
+,
+{
+  "name": "fa_memory_type",
+  "info": "Specifies the memory modules or instances ."
+}
+,
+{
+  "name": "fa_observe_point",
+  "info": "specifies observe point which can be a net, pin or port"
+}
+,
+{
+  "name": "fa_redundancy",
+  "info": "specifies instances or modules with redundancy in the design."
+}
+,
+{
+  "name": "fa_sanity_for_flop_pin_probability",
+  "info": "It is used to specify the flop pin type, threshold probability and threshold percentage value to run sanity."
+}
+,
+{
+  "name": "fa_ser_data",
+  "info": "specifies soft error data for modules or instances"
+}
+]},
+{ "name": "PowerEst Commands",
+"cmds": [
+{
+  "name": "check_power_lint",
+  "info": "Check power estimation violations"
+}
+,
+{
+  "name": "debug_clock_traversal",
+  "info": "debug clock traversal"
+}
+,
+{
+  "name": "define_clock_gating_cell",
+  "info": "defines an explicit CGC"
+}
+]},
+{ "name": "Constraints Commands",
+"cmds": [
+{
+  "name": "check_sdc",
+  "info": "Check constraints violations"
+}
+,
+{
+  "name": "configure_sdc_te_verification",
+  "info": "Provide exception verification configuration for Constraints"
+}
+,
+{
+  "name": "report_sdc",
+  "info": "Report constraints violations"
+}
+,
+{
+  "name": "sdc_report_clock_info",
+  "info": "Reports a table of generated clocks and source clocks relationships"
+}
+,
+{
+  "name": "write_ptc_waiver",
+  "info": "Migrate ptc compatible waivers"
+}
+,
+{
+  "name": "write_sdc_property",
+  "info": "Create properties for verification using VC-Formal"
+}
+]},
+{ "name": "Msg Commands",
+"cmds": [
+{
+  "name": "save_db",
+  "info": "Save in-memory database to disk."
+}
+]},
+{ "name": "Formal Initial State Setup Commands",
+"cmds": [
+{
+  "name": "fv_sim_config",
+  "info": "Configure VCF initialization settings"
+}
+,
+{
+  "name": "fv_sim_config_report",
+  "info": "Report VCF initialization settings"
+}
+,
+{
+  "name": "fv_sim_force",
+  "info": "Assign a specific value to a signal until explicitly cleared"
+}
+,
+{
+  "name": "fv_sim_monitor",
+  "info": "Add and delete signals to monitor their value in each simulation cycle"
+}
+,
+{
+  "name": "fv_sim_report",
+  "info": "Report values of specified signals"
+}
+,
+{
+  "name": "fv_sim_run",
+  "info": "Run simulator and save the initial state of the design"
+}
+,
+{
+  "name": "fv_sim_state",
+  "info": "Apply, save and clear specific values to sequentials for reset analysis"
+}
+,
+{
+  "name": "sim_add_monitor",
+  "info": "Add signals to the list of signals monitored each simulation cycle"
+}
+,
+{
+  "name": "sim_config",
+  "info": "Specifies certain configuration parameters for subsequent simulation"
+}
+,
+{
+  "name": "sim_force",
+  "info": "Assigns a logic value to a signal in the design until explicitly released"
+}
+,
+{
+  "name": "sim_force_state",
+  "info": "Sets sequential state values to one of the four values: 0,1,x,z until explicitly released"
+}
+,
+{
+  "name": "sim_get",
+  "info": "Get the 4 value logic value (vector) of the specified object"
+}
+,
+{
+  "name": "sim_load_state",
+  "info": "Takes a snapshot of the property trace at the specified time"
+}
+,
+{
+  "name": "sim_release",
+  "info": "Releases previously forced signal in the design"
+}
+,
+{
+  "name": "sim_release_state",
+  "info": "Releases previously forced sequential in the design"
+}
+,
+{
+  "name": "sim_remove_monitor",
+  "info": "Specify a list of signals whose values will no longer be monitored"
+}
+,
+{
+  "name": "sim_report_forces",
+  "info": "Reports currently applied forces and returns a collection of nets which are forced"
+}
+,
+{
+  "name": "sim_reset",
+  "info": "Reset the simulation"
+}
+,
+{
+  "name": "sim_run",
+  "info": "Run the simulator for the specified number of cycles of either the default clock (see sim_config) or the specified clock"
+}
+,
+{
+  "name": "sim_save_reset",
+  "info": "The current sim state should be used for starting state for upcoming formal analysis"
+}
+,
+{
+  "name": "sim_set_state",
+  "info": "Sets sequential state values to one of the four values: 0,1,x,z"
+}
+,
+{
+  "name": "sim_time",
+  "info": "Gets current simulation time"
+}
+]},
+{ "name": "Formal Coverage Verification Commands",
+"cmds": [
+{
+  "name": "fca_config",
+  "info": "Configure FCA app settings"
+}
+,
+{
+  "name": "fv_auto_scale_config",
+  "info": "Configure auto-scale settings"
+}
+,
+{
+  "name": "read_covdb",
+  "info": "The read_covdb command can be used to import a simulation coverage database. The return value is 1 for success and 0 for error scenarios. The read_covdb command implies that VC FV should perform analysis of only those coverage goals that are not yet resolved in the imported database. This command needs to be given prior to the read_file or elaborate command, as the filtering of covered goals happens as the design is built. If this command is given after the read_file or elaborate, VC Formal reports an error."
+}
+,
+{
+  "name": "save_cov_exclusion",
+  "info": "Save uncoverable coverage goals in an exclusion file"
+}
+,
+{
+  "name": "save_covdb",
+  "info": "Save covered/uncoverable coverage goals into a coverage database"
+}
+]},
+{ "name": "Formal Testbench Verification Commands",
+"cmds": [
+{
+  "name": "cluster_fta_faults",
+  "info": "clusters FTA faults using unsupervised machine learning techniques"
+}
+,
+{
+  "name": "configure_fta_props",
+  "info": "Configure FPV properties to be used and fault classes to be enabled during FTA analysis"
+}
+,
+{
+  "name": "fta_config",
+  "info": "Configure options for FTA."
+}
+,
+{
+  "name": "fta_config_report",
+  "info": "Report FTA app settings"
+}
+,
+{
+  "name": "fta_optimize_faults",
+  "info": "Optimizes FTA fault properties by finding equivalent faults"
+}
+,
+{
+  "name": "fta_report",
+  "info": "Report information about FTA properties"
+}
+,
+{
+  "name": "fta_save",
+  "info": "Save FTA results into Certitude fault database"
+}
+,
+{
+  "name": "get_activated_props",
+  "info": "Return collection of activated FPV properties for specified FTA fault properties"
+}
+,
+{
+  "name": "get_fta_faults",
+  "info": "Reports the faults belonging to the instance name(s) provided"
+}
+,
+{
+  "name": "read_faultdb",
+  "info": "Read Certitude fault database to skip analysis for converged faults"
+}
+,
+{
+  "name": "read_fta_waiver",
+  "info": "Read FTA waivers specified by coverage database or exclusion file(s)"
+}
+,
+{
+  "name": "report_fta_constraints",
+  "info": "Report constraints in the COI of FTA fault properties"
+}
+,
+{
+  "name": "report_fta_fault_clusters",
+  "info": "Report FTA fault clusters found by command cluster_fta_faults"
+}
+,
+{
+  "name": "save_fta_cov_results",
+  "info": "Map FTA to coverage and save the results into a coverage database"
+}
+]},
+{ "name": "Formal Connectivity Verification Commands",
+"cmds": [
+{
+  "name": "analyze_cc_coverage",
+  "info": "Checks the coverage of the currently loaded cc checks"
+}
+,
+{
+  "name": "cc_alias",
+  "info": " Creates an alias to the RTL path to be used in source, destination, enable and clock field of cc_assert/cc_load command"
+}
+,
+{
+  "name": "cc_assert",
+  "info": "Create a set of connectivity checks"
+}
+,
+{
+  "name": "cc_debug",
+  "info": "Debug and root cause unconnected connectivity checks"
+}
+,
+{
+  "name": "cc_debug_report",
+  "info": "Report debug and rootcause results for unconnected connectivity checks"
+}
+,
+{
+  "name": "cc_generate",
+  "info": "Generate connectivity pair(s) from source to destination"
+}
+,
+{
+  "name": "cc_load",
+  "info": "Load a set of connectivity checks from a file"
+}
+,
+{
+  "name": "cc_load_report",
+  "info": "Report results of cc_load command"
+}
+,
+{
+  "name": "report_cc_alias",
+  "info": "Report information on defined aliases or a subset of them depending upon the information provided"
+}
+,
+{
+  "name": "report_cc_blackbox",
+  "info": "Report the list of cells which can be blackboxed without affecting the results of currently selected cc checks"
+}
+]},
+{ "name": "Netlist Database Commands",
+"cmds": [
+{
+  "name": "all_clock_gates",
+  "info": "Create a collection of clock gating cells"
+}
+,
+{
+  "name": "all_clocks",
+  "info": "Returns all clocks of the current design"
+}
+,
+{
+  "name": "all_connected",
+  "info": "Returns collection of objects which are connected to specific object"
+}
+,
+{
+  "name": "all_designs",
+  "info": "Returns a collection containing the designs in the current design hierarchy in bottom-up order"
+}
+,
+{
+  "name": "all_fanin",
+  "info": "Returns all fan-ins to a specific sink list"
+}
+,
+{
+  "name": "all_fanout",
+  "info": "Returns all fan-outs of a specific source list"
+}
+,
+{
+  "name": "all_inputs",
+  "info": "Returns all inputs of the current design"
+}
+,
+{
+  "name": "all_instances",
+  "info": "Create a collection of all instances of a design"
+}
+,
+{
+  "name": "all_outputs",
+  "info": "Returns all outputs of the current design"
+}
+,
+{
+  "name": "all_registers",
+  "info": "Returns all specific registers"
+}
+,
+{
+  "name": "change_link",
+  "info": " Change existing instance of a module or libcell, to an instance of another type, existing cell can be a leaf level cell or hierarchical cell."
+}
+,
+{
+  "name": "compile_libs",
+  "info": "Read multiple synopsys .lib file in parallel"
+}
+,
+{
+  "name": "configure_mem_macro_inference",
+  "info": "Constraint for Memory Macro Inference in synthesis"
+}
+,
+{
+  "name": "connect_net",
+  "info": "Connects a net in design"
+}
+,
+{
+  "name": "create_bus",
+  "info": "Creates a bus in design"
+}
+,
+{
+  "name": "create_cell",
+  "info": "Creates a cell in design"
+}
+,
+{
+  "name": "create_net",
+  "info": "Creates a net in design"
+}
+,
+{
+  "name": "create_port",
+  "info": "Creates a port in NLDM"
+}
+,
+{
+  "name": "define_user_attribute",
+  "info": "Defines a new attribute"
+}
+,
+{
+  "name": "disconnect_net",
+  "info": "Disconnects a net in design"
+}
+,
+{
+  "name": "find",
+  "info": "Finds objects of specific object type"
+}
+,
+{
+  "name": "get_app_var_history",
+  "info": "Returns app_var history object"
+}
+,
+{
+  "name": "get_cdc_sequentials",
+  "info": "Creates a collection of sequential pins or rtl nets."
+}
+,
+{
+  "name": "get_cells",
+  "info": "Returns all specific library cells"
+}
+,
+{
+  "name": "get_command_history",
+  "info": "Returns command history object"
+}
+,
+{
+  "name": "get_designs",
+  "info": "Returns all specific designs"
+}
+,
+{
+  "name": "get_instances",
+  "info": "get all instances"
+}
+,
+{
+  "name": "get_lib_cells",
+  "info": "Returns all specific library cells"
+}
+,
+{
+  "name": "get_lib_pins",
+  "info": "Returns all specific library pins"
+}
+,
+{
+  "name": "get_lib_timing_arcs",
+  "info": "Returns collection of library timing arc objects"
+}
+,
+{
+  "name": "get_libs",
+  "info": "Returns all specific libraries"
+}
+,
+{
+  "name": "get_link",
+  "info": "Returns designs built with reason code using Simon/VNR"
+}
+,
+{
+  "name": "get_nets",
+  "info": "Returns all specific nets"
+}
+,
+{
+  "name": "get_object_name",
+  "info": "Returns a list of names of the objects in a collection"
+}
+,
+{
+  "name": "get_pins",
+  "info": "Returns all specific pins"
+}
+,
+{
+  "name": "get_ports",
+  "info": "Returns all specific ports"
+}
+,
+{
+  "name": "get_references",
+  "info": "Create a collection of clock gating cells"
+}
+,
+{
+  "name": "get_sequentials",
+  "info": "Gets collection of sequentials of the design"
+}
+,
+{
+  "name": "get_timing_arcs",
+  "info": "Returns collection of timing arc objects"
+}
+,
+{
+  "name": "insert_buffer",
+  "info": " Insert buffer cells"
+}
+,
+{
+  "name": "list_designs",
+  "info": "list_designs"
+}
+,
+{
+  "name": "list_instance",
+  "info": "list_instances"
+}
+,
+{
+  "name": "list_key_bindings",
+  "info": "List key bindings for current editing mode"
+}
+,
+{
+  "name": "list_libs",
+  "info": "Returns all specific libraries with more info"
+}
+,
+{
+  "name": "list_licenses",
+  "info": "List licenses in use by this process"
+}
+,
+{
+  "name": "map_multi_register_pin",
+  "info": "Set mapping of merge demerge pin for hierscope"
+}
+,
+{
+  "name": "read_lib",
+  "info": "Read a synopsys .lib file"
+}
+,
+{
+  "name": "remove_attribute",
+  "info": "Removes attribute"
+}
+,
+{
+  "name": "remove_buffer",
+  "info": "Remove buffer cells"
+}
+,
+{
+  "name": "remove_bus",
+  "info": "Removes a bus in design"
+}
+,
+{
+  "name": "remove_cell",
+  "info": "Removes a cell in design"
+}
+,
+{
+  "name": "remove_net",
+  "info": "Removes a net in design"
+}
+,
+{
+  "name": "remove_port",
+  "info": "Removes a port in design"
+}
+,
+{
+  "name": "report_attribute",
+  "info": "Report the attributes on one or more objects."
+}
+,
+{
+  "name": "report_case_analysis",
+  "info": "Report case analysis on ports and pins"
+}
+,
+{
+  "name": "report_cell",
+  "info": "reports cell information"
+}
+,
+{
+  "name": "report_lib",
+  "info": "Reports library information"
+}
+,
+{
+  "name": "report_link",
+  "info": "Reports the status of designs which got synthesized with a reason code."
+}
+,
+{
+  "name": "report_net",
+  "info": "Reports net information"
+}
+,
+{
+  "name": "report_port",
+  "info": "reports port information"
+}
+,
+{
+  "name": "report_port_coercion",
+  "info": "reports port coercion information"
+}
+,
+{
+  "name": "set_always_on_cell",
+  "info": "set library ao cell"
+}
+,
+{
+  "name": "set_attribute",
+  "info": "Attaches an attribute to objects in design"
+}
+,
+{
+  "name": "set_get_command_message_limit",
+  "info": "set limit number of get commands failures"
+}
+,
+{
+  "name": "set_isolation_cell",
+  "info": "set library isolation cell"
+}
+,
+{
+  "name": "set_level_shifter_cell",
+  "info": "set library level shifter cell"
+}
+,
+{
+  "name": "set_pg_pin_model",
+  "info": "set library cell pg pin model"
+}
+,
+{
+  "name": "set_pin_model",
+  "info": "set library cell pin related power/gro"
+}
+,
+{
+  "name": "set_power_switch_cell",
+  "info": "set library power_switch cell"
+}
+,
+{
+  "name": "set_retention_cell",
+  "info": "set library retention cell"
+}
+,
+{
+  "name": "set_seq_pin_map",
+  "info": "sets sequential cell's pin name map"
+}
+,
+{
+  "name": "set_top_module",
+  "info": "change top instance"
+}
+,
+{
+  "name": "undo_set_seq_top",
+  "info": "undo set sequential top"
+}
+]},
+{ "name": "Common Application Commands",
+"cmds": [
+{
+  "name": "add_top_interface",
+  "info": "Adds an interface connection for the top module"
+}
+,
+{
+  "name": "add_violation",
+  "info": "adds a violation to the database"
+}
+,
+{
+  "name": "all_active_scenarios",
+  "info": "Returns a list of all active scenario names"
+}
+,
+{
+  "name": "all_scenarios",
+  "info": "Returns a collection of all scenario names"
+}
+,
+{
+  "name": "analyze",
+  "info": "Analyze the source files"
+}
+,
+{
+  "name": "change_names",
+  "info": "Changes the names of ports, cells, and nets in a design"
+}
+,
+{
+  "name": "check_hdl_lib",
+  "info": "Enables language check on lib files and modules"
+}
+,
+{
+  "name": "check_rtl_model",
+  "info": ""
+}
+,
+{
+  "name": "check_rtl_model_pins",
+  "info": ""
+}
+,
+{
+  "name": "checkpoint_session",
+  "info": "Dumps the process image of a session"
+}
+,
+{
+  "name": "clean_compress",
+  "info": "Clean or compress Internal files and folders"
+}
+,
+{
+  "name": "clear_active_scenarios",
+  "info": "Clear active scenarios so that run_active_scenarios can be executed again in same shell"
+}
+,
+{
+  "name": "clear_uarch_port",
+  "info": "Clear Uarch Port"
+}
+,
+{
+  "name": "clock_infer_same_src_dom",
+  "info": "Using this command you can specify clocks which are defined at the output of constraint based abstract model if their domain should be same as that of clock reaching from top to any input clock of the constraint based abstract model."
+}
+,
+{
+  "name": "cluster_static_violations",
+  "info": "cluster static tool generated violations"
+}
+,
+{
+  "name": "compare_sam_model",
+  "info": "compares original and current json"
+}
+,
+{
+  "name": "compress_violations",
+  "info": "Configures compression scheme defined in the tool"
+}
+,
+{
+  "name": "compute_uarch_seq_depth",
+  "info": "Compute Uarch Seq Depth"
+}
+,
+{
+  "name": "configure_clock_propagation",
+  "info": "This command configures the propagation of clock"
+}
+,
+{
+  "name": "configure_command_sanity",
+  "info": "for enabling disabling common sanity on any command"
+}
+,
+{
+  "name": "configure_command_validation",
+  "info": "Ignore commands if any instance of any of its option lies inside SAM"
+}
+,
+{
+  "name": "configure_console_messages",
+  "info": "Restricts where tool shows design read and tool setup messages"
+}
+,
+{
+  "name": "configure_constprop",
+  "info": "Configure the constant propagation mode"
+}
+,
+{
+  "name": "configure_constraint_read",
+  "info": "Configures constraints read in specific naming style"
+}
+,
+{
+  "name": "configure_ip_report",
+  "info": "This command takes in a list of IPs from the user and generates an IP based violation report in UI"
+}
+,
+{
+  "name": "configure_libcell_uniquification",
+  "info": " configures libcell uniquification"
+}
+,
+{
+  "name": "configure_module_synthesis",
+  "info": "Configure Module Level Synthesis Configurations"
+}
+,
+{
+  "name": "configure_module_to_bbox",
+  "info": "configure user defined black-box based on mthresh_value"
+}
+,
+{
+  "name": "configure_multi_scenario",
+  "info": "Configures multi scenario runs"
+}
+,
+{
+  "name": "configure_netlist_design",
+  "info": "Invoke SVR flow on priority"
+}
+,
+{
+  "name": "configure_property",
+  "info": " This command is used to configure analysis and computation of the relevant glitchy points during CDC analysis needed for write_property."
+}
+,
+{
+  "name": "configure_reset_propagation",
+  "info": " configures reset propagation"
+}
+,
+{
+  "name": "configure_seq_libcell",
+  "info": "Configure sequential libcells"
+}
+,
+{
+  "name": "configure_sgbuiltin_load",
+  "info": "Configures loading of Spyglass builtins."
+}
+,
+{
+  "name": "configure_static_aware_synthesis",
+  "info": "This command controls the generation of static Database for synthesis tools. Synthesis tool consumes/understands static Database which helps to perform various operation in a better way. Example: On specification of CDC App, synthesized netlist is CDC aware i.e certain synthesis optimization are not performed around CDC paths, which can potentially introduce new CDC issues at the netlist"
+}
+,
+{
+  "name": "configure_symbolic_operators",
+  "info": "Configures which complex operators should be identified"
+}
+,
+{
+  "name": "configure_tag",
+  "info": "Displays and configures violation tags"
+}
+,
+{
+  "name": "configure_tag_field",
+  "info": "This command can be be used to configure fields for given tag"
+}
+,
+{
+  "name": "configure_tcl_command",
+  "info": "Disable tcl commands, Enable command again with -enable option"
+}
+,
+{
+  "name": "configure_unobservable_logic_identification",
+  "info": "Configure unobservable logic identification"
+}
+,
+{
+  "name": "configure_waiver",
+  "info": "This command is used to controls how waive_violation command applies and its various aspects. For example, it controls which waivers to reject using their names, not apply waivers on certain tags, skip certain filter fields during waiver application, or how a default waiver works. Therefore, all the configurations related to waiver processing for VC SpyGlass are managed by configure_waiver command."
+}
+,
+{
+  "name": "connect_top_port",
+  "info": "Connect interface/modport to top module port"
+}
+,
+{
+  "name": "constprop_selftest",
+  "info": "Dumps the constant propagation data for diagnose"
+}
+,
+{
+  "name": "cputime",
+  "info": "Cpu Time used"
+}
+,
+{
+  "name": "create_clock",
+  "info": "Defines a clock"
+}
+,
+{
+  "name": "create_generated_clock",
+  "info": "Specifies the relationship between a master clock and generated clock"
+}
+,
+{
+  "name": "create_generated_reset",
+  "info": "Creates a generated reset"
+}
+,
+{
+  "name": "create_interface_wrapper",
+  "info": "Create the interface wrapper"
+}
+,
+{
+  "name": "create_reset",
+  "info": "Creates a reset"
+}
+,
+{
+  "name": "create_reset_scenario",
+  "info": "Start of the scope within which the reset events will be defined"
+}
+,
+{
+  "name": "create_rtl_model",
+  "info": ""
+}
+,
+{
+  "name": "create_scenario",
+  "info": "Specifies the information related to scenarios which runs as parallel multi mode run"
+}
+,
+{
+  "name": "create_static",
+  "info": "specifies the design object(port/pin/net) which will be treated as Quasi-static signal "
+}
+,
+{
+  "name": "current_design",
+  "info": "set current_design"
+}
+,
+{
+  "name": "current_scenario",
+  "info": "Set specified scenario in command focus, Command applicable only from shell and in multi-scenario"
+}
+,
+{
+  "name": "define_compression",
+  "info": "Defines custom compression"
+}
+,
+{
+  "name": "define_design_lib",
+  "info": "hdl define design lib"
+}
+,
+{
+  "name": "define_design_mode_group",
+  "info": "Define a set of modes for a design"
+}
+,
+{
+  "name": "define_glitch_free_mux",
+  "info": "Define glitch free mux modules/cells"
+}
+,
+{
+  "name": "define_group",
+  "info": "Defines custom group"
+}
+,
+{
+  "name": "define_ip_block_bus_interface",
+  "info": "Defines IP Block and its bus interface for ML-RCA"
+}
+,
+{
+  "name": "define_name_rules",
+  "info": "Defines a set of name rules for designs"
+}
+,
+{
+  "name": "define_reset_mapping",
+  "info": "Command to associate block level reset to top level reset during CDC/RDC hierarchical top run"
+}
+,
+{
+  "name": "define_severity",
+  "info": "Define a new severity for violations."
+}
+,
+{
+  "name": "define_vcst_restart_script",
+  "info": "This command creates mapping of user given tcl file path and label which is shown in UI"
+}
+,
+{
+  "name": "define_violation",
+  "info": "adds definition of a violation tag to the database schema"
+}
+,
+{
+  "name": "design_lib_options",
+  "info": "Command to specify low_power/low_latency alternatives of a module"
+}
+,
+{
+  "name": "disable_tag_field",
+  "info": "Prevents printing/insertion this field for this tag"
+}
+,
+{
+  "name": "dump_debug_data",
+  "info": "Command to pass names of the blocks. Design statistics will be dumped"
+}
+,
+{
+  "name": "dw_analyze",
+  "info": "Analyze the DW source files."
+}
+,
+{
+  "name": "elaborate",
+  "info": "Elaborate the design, which is analyzed using analyze command"
+}
+,
+{
+  "name": "enable_rca_cluster",
+  "info": " Cluster related violations into groups and for each group report root cause violation(s)"
+}
+,
+{
+  "name": "enable_tag_field",
+  "info": "Enables printing this field for this tag"
+}
+,
+{
+  "name": "enable_turbo",
+  "info": " Group related violations using common data and for each group report parent violation(s)"
+}
+,
+{
+  "name": "encrypt",
+  "info": "This command can be used to encrypt command output"
+}
+,
+{
+  "name": "encrypt_rtl",
+  "info": "encrypts the verilog/vhdl/sverilog files based on key input"
+}
+,
+{
+  "name": "execute_rootcause_analysis",
+  "info": " Cluster related violations into groups and for each group report root cause violation(s)"
+}
+,
+{
+  "name": "extract_reset_sequence",
+  "info": "extract the reset sequences from a given FSDB file"
+}
+,
+{
+  "name": "generate_constraints",
+  "info": "Generates constraints for given violations based on format set by user."
+}
+,
+{
+  "name": "generate_waiver_commands",
+  "info": "Generates field based waiver commands corresponding to violations"
+}
+,
+{
+  "name": "get_blackbox",
+  "info": "Returns list of objects which are listed as blackbox"
+}
+,
+{
+  "name": "get_clock_mapping",
+  "info": "Reports mapping between block and top scope clocks"
+}
+,
+{
+  "name": "get_clock_network_objects",
+  "info": "Get clock network objects"
+}
+,
+{
+  "name": "get_clock_relationship",
+  "info": "Report relationship between two clocks"
+}
+,
+{
+  "name": "get_clocks",
+  "info": "Returns clock objects, whose name matches with the specified pattern"
+}
+,
+{
+  "name": "get_cluster_cause_viols",
+  "info": "Gets cause violation IDs in given cluster(s)"
+}
+,
+{
+  "name": "get_cluster_effect_viols",
+  "info": "Gets effect violation IDs in given cluster(s)"
+}
+,
+{
+  "name": "get_cluster_viols",
+  "info": "Gets cluster violation IDs"
+}
+,
+{
+  "name": "get_configure_module_synthesis",
+  "info": "Get Configure Module Level Synthesis Configurations"
+}
+,
+{
+  "name": "get_constant_sources",
+  "info": "Reports the RTL/SCA constant sources propagating to a signal"
+}
+,
+{
+  "name": "get_exceptions",
+  "info": "get exceptions related to design object"
+}
+,
+{
+  "name": "get_generated_clocks",
+  "info": "Returns generated clock objects, whose name matches with the specified pattern"
+}
+,
+{
+  "name": "get_glassbox",
+  "info": "Returns list of objects which are listed as glassbox"
+}
+,
+{
+  "name": "get_hierarchical_models",
+  "info": "Get modules in groups with group order mantaining a dependency hierarchy"
+}
+,
+{
+  "name": "get_ignored_waivers",
+  "info": "This command is used to dump the report that shows the ignored waivers since they do not have the configuration specified in -mandatory_filter_fields or -mandatory_options field(s) in configure_waiver command"
+}
+,
+{
+  "name": "get_license",
+  "info": "Get licenses for the specified features"
+}
+,
+{
+  "name": "get_pi_drive_clock",
+  "info": "return all PI/clock pairs in the database"
+}
+,
+{
+  "name": "get_reset_drive_clock",
+  "info": "return all reset/clock pairs in the database"
+}
+,
+{
+  "name": "get_resets",
+  "info": "Returns reset objects, whose name matches with the specified pattern"
+}
+,
+{
+  "name": "get_resource_cost",
+  "info": "Get Wall/Cpu time, peak memory, or current resident set memory size"
+}
+,
+{
+  "name": "get_rtl_parameters",
+  "info": "Get Rtl parameters of the design"
+}
+,
+{
+  "name": "get_session_info",
+  "info": "Displays directory information for the current session's runtime database."
+}
+,
+{
+  "name": "get_tag_info",
+  "info": "Returns list of information about tag"
+}
+,
+{
+  "name": "get_violation_field",
+  "info": "Return string data for one qualified field of this violation"
+}
+,
+{
+  "name": "get_violation_info",
+  "info": "Returns violation count severity wise and app wise"
+}
+,
+{
+  "name": "group_violations",
+  "info": "Configures grouping defined in the tool"
+}
+,
+{
+  "name": "infer_clock_roots",
+  "info": "Infers Clock Roots"
+}
+,
+{
+  "name": "infer_reset_roots",
+  "info": "Infers Reset Roots"
+}
+,
+{
+  "name": "infer_setup",
+  "info": "Infers Clock/Reset Roots"
+}
+,
+{
+  "name": "integrate_block_abstracts_multimode",
+  "info": "Command to merge mode specific SAMs into one SAM"
+}
+,
+{
+  "name": "invoke_multitop_flow",
+  "info": "Run VC-Static Jobs for Multi-Top"
+}
+,
+{
+  "name": "license_users",
+  "info": "Show system-wide license usage"
+}
+,
+{
+  "name": "link",
+  "info": "link current design"
+}
+,
+{
+  "name": "link_design",
+  "info": "Link a design"
+}
+,
+{
+  "name": "llib",
+  "info": "list information within library"
+}
+,
+{
+  "name": "man",
+  "info": "Show the man page for the given command or message."
+}
+,
+{
+  "name": "manage_rule_file",
+  "info": "Add rule files"
+}
+,
+{
+  "name": "manage_waiver_file",
+  "info": "Add/Remove waiver files"
+}
+,
+{
+  "name": "map_design_mode",
+  "info": "Map a design mode to cell modes and paths"
+}
+,
+{
+  "name": "mem",
+  "info": "Memory used"
+}
+,
+{
+  "name": "merge_database",
+  "info": "Merges given database in current session database"
+}
+,
+{
+  "name": "migrate_waivers",
+  "info": "Migrate block waivers to top level"
+}
+,
+{
+  "name": "monitor_cpu_usage",
+  "info": " Cluster related violations into groups and for each group report root cause violation(s)"
+}
+,
+{
+  "name": "populate_debug_data",
+  "info": ""
+}
+,
+{
+  "name": "read_cdc_constraints",
+  "info": "Read in SDC file"
+}
+,
+{
+  "name": "read_file",
+  "info": "Reading design files"
+}
+,
+{
+  "name": "read_sdc",
+  "info": "Read in SDC file"
+}
+,
+{
+  "name": "read_ssf",
+  "info": "Read Ssf file"
+}
+,
+{
+  "name": "read_sverilog",
+  "info": "Read one or more systemverilog files"
+}
+,
+{
+  "name": "read_verilog",
+  "info": "Read one or more verilog files"
+}
+,
+{
+  "name": "read_vhdl",
+  "info": "Read one or more vhdl files"
+}
+,
+{
+  "name": "remove_blackbox",
+  "info": "Removes blackbox marking on the specified objects"
+}
+,
+{
+  "name": "remove_case_analysis",
+  "info": "Removes the effect of setting value constraints from the specified list of ports/pins/nets"
+}
+,
+{
+  "name": "remove_case_sequential_propagation",
+  "info": "Disables  case  propagation  for  sequential  cell  instances or library cells"
+}
+,
+{
+  "name": "remove_clock",
+  "info": "Removes clock objects in design"
+}
+,
+{
+  "name": "remove_clock_groups",
+  "info": "Remove exclusive or asynchronous clock groups"
+}
+,
+{
+  "name": "remove_clock_sense",
+  "info": "Removes clock sense"
+}
+,
+{
+  "name": "remove_design_mode",
+  "info": "Remove specified design modes"
+}
+,
+{
+  "name": "remove_disable_timing",
+  "info": "Restore disabled timing arcs"
+}
+,
+{
+  "name": "remove_generated_clocks",
+  "info": "Removes generated clock objects in design"
+}
+,
+{
+  "name": "remove_host_options",
+  "info": "Removes the host options set using the set_host_options command"
+}
+,
+{
+  "name": "remove_ignorebox",
+  "info": "Removes modules, files or directories from Ignore specifications"
+}
+,
+{
+  "name": "remove_initial_value",
+  "info": "Removes the effect of setting initial values from the specified list of registers"
+}
+,
+{
+  "name": "remove_input_delay",
+  "info": "Removes input delay on pins or input ports relative to a clock signal"
+}
+,
+{
+  "name": "remove_ip_block_bus_interface",
+  "info": "Removes IP Block and its bus interface for ML-RCA"
+}
+,
+{
+  "name": "remove_license_limit",
+  "info": "Remove limit on one or more licenses"
+}
+,
+{
+  "name": "remove_output_delay",
+  "info": "Removes output delay on pins or ports relative to a clock signal"
+}
+,
+{
+  "name": "remove_read",
+  "info": "removes violations from the design database"
+}
+,
+{
+  "name": "remove_scenario",
+  "info": "Specifies which scenarios to be removed"
+}
+,
+{
+  "name": "remove_sdc",
+  "info": "Removes all SDC constraints, cdc config constratints, and history data provided in 'report_cdc_command_history'."
+}
+,
+{
+  "name": "remove_sense",
+  "info": "Remove clock or data sense"
+}
+,
+{
+  "name": "remove_static",
+  "info": "Removes the effect of setting create_static constraints from the specified list of ports/pins/nets"
+}
+,
+{
+  "name": "remove_sync_point",
+  "info": "Deregisters given commands as sync point in Multi-Scenario flow"
+}
+,
+{
+  "name": "remove_violation",
+  "info": "This command removes violations based on tag or violation id"
+}
+,
+{
+  "name": "rename_tag",
+  "info": "Changes name of tag"
+}
+,
+{
+  "name": "rename_tag_force",
+  "info": "Changes name of tag"
+}
+,
+{
+  "name": "report_app_history",
+  "info": "Displays the appvars which impacted the app run ,tags which ran, constraints and configuration commands section wise as tool/user configured command or constraints"
+}
+,
+{
+  "name": "report_app_logs",
+  "info": "Displays the appvars which impacted the app run ,tags which are run and config commands"
+}
+,
+{
+  "name": "report_blackbox",
+  "info": "Returns a report of blackboxed objects in the design"
+}
+,
+{
+  "name": "report_case_analysis_logic_contentions",
+  "info": "reports logic contentions due to set_case_analysis"
+}
+,
+{
+  "name": "report_cdc_command_history",
+  "info": "Report CDC Command History"
+}
+,
+{
+  "name": "report_cell_mode",
+  "info": "Print a report of the cell instance modes"
+}
+,
+{
+  "name": "report_checker_thread_consumption",
+  "info": "Report Lint checker process and thread consumption details"
+}
+,
+{
+  "name": "report_clock",
+  "info": "Report clock information"
+}
+,
+{
+  "name": "report_clock_roots",
+  "info": "Reports clock roots inferred during infer_clock_roots"
+}
+,
+{
+  "name": "report_design",
+  "info": "Displays attributes of the current design."
+}
+,
+{
+  "name": "report_disable_timing",
+  "info": "report disabled timing arcs in a circuit."
+}
+,
+{
+  "name": "report_dw",
+  "info": "Reports Designware related user settings"
+}
+,
+{
+  "name": "report_ff_clock",
+  "info": "Information about clocks"
+}
+,
+{
+  "name": "report_ff_reset",
+  "info": "Information about resets"
+}
+,
+{
+  "name": "report_host_usage",
+  "info": "Reports the host options details set using the set_host_options command"
+}
+,
+{
+  "name": "report_ignorebox",
+  "info": "Reports ignored modules and files during the design read"
+}
+,
+{
+  "name": "report_license_limit",
+  "info": "Report limits set on one or more licenses"
+}
+,
+{
+  "name": "report_mode",
+  "info": "Print a report of the instance modes"
+}
+,
+{
+  "name": "report_multi_scenario_design",
+  "info": "Reports details of given scenarios"
+}
+,
+{
+  "name": "report_name_rules",
+  "info": "Reports the values of name rules"
+}
+,
+{
+  "name": "report_names",
+  "info": " Reports  potential  name  changes of ports, cells, and nets in a design."
+}
+,
+{
+  "name": "report_properties",
+  "info": "Report properties for selected object"
+}
+,
+{
+  "name": "report_read_violations",
+  "info": "help"
+}
+,
+{
+  "name": "report_reset_roots",
+  "info": "Reports reset roots inferred during infer_reset_roots"
+}
+,
+{
+  "name": "report_rtl_file_list",
+  "info": "Reports the list of RTL files which got compiled sucessfully"
+}
+,
+{
+  "name": "report_sdc_diff",
+  "info": "Report differece between tools sdc with VC"
+}
+,
+{
+  "name": "report_sense",
+  "info": "Report clock and data propagation senses."
+}
+,
+{
+  "name": "report_session_data",
+  "info": "Displays session-specific information for the current runtime database."
+}
+,
+{
+  "name": "report_vcst_var",
+  "info": "Show vcstatic application variables"
+}
+,
+{
+  "name": "report_violations",
+  "info": "help"
+}
+,
+{
+  "name": "reset_clock_drive_info",
+  "info": "Reset the clock drive information"
+}
+,
+{
+  "name": "reset_mode",
+  "info": "Resets active modes of dbcell instances to default"
+}
+,
+{
+  "name": "reset_path",
+  "info": "Specifies the reset paths"
+}
+,
+{
+  "name": "restart_session",
+  "info": "Restarts process from a dumped image"
+}
+,
+{
+  "name": "restore_session",
+  "info": "Restores a previously saved session"
+}
+,
+{
+  "name": "resume_session",
+  "info": "Resume session by checking-out licenses which got checked-in due to shell idling"
+}
+,
+{
+  "name": "run_active_scenarios",
+  "info": "Run all active scenarios for mode analysis"
+}
+,
+{
+  "name": "run_active_scenarios_finish",
+  "info": "Marks the end of multi-mode flow"
+}
+,
+{
+  "name": "run_postelab",
+  "info": "start run elabcom in postelab flow"
+}
+,
+{
+  "name": "run_test_case",
+  "info": "This command is used to run a separate VC Static test case within the current VC static shell."
+}
+,
+{
+  "name": "runtime_db",
+  "info": "Accessor into the RunTimeDB directories"
+}
+,
+{
+  "name": "sam_consume_checksum_report",
+  "info": "Command to dump the checksum report for path in all set_abstract_model command in run"
+}
+,
+{
+  "name": "sam_gen_checksum_report",
+  "info": "Command to dump the checksum report for provided SAM directory"
+}
+,
+{
+  "name": "save_session",
+  "info": "Saves all generated data and settings of a session"
+}
+,
+{
+  "name": "set_abstract_model",
+  "info": "Command to associate abstract block model in the top level"
+}
+,
+{
+  "name": "set_active_scenarios",
+  "info": "Specifies which scenarios are active for mode analysis"
+}
+,
+{
+  "name": "set_annotated_transition",
+  "info": "Backannotate transition times"
+}
+,
+{
+  "name": "set_backward_compatibility_pin_name",
+  "info": "Backward compatibility of pin name for sturct"
+}
+,
+{
+  "name": "set_blackbox",
+  "info": "Marks black-box in the design"
+}
+,
+{
+  "name": "set_blackbox_file",
+  "info": "Marks all the modules as black-box in the file"
+}
+,
+{
+  "name": "set_case_analysis",
+  "info": "Performs analysis assuming this constant value at this port/pin/net"
+}
+,
+{
+  "name": "set_case_sequential_propagation",
+  "info": "Selectively propagates constants through sequential elements"
+}
+,
+{
+  "name": "set_characterize_blocks",
+  "info": "Specify blocks/instances for constraints annotation at boundary"
+}
+,
+{
+  "name": "set_clock_groups",
+  "info": "Specifies a set of clocks which are synchronous with respect to one another"
+}
+,
+{
+  "name": "set_clock_latency",
+  "info": "Capture actual or predicted clock latency"
+}
+,
+{
+  "name": "set_clock_sense",
+  "info": "Specifies unateness propagating forward for pins with respect to clock source."
+}
+,
+{
+  "name": "set_clock_transition",
+  "info": "Capture predicted clock transition"
+}
+,
+{
+  "name": "set_clock_uncertainty",
+  "info": "Specifies uncertainties between clock paths"
+}
+,
+{
+  "name": "set_constant_sequential_propagation",
+  "info": "Enables instances to ignore reset/set pin while sequential propagation"
+}
+,
+{
+  "name": "set_constr_abstract_model",
+  "info": "Specify blocks/instances for constraints based abstract model"
+}
+,
+{
+  "name": "set_constraint_format",
+  "info": "Sets constraint format for tags"
+}
+,
+{
+  "name": "set_disable_timing",
+  "info": "Disables timing arcs in a circuit."
+}
+,
+{
+  "name": "set_dont_touch_network",
+  "info": "Set the dont_touch_network attribute on networks for synthesis"
+}
+,
+{
+  "name": "set_drive",
+  "info": "Set port drive resistance"
+}
+,
+{
+  "name": "set_driving_cell",
+  "info": "Set port driving cell"
+}
+,
+{
+  "name": "set_false_path",
+  "info": "Specifies the false paths"
+}
+,
+{
+  "name": "set_fanout_load",
+  "info": "Set fanout load for ports"
+}
+,
+{
+  "name": "set_file_for_waiver",
+  "info": "Associate a file with a waiver"
+}
+,
+{
+  "name": "set_glassbox",
+  "info": "Marks glass-box in the design"
+}
+,
+{
+  "name": "set_host_options",
+  "info": "Specifies the host options for computation resources used in parallel multi mode run"
+}
+,
+{
+  "name": "set_ideal_latency",
+  "info": "Specifies ideal latency"
+}
+,
+{
+  "name": "set_ideal_network",
+  "info": "Specifies an ideal network"
+}
+,
+{
+  "name": "set_ignorebox",
+  "info": "Ignores all the specified modules from the design read"
+}
+,
+{
+  "name": "set_initial_value",
+  "info": "Performs analysis assuming this initial value at this register"
+}
+,
+{
+  "name": "set_input_delay",
+  "info": "Sets input delay on pins or input ports relative to a clock signal"
+}
+,
+{
+  "name": "set_input_transition",
+  "info": "Set port transition time"
+}
+,
+{
+  "name": "set_license_limit",
+  "info": "Set limit on one or more licenses"
+}
+,
+{
+  "name": "set_load",
+  "info": "Set capacitance on ports and nets"
+}
+,
+{
+  "name": "set_max_capacitance",
+  "info": "Set maximum capacitance for ports, clocks, or designs"
+}
+,
+{
+  "name": "set_max_delay",
+  "info": "Specifies the false paths"
+}
+,
+{
+  "name": "set_max_fanout",
+  "info": "Set maximum fanout for ports or designs"
+}
+,
+{
+  "name": "set_max_time_borrow",
+  "info": "Limit time borrowing for latches"
+}
+,
+{
+  "name": "set_max_transition",
+  "info": "Set maximum transition for ports, clocks, or designs"
+}
+,
+{
+  "name": "set_message_error_action",
+  "info": "Sets the maximum error message count and action"
+}
+,
+{
+  "name": "set_message_severity",
+  "info": "Sets the severity level of messages"
+}
+,
+{
+  "name": "set_min_capacitance",
+  "info": "Set minimum capacitance for ports or designs"
+}
+,
+{
+  "name": "set_min_delay",
+  "info": "Specifies the false paths"
+}
+,
+{
+  "name": "set_mode",
+  "info": "Select the mode of a cell or design"
+}
+,
+{
+  "name": "set_multicycle_path",
+  "info": "Specifies the multicycle paths"
+}
+,
+{
+  "name": "set_operating_conditions",
+  "info": "Set process, temperature and voltage"
+}
+,
+{
+  "name": "set_output_delay",
+  "info": "Sets output delay on pins or output ports relative to a clock signal"
+}
+,
+{
+  "name": "set_pi_drive_clock",
+  "info": "Associate the specified primary input (pi) with the specified clock"
+}
+,
+{
+  "name": "set_port_fanout_number",
+  "info": "Set number of external fanout points"
+}
+,
+{
+  "name": "set_reset_drive_clock",
+  "info": "Associate the specified reset with the specified clock"
+}
+,
+{
+  "name": "set_reset_prop",
+  "info": "Specifies points for advanced reset propagation."
+}
+,
+{
+  "name": "set_reset_sense",
+  "info": "Specifies reset propagation stop points."
+}
+,
+{
+  "name": "set_resistance",
+  "info": "Set resistance on nets"
+}
+,
+{
+  "name": "set_sense",
+  "info": "Specifies unateness propagating forward for pins with respect to clock source."
+}
+,
+{
+  "name": "set_uarch_port",
+  "info": "Set Uarch Port"
+}
+,
+{
+  "name": "set_verilog_abstract_model",
+  "info": "Command to associate abstract block model in the top level"
+}
+,
+{
+  "name": "set_violation_field",
+  "info": "Set string data for one top level field of this violation"
+}
+,
+{
+  "name": "set_violation_state",
+  "info": "Sets the Violation State ( Acknowledged, Waived, NeedsInfo, Waived_Temp, Ignore)"
+}
+,
+{
+  "name": "slr",
+  "info": "Configure Synopsys Live Recorder"
+}
+,
+{
+  "name": "stp_extract",
+  "info": "extract the current testcase using STP"
+}
+,
+{
+  "name": "submit_vc_static_shell_jobs",
+  "info": "Run VC-Static jobs"
+}
+,
+{
+  "name": "sync_active_scenarios",
+  "info": "Sync up with child scenario runs"
+}
+,
+{
+  "name": "undo_blackbox",
+  "info": "This command undoes the last set_blackbox command which was invoked after the design read."
+}
+,
+{
+  "name": "waive_violation",
+  "info": "This command can be used to apply waiver ( Waived, Waived_Temp, Ignore)"
+}
+,
+{
+  "name": "write_abstract_model",
+  "info": "Command to write abstract model from block level run"
+}
+,
+{
+  "name": "write_block_constraints",
+  "info": "Specify instance and filename for writing constraints at block boundary"
+}
+,
+{
+  "name": "write_inferred_setup",
+  "info": "Write setup of clock/reset/ roots inferred during infer_setup"
+}
+,
+{
+  "name": "write_property",
+  "info": "This command is used to write the properties of the specified type to the specified file"
+}
+,
+{
+  "name": "write_sdc",
+  "info": "Write SDC commands to file"
+}
+,
+{
+  "name": "write_session_settings",
+  "info": "Write current session settings to a file"
+}
+,
+{
+  "name": "write_verilog_abstract_model",
+  "info": "Command to write verilog abstract model from block level run"
+}
+]},
+{ "name": "Clock Domain Crossing Commands",
+"cmds": [
+{
+  "name": "abstract_port",
+  "info": "Specify to model pins/ports of blackbox, top module, library cells"
+}
+,
+{
+  "name": "apply_attribute",
+  "info": "Attaches the given attribute to list of pin/port as driver/load constraint."
+}
+,
+{
+  "name": "asyncrst_assert_noclk",
+  "info": "Specified RDC path(s) will be filtered for RDC analysis purpose"
+}
+,
+{
+  "name": "asyncrst_assert_sequence",
+  "info": "Specified RDC path(s) will be filtered for RDC analysis purpose"
+}
+,
+{
+  "name": "asyncrst_deassert_nochange",
+  "info": "Specified  path(s) will be ignored for Async Reset analysis purpose"
+}
+,
+{
+  "name": "asyncrst_deassert_noclk",
+  "info": "Specified  path(s) will be ignored for Async Reset analysis purpose"
+}
+,
+{
+  "name": "cdc_check_glitch",
+  "info": "This command is used to define points on which glitch checks are to be performed in the design"
+}
+,
+{
+  "name": "cdc_define_transition",
+  "info": "This command is used to define transition on specified nets"
+}
+,
+{
+  "name": "check_cdc",
+  "info": "Infers CDC synchronizers and check divergence, convergence"
+}
+,
+{
+  "name": "check_glitch",
+  "info": "Performs glitch check"
+}
+,
+{
+  "name": "check_rdc",
+  "info": "Checks for reset domain crossing violations"
+}
+,
+{
+  "name": "check_reset_glitch",
+  "info": "Checks for reset glitches"
+}
+,
+{
+  "name": "compress_cdc",
+  "info": "Compresses CDC violations covered by a representative violation"
+}
+,
+{
+  "name": "compress_rdc",
+  "info": "Compresses RDC violations covered by a representative violation"
+}
+,
+{
+  "name": "configure_abstract_port",
+  "info": "Configure abstract_port command"
+}
+,
+{
+  "name": "configure_bus_merging",
+  "info": "Configures parameters values for Bus Merge."
+}
+,
+{
+  "name": "configure_cdc_abstract_model",
+  "info": "Configures design abstraction in cdc flow"
+}
+,
+{
+  "name": "configure_cdc_asyncrst_crossing",
+  "info": "Configures crossing detection on asynchronous reset paths"
+}
+,
+{
+  "name": "configure_cdc_asyncrst_data_sync",
+  "info": "It configures the data synchronizer detection by the tool"
+}
+,
+{
+  "name": "configure_cdc_asyncrst_nff_sync",
+  "info": "It configures the multi-flop synchronizer detection by the tool"
+}
+,
+{
+  "name": "configure_cdc_attribute",
+  "info": "Use this command to specify mutually exclusive and unrelated signals such that convergence and glitch related violations are suppressed for such signals."
+}
+,
+{
+  "name": "configure_cdc_auto_abstraction",
+  "info": "Configures design auto abstraction in cdc flow"
+}
+,
+{
+  "name": "configure_cdc_back_to_back_uds",
+  "info": "This constraint is used to specify crossing sources so that CDC_SYNC_UDS_RESYNC will analyze them for back to back synchronizer usage."
+}
+,
+{
+  "name": "configure_cdc_clock_glitch",
+  "info": "This command is used to configure reporting of clock glitch paths"
+}
+,
+{
+  "name": "configure_cdc_constr_abstract_model",
+  "info": "This command is used to configure constraint based abstract model generation from VC Spyglass CDC."
+}
+,
+{
+  "name": "configure_cdc_convergence",
+  "info": "Configures several convergence detection criteria"
+}
+,
+{
+  "name": "configure_cdc_crossing",
+  "info": "Enables various configurations on crossing generation, such as disable complex seq/primary ports as crossing start/end points or per domain limit of start points"
+}
+,
+{
+  "name": "configure_cdc_data_sync",
+  "info": "It configures the data synchronizer detection by the tool"
+}
+,
+{
+  "name": "configure_cdc_detailed_report",
+  "info": "Configure the CDC-detailed-report.rpt"
+}
+,
+{
+  "name": "configure_cdc_formal",
+  "info": "Configures formal CDC checks"
+}
+,
+{
+  "name": "configure_cdc_glitch",
+  "info": "Configures glitch checking criteria in case of multiple sources"
+}
+,
+{
+  "name": "configure_cdc_hiersoc_verification",
+  "info": "Configures the HierSoC verification in cdc flow"
+}
+,
+{
+  "name": "configure_cdc_ignore_path",
+  "info": "Configures the ignore-path commands for CDC verification analysis."
+}
+,
+{
+  "name": "configure_cdc_integrity_checks",
+  "info": "Enables Integrity checks  based on user inputs. configure_integrity_checks and configure_cdc_integrity_checks are aliases of each other"
+}
+,
+{
+  "name": "configure_cdc_integrity_glitch",
+  "info": "Enables glitch check on clock paths based on user inputs."
+}
+,
+{
+  "name": "configure_cdc_internal_crossing",
+  "info": "Enables Crossings on the source clock pin and the destination clock pin of the libcell provided"
+}
+,
+{
+  "name": "configure_cdc_multiflop",
+  "info": "This command is used to configure reporting of multi-flop chains"
+}
+,
+{
+  "name": "configure_cdc_netlist_busmerging",
+  "info": "Specifies netlist bus-merging attributes"
+}
+,
+{
+  "name": "configure_cdc_nff_sync",
+  "info": "It configures the multi-flop synchronizer detection by the tool"
+}
+,
+{
+  "name": "configure_cdc_port",
+  "info": "Configures ports for CDC analysis"
+}
+,
+{
+  "name": "configure_cdc_power_aware",
+  "info": "Configures to consider Isolation Latch cell as Sequential or Combinatorial"
+}
+,
+{
+  "name": "configure_cdc_property",
+  "info": "This command configures the write_cdc_property. It must be specified before check_* command."
+}
+,
+{
+  "name": "configure_cdc_rca",
+  "info": "configuration options for CDC RCA flow"
+}
+,
+{
+  "name": "configure_cdc_read_project",
+  "info": "Set configurations for sg_read_project command"
+}
+,
+{
+  "name": "configure_cdc_reason_code",
+  "info": "Sets the type of CDC reason code"
+}
+,
+{
+  "name": "configure_cdc_sam_constraints",
+  "info": "Use this command to configure design abstraction in VC SpyGlass CDC flow. It controls the preservation/application of constraints."
+}
+,
+{
+  "name": "configure_cdc_setup_blackbox",
+  "info": "Configure parameters for blackbox modeling and setup. configure_setup_blackbox and configure_cdc_setup_blackbox are aliases of each other"
+}
+,
+{
+  "name": "configure_cdc_setup_check",
+  "info": "Configures parameters values for setup related checks.configure_setup_check and configure_cdc_setup_check are aliases of each other."
+}
+,
+{
+  "name": "configure_cdc_setup_libcell",
+  "info": "Configures parameters for libcell setup and modeling. configure_setup_libcell and configure_cdc_setup_libcell are aliases of each other"
+}
+,
+{
+  "name": "configure_cdc_sg_hier",
+  "info": "Configures the spyglass like hierarchical analysis in VC Spyglass Hierarchical SoC Flow"
+}
+,
+{
+  "name": "configure_cdc_sgwaiver",
+  "info": "Configures the waiver transformation from SG to VCUM"
+}
+,
+{
+  "name": "configure_cdc_smart_netlist",
+  "info": "Command to configure the CDC Smart Netlist flow. Should be used before design read."
+}
+,
+{
+  "name": "configure_cdc_static",
+  "info": "Configures quasi-statics for CDC analysis"
+}
+,
+{
+  "name": "configure_cdc_userpath_analysis",
+  "info": "This command is used to configure the userpath analysis"
+}
+,
+{
+  "name": "configure_cdc_userpath_data_sync",
+  "info": "It configures the data synchronizer detection by the tool"
+}
+,
+{
+  "name": "configure_cdc_userpath_nff_sync",
+  "info": "It configures the multi-flop synchronizer detection by the tool"
+}
+,
+{
+  "name": "configure_cdc_validation",
+  "info": "Configures validation checks for constraint based abstract model. configure_hier_validation and configure_cdc_validation are aliases of each other"
+}
+,
+{
+  "name": "configure_cdc_verbose_report",
+  "info": "Generate verbose report for the provided tag"
+}
+,
+{
+  "name": "configure_cdc_via_points",
+  "info": "Compute via points for specified cdc violations"
+}
+,
+{
+  "name": "configure_cdc_waive_block_violation",
+  "info": "This constraint is used to specify modules/instances which needs to be considered for ContainerModule field population and hence violation lying inside it needs to be ignored."
+}
+,
+{
+  "name": "configure_clock_reset_race",
+  "info": "Allows configurability of INTEGRITY_CLOCK_RESET_RACE violation tag."
+}
+,
+{
+  "name": "configure_clock_reset_tree",
+  "info": "Configures the Clock/Reset Tree view generated by generate_clock_reset_tree"
+}
+,
+{
+  "name": "configure_delta_delay",
+  "info": "Configures delta delay check points"
+}
+,
+{
+  "name": "configure_glitch",
+  "info": "Configures type of glitch checks to be performed in check_glitch command"
+}
+,
+{
+  "name": "configure_glitch_free_cells",
+  "info": "Allows configurability of cells to control pessimism in glitch analysis"
+}
+,
+{
+  "name": "configure_hier_validation",
+  "info": "Configures validation checks for constraint based abstract model. configure_hier_validation and configure_cdc_validation are aliases of each other"
+}
+,
+{
+  "name": "configure_inferred_clock_name",
+  "info": "configure the name of inferred clocks"
+}
+,
+{
+  "name": "configure_integrity_checks",
+  "info": "Enables Integrity checks  based on user inputs. configure_integrity_checks and configure_cdc_integrity_checks are aliases of each other"
+}
+,
+{
+  "name": "configure_internal_clock_report",
+  "info": "Configures to report block level internal clocks in a specified file. The file contains block level clocks which are internal to the block, i.e. the clocks are not driving any output port. If a block level output port is driven by a sequential element whose clock is internal to the block, then the output port is dumped along with the internal clock information in the speficied file."
+}
+,
+{
+  "name": "configure_ip_block",
+  "info": "User can specify the ip block in their design, which are used to configure the behavior/reporting of CDC, RDC and ResetAsync types of crossings present inside these blocks. By default, RDC crossings, which are present inside user specified blocks are reported as ignored."
+}
+,
+{
+  "name": "configure_partial_commands",
+  "info": "Configures to report partial commands which indicates that the command can be applied on downstream net/pin"
+}
+,
+{
+  "name": "configure_property_panel",
+  "info": "Configures the data shown in the schematics property panel"
+}
+,
+{
+  "name": "configure_quasi_signal",
+  "info": "Configure Quasi signals"
+}
+,
+{
+  "name": "configure_rdc_abstract_model",
+  "info": "Configures design abstraction in rdc flow"
+}
+,
+{
+  "name": "configure_rdc_convergence",
+  "info": "Configures several convergence detection criteria"
+}
+,
+{
+  "name": "configure_rdc_corrupt",
+  "info": "Configures the detection of RDC corruption"
+}
+,
+{
+  "name": "configure_rdc_cycle_aware",
+  "info": "Configures the Cycle Aware flow of RDC"
+}
+,
+{
+  "name": "configure_rdc_glitch",
+  "info": "Configures glitch checking criteria"
+}
+,
+{
+  "name": "configure_rdc_limit",
+  "info": "Configures the limits for RDC setup"
+}
+,
+{
+  "name": "configure_rdc_nff_sync",
+  "info": "It configures the multi-flop synchronizer detection by the tool"
+}
+,
+{
+  "name": "configure_rdc_qualifier",
+  "info": "Configures global options for RDC blocking schemes"
+}
+,
+{
+  "name": "configure_rdc_schematic",
+  "info": "Configures RDC Schematic generation in skip resetless flow"
+}
+,
+{
+  "name": "configure_rdc_violation",
+  "info": "Enables configurations on violations, such as setting limit of violation generation count per group of tags/rules"
+}
+,
+{
+  "name": "configure_rdc_waive_block_violation",
+  "info": "This constraint is used to specify modules/instances which needs to be considered for ContainerModule field population and hence violation lying inside it needs to be ignored."
+}
+,
+{
+  "name": "configure_sam_constraints",
+  "info": "Use this command to configure design abstraction. It controls the preservation/application of constraints."
+}
+,
+{
+  "name": "configure_set_clock_group",
+  "info": "configure the domain inference of clocks"
+}
+,
+{
+  "name": "configure_setup_blackbox",
+  "info": "Configure parameters for blackbox modeling and setup. configure_setup_blackbox and configure_cdc_setup_blackbox are aliases of each other"
+}
+,
+{
+  "name": "configure_setup_check",
+  "info": "Configures parameters values for setup related checks.configure_setup_check and configure_cdc_setup_check are aliases of each other."
+}
+,
+{
+  "name": "configure_setup_libcell",
+  "info": "Configures parameters for libcell setup and modeling. configure_setup_libcell and configure_cdc_setup_libcell are aliases of each other"
+}
+,
+{
+  "name": "configure_setup_port",
+  "info": "Configures SETUP_PORT_* tags"
+}
+,
+{
+  "name": "configure_stop_auto_infer",
+  "info": "configure_stop_auto_infer command is used to stop inferring auto clock. infer_setup command perform auto clock inferring for all object. if User does not want to infer clock on some object then configure_stop_auto_infer can be used to stop inferring for a perticular object or a list of objects. infer_setup -infer_all_potentials must be true to use configure_stop_auto_infer feature."
+}
+,
+{
+  "name": "configure_synthesis_block",
+  "info": "Specifies the list of blocks which will enable tool to generate crossing information in context with the user provided synthesis blocks."
+}
+,
+{
+  "name": "configure_transparent_flops",
+  "info": "Use this command to configure transparent flop based analysis for CDC checks."
+}
+,
+{
+  "name": "configure_unconstrained_ports",
+  "info": "Configures to model unconstrainted inputs and outputs of top, black-box modules, and lib modules"
+}
+,
+{
+  "name": "configure_userpath_glitch",
+  "info": "Configures user-path glitch checks"
+}
+,
+{
+  "name": "configure_userpath_glitch_formal",
+  "info": "Configures formal checks for user-path glitches"
+}
+,
+{
+  "name": "create_cdc_abstract_model",
+  "info": "Invoke abstraction for clock domain crossing violations"
+}
+,
+{
+  "name": "create_rdc_abstract_model",
+  "info": "Invoke abstraction for reset domain crossing violations"
+}
+,
+{
+  "name": "create_rdc_static",
+  "info": "Specify RDC Source that will be ignored for particular reset for RDC analysis purpose"
+}
+,
+{
+  "name": "customize_cdc_abstract_model",
+  "info": "Customizes design abstraction in cdc flow"
+}
+,
+{
+  "name": "customize_rdc_abstract_model",
+  "info": "Customizes design abstraction in rdc flow"
+}
+,
+{
+  "name": "debug_derived_data",
+  "info": "debug derived data"
+}
+,
+{
+  "name": "define_attribute",
+  "info": "Defines an attribute with given name in the current scope."
+}
+,
+{
+  "name": "define_fv_assume_property",
+  "info": "Generates fvassume for CDC VCF Flow"
+}
+,
+{
+  "name": "define_reset_event",
+  "info": "Specify reset assert/ de-assert with a time stamp"
+}
+,
+{
+  "name": "define_reset_scenario",
+  "info": "Start of the scope within which the reset events will be defined"
+}
+,
+{
+  "name": "end_constraints_scope",
+  "info": "Resets the current scope to the previouse scope."
+}
+,
+{
+  "name": "end_reset_scenario",
+  "info": "End of the scope within which the reset events will be defined"
+}
+,
+{
+  "name": "end_reset_scenario_scope",
+  "info": "End of the scope within which the reset events will be defined"
+}
+,
+{
+  "name": "generate_clock_reset_tree",
+  "info": "Generates the clock matrix data"
+}
+,
+{
+  "name": "generate_datasheet",
+  "info": "Enables datasheet file generation based on the provided type value."
+}
+,
+{
+  "name": "generate_reset_clock_pair",
+  "info": "Generates list of unique pairs of reset sources and clock sources from all sequential operators and libcells present in the design"
+}
+,
+{
+  "name": "generate_vc_cdc_report_for_sg_comparison",
+  "info": "Generates detailed reports 'VC-CDC-detailed-report.csv', 'VC-Conv-detailed-report.csv' and 'VC-Glitch-detailed-report.csv'"
+}
+,
+{
+  "name": "get_asyncrst_paths",
+  "info": "Returns all specific reset paths"
+}
+,
+{
+  "name": "get_cdc_cluster_cause_viols",
+  "info": "Gets cause violation IDs in given cluster(s)"
+}
+,
+{
+  "name": "get_cdc_cluster_effect_viols",
+  "info": "Gets effect violation IDs in given cluster(s)"
+}
+,
+{
+  "name": "get_cdc_cluster_viols",
+  "info": "Gets cluster violation IDs in cluster rank order"
+}
+,
+{
+  "name": "get_cdc_coherency",
+  "info": "Returns list of coherency issues in the design."
+}
+,
+{
+  "name": "get_cdc_coherency_elements",
+  "info": "Returns the elements in the specific CDC coherency"
+}
+,
+{
+  "name": "get_cdc_control_synchronizer_elements",
+  "info": "Returns the elements for a specific CDC control synchronizer"
+}
+,
+{
+  "name": "get_cdc_control_synchronizers",
+  "info": "Returns the clock domain crossing control synchronizers"
+}
+,
+{
+  "name": "get_cdc_mapped_name",
+  "info": "Use this command to get the equivalent NETLIST signal from a RTL signal and vice-versa"
+}
+,
+{
+  "name": "get_cdc_path_elements",
+  "info": "Returns the elements in the specific CDC path"
+}
+,
+{
+  "name": "get_cdc_paths",
+  "info": "Returns all specific CDC paths"
+}
+,
+{
+  "name": "get_clock_domains",
+  "info": "Returns all specific clock domains"
+}
+,
+{
+  "name": "get_clock_roots",
+  "info": "Returns all specific clock roots"
+}
+,
+{
+  "name": "get_glitch",
+  "info": "Returns collection of Glitch violation."
+}
+,
+{
+  "name": "get_glitch_paths",
+  "info": "get_glitch_paths command is to fetch source-destination based paths in glitch violations."
+}
+,
+{
+  "name": "get_rdc_assertion_sequence",
+  "info": "Returns existence of constraint set_rdc_define_assertion_sequence on specified resets"
+}
+,
+{
+  "name": "get_rdc_paths",
+  "info": "Returns all specific RDC paths"
+}
+,
+{
+  "name": "get_reset_groups",
+  "info": "Returns all specific RDC groups"
+}
+,
+{
+  "name": "get_reset_roots",
+  "info": "Returns all specific reset roots"
+}
+,
+{
+  "name": "get_synchronizer_cells",
+  "info": "Returns list of valid user provided synchronizer cells using command configure_cdc_nff_sync/configure_cdc_asyncrst_nff_sync -allowed_modules."
+}
+,
+{
+  "name": "group_cdc",
+  "info": "Configure grouping of CDC violations"
+}
+,
+{
+  "name": "group_cdc_paths",
+  "info": "Groups CDC paths"
+}
+,
+{
+  "name": "infer_mode_setup",
+  "info": "This command is used to setup configuration for mode(s) generation for glitch analysis."
+}
+,
+{
+  "name": "infer_rdc_crossings",
+  "info": "Infer rdc crossings"
+}
+,
+{
+  "name": "infer_snf_setup",
+  "info": "Specify this command to generate the SNF setup and review it before consuming it during the netlist run. This command needs to be specified after providing -enable_review true with configure_cdc_smart_netlist command."
+}
+,
+{
+  "name": "integrate_coverage_data",
+  "info": "Report VCS generated coverage results back into static violation"
+}
+,
+{
+  "name": "map_bus_info",
+  "info": "set the mapping between RTL bus name and equivalent Netlist individual bit name"
+}
+,
+{
+  "name": "map_point_info",
+  "info": "set the mapping relation of RTL signal and equivalent Netlist signal"
+}
+,
+{
+  "name": "meta_design_hier",
+  "info": "sets test bench design info for jitter flow or sva flow(in case of vhdl or mixed design)"
+}
+,
+{
+  "name": "meta_inst",
+  "info": "specifies instances for which jitter monitors should be generated"
+}
+,
+{
+  "name": "meta_module",
+  "info": "specifies modules for which jitter monitors should be generated"
+}
+,
+{
+  "name": "meta_monitor_options",
+  "info": "sets monitor options for jitter flow"
+}
+,
+{
+  "name": "remove_redundant_logic",
+  "info": "Remove Redundant Logic to specified Sequential Depth."
+}
+,
+{
+  "name": "remove_signal_waveform",
+  "info": "This command can be used to remove the signal waveform for specified object(s). This information must initially be set using the 'set_signal_waveform' command"
+}
+,
+{
+  "name": "report_cdc",
+  "info": "Reports CDC check information for the Vcum mode"
+}
+,
+{
+  "name": "report_cdc_reason_code",
+  "info": "Reports all the reason codes used during CDC analysis"
+}
+,
+{
+  "name": "report_clock_control_signals",
+  "info": "Reports the immediate sequentials on side-inputs of the clock path"
+}
+,
+{
+  "name": "report_clock_reset_tree",
+  "info": "Reports constraints based on Clock/Reset Tree Browser"
+}
+,
+{
+  "name": "report_convergence_qualifier",
+  "info": "Reports the convergence path of the startpoint ( qualifier output or sequential ) upto the specified sequential depth."
+}
+,
+{
+  "name": "report_glitch",
+  "info": "Reports glitch check information for the Vcum mode"
+}
+,
+{
+  "name": "report_rdc",
+  "info": "Reports RDC check information"
+}
+,
+{
+  "name": "report_rdc_abstraction_info",
+  "info": "This command writes information about preserved sequential elements during SAM abstraction in the json format to a given file. JSON files created from different versions of the tool can be compared to find out if there's difference between generated abstract models. The differences can be used to find out additionally preserved logic or logic missing in preservation. This command should be used only after configuring configure_rdc_abstract_model using -report_abstraction option, create_rdc_abstract_model and write_abstract_model all in order."
+}
+,
+{
+  "name": "report_reset_control_signals",
+  "info": "Reports the immediate sequentials on side-inputs of the reset path"
+}
+,
+{
+  "name": "reset_sim_active_val",
+  "info": "This command is internally generated by tool during block abstraction to preserve the active value on block output ports"
+}
+,
+{
+  "name": "set_allowed_cells",
+  "info": "Set unwanted cells found in clock or reset network"
+}
+,
+{
+  "name": "set_asyncrst_ignore_path",
+  "info": "Specified  path(s) will be ignored for Async Reset analysis purpose"
+}
+,
+{
+  "name": "set_asyncrst_synchronizer",
+  "info": "Specifies reset path synchronizer cell or signal in design"
+}
+,
+{
+  "name": "set_cdc_convergence_ports",
+  "info": "Specifies the input ports of an abstracted block which are converging inside the block"
+}
+,
+{
+  "name": "set_cdc_ignore_path",
+  "info": "Specified CDC path(s) will be ignored for CDC analysis purpose"
+}
+,
+{
+  "name": "set_clock_attribute",
+  "info": "Attaches clock information with the given attribute."
+}
+,
+{
+  "name": "set_clock_relation",
+  "info": "Specify synchronous points"
+}
+,
+{
+  "name": "set_clockglitch_ignore_path",
+  "info": "Specified CDC path(s) will be ignored for Clock Path Glitch analysis purpose"
+}
+,
+{
+  "name": "set_combo_attribute",
+  "info": "Specify this attribute to attach combinational property on an output port"
+}
+,
+{
+  "name": "set_connectivity_attribute",
+  "info": "Creates a connectivity attribute."
+}
+,
+{
+  "name": "set_constraints_scope",
+  "info": "Sets the current module scope to which attribute commands will be applied."
+}
+,
+{
+  "name": "set_event",
+  "info": "Specify events in reset scenario"
+}
+,
+{
+  "name": "set_gray_signals",
+  "info": "Use this command to specify gray signals used by Ac_conv05 for formal analysis."
+}
+,
+{
+  "name": "set_ignore_attribute",
+  "info": "When this attribute is applied on a port, it needs to be ignored for validation"
+}
+,
+{
+  "name": "set_ip_block_model",
+  "info": "Specify ip block model"
+}
+,
+{
+  "name": "set_point2point_glitch",
+  "info": "Specifies the custom paths on which glitch analysis needs to be performed"
+}
+,
+{
+  "name": "set_rdc_define_assertion_sequence",
+  "info": "Specify reset assertion sequence"
+}
+,
+{
+  "name": "set_rdc_ignore_path",
+  "info": "Specified RDC path(s) will be ignored for RDC analysis purpose"
+}
+,
+{
+  "name": "set_rdc_qualifier",
+  "info": "Specifies the qualifier to block RDCs"
+}
+,
+{
+  "name": "set_rdc_synchronizer",
+  "info": "Specifies the synchronizer cells to block RDCs"
+}
+,
+{
+  "name": "set_rdcstatic_attribute",
+  "info": "Attaches static reset information with the given attribute."
+}
+,
+{
+  "name": "set_reset_attribute",
+  "info": "Attaches reset information with the given attribute."
+}
+,
+{
+  "name": "set_reset_glitch",
+  "info": "Set a glitch on object(s) of the reset tree, to be used by check_reset_glitch"
+}
+,
+{
+  "name": "set_reset_groups",
+  "info": "Specifies a set of resets which are synchronous with respect to one another"
+}
+,
+{
+  "name": "set_reset_inactive",
+  "info": "Specify reset that need to be considered inactive for RDC analysis purpose"
+}
+,
+{
+  "name": "set_signal_waveform",
+  "info": "This command can be used to specify the signal waveform information for glitch source object(s)."
+}
+,
+{
+  "name": "set_sync_attribute",
+  "info": "Specifies the synchronizers which drive the given virtual node."
+}
+,
+{
+  "name": "set_test_attribute",
+  "info": "Attaches dft related information with the given attribute."
+}
+,
+{
+  "name": "set_user_ignore_path",
+  "info": "Specified CDC path(s) will be ignored for User Path Glitch analysis purpose"
+}
+,
+{
+  "name": "write_cdc_property",
+  "info": "Dumps SVA properties"
+}
+,
+{
+  "name": "write_clock_tree",
+  "info": "writes clock tree for user defined clocks"
+}
+,
+{
+  "name": "write_constr_abstract_model",
+  "info": "Command to write constraint based abstract model  to specified path in configure_cdc_constr_abstract_model"
+}
+,
+{
+  "name": "write_fv_assume_property",
+  "info": "Dumps fvassume properties for CDC VCF Flow"
+}
+,
+{
+  "name": "write_rdc_matrix",
+  "info": "Use to dump reset domain crossings Matrix to a file in comma separated csv format"
+}
+,
+{
+  "name": "write_rdc_property",
+  "info": "Dumps DB to verify RDC assumptions and protocols"
+}
+,
+{
+  "name": "write_reset_tree",
+  "info": "writes reset tree for user defined resets"
+}
+,
+{
+  "name": "write_resets",
+  "info": "Use to dump reset table to a file in comma separated csv format"
+}
+]},
+{ "name": "Lint 2014 Commands",
+"cmds": [
+{
+  "name": "check_hdl",
+  "info": "Invoke HDL checker"
+}
+,
+{
+  "name": "check_structure",
+  "info": "Apply netlist structural checks on current design"
+}
+,
+{
+  "name": "compress_hdl",
+  "info": "Compresses soc violations covered by a representative violation"
+}
+,
+{
+  "name": "configure_hdl_tag_param",
+  "info": "Set the parameter for vsi-soc tags"
+}
+,
+{
+  "name": "define_test_mode",
+  "info": "Define a test mode to be created during DFT synthesis"
+}
+,
+{
+  "name": "hdl_compile_custom_rules",
+  "info": "compile customer ruleset file"
+}
+,
+{
+  "name": "report_dft_signal",
+  "info": "Displays options specified by the set_dft_signal command"
+}
+,
+{
+  "name": "report_hdl",
+  "info": "Report HDL checks information"
+}
+,
+{
+  "name": "report_hdl_tag",
+  "info": "Report HDL parameters for selected rule tag"
+}
+,
+{
+  "name": "set_dft_signal",
+  "info": "Specify the DFT signal types for DFT check"
+}
+]},
+{ "name": "Lint Commands",
+"cmds": [
+{
+  "name": "check_idc",
+  "info": "Runs IDC"
+}
+,
+{
+  "name": "check_lint",
+  "info": "Invoke VC SpyGlass Lint application"
+}
+,
+{
+  "name": "check_llm_lint",
+  "info": "check custom spec violaions"
+}
+,
+{
+  "name": "configure_idc_setup",
+  "info": "Specifies the IDC configuration"
+}
+,
+{
+  "name": "configure_lint_abort_unverified_point",
+  "info": "Option to get the file name"
+}
+,
+{
+  "name": "configure_lint_functional_setup",
+  "info": "Specifies the functional lint configuration"
+}
+,
+{
+  "name": "configure_lint_impl_setup",
+  "info": "Specifies the IDC configuration"
+}
+,
+{
+  "name": "configure_lint_language_tags",
+  "info": "Set the parameter for all supported lint tags"
+}
+,
+{
+  "name": "configure_lint_llm_tag",
+  "info": "Configure lint llm tag"
+}
+,
+{
+  "name": "configure_lint_methodology",
+  "info": "Set options to specify current lint methodology"
+}
+,
+{
+  "name": "configure_lint_parameter",
+  "info": "Set the parameter for all supported lint tags"
+}
+,
+{
+  "name": "configure_lint_rca",
+  "info": "Configure lint tags in ML RCA flow"
+}
+,
+{
+  "name": "configure_lint_setup",
+  "info": "Specifies which goal to run"
+}
+,
+{
+  "name": "configure_lint_tag_parameter",
+  "info": "Set the parameter for Lint checks"
+}
+,
+{
+  "name": "configure_uvm_setup",
+  "info": "Specifies on which testbench class to run UVM"
+}
+,
+{
+  "name": "configure_waiver_data_file",
+  "info": "Specifies configuration for the waiver data file generation"
+}
+,
+{
+  "name": "convert_sg_enc",
+  "info": "convert spyglass encrypted file to vc compatible encrypted file"
+}
+,
+{
+  "name": "create_lint_abstract_model",
+  "info": "Invokes abstraction for Lint"
+}
+,
+{
+  "name": "debug_lint_report",
+  "info": "Report Lint Debug Information"
+}
+,
+{
+  "name": "define_clock_sense",
+  "info": "Specify the clock port/net name and it's sense"
+}
+,
+{
+  "name": "define_config_registers",
+  "info": "Option to get all the configuration registers"
+}
+,
+{
+  "name": "enable_lint_llm",
+  "info": "Enable and configure lint llm settings"
+}
+,
+{
+  "name": "enable_waiver_suggestions",
+  "info": "Enable and configure settings for waiver suggestions"
+}
+,
+{
+  "name": "fix_lint",
+  "info": "Fixes lint violations"
+}
+,
+{
+  "name": "get_cluster_info",
+  "info": "Specifies data types to be queried"
+}
+,
+{
+  "name": "get_flp_summary",
+  "info": "Summary "
+}
+,
+{
+  "name": "get_supported_tags",
+  "info": "Return supported rule list for given tag"
+}
+,
+{
+  "name": "idc_analyze_net",
+  "info": "Analyze the net functionally"
+}
+,
+{
+  "name": "idc_next_level_srcs",
+  "info": "Get the next level schematic from a net"
+}
+,
+{
+  "name": "idc_reg_debug_effort_level",
+  "info": "Set the effort level for registers optimized by logic"
+}
+,
+{
+  "name": "identify_waivable_violations",
+  "info": "Identify waivable violations based on previous waivers"
+}
+,
+{
+  "name": "lint_disable_bus_merge",
+  "info": "Disable the bus merging for tags specified"
+}
+,
+{
+  "name": "lint_smart_analysis",
+  "info": "Command to Enable smart analysis for lint tags"
+}
+,
+{
+  "name": "ol_clock_relation",
+  "info": "Specify the relation between two clk nets"
+}
+,
+{
+  "name": "ol_frc",
+  "info": "Specify the free running clocks"
+}
+,
+{
+  "name": "ol_wsp",
+  "info": "Provide the triplets that should be waived"
+}
+,
+{
+  "name": "report_complex",
+  "info": "Filters module complexity info by module"
+}
+,
+{
+  "name": "report_constant_reg_srcs",
+  "info": "Generate Constant Registers Source Summary"
+}
+,
+{
+  "name": "report_fsm_info",
+  "info": "Filters FSM info by rule violation"
+}
+,
+{
+  "name": "report_lint_tag",
+  "info": "Report Lint parameters for selected tag"
+}
+,
+{
+  "name": "report_overlapping_registers",
+  "info": "Generate report for overlapping regs in DetectOptimizedUnUsedRegister DetectOptimizedConstRegister rules"
+}
+,
+{
+  "name": "report_unused_reg_fanout",
+  "info": "Generate Unused Registers Fanout Summary"
+}
+,
+{
+  "name": "save_waived_violation_info",
+  "info": "Save current design waived violation waiver information"
+}
+,
+{
+  "name": "sg_read_project",
+  "info": "import spyglass project"
+}
+,
+{
+  "name": "sg_read_waiver",
+  "info": "translates spyglass waiver"
+}
+,
+{
+  "name": "view_fl_viol_summary",
+  "info": "Generate Functional Lint Violation Summary"
+}
+,
+{
+  "name": "write_fixed_rtl",
+  "info": "Dumps fixed RTL"
+}
+]},
+{ "name": "Connectivity Commands",
+"cmds": [
+{
+  "name": "check_connectivity",
+  "info": "Run Connectivity checks"
+}
+]},
+{ "name": "DFT Commands",
+"cmds": [
+{
+  "name": "check_dft",
+  "info": "Run DFT checks"
+}
+,
+{
+  "name": "configure_dft_setup",
+  "info": "Configurations for DFT setup."
+}
+,
+{
+  "name": "create_test_clock",
+  "info": "Defines test clocks"
+}
+,
+{
+  "name": "ctl_data",
+  "info": "Specifies constraint for ctl data"
+}
+,
+{
+  "name": "define_illegal_input_values",
+  "info": "Specifies input values for a set of input as illegal"
+}
+,
+{
+  "name": "define_legal_input_values",
+  "info": "Specifies input values for a set of input as legal"
+}
+,
+{
+  "name": "define_macro",
+  "info": "defines an object-set which can be directly used as -type in other constraints"
+}
+,
+{
+  "name": "define_message_group",
+  "info": "defines an object-set which can be directly used as -type in other constraints"
+}
+,
+{
+  "name": "define_tag",
+  "info": "Specifies named condition for application of certain stimulus at top port or internal node"
+}
+,
+{
+  "name": "dft_decompile_analysis_cmd",
+  "info": "Decompile DFT analysis"
+}
+,
+{
+  "name": "dft_get_constant_sources",
+  "info": "Get Constant Sources For a Node"
+}
+,
+{
+  "name": "force_no_atspeed",
+  "info": "The 'force_no_atspeed' constraint is used to exclude flip-flops from being treated as launch and capture point even if they so qualify"
+}
+,
+{
+  "name": "force_no_scan",
+  "info": "The 'force_no_scan' constraint is used to exclude flip-flops from being declared scannable even if they so qualify"
+}
+,
+{
+  "name": "force_scan",
+  "info": "The 'force_scan' constraint is used to include flip-flops as being declared scannable even if they don't qualify"
+}
+,
+{
+  "name": "illegal_path",
+  "info": "Specifies a connectivity check for an illegal path from a pin specified with the -from argument to a pin specified with the -to argument"
+}
+,
+{
+  "name": "illegal_reconvergence",
+  "info": "The illegal_reconvergence constraint defines a check of reconvergence from/to an arbitary node."
+}
+,
+{
+  "name": "illegal_value",
+  "info": "Specifies a check that requires a logic value to not be established on a certain node when the circuit has been simulated using the condition specified by the -tag argument"
+}
+,
+{
+  "name": "remove_fault",
+  "info": "Specifies constraint for removing faults in design. "
+}
+,
+{
+  "name": "report_dft",
+  "info": "Reports DFT checks information"
+}
+,
+{
+  "name": "report_element",
+  "info": "Command used to report the element (or design-objects) represented by the static/dynamic macros"
+}
+,
+{
+  "name": "require_clock",
+  "info": "The require_clock constraint defines a check that a clock is reaching the specified  node or not."
+}
+,
+{
+  "name": "require_frequency",
+  "info": "Specifies required frequencies at a design node"
+}
+,
+{
+  "name": "require_path",
+  "info": "Specifies a connectivity check for a path from a pin specified with the -from argument to a pin specified with the -to argument"
+}
+,
+{
+  "name": "require_structure",
+  "info": "Specifies a structure check for all paths from pins specified eith -from argument to pin specified with -to argument."
+}
+,
+{
+  "name": "require_value",
+  "info": "Specifies a check that requires a logic value to be established on a certain node when the circuit has been simulated using the condition specified by the -tag argument"
+}
+,
+{
+  "name": "set_atspeed_clock_frequency",
+  "info": "Specifies test mode simulation conditions"
+}
+,
+{
+  "name": "set_dft_capture_enable",
+  "info": "Specifies constraint for setting capture enable pins "
+}
+,
+{
+  "name": "set_dft_clock_shaper",
+  "info": "Specifies clock shapers"
+}
+,
+{
+  "name": "set_dft_gating_cell",
+  "info": "Specifies clock gating cells"
+}
+,
+{
+  "name": "set_dft_gating_cell_enable",
+  "info": "Specifies enable signal of clock gating cells"
+}
+,
+{
+  "name": "set_dft_ip_block",
+  "info": "Specifies constraint for DFT ip_block"
+}
+,
+{
+  "name": "set_dft_memory",
+  "info": "Specifies memory name"
+}
+,
+{
+  "name": "set_dft_module_bypass",
+  "info": "Specifies module bypass"
+}
+,
+{
+  "name": "set_dft_retiming_flip_flop",
+  "info": "Specifies constraint for setting retiming flip flops in scan chains. "
+}
+,
+{
+  "name": "set_dft_scan_chain",
+  "info": "Specifies constraint for setting no wrap pins/ports. "
+}
+,
+{
+  "name": "set_dft_scan_wrap",
+  "info": "specifies black-box design units or instances that will be designed with scan wrappers"
+}
+,
+{
+  "name": "set_dft_shift_enable",
+  "info": "Specifies constraint for setting shift enable pins "
+}
+,
+{
+  "name": "set_dft_slos_enable",
+  "info": "Specifies constraint for setting Slos enable pins "
+}
+,
+{
+  "name": "set_dft_slos_reg",
+  "info": "Specifies slos regsiters in design "
+}
+,
+{
+  "name": "set_no_wrap",
+  "info": "Specifies constraint for setting no wrap pins/ports. "
+}
+,
+{
+  "name": "set_test_mode",
+  "info": "Specifies test mode simulation conditions"
+}
+]},
+{ "name": "Low Power Commands",
+"cmds": [
+{
+  "name": "all_isolation_cells",
+  "info": "Returns a collection of all isolation cells"
+}
+,
+{
+  "name": "all_level_shifters",
+  "info": "Returns a collection of specific level shifter cells"
+}
+,
+{
+  "name": "all_macro_cells",
+  "info": "Returns a collection of all macro cells"
+}
+,
+{
+  "name": "allow_upf_enum",
+  "info": "allows the specified upf option of the specified upf command for the specified version"
+}
+,
+{
+  "name": "allow_upf_option",
+  "info": "allows the specified upf option of the specified upf command for the specified version"
+}
+,
+{
+  "name": "analyze_add_all_off",
+  "info": "analyzes where all-off PST would be added"
+}
+,
+{
+  "name": "analyze_domain_crossings",
+  "info": "Reports ISO/LS requirements between domains"
+}
+,
+{
+  "name": "analyze_invalid_power_state",
+  "info": "analyzes the reason for a state marked invalid during PST merge"
+}
+,
+{
+  "name": "analyze_pg_function",
+  "info": "analyzes pg_function statements for power switches"
+}
+,
+{
+  "name": "analyze_pg_reason",
+  "info": "Finds reason for classifying supply net as power or ground"
+}
+,
+{
+  "name": "analyze_power_state_exists",
+  "info": "Check if legal state exists in merged PST, return power state collection if exists"
+}
+,
+{
+  "name": "analyze_pst_chain",
+  "info": "reports shortest chain of PST linking a source supply to a sink supply"
+}
+,
+{
+  "name": "analyze_supply_relations",
+  "info": "analyzes relationship of all supply pairs"
+}
+,
+{
+  "name": "bind_switch_strategy",
+  "info": "Provides user binding for power switches to strategies"
+}
+,
+{
+  "name": "check_lp",
+  "info": "This performs all stages of low power verification"
+}
+,
+{
+  "name": "check_lp_devices",
+  "info": "This is a Xover Independent Check performing ISO/LS Requirement Check."
+}
+,
+{
+  "name": "compare_upf",
+  "info": "compares original and current UPF"
+}
+,
+{
+  "name": "compare_vclp_db",
+  "info": "compares vclp_db from two different sessions"
+}
+,
+{
+  "name": "compare_violations",
+  "info": "Compare violations between violation reports of two sessions"
+}
+,
+{
+  "name": "compress_lp",
+  "info": "Compresses low power violations covered by a representative violation"
+}
+,
+{
+  "name": "configure_lp_abstract_model",
+  "info": "Enables set of application variables for Abstraction (SAM flow) for LP"
+}
+,
+{
+  "name": "configure_lp_feedthrough_check",
+  "info": "Configure FeedThrough check"
+}
+,
+{
+  "name": "configure_lp_light_abstract_model",
+  "info": "Enables set of application variables for Lightweight Abstraction (Lightweight SAM flow) for LP"
+}
+,
+{
+  "name": "configure_transient_checks",
+  "info": "Configure transient checks for family"
+}
+,
+{
+  "name": "create_lp_abstract_model",
+  "info": "Enables a minimal set of Low Power checks for Abstraction (SAM flow) model generation for LP"
+}
+,
+{
+  "name": "create_source",
+  "info": "create sources"
+}
+,
+{
+  "name": "create_trace_constraint",
+  "info": "create trace constraint that tracing engine should honor"
+}
+,
+{
+  "name": "define_lp_anchor",
+  "info": "Specify the buffer or inverter cells for crossover path to stop"
+}
+,
+{
+  "name": "define_ram_controls",
+  "info": "Define RAM controls"
+}
+,
+{
+  "name": "define_upf_attribute",
+  "info": "define a user attribute in UPF files"
+}
+,
+{
+  "name": "disallow_load_upf_version",
+  "info": "disallows the specified lower upf version to load the specified higher child upf version"
+}
+,
+{
+  "name": "disallow_upf_command",
+  "info": "disallows the specified upf command for the specified version"
+}
+,
+{
+  "name": "disallow_upf_enum",
+  "info": "disallows the specified upf option of the specified upf command for the specified version"
+}
+,
+{
+  "name": "disallow_upf_option",
+  "info": "disallows the specified upf option of the specified upf command for the specified version"
+}
+,
+{
+  "name": "dump_crossovers_with_noboundary",
+  "info": "Dump crossovers that does not contain any power domain boundary"
+}
+,
+{
+  "name": "dump_iso_clamp_values",
+  "info": "Dump isolation clamp values of boundary ports with isolation strategy"
+}
+,
+{
+  "name": "dump_lp_db",
+  "info": "dump different components(xover, strategies, root supply, upf datamodel, xover_src_sink) of lowpower in json format"
+}
+,
+{
+  "name": "dump_vclp_db",
+  "info": "dump different components of lowpower in json format"
+}
+,
+{
+  "name": "enable_lp_dump_debug_reports",
+  "info": "Dump debug reports input under options in directory vcst_rtdb/lpdb/debug_reports/"
+}
+,
+{
+  "name": "enable_sink_off_clamp_check",
+  "info": "sink off clamp check"
+}
+,
+{
+  "name": "generate_crossovers",
+  "info": "generates crossover data to enable reporting of LP data"
+}
+,
+{
+  "name": "generate_lp_db",
+  "info": "dumps retention and isolation data"
+}
+,
+{
+  "name": "generate_signal_supply",
+  "info": "generate tcl script of relations between signal level and supply state"
+}
+,
+{
+  "name": "generate_supply_map",
+  "info": "Read violation file of SAM module and generate supply name mapping file"
+}
+,
+{
+  "name": "get_connected_supply_net",
+  "info": "Returns a collection of the connected supply net of given data pin"
+}
+,
+{
+  "name": "get_constant_value",
+  "info": "Get the constant value propagated to the net|pin"
+}
+,
+{
+  "name": "get_crossover_elements",
+  "info": "Returns a collection different aspects of this crossover obj"
+}
+,
+{
+  "name": "get_crossover_info",
+  "info": "Returns specific power cross-over information"
+}
+,
+{
+  "name": "get_crossover_node_elements",
+  "info": "Returns a collection of different aspects of this crossover node object"
+}
+,
+{
+  "name": "get_crossover_nodes",
+  "info": "Returns a collection of xover nodes created for the given name"
+}
+,
+{
+  "name": "get_crossovers",
+  "info": "Returns a collection of specific crossovers"
+}
+,
+{
+  "name": "get_equiv_power_ports",
+  "info": "Returns a collector of supply ports or nets which are equivalent to the specific supply net"
+}
+,
+{
+  "name": "get_equivalent_nets",
+  "info": "Returns a collection of supply nets/ports equivalent to given supply"
+}
+,
+{
+  "name": "get_equivalent_sets",
+  "info": "Returns a collection of equivalent supply sets"
+}
+,
+{
+  "name": "get_group_states",
+  "info": "Returns a collection of power states from power groups"
+}
+,
+{
+  "name": "get_iso_strategy",
+  "info": "Returns the iso strategy that is applied on a boundary node for a path"
+}
+,
+{
+  "name": "get_isolation_cell_elements",
+  "info": "Returns elements of specific isolation cells"
+}
+,
+{
+  "name": "get_isolation_strategies",
+  "info": "Returns a collection of specific isolation strategies"
+}
+,
+{
+  "name": "get_isolation_strategy_elements",
+  "info": "Returns a collection different aspects of this isolation strategy object"
+}
+,
+{
+  "name": "get_level_shifter_strategies",
+  "info": "Returns a collection of specific level shifter strategies"
+}
+,
+{
+  "name": "get_level_shifter_strategy_elements",
+  "info": "Returns a collection different aspects of this LS strategy object"
+}
+,
+{
+  "name": "get_ls_strategy",
+  "info": "Returns the ls strategy that is applied on a boundary node for a path"
+}
+,
+{
+  "name": "get_num_merged_pst_states",
+  "info": "Returns number of states in merged PST"
+}
+,
+{
+  "name": "get_power_domain_elements",
+  "info": "Returns a collection of items specified"
+}
+,
+{
+  "name": "get_power_domains",
+  "info": "Returns a collection of specific power domains"
+}
+,
+{
+  "name": "get_power_groups",
+  "info": "Returns a collection of Power Group objects"
+}
+,
+{
+  "name": "get_power_switch_strategies",
+  "info": "Return a collection of specific power switches"
+}
+,
+{
+  "name": "get_power_switch_strategy_elements",
+  "info": "Return a collection different aspects of this PSW strategy object"
+}
+,
+{
+  "name": "get_pst",
+  "info": "Returns a collection of Power State Table objects"
+}
+,
+{
+  "name": "get_pst_states",
+  "info": "Returns a collection of states (rows in PST) in the specific PST"
+}
+,
+{
+  "name": "get_related_supply_net",
+  "info": "Returns a collection of root supply nets for specific design pins/ports or UPF supply ports"
+}
+,
+{
+  "name": "get_related_supply_pin",
+  "info": "Returns a collection of the related pin"
+}
+,
+{
+  "name": "get_repeater_strategies",
+  "info": "Returns a collection of specific repeater strategies"
+}
+,
+{
+  "name": "get_resolved_elements",
+  "info": "Returns a collection resolved elements of strategy"
+}
+,
+{
+  "name": "get_retention_strategies",
+  "info": "Returns a collection of specific retention strategies"
+}
+,
+{
+  "name": "get_retention_strategy_elements",
+  "info": "Returns a collection different aspects of this retention strategy object "
+}
+,
+{
+  "name": "get_root_supply_net",
+  "info": "Returns a collection of root supply nets for specific design pins/ports or UPF supply ports or crossover node"
+}
+,
+{
+  "name": "get_root_supply_object",
+  "info": "Returns a collection of root supply objects for specific design pins/ports or UPF supply ports or crossover node"
+}
+,
+{
+  "name": "get_root_supply_path",
+  "info": "Returns a collection of upf root supply net (state source) and all intermediate upf supply nets and ports in the path for a upf supply net or supply port"
+}
+,
+{
+  "name": "get_sources",
+  "info": "get sources"
+}
+,
+{
+  "name": "get_supply_net_combinations",
+  "info": "Returns a collection of all possible combinations of the pair of supply nets"
+}
+,
+{
+  "name": "get_supply_net_elements",
+  "info": "Returns a collection of different aspects of this supply net object"
+}
+,
+{
+  "name": "get_supply_nets",
+  "info": "Returns a collection of specific supply nets"
+}
+,
+{
+  "name": "get_supply_ports",
+  "info": "Returns a collection of specific supply ports"
+}
+,
+{
+  "name": "get_supply_rail_order",
+  "info": " Returns Boolean information about relationship of two supplies, by default true if supply_net1 is ON and supply_net2 is OFF"
+}
+,
+{
+  "name": "get_supply_set_states",
+  "info": "Returns a collection of power states from supply sets"
+}
+,
+{
+  "name": "get_supply_sets",
+  "info": "Returns a collection of specific supply sets"
+}
+,
+{
+  "name": "get_supply_states",
+  "info": "Returns a collection of supply states"
+}
+,
+{
+  "name": "get_trace_path_elements",
+  "info": "return signals in trace paths"
+}
+,
+{
+  "name": "get_trace_paths",
+  "info": "Creates a collection of tracing paths for custom reporting and other processings."
+}
+,
+{
+  "name": "get_upf_connection",
+  "info": "Returns immediate connection of specified type"
+}
+,
+{
+  "name": "get_upf_csn",
+  "info": "Returns true name of the CSN on the given pin mentioned in upf if a csn exists in UPF otherwise prints csn not presents"
+}
+,
+{
+  "name": "get_upf_scope",
+  "info": "This command returns upf files or upf scopes"
+}
+,
+{
+  "name": "identify_lp_blackboxes",
+  "info": "Fid out design hierarchies which are not relevent for LP analysis"
+}
+,
+{
+  "name": "infer_source",
+  "info": "infer sources"
+}
+,
+{
+  "name": "integrate_lp_block_violations",
+  "info": "Generate cloned violation file of SAM module"
+}
+,
+{
+  "name": "lp_abstraction_aggressive_opt",
+  "info": "The command set a group of VC LP abstraction related app_vars to perform abstraction related optimization in aggresive manner"
+}
+,
+{
+  "name": "lp_abstraction_generate_noninterface_supplies",
+  "info": "Generate XML file which contains information of non peripheral supplies of a SAM model  "
+}
+,
+{
+  "name": "lp_abstraction_lightweight_dump_block_pis",
+  "info": "Generate XML file which contains information of pruned primary inputs in the lightweight SAM model generation to re-use in the old Top+SAM run to trim crossover paths to match in lightweight Top+SAM run"
+}
+,
+{
+  "name": "lp_abstraction_read_noninterface_supplies",
+  "info": "Read the non peripheral supply file and generate a list of fully non peripheral supplies for a given SAM"
+}
+,
+{
+  "name": "lp_allow_pg_bbox_count",
+  "info": "This command set threshold limit for allowed instance count for each blackbox module in PG_BBOX_SETUP rule"
+}
+,
+{
+  "name": "lp_combo_aon_supplies",
+  "info": "Provide list of AON supplies for ISO combo checks"
+}
+,
+{
+  "name": "lp_compare_dcc_result",
+  "info": "This matches VCLP violations with DCC violations"
+}
+,
+{
+  "name": "lp_define_synchronous_clock",
+  "info": "Specify the list of design pins which would be identified as clock source"
+}
+,
+{
+  "name": "lp_ignore_signal_corruption",
+  "info": "Ignore signal corruption checks"
+}
+,
+{
+  "name": "lp_literal_constant",
+  "info": "enable literal constant behavior in VC LP"
+}
+,
+{
+  "name": "lp_pg_driver",
+  "info": "Setting valid drivers for supply nets"
+}
+,
+{
+  "name": "lp_psw_allow_branches",
+  "info": "Allows a designer to specify which paths allow dead branches and which do not to report PSW_ACK_UNCONN. Also, which ACK pins allow connecting to PSW instance control ports associated with different PSW strategies; not to report PSW_ACK_CONN."
+}
+,
+{
+  "name": "lp_psw_andor",
+  "info": "check and/or logic on PSW outputs"
+}
+,
+{
+  "name": "lp_rca_insert_violations",
+  "info": "This command inserts the RCA violations' information present in an XML into the report database."
+}
+,
+{
+  "name": "lp_setup_thresh_error",
+  "info": "This command set threshold value for a VC LP setup check"
+}
+,
+{
+  "name": "lp_show_cluster_proof",
+  "info": "Reports the path from source to sink of a violation for a violation cluster. This can be used to debug a violation cluster and prove its validity."
+}
+,
+{
+  "name": "lp_signal_supply",
+  "info": "define relation between signal level and supply state"
+}
+,
+{
+  "name": "lp_violation_threshold",
+  "info": "This thresholds certain LP violation counts to a user specified value"
+}
+,
+{
+  "name": "map_retention_clamp_cell",
+  "info": "Specify library cells for mapping Zero Pin Retention (ZPR) clamp cells"
+}
+,
+{
+  "name": "read_upf",
+  "info": "Read in UPF file"
+}
+,
+{
+  "name": "rebuild_pst_data",
+  "info": "Rebuild internal PST data, for example after marking states transient"
+}
+,
+{
+  "name": "reference_toplevel_isolation_signal",
+  "info": "specify the name of the correct isolation enable signal at SoC level, and the correct supply of the driver of isolation data pin"
+}
+,
+{
+  "name": "remove_crossovers",
+  "info": "remove crossover data"
+}
+,
+{
+  "name": "remove_source",
+  "info": "remove source"
+}
+,
+{
+  "name": "remove_upf",
+  "info": "Removes the UPF constraints from the design"
+}
+,
+{
+  "name": "report_abstraction_info",
+  "info": "Retrieve information about marking/unmarking for a given design object in the abstraction model or dump information about marking/unmarking of all the design objects in the json format to a given file"
+}
+,
+{
+  "name": "report_cell_classification",
+  "info": "Reports the design cells found and analyzed"
+}
+,
+{
+  "name": "report_crossover",
+  "info": "Reports specific crossovers"
+}
+,
+{
+  "name": "report_crossover_node",
+  "info": "Reports specific crossover node"
+}
+,
+{
+  "name": "report_group_pst",
+  "info": "reports power group as a power state table"
+}
+,
+{
+  "name": "report_group_state",
+  "info": "Reports specific group power states"
+}
+,
+{
+  "name": "report_isolation_strategy",
+  "info": "Reports specific isolation strategies"
+}
+,
+{
+  "name": "report_isolation_strategy_info",
+  "info": "Reports various information for an Isolation strategy"
+}
+,
+{
+  "name": "report_level_shifter_strategy",
+  "info": "Reports specific level shifter strategies"
+}
+,
+{
+  "name": "report_lp",
+  "info": "Reports low power check information"
+}
+,
+{
+  "name": "report_lp_anchor",
+  "info": "Report the specified buffer or inverter cells for crossover path to stop"
+}
+,
+{
+  "name": "report_lp_markers",
+  "info": "report the marker types"
+}
+,
+{
+  "name": "report_lp_statistics",
+  "info": "reports counts and percentages for LP objects"
+}
+,
+{
+  "name": "report_mv_library_cells",
+  "info": "Reports all power management cells from the libraries"
+}
+,
+{
+  "name": "report_pg_setup",
+  "info": "reports PG setup problems"
+}
+,
+{
+  "name": "report_power_domain",
+  "info": "Reports specific power domains"
+}
+,
+{
+  "name": "report_power_group",
+  "info": "Reports specific power groups"
+}
+,
+{
+  "name": "report_power_switch",
+  "info": "Reports specific power switches"
+}
+,
+{
+  "name": "report_protection_cells_on_clock_path",
+  "info": "reports protection cells on clock path"
+}
+,
+{
+  "name": "report_pst",
+  "info": "Reports specific power state tables"
+}
+,
+{
+  "name": "report_pst_state",
+  "info": "Reports specific PST states"
+}
+,
+{
+  "name": "report_psw_andor",
+  "info": "Report PSW instances not part of any and/or chain"
+}
+,
+{
+  "name": "report_repeater_strategy",
+  "info": "Reports specific repeater strategies"
+}
+,
+{
+  "name": "report_retention_strategy",
+  "info": "Reports spcific retention strategies"
+}
+,
+{
+  "name": "report_signal_supply",
+  "info": "report relation between signal level and supply state"
+}
+,
+{
+  "name": "report_supply_net",
+  "info": "Reports specific supply nets"
+}
+,
+{
+  "name": "report_supply_port",
+  "info": "Reports specific supply ports"
+}
+,
+{
+  "name": "report_supply_set",
+  "info": "Reports specific supply sets"
+}
+,
+{
+  "name": "report_supply_state",
+  "info": "Reports specific supply power states"
+}
+,
+{
+  "name": "report_system_pst",
+  "info": "reports system power state table for all or some supplies"
+}
+,
+{
+  "name": "report_trace_paths",
+  "info": "reports paths returned from get_trace_paths/get_crossovers"
+}
+,
+{
+  "name": "report_upf",
+  "info": "Prints counts of interesting UPF objects"
+}
+,
+{
+  "name": "set_clone",
+  "info": "specify cloned ports/pins with respect to original control signal defined in upf"
+}
+,
+{
+  "name": "set_hardmacro_isolation",
+  "info": "set isolation information for hard macro outputs"
+}
+,
+{
+  "name": "set_local_policy_match",
+  "info": "Specify the local policy match priorities "
+}
+,
+{
+  "name": "set_lp_rca_cluster_merging",
+  "info": "This command sets the method used to merge clusters, maximum effect violation to have in a merged clusterAnd whether to dump the cluster's root cause violation"
+}
+,
+{
+  "name": "set_pruned_block_module",
+  "info": "Read pruned block PI file of the SAM module and store data to trim crossovers going into the same module in the Top+SAM run while dumping xover.json"
+}
+,
+{
+  "name": "set_pst_transient",
+  "info": "sets a power state from a table to be transient"
+}
+,
+{
+  "name": "set_psw_turn_net",
+  "info": "Sets PSW turn net in case of Mother-Daughter PSW Configuration"
+}
+,
+{
+  "name": "start_onthefly_distributed_run",
+  "info": "Start the distributed run for SAM genearation as well as SAM readback run"
+}
+,
+{
+  "name": "test_conditional_upf",
+  "info": "Specify the conditional upf setting."
+}
+,
+{
+  "name": "upf_set_once",
+  "info": "checks whether the tcl/env variable specified is modified later"
+}
+,
+{
+  "name": "write_bbox_data_model",
+  "info": "Dumps BBOX related attributes"
+}
+]},
+{ "name": "Low Power Formal Commands",
+"cmds": [
+{
+  "name": "annotate_upf",
+  "info": "low power formal analysis on the design"
+}
+,
+{
+  "name": "bind_checker",
+  "info": "Insert checker modules and bind them to instances (IEEE-1801)"
+}
+,
+{
+  "name": "flp_check_clamp_value",
+  "info": "Check the correctness of clamp value of the isolation cells on given port."
+}
+,
+{
+  "name": "flp_config",
+  "info": "Configure FLP app settings"
+}
+,
+{
+  "name": "flp_config_report",
+  "info": "Report FLP app settings"
+}
+,
+{
+  "name": "flp_design_check",
+  "info": "Do the design check based on the provided type."
+}
+,
+{
+  "name": "flp_design_check_report",
+  "info": "Prepare a report based on clamp vs reset check on the provided type."
+}
+,
+{
+  "name": "flp_report",
+  "info": "Report FLP results"
+}
+,
+{
+  "name": "flp_supply_net",
+  "info": "Set FLP supply assumes"
+}
+,
+{
+  "name": "fvlp_instrument",
+  "info": "set the type of instrumentation like iso, ret, pnm, bind_generics, ret1 for the LP CC."
+}
+,
+{
+  "name": "fvlp_pmc_extend",
+  "info": "set remove PMC instances"
+}
+,
+{
+  "name": "fvlp_pmc_list",
+  "info": "list PMC instances in the design"
+}
+,
+{
+  "name": "fvlp_set_supply_aon",
+  "info": "set supply nets to be treated as always on"
+}
+,
+{
+  "name": "fvlp_set_supply_onoff_net",
+  "info": "set supply net to be driven by given net"
+}
+,
+{
+  "name": "get_fvlp_free_supply_nets",
+  "info": "Returns a collection of supply nets being treated as free inputs by LP-CC/LP-Formal"
+}
+,
+{
+  "name": "get_pnm_input_control_ports",
+  "info": "Returns the list of input control ports for pnm module"
+}
+,
+{
+  "name": "get_pnm_input_supply_ports",
+  "info": "Returns the list of top level input supply ports for pnm module"
+}
+,
+{
+  "name": "get_pnm_input_supply_volt_by_name",
+  "info": "Returns the input supply volt port according to the SupplyNetName provided"
+}
+,
+{
+  "name": "get_pnm_output_supply_state",
+  "info": "Returns the output supply state signal corresponding to the supply of design object passed"
+}
+,
+{
+  "name": "get_pnm_output_supply_state_by_name",
+  "info": "Returns the output supply state port according to the SupplyNetName provided"
+}
+,
+{
+  "name": "get_pnm_output_supply_volt",
+  "info": "Returns the output supply volt signal corresponding to the supply of design object passed"
+}
+,
+{
+  "name": "get_pnm_output_supply_volt_by_name",
+  "info": "Returns the output supply volt port according to the SupplyNetName provided"
+}
+]},
+{ "name": "Sequential Equivalence Checking Commands",
+"cmds": [
+{
+  "name": "add_cg_covers",
+  "info": "Adds the toggle cover properties for non-clock signals present in the COI of clock nets"
+}
+,
+{
+  "name": "elaborate_seq",
+  "info": "Elaborates two designs for SEQ applications."
+}
+,
+{
+  "name": "fv_abstract_compile",
+  "info": "Enable abstraction inferencing during compilation"
+}
+,
+{
+  "name": "fv_abstract_compile_report",
+  "info": "Report compile memory abstractions created by fv_abstract_compile command"
+}
+,
+{
+  "name": "get_compile_abstractions",
+  "info": "Reports the list of various compile abstractions created by set_compile_abstractions command"
+}
+,
+{
+  "name": "get_seq_equivalences",
+  "info": "Gets information about internal equivalences found in a SEQ setup as a Tcl collection"
+}
+,
+{
+  "name": "get_seq_mappings",
+  "info": "Gets information about various SEQ mappings as a tcl collection"
+}
+,
+{
+  "name": "map_by_name",
+  "info": "Map signals by name in the two designs"
+}
+,
+{
+  "name": "map_uninit",
+  "info": "Map uninitialized registers in the two designs"
+}
+,
+{
+  "name": "report_cg_covers",
+  "info": "Reports the toggle cover properties created for non-clock signals present in the COI of clock nets"
+}
+,
+{
+  "name": "report_compile_abstractions",
+  "info": "Reports the various compile abstractions created by set_compile_abstractions command"
+}
+,
+{
+  "name": "report_proofs",
+  "info": "Reports information about existing proofs"
+}
+,
+{
+  "name": "report_seq_equivalences",
+  "info": "Reports information about Internal Equivalences found in a SEQ setup"
+}
+,
+{
+  "name": "report_seq_mappings",
+  "info": "Reports information about various SEQ mappings"
+}
+,
+{
+  "name": "resume_seq",
+  "info": "Resume and Continue with a previous SEQ run"
+}
+,
+{
+  "name": "seq_assert",
+  "info": "Create assert mapping between specification and implementation signals for SEQ"
+}
+,
+{
+  "name": "seq_assume",
+  "info": "Create assume mapping between specification and implementation signals for SEQ"
+}
+,
+{
+  "name": "seq_bind",
+  "info": "Bind specification instance as implementation instance to the top module"
+}
+,
+{
+  "name": "seq_cg_cover",
+  "info": "Add clock gating covers in a design"
+}
+,
+{
+  "name": "seq_cg_cover_report",
+  "info": "Report clock gating covers in a design"
+}
+,
+{
+  "name": "seq_config",
+  "info": "Configure SEQ app settings"
+}
+,
+{
+  "name": "seq_config_report",
+  "info": "Report SEQ app settings"
+}
+,
+{
+  "name": "seq_debug",
+  "info": "Compute debug information for the specified properties"
+}
+,
+{
+  "name": "seq_debug_report",
+  "info": "Report debug information for the specified properties"
+}
+,
+{
+  "name": "seq_generate",
+  "info": "Generate SEQ mappings for spec and impl designs"
+}
+,
+{
+  "name": "seq_map",
+  "info": "Map specification and implementation signals in SEQ"
+}
+,
+{
+  "name": "seq_report",
+  "info": "Reports SEQ related information"
+}
+,
+{
+  "name": "seq_resume",
+  "info": "Resume SEQ run from where it was stopped"
+}
+,
+{
+  "name": "seqmap",
+  "info": "Provide extra hint mappings for SEQ"
+}
+,
+{
+  "name": "sequnmap",
+  "info": "Remove hint mappings for SEQ"
+}
+,
+{
+  "name": "set_compile_abstractions",
+  "info": "Enable abstraction inferencing during compilation"
+}
+,
+{
+  "name": "set_seq_abstractions",
+  "info": "Sets the various abstraction settings for SEQ backend"
+}
+]},
+{ "name": " RPC related Commands",
+"cmds": [
+{
+  "name": "python",
+  "info": "Executes a python script"
+}
+,
+{
+  "name": "start_rpc",
+  "info": "Starts an RPC Server to allow clients to connect"
+}
+,
+{
+  "name": "stop_rpc",
+  "info": "Stops the currently running RPC Server"
+}
+]},
+{ "name": " SmartSearch related Commands",
+"cmds": [
+{
+  "name": "formalhelp",
+  "info": "Launches SmartSearch for VC Formal"
+}
+,
+{
+  "name": "smartsearch",
+  "info": "Launches SmartSearch"
+}
+]},
+{ "name": "Formal Verification Commands",
+"cmds": [
+{
+  "name": "aip_load",
+  "info": "Load AIP source files for compilation"
+}
+,
+{
+  "name": "cc_config",
+  "info": "Configure CC app settings"
+}
+,
+{
+  "name": "check_config",
+  "info": "Specifies certain configuration parameters for check commands"
+}
+,
+{
+  "name": "check_constraints",
+  "info": "Checks for conflicts/deadends due to constraints."
+}
+,
+{
+  "name": "check_fv",
+  "info": "Check the properties"
+}
+,
+{
+  "name": "check_fv_setup",
+  "info": "Check the FV setup"
+}
+,
+{
+  "name": "compare_coi",
+  "info": "Compare one or more coi to a given coi and report those which are included, intersect or disjoint from the main coi"
+}
+,
+{
+  "name": "compute_formal_core",
+  "info": "Compute the formal core used in proving a property"
+}
+,
+{
+  "name": "compute_proof_assist",
+  "info": "Compute the Proof Assist info towards converging a property (single property only)"
+}
+,
+{
+  "name": "compute_reduced_constraints",
+  "info": "Compute the reduced constraints required for proving a property"
+}
+,
+{
+  "name": "compute_verification_summary",
+  "info": "Compute the current verification task summary"
+}
+,
+{
+  "name": "enable_coverage_goals_in_coi",
+  "info": "Enables the coverage goals which are in the COI of a FPV goal"
+}
+,
+{
+  "name": "fca_report",
+  "info": "Print report for FCA analysis results."
+}
+,
+{
+  "name": "flp_cc_vacuity_gen_split",
+  "info": "Create different combination of vacuity properties for the provided vacuous property/properties or all vacuous properties."
+}
+,
+{
+  "name": "flp_cc_vacuity_report",
+  "info": "Get the vacuous report for the provided vacuous property/properties or all vacuous properties."
+}
+,
+{
+  "name": "flp_pst_config",
+  "info": "pst config to be set to create the pst constraint for specific pst and state."
+}
+,
+{
+  "name": "formal_setup_config",
+  "info": "Configure the setup for Formal clock inference."
+}
+,
+{
+  "name": "fv_abstract",
+  "info": "Set abstractions in the design"
+}
+,
+{
+  "name": "fv_abstract_report",
+  "info": "Report abstractions in the design"
+}
+,
+{
+  "name": "fv_app",
+  "info": "Set VC Formal app mode"
+}
+,
+{
+  "name": "fv_app_report",
+  "info": "Report VC Formal app mode"
+}
+,
+{
+  "name": "fv_assert",
+  "info": "Creates an assertion or set usage attribute to assert"
+}
+,
+{
+  "name": "fv_assume",
+  "info": "Creates a constraint or set the usage attribute to assume and enabled"
+}
+,
+{
+  "name": "fv_bind_sva",
+  "info": "Bind SVA properties to the DUT"
+}
+,
+{
+  "name": "fv_change_at",
+  "info": "Specify clock and edge-sensitive information of signals"
+}
+,
+{
+  "name": "fv_change_at_report",
+  "info": "Report clock and edge-sensitive information of signals"
+}
+,
+{
+  "name": "fv_check",
+  "info": "Run formal verification on properties"
+}
+,
+{
+  "name": "fv_check_config",
+  "info": "Configure VCF proof settings"
+}
+,
+{
+  "name": "fv_coi_compare_report",
+  "info": "Compare COI of one or more properties to the COI of a reference property. Report objects which have a COI overlap and also those that are outside the COI of the reference property"
+}
+,
+{
+  "name": "fv_coi_report",
+  "info": "Reports complexity of the COI of a list of nets or properties, or complexity of a design instance"
+}
+,
+{
+  "name": "fv_coi_signal_report",
+  "info": "Report if a target signal is found in the fanin of a specified signal or property"
+}
+,
+{
+  "name": "fv_config",
+  "info": "VCF configuration settings"
+}
+,
+{
+  "name": "fv_constant",
+  "info": "Constraint to set signal to a constant value"
+}
+,
+{
+  "name": "fv_constant_report",
+  "info": "Report constants set through fv_constant"
+}
+,
+{
+  "name": "fv_constraint_check",
+  "info": "Check for constraint conflicts and deadends in the design"
+}
+,
+{
+  "name": "fv_constraint_check_report",
+  "info": "Report constraint conflicts and deadends in the design"
+}
+,
+{
+  "name": "fv_cover",
+  "info": "Creates a cover or sets the usage attribute to cover"
+}
+,
+{
+  "name": "fv_design_check",
+  "info": "Check the FV setup"
+}
+,
+{
+  "name": "fv_design_check_report",
+  "info": "Report results of VC Formal environment and setup checks"
+}
+,
+{
+  "name": "fv_engine_report",
+  "info": "Reports run time information about engines and properties"
+}
+,
+{
+  "name": "fv_exclusion",
+  "info": "Read/Save/Delete/Cover/Exclude/Waive/UnWaive coverage goals."
+}
+,
+{
+  "name": "fv_grid_config",
+  "info": "Set grid configuration for engine jobs"
+}
+,
+{
+  "name": "fv_logic",
+  "info": "Add logic to the design and assign a new signal in the top module"
+}
+,
+{
+  "name": "fv_path_report",
+  "info": "Report a path between source and destination if it exists"
+}
+,
+{
+  "name": "fv_proof_arch",
+  "info": "Proof architect command to create and automate compositional verification through tasks"
+}
+,
+{
+  "name": "fv_proof_arch_report",
+  "info": "Proof Architect report and details"
+}
+,
+{
+  "name": "fv_proof_assist",
+  "info": "Compute proof assist information for the specified property"
+}
+,
+{
+  "name": "fv_proof_assist_report",
+  "info": "Report Proof Assist info for the selected property."
+}
+,
+{
+  "name": "fv_quickstart",
+  "info": "Starts the quick start mode for VC Formal"
+}
+,
+{
+  "name": "fv_report",
+  "info": "Reports VC Formal results and property information"
+}
+,
+{
+  "name": "fv_rma_config",
+  "info": "Configure RMA settings"
+}
+,
+{
+  "name": "fv_session_check",
+  "info": "Check VC Formal session for potential issues"
+}
+,
+{
+  "name": "fv_session_check_config",
+  "info": "Configure VC Formal session summary"
+}
+,
+{
+  "name": "fv_session_check_config_report",
+  "info": "Report configuration of VC Formal session summary"
+}
+,
+{
+  "name": "fv_session_check_report",
+  "info": "VC Formal session check report"
+}
+,
+{
+  "name": "fv_setup_config",
+  "info": "Configure design and formal related checks for VC-Static Formal"
+}
+,
+{
+  "name": "fv_signoff_config",
+  "info": "Configure formal signoff settings"
+}
+,
+{
+  "name": "fv_signoff_report",
+  "info": "Reports signoff run results and data"
+}
+,
+{
+  "name": "fv_snip_driver",
+  "info": "Snip the driver of a signal"
+}
+,
+{
+  "name": "fv_snip_driver_report",
+  "info": "Report snips on signals"
+}
+,
+{
+  "name": "fv_task",
+  "info": "Add, delete, set a specified task"
+}
+,
+{
+  "name": "fv_task_report",
+  "info": "Report task information"
+}
+,
+{
+  "name": "fv_trace_check",
+  "info": "Run trace analysis to check a trace for potential problems, or configure trace analysis"
+}
+,
+{
+  "name": "fv_trace_check_report",
+  "info": "Report trace analysis results"
+}
+,
+{
+  "name": "fv_trace_save",
+  "info": "Save FSDB and VC Formal traces for specified properties"
+}
+,
+{
+  "name": "fv_var",
+  "info": "Set VC Formal variables"
+}
+,
+{
+  "name": "fv_var_report",
+  "info": "Gets and reports task specific and app formal variables"
+}
+,
+{
+  "name": "fvassert",
+  "info": "Creates an assertion or sets the usage attribute to assert and enabled"
+}
+,
+{
+  "name": "fvassign",
+  "info": "Add logic to the design and assign to a new signal in the top design scope."
+}
+,
+{
+  "name": "fvassist",
+  "info": "Sets the formal search assist attribute"
+}
+,
+{
+  "name": "fvassume",
+  "info": "Creates a constraint or sets the usage attribute to assume  and enabled"
+}
+,
+{
+  "name": "fvclear",
+  "info": "Clears the run status of selected properties."
+}
+,
+{
+  "name": "fvcover",
+  "info": "Creates a cover or sets the usage attribute to cover and enabled"
+}
+,
+{
+  "name": "fvdelete",
+  "info": "Delete the property from all tasks and the design"
+}
+,
+{
+  "name": "fvdisable",
+  "info": "Disables properties"
+}
+,
+{
+  "name": "fvedit",
+  "info": "Edit an existing property. Allows rewrite and rename options for script properties. "
+}
+,
+{
+  "name": "fvenable",
+  "info": "Enables properties"
+}
+,
+{
+  "name": "fvlatch",
+  "info": "Add a latch with the specified signal name to the top design scope."
+}
+,
+{
+  "name": "fvlp_cc_print_path",
+  "info": "Show property path for structurally connected LPCC property."
+}
+,
+{
+  "name": "fvlp_cc_trace_fanin",
+  "info": "Show property path for structurally disconnected LPCC property."
+}
+,
+{
+  "name": "fvorc",
+  "info": "Specify user directed orchestration"
+}
+,
+{
+  "name": "fvorc_config",
+  "info": "Specifies certain configuration parameters for fvorc commands"
+}
+,
+{
+  "name": "fvorder",
+  "info": "Sets the formal search order attribute"
+}
+,
+{
+  "name": "fvregister",
+  "info": "Add a register with the specified signal name to the top design scope."
+}
+,
+{
+  "name": "fvtask",
+  "info": "command to set/create/delete a user verification task"
+}
+,
+{
+  "name": "fvtrace",
+  "info": "Create an FSDB trace of selected property"
+}
+,
+{
+  "name": "fvtrace_config",
+  "info": "Set or display the trace analysis configuration. Run 'fvtrace_config' with no arguments to see the current settings."
+}
+,
+{
+  "name": "fvtrace_report",
+  "info": "Report trace analysis results."
+}
+,
+{
+  "name": "fvunwaive",
+  "info": "Unwaives coverage, aep, fta goals"
+}
+,
+{
+  "name": "fvwaive",
+  "info": "Waives coverage, aep, fta goals"
+}
+,
+{
+  "name": "get_abstractions",
+  "info": "Returns a collection of nets driven by the various abstractions which are remodeled"
+}
+,
+{
+  "name": "get_change_at",
+  "info": "Return collection of data with set_change_at command"
+}
+,
+{
+  "name": "get_constant",
+  "info": "Get nets with constant value"
+}
+,
+{
+  "name": "get_fv_complexity",
+  "info": "Return collection of object for complexity of the COI  of a set of nets or properties, or complexity of a design instance"
+}
+,
+{
+  "name": "get_fvtask",
+  "info": "Returns the current FV task, or a collection of tasks meeting specified criteria"
+}
+,
+{
+  "name": "get_pkg_parameters",
+  "info": "Get package parameters or write in xml format"
+}
+,
+{
+  "name": "get_props",
+  "info": "Select properties according to various criteria"
+}
+,
+{
+  "name": "get_snips",
+  "info": "get snip drivers"
+}
+,
+{
+  "name": "infer_formal_setup",
+  "info": "Formal clock inference."
+}
+,
+{
+  "name": "is_in_fanin",
+  "info": "Reports whether a given lookup signal is found in the fanin of given signal"
+}
+,
+{
+  "name": "kill_jobs",
+  "info": "Terminate solver jobs for a running verfication task"
+}
+,
+{
+  "name": "read_waiver_file",
+  "info": "Reading coverage, aep, fta waiver file"
+}
+,
+{
+  "name": "remove_constant",
+  "info": "Remove constant values for specified nets"
+}
+,
+{
+  "name": "remove_fta_waiver",
+  "info": "Remove FTA waivers specified by exclusion file(s)"
+}
+,
+{
+  "name": "remove_waiver_file",
+  "info": "Remove waiver file"
+}
+,
+{
+  "name": "replay_trace",
+  "info": "Replay VC-Static Formal traces saved previously with save_trace."
+}
+,
+{
+  "name": "report_abstractions",
+  "info": "Report all currently active abstractions in the design"
+}
+,
+{
+  "name": "report_assertion_density",
+  "info": "Report line count and number of assertions/covers in given scope"
+}
+,
+{
+  "name": "report_backup_grid_usage",
+  "info": "report backup grid configuration for VC-Static Formal"
+}
+,
+{
+  "name": "report_bug_dependency",
+  "info": "Reports the results of the report_bug_dependency command"
+}
+,
+{
+  "name": "report_change_at",
+  "info": "Report information specified by set_change_at command"
+}
+,
+{
+  "name": "report_constant",
+  "info": "Report Constraint of a constant value"
+}
+,
+{
+  "name": "report_fml_hosts",
+  "info": "Reports the CPU and memory utilization of the machines running solvers"
+}
+,
+{
+  "name": "report_fml_jobs",
+  "info": "Reports information about solver jobs running locally or on grid."
+}
+,
+{
+  "name": "report_formal_core",
+  "info": "Report formal core for the selected properties."
+}
+,
+{
+  "name": "report_formal_setup",
+  "info": "Report inference results."
+}
+,
+{
+  "name": "report_fv",
+  "info": "Reports formal information"
+}
+,
+{
+  "name": "report_fv_complexity",
+  "info": "Reports complexity of the COI of a list of nets or properties, or complexity of a design instance"
+}
+,
+{
+  "name": "report_fv_coverage",
+  "info": "Report the coverage of assertions in the design (resulting from analyze_fv_coverage analysis)"
+}
+,
+{
+  "name": "report_fv_setup",
+  "info": "Reports the results of the check_fv_setup command"
+}
+,
+{
+  "name": "report_fvorc",
+  "info": "Reports specified fvorc information"
+}
+,
+{
+  "name": "report_fvtask",
+  "info": "Returns a report of the specified tasks"
+}
+,
+{
+  "name": "report_grid_usage",
+  "info": "report grid configuration for VC-Static Formal"
+}
+,
+{
+  "name": "report_icm",
+  "info": "Report results of ICM orchestation."
+}
+,
+{
+  "name": "report_proof_assist",
+  "info": "Report Proof Assist info for the selected property."
+}
+,
+{
+  "name": "report_reduced_constraints",
+  "info": "Reports information about reduced constraints for selected properties."
+}
+,
+{
+  "name": "report_run",
+  "info": "report orchestration status during the run"
+}
+,
+{
+  "name": "report_snips",
+  "info": "Report which nets in the design have been snipped using the snip_driver command"
+}
+,
+{
+  "name": "report_solve_path",
+  "info": "Report engines that solved the properties in the current verification task"
+}
+,
+{
+  "name": "report_verification_summary",
+  "info": "Report the current verification task summary"
+}
+,
+{
+  "name": "run_idx",
+  "info": "run idx analysis in Formal Verification"
+}
+,
+{
+  "name": "save_trace",
+  "info": "Save VC-Static Formal traces for later replay with replay_trace."
+}
+,
+{
+  "name": "save_waiver_file",
+  "info": "Save waived coverage, aep, fta goals in an exclusion file"
+}
+,
+{
+  "name": "seq_cg_guide",
+  "info": "Guidance to achieve convergence in clock gating verification"
+}
+,
+{
+  "name": "seq_cg_guide_report",
+  "info": "Report implementation flops whose clock pin was overridden with clock pin of specification flop to achieve convergence in clock gating verification"
+}
+,
+{
+  "name": "seq_guidance",
+  "info": "Command to guide users to achieve convergence for clock-gating verification"
+}
+,
+{
+  "name": "set_abstractions",
+  "info": "Searches for user-requested design constructs, and replaces them with the desired abstraction. Return a collection of nets which are driven directly by the abstracted region"
+}
+,
+{
+  "name": "set_backup_grid_usage",
+  "info": "set backup grid configuration"
+}
+,
+{
+  "name": "set_change_at",
+  "info": "Specify legal transition time of the signals"
+}
+,
+{
+  "name": "set_constant",
+  "info": "Set net to constant value"
+}
+,
+{
+  "name": "set_engine",
+  "info": "set engine on/off or score"
+}
+,
+{
+  "name": "set_grid_usage",
+  "info": "set grid configuration for VC-Static Formal"
+}
+,
+{
+  "name": "set_verification_summary",
+  "info": "Set certain attributes of a tag in the verification summary"
+}
+,
+{
+  "name": "snip_driver",
+  "info": "Snip the driver of the net"
+}
+,
+{
+  "name": "view_idx",
+  "info": "view idx result in Formal Verification"
+}
+,
+{
+  "name": "waive_verification_summary",
+  "info": "Waive a tag in the verification summary"
+}
+]},
+{ "name": "Formal Auto-Extracted Property Verification Commands",
+"cmds": [
+{
+  "name": "aep_config",
+  "info": "Configure AEP app settings"
+}
+,
+{
+  "name": "aep_config_report",
+  "info": "Report AEP app settings"
+}
+,
+{
+  "name": "aep_generate",
+  "info": "Generate specified COI input constraints for AEP properties"
+}
+,
+{
+  "name": "enable_aep_goals_in_coi",
+  "info": "Enables the AEP goals which are in the COI of a FPV goal"
+}
+,
+{
+  "name": "fv_coi_enable_aep",
+  "info": "Enables the AEP goals which are in the COI of a FPV goal"
+}
+]},
+{ "name": "Formal Register Verification Commands",
+"cmds": [
+{
+  "name": "frv_config",
+  "info": "Configure FRV app settings"
+}
+,
+{
+  "name": "frv_config_report",
+  "info": "Report FRV app settings"
+}
+,
+{
+  "name": "frv_load",
+  "info": "Load FRV checks"
+}
+,
+{
+  "name": "frv_report",
+  "info": "Report FRV results and run data"
+}
+]},
+{ "name": "Formal Security Verification Commands",
+"cmds": [
+{
+  "name": "fsv_assert",
+  "info": "Create FSV assertions"
+}
+,
+{
+  "name": "fsv_assume",
+  "info": "Create FSV assumes"
+}
+,
+{
+  "name": "fsv_blackbox",
+  "info": "Create a blackbox for security verification in FSV"
+}
+,
+{
+  "name": "fsv_blackbox_report",
+  "info": "Report information about FSV blackboxed instances"
+}
+,
+{
+  "name": "fsv_config",
+  "info": "Use this command to configure FSV app settings"
+}
+,
+{
+  "name": "fsv_config_report",
+  "info": "Report FSV app settings"
+}
+,
+{
+  "name": "fsv_debug",
+  "info": "Debug root cause of the specified failures"
+}
+,
+{
+  "name": "fsv_debug_report",
+  "info": "Report secure paths for FSV properties"
+}
+,
+{
+  "name": "fsv_generate",
+  "info": "Generate FSV assertions and assumes"
+}
+,
+{
+  "name": "fsv_refine",
+  "info": "Reanalyze a falsified property if it goes through a security blackbox."
+}
+,
+{
+  "name": "fsv_report",
+  "info": "Report information about FSV runs"
+}
+,
+{
+  "name": "fsv_report_rootcause",
+  "info": "Report the root cause of the selected properties"
+}
+]},
+{ "name": "Formal XProp Verification Commands",
+"cmds": [
+{
+  "name": "fxp_assert",
+  "info": "Create assertions to check X-propagation"
+}
+,
+{
+  "name": "fxp_assume",
+  "info": "Always propagate X from these sources using assumes"
+}
+,
+{
+  "name": "fxp_config",
+  "info": "Use this command to configure FXP app settings"
+}
+,
+{
+  "name": "fxp_config_report",
+  "info": "Report FXP app settings"
+}
+,
+{
+  "name": "fxp_debug",
+  "info": "Debug X-propagation of the specified property"
+}
+,
+{
+  "name": "fxp_debug_report",
+  "info": "Report X-propagation debug information of the specified property"
+}
+,
+{
+  "name": "fxp_generate",
+  "info": "Create properties for specified sources and targets of X"
+}
+,
+{
+  "name": "fxp_report_rootcause",
+  "info": "Report the root cause of the selected properties"
+}
+]},
+{ "name": "Formal Functional Safety Commands",
+"cmds": [
+{
+  "name": "fusa_add",
+  "info": "Add observation and detection points"
+}
+,
+{
+  "name": "fusa_blackbox",
+  "info": "Create a blackbox for functional safety analysis in FuSa"
+}
+,
+{
+  "name": "fusa_blackbox_report",
+  "info": "Report list of FuSa blackbox instances and relevant information"
+}
+,
+{
+  "name": "fusa_check",
+  "info": "Run specified FuSa analysis"
+}
+,
+{
+  "name": "fusa_clear",
+  "info": "Clear generated faults and status for the FuSa run. Use fusa_config and fusa_generate again to generate a new fault database"
+}
+,
+{
+  "name": "fusa_config",
+  "info": "Configure FuSa app settings"
+}
+,
+{
+  "name": "fusa_config_report",
+  "info": "Report FuSa app settings"
+}
+,
+{
+  "name": "fusa_delete",
+  "info": "Delete observation and detection points"
+}
+,
+{
+  "name": "fusa_detection",
+  "info": "Add/delete detection points"
+}
+,
+{
+  "name": "fusa_fault",
+  "info": "Add/delete/exclude faults and create all the related assertions"
+}
+,
+{
+  "name": "fusa_generate",
+  "info": "Generate all faults and related properties for FuSa"
+}
+,
+{
+  "name": "fusa_get_detection",
+  "info": "Get the set of detection points in the current task."
+}
+,
+{
+  "name": "fusa_get_ignored_signals",
+  "info": "Get the set of clk/rst/skipped signals which have been ignored for inducing faults."
+}
+,
+{
+  "name": "fusa_get_observation",
+  "info": "Get the set of observation points in the current task."
+}
+,
+{
+  "name": "fusa_map_status",
+  "info": "Map an internal FuSa status to a SFF status of choice"
+}
+,
+{
+  "name": "fusa_observation",
+  "info": "Add/delete observation points"
+}
+,
+{
+  "name": "fusa_report",
+  "info": "Report information about FuSa runs"
+}
+,
+{
+  "name": "fusa_report_total_faults",
+  "info": "Reports information about Faults accepted and ignored by Formal."
+}
+,
+{
+  "name": "fusa_save",
+  "info": "Save current results to a file or the fault DB"
+}
+,
+{
+  "name": "fusa_stop_fdb_server",
+  "info": "Stop the fdb server (in single user flow)."
+}
+]},
+{ "name": "C++ Compile",
+"cmds": [
+{
+  "name": "elaborate_cpp",
+  "info": "Elaborate C++ design files"
+}
+,
+{
+  "name": "fv_cpp_config",
+  "info": "Configure C++ compilation settings"
+}
+,
+{
+  "name": "fv_cpp_config_report",
+  "info": "Report C++ compilation settings"
+}
+]},
+{ "name": "Datapath Verification Commands",
+"cmds": [
+{
+  "name": "get_task_runtime",
+  "info": "Get wallclock time consumed for solving a task"
+}
+,
+{
+  "name": "read_cpp",
+  "info": "Analyze the C++ source files"
+}
+]},
+{ "name": "GuiDebug",
+"cmds": [
+{
+  "name": "view_clock_reset_tree_browser",
+  "info": "Open clock tree browser"
+}
+]},
+{ "name": "Debug Commands",
+"cmds": [
+{
+  "name": "debug_nldm",
+  "info": "debug utility to debug the nldm code."
+}
+,
+{
+  "name": "dump_nldm",
+  "info": "dumping utility for MDM"
+}
+,
+{
+  "name": "traverse_path",
+  "info": "traverse path utility for MDM"
+}
+,
+{
+  "name": "view_clock_tree",
+  "info": "Display Clock Tree of the design"
+}
+,
+{
+  "name": "write_verilog",
+  "info": "dumping Verilog code for netlist"
+}
+]},
+{ "name": "Graphical View Commands",
+"cmds": [
+{
+  "name": "capture_command",
+  "info": "Capture all commands given by the list to event queue"
+}
+,
+{
+  "name": "define_supplementary_command",
+  "info": "Define supplementary commands to execute before or after a master command or to add a comment to a master command"
+}
+,
+{
+  "name": "dump_event_list",
+  "info": "Dump UI event list to a file"
+}
+,
+{
+  "name": "get_user_input",
+  "info": "Gets user input from standard input in UI mode"
+}
+,
+{
+  "name": "gui_disable_waiver",
+  "info": "Disable GUI Waiver operations for violation tags"
+}
+,
+{
+  "name": "ignore_command",
+  "info": "Ignore all commands given by the list from event queue"
+}
+,
+{
+  "name": "modify_capture_command",
+  "info": "Modify a command that is being captured"
+}
+,
+{
+  "name": "print_schematic",
+  "info": "Print the schematic for a violation"
+}
+,
+{
+  "name": "start_gui",
+  "info": "Show the Activity 'Hybrid' View"
+}
+,
+{
+  "name": "start_verdi",
+  "info": "Show Verdi with Docked Activity View"
+}
+,
+{
+  "name": "view_activity",
+  "info": "Show the Activity 'Hybrid' View"
+}
+,
+{
+  "name": "view_coverage",
+  "info": "Show the Coverage View"
+}
+,
+{
+  "name": "view_help",
+  "info": "Show the Help Viewer"
+}
+,
+{
+  "name": "view_schematic",
+  "info": "Display the Schematic for a Module or Trace/Path"
+}
+,
+{
+  "name": "view_source",
+  "info": "Show the Source View"
+}
+,
+{
+  "name": "view_trace",
+  "info": "Show trace view or add signals to existing trace view"
+}
+,
+{
+  "name": "view_upf",
+  "info": "Show the UPF View"
+}
+]},
+{ "name": "Security",
+"cmds": [
+{
+  "name": "distance_metrics",
+  "info": "command to get parameters for THREAT_DISTANCE_METRIC tag"
+}
+,
+{
+  "name": "fsm_lfi",
+  "info": "command to get parameters for THREAT_FSM_LFI tag"
+}
+,
+{
+  "name": "integerate_simulation_data",
+  "info": "Integerate VCS results to generate time metrics results"
+}
+,
+{
+  "name": "time_metrics",
+  "info": "command to get parameters for THREAT_TIME_METRIC tag"
+}
+,
+{
+  "name": "write_security_property",
+  "info": "Dumps SVA properties"
+}
+]},
+{ "name": "Miscellaneous procedures",
+"cmds": [
+{
+  "name": "auto_reset",
+  "info": ""
+}
+,
+{
+  "name": "bgerror",
+  "info": ""
+}
+,
+{
+  "name": "cd",
+  "info": ""
+}
+,
+{
+  "name": "close",
+  "info": ""
+}
+,
+{
+  "name": "create_voltage_area",
+  "info": ""
+}
+,
+{
+  "name": "dump_reduced_constraints",
+  "info": ""
+}
+,
+{
+  "name": "echoAndLog",
+  "info": ""
+}
+,
+{
+  "name": "getFtaSource",
+  "info": ""
+}
+,
+{
+  "name": "guide",
+  "info": ""
+}
+,
+{
+  "name": "guide_architecture_db",
+  "info": ""
+}
+,
+{
+  "name": "guide_architecture_netlist",
+  "info": ""
+}
+,
+{
+  "name": "guide_arithmetic_fracture",
+  "info": ""
+}
+,
+{
+  "name": "guide_boundary",
+  "info": ""
+}
+,
+{
+  "name": "guide_boundary_netlist",
+  "info": ""
+}
+,
+{
+  "name": "guide_checkpoint",
+  "info": ""
+}
+,
+{
+  "name": "guide_constraints",
+  "info": ""
+}
+,
+{
+  "name": "guide_datapath",
+  "info": ""
+}
+,
+{
+  "name": "guide_dont_verify_scan",
+  "info": ""
+}
+,
+{
+  "name": "guide_dsp_implementation",
+  "info": ""
+}
+,
+{
+  "name": "guide_dsp_netlist",
+  "info": ""
+}
+,
+{
+  "name": "guide_dsp_pack",
+  "info": ""
+}
+,
+{
+  "name": "guide_eco_change",
+  "info": ""
+}
+,
+{
+  "name": "guide_eco_map",
+  "info": ""
+}
+,
+{
+  "name": "guide_exec",
+  "info": ""
+}
+,
+{
+  "name": "guide_fsm_reencoding",
+  "info": ""
+}
+,
+{
+  "name": "guide_gcc_comb_latch",
+  "info": ""
+}
+,
+{
+  "name": "guide_gcc_comb_reg",
+  "info": ""
+}
+,
+{
+  "name": "guide_gcc_convert",
+  "info": ""
+}
+,
+{
+  "name": "guide_gcc_latch_flop",
+  "info": ""
+}
+,
+{
+  "name": "guide_gcc_retime",
+  "info": ""
+}
+,
+{
+  "name": "guide_group",
+  "info": ""
+}
+,
+{
+  "name": "guide_group_function",
+  "info": ""
+}
+,
+{
+  "name": "guide_hco_master_clk_port",
+  "info": ""
+}
+,
+{
+  "name": "guide_hco_master_clock",
+  "info": ""
+}
+,
+{
+  "name": "guide_hco_sync",
+  "info": ""
+}
+,
+{
+  "name": "guide_icg_convert_edge",
+  "info": ""
+}
+,
+{
+  "name": "guide_icg_removal",
+  "info": ""
+}
+,
+{
+  "name": "guide_implementation",
+  "info": ""
+}
+,
+{
+  "name": "guide_info",
+  "info": ""
+}
+,
+{
+  "name": "guide_instance_merging",
+  "info": ""
+}
+,
+{
+  "name": "guide_inv_push",
+  "info": ""
+}
+,
+{
+  "name": "guide_mark",
+  "info": ""
+}
+,
+{
+  "name": "guide_mc",
+  "info": ""
+}
+,
+{
+  "name": "guide_merge",
+  "info": ""
+}
+,
+{
+  "name": "guide_mim_retiming",
+  "info": ""
+}
+,
+{
+  "name": "guide_multibit",
+  "info": ""
+}
+,
+{
+  "name": "guide_multiplier",
+  "info": ""
+}
+,
+{
+  "name": "guide_netlist_table",
+  "info": ""
+}
+,
+{
+  "name": "guide_pins_eqop",
+  "info": ""
+}
+,
+{
+  "name": "guide_port_constant",
+  "info": ""
+}
+,
+{
+  "name": "guide_port_punch",
+  "info": ""
+}
+,
+{
+  "name": "guide_private",
+  "info": ""
+}
+,
+{
+  "name": "guide_reg_constant",
+  "info": ""
+}
+,
+{
+  "name": "guide_reg_driver_info",
+  "info": ""
+}
+,
+{
+  "name": "guide_reg_duplication",
+  "info": ""
+}
+,
+{
+  "name": "guide_reg_encoding",
+  "info": ""
+}
+,
+{
+  "name": "guide_reg_eqop",
+  "info": ""
+}
+,
+{
+  "name": "guide_reg_merging",
+  "info": ""
+}
+,
+{
+  "name": "guide_reg_removal",
+  "info": ""
+}
+,
+{
+  "name": "guide_reg_split",
+  "info": ""
+}
+,
+{
+  "name": "guide_rename_design",
+  "info": ""
+}
+,
+{
+  "name": "guide_replace",
+  "info": ""
+}
+,
+{
+  "name": "guide_retiming",
+  "info": ""
+}
+,
+{
+  "name": "guide_retiming_decompose",
+  "info": ""
+}
+,
+{
+  "name": "guide_retiming_dw_pipeline",
+  "info": ""
+}
+,
+{
+  "name": "guide_retiming_finished",
+  "info": ""
+}
+,
+{
+  "name": "guide_retiming_multibit",
+  "info": ""
+}
+,
+{
+  "name": "guide_rewire",
+  "info": ""
+}
+,
+{
+  "name": "guide_scan_input",
+  "info": ""
+}
+,
+{
+  "name": "guide_scan_output",
+  "info": ""
+}
+,
+{
+  "name": "guide_sequential_cg_fanin",
+  "info": ""
+}
+,
+{
+  "name": "guide_sequential_cg_fanout",
+  "info": ""
+}
+,
+{
+  "name": "guide_set_rounding",
+  "info": ""
+}
+,
+{
+  "name": "guide_share",
+  "info": ""
+}
+,
+{
+  "name": "guide_timebegin",
+  "info": ""
+}
+,
+{
+  "name": "guide_timeend",
+  "info": ""
+}
+,
+{
+  "name": "guide_transformation",
+  "info": ""
+}
+,
+{
+  "name": "guide_ungroup",
+  "info": ""
+}
+,
+{
+  "name": "guide_uniquify",
+  "info": ""
+}
+,
+{
+  "name": "guide_ununiquify",
+  "info": ""
+}
+,
+{
+  "name": "guide_upf_copy",
+  "info": ""
+}
+,
+{
+  "name": "lowpower_sourcelocation_data",
+  "info": ""
+}
+,
+{
+  "name": "open",
+  "info": ""
+}
+,
+{
+  "name": "printDbgMsg",
+  "info": ""
+}
+,
+{
+  "name": "read",
+  "info": ""
+}
+,
+{
+  "name": "remove_annotated_parasitics",
+  "info": ""
+}
+,
+{
+  "name": "set_coupling_separation",
+  "info": ""
+}
+,
+{
+  "name": "set_disable_clock_gating",
+  "info": ""
+}
+,
+{
+  "name": "set_dont_touch_g",
+  "info": ""
+}
+,
+{
+  "name": "set_level_shifter_strategy",
+  "info": ""
+}
+,
+{
+  "name": "set_level_shifter_threshold",
+  "info": ""
+}
+,
+{
+  "name": "set_multicycle",
+  "info": ""
+}
+,
+{
+  "name": "set_units",
+  "info": ""
+}
+,
+{
+  "name": "set_voltage",
+  "info": ""
+}
+,
+{
+  "name": "set_xmac_mode",
+  "info": ""
+}
+,
+{
+  "name": "setup",
+  "info": ""
+}
+,
+{
+  "name": "setup_final",
+  "info": ""
+}
+,
+{
+  "name": "setup_highvdd_final",
+  "info": ""
+}
+,
+{
+  "name": "setup_slow_final",
+  "info": ""
+}
+,
+{
+  "name": "setup_slow_working",
+  "info": ""
+}
+,
+{
+  "name": "setup_working",
+  "info": ""
+}
+,
+{
+  "name": "sh",
+  "info": ""
+}
+,
+{
+  "name": "vcProofHighlight",
+  "info": ""
+}
+]},
+{ "name": "Help commands",
+"cmds": [
+{
+  "name": "apropos",
+  "info": "Search command database for a pattern."
+}
+,
+{
+  "name": "help",
+  "info": "Display quick help for one or more commands."
+}
+,
+{
+  "name": "help_attributes",
+  "info": "Display help for attributes and object types"
+}
+]},
+{ "name": "Generic Tcl commands",
+"cmds": [
+{
+  "name": "_orig_cd",
+  "info": "Change working directory"
+}
+,
+{
+  "name": "_orig_sh",
+  "info": "Execute a command in a child process"
+}
+,
+{
+  "name": "_original_close",
+  "info": ""
+}
+,
+{
+  "name": "_original_open",
+  "info": ""
+}
+,
+{
+  "name": "_original_read",
+  "info": ""
+}
+,
+{
+  "name": "after",
+  "info": ""
+}
+,
+{
+  "name": "alias",
+  "info": "Create a command which expands to words."
+}
+,
+{
+  "name": "append",
+  "info": ""
+}
+,
+{
+  "name": "apply",
+  "info": ""
+}
+,
+{
+  "name": "array",
+  "info": ""
+}
+,
+{
+  "name": "binary",
+  "info": ""
+}
+,
+{
+  "name": "break",
+  "info": ""
+}
+,
+{
+  "name": "case",
+  "info": ""
+}
+,
+{
+  "name": "catch",
+  "info": ""
+}
+,
+{
+  "name": "chan",
+  "info": ""
+}
+,
+{
+  "name": "clock",
+  "info": ""
+}
+,
+{
+  "name": "concat",
+  "info": ""
+}
+,
+{
+  "name": "continue",
+  "info": ""
+}
+,
+{
+  "name": "coroutine",
+  "info": ""
+}
+,
+{
+  "name": "create_command_group",
+  "info": "Create a command group"
+}
+,
+{
+  "name": "date",
+  "info": "Return the date as a string"
+}
+,
+{
+  "name": "define_proc_attributes",
+  "info": "Add extensions to a procedure"
+}
+,
+{
+  "name": "dict",
+  "info": ""
+}
+,
+{
+  "name": "echo",
+  "info": "Echo arguments to standard output."
+}
+,
+{
+  "name": "encoding",
+  "info": ""
+}
+,
+{
+  "name": "eof",
+  "info": ""
+}
+,
+{
+  "name": "error",
+  "info": ""
+}
+,
+{
+  "name": "error_info",
+  "info": "Print extended info on errors from last command."
+}
+,
+{
+  "name": "eval",
+  "info": ""
+}
+,
+{
+  "name": "exec",
+  "info": ""
+}
+,
+{
+  "name": "expr",
+  "info": ""
+}
+,
+{
+  "name": "fblocked",
+  "info": ""
+}
+,
+{
+  "name": "fconfigure",
+  "info": ""
+}
+,
+{
+  "name": "fcopy",
+  "info": ""
+}
+,
+{
+  "name": "file",
+  "info": ""
+}
+,
+{
+  "name": "fileevent",
+  "info": ""
+}
+,
+{
+  "name": "flush",
+  "info": ""
+}
+,
+{
+  "name": "for",
+  "info": ""
+}
+,
+{
+  "name": "foreach",
+  "info": ""
+}
+,
+{
+  "name": "format",
+  "info": ""
+}
+,
+{
+  "name": "get_app_var",
+  "info": "Get the value of an application variable"
+}
+,
+{
+  "name": "get_command_option_values",
+  "info": "get command option values"
+}
+,
+{
+  "name": "get_defined_commands",
+  "info": "Get information on defined commands and groups"
+}
+,
+{
+  "name": "get_message_ids",
+  "info": "Get application message ids"
+}
+,
+{
+  "name": "get_message_info",
+  "info": "Return information about diagnostic messages"
+}
+,
+{
+  "name": "get_unix_variable",
+  "info": "Synonym for 'getenv'"
+}
+,
+{
+  "name": "getenv",
+  "info": "Return the value of a system environment variable"
+}
+,
+{
+  "name": "gets",
+  "info": ""
+}
+,
+{
+  "name": "glob",
+  "info": ""
+}
+,
+{
+  "name": "global",
+  "info": ""
+}
+,
+{
+  "name": "history",
+  "info": "Get command history"
+}
+,
+{
+  "name": "if",
+  "info": ""
+}
+,
+{
+  "name": "incr",
+  "info": ""
+}
+,
+{
+  "name": "interp",
+  "info": ""
+}
+,
+{
+  "name": "is_false",
+  "info": "Return 1 if value is 'false' or 0"
+}
+,
+{
+  "name": "is_true",
+  "info": "Return 1 if value is 'true' or 1"
+}
+,
+{
+  "name": "join",
+  "info": ""
+}
+,
+{
+  "name": "lappend",
+  "info": ""
+}
+,
+{
+  "name": "lassign",
+  "info": ""
+}
+,
+{
+  "name": "lindex",
+  "info": ""
+}
+,
+{
+  "name": "linsert",
+  "info": ""
+}
+,
+{
+  "name": "list",
+  "info": ""
+}
+,
+{
+  "name": "llength",
+  "info": ""
+}
+,
+{
+  "name": "lmap",
+  "info": ""
+}
+,
+{
+  "name": "lminus",
+  "info": "Remove elements from a list"
+}
+,
+{
+  "name": "load",
+  "info": ""
+}
+,
+{
+  "name": "lrange",
+  "info": ""
+}
+,
+{
+  "name": "lrepeat",
+  "info": ""
+}
+,
+{
+  "name": "lreplace",
+  "info": ""
+}
+,
+{
+  "name": "lreverse",
+  "info": ""
+}
+,
+{
+  "name": "ls",
+  "info": "List the contents of a directory"
+}
+,
+{
+  "name": "lsearch",
+  "info": ""
+}
+,
+{
+  "name": "lset",
+  "info": ""
+}
+,
+{
+  "name": "lsort",
+  "info": ""
+}
+,
+{
+  "name": "namespace",
+  "info": ""
+}
+,
+{
+  "name": "package",
+  "info": ""
+}
+,
+{
+  "name": "parse_proc_arguments",
+  "info": "Parse arguments to a procedure"
+}
+,
+{
+  "name": "pid",
+  "info": ""
+}
+,
+{
+  "name": "print_message_info",
+  "info": "Print information about messages"
+}
+,
+{
+  "name": "print_suppressed_messages",
+  "info": "Display the message ids which are currently suppressed"
+}
+,
+{
+  "name": "printenv",
+  "info": "Print the value of environment variables"
+}
+,
+{
+  "name": "printvar",
+  "info": "Print the value of one or more variables."
+}
+,
+{
+  "name": "proc",
+  "info": ""
+}
+,
+{
+  "name": "proc_args",
+  "info": "Synonym for 'info args'"
+}
+,
+{
+  "name": "proc_body",
+  "info": "Synonym for 'info body'"
+}
+,
+{
+  "name": "puts",
+  "info": ""
+}
+,
+{
+  "name": "pwd",
+  "info": "Display pathname of current working directory"
+}
+,
+{
+  "name": "redirect",
+  "info": "Redirect output of a command to a file"
+}
+,
+{
+  "name": "regexp",
+  "info": ""
+}
+,
+{
+  "name": "regsub",
+  "info": ""
+}
+,
+{
+  "name": "rename",
+  "info": "Rename a command"
+}
+,
+{
+  "name": "report_app_var",
+  "info": "Show application variables"
+}
+,
+{
+  "name": "return",
+  "info": ""
+}
+,
+{
+  "name": "scan",
+  "info": ""
+}
+,
+{
+  "name": "seek",
+  "info": ""
+}
+,
+{
+  "name": "set",
+  "info": ""
+}
+,
+{
+  "name": "set_app_var",
+  "info": "Set the value of an application variable"
+}
+,
+{
+  "name": "set_message_info",
+  "info": "Control message generation"
+}
+,
+{
+  "name": "set_unix_variable",
+  "info": "Synonym for 'setenv'"
+}
+,
+{
+  "name": "setenv",
+  "info": "Set the value of a system environment variable"
+}
+,
+{
+  "name": "socket",
+  "info": ""
+}
+,
+{
+  "name": "source",
+  "info": "Read a file and execute it as a script"
+}
+,
+{
+  "name": "split",
+  "info": ""
+}
+,
+{
+  "name": "string",
+  "info": ""
+}
+,
+{
+  "name": "subst",
+  "info": ""
+}
+,
+{
+  "name": "suppress_message",
+  "info": "Suppress printing of messages"
+}
+,
+{
+  "name": "switch",
+  "info": ""
+}
+,
+{
+  "name": "tailcall",
+  "info": ""
+}
+,
+{
+  "name": "tell",
+  "info": ""
+}
+,
+{
+  "name": "throw",
+  "info": ""
+}
+,
+{
+  "name": "time",
+  "info": ""
+}
+,
+{
+  "name": "trace",
+  "info": ""
+}
+,
+{
+  "name": "try",
+  "info": ""
+}
+,
+{
+  "name": "unalias",
+  "info": "Remove one or more aliases."
+}
+,
+{
+  "name": "unload",
+  "info": ""
+}
+,
+{
+  "name": "unset",
+  "info": ""
+}
+,
+{
+  "name": "unsetenv",
+  "info": "Unset the value of a system environment variable"
+}
+,
+{
+  "name": "unsuppress_message",
+  "info": "Re-establish printing of messages"
+}
+,
+{
+  "name": "update",
+  "info": ""
+}
+,
+{
+  "name": "uplevel",
+  "info": ""
+}
+,
+{
+  "name": "upvar",
+  "info": ""
+}
+,
+{
+  "name": "variable",
+  "info": ""
+}
+,
+{
+  "name": "vwait",
+  "info": ""
+}
+,
+{
+  "name": "which",
+  "info": "Locate a file, and display its pathname."
+}
+,
+{
+  "name": "while",
+  "info": ""
+}
+,
+{
+  "name": "write_app_var",
+  "info": "Write a script to set current variable values"
+}
+,
+{
+  "name": "yield",
+  "info": ""
+}
+,
+{
+  "name": "yieldto",
+  "info": ""
+}
+,
+{
+  "name": "zlib",
+  "info": ""
+}
+]},
+{ "name": "Default Command Group",
+"cmds": [
+{ "name": "Default Command Group",
+"cmds": [
+{
+  "name": "add_to_collection",
+  "info": "Add object(s) to a collection. Result is new collection"
+}
+,
+{
+  "name": "append_to_collection",
+  "info": "Add object(s) to a collection. Modifies variable "
+}
+,
+{
+  "name": "as_collection",
+  "info": "Find a collection or iter_collection by name; result a collection"
+}
+,
+{
+  "name": "check_power_est",
+  "info": ""
+}
+,
+{
+  "name": "compare_collections",
+  "info": "Return 0 if two collections contain the same objects"
+}
+,
+{
+  "name": "configure_libcell_divedown",
+  "info": ""
+}
+,
+{
+  "name": "copy_collection",
+  "info": "Make a copy of a collection. Result is new collection"
+}
+,
+{
+  "name": "define_derived_user_attribute",
+  "info": "Create an attribute defined in Tcl"
+}
+,
+{
+  "name": "filter_collection",
+  "info": "Filter a collection, resulting in new collection"
+}
+,
+{
+  "name": "foreach_in_collection",
+  "info": "Iterate over a collection"
+}
+,
+{
+  "name": "get_attribute",
+  "info": "Get the value of an attribute"
+}
+,
+{
+  "name": "get_cell",
+  "info": ""
+}
+,
+{
+  "name": "get_clock",
+  "info": ""
+}
+,
+{
+  "name": "get_defined_attributes",
+  "info": "Get information on the defined attributes and classes"
+}
+,
+{
+  "name": "get_lib",
+  "info": ""
+}
+,
+{
+  "name": "get_lib_cell",
+  "info": ""
+}
+,
+{
+  "name": "get_lib_pin",
+  "info": ""
+}
+,
+{
+  "name": "get_net",
+  "info": ""
+}
+,
+{
+  "name": "get_pin",
+  "info": ""
+}
+,
+{
+  "name": "get_port",
+  "info": ""
+}
+,
+{
+  "name": "index_collection",
+  "info": "Extract object(s) from collection. Result is new collection"
+}
+,
+{
+  "name": "info",
+  "info": "Builtin"
+}
+,
+{
+  "name": "list_attributes",
+  "info": "List currently defined attributes"
+}
+,
+{
+  "name": "load_ssf",
+  "info": ""
+}
+,
+{
+  "name": "load_upf",
+  "info": ""
+}
+,
+{
+  "name": "py_eval",
+  "info": "Evaluate python code"
+}
+,
+{
+  "name": "query_objects",
+  "info": "Display objects in the database"
+}
+,
+{
+  "name": "quit",
+  "info": "Exit the shell."
+}
+,
+{
+  "name": "remove_from_collection",
+  "info": "Remove object(s) from a collection. Result is new collection"
+}
+,
+{
+  "name": "report_attributes",
+  "info": ""
+}
+,
+{
+  "name": "report_collection",
+  "info": "Report on attributes of objects in collection"
+}
+,
+{
+  "name": "set_cell_mode",
+  "info": ""
+}
+,
+{
+  "name": "sizeof_collection",
+  "info": "Get the number of objects in collection"
+}
+,
+{
+  "name": "sort_collection",
+  "info": "Create a sorted copy of the collection"
+}
+,
+{
+  "name": "undefine_derived_user_attribute",
+  "info": "Remove an attribute definition defined in Tcl"
+}
+,
+{
+  "name": "write_collection",
+  "info": "Write attributes of objects in collection"
+}
+]}]}
