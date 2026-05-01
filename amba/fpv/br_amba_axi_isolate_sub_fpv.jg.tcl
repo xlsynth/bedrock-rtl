@@ -9,7 +9,7 @@ get_design_info
 array set param_list [get_design_info -list parameter]
 set MaxAxiBurstLen $param_list(MaxAxiBurstLen)
 set StaticPerIdReadTrackerFifoDepth $param_list(StaticPerIdReadTrackerFifoDepth)
-set UseDynamicFifoForReadTrackerIsZero $param_list(UseDynamicFifoForReadTrackerIsZero)
+set UseDynamicFifoForReadTracker $param_list(UseDynamicFifoForReadTracker)
 
 # TODO(bgelb): disable RTL covers to make nightly clean
 cover -disable *
@@ -21,7 +21,7 @@ cover -disable *monitor*tbl_no_overflow:precondition1
 
 if {$MaxAxiBurstLen == 1 &&
     $StaticPerIdReadTrackerFifoDepth == 1 &&
-    $UseDynamicFifoForReadTrackerIsZero} {
+    $UseDynamicFifoForReadTracker == 0} {
     # Single-beat reads with one static per-ID tracker slot do not have downstream
     # R-channel backpressure, so rvalid && !rready cover preconditions are unreachable.
     cover -disable *downstream.genStableChksRDInf.genRStableChks.slave_r_rvalid_stable:precondition1
