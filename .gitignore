@@ -3,6 +3,7 @@ user.bazelrc
 ci.bazelrc
 .vscode
 .codex
+jgproject/
 chipstack_artifacts
 *.f
 __pycache__
