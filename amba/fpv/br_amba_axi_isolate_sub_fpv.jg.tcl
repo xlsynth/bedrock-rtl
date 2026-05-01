@@ -21,7 +21,7 @@ cover -disable *monitor*tbl_no_overflow:precondition1
 
 if {$MaxAxiBurstLen == 1 &&
     $StaticPerIdReadTrackerFifoDepth == 1 &&
-    $UseDynamicFifoForReadTracker == 0} {
+    $UseDynamicFifoForReadTracker eq "1'b0"} {
     # Single-beat reads with one static per-ID tracker slot do not have downstream
     # R-channel backpressure, so rvalid && !rready cover preconditions are unreachable.
     cover -disable *downstream.genStableChksRDInf.genRStableChks.slave_r_rvalid_stable:precondition1
