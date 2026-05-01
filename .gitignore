@@ -2,6 +2,7 @@ bazel-*
 user.bazelrc
 ci.bazelrc
 .vscode
+.codex
 chipstack_artifacts
 *.f
 __pycache__
