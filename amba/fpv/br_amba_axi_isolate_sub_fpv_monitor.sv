@@ -9,14 +9,17 @@
 module br_amba_axi_isolate_sub_fpv_monitor #(
     parameter int AddrWidth = 12,
     parameter int DataWidth = 32,
-    parameter int IdWidth = 1,
+    parameter int AwAxiIdWidth = 1,
+    parameter int ArAxiIdWidth = 1,
     parameter int AWUserWidth = 1,
     parameter int WUserWidth = 1,
     parameter int ARUserWidth = 1,
     parameter int BUserWidth = 1,
     parameter int RUserWidth = 1,
-    parameter int MaxOutstanding = 128,
-    parameter int AxiIdCount = 2 ** IdWidth,
+    parameter int AwMaxOutstanding = 128,
+    parameter int ArMaxOutstanding = 128,
+    parameter int AwAxiIdCount = 2 ** AwAxiIdWidth,
+    parameter int ArAxiIdCount = 2 ** ArAxiIdWidth,
     parameter int MaxTransactionSkew = 2,
     parameter int MaxAxiBurstLen = 2 ** br_amba::AxiBurstLenWidth,
     parameter br_amba::axi_resp_t IsolateResp = br_amba::AxiRespSlverr,
@@ -24,7 +27,7 @@ module br_amba_axi_isolate_sub_fpv_monitor #(
     parameter bit [RUserWidth-1:0] IsolateRUser = '0,
     parameter bit [DataWidth-1:0] IsolateRData = '0,
     parameter bit UseDynamicFifoForReadTracker = 1,
-    parameter int StaticPerIdReadTrackerFifoDepth = MaxOutstanding,
+    parameter int StaticPerIdReadTrackerFifoDepth = ArMaxOutstanding,
     localparam int AxiBurstLenWidth = br_math::clamped_clog2(MaxAxiBurstLen),
     localparam int StrobeWidth = DataWidth / 8
 ) (
@@ -35,7 +38,7 @@ module br_amba_axi_isolate_sub_fpv_monitor #(
     input logic                                  isolate_done,
     //
     input logic [                 AddrWidth-1:0] upstream_awaddr,
-    input logic [                   IdWidth-1:0] upstream_awid,
+    input logic [              AwAxiIdWidth-1:0] upstream_awid,
     input logic [          AxiBurstLenWidth-1:0] upstream_awlen,
     input logic [br_amba::AxiBurstSizeWidth-1:0] upstream_awsize,
     input logic [br_amba::AxiBurstTypeWidth-1:0] upstream_awburst,
@@ -50,13 +53,13 @@ module br_amba_axi_isolate_sub_fpv_monitor #(
     input logic                                  upstream_wlast,
     input logic                                  upstream_wvalid,
     input logic                                  upstream_wready,
-    input logic [                   IdWidth-1:0] upstream_bid,
+    input logic [              AwAxiIdWidth-1:0] upstream_bid,
     input logic [                BUserWidth-1:0] upstream_buser,
     input logic [     br_amba::AxiRespWidth-1:0] upstream_bresp,
     input logic                                  upstream_bvalid,
     input logic                                  upstream_bready,
     input logic [                 AddrWidth-1:0] upstream_araddr,
-    input logic [                   IdWidth-1:0] upstream_arid,
+    input logic [              ArAxiIdWidth-1:0] upstream_arid,
     input logic [          AxiBurstLenWidth-1:0] upstream_arlen,
     input logic [br_amba::AxiBurstSizeWidth-1:0] upstream_arsize,
     input logic [br_amba::AxiBurstTypeWidth-1:0] upstream_arburst,
@@ -65,7 +68,7 @@ module br_amba_axi_isolate_sub_fpv_monitor #(
     input logic [               ARUserWidth-1:0] upstream_aruser,
     input logic                                  upstream_arvalid,
     input logic                                  upstream_arready,
-    input logic [                   IdWidth-1:0] upstream_rid,
+    input logic [              ArAxiIdWidth-1:0] upstream_rid,
     input logic [                 DataWidth-1:0] upstream_rdata,
     input logic [                RUserWidth-1:0] upstream_ruser,
     input logic [     br_amba::AxiRespWidth-1:0] upstream_rresp,
@@ -74,7 +77,7 @@ module br_amba_axi_isolate_sub_fpv_monitor #(
     input logic                                  upstream_rready,
     //
     input logic [                 AddrWidth-1:0] downstream_awaddr,
-    input logic [                   IdWidth-1:0] downstream_awid,
+    input logic [              AwAxiIdWidth-1:0] downstream_awid,
     input logic [          AxiBurstLenWidth-1:0] downstream_awlen,
     input logic [br_amba::AxiBurstSizeWidth-1:0] downstream_awsize,
     input logic [br_amba::AxiBurstTypeWidth-1:0] downstream_awburst,
@@ -89,13 +92,13 @@ module br_amba_axi_isolate_sub_fpv_monitor #(
     input logic                                  downstream_wlast,
     input logic                                  downstream_wvalid,
     input logic                                  downstream_wready,
-    input logic [                   IdWidth-1:0] downstream_bid,
+    input logic [              AwAxiIdWidth-1:0] downstream_bid,
     input logic [                BUserWidth-1:0] downstream_buser,
     input logic [     br_amba::AxiRespWidth-1:0] downstream_bresp,
     input logic                                  downstream_bvalid,
     input logic                                  downstream_bready,
     input logic [                 AddrWidth-1:0] downstream_araddr,
-    input logic [                   IdWidth-1:0] downstream_arid,
+    input logic [              ArAxiIdWidth-1:0] downstream_arid,
     input logic [          AxiBurstLenWidth-1:0] downstream_arlen,
     input logic [br_amba::AxiBurstSizeWidth-1:0] downstream_arsize,
     input logic [br_amba::AxiBurstTypeWidth-1:0] downstream_arburst,
@@ -104,7 +107,7 @@ module br_amba_axi_isolate_sub_fpv_monitor #(
     input logic [               ARUserWidth-1:0] downstream_aruser,
     input logic                                  downstream_arvalid,
     input logic                                  downstream_arready,
-    input logic [                   IdWidth-1:0] downstream_rid,
+    input logic [              ArAxiIdWidth-1:0] downstream_rid,
     input logic [                 DataWidth-1:0] downstream_rdata,
     input logic [                RUserWidth-1:0] downstream_ruser,
     input logic [     br_amba::AxiRespWidth-1:0] downstream_rresp,
@@ -113,32 +116,32 @@ module br_amba_axi_isolate_sub_fpv_monitor #(
     input logic                                  downstream_rready
 );
 
-  localparam int MaxPendingRd = AxiIdCount * StaticPerIdReadTrackerFifoDepth;
-  localparam int RdCntrWidth = $clog2(MaxPendingRd);
-  localparam int MaxPendingWr = AxiIdCount * MaxOutstanding;
-  localparam int WrCntrWidth = $clog2(MaxPendingWr);
+  localparam int MaxPendingRd = ArAxiIdCount * StaticPerIdReadTrackerFifoDepth;
+  localparam int RdCntrWidth = br_math::clamped_clog2(MaxPendingRd + 1);
+  localparam int MaxPendingWr = AwAxiIdCount * AwMaxOutstanding;
+  localparam int WrCntrWidth = br_math::clamped_clog2(MaxPendingWr + 1);
 
-  // if AxiIdCount < 2 ** IdWidth
-  `BR_ASSUME(legal_awid_a, upstream_awvalid |-> upstream_awid < AxiIdCount)
-  `BR_ASSUME(legal_bid_a, downstream_bvalid |-> downstream_bid < AxiIdCount)
-  `BR_ASSUME(legal_arid_a, upstream_arvalid |-> upstream_arid < AxiIdCount)
-  `BR_ASSUME(legal_rid_a, downstream_rvalid |-> downstream_rid < AxiIdCount)
+  // if *AxiIdCount < 2 ** *AxiIdWidth
+  `BR_ASSUME(legal_awid_a, upstream_awvalid |-> upstream_awid < AwAxiIdCount)
+  `BR_ASSUME(legal_bid_a, downstream_bvalid |-> downstream_bid < AwAxiIdCount)
+  `BR_ASSUME(legal_arid_a, upstream_arvalid |-> upstream_arid < ArAxiIdCount)
+  `BR_ASSUME(legal_rid_a, downstream_rvalid |-> downstream_rid < ArAxiIdCount)
 
-  // for each write Id, the number of outstanding transactions should be <= MaxOutstanding
+  // for each write Id, the number of outstanding transactions should be <= AwMaxOutstanding
   // for each read Id, the number of outstanding transactions should be <= StaticPerIdReadTrackerFifoDepth
-  logic [AxiIdCount-1:0][WrCntrWidth-1:0] aw_cntr;
-  logic [AxiIdCount-1:0][RdCntrWidth-1:0] ar_cntr;
+  logic [AwAxiIdCount-1:0][WrCntrWidth-1:0] aw_cntr;
+  logic [ArAxiIdCount-1:0][RdCntrWidth-1:0] ar_cntr;
 
-  for (genvar i = 0; i < AxiIdCount; i++) begin : gen_aw
+  for (genvar i = 0; i < AwAxiIdCount; i++) begin : gen_aw
     `BR_REG(aw_cntr[i],
             aw_cntr[i] +
             (upstream_awvalid && upstream_awready && (upstream_awid == i)) -
             (upstream_bvalid && upstream_bready && (upstream_bid == i)))
-    `BR_ASSUME(max_aw_perId_a, aw_cntr[i] <= MaxOutstanding)
+    `BR_ASSUME(max_aw_perId_a, aw_cntr[i] <= AwMaxOutstanding)
   end
 
   if (UseDynamicFifoForReadTracker == 0) begin : gen_perID
-    for (genvar i = 0; i < AxiIdCount; i++) begin : gen_ar
+    for (genvar i = 0; i < ArAxiIdCount; i++) begin : gen_ar
       `BR_REG(ar_cntr[i],
               ar_cntr[i] +
               (upstream_arvalid && upstream_arready && (upstream_arid == i)) -
@@ -171,13 +174,15 @@ module br_amba_axi_isolate_sub_fpv_monitor #(
       .ReadInterleaveOn(0),
       .AddrWidth(AddrWidth),
       .DataWidth(DataWidth),
-      .IdWidth(IdWidth),
+      .AwAxiIdWidth(AwAxiIdWidth),
+      .ArAxiIdWidth(ArAxiIdWidth),
       .AWUserWidth(AWUserWidth),
       .WUserWidth(WUserWidth),
       .ARUserWidth(ARUserWidth),
       .BUserWidth(BUserWidth),
       .RUserWidth(RUserWidth),
-      .MaxOutstanding(MaxPendingWr + MaxTransactionSkew),
+      .MaxOutstandingReads(MaxPendingRd),
+      .MaxOutstandingWrites(MaxPendingWr + MaxTransactionSkew),
       .MaxAxiBurstLen(MaxAxiBurstLen)
   ) fv_axi_check (
       .clk,
@@ -269,14 +274,17 @@ endmodule : br_amba_axi_isolate_sub_fpv_monitor
 bind br_amba_axi_isolate_sub br_amba_axi_isolate_sub_fpv_monitor #(
     .AddrWidth(AddrWidth),
     .DataWidth(DataWidth),
-    .IdWidth(IdWidth),
+    .AwAxiIdWidth(AwAxiIdWidth),
+    .ArAxiIdWidth(ArAxiIdWidth),
     .AWUserWidth(AWUserWidth),
     .WUserWidth(WUserWidth),
     .ARUserWidth(ARUserWidth),
     .BUserWidth(BUserWidth),
     .RUserWidth(RUserWidth),
-    .MaxOutstanding(MaxOutstanding),
-    .AxiIdCount(AxiIdCount),
+    .AwMaxOutstanding(AwMaxOutstanding),
+    .ArMaxOutstanding(ArMaxOutstanding),
+    .AwAxiIdCount(AwAxiIdCount),
+    .ArAxiIdCount(ArAxiIdCount),
     .MaxTransactionSkew(MaxTransactionSkew),
     .MaxAxiBurstLen(MaxAxiBurstLen),
     .IsolateResp(IsolateResp),

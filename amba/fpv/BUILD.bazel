@@ -355,15 +355,21 @@ verilog_elab_test(
 br_verilog_fpv_test_tools_suite(
     name = "br_amba_axi_isolate_sub_test_suite",
     elab_opts = [
-        "-parameter MaxOutstanding 4",
-        "-parameter AxiIdCount 2",
+        "-parameter AwMaxOutstanding 4",
+        "-parameter ArMaxOutstanding 4",
+        "-parameter AwAxiIdCount 2",
+        "-parameter ArAxiIdCount 2",
     ],
     params = {
         "MaxAxiBurstLen": [
             "1",
             "256",
         ],
-        "IdWidth": [
+        "AwAxiIdWidth": [
+            "1",
+            "2",
+        ],
+        "ArAxiIdWidth": [
             "1",
             "2",
         ],
