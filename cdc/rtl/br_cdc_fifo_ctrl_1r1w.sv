@@ -71,6 +71,8 @@ module br_cdc_fifo_ctrl_1r1w #(
     parameter bit EnableAssertPushValidStability = EnableCoverPushBackpressure,
     // If 1, assert that push_data is stable when backpressured.
     parameter bit EnableAssertPushDataStability = EnableAssertPushValidStability,
+    // If 1, assert that push_data is always known (not X) when push_valid is asserted.
+    parameter bit EnableAssertPushDataKnown = 1,
     // If 1, then assert there are no valid bits asserted and that the FIFO is
     // empty at the end of the test.
     parameter bit EnableAssertFinalNotValid = 1,
@@ -139,6 +141,7 @@ module br_cdc_fifo_ctrl_1r1w #(
       .EnableCoverPushBackpressure(EnableCoverPushBackpressure),
       .EnableAssertPushValidStability(EnableAssertPushValidStability),
       .EnableAssertPushDataStability(EnableAssertPushDataStability),
+      .EnableAssertPushDataKnown(EnableAssertPushDataKnown),
       .EnableAssertFinalNotValid(EnableAssertFinalNotValid)
   ) br_cdc_fifo_ctrl_push_1r1w (
       .push_clk,

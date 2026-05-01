@@ -21,6 +21,8 @@ module br_cdc_fifo_push_ctrl_credit #(
     // If 1, cover that push_credit_stall can be asserted
     // Otherwise, assert that it is never asserted.
     parameter bit EnableCoverPushCreditStall = 1,
+    // If 1, assert that push_data is always known (not X) when push_valid is asserted.
+    parameter bit EnableAssertPushDataKnown = 1,
     parameter bit EnableAssertFinalNotValid = 1,
     localparam int AddrWidth = $clog2(Depth),
     localparam int CountWidth = $clog2(Depth + 1),
@@ -151,6 +153,7 @@ module br_cdc_fifo_push_ctrl_credit #(
       .EnableBypass(1'b0),  // Bypass is not enabled for CDC
       // The core push control should never be backpressured.
       .EnableCoverPushBackpressure(0),
+      .EnableAssertPushDataKnown(EnableAssertPushDataKnown),
       .EnableAssertFinalNotValid(EnableAssertFinalNotValid)
   ) br_fifo_push_ctrl_core (
       .clk,
