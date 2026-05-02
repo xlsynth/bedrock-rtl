@@ -116,7 +116,8 @@ module br_amba_axi_isolate_sub_fpv_monitor #(
     input logic                                  downstream_rready
 );
 
-  localparam int MaxPendingRd = ArAxiIdCount * StaticPerIdReadTrackerFifoDepth;
+  localparam int MaxPendingRd = UseDynamicFifoForReadTracker ?
+    ArMaxOutstanding : ArAxiIdCount * StaticPerIdReadTrackerFifoDepth;
   localparam int RdCntrWidth = br_math::clamped_clog2(MaxPendingRd + 1);
   localparam int MaxPendingWr = AwAxiIdCount * AwMaxOutstanding;
   localparam int WrCntrWidth = br_math::clamped_clog2(MaxPendingWr + 1);
