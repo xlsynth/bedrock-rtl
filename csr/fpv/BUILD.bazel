@@ -42,6 +42,24 @@ br_verilog_fpv_test_tools_suite(
     deps = [":br_csr_axil_widget_fpv_monitor"],
 )
 
+verilog_library(
+    name = "br_csr_axil_widget_timeout_zero_fpv_repro",
+    srcs = ["br_csr_axil_widget_timeout_zero_fpv_repro.sv"],
+    deps = [
+        "//csr/rtl:br_csr_axil_widget",
+        "//macros:br_asserts",
+    ],
+)
+
+br_verilog_fpv_test_tools_suite(
+    name = "br_csr_axil_widget_timeout_zero_fpv_repro",
+    tools = {
+        "jg": "br_csr_axil_widget_fpv.jg.tcl",
+    },
+    top = "br_csr_axil_widget_timeout_zero_fpv_repro",
+    deps = [":br_csr_axil_widget_timeout_zero_fpv_repro"],
+)
+
 ####################################################################################
 # Bedrock-RTL SCB Demux FPV Monitor and Tests
 verilog_library(
