@@ -1,0 +1,24 @@
+# SPDX-License-Identifier: Apache-2.0
+
+load("@rules_hdl//verilog:providers.bzl", "verilog_library")
+load("//bazel:br_verilog.bzl", "br_verilog_fpv_test_tools_suite")
+
+package(default_visibility = ["//visibility:private"])
+
+verilog_library(
+    name = "br_mux_onehot_single_input_fpv_repro",
+    srcs = ["br_mux_onehot_single_input_fpv_repro.sv"],
+    deps = [
+        "//macros:br_asserts",
+        "//mux/rtl:br_mux_onehot",
+    ],
+)
+
+br_verilog_fpv_test_tools_suite(
+    name = "br_mux_onehot_single_input_fpv_repro",
+    tools = {
+        "jg": "br_mux_onehot_single_input_fpv_repro.jg.tcl",
+    },
+    top = "br_mux_onehot_single_input_fpv_repro",
+    deps = [":br_mux_onehot_single_input_fpv_repro"],
+)
