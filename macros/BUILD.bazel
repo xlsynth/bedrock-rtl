@@ -2,7 +2,7 @@
 
 load("@rules_hdl//verilog:providers.bzl", "verilog_library")
 load("//bazel:br_verilog.bzl", "br_verilog_sim_test_tools_suite")
-load("//bazel:verilog.bzl", "verilog_elab_test", "verilog_lint_test")
+load("//bazel:verilog.bzl", "verilog_elab_test", "verilog_fpv_test_suite", "verilog_lint_test")
 
 package(default_visibility = ["//visibility:private"])
 
@@ -214,6 +214,26 @@ verilog_elab_test(
     name = "br_asserts_internal_elab_noassert_test",
     tool = "verific",
     deps = [":br_asserts_internal_test"],
+)
+
+verilog_library(
+    name = "br_asserts_internal_impl_known_no_impl_fpv_repro",
+    srcs = ["br_asserts_internal_impl_known_no_impl_fpv_repro.sv"],
+    deps = [":br_asserts_internal"],
+)
+
+verilog_fpv_test_suite(
+    name = "br_asserts_internal_impl_known_no_impl_fpv_repro_jg",
+    custom_tcl_body = "br_asserts_internal_impl_known_no_impl_fpv_repro.jg.tcl",
+    defines = [
+        "BR_ASSERT_ON",
+        "BR_DISABLE_ASSERT_IMM",
+        "BR_DISABLE_FINAL_CHECKS",
+        "BR_ENABLE_FPV",
+    ],
+    tool = "jg",
+    top = "br_asserts_internal_impl_known_no_impl_fpv_repro",
+    deps = [":br_asserts_internal_impl_known_no_impl_fpv_repro"],
 )
 
 verilog_library(
