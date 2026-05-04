@@ -11,6 +11,7 @@ module br_cdc_reg_push #(
     parameter bit EnableCoverPushBackpressure = 1,
     parameter bit EnableAssertPushValidStability = EnableCoverPushBackpressure,
     parameter bit EnableAssertPushDataStability = EnableAssertPushValidStability,
+    parameter bit EnableAssertPushDataKnown = 1,
     parameter bit EnableAssertFinalNotValid = 1
 ) (
     input logic clk,
@@ -33,6 +34,7 @@ module br_cdc_reg_push #(
       .EnableCoverBackpressure(EnableCoverPushBackpressure),
       .EnableAssertValidStability(EnableAssertPushValidStability),
       .EnableAssertDataStability(EnableAssertPushDataStability),
+      .EnableAssertDataKnown(EnableAssertPushDataKnown),
       .EnableAssertFinalNotValid(EnableAssertFinalNotValid)
   ) br_flow_checks_valid_data_intg (
       .clk,
