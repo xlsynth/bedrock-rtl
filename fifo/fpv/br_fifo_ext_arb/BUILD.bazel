@@ -143,6 +143,25 @@ verilog_library(
     ],
 )
 
+verilog_library(
+    name = "br_fifo_shared_pop_ctrl_credit_ext_arbiter_pop_empty_fpv_repro",
+    srcs = ["br_fifo_shared_pop_ctrl_credit_ext_arbiter_pop_empty_fpv_repro.sv"],
+    deps = [
+        "//fifo/rtl:br_fifo_shared_pop_ctrl_credit_ext_arbiter",
+        "//macros:br_asserts",
+        "//macros:br_registers",
+    ],
+)
+
+br_verilog_fpv_test_tools_suite(
+    name = "br_fifo_shared_pop_ctrl_credit_ext_arbiter_pop_empty_fpv_repro",
+    tools = {
+        "jg": "br_fifo_shared_pop_ctrl_credit_ext_arbiter_pop_empty_fpv_repro.jg.tcl",
+    },
+    top = "br_fifo_shared_pop_ctrl_credit_ext_arbiter_pop_empty_fpv_repro",
+    deps = [":br_fifo_shared_pop_ctrl_credit_ext_arbiter_pop_empty_fpv_repro"],
+)
+
 verilog_elab_test(
     name = "br_fifo_shared_dynamic_ctrl_push_credit_ext_arbiter_fpv_monitor_elab_test",
     custom_tcl_header = "//:elab_test_jg_custom_header.verific.tcl",
