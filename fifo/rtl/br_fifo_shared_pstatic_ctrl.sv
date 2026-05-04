@@ -64,7 +64,8 @@ module br_fifo_shared_pstatic_ctrl #(
     // The number of cycles between ram read address and read data. Must be >=0.
     parameter int RamReadLatency = 0,
     // If 1, cover that the push side experiences backpressure.
-    // If 0, assert that there is never backpressure.
+    // If 0, disable backpressure coverage. By default, this also
+    // asserts that backpressure is impossible.
     parameter bit EnableCoverPushBackpressure = 1,
     // If 1, assert that push_valid is stable when backpressured.
     parameter bit EnableAssertPushValidStability = EnableCoverPushBackpressure,
@@ -77,6 +78,9 @@ module br_fifo_shared_pstatic_ctrl #(
     // empty at the end of the test.
     // ri lint_check_waive PARAM_NOT_USED
     parameter bit EnableAssertFinalNotValid = 1,
+    // If 1, assert that push-side backpressure is impossible.
+    // Can only be enabled if EnableCoverPushBackpressure is disabled.
+    parameter bit EnableAssertNoPushBackpressure = !EnableCoverPushBackpressure,
     localparam int CountWidth = $clog2(Depth + 1),
     localparam int FifoIdWidth = br_math::clamped_clog2(NumFifos),
     localparam int AddrWidth = br_math::clamped_clog2(Depth)
@@ -124,6 +128,8 @@ module br_fifo_shared_pstatic_ctrl #(
 );
 
   // Integration Checks
+  `BR_ASSERT_STATIC(legal_assert_no_push_backpressure_a,
+                    !(EnableAssertNoPushBackpressure && EnableCoverPushBackpressure))
   // TODO(zhemao): Support multiple read and write ports for pseudo-static FIFOs
   `BR_ASSERT_STATIC(one_write_port_a, NumWritePorts == 1)
   `BR_ASSERT_STATIC(one_read_port_a, NumReadPorts == 1)
@@ -164,6 +170,7 @@ module br_fifo_shared_pstatic_ctrl #(
       .EnableCoverPushBackpressure(EnableCoverPushBackpressure),
       .EnableAssertPushValidStability(EnableAssertPushValidStability),
       .EnableAssertPushDataStability(EnableAssertPushDataStability),
+      .EnableAssertNoPushBackpressure(EnableAssertNoPushBackpressure),
       .EnableAssertPushDataKnown(EnableAssertPushDataKnown),
       .EnableAssertFinalNotValid(EnableAssertFinalNotValid)
   ) br_fifo_shared_pstatic_push_ctrl_inst (

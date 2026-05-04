@@ -22,6 +22,9 @@ module br_cdc_fifo_flops_fpv_monitor #(
     parameter bit EnableAssertPushValidStability = EnableCoverPushBackpressure,
     parameter bit EnableAssertPushDataStability = EnableAssertPushValidStability,
     parameter bit EnableAssertFinalNotValid = 1,
+    // If 1, assert that push-side backpressure is impossible.
+    // Can only be enabled if EnableCoverPushBackpressure is disabled.
+    parameter bit EnableAssertNoPushBackpressure = !EnableCoverPushBackpressure,
     localparam int AddrWidth = $clog2(Depth),
     localparam int CountWidth = $clog2(Depth + 1)
 ) (
@@ -40,7 +43,6 @@ module br_cdc_fifo_flops_fpv_monitor #(
     input logic pop_rst,
     input logic pop_ready
 );
-
   localparam int RamReadLatency =
       FlopRamAddressDepthStages + FlopRamReadDataDepthStages + FlopRamReadDataWidthStages;
   localparam int RamWriteLatency = FlopRamAddressDepthStages + 1;
@@ -69,6 +71,7 @@ module br_cdc_fifo_flops_fpv_monitor #(
       .FlopRamReadDataWidthStages(FlopRamReadDataWidthStages),
       .EnableStructuredGatesDataQualification(EnableStructuredGatesDataQualification),
       .EnableCoverPushBackpressure(EnableCoverPushBackpressure),
+      .EnableAssertNoPushBackpressure(EnableAssertNoPushBackpressure),
       .EnableAssertPushValidStability(EnableAssertPushValidStability),
       .EnableAssertPushDataStability(EnableAssertPushDataStability),
       .EnableAssertFinalNotValid(EnableAssertFinalNotValid)
@@ -96,6 +99,7 @@ module br_cdc_fifo_flops_fpv_monitor #(
       .Width(Width),
       .NumSyncStages(NumSyncStages),
       .EnableCoverPushBackpressure(EnableCoverPushBackpressure),
+      .EnableAssertNoPushBackpressure(EnableAssertNoPushBackpressure),
       .EnableAssertPushValidStability(EnableAssertPushValidStability),
       .EnableAssertPushDataStability(EnableAssertPushDataStability),
       .RamWriteLatency(RamWriteLatency),

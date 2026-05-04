@@ -18,14 +18,18 @@ module br_flow_fork_select_multihot #(
     // If 0, assert that the push_select_multihot signal is always onehot when valid is high.
     parameter bit EnableCoverSelectMultihot = 1,
     // If 1, cover that the push side experiences backpressure.
-    // If 0, assert that there is never backpressure.
+    // If 0, disable backpressure coverage. By default, this also
+    // asserts that backpressure is impossible.
     parameter bit EnableCoverPushBackpressure = 1,
     // If 1, assert that push_valid is stable when backpressured.
     parameter bit EnableAssertPushValidStability = EnableCoverPushBackpressure,
     // If 1, assert that push_select_multihot is stable when backpressured.
     parameter bit EnableAssertSelectMultihotStability = EnableAssertPushValidStability,
     // If 1, then assert there are no valid bits asserted at the end of the test.
-    parameter bit EnableAssertFinalNotValid = 1
+    parameter bit EnableAssertFinalNotValid = 1,
+    // If 1, assert that push-side backpressure is impossible.
+    // Can only be enabled if EnableCoverPushBackpressure is disabled.
+    parameter bit EnableAssertNoPushBackpressure = !EnableCoverPushBackpressure
 ) (
     // Used only for assertions
     // ri lint_check_waive INPUT_NOT_READ HIER_NET_NOT_READ HIER_BRANCH_NOT_READ
@@ -52,6 +56,8 @@ module br_flow_fork_select_multihot #(
   //------------------------------------------
   // Integration checks
   //------------------------------------------
+  `BR_ASSERT_STATIC(legal_assert_no_push_backpressure_a,
+                    !(EnableAssertNoPushBackpressure && EnableCoverPushBackpressure))
   `BR_ASSERT_STATIC(num_flows_gte_1_a, NumFlows >= 1)
 
   `BR_ASSERT_INTG(select_not_0_when_valid_a, push_valid |-> (|push_select_multihot))
@@ -59,6 +65,7 @@ module br_flow_fork_select_multihot #(
       .NumFlows(1),
       .Width(NumFlows),
       .EnableCoverBackpressure(EnableCoverPushBackpressure),
+      .EnableAssertNoBackpressure(EnableAssertNoPushBackpressure),
       .EnableAssertValidStability(EnableAssertPushValidStability),
       .EnableAssertDataStability(EnableAssertSelectMultihotStability),
       .EnableAssertFinalNotValid(EnableAssertFinalNotValid)
@@ -112,6 +119,7 @@ module br_flow_fork_select_multihot #(
       .NumFlows(NumFlows),
       .Width(1),
       .EnableCoverBackpressure(EnableCoverPushBackpressure),
+      .EnableAssertNoBackpressure(EnableAssertNoPushBackpressure),
       .EnableAssertValidStability(EnableAssertPopValidStability),
       .EnableAssertFinalNotValid(EnableAssertFinalNotValid)
   ) br_flow_checks_valid_data_impl (

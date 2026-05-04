@@ -53,7 +53,8 @@ module br_credit_counter #(
     // Otherwise, assert that doesn't happen.
     parameter bit EnableCoverZeroDecrement = 1,
     // If 1, cover the case where decr_valid is high and decr_ready is low.
-    // Otherwise, assert that doesn't happen.
+    // Otherwise, disable decrement backpressure coverage. By default, this also
+    // asserts that decrement backpressure is impossible.
     parameter bit EnableCoverDecrementBackpressure = 1,
     // If 1, cover that withhold can be non-zero.
     // Otherwise, assert that it is always zero.
@@ -74,6 +75,9 @@ module br_credit_counter #(
     // the minimum number of credits that it stored at any point during the test.
     // Mutually exclusive with EnableAssertFinalMaxValue.
     parameter bit EnableAssertFinalMinValue = 0,
+    // If 1, assert that decrement backpressure is impossible.
+    // Can only be enabled if EnableCoverDecrementBackpressure is disabled.
+    parameter bit EnableAssertNoDecrementBackpressure = !EnableCoverDecrementBackpressure,
     localparam int MaxValueP1Width = MaxValueWidth + 1,
     localparam int MaxChangeP1Width = MaxChangeWidth + 1,
     localparam int ValueWidth = $clog2(MaxValueP1Width'(MaxValue) + 1),
@@ -111,6 +115,8 @@ module br_credit_counter #(
   `BR_ASSERT_STATIC(cover_max_value_lte_max_value_a, CoverMaxValue <= MaxValue)
   `BR_ASSERT_STATIC(assert_final_value_mutually_exclusive_a,
                     !(EnableAssertFinalMaxValue && EnableAssertFinalMinValue))
+  `BR_ASSERT_STATIC(legal_assert_no_decrement_backpressure_a,
+                    !(EnableAssertNoDecrementBackpressure && EnableCoverDecrementBackpressure))
 
   if (EnableAssertFinalNotValid) begin : gen_assert_final
     `BR_ASSERT_FINAL(final_not_incr_valid_a, !incr_valid)
@@ -179,7 +185,7 @@ module br_credit_counter #(
 
   if (EnableCoverDecrementBackpressure) begin : gen_cover_decr_gt_available
     `BR_COVER_INTG(decr_gt_available_c, decr_valid && decr > available)
-  end else begin : gen_assert_decr_lte_available
+  end else if (EnableAssertNoDecrementBackpressure) begin : gen_assert_decr_lte_available
     `BR_ASSERT_INTG(decr_lte_available_a, decr_valid |-> decr <= available)
   end
 

@@ -18,6 +18,9 @@ module br_fifo_shared_dynamic_basic_fpv_monitor #(
     parameter bit EnableCoverPushBackpressure = 1,
     parameter bit EnableAssertPushValidStability = EnableCoverPushBackpressure,
     parameter bit EnableAssertPushDataStability = EnableAssertPushValidStability,
+    // If 1, assert that push-side backpressure is impossible.
+    // Can only be enabled if EnableCoverPushBackpressure is disabled.
+    parameter bit EnableAssertNoPushBackpressure = !EnableCoverPushBackpressure,
     localparam int FifoIdWidth = br_math::clamped_clog2(NumFifos),
     localparam int AddrWidth = br_math::clamped_clog2(Depth)
 ) (
@@ -35,7 +38,6 @@ module br_fifo_shared_dynamic_basic_fpv_monitor #(
     input logic [NumFifos-1:0] pop_ready,
     input logic [NumFifos-1:0][Width-1:0] pop_data
 );
-
   // ----------FV Modeling Code----------
   localparam int PortWidth = br_math::clamped_clog2(NumWritePorts);
   // pick a random FIFO to check
@@ -67,7 +69,7 @@ module br_fifo_shared_dynamic_basic_fpv_monitor #(
             push_data_stable_a,
             push_valid[i] && !push_ready[i] |=> $stable(push_data[i]) && $stable(push_fifo_id[i]))
       end
-    end else begin : gen_no_backpressure
+    end else if (EnableAssertNoPushBackpressure) begin : gen_no_backpressure
       `BR_ASSUME(no_backpressure_a, push_valid[i] |-> push_ready[i])
     end
   end

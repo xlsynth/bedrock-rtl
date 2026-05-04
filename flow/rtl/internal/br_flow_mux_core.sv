@@ -19,7 +19,8 @@ module br_flow_mux_core #(
     parameter int NumFlows = 1,  // Must be at least 1
     parameter int Width = 1,  // Must be at least 1
     // If 1, cover that the push side experiences backpressure.
-    // If 0, assert that there is never backpressure.
+    // If 0, disable backpressure coverage. By default, this also
+    // asserts that backpressure is impossible.
     parameter bit EnableCoverPushBackpressure = 1,
     // If 1, assert that push_valid is stable when backpressured.
     parameter bit EnableAssertPushValidStability = 1,
@@ -30,10 +31,17 @@ module br_flow_mux_core #(
     // If 1, then assert there are no valid bits asserted at the end of the test.
     parameter bit EnableAssertFinalNotValid = 1,
     // If 1, then cover cases in which pop is backpressured.
-    // Otherwise, assert that pop is never backpressured.
+    // Otherwise, disable pop backpressure coverage. By default, this also
+    // asserts that pop backpressure is impossible.
     parameter bit EnableCoverPopBackpressure = EnableCoverPushBackpressure,
     // Set to 1 if the arbiter is guaranteed to grant in a cycle when any request is asserted.
-    parameter bit ArbiterAlwaysGrants = 1
+    parameter bit ArbiterAlwaysGrants = 1,
+    // If 1, assert that push-side backpressure is impossible.
+    // Can only be enabled if EnableCoverPushBackpressure is disabled.
+    parameter bit EnableAssertNoPushBackpressure = !EnableCoverPushBackpressure,
+    // If 1, assert that pop-side backpressure is impossible.
+    // Can only be enabled if EnableCoverPopBackpressure is disabled.
+    parameter bit EnableAssertNoPopBackpressure = !EnableCoverPopBackpressure
 ) (
     // ri lint_check_waive HIER_NET_NOT_READ HIER_BRANCH_NOT_READ INPUT_NOT_READ
     input  logic                           clk,                     // Used for assertions only
@@ -56,6 +64,10 @@ module br_flow_mux_core #(
   //------------------------------------------
   // Integration checks
   //------------------------------------------
+  `BR_ASSERT_STATIC(legal_assert_no_push_backpressure_a,
+                    !(EnableAssertNoPushBackpressure && EnableCoverPushBackpressure))
+  `BR_ASSERT_STATIC(legal_assert_no_pop_backpressure_a,
+                    !(EnableAssertNoPopBackpressure && EnableCoverPopBackpressure))
   `BR_ASSERT_STATIC(numflows_gte_2_a, NumFlows >= 1)
   `BR_ASSERT_STATIC(datawidth_gte_1_a, Width >= 1)
   `BR_ASSERT_STATIC(pop_backpressure_implies_push_backpressure_a,
@@ -69,6 +81,7 @@ module br_flow_mux_core #(
       .NumFlows(NumFlows),
       .Width(Width),
       .EnableCoverBackpressure(EnableCoverPushBackpressure),
+      .EnableAssertNoBackpressure(EnableAssertNoPushBackpressure),
       .EnableAssertValidStability(EnableAssertPushValidStability),
       .EnableAssertDataStability(EnableAssertPushDataStability),
       .EnableAssertDataKnown(EnableAssertPushDataKnown),
@@ -88,9 +101,11 @@ module br_flow_mux_core #(
   br_flow_arb_core #(
       .NumFlows(NumFlows),
       .EnableCoverPushBackpressure(EnableCoverPushBackpressure),
+      .EnableAssertNoPushBackpressure(EnableAssertNoPushBackpressure),
       .EnableAssertPushValidStability(EnableAssertPushValidStability),
       .EnableAssertFinalNotValid(EnableAssertFinalNotValid),
       .EnableCoverPopBackpressure(EnableCoverPopBackpressure),
+      .EnableAssertNoPopBackpressure(EnableAssertNoPopBackpressure),
       .ArbiterAlwaysGrants(ArbiterAlwaysGrants)
   ) br_flow_arb_core (
       .clk,
@@ -125,6 +140,7 @@ module br_flow_mux_core #(
       .NumFlows(1),
       .Width(Width),
       .EnableCoverBackpressure(EnableCoverPopBackpressure),
+      .EnableAssertNoBackpressure(EnableAssertNoPopBackpressure),
       .EnableAssertValidStability(EnableAssertPopValidStability),
       // pop_data_unstable is unstable regardless of whether push_data is stable
       .EnableAssertDataStability(0),

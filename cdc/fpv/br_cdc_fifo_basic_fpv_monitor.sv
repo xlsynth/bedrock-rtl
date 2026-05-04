@@ -18,6 +18,9 @@ module br_cdc_fifo_basic_fpv_monitor #(
     parameter int RamReadLatency = 1,
     parameter int PushExtraDelay = 0,
     parameter int PopExtraDelay = 0,
+    // If 1, assert that push-side backpressure is impossible.
+    // Can only be enabled if EnableCoverPushBackpressure is disabled.
+    parameter bit EnableAssertNoPushBackpressure = !EnableCoverPushBackpressure,
     localparam int CountWidth = $clog2(Depth + 1)
 ) (
     // FV system clk and rst
@@ -46,7 +49,6 @@ module br_cdc_fifo_basic_fpv_monitor #(
     input logic pop_empty,
     input logic [CountWidth-1:0] pop_items
 );
-
   localparam int ResetActiveDelay = 1;
   // Adding ExtraDelay to account for any extra flops when instantiating br_cdc_fifo.
   // Need to make sure that on push reset, the updated push_count is not visible
@@ -69,7 +71,7 @@ module br_cdc_fifo_basic_fpv_monitor #(
       `BR_ASSUME_CR(push_data_stable_a, push_valid && !push_ready |=> $stable(push_data), push_clk,
                     push_rst)
     end
-  end else begin : gen_no_back_pressure
+  end else if (EnableAssertNoPushBackpressure) begin : gen_no_back_pressure
     `BR_ASSUME_CR(no_back_pressure_a, push_valid |-> push_ready, push_clk, push_rst)
   end
 

@@ -19,6 +19,9 @@ module br_flow_xbar_core #(
     parameter bit EnableAssertPushDataKnown = 1,
     parameter bit EnableAssertFinalNotValid = 1,
 
+    // If 1, assert that push-side backpressure is impossible.
+    // Can only be enabled if EnableCoverPushBackpressure is disabled.
+    parameter bit EnableAssertNoPushBackpressure = !EnableCoverPushBackpressure,
     localparam int DestIdWidth = br_math::clamped_clog2(NumPopFlows)
 ) (
     input logic clk,
@@ -67,6 +70,7 @@ module br_flow_xbar_core #(
         .NumFlows(NumPopFlows),
         .Width(Width),
         .EnableCoverPushBackpressure(EnableCoverPushBackpressure),
+        .EnableAssertNoPushBackpressure(EnableAssertNoPushBackpressure),
         .EnableAssertPushValidStability(EnableAssertPushValidStability),
         .EnableAssertPushDataStability(EnableAssertPushDataStability),
         .EnableAssertSelectStability(EnableAssertPushDestinationStability),
@@ -89,6 +93,7 @@ module br_flow_xbar_core #(
         br_flow_reg_fwd #(
             .Width(Width),
             .EnableCoverPushBackpressure(EnableCoverPushBackpressure),
+            .EnableAssertNoPushBackpressure(EnableAssertNoPushBackpressure),
             .EnableAssertPushValidStability(
                 EnableAssertPushValidStability && EnableAssertPushDestinationStability),
             .EnableAssertPushDataStability(
@@ -121,6 +126,7 @@ module br_flow_xbar_core #(
         // mux_in to be backpressured and mux_in_valid/data
         // must be stable.
         .EnableCoverPushBackpressure(EnableCoverPushBackpressure || RegisterDemuxOutputs),
+        .EnableAssertNoPushBackpressure(EnableAssertNoPushBackpressure && !RegisterDemuxOutputs),
         .EnableAssertPushValidStability(
             (EnableAssertPushValidStability && EnableAssertPushDestinationStability) ||
             RegisterDemuxOutputs),
@@ -148,6 +154,7 @@ module br_flow_xbar_core #(
       br_flow_reg_fwd #(
           .Width(Width),
           .EnableCoverPushBackpressure(EnableCoverPushBackpressure || RegisterDemuxOutputs),
+          .EnableAssertNoPushBackpressure(EnableAssertNoPushBackpressure && !RegisterDemuxOutputs),
           .EnableAssertPushValidStability(
               (EnableAssertPushValidStability && EnableAssertPushDestinationStability) ||
               RegisterDemuxOutputs),

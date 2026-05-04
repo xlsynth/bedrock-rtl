@@ -60,6 +60,28 @@ br_verilog_elab_and_lint_test_suite(
 )
 
 br_verilog_elab_and_lint_test_suite(
+    name = "br_credit_counter_test_suite_no_decrement_backpressure",
+    params = {
+        "MaxValue": [
+            "2",
+            "4",
+        ],
+        "MaxChange": [
+            "1",
+            "2",
+        ],
+        "EnableCoverDecrementBackpressure": [
+            "0",
+        ],
+        "EnableAssertNoDecrementBackpressure": [
+            "0",
+            "1",
+        ],
+    },
+    deps = [":br_credit_counter"],
+)
+
+br_verilog_elab_and_lint_test_suite(
     name = "br_credit_counter_test_suite_large_maxes",
     params = {
         "MaxValueWidth": ["64"],

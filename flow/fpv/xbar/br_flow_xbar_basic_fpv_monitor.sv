@@ -16,6 +16,9 @@ module br_flow_xbar_basic_fpv_monitor #(
     parameter bit EnableAssertPushValidStability = EnableCoverPushBackpressure,
     parameter bit EnableAssertPushDataStability = EnableAssertPushValidStability,
     parameter bit EnableAssertPushDestinationStability = EnableAssertPushValidStability,
+    // If 1, assert that push-side backpressure is impossible.
+    // Can only be enabled if EnableCoverPushBackpressure is disabled.
+    parameter bit EnableAssertNoPushBackpressure = !EnableCoverPushBackpressure,
     localparam int PushDestIdWidth = br_math::clamped_clog2(NumPushFlows),
     localparam int DestIdWidth = br_math::clamped_clog2(NumPopFlows)
 ) (
@@ -34,7 +37,6 @@ module br_flow_xbar_basic_fpv_monitor #(
     input logic [PushDestIdWidth-1:0] fv_push_id,
     input logic [DestIdWidth-1:0] fv_pop_id
 );
-
   localparam int Latency = RegisterDemuxOutputs + RegisterPopOutputs;
   // when push_valid & push_ready from fv_push_id are sending to fv_pop_id
   logic fv_push_vr;
@@ -67,7 +69,7 @@ module br_flow_xbar_basic_fpv_monitor #(
         `BR_ASSUME(push_dest_id_stable_a,
                    push_valid[i] && !push_ready[i] |=> $stable(push_dest_id[i]))
       end
-    end else begin : gen_no_push_backpressure
+    end else if (EnableAssertNoPushBackpressure) begin : gen_no_push_backpressure
       `BR_ASSUME(no_backpressure_a, !push_ready[i] |-> !push_valid[i])
     end
   end

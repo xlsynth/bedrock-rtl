@@ -19,6 +19,9 @@ module br_multi_xfer_distributor_core #(
     parameter bit EnableCoverMorePopReadyThanSendable = 1,
     parameter bit EnableAssertFinalNotSendable = 1,
 
+    // If 1, assert that push-side backpressure is impossible.
+    // Can only be enabled if EnableCoverPushBackpressure is disabled.
+    parameter bit EnableAssertNoPushBackpressure = !EnableCoverPushBackpressure,
     localparam int CountWidth = $clog2(NumSymbols + 1)
 ) (
     input logic clk,
@@ -41,6 +44,7 @@ module br_multi_xfer_distributor_core #(
     input logic [CountWidth-1:0] grant_count,
     output logic enable_priority_update
 );
+
   logic [NumFlows-1:0][NumSymbols-1:0] grant_ordered_transposed;
 
   for (genvar i = 0; i < NumFlows; i++) begin : gen_grant_ordered_transposed
@@ -51,6 +55,8 @@ module br_multi_xfer_distributor_core #(
 
   // Integration Assertions
 
+  `BR_ASSERT_STATIC(legal_assert_no_push_backpressure_a,
+                    !(EnableAssertNoPushBackpressure && EnableCoverPushBackpressure))
   `BR_ASSERT_STATIC(legal_num_symbols_a, NumSymbols >= 2)
   `BR_ASSERT_STATIC(legal_symbol_width_a, SymbolWidth >= 1)
   `BR_ASSERT_STATIC(legal_num_flows_a, NumFlows >= NumSymbols)
@@ -59,6 +65,7 @@ module br_multi_xfer_distributor_core #(
       .NumSymbols(NumSymbols),
       .SymbolWidth(SymbolWidth),
       .EnableCoverBackpressure(EnableCoverPushBackpressure),
+      .EnableAssertNoBackpressure(EnableAssertNoPushBackpressure),
       .EnableAssertDataStability(EnableAssertPushDataStability)
   ) br_multi_xfer_checks_sendable_data_intg_push (
       .clk(clk),

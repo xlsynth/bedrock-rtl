@@ -10,7 +10,10 @@ module br_flow_arb_fixed_fpv_monitor #(
     parameter int NumFlows = 1,
     parameter bit EnableCoverPushBackpressure = 1,
     parameter bit EnableAssertPushValidStability = EnableCoverPushBackpressure,
-    parameter bit EnableAssertFinalNotValid = 1
+    parameter bit EnableAssertFinalNotValid = 1,
+    // If 1, assert that push-side backpressure is impossible.
+    // Can only be enabled if EnableCoverPushBackpressure is disabled.
+    parameter bit EnableAssertNoPushBackpressure = !EnableCoverPushBackpressure
 ) (
     input logic                clk,
     input logic                rst,
@@ -21,11 +24,11 @@ module br_flow_arb_fixed_fpv_monitor #(
     // RTL internal signal
     input logic [NumFlows-1:0] grant
 );
-
   // ----------Instantiate basic checks----------
   br_flow_arb_basic_fpv_monitor #(
       .NumFlows(NumFlows),
       .EnableCoverPushBackpressure(EnableCoverPushBackpressure),
+      .EnableAssertNoPushBackpressure(EnableAssertNoPushBackpressure),
       .EnableAssertPushValidStability(EnableAssertPushValidStability)
   ) fv_checker (
       .clk,
@@ -52,6 +55,7 @@ endmodule : br_flow_arb_fixed_fpv_monitor
 bind br_flow_arb_fixed br_flow_arb_fixed_fpv_monitor #(
     .NumFlows(NumFlows),
     .EnableCoverPushBackpressure(EnableCoverPushBackpressure),
+    .EnableAssertNoPushBackpressure(EnableAssertNoPushBackpressure),
     .EnableAssertPushValidStability(EnableAssertPushValidStability),
     .EnableAssertFinalNotValid(EnableAssertFinalNotValid)
 ) monitor (.*);

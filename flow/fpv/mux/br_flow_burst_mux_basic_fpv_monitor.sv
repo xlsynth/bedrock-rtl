@@ -15,7 +15,13 @@ module br_flow_burst_mux_basic_fpv_monitor #(
     parameter bit EnableAssertPushDataStability = EnableAssertPushValidStability,
     parameter bit EnableCoverPopBackpressure = EnableCoverPushBackpressure,
     parameter bit EnableAssertPopValidStability = EnableAssertPushValidStability,
-    parameter bit EnableAssertPopDataStability = 0
+    parameter bit EnableAssertPopDataStability = 0,
+    // If 1, assert that push-side backpressure is impossible.
+    // Can only be enabled if EnableCoverPushBackpressure is disabled.
+    parameter bit EnableAssertNoPushBackpressure = !EnableCoverPushBackpressure,
+    // If 1, assert that pop-side backpressure is impossible.
+    // Can only be enabled if EnableCoverPopBackpressure is disabled.
+    parameter bit EnableAssertNoPopBackpressure = !EnableCoverPopBackpressure
 ) (
     input logic                           clk,
     input logic                           rst,
@@ -48,7 +54,7 @@ module br_flow_burst_mux_basic_fpv_monitor #(
     `BR_ASSUME(push_last_liveness_a, s_eventually (push_valid[n] && push_last[n]))
     // Color the low bits of each flow's payload with that flow's index.
     `BR_ASSUME(color_push_data_a, push_valid[n] |-> push_data[n][FlowIdWidth-1:0] == n)
-    if (!EnableCoverPushBackpressure) begin : gen_no_backpressure
+    if (!EnableCoverPushBackpressure && EnableAssertNoPushBackpressure) begin : gen_no_backpressure
       `BR_ASSUME(no_backpressure_a, !push_ready[n] |-> !push_valid[n])
     end
     if (EnableAssertPushValidStability) begin : gen_push_valid
@@ -72,6 +78,8 @@ module br_flow_burst_mux_basic_fpv_monitor #(
       `BR_COVER(pop_data_unstable_c,
                 (pop_valid && !pop_ready) ##1 (!$stable(pop_data) || !$stable(pop_last)))
     end
+  end else if (EnableAssertNoPopBackpressure) begin : gen_no_pop_backpressure
+    `BR_ASSERT(no_pop_backpressure_a, pop_valid |-> pop_ready)
   end
 
   // ----------Burst Check----------

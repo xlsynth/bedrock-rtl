@@ -11,7 +11,10 @@ module br_flow_fork_select_multihot_fpv_monitor #(
     parameter bit EnableCoverPushBackpressure = 1,
     parameter bit EnableAssertPushValidStability = EnableCoverPushBackpressure,
     parameter bit EnableAssertSelectMultihotStability = EnableAssertPushValidStability,
-    parameter bit EnableAssertFinalNotValid = 1
+    parameter bit EnableAssertFinalNotValid = 1,
+    // If 1, assert that push-side backpressure is impossible.
+    // Can only be enabled if EnableCoverPushBackpressure is disabled.
+    parameter bit EnableAssertNoPushBackpressure = !EnableCoverPushBackpressure
 ) (
     input logic clk,
     input logic rst,
@@ -27,7 +30,6 @@ module br_flow_fork_select_multihot_fpv_monitor #(
     input logic [NumFlows-1:0] pop_ready,
     input logic [NumFlows-1:0] pop_valid_unstable
 );
-
   // ----------FV assumptions----------
   for (genvar n = 0; n < NumFlows; n++) begin : gen_asm
     `BR_ASSUME(pop_ready_liveness_a, s_eventually (pop_ready[n]))
@@ -45,7 +47,7 @@ module br_flow_fork_select_multihot_fpv_monitor #(
   end
   `BR_ASSUME(legal_select_a, push_valid |-> |push_select_multihot)
 
-  if (!EnableCoverPushBackpressure) begin : gen_no_backpressure
+  if (!EnableCoverPushBackpressure && EnableAssertNoPushBackpressure) begin : gen_no_backpressure
     `BR_ASSUME(no_backpressure_a, !push_ready |-> !push_valid)
   end
 
@@ -64,6 +66,7 @@ bind br_flow_fork_select_multihot br_flow_fork_select_multihot_fpv_monitor #(
     .NumFlows(NumFlows),
     .EnableCoverSelectMultihot(EnableCoverSelectMultihot),
     .EnableCoverPushBackpressure(EnableCoverPushBackpressure),
+    .EnableAssertNoPushBackpressure(EnableAssertNoPushBackpressure),
     .EnableAssertPushValidStability(EnableAssertPushValidStability),
     .EnableAssertSelectMultihotStability(EnableAssertSelectMultihotStability),
     .EnableAssertFinalNotValid(EnableAssertFinalNotValid)

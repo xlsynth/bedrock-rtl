@@ -17,6 +17,9 @@ module br_fifo_shared_pstatic_basic_fpv_monitor #(
     parameter bit EnableCoverPushBackpressure = 1,
     parameter bit EnableAssertPushValidStability = EnableCoverPushBackpressure,
     parameter bit EnableAssertPushDataStability = EnableAssertPushValidStability,
+    // If 1, assert that push-side backpressure is impossible.
+    // Can only be enabled if EnableCoverPushBackpressure is disabled.
+    parameter bit EnableAssertNoPushBackpressure = !EnableCoverPushBackpressure,
     localparam int FifoIdWidth = br_math::clamped_clog2(NumFifos),
     localparam int AddrWidth = br_math::clamped_clog2(Depth)
 ) (
@@ -78,7 +81,7 @@ module br_fifo_shared_pstatic_basic_fpv_monitor #(
       `BR_ASSUME(push_data_stable_a,
                  push_valid && !push_ready |=> $stable(push_data) && $stable(push_fifo_id))
     end
-  end else begin : gen_no_back_pressure
+  end else if (EnableAssertNoPushBackpressure) begin : gen_no_back_pressure
     `BR_ASSUME(no_backpressure_a, push_valid |-> push_ready)
   end
   if (!HasStagingBuffer) begin : gen_pop_ready_stable

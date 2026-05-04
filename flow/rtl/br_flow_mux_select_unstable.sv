@@ -30,7 +30,8 @@ module br_flow_mux_select_unstable #(
     // Must be at least 1
     parameter int Width = 1,
     // If 1, cover that the push side experiences backpressure.
-    // If 0, assert that there is never backpressure.
+    // If 0, disable backpressure coverage. By default, this also
+    // asserts that backpressure is impossible.
     parameter bit EnableCoverPushBackpressure = 1,
     // If 1, assert that push_valid is stable when backpressured.
     parameter bit EnableAssertPushValidStability = EnableCoverPushBackpressure,
@@ -43,6 +44,9 @@ module br_flow_mux_select_unstable #(
     parameter bit EnableAssertPushDataKnown = 1,
     // If 1, then assert there are no valid bits asserted at the end of the test.
     parameter bit EnableAssertFinalNotValid = 1,
+    // If 1, assert that push-side backpressure is impossible.
+    // Can only be enabled if EnableCoverPushBackpressure is disabled.
+    parameter bit EnableAssertNoPushBackpressure = !EnableCoverPushBackpressure,
     localparam int SelectWidth = br_math::clamped_clog2(NumFlows)
 
 ) (
@@ -71,6 +75,8 @@ module br_flow_mux_select_unstable #(
   //------------------------------------------
   // Integration checks
   //------------------------------------------
+  `BR_ASSERT_STATIC(legal_assert_no_push_backpressure_a,
+                    !(EnableAssertNoPushBackpressure && EnableCoverPushBackpressure))
   `BR_ASSERT_STATIC(num_flows_must_be_at_least_one_a, NumFlows >= 1)
   `BR_ASSERT_STATIC(width_gte_1_a, Width >= 1)
   `BR_ASSERT_STATIC(select_only_stable_if_valid_stable_a,
@@ -82,6 +88,7 @@ module br_flow_mux_select_unstable #(
       .NumFlows(NumFlows),
       .Width(Width),
       .EnableCoverBackpressure(EnableCoverPushBackpressure),
+      .EnableAssertNoBackpressure(EnableAssertNoPushBackpressure),
       .EnableAssertValidStability(EnableAssertPushValidStability),
       .EnableAssertDataStability(EnableAssertPushDataStability),
       .EnableAssertDataKnown(EnableAssertPushDataKnown),
@@ -155,6 +162,7 @@ module br_flow_mux_select_unstable #(
       .NumFlows(1),
       .Width(Width),
       .EnableCoverBackpressure(EnableCoverPushBackpressure),
+      .EnableAssertNoBackpressure(EnableAssertNoPushBackpressure),
       .EnableAssertValidStability(EnableAssertPopValidStability),
       .EnableAssertDataStability(EnableAssertPopDataStability),
       .EnableAssertFinalNotValid(EnableAssertFinalNotValid)
