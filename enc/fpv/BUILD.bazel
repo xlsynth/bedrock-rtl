@@ -1,0 +1,18 @@
+# SPDX-License-Identifier: Apache-2.0
+
+load("//bazel:br_verilog.bzl", "br_verilog_fpv_test_tools_suite")
+
+package(default_visibility = ["//visibility:private"])
+
+br_verilog_fpv_test_tools_suite(
+    name = "br_enc_priority_dynamic_single_requester_fpv_repro",
+    params = {
+        "NumRequesters": ["1"],
+        "NumResults": ["1"],
+    },
+    tools = {
+        "jg": "br_enc_priority_dynamic_single_requester_fpv_repro.jg.tcl",
+    },
+    top = "br_enc_priority_dynamic",
+    deps = ["//enc/rtl:br_enc_priority_dynamic"],
+)
