@@ -186,6 +186,24 @@ verilog_elab_test(
     deps = [":br_credit_sender_fpv_monitor"],
 )
 
+verilog_library(
+    name = "br_credit_sender_receiver_reset_fpv_repro",
+    srcs = ["br_credit_sender_receiver_reset_fpv_repro.sv"],
+    deps = [
+        "//credit/rtl:br_credit_sender",
+        "//macros:br_asserts",
+    ],
+)
+
+br_verilog_fpv_test_tools_suite(
+    name = "br_credit_sender_receiver_reset_fpv_repro",
+    tools = {
+        "jg": "br_credit_sender_receiver_reset_fpv_repro.jg.tcl",
+    },
+    top = "br_credit_sender_receiver_reset_fpv_repro",
+    deps = [":br_credit_sender_receiver_reset_fpv_repro"],
+)
+
 # test valid ready protocol
 br_verilog_fpv_test_tools_suite(
     name = "br_credit_sender_test_backpressure",
