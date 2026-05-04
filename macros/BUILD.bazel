@@ -2,7 +2,7 @@
 
 load("@rules_hdl//verilog:providers.bzl", "verilog_library")
 load("//bazel:br_verilog.bzl", "br_verilog_sim_test_tools_suite")
-load("//bazel:verilog.bzl", "verilog_elab_test", "verilog_lint_test")
+load("//bazel:verilog.bzl", "verilog_elab_test", "verilog_fpv_test_suite", "verilog_lint_test")
 
 package(default_visibility = ["//visibility:private"])
 
@@ -231,6 +231,30 @@ verilog_elab_test(
     defines = ["BR_ASSERT_ON"],
     tool = "verific",
     deps = [":br_gates_test"],
+)
+
+verilog_library(
+    name = "br_gates_cdc_rst_sync_fpv_repro",
+    srcs = ["br_gates_cdc_rst_sync_fpv_repro.sv"],
+    deps = [
+        ":br_gates",
+        "//cdc/rtl:br_cdc_rst_sync",
+    ],
+)
+
+verilog_fpv_test_suite(
+    name = "br_gates_cdc_rst_sync_fpv_repro_jg",
+    custom_tcl_body = "br_gates_cdc_rst_sync_fpv_repro.jg.tcl",
+    defines = [
+        "BR_ASSERT_ON",
+        "BR_DISABLE_ASSERT_IMM",
+        "BR_DISABLE_FINAL_CHECKS",
+        "BR_ENABLE_FPV",
+        "BR_ENABLE_IMPL_CHECKS",
+    ],
+    tool = "jg",
+    top = "br_gates_cdc_rst_sync_fpv_repro",
+    deps = [":br_gates_cdc_rst_sync_fpv_repro"],
 )
 
 verilog_library(
