@@ -174,6 +174,25 @@ br_verilog_fpv_test_tools_suite(
     deps = [":br_ram_data_rd_pipe_fpv_monitor"],
 )
 
+verilog_library(
+    name = "br_ram_flops_1r1w_mock_partial_write_bypass_fpv_repro",
+    srcs = ["br_ram_flops_1r1w_mock_partial_write_bypass_fpv_repro.sv"],
+    deps = [
+        "//macros:br_asserts",
+        "//macros:br_registers",
+        "//ram/rtl:br_ram_flops_1r1w_mock",
+    ],
+)
+
+br_verilog_fpv_test_tools_suite(
+    name = "br_ram_flops_1r1w_mock_partial_write_bypass_fpv_repro",
+    tools = {
+        "jg": "br_ram_flops_1r1w_mock_partial_write_bypass_fpv_repro.jg.tcl",
+    },
+    top = "br_ram_flops_1r1w_mock_partial_write_bypass_fpv_repro",
+    deps = [":br_ram_flops_1r1w_mock_partial_write_bypass_fpv_repro"],
+)
+
 #################################################################
 # Bedrock-RTL Flop-RAM Tile (same wr/rd clock)
 
