@@ -88,6 +88,102 @@ module br_amba_axi2axil_fpv_monitor #(
 
   // ABVIP should send more than DUT to test backpressure
   localparam int MaxPending = MaxOutstandingReqs + 2;
+  localparam int FvSplitCountWidth = br_amba::AxiBurstLenWidth + 1;
+
+  // Track split AXI-Lite B responses for each AXI write burst and check that
+  // the public AXI B response reports the first non-OKAY split response.
+  logic axi_aw_handshake;
+  logic axil_b_handshake;
+  logic fv_awlen_fifo_push_ready;
+  logic fv_awlen_fifo_pop_ready;
+  logic fv_awlen_fifo_pop_valid;
+  logic fv_awlen_fifo_empty;
+  logic fv_awlen_fifo_full;
+  logic [FvSplitCountWidth-1:0] fv_awlen_fifo_push_data;
+  logic [FvSplitCountWidth-1:0] fv_awlen_fifo_pop_data;
+  logic fv_b_active;
+  logic fv_b_active_next;
+  logic [FvSplitCountWidth-1:0] fv_b_split_count;
+  logic [FvSplitCountWidth-1:0] fv_b_remaining;
+  logic [FvSplitCountWidth-1:0] fv_b_remaining_next;
+  logic [br_amba::AxiRespWidth-1:0] fv_bresp;
+  logic [br_amba::AxiRespWidth-1:0] fv_bresp_after_axil;
+  logic [br_amba::AxiRespWidth-1:0] fv_bresp_next;
+  logic fv_axil_b_final;
+
+  assign axi_aw_handshake = axi_awvalid && axi_awready;
+  assign axil_b_handshake = axil_bvalid && axil_bready;
+  assign fv_awlen_fifo_push_ready = !fv_awlen_fifo_full;
+  assign fv_awlen_fifo_pop_valid = !fv_awlen_fifo_empty || axi_aw_handshake;
+  assign fv_awlen_fifo_push_data = FvSplitCountWidth'(axi_awlen) + FvSplitCountWidth'(1'b1);
+  assign fv_awlen_fifo_pop_ready = axil_b_handshake && !fv_b_active;
+  assign fv_b_split_count = fv_b_active ? fv_b_remaining : fv_awlen_fifo_pop_data;
+  assign fv_bresp_after_axil =
+      ((fv_bresp == br_amba::AxiRespOkay) && (axil_bresp != br_amba::AxiRespOkay)) ?
+      axil_bresp : fv_bresp;
+  assign fv_axil_b_final =
+      axil_bvalid && (fv_b_active ? (fv_b_remaining == FvSplitCountWidth'(1'b1)) :
+                      (fv_awlen_fifo_pop_valid &&
+                       (fv_awlen_fifo_pop_data == FvSplitCountWidth'(1'b1))));
+
+  // Update the expected aggregate B response after each split AXI-Lite B
+  // handshake. The saved response changes only for the first non-OKAY response
+  // and resets after the final split response for the AXI burst.
+  always_comb begin
+    fv_b_active_next = fv_b_active;
+    fv_b_remaining_next = fv_b_remaining;
+    fv_bresp_next = fv_bresp;
+
+    if (axil_b_handshake) begin
+      if (fv_b_split_count == FvSplitCountWidth'(1'b1)) begin
+        fv_b_active_next = 1'b0;
+        fv_b_remaining_next = '0;
+        fv_bresp_next = br_amba::AxiRespOkay;
+      end else begin
+        fv_b_active_next = 1'b1;
+        fv_b_remaining_next = fv_b_split_count - FvSplitCountWidth'(1'b1);
+        fv_bresp_next = fv_bresp_after_axil;
+      end
+    end
+  end
+
+  `BR_REGLI(fv_b_active, fv_b_active_next, axil_b_handshake, 1'b0)
+  `BR_REGLI(fv_b_remaining, fv_b_remaining_next, axil_b_handshake, '0)
+  `BR_REGLI(fv_bresp, fv_bresp_next, axil_b_handshake, br_amba::AxiRespOkay)
+
+  // Queue the number of expected split AXI-Lite B responses for each accepted
+  // AXI AW request. Bypass lets the first B response consume a same-cycle AW.
+  fv_fifo #(
+      .Depth(MaxOutstandingReqs),
+      .DataWidth(FvSplitCountWidth),
+      .Bypass(1)
+  ) fv_awlen_fifo (
+      .clk,
+      .rst,
+
+      .push(axi_aw_handshake),
+      .push_data(fv_awlen_fifo_push_data),
+
+      .pop(fv_awlen_fifo_pop_ready),
+      .pop_data(fv_awlen_fifo_pop_data),
+      .empty(fv_awlen_fifo_empty),
+      .full(fv_awlen_fifo_full)
+  );
+
+  // The FV AW-length queue should have space whenever the DUT accepts an AW.
+  `BR_ASSERT(awlen_fifo_ready_a, axi_aw_handshake |-> fv_awlen_fifo_push_ready)
+
+  // A first split B response must have a matching accepted AW burst length.
+  `BR_ASSERT(axil_b_has_aw_a, axil_bvalid && !fv_b_active |-> fv_awlen_fifo_pop_valid)
+
+  // On the final split B response, the public AXI B response must match the
+  // first non-OKAY response observed across the split AXI-Lite responses.
+  `BR_ASSERT(aggregated_bresp_a,
+             fv_axil_b_final && axi_bvalid |-> (axi_bresp == fv_bresp_after_axil))
+
+  // The bridge must present the public AXI B response when the final split
+  // AXI-Lite B response for the burst is available.
+  `BR_ASSERT(final_axil_b_drives_axi_b_a, fv_axil_b_final |-> axi_bvalid)
 
   // multi-beat narrow access is NOT supported.
   `BR_ASSUME(no_multi_beat_narrow_access_write_a, axi_awvalid && (axi_awsize != $clog2(StrobeWidth)
