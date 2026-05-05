@@ -76,9 +76,10 @@ module br_flow_fork_select_multihot #(
       .valid(push_valid),
       .data (push_select_multihot)
   );
-  if (EnableCoverSelectMultihot) begin : gen_cover_select_multihot
+  if (NumFlows > 1 && EnableCoverSelectMultihot) begin : gen_cover_select_multihot
     `BR_COVER_INTG(select_multihot_c, push_valid && $countones(push_select_multihot) > 1)
-  end else begin : gen_assert_onehot_select
+  end
+  if (!EnableCoverSelectMultihot) begin : gen_assert_onehot_select
     `BR_ASSERT_INTG(select_onehot_a, push_valid |-> $onehot(push_select_multihot))
   end
   `BR_ASSERT_INTG(select_multihot_known_a, push_valid |-> !$isunknown(push_select_multihot))
