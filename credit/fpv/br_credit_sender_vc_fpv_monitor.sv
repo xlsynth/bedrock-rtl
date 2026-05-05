@@ -115,7 +115,14 @@ module br_credit_sender_vc_fpv_monitor #(
   end
 
   // ----------FV assertions----------
-  `BR_ASSERT(push_valid_deadlock_a, push_valid[fv_vc] |-> s_eventually push_ready[fv_vc])
+  // Without push-valid stability, a backpressured push_valid pulse can legally drop before
+  // the DUT accepts it, so only an accepted push can require eventual pop.
+  if (EnableAssertPushValidStability) begin : gen_push_valid_deadlock_stable
+    `BR_ASSERT(push_valid_deadlock_a, push_valid[fv_vc] |-> s_eventually fv_pop_valid)
+  end else begin : gen_push_valid_deadlock_unstable
+    `BR_ASSERT(push_valid_deadlock_a,
+               push_valid[fv_vc] && push_ready[fv_vc] |-> s_eventually fv_pop_valid)
+  end
   `BR_ASSERT(no_spurious_pop_valid_a,
              (fv_pop_credit_cnt[fv_vc] + pop_credit[fv_vc]) == 'd0 |-> !fv_pop_valid)
 

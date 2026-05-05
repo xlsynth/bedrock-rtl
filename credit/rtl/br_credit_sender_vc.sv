@@ -127,8 +127,11 @@ module br_credit_sender_vc #(
     br_credit_counter #(
         .MaxValue(MaxCredit),
         .MaxChange(PopCreditMaxChange),
+        .MaxDecrement(1),
         .EnableCoverZeroIncrement(0),
         .EnableCoverZeroDecrement(0),
+        .EnableCoverDecrementBackpressure(0),
+        .EnableAssertNoDecrementBackpressure(0),
         .EnableAssertFinalNotValid(EnableAssertFinalNotValid),
         .EnableAssertFinalMaxValue(EnableAssertFinalMaxValue)
     ) br_credit_counter (
