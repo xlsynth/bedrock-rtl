@@ -18,6 +18,8 @@ verilog_library(
     name = "br_fifo_fv_ram",
     srcs = ["br_fifo_fv_ram.sv"],
     deps = [
+        "//macros:br_asserts",
+        "//macros:br_registers",
         "//pkg:br_math_pkg",
     ],
 )
