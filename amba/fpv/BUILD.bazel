@@ -87,6 +87,7 @@ verilog_library(
     srcs = ["br_amba_axi2axil_fpv_monitor.sv"],
     deps = [
         "//amba/rtl:br_amba_axi2axil",
+        "//fpv/lib:fv_fifo",
     ],
 )
 
