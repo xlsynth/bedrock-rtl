@@ -32,7 +32,8 @@ module br_cdc_reg #(
     // Do not decrease below that unless you have a good reason.
     parameter int NumSyncStages = 3,
     // If 1, cover that the push side experiences backpressure.
-    // If 0, assert that there is never backpressure.
+    // If 0, disable backpressure coverage. By default, this also
+    // asserts that backpressure is impossible.
     parameter bit EnableCoverPushBackpressure = 1,
     // If 1, assert that push_valid is stable when backpressured.
     parameter bit EnableAssertPushValidStability = EnableCoverPushBackpressure,
@@ -42,7 +43,10 @@ module br_cdc_reg #(
     parameter bit EnableAssertPushDataKnown = 1,
     // If 1, then assert there are no valid bits asserted and that the FIFO is
     // empty at the end of the test.
-    parameter bit EnableAssertFinalNotValid = 1
+    parameter bit EnableAssertFinalNotValid = 1,
+    // If 1, assert that push-side backpressure is impossible.
+    // Can only be enabled if EnableCoverPushBackpressure is disabled.
+    parameter bit EnableAssertNoPushBackpressure = !EnableCoverPushBackpressure
 ) (
     // Push-side interface
     input  logic             push_clk,
@@ -78,6 +82,7 @@ module br_cdc_reg #(
       .Width(Width),
       .RegisterResetActive(RegisterResetActive),
       .EnableCoverPushBackpressure(EnableCoverPushBackpressure),
+      .EnableAssertNoPushBackpressure(EnableAssertNoPushBackpressure),
       .EnableAssertPushValidStability(EnableAssertPushValidStability),
       .EnableAssertPushDataStability(EnableAssertPushDataStability),
       .EnableAssertPushDataKnown(EnableAssertPushDataKnown),

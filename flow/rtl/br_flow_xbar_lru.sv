@@ -31,7 +31,8 @@ module br_flow_xbar_lru #(
     // If 0, pop_valid/pop_data come directly from the muxes and may be unstable.
     parameter bit RegisterPopOutputs = 0,
     // If 1, cover that the push_ready signal can be backpressured.
-    // If 0, assert that push backpressure is not possible.
+    // If 0, disable push backpressure coverage. By default, this also
+    // asserts that push backpressure is impossible.
     parameter bit EnableCoverPushBackpressure = 1,
     // If 1, assert that push_valid is stable.
     parameter bit EnableAssertPushValidStability = EnableCoverPushBackpressure,
@@ -46,6 +47,9 @@ module br_flow_xbar_lru #(
     // register stages are empty at end of simulation.
     parameter bit EnableAssertFinalNotValid = 1,
 
+    // If 1, assert that push-side backpressure is impossible.
+    // Can only be enabled if EnableCoverPushBackpressure is disabled.
+    parameter bit EnableAssertNoPushBackpressure = !EnableCoverPushBackpressure,
     localparam int DestIdWidth = br_math::clamped_clog2(NumPopFlows)
 ) (
     input logic clk,
@@ -82,6 +86,7 @@ module br_flow_xbar_lru #(
       .RegisterDemuxOutputs(RegisterDemuxOutputs),
       .RegisterPopOutputs(RegisterPopOutputs),
       .EnableCoverPushBackpressure(EnableCoverPushBackpressure),
+      .EnableAssertNoPushBackpressure(EnableAssertNoPushBackpressure),
       .EnableAssertPushValidStability(EnableAssertPushValidStability),
       .EnableAssertPushDataStability(EnableAssertPushDataStability),
       .EnableAssertPushDestinationStability(EnableAssertPushDestinationStability),

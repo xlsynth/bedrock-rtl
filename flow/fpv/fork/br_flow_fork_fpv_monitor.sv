@@ -9,7 +9,10 @@ module br_flow_fork_fpv_monitor #(
     parameter int NumFlows = 1,
     parameter bit EnableCoverPushBackpressure = 1,
     parameter bit EnableAssertPushValidStability = EnableCoverPushBackpressure,
-    parameter bit EnableAssertFinalNotValid = 1
+    parameter bit EnableAssertFinalNotValid = 1,
+    // If 1, assert that push-side backpressure is impossible.
+    // Can only be enabled if EnableCoverPushBackpressure is disabled.
+    parameter bit EnableAssertNoPushBackpressure = !EnableCoverPushBackpressure
 ) (
     input logic clk,
     input logic rst,
@@ -24,7 +27,6 @@ module br_flow_fork_fpv_monitor #(
     input logic [NumFlows-1:0] pop_ready,
     input logic [NumFlows-1:0] pop_valid_unstable
 );
-
   // ----------FV assumptions----------
   for (genvar n = 0; n < NumFlows; n++) begin : gen_asm
     `BR_ASSUME(pop_ready_liveness_a, s_eventually (pop_ready[n]))
@@ -34,7 +36,7 @@ module br_flow_fork_fpv_monitor #(
     `BR_ASSUME(push_valid_stable_a, push_valid && !push_ready |=> push_valid)
   end
 
-  if (!EnableCoverPushBackpressure) begin : gen_no_backpressure
+  if (!EnableCoverPushBackpressure && EnableAssertNoPushBackpressure) begin : gen_no_backpressure
     `BR_ASSUME(no_backpressure_a, !push_ready |-> !push_valid)
   end
 
@@ -50,6 +52,7 @@ endmodule : br_flow_fork_fpv_monitor
 bind br_flow_fork br_flow_fork_fpv_monitor #(
     .NumFlows(NumFlows),
     .EnableCoverPushBackpressure(EnableCoverPushBackpressure),
+    .EnableAssertNoPushBackpressure(EnableAssertNoPushBackpressure),
     .EnableAssertPushValidStability(EnableAssertPushValidStability),
     .EnableAssertFinalNotValid(EnableAssertFinalNotValid)
 ) monitor (.*);

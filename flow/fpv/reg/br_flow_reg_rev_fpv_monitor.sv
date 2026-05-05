@@ -10,7 +10,10 @@ module br_flow_reg_rev_fpv_monitor #(
     parameter bit EnableCoverPushBackpressure = 1,
     parameter bit EnableAssertPushValidStability = EnableCoverPushBackpressure,
     parameter bit EnableAssertPushDataStability = EnableAssertPushValidStability,
-    parameter bit EnableAssertFinalNotValid = 1
+    parameter bit EnableAssertFinalNotValid = 1,
+    // If 1, assert that push-side backpressure is impossible.
+    // Can only be enabled if EnableCoverPushBackpressure is disabled.
+    parameter bit EnableAssertNoPushBackpressure = !EnableCoverPushBackpressure
 ) (
     input logic             clk,
     input logic             rst,
@@ -21,11 +24,11 @@ module br_flow_reg_rev_fpv_monitor #(
     input logic             pop_valid,
     input logic [Width-1:0] pop_data
 );
-
   // ----------Instantiate basic checks----------
   br_flow_reg_basic_fpv_monitor #(
       .Width(Width),
       .EnableCoverPushBackpressure(EnableCoverPushBackpressure),
+      .EnableAssertNoPushBackpressure(EnableAssertNoPushBackpressure),
       .EnableAssertPushValidStability(EnableAssertPushValidStability),
       .EnableAssertPushDataStability(EnableAssertPushDataStability)
   ) fv_checker (
@@ -48,6 +51,7 @@ endmodule : br_flow_reg_rev_fpv_monitor
 bind br_flow_reg_rev br_flow_reg_rev_fpv_monitor #(
     .Width(Width),
     .EnableCoverPushBackpressure(EnableCoverPushBackpressure),
+    .EnableAssertNoPushBackpressure(EnableAssertNoPushBackpressure),
     .EnableAssertPushValidStability(EnableAssertPushValidStability),
     .EnableAssertPushDataStability(EnableAssertPushDataStability),
     .EnableAssertFinalNotValid(EnableAssertFinalNotValid)

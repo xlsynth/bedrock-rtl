@@ -33,7 +33,8 @@ module br_cdc_fifo_ctrl_push_1r1w #(
     // before synchronization to the pop clock domain.
     parameter bit RegisterResetActive = 1,
     // If 1, cover that the push side experiences backpressure.
-    // If 0, assert that there is never backpressure.
+    // If 0, disable backpressure coverage. By default, this also
+    // asserts that backpressure is impossible.
     parameter bit EnableCoverPushBackpressure = 1,
     // If 1, assert that push_valid is stable when backpressured.
     parameter bit EnableAssertPushValidStability = EnableCoverPushBackpressure,
@@ -44,6 +45,9 @@ module br_cdc_fifo_ctrl_push_1r1w #(
     // If 1, then assert there are no valid bits asserted and that the FIFO is
     // empty at the end of the test.
     parameter bit EnableAssertFinalNotValid = 1,
+    // If 1, assert that push-side backpressure is impossible.
+    // Can only be enabled if EnableCoverPushBackpressure is disabled.
+    parameter bit EnableAssertNoPushBackpressure = !EnableCoverPushBackpressure,
     localparam int AddrWidth = $clog2(Depth),
     localparam int CountWidth = $clog2(Depth + 1)
 ) (
@@ -77,6 +81,7 @@ module br_cdc_fifo_ctrl_push_1r1w #(
     output logic [CountWidth-1:0] push_push_count_gray,
     output logic                  push_reset_active_push
 );
+
   //------------------------------------------
   // Integration checks
   //------------------------------------------
@@ -95,6 +100,7 @@ module br_cdc_fifo_ctrl_push_1r1w #(
       .RamWriteLatency(RamWriteLatency),
       .RegisterResetActive(RegisterResetActive),
       .EnableCoverPushBackpressure(EnableCoverPushBackpressure),
+      .EnableAssertNoPushBackpressure(EnableAssertNoPushBackpressure),
       .EnableAssertPushValidStability(EnableAssertPushValidStability),
       .EnableAssertPushDataStability(EnableAssertPushDataStability),
       .EnableAssertPushDataKnown(EnableAssertPushDataKnown),

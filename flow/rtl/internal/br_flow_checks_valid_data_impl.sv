@@ -19,7 +19,8 @@ module br_flow_checks_valid_data_impl #(
     // The width of the data signal. Must be at least 1.
     parameter int Width = 1,
     // If 1, cover that there is backpressure.
-    // If 0, assert that there is never backpressure.
+    // If 0, disable backpressure coverage. By default, this also
+    // asserts that backpressure is impossible.
     // ri lint_check_waive PARAM_NOT_USED
     parameter bit EnableCoverBackpressure = 1,
     // If 1, assert that valid is stable when backpressured.
@@ -35,7 +36,10 @@ module br_flow_checks_valid_data_impl #(
     // ri lint_check_waive PARAM_NOT_USED
     parameter bit EnableAssertDataKnown = 1,
     // If 1, then assert there are no valid bits asserted at the end of the test.
-    parameter bit EnableAssertFinalNotValid = 1
+    parameter bit EnableAssertFinalNotValid = 1,
+    // If 1, assert that there is never backpressure.
+    // Can only be enabled if EnableCoverBackpressure is disabled.
+    parameter bit EnableAssertNoBackpressure = !EnableCoverBackpressure
 ) (
     // ri lint_check_waive INPUT_NOT_READ HIER_NET_NOT_READ HIER_BRANCH_NOT_READ
     input logic clk,
@@ -49,6 +53,8 @@ module br_flow_checks_valid_data_impl #(
                     !(EnableAssertValidStability && !EnableCoverBackpressure))
   `BR_ASSERT_STATIC(legal_assert_data_stability_a,
                     !(EnableAssertDataStability && !EnableAssertValidStability))
+  `BR_ASSERT_STATIC(legal_assert_no_backpressure_a,
+                    !(EnableAssertNoBackpressure && EnableCoverBackpressure))
 
   if (EnableAssertFinalNotValid) begin : gen_assert_final
     `BR_ASSERT_FINAL(final_not_valid_a, !valid)
@@ -73,7 +79,7 @@ module br_flow_checks_valid_data_impl #(
         `BR_COVER_IMPL(backpressure_c, !ready[i] && valid[i])
       end
     end
-  end else begin : gen_no_backpressure_checks
+  end else if (EnableAssertNoBackpressure) begin : gen_no_backpressure_checks
     for (genvar i = 0; i < NumFlows; i++) begin : gen_no_backpressure_per_flow
       `BR_ASSERT_IMPL(no_backpressure_a, valid[i] |-> ready[i])
     end

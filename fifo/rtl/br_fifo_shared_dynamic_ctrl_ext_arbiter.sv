@@ -93,7 +93,8 @@ module br_fifo_shared_dynamic_ctrl_ext_arbiter #(
     // If 0, the arbiter may not grant in a cycle even when there is a request.
     parameter bit ArbiterAlwaysGrants = 1,
     // If 1, cover that the push side experiences backpressure.
-    // If 0, assert that there is never backpressure.
+    // If 0, disable backpressure coverage. By default, this also
+    // asserts that backpressure is impossible.
     parameter bit EnableCoverPushBackpressure = 1,
     // If 1, assert that push_valid is stable when backpressured.
     parameter bit EnableAssertPushValidStability = EnableCoverPushBackpressure,
@@ -106,6 +107,9 @@ module br_fifo_shared_dynamic_ctrl_ext_arbiter #(
     // empty at the end of the test.
     // ri lint_check_waive PARAM_NOT_USED
     parameter bit EnableAssertFinalNotValid = 1,
+    // If 1, assert that push-side backpressure is impossible.
+    // Can only be enabled if EnableCoverPushBackpressure is disabled.
+    parameter bit EnableAssertNoPushBackpressure = !EnableCoverPushBackpressure,
     localparam int CountWidth = $clog2(Depth + 1),
     localparam int FifoIdWidth = br_math::clamped_clog2(NumFifos),
     localparam int AddrWidth = br_math::clamped_clog2(Depth)
@@ -151,6 +155,8 @@ module br_fifo_shared_dynamic_ctrl_ext_arbiter #(
 );
 
   // Integration Checks
+  `BR_ASSERT_STATIC(legal_assert_no_push_backpressure_a,
+                    !(EnableAssertNoPushBackpressure && EnableCoverPushBackpressure))
   `BR_ASSERT_STATIC(num_write_ports_in_range_a, NumWritePorts >= 1)
   `BR_ASSERT_STATIC(legal_num_read_ports_a, NumReadPorts >= 1 && br_math::is_power_of_2(
                     NumReadPorts))
@@ -179,6 +185,7 @@ module br_fifo_shared_dynamic_ctrl_ext_arbiter #(
       .EnableCoverPushBackpressure(EnableCoverPushBackpressure),
       .EnableAssertPushValidStability(EnableAssertPushValidStability),
       .EnableAssertPushDataStability(EnableAssertPushDataStability),
+      .EnableAssertNoPushBackpressure(EnableAssertNoPushBackpressure),
       .EnableAssertPushDataKnown(EnableAssertPushDataKnown),
       .EnableAssertFinalNotValid(EnableAssertFinalNotValid)
   ) br_fifo_shared_dynamic_push_ctrl_inst (

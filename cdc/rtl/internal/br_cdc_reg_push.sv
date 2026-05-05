@@ -12,7 +12,10 @@ module br_cdc_reg_push #(
     parameter bit EnableAssertPushValidStability = EnableCoverPushBackpressure,
     parameter bit EnableAssertPushDataStability = EnableAssertPushValidStability,
     parameter bit EnableAssertPushDataKnown = 1,
-    parameter bit EnableAssertFinalNotValid = 1
+    parameter bit EnableAssertFinalNotValid = 1,
+    // If 1, assert that push-side backpressure is impossible.
+    // Can only be enabled if EnableCoverPushBackpressure is disabled.
+    parameter bit EnableAssertNoPushBackpressure = !EnableCoverPushBackpressure
 ) (
     input logic clk,
     input logic rst,
@@ -27,11 +30,16 @@ module br_cdc_reg_push #(
     input logic reset_active_pop,
     input logic pop_flag
 );
+
   // Integration Checks
+  `BR_ASSERT_STATIC(legal_assert_no_push_backpressure_a,
+                    !(EnableAssertNoPushBackpressure && EnableCoverPushBackpressure))
+
   br_flow_checks_valid_data_intg #(
       .NumFlows(1),
       .Width(Width),
       .EnableCoverBackpressure(EnableCoverPushBackpressure),
+      .EnableAssertNoBackpressure(EnableAssertNoPushBackpressure),
       .EnableAssertValidStability(EnableAssertPushValidStability),
       .EnableAssertDataStability(EnableAssertPushDataStability),
       .EnableAssertDataKnown(EnableAssertPushDataKnown),

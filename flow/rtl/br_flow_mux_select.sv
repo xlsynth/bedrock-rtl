@@ -20,7 +20,8 @@ module br_flow_mux_select #(
     // Must be at least 1
     parameter int Width = 1,
     // If 1, cover that the push side experiences backpressure.
-    // If 0, assert that there is never backpressure.
+    // If 0, disable backpressure coverage. By default, this also
+    // asserts that backpressure is impossible.
     parameter bit EnableCoverPushBackpressure = 1,
     // If 1, assert that push_valid is stable when backpressured.
     parameter bit EnableAssertPushValidStability = EnableCoverPushBackpressure,
@@ -33,6 +34,9 @@ module br_flow_mux_select #(
     parameter bit EnableAssertPushDataKnown = 1,
     // If 1, then assert there are no valid bits asserted at the end of the test.
     parameter bit EnableAssertFinalNotValid = 1,
+    // If 1, assert that push-side backpressure is impossible.
+    // Can only be enabled if EnableCoverPushBackpressure is disabled.
+    parameter bit EnableAssertNoPushBackpressure = !EnableCoverPushBackpressure,
     localparam int SelectWidth = br_math::clamped_clog2(NumFlows)
 ) (
     input logic clk,
@@ -68,6 +72,7 @@ module br_flow_mux_select #(
       .NumFlows(NumFlows),
       .Width(Width),
       .EnableCoverPushBackpressure(EnableCoverPushBackpressure),
+      .EnableAssertNoPushBackpressure(EnableAssertNoPushBackpressure),
       .EnableAssertPushValidStability(EnableAssertPushValidStability),
       .EnableAssertPushDataStability(EnableAssertPushDataStability),
       .EnableAssertSelectStability(EnableAssertSelectStability),
@@ -94,6 +99,7 @@ module br_flow_mux_select #(
   br_flow_reg_fwd #(
       .Width(Width),
       .EnableCoverPushBackpressure(EnableCoverPushBackpressure),
+      .EnableAssertNoPushBackpressure(EnableAssertNoPushBackpressure),
       .EnableAssertPushValidStability(EnableAssertInternalValidStability),
       .EnableAssertPushDataStability(EnableAssertInternalDataStability),
       .EnableAssertPushDataKnown(EnableAssertPushDataKnown),

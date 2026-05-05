@@ -75,7 +75,8 @@ module br_fifo_shared_pstatic_flops #(
     // Number of stages in the width dimension on the data flop RAM.
     parameter int RamReadDataWidthStages = 0,
     // If 1, cover that the push side experiences backpressure.
-    // If 0, assert that there is never backpressure.
+    // If 0, disable backpressure coverage. By default, this also
+    // asserts that backpressure is impossible.
     parameter bit EnableCoverPushBackpressure = 1,
     // If 1, assert that push_valid is stable when backpressured.
     parameter bit EnableAssertPushValidStability = EnableCoverPushBackpressure,
@@ -88,6 +89,9 @@ module br_fifo_shared_pstatic_flops #(
     // empty at the end of the test.
     // ri lint_check_waive PARAM_NOT_USED
     parameter bit EnableAssertFinalNotValid = 1,
+    // If 1, assert that push-side backpressure is impossible.
+    // Can only be enabled if EnableCoverPushBackpressure is disabled.
+    parameter bit EnableAssertNoPushBackpressure = !EnableCoverPushBackpressure,
     localparam int FifoIdWidth = br_math::clamped_clog2(NumFifos),
     localparam int AddrWidth = br_math::clamped_clog2(Depth)
 ) (
@@ -180,6 +184,7 @@ module br_fifo_shared_pstatic_flops #(
       .EnableCoverPushBackpressure(EnableCoverPushBackpressure),
       .EnableAssertPushValidStability(EnableAssertPushValidStability),
       .EnableAssertPushDataStability(EnableAssertPushDataStability),
+      .EnableAssertNoPushBackpressure(EnableAssertNoPushBackpressure),
       .EnableAssertPushDataKnown(EnableAssertPushDataKnown),
       .EnableAssertFinalNotValid(EnableAssertFinalNotValid)
   ) br_fifo_shared_pstatic_ctrl_inst (

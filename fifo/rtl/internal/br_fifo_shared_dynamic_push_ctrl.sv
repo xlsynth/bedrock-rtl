@@ -20,7 +20,8 @@ module br_fifo_shared_dynamic_push_ctrl #(
     // is indicated by dealloc_count.
     parameter int DeallocCountDelay = 2,
     // If 1, cover that the push side experiences backpressure.
-    // If 0, assert that there is never backpressure.
+    // If 0, disable backpressure coverage. By default, this also
+    // asserts that backpressure is impossible.
     parameter bit EnableCoverPushBackpressure = 1,
     // If 1, assert that push_valid is stable when backpressured.
     parameter bit EnableAssertPushValidStability = EnableCoverPushBackpressure,
@@ -35,6 +36,9 @@ module br_fifo_shared_dynamic_push_ctrl #(
     // ri lint_check_waive PARAM_NOT_USED
     parameter bit EnableAssertFinalNotValid = 1,
 
+    // If 1, assert that push-side backpressure is impossible.
+    // Can only be enabled if EnableCoverPushBackpressure is disabled.
+    parameter bit EnableAssertNoPushBackpressure = !EnableCoverPushBackpressure,
     localparam int FifoIdWidth = br_math::clamped_clog2(NumFifos),
     localparam int AddrWidth = br_math::clamped_clog2(Depth),
     localparam int FifoCountWidth = $clog2(NumFifos + 1)
@@ -66,6 +70,9 @@ module br_fifo_shared_dynamic_push_ctrl #(
 
   // Integration Assertions
 
+  `BR_ASSERT_STATIC(legal_assert_no_push_backpressure_a,
+                    !(EnableAssertNoPushBackpressure && EnableCoverPushBackpressure))
+
 `ifdef BR_ASSERT_ON
 `ifndef BR_DISABLE_INTG_CHECKS
 
@@ -79,6 +86,7 @@ module br_fifo_shared_dynamic_push_ctrl #(
       .NumFlows(NumWritePorts),
       .Width(Width + FifoIdWidth),
       .EnableCoverBackpressure(EnableCoverPushBackpressure),
+      .EnableAssertNoBackpressure(EnableAssertNoPushBackpressure),
       .EnableAssertValidStability(EnableAssertPushValidStability),
       .EnableAssertDataStability(EnableAssertPushDataStability),
       .EnableAssertDataKnown(EnableAssertPushDataKnown),
