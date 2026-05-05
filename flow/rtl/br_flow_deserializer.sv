@@ -73,7 +73,7 @@
 //     3     | 1'b1       | 8'h01     | 1'b0      | stable        | 1'b1      | 32'h01234567 | 1'b0     | 2'd0                     | 3'd2
 //     4     | 1'b1       | 8'h0D     | 1'b0      | 3'd5          | 1'b0      | 32'hXXXXXXXX | 1'bX     | 2'd0                     | 3'dX
 //     5     | 1'b1       | 8'hF0     | 1'b0      | stable        | 1'b0      | 32'hXXXXXXXX | 1'bX     | 2'd0                     | 3'dX
-//     6     | 1'b1       | 8'hAD     | 1'b1      | stable        | 1'b1      | 32'hXXADF00D | 1'b1     | 2'd1                     | 3'd5
+//     6     | 1'b1       | 8'hAD     | 1'b1      | stable        | 1'b1      | 32'h00ADF00D | 1'b1     | 2'd1                     | 3'd5
 
 `include "br_asserts.svh"
 `include "br_asserts_internal.svh"
