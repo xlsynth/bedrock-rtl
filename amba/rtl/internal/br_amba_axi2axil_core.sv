@@ -385,8 +385,8 @@ module br_amba_axi2axil_core #(
       assign axi_resp_ready_unqual = axi_resp_ready;
     end else begin : gen_write_response
       assign axi_resp_valid = (axi_resp_data_last && axi_resp_valid_unqual);
-      assign axi_resp_resp = (axil_resp_resp != br_amba::AxiRespOkay) ?  // ri lint_check_waive ENUM_COMPARE
-          axil_resp_resp : resp;
+      assign axi_resp_resp = (resp != br_amba::AxiRespOkay) ?  // ri lint_check_waive ENUM_COMPARE
+          resp : axil_resp_resp;
       assign axi_resp_ready_unqual = (!axi_resp_data_last || axi_resp_ready);
     end
   endgenerate
