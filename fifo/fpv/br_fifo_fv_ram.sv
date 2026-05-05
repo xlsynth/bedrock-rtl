@@ -52,6 +52,17 @@ module br_fifo_fv_ram #(
     end
   end
 
+  // ----------FV assertions----------
+  if (NumWritePorts > 1) begin : gen_write_conflict_checks
+    for (genvar porta = 0; porta < (NumWritePorts - 1); porta++) begin : gen_write_conflict_a
+      for (genvar portb = porta + 1; portb < NumWritePorts; portb++) begin : gen_write_conflict_b
+        `BR_ASSERT(no_write_conflict_a,
+                   (ram_wr_valid[porta] && ram_wr_valid[portb]) |->
+                       ram_wr_addr[porta] != ram_wr_addr[portb])
+      end
+    end
+  end
+
   // ----------FV assumptions----------
   for (genvar r = 0; r < NumReadPorts; r++) begin : gen_asm
     if (RamReadLatency == 0) begin : gen_lat0
