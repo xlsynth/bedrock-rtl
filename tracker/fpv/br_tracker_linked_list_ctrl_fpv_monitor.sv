@@ -44,14 +44,15 @@ module br_tracker_linked_list_ctrl_fpv_monitor #(
   // bit vector tracking which entry of RAM is in use
   always_comb begin
     fv_entry_used_nxt = fv_entry_used;
+    // A popped head is available for same-cycle reuse by next_tail.
+    if (head_valid & head_ready) begin
+      fv_entry_used_nxt[head] = 1'd0;
+    end
     for (int i = 0; i < NumWritePorts; i++) begin
       `BR_ASSUME(tail_unique_a, next_tail_valid[i] |-> !fv_entry_used_nxt[next_tail[i]])
       if (next_tail_valid[i]) begin
         fv_entry_used_nxt[next_tail[i]] = 1'd1;
       end
-    end
-    if (head_valid & head_ready) begin
-      fv_entry_used_nxt[head] = 1'd0;
     end
   end
 
@@ -69,7 +70,6 @@ module br_tracker_linked_list_ctrl_fpv_monitor #(
   // ----------FV assumptions----------
   for (genvar n = 0; n < NumWritePorts; n++) begin : gen_asm
     `BR_ASSUME(tail_in_range_a, next_tail_valid[n] |-> next_tail[n] < Depth)
-    `BR_ASSUME(tail_not_in_use_a, next_tail_valid[n] |-> !fv_entry_used[next_tail[n]])
   end
   // model RAM read data
   if (RamReadLatency == 0) begin : gen_latency0
@@ -108,6 +108,15 @@ module br_tracker_linked_list_ctrl_fpv_monitor #(
   // ----------Critical Covers----------
   `BR_COVER(all_next_tail_valid_c, &next_tail_valid)
   `BR_COVER(all_entry_used_c, &fv_entry_used)
+
+  // ----------Bug Reproduction Assertions----------
+  for (genvar a = 0; a < NumWritePorts; a++) begin : gen_a
+    for (genvar b = a + 1; b < NumWritePorts; b++) begin : gen_b
+      `BR_ASSERT(
+          ptr_ram_wr_conflict_a,
+          (ptr_ram_wr_valid[a] && ptr_ram_wr_valid[b]) |-> ptr_ram_wr_addr[a] != ptr_ram_wr_addr[b])
+    end
+  end
 
 endmodule : br_tracker_linked_list_ctrl_fpv_monitor
 
