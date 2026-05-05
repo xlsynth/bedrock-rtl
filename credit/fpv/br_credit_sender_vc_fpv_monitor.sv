@@ -67,6 +67,13 @@ module br_credit_sender_vc_fpv_monitor #(
   assign fv_rst = rst | pop_receiver_in_reset;
   assign fv_pop_valid = pop_valid && (pop_vc == fv_vc);
 
+  logic [NumVcs-1:0] fv_pop_grant;
+  if (RegisterPopOutputs) begin : gen_registered_pop_grant
+    `BR_REGIX(fv_pop_grant, grant, '0, clk, rst)
+  end else begin : gen_unregistered_pop_grant
+    assign fv_pop_grant = grant;
+  end
+
   for (genvar n = 0; n < NumVcs; n++) begin : gen_fv_credit_model
     logic fv_pop_valid_n;
     assign fv_pop_valid_n = pop_valid && (pop_vc == n);
@@ -113,8 +120,8 @@ module br_credit_sender_vc_fpv_monitor #(
              (fv_pop_credit_cnt[fv_vc] + pop_credit[fv_vc]) == 'd0 |-> !fv_pop_valid)
 
   `BR_ASSERT(pop_vc_legal_a, pop_valid |-> pop_vc < NumVcs)
-  `BR_ASSERT(pop_valid_implies_grant_a, pop_valid |-> |grant)
-  `BR_ASSERT(pop_vc_matches_grant_a, pop_valid |-> grant[pop_vc])
+  `BR_ASSERT(pop_valid_implies_grant_a, pop_valid |-> |fv_pop_grant)
+  `BR_ASSERT(pop_vc_matches_grant_a, pop_valid |-> fv_pop_grant[pop_vc])
   `BR_ASSERT(priority_update_a, enable_priority_update)
 
   // ----------Data integrity check----------

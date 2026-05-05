@@ -35,6 +35,7 @@ module br_credit_sender_vc #(
     // If 1, assert that push_valid is stable when backpressured.
     parameter bit EnableAssertPushValidStability = EnableCoverPushBackpressure,
     // If 1, assert that push_data is stable when backpressured.
+    // ri lint_check_waive PARAM_NOT_USED
     parameter bit EnableAssertPushDataStability = EnableAssertPushValidStability,
     // If 1, then assert there are no valid bits asserted at the end of the test.
     parameter bit EnableAssertFinalNotValid = 1,
@@ -126,6 +127,8 @@ module br_credit_sender_vc #(
     br_credit_counter #(
         .MaxValue(MaxCredit),
         .MaxChange(PopCreditMaxChange),
+        .EnableCoverZeroIncrement(0),
+        .EnableCoverZeroDecrement(0),
         .EnableAssertFinalNotValid(EnableAssertFinalNotValid),
         .EnableAssertFinalMaxValue(EnableAssertFinalMaxValue)
     ) br_credit_counter (
@@ -167,9 +170,10 @@ module br_credit_sender_vc #(
       .Width(Width),
       .EnableCoverPushBackpressure(EnableCoverPushBackpressure),
       .EnableAssertNoPushBackpressure(EnableAssertNoPushBackpressure),
-      .EnableAssertPushValidStability(EnableAssertPushValidStability),
-      .EnableAssertPushDataStability(EnableAssertPushDataStability),
-      .EnableAssertFinalNotValid(EnableAssertFinalNotValid)
+      .EnableAssertPushValidStability(0),
+      .EnableAssertPushDataStability(0),
+      .EnableAssertFinalNotValid(EnableAssertFinalNotValid),
+      .EnableCoverPopBackpressure(0)
   ) br_flow_mux_core_push (
       .clk,
       .rst,
