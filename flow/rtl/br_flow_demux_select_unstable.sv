@@ -91,7 +91,9 @@ module br_flow_demux_select_unstable #(
       .data (push_data)
   );
 
-  if (EnableCoverPushBackpressure && EnableAssertPushValidStability) begin : gen_select_checks
+  if (NumFlows > 1 &&
+      EnableCoverPushBackpressure &&
+      EnableAssertPushValidStability) begin : gen_select_checks
     if (EnableAssertSelectStability) begin : gen_select_stability_check
       `BR_ASSERT_INTG(select_stable_a,
                       (!push_ready && push_valid) |=> push_valid && $stable(select))
@@ -134,8 +136,10 @@ module br_flow_demux_select_unstable #(
   //------------------------------------------
   // Implementation checks
   //------------------------------------------
-  if (EnableCoverPushBackpressure && EnableAssertPushValidStability && !EnableAssertSelectStability)
-  begin : gen_stable_push_valid
+  if (NumFlows > 1 &&
+      EnableCoverPushBackpressure &&
+      EnableAssertPushValidStability &&
+      !EnableAssertSelectStability) begin : gen_stable_push_valid
     for (genvar i = 0; i < NumFlows; i++) begin : gen_pop_unstable_checks
       `BR_ASSERT_IMPL(
           pop_valid_instability_caused_by_select_a,
