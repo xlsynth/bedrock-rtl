@@ -17,6 +17,9 @@ module br_flow_xbar_fixed_fpv_monitor #(
     parameter bit EnableAssertPushDataStability = EnableAssertPushValidStability,
     parameter bit EnableAssertPushDestinationStability = EnableAssertPushValidStability,
     parameter bit EnableAssertFinalNotValid = 1,
+    // If 1, assert that push-side backpressure is impossible.
+    // Can only be enabled if EnableCoverPushBackpressure is disabled.
+    parameter bit EnableAssertNoPushBackpressure = !EnableCoverPushBackpressure,
     localparam int DestIdWidth = br_math::clamped_clog2(NumPopFlows)
 ) (
     input logic clk,
@@ -34,7 +37,6 @@ module br_flow_xbar_fixed_fpv_monitor #(
     // RTL internal signals
     input logic [NumPopFlows-1:0][NumPushFlows-1:0] grant
 );
-
   // ----------FV Modeling Code----------
   logic [$clog2(NumPushFlows)-1:0] i, j;
   logic push_valid_i;
@@ -63,6 +65,7 @@ module br_flow_xbar_fixed_fpv_monitor #(
       .RegisterDemuxOutputs(RegisterDemuxOutputs),
       .RegisterPopOutputs(RegisterPopOutputs),
       .EnableCoverPushBackpressure(EnableCoverPushBackpressure),
+      .EnableAssertNoPushBackpressure(EnableAssertNoPushBackpressure),
       .EnableAssertPushValidStability(EnableAssertPushValidStability),
       .EnableAssertPushDataStability(EnableAssertPushDataStability),
       .EnableAssertPushDestinationStability(EnableAssertPushDestinationStability)
@@ -104,6 +107,7 @@ bind br_flow_xbar_fixed br_flow_xbar_fixed_fpv_monitor #(
     .RegisterDemuxOutputs(RegisterDemuxOutputs),
     .RegisterPopOutputs(RegisterPopOutputs),
     .EnableCoverPushBackpressure(EnableCoverPushBackpressure),
+    .EnableAssertNoPushBackpressure(EnableAssertNoPushBackpressure),
     .EnableAssertPushValidStability(EnableAssertPushValidStability),
     .EnableAssertPushDataStability(EnableAssertPushDataStability),
     .EnableAssertPushDestinationStability(EnableAssertPushDestinationStability),

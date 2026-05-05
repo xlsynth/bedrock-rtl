@@ -15,6 +15,9 @@ module br_fifo_basic_fpv_monitor #(
     parameter bit EnableCoverPushBackpressure = 1,
     parameter bit EnableAssertPushValidStability = EnableCoverPushBackpressure,
     parameter bit EnableAssertPushDataStability = EnableAssertPushValidStability,
+    // If 1, assert that push-side backpressure is impossible.
+    // Can only be enabled if EnableCoverPushBackpressure is disabled.
+    parameter bit EnableAssertNoPushBackpressure = !EnableCoverPushBackpressure,
     localparam int CountWidth = $clog2(Depth + 1)
 ) (
     input logic clk,
@@ -43,7 +46,6 @@ module br_fifo_basic_fpv_monitor #(
     input logic [CountWidth-1:0] items,
     input logic [CountWidth-1:0] items_next
 );
-
   // ----------FV assumptions----------
   `BR_ASSUME(pop_ready_liveness_a, s_eventually (pop_ready))
   if (EnableCoverPushBackpressure) begin : gen_backpressure
@@ -53,7 +55,7 @@ module br_fifo_basic_fpv_monitor #(
     if (EnableAssertPushDataStability) begin : gen_push_data_stable
       `BR_ASSUME(push_data_stable_a, push_valid && !push_ready |=> $stable(push_data))
     end
-  end else begin : gen_no_back_pressure
+  end else if (EnableAssertNoPushBackpressure) begin : gen_no_back_pressure
     `BR_ASSUME(no_backpressure_a, push_valid |-> push_ready)
   end
 

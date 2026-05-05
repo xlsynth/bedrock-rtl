@@ -18,6 +18,7 @@ module br_multi_xfer_checks_sendable_data_impl #(
     parameter int SymbolWidth = 1,
     parameter bit EnableCoverBackpressure = 1,
     parameter bit EnableAssertDataStability = 1,
+    parameter bit EnableAssertNoBackpressure = !EnableCoverBackpressure,
 
     localparam int CountWidth = $clog2(NumSymbols + 1)
 ) (
@@ -29,6 +30,9 @@ module br_multi_xfer_checks_sendable_data_impl #(
     input logic [CountWidth-1:0] sendable,
     input logic [NumSymbols-1:0][SymbolWidth-1:0] data
 );
+
+  `BR_ASSERT_STATIC(legal_assert_no_backpressure_a,
+                    !(EnableAssertNoBackpressure && EnableCoverBackpressure))
 
   if (EnableCoverBackpressure) begin : gen_backpressure_checks
     // If not all of the sendable symbols are transferred,
@@ -70,7 +74,7 @@ module br_multi_xfer_checks_sendable_data_impl #(
       `BR_COVER_IMPL(data_instability_c,
                      (sendable > receivable) ##1 data_masked != $past(data_shifted))
     end
-  end else begin : gen_no_backpressure_checks
+  end else if (EnableAssertNoBackpressure) begin : gen_no_backpressure_checks
     `BR_ASSERT_IMPL(sendable_at_most_receivable_a, sendable <= receivable)
   end
 

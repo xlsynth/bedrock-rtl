@@ -14,7 +14,8 @@ module br_flow_burst_mux_core #(
     parameter int NumFlows = 1,  // Must be at least 1
     parameter int Width = 1,  // Must be at least 1
     // If 1, cover that the push side experiences backpressure.
-    // If 0, assert that there is never backpressure.
+    // If 0, disable backpressure coverage. By default, this also
+    // asserts that backpressure is impossible.
     parameter bit EnableCoverPushBackpressure = 1,
     // If 1, assert that push_valid is stable when backpressured.
     parameter bit EnableAssertPushValidStability = EnableCoverPushBackpressure,
@@ -23,7 +24,10 @@ module br_flow_burst_mux_core #(
     // If 1, assert that push_data is always known (not X) when push_valid is asserted.
     parameter bit EnableAssertPushDataKnown = 1,
     // If 1, then assert there are no valid bits asserted at the end of the test.
-    parameter bit EnableAssertFinalNotValid = 1
+    parameter bit EnableAssertFinalNotValid = 1,
+    // If 1, assert that push-side backpressure is impossible.
+    // Can only be enabled if EnableCoverPushBackpressure is disabled.
+    parameter bit EnableAssertNoPushBackpressure = !EnableCoverPushBackpressure
 ) (
     input  logic                           clk,
     input  logic                           rst,
@@ -47,6 +51,8 @@ module br_flow_burst_mux_core #(
   //------------------------------------------
   // Integration checks
   //------------------------------------------
+  `BR_ASSERT_STATIC(legal_assert_no_push_backpressure_a,
+                    !(EnableAssertNoPushBackpressure && EnableCoverPushBackpressure))
   `BR_ASSERT_STATIC(num_flows_gte_1_a, NumFlows >= 1)
   `BR_ASSERT_STATIC(datawidth_gte_1_a, Width >= 1)
 
@@ -83,6 +89,7 @@ module br_flow_burst_mux_core #(
       .NumFlows(NumFlows),
       .Width(PayloadWidth),
       .EnableCoverPushBackpressure(EnableCoverPushBackpressure),
+      .EnableAssertNoPushBackpressure(EnableAssertNoPushBackpressure),
       .EnableAssertPushValidStability(EnableAssertPushValidStability),
       .EnableAssertPushDataStability(EnableAssertPushDataStability),
       .EnableAssertPushDataKnown(EnableAssertPushDataKnown),

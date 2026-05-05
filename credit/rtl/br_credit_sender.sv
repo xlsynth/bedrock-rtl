@@ -77,7 +77,8 @@ module br_credit_sender #(
     // If 1, add 1 cycle of retiming to pop outputs.
     parameter bit RegisterPopOutputs = 0,
     // If 1, cover that the push side experiences backpressure.
-    // If 0, assert that there is never backpressure.
+    // If 0, disable backpressure coverage. By default, this also
+    // asserts that backpressure is impossible.
     parameter bit EnableCoverPushBackpressure = 1,
     // If 1, assert that push_valid is stable when backpressured.
     parameter bit EnableAssertPushValidStability = EnableCoverPushBackpressure,
@@ -99,7 +100,10 @@ module br_credit_sender #(
     // The maximum credit count value that will be checked by covers.
     parameter int CoverMaxCredit = MaxCredit,
 
-    localparam int CounterWidth   = $clog2(MaxCredit + 1),
+    // If 1, assert that push-side backpressure is impossible.
+    // Can only be enabled if EnableCoverPushBackpressure is disabled.
+    parameter bit EnableAssertNoPushBackpressure = !EnableCoverPushBackpressure,
+    localparam int CounterWidth = $clog2(MaxCredit + 1),
     localparam int PopCreditWidth = $clog2(PopCreditMaxChange + 1)
 ) (
     // Posedge-triggered clock.
@@ -146,6 +150,7 @@ module br_credit_sender #(
       .NumFlows(NumFlows),
       .Width(Width),
       .EnableCoverBackpressure(EnableCoverPushBackpressure),
+      .EnableAssertNoBackpressure(EnableAssertNoPushBackpressure),
       .EnableAssertValidStability(EnableAssertPushValidStability),
       .EnableAssertDataStability(EnableAssertPushDataStability),
       .EnableAssertDataKnown(EnableAssertPushDataKnown),
@@ -196,6 +201,7 @@ module br_credit_sender #(
       .EnableCoverZeroIncrement(0),
       .EnableCoverZeroDecrement(NumFlows > 1),
       .EnableCoverDecrementBackpressure(NumFlows == 1 && EnableCoverPushBackpressure),
+      .EnableAssertNoDecrementBackpressure((NumFlows != 1) || EnableAssertNoPushBackpressure),
       .EnableCoverWithhold(EnableCoverCreditWithhold),
       .EnableAssertFinalNotValid(EnableAssertFinalNotValid),
       .CoverMaxValue(CoverMaxCredit),

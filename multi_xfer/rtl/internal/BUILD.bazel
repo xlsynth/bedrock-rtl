@@ -35,6 +35,31 @@ br_verilog_elab_and_lint_test_suite(
     ],
 )
 
+br_verilog_elab_and_lint_test_suite(
+    name = "br_multi_xfer_checks_sendable_data_intg_test_suite_no_backpressure",
+    disable_lint_rules = ["NO_OUTPUT"],
+    params = {
+        "NumSymbols": [
+            "1",
+            "2",
+        ],
+        "SymbolWidth": [
+            "1",
+            "8",
+        ],
+        "EnableCoverBackpressure": [
+            "0",
+        ],
+        "EnableAssertNoBackpressure": [
+            "0",
+            "1",
+        ],
+    },
+    deps = [
+        ":br_multi_xfer_checks_sendable_data_intg",
+    ],
+)
+
 verilog_library(
     name = "br_multi_xfer_checks_sendable_data_impl",
     srcs = ["br_multi_xfer_checks_sendable_data_impl.sv"],
@@ -58,6 +83,31 @@ br_verilog_elab_and_lint_test_suite(
             "1",
             "3",
             "8",
+        ],
+    },
+    deps = [
+        ":br_multi_xfer_checks_sendable_data_impl",
+    ],
+)
+
+br_verilog_elab_and_lint_test_suite(
+    name = "br_multi_xfer_checks_sendable_data_impl_test_suite_no_backpressure",
+    disable_lint_rules = ["NO_OUTPUT"],
+    params = {
+        "NumSymbols": [
+            "1",
+            "2",
+        ],
+        "SymbolWidth": [
+            "1",
+            "8",
+        ],
+        "EnableCoverBackpressure": [
+            "0",
+        ],
+        "EnableAssertNoBackpressure": [
+            "0",
+            "1",
         ],
     },
     deps = [

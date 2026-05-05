@@ -14,7 +14,10 @@ module br_flow_mux_select_fpv_monitor #(
     parameter bit EnableAssertPushValidStability = EnableCoverPushBackpressure,
     parameter bit EnableAssertPushDataStability = EnableAssertPushValidStability,
     parameter bit EnableAssertSelectStability = EnableAssertPushValidStability,
-    parameter bit EnableAssertFinalNotValid = 1
+    parameter bit EnableAssertFinalNotValid = 1,
+    // If 1, assert that push-side backpressure is impossible.
+    // Can only be enabled if EnableCoverPushBackpressure is disabled.
+    parameter bit EnableAssertNoPushBackpressure = !EnableCoverPushBackpressure
 ) (
     input logic                                   clk,
     input logic                                   rst,
@@ -26,14 +29,15 @@ module br_flow_mux_select_fpv_monitor #(
     input logic                                   pop_valid,
     input logic [           Width-1:0]            pop_data
 );
-
   // ----------Instantiate basic checks----------
   br_flow_mux_basic_fpv_monitor #(
       .NumFlows(NumFlows),
       .Width(Width),
       .EnableCoverPushBackpressure(EnableCoverPushBackpressure),
+      .EnableAssertNoPushBackpressure(EnableAssertNoPushBackpressure),
       .EnableAssertPushValidStability(EnableAssertPushValidStability),
       .EnableAssertPushDataStability(EnableAssertPushDataStability),
+      .EnableCoverPopBackpressure(1),
       // Final flow mux stage ensures output is always stable
       .EnableAssertPopValidStability(1),
       .EnableAssertPopDataStability(1),
@@ -70,6 +74,7 @@ bind br_flow_mux_select br_flow_mux_select_fpv_monitor #(
     .NumFlows(NumFlows),
     .Width(Width),
     .EnableCoverPushBackpressure(EnableCoverPushBackpressure),
+    .EnableAssertNoPushBackpressure(EnableAssertNoPushBackpressure),
     .EnableAssertPushValidStability(EnableAssertPushValidStability),
     .EnableAssertPushDataStability(EnableAssertPushDataStability),
     .EnableAssertSelectStability(EnableAssertSelectStability),

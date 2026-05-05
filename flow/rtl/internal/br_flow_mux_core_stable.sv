@@ -12,7 +12,6 @@
 // A flow register is added to the output to ensure that the pop_data
 // is stable.
 
-`include "br_asserts.svh"
 `include "br_asserts_internal.svh"
 
 module br_flow_mux_core_stable #(
@@ -23,7 +22,8 @@ module br_flow_mux_core_stable #(
     // from pop_ready to push_ready.
     parameter bit RegisterPopReady = 0,
     // If 1, cover that the push side experiences backpressure.
-    // If 0, assert that there is never backpressure.
+    // If 0, disable backpressure coverage. By default, this also
+    // asserts that backpressure is impossible.
     parameter bit EnableCoverPushBackpressure = 1,
     // If 1, assert that push_valid is stable when backpressured.
     parameter bit EnableAssertPushValidStability = 1,
@@ -34,7 +34,10 @@ module br_flow_mux_core_stable #(
     // If 1, then assert there are no valid bits asserted at the end of the test.
     parameter bit EnableAssertFinalNotValid = 1,
     // Set to 1 if the arbiter is guaranteed to grant in a cycle when any request is asserted.
-    parameter bit ArbiterAlwaysGrants = 1
+    parameter bit ArbiterAlwaysGrants = 1,
+    // If 1, assert that push-side backpressure is impossible.
+    // Can only be enabled if EnableCoverPushBackpressure is disabled.
+    parameter bit EnableAssertNoPushBackpressure = !EnableCoverPushBackpressure
 ) (
     // ri lint_check_waive HIER_NET_NOT_READ HIER_BRANCH_NOT_READ INPUT_NOT_READ
     input  logic                           clk,                     // Used for assertions only
@@ -72,6 +75,7 @@ module br_flow_mux_core_stable #(
       .NumFlows(NumFlows),
       .Width(Width),
       .EnableCoverPushBackpressure(EnableCoverPushBackpressure),
+      .EnableAssertNoPushBackpressure(EnableAssertNoPushBackpressure),
       .EnableAssertPushValidStability(EnableAssertPushValidStability),
       .EnableAssertPushDataStability(EnableAssertPushDataStability),
       .EnableAssertPushDataKnown(EnableAssertPushDataKnown),
@@ -96,6 +100,7 @@ module br_flow_mux_core_stable #(
     br_flow_reg_both #(
         .Width(Width),
         .EnableCoverPushBackpressure(EnableCoverPushBackpressure),
+        .EnableAssertNoPushBackpressure(EnableAssertNoPushBackpressure),
         .EnableAssertPushValidStability(EnableAssertPushValidStability),
         // internal_pop_data cannot be stable
         .EnableAssertPushDataStability(0),
@@ -115,6 +120,7 @@ module br_flow_mux_core_stable #(
     br_flow_reg_fwd #(
         .Width(Width),
         .EnableCoverPushBackpressure(EnableCoverPushBackpressure),
+        .EnableAssertNoPushBackpressure(EnableAssertNoPushBackpressure),
         .EnableAssertPushValidStability(EnableAssertPushValidStability),
         // internal_pop_data cannot be stable
         .EnableAssertPushDataStability(0),

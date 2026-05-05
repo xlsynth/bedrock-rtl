@@ -23,7 +23,8 @@ module br_multi_xfer_distributor_rr #(
     // The number of flows to distribute to. Must be at least NumSymbols.
     parameter int NumFlows = 2,
     // If 1, cover that push_sendable can be greater than push_receivable.
-    // If 0, assert that push_sendable is always less than or equal to push_receivable.
+    // If 0, disable push backpressure coverage. By default, this also
+    // asserts that push_sendable is no greater than push_receivable.
     parameter bit EnableCoverPushBackpressure = 1,
     // If 1, cover that there are more pop flows ready to accept than
     // sendable symbols.
@@ -36,6 +37,9 @@ module br_multi_xfer_distributor_rr #(
     // If 1, assert that push_sendable is 0 at the end of simulation.
     parameter bit EnableAssertFinalNotSendable = 1,
 
+    // If 1, assert that push-side backpressure is impossible.
+    // Can only be enabled if EnableCoverPushBackpressure is disabled.
+    parameter bit EnableAssertNoPushBackpressure = !EnableCoverPushBackpressure,
     localparam int CountWidth = $clog2(NumSymbols + 1)
 ) (
     input logic clk,
@@ -62,6 +66,7 @@ module br_multi_xfer_distributor_rr #(
       .SymbolWidth(SymbolWidth),
       .NumFlows(NumFlows),
       .EnableCoverPushBackpressure(EnableCoverPushBackpressure),
+      .EnableAssertNoPushBackpressure(EnableAssertNoPushBackpressure),
       .EnableAssertPushDataStability(EnableAssertPushDataStability),
       .EnableCoverMorePopReadyThanSendable(EnableCoverMorePopReadyThanSendable),
       .EnableAssertFinalNotSendable(EnableAssertFinalNotSendable)
