@@ -1,7 +1,6 @@
 load("@bazel_skylib//rules:diff_test.bzl", "diff_test")
 load("@bazel_skylib//rules:write_file.bzl", "write_file")
 load("@rules_hdl//verilog:providers.bzl", "verilog_library")
-load("@rules_shell//shell:sh_binary.bzl", "sh_binary")
 
 def gen_shared_fifo(
         name,
@@ -88,10 +87,6 @@ def shared_fifo_verilog_library(
         srcs = [":gen_" + name + "_sv"],
         outs = ["gen_" + name + "_formatted.sv"],
         cmd = """
-        set -e
-        if [[ -n "$$VERILOG_RUNNER_EDA_TOOLS_ENV_SETUP" ]]; then
-            source "$$VERILOG_RUNNER_EDA_TOOLS_ENV_SETUP" >/dev/null
-        fi
         verible-verilog-format $(location :gen_{name}_sv) > $(@D)/gen_{name}_formatted.sv
         """.format(name = name),
     )
@@ -109,7 +104,7 @@ def shared_fifo_verilog_library(
             "cp -fv bazel-bin/fifo/rtl/gen_" + name + "_formatted.sv fifo/rtl/" + src,
         ],
     )
-    sh_binary(
+    native.sh_binary(
         name = "update_" + name,
         srcs = [":update_" + name + ".sh"],
         data = [

@@ -1,7 +1,6 @@
 # SPDX-License-Identifier: Apache-2.0
 
 load("@python_versions//3.12:defs.bzl", compile_pip_requirements_3_12 = "compile_pip_requirements")
-load("@rules_python//python:defs.bzl", "py_test")
 
 compile_pip_requirements_3_12(
     name = "requirements_3_12",
