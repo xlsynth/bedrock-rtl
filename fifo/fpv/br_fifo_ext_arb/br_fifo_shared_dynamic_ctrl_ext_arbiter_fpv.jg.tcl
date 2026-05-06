@@ -12,6 +12,8 @@ assume -name no_data_ram_rd_data_valid {rst |-> data_ram_rd_data_valid == 'd0}
 assume -name no_ptr_ram_rd_data_valid {rst |-> ptr_ram_rd_data_valid == 'd0}
 array set param_list [get_design_info -list parameter]
 set NumReadPorts $param_list(NumReadPorts)
+set DataRamReadLatency $param_list(DataRamReadLatency)
+set RegisterPopOutputs $param_list(RegisterPopOutputs)
 for {set i 0} {$i < $NumReadPorts} {incr i} {
   assume -name grant_onehot_during_reset_$i "\$onehot0(arb_grant\[$i\])"
 }
@@ -30,6 +32,13 @@ set_prove_time_limit 600s
 # ready to hold until valid is asserted.
 # TODO(zhemao): Find a way to disable in RTL
 cover -disable *br_flow_fork_head.br_flow_checks_valid_data_impl.*valid_unstable_c
+
+# DataRamReadLatency=0 and RegisterPopOutputs=0 selects the no-staging-buffer
+# path. There, pop_valid is gated by pop_ready through the RAM-read fork, so
+# the internal pop-side backpressure cover is structurally unreachable.
+if {$DataRamReadLatency == 0 && $RegisterPopOutputs eq "1'b0"} {
+  cover -disable *br_flow_fork_head.br_flow_checks_valid_data_impl.gen_backpressure_checks.gen_cover_without_stability.gen_per_flow*0*.backpressure_c
+}
 
 # prove command
 prove -all
