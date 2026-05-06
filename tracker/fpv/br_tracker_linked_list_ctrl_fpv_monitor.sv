@@ -86,6 +86,15 @@ module br_tracker_linked_list_ctrl_fpv_monitor #(
   `BR_ASSERT(empty_check_a, (fv_entry_used == 'd0) == empty)
   `BR_ASSERT(items_check_a, $countones(fv_entry_used) == items)
 
+  for (genvar a = 0; a < NumWritePorts; a++) begin : gen_a
+    for (genvar b = a + 1; b < NumWritePorts; b++) begin : gen_b
+      // If two write ports can fire together, they must not hit the same address.
+      `BR_ASSERT(ptr_ram_wr_conflict_a,
+                 !(ptr_ram_wr_valid[a] && ptr_ram_wr_valid[b] &&
+            (ptr_ram_wr_addr[a] == ptr_ram_wr_addr[b])))
+    end
+  end
+
   // ----------Data integrity/ordering Check----------
   // If there are multiple writes on the same cycle,
   // the order will be from least significant write port to most significant.
