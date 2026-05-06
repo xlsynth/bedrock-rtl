@@ -84,9 +84,10 @@
     "https://bcr.bazel.build/modules/rules_cc/0.0.8/MODULE.bazel": "964c85c82cfeb6f3855e6a07054fdb159aced38e99a5eecf7bce9d53990afa3e",
     "https://bcr.bazel.build/modules/rules_cc/0.0.9/MODULE.bazel": "836e76439f354b89afe6a911a7adf59a6b2518fafb174483ad78a2a2fde7b1c5",
     "https://bcr.bazel.build/modules/rules_cc/0.1.5/MODULE.bazel": "88dfc9361e8b5ae1008ac38f7cdfd45ad738e4fa676a3ad67d19204f045a1fd8",
+    "https://bcr.bazel.build/modules/rules_cc/0.2.17/MODULE.bazel": "1849602c86cb60da8613d2de887f9566a6d354a6df6d7009f9d04a14402f9a84",
+    "https://bcr.bazel.build/modules/rules_cc/0.2.17/source.json": "3832f45d145354049137c0090df04629d9c2b5493dc5c2bf46f1834040133a07",
     "https://bcr.bazel.build/modules/rules_cc/0.2.4/MODULE.bazel": "1ff1223dfd24f3ecf8f028446d4a27608aa43c3f41e346d22838a4223980b8cc",
     "https://bcr.bazel.build/modules/rules_cc/0.2.8/MODULE.bazel": "f1df20f0bf22c28192a794f29b501ee2018fa37a3862a1a2132ae2940a23a642",
-    "https://bcr.bazel.build/modules/rules_cc/0.2.8/source.json": "85087982aca15f31307bd52698316b28faa31bd2c3095a41f456afec0131344c",
     "https://bcr.bazel.build/modules/rules_foreign_cc/0.9.0/MODULE.bazel": "c9e8c682bf75b0e7c704166d79b599f93b72cfca5ad7477df596947891feeef6",
     "https://bcr.bazel.build/modules/rules_fuzzing/0.5.2/MODULE.bazel": "40c97d1144356f52905566c55811f13b299453a14ac7769dfba2ac38192337a8",
     "https://bcr.bazel.build/modules/rules_fuzzing/0.5.2/source.json": "c8b1e2c717646f1702290959a3302a178fb639d987ab61d548105019f11e527e",
@@ -128,7 +129,6 @@
     "https://bcr.bazel.build/modules/rules_python/0.28.0/MODULE.bazel": "cba2573d870babc976664a912539b320cbaa7114cd3e8f053c720171cde331ed",
     "https://bcr.bazel.build/modules/rules_python/0.31.0/MODULE.bazel": "93a43dc47ee570e6ec9f5779b2e64c1476a6ce921c48cc9a1678a91dd5f8fd58",
     "https://bcr.bazel.build/modules/rules_python/0.4.0/MODULE.bazel": "9208ee05fd48bf09ac60ed269791cf17fb343db56c8226a720fbb1cdf467166c",
-    "https://bcr.bazel.build/modules/rules_python/1.8.4/MODULE.bazel": "33e3971e66161a3e955f7a0d411a8d1f291c4ce4c561851512466f3c77ff8ece",
     "https://bcr.bazel.build/modules/rules_python/1.9.0/MODULE.bazel": "afc3a05f29f09f2d3ee95ad99a145250dab41a2b2d8d6f82cc91936b3213282c",
     "https://bcr.bazel.build/modules/rules_python/1.9.0/source.json": "3921ea0b65298d51aead5b9e4a82203d7be9b5918619b58b53f1c259f4e63169",
     "https://bcr.bazel.build/modules/rules_rust/0.69.0/MODULE.bazel": "4326fec48f2fef0d514de46346f7f77e200c82936dd08b91c9ef039fbdad5c10",
@@ -473,11 +473,11 @@
     },
     "@@rules_rust~//crate_universe:extension.bzl%crate": {
       "general": {
-        "bzlTransitiveDigest": "c6QFSol+cv2Pr+/HvtsjycT8J8Y+3K9b0uruJxlWI1s=",
+        "bzlTransitiveDigest": "OCr5A3uQGC7LSuftEK+GPg9RenuLdfbN5kTkIaJJKeo=",
         "usagesDigest": "Pn4D/X92sfnH5cbSJPwAOnTRduaxK3MJ4AkXEsp9b9Q=",
         "recordedFileInputs": {
           "@@//stitch/Cargo.toml": "a0b85ef14bad9cefbbe0e27bf7aa5f9598f3e9e5fd216b285f25e8b8e27da18b",
-          "@@//MODULE.bazel": "631f311dfb8afc249ed7e73bd99d641378ec0e67bf64d0fc2138bf92c40914df",
+          "@@//MODULE.bazel": "bfaf1e5c0ee9d21fde6dbad0cc86af881a9af8f58f76861ab355a5c99a472ebc",
           "@@//stitch/Cargo.lock": "26d74235835c12a1750a7ca46f489a6a23a4c2530d9b6892a5bbedadf56fb291",
           "@@rules_rust~~rust_host_tools~rust_host_tools//rust_host_tools": "ENOENT"
         },
@@ -3909,6 +3909,16 @@
           ],
           [
             "rules_cc~",
+            "cc_compatibility_proxy",
+            "rules_cc~~compatibility_proxy~cc_compatibility_proxy"
+          ],
+          [
+            "rules_cc~",
+            "rules_cc",
+            "rules_cc~"
+          ],
+          [
+            "rules_cc~~compatibility_proxy~cc_compatibility_proxy",
             "rules_cc",
             "rules_cc~"
           ],
@@ -3942,7 +3952,7 @@
     },
     "@@rules_rust~//crate_universe/private:internal_extensions.bzl%cu_nr": {
       "general": {
-        "bzlTransitiveDigest": "i/VmglWs9J48SsMwEXd0knMy71phbfDO5IsmL74GlyY=",
+        "bzlTransitiveDigest": "Jw7yRqjhCYRFxE/j0BzxOYxnLrq1T0sy9VeVawiV0ws=",
         "usagesDigest": "jdsFFevZIrOcSfuuZxyovS/wXbhPLIa/eBqyNOiTP98=",
         "recordedFileInputs": {},
         "recordedDirentsInputs": {},
@@ -4042,6 +4052,16 @@
           ],
           [
             "rules_cc~",
+            "cc_compatibility_proxy",
+            "rules_cc~~compatibility_proxy~cc_compatibility_proxy"
+          ],
+          [
+            "rules_cc~",
+            "rules_cc",
+            "rules_cc~"
+          ],
+          [
+            "rules_cc~~compatibility_proxy~cc_compatibility_proxy",
             "rules_cc",
             "rules_cc~"
           ],
