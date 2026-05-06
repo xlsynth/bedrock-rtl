@@ -4,8 +4,8 @@ load("@rules_python//python:defs.bzl", "py_binary", "py_library", "py_test")
 
 package(default_visibility = ["//visibility:public"])
 
-# TODO: This is a hack. We should use the py_binary target directly, but I'm not sure how to get the environment
-# to work correctly when we wrap the py_binary in a shell script that gets invoked later.
+# Generated Verilog tests invoke the source runner to keep per-test runfiles
+# small. Build-time generator actions can use the py_binary directly as a tool.
 exports_files([
     "verilog_runner.py",
     "cli.py",
@@ -37,6 +37,8 @@ py_binary(
         "plugins.py",
         "verilog_runner.py",
     ],
+    imports = ["."],
+    legacy_create_init = False,
     deps = [
         ":util",
     ],
