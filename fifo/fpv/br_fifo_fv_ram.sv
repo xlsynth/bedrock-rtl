@@ -65,6 +65,15 @@ module br_fifo_fv_ram #(
     end
   end
 
+  // ----------FV assertions----------
+  for (genvar a = 0; a < NumWritePorts; a++) begin : gen_wr_conflict_a
+    for (genvar b = a + 1; b < NumWritePorts; b++) begin : gen_wr_conflict_b
+      // If two write ports can fire together, they must not hit the same address.
+      `BR_ASSERT(wr_conflict_a,
+                 !(ram_wr_valid[a] && ram_wr_valid[b] && (ram_wr_addr[a] == ram_wr_addr[b])))
+    end
+  end
+
   // ----------wolper coloring invariant----------
   if (WolperColorEn) begin : gen_invariant
     `BR_ASSERT(fv_invariant_at_most_two_ones_a, $countones(fv_magic_col) <= 2)
