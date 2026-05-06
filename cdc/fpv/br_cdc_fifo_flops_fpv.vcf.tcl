@@ -63,4 +63,4 @@ fvassume -env no_push_valid_during_reset -expr {push_rst |-> push_valid == 'd0} 
 report_fv_complexity
 
 #run properties
-check_fv
+check_fv -block
