@@ -1,4 +1,0 @@
-# Ignore Bazel convenience symlinks if they are present in the workspace.
-bazel-bin
-bazel-out
-bazel-testlogs
