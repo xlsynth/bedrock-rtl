@@ -33,53 +33,32 @@ fvassume pop_clk_live -expr {!pop_clk |-> s_eventually $rose(pop_clk)} -clock cl
 set_change_at -internal -clock push_clk -posedge {push_valid push_data push_rst}
 set_change_at -internal -clock pop_clk -posedge {pop_ready pop_rst}
 
-## Assumptions mirrored from Jasper Tcl
-create_reset rst -sense high
-create_reset push_rst -sense high
-create_reset pop_rst -sense high
+# Declare system reset
+create_reset rst -sync -value high
+
+# These reset-domain constraints must be in place before sim_run to affect
+# reset-state computation. Normal temporal fvassume properties only apply
+# after sim_save_reset.
+fvassume env_assume_1 -env -expr {!rst || push_rst}
+fvassume env_assume_2 -env -expr {!rst || pop_rst}
+sim_force push_rst -apply 1'b1
+sim_force pop_rst -apply 1'b1
 sim_run -stable
+sim_release push_rst
+sim_release pop_rst
+# push_rst and pop_rst can deassert any time in random order
+fvassume env_assume_3 -expr {!push_rst |=> !push_rst} -clock clk
+fvassume env_assume_4 -expr {!pop_rst |=> !pop_rst} -clock clk
+fvassume env_assume_5 -expr {s_eventually !push_rst} -clock clk
+fvassume env_assume_6 -expr {s_eventually !pop_rst} -clock clk
 
-#fvassume delay_rst -expr {rst} -clock clk -depth 1
-#fvassume deassert_rst -expr {##1 !rst} -clock clk
-#fvassume env_assume_1 -expr {rst |-> push_rst} -clock clk
-#fvassume env_assume_2 -expr {rst |-> pop_rst} -clock clk
-#fvassume env_assume_3 -expr {!push_rst |=> !push_rst} -clock clk
-#fvassume env_assume_4 -expr {!pop_rst |=> !pop_rst} -clock clk
-#fvassume env_assume_5 -expr {s_eventually !push_rst} -clock clk
-#fvassume env_assume_6 -expr {s_eventually !pop_rst} -clock clk
-
-#set_constant rst -value 1'b0
-#set_constant push_rst -value 1'b0
-#set_constant pop_rst -value 1'b0
-#sim_force rst -apply 1
-#sim_run 5
-#sim_force push_rst -apply 1
-#sim_run 5
-#sim_force pop_rst -apply 1
-#sim_run -stable
-#sim_run 100
-
-#sim_force rst -apply 0
-#sim_run 5
-#sim_force push_rst -apply 0
-#sim_run 5
-#sim_force pop_rst -apply 0
-
+# unitialized flop will be initialized to 0
+# Then we don't have to wait for long reset sequence before FV can start checking properties
 sim_set_state -uninitialized -apply 0
 sim_save_reset
 
 # primary input control signal should be legal during reset
-#fvassume no_push_valid_during_reset -expr {push_rst |-> push_valid == 'd0} -clock push_clk
-
-# overlap_cycles is not initialized, so it becomes a random value in FV.
-# add assumption to force it to zero during first system_clock cycle.
-#fvassume push_overlap_cycles_init -expr {dut.br_cdc_fifo_ctrl_1r1w.br_cdc_fifo_ctrl_push_1r1w.br_cdc_fifo_push_ctrl.br_cdc_fifo_push_flag_mgr.br_cdc_fifo_reset_overlap_checks.overlap_cycles == 'd0} -clock clk -depth 1
-#fvassume pop_overlap_cycles_init -expr {dut.br_cdc_fifo_ctrl_1r1w.br_cdc_fifo_ctrl_pop_1r1w_inst.br_cdc_fifo_pop_ctrl.br_cdc_fifo_pop_flag_mgr.br_cdc_fifo_reset_overlap_checks.overlap_cycles == 'd0} -clock clk -depth 1
-
-# push_count_gray is not initialized, so it becomes a random value in FV.
-# When pop_rst falls, constrain the first push-count bit entering the pop-side
-# CDC synchronizer to start at zero.
-#fvassume push_count_gray_init -expr {$fell(pop_rst) |-> dut.br_cdc_fifo_ctrl_1r1w.br_cdc_fifo_ctrl_pop_1r1w_inst.br_cdc_fifo_gray_count_sync_push2pop.gen_cdc_sync[1].br_cdc_bit_toggle_inst.br_gate_cdc_sync.in_d == 'd0} -clock pop_clk
+fvassume -env no_push_valid_during_reset -expr {push_rst |-> push_valid == 'd0} -clock push_clk
 
 report_fv_complexity
 
