@@ -120,7 +120,7 @@ Writes FPV files and run scripts into a tarball for independent execution outsid
 | <a id="rule_verilog_fpv_sandbox-top"></a>top |  The top-level module; if not provided and there exists one dependency, then defaults to that dep's label name.   | String | optional |  `""`  |
 | <a id="rule_verilog_fpv_sandbox-verilog_runner_data"></a>verilog_runner_data |  Additional Verilog Runner files needed at runtime.   | <a href="https://bazel.build/concepts/labels">List of labels</a> | optional |  `["@bedrock-rtl//python/verilog_runner:verilog_runner_data"]`  |
 | <a id="rule_verilog_fpv_sandbox-verilog_runner_plugins"></a>verilog_runner_plugins |  Verilog runner plugins to load from this workspace, in addition to those loaded from VERILOG_RUNNER_PLUGIN_PATH.   | <a href="https://bazel.build/concepts/labels">List of labels</a> | optional |  `["@bedrock-rtl//python/verilog_runner/plugins:iverilog.py"]`  |
-| <a id="rule_verilog_fpv_sandbox-verilog_runner_tool"></a>verilog_runner_tool |  The Verilog Runner tool to use.   | <a href="https://bazel.build/concepts/labels">Label</a> | optional |  `"@bedrock-rtl//python/verilog_runner:verilog_runner.py"`  |
+| <a id="rule_verilog_fpv_sandbox-verilog_runner_tool"></a>verilog_runner_tool |  The Verilog Runner tool to use.   | <a href="https://bazel.build/concepts/labels">Label</a> | optional |  `"@bedrock-rtl//python/verilog_runner"`  |
 
 
 <a id="rule_verilog_fpv_test"></a>
@@ -332,7 +332,7 @@ Returns a depset of all Verilog source or header files in the transitive closure
 load("@bedrock-rtl//bazel:verilog.bzl", "verilog_elab_and_lint_test_suite")
 
 verilog_elab_and_lint_test_suite(<a href="#verilog_elab_and_lint_test_suite-name">name</a>, <a href="#verilog_elab_and_lint_test_suite-top">top</a>, <a href="#verilog_elab_and_lint_test_suite-deps">deps</a>, <a href="#verilog_elab_and_lint_test_suite-defines">defines</a>, <a href="#verilog_elab_and_lint_test_suite-params">params</a>, <a href="#verilog_elab_and_lint_test_suite-elab_tool">elab_tool</a>, <a href="#verilog_elab_and_lint_test_suite-lint_tool">lint_tool</a>,
-                                 <a href="#verilog_elab_and_lint_test_suite-disable_lint_rules">disable_lint_rules</a>, <a href="#verilog_elab_and_lint_test_suite-kwargs">kwargs</a>)
+                                 <a href="#verilog_elab_and_lint_test_suite-disable_lint_rules">disable_lint_rules</a>, <a href="#verilog_elab_and_lint_test_suite-kwargs">**kwargs</a>)
 </pre>
 
 Creates a suite of Verilog elaboration and lint tests for each combination of the provided parameters.
@@ -365,7 +365,7 @@ to the base name followed by the parameter key-values.
 <pre>
 load("@bedrock-rtl//bazel:verilog.bzl", "verilog_elab_test")
 
-verilog_elab_test(<a href="#verilog_elab_test-name">name</a>, <a href="#verilog_elab_test-tool">tool</a>, <a href="#verilog_elab_test-tags">tags</a>, <a href="#verilog_elab_test-kwargs">kwargs</a>)
+verilog_elab_test(<a href="#verilog_elab_test-name">name</a>, <a href="#verilog_elab_test-tool">tool</a>, <a href="#verilog_elab_test-tags">tags</a>, <a href="#verilog_elab_test-kwargs">**kwargs</a>)
 </pre>
 
 Wraps rule_verilog_elab_test with a default tool and appends extra tags.
@@ -395,7 +395,7 @@ The following extra tags are unconditionally appended to the list of tags:
 <pre>
 load("@bedrock-rtl//bazel:verilog.bzl", "verilog_fpv_test")
 
-verilog_fpv_test(<a href="#verilog_fpv_test-tool">tool</a>, <a href="#verilog_fpv_test-tags">tags</a>, <a href="#verilog_fpv_test-kwargs">kwargs</a>)
+verilog_fpv_test(<a href="#verilog_fpv_test-tool">tool</a>, <a href="#verilog_fpv_test-tags">tags</a>, <a href="#verilog_fpv_test-kwargs">**kwargs</a>)
 </pre>
 
 Wraps rule_verilog_fpv_test with a default tool and appends extra tags.
@@ -425,7 +425,7 @@ The following extra tags are unconditionally appended to the list of tags:
 load("@bedrock-rtl//bazel:verilog.bzl", "verilog_fpv_test_suite")
 
 verilog_fpv_test_suite(<a href="#verilog_fpv_test_suite-name">name</a>, <a href="#verilog_fpv_test_suite-defines">defines</a>, <a href="#verilog_fpv_test_suite-params">params</a>, <a href="#verilog_fpv_test_suite-illegal_param_combinations">illegal_param_combinations</a>, <a href="#verilog_fpv_test_suite-sandbox">sandbox</a>,
-                       <a href="#verilog_fpv_test_suite-verilog_fpv_test_func">verilog_fpv_test_func</a>, <a href="#verilog_fpv_test_suite-verilog_fpv_sandbox_func">verilog_fpv_sandbox_func</a>, <a href="#verilog_fpv_test_suite-kwargs">kwargs</a>)
+                       <a href="#verilog_fpv_test_suite-verilog_fpv_test_func">verilog_fpv_test_func</a>, <a href="#verilog_fpv_test_suite-verilog_fpv_sandbox_func">verilog_fpv_sandbox_func</a>, <a href="#verilog_fpv_test_suite-kwargs">**kwargs</a>)
 </pre>
 
 Creates a suite of Verilog fpv tests for each combination of the provided parameters.
@@ -457,7 +457,7 @@ to the base name followed by the parameter key-values.
 <pre>
 load("@bedrock-rtl//bazel:verilog.bzl", "verilog_lint_test")
 
-verilog_lint_test(<a href="#verilog_lint_test-tool">tool</a>, <a href="#verilog_lint_test-tags">tags</a>, <a href="#verilog_lint_test-kwargs">kwargs</a>)
+verilog_lint_test(<a href="#verilog_lint_test-tool">tool</a>, <a href="#verilog_lint_test-tags">tags</a>, <a href="#verilog_lint_test-kwargs">**kwargs</a>)
 </pre>
 
 Wraps rule_verilog_lint_test with a default tool and appends extra tags.
@@ -486,7 +486,7 @@ The following extra tags are unconditionally appended to the list of tags:
 <pre>
 load("@bedrock-rtl//bazel:verilog.bzl", "verilog_sim_test")
 
-verilog_sim_test(<a href="#verilog_sim_test-tool">tool</a>, <a href="#verilog_sim_test-opts">opts</a>, <a href="#verilog_sim_test-tags">tags</a>, <a href="#verilog_sim_test-waves">waves</a>, <a href="#verilog_sim_test-kwargs">kwargs</a>)
+verilog_sim_test(<a href="#verilog_sim_test-tool">tool</a>, <a href="#verilog_sim_test-opts">opts</a>, <a href="#verilog_sim_test-tags">tags</a>, <a href="#verilog_sim_test-waves">waves</a>, <a href="#verilog_sim_test-kwargs">**kwargs</a>)
 </pre>
 
 Wraps rule_verilog_sim_test with a default tool and appends extra tags.
@@ -517,7 +517,7 @@ The following extra tags are unconditionally appended to the list of tags:
 <pre>
 load("@bedrock-rtl//bazel:verilog.bzl", "verilog_sim_test_suite")
 
-verilog_sim_test_suite(<a href="#verilog_sim_test_suite-name">name</a>, <a href="#verilog_sim_test_suite-defines">defines</a>, <a href="#verilog_sim_test_suite-params">params</a>, <a href="#verilog_sim_test_suite-kwargs">kwargs</a>)
+verilog_sim_test_suite(<a href="#verilog_sim_test_suite-name">name</a>, <a href="#verilog_sim_test_suite-defines">defines</a>, <a href="#verilog_sim_test_suite-params">params</a>, <a href="#verilog_sim_test_suite-kwargs">**kwargs</a>)
 </pre>
 
 Creates a suite of Verilog sim tests for each combination of the provided parameters.
