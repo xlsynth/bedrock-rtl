@@ -60,7 +60,7 @@ module br_mux_onehot_fpv_monitor #(
     `BR_COVER_COMB(single_input_unselected_c, !select[0])
   end else begin : gen_multi_input_checks
     // When no input is selected, the OR-reduction should drive zero.
-    `BR_ASSERT_COMB(zero_select_out_a, select == '0 |-> out == '0)
+    `BR_ASSERT_COMB(zero_select_out_a, select != '0 || out == '0)
 
     // Cover the all-zero select case.
     `BR_COVER_COMB(zero_select_c, select == '0)
@@ -74,7 +74,7 @@ module br_mux_onehot_fpv_monitor #(
     for (genvar i = 0; i < NumSymbolsIn; i++) begin : gen_selected_input_checks
       if (EnableAssertSelectOnehot) begin : gen_selected_input_assert
         // Onehot selection of this lane must forward exactly this input symbol.
-        `BR_ASSERT_COMB(selected_input_out_a, select[i] |-> out == in[i])
+        `BR_ASSERT_COMB(selected_input_out_a, !select[i] || out == in[i])
       end
 
       // Cover each input lane being selected.
