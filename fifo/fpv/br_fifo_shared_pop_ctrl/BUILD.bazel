@@ -7,14 +7,31 @@ load("//bazel:verilog.bzl", "verilog_elab_test")
 package(default_visibility = ["//fifo/fpv:__subpackages__"])
 
 verilog_library(
-    name = "br_fifo_shared_pop_ctrl_fpv_monitor",
-    srcs = ["br_fifo_shared_pop_ctrl_fpv_monitor.sv"],
+    name = "br_fifo_shared_pop_ctrl_fpv_checker",
+    srcs = ["br_fifo_shared_pop_ctrl_fpv_checker.sv"],
     deps = [
-        "//fifo/rtl:br_fifo_shared_pop_ctrl",
         "//fpv/lib:fv_delay",
         "//fpv/lib:fv_valid_ready_check",
         "//macros:br_asserts",
         "//macros:br_registers",
+    ],
+)
+
+verilog_library(
+    name = "br_fifo_shared_pop_ctrl_fpv_monitor",
+    srcs = ["br_fifo_shared_pop_ctrl_fpv_monitor.sv"],
+    deps = [
+        ":br_fifo_shared_pop_ctrl_fpv_checker",
+        "//fifo/rtl:br_fifo_shared_pop_ctrl",
+    ],
+)
+
+verilog_library(
+    name = "br_fifo_shared_pop_ctrl_ext_arbiter_fpv_monitor",
+    srcs = ["br_fifo_shared_pop_ctrl_ext_arbiter_fpv_monitor.sv"],
+    deps = [
+        ":br_fifo_shared_pop_ctrl_fpv_checker",
+        "//fifo/rtl:br_fifo_shared_pop_ctrl_ext_arbiter",
     ],
 )
 

@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// Bind wrapper for the shared multi-FIFO pop-controller checker.
+// Bind wrapper for the shared multi-FIFO pop-controller checker on the ext-arbiter variant.
 
-module br_fifo_shared_pop_ctrl_fpv_monitor #(
+module br_fifo_shared_pop_ctrl_ext_arbiter_fpv_monitor #(
     parameter int NumReadPorts = 1,
     parameter int NumFifos = 1,
     parameter int Depth = 2,
@@ -11,6 +11,7 @@ module br_fifo_shared_pop_ctrl_fpv_monitor #(
     parameter bit RegisterPopOutputs = 0,
     parameter bit RegisterDeallocation = 0,
     parameter int RamReadLatency = 0,
+    parameter bit ArbiterAlwaysGrants = 1,
     localparam int AddrWidth = $clog2(Depth),
     localparam int CountWidth = $clog2(Depth + 1)
 ) (
@@ -35,7 +36,12 @@ module br_fifo_shared_pop_ctrl_fpv_monitor #(
     input logic [NumReadPorts-1:0] data_ram_rd_addr_valid,
     input logic [NumReadPorts-1:0][AddrWidth-1:0] data_ram_rd_addr,
     input logic [NumReadPorts-1:0] data_ram_rd_data_valid,
-    input logic [NumReadPorts-1:0][Width-1:0] data_ram_rd_data
+    input logic [NumReadPorts-1:0][Width-1:0] data_ram_rd_data,
+
+    input logic [NumReadPorts-1:0][NumFifos-1:0] arb_request,
+    input logic [NumReadPorts-1:0][NumFifos-1:0] arb_grant,
+    input logic [NumReadPorts-1:0][NumFifos-1:0] arb_can_grant,
+    input logic [NumReadPorts-1:0] arb_enable_priority_update
 );
 
   br_fifo_shared_pop_ctrl_fpv_checker #(
@@ -67,9 +73,9 @@ module br_fifo_shared_pop_ctrl_fpv_monitor #(
       .data_ram_rd_data
   );
 
-endmodule : br_fifo_shared_pop_ctrl_fpv_monitor
+endmodule : br_fifo_shared_pop_ctrl_ext_arbiter_fpv_monitor
 
-bind br_fifo_shared_pop_ctrl br_fifo_shared_pop_ctrl_fpv_monitor #(
+bind br_fifo_shared_pop_ctrl_ext_arbiter br_fifo_shared_pop_ctrl_ext_arbiter_fpv_monitor #(
     .NumReadPorts(NumReadPorts),
     .NumFifos(NumFifos),
     .Depth(Depth),
@@ -77,5 +83,6 @@ bind br_fifo_shared_pop_ctrl br_fifo_shared_pop_ctrl_fpv_monitor #(
     .StagingBufferDepth(StagingBufferDepth),
     .RegisterPopOutputs(RegisterPopOutputs),
     .RegisterDeallocation(RegisterDeallocation),
-    .RamReadLatency(RamReadLatency)
+    .RamReadLatency(RamReadLatency),
+    .ArbiterAlwaysGrants(ArbiterAlwaysGrants)
 ) monitor (.*);
