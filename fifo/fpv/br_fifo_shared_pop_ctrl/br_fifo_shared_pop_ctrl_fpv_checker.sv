@@ -31,6 +31,8 @@
 // - pop_empty reflects the empty state of the external RAM plus any staged pop-side data.
 // - dealloc_valid/dealloc_entry_id correspond exactly to accepted head pointers, with the
 //   configured RegisterDeallocation timing.
+// - Offered head pointers eventually get accepted, and accepted heads eventually produce
+//   a pop handshake.
 //
 // Covers:
 // - Multiple FIFOs contend for fewer read ports than FIFOs.
@@ -152,6 +154,13 @@ module br_fifo_shared_pop_ctrl_fpv_checker #(
 
     // A FIFO cannot report empty in the same cycle that it presents valid pop data.
     `BR_ASSERT(pop_empty_consistent_a, pop_valid[i] |-> !pop_empty[i])
+
+    // Deadlock check: a persistent nonempty FIFO request must eventually enter the read path.
+    `BR_ASSERT(head_ready_eventual_a, head_valid[i] |-> s_eventually head_ready[i])
+
+    // Deadlock check: once a head is accepted, its data must eventually drain to the pop side.
+    `BR_ASSERT(accepted_head_pop_hsk_eventual_a,
+               head_hs[i] |-> s_eventually (pop_valid[i] && pop_ready[i]))
 
     // Exercise the pop interface for every logical FIFO.
     `BR_COVER(pop_hsk_c, pop_valid[i] && pop_ready[i])

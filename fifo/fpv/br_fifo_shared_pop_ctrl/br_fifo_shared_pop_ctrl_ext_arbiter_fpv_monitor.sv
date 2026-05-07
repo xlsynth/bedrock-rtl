@@ -73,6 +73,19 @@ module br_fifo_shared_pop_ctrl_ext_arbiter_fpv_monitor #(
       .data_ram_rd_data
   );
 
+  br_fifo_shared_pop_ctrl_ext_arbiter_fpv_checker #(
+      .NumReadPorts(NumReadPorts),
+      .NumFifos(NumFifos),
+      .ArbiterAlwaysGrants(ArbiterAlwaysGrants)
+  ) ext_arb_checker_inst (
+      .clk,
+      .rst,
+      .arb_request,
+      .arb_grant,
+      .arb_can_grant,
+      .arb_enable_priority_update
+  );
+
 endmodule : br_fifo_shared_pop_ctrl_ext_arbiter_fpv_monitor
 
 bind br_fifo_shared_pop_ctrl_ext_arbiter br_fifo_shared_pop_ctrl_ext_arbiter_fpv_monitor #(
