@@ -8,10 +8,20 @@ package(default_visibility = ["//fifo/fpv:__subpackages__"])
 
 # Shared pop controller checkers
 verilog_library(
+    name = "br_fifo_shared_pop_ctrl_common_fpv_checker",
+    srcs = ["br_fifo_shared_pop_ctrl_common_fpv_checker.sv"],
+    deps = [
+        "//fpv/lib:fv_delay",
+        "//macros:br_asserts",
+        "//macros:br_registers",
+    ],
+)
+
+verilog_library(
     name = "br_fifo_shared_pop_ctrl_fpv_checker",
     srcs = ["br_fifo_shared_pop_ctrl_fpv_checker.sv"],
     deps = [
-        "//fpv/lib:fv_delay",
+        ":br_fifo_shared_pop_ctrl_common_fpv_checker",
         "//fpv/lib:fv_valid_ready_check",
         "//macros:br_asserts",
         "//macros:br_registers",
@@ -160,4 +170,82 @@ br_verilog_fpv_test_tools_suite(
     },
     top = "br_fifo_shared_pop_ctrl_ext_arbiter",
     deps = [":br_fifo_shared_pop_ctrl_ext_arbiter_fpv_monitor"],
+)
+
+#################################################################
+# Bedrock-RTL Shared Multi-FIFO Credit Pop Controller
+verilog_library(
+    name = "br_fifo_shared_pop_ctrl_credit_fpv_checker",
+    srcs = ["br_fifo_shared_pop_ctrl_credit_fpv_checker.sv"],
+    deps = [
+        ":br_fifo_shared_pop_ctrl_common_fpv_checker",
+        "//fifo/fpv:br_pop_credit_fpv_monitor",
+        "//fpv/lib:fv_valid_ready_check",
+        "//macros:br_asserts",
+        "//macros:br_registers",
+    ],
+)
+
+verilog_library(
+    name = "br_fifo_shared_pop_ctrl_credit_fpv_monitor",
+    srcs = ["br_fifo_shared_pop_ctrl_credit_fpv_monitor.sv"],
+    deps = [
+        ":br_fifo_shared_pop_ctrl_credit_fpv_checker",
+        "//fifo/rtl:br_fifo_shared_pop_ctrl_credit",
+    ],
+)
+
+verilog_elab_test(
+    name = "br_fifo_shared_pop_ctrl_credit_fpv_monitor_elab_test",
+    custom_tcl_header = "//:elab_test_jg_custom_header.verific.tcl",
+    tool = "verific",
+    deps = [":br_fifo_shared_pop_ctrl_credit_fpv_monitor"],
+)
+
+br_verilog_fpv_test_tools_suite(
+    name = "br_fifo_shared_pop_ctrl_credit_test_port",
+    elab_opts = [
+        "-parameter Depth 5",
+        "-parameter PopMaxCredits 2",
+    ],
+    params = {
+        "NumFifos": [
+            "2",
+            "4",
+        ],
+        "NumReadPorts": [
+            "1",
+            "2",
+        ],
+    },
+    tools = {
+        "jg": "br_fifo_shared_pop_ctrl_credit_fpv.jg.tcl",
+    },
+    top = "br_fifo_shared_pop_ctrl_credit",
+    deps = [":br_fifo_shared_pop_ctrl_credit_fpv_monitor"],
+)
+
+br_verilog_fpv_test_tools_suite(
+    name = "br_fifo_shared_pop_ctrl_credit_test_latency",
+    elab_opts = [
+        "-parameter Depth 5",
+        "-parameter NumFifos 2",
+        "-parameter NumReadPorts 1",
+        "-parameter PopMaxCredits 2",
+    ],
+    params = {
+        "RamReadLatency": [
+            "0",
+            "1",
+        ],
+        "RegisterDeallocation": [
+            "0",
+            "1",
+        ],
+    },
+    tools = {
+        "jg": "br_fifo_shared_pop_ctrl_credit_fpv.jg.tcl",
+    },
+    top = "br_fifo_shared_pop_ctrl_credit",
+    deps = [":br_fifo_shared_pop_ctrl_credit_fpv_monitor"],
 )
