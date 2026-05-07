@@ -22,6 +22,10 @@ module br_gates_test;
   logic out_xor2;
   logic out_mux;
   logic out_clk_mux;
+  logic cdc_clk;
+  logic cdc_arst;
+  logic cdc_srst;
+  logic cdc_srst_stages;
 
   `BR_GATE_BUF(out_buf, in0)
   `BR_GATE_CLK_BUF(out_clk_buf, in0)
@@ -32,6 +36,8 @@ module br_gates_test;
   `BR_GATE_XOR2(out_xor2, in0, in1)
   `BR_GATE_MUX2(out_mux, in0, in1, mux_sel)
   `BR_GATE_CLK_MUX2(out_clk_mux, in0, in1, mux_sel)
+  `BR_GATE_CDC_RST_SYNC(cdc_srst, cdc_arst, cdc_clk)
+  `BR_GATE_CDC_RST_SYNC_STAGES(cdc_srst_stages, cdc_arst, cdc_clk, 2)
 
 
   `BR_ASSERT_COMB(out_buf_check, out_buf == in0)
@@ -49,6 +55,8 @@ module br_gates_test;
     in0 = 1'b0;
     in1 = 1'b0;
     mux_sel = 1'b0;
+    cdc_clk = 1'b0;
+    cdc_arst = 1'b0;
 
     #5 in0 = 1'b1;
     #5 mux_sel = 1'b1;
