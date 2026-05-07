@@ -136,7 +136,7 @@ br_gate_cdc_sync_arst #(__stages__) br_gate_cdc_sync_arst_``__out__`` ( \
 
 // Reset Synchronizer
 `define BR_GATE_CDC_RST_SYNC(__srst__, __arst__, __clk__) \
-br_cdc_rst_sync #(__stages__) br_cdc_rst_sync_``__srst__`` ( \
+br_cdc_rst_sync br_cdc_rst_sync_``__srst__`` ( \
     .clk(__clk__), \
     .arst(__arst__), \
     .srst(__srst__) \
