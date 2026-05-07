@@ -222,6 +222,7 @@ verilog_library(
     deps = [
         ":br_asserts",
         ":br_gates",
+        "//cdc/rtl:br_cdc_rst_sync",
         "//gate/rtl:br_gate_mock",
     ],
 )
