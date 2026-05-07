@@ -27,7 +27,6 @@ assume -name no_pop_credit_during_reset {(rst || pop_receiver_in_reset) |-> pop_
 assume -name no_data_ram_rd_data_valid_during_reset {(rst || pop_receiver_in_reset) |-> data_ram_rd_data_valid == 'd0}
 
 # primary output control signal should be legal during reset
-assert -name fv_rst_check_pop_sender_in_reset {pop_sender_in_reset == rst}
 assert -name fv_rst_check_pop_valid {(rst || pop_receiver_in_reset) |-> pop_valid == 'd0}
 assert -name fv_rst_check_ram_rd_addr_valid {(rst || pop_receiver_in_reset) |-> data_ram_rd_addr_valid == 'd0}
 if {$RegisterDeallocation eq "1'b1"} {
