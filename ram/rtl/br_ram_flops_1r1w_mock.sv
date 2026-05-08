@@ -227,9 +227,32 @@ module br_ram_flops_1r1w_mock #(
   // Read port
   assign mem_rd_data_valid = mem_rd_addr_valid;
   if (TileEnableBypass) begin : gen_bypass
-    // ri lint_check_waive VAR_INDEX_READ
-    assign mem_rd_data =
-      (mem_wr_valid && (mem_wr_addr == mem_rd_addr)) ? mem_wr_data : mem[mem_rd_addr];
+    if (EnablePartialWrite) begin : gen_partial_write_bypass
+      logic [NumWords-1:0][WordWidth-1:0] mem_wr_data_words;
+      logic [NumWords-1:0][WordWidth-1:0] mem_rd_data_words;
+      logic [NumWords-1:0][WordWidth-1:0] mem_rd_bypass_data_words;
+
+      assign mem_wr_data_words = mem_wr_data;
+      // ri lint_check_waive VAR_INDEX_READ
+      assign mem_rd_data_words = mem[mem_rd_addr];
+
+      always_comb begin
+        mem_rd_bypass_data_words = mem_rd_data_words;
+        for (int i = 0; i < NumWords; i++) begin
+          if (wr_word_en[i]) begin
+            mem_rd_bypass_data_words[i] = mem_wr_data_words[i];
+          end
+        end
+      end
+
+      assign mem_rd_data = (mem_wr_valid && (mem_wr_addr == mem_rd_addr)) ?
+                           mem_rd_bypass_data_words :
+                           mem_rd_data_words;
+    end else begin : gen_full_write_bypass
+      // ri lint_check_waive VAR_INDEX_READ
+      assign mem_rd_data =
+        (mem_wr_valid && (mem_wr_addr == mem_rd_addr)) ? mem_wr_data : mem[mem_rd_addr];
+    end
   end else begin : gen_no_bypass
     // ri lint_check_waive VAR_INDEX_READ
     assign mem_rd_data = mem[mem_rd_addr];
