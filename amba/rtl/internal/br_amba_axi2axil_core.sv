@@ -121,15 +121,17 @@ module br_amba_axi2axil_core #(
     logic [AddrWidth-1:0] base_address;  // aligned to wrap boundary
     logic [AddrWidth-1:0] wrap_mask;  // mask the wrap boundary
     logic [AddrWidth-1:0] align_mask;
+    logic [AddrWidth-1:0] align_mask;
 
     incr_address = start_addr + (index << size);  // ri lint_check_waive VAR_SHIFT
 
     unique case (br_amba::axi_burst_type_t'(burst_type))
       br_amba::AxiBurstIncr: begin
-        align_mask   = {AddrWidth{1'b1}} << size;  // ri lint_check_waive VAR_SHIFT TRUNC_LSHIFT
+        align_mask   = {AddrWidth{1'b1}} << size;  // ri lint_check_waive VAR_SHIFT
         next_address = (index == 'd0) ? start_addr : (incr_address & align_mask);
       end
       br_amba::AxiBurstWrap: begin
+        wrap_mask    = ((burst_len + 1) << size) - 1;  // ri lint_check_waive ARITH_EXTENSION VAR_SHIFT TRUNC_LSHIFT
         wrap_mask    = ((burst_len + 1) << size) - 1;  // ri lint_check_waive ARITH_EXTENSION VAR_SHIFT TRUNC_LSHIFT
         base_address = start_addr & ~wrap_mask;
         next_address = base_address | (incr_address & wrap_mask);
@@ -193,6 +195,7 @@ module br_amba_axi2axil_core #(
       .push_ready(axi_req_ready),
       .push_valid(axi_req_valid),
       .push_data({
+        axi_req_addr,
         axi_req_addr,
         axi_req_id,
         axi_req_len,
