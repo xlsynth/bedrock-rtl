@@ -7,6 +7,10 @@
 //
 // The out signal will be set to in[i] for which select[i] is 1.
 // The select must have at most one bit set.
+//
+// In the base case where NumSymbolsIn == 1, then this just
+// becomes a pass-through from `in[0]` to `out`, and `select`
+// is ignored.
 
 `include "br_asserts_internal.svh"
 `include "br_unused.svh"
@@ -21,6 +25,7 @@ module br_mux_onehot #(
     // the output will be undefined and driven to X in simulation.
     parameter bit EnableAssertSelectOnehot = 1
 ) (
+    // Ignored when NumSymbolsIn == 1.
     input  logic [NumSymbolsIn-1:0]                  select,
     input  logic [NumSymbolsIn-1:0][SymbolWidth-1:0] in,
     output logic [ SymbolWidth-1:0]                  out
