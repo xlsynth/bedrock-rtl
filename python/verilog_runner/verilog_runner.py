@@ -8,6 +8,8 @@ import logging
 import os
 import sys
 
+sys.path.insert(0, os.path.dirname(__file__))
+
 from cli import Elab, Lint, Sim, Fpv, add_common_args, parse_params
 from plugins import discover_plugins
 from util import print_greeting, init_root_logger
