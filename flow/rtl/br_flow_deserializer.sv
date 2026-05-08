@@ -32,9 +32,7 @@
 //
 // The pop interface sets pop_last to 1 when the packet deserialization is complete (as indicated by push_last).
 // If the total number of push flits in the packet is not divisible by DeserializationRatio (i.e., push_last comes
-// "early"), then the last pop flit is partially populated and the remaining space is filled with zeros.
-// If DeserializeMostSignificantFirst is 1, then the zero-filled values occupy the least-significant portion of
-// the final pop flit; otherwise, they occupy the most-significant portion.
+// "early"), then the last pop flit is partially populated and the remaining tail bits are don't-care values.
 //
 // The pop_last_dont_care_count port indicates how much of the last pop_data flit contains "don't care"
 // values. The don't care values are always in contiguous multiples of PopWidth bits. If DeserializeMostSignificantFirst is 1,
