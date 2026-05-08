@@ -51,6 +51,7 @@
 //     - Ignores (drops) any incoming pop credits.
 //     - Loads the initial value for the credit counter from the credit_initial port.
 //     - Sets push_ready to 0.
+//   - The push side must not assert push_valid while the sender or receiver is in reset.
 //
 // Multi-Flow Operation:
 //   - If NumFlows > 1, the credit sender supports multiple data flows sharing the same credit
@@ -168,6 +169,8 @@ module br_credit_sender #(
   end else begin : gen_assert_no_pop_receiver_in_reset
     `BR_ASSERT_INCL_RST_INTG(no_pop_receiver_in_reset_a, !pop_receiver_in_reset)
   end
+  `BR_ASSERT_INCL_RST_INTG(no_push_valid_in_reset_a,
+                           (rst || pop_receiver_in_reset) |-> !(|push_valid))
 
   // Rely on submodule integration checks
 
