@@ -161,20 +161,27 @@ module br_ram_flops_basic_fv_checker #(
     localparam int FvLsb = n * WordWidth;
     localparam int FvMsb = (n + 1) * WordWidth;
 
-    // verilog_lint: waive-start line-length
+    /* verilog_format: off */
     if (EnableBypass) begin : gen_bypass
+      // Same-cycle read/write hazards must return the merged memory value for known words.
       `BR_ASSERT_CR(data_integrity_bypass_a,
-                    fv_rd_valid && fv_wr_valid && fv_wr_word_en[n] |-> ##Latency fv_rd_data[FvMsb-1:FvLsb] == fv_mem_nxt_d[FvMsb-1:FvLsb],
+                    fv_rd_valid && fv_wr_valid &&
+                    (fv_wr_word_en[n] || fv_word_written_d[n] || EnableReset) |->
+                    ##Latency fv_rd_data[FvMsb-1:FvLsb] == fv_mem_nxt_d[FvMsb-1:FvLsb],
                     rd_clk, rd_rst)
+      // Reads without a same-cycle write must return the previously stored word.
       `BR_ASSERT_CR(data_integrity_a,
-                    fv_rd_valid && !fv_wr_valid && fv_word_written_d[n] |-> ##Latency fv_rd_data[FvMsb-1:FvLsb] == fv_mem_d[FvMsb-1:FvLsb],
+                    fv_rd_valid && !fv_wr_valid && fv_word_written_d[n] |->
+                    ##Latency fv_rd_data[FvMsb-1:FvLsb] == fv_mem_d[FvMsb-1:FvLsb],
                     rd_clk, rd_rst)
     end else begin : gen_no_bypass
+      // Non-bypass reads must return the previously stored word.
       `BR_ASSERT_CR(data_integrity_a,
-                    fv_rd_valid && fv_word_written_d[n] |-> ##Latency fv_rd_data[FvMsb-1:FvLsb] == fv_mem_d[FvMsb-1:FvLsb],
+                    fv_rd_valid && fv_word_written_d[n] |->
+                    ##Latency fv_rd_data[FvMsb-1:FvLsb] == fv_mem_d[FvMsb-1:FvLsb],
                     rd_clk, rd_rst)
     end
-    // verilog_lint: waive-stop line-length
+    /* verilog_format: on */
   end
 
 endmodule
