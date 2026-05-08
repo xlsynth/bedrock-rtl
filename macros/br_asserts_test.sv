@@ -118,6 +118,12 @@ module br_asserts_test;
   `BR_ASSERT_COMB(inputs_nonzero_a, (a != 0) || (b != 0))
   `BR_ASSERT_COMB_FPV(inputs_nonzero_fpv_a, (a != 0) || (b != 0))
 
+  // Use BR_ASSUME_COMB
+  // Not really useful (redundant with assert above) but it
+  // should work like an assert when not being used in formal
+  `BR_ASSUME_COMB(inputs_nonzero_m, (a != 0) || (b != 0))
+  `BR_ASSUME_COMB_FPV(inputs_nonzero_fpv_m, (a != 0) || (b != 0))
+
   // Use BR_COVER
   `BR_COVER(sum_overflow_a, sum > 15)
   `BR_COVER_FPV(sum_overflow_fpv_a, sum > 15)
