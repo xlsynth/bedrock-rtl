@@ -94,6 +94,10 @@ module br_amba_axi2axil_fpv_monitor #(
   localparam int FvArReqPayloadWidth = AddrWidth + br_amba::AxiBurstLenWidth +
       br_amba::AxiBurstSizeWidth + br_amba::AxiBurstTypeWidth + br_amba::AxiProtWidth + ARUserWidth;
 
+  // Predict the AXI-Lite address for a split beat from one AXI burst.
+  // INCR keeps the original address on beat 0, then aligns later beats to the
+  // transfer size. WRAP applies the wrap boundary. FIXED keeps the start
+  // address for every beat.
   function automatic logic [AddrWidth-1:0] fv_axil_addr(
       input logic [AddrWidth-1:0] start_addr, input logic [br_amba::AxiBurstSizeWidth-1:0] size,
       input logic [br_amba::AxiBurstLenWidth-1:0] burst_len,
@@ -300,9 +304,17 @@ module br_amba_axi2axil_fpv_monitor #(
 
   `BR_REGLI(fv_aw_req_index, fv_aw_req_index_next, axil_aw_handshake, '0)
 
+  // The write-side prediction FIFO must have space whenever the DUT accepts a
+  // new AXI AW request, unless the same cycle consumes the final predicted beat.
   `BR_ASSERT(aw_req_fifo_ready_a,
              axi_aw_handshake |-> (!fv_aw_req_fifo_full || fv_aw_req_fifo_pop_ready))
+
+  // Every AXI-Lite AW produced by the DUT must correspond to an accepted AXI AW
+  // burst currently tracked by the prediction model.
   `BR_ASSERT(axil_aw_has_axi_aw_a, axil_awvalid |-> fv_aw_req_valid)
+
+  // Check the split AXI-Lite AW payload against the predicted burst beat. The
+  // address calculation is where narrow and unaligned burst behavior is verified.
   /* verilog_format: off */
   `BR_ASSERT(
       axil_aw_payload_a,
@@ -341,9 +353,17 @@ module br_amba_axi2axil_fpv_monitor #(
 
   `BR_REGLI(fv_ar_req_index, fv_ar_req_index_next, axil_ar_handshake, '0)
 
+  // The read-side prediction FIFO must have space whenever the DUT accepts a
+  // new AXI AR request, unless the same cycle consumes the final predicted beat.
   `BR_ASSERT(ar_req_fifo_ready_a,
              axi_ar_handshake |-> (!fv_ar_req_fifo_full || fv_ar_req_fifo_pop_ready))
+
+  // Every AXI-Lite AR produced by the DUT must correspond to an accepted AXI AR
+  // burst currently tracked by the prediction model.
   `BR_ASSERT(axil_ar_has_axi_ar_a, axil_arvalid |-> fv_ar_req_valid)
+
+  // Check the split AXI-Lite AR payload against the predicted burst beat. The
+  // address calculation is where narrow and unaligned burst behavior is verified.
   /* verilog_format: off */
   `BR_ASSERT(
       axil_ar_payload_a,
@@ -351,16 +371,24 @@ module br_amba_axi2axil_fpv_monitor #(
                         {fv_expected_axil_araddr, fv_arprot, fv_aruser}))
   /* verilog_format: on */
 
+  // Cover the newly supported multi-beat narrow bursts so the formal run shows
+  // the assumptions no longer exclude them.
   `BR_COVER(narrow_write_burst_c, axi_aw_handshake && (axi_awsize < $clog2(StrobeWidth)
             ) && (axi_awlen != '0))
   `BR_COVER(narrow_read_burst_c, axi_ar_handshake && (axi_arsize < $clog2(StrobeWidth)
             ) && (axi_arlen != '0))
+
+  // Cover unaligned INCR bursts, where the first split request keeps the
+  // original unaligned address and later requests align to the transfer size.
   `BR_COVER(unaligned_incr_write_burst_c,
             axi_aw_handshake && (axi_awburst == br_amba::AxiBurstIncr) && fv_unaligned_addr(
             axi_awaddr, axi_awsize) && (axi_awlen != '0))
   `BR_COVER(unaligned_incr_read_burst_c,
             axi_ar_handshake && (axi_arburst == br_amba::AxiBurstIncr) && fv_unaligned_addr(
             axi_araddr, axi_arsize) && (axi_arlen != '0))
+
+  // Cover unaligned FIXED bursts, where every split request should keep the
+  // original address unchanged.
   `BR_COVER(unaligned_fixed_write_burst_c,
             axi_aw_handshake && (axi_awburst == br_amba::AxiBurstFixed) && fv_unaligned_addr(
             axi_awaddr, axi_awsize) && (axi_awlen != '0))
