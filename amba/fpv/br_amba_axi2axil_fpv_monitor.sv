@@ -93,45 +93,57 @@ module br_amba_axi2axil_fpv_monitor #(
       br_amba::AxiBurstSizeWidth + br_amba::AxiBurstTypeWidth + br_amba::AxiProtWidth + AWUserWidth;
   localparam int FvArReqPayloadWidth = AddrWidth + br_amba::AxiBurstLenWidth +
       br_amba::AxiBurstSizeWidth + br_amba::AxiBurstTypeWidth + br_amba::AxiProtWidth + ARUserWidth;
+  localparam int FvAddrCalcWidth = AddrWidth + br_amba::AxiBurstLenWidth +
+      br_amba::AxiBurstSizeWidth + 1;
 
-  // Predict the AXI-Lite address for a split beat from one AXI burst.
-  // INCR keeps the original address on beat 0, then aligns later beats to the
-  // transfer size. WRAP applies the wrap boundary. FIXED keeps the start
-  // address for every beat.
-  function automatic logic [AddrWidth-1:0] fv_axil_addr(
-      input logic [AddrWidth-1:0] start_addr, input logic [br_amba::AxiBurstSizeWidth-1:0] size,
+  // Step the expected AXI-Lite address after one split beat has completed. Beat
+  // 0 is checked directly against the original AXI address; this helper only
+  // advances from the previously expected AXI-Lite address.
+  function automatic logic [AddrWidth-1:0] fv_next_axil_addr(
+      input logic [AddrWidth-1:0] current_addr, input logic [AddrWidth-1:0] start_addr,
+      input logic [br_amba::AxiBurstSizeWidth-1:0] size,
       input logic [br_amba::AxiBurstLenWidth-1:0] burst_len,
-      input logic [br_amba::AxiBurstTypeWidth-1:0] burst_type,
-      input logic [br_amba::AxiBurstLenWidth-1:0] index);
-    logic [AddrWidth-1:0] incr_addr;
-    logic [AddrWidth-1:0] wrap_base_addr;
-    logic [AddrWidth-1:0] wrap_mask;
-    logic [AddrWidth-1:0] align_mask;
+      input logic [br_amba::AxiBurstTypeWidth-1:0] burst_type);
+    logic [FvAddrCalcWidth-1:0] beat_bytes;
+    logic [FvAddrCalcWidth-1:0] stepped_addr;
+    logic [FvAddrCalcWidth-1:0] wrap_span;
+    logic [FvAddrCalcWidth-1:0] wrap_base_addr;
+    logic [FvAddrCalcWidth-1:0] wrap_limit_addr;
 
-    incr_addr = start_addr + (index << size);
+    beat_bytes   = FvAddrCalcWidth'(1'b1) << size;
+    stepped_addr = FvAddrCalcWidth'(current_addr) + beat_bytes;
 
     unique case (br_amba::axi_burst_type_t'(burst_type))
       br_amba::AxiBurstIncr: begin
-        align_mask   = {AddrWidth{1'b1}} << size;
-        fv_axil_addr = (index == 'd0) ? start_addr : (incr_addr & align_mask);
+        // INCR moves forward by one transfer size. After beat 0, AXI aligns
+        // the next address to the transfer-size boundary; compute that as
+        // address minus its transfer-size remainder.
+        fv_next_axil_addr = stepped_addr - (stepped_addr % beat_bytes);
       end
       br_amba::AxiBurstWrap: begin
-        wrap_mask = ((burst_len + 1'b1) << size) - 1'b1;
-        wrap_base_addr = start_addr & ~wrap_mask;
-        fv_axil_addr = wrap_base_addr | (incr_addr & wrap_mask);
+        // WRAP moves within a window of (burst length + 1) transfers. Compute
+        // the window base and limit with division-style remainder arithmetic,
+        // then wrap back to the base when the next step reaches the limit.
+        wrap_span = (FvAddrCalcWidth'(burst_len) + 1'b1) * beat_bytes;
+        wrap_base_addr = FvAddrCalcWidth'(start_addr) - (FvAddrCalcWidth'(start_addr) % wrap_span);
+        wrap_limit_addr = wrap_base_addr + wrap_span;
+        fv_next_axil_addr = (stepped_addr >= wrap_limit_addr) ?
+            (wrap_base_addr + (stepped_addr - wrap_limit_addr)) : stepped_addr;
       end
       default: begin
-        fv_axil_addr = start_addr;
+        // FIXED, and any unsupported burst value that the protocol checker will
+        // reject elsewhere, keeps the address unchanged in this reference model.
+        fv_next_axil_addr = current_addr;
       end
     endcase
   endfunction
 
   function automatic logic fv_unaligned_addr(input logic [AddrWidth-1:0] addr,
                                              input logic [br_amba::AxiBurstSizeWidth-1:0] size);
-    logic [AddrWidth-1:0] mask;
+    logic [AddrWidth-1:0] beat_bytes;
 
-    mask = (AddrWidth'(1'b1) << size) - 1'b1;
-    fv_unaligned_addr = |(addr & mask);
+    beat_bytes = AddrWidth'(1'b1) << size;
+    fv_unaligned_addr = (addr % beat_bytes) != '0;
   endfunction
 
   // Track split AXI-Lite B responses for each AXI write burst and check that
@@ -253,6 +265,8 @@ module br_amba_axi2axil_fpv_monitor #(
   logic [br_amba::AxiProtWidth-1:0] fv_awprot;
   logic [AWUserWidth-1:0] fv_awuser;
   logic [AddrWidth-1:0] fv_expected_axil_awaddr;
+  logic [AddrWidth-1:0] fv_expected_axil_awaddr_reg;
+  logic [AddrWidth-1:0] fv_expected_axil_awaddr_next;
   logic fv_axil_aw_last;
 
   logic fv_ar_req_fifo_pop_ready;
@@ -270,6 +284,8 @@ module br_amba_axi2axil_fpv_monitor #(
   logic [br_amba::AxiProtWidth-1:0] fv_arprot;
   logic [ARUserWidth-1:0] fv_aruser;
   logic [AddrWidth-1:0] fv_expected_axil_araddr;
+  logic [AddrWidth-1:0] fv_expected_axil_araddr_reg;
+  logic [AddrWidth-1:0] fv_expected_axil_araddr_next;
   logic fv_axil_ar_last;
 
   assign fv_aw_req_fifo_push_data = {
@@ -278,12 +294,14 @@ module br_amba_axi2axil_fpv_monitor #(
   assign {fv_awaddr, fv_awlen, fv_awsize, fv_awburst, fv_awprot, fv_awuser} =
       fv_aw_req_fifo_pop_data;
   assign fv_aw_req_valid = !fv_aw_req_fifo_empty || axi_aw_handshake;
-  assign fv_expected_axil_awaddr = fv_axil_addr(
-      fv_awaddr, fv_awsize, fv_awlen, fv_awburst, fv_aw_req_index
-  );
+  assign fv_expected_axil_awaddr =
+      (fv_aw_req_index == '0) ? fv_awaddr : fv_expected_axil_awaddr_reg;
   assign fv_axil_aw_last = fv_aw_req_index == fv_awlen;
   assign fv_aw_req_fifo_pop_ready = axil_aw_handshake && fv_axil_aw_last;
   assign fv_aw_req_index_next = fv_axil_aw_last ? '0 : fv_aw_req_index + 1'b1;
+  assign fv_expected_axil_awaddr_next = fv_axil_aw_last ? '0 : fv_next_axil_addr(
+      fv_expected_axil_awaddr, fv_awaddr, fv_awsize, fv_awlen, fv_awburst
+  );
 
   fv_fifo #(
       .Depth(MaxOutstandingReqs),
@@ -303,6 +321,7 @@ module br_amba_axi2axil_fpv_monitor #(
   );
 
   `BR_REGLI(fv_aw_req_index, fv_aw_req_index_next, axil_aw_handshake, '0)
+  `BR_REGLI(fv_expected_axil_awaddr_reg, fv_expected_axil_awaddr_next, axil_aw_handshake, '0)
 
   // The write-side prediction FIFO must have space whenever the DUT accepts a
   // new AXI AW request, unless the same cycle consumes the final predicted beat.
@@ -327,12 +346,14 @@ module br_amba_axi2axil_fpv_monitor #(
   assign {fv_araddr, fv_arlen, fv_arsize, fv_arburst, fv_arprot, fv_aruser} =
       fv_ar_req_fifo_pop_data;
   assign fv_ar_req_valid = !fv_ar_req_fifo_empty || axi_ar_handshake;
-  assign fv_expected_axil_araddr = fv_axil_addr(
-      fv_araddr, fv_arsize, fv_arlen, fv_arburst, fv_ar_req_index
-  );
+  assign fv_expected_axil_araddr =
+      (fv_ar_req_index == '0) ? fv_araddr : fv_expected_axil_araddr_reg;
   assign fv_axil_ar_last = fv_ar_req_index == fv_arlen;
   assign fv_ar_req_fifo_pop_ready = axil_ar_handshake && fv_axil_ar_last;
   assign fv_ar_req_index_next = fv_axil_ar_last ? '0 : fv_ar_req_index + 1'b1;
+  assign fv_expected_axil_araddr_next = fv_axil_ar_last ? '0 : fv_next_axil_addr(
+      fv_expected_axil_araddr, fv_araddr, fv_arsize, fv_arlen, fv_arburst
+  );
 
   fv_fifo #(
       .Depth(MaxOutstandingReqs),
@@ -352,6 +373,7 @@ module br_amba_axi2axil_fpv_monitor #(
   );
 
   `BR_REGLI(fv_ar_req_index, fv_ar_req_index_next, axil_ar_handshake, '0)
+  `BR_REGLI(fv_expected_axil_araddr_reg, fv_expected_axil_araddr_next, axil_ar_handshake, '0)
 
   // The read-side prediction FIFO must have space whenever the DUT accepts a
   // new AXI AR request, unless the same cycle consumes the final predicted beat.
