@@ -89,10 +89,53 @@ module br_amba_axi2axil_fpv_monitor #(
   // ABVIP should send more than DUT to test backpressure
   localparam int MaxPending = MaxOutstandingReqs + 2;
   localparam int FvSplitCountWidth = br_amba::AxiBurstLenWidth + 1;
+  localparam int FvAwReqPayloadWidth = AddrWidth + br_amba::AxiBurstLenWidth +
+      br_amba::AxiBurstSizeWidth + br_amba::AxiBurstTypeWidth + br_amba::AxiProtWidth + AWUserWidth;
+  localparam int FvArReqPayloadWidth = AddrWidth + br_amba::AxiBurstLenWidth +
+      br_amba::AxiBurstSizeWidth + br_amba::AxiBurstTypeWidth + br_amba::AxiProtWidth + ARUserWidth;
+
+  function automatic logic [AddrWidth-1:0] fv_axil_addr(
+      input logic [AddrWidth-1:0] start_addr, input logic [br_amba::AxiBurstSizeWidth-1:0] size,
+      input logic [br_amba::AxiBurstLenWidth-1:0] burst_len,
+      input logic [br_amba::AxiBurstTypeWidth-1:0] burst_type,
+      input logic [br_amba::AxiBurstLenWidth-1:0] index);
+    logic [AddrWidth-1:0] incr_addr;
+    logic [AddrWidth-1:0] wrap_base_addr;
+    logic [AddrWidth-1:0] wrap_mask;
+    logic [AddrWidth-1:0] align_mask;
+
+    incr_addr = start_addr + (index << size);
+
+    unique case (br_amba::axi_burst_type_t'(burst_type))
+      br_amba::AxiBurstIncr: begin
+        align_mask   = {AddrWidth{1'b1}} << size;
+        fv_axil_addr = (index == 'd0) ? start_addr : (incr_addr & align_mask);
+      end
+      br_amba::AxiBurstWrap: begin
+        wrap_mask = ((burst_len + 1'b1) << size) - 1'b1;
+        wrap_base_addr = start_addr & ~wrap_mask;
+        fv_axil_addr = wrap_base_addr | (incr_addr & wrap_mask);
+      end
+      default: begin
+        fv_axil_addr = start_addr;
+      end
+    endcase
+  endfunction
+
+  function automatic logic fv_unaligned_addr(input logic [AddrWidth-1:0] addr,
+                                             input logic [br_amba::AxiBurstSizeWidth-1:0] size);
+    logic [AddrWidth-1:0] mask;
+
+    mask = (AddrWidth'(1'b1) << size) - 1'b1;
+    fv_unaligned_addr = |(addr & mask);
+  endfunction
 
   // Track split AXI-Lite B responses for each AXI write burst and check that
   // the public AXI B response reports the first non-OKAY split response.
   logic axi_aw_handshake;
+  logic axi_ar_handshake;
+  logic axil_aw_handshake;
+  logic axil_ar_handshake;
   logic axil_b_handshake;
   logic fv_awlen_fifo_push_ready;
   logic fv_awlen_fifo_pop_ready;
@@ -112,6 +155,9 @@ module br_amba_axi2axil_fpv_monitor #(
   logic fv_axil_b_final;
 
   assign axi_aw_handshake = axi_awvalid && axi_awready;
+  assign axi_ar_handshake = axi_arvalid && axi_arready;
+  assign axil_aw_handshake = axil_awvalid && axil_awready;
+  assign axil_ar_handshake = axil_arvalid && axil_arready;
   assign axil_b_handshake = axil_bvalid && axil_bready;
   assign fv_awlen_fifo_push_ready = !fv_awlen_fifo_full;
   assign fv_awlen_fifo_pop_valid = !fv_awlen_fifo_empty || axi_aw_handshake;
@@ -185,11 +231,142 @@ module br_amba_axi2axil_fpv_monitor #(
   // AXI-Lite B response for the burst is available.
   `BR_ASSERT(final_axil_b_drives_axi_b_a, fv_axil_b_final |-> axi_bvalid)
 
-  // multi-beat narrow access is NOT supported.
-  `BR_ASSUME(no_multi_beat_narrow_access_write_a, axi_awvalid && (axi_awsize != $clog2(StrobeWidth)
-                                                  ) |-> axi_awlen == 'd0)
-  `BR_ASSUME(no_multi_beat_narrow_access_read_a, axi_arvalid && (axi_arsize != $clog2(StrobeWidth)
-                                                 ) |-> axi_arlen == 'd0)
+  // Predict the split AXI-Lite AW/AR requests for each accepted AXI burst. This
+  // covers narrow bursts by stepping at 2**AxSIZE, and unaligned INCR bursts by
+  // passing the first beat address through before aligning subsequent beats.
+  logic fv_aw_req_fifo_pop_ready;
+  logic fv_aw_req_fifo_empty;
+  logic fv_aw_req_fifo_full;
+  logic fv_aw_req_valid;
+  logic [FvAwReqPayloadWidth-1:0] fv_aw_req_fifo_push_data;
+  logic [FvAwReqPayloadWidth-1:0] fv_aw_req_fifo_pop_data;
+  logic [br_amba::AxiBurstLenWidth-1:0] fv_aw_req_index;
+  logic [br_amba::AxiBurstLenWidth-1:0] fv_aw_req_index_next;
+  logic [AddrWidth-1:0] fv_awaddr;
+  logic [br_amba::AxiBurstLenWidth-1:0] fv_awlen;
+  logic [br_amba::AxiBurstSizeWidth-1:0] fv_awsize;
+  logic [br_amba::AxiBurstTypeWidth-1:0] fv_awburst;
+  logic [br_amba::AxiProtWidth-1:0] fv_awprot;
+  logic [AWUserWidth-1:0] fv_awuser;
+  logic [AddrWidth-1:0] fv_expected_axil_awaddr;
+  logic fv_axil_aw_last;
+
+  logic fv_ar_req_fifo_pop_ready;
+  logic fv_ar_req_fifo_empty;
+  logic fv_ar_req_fifo_full;
+  logic fv_ar_req_valid;
+  logic [FvArReqPayloadWidth-1:0] fv_ar_req_fifo_push_data;
+  logic [FvArReqPayloadWidth-1:0] fv_ar_req_fifo_pop_data;
+  logic [br_amba::AxiBurstLenWidth-1:0] fv_ar_req_index;
+  logic [br_amba::AxiBurstLenWidth-1:0] fv_ar_req_index_next;
+  logic [AddrWidth-1:0] fv_araddr;
+  logic [br_amba::AxiBurstLenWidth-1:0] fv_arlen;
+  logic [br_amba::AxiBurstSizeWidth-1:0] fv_arsize;
+  logic [br_amba::AxiBurstTypeWidth-1:0] fv_arburst;
+  logic [br_amba::AxiProtWidth-1:0] fv_arprot;
+  logic [ARUserWidth-1:0] fv_aruser;
+  logic [AddrWidth-1:0] fv_expected_axil_araddr;
+  logic fv_axil_ar_last;
+
+  assign fv_aw_req_fifo_push_data = {
+    axi_awaddr, axi_awlen, axi_awsize, axi_awburst, axi_awprot, axi_awuser
+  };
+  assign {fv_awaddr, fv_awlen, fv_awsize, fv_awburst, fv_awprot, fv_awuser} =
+      fv_aw_req_fifo_pop_data;
+  assign fv_aw_req_valid = !fv_aw_req_fifo_empty || axi_aw_handshake;
+  assign fv_expected_axil_awaddr = fv_axil_addr(
+      fv_awaddr, fv_awsize, fv_awlen, fv_awburst, fv_aw_req_index
+  );
+  assign fv_axil_aw_last = fv_aw_req_index == fv_awlen;
+  assign fv_aw_req_fifo_pop_ready = axil_aw_handshake && fv_axil_aw_last;
+  assign fv_aw_req_index_next = fv_axil_aw_last ? '0 : fv_aw_req_index + 1'b1;
+
+  fv_fifo #(
+      .Depth(MaxOutstandingReqs),
+      .DataWidth(FvAwReqPayloadWidth),
+      .Bypass(1)
+  ) fv_aw_req_fifo (
+      .clk,
+      .rst,
+
+      .push(axi_aw_handshake),
+      .push_data(fv_aw_req_fifo_push_data),
+
+      .pop(fv_aw_req_fifo_pop_ready),
+      .pop_data(fv_aw_req_fifo_pop_data),
+      .empty(fv_aw_req_fifo_empty),
+      .full(fv_aw_req_fifo_full)
+  );
+
+  `BR_REGLI(fv_aw_req_index, fv_aw_req_index_next, axil_aw_handshake, '0)
+
+  `BR_ASSERT(aw_req_fifo_ready_a,
+             axi_aw_handshake |-> (!fv_aw_req_fifo_full || fv_aw_req_fifo_pop_ready))
+  `BR_ASSERT(axil_aw_has_axi_aw_a, axil_awvalid |-> fv_aw_req_valid)
+  /* verilog_format: off */
+  `BR_ASSERT(
+      axil_aw_payload_a,
+      axil_awvalid |-> ({axil_awaddr, axil_awprot, axil_awuser} ==
+                        {fv_expected_axil_awaddr, fv_awprot, fv_awuser}))
+  /* verilog_format: on */
+  assign fv_ar_req_fifo_push_data = {
+    axi_araddr, axi_arlen, axi_arsize, axi_arburst, axi_arprot, axi_aruser
+  };
+  assign {fv_araddr, fv_arlen, fv_arsize, fv_arburst, fv_arprot, fv_aruser} =
+      fv_ar_req_fifo_pop_data;
+  assign fv_ar_req_valid = !fv_ar_req_fifo_empty || axi_ar_handshake;
+  assign fv_expected_axil_araddr = fv_axil_addr(
+      fv_araddr, fv_arsize, fv_arlen, fv_arburst, fv_ar_req_index
+  );
+  assign fv_axil_ar_last = fv_ar_req_index == fv_arlen;
+  assign fv_ar_req_fifo_pop_ready = axil_ar_handshake && fv_axil_ar_last;
+  assign fv_ar_req_index_next = fv_axil_ar_last ? '0 : fv_ar_req_index + 1'b1;
+
+  fv_fifo #(
+      .Depth(MaxOutstandingReqs),
+      .DataWidth(FvArReqPayloadWidth),
+      .Bypass(1)
+  ) fv_ar_req_fifo (
+      .clk,
+      .rst,
+
+      .push(axi_ar_handshake),
+      .push_data(fv_ar_req_fifo_push_data),
+
+      .pop(fv_ar_req_fifo_pop_ready),
+      .pop_data(fv_ar_req_fifo_pop_data),
+      .empty(fv_ar_req_fifo_empty),
+      .full(fv_ar_req_fifo_full)
+  );
+
+  `BR_REGLI(fv_ar_req_index, fv_ar_req_index_next, axil_ar_handshake, '0)
+
+  `BR_ASSERT(ar_req_fifo_ready_a,
+             axi_ar_handshake |-> (!fv_ar_req_fifo_full || fv_ar_req_fifo_pop_ready))
+  `BR_ASSERT(axil_ar_has_axi_ar_a, axil_arvalid |-> fv_ar_req_valid)
+  /* verilog_format: off */
+  `BR_ASSERT(
+      axil_ar_payload_a,
+      axil_arvalid |-> ({axil_araddr, axil_arprot, axil_aruser} ==
+                        {fv_expected_axil_araddr, fv_arprot, fv_aruser}))
+  /* verilog_format: on */
+
+  `BR_COVER(narrow_write_burst_c, axi_aw_handshake && (axi_awsize < $clog2(StrobeWidth)
+            ) && (axi_awlen != '0))
+  `BR_COVER(narrow_read_burst_c, axi_ar_handshake && (axi_arsize < $clog2(StrobeWidth)
+            ) && (axi_arlen != '0))
+  `BR_COVER(unaligned_incr_write_burst_c,
+            axi_aw_handshake && (axi_awburst == br_amba::AxiBurstIncr) && fv_unaligned_addr(
+            axi_awaddr, axi_awsize) && (axi_awlen != '0))
+  `BR_COVER(unaligned_incr_read_burst_c,
+            axi_ar_handshake && (axi_arburst == br_amba::AxiBurstIncr) && fv_unaligned_addr(
+            axi_araddr, axi_arsize) && (axi_arlen != '0))
+  `BR_COVER(unaligned_fixed_write_burst_c,
+            axi_aw_handshake && (axi_awburst == br_amba::AxiBurstFixed) && fv_unaligned_addr(
+            axi_awaddr, axi_awsize) && (axi_awlen != '0))
+  `BR_COVER(unaligned_fixed_read_burst_c,
+            axi_ar_handshake && (axi_arburst == br_amba::AxiBurstFixed) && fv_unaligned_addr(
+            axi_araddr, axi_arsize) && (axi_arlen != '0))
 
   // Instance of the AXI Slave DUV
   axi4_master #(
