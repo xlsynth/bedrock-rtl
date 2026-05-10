@@ -1,0 +1,49 @@
+# SPDX-License-Identifier: Apache-2.0
+
+load("@rules_hdl//verilog:providers.bzl", "verilog_library")
+load("//bazel:br_verilog.bzl", "br_verilog_fpv_test_tools_suite")
+load("//bazel:verilog.bzl", "verilog_elab_test")
+
+package(default_visibility = ["//visibility:private"])
+
+verilog_library(
+    name = "br_mux_onehot_fpv_monitor",
+    srcs = ["br_mux_onehot_fpv_monitor.sv"],
+    deps = [
+        "//macros:br_asserts",
+        "//macros:br_registers",
+        "//mux/rtl:br_mux_onehot",
+    ],
+)
+
+verilog_elab_test(
+    name = "br_mux_onehot_fpv_monitor_elab_test",
+    tool = "verific",
+    deps = [":br_mux_onehot_fpv_monitor"],
+)
+
+br_verilog_fpv_test_tools_suite(
+    name = "br_mux_onehot_fpv_test_tools_suite",
+    custom_tcl_body = "br_mux_onehot_fpv.jg.tcl",
+    params = {
+        "EnableAssertSelectOnehot": [
+            "0",
+            "1",
+        ],
+        "NumSymbolsIn": [
+            "1",
+            "3",
+            "4",
+        ],
+        "SymbolWidth": [
+            "1",
+            "5",
+            "8",
+        ],
+    },
+    tools = {
+        "jg": "br_mux_onehot_fpv.jg.tcl",
+    },
+    top = "br_mux_onehot",
+    deps = [":br_mux_onehot_fpv_monitor"],
+)

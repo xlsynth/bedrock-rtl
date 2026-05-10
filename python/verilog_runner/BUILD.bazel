@@ -1,11 +1,10 @@
 # SPDX-License-Identifier: Apache-2.0
 
 load("@rules_python//python:defs.bzl", "py_binary", "py_library", "py_test")
+load("@rules_python//python/zipapp:py_zipapp_binary.bzl", "py_zipapp_binary")
 
 package(default_visibility = ["//visibility:public"])
 
-# TODO: This is a hack. We should use the py_binary target directly, but I'm not sure how to get the environment
-# to work correctly when we wrap the py_binary in a shell script that gets invoked later.
 exports_files([
     "verilog_runner.py",
     "cli.py",
@@ -37,9 +36,16 @@ py_binary(
         "plugins.py",
         "verilog_runner.py",
     ],
+    imports = ["."],
+    legacy_create_init = False,
     deps = [
         ":util",
     ],
+)
+
+py_zipapp_binary(
+    name = "verilog_runner_zipapp",
+    binary = ":verilog_runner",
 )
 
 py_test(
