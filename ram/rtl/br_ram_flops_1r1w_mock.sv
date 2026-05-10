@@ -57,6 +57,7 @@ module br_ram_flops_1r1w_mock #(
     // ri lint_check_waive PARAM_NOT_USED
     localparam int WriteLatency = AddressDepthStages + 1,
     // Read latency in units of rd_clk cycles
+    // ri lint_check_waive PARAM_NOT_USED
     localparam int ReadLatency = AddressDepthStages + ReadDataDepthStages + ReadDataWidthStages
 ) (
     // Write-clock signals
@@ -278,21 +279,52 @@ module br_ram_flops_1r1w_mock #(
   //------------------------------------------
   `BR_ASSERT_CR_IMPL(read_latency_a, rd_addr_valid |-> ##ReadLatency rd_data_valid, rd_clk, rd_rst)
 
+`ifdef BR_ASSERT_ON
+`ifdef BR_ENABLE_IMPL_CHECKS
   if (TileEnableBypass) begin : gen_bypass_checks
-    if (ReadLatency > 0) begin : gen_readlat_gt0
+    localparam int ReadDataLatency = ReadDataDepthStages + ReadDataWidthStages;
+
+    logic [Width-1:0] bypass_check_data;
+
+    if (EnablePartialWrite) begin : gen_partial_write_check_data
+      logic [NumWords-1:0][WordWidth-1:0] bypass_check_data_words;
+      logic [NumWords-1:0][WordWidth-1:0] mem_rd_check_data_words;
+      logic [NumWords-1:0][WordWidth-1:0] mem_wr_check_data_words;
+
+      // ri lint_check_waive VAR_INDEX_READ
+      assign mem_rd_check_data_words = mem[mem_rd_addr];
+      assign mem_wr_check_data_words = mem_wr_data;
+
+      always_comb begin
+        bypass_check_data_words = mem_rd_check_data_words;
+        for (int i = 0; i < NumWords; i++) begin
+          if (wr_word_en[i]) begin
+            bypass_check_data_words[i] = mem_wr_check_data_words[i];
+          end
+        end
+      end
+
+      assign bypass_check_data = bypass_check_data_words;
+    end else begin : gen_full_write_check_data
+      assign bypass_check_data = mem_wr_data;
+    end
+
+    if (ReadDataLatency > 0) begin : gen_readlat_gt0
       `BR_ASSERT_CR_IMPL(read_write_hazard_gets_new_data_a,
-                         wr_valid && rd_addr_valid && (wr_addr == rd_addr) |->
-          ##ReadLatency rd_data_valid && rd_data == $past(
-                             wr_data, ReadLatency
+                         mem_wr_valid && mem_rd_addr_valid && (mem_wr_addr == mem_rd_addr) |->
+          ##ReadDataLatency rd_data_valid && rd_data == $past(
+                             bypass_check_data, ReadDataLatency
                          ),
                          rd_clk, rd_rst)
     end else begin : gen_readlat_eq0
       `BR_ASSERT_CR_IMPL(read_write_hazard_gets_new_data_a,
-                         wr_valid && rd_addr_valid && (wr_addr == rd_addr) |->
-          rd_data_valid && (rd_data == wr_data),
+                         mem_wr_valid && mem_rd_addr_valid && (mem_wr_addr == mem_rd_addr) |->
+          rd_data_valid && (rd_data == bypass_check_data),
                          rd_clk, rd_rst)
     end
   end
+`endif
+`endif
 
   `BR_ASSERT_FINAL(final_not_rd_data_valid_a, !rd_data_valid)
 
