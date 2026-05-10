@@ -291,6 +291,8 @@ module br_ram_flops_1r1w_mock #(
       logic [NumWords-1:0][WordWidth-1:0] mem_rd_check_data_words;
       logic [NumWords-1:0][WordWidth-1:0] mem_wr_check_data_words;
 
+      // Mirror the partial-write merge here rather than checking against mem_rd_data, so the
+      // assertion compares the output pipeline against an independent expected value.
       // ri lint_check_waive VAR_INDEX_READ
       assign mem_rd_check_data_words = mem[mem_rd_addr];
       assign mem_wr_check_data_words = mem_wr_data;
