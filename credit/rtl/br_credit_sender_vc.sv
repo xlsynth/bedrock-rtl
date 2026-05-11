@@ -130,6 +130,11 @@ module br_credit_sender_vc #(
         .MaxDecrement(1),
         .EnableCoverZeroIncrement(0),
         .EnableCoverZeroDecrement(0),
+        // The counter decrement side is not exposed here as a normal ready/valid interface:
+        // the fork only asserts credit_decr_valid when the local credit_decr_ready path can
+        // accept it. The counter also resets on either_rst, while the upstream fork resets
+        // only on rst, so a decrement can appear around pop_receiver_in_reset after the
+        // counter has reset/withheld available credits.
         .EnableCoverDecrementBackpressure(0),
         .EnableAssertNoDecrementBackpressure(0),
         .EnableAssertFinalNotValid(EnableAssertFinalNotValid),
@@ -173,6 +178,9 @@ module br_credit_sender_vc #(
       .Width(Width),
       .EnableCoverPushBackpressure(EnableCoverPushBackpressure),
       .EnableAssertNoPushBackpressure(EnableAssertNoPushBackpressure),
+      // This mux is fed by br_flow_fork's pop_valid_unstable outputs, so mux_push_valid is
+      // not a primary input-style stable ready/valid signal. It can drop under backpressure
+      // when credit_decr_ready changes. The mux pop side is also tied permanently ready.
       .EnableAssertPushValidStability(0),
       .EnableAssertPushDataStability(0),
       .EnableAssertFinalNotValid(EnableAssertFinalNotValid),
