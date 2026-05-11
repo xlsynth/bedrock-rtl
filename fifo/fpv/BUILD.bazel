@@ -13,6 +13,16 @@ verilog_library(
     ],
 )
 
+# pop credit checkers
+verilog_library(
+    name = "br_pop_credit_fpv_monitor",
+    srcs = ["br_pop_credit_fpv_monitor.sv"],
+    deps = [
+        "//macros:br_asserts",
+        "//macros:br_registers",
+    ],
+)
+
 # FV Ram model
 verilog_library(
     name = "br_fifo_fv_ram",
