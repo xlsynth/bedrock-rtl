@@ -5,7 +5,8 @@
 module br_fifo_shared_pop_ctrl_ext_arbiter_fpv_checker #(
     parameter int NumReadPorts = 1,
     parameter int NumFifos = 1,
-    parameter bit ArbiterAlwaysGrants = 1
+    parameter bit ArbiterAlwaysGrants = 1,
+    parameter bit EnableAssertRequestStability = 1
 ) (
     input logic clk,
     input logic rst,
@@ -31,11 +32,15 @@ module br_fifo_shared_pop_ctrl_ext_arbiter_fpv_checker #(
     // The read crossbar is permanently ready to issue RAM reads, so priority updates stay enabled.
     `BR_ASSERT(arb_enable_priority_update_a, arb_enable_priority_update[r])
 
-    for (genvar f = 0; f < NumFifos; f++) begin : gen_fifo
-      // The DUT must hold requests until the external arbiter grants them.
-      `BR_ASSERT(arb_req_hold_until_grant_a,
-                 arb_request[r][f] && !arb_grant[r][f] |=> arb_request[r][f])
+    if (EnableAssertRequestStability) begin : gen_request_stability
+      for (genvar f = 0; f < NumFifos; f++) begin : gen_fifo
+        // The DUT must hold requests until the external arbiter grants them.
+        `BR_ASSERT(arb_req_hold_until_grant_a,
+                   arb_request[r][f] && !arb_grant[r][f] |=> arb_request[r][f])
+      end
+    end
 
+    for (genvar f = 0; f < NumFifos; f++) begin : gen_fifo
       // Prevent an unfair external arbiter model from starving an outstanding request forever.
       `BR_ASSUME(arb_grant_eventually_a, arb_request[r][f] |-> s_eventually arb_grant[r][f])
     end
