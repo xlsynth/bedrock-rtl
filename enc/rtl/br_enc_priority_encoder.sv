@@ -37,7 +37,7 @@ module br_enc_priority_encoder #(
   // Integration checks
   //------------------------------------------
   `BR_ASSERT_STATIC(legal_num_results_a, NumResults >= 1)
-  `BR_ASSERT_STATIC(legal_num_requesters_a, NumRequesters > NumResults)
+  `BR_ASSERT_STATIC(legal_num_requesters_a, NumRequesters >= NumResults)
   `BR_ASSERT_STATIC(max_in_hot_lte_num_requesters_a, MaxInHot <= NumRequesters)
 
 `ifdef BR_ASSERT_ON
