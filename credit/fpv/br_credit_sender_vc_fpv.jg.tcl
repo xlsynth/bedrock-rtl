@@ -16,6 +16,17 @@ set NumVcs $param_list(NumVcs)
 for {set i 0} {$i < $NumVcs} {incr i} {
   assume -name credit_initial_in_range_$i "credit_initial\[$i\] <= MaxCredit"
 }
+
+# When push backpressure coverage and push stability checks are all disabled,
+# the counter decrement-backpressure cover can be unreachable through this
+# wrapper. Keep the RTL default cover enabled, but waive it for this FPV sweep
+# point.
+if {[string equal $param_list(EnableCoverPushBackpressure) "1'b0"] &&
+    [string equal $param_list(EnableAssertPushValidStability) "1'b0"] &&
+    [string equal $param_list(EnableAssertPushDataStability) "1'b0"]} {
+  cover -disable {*gen_cover_decr_gt_available.decr_gt_available_c*}
+}
+
 assume -name initial_value_during_reset {rst | pop_receiver_in_reset |-> \
 $stable(credit_initial)}
 assume -name no_pop_credit_during_reset {rst | pop_receiver_in_reset |-> pop_credit == 'd0}
