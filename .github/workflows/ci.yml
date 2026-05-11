@@ -33,6 +33,11 @@ jobs:
   # build logs appear out of sequence across the CI workflow.
   bazel-build-and-test:
     runs-on: self-hosted
+    env:
+      # Temporary workaround until CI provides a container-local EDA setup script.
+      # The current CI plugins invoke tools by bare command name, and Bazel 9 uses
+      # a sanitized action PATH unless PATH is passed explicitly.
+      BAZEL_CI_FLAGS: --action_env=PATH
     outputs:
       python_total_tests: ${{ steps.python.outputs.total_tests }}
       python_passing_tests: ${{ steps.python.outputs.passing_tests }}
@@ -55,16 +60,18 @@ jobs:
     steps:
     # actions/checkout v6
     - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
+    # TODO(xiyu): Create a CI-container-local EDA setup script and point
+    # VERILOG_RUNNER_EDA_TOOLS_ENV_SETUP at it from the copied ci.bazelrc.
     - name: Copy ci.bazelrc
       working-directory: ${{ github.workspace }}
       run: cp /home/gh-actions/bedrock-infra/ci.bazelrc ci.bazelrc
     - name: Build
-      run: bazel build --noshow_loading_progress //...
+      run: bazel build $BAZEL_CI_FLAGS --noshow_loading_progress //...
     - name: python tests
       id: python
       run: |
         set +e
-        bazel test --noshow_loading_progress //python/... //ecc/rtl/secded_codegen/... 2>&1 | tee .bazel-test-python.log
+        bazel test $BAZEL_CI_FLAGS --noshow_loading_progress //python/... //ecc/rtl/secded_codegen/... 2>&1 | tee .bazel-test-python.log
         BAZEL_EXIT_CODE=${PIPESTATUS[0]}
         TOTAL_TESTS=$(grep -Po '(?<=out of )\d+(?= test)' .bazel-test-python.log)
         PASSING_TESTS=$(grep -Po '\d+(?= test passes?\.| tests pass)' .bazel-test-python.log)
@@ -75,7 +82,7 @@ jobs:
       id: stardoc
       run: |
         set +e
-        bazel test --noshow_loading_progress //bazel/... 2>&1 | tee .bazel-test-stardoc.log
+        bazel test $BAZEL_CI_FLAGS --noshow_loading_progress //bazel/... 2>&1 | tee .bazel-test-stardoc.log
         BAZEL_EXIT_CODE=${PIPESTATUS[0]}
         TOTAL_TESTS=$(grep -Po '(?<=out of )\d+(?= test)' .bazel-test-stardoc.log)
         PASSING_TESTS=$(grep -Po '\d+(?= test passes?\.| tests pass)' .bazel-test-stardoc.log)
@@ -87,7 +94,7 @@ jobs:
       # Use --test_output=summary to suppress log output, even on failure (proprietary EDA tool output may be sensitive).
       run: |
         set +e
-        bazel test --noshow_loading_progress --test_output=summary //... --test_tag_filters=verific 2>&1 | tee .bazel-test-verific.log
+        bazel test $BAZEL_CI_FLAGS --noshow_loading_progress --test_output=summary //... --test_tag_filters=verific 2>&1 | tee .bazel-test-verific.log
         BAZEL_EXIT_CODE=${PIPESTATUS[0]}
         TOTAL_TESTS=$(grep -Po '(?<=out of )\d+(?= test)' .bazel-test-verific.log)
         PASSING_TESTS=$(grep -Po '\d+(?= test passes?\.| tests pass)' .bazel-test-verific.log)
@@ -100,7 +107,7 @@ jobs:
       # Use --test_output=summary to suppress log output, even on failure (proprietary EDA tool output may be sensitive).
       run: |
         set +e
-        bazel test --noshow_loading_progress --test_output=summary //... --test_tag_filters=ascentlint 2>&1 | tee .bazel-test-ascentlint.log
+        bazel test $BAZEL_CI_FLAGS --noshow_loading_progress --test_output=summary //... --test_tag_filters=ascentlint 2>&1 | tee .bazel-test-ascentlint.log
         BAZEL_EXIT_CODE=${PIPESTATUS[0]}
         TOTAL_TESTS=$(grep -Po '(?<=out of )\d+(?= test)' .bazel-test-ascentlint.log)
         PASSING_TESTS=$(grep -Po '\d+(?= test passes?\.| tests pass)' .bazel-test-ascentlint.log)
@@ -112,7 +119,7 @@ jobs:
       # Use --test_output=summary to suppress log output, even on failure (proprietary EDA tool output may be sensitive).
       run: |
         set +e
-        bazel test --noshow_loading_progress --test_output=summary //... --test_tag_filters=vcs 2>&1 | tee .bazel-test-vcs.log
+        bazel test $BAZEL_CI_FLAGS --noshow_loading_progress --test_output=summary //... --test_tag_filters=vcs 2>&1 | tee .bazel-test-vcs.log
         BAZEL_EXIT_CODE=${PIPESTATUS[0]}
         TOTAL_TESTS=$(grep -Po '(?<=out of )\d+(?= test)' .bazel-test-vcs.log)
         PASSING_TESTS=$(grep -Po '\d+(?= test passes?\.| tests pass)' .bazel-test-vcs.log)
@@ -124,7 +131,7 @@ jobs:
       # Don't need --test_output=summary to suppress log output because iverilog is open source.
       run: |
         set +e
-        bazel test --noshow_loading_progress //... --test_tag_filters=iverilog 2>&1 | tee .bazel-test-iverilog.log
+        bazel test $BAZEL_CI_FLAGS --noshow_loading_progress //... --test_tag_filters=iverilog 2>&1 | tee .bazel-test-iverilog.log
         BAZEL_EXIT_CODE=${PIPESTATUS[0]}
         TOTAL_TESTS=$(grep -Po '(?<=out of )\d+(?= test)' .bazel-test-iverilog.log)
         PASSING_TESTS=$(grep -Po '\d+(?= test passes?\.| tests pass)' .bazel-test-iverilog.log)
