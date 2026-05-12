@@ -136,6 +136,11 @@ module br_tracker_freelist #(
     `BR_ASSERT_INTG(dealloc_in_range_a, dealloc_valid[i] |-> dealloc_entry_id[i] < NumEntries)
     `BR_ASSERT_INTG(no_dealloc_unallocated_a,
                     dealloc_valid[i] |-> allocated_entries[dealloc_entry_id[i]])
+    for (genvar j = i + 1; j < NumDeallocPorts; j++) begin : gen_unique_dealloc_intg_asserts
+      `BR_ASSERT_INTG(
+          unique_dealloc_entry_id_a,
+          dealloc_valid[i] && dealloc_valid[j] |-> dealloc_entry_id[i] != dealloc_entry_id[j])
+    end
   end
 `endif
 `endif
