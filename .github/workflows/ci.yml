@@ -34,7 +34,7 @@ jobs:
   bazel-build-and-test:
     runs-on: self-hosted
     env:
-      # Temporary workaround until CI provides a container-local EDA setup script.
+      # TODO(xiyu): Temporary workaround until CI provides a container-local EDA setup script.
       # The current CI plugins invoke tools by bare command name, and Bazel 9 uses
       # a sanitized action PATH unless PATH is passed explicitly.
       TMP_HACK_BAZEL_CI_FLAGS: --action_env=PATH
