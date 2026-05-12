@@ -8,6 +8,8 @@
 // the tail pointers are pushed through the next_tail interface.
 // The controller updates the tail pointers in RAM and reads
 // them back again in the same order.
+// Valid next_tail entries must not already be present in any linked list,
+// including an entry being popped from the head interface in the same cycle.
 //
 // Multiple write ports are supported. If there are multiple
 // writes on the same cycle, the order will be from least
@@ -69,6 +71,8 @@ module br_tracker_linked_list_ctrl #(
 
   for (genvar i = 0; i < NumWritePorts; i++) begin : gen_next_tail_checks
     `BR_ASSERT_INTG(next_tail_in_range_a, next_tail_valid[i] |-> next_tail[i] < Depth)
+    `BR_ASSERT_INTG(no_reuse_popped_head_a,
+                    next_tail_valid[i] && head_valid && head_ready |-> next_tail[i] != head)
   end
 
   if (RamReadLatency == 0) begin : gen_zero_read_latency_check
