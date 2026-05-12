@@ -349,7 +349,10 @@ rule_verilog_elab_test = rule(
             doc = "Additional Verilog Runner files needed at runtime.",
         ),
         "verilog_runner_plugins": attr.label_list(
-            default = ["//python/verilog_runner/plugins:iverilog.py"],
+            default = [
+                "//python/verilog_runner/plugins:iverilog.py",
+                "//python/verilog_runner/plugins:verilator.py",
+            ],
             allow_files = True,
             doc = "Verilog runner plugins to load from this workspace, in addition to those loaded from VERILOG_RUNNER_PLUGIN_PATH.",
         ),
@@ -432,7 +435,10 @@ rule_verilog_lint_test = rule(
             doc = "Additional Verilog Runner files needed at runtime.",
         ),
         "verilog_runner_plugins": attr.label_list(
-            default = ["//python/verilog_runner/plugins:iverilog.py"],
+            default = [
+                "//python/verilog_runner/plugins:iverilog.py",
+                "//python/verilog_runner/plugins:verilator.py",
+            ],
             allow_files = True,
             doc = "Verilog runner plugins to load from this workspace, in addition to those loaded from VERILOG_RUNNER_PLUGIN_PATH.",
         ),
@@ -518,7 +524,10 @@ rule_verilog_sim_test = rule(
             doc = "Additional Verilog Runner files needed at runtime.",
         ),
         "verilog_runner_plugins": attr.label_list(
-            default = ["//python/verilog_runner/plugins:iverilog.py"],
+            default = [
+                "//python/verilog_runner/plugins:iverilog.py",
+                "//python/verilog_runner/plugins:verilator.py",
+            ],
             allow_files = True,
             doc = "Verilog runner plugins to load from this workspace, in addition to those loaded from VERILOG_RUNNER_PLUGIN_PATH.",
         ),
@@ -632,7 +641,10 @@ rule_verilog_fpv_test = rule(
             doc = "Additional Verilog Runner files needed at runtime.",
         ),
         "verilog_runner_plugins": attr.label_list(
-            default = ["//python/verilog_runner/plugins:iverilog.py"],
+            default = [
+                "//python/verilog_runner/plugins:iverilog.py",
+                "//python/verilog_runner/plugins:verilator.py",
+            ],
             allow_files = True,
             doc = "Verilog runner plugins to load from this workspace, in addition to those loaded from VERILOG_RUNNER_PLUGIN_PATH.",
         ),
@@ -732,7 +744,10 @@ rule_verilog_fpv_sandbox = rule(
             doc = "Additional Verilog Runner files needed at runtime.",
         ),
         "verilog_runner_plugins": attr.label_list(
-            default = ["//python/verilog_runner/plugins:iverilog.py"],
+            default = [
+                "//python/verilog_runner/plugins:iverilog.py",
+                "//python/verilog_runner/plugins:verilator.py",
+            ],
             allow_files = True,
             doc = "Verilog runner plugins to load from this workspace, in addition to those loaded from VERILOG_RUNNER_PLUGIN_PATH.",
         ),
