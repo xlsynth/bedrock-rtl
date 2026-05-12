@@ -9,6 +9,10 @@
 // falls within the range of the branch, it is routed to the branch. If
 // the transaction address does not fall within the range of the branch, it
 // is routed to the "trunk" interface.
+//
+// The branch_start_addr and branch_end_addr inputs are static configuration
+// inputs. They must remain stable after reset while transactions may be
+// accepted or outstanding.
 
 `include "br_asserts_internal.svh"
 `include "br_registers.svh"
