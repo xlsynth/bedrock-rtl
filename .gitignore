@@ -1,11 +1,69 @@
+# bazel build output
 bazel-*
+
+# local bazel configuration
 user.bazelrc
 ci.bazelrc
-.vscode
-.codex
-jgproject/
-chipstack_artifacts
-*.f
-__pycache__
-target
+
+# stacked pull requests
 .spr.yml
+
+# Synopsys VCS and Verdi outputs
+novas.conf
+verdiLog/
+novas.rc
+*npiLog
+
+# lmstat
+.ricleanup
+
+# python environments and cache files
+.venv
+venv/
+venv.bak/
+__pycache__
+
+# VS Code project files
+.vscode
+.vs
+
+# Cursor project files
+.cursor
+
+# Codex files
+.codex
+
+# JasperGold outputs
+jgproject/
+
+# ChipStack outputs
+chipstack_artifacts
+
+# common trash
+build/
+target
+.cache
+
+# filelists
+*.f
+
+# physical design files
+*.lef
+*.def
+
+# pytest outputs
+.pytest_cache
+
+# vim
+*.swp
+
+# Emacs
+*#
+.#*
+*~
+
+# macOS
+.DS_Store
+
+# Genus
+genus.cmd
