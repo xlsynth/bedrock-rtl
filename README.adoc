@@ -85,7 +85,8 @@ To install the hooks, run:
 pre-commit install
 ----
 
-They should automatically run on every commit.
+This installs both the pre-commit and pre-push hooks configured by `.pre-commit-config.yaml`.
+They should automatically run on every commit and push.
 You can also run them manually via:
 
 [source,shell]
