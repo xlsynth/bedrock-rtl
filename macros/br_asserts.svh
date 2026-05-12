@@ -34,10 +34,27 @@ import uvm_pkg::*;
 
 `define BR_NOOP
 
+`ifdef BR_VERILATOR
+// When elaborating with Verilator, undefined module references are resolved before
+// untaken generate branches are pruned. The usual static-assert sentinel module
+// can therefore fail even when the constant expression is true. So, we keep the
+// generate-time guard, but report failures at simulation time using an initial block,
+// rather than at elaboration time.
+`define BR_ASSERT_STATIC(__name__, __expr__) \
+if (!(__expr__)) begin : gen__``__name__ \
+initial begin \
+$error($sformatf( \
+    "Bedrock-RTL assertion macro failed (%0s:%0d) [%0s]: %0s", \
+    `__FILE__, `__LINE__, `"__name__`", `"__expr__`")); \
+$finish; \
+end \
+end
+`else
 `define BR_ASSERT_STATIC(__name__, __expr__) \
 if (!(__expr__)) begin : gen__``__name__ \
 __BR_ASSERT_STATIC_FAILED__``__name__ __BR_ASSERT_STATIC_FAILED__``__name__ (); \
 end
+`endif
 
 `define BR_ASSERT_STATIC_IN_PACKAGE(__name__, __expr__) \
 typedef enum logic [1:0] { \

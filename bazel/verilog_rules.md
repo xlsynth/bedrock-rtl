@@ -79,7 +79,7 @@ Tests that a Verilog or SystemVerilog design elaborates. Needs VERILOG_RUNNER_PL
 | <a id="rule_verilog_elab_test-tool"></a>tool |  Elaboration tool to use.   | String | required |  |
 | <a id="rule_verilog_elab_test-top"></a>top |  The top-level module; if not provided and there exists one dependency, then defaults to that dep's label name.   | String | optional |  `""`  |
 | <a id="rule_verilog_elab_test-verilog_runner_data"></a>verilog_runner_data |  Additional Verilog Runner files needed at runtime.   | <a href="https://bazel.build/concepts/labels">List of labels</a> | optional |  `["@bedrock-rtl//python/verilog_runner:verilog_runner_data"]`  |
-| <a id="rule_verilog_elab_test-verilog_runner_plugins"></a>verilog_runner_plugins |  Verilog runner plugins to load from this workspace, in addition to those loaded from VERILOG_RUNNER_PLUGIN_PATH.   | <a href="https://bazel.build/concepts/labels">List of labels</a> | optional |  `["@bedrock-rtl//python/verilog_runner/plugins:iverilog.py"]`  |
+| <a id="rule_verilog_elab_test-verilog_runner_plugins"></a>verilog_runner_plugins |  Verilog runner plugins to load from this workspace, in addition to those loaded from VERILOG_RUNNER_PLUGIN_PATH.   | <a href="https://bazel.build/concepts/labels">List of labels</a> | optional |  `["@bedrock-rtl//python/verilog_runner/plugins:iverilog.py", "@bedrock-rtl//python/verilog_runner/plugins:verilator.py"]`  |
 | <a id="rule_verilog_elab_test-verilog_runner_tool"></a>verilog_runner_tool |  The executable Verilog Runner tool to use.   | <a href="https://bazel.build/concepts/labels">Label</a> | optional |  `"@bedrock-rtl//python/verilog_runner:verilog_runner_zipapp"`  |
 
 
@@ -119,7 +119,7 @@ Writes FPV files and run scripts into a tarball for independent execution outsid
 | <a id="rule_verilog_fpv_sandbox-tool"></a>tool |  Formal tool to use.   | String | required |  |
 | <a id="rule_verilog_fpv_sandbox-top"></a>top |  The top-level module; if not provided and there exists one dependency, then defaults to that dep's label name.   | String | optional |  `""`  |
 | <a id="rule_verilog_fpv_sandbox-verilog_runner_data"></a>verilog_runner_data |  Additional Verilog Runner files needed at runtime.   | <a href="https://bazel.build/concepts/labels">List of labels</a> | optional |  `["@bedrock-rtl//python/verilog_runner:verilog_runner_data"]`  |
-| <a id="rule_verilog_fpv_sandbox-verilog_runner_plugins"></a>verilog_runner_plugins |  Verilog runner plugins to load from this workspace, in addition to those loaded from VERILOG_RUNNER_PLUGIN_PATH.   | <a href="https://bazel.build/concepts/labels">List of labels</a> | optional |  `["@bedrock-rtl//python/verilog_runner/plugins:iverilog.py"]`  |
+| <a id="rule_verilog_fpv_sandbox-verilog_runner_plugins"></a>verilog_runner_plugins |  Verilog runner plugins to load from this workspace, in addition to those loaded from VERILOG_RUNNER_PLUGIN_PATH.   | <a href="https://bazel.build/concepts/labels">List of labels</a> | optional |  `["@bedrock-rtl//python/verilog_runner/plugins:iverilog.py", "@bedrock-rtl//python/verilog_runner/plugins:verilator.py"]`  |
 | <a id="rule_verilog_fpv_sandbox-verilog_runner_tool"></a>verilog_runner_tool |  The Verilog Runner tool to use.   | <a href="https://bazel.build/concepts/labels">Label</a> | optional |  `"@bedrock-rtl//python/verilog_runner"`  |
 
 
@@ -159,7 +159,7 @@ Runs Verilog/SystemVerilog compilation and formal verification in one command. T
 | <a id="rule_verilog_fpv_test-tool"></a>tool |  Formal tool to use.   | String | required |  |
 | <a id="rule_verilog_fpv_test-top"></a>top |  The top-level module; if not provided and there exists one dependency, then defaults to that dep's label name.   | String | optional |  `""`  |
 | <a id="rule_verilog_fpv_test-verilog_runner_data"></a>verilog_runner_data |  Additional Verilog Runner files needed at runtime.   | <a href="https://bazel.build/concepts/labels">List of labels</a> | optional |  `["@bedrock-rtl//python/verilog_runner:verilog_runner_data"]`  |
-| <a id="rule_verilog_fpv_test-verilog_runner_plugins"></a>verilog_runner_plugins |  Verilog runner plugins to load from this workspace, in addition to those loaded from VERILOG_RUNNER_PLUGIN_PATH.   | <a href="https://bazel.build/concepts/labels">List of labels</a> | optional |  `["@bedrock-rtl//python/verilog_runner/plugins:iverilog.py"]`  |
+| <a id="rule_verilog_fpv_test-verilog_runner_plugins"></a>verilog_runner_plugins |  Verilog runner plugins to load from this workspace, in addition to those loaded from VERILOG_RUNNER_PLUGIN_PATH.   | <a href="https://bazel.build/concepts/labels">List of labels</a> | optional |  `["@bedrock-rtl//python/verilog_runner/plugins:iverilog.py", "@bedrock-rtl//python/verilog_runner/plugins:verilator.py"]`  |
 | <a id="rule_verilog_fpv_test-verilog_runner_tool"></a>verilog_runner_tool |  The executable Verilog Runner tool to use.   | <a href="https://bazel.build/concepts/labels">Label</a> | optional |  `"@bedrock-rtl//python/verilog_runner:verilog_runner_zipapp"`  |
 
 
@@ -193,7 +193,7 @@ Tests that a Verilog or SystemVerilog design passes a set of static lint checks.
 | <a id="rule_verilog_lint_test-tool"></a>tool |  Lint tool to use.   | String | required |  |
 | <a id="rule_verilog_lint_test-top"></a>top |  The top-level module; if not provided and there exists one dependency, then defaults to that dep's label name.   | String | optional |  `""`  |
 | <a id="rule_verilog_lint_test-verilog_runner_data"></a>verilog_runner_data |  Additional Verilog Runner files needed at runtime.   | <a href="https://bazel.build/concepts/labels">List of labels</a> | optional |  `["@bedrock-rtl//python/verilog_runner:verilog_runner_data"]`  |
-| <a id="rule_verilog_lint_test-verilog_runner_plugins"></a>verilog_runner_plugins |  Verilog runner plugins to load from this workspace, in addition to those loaded from VERILOG_RUNNER_PLUGIN_PATH.   | <a href="https://bazel.build/concepts/labels">List of labels</a> | optional |  `["@bedrock-rtl//python/verilog_runner/plugins:iverilog.py"]`  |
+| <a id="rule_verilog_lint_test-verilog_runner_plugins"></a>verilog_runner_plugins |  Verilog runner plugins to load from this workspace, in addition to those loaded from VERILOG_RUNNER_PLUGIN_PATH.   | <a href="https://bazel.build/concepts/labels">List of labels</a> | optional |  `["@bedrock-rtl//python/verilog_runner/plugins:iverilog.py", "@bedrock-rtl//python/verilog_runner/plugins:verilator.py"]`  |
 | <a id="rule_verilog_lint_test-verilog_runner_tool"></a>verilog_runner_tool |  The executable Verilog Runner tool to use.   | <a href="https://bazel.build/concepts/labels">Label</a> | optional |  `"@bedrock-rtl//python/verilog_runner:verilog_runner_zipapp"`  |
 
 
@@ -230,7 +230,7 @@ Runs Verilog/SystemVerilog compilation and simulation in one command. This rule 
 | <a id="rule_verilog_sim_test-top"></a>top |  The top-level module; if not provided and there exists one dependency, then defaults to that dep's label name.   | String | optional |  `""`  |
 | <a id="rule_verilog_sim_test-uvm"></a>uvm |  Run UVM test.   | Boolean | optional |  `False`  |
 | <a id="rule_verilog_sim_test-verilog_runner_data"></a>verilog_runner_data |  Additional Verilog Runner files needed at runtime.   | <a href="https://bazel.build/concepts/labels">List of labels</a> | optional |  `["@bedrock-rtl//python/verilog_runner:verilog_runner_data"]`  |
-| <a id="rule_verilog_sim_test-verilog_runner_plugins"></a>verilog_runner_plugins |  Verilog runner plugins to load from this workspace, in addition to those loaded from VERILOG_RUNNER_PLUGIN_PATH.   | <a href="https://bazel.build/concepts/labels">List of labels</a> | optional |  `["@bedrock-rtl//python/verilog_runner/plugins:iverilog.py"]`  |
+| <a id="rule_verilog_sim_test-verilog_runner_plugins"></a>verilog_runner_plugins |  Verilog runner plugins to load from this workspace, in addition to those loaded from VERILOG_RUNNER_PLUGIN_PATH.   | <a href="https://bazel.build/concepts/labels">List of labels</a> | optional |  `["@bedrock-rtl//python/verilog_runner/plugins:iverilog.py", "@bedrock-rtl//python/verilog_runner/plugins:verilator.py"]`  |
 | <a id="rule_verilog_sim_test-verilog_runner_tool"></a>verilog_runner_tool |  The executable Verilog Runner tool to use.   | <a href="https://bazel.build/concepts/labels">Label</a> | optional |  `"@bedrock-rtl//python/verilog_runner:verilog_runner_zipapp"`  |
 | <a id="rule_verilog_sim_test-waves"></a>waves |  Enable waveform dumping.   | Boolean | optional |  `False`  |
 
