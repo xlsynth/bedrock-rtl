@@ -66,8 +66,9 @@ def br_verilog_sim_test_suite(name, tool, defines = [], opts = [], **kwargs):
         opts = opts + ["-assert global_finish_maxfail=1+offending_values"]
 
     if len(defines) == 0:
-        # Don't enable assertions with iverilog because it doesn't handle them well, even in -g2012 mode.
-        if tool != "iverilog":
+        # Don't enable assertions with open-source simulators that do not handle the
+        # full SVA subset used by Bedrock internal checks.
+        if tool not in ["iverilog"]:
             defines = ["BR_ASSERT_ON", "BR_ENABLE_IMPL_CHECKS", "SIMULATION"]
         else:
             defines = ["SIMULATION"]

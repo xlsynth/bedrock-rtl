@@ -87,7 +87,7 @@ RUN git clone https://github.com/verilator/verilator
 RUN cd verilator && \
     git checkout 8ff77e9d47351b0a59114929880687839a51840b && \
     autoconf && \
-    ./configure && \
+    CC=clang CXX=clang++ ./configure && \
     make -j$(nproc) && \
     make install && \
     cd .. && \
