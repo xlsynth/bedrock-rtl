@@ -5,6 +5,7 @@
 
 module br_lfsr_tb;
   parameter int Width = 2;
+  parameter int AdvanceSteps = 1;
 
   logic clk;
   logic rst;
@@ -50,7 +51,8 @@ module br_lfsr_tb;
   end
 
   br_lfsr #(
-      .Width(Width)
+      .Width(Width),
+      .AdvanceSteps(AdvanceSteps)
   ) dut (
       .clk,
       .rst,
@@ -67,6 +69,17 @@ module br_lfsr_tb;
       .rst
   );
 
+  function automatic logic [Width-1:0] get_next_state(input logic [Width-1:0] current_state,
+                                                      input logic [Width-1:0] current_taps);
+    logic [Width-1:0] advanced_state;
+
+    advanced_state = current_state;
+    for (int i = 0; i < AdvanceSteps; i++) begin
+      advanced_state = {advanced_state[Width-2:0], ^(advanced_state & current_taps)};
+    end
+    return advanced_state;
+  endfunction
+
   initial begin
     initial_state = Width'(1'b1);
     reinit = 0;
@@ -80,13 +93,17 @@ module br_lfsr_tb;
       int ones_count;
       int zeros_count;
       int period;
+      logic [Width-1:0] expected_state;
 
       zeros_count = out == 0;
       ones_count = out == 1;
       period = 1;
+      expected_state = initial_state;
 
       advance = 1;
+      expected_state = get_next_state(expected_state, taps);
       td.wait_cycles();
+      td.check_integer(int'(out_state), int'(expected_state), "State mismatch");
 
       while (out_state != initial_state) begin
         zeros_count += (out == 0);
@@ -98,7 +115,9 @@ module br_lfsr_tb;
         td.wait_cycles($urandom() % 3);
 
         advance = 1;
+        expected_state = get_next_state(expected_state, taps);
         td.wait_cycles();
+        td.check_integer(int'(out_state), int'(expected_state), "State mismatch");
       end
 
       td.check_integer(period, 2 ** Width - 1, "Period mismatch");
