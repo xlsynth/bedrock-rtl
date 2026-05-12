@@ -25,7 +25,7 @@ import uvm_pkg::*;
 //       are no-ops.
 // * BR_ENABLE_FPV -- if not defined, then all BR_*_FPV macros are no-ops.
 // * BR_DISABLE_ASSERT_IMM -- if defined, then all BR_ASSERT_IMM*, BR_COVER_IMM*,
-//       BR_ASSERT_COMB*, and BR_ASSERT_IMM* macros are no-ops.
+//       BR_ASSERT_COMB*, and BR_COVER_COMB* macros are no-ops.
 // * BR_DISABLE_FINAL_CHECKS -- if defined, then all BR_ASSERT_FINAL macros are no-ops.
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -253,6 +253,35 @@ end
 `endif  // BR_ENABLE_FPV
 `else  // BR_ASSERT_ON
 `define BR_ASSERT_COMB_FPV(__name__, __expr__) \
+`BR_NOOP
+`endif  // BR_ASSERT_ON
+
+`ifdef BR_ASSERT_ON
+`ifndef BR_DISABLE_ASSERT_IMM
+`define BR_ASSUME_COMB(__name__, __expr__) \
+always_comb begin  : gen_``__name__ \
+assume (__expr__); \
+end
+`else  // BR_DISABLE_ASSERT_IMM
+`define BR_ASSUME_COMB(__name__, __expr__) \
+`BR_NOOP
+`endif  // BR_DISABLE_ASSERT_IMM
+`else  // BR_ASSERT_ON
+`define BR_ASSUME_COMB(__name__, __expr__) \
+`BR_NOOP
+`endif  // BR_ASSERT_ON
+
+// FPV version macros
+`ifdef BR_ASSERT_ON
+`ifdef BR_ENABLE_FPV
+`define BR_ASSUME_COMB_FPV(__name__, __expr__) \
+`BR_ASSUME_COMB(__name__, __expr__);
+`else  // BR_ENABLE_FPV
+`define BR_ASSUME_COMB_FPV(__name__, __expr__) \
+`BR_NOOP
+`endif  // BR_ENABLE_FPV
+`else  // BR_ASSERT_ON
+`define BR_ASSUME_COMB_FPV(__name__, __expr__) \
 `BR_NOOP
 `endif  // BR_ASSERT_ON
 

@@ -107,10 +107,6 @@ module br_amba_axi2axil_core #(
   // We should only get responses when the response FIFO is not empty
   `BR_ASSERT_INTG(resp_fifo_not_empty_when_resp_valid_a, axil_resp_valid |-> resp_fifo_pop_valid)
 
-  // Assert to reject narrow bursts
-  `BR_ASSERT_INTG(reject_narrow_bursts_a, (axi_req_valid && (axi_req_size < $clog2(StrobeWidth)
-                                          )) |-> (axi_req_len == 'd0))
-
   //----------------------------------------------------------------------------
   // Functions
   //----------------------------------------------------------------------------
@@ -124,15 +120,17 @@ module br_amba_axi2axil_core #(
     logic [AddrWidth-1:0] incr_address;
     logic [AddrWidth-1:0] base_address;  // aligned to wrap boundary
     logic [AddrWidth-1:0] wrap_mask;  // mask the wrap boundary
+    logic [AddrWidth-1:0] align_mask;
 
     incr_address = start_addr + (index << size);  // ri lint_check_waive VAR_SHIFT
 
     unique case (br_amba::axi_burst_type_t'(burst_type))
       br_amba::AxiBurstIncr: begin
-        next_address = incr_address;
+        align_mask   = {AddrWidth{1'b1}} << size;  // ri lint_check_waive VAR_SHIFT TRUNC_LSHIFT
+        next_address = (index == 'd0) ? start_addr : (incr_address & align_mask);
       end
       br_amba::AxiBurstWrap: begin
-        wrap_mask = ((burst_len + 1) << size) - 1;  // ri lint_check_waive ARITH_EXTENSION VAR_SHIFT TRUNC_LSHIFT
+        wrap_mask    = ((burst_len + 1) << size) - 1;  // ri lint_check_waive ARITH_EXTENSION VAR_SHIFT TRUNC_LSHIFT
         base_address = start_addr & ~wrap_mask;
         next_address = base_address | (incr_address & wrap_mask);
       end
@@ -147,7 +145,6 @@ module br_amba_axi2axil_core #(
   //----------------------------------------------------------------------------
 
   localparam int RespFifoWidth = (IdWidth + 1);  // 1 bit to indicate if the burst is complete
-  localparam logic [AddrWidth-1:0] AddrAlignMask = {AddrWidth{1'b1}} << $clog2(StrobeWidth);
 
   logic [br_amba::AxiBurstLenWidth-1:0] req_count;
   logic [br_amba::AxiRespWidth-1:0] resp, resp_next;
@@ -161,7 +158,6 @@ module br_amba_axi2axil_core #(
   logic is_last_req_beat;
   logic flow_reg_pop_valid;
   logic flow_reg_pop_ready;
-  logic [AddrWidth-1:0] axi_req_addr_aligned;
   logic [AddrWidth-1:0] axi_req_addr_reg;
   logic [IdWidth-1:0] axi_req_id_reg;
   logic [br_amba::AxiProtWidth-1:0] axi_req_prot_reg;
@@ -181,9 +177,6 @@ module br_amba_axi2axil_core #(
   // Flow Register to Capture the AXI4 Request
   //----------------------------------------------------------------------------
 
-  // Align the AXI4 request address to the bus width
-  assign axi_req_addr_aligned = axi_req_addr & AddrAlignMask;
-
   br_flow_reg_both #(
       .Width(
         AddrWidth +
@@ -200,7 +193,7 @@ module br_amba_axi2axil_core #(
       .push_ready(axi_req_ready),
       .push_valid(axi_req_valid),
       .push_data({
-        axi_req_addr_aligned,
+        axi_req_addr,
         axi_req_id,
         axi_req_len,
         axi_req_size,

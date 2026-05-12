@@ -1,0 +1,56 @@
+# SPDX-License-Identifier: Apache-2.0
+
+load("@rules_hdl//verilog:providers.bzl", "verilog_library")
+load("//bazel:br_verilog.bzl", "br_verilog_fpv_test_tools_suite")
+load("//bazel:verilog.bzl", "verilog_elab_test")
+
+package(default_visibility = ["//visibility:private"])
+
+verilog_library(
+    name = "br_enc_priority_dynamic_fpv_monitor",
+    srcs = ["br_enc_priority_dynamic_fpv_monitor.sv"],
+    deps = [
+        "//enc/rtl:br_enc_priority_dynamic",
+        "//macros:br_asserts",
+        "//macros:br_fv",
+        "//macros:br_registers",
+        "//macros:br_unused",
+    ],
+)
+
+verilog_elab_test(
+    name = "br_enc_priority_dynamic_fpv_monitor_elab_test",
+    tool = "verific",
+    deps = [":br_enc_priority_dynamic_fpv_monitor"],
+)
+
+br_verilog_fpv_test_tools_suite(
+    name = "br_enc_priority_dynamic_fpv_test_tools_suite",
+    illegal_param_combinations = {
+        (
+            "NumRequesters",
+            "NumResults",
+        ): [
+            ("1", "2"),
+            ("1", "4"),
+            ("2", "4"),
+        ],
+    },
+    params = {
+        "NumRequesters": [
+            "1",
+            "2",
+            "4",
+        ],
+        "NumResults": [
+            "1",
+            "2",
+            "4",
+        ],
+    },
+    tools = {
+        "jg": "",
+    },
+    top = "br_enc_priority_dynamic",
+    deps = [":br_enc_priority_dynamic_fpv_monitor"],
+)
