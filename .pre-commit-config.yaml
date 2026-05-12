@@ -1,5 +1,7 @@
 # SPDX-License-Identifier: Apache-2.0
 
+default_install_hook_types: [pre-commit, pre-push]
+
 repos:
   - repo: https://github.com/pre-commit/pre-commit-hooks
     # v6.0.0
@@ -26,6 +28,27 @@ repos:
       - id: detect-private-key
       - id: debug-statements
       - id: mixed-line-ending
+
+  - repo: https://github.com/gitleaks/gitleaks
+    # v8.30.1
+    rev: 83d9cd684c87d95d656c1458ef04895a7f1cbd8e
+    hooks:
+      # The upstream hook entry uses `gitleaks git --pre-commit --staged`,
+      # which ignores pre-commit's `--all-files` file list. Scan the working
+      # tree instead so manual all-file runs and local hooks check current files.
+      - id: gitleaks
+        name: "gitleaks secret scan"
+        entry: gitleaks dir --redact --verbose
+        args: [--config=.gitleaks.toml]
+        pass_filenames: false
+        stages: [pre-commit]
+      - id: gitleaks
+        alias: gitleaks-all-files-on-push
+        name: "gitleaks secret scan (push)"
+        entry: gitleaks dir --redact --verbose
+        args: [--config=.gitleaks.toml]
+        pass_filenames: false
+        stages: [pre-push]
 
   # Format Python files
   - repo: https://github.com/psf/black-pre-commit-mirror

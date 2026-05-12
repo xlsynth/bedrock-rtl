@@ -1,0 +1,41 @@
+# SPDX-License-Identifier: Apache-2.0
+
+title = "Bedrock-RTL gitleaks config"
+
+[extend]
+useDefault = true
+
+[[rules]]
+id = "token"
+description = "look for 'TOKEN' string"
+regex = '''TOKEN'''
+
+[[rules]]
+id = "hw1p"
+description = "look for 'hw1p' string"
+regex = '''hw1p'''
+
+[[rules]]
+id = "hw-infra"
+description = "look for 'hw-infra' string"
+regex = '''hw-infra'''
+keywords = ["hw-infra"]
+
+[[rules]]
+id = "modulefiles"
+description = "look for 'modulefiles' string"
+regex = '''modulefiles'''
+
+[[rules]]
+id = "license"
+description = "look for '_LICENSE' string"
+regex = '''_LICENSE[_|$]'''
+
+[[rules]]
+id = "ssh"
+description = "look for 'SSH' string"
+regex = '''SSH'''
+
+[[allowlists]]
+description = "Ignore this configuration file's own rule patterns."
+paths = ['''^\.gitleaks\.toml$''']
