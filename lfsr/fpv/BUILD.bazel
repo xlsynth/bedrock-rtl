@@ -50,7 +50,6 @@ br_verilog_fpv_test_tools_suite(
 br_verilog_fpv_test_tools_suite(
     name = "br_lfsr_initial_state_test_suite",
     elab_opts = ["-parameter Width 4"],
-    gui = True,
     params = {
         "EnableAssertInitialStateNonZero": [
             "0",
