@@ -33,3 +33,16 @@ br_verilog_fpv_test_tools_suite(
     top = "br_lfsr",
     deps = [":br_lfsr_fpv_monitor"],
 )
+
+br_verilog_fpv_test_tools_suite(
+    name = "br_lfsr_advance_steps_test_suite",
+    elab_opts = ["-parameter Width 4"],
+    params = {
+        "AdvanceSteps": [str(advance_steps) for advance_steps in range(2, 15)],
+    },
+    tools = {
+        "jg": "br_lfsr_fpv.jg.tcl",
+    },
+    top = "br_lfsr",
+    deps = [":br_lfsr_fpv_monitor"],
+)
