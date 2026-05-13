@@ -96,7 +96,11 @@ module br_lfsr_fpv_monitor #(
   // Assumptions
   //------------------------------------------
 
-  `BR_ASSUME(initial_state_non_zero_a, initial_state != '0)
+  if (EnableAssertInitialStateNonZero) begin : gen_initial_state_check
+    `BR_ASSUME(initial_state_non_zero_a, initial_state != '0)
+  end else begin : gen_initial_state_zero_check
+    `BR_ASSUME(initial_state_zero_a, initial_state == '0)
+  end
   `BR_ASSUME(initial_state_stable_a, $stable(initial_state))
   `BR_ASSUME(taps_known_good_a, taps == get_expected_taps())
   `BR_ASSUME(taps_stable_a, $stable(taps))
@@ -106,7 +110,11 @@ module br_lfsr_fpv_monitor #(
   //------------------------------------------
 
   `BR_ASSERT(out_check_a, out == out_state[0])
-  `BR_ASSERT(out_state_non_zero_a, out_state != '0)
+  if (EnableAssertInitialStateNonZero) begin : gen_out_state_non_zero_check
+    `BR_ASSERT(out_state_non_zero_a, out_state != '0)
+  end else begin : gen_out_state_zero_check
+    `BR_ASSERT(out_state_zero_a, out_state == '0)
+  end
   `BR_ASSERT(no_advance_holds_a, !advance && !reinit |=> out_state == $past(out_state))
   `BR_ASSERT(reinit_loads_initial_state_a, reinit |=> out_state == $past(initial_state))
 
@@ -151,8 +159,10 @@ module br_lfsr_fpv_monitor #(
 
   // Since state_a and state_b are arbitrary distinct effective-period positions,
   // this proves any two positions in the effective period produce different LFSR states.
-  `BR_ASSERT(no_duplicate_states_a,
-             out_state_a_valid && (period_count == state_b) |-> out_state_a != out_state)
+  if (EnableAssertInitialStateNonZero) begin : gen_no_duplicate_states_check
+    `BR_ASSERT(no_duplicate_states_a,
+               out_state_a_valid && (period_count == state_b) |-> out_state_a != out_state)
+  end
 
   `BR_COVER(full_period_done_c, period_done)
 

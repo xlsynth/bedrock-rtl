@@ -107,9 +107,13 @@ module br_lfsr #(
   //------------------------------------------
 
   // Value
-  `BR_ASSERT_IMPL(out_state_non_zero_a, out_state != '0)
-  // Assumes AdvanceSteps is not equal to the LFSR period.
-  `BR_ASSERT_IMPL(advance_changes_a, advance && !reinit |=> out_state != $past(out_state))
+  if (EnableAssertInitialStateNonZero) begin : gen_out_state_non_zero_check
+    `BR_ASSERT_IMPL(out_state_non_zero_a, out_state != '0)
+    // Assumes AdvanceSteps is not equal to the LFSR period.
+    `BR_ASSERT_IMPL(advance_changes_a, advance && !reinit |=> out_state != $past(out_state))
+  end else begin : gen_out_state_zero_check
+    `BR_ASSERT_IMPL(out_state_zero_a, out_state == '0)
+  end
   `BR_ASSERT_IMPL(no_advance_holds_a, !advance && !reinit |=> (out_state == $past(out_state)
                                       ) && (out == $past(out)))
 
