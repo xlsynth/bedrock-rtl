@@ -64,8 +64,12 @@ module br_lfsr #(
   //------------------------------------------
   // Integration checks
   //------------------------------------------
+  localparam longint AdvanceStepsPlusTwo = (AdvanceSteps > 0) ? longint'(AdvanceSteps) + 2 : 2;
+
   `BR_ASSERT_STATIC(width_gte_two_a, Width >= 2)
   `BR_ASSERT_STATIC(advance_steps_gt_zero_a, AdvanceSteps > 0)
+  // Equivalent to AdvanceSteps < 2**Width - 1, but avoids constructing 2**Width.
+  `BR_ASSERT_STATIC(advance_steps_lt_period_a, $clog2(AdvanceStepsPlusTwo) <= Width)
   if (EnableAssertTapsMsbIsSet) begin : gen_taps_msb_check
     `BR_ASSERT_INTG(taps_msb_set_a, taps[Width-1] == 1'b1)
   end
