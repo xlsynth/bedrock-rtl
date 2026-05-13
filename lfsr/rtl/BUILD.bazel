@@ -25,8 +25,20 @@ br_verilog_elab_and_lint_test_suite(
             "8",
             "11",
             "16",
+            "55",
         ],
     },
+    deps = [":br_lfsr"],
+)
+
+verilog_elab_test(
+    name = "br_lfsr_advance_limit_elab_test",
+    defines = ["BR_ASSERT_ON"],
+    params = {
+        "AdvanceSteps": "6",
+        "Width": "3",
+    },
+    tool = "verific",
     deps = [":br_lfsr"],
 )
 

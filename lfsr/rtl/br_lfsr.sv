@@ -28,6 +28,11 @@
 module br_lfsr #(
     // Width of the LFSR state. Must be at least 2.
     parameter int Width = 2,
+    // Number of LFSR state update steps per advance. If AdvanceSteps is relatively
+    // prime to the period of the LFSR, then advancing multiple steps does not change
+    // the period of the resulting LFSR. Higher values of AdvanceSteps result in more
+    // "state mixing" per advance.
+    parameter int AdvanceSteps = 1,
     // Enable check that MSB of taps is set. This is necessary, but not sufficient,
     // for a maximal period LFSR. Disabling this checks allows the LFSR to be used
     // more flexibly (e.g. supporting adjustable period LFSRs by changing the taps).
@@ -59,7 +64,12 @@ module br_lfsr #(
   //------------------------------------------
   // Integration checks
   //------------------------------------------
+  localparam longint AdvanceStepsPlusTwo = (AdvanceSteps > 0) ? longint'(AdvanceSteps) + 2 : 2;
+
   `BR_ASSERT_STATIC(width_gte_two_a, Width >= 2)
+  `BR_ASSERT_STATIC(advance_steps_gt_zero_a, AdvanceSteps > 0)
+  // Equivalent to AdvanceSteps < 2**Width - 1, but avoids constructing 2**Width.
+  `BR_ASSERT_STATIC(advance_steps_lt_period_a, $clog2(AdvanceStepsPlusTwo) <= Width)
   if (EnableAssertTapsMsbIsSet) begin : gen_taps_msb_check
     `BR_ASSERT_INTG(taps_msb_set_a, taps[Width-1] == 1'b1)
   end
@@ -74,9 +84,21 @@ module br_lfsr #(
   logic [Width-1:0] state;
   logic [Width-1:0] next_state;
 
+  function automatic logic [Width-1:0] get_next_state(input logic [Width-1:0] current_state,
+                                                      input logic [Width-1:0] current_taps);
+    logic [Width-1:0] advanced_state;
+
+    advanced_state = current_state;
+    // ri lint_check_waive LOOP_VAR_NOT_USED
+    for (int i = 0; i < AdvanceSteps; i++) begin
+      advanced_state = {advanced_state[Width-2:0], ^(advanced_state & current_taps)};
+    end
+    return advanced_state;
+  endfunction
+
   assign out = state[0];
   assign out_state = state;
-  assign next_state = reinit ? initial_state : {state[Width-2:0], ^(state & taps)};
+  assign next_state = reinit ? initial_state : get_next_state(state, taps);
 
   `BR_REGLI(state, next_state, advance || reinit, initial_state)
 
@@ -86,6 +108,7 @@ module br_lfsr #(
 
   // Value
   `BR_ASSERT_IMPL(out_state_non_zero_a, out_state != '0)
+  // Assumes AdvanceSteps is not equal to the LFSR period.
   `BR_ASSERT_IMPL(advance_changes_a, advance && !reinit |=> out_state != $past(out_state))
   `BR_ASSERT_IMPL(no_advance_holds_a, !advance && !reinit |=> (out_state == $past(out_state)
                                       ) && (out == $past(out)))
