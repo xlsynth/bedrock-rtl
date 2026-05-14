@@ -1,7 +1,6 @@
 # SPDX-License-Identifier: Apache-2.0
 
 load("@rules_python//python:defs.bzl", "py_binary", "py_library", "py_test")
-load("@rules_python//python/zipapp:py_zipapp_binary.bzl", "py_zipapp_binary")
 
 package(default_visibility = ["//visibility:public"])
 
@@ -45,11 +44,6 @@ py_binary(
     deps = [
         ":util",
     ],
-)
-
-py_zipapp_binary(
-    name = "verilog_runner_zipapp",
-    binary = ":verilog_runner",
 )
 
 py_test(
