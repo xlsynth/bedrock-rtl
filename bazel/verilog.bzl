@@ -110,9 +110,21 @@ def _verilog_base_impl(ctx, subcmd, test = True, extra_args = [], extra_runfiles
     data_files = getattr(ctx.files, "data", [])
     runfiles = list(data_files)
     verilog_runner_files_to_run = ctx.attr.verilog_runner_tool[DefaultInfo].files_to_run
-    if test and not verilog_runner_files_to_run.executable:
-        fail("verilog_runner_tool must be an executable target for Verilog tests.")
-    if test or not verilog_runner_files_to_run.executable:
+    verilog_runner_files = ctx.files.verilog_runner_tool
+    verilog_runner_file = None
+
+    # Bazel may expose a single source file or filegroup through files_to_run;
+    # raw runner sources still need to be invoked through Python.
+    if (
+        len(verilog_runner_files) == 1 and
+        verilog_runner_files[0].is_source and
+        verilog_runner_files[0].basename.endswith(".py")
+    ):
+        verilog_runner_file = verilog_runner_files[0]
+        verilog_runner_executable = None
+    else:
+        verilog_runner_executable = verilog_runner_files_to_run.executable
+    if test or not verilog_runner_executable:
         runfiles += ctx.files.verilog_runner_tool
     runfiles += ctx.files.verilog_runner_data
     runfiles += ctx.files.verilog_runner_plugins
@@ -161,14 +173,21 @@ def _verilog_base_impl(ctx, subcmd, test = True, extra_args = [], extra_runfiles
     args += extra_args
 
     generator_tools = []
+    if not verilog_runner_executable:
+        if len(verilog_runner_files) != 1:
+            fail("verilog_runner_tool must be an executable target or a single Python source file.")
+        verilog_runner_file = verilog_runner_files[0]
+
     if test:
-        runner_cmd_prefix = [verilog_runner_files_to_run.executable.short_path]
-    elif verilog_runner_files_to_run.executable:
-        runner_cmd_prefix = [verilog_runner_files_to_run.executable.path]
+        if verilog_runner_executable:
+            runner_cmd_prefix = [verilog_runner_executable.short_path]
+        else:
+            runner_cmd_prefix = ["python3", verilog_runner_file.short_path]
+    elif verilog_runner_executable:
+        runner_cmd_prefix = [verilog_runner_executable.path]
         generator_tools = [verilog_runner_files_to_run]
     else:
-        runner_path = ctx.files.verilog_runner_tool[0].path
-        runner_cmd_prefix = ["python3", runner_path]
+        runner_cmd_prefix = ["python3", verilog_runner_file.path]
     plugin_paths = []
     for plugin in ctx.files.verilog_runner_plugins:
         if plugin.dirname not in plugin_paths:
@@ -342,7 +361,7 @@ rule_verilog_elab_test = rule(
         "defines": attr.string_list(doc = "Preprocessor defines to pass to the Verilog compiler."),
         "params": attr.string_dict(doc = "Verilog module parameters to set in the instantiation of the top-level module."),
         "top": attr.string(doc = "The top-level module; if not provided and there exists one dependency, then defaults to that dep's label name."),
-        "verilog_runner_tool": attr.label(doc = "The executable Verilog Runner tool to use.", default = "//python/verilog_runner:verilog_runner_zipapp", allow_files = True),
+        "verilog_runner_tool": attr.label(doc = "The Verilog Runner tool to use.", default = "//python/verilog_runner:verilog_runner.py", allow_files = True),
         "verilog_runner_data": attr.label_list(
             default = ["//python/verilog_runner:verilog_runner_data"],
             allow_files = True,
@@ -428,7 +447,7 @@ rule_verilog_lint_test = rule(
             allow_files = True,
             doc = "The lint policy file to use. If not provided, then the default tool policy is used (typically provided through an environment variable).",
         ),
-        "verilog_runner_tool": attr.label(doc = "The executable Verilog Runner tool to use.", default = "//python/verilog_runner:verilog_runner_zipapp", allow_files = True),
+        "verilog_runner_tool": attr.label(doc = "The Verilog Runner tool to use.", default = "//python/verilog_runner:verilog_runner.py", allow_files = True),
         "verilog_runner_data": attr.label_list(
             default = ["//python/verilog_runner:verilog_runner_data"],
             allow_files = True,
@@ -517,7 +536,7 @@ rule_verilog_sim_test = rule(
             doc = "Run UVM test.",
             default = False,
         ),
-        "verilog_runner_tool": attr.label(doc = "The executable Verilog Runner tool to use.", default = "//python/verilog_runner:verilog_runner_zipapp", allow_files = True),
+        "verilog_runner_tool": attr.label(doc = "The Verilog Runner tool to use.", default = "//python/verilog_runner:verilog_runner.py", allow_files = True),
         "verilog_runner_data": attr.label_list(
             default = ["//python/verilog_runner:verilog_runner_data"],
             allow_files = True,
@@ -634,7 +653,7 @@ rule_verilog_fpv_test = rule(
             doc = "Only run elaboration.",
             default = False,
         ),
-        "verilog_runner_tool": attr.label(doc = "The executable Verilog Runner tool to use.", default = "//python/verilog_runner:verilog_runner_zipapp", allow_files = True),
+        "verilog_runner_tool": attr.label(doc = "The Verilog Runner tool to use.", default = "//python/verilog_runner:verilog_runner.py", allow_files = True),
         "verilog_runner_data": attr.label_list(
             default = ["//python/verilog_runner:verilog_runner_data"],
             allow_files = True,
@@ -737,7 +756,7 @@ rule_verilog_fpv_sandbox = rule(
             doc = "Only run elaboration.",
             default = False,
         ),
-        "verilog_runner_tool": attr.label(doc = "The Verilog Runner tool to use.", default = "//python/verilog_runner:verilog_runner", allow_files = True),
+        "verilog_runner_tool": attr.label(doc = "The Verilog Runner tool to use.", default = "//python/verilog_runner:verilog_runner.py", allow_files = True),
         "verilog_runner_data": attr.label_list(
             default = ["//python/verilog_runner:verilog_runner_data"],
             allow_files = True,
