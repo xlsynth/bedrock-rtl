@@ -58,24 +58,19 @@ module br_enc_priority_dynamic #(
   assign in_low_prio  = in & priority_mask;
   assign in_high_prio = in & ~priority_mask;
 
-  // If there are as many results as requesters,
-  // we only need NumRequesters-1 results from the
-  // priority encoder. The last result will just be the
-  // input with all the previous results masked off.
-  localparam int InternalNumResults = br_math::min2(NumResults, NumRequesters - 1);
   // Internally, use a double-wide priority encoder.
   // However, the lowest bit of in_high_prio can never be set,
   // so ignore that one.
   localparam int InternalNumRequesters = 2 * NumRequesters - 1;
 
-  logic [InternalNumResults-1:0][InternalNumRequesters-1:0] out_internal;
+  logic [NumResults-1:0][InternalNumRequesters-1:0] out_internal;
 
   // Create a double-wide priority encoder with the
   // high priority inputs in the lower half and the
   // low priority inputs in the upper half.
   br_enc_priority_encoder #(
       .NumRequesters(InternalNumRequesters),
-      .NumResults(InternalNumResults),
+      .NumResults(NumResults),
       .MaxInHot(NumRequesters)
   ) br_enc_priority_encoder_inst (
       .clk,
@@ -89,23 +84,10 @@ module br_enc_priority_dynamic #(
 
   // To get the final result, fold the double-wide results
   // together using bitwise OR.
-  for (genvar i = 0; i < InternalNumResults; i++) begin : gen_out
+  for (genvar i = 0; i < NumResults; i++) begin : gen_out
     assign out[i] =
         out_internal[i][2*NumRequesters-2:NumRequesters-1] |
         {out_internal[i][NumRequesters-2:0], 1'b0};
-  end
-
-  // If there are as many results as requesters, the last result just gets
-  // what's left over in the input after the previous results have been masked
-  // off.
-  if (NumResults == NumRequesters) begin : gen_last_out
-    always_comb begin
-      out[NumResults-1] = in;
-
-      for (int i = 0; i < InternalNumResults; i++) begin : gen_last_out_checks
-        out[NumResults-1] &= ~out[i];
-      end
-    end
   end
 
   //------------------------------------------
