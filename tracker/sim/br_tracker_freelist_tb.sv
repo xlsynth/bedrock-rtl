@@ -6,6 +6,8 @@ module br_tracker_freelist_tb;
   parameter int NumEntries = 16;
   parameter int NumAllocPerCycle = 1;
   parameter int NumDeallocPorts = 1;
+  parameter bit RegisterAllocOutputs = 1;
+  parameter bit EnableBypass = 0;
   parameter int NumAllocations = 100;
   parameter int MaxDelay = 10;
 
@@ -43,7 +45,9 @@ module br_tracker_freelist_tb;
   br_tracker_freelist #(
       .NumEntries(NumEntries),
       .NumAllocPerCycle(NumAllocPerCycle),
-      .NumDeallocPorts(NumDeallocPorts)
+      .NumDeallocPorts(NumDeallocPorts),
+      .RegisterAllocOutputs(RegisterAllocOutputs),
+      .EnableBypass(EnableBypass)
   ) dut (
       .clk,
       .rst,

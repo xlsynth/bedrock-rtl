@@ -8,6 +8,7 @@ module br_csr_axil_widget_tb;
   parameter int TimeoutCycles = MaxTimeoutCycles;
   parameter int AddrWidth = 16;
   parameter int DataWidth = 32;
+  parameter bit RegisterCsrRequestOutputs = 0;
   parameter bit RegisterResponseOutputs = 0;
   localparam int StrobeWidth = DataWidth / 8;
   localparam int TimerWidth = br_math::clamped_clog2(MaxTimeoutCycles + 1);
@@ -55,6 +56,7 @@ module br_csr_axil_widget_tb;
   br_csr_axil_widget #(
       .AddrWidth(AddrWidth),
       .DataWidth(DataWidth),
+      .RegisterCsrRequestOutputs(RegisterCsrRequestOutputs),
       .RegisterResponseOutputs(RegisterResponseOutputs),
       .MaxTimeoutCycles(MaxTimeoutCycles)
   ) dut (

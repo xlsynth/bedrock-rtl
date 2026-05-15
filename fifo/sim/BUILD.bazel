@@ -55,9 +55,12 @@ br_verilog_sim_test_tools_suite(
         ],
         "FlopRamAddressDepthStages": ["0"],
     },
+    # TODO(mgottscho): Re-enable Verilator once it accepts the dependent
+    # counter assertions that use `not` in sequence expressions.
     tools = [
         "iverilog",
         "vcs",
+        #"verilator",
     ],
     deps = [":br_fifo_flops_tb"],
 )
@@ -84,9 +87,12 @@ br_verilog_sim_test_tools_suite(
             "3",
         ],
     },
+    # TODO(mgottscho): Re-enable Verilator once it accepts the dependent
+    # counter assertions that use `not` in sequence expressions.
     tools = [
         "iverilog",
         "vcs",
+        #"verilator",
     ],
     deps = [":br_fifo_flops_tb"],
 )
@@ -131,9 +137,12 @@ br_verilog_sim_test_tools_suite(
             "1",
         ],
     },
+    # TODO(mgottscho): Re-enable Verilator once it accepts the dependent
+    # counter and credit assertions that use `not` in sequence expressions.
     tools = [
         "iverilog",
         "vcs",
+        #"verilator",
     ],
     deps = [":br_fifo_flops_push_credit_tb"],
 )
@@ -199,7 +208,12 @@ br_verilog_sim_test_tools_suite(
             "1",
         ],
     },
-    tools = ["vcs"],
+    # TODO(mgottscho): Re-enable Verilator once it accepts the dependent
+    # counter assertions that use `not` in sequence expressions.
+    tools = [
+        "vcs",
+        #"verilator",
+    ],
     deps = [":br_fifo_shared_dynamic_flops_tb"],
 )
 
@@ -259,7 +273,12 @@ br_verilog_sim_test_tools_suite(
             "1",
         ],
     },
-    tools = ["vcs"],
+    # TODO(mgottscho): Re-enable Verilator once it accepts the dependent
+    # counter and credit assertions that use `not` in sequence expressions.
+    tools = [
+        "vcs",
+        #"verilator",
+    ],
     deps = [":br_fifo_shared_dynamic_flops_push_credit_tb"],
 )
 
@@ -301,7 +320,12 @@ br_verilog_sim_test_tools_suite(
             "1",
         ],
     },
-    tools = ["vcs"],
+    # TODO(mgottscho): Re-enable Verilator once it accepts the dependent
+    # counter assertions that use `not` in sequence expressions.
+    tools = [
+        "vcs",
+        #"verilator",
+    ],
     deps = [":br_fifo_shared_pstatic_flops_tb"],
 )
 
@@ -350,7 +374,12 @@ br_verilog_sim_test_tools_suite(
             "1",
         ],
     },
-    tools = ["vcs"],
+    # TODO(mgottscho): Re-enable Verilator once it accepts the dependent
+    # counter and credit assertions that use `not` in sequence expressions.
+    tools = [
+        "vcs",
+        #"verilator",
+    ],
     deps = [":br_fifo_shared_pstatic_flops_push_credit_tb"],
 )
 
@@ -408,6 +437,12 @@ br_verilog_sim_test_tools_suite(
             "1",
         ],
     },
-    tools = ["vcs"],
+    # TODO(mgottscho): Re-enable Verilator once it accepts the dependent
+    # counter, credit, and FIFO assertions that use `not` in sequence
+    # expressions.
+    tools = [
+        "vcs",
+        #"verilator",
+    ],
     deps = [":br_fifo_shared_dynamic_flops_push_credit_pop_credit_tb"],
 )

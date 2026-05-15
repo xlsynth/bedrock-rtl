@@ -17,6 +17,8 @@ class EdaTool(ABC):
     defines: List[str] = field(default_factory=list)
     params: Dict[str, str] = field(default_factory=dict)
     opts: List[str] = field(default_factory=list)
+    elab_opts: List[str] = field(default_factory=list)
+    sim_opts: List[str] = field(default_factory=list)
     srcs: List[str] = field(default_factory=list)
     top: str = field(default_factory=str)
     logfile: str = field(default_factory=str)

@@ -78,6 +78,8 @@ def add_common_args(parser: argparse.ArgumentParser) -> None:
         type=str,
         action="append",
         default=[],
+        # TODO(mgottscho): Move tool-specific option flags out of the common CLI
+        # surface once each subcommand has its own option model.
         help="Tool-specific options to pass directly to the tool. Can be specified multiple times. "
         "If provided, then --tool must be provided explicitly.",
     )
@@ -158,10 +160,12 @@ def common_args(args: argparse.Namespace):
             )
         return var
 
-    return {
+    common = {
         "hdrs": args.hdr,
         "defines": args.define,
         "params": args.params,
+        # TODO(mgottscho): Stop threading `opts` through common_args once the
+        # CLI no longer models tool-specific options as a common concept.
         "opts": args.opt,
         "srcs": args.srcs,
         "top": args.top,
@@ -175,6 +179,10 @@ def common_args(args: argparse.Namespace):
         # analysis time (when the verilog runner command is constructed).
         "env_setup_commands": get_env_setup_command_file_from_env(),
     }
+    if getattr(args, "subcommand", None) == "sim":
+        common["elab_opts"] = getattr(args, "elab_opt", [])
+        common["sim_opts"] = getattr(args, "sim_opt", [])
+    return common
 
 
 class Subcommand(ABC):
@@ -225,6 +233,20 @@ class Sim(Subcommand):
             "--elab_only",
             action="store_true",
             help="Only run elaboration.",
+        )
+        parser.add_argument(
+            "--elab_opt",
+            type=str,
+            action="append",
+            default=[],
+            help="Tool-specific compile/elaboration options.",
+        )
+        parser.add_argument(
+            "--sim_opt",
+            type=str,
+            action="append",
+            default=[],
+            help="Tool-specific simulation runtime options, such as simulator plusargs.",
         )
         parser.add_argument(
             "--uvm",
