@@ -158,7 +158,7 @@ def common_args(args: argparse.Namespace):
             )
         return var
 
-    return {
+    common = {
         "hdrs": args.hdr,
         "defines": args.define,
         "params": args.params,
@@ -169,8 +169,6 @@ def common_args(args: argparse.Namespace):
             if getattr(args, "subcommand", None) == "sim"
             else args.opt
         ),
-        "elab_opts": getattr(args, "elab_opt", []),
-        "sim_opts": getattr(args, "sim_opt", []),
         "srcs": args.srcs,
         "top": args.top,
         "tclfile": args.tcl,
@@ -183,6 +181,10 @@ def common_args(args: argparse.Namespace):
         # analysis time (when the verilog runner command is constructed).
         "env_setup_commands": get_env_setup_command_file_from_env(),
     }
+    if getattr(args, "subcommand", None) == "sim":
+        common["elab_opts"] = getattr(args, "elab_opt", [])
+        common["sim_opts"] = getattr(args, "sim_opt", [])
+    return common
 
 
 class Subcommand(ABC):
