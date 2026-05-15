@@ -305,6 +305,8 @@ def _verilog_sim_test_impl(ctx):
     extra_args.append("--seed='" + str(ctx.attr.seed) + "'")
     if ctx.attr.waves:
         extra_args.append("--waves")
+    for opt in ctx.attr.opts:
+        extra_args.append("--elab_opt='" + opt + "'")
     for opt in ctx.attr.elab_opts:
         extra_args.append("--elab_opt='" + opt + "'")
     for opt in ctx.attr.sim_opts:
@@ -527,6 +529,9 @@ rule_verilog_sim_test = rule(
         "top": attr.string(
             doc = "The top-level module; if not provided and there exists one dependency, then defaults to that dep's label name.",
         ),
+        "opts": attr.string_list(
+            doc = "Deprecated compatibility alias for compile/elaboration options. Prefer 'elab_opts'.",
+        ),
         "elab_opts": attr.string_list(
             doc = "Tool-specific compile/elaboration options not covered by other arguments.",
         ),
@@ -589,7 +594,7 @@ rule_verilog_sim_test = rule(
     test = True,
 )
 
-def verilog_sim_test(tool, elab_opts = [], sim_opts = [], tags = [], waves = False, **kwargs):
+def verilog_sim_test(tool, opts = [], elab_opts = [], sim_opts = [], tags = [], waves = False, **kwargs):
     """Wraps rule_verilog_sim_test with a default tool and appends extra tags.
 
     The following extra tags are unconditionally appended to the list of tags:
@@ -600,6 +605,7 @@ def verilog_sim_test(tool, elab_opts = [], sim_opts = [], tags = [], waves = Fal
 
     Args:
         tool: The simulation tool to use.
+        opts: Deprecated compatibility alias for compile/elaboration options.
         elab_opts: Tool-specific compile/elaboration options not covered by other arguments.
         sim_opts: Tool-specific simulation runtime options, such as simulator plusargs.
         tags: The tags to add to the test.
@@ -621,6 +627,7 @@ def verilog_sim_test(tool, elab_opts = [], sim_opts = [], tags = [], waves = Fal
 
     rule_verilog_sim_test(
         tool = tool,
+        opts = opts,
         elab_opts = elab_opts + extra_elab_opts,
         sim_opts = sim_opts + extra_sim_opts,
         tags = test_tags,

@@ -37,7 +37,7 @@ class TestCliFunctions(unittest.TestCase):
     def test_common_args_sim_includes_split_opts(self):
         common = common_args(_args_for_subcommand("sim"))
 
-        self.assertEqual(common["opts"], ["-foo"])
+        self.assertEqual(common["opts"], [])
         self.assertEqual(common["elab_opts"], ["-foo"])
         self.assertEqual(common["sim_opts"], ["+bar=1"])
 
@@ -48,6 +48,15 @@ class TestCliFunctions(unittest.TestCase):
         self.assertEqual(common["opts"], [])
         self.assertNotIn("elab_opts", common)
         self.assertNotIn("sim_opts", common)
+
+    @mock.patch.dict("os.environ", {}, clear=True)
+    def test_common_args_preserves_tool_opts(self):
+        args = _args_for_subcommand("fpv")
+        args.opt = ["-legacy"]
+
+        common = common_args(args)
+
+        self.assertEqual(common["opts"], ["-legacy"])
 
 
 if __name__ == "__main__":

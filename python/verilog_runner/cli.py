@@ -78,6 +78,8 @@ def add_common_args(parser: argparse.ArgumentParser) -> None:
         type=str,
         action="append",
         default=[],
+        # TODO(mgottscho): Move tool-specific option flags out of the common CLI
+        # surface once each subcommand has its own option model.
         help="Tool-specific options to pass directly to the tool. Can be specified multiple times. "
         "If provided, then --tool must be provided explicitly.",
     )
@@ -162,13 +164,9 @@ def common_args(args: argparse.Namespace):
         "hdrs": args.hdr,
         "defines": args.define,
         "params": args.params,
-        # TODO(mgottscho): Remove this compatibility bridge after the external
-        # VCS simulation plugin is updated to read `elab_opts` directly.
-        "opts": (
-            getattr(args, "elab_opt", [])
-            if getattr(args, "subcommand", None) == "sim"
-            else args.opt
-        ),
+        # TODO(mgottscho): Stop threading `opts` through common_args once the
+        # CLI no longer models tool-specific options as a common concept.
+        "opts": args.opt,
         "srcs": args.srcs,
         "top": args.top,
         "tclfile": args.tcl,
