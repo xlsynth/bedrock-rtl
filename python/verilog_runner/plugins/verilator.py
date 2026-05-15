@@ -94,13 +94,13 @@ class Verilator(EdaTool):
         verilator_cmd += ["-DBR_VERILATOR"]
         verilator_cmd += [f"-D{define}" for define in self.defines]
         verilator_cmd += [f"-G{key}={value}" for key, value in self.params.items()]
-        verilator_cmd += self.opts
+        verilator_cmd += self.elab_opts
         verilator_cmd = " ".join(verilator_cmd)
 
         if self.elab_only:
             cmd += [verilator_cmd]
         else:
-            sim_cmd = f"./{obj_dir}/{executable}"
+            sim_cmd = " ".join([f"./{obj_dir}/{executable}"] + self.sim_opts)
             cmd += [" && ".join([verilator_cmd, sim_cmd])]
         cmd += [""]
         return "\n".join(cmd)

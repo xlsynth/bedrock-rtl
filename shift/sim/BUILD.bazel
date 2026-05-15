@@ -38,6 +38,7 @@ br_verilog_sim_test_tools_suite(
     tools = [
         "iverilog",
         "vcs",
+        "verilator",
     ],
     deps = [":br_shift_rotate_tb"],
 )
@@ -70,6 +71,7 @@ br_verilog_sim_test_tools_suite(
     tools = [
         "iverilog",
         "vcs",
+        "verilator",
     ],
     deps = [":br_shift_right_tb"],
 )
@@ -102,6 +104,7 @@ br_verilog_sim_test_tools_suite(
     tools = [
         "iverilog",
         "vcs",
+        "verilator",
     ],
     deps = [":br_shift_left_tb"],
 )

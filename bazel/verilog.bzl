@@ -305,8 +305,10 @@ def _verilog_sim_test_impl(ctx):
     extra_args.append("--seed='" + str(ctx.attr.seed) + "'")
     if ctx.attr.waves:
         extra_args.append("--waves")
-    for opt in ctx.attr.opts:
-        extra_args.append("--opt='" + opt + "'")
+    for opt in ctx.attr.elab_opts:
+        extra_args.append("--elab_opt='" + opt + "'")
+    for opt in ctx.attr.sim_opts:
+        extra_args.append("--sim_opt='" + opt + "'")
 
     return _verilog_base_impl(
         ctx = ctx,
@@ -525,8 +527,11 @@ rule_verilog_sim_test = rule(
         "top": attr.string(
             doc = "The top-level module; if not provided and there exists one dependency, then defaults to that dep's label name.",
         ),
-        "opts": attr.string_list(
-            doc = "Tool-specific options not covered by other arguments. If provided, then 'tool' must also be set.",
+        "elab_opts": attr.string_list(
+            doc = "Tool-specific compile/elaboration options not covered by other arguments.",
+        ),
+        "sim_opts": attr.string_list(
+            doc = "Tool-specific simulation runtime options, such as simulator plusargs.",
         ),
         "elab_only": attr.bool(
             doc = "Only run elaboration.",
@@ -584,7 +589,7 @@ rule_verilog_sim_test = rule(
     test = True,
 )
 
-def verilog_sim_test(tool, opts = [], tags = [], waves = False, **kwargs):
+def verilog_sim_test(tool, elab_opts = [], sim_opts = [], tags = [], waves = False, **kwargs):
     """Wraps rule_verilog_sim_test with a default tool and appends extra tags.
 
     The following extra tags are unconditionally appended to the list of tags:
@@ -595,26 +600,29 @@ def verilog_sim_test(tool, opts = [], tags = [], waves = False, **kwargs):
 
     Args:
         tool: The simulation tool to use.
-        opts: Tool-specific options not covered by other arguments.
+        elab_opts: Tool-specific compile/elaboration options not covered by other arguments.
+        sim_opts: Tool-specific simulation runtime options, such as simulator plusargs.
         tags: The tags to add to the test.
         waves: Enable waveform dumping.
         **kwargs: Other arguments to pass to the rule_verilog_sim_test rule.
     """
 
     # Make sure we fail the test ASAP after any error occurs (assertion or otherwise).
-    extra_opts = []
+    extra_elab_opts = []
+    extra_sim_opts = []
     test_tags = tags + extra_tags("sim", tool)
     if waves:
         test_tags.append("no-sandbox")
     if tool == "vcs":
         # Make sure we fail the test if any assertions fail.
-        extra_opts = ["-assert global_finish_maxfail=1+offending_values -error=TFIPC -error=PCWM-W -error=PCWM-L"]
+        extra_elab_opts = ["-assert global_finish_maxfail=1+offending_values -error=TFIPC -error=PCWM-W -error=PCWM-L"]
     elif tool == "dsim":
-        extra_opts.append("-exit-on-error 1")
+        extra_sim_opts.append("-exit-on-error 1")
 
     rule_verilog_sim_test(
         tool = tool,
-        opts = opts + extra_opts,
+        elab_opts = elab_opts + extra_elab_opts,
+        sim_opts = sim_opts + extra_sim_opts,
         tags = test_tags,
         waves = waves,
         **kwargs

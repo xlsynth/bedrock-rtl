@@ -162,7 +162,15 @@ def common_args(args: argparse.Namespace):
         "hdrs": args.hdr,
         "defines": args.define,
         "params": args.params,
-        "opts": args.opt,
+        # TODO(mgottscho): Remove this compatibility bridge after the external
+        # VCS simulation plugin is updated to read `elab_opts` directly.
+        "opts": (
+            getattr(args, "elab_opt", [])
+            if getattr(args, "subcommand", None) == "sim"
+            else args.opt
+        ),
+        "elab_opts": getattr(args, "elab_opt", []),
+        "sim_opts": getattr(args, "sim_opt", []),
         "srcs": args.srcs,
         "top": args.top,
         "tclfile": args.tcl,
@@ -225,6 +233,20 @@ class Sim(Subcommand):
             "--elab_only",
             action="store_true",
             help="Only run elaboration.",
+        )
+        parser.add_argument(
+            "--elab_opt",
+            type=str,
+            action="append",
+            default=[],
+            help="Tool-specific compile/elaboration options.",
+        )
+        parser.add_argument(
+            "--sim_opt",
+            type=str,
+            action="append",
+            default=[],
+            help="Tool-specific simulation runtime options, such as simulator plusargs.",
         )
         parser.add_argument(
             "--uvm",
