@@ -69,6 +69,12 @@ class Verilator(EdaTool):
         cmd += [gen_file_header(self.scriptfile, "verilator")]
         cmd += ["set -e"]
         cmd += self.read_env_setup_commands()
+        # Verilator's threaded runtime needs libatomic on Rocky 8, and lld does
+        # not search GCC's private library directory for a bare `-latomic`.
+        cmd += ['libatomic="$(gcc --print-file-name=libatomic.so 2>/dev/null || true)"']
+        cmd += ['if [[ -z "$libatomic" || "$libatomic" == "libatomic.so" ]]; then']
+        cmd += ['  libatomic="-latomic"']
+        cmd += ["fi"]
         cmd += ["echo ' '"]
         cmd += [
             "echo '--------------------------- verilator ---------------------------'"
@@ -86,6 +92,8 @@ class Verilator(EdaTool):
             obj_dir,
             "-o",
             executable,
+            "-LDFLAGS",
+            '"$libatomic"',
             f"-f {self.filelist}",
         ]
         if self.waves:

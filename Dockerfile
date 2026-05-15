@@ -48,6 +48,7 @@ RUN yum install -y graphviz-2.40.1-45.el8
 RUN yum install -y help2man-1.47.6-1.el8
 RUN yum install -y libffi-3.1-24.el8
 RUN yum install -y libffi-devel-3.1-24.el8.x86_64
+RUN yum install -y libatomic-8.5.0-23.el8_10
 RUN yum install -y libnsl-2.28-251.el8_10.13
 RUN yum install -y libstdc++-8.5.0-23.el8_10
 RUN yum install -y libstdc++-devel-8.5.0-23.el8_10
