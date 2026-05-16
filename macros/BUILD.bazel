@@ -92,6 +92,13 @@ verilog_lint_test(
     deps = [":br_tieoff_tb"],
 )
 
+verilog_library(
+    name = "br_multicycle_path",
+    hdrs = ["br_multicycle_path.svh"],
+    visibility = ["//visibility:public"],
+    deps = ["//cdc/rtl:br_cdc_multicycle_path"],
+)
+
 # Macro unit tests
 verilog_library(
     name = "br_asserts_test",
