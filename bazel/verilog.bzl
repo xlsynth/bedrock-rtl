@@ -361,7 +361,7 @@ rule_verilog_elab_test = rule(
         "defines": attr.string_list(doc = "Preprocessor defines to pass to the Verilog compiler."),
         "params": attr.string_dict(doc = "Verilog module parameters to set in the instantiation of the top-level module."),
         "top": attr.string(doc = "The top-level module; if not provided and there exists one dependency, then defaults to that dep's label name."),
-        "verilog_runner_tool": attr.label(doc = "The Verilog Runner tool to use.", default = "//python/verilog_runner:verilog_runner.py", allow_files = True),
+        "verilog_runner_tool": attr.label(doc = "The Verilog Runner tool to use.", default = "//python/verilog_runner:verilog_runner", allow_files = True),
         "verilog_runner_data": attr.label_list(
             default = ["//python/verilog_runner:verilog_runner_data"],
             allow_files = True,
@@ -447,7 +447,7 @@ rule_verilog_lint_test = rule(
             allow_files = True,
             doc = "The lint policy file to use. If not provided, then the default tool policy is used (typically provided through an environment variable).",
         ),
-        "verilog_runner_tool": attr.label(doc = "The Verilog Runner tool to use.", default = "//python/verilog_runner:verilog_runner.py", allow_files = True),
+        "verilog_runner_tool": attr.label(doc = "The Verilog Runner tool to use.", default = "//python/verilog_runner:verilog_runner", allow_files = True),
         "verilog_runner_data": attr.label_list(
             default = ["//python/verilog_runner:verilog_runner_data"],
             allow_files = True,
@@ -536,7 +536,7 @@ rule_verilog_sim_test = rule(
             doc = "Run UVM test.",
             default = False,
         ),
-        "verilog_runner_tool": attr.label(doc = "The Verilog Runner tool to use.", default = "//python/verilog_runner:verilog_runner.py", allow_files = True),
+        "verilog_runner_tool": attr.label(doc = "The Verilog Runner tool to use.", default = "//python/verilog_runner:verilog_runner", allow_files = True),
         "verilog_runner_data": attr.label_list(
             default = ["//python/verilog_runner:verilog_runner_data"],
             allow_files = True,
@@ -653,7 +653,7 @@ rule_verilog_fpv_test = rule(
             doc = "Only run elaboration.",
             default = False,
         ),
-        "verilog_runner_tool": attr.label(doc = "The Verilog Runner tool to use.", default = "//python/verilog_runner:verilog_runner.py", allow_files = True),
+        "verilog_runner_tool": attr.label(doc = "The Verilog Runner tool to use.", default = "//python/verilog_runner:verilog_runner", allow_files = True),
         "verilog_runner_data": attr.label_list(
             default = ["//python/verilog_runner:verilog_runner_data"],
             allow_files = True,
@@ -756,7 +756,7 @@ rule_verilog_fpv_sandbox = rule(
             doc = "Only run elaboration.",
             default = False,
         ),
-        "verilog_runner_tool": attr.label(doc = "The Verilog Runner tool to use.", default = "//python/verilog_runner:verilog_runner.py", allow_files = True),
+        "verilog_runner_tool": attr.label(doc = "The Verilog Runner tool to use.", default = "//python/verilog_runner:verilog_runner", allow_files = True),
         "verilog_runner_data": attr.label_list(
             default = ["//python/verilog_runner:verilog_runner_data"],
             allow_files = True,
