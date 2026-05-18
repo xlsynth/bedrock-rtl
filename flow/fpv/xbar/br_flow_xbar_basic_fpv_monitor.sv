@@ -10,7 +10,7 @@ module br_flow_xbar_basic_fpv_monitor #(
     parameter int NumPushFlows = 1,
     parameter int NumPopFlows = 1,
     parameter int Width = 1,
-    parameter bit RegisterDemuxOutputs = 0,
+    parameter int PathBufferDepth = 0,
     parameter bit RegisterPopOutputs = 0,
     parameter bit EnableCoverPushBackpressure = 1,
     parameter bit EnableAssertPushValidStability = EnableCoverPushBackpressure,
@@ -37,7 +37,9 @@ module br_flow_xbar_basic_fpv_monitor #(
     input logic [PushDestIdWidth-1:0] fv_push_id,
     input logic [DestIdWidth-1:0] fv_pop_id
 );
-  localparam int Latency = RegisterDemuxOutputs + RegisterPopOutputs;
+  localparam int PathBufferLatency = PathBufferDepth > 0 ? 1 : 0;
+  localparam int PopBufferLatency = RegisterPopOutputs ? 1 : 0;
+  localparam int Latency = PathBufferLatency + PopBufferLatency;
   // when push_valid & push_ready from fv_push_id are sending to fv_pop_id
   logic fv_push_vr;
   logic fv_pop_vr;
@@ -91,9 +93,9 @@ module br_flow_xbar_basic_fpv_monitor #(
                pop_valid[fv_pop_id] && !pop_ready[fv_pop_id] |=> $stable(pop_data[fv_pop_id]))
   end
 
-  // If RegisterDemuxOutputs = 1, registers are inserted between the demux and mux to break up the
-  // timing path, increasing the cut-through latency by 1.
-  if (RegisterDemuxOutputs | RegisterPopOutputs) begin : gen_lat
+  // If PathBufferDepth > 0, registers are inserted between the demux and mux to break up the
+  // timing path, increasing the cut-through latency by 1 for the tested configurations.
+  if (Latency > 0) begin : gen_lat
     `BR_ASSERT(pop_valid_forward_progress_a, |push_valid |-> ##Latency |pop_valid)
   end else begin : gen_lat0
     `BR_ASSERT(pop_valid_forward_progress_a, |push_valid |-> |pop_valid)

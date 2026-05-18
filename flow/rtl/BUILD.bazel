@@ -886,7 +886,7 @@ br_verilog_elab_and_lint_test_suite(
             "5",
             "8",
         ],
-        "RegisterDemuxOutputs": [
+        "PathBufferDepth": [
             "0",
             "1",
         ],
@@ -915,7 +915,7 @@ br_verilog_elab_and_lint_test_suite(
             "5",
             "8",
         ],
-        "RegisterDemuxOutputs": [
+        "PathBufferDepth": [
             "0",
             "1",
         ],
@@ -944,7 +944,7 @@ br_verilog_elab_and_lint_test_suite(
             "5",
             "8",
         ],
-        "RegisterDemuxOutputs": [
+        "PathBufferDepth": [
             "0",
             "1",
         ],

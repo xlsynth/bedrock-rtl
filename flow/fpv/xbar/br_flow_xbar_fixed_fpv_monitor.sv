@@ -10,7 +10,7 @@ module br_flow_xbar_fixed_fpv_monitor #(
     parameter int NumPushFlows = 1,
     parameter int NumPopFlows = 1,
     parameter int Width = 1,
-    parameter bit RegisterDemuxOutputs = 0,
+    parameter int PathBufferDepth = 0,
     parameter bit RegisterPopOutputs = 0,
     parameter bit EnableCoverPushBackpressure = 1,
     parameter bit EnableAssertPushValidStability = EnableCoverPushBackpressure,
@@ -62,7 +62,7 @@ module br_flow_xbar_fixed_fpv_monitor #(
       .NumPushFlows(NumPushFlows),
       .NumPopFlows(NumPopFlows),
       .Width(Width),
-      .RegisterDemuxOutputs(RegisterDemuxOutputs),
+      .PathBufferDepth(PathBufferDepth),
       .RegisterPopOutputs(RegisterPopOutputs),
       .EnableCoverPushBackpressure(EnableCoverPushBackpressure),
       .EnableAssertNoPushBackpressure(EnableAssertNoPushBackpressure),
@@ -86,7 +86,7 @@ module br_flow_xbar_fixed_fpv_monitor #(
   // ----------FV assertions----------
   if (NumPushFlows > 1) begin : gen_multiple_req
     if (EnableCoverPushBackpressure) begin : gen_priority_checks
-      if (RegisterDemuxOutputs) begin : gen_lat
+      if (PathBufferDepth > 0) begin : gen_lat
         `BR_ASSERT(strict_priority_a,
                    (i < j) && push_valid_i && push_valid_j |=> !grant[fv_pop_id][j])
       end else begin : gen_lat0
@@ -104,7 +104,7 @@ bind br_flow_xbar_fixed br_flow_xbar_fixed_fpv_monitor #(
     .NumPushFlows(NumPushFlows),
     .NumPopFlows(NumPopFlows),
     .Width(Width),
-    .RegisterDemuxOutputs(RegisterDemuxOutputs),
+    .PathBufferDepth(PathBufferDepth),
     .RegisterPopOutputs(RegisterPopOutputs),
     .EnableCoverPushBackpressure(EnableCoverPushBackpressure),
     .EnableAssertNoPushBackpressure(EnableAssertNoPushBackpressure),

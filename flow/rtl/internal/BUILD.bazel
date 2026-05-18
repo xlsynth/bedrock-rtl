@@ -292,8 +292,8 @@ verilog_library(
     srcs = ["br_flow_xbar_core.sv"],
     deps = [
         ":br_flow_mux_core",
+        "//flow/rtl:br_flow_buffer",
         "//flow/rtl:br_flow_demux_select_unstable",
-        "//flow/rtl:br_flow_reg_fwd",
         "//pkg:br_math_pkg",
     ],
 )
@@ -315,11 +315,44 @@ br_verilog_elab_and_lint_test_suite(
             "5",
             "8",
         ],
-        "RegisterDemuxOutputs": [
+        "PathBufferDepth": [
             "0",
             "1",
         ],
         "RegisterPopOutputs": [
+            "0",
+            "1",
+        ],
+    },
+    deps = [":br_flow_xbar_core"],
+)
+
+br_verilog_elab_and_lint_test_suite(
+    name = "br_flow_xbar_core_test_suite_buffers",
+    params = {
+        "NumPushFlows": [
+            "2",
+        ],
+        "NumPopFlows": [
+            "2",
+        ],
+        "Width": [
+            "5",
+        ],
+        "PushBufferDepth": [
+            "1",
+        ],
+        "PathBufferDepth": [
+            "2",
+        ],
+        "PathBufferRegisterPopOutputs": [
+            "0",
+            "1",
+        ],
+        "PopBufferDepth": [
+            "3",
+        ],
+        "PopBufferRegisterPopOutputs": [
             "0",
             "1",
         ],

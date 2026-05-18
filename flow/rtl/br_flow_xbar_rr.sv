@@ -10,7 +10,11 @@
 //
 // This is a full crossbar with maximum throughput of min(NumPushFlows, NumPopFlows)
 // transfers per cycle. Every input transaction can be accepted if they are all
-// going to distinct destinations.
+// going to distinct destinations. Optional buffers can be inserted on all internal
+// demux-to-mux paths to absorb some amount of contention.
+//
+// Optional push and pop buffers can be used to cut timing paths, ensure stable
+// outputs, and/or provide additional queuing capacity.
 //
 // Uses round-robin arbitration to grant requests. The lowest-indexed
 // input flow starts out as the highest priority. On grant, the granted
@@ -24,15 +28,30 @@ module br_flow_xbar_rr #(
     parameter int NumPopFlows = 1,
     // The width of the data bus.
     parameter int Width = 1,
-    // If 1, registers are inserted between the demux and mux to break up the
-    // timing path, increasing the cut-through latency by 1. Note that this
-    // results in NumPushFlows x NumPopFlows x Width bits of registers being
-    // inserted.
-    parameter bit RegisterDemuxOutputs = 0,
     // If 1, registers are inserted at the output of the muxes, ensuring that
     // pop_valid/pop_data come directly from registers.
     // If 0, pop_valid/pop_data come directly from the muxes and may be unstable.
     parameter bit RegisterPopOutputs = 0,
+    // Buffer depth before each input demux.
+    parameter int PushBufferDepth = 0,
+    // If 1, then each input buffer's push_ready comes directly from a register.
+    parameter bit PushBufferRegisterPushOutputs = (PushBufferDepth > 1),
+    // If 1, then each input buffer's pop_valid/pop_data come directly from registers.
+    parameter bit PushBufferRegisterPopOutputs = 1,
+    // Buffer depth on each input-to-output path between the demuxes and muxes.
+    // This inserts PathBufferDepth x NumPushFlows x NumPopFlows x Width data
+    // register bits.
+    parameter int PathBufferDepth = 0,
+    // If 1, then each path buffer's push_ready comes directly from a register.
+    parameter bit PathBufferRegisterPushOutputs = (PathBufferDepth >= 3),
+    // If 1, then each path buffer's pop_valid/pop_data come directly from registers.
+    parameter bit PathBufferRegisterPopOutputs = (PathBufferDepth > 0),
+    // Buffer depth after each output mux. Defaults to the legacy RegisterPopOutputs behavior.
+    parameter int PopBufferDepth = RegisterPopOutputs ? 1 : 0,
+    // If 1, then each output buffer's push_ready comes directly from a register.
+    parameter bit PopBufferRegisterPushOutputs = (PopBufferDepth > 1),
+    // If 1, then each output buffer's pop_valid/pop_data come directly from registers.
+    parameter bit PopBufferRegisterPopOutputs = RegisterPopOutputs,
     // If 1, cover that the push_ready signal can be backpressured.
     // If 0, disable push backpressure coverage. By default, this also
     // asserts that push backpressure is impossible.
@@ -86,8 +105,16 @@ module br_flow_xbar_rr #(
       .NumPushFlows(NumPushFlows),
       .NumPopFlows(NumPopFlows),
       .Width(Width),
-      .RegisterDemuxOutputs(RegisterDemuxOutputs),
       .RegisterPopOutputs(RegisterPopOutputs),
+      .PushBufferDepth(PushBufferDepth),
+      .PushBufferRegisterPushOutputs(PushBufferRegisterPushOutputs),
+      .PushBufferRegisterPopOutputs(PushBufferRegisterPopOutputs),
+      .PathBufferDepth(PathBufferDepth),
+      .PathBufferRegisterPushOutputs(PathBufferRegisterPushOutputs),
+      .PathBufferRegisterPopOutputs(PathBufferRegisterPopOutputs),
+      .PopBufferDepth(PopBufferDepth),
+      .PopBufferRegisterPushOutputs(PopBufferRegisterPushOutputs),
+      .PopBufferRegisterPopOutputs(PopBufferRegisterPopOutputs),
       .EnableCoverPushBackpressure(EnableCoverPushBackpressure),
       .EnableAssertNoPushBackpressure(EnableAssertNoPushBackpressure),
       .EnableAssertPushValidStability(EnableAssertPushValidStability),

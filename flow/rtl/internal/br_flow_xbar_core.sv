@@ -9,8 +9,16 @@ module br_flow_xbar_core #(
     parameter int NumPushFlows = 1,
     parameter int NumPopFlows = 1,
     parameter int Width = 1,
-    parameter bit RegisterDemuxOutputs = 0,
     parameter bit RegisterPopOutputs = 0,
+    parameter int PushBufferDepth = 0,
+    parameter bit PushBufferRegisterPushOutputs = (PushBufferDepth > 1),
+    parameter bit PushBufferRegisterPopOutputs = 1,
+    parameter int PathBufferDepth = 0,
+    parameter bit PathBufferRegisterPushOutputs = (PathBufferDepth >= 3),
+    parameter bit PathBufferRegisterPopOutputs = (PathBufferDepth > 0),
+    parameter int PopBufferDepth = RegisterPopOutputs ? 1 : 0,
+    parameter bit PopBufferRegisterPushOutputs = (PopBufferDepth > 1),
+    parameter bit PopBufferRegisterPopOutputs = RegisterPopOutputs,
     parameter bit EnableCoverPushBackpressure = 1,
     parameter bit EnableAssertPushValidStability = EnableCoverPushBackpressure,
     parameter bit EnableAssertPushDataStability = EnableAssertPushValidStability,
@@ -53,86 +61,140 @@ module br_flow_xbar_core #(
   // Implementation
   //------------------------------------------
 
-  logic [NumPushFlows-1:0][NumPopFlows-1:0] demux_out_valid;
-  logic [NumPushFlows-1:0][NumPopFlows-1:0] demux_out_ready;
-  logic [NumPushFlows-1:0][NumPopFlows-1:0][Width-1:0] demux_out_data;
+  // Optional input buffers
+  localparam int PushPayloadWidth = Width + DestIdWidth;
 
-  logic [NumPopFlows-1:0][NumPushFlows-1:0] mux_in_valid;
-  logic [NumPopFlows-1:0][NumPushFlows-1:0] mux_in_ready;
-  logic [NumPopFlows-1:0][NumPushFlows-1:0][Width-1:0] mux_in_data;
+  logic [NumPushFlows-1:0]                       push_buffer_ready;
+  logic [NumPushFlows-1:0]                       push_buffer_valid;
+  logic [NumPushFlows-1:0][PushPayloadWidth-1:0] push_buffer_payload;
+  logic [NumPushFlows-1:0][           Width-1:0] push_buffer_data;
+  logic [NumPushFlows-1:0][     DestIdWidth-1:0] push_buffer_dest_id;
 
-  logic [NumPopFlows-1:0] mux_out_valid;
-  logic [NumPopFlows-1:0] mux_out_ready;
-  logic [NumPopFlows-1:0][Width-1:0] mux_out_data;
+  for (genvar i = 0; i < NumPushFlows; i++) begin : gen_push_buffer
+    logic [PushPayloadWidth-1:0] push_payload;
+
+    assign push_payload = {push_dest_id[i], push_data[i]};
+
+    br_flow_buffer #(
+        .Depth(PushBufferDepth),
+        .Width(PushPayloadWidth),
+        .RegisterPushOutputs(PushBufferRegisterPushOutputs),
+        .RegisterPopOutputs(PushBufferRegisterPopOutputs),
+        .EnableCoverPushBackpressure(EnableCoverPushBackpressure),
+        .EnableAssertNoPushBackpressure(EnableAssertNoPushBackpressure),
+        .EnableAssertPushValidStability(EnableAssertPushValidStability),
+        // The push buffer carries both data and destination as one payload.
+        .EnableAssertPushDataStability(
+            EnableAssertPushDataStability || EnableAssertPushDestinationStability),
+        .EnableAssertPushDataKnown(EnableAssertPushDataKnown),
+        .EnableAssertFinalNotValid(EnableAssertFinalNotValid)
+    ) br_flow_buffer_push (
+        .clk,  // ri lint_check_waive CLOCK_USE
+        .rst,
+        .push_ready(push_ready[i]),
+        .push_valid(push_valid[i]),
+        .push_data (push_payload),
+        .pop_ready (push_buffer_ready[i]),
+        .pop_valid (push_buffer_valid[i]),
+        .pop_data  (push_buffer_payload[i])
+    );
+
+    assign {push_buffer_dest_id[i], push_buffer_data[i]} = push_buffer_payload[i];
+  end
+
+  // Demux with optional per-path contention buffer
+  logic [NumPushFlows-1:0][ NumPopFlows-1:0]            demux_out_valid;
+  logic [NumPushFlows-1:0][ NumPopFlows-1:0]            demux_out_ready;
+  logic [NumPushFlows-1:0][ NumPopFlows-1:0][Width-1:0] demux_out_data;
+
+  logic [ NumPopFlows-1:0][NumPushFlows-1:0]            mux_in_valid;
+  logic [ NumPopFlows-1:0][NumPushFlows-1:0]            mux_in_ready;
+  logic [ NumPopFlows-1:0][NumPushFlows-1:0][Width-1:0] mux_in_data;
 
   for (genvar i = 0; i < NumPushFlows; i++) begin : gen_demux
+    localparam bit PushBufferStabilizes = PushBufferDepth > 0;
+
     br_flow_demux_select_unstable #(
         .NumFlows(NumPopFlows),
         .Width(Width),
         .EnableCoverPushBackpressure(EnableCoverPushBackpressure),
-        .EnableAssertNoPushBackpressure(EnableAssertNoPushBackpressure),
-        .EnableAssertPushValidStability(EnableAssertPushValidStability),
-        .EnableAssertPushDataStability(EnableAssertPushDataStability),
-        .EnableAssertSelectStability(EnableAssertPushDestinationStability),
+        .EnableAssertNoPushBackpressure(PushBufferStabilizes ? 0 : EnableAssertNoPushBackpressure),
+        .EnableAssertPushValidStability(
+            EnableCoverPushBackpressure && (EnableAssertPushValidStability || PushBufferStabilizes)),
+        .EnableAssertPushDataStability(
+            EnableCoverPushBackpressure && (EnableAssertPushDataStability || PushBufferStabilizes)),
+        .EnableAssertSelectStability(
+            EnableCoverPushBackpressure &&
+            (EnableAssertPushDestinationStability || PushBufferStabilizes)),
         .EnableAssertPushDataKnown(EnableAssertPushDataKnown),
         .EnableAssertFinalNotValid(EnableAssertFinalNotValid)
     ) br_flow_demux_select_unstable_push (
         .clk,
         .rst,
-        .push_valid(push_valid[i]),
-        .push_ready(push_ready[i]),
-        .push_data(push_data[i]),
-        .select(push_dest_id[i]),
+        .push_valid(push_buffer_valid[i]),
+        .push_ready(push_buffer_ready[i]),
+        .push_data(push_buffer_data[i]),
+        .select(push_buffer_dest_id[i]),
         .pop_ready(demux_out_ready[i]),
         .pop_valid_unstable(demux_out_valid[i]),
         .pop_data_unstable(demux_out_data[i])
     );
 
-    for (genvar j = 0; j < NumPopFlows; j++) begin : gen_mux_input
-      if (RegisterDemuxOutputs) begin : gen_reg_out
-        br_flow_reg_fwd #(
-            .Width(Width),
-            .EnableCoverPushBackpressure(EnableCoverPushBackpressure),
-            .EnableAssertNoPushBackpressure(EnableAssertNoPushBackpressure),
-            .EnableAssertPushValidStability(
-                EnableAssertPushValidStability && EnableAssertPushDestinationStability),
-            .EnableAssertPushDataStability(
-                EnableAssertPushDataStability && EnableAssertPushDestinationStability),
-            .EnableAssertPushDataKnown(EnableAssertPushDataKnown),
-            .EnableAssertFinalNotValid(EnableAssertFinalNotValid)
-        ) br_flow_reg_fwd_demux_to_mux (
-            .clk,
-            .rst,
-            .push_valid(demux_out_valid[i][j]),
-            .push_ready(demux_out_ready[i][j]),
-            .push_data (demux_out_data[i][j]),
-            .pop_ready (mux_in_ready[j][i]),
-            .pop_valid (mux_in_valid[j][i]),
-            .pop_data  (mux_in_data[j][i])
-        );
-      end else begin : gen_no_reg_out
-        assign mux_in_valid[j][i] = demux_out_valid[i][j];
-        assign mux_in_data[j][i] = demux_out_data[i][j];
-        assign demux_out_ready[i][j] = mux_in_ready[j][i];
-      end
+    for (genvar j = 0; j < NumPopFlows; j++) begin : gen_path_buffer
+      br_flow_buffer #(
+          .Depth(PathBufferDepth),
+          .Width(Width),
+          .RegisterPushOutputs(PathBufferRegisterPushOutputs),
+          .RegisterPopOutputs(PathBufferRegisterPopOutputs),
+          .EnableCoverPushBackpressure(EnableCoverPushBackpressure),
+          .EnableAssertNoPushBackpressure(0),
+          .EnableAssertPushValidStability(
+              EnableCoverPushBackpressure &&
+              (EnableAssertPushValidStability && EnableAssertPushDestinationStability ||
+               PushBufferStabilizes)),
+          .EnableAssertPushDataStability(
+              EnableCoverPushBackpressure &&
+              (EnableAssertPushDataStability && EnableAssertPushDestinationStability ||
+               PushBufferStabilizes)),
+          .EnableAssertPushDataKnown(EnableAssertPushDataKnown),
+          .EnableAssertFinalNotValid(EnableAssertFinalNotValid)
+      ) br_flow_buffer_path (
+          .clk,  // ri lint_check_waive CLOCK_USE
+          .rst,
+          .push_valid(demux_out_valid[i][j]),
+          .push_ready(demux_out_ready[i][j]),
+          .push_data (demux_out_data[i][j]),
+          .pop_ready (mux_in_ready[j][i]),
+          .pop_valid (mux_in_valid[j][i]),
+          .pop_data  (mux_in_data[j][i])
+      );
     end
   end
 
+  // Mux with optional output buffer
+  logic [NumPopFlows-1:0]            mux_out_valid;
+  logic [NumPopFlows-1:0]            mux_out_ready;
+  logic [NumPopFlows-1:0][Width-1:0] mux_out_data;
+
   for (genvar i = 0; i < NumPopFlows; i++) begin : gen_mux
+    localparam bit PushBufferStabilizes = PushBufferDepth > 0;
+    localparam bit PathBufferStabilizes = PathBufferDepth > 0;
+
     br_flow_mux_core #(
         .NumFlows(NumPushFlows),
         .Width(Width),
-        // If demux outputs are registered, it is possible for
-        // mux_in to be backpressured and mux_in_valid/data
-        // must be stable.
-        .EnableCoverPushBackpressure(EnableCoverPushBackpressure || RegisterDemuxOutputs),
-        .EnableAssertNoPushBackpressure(EnableAssertNoPushBackpressure && !RegisterDemuxOutputs),
+        .EnableCoverPushBackpressure(EnableCoverPushBackpressure),
+        .EnableAssertNoPushBackpressure(0),
         .EnableAssertPushValidStability(
-            (EnableAssertPushValidStability && EnableAssertPushDestinationStability) ||
-            RegisterDemuxOutputs),
+            EnableCoverPushBackpressure &&
+            (PathBufferStabilizes ||
+             PushBufferStabilizes ||
+             (EnableAssertPushValidStability && EnableAssertPushDestinationStability))),
         .EnableAssertPushDataStability(
-            (EnableAssertPushDataStability && EnableAssertPushDestinationStability) ||
-            RegisterDemuxOutputs),
+            EnableCoverPushBackpressure &&
+            (PathBufferStabilizes ||
+             PushBufferStabilizes ||
+             (EnableAssertPushDataStability && EnableAssertPushDestinationStability))),
         .EnableAssertPushDataKnown(EnableAssertPushDataKnown),
         .EnableAssertFinalNotValid(EnableAssertFinalNotValid)
     ) br_flow_mux_core_pop (
@@ -150,33 +212,30 @@ module br_flow_xbar_core #(
         .enable_priority_update(enable_priority_update[i])
     );
 
-    if (RegisterPopOutputs) begin : gen_reg_out
-      br_flow_reg_fwd #(
-          .Width(Width),
-          .EnableCoverPushBackpressure(EnableCoverPushBackpressure || RegisterDemuxOutputs),
-          .EnableAssertNoPushBackpressure(EnableAssertNoPushBackpressure && !RegisterDemuxOutputs),
-          .EnableAssertPushValidStability(
-              (EnableAssertPushValidStability && EnableAssertPushDestinationStability) ||
-              RegisterDemuxOutputs),
-          // Push data cannot be stable because it comes from the arbiter
-          .EnableAssertPushDataStability(0),
-          .EnableAssertPushDataKnown(EnableAssertPushDataKnown),
-          .EnableAssertFinalNotValid(EnableAssertFinalNotValid)
-      ) br_flow_reg_fwd_mux_to_pop (
-          .clk,
-          .rst,
-          .push_valid(mux_out_valid[i]),
-          .push_ready(mux_out_ready[i]),
-          .push_data (mux_out_data[i]),
-          .pop_ready (pop_ready[i]),
-          .pop_valid (pop_valid[i]),
-          .pop_data  (pop_data[i])
-      );
-    end else begin : gen_no_reg_out
-      assign pop_valid[i] = mux_out_valid[i];
-      assign pop_data[i] = mux_out_data[i];
-      assign mux_out_ready[i] = pop_ready[i];
-    end
+    br_flow_buffer #(
+        .Depth(PopBufferDepth),
+        .Width(Width),
+        .RegisterPushOutputs(PopBufferRegisterPushOutputs),
+        .RegisterPopOutputs(PopBufferRegisterPopOutputs),
+        .EnableCoverPushBackpressure(EnableCoverPushBackpressure),
+        .EnableAssertNoPushBackpressure(0),
+        .EnableAssertPushValidStability(
+            EnableCoverPushBackpressure &&
+            (PathBufferStabilizes || PushBufferStabilizes || EnableAssertPushDestinationStability)),
+        // Push data can change when the arbiter grant changes.
+        .EnableAssertPushDataStability(0),
+        .EnableAssertPushDataKnown(EnableAssertPushDataKnown),
+        .EnableAssertFinalNotValid(EnableAssertFinalNotValid)
+    ) br_flow_buffer_pop (
+        .clk,  // ri lint_check_waive CLOCK_USE
+        .rst,
+        .push_valid(mux_out_valid[i]),
+        .push_ready(mux_out_ready[i]),
+        .push_data (mux_out_data[i]),
+        .pop_ready (pop_ready[i]),
+        .pop_valid (pop_valid[i]),
+        .pop_data  (pop_data[i])
+    );
   end
 
   //------------------------------------------

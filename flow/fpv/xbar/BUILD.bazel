@@ -96,7 +96,7 @@ br_verilog_fpv_test_tools_suite(
             "3",
             "4",
         ],
-        "RegisterDemuxOutputs": [
+        "PathBufferDepth": [
             "0",
             "1",
         ],
@@ -200,7 +200,7 @@ br_verilog_fpv_test_tools_suite(
             "3",
             "4",
         ],
-        "RegisterDemuxOutputs": [
+        "PathBufferDepth": [
             "0",
             "1",
         ],
@@ -304,7 +304,7 @@ br_verilog_fpv_test_tools_suite(
             "3",
             "4",
         ],
-        "RegisterDemuxOutputs": [
+        "PathBufferDepth": [
             "0",
             "1",
         ],

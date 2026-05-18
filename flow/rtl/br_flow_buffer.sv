@@ -210,13 +210,16 @@ module br_flow_buffer #(
     if (RegisterPopOutputs) begin : gen_stage2_fwd
       br_flow_reg_fwd #(
           .Width(Width),
-          // Stage 2 can experience internal backpressure without backpressuring the input
-          .EnableCoverPushBackpressure(1),
-          // Stage 1 always provides stable inputs to stage 2
-          .EnableAssertPushValidStability(1),
-          .EnableAssertPushDataStability(1),
+          // Stage 2 can experience internal backpressure without backpressuring the input.
+          // Keep those coverpoints gated by the wrapper's cover setting.
+          .EnableCoverPushBackpressure(EnableCoverPushBackpressure),
+          // Stage 1 always provides stable inputs to stage 2. Gate these assertions with
+          // cover enable because assertion antecedents are also treated as coverpoints.
+          .EnableAssertPushValidStability(EnableCoverPushBackpressure),
+          .EnableAssertPushDataStability(EnableCoverPushBackpressure),
           .EnableAssertPushDataKnown(EnableAssertPushDataKnown),
-          .EnableAssertFinalNotValid(EnableAssertFinalNotValid)
+          .EnableAssertFinalNotValid(EnableAssertFinalNotValid),
+          .EnableAssertNoPushBackpressure(0)
       ) br_flow_reg_fwd (
           .clk,
           .rst,
@@ -230,13 +233,16 @@ module br_flow_buffer #(
     end else begin : gen_stage2_none
       br_flow_reg_none #(
           .Width(Width),
-          // Stage 2 can experience internal backpressure without backpressuring the input
-          .EnableCoverPushBackpressure(1),
-          // Stage 1 always provides stable inputs to stage 2
-          .EnableAssertPushValidStability(1),
-          .EnableAssertPushDataStability(1),
+          // Stage 2 can experience internal backpressure without backpressuring the input.
+          // Keep those coverpoints gated by the wrapper's cover setting.
+          .EnableCoverPushBackpressure(EnableCoverPushBackpressure),
+          // Stage 1 always provides stable inputs to stage 2. Gate these assertions with
+          // cover enable because assertion antecedents are also treated as coverpoints.
+          .EnableAssertPushValidStability(EnableCoverPushBackpressure),
+          .EnableAssertPushDataStability(EnableCoverPushBackpressure),
           .EnableAssertPushDataKnown(EnableAssertPushDataKnown),
-          .EnableAssertFinalNotValid(EnableAssertFinalNotValid)
+          .EnableAssertFinalNotValid(EnableAssertFinalNotValid),
+          .EnableAssertNoPushBackpressure(0)
       ) br_flow_reg_none (
           .clk,
           .rst,
