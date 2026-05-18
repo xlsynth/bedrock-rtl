@@ -291,6 +291,6 @@ module br_flow_buffer #(
   //------------------------------------------
   // Implementation checks
   //------------------------------------------
-  // Rely on submodule implementation checks.
+  // Rely on submodule implementation checks
 
 endmodule : br_flow_buffer
