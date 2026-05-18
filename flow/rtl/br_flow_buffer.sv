@@ -7,12 +7,8 @@
 // Uses the AMBA-inspired ready-valid handshake protocol for synchronizing
 // pipeline stages and stalling when encountering backpressure hazards.
 //
-// Data progresses from one stage to another when both
-// the corresponding ready signal and valid signal are
-// both 1 on the same cycle. Otherwise, the stage is stalled.
-//
-// A convenience wrapper with a flow-register interface, backed by
-// flow regs for shallow depths or a flop-based FIFO for deeper storage.
+// This module is a convenience wrapper that instantiates various combinations
+// of flow regs for shallow depths or a flop-based FIFO for deeper storage.
 //
 // Depth | RegisterPushOutputs | RegisterPopOutputs | Implementation
 // ------|---------------------|--------------------|-------------------------------
