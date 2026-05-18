@@ -228,6 +228,20 @@ verilog_library(
 )
 
 verilog_library(
+    name = "br_flow_buffer",
+    srcs = ["br_flow_buffer.sv"],
+    deps = [
+        ":br_flow_reg_both",
+        ":br_flow_reg_fwd",
+        ":br_flow_reg_none",
+        ":br_flow_reg_rev",
+        "//fifo/rtl:br_fifo_flops",
+        "//macros:br_asserts",
+        "//macros:br_unused",
+    ],
+)
+
+verilog_library(
     name = "br_flow_reg_both",
     srcs = ["br_flow_reg_both.sv"],
     deps = [
@@ -684,6 +698,87 @@ br_verilog_elab_and_lint_test_suite(
         ],
     },
     deps = [":br_flow_burst_mux_lru_stable"],
+)
+
+br_verilog_elab_and_lint_test_suite(
+    name = "br_flow_buffer_test_suite",
+    params = {
+        "Depth": [
+            "0",
+            "1",
+            "2",
+            "3",
+        ],
+        "Width": [
+            "1",
+            "2",
+        ],
+    },
+    deps = [":br_flow_buffer"],
+)
+
+br_verilog_elab_and_lint_test_suite(
+    name = "br_flow_buffer_depth1_no_pop_reg_test_suite",
+    params = {
+        "Depth": [
+            "1",
+        ],
+        "RegisterPushOutputs": [
+            "0",
+            "1",
+        ],
+        "RegisterPopOutputs": [
+            "0",
+        ],
+        "Width": [
+            "1",
+            "2",
+        ],
+    },
+    deps = [":br_flow_buffer"],
+)
+
+br_verilog_elab_and_lint_test_suite(
+    name = "br_flow_buffer_depth2_test_suite",
+    params = {
+        "Depth": [
+            "2",
+        ],
+        "RegisterPushOutputs": [
+            "0",
+            "1",
+        ],
+        "RegisterPopOutputs": [
+            "0",
+            "1",
+        ],
+        "Width": [
+            "1",
+            "2",
+        ],
+    },
+    deps = [":br_flow_buffer"],
+)
+
+br_verilog_elab_and_lint_test_suite(
+    name = "br_flow_buffer_depth3_test_suite",
+    params = {
+        "Depth": [
+            "3",
+        ],
+        "RegisterPushOutputs": [
+            "1",
+        ],
+        "RegisterPopOutputs": [
+            "0",
+            "1",
+        ],
+        "Width": [
+            "1",
+            "2",
+        ],
+    },
+    deps = [":br_flow_buffer"],
 )
 
 br_verilog_elab_and_lint_test_suite(
