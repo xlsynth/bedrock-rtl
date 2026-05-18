@@ -70,7 +70,7 @@ module br_flow_buffer #(
   // Integration checks
   //------------------------------------------
   // Rely on submodule integration checks
-  
+
   //------------------------------------------
   // Implementation
   //------------------------------------------
@@ -210,7 +210,10 @@ module br_flow_buffer #(
     if (RegisterPopOutputs) begin : gen_stage2_fwd
       br_flow_reg_fwd #(
           .Width(Width),
+          Stage 2 can still
+          // Stage 2 can experience internal backpressure without backpressuring the input
           .EnableCoverPushBackpressure(1),
+          // Stage 1 always provides stable inputs to stage 2
           .EnableAssertPushValidStability(1),
           .EnableAssertPushDataStability(1),
           .EnableAssertPushDataKnown(EnableAssertPushDataKnown),
@@ -228,7 +231,9 @@ module br_flow_buffer #(
     end else begin : gen_stage2_none
       br_flow_reg_none #(
           .Width(Width),
+          // Stage 2 can experience internal backpressure without backpressuring the input
           .EnableCoverPushBackpressure(1),
+          // Stage 1 always provides stable inputs to stage 2
           .EnableAssertPushValidStability(1),
           .EnableAssertPushDataStability(1),
           .EnableAssertPushDataKnown(EnableAssertPushDataKnown),
@@ -246,6 +251,9 @@ module br_flow_buffer #(
     end
 
   end else if (Depth >= 3 && RegisterPushOutputs) begin : gen_fifo
+    // Uses a bypass FIFO with an optional 'flow_reg_fwd' on the pop side.
+    // The FIFO drives push_ready from a full register and does not currently
+    // support a combinational path from pop_ready to push_ready.
     br_fifo_flops #(
         .Depth(Depth),
         .Width(Width),
