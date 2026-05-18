@@ -210,7 +210,6 @@ module br_flow_buffer #(
     if (RegisterPopOutputs) begin : gen_stage2_fwd
       br_flow_reg_fwd #(
           .Width(Width),
-          Stage 2 can still
           // Stage 2 can experience internal backpressure without backpressuring the input
           .EnableCoverPushBackpressure(1),
           // Stage 1 always provides stable inputs to stage 2
