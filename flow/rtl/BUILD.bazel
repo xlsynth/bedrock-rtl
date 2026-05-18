@@ -718,7 +718,7 @@ br_verilog_elab_and_lint_test_suite(
 )
 
 br_verilog_elab_and_lint_test_suite(
-    name = "br_flow_buffer_depth1_no_pop_reg_test_suite",
+    name = "br_flow_buffer_test_suite_depth1_no_pop_reg",
     params = {
         "Depth": [
             "1",
@@ -739,7 +739,7 @@ br_verilog_elab_and_lint_test_suite(
 )
 
 br_verilog_elab_and_lint_test_suite(
-    name = "br_flow_buffer_depth2_test_suite",
+    name = "br_flow_buffer_test_suite_depth2",
     params = {
         "Depth": [
             "2",
@@ -761,7 +761,7 @@ br_verilog_elab_and_lint_test_suite(
 )
 
 br_verilog_elab_and_lint_test_suite(
-    name = "br_flow_buffer_depth3_test_suite",
+    name = "br_flow_buffer_test_suite_depth3",
     params = {
         "Depth": [
             "3",
