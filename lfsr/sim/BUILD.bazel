@@ -46,6 +46,7 @@ br_verilog_sim_test_tools_suite(
     tools = [
         "iverilog",
         "vcs",
+        "verilator",
     ],
     deps = [":br_lfsr_tb"],
 )
@@ -66,6 +67,7 @@ br_verilog_sim_test_tools_suite(
     tools = [
         "iverilog",
         "vcs",
+        "verilator",
     ],
     deps = [":br_lfsr_tb"],
 )

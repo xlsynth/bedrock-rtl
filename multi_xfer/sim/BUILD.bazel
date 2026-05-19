@@ -32,6 +32,7 @@ br_verilog_sim_test_tools_suite(
     tools = [
         "iverilog",
         "vcs",
+        "verilator",
     ],
     deps = [":br_multi_xfer_reg_fwd_tb"],
 )

@@ -69,6 +69,12 @@ class Verilator(EdaTool):
         cmd += [gen_file_header(self.scriptfile, "verilator")]
         cmd += ["set -e"]
         cmd += self.read_env_setup_commands()
+        # Verilator's threaded runtime needs libatomic on Rocky 8, and lld does
+        # not search GCC's private library directory for a bare `-latomic`.
+        cmd += ['libatomic="$(gcc --print-file-name=libatomic.so 2>/dev/null || true)"']
+        cmd += ['if [[ -z "$libatomic" || "$libatomic" == "libatomic.so" ]]; then']
+        cmd += ['  libatomic="-latomic"']
+        cmd += ["fi"]
         cmd += ["echo ' '"]
         cmd += [
             "echo '--------------------------- verilator ---------------------------'"
@@ -86,6 +92,8 @@ class Verilator(EdaTool):
             obj_dir,
             "-o",
             executable,
+            "-LDFLAGS",
+            '"$libatomic"',
             f"-f {self.filelist}",
         ]
         if self.waves:
@@ -94,13 +102,13 @@ class Verilator(EdaTool):
         verilator_cmd += ["-DBR_VERILATOR"]
         verilator_cmd += [f"-D{define}" for define in self.defines]
         verilator_cmd += [f"-G{key}={value}" for key, value in self.params.items()]
-        verilator_cmd += self.opts
+        verilator_cmd += self.elab_opts
         verilator_cmd = " ".join(verilator_cmd)
 
         if self.elab_only:
             cmd += [verilator_cmd]
         else:
-            sim_cmd = f"./{obj_dir}/{executable}"
+            sim_cmd = " ".join([f"./{obj_dir}/{executable}"] + self.sim_opts)
             cmd += [" && ".join([verilator_cmd, sim_cmd])]
         cmd += [""]
         return "\n".join(cmd)

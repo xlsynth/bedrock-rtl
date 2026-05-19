@@ -49,6 +49,7 @@ br_verilog_sim_test_tools_suite(
     tools = [
         "iverilog",
         "vcs",
+        "verilator",
     ],
     deps = [":br_enc_bin2onehot_tb"],
 )
@@ -69,6 +70,7 @@ br_verilog_sim_test_tools_suite(
     tools = [
         "iverilog",
         "vcs",
+        "verilator",
     ],
     deps = [":br_enc_gray_tb"],
 )
@@ -93,7 +95,10 @@ br_verilog_sim_test_tools_suite(
         ],
     },
     # TODO: Does not work with iverilog.
-    tools = ["vcs"],
+    tools = [
+        "vcs",
+        "verilator",
+    ],
     deps = [":br_enc_priority_encoder_tb"],
 )
 
@@ -122,6 +127,9 @@ br_verilog_sim_test_tools_suite(
         ],
     },
     # TODO: Does not work with iverilog.
-    tools = ["vcs"],
+    tools = [
+        "vcs",
+        "verilator",
+    ],
     deps = [":br_enc_priority_dynamic_tb"],
 )
