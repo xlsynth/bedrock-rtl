@@ -27,7 +27,7 @@ image:bedrock-rtl-logo-light.jpg[Bedrock-RTL,width=300]
 
 At minimum, you need to have the following tools installed in your environment.
 
-* Bazel == 7.7.1 (recommended to manage this using Bazelisk)
+* Bazel == 9.1.0 (recommended to manage this using Bazelisk)
 * System Python interpreter >= 3.12
 
 Additionally, several tools are needed to build and run all of the tests:
@@ -37,10 +37,10 @@ Additionally, several tools are needed to build and run all of the tests:
     *** Verible
   ** Simulation
     *** Icarus Verilog
+    *** Verilator
   ** RTL wrapper generation
     *** TopStitch
   ** Additional tools included in the Docker image
-    *** Verilator
     *** Yosys, EQY, and Yices
     *** Slang
     *** XLS support libraries
