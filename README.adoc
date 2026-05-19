@@ -15,6 +15,7 @@ image:https://img.shields.io/endpoint?url=https://gist.githubusercontent.com/mgo
 image:https://img.shields.io/endpoint?url=https://gist.githubusercontent.com/mgottscho/c66dc2ddc0e513ba06ce338620977b26/raw/ascentlint.json[bazel-test-ascentlint,link="https://github.com/xlsynth/bedrock-rtl/actions/workflows/ci.yml?query=job%3Abazel-test-ascentlint"]
 image:https://img.shields.io/endpoint?url=https://gist.githubusercontent.com/mgottscho/c66dc2ddc0e513ba06ce338620977b26/raw/vcs.json[bazel-test-vcs,link="https://github.com/xlsynth/bedrock-rtl/actions/workflows/ci.yml?query=job%3Abazel-test-vcs"]
 image:https://img.shields.io/endpoint?url=https://gist.githubusercontent.com/mgottscho/c66dc2ddc0e513ba06ce338620977b26/raw/iverilog.json[bazel-test-iverilog,link="https://github.com/xlsynth/bedrock-rtl/actions/workflows/ci.yml?query=job%3Abazel-test-iverilog"]
+image:https://img.shields.io/endpoint?url=https://gist.githubusercontent.com/mgottscho/c66dc2ddc0e513ba06ce338620977b26/raw/verilator.json[bazel-test-verilator,link="https://github.com/xlsynth/bedrock-rtl/actions/workflows/ci.yml?query=job%3Abazel-test-verilator"]
 image:https://img.shields.io/endpoint?url=https://gist.githubusercontent.com/mgottscho/c66dc2ddc0e513ba06ce338620977b26/raw/jg.json[bazel-test-jg,link="https://github.com/xlsynth/bedrock-rtl/actions/workflows/nightly.yml?query=job%3Abazel-test-jg"]
 image:https://img.shields.io/github/issues/xlsynth/bedrock-rtl/bug?label=bugs[open bugs,link="https://github.com/xlsynth/bedrock-rtl/issues?q=is%3Aissue%20state%3Aopen%20label%3Abug"]
 
@@ -26,7 +27,7 @@ image:bedrock-rtl-logo-light.jpg[Bedrock-RTL,width=300]
 
 At minimum, you need to have the following tools installed in your environment.
 
-* Bazel == 7.7.1 (recommended to manage this using Bazelisk)
+* Bazel == 9.1.0 (recommended to manage this using Bazelisk)
 * System Python interpreter >= 3.12
 
 Additionally, several tools are needed to build and run all of the tests:
@@ -36,10 +37,10 @@ Additionally, several tools are needed to build and run all of the tests:
     *** Verible
   ** Simulation
     *** Icarus Verilog
+    *** Verilator
   ** RTL wrapper generation
     *** TopStitch
   ** Additional tools included in the Docker image
-    *** Verilator
     *** Yosys, EQY, and Yices
     *** Slang
     *** XLS support libraries
