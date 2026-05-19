@@ -31,10 +31,18 @@ py_library(
     srcs = ["util.py"],
 )
 
+py_library(
+    name = "cli",
+    srcs = ["cli.py"],
+    imports = ["."],
+    deps = [
+        ":util",
+    ],
+)
+
 py_binary(
     name = "verilog_runner",
     srcs = [
-        "cli.py",
         "eda_tool.py",
         "plugins.py",
         "verilog_runner.py",
@@ -42,6 +50,7 @@ py_binary(
     imports = ["."],
     legacy_create_init = False,
     deps = [
+        ":cli",
         ":util",
     ],
 )
@@ -50,4 +59,10 @@ py_test(
     name = "util_test",
     srcs = ["util_test.py"],
     deps = [":util"],
+)
+
+py_test(
+    name = "cli_test",
+    srcs = ["cli_test.py"],
+    deps = [":cli"],
 )

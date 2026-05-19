@@ -129,14 +129,20 @@ br_verilog_sim_test_tools_suite(
         "BR_ENABLE_FPV",
     ],
     # iverilog support for SVA is not complete
-    tools = ["vcs"],
+    tools = [
+        "vcs",
+        "verilator",
+    ],
     deps = [":br_asserts_test"],
 )
 
 br_verilog_sim_test_tools_suite(
     name = "br_asserts_sim_noassert_test_tools_suite",
     # iverilog support for SVA is not complete
-    tools = ["vcs"],
+    tools = [
+        "vcs",
+        "verilator",
+    ],
     deps = [":br_asserts_test"],
 )
 
@@ -170,7 +176,10 @@ br_verilog_sim_test_tools_suite(
     ],
     elab_only = True,
     # iverilog support for SVA is not complete
-    tools = ["vcs"],
+    tools = [
+        "vcs",
+        "verilator",
+    ],
     deps = [":br_asserts_in_pkg_test"],
 )
 
@@ -178,7 +187,10 @@ br_verilog_sim_test_tools_suite(
     name = "br_asserts_in_pkg_sim_noassert_test_tools_suite",
     elab_only = True,
     # iverilog support for SVA is not complete
-    tools = ["vcs"],
+    tools = [
+        "vcs",
+        "verilator",
+    ],
     deps = [":br_asserts_in_pkg_test"],
 )
 
