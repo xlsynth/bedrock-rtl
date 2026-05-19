@@ -180,6 +180,11 @@ def common_args(args: argparse.Namespace):
         "env_setup_commands": get_env_setup_command_file_from_env(),
     }
     if getattr(args, "subcommand", None) == "sim":
+        if len(args.opt) > 0 and args.tool != "vcs":
+            raise ValueError(
+                "--opt is a legacy VCS-only simulation option. Use --elab_opt "
+                "for compile/elaboration options or --sim_opt for runtime options."
+            )
         common["elab_opts"] = getattr(args, "elab_opt", [])
         common["sim_opts"] = getattr(args, "sim_opt", [])
     return common

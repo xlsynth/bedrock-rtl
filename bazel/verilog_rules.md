@@ -223,7 +223,7 @@ Runs Verilog/SystemVerilog compilation and simulation in one command. This rule 
 | <a id="rule_verilog_sim_test-defines"></a>defines |  Preprocessor defines to pass to the Verilog compiler.   | List of strings | optional |  `[]`  |
 | <a id="rule_verilog_sim_test-elab_only"></a>elab_only |  Only run elaboration.   | Boolean | optional |  `False`  |
 | <a id="rule_verilog_sim_test-elab_opts"></a>elab_opts |  Tool-specific compile/elaboration options not covered by other arguments.   | List of strings | optional |  `[]`  |
-| <a id="rule_verilog_sim_test-opts"></a>opts |  Deprecated compatibility alias for compile/elaboration options. Prefer 'elab_opts'.   | List of strings | optional |  `[]`  |
+| <a id="rule_verilog_sim_test-opts"></a>opts |  Deprecated VCS-only simulation options. Prefer 'elab_opts' or 'sim_opts'.   | List of strings | optional |  `[]`  |
 | <a id="rule_verilog_sim_test-params"></a>params |  Verilog module parameters to set in the instantiation of the top-level module.   | <a href="https://bazel.build/rules/lib/core/dict">Dictionary: String -> String</a> | optional |  `{}`  |
 | <a id="rule_verilog_sim_test-runner_flags"></a>runner_flags |  command line flags   | <a href="https://bazel.build/concepts/labels">Label</a> | optional |  `"@bedrock-rtl//bazel:runner_flags"`  |
 | <a id="rule_verilog_sim_test-seed"></a>seed |  Random seed to use in simulation.   | Integer | optional |  `0`  |
@@ -506,7 +506,7 @@ The following extra tags are unconditionally appended to the list of tags:
 | Name  | Description | Default Value |
 | :------------- | :------------- | :------------- |
 | <a id="verilog_sim_test-tool"></a>tool |  The simulation tool to use.   |  none |
-| <a id="verilog_sim_test-opts"></a>opts |  Deprecated compatibility alias for compile/elaboration options.   |  `[]` |
+| <a id="verilog_sim_test-opts"></a>opts |  Deprecated VCS-only simulation options.   |  `[]` |
 | <a id="verilog_sim_test-elab_opts"></a>elab_opts |  Tool-specific compile/elaboration options not covered by other arguments.   |  `[]` |
 | <a id="verilog_sim_test-sim_opts"></a>sim_opts |  Tool-specific simulation runtime options, such as simulator plusargs.   |  `[]` |
 | <a id="verilog_sim_test-tags"></a>tags |  The tags to add to the test.   |  `[]` |

@@ -298,6 +298,8 @@ def _verilog_lint_test_impl(ctx):
 def _verilog_sim_test_impl(ctx):
     """Implementation of the verilog_sim_test rule."""
     extra_args = []
+    if ctx.attr.opts and ctx.attr.tool != "vcs":
+        fail("'opts' is a deprecated VCS-only simulation option. Use 'elab_opts' or 'sim_opts' instead.")
     if ctx.attr.elab_only:
         extra_args.append("--elab_only")
     if ctx.attr.uvm:
@@ -306,7 +308,7 @@ def _verilog_sim_test_impl(ctx):
     if ctx.attr.waves:
         extra_args.append("--waves")
     for opt in ctx.attr.opts:
-        extra_args.append("--elab_opt='" + opt + "'")
+        extra_args.append("--opt='" + opt + "'")
     for opt in ctx.attr.elab_opts:
         extra_args.append("--elab_opt='" + opt + "'")
     for opt in ctx.attr.sim_opts:
@@ -530,7 +532,7 @@ rule_verilog_sim_test = rule(
             doc = "The top-level module; if not provided and there exists one dependency, then defaults to that dep's label name.",
         ),
         "opts": attr.string_list(
-            doc = "Deprecated compatibility alias for compile/elaboration options. Prefer 'elab_opts'.",
+            doc = "Deprecated VCS-only simulation options. Prefer 'elab_opts' or 'sim_opts'.",
         ),
         "elab_opts": attr.string_list(
             doc = "Tool-specific compile/elaboration options not covered by other arguments.",
@@ -605,13 +607,16 @@ def verilog_sim_test(tool, opts = [], elab_opts = [], sim_opts = [], tags = [], 
 
     Args:
         tool: The simulation tool to use.
-        opts: Deprecated compatibility alias for compile/elaboration options.
+        opts: Deprecated VCS-only simulation options.
         elab_opts: Tool-specific compile/elaboration options not covered by other arguments.
         sim_opts: Tool-specific simulation runtime options, such as simulator plusargs.
         tags: The tags to add to the test.
         waves: Enable waveform dumping.
         **kwargs: Other arguments to pass to the rule_verilog_sim_test rule.
     """
+
+    if opts and tool != "vcs":
+        fail("'opts' is a deprecated VCS-only simulation option. Use 'elab_opts' or 'sim_opts' instead.")
 
     # Make sure we fail the test ASAP after any error occurs (assertion or otherwise).
     extra_elab_opts = []

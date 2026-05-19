@@ -27,6 +27,7 @@ def _args_for_subcommand(subcommand: str) -> argparse.Namespace:
         custom_tcl_header=None,
         custom_tcl_body=None,
         subcommand=subcommand,
+        tool="iverilog",
     )
     return args
 
@@ -57,6 +58,26 @@ class TestCliFunctions(unittest.TestCase):
         common = common_args(args)
 
         self.assertEqual(common["opts"], ["-legacy"])
+
+    @mock.patch.dict("os.environ", {}, clear=True)
+    def test_common_args_sim_rejects_tool_opts_for_non_vcs(self):
+        args = _args_for_subcommand("sim")
+        args.opt = ["-legacy"]
+
+        with self.assertRaisesRegex(ValueError, "legacy VCS-only"):
+            common_args(args)
+
+    @mock.patch.dict("os.environ", {}, clear=True)
+    def test_common_args_sim_preserves_tool_opts_for_vcs(self):
+        args = _args_for_subcommand("sim")
+        args.tool = "vcs"
+        args.opt = ["-legacy"]
+
+        common = common_args(args)
+
+        self.assertEqual(common["opts"], ["-legacy"])
+        self.assertEqual(common["elab_opts"], ["-foo"])
+        self.assertEqual(common["sim_opts"], ["+bar=1"])
 
 
 if __name__ == "__main__":
