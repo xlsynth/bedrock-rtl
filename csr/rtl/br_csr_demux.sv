@@ -28,10 +28,9 @@ module br_csr_demux #(
     // aligned, allowing mask-based local address views. Set to 0 for deliberately
     // non-aligned maps; this module does not rebase addresses.
     parameter bit RequirePowerOfTwoAlignedRanges = 1,
-    // Apply this mask only while selecting a downstream route. The unmasked
-    // upstream address is forwarded before application of DownstreamAddrMask.
+    // Mask applied to the upstream address prior to decoding.
     parameter logic [AddrWidth-1:0] UpstreamAddrMask = '1,
-    // Apply one mask to each outgoing downstream request address.
+    // Mask applied to each forwarded downstream request address.
     parameter logic [NumDownstreams-1:0][AddrWidth-1:0] DownstreamAddrMask = '1,
     localparam int NumAddressRanges = HasDefaultDownstream ? NumDownstreams - 1 : NumDownstreams,
     localparam int StrobeWidth = DataWidth / 8
