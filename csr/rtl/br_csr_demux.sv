@@ -4,8 +4,9 @@
 //
 // Routes SCB requests to the correct downstream interface based on the request
 // address. Address ranges are provided as inputs so straps can select the
-// decoded map. Optional masks provide local address views while decoding and
-// while forwarding requests downstream.
+// decoded map. Optional masks may be applied while decoding and while
+// forwarding requests downstream. Forwarded addresses for explicit ranges may
+// independently be rebased relative to their range base.
 // Selection-based SCB routing and response handling are implemented by
 // br_csr_demux_select_onehot.
 //
@@ -24,15 +25,20 @@ module br_csr_demux #(
     // If 0, a request with an address that doesn't match any downstream address range
     // will result in a response with decerr=1.
     parameter bit HasDefaultDownstream = 0,
-    // If 1, assert that every decoded range is power-of-two sized and naturally
-    // aligned, allowing mask-based local address views. Set to 0 for deliberately
-    // non-aligned maps; this module does not rebase addresses.
-    parameter bit RequirePowerOfTwoAlignedRanges = 1,
+    localparam int NumAddressRanges = HasDefaultDownstream ? NumDownstreams - 1 : NumDownstreams,
+    // If 1 for a decoded range, assert that its size is a power of two and
+    // its base is naturally aligned to that size.
+    // ri lint_check_waive ARRAY_LENGTH_ONE
+    parameter bit RequirePowerOfTwoAlignedRanges[NumAddressRanges] = '{default: 1},
+    // If 1 for a decoded range, rebase its forwarded address relative to its
+    // range base before applying its outgoing mask.
+    // ri lint_check_waive ARRAY_LENGTH_ONE
+    parameter bit RebaseForwardedBase[NumAddressRanges] = '{default: 0},
     // Mask applied to the upstream address prior to decoding.
     parameter logic [AddrWidth-1:0] UpstreamAddrMask = '1,
-    // Mask applied to each forwarded downstream request address.
+    // Mask applied to each forwarded downstream request address, after
+    // subtraction-based rebasing where applicable.
     parameter logic [NumDownstreams-1:0][AddrWidth-1:0] DownstreamAddrMask = '1,
-    localparam int NumAddressRanges = HasDefaultDownstream ? NumDownstreams - 1 : NumDownstreams,
     localparam int StrobeWidth = DataWidth / 8
 ) (
     input logic clk,
@@ -91,13 +97,18 @@ module br_csr_demux #(
     `BR_ASSERT_INTG(downstream_addr_range_no_overflow_a,
                     $fell(rst) |-> !downstream_addr_limit_ext[i][AddrWidth])
 
-    if (RequirePowerOfTwoAlignedRanges) begin : gen_power_of_two_aligned_range_check
-      `BR_ASSERT_INTG(
-          downstream_addr_size_power_of_two_a,
-          $fell(rst) |-> (downstream_addr_size[i] & (downstream_addr_size[i] - 1'b1)) == '0)
+    if (RequirePowerOfTwoAlignedRanges[i]) begin : gen_power_of_two_aligned_range_check
+      // Require a power-of-two range size.
+      `BR_ASSERT_INTG(downstream_addr_size_power_of_two_a,
+                      $fell(rst) |-> $onehot0(downstream_addr_size[i]))
+      // Require the range base to start at its natural power-of-two boundary.
       `BR_ASSERT_INTG(
           downstream_addr_base_aligned_a,
           $fell(rst) |-> (downstream_addr_base[i] & (downstream_addr_size[i] - 1'b1)) == '0)
+      // Preserve every in-range offset bit to prevent forwarded address aliasing.
+      `BR_ASSERT_INTG(
+          downstream_addr_mask_preserves_offsets_a,
+          $fell(rst) |-> ((downstream_addr_size[i] - 1'b1) & ~DownstreamAddrMask[i]) == '0)
     end
   end
 
@@ -119,17 +130,23 @@ module br_csr_demux #(
 
   assign upstream_req_addr_masked = upstream_req_addr & UpstreamAddrMask;
 
-  // Request address decoding
-  for (genvar i = 0; i < NumAddressRanges; i++) begin : gen_select
+  // Decode and forward the request address for each explicit downstream range.
+  // ri lint_check_off PARAM_BIT_SEL
+  for (genvar i = 0; i < NumAddressRanges; i++) begin : gen_downstream_addr_translate
+    // Standard decode
     assign select_onehot[i] =
         (upstream_req_addr_masked >= downstream_addr_base[i]) &&
         (upstream_req_addr_masked <= downstream_addr_limit[i]);
-  end
 
-  // Parameter array indexing selects one fixed outgoing mask per generated route.
-  // ri lint_check_off PARAM_BIT_SEL
-  for (genvar i = 0; i < NumDownstreams; i++) begin : gen_downstream_addr_mask
-    assign downstream_req_addr[i] = downstream_req_addr_unmasked[i] & DownstreamAddrMask[i];
+    // Forward w/ optional rebase + mask
+    assign downstream_req_addr[i] = (RebaseForwardedBase[i] ?
+        downstream_req_addr_unmasked[i] - downstream_addr_base[i] :
+        downstream_req_addr_unmasked[i]) & DownstreamAddrMask[i];
+  end
+  if (HasDefaultDownstream) begin : gen_default_downstream_addr_translate
+    // A default downstream has no explicit address decoding or rebasing.
+    assign downstream_req_addr[NumDownstreams-1] =
+        downstream_req_addr_unmasked[NumDownstreams-1] & DownstreamAddrMask[NumDownstreams-1];
   end
   // ri lint_check_on PARAM_BIT_SEL
 
