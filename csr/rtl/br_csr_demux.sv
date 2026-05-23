@@ -1,16 +1,16 @@
 // SPDX-License-Identifier: Apache-2.0
 //
-// Bedrock-RTL SCB Demux
+// Bedrock-RTL Address-Decoding SCB Demux
 //
 // Routes SCB requests to the correct downstream interface based on the request
-// address. The address range for each downstream interface is specified by a
-// pair of static inputs. Responses from the downstream interfaces are muxed
-// together and passed upstream to the request initiator. Each downstream
-// interface can be retimed by a configurable number of stages.
+// address. Address ranges are provided as inputs so straps can select the
+// decoded map. Optional masks provide local address views while decoding and
+// while forwarding requests downstream.
+// Selection-based SCB routing and response handling are implemented by
+// br_csr_demux_select_onehot.
 //
 
 `include "br_asserts_internal.svh"
-`include "br_registers.svh"
 
 module br_csr_demux #(
     parameter int AddrWidth = 1,  // Must be at least 1
@@ -24,7 +24,15 @@ module br_csr_demux #(
     // If 0, a request with an address that doesn't match any downstream address range
     // will result in a response with decerr=1.
     parameter bit HasDefaultDownstream = 0,
-
+    // If 1, assert that every decoded range is power-of-two sized and naturally
+    // aligned, allowing mask-based local address views. Set to 0 for deliberately
+    // non-aligned maps; this module does not rebase addresses.
+    parameter bit RequirePowerOfTwoAlignedRanges = 1,
+    // Apply this mask only while selecting a downstream route. The unmasked
+    // upstream address is forwarded before application of DownstreamAddrMask.
+    parameter logic [AddrWidth-1:0] UpstreamAddrMask = '1,
+    // Apply one mask to each outgoing downstream request address.
+    parameter logic [NumDownstreams-1:0][AddrWidth-1:0] DownstreamAddrMask = '1,
     localparam int NumAddressRanges = HasDefaultDownstream ? NumDownstreams - 1 : NumDownstreams,
     localparam int StrobeWidth = DataWidth / 8
 ) (
@@ -45,9 +53,11 @@ module br_csr_demux #(
     output logic upstream_resp_decerr,
     output logic upstream_resp_slverr,
 
-    // Inclusive min and max addresses for each downstream interface
+    // Base address and size for each decoded downstream route. The decoded
+    // inclusive bound is base + size - 1. The last downstream has no decoded
+    // range when HasDefaultDownstream is set.
     input logic [NumAddressRanges-1:0][AddrWidth-1:0] downstream_addr_base,
-    input logic [NumAddressRanges-1:0][AddrWidth-1:0] downstream_addr_limit,
+    input logic [NumAddressRanges-1:0][AddrWidth-1:0] downstream_addr_size,
 
     output logic [NumDownstreams-1:0] downstream_req_valid,
     output logic [NumDownstreams-1:0] downstream_req_write,
@@ -70,9 +80,26 @@ module br_csr_demux #(
   `BR_ASSERT_STATIC(legal_addr_width_a, AddrWidth >= 1)
   `BR_ASSERT_STATIC(legal_data_width_a, DataWidth == 32 || DataWidth == 64)
 
-  for (genvar i = 0; i < NumAddressRanges; i++) begin : gen_positive_range_check
-    `BR_ASSERT_INTG(downstream_addr_range_positive_a,
-                    $fell(rst) |-> downstream_addr_base[i] <= downstream_addr_limit[i])
+  // Derive inclusive route bounds with one extra bit to detect overflow.
+  logic [NumAddressRanges-1:0][  AddrWidth:0] downstream_addr_limit_ext;
+  logic [NumAddressRanges-1:0][AddrWidth-1:0] downstream_addr_limit;
+
+  for (genvar i = 0; i < NumAddressRanges; i++) begin : gen_range_check
+    assign downstream_addr_limit_ext[i] = downstream_addr_base[i] + downstream_addr_size[i] - 1'b1;
+    assign downstream_addr_limit[i] = downstream_addr_limit_ext[i][AddrWidth-1:0];
+
+    `BR_ASSERT_INTG(legal_downstream_addr_size_a, $fell(rst) |-> downstream_addr_size[i] > '0)
+    `BR_ASSERT_INTG(downstream_addr_range_no_overflow_a,
+                    $fell(rst) |-> !downstream_addr_limit_ext[i][AddrWidth])
+
+    if (RequirePowerOfTwoAlignedRanges) begin : gen_power_of_two_aligned_range_check
+      `BR_ASSERT_INTG(
+          downstream_addr_size_power_of_two_a,
+          $fell(rst) |-> (downstream_addr_size[i] & (downstream_addr_size[i] - 1'b1)) == '0)
+      `BR_ASSERT_INTG(
+          downstream_addr_base_aligned_a,
+          $fell(rst) |-> (downstream_addr_base[i] & (downstream_addr_size[i] - 1'b1)) == '0)
+    end
   end
 
   for (genvar i = 0; i < NumAddressRanges - 1; i++) begin : gen_range_overlap_check_i
@@ -87,147 +114,60 @@ module br_csr_demux #(
 
   // Implementation
 
-  logic [NumDownstreams-1:0] select_onehot;
-  logic [NumDownstreams-1:0] downstream_req_valid_int;
-  logic [NumDownstreams-1:0] downstream_req_write_int;
-  logic [NumDownstreams-1:0][AddrWidth-1:0] downstream_req_addr_int;
-  logic [NumDownstreams-1:0][DataWidth-1:0] downstream_req_wdata_int;
-  logic [NumDownstreams-1:0][StrobeWidth-1:0] downstream_req_wstrb_int;
-  logic [NumDownstreams-1:0] downstream_req_privileged_int;
-  logic [NumDownstreams-1:0] downstream_req_secure_int;
-  logic [NumDownstreams-1:0] downstream_req_abort_int;
+  logic [AddrWidth-1:0] upstream_req_addr_masked;
+  logic [NumAddressRanges-1:0] select_onehot;
+  logic [NumDownstreams-1:0][AddrWidth-1:0] downstream_req_addr_unmasked;
+
+  assign upstream_req_addr_masked = upstream_req_addr & UpstreamAddrMask;
 
   // Request address decoding
   for (genvar i = 0; i < NumAddressRanges; i++) begin : gen_select
     assign select_onehot[i] =
-        (upstream_req_addr >= downstream_addr_base[i]) &&
-        (upstream_req_addr <= downstream_addr_limit[i]);
+        (upstream_req_addr_masked >= downstream_addr_base[i]) &&
+        (upstream_req_addr_masked <= downstream_addr_limit[i]);
   end
 
-  if (HasDefaultDownstream) begin : gen_default_downstream
-    assign select_onehot[NumAddressRanges] = !(|select_onehot[NumAddressRanges-1:0]);
+  // Parameter array indexing selects one fixed outgoing mask per generated route.
+  // ri lint_check_off PARAM_BIT_SEL
+  for (genvar i = 0; i < NumDownstreams; i++) begin : gen_downstream_addr_mask
+    assign downstream_req_addr[i] = downstream_req_addr_unmasked[i] & DownstreamAddrMask[i];
   end
+  // ri lint_check_on PARAM_BIT_SEL
 
-  assign downstream_req_valid_int = select_onehot & {NumDownstreams{upstream_req_valid}};
-  assign downstream_req_write_int = {NumDownstreams{upstream_req_write}};
-  assign downstream_req_addr_int = {NumDownstreams{upstream_req_addr}};
-  assign downstream_req_wdata_int = {NumDownstreams{upstream_req_wdata}};
-  assign downstream_req_wstrb_int = {NumDownstreams{upstream_req_wstrb}};
-  assign downstream_req_privileged_int = {NumDownstreams{upstream_req_privileged}};
-  assign downstream_req_secure_int = {NumDownstreams{upstream_req_secure}};
-  // It's safe to just broadcast the abort signal to all downstreams
-  // If there is no active request on a branch, the abort signal will be ignored.
-  assign downstream_req_abort_int = {NumDownstreams{upstream_req_abort}};
-
-  // Request retiming
-  for (genvar i = 0; i < NumDownstreams; i++) begin : gen_downstream_req_retime
-    // Retime the valid-qualified signals (exclude abort)
-    br_delay_valid #(
-        .Width(1 + AddrWidth + DataWidth + StrobeWidth + 2),
-        // ri lint_check_waive PARAM_BIT_SEL
-        .NumStages(NumRetimeStages[i])
-    ) br_delay_valid_req (
-        .clk,
-        .rst,
-        .in_valid(downstream_req_valid_int[i]),
-        .in({
-          downstream_req_write_int[i],
-          downstream_req_addr_int[i],
-          downstream_req_wdata_int[i],
-          downstream_req_wstrb_int[i],
-          downstream_req_privileged_int[i],
-          downstream_req_secure_int[i]
-        }),
-        .out_valid(downstream_req_valid[i]),
-        .out({
-          downstream_req_write[i],
-          downstream_req_addr[i],
-          downstream_req_wdata[i],
-          downstream_req_wstrb[i],
-          downstream_req_privileged[i],
-          downstream_req_secure[i]
-        }),
-        .out_valid_stages(),
-        .out_stages()
-    );
-
-    // Retime the abort signal
-    br_delay #(
-        .Width(1),
-        // ri lint_check_waive PARAM_BIT_SEL
-        .NumStages(NumRetimeStages[i])
-    ) br_delay_req_abort (
-        .clk,
-        .rst,
-        .in(downstream_req_abort_int[i]),
-        .out(downstream_req_abort[i]),
-        .out_stages()
-    );
-  end
-
-  // Response struct for retiming/muxing
-  typedef struct packed {
-    logic [DataWidth-1:0] rdata;
-    logic decerr;
-    logic slverr;
-  } resp_t;
-
-  // Decode error handling
-  logic  decerr_resp_valid_next;
-  logic  decerr_resp_valid;
-  resp_t decerr_resp;
-
-  // If we get a request that doesn't match any downstream address range,
-  // send a response with decerr=1.
-  assign decerr_resp_valid_next = upstream_req_valid && !(|select_onehot);
-  assign decerr_resp = '{rdata: '0, decerr: 1'b1, slverr: 1'b0};
-
-  `BR_REG(decerr_resp_valid, decerr_resp_valid_next)
-
-  // Response retiming
-  resp_t [NumDownstreams-1:0] downstream_resp;
-  logic  [NumDownstreams-1:0] downstream_resp_valid_int;
-  resp_t [NumDownstreams-1:0] downstream_resp_int;
-
-  for (genvar i = 0; i < NumDownstreams; i++) begin : gen_downstream_resp_retime
-    assign downstream_resp[i] = '{
-            rdata: downstream_resp_rdata[i],
-            decerr: downstream_resp_decerr[i],
-            slverr: downstream_resp_slverr[i]
-        };
-
-    br_delay_valid #(
-        .Width($bits(resp_t)),
-        // ri lint_check_waive PARAM_BIT_SEL
-        .NumStages(NumRetimeStages[i])
-    ) br_delay_valid_resp (
-        .clk,
-        .rst,
-        .in_valid(downstream_resp_valid[i]),
-        .in(downstream_resp[i]),
-        .out_valid(downstream_resp_valid_int[i]),
-        .out(downstream_resp_int[i]),
-        .out_valid_stages(),
-        .out_stages()
-    );
-  end
-
-  // Response muxing
-  // Choose between retimed downstream responses and the decode error response
-  resp_t upstream_resp;
-
-  br_mux_onehot #(
-      .NumSymbolsIn(NumDownstreams + 1),
-      .SymbolWidth ($bits(resp_t))
-  ) br_mux_onehot_resp (
-      .select({decerr_resp_valid, downstream_resp_valid_int}),
-      .in({decerr_resp, downstream_resp_int}),
-      .out(upstream_resp)
+  br_csr_demux_select_onehot #(
+      .AddrWidth(AddrWidth),
+      .DataWidth(DataWidth),
+      .NumDownstreams(NumDownstreams),
+      .NumRetimeStages(NumRetimeStages),
+      .HasDefaultDownstream(HasDefaultDownstream)
+  ) br_csr_demux_select_onehot (
+      .clk,
+      .rst,
+      .select_onehot,
+      .upstream_req_valid,
+      .upstream_req_write,
+      .upstream_req_addr,
+      .upstream_req_wdata,
+      .upstream_req_wstrb,
+      .upstream_req_privileged,
+      .upstream_req_secure,
+      .upstream_req_abort,
+      .upstream_resp_valid,
+      .upstream_resp_rdata,
+      .upstream_resp_decerr,
+      .upstream_resp_slverr,
+      .downstream_req_valid,
+      .downstream_req_write,
+      .downstream_req_addr(downstream_req_addr_unmasked),
+      .downstream_req_wdata,
+      .downstream_req_wstrb,
+      .downstream_req_privileged,
+      .downstream_req_secure,
+      .downstream_req_abort,
+      .downstream_resp_valid,
+      .downstream_resp_rdata,
+      .downstream_resp_decerr,
+      .downstream_resp_slverr
   );
 
-  assign upstream_resp_valid  = decerr_resp_valid || (|downstream_resp_valid_int);
-  assign upstream_resp_rdata  = upstream_resp.rdata;
-  assign upstream_resp_decerr = upstream_resp.decerr;
-  assign upstream_resp_slverr = upstream_resp.slverr;
-
-endmodule
+endmodule : br_csr_demux
