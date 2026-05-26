@@ -70,10 +70,6 @@ br_verilog_elab_and_lint_test_suite(
             "2",
             "3",
         ],
-        "HasDefaultDownstream": [
-            "0",
-            "1",
-        ],
     },
     deps = [":br_csr_demux_select_onehot"],
 )
@@ -87,7 +83,6 @@ br_verilog_elab_and_lint_test_suite(
             "64",
         ],
         "NumDownstreams": ["1"],
-        "HasDefaultDownstream": ["0"],
     },
     deps = [":br_csr_demux_select_onehot"],
 )

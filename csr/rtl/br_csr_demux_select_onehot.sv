@@ -6,9 +6,7 @@
 // downstream interfaces are muxed together and passed upstream to the request
 // initiator. Each downstream interface can be retimed independently.
 //
-// If a default downstream is enabled, it handles any valid request with no
-// explicit selection. Otherwise, a valid request with no selection receives a
-// decode error response.
+// A valid request with no selected downstream receives a decode error response.
 
 `include "br_asserts_internal.svh"
 `include "br_registers.svh"
@@ -19,18 +17,13 @@ module br_csr_demux_select_onehot #(
     parameter int NumDownstreams = 1,  // Must be at least 1
     // ri lint_check_waive ARRAY_LENGTH_ONE
     parameter int NumRetimeStages[NumDownstreams] = '{default: 0},
-    // If 1, the last downstream handles valid requests with no explicit select.
-    // If 0, those requests receive a response with decerr=1.
-    parameter bit HasDefaultDownstream = 0,
-    localparam int NumExplicitSelects = HasDefaultDownstream ? NumDownstreams - 1 : NumDownstreams,
     localparam int StrobeWidth = DataWidth / 8
 ) (
     input logic clk,
     input logic rst,
 
-    // For a valid request, select one explicit downstream or leave all zero.
-    // With HasDefaultDownstream set, zero selects the last downstream.
-    input logic [NumExplicitSelects-1:0] select_onehot,
+    // For a valid request, select one downstream or leave all zero.
+    input logic [NumDownstreams-1:0] select_onehot,
 
     input logic upstream_req_valid,
     input logic upstream_req_write,
@@ -62,15 +55,13 @@ module br_csr_demux_select_onehot #(
 );
   // Integration Checks
 
-  // There must be at least one non-default downstream port.
-  `BR_ASSERT_STATIC(legal_num_downstreams_a, NumDownstreams >= 1 + HasDefaultDownstream)
+  `BR_ASSERT_STATIC(legal_num_downstreams_a, NumDownstreams >= 1)
   `BR_ASSERT_STATIC(legal_addr_width_a, AddrWidth >= 1)
   `BR_ASSERT_STATIC(legal_data_width_a, DataWidth == 32 || DataWidth == 64)
   `BR_ASSERT_INTG(select_onehot0_a, upstream_req_valid |-> $onehot0(select_onehot))
 
   // Implementation
 
-  logic [NumDownstreams-1:0] select_onehot_int;
   logic [NumDownstreams-1:0] downstream_req_valid_int;
   logic [NumDownstreams-1:0] downstream_req_write_int;
   logic [NumDownstreams-1:0][AddrWidth-1:0] downstream_req_addr_int;
@@ -80,14 +71,7 @@ module br_csr_demux_select_onehot #(
   logic [NumDownstreams-1:0] downstream_req_secure_int;
   logic [NumDownstreams-1:0] downstream_req_abort_int;
 
-  // Expand the explicit select to the full downstream vector, filling the
-  // optional default route when there is no explicit selection.
-  assign select_onehot_int[NumExplicitSelects-1:0] = select_onehot;
-  if (HasDefaultDownstream) begin : gen_default_downstream
-    assign select_onehot_int[NumExplicitSelects] = !(|select_onehot);
-  end
-
-  assign downstream_req_valid_int = select_onehot_int & {NumDownstreams{upstream_req_valid}};
+  assign downstream_req_valid_int = select_onehot & {NumDownstreams{upstream_req_valid}};
   assign downstream_req_write_int = {NumDownstreams{upstream_req_write}};
   assign downstream_req_addr_int = {NumDownstreams{upstream_req_addr}};
   assign downstream_req_wdata_int = {NumDownstreams{upstream_req_wdata}};
@@ -156,8 +140,8 @@ module br_csr_demux_select_onehot #(
   logic  decerr_resp_valid;
   resp_t decerr_resp;
 
-  // If neither an explicit nor a default downstream is selected, return decerr.
-  assign decerr_resp_valid_next = upstream_req_valid && !(|select_onehot_int);
+  // If no downstream is selected, return decerr.
+  assign decerr_resp_valid_next = upstream_req_valid && !(|select_onehot);
   assign decerr_resp = '{rdata: '0, decerr: 1'b1, slverr: 1'b0};
 
   `BR_REG(decerr_resp_valid, decerr_resp_valid_next)

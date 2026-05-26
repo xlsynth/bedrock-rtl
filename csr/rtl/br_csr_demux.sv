@@ -85,17 +85,15 @@ module br_csr_demux #(
   `BR_ASSERT_STATIC(legal_addr_width_a, AddrWidth >= 1)
   `BR_ASSERT_STATIC(legal_data_width_a, DataWidth == 32 || DataWidth == 64)
 
-  // Derive inclusive route bounds with one extra bit to detect overflow.
-  logic [NumAddressRanges-1:0][  AddrWidth:0] downstream_addr_limit_ext;
+  // Derive inclusive route bounds and check that nonzero ranges do not wrap.
   logic [NumAddressRanges-1:0][AddrWidth-1:0] downstream_addr_limit;
 
   for (genvar i = 0; i < NumAddressRanges; i++) begin : gen_range_check
-    assign downstream_addr_limit_ext[i] = downstream_addr_base[i] + downstream_addr_size[i] - 1'b1;
-    assign downstream_addr_limit[i] = downstream_addr_limit_ext[i][AddrWidth-1:0];
+    assign downstream_addr_limit[i] = downstream_addr_base[i] + downstream_addr_size[i] - 1'b1;
 
     `BR_ASSERT_INTG(legal_downstream_addr_size_a, $fell(rst) |-> downstream_addr_size[i] > '0)
     `BR_ASSERT_INTG(downstream_addr_range_no_overflow_a,
-                    $fell(rst) |-> !downstream_addr_limit_ext[i][AddrWidth])
+                    $fell(rst) |-> downstream_addr_limit[i] >= downstream_addr_base[i])
 
     if (RequirePowerOfTwoAlignedRanges[i]) begin : gen_power_of_two_aligned_range_check
       // Require a power-of-two range size.
@@ -125,7 +123,7 @@ module br_csr_demux #(
   // Implementation
 
   logic [AddrWidth-1:0] upstream_req_addr_masked;
-  logic [NumAddressRanges-1:0] select_onehot;
+  logic [NumDownstreams-1:0] select_onehot;
   logic [NumDownstreams-1:0][AddrWidth-1:0] downstream_req_addr_unmasked;
 
   assign upstream_req_addr_masked = upstream_req_addr & UpstreamAddrMask;
@@ -144,7 +142,9 @@ module br_csr_demux #(
         downstream_req_addr_unmasked[i]) & DownstreamAddrMask[i];
   end
   if (HasDefaultDownstream) begin : gen_default_downstream_addr_translate
-    // A default downstream has no explicit address decoding or rebasing.
+    // A default downstream has no explicit address decoding or rebasing and
+    // handles any request whose address misses the explicit ranges.
+    assign select_onehot[NumDownstreams-1] = !(|select_onehot[NumAddressRanges-1:0]);
     assign downstream_req_addr[NumDownstreams-1] =
         downstream_req_addr_unmasked[NumDownstreams-1] & DownstreamAddrMask[NumDownstreams-1];
   end
@@ -154,8 +154,7 @@ module br_csr_demux #(
       .AddrWidth(AddrWidth),
       .DataWidth(DataWidth),
       .NumDownstreams(NumDownstreams),
-      .NumRetimeStages(NumRetimeStages),
-      .HasDefaultDownstream(HasDefaultDownstream)
+      .NumRetimeStages(NumRetimeStages)
   ) br_csr_demux_select_onehot (
       .clk,
       .rst,
