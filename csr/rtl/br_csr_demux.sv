@@ -3,10 +3,10 @@
 // Bedrock-RTL Address-Decoding SCB Demux
 //
 // Routes SCB requests to the correct downstream interface based on the request
-// address. Address ranges are provided as inputs so straps can select the
-// decoded map. Optional masks may be applied while decoding and while
-// forwarding requests downstream. Forwarded addresses for explicit ranges may
-// independently be rebased relative to their range base.
+// address. Address ranges are configurable inputs; each request is decoded
+// from their current values. Optional masks may be applied while decoding and
+// while forwarding requests downstream. Forwarded addresses for explicit
+// ranges may independently be rebased relative to their range base.
 // Selection-based SCB routing and response handling are implemented by
 // br_csr_demux_select_onehot.
 //
@@ -34,7 +34,8 @@ module br_csr_demux #(
     // range base before applying its outgoing mask.
     // ri lint_check_waive ARRAY_LENGTH_ONE
     parameter bit RebaseForwardedBase[NumAddressRanges] = '{default: 0},
-    // Mask applied to the upstream address prior to decoding.
+    // Mask applied to the upstream address only for route decoding. Forwarded
+    // addresses start from the unmasked upstream address.
     parameter logic [AddrWidth-1:0] UpstreamAddrMask = '1,
     // Mask applied to each forwarded downstream request address, after
     // subtraction-based rebasing where applicable.
@@ -58,9 +59,10 @@ module br_csr_demux #(
     output logic upstream_resp_decerr,
     output logic upstream_resp_slverr,
 
-    // Base address and size for each decoded downstream route. The decoded
-    // inclusive bound is base + size - 1. The last downstream has no decoded
-    // range when HasDefaultDownstream is set.
+    // Base address and nonzero size for each decoded downstream route. The
+    // decoded inclusive bound is base + size - 1. A full address-map-sized
+    // route cannot be represented by AddrWidth-bit size. The last downstream
+    // has no decoded range when HasDefaultDownstream is set.
     input logic [NumAddressRanges-1:0][AddrWidth-1:0] downstream_addr_base,
     input logic [NumAddressRanges-1:0][AddrWidth-1:0] downstream_addr_size,
 
@@ -85,37 +87,36 @@ module br_csr_demux #(
   `BR_ASSERT_STATIC(legal_addr_width_a, AddrWidth >= 1)
   `BR_ASSERT_STATIC(legal_data_width_a, DataWidth == 32 || DataWidth == 64)
 
-  // Derive inclusive route bounds and check that nonzero ranges do not wrap.
+  // Derive inclusive route bounds and check the active map on each request.
   logic [NumAddressRanges-1:0][AddrWidth-1:0] downstream_addr_limit;
 
   for (genvar i = 0; i < NumAddressRanges; i++) begin : gen_range_check
     assign downstream_addr_limit[i] = downstream_addr_base[i] + downstream_addr_size[i] - 1'b1;
 
-    `BR_ASSERT_INTG(legal_downstream_addr_size_a, $fell(rst) |-> downstream_addr_size[i] > '0)
+    `BR_ASSERT_INTG(legal_downstream_addr_size_a,
+                    upstream_req_valid |-> downstream_addr_size[i] > '0)
     `BR_ASSERT_INTG(downstream_addr_range_no_overflow_a,
-                    $fell(rst) |-> downstream_addr_limit[i] >= downstream_addr_base[i])
+                    upstream_req_valid |-> downstream_addr_limit[i] >= downstream_addr_base[i])
 
     if (RequirePowerOfTwoAlignedRanges[i]) begin : gen_power_of_two_aligned_range_check
       // Require a power-of-two range size.
       `BR_ASSERT_INTG(downstream_addr_size_power_of_two_a,
-                      $fell(rst) |-> $onehot0(downstream_addr_size[i]))
+                      upstream_req_valid |-> $onehot0(downstream_addr_size[i]))
       // Require the range base to start at its natural power-of-two boundary.
       `BR_ASSERT_INTG(
           downstream_addr_base_aligned_a,
-          $fell(rst) |-> (downstream_addr_base[i] & (downstream_addr_size[i] - 1'b1)) == '0)
+          upstream_req_valid |-> (downstream_addr_base[i] & (downstream_addr_size[i] - 1'b1)) == '0)
       // Preserve every in-range offset bit to prevent forwarded address aliasing.
       `BR_ASSERT_INTG(
           downstream_addr_mask_preserves_offsets_a,
-          $fell(rst) |-> ((downstream_addr_size[i] - 1'b1) & ~DownstreamAddrMask[i]) == '0)
+          upstream_req_valid |-> ((downstream_addr_size[i] - 1'b1) & ~DownstreamAddrMask[i]) == '0)
     end
   end
 
   for (genvar i = 0; i < NumAddressRanges - 1; i++) begin : gen_range_overlap_check_i
     for (genvar j = i + 1; j < NumAddressRanges; j++) begin : gen_range_overlap_check_j
       `BR_ASSERT_INTG(downstream_addr_range_overlap_a,
-                      $fell(
-                          rst
-                      ) |-> downstream_addr_limit[i] < downstream_addr_base[j] ||
+                      upstream_req_valid |-> downstream_addr_limit[i] < downstream_addr_base[j] ||
                           downstream_addr_base[i] > downstream_addr_limit[j])
     end
   end
