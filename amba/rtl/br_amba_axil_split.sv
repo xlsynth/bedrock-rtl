@@ -39,6 +39,8 @@ module br_amba_axil_split #(
 ) (
     input clk,
     input rst,  // Synchronous, active-high reset
+
+    // These must be stable after exiting reset.
     input logic [NumBranchAddrRanges-1:0][AddrWidth-1:0] branch_start_addr,
     input logic [NumBranchAddrRanges-1:0][AddrWidth-1:0] branch_end_addr,
 
