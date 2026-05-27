@@ -1,0 +1,226 @@
+# SPDX-License-Identifier: Apache-2.0
+
+load("@rules_hdl//verilog:providers.bzl", "verilog_library")
+load("//bazel:br_verilog.bzl", "br_verilog_fpv_test_tools_suite")
+load("//bazel:verilog.bzl", "verilog_elab_test")
+
+package(default_visibility = ["//visibility:private"])
+
+# Bedrock-RTL Flow Buffer
+
+verilog_library(
+    name = "br_flow_buffer_fpv_monitor",
+    srcs = ["br_flow_buffer_fpv_monitor.sv"],
+    deps = [
+        "//flow/rtl:br_flow_buffer",
+    ],
+)
+
+verilog_elab_test(
+    name = "br_flow_buffer_fpv_monitor_elab_test",
+    custom_tcl_header = "//:elab_test_jg_custom_header.verific.tcl",
+    tool = "verific",
+    deps = [":br_flow_buffer_fpv_monitor"],
+)
+
+br_verilog_fpv_test_tools_suite(
+    name = "br_flow_buffer_depth0_test_suite",
+    elab_opts = [
+        "-parameter Depth 0",
+        # Backpressure is legal for br_flow_buffer and does not imply a functional failure.
+        # Disable the no-backpressure assertion when backpressure coverage is disabled.
+        "-parameter EnableAssertNoPushBackpressure 0",
+    ],
+    illegal_param_combinations = {
+        (
+            "EnableCoverPushBackpressure",
+            "EnableAssertPushValidStability",
+            "EnableAssertPushDataStability",
+        ): [
+            ("0", "0", "1"),
+            ("0", "1", "0"),
+            ("0", "1", "1"),
+            ("1", "0", "1"),
+        ],
+    },
+    params = {
+        "EnableAssertPushDataStability": [
+            "0",
+            "1",
+        ],
+        "EnableAssertPushValidStability": [
+            "0",
+            "1",
+        ],
+        "EnableCoverPushBackpressure": [
+            "0",
+            "1",
+        ],
+        "RegisterPopOutputs": [
+            "0",
+            "1",
+        ],
+        "RegisterPushOutputs": [
+            "1",
+        ],
+    },
+    tools = {
+        "jg": "",
+    },
+    top = "br_flow_buffer",
+    deps = [":br_flow_buffer_fpv_monitor"],
+)
+
+br_verilog_fpv_test_tools_suite(
+    name = "br_flow_buffer_depth1_test_suite",
+    elab_opts = [
+        "-parameter Depth 1",
+        # Backpressure is legal for br_flow_buffer and does not imply a functional failure.
+        # Disable the no-backpressure assertion when backpressure coverage is disabled.
+        "-parameter EnableAssertNoPushBackpressure 0",
+    ],
+    illegal_param_combinations = {
+        (
+            "RegisterPopOutputs",
+            "RegisterPushOutputs",
+        ): [
+            ("1", "1"),
+        ],
+        (
+            "EnableCoverPushBackpressure",
+            "EnableAssertPushValidStability",
+            "EnableAssertPushDataStability",
+        ): [
+            ("0", "0", "1"),
+            ("0", "1", "0"),
+            ("0", "1", "1"),
+            ("1", "0", "1"),
+        ],
+    },
+    params = {
+        "EnableAssertPushDataStability": [
+            "0",
+            "1",
+        ],
+        "EnableAssertPushValidStability": [
+            "0",
+            "1",
+        ],
+        "EnableCoverPushBackpressure": [
+            "0",
+            "1",
+        ],
+        "RegisterPopOutputs": [
+            "0",
+            "1",
+        ],
+        "RegisterPushOutputs": [
+            "0",
+            "1",
+        ],
+    },
+    tools = {
+        "jg": "",
+    },
+    top = "br_flow_buffer",
+    deps = [":br_flow_buffer_fpv_monitor"],
+)
+
+br_verilog_fpv_test_tools_suite(
+    name = "br_flow_buffer_depth2_test_suite",
+    elab_opts = [
+        "-parameter Depth 2",
+        # Backpressure is legal for br_flow_buffer and does not imply a functional failure.
+        # Disable the no-backpressure assertion when backpressure coverage is disabled.
+        "-parameter EnableAssertNoPushBackpressure 0",
+    ],
+    illegal_param_combinations = {
+        (
+            "EnableCoverPushBackpressure",
+            "EnableAssertPushValidStability",
+            "EnableAssertPushDataStability",
+        ): [
+            ("0", "0", "1"),
+            ("0", "1", "0"),
+            ("0", "1", "1"),
+            ("1", "0", "1"),
+        ],
+    },
+    params = {
+        "EnableAssertPushDataStability": [
+            "0",
+            "1",
+        ],
+        "EnableAssertPushValidStability": [
+            "0",
+            "1",
+        ],
+        "EnableCoverPushBackpressure": [
+            "0",
+            "1",
+        ],
+        "RegisterPopOutputs": [
+            "0",
+            "1",
+        ],
+        "RegisterPushOutputs": [
+            "0",
+            "1",
+        ],
+    },
+    tools = {
+        "jg": "",
+    },
+    top = "br_flow_buffer",
+    deps = [":br_flow_buffer_fpv_monitor"],
+)
+
+br_verilog_fpv_test_tools_suite(
+    name = "br_flow_buffer_depth3_plus_test_suite",
+    elab_opts = [
+        "-parameter RegisterPushOutputs 1",
+        # Backpressure is legal for br_flow_buffer and does not imply a functional failure.
+        # Disable the no-backpressure assertion when backpressure coverage is disabled.
+        "-parameter EnableAssertNoPushBackpressure 0",
+    ],
+    illegal_param_combinations = {
+        (
+            "EnableCoverPushBackpressure",
+            "EnableAssertPushValidStability",
+            "EnableAssertPushDataStability",
+        ): [
+            ("0", "0", "1"),
+            ("0", "1", "0"),
+            ("0", "1", "1"),
+            ("1", "0", "1"),
+        ],
+    },
+    params = {
+        "Depth": [
+            "3",
+            "4",
+            "5",
+        ],
+        "EnableAssertPushDataStability": [
+            "0",
+            "1",
+        ],
+        "EnableAssertPushValidStability": [
+            "0",
+            "1",
+        ],
+        "EnableCoverPushBackpressure": [
+            "0",
+            "1",
+        ],
+        "RegisterPopOutputs": [
+            "0",
+            "1",
+        ],
+    },
+    tools = {
+        "jg": "",
+    },
+    top = "br_flow_buffer",
+    deps = [":br_flow_buffer_fpv_monitor"],
+)

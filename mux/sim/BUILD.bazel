@@ -42,6 +42,7 @@ br_verilog_sim_test_tools_suite(
     tools = [
         "iverilog",
         "vcs",
+        "verilator",
     ],
     deps = [":br_mux_bin_tb"],
 )
@@ -88,6 +89,7 @@ br_verilog_sim_test_tools_suite(
         # Does not work
         #"iverilog",
         "vcs",
+        "verilator",
     ],
     top = "br_mux_bin_structured_gates_tb",
     deps = [
@@ -129,6 +131,7 @@ br_verilog_sim_test_tools_suite(
     tools = [
         "iverilog",
         "vcs",
+        "verilator",
     ],
     top = "br_mux_bin_structured_gates_tb",
     deps = [
@@ -160,9 +163,12 @@ br_verilog_sim_test_tools_suite(
             "3",
         ],
     },
+    # TODO(mgottscho): Re-enable Verilator for this suite after fixing the
+    # testbench `check select invalid` runtime assertion.
     tools = [
         "iverilog",
         "vcs",
+        #"verilator",
     ],
     deps = [":br_mux_onehot_tb"],
 )

@@ -45,7 +45,7 @@ def br_verilog_elab_and_lint_test_suite(name, **kwargs):
         **kwargs
     )
 
-def br_verilog_sim_test_suite(name, tool, defines = [], opts = [], **kwargs):
+def br_verilog_sim_test_suite(name, tool, defines = [], elab_opts = [], sim_opts = [], **kwargs):
     """Wraps verilog_sim_test_suite with Bedrock-internal settings. Not intended to be called by Bedrock users.
 
     * Defines `BR_ASSERT_ON` and `BR_ENABLE_IMPL_CHECKS`.
@@ -55,7 +55,8 @@ def br_verilog_sim_test_suite(name, tool, defines = [], opts = [], **kwargs):
         name (str): The base name of the test suite.
         tool (str): The simulator tool to use.
         defines (List[str]): Defines to pass to the simulator. If not provided, defaults are determined internally.
-        opts (List[str]): Additional options to pass to the simulator.
+        elab_opts (List[str]): Compile/elaboration options to pass to the simulator.
+        sim_opts (List[str]): Simulation runtime options to pass to the simulator.
         **kwargs: Additional keyword arguments passed to verilog_sim_test_suite.
     """
 
@@ -63,11 +64,12 @@ def br_verilog_sim_test_suite(name, tool, defines = [], opts = [], **kwargs):
         fail("Do not pass defines to br_verilog_sim_test_suite. They are hard-coded in the macro.")
 
     if tool == "vcs":
-        opts = opts + ["-assert global_finish_maxfail=1+offending_values"]
+        elab_opts = elab_opts + ["-assert global_finish_maxfail=1+offending_values"]
 
     if len(defines) == 0:
-        # Don't enable assertions with iverilog because it doesn't handle them well, even in -g2012 mode.
-        if tool != "iverilog":
+        # Don't enable assertions with open-source simulators that do not handle the
+        # full SVA subset used by Bedrock internal checks.
+        if tool not in ["iverilog"]:
             defines = ["BR_ASSERT_ON", "BR_ENABLE_IMPL_CHECKS", "SIMULATION"]
         else:
             defines = ["SIMULATION"]
@@ -75,7 +77,8 @@ def br_verilog_sim_test_suite(name, tool, defines = [], opts = [], **kwargs):
     verilog_sim_test_suite(
         name = name,
         tool = tool,
-        opts = opts,
+        elab_opts = elab_opts,
+        sim_opts = sim_opts,
         defines = defines,
         **kwargs
     )
