@@ -32,13 +32,15 @@ module br_delay_deskew_tb;
     end
   endfunction
 
-  task automatic check_aligned_data(input logic expected_valid,
-                                    input logic [Width-1:0] expected_data, input string phase);
-    in = expected_data;
+  task automatic drive_cycle(input logic drive_valid_next, input logic expected_valid,
+                             input logic [Width-1:0] drive_data, input string phase);
+    in_valid_next = drive_valid_next;
+    td.wait_cycles();
+    in = drive_data;
     #1;
     td.check(out_valid === expected_valid, $sformatf("%s: out_valid mismatch", phase));
     if (expected_valid) begin
-      td.check(out === expected_data, $sformatf("%s: out mismatch", phase));
+      td.check(out === drive_data, $sformatf("%s: out mismatch", phase));
     end
   endtask
 
@@ -47,29 +49,13 @@ module br_delay_deskew_tb;
     in = '0;
 
     td.reset_dut();
-    td.wait_cycles();
-    check_aligned_data(1'b0, data_for(-1), "initial idle");
 
-    in_valid_next = 1'b1;
-    in = data_for(-2);
-    td.wait_cycles();
-    check_aligned_data(1'b1, data_for(0), "first valid beat");
-
-    in_valid_next = 1'b1;
-    td.wait_cycles();
-    check_aligned_data(1'b1, data_for(1), "back-to-back beat");
-
-    in_valid_next = 1'b0;
-    td.wait_cycles();
-    check_aligned_data(1'b0, data_for(2), "bubble");
-
-    in_valid_next = 1'b1;
-    td.wait_cycles();
-    check_aligned_data(1'b1, data_for(3), "valid after bubble");
-
-    in_valid_next = 1'b0;
-    td.wait_cycles();
-    check_aligned_data(1'b0, data_for(4), "final idle");
+    drive_cycle(1'b0, 1'b0, data_for(-1), "initial idle");
+    drive_cycle(1'b1, 1'b1, data_for(0), "first valid beat");
+    drive_cycle(1'b1, 1'b1, data_for(1), "back-to-back beat");
+    drive_cycle(1'b0, 1'b0, data_for(2), "bubble");
+    drive_cycle(1'b1, 1'b1, data_for(3), "valid after bubble");
+    drive_cycle(1'b0, 1'b0, data_for(4), "final idle");
 
     td.finish();
   end
