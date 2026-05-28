@@ -182,3 +182,25 @@ br_verilog_sim_test_tools_suite(
 #    tools = ["vcs", "iverilog"],
 #    deps = [":br_ram_flops_1r1w_tb"],
 #)
+
+verilog_library(
+    name = "br_ram_initializer_tb",
+    srcs = ["br_ram_initializer_tb.sv"],
+    deps = ["//ram/rtl:br_ram_initializer"],
+)
+
+verilog_elab_test(
+    name = "br_ram_initializer_tb_elab_test",
+    tool = "verific",
+    deps = [":br_ram_initializer_tb"],
+)
+
+br_verilog_sim_test_tools_suite(
+    name = "br_ram_initializer_sim_test_tools_suite_basic",
+    # TODO(mgottscho): enable iverilog when it's fixed.
+    tools = [
+        "vcs",
+        "verilator",
+    ],
+    deps = [":br_ram_initializer_tb"],
+)

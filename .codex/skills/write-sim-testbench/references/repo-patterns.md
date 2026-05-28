@@ -38,9 +38,6 @@ Protocol/task-heavy:
 - `amba/sim/br_amba_axi_shrinker_tb.sv`: large task-oriented protocol test with transaction-specific checkers.
 - `tracker/sim/br_tracker_freelist_tb.sv`: allocation/deallocation helpers, free-entry scoreboard, quiesce check.
 
-Generated/ChipStack style:
-- `*/sim/chipstack/*_gen_tb.sv` benches often use clocking blocks, explicit timeout blocks, and more verbose generated structure. Treat them as useful reference material, but prefer the simpler hand-written Bedrock style for new benches unless matching a generated suite.
-
 ## BUILD Skeleton
 
 ```bzl
@@ -169,7 +166,7 @@ Verilator:
 
 Icarus:
 - Good for simpler procedural benches.
-- Avoid richer SystemVerilog/SVA-heavy benches, some generated ChipStack benches, and cases already excluded nearby.
+- Avoid richer SystemVerilog/SVA-heavy benches, and cases already excluded nearby.
 - Existing exclusions appear in priority encoder, some ECC, generated enc/ram, structured-gate mux, and one credit VC test.
 
 ## Coverage Expectations
