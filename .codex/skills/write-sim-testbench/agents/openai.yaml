@@ -1,0 +1,4 @@
+interface:
+  display_name: "Write Sim Testbench"
+  short_description: "Write one Bedrock RTL sim testbench"
+  default_prompt: "Use $write-sim-testbench to add a portable Bedrock-RTL simulation testbench."

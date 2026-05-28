@@ -14,4 +14,6 @@ exports_files(["elab_test_jg_custom_header.verific.tcl"])
 py_test(
     name = "check_env",
     srcs = ["check_env.py"],
+    env_inherit = ["PATH"],
+    tags = ["local"],
 )

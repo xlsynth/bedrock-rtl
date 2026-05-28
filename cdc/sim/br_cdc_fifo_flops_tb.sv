@@ -12,6 +12,7 @@ module br_cdc_fifo_flops_tb;
   parameter int FlopRamAddressDepthStages = 0;
   parameter int FlopRamReadDataDepthStages = 0;
   parameter int NumSyncStages = 3;
+  parameter bit EnableStructuredGatesDataQualification = 1;
 
   // Clock and Reset
   // Same clock for both push and pop side for now
@@ -47,6 +48,7 @@ module br_cdc_fifo_flops_tb;
       .RegisterPopOutputs(RegisterPopOutputs),
       .FlopRamAddressDepthStages(FlopRamAddressDepthStages),
       .FlopRamReadDataDepthStages(FlopRamReadDataDepthStages),
+      .EnableStructuredGatesDataQualification(EnableStructuredGatesDataQualification),
       // The test harness causes instability on the push_valid,
       // so need to disable the stability check
       .EnableAssertPushValidStability(0)

@@ -11,6 +11,7 @@ module br_cdc_fifo_flops_push_credit_tb ();
   parameter int FlopRamAddressDepthStages = 0;
   parameter int FlopRamReadDataDepthStages = 0;
   parameter int NumSyncStages = 2;
+  parameter bit EnableStructuredGatesDataQualification = 1;
 
   localparam int PropDelay = 3;
   localparam int Width = 8;
@@ -66,6 +67,7 @@ module br_cdc_fifo_flops_push_credit_tb ();
       .RegisterPushOutputs(RegisterPushOutputs),
       .FlopRamAddressDepthStages(FlopRamAddressDepthStages),
       .FlopRamReadDataDepthStages(FlopRamReadDataDepthStages),
+      .EnableStructuredGatesDataQualification(EnableStructuredGatesDataQualification),
       .MaxCredit(Depth)
   ) dut (
       .push_clk(clk),

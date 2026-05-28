@@ -106,6 +106,7 @@ br_verilog_elab_and_lint_test_suite(
             "1",
             "2",
             "3",
+            "4",
         ],
         "MsbHighestPriority": [
             "0",

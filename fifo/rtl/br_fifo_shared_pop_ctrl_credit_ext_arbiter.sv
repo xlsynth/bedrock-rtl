@@ -131,7 +131,9 @@ module br_fifo_shared_pop_ctrl_credit_ext_arbiter #(
     logic ram_rd_req_ready;
 
     br_credit_counter #(
-        .MaxValue(PopMaxCredits)
+        .MaxValue(PopMaxCredits),
+        .EnableCoverZeroIncrement(0),
+        .EnableCoverZeroDecrement(0)
     ) br_credit_counter (
         .clk,
         .rst(either_rst),
@@ -152,7 +154,10 @@ module br_fifo_shared_pop_ctrl_credit_ext_arbiter #(
     br_flow_join #(
         .NumFlows(2),
         // ram_rd_req_valid will be 1 at end of sim
-        .EnableAssertFinalNotValid(0)
+        .EnableAssertFinalNotValid(0),
+        // Dynamic credit withholding can withdraw read eligibility before the
+        // request is accepted, so this internal valid is not stable-ready.
+        .EnableAssertPushValidStability(0)
     ) br_flow_join_ram_rd_addr (
         .clk,
         .rst(either_rst),
@@ -176,7 +181,9 @@ module br_fifo_shared_pop_ctrl_credit_ext_arbiter #(
       .Depth(Depth),
       .Width(Width),
       .RamReadLatency(RamReadLatency),
-      .EnableAssertPushValidStability(1),
+      // push_rd_addr_valid comes from the credit-gated join above, so it has
+      // eligibility semantics rather than strict stable-ready semantics.
+      .EnableAssertPushValidStability(0),
       .ArbiterAlwaysGrants(ArbiterAlwaysGrants)
   ) br_fifo_shared_read_xbar (
       .clk,

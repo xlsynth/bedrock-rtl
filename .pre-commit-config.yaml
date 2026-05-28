@@ -1,5 +1,7 @@
 # SPDX-License-Identifier: Apache-2.0
 
+default_install_hook_types: [pre-commit, pre-push]
+
 repos:
   - repo: https://github.com/pre-commit/pre-commit-hooks
     # v6.0.0
@@ -26,6 +28,21 @@ repos:
       - id: detect-private-key
       - id: debug-statements
       - id: mixed-line-ending
+
+  - repo: https://github.com/gitleaks/gitleaks
+    # v8.30.1
+    rev: 83d9cd684c87d95d656c1458ef04895a7f1cbd8e
+    hooks:
+      - id: gitleaks
+        alias: gitleaks-pre-commit
+        name: "gitleaks secret scan (pre-commit)"
+        args: [--config=.gitleaks.toml]
+        stages: [pre-commit]
+      - id: gitleaks
+        alias: gitleaks-push
+        name: "gitleaks secret scan (push)"
+        args: [--config=.gitleaks.toml]
+        stages: [pre-push]
 
   # Format Python files
   - repo: https://github.com/psf/black-pre-commit-mirror
@@ -65,13 +82,9 @@ repos:
       # Format Verilog files
       - id: verible-verilog-format
         args: [--inplace]
-        # Skip ChipStack-generated files
-        exclude: ^.*/chipstack/
       # Style lint Verilog files
       - id: verible-verilog-lint
         args: [--ruleset=default]
-        # Skip ChipStack-generated files
-        exclude: ^.*/chipstack/
 
   # Ensure that no tests have waves enabled. They're unnecessary to have on by default.
   # And the CI environment currently cannot generate them anyway, nor can we view them
