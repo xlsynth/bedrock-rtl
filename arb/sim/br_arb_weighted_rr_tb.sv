@@ -38,9 +38,7 @@ module br_arb_weighted_rr_tb;
       .rst
   );
 
-  function automatic logic [NumRequesters-1:0] expected_grant(
-      input logic [NumRequesters-1:0] req
-  );
+  function automatic logic [NumRequesters-1:0] expected_grant(input logic [NumRequesters-1:0] req);
     logic [NumRequesters-1:0] high_priority_request;
     logic [NumRequesters-1:0] eligible_request;
     int idx;
@@ -99,12 +97,9 @@ module br_arb_weighted_rr_tb;
     end
   endtask
 
-  task automatic drive_and_check(
-      input logic [NumRequesters-1:0] req,
-      input logic [NumRequesters-1:0][WeightWidth-1:0] weight,
-      input logic enable_update,
-      input string message
-  );
+  task automatic drive_and_check(input logic [NumRequesters-1:0] req,
+                                 input logic [NumRequesters-1:0][WeightWidth-1:0] weight,
+                                 input logic enable_update, input string message);
     logic [NumRequesters-1:0] grant_expected;
 
     request = req;
@@ -113,18 +108,15 @@ module br_arb_weighted_rr_tb;
     #1;
 
     grant_expected = expected_grant(req);
-    td.check(grant === grant_expected,
-             $sformatf("%s: got grant 0x%0h, expected 0x%0h",
-                       message, grant, grant_expected));
+    td.check(grant === grant_expected, $sformatf(
+             "%s: got grant 0x%0h, expected 0x%0h", message, grant, grant_expected));
 
     td.wait_cycles();
     update_model(grant_expected);
   endtask
 
-  task automatic set_uniform_weight(
-      output logic [NumRequesters-1:0][WeightWidth-1:0] weight,
-      input int value
-  );
+  task automatic set_uniform_weight(output logic [NumRequesters-1:0][WeightWidth-1:0] weight,
+                                    input int value);
     for (int i = 0; i < NumRequesters; i++) begin
       weight[i] = WeightWidth'(value);
     end

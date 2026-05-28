@@ -36,21 +36,19 @@ module br_arb_pri_rr_tb;
   );
 
   function automatic logic [NumRequesters-1:0] expected_grant(
-      input logic [NumRequesters-1:0] req,
-      input logic [NumRequesters-1:0][PriorityWidth-1:0] pri
-  );
+      input logic [NumRequesters-1:0] req, input logic [NumRequesters-1:0][PriorityWidth-1:0] pri);
     logic found_request;
     logic [PriorityWidth-1:0] max_priority;
     int idx;
 
     expected_grant = '0;
-    found_request = 1'b0;
-    max_priority = '0;
+    found_request  = 1'b0;
+    max_priority   = '0;
 
     for (int i = 0; i < NumRequesters; i++) begin
       if (req[i] && (!found_request || (pri[i] > max_priority))) begin
         found_request = 1'b1;
-        max_priority = pri[i];
+        max_priority  = pri[i];
       end
     end
 
@@ -74,12 +72,9 @@ module br_arb_pri_rr_tb;
     end
   endtask
 
-  task automatic drive_and_check(
-      input logic [NumRequesters-1:0] req,
-      input logic [NumRequesters-1:0][PriorityWidth-1:0] pri,
-      input logic enable_update,
-      input string message
-  );
+  task automatic drive_and_check(input logic [NumRequesters-1:0] req,
+                                 input logic [NumRequesters-1:0][PriorityWidth-1:0] pri,
+                                 input logic enable_update, input string message);
     logic [NumRequesters-1:0] grant_expected;
 
     request = req;
@@ -88,9 +83,8 @@ module br_arb_pri_rr_tb;
     #1;
 
     grant_expected = expected_grant(req, pri);
-    td.check(grant === grant_expected,
-             $sformatf("%s: got grant 0x%0h, expected 0x%0h",
-                       message, grant, grant_expected));
+    td.check(grant === grant_expected, $sformatf(
+             "%s: got grant 0x%0h, expected 0x%0h", message, grant, grant_expected));
 
     td.wait_cycles();
     update_model(grant_expected);
@@ -102,18 +96,14 @@ module br_arb_pri_rr_tb;
     end
   endtask
 
-  task automatic set_uniform_priority(
-      output logic [NumRequesters-1:0][PriorityWidth-1:0] pri,
-      input int priority_value
-  );
+  task automatic set_uniform_priority(output logic [NumRequesters-1:0][PriorityWidth-1:0] pri,
+                                      input int priority_value);
     for (int i = 0; i < NumRequesters; i++) begin
       pri[i] = PriorityWidth'(priority_value);
     end
   endtask
 
-  task automatic set_random_priorities(
-      output logic [NumRequesters-1:0][PriorityWidth-1:0] pri
-  );
+  task automatic set_random_priorities(output logic [NumRequesters-1:0][PriorityWidth-1:0] pri);
     for (int i = 0; i < NumRequesters; i++) begin
       pri[i] = PriorityWidth'($urandom_range(0, NumPriorities - 1));
     end
