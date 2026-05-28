@@ -7,8 +7,8 @@ load("//bazel:verilog.bzl", "verilog_elab_test")
 package(default_visibility = ["//visibility:private"])
 
 verilog_library(
-    name = "br_arb_fixed_gen_tb",
-    srcs = ["br_arb_fixed_gen_tb.sv"],
+    name = "br_arb_fixed_tb",
+    srcs = ["br_arb_fixed_tb.sv"],
     deps = [
         "//arb/rtl:br_arb_fixed",
         "//macros:br_asserts_internal",
@@ -16,24 +16,24 @@ verilog_library(
 )
 
 verilog_elab_test(
-    name = "br_arb_fixed_gen_tb_elab_test",
+    name = "br_arb_fixed_tb_elab_test",
     tool = "verific",
-    deps = [":br_arb_fixed_gen_tb"],
+    deps = [":br_arb_fixed_tb"],
 )
 
 br_verilog_sim_test_tools_suite(
-    name = "br_arb_fixed_gen_tb_sim_test_tools_suite",
+    name = "br_arb_fixed_tb_sim_test_tools_suite",
     # TODO: Does not work with iverilog.
     tools = [
         "vcs",
         "verilator",
     ],
-    deps = [":br_arb_fixed_gen_tb"],
+    deps = [":br_arb_fixed_tb"],
 )
 
 verilog_library(
-    name = "br_arb_lru_gen_tb",
-    srcs = ["br_arb_lru_gen_tb.sv"],
+    name = "br_arb_lru_tb",
+    srcs = ["br_arb_lru_tb.sv"],
     deps = [
         "//arb/rtl:br_arb_lru",
         "//macros:br_asserts_internal",
@@ -41,13 +41,13 @@ verilog_library(
 )
 
 verilog_elab_test(
-    name = "br_arb_lru_gen_tb_elab_test",
+    name = "br_arb_lru_tb_elab_test",
     tool = "verific",
-    deps = [":br_arb_lru_gen_tb"],
+    deps = [":br_arb_lru_tb"],
 )
 
 br_verilog_sim_test_tools_suite(
-    name = "br_arb_lru_gen_tb_sim_test_tools_suite",
+    name = "br_arb_lru_tb_sim_test_tools_suite",
     # TODO: Does not work with iverilog.
     # TODO(mgottscho): Re-enable Verilator once it accepts the `br_arb_lru`
     # assertions that use `not` in sequence expressions.
@@ -55,12 +55,12 @@ br_verilog_sim_test_tools_suite(
         "vcs",
         #"verilator",
     ],
-    deps = [":br_arb_lru_gen_tb"],
+    deps = [":br_arb_lru_tb"],
 )
 
 verilog_library(
-    name = "br_arb_rr_gen_tb",
-    srcs = ["br_arb_rr_gen_tb.sv"],
+    name = "br_arb_rr_tb",
+    srcs = ["br_arb_rr_tb.sv"],
     deps = [
         "//arb/rtl:br_arb_rr",
         "//macros:br_asserts_internal",
@@ -68,13 +68,13 @@ verilog_library(
 )
 
 verilog_elab_test(
-    name = "br_arb_rr_gen_tb_elab_test",
+    name = "br_arb_rr_tb_elab_test",
     tool = "verific",
-    deps = [":br_arb_rr_gen_tb"],
+    deps = [":br_arb_rr_tb"],
 )
 
 br_verilog_sim_test_tools_suite(
-    name = "br_arb_rr_gen_tb_sim_test_tools_suite",
+    name = "br_arb_rr_tb_sim_test_tools_suite",
     # TODO: Does not work with iverilog.
     # TODO(mgottscho): Re-enable Verilator once it accepts the `br_arb_rr`
     # assertions that use `not` in sequence expressions.
@@ -82,12 +82,12 @@ br_verilog_sim_test_tools_suite(
         "vcs",
         #"verilator",
     ],
-    deps = [":br_arb_rr_gen_tb"],
+    deps = [":br_arb_rr_tb"],
 )
 
 verilog_library(
-    name = "br_arb_grant_hold_gen_tb",
-    srcs = ["br_arb_grant_hold_gen_tb.sv"],
+    name = "br_arb_grant_hold_tb",
+    srcs = ["br_arb_grant_hold_tb.sv"],
     deps = [
         "//arb/rtl:br_arb_grant_hold",
         "//macros:br_asserts_internal",
@@ -95,17 +95,17 @@ verilog_library(
 )
 
 verilog_elab_test(
-    name = "br_arb_grant_hold_gen_tb_elab_test",
+    name = "br_arb_grant_hold_tb_elab_test",
     tool = "verific",
-    deps = [":br_arb_grant_hold_gen_tb"],
+    deps = [":br_arb_grant_hold_tb"],
 )
 
 br_verilog_sim_test_tools_suite(
-    name = "br_arb_grant_hold_gen_tb_sim_test_tools_suite",
+    name = "br_arb_grant_hold_tb_sim_test_tools_suite",
     # TODO: Does not work with iverilog.
     tools = [
         "vcs",
         "verilator",
     ],
-    deps = [":br_arb_grant_hold_gen_tb"],
+    deps = [":br_arb_grant_hold_tb"],
 )
