@@ -29,7 +29,8 @@ module br_multi_xfer_reg_fwd #(
     // Must be at least 1.
     parameter int SymbolWidth = 1,
     // If 1, cover that push_sendable can be greater than push_receivable.
-    // If 0, assert that push_sendable is always less than or equal to push_receivable.
+    // If 0, disable push backpressure coverage. By default, this also
+    // asserts that push_sendable is no greater than push_receivable.
     parameter bit EnableCoverPushBackpressure = 1,
     // If 1, assert that push_data is stable when push_sendable > push_receivable.
     // If 0, cover that push_data is unstable when push_sendable > push_receivable.
@@ -38,6 +39,9 @@ module br_multi_xfer_reg_fwd #(
     // at end of simulation.
     parameter int EnableAssertFinalNotSendable = 1,
 
+    // If 1, assert that push-side backpressure is impossible.
+    // Can only be enabled if EnableCoverPushBackpressure is disabled.
+    parameter bit EnableAssertNoPushBackpressure = !EnableCoverPushBackpressure,
     localparam int CountWidth = $clog2(NumSymbols + 1)
 ) (
     input logic clk,
@@ -53,6 +57,8 @@ module br_multi_xfer_reg_fwd #(
 );
 
   // Integration Assertions
+  `BR_ASSERT_STATIC(legal_assert_no_push_backpressure_a,
+                    !(EnableAssertNoPushBackpressure && EnableCoverPushBackpressure))
   `BR_ASSERT_STATIC(legal_num_symbols_a, NumSymbols >= 2)
   `BR_ASSERT_STATIC(legal_symbol_width_a, SymbolWidth >= 1)
 
@@ -60,6 +66,7 @@ module br_multi_xfer_reg_fwd #(
       .NumSymbols(NumSymbols),
       .SymbolWidth(SymbolWidth),
       .EnableCoverBackpressure(EnableCoverPushBackpressure),
+      .EnableAssertNoBackpressure(EnableAssertNoPushBackpressure),
       .EnableAssertDataStability(EnableAssertPushDataStability)
   ) br_multi_xfer_checks_sendable_data_intg_push (
       .clk(clk),

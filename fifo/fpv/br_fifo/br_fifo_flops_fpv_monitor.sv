@@ -20,6 +20,9 @@ module br_fifo_flops_fpv_monitor #(
     parameter bit EnableCoverPushBackpressure = 1,
     parameter bit EnableAssertPushValidStability = EnableCoverPushBackpressure,
     parameter bit EnableAssertPushDataStability = EnableAssertPushValidStability,
+    // If 1, assert that push-side backpressure is impossible.
+    // Can only be enabled if EnableCoverPushBackpressure is disabled.
+    parameter bit EnableAssertNoPushBackpressure = !EnableCoverPushBackpressure,
     localparam int AddrWidth = $clog2(Depth),
     localparam int CountWidth = $clog2(Depth + 1)
 ) (
@@ -48,7 +51,6 @@ module br_fifo_flops_fpv_monitor #(
     input logic [CountWidth-1:0] items,
     input logic [CountWidth-1:0] items_next
 );
-
   localparam bit WolperColorEn = 1;
   logic [$clog2(Width)-1:0] magic_bit_index;
   `BR_ASSUME(magic_bit_index_range_a, $stable(magic_bit_index) && (magic_bit_index < Width))
@@ -59,6 +61,7 @@ module br_fifo_flops_fpv_monitor #(
       .Width(Width),
       .EnableBypass(EnableBypass),
       .EnableCoverPushBackpressure(EnableCoverPushBackpressure),
+      .EnableAssertNoPushBackpressure(EnableAssertNoPushBackpressure),
       .EnableAssertPushValidStability(EnableAssertPushValidStability),
       .EnableAssertPushDataStability(EnableAssertPushDataStability)
   ) br_fifo_basic_fpv_monitor (
@@ -94,6 +97,7 @@ bind br_fifo_flops br_fifo_flops_fpv_monitor #(
     .FlopRamReadDataDepthStages(FlopRamReadDataDepthStages),
     .FlopRamReadDataWidthStages(FlopRamReadDataWidthStages),
     .EnableCoverPushBackpressure(EnableCoverPushBackpressure),
+    .EnableAssertNoPushBackpressure(EnableAssertNoPushBackpressure),
     .EnableAssertPushValidStability(EnableAssertPushValidStability),
     .EnableAssertPushDataStability(EnableAssertPushDataStability)
 ) monitor (.*);

@@ -128,13 +128,15 @@ module br_amba_axi_isolate_mgr_fpv_monitor #(
       .ReadInterleaveOn(1),
       .AddrWidth(AddrWidth),
       .DataWidth(DataWidth),
-      .IdWidth(IdWidth),
+      .AwAxiIdWidth(IdWidth),
+      .ArAxiIdWidth(IdWidth),
       .AWUserWidth(AWUserWidth),
       .WUserWidth(WUserWidth),
       .ARUserWidth(ARUserWidth),
       .BUserWidth(BUserWidth),
       .RUserWidth(RUserWidth),
-      .MaxOutstanding(MaxOutstanding),
+      .MaxOutstandingReads(MaxOutstanding),
+      .MaxOutstandingWrites(MaxOutstanding),
       .MaxAxiBurstLen(MaxAxiBurstLen)
   ) fv_axi_check (
       .clk,

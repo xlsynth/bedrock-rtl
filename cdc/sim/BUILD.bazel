@@ -31,10 +31,6 @@ verilog_elab_test(
 [
     br_verilog_sim_test_tools_suite(
         name = "br_cdc_fifo_flops_sim_test_tools_suite" + cdc_delay_mode,
-        opts = [
-            "+cdc_delay_mode=" + cdc_delay_mode,
-            "+define+SIMULATION",
-        ],
         params = {
             "Depth": [
                 # Minimum depth needed for full bandwidth at the maximum cut-through and backpressure latencies
@@ -58,8 +54,16 @@ verilog_elab_test(
                 "3",
             ],
         },
+        sim_opts = [
+            "+cdc_delay_mode=" + cdc_delay_mode,
+        ],
         tags = ["no-sandbox"],
-        tools = ["vcs"],
+        # TODO(mgottscho): Re-enable Verilator once it accepts the dependent
+        # assertions that use `not` in sequence expressions.
+        tools = [
+            "vcs",
+            #"verilator",
+        ],
         top = "br_cdc_fifo_flops_tb",
         deps = [
             ":br_cdc_fifo_flops_tb",
@@ -101,10 +105,6 @@ verilog_elab_test(
 [
     br_verilog_sim_test_tools_suite(
         name = "br_cdc_fifo_flops_push_credit_sim_test_tools_suite" + cdc_delay_mode,
-        opts = [
-            "+cdc_delay_mode=" + cdc_delay_mode,
-            "+define+SIMULATION",
-        ],
         params = {
             "RegisterPopOutputs": [
                 "0",
@@ -127,7 +127,15 @@ verilog_elab_test(
                 "1",
             ],
         },
-        tools = ["vcs"],
+        sim_opts = [
+            "+cdc_delay_mode=" + cdc_delay_mode,
+        ],
+        # TODO(mgottscho): Re-enable Verilator once it accepts the dependent
+        # assertions that use `not` in sequence expressions.
+        tools = [
+            "vcs",
+            #"verilator",
+        ],
         top = "br_cdc_fifo_flops_push_credit_tb",
         deps = [
             ":br_cdc_fifo_flops_push_credit_tb",
@@ -165,10 +173,6 @@ verilog_elab_test(
 [
     br_verilog_sim_test_tools_suite(
         name = "br_cdc_bit_pulse_sim_test_tools_suite_" + cdc_delay_mode,
-        opts = [
-            "+cdc_delay_mode=" + cdc_delay_mode,
-            "+define+SIMULATION",
-        ],
         params = {
             "NumStages": [
                 "2",
@@ -187,9 +191,16 @@ verilog_elab_test(
                 "30",
             ],
         },
+        sim_opts = [
+            "+cdc_delay_mode=" + cdc_delay_mode,
+        ],
         tags = ["no-sandbox"],
+        # TODO(mgottscho): Re-enable Verilator once it supports
+        # `process::self().srandom(new_seed)` in `br_cdc_bit_toggle` during CDC
+        # delay modeling.
         tools = [
             "vcs",
+            #"verilator",
         ],
         deps = [":br_cdc_bit_pulse_tb"],
     )
@@ -244,8 +255,12 @@ br_verilog_sim_test_tools_suite(
             "20",
         ],
     },
+    # TODO(mgottscho): Re-enable Verilator once it supports
+    # `process::self().srandom(new_seed)` in `br_cdc_bit_toggle` during CDC
+    # delay modeling.
     tools = [
         "vcs",
+        #"verilator",
     ],
     top = "br_cdc_reg_tb",
     deps = [
@@ -298,7 +313,13 @@ br_verilog_sim_test_tools_suite(
             "16",
         ],
     },
-    tools = ["vcs"],
+    # TODO(mgottscho): Re-enable Verilator once it supports
+    # `process::self().srandom(new_seed)` in `br_cdc_bit_toggle` during CDC
+    # delay modeling.
+    tools = [
+        "vcs",
+        #"verilator",
+    ],
     top = "br_cdc_stable_data_tb",
     deps = [
         ":br_cdc_stable_data_tb",
@@ -350,7 +371,13 @@ br_verilog_sim_test_tools_suite(
             "16",
         ],
     },
-    tools = ["vcs"],
+    # TODO(mgottscho): Re-enable Verilator once it supports
+    # `process::self().srandom(new_seed)` in `br_cdc_bit_toggle` during CDC
+    # delay modeling.
+    tools = [
+        "vcs",
+        #"verilator",
+    ],
     top = "br_cdc_stable_data_autoupdate_tb",
     deps = [
         ":br_cdc_stable_data_autoupdate_tb",

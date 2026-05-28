@@ -7,6 +7,10 @@
 //
 // The out signal will be set to in[i] for which select[i] is 1.
 // The select must have at most one bit set.
+//
+// In the base case where NumSymbolsIn == 1, then this just
+// becomes a pass-through from `in[0]` to `out`, and `select`
+// is ignored.
 
 `include "br_asserts_internal.svh"
 `include "br_unused.svh"
@@ -18,9 +22,11 @@ module br_mux_onehot #(
     parameter int SymbolWidth = 1,
     // If 1, assert that the select is, in fact, onehot.
     // If 0, the select can be multi-hot, but in this case,
-    // the output will be undefined and driven to X in simulation.
+    // the output will be undefined and driven to X in simulation,
+    // unless NumSymbolsIn == 1.
     parameter bit EnableAssertSelectOnehot = 1
 ) (
+    // Ignored when NumSymbolsIn == 1.
     input  logic [NumSymbolsIn-1:0]                  select,
     input  logic [NumSymbolsIn-1:0][SymbolWidth-1:0] in,
     output logic [ SymbolWidth-1:0]                  out
@@ -41,25 +47,10 @@ module br_mux_onehot #(
   //------------------------------------------
 
   if (NumSymbolsIn == 1) begin : gen_base
-`ifdef SIMULATION
-    if (EnableAssertSelectOnehot) begin : gen_onehot_out
-      assign out = in;
-    end else begin : gen_multihot_out
-      always_comb begin
-        if (select == 1'b0) begin
-          out = in;
-        end else begin
-          out = 'X;
-        end
-      end
-    end
-`else  // SIMULATION
     `BR_UNUSED(select)
     assign out = in;
-`endif  // SIMULATION
 
   end else begin : gen_n
-
     logic [SymbolWidth-1:0] out_internal;
 
     always_comb begin

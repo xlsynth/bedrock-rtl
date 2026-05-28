@@ -56,6 +56,11 @@ def _write_executable_shell_script(ctx, executable_file, cmd, verbose = True, en
     if env_exports:
         for key, value in env_exports.items():
             lines.append("export {}={}".format(key, value))
+
+    # Bazel 9 exports an rlocation compatibility function whose body contains a
+    # literal "ERROR:" message. Some EDA plugins scan captured shell output for
+    # diagnostics, so keep that helper out of child tool environments.
+    lines.append("unset -f rlocation 2>/dev/null || true")
     if verbose:
         lines.append("pwd")
     lines.append(cmd)
@@ -104,7 +109,23 @@ def _verilog_base_impl(ctx, subcmd, test = True, extra_args = [], extra_runfiles
     """
     data_files = getattr(ctx.files, "data", [])
     runfiles = list(data_files)
-    runfiles += ctx.files.verilog_runner_tool
+    verilog_runner_files_to_run = ctx.attr.verilog_runner_tool[DefaultInfo].files_to_run
+    verilog_runner_files = ctx.files.verilog_runner_tool
+    verilog_runner_file = None
+
+    # Bazel may expose a single source file or filegroup through files_to_run;
+    # raw runner sources still need to be invoked through Python.
+    if (
+        len(verilog_runner_files) == 1 and
+        verilog_runner_files[0].is_source and
+        verilog_runner_files[0].basename.endswith(".py")
+    ):
+        verilog_runner_file = verilog_runner_files[0]
+        verilog_runner_executable = None
+    else:
+        verilog_runner_executable = verilog_runner_files_to_run.executable
+    if test or not verilog_runner_executable:
+        runfiles += ctx.files.verilog_runner_tool
     runfiles += ctx.files.verilog_runner_data
     runfiles += ctx.files.verilog_runner_plugins
     srcs = get_transitive(ctx = ctx, srcs_not_hdrs = True).to_list()
@@ -151,12 +172,22 @@ def _verilog_base_impl(ctx, subcmd, test = True, extra_args = [], extra_runfiles
         args += ctx.attr.runner_flags[VerilogRunnerFlagsInfo].runner_flags
     args += extra_args
 
-    # TODO: This is a hack. We should use the py_binary target directly, but I'm not sure how to get the environment
-    # to work correctly when we wrap the py_binary in a shell script that gets invoked later.
+    generator_tools = []
+    if not verilog_runner_executable:
+        if len(verilog_runner_files) != 1:
+            fail("verilog_runner_tool must be an executable target or a single Python source file.")
+        verilog_runner_file = verilog_runner_files[0]
+
     if test:
-        runner_path = ctx.files.verilog_runner_tool[0].short_path
+        if verilog_runner_executable:
+            runner_cmd_prefix = [verilog_runner_executable.short_path]
+        else:
+            runner_cmd_prefix = ["python3", verilog_runner_file.short_path]
+    elif verilog_runner_executable:
+        runner_cmd_prefix = [verilog_runner_executable.path]
+        generator_tools = [verilog_runner_files_to_run]
     else:
-        runner_path = ctx.files.verilog_runner_tool[0].path
+        runner_cmd_prefix = ["python3", verilog_runner_file.path]
     plugin_paths = []
     for plugin in ctx.files.verilog_runner_plugins:
         if plugin.dirname not in plugin_paths:
@@ -167,8 +198,12 @@ def _verilog_base_impl(ctx, subcmd, test = True, extra_args = [], extra_runfiles
         "VERILOG_RUNNER_PLUGIN_PATH": "${VERILOG_RUNNER_PLUGIN_PATH}:" + verilog_runner_plugin_paths,
     }
 
-    verilog_runner_cmd = " ".join(["python3"] + [runner_path] + [subcmd] + args + src_files)
+    verilog_runner_cmd = " ".join(runner_cmd_prefix + [subcmd] + args + src_files)
     verilog_runner_runfiles = ctx.runfiles(files = srcs + hdrs + runfiles + extra_runfiles)
+    if test:
+        verilog_runner_runfiles = verilog_runner_runfiles.merge(
+            ctx.attr.verilog_runner_tool[DefaultInfo].default_runfiles,
+        )
     if test:
         runner = ctx.label.name + "_runner.sh"
         runner_executable_file = ctx.actions.declare_file(runner)
@@ -220,6 +255,7 @@ def _verilog_base_impl(ctx, subcmd, test = True, extra_args = [], extra_runfiles
             outputs = [ctx.outputs.tarball],
             executable = generator_executable_file,
             arguments = [],
+            tools = generator_tools,
             use_default_shell_env = True,
             progress_message = "Generating FPV sandbox for %{label}",
         )
@@ -262,6 +298,8 @@ def _verilog_lint_test_impl(ctx):
 def _verilog_sim_test_impl(ctx):
     """Implementation of the verilog_sim_test rule."""
     extra_args = []
+    if ctx.attr.opts and ctx.attr.tool != "vcs":
+        fail("'opts' is a deprecated VCS-only simulation option. Use 'elab_opts' or 'sim_opts' instead.")
     if ctx.attr.elab_only:
         extra_args.append("--elab_only")
     if ctx.attr.uvm:
@@ -271,6 +309,10 @@ def _verilog_sim_test_impl(ctx):
         extra_args.append("--waves")
     for opt in ctx.attr.opts:
         extra_args.append("--opt='" + opt + "'")
+    for opt in ctx.attr.elab_opts:
+        extra_args.append("--elab_opt='" + opt + "'")
+    for opt in ctx.attr.sim_opts:
+        extra_args.append("--sim_opt='" + opt + "'")
 
     return _verilog_base_impl(
         ctx = ctx,
@@ -332,7 +374,10 @@ rule_verilog_elab_test = rule(
             doc = "Additional Verilog Runner files needed at runtime.",
         ),
         "verilog_runner_plugins": attr.label_list(
-            default = ["//python/verilog_runner/plugins:iverilog.py"],
+            default = [
+                "//python/verilog_runner/plugins:iverilog.py",
+                "//python/verilog_runner/plugins:verilator.py",
+            ],
             allow_files = True,
             doc = "Verilog runner plugins to load from this workspace, in addition to those loaded from VERILOG_RUNNER_PLUGIN_PATH.",
         ),
@@ -415,7 +460,10 @@ rule_verilog_lint_test = rule(
             doc = "Additional Verilog Runner files needed at runtime.",
         ),
         "verilog_runner_plugins": attr.label_list(
-            default = ["//python/verilog_runner/plugins:iverilog.py"],
+            default = [
+                "//python/verilog_runner/plugins:iverilog.py",
+                "//python/verilog_runner/plugins:verilator.py",
+            ],
             allow_files = True,
             doc = "Verilog runner plugins to load from this workspace, in addition to those loaded from VERILOG_RUNNER_PLUGIN_PATH.",
         ),
@@ -484,7 +532,13 @@ rule_verilog_sim_test = rule(
             doc = "The top-level module; if not provided and there exists one dependency, then defaults to that dep's label name.",
         ),
         "opts": attr.string_list(
-            doc = "Tool-specific options not covered by other arguments. If provided, then 'tool' must also be set.",
+            doc = "Deprecated VCS-only simulation options. Prefer 'elab_opts' or 'sim_opts'.",
+        ),
+        "elab_opts": attr.string_list(
+            doc = "Tool-specific compile/elaboration options not covered by other arguments.",
+        ),
+        "sim_opts": attr.string_list(
+            doc = "Tool-specific simulation runtime options, such as simulator plusargs.",
         ),
         "elab_only": attr.bool(
             doc = "Only run elaboration.",
@@ -501,7 +555,10 @@ rule_verilog_sim_test = rule(
             doc = "Additional Verilog Runner files needed at runtime.",
         ),
         "verilog_runner_plugins": attr.label_list(
-            default = ["//python/verilog_runner/plugins:iverilog.py"],
+            default = [
+                "//python/verilog_runner/plugins:iverilog.py",
+                "//python/verilog_runner/plugins:verilator.py",
+            ],
             allow_files = True,
             doc = "Verilog runner plugins to load from this workspace, in addition to those loaded from VERILOG_RUNNER_PLUGIN_PATH.",
         ),
@@ -539,7 +596,7 @@ rule_verilog_sim_test = rule(
     test = True,
 )
 
-def verilog_sim_test(tool, opts = [], tags = [], waves = False, **kwargs):
+def verilog_sim_test(tool, opts = [], elab_opts = [], sim_opts = [], tags = [], waves = False, **kwargs):
     """Wraps rule_verilog_sim_test with a default tool and appends extra tags.
 
     The following extra tags are unconditionally appended to the list of tags:
@@ -550,26 +607,34 @@ def verilog_sim_test(tool, opts = [], tags = [], waves = False, **kwargs):
 
     Args:
         tool: The simulation tool to use.
-        opts: Tool-specific options not covered by other arguments.
+        opts: Deprecated VCS-only simulation options.
+        elab_opts: Tool-specific compile/elaboration options not covered by other arguments.
+        sim_opts: Tool-specific simulation runtime options, such as simulator plusargs.
         tags: The tags to add to the test.
         waves: Enable waveform dumping.
         **kwargs: Other arguments to pass to the rule_verilog_sim_test rule.
     """
 
+    if opts and tool != "vcs":
+        fail("'opts' is a deprecated VCS-only simulation option. Use 'elab_opts' or 'sim_opts' instead.")
+
     # Make sure we fail the test ASAP after any error occurs (assertion or otherwise).
-    extra_opts = []
+    extra_elab_opts = []
+    extra_sim_opts = []
     test_tags = tags + extra_tags("sim", tool)
     if waves:
         test_tags.append("no-sandbox")
     if tool == "vcs":
         # Make sure we fail the test if any assertions fail.
-        extra_opts = ["-assert global_finish_maxfail=1+offending_values -error=TFIPC -error=PCWM-W -error=PCWM-L"]
+        extra_elab_opts = ["-assert global_finish_maxfail=1+offending_values -error=TFIPC -error=PCWM-W -error=PCWM-L"]
     elif tool == "dsim":
-        extra_opts.append("-exit-on-error 1")
+        extra_sim_opts.append("-exit-on-error 1")
 
     rule_verilog_sim_test(
         tool = tool,
-        opts = opts + extra_opts,
+        opts = opts,
+        elab_opts = elab_opts + extra_elab_opts,
+        sim_opts = sim_opts + extra_sim_opts,
         tags = test_tags,
         waves = waves,
         **kwargs
@@ -615,7 +680,10 @@ rule_verilog_fpv_test = rule(
             doc = "Additional Verilog Runner files needed at runtime.",
         ),
         "verilog_runner_plugins": attr.label_list(
-            default = ["//python/verilog_runner/plugins:iverilog.py"],
+            default = [
+                "//python/verilog_runner/plugins:iverilog.py",
+                "//python/verilog_runner/plugins:verilator.py",
+            ],
             allow_files = True,
             doc = "Verilog runner plugins to load from this workspace, in addition to those loaded from VERILOG_RUNNER_PLUGIN_PATH.",
         ),
@@ -715,7 +783,10 @@ rule_verilog_fpv_sandbox = rule(
             doc = "Additional Verilog Runner files needed at runtime.",
         ),
         "verilog_runner_plugins": attr.label_list(
-            default = ["//python/verilog_runner/plugins:iverilog.py"],
+            default = [
+                "//python/verilog_runner/plugins:iverilog.py",
+                "//python/verilog_runner/plugins:verilator.py",
+            ],
             allow_files = True,
             doc = "Verilog runner plugins to load from this workspace, in addition to those loaded from VERILOG_RUNNER_PLUGIN_PATH.",
         ),

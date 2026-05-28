@@ -362,12 +362,18 @@ br_verilog_elab_and_lint_test_suite(
     params = {
         "AddrWidth": ["64"],
         "DataWidth": ["128"],
-        "IdWidth": ["8"],
-        "AxiIdCount": [
+        "AwAxiIdWidth": ["3"],
+        "AwAxiIdCount": [
             "1",
-            "128",
+            "6",
         ],
-        "MaxOutstanding": ["128"],
+        "ArAxiIdWidth": ["2"],
+        "ArAxiIdCount": [
+            "1",
+            "3",
+        ],
+        "AwMaxOutstanding": ["128"],
+        "ArMaxOutstanding": ["64"],
         "MaxAxiBurstLen": [
             "1",
             "256",
@@ -381,9 +387,12 @@ br_verilog_elab_and_lint_test_suite(
     params = {
         "AddrWidth": ["40"],
         "DataWidth": ["64"],
-        "IdWidth": ["1"],
-        "AxiIdCount": ["1"],
-        "MaxOutstanding": ["16"],
+        "AwAxiIdWidth": ["1"],
+        "AwAxiIdCount": ["1"],
+        "ArAxiIdWidth": ["1"],
+        "ArAxiIdCount": ["1"],
+        "AwMaxOutstanding": ["16"],
+        "ArMaxOutstanding": ["16"],
         "MaxAxiBurstLen": ["1"],
     },
     deps = [":br_amba_axi_isolate_sub"],

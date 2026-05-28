@@ -17,6 +17,9 @@ module br_credit_sender_fpv_monitor #(
     parameter bit EnableAssertPushValidStability = EnableCoverPushBackpressure,
     parameter bit EnableAssertPushDataStability = EnableAssertPushValidStability,
     parameter bit EnableAssertFinalNotValid = 1,
+    // If 1, assert that push-side backpressure is impossible.
+    // Can only be enabled if EnableCoverPushBackpressure is disabled.
+    parameter bit EnableAssertNoPushBackpressure = !EnableCoverPushBackpressure,
     localparam int CounterWidth = $clog2(MaxCredit + 1),
     localparam int PopCreditWidth = $clog2(PopCreditMaxChange + 1)
 ) (
@@ -44,7 +47,6 @@ module br_credit_sender_fpv_monitor #(
     // Dynamic amount of available credit.
     input logic [CounterWidth-1:0] credit_available
 );
-
   // ----------FV modeling code----------
   localparam int N = NumFlows == 1 ? 1 : $clog2(NumFlows);
   logic [N-1:0] fv_flow;
@@ -64,7 +66,8 @@ module br_credit_sender_fpv_monitor #(
   `BR_ASSUME(credit_withhold_a, credit_withhold <= MaxCredit)
   `BR_ASSUME(credit_withhold_liveness_a, s_eventually (credit_withhold < fv_max_credit))
   for (genvar n = 0; n < NumFlows; n++) begin : gen_asm
-    if (!EnableCoverPushBackpressure) begin : gen_no_push_backpressure
+    if (!EnableCoverPushBackpressure &&
+        EnableAssertNoPushBackpressure) begin : gen_no_push_backpressure
       `BR_ASSUME(no_push_backpressure_a, !push_ready[n] |-> !push_valid[n])
     end
     if (EnableAssertPushValidStability) begin : gen_push_valid_stable
@@ -89,7 +92,8 @@ module br_credit_sender_fpv_monitor #(
                push_valid[fv_flow] && !push_ready[fv_flow] |=> $stable(push_data[fv_flow]))
   end
 
-  if (!EnableCoverPushBackpressure) begin : gen_no_push_backpressure
+  if (!EnableCoverPushBackpressure &&
+      EnableAssertNoPushBackpressure) begin : gen_no_push_backpressure
     `BR_ASSUME(no_push_backpressure_a, !push_ready[fv_flow] |-> !push_valid[fv_flow])
   end
 
@@ -121,6 +125,7 @@ bind br_credit_sender br_credit_sender_fpv_monitor #(
     .PopCreditMaxChange(PopCreditMaxChange),
     .RegisterPopOutputs(RegisterPopOutputs),
     .EnableCoverPushBackpressure(EnableCoverPushBackpressure),
+    .EnableAssertNoPushBackpressure(EnableAssertNoPushBackpressure),
     .EnableAssertPushValidStability(EnableAssertPushValidStability),
     .EnableAssertPushDataStability(EnableAssertPushDataStability),
     .EnableAssertFinalNotValid(EnableAssertFinalNotValid)

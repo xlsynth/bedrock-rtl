@@ -29,11 +29,13 @@ module br_credit_sender_vc #(
     // If 1, add 1 cycle of retiming to pop outputs.
     parameter bit RegisterPopOutputs = 0,
     // If 1, cover that the push side experiences backpressure.
-    // If 0, assert that there is never backpressure.
+    // If 0, disable backpressure coverage. By default, this also
+    // asserts that backpressure is impossible.
     parameter bit EnableCoverPushBackpressure = 1,
     // If 1, assert that push_valid is stable when backpressured.
     parameter bit EnableAssertPushValidStability = EnableCoverPushBackpressure,
     // If 1, assert that push_data is stable when backpressured.
+    // ri lint_check_waive PARAM_NOT_USED
     parameter bit EnableAssertPushDataStability = EnableAssertPushValidStability,
     // If 1, then assert there are no valid bits asserted at the end of the test.
     parameter bit EnableAssertFinalNotValid = 1,
@@ -41,6 +43,9 @@ module br_credit_sender_vc #(
     // the maximum number of credits that it stored at any point during the test.
     parameter bit EnableAssertFinalMaxValue = 1,
 
+    // If 1, assert that push-side backpressure is impossible.
+    // Can only be enabled if EnableCoverPushBackpressure is disabled.
+    parameter bit EnableAssertNoPushBackpressure = !EnableCoverPushBackpressure,
     localparam int VcWidth = $clog2(NumVcs),
     localparam int CounterWidth = $clog2(MaxCredit + 1),
     localparam int PopCreditWidth = $clog2(PopCreditMaxChange + 1)
@@ -90,6 +95,8 @@ module br_credit_sender_vc #(
   //------------------------------------------
   // Integration checks
   //------------------------------------------
+  `BR_ASSERT_STATIC(legal_assert_no_push_backpressure_a,
+                    !(EnableAssertNoPushBackpressure && EnableCoverPushBackpressure))
   `BR_ASSERT_STATIC(num_vcs_in_range_a, (NumVcs >= 2))
   `BR_ASSERT_STATIC(pop_credit_max_change_in_range_a, (PopCreditMaxChange <= MaxCredit))
 
@@ -120,6 +127,9 @@ module br_credit_sender_vc #(
     br_credit_counter #(
         .MaxValue(MaxCredit),
         .MaxChange(PopCreditMaxChange),
+        .MaxDecrement(1),
+        .EnableCoverZeroIncrement(0),
+        .EnableCoverZeroDecrement(0),
         .EnableAssertFinalNotValid(EnableAssertFinalNotValid),
         .EnableAssertFinalMaxValue(EnableAssertFinalMaxValue)
     ) br_credit_counter (
@@ -139,6 +149,7 @@ module br_credit_sender_vc #(
     br_flow_fork #(
         .NumFlows(2),
         .EnableCoverPushBackpressure(EnableCoverPushBackpressure),
+        .EnableAssertNoPushBackpressure(EnableAssertNoPushBackpressure),
         .EnableAssertPushValidStability(EnableAssertPushValidStability),
         .EnableAssertFinalNotValid(EnableAssertFinalNotValid)
     ) br_flow_fork_push (
@@ -159,9 +170,14 @@ module br_credit_sender_vc #(
       .NumFlows(NumVcs),
       .Width(Width),
       .EnableCoverPushBackpressure(EnableCoverPushBackpressure),
-      .EnableAssertPushValidStability(EnableAssertPushValidStability),
-      .EnableAssertPushDataStability(EnableAssertPushDataStability),
-      .EnableAssertFinalNotValid(EnableAssertFinalNotValid)
+      .EnableAssertNoPushBackpressure(EnableAssertNoPushBackpressure),
+      // This mux is fed by br_flow_fork's pop_valid_unstable outputs, so mux_push_valid is
+      // not a primary input-style stable ready/valid signal. It can drop under backpressure
+      // when credit_decr_ready changes. The mux pop side is also tied permanently ready.
+      .EnableAssertPushValidStability(0),
+      .EnableAssertPushDataStability(0),
+      .EnableAssertFinalNotValid(EnableAssertFinalNotValid),
+      .EnableCoverPopBackpressure(0)
   ) br_flow_mux_core_push (
       .clk,
       .rst,

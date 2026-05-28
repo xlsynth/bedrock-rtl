@@ -32,9 +32,7 @@
 //
 // The pop interface sets pop_last to 1 when the packet deserialization is complete (as indicated by push_last).
 // If the total number of push flits in the packet is not divisible by DeserializationRatio (i.e., push_last comes
-// "early"), then the last pop flit is partially populated and the remaining space is filled with zeros.
-// If DeserializeMostSignificantFirst is 1, then the zero-filled values occupy the least-significant portion of
-// the final pop flit; otherwise, they occupy the most-significant portion.
+// "early"), then the last pop flit is partially populated and the remaining tail bits are don't-care values.
 //
 // The pop_last_dont_care_count port indicates how much of the last pop_data flit contains "don't care"
 // values. The don't care values are always in contiguous multiples of PopWidth bits. If DeserializeMostSignificantFirst is 1,
@@ -89,7 +87,8 @@ module br_flow_deserializer #(
     // Width of the sideband metadata (not serialized). Must be at least 1.
     parameter int MetadataWidth = 1,
     // If 1, cover that the push side experiences backpressure.
-    // If 0, assert that there is never backpressure.
+    // If 0, disable backpressure coverage. By default, this also
+    // asserts that backpressure is impossible.
     parameter bit EnableCoverPushBackpressure = 1,
     // If 1, the most significant bits of the packet are received first (big endian).
     // If 0, the least significant bits are received first (little endian).
@@ -100,6 +99,9 @@ module br_flow_deserializer #(
     parameter bit EnableAssertPushDataKnown = 1,
     // If 1, then assert there are no valid bits asserted at the end of the test.
     parameter bit EnableAssertFinalNotValid = 1,
+    // If 1, assert that push-side backpressure is impossible.
+    // Can only be enabled if EnableCoverPushBackpressure is disabled.
+    parameter bit EnableAssertNoPushBackpressure = !EnableCoverPushBackpressure,
     localparam int DeserializationRatio = PopWidth / PushWidth,
     // Vector widths cannot be 0, so we need to special-case when DeserializationRatio == 1
     // even though the pop_last_dont_care_count port will be unused downstream in that case.
@@ -143,6 +145,8 @@ module br_flow_deserializer #(
   //------------------------------------------
   // Integration checks
   //------------------------------------------
+  `BR_ASSERT_STATIC(legal_assert_no_push_backpressure_a,
+                    !(EnableAssertNoPushBackpressure && EnableCoverPushBackpressure))
   `BR_ASSERT_STATIC(push_width_gte_1_a, PushWidth >= 1)
   `BR_ASSERT_STATIC(pop_width_multiple_of_push_width_a, (PopWidth % PushWidth) == 0)
   `BR_ASSERT_STATIC(metadata_width_gte_1_a, MetadataWidth >= 1)
@@ -156,6 +160,7 @@ module br_flow_deserializer #(
       // has been received. If the push data is unstable during reception, then the data
       // integrity is compromised.
       .EnableCoverBackpressure(EnableCoverPushBackpressure),
+      .EnableAssertNoBackpressure(EnableAssertNoPushBackpressure),
       .EnableAssertValidStability(EnableCoverPushBackpressure),
       .EnableAssertDataStability(EnableCoverPushBackpressure),
       .EnableAssertDataKnown(EnableAssertPushDataKnown),

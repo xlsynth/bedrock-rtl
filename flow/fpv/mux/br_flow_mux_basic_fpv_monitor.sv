@@ -16,7 +16,13 @@ module br_flow_mux_basic_fpv_monitor #(
     parameter bit EnableAssertPopValidStability = EnableAssertPushValidStability,
     parameter bit EnableAssertPopDataStability = 0,
     parameter bit EnableAssertMustGrant = 1,
-    parameter bit DelayedGrant = 0
+    parameter bit DelayedGrant = 0,
+    // If 1, assert that push-side backpressure is impossible.
+    // Can only be enabled if EnableCoverPushBackpressure is disabled.
+    parameter bit EnableAssertNoPushBackpressure = !EnableCoverPushBackpressure,
+    // If 1, assert that pop-side backpressure is impossible.
+    // Can only be enabled if EnableCoverPopBackpressure is disabled.
+    parameter bit EnableAssertNoPopBackpressure = !EnableCoverPopBackpressure
 ) (
     input logic                           clk,
     input logic                           rst,
@@ -32,7 +38,7 @@ module br_flow_mux_basic_fpv_monitor #(
   `BR_ASSUME(pop_ready_liveness_a, s_eventually (pop_ready))
 
   for (genvar n = 0; n < NumFlows; n++) begin : gen_asm
-    if (!EnableCoverPushBackpressure) begin : gen_no_backpressure
+    if (!EnableCoverPushBackpressure && EnableAssertNoPushBackpressure) begin : gen_no_backpressure
       `BR_ASSUME(no_backpressure_a, !push_ready[n] |-> !push_valid[n])
     end
     if (EnableAssertPushValidStability) begin : gen_push_valid
@@ -53,6 +59,8 @@ module br_flow_mux_basic_fpv_monitor #(
     end else if (NumFlows != 1) begin : gen_pop_data_unstable
       `BR_COVER(pop_data_unstable_c, (pop_valid && !pop_ready) ##1 !$stable(pop_data))
     end
+  end else if (EnableAssertNoPopBackpressure) begin : gen_no_pop_backpressure
+    `BR_ASSERT(no_pop_backpressure_a, pop_valid |-> pop_ready)
   end
 
   // ----------Critical Covers----------

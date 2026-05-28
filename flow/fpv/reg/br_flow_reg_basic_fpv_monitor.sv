@@ -9,7 +9,10 @@ module br_flow_reg_basic_fpv_monitor #(
     parameter int Width = 1,
     parameter bit EnableCoverPushBackpressure = 1,
     parameter bit EnableAssertPushValidStability = EnableCoverPushBackpressure,
-    parameter bit EnableAssertPushDataStability = EnableAssertPushValidStability
+    parameter bit EnableAssertPushDataStability = EnableAssertPushValidStability,
+    // If 1, assert that push-side backpressure is impossible.
+    // Can only be enabled if EnableCoverPushBackpressure is disabled.
+    parameter bit EnableAssertNoPushBackpressure = !EnableCoverPushBackpressure
 ) (
     input logic             clk,
     input logic             rst,
@@ -20,11 +23,10 @@ module br_flow_reg_basic_fpv_monitor #(
     input logic             pop_valid,
     input logic [Width-1:0] pop_data
 );
-
   // ----------FV assumptions----------
   `BR_ASSUME(pop_ready_liveness_a, s_eventually (pop_ready))
 
-  if (!EnableCoverPushBackpressure) begin : gen_no_backpressure
+  if (!EnableCoverPushBackpressure && EnableAssertNoPushBackpressure) begin : gen_no_backpressure
     `BR_ASSUME(no_backpressure_a, !push_ready |-> !push_valid)
   end
 

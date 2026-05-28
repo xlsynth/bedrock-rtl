@@ -21,6 +21,9 @@ module br_fifo_shared_pstatic_flops_fpv_monitor #(
     parameter bit EnableAssertPushValidStability = EnableCoverPushBackpressure,
     parameter bit EnableAssertPushDataStability = EnableAssertPushValidStability,
     parameter bit EnableAssertFinalNotValid = 1,
+    // If 1, assert that push-side backpressure is impossible.
+    // Can only be enabled if EnableCoverPushBackpressure is disabled.
+    parameter bit EnableAssertNoPushBackpressure = !EnableCoverPushBackpressure,
     localparam int FifoIdWidth = br_math::clamped_clog2(NumFifos),
     localparam int AddrWidth = br_math::clamped_clog2(Depth)
 ) (
@@ -57,7 +60,6 @@ module br_fifo_shared_pstatic_flops_fpv_monitor #(
     input logic [NumFifos-1:0][Width-1:0] pop_data,
     input logic [NumFifos-1:0]            pop_empty
 );
-
   localparam bit WolperColorEn = 0;
   logic [$clog2(Width)-1:0] magic_bit_index;
   `BR_ASSUME(magic_bit_index_range_a, $stable(magic_bit_index) && (magic_bit_index < Width))
@@ -76,6 +78,7 @@ module br_fifo_shared_pstatic_flops_fpv_monitor #(
       .RegisterPopOutputs(RegisterPopOutputs),
       .RamReadLatency(RamReadLatency),
       .EnableCoverPushBackpressure(EnableCoverPushBackpressure),
+      .EnableAssertNoPushBackpressure(EnableAssertNoPushBackpressure),
       .EnableAssertPushValidStability(EnableAssertPushValidStability),
       .EnableAssertPushDataStability(EnableAssertPushDataStability)
   ) fv_checker (
@@ -109,6 +112,7 @@ bind br_fifo_shared_pstatic_flops br_fifo_shared_pstatic_flops_fpv_monitor #(
     .RamReadDataDepthStages(RamReadDataDepthStages),
     .RamReadDataWidthStages(RamReadDataWidthStages),
     .EnableCoverPushBackpressure(EnableCoverPushBackpressure),
+    .EnableAssertNoPushBackpressure(EnableAssertNoPushBackpressure),
     .EnableAssertPushValidStability(EnableAssertPushValidStability),
     .EnableAssertPushDataStability(EnableAssertPushDataStability),
     .EnableAssertFinalNotValid(EnableAssertFinalNotValid)

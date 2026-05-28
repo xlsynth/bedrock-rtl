@@ -25,7 +25,7 @@ import uvm_pkg::*;
 //       are no-ops.
 // * BR_ENABLE_FPV -- if not defined, then all BR_*_FPV macros are no-ops.
 // * BR_DISABLE_ASSERT_IMM -- if defined, then all BR_ASSERT_IMM*, BR_COVER_IMM*,
-//       BR_ASSERT_COMB*, and BR_ASSERT_IMM* macros are no-ops.
+//       BR_ASSERT_COMB*, and BR_COVER_COMB* macros are no-ops.
 // * BR_DISABLE_FINAL_CHECKS -- if defined, then all BR_ASSERT_FINAL macros are no-ops.
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -34,10 +34,27 @@ import uvm_pkg::*;
 
 `define BR_NOOP
 
+`ifdef BR_VERILATOR
+// When elaborating with Verilator, undefined module references are resolved before
+// untaken generate branches are pruned. The usual static-assert sentinel module
+// can therefore fail even when the constant expression is true. So, we keep the
+// generate-time guard, but report failures at simulation time using an initial block,
+// rather than at elaboration time.
+`define BR_ASSERT_STATIC(__name__, __expr__) \
+if (!(__expr__)) begin : gen__``__name__ \
+initial begin \
+$error($sformatf( \
+    "Bedrock-RTL assertion macro failed (%0s:%0d) [%0s]: %0s", \
+    `__FILE__, `__LINE__, `"__name__`", `"__expr__`")); \
+$finish; \
+end \
+end
+`else
 `define BR_ASSERT_STATIC(__name__, __expr__) \
 if (!(__expr__)) begin : gen__``__name__ \
 __BR_ASSERT_STATIC_FAILED__``__name__ __BR_ASSERT_STATIC_FAILED__``__name__ (); \
 end
+`endif
 
 `define BR_ASSERT_STATIC_IN_PACKAGE(__name__, __expr__) \
 typedef enum logic [1:0] { \
@@ -253,6 +270,35 @@ end
 `endif  // BR_ENABLE_FPV
 `else  // BR_ASSERT_ON
 `define BR_ASSERT_COMB_FPV(__name__, __expr__) \
+`BR_NOOP
+`endif  // BR_ASSERT_ON
+
+`ifdef BR_ASSERT_ON
+`ifndef BR_DISABLE_ASSERT_IMM
+`define BR_ASSUME_COMB(__name__, __expr__) \
+always_comb begin  : gen_``__name__ \
+assume (__expr__); \
+end
+`else  // BR_DISABLE_ASSERT_IMM
+`define BR_ASSUME_COMB(__name__, __expr__) \
+`BR_NOOP
+`endif  // BR_DISABLE_ASSERT_IMM
+`else  // BR_ASSERT_ON
+`define BR_ASSUME_COMB(__name__, __expr__) \
+`BR_NOOP
+`endif  // BR_ASSERT_ON
+
+// FPV version macros
+`ifdef BR_ASSERT_ON
+`ifdef BR_ENABLE_FPV
+`define BR_ASSUME_COMB_FPV(__name__, __expr__) \
+`BR_ASSUME_COMB(__name__, __expr__);
+`else  // BR_ENABLE_FPV
+`define BR_ASSUME_COMB_FPV(__name__, __expr__) \
+`BR_NOOP
+`endif  // BR_ENABLE_FPV
+`else  // BR_ASSERT_ON
+`define BR_ASSUME_COMB_FPV(__name__, __expr__) \
 `BR_NOOP
 `endif  // BR_ASSERT_ON
 

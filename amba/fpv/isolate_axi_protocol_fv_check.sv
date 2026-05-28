@@ -9,13 +9,15 @@ module isolate_axi_protocol_fv_check #(
     parameter bit ValidBeforeReady = 1,
     parameter int AddrWidth = 12,
     parameter int DataWidth = 32,
-    parameter int IdWidth = 1,
+    parameter int AwAxiIdWidth = 1,
+    parameter int ArAxiIdWidth = 1,
     parameter int AWUserWidth = 1,
     parameter int WUserWidth = 1,
     parameter int ARUserWidth = 1,
     parameter int BUserWidth = 1,
     parameter int RUserWidth = 1,
-    parameter int MaxOutstanding = 128,
+    parameter int MaxOutstandingReads = 128,
+    parameter int MaxOutstandingWrites = 128,
     parameter int MaxAxiBurstLen = 2 ** br_amba::AxiBurstLenWidth,
     localparam int AxiBurstLenWidth = br_math::clamped_clog2(MaxAxiBurstLen),
     localparam int StrobeWidth = DataWidth / 8
@@ -29,7 +31,7 @@ module isolate_axi_protocol_fv_check #(
     input logic                                  isolate_done,
     //
     input logic [                 AddrWidth-1:0] upstream_awaddr,
-    input logic [                   IdWidth-1:0] upstream_awid,
+    input logic [              AwAxiIdWidth-1:0] upstream_awid,
     input logic [          AxiBurstLenWidth-1:0] upstream_awlen,
     input logic [br_amba::AxiBurstSizeWidth-1:0] upstream_awsize,
     input logic [br_amba::AxiBurstTypeWidth-1:0] upstream_awburst,
@@ -44,13 +46,13 @@ module isolate_axi_protocol_fv_check #(
     input logic                                  upstream_wlast,
     input logic                                  upstream_wvalid,
     input logic                                  upstream_wready,
-    input logic [                   IdWidth-1:0] upstream_bid,
+    input logic [              AwAxiIdWidth-1:0] upstream_bid,
     input logic [                BUserWidth-1:0] upstream_buser,
     input logic [     br_amba::AxiRespWidth-1:0] upstream_bresp,
     input logic                                  upstream_bvalid,
     input logic                                  upstream_bready,
     input logic [                 AddrWidth-1:0] upstream_araddr,
-    input logic [                   IdWidth-1:0] upstream_arid,
+    input logic [              ArAxiIdWidth-1:0] upstream_arid,
     input logic [          AxiBurstLenWidth-1:0] upstream_arlen,
     input logic [br_amba::AxiBurstSizeWidth-1:0] upstream_arsize,
     input logic [br_amba::AxiBurstTypeWidth-1:0] upstream_arburst,
@@ -59,7 +61,7 @@ module isolate_axi_protocol_fv_check #(
     input logic [               ARUserWidth-1:0] upstream_aruser,
     input logic                                  upstream_arvalid,
     input logic                                  upstream_arready,
-    input logic [                   IdWidth-1:0] upstream_rid,
+    input logic [              ArAxiIdWidth-1:0] upstream_rid,
     input logic [                 DataWidth-1:0] upstream_rdata,
     input logic [                RUserWidth-1:0] upstream_ruser,
     input logic [     br_amba::AxiRespWidth-1:0] upstream_rresp,
@@ -68,7 +70,7 @@ module isolate_axi_protocol_fv_check #(
     input logic                                  upstream_rready,
     //
     input logic [                 AddrWidth-1:0] downstream_awaddr,
-    input logic [                   IdWidth-1:0] downstream_awid,
+    input logic [              AwAxiIdWidth-1:0] downstream_awid,
     input logic [          AxiBurstLenWidth-1:0] downstream_awlen,
     input logic [br_amba::AxiBurstSizeWidth-1:0] downstream_awsize,
     input logic [br_amba::AxiBurstTypeWidth-1:0] downstream_awburst,
@@ -83,13 +85,13 @@ module isolate_axi_protocol_fv_check #(
     input logic                                  downstream_wlast,
     input logic                                  downstream_wvalid,
     input logic                                  downstream_wready,
-    input logic [                   IdWidth-1:0] downstream_bid,
+    input logic [              AwAxiIdWidth-1:0] downstream_bid,
     input logic [                BUserWidth-1:0] downstream_buser,
     input logic [     br_amba::AxiRespWidth-1:0] downstream_bresp,
     input logic                                  downstream_bvalid,
     input logic                                  downstream_bready,
     input logic [                 AddrWidth-1:0] downstream_araddr,
-    input logic [                   IdWidth-1:0] downstream_arid,
+    input logic [              ArAxiIdWidth-1:0] downstream_arid,
     input logic [          AxiBurstLenWidth-1:0] downstream_arlen,
     input logic [br_amba::AxiBurstSizeWidth-1:0] downstream_arsize,
     input logic [br_amba::AxiBurstTypeWidth-1:0] downstream_arburst,
@@ -98,7 +100,7 @@ module isolate_axi_protocol_fv_check #(
     input logic [               ARUserWidth-1:0] downstream_aruser,
     input logic                                  downstream_arvalid,
     input logic                                  downstream_arready,
-    input logic [                   IdWidth-1:0] downstream_rid,
+    input logic [              ArAxiIdWidth-1:0] downstream_rid,
     input logic [                 DataWidth-1:0] downstream_rdata,
     input logic [                RUserWidth-1:0] downstream_ruser,
     input logic [     br_amba::AxiRespWidth-1:0] downstream_rresp,
@@ -108,7 +110,8 @@ module isolate_axi_protocol_fv_check #(
 );
 
   // ABVIP should send more than DUT to test backpressure
-  localparam int MaxPending = MaxOutstanding + 2;
+  localparam int MaxPendingRd = MaxOutstandingReads + 2;
+  localparam int MaxPendingWr = MaxOutstandingWrites + 2;
 
   // FV 4-phase handshake modeling
   fv_4phase_handshake #(
@@ -122,7 +125,8 @@ module isolate_axi_protocol_fv_check #(
 
   // upstream
   axi4_master #(
-      .ID_WIDTH(IdWidth),
+      .ID_WIDTH_W(AwAxiIdWidth),
+      .ID_WIDTH_R(ArAxiIdWidth),
       .ADDR_WIDTH(AddrWidth),
       .LEN_WIDTH(AxiBurstLenWidth),
       .SIZE_WIDTH(br_amba::AxiBurstSizeWidth),
@@ -136,7 +140,8 @@ module isolate_axi_protocol_fv_check #(
       .BUSER_WIDTH(BUserWidth),
       .RUSER_WIDTH(RUserWidth),
       .BRESP_WIDTH(br_amba::AxiRespWidth),
-      .MAX_PENDING(MaxPending),
+      .MAX_PENDING_RD(MaxPendingRd),
+      .MAX_PENDING_WR(MaxPendingWr),
       .AXI4_LITE(MaxAxiBurstLen == 1),
       .READ_INTERLEAVE_ON(ReadInterleaveOn),
       // when there is no valid, ready doesn't have to be high eventually
@@ -205,7 +210,8 @@ module isolate_axi_protocol_fv_check #(
 
   // downstream
   axi4_slave #(
-      .ID_WIDTH(IdWidth),
+      .ID_WIDTH_W(AwAxiIdWidth),
+      .ID_WIDTH_R(ArAxiIdWidth),
       .ADDR_WIDTH(AddrWidth),
       .LEN_WIDTH(AxiBurstLenWidth),
       .SIZE_WIDTH(br_amba::AxiBurstSizeWidth),
@@ -219,7 +225,8 @@ module isolate_axi_protocol_fv_check #(
       .BUSER_WIDTH(BUserWidth),
       .RUSER_WIDTH(RUserWidth),
       .BRESP_WIDTH(br_amba::AxiRespWidth),
-      .MAX_PENDING(MaxPending),
+      .MAX_PENDING_RD(MaxPendingRd),
+      .MAX_PENDING_WR(MaxPendingWr),
       .AXI4_LITE(MaxAxiBurstLen == 1),
       .READ_INTERLEAVE_ON(ReadInterleaveOn),  // not supported by br_amba_axi_isolate_sub
       // when there is no valid, ready doesn't have to be high eventually

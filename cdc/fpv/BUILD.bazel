@@ -587,6 +587,7 @@ br_verilog_fpv_test_tools_suite(
 # VCF experiment
 br_verilog_fpv_test_tools_suite(
     name = "br_cdc_fifo_flops_test_vcf",
+    analysis_opts = ["+undefine+SYNTHESIS"],
     params = {
         "Jasper": [
             "0",

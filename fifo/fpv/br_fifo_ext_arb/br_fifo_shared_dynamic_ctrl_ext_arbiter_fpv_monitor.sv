@@ -23,6 +23,9 @@ module br_fifo_shared_dynamic_ctrl_ext_arbiter_fpv_monitor #(
     parameter bit EnableAssertPushValidStability = EnableCoverPushBackpressure,
     parameter bit EnableAssertPushDataStability = EnableAssertPushValidStability,
     parameter bit EnableAssertFinalNotValid = 1,
+    // If 1, assert that push-side backpressure is impossible.
+    // Can only be enabled if EnableCoverPushBackpressure is disabled.
+    parameter bit EnableAssertNoPushBackpressure = !EnableCoverPushBackpressure,
     localparam int FifoIdWidth = br_math::clamped_clog2(NumFifos),
     localparam int AddrWidth = br_math::clamped_clog2(Depth)
 ) (
@@ -138,6 +141,7 @@ module br_fifo_shared_dynamic_ctrl_ext_arbiter_fpv_monitor #(
       .StagingBufferDepth(StagingBufferDepth),
       .HasStagingBuffer(HasStagingBuffer),
       .EnableCoverPushBackpressure(EnableCoverPushBackpressure),
+      .EnableAssertNoPushBackpressure(EnableAssertNoPushBackpressure),
       .EnableAssertPushValidStability(EnableAssertPushValidStability),
       .EnableAssertPushDataStability(EnableAssertPushDataStability)
   ) fv_checker (
@@ -167,6 +171,7 @@ bind br_fifo_shared_dynamic_ctrl_ext_arbiter br_fifo_shared_dynamic_ctrl_ext_arb
     .DataRamReadLatency(DataRamReadLatency),
     .PointerRamReadLatency(PointerRamReadLatency),
     .EnableCoverPushBackpressure(EnableCoverPushBackpressure),
+    .EnableAssertNoPushBackpressure(EnableAssertNoPushBackpressure),
     .EnableAssertPushValidStability(EnableAssertPushValidStability),
     .EnableAssertPushDataStability(EnableAssertPushDataStability),
     .EnableAssertFinalNotValid(EnableAssertFinalNotValid)

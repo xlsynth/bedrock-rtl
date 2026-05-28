@@ -19,7 +19,8 @@ module br_fifo_shared_pstatic_push_ctrl #(
     // Width of the data
     parameter int Width = 1,
     // If 1, cover that the push side experiences backpressure.
-    // If 0, assert that there is never backpressure.
+    // If 0, disable backpressure coverage. By default, this also
+    // asserts that backpressure is impossible.
     parameter bit EnableCoverPushBackpressure = 1,
     // If 1, assert that push_valid is stable when backpressured.
     parameter bit EnableAssertPushValidStability = EnableCoverPushBackpressure,
@@ -33,8 +34,11 @@ module br_fifo_shared_pstatic_push_ctrl #(
     // ri lint_check_waive PARAM_NOT_USED
     parameter bit EnableAssertFinalNotValid = 1,
 
+    // If 1, assert that push-side backpressure is impossible.
+    // Can only be enabled if EnableCoverPushBackpressure is disabled.
+    parameter bit EnableAssertNoPushBackpressure = !EnableCoverPushBackpressure,
     localparam int FifoIdWidth = br_math::clamped_clog2(NumFifos),
-    localparam int AddrWidth   = br_math::clamped_clog2(Depth)
+    localparam int AddrWidth = br_math::clamped_clog2(Depth)
 ) (
     input logic clk,
     input logic rst,
@@ -63,6 +67,9 @@ module br_fifo_shared_pstatic_push_ctrl #(
 
   // Integration Assertions
 
+  `BR_ASSERT_STATIC(legal_assert_no_push_backpressure_a,
+                    !(EnableAssertNoPushBackpressure && EnableCoverPushBackpressure))
+
 `ifdef BR_ASSERT_ON
 `ifndef BR_DISABLE_INTG_CHECKS
   logic [Width+FifoIdWidth-1:0] push_comb_data;
@@ -73,6 +80,7 @@ module br_fifo_shared_pstatic_push_ctrl #(
       .NumFlows(1),
       .Width(Width + FifoIdWidth),
       .EnableCoverBackpressure(EnableCoverPushBackpressure),
+      .EnableAssertNoBackpressure(EnableAssertNoPushBackpressure),
       .EnableAssertValidStability(EnableAssertPushValidStability),
       .EnableAssertDataStability(EnableAssertPushDataStability),
       .EnableAssertDataKnown(EnableAssertPushDataKnown),
@@ -106,6 +114,7 @@ module br_fifo_shared_pstatic_push_ctrl #(
         // TODO(zhemao): Add bypass support.
         .EnableBypass(0),
         .EnableCoverPushBackpressure(EnableCoverPushBackpressure),
+        .EnableAssertNoPushBackpressure(EnableAssertNoPushBackpressure),
         // Core can only have valid stability if the fifo_id is stable,
         // so pass the data stability parameter instead of the
         // valid stability parameter.
@@ -137,6 +146,7 @@ module br_fifo_shared_pstatic_push_ctrl #(
       .NumFlows(NumFifos),
       .Width(Width),
       .EnableCoverPushBackpressure(EnableCoverPushBackpressure),
+      .EnableAssertNoPushBackpressure(EnableAssertNoPushBackpressure),
       .EnableAssertPushValidStability(EnableAssertPushValidStability),
       // push_fifo_id should always be stable if valid is stable.
       .EnableAssertSelectStability(EnableAssertPushDataStability),

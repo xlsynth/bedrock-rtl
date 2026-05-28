@@ -45,6 +45,17 @@ module fv_ram #(
   end
   `BR_REGN(fv_ram_data, fv_ram_data_next)
 
+  // ----------FV assertions----------
+  if (NumWritePorts > 1) begin : gen_write_conflict_checks
+    for (genvar porta = 0; porta < (NumWritePorts - 1); porta++) begin : gen_write_conflict_a
+      for (genvar portb = porta + 1; portb < NumWritePorts; portb++) begin : gen_write_conflict_b
+        `BR_ASSERT(no_write_conflict_a,
+                   (ram_wr_valid[porta] && ram_wr_valid[portb]) |->
+                       ram_wr_addr[porta] != ram_wr_addr[portb])
+      end
+    end
+  end
+
   // ----------FV assumptions----------
   for (genvar r = 0; r < NumReadPorts; r++) begin : gen_asm
     if (RamReadLatency == 0) begin : gen_lat0
@@ -55,6 +66,15 @@ module fv_ram #(
                  ))
       `BR_ASSUME(ram_rd_data_addr_latency_a, ram_rd_data_valid[r] == $past(
                  ram_rd_addr_valid[r], RamReadLatency))
+    end
+  end
+
+  // ----------FV assertions----------
+  for (genvar a = 0; a < NumWritePorts; a++) begin : gen_wr_conflict_a
+    for (genvar b = a + 1; b < NumWritePorts; b++) begin : gen_wr_conflict_b
+      // If two write ports can fire together, they must not hit the same address.
+      `BR_ASSERT(wr_conflict_a,
+                 !(ram_wr_valid[a] && ram_wr_valid[b] && (ram_wr_addr[a] == ram_wr_addr[b])))
     end
   end
 

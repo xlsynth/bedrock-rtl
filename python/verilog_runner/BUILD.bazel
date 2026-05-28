@@ -4,8 +4,8 @@ load("@rules_python//python:defs.bzl", "py_binary", "py_library", "py_test")
 
 package(default_visibility = ["//visibility:public"])
 
-# TODO: This is a hack. We should use the py_binary target directly, but I'm not sure how to get the environment
-# to work correctly when we wrap the py_binary in a shell script that gets invoked later.
+# TODO: Use a hermetic Python runner without adding the full Python runtime to
+# every Verilog test runfiles tree.
 exports_files([
     "verilog_runner.py",
     "cli.py",
@@ -21,6 +21,8 @@ filegroup(
         "eda_tool.py",
         "plugins.py",
         "util.py",
+        "//python/verilog_runner/plugins:iverilog.py",
+        "//python/verilog_runner/plugins:verilator.py",
     ],
 )
 
@@ -29,15 +31,26 @@ py_library(
     srcs = ["util.py"],
 )
 
+py_library(
+    name = "cli",
+    srcs = ["cli.py"],
+    imports = ["."],
+    deps = [
+        ":util",
+    ],
+)
+
 py_binary(
     name = "verilog_runner",
     srcs = [
-        "cli.py",
         "eda_tool.py",
         "plugins.py",
         "verilog_runner.py",
     ],
+    imports = ["."],
+    legacy_create_init = False,
     deps = [
+        ":cli",
         ":util",
     ],
 )
@@ -46,4 +59,10 @@ py_test(
     name = "util_test",
     srcs = ["util_test.py"],
     deps = [":util"],
+)
+
+py_test(
+    name = "cli_test",
+    srcs = ["cli_test.py"],
+    deps = [":cli"],
 )

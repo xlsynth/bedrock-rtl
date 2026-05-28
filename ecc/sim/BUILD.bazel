@@ -37,6 +37,7 @@ br_verilog_sim_test_tools_suite(
     tools = [
         "iverilog",
         "vcs",
+        "verilator",
     ],
     deps = [":br_ecc_sed_encoder_decoder_tb"],
 )
@@ -89,7 +90,10 @@ K = [
         params = {"DataWidth": [k]},
         seed = 42,
         # iverilog is really slow on these tests :(
-        tools = ["vcs"],
+        tools = [
+            "vcs",
+            "verilator",
+        ],
         deps = [":br_ecc_secded_encoder_decoder_tb"],
     )
     for k in K

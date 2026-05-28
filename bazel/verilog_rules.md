@@ -79,7 +79,7 @@ Tests that a Verilog or SystemVerilog design elaborates. Needs VERILOG_RUNNER_PL
 | <a id="rule_verilog_elab_test-tool"></a>tool |  Elaboration tool to use.   | String | required |  |
 | <a id="rule_verilog_elab_test-top"></a>top |  The top-level module; if not provided and there exists one dependency, then defaults to that dep's label name.   | String | optional |  `""`  |
 | <a id="rule_verilog_elab_test-verilog_runner_data"></a>verilog_runner_data |  Additional Verilog Runner files needed at runtime.   | <a href="https://bazel.build/concepts/labels">List of labels</a> | optional |  `["@bedrock-rtl//python/verilog_runner:verilog_runner_data"]`  |
-| <a id="rule_verilog_elab_test-verilog_runner_plugins"></a>verilog_runner_plugins |  Verilog runner plugins to load from this workspace, in addition to those loaded from VERILOG_RUNNER_PLUGIN_PATH.   | <a href="https://bazel.build/concepts/labels">List of labels</a> | optional |  `["@bedrock-rtl//python/verilog_runner/plugins:iverilog.py"]`  |
+| <a id="rule_verilog_elab_test-verilog_runner_plugins"></a>verilog_runner_plugins |  Verilog runner plugins to load from this workspace, in addition to those loaded from VERILOG_RUNNER_PLUGIN_PATH.   | <a href="https://bazel.build/concepts/labels">List of labels</a> | optional |  `["@bedrock-rtl//python/verilog_runner/plugins:iverilog.py", "@bedrock-rtl//python/verilog_runner/plugins:verilator.py"]`  |
 | <a id="rule_verilog_elab_test-verilog_runner_tool"></a>verilog_runner_tool |  The Verilog Runner tool to use.   | <a href="https://bazel.build/concepts/labels">Label</a> | optional |  `"@bedrock-rtl//python/verilog_runner:verilog_runner.py"`  |
 
 
@@ -119,7 +119,7 @@ Writes FPV files and run scripts into a tarball for independent execution outsid
 | <a id="rule_verilog_fpv_sandbox-tool"></a>tool |  Formal tool to use.   | String | required |  |
 | <a id="rule_verilog_fpv_sandbox-top"></a>top |  The top-level module; if not provided and there exists one dependency, then defaults to that dep's label name.   | String | optional |  `""`  |
 | <a id="rule_verilog_fpv_sandbox-verilog_runner_data"></a>verilog_runner_data |  Additional Verilog Runner files needed at runtime.   | <a href="https://bazel.build/concepts/labels">List of labels</a> | optional |  `["@bedrock-rtl//python/verilog_runner:verilog_runner_data"]`  |
-| <a id="rule_verilog_fpv_sandbox-verilog_runner_plugins"></a>verilog_runner_plugins |  Verilog runner plugins to load from this workspace, in addition to those loaded from VERILOG_RUNNER_PLUGIN_PATH.   | <a href="https://bazel.build/concepts/labels">List of labels</a> | optional |  `["@bedrock-rtl//python/verilog_runner/plugins:iverilog.py"]`  |
+| <a id="rule_verilog_fpv_sandbox-verilog_runner_plugins"></a>verilog_runner_plugins |  Verilog runner plugins to load from this workspace, in addition to those loaded from VERILOG_RUNNER_PLUGIN_PATH.   | <a href="https://bazel.build/concepts/labels">List of labels</a> | optional |  `["@bedrock-rtl//python/verilog_runner/plugins:iverilog.py", "@bedrock-rtl//python/verilog_runner/plugins:verilator.py"]`  |
 | <a id="rule_verilog_fpv_sandbox-verilog_runner_tool"></a>verilog_runner_tool |  The Verilog Runner tool to use.   | <a href="https://bazel.build/concepts/labels">Label</a> | optional |  `"@bedrock-rtl//python/verilog_runner:verilog_runner.py"`  |
 
 
@@ -159,7 +159,7 @@ Runs Verilog/SystemVerilog compilation and formal verification in one command. T
 | <a id="rule_verilog_fpv_test-tool"></a>tool |  Formal tool to use.   | String | required |  |
 | <a id="rule_verilog_fpv_test-top"></a>top |  The top-level module; if not provided and there exists one dependency, then defaults to that dep's label name.   | String | optional |  `""`  |
 | <a id="rule_verilog_fpv_test-verilog_runner_data"></a>verilog_runner_data |  Additional Verilog Runner files needed at runtime.   | <a href="https://bazel.build/concepts/labels">List of labels</a> | optional |  `["@bedrock-rtl//python/verilog_runner:verilog_runner_data"]`  |
-| <a id="rule_verilog_fpv_test-verilog_runner_plugins"></a>verilog_runner_plugins |  Verilog runner plugins to load from this workspace, in addition to those loaded from VERILOG_RUNNER_PLUGIN_PATH.   | <a href="https://bazel.build/concepts/labels">List of labels</a> | optional |  `["@bedrock-rtl//python/verilog_runner/plugins:iverilog.py"]`  |
+| <a id="rule_verilog_fpv_test-verilog_runner_plugins"></a>verilog_runner_plugins |  Verilog runner plugins to load from this workspace, in addition to those loaded from VERILOG_RUNNER_PLUGIN_PATH.   | <a href="https://bazel.build/concepts/labels">List of labels</a> | optional |  `["@bedrock-rtl//python/verilog_runner/plugins:iverilog.py", "@bedrock-rtl//python/verilog_runner/plugins:verilator.py"]`  |
 | <a id="rule_verilog_fpv_test-verilog_runner_tool"></a>verilog_runner_tool |  The Verilog Runner tool to use.   | <a href="https://bazel.build/concepts/labels">Label</a> | optional |  `"@bedrock-rtl//python/verilog_runner:verilog_runner.py"`  |
 
 
@@ -193,7 +193,7 @@ Tests that a Verilog or SystemVerilog design passes a set of static lint checks.
 | <a id="rule_verilog_lint_test-tool"></a>tool |  Lint tool to use.   | String | required |  |
 | <a id="rule_verilog_lint_test-top"></a>top |  The top-level module; if not provided and there exists one dependency, then defaults to that dep's label name.   | String | optional |  `""`  |
 | <a id="rule_verilog_lint_test-verilog_runner_data"></a>verilog_runner_data |  Additional Verilog Runner files needed at runtime.   | <a href="https://bazel.build/concepts/labels">List of labels</a> | optional |  `["@bedrock-rtl//python/verilog_runner:verilog_runner_data"]`  |
-| <a id="rule_verilog_lint_test-verilog_runner_plugins"></a>verilog_runner_plugins |  Verilog runner plugins to load from this workspace, in addition to those loaded from VERILOG_RUNNER_PLUGIN_PATH.   | <a href="https://bazel.build/concepts/labels">List of labels</a> | optional |  `["@bedrock-rtl//python/verilog_runner/plugins:iverilog.py"]`  |
+| <a id="rule_verilog_lint_test-verilog_runner_plugins"></a>verilog_runner_plugins |  Verilog runner plugins to load from this workspace, in addition to those loaded from VERILOG_RUNNER_PLUGIN_PATH.   | <a href="https://bazel.build/concepts/labels">List of labels</a> | optional |  `["@bedrock-rtl//python/verilog_runner/plugins:iverilog.py", "@bedrock-rtl//python/verilog_runner/plugins:verilator.py"]`  |
 | <a id="rule_verilog_lint_test-verilog_runner_tool"></a>verilog_runner_tool |  The Verilog Runner tool to use.   | <a href="https://bazel.build/concepts/labels">Label</a> | optional |  `"@bedrock-rtl//python/verilog_runner:verilog_runner.py"`  |
 
 
@@ -204,8 +204,8 @@ Tests that a Verilog or SystemVerilog design passes a set of static lint checks.
 <pre>
 load("@bedrock-rtl//bazel:verilog.bzl", "rule_verilog_sim_test")
 
-rule_verilog_sim_test(<a href="#rule_verilog_sim_test-name">name</a>, <a href="#rule_verilog_sim_test-deps">deps</a>, <a href="#rule_verilog_sim_test-custom_tcl_body">custom_tcl_body</a>, <a href="#rule_verilog_sim_test-custom_tcl_header">custom_tcl_header</a>, <a href="#rule_verilog_sim_test-defines">defines</a>, <a href="#rule_verilog_sim_test-elab_only">elab_only</a>, <a href="#rule_verilog_sim_test-opts">opts</a>,
-                      <a href="#rule_verilog_sim_test-params">params</a>, <a href="#rule_verilog_sim_test-runner_flags">runner_flags</a>, <a href="#rule_verilog_sim_test-seed">seed</a>, <a href="#rule_verilog_sim_test-tool">tool</a>, <a href="#rule_verilog_sim_test-top">top</a>, <a href="#rule_verilog_sim_test-uvm">uvm</a>, <a href="#rule_verilog_sim_test-verilog_runner_data">verilog_runner_data</a>,
+rule_verilog_sim_test(<a href="#rule_verilog_sim_test-name">name</a>, <a href="#rule_verilog_sim_test-deps">deps</a>, <a href="#rule_verilog_sim_test-custom_tcl_body">custom_tcl_body</a>, <a href="#rule_verilog_sim_test-custom_tcl_header">custom_tcl_header</a>, <a href="#rule_verilog_sim_test-defines">defines</a>, <a href="#rule_verilog_sim_test-elab_only">elab_only</a>, <a href="#rule_verilog_sim_test-elab_opts">elab_opts</a>,
+                      <a href="#rule_verilog_sim_test-opts">opts</a>, <a href="#rule_verilog_sim_test-params">params</a>, <a href="#rule_verilog_sim_test-runner_flags">runner_flags</a>, <a href="#rule_verilog_sim_test-seed">seed</a>, <a href="#rule_verilog_sim_test-sim_opts">sim_opts</a>, <a href="#rule_verilog_sim_test-tool">tool</a>, <a href="#rule_verilog_sim_test-top">top</a>, <a href="#rule_verilog_sim_test-uvm">uvm</a>, <a href="#rule_verilog_sim_test-verilog_runner_data">verilog_runner_data</a>,
                       <a href="#rule_verilog_sim_test-verilog_runner_plugins">verilog_runner_plugins</a>, <a href="#rule_verilog_sim_test-verilog_runner_tool">verilog_runner_tool</a>, <a href="#rule_verilog_sim_test-waves">waves</a>)
 </pre>
 
@@ -222,15 +222,17 @@ Runs Verilog/SystemVerilog compilation and simulation in one command. This rule 
 | <a id="rule_verilog_sim_test-custom_tcl_header"></a>custom_tcl_header |  Tcl script file containing custom tool-specific commands to insert at the beginning of the generated tcl script.The tcl header (custom or not) is unconditionally followed by analysis and elaborate commands, and then the tcl body.Do not include Tcl commands that manipulate sources, headers, defines, or parameters, as those will be handled by the rule implementation.   | <a href="https://bazel.build/concepts/labels">Label</a> | optional |  `None`  |
 | <a id="rule_verilog_sim_test-defines"></a>defines |  Preprocessor defines to pass to the Verilog compiler.   | List of strings | optional |  `[]`  |
 | <a id="rule_verilog_sim_test-elab_only"></a>elab_only |  Only run elaboration.   | Boolean | optional |  `False`  |
-| <a id="rule_verilog_sim_test-opts"></a>opts |  Tool-specific options not covered by other arguments. If provided, then 'tool' must also be set.   | List of strings | optional |  `[]`  |
+| <a id="rule_verilog_sim_test-elab_opts"></a>elab_opts |  Tool-specific compile/elaboration options not covered by other arguments.   | List of strings | optional |  `[]`  |
+| <a id="rule_verilog_sim_test-opts"></a>opts |  Deprecated VCS-only simulation options. Prefer 'elab_opts' or 'sim_opts'.   | List of strings | optional |  `[]`  |
 | <a id="rule_verilog_sim_test-params"></a>params |  Verilog module parameters to set in the instantiation of the top-level module.   | <a href="https://bazel.build/rules/lib/core/dict">Dictionary: String -> String</a> | optional |  `{}`  |
 | <a id="rule_verilog_sim_test-runner_flags"></a>runner_flags |  command line flags   | <a href="https://bazel.build/concepts/labels">Label</a> | optional |  `"@bedrock-rtl//bazel:runner_flags"`  |
 | <a id="rule_verilog_sim_test-seed"></a>seed |  Random seed to use in simulation.   | Integer | optional |  `0`  |
+| <a id="rule_verilog_sim_test-sim_opts"></a>sim_opts |  Tool-specific simulation runtime options, such as simulator plusargs.   | List of strings | optional |  `[]`  |
 | <a id="rule_verilog_sim_test-tool"></a>tool |  Simulator tool to use.   | String | required |  |
 | <a id="rule_verilog_sim_test-top"></a>top |  The top-level module; if not provided and there exists one dependency, then defaults to that dep's label name.   | String | optional |  `""`  |
 | <a id="rule_verilog_sim_test-uvm"></a>uvm |  Run UVM test.   | Boolean | optional |  `False`  |
 | <a id="rule_verilog_sim_test-verilog_runner_data"></a>verilog_runner_data |  Additional Verilog Runner files needed at runtime.   | <a href="https://bazel.build/concepts/labels">List of labels</a> | optional |  `["@bedrock-rtl//python/verilog_runner:verilog_runner_data"]`  |
-| <a id="rule_verilog_sim_test-verilog_runner_plugins"></a>verilog_runner_plugins |  Verilog runner plugins to load from this workspace, in addition to those loaded from VERILOG_RUNNER_PLUGIN_PATH.   | <a href="https://bazel.build/concepts/labels">List of labels</a> | optional |  `["@bedrock-rtl//python/verilog_runner/plugins:iverilog.py"]`  |
+| <a id="rule_verilog_sim_test-verilog_runner_plugins"></a>verilog_runner_plugins |  Verilog runner plugins to load from this workspace, in addition to those loaded from VERILOG_RUNNER_PLUGIN_PATH.   | <a href="https://bazel.build/concepts/labels">List of labels</a> | optional |  `["@bedrock-rtl//python/verilog_runner/plugins:iverilog.py", "@bedrock-rtl//python/verilog_runner/plugins:verilator.py"]`  |
 | <a id="rule_verilog_sim_test-verilog_runner_tool"></a>verilog_runner_tool |  The Verilog Runner tool to use.   | <a href="https://bazel.build/concepts/labels">Label</a> | optional |  `"@bedrock-rtl//python/verilog_runner:verilog_runner.py"`  |
 | <a id="rule_verilog_sim_test-waves"></a>waves |  Enable waveform dumping.   | Boolean | optional |  `False`  |
 
@@ -332,7 +334,7 @@ Returns a depset of all Verilog source or header files in the transitive closure
 load("@bedrock-rtl//bazel:verilog.bzl", "verilog_elab_and_lint_test_suite")
 
 verilog_elab_and_lint_test_suite(<a href="#verilog_elab_and_lint_test_suite-name">name</a>, <a href="#verilog_elab_and_lint_test_suite-top">top</a>, <a href="#verilog_elab_and_lint_test_suite-deps">deps</a>, <a href="#verilog_elab_and_lint_test_suite-defines">defines</a>, <a href="#verilog_elab_and_lint_test_suite-params">params</a>, <a href="#verilog_elab_and_lint_test_suite-elab_tool">elab_tool</a>, <a href="#verilog_elab_and_lint_test_suite-lint_tool">lint_tool</a>,
-                                 <a href="#verilog_elab_and_lint_test_suite-disable_lint_rules">disable_lint_rules</a>, <a href="#verilog_elab_and_lint_test_suite-kwargs">kwargs</a>)
+                                 <a href="#verilog_elab_and_lint_test_suite-disable_lint_rules">disable_lint_rules</a>, <a href="#verilog_elab_and_lint_test_suite-kwargs">**kwargs</a>)
 </pre>
 
 Creates a suite of Verilog elaboration and lint tests for each combination of the provided parameters.
@@ -365,7 +367,7 @@ to the base name followed by the parameter key-values.
 <pre>
 load("@bedrock-rtl//bazel:verilog.bzl", "verilog_elab_test")
 
-verilog_elab_test(<a href="#verilog_elab_test-name">name</a>, <a href="#verilog_elab_test-tool">tool</a>, <a href="#verilog_elab_test-tags">tags</a>, <a href="#verilog_elab_test-kwargs">kwargs</a>)
+verilog_elab_test(<a href="#verilog_elab_test-name">name</a>, <a href="#verilog_elab_test-tool">tool</a>, <a href="#verilog_elab_test-tags">tags</a>, <a href="#verilog_elab_test-kwargs">**kwargs</a>)
 </pre>
 
 Wraps rule_verilog_elab_test with a default tool and appends extra tags.
@@ -395,7 +397,7 @@ The following extra tags are unconditionally appended to the list of tags:
 <pre>
 load("@bedrock-rtl//bazel:verilog.bzl", "verilog_fpv_test")
 
-verilog_fpv_test(<a href="#verilog_fpv_test-tool">tool</a>, <a href="#verilog_fpv_test-tags">tags</a>, <a href="#verilog_fpv_test-kwargs">kwargs</a>)
+verilog_fpv_test(<a href="#verilog_fpv_test-tool">tool</a>, <a href="#verilog_fpv_test-tags">tags</a>, <a href="#verilog_fpv_test-kwargs">**kwargs</a>)
 </pre>
 
 Wraps rule_verilog_fpv_test with a default tool and appends extra tags.
@@ -425,7 +427,7 @@ The following extra tags are unconditionally appended to the list of tags:
 load("@bedrock-rtl//bazel:verilog.bzl", "verilog_fpv_test_suite")
 
 verilog_fpv_test_suite(<a href="#verilog_fpv_test_suite-name">name</a>, <a href="#verilog_fpv_test_suite-defines">defines</a>, <a href="#verilog_fpv_test_suite-params">params</a>, <a href="#verilog_fpv_test_suite-illegal_param_combinations">illegal_param_combinations</a>, <a href="#verilog_fpv_test_suite-sandbox">sandbox</a>,
-                       <a href="#verilog_fpv_test_suite-verilog_fpv_test_func">verilog_fpv_test_func</a>, <a href="#verilog_fpv_test_suite-verilog_fpv_sandbox_func">verilog_fpv_sandbox_func</a>, <a href="#verilog_fpv_test_suite-kwargs">kwargs</a>)
+                       <a href="#verilog_fpv_test_suite-verilog_fpv_test_func">verilog_fpv_test_func</a>, <a href="#verilog_fpv_test_suite-verilog_fpv_sandbox_func">verilog_fpv_sandbox_func</a>, <a href="#verilog_fpv_test_suite-kwargs">**kwargs</a>)
 </pre>
 
 Creates a suite of Verilog fpv tests for each combination of the provided parameters.
@@ -457,7 +459,7 @@ to the base name followed by the parameter key-values.
 <pre>
 load("@bedrock-rtl//bazel:verilog.bzl", "verilog_lint_test")
 
-verilog_lint_test(<a href="#verilog_lint_test-tool">tool</a>, <a href="#verilog_lint_test-tags">tags</a>, <a href="#verilog_lint_test-kwargs">kwargs</a>)
+verilog_lint_test(<a href="#verilog_lint_test-tool">tool</a>, <a href="#verilog_lint_test-tags">tags</a>, <a href="#verilog_lint_test-kwargs">**kwargs</a>)
 </pre>
 
 Wraps rule_verilog_lint_test with a default tool and appends extra tags.
@@ -486,7 +488,7 @@ The following extra tags are unconditionally appended to the list of tags:
 <pre>
 load("@bedrock-rtl//bazel:verilog.bzl", "verilog_sim_test")
 
-verilog_sim_test(<a href="#verilog_sim_test-tool">tool</a>, <a href="#verilog_sim_test-opts">opts</a>, <a href="#verilog_sim_test-tags">tags</a>, <a href="#verilog_sim_test-waves">waves</a>, <a href="#verilog_sim_test-kwargs">kwargs</a>)
+verilog_sim_test(<a href="#verilog_sim_test-tool">tool</a>, <a href="#verilog_sim_test-opts">opts</a>, <a href="#verilog_sim_test-elab_opts">elab_opts</a>, <a href="#verilog_sim_test-sim_opts">sim_opts</a>, <a href="#verilog_sim_test-tags">tags</a>, <a href="#verilog_sim_test-waves">waves</a>, <a href="#verilog_sim_test-kwargs">**kwargs</a>)
 </pre>
 
 Wraps rule_verilog_sim_test with a default tool and appends extra tags.
@@ -504,7 +506,9 @@ The following extra tags are unconditionally appended to the list of tags:
 | Name  | Description | Default Value |
 | :------------- | :------------- | :------------- |
 | <a id="verilog_sim_test-tool"></a>tool |  The simulation tool to use.   |  none |
-| <a id="verilog_sim_test-opts"></a>opts |  Tool-specific options not covered by other arguments.   |  `[]` |
+| <a id="verilog_sim_test-opts"></a>opts |  Deprecated VCS-only simulation options.   |  `[]` |
+| <a id="verilog_sim_test-elab_opts"></a>elab_opts |  Tool-specific compile/elaboration options not covered by other arguments.   |  `[]` |
+| <a id="verilog_sim_test-sim_opts"></a>sim_opts |  Tool-specific simulation runtime options, such as simulator plusargs.   |  `[]` |
 | <a id="verilog_sim_test-tags"></a>tags |  The tags to add to the test.   |  `[]` |
 | <a id="verilog_sim_test-waves"></a>waves |  Enable waveform dumping.   |  `False` |
 | <a id="verilog_sim_test-kwargs"></a>kwargs |  Other arguments to pass to the rule_verilog_sim_test rule.   |  none |
@@ -517,7 +521,7 @@ The following extra tags are unconditionally appended to the list of tags:
 <pre>
 load("@bedrock-rtl//bazel:verilog.bzl", "verilog_sim_test_suite")
 
-verilog_sim_test_suite(<a href="#verilog_sim_test_suite-name">name</a>, <a href="#verilog_sim_test_suite-defines">defines</a>, <a href="#verilog_sim_test_suite-params">params</a>, <a href="#verilog_sim_test_suite-kwargs">kwargs</a>)
+verilog_sim_test_suite(<a href="#verilog_sim_test_suite-name">name</a>, <a href="#verilog_sim_test_suite-defines">defines</a>, <a href="#verilog_sim_test_suite-params">params</a>, <a href="#verilog_sim_test_suite-kwargs">**kwargs</a>)
 </pre>
 
 Creates a suite of Verilog sim tests for each combination of the provided parameters.

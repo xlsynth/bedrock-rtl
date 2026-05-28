@@ -14,7 +14,10 @@ module br_flow_demux_basic_fpv_monitor #(
     parameter bit EnableAssertPushDataStability = EnableAssertPushValidStability,
     parameter bit EnableAssertSelectStability = 0,
     parameter bit EnableAssertPopValidStability = 1,
-    parameter bit EnableAssertPopDataStability = 1
+    parameter bit EnableAssertPopDataStability = 1,
+    // If 1, assert that push-side backpressure is impossible.
+    // Can only be enabled if EnableCoverPushBackpressure is disabled.
+    parameter bit EnableAssertNoPushBackpressure = !EnableCoverPushBackpressure
 ) (
     input logic                                   clk,
     input logic                                   rst,
@@ -26,7 +29,6 @@ module br_flow_demux_basic_fpv_monitor #(
     input logic [        NumFlows-1:0]            pop_valid,
     input logic [        NumFlows-1:0][Width-1:0] pop_data
 );
-
   // pick a random constant for assertion
   logic [$clog2(NumFlows)-1:0] fv_idx;
   `BR_ASSUME(fv_idx_a, $stable(fv_idx) && fv_idx < NumFlows)
@@ -43,7 +45,8 @@ module br_flow_demux_basic_fpv_monitor #(
     `BR_ASSUME(push_data_stable_a, push_valid && !push_ready |=> $stable(push_data))
   end
 
-  if (!EnableCoverPushBackpressure) begin : gen_no_push_backpressure
+  if (!EnableCoverPushBackpressure &&
+      EnableAssertNoPushBackpressure) begin : gen_no_push_backpressure
     `BR_ASSUME(no_push_backpressure_a, !push_ready |-> !push_valid)
   end
 
