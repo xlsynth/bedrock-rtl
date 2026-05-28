@@ -84,15 +84,15 @@ module br_delay_valid_next_nr_tb;
   endtask
 
   task automatic check_model(input string phase);
-    td.check(out_valid_next === model_valid_next[NumStages],
-             $sformatf("%s: out_valid_next mismatch", phase));
-    td.check(out_valid_next_stages === model_valid_next,
-             $sformatf("%s: out_valid_next_stages mismatch", phase));
+    td.check(out_valid_next === model_valid_next[NumStages], $sformatf(
+             "%s: out_valid_next mismatch", phase));
+    td.check(out_valid_next_stages === model_valid_next, $sformatf(
+             "%s: out_valid_next_stages mismatch", phase));
 
     for (int i = 0; i <= NumStages; i++) begin
       if (model_data_valid[i] || (NumStages == 0 && i == 0)) begin
-        td.check(out_stages[i] === model_data[i],
-                 $sformatf("%s: out_stages[%0d] mismatch", phase, i));
+        td.check(out_stages[i] === model_data[i], $sformatf("%s: out_stages[%0d] mismatch", phase, i
+                 ));
       end
     end
 

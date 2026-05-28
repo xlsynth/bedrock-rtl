@@ -39,8 +39,7 @@ module br_delay_skew_tb;
     in_valid = drive_valid;
     in = drive_data;
     td.wait_cycles();
-    td.check(out_valid_next === drive_valid,
-             $sformatf("%s: out_valid_next mismatch", phase));
+    td.check(out_valid_next === drive_valid, $sformatf("%s: out_valid_next mismatch", phase));
 
     if (drive_valid) begin
       expected_out = drive_data;

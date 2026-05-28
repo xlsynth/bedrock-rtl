@@ -59,10 +59,10 @@ module br_delay_valid_nr_tb;
       logic [Width-1:0] prev_data;
 
       prev_valid = (i == 1) ? drive_valid : model_valid[i-1];
-      prev_data  = (i == 1) ? drive_data : model_data[i-1];
+      prev_data = (i == 1) ? drive_data : model_data[i-1];
 
       next_valid[i] = prev_valid;
-      next_data[i]  = model_data[i];
+      next_data[i] = model_data[i];
       if (prev_valid || (FirstStageUngated && i == 1)) begin
         next_data[i] = prev_data;
       end
@@ -73,15 +73,13 @@ module br_delay_valid_nr_tb;
   endtask
 
   task automatic check_model(input string phase);
-    td.check(out_valid === model_valid[NumStages],
-             $sformatf("%s: out_valid mismatch", phase));
-    td.check(out_valid_stages === model_valid,
-             $sformatf("%s: out_valid_stages mismatch", phase));
+    td.check(out_valid === model_valid[NumStages], $sformatf("%s: out_valid mismatch", phase));
+    td.check(out_valid_stages === model_valid, $sformatf("%s: out_valid_stages mismatch", phase));
 
     for (int i = 0; i <= NumStages; i++) begin
       if (model_valid[i]) begin
-        td.check(out_stages[i] === model_data[i],
-                 $sformatf("%s: out_stages[%0d] mismatch", phase, i));
+        td.check(out_stages[i] === model_data[i], $sformatf("%s: out_stages[%0d] mismatch", phase, i
+                 ));
       end
     end
 
@@ -116,8 +114,8 @@ module br_delay_valid_nr_tb;
     end
 
     for (int i = 0; i < NumTestCycles; i++) begin
-      drive_cycle(valid_for(i), valid_for(i) ? data_for(i) : data_for(-i - 1),
-                  $sformatf("directed cycle %0d", i));
+      drive_cycle(valid_for(i), valid_for(i) ? data_for(i) : data_for(-i - 1), $sformatf(
+                  "directed cycle %0d", i));
     end
 
     for (int i = 0; i < NumStages + 2; i++) begin
