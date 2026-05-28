@@ -38,9 +38,12 @@ br_verilog_sim_test_tools_suite(
             "2",
         ],
     },
+    # TODO(mgottscho): Re-enable Verilator once it accepts the
+    # `br_credit_counter` assertions that use `not` in sequence expressions.
     tools = [
         "iverilog",
         "vcs",
+        #"verilator",
     ],
     deps = [":br_credit_receiver_tb"],
 )
@@ -87,7 +90,11 @@ br_verilog_sim_test_tools_suite(
         # This test is triggering an internal assertion failure in iverilog.
         # TODO(zhemao): Figure out why this is happening.
         #"iverilog",
+        # TODO(mgottscho): Re-enable Verilator once it accepts the
+        # `br_credit_counter` assertions that use `not` in sequence
+        # expressions.
         "vcs",
+        #"verilator",
     ],
     deps = [":br_credit_sender_vc_rr_tb"],
 )

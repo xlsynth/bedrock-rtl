@@ -80,9 +80,9 @@ class Iverilog(EdaTool):
         iverilog_cmd += [
             f"-P{self.top}.{key}={value}" for key, value in self.params.items()
         ]
-        iverilog_cmd += self.opts
+        iverilog_cmd += self.elab_opts
         iverilog_cmd = " ".join(iverilog_cmd)
-        vvp_cmd = "vvp compiled.vvp"
+        vvp_cmd = " ".join(["vvp", "compiled.vvp"] + self.sim_opts)
         cmd += [" && ".join([iverilog_cmd, vvp_cmd])]
         cmd += [""]
         return "\n".join(cmd)

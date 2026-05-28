@@ -38,9 +38,12 @@ br_verilog_sim_test_tools_suite(
             "1",
         ],
     },
+    # TODO(mgottscho): Re-enable Verilator once it accepts the
+    # `br_counter_incr` assertions that use `not` in sequence expressions.
     tools = [
         "iverilog",
         "vcs",
+        #"verilator",
     ],
     deps = [":br_counter_incr_tb"],
 )
@@ -80,9 +83,12 @@ br_verilog_sim_test_tools_suite(
             "1",
         ],
     },
+    # TODO(mgottscho): Re-enable Verilator once it accepts the `br_counter`
+    # assertions that use `not` in sequence expressions.
     tools = [
         "iverilog",
         "vcs",
+        #"verilator",
     ],
     deps = [":br_counter_tb"],
 )
@@ -122,9 +128,12 @@ br_verilog_sim_test_tools_suite(
             "1",
         ],
     },
+    # TODO(mgottscho): Re-enable Verilator once it accepts the
+    # `br_counter_decr` assertions that use `not` in sequence expressions.
     tools = [
         "iverilog",
         "vcs",
+        #"verilator",
     ],
     deps = [":br_counter_decr_tb"],
 )

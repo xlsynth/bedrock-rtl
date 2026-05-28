@@ -5,7 +5,7 @@
 //
 // This monitor checks that a configured maximum-length LFSR stays out of the
 // all-zero lock-up state, preserves state while stalled, reloads initial_state
-// on reinit, and does not repeat an out_state value within one expected period.
+// on reinit, and does not repeat an out_state value within one effective period.
 // The period check constrains taps to the known-good table values for the
 // selected Width and compares two arbitrary positions in the cycle.
 
@@ -15,10 +15,9 @@
 
 module br_lfsr_fpv_monitor #(
     parameter int Width = 2,
+    parameter int AdvanceSteps = 1,
     parameter bit EnableAssertTapsMsbIsSet = 1,
-    parameter bit EnableAssertInitialStateNonZero = 1,
-    localparam int Period = (2 ** Width) - 1,
-    localparam int PeriodCounterWidth = $clog2(Period)
+    parameter bit EnableAssertInitialStateNonZero = 1
 ) (
     input logic             clk,
     input logic             rst,
@@ -29,9 +28,35 @@ module br_lfsr_fpv_monitor #(
     input logic             out,
     input logic [Width-1:0] out_state
 );
+  localparam int Period = (2 ** Width) - 1;
 
   `BR_ASSERT_STATIC(width_gte_two_a, Width >= 2)
   `BR_ASSERT_STATIC(width_supported_a, Width <= 16)
+
+  // Euclidean algorithm for the greatest common divisor. This is used only in
+  // constant parameter math to determine how AdvanceSteps maps onto the LFSR period.
+  function automatic int get_gcd(input int value_a, input int value_b);
+    int a;
+    int b;
+    int remainder;
+
+    a = value_a;
+    b = value_b;
+    while (b != 0) begin
+      remainder = a % b;
+      a = b;
+      b = remainder;
+    end
+    return a;
+  endfunction
+
+  // Advancing by N steps walks the period-sized state cycle in strides of N.
+  // If the stride shares a factor with Period, only Period / gcd(N, Period)
+  // unique states are visited before repeating.
+  localparam int EffectivePeriod = Period / get_gcd(AdvanceSteps, Period);
+  localparam int PeriodCounterWidth = (EffectivePeriod > 1) ? $clog2(EffectivePeriod) : 1;
+
+  `BR_ASSERT_STATIC(effective_period_gt_one_a, EffectivePeriod > 1)
 
   function automatic logic [Width-1:0] get_expected_taps();
     if (Width == 2) begin
@@ -71,7 +96,11 @@ module br_lfsr_fpv_monitor #(
   // Assumptions
   //------------------------------------------
 
-  `BR_ASSUME(initial_state_non_zero_a, initial_state != '0)
+  if (EnableAssertInitialStateNonZero) begin : gen_initial_state_check
+    `BR_ASSUME(initial_state_non_zero_a, initial_state != '0)
+  end else begin : gen_initial_state_zero_check
+    `BR_ASSUME(initial_state_zero_a, initial_state == '0)
+  end
   `BR_ASSUME(initial_state_stable_a, $stable(initial_state))
   `BR_ASSUME(taps_known_good_a, taps == get_expected_taps())
   `BR_ASSUME(taps_stable_a, $stable(taps))
@@ -81,12 +110,16 @@ module br_lfsr_fpv_monitor #(
   //------------------------------------------
 
   `BR_ASSERT(out_check_a, out == out_state[0])
-  `BR_ASSERT(out_state_non_zero_a, out_state != '0)
+  if (EnableAssertInitialStateNonZero) begin : gen_out_state_non_zero_check
+    `BR_ASSERT(out_state_non_zero_a, out_state != '0)
+  end else begin : gen_out_state_zero_check
+    `BR_ASSERT(out_state_zero_a, out_state == '0)
+  end
   `BR_ASSERT(no_advance_holds_a, !advance && !reinit |=> out_state == $past(out_state))
   `BR_ASSERT(reinit_loads_initial_state_a, reinit |=> out_state == $past(initial_state))
 
   //------------------------------------------
-  // Full-period checks
+  // Effective-period checks
   //------------------------------------------
 
   logic [PeriodCounterWidth-1:0] period_count;
@@ -96,10 +129,10 @@ module br_lfsr_fpv_monitor #(
   logic                          out_state_a_valid;
   logic [             Width-1:0] out_state_a;
 
-  `BR_FV_2RAND_IDX(state_a, state_b, Period)
+  `BR_FV_2RAND_IDX(state_a, state_b, EffectivePeriod)
   `BR_ASSUME(state_a_lt_state_b_a, state_a < state_b)
 
-  // Pick two arbitrary positions in the expected period. Capture the out_state
+  // Pick two arbitrary positions in the effective period. Capture the out_state
   // at the earlier position and check that the later position differs.
   always_ff @(posedge clk) begin
     if (rst || reinit) begin
@@ -114,7 +147,7 @@ module br_lfsr_fpv_monitor #(
       end
 
       if (advance) begin
-        if (period_count == PeriodCounterWidth'(Period - 1)) begin
+        if (period_count == PeriodCounterWidth'(EffectivePeriod - 1)) begin
           period_count <= '0;
           period_done  <= 1'b1;
         end else begin
@@ -124,10 +157,12 @@ module br_lfsr_fpv_monitor #(
     end
   end
 
-  // Since state_a and state_b are arbitrary distinct period positions, this
-  // proves any two positions in the period produce different LFSR states.
-  `BR_ASSERT(no_duplicate_states_a,
-             out_state_a_valid && (period_count == state_b) |-> out_state_a != out_state)
+  // Since state_a and state_b are arbitrary distinct effective-period positions,
+  // this proves any two positions in the effective period produce different LFSR states.
+  if (EnableAssertInitialStateNonZero) begin : gen_no_duplicate_states_check
+    `BR_ASSERT(no_duplicate_states_a,
+               out_state_a_valid && (period_count == state_b) |-> out_state_a != out_state)
+  end
 
   `BR_COVER(full_period_done_c, period_done)
 
@@ -135,6 +170,7 @@ endmodule : br_lfsr_fpv_monitor
 
 bind br_lfsr br_lfsr_fpv_monitor #(
     .Width(Width),
+    .AdvanceSteps(AdvanceSteps),
     .EnableAssertTapsMsbIsSet(EnableAssertTapsMsbIsSet),
     .EnableAssertInitialStateNonZero(EnableAssertInitialStateNonZero)
 ) monitor (.*);
