@@ -6,7 +6,7 @@
 // address. Address ranges are configurable inputs; each request is decoded
 // from their current values. Optional masks may be applied while decoding and
 // while forwarding requests downstream. Forwarded addresses for explicit
-// ranges may independently be rebased relative to their range base.
+// ranges may independently be normalized relative to their range base.
 // Selection-based SCB routing and response handling are implemented by
 // br_csr_demux_select_onehot.
 //
@@ -30,15 +30,15 @@ module br_csr_demux #(
     // its base is naturally aligned to that size.
     // ri lint_check_waive ARRAY_LENGTH_ONE
     parameter bit RequirePowerOfTwoAlignedRanges[NumAddressRanges] = '{default: 1},
-    // If 1 for a decoded range, rebase its forwarded address relative to its
-    // range base before applying its outgoing mask.
+    // If 1 for a decoded range, normalize its forwarded address by subtracting
+    // its range base before applying its outgoing mask.
     // ri lint_check_waive ARRAY_LENGTH_ONE
-    parameter bit RebaseForwardedBase[NumAddressRanges] = '{default: 0},
+    parameter bit NormalizeDownstreamAddress[NumAddressRanges] = '{default: 0},
     // Mask applied to the upstream address only for route decoding. Forwarded
     // addresses start from the unmasked upstream address.
     parameter logic [AddrWidth-1:0] UpstreamAddrMask = '1,
     // Mask applied to each forwarded downstream request address, after
-    // subtraction-based rebasing where applicable.
+    // normalization where applicable.
     parameter logic [NumDownstreams-1:0][AddrWidth-1:0] DownstreamAddrMask = '1,
     localparam int StrobeWidth = DataWidth / 8
 ) (
@@ -137,13 +137,15 @@ module br_csr_demux #(
         (upstream_req_addr_masked >= downstream_addr_base[i]) &&
         (upstream_req_addr_masked <= downstream_addr_limit[i]);
 
-    // Forward w/ optional rebase + mask
-    assign downstream_req_addr[i] = (RebaseForwardedBase[i] ?
-        downstream_req_addr_unmasked[i] - downstream_addr_base[i] :
-        downstream_req_addr_unmasked[i]) & DownstreamAddrMask[i];
+    if (NormalizeDownstreamAddress[i]) begin : gen_normalize_downstream_address
+      assign downstream_req_addr[i] =
+          (downstream_req_addr_unmasked[i] - downstream_addr_base[i]) & DownstreamAddrMask[i];
+    end else begin : gen_passthrough_downstream_address
+      assign downstream_req_addr[i] = downstream_req_addr_unmasked[i] & DownstreamAddrMask[i];
+    end
   end
   if (HasDefaultDownstream) begin : gen_default_downstream_addr_translate
-    // A default downstream has no explicit address decoding or rebasing and
+    // A default downstream has no explicit address decoding or normalization and
     // handles any request whose address misses the explicit ranges.
     assign select_onehot[NumDownstreams-1] = !(|select_onehot[NumAddressRanges-1:0]);
     assign downstream_req_addr[NumDownstreams-1] =
