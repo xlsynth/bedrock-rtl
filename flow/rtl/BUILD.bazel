@@ -80,6 +80,14 @@ verilog_library(
     name = "br_flow_join",
     srcs = ["br_flow_join.sv"],
     deps = [
+        ":br_flow_join_select_multihot",
+    ],
+)
+
+verilog_library(
+    name = "br_flow_join_select_multihot",
+    srcs = ["br_flow_join_select_multihot.sv"],
+    deps = [
         "//flow/rtl/internal:br_flow_checks_valid_data_impl",
         "//flow/rtl/internal:br_flow_checks_valid_data_intg",
         "//macros:br_asserts_internal",
@@ -888,6 +896,22 @@ br_verilog_elab_and_lint_test_suite(
         ],
     },
     deps = [":br_flow_join"],
+)
+
+br_verilog_elab_and_lint_test_suite(
+    name = "br_flow_join_select_multihot_test_suite",
+    params = {
+        "NumFlows": [
+            "1",
+            "2",
+            "3",
+        ],
+        "AllowEmptySelect": [
+            "0",
+            "1",
+        ],
+    },
+    deps = [":br_flow_join_select_multihot"],
 )
 
 br_verilog_elab_and_lint_test_suite(
