@@ -31,7 +31,9 @@ __pycache__
 .cursor
 
 # Codex files
-.codex
+.codex/*
+!.codex/skills/
+!.codex/skills/**
 
 # JasperGold outputs
 jgproject/
