@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 
-module br_enc_countones_gen_tb;
+module br_enc_countones_tb;
   timeunit 1ns; timeprecision 100ps;
 
   //===========================================================

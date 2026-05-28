@@ -3,7 +3,7 @@
 
 // verilog_lint: waive-start line-length
 
-module br_ram_initializer_gen_unittest;
+module br_ram_initializer_tb;
   timeunit 1ns; timeprecision 100ps;
 
   //===========================================================
