@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 
-
-module br_arb_fixed_gen_tb;
+module br_arb_fixed_tb;
   timeunit 1ns; timeprecision 100ps;
 
   //===========================================================

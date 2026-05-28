@@ -38,9 +38,6 @@ __pycache__
 # JasperGold outputs
 jgproject/
 
-# ChipStack outputs
-chipstack_artifacts
-
 # common trash
 build/
 target

@@ -82,13 +82,9 @@ repos:
       # Format Verilog files
       - id: verible-verilog-format
         args: [--inplace]
-        # Skip ChipStack-generated files
-        exclude: ^.*/chipstack/
       # Style lint Verilog files
       - id: verible-verilog-lint
         args: [--ruleset=default]
-        # Skip ChipStack-generated files
-        exclude: ^.*/chipstack/
 
   # Ensure that no tests have waves enabled. They're unnecessary to have on by default.
   # And the CI environment currently cannot generate them anyway, nor can we view them
