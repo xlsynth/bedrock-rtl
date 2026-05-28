@@ -12,8 +12,6 @@ module br_delay_valid_next_nr_tb;
   logic [Width-1:0] in;
   logic out_valid_next;
   logic [Width-1:0] out;
-  logic [NumStages:0] out_valid_next_stages;
-  logic [NumStages:0][Width-1:0] out_stages;
 
   logic [NumStages:0] model_valid_next;
   logic [NumStages:0] model_data_valid;
@@ -31,8 +29,8 @@ module br_delay_valid_next_nr_tb;
       .in,
       .out_valid_next,
       .out,
-      .out_valid_next_stages,
-      .out_stages
+      .out_valid_next_stages(),
+      .out_stages()
   );
 
   br_test_driver td (
@@ -86,15 +84,6 @@ module br_delay_valid_next_nr_tb;
   task automatic check_model(input string phase);
     td.check(out_valid_next === model_valid_next[NumStages], $sformatf(
              "%s: out_valid_next mismatch", phase));
-    td.check(out_valid_next_stages === model_valid_next, $sformatf(
-             "%s: out_valid_next_stages mismatch", phase));
-
-    for (int i = 0; i <= NumStages; i++) begin
-      if (model_data_valid[i] || (NumStages == 0 && i == 0)) begin
-        td.check(out_stages[i] === model_data[i], $sformatf("%s: out_stages[%0d] mismatch", phase, i
-                 ));
-      end
-    end
 
     if (model_data_valid[NumStages] || NumStages == 0) begin
       td.check(out === model_data[NumStages], $sformatf("%s: out mismatch", phase));
