@@ -1,0 +1,56 @@
+# SPDX-License-Identifier: Apache-2.0
+
+load("@rules_hdl//verilog:providers.bzl", "verilog_library")
+load("@rules_shell//shell:sh_test.bzl", "sh_test")
+load("//bazel:verilog.bzl", "verilog_elab_test", "verilog_fpv_test", "verilog_lint_test", "verilog_sim_test")
+
+package(default_visibility = ["//visibility:public"])
+
+verilog_library(
+    name = "nonzip_smoke_lib",
+    srcs = ["nonzip_smoke.sv"],
+)
+
+verilog_elab_test(
+    name = "nonzip_elab_test",
+    tags = ["manual"],
+    tool = "verific",
+    top = "nonzip_smoke",
+    deps = [":nonzip_smoke_lib"],
+)
+
+verilog_lint_test(
+    name = "nonzip_lint_test",
+    tags = ["manual"],
+    tool = "ascentlint",
+    top = "nonzip_smoke",
+    deps = [":nonzip_smoke_lib"],
+)
+
+verilog_sim_test(
+    name = "nonzip_sim_test",
+    tags = ["manual"],
+    tool = "iverilog",
+    top = "nonzip_smoke",
+    deps = [":nonzip_smoke_lib"],
+)
+
+verilog_fpv_test(
+    name = "nonzip_fpv_test",
+    tags = ["manual"],
+    tool = "jg",
+    top = "nonzip_smoke",
+    deps = [":nonzip_smoke_lib"],
+)
+
+sh_test(
+    name = "nonzip_test",
+    srcs = ["nonzip_test.sh"],
+    data = [
+        ":nonzip_elab_test",
+        ":nonzip_fpv_test",
+        ":nonzip_lint_test",
+        ":nonzip_sim_test",
+        "//bazel:verilog.bzl",
+    ],
+)
