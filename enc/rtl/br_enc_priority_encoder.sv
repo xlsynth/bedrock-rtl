@@ -15,7 +15,7 @@
 `include "br_unused.svh"
 
 module br_enc_priority_encoder #(
-    // Must be at least 2 and greater than NumResults.
+    // Must be greater than or equal to NumResults.
     parameter int NumRequesters = 2,
     // Number of onehot results to produce. Must be at least 1.
     parameter int NumResults = 1,
