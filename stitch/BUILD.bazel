@@ -3,6 +3,7 @@
 load("@bedrock_stitch//:defs.bzl", "all_crate_deps")
 load("@rules_cc//cc:defs.bzl", "cc_library")
 load("@rules_rust//rust:defs.bzl", "rust_binary")
+load("//stitch:launcher.bzl", "xls_dso_launcher")
 
 package(default_visibility = ["//visibility:public"])
 
@@ -12,7 +13,7 @@ cc_library(
 )
 
 rust_binary(
-    name = "stitch_tool",
+    name = "stitch_tool_bin",
     srcs = [
         "src/common.rs",
         "src/instantiate.rs",
@@ -21,4 +22,10 @@ rust_binary(
     deps = [
         ":xls_lib",
     ] + all_crate_deps(normal = True),
+)
+
+xls_dso_launcher(
+    name = "stitch_tool",
+    binary = ":stitch_tool_bin",
+    xls_dso = "@xlsynth_artifacts//:xls_dso",
 )
