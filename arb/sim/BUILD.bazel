@@ -1,0 +1,191 @@
+# SPDX-License-Identifier: Apache-2.0
+
+load("@rules_hdl//verilog:providers.bzl", "verilog_library")
+load("//bazel:br_verilog.bzl", "br_verilog_sim_test_tools_suite")
+load("//bazel:verilog.bzl", "verilog_elab_test")
+
+package(default_visibility = ["//visibility:private"])
+
+verilog_library(
+    name = "br_arb_fixed_tb",
+    srcs = ["br_arb_fixed_tb.sv"],
+    deps = [
+        "//arb/rtl:br_arb_fixed",
+        "//macros:br_asserts_internal",
+    ],
+)
+
+verilog_elab_test(
+    name = "br_arb_fixed_tb_elab_test",
+    tool = "verific",
+    deps = [":br_arb_fixed_tb"],
+)
+
+br_verilog_sim_test_tools_suite(
+    name = "br_arb_fixed_tb_sim_test_tools_suite",
+    # TODO: Does not work with iverilog.
+    tools = [
+        "vcs",
+        "verilator",
+    ],
+    deps = [":br_arb_fixed_tb"],
+)
+
+verilog_library(
+    name = "br_arb_lru_tb",
+    srcs = ["br_arb_lru_tb.sv"],
+    deps = [
+        "//arb/rtl:br_arb_lru",
+        "//macros:br_asserts_internal",
+    ],
+)
+
+verilog_elab_test(
+    name = "br_arb_lru_tb_elab_test",
+    tool = "verific",
+    deps = [":br_arb_lru_tb"],
+)
+
+br_verilog_sim_test_tools_suite(
+    name = "br_arb_lru_tb_sim_test_tools_suite",
+    # TODO: Does not work with iverilog.
+    # TODO(mgottscho): Re-enable Verilator once it accepts the `br_arb_lru`
+    # assertions that use `not` in sequence expressions.
+    tools = [
+        "vcs",
+        #"verilator",
+    ],
+    deps = [":br_arb_lru_tb"],
+)
+
+verilog_library(
+    name = "br_arb_rr_tb",
+    srcs = ["br_arb_rr_tb.sv"],
+    deps = [
+        "//arb/rtl:br_arb_rr",
+        "//macros:br_asserts_internal",
+    ],
+)
+
+verilog_elab_test(
+    name = "br_arb_rr_tb_elab_test",
+    tool = "verific",
+    deps = [":br_arb_rr_tb"],
+)
+
+br_verilog_sim_test_tools_suite(
+    name = "br_arb_rr_tb_sim_test_tools_suite",
+    # TODO: Does not work with iverilog.
+    # TODO(mgottscho): Re-enable Verilator once it accepts the `br_arb_rr`
+    # assertions that use `not` in sequence expressions.
+    tools = [
+        "vcs",
+        #"verilator",
+    ],
+    deps = [":br_arb_rr_tb"],
+)
+
+verilog_library(
+    name = "br_arb_grant_hold_tb",
+    srcs = ["br_arb_grant_hold_tb.sv"],
+    deps = [
+        "//arb/rtl:br_arb_grant_hold",
+        "//macros:br_asserts_internal",
+    ],
+)
+
+verilog_elab_test(
+    name = "br_arb_grant_hold_tb_elab_test",
+    tool = "verific",
+    deps = [":br_arb_grant_hold_tb"],
+)
+
+br_verilog_sim_test_tools_suite(
+    name = "br_arb_grant_hold_tb_sim_test_tools_suite",
+    # TODO: Does not work with iverilog.
+    tools = [
+        "vcs",
+        "verilator",
+    ],
+    deps = [":br_arb_grant_hold_tb"],
+)
+
+verilog_library(
+    name = "br_arb_pri_rr_tb",
+    srcs = ["br_arb_pri_rr_tb.sv"],
+    deps = [
+        "//arb/rtl:br_arb_pri_rr",
+        "//misc/sim:br_test_driver",
+    ],
+)
+
+verilog_elab_test(
+    name = "br_arb_pri_rr_tb_elab_test",
+    tool = "verific",
+    deps = [":br_arb_pri_rr_tb"],
+)
+
+br_verilog_sim_test_tools_suite(
+    name = "br_arb_pri_rr_tb_sim_test_tools_suite",
+    params = {
+        "NumPriorities": [
+            "2",
+            "3",
+        ],
+        "NumRequesters": [
+            "2",
+            "4",
+            "5",
+        ],
+    },
+    # TODO: Does not work with iverilog.
+    # TODO(mgottscho): Re-enable Verilator once it accepts the `br_arb_pri_rr`
+    # assertions that use delayed sequence expressions.
+    tools = [
+        "vcs",
+        #"verilator",
+    ],
+    deps = [":br_arb_pri_rr_tb"],
+)
+
+verilog_library(
+    name = "br_arb_weighted_rr_tb",
+    srcs = ["br_arb_weighted_rr_tb.sv"],
+    deps = [
+        "//arb/rtl:br_arb_weighted_rr",
+        "//misc/sim:br_test_driver",
+    ],
+)
+
+verilog_elab_test(
+    name = "br_arb_weighted_rr_tb_elab_test",
+    tool = "verific",
+    deps = [":br_arb_weighted_rr_tb"],
+)
+
+br_verilog_sim_test_tools_suite(
+    name = "br_arb_weighted_rr_tb_sim_test_tools_suite",
+    params = {
+        "MaxAccumulatedWeight": [
+            "3",
+            "8",
+        ],
+        "MaxWeight": [
+            "1",
+            "3",
+        ],
+        "NumRequesters": [
+            "1",
+            "2",
+            "4",
+        ],
+    },
+    # TODO: Does not work with iverilog.
+    # TODO(mgottscho): Re-enable Verilator once it accepts the `br_counter`
+    # assertions that use delayed sequence expressions.
+    tools = [
+        "vcs",
+        #"verilator",
+    ],
+    deps = [":br_arb_weighted_rr_tb"],
+)

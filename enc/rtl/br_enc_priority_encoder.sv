@@ -15,7 +15,7 @@
 `include "br_unused.svh"
 
 module br_enc_priority_encoder #(
-    // Must be at least 2 and greater than NumResults.
+    // Must be greater than or equal to NumResults.
     parameter int NumRequesters = 2,
     // Number of onehot results to produce. Must be at least 1.
     parameter int NumResults = 1,
@@ -37,7 +37,7 @@ module br_enc_priority_encoder #(
   // Integration checks
   //------------------------------------------
   `BR_ASSERT_STATIC(legal_num_results_a, NumResults >= 1)
-  `BR_ASSERT_STATIC(legal_num_requesters_a, NumRequesters > NumResults)
+  `BR_ASSERT_STATIC(legal_num_requesters_a, NumRequesters >= NumResults)
   `BR_ASSERT_STATIC(max_in_hot_lte_num_requesters_a, MaxInHot <= NumRequesters)
 
 `ifdef BR_ASSERT_ON

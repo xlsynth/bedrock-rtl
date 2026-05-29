@@ -1065,11 +1065,14 @@ def _generate_instantiation_wrapper_impl(ctx):
         disable_args.append("--disable-lint-rules")
         disable_args.append(rule)
 
+    stitch_tool = ctx.attr.stitch_tool[DefaultInfo].files_to_run
+    stitch_tool_inputs = ctx.files.stitch_tool
     ctx.actions.run(
         mnemonic = "GenStitchInstantiationWrapper",
-        executable = ctx.executable.stitch_tool,
-        inputs = srcs + hdrs + param_files,
+        executable = stitch_tool,
+        inputs = srcs + hdrs + param_files + stitch_tool_inputs,
         outputs = [output_file],
+        tools = [stitch_tool],
         arguments = common_args + [
             "instantiate",
             "--module-name",

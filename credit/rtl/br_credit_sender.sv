@@ -242,7 +242,7 @@ module br_credit_sender #(
         .EnableCoverBlockPriorityUpdate(0)
     ) br_arb_multi_rr (
         .clk,
-        .rst,
+        .rst(either_rst),
         .enable_priority_update(1'b1),
         .request(push_valid),
         .grant(push_ready),
@@ -260,7 +260,7 @@ module br_credit_sender #(
     `BR_ASSERT_IMPL(no_credit_underflow_a, credit_decr_valid |-> credit_decr_ready)
   end
 
-  assign internal_pop_valid = push_ready & push_valid;
+  assign internal_pop_valid = push_ready & push_valid & {NumFlows{!either_rst}};
 
   if (RegisterPopOutputs) begin : gen_reg_pop
     `BR_REGI(pop_sender_in_reset, 1'b0, 1'b1)

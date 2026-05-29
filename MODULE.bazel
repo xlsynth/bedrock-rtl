@@ -78,3 +78,13 @@ bedrock_stitch_crate.from_cargo(
     supported_platform_triples = RUST_TARGET_TRIPLES,
 )
 use_repo(bedrock_stitch_crate, "bedrock_stitch")
+
+xlsynth_artifacts_repository = use_repo_rule(
+    "//dependency_support/xlsynth_artifacts:repositories.bzl",
+    "xlsynth_artifacts_repository",
+)
+
+xlsynth_artifacts_repository(
+    name = "xlsynth_artifacts",
+    cargo_lock = "//stitch:Cargo.lock",
+)

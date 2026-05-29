@@ -31,13 +31,12 @@ __pycache__
 .cursor
 
 # Codex files
-.codex
+.codex/*
+!.codex/skills/
+!.codex/skills/**
 
 # JasperGold outputs
 jgproject/
-
-# ChipStack outputs
-chipstack_artifacts
 
 # common trash
 build/
