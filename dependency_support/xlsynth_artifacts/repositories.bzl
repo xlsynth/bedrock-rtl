@@ -1,6 +1,20 @@
 # SPDX-License-Identifier: Apache-2.0
 
-"""Repository rules for XLSynth release artifacts."""
+"""Repository rules for XLSynth release artifacts.
+
+TopStitch links against the `libxls` DSO through the `xlsynth-sys` crate.
+Although `xlsynth-sys` downloads that DSO during its Rust build script, Bazel
+does not automatically expose Cargo build-script outputs as runtime inputs for
+later actions that execute `//stitch:stitch_tool`. This repository rule makes
+the DSO a declared Bazel input so wrapper-generation actions can run hermetically
+inside their sandboxes.
+
+The `xlsynth-sys` version is read from `stitch/Cargo.lock`, keeping TopStitch's
+Cargo dependency graph as the source of truth. Dependabot can then bump
+TopStitch, lockfile regeneration can update `xlsynth-sys`, and this rule will
+download the matching XLS release artifact without requiring synchronized
+Dockerfile edits.
+"""
 
 def _parse_xlsynth_sys_version(cargo_lock):
     current_name = None
