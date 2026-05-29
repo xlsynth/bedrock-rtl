@@ -1,0 +1,191 @@
+# SPDX-License-Identifier: Apache-2.0
+
+load("@rules_hdl//verilog:providers.bzl", "verilog_library")
+load("//bazel:br_verilog.bzl", "br_verilog_sim_test_tools_suite")
+load("//bazel:verilog.bzl", "verilog_elab_test")
+
+package(default_visibility = ["//visibility:private"])
+
+verilog_library(
+    name = "br_delay_deskew_tb",
+    srcs = ["br_delay_deskew_tb.sv"],
+    deps = [
+        "//delay/rtl:br_delay_deskew",
+        "//misc/sim:br_test_driver",
+    ],
+)
+
+verilog_elab_test(
+    name = "br_delay_deskew_tb_elab_test",
+    tool = "verific",
+    deps = [":br_delay_deskew_tb"],
+)
+
+br_verilog_sim_test_tools_suite(
+    name = "br_delay_deskew_sim_test_tools_suite",
+    params = {
+        "Width": [
+            "1",
+            "8",
+        ],
+    },
+    tools = [
+        "iverilog",
+        "vcs",
+        # TODO(mgottscho): Re-enable Verilator once it accepts the dependent
+        # assertions that use delayed sequence expressions.
+        #"verilator",
+    ],
+    deps = [":br_delay_deskew_tb"],
+)
+
+verilog_library(
+    name = "br_delay_skew_tb",
+    srcs = ["br_delay_skew_tb.sv"],
+    deps = [
+        "//delay/rtl:br_delay_skew",
+        "//misc/sim:br_test_driver",
+    ],
+)
+
+verilog_elab_test(
+    name = "br_delay_skew_tb_elab_test",
+    tool = "verific",
+    deps = [":br_delay_skew_tb"],
+)
+
+br_verilog_sim_test_tools_suite(
+    name = "br_delay_skew_sim_test_tools_suite",
+    params = {
+        "Width": [
+            "1",
+            "8",
+        ],
+    },
+    tools = [
+        "iverilog",
+        "vcs",
+        # TODO(mgottscho): Re-enable Verilator once it accepts the dependent
+        # assertions that use delayed sequence expressions.
+        #"verilator",
+    ],
+    deps = [":br_delay_skew_tb"],
+)
+
+verilog_library(
+    name = "br_delay_valid_next_tb",
+    srcs = ["br_delay_valid_next_tb.sv"],
+    deps = [
+        "//delay/rtl:br_delay_valid_next",
+        "//misc/sim:br_test_driver",
+    ],
+)
+
+verilog_elab_test(
+    name = "br_delay_valid_next_tb_elab_test",
+    tool = "verific",
+    deps = [":br_delay_valid_next_tb"],
+)
+
+br_verilog_sim_test_tools_suite(
+    name = "br_delay_valid_next_sim_test_tools_suite",
+    params = {
+        "NumStages": [
+            "0",
+            "1",
+            "3",
+        ],
+        "Width": [
+            "1",
+            "8",
+        ],
+    },
+    tools = [
+        "iverilog",
+        "vcs",
+        # TODO(mgottscho): Re-enable Verilator once it accepts the dependent
+        # assertions that use delayed sequence expressions.
+        #"verilator",
+    ],
+    deps = [":br_delay_valid_next_tb"],
+)
+
+verilog_library(
+    name = "br_delay_valid_next_nr_tb",
+    srcs = ["br_delay_valid_next_nr_tb.sv"],
+    deps = [
+        "//delay/rtl:br_delay_valid_next_nr",
+        "//misc/sim:br_test_driver",
+    ],
+)
+
+verilog_elab_test(
+    name = "br_delay_valid_next_nr_tb_elab_test",
+    tool = "verific",
+    deps = [":br_delay_valid_next_nr_tb"],
+)
+
+br_verilog_sim_test_tools_suite(
+    name = "br_delay_valid_next_nr_sim_test_tools_suite",
+    params = {
+        "NumStages": [
+            "0",
+            "1",
+            "3",
+        ],
+        "Width": [
+            "1",
+            "8",
+        ],
+    },
+    tools = [
+        "iverilog",
+        "vcs",
+        # TODO(mgottscho): Re-enable Verilator once it accepts the dependent
+        # assertions that use delayed sequence expressions.
+        #"verilator",
+    ],
+    deps = [":br_delay_valid_next_nr_tb"],
+)
+
+verilog_library(
+    name = "br_delay_valid_nr_tb",
+    srcs = ["br_delay_valid_nr_tb.sv"],
+    deps = [
+        "//delay/rtl:br_delay_valid_nr",
+        "//misc/sim:br_test_driver",
+    ],
+)
+
+verilog_elab_test(
+    name = "br_delay_valid_nr_tb_elab_test",
+    tool = "verific",
+    deps = [":br_delay_valid_nr_tb"],
+)
+
+br_verilog_sim_test_tools_suite(
+    name = "br_delay_valid_nr_sim_test_tools_suite",
+    params = {
+        "FirstStageUngated": [
+            "0",
+            "1",
+        ],
+        "NumStages": [
+            "0",
+            "1",
+            "3",
+        ],
+        "Width": [
+            "1",
+            "8",
+        ],
+    },
+    tools = [
+        "iverilog",
+        "vcs",
+        # TODO(mgottscho): Re-enable Verilator once it accepts the dependent
+        # assertions that use delayed sequence expressions.
+        #"verilator",
+    ],
+    deps = [":br_delay_valid_nr_tb"],
+)
