@@ -235,6 +235,7 @@ module br_credit_sender #(
 
     logic [FlowCountWidth-1:0] grant_allowed;
     logic [FlowCountWidth-1:0] grant_count;
+    logic [NumFlows-1:0] grant;
 
     br_arb_multi_rr #(
         .NumRequesters(NumFlows),
@@ -245,7 +246,7 @@ module br_credit_sender #(
         .rst(either_rst),
         .enable_priority_update(1'b1),
         .request(push_valid),
-        .grant(push_ready),
+        .grant,
         .grant_ordered(),
         .grant_allowed,
         .grant_count
@@ -255,12 +256,13 @@ module br_credit_sender #(
     assign credit_decr = ChangeWidth'(grant_count);
     assign grant_allowed =
         (credit_available < NumFlows) ? FlowCountWidth'(credit_available) : NumFlows;
+    assign push_ready = either_rst ? '0 : grant;
 
     `BR_UNUSED(credit_decr_ready)  // Only used for assertions
     `BR_ASSERT_IMPL(no_credit_underflow_a, credit_decr_valid |-> credit_decr_ready)
   end
 
-  assign internal_pop_valid = push_ready & push_valid & {NumFlows{!either_rst}};
+  assign internal_pop_valid = push_ready & push_valid;
 
   if (RegisterPopOutputs) begin : gen_reg_pop
     `BR_REGI(pop_sender_in_reset, 1'b0, 1'b1)
