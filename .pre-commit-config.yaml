@@ -47,7 +47,7 @@ repos:
   # Format Python files
   - repo: https://github.com/psf/black-pre-commit-mirror
     # 24.8.0
-    rev: f7aa1f9a50202a2cd7cef269f8d83f5ac91b2915
+    rev: 4160603246a6b365d4a2af661c6d71b0a0f50478
     hooks:
       - id: black
         language_version: python3.12
