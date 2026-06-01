@@ -22,7 +22,7 @@ jobs:
         run: python -m pip freeze --local
       - name: Cache pre-commit environments
         # actions/cache v4.3.0
-        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830
+        uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae
         with:
           path: ~/.cache/pre-commit
           key: pre-commit-3|${{ env.pythonLocation }}|${{ hashFiles('.pre-commit-config.yaml') }}
