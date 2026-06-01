@@ -19,7 +19,7 @@ module br_csr_demux_fpv_monitor #(
     parameter bit HasDefaultDownstream = 0,
     localparam int NumAddressRanges = HasDefaultDownstream ? NumDownstreams - 1 : NumDownstreams,
     parameter bit RequirePowerOfTwoAlignedRanges[NumAddressRanges] = '{default: 1},
-    parameter bit RebaseForwardedBase[NumAddressRanges] = '{default: 0},
+    parameter bit NormalizeDownstreamAddress[NumAddressRanges] = '{default: 0},
     parameter logic [AddrWidth-1:0] UpstreamAddrMask = '1,
     parameter logic [NumDownstreams-1:0][AddrWidth-1:0] DownstreamAddrMask = '1,
     localparam int StrobeWidth = DataWidth / 8
@@ -79,6 +79,7 @@ module br_csr_demux_fpv_monitor #(
   logic [NumDownstreams:0] downstream_resp_vec;
   logic [DownstreamWidth:0] downstream_resp_id;
   logic [NumAddressRanges-1:0][AddrWidth-1:0] downstream_addr_limit;
+  logic [NumAddressRanges-1:0] downstream_addr_range_disabled;
   logic [AddrWidth-1:0] expected_downstream_req_addr;
   logic [DataWidth-1:0] fv_downstream_resp_rdata;
   logic fv_downstream_resp_decerr;
@@ -110,13 +111,15 @@ module br_csr_demux_fpv_monitor #(
 
   for (genvar i = 0; i < NumAddressRanges; i++) begin : gen_downstream_addr_limit
     assign downstream_addr_limit[i] = downstream_addr_base[i] + downstream_addr_size[i] - 1'b1;
+    assign downstream_addr_range_disabled[i] = downstream_addr_size[i] == '0;
   end
 
   always_comb begin
     addr_match_d = 1'b0;
     for (int i = 0; i < NumAddressRanges; i++) begin
       if (d == DownstreamWidth'(i)) begin
-        addr_match_d = (upstream_req_addr_masked >= downstream_addr_base[i]) &&
+        addr_match_d = !downstream_addr_range_disabled[i] &&
+                       (upstream_req_addr_masked >= downstream_addr_base[i]) &&
                        (upstream_req_addr_masked <= downstream_addr_limit[i]);
         break;
       end
@@ -132,7 +135,7 @@ module br_csr_demux_fpv_monitor #(
     expected_downstream_req_addr = upstream_req_addr;
     for (int i = 0; i < NumAddressRanges; i++) begin
       if (d == DownstreamWidth'(i)) begin
-        expected_downstream_req_addr = RebaseForwardedBase[i] ?
+        expected_downstream_req_addr = NormalizeDownstreamAddress[i] ?
                                        upstream_req_addr - downstream_addr_base[i] :
                                        upstream_req_addr;
         break;
@@ -149,7 +152,8 @@ module br_csr_demux_fpv_monitor #(
   always_comb begin
     upstream_addr_hit = 1'b0;
     for (int i = 0; i < NumAddressRanges; i++) begin
-      if ((upstream_req_addr_masked >= downstream_addr_base[i]) &&
+      if (!downstream_addr_range_disabled[i] &&
+          (upstream_req_addr_masked >= downstream_addr_base[i]) &&
           (upstream_req_addr_masked <= downstream_addr_limit[i])) begin
         upstream_addr_hit = 1'b1;
         break;
@@ -194,22 +198,23 @@ module br_csr_demux_fpv_monitor #(
     // Range straps are stable during the proof.
     `BR_ASSUME(static_addr_a, $stable(downstream_addr_base[i]) && $stable(downstream_addr_size[i]))
 
-    // Range sizes must be nonzero.
-    `BR_ASSUME(legal_addr_size_a, downstream_addr_size[i] > '0)
-
-    // Base plus size must not overflow the address width.
-    `BR_ASSUME(legal_addr_range_a, downstream_addr_limit[i] >= downstream_addr_base[i])
+    // Enabled ranges must not overflow the address width.
+    `BR_ASSUME(
+        legal_addr_range_a,
+        downstream_addr_range_disabled[i] || downstream_addr_limit[i] >= downstream_addr_base[i])
 
     if (RequirePowerOfTwoAlignedRanges[i]) begin : gen_power_of_two_aligned_addr
-      // Power-of-two ranges have exactly one size bit set.
+      // Enabled power-of-two ranges have exactly one size bit set.
       `BR_ASSUME(addr_size_power_of_two_a, $onehot0(downstream_addr_size[i]))
 
-      // Power-of-two ranges start on their natural alignment.
+      // Enabled power-of-two ranges start on their natural alignment.
       `BR_ASSUME(addr_base_aligned_a,
+                 downstream_addr_range_disabled[i] ||
                  (downstream_addr_base[i] & (downstream_addr_size[i] - 1'b1)) == '0)
 
-      // Downstream masks must preserve all in-range offset bits.
+      // Downstream masks must preserve all enabled in-range offset bits.
       `BR_ASSUME(addr_mask_preserves_offsets_a,
+                 downstream_addr_range_disabled[i] ||
                  ((downstream_addr_size[i] - 1'b1) & ~DownstreamAddrMask[i]) == '0)
     end
   end
@@ -224,8 +229,10 @@ module br_csr_demux_fpv_monitor #(
     for (genvar j = i + 1; j < NumAddressRanges; j++) begin : gen_j
       // Explicit address ranges do not overlap.
       `BR_ASSUME(no_overlapping_addr_a,
+                 downstream_addr_range_disabled[i] ||
+                 downstream_addr_range_disabled[j] ||
                  downstream_addr_limit[i] < downstream_addr_base[j] ||
-                downstream_addr_base[i] > downstream_addr_limit[j])
+                 downstream_addr_base[i] > downstream_addr_limit[j])
     end
   end
 
@@ -335,7 +342,7 @@ bind br_csr_demux br_csr_demux_fpv_monitor #(
     .NumRetimeStages(NumRetimeStages),
     .HasDefaultDownstream(HasDefaultDownstream),
     .RequirePowerOfTwoAlignedRanges(RequirePowerOfTwoAlignedRanges),
-    .RebaseForwardedBase(RebaseForwardedBase),
+    .NormalizeDownstreamAddress(NormalizeDownstreamAddress),
     .UpstreamAddrMask(UpstreamAddrMask),
     .DownstreamAddrMask(DownstreamAddrMask)
 ) monitor (.*);
