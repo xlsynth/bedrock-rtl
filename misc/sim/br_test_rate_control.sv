@@ -29,6 +29,7 @@ module br_test_rate_control #(
   // Initialize random number seed
   initial begin
     int seed;
+    // Icarus requires the seed argument to be a variable, not a parameter.
     seed = Seed;
     void'($urandom(seed));
   end
