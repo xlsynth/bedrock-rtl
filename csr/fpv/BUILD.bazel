@@ -43,7 +43,76 @@ br_verilog_fpv_test_tools_suite(
 )
 
 ####################################################################################
-# Bedrock-RTL SCB Demux FPV Monitor and Tests
+# Bedrock-RTL CSR Demux Select-Onehot FPV Monitor and Tests
+verilog_library(
+    name = "br_csr_demux_select_onehot_fpv_monitor",
+    srcs = ["br_csr_demux_select_onehot_fpv_monitor.sv"],
+    visibility = ["//visibility:public"],
+    deps = [
+        "//csr/rtl:br_csr_demux_select_onehot",
+    ],
+)
+
+verilog_elab_test(
+    name = "br_csr_demux_select_onehot_fpv_monitor_elab_test",
+    custom_tcl_header = "//:elab_test_jg_custom_header.verific.tcl",
+    tool = "verific",
+    top = "br_csr_demux_select_onehot_fpv_monitor",
+    deps = [
+        ":br_csr_demux_select_onehot_fpv_monitor",
+    ],
+)
+
+# Single-downstream select-onehot case checks degenerate routing with no retiming.
+br_verilog_fpv_test_tools_suite(
+    name = "br_csr_demux_select_onehot_num_downstream1",
+    elab_opts =
+        [
+            "-parameter AddrWidth 1",
+            "-parameter NumDownstreams 1",
+            "-parameter NumRetimeStages '\"'\"'{0}",
+        ],
+    tools = {
+        "jg": "",
+    },
+    top = "br_csr_demux_select_onehot",
+    deps = [":br_csr_demux_select_onehot_fpv_monitor"],
+)
+
+# Three-downstream select-onehot case checks uneven retiming across selected routes.
+br_verilog_fpv_test_tools_suite(
+    name = "br_csr_demux_select_onehot_num_downstream3",
+    elab_opts =
+        [
+            "-parameter AddrWidth 5",
+            "-parameter NumDownstreams 3",
+            "-parameter NumRetimeStages '\"'\"'{6,4,2}",
+        ],
+    tools = {
+        "jg": "",
+    },
+    top = "br_csr_demux_select_onehot",
+    deps = [":br_csr_demux_select_onehot_fpv_monitor"],
+)
+
+# Four-downstream select-onehot case checks mixed zero and nonzero retime paths.
+br_verilog_fpv_test_tools_suite(
+    name = "br_csr_demux_select_onehot_num_downstream4",
+    elab_opts =
+        [
+            "-parameter AddrWidth 4",
+            "-parameter NumDownstreams 4",
+            "-parameter NumRetimeStages '\"'\"'{0,3,5,7}",
+        ],
+    tools = {
+        "jg": "",
+    },
+    top = "br_csr_demux_select_onehot",
+    deps = [":br_csr_demux_select_onehot_fpv_monitor"],
+)
+
+####################################################################################
+# Bedrock-RTL CSR Demux FPV Monitor and Tests
 verilog_library(
     name = "br_csr_demux_fpv_monitor",
     srcs = ["br_csr_demux_fpv_monitor.sv"],
@@ -63,6 +132,7 @@ verilog_elab_test(
     ],
 )
 
+# Single-downstream demux case checks the degenerate address decode with no retiming.
 br_verilog_fpv_test_tools_suite(
     name = "br_csr_demux_num_downstream1",
     elab_opts =
@@ -78,6 +148,7 @@ br_verilog_fpv_test_tools_suite(
     deps = [":br_csr_demux_fpv_monitor"],
 )
 
+# Three-downstream demux case checks default and non-default decode with uneven retiming.
 br_verilog_fpv_test_tools_suite(
     name = "br_csr_demux_num_downstream3",
     elab_opts =
@@ -99,6 +170,7 @@ br_verilog_fpv_test_tools_suite(
     deps = [":br_csr_demux_fpv_monitor"],
 )
 
+# Four-downstream demux case checks default and non-default decode with a zero-retime path.
 br_verilog_fpv_test_tools_suite(
     name = "br_csr_demux_num_downstream4",
     elab_opts =
@@ -113,6 +185,48 @@ br_verilog_fpv_test_tools_suite(
             "1",
         ],
     },
+    tools = {
+        "jg": "",
+    },
+    top = "br_csr_demux",
+    deps = [":br_csr_demux_fpv_monitor"],
+)
+
+# No-default address-translation case checks masking, rebasing, and relaxed range constraints.
+br_verilog_fpv_test_tools_suite(
+    name = "br_csr_demux_addr_translate_no_default",
+    elab_opts =
+        [
+            "-parameter AddrWidth 5",
+            "-parameter NumDownstreams 3",
+            "-parameter HasDefaultDownstream 0",
+            "-parameter NumRetimeStages '\"'\"'{1,2,3}",
+            "-parameter RequirePowerOfTwoAlignedRanges '\"'\"'{1,0,1}",
+            "-parameter NormalizeDownstreamAddress '\"'\"'{1,0,1}",
+            "-parameter UpstreamAddrMask 30",
+            "-parameter DownstreamAddrMask '\"'\"'{31,15,23}",
+        ],
+    tools = {
+        "jg": "",
+    },
+    top = "br_csr_demux",
+    deps = [":br_csr_demux_fpv_monitor"],
+)
+
+# Default address-translation case checks masking and rebasing when misses route to default.
+br_verilog_fpv_test_tools_suite(
+    name = "br_csr_demux_addr_translate_with_default",
+    elab_opts =
+        [
+            "-parameter AddrWidth 5",
+            "-parameter NumDownstreams 3",
+            "-parameter HasDefaultDownstream 1",
+            "-parameter NumRetimeStages '\"'\"'{2,0,4}",
+            "-parameter RequirePowerOfTwoAlignedRanges '\"'\"'{0,1}",
+            "-parameter NormalizeDownstreamAddress '\"'\"'{0,1}",
+            "-parameter UpstreamAddrMask 29",
+            "-parameter DownstreamAddrMask '\"'\"'{15,31,27}",
+        ],
     tools = {
         "jg": "",
     },
