@@ -26,8 +26,8 @@ module br_csr_demux #(
     // will result in a response with decerr=1.
     parameter bit HasDefaultDownstream = 0,
     localparam int NumAddressRanges = HasDefaultDownstream ? NumDownstreams - 1 : NumDownstreams,
-    // If 1 for a decoded range, assert that its size is a power of two and
-    // its base is naturally aligned to that size.
+    // If 1 for an enabled decoded range, assert that its size is a power of two
+    // and its base is naturally aligned to that size.
     // ri lint_check_waive ARRAY_LENGTH_ONE
     parameter bit RequirePowerOfTwoAlignedRanges[NumAddressRanges] = '{default: 1},
     // If 1 for a decoded range, normalize its forwarded address by subtracting
@@ -59,10 +59,10 @@ module br_csr_demux #(
     output logic upstream_resp_decerr,
     output logic upstream_resp_slverr,
 
-    // Base address and nonzero size for each decoded downstream route. The
-    // decoded inclusive bound is base + size - 1. A full address-map-sized
-    // route cannot be represented by AddrWidth-bit size. The last downstream
-    // has no decoded range when HasDefaultDownstream is set.
+    // Base address and size for each decoded downstream route. The decoded
+    // inclusive bound is base + size - 1. A zero size disables the route. A
+    // full address-map-sized route cannot be represented by AddrWidth-bit size.
+    // The last downstream has no decoded range when HasDefaultDownstream is set.
     input logic [NumAddressRanges-1:0][AddrWidth-1:0] downstream_addr_base,
     input logic [NumAddressRanges-1:0][AddrWidth-1:0] downstream_addr_size,
 
@@ -87,36 +87,39 @@ module br_csr_demux #(
   `BR_ASSERT_STATIC(legal_addr_width_a, AddrWidth >= 1)
   `BR_ASSERT_STATIC(legal_data_width_a, DataWidth == 32 || DataWidth == 64)
 
-  // Derive inclusive route bounds and check the active map on each request.
+  // Derive inclusive route bounds and check the enabled routes on each request.
   logic [NumAddressRanges-1:0][AddrWidth-1:0] downstream_addr_limit;
+  logic [NumAddressRanges-1:0] downstream_addr_range_disabled;
 
   for (genvar i = 0; i < NumAddressRanges; i++) begin : gen_range_check
     assign downstream_addr_limit[i] = downstream_addr_base[i] + downstream_addr_size[i] - 1'b1;
+    assign downstream_addr_range_disabled[i] = downstream_addr_size[i] == '0;
 
-    `BR_ASSERT_INTG(legal_downstream_addr_size_a,
-                    upstream_req_valid |-> downstream_addr_size[i] > '0)
     `BR_ASSERT_INTG(downstream_addr_range_no_overflow_a,
-                    upstream_req_valid |-> downstream_addr_limit[i] >= downstream_addr_base[i])
+                    upstream_req_valid |-> downstream_addr_range_disabled[i] ||
+                        downstream_addr_limit[i] >= downstream_addr_base[i])
 
     if (RequirePowerOfTwoAlignedRanges[i]) begin : gen_power_of_two_aligned_range_check
-      // Require a power-of-two range size.
+      // Require a power-of-two range size, or zero for a disabled range.
       `BR_ASSERT_INTG(downstream_addr_size_power_of_two_a,
                       upstream_req_valid |-> $onehot0(downstream_addr_size[i]))
       // Require the range base to start at its natural power-of-two boundary.
-      `BR_ASSERT_INTG(
-          downstream_addr_base_aligned_a,
-          upstream_req_valid |-> (downstream_addr_base[i] & (downstream_addr_size[i] - 1'b1)) == '0)
+      `BR_ASSERT_INTG(downstream_addr_base_aligned_a,
+                      upstream_req_valid |-> downstream_addr_range_disabled[i] ||
+              (downstream_addr_base[i] & (downstream_addr_size[i] - 1'b1)) == '0)
       // Preserve every in-range offset bit to prevent forwarded address aliasing.
-      `BR_ASSERT_INTG(
-          downstream_addr_mask_preserves_offsets_a,
-          upstream_req_valid |-> ((downstream_addr_size[i] - 1'b1) & ~DownstreamAddrMask[i]) == '0)
+      `BR_ASSERT_INTG(downstream_addr_mask_preserves_offsets_a,
+                      upstream_req_valid |-> downstream_addr_range_disabled[i] ||
+              ((downstream_addr_size[i] - 1'b1) & ~DownstreamAddrMask[i]) == '0)
     end
   end
 
   for (genvar i = 0; i < NumAddressRanges - 1; i++) begin : gen_range_overlap_check_i
     for (genvar j = i + 1; j < NumAddressRanges; j++) begin : gen_range_overlap_check_j
       `BR_ASSERT_INTG(downstream_addr_range_overlap_a,
-                      upstream_req_valid |-> downstream_addr_limit[i] < downstream_addr_base[j] ||
+                      upstream_req_valid |-> downstream_addr_range_disabled[i] ||
+                          downstream_addr_range_disabled[j] ||
+                          downstream_addr_limit[i] < downstream_addr_base[j] ||
                           downstream_addr_base[i] > downstream_addr_limit[j])
     end
   end
@@ -132,8 +135,9 @@ module br_csr_demux #(
   // Decode and forward the request address for each explicit downstream range.
   // ri lint_check_off PARAM_BIT_SEL
   for (genvar i = 0; i < NumAddressRanges; i++) begin : gen_downstream_addr_translate
-    // Standard decode
+    // Decode enabled ranges only.
     assign select_onehot[i] =
+        !downstream_addr_range_disabled[i] &&
         (upstream_req_addr_masked >= downstream_addr_base[i]) &&
         (upstream_req_addr_masked <= downstream_addr_limit[i]);
 
