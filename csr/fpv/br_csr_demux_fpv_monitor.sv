@@ -72,6 +72,8 @@ module br_csr_demux_fpv_monitor #(
   logic magic_upstream_req_valid;
   logic [31:0] abort_cntr;
   logic [31:0] abort_cntr_next;
+  logic addr_req_pending_d;
+  logic addr_req_pending_d_next;
   logic [AddrWidth-1:0] upstream_req_addr_masked;
   logic upstream_addr_hit;
   logic upstream_decerr_valid;
@@ -129,6 +131,11 @@ module br_csr_demux_fpv_monitor #(
   assign d_is_default = HasDefaultDownstream && (d == DownstreamWidth'(NumAddressRanges));
   assign magic_upstream_req_valid = upstream_req_valid &&
                                     (addr_match_d || (d_is_default && !upstream_addr_hit));
+  assign addr_req_pending_d_next = (addr_req_pending_d || magic_upstream_req_valid) &&
+                                   !downstream_req_valid[d];
+
+  // Track when a request selected for d is still in the downstream request retime path.
+  `BR_REG(addr_req_pending_d, addr_req_pending_d_next)
 
   // Expected forwarded downstream address after optional rebasing and masking.
   always_comb begin
@@ -195,27 +202,32 @@ module br_csr_demux_fpv_monitor #(
   `BR_ASSUME(only_one_outstanding_req_upstream_a, upstream_req_pending |-> !upstream_req_valid)
 
   for (genvar i = 0; i < NumAddressRanges; i++) begin : gen_addr
-    // Range straps are stable during the proof.
-    `BR_ASSUME(static_addr_a, $stable(downstream_addr_base[i]) && $stable(downstream_addr_size[i]))
+    // Normalized range bases are used after retiming, so keep the selected base
+    // stable until the selected request reaches its downstream port.
+    if (NormalizeDownstreamAddress[i] && (NumRetimeStages[i] > 0)) begin : gen_normalized_addr
+      `BR_ASSUME(
+          addr_base_stable_until_req_forwarded_a,
+          addr_req_pending_d && (d == DownstreamWidth'(i)) |-> $stable(downstream_addr_base[i]))
+    end
 
     // Enabled ranges must not overflow the address width.
-    `BR_ASSUME(
-        legal_addr_range_a,
-        downstream_addr_range_disabled[i] || downstream_addr_limit[i] >= downstream_addr_base[i])
+    `BR_ASSUME(legal_addr_range_a,
+               upstream_req_valid |-> downstream_addr_range_disabled[i] ||
+            downstream_addr_limit[i] >= downstream_addr_base[i])
 
     if (RequirePowerOfTwoAlignedRanges[i]) begin : gen_power_of_two_aligned_addr
       // Enabled power-of-two ranges have exactly one size bit set.
-      `BR_ASSUME(addr_size_power_of_two_a, $onehot0(downstream_addr_size[i]))
+      `BR_ASSUME(addr_size_power_of_two_a, upstream_req_valid |-> $onehot0(downstream_addr_size[i]))
 
       // Enabled power-of-two ranges start on their natural alignment.
       `BR_ASSUME(addr_base_aligned_a,
-                 downstream_addr_range_disabled[i] ||
-                 (downstream_addr_base[i] & (downstream_addr_size[i] - 1'b1)) == '0)
+                 upstream_req_valid |-> downstream_addr_range_disabled[i] ||
+                     (downstream_addr_base[i] & (downstream_addr_size[i] - 1'b1)) == '0)
 
       // Downstream masks must preserve all enabled in-range offset bits.
       `BR_ASSUME(addr_mask_preserves_offsets_a,
-                 downstream_addr_range_disabled[i] ||
-                 ((downstream_addr_size[i] - 1'b1) & ~DownstreamAddrMask[i]) == '0)
+                 upstream_req_valid |-> downstream_addr_range_disabled[i] ||
+                     ((downstream_addr_size[i] - 1'b1) & ~DownstreamAddrMask[i]) == '0)
     end
   end
 
@@ -229,10 +241,10 @@ module br_csr_demux_fpv_monitor #(
     for (genvar j = i + 1; j < NumAddressRanges; j++) begin : gen_j
       // Explicit address ranges do not overlap.
       `BR_ASSUME(no_overlapping_addr_a,
-                 downstream_addr_range_disabled[i] ||
-                 downstream_addr_range_disabled[j] ||
-                 downstream_addr_limit[i] < downstream_addr_base[j] ||
-                 downstream_addr_base[i] > downstream_addr_limit[j])
+                 upstream_req_valid |-> downstream_addr_range_disabled[i] ||
+                     downstream_addr_range_disabled[j] ||
+                     downstream_addr_limit[i] < downstream_addr_base[j] ||
+                     downstream_addr_base[i] > downstream_addr_limit[j])
     end
   end
 
