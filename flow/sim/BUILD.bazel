@@ -1,6 +1,7 @@
 # SPDX-License-Identifier: Apache-2.0
 
 load("@rules_hdl//verilog:providers.bzl", "verilog_library")
+load("//bazel:br_verilog.bzl", "br_verilog_sim_test_tools_suite")
 load("//bazel:verilog.bzl", "verilog_elab_test")
 
 package(default_visibility = ["//visibility:public"])
@@ -33,4 +34,96 @@ verilog_elab_test(
     name = "br_flow_test_sink_elab_test",
     tool = "verific",
     deps = [":br_flow_test_sink"],
+)
+
+_FLOW_REG_TB_DEPS = [
+    ":br_flow_test_driver",
+    ":br_flow_test_sink",
+    "//flow/rtl:br_flow_reg_both",
+    "//flow/rtl:br_flow_reg_fwd",
+    "//flow/rtl:br_flow_reg_none",
+    "//flow/rtl:br_flow_reg_rev",
+    "//misc/sim:br_test_driver",
+]
+
+_FLOW_REG_SIM_PARAMS = {
+    "NumRandomValues": ["64"],
+    "Width": [
+        "1",
+        "8",
+        "17",
+    ],
+}
+
+_FLOW_REG_SIM_TOOLS = [
+    "iverilog",
+    # TODO(mgottscho): Re-enable Verilator once it accepts the dependent
+    # flow-register assertions that use multi-cycle sequence operators.
+    #"verilator",
+]
+
+verilog_library(
+    name = "br_flow_reg_tb",
+    srcs = ["br_flow_reg_tb.sv"],
+    deps = _FLOW_REG_TB_DEPS,
+)
+
+verilog_elab_test(
+    name = "br_flow_reg_fwd_tb_elab_test",
+    tool = "verific",
+    top = "br_flow_reg_fwd_tb",
+    deps = [":br_flow_reg_tb"],
+)
+
+br_verilog_sim_test_tools_suite(
+    name = "br_flow_reg_fwd_sim_test_tools_suite",
+    params = _FLOW_REG_SIM_PARAMS,
+    tools = _FLOW_REG_SIM_TOOLS,
+    top = "br_flow_reg_fwd_tb",
+    deps = [":br_flow_reg_tb"],
+)
+
+verilog_elab_test(
+    name = "br_flow_reg_rev_tb_elab_test",
+    tool = "verific",
+    top = "br_flow_reg_rev_tb",
+    deps = [":br_flow_reg_tb"],
+)
+
+br_verilog_sim_test_tools_suite(
+    name = "br_flow_reg_rev_sim_test_tools_suite",
+    params = _FLOW_REG_SIM_PARAMS,
+    tools = _FLOW_REG_SIM_TOOLS,
+    top = "br_flow_reg_rev_tb",
+    deps = [":br_flow_reg_tb"],
+)
+
+verilog_elab_test(
+    name = "br_flow_reg_none_tb_elab_test",
+    tool = "verific",
+    top = "br_flow_reg_none_tb",
+    deps = [":br_flow_reg_tb"],
+)
+
+br_verilog_sim_test_tools_suite(
+    name = "br_flow_reg_none_sim_test_tools_suite",
+    params = _FLOW_REG_SIM_PARAMS,
+    tools = _FLOW_REG_SIM_TOOLS,
+    top = "br_flow_reg_none_tb",
+    deps = [":br_flow_reg_tb"],
+)
+
+verilog_elab_test(
+    name = "br_flow_reg_both_tb_elab_test",
+    tool = "verific",
+    top = "br_flow_reg_both_tb",
+    deps = [":br_flow_reg_tb"],
+)
+
+br_verilog_sim_test_tools_suite(
+    name = "br_flow_reg_both_sim_test_tools_suite",
+    params = _FLOW_REG_SIM_PARAMS,
+    tools = _FLOW_REG_SIM_TOOLS,
+    top = "br_flow_reg_both_tb",
+    deps = [":br_flow_reg_tb"],
 )
