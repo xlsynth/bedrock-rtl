@@ -57,9 +57,7 @@ _FLOW_REG_SIM_PARAMS = {
 
 _FLOW_REG_SIM_TOOLS = [
     "iverilog",
-    # TODO(mgottscho): Re-enable Verilator once it accepts the dependent
-    # flow-register assertions that use multi-cycle sequence operators.
-    #"verilator",
+    "verilator",
 ]
 
 verilog_library(

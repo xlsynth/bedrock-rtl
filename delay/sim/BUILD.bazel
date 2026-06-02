@@ -32,9 +32,7 @@ br_verilog_sim_test_tools_suite(
     tools = [
         "iverilog",
         "vcs",
-        # TODO(mgottscho): Re-enable Verilator once it accepts the dependent
-        # assertions that use delayed sequence expressions.
-        #"verilator",
+        "verilator",
     ],
     deps = [":br_delay_deskew_tb"],
 )
@@ -65,9 +63,7 @@ br_verilog_sim_test_tools_suite(
     tools = [
         "iverilog",
         "vcs",
-        # TODO(mgottscho): Re-enable Verilator once it accepts the dependent
-        # assertions that use delayed sequence expressions.
-        #"verilator",
+        "verilator",
     ],
     deps = [":br_delay_skew_tb"],
 )
@@ -103,9 +99,7 @@ br_verilog_sim_test_tools_suite(
     tools = [
         "iverilog",
         "vcs",
-        # TODO(mgottscho): Re-enable Verilator once it accepts the dependent
-        # assertions that use delayed sequence expressions.
-        #"verilator",
+        "verilator",
     ],
     deps = [":br_delay_valid_next_tb"],
 )
@@ -141,9 +135,7 @@ br_verilog_sim_test_tools_suite(
     tools = [
         "iverilog",
         "vcs",
-        # TODO(mgottscho): Re-enable Verilator once it accepts the dependent
-        # assertions that use delayed sequence expressions.
-        #"verilator",
+        "verilator",
     ],
     deps = [":br_delay_valid_next_nr_tb"],
 )
@@ -183,9 +175,7 @@ br_verilog_sim_test_tools_suite(
     tools = [
         "iverilog",
         "vcs",
-        # TODO(mgottscho): Re-enable Verilator once it accepts the dependent
-        # assertions that use delayed sequence expressions.
-        #"verilator",
+        "verilator",
     ],
     deps = [":br_delay_valid_nr_tb"],
 )
