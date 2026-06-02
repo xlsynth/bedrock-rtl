@@ -79,8 +79,9 @@ verilog_elab_test(
             "+cdc_delay_mode=" + cdc_delay_mode,
         ],
         tags = ["no-sandbox"],
-        # TODO(mgottscho): Re-enable Verilator once it accepts the dependent
-        # assertions that use `not` in sequence expressions.
+        # TODO(mgottscho): Enable Verilator once it supports
+        # `process::self().srandom(new_seed)` in `br_cdc_bit_toggle` during CDC
+        # delay modeling.
         tools = [
             "vcs",
             #"verilator",
@@ -151,8 +152,9 @@ verilog_elab_test(
         sim_opts = [
             "+cdc_delay_mode=" + cdc_delay_mode,
         ],
-        # TODO(mgottscho): Re-enable Verilator once it accepts the dependent
-        # assertions that use `not` in sequence expressions.
+        # TODO(mgottscho): Enable Verilator once it supports
+        # `process::self().srandom(new_seed)` in `br_cdc_bit_toggle` during CDC
+        # delay modeling.
         tools = [
             "vcs",
             #"verilator",
@@ -216,7 +218,7 @@ verilog_elab_test(
             "+cdc_delay_mode=" + cdc_delay_mode,
         ],
         tags = ["no-sandbox"],
-        # TODO(mgottscho): Re-enable Verilator once it supports
+        # TODO(mgottscho): Enable Verilator once it supports
         # `process::self().srandom(new_seed)` in `br_cdc_bit_toggle` during CDC
         # delay modeling.
         tools = [
@@ -276,7 +278,7 @@ br_verilog_sim_test_tools_suite(
             "20",
         ],
     },
-    # TODO(mgottscho): Re-enable Verilator once it supports
+    # TODO(mgottscho): Enable Verilator once it supports
     # `process::self().srandom(new_seed)` in `br_cdc_bit_toggle` during CDC
     # delay modeling.
     tools = [
@@ -334,7 +336,7 @@ br_verilog_sim_test_tools_suite(
             "16",
         ],
     },
-    # TODO(mgottscho): Re-enable Verilator once it supports
+    # TODO(mgottscho): Enable Verilator once it supports
     # `process::self().srandom(new_seed)` in `br_cdc_bit_toggle` during CDC
     # delay modeling.
     tools = [
@@ -392,7 +394,7 @@ br_verilog_sim_test_tools_suite(
             "16",
         ],
     },
-    # TODO(mgottscho): Re-enable Verilator once it supports
+    # TODO(mgottscho): Enable Verilator once it supports
     # `process::self().srandom(new_seed)` in `br_cdc_bit_toggle` during CDC
     # delay modeling.
     tools = [

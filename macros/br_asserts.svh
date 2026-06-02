@@ -27,6 +27,9 @@ import uvm_pkg::*;
 // * BR_DISABLE_ASSERT_IMM -- if defined, then all BR_ASSERT_IMM*, BR_COVER_IMM*,
 //       BR_ASSERT_COMB*, and BR_COVER_COMB* macros are no-ops.
 // * BR_DISABLE_FINAL_CHECKS -- if defined, then all BR_ASSERT_FINAL macros are no-ops.
+// * BR_VERILATOR -- temporarily disables concurrent assertion, cover, and
+//       assume property macros because Verilator does not yet support all SVA
+//       sequence syntax used by Bedrock implementation checks.
 
 ////////////////////////////////////////////////////////////////////////////////
 // Static (elaboration-time) assertion macros
@@ -85,6 +88,17 @@ $error($sformatf("Bedrock-RTL assertion macro failed (%0s:%0d) [%0s]: %0s", `__F
 `BR_ASSERT_BUILTIN_ERROR(__name__, __expr__)
 `endif // UVM_MAJOR_REV
 
+// TODO(mgottscho): This is a blunt temporary workaround, not the desired
+// permanent behavior. Verilator should eventually run Bedrock's concurrent SVA
+// checks like the other simulators. Remove this guard once Verilator accepts the
+// delayed sequence expressions used by the Bedrock assertion macros, especially
+// expressions such as `##1 !$past(rst) |-> ...`.
+`ifdef BR_ASSERT_ON
+`ifndef BR_VERILATOR
+`define BR_ASSERT_CONCURRENT_ON
+`endif  // BR_VERILATOR
+`endif  // BR_ASSERT_ON
+
 ////////////////////////////////////////////////////////////////////////////////
 // Final assertion macros (end of test)
 ////////////////////////////////////////////////////////////////////////////////
@@ -109,7 +123,7 @@ end
 
 // Clock: 'clk'
 // Reset: 'rst'
-`ifdef BR_ASSERT_ON
+`ifdef BR_ASSERT_CONCURRENT_ON
 `ifndef BR_ENABLE_FPV // FPV cannot check properties during reset
 `define BR_ASSERT_INCL_RST(__name__, __expr__) \
 __name__ : assert property (@(posedge clk) disable iff (rst === 1'bx) (__expr__)) else `BR_ASSERT_ERROR(__name__, __expr__);
@@ -117,13 +131,13 @@ __name__ : assert property (@(posedge clk) disable iff (rst === 1'bx) (__expr__)
 `define BR_ASSERT_INCL_RST(__name__, __expr__) \
 `BR_NOOP
 `endif  // BR_ENABLE_FPV
-`else  // BR_ASSERT_ON
+`else  // BR_ASSERT_CONCURRENT_ON
 `define BR_ASSERT_INCL_RST(__name__, __expr__) \
 `BR_NOOP
-`endif  // BR_ASSERT_ON
+`endif  // BR_ASSERT_CONCURRENT_ON
 
 // More expressive form of BR_ASSERT_INCL_RST that allows the use of a custom clock signal name.
-`ifdef BR_ASSERT_ON
+`ifdef BR_ASSERT_CONCURRENT_ON
 `ifndef BR_ENABLE_FPV // FPV cannot check properties during reset
 `define BR_ASSERT_INCL_RST_C(__name__, __expr__, __clk__) \
 __name__ : assert property (@(posedge __clk__) disable iff (rst === 1'bx) (__expr__)) else `BR_ASSERT_ERROR(__name__, __expr__);
@@ -131,10 +145,10 @@ __name__ : assert property (@(posedge __clk__) disable iff (rst === 1'bx) (__exp
 `define BR_ASSERT_INCL_RST_C(__name__, __expr__, __clk__) \
 `BR_NOOP
 `endif  // BR_ENABLE_FPV
-`else  // BR_ASSERT_ON
+`else  // BR_ASSERT_CONCURRENT_ON
 `define BR_ASSERT_INCL_RST_C(__name__, __expr__, __clk__) \
 `BR_NOOP
-`endif  // BR_ASSERT_ON
+`endif  // BR_ASSERT_CONCURRENT_ON
 
 ////////////////////////////////////////////////////////////////////////////////
 // Concurrent assertion macros (evaluated on posedge of a clock and disabled during a synchronous active-high reset)
@@ -142,65 +156,65 @@ __name__ : assert property (@(posedge __clk__) disable iff (rst === 1'bx) (__exp
 
 // Clock: 'clk'
 // Reset: 'rst'
-`ifdef BR_ASSERT_ON
+`ifdef BR_ASSERT_CONCURRENT_ON
 `define BR_ASSERT(__name__, __expr__) \
 __name__ : assert property (@(posedge clk) disable iff (rst === 1'b1 || rst === 1'bx) (__expr__)) else `BR_ASSERT_ERROR(__name__, __expr__);
-`else  // BR_ASSERT_ON
+`else  // BR_ASSERT_CONCURRENT_ON
 `define BR_ASSERT(__name__, __expr__) \
 `BR_NOOP
-`endif  // BR_ASSERT_ON
+`endif  // BR_ASSERT_CONCURRENT_ON
 
 // More expressive form of BR_ASSERT that allows the use of custom clock and reset signal names.
-`ifdef BR_ASSERT_ON
+`ifdef BR_ASSERT_CONCURRENT_ON
 `define BR_ASSERT_CR(__name__, __expr__, __clk__, __rst__) \
 __name__ : assert property (@(posedge __clk__) disable iff (__rst__ === 1'b1 || __rst__ === 1'bx) (__expr__)) else `BR_ASSERT_ERROR(__name__, __expr__);
-`else  // BR_ASSERT_ON
+`else  // BR_ASSERT_CONCURRENT_ON
 `define BR_ASSERT_CR(__name__, __expr__, __clk__, __rst__) \
 `BR_NOOP
-`endif  // BR_ASSERT_ON
+`endif  // BR_ASSERT_CONCURRENT_ON
 
 // Assert an expression is always known.
-`ifdef BR_ASSERT_ON
+`ifdef BR_ASSERT_CONCURRENT_ON
 `define BR_ASSERT_KNOWN(__name__, __expr__) \
 __name__ : assert property (@(posedge clk) disable iff (rst === 1'b1 || rst === 1'bx) (!$isunknown(__expr__))) else `BR_ASSERT_ERROR(__name__, (!$isunknown(__expr__)));
-`else  // BR_ASSERT_ON
+`else  // BR_ASSERT_CONCURRENT_ON
 `define BR_ASSERT_KNOWN(__name__, __expr__) \
 `BR_NOOP
-`endif  // BR_ASSERT_ON
+`endif  // BR_ASSERT_CONCURRENT_ON
 
 // Assert an expression is known whenever a corresponding valid signal is 1.
-`ifdef BR_ASSERT_ON
+`ifdef BR_ASSERT_CONCURRENT_ON
 `define BR_ASSERT_KNOWN_VALID(__name__, __valid__, __expr__) \
 __name__ : assert property (@(posedge clk) disable iff (rst === 1'b1 || rst === 1'bx) (__valid__ |-> !$isunknown(__expr__))) else `BR_ASSERT_ERROR(__name__, (__valid__ |-> !$isunknown(__expr__)));
-`else  // BR_ASSERT_ON
+`else  // BR_ASSERT_CONCURRENT_ON
 `define BR_ASSERT_KNOWN_VALID(__name__, __valid__, __expr__) \
 `BR_NOOP
-`endif  // BR_ASSERT_ON
+`endif  // BR_ASSERT_CONCURRENT_ON
 
 // More expressive form of BR_ASSERT_KNOWN that allows the use of custom clock and reset signal names.
-`ifdef BR_ASSERT_ON
+`ifdef BR_ASSERT_CONCURRENT_ON
 `define BR_ASSERT_KNOWN_CR(__name__, __expr__, __clk__, __rst__) \
 __name__ : assert property (@(posedge __clk__) disable iff (__rst__ === 1'b1 || __rst__ === 1'bx) (!$isunknown(__expr__))) else `BR_ASSERT_ERROR(__name__, (!$isunknown(__expr__)));
-`else  // BR_ASSERT_ON
+`else  // BR_ASSERT_CONCURRENT_ON
 `define BR_ASSERT_KNOWN_CR(__name__, __expr__, __clk__, __rst__) \
 `BR_NOOP
-`endif  // BR_ASSERT_ON
+`endif  // BR_ASSERT_CONCURRENT_ON
 
 // More expressive form of BR_ASSERT_KNOWN_VALID that allows the use of custom clock and reset signal names.
-`ifdef BR_ASSERT_ON
+`ifdef BR_ASSERT_CONCURRENT_ON
 `define BR_ASSERT_KNOWN_VALID_CR(__name__, __valid__, __expr__, __clk__, __rst__) \
 __name__ : assert property (@(posedge __clk__) disable iff (__rst__ === 1'b1 || __rst__ === 1'bx) (__valid__ |-> !$isunknown(__expr__))) else `BR_ASSERT_ERROR(__name__, (__valid__ |-> !$isunknown(__expr__)));
-`else  // BR_ASSERT_ON
+`else  // BR_ASSERT_CONCURRENT_ON
 `define BR_ASSERT_KNOWN_VALID_CR(__name__, __valid__, __expr__, __clk__, __rst__) \
 `BR_NOOP
-`endif  // BR_ASSERT_ON
+`endif  // BR_ASSERT_CONCURRENT_ON
 
 ////////////////////////////////////////////////////////////////////////////////
 // FPV-only concurrent assertion macros (evaluated on posedge of a clock and disabled during a synchronous active-high reset)
 ////////////////////////////////////////////////////////////////////////////////
 
 // FPV version macros
-`ifdef BR_ASSERT_ON
+`ifdef BR_ASSERT_CONCURRENT_ON
 `ifdef BR_ENABLE_FPV
 `define BR_ASSERT_FPV(__name__, __expr__) \
 `BR_ASSERT(__name__, __expr__);
@@ -208,12 +222,12 @@ __name__ : assert property (@(posedge __clk__) disable iff (__rst__ === 1'b1 || 
 `define BR_ASSERT_FPV(__name__, __expr__) \
 `BR_NOOP
 `endif  // BR_ENABLE_FPV
-`else  // BR_ASSERT_ON
+`else  // BR_ASSERT_CONCURRENT_ON
 `define BR_ASSERT_FPV(__name__, __expr__) \
 `BR_NOOP
-`endif  // BR_ASSERT_ON
+`endif  // BR_ASSERT_CONCURRENT_ON
 
-`ifdef BR_ASSERT_ON
+`ifdef BR_ASSERT_CONCURRENT_ON
 `ifdef BR_ENABLE_FPV
 `define BR_ASSERT_CR_FPV(__name__, __expr__, __clk__, __rst__) \
 `BR_ASSERT_CR(__name__, __expr__, __clk__, __rst__);
@@ -221,10 +235,10 @@ __name__ : assert property (@(posedge __clk__) disable iff (__rst__ === 1'b1 || 
 `define BR_ASSERT_CR_FPV(__name__, __expr__, __clk__, __rst__) \
 `BR_NOOP
 `endif  // BR_ENABLE_FPV
-`else  // BR_ASSERT_ON
+`else  // BR_ASSERT_CONCURRENT_ON
 `define BR_ASSERT_CR_FPV(__name__, __expr__, __clk__, __rst__) \
 `BR_NOOP
-`endif  // BR_ASSERT_ON
+`endif  // BR_ASSERT_CONCURRENT_ON
 
 ////////////////////////////////////////////////////////////////////////////////
 // Combinational/immediate assertion macros (evaluated continuously based on the expression sensitivity).
@@ -308,17 +322,17 @@ end
 
 // Clock: 'clk'
 // Reset: 'rst'
-`ifdef BR_ASSERT_ON
+`ifdef BR_ASSERT_CONCURRENT_ON
 `define BR_COVER(__name__, __expr__) \
 __name__ : cover property (@(posedge clk) disable iff (rst === 1'b1 || rst === 1'bx) (__expr__));
-`else  // BR_ASSERT_ON
+`else  // BR_ASSERT_CONCURRENT_ON
 `define BR_COVER(__name__, __expr__) \
 `BR_NOOP
-`endif  // BR_ASSERT_ON
+`endif  // BR_ASSERT_CONCURRENT_ON
 
 // Clock: 'clk'
 // Reset: 'rst'
-`ifdef BR_ASSERT_ON
+`ifdef BR_ASSERT_CONCURRENT_ON
 `ifndef BR_ENABLE_FPV // FPV cannot check properties during reset
 `define BR_COVER_INCL_RST(__name__, __expr__) \
 __name__ : cover property (@(posedge clk) disable iff (rst === 1'bx) (__expr__));
@@ -326,22 +340,22 @@ __name__ : cover property (@(posedge clk) disable iff (rst === 1'bx) (__expr__))
 `define BR_COVER_INCL_RST(__name__, __expr__) \
 `BR_NOOP
 `endif  // BR_ENABLE_FPV
-`else  // BR_ASSERT_ON
+`else  // BR_ASSERT_CONCURRENT_ON
 `define BR_COVER_INCL_RST(__name__, __expr__) \
 `BR_NOOP
-`endif  // BR_ASSERT_ON
+`endif  // BR_ASSERT_CONCURRENT_ON
 
 // More expressive form of BR_COVER that allows the use of custom clock and reset signal names.
-`ifdef BR_ASSERT_ON
+`ifdef BR_ASSERT_CONCURRENT_ON
 `define BR_COVER_CR(__name__, __expr__, __clk__, __rst__) \
 __name__ : cover property (@(posedge __clk__) disable iff (__rst__ === 1'b1 || __rst__ === 1'bx) (__expr__));
-`else  // BR_ASSERT_ON
+`else  // BR_ASSERT_CONCURRENT_ON
 `define BR_COVER_CR(__name__, __expr__, __clk__, __rst__) \
 `BR_NOOP
-`endif  // BR_ASSERT_ON
+`endif  // BR_ASSERT_CONCURRENT_ON
 
 // FPV version macros
-`ifdef BR_ASSERT_ON
+`ifdef BR_ASSERT_CONCURRENT_ON
 `ifdef BR_ENABLE_FPV
 `define BR_COVER_FPV(__name__, __expr__) \
 `BR_COVER(__name__, __expr__);
@@ -349,12 +363,12 @@ __name__ : cover property (@(posedge __clk__) disable iff (__rst__ === 1'b1 || _
 `define BR_COVER_FPV(__name__, __expr__) \
 `BR_NOOP
 `endif  // BR_ENABLE_FPV
-`else  // BR_ASSERT_ON
+`else  // BR_ASSERT_CONCURRENT_ON
 `define BR_COVER_FPV(__name__, __expr__) \
 `BR_NOOP
-`endif  // BR_ASSERT_ON
+`endif  // BR_ASSERT_CONCURRENT_ON
 
-`ifdef BR_ASSERT_ON
+`ifdef BR_ASSERT_CONCURRENT_ON
 `ifdef BR_ENABLE_FPV
 `define BR_COVER_CR_FPV(__name__, __expr__, __clk__, __rst__) \
 `BR_COVER_CR(__name__, __expr__, __clk__, __rst__);
@@ -362,10 +376,10 @@ __name__ : cover property (@(posedge __clk__) disable iff (__rst__ === 1'b1 || _
 `define BR_COVER_CR_FPV(__name__, __expr__, __clk__, __rst__) \
 `BR_NOOP
 `endif  // BR_ENABLE_FPV
-`else  // BR_ASSERT_ON
+`else  // BR_ASSERT_CONCURRENT_ON
 `define BR_COVER_CR_FPV(__name__, __expr__, __clk__, __rst__) \
 `BR_NOOP
-`endif  // BR_ASSERT_ON
+`endif  // BR_ASSERT_CONCURRENT_ON
 
 ////////////////////////////////////////////////////////////////////////////////
 // Combinational/immediate cover macros (evaluated continuously based on the expression sensitivity)
@@ -419,25 +433,25 @@ end
 
 // Clock: 'clk'
 // Reset: 'rst'
-`ifdef BR_ASSERT_ON
+`ifdef BR_ASSERT_CONCURRENT_ON
 `define BR_ASSUME(__name__, __expr__) \
 __name__ : assume property (@(posedge clk) disable iff (rst === 1'b1 || rst === 1'bx) (__expr__)) else `BR_ASSERT_ERROR(__name__, __expr__);
-`else  // BR_ASSERT_ON
+`else  // BR_ASSERT_CONCURRENT_ON
 `define BR_ASSUME(__name__, __expr__) \
 `BR_NOOP
-`endif  // BR_ASSERT_ON
+`endif  // BR_ASSERT_CONCURRENT_ON
 
 // More expressive form of BR_ASSUME that allows the use of custom clock and reset signal names.
-`ifdef BR_ASSERT_ON
+`ifdef BR_ASSERT_CONCURRENT_ON
 `define BR_ASSUME_CR(__name__, __expr__, __clk__, __rst__) \
 __name__ : assume property (@(posedge __clk__) disable iff (__rst__ === 1'b1 || __rst__ === 1'bx) (__expr__)) else `BR_ASSERT_ERROR(__name__, __expr__);
-`else  // BR_ASSERT_ON
+`else  // BR_ASSERT_CONCURRENT_ON
 `define BR_ASSUME_CR(__name__, __expr__, __clk__, __rst__) \
 `BR_NOOP
-`endif  // BR_ASSERT_ON
+`endif  // BR_ASSERT_CONCURRENT_ON
 
 // FPV version macros
-`ifdef BR_ASSERT_ON
+`ifdef BR_ASSERT_CONCURRENT_ON
 `ifdef BR_ENABLE_FPV
 `define BR_ASSUME_FPV(__name__, __expr__) \
 `BR_ASSUME(__name__, __expr__);
@@ -445,12 +459,12 @@ __name__ : assume property (@(posedge __clk__) disable iff (__rst__ === 1'b1 || 
 `define BR_ASSUME_FPV(__name__, __expr__) \
 `BR_NOOP
 `endif  // BR_ENABLE_FPV
-`else  // BR_ASSERT_ON
+`else  // BR_ASSERT_CONCURRENT_ON
 `define BR_ASSUME_FPV(__name__, __expr__) \
 `BR_NOOP
-`endif  // BR_ASSERT_ON
+`endif  // BR_ASSERT_CONCURRENT_ON
 
-`ifdef BR_ASSERT_ON
+`ifdef BR_ASSERT_CONCURRENT_ON
 `ifdef BR_ENABLE_FPV
 `define BR_ASSUME_CR_FPV(__name__, __expr__, __clk__, __rst__) \
 `BR_ASSUME_CR(__name__, __expr__, __clk__, __rst__);
@@ -458,10 +472,10 @@ __name__ : assume property (@(posedge __clk__) disable iff (__rst__ === 1'b1 || 
 `define BR_ASSUME_CR_FPV(__name__, __expr__, __clk__, __rst__) \
 `BR_NOOP
 `endif  // BR_ENABLE_FPV
-`else  // BR_ASSERT_ON
+`else  // BR_ASSERT_CONCURRENT_ON
 `define BR_ASSUME_CR_FPV(__name__, __expr__, __clk__, __rst__) \
 `BR_NOOP
-`endif  // BR_ASSERT_ON
+`endif  // BR_ASSERT_CONCURRENT_ON
 
 // verilog_format: on
 // verilog_lint: waive-stop line-length
