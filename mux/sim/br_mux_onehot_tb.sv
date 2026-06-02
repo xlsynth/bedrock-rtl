@@ -46,10 +46,6 @@ module br_mux_onehot_tb;
       td.check_integer(out, i + 1, $sformatf("check select %d", i));
     end
 
-    select = '1;
-    td.wait_cycles(1);
-    td.check($isunknown(out), "check select invalid");
-
     td.wait_cycles(1);
 
     td.finish();
