@@ -21,7 +21,7 @@ jobs:
       - name: Show installed Python packages
         run: python -m pip freeze --local
       - name: Cache pre-commit environments
-        # actions/cache v4.3.0
+        # actions/cache v5.0.5
         uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae
         with:
           path: ~/.cache/pre-commit
