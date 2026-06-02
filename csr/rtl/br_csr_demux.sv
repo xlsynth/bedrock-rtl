@@ -95,22 +95,27 @@ module br_csr_demux #(
     assign downstream_addr_limit[i] = downstream_addr_base[i] + downstream_addr_size[i] - 1'b1;
     assign downstream_addr_range_disabled[i] = downstream_addr_size[i] == '0;
 
-    `BR_ASSERT_INTG(downstream_addr_range_no_overflow_a,
-                    upstream_req_valid |-> downstream_addr_range_disabled[i] ||
-                        downstream_addr_limit[i] >= downstream_addr_base[i])
+    // One-bit addresses permit only disabled or single-entry ranges, making these checks vacuous.
+    if (AddrWidth > 1) begin : gen_multi_bit_addr_range_check
+      `BR_ASSERT_INTG(downstream_addr_range_no_overflow_a,
+                      upstream_req_valid |-> downstream_addr_range_disabled[i] ||
+                          downstream_addr_limit[i] >= downstream_addr_base[i])
 
-    if (RequirePowerOfTwoAlignedRanges[i]) begin : gen_power_of_two_aligned_range_check
-      // Require a power-of-two range size, or zero for a disabled range.
-      `BR_ASSERT_INTG(downstream_addr_size_power_of_two_a,
-                      upstream_req_valid |-> $onehot0(downstream_addr_size[i]))
-      // Require the range base to start at its natural power-of-two boundary.
-      `BR_ASSERT_INTG(downstream_addr_base_aligned_a,
-                      upstream_req_valid |-> downstream_addr_range_disabled[i] ||
-              (downstream_addr_base[i] & (downstream_addr_size[i] - 1'b1)) == '0)
-      // Preserve every in-range offset bit to prevent forwarded address aliasing.
-      `BR_ASSERT_INTG(downstream_addr_mask_preserves_offsets_a,
-                      upstream_req_valid |-> downstream_addr_range_disabled[i] ||
-              ((downstream_addr_size[i] - 1'b1) & ~DownstreamAddrMask[i]) == '0)
+      if (RequirePowerOfTwoAlignedRanges[i]) begin : gen_power_of_two_aligned_range_check
+        // Require a power-of-two range size, or zero for a disabled range.
+        `BR_ASSERT_INTG(downstream_addr_size_power_of_two_a,
+                        upstream_req_valid |-> $onehot0(downstream_addr_size[i]))
+        // Require the range base to start at its natural power-of-two boundary.
+        `BR_ASSERT_INTG(downstream_addr_base_aligned_a,
+                        upstream_req_valid |-> downstream_addr_range_disabled[i] ||
+                (downstream_addr_base[i] & (downstream_addr_size[i] - 1'b1)) == '0)
+        if (DownstreamAddrMask[i] != '1) begin : gen_downstream_addr_mask_check
+          // Preserve every in-range offset bit to prevent forwarded address aliasing.
+          `BR_ASSERT_INTG(downstream_addr_mask_preserves_offsets_a,
+                          upstream_req_valid |-> downstream_addr_range_disabled[i] ||
+                  ((downstream_addr_size[i] - 1'b1) & ~DownstreamAddrMask[i]) == '0)
+        end
+      end
     end
   end
 

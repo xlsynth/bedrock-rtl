@@ -58,7 +58,9 @@ module br_csr_demux_select_onehot #(
   `BR_ASSERT_STATIC(legal_num_downstreams_a, NumDownstreams >= 1)
   `BR_ASSERT_STATIC(legal_addr_width_a, AddrWidth >= 1)
   `BR_ASSERT_STATIC(legal_data_width_a, DataWidth == 32 || DataWidth == 64)
-  `BR_ASSERT_INTG(select_onehot0_a, upstream_req_valid |-> $onehot0(select_onehot))
+  if (NumDownstreams > 1) begin : gen_multi_downstream_check
+    `BR_ASSERT_INTG(select_onehot0_a, upstream_req_valid |-> $onehot0(select_onehot))
+  end
 
   // Implementation
 
