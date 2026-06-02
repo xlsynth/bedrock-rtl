@@ -35,11 +35,9 @@ br_verilog_sim_test_tools_suite(
             "1",
         ],
     },
-    # TODO(mgottscho): Re-enable Verilator once it accepts the dependent
-    # `br_counter_incr` assertions that use `not` in sequence expressions.
     tools = [
         "vcs",
-        #"verilator",
+        "verilator",
     ],
     deps = [":br_csr_axil_widget_tb"],
 )
@@ -115,8 +113,8 @@ br_verilog_sim_test_tools_suite(
             "1",
         ],
     },
-    # TODO(mgottscho): Re-enable Verilator for this suite after fixing the
-    # runtime memory write address mismatch (`Got 8, Expected 16`) seen with
+    # TODO(mgottscho): Enable Verilator once this suite no longer fails due to
+    # the runtime memory write address mismatch (`Got 8, Expected 16`) seen with
     # `RegisterMemOutputs=1` and `RegisterResponseOutputs=0`.
     tools = [
         "vcs",

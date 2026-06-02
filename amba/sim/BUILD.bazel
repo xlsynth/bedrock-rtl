@@ -20,11 +20,9 @@ verilog_elab_test(
 
 br_verilog_sim_test_tools_suite(
     name = "br_amba_axi_isolate_sub_tb_sim_test_tools_suite",
-    # TODO(mgottscho): Re-enable Verilator once it accepts the dependent
-    # assertions that use `not` in sequence expressions.
     tools = [
         "vcs",
-        #"verilator",
+        "verilator",
     ],
     deps = [":br_amba_axi_isolate_sub_tb"],
 )
@@ -45,11 +43,9 @@ verilog_elab_test(
 
 br_verilog_sim_test_tools_suite(
     name = "br_amba_axi_isolate_mgr_tb_sim_test_tools_suite",
-    # TODO(mgottscho): Re-enable Verilator once it accepts the dependent
-    # assertions that use `not` in sequence expressions.
     tools = [
         "vcs",
-        #"verilator",
+        "verilator",
     ],
     deps = [":br_amba_axi_isolate_mgr_tb"],
 )
@@ -70,11 +66,9 @@ verilog_elab_test(
 
 br_verilog_sim_test_tools_suite(
     name = "br_amba_axi_demux_tb_sim_test_tools_suite",
-    # TODO(mgottscho): Re-enable Verilator once it accepts the dependent
-    # assertions that use `not` in sequence expressions.
     tools = [
         "vcs",
-        #"verilator",
+        "verilator",
     ],
     deps = [":br_amba_axi_demux_tb"],
 )
@@ -96,8 +90,8 @@ verilog_elab_test(
 
 br_verilog_sim_test_tools_suite(
     name = "br_amba_axi_shrinker_sim_test_tools_suite",
-    # TODO(mgottscho): Re-enable Verilator once it accepts the dependent
-    # assertions that use `not` in sequence expressions.
+    # TODO(mgottscho): Enable Verilator once it no longer emits generated C++
+    # references to undeclared fork sync objects such as `__Vfork_25__sync`.
     tools = [
         "vcs",
         #"verilator",

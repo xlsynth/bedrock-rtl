@@ -46,8 +46,8 @@ br_verilog_sim_test_tools_suite(
         ],
     },
     # TODO: iverilog does not work
-    # TODO(mgottscho): Re-enable Verilator for this suite after fixing the
-    # `final_allocated_initial_a` runtime assertion seen when
+    # TODO(mgottscho): Enable Verilator once this suite no longer fails due to
+    # `final_allocated_initial_a` and allocation-timeout failures seen when
     # `NumDeallocPorts=1`.
     tools = [
         "vcs",
@@ -93,12 +93,10 @@ br_verilog_sim_test_tools_suite(
             "2",
         ],
     },
-    # TODO(mgottscho): Re-enable Verilator once it accepts the dependent
-    # counter assertions that use `not` in sequence expressions.
     tools = [
         "iverilog",
         "vcs",
-        #"verilator",
+        "verilator",
     ],
     deps = [":br_tracker_linked_list_ctrl_tb"],
 )
@@ -117,12 +115,9 @@ verilog_elab_test(
 
 br_verilog_sim_test_tools_suite(
     name = "br_tracker_reorder_buffer_flops_sim_test_tools_suite",
-    # TODO(mgottscho): Re-enable Verilator once it accepts the dependent
-    # counter, credit, and FIFO assertions that use `not` in sequence
-    # expressions.
     tools = [
         "vcs",
-        #"verilator",
+        "verilator",
     ],
     deps = [":br_tracker_reorder_buffer_flops_tb"],
 )
