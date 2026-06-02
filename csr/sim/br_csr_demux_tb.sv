@@ -28,7 +28,7 @@ module br_csr_demux_tb;
   logic upstream_resp_slverr;
 
   logic [NumDownstreams-1:0][AddrWidth-1:0] downstream_addr_base;
-  logic [NumDownstreams-1:0][AddrWidth-1:0] downstream_addr_limit;
+  logic [NumDownstreams-1:0][AddrWidth-1:0] downstream_addr_size;
 
   logic [NumDownstreams-1:0] downstream_req_valid;
   logic [NumDownstreams-1:0] downstream_req_write;
@@ -72,7 +72,7 @@ module br_csr_demux_tb;
       .upstream_resp_decerr,
       .upstream_resp_slverr,
       .downstream_addr_base,
-      .downstream_addr_limit,
+      .downstream_addr_size,
       .downstream_req_valid,
       .downstream_req_write,
       .downstream_req_addr,
@@ -214,8 +214,8 @@ module br_csr_demux_tb;
 
   initial begin
     for (int i = 0; i < NumDownstreams; i++) begin
-      downstream_addr_base[i]  = i * SizePerDownstream;
-      downstream_addr_limit[i] = (i + 1) * SizePerDownstream - 1;
+      downstream_addr_base[i] = i * SizePerDownstream;
+      downstream_addr_size[i] = SizePerDownstream;
     end
 
     upstream_req_valid = 0;

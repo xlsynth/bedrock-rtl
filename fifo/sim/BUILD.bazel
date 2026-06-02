@@ -55,8 +55,8 @@ br_verilog_sim_test_tools_suite(
         ],
         "FlopRamAddressDepthStages": ["0"],
     },
-    # TODO(mgottscho): Re-enable Verilator once it accepts the dependent
-    # counter assertions that use `not` in sequence expressions.
+    # TODO(mgottscho): Re-enable Verilator after the FIFO Verilator suites have
+    # been fully triaged and this suite is confirmed passing.
     tools = [
         "iverilog",
         "vcs",
@@ -87,8 +87,8 @@ br_verilog_sim_test_tools_suite(
             "3",
         ],
     },
-    # TODO(mgottscho): Re-enable Verilator once it accepts the dependent
-    # counter assertions that use `not` in sequence expressions.
+    # TODO(mgottscho): Re-enable Verilator after the FIFO Verilator suites have
+    # been fully triaged and this suite is confirmed passing.
     tools = [
         "iverilog",
         "vcs",
@@ -137,8 +137,9 @@ br_verilog_sim_test_tools_suite(
             "1",
         ],
     },
-    # TODO(mgottscho): Re-enable Verilator once it accepts the dependent
-    # counter and credit assertions that use `not` in sequence expressions.
+    # TODO(mgottscho): Enable Verilator once this suite no longer fails the
+    # testbench assertion "Cannot push data. FIFO Full." Minimal observed case:
+    # `eb1_frads1_rpo0_rpo0`.
     tools = [
         "iverilog",
         "vcs",
@@ -208,8 +209,8 @@ br_verilog_sim_test_tools_suite(
             "1",
         ],
     },
-    # TODO(mgottscho): Re-enable Verilator once it accepts the dependent
-    # counter assertions that use `not` in sequence expressions.
+    # TODO(mgottscho): Re-enable Verilator after the FIFO Verilator suites have
+    # been fully triaged and this suite is confirmed passing.
     tools = [
         "vcs",
         #"verilator",
@@ -273,8 +274,10 @@ br_verilog_sim_test_tools_suite(
             "1",
         ],
     },
-    # TODO(mgottscho): Re-enable Verilator once it accepts the dependent
-    # counter and credit assertions that use `not` in sequence expressions.
+    # TODO(mgottscho): Enable Verilator once this suite no longer reports wrong
+    # FIFO output data and trips the `br_mux_onehot` select-onehot assertion.
+    # Minimal observed case:
+    # `drads1_d5_nf4_nllpf1_nrp1_nwp1_prads1_rd0_rpo0_sbd1_w8`.
     tools = [
         "vcs",
         #"verilator",
@@ -320,8 +323,8 @@ br_verilog_sim_test_tools_suite(
             "1",
         ],
     },
-    # TODO(mgottscho): Re-enable Verilator once it accepts the dependent
-    # counter assertions that use `not` in sequence expressions.
+    # TODO(mgottscho): Re-enable Verilator after the FIFO Verilator suites have
+    # been fully triaged and this suite is confirmed passing.
     tools = [
         "vcs",
         #"verilator",
@@ -374,8 +377,8 @@ br_verilog_sim_test_tools_suite(
             "1",
         ],
     },
-    # TODO(mgottscho): Re-enable Verilator once it accepts the dependent
-    # counter and credit assertions that use `not` in sequence expressions.
+    # TODO(mgottscho): Re-enable Verilator after the FIFO Verilator suites have
+    # been fully triaged and this suite is confirmed passing.
     tools = [
         "vcs",
         #"verilator",
@@ -437,9 +440,8 @@ br_verilog_sim_test_tools_suite(
             "1",
         ],
     },
-    # TODO(mgottscho): Re-enable Verilator once it accepts the dependent
-    # counter, credit, and FIFO assertions that use `not` in sequence
-    # expressions.
+    # TODO(mgottscho): Re-enable Verilator after the FIFO Verilator suites have
+    # been fully triaged and this suite is confirmed passing.
     tools = [
         "vcs",
         #"verilator",
