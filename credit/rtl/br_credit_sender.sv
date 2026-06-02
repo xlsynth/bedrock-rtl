@@ -256,7 +256,7 @@ module br_credit_sender #(
     assign credit_decr = ChangeWidth'(grant_count);
     assign grant_allowed =
         (credit_available < NumFlows) ? FlowCountWidth'(credit_available) : NumFlows;
-    assign push_ready = either_rst ? '0 : grant;
+    assign push_ready = grant & {NumFlows{!either_rst}};
 
     `BR_UNUSED(credit_decr_ready)  // Only used for assertions
     `BR_ASSERT_IMPL(no_credit_underflow_a, credit_decr_valid |-> credit_decr_ready)
