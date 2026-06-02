@@ -163,12 +163,10 @@ br_verilog_sim_test_tools_suite(
             "3",
         ],
     },
-    # TODO(mgottscho): Enable Verilator once this suite no longer fails due to
-    # the testbench `check select invalid` runtime assertion.
     tools = [
         "iverilog",
         "vcs",
-        #"verilator",
+        "verilator",
     ],
     deps = [":br_mux_onehot_tb"],
 )
