@@ -38,6 +38,9 @@ COMPOSITE_DIRECT_BENCH_PREFIXES = {
     "//flow/rtl:br_flow_join": ("br_flow_join",),
     "//flow/rtl:br_flow_mux_select": ("br_flow_mux_select",),
     "//flow/rtl:br_flow_mux_select_unstable": ("br_flow_mux_select",),
+    "//flow/rtl:br_flow_xbar_fixed": ("br_flow_xbar",),
+    "//flow/rtl:br_flow_xbar_lru": ("br_flow_xbar",),
+    "//flow/rtl:br_flow_xbar_rr": ("br_flow_xbar",),
     "//ram/rtl:br_ram_flops": ("br_ram_flops_1r1w",),
     "//ram/rtl:br_ram_flops_1r1w_mock": ("br_ram_flops_1r1w",),
 }

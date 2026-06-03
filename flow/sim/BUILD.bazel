@@ -787,3 +787,45 @@ br_verilog_sim_test_tools_suite(
     ],
     deps = [":br_flow_serializer_tb"],
 )
+
+verilog_library(
+    name = "br_flow_xbar_tb",
+    srcs = ["br_flow_xbar_tb.sv"],
+    deps = [
+        "//flow/rtl:br_flow_xbar_fixed",
+        "//flow/rtl:br_flow_xbar_lru",
+        "//flow/rtl:br_flow_xbar_rr",
+        "//misc/sim:br_test_driver",
+    ],
+)
+
+verilog_elab_test(
+    name = "br_flow_xbar_tb_elab_test",
+    tool = "verific",
+    deps = [":br_flow_xbar_tb"],
+)
+
+br_verilog_sim_test_tools_suite(
+    name = "br_flow_xbar_sim_test_tools_suite",
+    params = {
+        "NumPopFlows": ["2"],
+        "NumPushFlows": ["3"],
+        "Width": ["8"],
+    },
+    tools = ["vcs"],
+    deps = [":br_flow_xbar_tb"],
+)
+
+br_verilog_sim_test_tools_suite(
+    name = "br_flow_xbar_sim_test_tools_suite_verilator",
+    # See br_flow_arb_sim_test_tools_suite_verilator: this test instantiates
+    # the LRU xbar.
+    elab_opts = ["-Wno-BLKANDNBLK"],
+    params = {
+        "NumPopFlows": ["2"],
+        "NumPushFlows": ["3"],
+        "Width": ["8"],
+    },
+    tools = ["verilator"],
+    deps = [":br_flow_xbar_tb"],
+)
