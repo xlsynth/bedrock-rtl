@@ -117,24 +117,15 @@ jobs:
         echo "total_tests=$TOTAL_TESTS" >> $GITHUB_OUTPUT
         echo "passing_tests=$PASSING_TESTS" >> $GITHUB_OUTPUT
         echo "exit_code=$BAZEL_EXIT_CODE" >> $GITHUB_OUTPUT
-    # Temporarily disable VCS CI until infra issues are resolved.
-    - name: (TEMPORARILY DISABLED) Verilog sim tests (using Synopsys VCS)
+    - name: Verilog sim tests (using Synopsys VCS)
       id: vcs
       # Use --test_output=summary to suppress log output, even on failure (proprietary EDA tool output may be sensitive).
-      #run: |
-      #  set +e
-      #  bazel test $TMP_HACK_BAZEL_CI_FLAGS --noshow_loading_progress --test_output=summary //... --test_tag_filters=vcs 2>&1 | tee .bazel-test-vcs.log
-      #  BAZEL_EXIT_CODE=${PIPESTATUS[0]}
-      #  TOTAL_TESTS=$(grep -Po '(?<=out of )\d+(?= test)' .bazel-test-vcs.log)
-      #  PASSING_TESTS=$(grep -Po '\d+(?= test passes?\.| tests pass)' .bazel-test-vcs.log)
-      #  echo "total_tests=$TOTAL_TESTS" >> $GITHUB_OUTPUT
-      #  echo "passing_tests=$PASSING_TESTS" >> $GITHUB_OUTPUT
-      #  echo "exit_code=$BAZEL_EXIT_CODE" >> $GITHUB_OUTPUT
       run: |
         set +e
-        TOTAL_TESTS=0
-        PASSING_TESTS=0
-        BAZEL_EXIT_CODE=0
+        bazel test $TMP_HACK_BAZEL_CI_FLAGS --noshow_loading_progress --test_output=summary //... --test_tag_filters=vcs 2>&1 | tee .bazel-test-vcs.log
+        BAZEL_EXIT_CODE=${PIPESTATUS[0]}
+        TOTAL_TESTS=$(grep -Po '(?<=out of )\d+(?= test)' .bazel-test-vcs.log)
+        PASSING_TESTS=$(grep -Po '\d+(?= test passes?\.| tests pass)' .bazel-test-vcs.log)
         echo "total_tests=$TOTAL_TESTS" >> $GITHUB_OUTPUT
         echo "passing_tests=$PASSING_TESTS" >> $GITHUB_OUTPUT
         echo "exit_code=$BAZEL_EXIT_CODE" >> $GITHUB_OUTPUT
