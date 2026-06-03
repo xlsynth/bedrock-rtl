@@ -360,3 +360,92 @@ br_verilog_sim_test_tools_suite(
     ],
     deps = [":br_flow_buffer_tb"],
 )
+
+verilog_library(
+    name = "br_flow_arb_tb",
+    srcs = ["br_flow_arb_tb.sv"],
+    deps = [
+        "//flow/rtl:br_flow_arb_fixed",
+        "//flow/rtl:br_flow_arb_lru",
+        "//flow/rtl:br_flow_arb_rr",
+        "//misc/sim:br_test_driver",
+    ],
+)
+
+verilog_elab_test(
+    name = "br_flow_arb_tb_elab_test",
+    tool = "verific",
+    deps = [":br_flow_arb_tb"],
+)
+
+br_verilog_sim_test_tools_suite(
+    name = "br_flow_arb_sim_test_tools_suite",
+    params = {
+        "NumFlows": ["3"],
+    },
+    tools = ["vcs"],
+    deps = [":br_flow_arb_tb"],
+)
+
+br_verilog_sim_test_tools_suite(
+    name = "br_flow_arb_sim_test_tools_suite_verilator",
+    # LRU flow variants instantiate br_arb_lru_internal, which registers only
+    # the upper triangular state matrix and ties off unused lower/diagonal bits.
+    # Verilator reports the whole packed array as mixed blocking/nonblocking,
+    # even though the driven bits are disjoint.
+    elab_opts = ["-Wno-BLKANDNBLK"],
+    params = {
+        "NumFlows": ["3"],
+    },
+    tools = ["verilator"],
+    deps = [":br_flow_arb_tb"],
+)
+
+verilog_library(
+    name = "br_flow_mux_tb",
+    srcs = ["br_flow_mux_tb.sv"],
+    deps = [
+        "//flow/rtl:br_flow_burst_mux_fixed",
+        "//flow/rtl:br_flow_burst_mux_fixed_stable",
+        "//flow/rtl:br_flow_burst_mux_lru",
+        "//flow/rtl:br_flow_burst_mux_lru_stable",
+        "//flow/rtl:br_flow_burst_mux_rr",
+        "//flow/rtl:br_flow_burst_mux_rr_stable",
+        "//flow/rtl:br_flow_mux_fixed",
+        "//flow/rtl:br_flow_mux_fixed_stable",
+        "//flow/rtl:br_flow_mux_lru",
+        "//flow/rtl:br_flow_mux_lru_stable",
+        "//flow/rtl:br_flow_mux_rr",
+        "//flow/rtl:br_flow_mux_rr_stable",
+        "//misc/sim:br_test_driver",
+    ],
+)
+
+verilog_elab_test(
+    name = "br_flow_mux_tb_elab_test",
+    tool = "verific",
+    deps = [":br_flow_mux_tb"],
+)
+
+br_verilog_sim_test_tools_suite(
+    name = "br_flow_mux_sim_test_tools_suite",
+    params = {
+        "NumFlows": ["3"],
+        "Width": ["8"],
+    },
+    tools = ["vcs"],
+    deps = [":br_flow_mux_tb"],
+)
+
+br_verilog_sim_test_tools_suite(
+    name = "br_flow_mux_sim_test_tools_suite_verilator",
+    # See br_flow_arb_sim_test_tools_suite_verilator: these tests instantiate
+    # LRU arbitration through mux and burst-mux variants.
+    elab_opts = ["-Wno-BLKANDNBLK"],
+    params = {
+        "NumFlows": ["3"],
+        "Width": ["8"],
+    },
+    tools = ["verilator"],
+    deps = [":br_flow_mux_tb"],
+)
