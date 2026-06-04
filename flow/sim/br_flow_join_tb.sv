@@ -2,8 +2,8 @@
 
 // Bedrock-RTL Flow Join Testbench
 //
-// Test plan: check the all-valid transfer case and verify that a missing push
-// prevents a pop transfer while allowing that push to make progress.
+// Test plan: sweep every push-valid combination with and without downstream
+// readiness and verify the corresponding joined flow control.
 
 module br_flow_join_tb;
   parameter int NumFlows = 3;
@@ -32,28 +32,43 @@ module br_flow_join_tb;
       .rst
   );
 
+  function automatic logic [NumFlows-1:0] expected_push_ready(input logic [NumFlows-1:0] valid,
+                                                              input logic ready);
+    logic [NumFlows-1:0] result;
+    for (int i = 0; i < NumFlows; i++) begin
+      result[i] = ready;
+      for (int j = 0; j < NumFlows; j++) begin
+        if (i != j) begin
+          result[i] &= valid[j];
+        end
+      end
+    end
+    return result;
+  endfunction
+
+  task automatic check_pattern(input logic [NumFlows-1:0] valid, input logic ready);
+    @(negedge clk);
+    push_valid = valid;
+    pop_ready  = ready;
+    #1;
+    td.check(pop_valid === &valid, "join pop_valid mismatch");
+    td.check(push_ready === expected_push_ready(valid, ready), "join push_ready mismatch");
+    push_valid = '0;
+    pop_ready  = 1'b0;
+  endtask
+
   initial begin
     push_valid = '0;
-    pop_ready  = 1'b1;
+    pop_ready  = 1'b0;
 
     td.reset_dut();
 
-    push_valid = '1;
-    #1;
-    td.check(pop_valid, "join should be valid when all pushes are valid");
-    td.check(push_ready == '1, "join should ready all pushes when pop is ready");
-
-    push_valid[1] = 1'b0;
-    #1;
-    td.check(!pop_valid, "join should not be valid with a missing push");
-    td.check(push_ready == NumFlows'(1 << 1), "join should only ready the missing push");
-
-    push_valid = '1;
-    @(posedge clk);
-    #1;
-    push_valid = '0;
+    for (int valid = 0; valid < (1 << NumFlows); valid++) begin
+      check_pattern(NumFlows'(valid), 1'b0);
+      check_pattern(NumFlows'(valid), 1'b1);
+    end
 
     td.finish();
   end
 
-endmodule
+endmodule : br_flow_join_tb

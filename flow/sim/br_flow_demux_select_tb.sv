@@ -2,14 +2,14 @@
 
 // Bedrock-RTL Flow Demux With Select Testbench
 //
-// Test plan: route one input through a selected registered output and verify
-// ready, valid, data, and drain behavior.
+// Test plan: route one input through every selected registered output and
+// verify ready, valid, data, one-cycle latency, and drain behavior.
 
 module br_flow_demux_select_tb;
   parameter int NumFlows = 3;
   parameter int Width = 8;
 
-  localparam int SelectWidth = $clog2(NumFlows);
+  localparam int SelectWidth = (NumFlows > 1) ? $clog2(NumFlows) : 1;
 
   logic clk;
   logic rst;
@@ -42,6 +42,28 @@ module br_flow_demux_select_tb;
       .rst
   );
 
+  task automatic check_route(input int route);
+    @(negedge clk);
+    select = SelectWidth'(route);
+    push_valid = 1'b1;
+    push_data = Width'(route + 8'h60);
+    #1;
+    td.check(push_ready, "demux-select should be ready when selected pop is ready");
+    td.check(pop_valid == '0, "demux-select should add one cycle of latency");
+
+    @(posedge clk);
+    #1;
+    td.check(pop_valid == NumFlows'(1 << route), "demux-select valid route mismatch");
+    td.check(pop_data[route] == Width'(route + 8'h60), "demux-select data mismatch");
+
+    @(negedge clk);
+    push_valid = 1'b0;
+    push_data  = '0;
+    @(posedge clk);
+    #1;
+    td.check(pop_valid == '0, "demux-select should drain after the transfer");
+  endtask
+
   initial begin
     select = '0;
     push_valid = 1'b0;
@@ -50,23 +72,11 @@ module br_flow_demux_select_tb;
 
     td.reset_dut();
 
-    select = SelectWidth'(1);
-    push_valid = 1'b1;
-    push_data = Width'(8'h66);
-    #1;
-    td.check(push_ready, "demux-select should be ready when selected pop is ready");
-
-    @(posedge clk);
-    #1;
-    td.check(pop_valid == NumFlows'(1 << 1), "demux-select valid route mismatch");
-    td.check(pop_data[1] == Width'(8'h66), "demux-select data mismatch");
-
-    push_valid = 1'b0;
-    @(posedge clk);
-    #1;
-    td.check(pop_valid == '0, "demux-select should drain after the transfer");
+    for (int route = 0; route < NumFlows; route++) begin
+      check_route(route);
+    end
 
     td.finish();
   end
 
-endmodule
+endmodule : br_flow_demux_select_tb

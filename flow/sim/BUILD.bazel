@@ -143,47 +143,32 @@ _FLOW_SELECT_SIM_PARAMS = {
 }
 
 verilog_library(
-    name = "br_flow_fork_tb",
-    srcs = ["br_flow_fork_tb.sv"],
+    name = "br_flow_fork_select_tb",
+    srcs = ["br_flow_fork_select_tb.sv"],
     deps = [
         "//flow/rtl:br_flow_fork",
-        "//misc/sim:br_test_driver",
-    ],
-)
-
-verilog_elab_test(
-    name = "br_flow_fork_tb_elab_test",
-    tool = "verific",
-    deps = [":br_flow_fork_tb"],
-)
-
-br_verilog_sim_test_tools_suite(
-    name = "br_flow_fork_sim_test_tools_suite",
-    params = _FLOW_NUM_FLOWS_SIM_PARAMS,
-    tools = _FLOW_PRIMITIVE_SIM_TOOLS,
-    deps = [":br_flow_fork_tb"],
-)
-
-verilog_library(
-    name = "br_flow_fork_select_multihot_tb",
-    srcs = ["br_flow_fork_select_multihot_tb.sv"],
-    deps = [
         "//flow/rtl:br_flow_fork_select_multihot",
         "//misc/sim:br_test_driver",
     ],
 )
 
 verilog_elab_test(
-    name = "br_flow_fork_select_multihot_tb_elab_test",
+    name = "br_flow_fork_select_tb_elab_test",
     tool = "verific",
-    deps = [":br_flow_fork_select_multihot_tb"],
+    deps = [":br_flow_fork_select_tb"],
 )
 
 br_verilog_sim_test_tools_suite(
-    name = "br_flow_fork_select_multihot_sim_test_tools_suite",
-    params = _FLOW_NUM_FLOWS_SIM_PARAMS,
+    name = "br_flow_fork_select_sim_test_tools_suite",
+    params = {
+        "NumFlows": ["3"],
+        "UseSelectMultihot": [
+            "0",
+            "1",
+        ],
+    },
     tools = _FLOW_PRIMITIVE_SIM_TOOLS,
-    deps = [":br_flow_fork_select_multihot_tb"],
+    deps = [":br_flow_fork_select_tb"],
 )
 
 verilog_library(

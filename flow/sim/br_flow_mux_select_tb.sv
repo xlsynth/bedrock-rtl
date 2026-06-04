@@ -2,14 +2,14 @@
 
 // Bedrock-RTL Flow Mux With Select Testbench
 //
-// Test plan: route one selected input through the registered output and verify
-// ready, valid, data, and drain behavior.
+// Test plan: route every selected input through the registered output and
+// verify ready, valid, data, one-cycle latency, and drain behavior.
 
 module br_flow_mux_select_tb;
   parameter int NumFlows = 3;
   parameter int Width = 8;
 
-  localparam int SelectWidth = $clog2(NumFlows);
+  localparam int SelectWidth = (NumFlows > 1) ? $clog2(NumFlows) : 1;
 
   logic clk;
   logic rst;
@@ -42,6 +42,28 @@ module br_flow_mux_select_tb;
       .rst
   );
 
+  task automatic check_route(input int route);
+    @(negedge clk);
+    select = SelectWidth'(route);
+    push_valid[route] = 1'b1;
+    push_data[route] = Width'(route + 8'ha0);
+    #1;
+    td.check(push_ready == NumFlows'(1 << route), "mux-select ready should target selected flow");
+    td.check(!pop_valid, "mux-select should add one cycle of latency");
+
+    @(posedge clk);
+    #1;
+    td.check(pop_valid, "mux-select should register pop valid");
+    td.check(pop_data == Width'(route + 8'ha0), "mux-select data mismatch");
+
+    @(negedge clk);
+    push_valid = '0;
+    push_data  = '0;
+    @(posedge clk);
+    #1;
+    td.check(!pop_valid, "mux-select should drain after the transfer");
+  endtask
+
   initial begin
     select = '0;
     push_valid = '0;
@@ -50,22 +72,11 @@ module br_flow_mux_select_tb;
 
     td.reset_dut();
 
-    push_valid[0] = 1'b1;
-    push_data[0]  = Width'(8'ha0);
-    #1;
-    td.check(push_ready == NumFlows'(1), "mux-select ready should target selected flow");
-
-    @(posedge clk);
-    #1;
-    td.check(pop_valid, "mux-select should register pop valid");
-    td.check(pop_data == Width'(8'ha0), "mux-select data mismatch");
-
-    push_valid = '0;
-    @(posedge clk);
-    #1;
-    td.check(!pop_valid, "mux-select should drain after the transfer");
+    for (int route = 0; route < NumFlows; route++) begin
+      check_route(route);
+    end
 
     td.finish();
   end
 
-endmodule
+endmodule : br_flow_mux_select_tb
