@@ -291,11 +291,11 @@ The verification-artifact column reports repository evidence, not a promise that
 
 | `br_demux_bin`
 | Routes input data to one output selected by a binary index.
-| Elab/lint.
+| Elab/lint, Sim
 
 | `br_demux_onehot`
 | Routes input data to outputs selected by a one-hot mask.
-| Elab/lint.
+| Elab/lint, Sim
 
 |===
 
