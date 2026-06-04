@@ -1,9 +1,13 @@
 // SPDX-License-Identifier: Apache-2.0
 
+//
+// Bedrock-RTL-Eval One-Hot and Binary Select Demultiplexer Testbench
+
 module br_demux_tb;
 
   parameter int NumSymbolsOut = 2;
   parameter int SymbolWidth = 8;
+  parameter int DRAIN_TIME_CYCLES = 10;  // Time to observe all results in ns
 
   localparam int SelectWidth = br_math::clamped_clog2(NumSymbolsOut);
 
@@ -49,20 +53,10 @@ module br_demux_tb;
       .rst
   );
 
-  function automatic logic [SymbolWidth-1:0] data_pattern(input int seed);
-    logic [SymbolWidth-1:0] pattern;
-
-    for (int i = 0; i < SymbolWidth; i++) begin
-      pattern[i] = ((seed + i) % 3) == 0;
-    end
-    return pattern;
-  endfunction
-
   task automatic check_replicated_data(input string test_name);
     for (int i = 0; i < NumSymbolsOut; i++) begin
       td.check(bin_out[i] === in, $sformatf("%s: bin out[%0d] data mismatch", test_name, i));
-      td.check(onehot_out[i] === in,
-               $sformatf("%s: onehot out[%0d] data mismatch", test_name, i));
+      td.check(onehot_out[i] === in, $sformatf("%s: onehot out[%0d] data mismatch", test_name, i));
     end
   endtask
 
@@ -72,8 +66,8 @@ module br_demux_tb;
 
   task automatic check_onehot(input logic [NumSymbolsOut-1:0] expected_valid,
                               input string test_name);
-    td.check(onehot_out_valid === expected_valid,
-             $sformatf("%s: onehot valid mismatch", test_name));
+    td.check(onehot_out_valid === expected_valid, $sformatf("%s: onehot valid mismatch", test_name
+             ));
   endtask
 
   initial begin
@@ -91,6 +85,7 @@ module br_demux_tb;
     check_onehot('0, "reset idle");
     check_replicated_data("reset idle");
 
+    // Input data is invalid
     in = '1;
     in_valid = 1'b0;
     for (int select_idx = 0; select_idx < NumSymbolsOut; select_idx++) begin
@@ -103,9 +98,11 @@ module br_demux_tb;
       check_replicated_data($sformatf("invalid select %0d", select_idx));
     end
 
+    // Valid input data and test both demultiplexers
     in_valid = 1'b1;
     for (int select_idx = 0; select_idx < NumSymbolsOut; select_idx++) begin
-      in = data_pattern(select_idx);
+      in = SymbolWidth'($urandom_range(0, (2 ** SymbolWidth) - 1));
+
       expected_valid = '0;
       expected_valid[select_idx] = 1'b1;
 
@@ -118,6 +115,7 @@ module br_demux_tb;
       check_replicated_data($sformatf("valid select %0d", select_idx));
     end
 
+    // Test only the binary select demultiplexer
     onehot_select = '0;
     in = '0;
     td.wait_cycles(1);
@@ -127,7 +125,7 @@ module br_demux_tb;
     in_valid = 1'b0;
     td.wait_cycles(1);
 
-    td.finish();
+    td.finish(DRAIN_TIME_CYCLES);
   end
 
 endmodule : br_demux_tb
