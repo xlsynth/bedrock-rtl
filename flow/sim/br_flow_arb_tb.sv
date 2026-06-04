@@ -4,8 +4,8 @@
 //
 // Test plan: apply simultaneous stable requests to the fixed, round-robin, and
 // LRU flow arbiters with the pop side ready. The test checks fixed-priority
-// service, RR/LRU rotation after accepted grants, onehot ready behavior, and
-// orderly drain of backpressured requesters without violating ready/valid stability.
+// service, RR/LRU rotation after accepted grants, priority hold under downstream
+// backpressure, onehot ready behavior, and orderly drain of requesters.
 
 module br_flow_arb_tb;
   parameter int NumFlows = 3;
@@ -88,19 +88,54 @@ module br_flow_arb_tb;
 
     @(posedge clk);
     #1;
+    check_accept(fixed_push_ready, push_valid, 3'b001, "fixed should retain priority");
+    check_accept(rr_push_ready, push_valid, 3'b010, "rr should rotate to second requester");
+    check_accept(lru_push_ready, push_valid, 3'b010, "lru should rotate to second requester");
+
+    @(negedge clk);
+    pop_ready = 1'b0;
+    #1;
+    check_ready(fixed_push_ready, '0, "fixed should stall under downstream backpressure");
+    check_ready(rr_push_ready, '0, "rr should stall under downstream backpressure");
+    check_ready(lru_push_ready, '0, "lru should stall under downstream backpressure");
+    td.check(fixed_pop_valid_unstable && rr_pop_valid_unstable && lru_pop_valid_unstable,
+             "all arbiters should retain pop_valid while stalled");
+
+    @(posedge clk);
+    #1;
+    pop_ready = 1'b1;
+    #1;
+    check_accept(fixed_push_ready, push_valid, 3'b001, "fixed should retain stalled priority");
+    check_accept(rr_push_ready, push_valid, 3'b010, "rr should retain stalled priority");
+    check_accept(lru_push_ready, push_valid, 3'b010, "lru should retain stalled priority");
+
+    @(posedge clk);
+    #1;
+    check_accept(fixed_push_ready, push_valid, 3'b001, "fixed should retain priority again");
+    check_accept(rr_push_ready, push_valid, 3'b100, "rr should rotate to third requester");
+    check_accept(lru_push_ready, push_valid, 3'b100, "lru should rotate to third requester");
+
+    @(posedge clk);
+    #1;
+    check_accept(fixed_push_ready, push_valid, 3'b001, "fixed should continue retaining priority");
+    check_accept(rr_push_ready, push_valid, 3'b001, "rr should rotate back to first requester");
+    check_accept(lru_push_ready, push_valid, 3'b001, "lru should rotate back to first requester");
+
+    @(posedge clk);
+    #1;
     push_valid[0] = 1'b0;
     #1;
-    check_accept(fixed_push_ready, push_valid, 3'b010, "fixed second grant");
-    check_accept(rr_push_ready, push_valid, 3'b010, "rr second grant");
-    check_accept(lru_push_ready, push_valid, 3'b010, "lru second grant");
+    check_accept(fixed_push_ready, push_valid, 3'b010, "fixed drain second grant");
+    check_accept(rr_push_ready, push_valid, 3'b010, "rr drain second grant");
+    check_accept(lru_push_ready, push_valid, 3'b010, "lru drain second grant");
 
     @(posedge clk);
     #1;
     push_valid[1] = 1'b0;
     #1;
-    check_accept(fixed_push_ready, push_valid, 3'b100, "fixed third grant");
-    check_accept(rr_push_ready, push_valid, 3'b100, "rr third grant");
-    check_accept(lru_push_ready, push_valid, 3'b100, "lru third grant");
+    check_accept(fixed_push_ready, push_valid, 3'b100, "fixed drain third grant");
+    check_accept(rr_push_ready, push_valid, 3'b100, "rr drain third grant");
+    check_accept(lru_push_ready, push_valid, 3'b100, "lru drain third grant");
 
     @(posedge clk);
     #1;
