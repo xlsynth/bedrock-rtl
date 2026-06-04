@@ -4,7 +4,8 @@
 //
 // Test plan: check serializer ordering for full and shortened last push flits,
 // then check deserializer reconstruction for a full pop flit and an early-last
-// partial pop flit. The suite sweeps most-significant-first and least-significant-
+// partial pop flit. Stall each direction once to check state hold under
+// backpressure. The suite sweeps most-significant-first and least-significant-
 // first ordering so both slice directions and last-dont-care accounting are covered.
 
 module br_flow_serializer_tb;
@@ -114,13 +115,24 @@ module br_flow_serializer_tb;
 
   task automatic send_serializer_word(input logic [PushWidth-1:0] data, input logic last,
                                       input logic [FlitIdWidth-1:0] dont_care_count,
-                                      input int expected_flits);
+                                      input int expected_flits, input logic stall_second_flit);
     ser_push_valid = 1'b1;
     ser_push_data = data;
     ser_push_last = last;
     ser_push_last_dont_care_count = dont_care_count;
 
     for (int flit = 0; flit < expected_flits; flit++) begin
+      if (stall_second_flit && flit == 1) begin
+        ser_pop_ready = 1'b0;
+        #1;
+        td.check(ser_pop_valid, "serializer should retain pop_valid while stalled");
+        check_flit(ser_pop_data, slice(data, flit), "serializer stalled pop_data");
+        td.check(!ser_push_ready, "serializer should not complete while stalled");
+        @(posedge clk);
+        #1;
+        check_flit(ser_pop_data, slice(data, flit), "serializer stalled pop_data hold");
+        ser_pop_ready = 1'b1;
+      end
       #1;
       td.check(ser_pop_valid, "serializer pop_valid should be asserted");
       check_flit(ser_pop_data, slice(data, flit), "serializer pop_data");
@@ -138,6 +150,16 @@ module br_flow_serializer_tb;
     ser_push_last = 1'b0;
     ser_push_last_dont_care_count = '0;
     @(negedge clk);
+  endtask
+
+  task automatic check_partial_packet(input logic [PushWidth-1:0] expected,
+                                      input int expected_flits);
+    int slice_id;
+    for (int flit = 0; flit < expected_flits; flit++) begin
+      slice_id = SerializeMostSignificantFirst ? (Ratio - 1 - flit) : flit;
+      check_flit(deser_pop_data[(slice_id*PopWidth)+:PopWidth], slice(expected, flit),
+                 "deserializer partial pop_data");
+    end
   endtask
 
   task automatic send_deserializer_flit(input logic [PopWidth-1:0] data, input logic last,
@@ -165,8 +187,8 @@ module br_flow_serializer_tb;
 
     td.reset_dut();
 
-    send_serializer_word(16'habcd, 1'b0, '0, 4);
-    send_serializer_word(16'h1234, 1'b1, 2'd1, 3);
+    send_serializer_word(16'habcd, 1'b0, '0, 4, 1'b1);
+    send_serializer_word(16'h1234, 1'b1, 2'd1, 3, 1'b0);
 
     send_deserializer_flit(slice(16'habcd, 0), 1'b0, 3'h2);
     @(posedge clk);
@@ -192,12 +214,26 @@ module br_flow_serializer_tb;
     send_deserializer_flit(slice(16'h1234, 1), 1'b0, 3'h6);
     @(posedge clk);
     #1;
-    send_deserializer_flit(slice(16'h1234, 2), 1'b1, 3'h6);
+    deser_pop_ready = 1'b0;
+    deser_push_valid = 1'b1;
+    deser_push_data = slice(16'h1234, 2);
+    deser_push_last = 1'b1;
+    deser_push_metadata = 3'h6;
     #1;
     td.check(deser_pop_valid, "deserializer partial pop_valid");
     td.check(deser_pop_last, "deserializer partial pop_last");
     td.check(deser_pop_last_dont_care_count == 2'd1, "deserializer dont-care count");
     td.check(deser_pop_metadata == 3'h6, "deserializer partial metadata");
+    td.check(!deser_push_ready, "deserializer should stall completed output");
+    check_partial_packet(16'h1234, 3);
+    @(posedge clk);
+    #1;
+    td.check(deser_pop_valid, "deserializer should retain partial pop_valid while stalled");
+    td.check(deser_pop_last, "deserializer should retain partial pop_last while stalled");
+    check_partial_packet(16'h1234, 3);
+    deser_pop_ready = 1'b1;
+    #1;
+    td.check(deser_push_ready, "deserializer should complete when output stall clears");
     @(posedge clk);
     #1;
 
