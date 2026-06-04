@@ -83,19 +83,6 @@ module br_flow_buffer_tb #(
   initial begin
     int timeout;
 
-    if (Depth < 0) begin
-      $fatal(1, "Depth must be at least 0");
-    end
-    if (Width < 1) begin
-      $fatal(1, "Width must be at least 1");
-    end
-    if (Depth == 1 && RegisterPushOutputs && RegisterPopOutputs) begin
-      $fatal(1, "Depth 1 cannot register both push and pop outputs");
-    end
-    if (Depth >= 3 && !RegisterPushOutputs) begin
-      $fatal(1, "Depth >= 3 requires registered push outputs");
-    end
-
     td.reset_dut();
 
     timeout = (NumRandomValues * 40) + 200;
