@@ -755,3 +755,35 @@ br_verilog_sim_test_tools_suite(
     tools = ["verilator"],
     deps = [":br_flow_burst_mux_lru_stable_tb"],
 )
+
+verilog_library(
+    name = "br_flow_serializer_tb",
+    srcs = ["br_flow_serializer_tb.sv"],
+    deps = [
+        "//flow/rtl:br_flow_deserializer",
+        "//flow/rtl:br_flow_serializer",
+        "//misc/sim:br_test_driver",
+    ],
+)
+
+verilog_elab_test(
+    name = "br_flow_serializer_tb_elab_test",
+    tool = "verific",
+    deps = [":br_flow_serializer_tb"],
+)
+
+br_verilog_sim_test_tools_suite(
+    name = "br_flow_serializer_sim_test_tools_suite",
+    params = {
+        "SerializeMostSignificantFirst": [
+            "0",
+            "1",
+        ],
+    },
+    tools = [
+        "iverilog",
+        "vcs",
+        "verilator",
+    ],
+    deps = [":br_flow_serializer_tb"],
+)
