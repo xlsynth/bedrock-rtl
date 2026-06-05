@@ -379,8 +379,35 @@ verilog_elab_test(
 )
 
 br_verilog_sim_test_tools_suite(
-    name = "br_flow_arb_sim_test_tools_suite",
+    name = "br_flow_arb_fixed_sim_test_tools_suite",
     params = {
+        "ArbVariant": ["0"],
+        "NumFlows": ["3"],
+    },
+    tools = [
+        "vcs",
+        "verilator",
+    ],
+    deps = [":br_flow_arb_tb"],
+)
+
+br_verilog_sim_test_tools_suite(
+    name = "br_flow_arb_rr_sim_test_tools_suite",
+    params = {
+        "ArbVariant": ["1"],
+        "NumFlows": ["3"],
+    },
+    tools = [
+        "vcs",
+        "verilator",
+    ],
+    deps = [":br_flow_arb_tb"],
+)
+
+br_verilog_sim_test_tools_suite(
+    name = "br_flow_arb_lru_sim_test_tools_suite",
+    params = {
+        "ArbVariant": ["2"],
         "NumFlows": ["3"],
     },
     tools = ["vcs"],
@@ -388,13 +415,14 @@ br_verilog_sim_test_tools_suite(
 )
 
 br_verilog_sim_test_tools_suite(
-    name = "br_flow_arb_sim_test_tools_suite_verilator",
+    name = "br_flow_arb_lru_sim_test_tools_suite_verilator",
     # LRU flow variants instantiate br_arb_lru_internal, which registers only
     # the upper triangular state matrix and ties off unused lower/diagonal bits.
     # Verilator reports the whole packed array as mixed blocking/nonblocking,
     # even though the driven bits are disjoint.
     elab_opts = ["-Wno-BLKANDNBLK"],
     params = {
+        "ArbVariant": ["2"],
         "NumFlows": ["3"],
     },
     tools = ["verilator"],
@@ -439,7 +467,7 @@ br_verilog_sim_test_tools_suite(
 
 br_verilog_sim_test_tools_suite(
     name = "br_flow_mux_sim_test_tools_suite_verilator",
-    # See br_flow_arb_sim_test_tools_suite_verilator: these tests instantiate
+    # See br_flow_arb_lru_sim_test_tools_suite_verilator: these tests instantiate
     # LRU arbitration through mux and burst-mux variants.
     elab_opts = ["-Wno-BLKANDNBLK"],
     params = {
