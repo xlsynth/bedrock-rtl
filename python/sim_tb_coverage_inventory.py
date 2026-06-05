@@ -32,6 +32,7 @@ COMPOSITE_DIRECT_BENCH_PREFIXES = {
     "//flow/rtl:br_flow_buffer": ("br_flow_buffer_depth_",),
     "//flow/rtl:br_flow_demux_select": ("br_flow_demux_select",),
     "//flow/rtl:br_flow_demux_select_unstable": ("br_flow_demux_select",),
+    "//flow/rtl:br_flow_deserializer": ("br_flow_serializer",),
     "//flow/rtl:br_flow_fork": ("br_flow_fork",),
     "//flow/rtl:br_flow_fork_select_multihot": ("br_flow_fork_select",),
     "//flow/rtl:br_flow_join": ("br_flow_join",),
