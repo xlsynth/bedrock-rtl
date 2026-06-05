@@ -807,25 +807,15 @@ verilog_elab_test(
 
 br_verilog_sim_test_tools_suite(
     name = "br_flow_xbar_sim_test_tools_suite",
-    params = {
-        "NumPopFlows": ["2"],
-        "NumPushFlows": ["3"],
-        "Width": ["8"],
-    },
     tools = ["vcs"],
     deps = [":br_flow_xbar_tb"],
 )
 
 br_verilog_sim_test_tools_suite(
     name = "br_flow_xbar_sim_test_tools_suite_verilator",
-    # See br_flow_arb_sim_test_tools_suite_verilator: this test instantiates
-    # the LRU xbar.
+    # See br_flow_arb_lru_sim_test_tools_suite_verilator: this test instantiates
+    # LRU arbitration through the xbar.
     elab_opts = ["-Wno-BLKANDNBLK"],
-    params = {
-        "NumPopFlows": ["2"],
-        "NumPushFlows": ["3"],
-        "Width": ["8"],
-    },
     tools = ["verilator"],
     deps = [":br_flow_xbar_tb"],
 )

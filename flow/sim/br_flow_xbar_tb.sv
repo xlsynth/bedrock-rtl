@@ -8,9 +8,9 @@
 // orderly drain of colliding requesters.
 
 module br_flow_xbar_tb;
-  parameter int NumPushFlows = 3;
-  parameter int NumPopFlows = 2;
-  parameter int Width = 8;
+  localparam int NumPushFlows = 3;
+  localparam int NumPopFlows = 2;
+  localparam int Width = 8;
 
   localparam int DestIdWidth = $clog2(NumPopFlows);
 
