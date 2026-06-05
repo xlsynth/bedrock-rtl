@@ -2,9 +2,15 @@
 
 load("@rules_hdl//verilog:providers.bzl", "verilog_library")
 load("//bazel:br_verilog.bzl", "br_verilog_sim_test_tools_suite")
-load("//bazel:verilog.bzl", "verilog_elab_test")
+load("//bazel:verilog.bzl", "verilog_elab_test", "verilog_sim_test")
 
 package(default_visibility = ["//visibility:public"])
+
+_BEDROCK_SIM_DEFINES = [
+    "BR_ASSERT_ON",
+    "BR_ENABLE_IMPL_CHECKS",
+    "SIMULATION",
+]
 
 verilog_library(
     name = "br_flow_test_driver",
@@ -424,18 +430,20 @@ verilog_elab_test(
     deps = [":br_flow_arb_lru_tb"],
 )
 
-br_verilog_sim_test_tools_suite(
-    name = "br_flow_arb_lru_sim_test_tools_suite",
-    tools = ["vcs"],
+verilog_sim_test(
+    name = "br_flow_arb_lru_vcs_sim_test",
+    defines = _BEDROCK_SIM_DEFINES,
+    tool = "vcs",
     deps = [":br_flow_arb_lru_tb"],
 )
 
-br_verilog_sim_test_tools_suite(
-    name = "br_flow_arb_lru_sim_test_tools_suite_verilator",
+verilog_sim_test(
+    name = "br_flow_arb_lru_verilator_sim_test",
     # br_arb_lru_internal drives disjoint regions of a packed state matrix with
     # blocking and nonblocking assignments, which Verilator reports globally.
+    defines = _BEDROCK_SIM_DEFINES,
     elab_opts = ["-Wno-BLKANDNBLK"],
-    tools = ["verilator"],
+    tool = "verilator",
     deps = [":br_flow_arb_lru_tb"],
 )
 
@@ -502,16 +510,18 @@ verilog_elab_test(
     deps = [":br_flow_mux_lru_tb"],
 )
 
-br_verilog_sim_test_tools_suite(
-    name = "br_flow_mux_lru_sim_test_tools_suite",
-    tools = ["vcs"],
+verilog_sim_test(
+    name = "br_flow_mux_lru_vcs_sim_test",
+    defines = _BEDROCK_SIM_DEFINES,
+    tool = "vcs",
     deps = [":br_flow_mux_lru_tb"],
 )
 
-br_verilog_sim_test_tools_suite(
-    name = "br_flow_mux_lru_sim_test_tools_suite_verilator",
+verilog_sim_test(
+    name = "br_flow_mux_lru_verilator_sim_test",
+    defines = _BEDROCK_SIM_DEFINES,
     elab_opts = ["-Wno-BLKANDNBLK"],
-    tools = ["verilator"],
+    tool = "verilator",
     deps = [":br_flow_mux_lru_tb"],
 )
 
@@ -578,16 +588,18 @@ verilog_elab_test(
     deps = [":br_flow_mux_lru_stable_tb"],
 )
 
-br_verilog_sim_test_tools_suite(
-    name = "br_flow_mux_lru_stable_sim_test_tools_suite",
-    tools = ["vcs"],
+verilog_sim_test(
+    name = "br_flow_mux_lru_stable_vcs_sim_test",
+    defines = _BEDROCK_SIM_DEFINES,
+    tool = "vcs",
     deps = [":br_flow_mux_lru_stable_tb"],
 )
 
-br_verilog_sim_test_tools_suite(
-    name = "br_flow_mux_lru_stable_sim_test_tools_suite_verilator",
+verilog_sim_test(
+    name = "br_flow_mux_lru_stable_verilator_sim_test",
+    defines = _BEDROCK_SIM_DEFINES,
     elab_opts = ["-Wno-BLKANDNBLK"],
-    tools = ["verilator"],
+    tool = "verilator",
     deps = [":br_flow_mux_lru_stable_tb"],
 )
 
@@ -654,16 +666,18 @@ verilog_elab_test(
     deps = [":br_flow_burst_mux_lru_tb"],
 )
 
-br_verilog_sim_test_tools_suite(
-    name = "br_flow_burst_mux_lru_sim_test_tools_suite",
-    tools = ["vcs"],
+verilog_sim_test(
+    name = "br_flow_burst_mux_lru_vcs_sim_test",
+    defines = _BEDROCK_SIM_DEFINES,
+    tool = "vcs",
     deps = [":br_flow_burst_mux_lru_tb"],
 )
 
-br_verilog_sim_test_tools_suite(
-    name = "br_flow_burst_mux_lru_sim_test_tools_suite_verilator",
+verilog_sim_test(
+    name = "br_flow_burst_mux_lru_verilator_sim_test",
+    defines = _BEDROCK_SIM_DEFINES,
     elab_opts = ["-Wno-BLKANDNBLK"],
-    tools = ["verilator"],
+    tool = "verilator",
     deps = [":br_flow_burst_mux_lru_tb"],
 )
 
@@ -730,15 +744,17 @@ verilog_elab_test(
     deps = [":br_flow_burst_mux_lru_stable_tb"],
 )
 
-br_verilog_sim_test_tools_suite(
-    name = "br_flow_burst_mux_lru_stable_sim_test_tools_suite",
-    tools = ["vcs"],
+verilog_sim_test(
+    name = "br_flow_burst_mux_lru_stable_vcs_sim_test",
+    defines = _BEDROCK_SIM_DEFINES,
+    tool = "vcs",
     deps = [":br_flow_burst_mux_lru_stable_tb"],
 )
 
-br_verilog_sim_test_tools_suite(
-    name = "br_flow_burst_mux_lru_stable_sim_test_tools_suite_verilator",
+verilog_sim_test(
+    name = "br_flow_burst_mux_lru_stable_verilator_sim_test",
+    defines = _BEDROCK_SIM_DEFINES,
     elab_opts = ["-Wno-BLKANDNBLK"],
-    tools = ["verilator"],
+    tool = "verilator",
     deps = [":br_flow_burst_mux_lru_stable_tb"],
 )
