@@ -789,33 +789,80 @@ br_verilog_sim_test_tools_suite(
 )
 
 verilog_library(
-    name = "br_flow_xbar_tb",
-    srcs = ["br_flow_xbar_tb.sv"],
+    name = "br_flow_xbar_fixed_tb",
+    srcs = ["br_flow_xbar_fixed_tb.sv"],
     deps = [
         "//flow/rtl:br_flow_xbar_fixed",
-        "//flow/rtl:br_flow_xbar_lru",
+        "//misc/sim:br_test_driver",
+    ],
+)
+
+verilog_elab_test(
+    name = "br_flow_xbar_fixed_tb_elab_test",
+    tool = "verific",
+    deps = [":br_flow_xbar_fixed_tb"],
+)
+
+br_verilog_sim_test_tools_suite(
+    name = "br_flow_xbar_fixed_sim_test_tools_suite",
+    tools = [
+        "vcs",
+        "verilator",
+    ],
+    deps = [":br_flow_xbar_fixed_tb"],
+)
+
+verilog_library(
+    name = "br_flow_xbar_rr_tb",
+    srcs = ["br_flow_xbar_rr_tb.sv"],
+    deps = [
         "//flow/rtl:br_flow_xbar_rr",
         "//misc/sim:br_test_driver",
     ],
 )
 
 verilog_elab_test(
-    name = "br_flow_xbar_tb_elab_test",
+    name = "br_flow_xbar_rr_tb_elab_test",
     tool = "verific",
-    deps = [":br_flow_xbar_tb"],
+    deps = [":br_flow_xbar_rr_tb"],
 )
 
 br_verilog_sim_test_tools_suite(
-    name = "br_flow_xbar_sim_test_tools_suite",
+    name = "br_flow_xbar_rr_sim_test_tools_suite",
+    tools = [
+        "vcs",
+        "verilator",
+    ],
+    deps = [":br_flow_xbar_rr_tb"],
+)
+
+verilog_library(
+    name = "br_flow_xbar_lru_tb",
+    srcs = ["br_flow_xbar_lru_tb.sv"],
+    deps = [
+        "//flow/rtl:br_flow_xbar_lru",
+        "//misc/sim:br_test_driver",
+    ],
+)
+
+verilog_elab_test(
+    name = "br_flow_xbar_lru_tb_elab_test",
+    tool = "verific",
+    deps = [":br_flow_xbar_lru_tb"],
+)
+
+br_verilog_sim_test_tools_suite(
+    name = "br_flow_xbar_lru_sim_test_tools_suite",
     tools = ["vcs"],
-    deps = [":br_flow_xbar_tb"],
+    deps = [":br_flow_xbar_lru_tb"],
 )
 
 br_verilog_sim_test_tools_suite(
-    name = "br_flow_xbar_sim_test_tools_suite_verilator",
-    # See br_flow_arb_lru_sim_test_tools_suite_verilator: this test instantiates
-    # LRU arbitration through the xbar.
+    name = "br_flow_xbar_lru_sim_test_tools_suite_verilator",
+    # br_arb_lru_internal registers upper-triangle bits of packed state_reg,
+    # but continuously ties off its unused lower-triangle and diagonal bits.
+    # Verilator reports those disjoint bit drivers as BLKANDNBLK on the matrix.
     elab_opts = ["-Wno-BLKANDNBLK"],
     tools = ["verilator"],
-    deps = [":br_flow_xbar_tb"],
+    deps = [":br_flow_xbar_lru_tb"],
 )
