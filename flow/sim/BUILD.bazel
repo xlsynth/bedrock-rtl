@@ -362,106 +362,383 @@ br_verilog_sim_test_tools_suite(
 )
 
 verilog_library(
-    name = "br_flow_arb_tb",
-    srcs = ["br_flow_arb_tb.sv"],
+    name = "br_flow_arb_fixed_tb",
+    srcs = ["br_flow_arb_fixed_tb.sv"],
     deps = [
         "//flow/rtl:br_flow_arb_fixed",
-        "//flow/rtl:br_flow_arb_lru",
+        "//misc/sim:br_test_driver",
+    ],
+)
+
+verilog_elab_test(
+    name = "br_flow_arb_fixed_tb_elab_test",
+    tool = "verific",
+    deps = [":br_flow_arb_fixed_tb"],
+)
+
+br_verilog_sim_test_tools_suite(
+    name = "br_flow_arb_fixed_sim_test_tools_suite",
+    tools = [
+        "vcs",
+        "verilator",
+    ],
+    deps = [":br_flow_arb_fixed_tb"],
+)
+
+verilog_library(
+    name = "br_flow_arb_rr_tb",
+    srcs = ["br_flow_arb_rr_tb.sv"],
+    deps = [
         "//flow/rtl:br_flow_arb_rr",
         "//misc/sim:br_test_driver",
     ],
 )
 
 verilog_elab_test(
-    name = "br_flow_arb_tb_elab_test",
+    name = "br_flow_arb_rr_tb_elab_test",
     tool = "verific",
-    deps = [":br_flow_arb_tb"],
-)
-
-br_verilog_sim_test_tools_suite(
-    name = "br_flow_arb_fixed_sim_test_tools_suite",
-    params = {
-        "ArbVariant": ["0"],
-    },
-    tools = [
-        "vcs",
-        "verilator",
-    ],
-    deps = [":br_flow_arb_tb"],
+    deps = [":br_flow_arb_rr_tb"],
 )
 
 br_verilog_sim_test_tools_suite(
     name = "br_flow_arb_rr_sim_test_tools_suite",
-    params = {
-        "ArbVariant": ["1"],
-    },
     tools = [
         "vcs",
         "verilator",
     ],
-    deps = [":br_flow_arb_tb"],
+    deps = [":br_flow_arb_rr_tb"],
+)
+
+verilog_library(
+    name = "br_flow_arb_lru_tb",
+    srcs = ["br_flow_arb_lru_tb.sv"],
+    deps = [
+        "//flow/rtl:br_flow_arb_lru",
+        "//misc/sim:br_test_driver",
+    ],
+)
+
+verilog_elab_test(
+    name = "br_flow_arb_lru_tb_elab_test",
+    tool = "verific",
+    deps = [":br_flow_arb_lru_tb"],
 )
 
 br_verilog_sim_test_tools_suite(
     name = "br_flow_arb_lru_sim_test_tools_suite",
-    params = {
-        "ArbVariant": ["2"],
-    },
     tools = ["vcs"],
-    deps = [":br_flow_arb_tb"],
+    deps = [":br_flow_arb_lru_tb"],
 )
 
 br_verilog_sim_test_tools_suite(
     name = "br_flow_arb_lru_sim_test_tools_suite_verilator",
-    # LRU flow variants instantiate br_arb_lru_internal, which registers only
-    # the upper triangular state matrix and ties off unused lower/diagonal bits.
-    # Verilator reports the whole packed array as mixed blocking/nonblocking,
-    # even though the driven bits are disjoint.
+    # br_arb_lru_internal drives disjoint regions of a packed state matrix with
+    # blocking and nonblocking assignments, which Verilator reports globally.
     elab_opts = ["-Wno-BLKANDNBLK"],
-    params = {
-        "ArbVariant": ["2"],
-    },
     tools = ["verilator"],
-    deps = [":br_flow_arb_tb"],
+    deps = [":br_flow_arb_lru_tb"],
 )
 
 verilog_library(
-    name = "br_flow_mux_tb",
-    srcs = ["br_flow_mux_tb.sv"],
+    name = "br_flow_mux_fixed_tb",
+    srcs = ["br_flow_mux_fixed_tb.sv"],
     deps = [
-        "//flow/rtl:br_flow_burst_mux_fixed",
-        "//flow/rtl:br_flow_burst_mux_fixed_stable",
-        "//flow/rtl:br_flow_burst_mux_lru",
-        "//flow/rtl:br_flow_burst_mux_lru_stable",
-        "//flow/rtl:br_flow_burst_mux_rr",
-        "//flow/rtl:br_flow_burst_mux_rr_stable",
         "//flow/rtl:br_flow_mux_fixed",
-        "//flow/rtl:br_flow_mux_fixed_stable",
-        "//flow/rtl:br_flow_mux_lru",
-        "//flow/rtl:br_flow_mux_lru_stable",
+        "//misc/sim:br_test_driver",
+    ],
+)
+
+verilog_elab_test(
+    name = "br_flow_mux_fixed_tb_elab_test",
+    tool = "verific",
+    deps = [":br_flow_mux_fixed_tb"],
+)
+
+br_verilog_sim_test_tools_suite(
+    name = "br_flow_mux_fixed_sim_test_tools_suite",
+    tools = [
+        "vcs",
+        "verilator",
+    ],
+    deps = [":br_flow_mux_fixed_tb"],
+)
+
+verilog_library(
+    name = "br_flow_mux_rr_tb",
+    srcs = ["br_flow_mux_rr_tb.sv"],
+    deps = [
         "//flow/rtl:br_flow_mux_rr",
+        "//misc/sim:br_test_driver",
+    ],
+)
+
+verilog_elab_test(
+    name = "br_flow_mux_rr_tb_elab_test",
+    tool = "verific",
+    deps = [":br_flow_mux_rr_tb"],
+)
+
+br_verilog_sim_test_tools_suite(
+    name = "br_flow_mux_rr_sim_test_tools_suite",
+    tools = [
+        "vcs",
+        "verilator",
+    ],
+    deps = [":br_flow_mux_rr_tb"],
+)
+
+verilog_library(
+    name = "br_flow_mux_lru_tb",
+    srcs = ["br_flow_mux_lru_tb.sv"],
+    deps = [
+        "//flow/rtl:br_flow_mux_lru",
+        "//misc/sim:br_test_driver",
+    ],
+)
+
+verilog_elab_test(
+    name = "br_flow_mux_lru_tb_elab_test",
+    tool = "verific",
+    deps = [":br_flow_mux_lru_tb"],
+)
+
+br_verilog_sim_test_tools_suite(
+    name = "br_flow_mux_lru_sim_test_tools_suite",
+    tools = ["vcs"],
+    deps = [":br_flow_mux_lru_tb"],
+)
+
+br_verilog_sim_test_tools_suite(
+    name = "br_flow_mux_lru_sim_test_tools_suite_verilator",
+    elab_opts = ["-Wno-BLKANDNBLK"],
+    tools = ["verilator"],
+    deps = [":br_flow_mux_lru_tb"],
+)
+
+verilog_library(
+    name = "br_flow_mux_fixed_stable_tb",
+    srcs = ["br_flow_mux_fixed_stable_tb.sv"],
+    deps = [
+        "//flow/rtl:br_flow_mux_fixed_stable",
+        "//misc/sim:br_test_driver",
+    ],
+)
+
+verilog_elab_test(
+    name = "br_flow_mux_fixed_stable_tb_elab_test",
+    tool = "verific",
+    deps = [":br_flow_mux_fixed_stable_tb"],
+)
+
+br_verilog_sim_test_tools_suite(
+    name = "br_flow_mux_fixed_stable_sim_test_tools_suite",
+    tools = [
+        "vcs",
+        "verilator",
+    ],
+    deps = [":br_flow_mux_fixed_stable_tb"],
+)
+
+verilog_library(
+    name = "br_flow_mux_rr_stable_tb",
+    srcs = ["br_flow_mux_rr_stable_tb.sv"],
+    deps = [
         "//flow/rtl:br_flow_mux_rr_stable",
         "//misc/sim:br_test_driver",
     ],
 )
 
 verilog_elab_test(
-    name = "br_flow_mux_tb_elab_test",
+    name = "br_flow_mux_rr_stable_tb_elab_test",
     tool = "verific",
-    deps = [":br_flow_mux_tb"],
+    deps = [":br_flow_mux_rr_stable_tb"],
 )
 
 br_verilog_sim_test_tools_suite(
-    name = "br_flow_mux_sim_test_tools_suite",
+    name = "br_flow_mux_rr_stable_sim_test_tools_suite",
+    tools = [
+        "vcs",
+        "verilator",
+    ],
+    deps = [":br_flow_mux_rr_stable_tb"],
+)
+
+verilog_library(
+    name = "br_flow_mux_lru_stable_tb",
+    srcs = ["br_flow_mux_lru_stable_tb.sv"],
+    deps = [
+        "//flow/rtl:br_flow_mux_lru_stable",
+        "//misc/sim:br_test_driver",
+    ],
+)
+
+verilog_elab_test(
+    name = "br_flow_mux_lru_stable_tb_elab_test",
+    tool = "verific",
+    deps = [":br_flow_mux_lru_stable_tb"],
+)
+
+br_verilog_sim_test_tools_suite(
+    name = "br_flow_mux_lru_stable_sim_test_tools_suite",
     tools = ["vcs"],
-    deps = [":br_flow_mux_tb"],
+    deps = [":br_flow_mux_lru_stable_tb"],
 )
 
 br_verilog_sim_test_tools_suite(
-    name = "br_flow_mux_sim_test_tools_suite_verilator",
-    # See br_flow_arb_lru_sim_test_tools_suite_verilator: these tests instantiate
-    # LRU arbitration through mux and burst-mux variants.
+    name = "br_flow_mux_lru_stable_sim_test_tools_suite_verilator",
     elab_opts = ["-Wno-BLKANDNBLK"],
     tools = ["verilator"],
-    deps = [":br_flow_mux_tb"],
+    deps = [":br_flow_mux_lru_stable_tb"],
+)
+
+verilog_library(
+    name = "br_flow_burst_mux_fixed_tb",
+    srcs = ["br_flow_burst_mux_fixed_tb.sv"],
+    deps = [
+        "//flow/rtl:br_flow_burst_mux_fixed",
+        "//misc/sim:br_test_driver",
+    ],
+)
+
+verilog_elab_test(
+    name = "br_flow_burst_mux_fixed_tb_elab_test",
+    tool = "verific",
+    deps = [":br_flow_burst_mux_fixed_tb"],
+)
+
+br_verilog_sim_test_tools_suite(
+    name = "br_flow_burst_mux_fixed_sim_test_tools_suite",
+    tools = [
+        "vcs",
+        "verilator",
+    ],
+    deps = [":br_flow_burst_mux_fixed_tb"],
+)
+
+verilog_library(
+    name = "br_flow_burst_mux_rr_tb",
+    srcs = ["br_flow_burst_mux_rr_tb.sv"],
+    deps = [
+        "//flow/rtl:br_flow_burst_mux_rr",
+        "//misc/sim:br_test_driver",
+    ],
+)
+
+verilog_elab_test(
+    name = "br_flow_burst_mux_rr_tb_elab_test",
+    tool = "verific",
+    deps = [":br_flow_burst_mux_rr_tb"],
+)
+
+br_verilog_sim_test_tools_suite(
+    name = "br_flow_burst_mux_rr_sim_test_tools_suite",
+    tools = [
+        "vcs",
+        "verilator",
+    ],
+    deps = [":br_flow_burst_mux_rr_tb"],
+)
+
+verilog_library(
+    name = "br_flow_burst_mux_lru_tb",
+    srcs = ["br_flow_burst_mux_lru_tb.sv"],
+    deps = [
+        "//flow/rtl:br_flow_burst_mux_lru",
+        "//misc/sim:br_test_driver",
+    ],
+)
+
+verilog_elab_test(
+    name = "br_flow_burst_mux_lru_tb_elab_test",
+    tool = "verific",
+    deps = [":br_flow_burst_mux_lru_tb"],
+)
+
+br_verilog_sim_test_tools_suite(
+    name = "br_flow_burst_mux_lru_sim_test_tools_suite",
+    tools = ["vcs"],
+    deps = [":br_flow_burst_mux_lru_tb"],
+)
+
+br_verilog_sim_test_tools_suite(
+    name = "br_flow_burst_mux_lru_sim_test_tools_suite_verilator",
+    elab_opts = ["-Wno-BLKANDNBLK"],
+    tools = ["verilator"],
+    deps = [":br_flow_burst_mux_lru_tb"],
+)
+
+verilog_library(
+    name = "br_flow_burst_mux_fixed_stable_tb",
+    srcs = ["br_flow_burst_mux_fixed_stable_tb.sv"],
+    deps = [
+        "//flow/rtl:br_flow_burst_mux_fixed_stable",
+        "//misc/sim:br_test_driver",
+    ],
+)
+
+verilog_elab_test(
+    name = "br_flow_burst_mux_fixed_stable_tb_elab_test",
+    tool = "verific",
+    deps = [":br_flow_burst_mux_fixed_stable_tb"],
+)
+
+br_verilog_sim_test_tools_suite(
+    name = "br_flow_burst_mux_fixed_stable_sim_test_tools_suite",
+    tools = [
+        "vcs",
+        "verilator",
+    ],
+    deps = [":br_flow_burst_mux_fixed_stable_tb"],
+)
+
+verilog_library(
+    name = "br_flow_burst_mux_rr_stable_tb",
+    srcs = ["br_flow_burst_mux_rr_stable_tb.sv"],
+    deps = [
+        "//flow/rtl:br_flow_burst_mux_rr_stable",
+        "//misc/sim:br_test_driver",
+    ],
+)
+
+verilog_elab_test(
+    name = "br_flow_burst_mux_rr_stable_tb_elab_test",
+    tool = "verific",
+    deps = [":br_flow_burst_mux_rr_stable_tb"],
+)
+
+br_verilog_sim_test_tools_suite(
+    name = "br_flow_burst_mux_rr_stable_sim_test_tools_suite",
+    tools = [
+        "vcs",
+        "verilator",
+    ],
+    deps = [":br_flow_burst_mux_rr_stable_tb"],
+)
+
+verilog_library(
+    name = "br_flow_burst_mux_lru_stable_tb",
+    srcs = ["br_flow_burst_mux_lru_stable_tb.sv"],
+    deps = [
+        "//flow/rtl:br_flow_burst_mux_lru_stable",
+        "//misc/sim:br_test_driver",
+    ],
+)
+
+verilog_elab_test(
+    name = "br_flow_burst_mux_lru_stable_tb_elab_test",
+    tool = "verific",
+    deps = [":br_flow_burst_mux_lru_stable_tb"],
+)
+
+br_verilog_sim_test_tools_suite(
+    name = "br_flow_burst_mux_lru_stable_sim_test_tools_suite",
+    tools = ["vcs"],
+    deps = [":br_flow_burst_mux_lru_stable_tb"],
+)
+
+br_verilog_sim_test_tools_suite(
+    name = "br_flow_burst_mux_lru_stable_sim_test_tools_suite_verilator",
+    elab_opts = ["-Wno-BLKANDNBLK"],
+    tools = ["verilator"],
+    deps = [":br_flow_burst_mux_lru_stable_tb"],
 )
