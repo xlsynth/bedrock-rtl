@@ -8,9 +8,9 @@
 // requesters.
 
 module br_flow_arb_tb #(
-    parameter int NumFlows   = 3,
     parameter int ArbVariant = 0
 );
+  localparam int NumFlows = 3;
   localparam int ArbVariantFixed = 0;
   localparam int ArbVariantRr = 1;
   localparam int ArbVariantLru = 2;

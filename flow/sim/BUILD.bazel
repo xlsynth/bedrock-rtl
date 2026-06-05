@@ -382,7 +382,6 @@ br_verilog_sim_test_tools_suite(
     name = "br_flow_arb_fixed_sim_test_tools_suite",
     params = {
         "ArbVariant": ["0"],
-        "NumFlows": ["3"],
     },
     tools = [
         "vcs",
@@ -395,7 +394,6 @@ br_verilog_sim_test_tools_suite(
     name = "br_flow_arb_rr_sim_test_tools_suite",
     params = {
         "ArbVariant": ["1"],
-        "NumFlows": ["3"],
     },
     tools = [
         "vcs",
@@ -408,7 +406,6 @@ br_verilog_sim_test_tools_suite(
     name = "br_flow_arb_lru_sim_test_tools_suite",
     params = {
         "ArbVariant": ["2"],
-        "NumFlows": ["3"],
     },
     tools = ["vcs"],
     deps = [":br_flow_arb_tb"],
@@ -423,7 +420,6 @@ br_verilog_sim_test_tools_suite(
     elab_opts = ["-Wno-BLKANDNBLK"],
     params = {
         "ArbVariant": ["2"],
-        "NumFlows": ["3"],
     },
     tools = ["verilator"],
     deps = [":br_flow_arb_tb"],
@@ -457,10 +453,6 @@ verilog_elab_test(
 
 br_verilog_sim_test_tools_suite(
     name = "br_flow_mux_sim_test_tools_suite",
-    params = {
-        "NumFlows": ["3"],
-        "Width": ["8"],
-    },
     tools = ["vcs"],
     deps = [":br_flow_mux_tb"],
 )
@@ -470,10 +462,6 @@ br_verilog_sim_test_tools_suite(
     # See br_flow_arb_lru_sim_test_tools_suite_verilator: these tests instantiate
     # LRU arbitration through mux and burst-mux variants.
     elab_opts = ["-Wno-BLKANDNBLK"],
-    params = {
-        "NumFlows": ["3"],
-        "Width": ["8"],
-    },
     tools = ["verilator"],
     deps = [":br_flow_mux_tb"],
 )

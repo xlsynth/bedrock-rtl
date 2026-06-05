@@ -9,8 +9,8 @@
 // burst ownership is held until push_last before draining the waiting requester.
 
 module br_flow_mux_tb;
-  parameter int NumFlows = 3;
-  parameter int Width = 8;
+  localparam int NumFlows = 3;
+  localparam int Width = 8;
 
   logic clk;
   logic rst;
