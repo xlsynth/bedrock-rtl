@@ -57,6 +57,7 @@ _FLOW_REG_SIM_PARAMS = {
 
 _FLOW_REG_SIM_TOOLS = [
     "iverilog",
+    "vcs",
     "verilator",
 ]
 
@@ -124,4 +125,238 @@ br_verilog_sim_test_tools_suite(
     tools = _FLOW_REG_SIM_TOOLS,
     top = "br_flow_reg_both_tb",
     deps = [":br_flow_reg_tb"],
+)
+
+_FLOW_PRIMITIVE_SIM_TOOLS = [
+    "iverilog",
+    "vcs",
+    "verilator",
+]
+
+_FLOW_NUM_FLOWS_SIM_PARAMS = {
+    "NumFlows": ["3"],
+}
+
+_FLOW_SELECT_SIM_PARAMS = {
+    "NumFlows": ["3"],
+    "Width": ["8"],
+}
+
+verilog_library(
+    name = "br_flow_fork_select_tb",
+    srcs = ["br_flow_fork_select_tb.sv"],
+    deps = [
+        "//flow/rtl:br_flow_fork",
+        "//flow/rtl:br_flow_fork_select_multihot",
+        "//misc/sim:br_test_driver",
+    ],
+)
+
+verilog_elab_test(
+    name = "br_flow_fork_select_tb_elab_test",
+    tool = "verific",
+    deps = [":br_flow_fork_select_tb"],
+)
+
+br_verilog_sim_test_tools_suite(
+    name = "br_flow_fork_select_sim_test_tools_suite",
+    params = {
+        "NumFlows": ["3"],
+        "UseSelectMultihot": [
+            "0",
+            "1",
+        ],
+    },
+    tools = _FLOW_PRIMITIVE_SIM_TOOLS,
+    deps = [":br_flow_fork_select_tb"],
+)
+
+verilog_library(
+    name = "br_flow_join_tb",
+    srcs = ["br_flow_join_tb.sv"],
+    deps = [
+        "//flow/rtl:br_flow_join",
+        "//misc/sim:br_test_driver",
+    ],
+)
+
+verilog_elab_test(
+    name = "br_flow_join_tb_elab_test",
+    tool = "verific",
+    deps = [":br_flow_join_tb"],
+)
+
+br_verilog_sim_test_tools_suite(
+    name = "br_flow_join_sim_test_tools_suite",
+    params = _FLOW_NUM_FLOWS_SIM_PARAMS,
+    tools = _FLOW_PRIMITIVE_SIM_TOOLS,
+    deps = [":br_flow_join_tb"],
+)
+
+verilog_library(
+    name = "br_flow_mux_select_tb",
+    srcs = ["br_flow_mux_select_tb.sv"],
+    deps = [
+        "//flow/rtl:br_flow_mux_select",
+        "//misc/sim:br_test_driver",
+    ],
+)
+
+verilog_elab_test(
+    name = "br_flow_mux_select_tb_elab_test",
+    tool = "verific",
+    deps = [":br_flow_mux_select_tb"],
+)
+
+br_verilog_sim_test_tools_suite(
+    name = "br_flow_mux_select_sim_test_tools_suite",
+    params = _FLOW_SELECT_SIM_PARAMS,
+    tools = _FLOW_PRIMITIVE_SIM_TOOLS,
+    deps = [":br_flow_mux_select_tb"],
+)
+
+verilog_library(
+    name = "br_flow_demux_select_tb",
+    srcs = ["br_flow_demux_select_tb.sv"],
+    deps = [
+        "//flow/rtl:br_flow_demux_select",
+        "//misc/sim:br_test_driver",
+    ],
+)
+
+verilog_elab_test(
+    name = "br_flow_demux_select_tb_elab_test",
+    tool = "verific",
+    deps = [":br_flow_demux_select_tb"],
+)
+
+br_verilog_sim_test_tools_suite(
+    name = "br_flow_demux_select_sim_test_tools_suite",
+    params = _FLOW_SELECT_SIM_PARAMS,
+    tools = _FLOW_PRIMITIVE_SIM_TOOLS,
+    deps = [":br_flow_demux_select_tb"],
+)
+
+verilog_library(
+    name = "br_flow_buffer_tb",
+    srcs = ["br_flow_buffer_tb.sv"],
+    deps = [
+        ":br_flow_test_driver",
+        ":br_flow_test_sink",
+        "//flow/rtl:br_flow_buffer",
+        "//misc/sim:br_test_driver",
+    ],
+)
+
+verilog_elab_test(
+    name = "br_flow_buffer_tb_elab_test",
+    tool = "verific",
+    deps = [":br_flow_buffer_tb"],
+)
+
+br_verilog_sim_test_tools_suite(
+    name = "br_flow_buffer_depth_0_sim_test_tools_suite",
+    params = {
+        "Depth": ["0"],
+        "RegisterPopOutputs": ["0"],
+        "RegisterPushOutputs": ["0"],
+        "Width": [
+            "1",
+            "8",
+        ],
+    },
+    tools = [
+        "iverilog",
+        "vcs",
+        "verilator",
+    ],
+    deps = [":br_flow_buffer_tb"],
+)
+
+br_verilog_sim_test_tools_suite(
+    name = "br_flow_buffer_depth_1_sim_test_tools_suite",
+    params = {
+        "Depth": ["1"],
+        "RegisterPopOutputs": ["0"],
+        "RegisterPushOutputs": [
+            "0",
+            "1",
+        ],
+        "Width": [
+            "1",
+            "8",
+        ],
+    },
+    tools = [
+        "iverilog",
+        "vcs",
+        "verilator",
+    ],
+    deps = [":br_flow_buffer_tb"],
+)
+
+br_verilog_sim_test_tools_suite(
+    name = "br_flow_buffer_depth_1_fwd_sim_test_tools_suite",
+    params = {
+        "Depth": ["1"],
+        "RegisterPopOutputs": ["1"],
+        "RegisterPushOutputs": ["0"],
+        "Width": [
+            "1",
+            "8",
+        ],
+    },
+    tools = [
+        "iverilog",
+        "vcs",
+        "verilator",
+    ],
+    deps = [":br_flow_buffer_tb"],
+)
+
+br_verilog_sim_test_tools_suite(
+    name = "br_flow_buffer_depth_2_sim_test_tools_suite",
+    params = {
+        "Depth": ["2"],
+        "RegisterPopOutputs": [
+            "0",
+            "1",
+        ],
+        "RegisterPushOutputs": [
+            "0",
+            "1",
+        ],
+        "Width": [
+            "1",
+            "8",
+        ],
+    },
+    tools = [
+        "iverilog",
+        "vcs",
+        "verilator",
+    ],
+    deps = [":br_flow_buffer_tb"],
+)
+
+br_verilog_sim_test_tools_suite(
+    name = "br_flow_buffer_depth_3_sim_test_tools_suite",
+    params = {
+        "Depth": ["3"],
+        "RegisterPopOutputs": [
+            "0",
+            "1",
+        ],
+        "RegisterPushOutputs": ["1"],
+        "Width": [
+            "1",
+            "8",
+        ],
+    },
+    tools = [
+        "iverilog",
+        "vcs",
+        "verilator",
+    ],
+    deps = [":br_flow_buffer_tb"],
 )
