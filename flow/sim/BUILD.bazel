@@ -360,3 +360,398 @@ br_verilog_sim_test_tools_suite(
     ],
     deps = [":br_flow_buffer_tb"],
 )
+
+verilog_library(
+    name = "br_flow_arb_fixed_tb",
+    srcs = ["br_flow_arb_fixed_tb.sv"],
+    deps = [
+        "//flow/rtl:br_flow_arb_fixed",
+        "//misc/sim:br_test_driver",
+    ],
+)
+
+verilog_elab_test(
+    name = "br_flow_arb_fixed_tb_elab_test",
+    tool = "verific",
+    deps = [":br_flow_arb_fixed_tb"],
+)
+
+br_verilog_sim_test_tools_suite(
+    name = "br_flow_arb_fixed_sim_test_tools_suite",
+    tools = [
+        "vcs",
+        "verilator",
+    ],
+    deps = [":br_flow_arb_fixed_tb"],
+)
+
+verilog_library(
+    name = "br_flow_arb_rr_tb",
+    srcs = ["br_flow_arb_rr_tb.sv"],
+    deps = [
+        "//flow/rtl:br_flow_arb_rr",
+        "//misc/sim:br_test_driver",
+    ],
+)
+
+verilog_elab_test(
+    name = "br_flow_arb_rr_tb_elab_test",
+    tool = "verific",
+    deps = [":br_flow_arb_rr_tb"],
+)
+
+br_verilog_sim_test_tools_suite(
+    name = "br_flow_arb_rr_sim_test_tools_suite",
+    tools = [
+        "vcs",
+        "verilator",
+    ],
+    deps = [":br_flow_arb_rr_tb"],
+)
+
+verilog_library(
+    name = "br_flow_arb_lru_tb",
+    srcs = ["br_flow_arb_lru_tb.sv"],
+    deps = [
+        "//flow/rtl:br_flow_arb_lru",
+        "//misc/sim:br_test_driver",
+    ],
+)
+
+verilog_elab_test(
+    name = "br_flow_arb_lru_tb_elab_test",
+    tool = "verific",
+    deps = [":br_flow_arb_lru_tb"],
+)
+
+br_verilog_sim_test_tools_suite(
+    name = "br_flow_arb_lru_sim_test_tools_suite",
+    tools = ["vcs"],
+    deps = [":br_flow_arb_lru_tb"],
+)
+
+br_verilog_sim_test_tools_suite(
+    name = "br_flow_arb_lru_sim_test_tools_suite_verilator",
+    # br_arb_lru_internal registers upper-triangle bits of packed state_reg,
+    # but continuously ties off its unused lower-triangle and diagonal bits.
+    # Verilator reports those disjoint bit drivers as BLKANDNBLK on the matrix.
+    elab_opts = ["-Wno-BLKANDNBLK"],
+    tools = ["verilator"],
+    deps = [":br_flow_arb_lru_tb"],
+)
+
+verilog_library(
+    name = "br_flow_mux_fixed_tb",
+    srcs = ["br_flow_mux_fixed_tb.sv"],
+    deps = [
+        "//flow/rtl:br_flow_mux_fixed",
+        "//misc/sim:br_test_driver",
+    ],
+)
+
+verilog_elab_test(
+    name = "br_flow_mux_fixed_tb_elab_test",
+    tool = "verific",
+    deps = [":br_flow_mux_fixed_tb"],
+)
+
+br_verilog_sim_test_tools_suite(
+    name = "br_flow_mux_fixed_sim_test_tools_suite",
+    tools = [
+        "vcs",
+        "verilator",
+    ],
+    deps = [":br_flow_mux_fixed_tb"],
+)
+
+verilog_library(
+    name = "br_flow_mux_rr_tb",
+    srcs = ["br_flow_mux_rr_tb.sv"],
+    deps = [
+        "//flow/rtl:br_flow_mux_rr",
+        "//misc/sim:br_test_driver",
+    ],
+)
+
+verilog_elab_test(
+    name = "br_flow_mux_rr_tb_elab_test",
+    tool = "verific",
+    deps = [":br_flow_mux_rr_tb"],
+)
+
+br_verilog_sim_test_tools_suite(
+    name = "br_flow_mux_rr_sim_test_tools_suite",
+    tools = [
+        "vcs",
+        "verilator",
+    ],
+    deps = [":br_flow_mux_rr_tb"],
+)
+
+verilog_library(
+    name = "br_flow_mux_lru_tb",
+    srcs = ["br_flow_mux_lru_tb.sv"],
+    deps = [
+        "//flow/rtl:br_flow_mux_lru",
+        "//misc/sim:br_test_driver",
+    ],
+)
+
+verilog_elab_test(
+    name = "br_flow_mux_lru_tb_elab_test",
+    tool = "verific",
+    deps = [":br_flow_mux_lru_tb"],
+)
+
+br_verilog_sim_test_tools_suite(
+    name = "br_flow_mux_lru_sim_test_tools_suite",
+    tools = ["vcs"],
+    deps = [":br_flow_mux_lru_tb"],
+)
+
+br_verilog_sim_test_tools_suite(
+    name = "br_flow_mux_lru_sim_test_tools_suite_verilator",
+    # br_arb_lru_internal registers upper-triangle bits of packed state_reg,
+    # but continuously ties off its unused lower-triangle and diagonal bits.
+    # Verilator reports those disjoint bit drivers as BLKANDNBLK on the matrix.
+    elab_opts = ["-Wno-BLKANDNBLK"],
+    tools = ["verilator"],
+    deps = [":br_flow_mux_lru_tb"],
+)
+
+verilog_library(
+    name = "br_flow_mux_fixed_stable_tb",
+    srcs = ["br_flow_mux_fixed_stable_tb.sv"],
+    deps = [
+        "//flow/rtl:br_flow_mux_fixed_stable",
+        "//misc/sim:br_test_driver",
+    ],
+)
+
+verilog_elab_test(
+    name = "br_flow_mux_fixed_stable_tb_elab_test",
+    tool = "verific",
+    deps = [":br_flow_mux_fixed_stable_tb"],
+)
+
+br_verilog_sim_test_tools_suite(
+    name = "br_flow_mux_fixed_stable_sim_test_tools_suite",
+    tools = [
+        "vcs",
+        "verilator",
+    ],
+    deps = [":br_flow_mux_fixed_stable_tb"],
+)
+
+verilog_library(
+    name = "br_flow_mux_rr_stable_tb",
+    srcs = ["br_flow_mux_rr_stable_tb.sv"],
+    deps = [
+        "//flow/rtl:br_flow_mux_rr_stable",
+        "//misc/sim:br_test_driver",
+    ],
+)
+
+verilog_elab_test(
+    name = "br_flow_mux_rr_stable_tb_elab_test",
+    tool = "verific",
+    deps = [":br_flow_mux_rr_stable_tb"],
+)
+
+br_verilog_sim_test_tools_suite(
+    name = "br_flow_mux_rr_stable_sim_test_tools_suite",
+    tools = [
+        "vcs",
+        "verilator",
+    ],
+    deps = [":br_flow_mux_rr_stable_tb"],
+)
+
+verilog_library(
+    name = "br_flow_mux_lru_stable_tb",
+    srcs = ["br_flow_mux_lru_stable_tb.sv"],
+    deps = [
+        "//flow/rtl:br_flow_mux_lru_stable",
+        "//misc/sim:br_test_driver",
+    ],
+)
+
+verilog_elab_test(
+    name = "br_flow_mux_lru_stable_tb_elab_test",
+    tool = "verific",
+    deps = [":br_flow_mux_lru_stable_tb"],
+)
+
+br_verilog_sim_test_tools_suite(
+    name = "br_flow_mux_lru_stable_sim_test_tools_suite",
+    tools = ["vcs"],
+    deps = [":br_flow_mux_lru_stable_tb"],
+)
+
+br_verilog_sim_test_tools_suite(
+    name = "br_flow_mux_lru_stable_sim_test_tools_suite_verilator",
+    # br_arb_lru_internal registers upper-triangle bits of packed state_reg,
+    # but continuously ties off its unused lower-triangle and diagonal bits.
+    # Verilator reports those disjoint bit drivers as BLKANDNBLK on the matrix.
+    elab_opts = ["-Wno-BLKANDNBLK"],
+    tools = ["verilator"],
+    deps = [":br_flow_mux_lru_stable_tb"],
+)
+
+verilog_library(
+    name = "br_flow_burst_mux_fixed_tb",
+    srcs = ["br_flow_burst_mux_fixed_tb.sv"],
+    deps = [
+        "//flow/rtl:br_flow_burst_mux_fixed",
+        "//misc/sim:br_test_driver",
+    ],
+)
+
+verilog_elab_test(
+    name = "br_flow_burst_mux_fixed_tb_elab_test",
+    tool = "verific",
+    deps = [":br_flow_burst_mux_fixed_tb"],
+)
+
+br_verilog_sim_test_tools_suite(
+    name = "br_flow_burst_mux_fixed_sim_test_tools_suite",
+    tools = [
+        "vcs",
+        "verilator",
+    ],
+    deps = [":br_flow_burst_mux_fixed_tb"],
+)
+
+verilog_library(
+    name = "br_flow_burst_mux_rr_tb",
+    srcs = ["br_flow_burst_mux_rr_tb.sv"],
+    deps = [
+        "//flow/rtl:br_flow_burst_mux_rr",
+        "//misc/sim:br_test_driver",
+    ],
+)
+
+verilog_elab_test(
+    name = "br_flow_burst_mux_rr_tb_elab_test",
+    tool = "verific",
+    deps = [":br_flow_burst_mux_rr_tb"],
+)
+
+br_verilog_sim_test_tools_suite(
+    name = "br_flow_burst_mux_rr_sim_test_tools_suite",
+    tools = [
+        "vcs",
+        "verilator",
+    ],
+    deps = [":br_flow_burst_mux_rr_tb"],
+)
+
+verilog_library(
+    name = "br_flow_burst_mux_lru_tb",
+    srcs = ["br_flow_burst_mux_lru_tb.sv"],
+    deps = [
+        "//flow/rtl:br_flow_burst_mux_lru",
+        "//misc/sim:br_test_driver",
+    ],
+)
+
+verilog_elab_test(
+    name = "br_flow_burst_mux_lru_tb_elab_test",
+    tool = "verific",
+    deps = [":br_flow_burst_mux_lru_tb"],
+)
+
+br_verilog_sim_test_tools_suite(
+    name = "br_flow_burst_mux_lru_sim_test_tools_suite",
+    tools = ["vcs"],
+    deps = [":br_flow_burst_mux_lru_tb"],
+)
+
+br_verilog_sim_test_tools_suite(
+    name = "br_flow_burst_mux_lru_sim_test_tools_suite_verilator",
+    # br_arb_lru_internal registers upper-triangle bits of packed state_reg,
+    # but continuously ties off its unused lower-triangle and diagonal bits.
+    # Verilator reports those disjoint bit drivers as BLKANDNBLK on the matrix.
+    elab_opts = ["-Wno-BLKANDNBLK"],
+    tools = ["verilator"],
+    deps = [":br_flow_burst_mux_lru_tb"],
+)
+
+verilog_library(
+    name = "br_flow_burst_mux_fixed_stable_tb",
+    srcs = ["br_flow_burst_mux_fixed_stable_tb.sv"],
+    deps = [
+        "//flow/rtl:br_flow_burst_mux_fixed_stable",
+        "//misc/sim:br_test_driver",
+    ],
+)
+
+verilog_elab_test(
+    name = "br_flow_burst_mux_fixed_stable_tb_elab_test",
+    tool = "verific",
+    deps = [":br_flow_burst_mux_fixed_stable_tb"],
+)
+
+br_verilog_sim_test_tools_suite(
+    name = "br_flow_burst_mux_fixed_stable_sim_test_tools_suite",
+    tools = [
+        "vcs",
+        "verilator",
+    ],
+    deps = [":br_flow_burst_mux_fixed_stable_tb"],
+)
+
+verilog_library(
+    name = "br_flow_burst_mux_rr_stable_tb",
+    srcs = ["br_flow_burst_mux_rr_stable_tb.sv"],
+    deps = [
+        "//flow/rtl:br_flow_burst_mux_rr_stable",
+        "//misc/sim:br_test_driver",
+    ],
+)
+
+verilog_elab_test(
+    name = "br_flow_burst_mux_rr_stable_tb_elab_test",
+    tool = "verific",
+    deps = [":br_flow_burst_mux_rr_stable_tb"],
+)
+
+br_verilog_sim_test_tools_suite(
+    name = "br_flow_burst_mux_rr_stable_sim_test_tools_suite",
+    tools = [
+        "vcs",
+        "verilator",
+    ],
+    deps = [":br_flow_burst_mux_rr_stable_tb"],
+)
+
+verilog_library(
+    name = "br_flow_burst_mux_lru_stable_tb",
+    srcs = ["br_flow_burst_mux_lru_stable_tb.sv"],
+    deps = [
+        "//flow/rtl:br_flow_burst_mux_lru_stable",
+        "//misc/sim:br_test_driver",
+    ],
+)
+
+verilog_elab_test(
+    name = "br_flow_burst_mux_lru_stable_tb_elab_test",
+    tool = "verific",
+    deps = [":br_flow_burst_mux_lru_stable_tb"],
+)
+
+br_verilog_sim_test_tools_suite(
+    name = "br_flow_burst_mux_lru_stable_sim_test_tools_suite",
+    tools = ["vcs"],
+    deps = [":br_flow_burst_mux_lru_stable_tb"],
+)
+
+br_verilog_sim_test_tools_suite(
+    name = "br_flow_burst_mux_lru_stable_sim_test_tools_suite_verilator",
+    # br_arb_lru_internal registers upper-triangle bits of packed state_reg,
+    # but continuously ties off its unused lower-triangle and diagonal bits.
+    # Verilator reports those disjoint bit drivers as BLKANDNBLK on the matrix.
+    elab_opts = ["-Wno-BLKANDNBLK"],
+    tools = ["verilator"],
+    deps = [":br_flow_burst_mux_lru_stable_tb"],
+)
