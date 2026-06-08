@@ -54,6 +54,8 @@ module br_flow_buffer #(
     // Can only be enabled if EnableCoverPushBackpressure is disabled.
     parameter bit EnableAssertNoPushBackpressure = !EnableCoverPushBackpressure
 ) (
+    // May be unused if Depth=0. Cannot use BR_UNUSED since it will cause clock use
+    // ri lint_check_waive INPUT_NOT_READ HIER_NET_NOT_READ HIER_BRANCH_NOT_READ
     input logic clk,
     input logic rst,  // Synchronous active-high reset.
 
@@ -79,7 +81,6 @@ module br_flow_buffer #(
     assign pop_valid  = push_valid;
     assign pop_data   = push_data;
 
-    `BR_UNUSED(clk)
     `BR_UNUSED(rst)
 
   end else if (Depth == 1 && !RegisterPushOutputs && !RegisterPopOutputs) begin : gen_flow_reg_none
