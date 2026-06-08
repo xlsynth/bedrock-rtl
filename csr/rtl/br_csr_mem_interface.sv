@@ -263,11 +263,12 @@ module br_csr_mem_interface #(
 
   if (RegisterResponseOutputs) begin : gen_reg_resp_out
     `BR_REG(resp_valid, resp_valid_int)
-    `BR_REGL(resp_rdata, resp_rdata_int, resp_valid_int)
+    // rdata only used for read responses
+    `BR_REGL(resp_rdata, resp_rdata_int, read_resp_valid)
     `BR_REGL(resp_slverr, resp_slverr_int, resp_valid_int)
   end else begin : gen_no_reg_resp_out
     assign resp_valid  = resp_valid_int;
-    assign resp_rdata  = resp_rdata_int;
+    assign resp_rdata  = read_resp_valid ? resp_rdata_int : '0;
     assign resp_slverr = resp_slverr_int;
   end
 
