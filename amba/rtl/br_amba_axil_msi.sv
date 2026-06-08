@@ -251,9 +251,10 @@ module br_amba_axil_msi #(
       .pop_data ({init_wdata, init_wstrb})
   );
 
-  // Provide a registered error output
-  `BR_REGL(error, error_next, init_bvalid && init_bready)
-  assign error_next  = init_bresp != br_amba::AxiRespOkay;  // ri lint_check_waive ENUM_COMPARE
+  // Pulse when an unsuccessful write response is accepted
+  `BR_REG(error, error_next)
+  assign error_next = init_bvalid && init_bready &&
+      init_bresp != br_amba::AxiRespOkay;  // ri lint_check_waive ENUM_COMPARE
 
   // No back pressure on the write response channel
   assign init_bready = 1'b1;  // ri lint_check_waive CONST_ASSIGN CONST_OUTPUT
