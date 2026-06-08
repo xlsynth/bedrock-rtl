@@ -5,6 +5,39 @@ load("//bazel:br_verilog.bzl", "br_verilog_sim_test_tools_suite")
 load("//bazel:verilog.bzl", "verilog_elab_test")
 
 verilog_library(
+    name = "br_amba_apb_timing_slice_tb",
+    srcs = ["br_amba_apb_timing_slice_tb.sv"],
+    deps = [
+        "//amba/rtl:br_amba_apb_timing_slice",
+        "//misc/sim:br_test_driver",
+    ],
+)
+
+verilog_elab_test(
+    name = "br_amba_apb_timing_slice_tb_elab_test",
+    tool = "verific",
+    deps = [":br_amba_apb_timing_slice_tb"],
+)
+
+br_verilog_sim_test_tools_suite(
+    name = "br_amba_apb_timing_slice_sim_test_tools_suite",
+    params = {
+        "AddrWidth": [
+            "12",
+            "32",
+        ],
+    },
+    # TODO: Enable Icarus once it accepts AMBA package declarations such as
+    # `localparam int unsigned` in br_amba_pkg.sv.
+    tools = [
+        "vcs",
+        "verilator",
+        #"iverilog",
+    ],
+    deps = [":br_amba_apb_timing_slice_tb"],
+)
+
+verilog_library(
     name = "br_amba_axi_isolate_sub_tb",
     srcs = ["br_amba_axi_isolate_sub_tb.sv"],
     deps = [

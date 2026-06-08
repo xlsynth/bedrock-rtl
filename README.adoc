@@ -855,7 +855,7 @@ The verification-artifact column reports repository evidence, not a promise that
 
 | `br_amba_apb_timing_slice`
 | Inserts timing isolation on an APB channel.
-| Elab/lint, FPV.
+| Elab/lint, Sim, FPV.
 
 | `br_amba_atb_funnel`
 | Funnels multiple AMBA Trace Bus streams into one downstream stream.
