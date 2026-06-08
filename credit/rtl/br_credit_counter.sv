@@ -224,7 +224,13 @@ module br_credit_counter #(
   assign available = value_plus_incr > withhold ? value_plus_incr - withhold : '0;
 
   if (MaxDecrement == 1) begin : gen_decr_ready_one
-    assign decr_ready = available > '0;
+    if (EnableCoverWithhold) begin : gen_decr_ready_with_withhold
+      assign decr_ready = available > '0;
+    end else if (EnableCoverZeroIncrement) begin : gen_decr_ready_with_zero_increment
+      assign decr_ready = (value != '0) || (incr_valid && incr != '0);
+    end else begin : gen_decr_ready_without_zero_increment
+      assign decr_ready = (value != '0) || incr_valid;
+    end
   end else begin : gen_decr_ready_gt_one
     assign decr_ready = ValueWidth'(decr_internal) <= available;
   end
