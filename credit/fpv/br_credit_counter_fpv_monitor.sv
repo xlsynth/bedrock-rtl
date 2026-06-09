@@ -19,6 +19,7 @@ module br_credit_counter_fpv_monitor #(
     parameter bit EnableCoverDecrementBackpressure = 1,
     parameter bit EnableCoverWithhold = 1,
     parameter bit EnableAssertAlwaysDecr = 0,
+    parameter bit EnableAssertNoDecrementBackpressure = !EnableCoverDecrementBackpressure,
     parameter bit EnableAssertFinalNotValid = 1,
     localparam int MaxValueP1Width = MaxValueWidth + 1,
     localparam int MaxChangeP1Width = MaxChangeWidth + 1,
@@ -74,7 +75,7 @@ module br_credit_counter_fpv_monitor #(
   end
   if (EnableCoverDecrementBackpressure) begin : gen_cover_decrement_backpressure
     `BR_COVER(decrement_backpressure_c, decr_valid && decr > fv_available)
-  end else begin : gen_assume_no_decrement_backpressure
+  end else if (EnableAssertNoDecrementBackpressure) begin : gen_assume_no_decrement_backpressure
     `BR_ASSUME(no_decrement_backpressure_a, decr_valid |-> decr <= fv_available)
   end
   if (EnableCoverWithhold) begin : gen_assume_withhold_liveness
@@ -89,9 +90,10 @@ module br_credit_counter_fpv_monitor #(
   end
 
   // ----------FV assertions----------
-  // Always-decrement with no backpressure requires each decrement to be immediately serviceable,
-  // so the counter cannot be empty without an increment to replenish available credit.
-  if (!(EnableAssertAlwaysDecr && !EnableCoverDecrementBackpressure)) begin : gen_decr_ready_sanity
+  // Always-decrement with no backpressure requires each nonzero decrement to be immediately
+  // serviceable, so the empty/no-increment antecedent is unreachable unless decr can be zero.
+  if (!(EnableAssertAlwaysDecr && EnableAssertNoDecrementBackpressure &&
+        !EnableCoverZeroDecrement)) begin : gen_decr_ready_sanity
     `BR_ASSERT(decr_ready_sanity_a, (fv_credit_cnt == 'd0) && (fv_incr == 'd0) |-> fv_decr == 'd0)
   end
   // Cover the ready contract for all serviceable decrement requests, including decr == 0.
@@ -114,5 +116,6 @@ bind br_credit_counter br_credit_counter_fpv_monitor #(
     .EnableCoverDecrementBackpressure(EnableCoverDecrementBackpressure),
     .EnableCoverWithhold(EnableCoverWithhold),
     .EnableAssertAlwaysDecr(EnableAssertAlwaysDecr),
+    .EnableAssertNoDecrementBackpressure(EnableAssertNoDecrementBackpressure),
     .EnableAssertFinalNotValid(EnableAssertFinalNotValid)
 ) monitor (.*);

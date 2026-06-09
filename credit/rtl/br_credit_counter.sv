@@ -275,9 +275,10 @@ module br_credit_counter #(
   `BR_COVER_IMPL(value_lt_available_c, value < available)
   if (EnableCoverWithhold) begin : gen_cover_withhold_gt_value
     `BR_COVER_IMPL(value_gt_available_c, value > available)
-    // Always-decrement with no backpressure requires each decrement to be immediately
-    // serviceable, so withhold cannot be driven above the stored value in that environment.
-    if (!(EnableAssertAlwaysDecr && EnableAssertNoDecrementBackpressure)) begin : gen_wh_gt_value
+    // If every cycle must decrement with no backpressure, zero decrements are disallowed,
+    // and increments are limited to one credit, withhold cannot exceed the stored value.
+    if (!(EnableAssertAlwaysDecr && EnableAssertNoDecrementBackpressure &&
+          !EnableCoverZeroDecrement && MaxIncrement == 1)) begin : gen_wh_gt_value
       `BR_COVER_IMPL(withhold_gt_value_c, withhold > value)
     end
   end

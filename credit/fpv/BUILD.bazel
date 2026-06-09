@@ -68,6 +68,12 @@ br_verilog_fpv_test_tools_suite(
         ): [
             ("1", "1"),
         ],
+        (
+            "EnableAssertNoDecrementBackpressure",
+            "EnableCoverDecrementBackpressure",
+        ): [
+            ("1", "1"),
+        ],
     },
     params = {
         "MaxDecrement": [
@@ -79,6 +85,10 @@ br_verilog_fpv_test_tools_suite(
             "3",
         ],
         "EnableAssertAlwaysDecr": [
+            "0",
+            "1",
+        ],
+        "EnableAssertNoDecrementBackpressure": [
             "0",
             "1",
         ],
