@@ -78,6 +78,23 @@ br_verilog_sim_test_tools_suite(
 
 If Verilator or Icarus cannot support the bench or dependent RTL, comment out only that tool and leave a short TODO with the reason.
 
+`br_verilog_sim_test_tools_suite` also supplies the repository's standard simulation defines. Keep the wrapper for single-tool targets rather than replacing it with a raw `verilog_sim_test`. When only one tool needs an elaboration option, use a common suite for the unaffected tools and a separate narrowly scoped suite for that tool.
+
+## Bench Boundaries And Naming
+
+- Prefer one testbench file and one DUT instance for each distinct implementation policy. Fixed-priority, round-robin, and LRU variants should normally have separate benches even if their port lists match.
+- A thin wrapper may use the underlying configurable module's bench as a base case when the wrapper adds no behavior and the parameterization remains obvious.
+- Do not build a generic multi-DUT bench whose conditionals obscure the expected behavior. Small duplicated tasks are cheaper than a test harness that is difficult to review.
+- The coverage inventory recognizes sim target names beginning with the DUT stem followed by `_tb`, `_gen_tb`, `_gen_unittest`, or `_sim_test_tools_suite`. Prefer those names. Add an entry to `COMPOSITE_DIRECT_BENCH_PREFIXES` only when sharing a bench is intentional.
+- Repository lint treats `.svh` files as standalone inputs. Do not put module-scope declarations or tasks in a shared header unless the header is also valid when linted independently; use a package/helper module or keep the small helper local.
+
+## Parameterization
+
+- Use a testbench `parameter` only when the test derives its loops, stimulus, expected ordering, widths, and edge cases from that value.
+- If directed behavior assumes exactly three requesters, two outputs, or another fixed shape, declare those values as `localparam` and do not expose a misleading Bazel override.
+- Every Bazel parameter combination is a separate simulation target and typically recompiles in its own sandbox. Keep sweeps representative and make every point earn its compile cost.
+- Do not duplicate DUT parameter legality checks in an `initial` block. RTL modules own them with `BR_ASSERT_STATIC`.
+
 ## Testbench Skeleton
 
 ```systemverilog
@@ -163,6 +180,8 @@ Verilator:
 - Avoid if dependent RTL enables internal assertions with unsupported multi-cycle SVA sequence constructs, especially delayed sequences using logical not.
 - Avoid pass/fail requirements that depend on X detection or X propagation, such as `$isunknown(out)` for an invalid-select case.
 - Existing exclusions appear in counter, FIFO, credit, CDC FIFO, AMBA, and some mux BUILD files.
+- Diagnose warnings from the RTL before waiving them. For example, a packed matrix with disjoint continuously driven and registered bit regions may trigger Verilator's global `BLKANDNBLK` analysis even though the bits do not overlap. Document that exact cause and scope `-Wno-BLKANDNBLK` only to the affected suite.
+- A local Verilator C++ compilation failure may be a host-toolchain problem rather than a repository problem. Verify the configured compiler and CI behavior before changing RTL or shared build rules.
 
 Icarus:
 - Good for simpler procedural benches.
@@ -176,8 +195,21 @@ Simulation tests should be useful smoke/regression tests, not formal replacement
 - Reset and initial state.
 - One or more normal transactions.
 - Backpressure or stall behavior when applicable.
+- Payload/data integrity on every accepted transfer.
+- Contractual latency, cut-through behavior, and output stability while stalled.
+- Every selectable route or requester at least once for routing/arbitration DUTs, plus simultaneous independent routes where the DUT promises parallel throughput.
+- Policy-specific contention and state updates in a bench dedicated to that policy.
 - Boundary values and parameter-sensitive behavior.
 - A short random or permuted phase with a scoreboard for ordering/data integrity.
 - Quiesce/drain at the end.
 
 Leave exhaustive parameter sweeps, full protocol state-space coverage, and liveness/proof obligations to formal collateral.
+
+## Validation Sequence
+
+1. Run `pre-commit` on the changed bench and BUILD files, then `git diff --check`.
+2. Run the bench's Verific elaboration target when present.
+3. Run every generated VCS/Verilator/Icarus target for the changed bench with `--nocache_test_results`.
+4. Run the containing area's simulation regression, for example `bazel test //flow/sim:all --test_tag_filters=sim --nocache_test_results`.
+5. Run `python3 python/sim_tb_coverage_inventory.py` and confirm the intended DUTs are reported as direct benches.
+6. Check `git status` after Bazel runs and discard unrelated generated lockfile churn before committing.

@@ -230,7 +230,6 @@ end
 
 // Flip-flop register
 // * unconditional load
-// * initial value is 0
 // * no reset
 // * positive-edge triggered clock
 `define BR_REGNX(__q__, __d__, __clk__) \
@@ -240,7 +239,6 @@ end
 
 // Flip-flop register
 // * conditional load
-// * initial value is 0
 // * no reset
 // * positive-edge triggered clock
 `define BR_REGLNX(__q__, __d__, __en__, __clk__) \
