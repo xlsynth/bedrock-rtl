@@ -4,12 +4,26 @@
 
 import br_amba::*;
 
+// Directed simulation testbench for br_amba_apb_timing_slice.
+//
+// Scope:
+// - checks reset-visible APB outputs are idle;
+// - sends one zero-wait write and one stalled read to verify payload and response data;
+// - exercises the back-to-back completion path where a new setup arrives while the
+//   timing slice is suppressing requester traffic after a completed access.
 module br_amba_apb_timing_slice_tb;
   parameter int AddrWidth = 12;
 
   localparam int IdleCyclesAfterTransfer = 2;
   localparam int MaxStallCycles = 3;
   localparam logic [AddrWidth-1:0] SecondAddrMask = 12'h321;
+  localparam int RandomSeed = 32'h1bad_f00d;
+  localparam logic [AddrWidth-1:0] WriteAddr = 'h124;
+  localparam logic [AddrWidth-1:0] ReadAddr = 'h248;
+  localparam logic [ApbProtWidth-1:0] WriteProt = 3'b010;
+  localparam logic [ApbProtWidth-1:0] ReadProt = 3'b101;
+  localparam logic [3:0] WriteStrb = 4'b1111;
+  localparam logic [3:0] ReadStrb = 4'b0000;
 
   logic clk;
   logic rst;
@@ -35,6 +49,10 @@ module br_amba_apb_timing_slice_tb;
   logic [31:0] prdata_in;
   logic pready_in;
   logic pslverr_in;
+
+  logic monitor_enable;
+  logic monitor_done;
+  logic driver_done;
 
   br_amba_apb_timing_slice #(
       .AddrWidth(AddrWidth)
@@ -70,118 +88,87 @@ module br_amba_apb_timing_slice_tb;
       .rst
   );
 
-  task automatic init_inputs();
-    paddr_in   = '0;
-    psel_in    = 1'b0;
-    penable_in = 1'b0;
-    pprot_in   = '0;
-    pstrb_in   = '0;
-    pwrite_in  = 1'b0;
-    pwdata_in  = '0;
-    prdata_in  = '0;
-    pready_in  = 1'b0;
-    pslverr_in = 1'b0;
+  br_amba_apb_requester_driver #(
+      .AddrWidth(AddrWidth)
+  ) requester (
+      .clk,
+      .done(driver_done),
+      .paddr(paddr_in),
+      .psel(psel_in),
+      .penable(penable_in),
+      .pprot(pprot_in),
+      .pstrb(pstrb_in),
+      .pwrite(pwrite_in),
+      .pwdata(pwdata_in)
+  );
+
+  br_amba_apb_completer_driver completer (
+      .clk,
+      .done(driver_done),
+      .pready(pready_in),
+      .prdata(prdata_in),
+      .pslverr(pslverr_in)
+  );
+
+  br_amba_apb_timing_slice_monitor #(
+      .AddrWidth(AddrWidth)
+  ) monitor (
+      .clk,
+      .rst,
+      .enable(monitor_enable),
+      .done(monitor_done),
+      .paddr_in,
+      .psel_in,
+      .penable_in,
+      .pprot_in,
+      .pstrb_in,
+      .pwrite_in,
+      .pwdata_in,
+      .prdata_out,
+      .pready_out,
+      .pslverr_out,
+      .paddr_out,
+      .psel_out,
+      .penable_out,
+      .pprot_out,
+      .pstrb_out,
+      .pwrite_out,
+      .pwdata_out,
+      .prdata_in,
+      .pready_in,
+      .pslverr_in
+  );
+
+  task automatic wait_idle_after_transfer();
+    requester.send_idle_from_last();
+    for (int i = 0; i < IdleCyclesAfterTransfer; i++) begin
+      // Drive the completer idle while the requester side drains the timing-slice cooldown.
+      completer.reset_idle();
+      td.wait_cycles();
+    end
   endtask
 
-  task automatic drive_apb(input logic [AddrWidth-1:0] addr, input logic psel,
-                           input logic penable, input logic [ApbProtWidth-1:0] prot,
-                           input logic [3:0] strb, input logic write, input logic [31:0] wdata);
-    paddr_in   = addr;
-    psel_in    = psel;
-    penable_in = penable;
-    pprot_in   = prot;
-    pstrb_in   = strb;
-    pwrite_in  = write;
-    pwdata_in  = wdata;
-  endtask
-
-  task automatic drive_apb_idle();
-    psel_in    = 1'b0;
-    penable_in = 1'b0;
-  endtask
-
-  task automatic drive_slave_response(input logic ready, input logic [31:0] rdata,
-                                      input logic slverr);
-    pready_in  = ready;
-    prdata_in  = rdata;
-    pslverr_in = slverr;
-  endtask
-
-  function automatic logic [31:0] get_stall_rdata(input int cycle);
-    get_stall_rdata = 32'h5a5a_0000 | cycle;
-  endfunction
-
-  task automatic check_downstream(input logic [AddrWidth-1:0] addr,
-                                  input logic expected_psel, input logic expected_penable,
+  task automatic send_transaction(input logic [AddrWidth-1:0] addr,
                                   input logic [ApbProtWidth-1:0] prot,
                                   input logic [3:0] strb, input logic write,
-                                  input logic [31:0] wdata, input string phase);
-    td.check(paddr_out === addr, $sformatf("%s: paddr_out mismatch", phase));
-    td.check(psel_out === expected_psel, $sformatf("%s: psel_out mismatch", phase));
-    td.check(penable_out === expected_penable, $sformatf("%s: penable_out mismatch", phase));
-    td.check(pprot_out === prot, $sformatf("%s: pprot_out mismatch", phase));
-    td.check(pstrb_out === strb, $sformatf("%s: pstrb_out mismatch", phase));
-    td.check(pwrite_out === write, $sformatf("%s: pwrite_out mismatch", phase));
-    td.check(pwdata_out === wdata, $sformatf("%s: pwdata_out mismatch", phase));
-  endtask
-
-  task automatic check_response(input logic expected_pready, input logic [31:0] rdata,
-                                input logic slverr, input string phase);
-    td.check(pready_out === expected_pready, $sformatf("%s: pready_out mismatch", phase));
-    td.check(prdata_out === rdata, $sformatf("%s: prdata_out mismatch", phase));
-    td.check(pslverr_out === slverr, $sformatf("%s: pslverr_out mismatch", phase));
-  endtask
-
-  task automatic check_idle_after_transfer(input logic [AddrWidth-1:0] addr,
-                                           input logic [ApbProtWidth-1:0] prot,
-                                           input logic [3:0] strb, input logic write,
-                                           input logic [31:0] wdata);
-    for (int i = 0; i < IdleCyclesAfterTransfer; i++) begin
-      drive_slave_response(1'b0, '0, 1'b0);
-      td.wait_cycles();
-      check_downstream(addr, 1'b0, 1'b0, prot, strb, write, wdata,
-                       $sformatf("post-transfer idle cycle %0d", i));
-      td.check(!pready_out, $sformatf("pready_out asserted in post-transfer idle cycle %0d", i));
-    end
-  endtask
-
-  task automatic run_transaction(input logic [AddrWidth-1:0] addr,
-                                 input logic [ApbProtWidth-1:0] prot,
-                                 input logic [3:0] strb, input logic write,
-                                 input logic [31:0] wdata, input int wait_cycles,
-                                 input logic [31:0] rdata, input logic slverr);
-    string phase;
-    logic [31:0] stall_rdata;
-
-    drive_slave_response(1'b0, '0, 1'b0);
-    drive_apb(addr, 1'b1, 1'b0, prot, strb, write, wdata);
-    td.wait_cycles();
-    check_downstream(addr, 1'b1, 1'b0, prot, strb, write, wdata, "setup");
-    check_response(1'b0, '0, 1'b0, "setup");
-
-    drive_apb(addr, 1'b1, 1'b1, prot, strb, write, wdata);
-    td.wait_cycles();
-    check_downstream(addr, 1'b1, 1'b1, prot, strb, write, wdata, "access");
-    check_response(1'b0, '0, 1'b0, "access");
+                                  input logic [31:0] wdata, input int wait_cycles,
+                                  input logic [31:0] rdata, input logic slverr,
+                                  input string phase = "ready response");
+    requester.send_setup(addr, prot, strb, write, wdata);
+    requester.send_access(addr, prot, strb, write, wdata);
 
     for (int i = 0; i < wait_cycles; i++) begin
-      phase = $sformatf("stalled access cycle %0d", i);
-      stall_rdata = get_stall_rdata(i);
-      drive_slave_response(1'b0, stall_rdata, 1'b0);
-      td.wait_cycles();
-      check_downstream(addr, 1'b1, 1'b1, prot, strb, write, wdata, phase);
-      check_response(1'b0, stall_rdata, 1'b0, phase);
+      completer.stall(i);
     end
 
-    drive_slave_response(1'b1, rdata, slverr);
-    td.wait_cycles();
-    check_downstream(addr, 1'b0, 1'b0, prot, strb, write, wdata, "ready response");
-    check_response(1'b1, rdata, slverr, "ready response");
-
-    drive_apb_idle();
-    check_idle_after_transfer(addr, prot, strb, write, wdata);
+    monitor.expect_response(rdata, slverr, phase);
+    completer.complete(rdata, slverr);
+    wait_idle_after_transfer();
   endtask
 
+  // Complete an access and immediately start another transfer while the timing slice is
+  // suppressing requester traffic. This covers the cooldown path that prevents a new
+  // setup phase from leaking through in the response cycle after a completed access.
   task automatic run_back_to_back_same_select();
     logic [AddrWidth-1:0] first_addr;
     logic [AddrWidth-1:0] second_addr;
@@ -189,51 +176,43 @@ module br_amba_apb_timing_slice_tb;
     first_addr  = '1;
     second_addr = '1 ^ SecondAddrMask;
 
-    drive_slave_response(1'b0, '0, 1'b0);
-    drive_apb(first_addr, 1'b1, 1'b0, 3'b001, 4'b1111, 1'b1, 32'haaaa_0001);
-    td.wait_cycles();
-    check_downstream(first_addr, 1'b1, 1'b0, 3'b001, 4'b1111, 1'b1, 32'haaaa_0001,
-                     "back-to-back first setup");
+    completer.reset_idle();
+    requester.send_setup(first_addr, 3'b001, 4'b1111, 1'b1, 32'haaaa_0001);
+    requester.send_access(first_addr, 3'b001, 4'b1111, 1'b1, 32'haaaa_0001);
+    // Leave the requester in access after the first response to exercise the slice cooldown.
+    monitor.expect_response(32'hfeed_1001, 1'b0, "back-to-back first response");
+    completer.complete(32'hfeed_1001, 1'b0);
 
-    drive_apb(first_addr, 1'b1, 1'b1, 3'b001, 4'b1111, 1'b1, 32'haaaa_0001);
-    td.wait_cycles();
-    check_downstream(first_addr, 1'b1, 1'b1, 3'b001, 4'b1111, 1'b1, 32'haaaa_0001,
-                     "back-to-back first access");
-
-    drive_slave_response(1'b1, 32'hfeed_1001, 1'b0);
-    td.wait_cycles();
-    check_downstream(first_addr, 1'b0, 1'b0, 3'b001, 4'b1111, 1'b1, 32'haaaa_0001,
-                     "back-to-back first response");
-    check_response(1'b1, 32'hfeed_1001, 1'b0, "back-to-back first response");
-
-    drive_slave_response(1'b0, '0, 1'b0);
-    drive_apb(second_addr, 1'b1, 1'b0, 3'b110, 4'b0011, 1'b0, 32'hbbbb_0002);
-    td.wait_cycles();
-    check_downstream(second_addr, 1'b0, 1'b0, 3'b110, 4'b0011, 1'b0, 32'hbbbb_0002,
-                     "back-to-back cooldown");
-    check_response(1'b0, '0, 1'b0, "back-to-back cooldown");
-
-    td.wait_cycles();
-    check_downstream(second_addr, 1'b1, 1'b0, 3'b110, 4'b0011, 1'b0, 32'hbbbb_0002,
-                     "back-to-back second setup");
-
-    drive_apb(second_addr, 1'b1, 1'b1, 3'b110, 4'b0011, 1'b0, 32'hbbbb_0002);
-    td.wait_cycles();
-    check_downstream(second_addr, 1'b1, 1'b1, 3'b110, 4'b0011, 1'b0, 32'hbbbb_0002,
-                     "back-to-back second access");
-
-    drive_slave_response(1'b1, 32'hfeed_2002, 1'b1);
-    td.wait_cycles();
-    check_downstream(second_addr, 1'b0, 1'b0, 3'b110, 4'b0011, 1'b0, 32'hbbbb_0002,
-                     "back-to-back second response");
-    check_response(1'b1, 32'hfeed_2002, 1'b1, "back-to-back second response");
-
-    drive_apb_idle();
-    check_idle_after_transfer(second_addr, 3'b110, 4'b0011, 1'b0, 32'hbbbb_0002);
+    completer.reset_idle();
+    // The second setup is driven during cooldown. The two-cycle wait checks that the DUT
+    // suppresses PSEL for the response cycle and the following valid_handshake_d1 cycle.
+    requester.send_setup(second_addr, 3'b110, 4'b0011, 1'b0, 32'hbbbb_0002, 2);
+    requester.send_access(second_addr, 3'b110, 4'b0011, 1'b0, 32'hbbbb_0002);
+    monitor.expect_response(32'hfeed_2002, 1'b1, "back-to-back second response");
+    completer.complete(32'hfeed_2002, 1'b1);
+    wait_idle_after_transfer();
   endtask
 
   initial begin
-    init_inputs();
+    int random_seed;
+    logic [31:0] write_wdata;
+    logic [31:0] write_rdata;
+    logic [31:0] read_wdata;
+    logic [31:0] read_rdata;
+
+    monitor_enable = 1'b0;
+    monitor_done   = 1'b0;
+    driver_done    = 1'b0;
+    random_seed    = RandomSeed;
+    void'($urandom(random_seed));
+    write_wdata = $urandom();
+    write_rdata = $urandom();
+    read_wdata  = $urandom();
+    read_rdata  = $urandom();
+
+    requester.init_idle();
+    completer.init_idle();
+    monitor.clear();
     td.reset_dut();
     td.wait_cycles();
 
@@ -241,12 +220,26 @@ module br_amba_apb_timing_slice_tb;
     td.check(!penable_out, "penable_out asserted after reset");
     td.check(!pready_out, "pready_out asserted after reset");
 
-    run_transaction('h124, 3'b010, 4'b1111, 1'b1, 32'hc001_cafe, 0, 32'h1234_5678,
-                    1'b0);
-    run_transaction('h248, 3'b101, 4'b0000, 1'b0, 32'hdead_beef, MaxStallCycles,
-                    32'h89ab_cdef, 1'b1);
+    fork
+      requester.run();
+      completer.run();
+      monitor.run();
+    join_none
+
+    monitor_enable = 1'b1;
+
+    send_transaction(WriteAddr, WriteProt, WriteStrb, 1'b1, write_wdata, 0, write_rdata, 1'b0);
+    send_transaction(ReadAddr, ReadProt, ReadStrb, 1'b0, read_wdata, MaxStallCycles, read_rdata,
+                     1'b1);
     run_back_to_back_same_select();
 
+    td.check(requester.pending_count() == 0, "requester drive queue not empty");
+    td.check(completer.pending_count() == 0, "completer drive queue not empty");
+    td.check(monitor.pending_count() == 0, "monitor response queue not empty");
+    td.check(monitor.get_error_count() == 0, "APB monitor reported errors");
+    monitor_enable = 1'b0;
+    monitor_done   = 1'b1;
+    driver_done    = 1'b1;
     td.finish();
   end
 
