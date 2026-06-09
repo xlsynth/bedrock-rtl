@@ -29,6 +29,95 @@ jobs:
       - name: Run pre-commit
         run: pre-commit run --show-diff-on-failure --color=always --all-files
 
+  docker-image-build:
+    runs-on: ubuntu-24.04
+    outputs:
+      image-tag: ${{ steps.image-metadata.outputs.tag }}
+    permissions:
+      contents: read
+    steps:
+      # actions/checkout v6
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
+      # docker/setup-buildx-action v4.1.0
+      - uses: docker/setup-buildx-action@d7f5e7f509e45cec5c76c4d5afdd7de93d0b3df5
+      - name: Set YYYY-MM-DD-SHA image tag
+        id: image-metadata
+        run: |
+          # Normalize the commit timestamp to a UTC date so a Git SHA always
+          # maps to the same YYYY-MM-DD-SHA image tag across time zones.
+          commit_timestamp="$(git show --no-patch --format=%ct "${GITHUB_SHA}")"
+          commit_date="$(date --utc --date="@${commit_timestamp}" +%F)"
+          echo "tag=${commit_date}-${GITHUB_SHA}" >> "${GITHUB_OUTPUT}"
+      - name: Build Docker image
+        # docker/build-push-action v7.2.0
+        uses: docker/build-push-action@f9f3042f7e2789586610d6e8b85c8f03e5195baf
+        with:
+          context: .
+          file: ./Dockerfile
+          platforms: linux/amd64
+          push: false
+          labels: |
+            org.opencontainers.image.revision=${{ github.sha }}
+          # Reuse BuildKit layers stored in the GitHub Actions cache for this image.
+          cache-from: type=gha,scope=bedrock-rtl-docker
+          # Export all intermediate and final layers for subsequent builds.
+          cache-to: type=gha,mode=max,scope=bedrock-rtl-docker
+
+  docker-image-publish:
+    runs-on: ubuntu-24.04
+    needs: docker-image-build
+    # GitHub only permits users with repository write access to use workflow_dispatch.
+    if: >-
+      needs.docker-image-build.result == 'success' &&
+      (github.event_name == 'workflow_dispatch' ||
+      (github.event_name == 'push' && github.ref == 'refs/heads/main'))
+    permissions:
+      # Allows checkout to read the repository contents.
+      contents: read
+      # Allows GitHub to issue the OIDC token used to sign the provenance attestation.
+      id-token: write
+      # Allows the job to persist the signed provenance attestation with GitHub.
+      attestations: write
+      # Links the attestation to the image published in GHCR.
+      artifact-metadata: write
+      # Allows the job credential to publish the image to GHCR.
+      packages: write
+    steps:
+      # actions/checkout v6
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
+      # docker/setup-buildx-action v4.1.0
+      - uses: docker/setup-buildx-action@d7f5e7f509e45cec5c76c4d5afdd7de93d0b3df5
+      - name: Log in to GHCR
+        # docker/login-action v4.2.0
+        uses: docker/login-action@650006c6eb7dba73a995cc03b0b2d7f5ca915bee
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ github.token }}
+      - name: Publish Docker image
+        id: publish
+        # docker/build-push-action v7.2.0
+        uses: docker/build-push-action@f9f3042f7e2789586610d6e8b85c8f03e5195baf
+        with:
+          context: .
+          file: ./Dockerfile
+          platforms: linux/amd64
+          push: true
+          # Attach max-detail BuildKit provenance to the published image.
+          provenance: mode=max
+          tags: ghcr.io/xlsynth/bedrock-rtl:${{ needs.docker-image-build.outputs.image-tag }}
+          labels: |
+            org.opencontainers.image.revision=${{ github.sha }}
+          # Reuse the layers populated by docker-image-build before publishing.
+          cache-from: type=gha,scope=bedrock-rtl-docker
+      - name: Attest Docker image provenance
+        # actions/attest v4.1.0
+        uses: actions/attest@59d89421af93a897026c735860bf21b6eb4f7b26
+        with:
+          subject-name: ghcr.io/xlsynth/bedrock-rtl
+          subject-digest: ${{ steps.publish.outputs.digest }}
+          push-to-registry: true
+
   # Run bazel build and tests in order in one job to avoid parallel jobs that make
   # build logs appear out of sequence across the CI workflow.
   bazel-build-and-test:
