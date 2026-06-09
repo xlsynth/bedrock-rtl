@@ -228,6 +228,19 @@ RUN mv /usr/local/bin/bazelisk /usr/local/bin/bazel
 RUN chmod +x /usr/local/bin/bazel
 RUN bazel --version
 
+# Clone z3 to use as a verilator solver
+# z3-4.16.0
+RUN git clone https://github.com/Z3Prover/z3.git && \
+    cd z3 && \
+    git checkout ddb49568d3520e99799e364fb22f35fc67d887b1
+RUN cd z3 && \
+    CXX=clang++ CC=clang python3 ./scripts/mk_make.py && \
+    cd build && make -j$(nproc) && make install && \
+    cd ../../
+RUN z3 --version
+# Export VERILATOR_SOLVER environmental variable to use z3 as a solver
+ENV VERILATOR_SOLVER="z3 --in"
+
 RUN useradd -m user
 USER user
 
