@@ -142,3 +142,43 @@ br_verilog_sim_test_tools_suite(
     ],
     deps = [":br_amba_axi_shrinker_tb"],
 )
+
+verilog_library(
+    name = "br_amba_axil_default_target_tb",
+    srcs = ["br_amba_axil_default_target_tb.sv"],
+    deps = [
+        "//amba/rtl:br_amba_axil_default_target",
+        "//misc/sim:br_test_driver",
+    ],
+)
+
+verilog_elab_test(
+    name = "br_amba_axil_default_target_tb_elab_test",
+    tool = "verific",
+    deps = [":br_amba_axil_default_target_tb"],
+)
+
+br_verilog_sim_test_tools_suite(
+    name = "br_amba_axil_default_target_sim_test_tools_suite",
+    params = {
+        "DataWidth": [
+            "32",
+            "64",
+        ],
+        "NumTransactions": [
+            "1",
+            "10",
+            "100",
+        ],
+        "ResponseKind": [
+            "0",
+            "1",
+            "2",
+        ],
+    },
+    tools = [
+        "vcs",
+        "verilator",
+    ],
+    deps = [":br_amba_axil_default_target_tb"],
+)
