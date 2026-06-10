@@ -186,6 +186,7 @@ verilog_library(
     name = "br_arb_weighted_lru_fpv_monitor",
     srcs = ["br_arb_weighted_lru_fpv_monitor.sv"],
     deps = [
+        ":lru_basic_fpv_monitor",
         "//arb/rtl:br_arb_weighted_lru",
         "//macros:br_fv",
     ],

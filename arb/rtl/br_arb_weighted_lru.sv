@@ -18,7 +18,6 @@
 // 4. Decrement the accumulated weight of the granted requester by 1.
 
 `include "br_asserts_internal.svh"
-`include "br_registers.svh"
 `include "br_unused.svh"
 
 module br_arb_weighted_lru #(
@@ -28,8 +27,7 @@ module br_arb_weighted_lru #(
     parameter int MaxWeight = 1,
     // Maximum accumulated weight per requester. Must be at least MaxWeight.
     parameter int MaxAccumulatedWeight = MaxWeight,
-    localparam int WeightWidth = $clog2(MaxWeight + 1),
-    localparam int AccumulatedWeightWidth = $clog2(MaxAccumulatedWeight + 1)
+    localparam int WeightWidth = $clog2(MaxWeight + 1)
 ) (
     // ri lint_check_waive INPUT_NOT_READ
     input logic clk,
@@ -64,102 +62,53 @@ module br_arb_weighted_lru #(
 
   end else begin : gen_n_req
     logic [NumRequesters-1:0] request_priority;
-    logic any_high_priority_request;
-    logic [NumRequesters-1:0] can_grant;
     logic [NumRequesters-1:0][NumRequesters-1:0] state;
-    logic [NumRequesters-1:0][NumRequesters-1:0] state_reg;
-    logic [NumRequesters-1:0][NumRequesters-1:0] state_reg_next;
+    logic [NumRequesters-1:0][NumRequesters-1:0] priority_matrix;
 
-    logic incr_accumulated_weight;
-    logic [NumRequesters-1:0] decr_accumulated_weight;
-    logic [NumRequesters-1:0][AccumulatedWeightWidth-1:0] accumulated_weight;
-
-    assign any_high_priority_request = |(request & request_priority);
-
-    // This LRU state matrix implementation is copied from br_arb_lru_internal.
-    // Implement the state matrix. We only need to maintain the upper triangular state (exclusive of
-    // diagonal) in registers because the lower triangle is its complement. The diagonal is undefined
-    // and unused (because we never need to compare the priority of a requester with itself).
-    // There are NumRequesters * (NumRequesters - 1) / 2 flip-flops of priority state.
-    for (genvar i = 0; i < NumRequesters; i++) begin : gen_state_row
-      for (genvar j = 0; j < NumRequesters; j++) begin : gen_state_col
-        // Upper triangle
-        if (i < j) begin : gen_upper_tri
-          // All bits in upper triangle init to 1'b1 (lowest numbered req wins)
-          assign state_reg_next[i][j] = grant[i] ? 1'b0 : grant[j] ? 1'b1 : state[i][j];
-          `BR_REGLI(state_reg[i][j], state_reg_next[i][j], enable_priority_update && |request, 1'b1)
-          assign state[i][j] = state_reg[i][j];
-
-          // Lower triangle is the inverse of upper triangle
-        end else if (i > j) begin : gen_lower_tri
-          assign state[i][j] = !state_reg[j][i];
-
-          // Tie-off unused signals
-          assign state_reg_next[i][j] = 1'b0;  // ri lint_check_waive CONST_ASSIGN
-          assign state_reg[i][j] = 1'b0;  // ri lint_check_waive CONST_ASSIGN
-          `BR_UNUSED_NAMED(states, {state_reg_next[i][j], state_reg[i][j]})
-
-          // The diagonal is unused. Tie off signals.
-        end else begin : gen_diag
-          // ri lint_check_waive CONST_ASSIGN
-          assign {state_reg_next[i][j], state_reg[i][j], state[i][j]} = '0;
-          `BR_UNUSED_NAMED(states, {state_reg_next[i][j], state_reg[i][j], state[i][j]})
-        end
-      end
-    end
+    br_lru_state_internal #(
+        .NumRequesters(NumRequesters)
+    ) br_lru_state_internal (
+        .clk,
+        .rst,
+        .update_priority(enable_priority_update && |request),
+        .grant,
+        .state
+    );
 
     // Fold weighted priority into the LRU matrix. Since request_priority is
-    // registered state, request only passes through one pairwise comparison.
-    always_comb begin
-      for (int i = 0; i < NumRequesters; i++) begin
-        can_grant[i] = 1'b1;
-        for (int j = 0; j < NumRequesters; j++) begin
-          if (i != j) begin
-            can_grant[i] &=
-                !request[j] ||
-                ((request_priority[i] == request_priority[j]) ? state[i][j] : request_priority[i]);
-          end
-        end
+    // registered state, request does not pass through this comparison.
+    for (genvar i = 0; i < NumRequesters; i++) begin : gen_priority_matrix_row
+      for (genvar j = 0; j < NumRequesters; j++) begin : gen_priority_matrix_col
+        assign priority_matrix[i][j] =
+            (request_priority[i] == request_priority[j]) ? state[i][j] : request_priority[i];
       end
     end
 
-    assign grant = request & can_grant;
+    br_arb_lru_core_internal #(
+        .NumRequesters(NumRequesters)
+    ) br_arb_lru_core_internal (
+        .request,
+        .priority_matrix,
+        .can_grant(),
+        .grant
+    );
 
-    // Track per-request accumulated weight.
-    assign incr_accumulated_weight =
-        enable_priority_update && |request && !any_high_priority_request;
-    assign decr_accumulated_weight = enable_priority_update ? grant : '0;
+    br_arb_weight_handler #(
+        .NumRequesters(NumRequesters),
+        .MaxWeight(MaxWeight),
+        .MaxAccumulatedWeight(MaxAccumulatedWeight)
+    ) br_arb_weight_handler (
+        .clk,
+        .rst,
+        .enable_priority_update,
+        .request,
+        .request_weight,
+        .grant,
+        .request_priority
+    );
 
-    for (genvar i = 0; i < NumRequesters; i++) begin : gen_accumulated_weight
-      br_counter #(
-          .MaxValue(MaxAccumulatedWeight),
-          .MaxChange(MaxWeight),
-          .MaxDecrement(1),
-          .EnableSaturate(1),
-          .EnableWrap(0),
-          .EnableCoverZeroChange(0),
-          .EnableCoverReinit(0),
-          .EnableAssertFinalInitialValue(0)
-      ) br_counter (
-          .clk,
-          .rst,
-          .reinit(1'b0),
-          .initial_value({AccumulatedWeightWidth{1'b0}}),
-          .incr_valid(incr_accumulated_weight),
-          .incr(request_weight[i]),
-          .decr_valid(decr_accumulated_weight[i]),
-          .decr(WeightWidth'(1'b1)),
-          .value(accumulated_weight[i]),
-          .value_next()
-      );
-
-      assign request_priority[i] = |accumulated_weight[i];
-    end
-
-    `BR_ASSERT_IMPL(disable_priority_update_A,
-                    !enable_priority_update |=> $stable({accumulated_weight, state}))
     `BR_ASSERT_IMPL(high_priority_grant_A,
-                    any_high_priority_request |-> |(grant & request_priority))
+                    |(request & request_priority) |-> |(grant & request_priority))
   end
 
   //------------------------------------------

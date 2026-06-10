@@ -116,7 +116,7 @@ module br_arb_weighted_lru_tb;
     request = req;
     request_weight = weight;
     enable_priority_update = enable_update;
-    #1;
+    @(posedge clk);
 
     grant_expected = expected_grant(req);
     td.check(grant === grant_expected, $sformatf(
