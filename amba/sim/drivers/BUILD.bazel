@@ -3,8 +3,8 @@
 load("@rules_hdl//verilog:providers.bzl", "verilog_library")
 
 verilog_library(
-    name = "br_amba_apb_timing_slice_monitor",
-    srcs = ["br_amba_apb_timing_slice_monitor.sv"],
+    name = "br_amba_apb_sim_helpers",
+    srcs = ["br_amba_apb_sim_helpers.sv"],
     visibility = ["//visibility:public"],
     deps = [
         "//amba/rtl:br_amba_pkg",
@@ -12,10 +12,7 @@ verilog_library(
 )
 
 verilog_library(
-    name = "br_amba_axil_monitor",
-    srcs = ["br_amba_axil_monitor.sv"],
+    name = "br_amba_axil_driver",
+    srcs = ["br_amba_axil_driver.sv"],
     visibility = ["//visibility:public"],
-    deps = [
-        "//amba/rtl:br_amba_pkg",
-    ],
 )
