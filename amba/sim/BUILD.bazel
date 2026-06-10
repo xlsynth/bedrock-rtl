@@ -5,19 +5,10 @@ load("//bazel:br_verilog.bzl", "br_verilog_sim_test_tools_suite")
 load("//bazel:verilog.bzl", "verilog_elab_test")
 
 verilog_library(
-    name = "br_amba_apb_sim_helpers",
-    srcs = ["br_amba_apb_sim_helpers.sv"],
-    visibility = ["//visibility:public"],
-    deps = [
-        "//amba/rtl:br_amba_pkg",
-    ],
-)
-
-verilog_library(
     name = "br_amba_apb_timing_slice_tb",
     srcs = ["br_amba_apb_timing_slice_tb.sv"],
     deps = [
-        ":br_amba_apb_sim_helpers",
+        "//amba/sim/drivers:br_amba_apb_sim_helpers",
         "//amba/sim/monitors:br_amba_apb_timing_slice_monitor",
         "//amba/rtl:br_amba_apb_timing_slice",
         "//misc/sim:br_test_driver",
@@ -147,6 +138,8 @@ verilog_library(
     name = "br_amba_axil_default_target_tb",
     srcs = ["br_amba_axil_default_target_tb.sv"],
     deps = [
+        "//amba/sim/drivers:br_amba_axil_driver",
+        "//amba/sim/monitors:br_amba_axil_monitor",
         "//amba/rtl:br_amba_axil_default_target",
         "//misc/sim:br_test_driver",
     ],
