@@ -1,6 +1,6 @@
 # AGENTS.md
 
-First, read the `README.adoc` file completely before proceeding.
+Reading the `README.adoc` file in its entirety is not strictly required, but it may provide helpful repository context.
 
 ## Verilog coding style
 
