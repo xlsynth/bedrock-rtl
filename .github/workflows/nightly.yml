@@ -33,6 +33,7 @@ jobs:
 
   bazel-test-jg:
     runs-on: self-hosted
+    environment: ci-badge-publishing
     needs: bazel-build
     outputs:
       total_tests: ${{ steps.test.outputs.total_tests }}
@@ -100,6 +101,7 @@ jobs:
 
   jg-badge:
     runs-on: ubuntu-24.04
+    environment: ci-badge-publishing
     needs: bazel-test-jg
     # Run when bazel-test-jg completes, even if it failed.
     if: ${{ always() }}
