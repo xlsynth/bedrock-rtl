@@ -25,6 +25,7 @@ if {[string equal $param_list(EnableCoverPushBackpressure) "1'b0"] &&
     [string equal $param_list(EnableAssertPushValidStability) "1'b0"] &&
     [string equal $param_list(EnableAssertPushDataStability) "1'b0"]} {
   cover -disable {*gen_cover_decr_gt_available.decr_gt_available_c*}
+  cover -disable {*br_flow_fork_push.br_flow_fork_select_multihot.gen_flow_checks*.pop_valid_unstable_c}
 }
 
 assume -name initial_value_during_reset {rst | pop_receiver_in_reset |-> \

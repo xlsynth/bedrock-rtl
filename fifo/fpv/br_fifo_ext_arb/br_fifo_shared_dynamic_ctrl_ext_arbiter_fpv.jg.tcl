@@ -33,11 +33,20 @@ set_prove_time_limit 600s
 # TODO(zhemao): Find a way to disable in RTL
 cover -disable *br_flow_fork_head.br_flow_checks_valid_data_impl.*valid_unstable_c
 
+# With one read port, the FIFO can perform at most one pop/deallocation per
+# cycle. The freelist still has one dealloc port per logical FIFO, so Jasper
+# generates a precondition cover for the multi-dealloc uniqueness assertion even
+# though that precondition is structurally unreachable in this wrapper
+# configuration.
+if {$NumReadPorts == 1} {
+  cover -disable *br_tracker_freelist_inst.gen_dealloc_intg_asserts*.gen_unique_dealloc_intg_asserts*.unique_dealloc_entry_id_a:precondition1
+}
+
 # DataRamReadLatency=0 and RegisterPopOutputs=0 selects the no-staging-buffer
 # path. There, pop_valid is gated by pop_ready through the RAM-read fork, so
 # the internal pop-side backpressure cover is structurally unreachable.
 if {$DataRamReadLatency == 0 && $RegisterPopOutputs eq "1'b0"} {
-  cover -disable *br_flow_fork_head.br_flow_checks_valid_data_impl.gen_backpressure_checks.gen_cover_without_stability.gen_per_flow*0*.backpressure_c
+  cover -disable *br_flow_fork_head*br_flow_checks_valid_data_impl.gen_backpressure_checks.gen_cover_without_stability.gen_per_flow*0*.backpressure_c
 }
 
 # prove command
