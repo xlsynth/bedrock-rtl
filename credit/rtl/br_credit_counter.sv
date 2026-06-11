@@ -191,6 +191,12 @@ module br_credit_counter #(
   end else begin : gen_assert_withhold_zero
     `BR_ASSERT_INTG(withhold_zero_a, withhold == 0)
   end
+  // If every cycle must pop a nonzero credit with no backpressure, withholding more
+  // than the stored pool would force an underflow when increments are limited to one.
+  if (EnableAssertAlwaysDecr && EnableAssertNoDecrementBackpressure &&
+      !EnableCoverZeroDecrement && MaxIncrement == 1) begin : gen_assert_withhold_lte_value
+    `BR_ASSERT_INTG(withhold_lte_value_a, withhold <= value)
+  end
 
   if (EnableCoverDecrementBackpressure) begin : gen_cover_decr_gt_available
     `BR_COVER_INTG(decr_gt_available_c, decr_valid && decr > available)

@@ -83,6 +83,10 @@ module br_credit_counter_fpv_monitor #(
   end else begin : gen_assume_no_withhold
     `BR_ASSUME(no_withhold_a, withhold == 'd0)
   end
+  if (EnableAssertAlwaysDecr && EnableAssertNoDecrementBackpressure &&
+      !EnableCoverZeroDecrement && MaxIncrement == 1) begin : gen_assume_withhold_lte_value
+    `BR_ASSUME(withhold_lte_value_a, withhold <= value)
+  end
   if (EnableAssertAlwaysDecr) begin : gen_assume_always_decr
     `BR_ASSUME(always_decr_a, decr_valid)
   end else begin : gen_cover_no_decr
