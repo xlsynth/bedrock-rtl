@@ -116,7 +116,7 @@ module br_amba_apb_timing_slice_tb;
       .clk,
       .rst,
       .enable(monitor_enable),
-      .done(monitor_done),
+      .done  (monitor_done),
       .paddr_in,
       .psel_in,
       .penable_in,
@@ -148,12 +148,10 @@ module br_amba_apb_timing_slice_tb;
     end
   endtask
 
-  task automatic send_transaction(input logic [AddrWidth-1:0] addr,
-                                  input logic [ApbProtWidth-1:0] prot,
-                                  input logic [3:0] strb, input logic write,
-                                  input logic [31:0] wdata, input int wait_cycles,
-                                  input logic [31:0] rdata, input logic slverr,
-                                  input string phase = "ready response");
+  task automatic send_transaction(
+      input logic [AddrWidth-1:0] addr, input logic [ApbProtWidth-1:0] prot, input logic [3:0] strb,
+      input logic write, input logic [31:0] wdata, input int wait_cycles, input logic [31:0] rdata,
+      input logic slverr, input string phase = "ready response");
     requester.send_setup(addr, prot, strb, write, wdata);
     requester.send_access(addr, prot, strb, write, wdata);
 

@@ -4,7 +4,10 @@ load("@rules_hdl//verilog:providers.bzl", "verilog_library")
 
 verilog_library(
     name = "br_amba_apb_sim_helpers",
-    srcs = ["br_amba_apb_sim_helpers.sv"],
+    srcs = [
+        "br_amba_apb_completer_driver.sv",
+        "br_amba_apb_requester_driver.sv",
+    ],
     visibility = ["//visibility:public"],
     deps = [
         "//amba/rtl:br_amba_pkg",

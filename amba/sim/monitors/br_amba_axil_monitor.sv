@@ -95,8 +95,8 @@ module br_amba_axil_monitor #(
     end
   endtask
 
-  task automatic run(input int num_writes = 0, input int num_reads = 0,
-                     input int awvalid_delay = 0, input int wvalid_delay = 0);
+  task automatic run(input int num_writes = 0, input int num_reads = 0, input int awvalid_delay = 0,
+                     input int wvalid_delay = 0);
     fork
       begin
         if (num_writes > 0) begin
