@@ -56,6 +56,67 @@ br_verilog_fpv_test_tools_suite(
 )
 
 br_verilog_fpv_test_tools_suite(
+    name = "br_credit_counter_param_knobs_test_suite",
+    elab_opts = [
+        "-parameter MaxValue 5",
+        "-parameter MaxChange 3",
+    ],
+    illegal_param_combinations = {
+        (
+            "EnableCoverZeroDecrement",
+            "MaxDecrement",
+        ): [
+            ("1", "1"),
+        ],
+        (
+            "EnableAssertNoDecrementBackpressure",
+            "EnableCoverDecrementBackpressure",
+        ): [
+            ("1", "1"),
+        ],
+    },
+    params = {
+        "MaxDecrement": [
+            "1",
+            "3",
+        ],
+        "MaxIncrement": [
+            "1",
+            "3",
+        ],
+        "EnableAssertAlwaysDecr": [
+            "0",
+            "1",
+        ],
+        "EnableAssertNoDecrementBackpressure": [
+            "0",
+            "1",
+        ],
+        "EnableCoverDecrementBackpressure": [
+            "0",
+            "1",
+        ],
+        "EnableCoverWithhold": [
+            "0",
+            "1",
+        ],
+        "EnableCoverZeroDecrement": [
+            "0",
+            "1",
+        ],
+        "EnableCoverZeroIncrement": [
+            "0",
+            "1",
+        ],
+    },
+    tools = {
+        "jg": "br_credit_counter_fpv.jg.tcl",
+    },
+    top = "br_credit_counter",
+    deps = [":br_credit_counter_fpv_monitor"],
+)
+
+br_verilog_fpv_test_tools_suite(
     name = "br_credit_counter_test_max",
     elab_opts = [
         "-parameter MaxValue 4294967295",
