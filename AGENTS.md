@@ -1,82 +1,91 @@
 # AGENTS.md
 
-First, read the `README.adoc` file completely before proceeding.
+Reading `README.adoc` in its entirety is not required, but it may provide helpful repository context. Before changing code, inspect the closest analogous module, test, and `BUILD.bazel` target and follow their established patterns.
+
+## Repository layout
+
+* Synthesizable design RTL belongs beneath a block's `rtl/` directory.
+* Simulation testbenches and support code belong beneath `sim/`.
+* Formal properties, monitors, and support code belong beneath `fpv/`.
+* Bazel build files must be named `BUILD.bazel`, never `BUILD`.
 
 ## Verilog coding style
 
 ### Style guides
 
-This repository follows the [xlsynth/verilog-style-guides](https://github.com/xlsynth/verilog-style-guides/).
-Make sure that all Verilog code abides by the [general style guide](https://github.com/xlsynth/verilog-style-guides/blob/master/VerilogCodingStyle.md).
+This repository follows the [xlsynth Verilog style guide](https://github.com/xlsynth/verilog-style-guides/blob/master/VerilogCodingStyle.md).
 
-Simulation testbench code should additionally abide by the relevant parts of the [verification addendum](https://github.com/xlsynth/verilog-style-guides/blob/master/DVCodingStyle.md).
-(This repository does not contain any UVM code, so ignore that part of the verification style guide.)
+Simulation testbench code must also follow the relevant parts of the [verification addendum](https://github.com/xlsynth/verilog-style-guides/blob/master/DVCodingStyle.md). This repository does not use UVM, so its UVM-specific guidance does not apply.
 
 ### Reuse existing code
 
-When implementing RTL, always try to compose existing Bedrock libraries; don't write write a bespoke functional implementation unless it's genuinely new or if composition of existing modules will lead to suboptimal performance, power, or area.
-RTL files will always be located beneath an `rtl/` subdirectory tree.
+Prefer composing existing Bedrock modules over writing bespoke RTL. New implementations are appropriate when the functionality is genuinely new or composition would materially harm performance, power, or area.
 
 ### Registers and sequential logic
 
-This repository uses the following clock and reset conventions.
-* Only use flip-flops; no latches.
-* Flip-flops are triggered on the positive edge of the clock.
-* Resets are synchronous and active-high.
+* Do not infer latches.
+* Flip-flops are positive-edge triggered.
+* Prefer synchronous, active-high resets. Use asynchronous resets only where the design requires them, such as CDC and reset-synchronization logic.
+* For ordinary synthesizable flip-flop logic, use the appropriate `BR_REG*` macro from `macros/br_registers.svh` rather than writing an `always_ff` block directly.
+* Direct sequential blocks may be appropriate for memories, verification code, or constructs that the register macros cannot express. Follow the closest existing implementation in those cases.
 
-Use the `BR_REG*` macros defined in `macros/br_registers.svh` for _all_ sequential logic; never write `always @(posedge clk)` or `always_ff` blocks.
+### Assertions and covers
 
-### Assertions and Covers
+Use the assertion and cover macros in `macros/br_asserts.svh`; do not write `assert property`, `cover property`, or similar constructs directly. Within Bedrock implementations, use the integration and implementation macros from `macros/br_asserts_internal.svh` where applicable.
 
-Use the assertion and cover macros in `macros/br_asserts.svh` and `macros/br_asserts_internal.svh`.
-Do not write `assert property`, etc. directly.
+* Parameterized RTL modules must use `BR_ASSERT_STATIC` to validate all nontrivial parameter constraints.
+* Input and integration constraints should use `*_INTG` macros and appear near the top of the module body.
+* Output behavior, assuming integration constraints are satisfied, should use `*_IMPL` macros. Prefer placing these checks near the bottom of the module unless keeping one near the relevant implementation improves readability.
 
-* Every RTL module should have `BR_ASSERT_STATIC` to check for legal parameter values.
-* Checks on input constraints should be written with `*_INTG` macros, and placed at the top of the module body.
-* Checks on output behavior (assuming that the input constraints are satisfied) must be written with `*_IMPL` macros, and preferably placed at the bottom of the module body, though sometimes it is acceptable to put them in the middle of the implementation if it helps readability.
+## Bazel and verification
 
-## Building and testing
+Use Bazel for builds and tests. Prefer validation proportional to the change:
 
-We use the Bazel build system.
+1. Run the narrowest affected build and test targets first.
+2. Expand to the relevant package, test type, or tool-filtered suite when appropriate.
+3. Run repository-wide `//...` commands only when the scope or risk warrants them.
 
-To build targets, just run this:
+RTL behavior changes should generally add or update verification collateral. Use the appropriate combination of elaboration, lint, simulation, and formal tests; compilation alone is not sufficient evidence for a behavioral change.
 
-```shell
-bazel build //...
-```
-
-But to run most tests, you need a properly configured environment with access to relevant EDA tools, some of which are proprietary, as mentioned in the README.
-To check if this is configured properly, read through `.bazelrc` and also check if there is a `user.bazelrc`.
-If it looks like any of the required environment variables are not set or they're set to invalid paths, the environment may not be set up correctly.
-You can smoke-test if the environment looks ready:
+Useful commands include:
 
 ```shell
-bazel run //:check_env
+bazel build //<affected/package>:<target>
+bazel test //<affected/package>/...
+bazel test //... --test_tag_filters=elab
+bazel test //... --test_tag_filters=lint
+bazel test //... --test_tag_filters=sim
+bazel test //... --test_tag_filters=fpv
+bazel test //... --test_tag_filters=<tool>
 ```
 
-Assuming it's ok, you can run all tests:
+Many tests require locally configured EDA tools, including proprietary tools. Review `.bazelrc` and `user.bazelrc`, if present, and check the environment with:
 
 ```shell
-bazel test //...
+bazel test //:check_env
 ```
 
-The above might take a long time, especially because proprietary EDA tools are typically license-limited and that can limit Bazel's test-level concurrency.
-You can filter to run fewer tests using the typical Bazel path syntax.
-We've also provided handy test tag filters by test type and by vendor tool.
-For example:
-
-```shell
-bazel test //... --test_tag-filters=elab  # Run only elaboration tests
-bazel test //... --test_tag-filters=verific  # Run only tests that use the `verific` tool
-bazel test //... --test_tag-filters=sim  # Run only simulation tests, with all applicable tools
-bazel test //... --test_tag-filters=vcs  # Run only tests that use the `vcs` tool (subset of all simulation tests)
-```
-
-Note that some Bazel tests do not require any EDA tools.
-Notably:
+Tests under `//bazel/...` and `//python/...` generally do not require EDA tools:
 
 ```shell
 bazel test //bazel/... //python/...
 ```
 
-`pre-commit` will run code formatters.
+Repository-wide commands can be expensive and license-limited:
+
+```shell
+bazel build //...
+bazel test //...
+```
+
+Simulation targets must not enable waveform generation by default; `waves = True` is rejected by the repository checks.
+
+## Formatting and repository checks
+
+Run pre-commit before considering a change complete:
+
+```shell
+pre-commit run --all-files
+```
+
+Pre-commit may modify files. Review the resulting diff and rerun the checks until they pass. It performs more than formatting, including Verilog lint, secret scanning, filename checks, and repository-specific policy checks. For documentation-only changes, formatting and repository checks are generally sufficient; EDA tests are unnecessary unless the documentation affects executable examples or generated artifacts.
