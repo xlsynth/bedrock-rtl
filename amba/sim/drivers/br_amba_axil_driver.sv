@@ -46,12 +46,12 @@ module br_amba_axil_driver #(
 
   localparam axil_target_inputs_t IdleTargetInputs = '{
       awvalid: 1'b0,
-      wvalid:  1'b0,
-      bready:  1'b0,
+      wvalid: 1'b0,
+      bready: 1'b0,
       arvalid: 1'b0,
-      rready:  1'b0
+      rready: 1'b0
   };
-  localparam int MAX_CYCLES = 10;
+  localparam int MaxCycles = 10;
 
   axil_target_inputs_t target_inputs;
 
@@ -80,7 +80,7 @@ module br_amba_axil_driver #(
   task automatic wait_random_cycles();
     int random_cycles;
 
-    random_cycles = $urandom_range(MAX_CYCLES - 1) + 1;
+    random_cycles = $urandom_range(MaxCycles - 1) + 1;
     wait_cycles(random_cycles);
   endtask
 
@@ -99,7 +99,9 @@ module br_amba_axil_driver #(
     int timeout = 0;
 
     @(posedge clk);
-    while (!is_wait_condition_met(condition) && timeout < TimeoutCycles) begin
+    while (!is_wait_condition_met(
+        condition
+    ) && timeout < TimeoutCycles) begin
       @(posedge clk);
       timeout++;
     end
@@ -207,9 +209,8 @@ module br_amba_axil_driver #(
     join
   endtask
 
-  task automatic run(input int num_writes = 0, input int num_reads = 0,
-                     input int awvalid_delay = 0, input int wvalid_delay = 0,
-                     input int arvalid_delay = 0);
+  task automatic run(input int num_writes = 0, input int num_reads = 0, input int awvalid_delay = 0,
+                     input int wvalid_delay = 0, input int arvalid_delay = 0);
     target_inputs.bready = 1'b0;
     target_inputs.rready = 1'b0;
 

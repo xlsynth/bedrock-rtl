@@ -5,7 +5,7 @@
 import br_amba::*;
 
 typedef enum int {
-  ResponseKindOkay = 0,
+  ResponseKindOkay   = 0,
   ResponseKindSlverr = 1,
   ResponseKindDecerr = 2
 } response_kind_e;

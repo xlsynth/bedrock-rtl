@@ -66,8 +66,7 @@ module br_amba_apb_timing_slice_monitor #(
   int error_count;
 
   function automatic apb_req_t get_req(input logic [AddrWidth-1:0] addr, input logic psel,
-                                       input logic penable,
-                                       input logic [ApbProtWidth-1:0] prot,
+                                       input logic penable, input logic [ApbProtWidth-1:0] prot,
                                        input logic [3:0] strb, input logic write,
                                        input logic [31:0] wdata);
     get_req.addr    = addr;
@@ -99,15 +98,13 @@ module br_amba_apb_timing_slice_monitor #(
     expected_rsp_phase_queue.delete();
   endtask
 
-  task automatic expect_response(input logic [31:0] rdata, input logic slverr,
-                                 input string phase);
+  task automatic expect_response(input logic [31:0] rdata, input logic slverr, input string phase);
     expected_rsp_queue.push_back(get_rsp(1'b1, rdata, slverr));
     expected_rsp_phase_queue.push_back(phase);
   endtask
 
   task automatic read_downstream(output apb_req_t req);
-    req = get_req(paddr_out, psel_out, penable_out, pprot_out, pstrb_out, pwrite_out,
-                  pwdata_out);
+    req = get_req(paddr_out, psel_out, penable_out, pprot_out, pstrb_out, pwrite_out, pwdata_out);
   endtask
 
   task automatic read_response(output apb_rsp_t rsp);
@@ -130,12 +127,13 @@ module br_amba_apb_timing_slice_monitor #(
     check(actual.ready === expected.ready, $sformatf("%s: pready_out mismatch", phase));
 
     if (expected.ready || actual.ready) begin
-      check(actual.rdata === expected.rdata,
-            $sformatf("%s: prdata_out mismatch, got 0x%08x expected 0x%08x", phase,
-                       actual.rdata, expected.rdata));
-      check(actual.slverr === expected.slverr,
-            $sformatf("%s: pslverr_out mismatch, got %0b expected %0b", phase,
-                       actual.slverr, expected.slverr));
+      check(
+          actual.rdata === expected.rdata, $sformatf(
+          "%s: prdata_out mismatch, got 0x%08x expected 0x%08x", phase, actual.rdata, expected.rdata
+          ));
+      check(actual.slverr === expected.slverr, $sformatf(
+            "%s: pslverr_out mismatch, got %0b expected %0b", phase, actual.slverr, expected.slverr
+            ));
     end
   endtask
 
