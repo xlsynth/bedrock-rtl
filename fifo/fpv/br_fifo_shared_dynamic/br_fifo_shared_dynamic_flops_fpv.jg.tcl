@@ -20,6 +20,12 @@ cover -disable *br_flow_fork_head.br_flow_checks_valid_data_impl.*valid_unstable
 array set param_list [get_design_info -list parameter]
 set NumReadPorts $param_list(NumReadPorts)
 set Depth $param_list(Depth)
+# With one read port, the wrapper can only deallocate one FIFO entry per cycle.
+# The freelist has per-FIFO dealloc ports, so its multi-dealloc precondition
+# covers are structurally unreachable in this configuration.
+if {$NumReadPorts == 1} {
+  cover -disable *br_tracker_freelist_inst.gen_dealloc_intg_asserts*.gen_unique_dealloc_intg_asserts*.unique_dealloc_entry_id_a:precondition1
+}
 if {$Depth < 2 * $NumReadPorts} {
   cover -disable *br_fifo_shared_read_xbar*br_flow_demux_select_unstable*br_flow_checks_valid_data_impl.*stable*
   cover -disable *br_ram_flops_pointer*br_ram_flops_tile.gen_multi_read_checks.all_rd_ports_active_a
