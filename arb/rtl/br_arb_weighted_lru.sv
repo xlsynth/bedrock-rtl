@@ -84,9 +84,9 @@ module br_arb_weighted_lru #(
       end
     end
 
-    br_arb_lru_core_internal #(
+    br_arb_pairwise_core_internal #(
         .NumRequesters(NumRequesters)
-    ) br_arb_lru_core_internal (
+    ) br_arb_pairwise_core_internal (
         .request,
         .priority_matrix,
         .can_grant(),
