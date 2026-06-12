@@ -7,6 +7,7 @@ module br_arb_weighted_rr_tb;
   parameter int MaxWeight = 4;
   parameter int MaxAccumulatedWeight = 8;
   parameter int NumRandomCycles = 120;
+  parameter bit Pairwise = 0;
 
   localparam int WeightWidth = $clog2(MaxWeight + 1);
 
@@ -20,18 +21,33 @@ module br_arb_weighted_rr_tb;
   int rr_ptr;
   int unsigned accumulated_weight[NumRequesters];
 
-  br_arb_weighted_rr #(
-      .NumRequesters(NumRequesters),
-      .MaxWeight(MaxWeight),
-      .MaxAccumulatedWeight(MaxAccumulatedWeight)
-  ) dut (
-      .clk,
-      .rst,
-      .enable_priority_update,
-      .request,
-      .request_weight,
-      .grant
-  );
+  if (Pairwise) begin : gen_pairwise
+    br_arb_weighted_pairwise_rr #(
+        .NumRequesters(NumRequesters),
+        .MaxWeight(MaxWeight),
+        .MaxAccumulatedWeight(MaxAccumulatedWeight)
+    ) dut (
+        .clk,
+        .rst,
+        .enable_priority_update,
+        .request,
+        .request_weight,
+        .grant
+    );
+  end else begin : gen_standard
+    br_arb_weighted_rr #(
+        .NumRequesters(NumRequesters),
+        .MaxWeight(MaxWeight),
+        .MaxAccumulatedWeight(MaxAccumulatedWeight)
+    ) dut (
+        .clk,
+        .rst,
+        .enable_priority_update,
+        .request,
+        .request_weight,
+        .grant
+    );
+  end
 
   br_test_driver td (
       .clk,

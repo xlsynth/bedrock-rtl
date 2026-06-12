@@ -85,3 +85,9 @@ bind br_arb_weighted_rr br_arb_weighted_rr_fpv_monitor #(
     .MaxWeight(MaxWeight),
     .MaxAccumulatedWeight(MaxAccumulatedWeight)
 ) monitor (.*);
+
+bind br_arb_weighted_pairwise_rr br_arb_weighted_rr_fpv_monitor #(
+    .NumRequesters(NumRequesters),
+    .MaxWeight(MaxWeight),
+    .MaxAccumulatedWeight(MaxAccumulatedWeight)
+) monitor (.*);
