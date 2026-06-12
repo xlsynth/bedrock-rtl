@@ -49,11 +49,11 @@ module br_test_driver #(
     end
   endtask
 
-  task automatic finish();
+  task automatic finish(input int cycles = 100);
     // Wait some cycles for things to drain, then finish simulation.
     // Cannot catch assertion failures here, so we rely on the test runner to report them.
     // This means it's possible to have "TEST PASSED" and also have assertions that failed.
-    wait_cycles(100);
+    wait_cycles(cycles);
     if (error_count == 0) begin
       $display("TEST PASSED");
     end else begin
