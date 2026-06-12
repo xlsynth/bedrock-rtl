@@ -170,6 +170,7 @@ verilog_library(
     srcs = ["br_fifo_flops_tb.sv"],
     deps = [
         ":br_fifo_test_harness",
+        "//cov:br_ready_valid_covgrp",
         "//fifo/rtl:br_fifo_flops",
         "//misc/sim:br_test_driver",
     ],
@@ -205,6 +206,21 @@ br_verilog_sim_test_tools_suite(
         "vcs",
         #"verilator",
     ],
+    deps = [":br_fifo_flops_tb"],
+)
+
+br_verilog_sim_test_tools_suite(
+    name = "br_fifo_flops_cov_sim_test_tools_suite",
+    elab_opts = ["--coverage"],
+    params = {
+        "Depth": ["13"],
+        "Width": ["8"],
+        "EnableBypass": ["1"],
+        "RegisterPopOutputs": ["0"],
+        "FlopRamAddressDepthStages": ["0"],
+    },
+    sim_opts = ["+verilator+coverage+file+$TEST_UNDECLARED_OUTPUTS_DIR/coverage.dat"],
+    tools = ["verilator"],
     deps = [":br_fifo_flops_tb"],
 )
 
