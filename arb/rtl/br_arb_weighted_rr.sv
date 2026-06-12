@@ -52,8 +52,7 @@ module br_arb_weighted_rr #(
     parameter int MaxWeight = 1,
     // Maximum accumulated weight per requester. Must be at least MaxWeight.
     parameter int MaxAccumulatedWeight = MaxWeight,
-    localparam int WeightWidth = $clog2(MaxWeight + 1),
-    localparam int AccumulatedWeightWidth = $clog2(MaxAccumulatedWeight + 1)
+    localparam int WeightWidth = $clog2(MaxWeight + 1)
 ) (
     // ri lint_check_waive INPUT_NOT_READ
     input logic clk,
@@ -105,45 +104,19 @@ module br_arb_weighted_rr #(
         .grant
     );
 
-    // Track per-request accumulated weight
-    logic any_high_priority_request;
-    logic incr_accumulated_weight;
-    logic [NumRequesters-1:0] decr_accumulated_weight;
-    assign any_high_priority_request = |(request & request_priority);
-    assign incr_accumulated_weight = enable_priority_update &&
-        |request && !any_high_priority_request;
-    assign decr_accumulated_weight = enable_priority_update ? grant : '0;
-
-    logic [NumRequesters-1:0][AccumulatedWeightWidth-1:0] accumulated_weight;
-
-    for (genvar i = 0; i < NumRequesters; i++) begin : gen_accumulated_weight
-      br_counter #(
-          .MaxValue(MaxAccumulatedWeight),
-          .MaxChange(MaxWeight),
-          .MaxDecrement(1),
-          .EnableSaturate(1),
-          .EnableWrap(0),
-          .EnableCoverZeroChange(0),
-          .EnableCoverReinit(0),
-          .EnableAssertFinalInitialValue(0)
-      ) br_counter (
-          .clk,
-          .rst,
-          .reinit(1'b0),
-          .initial_value({AccumulatedWeightWidth{1'b0}}),
-          .incr_valid(incr_accumulated_weight),
-          .incr(request_weight[i]),
-          .decr_valid(decr_accumulated_weight[i]),
-          .decr(WeightWidth'(1'b1)),
-          .value(accumulated_weight[i]),
-          .value_next()
-      );
-
-      assign request_priority[i] = |accumulated_weight[i];
-    end
-
-    `BR_ASSERT_IMPL(disable_priority_update_A,
-                    !enable_priority_update |=> $stable(accumulated_weight))
+    br_arb_weight_handler #(
+        .NumRequesters(NumRequesters),
+        .MaxWeight(MaxWeight),
+        .MaxAccumulatedWeight(MaxAccumulatedWeight)
+    ) br_arb_weight_handler (
+        .clk,
+        .rst,
+        .enable_priority_update,
+        .request,
+        .request_weight,
+        .grant,
+        .request_priority
+    );
   end
 
   `BR_ASSERT_IMPL(no_update_same_grants_A, ##1 !$past(enable_priority_update) && $stable(request)

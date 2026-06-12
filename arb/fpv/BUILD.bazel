@@ -180,6 +180,62 @@ br_verilog_fpv_test_tools_suite(
     deps = [":br_arb_pri_rr_fpv_monitor"],
 )
 
+# Weighted Least-Recently-Used Arbiter
+
+verilog_library(
+    name = "br_arb_weighted_lru_fpv_monitor",
+    srcs = ["br_arb_weighted_lru_fpv_monitor.sv"],
+    deps = [
+        ":lru_basic_fpv_monitor",
+        "//arb/rtl:br_arb_weighted_lru",
+        "//macros:br_fv",
+    ],
+)
+
+verilog_elab_test(
+    name = "br_arb_weighted_lru_fpv_monitor_elab_test",
+    tool = "verific",
+    deps = [":br_arb_weighted_lru_fpv_monitor"],
+)
+
+br_verilog_fpv_test_tools_suite(
+    name = "br_arb_weighted_lru_test_suite",
+    # MaxAccumulatedWeight >= MaxWeight
+    illegal_param_combinations = {
+        (
+            "MaxAccumulatedWeight",
+            "MaxWeight",
+        ): [
+            ("1", "3"),
+            ("1", "5"),
+        ],
+    },
+    params = {
+        "MaxAccumulatedWeight": [
+            "1",
+            "5",
+            "7",
+        ],
+        "MaxWeight": [
+            "1",
+            "3",
+            "5",
+        ],
+        "NumRequesters": [
+            "1",
+            "2",
+            "3",
+            "4",
+        ],
+    },
+    tools = {
+        "jg": "br_arb_weighted_lru_fpv.jg.tcl",
+        "vcf": "br_arb_weighted_lru_fpv.vcf.tcl",
+    },
+    top = "br_arb_weighted_lru",
+    deps = [":br_arb_weighted_lru_fpv_monitor"],
+)
+
 # Weighted Round-Robin Arbiter
 
 verilog_library(
