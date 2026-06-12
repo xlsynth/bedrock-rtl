@@ -69,6 +69,26 @@ module br_fifo_flops_tb;
       .items_next()
   );
 
+  br_ready_valid_cg #(
+      .PayloadWidth(Width)
+  ) push_ready_valid_cg (
+      .clk,
+      .rst,
+      .valid  (push_valid),
+      .ready  (push_ready),
+      .payload(push_data)
+  );
+
+  br_ready_valid_cg #(
+      .PayloadWidth(Width)
+  ) pop_ready_valid_cg (
+      .clk,
+      .rst,
+      .valid  (pop_valid),
+      .ready  (pop_ready),
+      .payload(pop_data)
+  );
+
   // Hook up the test harness
   br_fifo_test_harness #(
       .Depth(Depth),
