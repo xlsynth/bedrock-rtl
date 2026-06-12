@@ -7,6 +7,7 @@ module br_arb_weighted_rr_tb;
   parameter int MaxWeight = 4;
   parameter int MaxAccumulatedWeight = 8;
   parameter int NumRandomCycles = 120;
+  parameter bit UsePairwiseArb = 0;
 
   localparam int WeightWidth = $clog2(MaxWeight + 1);
 
@@ -23,7 +24,8 @@ module br_arb_weighted_rr_tb;
   br_arb_weighted_rr #(
       .NumRequesters(NumRequesters),
       .MaxWeight(MaxWeight),
-      .MaxAccumulatedWeight(MaxAccumulatedWeight)
+      .MaxAccumulatedWeight(MaxAccumulatedWeight),
+      .UsePairwiseArb(UsePairwiseArb)
   ) dut (
       .clk,
       .rst,
