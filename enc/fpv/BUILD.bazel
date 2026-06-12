@@ -31,6 +31,7 @@ br_verilog_fpv_test_tools_suite(
             "NumRequesters",
             "NumResults",
         ): [
+            ("1", "1"),
             ("1", "2"),
             ("1", "4"),
             ("2", "4"),

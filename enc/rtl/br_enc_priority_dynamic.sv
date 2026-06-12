@@ -34,7 +34,7 @@ module br_enc_priority_dynamic #(
   // Integration checks
   //------------------------------------------
   `BR_ASSERT_STATIC(legal_num_results_a, NumResults >= 1)
-  `BR_ASSERT_STATIC(legal_num_requesters_a, NumRequesters >= NumResults)
+  `BR_ASSERT_STATIC(legal_num_requesters_a, (NumRequesters >= 2) && (NumRequesters >= NumResults))
 
   `BR_ASSERT_INTG(lowest_prio_onehot_a, $onehot(lowest_prio))
 

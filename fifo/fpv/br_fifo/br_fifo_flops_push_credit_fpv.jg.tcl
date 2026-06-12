@@ -27,6 +27,7 @@ cover -disable *br_fifo_basic_fpv_monitor.gen_push_backpressure_assume.no_push_b
 array set local_param_list [get_design_info -instance monitor -list local_parameter]
 set WolperColorEn $local_param_list(WolperColorEn)
 if {[string index $WolperColorEn end] eq "1"} {
+    set RamInvariantReset "rst || push_sender_in_reset"
     set invariant_path [file join $::env(TEST_SRCDIR) $::env(TEST_WORKSPACE) fifo fpv br_ram_invariant.tcl]
     source $invariant_path
 }

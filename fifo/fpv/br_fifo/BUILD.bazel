@@ -420,7 +420,7 @@ verilog_library(
     name = "br_fifo_flops_push_credit_fpv_monitor",
     srcs = ["br_fifo_flops_push_credit_fpv_monitor.sv"],
     deps = [
-        ":br_fifo_flops_fpv_monitor",
+        ":br_fifo_basic_fpv_monitor",
         "//fifo/fpv:br_credit_receiver_fpv_monitor",
         "//fifo/rtl:br_fifo_flops_push_credit",
         "//macros:br_fv",
