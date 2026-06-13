@@ -61,6 +61,10 @@ module br_fifo_flops_push_credit_fpv_monitor #(
     input logic [CountWidth-1:0] items_next
 );
 
+  localparam bit WolperColorEn = 1;
+  logic [$clog2(Width)-1:0] magic_bit_index;
+  `BR_ASSUME(magic_bit_index_range_a, $stable(magic_bit_index) && (magic_bit_index < Width))
+
   // ----------Instantiate credit FV checker----------
   br_credit_receiver_fpv_monitor #(
       .PStatic(0),
@@ -85,21 +89,17 @@ module br_fifo_flops_push_credit_fpv_monitor #(
       .config_bound('d0)
   );
 
-  // ----------Instantiate non-credit version FV checker----------
-  br_fifo_flops_fpv_monitor #(
+  // ----------FIFO basic checks----------
+  br_fifo_basic_fpv_monitor #(
+      .WolperColorEn(WolperColorEn),
       .Depth(Depth),
       .Width(Width),
       .EnableBypass(EnableBypass),
-      .EnableCoverPushBackpressure(0),
-      .RegisterPopOutputs(RegisterPopOutputs),
-      .FlopRamDepthTiles(FlopRamDepthTiles),
-      .FlopRamWidthTiles(FlopRamWidthTiles),
-      .FlopRamAddressDepthStages(FlopRamAddressDepthStages),
-      .FlopRamReadDataDepthStages(FlopRamReadDataDepthStages),
-      .FlopRamReadDataWidthStages(FlopRamReadDataWidthStages)
-  ) br_fifo_flops_fpv_monitor (
+      .EnableCoverPushBackpressure(0)
+  ) br_fifo_basic_fpv_monitor (
       .clk,
       .rst,
+      .magic_bit_index,
       .push_ready(1'd1),
       .push_valid,
       .push_data,
