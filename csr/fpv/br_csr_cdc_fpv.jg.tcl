@@ -50,4 +50,9 @@ downstream_rst |-> downstream_resp_valid == 'd0}
 # limit run time to 10-mins
 set_prove_time_limit 10m
 
+# The CDC request and response datapaths tie their pop_ready inputs high, so
+# backpressure stability precondition covers in the shared flow checkers are
+# intentionally unreachable.
+cover -disable *valid_data_stable_when_backpressured_a:precondition1
+
 prove -all
