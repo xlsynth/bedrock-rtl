@@ -35,7 +35,6 @@ module br_credit_sender_vc #(
     // If 1, assert that push_valid is stable when backpressured.
     parameter bit EnableAssertPushValidStability = EnableCoverPushBackpressure,
     // If 1, assert that push_data is stable when backpressured.
-    // ri lint_check_waive PARAM_NOT_USED
     parameter bit EnableAssertPushDataStability = EnableAssertPushValidStability,
     // If 1, then assert there are no valid bits asserted at the end of the test.
     parameter bit EnableAssertFinalNotValid = 1,
@@ -97,6 +96,10 @@ module br_credit_sender_vc #(
   //------------------------------------------
   `BR_ASSERT_STATIC(legal_assert_no_push_backpressure_a,
                     !(EnableAssertNoPushBackpressure && EnableCoverPushBackpressure))
+  `BR_ASSERT_STATIC(legal_assert_push_valid_stability_a,
+                    !(EnableAssertPushValidStability && !EnableCoverPushBackpressure))
+  `BR_ASSERT_STATIC(legal_assert_push_data_stability_a,
+                    !(EnableAssertPushDataStability && !EnableAssertPushValidStability))
   `BR_ASSERT_STATIC(num_vcs_in_range_a, (NumVcs >= 2))
   `BR_ASSERT_STATIC(pop_credit_max_change_in_range_a, (PopCreditMaxChange <= MaxCredit))
 
@@ -130,6 +133,7 @@ module br_credit_sender_vc #(
         .MaxDecrement(1),
         .EnableCoverZeroIncrement(0),
         .EnableCoverZeroDecrement(0),
+        .EnableCoverDecrementBackpressure(EnableCoverPushBackpressure),
         .EnableAssertFinalNotValid(EnableAssertFinalNotValid),
         .EnableAssertFinalMaxValue(EnableAssertFinalMaxValue)
     ) br_credit_counter (
