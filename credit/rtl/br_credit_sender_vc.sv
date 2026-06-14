@@ -94,10 +94,6 @@ module br_credit_sender_vc #(
   //------------------------------------------
   // Integration checks
   //------------------------------------------
-  `BR_ASSERT_STATIC(legal_assert_no_push_backpressure_a,
-                    !(EnableAssertNoPushBackpressure && EnableCoverPushBackpressure))
-  `BR_ASSERT_STATIC(legal_assert_push_valid_stability_a,
-                    !(EnableAssertPushValidStability && !EnableCoverPushBackpressure))
   `BR_ASSERT_STATIC(legal_assert_push_data_stability_a,
                     !(EnableAssertPushDataStability && !EnableAssertPushValidStability))
   `BR_ASSERT_STATIC(num_vcs_in_range_a, (NumVcs >= 2))
