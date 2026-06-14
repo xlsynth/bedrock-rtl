@@ -157,7 +157,8 @@ module br_fifo_shared_dynamic_push_ctrl_credit #(
       .DeallocCountDelay(2 - RegisterPushOutputs),
       .EnableCoverPushBackpressure(0),
       .EnableAssertPushDataKnown(EnableAssertPushDataKnown),
-      .EnableAssertFinalNotValid(EnableAssertFinalNotValid)
+      .EnableAssertFinalNotValid(EnableAssertFinalNotValid),
+      .EnableAssertUniqueDeallocEntryId(NumReadPorts > 1)
   ) br_fifo_shared_dynamic_push_ctrl (
       .clk,
       .rst(either_rst),

@@ -53,6 +53,7 @@ module br_tracker_freelist #(
     // It is expected that alloc_valid could be 1 at end of the test because it's
     // a natural idle condition for this design.
     parameter bit EnableAssertFinalNotDeallocValid = 1,
+    parameter bit EnableAssertUniqueDeallocEntryId = 1,
     // If 1, then assert that the number of allocated entries is the same as the number of
     // preallocated entries at the end of the test.
     // ri lint_check_waive PARAM_NOT_USED
@@ -136,10 +137,12 @@ module br_tracker_freelist #(
     `BR_ASSERT_INTG(dealloc_in_range_a, dealloc_valid[i] |-> dealloc_entry_id[i] < NumEntries)
     `BR_ASSERT_INTG(no_dealloc_unallocated_a,
                     dealloc_valid[i] |-> allocated_entries[dealloc_entry_id[i]])
-    for (genvar j = i + 1; j < NumDeallocPorts; j++) begin : gen_unique_dealloc_intg_asserts
-      `BR_ASSERT_INTG(
-          unique_dealloc_entry_id_a,
-          dealloc_valid[i] && dealloc_valid[j] |-> dealloc_entry_id[i] != dealloc_entry_id[j])
+    if (EnableAssertUniqueDeallocEntryId) begin : gen_unique_dealloc_enabled
+      for (genvar j = i + 1; j < NumDeallocPorts; j++) begin : gen_unique_dealloc_intg_asserts
+        `BR_ASSERT_INTG(
+            unique_dealloc_entry_id_a,
+            dealloc_valid[i] && dealloc_valid[j] |-> dealloc_entry_id[i] != dealloc_entry_id[j])
+      end
     end
   end
 `endif

@@ -46,6 +46,10 @@ module br_fifo_shared_read_xbar #(
                     NumReadPorts))
   `BR_ASSERT_STATIC(legal_depth_a, Depth >= NumReadPorts)
 
+  localparam bit EnableCoverDemuxPopBackpressure = Depth >= 2 * NumReadPorts;
+  localparam bit EnableAssertDemuxPushValidStability =
+      EnableAssertPushValidStability && EnableCoverDemuxPopBackpressure;
+
   // Read Address Demux per FIFO
 
   logic [NumFifos-1:0][NumReadPorts-1:0] demuxed_rd_addr_valid;
@@ -67,8 +71,10 @@ module br_fifo_shared_read_xbar #(
       br_flow_demux_select_unstable #(
           .NumFlows(NumReadPorts),
           .Width(AddrWidth),
-          .EnableAssertPushValidStability(EnableAssertPushValidStability),
-          .EnableAssertSelectStability(EnableAssertPushValidStability)
+          .EnableCoverPushBackpressure(EnableCoverDemuxPopBackpressure),
+          .EnableAssertNoPushBackpressure(0),
+          .EnableAssertPushValidStability(EnableAssertDemuxPushValidStability),
+          .EnableAssertSelectStability(EnableAssertDemuxPushValidStability)
       ) br_flow_demux_select_unstable_inst (
           .clk,
           .rst,
