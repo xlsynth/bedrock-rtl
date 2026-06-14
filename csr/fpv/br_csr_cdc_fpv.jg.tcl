@@ -56,9 +56,4 @@ assume -from_assert <embedded>::br_csr_cdc_fpv_monitor.abort_sb.genblk6.core.gen
 # limit run time to 10-mins
 set_prove_time_limit 10m
 
-# The CDC request and response datapaths tie their pop_ready inputs high, so
-# backpressure stability precondition covers in the shared flow checkers are
-# intentionally unreachable.
-cover -disable *valid_data_stable_when_backpressured_a:precondition1
-
 prove -all
