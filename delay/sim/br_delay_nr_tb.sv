@@ -1,10 +1,9 @@
 // SPDX-License-Identifier: Apache-2.0
 
-module br_delay_tb;
+module br_delay_nr_tb;
 
   parameter int Width = 8;
   parameter int NumStages = 2;
-  parameter logic [Width-1:0] InitValue = '1;
   parameter int NumTestCycles = 18;
 
   logic clk;
@@ -16,13 +15,11 @@ module br_delay_tb;
   logic [NumStages:0][Width-1:0] model_data;
   logic [NumStages:0][Width-1:0] next_data;
 
-  br_delay #(
+  br_delay_nr #(
       .Width(Width),
-      .NumStages(NumStages),
-      .InitValue(InitValue)
+      .NumStages(NumStages)
   ) dut (
       .clk,
-      .rst,
       .in,
       .out,
       .out_stages
@@ -62,6 +59,12 @@ module br_delay_tb;
     check_model(phase);
   endtask
 
+  task automatic fill_cycle(input logic [Width-1:0] drive_data);
+    in = drive_data;
+    td.wait_cycles();
+    update_model(drive_data);
+  endtask
+
   initial begin
     in = data_for(0);
     model_data = '0;
@@ -69,21 +72,20 @@ module br_delay_tb;
 
     td.reset_dut();
 
-    model_data[0] = in;
-    for (int i = 1; i <= NumStages; i++) begin
-      model_data[i] = InitValue;
+    for (int i = 0; i < NumStages + 1; i++) begin
+      fill_cycle(data_for(i));
     end
-    check_model("after reset");
+    check_model("after flush");
 
     for (int i = 0; i < NumTestCycles; i++) begin
-      drive_cycle(data_for(i + 1), $sformatf("directed cycle %0d", i));
+      drive_cycle(data_for(i + NumStages + 1), $sformatf("directed cycle %0d", i));
     end
 
     for (int i = 0; i < NumStages + 2; i++) begin
-      drive_cycle(data_for(NumTestCycles + i + 1), $sformatf("drain cycle %0d", i));
+      drive_cycle(data_for(NumTestCycles + NumStages + i + 1), $sformatf("drain cycle %0d", i));
     end
 
     td.finish();
   end
 
-endmodule : br_delay_tb
+endmodule : br_delay_nr_tb
