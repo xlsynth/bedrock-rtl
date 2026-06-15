@@ -44,6 +44,8 @@ module br_flow_valve #(
   //------------------------------------------
   // Integration checks
   //------------------------------------------
+  `BR_ASSERT_STATIC(num_flows_gte_1_a, NumFlows >= 1)
+
   br_flow_checks_valid_data_intg #(
       .NumFlows(NumFlows),
       .Width(1),
