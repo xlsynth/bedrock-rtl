@@ -89,3 +89,12 @@ pre-commit run --all-files
 ```
 
 Pre-commit may modify files. Review the resulting diff and rerun the checks until they pass. It performs more than formatting, including Verilog lint, secret scanning, filename checks, and repository-specific policy checks. For documentation-only changes, formatting and repository checks are generally sufficient; EDA tests are unnecessary unless the documentation affects executable examples or generated artifacts.
+
+## Filing bugs
+
+This repository provides a bug report form at
+`.github/ISSUE_TEMPLATE/bug.yml`. Use this form when filing GitHub issues for
+bugs instead of opening a blank issue. Include a clear symptom, select the kind
+of bug, and provide exact instructions to reproduce it. Add the optional root
+cause analysis, recommended fix, and first known bad commit when that
+information is available.
