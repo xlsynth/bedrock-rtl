@@ -9,7 +9,6 @@
 // If low, grants can still be made, but the priority will remain unchanged for the next cycle.
 
 `include "br_asserts_internal.svh"
-`include "br_registers.svh"
 `include "br_unused.svh"
 
 module br_arb_lru_internal #(
@@ -64,57 +63,27 @@ module br_arb_lru_internal #(
     // costing extra flip-flops.
 
 
-    // Implement the state matrix. We only need to maintain the upper triangular state (exclusive of
-    // diagonal) in registers because the lower triangle is its complement. The diagonal is undefined
-    // and unused (because we never need to compare the priority of a requester with itself).
-    // There are NumRequesters * (NumRequesters - 1) / 2 flip-flops of priority state.
     logic [NumRequesters-1:0][NumRequesters-1:0] state;
-    logic [NumRequesters-1:0][NumRequesters-1:0] state_reg;
-    logic [NumRequesters-1:0][NumRequesters-1:0] state_reg_next;
 
-    for (genvar i = 0; i < NumRequesters; i++) begin : gen_state_row
-      for (genvar j = 0; j < NumRequesters; j++) begin : gen_state_col
-        // Upper triangle
-        if (i < j) begin : gen_upper_tri
-          // All bits in upper triangle init to 1'b1 (lowest numbered req wins)
-          assign state_reg_next[i][j] = grant[i] ? 1'b0 : grant[j] ? 1'b1 : state[i][j];
-          `BR_REGLI(state_reg[i][j], state_reg_next[i][j], enable_priority_update && |request, 1'b1)
-          assign state[i][j] = state_reg[i][j];
-
-          // Lower triangle is the inverse of upper triangle
-        end else if (i > j) begin : gen_lower_tri
-          assign state[i][j] = !state_reg[j][i];
-
-          // Tie-off unused signals
-          assign state_reg_next[i][j] = 1'b0;  // ri lint_check_waive CONST_ASSIGN
-          assign state_reg[i][j] = 1'b0;  // ri lint_check_waive CONST_ASSIGN
-          `BR_UNUSED_NAMED(states, {state_reg_next[i][j], state_reg[i][j]})
-
-          // The diagonal is unused. Tie off signals.
-        end else begin : gen_diag
-          // ri lint_check_waive CONST_ASSIGN
-          assign {state_reg_next[i][j], state_reg[i][j], state[i][j]} = '0;
-          `BR_UNUSED_NAMED(states, {state_reg_next[i][j], state_reg[i][j], state[i][j]})
-        end
-      end
-    end
+    br_lru_state_internal #(
+        .NumRequesters(NumRequesters)
+    ) br_lru_state_internal (
+        .clk,
+        .rst,
+        .update_priority(enable_priority_update && |request),
+        .grant,
+        .state
+    );
 
 
-    // Compute the grant.
-    // * A requester can only be granted if there are no higher priority active requesters.
-    // * A requester i is higher priority than a requester j if state[i][j] is 1.
-    always_comb begin
-      for (int i = 0; i < NumRequesters; i++) begin
-        can_grant[i] = 1'b1;
-        for (int j = 0; j < NumRequesters; j++) begin
-          if (i != j) begin  // Diagonal is unused
-            can_grant[i] &= !request[j] || state[i][j];
-          end
-        end
-      end
-    end
-
-    assign grant = request & can_grant;
+    br_arb_lru_core_internal #(
+        .NumRequesters(NumRequesters)
+    ) br_arb_lru_core_internal (
+        .request,
+        .priority_matrix(state),
+        .can_grant,
+        .grant
+    );
   end
 
 endmodule : br_arb_lru_internal

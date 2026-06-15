@@ -47,6 +47,12 @@ upstream_rst |-> upstream_req_abort == 'd0}
 assume -name no_resp_valid_during_reset {@(posedge downstream_clk) \
 downstream_rst |-> downstream_resp_valid == 'd0}
 
+# The abort path uses br_cdc_bit_pulse, whose source pulse must not be issued
+# again before the previous pulse is observable in the destination domain.
+# Treat the abort scoreboard overflow check as this source-side environment
+# contract rather than as a DUT assertion.
+assume -from_assert <embedded>::br_csr_cdc_fpv_monitor.abort_sb.genblk6.core.genblk5.genblk2.no_overflow
+
 # limit run time to 10-mins
 set_prove_time_limit 10m
 

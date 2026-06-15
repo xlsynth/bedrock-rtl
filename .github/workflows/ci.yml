@@ -277,6 +277,7 @@ jobs:
   ##########################################
   rtl-files-badge:
     runs-on: ubuntu-24.04
+    environment: ci-badge-publishing
     if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
     steps:
     # actions/checkout v6
@@ -298,6 +299,7 @@ jobs:
 
   python-badge:
     runs-on: ubuntu-24.04
+    environment: ci-badge-publishing
     needs: bazel-build-and-test
     if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
     steps:
@@ -314,6 +316,7 @@ jobs:
 
   stardoc-badge:
     runs-on: ubuntu-24.04
+    environment: ci-badge-publishing
     needs: bazel-build-and-test
     if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
     steps:
@@ -330,6 +333,7 @@ jobs:
 
   verific-badge:
     runs-on: ubuntu-24.04
+    environment: ci-badge-publishing
     needs: bazel-build-and-test
     if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
     steps:
@@ -346,6 +350,7 @@ jobs:
 
   ascentlint-badge:
     runs-on: ubuntu-24.04
+    environment: ci-badge-publishing
     needs: bazel-build-and-test
     if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
     steps:
@@ -362,6 +367,7 @@ jobs:
 
   vcs-badge:
     runs-on: ubuntu-24.04
+    environment: ci-badge-publishing
     needs: bazel-build-and-test
     if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
     steps:
@@ -378,6 +384,7 @@ jobs:
 
   iverilog-badge:
     runs-on: ubuntu-24.04
+    environment: ci-badge-publishing
     needs: bazel-build-and-test
     if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
     steps:
@@ -394,6 +401,7 @@ jobs:
 
   verilator-badge:
     runs-on: ubuntu-24.04
+    environment: ci-badge-publishing
     needs: bazel-build-and-test
     if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
     steps:
