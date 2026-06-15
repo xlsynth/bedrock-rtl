@@ -80,3 +80,12 @@ bazel test //bazel/... //python/...
 ```
 
 `pre-commit` will run code formatters.
+
+## Filing bugs
+
+This repository provides a bug report form at
+`.github/ISSUE_TEMPLATE/bug.yml`. Use this form when filing GitHub issues for
+bugs instead of opening a blank issue. Include a clear symptom, select the kind
+of bug, and provide exact instructions to reproduce it. Add the optional root
+cause analysis, recommended fix, and first known bad commit when that
+information is available.
