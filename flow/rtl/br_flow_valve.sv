@@ -49,7 +49,7 @@ module br_flow_valve #(
       .Width(1),
       .EnableCoverBackpressure(1),
       .EnableAssertValidStability(EnableAssertPushValidStability),
-      .EnableAssertDataStability(1'b0),
+      .EnableAssertDataStability(0),
       .EnableAssertFinalNotValid(EnableAssertPushFinalNotValid)
   ) br_flow_checks_valid_data_intg (
       .clk,
