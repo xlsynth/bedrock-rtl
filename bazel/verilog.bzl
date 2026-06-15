@@ -721,6 +721,10 @@ rule_verilog_fpv_test = rule(
             providers = [VerilogRunnerFlagsInfo],
             default = "//bazel:runner_flags",
         ),
+        "slurm_mem_mb": attr.int(
+            doc = "Optional Slurm memory request, in MiB, for generated CLF regression jobs.",
+            default = 0,
+        ),
     },
     test = True,
 )
@@ -823,6 +827,10 @@ rule_verilog_fpv_sandbox = rule(
             allow_files = False,
             providers = [VerilogRunnerFlagsInfo],
             default = "//bazel:runner_flags",
+        ),
+        "slurm_mem_mb": attr.int(
+            doc = "Optional Slurm memory request, in MiB, for generated CLF regression jobs.",
+            default = 0,
         ),
     },
     outputs = {

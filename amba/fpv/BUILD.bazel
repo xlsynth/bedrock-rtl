@@ -136,6 +136,7 @@ br_verilog_fpv_test_tools_suite(
             "3",
         ],
     },
+    slurm_mem_mb = 65536,
     tools = {
         "jg": "br_amba_axil_split_fpv.jg.tcl",
     },
@@ -383,6 +384,7 @@ br_verilog_fpv_test_tools_suite(
             "2",
         ],
     },
+    slurm_mem_mb = 65536,
     tools = {
         "jg": "br_amba_axi_isolate_sub_fpv.jg.tcl",
     },
@@ -466,6 +468,7 @@ br_verilog_fpv_test_tools_suite(
             "8",
         ],
     },
+    slurm_mem_mb = 65536,
     tools = {
         "jg": "br_amba_axi_shrinker_fpv.jg.tcl",
     },

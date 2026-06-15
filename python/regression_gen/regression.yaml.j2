@@ -31,6 +31,12 @@ jobs:
 {% for job in jobs %}
   - name: {{ job.name }}
     flow: {{ project }}.{{ job.block }}.{{ flow_name }}
+{% if job.slurm_mem_mb %}
+    environment:
+      slurm:
+        mem:
+          mb: {{ job.slurm_mem_mb }}
+{% endif %}
     bazel_sandbox:
       path: {{ job.path }}
 {% if job.hierarchy %}

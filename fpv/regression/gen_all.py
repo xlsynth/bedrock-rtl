@@ -56,12 +56,12 @@ class Day(Enum):
 # Day.SUN by default.
 
 DAY_BLOCK_MAP = [
-    (r"^amba$", Day.MON),
     (r"^arb$", Day.MON),
     (r"^ecc$", Day.MON),
     (r"^flow_mux$", Day.MON),
     (r"^flow_serializer$", Day.MON),
     (r"^flow_xbar$", Day.MON),
+    (r"^mux$", Day.MON),
     (r"^cdc$", Day.TUE),
     (r"^tracker$", Day.TUE),
     (r"^counter$", Day.WED),
@@ -70,8 +70,14 @@ DAY_BLOCK_MAP = [
     (r"^flow_.*$", Day.THU),
     (r"^fifo$", Day.FRI),
     (r"^fifo_.*$", Day.FRI),
+    (r"^amba$", Day.SAT),
     (r"^ram$", Day.SAT),
+    (r"^csr$", Day.SUN),
+    (r"^enc$", Day.SUN),
+    (r"^lfsr$", Day.SUN),
+    (r"^multi_xfer$", Day.SUN),
     # FIFO blocks:
+    (r"^br_fifo_shared_pop_ctrl$", Day.SUN),
     (r"^br_fifo_shared_dynamic$", Day.FRI),
     (r"^br_fifo_shared_pstatic$", Day.SUN),
     (r"^br_fifo_ext_arb$", Day.WED),
