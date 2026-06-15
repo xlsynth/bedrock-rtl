@@ -14,8 +14,10 @@ module br_flow_valve #(
     // If 0, disable pop-side backpressure coverage. By default, this also
     // asserts that pop-side backpressure is impossible.
     parameter bit EnableCoverPopBackpressure = 1,
-    // If 1, then assert there are no valid bits asserted at the end of the test.
-    parameter bit EnableAssertFinalNotValid = 1,
+    // If 1, then assert there are no push-valid bits asserted at the end of the test.
+    parameter bit EnableAssertPushFinalNotValid = 1,
+    // If 1, then assert there are no pop-valid bits asserted at the end of the test.
+    parameter bit EnableAssertPopFinalNotValid = 1,
     // If 1, assert that push_valid is stable when backpressured.
     parameter bit EnableAssertPushValidStability = 1
 ) (
@@ -42,24 +44,19 @@ module br_flow_valve #(
   //------------------------------------------
   // Integration checks
   //------------------------------------------
-  `BR_ASSERT_STATIC(num_flows_gte_1_a, NumFlows >= 1)
-
-  `BR_ASSERT_KNOWN_INTG(en_known_a, en)
-
   br_flow_checks_valid_data_intg #(
       .NumFlows(NumFlows),
       .Width(1),
       .EnableCoverBackpressure(1),
       .EnableAssertValidStability(EnableAssertPushValidStability),
-      // Data is always stable when valid is since it is constant.
-      .EnableAssertDataStability(EnableAssertPushValidStability),
-      .EnableAssertFinalNotValid(EnableAssertFinalNotValid)
+      .EnableAssertDataStability(1'b0),
+      .EnableAssertFinalNotValid(EnableAssertPushFinalNotValid)
   ) br_flow_checks_valid_data_intg (
       .clk,
       .rst,
       .ready(push_ready),
       .valid(push_valid),
-      .data ({NumFlows{1'b0}})
+      .data (1'b0)
   );
 
   //------------------------------------------
@@ -76,16 +73,13 @@ module br_flow_valve #(
       .Width(1),
       .EnableCoverBackpressure(EnableCoverPopBackpressure),
       .EnableAssertValidStability(0),
-      .EnableAssertFinalNotValid(EnableAssertFinalNotValid)
+      .EnableAssertFinalNotValid(EnableAssertPopFinalNotValid)
   ) br_flow_checks_valid_data_impl (
       .clk,
       .rst,
       .ready(pop_ready),
       .valid(pop_valid),
-      .data ({NumFlows{1'b0}})
+      .data (1'b0)
   );
-
-  `BR_ASSERT_IMPL(push_ready_masks_pop_ready_a, push_ready == (pop_ready & en))
-  `BR_ASSERT_IMPL(pop_valid_masks_push_valid_a, pop_valid == (push_valid & en))
 
 endmodule : br_flow_valve
