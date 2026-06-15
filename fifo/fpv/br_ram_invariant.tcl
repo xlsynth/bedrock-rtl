@@ -50,6 +50,12 @@ if {$EnableBypass eq "1'b1" && (($RamReadLatency > 0) || $RegisterPopOutputs eq 
 set RamDepth  [align_up $reduced_depth $FlopRamDepthTiles]
 set TileDepth [ceil_div $RamDepth $FlopRamDepthTiles]
 set TileWidth [ceil_div $Width $FlopRamWidthTiles]
+if {![info exists RamInvariantInitReset]} {
+  set RamInvariantInitReset rst
+}
+if {![info exists RamInvariantDisable]} {
+  set RamInvariantDisable $RamInvariantInitReset
+}
 
 if {$TileDepth <= 0} {
   error "Derived TileDepth is non-positive ($TileDepth)"
@@ -62,7 +68,7 @@ if {$TileWidth <= 0} {
 for {set r 0} {$r < $FlopRamDepthTiles} {incr r} {
     for {set c 0} {$c < $FlopRamWidthTiles} {incr c} {
         # initalize ram to 0 so we don't get spurious 1s
-        assume -name init_ram_to_0_row${r}_col${c} "\$fell(rst) |-> br_ram_flops.gen_row\[$r\].gen_col\[$c\].br_ram_flops_tile.mem == '0"
+        assume -name init_ram_to_0_row${r}_col${c} "\$fell($RamInvariantInitReset) |-> br_ram_flops.gen_row\[$r\].gen_col\[$c\].br_ram_flops_tile.mem == '0"
     }
 }
 
@@ -87,4 +93,5 @@ for {set r 0} {$r < $FlopRamDepthTiles} {incr r} {
   }
 }
 
-assert -name fv_invariant_at_most_two_ones "\$countones({[join $bit_exprs ", "]}) <= 2"
+assert -name fv_invariant_at_most_two_ones \
+    "!($RamInvariantDisable) |-> \$countones({[join $bit_exprs ", "]}) <= 2"
