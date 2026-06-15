@@ -36,9 +36,9 @@ module br_flow_valve #(
 
     // Pop-side interfaces
     //
-    // pop_valid can be unstable because it falls if en falls.
+    // pop_valid_unstable can be unstable because it falls if en falls.
     input  logic [NumFlows-1:0] pop_ready,
-    output logic [NumFlows-1:0] pop_valid
+    output logic [NumFlows-1:0] pop_valid_unstable
 );
 
   //------------------------------------------
@@ -62,8 +62,8 @@ module br_flow_valve #(
   //------------------------------------------
   // Implementation
   //------------------------------------------
-  assign push_ready = pop_ready & en;
-  assign pop_valid  = push_valid & en;
+  assign push_ready         = pop_ready & en;
+  assign pop_valid_unstable = push_valid & en;
 
   //------------------------------------------
   // Implementation checks
@@ -78,7 +78,7 @@ module br_flow_valve #(
       .clk,
       .rst,
       .ready(pop_ready),
-      .valid(pop_valid),
+      .valid(pop_valid_unstable),
       .data (1'b0)
   );
 
