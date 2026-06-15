@@ -61,20 +61,50 @@ The provided Dockerfile can be used to build an image with the minimum dependenc
 The Dockerfile uses RockyLinux 8 on x86-64 as the base image.
 If you want to run tests that leverage proprietary tools, you need to provide your own installations and licenses (which are typically compatible with RockyLinux 8 on x86-64).
 
-To build the Docker image:
-
-[source,shell]
-----
-docker build --platform=linux/amd64 --tag=bedrock-rtl:${USER} .
-docker run -v $(pwd):/src -w /src bedrock-rtl:${USER} /bin/bash
-----
-
-Then once inside the container, try `bazel build //... && bazel test //fifo/sim/... --test_tag_filters=iverilog`.
-
 If you bring your own EDA tools, you may need to provide a bit of your own Python code that implements the plugin API for `verilog_runner.py`.
 If you want to use a tool that isn't already supported, update `//bazel:verilog.bzl`, implement a new verilog runner plugin, and reference your new tool in the appropriate Bazel test targets.
 Not all tests necessarily work with every tool.
 Refer to the `BUILD.bazel` files for specifics.
+
+=== Using the Published Docker Image
+
+Prebuilt `linux/amd64` images are published to the
+https://github.com/orgs/xlsynth/packages/container/package/bedrock-rtl[Bedrock-RTL package on GitHub Container Registry^].
+Each image has an immutable tag of the form `YYYY-MM-DD-<full-git-sha>`, where the date is the commit date in UTC.
+We intentionally do not publish a moving `latest` tag.
+
+To use the latest image, open the package page linked above, copy the tag from the most recently published version, and run:
+
+[source,shell]
+----
+docker pull ghcr.io/xlsynth/bedrock-rtl:<tag>
+docker run --rm -it -v "$(pwd)":/src -w /src ghcr.io/xlsynth/bedrock-rtl:<tag> /bin/bash
+----
+
+The package is public, so pulling it does not require GitHub Container Registry authentication.
+Using an immutable tag makes local and CI environments reproducible; pull a newer tag from the package page when you want to update the toolchain.
+
+=== Building the Docker Image Locally
+
+To build the image from the checked-out Dockerfile instead:
+
+[source,shell]
+----
+docker build --platform=linux/amd64 --tag=bedrock-rtl:${USER} .
+docker run --rm -it -v "$(pwd)":/src -w /src bedrock-rtl:${USER} /bin/bash
+----
+
+Then once inside the container, try `bazel build //... && bazel test //fifo/sim/... --test_tag_filters=iverilog`.
+
+=== Deploying Docker Images
+
+The `docker-image-build` job in `.github/workflows/ci.yml` builds the image for every pull request, push to `main`, and manual CI run.
+After that build succeeds, the `docker-image-publish` job deploys the image to `ghcr.io/xlsynth/bedrock-rtl` for pushes to `main` and manually dispatched CI runs.
+Pull requests build the image but do not publish it.
+
+The publish job generates the immutable `YYYY-MM-DD-<full-git-sha>` tag, pushes the `linux/amd64` image, attaches BuildKit provenance, and publishes a signed GitHub artifact attestation for the image digest.
+Repository maintainers can deploy an image manually by opening the
+https://github.com/xlsynth/bedrock-rtl/actions/workflows/ci.yml[CI workflow^], selecting *Run workflow*, and choosing the Git ref to publish.
 
 == Pre-Commit Hooks
 
@@ -909,6 +939,10 @@ The verification-artifact column reports repository evidence, not a promise that
 
 | `br_arb_rr`
 | Grants using round-robin priority state.
+| Elab/lint, Sim, FPV.
+
+| `br_arb_weighted_lru`
+| Grants using weighted least-recently-used priority state.
 | Elab/lint, Sim, FPV.
 
 | `br_arb_weighted_rr`

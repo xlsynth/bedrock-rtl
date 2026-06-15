@@ -143,6 +143,46 @@ br_verilog_sim_test_tools_suite(
 )
 
 verilog_library(
+    name = "br_arb_weighted_lru_tb",
+    srcs = ["br_arb_weighted_lru_tb.sv"],
+    deps = [
+        "//arb/rtl:br_arb_weighted_lru",
+        "//misc/sim:br_test_driver",
+    ],
+)
+
+verilog_elab_test(
+    name = "br_arb_weighted_lru_tb_elab_test",
+    tool = "verific",
+    deps = [":br_arb_weighted_lru_tb"],
+)
+
+br_verilog_sim_test_tools_suite(
+    name = "br_arb_weighted_lru_tb_sim_test_tools_suite",
+    params = {
+        "MaxAccumulatedWeight": [
+            "3",
+            "8",
+        ],
+        "MaxWeight": [
+            "1",
+            "3",
+        ],
+        "NumRequesters": [
+            "1",
+            "2",
+            "4",
+        ],
+    },
+    # TODO: Does not work with iverilog.
+    tools = [
+        "vcs",
+        "verilator",
+    ],
+    deps = [":br_arb_weighted_lru_tb"],
+)
+
+verilog_library(
     name = "br_arb_weighted_rr_tb",
     srcs = ["br_arb_weighted_rr_tb.sv"],
     deps = [

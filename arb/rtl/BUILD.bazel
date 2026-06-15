@@ -56,11 +56,23 @@ verilog_library(
 )
 
 verilog_library(
+    name = "br_arb_weighted_lru",
+    srcs = ["br_arb_weighted_lru.sv"],
+    deps = [
+        "//arb/rtl/internal:br_arb_lru_core_internal",
+        "//arb/rtl/internal:br_arb_weight_handler",
+        "//arb/rtl/internal:br_lru_state_internal",
+        "//macros:br_asserts_internal",
+        "//macros:br_unused",
+    ],
+)
+
+verilog_library(
     name = "br_arb_weighted_rr",
     srcs = ["br_arb_weighted_rr.sv"],
     deps = [
         "//arb/rtl:br_arb_pri_rr",
-        "//counter/rtl:br_counter",
+        "//arb/rtl/internal:br_arb_weight_handler",
         "//macros:br_asserts_internal",
         "//macros:br_unused",
     ],
@@ -130,6 +142,25 @@ br_verilog_elab_and_lint_test_suite(
         ],
     },
     deps = [":br_arb_pri_rr"],
+)
+
+br_verilog_elab_and_lint_test_suite(
+    name = "br_arb_weighted_lru_test_suite",
+    params = {
+        "NumRequesters": [
+            "1",
+            "2",
+            "5",
+        ],
+        "MaxAccumulatedWeight": [
+            "8",
+        ],
+        "MaxWeight": [
+            "2",
+            "5",
+        ],
+    },
+    deps = [":br_arb_weighted_lru"],
 )
 
 br_verilog_elab_and_lint_test_suite(
