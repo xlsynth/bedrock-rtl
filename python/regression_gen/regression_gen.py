@@ -21,7 +21,6 @@ import os
 from pathlib import Path
 import subprocess
 import sys
-import xml.etree.ElementTree as ET
 
 import click
 
@@ -60,58 +59,7 @@ def _run_bazel_query(expr: str) -> list[str]:
     return [line.strip() for line in completed.stdout.splitlines() if line.strip()]
 
 
-def _run_bazel_query_xml(expr: str) -> ET.Element:
-    """Run `bazel query --output=xml` and return the XML root."""
-
-    try:
-        completed = subprocess.run(
-            [
-                "bazel",
-                "query",
-                "--output=xml",
-                expr,
-            ],
-            check=True,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-            text=True,
-        )
-    except FileNotFoundError:
-        click.echo("ERROR: `bazel` executable not found in PATH.", err=True)
-        sys.exit(1)
-    except subprocess.CalledProcessError as exc:
-        click.echo(exc.stderr, err=True)
-        click.echo("ERROR: Bazel query failed.", err=True)
-        sys.exit(exc.returncode)
-
-    return ET.fromstring(completed.stdout)
-
-
-def _extract_slurm_mem_mb_by_label(query_expr: str) -> dict[str, int]:
-    """Return non-default slurm_mem_mb attrs keyed by Bazel label."""
-
-    xml_root = _run_bazel_query_xml(query_expr)
-    slurm_mem_mb_by_label: dict[str, int] = {}
-    for rule in xml_root.iter("rule"):
-        label = rule.attrib.get("name")
-        if not label:
-            continue
-        for attr_node in rule:
-            if attr_node.attrib.get("name") != "slurm_mem_mb":
-                continue
-            value = int(attr_node.attrib.get("value", "0"))
-            if value > 0:
-                slurm_mem_mb_by_label[label] = value
-            break
-    return slurm_mem_mb_by_label
-
-
-def _derive_job_from_label(
-    label: str,
-    block: str,
-    add_hierarchy: bool,
-    slurm_mem_mb: int | None = None,
-) -> Job:
+def _derive_job_from_label(label: str, block: str, add_hierarchy: bool) -> Job:
     """Convert a Bazel label (e.g., //foo/bar:sandbox) into a Job dataclass, including hierarchy if requested."""
 
     if ":" in label:
@@ -131,13 +79,7 @@ def _derive_job_from_label(
     else:
         hierarchy = []
 
-    return Job(
-        name=name,
-        path=label,
-        block=block,
-        hierarchy=hierarchy,
-        slurm_mem_mb=slurm_mem_mb,
-    )
+    return Job(name=name, path=label, block=block, hierarchy=hierarchy)
 
 
 def _get_workspace_root() -> Path:
@@ -308,15 +250,8 @@ def cli(
         click.echo("No matching targets found. Exiting.", err=True)
         sys.exit(2)
 
-    slurm_mem_mb_by_label = _extract_slurm_mem_mb_by_label(query_expr)
     jobs = [
-        _derive_job_from_label(
-            label,
-            block,
-            add_hierarchy,
-            slurm_mem_mb=slurm_mem_mb_by_label.get(label),
-        )
-        for label in sorted(labels)
+        _derive_job_from_label(label, block, add_hierarchy) for label in sorted(labels)
     ]
 
     yaml_text = render_yaml(

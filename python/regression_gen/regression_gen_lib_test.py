@@ -44,19 +44,3 @@ class RenderYamlTest(unittest.TestCase):
 
         # Each job should show up exactly once in the *jobs* section.
         assert yaml_text.count(f"- name: {expected_job}") == 1
-
-    def test_render_job_slurm_mem_override(self) -> None:
-        yaml_text = render_yaml(
-            [
-                Job(
-                    name="fpv_big",
-                    path="//bedrock/fpv:big",
-                    block="core",
-                    slurm_mem_mb=65536,
-                ),
-            ]
-        )
-
-        assert (
-            "environment:\n      slurm:\n        mem:\n          mb: 65536" in yaml_text
-        )

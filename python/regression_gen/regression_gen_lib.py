@@ -53,7 +53,6 @@ class Job:
     path: str
     block: str
     hierarchy: list[str] | None = None
-    slurm_mem_mb: int | None = None
 
 
 # ----------------------------------------------------------------------------
