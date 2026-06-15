@@ -34,8 +34,7 @@ module br_flow_valve_tb;
       .rst
   );
 
-  task automatic check_pattern(input logic [NumFlows-1:0] valid,
-                               input logic [NumFlows-1:0] ready,
+  task automatic check_pattern(input logic [NumFlows-1:0] valid, input logic [NumFlows-1:0] ready,
                                input logic [NumFlows-1:0] enable);
     @(negedge clk);
     push_valid = valid;
