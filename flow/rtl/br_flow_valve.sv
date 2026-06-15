@@ -58,7 +58,7 @@ module br_flow_valve #(
       .rst,
       .ready(push_ready),
       .valid(push_valid),
-      .data (1'b0)
+      .data ('0)
   );
 
   //------------------------------------------
@@ -81,7 +81,7 @@ module br_flow_valve #(
       .rst,
       .ready(pop_ready),
       .valid(pop_valid_unstable),
-      .data (1'b0)
+      .data ('0)
   );
 
 endmodule : br_flow_valve
