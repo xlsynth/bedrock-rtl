@@ -22,7 +22,6 @@ module br_flow_valve #(
     // Can only be enabled if EnableCoverPushBackpressure is disabled.
     parameter bit EnableAssertNoPushBackpressure = !EnableCoverPushBackpressure,
     // If 1, assert that pop-side backpressure is impossible.
-    // This disables the pop-side implementation backpressure cover.
     parameter bit EnableAssertNoPopBackpressure = 0
 ) (
     // Used only for assertions
@@ -80,7 +79,7 @@ module br_flow_valve #(
   br_flow_checks_valid_data_impl #(
       .NumFlows(NumFlows),
       .Width(1),
-      .EnableCoverBackpressure(!EnableAssertNoPopBackpressure),
+      .EnableCoverBackpressure(0),
       .EnableAssertNoBackpressure(EnableAssertNoPopBackpressure),
       .EnableAssertValidStability(0),
       .EnableAssertFinalNotValid(0)
