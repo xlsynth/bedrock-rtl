@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 
-// Bedrock-RTL Least-Recently-Used (LRU) Arbiter Core
+// Bedrock-RTL Pairwise-Priority Arbiter Core
 //
 // Combinationally selects the highest-priority active requester using an
 // externally maintained pairwise priority matrix. priority_matrix[i][j] is
@@ -10,7 +10,7 @@
 
 `include "br_asserts_internal.svh"
 
-module br_arb_lru_core_internal #(
+module br_arb_pairwise_core_internal #(
     // Must be at least 1
     parameter int NumRequesters = 1
 ) (
@@ -36,4 +36,4 @@ module br_arb_lru_core_internal #(
 
   assign grant = request & can_grant;
 
-endmodule : br_arb_lru_core_internal
+endmodule : br_arb_pairwise_core_internal
