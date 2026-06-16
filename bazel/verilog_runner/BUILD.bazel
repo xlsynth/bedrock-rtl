@@ -19,6 +19,14 @@ verilog_elab_test(
     deps = [":nonzip_smoke_lib"],
 )
 
+verilog_elab_test(
+    name = "slang_elab_test",
+    params = {"Width": "8"},
+    tool = "slang",
+    top = "nonzip_smoke",
+    deps = [":nonzip_smoke_lib"],
+)
+
 verilog_lint_test(
     name = "nonzip_lint_test",
     tags = ["manual"],

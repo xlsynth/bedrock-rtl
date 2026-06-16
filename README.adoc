@@ -32,6 +32,8 @@ At minimum, you need to have the following tools installed in your environment.
 Additionally, several tools are needed to build and run all of the tests:
 
 * **Open source**
+  ** Elaboration
+    *** Slang
   ** Linting
     *** Verible
   ** Simulation
@@ -153,6 +155,22 @@ You can set this environment variable in `user.bazelrc` so that it is used in al
 ====
 
 The Bazel test rule implementations at `//bazel:verilog.bzl` shell out the `//python/verilog_runner/verilog_runner.py` tool that presents a generic tool-agnostic API that actually implements the test.
+
+The repository includes a Slang plugin for open-source elaboration tests.
+Select it by setting `tool = "slang"` on a `verilog_elab_test` target:
+
+[source,bazel]
+----
+verilog_elab_test(
+    name = "example_elab_test",
+    tool = "slang",
+    top = "example",
+    deps = [":example"],
+)
+----
+
+Slang performs parsing, semantic analysis, hierarchy elaboration, and type checking.
+The plugin supports source and header dependencies, preprocessor defines, and top-level parameter overrides supplied through the rule.
 
 == Continuous Integration
 

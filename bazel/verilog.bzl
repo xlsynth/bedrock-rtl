@@ -375,6 +375,7 @@ rule_verilog_elab_test = rule(
         ),
         "verilog_runner_plugins": attr.label_list(
             default = [
+                "//python/verilog_runner/plugins:slang.py",
                 "//python/verilog_runner/plugins:verilator.py",
             ],
             allow_files = True,
