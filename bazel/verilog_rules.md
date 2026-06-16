@@ -333,14 +333,14 @@ Returns a depset of all Verilog source or header files in the transitive closure
 <pre>
 load("@bedrock-rtl//bazel:verilog.bzl", "verilog_elab_and_lint_test_suite")
 
-verilog_elab_and_lint_test_suite(<a href="#verilog_elab_and_lint_test_suite-name">name</a>, <a href="#verilog_elab_and_lint_test_suite-top">top</a>, <a href="#verilog_elab_and_lint_test_suite-deps">deps</a>, <a href="#verilog_elab_and_lint_test_suite-defines">defines</a>, <a href="#verilog_elab_and_lint_test_suite-params">params</a>, <a href="#verilog_elab_and_lint_test_suite-elab_tool">elab_tool</a>, <a href="#verilog_elab_and_lint_test_suite-additional_elab_tools">additional_elab_tools</a>,
-                                 <a href="#verilog_elab_and_lint_test_suite-lint_tool">lint_tool</a>, <a href="#verilog_elab_and_lint_test_suite-disable_lint_rules">disable_lint_rules</a>, <a href="#verilog_elab_and_lint_test_suite-kwargs">**kwargs</a>)
+verilog_elab_and_lint_test_suite(<a href="#verilog_elab_and_lint_test_suite-name">name</a>, <a href="#verilog_elab_and_lint_test_suite-top">top</a>, <a href="#verilog_elab_and_lint_test_suite-deps">deps</a>, <a href="#verilog_elab_and_lint_test_suite-defines">defines</a>, <a href="#verilog_elab_and_lint_test_suite-params">params</a>, <a href="#verilog_elab_and_lint_test_suite-elab_tools">elab_tools</a>, <a href="#verilog_elab_and_lint_test_suite-lint_tool">lint_tool</a>,
+                                 <a href="#verilog_elab_and_lint_test_suite-disable_lint_rules">disable_lint_rules</a>, <a href="#verilog_elab_and_lint_test_suite-kwargs">**kwargs</a>)
 </pre>
 
 Creates a suite of Verilog elaboration and lint tests for each combination of the provided parameters.
 
 The function generates a wrapper covering all possible combinations of the provided parameters, creates a
-verilog_elab_test for each elaboration tool, and creates one verilog_lint_test. The primary elaboration test and
+verilog_elab_test for each elaboration tool, and creates one verilog_lint_test. The first elaboration test and
 lint test names append "_elab_test" and "_lint_test" to the base name. Additional elaboration tests append the
 tool name followed by "_elab_test".
 
@@ -355,8 +355,7 @@ tool name followed by "_elab_test".
 | <a id="verilog_elab_and_lint_test_suite-deps"></a>deps |  The dependencies of the test suite.   |  `[]` |
 | <a id="verilog_elab_and_lint_test_suite-defines"></a>defines |  A list of defines.   |  `[]` |
 | <a id="verilog_elab_and_lint_test_suite-params"></a>params |  A dictionary where keys are parameter names and values are lists of possible values for those parameters.   |  `{}` |
-| <a id="verilog_elab_and_lint_test_suite-elab_tool"></a>elab_tool |  The primary tool to use for elaboration.   |  `"verific"` |
-| <a id="verilog_elab_and_lint_test_suite-additional_elab_tools"></a>additional_elab_tools |  Additional elaboration tools. Defaults to Slang.   |  `["slang"]` |
+| <a id="verilog_elab_and_lint_test_suite-elab_tools"></a>elab_tools |  The tools to use for elaboration. Defaults to Verific and Slang.   |  `["verific", "slang"]` |
 | <a id="verilog_elab_and_lint_test_suite-lint_tool"></a>lint_tool |  The tool to use for linting.   |  `"ascentlint"` |
 | <a id="verilog_elab_and_lint_test_suite-disable_lint_rules"></a>disable_lint_rules |  A list of lint rules to disable in the generated files.   |  `[]` |
 | <a id="verilog_elab_and_lint_test_suite-kwargs"></a>kwargs |  Additional common keyword arguments to be passed to the verilog_elab_test and verilog_lint_test functions.   |  none |

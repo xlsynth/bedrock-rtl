@@ -855,15 +855,14 @@ def verilog_elab_and_lint_test_suite(
         deps = [],
         defines = [],
         params = {},
-        elab_tool = "verific",
-        additional_elab_tools = ["slang"],
+        elab_tools = ["verific", "slang"],
         lint_tool = "ascentlint",
         disable_lint_rules = [],
         **kwargs):
     """Creates a suite of Verilog elaboration and lint tests for each combination of the provided parameters.
 
     The function generates a wrapper covering all possible combinations of the provided parameters, creates a
-    verilog_elab_test for each elaboration tool, and creates one verilog_lint_test. The primary elaboration test and
+    verilog_elab_test for each elaboration tool, and creates one verilog_lint_test. The first elaboration test and
     lint test names append "_elab_test" and "_lint_test" to the base name. Additional elaboration tests append the
     tool name followed by "_elab_test".
 
@@ -873,8 +872,7 @@ def verilog_elab_and_lint_test_suite(
         name (str): The base name for the test suite.
         defines (list): A list of defines.
         params (dict): A dictionary where keys are parameter names and values are lists of possible values for those parameters.
-        elab_tool (str): The primary tool to use for elaboration.
-        additional_elab_tools (list of strings): Additional elaboration tools. Defaults to Slang.
+        elab_tools (list of strings): The tools to use for elaboration. Defaults to Verific and Slang.
         lint_tool (str): The tool to use for linting.
         disable_lint_rules (list): A list of lint rules to disable in the generated files.
         **kwargs: Additional common keyword arguments to be passed to the verilog_elab_test and verilog_lint_test functions.
@@ -883,6 +881,14 @@ def verilog_elab_and_lint_test_suite(
         if len(deps) != 1:
             fail("top must be provided if there is more than one dependency")
         top = deps[0][1:]
+
+    if len(elab_tools) == 0:
+        fail("elab_tools must contain at least one elaboration tool")
+    seen_elab_tools = {}
+    for elab_tool in elab_tools:
+        if elab_tool in seen_elab_tools:
+            fail("elab_tools contains a duplicate tool: " + elab_tool)
+        seen_elab_tools[elab_tool] = True
 
     generate_parameter_file(
         name = name + "_params",
@@ -904,20 +910,11 @@ def verilog_elab_and_lint_test_suite(
         deps = deps,
     )
 
-    verilog_elab_test(
-        name = name + "_elab_test",
-        tool = elab_tool,
-        deps = [":" + name + "_wrapper"],
-        defines = defines,
-        **kwargs
-    )
-
-    for additional_elab_tool in additional_elab_tools:
-        if additional_elab_tool == elab_tool:
-            fail("additional_elab_tools contains the primary elab_tool: " + elab_tool)
+    for index, elab_tool in enumerate(elab_tools):
+        test_name = name + "_elab_test" if index == 0 else name + "_" + elab_tool + "_elab_test"
         verilog_elab_test(
-            name = name + "_" + additional_elab_tool + "_elab_test",
-            tool = additional_elab_tool,
+            name = test_name,
+            tool = elab_tool,
             deps = [":" + name + "_wrapper"],
             defines = defines,
             **kwargs
