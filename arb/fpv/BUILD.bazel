@@ -282,6 +282,10 @@ br_verilog_fpv_test_tools_suite(
             "3",
             "4",
         ],
+        "UsePairwiseArb": [
+            "0",
+            "1",
+        ],
     },
     tools = {
         "jg": "br_arb_weighted_rr_fpv.jg.tcl",
