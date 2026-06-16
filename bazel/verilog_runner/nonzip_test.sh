@@ -36,6 +36,7 @@ for file in \
   python/verilog_runner/eda_tool.py \
   python/verilog_runner/plugins.py \
   python/verilog_runner/util.py \
+  python/verilog_runner/plugins/slang.py \
   python/verilog_runner/plugins/verilator.py; do
   if [[ ! -f "${repo}/${file}" ]]; then
     echo "missing Verilog runner runfile: ${file}"
