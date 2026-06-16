@@ -10,16 +10,20 @@
 
 module br_flow_valve #(
     parameter int NumFlows = 1,  // Must be at least 1
-    // If 1, cover that the pop side experiences backpressure.
-    // If 0, disable pop-side backpressure coverage. By default, this also
-    // asserts that pop-side backpressure is impossible.
-    parameter bit EnableCoverPopBackpressure = 1,
+    // If 1, cover that the push side experiences backpressure.
+    // If 0, disable backpressure coverage. By default, this also
+    // asserts that backpressure is impossible.
+    parameter bit EnableCoverPushBackpressure = 1,
+    // If 1, assert that push_valid is stable when backpressured.
+    parameter bit EnableAssertPushValidStability = EnableCoverPushBackpressure,
     // If 1, then assert there are no push-valid bits asserted at the end of the test.
     parameter bit EnableAssertPushFinalNotValid = 1,
-    // If 1, then assert there are no pop-valid bits asserted at the end of the test.
-    parameter bit EnableAssertPopFinalNotValid = 1,
-    // If 1, assert that push_valid is stable when backpressured.
-    parameter bit EnableAssertPushValidStability = 1
+    // If 1, assert that push-side backpressure is impossible.
+    // Can only be enabled if EnableCoverPushBackpressure is disabled.
+    parameter bit EnableAssertNoPushBackpressure = !EnableCoverPushBackpressure,
+    // If 1, assert that pop-side backpressure is impossible.
+    // This disables the pop-side implementation backpressure cover.
+    parameter bit EnableAssertNoPopBackpressure = 0
 ) (
     // Used only for assertions
     // ri lint_check_waive INPUT_NOT_READ HIER_NET_NOT_READ HIER_BRANCH_NOT_READ
@@ -44,12 +48,15 @@ module br_flow_valve #(
   //------------------------------------------
   // Integration checks
   //------------------------------------------
+  `BR_ASSERT_STATIC(legal_assert_no_push_backpressure_a,
+                    !(EnableAssertNoPushBackpressure && EnableCoverPushBackpressure))
   `BR_ASSERT_STATIC(num_flows_gte_1_a, NumFlows >= 1)
 
   br_flow_checks_valid_data_intg #(
       .NumFlows(NumFlows),
       .Width(1),
-      .EnableCoverBackpressure(1),
+      .EnableCoverBackpressure(EnableCoverPushBackpressure),
+      .EnableAssertNoBackpressure(EnableAssertNoPushBackpressure),
       .EnableAssertValidStability(EnableAssertPushValidStability),
       .EnableAssertDataStability(0),
       .EnableAssertFinalNotValid(EnableAssertPushFinalNotValid)
@@ -73,9 +80,10 @@ module br_flow_valve #(
   br_flow_checks_valid_data_impl #(
       .NumFlows(NumFlows),
       .Width(1),
-      .EnableCoverBackpressure(EnableCoverPopBackpressure),
+      .EnableCoverBackpressure(!EnableAssertNoPopBackpressure),
+      .EnableAssertNoBackpressure(EnableAssertNoPopBackpressure),
       .EnableAssertValidStability(0),
-      .EnableAssertFinalNotValid(EnableAssertPopFinalNotValid)
+      .EnableAssertFinalNotValid(0)
   ) br_flow_checks_valid_data_impl (
       .clk,
       .rst,
