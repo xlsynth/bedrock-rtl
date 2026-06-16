@@ -9,22 +9,23 @@
 //
 // This module is a convenience wrapper that instantiates various combinations
 // of flow regs for shallow depths or a flop-based FIFO for deeper storage.
+// The default configurations for a given depth are listed below.
 //
-// Depth | RegisterPushOutputs | RegisterPopOutputs | Implementation
-// ------|---------------------|--------------------|-------------------------------
-// 0     | N/A                 | N/A                | Combinational pass-through
-// 1     | 0                   | 0                  | br_flow_reg_none
-// 1     | 0                   | 1                  | br_flow_reg_fwd
-// 1     | 1                   | 0                  | br_flow_reg_rev
-// 1     | 1                   | 1                  | Unsupported
-// 2     | 0                   | 0                  | br_flow_reg_none + br_flow_reg_none
-// 2     | 0                   | 1                  | br_flow_reg_none + br_flow_reg_fwd
-// 2     | 1                   | 0                  | br_flow_reg_rev + br_flow_reg_none
-// 2     | 1                   | 1                  | br_flow_reg_both
-// 3+    | 0                   | 0                  | Unsupported
-// 3+    | 0                   | 1                  | Unsupported
-// 3+    | 1                   | 0                  | br_fifo_flops with bypass
-// 3+    | 1                   | 1                  | br_fifo_flops with bypass and pop outputs registered
+// Depth | Default? | RegisterPushOutputs | RegisterPopOutputs | Implementation
+// ------|----------|---------------------|--------------------|-------------------------------
+// 0     | x        | N/A                 | N/A                | Combinational pass-through
+// 1     |          | 0                   | 0                  | br_flow_reg_none
+// 1     | x        | 0                   | 1                  | br_flow_reg_fwd
+// 1     |          | 1                   | 0                  | br_flow_reg_rev
+// 1     |          | 1                   | 1                  | Unsupported
+// 2     |          | 0                   | 0                  | br_flow_reg_none + br_flow_reg_none
+// 2     |          | 0                   | 1                  | br_flow_reg_none + br_flow_reg_fwd
+// 2     |          | 1                   | 0                  | br_flow_reg_rev + br_flow_reg_none
+// 2     | x        | 1                   | 1                  | br_flow_reg_both
+// 3+    |          | 0                   | 0                  | Unsupported
+// 3+    |          | 0                   | 1                  | Unsupported
+// 3+    |          | 1                   | 0                  | br_fifo_flops with bypass
+// 3+    | x        | 1                   | 1                  | br_fifo_flops with bypass and pop outputs registered
 
 `include "br_asserts.svh"
 `include "br_unused.svh"
