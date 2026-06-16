@@ -192,6 +192,28 @@ br_verilog_sim_test_tools_suite(
 )
 
 verilog_library(
+    name = "br_flow_valve_tb",
+    srcs = ["br_flow_valve_tb.sv"],
+    deps = [
+        "//flow/rtl:br_flow_valve",
+        "//misc/sim:br_test_driver",
+    ],
+)
+
+verilog_elab_test(
+    name = "br_flow_valve_tb_elab_test",
+    tool = "verific",
+    deps = [":br_flow_valve_tb"],
+)
+
+br_verilog_sim_test_tools_suite(
+    name = "br_flow_valve_sim_test_tools_suite",
+    params = _FLOW_NUM_FLOWS_SIM_PARAMS,
+    tools = _FLOW_PRIMITIVE_SIM_TOOLS,
+    deps = [":br_flow_valve_tb"],
+)
+
+verilog_library(
     name = "br_flow_mux_select_tb",
     srcs = ["br_flow_mux_select_tb.sv"],
     deps = [
