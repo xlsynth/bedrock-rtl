@@ -3,17 +3,19 @@
 `timescale 1ns / 1ps
 
 import br_amba::*;
+import br_amba_apb_sim_pkg::*;
 
 // APB requester-side transaction driver.
 //
-// The driver owns only the requester APB signals and applies queued setup/access/idle
-// phases on the falling clock edge. Tests can call the public tasks to build precise
-// APB timing scenarios without open-coding signal assignments in each bench.
+// The driver owns only the requester APB signals and issues one directed APB
+// transfer per run call. Tests combine it with a DUT-specific monitor to check
+// response behavior without open-coding APB phase sequencing in each bench.
 module br_amba_apb_requester_driver #(
-    parameter int AddrWidth = 12
+    parameter int AddrWidth = 12,
+    parameter int TimeoutCycles = 100
 ) (
     input logic clk,
-    input logic done,
+    input logic pready,
 
     output logic [AddrWidth-1:0] paddr,
     output logic psel,
@@ -24,90 +26,84 @@ module br_amba_apb_requester_driver #(
     output logic [31:0] pwdata
 );
 
-  typedef struct packed {
-    logic [AddrWidth-1:0] addr;
-    logic psel;
-    logic penable;
-    logic [ApbProtWidth-1:0] prot;
-    logic [3:0] strb;
-    logic write;
-    logic [31:0] wdata;
-  } apb_req_t;
+  apb_request_beat_t apb_beat;
 
-  apb_req_t drive_queue[$];
-  apb_req_t last_access_req;
+  assign paddr   = apb_beat.request.addr;
+  assign psel    = apb_beat.psel;
+  assign penable = apb_beat.penable;
+  assign pprot   = apb_beat.request.prot;
+  assign pstrb   = apb_beat.request.strb;
+  assign pwrite  = apb_beat.request.write;
+  assign pwdata  = apb_beat.request.wdata;
 
-  function automatic apb_req_t get_req(input logic [AddrWidth-1:0] addr, input logic psel_in,
-                                       input logic penable_in, input logic [ApbProtWidth-1:0] prot,
-                                       input logic [3:0] strb, input logic write,
-                                       input logic [31:0] wdata);
-    get_req.addr    = addr;
-    get_req.psel    = psel_in;
-    get_req.penable = penable_in;
-    get_req.prot    = prot;
-    get_req.strb    = strb;
-    get_req.write   = write;
-    get_req.wdata   = wdata;
-  endfunction
-
-  function automatic apb_req_t get_idle_req();
-    get_idle_req = get_req('0, 1'b0, 1'b0, '0, '0, 1'b0, '0);
-  endfunction
-
-  function automatic void drive(input apb_req_t req);
-    paddr   = req.addr;
-    psel    = req.psel;
-    penable = req.penable;
-    pprot   = req.prot;
-    pstrb   = req.strb;
-    pwrite  = req.write;
-    pwdata  = req.wdata;
+  function automatic apb_request_beat_t request_beat(
+      input apb_request_t request, input logic psel_value, input logic penable_value);
+    request_beat.psel    = psel_value;
+    request_beat.penable = penable_value;
+    request_beat.request = request;
   endfunction
 
   task automatic init_idle();
-    last_access_req = get_idle_req();
-    drive(last_access_req);
+    apb_beat = request_beat('0, Psel0, Penable0);
   endtask
 
-  task automatic send_setup(input logic [AddrWidth-1:0] addr, input logic [ApbProtWidth-1:0] prot,
-                            input logic [3:0] strb, input logic write, input logic [31:0] wdata,
-                            input int cycles = 1);
-    apb_req_t setup_req;
-
-    setup_req = get_req(addr, 1'b1, 1'b0, prot, strb, write, wdata);
-    drive_queue.push_back(setup_req);
+  task automatic wait_cycles(input int cycles = 1);
     repeat (cycles) @(negedge clk);
   endtask
 
-  task automatic send_access(input logic [AddrWidth-1:0] addr, input logic [ApbProtWidth-1:0] prot,
-                             input logic [3:0] strb, input logic write, input logic [31:0] wdata);
-    last_access_req = get_req(addr, 1'b1, 1'b1, prot, strb, write, wdata);
-    drive_queue.push_back(last_access_req);
-    @(negedge clk);
-  endtask
+  task automatic issue_setup_request(input apb_request_t request, input int setup_cycles);
+    int setup_count;
 
-  task automatic send_idle_from_last();
-    apb_req_t idle_req;
-
-    idle_req = last_access_req;
-    idle_req.psel = 1'b0;
-    idle_req.penable = 1'b0;
-    drive_queue.push_back(idle_req);
-  endtask
-
-  function automatic int pending_count();
-    pending_count = drive_queue.size();
-  endfunction
-
-  task automatic run();
-    apb_req_t req;
-
-    while (!done) begin
+    setup_count = setup_cycles;
+    if (setup_count < 1) begin
+      setup_count = 1;
+    end
+    for (int cycle = 0; cycle < setup_count; cycle++) begin
       @(negedge clk);
-      if (drive_queue.size() > 0) begin
-        req = drive_queue.pop_front();
-        drive(req);
-      end
+      apb_beat = request_beat(request, Psel1, Penable0);
+    end
+  endtask
+
+  task automatic issue_access_request(input apb_request_t request);
+    @(negedge clk);
+    apb_beat = request_beat(request, Psel1, Penable1);
+  endtask
+
+  task automatic wait_for_response();
+    int timeout = 0;
+
+    @(posedge clk);
+    while (!pready && timeout < TimeoutCycles) begin
+      @(posedge clk);
+      timeout++;
+    end
+    if (!pready) begin
+      $error("Timeout waiting for upstream APB response");
+    end
+  endtask
+
+  task automatic drive_idle(input int idle_cycles);
+    if (idle_cycles > 0) begin
+      wait_for_response();
+      @(negedge clk);
+      apb_beat.psel    = Psel0;
+      apb_beat.penable = Penable0;
+      wait_cycles(idle_cycles - 1);
+    end
+  endtask
+
+  task automatic run(input apb_request_t inputs, input apb_request_controls_t controls);
+    apb_request_t request;
+
+    for (int transaction = 0; transaction < controls.num_transactions; transaction++) begin
+      request.addr  = AddrWidth'(inputs.addr + AddrWidth'(transaction));
+      request.prot  = inputs.prot;
+      request.strb  = inputs.strb;
+      request.write = inputs.write;
+      request.wdata = inputs.wdata + 32'(transaction);
+      issue_setup_request(request, controls.setup_cycles);
+      issue_access_request(request);
+      drive_idle(controls.idle_cycles);
     end
   endtask
 

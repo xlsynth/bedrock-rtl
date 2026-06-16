@@ -3,6 +3,7 @@
 `timescale 1ns / 1ps
 
 import br_amba::*;
+import br_amba_apb_sim_pkg::*;
 
 // APB timing-slice reference monitor.
 //
@@ -45,41 +46,24 @@ module br_amba_apb_timing_slice_monitor #(
     input logic pslverr_in
 );
 
-  typedef struct packed {
-    logic [AddrWidth-1:0] addr;
-    logic psel;
-    logic penable;
-    logic [ApbProtWidth-1:0] prot;
-    logic [3:0] strb;
-    logic write;
-    logic [31:0] wdata;
-  } apb_req_t;
-
-  typedef struct packed {
-    logic ready;
-    logic [31:0] rdata;
-    logic slverr;
-  } apb_rsp_t;
-
-  apb_rsp_t expected_rsp_queue[$];
-  string expected_rsp_phase_queue[$];
+  apb_response_t expected_rsp_queue[$];
   int error_count;
 
-  function automatic apb_req_t get_req(input logic [AddrWidth-1:0] addr, input logic psel,
-                                       input logic penable, input logic [ApbProtWidth-1:0] prot,
-                                       input logic [3:0] strb, input logic write,
-                                       input logic [31:0] wdata);
-    get_req.addr    = addr;
-    get_req.psel    = psel;
-    get_req.penable = penable;
-    get_req.prot    = prot;
-    get_req.strb    = strb;
-    get_req.write   = write;
-    get_req.wdata   = wdata;
+  function automatic apb_request_beat_t get_req(
+      input logic [AddrWidth-1:0] addr, input logic psel, input logic penable,
+      input logic [ApbProtWidth-1:0] prot, input logic [3:0] strb, input logic write,
+      input logic [31:0] wdata);
+    get_req.psel          = psel;
+    get_req.penable       = penable;
+    get_req.request.addr  = 32'(addr);
+    get_req.request.prot  = prot;
+    get_req.request.strb  = strb;
+    get_req.request.write = write;
+    get_req.request.wdata = wdata;
   endfunction
 
-  function automatic apb_rsp_t get_rsp(input logic ready, input logic [31:0] rdata,
-                                       input logic slverr);
+  function automatic apb_response_t get_rsp(input logic ready, input logic [31:0] rdata,
+                                            input logic slverr);
     get_rsp.ready  = ready;
     get_rsp.rdata  = rdata;
     get_rsp.slverr = slverr;
@@ -95,50 +79,49 @@ module br_amba_apb_timing_slice_monitor #(
   task automatic clear();
     error_count = 0;
     expected_rsp_queue.delete();
-    expected_rsp_phase_queue.delete();
   endtask
 
-  task automatic expect_response(input logic [31:0] rdata, input logic slverr, input string phase);
-    expected_rsp_queue.push_back(get_rsp(1'b1, rdata, slverr));
-    expected_rsp_phase_queue.push_back(phase);
+  task automatic expect_response(input logic [31:0] rdata, input logic slverr);
+    expected_rsp_queue.push_back(get_rsp(Pready1, rdata, slverr));
   endtask
 
-  task automatic read_downstream(output apb_req_t req);
+  task automatic read_downstream(output apb_request_beat_t req);
     req = get_req(paddr_out, psel_out, penable_out, pprot_out, pstrb_out, pwrite_out, pwdata_out);
   endtask
 
-  task automatic read_response(output apb_rsp_t rsp);
+  task automatic read_response(output apb_response_t rsp);
     rsp = get_rsp(pready_out, prdata_out, pslverr_out);
   endtask
 
-  task automatic check_downstream(input apb_req_t actual, input apb_req_t expected,
-                                  input string phase);
+  task automatic check_downstream(input apb_request_beat_t actual,
+                                  input apb_request_beat_t expected, input string phase);
     check(actual.psel === expected.psel, $sformatf("%s: psel_out mismatch", phase));
     check(actual.penable === expected.penable, $sformatf("%s: penable_out mismatch", phase));
-    check(actual.addr === expected.addr, $sformatf("%s: paddr_out mismatch", phase));
-    check(actual.prot === expected.prot, $sformatf("%s: pprot_out mismatch", phase));
-    check(actual.strb === expected.strb, $sformatf("%s: pstrb_out mismatch", phase));
-    check(actual.write === expected.write, $sformatf("%s: pwrite_out mismatch", phase));
-    check(actual.wdata === expected.wdata, $sformatf("%s: pwdata_out mismatch", phase));
+    check(actual.request.addr === expected.request.addr, $sformatf("%s: paddr_out mismatch", phase
+          ));
+    check(actual.request.prot === expected.request.prot, $sformatf("%s: pprot_out mismatch", phase
+          ));
+    check(actual.request.strb === expected.request.strb, $sformatf("%s: pstrb_out mismatch", phase
+          ));
+    check(actual.request.write === expected.request.write, $sformatf(
+          "%s: pwrite_out mismatch", phase));
+    check(actual.request.wdata === expected.request.wdata, $sformatf(
+          "%s: pwdata_out mismatch", phase));
   endtask
 
-  task automatic check_response(input apb_rsp_t actual, input apb_rsp_t expected,
-                                input string phase);
-    check(actual.ready === expected.ready, $sformatf("%s: pready_out mismatch", phase));
+  task automatic check_response(input apb_response_t actual, input apb_response_t expected);
+    check(actual.ready === expected.ready, "pready_out mismatch");
 
     if (expected.ready || actual.ready) begin
-      check(
-          actual.rdata === expected.rdata, $sformatf(
-          "%s: prdata_out mismatch, got 0x%08x expected 0x%08x", phase, actual.rdata, expected.rdata
-          ));
+      check(actual.rdata === expected.rdata, $sformatf(
+            "prdata_out mismatch, got 0x%08x expected 0x%08x", actual.rdata, expected.rdata));
       check(actual.slverr === expected.slverr, $sformatf(
-            "%s: pslverr_out mismatch, got %0b expected %0b", phase, actual.slverr, expected.slverr
-            ));
+            "pslverr_out mismatch, got %0b expected %0b", actual.slverr, expected.slverr));
     end
   endtask
 
   function automatic int pending_count();
-    pending_count = expected_rsp_queue.size() + expected_rsp_phase_queue.size();
+    pending_count = expected_rsp_queue.size();
   endfunction
 
   function automatic int get_error_count();
@@ -146,19 +129,19 @@ module br_amba_apb_timing_slice_monitor #(
   endfunction
 
   task automatic run();
-    apb_req_t actual_req;
-    apb_req_t expected_req;
-    apb_rsp_t actual_rsp;
-    apb_rsp_t expected_rsp;
-    string phase;
-    logic model_psel;
-    logic model_penable;
-    logic model_valid_handshake_d1;
+    apb_request_beat_t actual_req;
+    apb_request_beat_t expected_req;
+    apb_response_t actual_rsp;
+    apb_response_t expected_rsp;
+    // Expected downstream APB state from the previous monitor cycle.
+    logic expected_psel_out;
+    logic expected_penable_out;
+    logic expected_valid_handshake_d1;
     logic valid_handshake;
 
-    model_psel = 1'b0;
-    model_penable = 1'b0;
-    model_valid_handshake_d1 = 1'b0;
+    expected_psel_out = Psel0;
+    expected_penable_out = Penable0;
+    expected_valid_handshake_d1 = Pready0;
 
     while (!done) begin
       @(posedge clk);
@@ -166,12 +149,12 @@ module br_amba_apb_timing_slice_monitor #(
       // checks the same-cycle APB outputs rather than the previous cycle's values.
       #1ps;
       if (enable && !rst) begin
-        valid_handshake = model_psel && model_penable && pready_in;
+        valid_handshake = expected_psel_out && expected_penable_out && pready_in;
 
         expected_req = get_req(
             paddr_in,
-            psel_in && !valid_handshake && !model_valid_handshake_d1,
-            penable_in && !valid_handshake && !model_valid_handshake_d1,
+            psel_in && !valid_handshake && !expected_valid_handshake_d1,
+            penable_in && !valid_handshake && !expected_valid_handshake_d1,
             pprot_in,
             pstrb_in,
             pwrite_in,
@@ -188,14 +171,13 @@ module br_amba_apb_timing_slice_monitor #(
           check(expected_rsp_queue.size() > 0, "unexpected APB response");
           if (expected_rsp_queue.size() > 0) begin
             expected_rsp = expected_rsp_queue.pop_front();
-            phase = expected_rsp_phase_queue.pop_front();
-            check_response(actual_rsp, expected_rsp, phase);
+            check_response(actual_rsp, expected_rsp);
           end
         end
 
-        model_psel = expected_req.psel;
-        model_penable = expected_req.penable;
-        model_valid_handshake_d1 = valid_handshake;
+        expected_psel_out = expected_req.psel;
+        expected_penable_out = expected_req.penable;
+        expected_valid_handshake_d1 = valid_handshake;
       end
     end
   endtask
