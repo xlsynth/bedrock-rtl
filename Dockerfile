@@ -111,24 +111,6 @@ RUN git clone https://github.com/YosysHQ/eqy.git && \
     rm -rf eqy && \
     eqy --help
 
-# Install boolector and yices2 to able to run LEC with Yosys
-# TODO: boolector is not able to build..
-#RUN git clone https://github.com/boolector/boolector
-#RUN cd boolector && \
-#    # 3.2.4
-#    git checkout 393cdfba3735d334bb4e6525500b8a0280dd41e6 && \
-#    ./contrib/setup-lingeling.sh && \
-#    ./contrib/setup-btor2tools.sh && \
-#    ./configure.sh && \
-#    cd build && \
-#    make -j$(nproc) && \
-#    cp build/bin/boolector /usr/local/bin/ && \
-#    cp build/bin/btor* /usr/local/bin/ && \
-#    cp deps/btor2tools/build/bin/btorsim /usr/local/bin/ && \
-#    cd .. && \
-#    rm -rf boolector
-#RUN boolector --version
-
 # Yices-2.6.5
 RUN git clone https://github.com/SRI-CSL/yices2.git && \
     cd yices2 && \
@@ -140,44 +122,6 @@ RUN git clone https://github.com/SRI-CSL/yices2.git && \
     cd .. && \
     rm -rf yices2 && \
     yices --version
-
-# Necessary for building OpenSTA
-RUN curl -L https://github.com/davidkebo/cudd/raw/c8d587ef3fbcc115977fed48a867aa6664ca11d0/cudd_versions/cudd-3.0.0.tar.gz -o cudd-3.0.0.tar.gz && \
-    echo "b8e966b4562c96a03e7fbea239729587d7b395d53cadcc39a7203b49cf7eeb69  cudd-3.0.0.tar.gz" | sha256sum -c - && \
-    tar -xzf cudd-3.0.0.tar.gz && \
-    cd cudd-3.0.0 && \
-    ./configure --prefix=/usr/local && \
-    make -j$(nproc) && \
-    make install && \
-    cd .. && rm -rf cudd-3.0.0 && rm cudd-3.0.0.tar.gz
-
-# Build eigen 3.4.0 manually because yum only gave us 3.3.4, too low for OpenSTA
-#RUN curl -L https://gitlab.com/libeigen/eigen/-/archive/3.4.0/eigen-3.4.0.tar.gz -o eigen-3.4.0.tar.gz
-#RUN echo "8586084f71f9bde545ee7fa6d00288b264a2b7ac3607b974e54d13e7162c1c72  eigen-3.4.0.tar.gz" | sha256sum -c -
-#RUN tar -xzf eigen-3.4.0.tar.gz && \
-#    cd eigen-3.4.0 && \
-#    mkdir build && \
-#    cd build && \
-#    cmake .. && \
-#    make -j$(nproc) && \
-#    make install && \
-#    cd ../.. && \
-#    rm -rf eigen-3.4.0 && \
-#    rm eigen-3.4.0.tar.gz
-
-# TODO: not yet working because of missing eigen dependency
-#RUN git clone https://github.com/The-OpenROAD-Project/OpenSTA.git
-#RUN cd OpenSTA && \
-#    git checkout 543361765b78269402dba2656c7fca19459a7b7f && \
-#    mkdir build && \
-#    cd build && \
-#    cmake .. && \
-#    make -j$(nproc) && \
-#    make install && \
-#    cd ../.. && \
-#    rm -rf OpenSTA
-
-# TODO: SKY130 PDK?
 
 # Install Slang. Make sure to tell it to use clang,
 # because our gcc install in this image is too old for C++20 language features.
