@@ -20,12 +20,3 @@ verilog_library(
         "//amba/rtl:br_amba_pkg",
     ],
 )
-
-verilog_library(
-    name = "br_amba_axil_monitor",
-    srcs = ["br_amba_axil_monitor.sv"],
-    visibility = ["//visibility:public"],
-    deps = [
-        "//amba/rtl:br_amba_pkg",
-    ],
-)
