@@ -14,8 +14,8 @@ verilog_library(
 )
 
 verilog_library(
-    name = "br_arb_lru_core_internal",
-    srcs = ["br_arb_lru_core_internal.sv"],
+    name = "br_arb_pairwise_core_internal",
+    srcs = ["br_arb_pairwise_core_internal.sv"],
     deps = [
         "//macros:br_asserts_internal",
     ],
@@ -25,7 +25,7 @@ verilog_library(
     name = "br_arb_lru_internal",
     srcs = ["br_arb_lru_internal.sv"],
     deps = [
-        ":br_arb_lru_core_internal",
+        ":br_arb_pairwise_core_internal",
         ":br_lru_state_internal",
         "//macros:br_asserts",
         "//macros:br_asserts_internal",

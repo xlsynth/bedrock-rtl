@@ -106,8 +106,8 @@ The verification-artifact column reports repository evidence, not a promise that
 | Elab/lint, Sim, FPV.
 
 | `br_arb_weighted_rr`
-| Grants using weighted round-robin priority state.
-| Elab/lint, FPV.
+| Grants using weighted round-robin priority state with selectable unrolled or pairwise grant selection.
+| Elab/lint, Sim, FPV.
 
 |===
 

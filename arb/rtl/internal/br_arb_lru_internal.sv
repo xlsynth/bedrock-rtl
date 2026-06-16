@@ -76,9 +76,9 @@ module br_arb_lru_internal #(
     );
 
 
-    br_arb_lru_core_internal #(
+    br_arb_pairwise_core_internal #(
         .NumRequesters(NumRequesters)
-    ) br_arb_lru_core_internal (
+    ) br_arb_pairwise_core_internal (
         .request,
         .priority_matrix(state),
         .can_grant,

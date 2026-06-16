@@ -213,6 +213,10 @@ br_verilog_sim_test_tools_suite(
             "2",
             "4",
         ],
+        "UsePairwiseArb": [
+            "0",
+            "1",
+        ],
     },
     # TODO: Does not work with iverilog.
     tools = [
