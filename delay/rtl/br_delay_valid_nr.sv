@@ -58,11 +58,8 @@ module br_delay_valid_nr #(
   logic [NumStages:0] stage_valid;
   logic [NumStages:0][Width-1:0] stage;
 
-  // always_comb instead of assign here to keep iverilog happy
-  always_comb begin
-    stage_valid[0] = in_valid;
-    stage[0] = in;
-  end
+  assign stage_valid[0] = in_valid;
+  assign stage[0] = in;
 
   if (NumStages > 0 && FirstStageUngated) begin : gen_ungated_stage
     // ri lint_check_waive BA_NBA_REG

@@ -65,19 +65,6 @@ RUN yum install -y dnf-plugins-core-4.0.21-25.el8 && \
 RUN pip3.12 install --require-hashes -r /tmp/requirements_lock_3_12.txt && \
     rm /tmp/requirements_lock_3_12.txt
 
-# Install iverilog
-# git SHA from: Jan 3, 2025
-RUN git clone https://github.com/steveicarus/iverilog.git && \
-    cd iverilog && \
-    git checkout 14375567c72b6f71cc93bec3b62cf43aaf34942e && \
-    sh autoconf.sh && \
-    ./configure && \
-    make -j$(nproc) && \
-    make install && \
-    cd .. && \
-    rm -rf iverilog && \
-    iverilog -V
-
 # Install Verilator
 # v5.048
 RUN git clone https://github.com/verilator/verilator && \

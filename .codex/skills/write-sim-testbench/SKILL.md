@@ -1,6 +1,6 @@
 ---
 name: write-sim-testbench
-description: Write or update one Bedrock-RTL SystemVerilog simulation testbench and its Bazel sim target. Use when Codex needs to add, refactor, debug, or review a verilog_sim_test/br_verilog_sim_test_tools_suite bench for VCS, Verilator, or Icarus, including parameterized tests, ready/valid stimulus, scoreboards, and portable smoke/regression coverage that complements formal verification.
+description: Write or update one Bedrock-RTL SystemVerilog simulation testbench and its Bazel sim target. Use when Codex needs to add, refactor, debug, or review a verilog_sim_test/br_verilog_sim_test_tools_suite bench for VCS or Verilator, including parameterized tests, ready/valid stimulus, scoreboards, and portable smoke/regression coverage that complements formal verification.
 ---
 
 # Write Sim Testbench
@@ -18,7 +18,7 @@ description: Write or update one Bedrock-RTL SystemVerilog simulation testbench 
    - Reuse a bench for a thin wrapper only when the wrapper is genuinely a base parameterization of the same behavior and the resulting test remains clear.
    - Share small helpers only when they make each bench easier to read; accept modest duplication over preprocessor or generic-harness complexity.
 4. Add a `*_tb.sv` module and a `BUILD.bazel` entry. Expose a testbench parameter only when changing it changes stimulus or expected coverage; otherwise make it a `localparam`. Sweep important parameters from Bazel using string values.
-5. Keep VCS as the minimum simulator target; include Verilator and Icarus only when the bench and dependent RTL actually work with them.
+5. Keep VCS as the minimum simulator target; include Verilator when the bench and dependent RTL work with it.
 6. Run formatting/lint, the narrowest relevant elaboration and simulation targets, the area simulation regression, and `python/sim_tb_coverage_inventory.py` when adding direct DUT coverage. If EDA tools are unavailable, at least verify labels/deps with `bazel query` or report that simulation could not be run.
 
 Read `references/repo-patterns.md` when you need concrete examples, a BUILD skeleton, or simulator compatibility notes.
@@ -40,12 +40,11 @@ Use the existing Bedrock simulation utilities by default:
 
 ## Portability Rules
 
-Target VCS first. Add Verilator and Icarus opportunistically:
+Target VCS first. Add Verilator when practical:
 
 - Verilator often fails on dependent Bedrock internal SVA that uses multi-cycle sequence constructs, especially delayed sequence expressions with logical not. If those assertions are in the dependency closure, comment out `"verilator"` with a TODO explaining the unsupported construct.
 - Before adding a Verilator warning waiver, identify the exact RTL construct that triggers it. Scope the waiver to the affected target and leave a comment describing the root cause; do not use a broad unexplained waiver.
 - Treat local compiler/toolchain failures separately from RTL portability. Do not commit simulator or C++ standard fixes solely for a developer-machine issue when the repository CI image already works.
-- Icarus has incomplete SystemVerilog/SVA support and may struggle with richer generated or protocol benches. If it fails for tool limitations, leave it out with a short BUILD comment.
 - Do not make a Verilator-enabled test depend on X-propagation semantics for pass/fail. Verilator is effectively 2-state in many practical cases; checks such as `$isunknown(out)` are usually not portable.
 - Avoid advanced testbench-only constructs unless existing nearby benches already use them with the same tool list: classes, clocking blocks, `process::self().srandom`, DPI, UVM, fork-heavy randomized environments, and complex SVA.
 - For CDC simulations that use delay modeling, follow the existing plusarg/`SIMULATION` pattern and keep Verilator exclusions if the delay model uses unsupported process randomization.

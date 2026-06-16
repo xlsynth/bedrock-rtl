@@ -47,7 +47,6 @@ br_verilog_sim_test_tools_suite(
         "5",
     ]},
     tools = [
-        "iverilog",
         "vcs",
         "verilator",
     ],
@@ -68,7 +67,6 @@ br_verilog_sim_test_tools_suite(
         "5",
     ]},
     tools = [
-        "iverilog",
         "vcs",
         "verilator",
     ],
@@ -95,7 +93,6 @@ br_verilog_sim_test_tools_suite(
             "1",
         ],
     },
-    # TODO: Does not work with iverilog.
     tools = [
         "vcs",
         "verilator",
@@ -128,7 +125,6 @@ br_verilog_sim_test_tools_suite(
             "7",
         ],
     },
-    # TODO: Does not work with iverilog.
     tools = [
         "vcs",
         "verilator",
@@ -153,7 +149,6 @@ verilog_elab_test(
 
 br_verilog_sim_test_tools_suite(
     name = "br_enc_countones_tb_sim_test_suite",
-    # TODO: support iverilog
     tools = [
         "vcs",
         "verilator",
@@ -178,7 +173,6 @@ verilog_elab_test(
 
 br_verilog_sim_test_tools_suite(
     name = "br_enc_onehot2bin_tb_sim_test_suite",
-    # TODO: support iverilog
     tools = [
         "vcs",
         "verilator",

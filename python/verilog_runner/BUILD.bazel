@@ -21,7 +21,6 @@ filegroup(
         "eda_tool.py",
         "plugins.py",
         "util.py",
-        "//python/verilog_runner/plugins:iverilog.py",
         "//python/verilog_runner/plugins:verilator.py",
     ],
 )

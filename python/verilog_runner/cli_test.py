@@ -27,7 +27,7 @@ def _args_for_subcommand(subcommand: str) -> argparse.Namespace:
         custom_tcl_header=None,
         custom_tcl_body=None,
         subcommand=subcommand,
-        tool="iverilog",
+        tool="verilator",
     )
     return args
 

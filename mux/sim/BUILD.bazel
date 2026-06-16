@@ -40,7 +40,6 @@ br_verilog_sim_test_tools_suite(
         ],
     },
     tools = [
-        "iverilog",
         "vcs",
         "verilator",
     ],
@@ -86,8 +85,6 @@ br_verilog_sim_test_tools_suite(
         ],
     },
     tools = [
-        # Does not work
-        #"iverilog",
         "vcs",
         "verilator",
     ],
@@ -129,7 +126,6 @@ br_verilog_sim_test_tools_suite(
         ],
     },
     tools = [
-        "iverilog",
         "vcs",
         "verilator",
     ],
@@ -164,7 +160,6 @@ br_verilog_sim_test_tools_suite(
         ],
     },
     tools = [
-        "iverilog",
         "vcs",
         "verilator",
     ],

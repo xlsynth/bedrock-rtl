@@ -58,7 +58,6 @@ br_verilog_sim_test_tools_suite(
     # TODO(mgottscho): Re-enable Verilator after the FIFO Verilator suites have
     # been fully triaged and this suite is confirmed passing.
     tools = [
-        "iverilog",
         "vcs",
         #"verilator",
     ],
@@ -90,7 +89,6 @@ br_verilog_sim_test_tools_suite(
     # TODO(mgottscho): Re-enable Verilator after the FIFO Verilator suites have
     # been fully triaged and this suite is confirmed passing.
     tools = [
-        "iverilog",
         "vcs",
         #"verilator",
     ],
@@ -141,7 +139,6 @@ br_verilog_sim_test_tools_suite(
     # testbench assertion "Cannot push data. FIFO Full." Minimal observed case:
     # `eb1_frads1_rpo0_rpo0`.
     tools = [
-        "iverilog",
         "vcs",
         #"verilator",
     ],

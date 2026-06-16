@@ -56,7 +56,6 @@ _FLOW_REG_SIM_PARAMS = {
 }
 
 _FLOW_REG_SIM_TOOLS = [
-    "iverilog",
     "vcs",
     "verilator",
 ]
@@ -128,7 +127,6 @@ br_verilog_sim_test_tools_suite(
 )
 
 _FLOW_PRIMITIVE_SIM_TOOLS = [
-    "iverilog",
     "vcs",
     "verilator",
 ]
@@ -266,7 +264,6 @@ br_verilog_sim_test_tools_suite(
         ],
     },
     tools = [
-        "iverilog",
         "vcs",
         "verilator",
     ],
@@ -288,7 +285,6 @@ br_verilog_sim_test_tools_suite(
         ],
     },
     tools = [
-        "iverilog",
         "vcs",
         "verilator",
     ],
@@ -307,7 +303,6 @@ br_verilog_sim_test_tools_suite(
         ],
     },
     tools = [
-        "iverilog",
         "vcs",
         "verilator",
     ],
@@ -332,7 +327,6 @@ br_verilog_sim_test_tools_suite(
         ],
     },
     tools = [
-        "iverilog",
         "vcs",
         "verilator",
     ],
@@ -354,7 +348,6 @@ br_verilog_sim_test_tools_suite(
         ],
     },
     tools = [
-        "iverilog",
         "vcs",
         "verilator",
     ],
@@ -781,7 +774,6 @@ br_verilog_sim_test_tools_suite(
         ],
     },
     tools = [
-        "iverilog",
         "vcs",
         "verilator",
     ],

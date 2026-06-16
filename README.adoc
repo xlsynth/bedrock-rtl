@@ -14,7 +14,6 @@ image:https://img.shields.io/endpoint?url=https://gist.githubusercontent.com/mgo
 image:https://img.shields.io/endpoint?url=https://gist.githubusercontent.com/mgottscho/c66dc2ddc0e513ba06ce338620977b26/raw/verific.json[bazel-test-verific,link="https://github.com/xlsynth/bedrock-rtl/actions/workflows/ci.yml?query=job%3Abazel-test-verific"]
 image:https://img.shields.io/endpoint?url=https://gist.githubusercontent.com/mgottscho/c66dc2ddc0e513ba06ce338620977b26/raw/ascentlint.json[bazel-test-ascentlint,link="https://github.com/xlsynth/bedrock-rtl/actions/workflows/ci.yml?query=job%3Abazel-test-ascentlint"]
 image:https://img.shields.io/endpoint?url=https://gist.githubusercontent.com/mgottscho/c66dc2ddc0e513ba06ce338620977b26/raw/vcs.json[bazel-test-vcs,link="https://github.com/xlsynth/bedrock-rtl/actions/workflows/ci.yml?query=job%3Abazel-test-vcs"]
-image:https://img.shields.io/endpoint?url=https://gist.githubusercontent.com/mgottscho/c66dc2ddc0e513ba06ce338620977b26/raw/iverilog.json[bazel-test-iverilog,link="https://github.com/xlsynth/bedrock-rtl/actions/workflows/ci.yml?query=job%3Abazel-test-iverilog"]
 image:https://img.shields.io/endpoint?url=https://gist.githubusercontent.com/mgottscho/c66dc2ddc0e513ba06ce338620977b26/raw/verilator.json[bazel-test-verilator,link="https://github.com/xlsynth/bedrock-rtl/actions/workflows/ci.yml?query=job%3Abazel-test-verilator"]
 image:https://img.shields.io/endpoint?url=https://gist.githubusercontent.com/mgottscho/c66dc2ddc0e513ba06ce338620977b26/raw/jg.json[bazel-test-jg,link="https://github.com/xlsynth/bedrock-rtl/actions/workflows/nightly.yml?query=job%3Abazel-test-jg"]
 image:https://img.shields.io/github/issues/xlsynth/bedrock-rtl/bug?label=bugs[open bugs,link="https://github.com/xlsynth/bedrock-rtl/issues?q=is%3Aissue%20state%3Aopen%20label%3Abug"]
@@ -36,7 +35,6 @@ Additionally, several tools are needed to build and run all of the tests:
   ** Linting
     *** Verible
   ** Simulation
-    *** Icarus Verilog
     *** Verilator
   ** RTL wrapper generation
     *** TopStitch
@@ -94,7 +92,7 @@ docker build --platform=linux/amd64 --tag=bedrock-rtl:${USER} .
 docker run --rm -it -v "$(pwd)":/src -w /src bedrock-rtl:${USER} /bin/bash
 ----
 
-Then once inside the container, try `bazel build //... && bazel test //fifo/sim/... --test_tag_filters=iverilog`.
+Then once inside the container, try `bazel build //... && bazel test //fifo/sim/... --test_tag_filters=verilator`.
 
 === Deploying Docker Images
 
@@ -143,7 +141,7 @@ bazel test //...
 [IMPORTANT]
 .Action required for tests to pass!
 ====
-The repository includes an Icarus Verilog plugin for open-source simulation tests, but most EDA tool plugins are intentionally not provided.
+The repository includes a Verilator plugin for open-source simulation tests, but most EDA tool plugins are intentionally not provided.
 Many Bazel tests will fail unless your local or CI environment provides plugins for the proprietary tools used by those tests.
 We keep those plugins outside the repository because:
 
@@ -159,7 +157,7 @@ The Bazel test rule implementations at `//bazel:verilog.bzl` shell out the `//py
 == Continuous Integration
 
 We run continuous integration tests with GitHub Actions.
-The main CI workflow currently covers pre-commit, build, Python/ecc codegen tests, Stardoc, Verific, AscentLint, VCS, and Icarus.
+The main CI workflow currently covers pre-commit, build, Python/ecc codegen tests, Stardoc, Verific, AscentLint, VCS, and Verilator.
 Sampled JasperGold formal tests run in the nightly workflow.
 See `.github/workflows/ci.yml` and `.github/workflows/nightly.yml` for details.
 

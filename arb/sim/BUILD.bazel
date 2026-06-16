@@ -23,7 +23,6 @@ verilog_elab_test(
 
 br_verilog_sim_test_tools_suite(
     name = "br_arb_fixed_tb_sim_test_tools_suite",
-    # TODO: Does not work with iverilog.
     tools = [
         "vcs",
         "verilator",
@@ -48,7 +47,6 @@ verilog_elab_test(
 
 br_verilog_sim_test_tools_suite(
     name = "br_arb_lru_tb_sim_test_tools_suite",
-    # TODO: Does not work with iverilog.
     tools = [
         "vcs",
         "verilator",
@@ -73,7 +71,6 @@ verilog_elab_test(
 
 br_verilog_sim_test_tools_suite(
     name = "br_arb_rr_tb_sim_test_tools_suite",
-    # TODO: Does not work with iverilog.
     tools = [
         "vcs",
         "verilator",
@@ -98,7 +95,6 @@ verilog_elab_test(
 
 br_verilog_sim_test_tools_suite(
     name = "br_arb_grant_hold_tb_sim_test_tools_suite",
-    # TODO: Does not work with iverilog.
     tools = [
         "vcs",
         "verilator",
@@ -134,7 +130,6 @@ br_verilog_sim_test_tools_suite(
             "5",
         ],
     },
-    # TODO: Does not work with iverilog.
     tools = [
         "vcs",
         "verilator",
@@ -174,7 +169,6 @@ br_verilog_sim_test_tools_suite(
             "4",
         ],
     },
-    # TODO: Does not work with iverilog.
     tools = [
         "vcs",
         "verilator",
@@ -218,7 +212,6 @@ br_verilog_sim_test_tools_suite(
             "1",
         ],
     },
-    # TODO: Does not work with iverilog.
     tools = [
         "vcs",
         "verilator",

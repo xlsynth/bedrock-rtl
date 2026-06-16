@@ -143,9 +143,6 @@ jobs:
       vcs_total_tests: ${{ steps.vcs.outputs.total_tests }}
       vcs_passing_tests: ${{ steps.vcs.outputs.passing_tests }}
       vcs_exit_code: ${{ steps.vcs.outputs.exit_code }}
-      iverilog_total_tests: ${{ steps.iverilog.outputs.total_tests }}
-      iverilog_passing_tests: ${{ steps.iverilog.outputs.passing_tests }}
-      iverilog_exit_code: ${{ steps.iverilog.outputs.exit_code }}
       verilator_total_tests: ${{ steps.verilator.outputs.total_tests }}
       verilator_passing_tests: ${{ steps.verilator.outputs.passing_tests }}
       verilator_exit_code: ${{ steps.verilator.outputs.exit_code }}
@@ -218,18 +215,6 @@ jobs:
         echo "total_tests=$TOTAL_TESTS" >> $GITHUB_OUTPUT
         echo "passing_tests=$PASSING_TESTS" >> $GITHUB_OUTPUT
         echo "exit_code=$BAZEL_EXIT_CODE" >> $GITHUB_OUTPUT
-    - name: Verilog sim tests (using Icarus Verilog)
-      id: iverilog
-      # Don't need --test_output=summary to suppress log output because iverilog is open source.
-      run: |
-        set +e
-        bazel test $TMP_HACK_BAZEL_CI_FLAGS --noshow_loading_progress //... --test_tag_filters=iverilog 2>&1 | tee .bazel-test-iverilog.log
-        BAZEL_EXIT_CODE=${PIPESTATUS[0]}
-        TOTAL_TESTS=$(grep -Po '(?<=out of )\d+(?= test)' .bazel-test-iverilog.log)
-        PASSING_TESTS=$(grep -Po '\d+(?= test passes?\.| tests pass)' .bazel-test-iverilog.log)
-        echo "total_tests=$TOTAL_TESTS" >> $GITHUB_OUTPUT
-        echo "passing_tests=$PASSING_TESTS" >> $GITHUB_OUTPUT
-        echo "exit_code=$BAZEL_EXIT_CODE" >> $GITHUB_OUTPUT
     - name: Verilog sim tests (using Verilator)
       id: verilator
       # Don't need --test_output=summary to suppress log output because Verilator is open source.
@@ -251,7 +236,6 @@ jobs:
           || [ "${{ steps.verific.outputs.exit_code }}" != "0" ] \
           || [ "${{ steps.ascentlint.outputs.exit_code }}" != "0" ] \
           || [ "${{ steps.vcs.outputs.exit_code }}" != "0" ] \
-          || [ "${{ steps.iverilog.outputs.exit_code }}" != "0" ] \
           || [ "${{ steps.verilator.outputs.exit_code }}" != "0" ]; then
           echo "One or more Bazel suites failed."
           exit 1
@@ -372,23 +356,6 @@ jobs:
         label: "vcs"
         message: ${{ needs.bazel-build-and-test.outputs.vcs_passing_tests }} of ${{ needs.bazel-build-and-test.outputs.vcs_total_tests }} passing
         color: ${{ needs.bazel-build-and-test.outputs.vcs_exit_code == '0' && 'brightgreen' || 'red' }}
-
-  iverilog-badge:
-    runs-on: ubuntu-24.04
-    environment: ci-badge-publishing
-    needs: bazel-build-and-test
-    if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
-    steps:
-    - name: Create iverilog badge
-      # schneegans/dynamic-badges-action v1.7.0
-      uses: schneegans/dynamic-badges-action@e9a478b16159b4d31420099ba146cdc50f134483
-      with:
-        auth: ${{ secrets.MGOTTSCHO_GISTS_SECRET }}
-        gistID: c66dc2ddc0e513ba06ce338620977b26
-        filename: iverilog.json
-        label: "iverilog"
-        message: ${{ needs.bazel-build-and-test.outputs.iverilog_passing_tests }} of ${{ needs.bazel-build-and-test.outputs.iverilog_total_tests }} passing
-        color: ${{ needs.bazel-build-and-test.outputs.iverilog_exit_code == '0' && 'brightgreen' || 'red' }}
 
   verilator-badge:
     runs-on: ubuntu-24.04

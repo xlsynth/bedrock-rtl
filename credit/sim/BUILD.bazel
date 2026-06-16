@@ -39,7 +39,6 @@ br_verilog_sim_test_tools_suite(
         ],
     },
     tools = [
-        "iverilog",
         "vcs",
         "verilator",
     ],
@@ -85,9 +84,6 @@ br_verilog_sim_test_tools_suite(
         ],
     },
     tools = [
-        # This test is triggering an internal assertion failure in iverilog.
-        # TODO(zhemao): Figure out why this is happening.
-        #"iverilog",
         "vcs",
         "verilator",
     ],
