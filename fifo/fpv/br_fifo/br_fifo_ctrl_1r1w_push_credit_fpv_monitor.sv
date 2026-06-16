@@ -122,7 +122,9 @@ module br_fifo_ctrl_1r1w_push_credit_fpv_monitor #(
       .Depth(Depth),
       .Width(Width),
       .EnableBypass(EnableBypass),
-      .EnableCoverPushBackpressure(0)
+      .EnableCoverPushBackpressure(0),
+      // push_ready is tied high, so do not generate the no-backpressure assumption cover.
+      .EnableAssertNoPushBackpressure(0)
   ) br_fifo_basic_fpv_monitor (
       .clk,
       .rst,

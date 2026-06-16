@@ -132,7 +132,9 @@ module br_flow_fork_select_multihot #(
   );
 
   for (genvar i = 0; i < NumFlows; i++) begin : gen_flow_checks
-    `BR_COVER_IMPL(pop_valid_unstable_c, $stable(push_valid) && $fell(pop_valid_unstable[i]))
+    if (NumFlows > 1 && EnableCoverPushBackpressure) begin : gen_cover_pop_valid_unstable
+      `BR_COVER_IMPL(pop_valid_unstable_c, $stable(push_valid) && $fell(pop_valid_unstable[i]))
+    end
   end
 
 endmodule : br_flow_fork_select_multihot

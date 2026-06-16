@@ -178,7 +178,8 @@ module br_fifo_shared_dynamic_ctrl #(
       .EnableAssertPushDataStability(EnableAssertPushDataStability),
       .EnableAssertNoPushBackpressure(EnableAssertNoPushBackpressure),
       .EnableAssertPushDataKnown(EnableAssertPushDataKnown),
-      .EnableAssertFinalNotValid(EnableAssertFinalNotValid)
+      .EnableAssertFinalNotValid(EnableAssertFinalNotValid),
+      .EnableAssertUniqueDeallocEntryId(NumReadPorts > 1)
   ) br_fifo_shared_dynamic_push_ctrl_inst (
       .clk,
       .rst(rst),

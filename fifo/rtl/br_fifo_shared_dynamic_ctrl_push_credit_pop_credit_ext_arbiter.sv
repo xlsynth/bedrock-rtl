@@ -204,7 +204,8 @@ module br_fifo_shared_dynamic_ctrl_push_credit_pop_credit_ext_arbiter #(
       .EnableCoverCreditWithhold(EnableCoverCreditWithhold),
       .EnableCoverPushSenderInReset(EnableCoverPushSenderInReset),
       .EnableAssertPushDataKnown(EnableAssertPushDataKnown),
-      .EnableAssertFinalNotValid(EnableAssertFinalNotValid)
+      .EnableAssertFinalNotValid(EnableAssertFinalNotValid),
+      .EnableAssertUniqueDeallocEntryId(NumReadPorts > 1)
   ) br_fifo_shared_dynamic_push_ctrl_credit_inst (
       .clk,
       .rst(push_ctrl_rst),

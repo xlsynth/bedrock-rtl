@@ -122,7 +122,10 @@ module br_fifo_shared_pop_ctrl_ext_arbiter #(
   for (genvar i = 0; i < NumFifos; i++) begin : gen_fifo_ram_read
     if (!HasStagingBuffer) begin : gen_no_buffer
       br_flow_fork #(
-          .NumFlows(2)
+          .NumFlows(2),
+          // In the no-buffer path, pop_valid is directly gated by downstream readiness.
+          .EnableCoverPushBackpressure(0),
+          .EnableAssertNoPushBackpressure(0)
       ) br_flow_fork_head (
           .clk,
           .rst,

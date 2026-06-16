@@ -573,6 +573,9 @@ module {{ module_name }} #(
 {%-   endif %}
       .EnableAssertPushDataKnown(EnableAssertPushDataKnown),
       .EnableAssertFinalNotValid(EnableAssertFinalNotValid)
+{%-   if dynamic %},
+      .EnableAssertUniqueDeallocEntryId(NumReadPorts > 1)
+{%-   endif %}
   ) {{ push_ctrl_module }}_inst (
       .clk,
       .rst({{ push_ctrl_rst }}),

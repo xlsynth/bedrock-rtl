@@ -32,6 +32,7 @@ module br_fifo_shared_dynamic_push_ctrl_credit #(
     // empty at the end of the test.
     // ri lint_check_waive PARAM_NOT_USED
     parameter bit EnableAssertFinalNotValid = 1,
+    parameter bit EnableAssertUniqueDeallocEntryId = 1,
 
     localparam int FifoIdWidth = br_math::clamped_clog2(NumFifos),
     localparam int AddrWidth = br_math::clamped_clog2(Depth),
@@ -157,7 +158,8 @@ module br_fifo_shared_dynamic_push_ctrl_credit #(
       .DeallocCountDelay(2 - RegisterPushOutputs),
       .EnableCoverPushBackpressure(0),
       .EnableAssertPushDataKnown(EnableAssertPushDataKnown),
-      .EnableAssertFinalNotValid(EnableAssertFinalNotValid)
+      .EnableAssertFinalNotValid(EnableAssertFinalNotValid),
+      .EnableAssertUniqueDeallocEntryId(EnableAssertUniqueDeallocEntryId)
   ) br_fifo_shared_dynamic_push_ctrl (
       .clk,
       .rst(either_rst),

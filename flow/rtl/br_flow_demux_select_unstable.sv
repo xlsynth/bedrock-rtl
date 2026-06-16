@@ -30,6 +30,9 @@ module br_flow_demux_select_unstable #(
     // If 0, disable backpressure coverage. By default, this also
     // asserts that backpressure is impossible.
     parameter bit EnableCoverPushBackpressure = 1,
+    // Generate pop-side backpressure covers and stability checks only for this many
+    // low-indexed flows.
+    parameter int NumPopBackpressureCheckFlows = NumFlows,
     // If 1, assert that push_valid is stable when backpressured.
     parameter bit EnableAssertPushValidStability = EnableCoverPushBackpressure,
     // If 1, assert that push_data is stable when backpressured.
@@ -80,6 +83,8 @@ module br_flow_demux_select_unstable #(
   `BR_ASSERT_STATIC(bit_width_must_be_at_least_one_a, Width >= 1)
   `BR_ASSERT_STATIC(select_stability_implies_valid_stability_a,
                     !(EnableAssertSelectStability && !EnableAssertPushValidStability))
+  `BR_ASSERT_STATIC(legal_num_pop_backpressure_check_flows_a,
+                    NumPopBackpressureCheckFlows <= NumFlows)
 
   br_flow_checks_valid_data_intg #(
       .NumFlows(1),
@@ -158,6 +163,7 @@ module br_flow_demux_select_unstable #(
       .NumFlows(NumFlows),
       .Width(Width),
       .EnableCoverBackpressure(EnableCoverPushBackpressure),
+      .NumBackpressureCheckFlows(NumPopBackpressureCheckFlows),
       .EnableAssertNoBackpressure(EnableAssertNoPushBackpressure),
       // Pop valid and data can only be stable if select is stable.
       .EnableAssertValidStability(EnableAssertPushValidStability && EnableAssertSelectStability),
