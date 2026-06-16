@@ -30,7 +30,7 @@ verilog_lint_test(
 verilog_sim_test(
     name = "nonzip_sim_test",
     tags = ["manual"],
-    tool = "iverilog",
+    tool = "verilator",
     top = "nonzip_smoke",
     deps = [":nonzip_smoke_lib"],
 )

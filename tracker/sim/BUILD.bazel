@@ -45,7 +45,6 @@ br_verilog_sim_test_tools_suite(
             "1",
         ],
     },
-    # TODO: iverilog does not work
     # TODO(mgottscho): Enable Verilator once this suite no longer fails due to
     # `final_allocated_initial_a` and allocation-timeout failures seen when
     # `NumDeallocPorts=1`.
@@ -94,7 +93,6 @@ br_verilog_sim_test_tools_suite(
         ],
     },
     tools = [
-        "iverilog",
         "vcs",
         "verilator",
     ],

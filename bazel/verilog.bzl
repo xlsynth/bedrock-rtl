@@ -375,7 +375,6 @@ rule_verilog_elab_test = rule(
         ),
         "verilog_runner_plugins": attr.label_list(
             default = [
-                "//python/verilog_runner/plugins:iverilog.py",
                 "//python/verilog_runner/plugins:verilator.py",
             ],
             allow_files = True,
@@ -461,7 +460,6 @@ rule_verilog_lint_test = rule(
         ),
         "verilog_runner_plugins": attr.label_list(
             default = [
-                "//python/verilog_runner/plugins:iverilog.py",
                 "//python/verilog_runner/plugins:verilator.py",
             ],
             allow_files = True,
@@ -556,7 +554,6 @@ rule_verilog_sim_test = rule(
         ),
         "verilog_runner_plugins": attr.label_list(
             default = [
-                "//python/verilog_runner/plugins:iverilog.py",
                 "//python/verilog_runner/plugins:verilator.py",
             ],
             allow_files = True,
@@ -681,7 +678,6 @@ rule_verilog_fpv_test = rule(
         ),
         "verilog_runner_plugins": attr.label_list(
             default = [
-                "//python/verilog_runner/plugins:iverilog.py",
                 "//python/verilog_runner/plugins:verilator.py",
             ],
             allow_files = True,
@@ -784,7 +780,6 @@ rule_verilog_fpv_sandbox = rule(
         ),
         "verilog_runner_plugins": attr.label_list(
             default = [
-                "//python/verilog_runner/plugins:iverilog.py",
                 "//python/verilog_runner/plugins:verilator.py",
             ],
             allow_files = True,

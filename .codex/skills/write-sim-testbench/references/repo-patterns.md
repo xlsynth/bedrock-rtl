@@ -68,7 +68,6 @@ br_verilog_sim_test_tools_suite(
         "Width": ["1", "8", "17"],
     },
     tools = [
-        "iverilog",
         "vcs",
         "verilator",
     ],
@@ -76,7 +75,7 @@ br_verilog_sim_test_tools_suite(
 )
 ```
 
-If Verilator or Icarus cannot support the bench or dependent RTL, comment out only that tool and leave a short TODO with the reason.
+If Verilator cannot support the bench or dependent RTL, comment it out and leave a short TODO with the reason.
 
 `br_verilog_sim_test_tools_suite` also supplies the repository's standard simulation defines. Keep the wrapper for single-tool targets rather than replacing it with a raw `verilog_sim_test`. When only one tool needs an elaboration option, use a common suite for the unaffected tools and a separate narrowly scoped suite for that tool.
 
@@ -183,11 +182,6 @@ Verilator:
 - Diagnose warnings from the RTL before waiving them. For example, a packed matrix with disjoint continuously driven and registered bit regions may trigger Verilator's global `BLKANDNBLK` analysis even though the bits do not overlap. Document that exact cause and scope `-Wno-BLKANDNBLK` only to the affected suite.
 - A local Verilator C++ compilation failure may be a host-toolchain problem rather than a repository problem. Verify the configured compiler and CI behavior before changing RTL or shared build rules.
 
-Icarus:
-- Good for simpler procedural benches.
-- Avoid richer SystemVerilog/SVA-heavy benches, and cases already excluded nearby.
-- Existing exclusions appear in priority encoder, some ECC, generated enc/ram, structured-gate mux, and one credit VC test.
-
 ## Coverage Expectations
 
 Simulation tests should be useful smoke/regression tests, not formal replacements. Aim for:
@@ -209,7 +203,7 @@ Leave exhaustive parameter sweeps, full protocol state-space coverage, and liven
 
 1. Run `pre-commit` on the changed bench and BUILD files, then `git diff --check`.
 2. Run the bench's Verific elaboration target when present.
-3. Run every generated VCS/Verilator/Icarus target for the changed bench with `--nocache_test_results`.
+3. Run every generated VCS/Verilator target for the changed bench with `--nocache_test_results`.
 4. Run the containing area's simulation regression, for example `bazel test //flow/sim:all --test_tag_filters=sim --nocache_test_results`.
 5. Run `python3 python/sim_tb_coverage_inventory.py` and confirm the intended DUTs are reported as direct benches.
 6. Check `git status` after Bazel runs and discard unrelated generated lockfile churn before committing.
