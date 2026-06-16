@@ -42,59 +42,31 @@ module br_flow_join #(
   //------------------------------------------
   // Integration checks
   //------------------------------------------
-  `BR_ASSERT_STATIC(legal_assert_no_push_backpressure_a,
-                    !(EnableAssertNoPushBackpressure && EnableCoverPushBackpressure))
-  `BR_ASSERT_STATIC(num_flows_gte1_a, NumFlows >= 1)
-
-  br_flow_checks_valid_data_intg #(
-      .NumFlows(NumFlows),
-      .Width(1),
-      .EnableCoverBackpressure(EnableCoverPushBackpressure),
-      .EnableAssertNoBackpressure(EnableAssertNoPushBackpressure),
-      .EnableAssertValidStability(EnableAssertPushValidStability),
-      // Data is always stable when valid is since it is constant.
-      .EnableAssertDataStability(EnableAssertPushValidStability),
-      .EnableAssertFinalNotValid(EnableAssertFinalNotValid)
-  ) br_flow_checks_valid_data_intg (
-      .clk,
-      .rst,
-      .ready(push_ready),
-      .valid(push_valid),
-      .data ({NumFlows{1'b0}})
-  );
+  // Rely on checks in submodule
 
   //------------------------------------------
   // Implementation
   //------------------------------------------
-  for (genvar i = 0; i < NumFlows; i++) begin : gen_flows
-    always_comb begin
-      push_ready[i] = pop_ready;
-      for (int j = 0; j < NumFlows; j++) begin
-        if (i != j) begin
-          push_ready[i] &= push_valid[j];
-        end
-      end
-    end
-  end
-
-  assign pop_valid = &push_valid;
+  br_flow_join_select_multihot #(
+      .NumFlows(NumFlows),
+      .AllowEmptySelect(0),
+      .EnableCoverPushBackpressure(EnableCoverPushBackpressure),
+      .EnableAssertPushValidStability(EnableAssertPushValidStability),
+      .EnableAssertFinalNotValid(EnableAssertFinalNotValid),
+      .EnableAssertNoPushBackpressure(EnableAssertNoPushBackpressure)
+  ) br_flow_join_select_multihot (
+      .clk,
+      .rst,
+      .select_multihot('1),  // All flows always selected
+      .push_ready,
+      .push_valid,
+      .pop_ready,
+      // Since select is always one, the pop_valid will be stable
+      .pop_valid_unstable(pop_valid)
+  );
 
   //------------------------------------------
   // Implementation checks
   //------------------------------------------
-  br_flow_checks_valid_data_impl #(
-      .NumFlows(1),
-      .Width(1),
-      .EnableCoverBackpressure(1),
-      .EnableAssertValidStability(EnableAssertPushValidStability),
-      .EnableAssertDataStability(EnableAssertPushValidStability),
-      .EnableAssertFinalNotValid(EnableAssertFinalNotValid)
-  ) br_flow_checks_valid_data_impl (
-      .clk,
-      .rst,
-      .ready(pop_ready),
-      .valid(pop_valid),
-      .data (1'b0)
-  );
-
+  // Checks in submodule
 endmodule : br_flow_join
