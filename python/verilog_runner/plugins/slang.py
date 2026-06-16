@@ -56,7 +56,7 @@ class Slang(EdaTool):
         """Returns a default shell script to run slang."""
         self.logger.info("Generating shell script.")
         slang_cmd = [
-            '"${SLANG_PATH}/slang"',
+            '"${SLANG_PATH}"',
             "--std 1800-2017",
             f"--top {self.top}",
             f"-f {self.filelist}",
