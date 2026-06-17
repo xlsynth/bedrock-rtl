@@ -22,6 +22,15 @@ verilog_library(
 )
 
 verilog_library(
+    name = "br_amba_axi_default_target_monitor",
+    srcs = ["br_amba_axi_default_target_monitor.sv"],
+    visibility = ["//visibility:public"],
+    deps = [
+        "//amba/rtl:br_amba_pkg",
+    ],
+)
+
+verilog_library(
     name = "br_amba_axil_timing_slice_monitor",
     srcs = ["br_amba_axil_timing_slice_monitor.sv"],
     visibility = ["//visibility:public"],
