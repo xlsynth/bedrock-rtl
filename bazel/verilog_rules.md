@@ -342,9 +342,8 @@ verilog_elab_and_lint_test_suite(<a href="#verilog_elab_and_lint_test_suite-name
 Creates a suite of Verilog elaboration and lint tests for each combination of the provided parameters.
 
 The function generates a wrapper covering all possible combinations of the provided parameters, creates a
-verilog_elab_test for each elaboration tool, and creates one verilog_lint_test. The first elaboration test and
-lint test names append "_elab_test" and "_lint_test" to the base name. Additional elaboration tests append the
-tool name followed by "_elab_test".
+verilog_elab_test for each elaboration tool, and creates one verilog_lint_test. Elaboration test names append
+the tool name followed by "_elab_test"; the lint test name appends "_lint_test".
 
 
 **PARAMETERS**

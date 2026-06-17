@@ -870,9 +870,8 @@ def verilog_elab_and_lint_test_suite(
     """Creates a suite of Verilog elaboration and lint tests for each combination of the provided parameters.
 
     The function generates a wrapper covering all possible combinations of the provided parameters, creates a
-    verilog_elab_test for each elaboration tool, and creates one verilog_lint_test. The first elaboration test and
-    lint test names append "_elab_test" and "_lint_test" to the base name. Additional elaboration tests append the
-    tool name followed by "_elab_test".
+    verilog_elab_test for each elaboration tool, and creates one verilog_lint_test. Elaboration test names append
+    the tool name followed by "_elab_test"; the lint test name appends "_lint_test".
 
     Args:
         top (str): The top-level module to instantiate. Can be left undefined if there is only one dependency.
@@ -918,8 +917,8 @@ def verilog_elab_and_lint_test_suite(
         deps = deps,
     )
 
-    for index, elab_tool in enumerate(elab_tools):
-        test_name = name + "_elab_test" if index == 0 else name + "_" + elab_tool + "_elab_test"
+    for elab_tool in elab_tools:
+        test_name = name + "_" + elab_tool + "_elab_test"
         verilog_elab_test(
             name = test_name,
             tool = elab_tool,
