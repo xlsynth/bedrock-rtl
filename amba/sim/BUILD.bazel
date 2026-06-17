@@ -114,6 +114,47 @@ br_verilog_sim_test_tools_suite(
 )
 
 verilog_library(
+    name = "br_amba_axil_timing_slice_tb",
+    srcs = ["br_amba_axil_timing_slice_tb.sv"],
+    deps = [
+        "//amba/rtl:br_amba_axil_timing_slice",
+        "//amba/sim/drivers:br_amba_axil_sim_pkg",
+        "//amba/sim/drivers:br_amba_axil_timing_slice_driver",
+        "//amba/sim/monitors:br_amba_axil_timing_slice_monitor",
+        "//misc/sim:br_test_driver",
+    ],
+)
+
+verilog_elab_test(
+    name = "br_amba_axil_timing_slice_tb_elab_test",
+    tool = "slang",
+    deps = [":br_amba_axil_timing_slice_tb"],
+)
+
+br_verilog_sim_test_tools_suite(
+    name = "br_amba_axil_timing_slice_sim_test_tools_suite",
+    params = {
+        "AddrWidth": [
+            "12",
+            "32",
+        ],
+        "DataWidth": [
+            "32",
+            "64",
+        ],
+        "NumTransactions": [
+            "1",
+            "10",
+        ],
+    },
+    tools = [
+        "vcs",
+        "verilator",
+    ],
+    deps = [":br_amba_axil_timing_slice_tb"],
+)
+
+verilog_library(
     name = "br_amba_axi_isolate_sub_tb",
     srcs = ["br_amba_axi_isolate_sub_tb.sv"],
     deps = [
