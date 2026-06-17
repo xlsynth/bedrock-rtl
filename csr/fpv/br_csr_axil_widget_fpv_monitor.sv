@@ -144,7 +144,9 @@ module br_csr_axil_widget_fpv_monitor #(
   w_t csr_write_data;
   logic [br_amba::AxiRespWidth-1:0] csr_resp;
   logic [TimerWidth:0] timer;
+  logic timeout_en;
   logic timer_expired;
+  logic first_timeout;
 
   always_ff @(posedge clk) begin
     if (rst) begin
@@ -177,11 +179,14 @@ module br_csr_axil_widget_fpv_monitor #(
   always_ff @(posedge clk) begin
     if (rst | csr_req_abort | csr_resp_valid | request_aborted) begin
       timer <= 1'b0;
-    end else if (csr_write_req_pending) begin
+    end else if (csr_write_req_pending && timeout_en) begin
       timer <= timer + 1'b1;
     end
   end
-  assign timer_expired = (timer >= timeout_cycles);
+  assign timeout_en = timeout_cycles != '0;
+  assign timer_expired = timer >= timeout_cycles;
+  assign first_timeout =
+      csr_req_pending && !csr_req_aborting && timeout_en && timer_expired && !csr_resp_valid;
 
   assign csr_write_req = '{
           addr: axil_awaddr,
@@ -201,8 +206,6 @@ module br_csr_axil_widget_fpv_monitor #(
   assign csr_resp = csr_resp_decerr ? 2'b11 : csr_resp_slverr ? 2'b10 : 2'b00;
 
   // ----------FV assumptions----------
-  // TODO(masai): https://github.com/xlsynth/bedrock-rtl/issues/955
-  `BR_ASSUME(timeout_cycles_non_zero_a, timeout_cycles != 'd0)
   `BR_ASSUME(legal_timeout_cycles_a, timeout_cycles <= MaxTimeoutCycles)
   `BR_ASSUME(legal_csr_resp_a, csr_resp_valid |-> !(csr_resp_decerr && csr_resp_slverr))
   `BR_ASSUME(no_spurious_csr_req_resp_a, !csr_req_pending |-> !csr_resp_valid);
@@ -216,9 +219,7 @@ module br_csr_axil_widget_fpv_monitor #(
   `BR_ASSERT(no_deadlock_b_a, csr_resp_valid && csr_write_req_pending |-> s_eventually axil_bvalid);
   `BR_ASSERT(no_deadlock_r_a,
              csr_resp_valid && !csr_write_req_pending |-> s_eventually axil_rvalid);
-  `BR_ASSERT(
-      csr_req_1st_timeout_a,
-      csr_req_pending && !csr_req_aborting && timer_expired && !csr_resp_valid |-> csr_req_abort);
+  `BR_ASSERT(csr_req_1st_timeout_a, first_timeout |-> csr_req_abort);
   `BR_ASSERT(
       csr_req_2nd_timeout_a,
       csr_req_pending && csr_req_aborting && timer_expired && !csr_resp_valid |-> request_aborted);
