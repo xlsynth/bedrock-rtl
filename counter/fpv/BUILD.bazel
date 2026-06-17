@@ -20,6 +20,7 @@ verilog_library(
 
 verilog_elab_test(
     name = "br_counter_fpv_monitor_elab_test",
+    tool = "slang",
     deps = [":br_counter_fpv_monitor"],
 )
 
@@ -112,6 +113,7 @@ verilog_library(
 
 verilog_elab_test(
     name = "br_counter_decr_fpv_monitor_elab_test",
+    tool = "slang",
     deps = [":br_counter_decr_fpv_monitor"],
 )
 
@@ -194,6 +196,7 @@ verilog_library(
 
 verilog_elab_test(
     name = "br_counter_incr_fpv_monitor_elab_test",
+    tool = "slang",
     deps = [":br_counter_incr_fpv_monitor"],
 )
 

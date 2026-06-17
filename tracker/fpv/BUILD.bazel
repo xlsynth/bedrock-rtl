@@ -26,6 +26,7 @@ verilog_library(
 verilog_elab_test(
     name = "br_tracker_freelist_fpv_monitor_elab_test",
     opts = ["--ignore-unknown-modules"],
+    tool = "slang",
     deps = [":br_tracker_freelist_fpv_monitor"],
 )
 
@@ -136,6 +137,7 @@ verilog_library(
 verilog_elab_test(
     name = "br_tracker_linked_list_ctrl_fpv_monitor_elab_test",
     opts = ["--ignore-unknown-modules"],
+    tool = "slang",
     deps = [":br_tracker_linked_list_ctrl_fpv_monitor"],
 )
 
@@ -199,6 +201,7 @@ verilog_library(
 verilog_elab_test(
     name = "br_tracker_sequence_fpv_monitor_elab_test",
     opts = ["--ignore-unknown-modules"],
+    tool = "slang",
     deps = [":br_tracker_sequence_fpv_monitor"],
 )
 
@@ -259,6 +262,7 @@ verilog_library(
 verilog_elab_test(
     name = "br_tracker_reorder_fpv_monitor_elab_test",
     opts = ["--ignore-unknown-modules"],
+    tool = "slang",
     deps = [":br_tracker_reorder_fpv_monitor"],
 )
 
@@ -309,6 +313,7 @@ verilog_library(
 verilog_elab_test(
     name = "br_tracker_reorder_buffer_flops_fpv_monitor_elab_test",
     opts = ["--ignore-unknown-modules"],
+    tool = "slang",
     deps = [":br_tracker_reorder_buffer_flops_fpv_monitor"],
 )
 
@@ -363,6 +368,7 @@ verilog_library(
 verilog_elab_test(
     name = "br_tracker_reorder_buffer_ctrl_1r1w_fpv_monitor_elab_test",
     opts = ["--ignore-unknown-modules"],
+    tool = "slang",
     deps = [":br_tracker_reorder_buffer_ctrl_1r1w_fpv_monitor"],
 )
 

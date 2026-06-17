@@ -17,6 +17,7 @@ verilog_library(
 
 verilog_elab_test(
     name = "br_delay_deskew_tb_elab_test",
+    tool = "slang",
     deps = [":br_delay_deskew_tb"],
 )
 
@@ -46,6 +47,7 @@ verilog_library(
 
 verilog_elab_test(
     name = "br_delay_skew_tb_elab_test",
+    tool = "slang",
     deps = [":br_delay_skew_tb"],
 )
 
@@ -75,6 +77,7 @@ verilog_library(
 
 verilog_elab_test(
     name = "br_delay_valid_next_tb_elab_test",
+    tool = "slang",
     deps = [":br_delay_valid_next_tb"],
 )
 
@@ -109,6 +112,7 @@ verilog_library(
 
 verilog_elab_test(
     name = "br_delay_valid_next_nr_tb_elab_test",
+    tool = "slang",
     deps = [":br_delay_valid_next_nr_tb"],
 )
 
@@ -143,6 +147,7 @@ verilog_library(
 
 verilog_elab_test(
     name = "br_delay_valid_nr_tb_elab_test",
+    tool = "slang",
     deps = [":br_delay_valid_nr_tb"],
 )
 

@@ -19,6 +19,7 @@ verilog_library(
 
 verilog_elab_test(
     name = "br_cdc_fifo_flops_tb_elab_test",
+    tool = "slang",
     top = "br_cdc_fifo_flops_tb",
     deps = [
         ":br_cdc_fifo_flops_tb",
@@ -93,6 +94,7 @@ verilog_library(
 
 verilog_elab_test(
     name = "br_cdc_fifo_flops_push_credit_tb_elab_test",
+    tool = "slang",
     top = "br_cdc_fifo_flops_push_credit_tb",
     deps = [
         ":br_cdc_fifo_flops_push_credit_tb",
@@ -163,6 +165,7 @@ verilog_library(
 
 verilog_elab_test(
     name = "br_cdc_bit_pulse_tb_elab_test",
+    tool = "slang",
     top = "br_cdc_bit_pulse_tb",
     deps = [
         ":br_cdc_bit_pulse_tb",
@@ -223,6 +226,7 @@ verilog_library(
 
 verilog_elab_test(
     name = "br_cdc_reg_tb_elab_test",
+    tool = "slang",
     top = "br_cdc_reg_tb",
     deps = [
         ":br_cdc_reg_tb",
@@ -278,6 +282,7 @@ verilog_library(
 
 verilog_elab_test(
     name = "br_cdc_stable_data_tb_elab_test",
+    tool = "slang",
     top = "br_cdc_stable_data_tb",
     deps = [
         ":br_cdc_stable_data_tb",
@@ -335,6 +340,7 @@ verilog_library(
 
 verilog_elab_test(
     name = "br_cdc_stable_data_autoupdate_tb_elab_test",
+    tool = "slang",
     top = "br_cdc_stable_data_autoupdate_tb",
     deps = [
         ":br_cdc_stable_data_autoupdate_tb",

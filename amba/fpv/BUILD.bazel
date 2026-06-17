@@ -31,6 +31,7 @@ verilog_library(
 verilog_elab_test(
     name = "br_amba_axil_default_target_fpv_monitor_elab_test",
     opts = ["--ignore-unknown-modules"],
+    tool = "slang",
     deps = [":br_amba_axil_default_target_fpv_monitor"],
 )
 
@@ -56,6 +57,7 @@ verilog_library(
 verilog_elab_test(
     name = "br_amba_axi_default_target_fpv_monitor_elab_test",
     opts = ["--ignore-unknown-modules"],
+    tool = "slang",
     deps = [":br_amba_axi_default_target_fpv_monitor"],
 )
 
@@ -92,6 +94,7 @@ verilog_library(
 verilog_elab_test(
     name = "br_amba_axi2axil_fpv_monitor_elab_test",
     opts = ["--ignore-unknown-modules"],
+    tool = "slang",
     deps = [":br_amba_axi2axil_fpv_monitor"],
 )
 
@@ -120,6 +123,7 @@ verilog_library(
 verilog_elab_test(
     name = "br_amba_axil_split_fpv_monitor_elab_test",
     opts = ["--ignore-unknown-modules"],
+    tool = "slang",
     deps = [":br_amba_axil_split_fpv_monitor"],
 )
 
@@ -152,6 +156,7 @@ verilog_library(
 verilog_elab_test(
     name = "br_amba_axi_timing_slice_fpv_monitor_elab_test",
     opts = ["--ignore-unknown-modules"],
+    tool = "slang",
     deps = [":br_amba_axi_timing_slice_fpv_monitor"],
 )
 
@@ -177,6 +182,7 @@ verilog_library(
 verilog_elab_test(
     name = "br_amba_axil_timing_slice_fpv_monitor_elab_test",
     opts = ["--ignore-unknown-modules"],
+    tool = "slang",
     deps = [":br_amba_axil_timing_slice_fpv_monitor"],
 )
 
@@ -202,6 +208,7 @@ verilog_library(
 verilog_elab_test(
     name = "br_amba_axil2apb_fpv_monitor_elab_test",
     opts = ["--ignore-unknown-modules"],
+    tool = "slang",
     deps = [":br_amba_axil2apb_fpv_monitor"],
 )
 
@@ -227,6 +234,7 @@ verilog_library(
 verilog_elab_test(
     name = "br_amba_apb_timing_slice_fpv_monitor_elab_test",
     opts = ["--ignore-unknown-modules"],
+    tool = "slang",
     deps = [":br_amba_apb_timing_slice_fpv_monitor"],
 )
 
@@ -252,6 +260,7 @@ verilog_library(
 verilog_elab_test(
     name = "br_amba_atb_funnel_fpv_monitor_elab_test",
     opts = ["--ignore-unknown-modules"],
+    tool = "slang",
     deps = [":br_amba_atb_funnel_fpv_monitor"],
 )
 
@@ -277,6 +286,7 @@ verilog_library(
 verilog_elab_test(
     name = "br_amba_axil_msi_fpv_monitor_elab_test",
     opts = ["--ignore-unknown-modules"],
+    tool = "slang",
     deps = [":br_amba_axil_msi_fpv_monitor"],
 )
 
@@ -303,6 +313,7 @@ verilog_library(
 verilog_elab_test(
     name = "br_amba_axi_isolate_mgr_fpv_monitor_elab_test",
     opts = ["--ignore-unknown-modules"],
+    tool = "slang",
     deps = [":br_amba_axi_isolate_mgr_fpv_monitor"],
 )
 
@@ -338,6 +349,7 @@ verilog_library(
 verilog_elab_test(
     name = "br_amba_axi_isolate_sub_fpv_monitor_elab_test",
     opts = ["--ignore-unknown-modules"],
+    tool = "slang",
     deps = [":br_amba_axi_isolate_sub_fpv_monitor"],
 )
 
@@ -395,6 +407,7 @@ verilog_elab_test(
     # elab complains about: use of undefined macro 'JS3_OUT_OF_ORDER'
     # needs to disable those spurious warnings for regression
     tags = ["manual"],
+    tool = "slang",
     deps = [":br_amba_axi_demux_fpv_monitor"],
 )
 
@@ -435,6 +448,7 @@ verilog_library(
 verilog_elab_test(
     name = "br_amba_axi_shrinker_fpv_monitor_elab_test",
     opts = ["--ignore-unknown-modules"],
+    tool = "slang",
     deps = [":br_amba_axi_shrinker_fpv_monitor"],
 )
 

@@ -15,6 +15,7 @@ verilog_library(
 
 verilog_elab_test(
     name = "br_test_driver_elab_test",
+    tool = "slang",
     deps = [":br_test_driver"],
 )
 
@@ -30,6 +31,7 @@ verilog_library(
 
 verilog_elab_test(
     name = "br_test_rate_control_elab_test",
+    tool = "slang",
     deps = [":br_test_rate_control"],
 )
 
@@ -44,6 +46,7 @@ verilog_library(
 
 verilog_elab_test(
     name = "br_misc_tieoff_one_tb_elab_test",
+    tool = "slang",
     deps = [":br_misc_tieoff_one_tb"],
 )
 
@@ -73,6 +76,7 @@ verilog_library(
 
 verilog_elab_test(
     name = "br_misc_tieoff_zero_tb_elab_test",
+    tool = "slang",
     deps = [":br_misc_tieoff_zero_tb"],
 )
 
@@ -102,6 +106,7 @@ verilog_library(
 
 verilog_elab_test(
     name = "br_misc_unused_tb_elab_test",
+    tool = "slang",
     deps = [":br_misc_unused_tb"],
 )
 

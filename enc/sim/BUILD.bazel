@@ -35,6 +35,7 @@ verilog_library(
 
 verilog_elab_test(
     name = "br_enc_bin2onehot_tb_elab_test",
+    tool = "slang",
     deps = [":br_enc_bin2onehot_tb"],
 )
 
@@ -54,6 +55,7 @@ br_verilog_sim_test_tools_suite(
 
 verilog_elab_test(
     name = "br_enc_gray_tb_elab_test",
+    tool = "slang",
     deps = [":br_enc_gray_tb"],
 )
 
@@ -73,6 +75,7 @@ br_verilog_sim_test_tools_suite(
 
 verilog_elab_test(
     name = "br_enc_priority_encoder_tb_elab_test",
+    tool = "slang",
     deps = [":br_enc_priority_encoder_tb"],
 )
 
@@ -108,6 +111,7 @@ verilog_library(
 
 verilog_elab_test(
     name = "br_enc_priority_dynamic_tb_elab_test",
+    tool = "slang",
     deps = [":br_enc_priority_dynamic_tb"],
 )
 
@@ -139,6 +143,7 @@ verilog_library(
 
 verilog_elab_test(
     name = "br_enc_countones_tb_elab_test",
+    tool = "slang",
     deps = [":br_enc_countones_tb"],
 )
 
@@ -162,6 +167,7 @@ verilog_library(
 
 verilog_elab_test(
     name = "br_enc_onehot2bin_tb_elab_test",
+    tool = "slang",
     deps = [":br_enc_onehot2bin_tb"],
 )
 

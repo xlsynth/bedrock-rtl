@@ -20,6 +20,7 @@ verilog_library(
 verilog_elab_test(
     name = "br_csr_axil_widget_fpv_monitor_elab_test",
     opts = ["--ignore-unknown-modules"],
+    tool = "slang",
     top = "br_csr_axil_widget_fpv_monitor",
     deps = [
         ":br_csr_axil_widget_fpv_monitor",
@@ -55,6 +56,7 @@ verilog_library(
 verilog_elab_test(
     name = "br_csr_demux_select_onehot_fpv_monitor_elab_test",
     opts = ["--ignore-unknown-modules"],
+    tool = "slang",
     top = "br_csr_demux_select_onehot_fpv_monitor",
     deps = [
         ":br_csr_demux_select_onehot_fpv_monitor",
@@ -123,6 +125,7 @@ verilog_library(
 verilog_elab_test(
     name = "br_csr_demux_fpv_monitor_elab_test",
     opts = ["--ignore-unknown-modules"],
+    tool = "slang",
     top = "br_csr_demux_fpv_monitor",
     deps = [
         ":br_csr_demux_fpv_monitor",
@@ -246,6 +249,7 @@ verilog_library(
 verilog_elab_test(
     name = "br_csr_cdc_fpv_monitor_elab_test",
     opts = ["--ignore-unknown-modules"],
+    tool = "slang",
     top = "br_csr_cdc_fpv_monitor",
     deps = [
         ":br_csr_cdc_fpv_monitor",

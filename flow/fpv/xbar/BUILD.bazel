@@ -28,6 +28,7 @@ verilog_library(
 verilog_elab_test(
     name = "br_flow_xbar_fixed_fpv_monitor_elab_test",
     opts = ["--ignore-unknown-modules"],
+    tool = "slang",
     deps = [":br_flow_xbar_fixed_fpv_monitor"],
 )
 
@@ -131,6 +132,7 @@ verilog_library(
 verilog_elab_test(
     name = "br_flow_xbar_rr_fpv_monitor_elab_test",
     opts = ["--ignore-unknown-modules"],
+    tool = "slang",
     deps = [":br_flow_xbar_rr_fpv_monitor"],
 )
 
@@ -234,6 +236,7 @@ verilog_library(
 verilog_elab_test(
     name = "br_flow_xbar_lru_fpv_monitor_elab_test",
     opts = ["--ignore-unknown-modules"],
+    tool = "slang",
     deps = [":br_flow_xbar_lru_fpv_monitor"],
 )
 

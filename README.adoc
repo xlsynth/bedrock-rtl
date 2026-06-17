@@ -157,12 +157,13 @@ You can set this environment variable in `user.bazelrc` so that it is used in al
 The Bazel test rule implementations at `//bazel:verilog.bzl` shell out the `//python/verilog_runner/verilog_runner.py` tool that presents a generic tool-agnostic API that actually implements the test.
 
 The repository includes a Slang plugin for open-source elaboration tests.
-Slang is the default tool for `verilog_elab_test` targets:
+Select Slang explicitly for `verilog_elab_test` targets:
 
 [source,bazel]
 ----
 verilog_elab_test(
     name = "example_elab_test",
+    tool = "slang",
     top = "example",
     deps = [":example"],
 )
@@ -371,6 +372,7 @@ verilog_library(
 
 verilog_elab_test(
     name = "datapath_join_elab_test",
+    tool = "slang",
     deps = [":datapath_join"],
 )
 

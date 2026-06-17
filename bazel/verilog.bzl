@@ -417,10 +417,10 @@ rule_verilog_elab_test = rule(
 
 def verilog_elab_test(
         name,
-        tool = "slang",
+        tool,
         tags = [],
         **kwargs):
-    """Wraps rule_verilog_elab_test with Slang as the default tool and appends extra tags.
+    """Wraps rule_verilog_elab_test and appends extra tags.
 
     The following extra tags are unconditionally appended to the list of tags:
         * elab -- useful for test filtering, e.g., bazel test //... --test_tag_filters=elab
@@ -430,7 +430,7 @@ def verilog_elab_test(
 
     Args:
         name: test name
-        tool: The elaboration tool to use. Defaults to Slang.
+        tool: The elaboration tool to use.
         tags: The tags to add to the test.
         **kwargs: Other arguments to pass to the rule_verilog_elab_test rule.
     """

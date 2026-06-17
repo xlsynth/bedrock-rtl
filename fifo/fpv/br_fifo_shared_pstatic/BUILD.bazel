@@ -30,6 +30,7 @@ verilog_library(
 verilog_elab_test(
     name = "br_fifo_shared_pstatic_ctrl_fpv_monitor_elab_test",
     opts = ["--ignore-unknown-modules"],
+    tool = "slang",
     deps = [":br_fifo_shared_pstatic_ctrl_fpv_monitor"],
 )
 
@@ -150,6 +151,7 @@ verilog_library(
 verilog_elab_test(
     name = "br_fifo_shared_pstatic_ctrl_push_credit_fpv_monitor_elab_test",
     opts = ["--ignore-unknown-modules"],
+    tool = "slang",
     deps = [":br_fifo_shared_pstatic_ctrl_push_credit_fpv_monitor"],
 )
 
@@ -220,6 +222,7 @@ verilog_library(
 verilog_elab_test(
     name = "br_fifo_shared_pstatic_flops_fpv_monitor_elab_test",
     opts = ["--ignore-unknown-modules"],
+    tool = "slang",
     deps = [":br_fifo_shared_pstatic_flops_fpv_monitor"],
 )
 
@@ -345,6 +348,7 @@ verilog_library(
 verilog_elab_test(
     name = "br_fifo_shared_pstatic_flops_push_credit_fpv_monitor_elab_test",
     opts = ["--ignore-unknown-modules"],
+    tool = "slang",
     deps = [":br_fifo_shared_pstatic_flops_push_credit_fpv_monitor"],
 )
 

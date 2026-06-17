@@ -20,6 +20,7 @@ verilog_library(
 
 verilog_elab_test(
     name = "br_enc_priority_dynamic_fpv_monitor_elab_test",
+    tool = "slang",
     deps = [":br_enc_priority_dynamic_fpv_monitor"],
 )
 

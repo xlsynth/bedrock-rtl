@@ -372,7 +372,7 @@ load("@bedrock-rtl//bazel:verilog.bzl", "verilog_elab_test")
 verilog_elab_test(<a href="#verilog_elab_test-name">name</a>, <a href="#verilog_elab_test-tool">tool</a>, <a href="#verilog_elab_test-tags">tags</a>, <a href="#verilog_elab_test-kwargs">**kwargs</a>)
 </pre>
 
-Wraps rule_verilog_elab_test with Slang as the default tool and appends extra tags.
+Wraps rule_verilog_elab_test and appends extra tags.
 
 The following extra tags are unconditionally appended to the list of tags:
     * elab -- useful for test filtering, e.g., bazel test //... --test_tag_filters=elab
@@ -387,7 +387,7 @@ The following extra tags are unconditionally appended to the list of tags:
 | Name  | Description | Default Value |
 | :------------- | :------------- | :------------- |
 | <a id="verilog_elab_test-name"></a>name |  test name   |  none |
-| <a id="verilog_elab_test-tool"></a>tool |  The elaboration tool to use. Defaults to Slang.   |  `"slang"` |
+| <a id="verilog_elab_test-tool"></a>tool |  The elaboration tool to use.   |  none |
 | <a id="verilog_elab_test-tags"></a>tags |  The tags to add to the test.   |  `[]` |
 | <a id="verilog_elab_test-kwargs"></a>kwargs |  Other arguments to pass to the rule_verilog_elab_test rule.   |  none |
 

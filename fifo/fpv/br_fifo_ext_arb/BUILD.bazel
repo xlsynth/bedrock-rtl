@@ -28,6 +28,7 @@ verilog_library(
 verilog_elab_test(
     name = "br_fifo_shared_dynamic_ctrl_ext_arbiter_fpv_monitor_elab_test",
     opts = ["--ignore-unknown-modules"],
+    tool = "slang",
     deps = [":br_fifo_shared_dynamic_ctrl_ext_arbiter_fpv_monitor"],
 )
 
@@ -145,6 +146,7 @@ verilog_library(
 verilog_elab_test(
     name = "br_fifo_shared_dynamic_ctrl_push_credit_ext_arbiter_fpv_monitor_elab_test",
     opts = ["--ignore-unknown-modules"],
+    tool = "slang",
     deps = [":br_fifo_shared_dynamic_ctrl_push_credit_ext_arbiter_fpv_monitor"],
 )
 

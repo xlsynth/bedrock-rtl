@@ -17,6 +17,7 @@ verilog_library(
 
 verilog_elab_test(
     name = "br_credit_receiver_tb_elab_test",
+    tool = "slang",
     deps = [":br_credit_receiver_tb"],
 )
 
@@ -57,6 +58,7 @@ verilog_library(
 
 verilog_elab_test(
     name = "br_credit_sender_vc_rr_tb_elab_test",
+    tool = "slang",
     deps = [":br_credit_sender_vc_rr_tb"],
 )
 
