@@ -215,6 +215,8 @@ module br_fifo_shared_dynamic_flops_push_credit_pop_credit_tb;
   );
 
   initial begin
+    integer timeout;
+
     start = 0;
 
     td.reset_dut();
@@ -223,12 +225,16 @@ module br_fifo_shared_dynamic_flops_push_credit_pop_credit_tb;
     start = 1;
     td.wait_cycles(1);
 
-    while (!finished) begin
+    timeout = 5000;
+    td.wait_cycles();
+    while (timeout > 0 && !finished) begin
       td.wait_cycles();
+      timeout = timeout - 1;
     end
 
-    if (error_count != 0) begin
-      $display("ERROR: %d errors occurred", error_count);
+    if (error_count != 0 || !finished) begin
+      $display("ERROR: %d errors occurred, finished state is :%b", error_count, finished);
+      $stop;
     end else begin
       td.finish();
     end
