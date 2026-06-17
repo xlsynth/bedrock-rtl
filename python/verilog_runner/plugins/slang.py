@@ -62,7 +62,9 @@ class Slang(EdaTool):
             "--timescale 1ns/1ps",
             f"-f {self.filelist}",
         ]
-        if not self.compile_only:
+        if self.compile_only:
+            slang_cmd += ["--lint-only"]
+        else:
             slang_cmd += [f"--top {self.top}"]
         slang_cmd += [f"-I{directory}" for directory in include_dirs(self.hdrs)]
         slang_cmd += [f"-D{define}" for define in self.defines]

@@ -11,6 +11,11 @@ verilog_library(
     srcs = ["nonzip_smoke.sv"],
 )
 
+verilog_library(
+    name = "compile_only_smoke_lib",
+    srcs = ["compile_only_smoke.sv"],
+)
+
 verilog_elab_test(
     name = "nonzip_elab_test",
     tags = ["manual"],
@@ -25,6 +30,14 @@ verilog_elab_test(
     tool = "slang",
     top = "nonzip_smoke",
     deps = [":nonzip_smoke_lib"],
+)
+
+verilog_elab_test(
+    name = "slang_compile_only_test",
+    compile_only = True,
+    tags = ["manual"],
+    tool = "slang",
+    deps = [":compile_only_smoke_lib"],
 )
 
 verilog_lint_test(
