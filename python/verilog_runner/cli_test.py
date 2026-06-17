@@ -7,7 +7,7 @@ import argparse
 import unittest
 from unittest import mock
 
-from python.verilog_runner.cli import common_args
+from python.verilog_runner.cli import common_args, validate_top
 
 
 def _args_for_subcommand(subcommand: str) -> argparse.Namespace:
@@ -33,6 +33,21 @@ def _args_for_subcommand(subcommand: str) -> argparse.Namespace:
 
 
 class TestCliFunctions(unittest.TestCase):
+
+    def test_validate_top_allows_compile_only_elab_without_top(self):
+        args = _args_for_subcommand("elab")
+        args.top = None
+        args.compile_only = True
+
+        validate_top(argparse.ArgumentParser(), args)
+
+    def test_validate_top_rejects_non_compile_only_elab_without_top(self):
+        args = _args_for_subcommand("elab")
+        args.top = None
+        args.compile_only = False
+
+        with self.assertRaises(SystemExit):
+            validate_top(argparse.ArgumentParser(), args)
 
     @mock.patch.dict("os.environ", {}, clear=True)
     def test_common_args_sim_includes_split_opts(self):

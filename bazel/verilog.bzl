@@ -94,7 +94,7 @@ runner_flags = rule(
     build_setting = config.string(flag = True),
 )
 
-def _verilog_base_impl(ctx, subcmd, test = True, extra_args = [], extra_runfiles = []):
+def _verilog_base_impl(ctx, subcmd, test = True, extra_args = [], extra_runfiles = [], allow_empty_top = False):
     """Shared implementation for rule_verilog_elab_test, rule_verilog_lint_test, rule_verilog_sim_test, and rule_verilog_fpv_test.
 
     Args:
@@ -103,6 +103,7 @@ def _verilog_base_impl(ctx, subcmd, test = True, extra_args = [], extra_runfiles
         test (bool, optional): whether the rule is a test; if not, then generate a tarball sandbox
         extra_args (list of strings, optional): tool-specific args
         extra_runfiles (list of files, optional): tool-specific files
+        allow_empty_top (bool, optional): whether the rule may omit a top module
 
     Returns:
         DefaultInfo for the rule that describes the runfiles, depset, and executable
@@ -137,14 +138,15 @@ def _verilog_base_impl(ctx, subcmd, test = True, extra_args = [], extra_runfiles
         src_files = [src.path for src in srcs]
         hdr_files = [hdr.path for hdr in hdrs]
     top = ctx.attr.top
-    if top == "":
+    if top == "" and not allow_empty_top:
         if (len(ctx.attr.deps) != 1):
             fail("If the top attribute is not provided, then there must be exactly one dependency.")
         top = ctx.attr.deps[0].label.name
     args = (["--hdr=" + hdr for hdr in hdr_files] +
             ["--define=" + define for define in ctx.attr.defines] +
-            ["--top=" + top] +
             ["--param=" + key + "=\"" + value + "\"" for key, value in ctx.attr.params.items()])
+    if top:
+        args.append("--top=" + top)
     filelist = ctx.label.name + ".f"
     tcl = ctx.label.name + ".tcl"
     script = ctx.label.name + ".sh"
@@ -282,6 +284,7 @@ def _verilog_elab_test_impl(ctx):
     for opt in ctx.attr.opts:
         extra_args.append("--opt='" + opt + "'")
     return _verilog_base_impl(
+        allow_empty_top = ctx.attr.compile_only,
         ctx = ctx,
         subcmd = "elab",
         extra_args = extra_args,
