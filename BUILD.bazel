@@ -9,8 +9,6 @@ compile_pip_requirements_3_12(
     requirements_txt = "requirements_lock_3_12.txt",
 )
 
-exports_files(["elab_test_jg_custom_header.verific.tcl"])
-
 py_test(
     name = "check_env",
     srcs = ["check_env.py"],
