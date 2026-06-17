@@ -190,7 +190,18 @@ jobs:
         echo "total_tests=$TOTAL_TESTS" >> $GITHUB_OUTPUT
         echo "passing_tests=$PASSING_TESTS" >> $GITHUB_OUTPUT
         echo "exit_code=$BAZEL_EXIT_CODE" >> $GITHUB_OUTPUT
-    # Keep AscentLint after Verific as before.
+    - name: Verilog elaboration tests (using Slang)
+      id: slang
+      run: |
+        set +e
+        bazel test $TMP_HACK_BAZEL_CI_FLAGS --noshow_loading_progress //... --test_tag_filters=slang 2>&1 | tee .bazel-test-slang.log
+        BAZEL_EXIT_CODE=${PIPESTATUS[0]}
+        TOTAL_TESTS=$(grep -Po '(?<=out of )\d+(?= test)' .bazel-test-slang.log)
+        PASSING_TESTS=$(grep -Po '\d+(?= test passes?\.| tests pass)' .bazel-test-slang.log)
+        echo "total_tests=$TOTAL_TESTS" >> $GITHUB_OUTPUT
+        echo "passing_tests=$PASSING_TESTS" >> $GITHUB_OUTPUT
+        echo "exit_code=$BAZEL_EXIT_CODE" >> $GITHUB_OUTPUT
+    # Keep AscentLint after the elaboration suites.
     - name: Verilog lint tests (using RealIntent AscentLint)
       id: ascentlint
       # Use --test_output=summary to suppress log output, even on failure (proprietary EDA tool output may be sensitive).
@@ -234,6 +245,7 @@ jobs:
         if [ "${{ steps.python.outputs.exit_code }}" != "0" ] \
           || [ "${{ steps.stardoc.outputs.exit_code }}" != "0" ] \
           || [ "${{ steps.verific.outputs.exit_code }}" != "0" ] \
+          || [ "${{ steps.slang.outputs.exit_code }}" != "0" ] \
           || [ "${{ steps.ascentlint.outputs.exit_code }}" != "0" ] \
           || [ "${{ steps.vcs.outputs.exit_code }}" != "0" ] \
           || [ "${{ steps.verilator.outputs.exit_code }}" != "0" ]; then

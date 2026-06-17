@@ -17,7 +17,7 @@ verilog_library(
 
 verilog_elab_test(
     name = "br_shift_rotate_tb_elab_test",
-    tool = "verific",
+    tool = "slang",
     deps = [":br_shift_rotate_tb"],
 )
 
@@ -53,7 +53,7 @@ verilog_library(
 
 verilog_elab_test(
     name = "br_shift_right_tb_elab_test",
-    tool = "verific",
+    tool = "slang",
     deps = [":br_shift_right_tb"],
 )
 
@@ -85,7 +85,7 @@ verilog_library(
 
 verilog_elab_test(
     name = "br_shift_left_tb_elab_test",
-    tool = "verific",
+    tool = "slang",
     deps = [":br_shift_left_tb"],
 )
 

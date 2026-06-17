@@ -17,7 +17,7 @@ verilog_library(
 
 verilog_elab_test(
     name = "br_mux_bin_tb_elab_test",
-    tool = "verific",
+    tool = "slang",
     deps = [":br_mux_bin_tb"],
 )
 
@@ -57,7 +57,7 @@ verilog_library(
 
 verilog_elab_test(
     name = "br_mux_bin_structured_gates_tb_elab_test",
-    tool = "verific",
+    tool = "slang",
     top = "br_mux_bin_structured_gates_tb",
     deps = [
         ":br_mux_bin_structured_gates_tb",
@@ -99,7 +99,7 @@ br_verilog_sim_test_tools_suite(
 # Same TB, different RTL dep
 verilog_elab_test(
     name = "br_mux_bin_structured_gates_mock_tb_elab_test",
-    tool = "verific",
+    tool = "slang",
     top = "br_mux_bin_structured_gates_tb",
     deps = [
         ":br_mux_bin_structured_gates_tb",
@@ -147,7 +147,7 @@ verilog_library(
 
 verilog_elab_test(
     name = "br_mux_onehot_tb_elab_test",
-    tool = "verific",
+    tool = "slang",
     deps = [":br_mux_onehot_tb"],
 )
 
