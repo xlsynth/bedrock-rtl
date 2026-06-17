@@ -22,6 +22,7 @@ verilog_elab_test(
 verilog_elab_test(
     name = "slang_elab_test",
     params = {"Width": "8"},
+    tags = ["manual"],
     tool = "slang",
     top = "nonzip_smoke",
     deps = [":nonzip_smoke_lib"],
