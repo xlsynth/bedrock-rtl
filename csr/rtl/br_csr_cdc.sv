@@ -99,7 +99,8 @@ module br_csr_cdc #(
       .NumSyncStages(NumSyncStages),
       // CSR CDC ties pop_ready high and asserts no request backpressure, so
       // br_cdc_reg's push/pop backpressure-stability precondition covers are unreachable.
-      .EnableCoverPushBackpressure(0)
+      .EnableCoverPushBackpressure(0),
+      .EnableCoverPopBackpressure(0)
   ) br_cdc_reg_req (
       .push_clk(upstream_clk),  // ri lint_check_waive SAME_CLOCK_NAME
       .push_rst(upstream_rst),
@@ -144,7 +145,8 @@ module br_csr_cdc #(
       .NumSyncStages(NumSyncStages),
       // CSR CDC ties pop_ready high and asserts no response backpressure, so
       // br_cdc_reg's push/pop backpressure-stability precondition covers are unreachable.
-      .EnableCoverPushBackpressure(0)
+      .EnableCoverPushBackpressure(0),
+      .EnableCoverPopBackpressure(0)
   ) br_cdc_reg_resp (
       .push_clk(downstream_clk),  // ri lint_check_waive SAME_CLOCK_NAME
       .push_rst(downstream_rst),

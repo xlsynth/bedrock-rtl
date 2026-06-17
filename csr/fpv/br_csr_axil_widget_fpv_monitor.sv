@@ -66,7 +66,7 @@ module br_csr_axil_widget_fpv_monitor #(
       .CONFIG_WAIT_FOR_VALID_BEFORE_READY(1),
       // AXI constraints will be applied to wdata, instead of wstrb & wdata
       .CONFIG_WDATA_MASKED(0),
-      .MAX_PENDING(RegisterResponseOutputs ? 3 : 2)
+      .MAX_PENDING(RegisterResponseOutputs ? 2 : 1)
   ) axi4_lite (
       // Global signals
       .aclk    (clk),
