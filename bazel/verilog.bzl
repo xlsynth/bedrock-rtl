@@ -276,9 +276,15 @@ def _verilog_base_impl(ctx, subcmd, test = True, extra_args = [], extra_runfiles
 
 def _verilog_elab_test_impl(ctx):
     """Implementation of the verilog_elab_test rule."""
+    extra_args = []
+    if ctx.attr.compile_only:
+        extra_args.append("--compile_only")
+    for opt in ctx.attr.opts:
+        extra_args.append("--opt='" + opt + "'")
     return _verilog_base_impl(
         ctx = ctx,
         subcmd = "elab",
+        extra_args = extra_args,
     )
 
 def _verilog_lint_test_impl(ctx):
@@ -366,6 +372,8 @@ rule_verilog_elab_test = rule(
         "deps": attr.label_list(allow_files = False, providers = [VerilogInfo], doc = "The dependencies of the test."),
         "defines": attr.string_list(doc = "Preprocessor defines to pass to the Verilog compiler."),
         "params": attr.string_dict(doc = "Verilog module parameters to set in the instantiation of the top-level module."),
+        "compile_only": attr.bool(doc = "Compile and type-check sources without elaborating a top-level module."),
+        "opts": attr.string_list(doc = "Tool-specific elaboration options."),
         "top": attr.string(doc = "The top-level module; if not provided and there exists one dependency, then defaults to that dep's label name."),
         "verilog_runner_tool": attr.label(doc = "The Verilog Runner tool to use.", default = "//python/verilog_runner:verilog_runner.py", allow_files = True),
         "verilog_runner_data": attr.label_list(
@@ -406,10 +414,10 @@ rule_verilog_elab_test = rule(
 
 def verilog_elab_test(
         name,
-        tool,
+        tool = "slang",
         tags = [],
         **kwargs):
-    """Wraps rule_verilog_elab_test with a default tool and appends extra tags.
+    """Wraps rule_verilog_elab_test with Slang as the default tool and appends extra tags.
 
     The following extra tags are unconditionally appended to the list of tags:
         * elab -- useful for test filtering, e.g., bazel test //... --test_tag_filters=elab
@@ -419,7 +427,7 @@ def verilog_elab_test(
 
     Args:
         name: test name
-        tool: The elaboration tool to use.
+        tool: The elaboration tool to use. Defaults to Slang.
         tags: The tags to add to the test.
         **kwargs: Other arguments to pass to the rule_verilog_elab_test rule.
     """

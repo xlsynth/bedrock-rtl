@@ -28,8 +28,7 @@ verilog_library(
 
 verilog_elab_test(
     name = "br_ram_initializer_fpv_monitor_elab_test",
-    custom_tcl_header = "//:elab_test_jg_custom_header.verific.tcl",
-    tool = "verific",
+    opts = ["--ignore-unknown-modules"],
     deps = [":br_ram_initializer_fpv_monitor"],
 )
 
@@ -65,8 +64,7 @@ verilog_library(
 
 verilog_elab_test(
     name = "br_ram_addr_decoder_fpv_monitor_elab_test",
-    custom_tcl_header = "//:elab_test_jg_custom_header.verific.tcl",
-    tool = "verific",
+    opts = ["--ignore-unknown-modules"],
     deps = [":br_ram_addr_decoder_fpv_monitor"],
 )
 
@@ -125,8 +123,7 @@ verilog_library(
 
 verilog_elab_test(
     name = "br_ram_data_rd_pipe_fpv_monitor_elab_test",
-    custom_tcl_header = "//:elab_test_jg_custom_header.verific.tcl",
-    tool = "verific",
+    opts = ["--ignore-unknown-modules"],
     deps = [":br_ram_data_rd_pipe_fpv_monitor"],
 )
 
@@ -190,8 +187,7 @@ verilog_library(
 
 verilog_elab_test(
     name = "br_ram_flops_tile_fpv_monitor_elab_test",
-    custom_tcl_header = "//:elab_test_jg_custom_header.verific.tcl",
-    tool = "verific",
+    opts = ["--ignore-unknown-modules"],
     deps = [":br_ram_flops_tile_fpv_monitor"],
 )
 
@@ -408,8 +404,7 @@ verilog_library(
 
 verilog_elab_test(
     name = "br_ram_flops_fpv_monitor_elab_test",
-    custom_tcl_header = "//:elab_test_jg_custom_header.verific.tcl",
-    tool = "verific",
+    opts = ["--ignore-unknown-modules"],
     deps = [":br_ram_flops_fpv_monitor"],
 )
 
@@ -837,8 +832,7 @@ verilog_library(
 
 verilog_elab_test(
     name = "br_ram_flops_1r1w_mock_fpv_monitor_elab_test",
-    custom_tcl_header = "//:elab_test_jg_custom_header.verific.tcl",
-    tool = "verific",
+    opts = ["--ignore-unknown-modules"],
     deps = [":br_ram_flops_1r1w_mock_fpv_monitor"],
 )
 

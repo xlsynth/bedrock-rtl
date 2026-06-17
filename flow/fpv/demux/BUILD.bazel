@@ -26,7 +26,6 @@ verilog_library(
 
 verilog_elab_test(
     name = "br_flow_demux_select_unstable_fpv_monitor_elab_test",
-    tool = "verific",
     deps = [":br_flow_demux_select_unstable_fpv_monitor"],
 )
 
@@ -101,7 +100,6 @@ verilog_library(
 
 verilog_elab_test(
     name = "br_flow_demux_select_fpv_monitor_elab_test",
-    tool = "verific",
     deps = [":br_flow_demux_select_fpv_monitor"],
 )
 

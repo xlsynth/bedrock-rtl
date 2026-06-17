@@ -17,7 +17,6 @@ verilog_library(
 
 verilog_elab_test(
     name = "br_tracker_freelist_tb_elab_test",
-    tool = "verific",
     deps = [":br_tracker_freelist_tb"],
 )
 
@@ -67,7 +66,6 @@ verilog_library(
 
 verilog_elab_test(
     name = "br_tracker_linked_list_ctrl_tb_elab_test",
-    tool = "verific",
     deps = [":br_tracker_linked_list_ctrl_tb"],
 )
 
@@ -107,7 +105,6 @@ verilog_library(
 
 verilog_elab_test(
     name = "br_tracker_reorder_buffer_flops_tb_elab_test",
-    tool = "verific",
     deps = [":br_tracker_reorder_buffer_flops_tb"],
 )
 

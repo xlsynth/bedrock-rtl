@@ -211,7 +211,11 @@ class Elab(Subcommand):
 
     @staticmethod
     def add_args(parser: argparse.ArgumentParser) -> None:
-        pass
+        parser.add_argument(
+            "--compile_only",
+            action="store_true",
+            help="Compile and type-check sources without elaborating a top-level module.",
+        )
 
 
 class Lint(Subcommand):

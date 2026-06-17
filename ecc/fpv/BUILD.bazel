@@ -21,7 +21,6 @@ verilog_library(
 
 verilog_elab_test(
     name = "br_ecc_sed_fpv_monitor_elab_test",
-    tool = "verific",
     deps = [":br_ecc_sed_fpv_monitor"],
 )
 
@@ -73,7 +72,6 @@ verilog_library(
 
 verilog_elab_test(
     name = "br_ecc_secded_fpv_monitor_elab_test",
-    tool = "verific",
     deps = [":br_ecc_secded_fpv_monitor"],
 )
 
@@ -207,7 +205,6 @@ verilog_library(
 
 verilog_elab_test(
     name = "br_ecc_secded_error_fpv_monitor_elab_test",
-    tool = "verific",
     deps = [":br_ecc_secded_error_fpv_monitor"],
 )
 

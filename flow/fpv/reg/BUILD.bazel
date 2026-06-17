@@ -25,8 +25,7 @@ verilog_library(
 
 verilog_elab_test(
     name = "br_flow_reg_both_fpv_monitor_elab_test",
-    custom_tcl_header = "//:elab_test_jg_custom_header.verific.tcl",
-    tool = "verific",
+    opts = ["--ignore-unknown-modules"],
     deps = [":br_flow_reg_both_fpv_monitor"],
 )
 
@@ -81,8 +80,7 @@ verilog_library(
 
 verilog_elab_test(
     name = "br_flow_reg_fwd_fpv_monitor_elab_test",
-    custom_tcl_header = "//:elab_test_jg_custom_header.verific.tcl",
-    tool = "verific",
+    opts = ["--ignore-unknown-modules"],
     deps = [":br_flow_reg_fwd_fpv_monitor"],
 )
 
@@ -137,8 +135,7 @@ verilog_library(
 
 verilog_elab_test(
     name = "br_flow_reg_rev_fpv_monitor_elab_test",
-    custom_tcl_header = "//:elab_test_jg_custom_header.verific.tcl",
-    tool = "verific",
+    opts = ["--ignore-unknown-modules"],
     deps = [":br_flow_reg_rev_fpv_monitor"],
 )
 
@@ -193,8 +190,7 @@ verilog_library(
 
 verilog_elab_test(
     name = "br_flow_reg_none_fpv_monitor_elab_test",
-    custom_tcl_header = "//:elab_test_jg_custom_header.verific.tcl",
-    tool = "verific",
+    opts = ["--ignore-unknown-modules"],
     deps = [":br_flow_reg_none_fpv_monitor"],
 )
 

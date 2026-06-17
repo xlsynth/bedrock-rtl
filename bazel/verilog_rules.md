@@ -57,8 +57,8 @@ generate_parameter_file(<a href="#generate_parameter_file-name">name</a>, <a hre
 <pre>
 load("@bedrock-rtl//bazel:verilog.bzl", "rule_verilog_elab_test")
 
-rule_verilog_elab_test(<a href="#rule_verilog_elab_test-name">name</a>, <a href="#rule_verilog_elab_test-deps">deps</a>, <a href="#rule_verilog_elab_test-custom_tcl_body">custom_tcl_body</a>, <a href="#rule_verilog_elab_test-custom_tcl_header">custom_tcl_header</a>, <a href="#rule_verilog_elab_test-defines">defines</a>, <a href="#rule_verilog_elab_test-params">params</a>,
-                       <a href="#rule_verilog_elab_test-runner_flags">runner_flags</a>, <a href="#rule_verilog_elab_test-tool">tool</a>, <a href="#rule_verilog_elab_test-top">top</a>, <a href="#rule_verilog_elab_test-verilog_runner_data">verilog_runner_data</a>, <a href="#rule_verilog_elab_test-verilog_runner_plugins">verilog_runner_plugins</a>,
+rule_verilog_elab_test(<a href="#rule_verilog_elab_test-name">name</a>, <a href="#rule_verilog_elab_test-deps">deps</a>, <a href="#rule_verilog_elab_test-compile_only">compile_only</a>, <a href="#rule_verilog_elab_test-custom_tcl_body">custom_tcl_body</a>, <a href="#rule_verilog_elab_test-custom_tcl_header">custom_tcl_header</a>, <a href="#rule_verilog_elab_test-defines">defines</a>, <a href="#rule_verilog_elab_test-opts">opts</a>,
+                       <a href="#rule_verilog_elab_test-params">params</a>, <a href="#rule_verilog_elab_test-runner_flags">runner_flags</a>, <a href="#rule_verilog_elab_test-tool">tool</a>, <a href="#rule_verilog_elab_test-top">top</a>, <a href="#rule_verilog_elab_test-verilog_runner_data">verilog_runner_data</a>, <a href="#rule_verilog_elab_test-verilog_runner_plugins">verilog_runner_plugins</a>,
                        <a href="#rule_verilog_elab_test-verilog_runner_tool">verilog_runner_tool</a>)
 </pre>
 
@@ -71,9 +71,11 @@ Tests that a Verilog or SystemVerilog design elaborates. Needs VERILOG_RUNNER_PL
 | :------------- | :------------- | :------------- | :------------- | :------------- |
 | <a id="rule_verilog_elab_test-name"></a>name |  A unique name for this target.   | <a href="https://bazel.build/concepts/labels#target-names">Name</a> | required |  |
 | <a id="rule_verilog_elab_test-deps"></a>deps |  The dependencies of the test.   | <a href="https://bazel.build/concepts/labels">List of labels</a> | optional |  `[]`  |
+| <a id="rule_verilog_elab_test-compile_only"></a>compile_only |  Compile and type-check sources without elaborating a top-level module.   | Boolean | optional |  `False`  |
 | <a id="rule_verilog_elab_test-custom_tcl_body"></a>custom_tcl_body |  Tcl script file containing custom tool-specific commands to insert in the middle of the generated tcl script after the elaboration step.The tcl body (custom or not) is unconditionally followed by the tcl footer.Do not include Tcl commands that manipulate sources, headers, defines, or parameters, as those will be handled by the rule implementation.   | <a href="https://bazel.build/concepts/labels">Label</a> | optional |  `None`  |
 | <a id="rule_verilog_elab_test-custom_tcl_header"></a>custom_tcl_header |  Tcl script file containing custom tool-specific commands to insert at the beginning of the generated tcl script.The tcl header (custom or not) is unconditionally followed by analysis and elaborate commands, and then the tcl body.Do not include Tcl commands that manipulate sources, headers, defines, or parameters, as those will be handled by the rule implementation.   | <a href="https://bazel.build/concepts/labels">Label</a> | optional |  `None`  |
 | <a id="rule_verilog_elab_test-defines"></a>defines |  Preprocessor defines to pass to the Verilog compiler.   | List of strings | optional |  `[]`  |
+| <a id="rule_verilog_elab_test-opts"></a>opts |  Tool-specific elaboration options.   | List of strings | optional |  `[]`  |
 | <a id="rule_verilog_elab_test-params"></a>params |  Verilog module parameters to set in the instantiation of the top-level module.   | <a href="https://bazel.build/rules/lib/core/dict">Dictionary: String -> String</a> | optional |  `{}`  |
 | <a id="rule_verilog_elab_test-runner_flags"></a>runner_flags |  command line flags   | <a href="https://bazel.build/concepts/labels">Label</a> | optional |  `"@bedrock-rtl//bazel:runner_flags"`  |
 | <a id="rule_verilog_elab_test-tool"></a>tool |  Elaboration tool to use.   | String | required |  |
@@ -371,7 +373,7 @@ load("@bedrock-rtl//bazel:verilog.bzl", "verilog_elab_test")
 verilog_elab_test(<a href="#verilog_elab_test-name">name</a>, <a href="#verilog_elab_test-tool">tool</a>, <a href="#verilog_elab_test-tags">tags</a>, <a href="#verilog_elab_test-kwargs">**kwargs</a>)
 </pre>
 
-Wraps rule_verilog_elab_test with a default tool and appends extra tags.
+Wraps rule_verilog_elab_test with Slang as the default tool and appends extra tags.
 
 The following extra tags are unconditionally appended to the list of tags:
     * elab -- useful for test filtering, e.g., bazel test //... --test_tag_filters=elab
@@ -386,7 +388,7 @@ The following extra tags are unconditionally appended to the list of tags:
 | Name  | Description | Default Value |
 | :------------- | :------------- | :------------- |
 | <a id="verilog_elab_test-name"></a>name |  test name   |  none |
-| <a id="verilog_elab_test-tool"></a>tool |  The elaboration tool to use.   |  none |
+| <a id="verilog_elab_test-tool"></a>tool |  The elaboration tool to use. Defaults to Slang.   |  `"slang"` |
 | <a id="verilog_elab_test-tags"></a>tags |  The tags to add to the test.   |  `[]` |
 | <a id="verilog_elab_test-kwargs"></a>kwargs |  Other arguments to pass to the rule_verilog_elab_test rule.   |  none |
 

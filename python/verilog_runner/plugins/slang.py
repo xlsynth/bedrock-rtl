@@ -25,6 +25,7 @@ class Slang(EdaTool):
     subcommand: Type[Subcommand] = Elab
     tool_name: str = "slang"
     help: str = "Elaborate a Verilog/SystemVerilog design using slang"
+    compile_only: bool = False
 
     def __post_init__(self):
         self.logger = get_class_logger("elab", "slang")
@@ -35,7 +36,7 @@ class Slang(EdaTool):
 
     @classmethod
     def from_args(cls, args):
-        return cls(**common_args(args))
+        return cls(**common_args(args), compile_only=args.compile_only)
 
     def tcl_preamble(self) -> str:
         return gen_file_header(self.tclfile, "slang")
@@ -58,9 +59,11 @@ class Slang(EdaTool):
         slang_cmd = [
             '"${SLANG_PATH}"',
             "--std 1800-2017",
-            f"--top {self.top}",
+            "--timescale 1ns/1ps",
             f"-f {self.filelist}",
         ]
+        if not self.compile_only:
+            slang_cmd += [f"--top {self.top}"]
         slang_cmd += [f"-I{directory}" for directory in include_dirs(self.hdrs)]
         slang_cmd += [f"-D{define}" for define in self.defines]
         slang_cmd += [f"-G{key}={value}" for key, value in self.params.items()]

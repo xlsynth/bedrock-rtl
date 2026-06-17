@@ -53,7 +53,6 @@ verilog_library(
 
 verilog_elab_test(
     name = "br_unused_tb_elab_test",
-    tool = "verific",
     deps = [":br_unused_tb"],
 )
 
@@ -82,7 +81,6 @@ verilog_library(
 
 verilog_elab_test(
     name = "br_tieoff_tb_elab_test",
-    tool = "verific",
     deps = [":br_tieoff_tb"],
 )
 
@@ -105,13 +103,11 @@ verilog_elab_test(
         "BR_ASSERT_ON",
         "BR_ENABLE_FPV",
     ],
-    tool = "verific",
     deps = [":br_asserts_test"],
 )
 
 verilog_elab_test(
     name = "br_asserts_elab_noassert_test",
-    tool = "verific",
     deps = [":br_asserts_test"],
 )
 
@@ -149,13 +145,11 @@ verilog_elab_test(
         "BR_ASSERT_ON",
         "BR_ENABLE_FPV",
     ],
-    tool = "verific",
     deps = [":br_asserts_in_pkg_test"],
 )
 
 verilog_elab_test(
     name = "br_asserts_in_pkg_elab_noassert_test",
-    tool = "verific",
     deps = [":br_asserts_in_pkg_test"],
 )
 
@@ -197,14 +191,12 @@ verilog_elab_test(
         "BR_ENABLE_FPV",
         "BR_ENABLE_IMPL_CHECKS",
     ],
-    tool = "verific",
     deps = [":br_asserts_internal_test"],
 )
 
 verilog_elab_test(
     name = "br_asserts_elab_internal_no_impl_test",
     defines = ["BR_ASSERT_ON"],
-    tool = "verific",
     deps = [":br_asserts_internal_test"],
 )
 
@@ -214,13 +206,11 @@ verilog_elab_test(
         "BR_ASSERT_ON",
         "BR_DISABLE_INTG_CHECKS",
     ],
-    tool = "verific",
     deps = [":br_asserts_internal_test"],
 )
 
 verilog_elab_test(
     name = "br_asserts_internal_elab_noassert_test",
-    tool = "verific",
     deps = [":br_asserts_internal_test"],
 )
 
@@ -238,7 +228,6 @@ verilog_library(
 verilog_elab_test(
     name = "br_gates_elab_test",
     defines = ["BR_ASSERT_ON"],
-    tool = "verific",
     deps = [":br_gates_test"],
 )
 
@@ -256,7 +245,6 @@ verilog_library(
 
 verilog_elab_test(
     name = "br_assign_elab_test",
-    tool = "verific",
     deps = [":br_assign_test"],
 )
 
