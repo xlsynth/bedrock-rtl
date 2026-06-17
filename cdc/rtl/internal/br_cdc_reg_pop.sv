@@ -8,7 +8,14 @@
 module br_cdc_reg_pop #(
     parameter int Width = 1,
     parameter bit RegisterPopOutputs = 0,
-    parameter bit RegisterResetActive = 1
+    parameter bit RegisterResetActive = 1,
+    // If 1, cover that the pop side experiences backpressure.
+    // If 0, disable backpressure coverage. By default, this also
+    // asserts that backpressure is impossible.
+    parameter bit EnableCoverPopBackpressure = 1,
+    // If 1, assert that pop-side backpressure is impossible.
+    // Can only be enabled if EnableCoverPopBackpressure is disabled.
+    parameter bit EnableAssertNoPopBackpressure = !EnableCoverPopBackpressure
 ) (
     input logic clk,
     input logic rst,
@@ -73,7 +80,11 @@ module br_cdc_reg_pop #(
 
   if (RegisterPopOutputs) begin : gen_reg_out
     br_flow_reg_fwd #(
-        .Width(Width)
+        .Width(Width),
+        .EnableCoverPushBackpressure(EnableCoverPopBackpressure),
+        .EnableAssertNoPushBackpressure(EnableAssertNoPopBackpressure),
+        .EnableCoverPopBackpressure(EnableCoverPopBackpressure),
+        .EnableAssertNoPopBackpressure(EnableAssertNoPopBackpressure)
     ) br_flow_reg_fwd (
         .clk,
         .rst,
@@ -93,7 +104,11 @@ module br_cdc_reg_pop #(
   // Implementation Checks
   br_flow_checks_valid_data_impl #(
       .NumFlows(1),
-      .Width(Width)
+      .Width(Width),
+      .EnableCoverBackpressure(EnableCoverPopBackpressure),
+      .EnableAssertNoBackpressure(EnableAssertNoPopBackpressure),
+      .EnableAssertValidStability(EnableCoverPopBackpressure),
+      .EnableAssertDataStability(EnableCoverPopBackpressure)
   ) br_flow_checks_valid_data_impl (
       .clk,
       .rst,
