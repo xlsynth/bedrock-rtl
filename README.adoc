@@ -175,7 +175,7 @@ The plugin supports source and header dependencies, preprocessor defines, and to
 == Continuous Integration
 
 We run continuous integration tests with GitHub Actions.
-The main CI workflow currently covers pre-commit, build, Python/ecc codegen tests, Stardoc, Verific, AscentLint, VCS, and Verilator.
+The main CI workflow currently covers pre-commit, build, Python/ecc codegen tests, Stardoc, Verific, Slang, AscentLint, VCS, and Verilator.
 Sampled JasperGold formal tests run in the nightly workflow.
 See `.github/workflows/ci.yml` and `.github/workflows/nightly.yml` for details.
 
