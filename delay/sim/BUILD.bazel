@@ -17,7 +17,7 @@ verilog_library(
 
 verilog_elab_test(
     name = "br_delay_tb_elab_test",
-    tool = "verific",
+    tool = "slang",
     deps = [":br_delay_tb"],
 )
 
@@ -35,7 +35,6 @@ br_verilog_sim_test_tools_suite(
         ],
     },
     tools = [
-        "iverilog",
         "vcs",
         "verilator",
     ],
@@ -53,7 +52,7 @@ verilog_library(
 
 verilog_elab_test(
     name = "br_delay_nr_tb_elab_test",
-    tool = "verific",
+    tool = "slang",
     deps = [":br_delay_nr_tb"],
 )
 
@@ -71,7 +70,6 @@ br_verilog_sim_test_tools_suite(
         ],
     },
     tools = [
-        "iverilog",
         "vcs",
         "verilator",
     ],
@@ -89,7 +87,7 @@ verilog_library(
 
 verilog_elab_test(
     name = "br_delay_shift_reg_tb_elab_test",
-    tool = "verific",
+    tool = "slang",
     deps = [":br_delay_shift_reg_tb"],
 )
 
@@ -111,7 +109,6 @@ br_verilog_sim_test_tools_suite(
         ],
     },
     tools = [
-        "iverilog",
         "vcs",
         "verilator",
     ],
@@ -259,7 +256,7 @@ verilog_library(
 
 verilog_elab_test(
     name = "br_delay_valid_tb_elab_test",
-    tool = "verific",
+    tool = "slang",
     deps = [":br_delay_valid_tb"],
 )
 
@@ -281,7 +278,6 @@ br_verilog_sim_test_tools_suite(
         ],
     },
     tools = [
-        "iverilog",
         "vcs",
         "verilator",
     ],
