@@ -319,21 +319,7 @@ module br_amba_axil_timing_slice_tb;
     get_r_input.user = payload[160+:RUserWidth];
   endfunction
 
-  task automatic check_valids_idle(input string scenario_name);
-    td.check(!target_awvalid, {scenario_name, ": target_awvalid asserted after scenario"});
-    td.check(!target_wvalid, {scenario_name, ": target_wvalid asserted after scenario"});
-    td.check(!target_arvalid, {scenario_name, ": target_arvalid asserted after scenario"});
-    td.check(!init_bvalid, {scenario_name, ": init_bvalid asserted after scenario"});
-    td.check(!init_rvalid, {scenario_name, ": init_rvalid asserted after scenario"});
-    td.check(!init_awvalid, {scenario_name, ": init_awvalid asserted after scenario"});
-    td.check(!init_wvalid, {scenario_name, ": init_wvalid asserted after scenario"});
-    td.check(!target_bvalid, {scenario_name, ": target_bvalid asserted after scenario"});
-    td.check(!init_arvalid, {scenario_name, ": init_arvalid asserted after scenario"});
-    td.check(!target_rvalid, {scenario_name, ": target_rvalid asserted after scenario"});
-  endtask
-
-  task automatic run_scenario(input axil_timing_slice_controls_t controls,
-                              input string scenario_name);
+  task automatic run_timing_slice_test(input axil_timing_slice_controls_t controls);
     axil_aw_t aw_input;
     axil_w_t  w_input;
     axil_ar_t ar_input;
@@ -362,9 +348,6 @@ module br_amba_axil_timing_slice_tb;
                       controls.max_stall_cycles, aw_input, w_input, ar_input, b_input, r_input);
       axil_monitor.run(controls.num_writes, controls.num_reads);
     join
-
-    td.wait_cycles(2);
-    check_valids_idle(scenario_name);
   endtask
 
   task automatic test_directed_backpressure();
@@ -375,7 +358,7 @@ module br_amba_axil_timing_slice_tb;
     controls.num_reads = 1;
     controls.valid_gap_cycles = DirectedValidGapCycles;
     controls.max_stall_cycles = DirectedStallCycles;
-    run_scenario(controls, "directed backpressure");
+    run_timing_slice_test(controls);
   endtask
 
   task automatic test_multi_transaction_ordering();
@@ -386,7 +369,7 @@ module br_amba_axil_timing_slice_tb;
     controls.num_reads = NumTransactions;
     controls.valid_gap_cycles = RandomizedValidGapCycles;
     controls.max_stall_cycles = RandomizedStallCycles;
-    run_scenario(controls, "multi-transaction ordering");
+    run_timing_slice_test(controls);
   endtask
 
   initial begin

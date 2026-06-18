@@ -135,6 +135,19 @@ module br_amba_axi_timing_slice_monitor #(
     end
   endtask
 
+  task automatic check_valids_idle();
+    check(!target_awvalid, "target_awvalid asserted after monitor run");
+    check(!target_wvalid, "target_wvalid asserted after monitor run");
+    check(!target_arvalid, "target_arvalid asserted after monitor run");
+    check(!init_bvalid, "init_bvalid asserted after monitor run");
+    check(!init_rvalid, "init_rvalid asserted after monitor run");
+    check(!init_awvalid, "init_awvalid asserted after monitor run");
+    check(!init_wvalid, "init_wvalid asserted after monitor run");
+    check(!target_bvalid, "target_bvalid asserted after monitor run");
+    check(!init_arvalid, "init_arvalid asserted after monitor run");
+    check(!target_rvalid, "target_rvalid asserted after monitor run");
+  endtask
+
   function automatic axi_aw_t get_target_aw();
     get_target_aw.addr  = target_awaddr;
     get_target_aw.id    = target_awid;
@@ -303,6 +316,9 @@ module br_amba_axi_timing_slice_monitor #(
       monitor_channel(ChannelB, num_writes, "B");
       monitor_channel(ChannelR, num_reads, "R");
     join
+
+    repeat (2) @(posedge clk);
+    check_valids_idle();
   endtask
 
 endmodule : br_amba_axi_timing_slice_monitor
