@@ -55,6 +55,8 @@ module br_amba_axi_timing_slice_tb;
   logic clk;
   logic rst;
   logic driver_failed;
+  logic target_driver_failed;
+  logic initiator_driver_failed;
   logic monitor_failed;
 
   logic [AddrWidth-1:0] target_awaddr;
@@ -130,6 +132,8 @@ module br_amba_axi_timing_slice_tb;
   logic init_rlast;
   logic init_rvalid;
   logic init_rready;
+
+  assign driver_failed = target_driver_failed || initiator_driver_failed;
 
   br_test_driver #(
       .ResetCycles(5)
@@ -236,10 +240,8 @@ module br_amba_axi_timing_slice_tb;
       .AWUserWidth(AWUserWidth),
       .WUserWidth(WUserWidth),
       .ARUserWidth(ARUserWidth),
-      .BUserWidth(BUserWidth),
-      .RUserWidth(RUserWidth),
       .TimeoutCycles(TimeoutCycles)
-  ) axi_driver (
+  ) axi_target_driver (
       .clk,
       .rst,
       .target_awaddr,
@@ -270,6 +272,18 @@ module br_amba_axi_timing_slice_tb;
       .target_arready,
       .target_rvalid,
       .target_rready,
+      .failed(target_driver_failed)
+  );
+
+  br_amba_axi_timing_slice_initiator_driver #(
+      .DataWidth(DataWidth),
+      .IdWidth(IdWidth),
+      .BUserWidth(BUserWidth),
+      .RUserWidth(RUserWidth),
+      .TimeoutCycles(TimeoutCycles)
+  ) axi_initiator_driver (
+      .clk,
+      .rst,
       .init_awvalid,
       .init_awready,
       .init_wvalid,
@@ -288,7 +302,7 @@ module br_amba_axi_timing_slice_tb;
       .init_rlast,
       .init_rvalid,
       .init_rready,
-      .failed(driver_failed)
+      .failed(initiator_driver_failed)
   );
 
   br_amba_axi_timing_slice_monitor #(
@@ -379,63 +393,24 @@ module br_amba_axi_timing_slice_tb;
       .failed(monitor_failed)
   );
 
-  function automatic logic [255:0] payload_pattern(input int index, input int salt);
-    for (int word = 0; word < 8; word++) begin
-      payload_pattern[word*32+:32] = 32'((index + 1) * (salt + (word * 17)) ^
-                                         (PayloadSeed >> (word % 7)) ^
-                                         (32'h1020_4081 << (word % 5)));
-    end
-  endfunction
-
   function automatic axi_aw_t get_aw_input(input int index);
-    logic [255:0] payload;
-    payload = payload_pattern(index, 11);
-    get_aw_input.addr  = payload[AddrWidth-1:0];
-    get_aw_input.id    = payload[32+:IdWidth];
-    get_aw_input.len   = AxiBurstLenWidth'(index);
-    get_aw_input.size  = AxiBurstSizeWidth'($clog2(StrobeWidth));
-    get_aw_input.burst = AxiBurstIncr;
-    get_aw_input.prot  = payload[64+:AxiProtWidth];
-    get_aw_input.user  = payload[96+:AWUserWidth];
+    get_aw_input = get_axi_timing_slice_aw_input(index, StrobeWidth, PayloadSeed);
   endfunction
 
   function automatic axi_w_t get_w_input(input int index);
-    logic [255:0] payload;
-    payload = payload_pattern(index, 23);
-    get_w_input.data = payload[DataWidth-1:0];
-    get_w_input.strb = StrobeWidth'(payload[128+:StrobeWidth]) | StrobeWidth'(1'b1);
-    get_w_input.user = payload[160+:WUserWidth];
-    get_w_input.last = index[0];
+    get_w_input = get_axi_timing_slice_w_input(index, PayloadSeed);
   endfunction
 
   function automatic axi_ar_t get_ar_input(input int index);
-    logic [255:0] payload;
-    payload = payload_pattern(index, 37);
-    get_ar_input.addr  = payload[AddrWidth-1:0];
-    get_ar_input.id    = payload[32+:IdWidth];
-    get_ar_input.len   = AxiBurstLenWidth'(index + 1);
-    get_ar_input.size  = AxiBurstSizeWidth'($clog2(StrobeWidth));
-    get_ar_input.burst = AxiBurstWrap;
-    get_ar_input.prot  = payload[64+:AxiProtWidth];
-    get_ar_input.user  = payload[96+:ARUserWidth];
+    get_ar_input = get_axi_timing_slice_ar_input(index, StrobeWidth, PayloadSeed);
   endfunction
 
   function automatic axi_b_t get_b_input(input int index);
-    logic [255:0] payload;
-    payload = payload_pattern(index, 47);
-    get_b_input.id = payload[IdWidth-1:0];
-    get_b_input.user = payload[32+:BUserWidth];
-    get_b_input.resp = AxiRespWidth'(index);
+    get_b_input = get_axi_timing_slice_b_input(index, PayloadSeed);
   endfunction
 
   function automatic axi_r_t get_r_input(input int index);
-    logic [255:0] payload;
-    payload = payload_pattern(index, 59);
-    get_r_input.id = payload[IdWidth-1:0];
-    get_r_input.data = payload[DataWidth-1:0];
-    get_r_input.resp = AxiRespWidth'(index + 1);
-    get_r_input.user = payload[160+:RUserWidth];
-    get_r_input.last = !index[0];
+    get_r_input = get_axi_timing_slice_r_input(index, PayloadSeed);
   endfunction
 
   task automatic run_timing_slice_test(input axi_timing_slice_controls_t controls);
@@ -451,7 +426,8 @@ module br_amba_axi_timing_slice_tb;
     b_input  = get_b_input(0);
     r_input  = get_r_input(0);
 
-    axi_driver.init_idle();
+    axi_target_driver.init_idle();
+    axi_initiator_driver.init_idle();
     axi_monitor.init_idle();
     td.reset_dut();
     td.wait_cycles();
@@ -463,8 +439,10 @@ module br_amba_axi_timing_slice_tb;
     td.check(!target_rvalid, "target_rvalid asserted after reset");
 
     fork
-      axi_driver.run(controls.num_writes, controls.num_reads, controls.valid_gap_cycles,
-                     controls.max_stall_cycles, aw_input, w_input, ar_input, b_input, r_input);
+      axi_target_driver.run(controls.num_writes, controls.num_reads, controls.valid_gap_cycles,
+                            controls.max_stall_cycles, aw_input, w_input, ar_input);
+      axi_initiator_driver.run(controls.num_writes, controls.num_reads, controls.valid_gap_cycles,
+                               controls.max_stall_cycles, b_input, r_input);
       axi_monitor.run(controls.num_writes, controls.num_reads);
     join
   endtask
@@ -492,7 +470,8 @@ module br_amba_axi_timing_slice_tb;
   endtask
 
   initial begin
-    axi_driver.init_idle();
+    axi_target_driver.init_idle();
+    axi_initiator_driver.init_idle();
     axi_monitor.init_idle();
 
     test_directed_backpressure();

@@ -48,11 +48,11 @@ verilog_library(
 )
 
 verilog_library(
-    name = "br_amba_axi_default_target_driver",
-    srcs = ["br_amba_axi_default_target_driver.sv"],
+    name = "br_amba_axi_target_driver",
+    srcs = ["br_amba_axi_target_driver.sv"],
     visibility = ["//visibility:public"],
     deps = [
-        "//amba/rtl:br_amba_pkg",
+        ":br_amba_axi_sim_pkg",
     ],
 )
 
@@ -71,5 +71,6 @@ verilog_library(
     visibility = ["//visibility:public"],
     deps = [
         ":br_amba_axi_sim_pkg",
+        ":br_amba_axi_target_driver",
     ],
 )

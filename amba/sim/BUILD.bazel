@@ -112,7 +112,8 @@ verilog_library(
     srcs = ["br_amba_axi_default_target_tb.sv"],
     deps = [
         "//amba/rtl:br_amba_axi_default_target",
-        "//amba/sim/drivers:br_amba_axi_default_target_driver",
+        "//amba/sim/drivers:br_amba_axi_sim_pkg",
+        "//amba/sim/drivers:br_amba_axi_target_driver",
         "//amba/sim/monitors:br_amba_axi_default_target_monitor",
         "//misc/sim:br_test_driver",
     ],
