@@ -22,6 +22,56 @@ verilog_elab_test(
 )
 
 verilog_library(
+    name = "br_fifo_ctrl_1r1w_tb",
+    srcs = ["br_fifo_ctrl_1r1w_tb.sv"],
+    deps = [
+        "//fifo/rtl:br_fifo_ctrl_1r1w",
+        "//misc/sim:br_test_driver",
+        "//ram/rtl:br_ram_flops",
+    ],
+)
+
+verilog_elab_test(
+    name = "br_fifo_ctrl_1r1w_tb_elab_test",
+    tool = "verific",
+    deps = [":br_fifo_ctrl_1r1w_tb"],
+)
+
+br_verilog_sim_test_tools_suite(
+    name = "br_fifo_ctrl_1r1w_sim_test_tools_suite",
+    params = {
+        "Depth": [
+            "4",
+            "13",
+        ],
+        "Width": ["8"],
+        "EnableBypass": [
+            "0",
+            "1",
+        ],
+        "RegisterPopOutputs": [
+            "0",
+            "1",
+        ],
+        "RamReadLatency": [
+            "0",
+            "1",
+            "2",
+        ],
+        "NumRandomTransactions": ["120"],
+        "RandomPushIdleMax": ["3"],
+        "RandomPopIdleMax": ["4"],
+    },
+    # TODO(mczyz): Re-enable Icarus if vvp supports this bench's fork/join_any
+    # timeout guards without crashing in of_JOIN_DETACH.
+    tools = [
+        "vcs",
+        "verilator",
+    ],
+    deps = [":br_fifo_ctrl_1r1w_tb"],
+)
+
+verilog_library(
     name = "br_fifo_flops_tb",
     srcs = ["br_fifo_flops_tb.sv"],
     deps = [
