@@ -17,7 +17,7 @@ verilog_library(
 
 verilog_elab_test(
     name = "br_amba_apb_timing_slice_tb_elab_test",
-    tool = "verific",
+    tool = "slang",
     deps = [":br_amba_apb_timing_slice_tb"],
 )
 
@@ -29,12 +29,9 @@ br_verilog_sim_test_tools_suite(
             "32",
         ],
     },
-    # TODO: Enable Icarus once it accepts AMBA package declarations such as
-    # `localparam int unsigned` in br_amba_pkg.sv.
     tools = [
         "vcs",
         "verilator",
-        #"iverilog",
     ],
     deps = [":br_amba_apb_timing_slice_tb"],
 )
@@ -147,7 +144,7 @@ verilog_library(
 
 verilog_elab_test(
     name = "br_amba_axil_default_target_tb_elab_test",
-    tool = "verific",
+    tool = "slang",
     deps = [":br_amba_axil_default_target_tb"],
 )
 
