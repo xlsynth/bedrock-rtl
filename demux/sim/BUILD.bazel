@@ -19,7 +19,7 @@ verilog_library(
 
 verilog_elab_test(
     name = "br_demux_tb_elab_test",
-    tool = "verific",
+    tool = "slang",
     deps = [":br_demux_tb"],
 )
 
@@ -39,7 +39,6 @@ br_verilog_sim_test_tools_suite(
         ],
     },
     tools = [
-        "iverilog",
         "vcs",
         "verilator",
     ],
