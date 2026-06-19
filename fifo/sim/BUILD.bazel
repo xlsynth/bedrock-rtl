@@ -72,6 +72,100 @@ br_verilog_sim_test_tools_suite(
 )
 
 verilog_library(
+    name = "br_fifo_ctrl_1r1w_push_credit_tb",
+    srcs = ["br_fifo_ctrl_1r1w_push_credit_tb.sv"],
+    deps = [
+        "//credit/rtl:br_credit_sender",
+        "//delay/rtl:br_delay_nr",
+        "//fifo/rtl:br_fifo_ctrl_1r1w_push_credit",
+        "//misc/sim:br_test_driver",
+        "//ram/rtl:br_ram_flops",
+    ],
+)
+
+verilog_elab_test(
+    name = "br_fifo_ctrl_1r1w_push_credit_tb_elab_test",
+    tool = "verific",
+    deps = [":br_fifo_ctrl_1r1w_push_credit_tb"],
+)
+
+br_verilog_sim_test_tools_suite(
+    name = "br_fifo_ctrl_1r1w_push_credit_sim_test_tools_suite",
+    params = {
+        # Keep this sweep representative because the parameter matrix is
+        # Cartesian. Depth=3 is the smallest value legal with nonzero RAM read
+        # latency, and 13 is the existing odd default.
+        "Depth": [
+            "3",
+            "13",
+        ],
+        # Width covers min width and an odd non-byte-aligned wider datapath.
+        "Width": [
+            "1",
+            "17",
+        ],
+        "EnableBypass": [
+            "0",
+            "1",
+        ],
+        "RegisterPushOutputs": [
+            "0",
+            "1",
+        ],
+        "RegisterPopOutputs": [
+            "0",
+            "1",
+        ],
+        "RamReadLatency": [
+            "0",
+            "1",
+        ],
+        "NumRandomTransactions": ["120"],
+        "RandomPushIdleMax": ["3"],
+        "RandomPopIdleMax": ["4"],
+    },
+    tools = [
+        "vcs",
+        "verilator",
+    ],
+    deps = [":br_fifo_ctrl_1r1w_push_credit_tb"],
+)
+
+br_verilog_sim_test_tools_suite(
+    name = "br_fifo_ctrl_1r1w_push_credit_min_depth_sim_test_tools_suite",
+    params = {
+        # Depth=2 is the DUT minimum, but only legal here with zero RAM read
+        # latency once RegisterPopOutputs is swept in both states.
+        "Depth": ["2"],
+        "Width": [
+            "1",
+            "8",
+        ],
+        "EnableBypass": [
+            "0",
+            "1",
+        ],
+        "RegisterPushOutputs": [
+            "0",
+            "1",
+        ],
+        "RegisterPopOutputs": [
+            "0",
+            "1",
+        ],
+        "RamReadLatency": ["0"],
+        "NumRandomTransactions": ["120"],
+        "RandomPushIdleMax": ["3"],
+        "RandomPopIdleMax": ["4"],
+    },
+    tools = [
+        "vcs",
+        "verilator",
+    ],
+    deps = [":br_fifo_ctrl_1r1w_push_credit_tb"],
+)
+
+verilog_library(
     name = "br_fifo_flops_tb",
     srcs = ["br_fifo_flops_tb.sv"],
     deps = [
