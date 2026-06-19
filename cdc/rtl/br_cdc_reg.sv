@@ -35,6 +35,10 @@ module br_cdc_reg #(
     // If 0, disable backpressure coverage. By default, this also
     // asserts that backpressure is impossible.
     parameter bit EnableCoverPushBackpressure = 1,
+    // If 1, cover that the pop side experiences backpressure.
+    // If 0, disable backpressure coverage. By default, this also
+    // asserts that backpressure is impossible.
+    parameter bit EnableCoverPopBackpressure = 1,
     // If 1, assert that push_valid is stable when backpressured.
     parameter bit EnableAssertPushValidStability = EnableCoverPushBackpressure,
     // If 1, assert that push_data is stable when backpressured.
@@ -46,7 +50,10 @@ module br_cdc_reg #(
     parameter bit EnableAssertFinalNotValid = 1,
     // If 1, assert that push-side backpressure is impossible.
     // Can only be enabled if EnableCoverPushBackpressure is disabled.
-    parameter bit EnableAssertNoPushBackpressure = !EnableCoverPushBackpressure
+    parameter bit EnableAssertNoPushBackpressure = !EnableCoverPushBackpressure,
+    // If 1, assert that pop-side backpressure is impossible.
+    // Can only be enabled if EnableCoverPopBackpressure is disabled.
+    parameter bit EnableAssertNoPopBackpressure = !EnableCoverPopBackpressure
 ) (
     // Push-side interface
     input  logic             push_clk,
@@ -104,7 +111,9 @@ module br_cdc_reg #(
   br_cdc_reg_pop #(
       .Width(Width),
       .RegisterPopOutputs(RegisterPopOutputs),
-      .RegisterResetActive(RegisterResetActive)
+      .RegisterResetActive(RegisterResetActive),
+      .EnableCoverPopBackpressure(EnableCoverPopBackpressure),
+      .EnableAssertNoPopBackpressure(EnableAssertNoPopBackpressure)
   ) br_cdc_reg_pop (
       .clk(pop_clk),  // ri lint_check_waive SAME_CLOCK_NAME
       .rst(pop_rst),

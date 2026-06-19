@@ -7,31 +7,40 @@ load("//bazel:verilog.bzl", "verilog_elab_test")
 package(default_visibility = ["//visibility:private"])
 
 verilog_library(
-    name = "br_multi_xfer_reg_fwd_tb",
-    srcs = ["br_multi_xfer_reg_fwd_tb.sv"],
+    name = "br_demux_tb",
+    srcs = ["br_demux_tb.sv"],
     deps = [
+        "//demux/rtl:br_demux_bin",
+        "//demux/rtl:br_demux_onehot",
         "//misc/sim:br_test_driver",
-        "//multi_xfer/rtl:br_multi_xfer_reg_fwd",
+        "//pkg:br_math_pkg",
     ],
 )
 
 verilog_elab_test(
-    name = "br_multi_xfer_reg_fwd_tb_elab_test",
+    name = "br_demux_tb_elab_test",
     tool = "slang",
-    deps = [":br_multi_xfer_reg_fwd_tb"],
+    deps = [":br_demux_tb"],
 )
 
 br_verilog_sim_test_tools_suite(
-    name = "br_multi_xfer_reg_fwd_sim_test_tools_suite",
+    name = "br_demux_sim_test_tools_suite",
     params = {
-        "NumSymbols": [
+        "NumSymbolsOut": [
+            "1",
             "2",
+            "3",
             "4",
+            "7",
+        ],
+        "SymbolWidth": [
+            "1",
+            "8",
         ],
     },
     tools = [
         "vcs",
         "verilator",
     ],
-    deps = [":br_multi_xfer_reg_fwd_tb"],
+    deps = [":br_demux_tb"],
 )

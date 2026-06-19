@@ -43,8 +43,7 @@ def add_common_args(parser: argparse.ArgumentParser) -> None:
     parser.add_argument(
         "--top",
         type=str,
-        required=True,
-        help="Top module",
+        help="Top module. May be omitted for compile-only elaboration.",
     )
     parser.add_argument(
         "--hdr",
@@ -143,6 +142,14 @@ def parse_params(parser: argparse.ArgumentParser, params: List[str]) -> Dict[str
     return params_dict
 
 
+def validate_top(parser: argparse.ArgumentParser, args: argparse.Namespace) -> None:
+    """Validates that a top is present unless the command is compile-only elaboration."""
+    if not args.top and not (
+        args.subcommand == Elab.name and getattr(args, "compile_only", False)
+    ):
+        parser.error("--top is required unless --compile_only is used with elab")
+
+
 def common_args(args: argparse.Namespace):
     def get_env_setup_command_file_from_env() -> str:
         import logging
@@ -211,7 +218,11 @@ class Elab(Subcommand):
 
     @staticmethod
     def add_args(parser: argparse.ArgumentParser) -> None:
-        pass
+        parser.add_argument(
+            "--compile_only",
+            action="store_true",
+            help="Compile and type-check sources without elaborating a top-level module.",
+        )
 
 
 class Lint(Subcommand):

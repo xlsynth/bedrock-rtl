@@ -17,7 +17,7 @@ verilog_library(
 
 verilog_elab_test(
     name = "br_csr_axil_widget_tb_elab_test",
-    tool = "verific",
+    tool = "slang",
     deps = [":br_csr_axil_widget_tb"],
 )
 
@@ -53,7 +53,7 @@ verilog_library(
 
 verilog_elab_test(
     name = "br_csr_demux_tb_elab_test",
-    tool = "verific",
+    tool = "slang",
     deps = [":br_csr_demux_tb"],
 )
 
@@ -90,7 +90,7 @@ verilog_library(
 
 verilog_elab_test(
     name = "br_csr_mem_interface_tb_elab_test",
-    tool = "verific",
+    tool = "slang",
     deps = [":br_csr_mem_interface_tb"],
 )
 

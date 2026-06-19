@@ -38,7 +38,7 @@ verilog_elab_test(
         "AdvanceSteps": "6",
         "Width": "3",
     },
-    tool = "verific",
+    tool = "slang",
     deps = [":br_lfsr"],
 )
 
@@ -49,7 +49,8 @@ verilog_library(
 
 verilog_elab_test(
     name = "br_lfsr_taps_elab_test",
+    compile_only = True,
     defines = ["BR_ASSERT_ON"],
-    tool = "verific",
+    tool = "slang",
     deps = [":br_lfsr_taps"],
 )
