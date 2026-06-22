@@ -330,3 +330,46 @@ br_verilog_sim_test_tools_suite(
     ],
     deps = [":br_amba_axil_default_target_tb"],
 )
+
+verilog_library(
+    name = "br_amba_atb_funnel_tb",
+    srcs = ["br_amba_atb_funnel_tb.sv"],
+    deps = [
+        "//amba/rtl:br_amba_atb_funnel",
+        "//misc/sim:br_test_driver",
+    ],
+)
+
+verilog_elab_test(
+    name = "br_amba_atb_funnel_tb_elab_test",
+    tool = "slang",
+    deps = [":br_amba_atb_funnel_tb"],
+)
+
+br_verilog_sim_test_tools_suite(
+    name = "br_amba_atb_funnel_sim_test_tools_suite",
+    params = {
+        "DataWidth": [
+            "32",
+            "64",
+        ],
+        "NumSources": [
+            "2",
+            "4",
+            "17",
+        ],
+        "RegisterAtReady": [
+            "0",
+            "1",
+        ],
+        "UserWidth": [
+            "1",
+            "3",
+        ],
+    },
+    tools = [
+        "vcs",
+        "verilator",
+    ],
+    deps = [":br_amba_atb_funnel_tb"],
+)
