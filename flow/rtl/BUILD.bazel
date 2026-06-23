@@ -62,9 +62,7 @@ verilog_library(
     name = "br_flow_fork",
     srcs = ["br_flow_fork.sv"],
     deps = [
-        "//flow/rtl/internal:br_flow_checks_valid_data_impl",
-        "//flow/rtl/internal:br_flow_checks_valid_data_intg",
-        "//macros:br_asserts_internal",
+        ":br_flow_fork_select_multihot",
     ],
 )
 
@@ -81,6 +79,16 @@ verilog_library(
 verilog_library(
     name = "br_flow_join",
     srcs = ["br_flow_join.sv"],
+    deps = [
+        "//flow/rtl/internal:br_flow_checks_valid_data_impl",
+        "//flow/rtl/internal:br_flow_checks_valid_data_intg",
+        "//macros:br_asserts_internal",
+    ],
+)
+
+verilog_library(
+    name = "br_flow_valve",
+    srcs = ["br_flow_valve.sv"],
     deps = [
         "//flow/rtl/internal:br_flow_checks_valid_data_impl",
         "//flow/rtl/internal:br_flow_checks_valid_data_intg",
@@ -450,6 +458,18 @@ br_verilog_elab_and_lint_test_suite(
         ],
     },
     deps = [":br_flow_join"],
+)
+
+br_verilog_elab_and_lint_test_suite(
+    name = "br_flow_valve_test_suite",
+    params = {
+        "NumFlows": [
+            "1",
+            "2",
+            "3",
+        ],
+    },
+    deps = [":br_flow_valve"],
 )
 
 br_verilog_elab_and_lint_test_suite(

@@ -34,11 +34,18 @@ module br_flow_reg_fwd #(
     parameter bit EnableAssertPushDataStability = EnableAssertPushValidStability,
     // If 1, assert that push_data is always known (not X) when push_valid is asserted.
     parameter bit EnableAssertPushDataKnown = 1,
+    // If 1, cover that the pop side experiences backpressure.
+    // If 0, disable backpressure coverage. By default, this also
+    // asserts that backpressure is impossible.
+    parameter bit EnableCoverPopBackpressure = 1,
     // If 1, then assert there are no valid bits asserted at the end of the test.
     parameter bit EnableAssertFinalNotValid = 1,
     // If 1, assert that push-side backpressure is impossible.
     // Can only be enabled if EnableCoverPushBackpressure is disabled.
-    parameter bit EnableAssertNoPushBackpressure = !EnableCoverPushBackpressure
+    parameter bit EnableAssertNoPushBackpressure = !EnableCoverPushBackpressure,
+    // If 1, assert that pop-side backpressure is impossible.
+    // Can only be enabled if EnableCoverPopBackpressure is disabled.
+    parameter bit EnableAssertNoPopBackpressure = !EnableCoverPopBackpressure
 ) (
     input logic clk,
     input logic rst,  // Synchronous active-high
@@ -57,6 +64,8 @@ module br_flow_reg_fwd #(
   //------------------------------------------
   `BR_ASSERT_STATIC(legal_assert_no_push_backpressure_a,
                     !(EnableAssertNoPushBackpressure && EnableCoverPushBackpressure))
+  `BR_ASSERT_STATIC(legal_assert_no_pop_backpressure_a,
+                    !(EnableAssertNoPopBackpressure && EnableCoverPopBackpressure))
   `BR_ASSERT_STATIC(bit_width_must_be_at_least_one_a, Width >= 1)
 
   br_flow_checks_valid_data_intg #(
@@ -101,9 +110,10 @@ module br_flow_reg_fwd #(
   br_flow_checks_valid_data_impl #(
       .NumFlows(1),
       .Width(Width),
-      .EnableCoverBackpressure(1),
-      .EnableAssertValidStability(1),
-      .EnableAssertDataStability(1),
+      .EnableCoverBackpressure(EnableCoverPopBackpressure),
+      .EnableAssertNoBackpressure(EnableAssertNoPopBackpressure),
+      .EnableAssertValidStability(EnableCoverPopBackpressure),
+      .EnableAssertDataStability(EnableCoverPopBackpressure),
       .EnableAssertFinalNotValid(EnableAssertFinalNotValid)
   ) br_flow_checks_valid_data_impl (
       .clk,

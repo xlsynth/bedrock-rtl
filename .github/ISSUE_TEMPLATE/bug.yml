@@ -1,0 +1,72 @@
+name: Bug report
+description: Report a bug in Bedrock-RTL
+title: "[Bug]: "
+labels:
+  - bug
+body:
+  - type: markdown
+    attributes:
+      value: |
+        > [!IMPORTANT]
+        > Do not use this form to report security vulnerabilities. Follow the
+        > reporting instructions in
+        > [SECURITY.md](https://github.com/xlsynth/bedrock-rtl/security/policy)
+        > instead.
+
+  - type: textarea
+    id: symptom
+    attributes:
+      label: Symptom
+      description: |
+        Describe the observed behavior and why it is incorrect. Include the
+        affected files, modules, or targets and any relevant error messages.
+    validations:
+      required: true
+
+  - type: dropdown
+    id: kind
+    attributes:
+      label: Kind
+      description: Select the area in which the bug occurs.
+      options:
+        - RTL
+        - Formal TB
+        - Simulation TB
+        - Infrastructure
+        - Uncategorized
+    validations:
+      required: true
+
+  - type: textarea
+    id: instructions-to-reproduce
+    attributes:
+      label: Instructions to Reproduce
+      description: |
+        Provide the exact commands, parameters, branch or commit, and any
+        minimal test or property needed to reproduce the symptom.
+      placeholder: |
+        1. Check out branch or commit ...
+        2. Run `bazel test //path/to:target --test_output=errors`
+        3. Observe ...
+    validations:
+      required: true
+
+  - type: textarea
+    id: root-cause-analysis
+    attributes:
+      label: Root Cause Analysis
+      description: Optional. Explain the condition and implementation behavior that cause the bug.
+
+  - type: textarea
+    id: recommended-fix
+    attributes:
+      label: Recommended Fix
+      description: Optional. Describe a likely fix and any verification coverage that should be added.
+
+  - type: textarea
+    id: first-known-bad-commit
+    attributes:
+      label: First Known Bad Commit
+      description: |
+        Optional. Provide the commit SHA, date, subject, and how the regression
+        point was identified.

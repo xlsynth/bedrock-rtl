@@ -17,7 +17,7 @@ verilog_library(
 
 verilog_elab_test(
     name = "br_tracker_freelist_tb_elab_test",
-    tool = "verific",
+    tool = "slang",
     deps = [":br_tracker_freelist_tb"],
 )
 
@@ -45,7 +45,6 @@ br_verilog_sim_test_tools_suite(
             "1",
         ],
     },
-    # TODO: iverilog does not work
     # TODO(mgottscho): Enable Verilator once this suite no longer fails due to
     # `final_allocated_initial_a` and allocation-timeout failures seen when
     # `NumDeallocPorts=1`.
@@ -68,7 +67,7 @@ verilog_library(
 
 verilog_elab_test(
     name = "br_tracker_linked_list_ctrl_tb_elab_test",
-    tool = "verific",
+    tool = "slang",
     deps = [":br_tracker_linked_list_ctrl_tb"],
 )
 
@@ -94,7 +93,6 @@ br_verilog_sim_test_tools_suite(
         ],
     },
     tools = [
-        "iverilog",
         "vcs",
         "verilator",
     ],
@@ -109,7 +107,7 @@ verilog_library(
 
 verilog_elab_test(
     name = "br_tracker_reorder_buffer_flops_tb_elab_test",
-    tool = "verific",
+    tool = "slang",
     deps = [":br_tracker_reorder_buffer_flops_tb"],
 )
 

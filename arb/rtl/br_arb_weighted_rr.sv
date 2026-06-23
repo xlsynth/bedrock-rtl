@@ -52,8 +52,12 @@ module br_arb_weighted_rr #(
     parameter int MaxWeight = 1,
     // Maximum accumulated weight per requester. Must be at least MaxWeight.
     parameter int MaxAccumulatedWeight = MaxWeight,
-    localparam int WeightWidth = $clog2(MaxWeight + 1),
-    localparam int AccumulatedWeightWidth = $clog2(MaxAccumulatedWeight + 1)
+    // If 1, use pairwise grant selection instead of unrolled grant selection. Pairwise grant
+    // selection can provide better PPA for small requester counts, but its O(N^2) priority
+    // matrix scales worse than the unrolled implementation as the requester count grows.
+    // The two implementations are functionally equivalent.
+    parameter bit UsePairwiseArb = 0,
+    localparam int WeightWidth = $clog2(MaxWeight + 1)
 ) (
     // ri lint_check_waive INPUT_NOT_READ
     input logic clk,
@@ -87,65 +91,91 @@ module br_arb_weighted_rr #(
     `BR_UNUSED(request_weight)
     assign grant = request;
 
-  end else begin : gen_any_higher_pri_req
+  end else begin : gen_n_req
 
-    // Arbitrate, prioritizing requests with
-    // non-zero accumulated weight
+    // Arbitrate, prioritizing requests with non-zero accumulated weight.
     logic [NumRequesters-1:0] request_priority;
 
-    br_arb_pri_rr #(
+    if (UsePairwiseArb) begin : gen_pairwise_arb
+      logic [NumRequesters-1:0] priority_mask;
+      logic [NumRequesters-1:0][NumRequesters-1:0] rr_priority;
+      logic [NumRequesters-1:0][NumRequesters-1:0] higher_priority;
+
+      br_rr_state_internal #(
+          .NumRequesters(NumRequesters)
+      ) br_rr_state_internal (
+          .clk,
+          .rst,
+          .update_priority(enable_priority_update && |request),
+          .grant,
+          .last_grant(),
+          .priority_mask
+      );
+
+      // Build a pairwise RR priority matrix from the shared priority mask, then
+      // fold weighted priority into it. rr_priority[i][j] means requester i has
+      // higher RR priority than requester j.
+      for (genvar i = 0; i < NumRequesters; i++) begin : gen_priority_row
+        for (genvar j = 0; j < NumRequesters; j++) begin : gen_priority_col
+          if (i != j) begin : gen_off_diag
+            assign rr_priority[i][j] =
+                (priority_mask[i] == priority_mask[j]) ? (i < j) : !priority_mask[i];
+            assign higher_priority[i][j] =
+                (request_priority[i] == request_priority[j]) ? rr_priority[i][j] :
+                                                               request_priority[i];
+          end else begin : gen_diag
+            assign {rr_priority[i][j], higher_priority[i][j]} = '0;
+            `BR_UNUSED_NAMED(priorities, {rr_priority[i][j], higher_priority[i][j]})
+          end
+        end
+      end
+
+      br_arb_pairwise_core_internal #(
+          .NumRequesters(NumRequesters)
+      ) br_arb_pairwise_core_internal (
+          .request,
+          .priority_matrix(higher_priority),
+          .can_grant(),
+          .grant
+      );
+
+      `BR_ASSERT_IMPL(disable_priority_update_A, !enable_priority_update |=> $stable(priority_mask))
+      `BR_ASSERT_IMPL(high_priority_grant_A,
+                      |(request & request_priority) |-> |(grant & request_priority))
+      `BR_ASSERT_IMPL(grant_onehot0_A, $onehot0(grant))
+      `BR_ASSERT_IMPL(always_grant_A, |request |-> |grant)
+      `BR_ASSERT_IMPL(grant_implies_request_A, (grant & request) == grant)
+      `BR_COVER_IMPL(grant_without_state_update_C, !enable_priority_update && |grant)
+    end else begin : gen_unrolled_arb
+      br_arb_pri_rr #(
+          .NumRequesters(NumRequesters),
+          .NumPriorities(2)
+      ) br_arb_pri_rr_inst (
+          .clk,
+          .rst,
+          .enable_priority_update,
+          .request,
+          .request_priority,
+          .grant
+      );
+    end
+
+    br_arb_weight_handler #(
         .NumRequesters(NumRequesters),
-        .NumPriorities(2)
-    ) br_arb_pri_rr_inst (
+        .MaxWeight(MaxWeight),
+        .MaxAccumulatedWeight(MaxAccumulatedWeight)
+    ) br_arb_weight_handler (
         .clk,
         .rst,
         .enable_priority_update,
         .request,
-        .request_priority,
-        .grant
+        .request_weight,
+        .grant,
+        .request_priority
     );
-
-    // Track per-request accumulated weight
-    logic any_high_priority_request;
-    logic incr_accumulated_weight;
-    logic [NumRequesters-1:0] decr_accumulated_weight;
-    assign any_high_priority_request = |(request & request_priority);
-    assign incr_accumulated_weight = enable_priority_update &&
-        |request && !any_high_priority_request;
-    assign decr_accumulated_weight = enable_priority_update ? grant : '0;
-
-    logic [NumRequesters-1:0][AccumulatedWeightWidth-1:0] accumulated_weight;
-
-    for (genvar i = 0; i < NumRequesters; i++) begin : gen_accumulated_weight
-      br_counter #(
-          .MaxValue(MaxAccumulatedWeight),
-          .MaxChange(MaxWeight),
-          .MaxDecrement(1),
-          .EnableSaturate(1),
-          .EnableWrap(0),
-          .EnableCoverZeroChange(0),
-          .EnableCoverReinit(0),
-          .EnableAssertFinalInitialValue(0)
-      ) br_counter (
-          .clk,
-          .rst,
-          .reinit(1'b0),
-          .initial_value({AccumulatedWeightWidth{1'b0}}),
-          .incr_valid(incr_accumulated_weight),
-          .incr(request_weight[i]),
-          .decr_valid(decr_accumulated_weight[i]),
-          .decr(WeightWidth'(1'b1)),
-          .value(accumulated_weight[i]),
-          .value_next()
-      );
-
-      assign request_priority[i] = |accumulated_weight[i];
-    end
-
-    `BR_ASSERT_IMPL(disable_priority_update_A,
-                    !enable_priority_update |=> $stable(accumulated_weight))
   end
 
   `BR_ASSERT_IMPL(no_update_same_grants_A, ##1 !$past(enable_priority_update) && $stable(request)
                                            |-> $stable(grant))
-endmodule
+
+endmodule : br_arb_weighted_rr

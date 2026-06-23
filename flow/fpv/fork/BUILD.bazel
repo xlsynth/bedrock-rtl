@@ -18,7 +18,7 @@ verilog_library(
 
 verilog_elab_test(
     name = "br_flow_fork_fpv_monitor_elab_test",
-    tool = "verific",
+    tool = "slang",
     deps = [":br_flow_fork_fpv_monitor"],
 )
 
@@ -55,7 +55,7 @@ verilog_library(
 
 verilog_elab_test(
     name = "br_flow_fork_select_multihot_fpv_monitor_elab_test",
-    tool = "verific",
+    tool = "slang",
     deps = [":br_flow_fork_select_multihot_fpv_monitor"],
 )
 

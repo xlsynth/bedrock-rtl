@@ -10,7 +10,7 @@ import sys
 
 sys.path.insert(0, os.path.dirname(__file__))
 
-from cli import Elab, Lint, Sim, Fpv, add_common_args, parse_params
+from cli import Elab, Lint, Sim, Fpv, add_common_args, parse_params, validate_top
 from plugins import discover_plugins
 from util import print_greeting, init_root_logger
 
@@ -88,6 +88,7 @@ def main():
 
     logging.info("Parsing command line arguments...")
     args = parser.parse_args()
+    validate_top(parser, args)
 
     if len(args.opt) > 0 and not args.tool:
         raise ValueError(

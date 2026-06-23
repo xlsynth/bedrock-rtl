@@ -31,7 +31,7 @@ verilog_library(
 
 verilog_elab_test(
     name = "br_flow_mux_fixed_fpv_monitor_elab_test",
-    tool = "verific",
+    tool = "slang",
     deps = [":br_flow_mux_fixed_fpv_monitor"],
 )
 
@@ -94,8 +94,8 @@ verilog_library(
 
 verilog_elab_test(
     name = "br_flow_burst_mux_fixed_fpv_monitor_elab_test",
-    custom_tcl_header = "//:elab_test_jg_custom_header.verific.tcl",
-    tool = "verific",
+    opts = ["--ignore-unknown-modules"],
+    tool = "slang",
     deps = [":br_flow_burst_mux_fixed_fpv_monitor"],
 )
 
@@ -159,8 +159,8 @@ verilog_library(
 
 verilog_elab_test(
     name = "br_flow_mux_lru_fpv_monitor_elab_test",
-    custom_tcl_header = "//:elab_test_jg_custom_header.verific.tcl",
-    tool = "verific",
+    opts = ["--ignore-unknown-modules"],
+    tool = "slang",
     deps = [":br_flow_mux_lru_fpv_monitor"],
 )
 
@@ -224,8 +224,8 @@ verilog_library(
 
 verilog_elab_test(
     name = "br_flow_burst_mux_lru_fpv_monitor_elab_test",
-    custom_tcl_header = "//:elab_test_jg_custom_header.verific.tcl",
-    tool = "verific",
+    opts = ["--ignore-unknown-modules"],
+    tool = "slang",
     deps = [":br_flow_burst_mux_lru_fpv_monitor"],
 )
 
@@ -289,8 +289,8 @@ verilog_library(
 
 verilog_elab_test(
     name = "br_flow_mux_rr_fpv_monitor_elab_test",
-    custom_tcl_header = "//:elab_test_jg_custom_header.verific.tcl",
-    tool = "verific",
+    opts = ["--ignore-unknown-modules"],
+    tool = "slang",
     deps = [":br_flow_mux_rr_fpv_monitor"],
 )
 
@@ -354,8 +354,8 @@ verilog_library(
 
 verilog_elab_test(
     name = "br_flow_burst_mux_rr_fpv_monitor_elab_test",
-    custom_tcl_header = "//:elab_test_jg_custom_header.verific.tcl",
-    tool = "verific",
+    opts = ["--ignore-unknown-modules"],
+    tool = "slang",
     deps = [":br_flow_burst_mux_rr_fpv_monitor"],
 )
 
@@ -418,7 +418,7 @@ verilog_library(
 
 verilog_elab_test(
     name = "br_flow_mux_select_unstable_fpv_monitor_elab_test",
-    tool = "verific",
+    tool = "slang",
     deps = [":br_flow_mux_select_unstable_fpv_monitor"],
 )
 
@@ -492,7 +492,7 @@ verilog_library(
 
 verilog_elab_test(
     name = "br_flow_mux_select_fpv_monitor_elab_test",
-    tool = "verific",
+    tool = "slang",
     deps = [":br_flow_mux_select_fpv_monitor"],
 )
 
@@ -566,7 +566,7 @@ verilog_library(
 
 verilog_elab_test(
     name = "br_flow_mux_fixed_stable_fpv_monitor_elab_test",
-    tool = "verific",
+    tool = "slang",
     deps = [":br_flow_mux_fixed_stable_fpv_monitor"],
 )
 
@@ -633,8 +633,8 @@ verilog_library(
 
 verilog_elab_test(
     name = "br_flow_burst_mux_fixed_stable_fpv_monitor_elab_test",
-    custom_tcl_header = "//:elab_test_jg_custom_header.verific.tcl",
-    tool = "verific",
+    opts = ["--ignore-unknown-modules"],
+    tool = "slang",
     deps = [":br_flow_burst_mux_fixed_stable_fpv_monitor"],
 )
 
@@ -702,8 +702,8 @@ verilog_library(
 
 verilog_elab_test(
     name = "br_flow_mux_lru_stable_fpv_monitor_elab_test",
-    custom_tcl_header = "//:elab_test_jg_custom_header.verific.tcl",
-    tool = "verific",
+    opts = ["--ignore-unknown-modules"],
+    tool = "slang",
     deps = [":br_flow_mux_lru_stable_fpv_monitor"],
 )
 
@@ -771,8 +771,8 @@ verilog_library(
 
 verilog_elab_test(
     name = "br_flow_burst_mux_lru_stable_fpv_monitor_elab_test",
-    custom_tcl_header = "//:elab_test_jg_custom_header.verific.tcl",
-    tool = "verific",
+    opts = ["--ignore-unknown-modules"],
+    tool = "slang",
     deps = [":br_flow_burst_mux_lru_stable_fpv_monitor"],
 )
 
@@ -840,8 +840,8 @@ verilog_library(
 
 verilog_elab_test(
     name = "br_flow_mux_rr_stable_fpv_monitor_elab_test",
-    custom_tcl_header = "//:elab_test_jg_custom_header.verific.tcl",
-    tool = "verific",
+    opts = ["--ignore-unknown-modules"],
+    tool = "slang",
     deps = [":br_flow_mux_rr_stable_fpv_monitor"],
 )
 
@@ -909,8 +909,8 @@ verilog_library(
 
 verilog_elab_test(
     name = "br_flow_burst_mux_rr_stable_fpv_monitor_elab_test",
-    custom_tcl_header = "//:elab_test_jg_custom_header.verific.tcl",
-    tool = "verific",
+    opts = ["--ignore-unknown-modules"],
+    tool = "slang",
     deps = [":br_flow_burst_mux_rr_stable_fpv_monitor"],
 )
 

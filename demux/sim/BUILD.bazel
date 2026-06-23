@@ -1,0 +1,46 @@
+# SPDX-License-Identifier: Apache-2.0
+
+load("@rules_hdl//verilog:providers.bzl", "verilog_library")
+load("//bazel:br_verilog.bzl", "br_verilog_sim_test_tools_suite")
+load("//bazel:verilog.bzl", "verilog_elab_test")
+
+package(default_visibility = ["//visibility:private"])
+
+verilog_library(
+    name = "br_demux_tb",
+    srcs = ["br_demux_tb.sv"],
+    deps = [
+        "//demux/rtl:br_demux_bin",
+        "//demux/rtl:br_demux_onehot",
+        "//misc/sim:br_test_driver",
+        "//pkg:br_math_pkg",
+    ],
+)
+
+verilog_elab_test(
+    name = "br_demux_tb_elab_test",
+    tool = "slang",
+    deps = [":br_demux_tb"],
+)
+
+br_verilog_sim_test_tools_suite(
+    name = "br_demux_sim_test_tools_suite",
+    params = {
+        "NumSymbolsOut": [
+            "1",
+            "2",
+            "3",
+            "4",
+            "7",
+        ],
+        "SymbolWidth": [
+            "1",
+            "8",
+        ],
+    },
+    tools = [
+        "vcs",
+        "verilator",
+    ],
+    deps = [":br_demux_tb"],
+)

@@ -17,7 +17,7 @@ verilog_library(
 
 verilog_elab_test(
     name = "br_flow_test_driver_elab_test",
-    tool = "verific",
+    tool = "slang",
     deps = [":br_flow_test_driver"],
 )
 
@@ -32,7 +32,7 @@ verilog_library(
 
 verilog_elab_test(
     name = "br_flow_test_sink_elab_test",
-    tool = "verific",
+    tool = "slang",
     deps = [":br_flow_test_sink"],
 )
 
@@ -56,7 +56,6 @@ _FLOW_REG_SIM_PARAMS = {
 }
 
 _FLOW_REG_SIM_TOOLS = [
-    "iverilog",
     "vcs",
     "verilator",
 ]
@@ -69,7 +68,7 @@ verilog_library(
 
 verilog_elab_test(
     name = "br_flow_reg_fwd_tb_elab_test",
-    tool = "verific",
+    tool = "slang",
     top = "br_flow_reg_fwd_tb",
     deps = [":br_flow_reg_tb"],
 )
@@ -84,7 +83,7 @@ br_verilog_sim_test_tools_suite(
 
 verilog_elab_test(
     name = "br_flow_reg_rev_tb_elab_test",
-    tool = "verific",
+    tool = "slang",
     top = "br_flow_reg_rev_tb",
     deps = [":br_flow_reg_tb"],
 )
@@ -99,7 +98,7 @@ br_verilog_sim_test_tools_suite(
 
 verilog_elab_test(
     name = "br_flow_reg_none_tb_elab_test",
-    tool = "verific",
+    tool = "slang",
     top = "br_flow_reg_none_tb",
     deps = [":br_flow_reg_tb"],
 )
@@ -114,7 +113,7 @@ br_verilog_sim_test_tools_suite(
 
 verilog_elab_test(
     name = "br_flow_reg_both_tb_elab_test",
-    tool = "verific",
+    tool = "slang",
     top = "br_flow_reg_both_tb",
     deps = [":br_flow_reg_tb"],
 )
@@ -128,7 +127,6 @@ br_verilog_sim_test_tools_suite(
 )
 
 _FLOW_PRIMITIVE_SIM_TOOLS = [
-    "iverilog",
     "vcs",
     "verilator",
 ]
@@ -154,7 +152,7 @@ verilog_library(
 
 verilog_elab_test(
     name = "br_flow_fork_select_tb_elab_test",
-    tool = "verific",
+    tool = "slang",
     deps = [":br_flow_fork_select_tb"],
 )
 
@@ -182,7 +180,7 @@ verilog_library(
 
 verilog_elab_test(
     name = "br_flow_join_tb_elab_test",
-    tool = "verific",
+    tool = "slang",
     deps = [":br_flow_join_tb"],
 )
 
@@ -191,6 +189,28 @@ br_verilog_sim_test_tools_suite(
     params = _FLOW_NUM_FLOWS_SIM_PARAMS,
     tools = _FLOW_PRIMITIVE_SIM_TOOLS,
     deps = [":br_flow_join_tb"],
+)
+
+verilog_library(
+    name = "br_flow_valve_tb",
+    srcs = ["br_flow_valve_tb.sv"],
+    deps = [
+        "//flow/rtl:br_flow_valve",
+        "//misc/sim:br_test_driver",
+    ],
+)
+
+verilog_elab_test(
+    name = "br_flow_valve_tb_elab_test",
+    tool = "slang",
+    deps = [":br_flow_valve_tb"],
+)
+
+br_verilog_sim_test_tools_suite(
+    name = "br_flow_valve_sim_test_tools_suite",
+    params = _FLOW_NUM_FLOWS_SIM_PARAMS,
+    tools = _FLOW_PRIMITIVE_SIM_TOOLS,
+    deps = [":br_flow_valve_tb"],
 )
 
 verilog_library(
@@ -204,7 +224,7 @@ verilog_library(
 
 verilog_elab_test(
     name = "br_flow_mux_select_tb_elab_test",
-    tool = "verific",
+    tool = "slang",
     deps = [":br_flow_mux_select_tb"],
 )
 
@@ -226,7 +246,7 @@ verilog_library(
 
 verilog_elab_test(
     name = "br_flow_demux_select_tb_elab_test",
-    tool = "verific",
+    tool = "slang",
     deps = [":br_flow_demux_select_tb"],
 )
 
@@ -250,7 +270,7 @@ verilog_library(
 
 verilog_elab_test(
     name = "br_flow_buffer_tb_elab_test",
-    tool = "verific",
+    tool = "slang",
     deps = [":br_flow_buffer_tb"],
 )
 
@@ -266,7 +286,6 @@ br_verilog_sim_test_tools_suite(
         ],
     },
     tools = [
-        "iverilog",
         "vcs",
         "verilator",
     ],
@@ -288,7 +307,6 @@ br_verilog_sim_test_tools_suite(
         ],
     },
     tools = [
-        "iverilog",
         "vcs",
         "verilator",
     ],
@@ -307,7 +325,6 @@ br_verilog_sim_test_tools_suite(
         ],
     },
     tools = [
-        "iverilog",
         "vcs",
         "verilator",
     ],
@@ -332,7 +349,6 @@ br_verilog_sim_test_tools_suite(
         ],
     },
     tools = [
-        "iverilog",
         "vcs",
         "verilator",
     ],
@@ -354,7 +370,6 @@ br_verilog_sim_test_tools_suite(
         ],
     },
     tools = [
-        "iverilog",
         "vcs",
         "verilator",
     ],
@@ -372,7 +387,7 @@ verilog_library(
 
 verilog_elab_test(
     name = "br_flow_arb_fixed_tb_elab_test",
-    tool = "verific",
+    tool = "slang",
     deps = [":br_flow_arb_fixed_tb"],
 )
 
@@ -396,7 +411,7 @@ verilog_library(
 
 verilog_elab_test(
     name = "br_flow_arb_rr_tb_elab_test",
-    tool = "verific",
+    tool = "slang",
     deps = [":br_flow_arb_rr_tb"],
 )
 
@@ -420,7 +435,7 @@ verilog_library(
 
 verilog_elab_test(
     name = "br_flow_arb_lru_tb_elab_test",
-    tool = "verific",
+    tool = "slang",
     deps = [":br_flow_arb_lru_tb"],
 )
 
@@ -451,7 +466,7 @@ verilog_library(
 
 verilog_elab_test(
     name = "br_flow_mux_fixed_tb_elab_test",
-    tool = "verific",
+    tool = "slang",
     deps = [":br_flow_mux_fixed_tb"],
 )
 
@@ -475,7 +490,7 @@ verilog_library(
 
 verilog_elab_test(
     name = "br_flow_mux_rr_tb_elab_test",
-    tool = "verific",
+    tool = "slang",
     deps = [":br_flow_mux_rr_tb"],
 )
 
@@ -499,7 +514,7 @@ verilog_library(
 
 verilog_elab_test(
     name = "br_flow_mux_lru_tb_elab_test",
-    tool = "verific",
+    tool = "slang",
     deps = [":br_flow_mux_lru_tb"],
 )
 
@@ -530,7 +545,7 @@ verilog_library(
 
 verilog_elab_test(
     name = "br_flow_mux_fixed_stable_tb_elab_test",
-    tool = "verific",
+    tool = "slang",
     deps = [":br_flow_mux_fixed_stable_tb"],
 )
 
@@ -554,7 +569,7 @@ verilog_library(
 
 verilog_elab_test(
     name = "br_flow_mux_rr_stable_tb_elab_test",
-    tool = "verific",
+    tool = "slang",
     deps = [":br_flow_mux_rr_stable_tb"],
 )
 
@@ -578,7 +593,7 @@ verilog_library(
 
 verilog_elab_test(
     name = "br_flow_mux_lru_stable_tb_elab_test",
-    tool = "verific",
+    tool = "slang",
     deps = [":br_flow_mux_lru_stable_tb"],
 )
 
@@ -609,7 +624,7 @@ verilog_library(
 
 verilog_elab_test(
     name = "br_flow_burst_mux_fixed_tb_elab_test",
-    tool = "verific",
+    tool = "slang",
     deps = [":br_flow_burst_mux_fixed_tb"],
 )
 
@@ -633,7 +648,7 @@ verilog_library(
 
 verilog_elab_test(
     name = "br_flow_burst_mux_rr_tb_elab_test",
-    tool = "verific",
+    tool = "slang",
     deps = [":br_flow_burst_mux_rr_tb"],
 )
 
@@ -657,7 +672,7 @@ verilog_library(
 
 verilog_elab_test(
     name = "br_flow_burst_mux_lru_tb_elab_test",
-    tool = "verific",
+    tool = "slang",
     deps = [":br_flow_burst_mux_lru_tb"],
 )
 
@@ -688,7 +703,7 @@ verilog_library(
 
 verilog_elab_test(
     name = "br_flow_burst_mux_fixed_stable_tb_elab_test",
-    tool = "verific",
+    tool = "slang",
     deps = [":br_flow_burst_mux_fixed_stable_tb"],
 )
 
@@ -712,7 +727,7 @@ verilog_library(
 
 verilog_elab_test(
     name = "br_flow_burst_mux_rr_stable_tb_elab_test",
-    tool = "verific",
+    tool = "slang",
     deps = [":br_flow_burst_mux_rr_stable_tb"],
 )
 
@@ -736,7 +751,7 @@ verilog_library(
 
 verilog_elab_test(
     name = "br_flow_burst_mux_lru_stable_tb_elab_test",
-    tool = "verific",
+    tool = "slang",
     deps = [":br_flow_burst_mux_lru_stable_tb"],
 )
 
@@ -768,7 +783,7 @@ verilog_library(
 
 verilog_elab_test(
     name = "br_flow_serializer_tb_elab_test",
-    tool = "verific",
+    tool = "slang",
     deps = [":br_flow_serializer_tb"],
 )
 
@@ -781,7 +796,6 @@ br_verilog_sim_test_tools_suite(
         ],
     },
     tools = [
-        "iverilog",
         "vcs",
         "verilator",
     ],
@@ -799,7 +813,7 @@ verilog_library(
 
 verilog_elab_test(
     name = "br_flow_xbar_fixed_tb_elab_test",
-    tool = "verific",
+    tool = "slang",
     deps = [":br_flow_xbar_fixed_tb"],
 )
 
@@ -823,7 +837,7 @@ verilog_library(
 
 verilog_elab_test(
     name = "br_flow_xbar_rr_tb_elab_test",
-    tool = "verific",
+    tool = "slang",
     deps = [":br_flow_xbar_rr_tb"],
 )
 
@@ -847,7 +861,7 @@ verilog_library(
 
 verilog_elab_test(
     name = "br_flow_xbar_lru_tb_elab_test",
-    tool = "verific",
+    tool = "slang",
     deps = [":br_flow_xbar_lru_tb"],
 )
 

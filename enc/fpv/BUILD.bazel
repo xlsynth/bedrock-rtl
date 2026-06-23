@@ -20,7 +20,7 @@ verilog_library(
 
 verilog_elab_test(
     name = "br_enc_priority_dynamic_fpv_monitor_elab_test",
-    tool = "verific",
+    tool = "slang",
     deps = [":br_enc_priority_dynamic_fpv_monitor"],
 )
 
@@ -31,6 +31,7 @@ br_verilog_fpv_test_tools_suite(
             "NumRequesters",
             "NumResults",
         ): [
+            ("1", "1"),
             ("1", "2"),
             ("1", "4"),
             ("2", "4"),

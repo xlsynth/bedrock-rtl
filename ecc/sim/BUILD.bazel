@@ -20,7 +20,7 @@ verilog_library(
 
 verilog_elab_test(
     name = "br_ecc_sed_encoder_decoder_tb_elab_test",
-    tool = "verific",
+    tool = "slang",
     deps = [":br_ecc_sed_encoder_decoder_tb"],
 )
 
@@ -35,7 +35,6 @@ br_verilog_sim_test_tools_suite(
         ],
     },
     tools = [
-        "iverilog",
         "vcs",
         "verilator",
     ],
@@ -57,7 +56,7 @@ verilog_library(
 
 verilog_elab_test(
     name = "br_ecc_secded_encoder_decoder_tb_elab_test",
-    tool = "verific",
+    tool = "slang",
     deps = [":br_ecc_secded_encoder_decoder_tb"],
 )
 
@@ -89,7 +88,6 @@ K = [
         name = "br_ecc_secded_encoder_decoder_sim_test_tools_suite",
         params = {"DataWidth": [k]},
         seed = 42,
-        # iverilog is really slow on these tests :(
         tools = [
             "vcs",
             "verilator",

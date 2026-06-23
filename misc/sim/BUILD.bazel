@@ -1,6 +1,7 @@
 # SPDX-License-Identifier: Apache-2.0
 
 load("@rules_hdl//verilog:providers.bzl", "verilog_library")
+load("//bazel:br_verilog.bzl", "br_verilog_sim_test_tools_suite")
 load("//bazel:verilog.bzl", "verilog_elab_test")
 
 package(default_visibility = ["//visibility:private"])
@@ -14,7 +15,7 @@ verilog_library(
 
 verilog_elab_test(
     name = "br_test_driver_elab_test",
-    tool = "verific",
+    tool = "slang",
     deps = [":br_test_driver"],
 )
 
@@ -30,6 +31,101 @@ verilog_library(
 
 verilog_elab_test(
     name = "br_test_rate_control_elab_test",
-    tool = "verific",
+    tool = "slang",
     deps = [":br_test_rate_control"],
+)
+
+verilog_library(
+    name = "br_misc_tieoff_one_tb",
+    srcs = ["br_misc_tieoff_one_tb.sv"],
+    deps = [
+        ":br_test_driver",
+        "//misc/rtl:br_misc_tieoff_one",
+    ],
+)
+
+verilog_elab_test(
+    name = "br_misc_tieoff_one_tb_elab_test",
+    tool = "slang",
+    deps = [":br_misc_tieoff_one_tb"],
+)
+
+br_verilog_sim_test_tools_suite(
+    name = "br_misc_tieoff_one_sim_test_tools_suite",
+    params = {"Width": [
+        "1",
+        "2",
+        "17",
+        "32",
+    ]},
+    tools = [
+        "vcs",
+        "verilator",
+    ],
+    deps = [":br_misc_tieoff_one_tb"],
+)
+
+verilog_library(
+    name = "br_misc_tieoff_zero_tb",
+    srcs = ["br_misc_tieoff_zero_tb.sv"],
+    deps = [
+        ":br_test_driver",
+        "//misc/rtl:br_misc_tieoff_zero",
+    ],
+)
+
+verilog_elab_test(
+    name = "br_misc_tieoff_zero_tb_elab_test",
+    tool = "slang",
+    deps = [":br_misc_tieoff_zero_tb"],
+)
+
+br_verilog_sim_test_tools_suite(
+    name = "br_misc_tieoff_zero_sim_test_tools_suite",
+    params = {"Width": [
+        "1",
+        "2",
+        "17",
+        "32",
+    ]},
+    tools = [
+        "vcs",
+        "verilator",
+    ],
+    deps = [":br_misc_tieoff_zero_tb"],
+)
+
+verilog_library(
+    name = "br_misc_unused_tb",
+    srcs = ["br_misc_unused_tb.sv"],
+    deps = [
+        ":br_test_driver",
+        "//misc/rtl:br_misc_unused",
+    ],
+)
+
+verilog_elab_test(
+    name = "br_misc_unused_tb_elab_test",
+    tool = "slang",
+    deps = [":br_misc_unused_tb"],
+)
+
+br_verilog_sim_test_tools_suite(
+    name = "br_misc_unused_sim_test_tools_suite",
+    params = {
+        "NumRandomIterations": [
+            "8",
+        ],
+        "Width": [
+            "1",
+            "2",
+            "17",
+            "32",
+        ],
+    },
+    tools = [
+        "vcs",
+        "verilator",
+    ],
+    deps = [":br_misc_unused_tb"],
 )

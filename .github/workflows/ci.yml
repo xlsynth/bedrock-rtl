@@ -29,6 +29,95 @@ jobs:
       - name: Run pre-commit
         run: pre-commit run --show-diff-on-failure --color=always --all-files
 
+  docker-image-build:
+    runs-on: ubuntu-24.04
+    outputs:
+      image-tag: ${{ steps.image-metadata.outputs.tag }}
+    permissions:
+      contents: read
+    steps:
+      # actions/checkout v6
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
+      # docker/setup-buildx-action v4.1.0
+      - uses: docker/setup-buildx-action@d7f5e7f509e45cec5c76c4d5afdd7de93d0b3df5
+      - name: Set YYYY-MM-DD-SHA image tag
+        id: image-metadata
+        run: |
+          # Normalize the commit timestamp to a UTC date so a Git SHA always
+          # maps to the same YYYY-MM-DD-SHA image tag across time zones.
+          commit_timestamp="$(git show --no-patch --format=%ct "${GITHUB_SHA}")"
+          commit_date="$(date --utc --date="@${commit_timestamp}" +%F)"
+          echo "tag=${commit_date}-${GITHUB_SHA}" >> "${GITHUB_OUTPUT}"
+      - name: Build Docker image
+        # docker/build-push-action v7.2.0
+        uses: docker/build-push-action@f9f3042f7e2789586610d6e8b85c8f03e5195baf
+        with:
+          context: .
+          file: ./Dockerfile
+          platforms: linux/amd64
+          push: false
+          labels: |
+            org.opencontainers.image.revision=${{ github.sha }}
+          # Reuse BuildKit layers stored in the GitHub Actions cache for this image.
+          cache-from: type=gha,scope=bedrock-rtl-docker
+          # Export all intermediate and final layers for subsequent builds.
+          cache-to: type=gha,mode=max,scope=bedrock-rtl-docker
+
+  docker-image-publish:
+    runs-on: ubuntu-24.04
+    needs: docker-image-build
+    # GitHub only permits users with repository write access to use workflow_dispatch.
+    if: >-
+      needs.docker-image-build.result == 'success' &&
+      (github.event_name == 'workflow_dispatch' ||
+      (github.event_name == 'push' && github.ref == 'refs/heads/main'))
+    permissions:
+      # Allows checkout to read the repository contents.
+      contents: read
+      # Allows GitHub to issue the OIDC token used to sign the provenance attestation.
+      id-token: write
+      # Allows the job to persist the signed provenance attestation with GitHub.
+      attestations: write
+      # Links the attestation to the image published in GHCR.
+      artifact-metadata: write
+      # Allows the job credential to publish the image to GHCR.
+      packages: write
+    steps:
+      # actions/checkout v6
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
+      # docker/setup-buildx-action v4.1.0
+      - uses: docker/setup-buildx-action@d7f5e7f509e45cec5c76c4d5afdd7de93d0b3df5
+      - name: Log in to GHCR
+        # docker/login-action v4.2.0
+        uses: docker/login-action@650006c6eb7dba73a995cc03b0b2d7f5ca915bee
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ github.token }}
+      - name: Publish Docker image
+        id: publish
+        # docker/build-push-action v7.2.0
+        uses: docker/build-push-action@f9f3042f7e2789586610d6e8b85c8f03e5195baf
+        with:
+          context: .
+          file: ./Dockerfile
+          platforms: linux/amd64
+          push: true
+          # Attach max-detail BuildKit provenance to the published image.
+          provenance: mode=max
+          tags: ghcr.io/xlsynth/bedrock-rtl:${{ needs.docker-image-build.outputs.image-tag }}
+          labels: |
+            org.opencontainers.image.revision=${{ github.sha }}
+          # Reuse the layers populated by docker-image-build before publishing.
+          cache-from: type=gha,scope=bedrock-rtl-docker
+      - name: Attest Docker image provenance
+        # actions/attest v4.1.0
+        uses: actions/attest@59d89421af93a897026c735860bf21b6eb4f7b26
+        with:
+          subject-name: ghcr.io/xlsynth/bedrock-rtl
+          subject-digest: ${{ steps.publish.outputs.digest }}
+          push-to-registry: true
+
   # Run bazel build and tests in order in one job to avoid parallel jobs that make
   # build logs appear out of sequence across the CI workflow.
   bazel-build-and-test:
@@ -57,9 +146,6 @@ jobs:
       vcs_total_tests: ${{ steps.vcs.outputs.total_tests }}
       vcs_passing_tests: ${{ steps.vcs.outputs.passing_tests }}
       vcs_exit_code: ${{ steps.vcs.outputs.exit_code }}
-      iverilog_total_tests: ${{ steps.iverilog.outputs.total_tests }}
-      iverilog_passing_tests: ${{ steps.iverilog.outputs.passing_tests }}
-      iverilog_exit_code: ${{ steps.iverilog.outputs.exit_code }}
       verilator_total_tests: ${{ steps.verilator.outputs.total_tests }}
       verilator_passing_tests: ${{ steps.verilator.outputs.passing_tests }}
       verilator_exit_code: ${{ steps.verilator.outputs.exit_code }}
@@ -131,36 +217,15 @@ jobs:
         echo "total_tests=$TOTAL_TESTS" >> $GITHUB_OUTPUT
         echo "passing_tests=$PASSING_TESTS" >> $GITHUB_OUTPUT
         echo "exit_code=$BAZEL_EXIT_CODE" >> $GITHUB_OUTPUT
-    # Temporarily disable VCS CI until infra issues are resolved.
-    - name: (TEMPORARILY DISABLED) Verilog sim tests (using Synopsys VCS)
+    - name: Verilog sim tests (using Synopsys VCS)
       id: vcs
       # Use --test_output=summary to suppress log output, even on failure (proprietary EDA tool output may be sensitive).
-      #run: |
-      #  set +e
-      #  bazel test $TMP_HACK_BAZEL_CI_FLAGS --noshow_loading_progress --test_output=summary //... --test_tag_filters=vcs 2>&1 | tee .bazel-test-vcs.log
-      #  BAZEL_EXIT_CODE=${PIPESTATUS[0]}
-      #  TOTAL_TESTS=$(grep -Po '(?<=out of )\d+(?= test)' .bazel-test-vcs.log)
-      #  PASSING_TESTS=$(grep -Po '\d+(?= test passes?\.| tests pass)' .bazel-test-vcs.log)
-      #  echo "total_tests=$TOTAL_TESTS" >> $GITHUB_OUTPUT
-      #  echo "passing_tests=$PASSING_TESTS" >> $GITHUB_OUTPUT
-      #  echo "exit_code=$BAZEL_EXIT_CODE" >> $GITHUB_OUTPUT
       run: |
         set +e
-        TOTAL_TESTS=0
-        PASSING_TESTS=0
-        BAZEL_EXIT_CODE=0
-        echo "total_tests=$TOTAL_TESTS" >> $GITHUB_OUTPUT
-        echo "passing_tests=$PASSING_TESTS" >> $GITHUB_OUTPUT
-        echo "exit_code=$BAZEL_EXIT_CODE" >> $GITHUB_OUTPUT
-    - name: Verilog sim tests (using Icarus Verilog)
-      id: iverilog
-      # Don't need --test_output=summary to suppress log output because iverilog is open source.
-      run: |
-        set +e
-        bazel test $TMP_HACK_BAZEL_CI_FLAGS --noshow_loading_progress //... --test_tag_filters=iverilog 2>&1 | tee .bazel-test-iverilog.log
+        bazel test $TMP_HACK_BAZEL_CI_FLAGS --noshow_loading_progress --test_output=summary //... --test_tag_filters=vcs 2>&1 | tee .bazel-test-vcs.log
         BAZEL_EXIT_CODE=${PIPESTATUS[0]}
-        TOTAL_TESTS=$(grep -Po '(?<=out of )\d+(?= test)' .bazel-test-iverilog.log)
-        PASSING_TESTS=$(grep -Po '\d+(?= test passes?\.| tests pass)' .bazel-test-iverilog.log)
+        TOTAL_TESTS=$(grep -Po '(?<=out of )\d+(?= test)' .bazel-test-vcs.log)
+        PASSING_TESTS=$(grep -Po '\d+(?= test passes?\.| tests pass)' .bazel-test-vcs.log)
         echo "total_tests=$TOTAL_TESTS" >> $GITHUB_OUTPUT
         echo "passing_tests=$PASSING_TESTS" >> $GITHUB_OUTPUT
         echo "exit_code=$BAZEL_EXIT_CODE" >> $GITHUB_OUTPUT
@@ -197,7 +262,6 @@ jobs:
         check_suite "slang" "${{ steps.slang.outputs.exit_code }}"
         check_suite "ascentlint" "${{ steps.ascentlint.outputs.exit_code }}"
         check_suite "vcs" "${{ steps.vcs.outputs.exit_code }}"
-        check_suite "iverilog" "${{ steps.iverilog.outputs.exit_code }}"
         check_suite "verilator" "${{ steps.verilator.outputs.exit_code }}"
 
         if [ "${#failed_suites[@]}" -ne 0 ]; then
@@ -217,6 +281,7 @@ jobs:
   ##########################################
   rtl-files-badge:
     runs-on: ubuntu-24.04
+    environment: ci-badge-publishing
     if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
     steps:
     # actions/checkout v6
@@ -238,6 +303,7 @@ jobs:
 
   python-badge:
     runs-on: ubuntu-24.04
+    environment: ci-badge-publishing
     needs: bazel-build-and-test
     if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
     steps:
@@ -254,6 +320,7 @@ jobs:
 
   stardoc-badge:
     runs-on: ubuntu-24.04
+    environment: ci-badge-publishing
     needs: bazel-build-and-test
     if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
     steps:
@@ -270,6 +337,7 @@ jobs:
 
   verific-badge:
     runs-on: ubuntu-24.04
+    environment: ci-badge-publishing
     needs: bazel-build-and-test
     if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
     steps:
@@ -286,6 +354,7 @@ jobs:
 
   slang-badge:
     runs-on: ubuntu-24.04
+    environment: ci-badge-publishing
     needs: bazel-build-and-test
     if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
     steps:
@@ -302,6 +371,7 @@ jobs:
 
   ascentlint-badge:
     runs-on: ubuntu-24.04
+    environment: ci-badge-publishing
     needs: bazel-build-and-test
     if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
     steps:
@@ -318,6 +388,7 @@ jobs:
 
   vcs-badge:
     runs-on: ubuntu-24.04
+    environment: ci-badge-publishing
     needs: bazel-build-and-test
     if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
     steps:
@@ -332,24 +403,9 @@ jobs:
         message: ${{ needs.bazel-build-and-test.outputs.vcs_passing_tests }} of ${{ needs.bazel-build-and-test.outputs.vcs_total_tests }} passing
         color: ${{ needs.bazel-build-and-test.outputs.vcs_exit_code == '0' && 'brightgreen' || 'red' }}
 
-  iverilog-badge:
-    runs-on: ubuntu-24.04
-    needs: bazel-build-and-test
-    if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
-    steps:
-    - name: Create iverilog badge
-      # schneegans/dynamic-badges-action v1.7.0
-      uses: schneegans/dynamic-badges-action@e9a478b16159b4d31420099ba146cdc50f134483
-      with:
-        auth: ${{ secrets.MGOTTSCHO_GISTS_SECRET }}
-        gistID: c66dc2ddc0e513ba06ce338620977b26
-        filename: iverilog.json
-        label: "iverilog"
-        message: ${{ needs.bazel-build-and-test.outputs.iverilog_passing_tests }} of ${{ needs.bazel-build-and-test.outputs.iverilog_total_tests }} passing
-        color: ${{ needs.bazel-build-and-test.outputs.iverilog_exit_code == '0' && 'brightgreen' || 'red' }}
-
   verilator-badge:
     runs-on: ubuntu-24.04
+    environment: ci-badge-publishing
     needs: bazel-build-and-test
     if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
     steps:

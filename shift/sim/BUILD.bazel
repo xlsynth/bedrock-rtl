@@ -17,7 +17,7 @@ verilog_library(
 
 verilog_elab_test(
     name = "br_shift_rotate_tb_elab_test",
-    tool = "verific",
+    tool = "slang",
     deps = [":br_shift_rotate_tb"],
 )
 
@@ -36,7 +36,6 @@ br_verilog_sim_test_tools_suite(
         ],
     },
     tools = [
-        "iverilog",
         "vcs",
         "verilator",
     ],
@@ -54,7 +53,7 @@ verilog_library(
 
 verilog_elab_test(
     name = "br_shift_right_tb_elab_test",
-    tool = "verific",
+    tool = "slang",
     deps = [":br_shift_right_tb"],
 )
 
@@ -69,7 +68,6 @@ br_verilog_sim_test_tools_suite(
         "SymbolWidth": ["8"],
     },
     tools = [
-        "iverilog",
         "vcs",
         "verilator",
     ],
@@ -87,7 +85,7 @@ verilog_library(
 
 verilog_elab_test(
     name = "br_shift_left_tb_elab_test",
-    tool = "verific",
+    tool = "slang",
     deps = [":br_shift_left_tb"],
 )
 
@@ -102,7 +100,6 @@ br_verilog_sim_test_tools_suite(
         "SymbolWidth": ["8"],
     },
     tools = [
-        "iverilog",
         "vcs",
         "verilator",
     ],

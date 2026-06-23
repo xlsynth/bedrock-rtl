@@ -14,10 +14,38 @@ verilog_library(
 )
 
 verilog_library(
+    name = "br_arb_pairwise_core_internal",
+    srcs = ["br_arb_pairwise_core_internal.sv"],
+    deps = [
+        "//macros:br_asserts_internal",
+    ],
+)
+
+verilog_library(
     name = "br_arb_lru_internal",
     srcs = ["br_arb_lru_internal.sv"],
     deps = [
+        ":br_arb_pairwise_core_internal",
+        ":br_lru_state_internal",
         "//macros:br_asserts",
+        "//macros:br_asserts_internal",
+        "//macros:br_unused",
+    ],
+)
+
+verilog_library(
+    name = "br_arb_weight_handler",
+    srcs = ["br_arb_weight_handler.sv"],
+    deps = [
+        "//counter/rtl:br_counter",
+        "//macros:br_asserts_internal",
+    ],
+)
+
+verilog_library(
+    name = "br_lru_state_internal",
+    srcs = ["br_lru_state_internal.sv"],
+    deps = [
         "//macros:br_asserts_internal",
         "//macros:br_registers",
         "//macros:br_unused",

@@ -7,6 +7,115 @@ load("//bazel:verilog.bzl", "verilog_elab_test")
 package(default_visibility = ["//visibility:private"])
 
 verilog_library(
+    name = "br_delay_tb",
+    srcs = ["br_delay_tb.sv"],
+    deps = [
+        "//delay/rtl:br_delay",
+        "//misc/sim:br_test_driver",
+    ],
+)
+
+verilog_elab_test(
+    name = "br_delay_tb_elab_test",
+    tool = "slang",
+    deps = [":br_delay_tb"],
+)
+
+br_verilog_sim_test_tools_suite(
+    name = "br_delay_sim_test_tools_suite",
+    params = {
+        "NumStages": [
+            "0",
+            "1",
+            "3",
+        ],
+        "Width": [
+            "1",
+            "8",
+        ],
+    },
+    tools = [
+        "vcs",
+        "verilator",
+    ],
+    deps = [":br_delay_tb"],
+)
+
+verilog_library(
+    name = "br_delay_nr_tb",
+    srcs = ["br_delay_nr_tb.sv"],
+    deps = [
+        "//delay/rtl:br_delay_nr",
+        "//misc/sim:br_test_driver",
+    ],
+)
+
+verilog_elab_test(
+    name = "br_delay_nr_tb_elab_test",
+    tool = "slang",
+    deps = [":br_delay_nr_tb"],
+)
+
+br_verilog_sim_test_tools_suite(
+    name = "br_delay_nr_sim_test_tools_suite",
+    params = {
+        "NumStages": [
+            "0",
+            "1",
+            "3",
+        ],
+        "Width": [
+            "1",
+            "8",
+        ],
+    },
+    tools = [
+        "vcs",
+        "verilator",
+    ],
+    deps = [":br_delay_nr_tb"],
+)
+
+verilog_library(
+    name = "br_delay_shift_reg_tb",
+    srcs = ["br_delay_shift_reg_tb.sv"],
+    deps = [
+        "//delay/rtl:br_delay_shift_reg",
+        "//misc/sim:br_test_driver",
+    ],
+)
+
+verilog_elab_test(
+    name = "br_delay_shift_reg_tb_elab_test",
+    tool = "slang",
+    deps = [":br_delay_shift_reg_tb"],
+)
+
+br_verilog_sim_test_tools_suite(
+    name = "br_delay_shift_reg_sim_test_tools_suite",
+    params = {
+        "EnableCoverReinit": [
+            "0",
+            "1",
+        ],
+        "NumStages": [
+            "1",
+            "2",
+            "4",
+        ],
+        "Width": [
+            "1",
+            "8",
+        ],
+    },
+    tools = [
+        "vcs",
+        "verilator",
+    ],
+    deps = [":br_delay_shift_reg_tb"],
+)
+
+verilog_library(
     name = "br_delay_deskew_tb",
     srcs = ["br_delay_deskew_tb.sv"],
     deps = [
@@ -17,7 +126,7 @@ verilog_library(
 
 verilog_elab_test(
     name = "br_delay_deskew_tb_elab_test",
-    tool = "verific",
+    tool = "slang",
     deps = [":br_delay_deskew_tb"],
 )
 
@@ -30,7 +139,6 @@ br_verilog_sim_test_tools_suite(
         ],
     },
     tools = [
-        "iverilog",
         "vcs",
         "verilator",
     ],
@@ -48,7 +156,7 @@ verilog_library(
 
 verilog_elab_test(
     name = "br_delay_skew_tb_elab_test",
-    tool = "verific",
+    tool = "slang",
     deps = [":br_delay_skew_tb"],
 )
 
@@ -61,7 +169,6 @@ br_verilog_sim_test_tools_suite(
         ],
     },
     tools = [
-        "iverilog",
         "vcs",
         "verilator",
     ],
@@ -79,7 +186,7 @@ verilog_library(
 
 verilog_elab_test(
     name = "br_delay_valid_next_tb_elab_test",
-    tool = "verific",
+    tool = "slang",
     deps = [":br_delay_valid_next_tb"],
 )
 
@@ -97,7 +204,6 @@ br_verilog_sim_test_tools_suite(
         ],
     },
     tools = [
-        "iverilog",
         "vcs",
         "verilator",
     ],
@@ -115,7 +221,7 @@ verilog_library(
 
 verilog_elab_test(
     name = "br_delay_valid_next_nr_tb_elab_test",
-    tool = "verific",
+    tool = "slang",
     deps = [":br_delay_valid_next_nr_tb"],
 )
 
@@ -133,11 +239,49 @@ br_verilog_sim_test_tools_suite(
         ],
     },
     tools = [
-        "iverilog",
         "vcs",
         "verilator",
     ],
     deps = [":br_delay_valid_next_nr_tb"],
+)
+
+verilog_library(
+    name = "br_delay_valid_tb",
+    srcs = ["br_delay_valid_tb.sv"],
+    deps = [
+        "//delay/rtl:br_delay_valid",
+        "//misc/sim:br_test_driver",
+    ],
+)
+
+verilog_elab_test(
+    name = "br_delay_valid_tb_elab_test",
+    tool = "slang",
+    deps = [":br_delay_valid_tb"],
+)
+
+br_verilog_sim_test_tools_suite(
+    name = "br_delay_valid_sim_test_tools_suite",
+    params = {
+        "FirstStageUngated": [
+            "0",
+            "1",
+        ],
+        "NumStages": [
+            "0",
+            "1",
+            "3",
+        ],
+        "Width": [
+            "1",
+            "8",
+        ],
+    },
+    tools = [
+        "vcs",
+        "verilator",
+    ],
+    deps = [":br_delay_valid_tb"],
 )
 
 verilog_library(
@@ -151,7 +295,7 @@ verilog_library(
 
 verilog_elab_test(
     name = "br_delay_valid_nr_tb_elab_test",
-    tool = "verific",
+    tool = "slang",
     deps = [":br_delay_valid_nr_tb"],
 )
 
@@ -173,7 +317,6 @@ br_verilog_sim_test_tools_suite(
         ],
     },
     tools = [
-        "iverilog",
         "vcs",
         "verilator",
     ],

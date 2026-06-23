@@ -1,6 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
 
-
 // Bedrock-RTL Flow Fork
 //
 // Forks a dataflow pipeline into a number of downstream pipelines.
@@ -47,64 +46,32 @@ module br_flow_fork #(
   //------------------------------------------
   // Integration checks
   //------------------------------------------
-  `BR_ASSERT_STATIC(legal_assert_no_push_backpressure_a,
-                    !(EnableAssertNoPushBackpressure && EnableCoverPushBackpressure))
-  `BR_ASSERT_STATIC(num_flows_gte_1_a, NumFlows >= 1)
-
-  br_flow_checks_valid_data_intg #(
-      .NumFlows(1),
-      .Width(1),
-      .EnableCoverBackpressure(EnableCoverPushBackpressure),
-      .EnableAssertNoBackpressure(EnableAssertNoPushBackpressure),
-      .EnableAssertValidStability(EnableAssertPushValidStability),
-      // Data is always stable when valid is since it is constant.
-      .EnableAssertDataStability(EnableAssertPushValidStability),
-      .EnableAssertFinalNotValid(EnableAssertFinalNotValid)
-  ) br_flow_checks_valid_data_intg (
-      .clk,
-      .rst,
-      .ready(push_ready),
-      .valid(push_valid),
-      .data (1'b0)
-  );
+  // Rely on checks in submodule
 
   //------------------------------------------
   // Implementation
   //------------------------------------------
-  assign push_ready = &pop_ready;
-
-  for (genvar i = 0; i < NumFlows; i++) begin : gen_flows
-    always_comb begin
-      pop_valid_unstable[i] = push_valid;
-      for (int j = 0; j < NumFlows; j++) begin
-        if (i != j) begin
-          pop_valid_unstable[i] &= pop_ready[j];
-        end
-      end
-    end
-  end
+  br_flow_fork_select_multihot #(
+      .NumFlows(NumFlows),
+      .EnableCoverSelectMultihot(1),
+      .EnableCoverPushBackpressure(EnableCoverPushBackpressure),
+      .EnableAssertPushValidStability(EnableAssertPushValidStability),
+      .EnableAssertSelectMultihotStability(EnableAssertPushValidStability),
+      .EnableAssertFinalNotValid(EnableAssertFinalNotValid),
+      .EnableAssertNoPushBackpressure(EnableAssertNoPushBackpressure)
+  ) br_flow_fork_select_multihot (
+      .clk,
+      .rst,
+      .push_ready(push_ready),
+      .push_valid(push_valid),
+      .push_select_multihot('1),
+      .pop_ready(pop_ready),
+      .pop_valid_unstable(pop_valid_unstable)
+  );
 
   //------------------------------------------
   // Implementation checks
   //------------------------------------------
-  br_flow_checks_valid_data_impl #(
-      .NumFlows(NumFlows),
-      .Width(1),
-      .EnableCoverBackpressure(EnableCoverPushBackpressure),
-      .EnableAssertNoBackpressure(EnableAssertNoPushBackpressure),
-      // We know that the pop valids can be unstable.
-      .EnableAssertValidStability(0),
-      .EnableAssertFinalNotValid(EnableAssertFinalNotValid)
-  ) br_flow_checks_valid_data_impl (
-      .clk,
-      .rst,
-      .ready(pop_ready),
-      .valid(pop_valid_unstable),
-      .data ({NumFlows{1'b0}})
-  );
-
-  if (EnableCoverPushBackpressure) begin : gen_push_backpressure_cover
-    `BR_COVER_IMPL(pop_valid_unstable_c, !$stable(pop_valid_unstable))
-  end
+  // Rely on checks in submodule
 
 endmodule : br_flow_fork

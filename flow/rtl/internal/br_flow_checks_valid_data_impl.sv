@@ -23,6 +23,9 @@ module br_flow_checks_valid_data_impl #(
     // asserts that backpressure is impossible.
     // ri lint_check_waive PARAM_NOT_USED
     parameter bit EnableCoverBackpressure = 1,
+    // Generate backpressure covers and stability checks only for this many low-indexed flows.
+    // ri lint_check_waive PARAM_NOT_USED
+    parameter int NumBackpressureCheckFlows = NumFlows,
     // If 1, assert that valid is stable when backpressured.
     // Can only be enabled if EnableCoverBackpressure is also enabled.
     // ri lint_check_waive PARAM_NOT_USED
@@ -55,6 +58,7 @@ module br_flow_checks_valid_data_impl #(
                     !(EnableAssertDataStability && !EnableAssertValidStability))
   `BR_ASSERT_STATIC(legal_assert_no_backpressure_a,
                     !(EnableAssertNoBackpressure && EnableCoverBackpressure))
+  `BR_ASSERT_STATIC(legal_num_backpressure_check_flows_a, NumBackpressureCheckFlows <= NumFlows)
 
   if (EnableAssertFinalNotValid) begin : gen_assert_final
     `BR_ASSERT_FINAL(final_not_valid_a, !valid)
@@ -65,17 +69,21 @@ module br_flow_checks_valid_data_impl #(
   if (EnableCoverBackpressure) begin : gen_backpressure_checks
     if (EnableAssertValidStability) begin : gen_valid_stability_checks
       if (EnableAssertDataStability) begin : gen_valid_data_stability_checks
-        for (genvar i = 0; i < NumFlows; i++) begin : gen_valid_data_stability_per_flow
+        for (
+            genvar i = 0; i < NumBackpressureCheckFlows; i++
+        ) begin : gen_valid_data_stability_per_flow
           `BR_ASSERT_IMPL(valid_data_stable_when_backpressured_a,
                           !ready[i] && valid[i] |=> valid[i] && $stable(data[i]))
         end
       end else begin : gen_valid_only_stability_checks
-        for (genvar i = 0; i < NumFlows; i++) begin : gen_valid_only_stability_per_flow
+        for (
+            genvar i = 0; i < NumBackpressureCheckFlows; i++
+        ) begin : gen_valid_only_stability_per_flow
           `BR_ASSERT_IMPL(valid_stable_when_backpressured_a, !ready[i] && valid[i] |=> valid[i])
         end
       end
     end else begin : gen_cover_without_stability
-      for (genvar i = 0; i < NumFlows; i++) begin : gen_per_flow
+      for (genvar i = 0; i < NumBackpressureCheckFlows; i++) begin : gen_per_flow
         `BR_COVER_IMPL(backpressure_c, !ready[i] && valid[i])
       end
     end

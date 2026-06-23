@@ -51,7 +51,8 @@ module br_credit_counter #(
     parameter bit EnableCoverZeroIncrement = 1,
     // If 1, cover that you can have decr_valid high with decr = 0.
     // Otherwise, assert that doesn't happen.
-    parameter bit EnableCoverZeroDecrement = 1,
+    // Cannot have zero decrement if MaxDecrement is 1
+    parameter bit EnableCoverZeroDecrement = MaxDecrement > 1,
     // If 1, cover the case where decr_valid is high and decr_ready is low.
     // Otherwise, disable decrement backpressure coverage. By default, this also
     // asserts that decrement backpressure is impossible.
@@ -117,6 +118,8 @@ module br_credit_counter #(
                     !(EnableAssertFinalMaxValue && EnableAssertFinalMinValue))
   `BR_ASSERT_STATIC(legal_assert_no_decrement_backpressure_a,
                     !(EnableAssertNoDecrementBackpressure && EnableCoverDecrementBackpressure))
+  `BR_ASSERT_STATIC(no_zero_decrement_if_max_decrement_one_a,
+                    !(EnableCoverZeroDecrement && MaxDecrement == 1))
 
   if (EnableAssertFinalNotValid) begin : gen_assert_final
     `BR_ASSERT_FINAL(final_not_incr_valid_a, !incr_valid)
@@ -132,6 +135,12 @@ module br_credit_counter #(
   // Ensure increments and decrements are in range
   `BR_ASSERT_INTG(incr_in_range_a, incr_valid |-> (incr <= MaxIncrement))
   `BR_ASSERT_INTG(decr_in_range_a, decr_valid |-> (decr <= MaxDecrement))
+
+  if (EnableCoverZeroDecrement) begin : gen_cover_zero_decrement
+    `BR_COVER_INTG(zero_decr_c, decr_valid && decr == '0)
+  end else begin : gen_assert_nonzero_decrement
+    `BR_ASSERT_INTG(nonzero_decr_a, decr_valid |-> decr != '0)
+  end
 
   // Assertion-only helper logic for overflow/underflow detection
 `ifdef BR_ASSERT_ON
@@ -182,6 +191,12 @@ module br_credit_counter #(
   end else begin : gen_assert_withhold_zero
     `BR_ASSERT_INTG(withhold_zero_a, withhold == 0)
   end
+  // If every cycle must pop a nonzero credit with no backpressure, withholding more
+  // than the stored pool would force an underflow when increments are limited to one.
+  if (EnableAssertAlwaysDecr && EnableAssertNoDecrementBackpressure &&
+      !EnableCoverZeroDecrement && MaxIncrement == 1) begin : gen_assert_withhold_lte_value
+    `BR_ASSERT_INTG(withhold_lte_value_a, withhold <= value)
+  end
 
   if (EnableCoverDecrementBackpressure) begin : gen_cover_decr_gt_available
     `BR_COVER_INTG(decr_gt_available_c, decr_valid && decr > available)
@@ -215,7 +230,13 @@ module br_credit_counter #(
   assign available = value_plus_incr > withhold ? value_plus_incr - withhold : '0;
 
   if (MaxDecrement == 1) begin : gen_decr_ready_one
-    assign decr_ready = available > '0;
+    if (EnableCoverWithhold) begin : gen_decr_ready_with_withhold
+      assign decr_ready = available > '0;
+    end else if (EnableCoverZeroIncrement) begin : gen_decr_ready_with_zero_increment
+      assign decr_ready = (value != '0) || (incr_valid && incr != '0);
+    end else begin : gen_decr_ready_without_zero_increment
+      assign decr_ready = (value != '0) || incr_valid;
+    end
   end else begin : gen_decr_ready_gt_one
     assign decr_ready = ValueWidth'(decr_internal) <= available;
   end
@@ -241,11 +262,6 @@ module br_credit_counter #(
 
   // Decrement corners
   `BR_COVER_IMPL(max_decr_c, decr_valid && decr == MaxDecrement)
-  if (EnableCoverZeroDecrement) begin : gen_cover_zero_decrement
-    `BR_COVER_IMPL(min_decr_c, decr_valid && decr == '0)
-  end else begin : gen_assert_nonzero_decrement
-    `BR_ASSERT_IMPL(nonzero_decr_a, decr_valid |-> decr != '0)
-  end
 
   // Increment/decrement combination corner cases
   `BR_COVER_IMPL(incr_and_decr_c, incr_valid && decr_valid)
@@ -265,7 +281,12 @@ module br_credit_counter #(
   `BR_COVER_IMPL(value_lt_available_c, value < available)
   if (EnableCoverWithhold) begin : gen_cover_withhold_gt_value
     `BR_COVER_IMPL(value_gt_available_c, value > available)
-    `BR_COVER_IMPL(withhold_gt_value_c, withhold > value)
+    // If every cycle must decrement with no backpressure, zero decrements are disallowed,
+    // and increments are limited to one credit, withhold cannot exceed the stored value.
+    if (!(EnableAssertAlwaysDecr && EnableAssertNoDecrementBackpressure &&
+          !EnableCoverZeroDecrement && MaxIncrement == 1)) begin : gen_wh_gt_value
+      `BR_COVER_IMPL(withhold_gt_value_c, withhold > value)
+    end
   end
 
 endmodule : br_credit_counter

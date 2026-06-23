@@ -17,8 +17,152 @@ verilog_library(
 
 verilog_elab_test(
     name = "br_fifo_test_harness_elab_test",
-    tool = "verific",
+    tool = "slang",
     deps = [":br_fifo_test_harness"],
+)
+
+verilog_library(
+    name = "br_fifo_ctrl_1r1w_tb",
+    srcs = ["br_fifo_ctrl_1r1w_tb.sv"],
+    deps = [
+        "//fifo/rtl:br_fifo_ctrl_1r1w",
+        "//misc/sim:br_test_driver",
+        "//ram/rtl:br_ram_flops",
+    ],
+)
+
+verilog_elab_test(
+    name = "br_fifo_ctrl_1r1w_tb_elab_test",
+    tool = "verific",
+    deps = [":br_fifo_ctrl_1r1w_tb"],
+)
+
+br_verilog_sim_test_tools_suite(
+    name = "br_fifo_ctrl_1r1w_sim_test_tools_suite",
+    params = {
+        "Depth": [
+            "4",
+            "13",
+        ],
+        "Width": ["8"],
+        "EnableBypass": [
+            "0",
+            "1",
+        ],
+        "RegisterPopOutputs": [
+            "0",
+            "1",
+        ],
+        "RamReadLatency": [
+            "0",
+            "1",
+            "2",
+        ],
+        "NumRandomTransactions": ["120"],
+        "RandomPushIdleMax": ["3"],
+        "RandomPopIdleMax": ["4"],
+    },
+    # TODO(mczyz): Re-enable Icarus if vvp supports this bench's fork/join_any
+    # timeout guards without crashing in of_JOIN_DETACH.
+    tools = [
+        "vcs",
+        "verilator",
+    ],
+    deps = [":br_fifo_ctrl_1r1w_tb"],
+)
+
+verilog_library(
+    name = "br_fifo_ctrl_1r1w_push_credit_tb",
+    srcs = ["br_fifo_ctrl_1r1w_push_credit_tb.sv"],
+    deps = [
+        "//credit/rtl:br_credit_sender",
+        "//delay/rtl:br_delay_nr",
+        "//fifo/rtl:br_fifo_ctrl_1r1w_push_credit",
+        "//misc/sim:br_test_driver",
+        "//ram/rtl:br_ram_flops",
+    ],
+)
+
+verilog_elab_test(
+    name = "br_fifo_ctrl_1r1w_push_credit_tb_elab_test",
+    tool = "verific",
+    deps = [":br_fifo_ctrl_1r1w_push_credit_tb"],
+)
+
+br_verilog_sim_test_tools_suite(
+    name = "br_fifo_ctrl_1r1w_push_credit_sim_test_tools_suite",
+    params = {
+        # Keep this sweep representative because the parameter matrix is
+        # Cartesian. Depth=3 is the smallest value legal with nonzero RAM read
+        # latency, and 13 is the existing odd default.
+        "Depth": [
+            "3",
+            "13",
+        ],
+        # Width covers min width and an odd non-byte-aligned wider datapath.
+        "Width": [
+            "1",
+            "17",
+        ],
+        "EnableBypass": [
+            "0",
+            "1",
+        ],
+        "RegisterPushOutputs": [
+            "0",
+            "1",
+        ],
+        "RegisterPopOutputs": [
+            "0",
+            "1",
+        ],
+        "RamReadLatency": [
+            "0",
+            "1",
+        ],
+        "NumRandomTransactions": ["120"],
+        "RandomPushIdleMax": ["3"],
+        "RandomPopIdleMax": ["4"],
+    },
+    tools = [
+        "vcs",
+        "verilator",
+    ],
+    deps = [":br_fifo_ctrl_1r1w_push_credit_tb"],
+)
+
+br_verilog_sim_test_tools_suite(
+    name = "br_fifo_ctrl_1r1w_push_credit_min_depth_sim_test_tools_suite",
+    params = {
+        # Depth=2 is the DUT minimum, but only legal here with zero RAM read
+        # latency once RegisterPopOutputs is swept in both states.
+        "Depth": ["2"],
+        "Width": [
+            "1",
+            "8",
+        ],
+        "EnableBypass": [
+            "0",
+            "1",
+        ],
+        "RegisterPushOutputs": [
+            "0",
+            "1",
+        ],
+        "RegisterPopOutputs": [
+            "0",
+            "1",
+        ],
+        "RamReadLatency": ["0"],
+        "NumRandomTransactions": ["120"],
+        "RandomPushIdleMax": ["3"],
+        "RandomPopIdleMax": ["4"],
+    },
+    tools = [
+        "vcs",
+        "verilator",
+    ],
+    deps = [":br_fifo_ctrl_1r1w_push_credit_tb"],
 )
 
 verilog_library(
@@ -33,7 +177,7 @@ verilog_library(
 
 verilog_elab_test(
     name = "br_fifo_flops_tb_elab_test",
-    tool = "verific",
+    tool = "slang",
     deps = [":br_fifo_flops_tb"],
 )
 
@@ -58,7 +202,6 @@ br_verilog_sim_test_tools_suite(
     # TODO(mgottscho): Re-enable Verilator after the FIFO Verilator suites have
     # been fully triaged and this suite is confirmed passing.
     tools = [
-        "iverilog",
         "vcs",
         #"verilator",
     ],
@@ -90,7 +233,6 @@ br_verilog_sim_test_tools_suite(
     # TODO(mgottscho): Re-enable Verilator after the FIFO Verilator suites have
     # been fully triaged and this suite is confirmed passing.
     tools = [
-        "iverilog",
         "vcs",
         #"verilator",
     ],
@@ -111,7 +253,7 @@ verilog_library(
 
 verilog_elab_test(
     name = "br_fifo_flops_push_credit_tb_elab_test",
-    tool = "verific",
+    tool = "slang",
     deps = [":br_fifo_flops_push_credit_tb"],
 )
 
@@ -141,7 +283,6 @@ br_verilog_sim_test_tools_suite(
     # testbench assertion "Cannot push data. FIFO Full." Minimal observed case:
     # `eb1_frads1_rpo0_rpo0`.
     tools = [
-        "iverilog",
         "vcs",
         #"verilator",
     ],
@@ -166,7 +307,7 @@ verilog_library(
 
 verilog_elab_test(
     name = "br_fifo_shared_dynamic_flops_tb_elab_test",
-    tool = "verific",
+    tool = "slang",
     deps = [":br_fifo_shared_dynamic_flops_tb"],
 )
 
@@ -231,7 +372,7 @@ verilog_library(
 
 verilog_elab_test(
     name = "br_fifo_shared_dynamic_flops_push_credit_tb_elab_test",
-    tool = "verific",
+    tool = "slang",
     deps = [":br_fifo_shared_dynamic_flops_push_credit_tb"],
 )
 
@@ -297,7 +438,7 @@ verilog_library(
 
 verilog_elab_test(
     name = "br_fifo_shared_pstatic_flops_tb_elab_test",
-    tool = "verific",
+    tool = "slang",
     deps = [":br_fifo_shared_pstatic_flops_tb"],
 )
 
@@ -347,7 +488,7 @@ verilog_library(
 
 verilog_elab_test(
     name = "br_fifo_shared_pstatic_flops_push_credit_tb_elab_test",
-    tool = "verific",
+    tool = "slang",
     deps = [":br_fifo_shared_pstatic_flops_push_credit_tb"],
 )
 
@@ -401,7 +542,7 @@ verilog_library(
 
 verilog_elab_test(
     name = "br_fifo_shared_dynamic_flops_push_credit_pop_credit_tb_elab_test",
-    tool = "verific",
+    tool = "slang",
     deps = [":br_fifo_shared_dynamic_flops_push_credit_pop_credit_tb"],
 )
 

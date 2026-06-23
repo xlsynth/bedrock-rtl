@@ -18,7 +18,7 @@ verilog_library(
 
 verilog_elab_test(
     name = "br_lfsr_tb_elab_test",
-    tool = "verific",
+    tool = "slang",
     deps = [":br_lfsr_tb"],
 )
 
@@ -44,7 +44,6 @@ br_verilog_sim_test_tools_suite(
         ],
     },
     tools = [
-        "iverilog",
         "vcs",
         "verilator",
     ],
@@ -65,7 +64,6 @@ br_verilog_sim_test_tools_suite(
         ],
     },
     tools = [
-        "iverilog",
         "vcs",
         "verilator",
     ],

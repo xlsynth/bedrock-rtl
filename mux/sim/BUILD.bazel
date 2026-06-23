@@ -17,7 +17,7 @@ verilog_library(
 
 verilog_elab_test(
     name = "br_mux_bin_tb_elab_test",
-    tool = "verific",
+    tool = "slang",
     deps = [":br_mux_bin_tb"],
 )
 
@@ -40,11 +40,52 @@ br_verilog_sim_test_tools_suite(
         ],
     },
     tools = [
-        "iverilog",
         "vcs",
         "verilator",
     ],
     deps = [":br_mux_bin_tb"],
+)
+
+verilog_library(
+    name = "br_mux_bin_array_tb",
+    srcs = ["br_mux_bin_array_tb.sv"],
+    deps = [
+        "//misc/sim:br_test_driver",
+        "//mux/rtl:br_mux_bin_array",
+    ],
+)
+
+verilog_elab_test(
+    name = "br_mux_bin_array_tb_elab_test",
+    tool = "slang",
+    deps = [":br_mux_bin_array_tb"],
+)
+
+br_verilog_sim_test_tools_suite(
+    name = "br_mux_bin_array_sim_test_tools_suite",
+    params = {
+        "NumSymbolsIn": [
+            "1",
+            "3",
+            "8",
+            "13",
+        ],
+        "NumSymbolsOut": [
+            "1",
+            "5",
+        ],
+        "SymbolWidth": [
+            "1",
+            "8",
+            "17",
+        ],
+        "NumRandomIterations": ["64"],
+    },
+    tools = [
+        "vcs",
+        "verilator",
+    ],
+    deps = [":br_mux_bin_array_tb"],
 )
 
 verilog_library(
@@ -58,7 +99,7 @@ verilog_library(
 
 verilog_elab_test(
     name = "br_mux_bin_structured_gates_tb_elab_test",
-    tool = "verific",
+    tool = "slang",
     top = "br_mux_bin_structured_gates_tb",
     deps = [
         ":br_mux_bin_structured_gates_tb",
@@ -86,8 +127,6 @@ br_verilog_sim_test_tools_suite(
         ],
     },
     tools = [
-        # Does not work
-        #"iverilog",
         "vcs",
         "verilator",
     ],
@@ -102,7 +141,7 @@ br_verilog_sim_test_tools_suite(
 # Same TB, different RTL dep
 verilog_elab_test(
     name = "br_mux_bin_structured_gates_mock_tb_elab_test",
-    tool = "verific",
+    tool = "slang",
     top = "br_mux_bin_structured_gates_tb",
     deps = [
         ":br_mux_bin_structured_gates_tb",
@@ -129,7 +168,6 @@ br_verilog_sim_test_tools_suite(
         ],
     },
     tools = [
-        "iverilog",
         "vcs",
         "verilator",
     ],
@@ -151,7 +189,7 @@ verilog_library(
 
 verilog_elab_test(
     name = "br_mux_onehot_tb_elab_test",
-    tool = "verific",
+    tool = "slang",
     deps = [":br_mux_onehot_tb"],
 )
 
@@ -164,7 +202,6 @@ br_verilog_sim_test_tools_suite(
         ],
     },
     tools = [
-        "iverilog",
         "vcs",
         "verilator",
     ],

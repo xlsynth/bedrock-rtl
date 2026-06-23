@@ -33,6 +33,16 @@ clock -rate {pop_rst \
             pop_ram_rd_data} pop_clk
 
 get_design_info
+array set param_list [get_design_info -list parameter]
+set Depth $param_list(Depth)
+
+# For Depth=6, the generic credit-counter max-increment cover requires the
+# push side to observe a full-depth pop-count delta in one synchronized sample.
+# This cover is reachable in all smaller parameter setups, but becomes
+# undetermined due to complexity for Depth=6.
+if {$Depth == 6} {
+  cover -disable *br_credit_receiver.br_credit_counter.max_incr_c
+}
 
 # primary input control signal should be legal during reset
 assume -name initial_value_during_reset {@(posedge push_clk) \

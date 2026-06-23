@@ -18,13 +18,12 @@ verilog_library(
 
 verilog_elab_test(
     name = "br_mux_onehot_fpv_monitor_elab_test",
-    tool = "verific",
+    tool = "slang",
     deps = [":br_mux_onehot_fpv_monitor"],
 )
 
 br_verilog_fpv_test_tools_suite(
     name = "br_mux_onehot_fpv_test_tools_suite",
-    custom_tcl_body = "br_mux_onehot_fpv.jg.tcl",
     params = {
         "EnableAssertSelectOnehot": [
             "0",

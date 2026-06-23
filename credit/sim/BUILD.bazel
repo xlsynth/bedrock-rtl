@@ -17,7 +17,7 @@ verilog_library(
 
 verilog_elab_test(
     name = "br_credit_receiver_tb_elab_test",
-    tool = "verific",
+    tool = "slang",
     deps = [":br_credit_receiver_tb"],
 )
 
@@ -39,7 +39,6 @@ br_verilog_sim_test_tools_suite(
         ],
     },
     tools = [
-        "iverilog",
         "vcs",
         "verilator",
     ],
@@ -59,7 +58,7 @@ verilog_library(
 
 verilog_elab_test(
     name = "br_credit_sender_vc_rr_tb_elab_test",
-    tool = "verific",
+    tool = "slang",
     deps = [":br_credit_sender_vc_rr_tb"],
 )
 
@@ -85,9 +84,6 @@ br_verilog_sim_test_tools_suite(
         ],
     },
     tools = [
-        # This test is triggering an internal assertion failure in iverilog.
-        # TODO(zhemao): Figure out why this is happening.
-        #"iverilog",
         "vcs",
         "verilator",
     ],

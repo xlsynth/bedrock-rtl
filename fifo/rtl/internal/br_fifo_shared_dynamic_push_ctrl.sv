@@ -35,6 +35,7 @@ module br_fifo_shared_dynamic_push_ctrl #(
     // empty at the end of the test.
     // ri lint_check_waive PARAM_NOT_USED
     parameter bit EnableAssertFinalNotValid = 1,
+    parameter bit EnableAssertUniqueDeallocEntryId = 1,
 
     // If 1, assert that push-side backpressure is impossible.
     // Can only be enabled if EnableCoverPushBackpressure is disabled.
@@ -121,7 +122,8 @@ module br_fifo_shared_dynamic_push_ctrl #(
       .NumEntries(Depth),
       .NumAllocPerCycle(NumWritePorts),
       .NumDeallocPorts(NumFifos),
-      .DeallocCountDelay(DeallocCountDelay)
+      .DeallocCountDelay(DeallocCountDelay),
+      .EnableAssertUniqueDeallocEntryId(EnableAssertUniqueDeallocEntryId)
   ) br_tracker_freelist_inst (
       .clk,
       .rst,
