@@ -197,12 +197,9 @@ verilog_elab_test(
             "+cdc_delay_mode=" + cdc_delay_mode,
         ],
         tags = ["no-sandbox"],
-        # TODO(mgottscho): Enable Verilator once it supports
-        # `process::self().srandom(new_seed)` in `br_cdc_bit_toggle` during CDC
-        # delay modeling.
         tools = [
             "vcs",
-            #"verilator",
+            "verilator",
         ],
         deps = [":br_cdc_bit_pulse_tb"],
     )
