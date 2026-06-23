@@ -48,6 +48,9 @@ jobs:
       verific_total_tests: ${{ steps.verific.outputs.total_tests }}
       verific_passing_tests: ${{ steps.verific.outputs.passing_tests }}
       verific_exit_code: ${{ steps.verific.outputs.exit_code }}
+      slang_total_tests: ${{ steps.slang.outputs.total_tests }}
+      slang_passing_tests: ${{ steps.slang.outputs.passing_tests }}
+      slang_exit_code: ${{ steps.slang.outputs.exit_code }}
       ascentlint_total_tests: ${{ steps.ascentlint.outputs.total_tests }}
       ascentlint_passing_tests: ${{ steps.ascentlint.outputs.passing_tests }}
       ascentlint_exit_code: ${{ steps.ascentlint.outputs.exit_code }}
@@ -104,7 +107,18 @@ jobs:
         echo "total_tests=$TOTAL_TESTS" >> $GITHUB_OUTPUT
         echo "passing_tests=$PASSING_TESTS" >> $GITHUB_OUTPUT
         echo "exit_code=$BAZEL_EXIT_CODE" >> $GITHUB_OUTPUT
-    # Keep AscentLint after Verific as before.
+    - name: Verilog elaboration tests (using Slang)
+      id: slang
+      run: |
+        set +e
+        bazel test $TMP_HACK_BAZEL_CI_FLAGS --noshow_loading_progress //... --test_tag_filters=slang 2>&1 | tee .bazel-test-slang.log
+        BAZEL_EXIT_CODE=${PIPESTATUS[0]}
+        TOTAL_TESTS=$(grep -Po '(?<=out of )\d+(?= test)' .bazel-test-slang.log)
+        PASSING_TESTS=$(grep -Po '\d+(?= test passes?\.| tests pass)' .bazel-test-slang.log)
+        echo "total_tests=$TOTAL_TESTS" >> $GITHUB_OUTPUT
+        echo "passing_tests=$PASSING_TESTS" >> $GITHUB_OUTPUT
+        echo "exit_code=$BAZEL_EXIT_CODE" >> $GITHUB_OUTPUT
+    # Keep AscentLint after the elaboration suites.
     - name: Verilog lint tests (using RealIntent AscentLint)
       id: ascentlint
       # Use --test_output=summary to suppress log output, even on failure (proprietary EDA tool output may be sensitive).
@@ -169,6 +183,7 @@ jobs:
         if [ "${{ steps.python.outputs.exit_code }}" != "0" ] \
           || [ "${{ steps.stardoc.outputs.exit_code }}" != "0" ] \
           || [ "${{ steps.verific.outputs.exit_code }}" != "0" ] \
+          || [ "${{ steps.slang.outputs.exit_code }}" != "0" ] \
           || [ "${{ steps.ascentlint.outputs.exit_code }}" != "0" ] \
           || [ "${{ steps.vcs.outputs.exit_code }}" != "0" ] \
           || [ "${{ steps.iverilog.outputs.exit_code }}" != "0" ] \
@@ -254,6 +269,22 @@ jobs:
         label: "verific"
         message: ${{ needs.bazel-build-and-test.outputs.verific_passing_tests }} of ${{ needs.bazel-build-and-test.outputs.verific_total_tests }} passing
         color: ${{ needs.bazel-build-and-test.outputs.verific_exit_code == '0' && 'brightgreen' || 'red' }}
+
+  slang-badge:
+    runs-on: ubuntu-24.04
+    needs: bazel-build-and-test
+    if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
+    steps:
+    - name: Create slang badge
+      # schneegans/dynamic-badges-action v1.7.0
+      uses: schneegans/dynamic-badges-action@e9a478b16159b4d31420099ba146cdc50f134483
+      with:
+        auth: ${{ secrets.MGOTTSCHO_GISTS_SECRET }}
+        gistID: c66dc2ddc0e513ba06ce338620977b26
+        filename: slang.json
+        label: "slang"
+        message: ${{ needs.bazel-build-and-test.outputs.slang_passing_tests }} of ${{ needs.bazel-build-and-test.outputs.slang_total_tests }} passing
+        color: ${{ needs.bazel-build-and-test.outputs.slang_exit_code == '0' && 'brightgreen' || 'red' }}
 
   ascentlint-badge:
     runs-on: ubuntu-24.04
