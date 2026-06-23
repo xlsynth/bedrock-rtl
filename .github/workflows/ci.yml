@@ -197,10 +197,26 @@ jobs:
       id: slang
       run: |
         set +e
-        bazel test $TMP_HACK_BAZEL_CI_FLAGS --noshow_loading_progress //... --test_tag_filters=slang 2>&1 | tee .bazel-test-slang.log
-        BAZEL_EXIT_CODE=${PIPESTATUS[0]}
-        TOTAL_TESTS=$(grep -Po '(?<=out of )\d+(?= test)' .bazel-test-slang.log)
-        PASSING_TESTS=$(grep -Po '\d+(?= test passes?\.| tests pass)' .bazel-test-slang.log)
+        SLANG_TARGETS=.bazel-test-slang.targets
+        bazel query --noshow_progress 'tests(//...) intersect attr(tags, "slang", //...)' > "$SLANG_TARGETS"
+        BAZEL_EXIT_CODE=$?
+        TOTAL_TESTS=0
+        PASSING_TESTS=0
+
+        if [ "$BAZEL_EXIT_CODE" -ne 0 ]; then
+          echo "::error title=Slang test discovery failed::Bazel query exited with code $BAZEL_EXIT_CODE"
+        elif [ ! -s "$SLANG_TARGETS" ]; then
+          echo "::error title=No Slang tests found::The slang tag must select at least one test target"
+          BAZEL_EXIT_CODE=4
+        else
+          NUM_SLANG_TARGETS=$(wc -l < "$SLANG_TARGETS")
+          echo "Running $NUM_SLANG_TARGETS Slang-tagged test targets."
+          bazel test $TMP_HACK_BAZEL_CI_FLAGS --noshow_loading_progress //... --test_tag_filters=slang 2>&1 | tee .bazel-test-slang.log
+          BAZEL_EXIT_CODE=${PIPESTATUS[0]}
+          TOTAL_TESTS=$(grep -Po '(?<=out of )\d+(?= test)' .bazel-test-slang.log)
+          PASSING_TESTS=$(grep -Po '\d+(?= test passes?\.| tests pass)' .bazel-test-slang.log)
+        fi
+
         echo "total_tests=$TOTAL_TESTS" >> $GITHUB_OUTPUT
         echo "passing_tests=$PASSING_TESTS" >> $GITHUB_OUTPUT
         echo "exit_code=$BAZEL_EXIT_CODE" >> $GITHUB_OUTPUT
