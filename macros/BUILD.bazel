@@ -130,6 +130,7 @@ br_verilog_sim_test_tools_suite(
 
 br_verilog_sim_test_tools_suite(
     name = "br_asserts_sim_noassert_test_tools_suite",
+    defines = [],
     tools = [
         "vcs",
         "verilator",
@@ -175,6 +176,7 @@ br_verilog_sim_test_tools_suite(
 
 br_verilog_sim_test_tools_suite(
     name = "br_asserts_in_pkg_sim_noassert_test_tools_suite",
+    defines = [],
     elab_only = True,
     tools = [
         "vcs",
