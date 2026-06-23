@@ -45,28 +45,26 @@ def br_verilog_elab_and_lint_test_suite(name, **kwargs):
         **kwargs
     )
 
-def br_verilog_sim_test_suite(name, tool, defines = [], elab_opts = [], sim_opts = [], **kwargs):
+def br_verilog_sim_test_suite(name, tool, defines = None, elab_opts = [], sim_opts = [], **kwargs):
     """Wraps verilog_sim_test_suite with Bedrock-internal settings. Not intended to be called by Bedrock users.
 
-    * Defines `BR_ASSERT_ON` and `BR_ENABLE_IMPL_CHECKS`.
+    * Defines `BR_ASSERT_ON`, `BR_ENABLE_IMPL_CHECKS`, and `SIMULATION` by default.
     * Sets tool to exit on first assertion failure.
 
     Args:
         name (str): The base name of the test suite.
         tool (str): The simulator tool to use.
-        defines (List[str]): Defines to pass to the simulator. If not provided, defaults are determined internally.
+        defines (List[str] or None): Defines to pass to the simulator. If omitted, Bedrock's simulation defaults
+            are used. Pass an empty list to compile without any defines.
         elab_opts (List[str]): Compile/elaboration options to pass to the simulator.
         sim_opts (List[str]): Simulation runtime options to pass to the simulator.
         **kwargs: Additional keyword arguments passed to verilog_sim_test_suite.
     """
 
-    if "defines" in kwargs:
-        fail("Do not pass defines to br_verilog_sim_test_suite. They are hard-coded in the macro.")
-
     if tool == "vcs":
         elab_opts = elab_opts + ["-assert global_finish_maxfail=1+offending_values"]
 
-    if len(defines) == 0:
+    if defines == None:
         defines = ["BR_ASSERT_ON", "BR_ENABLE_IMPL_CHECKS", "SIMULATION"]
 
     verilog_sim_test_suite(
@@ -115,7 +113,13 @@ def br_verilog_fpv_test_tools_suite(name, tools = {}, **kwargs):
 def br_verilog_fpv_test_suite(**kwargs):
     """Wraps verilog_fpv_test_suite with Bedrock-internal settings. Not intended to be called by Bedrock users.
 
-    * Defines `BR_ASSERT_ON`, `BR_ENABLE_IMPL_CHECKS`, `BR_DISABLE_FINAL_CHECKS`, `BR_ENABLE_FPV` and `BR_DISABLE_ASSERT_IMM`.
+    The define set is fixed for every generated FPV test and sandbox:
+    * `BR_ASSERT_ON` enables assertion macros.
+    * `BR_ENABLE_IMPL_CHECKS` enables Bedrock implementation checks.
+    * `BR_ENABLE_FPV` enables FPV-only assertion wrappers.
+    * `BR_DISABLE_FINAL_CHECKS` suppresses simulation-only final blocks, which formal tools ignore.
+    * `BR_DISABLE_ASSERT_IMM` suppresses immediate/combinational checks. Formal assumptions constrain sampled
+      clock edges and cannot reliably prevent between-edge immediate checks from firing.
 
     Args:
         **kwargs: Additional keyword arguments passed to verilog_fpv_test_suite. Do not pass defines.

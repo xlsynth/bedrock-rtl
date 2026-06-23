@@ -54,8 +54,16 @@ They are guarded (enabled) by the following defines:
       are no-ops.
 * `BR_ENABLE_FPV` -- if not defined, then all `BR_*_FPV` macros are no-ops.
 * `BR_DISABLE_ASSERT_IMM` -- if defined, then all `BR_ASSERT_IMM*`, `BR_COVER_IMM*`,
-      `BR_ASSERT_COMB*`, and `BR_COVER_COMB*` macros are no-ops.
+      `BR_ASSERT_COMB*`, `BR_ASSUME_COMB*`, and `BR_COVER_COMB*` macros are no-ops.
 * `BR_DISABLE_FINAL_CHECKS` -- if defined, then all `BR_ASSERT_FINAL*` macros are no-ops.
+* `BR_VERILATOR` -- tool-owned define that selects the Verilator-compatible static assertion
+      implementation and temporarily suppresses concurrent assertion, assumption, and cover macros.
+      The Verilator runner sets it automatically; users should not set it for other tools.
+
+`BR_ASSERT_CONCURRENT_ON` is an internal derived define. `br_asserts.svh` defines it when
+`BR_ASSERT_ON` is set and `BR_VERILATOR` is not set. Users and build rules must not set it directly.
+When UVM is present, UVM itself supplies `UVM_MAJOR_REV`; Bedrock uses that standard UVM define to
+route assertion failures through `uvm_error` and does not set it.
 
 TIP: It is recommended that users simply define `BR_ASSERT_ON` when integrating Bedrock modules into their designs.
 The other guards will typically not be necessary.
@@ -128,6 +136,10 @@ Disable by defining `BR_DISABLE_ASSERT_IMM`.
 | `BR_ASSUME_CR`
 | Concurrent assumption with explicit clock and reset names.
 
+| `BR_ASSUME_COMB`
+a| Immediate assumption wrapped inside of an `always_comb` block.
+Disable by defining `BR_DISABLE_ASSERT_IMM`.
+
 | `BR_ASSERT_INCL_RST`
 a| Concurrent assertion that is active in reset and out of reset
 (but specifically intended for checking the former), with implicit `clk` name.
@@ -145,6 +157,10 @@ be integrated into a simulation environment, but where not all formal assertions
 They are guarded (enabled) by the following defines:
 
 * `BR_ENABLE_FPV` -- if not defined, then all BR_*_FPV macros are no-ops.
+
+These wrappers remain subject to the guards on the macros they wrap. In particular,
+`BR_ASSERT_ON` must also be defined, and `BR_DISABLE_ASSERT_IMM` suppresses the
+`BR_ASSERT_COMB_FPV`, `BR_ASSUME_COMB_FPV`, and `BR_COVER_COMB_FPV` wrappers.
 
 [cols="2,4"]
 |===
@@ -167,6 +183,9 @@ They are guarded (enabled) by the following defines:
 
 | `BR_COVER_COMB_FPV`
 | Wraps BR_COVER_COMB.
+
+| `BR_ASSUME_COMB_FPV`
+| Wraps BR_ASSUME_COMB.
 
 | `BR_ASSUME_FPV`
 | Wraps BR_ASSUME.
@@ -303,6 +322,51 @@ Enable them globally by defining `BR_ENABLE_IMPL_CHECKS`.
 | Wraps `BR_COVER_COMB`.
 
 |===
+
+== Bazel Define Profiles
+
+The Bedrock Bazel wrappers in `bazel/br_verilog.bzl` apply the following compile-time define profiles.
+The generic rules in `bazel/verilog.bzl` do not add these Bedrock-specific defines; they pass their
+`defines` attribute unchanged to Verilog Runner.
+
+[cols="2,3,5"]
+|===
+| Wrapper/profile | Defines | Intent
+
+| Elaboration/lint: integration checks
+| `BR_ASSERT_ON`
+| Enables public and integration checks while leaving implementation checks disabled.
+
+| Elaboration/lint: all checks
+| `BR_ASSERT_ON`, `BR_ENABLE_IMPL_CHECKS`
+| Enables both integration and Bedrock implementation checks.
+
+| Elaboration/lint: no assertions
+| None
+| Verifies that RTL elaborates and lints when assertion macros are disabled.
+
+| Simulation default
+| `BR_ASSERT_ON`, `BR_ENABLE_IMPL_CHECKS`, `SIMULATION`
+| Enables all Bedrock checks and simulation-specific RTL behavior. An explicitly supplied `defines`
+  list replaces this default; an explicit empty list requests no defines.
+
+| Formal property verification
+| `BR_ASSERT_ON`, `BR_ENABLE_IMPL_CHECKS`, `BR_ENABLE_FPV`,
+  `BR_DISABLE_FINAL_CHECKS`, `BR_DISABLE_ASSERT_IMM`
+| Enables concurrent public, implementation, and FPV-only properties. Final blocks are simulation-only
+  and are ignored by formal tools. Immediate/combinational checks are disabled because formal assumptions
+  constrain sampled clock edges and cannot reliably prevent between-edge immediate checks from firing.
+
+|===
+
+The formal profile is fixed by `br_verilog_fpv_test_suite`; callers cannot override `defines`.
+It is applied identically to executable FPV tests and generated FPV sandboxes, for both JasperGold and VCF.
+Formal builds intentionally do not define `SIMULATION`, `SYNTHESIS`, or `BR_VERILATOR`.
+The Verilator simulation plugin adds `BR_VERILATOR` after receiving the Bazel-provided define list.
+
+`SIMULATION` controls simulation-only RTL behavior outside the assertion headers. It is owned by the
+Bedrock simulation wrapper rather than by `br_asserts.svh`. `SYNTHESIS` is reserved for synthesis-tool
+environments and is not set by Bedrock's elaboration, lint, simulation, or formal wrappers.
 
 == `br_gates.svh`: Gate Convenience Wrappers
 
