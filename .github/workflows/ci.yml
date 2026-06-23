@@ -180,15 +180,29 @@ jobs:
 
     - name: Check bazel test suite results
       run: |
-        if [ "${{ steps.python.outputs.exit_code }}" != "0" ] \
-          || [ "${{ steps.stardoc.outputs.exit_code }}" != "0" ] \
-          || [ "${{ steps.verific.outputs.exit_code }}" != "0" ] \
-          || [ "${{ steps.slang.outputs.exit_code }}" != "0" ] \
-          || [ "${{ steps.ascentlint.outputs.exit_code }}" != "0" ] \
-          || [ "${{ steps.vcs.outputs.exit_code }}" != "0" ] \
-          || [ "${{ steps.iverilog.outputs.exit_code }}" != "0" ] \
-          || [ "${{ steps.verilator.outputs.exit_code }}" != "0" ]; then
-          echo "One or more Bazel suites failed."
+        failed_suites=()
+
+        check_suite() {
+          local suite="$1"
+          local exit_code="$2"
+          if [ "$exit_code" != "0" ]; then
+            echo "::error title=Bazel suite failed::$suite exited with code ${exit_code:-missing}"
+            failed_suites+=("$suite")
+          fi
+        }
+
+        check_suite "python" "${{ steps.python.outputs.exit_code }}"
+        check_suite "stardoc" "${{ steps.stardoc.outputs.exit_code }}"
+        check_suite "verific" "${{ steps.verific.outputs.exit_code }}"
+        check_suite "slang" "${{ steps.slang.outputs.exit_code }}"
+        check_suite "ascentlint" "${{ steps.ascentlint.outputs.exit_code }}"
+        check_suite "vcs" "${{ steps.vcs.outputs.exit_code }}"
+        check_suite "iverilog" "${{ steps.iverilog.outputs.exit_code }}"
+        check_suite "verilator" "${{ steps.verilator.outputs.exit_code }}"
+
+        if [ "${#failed_suites[@]}" -ne 0 ]; then
+          echo "Failed Bazel suites:"
+          printf '  - %s\n' "${failed_suites[@]}"
           exit 1
         fi
 
