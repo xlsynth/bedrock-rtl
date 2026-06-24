@@ -2,9 +2,8 @@
 
 `timescale 1ns / 1ps
 
-import br_amba::*;
-
 package br_amba_axi_sim_pkg;
+  import br_amba::*;
 
   localparam int AxiAddrWidth = 64;
   localparam int AxiDataWidth = 1024;

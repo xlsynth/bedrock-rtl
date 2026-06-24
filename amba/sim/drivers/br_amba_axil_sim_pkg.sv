@@ -2,9 +2,8 @@
 
 `timescale 1ns / 1ps
 
-import br_amba::*;
-
 package br_amba_axil_sim_pkg;
+  import br_amba::*;
 
   localparam int AxilAddrWidth = 64;
   localparam int AxilDataWidth = 1024;
