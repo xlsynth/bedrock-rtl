@@ -66,10 +66,10 @@ RUN pip3.12 install --require-hashes -r /tmp/requirements_lock_3_12.txt && \
     rm /tmp/requirements_lock_3_12.txt
 
 # Install Verilator
-# v5.048
+# v5.049 - devel
 RUN git clone https://github.com/verilator/verilator && \
     cd verilator && \
-    git checkout d0aa828c217410fffc73d92077b6f4f54830357c && \
+    git checkout 7752625f49aae7886ea44b0bf98add5bcbff2eab && \
     autoconf && \
     CC="clang -fuse-ld=lld" CXX="clang++ -fuse-ld=lld" ./configure && \
     make -j$(nproc) && \
