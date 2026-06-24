@@ -260,7 +260,8 @@ module br_ram_flops_tile #(
       // Write address decoding
       for (genvar port = 0; port < NumWritePorts; port++) begin : gen_wr_addr_onehot
         br_enc_bin2onehot #(
-            .NumValues(Depth)
+            .NumValues(Depth),
+            .EnableAssertFinalNotValid(EnableAssertFinalNotValid)
         ) br_enc_bin2onehot_inst (
             .clk(wr_clk),  // ri lint_check_waive SAME_CLOCK_NAME
             .rst(wr_rst),
