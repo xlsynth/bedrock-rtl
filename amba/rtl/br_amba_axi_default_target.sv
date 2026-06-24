@@ -10,6 +10,10 @@
 // response. If SlvErr is 1, the target will respond with a SLVERR response.
 // If both DecodeError and SlvErr are 0, the target will respond with an OKAY
 // response.
+//
+// The reduced interface intentionally omits the write data payload and strobe
+// signals. This target discards all write data; users only need to provide
+// target_wvalid and target_wlast to complete the write-channel handshake.
 
 `include "br_asserts_internal.svh"
 `include "br_unused.svh"

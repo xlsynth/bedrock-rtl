@@ -5,6 +5,38 @@ load("//bazel:br_verilog.bzl", "br_verilog_sim_test_tools_suite")
 load("//bazel:verilog.bzl", "verilog_elab_test")
 
 verilog_library(
+    name = "br_amba_apb_timing_slice_tb",
+    srcs = ["br_amba_apb_timing_slice_tb.sv"],
+    deps = [
+        "//amba/rtl:br_amba_apb_timing_slice",
+        "//amba/sim/drivers:br_amba_apb_sim_helpers",
+        "//amba/sim/monitors:br_amba_apb_timing_slice_monitor",
+        "//misc/sim:br_test_driver",
+    ],
+)
+
+verilog_elab_test(
+    name = "br_amba_apb_timing_slice_tb_elab_test",
+    tool = "slang",
+    deps = [":br_amba_apb_timing_slice_tb"],
+)
+
+br_verilog_sim_test_tools_suite(
+    name = "br_amba_apb_timing_slice_sim_test_tools_suite",
+    params = {
+        "AddrWidth": [
+            "12",
+            "32",
+        ],
+    },
+    tools = [
+        "vcs",
+        "verilator",
+    ],
+    deps = [":br_amba_apb_timing_slice_tb"],
+)
+
+verilog_library(
     name = "br_amba_axi_isolate_sub_tb",
     srcs = ["br_amba_axi_isolate_sub_tb.sv"],
     deps = [
@@ -97,4 +129,46 @@ br_verilog_sim_test_tools_suite(
         #"verilator",
     ],
     deps = [":br_amba_axi_shrinker_tb"],
+)
+
+verilog_library(
+    name = "br_amba_axil_default_target_tb",
+    srcs = ["br_amba_axil_default_target_tb.sv"],
+    deps = [
+        "//amba/rtl:br_amba_axil_default_target",
+        "//amba/sim/drivers:br_amba_axil_driver",
+        "//amba/sim/monitors:br_amba_axil_monitor",
+        "//misc/sim:br_test_driver",
+    ],
+)
+
+verilog_elab_test(
+    name = "br_amba_axil_default_target_tb_elab_test",
+    tool = "slang",
+    deps = [":br_amba_axil_default_target_tb"],
+)
+
+br_verilog_sim_test_tools_suite(
+    name = "br_amba_axil_default_target_sim_test_tools_suite",
+    params = {
+        "DataWidth": [
+            "32",
+            "64",
+        ],
+        "NumTransactions": [
+            "1",
+            "10",
+            "100",
+        ],
+        "ResponseKind": [
+            "0",
+            "1",
+            "2",
+        ],
+    },
+    tools = [
+        "vcs",
+        "verilator",
+    ],
+    deps = [":br_amba_axil_default_target_tb"],
 )
