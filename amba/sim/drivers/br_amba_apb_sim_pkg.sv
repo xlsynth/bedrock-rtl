@@ -2,9 +2,9 @@
 
 `timescale 1ns / 1ps
 
-import br_amba::*;
-
 package br_amba_apb_sim_pkg;
+  import br_amba::*;
+
   localparam logic Psel0 = 1'b0;
   localparam logic Psel1 = 1'b1;
   localparam logic Penable0 = 1'b0;
