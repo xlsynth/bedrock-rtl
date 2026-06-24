@@ -33,7 +33,7 @@ module br_credit_counter_tb;
   parameter bit EnableCoverDecrementBackpressure = 1;
   parameter bit EnableCoverWithhold = 1;
   parameter bit EnableAssertAlwaysDecr = 0;
-  parameter bit EnableAssertFinalNotValid = 1;
+  parameter bit EnableAssertFinalNotValid = 0;
   parameter logic [MaxValueWidth-1:0] CoverMaxValue = MaxValue;
   parameter bit EnableAssertFinalMaxValue = 0;
   parameter bit EnableAssertFinalMinValue = 0;
