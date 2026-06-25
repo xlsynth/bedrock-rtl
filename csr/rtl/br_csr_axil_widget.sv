@@ -231,6 +231,7 @@ module br_csr_axil_widget #(
 
   watchdog_state_t wd_state, wd_state_next;
   logic [TimerWidth-1:0] timer_count;
+  logic timeout_en;
   logic timer_active;
   logic timer_expired;
   logic timer_reset;
@@ -238,12 +239,13 @@ module br_csr_axil_widget #(
   logic csr_req_abort_int;
   logic request_aborted_int;
 
-  assign timer_active = wd_state == Active || wd_state == Expired;
+  assign timeout_en = timeout_cycles != '0;
+  assign timer_active = timeout_en && (wd_state == Active || wd_state == Expired);
   assign timer_expired = timer_count >= timeout_cycles;
-  assign timer_reset = (timer_active && timer_expired) || csr_resp_valid;
+  assign timer_reset = (timer_active && timer_expired) || request_aborted_int || csr_resp_valid;
 
   assign timeout_resp_valid = (wd_state == Aborted);
-  assign csr_req_abort_int = (wd_state == Active) && timer_expired && !csr_resp_valid;
+  assign csr_req_abort_int = timeout_en && (wd_state == Active) && timer_expired && !csr_resp_valid;
   assign request_aborted_int = (wd_state == Expired) && timer_expired && !csr_resp_valid;
 
   if (RegisterCsrRequestOutputs) begin : gen_reg_csr_req_out
@@ -257,7 +259,6 @@ module br_csr_axil_widget #(
   br_counter_incr #(
       .MaxValue(MaxTimeoutCycles),
       .EnableCoverZeroIncrement(0),
-      .EnableCoverReinitNoIncr(0),
       .EnableWrap(0)
   ) br_counter_incr_timer (
       .clk,
@@ -281,7 +282,7 @@ module br_csr_axil_widget #(
       Active: begin
         if (csr_resp_valid) begin
           wd_state_next = Idle;
-        end else if (timer_expired) begin
+        end else if (timeout_en && timer_expired) begin
           wd_state_next = Expired;
         end
       end

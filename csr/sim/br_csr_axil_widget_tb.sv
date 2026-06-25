@@ -12,6 +12,7 @@ module br_csr_axil_widget_tb;
   parameter bit RegisterResponseOutputs = 0;
   localparam int StrobeWidth = DataWidth / 8;
   localparam int TimerWidth = br_math::clamped_clog2(MaxTimeoutCycles + 1);
+  localparam int WatchdogDisabledCheckCycles = 20;
 
   logic clk;
   logic rst;
@@ -216,11 +217,16 @@ module br_csr_axil_widget_tb;
 
   task automatic wait_axil_read_response(input logic [br_amba::AxiRespWidth-1:0] expected_rresp,
                                          input logic [DataWidth-1:0] expected_rdata);
+    int timeout = 0;
     axil_rready = 1;
 
     @(posedge clk);
-    while (!axil_rvalid) @(posedge clk);
+    while (!axil_rvalid && timeout < TimeoutCycles) begin
+      @(posedge clk);
+      timeout++;
+    end
 
+    td.check(timeout < TimeoutCycles, "Timeout waiting for AXI-Lite read response");
     td.check_integer(axil_rresp, expected_rresp, "AXI-Lite rresp mismatch");
     td.check_integer(axil_rdata, expected_rdata, "AXI-Lite rdata mismatch");
 
@@ -328,6 +334,26 @@ module br_csr_axil_widget_tb;
         wait_csr_read(16'h0040, 1'b0, 1'b1);
         send_csr_response(32'hDEADBEEF, 1'b0, 1'b0);
       end
+    join
+
+    // Keep a request pending for multiple cycles with the watchdog disabled.
+    $display("Checking timeout_cycles=0 disables the watchdog");
+    timeout_cycles = '0;
+    fork
+      send_axil_read(16'h0048, 3'b000);
+      wait_csr_read(16'h0048, 1'b0, 1'b1);
+    join
+    repeat (WatchdogDisabledCheckCycles) begin
+      @(posedge clk);
+      td.check(!csr_req_valid, "Unexpected CSR request while watchdog is disabled");
+      td.check(!csr_req_abort, "Unexpected CSR abort while watchdog is disabled");
+      td.check(!request_aborted, "Unexpected request abort while watchdog is disabled");
+      td.check(!axil_rvalid, "Unexpected AXI-Lite response while watchdog is disabled");
+    end
+    @(negedge clk);
+    fork
+      send_csr_response(32'h01234567, 1'b0, 1'b0);
+      wait_axil_read_response(br_amba::AxiRespOkay, 32'h01234567);
     join
 
     // Test timeout mechanism
