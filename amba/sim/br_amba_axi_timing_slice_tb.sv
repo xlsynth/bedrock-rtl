@@ -447,6 +447,15 @@ module br_amba_axi_timing_slice_tb;
     join
   endtask
 
+  task automatic check_timing_slice_status(input string scenario);
+    td.check(!target_driver_failed, $sformatf(
+             "%s: AXI timing-slice target driver reported one or more failures", scenario));
+    td.check(!initiator_driver_failed, $sformatf(
+             "%s: AXI timing-slice initiator driver reported one or more failures", scenario));
+    td.check(!monitor_failed, $sformatf(
+             "%s: AXI timing-slice monitor reported one or more failures", scenario));
+  endtask
+
   task automatic test_directed_backpressure();
     axi_timing_slice_controls_t controls;
 
@@ -456,6 +465,7 @@ module br_amba_axi_timing_slice_tb;
     controls.valid_gap_cycles = DirectedValidGapCycles;
     controls.max_stall_cycles = DirectedStallCycles;
     run_timing_slice_test(controls);
+    check_timing_slice_status("directed backpressure");
   endtask
 
   task automatic test_multi_transaction_ordering();
@@ -467,6 +477,7 @@ module br_amba_axi_timing_slice_tb;
     controls.valid_gap_cycles = RandomizedValidGapCycles;
     controls.max_stall_cycles = RandomizedStallCycles;
     run_timing_slice_test(controls);
+    check_timing_slice_status("multi-transaction ordering");
   endtask
 
   initial begin
