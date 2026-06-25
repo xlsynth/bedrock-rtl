@@ -35,3 +35,43 @@ br_verilog_sim_test_tools_suite(
     ],
     deps = [":br_multi_xfer_reg_fwd_tb"],
 )
+
+verilog_library(
+    name = "br_multi_xfer_distributor_rr_tb",
+    srcs = ["br_multi_xfer_distributor_rr_tb.sv"],
+    deps = [
+        "//misc/sim:br_test_driver",
+        "//multi_xfer/rtl:br_multi_xfer_distributor_rr",
+    ],
+)
+
+verilog_elab_test(
+    name = "br_multi_xfer_distributor_rr_tb_elab_test",
+    tool = "slang",
+    deps = [":br_multi_xfer_distributor_rr_tb"],
+)
+
+br_verilog_sim_test_tools_suite(
+    name = "br_multi_xfer_distributor_rr_sim_test_tools_suite",
+    params = {
+        "NumSymbols": [
+            "2",
+            "3",
+        ],
+        "NumFlows": [
+            "3",
+            "5",
+        ],
+        "SymbolWidth": [
+            "1",
+            "8",
+            "17",
+        ],
+        "NumRandomCycles": ["120"],
+    },
+    tools = [
+        "vcs",
+        "verilator",
+    ],
+    deps = [":br_multi_xfer_distributor_rr_tb"],
+)
