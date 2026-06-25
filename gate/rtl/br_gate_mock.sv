@@ -9,7 +9,9 @@
 // version of the gatelib should be included in the design filelist.
 
 `ifdef SYNTHESIS
+`ifndef BR_PPA_SYNTHESIS
 `BR_ASSERT_STATIC(do_not_synthesize_br_gate_mock_modules_a, 0)
+`endif
 `endif
 
 // verilog_lint: waive-start module-filename

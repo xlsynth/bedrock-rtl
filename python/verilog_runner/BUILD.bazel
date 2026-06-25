@@ -21,8 +21,10 @@ filegroup(
         "eda_tool.py",
         "plugins.py",
         "util.py",
+        "verilog_runner.py",
         "//python/verilog_runner/plugins:slang.py",
         "//python/verilog_runner/plugins:verilator.py",
+        "//python/verilog_runner/plugins:yosys.py",
     ],
 )
 

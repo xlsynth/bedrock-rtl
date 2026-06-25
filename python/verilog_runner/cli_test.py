@@ -66,6 +66,17 @@ class TestCliFunctions(unittest.TestCase):
         self.assertNotIn("sim_opts", common)
 
     @mock.patch.dict("os.environ", {}, clear=True)
+    def test_common_args_synth_includes_mapping_options(self):
+        args = _args_for_subcommand("synth")
+        args.liberty = "cells.lib"
+        args.clock_period_ps = 1000
+
+        common = common_args(args)
+
+        self.assertEqual(common["liberty"], "cells.lib")
+        self.assertEqual(common["clock_period_ps"], 1000)
+
+    @mock.patch.dict("os.environ", {}, clear=True)
     def test_common_args_preserves_tool_opts(self):
         args = _args_for_subcommand("fpv")
         args.opt = ["-legacy"]

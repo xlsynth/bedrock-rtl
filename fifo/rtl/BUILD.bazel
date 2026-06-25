@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: Apache-2.0
 
 load("@rules_hdl//verilog:providers.bzl", "verilog_library")
-load("//bazel:br_verilog.bzl", "br_verilog_elab_and_lint_test_suite")
+load("//bazel:br_verilog.bzl", "br_verilog_elab_and_lint_test_suite", "br_verilog_synth_suite")
 load("//fifo/rtl/fifo_codegen:fifo_codegen.bzl", "shared_fifo_verilog_library")
 
 package(default_visibility = ["//visibility:public"])
@@ -37,6 +37,45 @@ verilog_library(
         ":br_fifo_ctrl_1r1w",
         "//ram/rtl:br_ram_flops",
     ],
+)
+
+br_verilog_synth_suite(
+    name = "br_fifo_flops_baseline_ppa",
+    params = {
+        "Depth": [
+            "4",
+            "16",
+        ],
+        "EnableBypass": ["1"],
+        "RegisterPopOutputs": ["0"],
+        "Width": ["32"],
+    },
+    deps = [":br_fifo_flops"],
+)
+
+br_verilog_synth_suite(
+    name = "br_fifo_flops_timing_ppa",
+    params = {
+        "Depth": ["16"],
+        "EnableBypass": ["0"],
+        "RegisterPopOutputs": ["1"],
+        "Width": ["64"],
+    },
+    deps = [":br_fifo_flops"],
+)
+
+br_verilog_synth_suite(
+    name = "br_fifo_flops_pipelined_ppa",
+    params = {
+        "Depth": ["32"],
+        "FlopRamAddressDepthStages": ["1"],
+        "FlopRamDepthTiles": ["2"],
+        "FlopRamReadDataDepthStages": ["1"],
+        "FlopRamReadDataWidthStages": ["1"],
+        "FlopRamWidthTiles": ["2"],
+        "Width": ["64"],
+    },
+    deps = [":br_fifo_flops"],
 )
 
 verilog_library(
@@ -1065,4 +1104,374 @@ br_verilog_elab_and_lint_test_suite(
         ],
     },
     deps = [":br_fifo_shared_dynamic_flops_push_credit_pop_credit"],
+)
+
+# Representative synthesis points emphasize storage depth, logical FIFO count,
+# and practical interface pipelining. Assertion- and cover-only parameters are
+# intentionally left at their defaults.
+
+br_verilog_synth_suite(
+    name = "br_fifo_ctrl_1r1w_ppa",
+    params = {
+        "Depth": [
+            "8",
+            "32",
+        ],
+        "EnableBypass": ["1"],
+        "RamReadLatency": ["1"],
+        "RegisterPopOutputs": ["1"],
+        "Width": ["32"],
+    },
+    deps = [":br_fifo_ctrl_1r1w"],
+)
+
+br_verilog_synth_suite(
+    name = "br_fifo_ctrl_1r1w_push_credit_ppa",
+    params = {
+        "Depth": [
+            "8",
+            "32",
+        ],
+        "EnableBypass": ["1"],
+        "RamReadLatency": ["1"],
+        "RegisterPopOutputs": ["1"],
+        "RegisterPushOutputs": ["1"],
+        "Width": ["32"],
+    },
+    deps = [":br_fifo_ctrl_1r1w_push_credit"],
+)
+
+br_verilog_synth_suite(
+    name = "br_fifo_flops_push_credit_ppa",
+    params = {
+        "Depth": [
+            "8",
+            "32",
+        ],
+        "EnableBypass": ["1"],
+        "FlopRamAddressDepthStages": ["1"],
+        "RegisterPopOutputs": ["1"],
+        "RegisterPushOutputs": ["1"],
+        "Width": ["32"],
+    },
+    deps = [":br_fifo_flops_push_credit"],
+)
+
+br_verilog_synth_suite(
+    name = "br_fifo_shared_dynamic_ctrl_ppa",
+    params = {
+        "DataRamReadLatency": ["1"],
+        "Depth": ["32"],
+        "NumFifos": [
+            "2",
+            "4",
+        ],
+        "NumReadPorts": ["2"],
+        "NumWritePorts": ["2"],
+        "PointerRamReadLatency": ["1"],
+        "RegisterDeallocation": ["1"],
+        "RegisterPopOutputs": ["1"],
+        "StagingBufferDepth": ["2"],
+        "Width": ["32"],
+    },
+    deps = [":br_fifo_shared_dynamic_ctrl"],
+)
+
+br_verilog_synth_suite(
+    name = "br_fifo_shared_dynamic_ctrl_ext_arbiter_ppa",
+    params = {
+        "DataRamReadLatency": ["1"],
+        "Depth": ["32"],
+        "NumFifos": [
+            "2",
+            "4",
+        ],
+        "NumReadPorts": ["2"],
+        "NumWritePorts": ["2"],
+        "PointerRamReadLatency": ["1"],
+        "RegisterDeallocation": ["1"],
+        "RegisterPopOutputs": ["1"],
+        "StagingBufferDepth": ["2"],
+        "Width": ["32"],
+    },
+    deps = [":br_fifo_shared_dynamic_ctrl_ext_arbiter"],
+)
+
+br_verilog_synth_suite(
+    name = "br_fifo_shared_dynamic_ctrl_push_credit_ppa",
+    params = {
+        "DataRamReadLatency": ["1"],
+        "Depth": ["32"],
+        "NumFifos": [
+            "2",
+            "4",
+        ],
+        "NumReadPorts": ["2"],
+        "NumWritePorts": ["2"],
+        "PointerRamReadLatency": ["1"],
+        "RegisterDeallocation": ["1"],
+        "RegisterPopOutputs": ["1"],
+        "RegisterPushOutputs": ["1"],
+        "StagingBufferDepth": ["2"],
+        "Width": ["32"],
+    },
+    deps = [":br_fifo_shared_dynamic_ctrl_push_credit"],
+)
+
+br_verilog_synth_suite(
+    name = "br_fifo_shared_dynamic_ctrl_push_credit_ext_arbiter_ppa",
+    params = {
+        "DataRamReadLatency": ["1"],
+        "Depth": ["32"],
+        "NumFifos": [
+            "2",
+            "4",
+        ],
+        "NumReadPorts": ["2"],
+        "NumWritePorts": ["2"],
+        "PointerRamReadLatency": ["1"],
+        "RegisterDeallocation": ["1"],
+        "RegisterPopOutputs": ["1"],
+        "RegisterPushOutputs": ["1"],
+        "StagingBufferDepth": ["2"],
+        "Width": ["32"],
+    },
+    deps = [":br_fifo_shared_dynamic_ctrl_push_credit_ext_arbiter"],
+)
+
+br_verilog_synth_suite(
+    name = "br_fifo_shared_dynamic_ctrl_push_credit_pop_credit_ppa",
+    params = {
+        "DataRamReadLatency": ["1"],
+        "Depth": ["32"],
+        "NumFifos": [
+            "2",
+            "4",
+        ],
+        "NumReadPorts": ["2"],
+        "NumWritePorts": ["2"],
+        "PointerRamReadLatency": ["1"],
+        "PopMaxCredits": ["4"],
+        "RegisterDeallocation": ["1"],
+        "RegisterPushOutputs": ["1"],
+        "Width": ["32"],
+    },
+    deps = [":br_fifo_shared_dynamic_ctrl_push_credit_pop_credit"],
+)
+
+br_verilog_synth_suite(
+    name = "br_fifo_shared_dynamic_ctrl_push_credit_pop_credit_ext_arbiter_ppa",
+    params = {
+        "DataRamReadLatency": ["1"],
+        "Depth": ["32"],
+        "NumFifos": [
+            "2",
+            "4",
+        ],
+        "NumReadPorts": ["2"],
+        "NumWritePorts": ["2"],
+        "PointerRamReadLatency": ["1"],
+        "PopMaxCredits": ["4"],
+        "RegisterDeallocation": ["1"],
+        "RegisterPushOutputs": ["1"],
+        "Width": ["32"],
+    },
+    deps = [":br_fifo_shared_dynamic_ctrl_push_credit_pop_credit_ext_arbiter"],
+)
+
+br_verilog_synth_suite(
+    name = "br_fifo_shared_dynamic_flops_ppa",
+    params = {
+        "DataRamAddressDepthStages": ["1"],
+        "Depth": ["32"],
+        "NumFifos": [
+            "2",
+            "4",
+        ],
+        "NumReadPorts": ["2"],
+        "NumWritePorts": ["2"],
+        "PointerRamAddressDepthStages": ["1"],
+        "RegisterDeallocation": ["1"],
+        "RegisterPopOutputs": ["1"],
+        "StagingBufferDepth": ["2"],
+        "Width": ["32"],
+    },
+    deps = [":br_fifo_shared_dynamic_flops"],
+)
+
+br_verilog_synth_suite(
+    name = "br_fifo_shared_dynamic_flops_push_credit_ppa",
+    params = {
+        "DataRamAddressDepthStages": ["1"],
+        "Depth": ["32"],
+        "NumFifos": [
+            "2",
+            "4",
+        ],
+        "NumReadPorts": ["2"],
+        "NumWritePorts": ["2"],
+        "PointerRamAddressDepthStages": ["1"],
+        "RegisterDeallocation": ["1"],
+        "RegisterPopOutputs": ["1"],
+        "RegisterPushOutputs": ["1"],
+        "StagingBufferDepth": ["2"],
+        "Width": ["32"],
+    },
+    deps = [":br_fifo_shared_dynamic_flops_push_credit"],
+)
+
+br_verilog_synth_suite(
+    name = "br_fifo_shared_dynamic_flops_push_credit_pop_credit_ppa",
+    params = {
+        "DataRamAddressDepthStages": ["1"],
+        "Depth": ["32"],
+        "NumFifos": [
+            "2",
+            "4",
+        ],
+        "NumReadPorts": ["2"],
+        "NumWritePorts": ["2"],
+        "PointerRamAddressDepthStages": ["1"],
+        "PopMaxCredits": ["4"],
+        "RegisterDeallocation": ["1"],
+        "RegisterPushOutputs": ["1"],
+        "Width": ["32"],
+    },
+    deps = [":br_fifo_shared_dynamic_flops_push_credit_pop_credit"],
+)
+
+br_verilog_synth_suite(
+    name = "br_fifo_shared_pop_ctrl_ppa",
+    params = {
+        "Depth": ["32"],
+        "NumFifos": [
+            "2",
+            "4",
+        ],
+        "NumReadPorts": ["2"],
+        "RamReadLatency": ["1"],
+        "RegisterDeallocation": ["1"],
+        "RegisterPopOutputs": ["1"],
+        "StagingBufferDepth": ["2"],
+        "Width": ["32"],
+    },
+    deps = [":br_fifo_shared_pop_ctrl"],
+)
+
+br_verilog_synth_suite(
+    name = "br_fifo_shared_pop_ctrl_ext_arbiter_ppa",
+    params = {
+        "Depth": ["32"],
+        "NumFifos": [
+            "2",
+            "4",
+        ],
+        "NumReadPorts": ["2"],
+        "RamReadLatency": ["1"],
+        "RegisterDeallocation": ["1"],
+        "RegisterPopOutputs": ["1"],
+        "StagingBufferDepth": ["2"],
+        "Width": ["32"],
+    },
+    deps = [":br_fifo_shared_pop_ctrl_ext_arbiter"],
+)
+
+br_verilog_synth_suite(
+    name = "br_fifo_shared_pop_ctrl_credit_ppa",
+    params = {
+        "Depth": ["32"],
+        "NumFifos": [
+            "2",
+            "4",
+        ],
+        "NumReadPorts": ["2"],
+        "PopMaxCredits": ["4"],
+        "RamReadLatency": ["1"],
+        "RegisterDeallocation": ["1"],
+        "Width": ["32"],
+    },
+    deps = [":br_fifo_shared_pop_ctrl_credit"],
+)
+
+br_verilog_synth_suite(
+    name = "br_fifo_shared_pop_ctrl_credit_ext_arbiter_ppa",
+    params = {
+        "Depth": ["32"],
+        "NumFifos": [
+            "2",
+            "4",
+        ],
+        "NumReadPorts": ["2"],
+        "PopMaxCredits": ["4"],
+        "RamReadLatency": ["1"],
+        "RegisterDeallocation": ["1"],
+        "Width": ["32"],
+    },
+    deps = [":br_fifo_shared_pop_ctrl_credit_ext_arbiter"],
+)
+
+br_verilog_synth_suite(
+    name = "br_fifo_shared_pstatic_ctrl_ppa",
+    params = {
+        "Depth": ["32"],
+        "NumFifos": [
+            "2",
+            "4",
+        ],
+        "RamReadLatency": ["1"],
+        "RegisterPopOutputs": ["1"],
+        "StagingBufferDepth": ["2"],
+        "Width": ["32"],
+    },
+    deps = [":br_fifo_shared_pstatic_ctrl"],
+)
+
+br_verilog_synth_suite(
+    name = "br_fifo_shared_pstatic_ctrl_push_credit_ppa",
+    params = {
+        "Depth": ["32"],
+        "NumFifos": [
+            "2",
+            "4",
+        ],
+        "RamReadLatency": ["1"],
+        "RegisterPopOutputs": ["1"],
+        "RegisterPushOutputs": ["1"],
+        "StagingBufferDepth": ["2"],
+        "Width": ["32"],
+    },
+    deps = [":br_fifo_shared_pstatic_ctrl_push_credit"],
+)
+
+br_verilog_synth_suite(
+    name = "br_fifo_shared_pstatic_flops_ppa",
+    params = {
+        "Depth": ["32"],
+        "NumFifos": [
+            "2",
+            "4",
+        ],
+        "RamAddressDepthStages": ["1"],
+        "RegisterPopOutputs": ["1"],
+        "StagingBufferDepth": ["2"],
+        "Width": ["32"],
+    },
+    deps = [":br_fifo_shared_pstatic_flops"],
+)
+
+br_verilog_synth_suite(
+    name = "br_fifo_shared_pstatic_flops_push_credit_ppa",
+    params = {
+        "Depth": ["32"],
+        "NumFifos": [
+            "2",
+            "4",
+        ],
+        "RamAddressDepthStages": ["1"],
+        "RegisterPopOutputs": ["1"],
+        "RegisterPushOutputs": ["1"],
+        "StagingBufferDepth": ["2"],
+        "Width": ["32"],
+    },
+    deps = [":br_fifo_shared_pstatic_flops_push_credit"],
 )

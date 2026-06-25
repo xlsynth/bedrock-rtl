@@ -87,18 +87,42 @@ RUN curl -L https://github.com/chipsalliance/verible/releases/download/v0.0-4023
     rm verible-v0.0-4023-gc1271a00-linux-static-x86_64.tar.gz && \
     rm -rf verible-v0.0-4023-gc1271a00
 
+# Yosys 0.65 requires Bison 3.6 or newer; Rocky Linux 8 packages Bison 3.0.
+RUN curl -L https://ftp.gnu.org/gnu/bison/bison-3.8.2.tar.gz -o bison-3.8.2.tar.gz && \
+    echo "06c9e13bdf7eb24d4ceb6b59205a4f67c2c7e7213119644430fe82fbd14a0abb  bison-3.8.2.tar.gz" | sha256sum -c - && \
+    tar -xzf bison-3.8.2.tar.gz && \
+    cd bison-3.8.2 && \
+    ./configure && \
+    make -j$(nproc) && \
+    make install && \
+    cd .. && \
+    rm -rf bison-3.8.2 bison-3.8.2.tar.gz && \
+    bison --version
+
 # Install Yosys
-# v0.51
+# v0.65 (latest release supported by yosys-slang at the pinned revision below)
 RUN git clone https://github.com/YosysHQ/yosys.git && \
     cd yosys && \
     git fetch --all && \
-    git checkout c4b5190229616f7ebf8197f43990b4429de3e420 && \
+    git checkout b85cad634782fafac275e5f540c056bfacb2b5d2 && \
     git submodule update --init --recursive && \
+    make config-clang && \
     make -j$(nproc) && \
     make install && \
     cd .. && \
     rm -rf yosys && \
     yosys --help
+
+# Install the Slang SystemVerilog frontend plugin for Yosys.
+RUN git clone https://github.com/povik/yosys-slang.git && \
+    cd yosys-slang && \
+    git checkout 6760afa2c9b9ba231a9c6a9e94f0939dd39f0a20 && \
+    git submodule update --init --recursive && \
+    CC=clang CXX=clang++ make -j$(nproc) && \
+    cmake --install build && \
+    cd .. && \
+    rm -rf yosys-slang && \
+    yosys -m slang -p "help read_slang"
 
 # Install EQY
 # v0.48

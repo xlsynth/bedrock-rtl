@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: Apache-2.0
 
 load("@rules_hdl//verilog:providers.bzl", "verilog_library")
-load("//bazel:br_verilog.bzl", "br_verilog_elab_and_lint_test_suite")
+load("//bazel:br_verilog.bzl", "br_verilog_elab_and_lint_test_suite", "br_verilog_synth_suite")
 
 package(default_visibility = ["//visibility:public"])
 
@@ -20,6 +20,30 @@ verilog_library(
         "//macros:br_registers",
         "//macros:br_tieoff",
     ],
+)
+
+br_verilog_synth_suite(
+    name = "br_csr_axil_widget_baseline_ppa",
+    params = {
+        "AddrWidth": ["16"],
+        "DataWidth": ["32"],
+        "MaxTimeoutCycles": ["100"],
+        "RegisterCsrRequestOutputs": ["0"],
+        "RegisterResponseOutputs": ["0"],
+    },
+    deps = [":br_csr_axil_widget"],
+)
+
+br_verilog_synth_suite(
+    name = "br_csr_axil_widget_scaled_registered_ppa",
+    params = {
+        "AddrWidth": ["32"],
+        "DataWidth": ["64"],
+        "MaxTimeoutCycles": ["1000"],
+        "RegisterCsrRequestOutputs": ["1"],
+        "RegisterResponseOutputs": ["1"],
+    },
+    deps = [":br_csr_axil_widget"],
 )
 
 br_verilog_elab_and_lint_test_suite(
@@ -58,6 +82,26 @@ verilog_library(
     ],
 )
 
+br_verilog_synth_suite(
+    name = "br_csr_demux_select_onehot_baseline_ppa",
+    params = {
+        "AddrWidth": ["16"],
+        "DataWidth": ["32"],
+        "NumDownstreams": ["4"],
+    },
+    deps = [":br_csr_demux_select_onehot"],
+)
+
+br_verilog_synth_suite(
+    name = "br_csr_demux_select_onehot_scaled_ppa",
+    params = {
+        "AddrWidth": ["32"],
+        "DataWidth": ["64"],
+        "NumDownstreams": ["16"],
+    },
+    deps = [":br_csr_demux_select_onehot"],
+)
+
 br_verilog_elab_and_lint_test_suite(
     name = "br_csr_demux_select_onehot_test_suite",
     params = {
@@ -94,6 +138,28 @@ verilog_library(
         ":br_csr_demux_select_onehot",
         "//macros:br_asserts_internal",
     ],
+)
+
+br_verilog_synth_suite(
+    name = "br_csr_demux_baseline_ppa",
+    params = {
+        "AddrWidth": ["16"],
+        "DataWidth": ["32"],
+        "HasDefaultDownstream": ["0"],
+        "NumDownstreams": ["4"],
+    },
+    deps = [":br_csr_demux"],
+)
+
+br_verilog_synth_suite(
+    name = "br_csr_demux_scaled_ppa",
+    params = {
+        "AddrWidth": ["32"],
+        "DataWidth": ["64"],
+        "HasDefaultDownstream": ["1"],
+        "NumDownstreams": ["16"],
+    },
+    deps = [":br_csr_demux"],
 )
 
 br_verilog_elab_and_lint_test_suite(
@@ -139,6 +205,32 @@ verilog_library(
     ],
 )
 
+br_verilog_synth_suite(
+    name = "br_csr_cdc_baseline_ppa",
+    params = {
+        "AddrWidth": ["16"],
+        "DataWidth": ["32"],
+        "NumSyncStages": ["2"],
+        "RegisterDownstreamAbort": ["0"],
+        "RegisterDownstreamReqOutputs": ["0"],
+        "RegisterUpstreamRespOutputs": ["0"],
+    },
+    deps = [":br_csr_cdc"],
+)
+
+br_verilog_synth_suite(
+    name = "br_csr_cdc_scaled_registered_ppa",
+    params = {
+        "AddrWidth": ["32"],
+        "DataWidth": ["64"],
+        "NumSyncStages": ["3"],
+        "RegisterDownstreamAbort": ["1"],
+        "RegisterDownstreamReqOutputs": ["1"],
+        "RegisterUpstreamRespOutputs": ["1"],
+    },
+    deps = [":br_csr_cdc"],
+)
+
 br_verilog_elab_and_lint_test_suite(
     name = "br_csr_cdc_test_suite",
     params = {
@@ -180,6 +272,34 @@ verilog_library(
         "//mux/rtl:br_mux_onehot",
         "//pkg:br_math_pkg",
     ],
+)
+
+br_verilog_synth_suite(
+    name = "br_csr_mem_interface_baseline_ppa",
+    params = {
+        "CsrAddrWidth": ["16"],
+        "CsrDataWidth": ["32"],
+        "EnablePartialWrites": ["0"],
+        "MemDepth": ["16"],
+        "MemWidth": ["32"],
+        "RegisterMemOutputs": ["0"],
+        "RegisterResponseOutputs": ["0"],
+    },
+    deps = [":br_csr_mem_interface"],
+)
+
+br_verilog_synth_suite(
+    name = "br_csr_mem_interface_scaled_registered_ppa",
+    params = {
+        "CsrAddrWidth": ["20"],
+        "CsrDataWidth": ["64"],
+        "EnablePartialWrites": ["1"],
+        "MemDepth": ["64"],
+        "MemWidth": ["64"],
+        "RegisterMemOutputs": ["1"],
+        "RegisterResponseOutputs": ["1"],
+    },
+    deps = [":br_csr_mem_interface"],
 )
 
 br_verilog_elab_and_lint_test_suite(

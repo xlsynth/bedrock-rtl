@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: Apache-2.0
 
 load("@rules_hdl//verilog:providers.bzl", "verilog_library")
-load("//bazel:br_verilog.bzl", "br_verilog_elab_and_lint_test_suite")
+load("//bazel:br_verilog.bzl", "br_verilog_elab_and_lint_test_suite", "br_verilog_synth_suite")
 
 package(default_visibility = ["//visibility:public"])
 
@@ -61,6 +61,81 @@ verilog_library(
         "//macros:br_asserts_internal",
         "//pkg:br_math_pkg",
     ],
+)
+
+br_verilog_synth_suite(
+    name = "br_enc_bin2onehot_ppa",
+    params = {"NumValues": [
+        "8",
+        "32",
+    ]},
+    deps = [":br_enc_bin2onehot"],
+)
+
+br_verilog_synth_suite(
+    name = "br_enc_onehot2bin_ppa",
+    params = {"NumValues": [
+        "8",
+        "32",
+    ]},
+    deps = [":br_enc_onehot2bin"],
+)
+
+br_verilog_synth_suite(
+    name = "br_enc_priority_encoder_ppa",
+    params = {
+        "NumRequesters": [
+            "8",
+            "16",
+        ],
+        "NumResults": [
+            "1",
+            "4",
+        ],
+    },
+    deps = [":br_enc_priority_encoder"],
+)
+
+br_verilog_synth_suite(
+    name = "br_enc_bin2gray_ppa",
+    params = {"Width": [
+        "8",
+        "32",
+    ]},
+    deps = [":br_enc_bin2gray"],
+)
+
+br_verilog_synth_suite(
+    name = "br_enc_gray2bin_ppa",
+    params = {"Width": [
+        "8",
+        "32",
+    ]},
+    deps = [":br_enc_gray2bin"],
+)
+
+br_verilog_synth_suite(
+    name = "br_enc_countones_ppa",
+    params = {"Width": [
+        "8",
+        "32",
+    ]},
+    deps = [":br_enc_countones"],
+)
+
+br_verilog_synth_suite(
+    name = "br_enc_priority_dynamic_ppa",
+    params = {
+        "NumRequesters": [
+            "8",
+            "16",
+        ],
+        "NumResults": [
+            "1",
+            "4",
+        ],
+    },
+    deps = [":br_enc_priority_dynamic"],
 )
 
 br_verilog_elab_and_lint_test_suite(
