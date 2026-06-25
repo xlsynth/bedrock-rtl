@@ -4,6 +4,7 @@
 
 import br_amba::*;
 import br_amba_axi_sim_pkg::*;
+import br_amba_sim_pkg::*;
 
 typedef enum int {
   AxiDefaultResponseKindOkay   = 0,
@@ -209,19 +210,48 @@ module br_amba_axi_default_target_tb;
       .failed(monitor_failed)
   );
 
+  function automatic axi_aw_t get_aw_input(input int index);
+    get_aw_input = '0;
+    get_aw_input.addr = AxiAddrWidth'($urandom());
+    get_aw_input.id = AxiIdWidth'($urandom());
+    get_aw_input.len = get_axi_default_target_aw_len(index, SingleBeat, MaxReadLen);
+    get_aw_input.size = AxiBurstSizeWidth'($clog2(DriverStrobeWidth));
+    get_aw_input.burst = AxiBurstIncr;
+    get_aw_input.prot = AxiProtWidth'($urandom());
+    get_aw_input.user = AxiUserWidth'($urandom());
+  endfunction
+
+  function automatic axi_w_t get_w_input();
+    get_w_input = '0;
+    for (int word = 0; word < DriverDataWidth / 32; word++) begin
+      get_w_input.data[word*32+:32] = $urandom();
+    end
+    get_w_input.strb = AxiStrobeWidth'($urandom()) | AxiStrobeWidth'(1'b1);
+    get_w_input.user = AxiUserWidth'($urandom());
+    get_w_input.last = 1'b1;
+  endfunction
+
+  function automatic axi_ar_t get_ar_input(input int index);
+    get_ar_input = '0;
+    get_ar_input.addr = AxiAddrWidth'($urandom());
+    get_ar_input.id = AxiIdWidth'($urandom());
+    get_ar_input.len = get_axi_default_target_ar_len(index, SingleBeat, MaxReadLen);
+    get_ar_input.size = AxiBurstSizeWidth'($clog2(DriverStrobeWidth));
+    get_ar_input.burst = AxiBurstIncr;
+    get_ar_input.prot = AxiProtWidth'($urandom());
+    get_ar_input.user = AxiUserWidth'($urandom());
+  endfunction
+
   task automatic test_write_address_before_data();
     axi_default_delays_t delays;
 
     delays = '{default: 0};
     delays.wvalid = ChannelSkewCycles;
     fork
-      axi_driver.run(
-          .num_writes(NumTransactions), .awvalid_delay(delays.awvalid),
-          .wvalid_delay(delays.wvalid), .arvalid_delay(delays.arvalid),
-          .max_stall_cycles(MaxReadyStallCycles),
-          .aw_input(get_axi_default_target_aw_input(0, SingleBeat, MaxReadLen, DriverStrobeWidth)),
-          .w_input(get_axi_default_target_w_input(0)), .vary_burst_len(!SingleBeat),
-          .vary_wlast(1'b0));
+      axi_driver.run(.num_writes(NumTransactions), .awvalid_delay(delays.awvalid),
+                     .wvalid_delay(delays.wvalid), .arvalid_delay(delays.arvalid),
+                     .max_stall_cycles(MaxReadyStallCycles), .aw_input(get_aw_input(0)),
+                     .w_input(get_w_input()), .vary_burst_len(!SingleBeat), .vary_wlast(1'b0));
       axi_monitor.run(.num_writes(NumTransactions), .awvalid_delay(delays.awvalid),
                       .wvalid_delay(delays.wvalid));
     join
@@ -233,13 +263,10 @@ module br_amba_axi_default_target_tb;
     delays = '{default: 0};
     delays.awvalid = ChannelSkewCycles;
     fork
-      axi_driver.run(
-          .num_writes(NumTransactions), .awvalid_delay(delays.awvalid),
-          .wvalid_delay(delays.wvalid), .arvalid_delay(delays.arvalid),
-          .max_stall_cycles(MaxReadyStallCycles),
-          .aw_input(get_axi_default_target_aw_input(0, SingleBeat, MaxReadLen, DriverStrobeWidth)),
-          .w_input(get_axi_default_target_w_input(0)), .vary_burst_len(!SingleBeat),
-          .vary_wlast(1'b0));
+      axi_driver.run(.num_writes(NumTransactions), .awvalid_delay(delays.awvalid),
+                     .wvalid_delay(delays.wvalid), .arvalid_delay(delays.arvalid),
+                     .max_stall_cycles(MaxReadyStallCycles), .aw_input(get_aw_input(0)),
+                     .w_input(get_w_input()), .vary_burst_len(!SingleBeat), .vary_wlast(1'b0));
       axi_monitor.run(.num_writes(NumTransactions), .awvalid_delay(delays.awvalid),
                       .wvalid_delay(delays.wvalid));
     join
@@ -250,11 +277,10 @@ module br_amba_axi_default_target_tb;
 
     delays = '{default: 0};
     fork
-      axi_driver.run(
-          .num_reads(NumTransactions), .awvalid_delay(delays.awvalid), .wvalid_delay(delays.wvalid),
-          .arvalid_delay(delays.arvalid), .max_stall_cycles(MaxReadyStallCycles),
-          .ar_input(get_axi_default_target_ar_input(0, SingleBeat, MaxReadLen, DriverStrobeWidth)),
-          .accept_r_burst_len(1'b1), .vary_burst_len(!SingleBeat));
+      axi_driver.run(.num_reads(NumTransactions), .awvalid_delay(delays.awvalid),
+                     .wvalid_delay(delays.wvalid), .arvalid_delay(delays.arvalid),
+                     .max_stall_cycles(MaxReadyStallCycles), .ar_input(get_ar_input(0)),
+                     .accept_r_burst_len(1'b1), .vary_burst_len(!SingleBeat));
       axi_monitor.run(.num_reads(NumTransactions), .awvalid_delay(delays.awvalid),
                       .wvalid_delay(delays.wvalid));
     join
