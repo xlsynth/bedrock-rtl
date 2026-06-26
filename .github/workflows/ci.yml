@@ -107,7 +107,8 @@ jobs:
       - name: Run public Bazel test suites
         continue-on-error: true
         run: |
-          docker run --rm \
+          # Keep stdin attached so `bash -s` receives the heredoc below.
+          docker run --rm -i \
             --user "$(id -u):$(id -g)" \
             --env HOME="${HOME}" \
             --workdir "${GITHUB_WORKSPACE}" \
