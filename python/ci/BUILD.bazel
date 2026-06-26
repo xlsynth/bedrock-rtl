@@ -1,0 +1,22 @@
+# SPDX-License-Identifier: Apache-2.0
+
+load("@rules_python//python:defs.bzl", "py_binary", "py_library", "py_test")
+
+package(default_visibility = ["//visibility:public"])
+
+py_library(
+    name = "bazel_oss_sharding_lib",
+    srcs = ["bazel_oss_sharding.py"],
+)
+
+py_binary(
+    name = "bazel_oss_sharding",
+    srcs = ["bazel_oss_sharding.py"],
+    main = "bazel_oss_sharding.py",
+)
+
+py_test(
+    name = "bazel_oss_sharding_test",
+    srcs = ["bazel_oss_sharding_test.py"],
+    deps = [":bazel_oss_sharding_lib"],
+)

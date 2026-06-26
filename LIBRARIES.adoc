@@ -233,6 +233,10 @@ The verification-artifact column reports repository evidence, not a promise that
 | Routes CSR requests to one of multiple downstream CSR interfaces.
 | Elab/lint, Sim, FPV.
 
+| `br_csr_demux_select_onehot`
+| Routes CSR requests using an externally supplied one-hot downstream selection.
+| Elab/lint, FPV.
+
 | `br_csr_mem_interface`
 | Adapts CSR requests to a simple memory-like interface.
 | Elab/lint, Sim.
@@ -469,6 +473,10 @@ The verification-artifact column reports repository evidence, not a promise that
 | Arbitrates ready/valid flows with round-robin priority.
 | Elab/lint, FPV.
 
+| `br_flow_buffer`
+| Selects a ready/valid buffer implementation for a configurable storage depth.
+| Elab/lint, Sim.
+
 | `br_flow_burst_mux_fixed`
 | Multiplexes bursty ready/valid flows with fixed-priority arbitration.
 | Elab/lint, FPV.
@@ -568,6 +576,10 @@ The verification-artifact column reports repository evidence, not a promise that
 | `br_flow_serializer`
 | Converts fewer wide ready/valid flits into multiple narrower flits.
 | Elab/lint, FPV.
+
+| `br_flow_valve`
+| Gates data-less ready/valid flows with per-flow enable controls.
+| Elab/lint, Sim.
 
 | `br_flow_xbar_fixed`
 | Crossbars ready/valid flows with fixed-priority arbitration.

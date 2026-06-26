@@ -1,0 +1,20 @@
+# SPDX-License-Identifier: Apache-2.0
+
+load("@rules_python//python:defs.bzl", "py_binary", "py_test")
+
+package(default_visibility = ["//visibility:public"])
+
+py_binary(
+    name = "generate_ppa",
+    srcs = ["generate_ppa.py"],
+    main = "generate_ppa.py",
+)
+
+py_test(
+    name = "generate_ppa_test",
+    srcs = [
+        "generate_ppa.py",
+        "generate_ppa_test.py",
+    ],
+    main = "generate_ppa_test.py",
+)

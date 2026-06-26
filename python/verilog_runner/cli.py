@@ -38,6 +38,10 @@ def filelist_file(filename: str) -> str:
     return check_filename_extension(filename, (".f"))
 
 
+def liberty_file(filename: str) -> str:
+    return check_filename_extension(filename, (".lib"))
+
+
 def add_common_args(parser: argparse.ArgumentParser) -> None:
     """Common arguments for all subcommands and plugins."""
     parser.add_argument(
@@ -194,6 +198,9 @@ def common_args(args: argparse.Namespace):
             )
         common["elab_opts"] = getattr(args, "elab_opt", [])
         common["sim_opts"] = getattr(args, "sim_opt", [])
+    elif getattr(args, "subcommand", None) == "synth":
+        common["liberty"] = getattr(args, "liberty", None)
+        common["clock_period_ps"] = getattr(args, "clock_period_ps", None)
     return common
 
 
@@ -315,4 +322,22 @@ class Fpv(Subcommand):
             "--conn",
             action="store_true",
             help="Run in connectivity mode",
+        )
+
+
+class Synth(Subcommand):
+    name = "synth"
+    help = "Logic synthesis"
+
+    @staticmethod
+    def add_args(parser: argparse.ArgumentParser) -> None:
+        parser.add_argument(
+            "--liberty",
+            type=liberty_file,
+            help="Optional Liberty standard-cell library for technology mapping.",
+        )
+        parser.add_argument(
+            "--clock_period_ps",
+            type=int,
+            help="Optional target clock period in picoseconds for technology mapping.",
         )

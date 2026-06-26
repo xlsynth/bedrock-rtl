@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: Apache-2.0
 
 load("@rules_hdl//verilog:providers.bzl", "verilog_library")
-load("//bazel:br_verilog.bzl", "br_verilog_elab_and_lint_test_suite")
+load("//bazel:br_verilog.bzl", "br_verilog_elab_and_lint_test_suite", "br_verilog_synth_suite")
 
 package(default_visibility = ["//visibility:public"])
 
@@ -530,4 +530,337 @@ br_verilog_elab_and_lint_test_suite(
         ],
     },
     deps = [":br_amba_axi_shrinker"],
+)
+
+br_verilog_synth_suite(
+    name = "br_amba_apb_timing_slice_width_ppa",
+    params = {
+        "AddrWidth": [
+            "32",
+            "40",
+        ],
+    },
+    deps = [":br_amba_apb_timing_slice"],
+)
+
+br_verilog_synth_suite(
+    name = "br_amba_atb_funnel_baseline_ppa",
+    params = {
+        "DataWidth": ["32"],
+        "NumSources": ["2"],
+        "RegisterAtReady": ["0"],
+        "UserWidth": ["1"],
+    },
+    deps = [":br_amba_atb_funnel"],
+)
+
+br_verilog_synth_suite(
+    name = "br_amba_atb_funnel_scaled_ppa",
+    params = {
+        "DataWidth": ["64"],
+        "NumSources": ["4"],
+        "RegisterAtReady": ["1"],
+        "UserWidth": ["8"],
+    },
+    deps = [":br_amba_atb_funnel"],
+)
+
+br_verilog_synth_suite(
+    name = "br_amba_axi2axil_baseline_ppa",
+    params = {
+        "AddrWidth": ["32"],
+        "DataWidth": ["32"],
+        "IdWidth": ["4"],
+        "MaxOutstandingReqs": ["4"],
+    },
+    deps = [":br_amba_axi2axil"],
+)
+
+br_verilog_synth_suite(
+    name = "br_amba_axi2axil_scaled_ppa",
+    params = {
+        "AddrWidth": ["40"],
+        "DataWidth": ["64"],
+        "IdWidth": ["8"],
+        "MaxOutstandingReqs": ["16"],
+    },
+    deps = [":br_amba_axi2axil"],
+)
+
+br_verilog_synth_suite(
+    name = "br_amba_axi_default_target_single_beat_ppa",
+    params = {
+        "AxiIdWidth": ["4"],
+        "DataWidth": ["32"],
+        "SingleBeat": ["1"],
+    },
+    deps = [":br_amba_axi_default_target"],
+)
+
+br_verilog_synth_suite(
+    name = "br_amba_axi_default_target_burst_ppa",
+    params = {
+        "AxiIdWidth": ["8"],
+        "DataWidth": ["64"],
+        "SingleBeat": ["0"],
+    },
+    deps = [":br_amba_axi_default_target"],
+)
+
+br_verilog_synth_suite(
+    name = "br_amba_axi_demux_single_id_ppa",
+    params = {
+        "AddrWidth": ["32"],
+        "ArAxiIdWidth": ["1"],
+        "ArMaxOutstandingPerId": ["4"],
+        "AwAxiIdWidth": ["1"],
+        "AwMaxOutstandingPerId": ["4"],
+        "DataWidth": ["32"],
+        "MaxAwRunahead": ["4"],
+        "NumSubordinates": ["2"],
+        "RegisterDownstreamAxOutputs": ["1"],
+        "RegisterDownstreamWOutputs": ["1"],
+        "SingleIdOnly": ["1"],
+        "WdataBufferDepth": ["2"],
+    },
+    deps = [":br_amba_axi_demux"],
+)
+
+br_verilog_synth_suite(
+    name = "br_amba_axi_demux_multi_id_ppa",
+    params = {
+        "AddrWidth": ["40"],
+        "ArAxiIdWidth": ["4"],
+        "ArMaxOutstandingPerId": ["8"],
+        "AwAxiIdWidth": ["4"],
+        "AwMaxOutstandingPerId": ["8"],
+        "DataWidth": ["64"],
+        "MaxAwRunahead": ["8"],
+        "NumSubordinates": ["4"],
+        "RegisterDownstreamAxOutputs": ["1"],
+        "RegisterDownstreamWOutputs": ["1"],
+        "SingleIdOnly": ["0"],
+        "WdataBufferDepth": ["4"],
+    },
+    deps = [":br_amba_axi_demux"],
+)
+
+br_verilog_synth_suite(
+    name = "br_amba_axi_isolate_mgr_single_beat_ppa",
+    params = {
+        "AddrWidth": ["32"],
+        "DataWidth": ["32"],
+        "IdWidth": ["4"],
+        "MaxAxiBurstLen": ["1"],
+        "MaxOutstanding": ["16"],
+    },
+    deps = [":br_amba_axi_isolate_mgr"],
+)
+
+br_verilog_synth_suite(
+    name = "br_amba_axi_isolate_mgr_burst_ppa",
+    params = {
+        "AddrWidth": ["40"],
+        "DataWidth": ["64"],
+        "IdWidth": ["8"],
+        "MaxAxiBurstLen": ["256"],
+        "MaxOutstanding": ["64"],
+    },
+    deps = [":br_amba_axi_isolate_mgr"],
+)
+
+br_verilog_synth_suite(
+    name = "br_amba_axi_isolate_sub_static_single_beat_ppa",
+    params = {
+        "AddrWidth": ["32"],
+        "ArAxiIdCount": ["1"],
+        "ArAxiIdWidth": ["1"],
+        "ArMaxOutstanding": ["16"],
+        "AwAxiIdCount": ["1"],
+        "AwAxiIdWidth": ["1"],
+        "AwMaxOutstanding": ["16"],
+        "DataWidth": ["32"],
+        "MaxAxiBurstLen": ["1"],
+        "StaticPerIdReadTrackerFifoDepth": ["16"],
+        "UseDynamicFifoForReadTracker": ["0"],
+    },
+    deps = [":br_amba_axi_isolate_sub"],
+)
+
+br_verilog_synth_suite(
+    name = "br_amba_axi_isolate_sub_dynamic_burst_ppa",
+    params = {
+        "AddrWidth": ["40"],
+        "ArAxiIdCount": ["8"],
+        "ArAxiIdWidth": ["4"],
+        "ArMaxOutstanding": ["64"],
+        "AwAxiIdCount": ["8"],
+        "AwAxiIdWidth": ["4"],
+        "AwMaxOutstanding": ["64"],
+        "DataWidth": ["64"],
+        "MaxAxiBurstLen": ["256"],
+        "UseDynamicFifoForReadTracker": ["1"],
+    },
+    deps = [":br_amba_axi_isolate_sub"],
+)
+
+br_verilog_synth_suite(
+    name = "br_amba_axi_shrinker_baseline_ppa",
+    params = {
+        "AddrWidth": ["32"],
+        "IdWidth": ["4"],
+        "MaxOutstandingReqs": ["4"],
+        "NarrowDataWidth": ["32"],
+        "RegisterNarrowOutputs": ["1"],
+        "RegisterWideOutputs": ["1"],
+        "WideDataWidth": ["64"],
+        "WriteFifoDepth": ["2"],
+    },
+    deps = [":br_amba_axi_shrinker"],
+)
+
+br_verilog_synth_suite(
+    name = "br_amba_axi_shrinker_scaled_ppa",
+    params = {
+        "AddrWidth": ["40"],
+        "IdWidth": ["8"],
+        "MaxOutstandingReqs": ["16"],
+        "NarrowDataWidth": ["32"],
+        "RegisterNarrowOutputs": ["1"],
+        "RegisterWideOutputs": ["1"],
+        "WideDataWidth": ["128"],
+        "WriteFifoDepth": ["4"],
+    },
+    deps = [":br_amba_axi_shrinker"],
+)
+
+br_verilog_synth_suite(
+    name = "br_amba_axi_timing_slice_forward_ppa",
+    params = {
+        "ARSliceType": ["0"],
+        "AWSliceType": ["0"],
+        "AddrWidth": ["32"],
+        "BSliceType": ["0"],
+        "DataWidth": ["32"],
+        "IdWidth": ["4"],
+        "RSliceType": ["0"],
+        "WSliceType": ["0"],
+    },
+    deps = [":br_amba_axi_timing_slice"],
+)
+
+br_verilog_synth_suite(
+    name = "br_amba_axi_timing_slice_full_ppa",
+    params = {
+        "ARSliceType": ["2"],
+        "AWSliceType": ["2"],
+        "AddrWidth": ["40"],
+        "BSliceType": ["2"],
+        "DataWidth": ["64"],
+        "IdWidth": ["8"],
+        "RSliceType": ["2"],
+        "WSliceType": ["2"],
+    },
+    deps = [":br_amba_axi_timing_slice"],
+)
+
+br_verilog_synth_suite(
+    name = "br_amba_axil2apb_baseline_ppa",
+    params = {
+        "AddrWidth": ["32"],
+        "DataWidth": ["32"],
+    },
+    deps = [":br_amba_axil2apb"],
+)
+
+br_verilog_synth_suite(
+    name = "br_amba_axil2apb_scaled_ppa",
+    params = {
+        "AddrWidth": ["40"],
+        "DataWidth": ["64"],
+    },
+    deps = [":br_amba_axil2apb"],
+)
+
+br_verilog_synth_suite(
+    name = "br_amba_axil_default_target_width_ppa",
+    params = {
+        "DataWidth": [
+            "32",
+            "64",
+        ],
+    },
+    deps = [":br_amba_axil_default_target"],
+)
+
+br_verilog_synth_suite(
+    name = "br_amba_axil_msi_baseline_ppa",
+    params = {
+        "AddrWidth": ["32"],
+        "DataWidth": ["32"],
+        "DeviceIdWidth": ["16"],
+        "EventIdWidth": ["16"],
+        "NumInterrupts": ["4"],
+        "NumMsiDestAddr": ["1"],
+        "ThrottleCntrWidth": ["4"],
+    },
+    deps = [":br_amba_axil_msi"],
+)
+
+br_verilog_synth_suite(
+    name = "br_amba_axil_msi_scaled_ppa",
+    params = {
+        "AddrWidth": ["40"],
+        "DataWidth": ["64"],
+        "DeviceIdWidth": ["16"],
+        "EventIdWidth": ["16"],
+        "NumInterrupts": ["16"],
+        "NumMsiDestAddr": ["4"],
+        "ThrottleCntrWidth": ["16"],
+    },
+    deps = [":br_amba_axil_msi"],
+)
+
+br_verilog_synth_suite(
+    name = "br_amba_axil_split_baseline_ppa",
+    params = {
+        "AddrWidth": ["32"],
+        "DataWidth": ["32"],
+        "MaxOutstandingReads": ["4"],
+        "MaxOutstandingWrites": ["4"],
+        "NormalizeBranchAddress": ["0"],
+        "NumBranchAddrRanges": ["1"],
+    },
+    deps = [":br_amba_axil_split"],
+)
+
+br_verilog_synth_suite(
+    name = "br_amba_axil_split_scaled_ppa",
+    params = {
+        "AddrWidth": ["40"],
+        "DataWidth": ["64"],
+        "MaxOutstandingReads": ["16"],
+        "MaxOutstandingWrites": ["16"],
+        "NormalizeBranchAddress": ["1"],
+        "NumBranchAddrRanges": ["4"],
+    },
+    deps = [":br_amba_axil_split"],
+)
+
+br_verilog_synth_suite(
+    name = "br_amba_axil_timing_slice_baseline_ppa",
+    params = {
+        "AddrWidth": ["32"],
+        "DataWidth": ["32"],
+    },
+    deps = [":br_amba_axil_timing_slice"],
+)
+
+br_verilog_synth_suite(
+    name = "br_amba_axil_timing_slice_scaled_ppa",
+    params = {
+        "AddrWidth": ["40"],
+        "DataWidth": ["64"],
+    },
+    deps = [":br_amba_axil_timing_slice"],
 )

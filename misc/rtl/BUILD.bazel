@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: Apache-2.0
 
 load("@rules_hdl//verilog:providers.bzl", "verilog_library")
-load("//bazel:br_verilog.bzl", "br_verilog_elab_and_lint_test_suite")
+load("//bazel:br_verilog.bzl", "br_verilog_elab_and_lint_test_suite", "br_verilog_synth_suite")
 
 package(default_visibility = ["//visibility:public"])
 
@@ -9,6 +9,15 @@ verilog_library(
     name = "br_misc_unused",
     srcs = ["br_misc_unused.sv"],
     deps = ["//macros:br_asserts"],
+)
+
+br_verilog_synth_suite(
+    name = "br_misc_unused_ppa",
+    params = {"Width": [
+        "1",
+        "32",
+    ]},
+    deps = [":br_misc_unused"],
 )
 
 br_verilog_elab_and_lint_test_suite(
@@ -27,6 +36,15 @@ verilog_library(
     deps = ["//macros:br_asserts"],
 )
 
+br_verilog_synth_suite(
+    name = "br_misc_tieoff_zero_ppa",
+    params = {"Width": [
+        "1",
+        "32",
+    ]},
+    deps = [":br_misc_tieoff_zero"],
+)
+
 br_verilog_elab_and_lint_test_suite(
     name = "br_misc_tieoff_zero_test_suite",
     params = {
@@ -42,6 +60,15 @@ verilog_library(
     name = "br_misc_tieoff_one",
     srcs = ["br_misc_tieoff_one.sv"],
     deps = ["//macros:br_asserts"],
+)
+
+br_verilog_synth_suite(
+    name = "br_misc_tieoff_one_ppa",
+    params = {"Width": [
+        "1",
+        "32",
+    ]},
+    deps = [":br_misc_tieoff_one"],
 )
 
 br_verilog_elab_and_lint_test_suite(

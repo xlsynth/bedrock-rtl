@@ -239,6 +239,80 @@ Runs Verilog/SystemVerilog compilation and simulation in one command. This rule 
 | <a id="rule_verilog_sim_test-waves"></a>waves |  Enable waveform dumping.   | Boolean | optional |  `False`  |
 
 
+<a id="rule_verilog_synth"></a>
+
+## rule_verilog_synth
+
+<pre>
+load("@bedrock-rtl//bazel:verilog.bzl", "rule_verilog_synth")
+
+rule_verilog_synth(<a href="#rule_verilog_synth-name">name</a>, <a href="#rule_verilog_synth-deps">deps</a>, <a href="#rule_verilog_synth-data">data</a>, <a href="#rule_verilog_synth-clock_period_ps">clock_period_ps</a>, <a href="#rule_verilog_synth-custom_tcl_body">custom_tcl_body</a>, <a href="#rule_verilog_synth-custom_tcl_header">custom_tcl_header</a>, <a href="#rule_verilog_synth-defines">defines</a>,
+                   <a href="#rule_verilog_synth-liberty">liberty</a>, <a href="#rule_verilog_synth-opts">opts</a>, <a href="#rule_verilog_synth-params">params</a>, <a href="#rule_verilog_synth-runner_flags">runner_flags</a>, <a href="#rule_verilog_synth-tool">tool</a>, <a href="#rule_verilog_synth-top">top</a>, <a href="#rule_verilog_synth-verilog_runner_data">verilog_runner_data</a>,
+                   <a href="#rule_verilog_synth-verilog_runner_plugins">verilog_runner_plugins</a>, <a href="#rule_verilog_synth-verilog_runner_tool">verilog_runner_tool</a>)
+</pre>
+
+Runs logic synthesis for a Verilog or SystemVerilog design and prints the tool report. This is an executable target, not a test.
+
+**ATTRIBUTES**
+
+
+| Name  | Description | Type | Mandatory | Default |
+| :------------- | :------------- | :------------- | :------------- | :------------- |
+| <a id="rule_verilog_synth-name"></a>name |  A unique name for this target.   | <a href="https://bazel.build/concepts/labels#target-names">Name</a> | required |  |
+| <a id="rule_verilog_synth-deps"></a>deps |  Verilog libraries containing the design to synthesize.   | <a href="https://bazel.build/concepts/labels">List of labels</a> | optional |  `[]`  |
+| <a id="rule_verilog_synth-data"></a>data |  Additional runtime files needed by the synthesis plugin.   | <a href="https://bazel.build/concepts/labels">List of labels</a> | optional |  `[]`  |
+| <a id="rule_verilog_synth-clock_period_ps"></a>clock_period_ps |  Optional target clock period in picoseconds; requires liberty.   | Integer | optional |  `0`  |
+| <a id="rule_verilog_synth-custom_tcl_body"></a>custom_tcl_body |  Optional tool-specific Tcl body.   | <a href="https://bazel.build/concepts/labels">Label</a> | optional |  `None`  |
+| <a id="rule_verilog_synth-custom_tcl_header"></a>custom_tcl_header |  Optional tool-specific Tcl header.   | <a href="https://bazel.build/concepts/labels">Label</a> | optional |  `None`  |
+| <a id="rule_verilog_synth-defines"></a>defines |  Preprocessor defines to pass to the synthesis frontend.   | List of strings | optional |  `[]`  |
+| <a id="rule_verilog_synth-liberty"></a>liberty |  Optional Liberty standard-cell library for technology mapping.   | <a href="https://bazel.build/concepts/labels">Label</a> | optional |  `None`  |
+| <a id="rule_verilog_synth-opts"></a>opts |  Tool-specific synthesis frontend options.   | List of strings | optional |  `[]`  |
+| <a id="rule_verilog_synth-params"></a>params |  Top-level Verilog module parameter overrides.   | <a href="https://bazel.build/rules/lib/core/dict">Dictionary: String -> String</a> | optional |  `{}`  |
+| <a id="rule_verilog_synth-runner_flags"></a>runner_flags |  Command-line flags forwarded to Verilog Runner.   | <a href="https://bazel.build/concepts/labels">Label</a> | optional |  `"@bedrock-rtl//bazel:runner_flags"`  |
+| <a id="rule_verilog_synth-tool"></a>tool |  Synthesis tool plugin to use.   | String | required |  |
+| <a id="rule_verilog_synth-top"></a>top |  Top-level module; defaults to the sole dependency's label name.   | String | optional |  `""`  |
+| <a id="rule_verilog_synth-verilog_runner_data"></a>verilog_runner_data |  Additional Verilog Runner files needed at runtime.   | <a href="https://bazel.build/concepts/labels">List of labels</a> | optional |  `["@bedrock-rtl//python/verilog_runner:verilog_runner_data"]`  |
+| <a id="rule_verilog_synth-verilog_runner_plugins"></a>verilog_runner_plugins |  Verilog Runner synthesis plugins to load from this workspace.   | <a href="https://bazel.build/concepts/labels">List of labels</a> | optional |  `["@bedrock-rtl//python/verilog_runner/plugins:yosys.py"]`  |
+| <a id="rule_verilog_synth-verilog_runner_tool"></a>verilog_runner_tool |  The Verilog Runner tool to use.   | <a href="https://bazel.build/concepts/labels">Label</a> | optional |  `"@bedrock-rtl//python/verilog_runner:verilog_runner.py"`  |
+
+
+<a id="rule_verilog_synth_sandbox"></a>
+
+## rule_verilog_synth_sandbox
+
+<pre>
+load("@bedrock-rtl//bazel:verilog.bzl", "rule_verilog_synth_sandbox")
+
+rule_verilog_synth_sandbox(<a href="#rule_verilog_synth_sandbox-name">name</a>, <a href="#rule_verilog_synth_sandbox-deps">deps</a>, <a href="#rule_verilog_synth_sandbox-data">data</a>, <a href="#rule_verilog_synth_sandbox-clock_period_ps">clock_period_ps</a>, <a href="#rule_verilog_synth_sandbox-custom_tcl_body">custom_tcl_body</a>, <a href="#rule_verilog_synth_sandbox-custom_tcl_header">custom_tcl_header</a>,
+                           <a href="#rule_verilog_synth_sandbox-defines">defines</a>, <a href="#rule_verilog_synth_sandbox-liberty">liberty</a>, <a href="#rule_verilog_synth_sandbox-opts">opts</a>, <a href="#rule_verilog_synth_sandbox-params">params</a>, <a href="#rule_verilog_synth_sandbox-runner_flags">runner_flags</a>, <a href="#rule_verilog_synth_sandbox-tool">tool</a>, <a href="#rule_verilog_synth_sandbox-top">top</a>,
+                           <a href="#rule_verilog_synth_sandbox-verilog_runner_data">verilog_runner_data</a>, <a href="#rule_verilog_synth_sandbox-verilog_runner_plugins">verilog_runner_plugins</a>, <a href="#rule_verilog_synth_sandbox-verilog_runner_tool">verilog_runner_tool</a>)
+</pre>
+
+Writes logic-synthesis inputs and generated scripts into a tarball for independent execution outside Bazel.
+
+**ATTRIBUTES**
+
+
+| Name  | Description | Type | Mandatory | Default |
+| :------------- | :------------- | :------------- | :------------- | :------------- |
+| <a id="rule_verilog_synth_sandbox-name"></a>name |  A unique name for this target.   | <a href="https://bazel.build/concepts/labels#target-names">Name</a> | required |  |
+| <a id="rule_verilog_synth_sandbox-deps"></a>deps |  Verilog libraries containing the design to synthesize.   | <a href="https://bazel.build/concepts/labels">List of labels</a> | optional |  `[]`  |
+| <a id="rule_verilog_synth_sandbox-data"></a>data |  Additional runtime files needed by the synthesis plugin.   | <a href="https://bazel.build/concepts/labels">List of labels</a> | optional |  `[]`  |
+| <a id="rule_verilog_synth_sandbox-clock_period_ps"></a>clock_period_ps |  Optional target clock period in picoseconds; requires liberty.   | Integer | optional |  `0`  |
+| <a id="rule_verilog_synth_sandbox-custom_tcl_body"></a>custom_tcl_body |  Optional tool-specific Tcl body.   | <a href="https://bazel.build/concepts/labels">Label</a> | optional |  `None`  |
+| <a id="rule_verilog_synth_sandbox-custom_tcl_header"></a>custom_tcl_header |  Optional tool-specific Tcl header.   | <a href="https://bazel.build/concepts/labels">Label</a> | optional |  `None`  |
+| <a id="rule_verilog_synth_sandbox-defines"></a>defines |  Preprocessor defines to pass to the synthesis frontend.   | List of strings | optional |  `[]`  |
+| <a id="rule_verilog_synth_sandbox-liberty"></a>liberty |  Optional Liberty standard-cell library for technology mapping.   | <a href="https://bazel.build/concepts/labels">Label</a> | optional |  `None`  |
+| <a id="rule_verilog_synth_sandbox-opts"></a>opts |  Tool-specific synthesis frontend options.   | List of strings | optional |  `[]`  |
+| <a id="rule_verilog_synth_sandbox-params"></a>params |  Top-level Verilog module parameter overrides.   | <a href="https://bazel.build/rules/lib/core/dict">Dictionary: String -> String</a> | optional |  `{}`  |
+| <a id="rule_verilog_synth_sandbox-runner_flags"></a>runner_flags |  Command-line flags forwarded to Verilog Runner.   | <a href="https://bazel.build/concepts/labels">Label</a> | optional |  `"@bedrock-rtl//bazel:runner_flags"`  |
+| <a id="rule_verilog_synth_sandbox-tool"></a>tool |  Synthesis tool plugin to use.   | String | required |  |
+| <a id="rule_verilog_synth_sandbox-top"></a>top |  Top-level module; defaults to the sole dependency's label name.   | String | optional |  `""`  |
+| <a id="rule_verilog_synth_sandbox-verilog_runner_data"></a>verilog_runner_data |  Additional Verilog Runner files needed at runtime.   | <a href="https://bazel.build/concepts/labels">List of labels</a> | optional |  `["@bedrock-rtl//python/verilog_runner:verilog_runner_data"]`  |
+| <a id="rule_verilog_synth_sandbox-verilog_runner_plugins"></a>verilog_runner_plugins |  Verilog Runner synthesis plugins to load from this workspace.   | <a href="https://bazel.build/concepts/labels">List of labels</a> | optional |  `["@bedrock-rtl//python/verilog_runner/plugins:yosys.py"]`  |
+| <a id="rule_verilog_synth_sandbox-verilog_runner_tool"></a>verilog_runner_tool |  The Verilog Runner tool to use.   | <a href="https://bazel.build/concepts/labels">Label</a> | optional |  `"@bedrock-rtl//python/verilog_runner"`  |
+
+
 <a id="runner_flags"></a>
 
 ## runner_flags
@@ -542,5 +616,111 @@ to the base name followed by the parameter key-values.
 | <a id="verilog_sim_test_suite-defines"></a>defines |  A list of defines.   |  `[]` |
 | <a id="verilog_sim_test_suite-params"></a>params |  A dictionary where keys are parameter names and values are lists of possible values for those parameters.   |  `{}` |
 | <a id="verilog_sim_test_suite-kwargs"></a>kwargs |  Additional keyword arguments to be passed to the verilog_elab_test and verilog_lint_test functions.   |  none |
+
+
+<a id="verilog_synth"></a>
+
+## verilog_synth
+
+<pre>
+load("@bedrock-rtl//bazel:verilog.bzl", "verilog_synth")
+
+verilog_synth(<a href="#verilog_synth-name">name</a>, <a href="#verilog_synth-tool">tool</a>, <a href="#verilog_synth-tags">tags</a>, <a href="#verilog_synth-kwargs">**kwargs</a>)
+</pre>
+
+Creates a runnable logic-synthesis target that streams the raw tool report.
+
+The tool string selects a Verilog Runner synthesis plugin, so callers can
+use the bundled Yosys plugin or provide another open-source or proprietary
+synthesis plugin through `verilog_runner_plugins`. The Yosys flow produces
+technology-independent cell and logic-depth signals without a Liberty
+library, and can optionally map against one when `liberty` is supplied.
+
+Example:
+    ```starlark
+    verilog_synth(
+        name = "fifo_synth",
+        tool = "yosys",
+        deps = [":fifo"],
+        top = "fifo",
+        params = {"Depth": "16", "Width": "32"},
+    )
+    ```
+
+
+**PARAMETERS**
+
+
+| Name  | Description | Default Value |
+| :------------- | :------------- | :------------- |
+| <a id="verilog_synth-name"></a>name |  Target name.   |  none |
+| <a id="verilog_synth-tool"></a>tool |  Synthesis plugin name.   |  none |
+| <a id="verilog_synth-tags"></a>tags |  Additional Bazel tags.   |  `[]` |
+| <a id="verilog_synth-kwargs"></a>kwargs |  Arguments forwarded to rule_verilog_synth.   |  none |
+
+
+<a id="verilog_synth_sandbox"></a>
+
+## verilog_synth_sandbox
+
+<pre>
+load("@bedrock-rtl//bazel:verilog.bzl", "verilog_synth_sandbox")
+
+verilog_synth_sandbox(<a href="#verilog_synth_sandbox-name">name</a>, <a href="#verilog_synth_sandbox-tool">tool</a>, <a href="#verilog_synth_sandbox-tags">tags</a>, <a href="#verilog_synth_sandbox-kwargs">**kwargs</a>)
+</pre>
+
+Creates a portable logic-synthesis reproduction archive.
+
+The archive contains the transitive Verilog source and header closure,
+Verilog Runner plugin files, and generated filelist, Tcl, and shell scripts.
+The synthesis tool executable remains a system dependency.
+
+
+**PARAMETERS**
+
+
+| Name  | Description | Default Value |
+| :------------- | :------------- | :------------- |
+| <a id="verilog_synth_sandbox-name"></a>name |  Target name.   |  none |
+| <a id="verilog_synth_sandbox-tool"></a>tool |  Synthesis plugin name.   |  none |
+| <a id="verilog_synth_sandbox-tags"></a>tags |  Additional Bazel tags.   |  `[]` |
+| <a id="verilog_synth_sandbox-kwargs"></a>kwargs |  Arguments forwarded to rule_verilog_synth_sandbox.   |  none |
+
+
+<a id="verilog_synth_suite"></a>
+
+## verilog_synth_suite
+
+<pre>
+load("@bedrock-rtl//bazel:verilog.bzl", "verilog_synth_suite")
+
+verilog_synth_suite(<a href="#verilog_synth_suite-name">name</a>, <a href="#verilog_synth_suite-defines">defines</a>, <a href="#verilog_synth_suite-params">params</a>, <a href="#verilog_synth_suite-illegal_param_combinations">illegal_param_combinations</a>, <a href="#verilog_synth_suite-library_name">library_name</a>, <a href="#verilog_synth_suite-sandbox">sandbox</a>,
+                    <a href="#verilog_synth_suite-sandbox_tags">sandbox_tags</a>, <a href="#verilog_synth_suite-tags">tags</a>, <a href="#verilog_synth_suite-verilog_synth_func">verilog_synth_func</a>, <a href="#verilog_synth_suite-verilog_synth_sandbox_func">verilog_synth_sandbox_func</a>, <a href="#verilog_synth_suite-kwargs">**kwargs</a>)
+</pre>
+
+Creates runnable and reproducible synthesis targets for parameter combinations.
+
+Each runnable target delegates to `verilog_synth` and uses a deterministic
+name derived from its parameter values, tool, and mapping library. When
+`sandbox` is true, a sibling target ending in `_sandbox` packages the same
+inputs and generated scripts for execution outside Bazel.
+
+
+**PARAMETERS**
+
+
+| Name  | Description | Default Value |
+| :------------- | :------------- | :------------- |
+| <a id="verilog_synth_suite-name"></a>name |  Base name for generated targets.   |  none |
+| <a id="verilog_synth_suite-defines"></a>defines |  Preprocessor defines for synthesis.   |  `[]` |
+| <a id="verilog_synth_suite-params"></a>params |  Parameter names mapped to lists of values.   |  `{}` |
+| <a id="verilog_synth_suite-illegal_param_combinations"></a>illegal_param_combinations |  Parameter tuples mapped to disallowed value tuples.   |  `{}` |
+| <a id="verilog_synth_suite-library_name"></a>library_name |  Target-name identifier for the PDK/library/corner. Defaults to `nolib` when no Liberty file is supplied and is required when `liberty` is supplied.   |  `None` |
+| <a id="verilog_synth_suite-sandbox"></a>sandbox |  Whether to create a reproduction archive beside each runnable target.   |  `True` |
+| <a id="verilog_synth_suite-sandbox_tags"></a>sandbox_tags |  Tags for sandbox targets. Defaults to `tags`.   |  `None` |
+| <a id="verilog_synth_suite-tags"></a>tags |  Tags for runnable targets.   |  `[]` |
+| <a id="verilog_synth_suite-verilog_synth_func"></a>verilog_synth_func |  Runnable-target constructor override.   |  `None` |
+| <a id="verilog_synth_suite-verilog_synth_sandbox_func"></a>verilog_synth_sandbox_func |  Sandbox-target constructor override.   |  `None` |
+| <a id="verilog_synth_suite-kwargs"></a>kwargs |  Additional arguments passed to verilog_synth.   |  none |
 
 
