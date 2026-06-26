@@ -74,6 +74,7 @@ jobs:
           # setup-bazel restores these paths on a cache hit. Create them on a
           # miss so Docker can bind-mount the same host paths below.
           mkdir -p \
+            "${HOME}/.cache/bazel" \
             "${HOME}/.cache/bazelisk" \
             "${HOME}/.cache/bazel-disk" \
             "${HOME}/.cache/bazel-repo" \
@@ -110,6 +111,8 @@ jobs:
           # Keep stdin attached so `bash -s` receives the heredoc below. The
           # hosted runner UID is not present in the image's passwd file, so set
           # USER explicitly for Bazel after retaining that UID for cache writes.
+          # Mount Bazel's default output user root because the container's
+          # /home/runner is root-owned.
           docker run --rm -i \
             --user "$(id -u):$(id -g)" \
             --env USER=user \
@@ -117,6 +120,7 @@ jobs:
             --workdir "${GITHUB_WORKSPACE}" \
             --volume "${GITHUB_WORKSPACE}:${GITHUB_WORKSPACE}" \
             --volume "${HOME}/.bazelrc:${HOME}/.bazelrc:ro" \
+            --volume "${HOME}/.cache/bazel:${HOME}/.cache/bazel" \
             --volume "${HOME}/.cache/bazelisk:${HOME}/.cache/bazelisk" \
             --volume "${HOME}/.cache/bazel-disk:${HOME}/.cache/bazel-disk" \
             --volume "${HOME}/.cache/bazel-repo:${HOME}/.cache/bazel-repo" \
@@ -124,7 +128,14 @@ jobs:
             bedrock-rtl-ci:${{ github.sha }} \
             bash -s <<'EOF'
           set +e
-          BAZEL_FLAGS=(--action_env=PATH --noshow_loading_progress)
+          # Pass cache paths explicitly rather than depending on the generated
+          # user bazelrc being discovered inside the container.
+          BAZEL_FLAGS=(
+            --action_env=PATH
+            --noshow_loading_progress
+            --disk_cache=/home/runner/.cache/bazel-disk
+            --repository_cache=/home/runner/.cache/bazel-repo
+          )
           RESULTS=.bazel-oss-test-results
           : > "$RESULTS"
           failed_suites=()
