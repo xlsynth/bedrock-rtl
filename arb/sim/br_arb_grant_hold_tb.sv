@@ -452,6 +452,7 @@ module br_arb_grant_hold_tb;
 
         // Step 4: Change `grant_from_arb` to no requesters granted
         grant_from_arb = '0;
+        expected_grant = '0;
         @(posedge clk);
         if (ENABLE_INFO_MESSAGES == 1)
           $display(
@@ -460,7 +461,7 @@ module br_arb_grant_hold_tb;
               grant_from_arb
           );
 
-        // Step 5: Monitor `grant` output to ensure the grant is held
+        // Step 5: Monitor `grant` output to ensure it deasserts while the arbiter grants nothing
         @(posedge clk);
         if (grant !== expected_grant) begin
           $display(
