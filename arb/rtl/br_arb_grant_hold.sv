@@ -11,6 +11,8 @@
 // requester until the grant_hold signal for that requester is deasserted. On the cycle
 // following grant_hold asserted for the current grant, the grant_hold module deasserts
 // enable_priority_update, preventing the upstream arbiter from changing priority.
+// While ownership is held, grant is deasserted on cycles when the upstream arbiter does
+// not grant any requester. The held ownership is preserved until arbitration resumes.
 //
 // If grant_hold is asserted for a requester that is not granted, it has no effect on
 // that grant.
@@ -33,21 +35,27 @@ module br_arb_grant_hold #(
     input logic [NumRequesters-1:0] grant_hold,
     // If 1 and grant_hold is 0, then the arbiter's priority will update whenever it makes a grant.
     // If 0, then neither the arbiter's priority nor the grant hold state will update.
+    // The grant hold state also does not update when grant_from_arb is 0.
     input logic enable_grant_hold_update,
     // Connections to the arbiter.
     input logic [NumRequesters-1:0] grant_from_arb,
     output logic enable_priority_update_to_arb,
-    // The final grant signal post-hold.
+    // The final grant signal post-hold. Deasserted when grant_from_arb is 0.
     output logic [NumRequesters-1:0] grant
 );
 
   logic [NumRequesters-1:0] hold, hold_next;
+  logic grant_from_arb_valid;
 
-  `BR_REGL(hold, hold_next, enable_grant_hold_update)
+  assign grant_from_arb_valid = |grant_from_arb;
+
+  `BR_REGL(hold, hold_next, enable_grant_hold_update && grant_from_arb_valid)
   assign enable_priority_update_to_arb = !(|hold) && enable_grant_hold_update;
   assign hold_next = grant & grant_hold;
-  assign grant = |hold ? hold : grant_from_arb;
-  `BR_ASSERT_IMPL(grants_actually_hold_a, |hold |-> $stable(grant))
+  assign grant = (|hold && grant_from_arb_valid) ? hold : grant_from_arb;
+  `BR_ASSERT_IMPL(grants_actually_hold_a, |hold && grant_from_arb_valid |-> grant == hold)
+  `BR_ASSERT_IMPL(no_grant_without_arb_grant_a, !grant_from_arb_valid |-> !(|grant))
   `BR_ASSERT_IMPL(enable_priority_update_mask_a, |hold |-> !enable_priority_update_to_arb)
   `BR_ASSERT_IMPL(enable_grant_hold_update_mask_a, !enable_grant_hold_update |=> $stable(hold))
+  `BR_ASSERT_IMPL(no_arb_grant_hold_update_mask_a, !grant_from_arb_valid |=> $stable(hold))
 endmodule : br_arb_grant_hold
