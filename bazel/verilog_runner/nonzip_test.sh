@@ -39,6 +39,7 @@ for output in "${synth_sandbox}" "${synth_sandbox_runner}"; do
   fi
 done
 
+archive_contents="$(tar -tzf "${synth_sandbox}")"
 for required in \
   bazel/verilog_runner/nonzip_smoke.sv \
   python/verilog_runner/verilog_runner.py \
@@ -46,13 +47,13 @@ for required in \
   nonzip_synth_sandbox.f \
   nonzip_synth_sandbox.tcl \
   nonzip_synth_sandbox.sh; do
-  if ! tar -tzf "${synth_sandbox}" | grep -qx "${required}"; then
+  if ! grep -Fxq "${required}" <<< "${archive_contents}"; then
     echo "synthesis sandbox is missing ${required}"
     exit 1
   fi
 done
 
-if tar -tzf "${synth_sandbox}" | grep -q '/yosys$'; then
+if grep -Eq '/yosys$' <<< "${archive_contents}"; then
   echo "synthesis sandbox unexpectedly bundles the Yosys executable"
   exit 1
 fi
