@@ -107,9 +107,12 @@ jobs:
       - name: Run public Bazel test suites
         continue-on-error: true
         run: |
-          # Keep stdin attached so `bash -s` receives the heredoc below.
+          # Keep stdin attached so `bash -s` receives the heredoc below. The
+          # hosted runner UID is not present in the image's passwd file, so set
+          # USER explicitly for Bazel after retaining that UID for cache writes.
           docker run --rm -i \
             --user "$(id -u):$(id -g)" \
+            --env USER=user \
             --env HOME="${HOME}" \
             --workdir "${GITHUB_WORKSPACE}" \
             --volume "${GITHUB_WORKSPACE}:${GITHUB_WORKSPACE}" \
