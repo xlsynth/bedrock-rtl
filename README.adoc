@@ -8,14 +8,15 @@ image:https://img.shields.io/badge/build%20system-Bazel-blue[build system - Baze
 image:https://img.shields.io/endpoint?url=https://gist.githubusercontent.com/mgottscho/c66dc2ddc0e513ba06ce338620977b26/raw/rtl.json[rtl-files]
 
 image:https://img.shields.io/github/check-runs/xlsynth/bedrock-rtl/main?nameFilter=pre-commit&label=pre-commit[pre-commit,link="https://github.com/xlsynth/bedrock-rtl/actions/workflows/ci.yml?query=job%3Apre-commit"]
-image:https://img.shields.io/github/check-runs/xlsynth/bedrock-rtl/main?nameFilter=bazel-build&label=build[bazel-build,link="https://github.com/xlsynth/bedrock-rtl/actions/workflows/ci.yml?query=job%3Abazel-build"]
-image:https://img.shields.io/endpoint?url=https://gist.githubusercontent.com/mgottscho/c66dc2ddc0e513ba06ce338620977b26/raw/python.json[bazel-test-python,link="https://github.com/xlsynth/bedrock-rtl/actions/workflows/ci.yml?query=job%3Abazel-test-python"]
-image:https://img.shields.io/endpoint?url=https://gist.githubusercontent.com/mgottscho/c66dc2ddc0e513ba06ce338620977b26/raw/stardoc.json[bazel-test-stardoc,link="https://github.com/xlsynth/bedrock-rtl/actions/workflows/ci.yml?query=job%3Abazel-test-stardoc"]
-image:https://img.shields.io/endpoint?url=https://gist.githubusercontent.com/mgottscho/c66dc2ddc0e513ba06ce338620977b26/raw/verific.json[bazel-test-verific,link="https://github.com/xlsynth/bedrock-rtl/actions/workflows/ci.yml?query=job%3Abazel-test-verific"]
-image:https://img.shields.io/endpoint?url=https://gist.githubusercontent.com/mgottscho/c66dc2ddc0e513ba06ce338620977b26/raw/slang.json[bazel-test-slang,link="https://github.com/xlsynth/bedrock-rtl/actions/workflows/ci.yml?query=job%3Abazel-test-slang"]
-image:https://img.shields.io/endpoint?url=https://gist.githubusercontent.com/mgottscho/c66dc2ddc0e513ba06ce338620977b26/raw/ascentlint.json[bazel-test-ascentlint,link="https://github.com/xlsynth/bedrock-rtl/actions/workflows/ci.yml?query=job%3Abazel-test-ascentlint"]
-image:https://img.shields.io/endpoint?url=https://gist.githubusercontent.com/mgottscho/c66dc2ddc0e513ba06ce338620977b26/raw/vcs.json[bazel-test-vcs,link="https://github.com/xlsynth/bedrock-rtl/actions/workflows/ci.yml?query=job%3Abazel-test-vcs"]
-image:https://img.shields.io/endpoint?url=https://gist.githubusercontent.com/mgottscho/c66dc2ddc0e513ba06ce338620977b26/raw/verilator.json[bazel-test-verilator,link="https://github.com/xlsynth/bedrock-rtl/actions/workflows/ci.yml?query=job%3Abazel-test-verilator"]
+image:https://img.shields.io/github/check-runs/xlsynth/bedrock-rtl/main?nameFilter=bazel-oss-tool-test&label=oss%20tools[oss-tools,link="https://github.com/xlsynth/bedrock-rtl/actions/workflows/ci.yml?query=job%3Abazel-oss-tool-test"]
+image:https://img.shields.io/github/check-runs/xlsynth/bedrock-rtl/main?nameFilter=bazel-build-and-proprietary-tool-test&label=build%20and%20proprietary%20tools[build-and-proprietary-tools,link="https://github.com/xlsynth/bedrock-rtl/actions/workflows/ci.yml?query=job%3Abazel-build-and-proprietary-tool-test"]
+image:https://img.shields.io/endpoint?url=https://gist.githubusercontent.com/mgottscho/c66dc2ddc0e513ba06ce338620977b26/raw/python.json[bazel-test-python,link="https://github.com/xlsynth/bedrock-rtl/actions/workflows/ci.yml?query=job%3Abazel-oss-tool-test"]
+image:https://img.shields.io/endpoint?url=https://gist.githubusercontent.com/mgottscho/c66dc2ddc0e513ba06ce338620977b26/raw/stardoc.json[bazel-test-stardoc,link="https://github.com/xlsynth/bedrock-rtl/actions/workflows/ci.yml?query=job%3Abazel-oss-tool-test"]
+image:https://img.shields.io/endpoint?url=https://gist.githubusercontent.com/mgottscho/c66dc2ddc0e513ba06ce338620977b26/raw/verific.json[bazel-test-verific,link="https://github.com/xlsynth/bedrock-rtl/actions/workflows/ci.yml?query=job%3Abazel-build-and-proprietary-tool-test"]
+image:https://img.shields.io/endpoint?url=https://gist.githubusercontent.com/mgottscho/c66dc2ddc0e513ba06ce338620977b26/raw/slang.json[bazel-test-slang,link="https://github.com/xlsynth/bedrock-rtl/actions/workflows/ci.yml?query=job%3Abazel-oss-tool-test"]
+image:https://img.shields.io/endpoint?url=https://gist.githubusercontent.com/mgottscho/c66dc2ddc0e513ba06ce338620977b26/raw/ascentlint.json[bazel-test-ascentlint,link="https://github.com/xlsynth/bedrock-rtl/actions/workflows/ci.yml?query=job%3Abazel-build-and-proprietary-tool-test"]
+image:https://img.shields.io/endpoint?url=https://gist.githubusercontent.com/mgottscho/c66dc2ddc0e513ba06ce338620977b26/raw/vcs.json[bazel-test-vcs,link="https://github.com/xlsynth/bedrock-rtl/actions/workflows/ci.yml?query=job%3Abazel-build-and-proprietary-tool-test"]
+image:https://img.shields.io/endpoint?url=https://gist.githubusercontent.com/mgottscho/c66dc2ddc0e513ba06ce338620977b26/raw/verilator.json[bazel-test-verilator,link="https://github.com/xlsynth/bedrock-rtl/actions/workflows/ci.yml?query=job%3Abazel-oss-tool-test"]
 image:https://img.shields.io/endpoint?url=https://gist.githubusercontent.com/mgottscho/c66dc2ddc0e513ba06ce338620977b26/raw/jg.json[bazel-test-jg,link="https://github.com/xlsynth/bedrock-rtl/actions/workflows/nightly.yml?query=job%3Abazel-test-jg"]
 image:https://img.shields.io/github/issues/xlsynth/bedrock-rtl/bug?label=bugs[open bugs,link="https://github.com/xlsynth/bedrock-rtl/issues?q=is%3Aissue%20state%3Aopen%20label%3Abug"]
 
@@ -99,8 +100,8 @@ Then once inside the container, try `bazel build //... && bazel test //fifo/sim/
 
 === Deploying Docker Images
 
-The `docker-image-build` job in `.github/workflows/ci.yml` builds the image for every pull request, push to `main`, and manual CI run.
-After that build succeeds, the `docker-image-publish` job deploys the image to `ghcr.io/xlsynth/bedrock-rtl` for pushes to `main` and manually dispatched CI runs.
+The `bazel-oss-tool-test` job in `.github/workflows/ci.yml` builds the image for every pull request, push to `main`, and manual CI run, then uses that exact image for the public-tool test suites.
+After those tests succeed, the `docker-image-publish` job deploys the image to `ghcr.io/xlsynth/bedrock-rtl` for pushes to `main` and manually dispatched CI runs.
 Pull requests build the image but do not publish it.
 
 The publish job generates the immutable `YYYY-MM-DD-<full-git-sha>` tag, pushes the `linux/amd64` image, attaches BuildKit provenance, and publishes a signed GitHub artifact attestation for the image digest.
@@ -180,7 +181,8 @@ Run `bazel run //python/ppa:generate_ppa` to refresh link:PPA.md[] from all publ
 == Continuous Integration
 
 We run continuous integration tests with GitHub Actions.
-The main CI workflow currently covers pre-commit, build, Python/ecc codegen tests, Stardoc, Verific, Slang, AscentLint, VCS, and Verilator.
+The GitHub-hosted `bazel-oss-tool-test` job builds the public Docker image and runs Python/ecc codegen, Stardoc, Slang, and Verilator tests with public logs and GitHub Actions caches.
+The self-hosted `bazel-build-and-proprietary-tool-test` job runs `bazel build //...` plus Verific, AscentLint, and VCS tests; it reports private-suite results without emitting proprietary test logs.
 Sampled JasperGold formal tests run in the nightly workflow.
 See `.github/workflows/ci.yml` and `.github/workflows/nightly.yml` for details.
 
