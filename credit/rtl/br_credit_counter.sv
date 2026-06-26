@@ -46,6 +46,13 @@ module br_credit_counter #(
     parameter logic [MaxChangeWidth-1:0] MaxIncrement = MaxChange,
     // Maximum decrement amount (inclusive). Must be at least 1 and at most MaxChange.
     parameter logic [MaxChangeWidth-1:0] MaxDecrement = MaxChange,
+    // If 1, optimize the MaxDecrement=1 decr_ready path assuming withhold is always zero.
+    // EnableCoverWithhold must be disabled so that this requirement is asserted.
+    parameter bit OptimizeDecrReadyForNoWithhold = 0,
+    // If 1, further optimize the MaxDecrement=1 decr_ready path assuming every valid
+    // increment is nonzero. OptimizeDecrReadyForNoWithhold must also be enabled, and
+    // EnableCoverZeroIncrement must be disabled so that this requirement is asserted.
+    parameter bit OptimizeDecrReadyForNonzeroIncrement = 0,
     // If 1, cover that you can have incr_valid high with incr = 0.
     // Otherwise, assert that doesn't happen.
     parameter bit EnableCoverZeroIncrement = 1,
@@ -120,6 +127,12 @@ module br_credit_counter #(
                     !(EnableAssertNoDecrementBackpressure && EnableCoverDecrementBackpressure))
   `BR_ASSERT_STATIC(no_zero_decrement_if_max_decrement_one_a,
                     !(EnableCoverZeroDecrement && MaxDecrement == 1))
+  `BR_ASSERT_STATIC(legal_optimize_decr_ready_for_no_withhold_a,
+                    !(OptimizeDecrReadyForNoWithhold && EnableCoverWithhold))
+  `BR_ASSERT_STATIC(legal_optimize_decr_ready_for_nonzero_increment_a,
+                    !(OptimizeDecrReadyForNonzeroIncrement && EnableCoverZeroIncrement))
+  `BR_ASSERT_STATIC(optimize_decr_ready_for_nonzero_increment_requires_no_withhold_a,
+                    !OptimizeDecrReadyForNonzeroIncrement || OptimizeDecrReadyForNoWithhold)
 
   if (EnableAssertFinalNotValid) begin : gen_assert_final
     `BR_ASSERT_FINAL(final_not_incr_valid_a, !incr_valid)
@@ -230,9 +243,9 @@ module br_credit_counter #(
   assign available = value_plus_incr > withhold ? value_plus_incr - withhold : '0;
 
   if (MaxDecrement == 1) begin : gen_decr_ready_one
-    if (EnableCoverWithhold) begin : gen_decr_ready_with_withhold
+    if (!OptimizeDecrReadyForNoWithhold) begin : gen_decr_ready_with_withhold
       assign decr_ready = available > '0;
-    end else if (EnableCoverZeroIncrement) begin : gen_decr_ready_with_zero_increment
+    end else if (!OptimizeDecrReadyForNonzeroIncrement) begin : gen_decr_ready_with_zero_increment
       assign decr_ready = (value != '0) || (incr_valid && incr != '0);
     end else begin : gen_decr_ready_without_zero_increment
       assign decr_ready = (value != '0) || incr_valid;
