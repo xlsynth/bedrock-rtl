@@ -100,9 +100,14 @@ Then once inside the container, try `bazel build //... && bazel test //fifo/sim/
 
 === Deploying Docker Images
 
-The `bazel-oss-tool-test` job in `.github/workflows/ci.yml` builds the image for every pull request, push to `main`, and manual CI run, then uses that exact image for the public-tool test suites.
+The public CI shard jobs in `.github/workflows/ci.yml` build the image for every pull request, push to `main`, and manual CI run, then use that exact image for the public-tool test suites.
+Python/ecc-codegen and Stardoc share one runner, while stable SHA-256 label partitioning distributes Slang across four runners and Verilator across eight runners.
+The `bazel-oss-tool-test` job validates and aggregates every shard into the stable check and badge interface.
 After those tests succeed, the `docker-image-publish` job deploys the image to `ghcr.io/xlsynth/bedrock-rtl` for pushes to `main` and manually dispatched CI runs.
 Pull requests build the image but do not publish it.
+
+All public shards restore the shared Docker layer cache, but only one shard updates it on trusted `main` or manually dispatched runs.
+Bazel disk caches are partitioned with the test shards so repeated runs restore the outputs relevant to the same stable label set; pull requests restore caches without saving them.
 
 The publish job generates the immutable `YYYY-MM-DD-<full-git-sha>` tag, pushes the `linux/amd64` image, attaches BuildKit provenance, and publishes a signed GitHub artifact attestation for the image digest.
 Repository maintainers can deploy an image manually by opening the
@@ -181,7 +186,8 @@ Run `bazel run //python/ppa:generate_ppa` to refresh link:PPA.md[] from all publ
 == Continuous Integration
 
 We run continuous integration tests with GitHub Actions.
-The GitHub-hosted `bazel-oss-tool-test` job builds the public Docker image and runs Python/ecc codegen, Stardoc, Slang, and Verilator tests with public logs and GitHub Actions caches.
+GitHub-hosted shard jobs build the public Docker image and run Python/ecc codegen, Stardoc, Slang, and Verilator tests in parallel with public logs and GitHub Actions caches.
+The stable `bazel-oss-tool-test` check verifies complete, non-overlapping shard coverage and aggregates the results used by the public badges.
 The self-hosted `bazel-build-and-proprietary-tool-test` job runs `bazel build //...` plus Verific, AscentLint, and VCS tests; it reports private-suite results without emitting proprietary test logs.
 Sampled JasperGold formal tests run in the nightly workflow.
 See `.github/workflows/ci.yml` and `.github/workflows/nightly.yml` for details.

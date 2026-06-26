@@ -29,44 +29,93 @@ jobs:
       - name: Run pre-commit
         run: pre-commit run --show-diff-on-failure --color=always --all-files
 
-  bazel-oss-tool-test:
+  bazel-oss-tool-test-shard:
+    name: bazel-oss-tool-test-shard (${{ matrix.name }})
     runs-on: ubuntu-24.04
-    outputs:
-      image-tag: ${{ steps.image-metadata.outputs.tag }}
-      python_total_tests: ${{ steps.results.outputs.python_total_tests }}
-      python_passing_tests: ${{ steps.results.outputs.python_passing_tests }}
-      python_exit_code: ${{ steps.results.outputs.python_exit_code }}
-      stardoc_total_tests: ${{ steps.results.outputs.stardoc_total_tests }}
-      stardoc_passing_tests: ${{ steps.results.outputs.stardoc_passing_tests }}
-      stardoc_exit_code: ${{ steps.results.outputs.stardoc_exit_code }}
-      slang_total_tests: ${{ steps.results.outputs.slang_total_tests }}
-      slang_passing_tests: ${{ steps.results.outputs.slang_passing_tests }}
-      slang_exit_code: ${{ steps.results.outputs.slang_exit_code }}
-      verilator_total_tests: ${{ steps.results.outputs.verilator_total_tests }}
-      verilator_passing_tests: ${{ steps.results.outputs.verilator_passing_tests }}
-      verilator_exit_code: ${{ steps.results.outputs.verilator_exit_code }}
     permissions:
       contents: read
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: python-stardoc
+            suite: python-stardoc
+            shard_index: 0
+            shard_count: 1
+            docker_cache_writer: true
+          - name: slang-1-of-4
+            suite: slang
+            shard_index: 0
+            shard_count: 4
+            docker_cache_writer: false
+          - name: slang-2-of-4
+            suite: slang
+            shard_index: 1
+            shard_count: 4
+            docker_cache_writer: false
+          - name: slang-3-of-4
+            suite: slang
+            shard_index: 2
+            shard_count: 4
+            docker_cache_writer: false
+          - name: slang-4-of-4
+            suite: slang
+            shard_index: 3
+            shard_count: 4
+            docker_cache_writer: false
+          - name: verilator-1-of-8
+            suite: verilator
+            shard_index: 0
+            shard_count: 8
+            docker_cache_writer: false
+          - name: verilator-2-of-8
+            suite: verilator
+            shard_index: 1
+            shard_count: 8
+            docker_cache_writer: false
+          - name: verilator-3-of-8
+            suite: verilator
+            shard_index: 2
+            shard_count: 8
+            docker_cache_writer: false
+          - name: verilator-4-of-8
+            suite: verilator
+            shard_index: 3
+            shard_count: 8
+            docker_cache_writer: false
+          - name: verilator-5-of-8
+            suite: verilator
+            shard_index: 4
+            shard_count: 8
+            docker_cache_writer: false
+          - name: verilator-6-of-8
+            suite: verilator
+            shard_index: 5
+            shard_count: 8
+            docker_cache_writer: false
+          - name: verilator-7-of-8
+            suite: verilator
+            shard_index: 6
+            shard_count: 8
+            docker_cache_writer: false
+          - name: verilator-8-of-8
+            suite: verilator
+            shard_index: 7
+            shard_count: 8
+            docker_cache_writer: false
     steps:
       # actions/checkout v6
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
-      - name: Set YYYY-MM-DD-SHA image tag
-        id: image-metadata
-        run: |
-          # Normalize the commit timestamp to a UTC date so a Git SHA always
-          # maps to the same YYYY-MM-DD-SHA image tag across time zones.
-          commit_timestamp="$(git show --no-patch --format=%ct "${GITHUB_SHA}")"
-          commit_date="$(date --utc --date="@${commit_timestamp}" +%F)"
-          echo "tag=${commit_date}-${GITHUB_SHA}" >> "${GITHUB_OUTPUT}"
       # bazel-contrib/setup-bazel v0.19.0
       - name: Set up Bazel caches
         uses: bazel-contrib/setup-bazel@c5acdfb288317d0b5c0bbd7a396a3dc868bb0f86
         with:
           bazelisk-cache: true
-          disk-cache: ${{ github.workflow }}
+          # A stable partition gets a stable cache. Including the shard count
+          # prevents incompatible partitions from sharing an Actions cache.
+          disk-cache: ${{ github.workflow }}-oss-${{ matrix.suite }}-${{ matrix.shard_index }}-of-${{ matrix.shard_count }}
           repository-cache: true
-          # PRs restore trusted cache entries but do not publish new artifacts.
-          # This prevents untrusted pull-request code from polluting shared caches.
+          # PRs restore trusted cache entries but cannot pollute shared caches.
           cache-save: ${{ github.event_name != 'pull_request' }}
           output-base: ${{ runner.temp }}/bazel-output
       - name: Configure public Bazel environment
@@ -92,31 +141,30 @@ jobs:
           file: ./Dockerfile
           platforms: linux/amd64
           push: false
-          # Import the Buildx result into this runner's Docker daemon so the
-          # next step can run the exact image built from this checkout.
+          # Every shard tests the exact image built from its checkout.
           load: true
-          # This local tag is the image reference consumed by `docker run`.
           tags: bedrock-rtl-ci:${{ github.sha }}
           labels: |
             org.opencontainers.image.revision=${{ github.sha }}
-          # Reuse BuildKit layers stored in the GitHub Actions cache for this image.
           cache-from: type=gha,scope=bedrock-rtl-docker
-          # Export all intermediate and final layers for subsequent builds.
-          cache-to: type=gha,mode=max,scope=bedrock-rtl-docker
+          # Only one trusted shard updates this shared cache. All other shards
+          # are read-only, avoiding concurrent exports and PR cache pollution.
+          cache-to: ${{ matrix.docker_cache_writer && github.event_name != 'pull_request' && 'type=gha,mode=max,scope=bedrock-rtl-docker' || '' }}
       # Do not use `bazel test //...` with a tag filter here. Bazel would still
       # analyze targets that need proprietary verilog_runner plugins.
-      - name: Run public Bazel test suites
+      - name: Run public Bazel test shard
         continue-on-error: true
         run: |
           # Keep stdin attached so `bash -s` receives the heredoc below. The
           # hosted runner UID is not present in the image's passwd file, so set
-          # USER explicitly for Bazel after retaining that UID for cache writes.
-          # Mount Bazel's default output user root because the container's
-          # /home/runner is root-owned.
+          # USER explicitly while retaining that UID for cache writes.
           docker run --rm -i \
             --user "$(id -u):$(id -g)" \
             --env USER=user \
             --env HOME="${HOME}" \
+            --env CI_SUITE="${{ matrix.suite }}" \
+            --env CI_SHARD_INDEX="${{ matrix.shard_index }}" \
+            --env CI_SHARD_COUNT="${{ matrix.shard_count }}" \
             --workdir "${GITHUB_WORKSPACE}" \
             --volume "${GITHUB_WORKSPACE}:${GITHUB_WORKSPACE}" \
             --volume "${HOME}/.bazelrc:${HOME}/.bazelrc:ro" \
@@ -128,135 +176,188 @@ jobs:
             bedrock-rtl-ci:${{ github.sha }} \
             bash -s <<'EOF'
           set +e
-          # Pass cache paths explicitly rather than depending on the generated
-          # user bazelrc being discovered inside the container.
           BAZEL_FLAGS=(
             --action_env=PATH
             --noshow_loading_progress
             --disk_cache=/home/runner/.cache/bazel-disk
             --repository_cache=/home/runner/.cache/bazel-repo
+            --experimental_disk_cache_gc_max_size=256M
+            --experimental_disk_cache_gc_max_age=7d
           )
-          RESULTS=.bazel-oss-test-results
-          : > "$RESULTS"
-          failed_suites=()
+          HELPER=python/ci/bazel_oss_sharding.py
+          RESULTS_DIR="bazel-oss-results/${CI_SUITE}-${CI_SHARD_INDEX}-of-${CI_SHARD_COUNT}"
+          mkdir -p "$RESULTS_DIR"
 
-          write_result() {
+          run_discovered_suite() {
             local suite="$1"
-            local exit_code="$2"
-            local log="$3"
-            local total_tests
-            local passing_tests
-            total_tests="$(grep -Po '(?<=out of )\d+(?= test)' "$log" | tail -n1)"
-            passing_tests="$(grep -Po '\d+(?= test passes?\.| tests pass)' "$log" | tail -n1)"
-            echo "${suite}_total_tests=${total_tests:-0}" >> "$RESULTS"
-            echo "${suite}_passing_tests=${passing_tests:-0}" >> "$RESULTS"
-            echo "${suite}_exit_code=${exit_code}" >> "$RESULTS"
-            if [ "$exit_code" -ne 0 ]; then
-              failed_suites+=("$suite")
+            local shard_index="$2"
+            local shard_count="$3"
+            local discovered="$4"
+            local result="$RESULTS_DIR/result-${suite}-${shard_index}-of-${shard_count}.json"
+            local targets="$RESULTS_DIR/targets-${suite}-${shard_index}-of-${shard_count}.txt"
+            local log="/tmp/bazel-${suite}-${shard_index}-of-${shard_count}.log"
+
+            python3.12 "$HELPER" partition \
+              --suite "$suite" \
+              --shard-index "$shard_index" \
+              --shard-count "$shard_count" \
+              --input "$discovered" \
+              --output-dir "$RESULTS_DIR"
+            local partition_exit_code=$?
+            if [ "$partition_exit_code" -ne 0 ]; then
+              return "$partition_exit_code"
             fi
+
+            # A target-pattern file guarantees one Bazel invocation even when
+            # thousands of labels would exceed the shell argument limit.
+            bazel test "${BAZEL_FLAGS[@]}" \
+              --target_pattern_file="$targets" 2>&1 | tee "$log"
+            local bazel_exit_code=${PIPESTATUS[0]}
+            python3.12 "$HELPER" finalize \
+              --result "$result" \
+              --log "$log" \
+              --exit-code "$bazel_exit_code"
           }
 
-          run_command() {
+          query_and_run_suite() {
             local suite="$1"
-            shift
-            local log=".bazel-test-${suite}.log"
-            "$@" 2>&1 | tee "$log"
-            write_result "$suite" "${PIPESTATUS[0]}" "$log"
+            local shard_index="$2"
+            local shard_count="$3"
+            local query_expression="$4"
+            local discovered="/tmp/discovered-${suite}-${shard_index}-of-${shard_count}.txt"
+            local result="$RESULTS_DIR/result-${suite}-${shard_index}-of-${shard_count}.json"
+
+            bazel query --noshow_progress "$query_expression" > "$discovered"
+            local query_exit_code=$?
+            if [ "$query_exit_code" -ne 0 ]; then
+              python3.12 "$HELPER" partition \
+                --suite "$suite" \
+                --shard-index "$shard_index" \
+                --shard-count "$shard_count" \
+                --input "$discovered" \
+                --output-dir "$RESULTS_DIR"
+              python3.12 "$HELPER" discovery-failure \
+                --result "$result" \
+                --exit-code "$query_exit_code" \
+                --message "Bazel query failed"
+              return "$query_exit_code"
+            fi
+            run_discovered_suite "$suite" "$shard_index" "$shard_count" "$discovered"
           }
 
-          run_target_file() {
-            local suite="$1"
-            local targets="$2"
-            local log=".bazel-test-${suite}.log"
-            # Invoke Bazel once with every selected label so it can schedule
-            # independent test actions concurrently.
-            xargs -r bazel test "${BAZEL_FLAGS[@]}" < "$targets" 2>&1 | tee "$log"
-            write_result "$suite" "${PIPESTATUS[0]}" "$log"
-          }
+          case "$CI_SUITE" in
+            python-stardoc)
+              query_and_run_suite python 0 1 \
+                'tests(//python/...) union tests(//ecc/rtl/secded_codegen/...)'
+              printf '%s\n' \
+                //bazel:verilog_rules_diff_test \
+                //bazel/verilog_runner:nonzip_test \
+                > /tmp/discovered-stardoc.txt
+              run_discovered_suite stardoc 0 1 /tmp/discovered-stardoc.txt
+              ;;
+            slang)
+              query_and_run_suite slang "$CI_SHARD_INDEX" "$CI_SHARD_COUNT" \
+                '(tests(//...) intersect attr(tags, "slang", //...)) except attr(tags, "manual", //...)'
+              ;;
+            verilator)
+              query_and_run_suite verilator "$CI_SHARD_INDEX" "$CI_SHARD_COUNT" \
+                'tests(//...) intersect attr(tags, "verilator", //...) intersect attr(tags, "sim", //...)'
+              ;;
+            *)
+              echo "Unknown public suite: $CI_SUITE" >&2
+              exit 4
+              ;;
+          esac
 
-          PYTHON_TARGETS=.bazel-test-python.targets
-          bazel query --noshow_progress \
-            'tests(//python/...) union tests(//ecc/rtl/secded_codegen/...)' \
-            > "$PYTHON_TARGETS"
-          query_exit_code=$?
-          if [ "$query_exit_code" -ne 0 ] || [ ! -s "$PYTHON_TARGETS" ]; then
-            if [ "$query_exit_code" -eq 0 ]; then
-              query_exit_code=4
-            fi
-            echo "::error title=Python test discovery failed::No public Python test targets were selected"
-            : > .bazel-test-python.log
-            write_result python "$query_exit_code" .bazel-test-python.log
+          check_args=(--results-dir "$RESULTS_DIR")
+          if [ "$CI_SUITE" = python-stardoc ]; then
+            check_args+=(--expected-suite python --expected-suite stardoc)
           else
-            run_target_file python "$PYTHON_TARGETS"
+            check_args+=(--expected-suite "$CI_SUITE")
           fi
-
-          run_command stardoc bazel test "${BAZEL_FLAGS[@]}" \
-            //bazel:verilog_rules_diff_test \
-            //bazel/verilog_runner:nonzip_test
-
-          SLANG_TARGETS=.bazel-test-slang.targets
-          bazel query --noshow_progress \
-            '(tests(//...) intersect attr(tags, "slang", //...)) except attr(tags, "manual", //...)' \
-            > "$SLANG_TARGETS"
-          query_exit_code=$?
-          if [ "$query_exit_code" -ne 0 ] || [ ! -s "$SLANG_TARGETS" ]; then
-            if [ "$query_exit_code" -eq 0 ]; then
-              query_exit_code=4
-            fi
-            echo "::error title=Slang test discovery failed::No non-manual Slang test targets were selected"
-            : > .bazel-test-slang.log
-            write_result slang "$query_exit_code" .bazel-test-slang.log
-          else
-            run_target_file slang "$SLANG_TARGETS"
-          fi
-
-          VERILATOR_TARGETS=.bazel-test-verilator.targets
-          bazel query --noshow_progress \
-            'tests(//...) intersect attr(tags, "verilator", //...) intersect attr(tags, "sim", //...)' \
-            > "$VERILATOR_TARGETS"
-          query_exit_code=$?
-          if [ "$query_exit_code" -ne 0 ] || [ ! -s "$VERILATOR_TARGETS" ]; then
-            if [ "$query_exit_code" -eq 0 ]; then
-              query_exit_code=4
-            fi
-            echo "::error title=Verilator test discovery failed::No Verilator simulation test targets were selected"
-            : > .bazel-test-verilator.log
-            write_result verilator "$query_exit_code" .bazel-test-verilator.log
-          else
-            run_target_file verilator "$VERILATOR_TARGETS"
-          fi
-
-          if [ "${#failed_suites[@]}" -ne 0 ]; then
-            echo "Failed Bazel suites: ${failed_suites[*]}"
-            exit 1
-          fi
+          python3.12 "$HELPER" check "${check_args[@]}"
           EOF
-      - name: Export public suite results
-        id: results
+      - name: Upload public shard result
+        if: ${{ always() }}
+        # actions/upload-artifact v7.0.1
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: bazel-oss-result-${{ matrix.name }}
+          path: bazel-oss-results/${{ matrix.suite }}-${{ matrix.shard_index }}-of-${{ matrix.shard_count }}
+          if-no-files-found: error
+          retention-days: 1
+      - name: Check public shard result
+        if: ${{ always() }}
         run: |
-          test -s .bazel-oss-test-results
-          cat .bazel-oss-test-results >> "$GITHUB_OUTPUT"
+          check_args=(
+            --results-dir "bazel-oss-results/${{ matrix.suite }}-${{ matrix.shard_index }}-of-${{ matrix.shard_count }}"
+          )
+          if [ "${{ matrix.suite }}" = python-stardoc ]; then
+            check_args+=(--expected-suite python --expected-suite stardoc)
+          else
+            check_args+=(--expected-suite "${{ matrix.suite }}")
+          fi
+          python3.12 python/ci/bazel_oss_sharding.py check "${check_args[@]}"
+
+  # This stable aggregate check is the public branch-protection, badge, and
+  # image-publication interface; individual shards remain visible underneath it.
+  bazel-oss-tool-test:
+    runs-on: ubuntu-24.04
+    needs: bazel-oss-tool-test-shard
+    if: ${{ always() }}
+    permissions:
+      contents: read
+    outputs:
+      image-tag: ${{ steps.image-metadata.outputs.tag }}
+      python_total_tests: ${{ steps.results.outputs.python_total_tests }}
+      python_passing_tests: ${{ steps.results.outputs.python_passing_tests }}
+      python_exit_code: ${{ steps.results.outputs.python_exit_code }}
+      stardoc_total_tests: ${{ steps.results.outputs.stardoc_total_tests }}
+      stardoc_passing_tests: ${{ steps.results.outputs.stardoc_passing_tests }}
+      stardoc_exit_code: ${{ steps.results.outputs.stardoc_exit_code }}
+      slang_total_tests: ${{ steps.results.outputs.slang_total_tests }}
+      slang_passing_tests: ${{ steps.results.outputs.slang_passing_tests }}
+      slang_exit_code: ${{ steps.results.outputs.slang_exit_code }}
+      verilator_total_tests: ${{ steps.results.outputs.verilator_total_tests }}
+      verilator_passing_tests: ${{ steps.results.outputs.verilator_passing_tests }}
+      verilator_exit_code: ${{ steps.results.outputs.verilator_exit_code }}
+    steps:
+      # actions/checkout v6
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
+      - name: Set YYYY-MM-DD-SHA image tag
+        id: image-metadata
+        run: |
+          commit_timestamp="$(git show --no-patch --format=%ct "${GITHUB_SHA}")"
+          commit_date="$(date --utc --date="@${commit_timestamp}" +%F)"
+          echo "tag=${commit_date}-${GITHUB_SHA}" >> "${GITHUB_OUTPUT}"
+      - name: Download public shard results
+        continue-on-error: true
+        # actions/download-artifact v8.0.1
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
+        with:
+          pattern: bazel-oss-result-*
+          path: bazel-oss-aggregate
+          merge-multiple: true
+      - name: Aggregate public shard results
+        id: results
+        continue-on-error: true
+        run: |
+          python3.12 python/ci/bazel_oss_sharding.py aggregate \
+            --results-dir bazel-oss-aggregate \
+            --expected python=1 \
+            --expected stardoc=1 \
+            --expected slang=4 \
+            --expected verilator=8 \
+            --github-output "$GITHUB_OUTPUT" \
+            --step-summary "$GITHUB_STEP_SUMMARY"
       - name: Check public Bazel test suite results
         run: |
-          failed_suites=()
-
-          check_suite() {
-            local suite="$1"
-            local exit_code="$2"
-            if [ "$exit_code" != "0" ]; then
-              echo "::error title=Bazel suite failed::$suite exited with code ${exit_code:-missing}"
-              failed_suites+=("$suite")
-            fi
-          }
-
-          check_suite "python" "${{ steps.results.outputs.python_exit_code }}"
-          check_suite "stardoc" "${{ steps.results.outputs.stardoc_exit_code }}"
-          check_suite "slang" "${{ steps.results.outputs.slang_exit_code }}"
-          check_suite "verilator" "${{ steps.results.outputs.verilator_exit_code }}"
-
-          if [ "${#failed_suites[@]}" -ne 0 ]; then
-            echo "Failed Bazel suites:"
-            printf '  - %s\n' "${failed_suites[@]}"
+          if [ "${{ needs.bazel-oss-tool-test-shard.result }}" != success ]; then
+            echo "::error title=Public Bazel shard failed::One or more matrix jobs failed"
+            exit 1
+          fi
+          if [ "${{ steps.results.outcome }}" != success ]; then
+            echo "::error title=Public Bazel aggregation failed::Shard results were incomplete or failed validation"
             exit 1
           fi
 
