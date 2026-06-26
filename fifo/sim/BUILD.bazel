@@ -220,7 +220,10 @@ br_verilog_sim_test_tools_suite(
         "RegisterPopOutputs": ["0"],
         "FlopRamAddressDepthStages": ["0"],
     },
-    tools = ["verilator"],
+    tools = [
+        "vcs",
+        "verilator",
+    ],
     deps = [":br_fifo_flops_tb"],
 )
 
@@ -320,7 +323,10 @@ br_verilog_sim_test_tools_suite(
             "1",
         ],
     },
-    tools = ["verilator"],
+    tools = [
+        "vcs",
+        "verilator",
+    ],
     deps = [":br_fifo_flops_push_credit_tb"],
 )
 
