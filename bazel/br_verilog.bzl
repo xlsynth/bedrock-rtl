@@ -2,7 +2,7 @@
 
 """Bedrock-internal Verilog rules for Bazel."""
 
-load("//bazel:verilog.bzl", "verilog_elab_and_lint_test_suite", "verilog_fpv_test_suite", "verilog_sim_test_suite")
+load("//bazel:verilog.bzl", "verilog_elab_and_lint_test_suite", "verilog_fpv_test_suite", "verilog_sim_test_suite", "verilog_synth_suite")
 
 def br_verilog_elab_and_lint_test_suite(name, **kwargs):
     """Wraps three instances of verilog_elab_and_lint_test_suite.
@@ -91,6 +91,57 @@ def br_verilog_sim_test_tools_suite(name, tools = [], **kwargs):
             tool = tool,
             **kwargs
         )
+
+def br_verilog_synth_suite(
+        name,
+        tool = "yosys",
+        defines = ["SYNTHESIS"],
+        deps = [],
+        gate_library = "//gate/rtl:br_gate_mock",
+        library_name = None,
+        structured_gate_library = "//mux/rtl:br_mux_bin_structured_gates",
+        tags = [],
+        top = None,
+        **kwargs):
+    """Creates Bedrock logic-synthesis sweeps for representative parameter combinations.
+
+    Args:
+        name (str): Base name of the generated synthesis targets.
+        tool (str): Verilog Runner synthesis plugin. Defaults to Yosys.
+        defines (list[str]): Synthesis preprocessor defines.
+        deps (list[label]): Verilog library dependencies.
+        gate_library (label): Generic gate model used for no-PDK Yosys PPA runs.
+        library_name (str or None): Target-name identifier for the PDK/library/corner. Defaults to `nolib` for
+            no-Liberty synthesis and is required when a Liberty file is supplied.
+        structured_gate_library (label): Generic structured-gate mux implementation used by the no-PDK Yosys flow.
+        tags (list[str]): Additional Bazel tags.
+        top (str): Top module. Defaults to the target name of the sole explicit dependency.
+        **kwargs: Additional arguments passed to verilog_synth_suite.
+    """
+    if not top:
+        if len(deps) != 1:
+            fail("top must be provided unless there is exactly one explicit dependency")
+        top = str(deps[0]).split(":")[-1].split("/")[-1]
+
+    synth_defines = defines
+    synth_deps = deps
+    if tool == "yosys" and gate_library:
+        synth_defines = defines + ["BR_PPA_SYNTHESIS"]
+        synth_deps = deps + [gate_library]
+        if structured_gate_library and top != "br_mux_bin_structured_gates":
+            synth_deps.append(structured_gate_library)
+
+    verilog_synth_suite(
+        name = name,
+        tool = tool,
+        defines = synth_defines,
+        deps = synth_deps,
+        library_name = library_name,
+        sandbox_tags = tags + ["ppa-synth-generic", "ppa-synth-sandbox"],
+        tags = tags + ["ppa-synth", "ppa-synth-generic"],
+        top = top,
+        **kwargs
+    )
 
 def br_verilog_fpv_test_tools_suite(name, tools = {}, **kwargs):
     """Wraps br_verilog_fpv_test_suite with multiple formal tools.

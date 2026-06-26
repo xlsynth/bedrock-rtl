@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: Apache-2.0
 
 load("@rules_hdl//verilog:providers.bzl", "verilog_library")
-load("//bazel:br_verilog.bzl", "br_verilog_elab_and_lint_test_suite")
+load("//bazel:br_verilog.bzl", "br_verilog_elab_and_lint_test_suite", "br_verilog_synth_suite")
 
 package(default_visibility = ["//visibility:public"])
 
@@ -90,6 +90,102 @@ verilog_library(
         "//macros:br_registers",
         "//mux/rtl:br_mux_bin",
     ],
+)
+
+br_verilog_synth_suite(
+    name = "br_arb_fixed_ppa",
+    params = {"NumRequesters": [
+        "4",
+        "16",
+    ]},
+    deps = [":br_arb_fixed"],
+)
+
+br_verilog_synth_suite(
+    name = "br_arb_grant_hold_ppa",
+    params = {"NumRequesters": [
+        "4",
+        "16",
+    ]},
+    deps = [":br_arb_grant_hold"],
+)
+
+br_verilog_synth_suite(
+    name = "br_arb_lru_ppa",
+    params = {"NumRequesters": [
+        "4",
+        "16",
+    ]},
+    deps = [":br_arb_lru"],
+)
+
+br_verilog_synth_suite(
+    name = "br_arb_multi_rr_ppa",
+    params = {
+        "MaxGrantPerCycle": [
+            "2",
+            "4",
+        ],
+        "NumRequesters": [
+            "4",
+            "16",
+        ],
+    },
+    deps = [":br_arb_multi_rr"],
+)
+
+br_verilog_synth_suite(
+    name = "br_arb_pri_rr_ppa",
+    params = {
+        "NumPriorities": [
+            "2",
+            "4",
+        ],
+        "NumRequesters": [
+            "4",
+            "16",
+        ],
+    },
+    deps = [":br_arb_pri_rr"],
+)
+
+br_verilog_synth_suite(
+    name = "br_arb_rr_ppa",
+    params = {"NumRequesters": [
+        "4",
+        "16",
+    ]},
+    deps = [":br_arb_rr"],
+)
+
+br_verilog_synth_suite(
+    name = "br_arb_weighted_lru_ppa",
+    params = {
+        "MaxAccumulatedWeight": ["16"],
+        "MaxWeight": ["4"],
+        "NumRequesters": [
+            "4",
+            "16",
+        ],
+    },
+    deps = [":br_arb_weighted_lru"],
+)
+
+br_verilog_synth_suite(
+    name = "br_arb_weighted_rr_ppa",
+    params = {
+        "MaxAccumulatedWeight": ["16"],
+        "MaxWeight": ["4"],
+        "NumRequesters": [
+            "4",
+            "16",
+        ],
+        "UsePairwiseArb": [
+            "0",
+            "1",
+        ],
+    },
+    deps = [":br_arb_weighted_rr"],
 )
 
 br_verilog_elab_and_lint_test_suite(

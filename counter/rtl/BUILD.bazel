@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: Apache-2.0
 
 load("@rules_hdl//verilog:providers.bzl", "verilog_library")
-load("//bazel:br_verilog.bzl", "br_verilog_elab_and_lint_test_suite")
+load("//bazel:br_verilog.bzl", "br_verilog_elab_and_lint_test_suite", "br_verilog_synth_suite")
 
 package(default_visibility = ["//visibility:public"])
 
@@ -34,6 +34,88 @@ verilog_library(
         "//macros:br_unused",
         "//pkg:br_math_pkg",
     ],
+)
+
+br_verilog_synth_suite(
+    name = "br_counter_incr_wrap_ppa",
+    params = {
+        "EnableSaturate": ["0"],
+        "EnableWrap": ["1"],
+        "MaxIncrement": ["1"],
+        "MaxValue": [
+            "255",
+            "65535",
+        ],
+    },
+    deps = [":br_counter_incr"],
+)
+
+br_verilog_synth_suite(
+    name = "br_counter_incr_saturate_ppa",
+    params = {
+        "EnableSaturate": ["1"],
+        "EnableWrap": ["0"],
+        "MaxIncrement": ["15"],
+        "MaxValue": [
+            "255",
+            "65535",
+        ],
+    },
+    deps = [":br_counter_incr"],
+)
+
+br_verilog_synth_suite(
+    name = "br_counter_decr_wrap_ppa",
+    params = {
+        "EnableSaturate": ["0"],
+        "MaxDecrement": ["1"],
+        "MaxValue": [
+            "255",
+            "65535",
+        ],
+    },
+    deps = [":br_counter_decr"],
+)
+
+br_verilog_synth_suite(
+    name = "br_counter_decr_saturate_ppa",
+    params = {
+        "EnableSaturate": ["1"],
+        "MaxDecrement": ["15"],
+        "MaxValue": [
+            "255",
+            "65535",
+        ],
+    },
+    deps = [":br_counter_decr"],
+)
+
+br_verilog_synth_suite(
+    name = "br_counter_wrap_ppa",
+    params = {
+        "EnableSaturate": ["0"],
+        "EnableWrap": ["1"],
+        "MaxChange": ["1"],
+        "MaxValue": [
+            "255",
+            "65535",
+        ],
+    },
+    deps = [":br_counter"],
+)
+
+br_verilog_synth_suite(
+    name = "br_counter_saturate_ppa",
+    params = {
+        "EnableSaturate": ["1"],
+        "EnableWrap": ["0"],
+        "MaxChange": ["15"],
+        "MaxValue": [
+            "255",
+            "65535",
+        ],
+    },
+    deps = [":br_counter"],
 )
 
 br_verilog_elab_and_lint_test_suite(

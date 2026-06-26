@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: Apache-2.0
 
 load("@rules_hdl//verilog:providers.bzl", "verilog_library")
-load("//bazel:br_verilog.bzl", "br_verilog_elab_and_lint_test_suite")
+load("//bazel:br_verilog.bzl", "br_verilog_elab_and_lint_test_suite", "br_verilog_synth_suite")
 
 package(default_visibility = ["//visibility:public"])
 
@@ -12,6 +12,46 @@ verilog_library(
         "//macros:br_asserts",
         "//macros:br_registers",
     ],
+)
+
+[
+    br_verilog_synth_suite(
+        name = gate_top + "_ppa",
+        top = gate_top,
+    )
+    for gate_top in [
+        "br_gate_and2",
+        "br_gate_buf",
+        "br_gate_cdc_maxdel",
+        "br_gate_cdc_pseudostatic",
+        "br_gate_clk_buf",
+        "br_gate_clk_inv",
+        "br_gate_clk_mux2",
+        "br_gate_icg",
+        "br_gate_icg_rst",
+        "br_gate_inv",
+        "br_gate_mux2",
+        "br_gate_or2",
+        "br_gate_xor2",
+    ]
+]
+
+br_verilog_synth_suite(
+    name = "br_gate_cdc_sync_ppa",
+    params = {"NumStages": [
+        "2",
+        "3",
+    ]},
+    top = "br_gate_cdc_sync",
+)
+
+br_verilog_synth_suite(
+    name = "br_gate_cdc_sync_arst_ppa",
+    params = {"NumStages": [
+        "2",
+        "3",
+    ]},
+    top = "br_gate_cdc_sync_arst",
 )
 
 br_verilog_elab_and_lint_test_suite(

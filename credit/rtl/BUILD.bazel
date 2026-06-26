@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: Apache-2.0
 
 load("@rules_hdl//verilog:providers.bzl", "verilog_library")
-load("//bazel:br_verilog.bzl", "br_verilog_elab_and_lint_test_suite")
+load("//bazel:br_verilog.bzl", "br_verilog_elab_and_lint_test_suite", "br_verilog_synth_suite")
 
 package(default_visibility = ["//visibility:public"])
 
@@ -12,6 +12,24 @@ verilog_library(
         "//macros:br_asserts_internal",
         "//macros:br_registers",
     ],
+)
+
+br_verilog_synth_suite(
+    name = "br_credit_counter_small_ppa",
+    params = {
+        "MaxChange": ["1"],
+        "MaxValue": ["8"],
+    },
+    deps = [":br_credit_counter"],
+)
+
+br_verilog_synth_suite(
+    name = "br_credit_counter_scaled_ppa",
+    params = {
+        "MaxChange": ["4"],
+        "MaxValue": ["16"],
+    },
+    deps = [":br_credit_counter"],
 )
 
 br_verilog_elab_and_lint_test_suite(
@@ -108,6 +126,30 @@ verilog_library(
     ],
 )
 
+br_verilog_synth_suite(
+    name = "br_credit_sender_small_ppa",
+    params = {
+        "MaxCredit": ["8"],
+        "NumFlows": ["1"],
+        "PopCreditMaxChange": ["1"],
+        "RegisterPopOutputs": ["0"],
+        "Width": ["32"],
+    },
+    deps = [":br_credit_sender"],
+)
+
+br_verilog_synth_suite(
+    name = "br_credit_sender_scaled_ppa",
+    params = {
+        "MaxCredit": ["16"],
+        "NumFlows": ["4"],
+        "PopCreditMaxChange": ["4"],
+        "RegisterPopOutputs": ["1"],
+        "Width": ["64"],
+    },
+    deps = [":br_credit_sender"],
+)
+
 br_verilog_elab_and_lint_test_suite(
     name = "br_credit_sender_test_suite",
     params = {
@@ -158,6 +200,32 @@ verilog_library(
         "//macros:br_asserts_internal",
         "//pkg:br_math_pkg",
     ],
+)
+
+br_verilog_synth_suite(
+    name = "br_credit_receiver_small_ppa",
+    params = {
+        "MaxCredit": ["8"],
+        "NumFlows": ["1"],
+        "PopCreditMaxChange": ["1"],
+        "PushCreditMaxChange": ["1"],
+        "RegisterPushOutputs": ["0"],
+        "Width": ["32"],
+    },
+    deps = [":br_credit_receiver"],
+)
+
+br_verilog_synth_suite(
+    name = "br_credit_receiver_scaled_ppa",
+    params = {
+        "MaxCredit": ["16"],
+        "NumFlows": ["4"],
+        "PopCreditMaxChange": ["4"],
+        "PushCreditMaxChange": ["4"],
+        "RegisterPushOutputs": ["1"],
+        "Width": ["64"],
+    },
+    deps = [":br_credit_receiver"],
 )
 
 br_verilog_elab_and_lint_test_suite(
@@ -217,6 +285,30 @@ verilog_library(
         "//flow/rtl/internal:br_flow_mux_core",
         "//macros:br_asserts_internal",
     ],
+)
+
+br_verilog_synth_suite(
+    name = "br_credit_sender_vc_small_ppa",
+    params = {
+        "MaxCredit": ["8"],
+        "NumVcs": ["2"],
+        "PopCreditMaxChange": ["1"],
+        "RegisterPopOutputs": ["0"],
+        "Width": ["32"],
+    },
+    deps = [":br_credit_sender_vc"],
+)
+
+br_verilog_synth_suite(
+    name = "br_credit_sender_vc_scaled_ppa",
+    params = {
+        "MaxCredit": ["16"],
+        "NumVcs": ["4"],
+        "PopCreditMaxChange": ["4"],
+        "RegisterPopOutputs": ["1"],
+        "Width": ["64"],
+    },
+    deps = [":br_credit_sender_vc"],
 )
 
 br_verilog_elab_and_lint_test_suite(

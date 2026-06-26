@@ -10,7 +10,7 @@ import sys
 
 sys.path.insert(0, os.path.dirname(__file__))
 
-from cli import Elab, Lint, Sim, Fpv, add_common_args, parse_params, validate_top
+from cli import Elab, Fpv, Lint, Sim, Synth, add_common_args, parse_params, validate_top
 from plugins import discover_plugins
 from util import print_greeting, init_root_logger
 
@@ -51,7 +51,7 @@ def main():
 
     plugin_dirs = get_plugin_dirs_from_env()
 
-    allowed_subcommands = (Elab, Lint, Sim, Fpv)
+    allowed_subcommands = (Elab, Lint, Sim, Fpv, Synth)
     subcommand_name_to_class = {cls.name: cls for cls in allowed_subcommands}
 
     # Discover plugins and add subparsers per allowed subcommand
