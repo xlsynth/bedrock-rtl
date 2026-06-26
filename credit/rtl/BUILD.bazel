@@ -100,6 +100,33 @@ br_verilog_elab_and_lint_test_suite(
 )
 
 br_verilog_elab_and_lint_test_suite(
+    name = "br_credit_counter_test_suite_cover_controls_do_not_optimize",
+    params = {
+        "MaxValue": ["2"],
+        "MaxChange": ["1"],
+        "EnableCoverZeroIncrement": ["0"],
+        "EnableCoverWithhold": ["0"],
+    },
+    deps = [":br_credit_counter"],
+)
+
+br_verilog_elab_and_lint_test_suite(
+    name = "br_credit_counter_test_suite_decr_ready_optimizations",
+    params = {
+        "MaxValue": ["2"],
+        "MaxChange": ["1"],
+        "OptimizeDecrReadyForNoWithhold": ["1"],
+        "OptimizeDecrReadyForNonzeroIncrement": [
+            "0",
+            "1",
+        ],
+        "EnableCoverZeroIncrement": ["0"],
+        "EnableCoverWithhold": ["0"],
+    },
+    deps = [":br_credit_counter"],
+)
+
+br_verilog_elab_and_lint_test_suite(
     name = "br_credit_counter_test_suite_large_maxes",
     params = {
         "MaxValueWidth": ["64"],
