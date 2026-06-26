@@ -329,30 +329,43 @@ def _verilog_sim_test_impl(ctx):
         extra_args = extra_args,
     )
 
-def _verilog_synth_args(ctx, sandbox = False):
-    """Returns command-line arguments and files for a synthesis invocation."""
+def _verilog_synth_args(ctx):
+    """Returns command-line arguments for a synthesis invocation."""
     extra_args = []
-    extra_runfiles = []
-    if ctx.file.liberty:
-        liberty_path = ctx.file.liberty.path if sandbox else ctx.file.liberty.short_path
-        extra_args.append("--liberty=" + liberty_path)
-        extra_runfiles.append(ctx.file.liberty)
+    if ctx.attr.liberties:
+        if not ctx.attr.liberty_root_env:
+            fail("liberty_root_env is required with liberties")
+        if sorted(ctx.attr.liberty_sha256.keys()) != sorted(ctx.attr.liberties):
+            fail("liberty_sha256 must specify exactly one digest for each entry in liberties")
+        if ctx.attr.dff_liberty and ctx.attr.dff_liberty not in ctx.attr.liberties:
+            fail("dff_liberty must also be present in liberties")
+    elif ctx.attr.dff_liberty or ctx.attr.liberty_root_env or ctx.attr.liberty_sha256:
+        fail("dff_liberty, liberty_root_env, and liberty_sha256 require liberties")
+
+    for liberty in ctx.attr.liberties:
+        extra_args.append("--liberty='" + liberty + "'")
+    if ctx.attr.dff_liberty:
+        extra_args.append("--dff_liberty='" + ctx.attr.dff_liberty + "'")
+    if ctx.attr.liberty_root_env:
+        extra_args.append("--liberty_root_env='" + ctx.attr.liberty_root_env + "'")
+    for liberty, digest in sorted(ctx.attr.liberty_sha256.items()):
+        extra_args.append("--liberty_sha256='" + liberty + "=" + digest + "'")
+    if ctx.attr.liberties:
+        extra_args.append("--synth_profile='" + ctx.attr.synth_profile + "'")
     elif ctx.attr.clock_period_ps:
-        fail("clock_period_ps requires liberty")
+        fail("clock_period_ps requires liberties")
     if ctx.attr.clock_period_ps:
         extra_args.append("--clock_period_ps=" + str(ctx.attr.clock_period_ps))
     for opt in ctx.attr.opts:
         extra_args.append("--opt='" + opt + "'")
-    return extra_args, extra_runfiles
+    return extra_args
 
 def _verilog_synth_impl(ctx):
     """Implementation of the verilog_synth executable rule."""
-    extra_args, extra_runfiles = _verilog_synth_args(ctx)
     return _verilog_base_impl(
         ctx = ctx,
         subcmd = "synth",
-        extra_args = extra_args,
-        extra_runfiles = extra_runfiles,
+        extra_args = _verilog_synth_args(ctx),
     )
 
 def _verilog_synth_sandbox_impl(ctx):
@@ -360,13 +373,11 @@ def _verilog_synth_sandbox_impl(ctx):
     if not ctx.outputs.tarball.basename.endswith(".tar.gz"):
         fail("The 'tarball' attribute must be a file ending with '.tar.gz', but got '{}'.".format(ctx.outputs.tarball.basename))
 
-    extra_args, extra_runfiles = _verilog_synth_args(ctx, sandbox = True)
     return _verilog_base_impl(
         ctx = ctx,
         subcmd = "synth",
         test = False,
-        extra_args = extra_args,
-        extra_runfiles = extra_runfiles,
+        extra_args = _verilog_synth_args(ctx),
     )
 
 def _verilog_fpv_args(ctx):
@@ -581,12 +592,24 @@ def _verilog_synth_attrs(verilog_runner_tool_default = "//python/verilog_runner:
         "opts": attr.string_list(
             doc = "Tool-specific synthesis frontend options.",
         ),
-        "liberty": attr.label(
-            doc = "Optional Liberty standard-cell library for technology mapping.",
-            allow_single_file = [".lib"],
+        "liberties": attr.string_list(
+            doc = "System Liberty paths relative to the directory named by liberty_root_env.",
+        ),
+        "dff_liberty": attr.string(
+            doc = "Sequential-cell Liberty path used by dfflibmap; must also appear in liberties.",
+        ),
+        "liberty_root_env": attr.string(
+            doc = "Environment variable containing the root for system-provided Liberty files.",
+        ),
+        "liberty_sha256": attr.string_dict(
+            doc = "Expected SHA-256 digest for every entry in liberties.",
+        ),
+        "synth_profile": attr.string(
+            doc = "Stable synthesis profile recorded in generated reports.",
+            default = "generic",
         ),
         "clock_period_ps": attr.int(
-            doc = "Optional target clock period in picoseconds; requires liberty.",
+            doc = "Optional target clock period in picoseconds; requires liberties.",
         ),
         "data": attr.label_list(
             doc = "Additional runtime files needed by the synthesis plugin.",
@@ -650,8 +673,8 @@ def verilog_synth(name, tool, tags = [], **kwargs):
     The tool string selects a Verilog Runner synthesis plugin, so callers can
     use the bundled Yosys plugin or provide another open-source or proprietary
     synthesis plugin through `verilog_runner_plugins`. The Yosys flow produces
-    technology-independent cell and logic-depth signals without a Liberty
-    library, and can optionally map against one when `liberty` is supplied.
+    technology-independent cell and logic-depth signals without Liberty files,
+    and can map against system-provided libraries when `liberties` is supplied.
 
     Example:
         ```starlark
@@ -1238,7 +1261,7 @@ def verilog_synth_suite(
         params (dict): Parameter names mapped to lists of values.
         illegal_param_combinations (dict): Parameter tuples mapped to disallowed value tuples.
         library_name (str or None): Target-name identifier for the PDK/library/corner. Defaults to `nolib` when
-            no Liberty file is supplied and is required when `liberty` is supplied.
+            no Liberty files are supplied and is required when `liberties` is supplied.
         sandbox (bool): Whether to create a reproduction archive beside each runnable target.
         sandbox_tags (list or None): Tags for sandbox targets. Defaults to `tags`.
         tags (list): Tags for runnable targets.
@@ -1257,8 +1280,8 @@ def verilog_synth_suite(
     if not tool:
         fail("verilog_synth_suite requires tool")
     if library_name == None:
-        if kwargs.get("liberty"):
-            fail("verilog_synth_suite requires library_name when liberty is supplied")
+        if kwargs.get("liberties"):
+            fail("verilog_synth_suite requires library_name when liberties are supplied")
         library_name = "nolib"
     synth_suffix = "synth_%s_%s" % (
         _synth_name_token(tool),

@@ -5,6 +5,8 @@
 
 from abc import ABC, abstractmethod
 import argparse
+import os
+import re
 from typing import List, Dict
 from util import check_filename_extension
 
@@ -39,7 +41,39 @@ def filelist_file(filename: str) -> str:
 
 
 def liberty_file(filename: str) -> str:
-    return check_filename_extension(filename, (".lib"))
+    filename = check_filename_extension(filename, (".lib", ".lib.gz"))
+    path = os.path.normpath(filename)
+    if os.path.isabs(path) or path == ".." or path.startswith("../"):
+        raise argparse.ArgumentTypeError(
+            f"Liberty path '{filename}' must be relative to --liberty_root_env."
+        )
+    if not re.fullmatch(r"[A-Za-z0-9_./+-]+", path):
+        raise argparse.ArgumentTypeError(
+            f"Liberty path '{filename}' contains unsupported characters."
+        )
+    return path
+
+
+def environment_variable_name(value: str) -> str:
+    if not re.fullmatch(r"[A-Za-z_][A-Za-z0-9_]*", value):
+        raise argparse.ArgumentTypeError(
+            f"'{value}' is not a valid environment-variable name."
+        )
+    return value
+
+
+def liberty_sha256(value: str) -> tuple[str, str]:
+    if "=" not in value:
+        raise argparse.ArgumentTypeError(
+            f"Invalid Liberty checksum '{value}'. Expected PATH=SHA256."
+        )
+    path, digest = value.split("=", 1)
+    path = liberty_file(path)
+    if not re.fullmatch(r"[0-9a-fA-F]{64}", digest):
+        raise argparse.ArgumentTypeError(
+            f"Invalid SHA-256 digest for Liberty path '{path}'."
+        )
+    return path, digest.lower()
 
 
 def add_common_args(parser: argparse.ArgumentParser) -> None:
@@ -199,7 +233,11 @@ def common_args(args: argparse.Namespace):
         common["elab_opts"] = getattr(args, "elab_opt", [])
         common["sim_opts"] = getattr(args, "sim_opt", [])
     elif getattr(args, "subcommand", None) == "synth":
-        common["liberty"] = getattr(args, "liberty", None)
+        common["liberties"] = getattr(args, "liberty", [])
+        common["dff_liberty"] = getattr(args, "dff_liberty", None)
+        common["liberty_root_env"] = getattr(args, "liberty_root_env", None)
+        common["liberty_sha256"] = dict(getattr(args, "liberty_sha256", []))
+        common["synth_profile"] = getattr(args, "synth_profile", "generic")
         common["clock_period_ps"] = getattr(args, "clock_period_ps", None)
     return common
 
@@ -334,7 +372,32 @@ class Synth(Subcommand):
         parser.add_argument(
             "--liberty",
             type=liberty_file,
-            help="Optional Liberty standard-cell library for technology mapping.",
+            action="append",
+            default=[],
+            help="Liberty path relative to --liberty_root_env. May be repeated.",
+        )
+        parser.add_argument(
+            "--dff_liberty",
+            type=liberty_file,
+            help="Sequential-cell Liberty path used by Yosys dfflibmap.",
+        )
+        parser.add_argument(
+            "--liberty_root_env",
+            type=environment_variable_name,
+            help="Environment variable containing the system-provided Liberty root.",
+        )
+        parser.add_argument(
+            "--liberty_sha256",
+            type=liberty_sha256,
+            action="append",
+            default=[],
+            metavar="PATH=SHA256",
+            help="Expected checksum for one Liberty path. May be repeated.",
+        )
+        parser.add_argument(
+            "--synth_profile",
+            default="generic",
+            help="Stable synthesis profile recorded in generated reports.",
         )
         parser.add_argument(
             "--clock_period_ps",

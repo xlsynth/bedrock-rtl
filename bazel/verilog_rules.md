@@ -247,7 +247,8 @@ Runs Verilog/SystemVerilog compilation and simulation in one command. This rule 
 load("@bedrock-rtl//bazel:verilog.bzl", "rule_verilog_synth")
 
 rule_verilog_synth(<a href="#rule_verilog_synth-name">name</a>, <a href="#rule_verilog_synth-deps">deps</a>, <a href="#rule_verilog_synth-data">data</a>, <a href="#rule_verilog_synth-clock_period_ps">clock_period_ps</a>, <a href="#rule_verilog_synth-custom_tcl_body">custom_tcl_body</a>, <a href="#rule_verilog_synth-custom_tcl_header">custom_tcl_header</a>, <a href="#rule_verilog_synth-defines">defines</a>,
-                   <a href="#rule_verilog_synth-liberty">liberty</a>, <a href="#rule_verilog_synth-opts">opts</a>, <a href="#rule_verilog_synth-params">params</a>, <a href="#rule_verilog_synth-runner_flags">runner_flags</a>, <a href="#rule_verilog_synth-tool">tool</a>, <a href="#rule_verilog_synth-top">top</a>, <a href="#rule_verilog_synth-verilog_runner_data">verilog_runner_data</a>,
+                   <a href="#rule_verilog_synth-dff_liberty">dff_liberty</a>, <a href="#rule_verilog_synth-liberties">liberties</a>, <a href="#rule_verilog_synth-liberty_root_env">liberty_root_env</a>, <a href="#rule_verilog_synth-liberty_sha256">liberty_sha256</a>, <a href="#rule_verilog_synth-opts">opts</a>, <a href="#rule_verilog_synth-params">params</a>,
+                   <a href="#rule_verilog_synth-runner_flags">runner_flags</a>, <a href="#rule_verilog_synth-synth_profile">synth_profile</a>, <a href="#rule_verilog_synth-tool">tool</a>, <a href="#rule_verilog_synth-top">top</a>, <a href="#rule_verilog_synth-verilog_runner_data">verilog_runner_data</a>,
                    <a href="#rule_verilog_synth-verilog_runner_plugins">verilog_runner_plugins</a>, <a href="#rule_verilog_synth-verilog_runner_tool">verilog_runner_tool</a>)
 </pre>
 
@@ -261,14 +262,18 @@ Runs logic synthesis for a Verilog or SystemVerilog design and prints the tool r
 | <a id="rule_verilog_synth-name"></a>name |  A unique name for this target.   | <a href="https://bazel.build/concepts/labels#target-names">Name</a> | required |  |
 | <a id="rule_verilog_synth-deps"></a>deps |  Verilog libraries containing the design to synthesize.   | <a href="https://bazel.build/concepts/labels">List of labels</a> | optional |  `[]`  |
 | <a id="rule_verilog_synth-data"></a>data |  Additional runtime files needed by the synthesis plugin.   | <a href="https://bazel.build/concepts/labels">List of labels</a> | optional |  `[]`  |
-| <a id="rule_verilog_synth-clock_period_ps"></a>clock_period_ps |  Optional target clock period in picoseconds; requires liberty.   | Integer | optional |  `0`  |
+| <a id="rule_verilog_synth-clock_period_ps"></a>clock_period_ps |  Optional target clock period in picoseconds; requires liberties.   | Integer | optional |  `0`  |
 | <a id="rule_verilog_synth-custom_tcl_body"></a>custom_tcl_body |  Optional tool-specific Tcl body.   | <a href="https://bazel.build/concepts/labels">Label</a> | optional |  `None`  |
 | <a id="rule_verilog_synth-custom_tcl_header"></a>custom_tcl_header |  Optional tool-specific Tcl header.   | <a href="https://bazel.build/concepts/labels">Label</a> | optional |  `None`  |
 | <a id="rule_verilog_synth-defines"></a>defines |  Preprocessor defines to pass to the synthesis frontend.   | List of strings | optional |  `[]`  |
-| <a id="rule_verilog_synth-liberty"></a>liberty |  Optional Liberty standard-cell library for technology mapping.   | <a href="https://bazel.build/concepts/labels">Label</a> | optional |  `None`  |
+| <a id="rule_verilog_synth-dff_liberty"></a>dff_liberty |  Sequential-cell Liberty path used by dfflibmap; must also appear in liberties.   | String | optional |  `""`  |
+| <a id="rule_verilog_synth-liberties"></a>liberties |  System Liberty paths relative to the directory named by liberty_root_env.   | List of strings | optional |  `[]`  |
+| <a id="rule_verilog_synth-liberty_root_env"></a>liberty_root_env |  Environment variable containing the root for system-provided Liberty files.   | String | optional |  `""`  |
+| <a id="rule_verilog_synth-liberty_sha256"></a>liberty_sha256 |  Expected SHA-256 digest for every entry in liberties.   | <a href="https://bazel.build/rules/lib/core/dict">Dictionary: String -> String</a> | optional |  `{}`  |
 | <a id="rule_verilog_synth-opts"></a>opts |  Tool-specific synthesis frontend options.   | List of strings | optional |  `[]`  |
 | <a id="rule_verilog_synth-params"></a>params |  Top-level Verilog module parameter overrides.   | <a href="https://bazel.build/rules/lib/core/dict">Dictionary: String -> String</a> | optional |  `{}`  |
 | <a id="rule_verilog_synth-runner_flags"></a>runner_flags |  Command-line flags forwarded to Verilog Runner.   | <a href="https://bazel.build/concepts/labels">Label</a> | optional |  `"@bedrock-rtl//bazel:runner_flags"`  |
+| <a id="rule_verilog_synth-synth_profile"></a>synth_profile |  Stable synthesis profile recorded in generated reports.   | String | optional |  `"generic"`  |
 | <a id="rule_verilog_synth-tool"></a>tool |  Synthesis tool plugin to use.   | String | required |  |
 | <a id="rule_verilog_synth-top"></a>top |  Top-level module; defaults to the sole dependency's label name.   | String | optional |  `""`  |
 | <a id="rule_verilog_synth-verilog_runner_data"></a>verilog_runner_data |  Additional Verilog Runner files needed at runtime.   | <a href="https://bazel.build/concepts/labels">List of labels</a> | optional |  `["@bedrock-rtl//python/verilog_runner:verilog_runner_data"]`  |
@@ -284,8 +289,9 @@ Runs logic synthesis for a Verilog or SystemVerilog design and prints the tool r
 load("@bedrock-rtl//bazel:verilog.bzl", "rule_verilog_synth_sandbox")
 
 rule_verilog_synth_sandbox(<a href="#rule_verilog_synth_sandbox-name">name</a>, <a href="#rule_verilog_synth_sandbox-deps">deps</a>, <a href="#rule_verilog_synth_sandbox-data">data</a>, <a href="#rule_verilog_synth_sandbox-clock_period_ps">clock_period_ps</a>, <a href="#rule_verilog_synth_sandbox-custom_tcl_body">custom_tcl_body</a>, <a href="#rule_verilog_synth_sandbox-custom_tcl_header">custom_tcl_header</a>,
-                           <a href="#rule_verilog_synth_sandbox-defines">defines</a>, <a href="#rule_verilog_synth_sandbox-liberty">liberty</a>, <a href="#rule_verilog_synth_sandbox-opts">opts</a>, <a href="#rule_verilog_synth_sandbox-params">params</a>, <a href="#rule_verilog_synth_sandbox-runner_flags">runner_flags</a>, <a href="#rule_verilog_synth_sandbox-tool">tool</a>, <a href="#rule_verilog_synth_sandbox-top">top</a>,
-                           <a href="#rule_verilog_synth_sandbox-verilog_runner_data">verilog_runner_data</a>, <a href="#rule_verilog_synth_sandbox-verilog_runner_plugins">verilog_runner_plugins</a>, <a href="#rule_verilog_synth_sandbox-verilog_runner_tool">verilog_runner_tool</a>)
+                           <a href="#rule_verilog_synth_sandbox-defines">defines</a>, <a href="#rule_verilog_synth_sandbox-dff_liberty">dff_liberty</a>, <a href="#rule_verilog_synth_sandbox-liberties">liberties</a>, <a href="#rule_verilog_synth_sandbox-liberty_root_env">liberty_root_env</a>, <a href="#rule_verilog_synth_sandbox-liberty_sha256">liberty_sha256</a>, <a href="#rule_verilog_synth_sandbox-opts">opts</a>,
+                           <a href="#rule_verilog_synth_sandbox-params">params</a>, <a href="#rule_verilog_synth_sandbox-runner_flags">runner_flags</a>, <a href="#rule_verilog_synth_sandbox-synth_profile">synth_profile</a>, <a href="#rule_verilog_synth_sandbox-tool">tool</a>, <a href="#rule_verilog_synth_sandbox-top">top</a>, <a href="#rule_verilog_synth_sandbox-verilog_runner_data">verilog_runner_data</a>,
+                           <a href="#rule_verilog_synth_sandbox-verilog_runner_plugins">verilog_runner_plugins</a>, <a href="#rule_verilog_synth_sandbox-verilog_runner_tool">verilog_runner_tool</a>)
 </pre>
 
 Writes logic-synthesis inputs and generated scripts into a tarball for independent execution outside Bazel.
@@ -298,14 +304,18 @@ Writes logic-synthesis inputs and generated scripts into a tarball for independe
 | <a id="rule_verilog_synth_sandbox-name"></a>name |  A unique name for this target.   | <a href="https://bazel.build/concepts/labels#target-names">Name</a> | required |  |
 | <a id="rule_verilog_synth_sandbox-deps"></a>deps |  Verilog libraries containing the design to synthesize.   | <a href="https://bazel.build/concepts/labels">List of labels</a> | optional |  `[]`  |
 | <a id="rule_verilog_synth_sandbox-data"></a>data |  Additional runtime files needed by the synthesis plugin.   | <a href="https://bazel.build/concepts/labels">List of labels</a> | optional |  `[]`  |
-| <a id="rule_verilog_synth_sandbox-clock_period_ps"></a>clock_period_ps |  Optional target clock period in picoseconds; requires liberty.   | Integer | optional |  `0`  |
+| <a id="rule_verilog_synth_sandbox-clock_period_ps"></a>clock_period_ps |  Optional target clock period in picoseconds; requires liberties.   | Integer | optional |  `0`  |
 | <a id="rule_verilog_synth_sandbox-custom_tcl_body"></a>custom_tcl_body |  Optional tool-specific Tcl body.   | <a href="https://bazel.build/concepts/labels">Label</a> | optional |  `None`  |
 | <a id="rule_verilog_synth_sandbox-custom_tcl_header"></a>custom_tcl_header |  Optional tool-specific Tcl header.   | <a href="https://bazel.build/concepts/labels">Label</a> | optional |  `None`  |
 | <a id="rule_verilog_synth_sandbox-defines"></a>defines |  Preprocessor defines to pass to the synthesis frontend.   | List of strings | optional |  `[]`  |
-| <a id="rule_verilog_synth_sandbox-liberty"></a>liberty |  Optional Liberty standard-cell library for technology mapping.   | <a href="https://bazel.build/concepts/labels">Label</a> | optional |  `None`  |
+| <a id="rule_verilog_synth_sandbox-dff_liberty"></a>dff_liberty |  Sequential-cell Liberty path used by dfflibmap; must also appear in liberties.   | String | optional |  `""`  |
+| <a id="rule_verilog_synth_sandbox-liberties"></a>liberties |  System Liberty paths relative to the directory named by liberty_root_env.   | List of strings | optional |  `[]`  |
+| <a id="rule_verilog_synth_sandbox-liberty_root_env"></a>liberty_root_env |  Environment variable containing the root for system-provided Liberty files.   | String | optional |  `""`  |
+| <a id="rule_verilog_synth_sandbox-liberty_sha256"></a>liberty_sha256 |  Expected SHA-256 digest for every entry in liberties.   | <a href="https://bazel.build/rules/lib/core/dict">Dictionary: String -> String</a> | optional |  `{}`  |
 | <a id="rule_verilog_synth_sandbox-opts"></a>opts |  Tool-specific synthesis frontend options.   | List of strings | optional |  `[]`  |
 | <a id="rule_verilog_synth_sandbox-params"></a>params |  Top-level Verilog module parameter overrides.   | <a href="https://bazel.build/rules/lib/core/dict">Dictionary: String -> String</a> | optional |  `{}`  |
 | <a id="rule_verilog_synth_sandbox-runner_flags"></a>runner_flags |  Command-line flags forwarded to Verilog Runner.   | <a href="https://bazel.build/concepts/labels">Label</a> | optional |  `"@bedrock-rtl//bazel:runner_flags"`  |
+| <a id="rule_verilog_synth_sandbox-synth_profile"></a>synth_profile |  Stable synthesis profile recorded in generated reports.   | String | optional |  `"generic"`  |
 | <a id="rule_verilog_synth_sandbox-tool"></a>tool |  Synthesis tool plugin to use.   | String | required |  |
 | <a id="rule_verilog_synth_sandbox-top"></a>top |  Top-level module; defaults to the sole dependency's label name.   | String | optional |  `""`  |
 | <a id="rule_verilog_synth_sandbox-verilog_runner_data"></a>verilog_runner_data |  Additional Verilog Runner files needed at runtime.   | <a href="https://bazel.build/concepts/labels">List of labels</a> | optional |  `["@bedrock-rtl//python/verilog_runner:verilog_runner_data"]`  |
@@ -633,8 +643,8 @@ Creates a runnable logic-synthesis target that streams the raw tool report.
 The tool string selects a Verilog Runner synthesis plugin, so callers can
 use the bundled Yosys plugin or provide another open-source or proprietary
 synthesis plugin through `verilog_runner_plugins`. The Yosys flow produces
-technology-independent cell and logic-depth signals without a Liberty
-library, and can optionally map against one when `liberty` is supplied.
+technology-independent cell and logic-depth signals without Liberty files,
+and can map against system-provided libraries when `liberties` is supplied.
 
 Example:
     ```starlark
@@ -715,7 +725,7 @@ inputs and generated scripts for execution outside Bazel.
 | <a id="verilog_synth_suite-defines"></a>defines |  Preprocessor defines for synthesis.   |  `[]` |
 | <a id="verilog_synth_suite-params"></a>params |  Parameter names mapped to lists of values.   |  `{}` |
 | <a id="verilog_synth_suite-illegal_param_combinations"></a>illegal_param_combinations |  Parameter tuples mapped to disallowed value tuples.   |  `{}` |
-| <a id="verilog_synth_suite-library_name"></a>library_name |  Target-name identifier for the PDK/library/corner. Defaults to `nolib` when no Liberty file is supplied and is required when `liberty` is supplied.   |  `None` |
+| <a id="verilog_synth_suite-library_name"></a>library_name |  Target-name identifier for the PDK/library/corner. Defaults to `nolib` when no Liberty files are supplied and is required when `liberties` is supplied.   |  `None` |
 | <a id="verilog_synth_suite-sandbox"></a>sandbox |  Whether to create a reproduction archive beside each runnable target.   |  `True` |
 | <a id="verilog_synth_suite-sandbox_tags"></a>sandbox_tags |  Tags for sandbox targets. Defaults to `tags`.   |  `None` |
 | <a id="verilog_synth_suite-tags"></a>tags |  Tags for runnable targets.   |  `[]` |
