@@ -140,6 +140,30 @@ RUN git clone https://github.com/povik/yosys-slang.git && \
     rm -rf yosys-slang && \
     yosys -m slang -p "help read_slang"
 
+# Install the ASAP7 7.5-track RVT typical-corner NLDM libraries used by the
+# technology-mapped PPA sweeps. The files are pinned to OpenROAD-flow-scripts
+# commit ae9a8ed9d67b087abffd4645208672a33da2d3bf.
+ENV ASAP7_ROOT=/opt/asap7
+RUN mkdir -p ${ASAP7_ROOT}/lib/NLDM && \
+    curl -L https://raw.githubusercontent.com/The-OpenROAD-Project/asap7/d24f8b857ff74cf5b21ab18a7e1b11a3954c449b/LICENSE \
+      -o ${ASAP7_ROOT}/LICENSE && \
+    curl -L https://raw.githubusercontent.com/The-OpenROAD-Project/OpenROAD-flow-scripts/ae9a8ed9d67b087abffd4645208672a33da2d3bf/flow/platforms/asap7/lib/NLDM/asap7sc7p5t_AO_RVT_TT_nldm_211120.lib.gz \
+      -o ${ASAP7_ROOT}/lib/NLDM/asap7sc7p5t_AO_RVT_TT_nldm_211120.lib.gz && \
+    curl -L https://raw.githubusercontent.com/The-OpenROAD-Project/OpenROAD-flow-scripts/ae9a8ed9d67b087abffd4645208672a33da2d3bf/flow/platforms/asap7/lib/NLDM/asap7sc7p5t_INVBUF_RVT_TT_nldm_220122.lib.gz \
+      -o ${ASAP7_ROOT}/lib/NLDM/asap7sc7p5t_INVBUF_RVT_TT_nldm_220122.lib.gz && \
+    curl -L https://raw.githubusercontent.com/The-OpenROAD-Project/OpenROAD-flow-scripts/ae9a8ed9d67b087abffd4645208672a33da2d3bf/flow/platforms/asap7/lib/NLDM/asap7sc7p5t_OA_RVT_TT_nldm_211120.lib.gz \
+      -o ${ASAP7_ROOT}/lib/NLDM/asap7sc7p5t_OA_RVT_TT_nldm_211120.lib.gz && \
+    curl -L https://raw.githubusercontent.com/The-OpenROAD-Project/OpenROAD-flow-scripts/ae9a8ed9d67b087abffd4645208672a33da2d3bf/flow/platforms/asap7/lib/NLDM/asap7sc7p5t_SEQ_RVT_TT_nldm_220123.lib \
+      -o ${ASAP7_ROOT}/lib/NLDM/asap7sc7p5t_SEQ_RVT_TT_nldm_220123.lib && \
+    curl -L https://raw.githubusercontent.com/The-OpenROAD-Project/OpenROAD-flow-scripts/ae9a8ed9d67b087abffd4645208672a33da2d3bf/flow/platforms/asap7/lib/NLDM/asap7sc7p5t_SIMPLE_RVT_TT_nldm_211120.lib.gz \
+      -o ${ASAP7_ROOT}/lib/NLDM/asap7sc7p5t_SIMPLE_RVT_TT_nldm_211120.lib.gz && \
+    echo "df0c04b7633a00c037310e9b7ee66d77edeb9c5be23879a3bad449f5bec140f6  ${ASAP7_ROOT}/LICENSE" | sha256sum -c - && \
+    echo "fe9f1c18e88ab129d63ad82adc256f3a85c7e38e47dabbe0a96749b41087dea1  ${ASAP7_ROOT}/lib/NLDM/asap7sc7p5t_AO_RVT_TT_nldm_211120.lib.gz" | sha256sum -c - && \
+    echo "8d6db2c2f83c3c162be54a5e102b2d379fcaaaef2db5f0b1d4152c395d01fea1  ${ASAP7_ROOT}/lib/NLDM/asap7sc7p5t_INVBUF_RVT_TT_nldm_220122.lib.gz" | sha256sum -c - && \
+    echo "bbe6d904d58c7367de1ed7639e4eae386c65fa0a5af26ae62dc5e4e2ec52b08b  ${ASAP7_ROOT}/lib/NLDM/asap7sc7p5t_OA_RVT_TT_nldm_211120.lib.gz" | sha256sum -c - && \
+    echo "57a0b403485b99ebd676942af4673ac086b86c7c75fbdc3e5c0038501dd22ba3  ${ASAP7_ROOT}/lib/NLDM/asap7sc7p5t_SEQ_RVT_TT_nldm_220123.lib" | sha256sum -c - && \
+    echo "073ac4b6b08f272b6953b0ad54d1d9743767a7d15a0e2964ed86cf44c3dbe00e  ${ASAP7_ROOT}/lib/NLDM/asap7sc7p5t_SIMPLE_RVT_TT_nldm_211120.lib.gz" | sha256sum -c -
+
 # Install EQY
 # v0.48
 RUN git clone https://github.com/YosysHQ/eqy.git && \

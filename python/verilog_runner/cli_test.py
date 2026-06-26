@@ -68,12 +68,20 @@ class TestCliFunctions(unittest.TestCase):
     @mock.patch.dict("os.environ", {}, clear=True)
     def test_common_args_synth_includes_mapping_options(self):
         args = _args_for_subcommand("synth")
-        args.liberty = "cells.lib"
+        args.liberty = ["lib/a.lib", "lib/b.lib.gz"]
+        args.dff_liberty = "lib/a.lib"
+        args.liberty_root_env = "PDK_ROOT"
+        args.liberty_sha256 = [("lib/a.lib", "a" * 64)]
+        args.synth_profile = "example-tt"
         args.clock_period_ps = 1000
 
         common = common_args(args)
 
-        self.assertEqual(common["liberty"], "cells.lib")
+        self.assertEqual(common["liberties"], ["lib/a.lib", "lib/b.lib.gz"])
+        self.assertEqual(common["dff_liberty"], "lib/a.lib")
+        self.assertEqual(common["liberty_root_env"], "PDK_ROOT")
+        self.assertEqual(common["liberty_sha256"], {"lib/a.lib": "a" * 64})
+        self.assertEqual(common["synth_profile"], "example-tt")
         self.assertEqual(common["clock_period_ps"], 1000)
 
     @mock.patch.dict("os.environ", {}, clear=True)
