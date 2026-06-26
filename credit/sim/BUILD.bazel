@@ -7,6 +7,44 @@ load("//bazel:verilog.bzl", "verilog_elab_test")
 package(default_visibility = ["//visibility:private"])
 
 verilog_library(
+    name = "br_credit_sender_tb",
+    srcs = ["br_credit_sender_tb.sv"],
+    deps = [
+        "//credit/rtl:br_credit_sender",
+        "//misc/sim:br_test_driver",
+    ],
+)
+
+verilog_elab_test(
+    name = "br_credit_sender_tb_elab_test",
+    tool = "slang",
+    deps = [":br_credit_sender_tb"],
+)
+
+br_verilog_sim_test_tools_suite(
+    name = "br_credit_sender_sim_test_tools_suite",
+    params = {
+        "NumPopValidCopies": [
+            "2",
+            "4",
+        ],
+        "NumFlows": [
+            "1",
+            "2",
+        ],
+        "RegisterPopOutputs": [
+            "0",
+            "1",
+        ],
+    },
+    tools = [
+        "vcs",
+        "verilator",
+    ],
+    deps = [":br_credit_sender_tb"],
+)
+
+verilog_library(
     name = "br_credit_receiver_tb",
     srcs = ["br_credit_receiver_tb.sv"],
     deps = [

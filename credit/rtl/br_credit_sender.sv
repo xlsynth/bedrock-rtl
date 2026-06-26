@@ -76,6 +76,9 @@ module br_credit_sender #(
     parameter int PopCreditMaxChange = 1,
     // If 1, add 1 cycle of retiming to pop outputs.
     parameter bit RegisterPopOutputs = 0,
+    // Number of physically replicated pop_valid outputs. All copies are identical.
+    // Must be at least 1.
+    parameter int NumPopValidCopies = 1,
     // If 1, cover that the push side experiences backpressure.
     // If 0, disable backpressure coverage. By default, this also
     // asserts that backpressure is impossible.
@@ -124,7 +127,7 @@ module br_credit_sender #(
     // Synchronous active-high.
     input logic pop_receiver_in_reset,
     input logic [PopCreditWidth-1:0] pop_credit,
-    output logic [NumFlows-1:0] pop_valid,
+    output logic [NumFlows-1:0][NumPopValidCopies-1:0] pop_valid,
     output logic [NumFlows-1:0][Width-1:0] pop_data,
 
     // Reset value for the credit counter
@@ -143,6 +146,7 @@ module br_credit_sender #(
   `BR_ASSERT_STATIC(num_flows_in_range_a, (NumFlows >= 1) && (NumFlows <= MaxCredit))
   `BR_ASSERT_STATIC(width_in_range_a, Width >= 1)
   `BR_ASSERT_STATIC(max_credit_in_range_a, MaxCredit >= 1)
+  `BR_ASSERT_STATIC(num_pop_valid_copies_in_range_a, NumPopValidCopies >= 1)
   `BR_ASSERT_STATIC(pop_credit_max_change_in_range_a,
                     (PopCreditMaxChange >= 1) && (PopCreditMaxChange <= MaxCredit))
 
@@ -266,23 +270,32 @@ module br_credit_sender #(
 
   if (RegisterPopOutputs) begin : gen_reg_pop
     `BR_REGI(pop_sender_in_reset, 1'b0, 1'b1)
-    `BR_REG(pop_valid, internal_pop_valid)
     for (genvar i = 0; i < NumFlows; i++) begin : gen_reg_pop_data
+      for (genvar j = 0; j < NumPopValidCopies; j++) begin : gen_reg_pop_valid
+        `BR_REG(pop_valid[i][j], internal_pop_valid[i])
+      end
       `BR_REGL(pop_data[i], push_data[i], internal_pop_valid[i])
     end
   end else begin : gen_passthru_pop
     assign pop_sender_in_reset = rst;
-    assign pop_valid = internal_pop_valid;
+    for (genvar i = 0; i < NumFlows; i++) begin : gen_passthru_pop_valid
+      assign pop_valid[i] = {NumPopValidCopies{internal_pop_valid[i]}};
+    end
     assign pop_data = push_data;
   end
 
   //------------------------------------------
   // Implementation checks
   //------------------------------------------
-  if (RegisterPopOutputs) begin : gen_reg_pop_check
-    `BR_ASSERT_IMPL(pop_follows_push_a, ##1 (pop_valid == $past(push_valid & push_ready)))
-  end else begin : gen_passthru_pop_check
-    `BR_ASSERT_IMPL(pop_follows_push_a, pop_valid == (push_valid & push_ready))
+  for (genvar i = 0; i < NumFlows; i++) begin : gen_pop_valid_checks
+    for (genvar j = 0; j < NumPopValidCopies; j++) begin : gen_copy
+      if (RegisterPopOutputs) begin : gen_reg_pop_check
+        `BR_ASSERT_IMPL(pop_follows_push_a,
+                        ##1 (pop_valid[i][j] == $past(push_valid[i] & push_ready[i])))
+      end else begin : gen_passthru_pop_check
+        `BR_ASSERT_IMPL(pop_follows_push_a, pop_valid[i][j] == (push_valid[i] & push_ready[i]))
+      end
+    end
   end
 
   `BR_ASSERT_IMPL(

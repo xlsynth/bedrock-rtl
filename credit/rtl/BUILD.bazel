@@ -124,6 +124,10 @@ br_verilog_elab_and_lint_test_suite(
             "0",
             "1",
         ],
+        "NumPopValidCopies": [
+            "1",
+            "2",
+        ],
     },
     deps = [":br_credit_sender"],
 )
