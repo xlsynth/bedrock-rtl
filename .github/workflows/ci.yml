@@ -179,6 +179,7 @@ jobs:
           BAZEL_FLAGS=(
             --action_env=PATH
             --noshow_loading_progress
+            --test_output=errors
             --disk_cache=/home/runner/.cache/bazel-disk
             --repository_cache=/home/runner/.cache/bazel-repo
             --experimental_disk_cache_gc_max_size=256M
