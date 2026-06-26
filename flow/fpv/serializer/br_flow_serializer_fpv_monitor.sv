@@ -69,7 +69,6 @@ module br_flow_serializer_fpv_monitor #(
   // Number of dont_care flits should not exceed SerializationRatio
   `BR_ASSUME(legal_dont_care_count_a,
              push_valid & push_last |-> push_last_dont_care_count < SerializationRatio)
-  `BR_ASSUME(dont_care_count_quiet_a, push_valid & !push_last |-> push_last_dont_care_count == 'd0)
 
   // ----------FV assertions----------
   // if PushWidth=32, PopWidth=8, SerializationRatio=4.
@@ -78,12 +77,14 @@ module br_flow_serializer_fpv_monitor #(
   // SerializeMostSignificantFirst = 0, then pop_data will be EF,CD,AB,89
   // For these 4 cycles: fv_flit_cnt = 0,1,2,3
 
-  // push_last_dont_care_count indicates don't care flits.
+  // push_last_dont_care_count indicates don't care flits on the last push flit.
+  // It is ignored on non-last push flits.
   // if push_last_dont_care_count = 1, the last flip is don't care.
   // SerializeMostSignificantFirst = 1 as an example:
   //    For first 3-cyc, pop_data will be 89,AB,CD.
   //    Then last cyc, pop_data is a dont care.
-  assign fv_care_max = SerializationRatio == 1 ? 0 : MAX - push_last_dont_care_count;
+  assign fv_care_max = SerializationRatio == 1 ? 0 :
+                       MAX - (push_last ? push_last_dont_care_count : 'd0);
 
   // fv_flit_cnt will cap at fv_care_max
   `BR_REGL(fv_flit_cnt, fv_flit_cnt != fv_care_max ? fv_flit_cnt + 'd1 : 'd0, pop_valid & pop_ready)
@@ -112,6 +113,7 @@ module br_flow_serializer_fpv_monitor #(
   // ----------Critical Covers----------
   if (SerializationRatio != 1) begin : gen_cov
     `BR_COVER(dont_care_c, push_valid && push_last && (push_last_dont_care_count != 'd0))
+    `BR_COVER(ignored_dont_care_c, push_valid && !push_last && (push_last_dont_care_count != 'd0))
   end
   `BR_COVER(fake_dont_care_c, push_valid && push_last && (push_last_dont_care_count == 'd0))
 
