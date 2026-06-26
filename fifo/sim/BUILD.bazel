@@ -209,6 +209,22 @@ br_verilog_sim_test_tools_suite(
 )
 
 br_verilog_sim_test_tools_suite(
+    name = "br_fifo_flops_depth_1_sim_test_tools_suite",
+    params = {
+        "Depth": ["1"],
+        "Width": ["8"],
+        "EnableBypass": [
+            "0",
+            "1",
+        ],
+        "RegisterPopOutputs": ["0"],
+        "FlopRamAddressDepthStages": ["0"],
+    },
+    tools = ["verilator"],
+    deps = [":br_fifo_flops_tb"],
+)
+
+br_verilog_sim_test_tools_suite(
     name = "br_fifo_flops_sim_test_tools_suite_nonzero_lat",
     params = {
         "Depth": [

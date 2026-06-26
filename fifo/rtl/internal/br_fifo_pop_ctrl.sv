@@ -58,7 +58,7 @@ module br_fifo_pop_ctrl #(
   //------------------------------------------
   // Integration checks
   //------------------------------------------
-  `BR_ASSERT_STATIC(depth_must_be_at_least_two_a, Depth >= 2)
+  `BR_ASSERT_STATIC(depth_must_be_at_least_one_a, Depth >= 1)
   `BR_ASSERT_STATIC(bit_width_must_be_at_least_one_a, Width >= 1)
 
   `BR_ASSERT_INTG(ram_rd_latency_matches_a,
