@@ -89,6 +89,25 @@ verilog_synth_sandbox(
     deps = [":nonzip_smoke_lib"],
 )
 
+verilog_synth_sandbox(
+    name = "nonzip_synth_system_lib_sandbox",
+    dff_liberty = "lib/cells_seq.lib",
+    liberties = [
+        "lib/cells.lib.gz",
+        "lib/cells_seq.lib",
+    ],
+    liberty_root_env = "PDK_ROOT",
+    liberty_sha256 = {
+        "lib/cells.lib.gz": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "lib/cells_seq.lib": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+    },
+    synth_profile = "example-tt",
+    tags = ["manual"],
+    tool = "yosys",
+    top = "nonzip_smoke",
+    deps = [":nonzip_smoke_lib"],
+)
+
 sh_test(
     name = "nonzip_test",
     srcs = ["nonzip_test.sh"],
@@ -98,6 +117,7 @@ sh_test(
         ":nonzip_lint_test",
         ":nonzip_sim_test",
         ":nonzip_synth_sandbox",
+        ":nonzip_synth_system_lib_sandbox",
         ":nonzip_synth_test",
         "//bazel:verilog.bzl",
     ],

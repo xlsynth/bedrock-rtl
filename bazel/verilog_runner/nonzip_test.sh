@@ -57,6 +57,23 @@ if tar -tzf "${synth_sandbox}" | grep -q '/yosys$'; then
   exit 1
 fi
 
+system_lib_sandbox="${repo}/bazel/verilog_runner/nonzip_synth_system_lib_sandbox.tar.gz"
+if tar -tzf "${system_lib_sandbox}" | grep -Eq '\.lib(\.gz)?$'; then
+  echo "system-library synthesis sandbox unexpectedly bundles Liberty files"
+  exit 1
+fi
+
+system_lib_script="$(tar -xOf "${system_lib_sandbox}" nonzip_synth_system_lib_sandbox.sh)"
+for expected in \
+  'PDK_ROOT must point to the installed synthesis library root' \
+  '${PDK_ROOT}/lib/cells.lib.gz' \
+  '${PDK_ROOT}/lib/cells_seq.lib'; do
+  if [[ "${system_lib_script}" != *"${expected}"* ]]; then
+    echo "system-library synthesis sandbox script is missing: ${expected}"
+    exit 1
+  fi
+done
+
 for file in \
   python/verilog_runner/verilog_runner.py \
   python/verilog_runner/cli.py \

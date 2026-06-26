@@ -42,6 +42,24 @@ class Yosys(EdaTool):
 
     def __post_init__(self):
         self.logger = get_class_logger("synth", "yosys")
+        if self.liberties:
+            if not self.liberty_root_env:
+                raise ValueError("--liberty_root_env is required with --liberty")
+            if set(self.liberty_sha256) != set(self.liberties):
+                raise ValueError(
+                    "--liberty_sha256 must specify exactly one checksum for each --liberty"
+                )
+            if self.dff_liberty and self.dff_liberty not in self.liberties:
+                raise ValueError("--dff_liberty must also be present in --liberty")
+        elif (
+            self.dff_liberty
+            or self.liberty_root_env
+            or self.liberty_sha256
+            or self.clock_period_ps
+        ):
+            raise ValueError(
+                "Liberty root, DFF library, checksums, and clock period require --liberty"
+            )
 
     @classmethod
     def add_args(cls, parser: argparse.ArgumentParser) -> None:
@@ -81,17 +99,39 @@ class Yosys(EdaTool):
         # and topological paths describe the whole design, not just the top
         # module's immediate contents.
         commands = ["synth -flatten -top " + _tcl_word(self.top)]
+        # Measure technology-independent topological depth before mapping.
+        # User-defined standard cells are black boxes to ltp and would
+        # otherwise collapse mapped paths to zero levels.
+        commands.append("ltp -noff " + _tcl_word(self.top))
         stat_args = []
-        if self.liberty:
-            liberty = _tcl_word(self.liberty)
-            commands += [
-                "dfflibmap -liberty " + liberty,
-                "abc -liberty "
-                + liberty
-                + (" -D " + str(self.clock_period_ps) if self.clock_period_ps else ""),
-                "clean",
+        if self.liberties:
+            commands.insert(
+                0,
+                "set ppa_liberty_root $::env(" + self.liberty_root_env + ")",
+            )
+            liberty_paths = [
+                "[file join $ppa_liberty_root " + _tcl_word(path) + "]"
+                for path in self.liberties
             ]
-            stat_args = ["-liberty", liberty]
+            if self.dff_liberty:
+                dff_path = (
+                    "[file join $ppa_liberty_root " + _tcl_word(self.dff_liberty) + "]"
+                )
+                commands.append("dfflibmap -liberty " + dff_path)
+
+            abc_script = (
+                "+strash;&get,-n;&fraig,-x;&put;scorr;dc2;dretime;strash;"
+                "&get,-n;&dch,-f;&nf"
+                + ("," + str(self.clock_period_ps) if self.clock_period_ps else "")
+                + ";&put;stime,-p"
+            )
+            abc_args = []
+            for liberty in liberty_paths:
+                abc_args += ["-liberty", liberty]
+            abc_args += ["-script", _tcl_word(abc_script)]
+            commands += ["abc " + " ".join(abc_args), "clean"]
+            for liberty in liberty_paths:
+                stat_args += ["-liberty", liberty]
 
         commands += [
             "tee -q -o "
@@ -99,7 +139,6 @@ class Yosys(EdaTool):
             + " stat "
             + " ".join(stat_args + ["-json"]),
             "stat " + " ".join(stat_args),
-            "ltp -noff " + _tcl_word(self.top),
             'puts "PPA_POWER unavailable"',
         ]
         return "\n".join(commands)
@@ -110,11 +149,34 @@ class Yosys(EdaTool):
     def cmd(self) -> str:
         """Returns a shell script that invokes Yosys."""
         self.logger.info("Generating shell script.")
+        preflight = []
+        if self.liberties:
+            root = self.liberty_root_env
+            preflight.append(
+                f': "${{{root}:?{root} must point to the installed synthesis library root}}"'
+            )
+            for liberty in self.liberties:
+                path = f'"${{{root}}}/{liberty}"'
+                preflight += [
+                    "test -r "
+                    + path
+                    + " || { echo 'Missing system Liberty: '"
+                    + path
+                    + " >&2; exit 1; }",
+                    "printf '%s  %s\\n' '"
+                    + self.liberty_sha256[liberty]
+                    + "' "
+                    + path
+                    + " | sha256sum -c -",
+                ]
         return "\n".join(
             self.read_env_setup_commands()
             + [
                 "#!/usr/bin/env bash",
                 "set -euo pipefail",
+            ]
+            + preflight
+            + [
                 '"${YOSYS_PATH:-yosys}" -V',
                 '"${YOSYS_PATH:-yosys}" -m slang -c "' + self.tclfile + '"',
                 "",
@@ -140,8 +202,11 @@ class Yosys(EdaTool):
                     {
                         "clock_period_ps": self.clock_period_ps,
                         "defines": sorted(self.defines),
-                        "liberty": self.liberty,
+                        "dff_liberty": self.dff_liberty,
+                        "liberties": self.liberties,
+                        "liberty_root_env": self.liberty_root_env,
                         "params": dict(sorted(self.params.items())),
+                        "synth_profile": self.synth_profile,
                         "top": self.top,
                     },
                     sort_keys=True,
