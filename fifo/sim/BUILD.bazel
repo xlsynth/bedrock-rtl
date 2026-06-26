@@ -305,6 +305,25 @@ br_verilog_sim_test_tools_suite(
     deps = [":br_fifo_flops_push_credit_tb"],
 )
 
+br_verilog_sim_test_tools_suite(
+    name = "br_fifo_flops_push_credit_depth_1_sim_test_tools_suite",
+    params = {
+        "TestDepth": ["1"],
+        "EnableBypass": [
+            "0",
+            "1",
+        ],
+        "RegisterPopOutputs": ["0"],
+        "FlopRamAddressDepthStages": ["0"],
+        "RegisterPushOutputs": [
+            "0",
+            "1",
+        ],
+    },
+    tools = ["verilator"],
+    deps = [":br_fifo_flops_push_credit_tb"],
+)
+
 verilog_library(
     name = "br_fifo_shared_test_harness",
     srcs = ["br_fifo_shared_test_harness.sv"],

@@ -79,7 +79,7 @@ module br_fifo_push_ctrl_credit #(
   //------------------------------------------
   // Integration checks
   //------------------------------------------
-  `BR_ASSERT_STATIC(depth_must_be_at_least_one_a, Depth >= 2)
+  `BR_ASSERT_STATIC(depth_must_be_at_least_one_a, Depth >= 1)
   `BR_ASSERT_STATIC(bit_width_must_be_at_least_one_a, Width >= 1)
   `BR_ASSERT_STATIC(credit_width_a, CreditWidth >= $clog2(Depth + 1))
 
