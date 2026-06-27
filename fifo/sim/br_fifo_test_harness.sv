@@ -147,12 +147,8 @@ module br_fifo_test_harness #(
           push_data = i[Width-1:0];
           scoreboard[i] = push_data;
           @(posedge clk);
-          if (push_ready) begin
-            $display("Pushed data: %0h | Items: %0d", push_data, items);
-          end else begin
-            $error("Cannot push data. FIFO Full.");
-            error_count += 1;
-          end
+          while (!push_ready) @(posedge clk);
+          $display("Pushed data: %0h | Items: %0d", push_data, items);
           @(negedge clk);
           push_valid = 1'b0;
         end

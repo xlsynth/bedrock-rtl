@@ -81,12 +81,21 @@ br_verilog_fpv_test_tools_suite(
             "Depth",
             "RamReadLatency",
         ): [
+            ("1", "1"),
+            ("1", "2"),
             ("2", "1"),
             ("2", "2"),
+        ],
+        (
+            "Depth",
+            "RegisterPopOutputs",
+        ): [
+            ("1", "1"),
         ],
     },
     params = {
         "Depth": [
+            "1",
             "2",
             "5",
         ],
@@ -223,8 +232,17 @@ br_verilog_fpv_test_tools_suite(
 br_verilog_fpv_test_tools_suite(
     name = "br_fifo_flops_test_suite",
     data = ["//fifo/fpv:br_ram_invariant_tcl"],
+    illegal_param_combinations = {
+        (
+            "Depth",
+            "RegisterPopOutputs",
+        ): [
+            ("1", "1"),
+        ],
+    },
     params = {
         "Depth": [
+            "1",
             "2",
             "5",
         ],
@@ -324,12 +342,21 @@ br_verilog_fpv_test_tools_suite(
             "Depth",
             "RamReadLatency",
         ): [
+            ("1", "1"),
+            ("1", "2"),
             ("2", "1"),
             ("2", "2"),
+        ],
+        (
+            "Depth",
+            "RegisterPopOutputs",
+        ): [
+            ("1", "1"),
         ],
     },
     params = {
         "Depth": [
+            "1",
             "2",
             "5",
         ],
@@ -438,8 +465,17 @@ verilog_elab_test(
 br_verilog_fpv_test_tools_suite(
     name = "br_fifo_flops_push_credit_test_suite",
     data = ["//fifo/fpv:br_ram_invariant_tcl"],
+    illegal_param_combinations = {
+        (
+            "Depth",
+            "RegisterPopOutputs",
+        ): [
+            ("1", "1"),
+        ],
+    },
     params = {
         "Depth": [
+            "1",
             "2",
             "5",
         ],

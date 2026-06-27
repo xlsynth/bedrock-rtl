@@ -50,7 +50,9 @@
 `include "br_asserts_internal.svh"
 
 module br_fifo_ctrl_1r1w #(
-    parameter int Depth = 2,  // Number of entries in the FIFO. Must be at least 2.
+    // Number of entries in the FIFO. Must be at least 1. Depth 1 requires
+    // RamReadLatency=0 and RegisterPopOutputs=0.
+    parameter int Depth = 2,
     parameter int Width = 1,  // Width of each entry in the FIFO. Must be at least 1.
     // If 1, then bypasses push-to-pop when the FIFO is empty, resulting in
     // a cut-through latency of 0 cycles, but at the cost of worse timing.
@@ -146,6 +148,12 @@ module br_fifo_ctrl_1r1w #(
   //------------------------------------------
   // Integration checks
   //------------------------------------------
+  `BR_ASSERT_STATIC(depth_must_be_at_least_one_a, Depth >= 1)
+  if (Depth == 1) begin : gen_depth_1_checks
+    `BR_ASSERT_STATIC(depth_1_requires_zero_ram_read_latency_a, RamReadLatency == 0)
+    `BR_ASSERT_STATIC(depth_1_requires_unregistered_pop_outputs_a, !RegisterPopOutputs)
+  end
+
   // Rely on submodule integration checks
 
   //------------------------------------------
@@ -244,7 +252,9 @@ module br_fifo_ctrl_1r1w #(
   // Flag coherence
   `BR_ASSERT_IMPL(items_plus_slots_a, items + slots == Depth)
   `BR_ASSERT_IMPL(items_next_plus_slots_next_a, items_next + slots_next == Depth)
-  `BR_ASSERT_IMPL(push_and_pop_flags_unchanged_a,
-                  push_beat && pop_beat |-> items_next == items && slots_next == slots)
+  if (Depth > 1 || EnableBypass) begin : gen_push_and_pop_impl_checks
+    `BR_ASSERT_IMPL(push_and_pop_flags_unchanged_a,
+                    push_beat && pop_beat |-> items_next == items && slots_next == slots)
+  end
 
 endmodule : br_fifo_ctrl_1r1w

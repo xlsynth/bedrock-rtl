@@ -58,7 +58,7 @@ module br_fifo_pop_ctrl #(
   //------------------------------------------
   // Integration checks
   //------------------------------------------
-  `BR_ASSERT_STATIC(depth_must_be_at_least_two_a, Depth >= 2)
+  `BR_ASSERT_STATIC(depth_must_be_at_least_one_a, Depth >= 1)
   `BR_ASSERT_STATIC(bit_width_must_be_at_least_one_a, Width >= 1)
 
   `BR_ASSERT_INTG(ram_rd_latency_matches_a,
@@ -116,7 +116,8 @@ module br_fifo_pop_ctrl #(
       .EnableAssertFinalNotValid(EnableAssertFinalNotValid),
       .EnableWrap(0),
       .EnableCoverZeroChange(0),
-      .EnableCoverReinit(0)
+      .EnableCoverReinit(0),
+      .EnableCoverIncrementAndDecrement(Depth > 1 || EnableBypass)
   ) br_counter_items (
       .clk,
       .rst,
@@ -168,7 +169,9 @@ module br_fifo_pop_ctrl #(
 
   // Flags
   `BR_ASSERT_IMPL(items_in_range_a, items <= Depth)
-  `BR_ASSERT_IMPL(push_and_pop_items_a, push_beat && pop_beat |-> items_next == items)
+  if (Depth > 1 || EnableBypass) begin : gen_push_and_pop_impl_checks
+    `BR_ASSERT_IMPL(push_and_pop_items_a, push_beat && pop_beat |-> items_next == items)
+  end
   `BR_ASSERT_IMPL(push_items_a, push_beat && !pop_beat |-> items_next == items + 1)
   `BR_ASSERT_IMPL(pop_items_a, !push_beat && pop_beat |-> items_next == items - 1)
   `BR_ASSERT_IMPL(empty_a, empty == (items == 0))

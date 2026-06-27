@@ -10,13 +10,16 @@ module br_fifo_flops_push_credit_tb ();
   parameter bit RegisterPopOutputs = 0;
   parameter bit RegisterPushOutputs = 0;
   parameter int FlopRamAddressDepthStages = 0;
+  // If nonzero, override the minimum depth derived from the credit-loop latency.
+  parameter int TestDepth = 0;
 
   localparam int PropDelay = 3;
   localparam int Width = 8;
   localparam int CutThroughLatency =
       PropDelay + (EnableBypass ? 0 : (FlopRamAddressDepthStages + 1)) + 32'(RegisterPopOutputs);
   localparam int BackpressureLatency = PropDelay + 1 + 32'(RegisterPushOutputs);
-  localparam int Depth = CutThroughLatency + BackpressureLatency + 1;
+  localparam int MinimumDepth = CutThroughLatency + BackpressureLatency + 1;
+  localparam int Depth = TestDepth > 0 ? TestDepth : MinimumDepth;
   localparam int NData = 100;
 
   // Inputs

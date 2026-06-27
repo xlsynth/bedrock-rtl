@@ -68,7 +68,7 @@ module br_fifo_push_ctrl #(
   //------------------------------------------
   `BR_ASSERT_STATIC(legal_assert_no_push_backpressure_a,
                     !(EnableAssertNoPushBackpressure && EnableCoverPushBackpressure))
-  `BR_ASSERT_STATIC(depth_must_be_at_least_one_a, Depth >= 2)
+  `BR_ASSERT_STATIC(depth_must_be_at_least_one_a, Depth >= 1)
   `BR_ASSERT_STATIC(bit_width_must_be_at_least_one_a, Width >= 1)
 
   `BR_COVER_INTG(full_c, full)
@@ -127,7 +127,8 @@ module br_fifo_push_ctrl #(
       .EnableAssertFinalNotValid(EnableAssertFinalNotValid),
       .EnableWrap(0),
       .EnableCoverZeroChange(0),
-      .EnableCoverReinit(0)
+      .EnableCoverReinit(0),
+      .EnableCoverIncrementAndDecrement(Depth > 1 || EnableBypass)
   ) br_counter_slots (
       .clk,
       .rst,
@@ -162,7 +163,9 @@ module br_fifo_push_ctrl #(
   // Flags
   `BR_ASSERT_IMPL(slots_in_range_a, slots <= Depth)
   `BR_ASSERT_IMPL(slots_next_a, ##1 slots == $past(slots_next))
-  `BR_ASSERT_IMPL(push_and_pop_slots_a, push_beat && pop_beat |-> slots_next == slots)
+  if (Depth > 1 || EnableBypass) begin : gen_push_and_pop_impl_checks
+    `BR_ASSERT_IMPL(push_and_pop_slots_a, push_beat && pop_beat |-> slots_next == slots)
+  end
   `BR_ASSERT_IMPL(push_slots_a, push_beat && !pop_beat |-> slots_next == slots - 1)
   `BR_ASSERT_IMPL(pop_slots_a, !push_beat && pop_beat |-> slots_next == slots + 1)
   `BR_ASSERT_IMPL(full_a, full == (slots == 0))
