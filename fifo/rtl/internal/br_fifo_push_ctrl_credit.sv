@@ -167,7 +167,8 @@ module br_fifo_push_ctrl_credit #(
       .EnableAssertFinalNotValid(EnableAssertFinalNotValid),
       .EnableWrap(0),
       .EnableCoverZeroChange(0),
-      .EnableCoverReinit(0)
+      .EnableCoverReinit(0),
+      .EnableCoverIncrementAndDecrement(Depth > 1 || EnableBypass)
   ) br_counter_slots (
       .clk,
       .rst(either_rst),
@@ -202,8 +203,10 @@ module br_fifo_push_ctrl_credit #(
   // Flags
   `BR_ASSERT_CR_IMPL(slots_in_range_a, slots <= Depth, clk, either_rst)
   `BR_ASSERT_CR_IMPL(slots_next_a, ##1 slots == $past(slots_next), clk, either_rst)
-  `BR_ASSERT_CR_IMPL(push_and_pop_slots_a, push_beat && pop_beat |-> slots_next == slots, clk,
-                     either_rst)
+  if (Depth > 1 || EnableBypass) begin : gen_push_and_pop_impl_checks
+    `BR_ASSERT_CR_IMPL(push_and_pop_slots_a, push_beat && pop_beat |-> slots_next == slots, clk,
+                       either_rst)
+  end
   `BR_ASSERT_CR_IMPL(push_slots_a, push_beat && !pop_beat |-> slots_next == slots - 1, clk,
                      either_rst)
   `BR_ASSERT_CR_IMPL(pop_slots_a, !push_beat && pop_beat |-> slots_next == slots + 1, clk,

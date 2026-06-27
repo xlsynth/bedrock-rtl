@@ -116,7 +116,8 @@ module br_fifo_pop_ctrl #(
       .EnableAssertFinalNotValid(EnableAssertFinalNotValid),
       .EnableWrap(0),
       .EnableCoverZeroChange(0),
-      .EnableCoverReinit(0)
+      .EnableCoverReinit(0),
+      .EnableCoverIncrementAndDecrement(Depth > 1 || EnableBypass)
   ) br_counter_items (
       .clk,
       .rst,
@@ -168,7 +169,9 @@ module br_fifo_pop_ctrl #(
 
   // Flags
   `BR_ASSERT_IMPL(items_in_range_a, items <= Depth)
-  `BR_ASSERT_IMPL(push_and_pop_items_a, push_beat && pop_beat |-> items_next == items)
+  if (Depth > 1 || EnableBypass) begin : gen_push_and_pop_impl_checks
+    `BR_ASSERT_IMPL(push_and_pop_items_a, push_beat && pop_beat |-> items_next == items)
+  end
   `BR_ASSERT_IMPL(push_items_a, push_beat && !pop_beat |-> items_next == items + 1)
   `BR_ASSERT_IMPL(pop_items_a, !push_beat && pop_beat |-> items_next == items - 1)
   `BR_ASSERT_IMPL(empty_a, empty == (items == 0))

@@ -252,7 +252,9 @@ module br_fifo_ctrl_1r1w #(
   // Flag coherence
   `BR_ASSERT_IMPL(items_plus_slots_a, items + slots == Depth)
   `BR_ASSERT_IMPL(items_next_plus_slots_next_a, items_next + slots_next == Depth)
-  `BR_ASSERT_IMPL(push_and_pop_flags_unchanged_a,
-                  push_beat && pop_beat |-> items_next == items && slots_next == slots)
+  if (Depth > 1 || EnableBypass) begin : gen_push_and_pop_impl_checks
+    `BR_ASSERT_IMPL(push_and_pop_flags_unchanged_a,
+                    push_beat && pop_beat |-> items_next == items && slots_next == slots)
+  end
 
 endmodule : br_fifo_ctrl_1r1w
