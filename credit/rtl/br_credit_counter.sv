@@ -46,16 +46,9 @@ module br_credit_counter #(
     parameter logic [MaxChangeWidth-1:0] MaxIncrement = MaxChange,
     // Maximum decrement amount (inclusive). Must be at least 1 and at most MaxChange.
     parameter logic [MaxChangeWidth-1:0] MaxDecrement = MaxChange,
-    // If 1, optimize the MaxDecrement=1 decr_ready path assuming withhold is always zero.
-    // EnableCoverWithhold must be disabled so that this requirement is asserted.
-    parameter bit OptimizeDecrReadyForNoWithhold = 0,
-    // If 1, further optimize the MaxDecrement=1 decr_ready path assuming every valid
-    // increment is nonzero. OptimizeDecrReadyForNoWithhold must also be enabled, and
-    // EnableCoverZeroIncrement must be disabled so that this requirement is asserted.
-    parameter bit OptimizeDecrReadyForNonzeroIncrement = 0,
-    // If 1, cover that you can have incr_valid high with incr = 0.
-    // Otherwise, assert that doesn't happen.
-    parameter bit EnableCoverZeroIncrement = 1,
+    // If 1, support incr_valid high with incr = 0 and cover that case.
+    // Otherwise, optimize for every valid increment being nonzero and assert that requirement.
+    parameter bit EnableZeroIncrement = 1,
     // If 1, cover that you can have decr_valid high with decr = 0.
     // Otherwise, assert that doesn't happen.
     // Cannot have zero decrement if MaxDecrement is 1
@@ -64,9 +57,9 @@ module br_credit_counter #(
     // Otherwise, disable decrement backpressure coverage. By default, this also
     // asserts that decrement backpressure is impossible.
     parameter bit EnableCoverDecrementBackpressure = 1,
-    // If 1, cover that withhold can be non-zero.
-    // Otherwise, assert that it is always zero.
-    parameter bit EnableCoverWithhold = 1,
+    // If 1, support nonzero withhold values and cover that case.
+    // Otherwise, optimize for withhold being zero and assert that requirement.
+    parameter bit EnableWithhold = 1,
     // If 1, assert that decr_valid is always high.
     // Otherwise, cover that it can be low.
     // Generally, this should not be enabled unless decr_valid is tied high.
@@ -127,13 +120,6 @@ module br_credit_counter #(
                     !(EnableAssertNoDecrementBackpressure && EnableCoverDecrementBackpressure))
   `BR_ASSERT_STATIC(no_zero_decrement_if_max_decrement_one_a,
                     !(EnableCoverZeroDecrement && MaxDecrement == 1))
-  `BR_ASSERT_STATIC(legal_optimize_decr_ready_for_no_withhold_a,
-                    !(OptimizeDecrReadyForNoWithhold && EnableCoverWithhold))
-  `BR_ASSERT_STATIC(legal_optimize_decr_ready_for_nonzero_increment_a,
-                    !(OptimizeDecrReadyForNonzeroIncrement && EnableCoverZeroIncrement))
-  `BR_ASSERT_STATIC(optimize_decr_ready_for_nonzero_increment_requires_no_withhold_a,
-                    !OptimizeDecrReadyForNonzeroIncrement || OptimizeDecrReadyForNoWithhold)
-
   if (EnableAssertFinalNotValid) begin : gen_assert_final
     `BR_ASSERT_FINAL(final_not_incr_valid_a, !incr_valid)
     `BR_ASSERT_FINAL(final_not_decr_valid_a, !decr_valid)
@@ -199,7 +185,7 @@ module br_credit_counter #(
 
   // Withhold and available
   `BR_ASSERT_INTG(withhold_in_range_a, withhold <= MaxValue)
-  if (EnableCoverWithhold) begin : gen_cover_withhold_nonzero
+  if (EnableWithhold) begin : gen_cover_withhold_nonzero
     `BR_COVER_INTG(withhold_nonzero_c, withhold > 0)
   end else begin : gen_assert_withhold_zero
     `BR_ASSERT_INTG(withhold_zero_a, withhold == 0)
@@ -243,9 +229,9 @@ module br_credit_counter #(
   assign available = value_plus_incr > withhold ? value_plus_incr - withhold : '0;
 
   if (MaxDecrement == 1) begin : gen_decr_ready_one
-    if (!OptimizeDecrReadyForNoWithhold) begin : gen_decr_ready_with_withhold
+    if (EnableWithhold) begin : gen_decr_ready_with_withhold
       assign decr_ready = available > '0;
-    end else if (!OptimizeDecrReadyForNonzeroIncrement) begin : gen_decr_ready_with_zero_increment
+    end else if (EnableZeroIncrement) begin : gen_decr_ready_with_zero_increment
       assign decr_ready = (value != '0) || (incr_valid && incr != '0);
     end else begin : gen_decr_ready_without_zero_increment
       assign decr_ready = (value != '0) || incr_valid;
@@ -267,7 +253,7 @@ module br_credit_counter #(
 
   // Increment corners
   `BR_COVER_IMPL(max_incr_c, incr_valid && incr == MaxIncrement)
-  if (EnableCoverZeroIncrement) begin : gen_cover_zero_increment
+  if (EnableZeroIncrement) begin : gen_cover_zero_increment
     `BR_COVER_IMPL(min_incr_c, incr_valid && incr == '0)
   end else begin : gen_assert_nonzero_increment
     `BR_ASSERT_IMPL(nonzero_incr_a, incr_valid |-> incr != '0)
@@ -292,7 +278,7 @@ module br_credit_counter #(
 
   // Withhold and available
   `BR_COVER_IMPL(value_lt_available_c, value < available)
-  if (EnableCoverWithhold) begin : gen_cover_withhold_gt_value
+  if (EnableWithhold) begin : gen_cover_withhold_gt_value
     `BR_COVER_IMPL(value_gt_available_c, value > available)
     // If every cycle must decrement with no backpressure, zero decrements are disallowed,
     // and increments are limited to one credit, withhold cannot exceed the stored value.
