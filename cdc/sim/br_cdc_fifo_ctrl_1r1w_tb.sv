@@ -12,7 +12,7 @@
  * - Payload ordering checks for every accepted pop.
  * - External 1R1W RAM timing through br_ram_flops.
  * - Bazel-swept depth, width, RAM latency, pop-output registration, CDC
- *   synchronizer depth, and push/pop clock periods.
+ *   synchronizer depth, plus plusarg-selected/randomized push/pop clock periods.
  */
 module br_cdc_fifo_ctrl_1r1w_tb;
 
@@ -38,28 +38,70 @@ module br_cdc_fifo_ctrl_1r1w_tb;
   localparam int TimeoutPopCycles = 5000;
   localparam int ResetSettlePushCycles = NumSyncStages + RegisterResetActive + 4;
   localparam int ResetSettlePopCycles = NumSyncStages + RegisterResetActive + 4;
+  localparam int NumClockPeriodOptions = 11;
+  // PushClockPeriodsNs[i] and PopClockPeriodsNs[i]:
+  // 0: faster push, 1: faster pop, 2: nearly identical
+  // 3: prime ratio, 4: very slow push, 5: very slow pop,
+  // 6: same frequency, 7-10 extra ratios.
+  localparam int PushClockPeriodsNs[NumClockPeriodOptions] = '{
+      8,
+      19,
+      10,
+      11,
+      101,
+      7,
+      10,
+      18,
+      23,
+      13,
+      10
+  };
+  localparam int PopClockPeriodsNs[NumClockPeriodOptions] = '{
+      19,
+      8,
+      11,
+      17,
+      7,
+      101,
+      10,
+      9,
+      22,
+      12,
+      16
+  };
+
+  function automatic int random_clock_period_ns();
+    return $urandom_range(101, 7);
+  endfunction
+
+  function automatic int positive_mod(input int value, input int modulus);
+    positive_mod = value % modulus;
+    if (positive_mod < 0) begin
+      positive_mod += modulus;
+    end
+  endfunction
 
   typedef struct packed {
     logic                  ready;
     logic                  valid;
-    logic [     Width-1:0] data;
+    logic [Width-1:0]      data;
     logic                  full;
     logic [CountWidth-1:0] slots;
     logic                  ram_wr_valid;
-    logic [ AddrWidth-1:0] ram_wr_addr;
-    logic [     Width-1:0] ram_wr_data;
+    logic [AddrWidth-1:0]  ram_wr_addr;
+    logic [Width-1:0]      ram_wr_data;
   } push_if_t;
 
   typedef struct packed {
     logic                  ready;
     logic                  valid;
-    logic [     Width-1:0] data;
+    logic [Width-1:0]      data;
     logic                  empty;
     logic [CountWidth-1:0] items;
     logic                  ram_rd_addr_valid;
-    logic [ AddrWidth-1:0] ram_rd_addr;
+    logic [AddrWidth-1:0]  ram_rd_addr;
     logic                  ram_rd_data_valid;
-    logic [     Width-1:0] ram_rd_data;
+    logic [Width-1:0]      ram_rd_data;
   } pop_if_t;
 
   logic push_clk;
@@ -70,6 +112,14 @@ module br_cdc_fifo_ctrl_1r1w_tb;
   logic pop_rst;
   pop_if_t pop_if;
 
+  logic td_clk;
+  logic td_rst;
+  time push_clock_half_period;
+  time pop_clock_half_period;
+  int selected_push_clock_period_ns;
+  int selected_pop_clock_period_ns;
+  int selected_clock_period_index;
+  bit clock_periods_configured;
   logic [Width-1:0] expected_data[ScoreboardDepth];
   int expected_wr_idx;
   int expected_rd_idx;
@@ -150,15 +200,71 @@ module br_cdc_fifo_ctrl_1r1w_tb;
 `endif
 
   br_test_driver #(
-      .ClockPeriodNs(PushClockPeriodNs),
+      .ClockPeriodNs(10),
       .ResetCycles  (14)
   ) td (
-      .clk(push_clk),
-      .rst(push_rst)
+      .clk(td_clk),
+      .rst(td_rst)
   );
 
-  initial pop_clk = 1'b0;
-  always #(PopClockPeriodNs / 2) pop_clk = ~pop_clk;
+  task automatic validate_clock_periods();
+    if (selected_push_clock_period_ns < 1) begin
+      $fatal(1, "push clock period must be at least 1 ns");
+    end
+    if (selected_pop_clock_period_ns < 1) begin
+      $fatal(1, "pop clock period must be at least 1 ns");
+    end
+  endtask
+
+  task automatic configure_clock_periods();
+    int clock_period_select;
+
+    clock_period_select = 0;
+    if ($value$plusargs("clock_period_select=%d", clock_period_select)) begin
+      if (clock_period_select == -1) begin
+        selected_push_clock_period_ns = random_clock_period_ns();
+        selected_pop_clock_period_ns  = random_clock_period_ns();
+        $display("clock_period_select=-1 generated random push/pop periods");
+      end else begin
+        void'($urandom(clock_period_select));
+        selected_clock_period_index   = $urandom_range(NumClockPeriodOptions - 1, 0);
+        selected_push_clock_period_ns = PushClockPeriodsNs[selected_clock_period_index];
+        selected_pop_clock_period_ns  = PopClockPeriodsNs[selected_clock_period_index];
+        $display("clock_period_select=%0d generated random clock_period_index=%0d",
+                 clock_period_select, selected_clock_period_index);
+      end
+    end else begin
+      selected_push_clock_period_ns = PushClockPeriodNs;
+      selected_pop_clock_period_ns  = PopClockPeriodNs;
+      $display("clock_period_select plusarg not provided; using parameter clock periods");
+    end
+
+    validate_clock_periods();
+    // Convert integer ns periods into simulation-time delays.
+    push_clock_half_period = (selected_push_clock_period_ns * 1ns) / 2;
+    pop_clock_half_period  = (selected_pop_clock_period_ns * 1ns) / 2;
+    $display("push_clock_period_ns=%0d pop_clock_period_ns=%0d", selected_push_clock_period_ns,
+             selected_pop_clock_period_ns);
+  endtask
+
+  initial begin
+    clock_periods_configured = 1'b0;
+    configure_clock_periods();
+    clock_periods_configured = 1'b1;
+  end
+
+  initial begin
+    push_clk = 1'b0;
+    wait (clock_periods_configured);
+    forever #(push_clock_half_period) push_clk = ~push_clk;
+  end
+
+  initial begin
+    pop_clk = 1'b0;
+    wait (clock_periods_configured);
+    forever #(pop_clock_half_period) pop_clk = ~pop_clk;
+  end
+
   always @(posedge pop_clk) pop_rst <= push_rst;
 
   task automatic init_interfaces();
@@ -184,7 +290,9 @@ module br_cdc_fifo_ctrl_1r1w_tb;
 
   task automatic reset_dut();
     $assertoff;
-    td.reset_dut();
+    push_rst = 1'b1;
+    wait_push_cycles(14);
+    push_rst = 1'b0;
     wait_push_cycles(ResetSettlePushCycles);
     wait_pop_cycles(ResetSettlePopCycles);
     $asserton;
@@ -316,27 +424,29 @@ module br_cdc_fifo_ctrl_1r1w_tb;
     end
   endtask
 
-  task automatic drive_random_pushes();
+  task automatic drive_push_stream(input int num_transactions, input int idle_max,
+                                   input int data_base);
     int idle_cycles;
 
-    for (int i = 0; i < NumRandomTransactions; i++) begin
-      idle_cycles = $urandom_range(RandomPushIdleMax, 0);
+    for (int i = 0; i < num_transactions; i++) begin
+      idle_cycles = $urandom_range(idle_max, 0);
       wait_push_cycles(idle_cycles);
-      drive_push(Width'($urandom));
+      drive_push(Width'(data_base + i));
     end
   endtask
 
-  task automatic drive_random_pops();
+  task automatic drive_pop_stream(input int num_transactions, input int idle_max);
     logic [Width-1:0] data;
     int idle_cycles;
 
-    for (int i = 0; i < NumRandomTransactions; i++) begin
-      idle_cycles = $urandom_range(RandomPopIdleMax, 0);
+    for (int i = 0; i < num_transactions; i++) begin
+      idle_cycles = $urandom_range(idle_max, 0);
       wait_pop_cycles(idle_cycles);
       drive_pop(data);
     end
   endtask
 
+  // Check reset/idle status in both clock domains before any traffic.
   task automatic test_idle();
     reset_scoreboard();
     init_interfaces();
@@ -350,17 +460,21 @@ module br_cdc_fifo_ctrl_1r1w_tb;
     td.check_integer(int'(pop_if.items), 0, "idle: pop_items mismatch");
   endtask
 
+  // Check basic end-to-end delivery for one pushed item and one popped item.
   task automatic test_single_push_pop();
     logic [Width-1:0] data;
+    logic [Width-1:0] push_data;
 
     reset_scoreboard();
     init_interfaces();
     reset_dut();
 
-    drive_push(Width'('h5a));
+    push_data = Width'($urandom);
+    drive_push(push_data);
     drive_pop(data);
   endtask
 
+  // Fill the FIFO to full, then verify push backpressure clears after a pop.
   task automatic test_fill_and_backpressure();
     logic [Width-1:0] data;
 
@@ -382,6 +496,7 @@ module br_cdc_fifo_ctrl_1r1w_tb;
     drain_all();
   endtask
 
+  // Hold pop_ready low and verify pop_valid/data remain stable while stalled.
   task automatic test_pop_stall();
     logic [Width-1:0] stalled_data;
     logic [Width-1:0] data;
@@ -403,6 +518,7 @@ module br_cdc_fifo_ctrl_1r1w_tb;
     drive_pop(data);
   endtask
 
+  // Exercise repeated push-then-pop transitions across wraparound boundaries.
   task automatic test_alternating();
     logic [Width-1:0] data;
 
@@ -416,14 +532,15 @@ module br_cdc_fifo_ctrl_1r1w_tb;
     end
   endtask
 
+  // Run independent randomized push/pop idle spacing and check FIFO ordering.
   task automatic test_random();
     reset_scoreboard();
     init_interfaces();
     reset_dut();
 
     fork
-      drive_random_pushes();
-      drive_random_pops();
+      drive_push_stream(NumRandomTransactions, RandomPushIdleMax, 'h100);
+      drive_pop_stream(NumRandomTransactions, RandomPopIdleMax);
     join
 
     td.check_integer(expected_count, 0, "random: scoreboard should be empty");
@@ -452,11 +569,15 @@ module br_cdc_fifo_ctrl_1r1w_tb;
     br_cdc_pkg::cdc_delay_mode = cdc_delay_mode;
 `endif
 
-    pop_rst = 1'b1;
+    wait (clock_periods_configured);
+    push_rst = 1'b1;
+    pop_rst  = 1'b1;
     init_interfaces();
     reset_scoreboard();
 
     run_all_tests();
+
+    // Keep testbench inputs idle while final-not-valid assertions settle.
     init_interfaces();
     wait_push_cycles(ResetSettlePushCycles);
     wait_pop_cycles(ResetSettlePopCycles);

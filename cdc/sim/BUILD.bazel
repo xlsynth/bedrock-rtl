@@ -48,20 +48,54 @@ verilog_elab_test(
                 "2",
                 "3",
             ],
-            "PushClockPeriodNs": [
-                "10",
-                "16",
-            ],
-            "PopClockPeriodNs": [
-                "10",
-                "16",
-            ],
+            "PushClockPeriodNs": ["10"],
+            "PopClockPeriodNs": ["16"],
             "NumRandomTransactions": ["80"],
             "RandomPushIdleMax": ["3"],
             "RandomPopIdleMax": ["4"],
         },
         sim_opts = [
             "+cdc_delay_mode=" + cdc_delay_mode,
+        ],
+        tags = ["no-sandbox"],
+        tools = [
+            "vcs",
+            "verilator",
+        ],
+        top = "br_cdc_fifo_ctrl_1r1w_tb",
+        deps = [
+            ":br_cdc_fifo_ctrl_1r1w_tb",
+            "//gate/rtl:br_gate_mock",
+            "//mux/rtl:br_mux_bin_structured_gates_mock",
+        ],
+    )
+    for cdc_delay_mode in [
+        "0",
+        "1",
+        "2",
+        "3",
+    ]
+]
+
+[
+    br_verilog_sim_test_tools_suite(
+        name = "br_cdc_fifo_ctrl_1r1w_random_clock_period_sim_test_tools_suite" + cdc_delay_mode,
+        params = {
+            "Depth": ["13"],
+            "NumRandomTransactions": ["48"],
+            "NumSyncStages": ["3"],
+            "RamAddressDepthStages": ["1"],
+            "RandomPopIdleMax": ["4"],
+            "RandomPushIdleMax": ["3"],
+            "RegisterPopOutputs": [
+                "0",
+                "1",
+            ],
+            "Width": ["8"],
+        },
+        sim_opts = [
+            "+cdc_delay_mode=" + cdc_delay_mode,
+            "+clock_period_select=-1",
         ],
         tags = ["no-sandbox"],
         tools = [
