@@ -4,6 +4,7 @@
 
 import br_amba::*;
 import br_amba_axi_sim_pkg::*;
+import br_amba_sim_pkg::*;
 
 // Configurable AXI target-side stimulus driver.
 //
@@ -80,8 +81,23 @@ module br_amba_axi_target_driver #(
   axi_aw_source_t target_aw_drive;
   axi_w_source_t target_w_drive;
   axi_ar_source_t target_ar_drive;
+  axi_w_t queued_w_beats[$];
   logic target_bready_drive;
   logic target_rready_drive;
+
+  clocking cb @(posedge clk);
+    default input #1step;
+    input target_awvalid;
+    input target_awready;
+    input target_wvalid;
+    input target_wready;
+    input target_arvalid;
+    input target_arready;
+    input target_bvalid;
+    input target_bready;
+    input target_rvalid;
+    input target_rready;
+  endclocking
 
   assign target_awaddr  = AddrWidth'(target_aw_drive.payload.addr);
   assign target_awid    = IdWidth'(target_aw_drive.payload.id);
@@ -108,13 +124,14 @@ module br_amba_axi_target_driver #(
   assign target_rready  = target_rready_drive;
 
   task automatic init_idle();
-    failed              = 1'b0;
+    failed          = 1'b0;
 
-    target_aw_drive     = '0;
-    target_w_drive      = '0;
-    target_ar_drive     = '0;
-    target_bready_drive = 1'b0;
-    target_rready_drive = 1'b0;
+    target_aw_drive = '0;
+    target_w_drive  = '0;
+    target_ar_drive = '0;
+    queued_w_beats.delete();
+    target_bready_drive = 1'b1;
+    target_rready_drive = 1'b1;
   endtask
 
   task automatic check(input logic condition, input string message);
@@ -128,36 +145,40 @@ module br_amba_axi_target_driver #(
     repeat (cycles) @(negedge clk);
   endtask
 
-  function automatic int get_stall_cycles(input int index, input int max_stall_cycles,
-                                          input int salt);
-    if (max_stall_cycles == 0) begin
-      return 0;
-    end
-    return (((index + 1) * salt) ^ (salt >> 1)) % (max_stall_cycles + 1);
-  endfunction
-
   function automatic logic is_wait_condition_met(input wait_condition_e condition);
     case (condition)
-      WaitTargetAw: is_wait_condition_met = target_awvalid && target_awready;
-      WaitTargetW:  is_wait_condition_met = target_wvalid && target_wready;
-      WaitTargetAr: is_wait_condition_met = target_arvalid && target_arready;
-      WaitTargetB:  is_wait_condition_met = target_bvalid && target_bready;
-      WaitTargetR:  is_wait_condition_met = target_rvalid && target_rready;
+      WaitTargetAw: is_wait_condition_met = cb.target_awvalid && cb.target_awready;
+      WaitTargetW:  is_wait_condition_met = cb.target_wvalid && cb.target_wready;
+      WaitTargetAr: is_wait_condition_met = cb.target_arvalid && cb.target_arready;
+      WaitTargetB:  is_wait_condition_met = cb.target_bvalid && cb.target_bready;
+      WaitTargetR:  is_wait_condition_met = cb.target_rvalid && cb.target_rready;
       default:      is_wait_condition_met = 1'b0;
     endcase
   endfunction
 
-  task automatic wait_for(input wait_condition_e condition, input string timeout_message);
+  function automatic string wait_condition_name(input wait_condition_e condition);
+    case (condition)
+      WaitTargetAw: wait_condition_name = "target AW";
+      WaitTargetW:  wait_condition_name = "target W";
+      WaitTargetAr: wait_condition_name = "target AR";
+      WaitTargetB:  wait_condition_name = "target B";
+      WaitTargetR:  wait_condition_name = "target R";
+      default:      wait_condition_name = "unknown AXI";
+    endcase
+  endfunction
+
+  task automatic wait_for(input wait_condition_e condition);
     int timeout;
 
     timeout = TimeoutCycles;
-    while (!is_wait_condition_met(
-        condition
-    ) && timeout > 0) begin
-      @(posedge clk);
+    do begin
+      @cb;
       timeout--;
-    end
-    check(is_wait_condition_met(condition), timeout_message);
+    end while (!is_wait_condition_met(
+        condition
+    ) && timeout >= 0);
+    check(is_wait_condition_met(condition), {
+          "Timeout waiting for ", wait_condition_name(condition), " handshake"});
   endtask
 
   function automatic axi_aw_t get_aw_transaction(input axi_aw_t base, input int index,
@@ -204,7 +225,27 @@ module br_amba_axi_target_driver #(
     @(negedge clk);
     target_aw_drive.payload = aw_input;
     target_aw_drive.valid   = 1'b1;
-    wait_for(WaitTargetAw, "Timeout waiting for target AW handshake");
+    wait_for(WaitTargetAw);
+    @(negedge clk);
+    target_aw_drive.valid = 1'b0;
+  endtask
+
+  task automatic drive_aw_fields(
+      input logic [AddrWidth-1:0] addr, input logic [IdWidth-1:0] id,
+      input logic [AxiBurstLenWidth-1:0] len, input logic [AxiBurstSizeWidth-1:0] size,
+      input logic [AxiBurstTypeWidth-1:0] burst, input logic [AxiProtWidth-1:0] prot,
+      input logic [AWUserWidth-1:0] user);
+    @(negedge clk);
+    target_aw_drive.payload       = '0;
+    target_aw_drive.payload.addr  = addr;
+    target_aw_drive.payload.id    = id;
+    target_aw_drive.payload.len   = len;
+    target_aw_drive.payload.size  = size;
+    target_aw_drive.payload.burst = burst;
+    target_aw_drive.payload.prot  = prot;
+    target_aw_drive.payload.user  = user;
+    target_aw_drive.valid         = 1'b1;
+    wait_for(WaitTargetAw);
     @(negedge clk);
     target_aw_drive.valid = 1'b0;
   endtask
@@ -213,7 +254,37 @@ module br_amba_axi_target_driver #(
     @(negedge clk);
     target_w_drive.payload = w_input;
     target_w_drive.valid   = 1'b1;
-    wait_for(WaitTargetW, "Timeout waiting for target W handshake");
+    wait_for(WaitTargetW);
+    @(negedge clk);
+    target_w_drive.valid = 1'b0;
+  endtask
+
+  task automatic queue_w_beat(input axi_w_t w_input);
+    queued_w_beats.push_back(w_input);
+  endtask
+
+  task automatic drive_queued_w(input int stall_cycles);
+    axi_w_t w_input;
+
+    wait_cycles(stall_cycles);
+    check(queued_w_beats.size() > 0, "No queued AXI W beat available");
+    if (queued_w_beats.size() > 0) begin
+      w_input = queued_w_beats.pop_front();
+      drive_w(w_input);
+    end
+  endtask
+
+  task automatic drive_w_fields(input logic [DataWidth-1:0] data,
+                                input logic [StrobeWidth-1:0] strb,
+                                input logic [WUserWidth-1:0] user, input logic last);
+    @(negedge clk);
+    target_w_drive.payload      = '0;
+    target_w_drive.payload.data = data;
+    target_w_drive.payload.strb = strb;
+    target_w_drive.payload.user = user;
+    target_w_drive.payload.last = last;
+    target_w_drive.valid        = 1'b1;
+    wait_for(WaitTargetW);
     @(negedge clk);
     target_w_drive.valid = 1'b0;
   endtask
@@ -222,27 +293,82 @@ module br_amba_axi_target_driver #(
     @(negedge clk);
     target_ar_drive.payload = ar_input;
     target_ar_drive.valid   = 1'b1;
-    wait_for(WaitTargetAr, "Timeout waiting for target AR handshake");
+    wait_for(WaitTargetAr);
+    @(negedge clk);
+    target_ar_drive.valid = 1'b0;
+  endtask
+
+  task automatic drive_ar_fields(
+      input logic [AddrWidth-1:0] addr, input logic [IdWidth-1:0] id,
+      input logic [AxiBurstLenWidth-1:0] len, input logic [AxiBurstSizeWidth-1:0] size,
+      input logic [AxiBurstTypeWidth-1:0] burst, input logic [AxiProtWidth-1:0] prot,
+      input logic [ARUserWidth-1:0] user);
+    @(negedge clk);
+    target_ar_drive.payload       = '0;
+    target_ar_drive.payload.addr  = addr;
+    target_ar_drive.payload.id    = id;
+    target_ar_drive.payload.len   = len;
+    target_ar_drive.payload.size  = size;
+    target_ar_drive.payload.burst = burst;
+    target_ar_drive.payload.prot  = prot;
+    target_ar_drive.payload.user  = user;
+    target_ar_drive.valid         = 1'b1;
+    wait_for(WaitTargetAr);
     @(negedge clk);
     target_ar_drive.valid = 1'b0;
   endtask
 
   task automatic accept_target_b(input int stall_cycles);
-    target_bready_drive = 1'b0;
-    wait_cycles(stall_cycles);
+    if (stall_cycles > 0) begin
+      target_bready_drive = 1'b0;
+      wait_cycles(stall_cycles);
+    end
     target_bready_drive = 1'b1;
-    wait_for(WaitTargetB, "Timeout waiting for target B handshake");
-    @(negedge clk);
-    target_bready_drive = 1'b0;
+    wait_for(WaitTargetB);
   endtask
 
   task automatic accept_target_r(input int stall_cycles);
-    target_rready_drive = 1'b0;
-    wait_cycles(stall_cycles);
+    if (stall_cycles > 0) begin
+      target_rready_drive = 1'b0;
+      wait_cycles(stall_cycles);
+    end
     target_rready_drive = 1'b1;
-    wait_for(WaitTargetR, "Timeout waiting for target R handshake");
-    @(negedge clk);
-    target_rready_drive = 1'b0;
+    wait_for(WaitTargetR);
+  endtask
+
+  task automatic run_write_burst(input axi_aw_t aw_input, input int max_stall_cycles,
+                                 input int response_stall_cycles);
+    int unsigned beats;
+
+    beats = int'(aw_input.len) + 1;
+    check(queued_w_beats.size() >= beats, "Too few queued AXI W beats for write burst");
+    fork
+      drive_aw(aw_input);
+      begin
+        for (int unsigned beat = 0; beat < beats; beat++) begin
+          drive_queued_w(get_random_stall_cycles(max_stall_cycles));
+        end
+      end
+      accept_target_b(response_stall_cycles);
+    join
+  endtask
+
+  task automatic run_read_burst_fields(
+      input logic [AddrWidth-1:0] addr, input logic [IdWidth-1:0] id,
+      input logic [AxiBurstLenWidth-1:0] len, input logic [AxiBurstSizeWidth-1:0] size,
+      input logic [AxiBurstTypeWidth-1:0] burst, input logic [AxiProtWidth-1:0] prot,
+      input logic [ARUserWidth-1:0] aruser, input int max_stall_cycles);
+    int unsigned beats;
+
+    beats = int'(len) + 1;
+    fork
+      drive_ar_fields(addr, id, len, size, burst, prot, aruser);
+      begin
+        for (int unsigned beat = 0; beat < beats; beat++) begin
+          accept_target_r(get_random_stall_cycles(max_stall_cycles));
+        end
+      end
+    join
   endtask
 
   task automatic issue_write_transactions(
@@ -266,7 +392,7 @@ module br_amba_axi_target_driver #(
       end
       begin
         for (int i = 0; i < num_transactions; i++) begin
-          accept_target_b(get_stall_cycles(i, max_stall_cycles, 109));
+          accept_target_b(get_random_stall_cycles(max_stall_cycles));
         end
       end
     join
@@ -304,7 +430,7 @@ module br_amba_axi_target_driver #(
               );
               beat++
           ) begin
-            accept_target_r(get_stall_cycles(i + beat, max_stall_cycles, 113));
+            accept_target_r(get_random_stall_cycles(max_stall_cycles));
           end
         end
       end

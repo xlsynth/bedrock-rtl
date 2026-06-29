@@ -4,6 +4,7 @@
 
 import br_amba::*;
 import br_amba_axil_sim_pkg::*;
+import br_amba_sim_pkg::*;
 
 typedef struct {
   int num_writes;
@@ -35,7 +36,6 @@ module br_amba_axil_timing_slice_tb;
   localparam int DirectedStallCycles = 3;
   localparam int RandomizedValidGapCycles = 1;
   localparam int RandomizedStallCycles = 0;
-  localparam int PayloadSeed = 32'h2468_1357;
 
   logic clk;
   logic rst;
@@ -272,51 +272,39 @@ module br_amba_axil_timing_slice_tb;
       .failed(monitor_failed)
   );
 
-  function automatic logic [255:0] payload_pattern(input int index, input int salt);
-    for (int word = 0; word < 8; word++) begin
-      payload_pattern[word*32+:32] = 32'((index + 1) * (salt + (word * 19)) ^
-                                         (PayloadSeed >> (word % 7)) ^
-                                         (32'h2040_8102 << (word % 5)));
+  function automatic axil_aw_t get_aw_input();
+    get_aw_input.addr = AddrWidth'($urandom());
+    get_aw_input.prot = AxiProtWidth'($urandom());
+    get_aw_input.user = AWUserWidth'($urandom());
+  endfunction
+
+  function automatic axil_w_t get_w_input();
+    get_w_input.data = '0;
+    for (int word = 0; word < DataWidth / 32; word++) begin
+      get_w_input.data[word*32+:32] = $urandom();
     end
+    get_w_input.strb = StrobeWidth'($urandom()) | StrobeWidth'(1'b1);
+    get_w_input.user = WUserWidth'($urandom());
   endfunction
 
-  function automatic axil_aw_t get_aw_input(input int index);
-    logic [255:0] payload;
-    payload = payload_pattern(index, 11);
-    get_aw_input.addr = payload[AddrWidth-1:0];
-    get_aw_input.prot = payload[64+:AxiProtWidth];
-    get_aw_input.user = payload[96+:AWUserWidth];
-  endfunction
-
-  function automatic axil_w_t get_w_input(input int index);
-    logic [255:0] payload;
-    payload = payload_pattern(index, 23);
-    get_w_input.data = payload[DataWidth-1:0];
-    get_w_input.strb = StrobeWidth'(payload[128+:StrobeWidth]) | StrobeWidth'(1'b1);
-    get_w_input.user = payload[160+:WUserWidth];
-  endfunction
-
-  function automatic axil_ar_t get_ar_input(input int index);
-    logic [255:0] payload;
-    payload = payload_pattern(index, 37);
-    get_ar_input.addr = payload[AddrWidth-1:0];
-    get_ar_input.prot = payload[64+:AxiProtWidth];
-    get_ar_input.user = payload[96+:ARUserWidth];
+  function automatic axil_ar_t get_ar_input();
+    get_ar_input.addr = AddrWidth'($urandom());
+    get_ar_input.prot = AxiProtWidth'($urandom());
+    get_ar_input.user = ARUserWidth'($urandom());
   endfunction
 
   function automatic axil_b_t get_b_input(input int index);
-    logic [255:0] payload;
-    payload = payload_pattern(index, 47);
     get_b_input.resp = AxiRespWidth'(index);
-    get_b_input.user = payload[32+:BUserWidth];
+    get_b_input.user = BUserWidth'($urandom());
   endfunction
 
   function automatic axil_r_t get_r_input(input int index);
-    logic [255:0] payload;
-    payload = payload_pattern(index, 59);
-    get_r_input.data = payload[DataWidth-1:0];
+    get_r_input.data = '0;
+    for (int word = 0; word < DataWidth / 32; word++) begin
+      get_r_input.data[word*32+:32] = $urandom();
+    end
     get_r_input.resp = AxiRespWidth'(index + 1);
-    get_r_input.user = payload[160+:RUserWidth];
+    get_r_input.user = RUserWidth'($urandom());
   endfunction
 
   task automatic run_timing_slice_test(input axil_timing_slice_controls_t controls);
@@ -326,9 +314,9 @@ module br_amba_axil_timing_slice_tb;
     axil_b_t  b_input;
     axil_r_t  r_input;
 
-    aw_input = get_aw_input(0);
-    w_input  = get_w_input(0);
-    ar_input = get_ar_input(0);
+    aw_input = get_aw_input();
+    w_input  = get_w_input();
+    ar_input = get_ar_input();
     b_input  = get_b_input(0);
     r_input  = get_r_input(0);
 
