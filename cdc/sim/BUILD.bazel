@@ -245,6 +245,79 @@ verilog_elab_test(
 ]
 
 verilog_library(
+    name = "br_cdc_fifo_ctrl_1r1w_push_credit_tb",
+    srcs = ["br_cdc_fifo_ctrl_1r1w_push_credit_tb.sv"],
+    deps = [
+        "//cdc/rtl:br_cdc_fifo_ctrl_1r1w_push_credit",
+        "//credit/rtl:br_credit_sender",
+        "//delay/rtl:br_delay_nr",
+        "//misc/sim:br_test_driver",
+        "//pkg:br_math_pkg",
+        "//ram/rtl:br_ram_flops",
+    ],
+)
+
+verilog_elab_test(
+    name = "br_cdc_fifo_ctrl_1r1w_push_credit_tb_elab_test",
+    tool = "slang",
+    top = "br_cdc_fifo_ctrl_1r1w_push_credit_tb",
+    deps = [
+        ":br_cdc_fifo_ctrl_1r1w_push_credit_tb",
+        "//gate/rtl:br_gate_mock",
+        "//mux/rtl:br_mux_bin_structured_gates_mock",
+    ],
+)
+
+[
+    br_verilog_sim_test_tools_suite(
+        name = "br_cdc_fifo_ctrl_1r1w_push_credit_sim_test_tools_suite_cdc" +
+               cdc_delay_mode,
+        params = {
+            "RegisterPopOutputs": [
+                "0",
+                "1",
+            ],
+            "RamAddressDepthStages": [
+                "0",
+                "1",
+            ],
+            "EnableStructuredGatesDataQualification": [
+                "0",
+                "1",
+            ],
+            "NumSyncStages": [
+                "2",
+                "3",
+            ],
+            "RegisterPushOutputs": [
+                "0",
+                "1",
+            ],
+        },
+        sim_opts = [
+            "+cdc_delay_mode=" + cdc_delay_mode,
+            "+clock_period_select=-1",
+        ],
+        tools = [
+            "vcs",
+            "verilator",
+        ],
+        top = "br_cdc_fifo_ctrl_1r1w_push_credit_tb",
+        deps = [
+            ":br_cdc_fifo_ctrl_1r1w_push_credit_tb",
+            "//gate/rtl:br_gate_mock",
+            "//mux/rtl:br_mux_bin_structured_gates_mock",
+        ],
+    )
+    for cdc_delay_mode in [
+        "0",
+        "1",
+        "2",
+        "3",
+    ]
+]
+
+verilog_library(
     name = "br_cdc_fifo_flops_push_credit_tb",
     srcs = ["br_cdc_fifo_flops_push_credit_tb.sv"],
     deps = [
