@@ -1,0 +1,588 @@
+// SPDX-License-Identifier: Apache-2.0
+
+
+`timescale 1ns / 1ps
+
+/*
+ * Directed simulation testbench for br_cdc_fifo_ctrl_1r1w.
+ *
+ * Scope:
+ * - Reset and idle status checks in both clock domains.
+ * - Directed push/pop, full/backpressure, and pop-stall behavior.
+ * - Payload ordering checks for every accepted pop.
+ * - External 1R1W RAM timing through br_ram_flops.
+ * - Bazel-swept depth, width, RAM latency, pop-output registration, CDC
+ *   synchronizer depth, plus plusarg-selected/randomized push/pop clock periods.
+ */
+module br_cdc_fifo_ctrl_1r1w_tb;
+
+  parameter int Depth = 13;
+  parameter int Width = 8;
+  parameter bit RegisterPopOutputs = 0;
+  parameter bit RegisterResetActive = 1;
+  parameter int RamAddressDepthStages = 0;
+  parameter int NumSyncStages = 3;
+  parameter int PushClockPeriodNs = 10;
+  parameter int PopClockPeriodNs = 16;
+  parameter int NumRandomTransactions = 80;
+  parameter int RandomPushIdleMax = 3;
+  parameter int RandomPopIdleMax = 4;
+
+  localparam int AddrWidth = $clog2(Depth);
+  localparam int CountWidth = $clog2(Depth + 1);
+  localparam int RamWriteLatency = RamAddressDepthStages + 1;
+  localparam int RamReadLatency = RamAddressDepthStages;
+  localparam int NumDirectedItems = Depth * 2 + 8;
+  localparam int ScoreboardDepth = NumDirectedItems + NumRandomTransactions + Depth + 8;
+  localparam int TimeoutPushCycles = 5000;
+  localparam int TimeoutPopCycles = 5000;
+  localparam int ResetSettlePushCycles = NumSyncStages + RegisterResetActive + 4;
+  localparam int ResetSettlePopCycles = NumSyncStages + RegisterResetActive + 4;
+  localparam int NumClockPeriodOptions = 11;
+  // PushClockPeriodsNs[i] and PopClockPeriodsNs[i]:
+  // 0: faster push, 1: faster pop, 2: nearly identical
+  // 3: prime ratio, 4: very slow push, 5: very slow pop,
+  // 6: same frequency, 7-10 extra ratios.
+  localparam int PushClockPeriodsNs[NumClockPeriodOptions] = '{
+      8,
+      19,
+      10,
+      11,
+      101,
+      7,
+      10,
+      18,
+      23,
+      13,
+      10
+  };
+  localparam int PopClockPeriodsNs[NumClockPeriodOptions] = '{
+      19,
+      8,
+      11,
+      17,
+      7,
+      101,
+      10,
+      9,
+      22,
+      12,
+      16
+  };
+
+  function automatic int random_clock_period_ns();
+    return $urandom_range(101, 7);
+  endfunction
+
+  function automatic int positive_mod(input int value, input int modulus);
+    positive_mod = value % modulus;
+    if (positive_mod < 0) begin
+      positive_mod += modulus;
+    end
+  endfunction
+
+  typedef struct packed {
+    logic                  ready;
+    logic                  valid;
+    logic [Width-1:0]      data;
+    logic                  full;
+    logic [CountWidth-1:0] slots;
+    logic                  ram_wr_valid;
+    logic [AddrWidth-1:0]  ram_wr_addr;
+    logic [Width-1:0]      ram_wr_data;
+  } push_if_t;
+
+  typedef struct packed {
+    logic                  ready;
+    logic                  valid;
+    logic [Width-1:0]      data;
+    logic                  empty;
+    logic [CountWidth-1:0] items;
+    logic                  ram_rd_addr_valid;
+    logic [AddrWidth-1:0]  ram_rd_addr;
+    logic                  ram_rd_data_valid;
+    logic [Width-1:0]      ram_rd_data;
+  } pop_if_t;
+
+  logic push_clk;
+  logic push_rst;
+  push_if_t push_if;
+
+  logic pop_clk;
+  logic pop_rst;
+  pop_if_t pop_if;
+
+  logic td_clk;
+  logic td_rst;
+  time push_clock_half_period;
+  time pop_clock_half_period;
+  int selected_push_clock_period_ns;
+  int selected_pop_clock_period_ns;
+  int selected_clock_period_index;
+  bit clock_periods_configured;
+  logic [Width-1:0] expected_data[ScoreboardDepth];
+  int expected_wr_idx;
+  int expected_rd_idx;
+  int expected_count;
+  bit saw_push_backpressure;
+
+  br_cdc_fifo_ctrl_1r1w #(
+      .Depth(Depth),
+      .Width(Width),
+      .RegisterPopOutputs(RegisterPopOutputs),
+      .RegisterResetActive(RegisterResetActive),
+      .RamWriteLatency(RamWriteLatency),
+      .RamReadLatency(RamReadLatency),
+      .NumSyncStages(NumSyncStages),
+      .EnableCoverPushBackpressure(1),
+      .EnableAssertPushValidStability(1),
+      .EnableAssertPushDataStability(1),
+      .EnableAssertPushDataKnown(1),
+      .EnableAssertFinalNotValid(1),
+      .EnableAssertNoPushBackpressure(0)
+  ) dut (
+      .push_clk,
+      .push_rst,
+      .push_ready(push_if.ready),
+      .push_valid(push_if.valid),
+      .push_data(push_if.data),
+      .push_full(push_if.full),
+      .push_slots(push_if.slots),
+      .push_ram_wr_valid(push_if.ram_wr_valid),
+      .push_ram_wr_addr(push_if.ram_wr_addr),
+      .push_ram_wr_data(push_if.ram_wr_data),
+      .pop_clk,
+      .pop_rst,
+      .pop_ready(pop_if.ready),
+      .pop_valid(pop_if.valid),
+      .pop_data(pop_if.data),
+      .pop_empty(pop_if.empty),
+      .pop_items(pop_if.items),
+      .pop_ram_rd_addr_valid(pop_if.ram_rd_addr_valid),
+      .pop_ram_rd_addr(pop_if.ram_rd_addr),
+      .pop_ram_rd_data_valid(pop_if.ram_rd_data_valid),
+      .pop_ram_rd_data(pop_if.ram_rd_data)
+  );
+
+  br_ram_flops #(
+      .Depth(Depth),
+      .Width(Width),
+      .NumReadPorts(1),
+      .NumWritePorts(1),
+      .AddressDepthStages(RamAddressDepthStages),
+      .ReadDataDepthStages(0),
+      .ReadDataWidthStages(0),
+      .TileEnableBypass(0),
+      .EnableMemReset(0),
+      .UseStructuredGates(1),
+      .EnableStructuredGatesDataQualification(1),
+      .EnableAssertFinalNotValid(1)
+  ) br_ram_flops (
+      .wr_clk(push_clk),  // ri lint_check_waive SAME_CLOCK_NAME
+      .wr_rst(push_rst),
+      .wr_valid(push_if.ram_wr_valid),
+      .wr_addr(push_if.ram_wr_addr),
+      .wr_data(push_if.ram_wr_data),
+      .wr_word_en('1),
+      .rd_clk(pop_clk),  // ri lint_check_waive SAME_CLOCK_NAME
+      .rd_rst(pop_rst),
+      .rd_addr_valid(pop_if.ram_rd_addr_valid),
+      .rd_addr(pop_if.ram_rd_addr),
+      .rd_data_valid(pop_if.ram_rd_data_valid),
+      .rd_data(pop_if.ram_rd_data)
+  );
+
+`ifdef DUMP_WAVES
+  initial begin
+    $dumpfile("waves.vcd");
+    $dumpvars(0, br_cdc_fifo_ctrl_1r1w_tb);
+  end
+`endif
+
+  br_test_driver #(
+      .ClockPeriodNs(10),
+      .ResetCycles  (14)
+  ) td (
+      .clk(td_clk),
+      .rst(td_rst)
+  );
+
+  task automatic validate_clock_periods();
+    if (selected_push_clock_period_ns < 1) begin
+      $fatal(1, "push clock period must be at least 1 ns");
+    end
+    if (selected_pop_clock_period_ns < 1) begin
+      $fatal(1, "pop clock period must be at least 1 ns");
+    end
+  endtask
+
+  task automatic configure_clock_periods();
+    int clock_period_select;
+
+    clock_period_select = 0;
+    if ($value$plusargs("clock_period_select=%d", clock_period_select)) begin
+      if (clock_period_select == -1) begin
+        selected_push_clock_period_ns = random_clock_period_ns();
+        selected_pop_clock_period_ns  = random_clock_period_ns();
+        $display("clock_period_select=-1 generated random push/pop periods");
+      end else begin
+        void'($urandom(clock_period_select));
+        selected_clock_period_index   = $urandom_range(NumClockPeriodOptions - 1, 0);
+        selected_push_clock_period_ns = PushClockPeriodsNs[selected_clock_period_index];
+        selected_pop_clock_period_ns  = PopClockPeriodsNs[selected_clock_period_index];
+        $display("clock_period_select=%0d generated random clock_period_index=%0d",
+                 clock_period_select, selected_clock_period_index);
+      end
+    end else begin
+      selected_push_clock_period_ns = PushClockPeriodNs;
+      selected_pop_clock_period_ns  = PopClockPeriodNs;
+      $display("clock_period_select plusarg not provided; using parameter clock periods");
+    end
+
+    validate_clock_periods();
+    // Convert integer ns periods into simulation-time delays.
+    push_clock_half_period = (selected_push_clock_period_ns * 1ns) / 2;
+    pop_clock_half_period  = (selected_pop_clock_period_ns * 1ns) / 2;
+    $display("push_clock_period_ns=%0d pop_clock_period_ns=%0d", selected_push_clock_period_ns,
+             selected_pop_clock_period_ns);
+  endtask
+
+  initial begin
+    clock_periods_configured = 1'b0;
+    configure_clock_periods();
+    clock_periods_configured = 1'b1;
+  end
+
+  initial begin
+    push_clk = 1'b0;
+    wait (clock_periods_configured);
+    forever #(push_clock_half_period) push_clk = ~push_clk;
+  end
+
+  initial begin
+    pop_clk = 1'b0;
+    wait (clock_periods_configured);
+    forever #(pop_clock_half_period) pop_clk = ~pop_clk;
+  end
+
+  always @(posedge pop_clk) pop_rst <= push_rst;
+
+  task automatic init_interfaces();
+    push_if.valid = 1'b0;
+    push_if.data  = '0;
+    pop_if.ready  = 1'b0;
+  endtask
+
+  task automatic reset_scoreboard();
+    expected_wr_idx = 0;
+    expected_rd_idx = 0;
+    expected_count = 0;
+    saw_push_backpressure = 0;
+  endtask
+
+  task automatic wait_push_cycles(input int cycles);
+    repeat (cycles) @(negedge push_clk);
+  endtask
+
+  task automatic wait_pop_cycles(input int cycles);
+    repeat (cycles) @(negedge pop_clk);
+  endtask
+
+  task automatic reset_dut();
+    $assertoff;
+    push_rst = 1'b1;
+    wait_push_cycles(14);
+    push_rst = 1'b0;
+    wait_push_cycles(ResetSettlePushCycles);
+    wait_pop_cycles(ResetSettlePopCycles);
+    $asserton;
+  endtask
+
+  task automatic expect_push(input logic [Width-1:0] data);
+    td.check(expected_wr_idx < ScoreboardDepth, "scoreboard overflow");
+    td.check(expected_count < Depth, "accepted push beyond FIFO depth");
+    if ((expected_wr_idx < ScoreboardDepth) && (expected_count < Depth)) begin
+      expected_data[expected_wr_idx] = data;
+      expected_wr_idx++;
+      expected_count++;
+    end
+  endtask
+
+  task automatic expect_pop(input logic [Width-1:0] data);
+    td.check(expected_count > 0, "unexpected pop");
+    if (expected_count > 0) begin
+      td.check(data === expected_data[expected_rd_idx], "pop data mismatch");
+      expected_rd_idx++;
+      expected_count--;
+    end
+  endtask
+
+  task automatic push_timeout(input string message);
+    repeat (TimeoutPushCycles) @(posedge push_clk);
+    td.check(1'b0, message);
+  endtask
+
+  task automatic pop_timeout(input string message);
+    repeat (TimeoutPopCycles) @(posedge pop_clk);
+    td.check(1'b0, message);
+  endtask
+
+  task automatic drive_push(input logic [Width-1:0] data);
+    fork : drive_push_timeout_guard
+      push_timeout("push timed out");
+      begin
+        @(negedge push_clk);
+        push_if.valid = 1'b1;
+        push_if.data  = data;
+        do begin
+          @(posedge push_clk);
+        end while (!push_if.ready);
+        expect_push(data);
+      end
+    join_any
+    disable drive_push_timeout_guard;
+
+    @(negedge push_clk);
+    push_if.valid = 1'b0;
+    push_if.data  = '0;
+  endtask
+
+  task automatic drive_backpressured_push(input logic [Width-1:0] data);
+    saw_push_backpressure = 0;
+    fork : drive_backpressured_push_timeout_guard
+      push_timeout("backpressured push timed out");
+      begin
+        @(negedge push_clk);
+        push_if.valid = 1'b1;
+        push_if.data  = data;
+        do begin
+          @(posedge push_clk);
+          saw_push_backpressure |= !push_if.ready;
+        end while (!push_if.ready);
+        expect_push(data);
+      end
+    join_any
+    disable drive_backpressured_push_timeout_guard;
+
+    td.check(saw_push_backpressure, "push was not backpressured before acceptance");
+    @(negedge push_clk);
+    push_if.valid = 1'b0;
+    push_if.data  = '0;
+  endtask
+
+  task automatic drive_pop(output logic [Width-1:0] data);
+    logic [Width-1:0] popped_data;
+
+    fork : drive_pop_timeout_guard
+      pop_timeout("pop timed out");
+      begin
+        @(negedge pop_clk);
+        pop_if.ready = 1'b1;
+        do begin
+          @(posedge pop_clk);
+        end while (!pop_if.valid);
+        popped_data = pop_if.data;
+        expect_pop(popped_data);
+      end
+    join_any
+    disable drive_pop_timeout_guard;
+
+    data = popped_data;
+    @(negedge pop_clk);
+    pop_if.ready = 1'b0;
+  endtask
+
+  task automatic wait_for_pop_valid();
+    fork : wait_for_pop_valid_timeout_guard
+      pop_timeout("pop_valid timed out");
+      begin
+        while (!pop_if.valid) begin
+          @(posedge pop_clk);
+        end
+      end
+    join_any
+    disable wait_for_pop_valid_timeout_guard;
+  endtask
+
+  task automatic wait_for_push_full();
+    fork : wait_for_push_full_timeout_guard
+      push_timeout("push_full timed out");
+      begin
+        while (!(push_if.full && !push_if.ready)) begin
+          @(posedge push_clk);
+        end
+      end
+    join_any
+    disable wait_for_push_full_timeout_guard;
+  endtask
+
+  task automatic drain_all();
+    logic [Width-1:0] data;
+
+    while (expected_count > 0) begin
+      drive_pop(data);
+    end
+  endtask
+
+  task automatic drive_push_stream(input int num_transactions, input int idle_max,
+                                   input int data_base);
+    int idle_cycles;
+
+    for (int i = 0; i < num_transactions; i++) begin
+      idle_cycles = $urandom_range(idle_max, 0);
+      wait_push_cycles(idle_cycles);
+      drive_push(Width'(data_base + i));
+    end
+  endtask
+
+  task automatic drive_pop_stream(input int num_transactions, input int idle_max);
+    logic [Width-1:0] data;
+    int idle_cycles;
+
+    for (int i = 0; i < num_transactions; i++) begin
+      idle_cycles = $urandom_range(idle_max, 0);
+      wait_pop_cycles(idle_cycles);
+      drive_pop(data);
+    end
+  endtask
+
+  // Check reset/idle status in both clock domains before any traffic.
+  task automatic test_idle();
+    reset_scoreboard();
+    init_interfaces();
+    reset_dut();
+
+    td.check(push_if.ready, "idle: push_ready should be high after reset");
+    td.check(!push_if.full, "idle: push_full should be low after reset");
+    td.check_integer(int'(push_if.slots), Depth, "idle: push_slots mismatch");
+    td.check(!pop_if.valid, "idle: pop_valid should be low after reset");
+    td.check(pop_if.empty, "idle: pop_empty should be high after reset");
+    td.check_integer(int'(pop_if.items), 0, "idle: pop_items mismatch");
+  endtask
+
+  // Check basic end-to-end delivery for one pushed item and one popped item.
+  task automatic test_single_push_pop();
+    logic [Width-1:0] data;
+    logic [Width-1:0] push_data;
+
+    reset_scoreboard();
+    init_interfaces();
+    reset_dut();
+
+    push_data = Width'($urandom);
+    drive_push(push_data);
+    drive_pop(data);
+  endtask
+
+  // Fill the FIFO to full, then verify push backpressure clears after a pop.
+  task automatic test_fill_and_backpressure();
+    logic [Width-1:0] data;
+
+    reset_scoreboard();
+    init_interfaces();
+    reset_dut();
+
+    pop_if.ready = 1'b0;
+    for (int i = 0; i < Depth; i++) begin
+      drive_push(Width'(i + 1));
+    end
+    wait_for_push_full();
+
+    fork
+      drive_backpressured_push(Width'('ha5));
+      drive_pop(data);
+    join
+
+    drain_all();
+  endtask
+
+  // Hold pop_ready low and verify pop_valid/data remain stable while stalled.
+  task automatic test_pop_stall();
+    logic [Width-1:0] stalled_data;
+    logic [Width-1:0] data;
+
+    reset_scoreboard();
+    init_interfaces();
+    reset_dut();
+
+    drive_push(Width'('h3c));
+    wait_for_pop_valid();
+
+    stalled_data = pop_if.data;
+    repeat (4) begin
+      @(posedge pop_clk);
+      td.check(pop_if.valid, "pop_stall: pop_valid dropped while stalled");
+      td.check(pop_if.data === stalled_data, "pop_stall: pop_data changed while stalled");
+    end
+
+    drive_pop(data);
+  endtask
+
+  // Exercise repeated push-then-pop transitions across wraparound boundaries.
+  task automatic test_alternating();
+    logic [Width-1:0] data;
+
+    reset_scoreboard();
+    init_interfaces();
+    reset_dut();
+
+    for (int i = 0; i < NumDirectedItems; i++) begin
+      drive_push(Width'(i));
+      drive_pop(data);
+    end
+  endtask
+
+  // Run independent randomized push/pop idle spacing and check FIFO ordering.
+  task automatic test_random();
+    reset_scoreboard();
+    init_interfaces();
+    reset_dut();
+
+    fork
+      drive_push_stream(NumRandomTransactions, RandomPushIdleMax, 'h100);
+      drive_pop_stream(NumRandomTransactions, RandomPopIdleMax);
+    join
+
+    td.check_integer(expected_count, 0, "random: scoreboard should be empty");
+  endtask
+
+  task automatic run_all_tests();
+    $display("Running test_idle");
+    test_idle();
+    $display("Running test_single_push_pop");
+    test_single_push_pop();
+    $display("Running test_fill_and_backpressure");
+    test_fill_and_backpressure();
+    $display("Running test_pop_stall");
+    test_pop_stall();
+    $display("Running test_alternating");
+    test_alternating();
+    $display("Running test_random");
+    test_random();
+  endtask
+
+  initial begin
+    static br_cdc_pkg::cdc_delay_mode_t cdc_delay_mode = br_cdc_pkg::CdcDelayNone;
+    void'($value$plusargs("cdc_delay_mode=%d", cdc_delay_mode));
+    $display("set cdc_delay_mode = %0s", cdc_delay_mode.name());
+`ifdef SIMULATION
+    br_cdc_pkg::cdc_delay_mode = cdc_delay_mode;
+`endif
+
+    wait (clock_periods_configured);
+    push_rst = 1'b1;
+    pop_rst  = 1'b1;
+    init_interfaces();
+    reset_scoreboard();
+
+    run_all_tests();
+
+    // Keep testbench inputs idle while final-not-valid assertions settle.
+    init_interfaces();
+    wait_push_cycles(ResetSettlePushCycles);
+    wait_pop_cycles(ResetSettlePopCycles);
+    td.check_integer(expected_count, 0, "final: scoreboard should be empty");
+    td.finish();
+  end
+
+endmodule
