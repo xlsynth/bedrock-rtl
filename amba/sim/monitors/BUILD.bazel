@@ -18,6 +18,7 @@ verilog_library(
     visibility = ["//visibility:public"],
     deps = [
         "//amba/rtl:br_amba_pkg",
+        "//amba/sim/drivers:br_amba_axil_sim_pkg",
     ],
 )
 

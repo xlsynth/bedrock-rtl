@@ -356,7 +356,8 @@ verilog_library(
     srcs = ["br_amba_axil_default_target_tb.sv"],
     deps = [
         "//amba/rtl:br_amba_axil_default_target",
-        "//amba/sim/drivers:br_amba_axil_driver",
+        "//amba/sim/drivers:br_amba_axil_completer_driver",
+        "//amba/sim/drivers:br_amba_sim_pkg",
         "//amba/sim/monitors:br_amba_axil_monitor",
         "//misc/sim:br_test_driver",
     ],

@@ -8,7 +8,7 @@
 // request streams with configurable channel skew. Tests can combine it with a
 // DUT-specific monitor to check response behavior without open-coding AXI-Lite
 // handshakes in each bench.
-module br_amba_axil_driver #(
+module br_amba_axil_completer_driver #(
     parameter int TimeoutCycles = 20
 ) (
     input logic clk,
@@ -230,4 +230,4 @@ module br_amba_axil_driver #(
     wait_cycles();
   endtask
 
-endmodule : br_amba_axil_driver
+endmodule : br_amba_axil_completer_driver

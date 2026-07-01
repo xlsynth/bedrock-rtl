@@ -50,8 +50,8 @@ verilog_library(
 )
 
 verilog_library(
-    name = "br_amba_axil_driver",
-    srcs = ["br_amba_axil_driver.sv"],
+    name = "br_amba_axil_completer_driver",
+    srcs = ["br_amba_axil_completer_driver.sv"],
     visibility = ["//visibility:public"],
 )
 
