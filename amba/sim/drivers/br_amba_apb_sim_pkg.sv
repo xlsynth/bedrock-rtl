@@ -5,6 +5,10 @@
 package br_amba_apb_sim_pkg;
   import br_amba::*;
 
+  localparam int ApbAddrWidth = 64;
+  localparam int ApbDataWidth = 1024;
+  localparam int ApbStrbWidth = ApbDataWidth / 8;
+
   localparam logic Psel0 = 1'b0;
   localparam logic Psel1 = 1'b1;
   localparam logic Penable0 = 1'b0;
@@ -12,6 +16,7 @@ package br_amba_apb_sim_pkg;
   localparam logic Pready0 = 1'b0;
   localparam logic Pready1 = 1'b1;
   localparam logic Pslverr0 = 1'b0;
+  localparam logic Pslverr1 = 1'b1;
 
   typedef struct packed {
     logic [31:0] addr;
@@ -35,9 +40,24 @@ package br_amba_apb_sim_pkg;
 
   typedef struct packed {
     logic ready;
-    logic [31:0] rdata;
+    logic [ApbDataWidth-1:0] rdata;
     logic slverr;
   } apb_response_t;
+
+  typedef struct packed {
+    logic [ApbAddrWidth-1:0] addr;
+    logic [ApbProtWidth-1:0] prot;
+    logic [ApbStrbWidth-1:0] strb;
+    logic write;
+    logic [ApbDataWidth-1:0] data;
+    logic slverr;
+  } apb_transfer_t;
+
+  typedef struct {
+    apb_transfer_t packet;
+    time           request_timestamp;
+    time           completion_timestamp;
+  } apb_transfer_observation_t;
 
   typedef struct {
     int num_transactions;

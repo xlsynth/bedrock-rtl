@@ -89,6 +89,7 @@ module br_amba_apb_timing_slice_tb;
 
   logic monitor_enable;
   logic monitor_done;
+  logic completer_failed;
 
   br_amba_apb_timing_slice #(
       .AddrWidth(AddrWidth)
@@ -147,7 +148,8 @@ module br_amba_apb_timing_slice_tb;
       .target_penable(penable_out),
       .pready(pready_in),
       .prdata(prdata_in),
-      .pslverr(pslverr_in)
+      .pslverr(pslverr_in),
+      .failed(completer_failed)
   );
 
   br_amba_apb_timing_slice_monitor #(
@@ -183,7 +185,7 @@ module br_amba_apb_timing_slice_tb;
       input apb_request_t request, input apb_request_controls_t request_controls,
       input apb_response_t response, input apb_response_controls_t response_controls);
     for (int transaction = 0; transaction < response_controls.num_transactions; transaction++) begin
-      monitor.expect_response(response.rdata + 32'(transaction), response.slverr);
+      monitor.expect_response(32'(response.rdata) + 32'(transaction), response.slverr);
     end
     fork
       requester.run(request, request_controls);
@@ -281,6 +283,7 @@ module br_amba_apb_timing_slice_tb;
 
     td.check(monitor.pending_count() == 0, "monitor response queue not empty");
     td.check(monitor.get_error_count() == 0, "APB monitor reported errors");
+    td.check(!completer_failed, "APB completer reported failures");
     monitor_enable = 1'b0;
     monitor_done   = 1'b1;
     td.finish();

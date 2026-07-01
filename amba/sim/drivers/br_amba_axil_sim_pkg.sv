@@ -50,6 +50,14 @@ package br_amba_axil_sim_pkg;
     AxilTransactionRead
   } axil_transaction_kind_t;
 
+  typedef enum int {
+    AxilHandshakeAw,
+    AxilHandshakeW,
+    AxilHandshakeB,
+    AxilHandshakeAr,
+    AxilHandshakeR
+  } axil_handshake_channel_t;
+
   typedef struct {
     logic [AxilAddrWidth-1:0] addr;
     logic [AxiProtWidth-1:0]  prot;
