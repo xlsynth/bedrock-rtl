@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: Apache-2.0
 
-FROM docker.io/library/rockylinux:8.9.20231119@sha256:2d05a9266523bbf24f33ebc3a9832e4d5fd74b973c220f2204ca802286aa275d
+FROM docker.io/library/rockylinux:9.3.20231119@sha256:d7be1c094cc5845ee815d4632fe377514ee6ebcf8efaed6892889657e5ddaaa6
 ARG TARGETPLATFORM
 WORKDIR /tmp
 COPY requirements_lock_3_12.txt /tmp/requirements_lock_3_12.txt
