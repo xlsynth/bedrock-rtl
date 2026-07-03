@@ -36,49 +36,35 @@ module br_cdc_fifo_ctrl_1r1w_tb;
   localparam int ScoreboardDepth = NumDirectedItems + NumRandomTransactions + Depth + 8;
   localparam int TimeoutPushCycles = 5000;
   localparam int TimeoutPopCycles = 5000;
+  localparam int ResetAssertPushCycles = 14;
+  localparam int ResetAssertPopSampleCycles = 2;
   localparam int ResetSettlePushCycles = NumSyncStages + RegisterResetActive + 4;
   localparam int ResetSettlePopCycles = NumSyncStages + RegisterResetActive + 4;
   localparam int NumClockPeriodOptions = 11;
-  // PushClockPeriodsNs[i] and PopClockPeriodsNs[i]:
-  // 0: faster push, 1: faster pop, 2: nearly identical
-  // 3: prime ratio, 4: very slow push, 5: very slow pop,
-  // 6: same frequency, 7-10 extra ratios.
-  localparam int PushClockPeriodsNs[NumClockPeriodOptions] = '{
-      8,
-      19,
-      10,
-      11,
-      101,
-      7,
-      10,
-      18,
-      23,
-      13,
-      10
-  };
-  localparam int PopClockPeriodsNs[NumClockPeriodOptions] = '{
-      19,
-      8,
-      11,
-      17,
-      7,
-      101,
-      10,
-      9,
-      22,
-      12,
-      16
+
+  typedef struct packed {
+    int push_ns;
+    int pop_ns;
+  } clock_period_option_t;
+
+  // faster push, faster pop, nearly identical, prime ratio, very slow push,
+  // very slow pop, same frequency, and extra ratios.
+  localparam clock_period_option_t ClockPeriodOptions[NumClockPeriodOptions] = '{
+      '{push_ns: 8, pop_ns: 19},
+      '{push_ns: 19, pop_ns: 8},
+      '{push_ns: 10, pop_ns: 11},
+      '{push_ns: 11, pop_ns: 17},
+      '{push_ns: 101, pop_ns: 7},
+      '{push_ns: 7, pop_ns: 101},
+      '{push_ns: 10, pop_ns: 10},
+      '{push_ns: 18, pop_ns: 9},
+      '{push_ns: 23, pop_ns: 22},
+      '{push_ns: 13, pop_ns: 12},
+      '{push_ns: 10, pop_ns: 16}
   };
 
   function automatic int random_clock_period_ns();
     return $urandom_range(101, 7);
-  endfunction
-
-  function automatic int positive_mod(input int value, input int modulus);
-    positive_mod = value % modulus;
-    if (positive_mod < 0) begin
-      positive_mod += modulus;
-    end
   endfunction
 
   typedef struct packed {
@@ -228,8 +214,8 @@ module br_cdc_fifo_ctrl_1r1w_tb;
       end else begin
         void'($urandom(clock_period_select));
         selected_clock_period_index   = $urandom_range(NumClockPeriodOptions - 1, 0);
-        selected_push_clock_period_ns = PushClockPeriodsNs[selected_clock_period_index];
-        selected_pop_clock_period_ns  = PopClockPeriodsNs[selected_clock_period_index];
+        selected_push_clock_period_ns = ClockPeriodOptions[selected_clock_period_index].push_ns;
+        selected_pop_clock_period_ns  = ClockPeriodOptions[selected_clock_period_index].pop_ns;
         $display("clock_period_select=%0d generated random clock_period_index=%0d",
                  clock_period_select, selected_clock_period_index);
       end
@@ -288,10 +274,20 @@ module br_cdc_fifo_ctrl_1r1w_tb;
     repeat (cycles) @(negedge pop_clk);
   endtask
 
+  task automatic wait_for_pop_reset_samples();
+    repeat (ResetAssertPopSampleCycles) @(posedge pop_clk);
+    // Release push_rst away from the pop_rst sampling edge.
+    @(negedge pop_clk);
+    td.check(pop_rst === 1'b1, "reset: pop_rst did not sample asserted push_rst");
+  endtask
+
   task automatic reset_dut();
     $assertoff;
     push_rst = 1'b1;
-    wait_push_cycles(14);
+    fork
+      wait_push_cycles(ResetAssertPushCycles);
+      wait_for_pop_reset_samples();
+    join
     push_rst = 1'b0;
     wait_push_cycles(ResetSettlePushCycles);
     wait_pop_cycles(ResetSettlePopCycles);

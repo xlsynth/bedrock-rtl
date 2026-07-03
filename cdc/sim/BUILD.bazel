@@ -117,6 +117,59 @@ verilog_elab_test(
     ]
 ]
 
+[
+    br_verilog_sim_test_tools_suite(
+        name = "br_cdc_fifo_ctrl_1r1w_extreme_clock_ratio_sim_test_tools_suite" + cdc_delay_mode + "_" + clock_ratio["name"],
+        params = {
+            "Depth": ["13"],
+            "NumRandomTransactions": ["48"],
+            "NumSyncStages": ["3"],
+            "PopClockPeriodNs": [clock_ratio["pop_clock_period_ns"]],
+            "PushClockPeriodNs": [clock_ratio["push_clock_period_ns"]],
+            "RamAddressDepthStages": ["1"],
+            "RandomPopIdleMax": ["4"],
+            "RandomPushIdleMax": ["3"],
+            "RegisterPopOutputs": [
+                "0",
+                "1",
+            ],
+            "Width": ["8"],
+        },
+        sim_opts = [
+            "+cdc_delay_mode=" + cdc_delay_mode,
+        ],
+        tags = ["no-sandbox"],
+        tools = [
+            "vcs",
+            "verilator",
+        ],
+        top = "br_cdc_fifo_ctrl_1r1w_tb",
+        deps = [
+            ":br_cdc_fifo_ctrl_1r1w_tb",
+            "//gate/rtl:br_gate_mock",
+            "//mux/rtl:br_mux_bin_structured_gates_mock",
+        ],
+    )
+    for cdc_delay_mode in [
+        "0",
+        "1",
+        "2",
+        "3",
+    ]
+    for clock_ratio in [
+        {
+            "name": "slow_pop",
+            "pop_clock_period_ns": "101",
+            "push_clock_period_ns": "7",
+        },
+        {
+            "name": "slow_push",
+            "pop_clock_period_ns": "7",
+            "push_clock_period_ns": "101",
+        },
+    ]
+]
+
 verilog_library(
     name = "br_cdc_fifo_flops_tb",
     srcs = ["br_cdc_fifo_flops_tb.sv"],
