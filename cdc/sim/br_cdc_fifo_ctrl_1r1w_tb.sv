@@ -276,12 +276,40 @@ module br_cdc_fifo_ctrl_1r1w_tb;
     td.check(pop_rst === 1'b1, "reset: pop_rst did not sample asserted push_rst");
   endtask
 
+  task automatic wait_for_push_reset_active_overlap();
+    fork : wait_for_push_reset_active_overlap_timeout_guard
+      push_timeout("reset: push-domain reset-active overlap timed out");
+      begin
+        do begin
+          @(posedge push_clk);
+        end while (!((dut.br_cdc_fifo_ctrl_push_1r1w.push_reset_active_push === 1'b1) &&
+                     (dut.br_cdc_fifo_ctrl_push_1r1w.push_reset_active_pop === 1'b1)));
+      end
+    join_any
+    disable wait_for_push_reset_active_overlap_timeout_guard;
+  endtask
+
+  task automatic wait_for_pop_reset_active_overlap();
+    fork : wait_for_pop_reset_active_overlap_timeout_guard
+      pop_timeout("reset: pop-domain reset-active overlap timed out");
+      begin
+        do begin
+          @(posedge pop_clk);
+        end while (!((dut.br_cdc_fifo_ctrl_pop_1r1w_inst.pop_reset_active_pop === 1'b1) &&
+                     (dut.br_cdc_fifo_ctrl_pop_1r1w_inst.pop_reset_active_push === 1'b1)));
+      end
+    join_any
+    disable wait_for_pop_reset_active_overlap_timeout_guard;
+  endtask
+
   task automatic reset_dut();
     init_interfaces();
     push_rst = 1'b1;
     fork
       wait_push_cycles(ResetAssertPushCycles);
       wait_for_pop_reset_samples();
+      wait_for_push_reset_active_overlap();
+      wait_for_pop_reset_active_overlap();
     join
     push_rst = 1'b0;
     wait_push_cycles(ResetSettlePushCycles);
