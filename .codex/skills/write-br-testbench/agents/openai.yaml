@@ -1,0 +1,4 @@
+interface:
+  display_name: "Write BR Testbench"
+  short_description: "Bedrock RTL testbench guidance"
+  default_prompt: "Use $write-br-testbench to add a br_dv_lib simulation testbench for this RTL module."
