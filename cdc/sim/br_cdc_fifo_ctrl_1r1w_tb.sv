@@ -178,13 +178,6 @@ module br_cdc_fifo_ctrl_1r1w_tb;
       .rd_data(pop_if.ram_rd_data)
   );
 
-`ifdef DUMP_WAVES
-  initial begin
-    $dumpfile("waves.vcd");
-    $dumpvars(0, br_cdc_fifo_ctrl_1r1w_tb);
-  end
-`endif
-
   br_test_driver #(
       .ClockPeriodNs(10),
       .ResetCycles  (14)
