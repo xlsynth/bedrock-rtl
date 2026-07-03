@@ -46,7 +46,6 @@ Target VCS first. Add Verilator when practical:
 - Before adding a Verilator warning waiver, identify the exact RTL construct that triggers it. Scope the waiver to the affected target and leave a comment describing the root cause; do not use a broad unexplained waiver.
 - Treat local compiler/toolchain failures separately from RTL portability. Do not commit simulator or C++ standard fixes solely for a developer-machine issue when the repository CI image already works.
 - Do not make a Verilator-enabled test depend on X-propagation semantics for pass/fail. Verilator is effectively 2-state in many practical cases; checks such as `$isunknown(out)` are usually not portable.
-- Avoid advanced testbench-only constructs unless existing nearby benches already use them with the same tool list: classes, clocking blocks, `process::self().srandom`, DPI, UVM, fork-heavy randomized environments, and complex SVA.
 - For CDC simulations that use delay modeling, follow the existing plusarg/`SIMULATION` pattern and keep Verilator exclusions if the delay model uses unsupported process randomization.
 
 ## Bazel Integration
