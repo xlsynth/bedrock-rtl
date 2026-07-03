@@ -1,0 +1,143 @@
+# SPDX-License-Identifier: Apache-2.0
+
+load("@rules_hdl//verilog:providers.bzl", "verilog_library")
+load("//bazel:br_verilog.bzl", "br_verilog_sim_test_tools_suite")
+load("//bazel:verilog.bzl", "verilog_elab_test")
+
+package(default_visibility = ["//visibility:private"])
+
+verilog_library(
+    name = "br_ram_addr_decoder_if",
+    srcs = ["br_ram_addr_decoder_if.sv"],
+    deps = ["//br_dv_lib:br_dv_test"],
+)
+
+verilog_library(
+    name = "br_ram_addr_decoder_tb_pkg",
+    srcs = ["br_ram_addr_decoder_tb_pkg.sv"],
+    hdrs = [
+        "br_ram_addr_decoder_driver.svh",
+        "br_ram_addr_decoder_env.svh",
+        "br_ram_addr_decoder_item.svh",
+        "br_ram_addr_decoder_monitor.svh",
+        "br_ram_addr_decoder_random_sequence.svh",
+        "br_ram_addr_decoder_scoreboard.svh",
+    ],
+    deps = [
+        ":br_ram_addr_decoder_if",
+        "//br_dv_lib:br_dv_test",
+    ],
+)
+
+verilog_library(
+    name = "br_ram_addr_decoder_tb",
+    srcs = ["br_ram_addr_decoder_tb.sv"],
+    deps = [
+        ":br_ram_addr_decoder_if",
+        ":br_ram_addr_decoder_tb_pkg",
+        "//br_dv_lib:br_dv_test",
+        "//pkg:br_math_pkg",
+        "//ram/rtl:br_ram_addr_decoder",
+    ],
+)
+
+verilog_elab_test(
+    name = "br_ram_addr_decoder_tb_elab_test",
+    tool = "slang",
+    deps = [":br_ram_addr_decoder_tb"],
+)
+
+br_verilog_sim_test_tools_suite(
+    name = "br_ram_addr_decoder_sim_test_tools_suite_one_tile",
+    params = {
+        "Depth": [
+            "1",
+            "8",
+        ],
+        "DataWidth": [
+            "1",
+            "8",
+        ],
+        "Tiles": ["1"],
+        "Stages": [
+            "0",
+            "2",
+        ],
+        "EnableDatapath": [
+            "0",
+            "1",
+        ],
+    },
+    tools = [
+        "vcs",
+        "verilator",
+    ],
+    top = "br_ram_addr_decoder_tb",
+    deps = [":br_ram_addr_decoder_tb"],
+)
+
+br_verilog_sim_test_tools_suite(
+    name = "br_ram_addr_decoder_sim_test_tools_suite_power2",
+    params = {
+        "Depth": ["32"],
+        "DataWidth": [
+            "1",
+            "8",
+        ],
+        "Tiles": [
+            "2",
+            "4",
+            "8",
+            "32",
+        ],
+        "Stages": [
+            "0",
+            "1",
+            "2",
+            "3",
+        ],
+        "EnableDatapath": [
+            "0",
+            "1",
+        ],
+    },
+    tools = [
+        "vcs",
+        "verilator",
+    ],
+    top = "br_ram_addr_decoder_tb",
+    deps = [":br_ram_addr_decoder_tb"],
+)
+
+br_verilog_sim_test_tools_suite(
+    name = "br_ram_addr_decoder_sim_test_tools_suite_nonpower2",
+    params = {
+        "Depth": ["30"],
+        "DataWidth": [
+            "1",
+            "8",
+        ],
+        "Tiles": [
+            "2",
+            "3",
+            "5",
+            "6",
+            "10",
+            "15",
+        ],
+        "Stages": [
+            "0",
+            "2",
+        ],
+        "EnableDatapath": [
+            "0",
+            "1",
+        ],
+    },
+    tools = [
+        "vcs",
+        "verilator",
+    ],
+    top = "br_ram_addr_decoder_tb",
+    deps = [":br_ram_addr_decoder_tb"],
+)
