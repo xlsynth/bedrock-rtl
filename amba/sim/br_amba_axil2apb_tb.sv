@@ -164,7 +164,8 @@ module br_amba_axil2apb_tb;
 
   br_amba_axil_requester_driver #(
       .AddrWidth(AddrWidth),
-      .DataWidth(DataWidth)
+      .DataWidth(DataWidth),
+      .TimeoutCycles(TimeoutCycles)
   ) axil_driver (
       .clk(clk),
       .rst(rst),
@@ -188,7 +189,8 @@ module br_amba_axil2apb_tb;
   );
 
   br_amba_apb_completer_driver #(
-      .DataWidth(DataWidth)
+      .DataWidth(DataWidth),
+      .TimeoutCycles(TimeoutCycles)
   ) apb_completer (
       .clk(clk),
       .target_psel(psel),
