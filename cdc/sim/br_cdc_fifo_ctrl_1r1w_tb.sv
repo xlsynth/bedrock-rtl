@@ -90,12 +90,12 @@ module br_cdc_fifo_ctrl_1r1w_tb;
     logic [Width-1:0]      ram_rd_data;
   } pop_if_t;
 
-  logic push_clk;
-  logic push_rst;
+  logic push_clk = 1'b0;
+  logic push_rst = 1'b1;
   push_if_t push_if;
 
-  logic pop_clk;
-  logic pop_rst;
+  logic pop_clk = 1'b0;
+  logic pop_rst = 1'b1;
   pop_if_t pop_if;
 
   logic td_clk;
@@ -105,7 +105,7 @@ module br_cdc_fifo_ctrl_1r1w_tb;
   int selected_push_clock_period_ns;
   int selected_pop_clock_period_ns;
   int selected_clock_period_index;
-  bit clock_periods_configured;
+  bit clock_periods_configured = 1'b0;
   logic [Width-1:0] expected_data[ScoreboardDepth];
   int expected_wr_idx;
   int expected_rd_idx;
@@ -233,18 +233,20 @@ module br_cdc_fifo_ctrl_1r1w_tb;
   end
 
   initial begin
-    push_clk = 1'b0;
     wait (clock_periods_configured);
     forever #(push_clock_half_period) push_clk = ~push_clk;
   end
 
   initial begin
-    pop_clk = 1'b0;
     wait (clock_periods_configured);
     forever #(pop_clock_half_period) pop_clk = ~pop_clk;
   end
 
   always @(posedge pop_clk) pop_rst <= push_rst;
+
+  initial begin
+    init_interfaces();
+  end
 
   task automatic init_interfaces();
     push_if.valid = 1'b0;
@@ -275,7 +277,7 @@ module br_cdc_fifo_ctrl_1r1w_tb;
   endtask
 
   task automatic reset_dut();
-    $assertoff;
+    init_interfaces();
     push_rst = 1'b1;
     fork
       wait_push_cycles(ResetAssertPushCycles);
@@ -284,7 +286,6 @@ module br_cdc_fifo_ctrl_1r1w_tb;
     push_rst = 1'b0;
     wait_push_cycles(ResetSettlePushCycles);
     wait_pop_cycles(ResetSettlePopCycles);
-    $asserton;
   endtask
 
   task automatic expect_push(input logic [Width-1:0] data);
