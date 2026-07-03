@@ -14,7 +14,7 @@
  * - External 1R1W RAM timing through br_ram_flops.
  * - Bazel-swept RAM latency, pop/push-output registration, CDC synchronizer depth,
  *   structured-gate data qualification, and CDC delay mode.
- * - Deterministic clock-period selection through plusargs.
+ * - Default and plusarg-selected push/pop clock periods.
  */
 module br_cdc_fifo_ctrl_1r1w_push_credit_tb;
 
@@ -41,9 +41,19 @@ module br_cdc_fifo_ctrl_1r1w_push_credit_tb;
   localparam int NumRandomTransactions = 100;
   localparam int TimeoutPushCycles = 5000;
   localparam int TimeoutPopCycles = 5000;
+  localparam int PushCountSettleCycles = (RegisterResetActive + 1 > RamWriteLatency) ?
+      RegisterResetActive + 1 : RamWriteLatency;
+  localparam int PopCountSettleCycles = RegisterResetActive + 1;
+  localparam int ResetAssertPushCycles = PushCountSettleCycles + NumSyncStages + PropDelay + 4;
+  localparam int ResetAssertPopCycles = PopCountSettleCycles + NumSyncStages + 4;
   localparam int ResetSettlePushCycles = NumSyncStages + RegisterResetActive + PropDelay + 4;
   localparam int ResetSettlePopCycles = NumSyncStages + RegisterResetActive + RamReadLatency +
       32'(RegisterPopOutputs) + 4;
+  localparam int ResetPreIdlePushCycles = PushCountSettleCycles + NumSyncStages + PropDelay + 2;
+  localparam int ResetPreIdlePopCycles = PopCountSettleCycles + NumSyncStages + RamReadLatency +
+      32'(RegisterPopOutputs) + 2;
+  localparam int SenderResetAssertPushCycles = ResetAssertPushCycles + PropDelay + 2;
+  localparam int SenderResetSettlePushCycles = ResetSettlePushCycles + PropDelay + 2;
   localparam int NumClockPeriodOptions = 11;
   localparam int PushClockPeriodsNs[NumClockPeriodOptions] = '{
       8,
@@ -123,13 +133,13 @@ module br_cdc_fifo_ctrl_1r1w_push_credit_tb;
     endcase
   endfunction
 
-  logic push_clk;
-  logic push_rst;
+  logic push_clk = 1'b0;
+  logic push_rst = 1'b1;
   credit_sender_push_if_t credit_sender_push_if;
   dut_push_if_t dut_push_if;
 
-  logic pop_clk;
-  logic pop_rst;
+  logic pop_clk = 1'b0;
+  logic pop_rst = 1'b1;
   dut_pop_if_t dut_pop_if;
 
   logic td_clk;
@@ -139,7 +149,7 @@ module br_cdc_fifo_ctrl_1r1w_push_credit_tb;
   int selected_push_clock_period_ns;
   int selected_pop_clock_period_ns;
   int selected_clock_period_index;
-  bit clock_periods_configured;
+  bit clock_periods_configured = 1'b0;
 
   dut_push_if_t dut_push_if_d;
   logic credit_sender_rst;
@@ -160,19 +170,13 @@ module br_cdc_fifo_ctrl_1r1w_push_credit_tb;
 
   logic [Width-1:0] expected_data[$];
   int expected_count;
-  logic last_push_fire;
-  logic last_pop_fire;
-  logic sampled_push_fire;
-  logic sampled_pop_fire;
-  int sampled_expected_count;
-  logic [Width-1:0] sampled_push_data;
-  logic [Width-1:0] sampled_pop_data;
   bit saw_credit_backpressure;
   bit saw_credit_withhold;
   bit saw_push_credit_stall;
   bit saw_push_sender_reset;
   bit random_pushes_done;
-  logic [Width-1:0] last_pop_data;
+  bit reset_in_progress;
+  bit reset_seen;
 
   assign credit_sender_rst = push_rst || push_sender_rst;
   // Reset the push-side RAM model while the delayed sender reset is visible at the DUT.
@@ -349,18 +353,18 @@ module br_cdc_fifo_ctrl_1r1w_push_credit_tb;
   end
 
   initial begin
-    push_clk = 1'b0;
     wait (clock_periods_configured);
     forever #(push_clock_half_period) push_clk = ~push_clk;
   end
 
   initial begin
-    pop_clk = 1'b0;
     wait (clock_periods_configured);
     forever #(pop_clock_half_period) pop_clk = ~pop_clk;
   end
 
-  always @(posedge pop_clk) pop_rst <= push_rst;
+  initial begin
+    init_interfaces();
+  end
 
   task automatic init_interfaces();
     credit_sender_push_if.valid = 1'b0;
@@ -377,37 +381,111 @@ module br_cdc_fifo_ctrl_1r1w_push_credit_tb;
   task automatic reset_scoreboard();
     expected_data.delete();
     expected_count = 0;
-    last_push_fire = 1'b0;
-    last_pop_fire = 1'b0;
-    sampled_push_fire = 1'b0;
-    sampled_pop_fire = 1'b0;
-    sampled_expected_count = 0;
-    sampled_push_data = '0;
-    sampled_pop_data = '0;
     saw_credit_backpressure = 1'b0;
     saw_credit_withhold = 1'b0;
     saw_push_credit_stall = 1'b0;
     saw_push_sender_reset = 1'b0;
     random_pushes_done = 1'b0;
-    last_pop_data = '0;
+    reset_in_progress = 1'b0;
   endtask
 
   task automatic wait_push_cycles(input int cycles);
-    repeat (cycles) @(negedge push_clk);
+    repeat (cycles) @(posedge push_clk);
   endtask
 
   task automatic wait_pop_cycles(input int cycles);
-    repeat (cycles) @(negedge pop_clk);
+    repeat (cycles) @(posedge pop_clk);
+  endtask
+
+  task automatic wait_for_reset_safe_idle();
+    if (reset_seen) begin
+      fork
+        wait_push_cycles(ResetPreIdlePushCycles);
+        wait_pop_cycles(ResetPreIdlePopCycles);
+      join
+    end
   endtask
 
   task automatic reset_dut();
-    $assertoff;
-    push_rst = 1'b1;
-    wait_push_cycles(14);
-    push_rst = 1'b0;
+    reset_in_progress = 1'b1;
+    init_interfaces();
+    wait_for_reset_safe_idle();
+
+    fork
+      begin
+        @(posedge push_clk);
+        push_rst <= 1'b1;
+      end
+      begin
+        @(posedge pop_clk);
+        pop_rst <= 1'b1;
+      end
+    join
+
+    fork
+      wait_push_cycles(ResetAssertPushCycles);
+      wait_pop_cycles(ResetAssertPopCycles);
+    join
+
+    fork
+      begin
+        @(posedge push_clk);
+        push_rst <= 1'b0;
+      end
+      begin
+        @(posedge pop_clk);
+        pop_rst <= 1'b0;
+      end
+    join
+
     wait_push_cycles(ResetSettlePushCycles);
     wait_pop_cycles(ResetSettlePopCycles);
-    $asserton;
+    reset_seen = 1'b1;
+    reset_in_progress = 1'b0;
+  endtask
+
+  task automatic reset_push_sender_with_pop_overlap();
+    reset_in_progress = 1'b1;
+    credit_sender_push_if.valid = 1'b0;
+    credit_sender_push_if.data = '0;
+    dut_pop_if.ready = 1'b0;
+    push_credit_stall = 1'b0;
+    credit_withhold_sender = '0;
+    credit_withhold_push = '0;
+    wait_for_reset_safe_idle();
+
+    fork
+      begin
+        @(posedge push_clk);
+        push_sender_rst <= 1'b1;
+      end
+      begin
+        @(posedge pop_clk);
+        pop_rst <= 1'b1;
+      end
+    join
+
+    fork
+      wait_push_cycles(SenderResetAssertPushCycles);
+      wait_pop_cycles(ResetAssertPopCycles);
+    join
+
+    saw_push_sender_reset |= push_sender_in_reset_d;
+
+    fork
+      begin
+        @(posedge push_clk);
+        push_sender_rst <= 1'b0;
+      end
+      begin
+        @(posedge pop_clk);
+        pop_rst <= 1'b0;
+      end
+    join
+
+    wait_push_cycles(SenderResetSettlePushCycles);
+    wait_pop_cycles(ResetSettlePopCycles);
+    reset_in_progress = 1'b0;
   endtask
 
   task automatic expect_push(input logic [Width-1:0] data);
@@ -424,7 +502,8 @@ module br_cdc_fifo_ctrl_1r1w_push_credit_tb;
     td.check(expected_data.size() > 0, "unexpected pop");
     if (expected_data.size() > 0) begin
       expected = expected_data.pop_front();
-      td.check(data === expected, "pop data mismatch");
+      td.check(data === expected, $sformatf(
+               "pop data mismatch: got 0x%0h expected 0x%0h", data, expected));
       expected_count = expected_data.size();
     end
   endtask
@@ -459,32 +538,17 @@ module br_cdc_fifo_ctrl_1r1w_push_credit_tb;
   endtask
 
   task automatic monitor_push_credit_interface();
-    sampled_expected_count = expected_count;
-    sampled_push_fire =
-        dut.br_cdc_fifo_ctrl_push_1r1w_push_credit_inst.br_cdc_fifo_push_ctrl_credit.push_beat;
-    sampled_push_data =
-        dut.br_cdc_fifo_ctrl_push_1r1w_push_credit_inst.br_cdc_fifo_push_ctrl_credit.internal_data;
-    last_push_fire = sampled_push_fire;
     saw_credit_backpressure |= credit_sender_push_if.valid && !credit_sender_push_if.ready;
     saw_credit_withhold |= |credit_withhold_push;
     saw_push_credit_stall |= push_credit_stall;
     saw_push_sender_reset |= push_sender_in_reset_d;
   endtask
 
-  task automatic monitor_pop_interface();
-    sampled_pop_fire = dut_pop_if.ready && dut_pop_if.valid;
-    sampled_pop_data = dut_pop_if.data;
-    last_pop_fire = sampled_pop_fire;
-    if (sampled_pop_fire) begin
-      last_pop_data = sampled_pop_data;
-    end
-  endtask
-
   task automatic monitor_enable();
     fork
       forever begin
         @(posedge push_clk);
-        if (!push_rst) begin
+        if (!reset_in_progress && !push_rst) begin
           monitor_push_credit_interface();
           check_push_status_bounds("push_monitor");
           check_credit_status(CreditCheckPushMonitor);
@@ -493,8 +557,7 @@ module br_cdc_fifo_ctrl_1r1w_push_credit_tb;
 
       forever begin
         @(posedge pop_clk);
-        if (!pop_rst) begin
-          monitor_pop_interface();
+        if (!reset_in_progress && !pop_rst) begin
           check_pop_status_bounds("pop_monitor");
         end
       end
@@ -502,13 +565,13 @@ module br_cdc_fifo_ctrl_1r1w_push_credit_tb;
   endtask
 
   task automatic push_timeout(input string message);
-    repeat (TimeoutPushCycles) @(posedge push_clk);
-    td.check(1'b0, message);
+    wait_push_cycles(TimeoutPushCycles);
+    $fatal(1, "%s", message);
   endtask
 
   task automatic pop_timeout(input string message);
-    repeat (TimeoutPopCycles) @(posedge pop_clk);
-    td.check(1'b0, message);
+    wait_pop_cycles(TimeoutPopCycles);
+    $fatal(1, "%s", message);
   endtask
 
   task automatic wait_for_initial_credit();
@@ -527,24 +590,18 @@ module br_cdc_fifo_ctrl_1r1w_push_credit_tb;
     fork : drive_push_timeout_guard
       push_timeout("push timed out");
       begin
-        @(negedge push_clk);
-        credit_sender_push_if.valid = 1'b1;
-        credit_sender_push_if.data  = data;
+        @(posedge push_clk);
+        credit_sender_push_if.valid <= 1'b1;
+        credit_sender_push_if.data  <= data;
         do begin
           @(posedge push_clk);
         end while (!credit_sender_push_if.ready);
-        sampled_push_fire = 1'b1;
-        sampled_push_data = data;
-        last_push_fire = sampled_push_fire;
         expect_push(data);
+        credit_sender_push_if.valid <= 1'b0;
+        credit_sender_push_if.data  <= '0;
       end
     join_any
     disable drive_push_timeout_guard;
-
-    @(negedge push_clk);
-    credit_sender_push_if.valid = 1'b0;
-    credit_sender_push_if.data = '0;
-    sampled_push_fire = 1'b0;
   endtask
 
   task automatic drive_backpressured_push(input logic [Width-1:0] data);
@@ -552,26 +609,21 @@ module br_cdc_fifo_ctrl_1r1w_push_credit_tb;
     fork : drive_backpressured_push_timeout_guard
       push_timeout("backpressured push timed out");
       begin
-        @(negedge push_clk);
-        credit_sender_push_if.valid = 1'b1;
-        credit_sender_push_if.data  = data;
+        @(posedge push_clk);
+        credit_sender_push_if.valid <= 1'b1;
+        credit_sender_push_if.data  <= data;
         do begin
           @(posedge push_clk);
           saw_credit_backpressure |= !credit_sender_push_if.ready;
         end while (!credit_sender_push_if.ready);
-        sampled_push_fire = 1'b1;
-        sampled_push_data = data;
-        last_push_fire = sampled_push_fire;
         expect_push(data);
+        credit_sender_push_if.valid <= 1'b0;
+        credit_sender_push_if.data  <= '0;
       end
     join_any
     disable drive_backpressured_push_timeout_guard;
 
     td.check(saw_credit_backpressure, "push was not backpressured before acceptance");
-    @(negedge push_clk);
-    credit_sender_push_if.valid = 1'b0;
-    credit_sender_push_if.data = '0;
-    sampled_push_fire = 1'b0;
   endtask
 
   task automatic drive_pop(output logic [Width-1:0] data);
@@ -580,25 +632,39 @@ module br_cdc_fifo_ctrl_1r1w_push_credit_tb;
     fork : drive_pop_timeout_guard
       pop_timeout("pop timed out");
       begin
-        @(negedge pop_clk);
-        dut_pop_if.ready = 1'b1;
-        do begin
-          @(posedge pop_clk);
-        end while (!dut_pop_if.valid);
+        @(posedge pop_clk);
+        dut_pop_if.ready <= 1'b0;
+        do @(posedge pop_clk); while (!dut_pop_if.valid);
         popped_data = dut_pop_if.data;
-        sampled_pop_fire = 1'b1;
-        sampled_pop_data = popped_data;
-        last_pop_fire = sampled_pop_fire;
-        last_pop_data = popped_data;
+        dut_pop_if.ready <= 1'b1;
+        @(posedge pop_clk);
         expect_pop(popped_data);
+        dut_pop_if.ready <= 1'b0;
       end
     join_any
     disable drive_pop_timeout_guard;
 
     data = popped_data;
-    @(negedge pop_clk);
-    dut_pop_if.ready = 1'b0;
-    sampled_pop_fire = 1'b0;
+  endtask
+
+  task automatic drive_ready_pop(output logic [Width-1:0] data);
+    logic [Width-1:0] popped_data;
+
+    fork : drive_ready_pop_timeout_guard
+      pop_timeout("ready pop timed out");
+      begin
+        @(posedge pop_clk);
+        dut_pop_if.ready <= 1'b1;
+        do @(posedge pop_clk); while (!dut_pop_if.valid);
+        popped_data = dut_pop_if.data;
+        expect_pop(popped_data);
+        @(posedge pop_clk);
+        dut_pop_if.ready <= 1'b0;
+      end
+    join_any
+    disable drive_ready_pop_timeout_guard;
+
+    data = popped_data;
   endtask
 
   task automatic set_push_credit_stall(input logic stall);
@@ -607,10 +673,6 @@ module br_cdc_fifo_ctrl_1r1w_push_credit_tb;
 
   task automatic set_credit_withhold(input logic [CreditWidth-1:0] withhold);
     credit_withhold_push = withhold;
-  endtask
-
-  task automatic set_push_sender_reset(input logic in_reset);
-    push_sender_rst = in_reset;
   endtask
 
   task automatic wait_for_pop_valid();
@@ -694,14 +756,19 @@ module br_cdc_fifo_ctrl_1r1w_push_credit_tb;
   endtask
 
   task automatic test_empty_cutthrough();
+    logic [Width-1:0] data;
+    logic [Width-1:0] push_data;
+
     reset_scoreboard();
     init_interfaces();
     reset_dut();
     wait_for_initial_credit();
 
-    dut_pop_if.ready = 1'b1;
-    drive_push(Width'($urandom));
-    drain_all();
+    push_data = Width'($urandom);
+    fork
+      drive_push(push_data);
+      drive_ready_pop(data);
+    join
     check_quiescent_empty_status("empty_cutthrough");
   endtask
 
@@ -801,10 +868,8 @@ module br_cdc_fifo_ctrl_1r1w_push_credit_tb;
     reset_dut();
     wait_for_initial_credit();
 
-    set_push_sender_reset(1'b1);
-    wait_push_cycles(PropDelay + 2);
+    reset_push_sender_with_pop_overlap();
     td.check(saw_push_sender_reset, "push_sender_reset: DUT did not observe sender reset");
-    set_push_sender_reset(1'b0);
     wait_for_initial_credit();
     check_quiescent_empty_status("push_sender_reset");
   endtask
@@ -909,6 +974,8 @@ module br_cdc_fifo_ctrl_1r1w_push_credit_tb;
     pop_rst  = 1'b1;
     init_interfaces();
     reset_scoreboard();
+    reset_in_progress = 1'b1;
+    reset_seen = 1'b0;
     fork
       monitor_enable();
     join_none
