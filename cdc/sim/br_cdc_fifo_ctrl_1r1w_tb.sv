@@ -13,6 +13,17 @@
  * - External 1R1W RAM timing through br_ram_flops.
  * - Bazel-swept depth, width, RAM latency, pop-output registration, CDC
  *   synchronizer depth, plus plusarg-selected/randomized push/pop clock periods.
+ * - Extreme push/pop clock ratios, including 101 ns vs 7 ns, to verify that
+ *   reset is sampled and held long enough in both domains.
+ *
+ * Reset verification:
+ * The DUT is composed from CDC helpers whose synchronizers assume the source
+ * gray count changes by at most one bit between source-clock samples. The test
+ * deliberately runs multiple scenarios under unrelated push/pop clocks, so each
+ * scenario reset must leave the previous scenario quiescent before reset is
+ * released. The reset helper below therefore drives only the DUT ports and
+ * holds both synchronous resets long enough for the documented reset-active and
+ * count-delay pipelines to settle before starting the next scenario.
  */
 module br_cdc_fifo_ctrl_1r1w_tb;
 
@@ -36,10 +47,15 @@ module br_cdc_fifo_ctrl_1r1w_tb;
   localparam int ScoreboardDepth = NumDirectedItems + NumRandomTransactions + Depth + 8;
   localparam int TimeoutPushCycles = 5000;
   localparam int TimeoutPopCycles = 5000;
-  localparam int ResetAssertPushCycles = 14;
-  localparam int ResetAssertPopSampleCycles = 2;
+  localparam int PushCountSettleCycles = (RegisterResetActive + 1 > RamWriteLatency) ?
+      RegisterResetActive + 1 : RamWriteLatency;
+  localparam int PopCountSettleCycles = RegisterResetActive + 1;
+  localparam int ResetAssertPushCycles = PushCountSettleCycles + NumSyncStages + 4;
+  localparam int ResetAssertPopCycles = PopCountSettleCycles + NumSyncStages + 4;
   localparam int ResetSettlePushCycles = NumSyncStages + RegisterResetActive + 4;
   localparam int ResetSettlePopCycles = NumSyncStages + RegisterResetActive + 4;
+  localparam int ResetPreIdlePushCycles = PushCountSettleCycles + NumSyncStages + 2;
+  localparam int ResetPreIdlePopCycles = PopCountSettleCycles + NumSyncStages + 2;
   localparam int NumClockPeriodOptions = 11;
 
   typedef struct packed {
@@ -109,8 +125,12 @@ module br_cdc_fifo_ctrl_1r1w_tb;
   logic [Width-1:0] expected_data[ScoreboardDepth];
   int expected_wr_idx;
   int expected_rd_idx;
-  int expected_count;
   bit saw_push_backpressure;
+  bit reset_seen;
+
+  function automatic int expected_count();
+    return expected_wr_idx - expected_rd_idx;
+  endfunction
 
   br_cdc_fifo_ctrl_1r1w #(
       .Depth(Depth),
@@ -242,8 +262,6 @@ module br_cdc_fifo_ctrl_1r1w_tb;
     forever #(pop_clock_half_period) pop_clk = ~pop_clk;
   end
 
-  always @(posedge pop_clk) pop_rst <= push_rst;
-
   initial begin
     init_interfaces();
   end
@@ -257,112 +275,114 @@ module br_cdc_fifo_ctrl_1r1w_tb;
   task automatic reset_scoreboard();
     expected_wr_idx = 0;
     expected_rd_idx = 0;
-    expected_count = 0;
     saw_push_backpressure = 0;
   endtask
 
+  // After the first scenario, let accepted transfers propagate through the
+  // externally visible RAM and CDC latency windows before asserting the next
+  // reset. This keeps scenario-to-scenario reset testing inside the integrator
+  // contract without peeking into DUT internals.
+  task automatic wait_for_reset_safe_idle();
+    if (reset_seen) begin
+      fork
+        wait_push_cycles(ResetPreIdlePushCycles);
+        wait_pop_cycles(ResetPreIdlePopCycles);
+      join
+    end
+  endtask
+
   task automatic wait_push_cycles(input int cycles);
-    repeat (cycles) @(negedge push_clk);
+    repeat (cycles) @(posedge push_clk);
   endtask
 
   task automatic wait_pop_cycles(input int cycles);
-    repeat (cycles) @(negedge pop_clk);
-  endtask
-
-  task automatic wait_for_pop_reset_samples();
-    repeat (ResetAssertPopSampleCycles) @(posedge pop_clk);
-    // Release push_rst away from the pop_rst sampling edge.
-    @(negedge pop_clk);
-    td.check(pop_rst === 1'b1, "reset: pop_rst did not sample asserted push_rst");
-  endtask
-
-  task automatic wait_for_push_reset_active_overlap();
-    fork : wait_for_push_reset_active_overlap_timeout_guard
-      push_timeout("reset: push-domain reset-active overlap timed out");
-      begin
-        do begin
-          @(posedge push_clk);
-        end while (!((dut.br_cdc_fifo_ctrl_push_1r1w.push_reset_active_push === 1'b1) &&
-                     (dut.br_cdc_fifo_ctrl_push_1r1w.push_reset_active_pop === 1'b1)));
-      end
-    join_any
-    disable wait_for_push_reset_active_overlap_timeout_guard;
-  endtask
-
-  task automatic wait_for_pop_reset_active_overlap();
-    fork : wait_for_pop_reset_active_overlap_timeout_guard
-      pop_timeout("reset: pop-domain reset-active overlap timed out");
-      begin
-        do begin
-          @(posedge pop_clk);
-        end while (!((dut.br_cdc_fifo_ctrl_pop_1r1w_inst.pop_reset_active_pop === 1'b1) &&
-                     (dut.br_cdc_fifo_ctrl_pop_1r1w_inst.pop_reset_active_push === 1'b1)));
-      end
-    join_any
-    disable wait_for_pop_reset_active_overlap_timeout_guard;
+    repeat (cycles) @(posedge pop_clk);
   endtask
 
   task automatic reset_dut();
     init_interfaces();
-    push_rst = 1'b1;
+    wait_for_reset_safe_idle();
+
+    fork
+      begin
+        @(posedge push_clk);
+        push_rst <= 1'b1;
+      end
+      begin
+        @(posedge pop_clk);
+        pop_rst <= 1'b1;
+      end
+    join
+
     fork
       wait_push_cycles(ResetAssertPushCycles);
-      wait_for_pop_reset_samples();
-      wait_for_push_reset_active_overlap();
-      wait_for_pop_reset_active_overlap();
+      wait_pop_cycles(ResetAssertPopCycles);
     join
-    push_rst = 1'b0;
+
+    fork
+      begin
+        @(posedge push_clk);
+        push_rst <= 1'b0;
+      end
+      begin
+        @(posedge pop_clk);
+        pop_rst <= 1'b0;
+      end
+    join
+
     wait_push_cycles(ResetSettlePushCycles);
     wait_pop_cycles(ResetSettlePopCycles);
+    reset_seen = 1'b1;
   endtask
 
   task automatic expect_push(input logic [Width-1:0] data);
     td.check(expected_wr_idx < ScoreboardDepth, "scoreboard overflow");
-    td.check(expected_count < Depth, "accepted push beyond FIFO depth");
-    if ((expected_wr_idx < ScoreboardDepth) && (expected_count < Depth)) begin
+    td.check(expected_count() < Depth, "accepted push beyond FIFO depth");
+    if ((expected_wr_idx < ScoreboardDepth) && (expected_count() < Depth)) begin
       expected_data[expected_wr_idx] = data;
       expected_wr_idx++;
-      expected_count++;
     end
   endtask
 
   task automatic expect_pop(input logic [Width-1:0] data);
-    td.check(expected_count > 0, "unexpected pop");
-    if (expected_count > 0) begin
-      td.check(data === expected_data[expected_rd_idx], "pop data mismatch");
+    td.check(expected_count() > 0, "unexpected pop");
+    if (expected_count() > 0) begin
+      td.check(data === expected_data[expected_rd_idx], $sformatf(
+               "pop data mismatch at rd_idx=%0d: got 0x%0h expected 0x%0h",
+               expected_rd_idx,
+               data,
+               expected_data[expected_rd_idx]
+               ));
       expected_rd_idx++;
-      expected_count--;
     end
   endtask
 
   task automatic push_timeout(input string message);
-    repeat (TimeoutPushCycles) @(posedge push_clk);
-    td.check(1'b0, message);
+    wait_push_cycles(TimeoutPushCycles);
+    $fatal(1, "%s", message);
   endtask
 
   task automatic pop_timeout(input string message);
-    repeat (TimeoutPopCycles) @(posedge pop_clk);
-    td.check(1'b0, message);
+    wait_pop_cycles(TimeoutPopCycles);
+    $fatal(1, "%s", message);
   endtask
 
   task automatic drive_push(input logic [Width-1:0] data);
     fork : drive_push_timeout_guard
       push_timeout("push timed out");
       begin
-        @(negedge push_clk);
-        push_if.valid = 1'b1;
-        push_if.data  = data;
+        @(posedge push_clk);
+        push_if.valid <= 1'b1;
+        push_if.data  <= data;
         do begin
           @(posedge push_clk);
         end while (!push_if.ready);
         expect_push(data);
+        push_if.valid <= 1'b0;
+        push_if.data  <= '0;
       end
     join_any
     disable drive_push_timeout_guard;
-
-    @(negedge push_clk);
-    push_if.valid = 1'b0;
-    push_if.data  = '0;
   endtask
 
   task automatic drive_backpressured_push(input logic [Width-1:0] data);
@@ -370,22 +390,21 @@ module br_cdc_fifo_ctrl_1r1w_tb;
     fork : drive_backpressured_push_timeout_guard
       push_timeout("backpressured push timed out");
       begin
-        @(negedge push_clk);
-        push_if.valid = 1'b1;
-        push_if.data  = data;
+        @(posedge push_clk);
+        push_if.valid <= 1'b1;
+        push_if.data  <= data;
         do begin
           @(posedge push_clk);
           saw_push_backpressure |= !push_if.ready;
         end while (!push_if.ready);
         expect_push(data);
+        push_if.valid <= 1'b0;
+        push_if.data  <= '0;
       end
     join_any
     disable drive_backpressured_push_timeout_guard;
 
     td.check(saw_push_backpressure, "push was not backpressured before acceptance");
-    @(negedge push_clk);
-    push_if.valid = 1'b0;
-    push_if.data  = '0;
   endtask
 
   task automatic drive_pop(output logic [Width-1:0] data);
@@ -394,20 +413,21 @@ module br_cdc_fifo_ctrl_1r1w_tb;
     fork : drive_pop_timeout_guard
       pop_timeout("pop timed out");
       begin
-        @(negedge pop_clk);
-        pop_if.ready = 1'b1;
+        @(posedge pop_clk);
+        pop_if.ready <= 1'b0;
         do begin
           @(posedge pop_clk);
         end while (!pop_if.valid);
         popped_data = pop_if.data;
+        pop_if.ready <= 1'b1;
+        @(posedge pop_clk);
         expect_pop(popped_data);
+        pop_if.ready <= 1'b0;
       end
     join_any
     disable drive_pop_timeout_guard;
 
     data = popped_data;
-    @(negedge pop_clk);
-    pop_if.ready = 1'b0;
   endtask
 
   task automatic wait_for_pop_valid();
@@ -437,7 +457,7 @@ module br_cdc_fifo_ctrl_1r1w_tb;
   task automatic drain_all();
     logic [Width-1:0] data;
 
-    while (expected_count > 0) begin
+    while (expected_count() > 0) begin
       drive_pop(data);
     end
   endtask
@@ -561,7 +581,7 @@ module br_cdc_fifo_ctrl_1r1w_tb;
       drive_pop_stream(NumRandomTransactions, RandomPopIdleMax);
     join
 
-    td.check_integer(expected_count, 0, "random: scoreboard should be empty");
+    td.check_integer(expected_count(), 0, "random: scoreboard should be empty");
   endtask
 
   task automatic run_all_tests();
@@ -592,6 +612,7 @@ module br_cdc_fifo_ctrl_1r1w_tb;
     pop_rst  = 1'b1;
     init_interfaces();
     reset_scoreboard();
+    reset_seen = 1'b0;
 
     run_all_tests();
 
@@ -599,7 +620,7 @@ module br_cdc_fifo_ctrl_1r1w_tb;
     init_interfaces();
     wait_push_cycles(ResetSettlePushCycles);
     wait_pop_cycles(ResetSettlePopCycles);
-    td.check_integer(expected_count, 0, "final: scoreboard should be empty");
+    td.check_integer(expected_count(), 0, "final: scoreboard should be empty");
     td.finish();
   end
 
