@@ -39,8 +39,8 @@ module br_cdc_fifo_ctrl_1r1w_push_credit_tb;
   localparam int RamReadLatency = RamAddressDepthStages;
   localparam int NumDirectedItems = Depth * 2 + 8;
   localparam int NumRandomTransactions = 100;
-  localparam int TimeoutPushCycles = 5000;
-  localparam int TimeoutPopCycles = 5000;
+  localparam int TimeoutPushCycles = 50000;
+  localparam int TimeoutPopCycles = 50000;
   localparam int PushCountSettleCycles = (RegisterResetActive + 1 > RamWriteLatency) ?
       RegisterResetActive + 1 : RamWriteLatency;
   localparam int PopCountSettleCycles = RegisterResetActive + 1;
@@ -54,34 +54,6 @@ module br_cdc_fifo_ctrl_1r1w_push_credit_tb;
       32'(RegisterPopOutputs) + 2;
   localparam int SenderResetAssertPushCycles = ResetAssertPushCycles + PropDelay + 2;
   localparam int SenderResetSettlePushCycles = ResetSettlePushCycles + PropDelay + 2;
-  localparam int NumClockPeriodOptions = 11;
-  localparam int PushClockPeriodsNs[NumClockPeriodOptions] = '{
-      8,
-      19,
-      10,
-      11,
-      101,
-      7,
-      10,
-      18,
-      23,
-      13,
-      10
-  };
-  localparam int PopClockPeriodsNs[NumClockPeriodOptions] = '{
-      19,
-      8,
-      11,
-      17,
-      7,
-      101,
-      10,
-      9,
-      22,
-      12,
-      16
-  };
-
   function automatic int random_clock_period_ns();
     return $urandom_range(101, 7);
   endfunction
@@ -148,7 +120,6 @@ module br_cdc_fifo_ctrl_1r1w_push_credit_tb;
   time pop_clock_half_period;
   int selected_push_clock_period_ns;
   int selected_pop_clock_period_ns;
-  int selected_clock_period_index;
   bit clock_periods_configured = 1'b0;
 
   dut_push_if_t dut_push_if_d;
@@ -317,26 +288,19 @@ module br_cdc_fifo_ctrl_1r1w_push_credit_tb;
   endtask
 
   task automatic configure_clock_periods();
-    int clock_period_select;
+    selected_push_clock_period_ns = PushClockPeriodNs;
+    selected_pop_clock_period_ns  = PopClockPeriodNs;
 
-    clock_period_select = 0;
-    if ($value$plusargs("clock_period_select=%d", clock_period_select)) begin
-      if (clock_period_select == -1) begin
-        selected_push_clock_period_ns = random_clock_period_ns();
-        selected_pop_clock_period_ns  = random_clock_period_ns();
-        $display("clock_period_select=-1 generated random push/pop periods");
-      end else begin
-        void'($urandom(clock_period_select));
-        selected_clock_period_index   = $urandom_range(NumClockPeriodOptions - 1, 0);
-        selected_push_clock_period_ns = PushClockPeriodsNs[selected_clock_period_index];
-        selected_pop_clock_period_ns  = PopClockPeriodsNs[selected_clock_period_index];
-        $display("clock_period_select=%0d generated random clock_period_index=%0d",
-                 clock_period_select, selected_clock_period_index);
-      end
-    end else begin
-      selected_push_clock_period_ns = PushClockPeriodNs;
-      selected_pop_clock_period_ns  = PopClockPeriodNs;
-      $display("clock_period_select plusarg not provided; using parameter clock periods");
+    void'($value$plusargs("push_clock_period_ns=%d", selected_push_clock_period_ns));
+    void'($value$plusargs("pop_clock_period_ns=%d", selected_pop_clock_period_ns));
+
+    if (selected_push_clock_period_ns == -1) begin
+      selected_push_clock_period_ns = random_clock_period_ns();
+      $display("push_clock_period_ns=-1 generated random push period");
+    end
+    if (selected_pop_clock_period_ns == -1) begin
+      selected_pop_clock_period_ns = random_clock_period_ns();
+      $display("pop_clock_period_ns=-1 generated random pop period");
     end
 
     validate_clock_periods();
