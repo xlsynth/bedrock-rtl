@@ -119,6 +119,17 @@ module br_amba_axil_requester_driver #(
     endcase
   endfunction
 
+  function automatic logic is_valid_seen(input axil_handshake_channel_t channel);
+    unique case (channel)
+      AxilHandshakeAw: is_valid_seen = cb.axil_awvalid;
+      AxilHandshakeW:  is_valid_seen = cb.axil_wvalid;
+      AxilHandshakeB:  is_valid_seen = cb.axil_bvalid;
+      AxilHandshakeAr: is_valid_seen = cb.axil_arvalid;
+      AxilHandshakeR:  is_valid_seen = cb.axil_rvalid;
+      default:         is_valid_seen = 1'b0;
+    endcase
+  endfunction
+
   task automatic wait_handshake(input axil_handshake_channel_t channel, input string channel_name);
     fork
       do @cb; while (!is_handshake_seen(channel));
@@ -126,6 +137,28 @@ module br_amba_axil_requester_driver #(
               "Timeout waiting for AXI-Lite %s handshake", channel_name), failed);
     join_any
     disable fork;
+  endtask
+
+  task automatic wait_valid(input axil_handshake_channel_t channel, input string channel_name);
+    fork
+      do @cb; while (!is_valid_seen(channel));
+      timeout(sample_tick, TimeoutCycles, $sformatf(
+              "Timeout waiting for AXI-Lite %s valid", channel_name), failed);
+    join_any
+    disable fork;
+  endtask
+
+  task automatic wait_response_stall(input axil_handshake_channel_t channel,
+                                     input string channel_name, input int stall_cycles);
+    for (int stall_cycle = 0; stall_cycle < stall_cycles; stall_cycle++) begin
+      if (stall_cycle == 0) begin
+        wait_valid(channel, channel_name);
+        if (failed) begin
+          return;
+        end
+      end
+      @(negedge clk);
+    end
   endtask
 
   task automatic drive_aw_channel(input int num_writes);
@@ -183,7 +216,10 @@ module br_amba_axil_requester_driver #(
         return;
       end
       stall_cycles = bready_stall_queue.pop_front();
-      repeat (stall_cycles) @(negedge clk);
+      wait_response_stall(AxilHandshakeB, "B", stall_cycles);
+      if (failed) begin
+        return;
+      end
       axil_bready = 1'b1;
       wait_handshake(AxilHandshakeB, "B");
       if (failed) begin
@@ -227,7 +263,10 @@ module br_amba_axil_requester_driver #(
         return;
       end
       stall_cycles = rready_stall_queue.pop_front();
-      repeat (stall_cycles) @(negedge clk);
+      wait_response_stall(AxilHandshakeR, "R", stall_cycles);
+      if (failed) begin
+        return;
+      end
       axil_rready = 1'b1;
       wait_handshake(AxilHandshakeR, "R");
       if (failed) begin

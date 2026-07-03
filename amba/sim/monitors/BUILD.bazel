@@ -26,9 +26,9 @@ verilog_library(
     srcs = ["br_amba_axil_monitor.sv"],
     visibility = ["//visibility:public"],
     deps = [
+        ":br_amba_axil_monitor_sim_pkg",
         "//amba/rtl:br_amba_pkg",
         "//amba/sim/drivers:br_amba_axil_sim_pkg",
-        ":br_amba_axil_monitor_sim_pkg",
     ],
 )
 
@@ -47,10 +47,10 @@ verilog_library(
     srcs = ["br_amba_axil2apb_scoreboard.sv"],
     visibility = ["//visibility:public"],
     deps = [
+        ":br_amba_axil_monitor_sim_pkg",
         "//amba/sim:br_amba_axil2apb_sim_pkg",
         "//amba/sim/drivers:br_amba_apb_sim_pkg",
         "//amba/sim/drivers:br_amba_axil_sim_pkg",
-        ":br_amba_axil_monitor_sim_pkg",
     ],
 )
 

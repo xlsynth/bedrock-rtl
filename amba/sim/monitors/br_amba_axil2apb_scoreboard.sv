@@ -238,6 +238,7 @@ module br_amba_axil2apb_scoreboard #(
                                       input axil_b_observation_t observed_b, input int write_index,
                                       inout int mismatch_count);
     axil_b_t expected_b = expected_b_response(expected_transaction);
+    time expected_bvalid_timestamp = observed_apb.completion_timestamp + ClockPeriodNs;
 
     if (expected_b !== observed_b.packet) begin
       failed = 1'b1;
@@ -246,12 +247,19 @@ module br_amba_axil2apb_scoreboard #(
              write_index, expected_b, observed_b.packet);
     end
 
-    if (observed_b.timestamp <= observed_apb.completion_timestamp) begin
+    if (observed_b.valid_timestamp != expected_bvalid_timestamp) begin
       failed = 1'b1;
       mismatch_count++;
-      $error(
-          "AXI-Lite B response at write %0d was not observed after APB completion: b=%0t apb=%0t",
-          write_index, observed_b.timestamp, observed_apb.completion_timestamp);
+      $error({"AXI-Lite BVALID at write %0d was not observed one clock after APB completion: ",
+              "bvalid=%0t expected=%0t apb=%0t"}, write_index, observed_b.valid_timestamp,
+               expected_bvalid_timestamp, observed_apb.completion_timestamp);
+    end
+
+    if (observed_b.timestamp < observed_b.valid_timestamp) begin
+      failed = 1'b1;
+      mismatch_count++;
+      $error("AXI-Lite B handshake at write %0d was observed before BVALID: b=%0t bvalid=%0t",
+             write_index, observed_b.timestamp, observed_b.valid_timestamp);
     end
   endtask
 
@@ -260,6 +268,7 @@ module br_amba_axil2apb_scoreboard #(
                                      input axil_r_observation_t observed_r, input int read_index,
                                      inout int mismatch_count);
     axil_r_t expected_r = expected_r_response(expected_transaction);
+    time expected_rvalid_timestamp = observed_apb.completion_timestamp + ClockPeriodNs;
 
     if (expected_r !== observed_r.packet) begin
       failed = 1'b1;
@@ -268,11 +277,19 @@ module br_amba_axil2apb_scoreboard #(
              expected_r, observed_r.packet);
     end
 
-    if (observed_r.timestamp <= observed_apb.completion_timestamp) begin
+    if (observed_r.valid_timestamp != expected_rvalid_timestamp) begin
       failed = 1'b1;
       mismatch_count++;
-      $error("AXI-Lite R response at read %0d was not observed after APB completion: r=%0t apb=%0t",
-             read_index, observed_r.timestamp, observed_apb.completion_timestamp);
+      $error({"AXI-Lite RVALID at read %0d was not observed one clock after APB completion: ",
+              "rvalid=%0t expected=%0t apb=%0t"}, read_index, observed_r.valid_timestamp,
+               expected_rvalid_timestamp, observed_apb.completion_timestamp);
+    end
+
+    if (observed_r.timestamp < observed_r.valid_timestamp) begin
+      failed = 1'b1;
+      mismatch_count++;
+      $error("AXI-Lite R handshake at read %0d was observed before RVALID: r=%0t rvalid=%0t",
+             read_index, observed_r.timestamp, observed_r.valid_timestamp);
     end
   endtask
 
@@ -316,7 +333,12 @@ module br_amba_axil2apb_scoreboard #(
         continue;
       end
 
-      if (read_grant && write_grant) begin
+      if (request_state.timestamp < bridge_available_timestamp) begin
+        failed = 1'b1;
+        mismatch_count++;
+        $error("AXI-Lite grant observed before the bridge completed the previous transaction");
+        continue;
+      end else if (read_grant && write_grant) begin
         failed = 1'b1;
         mismatch_count++;
         $error("AXI-Lite read and write grants were observed in the same cycle");

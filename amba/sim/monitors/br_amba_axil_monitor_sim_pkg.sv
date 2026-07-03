@@ -23,11 +23,13 @@ package br_amba_axil_monitor_sim_pkg;
   typedef struct {
     axil_b_t packet;
     time     timestamp;
+    time     valid_timestamp;
   } axil_b_observation_t;
 
   typedef struct {
     axil_r_t packet;
     time     timestamp;
+    time     valid_timestamp;
   } axil_r_observation_t;
 
   typedef struct {

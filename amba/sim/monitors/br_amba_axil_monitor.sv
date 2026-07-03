@@ -162,14 +162,25 @@ module br_amba_axil_monitor #(
 
   task automatic monitor_b_channel();
     axil_b_observation_t b;
+    logic bvalid_seen = 1'b0;
+    time bvalid_timestamp;
 
     forever begin
       @cb;
+      if (cb.rst || !cb.axil_bvalid) begin
+        bvalid_seen = 1'b0;
+      end else if (!bvalid_seen) begin
+        bvalid_seen = 1'b1;
+        bvalid_timestamp = $time;
+      end
+
       if (!cb.rst && b_handshake) begin
         b.packet.resp = cb.axil_bresp;
         b.packet.user = AxilUserWidth'(cb.axil_buser);
-        b.timestamp   = $time;
+        b.timestamp = $time;
+        b.valid_timestamp = bvalid_timestamp;
         b_queue.push_back(b);
+        bvalid_seen = 1'b0;
       end
     end
   endtask
@@ -191,15 +202,26 @@ module br_amba_axil_monitor #(
 
   task automatic monitor_r_channel();
     axil_r_observation_t r;
+    logic rvalid_seen = 1'b0;
+    time rvalid_timestamp;
 
     forever begin
       @cb;
+      if (cb.rst || !cb.axil_rvalid) begin
+        rvalid_seen = 1'b0;
+      end else if (!rvalid_seen) begin
+        rvalid_seen = 1'b1;
+        rvalid_timestamp = $time;
+      end
+
       if (!cb.rst && r_handshake) begin
         r.packet.data = AxilDataWidth'(cb.axil_rdata);
         r.packet.resp = cb.axil_rresp;
         r.packet.user = AxilUserWidth'(cb.axil_ruser);
-        r.timestamp   = $time;
+        r.timestamp = $time;
+        r.valid_timestamp = rvalid_timestamp;
         r_queue.push_back(r);
+        rvalid_seen = 1'b0;
       end
     end
   endtask

@@ -22,6 +22,7 @@ import br_amba_axil2apb_sim_pkg::*;
 //   reads/writes with randomized data, strobes, and no intentional source delay;
 // - AXI write response backpressure: delay BREADY across a random write transaction count;
 // - AXI read response backpressure: delay RREADY across a random read transaction count;
+// - mixed AXI response backpressure: delay BREADY/RREADY with interleaved reads and writes;
 // - error propagation: complete APB writes and reads with PSLVERR set across many transfers;
 // - mixed directed sequence: run reads and writes with representative gaps and wait states;
 // - stress: run sustained traffic with no intentional stalls on either side;
@@ -404,16 +405,27 @@ module br_amba_axil2apb_tb;
   endtask
 
   task automatic check_scenario_cycle_ranges(input axil2apb_scenario_t scenario);
+    td.check(scenario.min_aw_gap_cycles >= 0, "AXI-Lite AW gap min cycles is negative");
+    td.check(scenario.max_aw_gap_cycles >= 0, "AXI-Lite AW gap max cycles is negative");
     td.check(scenario.max_aw_gap_cycles >= scenario.min_aw_gap_cycles,
              "AXI-Lite AW gap max cycles is less than min cycles");
+    td.check(scenario.min_w_gap_cycles >= 0, "AXI-Lite W gap min cycles is negative");
+    td.check(scenario.max_w_gap_cycles >= 0, "AXI-Lite W gap max cycles is negative");
     td.check(scenario.max_w_gap_cycles >= scenario.min_w_gap_cycles,
              "AXI-Lite W gap max cycles is less than min cycles");
+    td.check(scenario.min_ar_gap_cycles >= 0, "AXI-Lite AR gap min cycles is negative");
+    td.check(scenario.max_ar_gap_cycles >= 0, "AXI-Lite AR gap max cycles is negative");
     td.check(scenario.max_ar_gap_cycles >= scenario.min_ar_gap_cycles,
              "AXI-Lite AR gap max cycles is less than min cycles");
+    td.check(scenario.min_b_stall_cycles >= 0, "AXI-Lite B stall min cycles is negative");
+    td.check(scenario.max_b_stall_cycles >= 0, "AXI-Lite B stall max cycles is negative");
     td.check(scenario.max_b_stall_cycles >= scenario.min_b_stall_cycles,
              "AXI-Lite B stall max cycles is less than min cycles");
+    td.check(scenario.min_r_stall_cycles >= 0, "AXI-Lite R stall min cycles is negative");
+    td.check(scenario.max_r_stall_cycles >= 0, "AXI-Lite R stall max cycles is negative");
     td.check(scenario.max_r_stall_cycles >= scenario.min_r_stall_cycles,
              "AXI-Lite R stall max cycles is less than min cycles");
+    td.check(scenario.apb_wait_cycles >= 0, "APB wait cycles is negative");
   endtask
 
   task automatic check_observed_request_counts(input axil2apb_scenario_t scenario,
@@ -611,6 +623,20 @@ module br_amba_axil2apb_tb;
     init_idle();
     queue_reads(scenario, response_queue);
     run_queued_scenario("AXI read response backpressure", scenario, response_queue);
+  endtask
+
+  task automatic test_mixed_response_backpressure();
+    axil2apb_scenario_t scenario;
+    apb_response_t response_queue[$];
+
+    init_scenario(scenario, directed_transaction_count(), directed_transaction_count());
+    scenario.min_b_stall_cycles = ResponseStallCycles;
+    scenario.max_b_stall_cycles = ResponseStallCycles;
+    scenario.min_r_stall_cycles = ResponseStallCycles;
+    scenario.max_r_stall_cycles = ResponseStallCycles;
+    init_idle();
+    queue_mixed_transactions(scenario, response_queue);
+    run_queued_scenario("mixed AXI response backpressure", scenario, response_queue);
   endtask
 
   task automatic test_error_response_propagation();
@@ -865,6 +891,7 @@ module br_amba_axil2apb_tb;
     test_read_write_arbitration();
     test_axi_write_response_backpressure();
     test_axi_read_response_backpressure();
+    test_mixed_response_backpressure();
     test_error_response_propagation();
     test_mixed_directed_sequence();
     test_stress();
