@@ -1,0 +1,33 @@
+# SPDX-License-Identifier: Apache-2.0
+
+load("@rules_hdl//verilog:providers.bzl", "verilog_library")
+
+package(default_visibility = ["//visibility:private"])
+
+verilog_library(
+    name = "br_dv_test",
+    srcs = [
+        "br_dv_clk_rst_if.sv",
+        "br_dv_lib_pkg.sv",
+    ],
+    hdrs = [
+        "br_dv_agent.svh",
+        "br_dv_clk_rst_driver.svh",
+        "br_dv_component.svh",
+        "br_dv_context.svh",
+        "br_dv_driver.svh",
+        "br_dv_env.svh",
+        "br_dv_item_sink.svh",
+        "br_dv_macros.svh",
+        "br_dv_monitor.svh",
+        "br_dv_port_sink.svh",
+        "br_dv_port_sink_target.svh",
+        "br_dv_scoreboard.svh",
+        "br_dv_sequence.svh",
+        "br_dv_sequence_base.svh",
+        "br_dv_test.svh",
+        "br_dv_types.svh",
+        "br_item.svh",
+    ],
+    visibility = ["//visibility:public"],
+)
