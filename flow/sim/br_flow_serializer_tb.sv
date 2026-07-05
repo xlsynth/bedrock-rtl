@@ -3,6 +3,7 @@
 // Bedrock-RTL Flow Serializer/Deserializer Testbench
 //
 // Test plan: check serializer ordering for full and shortened last push flits,
+// including that last-don't-care count is ignored for non-last push flits,
 // then check deserializer reconstruction for a full pop flit and an early-last
 // partial pop flit. Stall each direction once to check state hold under
 // backpressure. The suite sweeps most-significant-first and least-significant-
@@ -141,6 +142,8 @@ module br_flow_serializer_tb;
                "serializer pop_last mismatch");
       if (flit == expected_flits - 1) begin
         td.check(ser_push_ready, "serializer push_ready should complete on final flit");
+      end else begin
+        td.check(!ser_push_ready, "serializer push_ready should wait for final flit");
       end
       @(posedge clk);
       #1;
@@ -188,6 +191,7 @@ module br_flow_serializer_tb;
     td.reset_dut();
 
     send_serializer_word(16'habcd, 1'b0, '0, 4, 1'b1);
+    send_serializer_word(16'h5678, 1'b0, 2'd2, 4, 1'b0);
     send_serializer_word(16'h1234, 1'b1, 2'd1, 3, 1'b0);
 
     send_deserializer_flit(slice(16'habcd, 0), 1'b0, 3'h2);
