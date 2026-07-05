@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: Apache-2.0
 
 load("@rules_hdl//verilog:providers.bzl", "verilog_library")
-load("//bazel:br_verilog.bzl", "br_verilog_elab_and_lint_test_suite", "br_verilog_synth_suite")
+load("//bazel:br_verilog.bzl", "br_verilog_elab_and_lint_test_suite", "br_verilog_yosys_synth_suite")
 
 package(default_visibility = ["//visibility:public"])
 
@@ -116,7 +116,7 @@ br_verilog_elab_and_lint_test_suite(
     ],
 )
 
-br_verilog_synth_suite(
+br_verilog_yosys_synth_suite(
     name = "br_mux_bin_structured_gates_ppa",
     params = {
         "NumSymbolsIn": [
@@ -197,7 +197,7 @@ br_verilog_elab_and_lint_test_suite(
     deps = [":br_mux_bin_array"],
 )
 
-br_verilog_synth_suite(
+br_verilog_yosys_synth_suite(
     name = "br_mux_bin_ppa",
     params = {
         "NumSymbolsIn": [
@@ -212,7 +212,7 @@ br_verilog_synth_suite(
     deps = [":br_mux_bin"],
 )
 
-br_verilog_synth_suite(
+br_verilog_yosys_synth_suite(
     name = "br_mux_bin_array_ppa",
     params = {
         "NumSymbolsIn": [
@@ -228,7 +228,7 @@ br_verilog_synth_suite(
     deps = [":br_mux_bin_array"],
 )
 
-br_verilog_synth_suite(
+br_verilog_yosys_synth_suite(
     name = "br_mux_onehot_ppa",
     params = {
         "NumSymbolsIn": [

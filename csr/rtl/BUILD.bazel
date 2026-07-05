@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: Apache-2.0
 
 load("@rules_hdl//verilog:providers.bzl", "verilog_library")
-load("//bazel:br_verilog.bzl", "br_verilog_elab_and_lint_test_suite", "br_verilog_synth_suite")
+load("//bazel:br_verilog.bzl", "br_verilog_elab_and_lint_test_suite", "br_verilog_yosys_synth_suite")
 
 package(default_visibility = ["//visibility:public"])
 
@@ -27,7 +27,7 @@ verilog_library(
     ],
 )
 
-br_verilog_synth_suite(
+br_verilog_yosys_synth_suite(
     name = "br_csr_axil_widget_baseline_ppa",
     params = {
         "AddrWidth": ["16"],
@@ -39,7 +39,7 @@ br_verilog_synth_suite(
     deps = [":br_csr_axil_widget"],
 )
 
-br_verilog_synth_suite(
+br_verilog_yosys_synth_suite(
     name = "br_csr_axil_widget_scaled_registered_ppa",
     params = {
         "AddrWidth": ["32"],
@@ -87,7 +87,7 @@ verilog_library(
     ],
 )
 
-br_verilog_synth_suite(
+br_verilog_yosys_synth_suite(
     name = "br_csr_demux_select_onehot_baseline_ppa",
     params = {
         "AddrWidth": ["16"],
@@ -97,7 +97,7 @@ br_verilog_synth_suite(
     deps = [":br_csr_demux_select_onehot"],
 )
 
-br_verilog_synth_suite(
+br_verilog_yosys_synth_suite(
     name = "br_csr_demux_select_onehot_scaled_ppa",
     params = {
         "AddrWidth": ["32"],
@@ -146,7 +146,7 @@ verilog_library(
     ],
 )
 
-br_verilog_synth_suite(
+br_verilog_yosys_synth_suite(
     name = "br_csr_demux_baseline_ppa",
     params = {
         "AddrWidth": ["16"],
@@ -157,7 +157,7 @@ br_verilog_synth_suite(
     deps = [":br_csr_demux"],
 )
 
-br_verilog_synth_suite(
+br_verilog_yosys_synth_suite(
     name = "br_csr_demux_scaled_ppa",
     params = {
         "AddrWidth": ["32"],
@@ -211,7 +211,7 @@ verilog_library(
     ],
 )
 
-br_verilog_synth_suite(
+br_verilog_yosys_synth_suite(
     name = "br_csr_cdc_baseline_ppa",
     params = {
         "AddrWidth": ["16"],
@@ -224,7 +224,7 @@ br_verilog_synth_suite(
     deps = [":br_csr_cdc"],
 )
 
-br_verilog_synth_suite(
+br_verilog_yosys_synth_suite(
     name = "br_csr_cdc_scaled_registered_ppa",
     params = {
         "AddrWidth": ["32"],
@@ -280,7 +280,7 @@ verilog_library(
     ],
 )
 
-br_verilog_synth_suite(
+br_verilog_yosys_synth_suite(
     name = "br_csr_mem_interface_baseline_ppa",
     params = {
         "CsrAddrWidth": ["16"],
@@ -294,7 +294,7 @@ br_verilog_synth_suite(
     deps = [":br_csr_mem_interface"],
 )
 
-br_verilog_synth_suite(
+br_verilog_yosys_synth_suite(
     name = "br_csr_mem_interface_scaled_registered_ppa",
     params = {
         "CsrAddrWidth": ["20"],

@@ -66,29 +66,6 @@ class TestCliFunctions(unittest.TestCase):
         self.assertNotIn("sim_opts", common)
 
     @mock.patch.dict("os.environ", {}, clear=True)
-    def test_common_args_synth_includes_mapping_options(self):
-        args = _args_for_subcommand("synth")
-        args.liberty = ["lib/a.lib", "lib/b.lib.gz"]
-        args.sequential_liberty = "lib/a.lib"
-        args.liberty_root_env = "PDK_ROOT"
-        args.liberty_sha256 = [("lib/a.lib", "a" * 64)]
-        args.synth_profile = "example-tt"
-        args.clock_period_ps = 1000
-        args.input_driver_cell = "BUFx2_EXAMPLE"
-        args.output_load_ff = 3.898
-
-        common = common_args(args)
-
-        self.assertEqual(common["liberties"], ["lib/a.lib", "lib/b.lib.gz"])
-        self.assertEqual(common["sequential_liberty"], "lib/a.lib")
-        self.assertEqual(common["liberty_root_env"], "PDK_ROOT")
-        self.assertEqual(common["liberty_sha256"], {"lib/a.lib": "a" * 64})
-        self.assertEqual(common["synth_profile"], "example-tt")
-        self.assertEqual(common["clock_period_ps"], 1000)
-        self.assertEqual(common["input_driver_cell"], "BUFx2_EXAMPLE")
-        self.assertEqual(common["output_load_ff"], 3.898)
-
-    @mock.patch.dict("os.environ", {}, clear=True)
     def test_common_args_preserves_tool_opts(self):
         args = _args_for_subcommand("fpv")
         args.opt = ["-legacy"]

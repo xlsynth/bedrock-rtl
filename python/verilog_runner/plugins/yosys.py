@@ -3,15 +3,18 @@
 """Yosys logic-synthesis plugin for Verilog Runner."""
 
 import argparse
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 import json
+import os
 from pathlib import Path
+import re
 import shlex
-from typing import Dict, Type
+from typing import Dict, List, Optional, Type
 
 from cli import Subcommand, Synth, common_args
 from eda_tool import EdaTool
 from util import (
+    check_filename_extension,
     gen_file_header,
     get_class_logger,
     include_dirs,
@@ -33,6 +36,59 @@ def _tcl_word(value: object) -> str:
     return "{" + text.replace("\\", "\\\\").replace("}", "\\}") + "}"
 
 
+def _liberty_file(filename: str) -> str:
+    """Validates a Liberty path relative to the configured library root."""
+    filename = check_filename_extension(filename, (".lib", ".lib.gz"))
+    path = os.path.normpath(filename)
+    if os.path.isabs(path) or path == ".." or path.startswith("../"):
+        raise argparse.ArgumentTypeError(
+            f"Liberty path '{filename}' must be relative to --liberty_root."
+        )
+    if not re.fullmatch(r"[A-Za-z0-9_./+-]+", path):
+        raise argparse.ArgumentTypeError(
+            f"Liberty path '{filename}' contains unsupported characters."
+        )
+    return path
+
+
+def _liberty_sha256(value: str) -> tuple[str, str]:
+    """Parses PATH=SHA256 for one pinned Liberty input."""
+    if "=" not in value:
+        raise argparse.ArgumentTypeError(
+            f"Invalid Liberty checksum '{value}'. Expected PATH=SHA256."
+        )
+    path, digest = value.split("=", 1)
+    path = _liberty_file(path)
+    if not re.fullmatch(r"[0-9a-fA-F]{64}", digest):
+        raise argparse.ArgumentTypeError(
+            f"Invalid SHA-256 digest for Liberty path '{path}'."
+        )
+    return path, digest.lower()
+
+
+def _unconstrained_abc_script(clock_period_ps: Optional[int]) -> str:
+    """Builds the default-like ABC script used to retain a timing report."""
+    map_command = "&nf"
+    if clock_period_ps:
+        map_command += ",-D," + str(clock_period_ps)
+    commands = [
+        "+strash",
+        "&get,-n",
+        "&fraig,-x",
+        "&put",
+        "scorr",
+        "dc2",
+        "dretime",
+        "strash",
+        "&get,-n",
+        "&dch,-f",
+        map_command,
+        "&put",
+        "stime,-p",
+    ]
+    return ";".join(commands)
+
+
 @dataclass
 class Yosys(EdaTool):
     """Runs Yosys synthesis using the yosys-slang SystemVerilog frontend."""
@@ -40,6 +96,14 @@ class Yosys(EdaTool):
     subcommand: Type[Subcommand] = Synth
     tool_name: str = "yosys"
     help: str = "Synthesize a SystemVerilog design using Yosys and yosys-slang"
+    liberties: List[str] = field(default_factory=list)
+    sequential_liberty: Optional[str] = None
+    liberty_root: Optional[str] = None
+    liberty_sha256: Dict[str, str] = field(default_factory=dict)
+    synth_profile: str = "generic"
+    clock_period_ps: Optional[int] = None
+    input_driver_cell: Optional[str] = None
+    output_load_ff: Optional[float] = None
 
     def __post_init__(self):
         self.logger = get_class_logger("synth", "yosys")
@@ -50,8 +114,8 @@ class Yosys(EdaTool):
         if self.output_load_ff is not None and self.output_load_ff <= 0:
             raise ValueError("--output_load_ff must be greater than zero")
         if self.liberties:
-            if not self.liberty_root_env:
-                raise ValueError("--liberty_root_env is required with --liberty")
+            if not self.liberty_root:
+                raise ValueError("--liberty_root is required with --liberty")
             if set(self.liberty_sha256) != set(self.liberties):
                 raise ValueError(
                     "--liberty_sha256 must specify exactly one checksum for each --liberty"
@@ -65,7 +129,7 @@ class Yosys(EdaTool):
                 )
         elif (
             self.sequential_liberty
-            or self.liberty_root_env
+            or self.liberty_root
             or self.liberty_sha256
             or self.clock_period_ps
             or self.input_driver_cell
@@ -77,11 +141,66 @@ class Yosys(EdaTool):
 
     @classmethod
     def add_args(cls, parser: argparse.ArgumentParser) -> None:
-        pass
+        parser.add_argument(
+            "--liberty",
+            type=_liberty_file,
+            action="append",
+            default=[],
+            help="Liberty path relative to --liberty_root. May be repeated.",
+        )
+        parser.add_argument(
+            "--sequential_liberty",
+            type=_liberty_file,
+            help="Liberty path used for sequential-cell mapping when libraries are split.",
+        )
+        parser.add_argument(
+            "--liberty_root",
+            help="Root directory containing the system-provided Liberty files.",
+        )
+        parser.add_argument(
+            "--liberty_sha256",
+            type=_liberty_sha256,
+            action="append",
+            default=[],
+            metavar="PATH=SHA256",
+            help="Expected checksum for one Liberty path. May be repeated.",
+        )
+        parser.add_argument(
+            "--synth_profile",
+            default="generic",
+            help="Stable synthesis profile recorded in generated reports.",
+        )
+        parser.add_argument(
+            "--clock_period_ps",
+            type=int,
+            help="Optional target clock period in picoseconds for technology mapping.",
+        )
+        parser.add_argument(
+            "--input_driver_cell",
+            help="Optional Liberty cell assumed to drive each primary input.",
+        )
+        parser.add_argument(
+            "--output_load_ff",
+            type=float,
+            help="Optional capacitive load in femtofarads on each primary output.",
+        )
 
     @classmethod
     def from_args(cls, args):
-        return cls(**common_args(args))
+        yosys_args = common_args(args)
+        yosys_args.update(
+            {
+                "liberties": args.liberty,
+                "sequential_liberty": args.sequential_liberty,
+                "liberty_root": args.liberty_root,
+                "liberty_sha256": dict(args.liberty_sha256),
+                "synth_profile": args.synth_profile,
+                "clock_period_ps": args.clock_period_ps,
+                "input_driver_cell": args.input_driver_cell,
+                "output_load_ff": args.output_load_ff,
+            }
+        )
+        return cls(**yosys_args)
 
     @property
     def stat_json_file(self) -> str:
@@ -123,21 +242,15 @@ class Yosys(EdaTool):
         commands.append("ltp -noff " + _tcl_word(self.top))
         stat_args = []
         if self.liberties:
-            commands.insert(
-                0,
-                "set ppa_liberty_root $::env(" + self.liberty_root_env + ")",
-            )
             liberty_paths = [
-                "[file join $ppa_liberty_root " + _tcl_word(path) + "]"
+                _tcl_word(str(Path(self.liberty_root) / path))
                 for path in self.liberties
             ]
             if self.sequential_liberty:
-                dff_path = (
-                    "[file join $ppa_liberty_root "
-                    + _tcl_word(self.sequential_liberty)
-                    + "]"
+                sequential_path = _tcl_word(
+                    str(Path(self.liberty_root) / self.sequential_liberty)
                 )
-                commands.append("dfflibmap -liberty " + dff_path)
+                commands.append("dfflibmap -liberty " + sequential_path)
 
             abc_args = []
             for liberty in liberty_paths:
@@ -149,16 +262,7 @@ class Yosys(EdaTool):
             if not self.input_driver_cell:
                 # The default unconstrained Yosys script omits stime. Keep a
                 # custom equivalent so the raw report still contains delay.
-                abc_script = (
-                    "+strash;&get,-n;&fraig,-x;&put;scorr;dc2;dretime;strash;"
-                    "&get,-n;&dch,-f;&nf"
-                    + (
-                        ",-D," + str(self.clock_period_ps)
-                        if self.clock_period_ps
-                        else ""
-                    )
-                    + ";&put;stime,-p"
-                )
+                abc_script = _unconstrained_abc_script(self.clock_period_ps)
                 abc_args += ["-script", _tcl_word(abc_script)]
             commands += ["abc " + " ".join(abc_args), "clean"]
             for liberty in liberty_paths:
@@ -195,12 +299,8 @@ class Yosys(EdaTool):
                 + shlex.quote(self.abc_constraints_file)
             )
         if self.liberties:
-            root = self.liberty_root_env
-            preflight.append(
-                f': "${{{root}:?{root} must point to the installed synthesis library root}}"'
-            )
             for liberty in self.liberties:
-                path = f'"${{{root}}}/{liberty}"'
+                path = shlex.quote(str(Path(self.liberty_root) / liberty))
                 preflight += [
                     "test -r "
                     + path
@@ -250,7 +350,6 @@ class Yosys(EdaTool):
                         "defines": sorted(self.defines),
                         "sequential_liberty": self.sequential_liberty,
                         "liberties": self.liberties,
-                        "liberty_root_env": self.liberty_root_env,
                         "params": dict(sorted(self.params.items())),
                         "synth_profile": self.synth_profile,
                         "top": self.top,

@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: Apache-2.0
 
 load("@rules_hdl//verilog:providers.bzl", "verilog_library")
-load("//bazel:br_verilog.bzl", "br_verilog_elab_and_lint_test_suite", "br_verilog_synth_suite")
+load("//bazel:br_verilog.bzl", "br_verilog_elab_and_lint_test_suite", "br_verilog_yosys_synth_suite")
 
 package(default_visibility = ["//visibility:public"])
 
@@ -709,7 +709,7 @@ br_verilog_elab_and_lint_test_suite(
     deps = [":br_amba_axi_shrinker"],
 )
 
-br_verilog_synth_suite(
+br_verilog_yosys_synth_suite(
     name = "br_amba_apb_timing_slice_width_ppa",
     params = {
         "AddrWidth": [
@@ -720,7 +720,7 @@ br_verilog_synth_suite(
     deps = [":br_amba_apb_timing_slice"],
 )
 
-br_verilog_synth_suite(
+br_verilog_yosys_synth_suite(
     name = "br_amba_atb_funnel_baseline_ppa",
     params = {
         "DataWidth": ["32"],
@@ -731,7 +731,7 @@ br_verilog_synth_suite(
     deps = [":br_amba_atb_funnel"],
 )
 
-br_verilog_synth_suite(
+br_verilog_yosys_synth_suite(
     name = "br_amba_atb_funnel_scaled_ppa",
     params = {
         "DataWidth": ["64"],
@@ -742,7 +742,7 @@ br_verilog_synth_suite(
     deps = [":br_amba_atb_funnel"],
 )
 
-br_verilog_synth_suite(
+br_verilog_yosys_synth_suite(
     name = "br_amba_axi2axil_baseline_ppa",
     params = {
         "AddrWidth": ["32"],
@@ -753,7 +753,7 @@ br_verilog_synth_suite(
     deps = [":br_amba_axi2axil"],
 )
 
-br_verilog_synth_suite(
+br_verilog_yosys_synth_suite(
     name = "br_amba_axi2axil_scaled_ppa",
     params = {
         "AddrWidth": ["40"],
@@ -764,7 +764,7 @@ br_verilog_synth_suite(
     deps = [":br_amba_axi2axil"],
 )
 
-br_verilog_synth_suite(
+br_verilog_yosys_synth_suite(
     name = "br_amba_axi_default_target_single_beat_ppa",
     params = {
         "AxiIdWidth": ["4"],
@@ -774,7 +774,7 @@ br_verilog_synth_suite(
     deps = [":br_amba_axi_default_target"],
 )
 
-br_verilog_synth_suite(
+br_verilog_yosys_synth_suite(
     name = "br_amba_axi_default_target_burst_ppa",
     params = {
         "AxiIdWidth": ["8"],
@@ -784,7 +784,7 @@ br_verilog_synth_suite(
     deps = [":br_amba_axi_default_target"],
 )
 
-br_verilog_synth_suite(
+br_verilog_yosys_synth_suite(
     name = "br_amba_axi_demux_single_id_ppa",
     params = {
         "AddrWidth": ["32"],
@@ -803,7 +803,7 @@ br_verilog_synth_suite(
     deps = [":br_amba_axi_demux"],
 )
 
-br_verilog_synth_suite(
+br_verilog_yosys_synth_suite(
     name = "br_amba_axi_demux_multi_id_ppa",
     params = {
         "AddrWidth": ["40"],
@@ -822,7 +822,7 @@ br_verilog_synth_suite(
     deps = [":br_amba_axi_demux"],
 )
 
-br_verilog_synth_suite(
+br_verilog_yosys_synth_suite(
     name = "br_amba_axi_isolate_mgr_single_beat_ppa",
     params = {
         "AddrWidth": ["32"],
@@ -834,7 +834,7 @@ br_verilog_synth_suite(
     deps = [":br_amba_axi_isolate_mgr"],
 )
 
-br_verilog_synth_suite(
+br_verilog_yosys_synth_suite(
     name = "br_amba_axi_isolate_mgr_burst_ppa",
     params = {
         "AddrWidth": ["40"],
@@ -846,7 +846,7 @@ br_verilog_synth_suite(
     deps = [":br_amba_axi_isolate_mgr"],
 )
 
-br_verilog_synth_suite(
+br_verilog_yosys_synth_suite(
     name = "br_amba_axi_isolate_sub_static_single_beat_ppa",
     params = {
         "AddrWidth": ["32"],
@@ -864,7 +864,7 @@ br_verilog_synth_suite(
     deps = [":br_amba_axi_isolate_sub"],
 )
 
-br_verilog_synth_suite(
+br_verilog_yosys_synth_suite(
     name = "br_amba_axi_isolate_sub_dynamic_burst_ppa",
     params = {
         "AddrWidth": ["40"],
@@ -881,7 +881,7 @@ br_verilog_synth_suite(
     deps = [":br_amba_axi_isolate_sub"],
 )
 
-br_verilog_synth_suite(
+br_verilog_yosys_synth_suite(
     name = "br_amba_axi_shrinker_baseline_ppa",
     params = {
         "AddrWidth": ["32"],
@@ -896,7 +896,7 @@ br_verilog_synth_suite(
     deps = [":br_amba_axi_shrinker"],
 )
 
-br_verilog_synth_suite(
+br_verilog_yosys_synth_suite(
     name = "br_amba_axi_shrinker_scaled_ppa",
     params = {
         "AddrWidth": ["40"],
@@ -911,7 +911,7 @@ br_verilog_synth_suite(
     deps = [":br_amba_axi_shrinker"],
 )
 
-br_verilog_synth_suite(
+br_verilog_yosys_synth_suite(
     name = "br_amba_axi_timing_slice_forward_ppa",
     params = {
         "ARSliceType": ["0"],
@@ -926,7 +926,7 @@ br_verilog_synth_suite(
     deps = [":br_amba_axi_timing_slice"],
 )
 
-br_verilog_synth_suite(
+br_verilog_yosys_synth_suite(
     name = "br_amba_axi_timing_slice_full_ppa",
     params = {
         "ARSliceType": ["2"],
@@ -941,7 +941,7 @@ br_verilog_synth_suite(
     deps = [":br_amba_axi_timing_slice"],
 )
 
-br_verilog_synth_suite(
+br_verilog_yosys_synth_suite(
     name = "br_amba_axil2apb_baseline_ppa",
     params = {
         "AddrWidth": ["32"],
@@ -950,7 +950,7 @@ br_verilog_synth_suite(
     deps = [":br_amba_axil2apb"],
 )
 
-br_verilog_synth_suite(
+br_verilog_yosys_synth_suite(
     name = "br_amba_axil2apb_scaled_ppa",
     params = {
         "AddrWidth": ["40"],
@@ -959,7 +959,7 @@ br_verilog_synth_suite(
     deps = [":br_amba_axil2apb"],
 )
 
-br_verilog_synth_suite(
+br_verilog_yosys_synth_suite(
     name = "br_amba_axil_default_target_width_ppa",
     params = {
         "DataWidth": [
@@ -970,7 +970,7 @@ br_verilog_synth_suite(
     deps = [":br_amba_axil_default_target"],
 )
 
-br_verilog_synth_suite(
+br_verilog_yosys_synth_suite(
     name = "br_amba_axil_msi_baseline_ppa",
     params = {
         "AddrWidth": ["32"],
@@ -984,7 +984,7 @@ br_verilog_synth_suite(
     deps = [":br_amba_axil_msi"],
 )
 
-br_verilog_synth_suite(
+br_verilog_yosys_synth_suite(
     name = "br_amba_axil_msi_scaled_ppa",
     params = {
         "AddrWidth": ["40"],
@@ -998,7 +998,7 @@ br_verilog_synth_suite(
     deps = [":br_amba_axil_msi"],
 )
 
-br_verilog_synth_suite(
+br_verilog_yosys_synth_suite(
     name = "br_amba_axil_split_baseline_ppa",
     params = {
         "AddrWidth": ["32"],
@@ -1011,7 +1011,7 @@ br_verilog_synth_suite(
     deps = [":br_amba_axil_split"],
 )
 
-br_verilog_synth_suite(
+br_verilog_yosys_synth_suite(
     name = "br_amba_axil_split_scaled_ppa",
     params = {
         "AddrWidth": ["40"],
@@ -1024,7 +1024,7 @@ br_verilog_synth_suite(
     deps = [":br_amba_axil_split"],
 )
 
-br_verilog_synth_suite(
+br_verilog_yosys_synth_suite(
     name = "br_amba_axil_timing_slice_baseline_ppa",
     params = {
         "AddrWidth": ["32"],
@@ -1033,7 +1033,7 @@ br_verilog_synth_suite(
     deps = [":br_amba_axil_timing_slice"],
 )
 
-br_verilog_synth_suite(
+br_verilog_yosys_synth_suite(
     name = "br_amba_axil_timing_slice_scaled_ppa",
     params = {
         "AddrWidth": ["40"],

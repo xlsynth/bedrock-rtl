@@ -2,8 +2,8 @@
 
 """Bedrock-internal Verilog rules for Bazel."""
 
-load("//bazel:asap7.bzl", "asap7_rvt_tt_verilog_synth_suite")
-load("//bazel:verilog.bzl", "verilog_elab_and_lint_test_suite", "verilog_fpv_test_suite", "verilog_sim_test_suite", "verilog_synth_suite")
+load("//bazel:asap7.bzl", "asap7_rvt_tt_yosys_synth_suite")
+load("//bazel:verilog.bzl", "verilog_elab_and_lint_test_suite", "verilog_fpv_test_suite", "verilog_sim_test_suite", "verilog_yosys_synth_suite")
 
 def br_verilog_elab_and_lint_test_suite(name, **kwargs):
     """Wraps three instances of verilog_elab_and_lint_test_suite.
@@ -104,26 +104,22 @@ def br_verilog_sim_test_tools_suite(name, tools = [], coverage = None, **kwargs)
             **tool_kwargs
         )
 
-def br_verilog_synth_suite(
+def br_verilog_yosys_synth_suite(
         name,
-        tool = "yosys",
         defines = ["SYNTHESIS"],
         deps = [],
         gate_library = "//gate/rtl:br_gate_mock",
-        library_name = None,
         structured_gate_library = "//mux/rtl:br_mux_bin_structured_gates",
         tags = [],
         top = None,
         **kwargs):
-    """Creates generic and ASAP7 Bedrock synthesis sweeps for representative parameters.
+    """Creates generic and ASAP7 Yosys sweeps for representative parameters.
 
     Args:
         name (str): Base name of the generated synthesis targets.
-        tool (str): Verilog Runner synthesis plugin. Defaults to Yosys.
         defines (list[str]): Synthesis preprocessor defines.
         deps (list[label]): Verilog library dependencies.
         gate_library (label): Generic gate model used for no-PDK Yosys PPA runs.
-        library_name (str or None): Target-name identifier used by non-Yosys synthesis plugins.
         structured_gate_library (label): Generic structured-gate mux implementation used by the no-PDK Yosys flow.
         tags (list[str]): Additional Bazel tags.
         top (str): Top module. Defaults to the target name of the sole explicit dependency.
@@ -136,44 +132,28 @@ def br_verilog_synth_suite(
 
     synth_defines = defines
     synth_deps = deps
-    if tool == "yosys" and gate_library:
+    if gate_library:
         synth_defines = defines + ["BR_PPA_SYNTHESIS"]
         synth_deps = deps + [gate_library]
         if structured_gate_library and top != "br_mux_bin_structured_gates":
             synth_deps.append(structured_gate_library)
 
-    if tool == "yosys":
-        # Both profiles intentionally share a base name. verilog_synth_suite
-        # appends the tool and library name, producing distinct nolib and
-        # asap7_rvt_tt targets.
-        verilog_synth_suite(
-            name = name,
-            tool = tool,
-            defines = synth_defines,
-            deps = synth_deps,
-            sandbox_tags = tags + ["ppa-synth-generic", "ppa-synth-sandbox"],
-            tags = tags + ["ppa-synth", "ppa-synth-generic"],
-            top = top,
-            **kwargs
-        )
-        asap7_rvt_tt_verilog_synth_suite(
-            name = name,
-            defines = synth_defines,
-            deps = synth_deps,
-            tags = tags,
-            top = top,
-            **kwargs
-        )
-        return
-
-    verilog_synth_suite(
+    # Both profiles intentionally share a base name. The sweep appends the
+    # tool and library name, producing distinct nolib and asap7_rvt_tt targets.
+    verilog_yosys_synth_suite(
         name = name,
-        tool = tool,
         defines = synth_defines,
         deps = synth_deps,
-        library_name = library_name,
-        sandbox_tags = tags + ["ppa-synth-sandbox"],
-        tags = tags + ["ppa-synth"],
+        sandbox_tags = tags + ["ppa-synth-generic", "ppa-synth-sandbox"],
+        tags = tags + ["ppa-synth", "ppa-synth-generic"],
+        top = top,
+        **kwargs
+    )
+    asap7_rvt_tt_yosys_synth_suite(
+        name = name,
+        defines = synth_defines,
+        deps = synth_deps,
+        tags = tags,
         top = top,
         **kwargs
     )

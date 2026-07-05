@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: Apache-2.0
 
 load("@rules_hdl//verilog:providers.bzl", "verilog_library")
-load("//bazel:br_verilog.bzl", "br_verilog_elab_and_lint_test_suite", "br_verilog_synth_suite")
+load("//bazel:br_verilog.bzl", "br_verilog_elab_and_lint_test_suite", "br_verilog_yosys_synth_suite")
 
 package(default_visibility = ["//visibility:public"])
 
@@ -91,7 +91,7 @@ verilog_library(
     ],
 )
 
-br_verilog_synth_suite(
+br_verilog_yosys_synth_suite(
     name = "br_delay_ppa",
     params = {
         "NumStages": [
@@ -106,7 +106,7 @@ br_verilog_synth_suite(
     deps = [":br_delay"],
 )
 
-br_verilog_synth_suite(
+br_verilog_yosys_synth_suite(
     name = "br_delay_nr_ppa",
     params = {
         "NumStages": [
@@ -121,7 +121,7 @@ br_verilog_synth_suite(
     deps = [":br_delay_nr"],
 )
 
-br_verilog_synth_suite(
+br_verilog_yosys_synth_suite(
     name = "br_delay_valid_gated_ppa",
     params = {
         "FirstStageUngated": ["0"],
@@ -131,7 +131,7 @@ br_verilog_synth_suite(
     deps = [":br_delay_valid"],
 )
 
-br_verilog_synth_suite(
+br_verilog_yosys_synth_suite(
     name = "br_delay_valid_ungated_ppa",
     params = {
         "FirstStageUngated": ["1"],
@@ -141,7 +141,7 @@ br_verilog_synth_suite(
     deps = [":br_delay_valid"],
 )
 
-br_verilog_synth_suite(
+br_verilog_yosys_synth_suite(
     name = "br_delay_valid_nr_gated_ppa",
     params = {
         "FirstStageUngated": ["0"],
@@ -151,7 +151,7 @@ br_verilog_synth_suite(
     deps = [":br_delay_valid_nr"],
 )
 
-br_verilog_synth_suite(
+br_verilog_yosys_synth_suite(
     name = "br_delay_valid_nr_ungated_ppa",
     params = {
         "FirstStageUngated": ["1"],
@@ -161,7 +161,7 @@ br_verilog_synth_suite(
     deps = [":br_delay_valid_nr"],
 )
 
-br_verilog_synth_suite(
+br_verilog_yosys_synth_suite(
     name = "br_delay_valid_next_ppa",
     params = {
         "NumStages": [
@@ -176,7 +176,7 @@ br_verilog_synth_suite(
     deps = [":br_delay_valid_next"],
 )
 
-br_verilog_synth_suite(
+br_verilog_yosys_synth_suite(
     name = "br_delay_valid_next_nr_ppa",
     params = {
         "NumStages": [
@@ -191,7 +191,7 @@ br_verilog_synth_suite(
     deps = [":br_delay_valid_next_nr"],
 )
 
-br_verilog_synth_suite(
+br_verilog_yosys_synth_suite(
     name = "br_delay_shift_reg_ppa",
     params = {
         "NumStages": [
@@ -206,7 +206,7 @@ br_verilog_synth_suite(
     deps = [":br_delay_shift_reg"],
 )
 
-br_verilog_synth_suite(
+br_verilog_yosys_synth_suite(
     name = "br_delay_skew_ppa",
     params = {"Width": [
         "8",
@@ -215,7 +215,7 @@ br_verilog_synth_suite(
     deps = [":br_delay_skew"],
 )
 
-br_verilog_synth_suite(
+br_verilog_yosys_synth_suite(
     name = "br_delay_deskew_ppa",
     params = {"Width": [
         "8",

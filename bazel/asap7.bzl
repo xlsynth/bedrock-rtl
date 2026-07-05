@@ -2,7 +2,7 @@
 
 """Pinned ASAP7 synthesis profile used by Bedrock PPA sweeps."""
 
-load("//bazel:verilog.bzl", "verilog_synth_suite")
+load("//bazel:verilog.bzl", "verilog_yosys_synth_suite")
 
 # These inputs match the OpenROAD-flow-scripts ASAP7 platform at commit
 # ae9a8ed9d67b087abffd4645208672a33da2d3bf. ASAP7 splits the RVT/TT NLDM
@@ -34,17 +34,16 @@ _SHA256 = {
     "lib/NLDM/asap7sc7p5t_SIMPLE_RVT_TT_nldm_211120.lib.gz": "073ac4b6b08f272b6953b0ad54d1d9743767a7d15a0e2964ed86cf44c3dbe00e",
 }
 
-def asap7_rvt_tt_verilog_synth_suite(name, defines, deps, tags, top, **kwargs):
+def asap7_rvt_tt_yosys_synth_suite(name, defines, deps, tags, top, **kwargs):
     """Creates the Yosys ASAP7 RVT/TT synthesis targets for one sweep."""
-    verilog_synth_suite(
+    verilog_yosys_synth_suite(
         name = name,
-        tool = "yosys",
         defines = defines,
         deps = deps,
         input_driver_cell = _INPUT_DRIVER_CELL,
         liberties = _LIBERTIES,
         library_name = "asap7_rvt_tt",
-        liberty_root_env = "ASAP7_ROOT",
+        liberty_root = "${ASAP7_ROOT}",
         liberty_sha256 = _SHA256,
         output_load_ff = _OUTPUT_LOAD_FF,
         sandbox_tags = tags + ["ppa-synth-asap7-rvt-tt", "ppa-synth-sandbox"],
