@@ -234,13 +234,13 @@ def common_args(args: argparse.Namespace):
         common["sim_opts"] = getattr(args, "sim_opt", [])
     elif getattr(args, "subcommand", None) == "synth":
         common["liberties"] = getattr(args, "liberty", [])
-        common["dff_liberty"] = getattr(args, "dff_liberty", None)
+        common["sequential_liberty"] = getattr(args, "sequential_liberty", None)
         common["liberty_root_env"] = getattr(args, "liberty_root_env", None)
         common["liberty_sha256"] = dict(getattr(args, "liberty_sha256", []))
         common["synth_profile"] = getattr(args, "synth_profile", "generic")
         common["clock_period_ps"] = getattr(args, "clock_period_ps", None)
-        common["abc_driver_cell"] = getattr(args, "abc_driver_cell", None)
-        common["abc_load_ff"] = getattr(args, "abc_load_ff", None)
+        common["input_driver_cell"] = getattr(args, "input_driver_cell", None)
+        common["output_load_ff"] = getattr(args, "output_load_ff", None)
     return common
 
 
@@ -385,9 +385,9 @@ class Synth(Subcommand):
             help="Liberty path relative to --liberty_root_env. May be repeated.",
         )
         parser.add_argument(
-            "--dff_liberty",
+            "--sequential_liberty",
             type=liberty_file,
-            help="Sequential-cell Liberty path used by Yosys dfflibmap.",
+            help="Liberty path used for sequential-cell mapping when libraries are split.",
         )
         parser.add_argument(
             "--liberty_root_env",
@@ -413,11 +413,11 @@ class Synth(Subcommand):
             help="Optional target clock period in picoseconds for technology mapping.",
         )
         parser.add_argument(
-            "--abc_driver_cell",
+            "--input_driver_cell",
             help="Optional Liberty cell assumed to drive each primary input.",
         )
         parser.add_argument(
-            "--abc_load_ff",
+            "--output_load_ff",
             type=float,
             help="Optional capacitive load in femtofarads on each primary output.",
         )

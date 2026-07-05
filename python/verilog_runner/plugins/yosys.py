@@ -43,12 +43,12 @@ class Yosys(EdaTool):
 
     def __post_init__(self):
         self.logger = get_class_logger("synth", "yosys")
-        if (self.abc_driver_cell is None) != (self.abc_load_ff is None):
+        if (self.input_driver_cell is None) != (self.output_load_ff is None):
             raise ValueError(
-                "--abc_driver_cell and --abc_load_ff must be specified together"
+                "--input_driver_cell and --output_load_ff must be specified together"
             )
-        if self.abc_load_ff is not None and self.abc_load_ff <= 0:
-            raise ValueError("--abc_load_ff must be greater than zero")
+        if self.output_load_ff is not None and self.output_load_ff <= 0:
+            raise ValueError("--output_load_ff must be greater than zero")
         if self.liberties:
             if not self.liberty_root_env:
                 raise ValueError("--liberty_root_env is required with --liberty")
@@ -56,18 +56,23 @@ class Yosys(EdaTool):
                 raise ValueError(
                     "--liberty_sha256 must specify exactly one checksum for each --liberty"
                 )
-            if self.dff_liberty and self.dff_liberty not in self.liberties:
-                raise ValueError("--dff_liberty must also be present in --liberty")
+            if (
+                self.sequential_liberty
+                and self.sequential_liberty not in self.liberties
+            ):
+                raise ValueError(
+                    "--sequential_liberty must also be present in --liberty"
+                )
         elif (
-            self.dff_liberty
+            self.sequential_liberty
             or self.liberty_root_env
             or self.liberty_sha256
             or self.clock_period_ps
-            or self.abc_driver_cell
-            or self.abc_load_ff
+            or self.input_driver_cell
+            or self.output_load_ff
         ):
             raise ValueError(
-                "Liberty root, DFF library, checksums, clock period, and ABC constraints require --liberty"
+                "Liberty root, sequential library, checksums, clock period, and I/O constraints require --liberty"
             )
 
     @classmethod
@@ -126,20 +131,22 @@ class Yosys(EdaTool):
                 "[file join $ppa_liberty_root " + _tcl_word(path) + "]"
                 for path in self.liberties
             ]
-            if self.dff_liberty:
+            if self.sequential_liberty:
                 dff_path = (
-                    "[file join $ppa_liberty_root " + _tcl_word(self.dff_liberty) + "]"
+                    "[file join $ppa_liberty_root "
+                    + _tcl_word(self.sequential_liberty)
+                    + "]"
                 )
                 commands.append("dfflibmap -liberty " + dff_path)
 
             abc_args = []
             for liberty in liberty_paths:
                 abc_args += ["-liberty", liberty]
-            if self.abc_driver_cell:
+            if self.input_driver_cell:
                 abc_args += ["-constr", _tcl_word(self.abc_constraints_file)]
             if self.clock_period_ps:
                 abc_args += ["-D", str(self.clock_period_ps)]
-            if not self.abc_driver_cell:
+            if not self.input_driver_cell:
                 # The default unconstrained Yosys script omits stime. Keep a
                 # custom equivalent so the raw report still contains delay.
                 abc_script = (
@@ -174,10 +181,10 @@ class Yosys(EdaTool):
         """Returns a shell script that invokes Yosys."""
         self.logger.info("Generating shell script.")
         preflight = []
-        if self.abc_driver_cell:
+        if self.input_driver_cell:
             constraint_lines = [
-                "set_driving_cell " + self.abc_driver_cell,
-                "set_load " + format(self.abc_load_ff, "g"),
+                "set_driving_cell " + self.input_driver_cell,
+                "set_load " + format(self.output_load_ff, "g"),
             ]
             cleanup_command = "rm -f -- " + shlex.quote(self.abc_constraints_file)
             preflight.append("trap " + shlex.quote(cleanup_command) + " EXIT")
@@ -237,11 +244,11 @@ class Yosys(EdaTool):
                 METADATA_JSON_BEGIN,
                 json.dumps(
                     {
-                        "abc_driver_cell": self.abc_driver_cell,
-                        "abc_load_ff": self.abc_load_ff,
+                        "input_driver_cell": self.input_driver_cell,
+                        "output_load_ff": self.output_load_ff,
                         "clock_period_ps": self.clock_period_ps,
                         "defines": sorted(self.defines),
-                        "dff_liberty": self.dff_liberty,
+                        "sequential_liberty": self.sequential_liberty,
                         "liberties": self.liberties,
                         "liberty_root_env": self.liberty_root_env,
                         "params": dict(sorted(self.params.items())),

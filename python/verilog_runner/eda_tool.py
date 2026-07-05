@@ -31,13 +31,13 @@ class EdaTool(ABC):
     tclfile_custom_body: Optional[str] = field(default_factory=Optional[str])
     env_setup_commands: Optional[str] = field(default_factory=Optional[str])
     liberties: List[str] = field(default_factory=list)
-    dff_liberty: Optional[str] = None
+    sequential_liberty: Optional[str] = None
     liberty_root_env: Optional[str] = None
     liberty_sha256: Dict[str, str] = field(default_factory=dict)
     synth_profile: str = "generic"
     clock_period_ps: Optional[int] = None
-    abc_driver_cell: Optional[str] = None
-    abc_load_ff: Optional[float] = None
+    input_driver_cell: Optional[str] = None
+    output_load_ff: Optional[float] = None
 
     @abstractmethod
     def tcl_preamble(self) -> str:

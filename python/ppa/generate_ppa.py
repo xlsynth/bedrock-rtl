@@ -50,8 +50,8 @@ class PpaMetrics:
     synth_profile: str
     tool_version: str
     liberties: tuple[str, ...]
-    abc_driver_cell: Optional[str]
-    abc_load_ff: Optional[float]
+    input_driver_cell: Optional[str]
+    output_load_ff: Optional[float]
     cells: int
     flops: int
     wire_bits: int
@@ -132,10 +132,12 @@ def parse_log(target: str, text: str) -> PpaMetrics:
         synth_profile=str(metadata.get("synth_profile", PROFILE_GENERIC)),
         tool_version=version_match.group(0).strip() if version_match else "unknown",
         liberties=tuple(str(path) for path in metadata.get("liberties", [])),
-        abc_driver_cell=metadata.get("abc_driver_cell"),
-        abc_load_ff=(
-            float(metadata["abc_load_ff"])
-            if metadata.get("abc_load_ff") is not None
+        input_driver_cell=metadata.get(
+            "input_driver_cell", metadata.get("abc_driver_cell")
+        ),
+        output_load_ff=(
+            float(metadata.get("output_load_ff", metadata.get("abc_load_ff")))
+            if metadata.get("output_load_ff", metadata.get("abc_load_ff")) is not None
             else None
         ),
         cells=int(module.get("num_cells", 0)),
@@ -195,8 +197,8 @@ def render_markdown(
         liberties = sorted(
             {Path(path).name for metric in rows for path in metric.liberties}
         )
-        driver_cells = {metric.abc_driver_cell for metric in rows}
-        output_loads = {metric.abc_load_ff for metric in rows}
+        driver_cells = {metric.input_driver_cell for metric in rows}
+        output_loads = {metric.output_load_ff for metric in rows}
         if len(driver_cells) != 1 or None in driver_cells:
             raise ValueError("ASAP7 metrics must use one ABC input driver cell")
         if len(output_loads) != 1 or None in output_loads:
@@ -219,10 +221,16 @@ def render_markdown(
             + ".",
             "",
             (
+                "Set `ASAP7_ROOT` to the compatible system installation; `.bazelrc` "
+                "forwards the caller's value, while the Docker image supplies `/opt/asap7`."
+            ),
+            "",
+            (
                 f"ABC mapping assumes `{_markdown(driver_cell)}` drives each primary input "
                 f"and applies {output_load:g} fF to each primary output. Mapping runs "
                 "`buffer`, `upsize`, and `dnsize` before `stime -p`; no clock delay target "
-                "is imposed, and `WireLoad = none`."
+                "is imposed, and `WireLoad = none`. The driver and load match the pinned "
+                "OpenROAD ASAP7 platform defaults."
             ),
         ]
     else:

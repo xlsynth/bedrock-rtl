@@ -411,28 +411,28 @@ def _verilog_sim_test_impl(ctx):
 def _verilog_synth_args(ctx):
     """Returns command-line arguments for a synthesis invocation."""
     extra_args = []
-    if bool(ctx.attr.abc_driver_cell) != bool(ctx.attr.abc_load_ff):
-        fail("abc_driver_cell and abc_load_ff must be specified together")
+    if bool(ctx.attr.input_driver_cell) != bool(ctx.attr.output_load_ff):
+        fail("input_driver_cell and output_load_ff must be specified together")
     if ctx.attr.liberties:
         if not ctx.attr.liberty_root_env:
             fail("liberty_root_env is required with liberties")
         if sorted(ctx.attr.liberty_sha256.keys()) != sorted(ctx.attr.liberties):
             fail("liberty_sha256 must specify exactly one digest for each entry in liberties")
-        if ctx.attr.dff_liberty and ctx.attr.dff_liberty not in ctx.attr.liberties:
-            fail("dff_liberty must also be present in liberties")
+        if ctx.attr.sequential_liberty and ctx.attr.sequential_liberty not in ctx.attr.liberties:
+            fail("sequential_liberty must also be present in liberties")
     elif (
-        ctx.attr.dff_liberty or
+        ctx.attr.sequential_liberty or
         ctx.attr.liberty_root_env or
         ctx.attr.liberty_sha256 or
-        ctx.attr.abc_driver_cell or
-        ctx.attr.abc_load_ff
+        ctx.attr.input_driver_cell or
+        ctx.attr.output_load_ff
     ):
-        fail("DFF mapping, Liberty metadata, and ABC constraints require liberties")
+        fail("Sequential mapping, Liberty metadata, and I/O constraints require liberties")
 
     for liberty in ctx.attr.liberties:
         extra_args.append("--liberty='" + liberty + "'")
-    if ctx.attr.dff_liberty:
-        extra_args.append("--dff_liberty='" + ctx.attr.dff_liberty + "'")
+    if ctx.attr.sequential_liberty:
+        extra_args.append("--sequential_liberty='" + ctx.attr.sequential_liberty + "'")
     if ctx.attr.liberty_root_env:
         extra_args.append("--liberty_root_env='" + ctx.attr.liberty_root_env + "'")
     for liberty, digest in sorted(ctx.attr.liberty_sha256.items()):
@@ -443,9 +443,9 @@ def _verilog_synth_args(ctx):
         fail("clock_period_ps requires liberties")
     if ctx.attr.clock_period_ps:
         extra_args.append("--clock_period_ps=" + str(ctx.attr.clock_period_ps))
-    if ctx.attr.abc_driver_cell:
-        extra_args.append("--abc_driver_cell='" + ctx.attr.abc_driver_cell + "'")
-        extra_args.append("--abc_load_ff='" + ctx.attr.abc_load_ff + "'")
+    if ctx.attr.input_driver_cell:
+        extra_args.append("--input_driver_cell='" + ctx.attr.input_driver_cell + "'")
+        extra_args.append("--output_load_ff='" + ctx.attr.output_load_ff + "'")
     for opt in ctx.attr.opts:
         extra_args.append("--opt='" + opt + "'")
     return extra_args
@@ -1120,8 +1120,8 @@ def _verilog_synth_attrs(verilog_runner_tool_default = "//python/verilog_runner:
         "liberties": attr.string_list(
             doc = "System Liberty paths relative to the directory named by liberty_root_env.",
         ),
-        "dff_liberty": attr.string(
-            doc = "Sequential-cell Liberty path used by dfflibmap; must also appear in liberties.",
+        "sequential_liberty": attr.string(
+            doc = "Liberty path used for sequential-cell mapping when libraries are split; must also appear in liberties.",
         ),
         "liberty_root_env": attr.string(
             doc = "Environment variable containing the root for system-provided Liberty files.",
@@ -1136,11 +1136,11 @@ def _verilog_synth_attrs(verilog_runner_tool_default = "//python/verilog_runner:
         "clock_period_ps": attr.int(
             doc = "Optional target clock period in picoseconds; requires liberties.",
         ),
-        "abc_driver_cell": attr.string(
-            doc = "Optional Liberty cell assumed to drive each primary input; requires abc_load_ff.",
+        "input_driver_cell": attr.string(
+            doc = "Optional Liberty cell assumed to drive each primary input; requires output_load_ff.",
         ),
-        "abc_load_ff": attr.string(
-            doc = "Optional capacitive load in femtofarads on each primary output; requires abc_driver_cell.",
+        "output_load_ff": attr.string(
+            doc = "Optional capacitive load in femtofarads on each primary output; requires input_driver_cell.",
         ),
         "data": attr.label_list(
             doc = "Additional runtime files needed by the synthesis plugin.",

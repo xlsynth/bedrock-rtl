@@ -8,7 +8,9 @@ Library source: OpenROAD-flow-scripts commit `ae9a8ed9d67b087abffd4645208672a33d
 
 Library files: `asap7sc7p5t_AO_RVT_TT_nldm_211120.lib.gz`, `asap7sc7p5t_INVBUF_RVT_TT_nldm_220122.lib.gz`, `asap7sc7p5t_OA_RVT_TT_nldm_211120.lib.gz`, `asap7sc7p5t_SEQ_RVT_TT_nldm_220123.lib`, `asap7sc7p5t_SIMPLE_RVT_TT_nldm_211120.lib.gz`.
 
-ABC mapping assumes `BUFx2_ASAP7_75t_R` drives each primary input and applies 3.898 fF to each primary output. Mapping runs `buffer`, `upsize`, and `dnsize` before `stime -p`; no clock delay target is imposed, and `WireLoad = none`.
+Set `ASAP7_ROOT` to the compatible system installation; `.bazelrc` forwards the caller's value, while the Docker image supplies `/opt/asap7`.
+
+ABC mapping assumes `BUFx2_ASAP7_75t_R` drives each primary input and applies 3.898 fF to each primary output. Mapping runs `buffer`, `upsize`, and `dnsize` before `stime -p`; no clock delay target is imposed, and `WireLoad = none`. The driver and load match the pinned OpenROAD ASAP7 platform defaults.
 
 Tool versions: `Yosys 0.65 (git sha1 b85cad634, clang++ 18.1.8 -fPIC -O3)`
 
