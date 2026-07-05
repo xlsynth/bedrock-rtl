@@ -13,6 +13,8 @@ _ASAP7_RVT_TT_LIBERTIES = [
 ]
 
 _ASAP7_RVT_TT_DFF_LIBERTY = "lib/NLDM/asap7sc7p5t_SEQ_RVT_TT_nldm_220123.lib"
+_ASAP7_RVT_TT_ABC_DRIVER_CELL = "BUFx2_ASAP7_75t_R"
+_ASAP7_RVT_TT_ABC_LOAD_FF = "3.898"
 
 _ASAP7_RVT_TT_SHA256 = {
     "lib/NLDM/asap7sc7p5t_AO_RVT_TT_nldm_211120.lib.gz": "fe9f1c18e88ab129d63ad82adc256f3a85c7e38e47dabbe0a96749b41087dea1",
@@ -173,6 +175,8 @@ def br_verilog_synth_suite(
         verilog_synth_suite(
             name = name,
             tool = tool,
+            abc_driver_cell = _ASAP7_RVT_TT_ABC_DRIVER_CELL,
+            abc_load_ff = _ASAP7_RVT_TT_ABC_LOAD_FF,
             defines = synth_defines,
             deps = synth_deps,
             dff_liberty = _ASAP7_RVT_TT_DFF_LIBERTY,

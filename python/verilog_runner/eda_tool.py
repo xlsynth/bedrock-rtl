@@ -36,6 +36,8 @@ class EdaTool(ABC):
     liberty_sha256: Dict[str, str] = field(default_factory=dict)
     synth_profile: str = "generic"
     clock_period_ps: Optional[int] = None
+    abc_driver_cell: Optional[str] = None
+    abc_load_ff: Optional[float] = None
 
     @abstractmethod
     def tcl_preamble(self) -> str:

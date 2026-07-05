@@ -6,6 +6,7 @@ import argparse
 from dataclasses import dataclass
 import json
 from pathlib import Path
+import shlex
 from typing import Dict, Type
 
 from cli import Subcommand, Synth, common_args
@@ -42,6 +43,12 @@ class Yosys(EdaTool):
 
     def __post_init__(self):
         self.logger = get_class_logger("synth", "yosys")
+        if (self.abc_driver_cell is None) != (self.abc_load_ff is None):
+            raise ValueError(
+                "--abc_driver_cell and --abc_load_ff must be specified together"
+            )
+        if self.abc_load_ff is not None and self.abc_load_ff <= 0:
+            raise ValueError("--abc_load_ff must be greater than zero")
         if self.liberties:
             if not self.liberty_root_env:
                 raise ValueError("--liberty_root_env is required with --liberty")
@@ -56,9 +63,11 @@ class Yosys(EdaTool):
             or self.liberty_root_env
             or self.liberty_sha256
             or self.clock_period_ps
+            or self.abc_driver_cell
+            or self.abc_load_ff
         ):
             raise ValueError(
-                "Liberty root, DFF library, checksums, and clock period require --liberty"
+                "Liberty root, DFF library, checksums, clock period, and ABC constraints require --liberty"
             )
 
     @classmethod
@@ -72,6 +81,10 @@ class Yosys(EdaTool):
     @property
     def stat_json_file(self) -> str:
         return self.logfile + ".stat.json"
+
+    @property
+    def abc_constraints_file(self) -> str:
+        return self.logfile + ".abc.constr"
 
     def tcl_preamble(self) -> str:
         return "\n".join([gen_file_header(self.tclfile, "yosys"), "yosys -import"])
@@ -119,16 +132,27 @@ class Yosys(EdaTool):
                 )
                 commands.append("dfflibmap -liberty " + dff_path)
 
-            abc_script = (
-                "+strash;&get,-n;&fraig,-x;&put;scorr;dc2;dretime;strash;"
-                "&get,-n;&dch,-f;&nf"
-                + ("," + str(self.clock_period_ps) if self.clock_period_ps else "")
-                + ";&put;stime,-p"
-            )
             abc_args = []
             for liberty in liberty_paths:
                 abc_args += ["-liberty", liberty]
-            abc_args += ["-script", _tcl_word(abc_script)]
+            if self.abc_driver_cell:
+                abc_args += ["-constr", _tcl_word(self.abc_constraints_file)]
+            if self.clock_period_ps:
+                abc_args += ["-D", str(self.clock_period_ps)]
+            if not self.abc_driver_cell:
+                # The default unconstrained Yosys script omits stime. Keep a
+                # custom equivalent so the raw report still contains delay.
+                abc_script = (
+                    "+strash;&get,-n;&fraig,-x;&put;scorr;dc2;dretime;strash;"
+                    "&get,-n;&dch,-f;&nf"
+                    + (
+                        ",-D," + str(self.clock_period_ps)
+                        if self.clock_period_ps
+                        else ""
+                    )
+                    + ";&put;stime,-p"
+                )
+                abc_args += ["-script", _tcl_word(abc_script)]
             commands += ["abc " + " ".join(abc_args), "clean"]
             for liberty in liberty_paths:
                 stat_args += ["-liberty", liberty]
@@ -150,6 +174,17 @@ class Yosys(EdaTool):
         """Returns a shell script that invokes Yosys."""
         self.logger.info("Generating shell script.")
         preflight = []
+        if self.abc_driver_cell:
+            constraint_lines = [
+                "set_driving_cell " + self.abc_driver_cell,
+                "set_load " + format(self.abc_load_ff, "g"),
+            ]
+            preflight.append(
+                "printf '%s\\n' "
+                + " ".join(shlex.quote(line) for line in constraint_lines)
+                + " > "
+                + shlex.quote(self.abc_constraints_file)
+            )
         if self.liberties:
             root = self.liberty_root_env
             preflight.append(
@@ -200,6 +235,8 @@ class Yosys(EdaTool):
                 METADATA_JSON_BEGIN,
                 json.dumps(
                     {
+                        "abc_driver_cell": self.abc_driver_cell,
+                        "abc_load_ff": self.abc_load_ff,
                         "clock_period_ps": self.clock_period_ps,
                         "defines": sorted(self.defines),
                         "dff_liberty": self.dff_liberty,

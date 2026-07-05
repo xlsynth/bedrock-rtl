@@ -239,6 +239,8 @@ def common_args(args: argparse.Namespace):
         common["liberty_sha256"] = dict(getattr(args, "liberty_sha256", []))
         common["synth_profile"] = getattr(args, "synth_profile", "generic")
         common["clock_period_ps"] = getattr(args, "clock_period_ps", None)
+        common["abc_driver_cell"] = getattr(args, "abc_driver_cell", None)
+        common["abc_load_ff"] = getattr(args, "abc_load_ff", None)
     return common
 
 
@@ -409,4 +411,13 @@ class Synth(Subcommand):
             "--clock_period_ps",
             type=int,
             help="Optional target clock period in picoseconds for technology mapping.",
+        )
+        parser.add_argument(
+            "--abc_driver_cell",
+            help="Optional Liberty cell assumed to drive each primary input.",
+        )
+        parser.add_argument(
+            "--abc_load_ff",
+            type=float,
+            help="Optional capacitive load in femtofarads on each primary output.",
         )

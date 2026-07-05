@@ -74,6 +74,8 @@ class TestCliFunctions(unittest.TestCase):
         args.liberty_sha256 = [("lib/a.lib", "a" * 64)]
         args.synth_profile = "example-tt"
         args.clock_period_ps = 1000
+        args.abc_driver_cell = "BUFx2_EXAMPLE"
+        args.abc_load_ff = 3.898
 
         common = common_args(args)
 
@@ -83,6 +85,8 @@ class TestCliFunctions(unittest.TestCase):
         self.assertEqual(common["liberty_sha256"], {"lib/a.lib": "a" * 64})
         self.assertEqual(common["synth_profile"], "example-tt")
         self.assertEqual(common["clock_period_ps"], 1000)
+        self.assertEqual(common["abc_driver_cell"], "BUFx2_EXAMPLE")
+        self.assertEqual(common["abc_load_ff"], 3.898)
 
     @mock.patch.dict("os.environ", {}, clear=True)
     def test_common_args_preserves_tool_opts(self):

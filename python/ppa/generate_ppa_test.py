@@ -67,6 +67,8 @@ class GeneratePpaTest(unittest.TestCase):
             "params": {"Width": "32"},
             "synth_profile": "asap7-rvt-tt",
             "liberties": ["lib/NLDM/asap7.lib.gz"],
+            "abc_driver_cell": "BUFx2_ASAP7_75t_R",
+            "abc_load_ff": 3.898,
         }
         stats = {
             "modules": {
@@ -108,6 +110,9 @@ class GeneratePpaTest(unittest.TestCase):
         self.assertIn("Mapped cells", rendered)
         self.assertIn("ABC delay (ps)", rendered)
         self.assertIn("`asap7.lib.gz`", rendered)
+        self.assertIn("`BUFx2_ASAP7_75t_R` drives each primary input", rendered)
+        self.assertIn("applies 3.898 fF", rendered)
+        self.assertIn("`buffer`, `upsize`, and `dnsize`", rendered)
 
     def test_catalog_coverage_rejects_missing_module(self):
         with tempfile.TemporaryDirectory() as temporary:
@@ -134,6 +139,8 @@ class GeneratePpaTest(unittest.TestCase):
             synth_profile="generic",
             tool_version="Yosys 0.65",
             liberties=(),
+            abc_driver_cell=None,
+            abc_load_ff=None,
             cells=1,
             flops=0,
             wire_bits=1,

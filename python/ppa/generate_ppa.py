@@ -50,6 +50,8 @@ class PpaMetrics:
     synth_profile: str
     tool_version: str
     liberties: tuple[str, ...]
+    abc_driver_cell: Optional[str]
+    abc_load_ff: Optional[float]
     cells: int
     flops: int
     wire_bits: int
@@ -130,6 +132,12 @@ def parse_log(target: str, text: str) -> PpaMetrics:
         synth_profile=str(metadata.get("synth_profile", PROFILE_GENERIC)),
         tool_version=version_match.group(0).strip() if version_match else "unknown",
         liberties=tuple(str(path) for path in metadata.get("liberties", [])),
+        abc_driver_cell=metadata.get("abc_driver_cell"),
+        abc_load_ff=(
+            float(metadata["abc_load_ff"])
+            if metadata.get("abc_load_ff") is not None
+            else None
+        ),
         cells=int(module.get("num_cells", 0)),
         flops=flops,
         wire_bits=int(module.get("num_wire_bits", 0)),
@@ -187,6 +195,14 @@ def render_markdown(
         liberties = sorted(
             {Path(path).name for metric in rows for path in metric.liberties}
         )
+        driver_cells = {metric.abc_driver_cell for metric in rows}
+        output_loads = {metric.abc_load_ff for metric in rows}
+        if len(driver_cells) != 1 or None in driver_cells:
+            raise ValueError("ASAP7 metrics must use one ABC input driver cell")
+        if len(output_loads) != 1 or None in output_loads:
+            raise ValueError("ASAP7 metrics must use one ABC output load")
+        driver_cell = next(iter(driver_cells))
+        output_load = next(iter(output_loads))
         lines += [
             "# Bedrock RTL synthesis signals — ASAP7 RVT/TT",
             "",
@@ -203,8 +219,10 @@ def render_markdown(
             + ".",
             "",
             (
-                "ABC mapping is unconstrained. Reported delay assumes ideal primary-input "
-                "arrival, no external output load, and `WireLoad = none`."
+                f"ABC mapping assumes `{_markdown(driver_cell)}` drives each primary input "
+                f"and applies {output_load:g} fF to each primary output. Mapping runs "
+                "`buffer`, `upsize`, and `dnsize` before `stime -p`; no clock delay target "
+                "is imposed, and `WireLoad = none`."
             ),
         ]
     else:
