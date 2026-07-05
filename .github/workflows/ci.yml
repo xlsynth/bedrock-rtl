@@ -29,10 +29,8 @@ jobs:
       - name: Run pre-commit
         run: pre-commit run --show-diff-on-failure --color=always --all-files
 
-  docker-image-build:
+  bazel-oss-docker-image:
     runs-on: ubuntu-24.04
-    outputs:
-      image-tag: ${{ steps.image-metadata.outputs.tag }}
     permissions:
       contents: read
     steps:
@@ -40,15 +38,7 @@ jobs:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
       # docker/setup-buildx-action v4.1.0
       - uses: docker/setup-buildx-action@d7f5e7f509e45cec5c76c4d5afdd7de93d0b3df5
-      - name: Set YYYY-MM-DD-SHA image tag
-        id: image-metadata
-        run: |
-          # Normalize the commit timestamp to a UTC date so a Git SHA always
-          # maps to the same YYYY-MM-DD-SHA image tag across time zones.
-          commit_timestamp="$(git show --no-patch --format=%ct "${GITHUB_SHA}")"
-          commit_date="$(date --utc --date="@${commit_timestamp}" +%F)"
-          echo "tag=${commit_date}-${GITHUB_SHA}" >> "${GITHUB_OUTPUT}"
-      - name: Build Docker image
+      - name: Build and load public Docker image
         # docker/build-push-action v7.2.0
         uses: docker/build-push-action@f9f3042f7e2789586610d6e8b85c8f03e5195baf
         with:
@@ -56,19 +46,339 @@ jobs:
           file: ./Dockerfile
           platforms: linux/amd64
           push: false
+          load: true
+          tags: bedrock-rtl-ci:${{ github.sha }}
           labels: |
             org.opencontainers.image.revision=${{ github.sha }}
-          # Reuse BuildKit layers stored in the GitHub Actions cache for this image.
           cache-from: type=gha,scope=bedrock-rtl-docker
-          # Export all intermediate and final layers for subsequent builds.
-          cache-to: type=gha,mode=max,scope=bedrock-rtl-docker
+          cache-to: ${{ github.event_name != 'pull_request' && 'type=gha,mode=max,scope=bedrock-rtl-docker' || '' }}
+      - name: Export public Docker image
+        run: docker save bedrock-rtl-ci:${{ github.sha }} --output /tmp/bedrock-rtl-ci.tar
+      - name: Upload public Docker image
+        # actions/upload-artifact v7.0.1
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: bedrock-rtl-ci-image-${{ github.sha }}
+          path: /tmp/bedrock-rtl-ci.tar
+          compression-level: 0
+          retention-days: 1
+
+  bazel-oss-tool-test-shard:
+    name: bazel-oss-tool-test-shard (${{ matrix.name }})
+    runs-on: ubuntu-24.04
+    needs: bazel-oss-docker-image
+    permissions:
+      contents: read
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: python-stardoc
+            suite: python-stardoc
+            shard_index: 0
+            shard_count: 1
+          - name: slang-1-of-4
+            suite: slang
+            shard_index: 0
+            shard_count: 4
+          - name: slang-2-of-4
+            suite: slang
+            shard_index: 1
+            shard_count: 4
+          - name: slang-3-of-4
+            suite: slang
+            shard_index: 2
+            shard_count: 4
+          - name: slang-4-of-4
+            suite: slang
+            shard_index: 3
+            shard_count: 4
+          - name: verilator-1-of-8
+            suite: verilator
+            shard_index: 0
+            shard_count: 8
+          - name: verilator-2-of-8
+            suite: verilator
+            shard_index: 1
+            shard_count: 8
+          - name: verilator-3-of-8
+            suite: verilator
+            shard_index: 2
+            shard_count: 8
+          - name: verilator-4-of-8
+            suite: verilator
+            shard_index: 3
+            shard_count: 8
+          - name: verilator-5-of-8
+            suite: verilator
+            shard_index: 4
+            shard_count: 8
+          - name: verilator-6-of-8
+            suite: verilator
+            shard_index: 5
+            shard_count: 8
+          - name: verilator-7-of-8
+            suite: verilator
+            shard_index: 6
+            shard_count: 8
+          - name: verilator-8-of-8
+            suite: verilator
+            shard_index: 7
+            shard_count: 8
+    steps:
+      # actions/checkout v6
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
+      # bazel-contrib/setup-bazel v0.19.0
+      - name: Set up Bazel caches
+        uses: bazel-contrib/setup-bazel@c5acdfb288317d0b5c0bbd7a396a3dc868bb0f86
+        with:
+          bazelisk-cache: true
+          # A stable partition gets a stable cache. Including the shard count
+          # prevents incompatible partitions from sharing an Actions cache.
+          disk-cache: ${{ github.workflow }}-oss-${{ matrix.suite }}-${{ matrix.shard_index }}-of-${{ matrix.shard_count }}
+          repository-cache: true
+          # PRs restore trusted cache entries but cannot pollute shared caches.
+          cache-save: ${{ github.event_name != 'pull_request' }}
+          output-base: ${{ runner.temp }}/bazel-output
+      - name: Configure public Bazel environment
+        run: |
+          # setup-bazel restores these paths on a cache hit. Create them on a
+          # miss so Docker can bind-mount the same host paths below.
+          mkdir -p \
+            "${HOME}/.cache/bazel" \
+            "${HOME}/.cache/bazelisk" \
+            "${HOME}/.cache/bazel-disk" \
+            "${HOME}/.cache/bazel-repo" \
+            "${RUNNER_TEMP}/bazel-output"
+          # The Slang plugin executes $SLANG_PATH directly rather than looking
+          # up `slang` on PATH. The public Docker image installs it here.
+          echo 'common --action_env=SLANG_PATH=/usr/local/bin/slang' > ci.bazelrc
+      - name: Download public Docker image
+        # actions/download-artifact v8.0.1
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
+        with:
+          name: bedrock-rtl-ci-image-${{ github.sha }}
+          path: /tmp
+      - name: Load public Docker image
+        run: docker load --input /tmp/bedrock-rtl-ci.tar
+      # Do not use `bazel test //...` with a tag filter here. Bazel would still
+      # analyze targets that need proprietary verilog_runner plugins.
+      - name: Run public Bazel test shard
+        continue-on-error: true
+        run: |
+          # Keep stdin attached so `bash -s` receives the heredoc below. The
+          # hosted runner UID is not present in the image's passwd file, so set
+          # USER explicitly while retaining that UID for cache writes.
+          docker run --rm -i \
+            --user "$(id -u):$(id -g)" \
+            --env USER=user \
+            --env HOME="${HOME}" \
+            --env CI_SUITE="${{ matrix.suite }}" \
+            --env CI_SHARD_INDEX="${{ matrix.shard_index }}" \
+            --env CI_SHARD_COUNT="${{ matrix.shard_count }}" \
+            --workdir "${GITHUB_WORKSPACE}" \
+            --volume "${GITHUB_WORKSPACE}:${GITHUB_WORKSPACE}" \
+            --volume "${HOME}/.bazelrc:${HOME}/.bazelrc:ro" \
+            --volume "${HOME}/.cache/bazel:${HOME}/.cache/bazel" \
+            --volume "${HOME}/.cache/bazelisk:${HOME}/.cache/bazelisk" \
+            --volume "${HOME}/.cache/bazel-disk:${HOME}/.cache/bazel-disk" \
+            --volume "${HOME}/.cache/bazel-repo:${HOME}/.cache/bazel-repo" \
+            --volume "${RUNNER_TEMP}/bazel-output:${RUNNER_TEMP}/bazel-output" \
+            bedrock-rtl-ci:${{ github.sha }} \
+            bash -s <<'EOF'
+          set +e
+          BAZEL_FLAGS=(
+            --action_env=PATH
+            --noshow_loading_progress
+            --test_output=errors
+            --disk_cache=/home/runner/.cache/bazel-disk
+            --repository_cache=/home/runner/.cache/bazel-repo
+            --experimental_disk_cache_gc_max_size=256M
+            --experimental_disk_cache_gc_max_age=7d
+          )
+          HELPER=python/ci/bazel_oss_sharding.py
+          RESULTS_DIR="bazel-oss-results/${CI_SUITE}-${CI_SHARD_INDEX}-of-${CI_SHARD_COUNT}"
+          mkdir -p "$RESULTS_DIR"
+
+          run_discovered_suite() {
+            local suite="$1"
+            local shard_index="$2"
+            local shard_count="$3"
+            local discovered="$4"
+            local result="$RESULTS_DIR/result-${suite}-${shard_index}-of-${shard_count}.json"
+            local targets="$RESULTS_DIR/targets-${suite}-${shard_index}-of-${shard_count}.txt"
+            local log="/tmp/bazel-${suite}-${shard_index}-of-${shard_count}.log"
+
+            python3.12 "$HELPER" partition \
+              --suite "$suite" \
+              --shard-index "$shard_index" \
+              --shard-count "$shard_count" \
+              --input "$discovered" \
+              --output-dir "$RESULTS_DIR"
+            local partition_exit_code=$?
+            if [ "$partition_exit_code" -ne 0 ]; then
+              return "$partition_exit_code"
+            fi
+
+            # A target-pattern file guarantees one Bazel invocation even when
+            # thousands of labels would exceed the shell argument limit.
+            bazel test "${BAZEL_FLAGS[@]}" \
+              --target_pattern_file="$targets" 2>&1 | tee "$log"
+            local bazel_exit_code=${PIPESTATUS[0]}
+            python3.12 "$HELPER" finalize \
+              --result "$result" \
+              --log "$log" \
+              --exit-code "$bazel_exit_code"
+          }
+
+          query_and_run_suite() {
+            local suite="$1"
+            local shard_index="$2"
+            local shard_count="$3"
+            local query_expression="$4"
+            local discovered="/tmp/discovered-${suite}-${shard_index}-of-${shard_count}.txt"
+            local result="$RESULTS_DIR/result-${suite}-${shard_index}-of-${shard_count}.json"
+
+            bazel query --noshow_progress "$query_expression" > "$discovered"
+            local query_exit_code=$?
+            if [ "$query_exit_code" -ne 0 ]; then
+              python3.12 "$HELPER" partition \
+                --suite "$suite" \
+                --shard-index "$shard_index" \
+                --shard-count "$shard_count" \
+                --input "$discovered" \
+                --output-dir "$RESULTS_DIR"
+              python3.12 "$HELPER" discovery-failure \
+                --result "$result" \
+                --exit-code "$query_exit_code" \
+                --message "Bazel query failed"
+              return "$query_exit_code"
+            fi
+            run_discovered_suite "$suite" "$shard_index" "$shard_count" "$discovered"
+          }
+
+          case "$CI_SUITE" in
+            python-stardoc)
+              query_and_run_suite python 0 1 \
+                'tests(//python/...) union tests(//ecc/rtl/secded_codegen/...)'
+              printf '%s\n' \
+                //bazel:verilog_rules_diff_test \
+                //bazel/verilog_runner:nonzip_test \
+                > /tmp/discovered-stardoc.txt
+              run_discovered_suite stardoc 0 1 /tmp/discovered-stardoc.txt
+              ;;
+            slang)
+              query_and_run_suite slang "$CI_SHARD_INDEX" "$CI_SHARD_COUNT" \
+                '(tests(//...) intersect attr(tags, "slang", //...)) except attr(tags, "manual", //...)'
+              ;;
+            verilator)
+              query_and_run_suite verilator "$CI_SHARD_INDEX" "$CI_SHARD_COUNT" \
+                'tests(//...) intersect attr(tags, "verilator", //...) intersect attr(tags, "sim", //...)'
+              ;;
+            *)
+              echo "Unknown public suite: $CI_SUITE" >&2
+              exit 4
+              ;;
+          esac
+
+          check_args=(--results-dir "$RESULTS_DIR")
+          if [ "$CI_SUITE" = python-stardoc ]; then
+            check_args+=(--expected-suite python --expected-suite stardoc)
+          else
+            check_args+=(--expected-suite "$CI_SUITE")
+          fi
+          python3.12 "$HELPER" check "${check_args[@]}"
+          EOF
+      - name: Upload public shard result
+        if: ${{ always() }}
+        # actions/upload-artifact v7.0.1
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: bazel-oss-result-${{ matrix.name }}
+          path: bazel-oss-results/${{ matrix.suite }}-${{ matrix.shard_index }}-of-${{ matrix.shard_count }}
+          if-no-files-found: error
+          retention-days: 1
+      - name: Check public shard result
+        if: ${{ always() }}
+        run: |
+          check_args=(
+            --results-dir "bazel-oss-results/${{ matrix.suite }}-${{ matrix.shard_index }}-of-${{ matrix.shard_count }}"
+          )
+          if [ "${{ matrix.suite }}" = python-stardoc ]; then
+            check_args+=(--expected-suite python --expected-suite stardoc)
+          else
+            check_args+=(--expected-suite "${{ matrix.suite }}")
+          fi
+          python3.12 python/ci/bazel_oss_sharding.py check "${check_args[@]}"
+
+  # This stable aggregate check is the public branch-protection, badge, and
+  # image-publication interface; individual shards remain visible underneath it.
+  bazel-oss-tool-test:
+    runs-on: ubuntu-24.04
+    needs: bazel-oss-tool-test-shard
+    if: ${{ always() }}
+    permissions:
+      contents: read
+    outputs:
+      image-tag: ${{ steps.image-metadata.outputs.tag }}
+      python_total_tests: ${{ steps.results.outputs.python_total_tests }}
+      python_passing_tests: ${{ steps.results.outputs.python_passing_tests }}
+      python_exit_code: ${{ steps.results.outputs.python_exit_code }}
+      stardoc_total_tests: ${{ steps.results.outputs.stardoc_total_tests }}
+      stardoc_passing_tests: ${{ steps.results.outputs.stardoc_passing_tests }}
+      stardoc_exit_code: ${{ steps.results.outputs.stardoc_exit_code }}
+      slang_total_tests: ${{ steps.results.outputs.slang_total_tests }}
+      slang_passing_tests: ${{ steps.results.outputs.slang_passing_tests }}
+      slang_exit_code: ${{ steps.results.outputs.slang_exit_code }}
+      verilator_total_tests: ${{ steps.results.outputs.verilator_total_tests }}
+      verilator_passing_tests: ${{ steps.results.outputs.verilator_passing_tests }}
+      verilator_exit_code: ${{ steps.results.outputs.verilator_exit_code }}
+    steps:
+      # actions/checkout v6
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
+      - name: Set YYYY-MM-DD-SHA image tag
+        id: image-metadata
+        run: |
+          commit_timestamp="$(git show --no-patch --format=%ct "${GITHUB_SHA}")"
+          commit_date="$(date --utc --date="@${commit_timestamp}" +%F)"
+          echo "tag=${commit_date}-${GITHUB_SHA}" >> "${GITHUB_OUTPUT}"
+      - name: Download public shard results
+        continue-on-error: true
+        # actions/download-artifact v8.0.1
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
+        with:
+          pattern: bazel-oss-result-*
+          path: bazel-oss-aggregate
+          merge-multiple: true
+      - name: Aggregate public shard results
+        id: results
+        continue-on-error: true
+        run: |
+          python3.12 python/ci/bazel_oss_sharding.py aggregate \
+            --results-dir bazel-oss-aggregate \
+            --expected python=1 \
+            --expected stardoc=1 \
+            --expected slang=4 \
+            --expected verilator=8 \
+            --github-output "$GITHUB_OUTPUT" \
+            --step-summary "$GITHUB_STEP_SUMMARY"
+      - name: Check public Bazel test suite results
+        run: |
+          if [ "${{ needs.bazel-oss-tool-test-shard.result }}" != success ]; then
+            echo "::error title=Public Bazel shard failed::One or more matrix jobs failed"
+            exit 1
+          fi
+          if [ "${{ steps.results.outcome }}" != success ]; then
+            echo "::error title=Public Bazel aggregation failed::Shard results were incomplete or failed validation"
+            exit 1
+          fi
 
   docker-image-publish:
     runs-on: ubuntu-24.04
-    needs: docker-image-build
+    needs: bazel-oss-tool-test
     # GitHub only permits users with repository write access to use workflow_dispatch.
     if: >-
-      needs.docker-image-build.result == 'success' &&
+      needs.bazel-oss-tool-test.result == 'success' &&
       (github.event_name == 'workflow_dispatch' ||
       (github.event_name == 'push' && github.ref == 'refs/heads/main'))
     permissions:
@@ -105,10 +415,10 @@ jobs:
           push: true
           # Attach max-detail BuildKit provenance to the published image.
           provenance: mode=max
-          tags: ghcr.io/xlsynth/bedrock-rtl:${{ needs.docker-image-build.outputs.image-tag }}
+          tags: ghcr.io/xlsynth/bedrock-rtl:${{ needs.bazel-oss-tool-test.outputs.image-tag }}
           labels: |
             org.opencontainers.image.revision=${{ github.sha }}
-          # Reuse the layers populated by docker-image-build before publishing.
+          # Reuse the layers populated by bazel-oss-tool-test before publishing.
           cache-from: type=gha,scope=bedrock-rtl-docker
       - name: Attest Docker image provenance
         # actions/attest v4.1.0
@@ -118,9 +428,8 @@ jobs:
           subject-digest: ${{ steps.publish.outputs.digest }}
           push-to-registry: true
 
-  # Run bazel build and tests in order in one job to avoid parallel jobs that make
-  # build logs appear out of sequence across the CI workflow.
-  bazel-build-and-test:
+  # Keep proprietary tools and their logs exclusively on the private runner.
+  bazel-build-and-proprietary-tool-test:
     runs-on: self-hosted
     env:
       # TODO(xiyu): Temporary workaround until CI provides a container-local EDA setup script.
@@ -128,27 +437,15 @@ jobs:
       # a sanitized action PATH unless PATH is passed explicitly.
       TMP_HACK_BAZEL_CI_FLAGS: --action_env=PATH
     outputs:
-      python_total_tests: ${{ steps.python.outputs.total_tests }}
-      python_passing_tests: ${{ steps.python.outputs.passing_tests }}
-      python_exit_code: ${{ steps.python.outputs.exit_code }}
-      stardoc_total_tests: ${{ steps.stardoc.outputs.total_tests }}
-      stardoc_passing_tests: ${{ steps.stardoc.outputs.passing_tests }}
-      stardoc_exit_code: ${{ steps.stardoc.outputs.exit_code }}
       verific_total_tests: ${{ steps.verific.outputs.total_tests }}
       verific_passing_tests: ${{ steps.verific.outputs.passing_tests }}
       verific_exit_code: ${{ steps.verific.outputs.exit_code }}
-      slang_total_tests: ${{ steps.slang.outputs.total_tests }}
-      slang_passing_tests: ${{ steps.slang.outputs.passing_tests }}
-      slang_exit_code: ${{ steps.slang.outputs.exit_code }}
       ascentlint_total_tests: ${{ steps.ascentlint.outputs.total_tests }}
       ascentlint_passing_tests: ${{ steps.ascentlint.outputs.passing_tests }}
       ascentlint_exit_code: ${{ steps.ascentlint.outputs.exit_code }}
       vcs_total_tests: ${{ steps.vcs.outputs.total_tests }}
       vcs_passing_tests: ${{ steps.vcs.outputs.passing_tests }}
       vcs_exit_code: ${{ steps.vcs.outputs.exit_code }}
-      verilator_total_tests: ${{ steps.verilator.outputs.total_tests }}
-      verilator_passing_tests: ${{ steps.verilator.outputs.passing_tests }}
-      verilator_exit_code: ${{ steps.verilator.outputs.exit_code }}
     steps:
     # actions/checkout v6
     - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
@@ -158,29 +455,11 @@ jobs:
       working-directory: ${{ github.workspace }}
       run: cp /home/gh-actions/bedrock-infra/ci.bazelrc ci.bazelrc
     - name: Build
-      run: bazel build $TMP_HACK_BAZEL_CI_FLAGS --noshow_loading_progress //...
-    - name: python tests
-      id: python
+      id: build
       run: |
         set +e
-        bazel test $TMP_HACK_BAZEL_CI_FLAGS --noshow_loading_progress //python/... //ecc/rtl/secded_codegen/... 2>&1 | tee .bazel-test-python.log
-        BAZEL_EXIT_CODE=${PIPESTATUS[0]}
-        TOTAL_TESTS=$(grep -Po '(?<=out of )\d+(?= test)' .bazel-test-python.log)
-        PASSING_TESTS=$(grep -Po '\d+(?= test passes?\.| tests pass)' .bazel-test-python.log)
-        echo "total_tests=$TOTAL_TESTS" >> $GITHUB_OUTPUT
-        echo "passing_tests=$PASSING_TESTS" >> $GITHUB_OUTPUT
-        echo "exit_code=$BAZEL_EXIT_CODE" >> $GITHUB_OUTPUT
-    - name: Stardoc tests
-      id: stardoc
-      run: |
-        set +e
-        bazel test $TMP_HACK_BAZEL_CI_FLAGS --noshow_loading_progress //bazel/... 2>&1 | tee .bazel-test-stardoc.log
-        BAZEL_EXIT_CODE=${PIPESTATUS[0]}
-        TOTAL_TESTS=$(grep -Po '(?<=out of )\d+(?= test)' .bazel-test-stardoc.log)
-        PASSING_TESTS=$(grep -Po '\d+(?= test passes?\.| tests pass)' .bazel-test-stardoc.log)
-        echo "total_tests=$TOTAL_TESTS" >> $GITHUB_OUTPUT
-        echo "passing_tests=$PASSING_TESTS" >> $GITHUB_OUTPUT
-        echo "exit_code=$BAZEL_EXIT_CODE" >> $GITHUB_OUTPUT
+        bazel build $TMP_HACK_BAZEL_CI_FLAGS --noshow_loading_progress //...
+        echo "exit_code=$?" >> $GITHUB_OUTPUT
     - name: Verilog elaboration tests (using Verific tclmain)
       id: verific
       # Use --test_output=summary to suppress log output, even on failure (proprietary EDA tool output may be sensitive).
@@ -190,33 +469,6 @@ jobs:
         BAZEL_EXIT_CODE=${PIPESTATUS[0]}
         TOTAL_TESTS=$(grep -Po '(?<=out of )\d+(?= test)' .bazel-test-verific.log)
         PASSING_TESTS=$(grep -Po '\d+(?= test passes?\.| tests pass)' .bazel-test-verific.log)
-        echo "total_tests=$TOTAL_TESTS" >> $GITHUB_OUTPUT
-        echo "passing_tests=$PASSING_TESTS" >> $GITHUB_OUTPUT
-        echo "exit_code=$BAZEL_EXIT_CODE" >> $GITHUB_OUTPUT
-    - name: Verilog elaboration tests (using Slang)
-      id: slang
-      run: |
-        set +e
-        SLANG_TARGETS=.bazel-test-slang.targets
-        bazel query --noshow_progress 'tests(//...) intersect attr(tags, "slang", //...)' > "$SLANG_TARGETS"
-        BAZEL_EXIT_CODE=$?
-        TOTAL_TESTS=0
-        PASSING_TESTS=0
-
-        if [ "$BAZEL_EXIT_CODE" -ne 0 ]; then
-          echo "::error title=Slang test discovery failed::Bazel query exited with code $BAZEL_EXIT_CODE"
-        elif [ ! -s "$SLANG_TARGETS" ]; then
-          echo "::error title=No Slang tests found::The slang tag must select at least one test target"
-          BAZEL_EXIT_CODE=4
-        else
-          NUM_SLANG_TARGETS=$(wc -l < "$SLANG_TARGETS")
-          echo "Running $NUM_SLANG_TARGETS Slang-tagged test targets."
-          bazel test $TMP_HACK_BAZEL_CI_FLAGS --noshow_loading_progress //... --test_tag_filters=slang 2>&1 | tee .bazel-test-slang.log
-          BAZEL_EXIT_CODE=${PIPESTATUS[0]}
-          TOTAL_TESTS=$(grep -Po '(?<=out of )\d+(?= test)' .bazel-test-slang.log)
-          PASSING_TESTS=$(grep -Po '\d+(?= test passes?\.| tests pass)' .bazel-test-slang.log)
-        fi
-
         echo "total_tests=$TOTAL_TESTS" >> $GITHUB_OUTPUT
         echo "passing_tests=$PASSING_TESTS" >> $GITHUB_OUTPUT
         echo "exit_code=$BAZEL_EXIT_CODE" >> $GITHUB_OUTPUT
@@ -245,21 +497,7 @@ jobs:
         echo "total_tests=$TOTAL_TESTS" >> $GITHUB_OUTPUT
         echo "passing_tests=$PASSING_TESTS" >> $GITHUB_OUTPUT
         echo "exit_code=$BAZEL_EXIT_CODE" >> $GITHUB_OUTPUT
-    - name: Verilog sim tests (using Verilator)
-      id: verilator
-      # Don't need --test_output=summary to suppress log output because Verilator is open source.
-      run: |
-        set +e
-        bazel query 'tests(//...) intersect attr(tags, "verilator", //...) intersect attr(tags, "sim", //...)' > .bazel-test-verilator.targets
-        xargs -a .bazel-test-verilator.targets bazel test $TMP_HACK_BAZEL_CI_FLAGS --noshow_loading_progress 2>&1 | tee .bazel-test-verilator.log
-        BAZEL_EXIT_CODE=${PIPESTATUS[0]}
-        TOTAL_TESTS=$(grep -Po '(?<=out of )\d+(?= test)' .bazel-test-verilator.log)
-        PASSING_TESTS=$(grep -Po '\d+(?= test passes?\.| tests pass)' .bazel-test-verilator.log)
-        echo "total_tests=$TOTAL_TESTS" >> $GITHUB_OUTPUT
-        echo "passing_tests=$PASSING_TESTS" >> $GITHUB_OUTPUT
-        echo "exit_code=$BAZEL_EXIT_CODE" >> $GITHUB_OUTPUT
-
-    - name: Check bazel test suite results
+    - name: Check proprietary Bazel build and test suite results
       run: |
         failed_suites=()
 
@@ -272,13 +510,10 @@ jobs:
           fi
         }
 
-        check_suite "python" "${{ steps.python.outputs.exit_code }}"
-        check_suite "stardoc" "${{ steps.stardoc.outputs.exit_code }}"
+        check_suite "build" "${{ steps.build.outputs.exit_code }}"
         check_suite "verific" "${{ steps.verific.outputs.exit_code }}"
-        check_suite "slang" "${{ steps.slang.outputs.exit_code }}"
         check_suite "ascentlint" "${{ steps.ascentlint.outputs.exit_code }}"
         check_suite "vcs" "${{ steps.vcs.outputs.exit_code }}"
-        check_suite "verilator" "${{ steps.verilator.outputs.exit_code }}"
 
         if [ "${#failed_suites[@]}" -ne 0 ]; then
           echo "Failed Bazel suites:"
@@ -320,8 +555,8 @@ jobs:
   python-badge:
     runs-on: ubuntu-24.04
     environment: ci-badge-publishing
-    needs: bazel-build-and-test
-    if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
+    needs: bazel-oss-tool-test
+    if: ${{ always() && github.event_name == 'push' && github.ref == 'refs/heads/main' }}
     steps:
     - name: Create python badge
       # schneegans/dynamic-badges-action v1.7.0
@@ -331,14 +566,14 @@ jobs:
         gistID: c66dc2ddc0e513ba06ce338620977b26
         filename: python.json
         label: "python"
-        message: ${{ needs.bazel-build-and-test.outputs.python_passing_tests }} of ${{ needs.bazel-build-and-test.outputs.python_total_tests }} passing
-        color: ${{ needs.bazel-build-and-test.outputs.python_exit_code == '0' && 'brightgreen' || 'red' }}
+        message: ${{ needs.bazel-oss-tool-test.outputs.python_passing_tests }} of ${{ needs.bazel-oss-tool-test.outputs.python_total_tests }} passing
+        color: ${{ needs.bazel-oss-tool-test.outputs.python_exit_code == '0' && 'brightgreen' || 'red' }}
 
   stardoc-badge:
     runs-on: ubuntu-24.04
     environment: ci-badge-publishing
-    needs: bazel-build-and-test
-    if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
+    needs: bazel-oss-tool-test
+    if: ${{ always() && github.event_name == 'push' && github.ref == 'refs/heads/main' }}
     steps:
     - name: Create stardoc badge
       # schneegans/dynamic-badges-action v1.7.0
@@ -348,14 +583,14 @@ jobs:
         gistID: c66dc2ddc0e513ba06ce338620977b26
         filename: stardoc.json
         label: "stardoc"
-        message: ${{ needs.bazel-build-and-test.outputs.stardoc_passing_tests }} of ${{ needs.bazel-build-and-test.outputs.stardoc_total_tests }} passing
-        color: ${{ needs.bazel-build-and-test.outputs.stardoc_exit_code == '0' && 'brightgreen' || 'red' }}
+        message: ${{ needs.bazel-oss-tool-test.outputs.stardoc_passing_tests }} of ${{ needs.bazel-oss-tool-test.outputs.stardoc_total_tests }} passing
+        color: ${{ needs.bazel-oss-tool-test.outputs.stardoc_exit_code == '0' && 'brightgreen' || 'red' }}
 
   verific-badge:
     runs-on: ubuntu-24.04
     environment: ci-badge-publishing
-    needs: bazel-build-and-test
-    if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
+    needs: bazel-build-and-proprietary-tool-test
+    if: ${{ always() && github.event_name == 'push' && github.ref == 'refs/heads/main' }}
     steps:
     - name: Create verific badge
       # schneegans/dynamic-badges-action v1.7.0
@@ -365,14 +600,14 @@ jobs:
         gistID: c66dc2ddc0e513ba06ce338620977b26
         filename: verific.json
         label: "verific"
-        message: ${{ needs.bazel-build-and-test.outputs.verific_passing_tests }} of ${{ needs.bazel-build-and-test.outputs.verific_total_tests }} passing
-        color: ${{ needs.bazel-build-and-test.outputs.verific_exit_code == '0' && 'brightgreen' || 'red' }}
+        message: ${{ needs.bazel-build-and-proprietary-tool-test.outputs.verific_passing_tests }} of ${{ needs.bazel-build-and-proprietary-tool-test.outputs.verific_total_tests }} passing
+        color: ${{ needs.bazel-build-and-proprietary-tool-test.outputs.verific_exit_code == '0' && 'brightgreen' || 'red' }}
 
   slang-badge:
     runs-on: ubuntu-24.04
     environment: ci-badge-publishing
-    needs: bazel-build-and-test
-    if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
+    needs: bazel-oss-tool-test
+    if: ${{ always() && github.event_name == 'push' && github.ref == 'refs/heads/main' }}
     steps:
     - name: Create slang badge
       # schneegans/dynamic-badges-action v1.7.0
@@ -382,14 +617,14 @@ jobs:
         gistID: c66dc2ddc0e513ba06ce338620977b26
         filename: slang.json
         label: "slang"
-        message: ${{ needs.bazel-build-and-test.outputs.slang_passing_tests }} of ${{ needs.bazel-build-and-test.outputs.slang_total_tests }} passing
-        color: ${{ needs.bazel-build-and-test.outputs.slang_exit_code == '0' && 'brightgreen' || 'red' }}
+        message: ${{ needs.bazel-oss-tool-test.outputs.slang_passing_tests }} of ${{ needs.bazel-oss-tool-test.outputs.slang_total_tests }} passing
+        color: ${{ needs.bazel-oss-tool-test.outputs.slang_exit_code == '0' && 'brightgreen' || 'red' }}
 
   ascentlint-badge:
     runs-on: ubuntu-24.04
     environment: ci-badge-publishing
-    needs: bazel-build-and-test
-    if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
+    needs: bazel-build-and-proprietary-tool-test
+    if: ${{ always() && github.event_name == 'push' && github.ref == 'refs/heads/main' }}
     steps:
     - name: Create ascentlint badge
       # schneegans/dynamic-badges-action v1.7.0
@@ -399,14 +634,14 @@ jobs:
         gistID: c66dc2ddc0e513ba06ce338620977b26
         filename: ascentlint.json
         label: "ascentlint"
-        message: ${{ needs.bazel-build-and-test.outputs.ascentlint_passing_tests }} of ${{ needs.bazel-build-and-test.outputs.ascentlint_total_tests }} passing
-        color: ${{ needs.bazel-build-and-test.outputs.ascentlint_exit_code == '0' && 'brightgreen' || 'red' }}
+        message: ${{ needs.bazel-build-and-proprietary-tool-test.outputs.ascentlint_passing_tests }} of ${{ needs.bazel-build-and-proprietary-tool-test.outputs.ascentlint_total_tests }} passing
+        color: ${{ needs.bazel-build-and-proprietary-tool-test.outputs.ascentlint_exit_code == '0' && 'brightgreen' || 'red' }}
 
   vcs-badge:
     runs-on: ubuntu-24.04
     environment: ci-badge-publishing
-    needs: bazel-build-and-test
-    if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
+    needs: bazel-build-and-proprietary-tool-test
+    if: ${{ always() && github.event_name == 'push' && github.ref == 'refs/heads/main' }}
     steps:
     - name: Create vcs badge
       # schneegans/dynamic-badges-action v1.7.0
@@ -416,14 +651,14 @@ jobs:
         gistID: c66dc2ddc0e513ba06ce338620977b26
         filename: vcs.json
         label: "vcs"
-        message: ${{ needs.bazel-build-and-test.outputs.vcs_passing_tests }} of ${{ needs.bazel-build-and-test.outputs.vcs_total_tests }} passing
-        color: ${{ needs.bazel-build-and-test.outputs.vcs_exit_code == '0' && 'brightgreen' || 'red' }}
+        message: ${{ needs.bazel-build-and-proprietary-tool-test.outputs.vcs_passing_tests }} of ${{ needs.bazel-build-and-proprietary-tool-test.outputs.vcs_total_tests }} passing
+        color: ${{ needs.bazel-build-and-proprietary-tool-test.outputs.vcs_exit_code == '0' && 'brightgreen' || 'red' }}
 
   verilator-badge:
     runs-on: ubuntu-24.04
     environment: ci-badge-publishing
-    needs: bazel-build-and-test
-    if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
+    needs: bazel-oss-tool-test
+    if: ${{ always() && github.event_name == 'push' && github.ref == 'refs/heads/main' }}
     steps:
     - name: Create verilator badge
       # schneegans/dynamic-badges-action v1.7.0
@@ -433,5 +668,5 @@ jobs:
         gistID: c66dc2ddc0e513ba06ce338620977b26
         filename: verilator.json
         label: "verilator"
-        message: ${{ needs.bazel-build-and-test.outputs.verilator_passing_tests }} of ${{ needs.bazel-build-and-test.outputs.verilator_total_tests }} passing
-        color: ${{ needs.bazel-build-and-test.outputs.verilator_exit_code == '0' && 'brightgreen' || 'red' }}
+        message: ${{ needs.bazel-oss-tool-test.outputs.verilator_passing_tests }} of ${{ needs.bazel-oss-tool-test.outputs.verilator_total_tests }} passing
+        color: ${{ needs.bazel-oss-tool-test.outputs.verilator_exit_code == '0' && 'brightgreen' || 'red' }}

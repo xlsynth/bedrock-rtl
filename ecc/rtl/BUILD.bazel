@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: Apache-2.0
 
 load("@rules_hdl//verilog:providers.bzl", "verilog_library")
-load("//bazel:br_verilog.bzl", "br_verilog_elab_and_lint_test_suite")
+load("//bazel:br_verilog.bzl", "br_verilog_elab_and_lint_test_suite", "br_verilog_synth_suite")
 
 package(default_visibility = ["//visibility:public"])
 
@@ -15,6 +15,29 @@ verilog_library(
         "//delay/rtl:br_delay_valid",
         "//macros:br_asserts_internal",
     ],
+)
+
+br_verilog_synth_suite(
+    name = "br_ecc_sed_encoder_comb_ppa",
+    params = {
+        "DataWidth": [
+            "32",
+            "64",
+        ],
+        "RegisterInputs": ["0"],
+        "RegisterOutputs": ["0"],
+    },
+    deps = [":br_ecc_sed_encoder"],
+)
+
+br_verilog_synth_suite(
+    name = "br_ecc_sed_encoder_pipelined_ppa",
+    params = {
+        "DataWidth": ["64"],
+        "RegisterInputs": ["1"],
+        "RegisterOutputs": ["1"],
+    },
+    deps = [":br_ecc_sed_encoder"],
 )
 
 br_verilog_elab_and_lint_test_suite(
@@ -36,6 +59,29 @@ verilog_library(
         "//delay/rtl:br_delay_valid",
         "//macros:br_asserts_internal",
     ],
+)
+
+br_verilog_synth_suite(
+    name = "br_ecc_sed_decoder_comb_ppa",
+    params = {
+        "DataWidth": [
+            "32",
+            "64",
+        ],
+        "RegisterInputs": ["0"],
+        "RegisterOutputs": ["0"],
+    },
+    deps = [":br_ecc_sed_decoder"],
+)
+
+br_verilog_synth_suite(
+    name = "br_ecc_sed_decoder_pipelined_ppa",
+    params = {
+        "DataWidth": ["64"],
+        "RegisterInputs": ["1"],
+        "RegisterOutputs": ["1"],
+    },
+    deps = [":br_ecc_sed_decoder"],
 )
 
 br_verilog_elab_and_lint_test_suite(
@@ -62,6 +108,29 @@ verilog_library(
         "//pkg:br_ecc_secded_pkg",
         "//pkg:br_math_pkg",
     ],
+)
+
+br_verilog_synth_suite(
+    name = "br_ecc_secded_encoder_comb_ppa",
+    params = {
+        "DataWidth": [
+            "32",
+            "64",
+        ],
+        "RegisterInputs": ["0"],
+        "RegisterOutputs": ["0"],
+    },
+    deps = [":br_ecc_secded_encoder"],
+)
+
+br_verilog_synth_suite(
+    name = "br_ecc_secded_encoder_pipelined_ppa",
+    params = {
+        "DataWidth": ["64"],
+        "RegisterInputs": ["1"],
+        "RegisterOutputs": ["1"],
+    },
+    deps = [":br_ecc_secded_encoder"],
 )
 
 K = [
@@ -118,6 +187,31 @@ verilog_library(
         "//pkg:br_ecc_secded_pkg",
         "//pkg:br_math_pkg",
     ],
+)
+
+br_verilog_synth_suite(
+    name = "br_ecc_secded_decoder_comb_ppa",
+    params = {
+        "DataWidth": [
+            "32",
+            "64",
+        ],
+        "RegisterInputs": ["0"],
+        "RegisterOutputs": ["0"],
+        "RegisterSyndrome": ["0"],
+    },
+    deps = [":br_ecc_secded_decoder"],
+)
+
+br_verilog_synth_suite(
+    name = "br_ecc_secded_decoder_pipelined_ppa",
+    params = {
+        "DataWidth": ["64"],
+        "RegisterInputs": ["1"],
+        "RegisterOutputs": ["1"],
+        "RegisterSyndrome": ["1"],
+    },
+    deps = [":br_ecc_secded_decoder"],
 )
 
 [

@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: Apache-2.0
 
 load("@rules_hdl//verilog:providers.bzl", "verilog_library")
-load("//bazel:br_verilog.bzl", "br_verilog_elab_and_lint_test_suite")
+load("//bazel:br_verilog.bzl", "br_verilog_elab_and_lint_test_suite", "br_verilog_synth_suite")
 
 package(default_visibility = ["//visibility:public"])
 
@@ -18,6 +18,42 @@ verilog_library(
         "//multi_xfer/rtl:br_multi_xfer_reg_fwd",
         "//mux/rtl:br_mux_onehot",
     ],
+)
+
+br_verilog_synth_suite(
+    name = "br_tracker_freelist_baseline_ppa",
+    params = {
+        "EnableBypass": ["0"],
+        "NumAllocPerCycle": ["1"],
+        "NumDeallocPorts": ["1"],
+        "NumEntries": ["16"],
+        "RegisterAllocOutputs": ["0"],
+    },
+    deps = [":br_tracker_freelist"],
+)
+
+br_verilog_synth_suite(
+    name = "br_tracker_freelist_multiport_ppa",
+    params = {
+        "EnableBypass": ["0"],
+        "NumAllocPerCycle": ["2"],
+        "NumDeallocPorts": ["2"],
+        "NumEntries": ["32"],
+        "RegisterAllocOutputs": ["1"],
+    },
+    deps = [":br_tracker_freelist"],
+)
+
+br_verilog_synth_suite(
+    name = "br_tracker_freelist_bypass_ppa",
+    params = {
+        "EnableBypass": ["1"],
+        "NumAllocPerCycle": ["4"],
+        "NumDeallocPorts": ["4"],
+        "NumEntries": ["64"],
+        "RegisterAllocOutputs": ["1"],
+    },
+    deps = [":br_tracker_freelist"],
 )
 
 br_verilog_elab_and_lint_test_suite(
@@ -66,6 +102,39 @@ verilog_library(
     ],
 )
 
+br_verilog_synth_suite(
+    name = "br_tracker_linked_list_ctrl_baseline_ppa",
+    params = {
+        "Depth": ["16"],
+        "NumLinkedLists": ["1"],
+        "NumWritePorts": ["1"],
+        "RamReadLatency": ["0"],
+    },
+    deps = [":br_tracker_linked_list_ctrl"],
+)
+
+br_verilog_synth_suite(
+    name = "br_tracker_linked_list_ctrl_banked_ppa",
+    params = {
+        "Depth": ["64"],
+        "NumLinkedLists": ["2"],
+        "NumWritePorts": ["2"],
+        "RamReadLatency": ["1"],
+    },
+    deps = [":br_tracker_linked_list_ctrl"],
+)
+
+br_verilog_synth_suite(
+    name = "br_tracker_linked_list_ctrl_high_bandwidth_ppa",
+    params = {
+        "Depth": ["128"],
+        "NumLinkedLists": ["4"],
+        "NumWritePorts": ["4"],
+        "RamReadLatency": ["2"],
+    },
+    deps = [":br_tracker_linked_list_ctrl"],
+)
+
 br_verilog_elab_and_lint_test_suite(
     name = "br_tracker_linked_list_ctrl_test_suite",
     params = {
@@ -104,6 +173,24 @@ verilog_library(
     ],
 )
 
+br_verilog_synth_suite(
+    name = "br_tracker_reorder_baseline_ppa",
+    params = {
+        "EntryIdWidth": ["4"],
+        "NumEntries": ["16"],
+    },
+    deps = [":br_tracker_reorder"],
+)
+
+br_verilog_synth_suite(
+    name = "br_tracker_reorder_scaled_ppa",
+    params = {
+        "EntryIdWidth": ["6"],
+        "NumEntries": ["64"],
+    },
+    deps = [":br_tracker_reorder"],
+)
+
 br_verilog_elab_and_lint_test_suite(
     name = "br_tracker_reorder_test_suite",
     params = {
@@ -130,6 +217,30 @@ verilog_library(
         "//macros:br_asserts",
         "//macros:br_unused",
     ],
+)
+
+br_verilog_synth_suite(
+    name = "br_tracker_reorder_buffer_ctrl_1r1w_baseline_ppa",
+    params = {
+        "DataWidth": ["32"],
+        "EntryIdWidth": ["4"],
+        "NumEntries": ["16"],
+        "RamReadLatency": ["0"],
+        "RegisterPopOutputs": ["0"],
+    },
+    deps = [":br_tracker_reorder_buffer_ctrl_1r1w"],
+)
+
+br_verilog_synth_suite(
+    name = "br_tracker_reorder_buffer_ctrl_1r1w_pipelined_ppa",
+    params = {
+        "DataWidth": ["64"],
+        "EntryIdWidth": ["6"],
+        "NumEntries": ["64"],
+        "RamReadLatency": ["2"],
+        "RegisterPopOutputs": ["1"],
+    },
+    deps = [":br_tracker_reorder_buffer_ctrl_1r1w"],
 )
 
 br_verilog_elab_and_lint_test_suite(
@@ -161,6 +272,28 @@ verilog_library(
     ],
 )
 
+br_verilog_synth_suite(
+    name = "br_tracker_reorder_buffer_flops_baseline_ppa",
+    params = {
+        "DataWidth": ["32"],
+        "EntryIdWidth": ["4"],
+        "NumEntries": ["16"],
+        "RegisterPopOutputs": ["0"],
+    },
+    deps = [":br_tracker_reorder_buffer_flops"],
+)
+
+br_verilog_synth_suite(
+    name = "br_tracker_reorder_buffer_flops_registered_ppa",
+    params = {
+        "DataWidth": ["64"],
+        "EntryIdWidth": ["5"],
+        "NumEntries": ["32"],
+        "RegisterPopOutputs": ["1"],
+    },
+    deps = [":br_tracker_reorder_buffer_flops"],
+)
+
 br_verilog_elab_and_lint_test_suite(
     name = "br_tracker_reorder_buffer_flops_test_suite",
     params = {
@@ -185,6 +318,36 @@ verilog_library(
         "//macros:br_asserts",
         "//macros:br_asserts_internal",
     ],
+)
+
+br_verilog_synth_suite(
+    name = "br_tracker_sequence_baseline_ppa",
+    params = {
+        "EntryIdWidth": ["4"],
+        "MaxAllocSize": ["1"],
+        "NumEntries": ["16"],
+    },
+    deps = [":br_tracker_sequence"],
+)
+
+br_verilog_synth_suite(
+    name = "br_tracker_sequence_multi_alloc_ppa",
+    params = {
+        "EntryIdWidth": ["5"],
+        "MaxAllocSize": ["2"],
+        "NumEntries": ["24"],
+    },
+    deps = [":br_tracker_sequence"],
+)
+
+br_verilog_synth_suite(
+    name = "br_tracker_sequence_scaled_ppa",
+    params = {
+        "EntryIdWidth": ["6"],
+        "MaxAllocSize": ["4"],
+        "NumEntries": ["64"],
+    },
+    deps = [":br_tracker_sequence"],
 )
 
 br_verilog_elab_and_lint_test_suite(
