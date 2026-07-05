@@ -410,7 +410,7 @@ jobs:
           # Reuse the layers populated by bazel-oss-tool-test before publishing.
           cache-from: type=gha,scope=bedrock-rtl-docker
       - name: Attest Docker image provenance
-        # actions/attest v4.1.0
+        # actions/attest v4.1.1
         uses: actions/attest@a1948c3f048ba23858d222213b7c278aabede763
         with:
           subject-name: ghcr.io/xlsynth/bedrock-rtl
