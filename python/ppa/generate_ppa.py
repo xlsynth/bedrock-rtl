@@ -370,7 +370,14 @@ def _log_filename(target: str) -> str:
 
 def _cleanup_runner_outputs(workspace: Path, target: str) -> None:
     name = target.rsplit(":", 1)[-1]
-    for suffix in (".f", ".tcl", ".sh", ".log", ".log.stat.json"):
+    for suffix in (
+        ".f",
+        ".tcl",
+        ".sh",
+        ".log",
+        ".log.stat.json",
+        ".log.abc.constr",
+    ):
         path = workspace / (name + suffix)
         if path.exists():
             path.unlink()

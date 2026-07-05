@@ -179,6 +179,8 @@ class Yosys(EdaTool):
                 "set_driving_cell " + self.abc_driver_cell,
                 "set_load " + format(self.abc_load_ff, "g"),
             ]
+            cleanup_command = "rm -f -- " + shlex.quote(self.abc_constraints_file)
+            preflight.append("trap " + shlex.quote(cleanup_command) + " EXIT")
             preflight.append(
                 "printf '%s\\n' "
                 + " ".join(shlex.quote(line) for line in constraint_lines)

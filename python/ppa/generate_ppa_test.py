@@ -6,6 +6,7 @@ import tempfile
 import unittest
 
 from python.ppa.generate_ppa import (
+    _cleanup_runner_outputs,
     parse_log,
     render_markdown,
     validate_catalog_coverage,
@@ -127,6 +128,16 @@ class GeneratePpaTest(unittest.TestCase):
             metric = self._metric("br_present")
             with self.assertRaisesRegex(ValueError, "br_missing"):
                 validate_catalog_coverage([metric], libraries)
+
+    def test_cleanup_runner_outputs_removes_abc_constraints(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            workspace = Path(temporary)
+            constraint_file = workspace / "synth.log.abc.constr"
+            constraint_file.write_text("set_load 3.898\n", encoding="utf-8")
+
+            _cleanup_runner_outputs(workspace, "//foo:synth")
+
+            self.assertFalse(constraint_file.exists())
 
     @staticmethod
     def _metric(top):
