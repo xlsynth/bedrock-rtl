@@ -7,7 +7,7 @@ This guide covers the tools and checks used to develop Bedrock-RTL. See
 
 Install Bazel 9.1.0 (Bazelisk is recommended) and a system Python interpreter version 3.12 or newer.
 
-The public toolchain uses Slang for elaboration, Verible for lint, Verilator for simulation, and TopStitch for RTL wrapper generation. The Docker image includes those tools, plus Yosys, EQY, Yices, and XLS support libraries.
+The public toolchain uses Slang for elaboration, Verible for lint, Verilator for simulation, SymbiYosys (SBY) with Yosys/yosys-slang and Yices for formal verification, and TopStitch for RTL wrapper generation. The Docker image includes those tools, plus EQY and XLS support libraries.
 
 Some checks also use tools that are not distributed with Bedrock-RTL: Verific tclmain, RealIntent AscentLint, Synopsys VCS, Cadence JasperGold, and Synopsys VCF. Provide the installations and licenses yourself if you need those checks.
 
@@ -19,7 +19,7 @@ Bedrock-RTL uses [Bazel](https://bazel.build/) to assemble source lists and run 
 bazel test //...
 ```
 
-The repository includes plugins for Verilator simulation and Slang elaboration. Most other EDA-tool plugins are deliberately kept outside this repository. As a result, tests that select proprietary tools need corresponding plugins in your local or CI environment.
+The repository includes plugins for Slang elaboration, Verilator simulation, Yosys synthesis, and SBY formal verification. Most proprietary EDA-tool plugins are deliberately kept outside this repository. As a result, tests that select proprietary tools need corresponding plugins in your local or CI environment.
 
 Keeping these plugins separate lets the test definitions remain vendor-agnostic and avoids publishing vendor API or licensing details. Not every test works with every tool; check the relevant `BUILD.bazel` target.
 
@@ -39,6 +39,19 @@ verilog_elab_test(
 ```
 
 Slang parses, type-checks, and elaborates the hierarchy. It supports source and header dependencies, defines, and top-level parameter overrides. For package-only source sets, set `compile_only = True`.
+
+For open-source formal verification, use `br_verilog_fpv_test_suite`, which applies the SBY-compatible assertion profile to both the executable test and its generated sandbox:
+
+```bazel
+br_verilog_fpv_test_suite(
+    name = "example_sby",
+    tool = "sby",
+    top = "example_sby_harness",
+    deps = [":example_sby_harness"],
+)
+```
+
+SBY runs unbounded safety (`prove`) and bounded reachability (`cover`) tasks with Yices. Because yosys-slang does not support all Bedrock SVA constructs, SBY harnesses use frontend-compatible immediate assertions and the `BR_YOSYS_SBY` profile suppresses concurrent Bedrock SVA. See the [Verilog Runner documentation](python/verilog_runner/README.md#sby-formal-plugin) for the complete SBY behavior and option contract.
 
 To refresh the public RTL PPA report, run:
 

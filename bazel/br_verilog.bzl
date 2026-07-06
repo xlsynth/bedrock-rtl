@@ -159,44 +159,62 @@ def br_verilog_fpv_test_tools_suite(name, tools = {}, **kwargs):
 
     Args:
         name (str): The base name of the test suite.
-        tools (dict[str, label]): formal tools to use and their corresponding custom tcl body files.
+        tools (dict[str, label|dict]): Formal tools to use. A label value is a custom control body.
+            A dict value overrides suite arguments for that tool, including deps, top, opts,
+            custom_control_header, custom_control_body, custom_tcl_header, and custom_tcl_body.
         **kwargs: Additional keyword arguments passed to br_verilog_fpv_test_suite.
     """
 
-    for tool, custom_tcl_body in tools.items():
-        if custom_tcl_body:
-            kwargs["custom_tcl_body"] = custom_tcl_body
+    for tool, tool_config in tools.items():
+        tool_kwargs = dict(kwargs)
+        if type(tool_config) == "dict":
+            tool_kwargs.update(tool_config)
+        elif type(tool_config) in ["string", "Label"]:
+            if tool_config:
+                tool_kwargs["custom_control_body"] = tool_config
+        else:
+            fail("FPV tool configuration for {} must be a string, Label, or dict".format(tool))
         br_verilog_fpv_test_suite(
             name = name + "_" + tool,
             tool = tool,
-            **kwargs
+            **tool_kwargs
         )
 
-def br_verilog_fpv_test_suite(**kwargs):
+def br_verilog_fpv_test_suite(tool, **kwargs):
     """Wraps verilog_fpv_test_suite with Bedrock-internal settings. Not intended to be called by Bedrock users.
 
-    The define set is fixed for every generated FPV test and sandbox:
+    The common define set enables Bedrock assertions and FPV checks:
     * `BR_ASSERT_ON` enables assertion macros.
     * `BR_ENABLE_IMPL_CHECKS` enables Bedrock implementation checks.
     * `BR_ENABLE_FPV` enables FPV-only assertion wrappers.
     * `BR_DISABLE_FINAL_CHECKS` suppresses simulation-only final blocks, which formal tools ignore.
-    * `BR_DISABLE_ASSERT_IMM` suppresses immediate/combinational checks. Formal assumptions constrain sampled
-      clock edges and cannot reliably prevent between-edge immediate checks from firing.
+
+    Proprietary formal tools additionally define `BR_DISABLE_ASSERT_IMM` because their assumptions constrain
+    sampled clock edges and cannot reliably prevent between-edge immediate checks from firing. SBY instead defines
+    `BR_YOSYS_SBY` to suppress unsupported concurrent SVA while leaving the immediate/combinational FPV macros
+    enabled for its tool-compatible harnesses.
 
     Args:
+        tool (str): The formal tool to use.
         **kwargs: Additional keyword arguments passed to verilog_fpv_test_suite. Do not pass defines.
     """
 
     if "defines" in kwargs:
         fail("Do not pass defines to br_verilog_fpv_test_suite. They are hard-coded in the macro.")
 
+    defines = [
+        "BR_ASSERT_ON",
+        "BR_ENABLE_IMPL_CHECKS",
+        "BR_DISABLE_FINAL_CHECKS",
+        "BR_ENABLE_FPV",
+    ]
+    if tool == "sby":
+        defines.append("BR_YOSYS_SBY")
+    else:
+        defines.append("BR_DISABLE_ASSERT_IMM")
+
     verilog_fpv_test_suite(
-        defines = [
-            "BR_ASSERT_ON",
-            "BR_ENABLE_IMPL_CHECKS",
-            "BR_DISABLE_FINAL_CHECKS",
-            "BR_ENABLE_FPV",
-            "BR_DISABLE_ASSERT_IMM",
-        ],
+        defines = defines,
+        tool = tool,
         **kwargs
     )
