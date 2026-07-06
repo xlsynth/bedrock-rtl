@@ -418,3 +418,7 @@ See link:MACROS.adoc[SystemVerilog Macros] for the list of available macros and 
 == RTL Libraries
 
 See link:LIBRARIES.adoc[RTL Libraries] for the list of available public RTL modules, packages, and formal libraries.
+
+== Report generation scripts
+
+See link:SCRIPTS.adoc[Scripts] for description of avaiable scripts.
