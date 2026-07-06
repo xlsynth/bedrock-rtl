@@ -31,6 +31,7 @@
 // values that can be dropped from the serialized transmission. The don't care values are always in contiguous
 // multiples of PopWidth bits. If SerializeMostSignificantFirst is 1, then the don't care values are the
 // least-significant bits; otherwise, they are the most-significant bits, i.e., either way, the tail end of the flit.
+// The port is ignored when push_last is 0.
 //
 // The push_valid, push_data, push_last, push_last_dont_care_count, and push_metadata must be held stable until push_ready is 1.
 //
@@ -111,7 +112,7 @@ module br_flow_serializer #(
     // the tail end of the push flit. It must be less than SerializationRatio,
     // i.e., the entire push flit is not allowed to consist of "don't care" slices.
     // Drive to 0 if each push flit should be fully serialized and transmitted
-    // over SerializationRatio pop flits. Must be 0 when push_last is 0.
+    // over SerializationRatio pop flits. Ignored when push_last is 0.
     input  logic [SerFlitIdWidth-1:0] push_last_dont_care_count,
     // Constant metadata to carry alongside the flits.
     // Does not get serialized (simply replicated alongside each pop flit).
@@ -143,8 +144,6 @@ module br_flow_serializer #(
   end else begin : gen_push_last_not_covered
     `BR_ASSERT_INTG(push_last_always_zero_a, push_valid |-> !push_last)
   end
-  `BR_ASSERT_INTG(push_last_dont_care_count_zero_a,
-                  push_valid && !push_last |-> push_last_dont_care_count == 0)
 
   // Check push side validity and data stability
   br_flow_checks_valid_data_intg #(
@@ -250,9 +249,11 @@ module br_flow_serializer #(
     // The metadata is replicated from the push side for each pop flit.
     //------
     logic [SerFlitIdWidth-1:0] pop_flit_id_plus_dont_care_count;
+    logic [SerFlitIdWidth-1:0] effective_dont_care_count;
 
     assign pop_valid = push_valid;
-    assign pop_flit_id_plus_dont_care_count = pop_flit_id + push_last_dont_care_count;
+    assign effective_dont_care_count = push_last ? push_last_dont_care_count : '0;
+    assign pop_flit_id_plus_dont_care_count = pop_flit_id + effective_dont_care_count;
     assign pop_last = push_last && (pop_flit_id_plus_dont_care_count == sr_minus_1);
     assign pop_metadata = push_metadata;
 

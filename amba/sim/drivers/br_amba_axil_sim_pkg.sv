@@ -39,4 +39,10 @@ package br_amba_axil_sim_pkg;
     logic [AxilUserWidth-1:0] user;
   } axil_r_t;
 
+  typedef enum int {
+    AxilRequestAw,
+    AxilRequestW,
+    AxilRequestAr
+  } axil_request_channel_t;
+
 endpackage : br_amba_axil_sim_pkg

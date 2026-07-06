@@ -9,23 +9,35 @@ updates:
     directory: "/"
     schedule:
       interval: "monthly"
+    cooldown:
+      default-days: 30
   - package-ecosystem: "bazel"
     directory: "/"
     schedule:
       interval: "monthly"
+    cooldown:
+      default-days: 30
   - package-ecosystem: "pip"
     directory: "/"
     schedule:
       interval: "monthly"
+    cooldown:
+      default-days: 30
   - package-ecosystem: "pre-commit"
     directory: "/"
     schedule:
       interval: "monthly"
+    cooldown:
+      default-days: 30
   - package-ecosystem: "docker"
     directory: "/"
     schedule:
       interval: "monthly"
+    cooldown:
+      default-days: 30
   - package-ecosystem: "cargo"
     directory: "/stitch"
     schedule:
       interval: "monthly"
+    cooldown:
+      default-days: 30

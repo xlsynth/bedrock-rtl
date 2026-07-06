@@ -4,6 +4,7 @@
 
 import br_amba::*;
 import br_amba_axi_sim_pkg::*;
+import br_amba_sim_pkg::*;
 
 typedef struct {
   int num_writes;
@@ -50,8 +51,6 @@ module br_amba_axi_timing_slice_tb;
   // The directed phase covers reverse-W backpressure without relying on a
   // multi-transfer source/sink pattern that can deadlock a registered-ready slice.
   localparam int MultiNumTransactions = (EffectiveWSliceType == 1) ? 1 : NumTransactions;
-  localparam int PayloadSeed = 32'h1357_2468;
-
   logic clk;
   logic rst;
   logic driver_failed;
@@ -394,23 +393,53 @@ module br_amba_axi_timing_slice_tb;
   );
 
   function automatic axi_aw_t get_aw_input(input int index);
-    get_aw_input = get_axi_timing_slice_aw_input(index, StrobeWidth, PayloadSeed);
+    get_aw_input = '0;
+    get_aw_input.addr = AxiAddrWidth'($urandom());
+    get_aw_input.id = AxiIdWidth'($urandom());
+    get_aw_input.len = AxiBurstLenWidth'(index);
+    get_aw_input.size = AxiBurstSizeWidth'($clog2(StrobeWidth));
+    get_aw_input.burst = AxiBurstIncr;
+    get_aw_input.prot = AxiProtWidth'($urandom());
+    get_aw_input.user = AxiUserWidth'($urandom());
   endfunction
 
-  function automatic axi_w_t get_w_input(input int index);
-    get_w_input = get_axi_timing_slice_w_input(index, PayloadSeed);
+  function automatic axi_w_t get_w_input();
+    get_w_input = '0;
+    for (int word = 0; word < DataWidth / 32; word++) begin
+      get_w_input.data[word*32+:32] = $urandom();
+    end
+    get_w_input.strb = AxiStrobeWidth'($urandom()) | AxiStrobeWidth'(1'b1);
+    get_w_input.user = AxiUserWidth'($urandom());
+    get_w_input.last = logic'($urandom_range(0, 1));
   endfunction
 
   function automatic axi_ar_t get_ar_input(input int index);
-    get_ar_input = get_axi_timing_slice_ar_input(index, StrobeWidth, PayloadSeed);
+    get_ar_input = '0;
+    get_ar_input.addr = AxiAddrWidth'($urandom());
+    get_ar_input.id = AxiIdWidth'($urandom());
+    get_ar_input.len = AxiBurstLenWidth'(index + 1);
+    get_ar_input.size = AxiBurstSizeWidth'($clog2(StrobeWidth));
+    get_ar_input.burst = AxiBurstWrap;
+    get_ar_input.prot = AxiProtWidth'($urandom());
+    get_ar_input.user = AxiUserWidth'($urandom());
   endfunction
 
-  function automatic axi_b_t get_b_input(input int index);
-    get_b_input = get_axi_timing_slice_b_input(index, PayloadSeed);
+  function automatic axi_b_t get_b_input();
+    get_b_input = '0;
+    get_b_input.id = AxiIdWidth'($urandom());
+    get_b_input.user = AxiUserWidth'($urandom());
+    get_b_input.resp = AxiRespWidth'($urandom());
   endfunction
 
-  function automatic axi_r_t get_r_input(input int index);
-    get_r_input = get_axi_timing_slice_r_input(index, PayloadSeed);
+  function automatic axi_r_t get_r_input();
+    get_r_input = '0;
+    get_r_input.id = AxiIdWidth'($urandom());
+    for (int word = 0; word < DataWidth / 32; word++) begin
+      get_r_input.data[word*32+:32] = $urandom();
+    end
+    get_r_input.resp = AxiRespWidth'($urandom());
+    get_r_input.user = AxiUserWidth'($urandom());
+    get_r_input.last = logic'($urandom_range(0, 1));
   endfunction
 
   task automatic run_timing_slice_test(input axi_timing_slice_controls_t controls);
@@ -421,10 +450,10 @@ module br_amba_axi_timing_slice_tb;
     axi_r_t  r_input;
 
     aw_input = get_aw_input(0);
-    w_input  = get_w_input(0);
+    w_input  = get_w_input();
     ar_input = get_ar_input(0);
-    b_input  = get_b_input(0);
-    r_input  = get_r_input(0);
+    b_input  = get_b_input();
+    r_input  = get_r_input();
 
     axi_target_driver.init_idle();
     axi_initiator_driver.init_idle();

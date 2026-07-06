@@ -4,6 +4,7 @@
 
 import br_amba::*;
 import br_amba_axi_sim_pkg::*;
+import br_amba_sim_pkg::*;
 
 typedef enum int {
   AxiDefaultResponseKindOkay   = 0,
@@ -34,10 +35,6 @@ module br_amba_axi_default_target_tb;
   localparam int TimeoutCycles = (NumTransactions * 80) + 200;
   localparam int ChannelSkewCycles = 3;
   localparam int MaxReadyStallCycles = 9;
-  localparam int DriverAddrWidth = 12;
-  localparam int DriverDataWidth = 32;
-  localparam int DriverUserWidth = 1;
-  localparam int DriverStrobeWidth = DriverDataWidth / 8;
   localparam int MaxReadLen = 3;
   localparam logic [63:0] DefaultReadDataFull = 64'hc001_d00d_f00d_5eed;
   localparam logic [DataWidth-1:0] DefaultReadData = DefaultReadDataFull[DataWidth-1:0];
@@ -74,23 +71,27 @@ module br_amba_axi_default_target_tb;
   logic target_rlast;
   logic driver_failed;
   logic monitor_failed;
-  logic [DriverAddrWidth-1:0] unused_awaddr;
+  logic [br_amba_axi_sim_pkg::AxiAddrWidth-1:0] unused_awaddr;
+  logic [br_amba_axi_sim_pkg::AxiIdWidth-1:0] driver_awid;
   logic [AxiBurstLenWidth-1:0] full_awlen;
   logic [AxiBurstSizeWidth-1:0] unused_awsize;
   logic [AxiBurstTypeWidth-1:0] unused_awburst;
   logic [AxiProtWidth-1:0] unused_awprot;
-  logic [DriverUserWidth-1:0] unused_awuser;
-  logic [DriverDataWidth-1:0] unused_wdata;
-  logic [DriverStrobeWidth-1:0] unused_wstrb;
-  logic [DriverUserWidth-1:0] unused_wuser;
-  logic [DriverAddrWidth-1:0] unused_araddr;
+  logic [br_amba_axi_sim_pkg::AxiUserWidth-1:0] unused_awuser;
+  logic [br_amba_axi_sim_pkg::AxiDataWidth-1:0] unused_wdata;
+  logic [br_amba_axi_sim_pkg::AxiStrobeWidth-1:0] unused_wstrb;
+  logic [br_amba_axi_sim_pkg::AxiUserWidth-1:0] unused_wuser;
+  logic [br_amba_axi_sim_pkg::AxiAddrWidth-1:0] unused_araddr;
+  logic [br_amba_axi_sim_pkg::AxiIdWidth-1:0] driver_arid;
   logic [AxiBurstLenWidth-1:0] full_arlen;
   logic [AxiBurstSizeWidth-1:0] unused_arsize;
   logic [AxiBurstTypeWidth-1:0] unused_arburst;
   logic [AxiProtWidth-1:0] unused_arprot;
-  logic [DriverUserWidth-1:0] unused_aruser;
+  logic [br_amba_axi_sim_pkg::AxiUserWidth-1:0] unused_aruser;
 
+  assign target_awid  = AxiIdWidth'(driver_awid);
   assign target_awlen = AxiLenWidth'(full_awlen);
+  assign target_arid  = AxiIdWidth'(driver_arid);
   assign target_arlen = AxiLenWidth'(full_arlen);
 
   br_test_driver #(
@@ -134,12 +135,6 @@ module br_amba_axi_default_target_tb;
   );
 
   br_amba_axi_target_driver #(
-      .AddrWidth(DriverAddrWidth),
-      .DataWidth(DriverDataWidth),
-      .IdWidth(AxiIdWidth),
-      .AWUserWidth(DriverUserWidth),
-      .WUserWidth(DriverUserWidth),
-      .ARUserWidth(DriverUserWidth),
       .TimeoutCycles(TimeoutCycles)
   ) axi_driver (
       .clk,
@@ -147,7 +142,7 @@ module br_amba_axi_default_target_tb;
       .target_awaddr(unused_awaddr),
       .target_awvalid,
       .target_awready,
-      .target_awid,
+      .target_awid(driver_awid),
       .target_awlen(full_awlen),
       .target_awsize(unused_awsize),
       .target_awburst(unused_awburst),
@@ -164,7 +159,7 @@ module br_amba_axi_default_target_tb;
       .target_araddr(unused_araddr),
       .target_arvalid,
       .target_arready,
-      .target_arid,
+      .target_arid(driver_arid),
       .target_arlen(full_arlen),
       .target_arsize(unused_arsize),
       .target_arburst(unused_arburst),
@@ -209,19 +204,55 @@ module br_amba_axi_default_target_tb;
       .failed(monitor_failed)
   );
 
+  function automatic axi_aw_t get_aw_input(input int index);
+    get_aw_input = '0;
+    get_aw_input.addr = AxiAddrWidth'($urandom());
+    get_aw_input.id = br_amba_axi_sim_pkg::AxiIdWidth'(AxiIdWidth'($urandom()));
+    get_aw_input.len = get_axi_default_target_aw_len(index, SingleBeat, MaxReadLen);
+    get_aw_input.size = AxiBurstSizeWidth'($clog2(br_amba_axi_sim_pkg::AxiStrobeWidth));
+    get_aw_input.burst = AxiBurstIncr;
+    get_aw_input.prot = AxiProtWidth'($urandom());
+    get_aw_input.user = AxiUserWidth'($urandom());
+  endfunction
+
+  function automatic axi_w_t get_w_input();
+    get_w_input = '0;
+    for (int word = 0; word < br_amba_axi_sim_pkg::AxiDataWidth / 32; word++) begin
+      get_w_input.data[word*32+:32] = $urandom();
+    end
+    get_w_input.strb = AxiStrobeWidth'($urandom()) | AxiStrobeWidth'(1'b1);
+    get_w_input.user = AxiUserWidth'($urandom());
+    get_w_input.last = 1'b1;
+  endfunction
+
+  function automatic axi_ar_t get_ar_input(input int index);
+    get_ar_input = '0;
+    get_ar_input.addr = AxiAddrWidth'($urandom());
+    get_ar_input.id = br_amba_axi_sim_pkg::AxiIdWidth'(AxiIdWidth'($urandom()));
+    get_ar_input.len = get_axi_default_target_ar_len(index, SingleBeat, MaxReadLen);
+    get_ar_input.size = AxiBurstSizeWidth'($clog2(br_amba_axi_sim_pkg::AxiStrobeWidth));
+    get_ar_input.burst = AxiBurstIncr;
+    get_ar_input.prot = AxiProtWidth'($urandom());
+    get_ar_input.user = AxiUserWidth'($urandom());
+  endfunction
+
   task automatic test_write_address_before_data();
     axi_default_delays_t delays;
+    axi_aw_t aw_input;
+    axi_w_t w_input;
 
     delays = '{default: 0};
     delays.wvalid = ChannelSkewCycles;
+    aw_input = get_aw_input(0);
+    w_input = get_w_input();
     fork
-      axi_driver.run(
-          .num_writes(NumTransactions), .awvalid_delay(delays.awvalid),
-          .wvalid_delay(delays.wvalid), .arvalid_delay(delays.arvalid),
-          .max_stall_cycles(MaxReadyStallCycles),
-          .aw_input(get_axi_default_target_aw_input(0, SingleBeat, MaxReadLen, DriverStrobeWidth)),
-          .w_input(get_axi_default_target_w_input(0)), .vary_burst_len(!SingleBeat),
-          .vary_wlast(1'b0));
+      axi_driver.run(.num_writes(NumTransactions), .awvalid_delay(delays.awvalid),
+                     .wvalid_delay(delays.wvalid), .arvalid_delay(delays.arvalid),
+                     .max_stall_cycles(MaxReadyStallCycles), .awaddr(aw_input.addr),
+                     .awid(aw_input.id), .awlen(aw_input.len), .awsize(aw_input.size),
+                     .awburst(aw_input.burst), .awprot(aw_input.prot), .awuser(aw_input.user),
+                     .wdata(w_input.data), .wstrb(w_input.strb), .wuser(w_input.user),
+                     .wlast(w_input.last), .vary_burst_len(!SingleBeat), .vary_wlast(1'b0));
       axi_monitor.run(.num_writes(NumTransactions), .awvalid_delay(delays.awvalid),
                       .wvalid_delay(delays.wvalid));
     join
@@ -229,17 +260,21 @@ module br_amba_axi_default_target_tb;
 
   task automatic test_write_data_before_address();
     axi_default_delays_t delays;
+    axi_aw_t aw_input;
+    axi_w_t w_input;
 
     delays = '{default: 0};
     delays.awvalid = ChannelSkewCycles;
+    aw_input = get_aw_input(0);
+    w_input = get_w_input();
     fork
-      axi_driver.run(
-          .num_writes(NumTransactions), .awvalid_delay(delays.awvalid),
-          .wvalid_delay(delays.wvalid), .arvalid_delay(delays.arvalid),
-          .max_stall_cycles(MaxReadyStallCycles),
-          .aw_input(get_axi_default_target_aw_input(0, SingleBeat, MaxReadLen, DriverStrobeWidth)),
-          .w_input(get_axi_default_target_w_input(0)), .vary_burst_len(!SingleBeat),
-          .vary_wlast(1'b0));
+      axi_driver.run(.num_writes(NumTransactions), .awvalid_delay(delays.awvalid),
+                     .wvalid_delay(delays.wvalid), .arvalid_delay(delays.arvalid),
+                     .max_stall_cycles(MaxReadyStallCycles), .awaddr(aw_input.addr),
+                     .awid(aw_input.id), .awlen(aw_input.len), .awsize(aw_input.size),
+                     .awburst(aw_input.burst), .awprot(aw_input.prot), .awuser(aw_input.user),
+                     .wdata(w_input.data), .wstrb(w_input.strb), .wuser(w_input.user),
+                     .wlast(w_input.last), .vary_burst_len(!SingleBeat), .vary_wlast(1'b0));
       axi_monitor.run(.num_writes(NumTransactions), .awvalid_delay(delays.awvalid),
                       .wvalid_delay(delays.wvalid));
     join
@@ -247,14 +282,17 @@ module br_amba_axi_default_target_tb;
 
   task automatic test_read_backpressure();
     axi_default_delays_t delays;
+    axi_ar_t ar_input;
 
-    delays = '{default: 0};
+    delays   = '{default: 0};
+    ar_input = get_ar_input(0);
     fork
-      axi_driver.run(
-          .num_reads(NumTransactions), .awvalid_delay(delays.awvalid), .wvalid_delay(delays.wvalid),
-          .arvalid_delay(delays.arvalid), .max_stall_cycles(MaxReadyStallCycles),
-          .ar_input(get_axi_default_target_ar_input(0, SingleBeat, MaxReadLen, DriverStrobeWidth)),
-          .accept_r_burst_len(1'b1), .vary_burst_len(!SingleBeat));
+      axi_driver.run(.num_reads(NumTransactions), .awvalid_delay(delays.awvalid),
+                     .wvalid_delay(delays.wvalid), .arvalid_delay(delays.arvalid),
+                     .max_stall_cycles(MaxReadyStallCycles), .araddr(ar_input.addr),
+                     .arid(ar_input.id), .arlen(ar_input.len), .arsize(ar_input.size),
+                     .arburst(ar_input.burst), .arprot(ar_input.prot), .aruser(ar_input.user),
+                     .accept_r_burst_len(1'b1), .vary_burst_len(!SingleBeat));
       axi_monitor.run(.num_reads(NumTransactions), .awvalid_delay(delays.awvalid),
                       .wvalid_delay(delays.wvalid));
     join
