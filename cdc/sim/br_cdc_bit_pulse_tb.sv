@@ -16,9 +16,12 @@ module br_cdc_bit_pulse_tb;
   localparam int DstClkHalfPeriod = DstClkPeriod / 2;
   localparam int MinSrcCycleSpacing = br_math::ceil_div(2 * DstClkPeriod, SrcClkPeriod);
   localparam int MaxSrcCycleSpacing = MinSrcCycleSpacing + 4;
+  localparam int SrcPulseLaunchCycles = 1;
+  localparam int MaxCdcDelayModelDstCycles = 1;
+  localparam int DstPulseObservationCycles = 1;
   localparam int DstTimeoutCycles = br_math::ceil_div(
-      MaxSrcCycleSpacing * SrcClkPeriod, DstClkPeriod
-  ) + NumStages + RegisterOutput;
+      (MaxSrcCycleSpacing + SrcPulseLaunchCycles) * SrcClkPeriod, DstClkPeriod
+  ) + NumStages + RegisterOutput + MaxCdcDelayModelDstCycles + DstPulseObservationCycles;
 
   logic src_clk;
   logic src_rst;
