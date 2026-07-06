@@ -10,6 +10,7 @@ module br_fifo_shared_pop_ctrl_ext_arbiter_fpv_monitor #(
     parameter int StagingBufferDepth = 1,
     parameter bit RegisterPopOutputs = 0,
     parameter bit RegisterDeallocation = 0,
+    parameter bit EnableBypass = 0,
     parameter int RamReadLatency = 0,
     parameter bit ArbiterAlwaysGrants = 1,
     localparam int AddrWidth = $clog2(Depth),
@@ -24,6 +25,10 @@ module br_fifo_shared_pop_ctrl_ext_arbiter_fpv_monitor #(
 
     input logic [NumFifos-1:0] ram_empty,
     input logic [NumFifos-1:0][CountWidth-1:0] ram_items,
+
+    input logic [NumFifos-1:0] bypass_ready,
+    input logic [NumFifos-1:0] bypass_valid_unstable,
+    input logic [NumFifos-1:0][Width-1:0] bypass_data_unstable,
 
     input logic [NumFifos-1:0] pop_valid,
     input logic [NumFifos-1:0] pop_ready,
@@ -52,6 +57,7 @@ module br_fifo_shared_pop_ctrl_ext_arbiter_fpv_monitor #(
       .StagingBufferDepth(StagingBufferDepth),
       .RegisterPopOutputs(RegisterPopOutputs),
       .RegisterDeallocation(RegisterDeallocation),
+      .EnableBypass(EnableBypass),
       .RamReadLatency(RamReadLatency)
   ) checker_inst (
       .clk,
@@ -61,6 +67,9 @@ module br_fifo_shared_pop_ctrl_ext_arbiter_fpv_monitor #(
       .head,
       .ram_empty,
       .ram_items,
+      .bypass_ready,
+      .bypass_valid_unstable,
+      .bypass_data_unstable,
       .pop_valid,
       .pop_ready,
       .pop_data,
@@ -96,6 +105,7 @@ bind br_fifo_shared_pop_ctrl_ext_arbiter br_fifo_shared_pop_ctrl_ext_arbiter_fpv
     .StagingBufferDepth(StagingBufferDepth),
     .RegisterPopOutputs(RegisterPopOutputs),
     .RegisterDeallocation(RegisterDeallocation),
+    .EnableBypass(EnableBypass),
     .RamReadLatency(RamReadLatency),
     .ArbiterAlwaysGrants(ArbiterAlwaysGrants)
 ) monitor (.*);

@@ -50,6 +50,10 @@ br_verilog_fpv_test_tools_suite(
     name = "br_fifo_shared_pop_ctrl_test_port",
     elab_opts = ["-parameter Depth 5"],
     params = {
+        "EnableBypass": [
+            "0",
+            "1",
+        ],
         "NumFifos": [
             "2",
             "4",
@@ -74,6 +78,10 @@ br_verilog_fpv_test_tools_suite(
         "-parameter NumReadPorts 1",
     ],
     params = {
+        "EnableBypass": [
+            "0",
+            "1",
+        ],
         "RamReadLatency": [
             "0",
             "1",
@@ -127,6 +135,10 @@ br_verilog_fpv_test_tools_suite(
     name = "br_fifo_shared_pop_ctrl_ext_arbiter_test_port",
     elab_opts = ["-parameter Depth 5"],
     params = {
+        "EnableBypass": [
+            "0",
+            "1",
+        ],
         "NumFifos": [
             "2",
             "4",
@@ -151,6 +163,10 @@ br_verilog_fpv_test_tools_suite(
         "-parameter NumReadPorts 1",
     ],
     params = {
+        "EnableBypass": [
+            "0",
+            "1",
+        ],
         "RamReadLatency": [
             "0",
             "1",

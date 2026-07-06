@@ -13,6 +13,7 @@ module br_fifo_shared_pstatic_ctrl_push_credit_fpv_monitor #(
     parameter bit RegisterPushOutputs = 1,
     parameter int StagingBufferDepth = 1,
     parameter bit RegisterPopOutputs = 0,
+    parameter bit EnableBypass = 0,
     parameter int RamReadLatency = 0,
     parameter bit EnableAssertFinalNotValid = 1,
     localparam int FifoIdWidth = br_math::clamped_clog2(NumFifos),
@@ -126,6 +127,7 @@ module br_fifo_shared_pstatic_ctrl_push_credit_fpv_monitor #(
       .Width(Width),
       .StagingBufferDepth(StagingBufferDepth),
       .RegisterPopOutputs(RegisterPopOutputs),
+      .EnableBypass(EnableBypass),
       .RamReadLatency(RamReadLatency),
       .EnableCoverPushBackpressure(0)
   ) fv_checker (
@@ -154,6 +156,7 @@ bind br_fifo_shared_pstatic_ctrl_push_credit br_fifo_shared_pstatic_ctrl_push_cr
     .RegisterPushOutputs(RegisterPushOutputs),
     .StagingBufferDepth(StagingBufferDepth),
     .RegisterPopOutputs(RegisterPopOutputs),
+    .EnableBypass(EnableBypass),
     .RamReadLatency(RamReadLatency),
     .EnableAssertFinalNotValid(EnableAssertFinalNotValid)
 ) monitor (.*);

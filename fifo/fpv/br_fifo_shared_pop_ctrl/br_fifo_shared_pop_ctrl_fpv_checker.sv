@@ -51,6 +51,7 @@ module br_fifo_shared_pop_ctrl_fpv_checker #(
     parameter int StagingBufferDepth = 1,
     parameter bit RegisterPopOutputs = 0,
     parameter bit RegisterDeallocation = 0,
+    parameter bit EnableBypass = 0,
     parameter int RamReadLatency = 0,
     localparam int AddrWidth = $clog2(Depth),
     localparam int CountWidth = $clog2(Depth + 1)
@@ -64,6 +65,10 @@ module br_fifo_shared_pop_ctrl_fpv_checker #(
 
     input logic [NumFifos-1:0] ram_empty,
     input logic [NumFifos-1:0][CountWidth-1:0] ram_items,
+
+    input logic [NumFifos-1:0] bypass_ready,
+    input logic [NumFifos-1:0] bypass_valid_unstable,
+    input logic [NumFifos-1:0][Width-1:0] bypass_data_unstable,
 
     input logic [NumFifos-1:0] pop_valid,
     input logic [NumFifos-1:0] pop_ready,
@@ -157,8 +162,14 @@ module br_fifo_shared_pop_ctrl_fpv_checker #(
       );
     end
 
-    // A FIFO cannot report empty in the same cycle that it presents valid pop data.
-    `BR_ASSERT(pop_empty_consistent_a, pop_valid[i] |-> !pop_empty[i])
+    if (EnableBypass) begin : gen_bypass
+      // An empty FIFO can only present valid pop data from the bypass input.
+      `BR_ASSERT(pop_empty_consistent_a,
+                 pop_empty[i] && !bypass_valid_unstable[i] |-> !pop_valid[i])
+    end else begin : gen_no_bypass
+      // A FIFO cannot report empty in the same cycle that it presents valid pop data.
+      `BR_ASSERT(pop_empty_consistent_a, pop_valid[i] |-> !pop_empty[i])
+    end
 
     // Deadlock check: a persistent nonempty FIFO request must eventually enter the read path.
     `BR_ASSERT(head_ready_eventual_a, head_valid[i] |-> s_eventually head_ready[i])
@@ -184,15 +195,15 @@ module br_fifo_shared_pop_ctrl_fpv_checker #(
   // the selected FIFO's pop stream.
   jasper_scoreboard_3 #(
       .CHUNK_WIDTH(Width),
-      .IN_CHUNKS(NumReadPorts),
+      .IN_CHUNKS(NumReadPorts + 1),
       .OUT_CHUNKS(1),
       .SINGLE_CLOCK(1),
       .MAX_PENDING(MaxPending)
   ) scoreboard (
       .clk(clk),
       .rstN(!rst),
-      .incoming_vld(fv_rsp_valid),
-      .incoming_data(data_ram_rd_data),
+      .incoming_vld({bypass_valid_unstable[fv_fifo_id] && bypass_ready[fv_fifo_id], fv_rsp_valid}),
+      .incoming_data({bypass_data_unstable[fv_fifo_id], data_ram_rd_data}),
       .outgoing_vld(pop_valid[fv_fifo_id] && pop_ready[fv_fifo_id]),
       .outgoing_data(pop_data[fv_fifo_id])
   );
