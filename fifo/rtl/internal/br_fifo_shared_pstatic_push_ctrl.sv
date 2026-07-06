@@ -18,6 +18,8 @@ module br_fifo_shared_pstatic_push_ctrl #(
     parameter int Depth = 3,
     // Width of the data
     parameter int Width = 1,
+    // If 1, allow bypass from the push side to the pop controller.
+    parameter bit EnableBypass = 0,
     // If 1, cover that the push side experiences backpressure.
     // If 0, disable backpressure coverage. By default, this also
     // asserts that backpressure is impossible.
@@ -53,6 +55,11 @@ module br_fifo_shared_pstatic_push_ctrl #(
     input logic [Width-1:0] push_data,
     input logic [FifoIdWidth-1:0] push_fifo_id,
     input logic [NumFifos-1:0] push_full,
+
+    // Bypass to pop controller
+    input logic [NumFifos-1:0] bypass_ready,
+    output logic [NumFifos-1:0] bypass_valid_unstable,
+    output logic [NumFifos-1:0][Width-1:0] bypass_data_unstable,
 
     // Data RAM write ports
     output logic ram_wr_valid,
@@ -111,8 +118,7 @@ module br_fifo_shared_pstatic_push_ctrl #(
     br_fifo_push_ctrl_core #(
         .Depth(Depth),
         .Width(Width),
-        // TODO(zhemao): Add bypass support.
-        .EnableBypass(0),
+        .EnableBypass(EnableBypass),
         .EnableCoverPushBackpressure(EnableCoverPushBackpressure),
         .EnableAssertNoPushBackpressure(EnableAssertNoPushBackpressure),
         // Core can only have valid stability if the fifo_id is stable,
@@ -128,9 +134,9 @@ module br_fifo_shared_pstatic_push_ctrl #(
         .push_ready(core_push_ready[i]),
         .push_valid(core_push_valid[i]),
         .push_data(core_push_data[i]),
-        .bypass_ready(1'b0),
-        .bypass_valid_unstable(),
-        .bypass_data_unstable(),
+        .bypass_ready(bypass_ready[i]),
+        .bypass_valid_unstable(bypass_valid_unstable[i]),
+        .bypass_data_unstable(bypass_data_unstable[i]),
         .ram_wr_valid(core_ram_wr_valid[i]),
         .ram_wr_addr_next(tail_next[i]),
         .ram_wr_addr(core_ram_wr_addr[i]),

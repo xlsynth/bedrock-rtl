@@ -223,6 +223,10 @@ br_verilog_elab_and_lint_test_suite(
             "0",
             "1",
         ],
+        "EnableBypass": [
+            "0",
+            "1",
+        ],
     },
     deps = [":br_fifo_shared_pop_ctrl"],
 )
@@ -236,6 +240,7 @@ verilog_library(
         "//fifo/rtl/internal:br_fifo_staging_buffer",
         "//flow/rtl:br_flow_fork",
         "//flow/rtl:br_flow_join",
+        "//flow/rtl:br_flow_mux_select_unstable",
     ],
 )
 
@@ -265,6 +270,10 @@ br_verilog_elab_and_lint_test_suite(
             "1",
         ],
         "RegisterPopOutputs": [
+            "0",
+            "1",
+        ],
+        "EnableBypass": [
             "0",
             "1",
         ],
@@ -753,6 +762,10 @@ br_verilog_elab_and_lint_test_suite(
             "0",
             "1",
         ],
+        "EnableBypass": [
+            "0",
+            "1",
+        ],
     },
     deps = [":br_fifo_shared_pstatic_ctrl"],
 )
@@ -793,6 +806,10 @@ br_verilog_elab_and_lint_test_suite(
             "1",
         ],
         "RegisterPopOutputs": [
+            "0",
+            "1",
+        ],
+        "EnableBypass": [
             "0",
             "1",
         ],
@@ -846,6 +863,10 @@ br_verilog_elab_and_lint_test_suite(
             "0",
             "1",
         ],
+        "EnableBypass": [
+            "0",
+            "1",
+        ],
     },
     deps = [":br_fifo_shared_pstatic_ctrl_push_credit"],
 )
@@ -890,6 +911,10 @@ br_verilog_elab_and_lint_test_suite(
             "1",
         ],
         "RamAddressDepthStages": [
+            "0",
+            "1",
+        ],
+        "EnableBypass": [
             "0",
             "1",
         ],

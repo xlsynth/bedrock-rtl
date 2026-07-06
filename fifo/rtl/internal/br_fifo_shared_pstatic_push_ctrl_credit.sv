@@ -22,6 +22,8 @@ module br_fifo_shared_pstatic_push_ctrl_credit #(
     // If 1, register is added on the credit returns,
     // improving timing at the cost of additional latency.
     parameter bit RegisterPushOutputs = 1,
+    // If 1, allow bypass from the push side to the pop controller.
+    parameter bit EnableBypass = 0,
     // If 1, cover that push_credit_stall can be asserted
     // Otherwise, assert that it is never asserted.
     parameter bit EnableCoverPushCreditStall = 1,
@@ -60,6 +62,11 @@ module br_fifo_shared_pstatic_push_ctrl_credit #(
     input logic [Width-1:0] push_data,
     input logic [FifoIdWidth-1:0] push_fifo_id,
     input logic [NumFifos-1:0] push_full,
+
+    // Bypass to pop controller
+    input logic [NumFifos-1:0] bypass_ready,
+    output logic [NumFifos-1:0] bypass_valid_unstable,
+    output logic [NumFifos-1:0][Width-1:0] bypass_data_unstable,
 
     input  logic [NumFifos-1:0][CountWidth-1:0] credit_initial_push,
     input  logic [NumFifos-1:0][CountWidth-1:0] credit_withhold_push,
@@ -145,6 +152,7 @@ module br_fifo_shared_pstatic_push_ctrl_credit #(
       .NumFifos(NumFifos),
       .Depth(Depth),
       .Width(Width),
+      .EnableBypass(EnableBypass),
       // Credit tracking should ensure there's no backpressure here.
       .EnableCoverPushBackpressure(0),
       .EnableAssertPushDataKnown(EnableAssertPushDataKnown),
@@ -159,6 +167,9 @@ module br_fifo_shared_pstatic_push_ctrl_credit #(
       .push_data,
       .push_fifo_id,
       .push_full,
+      .bypass_ready,
+      .bypass_valid_unstable,
+      .bypass_data_unstable,
       .ram_wr_valid,
       .ram_wr_addr,
       .ram_wr_data,

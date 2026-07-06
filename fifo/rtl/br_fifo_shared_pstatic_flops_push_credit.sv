@@ -76,6 +76,10 @@ module br_fifo_shared_pstatic_flops_push_credit #(
     parameter int RamReadDataDepthStages = 0,
     // Number of stages in the width dimension on the data flop RAM.
     parameter int RamReadDataWidthStages = 0,
+    // If 1, allow bypass from the push side to the pop controller.
+    // This reduces the cut-through latency to `RegisterPopOutputs` at the
+    // expense of potentially worse timing.
+    parameter bit EnableBypass = 0,
     // If 1, add a retiming stage to the push_credit signal so that it is
     // driven directly from a flop. This comes at the expense of one additional
     // cycle of credit loop latency.
@@ -195,6 +199,7 @@ module br_fifo_shared_pstatic_flops_push_credit #(
       .NumReadPorts(NumReadPorts),
       .StagingBufferDepth(StagingBufferDepth),
       .RegisterPopOutputs(RegisterPopOutputs),
+      .EnableBypass(EnableBypass),
       .RamReadLatency(RamReadLatency),
       .RegisterPushOutputs(RegisterPushOutputs),
       .EnableCoverPushCreditStall(EnableCoverPushCreditStall),

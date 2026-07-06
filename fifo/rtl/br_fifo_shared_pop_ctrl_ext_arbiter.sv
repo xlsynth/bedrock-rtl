@@ -46,6 +46,8 @@ module br_fifo_shared_pop_ctrl_ext_arbiter #(
     // staging buffer to the freelist. This improves timing at the cost of
     // adding a cycle of backpressure latency.
     parameter bit RegisterDeallocation = 0,
+    // If 1, allow bypass from the push side to the pop controller.
+    parameter bit EnableBypass = 0,
     // The number of cycles between data ram read address and read data. Must be >=0.
     parameter int RamReadLatency = 0,
     // Set to 1 if the arbiter is guaranteed to grant in a cycle when any request is asserted.
@@ -63,6 +65,10 @@ module br_fifo_shared_pop_ctrl_ext_arbiter #(
 
     input logic [NumFifos-1:0] ram_empty,
     input logic [NumFifos-1:0][CountWidth-1:0] ram_items,
+
+    output logic [NumFifos-1:0] bypass_ready,
+    input logic [NumFifos-1:0] bypass_valid_unstable,
+    input logic [NumFifos-1:0][Width-1:0] bypass_data_unstable,
 
     output logic [NumFifos-1:0] pop_valid,
     input logic [NumFifos-1:0] pop_ready,
@@ -121,6 +127,9 @@ module br_fifo_shared_pop_ctrl_ext_arbiter #(
 
   for (genvar i = 0; i < NumFifos; i++) begin : gen_fifo_ram_read
     if (!HasStagingBuffer) begin : gen_no_buffer
+      logic no_bypass_pop_valid;
+      logic no_bypass_pop_ready;
+
       br_flow_fork #(
           .NumFlows(2),
           // In the no-buffer path, pop_valid is directly gated by downstream readiness.
@@ -131,11 +140,39 @@ module br_fifo_shared_pop_ctrl_ext_arbiter #(
           .rst,
           .push_valid(head_valid[i]),
           .push_ready(head_ready[i]),
-          .pop_valid_unstable({fifo_ram_rd_addr_valid[i], pop_valid[i]}),
-          .pop_ready({fifo_ram_rd_addr_ready[i], pop_ready[i]})
+          .pop_valid_unstable({fifo_ram_rd_addr_valid[i], no_bypass_pop_valid}),
+          .pop_ready({fifo_ram_rd_addr_ready[i], no_bypass_pop_ready})
       );
 
-      assign pop_data[i]  = fifo_ram_rd_data[i];
+      if (EnableBypass) begin : gen_no_buffer_bypass
+        // Pop from the bypass path if the RAM is empty.
+        // Otherwise, pop from the RAM path.
+        br_flow_mux_select_unstable #(
+            .NumFlows(2),
+            .Width(Width),
+            // Bypass is unstable
+            .EnableAssertPushValidStability(0)
+        ) br_flow_mux_select_unstable_pop (
+            .clk,
+            .rst,
+            .select(ram_empty[i]),
+            .push_ready({bypass_ready[i], no_bypass_pop_ready}),
+            .push_valid({bypass_valid_unstable[i], no_bypass_pop_valid}),
+            .push_data({bypass_data_unstable[i], fifo_ram_rd_data[i]}),
+            .pop_ready(pop_ready[i]),
+            .pop_valid_unstable(pop_valid[i]),
+            .pop_data_unstable(pop_data[i])
+        );
+      end else begin : gen_no_buffer_no_bypass
+        assign pop_valid[i] = no_bypass_pop_valid;
+        assign no_bypass_pop_ready = pop_ready[i];
+        assign pop_data[i] = fifo_ram_rd_data[i];
+        assign bypass_ready[i] = 1'b0;
+        `BR_UNUSED_NAMED(bypass_valid_unstable, bypass_valid_unstable[i])
+        `BR_UNUSED_NAMED(bypass_data_unstable, bypass_data_unstable[i])
+        `BR_ASSERT_IMPL(no_bypass_valid_a, !bypass_valid_unstable[i])
+      end
+
       assign pop_empty[i] = ram_empty[i];
 
       `BR_ASSERT_IMPL(zero_read_latency_a,
@@ -146,7 +183,7 @@ module br_fifo_shared_pop_ctrl_ext_arbiter #(
       logic stg_buffer_empty;
 
       br_fifo_staging_buffer #(
-          .EnableBypass(0),
+          .EnableBypass(EnableBypass),
           .TotalDepth(Depth),
           .BufferDepth(StagingBufferDepth),
           .Width(Width),
@@ -159,9 +196,9 @@ module br_fifo_shared_pop_ctrl_ext_arbiter #(
 
           .total_items(ram_items[i]),
 
-          .bypass_valid_unstable(1'b0),
-          .bypass_data_unstable(Width'(1'b0)),
-          .bypass_ready(),
+          .bypass_valid_unstable(bypass_valid_unstable[i]),
+          .bypass_data_unstable(bypass_data_unstable[i]),
+          .bypass_ready(bypass_ready[i]),
 
           .ram_rd_addr_ready(ram_rd_req_ready),
           .ram_rd_addr_valid(ram_rd_req_valid),
