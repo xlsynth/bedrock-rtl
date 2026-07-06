@@ -51,6 +51,7 @@ verilog_library(
         "//amba/sim:br_amba_axil2apb_sim_pkg",
         "//amba/sim/drivers:br_amba_apb_sim_pkg",
         "//amba/sim/drivers:br_amba_axil_sim_pkg",
+        "//amba/sim/drivers:br_amba_sim_pkg",
     ],
 )
 

@@ -7,6 +7,9 @@ import br_amba_apb_sim_pkg::*;
 import br_amba_axil_sim_pkg::*;
 import br_amba_axil_monitor_sim_pkg::*;
 import br_amba_axil2apb_sim_pkg::*;
+import br_amba_sim_pkg::*;
+
+`include "br_amba_sim_macros.svh"
 
 // br_amba_axil2apb scoreboard.
 //
@@ -153,23 +156,11 @@ module br_amba_axil2apb_scoreboard #(
                                     input int transaction_index, inout int mismatch_count);
     apb_transfer_t expected_transfer = expected_apb_transfer(expected_transaction);
 
-    if (expected_transfer.addr !== observed_transfer.packet.addr ||
-        expected_transfer.prot !== observed_transfer.packet.prot ||
-        expected_transfer.strb !== observed_transfer.packet.strb ||
-        expected_transfer.write !== observed_transfer.packet.write ||
-        expected_transfer.data !== observed_transfer.packet.data ||
-        expected_transfer.slverr !== observed_transfer.packet.slverr) begin
-      failed = 1'b1;
+    if (observed_transfer.packet !== expected_transfer) begin
       mismatch_count++;
-      $error("APB transfer mismatch at transaction %0d", transaction_index);
-      $error("Expected APB: addr=0x%0h prot=0x%0h strb=0x%0h write=%0b data=0x%0h slverr=%0b",
-             expected_transfer.addr, expected_transfer.prot, expected_transfer.strb,
-             expected_transfer.write, expected_transfer.data, expected_transfer.slverr);
-      $error("Observed APB: addr=0x%0h prot=0x%0h strb=0x%0h write=%0b data=0x%0h slverr=%0b",
-             observed_transfer.packet.addr, observed_transfer.packet.prot,
-             observed_transfer.packet.strb, observed_transfer.packet.write,
-             observed_transfer.packet.data, observed_transfer.packet.slverr);
     end
+    `BR_AMBA_SIM_CHECK_EQ(observed_transfer.packet, expected_transfer, $sformatf(
+                          "APB transfer mismatch at transaction %0d", transaction_index), failed);
   endtask
 
   task automatic check_write_apb_timing(
@@ -182,12 +173,15 @@ module br_amba_axil2apb_scoreboard #(
                                                                      observed_w.timestamp;
     expected_apb_timestamp = request_timestamp + ClockPeriodNs;
     if (observed_apb.request_timestamp != expected_apb_timestamp) begin
-      failed = 1'b1;
       mismatch_count++;
-      $error({"APB write request %0d was not observed one clock after AXI-Lite AW/W completed: ",
-              "apb=%0t expected=%0t aw=%0t w=%0t"}, write_index, observed_apb.request_timestamp,
-               expected_apb_timestamp, observed_aw.timestamp, observed_w.timestamp);
     end
+    `BR_AMBA_SIM_CHECK_EQ(observed_apb.request_timestamp, expected_apb_timestamp, $sformatf(
+                          {
+                            "APB write request %0d was not observed one clock after ",
+                            "AXI-Lite AW/W completed"
+                          },
+                          write_index
+                          ), failed);
   endtask
 
   task automatic check_read_apb_timing(input apb_transfer_observation_t observed_apb,
@@ -196,41 +190,57 @@ module br_amba_axil2apb_scoreboard #(
     time expected_apb_timestamp = observed_ar.timestamp + ClockPeriodNs;
 
     if (observed_apb.request_timestamp != expected_apb_timestamp) begin
-      failed = 1'b1;
       mismatch_count++;
-      $error({"APB read request %0d was not observed one clock after AXI-Lite AR completed: ",
-              "apb=%0t expected=%0t ar=%0t"}, read_index, observed_apb.request_timestamp,
-               expected_apb_timestamp, observed_ar.timestamp);
     end
+    `BR_AMBA_SIM_CHECK_EQ(observed_apb.request_timestamp, expected_apb_timestamp, $sformatf(
+                          {
+                            "APB read request %0d was not observed one clock after ",
+                            "AXI-Lite AR completed"
+                          },
+                          read_index
+                          ), failed);
   endtask
 
   task automatic check_write_request(
       input axil2apb_transaction_t expected_transaction, input axil_aw_observation_t observed_aw,
       input axil_w_observation_t observed_w, input int write_index, inout int mismatch_count);
-    if (observed_aw.packet.addr !== AxilAddrWidth'(expected_transaction.addr) ||
-        observed_aw.packet.prot !== expected_transaction.prot) begin
-      failed = 1'b1;
-      mismatch_count++;
-      $error("AXI-Lite AW request mismatch at write %0d", write_index);
-    end
+    axil_aw_t expected_aw;
+    axil_w_t  expected_w;
 
-    if (observed_w.packet.data !== AxilDataWidth'(expected_transaction.data) ||
-        observed_w.packet.strb !== AxilStrobeWidth'(expected_transaction.strb)) begin
-      failed = 1'b1;
+    expected_aw = '0;
+    expected_aw.addr = AxilAddrWidth'(expected_transaction.addr);
+    expected_aw.prot = expected_transaction.prot;
+
+    expected_w = '0;
+    expected_w.data = AxilDataWidth'(expected_transaction.data);
+    expected_w.strb = AxilStrobeWidth'(expected_transaction.strb);
+
+    if (observed_aw.packet !== expected_aw) begin
       mismatch_count++;
-      $error("AXI-Lite W request mismatch at write %0d", write_index);
     end
+    `BR_AMBA_SIM_CHECK_EQ(observed_aw.packet, expected_aw, $sformatf(
+                          "AXI-Lite AW request mismatch at write %0d", write_index), failed);
+    if (observed_w.packet !== expected_w) begin
+      mismatch_count++;
+    end
+    `BR_AMBA_SIM_CHECK_EQ(observed_w.packet, expected_w, $sformatf(
+                          "AXI-Lite W request mismatch at write %0d", write_index), failed);
   endtask
 
   task automatic check_read_request(input axil2apb_transaction_t expected_transaction,
                                     input axil_ar_observation_t observed_ar, input int read_index,
                                     inout int mismatch_count);
-    if (observed_ar.packet.addr !== AxilAddrWidth'(expected_transaction.addr) ||
-        observed_ar.packet.prot !== expected_transaction.prot) begin
-      failed = 1'b1;
+    axil_ar_t expected_ar;
+
+    expected_ar = '0;
+    expected_ar.addr = AxilAddrWidth'(expected_transaction.addr);
+    expected_ar.prot = expected_transaction.prot;
+
+    if (observed_ar.packet !== expected_ar) begin
       mismatch_count++;
-      $error("AXI-Lite AR request mismatch at read %0d", read_index);
     end
+    `BR_AMBA_SIM_CHECK_EQ(observed_ar.packet, expected_ar, $sformatf(
+                          "AXI-Lite AR request mismatch at read %0d", read_index), failed);
   endtask
 
   task automatic check_write_response(input axil2apb_transaction_t expected_transaction,
@@ -241,19 +251,21 @@ module br_amba_axil2apb_scoreboard #(
     time expected_bvalid_timestamp = observed_apb.completion_timestamp + ClockPeriodNs;
 
     if (expected_b !== observed_b.packet) begin
-      failed = 1'b1;
       mismatch_count++;
-      $error("AXI-Lite B response mismatch at write %0d: expected 0x%0h observed 0x%0h",
-             write_index, expected_b, observed_b.packet);
     end
+    `BR_AMBA_SIM_CHECK_EQ(observed_b.packet, expected_b, $sformatf(
+                          "AXI-Lite B response mismatch at write %0d", write_index), failed);
 
     if (observed_b.valid_timestamp != expected_bvalid_timestamp) begin
-      failed = 1'b1;
       mismatch_count++;
-      $error({"AXI-Lite BVALID at write %0d was not observed one clock after APB completion: ",
-              "bvalid=%0t expected=%0t apb=%0t"}, write_index, observed_b.valid_timestamp,
-               expected_bvalid_timestamp, observed_apb.completion_timestamp);
     end
+    `BR_AMBA_SIM_CHECK_EQ(observed_b.valid_timestamp, expected_bvalid_timestamp, $sformatf(
+                          {
+                            "AXI-Lite BVALID at write %0d was not observed one clock ",
+                            "after APB completion"
+                          },
+                          write_index
+                          ), failed);
 
     if (observed_b.timestamp < observed_b.valid_timestamp) begin
       failed = 1'b1;
@@ -271,19 +283,21 @@ module br_amba_axil2apb_scoreboard #(
     time expected_rvalid_timestamp = observed_apb.completion_timestamp + ClockPeriodNs;
 
     if (expected_r !== observed_r.packet) begin
-      failed = 1'b1;
       mismatch_count++;
-      $error("AXI-Lite R response mismatch at read %0d: expected 0x%0h observed 0x%0h", read_index,
-             expected_r, observed_r.packet);
     end
+    `BR_AMBA_SIM_CHECK_EQ(observed_r.packet, expected_r, $sformatf(
+                          "AXI-Lite R response mismatch at read %0d", read_index), failed);
 
     if (observed_r.valid_timestamp != expected_rvalid_timestamp) begin
-      failed = 1'b1;
       mismatch_count++;
-      $error({"AXI-Lite RVALID at read %0d was not observed one clock after APB completion: ",
-              "rvalid=%0t expected=%0t apb=%0t"}, read_index, observed_r.valid_timestamp,
-               expected_rvalid_timestamp, observed_apb.completion_timestamp);
     end
+    `BR_AMBA_SIM_CHECK_EQ(observed_r.valid_timestamp, expected_rvalid_timestamp, $sformatf(
+                          {
+                            "AXI-Lite RVALID at read %0d was not observed one clock ",
+                            "after APB completion"
+                          },
+                          read_index
+                          ), failed);
 
     if (observed_r.timestamp < observed_r.valid_timestamp) begin
       failed = 1'b1;

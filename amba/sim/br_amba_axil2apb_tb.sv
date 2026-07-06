@@ -111,6 +111,7 @@ module br_amba_axil2apb_tb;
     default input #1step;
     input awvalid;
     input awready;
+    input wvalid;
     input psel;
     input penable;
     input bvalid;
@@ -728,12 +729,11 @@ module br_amba_axil2apb_tb;
       end
       begin
         @cb;
-        while (!(cb.awvalid && cb.awready)) @cb;
+        while (!(cb.awvalid && !cb.wvalid && !cb.awready)) @cb;
         td.reset_dut();
       end
       timeout(timeout_tick, MidResetTimeoutCycles,
-              "Timeout waiting for br_amba_axil2apb mid-transaction reset scenario",
-              timeout_failed);
+              "Timeout waiting to reset br_amba_axil2apb with only AW pending", timeout_failed);
     join_any
     disable fork;
 
