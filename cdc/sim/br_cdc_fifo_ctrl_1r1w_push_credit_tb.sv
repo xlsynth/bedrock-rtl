@@ -259,13 +259,13 @@ module br_cdc_fifo_ctrl_1r1w_push_credit_tb;
       .EnableStructuredGatesDataQualification(EnableStructuredGatesDataQualification),
       .EnableAssertFinalNotValid(1)
   ) br_ram_flops (
-      .wr_clk(push_clk),  // ri lint_check_waive SAME_CLOCK_NAME
+      .wr_clk(push_clk),
       .wr_rst(push_either_rst),
       .wr_valid(dut_push_if.ram_wr_valid),
       .wr_addr(dut_push_if.ram_wr_addr),
       .wr_data(dut_push_if.ram_wr_data),
       .wr_word_en('1),
-      .rd_clk(pop_clk),  // ri lint_check_waive SAME_CLOCK_NAME
+      .rd_clk(pop_clk),
       .rd_rst(pop_rst),
       .rd_addr_valid(dut_pop_if.ram_rd_addr_valid),
       .rd_addr(dut_pop_if.ram_rd_addr),
