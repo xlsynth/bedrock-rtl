@@ -1,0 +1,208 @@
+# SPDX-License-Identifier: Apache-2.0
+
+load("@rules_hdl//verilog:providers.bzl", "verilog_library")
+load("//bazel:br_verilog.bzl", "br_verilog_sim_test_tools_suite")
+load("//bazel:verilog.bzl", "verilog_elab_test")
+
+package(default_visibility = ["//visibility:private"])
+
+verilog_library(
+    name = "br_ram_data_rd_pipe_if",
+    srcs = ["br_ram_data_rd_pipe_if.sv"],
+    deps = [
+        "//pkg:br_math_pkg",
+    ],
+)
+
+verilog_library(
+    name = "br_ram_data_rd_pipe_tb_pkg",
+    srcs = ["br_ram_data_rd_pipe_tb_pkg.sv"],
+    hdrs = [
+        "br_ram_data_rd_pipe_driver.svh",
+        "br_ram_data_rd_pipe_env.svh",
+        "br_ram_data_rd_pipe_item.svh",
+        "br_ram_data_rd_pipe_monitor.svh",
+        "br_ram_data_rd_pipe_random_sequence.svh",
+        "br_ram_data_rd_pipe_scoreboard.svh",
+    ],
+    deps = [
+        ":br_ram_data_rd_pipe_if",
+        "//br_dv_lib:br_dv_test",
+        "//pkg:br_math_pkg",
+    ],
+)
+
+verilog_library(
+    name = "br_ram_data_rd_pipe_tb",
+    srcs = ["br_ram_data_rd_pipe_tb.sv"],
+    deps = [
+        ":br_ram_data_rd_pipe_if",
+        ":br_ram_data_rd_pipe_tb_pkg",
+        "//br_dv_lib:br_dv_test",
+        "//pkg:br_math_pkg",
+        "//ram/rtl:br_ram_data_rd_pipe",
+    ],
+)
+
+verilog_elab_test(
+    name = "br_ram_data_rd_pipe_tb_elab_test",
+    tool = "slang",
+    deps = [":br_ram_data_rd_pipe_tb"],
+)
+
+# Latency-focused sweep for zero and nonzero stage coverage.
+br_verilog_sim_test_tools_suite(
+    name = "br_ram_data_rd_pipe_sim_test_tools_suite_stages",
+    params = {
+        "DepthStages": [
+            "0",
+            "1",
+            "2",
+        ],
+        "DepthTiles": ["1"],
+        "Width": ["8"],
+        "WidthStages": [
+            "0",
+            "1",
+            "2",
+        ],
+        "WidthTiles": ["1"],
+    },
+    tools = [
+        "vcs",
+        "verilator",
+    ],
+    top = "br_ram_data_rd_pipe_tb",
+    deps = [":br_ram_data_rd_pipe_tb"],
+)
+
+# Tile-focused sweep for depth muxing and width concatenation.
+br_verilog_sim_test_tools_suite(
+    name = "br_ram_data_rd_pipe_sim_test_tools_suite_tiles",
+    params = {
+        "DepthStages": ["1"],
+        "DepthTiles": [
+            "1",
+            "2",
+            "4",
+        ],
+        "Width": ["32"],
+        "WidthStages": ["1"],
+        "WidthTiles": [
+            "1",
+            "2",
+            "4",
+        ],
+    },
+    tools = [
+        "vcs",
+        "verilator",
+    ],
+    top = "br_ram_data_rd_pipe_tb",
+    deps = [":br_ram_data_rd_pipe_tb"],
+)
+
+# Tiled paths with all combinations of zero and nonzero per-dimension stages.
+br_verilog_sim_test_tools_suite(
+    name = "br_ram_data_rd_pipe_sim_test_tools_suite_tiled_stage_edges",
+    params = {
+        "DepthStages": [
+            "0",
+            "1",
+        ],
+        "DepthTiles": ["4"],
+        "Width": ["32"],
+        "WidthStages": [
+            "0",
+            "1",
+        ],
+        "WidthTiles": ["4"],
+    },
+    tools = [
+        "vcs",
+        "verilator",
+    ],
+    top = "br_ram_data_rd_pipe_tb",
+    deps = [":br_ram_data_rd_pipe_tb"],
+)
+
+# Deeper latency with both depth muxing and width concatenation active.
+br_verilog_sim_test_tools_suite(
+    name = "br_ram_data_rd_pipe_sim_test_tools_suite_deep_tiled",
+    params = {
+        "DepthStages": ["2"],
+        "DepthTiles": ["4"],
+        "Width": ["32"],
+        "WidthStages": ["2"],
+        "WidthTiles": ["4"],
+    },
+    tools = [
+        "vcs",
+        "verilator",
+    ],
+    top = "br_ram_data_rd_pipe_tb",
+    deps = [":br_ram_data_rd_pipe_tb"],
+)
+
+# Minimal data width with depth muxing.
+br_verilog_sim_test_tools_suite(
+    name = "br_ram_data_rd_pipe_sim_test_tools_suite_tiny_width",
+    params = {
+        "DepthStages": [
+            "0",
+            "1",
+        ],
+        "DepthTiles": ["4"],
+        "Width": ["1"],
+        "WidthStages": ["0"],
+        "WidthTiles": ["1"],
+    },
+    tools = [
+        "vcs",
+        "verilator",
+    ],
+    top = "br_ram_data_rd_pipe_tb",
+    deps = [":br_ram_data_rd_pipe_tb"],
+)
+
+# Wide payload coverage above a single 128-bit randomization chunk.
+br_verilog_sim_test_tools_suite(
+    name = "br_ram_data_rd_pipe_sim_test_tools_suite_wide_width",
+    params = {
+        "DepthStages": ["1"],
+        "DepthTiles": ["2"],
+        "Width": ["256"],
+        "WidthStages": ["1"],
+        "WidthTiles": ["8"],
+    },
+    tools = [
+        "vcs",
+        "verilator",
+    ],
+    top = "br_ram_data_rd_pipe_tb",
+    deps = [":br_ram_data_rd_pipe_tb"],
+)
+
+# Nontrivial shapes that still satisfy WidthTiles * TileWidth == Width.
+br_verilog_sim_test_tools_suite(
+    name = "br_ram_data_rd_pipe_sim_test_tools_suite_odd_width",
+    params = {
+        "DepthStages": ["1"],
+        "DepthTiles": ["3"],
+        "Width": ["33"],
+        "WidthStages": [
+            "1",
+            "2",
+        ],
+        "WidthTiles": [
+            "1",
+            "3",
+        ],
+    },
+    tools = [
+        "vcs",
+        "verilator",
+    ],
+    top = "br_ram_data_rd_pipe_tb",
+    deps = [":br_ram_data_rd_pipe_tb"],
+)
