@@ -5,6 +5,11 @@ load("//bazel:br_verilog.bzl", "br_verilog_elab_and_lint_test_suite")
 
 package(default_visibility = ["//visibility:public"])
 
+filegroup(
+    name = "srcs",
+    srcs = glob(["*.sv"]),
+)
+
 verilog_library(
     name = "br_multi_xfer_checks_sendable_data_intg",
     srcs = ["br_multi_xfer_checks_sendable_data_intg.sv"],

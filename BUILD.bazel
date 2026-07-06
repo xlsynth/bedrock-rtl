@@ -10,6 +10,35 @@ compile_pip_requirements_3_12(
     requirements_txt = "requirements_lock_3_12.txt",
 )
 
+filegroup(
+    name = "rtl_srcs",
+    srcs = [
+        "//amba/rtl:srcs",
+        "//arb/rtl:srcs",
+        "//cdc/rtl:srcs",
+        "//counter/rtl:srcs",
+        "//credit/rtl:srcs",
+        "//csr/rtl:srcs",
+        "//delay/rtl:srcs",
+        "//demux/rtl:srcs",
+        "//ecc/rtl:srcs",
+        "//enc/rtl:srcs",
+        "//fifo/rtl:srcs",
+        "//flow/rtl:srcs",
+        "//gate/rtl:srcs",
+        "//lfsr/rtl:srcs",
+        "//macros:srcs",
+        "//misc/rtl:srcs",
+        "//multi_xfer/rtl:srcs",
+        "//mux/rtl:srcs",
+        "//pkg:srcs",
+        "//ram/rtl:srcs",
+        "//shift/rtl:srcs",
+        "//tracker/rtl:srcs",
+    ],
+    visibility = ["//visibility:public"],
+)
+
 py_test(
     name = "check_env",
     srcs = ["check_env.py"],
@@ -19,6 +48,7 @@ py_test(
 
 verilog_sim_coverage_aggregate(
     name = "br_verilator_coverage",
+    all_srcs = ":rtl_srcs",
     coverage_reports = [
         "//amba/sim:br_amba_verilator_coverage",
         "//arb/sim:br_arb_verilator_coverage",
