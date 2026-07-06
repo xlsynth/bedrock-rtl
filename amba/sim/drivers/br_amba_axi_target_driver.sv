@@ -6,47 +6,40 @@ import br_amba::*;
 import br_amba_axi_sim_pkg::*;
 import br_amba_sim_pkg::*;
 
-// Configurable AXI target-side stimulus driver.
+// AXI target-side stimulus driver.
 //
 // This is not a generic AXI master. It owns AXI target-side AW/W/AR
 // valid/payload signals and B/R ready signals for directed simulation benches.
 module br_amba_axi_target_driver #(
-    parameter int AddrWidth = 12,
-    parameter int DataWidth = 32,
-    parameter int IdWidth = 2,
-    parameter int AWUserWidth = 2,
-    parameter int WUserWidth = 2,
-    parameter int ARUserWidth = 2,
-    parameter int TimeoutCycles = 100,
-    localparam int StrobeWidth = DataWidth / 8
+    parameter int TimeoutCycles = 100
 ) (
     input logic clk,
     input logic rst,
 
-    output logic [AddrWidth-1:0] target_awaddr,
-    output logic [IdWidth-1:0] target_awid,
+    output logic [AxiAddrWidth-1:0] target_awaddr,
+    output logic [AxiIdWidth-1:0] target_awid,
     output logic [AxiBurstLenWidth-1:0] target_awlen,
     output logic [AxiBurstSizeWidth-1:0] target_awsize,
     output logic [AxiBurstTypeWidth-1:0] target_awburst,
     output logic [AxiProtWidth-1:0] target_awprot,
-    output logic [AWUserWidth-1:0] target_awuser,
+    output logic [AxiUserWidth-1:0] target_awuser,
     output logic target_awvalid,
     input logic target_awready,
-    output logic [DataWidth-1:0] target_wdata,
-    output logic [StrobeWidth-1:0] target_wstrb,
-    output logic [WUserWidth-1:0] target_wuser,
+    output logic [AxiDataWidth-1:0] target_wdata,
+    output logic [AxiStrobeWidth-1:0] target_wstrb,
+    output logic [AxiUserWidth-1:0] target_wuser,
     output logic target_wlast,
     output logic target_wvalid,
     input logic target_wready,
     input logic target_bvalid,
     output logic target_bready,
-    output logic [AddrWidth-1:0] target_araddr,
-    output logic [IdWidth-1:0] target_arid,
+    output logic [AxiAddrWidth-1:0] target_araddr,
+    output logic [AxiIdWidth-1:0] target_arid,
     output logic [AxiBurstLenWidth-1:0] target_arlen,
     output logic [AxiBurstSizeWidth-1:0] target_arsize,
     output logic [AxiBurstTypeWidth-1:0] target_arburst,
     output logic [AxiProtWidth-1:0] target_arprot,
-    output logic [ARUserWidth-1:0] target_aruser,
+    output logic [AxiUserWidth-1:0] target_aruser,
     output logic target_arvalid,
     input logic target_arready,
     input logic target_rvalid,
@@ -62,21 +55,6 @@ module br_amba_axi_target_driver #(
     WaitTargetB,
     WaitTargetR
   } wait_condition_e;
-
-  typedef struct packed {
-    axi_aw_t payload;
-    logic valid;
-  } axi_aw_source_t;
-
-  typedef struct packed {
-    axi_w_t payload;
-    logic   valid;
-  } axi_w_source_t;
-
-  typedef struct packed {
-    axi_ar_t payload;
-    logic valid;
-  } axi_ar_source_t;
 
   axi_aw_source_t target_aw_drive;
   axi_w_source_t target_w_drive;
@@ -99,35 +77,35 @@ module br_amba_axi_target_driver #(
     input target_rready;
   endclocking
 
-  assign target_awaddr  = AddrWidth'(target_aw_drive.payload.addr);
-  assign target_awid    = IdWidth'(target_aw_drive.payload.id);
+  assign target_awaddr  = target_aw_drive.payload.addr;
+  assign target_awid    = target_aw_drive.payload.id;
   assign target_awlen   = target_aw_drive.payload.len;
   assign target_awsize  = target_aw_drive.payload.size;
   assign target_awburst = target_aw_drive.payload.burst;
   assign target_awprot  = target_aw_drive.payload.prot;
-  assign target_awuser  = AWUserWidth'(target_aw_drive.payload.user);
+  assign target_awuser  = target_aw_drive.payload.user;
   assign target_awvalid = target_aw_drive.valid;
-  assign target_wdata   = DataWidth'(target_w_drive.payload.data);
-  assign target_wstrb   = StrobeWidth'(target_w_drive.payload.strb);
-  assign target_wuser   = WUserWidth'(target_w_drive.payload.user);
+  assign target_wdata   = target_w_drive.payload.data;
+  assign target_wstrb   = target_w_drive.payload.strb;
+  assign target_wuser   = target_w_drive.payload.user;
   assign target_wlast   = target_w_drive.payload.last;
   assign target_wvalid  = target_w_drive.valid;
   assign target_bready  = target_bready_drive;
-  assign target_araddr  = AddrWidth'(target_ar_drive.payload.addr);
-  assign target_arid    = IdWidth'(target_ar_drive.payload.id);
+  assign target_araddr  = target_ar_drive.payload.addr;
+  assign target_arid    = target_ar_drive.payload.id;
   assign target_arlen   = target_ar_drive.payload.len;
   assign target_arsize  = target_ar_drive.payload.size;
   assign target_arburst = target_ar_drive.payload.burst;
   assign target_arprot  = target_ar_drive.payload.prot;
-  assign target_aruser  = ARUserWidth'(target_ar_drive.payload.user);
+  assign target_aruser  = target_ar_drive.payload.user;
   assign target_arvalid = target_ar_drive.valid;
   assign target_rready  = target_rready_drive;
 
   task automatic init_idle();
-    failed          = 1'b0;
+    failed = 1'b0;
 
     target_aw_drive = '0;
-    target_w_drive  = '0;
+    target_w_drive = '0;
     target_ar_drive = '0;
     queued_w_beats.delete();
     target_bready_drive = 1'b1;
@@ -184,19 +162,19 @@ module br_amba_axi_target_driver #(
   function automatic axi_aw_t get_aw_transaction(input axi_aw_t base, input int index,
                                                  input bit vary_burst_len);
     get_aw_transaction = base;
-    get_aw_transaction.addr[AddrWidth-1:0] = base.addr[AddrWidth-1:0] + AddrWidth'(index);
-    get_aw_transaction.id[IdWidth-1:0] = base.id[IdWidth-1:0] + IdWidth'(index);
+    get_aw_transaction.addr = AxiAddrWidth'(base.addr + AxiAddrWidth'(index));
+    get_aw_transaction.id = AxiIdWidth'(base.id + AxiIdWidth'(index));
     if (vary_burst_len) begin
       get_aw_transaction.len = base.len + AxiBurstLenWidth'(index);
     end
-    get_aw_transaction.user[AWUserWidth-1:0] = base.user[AWUserWidth-1:0] + AWUserWidth'(index);
+    get_aw_transaction.user = AxiUserWidth'(base.user + AxiUserWidth'(index));
   endfunction
 
   function automatic axi_w_t get_w_transaction(input axi_w_t base, input int index,
                                                input bit vary_wlast);
     get_w_transaction = base;
-    get_w_transaction.data[DataWidth-1:0] = base.data[DataWidth-1:0] + DataWidth'(index);
-    get_w_transaction.user[WUserWidth-1:0] = base.user[WUserWidth-1:0] + WUserWidth'(index);
+    get_w_transaction.data = AxiDataWidth'(base.data + AxiDataWidth'(index));
+    get_w_transaction.user = AxiUserWidth'(base.user + AxiUserWidth'(index));
     if (vary_wlast) begin
       get_w_transaction.last = base.last ^ index[0];
     end
@@ -205,12 +183,12 @@ module br_amba_axi_target_driver #(
   function automatic axi_ar_t get_ar_transaction(input axi_ar_t base, input int index,
                                                  input bit vary_burst_len);
     get_ar_transaction = base;
-    get_ar_transaction.addr[AddrWidth-1:0] = base.addr[AddrWidth-1:0] + AddrWidth'(index);
-    get_ar_transaction.id[IdWidth-1:0] = base.id[IdWidth-1:0] + IdWidth'(index);
+    get_ar_transaction.addr = AxiAddrWidth'(base.addr + AxiAddrWidth'(index));
+    get_ar_transaction.id = AxiIdWidth'(base.id + AxiIdWidth'(index));
     if (vary_burst_len) begin
       get_ar_transaction.len = base.len + AxiBurstLenWidth'(index);
     end
-    get_ar_transaction.user[ARUserWidth-1:0] = base.user[ARUserWidth-1:0] + ARUserWidth'(index);
+    get_ar_transaction.user = AxiUserWidth'(base.user + AxiUserWidth'(index));
   endfunction
 
   function automatic int get_transaction_index(input int index, input bit vary_transactions);
@@ -231,10 +209,10 @@ module br_amba_axi_target_driver #(
   endtask
 
   task automatic drive_aw_fields(
-      input logic [AddrWidth-1:0] addr, input logic [IdWidth-1:0] id,
+      input logic [AxiAddrWidth-1:0] addr, input logic [AxiIdWidth-1:0] id,
       input logic [AxiBurstLenWidth-1:0] len, input logic [AxiBurstSizeWidth-1:0] size,
       input logic [AxiBurstTypeWidth-1:0] burst, input logic [AxiProtWidth-1:0] prot,
-      input logic [AWUserWidth-1:0] user);
+      input logic [AxiUserWidth-1:0] user);
     @(negedge clk);
     target_aw_drive.payload       = '0;
     target_aw_drive.payload.addr  = addr;
@@ -263,6 +241,12 @@ module br_amba_axi_target_driver #(
     queued_w_beats.push_back(w_input);
   endtask
 
+  task automatic queue_w_beat_fields(input logic [AxiDataWidth-1:0] data,
+                                     input logic [AxiStrobeWidth-1:0] strb,
+                                     input logic [AxiUserWidth-1:0] user, input logic last);
+    queued_w_beats.push_back('{data: data, strb: strb, user: user, last: last});
+  endtask
+
   task automatic drive_queued_w(input int stall_cycles);
     axi_w_t w_input;
 
@@ -274,9 +258,9 @@ module br_amba_axi_target_driver #(
     end
   endtask
 
-  task automatic drive_w_fields(input logic [DataWidth-1:0] data,
-                                input logic [StrobeWidth-1:0] strb,
-                                input logic [WUserWidth-1:0] user, input logic last);
+  task automatic drive_w_fields(input logic [AxiDataWidth-1:0] data,
+                                input logic [AxiStrobeWidth-1:0] strb,
+                                input logic [AxiUserWidth-1:0] user, input logic last);
     @(negedge clk);
     target_w_drive.payload      = '0;
     target_w_drive.payload.data = data;
@@ -299,10 +283,10 @@ module br_amba_axi_target_driver #(
   endtask
 
   task automatic drive_ar_fields(
-      input logic [AddrWidth-1:0] addr, input logic [IdWidth-1:0] id,
+      input logic [AxiAddrWidth-1:0] addr, input logic [AxiIdWidth-1:0] id,
       input logic [AxiBurstLenWidth-1:0] len, input logic [AxiBurstSizeWidth-1:0] size,
       input logic [AxiBurstTypeWidth-1:0] burst, input logic [AxiProtWidth-1:0] prot,
-      input logic [ARUserWidth-1:0] user);
+      input logic [AxiUserWidth-1:0] user);
     @(negedge clk);
     target_ar_drive.payload       = '0;
     target_ar_drive.payload.addr  = addr;
@@ -353,11 +337,22 @@ module br_amba_axi_target_driver #(
     join
   endtask
 
-  task automatic run_read_burst_fields(
-      input logic [AddrWidth-1:0] addr, input logic [IdWidth-1:0] id,
+  task automatic run_write_burst_fields(
+      input logic [AxiAddrWidth-1:0] addr, input logic [AxiIdWidth-1:0] id,
       input logic [AxiBurstLenWidth-1:0] len, input logic [AxiBurstSizeWidth-1:0] size,
       input logic [AxiBurstTypeWidth-1:0] burst, input logic [AxiProtWidth-1:0] prot,
-      input logic [ARUserWidth-1:0] aruser, input int max_stall_cycles);
+      input logic [AxiUserWidth-1:0] awuser, input int max_stall_cycles,
+      input int response_stall_cycles);
+    run_write_burst(
+        '{addr: addr, id: id, len: len, size: size, burst: burst, prot: prot, user: awuser},
+        max_stall_cycles, response_stall_cycles);
+  endtask
+
+  task automatic run_read_burst_fields(
+      input logic [AxiAddrWidth-1:0] addr, input logic [AxiIdWidth-1:0] id,
+      input logic [AxiBurstLenWidth-1:0] len, input logic [AxiBurstSizeWidth-1:0] size,
+      input logic [AxiBurstTypeWidth-1:0] burst, input logic [AxiProtWidth-1:0] prot,
+      input logic [AxiUserWidth-1:0] aruser, input int max_stall_cycles);
     int unsigned beats;
 
     beats = int'(len) + 1;
@@ -437,12 +432,45 @@ module br_amba_axi_target_driver #(
     join
   endtask
 
-  task automatic run(input int num_writes = 0, input int num_reads = 0, input int awvalid_delay = 0,
-                     input int wvalid_delay = 0, input int arvalid_delay = 0,
-                     input int max_stall_cycles = 0, input axi_aw_t aw_input = '0,
-                     input axi_w_t w_input = '0, input axi_ar_t ar_input = '0,
-                     input bit accept_r_burst_len = 0, input bit vary_transactions = 1,
-                     input bit vary_burst_len = 1, input bit vary_wlast = 1);
+  task automatic run(
+      input int num_writes = 0, input int num_reads = 0, input int awvalid_delay = 0,
+      input int wvalid_delay = 0, input int arvalid_delay = 0, input int max_stall_cycles = 0,
+      input logic [AxiAddrWidth-1:0] awaddr = '0, input logic [AxiIdWidth-1:0] awid = '0,
+      input logic [AxiBurstLenWidth-1:0] awlen = '0,
+      input logic [AxiBurstSizeWidth-1:0] awsize = '0,
+      input logic [AxiBurstTypeWidth-1:0] awburst = '0, input logic [AxiProtWidth-1:0] awprot = '0,
+      input logic [AxiUserWidth-1:0] awuser = '0, input logic [AxiDataWidth-1:0] wdata = '0,
+      input logic [AxiStrobeWidth-1:0] wstrb = '0, input logic [AxiUserWidth-1:0] wuser = '0,
+      input logic wlast = '0, input logic [AxiAddrWidth-1:0] araddr = '0,
+      input logic [AxiIdWidth-1:0] arid = '0, input logic [AxiBurstLenWidth-1:0] arlen = '0,
+      input logic [AxiBurstSizeWidth-1:0] arsize = '0,
+      input logic [AxiBurstTypeWidth-1:0] arburst = '0, input logic [AxiProtWidth-1:0] arprot = '0,
+      input logic [AxiUserWidth-1:0] aruser = '0, input bit accept_r_burst_len = 0,
+      input bit vary_transactions = 1, input bit vary_burst_len = 1, input bit vary_wlast = 1);
+    axi_aw_t aw_input;
+    axi_w_t  w_input;
+    axi_ar_t ar_input;
+
+    aw_input = '{
+        addr: awaddr,
+        id: awid,
+        len: awlen,
+        size: awsize,
+        burst: awburst,
+        prot: awprot,
+        user: awuser
+    };
+    w_input = '{data: wdata, strb: wstrb, user: wuser, last: wlast};
+    ar_input = '{
+        addr: araddr,
+        id: arid,
+        len: arlen,
+        size: arsize,
+        burst: arburst,
+        prot: arprot,
+        user: aruser
+    };
+
     fork
       begin
         if (num_writes > 0) begin

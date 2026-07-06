@@ -33,6 +33,7 @@ verilog_library(
 verilog_library(
     name = "br_amba_sim_pkg",
     srcs = ["br_amba_sim_pkg.sv"],
+    hdrs = ["br_amba_sim_macros.svh"],
     visibility = ["//visibility:public"],
 )
 

@@ -15,22 +15,13 @@ import br_amba_sim_pkg::*;
 // - verifies write data passthrough, read data passthrough, response user fields, IDs, and RLAST;
 // - checks AXI4 write response propagation returns the first non-OKAY beat response;
 // - separates no-stall stress traffic from directed backpressure scenarios;
-// - sweeps DataWidth, MaxOutstandingReqs, and NumRandomTransactions from Bazel.
+// - sweeps br_amba_axi_sim_pkg widths, MaxOutstandingReqs, and NumRandomTransactions from Bazel.
 module br_amba_axi2axil_tb;
-  parameter int DataWidth = 32;
   parameter int MaxOutstandingReqs = 4;
   parameter int NumRandomTransactions = 1;
 
   localparam int TimeoutCycles = 100;
-  localparam int AddrWidth = 12;
-  localparam int IdWidth = 3;
-  localparam int AWUserWidth = 2;
-  localparam int ARUserWidth = 2;
-  localparam int WUserWidth = 2;
-  localparam int BUserWidth = 2;
-  localparam int RUserWidth = 2;
-  localparam int StrobeWidth = DataWidth / 8;
-  localparam int AxiSize = $clog2(StrobeWidth);
+  localparam int AxiSize = $clog2(AxiStrobeWidth);
   localparam int MaxDirectedBeats = 4;
   localparam int NumStressTransactions = 100;
   localparam int NumBackpressureTransactions = MaxOutstandingReqs;
@@ -40,66 +31,66 @@ module br_amba_axi2axil_tb;
   logic rst;
 
   // AXI4 manager-side signals.
-  logic [AddrWidth-1:0] axi_awaddr;
-  logic [IdWidth-1:0] axi_awid;
+  logic [AxiAddrWidth-1:0] axi_awaddr;
+  logic [AxiIdWidth-1:0] axi_awid;
   logic [AxiBurstLenWidth-1:0] axi_awlen;
   logic [AxiBurstSizeWidth-1:0] axi_awsize;
   logic [AxiBurstTypeWidth-1:0] axi_awburst;
   logic [AxiProtWidth-1:0] axi_awprot;
-  logic [AWUserWidth-1:0] axi_awuser;
+  logic [AxiUserWidth-1:0] axi_awuser;
   logic axi_awvalid;
   logic axi_awready;
-  logic [DataWidth-1:0] axi_wdata;
-  logic [StrobeWidth-1:0] axi_wstrb;
-  logic [WUserWidth-1:0] axi_wuser;
+  logic [AxiDataWidth-1:0] axi_wdata;
+  logic [AxiStrobeWidth-1:0] axi_wstrb;
+  logic [AxiUserWidth-1:0] axi_wuser;
   logic axi_wlast;
   logic axi_wvalid;
   logic axi_wready;
-  logic [IdWidth-1:0] axi_bid;
-  logic [BUserWidth-1:0] axi_buser;
+  logic [AxiIdWidth-1:0] axi_bid;
+  logic [AxiUserWidth-1:0] axi_buser;
   logic [AxiRespWidth-1:0] axi_bresp;
   logic axi_bvalid;
   logic axi_bready;
-  logic [AddrWidth-1:0] axi_araddr;
-  logic [IdWidth-1:0] axi_arid;
+  logic [AxiAddrWidth-1:0] axi_araddr;
+  logic [AxiIdWidth-1:0] axi_arid;
   logic [AxiBurstLenWidth-1:0] axi_arlen;
   logic [AxiBurstSizeWidth-1:0] axi_arsize;
   logic [AxiBurstTypeWidth-1:0] axi_arburst;
   logic [AxiProtWidth-1:0] axi_arprot;
-  logic [ARUserWidth-1:0] axi_aruser;
+  logic [AxiUserWidth-1:0] axi_aruser;
   logic axi_arvalid;
   logic axi_arready;
-  logic [IdWidth-1:0] axi_rid;
-  logic [DataWidth-1:0] axi_rdata;
-  logic [RUserWidth-1:0] axi_ruser;
+  logic [AxiIdWidth-1:0] axi_rid;
+  logic [AxiDataWidth-1:0] axi_rdata;
+  logic [AxiUserWidth-1:0] axi_ruser;
   logic [AxiRespWidth-1:0] axi_rresp;
   logic axi_rlast;
   logic axi_rvalid;
   logic axi_rready;
 
   // AXI4-Lite target-side signals.
-  logic [AddrWidth-1:0] axil_awaddr;
+  logic [AxiAddrWidth-1:0] axil_awaddr;
   logic [AxiProtWidth-1:0] axil_awprot;
-  logic [AWUserWidth-1:0] axil_awuser;
+  logic [AxiUserWidth-1:0] axil_awuser;
   logic axil_awvalid;
   logic axil_awready;
-  logic [DataWidth-1:0] axil_wdata;
-  logic [StrobeWidth-1:0] axil_wstrb;
-  logic [WUserWidth-1:0] axil_wuser;
+  logic [AxiDataWidth-1:0] axil_wdata;
+  logic [AxiStrobeWidth-1:0] axil_wstrb;
+  logic [AxiUserWidth-1:0] axil_wuser;
   logic axil_wvalid;
   logic axil_wready;
   logic [AxiRespWidth-1:0] axil_bresp;
-  logic [BUserWidth-1:0] axil_buser;
+  logic [AxiUserWidth-1:0] axil_buser;
   logic axil_bvalid;
   logic axil_bready;
-  logic [AddrWidth-1:0] axil_araddr;
+  logic [AxiAddrWidth-1:0] axil_araddr;
   logic [AxiProtWidth-1:0] axil_arprot;
-  logic [ARUserWidth-1:0] axil_aruser;
+  logic [AxiUserWidth-1:0] axil_aruser;
   logic axil_arvalid;
   logic axil_arready;
-  logic [DataWidth-1:0] axil_rdata;
+  logic [AxiDataWidth-1:0] axil_rdata;
   logic [AxiRespWidth-1:0] axil_rresp;
-  logic [RUserWidth-1:0] axil_ruser;
+  logic [AxiUserWidth-1:0] axil_ruser;
   logic axil_rvalid;
   logic axil_rready;
 
@@ -109,14 +100,14 @@ module br_amba_axi2axil_tb;
   logic response_monitor_failed;
 
   br_amba_axi2axil #(
-      .AddrWidth(AddrWidth),
-      .DataWidth(DataWidth),
-      .IdWidth(IdWidth),
-      .AWUserWidth(AWUserWidth),
-      .ARUserWidth(ARUserWidth),
-      .WUserWidth(WUserWidth),
-      .BUserWidth(BUserWidth),
-      .RUserWidth(RUserWidth),
+      .AddrWidth(AxiAddrWidth),
+      .DataWidth(AxiDataWidth),
+      .IdWidth(AxiIdWidth),
+      .AWUserWidth(AxiUserWidth),
+      .ARUserWidth(AxiUserWidth),
+      .WUserWidth(AxiUserWidth),
+      .BUserWidth(AxiUserWidth),
+      .RUserWidth(AxiUserWidth),
       .MaxOutstandingReqs(MaxOutstandingReqs)
   ) dut (
       .clk(clk),
@@ -191,12 +182,6 @@ module br_amba_axi2axil_tb;
   );
 
   br_amba_axi_target_driver #(
-      .AddrWidth(AddrWidth),
-      .DataWidth(DataWidth),
-      .IdWidth(IdWidth),
-      .AWUserWidth(AWUserWidth),
-      .WUserWidth(WUserWidth),
-      .ARUserWidth(ARUserWidth),
       .TimeoutCycles(TimeoutCycles)
   ) axi_manager (
       .clk(clk),
@@ -233,9 +218,9 @@ module br_amba_axi2axil_tb;
   );
 
   br_amba_axil_target_driver #(
-      .DataWidth(DataWidth),
-      .BUserWidth(BUserWidth),
-      .RUserWidth(RUserWidth),
+      .DataWidth(AxiDataWidth),
+      .BUserWidth(AxiUserWidth),
+      .RUserWidth(AxiUserWidth),
       .TimeoutCycles(TimeoutCycles)
   ) axil_target (
       .clk(clk),
@@ -259,11 +244,11 @@ module br_amba_axi2axil_tb;
   );
 
   br_amba_axil_request_monitor #(
-      .AddrWidth(AddrWidth),
-      .DataWidth(DataWidth),
-      .AWUserWidth(AWUserWidth),
-      .WUserWidth(WUserWidth),
-      .ARUserWidth(ARUserWidth),
+      .AddrWidth(AxiAddrWidth),
+      .DataWidth(AxiDataWidth),
+      .AWUserWidth(AxiUserWidth),
+      .WUserWidth(AxiUserWidth),
+      .ARUserWidth(AxiUserWidth),
       .TimeoutCycles(TimeoutCycles)
   ) axil_request_monitor (
       .clk(clk),
@@ -287,10 +272,10 @@ module br_amba_axi2axil_tb;
   );
 
   br_amba_axi_response_monitor #(
-      .DataWidth(DataWidth),
-      .IdWidth(IdWidth),
-      .BUserWidth(BUserWidth),
-      .RUserWidth(RUserWidth),
+      .DataWidth(AxiDataWidth),
+      .IdWidth(AxiIdWidth),
+      .BUserWidth(AxiUserWidth),
+      .RUserWidth(AxiUserWidth),
       .TimeoutCycles(TimeoutCycles)
   ) response_monitor (
       .clk(clk),
@@ -347,15 +332,15 @@ module br_amba_axi2axil_tb;
     check_helpers_passed();
   endtask
 
-  function automatic logic [DataWidth-1:0] get_random_data();
-    logic [DataWidth-1:0] random_data;
+  function automatic logic [AxiDataWidth-1:0] get_random_data();
+    logic [AxiDataWidth-1:0] random_data;
     logic [31:0] random_word;
 
     random_data = '0;
-    for (int word = 0; word < (DataWidth + 31) / 32; word++) begin
+    for (int word = 0; word < (AxiDataWidth + 31) / 32; word++) begin
       random_word = $urandom();
       for (int bit_idx = 0; bit_idx < 32; bit_idx++) begin
-        if ((word * 32) + bit_idx < DataWidth) begin
+        if ((word * 32) + bit_idx < AxiDataWidth) begin
           random_data[(word*32)+bit_idx] = random_word[bit_idx];
         end
       end
@@ -363,12 +348,12 @@ module br_amba_axi2axil_tb;
     get_random_data = random_data;
   endfunction
 
-  function automatic logic [AddrWidth-1:0] get_random_aligned_addr(
+  function automatic logic [AxiAddrWidth-1:0] get_random_aligned_addr(
       input logic [AxiBurstSizeWidth-1:0] size);
-    logic [AddrWidth-1:0] align_mask;
+    logic [AxiAddrWidth-1:0] align_mask;
 
-    align_mask = {AddrWidth{1'b1}} << size;
-    get_random_aligned_addr = AddrWidth'($urandom()) & align_mask;
+    align_mask = {AxiAddrWidth{1'b1}} << size;
+    get_random_aligned_addr = AxiAddrWidth'($urandom()) & align_mask;
   endfunction
 
   //----------------------------------------------------------------------------
@@ -376,20 +361,20 @@ module br_amba_axi2axil_tb;
   //----------------------------------------------------------------------------
 
   task automatic queue_write_burst(
-      input axi_aw_t request, input logic [WUserWidth-1:0] wuser,
-      input logic [BUserWidth-1:0] buser, input logic [AxiRespWidth-1:0] first_resp,
+      input axi_aw_t request, input logic [AxiUserWidth-1:0] wuser,
+      input logic [AxiUserWidth-1:0] buser, input logic [AxiRespWidth-1:0] first_resp,
       input logic [AxiRespWidth-1:0] later_resp, output int unsigned beats);
-    logic [AxiRespWidth-1:0] resp;
-    logic [ StrobeWidth-1:0] strb;
+    logic [  AxiRespWidth-1:0] resp;
+    logic [AxiStrobeWidth-1:0] strb;
 
     beats = int'(request.len) + 1;
     resp  = response_monitor.predict_axi_write_resp(beats, first_resp, later_resp);
-    strb  = StrobeWidth'($urandom()) | StrobeWidth'(1'b1);
+    strb  = AxiStrobeWidth'($urandom()) | AxiStrobeWidth'(1'b1);
 
     for (int unsigned beat = 0; beat < beats; beat++) begin
       logic [AxiRespWidth-1:0] beat_resp;
-      logic [AddrWidth-1:0] expected_addr;
-      logic [DataWidth-1:0] data;
+      logic [AxiAddrWidth-1:0] expected_addr;
+      logic [AxiDataWidth-1:0] data;
       logic last;
 
       data = get_random_data();
@@ -398,8 +383,8 @@ module br_amba_axi2axil_tb;
       last = beat == beats - 1;
       beat_resp = (beat == 0) ? first_resp : later_resp;
 
-      axi_manager.queue_w_beat('{data: AxiDataWidth'(data), strb: AxiStrobeWidth'(strb),
-                               user: AxiUserWidth'(wuser), last: last});
+      axi_manager.queue_w_beat_fields(AxiDataWidth'(data), AxiStrobeWidth'(strb),
+                                      AxiUserWidth'(wuser), last);
       axil_request_monitor.aw_queue.push_back('{addr: AxilAddrWidth'(expected_addr),
                                               prot: request.prot,
                                               user: AxilUserWidth'(request.user)});
@@ -413,8 +398,8 @@ module br_amba_axi2axil_tb;
   endtask
 
   task automatic run_write_burst(
-      input axi_aw_t request, input logic [WUserWidth-1:0] wuser,
-      input logic [BUserWidth-1:0] buser, input logic [AxiRespWidth-1:0] first_resp,
+      input axi_aw_t request, input logic [AxiUserWidth-1:0] wuser,
+      input logic [AxiUserWidth-1:0] buser, input logic [AxiRespWidth-1:0] first_resp,
       input logic [AxiRespWidth-1:0] later_resp, input bit stall_outputs);
     int unsigned beats;
     int max_stall_cycles;
@@ -423,19 +408,21 @@ module br_amba_axi2axil_tb;
     max_stall_cycles = stall_outputs ? 2 : 0;
 
     fork
-      axi_manager.run_write_burst(request, max_stall_cycles, stall_outputs ? 2 : 0);
+      axi_manager.run_write_burst_fields(request.addr, request.id, request.len, request.size,
+                                         request.burst, request.prot, request.user,
+                                         max_stall_cycles, stall_outputs ? 2 : 0);
       axil_target.run(beats, 0, max_stall_cycles);
       axil_request_monitor.run(beats, 0);
       response_monitor.run(1, 0);
     join
   endtask
 
-  task automatic queue_read_burst(input axi_ar_t request, input logic [RUserWidth-1:0] ruser,
+  task automatic queue_read_burst(input axi_ar_t request, input logic [AxiUserWidth-1:0] ruser,
                                   input logic [AxiRespWidth-1:0] resp, output int unsigned beats);
     beats = int'(request.len) + 1;
     for (int unsigned beat = 0; beat < beats; beat++) begin
-      logic [AddrWidth-1:0] expected_addr;
-      logic [DataWidth-1:0] data;
+      logic [AxiAddrWidth-1:0] expected_addr;
+      logic [AxiDataWidth-1:0] data;
       logic last;
 
       data = get_random_data();
@@ -453,7 +440,7 @@ module br_amba_axi2axil_tb;
     end
   endtask
 
-  task automatic run_read_burst(input axi_ar_t request, input logic [RUserWidth-1:0] ruser,
+  task automatic run_read_burst(input axi_ar_t request, input logic [AxiUserWidth-1:0] ruser,
                                 input logic [AxiRespWidth-1:0] resp, input bit stall_outputs);
     int unsigned beats;
     int max_stall_cycles;
@@ -462,9 +449,9 @@ module br_amba_axi2axil_tb;
     max_stall_cycles = stall_outputs ? 2 : 0;
 
     fork
-      axi_manager.run_read_burst_fields(AddrWidth'(request.addr), IdWidth'(request.id), request.len,
-                                        request.size, request.burst, request.prot,
-                                        ARUserWidth'(request.user), max_stall_cycles);
+      axi_manager.run_read_burst_fields(request.addr, request.id, request.len, request.size,
+                                        request.burst, request.prot, request.user,
+                                        max_stall_cycles);
       axil_target.run(0, beats, max_stall_cycles);
       axil_request_monitor.run(0, beats);
       response_monitor.run(0, beats);
@@ -472,10 +459,10 @@ module br_amba_axi2axil_tb;
   endtask
 
   task automatic run_parallel_read_write(
-      input axi_aw_t write_request, input logic [WUserWidth-1:0] wuser,
-      input logic [BUserWidth-1:0] buser, input logic [AxiRespWidth-1:0] first_write_resp,
+      input axi_aw_t write_request, input logic [AxiUserWidth-1:0] wuser,
+      input logic [AxiUserWidth-1:0] buser, input logic [AxiRespWidth-1:0] first_write_resp,
       input logic [AxiRespWidth-1:0] later_write_resp, input axi_ar_t read_request,
-      input logic [RUserWidth-1:0] ruser, input logic [AxiRespWidth-1:0] read_resp,
+      input logic [AxiUserWidth-1:0] ruser, input logic [AxiRespWidth-1:0] read_resp,
       input bit stall_outputs);
     int unsigned write_beats;
     int unsigned read_beats;
@@ -486,11 +473,13 @@ module br_amba_axi2axil_tb;
     max_stall_cycles = stall_outputs ? 3 : 0;
 
     fork
-      axi_manager.run_write_burst(write_request, max_stall_cycles, stall_outputs ? 3 : 0);
-      axi_manager.run_read_burst_fields(AddrWidth'(read_request.addr), IdWidth'(read_request.id),
-                                        read_request.len, read_request.size, read_request.burst,
-                                        read_request.prot, ARUserWidth'(read_request.user),
-                                        max_stall_cycles);
+      axi_manager.run_write_burst_fields(write_request.addr, write_request.id, write_request.len,
+                                         write_request.size, write_request.burst,
+                                         write_request.prot, write_request.user, max_stall_cycles,
+                                         stall_outputs ? 3 : 0);
+      axi_manager.run_read_burst_fields(read_request.addr, read_request.id, read_request.len,
+                                        read_request.size, read_request.burst, read_request.prot,
+                                        read_request.user, max_stall_cycles);
       axil_target.run(write_beats, read_beats, max_stall_cycles);
       axil_request_monitor.run(write_beats, read_beats);
       response_monitor.run(1, read_beats);
@@ -522,37 +511,42 @@ module br_amba_axi2axil_tb;
       read_beats = $urandom_range(1, MaxDirectedBeats);
 
       write_request = '0;
-      write_request.addr = get_random_aligned_addr(AxiBurstSizeWidth'(AxiSize));
-      write_request.id = IdWidth'($urandom());
+      write_request.addr = AxiAddrWidth'(get_random_aligned_addr(AxiBurstSizeWidth'(AxiSize)));
+      write_request.id = AxiIdWidth'($urandom());
       write_request.len = AxiBurstLenWidth'(write_beats - 1);
       write_request.size = AxiBurstSizeWidth'(AxiSize);
       write_request.burst = transaction[0] ? AxiBurstFixed : AxiBurstIncr;
       write_request.prot = AxiProtWidth'($urandom());
-      write_request.user = AWUserWidth'($urandom());
+      write_request.user = AxiUserWidth'($urandom());
 
       read_request = '0;
-      read_request.addr = get_random_aligned_addr(AxiBurstSizeWidth'(AxiSize));
-      read_request.id = IdWidth'($urandom());
+      read_request.addr = AxiAddrWidth'(get_random_aligned_addr(AxiBurstSizeWidth'(AxiSize)));
+      read_request.id = AxiIdWidth'($urandom());
       read_request.len = AxiBurstLenWidth'(read_beats - 1);
       read_request.size = AxiBurstSizeWidth'(AxiSize);
       read_request.burst = transaction[0] ? AxiBurstIncr : AxiBurstFixed;
       read_request.prot = AxiProtWidth'($urandom());
-      read_request.user = ARUserWidth'($urandom());
+      read_request.user = AxiUserWidth'($urandom());
 
       write_requests.push_back(write_request);
       read_requests.push_back(read_request);
-      queue_write_burst(write_request, WUserWidth'($urandom()), BUserWidth'($urandom()),
+      queue_write_burst(write_request, AxiUserWidth'($urandom()), AxiUserWidth'($urandom()),
                         AxiRespOkay, transaction[0] ? AxiRespSlverr : AxiRespOkay, write_beats);
-      queue_read_burst(read_request, RUserWidth'($urandom()), AxiRespOkay, read_beats);
+      queue_read_burst(read_request, AxiUserWidth'($urandom()), AxiRespOkay, read_beats);
       total_write_beats += write_beats;
       total_read_beats += read_beats;
     end
 
     fork
       begin
+        axi_aw_t write_request;
+
         while (write_requests.size() > 0) begin
           axi_manager.wait_cycles(get_random_stall_cycles(awvalid_max_stall_cycles));
-          axi_manager.drive_aw(write_requests.pop_front());
+          write_request = write_requests.pop_front();
+          axi_manager.drive_aw_fields(write_request.addr, write_request.id, write_request.len,
+                                      write_request.size, write_request.burst, write_request.prot,
+                                      write_request.user);
         end
       end
       begin
@@ -566,9 +560,14 @@ module br_amba_axi2axil_tb;
         end
       end
       begin
+        axi_ar_t read_request;
+
         while (read_requests.size() > 0) begin
           axi_manager.wait_cycles(get_random_stall_cycles(arvalid_max_stall_cycles));
-          axi_manager.drive_ar(read_requests.pop_front());
+          read_request = read_requests.pop_front();
+          axi_manager.drive_ar_fields(read_request.addr, read_request.id, read_request.len,
+                                      read_request.size, read_request.burst, read_request.prot,
+                                      read_request.user);
         end
       end
       begin
@@ -610,14 +609,14 @@ module br_amba_axi2axil_tb;
     $display("Checking single-beat write conversion");
     start_test_case();
     request = '0;
-    request.addr = get_random_aligned_addr(AxiBurstSizeWidth'(AxiSize));
-    request.id = IdWidth'($urandom());
+    request.addr = AxiAddrWidth'(get_random_aligned_addr(AxiBurstSizeWidth'(AxiSize)));
+    request.id = AxiIdWidth'($urandom());
     request.len = '0;
     request.size = AxiBurstSizeWidth'(AxiSize);
     request.burst = AxiBurstIncr;
     request.prot = AxiProtWidth'($urandom());
-    request.user = AWUserWidth'($urandom());
-    run_write_burst(request, WUserWidth'($urandom()), BUserWidth'($urandom()), AxiRespOkay,
+    request.user = AxiUserWidth'($urandom());
+    run_write_burst(request, AxiUserWidth'($urandom()), AxiUserWidth'($urandom()), AxiRespOkay,
                     AxiRespOkay, 1'b0);
     finish_test_case();
   endtask
@@ -630,14 +629,14 @@ module br_amba_axi2axil_tb;
     $display("Checking incrementing write burst with response propagation");
     start_test_case();
     request = '0;
-    request.addr = get_random_aligned_addr(AxiBurstSizeWidth'(AxiSize));
-    request.id = IdWidth'($urandom());
+    request.addr = AxiAddrWidth'(get_random_aligned_addr(AxiBurstSizeWidth'(AxiSize)));
+    request.id = AxiIdWidth'($urandom());
     request.len = AxiBurstLenWidth'(MaxDirectedBeats - 1);
     request.size = AxiBurstSizeWidth'(AxiSize);
     request.burst = AxiBurstIncr;
     request.prot = AxiProtWidth'($urandom());
-    request.user = AWUserWidth'($urandom());
-    run_write_burst(request, WUserWidth'($urandom()), BUserWidth'($urandom()), AxiRespOkay,
+    request.user = AxiUserWidth'($urandom());
+    run_write_burst(request, AxiUserWidth'($urandom()), AxiUserWidth'($urandom()), AxiRespOkay,
                     AxiRespSlverr, 1'b1);
     finish_test_case();
   endtask
@@ -650,14 +649,14 @@ module br_amba_axi2axil_tb;
     $display("Checking fixed write burst");
     start_test_case();
     request = '0;
-    request.addr = get_random_aligned_addr(AxiBurstSizeWidth'(AxiSize));
-    request.id = IdWidth'($urandom());
+    request.addr = AxiAddrWidth'(get_random_aligned_addr(AxiBurstSizeWidth'(AxiSize)));
+    request.id = AxiIdWidth'($urandom());
     request.len = AxiBurstLenWidth'(3 - 1);
     request.size = AxiBurstSizeWidth'(AxiSize);
     request.burst = AxiBurstFixed;
     request.prot = AxiProtWidth'($urandom());
-    request.user = AWUserWidth'($urandom());
-    run_write_burst(request, WUserWidth'($urandom()), BUserWidth'($urandom()), AxiRespDecerr,
+    request.user = AxiUserWidth'($urandom());
+    run_write_burst(request, AxiUserWidth'($urandom()), AxiUserWidth'($urandom()), AxiRespDecerr,
                     AxiRespOkay, 1'b0);
     finish_test_case();
   endtask
@@ -670,14 +669,14 @@ module br_amba_axi2axil_tb;
     $display("Checking first-beat SLVERR write response propagation");
     start_test_case();
     request = '0;
-    request.addr = get_random_aligned_addr(AxiBurstSizeWidth'(AxiSize));
-    request.id = IdWidth'($urandom());
+    request.addr = AxiAddrWidth'(get_random_aligned_addr(AxiBurstSizeWidth'(AxiSize)));
+    request.id = AxiIdWidth'($urandom());
     request.len = AxiBurstLenWidth'(MaxDirectedBeats - 1);
     request.size = AxiBurstSizeWidth'(AxiSize);
     request.burst = AxiBurstIncr;
     request.prot = AxiProtWidth'($urandom());
-    request.user = AWUserWidth'($urandom());
-    run_write_burst(request, WUserWidth'($urandom()), BUserWidth'($urandom()), AxiRespSlverr,
+    request.user = AxiUserWidth'($urandom());
+    run_write_burst(request, AxiUserWidth'($urandom()), AxiUserWidth'($urandom()), AxiRespSlverr,
                     AxiRespOkay, 1'b1);
     finish_test_case();
   endtask
@@ -690,14 +689,14 @@ module br_amba_axi2axil_tb;
     $display("Checking later-beat DECERR write response propagation");
     start_test_case();
     request = '0;
-    request.addr = get_random_aligned_addr(AxiBurstSizeWidth'(AxiSize));
-    request.id = IdWidth'($urandom());
+    request.addr = AxiAddrWidth'(get_random_aligned_addr(AxiBurstSizeWidth'(AxiSize)));
+    request.id = AxiIdWidth'($urandom());
     request.len = AxiBurstLenWidth'(MaxDirectedBeats - 1);
     request.size = AxiBurstSizeWidth'(AxiSize);
     request.burst = AxiBurstIncr;
     request.prot = AxiProtWidth'($urandom());
-    request.user = AWUserWidth'($urandom());
-    run_write_burst(request, WUserWidth'($urandom()), BUserWidth'($urandom()), AxiRespOkay,
+    request.user = AxiUserWidth'($urandom());
+    run_write_burst(request, AxiUserWidth'($urandom()), AxiUserWidth'($urandom()), AxiRespOkay,
                     AxiRespDecerr, 1'b1);
     finish_test_case();
   endtask
@@ -710,14 +709,14 @@ module br_amba_axi2axil_tb;
     $display("Checking wrapping read burst");
     start_test_case();
     request = '0;
-    request.addr = get_random_aligned_addr(AxiBurstSizeWidth'(AxiSize));
-    request.id = IdWidth'($urandom());
+    request.addr = AxiAddrWidth'(get_random_aligned_addr(AxiBurstSizeWidth'(AxiSize)));
+    request.id = AxiIdWidth'($urandom());
     request.len = AxiBurstLenWidth'(MaxDirectedBeats - 1);
     request.size = AxiBurstSizeWidth'(AxiSize);
     request.burst = AxiBurstWrap;
     request.prot = AxiProtWidth'($urandom());
-    request.user = ARUserWidth'($urandom());
-    run_read_burst(request, RUserWidth'($urandom()), AxiRespOkay, 1'b1);
+    request.user = AxiUserWidth'($urandom());
+    run_read_burst(request, AxiUserWidth'($urandom()), AxiRespOkay, 1'b1);
     finish_test_case();
   endtask
 
@@ -729,14 +728,14 @@ module br_amba_axi2axil_tb;
     $display("Checking fixed read burst");
     start_test_case();
     request = '0;
-    request.addr = get_random_aligned_addr(AxiBurstSizeWidth'(AxiSize));
-    request.id = IdWidth'($urandom());
+    request.addr = AxiAddrWidth'(get_random_aligned_addr(AxiBurstSizeWidth'(AxiSize)));
+    request.id = AxiIdWidth'($urandom());
     request.len = AxiBurstLenWidth'(3 - 1);
     request.size = AxiBurstSizeWidth'(AxiSize);
     request.burst = AxiBurstFixed;
     request.prot = AxiProtWidth'($urandom());
-    request.user = ARUserWidth'($urandom());
-    run_read_burst(request, RUserWidth'($urandom()), AxiRespSlverr, 1'b0);
+    request.user = AxiUserWidth'($urandom());
+    run_read_burst(request, AxiUserWidth'($urandom()), AxiRespSlverr, 1'b0);
     finish_test_case();
   endtask
 
@@ -748,14 +747,14 @@ module br_amba_axi2axil_tb;
     $display("Checking DECERR read response propagation");
     start_test_case();
     request = '0;
-    request.addr = get_random_aligned_addr(AxiBurstSizeWidth'(AxiSize));
-    request.id = IdWidth'($urandom());
+    request.addr = AxiAddrWidth'(get_random_aligned_addr(AxiBurstSizeWidth'(AxiSize)));
+    request.id = AxiIdWidth'($urandom());
     request.len = AxiBurstLenWidth'(MaxDirectedBeats - 1);
     request.size = AxiBurstSizeWidth'(AxiSize);
     request.burst = AxiBurstIncr;
     request.prot = AxiProtWidth'($urandom());
-    request.user = ARUserWidth'($urandom());
-    run_read_burst(request, RUserWidth'($urandom()), AxiRespDecerr, 1'b1);
+    request.user = AxiUserWidth'($urandom());
+    run_read_burst(request, AxiUserWidth'($urandom()), AxiRespDecerr, 1'b1);
     finish_test_case();
   endtask
 
@@ -768,25 +767,25 @@ module br_amba_axi2axil_tb;
     $display("Checking parallel read/write burst conversion");
     start_test_case();
     write_request = '0;
-    write_request.addr = get_random_aligned_addr(AxiBurstSizeWidth'(AxiSize));
-    write_request.id = IdWidth'($urandom());
+    write_request.addr = AxiAddrWidth'(get_random_aligned_addr(AxiBurstSizeWidth'(AxiSize)));
+    write_request.id = AxiIdWidth'($urandom());
     write_request.len = AxiBurstLenWidth'(MaxDirectedBeats - 1);
     write_request.size = AxiBurstSizeWidth'(AxiSize);
     write_request.burst = AxiBurstIncr;
     write_request.prot = AxiProtWidth'($urandom());
-    write_request.user = AWUserWidth'($urandom());
+    write_request.user = AxiUserWidth'($urandom());
 
     read_request = '0;
-    read_request.addr = get_random_aligned_addr(AxiBurstSizeWidth'(AxiSize));
-    read_request.id = IdWidth'($urandom());
+    read_request.addr = AxiAddrWidth'(get_random_aligned_addr(AxiBurstSizeWidth'(AxiSize)));
+    read_request.id = AxiIdWidth'($urandom());
     read_request.len = AxiBurstLenWidth'(MaxDirectedBeats - 1);
     read_request.size = AxiBurstSizeWidth'(AxiSize);
     read_request.burst = AxiBurstIncr;
     read_request.prot = AxiProtWidth'($urandom());
-    read_request.user = ARUserWidth'($urandom());
+    read_request.user = AxiUserWidth'($urandom());
 
-    run_parallel_read_write(write_request, WUserWidth'($urandom()), BUserWidth'($urandom()),
-                            AxiRespOkay, AxiRespOkay, read_request, RUserWidth'($urandom()),
+    run_parallel_read_write(write_request, AxiUserWidth'($urandom()), AxiUserWidth'($urandom()),
+                            AxiRespOkay, AxiRespOkay, read_request, AxiUserWidth'($urandom()),
                             AxiRespOkay, 1'b0);
     finish_test_case();
   endtask
@@ -846,34 +845,34 @@ module br_amba_axi2axil_tb;
     bit is_write;
     int unsigned beats;
 
-    is_write = $urandom_range(0, 1);
+    is_write = bit'($urandom_range(0, 1));
     beats = $urandom_range(1, MaxDirectedBeats);
     start_test_case();
     if (is_write) begin
       axi_aw_t request;
 
       request = '0;
-      request.addr = get_random_aligned_addr(AxiBurstSizeWidth'(AxiSize));
-      request.id = IdWidth'($urandom());
+      request.addr = AxiAddrWidth'(get_random_aligned_addr(AxiBurstSizeWidth'(AxiSize)));
+      request.id = AxiIdWidth'($urandom());
       request.len = AxiBurstLenWidth'(beats - 1);
       request.size = AxiBurstSizeWidth'(AxiSize);
       request.burst = AxiBurstIncr;
       request.prot = AxiProtWidth'($urandom());
-      request.user = AWUserWidth'($urandom());
-      run_write_burst(request, WUserWidth'($urandom()), BUserWidth'($urandom()), AxiRespOkay,
+      request.user = AxiUserWidth'($urandom());
+      run_write_burst(request, AxiUserWidth'($urandom()), AxiUserWidth'($urandom()), AxiRespOkay,
                       AxiRespOkay, transaction[0]);
     end else begin
       axi_ar_t request;
 
       request = '0;
-      request.addr = get_random_aligned_addr(AxiBurstSizeWidth'(AxiSize));
-      request.id = IdWidth'($urandom());
+      request.addr = AxiAddrWidth'(get_random_aligned_addr(AxiBurstSizeWidth'(AxiSize)));
+      request.id = AxiIdWidth'($urandom());
       request.len = AxiBurstLenWidth'(beats - 1);
       request.size = AxiBurstSizeWidth'(AxiSize);
       request.burst = AxiBurstIncr;
       request.prot = AxiProtWidth'($urandom());
-      request.user = ARUserWidth'($urandom());
-      run_read_burst(request, RUserWidth'($urandom()), AxiRespOkay, transaction[0]);
+      request.user = AxiUserWidth'($urandom());
+      run_read_burst(request, AxiUserWidth'($urandom()), AxiRespOkay, transaction[0]);
     end
     finish_test_case();
   endtask

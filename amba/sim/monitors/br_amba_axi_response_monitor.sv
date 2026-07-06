@@ -6,6 +6,8 @@ import br_amba::*;
 import br_amba_axi_sim_pkg::*;
 import br_amba_sim_pkg::*;
 
+`include "br_amba_sim_macros.svh"
+
 // AXI response-channel payload monitor.
 //
 // This monitor observes B/R handshakes, compares each sampled payload against queued expected
@@ -86,12 +88,13 @@ module br_amba_axi_response_monitor #(
     while (observed < num_transactions) begin
       @cb;
       if (cb.axi_bvalid && cb.axi_bready) begin
-        check_eq(b_queue.size() > 0, 1'b1, "AXI B expected queue empty", failed);
+        `BR_AMBA_SIM_CHECK_EQ(b_queue.size() > 0, 1'b1, "AXI B expected queue empty", failed);
         if (b_queue.size() > 0) begin
           expected = b_queue.pop_front();
-          check_eq(cb.axi_bid, IdWidth'(expected.id), "AXI B id mismatch", failed);
-          check_eq(cb.axi_bresp, expected.resp, "AXI B resp mismatch", failed);
-          check_eq(cb.axi_buser, BUserWidth'(expected.user), "AXI B user mismatch", failed);
+          `BR_AMBA_SIM_CHECK_EQ(cb.axi_bid, IdWidth'(expected.id), "AXI B id mismatch", failed);
+          `BR_AMBA_SIM_CHECK_EQ(cb.axi_bresp, expected.resp, "AXI B resp mismatch", failed);
+          `BR_AMBA_SIM_CHECK_EQ(cb.axi_buser, BUserWidth'(expected.user), "AXI B user mismatch",
+                                failed);
         end
         observed++;
       end
@@ -106,14 +109,16 @@ module br_amba_axi_response_monitor #(
     while (observed < num_transactions) begin
       @cb;
       if (cb.axi_rvalid && cb.axi_rready) begin
-        check_eq(r_queue.size() > 0, 1'b1, "AXI R expected queue empty", failed);
+        `BR_AMBA_SIM_CHECK_EQ(r_queue.size() > 0, 1'b1, "AXI R expected queue empty", failed);
         if (r_queue.size() > 0) begin
           expected = r_queue.pop_front();
-          check_eq(cb.axi_rid, IdWidth'(expected.id), "AXI R id mismatch", failed);
-          check_eq(cb.axi_rdata, DataWidth'(expected.data), "AXI R data mismatch", failed);
-          check_eq(cb.axi_rresp, expected.resp, "AXI R resp mismatch", failed);
-          check_eq(cb.axi_ruser, RUserWidth'(expected.user), "AXI R user mismatch", failed);
-          check_eq(cb.axi_rlast, expected.last, "AXI R last mismatch", failed);
+          `BR_AMBA_SIM_CHECK_EQ(cb.axi_rid, IdWidth'(expected.id), "AXI R id mismatch", failed);
+          `BR_AMBA_SIM_CHECK_EQ(cb.axi_rdata, DataWidth'(expected.data), "AXI R data mismatch",
+                                failed);
+          `BR_AMBA_SIM_CHECK_EQ(cb.axi_rresp, expected.resp, "AXI R resp mismatch", failed);
+          `BR_AMBA_SIM_CHECK_EQ(cb.axi_ruser, RUserWidth'(expected.user), "AXI R user mismatch",
+                                failed);
+          `BR_AMBA_SIM_CHECK_EQ(cb.axi_rlast, expected.last, "AXI R last mismatch", failed);
         end
         observed++;
       end
@@ -144,8 +149,8 @@ module br_amba_axi_response_monitor #(
       monitor_r_channel(num_reads);
     join
 
-    check_eq(b_queue.size(), 0, "AXI B expected queue not empty", failed);
-    check_eq(r_queue.size(), 0, "AXI R expected queue not empty", failed);
+    `BR_AMBA_SIM_CHECK_EQ(b_queue.size(), 0, "AXI B expected queue not empty", failed);
+    `BR_AMBA_SIM_CHECK_EQ(r_queue.size(), 0, "AXI R expected queue not empty", failed);
   endtask
 
 endmodule : br_amba_axi_response_monitor

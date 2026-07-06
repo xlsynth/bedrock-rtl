@@ -55,41 +55,55 @@ module br_amba_axi_timing_slice_driver #(
     output logic failed
 );
 
+  logic [AxiAddrWidth-1:0] target_driver_awaddr;
+  logic [AxiIdWidth-1:0] target_driver_awid;
+  logic [AxiUserWidth-1:0] target_driver_awuser;
+  logic [AxiDataWidth-1:0] target_driver_wdata;
+  logic [AxiStrobeWidth-1:0] target_driver_wstrb;
+  logic [AxiUserWidth-1:0] target_driver_wuser;
+  logic [AxiAddrWidth-1:0] target_driver_araddr;
+  logic [AxiIdWidth-1:0] target_driver_arid;
+  logic [AxiUserWidth-1:0] target_driver_aruser;
+
+  assign target_awaddr = AddrWidth'(target_driver_awaddr);
+  assign target_awid   = IdWidth'(target_driver_awid);
+  assign target_awuser = AWUserWidth'(target_driver_awuser);
+  assign target_wdata  = DataWidth'(target_driver_wdata);
+  assign target_wstrb  = StrobeWidth'(target_driver_wstrb);
+  assign target_wuser  = WUserWidth'(target_driver_wuser);
+  assign target_araddr = AddrWidth'(target_driver_araddr);
+  assign target_arid   = IdWidth'(target_driver_arid);
+  assign target_aruser = ARUserWidth'(target_driver_aruser);
+
   br_amba_axi_target_driver #(
-      .AddrWidth(AddrWidth),
-      .DataWidth(DataWidth),
-      .IdWidth(IdWidth),
-      .AWUserWidth(AWUserWidth),
-      .WUserWidth(WUserWidth),
-      .ARUserWidth(ARUserWidth),
       .TimeoutCycles(TimeoutCycles)
   ) target_driver (
       .clk,
       .rst,
-      .target_awaddr,
-      .target_awid,
+      .target_awaddr(target_driver_awaddr),
+      .target_awid  (target_driver_awid),
       .target_awlen,
       .target_awsize,
       .target_awburst,
       .target_awprot,
-      .target_awuser,
+      .target_awuser(target_driver_awuser),
       .target_awvalid,
       .target_awready,
-      .target_wdata,
-      .target_wstrb,
-      .target_wuser,
+      .target_wdata (target_driver_wdata),
+      .target_wstrb (target_driver_wstrb),
+      .target_wuser (target_driver_wuser),
       .target_wlast,
       .target_wvalid,
       .target_wready,
       .target_bvalid,
       .target_bready,
-      .target_araddr,
-      .target_arid,
+      .target_araddr(target_driver_araddr),
+      .target_arid  (target_driver_arid),
       .target_arlen,
       .target_arsize,
       .target_arburst,
       .target_arprot,
-      .target_aruser,
+      .target_aruser(target_driver_aruser),
       .target_arvalid,
       .target_arready,
       .target_rvalid,
@@ -107,7 +121,12 @@ module br_amba_axi_timing_slice_driver #(
     target_driver.run(.num_writes(num_writes), .num_reads(num_reads),
                       .awvalid_delay(valid_gap_cycles), .wvalid_delay(valid_gap_cycles + 1),
                       .arvalid_delay(valid_gap_cycles + 2), .max_stall_cycles(max_stall_cycles),
-                      .aw_input(aw_input), .w_input(w_input), .ar_input(ar_input));
+                      .awaddr(aw_input.addr), .awid(aw_input.id), .awlen(aw_input.len),
+                      .awsize(aw_input.size), .awburst(aw_input.burst), .awprot(aw_input.prot),
+                      .awuser(aw_input.user), .wdata(w_input.data), .wstrb(w_input.strb),
+                      .wuser(w_input.user), .wlast(w_input.last), .araddr(ar_input.addr),
+                      .arid(ar_input.id), .arlen(ar_input.len), .arsize(ar_input.size),
+                      .arburst(ar_input.burst), .arprot(ar_input.prot), .aruser(ar_input.user));
   endtask
 
 endmodule : br_amba_axi_timing_slice_driver
@@ -232,16 +251,16 @@ module br_amba_axi_timing_slice_initiator_driver #(
   endtask
 
   function automatic axi_b_t get_b_transaction(input axi_b_t base, input int index);
-    get_b_transaction.id   = base.id + IdWidth'(index);
-    get_b_transaction.user = base.user + BUserWidth'(index);
+    get_b_transaction.id   = base.id + br_amba_axi_sim_pkg::AxiIdWidth'(IdWidth'(index));
+    get_b_transaction.user = base.user + br_amba_axi_sim_pkg::AxiUserWidth'(BUserWidth'(index));
     get_b_transaction.resp = base.resp + AxiRespWidth'(index);
   endfunction
 
   function automatic axi_r_t get_r_transaction(input axi_r_t base, input int index);
-    get_r_transaction.id   = base.id + IdWidth'(index);
-    get_r_transaction.data = base.data + DataWidth'(index);
+    get_r_transaction.id   = base.id + br_amba_axi_sim_pkg::AxiIdWidth'(IdWidth'(index));
+    get_r_transaction.data = base.data + br_amba_axi_sim_pkg::AxiDataWidth'(DataWidth'(index));
     get_r_transaction.resp = base.resp + AxiRespWidth'(index);
-    get_r_transaction.user = base.user + RUserWidth'(index);
+    get_r_transaction.user = base.user + br_amba_axi_sim_pkg::AxiUserWidth'(RUserWidth'(index));
     get_r_transaction.last = base.last ^ index[0];
   endfunction
 

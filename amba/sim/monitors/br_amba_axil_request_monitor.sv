@@ -7,6 +7,8 @@ import br_amba_axi_sim_pkg::*;
 import br_amba_axil_sim_pkg::*;
 import br_amba_sim_pkg::*;
 
+`include "br_amba_sim_macros.svh"
+
 // AXI-Lite request-channel payload monitor.
 //
 // This monitor observes AW/W/AR handshakes, compares each sampled payload against queued expected
@@ -119,14 +121,15 @@ module br_amba_axil_request_monitor #(
     while (observed < num_transactions) begin
       @cb;
       if (cb.axil_awvalid && cb.axil_awready) begin
-        check_eq(aw_queue.size() > 0, 1'b1, "AXI-Lite AW expected queue empty", failed);
+        `BR_AMBA_SIM_CHECK_EQ(aw_queue.size() > 0, 1'b1, "AXI-Lite AW expected queue empty",
+                              failed);
         if (aw_queue.size() > 0) begin
           expected = aw_queue.pop_front();
-          check_eq(cb.axil_awaddr, AddrWidth'(expected.addr), "AXI-Lite AW address mismatch",
-                   failed);
-          check_eq(cb.axil_awprot, expected.prot, "AXI-Lite AW prot mismatch", failed);
-          check_eq(cb.axil_awuser, AWUserWidth'(expected.user), "AXI-Lite AW user mismatch",
-                   failed);
+          `BR_AMBA_SIM_CHECK_EQ(cb.axil_awaddr, AddrWidth'(expected.addr),
+                                "AXI-Lite AW address mismatch", failed);
+          `BR_AMBA_SIM_CHECK_EQ(cb.axil_awprot, expected.prot, "AXI-Lite AW prot mismatch", failed);
+          `BR_AMBA_SIM_CHECK_EQ(cb.axil_awuser, AWUserWidth'(expected.user),
+                                "AXI-Lite AW user mismatch", failed);
         end
         observed++;
       end
@@ -141,13 +144,15 @@ module br_amba_axil_request_monitor #(
     while (observed < num_transactions) begin
       @cb;
       if (cb.axil_wvalid && cb.axil_wready) begin
-        check_eq(w_queue.size() > 0, 1'b1, "AXI-Lite W expected queue empty", failed);
+        `BR_AMBA_SIM_CHECK_EQ(w_queue.size() > 0, 1'b1, "AXI-Lite W expected queue empty", failed);
         if (w_queue.size() > 0) begin
           expected = w_queue.pop_front();
-          check_eq(cb.axil_wdata, DataWidth'(expected.data), "AXI-Lite W data mismatch", failed);
-          check_eq(cb.axil_wstrb, StrobeWidth'(expected.strb), "AXI-Lite W strobe mismatch",
-                   failed);
-          check_eq(cb.axil_wuser, WUserWidth'(expected.user), "AXI-Lite W user mismatch", failed);
+          `BR_AMBA_SIM_CHECK_EQ(cb.axil_wdata, DataWidth'(expected.data),
+                                "AXI-Lite W data mismatch", failed);
+          `BR_AMBA_SIM_CHECK_EQ(cb.axil_wstrb, StrobeWidth'(expected.strb),
+                                "AXI-Lite W strobe mismatch", failed);
+          `BR_AMBA_SIM_CHECK_EQ(cb.axil_wuser, WUserWidth'(expected.user),
+                                "AXI-Lite W user mismatch", failed);
         end
         observed++;
       end
@@ -162,14 +167,15 @@ module br_amba_axil_request_monitor #(
     while (observed < num_transactions) begin
       @cb;
       if (cb.axil_arvalid && cb.axil_arready) begin
-        check_eq(ar_queue.size() > 0, 1'b1, "AXI-Lite AR expected queue empty", failed);
+        `BR_AMBA_SIM_CHECK_EQ(ar_queue.size() > 0, 1'b1, "AXI-Lite AR expected queue empty",
+                              failed);
         if (ar_queue.size() > 0) begin
           expected = ar_queue.pop_front();
-          check_eq(cb.axil_araddr, AddrWidth'(expected.addr), "AXI-Lite AR address mismatch",
-                   failed);
-          check_eq(cb.axil_arprot, expected.prot, "AXI-Lite AR prot mismatch", failed);
-          check_eq(cb.axil_aruser, ARUserWidth'(expected.user), "AXI-Lite AR user mismatch",
-                   failed);
+          `BR_AMBA_SIM_CHECK_EQ(cb.axil_araddr, AddrWidth'(expected.addr),
+                                "AXI-Lite AR address mismatch", failed);
+          `BR_AMBA_SIM_CHECK_EQ(cb.axil_arprot, expected.prot, "AXI-Lite AR prot mismatch", failed);
+          `BR_AMBA_SIM_CHECK_EQ(cb.axil_aruser, ARUserWidth'(expected.user),
+                                "AXI-Lite AR user mismatch", failed);
         end
         observed++;
       end
@@ -180,9 +186,9 @@ module br_amba_axil_request_monitor #(
     fork
       case (channel)
         AxilRequestAw: monitor_aw(num_transactions);
-        AxilRequestW:  monitor_w(num_transactions);
+        AxilRequestW: monitor_w(num_transactions);
         AxilRequestAr: monitor_ar(num_transactions);
-        default:       check_eq(1'b0, 1'b1, "Unknown AXI-Lite request channel", failed);
+        default: report_error("Unknown AXI-Lite request channel", failed);
       endcase
       timeout(posedge_clk, TimeoutCycles * (num_transactions + 1), {
               "Timeout waiting for AXI-Lite ", channel_name(channel), " transfers"}, failed);
@@ -197,9 +203,9 @@ module br_amba_axil_request_monitor #(
       monitor_channel(AxilRequestAr, num_reads);
     join
 
-    check_eq(aw_queue.size(), 0, "AXI-Lite AW expected queue not empty", failed);
-    check_eq(w_queue.size(), 0, "AXI-Lite W expected queue not empty", failed);
-    check_eq(ar_queue.size(), 0, "AXI-Lite AR expected queue not empty", failed);
+    `BR_AMBA_SIM_CHECK_EQ(aw_queue.size(), 0, "AXI-Lite AW expected queue not empty", failed);
+    `BR_AMBA_SIM_CHECK_EQ(w_queue.size(), 0, "AXI-Lite W expected queue not empty", failed);
+    `BR_AMBA_SIM_CHECK_EQ(ar_queue.size(), 0, "AXI-Lite AR expected queue not empty", failed);
   endtask
 
 endmodule : br_amba_axil_request_monitor

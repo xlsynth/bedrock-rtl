@@ -5,11 +5,27 @@
 package br_amba_axi_sim_pkg;
   import br_amba::*;
 
-  localparam int AxiAddrWidth = 64;
-  localparam int AxiDataWidth = 1024;
-  localparam int AxiIdWidth = 16;
-  localparam int AxiUserWidth = 64;
-  localparam int AxiStrobeWidth = AxiDataWidth / 8;
+`ifndef BR_AMBA_AXI_SIM_ADDR_WIDTH
+  `define BR_AMBA_AXI_SIM_ADDR_WIDTH 64
+`endif
+
+`ifndef BR_AMBA_AXI_SIM_DATA_WIDTH
+  `define BR_AMBA_AXI_SIM_DATA_WIDTH 1024
+`endif
+
+`ifndef BR_AMBA_AXI_SIM_ID_WIDTH
+  `define BR_AMBA_AXI_SIM_ID_WIDTH 16
+`endif
+
+`ifndef BR_AMBA_AXI_SIM_USER_WIDTH
+  `define BR_AMBA_AXI_SIM_USER_WIDTH 64
+`endif
+
+  parameter int AxiAddrWidth = `BR_AMBA_AXI_SIM_ADDR_WIDTH;
+  parameter int AxiDataWidth = `BR_AMBA_AXI_SIM_DATA_WIDTH;
+  parameter int AxiIdWidth = `BR_AMBA_AXI_SIM_ID_WIDTH;
+  parameter int AxiUserWidth = `BR_AMBA_AXI_SIM_USER_WIDTH;
+  parameter int AxiStrobeWidth = AxiDataWidth / 8;
 
   typedef struct packed {
     logic [AxiAddrWidth-1:0] addr;
@@ -51,6 +67,21 @@ package br_amba_axi_sim_pkg;
     logic [AxiUserWidth-1:0] user;
     logic last;
   } axi_r_t;
+
+  typedef struct packed {
+    axi_aw_t payload;
+    logic valid;
+  } axi_aw_source_t;
+
+  typedef struct packed {
+    axi_w_t payload;
+    logic   valid;
+  } axi_w_source_t;
+
+  typedef struct packed {
+    axi_ar_t payload;
+    logic valid;
+  } axi_ar_source_t;
 
   function automatic logic [AxiBurstLenWidth-1:0] get_axi_default_target_aw_len(
       input int index, input bit single_beat, input int max_len);

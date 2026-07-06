@@ -6,6 +6,8 @@ import br_amba::*;
 import br_amba_axil_sim_pkg::*;
 import br_amba_sim_pkg::*;
 
+`include "br_amba_sim_macros.svh"
+
 // AXI-Lite target-side Bus Functional Model.
 //
 // The driver owns only AXI-Lite target inputs: AWREADY, WREADY, B payload/valid, ARREADY, and R
@@ -95,8 +97,8 @@ module br_amba_axil_target_driver #(
       @cb;
       timeout--;
     end while (!(cb.axil_awvalid && cb.axil_awready) && timeout >= 0);
-    check_eq(cb.axil_awvalid && cb.axil_awready, 1'b1, "Timeout waiting for AXI-Lite AW handshake",
-             failed);
+    `BR_AMBA_SIM_CHECK_EQ(cb.axil_awvalid && cb.axil_awready, 1'b1,
+                          "Timeout waiting for AXI-Lite AW handshake", failed);
   endtask
 
   task automatic wait_w_handshake();
@@ -107,8 +109,8 @@ module br_amba_axil_target_driver #(
       @cb;
       timeout--;
     end while (!(cb.axil_wvalid && cb.axil_wready) && timeout >= 0);
-    check_eq(cb.axil_wvalid && cb.axil_wready, 1'b1, "Timeout waiting for AXI-Lite W handshake",
-             failed);
+    `BR_AMBA_SIM_CHECK_EQ(cb.axil_wvalid && cb.axil_wready, 1'b1,
+                          "Timeout waiting for AXI-Lite W handshake", failed);
   endtask
 
   task automatic wait_b_handshake();
@@ -119,8 +121,8 @@ module br_amba_axil_target_driver #(
       @cb;
       timeout--;
     end while (!(cb.axil_bvalid && cb.axil_bready) && timeout >= 0);
-    check_eq(cb.axil_bvalid && cb.axil_bready, 1'b1, "Timeout waiting for AXI-Lite B handshake",
-             failed);
+    `BR_AMBA_SIM_CHECK_EQ(cb.axil_bvalid && cb.axil_bready, 1'b1,
+                          "Timeout waiting for AXI-Lite B handshake", failed);
   endtask
 
   task automatic wait_ar_handshake();
@@ -131,8 +133,8 @@ module br_amba_axil_target_driver #(
       @cb;
       timeout--;
     end while (!(cb.axil_arvalid && cb.axil_arready) && timeout >= 0);
-    check_eq(cb.axil_arvalid && cb.axil_arready, 1'b1, "Timeout waiting for AXI-Lite AR handshake",
-             failed);
+    `BR_AMBA_SIM_CHECK_EQ(cb.axil_arvalid && cb.axil_arready, 1'b1,
+                          "Timeout waiting for AXI-Lite AR handshake", failed);
   endtask
 
   task automatic wait_r_handshake();
@@ -143,8 +145,8 @@ module br_amba_axil_target_driver #(
       @cb;
       timeout--;
     end while (!(cb.axil_rvalid && cb.axil_rready) && timeout >= 0);
-    check_eq(cb.axil_rvalid && cb.axil_rready, 1'b1, "Timeout waiting for AXI-Lite R handshake",
-             failed);
+    `BR_AMBA_SIM_CHECK_EQ(cb.axil_rvalid && cb.axil_rready, 1'b1,
+                          "Timeout waiting for AXI-Lite R handshake", failed);
   endtask
 
   task automatic queue_b_response(input axil_b_t b);
@@ -201,8 +203,8 @@ module br_amba_axil_target_driver #(
     join_any
     disable fork;
 
-    check_eq(accepted_aw_count > request_index && accepted_w_count > request_index, 1'b1,
-             "Timeout waiting for AXI-Lite write request", failed);
+    `BR_AMBA_SIM_CHECK_EQ(accepted_aw_count > request_index && accepted_w_count > request_index,
+                          1'b1, "Timeout waiting for AXI-Lite write request", failed);
   endtask
 
   task automatic wait_read_request_accepted(input int unsigned request_index);
@@ -212,15 +214,15 @@ module br_amba_axil_target_driver #(
     join_any
     disable fork;
 
-    check_eq(accepted_ar_count > request_index, 1'b1, "Timeout waiting for AXI-Lite read request",
-             failed);
+    `BR_AMBA_SIM_CHECK_EQ(accepted_ar_count > request_index, 1'b1,
+                          "Timeout waiting for AXI-Lite read request", failed);
   endtask
 
   task automatic drive_next_b(input int stall_cycles);
     axil_b_t b;
 
     wait_cycles(stall_cycles);
-    check_eq(b_queue.size() > 0, 1'b1, "AXI-Lite B response queue empty", failed);
+    `BR_AMBA_SIM_CHECK_EQ(b_queue.size() > 0, 1'b1, "AXI-Lite B response queue empty", failed);
     if (b_queue.size() > 0) begin
       b = b_queue.pop_front();
     end else begin
@@ -242,7 +244,7 @@ module br_amba_axil_target_driver #(
     axil_r_t r;
 
     wait_cycles(stall_cycles);
-    check_eq(r_queue.size() > 0, 1'b1, "AXI-Lite R response queue empty", failed);
+    `BR_AMBA_SIM_CHECK_EQ(r_queue.size() > 0, 1'b1, "AXI-Lite R response queue empty", failed);
     if (r_queue.size() > 0) begin
       r = r_queue.pop_front();
     end else begin
@@ -299,8 +301,8 @@ module br_amba_axil_target_driver #(
       end
     join
 
-    check_eq(b_queue.size(), 0, "AXI-Lite B response queue not empty", failed);
-    check_eq(r_queue.size(), 0, "AXI-Lite R response queue not empty", failed);
+    `BR_AMBA_SIM_CHECK_EQ(b_queue.size(), 0, "AXI-Lite B response queue not empty", failed);
+    `BR_AMBA_SIM_CHECK_EQ(r_queue.size(), 0, "AXI-Lite R response queue not empty", failed);
   endtask
 
 endmodule : br_amba_axil_target_driver
