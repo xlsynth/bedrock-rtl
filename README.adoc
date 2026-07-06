@@ -71,7 +71,7 @@ Refer to the `BUILD.bazel` files for specifics.
 === Using the Published Docker Image
 
 Prebuilt `linux/amd64` images are published to the
-https://github.com/orgs/xlsynth/packages/container/package/bedrock-rtl[Bedrock-RTL package on GitHub Container Registry^].
+https://github.com/orgs/xlsynth/packages/container/package/bedrock-rtl-dev[Bedrock-RTL development package on GitHub Container Registry^].
 Each image has an immutable tag of the form `YYYY-MM-DD-<full-git-sha>`, where the date is the commit date in UTC.
 We intentionally do not publish a moving `latest` tag.
 
@@ -79,8 +79,8 @@ To use the latest image, open the package page linked above, copy the tag from t
 
 [source,shell]
 ----
-docker pull ghcr.io/xlsynth/bedrock-rtl:<tag>
-docker run --rm -it -v "$(pwd)":/src -w /src ghcr.io/xlsynth/bedrock-rtl:<tag> /bin/bash
+docker pull ghcr.io/xlsynth/bedrock-rtl-dev:<tag>
+docker run --rm -it -v "$(pwd)":/src -w /src ghcr.io/xlsynth/bedrock-rtl-dev:<tag> /bin/bash
 ----
 
 The package is public, so pulling it does not require GitHub Container Registry authentication.
@@ -92,8 +92,8 @@ To build the image from the checked-out Dockerfile instead:
 
 [source,shell]
 ----
-docker build --platform=linux/amd64 --tag=bedrock-rtl:${USER} .
-docker run --rm -it -v "$(pwd)":/src -w /src bedrock-rtl:${USER} /bin/bash
+docker build --platform=linux/amd64 --tag=bedrock-rtl-dev:${USER} .
+docker run --rm -it -v "$(pwd)":/src -w /src bedrock-rtl-dev:${USER} /bin/bash
 ----
 
 Then once inside the container, try `bazel build //... && bazel test //fifo/sim/... --test_tag_filters=verilator`.
@@ -103,7 +103,7 @@ Then once inside the container, try `bazel build //... && bazel test //fifo/sim/
 The public CI shard jobs in `.github/workflows/ci.yml` build the image for every pull request, push to `main`, and manual CI run, then use that exact image for the public-tool test suites.
 Python/ecc-codegen and Stardoc share one runner, while stable SHA-256 label partitioning distributes Slang across four runners and Verilator across eight runners.
 The `bazel-oss-tool-test` job validates and aggregates every shard into the stable check and badge interface.
-After those tests succeed, the `docker-image-publish` job deploys the image to `ghcr.io/xlsynth/bedrock-rtl` for pushes to `main` and manually dispatched CI runs.
+After those tests succeed, the `docker-image-publish` job deploys the development image to `ghcr.io/xlsynth/bedrock-rtl-dev` for pushes to `main` and manually dispatched CI runs.
 Pull requests build the image but do not publish it.
 
 All public shards restore the shared Docker layer cache, but only one shard updates it on trusted `main` or manually dispatched runs.

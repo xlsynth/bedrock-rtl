@@ -185,8 +185,8 @@ USER user
 
 WORKDIR /home/user
 LABEL description="Docker image for building and testing Bedrock-RTL using open source tools." \
-    org.opencontainers.image.title="Bedrock-RTL" \
-    org.opencontainers.image.description="Open source toolchain for building and testing Bedrock-RTL." \
+    org.opencontainers.image.title="bedrock-rtl-dev" \
+    org.opencontainers.image.description="Bedrock-RTL development image with an open source toolchain for building and testing." \
     org.opencontainers.image.source="https://github.com/xlsynth/bedrock-rtl" \
     org.opencontainers.image.licenses="Apache-2.0"
 CMD ["/bin/bash"]
