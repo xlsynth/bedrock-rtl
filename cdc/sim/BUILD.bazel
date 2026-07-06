@@ -318,6 +318,64 @@ verilog_elab_test(
 ]
 
 verilog_library(
+    name = "br_cdc_bit_toggle_tb",
+    srcs = ["br_cdc_bit_toggle_tb.sv"],
+    deps = [
+        "//cdc/rtl:br_cdc_bit_toggle",
+        "//gate/rtl:br_gate_mock",
+        "//pkg:br_math_pkg",
+    ],
+)
+
+verilog_elab_test(
+    name = "br_cdc_bit_toggle_tb_elab_test",
+    tool = "slang",
+    top = "br_cdc_bit_toggle_tb",
+    deps = [
+        ":br_cdc_bit_toggle_tb",
+    ],
+)
+
+[
+    br_verilog_sim_test_tools_suite(
+        name = "br_cdc_bit_toggle_sim_test_tools_suite_" + cdc_delay_mode,
+        params = {
+            "NumStages": [
+                "1",
+                "3",
+            ],
+            "AddSourceFlop": [
+                "0",
+                "1",
+            ],
+            "SrcClkPeriod": [
+                "5",
+                "20",
+            ],
+            "DstClkPeriod": [
+                "10",
+                "30",
+            ],
+        },
+        sim_opts = [
+            "+cdc_delay_mode=" + cdc_delay_mode,
+        ],
+        tags = ["no-sandbox"],
+        tools = [
+            "vcs",
+            "verilator",
+        ],
+        deps = [":br_cdc_bit_toggle_tb"],
+    )
+    for cdc_delay_mode in [
+        "0",
+        "1",
+        "2",
+        "3",
+    ]
+]
+
+verilog_library(
     name = "br_cdc_bit_pulse_tb",
     srcs = ["br_cdc_bit_pulse_tb.sv"],
     deps = [
