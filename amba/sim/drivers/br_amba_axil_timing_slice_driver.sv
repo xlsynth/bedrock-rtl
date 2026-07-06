@@ -4,6 +4,7 @@
 
 import br_amba::*;
 import br_amba_axil_sim_pkg::*;
+import br_amba_sim_pkg::*;
 
 // AXI-Lite timing-slice stimulus driver.
 //
@@ -163,14 +164,6 @@ module br_amba_axil_timing_slice_driver #(
   task automatic wait_cycles(input int cycles = 1);
     repeat (cycles) @(negedge clk);
   endtask
-
-  function automatic int get_stall_cycles(input int index, input int max_stall_cycles,
-                                          input int salt);
-    if (max_stall_cycles == 0) begin
-      return 0;
-    end
-    return (((index + 1) * salt) ^ (salt >> 1)) % (max_stall_cycles + 1);
-  endfunction
 
   function automatic logic is_wait_condition_met(input wait_condition_e condition);
     case (condition)
@@ -344,17 +337,17 @@ module br_amba_axil_timing_slice_driver #(
       end
       begin
         for (int i = 0; i < num_transactions; i++) begin
-          accept_init_aw(get_stall_cycles(i, max_stall_cycles, 101));
+          accept_init_aw(get_random_stall_cycles(max_stall_cycles));
         end
       end
       begin
         for (int i = 0; i < num_transactions; i++) begin
-          accept_init_w(get_stall_cycles(i, max_stall_cycles, 103));
+          accept_init_w(get_random_stall_cycles(max_stall_cycles));
         end
       end
       begin
         for (int i = 0; i < num_transactions; i++) begin
-          accept_target_b(get_stall_cycles(i, max_stall_cycles, 109));
+          accept_target_b(get_random_stall_cycles(max_stall_cycles));
         end
       end
     join
@@ -378,12 +371,12 @@ module br_amba_axil_timing_slice_driver #(
       end
       begin
         for (int i = 0; i < num_transactions; i++) begin
-          accept_init_ar(get_stall_cycles(i, max_stall_cycles, 107));
+          accept_init_ar(get_random_stall_cycles(max_stall_cycles));
         end
       end
       begin
         for (int i = 0; i < num_transactions; i++) begin
-          accept_target_r(get_stall_cycles(i, max_stall_cycles, 113));
+          accept_target_r(get_random_stall_cycles(max_stall_cycles));
         end
       end
     join

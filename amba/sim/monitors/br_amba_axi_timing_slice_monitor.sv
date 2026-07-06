@@ -149,84 +149,84 @@ module br_amba_axi_timing_slice_monitor #(
   endtask
 
   function automatic axi_aw_t get_target_aw();
-    get_target_aw.addr  = target_awaddr;
-    get_target_aw.id    = target_awid;
+    get_target_aw.addr  = br_amba_axi_sim_pkg::AxiAddrWidth'(target_awaddr);
+    get_target_aw.id    = br_amba_axi_sim_pkg::AxiIdWidth'(target_awid);
     get_target_aw.len   = target_awlen;
     get_target_aw.size  = target_awsize;
     get_target_aw.burst = target_awburst;
     get_target_aw.prot  = target_awprot;
-    get_target_aw.user  = target_awuser;
+    get_target_aw.user  = br_amba_axi_sim_pkg::AxiUserWidth'(target_awuser);
   endfunction
 
   function automatic axi_aw_t get_init_aw();
-    get_init_aw.addr  = init_awaddr;
-    get_init_aw.id    = init_awid;
+    get_init_aw.addr  = br_amba_axi_sim_pkg::AxiAddrWidth'(init_awaddr);
+    get_init_aw.id    = br_amba_axi_sim_pkg::AxiIdWidth'(init_awid);
     get_init_aw.len   = init_awlen;
     get_init_aw.size  = init_awsize;
     get_init_aw.burst = init_awburst;
     get_init_aw.prot  = init_awprot;
-    get_init_aw.user  = init_awuser;
+    get_init_aw.user  = br_amba_axi_sim_pkg::AxiUserWidth'(init_awuser);
   endfunction
 
   function automatic axi_w_t get_target_w();
-    get_target_w.data = target_wdata;
-    get_target_w.strb = target_wstrb;
-    get_target_w.user = target_wuser;
+    get_target_w.data = br_amba_axi_sim_pkg::AxiDataWidth'(target_wdata);
+    get_target_w.strb = br_amba_axi_sim_pkg::AxiStrobeWidth'(target_wstrb);
+    get_target_w.user = br_amba_axi_sim_pkg::AxiUserWidth'(target_wuser);
     get_target_w.last = target_wlast;
   endfunction
 
   function automatic axi_w_t get_init_w();
-    get_init_w.data = init_wdata;
-    get_init_w.strb = init_wstrb;
-    get_init_w.user = init_wuser;
+    get_init_w.data = br_amba_axi_sim_pkg::AxiDataWidth'(init_wdata);
+    get_init_w.strb = br_amba_axi_sim_pkg::AxiStrobeWidth'(init_wstrb);
+    get_init_w.user = br_amba_axi_sim_pkg::AxiUserWidth'(init_wuser);
     get_init_w.last = init_wlast;
   endfunction
 
   function automatic axi_ar_t get_target_ar();
-    get_target_ar.addr  = target_araddr;
-    get_target_ar.id    = target_arid;
+    get_target_ar.addr  = br_amba_axi_sim_pkg::AxiAddrWidth'(target_araddr);
+    get_target_ar.id    = br_amba_axi_sim_pkg::AxiIdWidth'(target_arid);
     get_target_ar.len   = target_arlen;
     get_target_ar.size  = target_arsize;
     get_target_ar.burst = target_arburst;
     get_target_ar.prot  = target_arprot;
-    get_target_ar.user  = target_aruser;
+    get_target_ar.user  = br_amba_axi_sim_pkg::AxiUserWidth'(target_aruser);
   endfunction
 
   function automatic axi_ar_t get_init_ar();
-    get_init_ar.addr  = init_araddr;
-    get_init_ar.id    = init_arid;
+    get_init_ar.addr  = br_amba_axi_sim_pkg::AxiAddrWidth'(init_araddr);
+    get_init_ar.id    = br_amba_axi_sim_pkg::AxiIdWidth'(init_arid);
     get_init_ar.len   = init_arlen;
     get_init_ar.size  = init_arsize;
     get_init_ar.burst = init_arburst;
     get_init_ar.prot  = init_arprot;
-    get_init_ar.user  = init_aruser;
+    get_init_ar.user  = br_amba_axi_sim_pkg::AxiUserWidth'(init_aruser);
   endfunction
 
   function automatic axi_b_t get_init_b();
-    get_init_b.id   = init_bid;
-    get_init_b.user = init_buser;
+    get_init_b.id   = br_amba_axi_sim_pkg::AxiIdWidth'(init_bid);
+    get_init_b.user = br_amba_axi_sim_pkg::AxiUserWidth'(init_buser);
     get_init_b.resp = init_bresp;
   endfunction
 
   function automatic axi_b_t get_target_b();
-    get_target_b.id   = target_bid;
-    get_target_b.user = target_buser;
+    get_target_b.id   = br_amba_axi_sim_pkg::AxiIdWidth'(target_bid);
+    get_target_b.user = br_amba_axi_sim_pkg::AxiUserWidth'(target_buser);
     get_target_b.resp = target_bresp;
   endfunction
 
   function automatic axi_r_t get_init_r();
-    get_init_r.id   = init_rid;
-    get_init_r.data = init_rdata;
+    get_init_r.id   = br_amba_axi_sim_pkg::AxiIdWidth'(init_rid);
+    get_init_r.data = br_amba_axi_sim_pkg::AxiDataWidth'(init_rdata);
     get_init_r.resp = init_rresp;
-    get_init_r.user = init_ruser;
+    get_init_r.user = br_amba_axi_sim_pkg::AxiUserWidth'(init_ruser);
     get_init_r.last = init_rlast;
   endfunction
 
   function automatic axi_r_t get_target_r();
-    get_target_r.id   = target_rid;
-    get_target_r.data = target_rdata;
+    get_target_r.id   = br_amba_axi_sim_pkg::AxiIdWidth'(target_rid);
+    get_target_r.data = br_amba_axi_sim_pkg::AxiDataWidth'(target_rdata);
     get_target_r.resp = target_rresp;
-    get_target_r.user = target_ruser;
+    get_target_r.user = br_amba_axi_sim_pkg::AxiUserWidth'(target_ruser);
     get_target_r.last = target_rlast;
   endfunction
 

@@ -7,6 +7,7 @@ verilog_library(
     srcs = ["br_amba_apb_sim_pkg.sv"],
     visibility = ["//visibility:public"],
     deps = [
+        ":br_amba_sim_pkg",
         "//amba/rtl:br_amba_pkg",
     ],
 )
@@ -27,6 +28,13 @@ verilog_library(
     deps = [
         "//amba/rtl:br_amba_pkg",
     ],
+)
+
+verilog_library(
+    name = "br_amba_sim_pkg",
+    srcs = ["br_amba_sim_pkg.sv"],
+    hdrs = ["br_amba_sim_macros.svh"],
+    visibility = ["//visibility:public"],
 )
 
 verilog_library(
@@ -53,6 +61,7 @@ verilog_library(
     visibility = ["//visibility:public"],
     deps = [
         ":br_amba_axi_sim_pkg",
+        ":br_amba_sim_pkg",
     ],
 )
 
@@ -62,6 +71,17 @@ verilog_library(
     visibility = ["//visibility:public"],
     deps = [
         ":br_amba_axil_sim_pkg",
+        ":br_amba_sim_pkg",
+    ],
+)
+
+verilog_library(
+    name = "br_amba_axil_target_driver",
+    srcs = ["br_amba_axil_target_driver.sv"],
+    visibility = ["//visibility:public"],
+    deps = [
+        ":br_amba_axil_sim_pkg",
+        ":br_amba_sim_pkg",
     ],
 )
 
@@ -72,5 +92,6 @@ verilog_library(
     deps = [
         ":br_amba_axi_sim_pkg",
         ":br_amba_axi_target_driver",
+        ":br_amba_sim_pkg",
     ],
 )
