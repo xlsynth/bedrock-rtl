@@ -12,8 +12,8 @@ jobs:
   pre-commit:
     runs-on: ubuntu-24.04
     steps:
-      # actions/checkout v6
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
+      # actions/checkout v7.0.0
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0
       # actions/setup-python v6.3.0
       - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1
       - name: Install pre-commit
@@ -34,8 +34,8 @@ jobs:
     permissions:
       contents: read
     steps:
-      # actions/checkout v6
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
+      # actions/checkout v7.0.0
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0
       # docker/setup-buildx-action v4.1.0
       - uses: docker/setup-buildx-action@d7f5e7f509e45cec5c76c4d5afdd7de93d0b3df5
       - name: Build and load public Docker image
@@ -126,8 +126,8 @@ jobs:
             shard_index: 7
             shard_count: 8
     steps:
-      # actions/checkout v6
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
+      # actions/checkout v7.0.0
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0
       # bazel-contrib/setup-bazel v0.19.0
       - name: Set up Bazel caches
         uses: bazel-contrib/setup-bazel@c5acdfb288317d0b5c0bbd7a396a3dc868bb0f86
@@ -334,8 +334,8 @@ jobs:
       verilator_passing_tests: ${{ steps.results.outputs.verilator_passing_tests }}
       verilator_exit_code: ${{ steps.results.outputs.verilator_exit_code }}
     steps:
-      # actions/checkout v6
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
+      # actions/checkout v7.0.0
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0
       - name: Set YYYY-MM-DD-SHA image tag
         id: image-metadata
         run: |
@@ -393,8 +393,8 @@ jobs:
       # Allows the job credential to publish the image to GHCR.
       packages: write
     steps:
-      # actions/checkout v6
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
+      # actions/checkout v7.0.0
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0
       # docker/setup-buildx-action v4.1.0
       - uses: docker/setup-buildx-action@d7f5e7f509e45cec5c76c4d5afdd7de93d0b3df5
       - name: Log in to GHCR
@@ -447,8 +447,8 @@ jobs:
       vcs_passing_tests: ${{ steps.vcs.outputs.passing_tests }}
       vcs_exit_code: ${{ steps.vcs.outputs.exit_code }}
     steps:
-    # actions/checkout v6
-    - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
+    # actions/checkout v7.0.0
+    - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0
     # TODO(xiyu): Create a CI-container-local EDA setup script and point
     # VERILOG_RUNNER_EDA_TOOLS_ENV_SETUP at it from the copied ci.bazelrc.
     - name: Copy ci.bazelrc
@@ -535,8 +535,8 @@ jobs:
     environment: ci-badge-publishing
     if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
     steps:
-    # actions/checkout v6
-    - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
+    # actions/checkout v7.0.0
+    - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0
     - name: Count RTL files
       run: |
         NUM_RTL_FILES=$(find . -type d -name rtl -exec find {} -type f -name "*.sv" \; | wc -l)
