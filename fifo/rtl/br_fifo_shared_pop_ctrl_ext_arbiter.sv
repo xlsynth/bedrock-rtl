@@ -176,7 +176,7 @@ module br_fifo_shared_pop_ctrl_ext_arbiter #(
       assign pop_empty[i] = ram_empty[i];
 
       `BR_ASSERT_IMPL(zero_read_latency_a,
-                      (pop_valid[i] && pop_ready[i]) |-> fifo_ram_rd_data_valid[i])
+                      (no_bypass_pop_valid && no_bypass_pop_ready) |-> fifo_ram_rd_data_valid[i])
     end else begin : gen_staging_buffer
       logic ram_rd_req_valid;
       logic ram_rd_req_ready;

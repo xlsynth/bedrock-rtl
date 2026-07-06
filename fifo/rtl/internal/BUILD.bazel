@@ -368,6 +368,10 @@ br_verilog_elab_and_lint_test_suite(
             "8",
         ],
         "Width": ["8"],
+        "EnableBypass": [
+            "0",
+            "1",
+        ],
     },
     deps = [":br_fifo_shared_pstatic_push_ctrl"],
 )
@@ -453,6 +457,10 @@ br_verilog_elab_and_lint_test_suite(
         ],
         "Width": ["8"],
         "RegisterPushOutputs": [
+            "0",
+            "1",
+        ],
+        "EnableBypass": [
             "0",
             "1",
         ],
