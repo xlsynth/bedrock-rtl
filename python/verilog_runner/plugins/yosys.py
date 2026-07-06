@@ -66,6 +66,34 @@ def _liberty_sha256(value: str) -> tuple[str, str]:
     return path, digest.lower()
 
 
+def _liberty_root_environment_variable(liberty_root: str) -> Optional[str]:
+    """Returns the variable in an exact ${VAR} root expression, if present."""
+    match = re.fullmatch(r"\$\{([A-Za-z_][A-Za-z0-9_]*)\}", liberty_root)
+    return match.group(1) if match else None
+
+
+def _tcl_liberty_path(liberty_root: str, relative_path: str) -> str:
+    """Returns a Tcl path that resolves a concrete or deferred Liberty root."""
+    environment_variable = _liberty_root_environment_variable(liberty_root)
+    if environment_variable:
+        return (
+            "[file join $::env("
+            + environment_variable
+            + ") "
+            + _tcl_word(relative_path)
+            + "]"
+        )
+    return _tcl_word(str(Path(liberty_root) / relative_path))
+
+
+def _shell_liberty_path(liberty_root: str, relative_path: str) -> str:
+    """Returns a shell path that resolves a concrete or deferred Liberty root."""
+    environment_variable = _liberty_root_environment_variable(liberty_root)
+    if environment_variable:
+        return '"${' + environment_variable + "}/" + relative_path + '"'
+    return shlex.quote(str(Path(liberty_root) / relative_path))
+
+
 def _unconstrained_abc_script(clock_period_ps: Optional[int]) -> str:
     """Builds the default-like ABC script used to retain a timing report."""
     map_command = "&nf"
@@ -243,12 +271,14 @@ class Yosys(EdaTool):
         stat_args = []
         if self.liberties:
             liberty_paths = [
-                _tcl_word(str(Path(self.liberty_root) / path))
-                for path in self.liberties
+                _tcl_liberty_path(self.liberty_root, path) for path in self.liberties
             ]
-            if self.sequential_liberty:
-                sequential_path = _tcl_word(
-                    str(Path(self.liberty_root) / self.sequential_liberty)
+            sequential_liberty = self.sequential_liberty
+            if sequential_liberty is None and len(self.liberties) == 1:
+                sequential_liberty = self.liberties[0]
+            if sequential_liberty:
+                sequential_path = _tcl_liberty_path(
+                    self.liberty_root, sequential_liberty
                 )
                 commands.append("dfflibmap -liberty " + sequential_path)
 
@@ -299,8 +329,19 @@ class Yosys(EdaTool):
                 + shlex.quote(self.abc_constraints_file)
             )
         if self.liberties:
+            root_environment_variable = _liberty_root_environment_variable(
+                self.liberty_root
+            )
+            if root_environment_variable:
+                preflight.append(
+                    ': "${'
+                    + root_environment_variable
+                    + ":?"
+                    + root_environment_variable
+                    + ' must point to the installed synthesis library root}"'
+                )
             for liberty in self.liberties:
-                path = shlex.quote(str(Path(self.liberty_root) / liberty))
+                path = _shell_liberty_path(self.liberty_root, liberty)
                 preflight += [
                     "test -r "
                     + path

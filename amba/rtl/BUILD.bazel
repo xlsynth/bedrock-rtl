@@ -446,7 +446,7 @@ br_verilog_elab_and_lint_test_suite(
     deps = [":br_apb_demux_select_onehot"],
 )
 
-br_verilog_synth_suite(
+br_verilog_yosys_synth_suite(
     name = "br_apb_demux_select_onehot_baseline_ppa",
     params = {
         "AddrWidth": ["16"],
@@ -456,7 +456,7 @@ br_verilog_synth_suite(
     deps = [":br_apb_demux_select_onehot"],
 )
 
-br_verilog_synth_suite(
+br_verilog_yosys_synth_suite(
     name = "br_apb_demux_select_onehot_scaled_ppa",
     params = {
         "AddrWidth": ["32"],
@@ -498,7 +498,7 @@ br_verilog_elab_and_lint_test_suite(
     deps = [":br_apb_demux"],
 )
 
-br_verilog_synth_suite(
+br_verilog_yosys_synth_suite(
     name = "br_apb_demux_baseline_ppa",
     params = {
         "AddrWidth": ["16"],
@@ -508,7 +508,7 @@ br_verilog_synth_suite(
     deps = [":br_apb_demux"],
 )
 
-br_verilog_synth_suite(
+br_verilog_yosys_synth_suite(
     name = "br_apb_demux_scaled_ppa",
     params = {
         "AddrWidth": ["32"],

@@ -415,7 +415,7 @@ def _verilog_synth_args(ctx):
         extra_args.append("--opt='" + opt + "'")
     return extra_args
 
-def _verilog_yosys_synth_args(ctx):
+def _verilog_yosys_synth_args(ctx, defer_liberty_root = False):
     """Returns Yosys-specific command-line arguments for synthesis."""
     extra_args = _verilog_synth_args(ctx)
     if bool(ctx.attr.input_driver_cell) != bool(ctx.attr.output_load_ff):
@@ -441,7 +441,8 @@ def _verilog_yosys_synth_args(ctx):
     if ctx.attr.sequential_liberty:
         extra_args.append("--sequential_liberty='" + ctx.attr.sequential_liberty + "'")
     if ctx.attr.liberty_root:
-        extra_args.append('--liberty_root="' + ctx.attr.liberty_root + '"')
+        quote = "'" if defer_liberty_root else '"'
+        extra_args.append("--liberty_root=" + quote + ctx.attr.liberty_root + quote)
     for liberty, digest in sorted(ctx.attr.liberty_sha256.items()):
         extra_args.append("--liberty_sha256='" + liberty + "=" + digest + "'")
     if ctx.attr.liberties:
@@ -925,7 +926,10 @@ def _verilog_yosys_synth_sandbox_impl(ctx):
         ctx = ctx,
         subcmd = "synth",
         test = False,
-        extra_args = _verilog_yosys_synth_args(ctx),
+        # Preserve environment references such as ${ASAP7_ROOT} in the
+        # generated archive. The standalone script resolves them when run, so
+        # building the sandbox itself does not require the system PDK.
+        extra_args = _verilog_yosys_synth_args(ctx, defer_liberty_root = True),
     )
 
 def _verilog_fpv_args(ctx):
@@ -1207,7 +1211,7 @@ def _verilog_yosys_synth_attrs(verilog_runner_tool_default = "//python/verilog_r
             doc = "Liberty path used for sequential-cell mapping when libraries are split; must also appear in liberties.",
         ),
         "liberty_root": attr.string(
-            doc = "Runtime root path for system-provided Liberty files. Shell environment references are expanded by the generated Bazel wrapper.",
+            doc = "Runtime root path for system-provided Liberty files. Shell environment references are expanded by runnable targets and preserved for standalone sandbox execution.",
         ),
         "liberty_sha256": attr.string_dict(
             doc = "Expected SHA-256 digest for every entry in liberties.",

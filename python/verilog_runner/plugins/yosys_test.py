@@ -48,6 +48,46 @@ class YosysTest(unittest.TestCase):
         self.assertNotIn("$::env", tcl)
         self.assertIn("/opt/example-pdk/lib/cells.lib", shell)
 
+    def test_deferred_liberty_root_is_resolved_by_standalone_scripts(self):
+        yosys = Yosys(
+            top="dut",
+            logfile="dut.log",
+            tclfile_custom_header=None,
+            tclfile_custom_body=None,
+            env_setup_commands=None,
+            liberties=["lib/cells.lib"],
+            liberty_root="${EXAMPLE_PDK_ROOT}",
+            liberty_sha256={"lib/cells.lib": "a" * 64},
+        )
+
+        tcl = yosys.default_tcl_body()
+        shell = yosys.cmd()
+
+        self.assertIn("[file join $::env(EXAMPLE_PDK_ROOT) {lib/cells.lib}]", tcl)
+        self.assertIn(
+            ': "${EXAMPLE_PDK_ROOT:?EXAMPLE_PDK_ROOT must point to the '
+            'installed synthesis library root}"',
+            shell,
+        )
+        self.assertIn('"${EXAMPLE_PDK_ROOT}/lib/cells.lib"', shell)
+
+    def test_single_combined_liberty_maps_flip_flops(self):
+        yosys = Yosys(
+            top="dut",
+            logfile="dut.log",
+            tclfile_custom_header=None,
+            tclfile_custom_body=None,
+            env_setup_commands=None,
+            liberties=["lib/cells.lib"],
+            liberty_root="/opt/example-pdk",
+            liberty_sha256={"lib/cells.lib": "a" * 64},
+        )
+
+        self.assertIn(
+            "dfflibmap -liberty {/opt/example-pdk/lib/cells.lib}",
+            yosys.default_tcl_body(),
+        )
+
 
 if __name__ == "__main__":
     unittest.main()
