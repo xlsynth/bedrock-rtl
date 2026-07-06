@@ -2,7 +2,7 @@
 
 load("@rules_hdl//verilog:providers.bzl", "verilog_library")
 load("//bazel:br_verilog.bzl", "br_verilog_sim_test_tools_suite")
-load("//bazel:verilog.bzl", "verilog_elab_test")
+load("//bazel:verilog.bzl", "verilog_elab_test", "verilog_sim_coverage_aggregate")
 
 package(default_visibility = ["//visibility:private"])
 
@@ -321,4 +321,20 @@ br_verilog_sim_test_tools_suite(
         "verilator",
     ],
     deps = [":br_delay_valid_nr_tb"],
+)
+
+verilog_sim_coverage_aggregate(
+    name = "br_delay_verilator_coverage",
+    coverage_reports = [
+        ":br_delay_sim_test_tools_suite_verilator_coverage",
+        ":br_delay_nr_sim_test_tools_suite_verilator_coverage",
+        ":br_delay_shift_reg_sim_test_tools_suite_verilator_coverage",
+        ":br_delay_deskew_sim_test_tools_suite_verilator_coverage",
+        ":br_delay_skew_sim_test_tools_suite_verilator_coverage",
+        ":br_delay_valid_next_sim_test_tools_suite_verilator_coverage",
+        ":br_delay_valid_next_nr_sim_test_tools_suite_verilator_coverage",
+        ":br_delay_valid_sim_test_tools_suite_verilator_coverage",
+        ":br_delay_valid_nr_sim_test_tools_suite_verilator_coverage",
+    ],
+    visibility = ["//:__pkg__"],
 )

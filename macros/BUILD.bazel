@@ -2,7 +2,7 @@
 
 load("@rules_hdl//verilog:providers.bzl", "verilog_library")
 load("//bazel:br_verilog.bzl", "br_verilog_sim_test_tools_suite")
-load("//bazel:verilog.bzl", "verilog_elab_test", "verilog_lint_test")
+load("//bazel:verilog.bzl", "verilog_elab_test", "verilog_lint_test", "verilog_sim_coverage_aggregate")
 
 package(default_visibility = ["//visibility:private"])
 
@@ -267,4 +267,13 @@ verilog_lint_test(
     tool = "ascentlint",
     visibility = ["//visibility:public"],
     deps = [":br_assign_test"],
+)
+
+verilog_sim_coverage_aggregate(
+    name = "br_macros_verilator_coverage",
+    coverage_reports = [
+        ":br_asserts_sim_test_tools_suite_verilator_coverage",
+        ":br_asserts_sim_noassert_test_tools_suite_verilator_coverage",
+    ],
+    visibility = ["//:__pkg__"],
 )

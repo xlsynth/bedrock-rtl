@@ -286,6 +286,12 @@ class Sim(Subcommand):
             action="store_true",
             help="Enable waveform dumping.",
         )
+        parser.add_argument(
+            "--coverage",
+            type=str,
+            default=None,
+            help="Path where coverage data will be saved, if None the coverage is not enabled",
+        )
 
 
 class Fpv(Subcommand):
