@@ -17,10 +17,6 @@ class TestResult:
     time: str
 
 
-def read_timestamp(timestamp_file):
-    return open(timestamp_file, "r").read().rstrip()
-
-
 def get_testplans(test_results):
     tp = set()
 
@@ -31,7 +27,7 @@ def get_testplans(test_results):
 
 
 def create_testresult_path(test_result):
-    path = "testlogs/" + test_result.category + "/"
+    path = test_result.category + "/"
 
     if test_result.postfix:
         path += test_result.postfix + "/"
@@ -42,8 +38,8 @@ def create_testresult_path(test_result):
     return path
 
 
-def get_simulated_time(test_result):
-    testlog = f"../{create_testresult_path(test_result)}"
+def get_simulated_time(test_result, testlogs_dir):
+    testlog = f"{testlogs_dir}/{create_testresult_path(test_result)}"
 
     pattern = re.compile(
         r""".*?\$finish\s+at\s+(?P<sim_time>[\d.]+[a-zuns]+)\s*;""",
@@ -59,9 +55,9 @@ def get_simulated_time(test_result):
     return "N.A."
 
 
-def create_test_entry(test_result):
+def create_test_entry(test_result, testlogs_dir):
     passed = 1 if test_result.result == "PASSED" else 0
-    simulated_time = get_simulated_time(test_result)
+    simulated_time = get_simulated_time(test_result, testlogs_dir)
     return {
         "name": test_result.name,
         "passing": passed,
@@ -71,13 +67,13 @@ def create_test_entry(test_result):
     }
 
 
-def generate_testreport(input_file, timestamp):
+def generate_testreport(input_file, timestamp, testlogs_dir, tests_category):
     if not os.path.exists("./testreports"):
         os.makedirs("./testreports")
 
     pattern = re.compile(
         r"""\s*//(?P<category>[^/]+?)(?:/(?P<postfix>[^:]+?))?:(?P<name>.*?)
-                             \s+(?P<result>.*?)\s+in\s+(?P<time>.*?)s""",
+        (?:\s+\(cached\))?\s+(?P<result>.*?)\s+in\s+(?P<time>.*?)s""",
         re.VERBOSE,
     )
     test_results = list()
@@ -102,22 +98,30 @@ def generate_testreport(input_file, timestamp):
 
     for tp in tps:
         hjson_out = {"timestamp": timestamp, "test_results": []}
-        output_file = open(f"./testreports/testreport_{tp}.hjson", "w")
+        output_file = open(f"./testreports/testreport_{tests_category}_{tp}.hjson", "w")
 
         for result in test_results:
             if tp == result.category:
-                hjson_out["test_results"].append(create_test_entry(result))
+                hjson_out["test_results"].append(
+                    create_test_entry(result, testlogs_dir)
+                )
 
         json.dump(hjson_out, output_file, indent=4)
         output_file.close()
 
 
 if __name__ == "__main__":
-    if len(sys.argv) != 3:
-        print("Usage " + sys.argv[0] + " <bazel_test_results> <tests_timestamp>")
+    if len(sys.argv) != 5:
+        print(
+            "Usage "
+            + sys.argv[0]
+            + " <bazel_test_results> <tests_timestamp> <testlogs_dir> <tests_category>"
+        )
         sys.exit(-1)
 
     input_file = sys.argv[1]
-    timestamp = read_timestamp(sys.argv[2])
+    timestamp = sys.argv[2]
+    testlogs_dir = sys.argv[3]
+    tests_category = sys.argv[4]
 
-    generate_testreport(input_file, timestamp)
+    generate_testreport(input_file, timestamp, testlogs_dir, tests_category)

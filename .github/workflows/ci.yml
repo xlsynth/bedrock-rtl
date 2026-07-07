@@ -224,6 +224,8 @@ jobs:
               return "$partition_exit_code"
             fi
 
+            # Save timestamp of bazel test invocation for testreport generation purpose
+            echo $(date -d "today" +"%Y-%m-%d-%H-%M-%S") > $RESULTS_DIR/timestamp-${suite}-${shard_index}-of-${shard_count}.txt
             # A target-pattern file guarantees one Bazel invocation even when
             # thousands of labels would exceed the shell argument limit.
             bazel test "${BAZEL_FLAGS[@]}" \
@@ -233,6 +235,9 @@ jobs:
               --result "$result" \
               --log "$log" \
               --exit-code "$bazel_exit_code"
+
+            cp $log $RESULTS_DIR/
+            mv $(readlink -f ./bazel-testlogs) ./$RESULTS_DIR/testlogs-${suite}-${shard_index}-of-${shard_count}
           }
 
           query_and_run_suite() {
@@ -298,7 +303,11 @@ jobs:
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         with:
           name: bazel-oss-result-${{ matrix.name }}
-          path: bazel-oss-results/${{ matrix.suite }}-${{ matrix.shard_index }}-of-${{ matrix.shard_count }}
+          path: |
+            bazel-oss-results/${{ matrix.suite }}-${{ matrix.shard_index }}-of-${{ matrix.shard_count }}
+            bazel-oss-results/bazel-${{ matrix.suite }}-${{ matrix.shard_index }}-of-${{ matrix.shard_count }}.log
+            bazel-oss-results/testlogs-${{ matrix.suite }}-${{ matrix.shard_index }}-of-${{ matrix.shard_count }}
+            bazel-oss-results/timestamp-${{ matrix.suite }}-${{ matrix.shard_index }}-of-${{ matrix.shard_count }}.txt
           if-no-files-found: error
           retention-days: 1
       - name: Check public shard result
@@ -375,6 +384,121 @@ jobs:
             echo "::error title=Public Bazel aggregation failed::Shard results were incomplete or failed validation"
             exit 1
           fi
+
+  generate-and-publish-test-results:
+    runs-on: ubuntu-24.04
+    needs: bazel-oss-tool-test-shard
+    if: ${{ always() }}
+    permissions:
+      contents: write
+    steps:
+      # actions/checkout v7.0.0
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0
+      - name: Download public Docker image
+        # actions/download-artifact v8.0.1
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
+        with:
+          name: bedrock-rtl-dev-image-${{ github.sha }}
+          path: /tmp
+      - name: Load public Docker image
+        run: docker load --input /tmp/bedrock-rtl-dev.tar
+      - name: Download public shard results
+        continue-on-error: true
+        # actions/download-artifact v8.0.1
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
+        with:
+          pattern: bazel-oss-result-*
+          path: bazel-oss-aggregate
+          merge-multiple: false
+      - name: Generate report
+        id: report_generation
+        run: |
+          # Keep stdin attached so `bash -s` receives the heredoc below. The
+          # hosted runner UID is not present in the image's passwd file, so set
+          # USER explicitly while retaining that UID for cache writes.
+          docker run --rm -i \
+            --user "$(id -u):$(id -g)" \
+            --env USER=user \
+            --env HOME="${HOME}" \
+            --workdir "${GITHUB_WORKSPACE}" \
+            --volume "${GITHUB_WORKSPACE}:${GITHUB_WORKSPACE}" \
+            bedrock-rtl-dev:${{ github.sha }} \
+            bash -s <<'EOF'
+
+          pushd scripts
+          test_categories=("verilator" "stardoc" "slang")
+
+          concat_shards () {
+              search_dir=$(realpath $1)
+              out_dir=$(realpath $2)
+
+              aggregate_from_dir () {
+                  category_name=$1
+                  dir_path=$2
+
+                  ls -la $dir_path
+
+                  cat $dir_path/*/*$category_name*.log >> $out_dir/$category_name/$category_name.log.concat
+                  cp -r $dir_path/*/*testlogs*$category_name*/* $out_dir/$category_name/testlogs_$category_name/
+              }
+
+            for category_name in "${@:3}"
+            do
+                mkdir -p $out_dir/$category_name/testlogs_$category_name/
+                echo "Searching for $category_name in $search_dir directory"
+                ls -la "$search_dir"
+
+                for dir in $(realpath $search_dir)/*; do
+                    echo "Checking $dir"
+                    if [[ "$dir" =~ .*"$category_name".* ]] && [ -d $dir ]; then
+                        echo "Found $dir, aggregating"
+                        aggregate_from_dir $category_name $dir
+                    fi
+                done
+            done
+          }
+
+
+          testplan_generate () {
+              test_category=$1
+
+              export BAZEL_TEST_LOGS_PATH="$(pwd)/concat_shards_out/$test_category/$test_category.log.concat"
+              # Timestamp here won't be accurate, we concat every shard of the same type.
+              # Sticking to timestamp of running this script
+              export BAZEL_TEST_TIMESTAMP="$(date -d "today" +"%Y-%m-%d-%H-%M-%S")"
+              export BEDROCK_RTL_SOURCE_URL_PREFIX="https://github.com/antmicro/bedrock-rtl"
+              export TESTLOGS_PATH="$(pwd)/concat_shards_out/$test_category/testlogs_$test_category"
+              export BEDROCK_RTL_PROJECT_ROOT=../
+              export TEST_SUMMARY_OUTPUT_DIR="${BEDROCK_RTL_PROJECT_ROOT}/testresult_out"
+              export TEST_CATEGORY="$test_category"
+
+              ./generate_test_summary.sh
+          }
+
+          concat_shards ../bazel-oss-aggregate/ ./concat_shards_out "${test_categories[@]}"
+
+          for category in ${test_categories[@]}; do
+              testplan_generate $category
+          done
+
+          testplanner ./testplans/*.hjson -s ./testreports/*.hjson -ot ${TEST_SUMMARY_OUTPUT_DIR}/generated/testplan.md \
+                  -os ${TEST_SUMMARY_OUTPUT_DIR}/sim-res --output-summary-title "Bedrock-RTL tests" \
+                  --output-summary ${TEST_SUMMARY_OUTPUT_DIR}/sim-res/index.html \
+                  --project-root ${BEDROCK_RTL_PROJECT_ROOT} --source-url-prefix ${BEDROCK_RTL_SOURCE_URL_PREFIX} \
+                  --coverage-report-url https://xlsynth.github.io/bedrock-rtl/coverage
+
+          popd
+          EOF
+      - name: Upload static files as artifact
+        id: deployment
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: ./testresult_out
+      - name: Publish test results to GitHub Pages
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./testresult_out/sim-res
 
   docker-image-publish:
     runs-on: ubuntu-24.04

@@ -4,6 +4,7 @@ FROM docker.io/library/rockylinux:8.9.20231119@sha256:2d05a9266523bbf24f33ebc3a9
 ARG TARGETPLATFORM
 WORKDIR /tmp
 COPY requirements_lock_3_12.txt /tmp/requirements_lock_3_12.txt
+COPY scripts/requirements.txt /tmp/scripts_requirements.txt
 
 RUN if [ "${TARGETPLATFORM}" != "linux/amd64" ]; then \
         echo "This Dockerfile does not yet support non-amd64 platforms because Bazel hasn't provided Docker images for them yet."; \
@@ -70,6 +71,8 @@ RUN yum install -y dnf-plugins-core-4.0.21-25.el8 && \
 
 RUN pip3.12 install --require-hashes -r /tmp/requirements_lock_3_12.txt && \
     rm /tmp/requirements_lock_3_12.txt
+RUN pip3.12 install -r /tmp/scripts_requirements.txt && \
+    rm /tmp/scripts_requirements.txt
 
 # Install Verilator
 # v5.050 - devel
