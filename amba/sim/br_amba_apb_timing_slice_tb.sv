@@ -61,11 +61,11 @@ module br_amba_apb_timing_slice_tb;
   function automatic apb_request_t get_request(
       input logic [AddrWidth-1:0] addr, input logic [ApbProtWidth-1:0] prot, input logic [3:0] strb,
       input logic write, input logic [31:0] wdata);
-    get_request.addr  = addr;
+    get_request.addr  = ApbAddrWidth'(addr);
     get_request.prot  = prot;
-    get_request.strb  = strb;
+    get_request.strb  = ApbStrbWidth'(strb);
     get_request.write = write;
-    get_request.wdata = wdata;
+    get_request.wdata = ApbDataWidth'(wdata);
   endfunction
 
   function automatic apb_request_controls_t get_request_controls(
@@ -77,7 +77,7 @@ module br_amba_apb_timing_slice_tb;
 
   function automatic apb_response_t get_response(input logic [31:0] rdata, input logic slverr);
     get_response.ready  = 1'b1;
-    get_response.rdata  = rdata;
+    get_response.rdata  = ApbDataWidth'(rdata);
     get_response.slverr = slverr;
   endfunction
 

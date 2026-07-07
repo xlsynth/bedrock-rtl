@@ -11,8 +11,10 @@ import br_amba_apb_sim_pkg::*;
 // transfer per run call. Tests combine it with a DUT-specific monitor to check
 // response behavior without open-coding APB phase sequencing in each bench.
 module br_amba_apb_requester_driver #(
-    parameter int AddrWidth = 12,
-    parameter int TimeoutCycles = 100
+    parameter  int AddrWidth     = ApbAddrWidth,
+    parameter  int DataWidth     = ApbDataWidth,
+    parameter  int TimeoutCycles = 100,
+    localparam int StrbWidth     = DataWidth / 8
 ) (
     input logic clk,
     input logic pready,
@@ -21,20 +23,20 @@ module br_amba_apb_requester_driver #(
     output logic psel,
     output logic penable,
     output logic [ApbProtWidth-1:0] pprot,
-    output logic [3:0] pstrb,
+    output logic [StrbWidth-1:0] pstrb,
     output logic pwrite,
-    output logic [31:0] pwdata
+    output logic [DataWidth-1:0] pwdata
 );
 
   apb_request_beat_t apb_beat;
 
-  assign paddr   = apb_beat.request.addr;
+  assign paddr   = AddrWidth'(apb_beat.request.addr);
   assign psel    = apb_beat.psel;
   assign penable = apb_beat.penable;
   assign pprot   = apb_beat.request.prot;
-  assign pstrb   = apb_beat.request.strb;
+  assign pstrb   = StrbWidth'(apb_beat.request.strb);
   assign pwrite  = apb_beat.request.write;
-  assign pwdata  = apb_beat.request.wdata;
+  assign pwdata  = DataWidth'(apb_beat.request.wdata);
 
   function automatic apb_request_beat_t request_beat(
       input apb_request_t request, input logic psel_value, input logic penable_value);
@@ -83,8 +85,8 @@ module br_amba_apb_requester_driver #(
   endtask
 
   task automatic drive_idle(input int idle_cycles);
+    wait_for_response();
     if (idle_cycles > 0) begin
-      wait_for_response();
       @(negedge clk);
       apb_beat.psel    = Psel0;
       apb_beat.penable = Penable0;
@@ -100,7 +102,7 @@ module br_amba_apb_requester_driver #(
       request.prot  = inputs.prot;
       request.strb  = inputs.strb;
       request.write = inputs.write;
-      request.wdata = inputs.wdata + 32'(transaction);
+      request.wdata = inputs.wdata + ApbDataWidth'(transaction);
       issue_setup_request(request, controls.setup_cycles);
       issue_access_request(request);
       drive_idle(controls.idle_cycles);

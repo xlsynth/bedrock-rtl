@@ -9,6 +9,8 @@ import br_amba_axil_sim_pkg::*;
 import br_amba_axil_monitor_sim_pkg::*;
 import br_amba_axil2apb_sim_pkg::*;
 
+`include "br_asserts.svh"
+
 // Directed simulation testbench for br_amba_axil2apb.
 //
 // Stimulus plan:
@@ -29,9 +31,8 @@ import br_amba_axil2apb_sim_pkg::*;
 // - mid-transaction reset: assert reset after a partial AXI write, during APB setup/access, and
 //   while AXI responses are pending; then reinitialize and run traffic.
 module br_amba_axil2apb_tb;
-  parameter int AddrWidth = 12;
-  parameter int DataWidth = 32;
-
+  localparam int AddrWidth = AxilAddrWidth;
+  localparam int DataWidth = AxilDataWidth;
   localparam int StrbWidth = DataWidth / 8;
   localparam int ResetCycles = 5;
   localparam int ClockPeriodNs = 10;
@@ -59,6 +60,11 @@ module br_amba_axil2apb_tb;
   localparam int MaxStressTransactions = 192;
   localparam logic [StrbWidth-1:0] ZeroStrobe = '0;
   localparam logic [StrbWidth-1:0] MidResetStrobe = '1;
+
+  `BR_ASSERT_STATIC(AxilApbAddrWidthMatch, AxilAddrWidth == ApbAddrWidth)
+  `BR_ASSERT_STATIC(AxilApbDataWidthMatch, AxilDataWidth == ApbDataWidth)
+  `BR_ASSERT_STATIC(AxilApbStrobeWidthMatch, AxilStrobeWidth == ApbStrbWidth)
+  `BR_ASSERT_STATIC(RandomDataWidthSupported, DataWidth <= BrAmbaSimMaxCheckWidth)
 
   logic clk;
   logic rst;
@@ -255,7 +261,6 @@ module br_amba_axil2apb_tb;
   );
 
   br_amba_axil2apb_scoreboard #(
-      .DataWidth(DataWidth),
       .ClockPeriodNs(ClockPeriodNs)
   ) scoreboard (
       .failed(scoreboard_failed)

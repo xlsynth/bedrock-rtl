@@ -55,7 +55,7 @@ module br_amba_apb_timing_slice_monitor #(
       input logic [31:0] wdata);
     get_req.psel          = psel;
     get_req.penable       = penable;
-    get_req.request.addr  = 32'(addr);
+    get_req.request.addr  = ApbAddrWidth'(addr);
     get_req.request.prot  = prot;
     get_req.request.strb  = strb;
     get_req.request.write = write;
@@ -65,7 +65,7 @@ module br_amba_apb_timing_slice_monitor #(
   function automatic apb_response_t get_rsp(input logic ready, input logic [31:0] rdata,
                                             input logic slverr);
     get_rsp.ready  = ready;
-    get_rsp.rdata  = rdata;
+    get_rsp.rdata  = ApbDataWidth'(rdata);
     get_rsp.slverr = slverr;
   endfunction
 

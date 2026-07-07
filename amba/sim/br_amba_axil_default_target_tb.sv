@@ -154,7 +154,8 @@ module br_amba_axil_default_target_tb;
 
     fork
       begin
-        wait (target_awvalid && target_awready);
+        @(posedge clk);
+        while (!(target_awvalid && target_awready)) @(posedge clk);
         observed = 1'b1;
       end
       timeout(timeout_tick, TimeoutCycles, "Timeout waiting for AXI-Lite AW handshake",
@@ -169,7 +170,8 @@ module br_amba_axil_default_target_tb;
 
     fork
       begin
-        wait (target_wvalid && target_wready);
+        @(posedge clk);
+        while (!(target_wvalid && target_wready)) @(posedge clk);
         observed = 1'b1;
       end
       timeout(timeout_tick, TimeoutCycles, "Timeout waiting for AXI-Lite W handshake",

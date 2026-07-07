@@ -19,7 +19,6 @@ import br_amba_sim_pkg::*;
 // sides: accepted AXI-Lite request channels, completed APB transfers, and
 // returned AXI-Lite responses.
 module br_amba_axil2apb_scoreboard #(
-    parameter int DataWidth = 32,
     parameter int ClockPeriodNs = 10
 ) (
     output logic failed
@@ -46,7 +45,7 @@ module br_amba_axil2apb_scoreboard #(
 
   function automatic axil_r_t expected_r_response(input axil2apb_transaction_t transaction);
     expected_r_response = '0;
-    expected_r_response.data = AxilDataWidth'(DataWidth'(transaction.data));
+    expected_r_response.data = AxilDataWidth'(transaction.data);
     expected_r_response.resp = transaction.slverr ? AxiRespSlverr : AxiRespOkay;
   endfunction
 
@@ -66,7 +65,7 @@ module br_amba_axil2apb_scoreboard #(
     predict_read_transaction.addr   = ApbAddrWidth'(ar.addr);
     predict_read_transaction.prot   = ar.prot;
     predict_read_transaction.strb   = '0;
-    predict_read_transaction.data   = ApbDataWidth'(DataWidth'(response.rdata));
+    predict_read_transaction.data   = ApbDataWidth'(response.rdata);
     predict_read_transaction.slverr = response.slverr;
   endfunction
 

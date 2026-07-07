@@ -2,12 +2,26 @@
 
 `timescale 1ns / 1ps
 
+`include "br_asserts.svh"
+
 package br_amba_apb_sim_pkg;
   import br_amba::*;
 
-  localparam int ApbAddrWidth = 64;
-  localparam int ApbDataWidth = 1024;
+`ifndef BR_AMBA_APB_SIM_ADDR_WIDTH
+  `define BR_AMBA_APB_SIM_ADDR_WIDTH 64
+`endif
+
+`ifndef BR_AMBA_APB_SIM_DATA_WIDTH
+  `define BR_AMBA_APB_SIM_DATA_WIDTH 1024
+`endif
+
+  parameter int ApbAddrWidth = `BR_AMBA_APB_SIM_ADDR_WIDTH;
+  parameter int ApbDataWidth = `BR_AMBA_APB_SIM_DATA_WIDTH;
   localparam int ApbStrbWidth = ApbDataWidth / 8;
+
+  `BR_ASSERT_STATIC_IN_PACKAGE(ApbAddrWidthPositive, ApbAddrWidth > 0)
+  `BR_ASSERT_STATIC_IN_PACKAGE(ApbDataWidthPositive, ApbDataWidth > 0)
+  `BR_ASSERT_STATIC_IN_PACKAGE(ApbDataWidthByteAligned, ApbDataWidth % 8 == 0)
 
   localparam logic Psel0 = 1'b0;
   localparam logic Psel1 = 1'b1;
@@ -19,11 +33,11 @@ package br_amba_apb_sim_pkg;
   localparam logic Pslverr1 = 1'b1;
 
   typedef struct packed {
-    logic [31:0] addr;
+    logic [ApbAddrWidth-1:0] addr;
     logic [ApbProtWidth-1:0] prot;
-    logic [3:0] strb;
+    logic [ApbStrbWidth-1:0] strb;
     logic write;
-    logic [31:0] wdata;
+    logic [ApbDataWidth-1:0] wdata;
   } apb_request_t;
 
   typedef struct packed {

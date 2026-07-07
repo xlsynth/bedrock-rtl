@@ -9,6 +9,7 @@ verilog_library(
     deps = [
         ":br_amba_sim_pkg",
         "//amba/rtl:br_amba_pkg",
+        "//macros:br_asserts",
     ],
 )
 
@@ -27,6 +28,7 @@ verilog_library(
     visibility = ["//visibility:public"],
     deps = [
         "//amba/rtl:br_amba_pkg",
+        "//macros:br_asserts",
     ],
 )
 
