@@ -167,6 +167,7 @@ module br_fifo_shared_pop_ctrl_fpv_checker #(
       `BR_ASSERT(pop_empty_consistent_a,
                  pop_empty[i] && !bypass_valid_unstable[i] |-> !pop_valid[i])
     end else begin : gen_no_bypass
+      `BR_ASSUME(no_bypass_valid_a, bypass_valid_unstable == '0)
       // A FIFO cannot report empty in the same cycle that it presents valid pop data.
       `BR_ASSERT(pop_empty_consistent_a, pop_valid[i] |-> !pop_empty[i])
     end
