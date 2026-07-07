@@ -222,12 +222,9 @@ verilog_elab_test(
             "+cdc_delay_mode=" + cdc_delay_mode,
         ],
         tags = ["no-sandbox"],
-        # TODO(mgottscho): Enable Verilator once it supports
-        # `process::self().srandom(new_seed)` in `br_cdc_bit_toggle` during CDC
-        # delay modeling.
         tools = [
             "vcs",
-            #"verilator",
+            "verilator",
         ],
         top = "br_cdc_fifo_flops_tb",
         deps = [
@@ -380,12 +377,9 @@ verilog_elab_test(
         sim_opts = [
             "+cdc_delay_mode=" + cdc_delay_mode,
         ],
-        # TODO(mgottscho): Enable Verilator once it supports
-        # `process::self().srandom(new_seed)` in `br_cdc_bit_toggle` during CDC
-        # delay modeling.
         tools = [
             "vcs",
-            #"verilator",
+            "verilator",
         ],
         top = "br_cdc_fifo_flops_push_credit_tb",
         deps = [
@@ -561,12 +555,9 @@ br_verilog_sim_test_tools_suite(
             "20",
         ],
     },
-    # TODO(mgottscho): Enable Verilator once it supports
-    # `process::self().srandom(new_seed)` in `br_cdc_bit_toggle` during CDC
-    # delay modeling.
     tools = [
         "vcs",
-        #"verilator",
+        "verilator",
     ],
     top = "br_cdc_reg_tb",
     deps = [
@@ -619,12 +610,9 @@ br_verilog_sim_test_tools_suite(
             "16",
         ],
     },
-    # TODO(mgottscho): Enable Verilator once it supports
-    # `process::self().srandom(new_seed)` in `br_cdc_bit_toggle` during CDC
-    # delay modeling.
     tools = [
         "vcs",
-        #"verilator",
+        "verilator",
     ],
     top = "br_cdc_stable_data_tb",
     deps = [
@@ -677,12 +665,9 @@ br_verilog_sim_test_tools_suite(
             "16",
         ],
     },
-    # TODO(mgottscho): Enable Verilator once it supports
-    # `process::self().srandom(new_seed)` in `br_cdc_bit_toggle` during CDC
-    # delay modeling.
     tools = [
         "vcs",
-        #"verilator",
+        "verilator",
     ],
     top = "br_cdc_stable_data_autoupdate_tb",
     deps = [
