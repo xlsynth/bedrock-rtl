@@ -206,7 +206,7 @@ module br_fifo_staging_buffer #(
   end else if (InternalDepth == 1) begin : gen_single_entry_buffer
     // In this case, we keep a single entry buffer that is filled if data is returned
     // but internal_pop_ready is not asserted.
-    localparam int MaxReadInflight = br_math::min2(BufferDepth, RamReadLatency);
+    localparam int MaxReadInflight = br_math::max2(1, br_math::min2(BufferDepth, RamReadLatency));
     localparam int ReadInflightCountWidth = $clog2(MaxReadInflight+1);
 
     logic has_inflight_read;
@@ -238,6 +238,7 @@ module br_fifo_staging_buffer #(
     );
 
     assign has_inflight_read = ram_rd_inflight_count != '0;
+    // Don't forward the buffered data if it is from a bypass but there is a read inflight.
     assign buffer_fwd_block = buffer_bypass && has_inflight_read;
     assign buffer_fwd_valid = buffer_valid && !buffer_fwd_block;
     assign buffer_fwd_ready = internal_pop_ready && !buffer_fwd_block;
