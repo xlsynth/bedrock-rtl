@@ -313,6 +313,11 @@ verilog_elab_test(
 
 br_verilog_sim_test_tools_suite(
     name = "br_fifo_shared_dynamic_flops_sim_test_tools_suite",
+    illegal_param_combinations = {
+        ("StagingBufferDepth", "DataRamAddressDepthStages"): [
+            ("2", "0"),
+        ],
+    },
     params = {
         "Depth": ["5"],
         "Width": ["8"],
@@ -378,6 +383,11 @@ verilog_elab_test(
 
 br_verilog_sim_test_tools_suite(
     name = "br_fifo_shared_dynamic_flops_push_credit_sim_test_tools_suite",
+    illegal_param_combinations = {
+        ("StagingBufferDepth", "DataRamAddressDepthStages"): [
+            ("2", "0"),
+        ],
+    },
     params = {
         "Depth": ["5"],
         "Width": ["8"],
@@ -444,6 +454,11 @@ verilog_elab_test(
 
 br_verilog_sim_test_tools_suite(
     name = "br_fifo_shared_pstatic_flops_sim_test_tools_suite",
+    illegal_param_combinations = {
+        ("StagingBufferDepth", "RamAddressDepthStages"): [
+            ("2", "0"),
+        ],
+    },
     params = {
         "Depth": ["8"],
         "Width": ["8"],
@@ -498,6 +513,11 @@ verilog_elab_test(
 
 br_verilog_sim_test_tools_suite(
     name = "br_fifo_shared_pstatic_flops_push_credit_sim_test_tools_suite",
+    illegal_param_combinations = {
+        ("StagingBufferDepth", "RamAddressDepthStages"): [
+            ("2", "0"),
+        ],
+    },
     params = {
         "Depth": ["8"],
         "Width": ["8"],
