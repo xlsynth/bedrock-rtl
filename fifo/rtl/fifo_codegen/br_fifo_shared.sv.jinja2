@@ -574,12 +574,6 @@ module {{ module_name }} #(
       .Width(Width),
 {%-   if bypassable %}
       .EnableBypass(EnableBypass),
-{%-     if push_credit %}
-      // Not sure yet why, but the implementation prevents dealloc_valid from being asserted
-      // on the same cycle as bypass_ready.
-      // TODO(zhemao): Figure out why this is true.
-      .SimultaneousBypassAndDeallocPossible(0),
-{%-     endif %}
 {%-   elif not dynamic %}
       // This variant does not support bypassing
       .EnableBypass(0),

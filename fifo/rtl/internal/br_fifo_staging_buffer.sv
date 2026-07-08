@@ -68,7 +68,9 @@ module br_fifo_staging_buffer #(
   `BR_ASSERT_STATIC(legal_ram_read_latency_a, RamReadLatency >= 0)
   `BR_ASSERT_STATIC(legal_total_depth_a, TotalDepth > BufferDepth)
   `BR_ASSERT_STATIC(legal_bitwidth_a, Width >= 1)
-  `BR_ASSERT_STATIC(legal_buffer_depth_a, BufferDepth >= 1)
+  `BR_ASSERT_STATIC(min_buffer_depth_a, BufferDepth >= 1)
+  // We don't gain any performance from increasing the buffer depth past this point
+  `BR_ASSERT_STATIC(max_buffer_depth_a, BufferDepth <= RamReadLatency + 1)
 
   if (RamReadLatency > 0) begin : gen_read_latency_gt_0
     `BR_ASSERT_INTG(expected_read_latency_a,
@@ -120,7 +122,7 @@ module br_fifo_staging_buffer #(
       .EnableWrap(0),
       .EnableCoverZeroChange(0),
       .EnableCoverReinit(0)
-  ) br_counter (
+  ) br_counter_staged_items (
       .clk,
       .rst,
 
@@ -207,7 +209,7 @@ module br_fifo_staging_buffer #(
     // In this case, we keep a single entry buffer that is filled if data is returned
     // but internal_pop_ready is not asserted.
     localparam int MaxReadInflight = br_math::max2(1, br_math::min2(BufferDepth, RamReadLatency));
-    localparam int ReadInflightCountWidth = $clog2(MaxReadInflight+1);
+    localparam int ReadInflightCountWidth = $clog2(MaxReadInflight + 1);
 
     logic has_inflight_read;
     logic [ReadInflightCountWidth-1:0] ram_rd_inflight_count;
@@ -455,19 +457,11 @@ module br_fifo_staging_buffer #(
       // internal_pop_valid can come from the head of the buffer
       // or be bypassed directly from the read data or the bypass data
       // For bypass data, we can only do direct bypass when the buffer is empty
-      if (RamReadLatency >= InternalDepth) begin : gen_with_rd_data_bypass
-        assign internal_pop_valid = head_valid ||
-                                    ram_rd_data_valid ||
-                                    (empty && bypass_valid_unstable);
-        assign internal_pop_data = head_valid ? mem_rd_data : push_data;
-        `BR_ASSERT_IMPL(rd_data_to_pop_correct_address_a,
-                        (!head_valid && ram_rd_data_valid) |-> (wr_ptr_onehot_d == rd_ptr_onehot))
-      end else begin : gen_no_rd_data_bypass
-        assign internal_pop_valid = head_valid || (empty && bypass_valid_unstable);
-        assign internal_pop_data  = head_valid ? mem_rd_data : bypass_data_unstable;
-        `BR_UNUSED(push_data)
-        `BR_ASSERT_IMPL(no_rd_data_when_buffer_empty_a, ram_rd_data_valid |-> head_valid)
-      end
+      assign internal_pop_valid = head_valid || ram_rd_data_valid || (empty && bypass_beat);
+      assign internal_pop_data = head_valid ? mem_rd_data : push_data;
+      `BR_ASSERT_IMPL(rd_data_to_pop_correct_address_a,
+                      (!head_valid && ram_rd_data_valid) |-> (wr_ptr_onehot_d == rd_ptr_onehot))
+
       // Only advance the read pointer if the write pointer was advanced
       // to provide the data currently being consumed.
       // This is true for read from the buffer or direct from read data,
@@ -536,8 +530,10 @@ module br_fifo_staging_buffer #(
 
   // Implementation Checks
   if (EnableBypass) begin : gen_bypass_impl_checks
+    // TODO(zhemao): Figure out the correct condition for enabling this cover
+    localparam bit SimultaneousBypassAndReadDataPossible = RamReadLatency > 0;
     `BR_ASSERT_IMPL(no_alloc_hazard_a, !(ram_rd_addr_beat && bypass_beat))
-    if (RamReadLatency > 0) begin : gen_bypass_and_read_same_cycle_cover
+    if (SimultaneousBypassAndReadDataPossible) begin : gen_bypass_and_read_same_cycle_cover
       `BR_COVER_IMPL(bypass_and_rd_data_same_cycle_c, bypass_beat && ram_rd_data_valid)
     end else begin : gen_no_bypass_and_read_same_cycle_assert
       `BR_ASSERT_IMPL(no_bypass_and_read_same_cycle_a, bypass_beat |-> !ram_rd_data_valid)

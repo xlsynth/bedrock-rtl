@@ -24,10 +24,6 @@ module br_fifo_shared_pstatic_push_ctrl_credit #(
     parameter bit RegisterPushOutputs = 1,
     // If 1, allow bypass from the push side to the pop controller.
     parameter bit EnableBypass = 0,
-    // If 1, it's possible for bypass to be accepted and an entry to be
-    // deallocated on the same cycle. Otherwise, assert that it never happens.
-    // Only relevant if EnableBypass is 1.
-    parameter bit SimultaneousBypassAndDeallocPossible = EnableBypass,
     // If 1, cover that push_credit_stall can be asserted
     // Otherwise, assert that it is never asserted.
     parameter bit EnableCoverPushCreditStall = 1,
@@ -91,8 +87,6 @@ module br_fifo_shared_pstatic_push_ctrl_credit #(
     input logic [NumFifos-1:0] dealloc_valid
 );
   // Integration Assertions
-  `BR_ASSERT_STATIC(legal_simultaneous_bypass_and_dealloc_a,
-                    EnableBypass || !SimultaneousBypassAndDeallocPossible)
   for (genvar i = 0; i < NumFifos; i++) begin : gen_per_fifo_intg_checks
     `BR_ASSERT_INTG(credit_initial_lte_size_a,
                     $fell(rst) |-> $past(credit_initial_push[i]) <= config_size[i])
@@ -106,8 +100,7 @@ module br_fifo_shared_pstatic_push_ctrl_credit #(
   assign either_rst = push_sender_in_reset || rst;
 
   // Credit Receiver
-  localparam int PopCreditMaxChange =
-      (EnableBypass && SimultaneousBypassAndDeallocPossible) ? 2 : 1;
+  localparam int PopCreditMaxChange = EnableBypass ? 2 : 1;
   localparam int PopCreditChangeWidth = $clog2(PopCreditMaxChange + 1);
 
   logic [NumFifos-1:0] push_receiver_in_reset_internal;
@@ -133,12 +126,7 @@ module br_fifo_shared_pstatic_push_ctrl_credit #(
       // This needs to be registered to avoid a combinational path from valid to credit
       `BR_REG(bypass_credit, bypass_valid_unstable[i] && bypass_ready[i])
 
-      if (SimultaneousBypassAndDeallocPossible) begin : gen_simul_bypass_dealloc_credit
-        assign pop_credit = dealloc_valid[i] + bypass_credit;
-      end else begin : gen_no_simul_bypass_dealloc_credit
-        `BR_ASSERT_IMPL(no_simultaneous_bypass_and_dealloc_a, !(dealloc_valid[i] && bypass_credit))
-        assign pop_credit = dealloc_valid[i] || bypass_credit;
-      end
+      assign pop_credit = dealloc_valid[i] + bypass_credit;
     end else begin : gen_no_bypass_pop_credit
       assign pop_credit = dealloc_valid[i];
     end

@@ -77,6 +77,11 @@ br_verilog_fpv_test_tools_suite(
         "-parameter NumFifos 2",
         "-parameter NumReadPorts 1",
     ],
+    illegal_param_combinations = {
+        ("RamReadLatency", "StagingBufferDepth"): [
+            ("0", "2"),
+        ],
+    },
     params = {
         "EnableBypass": [
             "0",
@@ -162,6 +167,11 @@ br_verilog_fpv_test_tools_suite(
         "-parameter NumFifos 2",
         "-parameter NumReadPorts 1",
     ],
+    illegal_param_combinations = {
+        ("RamReadLatency", "StagingBufferDepth"): [
+            ("0", "2"),
+        ],
+    },
     params = {
         "EnableBypass": [
             "0",

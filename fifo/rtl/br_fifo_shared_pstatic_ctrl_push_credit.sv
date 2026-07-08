@@ -187,10 +187,6 @@ module br_fifo_shared_pstatic_ctrl_push_credit #(
       .Depth(Depth),
       .Width(Width),
       .EnableBypass(EnableBypass),
-      // Not sure yet why, but the implementation prevents dealloc_valid from being asserted
-      // on the same cycle as bypass_ready.
-      // TODO(zhemao): Figure out why this is true.
-      .SimultaneousBypassAndDeallocPossible(0),
       .RegisterPushOutputs(RegisterPushOutputs),
       .EnableCoverPushCreditStall(EnableCoverPushCreditStall),
       .EnableCoverCreditWithhold(EnableCoverCreditWithhold),
