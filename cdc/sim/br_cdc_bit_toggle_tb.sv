@@ -12,6 +12,7 @@
 // - Bazel-swept NumStages, AddSourceFlop, SrcClkPeriod, and DstClkPeriod parameters
 
 module br_cdc_bit_toggle_tb;
+  timeunit 1ns; timeprecision 1ps;
 
   parameter int NumStages = 3;
   parameter bit AddSourceFlop = 1;
@@ -22,8 +23,8 @@ module br_cdc_bit_toggle_tb;
 
   localparam logic LowBitValue = 1'b0;
   localparam logic HighBitValue = 1'b1;
-  localparam int SrcClkHalfPeriod = SrcClkPeriod / 2;
-  localparam int DstClkHalfPeriod = DstClkPeriod / 2;
+  localparam realtime SrcClkHalfPeriod = SrcClkPeriod / 2.0;
+  localparam realtime DstClkHalfPeriod = DstClkPeriod / 2.0;
   localparam int SourceUpdateCycles = AddSourceFlop ? 2 : 1;
   localparam int MinResetTime = SourceUpdateCycles * SrcClkPeriod + (NumStages + 2) * DstClkPeriod;
   // The destination can only observe a source update after the optional source
@@ -48,6 +49,9 @@ module br_cdc_bit_toggle_tb;
   logic dst_rst;
   logic dst_bit;
 
+  logic td_clk;
+  logic td_rst;
+
   br_cdc_bit_toggle #(
       .NumStages(NumStages),
       .AddSourceFlop(AddSourceFlop)
@@ -63,6 +67,15 @@ module br_cdc_bit_toggle_tb;
   always #SrcClkHalfPeriod src_clk = ~src_clk;
   always #DstClkHalfPeriod dst_clk = ~dst_clk;
 
+  br_test_driver td (
+      .clk(td_clk),
+      .rst(td_rst)
+  );
+
+  task automatic record_failure(input string message);
+    td.check(1'b0, message);
+  endtask
+
   task automatic wait_for_dst_bit(input logic expected);
     int timeout;
 
@@ -73,8 +86,12 @@ module br_cdc_bit_toggle_tb;
     end
 
     if (dst_bit !== expected) begin
-      $error("timed out waiting for dst_bit=%0b, got %0b after %0d destination cycles", expected,
-             dst_bit, DstTimeoutCycles);
+      record_failure($sformatf(
+                     "timed out waiting for dst_bit=%0b, got %0b after %0d destination cycles",
+                     expected,
+                     dst_bit,
+                     DstTimeoutCycles
+                     ));
     end
   endtask
 
@@ -82,7 +99,8 @@ module br_cdc_bit_toggle_tb;
     repeat (2) begin
       @(posedge dst_clk);
       if (dst_bit !== expected) begin
-        $error("dst_bit changed unexpectedly, expected %0b got %0b", expected, dst_bit);
+        record_failure($sformatf(
+                       "dst_bit changed unexpectedly, expected %0b got %0b", expected, dst_bit));
       end
     end
   endtask
@@ -185,8 +203,7 @@ module br_cdc_bit_toggle_tb;
       drive_and_check(expected);
     end
 
-    $display("TEST PASSED");
-    $finish;
+    td.finish();
   end
 
 endmodule : br_cdc_bit_toggle_tb

@@ -402,6 +402,7 @@ verilog_library(
     deps = [
         "//cdc/rtl:br_cdc_bit_toggle",
         "//gate/rtl:br_gate_mock",
+        "//misc/sim:br_test_driver",
         "//pkg:br_math_pkg",
     ],
 )
