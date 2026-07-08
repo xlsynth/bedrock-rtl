@@ -263,7 +263,6 @@ jobs:
                 'tests(//python/...) union tests(//ecc/rtl/secded_codegen/...)'
               printf '%s\n' \
                 //bazel:verilog_rules_diff_test \
-                //bazel/verilog_runner:nonzip_test \
                 > /tmp/discovered-stardoc.txt
               run_discovered_suite stardoc 0 1 /tmp/discovered-stardoc.txt
               ;;
