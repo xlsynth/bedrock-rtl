@@ -4,6 +4,88 @@ load("@rules_hdl//verilog:providers.bzl", "verilog_library")
 load("//bazel:br_verilog.bzl", "br_verilog_sim_test_tools_suite")
 load("//bazel:verilog.bzl", "verilog_elab_test")
 
+BR_AMBA_SIM_MAX_CHECK_WIDTH_64 = "BR_AMBA_SIM_MAX_CHECK_WIDTH=64"
+
+BR_AMBA_SIM_DEFINES_64 = [
+    "BR_ASSERT_ON",
+    "BR_ENABLE_IMPL_CHECKS",
+    "SIMULATION",
+    BR_AMBA_SIM_MAX_CHECK_WIDTH_64,
+]
+
+BR_AMBA_APB_TIMING_SLICE_DEFINES = [
+    "BR_AMBA_APB_SIM_ADDR_WIDTH=32",
+    "BR_AMBA_APB_SIM_DATA_WIDTH=32",
+]
+
+verilog_library(
+    name = "br_amba_axil2apb_sim_pkg",
+    srcs = ["br_amba_axil2apb_sim_pkg.sv"],
+    visibility = ["//visibility:public"],
+    deps = [
+        "//amba/rtl:br_amba_pkg",
+        "//amba/sim/drivers:br_amba_apb_sim_pkg",
+    ],
+)
+
+verilog_library(
+    name = "br_amba_axil2apb_tb",
+    srcs = ["br_amba_axil2apb_tb.sv"],
+    deps = [
+        ":br_amba_axil2apb_sim_pkg",
+        "//amba/rtl:br_amba_axil2apb",
+        "//amba/sim/drivers:br_amba_apb_sim_helpers",
+        "//amba/sim/drivers:br_amba_axil_requester_driver",
+        "//amba/sim/drivers:br_amba_sim_pkg",
+        "//amba/sim/monitors:br_amba_apb_monitor",
+        "//amba/sim/monitors:br_amba_axil2apb_scoreboard",
+        "//amba/sim/monitors:br_amba_axil_monitor",
+        "//amba/sim/monitors:br_amba_axil_monitor_sim_pkg",
+        "//macros:br_asserts",
+        "//misc/sim:br_test_driver",
+    ],
+)
+
+verilog_elab_test(
+    name = "br_amba_axil2apb_tb_elab_test",
+    defines = [
+        "BR_AMBA_SIM_MAX_CHECK_WIDTH=32",
+        "BR_AMBA_AXIL_SIM_ADDR_WIDTH=12",
+        "BR_AMBA_AXIL_SIM_DATA_WIDTH=32",
+        "BR_AMBA_AXIL_SIM_USER_WIDTH=1",
+        "BR_AMBA_APB_SIM_ADDR_WIDTH=12",
+        "BR_AMBA_APB_SIM_DATA_WIDTH=32",
+    ],
+    tool = "slang",
+    deps = [":br_amba_axil2apb_tb"],
+)
+
+[
+    br_verilog_sim_test_tools_suite(
+        name = "br_amba_axil2apb_sim_test_tools_suite_dw%s" % data_width,
+        defines = [
+            "BR_ASSERT_ON",
+            "BR_ENABLE_IMPL_CHECKS",
+            "SIMULATION",
+            "BR_AMBA_SIM_MAX_CHECK_WIDTH=%s" % data_width,
+            "BR_AMBA_AXIL_SIM_ADDR_WIDTH=12",
+            "BR_AMBA_AXIL_SIM_DATA_WIDTH=%s" % data_width,
+            "BR_AMBA_AXIL_SIM_USER_WIDTH=1",
+            "BR_AMBA_APB_SIM_ADDR_WIDTH=12",
+            "BR_AMBA_APB_SIM_DATA_WIDTH=%s" % data_width,
+        ],
+        tools = [
+            "vcs",
+            "verilator",
+        ],
+        deps = [":br_amba_axil2apb_tb"],
+    )
+    for data_width in [
+        "32",
+        "64",
+    ]
+]
+
 verilog_library(
     name = "br_amba_apb_timing_slice_tb",
     srcs = ["br_amba_apb_timing_slice_tb.sv"],
@@ -17,12 +99,14 @@ verilog_library(
 
 verilog_elab_test(
     name = "br_amba_apb_timing_slice_tb_elab_test",
+    defines = BR_AMBA_APB_TIMING_SLICE_DEFINES,
     tool = "slang",
     deps = [":br_amba_apb_timing_slice_tb"],
 )
 
 br_verilog_sim_test_tools_suite(
     name = "br_amba_apb_timing_slice_sim_test_tools_suite",
+    defines = BR_AMBA_APB_TIMING_SLICE_DEFINES,
     params = {
         "AddrWidth": [
             "12",
@@ -176,6 +260,9 @@ verilog_elab_test(
         "BR_AMBA_AXI_SIM_DATA_WIDTH=32",
         "BR_AMBA_AXI_SIM_ID_WIDTH=3",
         "BR_AMBA_AXI_SIM_USER_WIDTH=2",
+        "BR_AMBA_AXIL_SIM_ADDR_WIDTH=12",
+        "BR_AMBA_AXIL_SIM_DATA_WIDTH=32",
+        "BR_AMBA_AXIL_SIM_USER_WIDTH=2",
     ],
     tool = "slang",
     deps = [":br_amba_axi2axil_tb"],
@@ -192,6 +279,9 @@ verilog_elab_test(
             "BR_AMBA_AXI_SIM_DATA_WIDTH=%s" % data_width,
             "BR_AMBA_AXI_SIM_ID_WIDTH=3",
             "BR_AMBA_AXI_SIM_USER_WIDTH=2",
+            "BR_AMBA_AXIL_SIM_ADDR_WIDTH=12",
+            "BR_AMBA_AXIL_SIM_DATA_WIDTH=%s" % data_width,
+            "BR_AMBA_AXIL_SIM_USER_WIDTH=2",
         ],
         params = {
             "MaxOutstandingReqs": [
@@ -356,7 +446,8 @@ verilog_library(
     srcs = ["br_amba_axil_default_target_tb.sv"],
     deps = [
         "//amba/rtl:br_amba_axil_default_target",
-        "//amba/sim/drivers:br_amba_axil_driver",
+        "//amba/sim/drivers:br_amba_axil_completer_driver",
+        "//amba/sim/drivers:br_amba_sim_pkg",
         "//amba/sim/monitors:br_amba_axil_monitor",
         "//misc/sim:br_test_driver",
     ],
@@ -391,4 +482,47 @@ br_verilog_sim_test_tools_suite(
         "verilator",
     ],
     deps = [":br_amba_axil_default_target_tb"],
+)
+
+verilog_library(
+    name = "br_amba_atb_funnel_tb",
+    srcs = ["br_amba_atb_funnel_tb.sv"],
+    deps = [
+        "//amba/rtl:br_amba_atb_funnel",
+        "//misc/sim:br_test_driver",
+    ],
+)
+
+verilog_elab_test(
+    name = "br_amba_atb_funnel_tb_elab_test",
+    tool = "slang",
+    deps = [":br_amba_atb_funnel_tb"],
+)
+
+br_verilog_sim_test_tools_suite(
+    name = "br_amba_atb_funnel_sim_test_tools_suite",
+    params = {
+        "DataWidth": [
+            "32",
+            "64",
+        ],
+        "NumSources": [
+            "2",
+            "4",
+            "17",
+        ],
+        "RegisterAtReady": [
+            "0",
+            "1",
+        ],
+        "UserWidth": [
+            "1",
+            "3",
+        ],
+    },
+    tools = [
+        "vcs",
+        "verilator",
+    ],
+    deps = [":br_amba_atb_funnel_tb"],
 )

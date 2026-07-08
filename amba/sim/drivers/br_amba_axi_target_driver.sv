@@ -53,7 +53,9 @@ module br_amba_axi_target_driver #(
     WaitTargetW,
     WaitTargetAr,
     WaitTargetB,
-    WaitTargetR
+    WaitTargetR,
+    WaitTargetBValid,
+    WaitTargetRValid
   } wait_condition_e;
 
   axi_aw_source_t target_aw_drive;
@@ -125,27 +127,31 @@ module br_amba_axi_target_driver #(
 
   function automatic logic is_wait_condition_met(input wait_condition_e condition);
     case (condition)
-      WaitTargetAw: is_wait_condition_met = cb.target_awvalid && cb.target_awready;
-      WaitTargetW:  is_wait_condition_met = cb.target_wvalid && cb.target_wready;
-      WaitTargetAr: is_wait_condition_met = cb.target_arvalid && cb.target_arready;
-      WaitTargetB:  is_wait_condition_met = cb.target_bvalid && cb.target_bready;
-      WaitTargetR:  is_wait_condition_met = cb.target_rvalid && cb.target_rready;
-      default:      is_wait_condition_met = 1'b0;
+      WaitTargetAw:     is_wait_condition_met = cb.target_awvalid && cb.target_awready;
+      WaitTargetW:      is_wait_condition_met = cb.target_wvalid && cb.target_wready;
+      WaitTargetAr:     is_wait_condition_met = cb.target_arvalid && cb.target_arready;
+      WaitTargetB:      is_wait_condition_met = cb.target_bvalid && cb.target_bready;
+      WaitTargetR:      is_wait_condition_met = cb.target_rvalid && cb.target_rready;
+      WaitTargetBValid: is_wait_condition_met = cb.target_bvalid;
+      WaitTargetRValid: is_wait_condition_met = cb.target_rvalid;
+      default:          is_wait_condition_met = 1'b0;
     endcase
   endfunction
 
   function automatic string wait_condition_name(input wait_condition_e condition);
     case (condition)
-      WaitTargetAw: wait_condition_name = "target AW";
-      WaitTargetW:  wait_condition_name = "target W";
-      WaitTargetAr: wait_condition_name = "target AR";
-      WaitTargetB:  wait_condition_name = "target B";
-      WaitTargetR:  wait_condition_name = "target R";
-      default:      wait_condition_name = "unknown AXI";
+      WaitTargetAw:     wait_condition_name = "target AW";
+      WaitTargetW:      wait_condition_name = "target W";
+      WaitTargetAr:     wait_condition_name = "target AR";
+      WaitTargetB:      wait_condition_name = "target B";
+      WaitTargetR:      wait_condition_name = "target R";
+      WaitTargetBValid: wait_condition_name = "target B";
+      WaitTargetRValid: wait_condition_name = "target R";
+      default:          wait_condition_name = "unknown AXI";
     endcase
   endfunction
 
-  task automatic wait_for(input wait_condition_e condition);
+  task automatic wait_for(input wait_condition_e condition, input string wait_item = "handshake");
     int timeout;
 
     timeout = TimeoutCycles;
@@ -156,7 +162,20 @@ module br_amba_axi_target_driver #(
         condition
     ) && timeout >= 0);
     check(is_wait_condition_met(condition), {
-          "Timeout waiting for ", wait_condition_name(condition), " handshake"});
+          "Timeout waiting for ", wait_condition_name(condition), " ", wait_item});
+  endtask
+
+  task automatic wait_response_stall(input wait_condition_e valid_condition,
+                                     input int stall_cycles);
+    for (int stall_cycle = 0; stall_cycle < stall_cycles; stall_cycle++) begin
+      if (stall_cycle == 0) begin
+        wait_for(valid_condition, "valid");
+        if (failed) begin
+          return;
+        end
+      end
+      wait_cycles();
+    end
   endtask
 
   function automatic axi_aw_t get_aw_transaction(input axi_aw_t base, input int index,
@@ -305,7 +324,10 @@ module br_amba_axi_target_driver #(
   task automatic accept_target_b(input int stall_cycles);
     if (stall_cycles > 0) begin
       target_bready_drive = 1'b0;
-      wait_cycles(stall_cycles);
+      wait_response_stall(WaitTargetBValid, stall_cycles);
+      if (failed) begin
+        return;
+      end
     end
     target_bready_drive = 1'b1;
     wait_for(WaitTargetB);
@@ -314,7 +336,10 @@ module br_amba_axi_target_driver #(
   task automatic accept_target_r(input int stall_cycles);
     if (stall_cycles > 0) begin
       target_rready_drive = 1'b0;
-      wait_cycles(stall_cycles);
+      wait_response_stall(WaitTargetRValid, stall_cycles);
+      if (failed) begin
+        return;
+      end
     end
     target_rready_drive = 1'b1;
     wait_for(WaitTargetR);
