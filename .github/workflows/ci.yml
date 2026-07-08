@@ -51,7 +51,9 @@ jobs:
           labels: |
             org.opencontainers.image.revision=${{ github.sha }}
           cache-from: type=gha,scope=bedrock-rtl-dev-docker
-          cache-to: ${{ github.event_name != 'pull_request' && 'type=gha,mode=max,scope=bedrock-rtl-dev-docker' || '' }}
+          # PR builds write to their PR-scoped GitHub Actions cache; this does
+          # not publish an image or write anything to GHCR.
+          cache-to: type=gha,mode=max,scope=bedrock-rtl-dev-docker
       - name: Export public Docker image
         run: docker save bedrock-rtl-dev:${{ github.sha }} --output /tmp/bedrock-rtl-dev.tar
       - name: Upload public Docker image
@@ -137,8 +139,10 @@ jobs:
           # prevents incompatible partitions from sharing an Actions cache.
           disk-cache: ${{ github.workflow }}-oss-${{ matrix.suite }}-${{ matrix.shard_index }}-of-${{ matrix.shard_count }}
           repository-cache: true
-          # PRs restore trusted cache entries but cannot pollute shared caches.
-          cache-save: ${{ github.event_name != 'pull_request' }}
+          # Save PR-local caches so repeated pushes to the same PR can reuse
+          # Bazel outputs. GitHub scopes pull_request caches to the PR merge
+          # ref; this does not make them shared main-branch caches.
+          cache-save: true
           output-base: ${{ runner.temp }}/bazel-output
       - name: Configure public Bazel environment
         run: |
