@@ -10,6 +10,10 @@ class br_dv_scoreboard #(
       .ItemType(ItemType),
       .PortType(int)
   ) SinkType;
+  typedef br_dv_port_sink_target#(
+      .ItemType(ItemType),
+      .PortType(int)
+  ) TargetType;
 
   localparam int ExpPort = 0;
   localparam int ActPort = 1;
@@ -24,8 +28,8 @@ class br_dv_scoreboard #(
     if (ctx != null) begin
       ctx.register(this);
     end
-    exp_sink = new(this, ExpPort);
-    act_sink = new(this, ActPort);
+    exp_sink = new(TargetType'(this), ExpPort);
+    act_sink = new(TargetType'(this), ActPort);
   endfunction
 
   virtual function br_dv_component_kind_e get_kind();

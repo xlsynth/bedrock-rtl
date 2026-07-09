@@ -9,6 +9,10 @@ typedef br_dv_port_sink#(
     .ItemType(br_ram_addr_decoder_item),
     .PortType(br_ram_addr_decoder_scoreboard_port_e)
 ) br_ram_addr_decoder_scoreboard_sink_t;
+typedef br_dv_port_sink_target#(
+    .ItemType(br_ram_addr_decoder_item),
+    .PortType(br_ram_addr_decoder_scoreboard_port_e)
+) br_ram_addr_decoder_scoreboard_target_t;
 
 class br_ram_addr_decoder_scoreboard extends br_dv_port_sink_target #(
     .ItemType(br_ram_addr_decoder_item),
@@ -31,8 +35,8 @@ class br_ram_addr_decoder_scoreboard extends br_dv_port_sink_target #(
     if (ctx != null) begin
       ctx.register(this);
     end
-    in_sink  = new(this, BrRamAddrDecoderIn);
-    out_sink = new(this, BrRamAddrDecoderOut);
+    in_sink  = new(br_ram_addr_decoder_scoreboard_target_t'(this), BrRamAddrDecoderIn);
+    out_sink = new(br_ram_addr_decoder_scoreboard_target_t'(this), BrRamAddrDecoderOut);
   endfunction
 
   virtual function br_dv_component_kind_e get_kind();
