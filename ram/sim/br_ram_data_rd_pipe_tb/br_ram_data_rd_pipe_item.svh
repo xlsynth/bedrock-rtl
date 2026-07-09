@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 
-typedef logic br_ram_data_rd_pipe_data_bit_t;
+typedef bit br_ram_data_rd_pipe_data_bit_t;
 
 class br_ram_data_rd_pipe_item extends br_item;
   // Interface valid value represented by this item.
@@ -57,14 +57,14 @@ class br_ram_data_rd_pipe_item extends br_item;
     if (width != item.get_width()) return 1'b0;
 
     for (int unsigned i = 0; i < width; i++) begin
-      if (word_data[i] !== item.word_data[i]) return 1'b0;
+      if (word_data[i] != item.word_data[i]) return 1'b0;
     end
     return 1'b1;
   endfunction
 
   function bit word_data_is_zero();
     for (int unsigned i = 0; i < width; i++) begin
-      if (word_data[i] !== 1'b0) return 1'b0;
+      if (word_data[i] != 1'b0) return 1'b0;
     end
     return 1'b1;
   endfunction
