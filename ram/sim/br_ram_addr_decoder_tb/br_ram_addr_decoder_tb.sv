@@ -16,7 +16,7 @@ module br_ram_addr_decoder_tb #(
   import br_dv_lib::*;
   import br_ram_addr_decoder_tb_pkg::*;
 
-  `include "br_dv_lib/br_dv_macros.svh"
+  `include "br_dv_macros.svh"
 
   initial begin
     string vcd_file;
@@ -69,6 +69,9 @@ module br_ram_addr_decoder_tb #(
       .out_data(out_data_if.data)
   );
 
+  `BR_DEFINE_TEST(br_ram_addr_decoder_test, TestTimeout)
+  `BR_RUN_TEST(br_ram_addr_decoder_test)
+
   task automatic run_all_tests();
     begin
       br_dv_context ctx;
@@ -109,6 +112,4 @@ module br_ram_addr_decoder_tb #(
     end
   endtask
 
-  `BR_DEFINE_TEST(br_ram_addr_decoder_test, TestTimeout)
-  `BR_RUN_TEST(br_ram_addr_decoder_test)
 endmodule : br_ram_addr_decoder_tb

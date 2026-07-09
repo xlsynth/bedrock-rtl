@@ -27,7 +27,7 @@ Every `br_dv_lib` testbench should:
 module br_example_tb;
   import br_dv_lib::*;
 
-  `include "br_dv_lib/br_dv_macros.svh"
+  `include "br_dv_macros.svh"
 
   localparam time TestTimeout = 10us;
 
@@ -492,12 +492,12 @@ Package example:
 package br_example_tb_pkg;
   import br_dv_lib::*;
 
-  `include "ram/sim/br_example_tb/br_example_item.svh"
-  `include "ram/sim/br_example_tb/br_example_sequence.svh"
-  `include "ram/sim/br_example_tb/br_example_driver.svh"
-  `include "ram/sim/br_example_tb/br_example_monitor.svh"
-  `include "ram/sim/br_example_tb/br_example_scoreboard.svh"
-  `include "ram/sim/br_example_tb/br_example_env.svh"
+  `include "br_example_item.svh"
+  `include "br_example_sequence.svh"
+  `include "br_example_driver.svh"
+  `include "br_example_monitor.svh"
+  `include "br_example_scoreboard.svh"
+  `include "br_example_env.svh"
 endpackage : br_example_tb_pkg
 ```
 
