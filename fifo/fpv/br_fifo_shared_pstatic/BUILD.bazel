@@ -48,6 +48,9 @@ br_verilog_fpv_test_tools_suite(
             ("0", "1", "1"),
             ("1", "0", "1"),
         ],
+        ("RamReadLatency", "StagingBufferDepth"): [
+            ("0", "2"),
+        ],
     },
     params = {
         "EnableAssertPushDataStability": [
@@ -67,6 +70,10 @@ br_verilog_fpv_test_tools_suite(
         ],
         "Depth": [
             "5",
+        ],
+        "EnableBypass": [
+            "0",
+            "1",
         ],
         "StagingBufferDepth": [
             "1",
@@ -91,6 +98,9 @@ br_verilog_fpv_test_tools_suite(
 # Test focuses on testing backpressure
 br_verilog_fpv_test_tools_suite(
     name = "br_fifo_shared_pstatic_ctrl_test_numfifo",
+    elab_opts = [
+        "-parameter RamReadLatency 1",
+    ],
     illegal_param_combinations = {
         (
             "NumFifos",
@@ -117,6 +127,10 @@ br_verilog_fpv_test_tools_suite(
             "2",
             "5",
             "8",
+        ],
+        "EnableBypass": [
+            "0",
+            "1",
         ],
         "StagingBufferDepth": [
             "1",
@@ -171,6 +185,9 @@ br_verilog_fpv_test_tools_suite(
         ): [
             ("2", "2"),
         ],
+        ("RamReadLatency", "StagingBufferDepth"): [
+            ("0", "2"),
+        ],
     },
     params = {
         "NumFifos": [
@@ -180,6 +197,10 @@ br_verilog_fpv_test_tools_suite(
         "Depth": [
             "2",
             "5",
+        ],
+        "EnableBypass": [
+            "0",
+            "1",
         ],
         "StagingBufferDepth": [
             "1",
@@ -254,6 +275,10 @@ br_verilog_fpv_test_tools_suite(
             "0",
             "1",
         ],
+        "EnableBypass": [
+            "0",
+            "1",
+        ],
     },
     tools = {
         "jg": "br_fifo_shared_pstatic_flops_fpv.jg.tcl",
@@ -275,6 +300,10 @@ br_verilog_fpv_test_tools_suite(
         "NumFifos": [
             "2",
             "4",
+        ],
+        "EnableBypass": [
+            "0",
+            "1",
         ],
         "RamDepthTiles": [
             "2",
@@ -301,6 +330,10 @@ br_verilog_fpv_test_tools_suite(
         ],
         "Depth": [
             "5",
+        ],
+        "EnableBypass": [
+            "0",
+            "1",
         ],
         "StagingBufferDepth": [
             "1",
@@ -366,6 +399,10 @@ br_verilog_fpv_test_tools_suite(
             "2",
             "4",
         ],
+        "EnableBypass": [
+            "0",
+            "1",
+        ],
         "RamDepthTiles": [
             "2",
             "3",
@@ -385,12 +422,26 @@ br_verilog_fpv_test_tools_suite(
 # Test focuses on testing delay
 br_verilog_fpv_test_tools_suite(
     name = "br_fifo_shared_pstatic_flops_push_credit_test_delay",
+    illegal_param_combinations = {
+        (
+            "RamAddressDepthStages",
+            "RamReadDataDepthStages",
+            "RamReadDataWidthStages",
+            "StagingBufferDepth",
+        ): [
+            ("0", "0", "0", "2"),
+        ],
+    },
     params = {
         "NumFifos": [
             "2",
         ],
         "Depth": [
             "5",
+        ],
+        "EnableBypass": [
+            "0",
+            "1",
         ],
         "StagingBufferDepth": [
             "1",

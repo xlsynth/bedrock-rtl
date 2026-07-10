@@ -10,6 +10,7 @@ module br_fifo_shared_pstatic_flops_push_credit_tb;
   parameter bit RegisterPopOutputs = 0;
   parameter bit RegisterPushOutputs = 0;
   parameter int RamAddressDepthStages = 0;
+  parameter bit EnableBypass = 0;
 
   localparam int FifoIdWidth = $clog2(NumFifos);
   localparam int CountWidth = $clog2(Depth + 1);
@@ -116,6 +117,7 @@ module br_fifo_shared_pstatic_flops_push_credit_tb;
       .NumFifos(NumFifos),
       .Depth(Depth),
       .Width(Width),
+      .EnableBypass(EnableBypass),
       .StagingBufferDepth(StagingBufferDepth),
       .RegisterPopOutputs(RegisterPopOutputs),
       .RegisterPushOutputs(RegisterPushOutputs),

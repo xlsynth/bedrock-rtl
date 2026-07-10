@@ -74,6 +74,10 @@ module br_fifo_shared_pstatic_flops #(
     parameter int RamReadDataDepthStages = 0,
     // Number of stages in the width dimension on the data flop RAM.
     parameter int RamReadDataWidthStages = 0,
+    // If 1, allow bypass from the push side to the pop controller.
+    // This reduces the cut-through latency to `RegisterPopOutputs` at the
+    // expense of potentially worse timing.
+    parameter bit EnableBypass = 0,
     // If 1, cover that the push side experiences backpressure.
     // If 0, disable backpressure coverage. By default, this also
     // asserts that backpressure is impossible.
@@ -180,6 +184,7 @@ module br_fifo_shared_pstatic_flops #(
       .NumReadPorts(NumReadPorts),
       .StagingBufferDepth(StagingBufferDepth),
       .RegisterPopOutputs(RegisterPopOutputs),
+      .EnableBypass(EnableBypass),
       .RamReadLatency(RamReadLatency),
       .EnableCoverPushBackpressure(EnableCoverPushBackpressure),
       .EnableAssertPushValidStability(EnableAssertPushValidStability),

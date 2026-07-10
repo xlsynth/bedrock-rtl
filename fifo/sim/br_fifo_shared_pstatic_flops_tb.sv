@@ -9,6 +9,7 @@ module br_fifo_shared_pstatic_flops_tb;
   parameter int NumFifos = 2;
   parameter int Depth = 5;
   parameter int Width = 8;
+  parameter bit EnableBypass = 0;
   parameter int StagingBufferDepth = 1;
   parameter bit RegisterPopOutputs = 0;
   parameter int RamAddressDepthStages = 0;
@@ -39,6 +40,7 @@ module br_fifo_shared_pstatic_flops_tb;
       .NumFifos(NumFifos),
       .Depth(Depth),
       .Width(Width),
+      .EnableBypass(EnableBypass),
       .StagingBufferDepth(StagingBufferDepth),
       .RegisterPopOutputs(RegisterPopOutputs),
       .RamAddressDepthStages(RamAddressDepthStages)

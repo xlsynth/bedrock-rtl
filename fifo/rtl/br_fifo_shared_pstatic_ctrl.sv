@@ -63,6 +63,10 @@ module br_fifo_shared_pstatic_ctrl #(
     parameter bit RegisterPopOutputs = 0,
     // The number of cycles between ram read address and read data. Must be >=0.
     parameter int RamReadLatency = 0,
+    // If 1, allow bypass from the push side to the pop controller.
+    // This reduces the cut-through latency to `RegisterPopOutputs` at the
+    // expense of potentially worse timing.
+    parameter bit EnableBypass = 0,
     // If 1, cover that the push side experiences backpressure.
     // If 0, disable backpressure coverage. By default, this also
     // asserts that backpressure is impossible.
@@ -162,11 +166,15 @@ module br_fifo_shared_pstatic_ctrl #(
   logic [NumFifos-1:0] advance_tail;
   logic [NumFifos-1:0][AddrWidth-1:0] tail_next;
   logic [NumFifos-1:0][AddrWidth-1:0] tail;
+  logic [NumFifos-1:0] bypass_ready;
+  logic [NumFifos-1:0] bypass_valid_unstable;
+  logic [NumFifos-1:0][Width-1:0] bypass_data_unstable;
 
   br_fifo_shared_pstatic_push_ctrl #(
       .NumFifos(NumFifos),
       .Depth(Depth),
       .Width(Width),
+      .EnableBypass(EnableBypass),
       .EnableCoverPushBackpressure(EnableCoverPushBackpressure),
       .EnableAssertPushValidStability(EnableAssertPushValidStability),
       .EnableAssertPushDataStability(EnableAssertPushDataStability),
@@ -183,6 +191,9 @@ module br_fifo_shared_pstatic_ctrl #(
       .push_fifo_id,
       .push_data,
       .push_full,
+      .bypass_ready,
+      .bypass_valid_unstable,
+      .bypass_data_unstable,
       .ram_wr_valid,
       .ram_wr_addr,
       .ram_wr_data,
@@ -229,6 +240,7 @@ module br_fifo_shared_pstatic_ctrl #(
       .Depth(Depth),
       .Width(Width),
       .StagingBufferDepth(StagingBufferDepth),
+      .EnableBypass(EnableBypass),
       .RamReadLatency(RamReadLatency),
       .RegisterPopOutputs(RegisterPopOutputs)
   ) br_fifo_shared_pop_ctrl_inst (
@@ -243,6 +255,9 @@ module br_fifo_shared_pstatic_ctrl #(
       .pop_valid,
       .pop_data,
       .pop_empty,
+      .bypass_ready,
+      .bypass_valid_unstable,
+      .bypass_data_unstable,
       .dealloc_valid(),  // Not used
       .dealloc_entry_id(),  // Not used
       .data_ram_rd_addr_valid(ram_rd_addr_valid),

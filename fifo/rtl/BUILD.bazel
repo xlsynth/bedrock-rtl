@@ -212,14 +212,18 @@ br_verilog_elab_and_lint_test_suite(
             "2",
         ],
         "RamReadLatency": [
-            "0",
             "1",
+            "2",
         ],
         "RegisterDeallocation": [
             "0",
             "1",
         ],
         "RegisterPopOutputs": [
+            "0",
+            "1",
+        ],
+        "EnableBypass": [
             "0",
             "1",
         ],
@@ -236,6 +240,7 @@ verilog_library(
         "//fifo/rtl/internal:br_fifo_staging_buffer",
         "//flow/rtl:br_flow_fork",
         "//flow/rtl:br_flow_join",
+        "//flow/rtl:br_flow_mux_select_unstable",
     ],
 )
 
@@ -257,14 +262,18 @@ br_verilog_elab_and_lint_test_suite(
             "2",
         ],
         "RamReadLatency": [
-            "0",
             "1",
+            "2",
         ],
         "RegisterDeallocation": [
             "0",
             "1",
         ],
         "RegisterPopOutputs": [
+            "0",
+            "1",
+        ],
+        "EnableBypass": [
             "0",
             "1",
         ],
@@ -509,7 +518,6 @@ br_verilog_elab_and_lint_test_suite(
             "1",
         ],
         "DataRamAddressDepthStages": [
-            "0",
             "1",
         ],
         "RegisterPopOutputs": [
@@ -746,10 +754,42 @@ br_verilog_elab_and_lint_test_suite(
             "2",
         ],
         "RamReadLatency": [
+            "1",
+            "2",
+        ],
+        "RegisterPopOutputs": [
             "0",
             "1",
         ],
+        "EnableBypass": [
+            "0",
+            "1",
+        ],
+    },
+    deps = [":br_fifo_shared_pstatic_ctrl"],
+)
+
+br_verilog_elab_and_lint_test_suite(
+    name = "br_fifo_shared_pstatic_ctrl_test_suite_zero_lat",
+    params = {
+        "NumFifos": [
+            "2",
+        ],
+        "Depth": [
+            "8",
+        ],
+        "Width": ["8"],
+        "StagingBufferDepth": [
+            "1",
+        ],
+        "RamReadLatency": [
+            "0",
+        ],
         "RegisterPopOutputs": [
+            "0",
+            "1",
+        ],
+        "EnableBypass": [
             "0",
             "1",
         ],
@@ -786,13 +826,16 @@ br_verilog_elab_and_lint_test_suite(
         "Width": ["8"],
         "StagingBufferDepth": [
             "1",
-            "2",
         ],
         "RamAddressDepthStages": [
             "0",
             "1",
         ],
         "RegisterPopOutputs": [
+            "0",
+            "1",
+        ],
+        "EnableBypass": [
             "0",
             "1",
         ],
@@ -843,6 +886,42 @@ br_verilog_elab_and_lint_test_suite(
             "1",
         ],
         "RamReadLatency": [
+            "1",
+            "2",
+        ],
+        "EnableBypass": [
+            "0",
+            "1",
+        ],
+    },
+    deps = [":br_fifo_shared_pstatic_ctrl_push_credit"],
+)
+
+br_verilog_elab_and_lint_test_suite(
+    name = "br_fifo_shared_pstatic_ctrl_push_credit_test_suite_zero_latency",
+    params = {
+        "NumFifos": [
+            "2",
+        ],
+        "Depth": [
+            "5",
+        ],
+        "Width": ["8"],
+        "StagingBufferDepth": [
+            "1",
+        ],
+        "RegisterPushOutputs": [
+            "0",
+            "1",
+        ],
+        "RegisterPopOutputs": [
+            "0",
+            "1",
+        ],
+        "RamReadLatency": [
+            "0",
+        ],
+        "EnableBypass": [
             "0",
             "1",
         ],
@@ -879,7 +958,6 @@ br_verilog_elab_and_lint_test_suite(
         "Width": ["8"],
         "StagingBufferDepth": [
             "1",
-            "2",
         ],
         "RegisterPushOutputs": [
             "0",
@@ -890,6 +968,10 @@ br_verilog_elab_and_lint_test_suite(
             "1",
         ],
         "RamAddressDepthStages": [
+            "0",
+            "1",
+        ],
+        "EnableBypass": [
             "0",
             "1",
         ],

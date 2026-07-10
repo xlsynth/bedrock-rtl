@@ -22,6 +22,8 @@ module br_fifo_shared_pstatic_push_ctrl_credit #(
     // If 1, register is added on the credit returns,
     // improving timing at the cost of additional latency.
     parameter bit RegisterPushOutputs = 1,
+    // If 1, allow bypass from the push side to the pop controller.
+    parameter bit EnableBypass = 0,
     // If 1, cover that push_credit_stall can be asserted
     // Otherwise, assert that it is never asserted.
     parameter bit EnableCoverPushCreditStall = 1,
@@ -61,6 +63,11 @@ module br_fifo_shared_pstatic_push_ctrl_credit #(
     input logic [FifoIdWidth-1:0] push_fifo_id,
     input logic [NumFifos-1:0] push_full,
 
+    // Bypass to pop controller
+    input logic [NumFifos-1:0] bypass_ready,
+    output logic [NumFifos-1:0] bypass_valid_unstable,
+    output logic [NumFifos-1:0][Width-1:0] bypass_data_unstable,
+
     input  logic [NumFifos-1:0][CountWidth-1:0] credit_initial_push,
     input  logic [NumFifos-1:0][CountWidth-1:0] credit_withhold_push,
     output logic [NumFifos-1:0][CountWidth-1:0] credit_available_push,
@@ -93,6 +100,8 @@ module br_fifo_shared_pstatic_push_ctrl_credit #(
   assign either_rst = push_sender_in_reset || rst;
 
   // Credit Receiver
+  localparam int PopCreditMaxChange = EnableBypass ? 2 : 1;
+  localparam int PopCreditChangeWidth = $clog2(PopCreditMaxChange + 1);
 
   logic [NumFifos-1:0] push_receiver_in_reset_internal;
   logic [NumFifos-1:0] receiver_push_valid;
@@ -104,14 +113,30 @@ module br_fifo_shared_pstatic_push_ctrl_credit #(
                    push_receiver_in_reset_internal[NumFifos-1:1])
 
   for (genvar i = 0; i < NumFifos; i++) begin : gen_credit_receiver
+    logic [PopCreditChangeWidth-1:0] pop_credit;
+
     // This is just used to track occupancy for assertion purposes.
     assign receiver_push_valid[i] = push_valid && (push_fifo_id == i);
+
+    if (EnableBypass) begin : gen_bypass_pop_credit
+      // Credit is returned if the RAM entry is deallocated or if we bypass directly
+      // to the staging FIFO.
+      logic bypass_credit;
+
+      // This needs to be registered to avoid a combinational path from valid to credit
+      `BR_REG(bypass_credit, bypass_valid_unstable[i] && bypass_ready[i])
+
+      assign pop_credit = dealloc_valid[i] + bypass_credit;
+    end else begin : gen_no_bypass_pop_credit
+      assign pop_credit = dealloc_valid[i];
+    end
 
     br_credit_receiver #(
         .NumFlows(1),
         .Width(Width),
         .MaxCredit(Depth),
         .RegisterPushOutputs(RegisterPushOutputs),
+        .PopCreditMaxChange(PopCreditMaxChange),
         .EnableAssertFinalNotValid(EnableAssertFinalNotValid),
         .EnableCoverPushSenderInReset(EnableCoverPushSenderInReset),
         .EnableCoverPushCreditStall(EnableCoverPushCreditStall),
@@ -129,7 +154,7 @@ module br_fifo_shared_pstatic_push_ctrl_credit #(
         .push_credit(push_credit[i]),
         .push_valid(receiver_push_valid[i]),
         .push_data,
-        .pop_credit(dealloc_valid[i]),
+        .pop_credit,
         // These aren't actually used.
         // They're identical to the push valid/data.
         .pop_valid(),
@@ -145,6 +170,7 @@ module br_fifo_shared_pstatic_push_ctrl_credit #(
       .NumFifos(NumFifos),
       .Depth(Depth),
       .Width(Width),
+      .EnableBypass(EnableBypass),
       // Credit tracking should ensure there's no backpressure here.
       .EnableCoverPushBackpressure(0),
       .EnableAssertPushDataKnown(EnableAssertPushDataKnown),
@@ -159,6 +185,9 @@ module br_fifo_shared_pstatic_push_ctrl_credit #(
       .push_data,
       .push_fifo_id,
       .push_full,
+      .bypass_ready,
+      .bypass_valid_unstable,
+      .bypass_data_unstable,
       .ram_wr_valid,
       .ram_wr_addr,
       .ram_wr_data,

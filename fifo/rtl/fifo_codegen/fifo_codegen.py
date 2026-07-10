@@ -110,6 +110,9 @@ def main():
 
         ctrl_module = module_name.replace("flops", "ctrl")
 
+        # Only pop-ready pstatic FIFO variants can enable bypass
+        bypassable = not (dynamic or pop_credit)
+
         rendered = template.render(
             module_name=module_name,
             ctrl_only=args.ctrl_only,
@@ -121,6 +124,7 @@ def main():
             push_credit=push_credit,
             pop_credit=pop_credit,
             ext_arbiter=ext_arbiter,
+            bypassable=bypassable,
         )
     else:
         raise Exception("Single-flow FIFO is not supported yet.")

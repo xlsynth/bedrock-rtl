@@ -42,6 +42,8 @@ module br_fifo_shared_pop_ctrl #(
     // staging buffer to the freelist. This improves timing at the cost of
     // adding a cycle of backpressure latency.
     parameter bit RegisterDeallocation = 0,
+    // If 1, allow bypass from the push side to the pop controller.
+    parameter bit EnableBypass = 0,
     // The number of cycles between data ram read address and read data. Must be >=0.
     parameter int RamReadLatency = 0,
 
@@ -57,6 +59,10 @@ module br_fifo_shared_pop_ctrl #(
 
     input logic [NumFifos-1:0] ram_empty,
     input logic [NumFifos-1:0][CountWidth-1:0] ram_items,
+
+    output logic [NumFifos-1:0] bypass_ready,
+    input logic [NumFifos-1:0] bypass_valid_unstable,
+    input logic [NumFifos-1:0][Width-1:0] bypass_data_unstable,
 
     output logic [NumFifos-1:0] pop_valid,
     input logic [NumFifos-1:0] pop_ready,
@@ -85,6 +91,7 @@ module br_fifo_shared_pop_ctrl #(
       .StagingBufferDepth(StagingBufferDepth),
       .RegisterPopOutputs(RegisterPopOutputs),
       .RegisterDeallocation(RegisterDeallocation),
+      .EnableBypass(EnableBypass),
       .RamReadLatency(RamReadLatency)
   ) br_fifo_shared_pop_ctrl_ext_arbiter (
       .clk,
@@ -94,6 +101,9 @@ module br_fifo_shared_pop_ctrl #(
       .head,
       .ram_empty,
       .ram_items,
+      .bypass_ready,
+      .bypass_valid_unstable,
+      .bypass_data_unstable,
       .pop_valid,
       .pop_ready,
       .pop_data,

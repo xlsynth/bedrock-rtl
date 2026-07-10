@@ -5,6 +5,7 @@ load("//bazel:br_verilog.bzl", "br_verilog_elab_and_lint_test_suite")
 
 package(default_visibility = [
     "//cdc/rtl:__subpackages__",
+    "//fifo/fpv:__subpackages__",
     "//fifo/rtl:__subpackages__",
 ])
 
@@ -201,9 +202,41 @@ br_verilog_elab_and_lint_test_suite(
         "TotalDepth": [
             "4",
         ],
+        "BufferDepth": [
+            "1",
+            "2",
+        ],
         "RamReadLatency": [
             "1",
             "2",
+        ],
+        "RegisterPopOutputs": [
+            "0",
+            "1",
+        ],
+        "TotalItemsIncludesStaged": [
+            "0",
+            "1",
+        ],
+    },
+    deps = [":br_fifo_staging_buffer"],
+)
+
+br_verilog_elab_and_lint_test_suite(
+    name = "br_fifo_staging_buffer_test_suite_zero_latency",
+    params = {
+        "EnableBypass": [
+            "0",
+            "1",
+        ],
+        "TotalDepth": [
+            "4",
+        ],
+        "BufferDepth": [
+            "1",
+        ],
+        "RamReadLatency": [
+            "0",
         ],
         "RegisterPopOutputs": [
             "0",
@@ -368,6 +401,10 @@ br_verilog_elab_and_lint_test_suite(
             "8",
         ],
         "Width": ["8"],
+        "EnableBypass": [
+            "0",
+            "1",
+        ],
     },
     deps = [":br_fifo_shared_pstatic_push_ctrl"],
 )
@@ -453,6 +490,10 @@ br_verilog_elab_and_lint_test_suite(
         ],
         "Width": ["8"],
         "RegisterPushOutputs": [
+            "0",
+            "1",
+        ],
+        "EnableBypass": [
             "0",
             "1",
         ],

@@ -342,6 +342,11 @@ br_verilog_fpv_test_tools_suite(
 # Test focuses on testing delays
 br_verilog_fpv_test_tools_suite(
     name = "br_fifo_shared_dynamic_ctrl_test_delay",
+    illegal_param_combinations = {
+        ("DataRamReadLatency", "StagingBufferDepth"): [
+            ("0", "2"),
+        ],
+    },
     params = {
         "DataRamReadLatency": [
             "0",
@@ -468,6 +473,11 @@ br_verilog_fpv_test_tools_suite(
 # Test focuses on testing delays
 br_verilog_fpv_test_tools_suite(
     name = "br_fifo_shared_dynamic_ctrl_push_credit_test_delay",
+    illegal_param_combinations = {
+        ("DataRamReadLatency", "StagingBufferDepth"): [
+            ("0", "2"),
+        ],
+    },
     params = {
         "DataRamReadLatency": [
             "0",

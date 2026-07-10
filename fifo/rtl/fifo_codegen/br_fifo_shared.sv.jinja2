@@ -275,6 +275,12 @@ module {{ module_name }} #(
     parameter int RamReadDataWidthStages = 0,
 {%-   endif %}{# ctrl_only #}
 {%- endif %}
+{%- if bypassable %}
+    // If 1, allow bypass from the push side to the pop controller.
+    // This reduces the cut-through latency to `RegisterPopOutputs` at the
+    // expense of potentially worse timing.
+    parameter bit EnableBypass = 0,
+{%- endif %}
 {%- if ext_arbiter %}
     // If 1, the arbiter is guaranteed to grant in a cycle when any request is asserted.`
     // If 0, the arbiter may not grant in a cycle even when there is a request.
@@ -550,6 +556,12 @@ module {{ module_name }} #(
 {%-     set pop_ctrl_rst = 'rst' %}
 {%-   endif %}
 
+{%-   if bypassable %}
+  logic [NumFifos-1:0] bypass_ready;
+  logic [NumFifos-1:0] bypass_valid_unstable;
+  logic [NumFifos-1:0][Width-1:0] bypass_data_unstable;
+{%-   endif %}
+
   {{ push_ctrl_module }} #(
 {%-   if dynamic %}
       .NumWritePorts(NumWritePorts),
@@ -560,6 +572,12 @@ module {{ module_name }} #(
       .NumFifos(NumFifos),
       .Depth(Depth),
       .Width(Width),
+{%-   if bypassable %}
+      .EnableBypass(EnableBypass),
+{%-   elif not dynamic %}
+      // This variant does not support bypassing
+      .EnableBypass(0),
+{%-   endif %}
 {%-   if push_credit %}
       .RegisterPushOutputs(RegisterPushOutputs),
       .EnableCoverPushCreditStall(EnableCoverPushCreditStall),
@@ -603,6 +621,15 @@ module {{ module_name }} #(
       .credit_withhold_push,
       .credit_available_push,
       .credit_count_push,
+{%-   endif %}
+{%-   if bypassable %}
+      .bypass_ready,
+      .bypass_valid_unstable,
+      .bypass_data_unstable,
+{%-   elif not dynamic %}
+      .bypass_ready(1'b0),
+      .bypass_valid_unstable(),
+      .bypass_data_unstable(),
 {%-   endif %}
 {%-   if dynamic %}
       .data_ram_wr_valid,
@@ -695,6 +722,9 @@ module {{ module_name }} #(
 {%-   else %}
       .StagingBufferDepth(StagingBufferDepth),
 {%-   endif %}
+{%-   if bypassable %}
+      .EnableBypass(EnableBypass),
+{%-   endif %}
 {%-   if dynamic %}
       .RamReadLatency(DataRamReadLatency),
       .RegisterDeallocation(RegisterDeallocation)
@@ -728,6 +758,16 @@ module {{ module_name }} #(
       .pop_data,
 {%-   endif %}{# pop_credit #}
       .pop_empty,
+
+{%-   if bypassable %}
+      .bypass_ready,
+      .bypass_valid_unstable,
+      .bypass_data_unstable,
+{%-   elif not pop_credit %}
+      .bypass_ready(),
+      .bypass_valid_unstable('0),
+      .bypass_data_unstable('0),
+{%-   endif %}
 
 {%-   if pop_credit %}
       .credit_initial_pop,
@@ -913,6 +953,9 @@ module {{ module_name }} #(
       .StagingBufferDepth(StagingBufferDepth),
       .RegisterPopOutputs(RegisterPopOutputs),
 {%-   endif %}{# pop_credit #}
+{%-   if bypassable %}
+      .EnableBypass(EnableBypass),
+{%-   endif %}
 {%-   if dynamic %}
       .NumLinkedListsPerFifo(NumLinkedListsPerFifo),
       .DataRamReadLatency(DataRamReadLatency),

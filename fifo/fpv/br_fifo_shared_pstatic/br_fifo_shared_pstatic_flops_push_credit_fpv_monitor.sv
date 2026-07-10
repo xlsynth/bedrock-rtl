@@ -13,6 +13,7 @@ module br_fifo_shared_pstatic_flops_push_credit_fpv_monitor #(
     parameter bit RegisterPushOutputs = 1,
     parameter int StagingBufferDepth = 1,
     parameter bit RegisterPopOutputs = 0,
+    parameter bit EnableBypass = 0,
     parameter int RamDepthTiles = 1,
     parameter int RamWidthTiles = 1,
     parameter int RamAddressDepthStages = 0,
@@ -104,6 +105,7 @@ module br_fifo_shared_pstatic_flops_push_credit_fpv_monitor #(
       .Width(Width),
       .StagingBufferDepth(StagingBufferDepth),
       .RegisterPopOutputs(RegisterPopOutputs),
+      .EnableBypass(EnableBypass),
       .RamReadLatency(RamReadLatency),
       .EnableCoverPushBackpressure(0)
   ) fv_checker (
@@ -133,6 +135,7 @@ bind br_fifo_shared_pstatic_flops_push_credit
     .RegisterPushOutputs(RegisterPushOutputs),
     .StagingBufferDepth(StagingBufferDepth),
     .RegisterPopOutputs(RegisterPopOutputs),
+    .EnableBypass(EnableBypass),
     .RamDepthTiles(RamDepthTiles),
     .RamWidthTiles(RamWidthTiles),
     .RamAddressDepthStages(RamAddressDepthStages),
