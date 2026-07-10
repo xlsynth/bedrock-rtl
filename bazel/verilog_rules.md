@@ -402,6 +402,31 @@ Returns a depset of all Verilog source or header files in the transitive closure
 | <a id="get_transitive-srcs_not_hdrs"></a>srcs_not_hdrs |  <p align="center"> - </p>   |  none |
 
 
+<a id="is_param_combination_legal"></a>
+
+## is_param_combination_legal
+
+<pre>
+load("@bedrock-rtl//bazel:verilog.bzl", "is_param_combination_legal")
+
+is_param_combination_legal(<a href="#is_param_combination_legal-params">params</a>, <a href="#is_param_combination_legal-illegal_param_combinations">illegal_param_combinations</a>)
+</pre>
+
+Checks if a given combination of parameters is legal based on the provided illegal combinations.
+
+**PARAMETERS**
+
+
+| Name  | Description | Default Value |
+| :------------- | :------------- | :------------- |
+| <a id="is_param_combination_legal-params"></a>params |  A dictionary where keys are parameter names and values are the specific value for those parameters in the current combination.   |  none |
+| <a id="is_param_combination_legal-illegal_param_combinations"></a>illegal_param_combinations |  A dictionary where keys are tuples of parameter names and values are lists of tuples of illegal values for those parameters.   |  none |
+
+**RETURNS**
+
+True if the combination is legal, False if it is illegal.
+
+
 <a id="verilog_elab_and_lint_test_suite"></a>
 
 ## verilog_elab_and_lint_test_suite
@@ -597,7 +622,7 @@ The following extra tags are unconditionally appended to the list of tags:
 <pre>
 load("@bedrock-rtl//bazel:verilog.bzl", "verilog_sim_test_suite")
 
-verilog_sim_test_suite(<a href="#verilog_sim_test_suite-name">name</a>, <a href="#verilog_sim_test_suite-defines">defines</a>, <a href="#verilog_sim_test_suite-params">params</a>, <a href="#verilog_sim_test_suite-kwargs">**kwargs</a>)
+verilog_sim_test_suite(<a href="#verilog_sim_test_suite-name">name</a>, <a href="#verilog_sim_test_suite-defines">defines</a>, <a href="#verilog_sim_test_suite-params">params</a>, <a href="#verilog_sim_test_suite-illegal_param_combinations">illegal_param_combinations</a>, <a href="#verilog_sim_test_suite-kwargs">**kwargs</a>)
 </pre>
 
 Creates a suite of Verilog sim tests for each combination of the provided parameters.
@@ -615,6 +640,7 @@ to the base name followed by the parameter key-values.
 | <a id="verilog_sim_test_suite-name"></a>name |  The base name for the test suite.   |  none |
 | <a id="verilog_sim_test_suite-defines"></a>defines |  A list of defines.   |  `[]` |
 | <a id="verilog_sim_test_suite-params"></a>params |  A dictionary where keys are parameter names and values are lists of possible values for those parameters.   |  `{}` |
+| <a id="verilog_sim_test_suite-illegal_param_combinations"></a>illegal_param_combinations |  A dictionary where keys are parameter tuples and values are lists of tuples of illegal values for those parameters.   |  `{}` |
 | <a id="verilog_sim_test_suite-kwargs"></a>kwargs |  Additional keyword arguments to be passed to the verilog_elab_test and verilog_lint_test functions.   |  none |
 
 
