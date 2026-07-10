@@ -12,26 +12,32 @@ import br_amba_axil_sim_pkg::*;
 // plus BREADY/RREADY. Payload observation and checking belong in monitors and
 // scoreboards.
 module br_amba_axil_requester_driver #(
-    parameter int AddrWidth = 12,
-    parameter int DataWidth = 32,
-    parameter int TimeoutCycles = 100,
-    localparam int StrbWidth = DataWidth / 8
+    parameter  int AddrWidth     = 12,
+    parameter  int DataWidth     = 32,
+    parameter  int AWUserWidth   = 1,
+    parameter  int WUserWidth    = 1,
+    parameter  int ARUserWidth   = 1,
+    parameter  int TimeoutCycles = 100,
+    localparam int StrbWidth     = DataWidth / 8
 ) (
     input logic clk,
     input logic rst,
 
     output logic [AddrWidth-1:0] axil_awaddr,
     output logic [AxiProtWidth-1:0] axil_awprot,
+    output logic [AWUserWidth-1:0] axil_awuser,
     output logic axil_awvalid,
     input logic axil_awready,
     output logic [DataWidth-1:0] axil_wdata,
     output logic [StrbWidth-1:0] axil_wstrb,
+    output logic [WUserWidth-1:0] axil_wuser,
     output logic axil_wvalid,
     input logic axil_wready,
     input logic axil_bvalid,
     output logic axil_bready,
     output logic [AddrWidth-1:0] axil_araddr,
     output logic [AxiProtWidth-1:0] axil_arprot,
+    output logic [ARUserWidth-1:0] axil_aruser,
     output logic axil_arvalid,
     input logic axil_arready,
     input logic axil_rvalid,
@@ -70,13 +76,16 @@ module br_amba_axil_requester_driver #(
   task automatic init_idle();
     axil_awaddr  = '0;
     axil_awprot  = '0;
+    axil_awuser  = '0;
     axil_awvalid = 1'b0;
     axil_wdata   = '0;
     axil_wstrb   = '0;
+    axil_wuser   = '0;
     axil_wvalid  = 1'b0;
     axil_bready  = 1'b0;
     axil_araddr  = '0;
     axil_arprot  = '0;
+    axil_aruser  = '0;
     axil_arvalid = 1'b0;
     axil_rready  = 1'b0;
     failed       = 1'b0;
@@ -96,15 +105,31 @@ module br_amba_axil_requester_driver #(
                              input logic [DataWidth-1:0] data, input logic [StrbWidth-1:0] strb,
                              input int aw_gap_cycles, input int w_gap_cycles,
                              input int b_stall_cycles);
-    aw_queue.push_back('{addr: AxilAddrWidth'(addr), prot: prot, gap_cycles: aw_gap_cycles});
+    queue_write_user(addr, prot, '0, data, strb, '0, aw_gap_cycles, w_gap_cycles, b_stall_cycles);
+  endtask
+
+  task automatic queue_write_user(
+      input logic [AddrWidth-1:0] addr, input logic [AxiProtWidth-1:0] prot,
+      input logic [AWUserWidth-1:0] awuser, input logic [DataWidth-1:0] data,
+      input logic [StrbWidth-1:0] strb, input logic [WUserWidth-1:0] wuser, input int aw_gap_cycles,
+      input int w_gap_cycles, input int b_stall_cycles);
+    aw_queue.push_back('{addr: AxilAddrWidth'(addr), prot: prot, user: AxilUserWidth'(awuser),
+                       gap_cycles: aw_gap_cycles});
     w_queue.push_back('{data: AxilDataWidth'(data), strb: AxilStrobeWidth'(strb),
-                      gap_cycles: w_gap_cycles});
+                      user: AxilUserWidth'(wuser), gap_cycles: w_gap_cycles});
     bready_stall_queue.push_back(b_stall_cycles);
   endtask
 
   task automatic queue_read(input logic [AddrWidth-1:0] addr, input logic [AxiProtWidth-1:0] prot,
                             input int ar_gap_cycles, input int r_stall_cycles);
-    ar_queue.push_back('{addr: AxilAddrWidth'(addr), prot: prot, gap_cycles: ar_gap_cycles});
+    queue_read_user(addr, prot, '0, ar_gap_cycles, r_stall_cycles);
+  endtask
+
+  task automatic queue_read_user(
+      input logic [AddrWidth-1:0] addr, input logic [AxiProtWidth-1:0] prot,
+      input logic [ARUserWidth-1:0] aruser, input int ar_gap_cycles, input int r_stall_cycles);
+    ar_queue.push_back('{addr: AxilAddrWidth'(addr), prot: prot, user: AxilUserWidth'(aruser),
+                       gap_cycles: ar_gap_cycles});
     rready_stall_queue.push_back(r_stall_cycles);
   endtask
 
@@ -173,6 +198,7 @@ module br_amba_axil_requester_driver #(
       repeat (item.gap_cycles) @(negedge clk);
       axil_awaddr  = AddrWidth'(item.addr);
       axil_awprot  = item.prot;
+      axil_awuser  = AWUserWidth'(item.user);
       axil_awvalid = 1'b1;
       wait_handshake(AxilHandshakeAw, "AW");
       if (failed) begin
@@ -196,6 +222,7 @@ module br_amba_axil_requester_driver #(
       repeat (item.gap_cycles) @(negedge clk);
       axil_wdata  = DataWidth'(item.data);
       axil_wstrb  = StrbWidth'(item.strb);
+      axil_wuser  = WUserWidth'(item.user);
       axil_wvalid = 1'b1;
       wait_handshake(AxilHandshakeW, "W");
       if (failed) begin
@@ -243,6 +270,7 @@ module br_amba_axil_requester_driver #(
       repeat (item.gap_cycles) @(negedge clk);
       axil_araddr  = AddrWidth'(item.addr);
       axil_arprot  = item.prot;
+      axil_aruser  = ARUserWidth'(item.user);
       axil_arvalid = 1'b1;
       wait_handshake(AxilHandshakeAr, "AR");
       if (failed) begin
