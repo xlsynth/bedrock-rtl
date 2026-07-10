@@ -62,11 +62,15 @@ __BR_ASSERT_STATIC_FAILED__``__name__ __BR_ASSERT_STATIC_FAILED__``__name__ (); 
 end
 `endif
 
+`ifdef BR_ENABLE_FPV
+`define BR_ASSERT_STATIC_IN_PACKAGE(__name__, __expr__) `BR_NOOP
+`else  // BR_ENABLE_FPV
 `define BR_ASSERT_STATIC_IN_PACKAGE(__name__, __expr__) \
 typedef enum logic [1:0] { \
     __BR_ASSERT_STATIC_IN_PACKAGE_OK__``__name__ = ((__expr__) ? 1 : 0), \
     __BR_ASSERT_STATIC_IN_PACKAGE_FAILED__``__name__ = 0 \
 } __br_static_assert_enum__``__name__;
+`endif  // BR_ENABLE_FPV
 
 ////////////////////////////////////////////////////////////////////////////////
 // Assertion error printing macros

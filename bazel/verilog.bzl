@@ -1288,13 +1288,7 @@ def verilog_synth_suite(
 
     for param_combination in param_combinations:
         combination_params = dict(zip(param_keys, param_combination))
-        skip = False
-        for keys_tuple, disallowed_values in illegal_param_combinations.items():
-            values_tuple = tuple([combination_params[k] for k in keys_tuple])
-            if values_tuple in disallowed_values:
-                skip = True
-                break
-        if not skip:
+        if is_param_combination_legal(combination_params, illegal_param_combinations):
             target_name = _make_test_name(name, synth_suffix, param_keys, param_combination)
             verilog_synth_func(
                 name = target_name,

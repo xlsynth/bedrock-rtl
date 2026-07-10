@@ -11,7 +11,9 @@ RUN if [ "${TARGETPLATFORM}" != "linux/amd64" ]; then \
         exit 1; \
     fi
 
-# Install build-time dependencies and other helpful yum packages.
+# Install build-time dependencies and other helpful yum packages. Rocky Linux 8
+# only packages CMake 3.26, but the pinned slang submodule requires CMake 3.28
+# or newer, so install a pinned Kitware build in the same layer.
 RUN yum install -y dnf-plugins-core-4.0.21-25.el8 && \
     yum config-manager --set-enabled \
         plus \
@@ -23,7 +25,6 @@ RUN yum install -y dnf-plugins-core-4.0.21-25.el8 && \
         boost-python3-devel-1.66.0-13.el8 \
         boost-system-1.66.0-13.el8 \
         clang-18.1.8-1.module+el8.10.0+1875+4f0b06db \
-        cmake-3.26.5-2.el8 \
         curl-7.61.1-34.el8_10.3 \
         eigen3-devel-3.3.4-6.el8 \
         emacs-26.1-13.el8_10 \
@@ -60,7 +61,12 @@ RUN yum install -y dnf-plugins-core-4.0.21-25.el8 && \
         zlib-1.2.11-26.el8 \
         zlib-devel-1.2.11-26.el8 && \
     yum clean all && \
-    rm -rf /var/cache/yum
+    rm -rf /var/cache/yum && \
+    curl -L https://github.com/Kitware/CMake/releases/download/v3.31.6/cmake-3.31.6-linux-x86_64.sh -o cmake-3.31.6-linux-x86_64.sh && \
+    echo "518c76bd18cc4ca5faab891db69b1289dc1bf134f394f0983a19576711b95210  cmake-3.31.6-linux-x86_64.sh" | sha256sum -c - && \
+    sh cmake-3.31.6-linux-x86_64.sh --skip-license --prefix=/usr/local && \
+    rm cmake-3.31.6-linux-x86_64.sh && \
+    cmake --version
 
 RUN pip3.12 install --require-hashes -r /tmp/requirements_lock_3_12.txt && \
     rm /tmp/requirements_lock_3_12.txt
@@ -100,11 +106,11 @@ RUN curl -L https://ftp.gnu.org/gnu/bison/bison-3.8.2.tar.gz -o bison-3.8.2.tar.
     bison --version
 
 # Install Yosys
-# v0.65 (latest release supported by yosys-slang at the pinned revision below)
+# v0.66
 RUN git clone https://github.com/YosysHQ/yosys.git && \
     cd yosys && \
     git fetch --all && \
-    git checkout b85cad634782fafac275e5f540c056bfacb2b5d2 && \
+    git checkout 86f2ddebce7e98ce7cacc27e8a5c14cb53b51b51 && \
     git submodule update --init --recursive && \
     make config-clang && \
     make -j$(nproc) && \
@@ -113,10 +119,20 @@ RUN git clone https://github.com/YosysHQ/yosys.git && \
     rm -rf yosys && \
     yosys --help
 
+# The pinned slang submodule requires Boost.Unordered headers newer than the
+# Boost 1.66 headers shipped by Rocky Linux 8.
+RUN curl -L https://archives.boost.io/release/1.88.0/source/boost_1_88_0.tar.gz -o boost_1_88_0.tar.gz && \
+    echo "3621533e820dcab1e8012afd583c0c73cf0f77694952b81352bf38c1488f9cb4  boost_1_88_0.tar.gz" | sha256sum -c - && \
+    tar -xzf boost_1_88_0.tar.gz && \
+    cp -R boost_1_88_0/boost /usr/local/include/ && \
+    rm -rf boost_1_88_0 boost_1_88_0.tar.gz
+
 # Install the Slang SystemVerilog frontend plugin for Yosys.
+# yosys-slang does not publish release tags. This is the first upstream
+# commit that declares support for Yosys 0.66.
 RUN git clone https://github.com/povik/yosys-slang.git && \
     cd yosys-slang && \
-    git checkout 6760afa2c9b9ba231a9c6a9e94f0939dd39f0a20 && \
+    git checkout 23193003ee2c2297ec8b6cbc8f6f9cdb0e732a47 && \
     git submodule update --init --recursive && \
     CC=clang CXX=clang++ make -j$(nproc) && \
     cmake --install build && \
@@ -185,8 +201,8 @@ USER user
 
 WORKDIR /home/user
 LABEL description="Docker image for building and testing Bedrock-RTL using open source tools." \
-    org.opencontainers.image.title="Bedrock-RTL" \
-    org.opencontainers.image.description="Open source toolchain for building and testing Bedrock-RTL." \
+    org.opencontainers.image.title="bedrock-rtl-dev" \
+    org.opencontainers.image.description="Bedrock-RTL development image with an open source toolchain for building and testing." \
     org.opencontainers.image.source="https://github.com/xlsynth/bedrock-rtl" \
     org.opencontainers.image.licenses="Apache-2.0"
 CMD ["/bin/bash"]
