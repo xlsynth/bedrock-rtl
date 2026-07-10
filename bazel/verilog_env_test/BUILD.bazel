@@ -1,0 +1,189 @@
+# SPDX-License-Identifier: Apache-2.0
+
+load("@bazel_skylib//rules:write_file.bzl", "write_file")
+load("@rules_hdl//verilog:providers.bzl", "verilog_library")
+load("@rules_shell//shell:sh_test.bzl", "sh_test")
+load("//bazel:verilog.bzl", "rule_verilog_elab_test", "rule_verilog_fpv_sandbox", "rule_verilog_fpv_test", "rule_verilog_lint_test", "rule_verilog_sim_test", "rule_verilog_synth", "rule_verilog_synth_sandbox")
+load(":verilog_env_analysis_test.bzl", "verilog_env_analysis_test_suite")
+
+_VERILOG_RUNNER_PLUGINS = [
+    ":plugins/fake_plugin.py",
+    "@rules_hdl//verilog:providers.bzl",
+]
+
+verilog_library(
+    name = "design",
+    srcs = ["test_design.sv"],
+)
+
+write_file(
+    name = "quoted_runner_env",
+    out = "runner_env's.sh",
+    content = [
+        "#!/usr/bin/env bash",
+        "export VERILOG_RUNNER_ENV_TEST_LOADED=1",
+        "export VERILOG_RUNNER_PLUGIN_PATH=/hook/verilog_runner_plugins",
+    ],
+    is_executable = True,
+)
+
+rule_verilog_elab_test(
+    name = "elab_with_env",
+    tool = "fake",
+    verilog_runner_data = [],
+    verilog_runner_env = ":runner_env.sh",
+    verilog_runner_plugins = _VERILOG_RUNNER_PLUGINS,
+    verilog_runner_tool = ":fake_verilog_runner.py",
+    deps = [":design"],
+)
+
+rule_verilog_lint_test(
+    name = "lint_with_env",
+    tool = "fake",
+    verilog_runner_data = [],
+    verilog_runner_env = ":runner_env.sh",
+    verilog_runner_plugins = _VERILOG_RUNNER_PLUGINS,
+    verilog_runner_tool = ":fake_verilog_runner.py",
+    deps = [":design"],
+)
+
+rule_verilog_sim_test(
+    name = "sim_with_env",
+    tool = "fake",
+    verilog_runner_data = [],
+    verilog_runner_env = ":runner_env.sh",
+    verilog_runner_plugins = _VERILOG_RUNNER_PLUGINS,
+    verilog_runner_tool = ":fake_verilog_runner.py",
+    deps = [":design"],
+)
+
+rule_verilog_fpv_test(
+    name = "fpv_with_env",
+    tool = "fake",
+    verilog_runner_data = [],
+    verilog_runner_env = ":runner_env.sh",
+    verilog_runner_plugins = _VERILOG_RUNNER_PLUGINS,
+    verilog_runner_tool = ":fake_verilog_runner.py",
+    deps = [":design"],
+)
+
+rule_verilog_elab_test(
+    name = "elab_without_env",
+    tool = "fake",
+    verilog_runner_data = [],
+    verilog_runner_plugins = _VERILOG_RUNNER_PLUGINS,
+    verilog_runner_tool = ":fake_verilog_runner.py",
+    deps = [":design"],
+)
+
+rule_verilog_elab_test(
+    name = "elab_with_quoted_env",
+    tool = "fake",
+    verilog_runner_data = [],
+    verilog_runner_env = ":quoted_runner_env",
+    verilog_runner_plugins = _VERILOG_RUNNER_PLUGINS,
+    verilog_runner_tool = ":fake_verilog_runner.py",
+    deps = [":design"],
+)
+
+rule_verilog_fpv_sandbox(
+    name = "fpv_sandbox_with_env",
+    tool = "fake",
+    verilog_runner_data = [],
+    verilog_runner_env = ":runner_env.sh",
+    verilog_runner_plugins = _VERILOG_RUNNER_PLUGINS,
+    verilog_runner_tool = ":fake_verilog_runner.py",
+    deps = [":design"],
+)
+
+rule_verilog_synth(
+    name = "synth_with_env",
+    tool = "fake",
+    verilog_runner_data = [],
+    verilog_runner_env = ":runner_env.sh",
+    verilog_runner_plugins = _VERILOG_RUNNER_PLUGINS,
+    verilog_runner_tool = ":fake_verilog_runner.py",
+    deps = [":design"],
+)
+
+rule_verilog_synth_sandbox(
+    name = "synth_sandbox_with_env",
+    tool = "fake",
+    verilog_runner_data = [],
+    verilog_runner_env = ":runner_env.sh",
+    verilog_runner_plugins = _VERILOG_RUNNER_PLUGINS,
+    verilog_runner_tool = ":fake_verilog_runner.py",
+    deps = [":design"],
+)
+
+sh_test(
+    name = "wrapper_contents_test",
+    srcs = ["wrapper_contents_test.sh"],
+    args = [
+        "$(location :elab_with_env)",
+        "$(location :elab_without_env)",
+        "$(location :elab_with_quoted_env)",
+    ],
+    data = [
+        ":elab_with_env",
+        ":elab_with_quoted_env",
+        ":elab_without_env",
+    ],
+)
+
+sh_test(
+    name = "fpv_sandbox_contents_test",
+    srcs = ["fpv_sandbox_contents_test.sh"],
+    args = [
+        "$(location :fpv_sandbox_with_env.tar.gz)",
+        "$(location :fpv_sandbox_with_env_runner.sh)",
+    ],
+    data = [
+        ":fpv_sandbox_with_env.tar.gz",
+        ":fpv_sandbox_with_env_runner.sh",
+    ],
+)
+
+sh_test(
+    name = "synth_with_env_test",
+    srcs = ["run_wrapper_test.sh"],
+    args = ["$(location :synth_with_env)"],
+    data = [":synth_with_env"],
+)
+
+sh_test(
+    name = "synth_sandbox_contents_test",
+    srcs = ["fpv_sandbox_contents_test.sh"],
+    args = [
+        "$(location :synth_sandbox_with_env.tar.gz)",
+        "$(location :synth_sandbox_with_env_runner.sh)",
+    ],
+    data = [
+        ":synth_sandbox_with_env.tar.gz",
+        ":synth_sandbox_with_env_runner.sh",
+    ],
+)
+
+verilog_env_analysis_test_suite(
+    name = "verilog_env_analysis_tests",
+    direct_target = ":elab_with_env",
+    fpv_sandbox_target = ":fpv_sandbox_with_env",
+    omitted_target = ":elab_without_env",
+)
+
+test_suite(
+    name = "verilog_env_tests",
+    tests = [
+        ":elab_with_env",
+        ":elab_with_quoted_env",
+        ":elab_without_env",
+        ":fpv_sandbox_contents_test",
+        ":fpv_with_env",
+        ":lint_with_env",
+        ":sim_with_env",
+        ":synth_sandbox_contents_test",
+        ":synth_with_env_test",
+        ":verilog_env_analysis_tests",
+        ":wrapper_contents_test",
+    ],
+)
