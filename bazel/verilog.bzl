@@ -1124,6 +1124,22 @@ def verilog_elab_and_lint_test_suite(
         **kwargs
     )
 
+def is_param_combination_legal(params, illegal_param_combinations):
+    """Checks if a given combination of parameters is legal based on the provided illegal combinations.
+
+    Args:
+        params (dict): A dictionary where keys are parameter names and values are the specific value for those parameters in the current combination.
+        illegal_param_combinations (dict): A dictionary where keys are tuples of parameter names and values are lists of tuples of illegal values for those parameters.
+
+    Returns:
+        True if the combination is legal, False if it is illegal.
+    """
+    for keys_tuple, disallowed_values in illegal_param_combinations.items():
+        values_tuple = tuple([params[k] for k in keys_tuple])
+        if values_tuple in disallowed_values:
+            return False
+    return True
+
 def verilog_fpv_test_suite(
         name,
         defines = [],
@@ -1165,13 +1181,7 @@ def verilog_fpv_test_suite(
         params = dict(zip(param_keys, param_combination))
 
         # Check if this combination is illegal
-        skip = False
-        for keys_tuple, disallowed_values in illegal_param_combinations.items():
-            values_tuple = tuple([params[k] for k in keys_tuple])
-            if values_tuple in disallowed_values:
-                skip = True
-                break
-        if not skip:
+        if is_param_combination_legal(params, illegal_param_combinations):
             verilog_fpv_test_func(
                 name = _make_test_name(name, "fpv_test", param_keys, param_combination),
                 defines = defines,
@@ -1186,7 +1196,12 @@ def verilog_fpv_test_suite(
                     **kwargs
                 )
 
-def verilog_sim_test_suite(name, defines = [], params = {}, **kwargs):
+def verilog_sim_test_suite(
+        name,
+        defines = [],
+        params = {},
+        illegal_param_combinations = {},
+        **kwargs):
     """Creates a suite of Verilog sim tests for each combination of the provided parameters.
 
     The function generates all possible combinations of the provided parameters and creates a verilog_sim_test
@@ -1197,21 +1212,25 @@ def verilog_sim_test_suite(name, defines = [], params = {}, **kwargs):
         name (str): The base name for the test suite.
         defines (list): A list of defines.
         params (dict): A dictionary where keys are parameter names and values are lists of possible values for those parameters.
+        illegal_param_combinations (dict): A dictionary where keys are parameter
+        tuples and values are lists of tuples of illegal values for those
+        parameters.
         **kwargs: Additional keyword arguments to be passed to the verilog_elab_test and verilog_lint_test functions.
     """
     param_keys = sorted(params.keys())
     param_values_list = [params[key] for key in param_keys]
     param_combinations = _cartesian_product(param_values_list)
 
-    # Create a verilog_sim_test for each combination of parameters
+    # Create a verilog_sim_test for each legal combination of parameters
     for param_combination in param_combinations:
         params = dict(zip(param_keys, param_combination))
-        verilog_sim_test(
-            name = _make_test_name(name, "sim_test", param_keys, param_combination),
-            defines = defines,
-            params = params,
-            **kwargs
-        )
+        if is_param_combination_legal(params, illegal_param_combinations):
+            verilog_sim_test(
+                name = _make_test_name(name, "sim_test", param_keys, param_combination),
+                defines = defines,
+                params = params,
+                **kwargs
+            )
 
 def verilog_synth_suite(
         name,
@@ -1271,13 +1290,7 @@ def verilog_synth_suite(
 
     for param_combination in param_combinations:
         combination_params = dict(zip(param_keys, param_combination))
-        skip = False
-        for keys_tuple, disallowed_values in illegal_param_combinations.items():
-            values_tuple = tuple([combination_params[k] for k in keys_tuple])
-            if values_tuple in disallowed_values:
-                skip = True
-                break
-        if not skip:
+        if is_param_combination_legal(combination_params, illegal_param_combinations):
             target_name = _make_test_name(name, synth_suffix, param_keys, param_combination)
             verilog_synth_func(
                 name = target_name,
