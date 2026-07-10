@@ -80,18 +80,21 @@ package br_amba_axil_sim_pkg;
   typedef struct {
     logic [AxilAddrWidth-1:0] addr;
     logic [AxiProtWidth-1:0]  prot;
+    logic [AxilUserWidth-1:0] user;
     int                       gap_cycles;
   } axil_aw_driver_item_t;
 
   typedef struct {
     logic [AxilDataWidth-1:0]   data;
     logic [AxilStrobeWidth-1:0] strb;
+    logic [AxilUserWidth-1:0]   user;
     int                         gap_cycles;
   } axil_w_driver_item_t;
 
   typedef struct {
     logic [AxilAddrWidth-1:0] addr;
     logic [AxiProtWidth-1:0]  prot;
+    logic [AxilUserWidth-1:0] user;
     int                       gap_cycles;
   } axil_ar_driver_item_t;
 

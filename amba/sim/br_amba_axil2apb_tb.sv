@@ -64,7 +64,6 @@ module br_amba_axil2apb_tb;
   `BR_ASSERT_STATIC(AxilApbAddrWidthMatch, AxilAddrWidth == ApbAddrWidth)
   `BR_ASSERT_STATIC(AxilApbDataWidthMatch, AxilDataWidth == ApbDataWidth)
   `BR_ASSERT_STATIC(AxilApbStrobeWidthMatch, AxilStrobeWidth == ApbStrbWidth)
-  `BR_ASSERT_STATIC(RandomDataWidthSupported, DataWidth <= BrAmbaSimMaxCheckWidth)
 
   logic clk;
   logic rst;
@@ -79,10 +78,12 @@ module br_amba_axil2apb_tb;
   // AXI4-Lite manager-side signals.
   logic [AddrWidth-1:0] awaddr;
   logic [AxiProtWidth-1:0] awprot;
+  logic [AxilUserWidth-1:0] axil_awuser_unused;
   logic awvalid;
   logic awready;
   logic [DataWidth-1:0] wdata;
   logic [StrbWidth-1:0] wstrb;
+  logic [AxilUserWidth-1:0] axil_wuser_unused;
   logic wvalid;
   logic wready;
   logic [AxiRespWidth-1:0] bresp;
@@ -90,6 +91,7 @@ module br_amba_axil2apb_tb;
   logic bready;
   logic [AddrWidth-1:0] araddr;
   logic [AxiProtWidth-1:0] arprot;
+  logic [AxilUserWidth-1:0] axil_aruser_unused;
   logic arvalid;
   logic arready;
   logic [DataWidth-1:0] rdata;
@@ -178,16 +180,19 @@ module br_amba_axil2apb_tb;
       .rst(rst),
       .axil_awaddr(awaddr),
       .axil_awprot(awprot),
+      .axil_awuser(axil_awuser_unused),
       .axil_awvalid(awvalid),
       .axil_awready(awready),
       .axil_wdata(wdata),
       .axil_wstrb(wstrb),
+      .axil_wuser(axil_wuser_unused),
       .axil_wvalid(wvalid),
       .axil_wready(wready),
       .axil_bvalid(bvalid),
       .axil_bready(bready),
       .axil_araddr(araddr),
       .axil_arprot(arprot),
+      .axil_aruser(axil_aruser_unused),
       .axil_arvalid(arvalid),
       .axil_arready(arready),
       .axil_rvalid(rvalid),
@@ -276,14 +281,26 @@ module br_amba_axil2apb_tb;
 
   function automatic apb_response_t random_response(input logic allow_slverr,
                                                     input logic force_slverr);
+    logic [DataWidth-1:0] rdata;
+
+    if (!std::randomize(rdata)) begin
+      $fatal(1, "Failed to randomize APB read response data");
+    end
+
     random_response.ready = Pready1;
-    random_response.rdata = ApbDataWidth'(DataWidth'(get_random_bits(DataWidth)));
+    random_response.rdata = ApbDataWidth'(rdata);
     random_response.slverr = force_slverr ?
         Pslverr1 : (allow_slverr ? logic'($urandom_range(1, 0)) : Pslverr0);
   endfunction
 
   function automatic logic [StrbWidth-1:0] random_write_strobe();
-    random_write_strobe = StrbWidth'(get_random_bits(StrbWidth));
+    logic [StrbWidth-1:0] strb;
+
+    if (!std::randomize(strb)) begin
+      $fatal(1, "Failed to randomize AXI-Lite write strobe");
+    end
+
+    random_write_strobe = strb;
   endfunction
 
   task automatic init_scenario(output axil2apb_scenario_t scenario, input int num_writes,
@@ -341,10 +358,14 @@ module br_amba_axil2apb_tb;
                                                 output apb_response_t response);
     logic [AddrWidth-1:0] addr = AddrWidth'($urandom());
     logic [AxiProtWidth-1:0] prot = AxiProtWidth'($urandom());
-    logic [DataWidth-1:0] data = DataWidth'(get_random_bits(DataWidth));
+    logic [DataWidth-1:0] data;
     int aw_gap_cycles = $urandom_range(scenario.max_aw_gap_cycles, scenario.min_aw_gap_cycles);
     int w_gap_cycles = $urandom_range(scenario.max_w_gap_cycles, scenario.min_w_gap_cycles);
     int b_stall_cycles = $urandom_range(scenario.max_b_stall_cycles, scenario.min_b_stall_cycles);
+
+    if (!std::randomize(data)) begin
+      td.check(1'b0, "Failed to randomize AXI-Lite write data");
+    end
 
     response = random_response(scenario.allow_slverr, scenario.force_slverr);
     axil_driver.queue_write(addr, prot, data, strb, aw_gap_cycles, w_gap_cycles, b_stall_cycles);
@@ -720,10 +741,15 @@ module br_amba_axil2apb_tb;
   endtask
 
   task automatic reset_after_incomplete_write();
+    logic [DataWidth-1:0] data;
+
     init_idle();
-    axil_driver.queue_write(AddrWidth'($urandom()), AxiProtWidth'($urandom()),
-                            DataWidth'(get_random_bits(DataWidth)), MidResetStrobe, NoGapCycles,
-                            MidResetWriteDataDelayCycles, NoStallCycles);
+    if (!std::randomize(data)) begin
+      td.check(1'b0, "Failed to randomize incomplete-write reset data");
+    end
+
+    axil_driver.queue_write(AddrWidth'($urandom()), AxiProtWidth'($urandom()), data, MidResetStrobe,
+                            NoGapCycles, MidResetWriteDataDelayCycles, NoStallCycles);
     fork
       begin
         fork
@@ -747,10 +773,15 @@ module br_amba_axil2apb_tb;
   endtask
 
   task automatic reset_during_apb_setup();
+    logic [DataWidth-1:0] data;
+
     init_idle();
-    axil_driver.queue_write(AddrWidth'($urandom()), AxiProtWidth'($urandom()),
-                            DataWidth'(get_random_bits(DataWidth)), MidResetStrobe, NoGapCycles,
-                            NoGapCycles, NoStallCycles);
+    if (!std::randomize(data)) begin
+      td.check(1'b0, "Failed to randomize APB setup reset data");
+    end
+
+    axil_driver.queue_write(AddrWidth'($urandom()), AxiProtWidth'($urandom()), data, MidResetStrobe,
+                            NoGapCycles, NoGapCycles, NoStallCycles);
     fork
       begin
         fork
@@ -774,10 +805,15 @@ module br_amba_axil2apb_tb;
   endtask
 
   task automatic reset_during_apb_access();
+    logic [DataWidth-1:0] data;
+
     init_idle();
-    axil_driver.queue_write(AddrWidth'($urandom()), AxiProtWidth'($urandom()),
-                            DataWidth'(get_random_bits(DataWidth)), MidResetStrobe, NoGapCycles,
-                            NoGapCycles, NoStallCycles);
+    if (!std::randomize(data)) begin
+      td.check(1'b0, "Failed to randomize APB access reset data");
+    end
+
+    axil_driver.queue_write(AddrWidth'($urandom()), AxiProtWidth'($urandom()), data, MidResetStrobe,
+                            NoGapCycles, NoGapCycles, NoStallCycles);
     fork
       begin
         fork
@@ -803,14 +839,18 @@ module br_amba_axil2apb_tb;
   task automatic reset_during_write_response();
     apb_response_controls_t response_controls;
     apb_response_t response_queue[$];
+    logic [DataWidth-1:0] data;
 
     init_idle();
+    if (!std::randomize(data)) begin
+      td.check(1'b0, "Failed to randomize write-response reset data");
+    end
+
     response_queue.push_back(random_response(1'b0, 1'b0));
     response_controls.num_transactions = SingleWrite;
     response_controls.wait_cycles = NoStallCycles;
-    axil_driver.queue_write(AddrWidth'($urandom()), AxiProtWidth'($urandom()),
-                            DataWidth'(get_random_bits(DataWidth)), MidResetStrobe, NoGapCycles,
-                            NoGapCycles, MidResetResponseStallCycles);
+    axil_driver.queue_write(AddrWidth'($urandom()), AxiProtWidth'($urandom()), data, MidResetStrobe,
+                            NoGapCycles, NoGapCycles, MidResetResponseStallCycles);
     fork
       begin
         fork
