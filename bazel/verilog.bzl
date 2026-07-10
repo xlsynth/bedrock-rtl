@@ -1212,9 +1212,7 @@ def verilog_sim_test_suite(
         name (str): The base name for the test suite.
         defines (list): A list of defines.
         params (dict): A dictionary where keys are parameter names and values are lists of possible values for those parameters.
-        illegal_param_combinations (dict): A dictionary where keys are parameter
-        tuples and values are lists of tuples of illegal values for those
-        parameters.
+        illegal_param_combinations (dict): A dictionary where keys are parameter tuples and values are lists of tuples of illegal values for those parameters.
         **kwargs: Additional keyword arguments to be passed to the verilog_elab_test and verilog_lint_test functions.
     """
     param_keys = sorted(params.keys())
