@@ -262,7 +262,11 @@ module br_fifo_shared_pstatic_ctrl_push_credit #(
       .Width(Width),
       .StagingBufferDepth(StagingBufferDepth),
       .EnableBypass(EnableBypass),
+      // Each FIFO gets at least one entry, so this is true only if one FIFO can
+      // contain enough entries to issue a read when an earlier read returns.
       .EnableCoverIncrementAndDecrement((Depth - (NumFifos - 1)) > RamReadLatency),
+      // With registered push outputs, a one-entry FIFO does not return credit
+      // early enough for a bypass beat to coincide with returning RAM read data.
       .EnableCoverBypassAndReadDataSameCycle(
           !RegisterPushOutputs || ((Depth - (NumFifos - 1)) > 1)
       ),

@@ -241,6 +241,8 @@ module br_fifo_shared_pstatic_ctrl #(
       .Width(Width),
       .StagingBufferDepth(StagingBufferDepth),
       .EnableBypass(EnableBypass),
+      // Each FIFO gets at least one entry, so this is true only if one FIFO can
+      // contain enough entries to issue a read when an earlier read returns.
       .EnableCoverIncrementAndDecrement((Depth - (NumFifos - 1)) > RamReadLatency),
       .RamReadLatency(RamReadLatency),
       .RegisterPopOutputs(RegisterPopOutputs)

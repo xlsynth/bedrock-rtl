@@ -726,11 +726,15 @@ module {{ module_name }} #(
       .EnableBypass(EnableBypass),
 {%-   endif %}
 {%-   if not dynamic and not pop_credit %}
+      // Each FIFO gets at least one entry, so this is true only if one FIFO can
+      // contain enough entries to issue a read when an earlier read returns.
       .EnableCoverIncrementAndDecrement(
           (Depth - (NumFifos - 1)) > RamReadLatency
       ),
 {%-   endif %}
 {%-   if bypassable and push_credit %}
+      // With registered push outputs, a one-entry FIFO does not return credit
+      // early enough for a bypass beat to coincide with returning RAM read data.
       .EnableCoverBypassAndReadDataSameCycle(
           !RegisterPushOutputs || ((Depth - (NumFifos - 1)) > 1)
       ),

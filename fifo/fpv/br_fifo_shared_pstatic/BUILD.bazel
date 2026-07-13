@@ -325,6 +325,10 @@ br_verilog_fpv_test_tools_suite(
 br_verilog_fpv_test_tools_suite(
     name = "br_fifo_shared_pstatic_flops_test_delay",
     illegal_param_combinations = {
+        # In this flop-backed FIFO, RamReadLatency is the sum of the three RAM
+        # pipeline-stage parameters. When all are 0, br_fifo_staging_buffer's
+        # max_buffer_depth_a static assertion requires
+        # StagingBufferDepth <= RamReadLatency + 1 = 1.
         (
             "RamAddressDepthStages",
             "RamReadDataDepthStages",
@@ -433,6 +437,10 @@ br_verilog_fpv_test_tools_suite(
 br_verilog_fpv_test_tools_suite(
     name = "br_fifo_shared_pstatic_flops_push_credit_test_delay",
     illegal_param_combinations = {
+        # In this flop-backed FIFO, RamReadLatency is the sum of the three RAM
+        # pipeline-stage parameters. When all are 0, br_fifo_staging_buffer's
+        # max_buffer_depth_a static assertion requires
+        # StagingBufferDepth <= RamReadLatency + 1 = 1.
         (
             "RamAddressDepthStages",
             "RamReadDataDepthStages",
