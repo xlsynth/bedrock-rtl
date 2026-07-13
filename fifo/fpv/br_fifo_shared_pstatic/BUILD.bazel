@@ -324,6 +324,16 @@ br_verilog_fpv_test_tools_suite(
 # Test focuses on testing delay
 br_verilog_fpv_test_tools_suite(
     name = "br_fifo_shared_pstatic_flops_test_delay",
+    illegal_param_combinations = {
+        (
+            "RamAddressDepthStages",
+            "RamReadDataDepthStages",
+            "RamReadDataWidthStages",
+            "StagingBufferDepth",
+        ): [
+            ("0", "0", "0", "2"),
+        ],
+    },
     params = {
         "NumFifos": [
             "2",

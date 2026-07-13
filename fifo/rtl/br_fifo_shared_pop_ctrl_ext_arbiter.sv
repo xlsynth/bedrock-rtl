@@ -48,6 +48,10 @@ module br_fifo_shared_pop_ctrl_ext_arbiter #(
     parameter bit RegisterDeallocation = 0,
     // If 1, allow bypass from the push side to the pop controller.
     parameter bit EnableBypass = 0,
+    // If 1, cover issuing a RAM read when an earlier read returns.
+    parameter bit EnableCoverIncrementAndDecrement = 1,
+    // If 1, cover accepting bypass data when RAM read data returns.
+    parameter bit EnableCoverBypassAndReadDataSameCycle = 1,
     // The number of cycles between data ram read address and read data. Must be >=0.
     parameter int RamReadLatency = 0,
     // Set to 1 if the arbiter is guaranteed to grant in a cycle when any request is asserted.
@@ -189,6 +193,8 @@ module br_fifo_shared_pop_ctrl_ext_arbiter #(
           .Width(Width),
           .RegisterPopOutputs(RegisterPopOutputs),
           .RamReadLatency(RamReadLatency),
+          .EnableCoverIncrementAndDecrement(EnableCoverIncrementAndDecrement),
+          .EnableCoverBypassAndReadDataSameCycle(EnableCoverBypassAndReadDataSameCycle),
           .TotalItemsIncludesStaged(0)
       ) br_fifo_staging_buffer (
           .clk,

@@ -35,6 +35,12 @@ module br_fifo_staging_buffer #(
     // If 1, then assert there are no valid bits asserted and that the FIFO is
     // empty at the end of the test.
     parameter bit EnableAssertFinalNotValid = 1,
+    // If 1, cover issuing a RAM read when an earlier read returns.
+    // Otherwise, assert that these events never occur together.
+    parameter bit EnableCoverIncrementAndDecrement = 1,
+    // If 1, cover accepting bypass data when RAM read data returns.
+    // Otherwise, assert that these events never occur together.
+    parameter bit EnableCoverBypassAndReadDataSameCycle = 1,
 
     localparam int TotalCountWidth  = $clog2(TotalDepth + 1),
     localparam int BufferCountWidth = $clog2(BufferDepth + 1)
@@ -225,7 +231,8 @@ module br_fifo_staging_buffer #(
         .MaxValue(MaxReadInflight),
         .EnableWrap(0),
         .EnableCoverReinit(0),
-        .EnableCoverZeroChange(0)
+        .EnableCoverZeroChange(0),
+        .EnableCoverIncrementAndDecrement(EnableCoverIncrementAndDecrement)
     ) br_counter_read_inflight (
         .clk,
         .rst,
@@ -283,7 +290,8 @@ module br_fifo_staging_buffer #(
     `BR_REGL(buffer_data, buffer_data_next, buffer_data_le)
     `BR_REGL(buffer_bypass, bypass_beat, buffer_data_le)
 
-    if (EnableBypass && RamReadLatency > 0) begin : gen_no_double_push_overflow_assert
+    if (EnableBypass && RamReadLatency > 0 &&
+        EnableCoverBypassAndReadDataSameCycle) begin : gen_no_double_push_overflow_assert
       `BR_ASSERT_IMPL(no_double_push_overflow_a,
                       (ram_rd_data_valid && bypass_beat) |-> (!buffer_valid && internal_pop_ready))
     end
@@ -530,8 +538,9 @@ module br_fifo_staging_buffer #(
 
   // Implementation Checks
   if (EnableBypass) begin : gen_bypass_impl_checks
-    // TODO(zhemao): Figure out the correct condition for enabling this cover
-    localparam bit SimultaneousBypassAndReadDataPossible = RamReadLatency > 0;
+    // A returning RAM read and bypass beat require separate internal storage.
+    localparam bit SimultaneousBypassAndReadDataPossible =
+        EnableCoverBypassAndReadDataSameCycle && (RamReadLatency > 0) && (InternalDepth > 0);
     `BR_ASSERT_IMPL(no_alloc_hazard_a, !(ram_rd_addr_beat && bypass_beat))
     if (SimultaneousBypassAndReadDataPossible) begin : gen_bypass_and_read_same_cycle_cover
       `BR_COVER_IMPL(bypass_and_rd_data_same_cycle_c, bypass_beat && ram_rd_data_valid)

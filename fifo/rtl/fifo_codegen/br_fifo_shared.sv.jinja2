@@ -725,6 +725,16 @@ module {{ module_name }} #(
 {%-   if bypassable %}
       .EnableBypass(EnableBypass),
 {%-   endif %}
+{%-   if not dynamic and not pop_credit %}
+      .EnableCoverIncrementAndDecrement(
+          (Depth - (NumFifos - 1)) > RamReadLatency
+      ),
+{%-   endif %}
+{%-   if bypassable and push_credit %}
+      .EnableCoverBypassAndReadDataSameCycle(
+          !RegisterPushOutputs || ((Depth - (NumFifos - 1)) > 1)
+      ),
+{%-   endif %}
 {%-   if dynamic %}
       .RamReadLatency(DataRamReadLatency),
       .RegisterDeallocation(RegisterDeallocation)
