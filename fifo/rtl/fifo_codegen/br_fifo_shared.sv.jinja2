@@ -733,10 +733,10 @@ module {{ module_name }} #(
       ),
 {%-   endif %}
 {%-   if bypassable and push_credit %}
-      // With registered push outputs, a one-entry FIFO does not return credit
-      // early enough for a bypass beat to coincide with returning RAM read data.
+      // With registered push outputs, a one-entry FIFO can only return and consume
+      // credit before RAM data returns when the RAM read latency is greater than 1.
       .EnableCoverBypassAndReadDataSameCycle(
-          !RegisterPushOutputs || ((Depth - (NumFifos - 1)) > 1)
+          !RegisterPushOutputs || ((Depth - (NumFifos - 1)) > 1) || (RamReadLatency > 1)
       ),
 {%-   endif %}
 {%-   if dynamic %}

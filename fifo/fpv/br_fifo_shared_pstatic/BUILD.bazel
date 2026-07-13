@@ -169,7 +169,7 @@ verilog_elab_test(
     deps = [":br_fifo_shared_pstatic_ctrl_push_credit_fpv_monitor"],
 )
 
-# Test focuses on testing backpressure
+# Test focuses on testing NumFifos and Depth
 br_verilog_fpv_test_tools_suite(
     name = "br_fifo_shared_pstatic_ctrl_push_credit_test",
     illegal_param_combinations = {
@@ -178,15 +178,6 @@ br_verilog_fpv_test_tools_suite(
             "Depth",
         ): [
             ("4", "2"),
-        ],
-        (
-            "Depth",
-            "StagingBufferDepth",
-        ): [
-            ("2", "2"),
-        ],
-        ("RamReadLatency", "StagingBufferDepth"): [
-            ("0", "2"),
         ],
     },
     params = {
@@ -202,21 +193,47 @@ br_verilog_fpv_test_tools_suite(
             "0",
             "1",
         ],
-        "StagingBufferDepth": [
-            "1",
-            "2",
+    },
+    tools = {
+        "jg": "br_fifo_shared_pstatic_ctrl_push_credit_fpv.jg.tcl",
+    },
+    top = "br_fifo_shared_pstatic_ctrl_push_credit",
+    deps = [":br_fifo_shared_pstatic_ctrl_push_credit_fpv_monitor"],
+)
+
+# Test focuses on testing delays
+br_verilog_fpv_test_tools_suite(
+    name = "br_fifo_shared_pstatic_ctrl_push_credit_test_delay",
+    elab_opts = [
+        "-parameter Depth 4",
+        "-parameter NumFifos 4",
+    ],
+    illegal_param_combinations = {
+        ("RamReadLatency", "StagingBufferDepth"): [
+            ("0", "2"),
         ],
-        "RegisterPushOutputs": [
-            "0",
-            "1",
-        ],
-        "RegisterPopOutputs": [
+    },
+    params = {
+        "EnableBypass": [
             "0",
             "1",
         ],
         "RamReadLatency": [
             "0",
             "1",
+            "2",
+        ],
+        "RegisterPopOutputs": [
+            "0",
+            "1",
+        ],
+        "RegisterPushOutputs": [
+            "0",
+            "1",
+        ],
+        "StagingBufferDepth": [
+            "1",
+            "2",
         ],
     },
     tools = {
