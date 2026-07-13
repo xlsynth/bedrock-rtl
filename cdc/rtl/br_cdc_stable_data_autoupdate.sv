@@ -47,7 +47,8 @@ module br_cdc_stable_data_autoupdate #(
       .Width(Width),
       .RegisterResetActive(RegisterResetActive),
       .NumSyncStages(NumSyncStages),
-      // Data can change if data changes while register is backpressured
+      // Both valid and data can change if src_data changes while the register is backpressured.
+      .EnableAssertPushValidStability(0),
       .EnableAssertPushDataStability(0)
   ) br_cdc_reg_inst (
       .push_clk  (src_clk),    // ri lint_check_waive SAME_CLOCK_NAME
