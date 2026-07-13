@@ -45,22 +45,52 @@ def get_transitive(ctx, srcs_not_hdrs):
     ]
     return depset([x for sub_tuple in transitive_srcs_or_hdrs for x in sub_tuple])
 
-def _write_executable_shell_script(ctx, executable_file, cmd, verbose = True, env_exports = None):
+def _shell_quote(value):
+    """Single-quotes a shell word, reopening quotes around each literal `'`."""
+    return "'" + value.replace("'", "'\"'\"'") + "'"
+
+def _append_env_exports(lines, env_exports):
+    if env_exports:
+        for key, value in env_exports.items():
+            lines.append("export {}={}".format(key, value))
+
+def _append_wrapper_prologue(lines, env_exports, verilog_runner_env):
+    """Appends the hook/no-hook environment setup in its required order."""
+
+    # Bazel 9 exports an rlocation compatibility function whose body contains a
+    # literal "ERROR:" message. Some EDA plugins scan captured shell output for
+    # diagnostics, so keep that helper out of child tool environments.
+    unset_rlocation = "unset -f rlocation 2>/dev/null || true"
+
+    if verilog_runner_env:
+        # The hook may inspect or replace Bazel's runfiles helper before it is
+        # kept out of child tool environments. Bedrock exports come last so
+        # plugin directories are appended to values established by the hook.
+        lines.append("source " + _shell_quote(verilog_runner_env))
+        lines.append(unset_rlocation)
+        _append_env_exports(lines, env_exports)
+    else:
+        # Preserve the pre-hook wrapper order when no hook is configured.
+        _append_env_exports(lines, env_exports)
+        lines.append(unset_rlocation)
+
+def _execution_path(file, use_runfiles):
+    """Returns a runfiles path for direct wrappers or execroot path for actions."""
+    return file.short_path if use_runfiles else file.path
+
+def _execution_dir(file, use_runfiles):
+    """Returns the directory containing a file in the selected execution mode."""
+    return "/".join(_execution_path(file, use_runfiles).split("/")[:-1])
+
+def _write_executable_shell_script(ctx, executable_file, cmd, verbose = True, env_exports = None, verilog_runner_env = None):
     """Writes a shell script that executes the given command and returns a handle to it."""
     lines = [
         "#!/usr/bin/env bash",
         "set -ex" if verbose else "set -e",
     ]
 
-    # Insert environment variable exports if provided
-    if env_exports:
-        for key, value in env_exports.items():
-            lines.append("export {}={}".format(key, value))
+    _append_wrapper_prologue(lines, env_exports, verilog_runner_env)
 
-    # Bazel 9 exports an rlocation compatibility function whose body contains a
-    # literal "ERROR:" message. Some EDA plugins scan captured shell output for
-    # diagnostics, so keep that helper out of child tool environments.
-    lines.append("unset -f rlocation 2>/dev/null || true")
     if verbose:
         lines.append("pwd")
     lines.append(cmd)
@@ -93,6 +123,24 @@ runner_flags = rule(
     implementation = _runner_flags_impl,
     build_setting = config.string(flag = True),
 )
+
+def _verilog_runner_env_attr():
+    return attr.label(
+        doc = """Optional shell script sourced immediately before each Verilog Runner invocation.
+
+The wrapper does not change directories before sourcing the hook, so it inherits
+the wrapper's existing working directory. Direct wrappers add the hook to
+runfiles and source its runfiles path; sandbox generator actions declare it as
+an input and source its execroot path. A direct hook is sourced before the
+wrapper unsets any inherited `rlocation` function, but callers needing runfiles
+lookup must initialize a working runfiles library rather than assume that Bazel
+exports a usable `rlocation` implementation. Bedrock appends its
+`verilog_runner_plugins` directories to `VERILOG_RUNNER_PLUGIN_PATH` after the
+hook runs. The hook is not included in sandbox archives or sourced by their
+final runners.""",
+        allow_single_file = True,
+        cfg = "exec",
+    )
 
 def _verilog_base_impl(ctx, subcmd, test = True, extra_args = [], extra_runfiles = [], allow_empty_top = False):
     """Shared implementation for rule_verilog_elab_test, rule_verilog_lint_test, rule_verilog_sim_test, and rule_verilog_fpv_test.
@@ -129,14 +177,14 @@ def _verilog_base_impl(ctx, subcmd, test = True, extra_args = [], extra_runfiles
         runfiles += ctx.files.verilog_runner_tool
     runfiles += ctx.files.verilog_runner_data
     runfiles += ctx.files.verilog_runner_plugins
+    verilog_runner_env = ctx.file.verilog_runner_env
+    if test and verilog_runner_env:
+        runfiles.append(verilog_runner_env)
     srcs = get_transitive(ctx = ctx, srcs_not_hdrs = True).to_list()
     hdrs = get_transitive(ctx = ctx, srcs_not_hdrs = False).to_list()
-    if test:
-        src_files = [src.short_path for src in srcs]
-        hdr_files = [hdr.short_path for hdr in hdrs]
-    else:
-        src_files = [src.path for src in srcs]
-        hdr_files = [hdr.path for hdr in hdrs]
+    use_runfiles = test
+    src_files = [_execution_path(src, use_runfiles) for src in srcs]
+    hdr_files = [_execution_path(hdr, use_runfiles) for hdr in hdrs]
     top = ctx.attr.top
     if top == "" and not allow_empty_top:
         if (len(ctx.attr.deps) != 1):
@@ -159,16 +207,10 @@ def _verilog_base_impl(ctx, subcmd, test = True, extra_args = [], extra_runfiles
     if not test:
         args.append("--dry-run")
     if ctx.attr.custom_tcl_header:
-        if test:
-            args.append("--custom_tcl_header=" + ctx.files.custom_tcl_header[0].short_path)
-        else:
-            args.append("--custom_tcl_header=" + ctx.files.custom_tcl_header[0].path)
+        args.append("--custom_tcl_header=" + _execution_path(ctx.files.custom_tcl_header[0], use_runfiles))
         runfiles += ctx.files.custom_tcl_header
     if ctx.attr.custom_tcl_body:
-        if test:
-            args.append("--custom_tcl_body=" + ctx.files.custom_tcl_body[0].short_path)
-        else:
-            args.append("--custom_tcl_body=" + ctx.files.custom_tcl_body[0].path)
+        args.append("--custom_tcl_body=" + _execution_path(ctx.files.custom_tcl_body[0], use_runfiles))
         runfiles += ctx.files.custom_tcl_body
     if ctx.attr.runner_flags:
         args += ctx.attr.runner_flags[VerilogRunnerFlagsInfo].runner_flags
@@ -180,20 +222,17 @@ def _verilog_base_impl(ctx, subcmd, test = True, extra_args = [], extra_runfiles
             fail("verilog_runner_tool must be an executable target or a single Python source file.")
         verilog_runner_file = verilog_runner_files[0]
 
-    if test:
-        if verilog_runner_executable:
-            runner_cmd_prefix = [verilog_runner_executable.short_path]
-        else:
-            runner_cmd_prefix = ["python3", verilog_runner_file.short_path]
-    elif verilog_runner_executable:
-        runner_cmd_prefix = [verilog_runner_executable.path]
-        generator_tools = [verilog_runner_files_to_run]
+    if verilog_runner_executable:
+        runner_cmd_prefix = [_execution_path(verilog_runner_executable, use_runfiles)]
     else:
-        runner_cmd_prefix = ["python3", verilog_runner_file.path]
+        runner_cmd_prefix = ["python3", _execution_path(verilog_runner_file, use_runfiles)]
+    if not test and verilog_runner_executable:
+        generator_tools = [verilog_runner_files_to_run]
     plugin_paths = []
     for plugin in ctx.files.verilog_runner_plugins:
-        if plugin.dirname not in plugin_paths:
-            plugin_paths.append(plugin.dirname)
+        plugin_dir = _execution_dir(plugin, use_runfiles)
+        if plugin_dir not in plugin_paths:
+            plugin_paths.append(plugin_dir)
     verilog_runner_plugin_paths = ":".join(plugin_paths)
     env_exports = {
         "VERILOG_RUNNER_EDA_TOOLS_ENV_SETUP": "${VERILOG_RUNNER_EDA_TOOLS_ENV_SETUP}",
@@ -201,6 +240,9 @@ def _verilog_base_impl(ctx, subcmd, test = True, extra_args = [], extra_runfiles
     }
 
     verilog_runner_cmd = " ".join(runner_cmd_prefix + [subcmd] + args + src_files)
+    verilog_runner_env_path = None
+    if verilog_runner_env:
+        verilog_runner_env_path = _execution_path(verilog_runner_env, use_runfiles)
     verilog_runner_runfiles = ctx.runfiles(files = srcs + hdrs + runfiles + extra_runfiles)
     if test:
         verilog_runner_runfiles = verilog_runner_runfiles.merge(
@@ -214,6 +256,7 @@ def _verilog_base_impl(ctx, subcmd, test = True, extra_args = [], extra_runfiles
             executable_file = runner_executable_file,
             cmd = verilog_runner_cmd,
             env_exports = env_exports,
+            verilog_runner_env = verilog_runner_env_path,
         )
         return DefaultInfo(
             runfiles = verilog_runner_runfiles,
@@ -224,11 +267,13 @@ def _verilog_base_impl(ctx, subcmd, test = True, extra_args = [], extra_runfiles
     else:
         # Generator I/O
         generator_inputs = srcs + hdrs + runfiles + extra_runfiles
+        if verilog_runner_env:
+            generator_inputs.append(verilog_runner_env)
         generator_outputs = [tcl, script, filelist]
 
         # Tarball inputs
         tar_inputs = []
-        for f in generator_inputs:
+        for f in srcs + hdrs + runfiles + extra_runfiles:
             tar_inputs.append(f.path)
         for f in generator_outputs:
             tar_inputs.append(f)
@@ -249,6 +294,7 @@ def _verilog_base_impl(ctx, subcmd, test = True, extra_args = [], extra_runfiles
             cmd = generator_cmd,
             verbose = False,
             env_exports = env_exports,
+            verilog_runner_env = verilog_runner_env_path,
         )
 
         # Run generator script
@@ -419,6 +465,7 @@ rule_verilog_elab_test = rule(
         "opts": attr.string_list(doc = "Tool-specific elaboration options."),
         "top": attr.string(doc = "The top-level module; if not provided and there exists one dependency, then defaults to that dep's label name."),
         "verilog_runner_tool": attr.label(doc = "The Verilog Runner tool to use.", default = "//python/verilog_runner:verilog_runner.py", allow_files = True),
+        "verilog_runner_env": _verilog_runner_env_attr(),
         "verilog_runner_data": attr.label_list(
             default = ["//python/verilog_runner:verilog_runner_data"],
             allow_files = True,
@@ -505,6 +552,7 @@ rule_verilog_lint_test = rule(
             doc = "The lint policy file to use. If not provided, then the default tool policy is used (typically provided through an environment variable).",
         ),
         "verilog_runner_tool": attr.label(doc = "The Verilog Runner tool to use.", default = "//python/verilog_runner:verilog_runner.py", allow_files = True),
+        "verilog_runner_env": _verilog_runner_env_attr(),
         "verilog_runner_data": attr.label_list(
             default = ["//python/verilog_runner:verilog_runner_data"],
             allow_files = True,
@@ -597,6 +645,7 @@ def _verilog_synth_attrs(verilog_runner_tool_default = "//python/verilog_runner:
             default = verilog_runner_tool_default,
             allow_files = True,
         ),
+        "verilog_runner_env": _verilog_runner_env_attr(),
         "verilog_runner_data": attr.label_list(
             default = ["//python/verilog_runner:verilog_runner_data"],
             allow_files = True,
@@ -735,6 +784,7 @@ rule_verilog_sim_test = rule(
             default = False,
         ),
         "verilog_runner_tool": attr.label(doc = "The Verilog Runner tool to use.", default = "//python/verilog_runner:verilog_runner.py", allow_files = True),
+        "verilog_runner_env": _verilog_runner_env_attr(),
         "verilog_runner_data": attr.label_list(
             default = ["//python/verilog_runner:verilog_runner_data"],
             allow_files = True,
@@ -859,6 +909,7 @@ rule_verilog_fpv_test = rule(
             default = False,
         ),
         "verilog_runner_tool": attr.label(doc = "The Verilog Runner tool to use.", default = "//python/verilog_runner:verilog_runner.py", allow_files = True),
+        "verilog_runner_env": _verilog_runner_env_attr(),
         "verilog_runner_data": attr.label_list(
             default = ["//python/verilog_runner:verilog_runner_data"],
             allow_files = True,
@@ -961,6 +1012,7 @@ rule_verilog_fpv_sandbox = rule(
             default = False,
         ),
         "verilog_runner_tool": attr.label(doc = "The Verilog Runner tool to use.", default = "//python/verilog_runner:verilog_runner.py", allow_files = True),
+        "verilog_runner_env": _verilog_runner_env_attr(),
         "verilog_runner_data": attr.label_list(
             default = ["//python/verilog_runner:verilog_runner_data"],
             allow_files = True,
