@@ -41,6 +41,7 @@ RUN yum install -y dnf-plugins-core-4.0.21-25.el8 && \
         gperf-3.1-5.el8 \
         graphviz-2.40.1-45.el8 \
         help2man-1.47.6-1.el8 \
+        jq-1.6-12.el8_10 \
         libatomic-8.5.0-23.el8_10 \
         libffi-3.1-24.el8 \
         libffi-devel-3.1-24.el8.x86_64 \

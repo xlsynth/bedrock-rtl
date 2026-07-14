@@ -81,6 +81,20 @@ class BazelOssShardingTest(unittest.TestCase):
             record = finalize_result(result_path, log_path, 0)
             self.assertNotEqual(record["exit_code"], 0)
 
+    def test_finalize_accepts_successful_build_suite_without_test_summary(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            output_dir = Path(temporary)
+            _, result_path, _ = prepare_partition(
+                "coverage", 0, 1, ["//sim:test_coverage_data"], output_dir
+            )
+            log_path = output_dir / "bazel.log"
+            log_path.write_text("INFO: Build completed successfully\n")
+
+            record = finalize_result(result_path, log_path, 0)
+
+            self.assertEqual(record["passing_tests"], 1)
+            self.assertEqual(record["exit_code"], 0)
+
     def test_aggregate_accepts_complete_partition(self):
         with tempfile.TemporaryDirectory() as temporary:
             results_dir = Path(temporary)

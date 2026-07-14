@@ -13,7 +13,8 @@ from typing import Iterable
 
 SCHEMA_VERSION = 1
 PASSING_TESTS_RE = re.compile(r"(\d+) tests? pass(?:es)?")
-SUITES = ("python", "stardoc", "slang", "verilator")
+SUITES = ("python", "stardoc", "slang", "verilator", "coverage")
+BUILD_SUITES = frozenset({"coverage"})
 
 
 def canonicalize_labels(lines: Iterable[str]) -> list[str]:
@@ -132,21 +133,26 @@ def finalize_result(result_path: Path, log_path: Path, exit_code: int) -> dict:
     """Adds Bazel's outcome to an existing result record."""
 
     record = read_json(result_path)
-    passing_tests = parse_passing_tests(
-        log_path.read_text(encoding="utf-8", errors="replace")
-    )
     errors = list(record.get("errors", []))
-    if passing_tests is None:
-        passing_tests = 0
-        if exit_code == 0:
-            errors.append("successful Bazel invocation had no test summary")
+    if record["suite"] in BUILD_SUITES:
+        passing_tests = record["selected_count"] if exit_code == 0 else 0
+    else:
+        passing_tests = parse_passing_tests(
+            log_path.read_text(encoding="utf-8", errors="replace")
+        )
+        if passing_tests is None:
+            passing_tests = 0
+            if exit_code == 0:
+                errors.append("successful Bazel invocation had no test summary")
+                exit_code = 4
+        if passing_tests > record["selected_count"]:
+            errors.append("Bazel passing count exceeds selected target count")
             exit_code = 4
-    if passing_tests > record["selected_count"]:
-        errors.append("Bazel passing count exceeds selected target count")
-        exit_code = 4
-    if exit_code == 0 and passing_tests != record["selected_count"]:
-        errors.append("successful Bazel invocation did not pass every selected target")
-        exit_code = 4
+        if exit_code == 0 and passing_tests != record["selected_count"]:
+            errors.append(
+                "successful Bazel invocation did not pass every selected target"
+            )
+            exit_code = 4
     record["passing_tests"] = passing_tests
     record["exit_code"] = exit_code
     record["errors"] = errors
