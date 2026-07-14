@@ -206,7 +206,6 @@ br_verilog_fpv_test_tools_suite(
     name = "br_fifo_shared_pstatic_ctrl_push_credit_test_delay",
     elab_opts = [
         "-parameter Depth 4",
-        "-parameter NumFifos 4",
     ],
     illegal_param_combinations = {
         ("RamReadLatency", "StagingBufferDepth"): [
@@ -218,10 +217,15 @@ br_verilog_fpv_test_tools_suite(
             "0",
             "1",
         ],
+        "NumFifos": [
+            "2",
+            "4",
+        ],
         "RamReadLatency": [
             "0",
             "1",
             "2",
+            "3",
         ],
         "RegisterPopOutputs": [
             "0",
