@@ -121,6 +121,50 @@ br_verilog_sim_test_tools_suite(
 )
 
 verilog_library(
+    name = "br_apb_demux_tb",
+    srcs = ["br_apb_demux_tb.sv"],
+    deps = [
+        "//amba/rtl:br_amba_pkg",
+        "//amba/rtl:br_apb_demux",
+        "//misc/sim:br_test_driver",
+    ],
+)
+
+verilog_elab_test(
+    name = "br_apb_demux_tb_elab_test",
+    tool = "slang",
+    deps = [":br_apb_demux_tb"],
+)
+
+br_verilog_sim_test_tools_suite(
+    name = "br_apb_demux_sim_test_tools_suite",
+    params = {
+        "AddrWidth": [
+            "12",
+            "16",
+        ],
+        "HasDefaultDownstream": [
+            "0",
+            "1",
+        ],
+        "NumDownstreams": [
+            "2",
+            "4",
+        ],
+        "NumRetimeStagesPerDownstream": [
+            "0",
+            "1",
+            "2",
+        ],
+    },
+    tools = [
+        "vcs",
+        "verilator",
+    ],
+    deps = [":br_apb_demux_tb"],
+)
+
+verilog_library(
     name = "br_amba_axi_timing_slice_tb",
     srcs = ["br_amba_axi_timing_slice_tb.sv"],
     deps = [
