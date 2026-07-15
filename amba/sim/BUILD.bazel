@@ -347,6 +347,52 @@ br_verilog_sim_test_tools_suite(
 )
 
 verilog_library(
+    name = "br_amba_axil_write_arbiter_tb",
+    srcs = ["br_amba_axil_write_arbiter_tb.sv"],
+    deps = [
+        "//amba/rtl:br_amba_axil_write_arbiter",
+        "//misc/sim:br_test_driver",
+    ],
+)
+
+verilog_elab_test(
+    name = "br_amba_axil_write_arbiter_tb_elab_test",
+    tool = "slang",
+    deps = [":br_amba_axil_write_arbiter_tb"],
+)
+
+br_verilog_sim_test_tools_suite(
+    name = "br_amba_axil_write_arbiter_sim_test_tools_suite",
+    params = {
+        "AddrWidth": [
+            "12",
+            "32",
+        ],
+        "DataWidth": [
+            "32",
+            "64",
+        ],
+        "MaxOutstandingWrites": [
+            "1",
+            "3",
+        ],
+        "NumInitiators": [
+            "2",
+            "3",
+        ],
+        "UseMinimumUserWidths": [
+            "0",
+            "1",
+        ],
+    },
+    tools = [
+        "vcs",
+        "verilator",
+    ],
+    deps = [":br_amba_axil_write_arbiter_tb"],
+)
+
+verilog_library(
     name = "br_amba_axi_isolate_sub_tb",
     srcs = ["br_amba_axi_isolate_sub_tb.sv"],
     deps = [
