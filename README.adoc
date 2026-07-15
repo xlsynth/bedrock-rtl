@@ -75,7 +75,7 @@ https://github.com/orgs/xlsynth/packages/container/package/bedrock-rtl-dev[Bedro
 Each image has an immutable tag of the form `YYYY-MM-DD-<full-git-sha>`, where the date is the commit date in UTC.
 We intentionally do not publish a moving `latest` tag.
 
-To use the latest image, open the package page linked above, copy the tag from the most recently published version, and run:
+To use the latest image, open the package page linked above and copy the most recent date-prefixed tag. Then run:
 
 [source,shell]
 ----
@@ -109,7 +109,7 @@ Pull requests build the image but do not publish it.
 All public shards restore the shared Docker layer cache, but only one shard updates it on trusted `main` or manually dispatched runs.
 Bazel disk caches are partitioned with the test shards so repeated runs restore the outputs relevant to the same stable label set; pull requests restore caches without saving them.
 
-The publish job generates the immutable `YYYY-MM-DD-<full-git-sha>` tag, pushes the `linux/amd64` image, attaches BuildKit provenance, and publishes a signed GitHub artifact attestation for the image digest.
+The publish job reuses the image artifact that was tested by the public-tool shards, retags it with the immutable `YYYY-MM-DD-<full-git-sha>` tag, and pushes the `linux/amd64` image. It also publishes a signed GitHub artifact attestation for the image digest without adding a separate attestation artifact to the GHCR package version list.
 Repository maintainers can deploy an image manually by opening the
 https://github.com/xlsynth/bedrock-rtl/actions/workflows/ci.yml[CI workflow^], selecting *Run workflow*, and choosing the Git ref to publish.
 
