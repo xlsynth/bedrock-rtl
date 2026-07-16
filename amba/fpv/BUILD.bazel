@@ -472,3 +472,40 @@ br_verilog_fpv_test_tools_suite(
     top = "br_amba_axi_shrinker",
     deps = [":br_amba_axi_shrinker_fpv_monitor"],
 )
+
+# Bedrock-RTL AXI4-Lite Write Arbiter
+
+verilog_library(
+    name = "br_amba_axil_write_arbiter_fpv_monitor",
+    srcs = ["br_amba_axil_write_arbiter_fpv_monitor.sv"],
+    deps = [
+        "//amba/rtl:br_amba_axil_write_arbiter",
+        "//fpv/lib:fv_fifo",
+    ],
+)
+
+verilog_elab_test(
+    name = "br_amba_axil_write_arbiter_fpv_monitor_elab_test",
+    opts = ["--ignore-unknown-modules"],
+    tool = "slang",
+    deps = [":br_amba_axil_write_arbiter_fpv_monitor"],
+)
+
+br_verilog_fpv_test_tools_suite(
+    name = "br_amba_axil_write_arbiter_test_suite",
+    params = {
+        "MaxOutstandingWrites": [
+            "1",
+            "2",
+        ],
+        "NumInitiators": [
+            "2",
+            "3",
+        ],
+    },
+    tools = {
+        "jg": "br_amba_axil_write_arbiter_fpv.jg.tcl",
+    },
+    top = "br_amba_axil_write_arbiter",
+    deps = [":br_amba_axil_write_arbiter_fpv_monitor"],
+)
