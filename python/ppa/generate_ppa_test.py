@@ -63,7 +63,7 @@ class GeneratePpaTest(unittest.TestCase):
 
     def test_catalog_coverage_rejects_missing_module(self):
         with tempfile.TemporaryDirectory() as temporary:
-            libraries = Path(temporary) / "LIBRARIES.adoc"
+            libraries = Path(temporary) / "LIBRARIES.md"
             libraries.write_text("| `br_present`\n| `br_missing`\n", encoding="utf-8")
             metric = self._metric("br_present")
             with self.assertRaisesRegex(ValueError, "br_missing"):

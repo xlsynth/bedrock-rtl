@@ -37,7 +37,7 @@ Bedrock-RTL is a collection of reusable, composable SystemVerilog building block
 
 The design style favors correct-by-construction interfaces: make valid use clear, catch invalid parameters at elaboration time, and check integration assumptions in the design itself. The libraries aim to make correct designs easier to build and integration mistakes easier to find.
 
-Assertions are a normal part of integration, not an optional afterthought. Define `BR_ASSERT_ON` when you integrate Bedrock modules so that public and integration checks are active. Bedrock leaves its internal implementation checks off by default for user designs. See [Assertions](MACROS.adoc#assertions) for the available controls.
+Assertions are a normal part of integration, not an optional afterthought. Define `BR_ASSERT_ON` when you integrate Bedrock modules so that public and integration checks are active. Bedrock leaves its internal implementation checks off by default for user designs. See [Assertions](MACROS.md#assertions) for the available controls.
 
 ## Integrate Bedrock-RTL
 
@@ -200,11 +200,11 @@ The generated `.f` file contains the target's transitive SystemVerilog sources a
 
 ## Explore the libraries
 
-- [RTL Libraries](LIBRARIES.adoc) lists the public modules, packages, and formal libraries.
-- [SystemVerilog Macros](MACROS.adoc) documents the register, gate, assignment, and helper macros.
-- [Assertions](MACROS.adoc#assertions) explains public, integration, implementation, and formal assertion controls.
+- [RTL Libraries](LIBRARIES.md) lists the public modules, packages, and formal libraries.
+- [SystemVerilog Macros](MACROS.md) documents the register, gate, assignment, and helper macros.
+- [Assertions](MACROS.md#assertions) explains public, integration, implementation, and formal assertion controls.
 - [Bazel Verilog Rules](bazel/verilog_rules.md) documents the rules supplied by this repository. The `verilog_library` rule itself comes from [rules_hdl](https://github.com/hdl/bazel_rules_hdl/blob/main/verilog/providers.bzl).
-- [Scripts](SCRIPTS.adoc) describes the repository's report-generation scripts.
+- [Scripts](SCRIPTS.md) describes the repository's report-generation scripts.
 
 For repository development, see [DEVELOPING.md](DEVELOPING.md). For pull-request
 requirements, see [CONTRIBUTING.md](CONTRIBUTING.md).

@@ -422,7 +422,7 @@ def main() -> int:
         print(rendered)
         return 0
 
-    validate_catalog_coverage(metrics, workspace / "LIBRARIES.adoc")
+    validate_catalog_coverage(metrics, workspace / "LIBRARIES.md")
     if args.check:
         if not output.exists() or output.read_text(encoding="utf-8") != rendered:
             print(
