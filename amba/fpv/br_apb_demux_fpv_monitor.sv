@@ -25,9 +25,10 @@
 // - For an arbitrary downstream, prove the decoded request reaches only that
 //   route with all request fields preserved and PADDR translated as configured.
 // - Prove a no-default decode miss activates no downstream and returns PSLVERR.
-// - Cover explicit routes, the default route, decode misses, and translated
-//   addresses. Wrapper tests use no retiming because retimed transport is
-//   already covered by the br_apb_demux_select_onehot environment.
+// - Cover explicit routes, disabled ranges, the default route, decode misses,
+//   and translated addresses. Wrapper tests include a mixed-retiming case;
+//   broader retimed transport is covered by the br_apb_demux_select_onehot
+//   environment.
 
 `include "br_asserts.svh"
 `include "br_registers.svh"
@@ -267,13 +268,35 @@ module br_apb_demux_fpv_monitor #(
     `BR_ASSERT(decode_miss_response_a, decode_miss && upstream_penable |-> decode_miss_response_ok)
   end
 
-  // Every request decoded to the arbitrary route reaches its finite retiming path.
-  `BR_ASSERT(decoded_request_progress_a,
-             upstream_req_start && route_magic_d |-> s_eventually downstream_req_start)
+  for (genvar i = 0; i < NumDownstreams; i++) begin : gen_progress_checks
+    // A request reaches this route after exactly one cycle per configured timing slice.
+    `BR_ASSERT(decoded_request_progress_a,
+               upstream_req_start && route_magic_d && magic_d == DownstreamWidth'(i)
+                   |-> ##[NumRetimeStages[i]:NumRetimeStages[i]] (downstream_psel[i] &&
+                                                                    !downstream_penable[i]))
+  end
 
-  // Exercise an explicit address-range route and its translated output
-  // address.
-  `BR_COVER(explicit_route_c, explicit_route_match)
+  if (NumAddressRanges > 0) begin : gen_explicit_route_cover
+    // Exercise an explicit address-range route and its translated output
+    // address.
+    `BR_COVER(explicit_route_c, explicit_route_match)
+  end
+
+  for (genvar i = 0; i < NumAddressRanges; i++) begin : gen_disabled_range_covers
+    if (HasDefaultDownstream) begin : gen_default
+      // Show that an address at a disabled range base skips that range and uses the default route.
+      `BR_COVER(disabled_range_skipped_c,
+                upstream_req_start && downstream_addr_range_disabled[i] &&
+                    upstream_paddr_masked == downstream_addr_base[i] && !upstream_addr_hit &&
+                    magic_d_is_default && route_magic_d)
+    end else begin : gen_no_default
+      // Show that an address at a disabled range base skips that range and becomes a decode miss.
+      `BR_COVER(disabled_range_skipped_c,
+                upstream_req_start && downstream_addr_range_disabled[i] &&
+                    upstream_paddr_masked == downstream_addr_base[i] && !upstream_addr_hit &&
+                    decode_miss)
+    end
+  end
 
   if (HasDefaultDownstream) begin : gen_default_cover
     // Exercise a decode miss routed to the configured default downstream.

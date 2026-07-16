@@ -241,13 +241,18 @@ module br_apb_demux_select_onehot_fpv_monitor #(
     `BR_COVER(decode_miss_c, decode_miss && upstream_penable && upstream_pready && upstream_pslverr)
   end
 
-  // Every selected request eventually reaches its chosen finite retiming path.
-  `BR_ASSERT(selected_request_progress_a,
-             upstream_req_start && select_onehot[magic_d] |-> s_eventually downstream_req_start)
+  for (genvar i = 0; i < NumDownstreams; i++) begin : gen_progress_checks
+    // A selected request reaches this route after exactly one cycle per configured timing slice.
+    `BR_ASSERT(selected_request_progress_a,
+               upstream_req_start && select_onehot[i]
+                   |-> ##[NumRetimeStages[i]:NumRetimeStages[i]] (downstream_psel[i] &&
+                                                                    !downstream_penable[i]))
 
-  // Every completed downstream response eventually returns through its finite retiming path.
-  `BR_ASSERT(selected_response_progress_a,
-             downstream_resp_complete |-> s_eventually upstream_resp_complete)
+    // A completed response returns after exactly one cycle per configured timing slice.
+    `BR_ASSERT(selected_response_progress_a,
+               downstream_psel[i] && downstream_penable[i] && downstream_pready[i]
+                   |-> ##[NumRetimeStages[i]:NumRetimeStages[i]] upstream_resp_complete)
+  end
 
   for (genvar i = 0; i < NumDownstreams; i++) begin : gen_covers
     // Exercise a completed read transfer through this downstream.
@@ -264,9 +269,9 @@ module br_apb_demux_select_onehot_fpv_monitor #(
   // Exercise downstream backpressure propagating to the upstream access.
   `BR_COVER(wait_state_c, upstream_psel && upstream_penable && !upstream_pready)
 
-  // Exercise a selected downstream error response returning upstream.
+  // Exercise an error response from the arbitrary selected downstream route.
   `BR_COVER(selected_error_response_c,
-            upstream_resp_complete && upstream_pslverr && (|select_onehot))
+            select_onehot[magic_d] && downstream_resp_complete && downstream_pslverr[magic_d])
 
 endmodule : br_apb_demux_select_onehot_fpv_monitor
 
