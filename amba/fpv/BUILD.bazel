@@ -588,3 +588,18 @@ br_verilog_fpv_test_tools_suite(
     top = "br_apb_demux",
     deps = [":br_apb_demux_fpv_monitor"],
 )
+
+# Disabled decode-error case requires a selected route and checks the alternate response mux.
+br_verilog_fpv_test_tools_suite(
+    name = "br_apb_demux_select_onehot_no_decode_error",
+    elab_opts = [
+        "-parameter NumDownstreams 2",
+        "-parameter EnableDecodeError 0",
+        "-parameter NumRetimeStages '\"'\"'{0,1}",
+    ],
+    tools = {
+        "jg": "br_apb_demux_select_onehot_fpv.jg.tcl",
+    },
+    top = "br_apb_demux_select_onehot",
+    deps = [":br_apb_demux_select_onehot_fpv_monitor"],
+)

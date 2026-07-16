@@ -10,16 +10,18 @@
 // - Allow each downstream path to contain an independent number of APB timing
 //   slices while preserving protocol behavior and transaction contents.
 // - Return the selected downstream PRDATA, PREADY, and PSLVERR response upstream.
-// - Complete an active transfer with zero PRDATA and asserted PSLVERR when no
-//   downstream is selected.
+// - When EnableDecodeError is set, complete an active transfer with zero
+//   PRDATA and asserted PSLVERR when no downstream is selected. Otherwise,
+//   require every active transfer to select a downstream.
 //
 // Input assumptions:
 // - The upstream interface follows the APB4 manager protocol, including stable
 //   request control and payload while an access is waiting.
 // - PWDATA also remains stable for pending reads because the RTL integration
 //   contract treats the complete request bundle uniformly.
-// - select_onehot is onehot-or-zero for an active transfer and remains stable
-//   until that transfer completes.
+// - select_onehot is onehot-or-zero for an active transfer when decode errors
+//   are enabled, and exactly onehot otherwise. It remains stable until that
+//   transfer completes.
 // - Every downstream response interface follows the APB4 subordinate protocol.
 //
 // Checks:
@@ -27,10 +29,10 @@
 // - Prove that only the selected downstream is activated and that request
 //   control and payload arrive unchanged, including through retimed paths.
 // - Prove that selected downstream responses return upstream unchanged.
-// - Prove that a decode miss activates no downstream and completes upstream
-//   with zero PRDATA and PSLVERR.
-// - Cover each destination, decode misses, reads, writes, wait states, error
-//   responses, and mixed zero/nonzero retiming configurations.
+// - When decode errors are enabled, prove that a decode miss activates no
+//   downstream and completes upstream with zero PRDATA and PSLVERR.
+// - Cover each destination, reads, writes, wait states, error responses, mixed
+//   zero/nonzero retiming configurations, and decode misses when enabled.
 
 `include "br_asserts.svh"
 `include "br_registers.svh"
@@ -38,6 +40,7 @@
 module br_apb_demux_select_onehot_fpv_monitor #(
     parameter int AddrWidth = 12,
     parameter int NumDownstreams = 1,
+    parameter bit EnableDecodeError = 1,
     parameter int NumRetimeStages[NumDownstreams] = '{default: 0}
 ) (
     input logic clk,
@@ -128,8 +131,13 @@ module br_apb_demux_select_onehot_fpv_monitor #(
   // Pick one arbitrary downstream so a single checker proves every route.
   `BR_ASSUME(magic_d_constant_a, $stable(magic_d) && magic_d < NumDownstreams)
 
-  // An active transfer selects at most one downstream; zero selects the error response.
-  `BR_ASSUME(select_onehot0_a, upstream_psel |-> $onehot0(select_onehot))
+  if (EnableDecodeError) begin : gen_decode_error_contract
+    // Decode-error mode permits zero select so the local error response can complete the transfer.
+    `BR_ASSUME(select_onehot0_a, upstream_psel |-> $onehot0(select_onehot))
+  end else begin : gen_no_decode_error_contract
+    // Without a local decode-error response, every active transfer must select one downstream.
+    `BR_ASSUME(select_onehot_a, upstream_psel |-> $onehot(select_onehot))
+  end
 
   // Keep the route stable from the APB setup phase into the access phase.
   `BR_ASSUME(select_stable_after_setup_a, upstream_psel && !upstream_penable |=> $stable
@@ -222,11 +230,16 @@ module br_apb_demux_select_onehot_fpv_monitor #(
   `BR_ASSERT(no_upstream_response_outside_access_a,
              (!upstream_psel || !upstream_penable) |-> !upstream_pready && !upstream_pslverr)
 
-  // A decode miss must not activate any downstream interface.
-  `BR_ASSERT(decode_miss_no_downstream_a, decode_miss |-> downstream_psel == '0)
+  if (EnableDecodeError) begin : gen_decode_error_checks
+    // A decode miss must not activate any downstream interface.
+    `BR_ASSERT(decode_miss_no_downstream_a, decode_miss |-> downstream_psel == '0)
 
-  // A decode miss completes in the access phase with the specified error response.
-  `BR_ASSERT(decode_miss_response_a, decode_miss && upstream_penable |-> decode_miss_response_ok)
+    // A decode miss completes in the access phase with the specified error response.
+    `BR_ASSERT(decode_miss_response_a, decode_miss && upstream_penable |-> decode_miss_response_ok)
+
+    // Exercise the internal decode-miss completion path.
+    `BR_COVER(decode_miss_c, decode_miss && upstream_penable && upstream_pready && upstream_pslverr)
+  end
 
   // Every selected request eventually reaches its chosen finite retiming path.
   `BR_ASSERT(selected_request_progress_a,
@@ -248,9 +261,6 @@ module br_apb_demux_select_onehot_fpv_monitor #(
         downstream_psel[i] && downstream_penable[i] && downstream_pready[i] && downstream_pwrite[i])
   end
 
-  // Exercise the internal decode-miss completion path.
-  `BR_COVER(decode_miss_c, decode_miss && upstream_penable && upstream_pready && upstream_pslverr)
-
   // Exercise downstream backpressure propagating to the upstream access.
   `BR_COVER(wait_state_c, upstream_psel && upstream_penable && !upstream_pready)
 
@@ -263,5 +273,6 @@ endmodule : br_apb_demux_select_onehot_fpv_monitor
 bind br_apb_demux_select_onehot br_apb_demux_select_onehot_fpv_monitor #(
     .AddrWidth(AddrWidth),
     .NumDownstreams(NumDownstreams),
+    .EnableDecodeError(EnableDecodeError),
     .NumRetimeStages(NumRetimeStages)
 ) monitor (.*);
