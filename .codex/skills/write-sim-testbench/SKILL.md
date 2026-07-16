@@ -7,7 +7,7 @@ description: Write or update one Bedrock-RTL SystemVerilog simulation testbench 
 
 ## Workflow
 
-1. Read the repo instructions first: `README.adoc`, local `AGENTS.md` if present, the DUT RTL, the nearest `sim/BUILD.bazel`, and 1-3 similar benches in neighboring directories.
+1. Read the repo instructions first: `README.md`, local `AGENTS.md` if present, the DUT RTL, the nearest `sim/BUILD.bazel`, and 1-3 similar benches in neighboring directories.
 2. Choose a bench shape that matches the DUT:
    - Combinational datapath: exhaustive or directed procedural sweeps with a reference function.
    - Single-clock state/protocol: scenario tasks plus a small scoreboard and timeout.

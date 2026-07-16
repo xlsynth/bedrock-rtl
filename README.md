@@ -151,13 +151,13 @@ endmodule : datapath_join
 
 </details>
 
-Its `BUILD.bazel` can declare the Bedrock dependencies and enable elaboration and lint tests:
+Its `BUILD.bazel` can declare the Bedrock dependencies and add an open-source elaboration test:
 
 <details>
 <summary><code>BUILD.bazel</code></summary>
 
 ```starlark
-load("@bedrock-rtl//bazel:verilog.bzl", "verilog_elab_and_lint_test_suite", "verilog_elab_test", "verilog_lint_test")
+load("@bedrock-rtl//bazel:verilog.bzl", "verilog_elab_test")
 load("@rules_hdl//verilog:providers.bzl", "verilog_library")
 
 package(default_visibility = ["//visibility:private"])
@@ -179,31 +179,11 @@ verilog_elab_test(
     deps = [":datapath_join"],
 )
 
-verilog_lint_test(
-    name = "datapath_join_lint_test",
-    tool = "ascentlint",
-    defines = ["BR_ASSERT_ON"],
-    deps = [":datapath_join"],
-)
-
-verilog_elab_and_lint_test_suite(
-    name = "datapath_join_test_suite",
-    params = {
-        "NumFlows": [
-            "2",
-            "3",
-        ],
-        "WidthPerFlow": [
-            "1",
-            "64",
-        ],
-    },
-    defines = ["BR_ASSERT_ON"],
-    deps = [":datapath_join"],
-)
 ```
 
 </details>
+
+This example uses Slang, which is part of the public toolchain. Add lint or multi-tool test suites when your project configures the required tool plugins; see [DEVELOPING.md](DEVELOPING.md).
 
 ### Clone the sources and generate a file list
 
