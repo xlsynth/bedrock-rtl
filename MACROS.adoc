@@ -45,6 +45,7 @@ The table below groups macros that share the same clock/reset behavior; the suff
 |===
 
 
+[#assertions]
 == `br_asserts.svh`: Public Assertions
 
 These assertion macros are intended for use by the user in their own designs.

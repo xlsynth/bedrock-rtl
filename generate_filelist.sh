@@ -19,12 +19,12 @@
 #
 # Examples:
 #   1. Default behavior (current directory):
-#      ./generate_filelist.sh //arb/rtl:br_arb_fixed_elab_test
-#      Output file: ./filelist_paths_arb_rtl_br_arb_fixed_elab_test.f
+#      ./generate_filelist.sh //arb/rtl:br_arb_fixed
+#      Output file: ./filelist_paths_arb_rtl_br_arb_fixed.f
 #
 #   2. Custom output path:
-#      ./generate_filelist.sh //arb/rtl:br_arb_fixed_elab_test /path/to/output
-#      Output file: /path/to/output/filelist_paths_arb_rtl_br_arb_fixed_elab_test.f
+#      ./generate_filelist.sh //arb/rtl:br_arb_fixed /path/to/output
+#      Output file: /path/to/output/filelist_paths_arb_rtl_br_arb_fixed.f
 # ===============================================
 
 # Check if target argument is provided
