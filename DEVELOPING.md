@@ -1,6 +1,7 @@
-# Development and contribution
+# Developing Bedrock-RTL
 
-This guide covers the tools and checks used to develop Bedrock-RTL.
+This guide covers the tools and checks used to develop Bedrock-RTL. See
+[CONTRIBUTING.md](CONTRIBUTING.md) for the pull-request and review policy.
 
 ## Dependencies
 

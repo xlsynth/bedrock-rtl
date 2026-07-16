@@ -17,7 +17,7 @@
 [![bazel-test-ascentlint](https://img.shields.io/endpoint?url=https://gist.githubusercontent.com/mgottscho/c66dc2ddc0e513ba06ce338620977b26/raw/ascentlint.json)](https://github.com/xlsynth/bedrock-rtl/actions/workflows/ci.yml?query=job%3Abazel-build-and-proprietary-tool-test)
 [![bazel-test-vcs](https://img.shields.io/endpoint?url=https://gist.githubusercontent.com/mgottscho/c66dc2ddc0e513ba06ce338620977b26/raw/vcs.json)](https://github.com/xlsynth/bedrock-rtl/actions/workflows/ci.yml?query=job%3Abazel-build-and-proprietary-tool-test)
 [![bazel-test-verilator](https://img.shields.io/endpoint?url=https://gist.githubusercontent.com/mgottscho/c66dc2ddc0e513ba06ce338620977b26/raw/verilator.json)](https://github.com/xlsynth/bedrock-rtl/actions/workflows/ci.yml?query=job%3Abazel-oss-tool-test)
-[![bazel-test-jg](https://img.shields.io/endpoint?url=https://gist.githubusercontent.com/mgottscho/c66dc2ddc0e513ba06ce338620977b26/raw/jg.json)](https://github.com/xlsynth/bedrock-rtl/actions/workflows/nightly.yml?query=job%3Abazel-test-jg)
+<!-- [![bazel-test-jg](https://img.shields.io/endpoint?url=https://gist.githubusercontent.com/mgottscho/c66dc2ddc0e513ba06ce338620977b26/raw/jg.json)](https://github.com/xlsynth/bedrock-rtl/actions/workflows/nightly.yml?query=job%3Abazel-test-jg) -->
 [![open bugs](https://img.shields.io/github/issues/xlsynth/bedrock-rtl/bug?label=bugs)](https://github.com/xlsynth/bedrock-rtl/issues?q=is%3Aissue%20state%3Aopen%20label%3Abug)
 
 High quality and composable RTL libraries in SystemVerilog
@@ -226,4 +226,5 @@ The generated `.f` file contains the target's transitive SystemVerilog sources a
 - [Bazel Verilog Rules](bazel/verilog_rules.md) documents the rules supplied by this repository. The `verilog_library` rule itself comes from [rules_hdl](https://github.com/hdl/bazel_rules_hdl/blob/main/verilog/providers.bzl).
 - [Scripts](SCRIPTS.adoc) describes the repository's report-generation scripts.
 
-For repository development and contribution, see the [Development guide](DEVELOPMENT.md).
+For repository development, see [DEVELOPING.md](DEVELOPING.md). For pull-request
+requirements, see [CONTRIBUTING.md](CONTRIBUTING.md).
