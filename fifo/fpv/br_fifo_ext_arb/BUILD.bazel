@@ -66,8 +66,12 @@ br_verilog_fpv_test_tools_suite(
     name = "br_fifo_shared_dynamic_ctrl_ext_arbiter_test_latency",
     # StagingBufferDepth must not exceed DataRamReadLatency + 1.
     illegal_param_combinations = {
-        ("DataRamReadLatency", "StagingBufferDepth"): [
-            ("0", "2"),
+        (
+            "DataRamReadLatency",
+            "RegisterPopOutputs",
+            "StagingBufferDepth",
+        ): [
+            ("0", "1", "2"),
         ],
     },
     params = {
@@ -190,8 +194,12 @@ br_verilog_fpv_test_tools_suite(
     name = "br_fifo_shared_dynamic_ctrl_push_credit_ext_arbiter_test_latency",
     # StagingBufferDepth must not exceed DataRamReadLatency + 1.
     illegal_param_combinations = {
-        ("DataRamReadLatency", "StagingBufferDepth"): [
-            ("0", "2"),
+        (
+            "DataRamReadLatency",
+            "RegisterPopOutputs",
+            "StagingBufferDepth",
+        ): [
+            ("0", "1", "2"),
         ],
     },
     params = {
