@@ -357,8 +357,26 @@ module br_amba_axil_write_arbiter_fpv_monitor #(
   `BR_ASSERT(bpayload_owner_route_a, downstream_bvalid && !fv_owner_empty |-> fv_bpayload_matches)
 
   // ----------Composition-specific covers----------
-  // Exercise simultaneous contention from every initiator.
-  `BR_COVER(all_initiators_contend_c, &complete_request)
+  // Exercise simultaneous contention through an actual arbitration handshake.
+  `BR_COVER(all_initiators_contend_c, &complete_request && |request_accept)
+
+  for (genvar i = 0; i < NumInitiators; i++) begin : gen_request_arrival_cover
+    // Exercise AW arriving before W, followed by acceptance of the complete request.
+    `BR_COVER(aw_before_w_accept_c,
+              upstream_awvalid[i] && !upstream_wvalid[i] ##1 request_accept[i])
+
+    // Exercise W arriving before AW, followed by acceptance of the complete request.
+    `BR_COVER(w_before_aw_accept_c,
+              upstream_wvalid[i] && !upstream_awvalid[i] ##1 request_accept[i])
+  end
+
+  // Exercise the AW output draining while the W output remains backpressured.
+  `BR_COVER(downstream_aw_drains_first_c,
+            downstream_awvalid && downstream_awready && downstream_wvalid && !downstream_wready)
+
+  // Exercise the W output draining while the AW output remains backpressured.
+  `BR_COVER(downstream_w_drains_first_c,
+            downstream_wvalid && downstream_wready && downstream_awvalid && !downstream_awready)
 
   // Exercise the configured outstanding-write capacity.
   `BR_COVER(max_outstanding_writes_c, fv_owner_full)
