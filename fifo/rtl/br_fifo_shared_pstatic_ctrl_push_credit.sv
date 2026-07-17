@@ -264,7 +264,7 @@ module br_fifo_shared_pstatic_ctrl_push_credit #(
       .EnableBypass(EnableBypass),
       // Concurrent read issue and return is possible with enough initial entries,
       // or when read latency allows a deallocated entry to be refilled and reissued.
-      .EnableCoverIncrementAndDecrement(
+      .EnableCoverSimultaneousReadIssueAndReturn(
           ((Depth - (NumFifos - 1)) > RamReadLatency) ||
           (RamReadLatency > (RegisterPushOutputs + 1))
       ),

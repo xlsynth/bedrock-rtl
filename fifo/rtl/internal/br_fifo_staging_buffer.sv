@@ -37,7 +37,7 @@ module br_fifo_staging_buffer #(
     parameter bit EnableAssertFinalNotValid = 1,
     // If 1, cover issuing a RAM read when an earlier read returns.
     // Otherwise, assert that these events never occur together.
-    parameter bit EnableCoverIncrementAndDecrement = 1,
+    parameter bit EnableCoverSimultaneousReadIssueAndReturn = 1,
     // If 1, cover accepting bypass data when RAM read data returns.
     // Otherwise, assert that these events never occur together.
     parameter bit EnableCoverBypassAndReadDataSameCycle = 1,
@@ -232,7 +232,7 @@ module br_fifo_staging_buffer #(
         .EnableWrap(0),
         .EnableCoverReinit(0),
         .EnableCoverZeroChange(0),
-        .EnableCoverIncrementAndDecrement(EnableCoverIncrementAndDecrement)
+        .EnableCoverIncrementAndDecrement(EnableCoverSimultaneousReadIssueAndReturn)
     ) br_counter_read_inflight (
         .clk,
         .rst,
