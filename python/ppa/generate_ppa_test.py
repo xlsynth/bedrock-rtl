@@ -64,7 +64,13 @@ class GeneratePpaTest(unittest.TestCase):
     def test_catalog_coverage_rejects_missing_module(self):
         with tempfile.TemporaryDirectory() as temporary:
             libraries = Path(temporary) / "LIBRARIES.md"
-            libraries.write_text("| `br_present`\n| `br_missing`\n", encoding="utf-8")
+            libraries.write_text(
+                "| Module | Description | Verification artifacts |\n"
+                "| --- | --- | --- |\n"
+                "| `br_present` | Present module. | Elab/lint. |\n"
+                "| `br_missing` | Missing module. | Elab/lint. |\n",
+                encoding="utf-8",
+            )
             metric = self._metric("br_present")
             with self.assertRaisesRegex(ValueError, "br_missing"):
                 validate_catalog_coverage([metric], libraries)

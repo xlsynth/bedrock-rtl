@@ -225,7 +225,7 @@ def documented_module_tops(libraries_doc: Path) -> set[str]:
     """Returns the documented public br_* library entries."""
     return set(
         re.findall(
-            r"^\| `(br_[^`]+)`\s*$",
+            r"^\|\s+`(br_[^`]+)`\s*(?:\||$)",
             libraries_doc.read_text(encoding="utf-8"),
             re.MULTILINE,
         )
