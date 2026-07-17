@@ -136,6 +136,7 @@ verilog_library(
     srcs = ["br_csr_demux.sv"],
     deps = [
         ":br_csr_demux_select_onehot",
+        "//demux/rtl:br_demux_addr_decode",
         "//macros:br_asserts_internal",
     ],
 )
