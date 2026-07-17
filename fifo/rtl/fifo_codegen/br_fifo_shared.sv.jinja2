@@ -729,12 +729,12 @@ module {{ module_name }} #(
       // Concurrent read issue and return is possible with enough initial entries,
       // or when read latency allows a deallocated entry to be refilled and reissued.
 {%-     if push_credit %}
-      .EnableCoverSimultaneousReadIssueAndReturn(
+      .EnableCoverSameCycleReadIssueAndReturn(
           ((Depth - (NumFifos - 1)) > RamReadLatency) ||
           (RamReadLatency > (RegisterPushOutputs + 1))
       ),
 {%-     else %}
-      .EnableCoverSimultaneousReadIssueAndReturn(
+      .EnableCoverSameCycleReadIssueAndReturn(
           ((Depth - (NumFifos - 1)) > RamReadLatency) || (RamReadLatency > 1)
       ),
 {%-     endif %}
