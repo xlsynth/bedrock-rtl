@@ -6,6 +6,18 @@ load("//bazel:verilog.bzl", "verilog_elab_test")
 
 package(default_visibility = ["//fifo/fpv:__subpackages__"])
 
+# A staging buffer is instantiated when DataRamReadLatency > 0 or
+# RegisterPopOutputs is set; its depth must not exceed DataRamReadLatency + 1.
+_EXT_ARB_LATENCY_ILLEGAL_PARAM_COMBINATIONS = {
+    (
+        "DataRamReadLatency",
+        "RegisterPopOutputs",
+        "StagingBufferDepth",
+    ): [
+        ("0", "1", "2"),
+    ],
+}
+
 verilog_library(
     name = "ext_arb_fv_monitor",
     srcs = ["ext_arb_fv_monitor.sv"],
@@ -64,16 +76,7 @@ br_verilog_fpv_test_tools_suite(
 
 br_verilog_fpv_test_tools_suite(
     name = "br_fifo_shared_dynamic_ctrl_ext_arbiter_test_latency",
-    # StagingBufferDepth must not exceed DataRamReadLatency + 1.
-    illegal_param_combinations = {
-        (
-            "DataRamReadLatency",
-            "RegisterPopOutputs",
-            "StagingBufferDepth",
-        ): [
-            ("0", "1", "2"),
-        ],
-    },
+    illegal_param_combinations = _EXT_ARB_LATENCY_ILLEGAL_PARAM_COMBINATIONS,
     params = {
         "StagingBufferDepth": [
             "1",
@@ -192,16 +195,7 @@ br_verilog_fpv_test_tools_suite(
 
 br_verilog_fpv_test_tools_suite(
     name = "br_fifo_shared_dynamic_ctrl_push_credit_ext_arbiter_test_latency",
-    # StagingBufferDepth must not exceed DataRamReadLatency + 1.
-    illegal_param_combinations = {
-        (
-            "DataRamReadLatency",
-            "RegisterPopOutputs",
-            "StagingBufferDepth",
-        ): [
-            ("0", "1", "2"),
-        ],
-    },
+    illegal_param_combinations = _EXT_ARB_LATENCY_ILLEGAL_PARAM_COMBINATIONS,
     params = {
         "StagingBufferDepth": [
             "1",
