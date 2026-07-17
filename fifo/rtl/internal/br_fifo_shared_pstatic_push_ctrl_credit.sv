@@ -100,9 +100,6 @@ module br_fifo_shared_pstatic_push_ctrl_credit #(
   assign either_rst = push_sender_in_reset || rst;
 
   // Credit Receiver
-  localparam int PopCreditMaxChange = EnableBypass ? 2 : 1;
-  localparam int PopCreditChangeWidth = $clog2(PopCreditMaxChange + 1);
-
   logic [NumFifos-1:0] push_receiver_in_reset_internal;
   logic [NumFifos-1:0] receiver_push_valid;
 
@@ -113,7 +110,7 @@ module br_fifo_shared_pstatic_push_ctrl_credit #(
                    push_receiver_in_reset_internal[NumFifos-1:1])
 
   for (genvar i = 0; i < NumFifos; i++) begin : gen_credit_receiver
-    logic [PopCreditChangeWidth-1:0] pop_credit;
+    logic pop_credit;
 
     // This is just used to track occupancy for assertion purposes.
     assign receiver_push_valid[i] = push_valid && (push_fifo_id == i);
@@ -126,7 +123,9 @@ module br_fifo_shared_pstatic_push_ctrl_credit #(
       // This needs to be registered to avoid a combinational path from valid to credit
       `BR_REG(bypass_credit, bypass_valid_unstable[i] && bypass_ready[i])
 
-      assign pop_credit = dealloc_valid[i] + bypass_credit;
+      assign pop_credit = dealloc_valid[i] || bypass_credit;
+      `BR_ASSERT_IMPL(no_simultaneous_dealloc_and_bypass_credit_a,
+                      !(dealloc_valid[i] && bypass_credit))
     end else begin : gen_no_bypass_pop_credit
       assign pop_credit = dealloc_valid[i];
     end
@@ -136,7 +135,6 @@ module br_fifo_shared_pstatic_push_ctrl_credit #(
         .Width(Width),
         .MaxCredit(Depth),
         .RegisterPushOutputs(RegisterPushOutputs),
-        .PopCreditMaxChange(PopCreditMaxChange),
         .EnableAssertFinalNotValid(EnableAssertFinalNotValid),
         .EnableCoverPushSenderInReset(EnableCoverPushSenderInReset),
         .EnableCoverPushCreditStall(EnableCoverPushCreditStall),
