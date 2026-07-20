@@ -209,6 +209,25 @@ br_verilog_sim_test_tools_suite(
 )
 
 br_verilog_sim_test_tools_suite(
+    name = "br_fifo_flops_depth_1_sim_test_tools_suite",
+    params = {
+        "Depth": ["1"],
+        "Width": ["8"],
+        "EnableBypass": [
+            "0",
+            "1",
+        ],
+        "RegisterPopOutputs": ["0"],
+        "FlopRamAddressDepthStages": ["0"],
+    },
+    tools = [
+        "vcs",
+        "verilator",
+    ],
+    deps = [":br_fifo_flops_tb"],
+)
+
+br_verilog_sim_test_tools_suite(
     name = "br_fifo_flops_sim_test_tools_suite_nonzero_lat",
     params = {
         "Depth": [
@@ -285,6 +304,28 @@ br_verilog_sim_test_tools_suite(
     tools = [
         "vcs",
         #"verilator",
+    ],
+    deps = [":br_fifo_flops_push_credit_tb"],
+)
+
+br_verilog_sim_test_tools_suite(
+    name = "br_fifo_flops_push_credit_depth_1_sim_test_tools_suite",
+    params = {
+        "TestDepth": ["1"],
+        "EnableBypass": [
+            "0",
+            "1",
+        ],
+        "RegisterPopOutputs": ["0"],
+        "FlopRamAddressDepthStages": ["0"],
+        "RegisterPushOutputs": [
+            "0",
+            "1",
+        ],
+    },
+    tools = [
+        "vcs",
+        "verilator",
     ],
     deps = [":br_fifo_flops_push_credit_tb"],
 )

@@ -28,7 +28,9 @@
 // It is recommended to disable the bypass only when necessary to close timing.
 
 module br_fifo_flops_push_credit #(
-    parameter int Depth = 2,  // Number of entries in the FIFO. Must be at least 2.
+    // Number of entries in the FIFO. Must be at least 1. Depth 1 requires
+    // RegisterPopOutputs=0 and all FlopRam*Stages parameters to be 0.
+    parameter int Depth = 2,
     parameter int Width = 1,  // Width of each entry in the FIFO. Must be at least 1.
     // If 1, then bypasses push-to-pop when the FIFO is empty, resulting in
     // a cut-through latency of 0 cycles, but at the cost of worse timing.
