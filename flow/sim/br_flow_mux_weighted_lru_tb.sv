@@ -16,7 +16,7 @@ module br_flow_mux_weighted_lru_tb;
   logic [NumFlows-1:0] push_ready;
   logic [NumFlows-1:0] push_valid;
   logic [NumFlows-1:0][Width-1:0] push_data;
-  logic [NumFlows-1:0][WeightWidth-1:0] push_weight;
+  logic [NumFlows-1:0][WeightWidth-1:0] cfg_weight;
   logic pop_ready;
   logic pop_valid_unstable;
   logic [Width-1:0] pop_data_unstable;
@@ -37,7 +37,7 @@ module br_flow_mux_weighted_lru_tb;
       .push_ready,
       .push_valid,
       .push_data,
-      .push_weight,
+      .cfg_weight,
       .pop_ready,
       .pop_valid_unstable,
       .pop_data_unstable
@@ -97,7 +97,7 @@ module br_flow_mux_weighted_lru_tb;
       for (int i = 0; i < NumFlows; i++) begin
         next_weight = accumulated_weight[i];
         if (!any_high_priority_request) begin
-          next_weight += push_weight[i];
+          next_weight += cfg_weight[i];
           if (next_weight > MaxAccumulatedWeight) begin
             next_weight = MaxAccumulatedWeight;
           end
@@ -154,9 +154,9 @@ module br_flow_mux_weighted_lru_tb;
   task automatic drive_and_check(input logic [NumFlows-1:0] valid,
                                  input logic [NumFlows-1:0][WeightWidth-1:0] weight,
                                  input logic ready, input string message);
-    push_valid  = valid;
-    push_weight = weight;
-    pop_ready   = ready;
+    push_valid = valid;
+    cfg_weight = weight;
+    pop_ready  = ready;
     #1;
     step_and_check(message);
   endtask
@@ -187,7 +187,7 @@ module br_flow_mux_weighted_lru_tb;
       accumulated_weight[i] = 0;
       lru_priority[i] = NumFlows;
       push_data[i] = Width'(8'h10 + (i * 8'h11));
-      push_weight[i] = WeightWidth'(1);
+      cfg_weight[i] = WeightWidth'(1);
     end
     td.reset_dut();
   endtask
