@@ -241,6 +241,11 @@ module br_fifo_shared_pstatic_ctrl #(
       .Width(Width),
       .StagingBufferDepth(StagingBufferDepth),
       .EnableBypass(EnableBypass),
+      // Concurrent read issue and return is possible with enough initial entries,
+      // or when read latency allows a deallocated entry to be refilled and reissued.
+      .EnableCoverSameCycleReadIssueAndReturn(
+          ((Depth - (NumFifos - 1)) > RamReadLatency) || (RamReadLatency > 1)
+      ),
       .RamReadLatency(RamReadLatency),
       .RegisterPopOutputs(RegisterPopOutputs)
   ) br_fifo_shared_pop_ctrl_inst (

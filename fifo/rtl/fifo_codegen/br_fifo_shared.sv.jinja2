@@ -725,6 +725,27 @@ module {{ module_name }} #(
 {%-   if bypassable %}
       .EnableBypass(EnableBypass),
 {%-   endif %}
+{%-   if not dynamic and not pop_credit %}
+      // Concurrent read issue and return is possible with enough initial entries,
+      // or when read latency allows a deallocated entry to be refilled and reissued.
+{%-     if push_credit %}
+      .EnableCoverSameCycleReadIssueAndReturn(
+          ((Depth - (NumFifos - 1)) > RamReadLatency) ||
+          (RamReadLatency > (RegisterPushOutputs + 1))
+      ),
+{%-     else %}
+      .EnableCoverSameCycleReadIssueAndReturn(
+          ((Depth - (NumFifos - 1)) > RamReadLatency) || (RamReadLatency > 1)
+      ),
+{%-     endif %}
+{%-   endif %}
+{%-   if bypassable and push_credit %}
+      // With registered push outputs, a one-entry FIFO can only return and consume
+      // credit before RAM data returns when the RAM read latency is greater than 1.
+      .EnableCoverBypassAndReadDataSameCycle(
+          !RegisterPushOutputs || ((Depth - (NumFifos - 1)) > 1) || (RamReadLatency > 1)
+      ),
+{%-   endif %}
 {%-   if dynamic %}
       .RamReadLatency(DataRamReadLatency),
       .RegisterDeallocation(RegisterDeallocation)

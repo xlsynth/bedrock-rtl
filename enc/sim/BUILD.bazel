@@ -2,7 +2,7 @@
 
 load("@rules_hdl//verilog:providers.bzl", "verilog_library")
 load("//bazel:br_verilog.bzl", "br_verilog_sim_test_tools_suite")
-load("//bazel:verilog.bzl", "verilog_elab_test")
+load("//bazel:verilog.bzl", "verilog_elab_test", "verilog_sim_coverage_aggregate")
 
 package(default_visibility = ["//visibility:private"])
 
@@ -178,4 +178,17 @@ br_verilog_sim_test_tools_suite(
         "verilator",
     ],
     deps = [":br_enc_onehot2bin_tb"],
+)
+
+verilog_sim_coverage_aggregate(
+    name = "br_enc_verilator_coverage",
+    coverage_reports = [
+        ":br_enc_bin2onehot_sim_test_tools_suite_verilator_coverage",
+        ":br_enc_gray_sim_test_tools_suite_verilator_coverage",
+        ":br_enc_priority_encoder_sim_test_tools_suite_verilator_coverage",
+        ":br_enc_priority_dynamic_sim_test_tools_suite_verilator_coverage",
+        ":br_enc_countones_tb_sim_test_suite_verilator_coverage",
+        ":br_enc_onehot2bin_tb_sim_test_suite_verilator_coverage",
+    ],
+    visibility = ["//:__pkg__"],
 )

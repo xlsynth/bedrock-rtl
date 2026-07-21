@@ -5,6 +5,11 @@ load("//bazel:br_verilog.bzl", "br_verilog_elab_and_lint_test_suite", "br_verilo
 
 package(default_visibility = ["//visibility:public"])
 
+filegroup(
+    name = "srcs",
+    srcs = glob(["*.sv"]) + ["//csr/rtl/internal:srcs"],
+)
+
 verilog_library(
     name = "br_csr_axil_widget",
     srcs = ["br_csr_axil_widget.sv"],

@@ -5,6 +5,11 @@ load("//bazel:br_verilog.bzl", "br_verilog_elab_and_lint_test_suite", "br_verilo
 
 package(default_visibility = ["//visibility:public"])
 
+filegroup(
+    name = "srcs",
+    srcs = glob(["*.sv"]) + ["//amba/rtl/internal:srcs"],
+)
+
 verilog_library(
     name = "br_amba_pkg",
     srcs = ["br_amba_pkg.sv"],
@@ -73,6 +78,21 @@ verilog_library(
         "//flow/rtl:br_flow_reg_both",
         "//macros:br_asserts_internal",
         "//macros:br_registers",
+    ],
+)
+
+verilog_library(
+    name = "br_amba_axil_write_arbiter",
+    srcs = ["br_amba_axil_write_arbiter.sv"],
+    deps = [
+        ":br_amba_pkg",
+        "//fifo/rtl:br_fifo_flops",
+        "//flow/rtl:br_flow_demux_select_unstable",
+        "//flow/rtl:br_flow_fork",
+        "//flow/rtl:br_flow_join",
+        "//flow/rtl:br_flow_mux_rr",
+        "//flow/rtl:br_flow_reg_fwd",
+        "//macros:br_asserts_internal",
     ],
 )
 
@@ -295,6 +315,32 @@ br_verilog_elab_and_lint_test_suite(
         ],
     },
     deps = [":br_amba_axil_split"],
+)
+
+br_verilog_elab_and_lint_test_suite(
+    name = "br_amba_axil_write_arbiter_test_suite",
+    params = {
+        "AddrWidth": [
+            "12",
+            "40",
+        ],
+        "DataWidth": [
+            "32",
+            "64",
+        ],
+        "AWUserWidth": ["3"],
+        "WUserWidth": ["2"],
+        "BUserWidth": ["4"],
+        "MaxOutstandingWrites": [
+            "1",
+            "4",
+        ],
+        "NumInitiators": [
+            "2",
+            "3",
+        ],
+    },
+    deps = [":br_amba_axil_write_arbiter"],
 )
 
 br_verilog_elab_and_lint_test_suite(

@@ -69,6 +69,26 @@ module br_fifo_flops_tb;
       .items_next()
   );
 
+  br_ready_valid_covgrp #(
+      .DataWidth(Width)
+  ) br_ready_valid_covgrp_push (
+      .clk,
+      .rst,
+      .valid(push_valid),
+      .ready(push_ready),
+      .data (push_data)
+  );
+
+  br_ready_valid_covgrp #(
+      .DataWidth(Width)
+  ) br_ready_valid_covgrp_pop (
+      .clk,
+      .rst,
+      .valid(pop_valid),
+      .ready(pop_ready),
+      .data (pop_data)
+  );
+
   // Hook up the test harness
   br_fifo_test_harness #(
       .Depth(Depth),

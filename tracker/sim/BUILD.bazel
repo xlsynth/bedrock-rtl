@@ -2,7 +2,7 @@
 
 load("@rules_hdl//verilog:providers.bzl", "verilog_library")
 load("//bazel:br_verilog.bzl", "br_verilog_sim_test_tools_suite")
-load("//bazel:verilog.bzl", "verilog_elab_test")
+load("//bazel:verilog.bzl", "verilog_elab_test", "verilog_sim_coverage_aggregate")
 
 package(default_visibility = ["//visibility:private"])
 
@@ -118,4 +118,13 @@ br_verilog_sim_test_tools_suite(
         "verilator",
     ],
     deps = [":br_tracker_reorder_buffer_flops_tb"],
+)
+
+verilog_sim_coverage_aggregate(
+    name = "br_tracker_verilator_coverage",
+    coverage_reports = [
+        ":br_tracker_linked_list_ctrl_sim_test_tools_suite_verilator_coverage",
+        ":br_tracker_reorder_buffer_flops_sim_test_tools_suite_verilator_coverage",
+    ],
+    visibility = ["//:__pkg__"],
 )
