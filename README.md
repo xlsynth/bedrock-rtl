@@ -198,7 +198,7 @@ git checkout <pinned-commit>
 
 The generated `.tar` contains a `.f` file and the target's transitive SystemVerilog sources and headers. Extract it, then run your simulator or synthesis tool from the extraction directory. The file list starts with the required `macros` include directory. Choose the library target for the module you use; its name is listed in the library's `BUILD.bazel` file.
 
-Pass `--filelist-only` to generate just the checkout-relative `.f` file, matching the former `generate_filelist.sh` behavior.
+Pass `--filelist-only` to generate just the checkout-relative `.f` file.
 
 ## Explore the libraries
 

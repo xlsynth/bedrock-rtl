@@ -21,7 +21,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--filelist-only",
         action="store_true",
-        help="generate only the filelist, matching generate_filelist.sh",
+        help="generate only the checkout-relative filelist",
     )
     parser.add_argument(
         "-o",
