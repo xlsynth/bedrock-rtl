@@ -185,18 +185,20 @@ verilog_elab_test(
 
 This example uses Slang, which is part of the public toolchain. Add lint or multi-tool test suites when your project configures the required tool plugins; see [DEVELOPING.md](DEVELOPING.md).
 
-### Clone the sources and generate a file list
+### Package sources or generate a file list
 
-If your project does not use Bazel, clone Bedrock-RTL at the revision you want and generate a file list for a library target. This command uses `bazel query`, so install Bazel 9.1.0 first.
+If your project does not use Bazel, clone Bedrock-RTL at the revision you want and package a library target's transitive sources. This command uses `bazel query`, so install Bazel 9.1.0 first.
 
 ```shell
 git clone https://github.com/xlsynth/bedrock-rtl.git
 cd bedrock-rtl
 git checkout <pinned-commit>
-./generate_filelist.sh //arb/rtl:br_arb_fixed
+./package_sources.py //arb/rtl:br_arb_fixed
 ```
 
-The generated `.f` file contains the target's transitive SystemVerilog sources and headers, and starts with the required `macros` include directory. Its paths are relative to the Bedrock-RTL checkout, so run your simulator or synthesis tool from that checkout, or convert the paths for your own flow. Choose the library target for the module you use; its name is listed in the library's `BUILD.bazel` file.
+The generated `.tar` contains a `.f` file and the target's transitive SystemVerilog sources and headers. Extract it, then run your simulator or synthesis tool from the extraction directory. The file list starts with the required `macros` include directory. Choose the library target for the module you use; its name is listed in the library's `BUILD.bazel` file.
+
+Pass `--filelist-only` to generate just the checkout-relative `.f` file, matching the former `generate_filelist.sh` behavior.
 
 ## Explore the libraries
 
