@@ -205,6 +205,71 @@ Tests that a Verilog or SystemVerilog design passes a set of static lint checks.
 | <a id="rule_verilog_lint_test-verilog_runner_tool"></a>verilog_runner_tool |  The Verilog Runner tool to use.   | <a href="https://bazel.build/concepts/labels">Label</a> | optional |  `"@bedrock-rtl//python/verilog_runner:verilog_runner.py"`  |
 
 
+<a id="rule_verilog_sim_coverage_aggregate"></a>
+
+## rule_verilog_sim_coverage_aggregate
+
+<pre>
+load("@bedrock-rtl//bazel:verilog.bzl", "rule_verilog_sim_coverage_aggregate")
+
+rule_verilog_sim_coverage_aggregate(<a href="#rule_verilog_sim_coverage_aggregate-name">name</a>, <a href="#rule_verilog_sim_coverage_aggregate-deps">deps</a>, <a href="#rule_verilog_sim_coverage_aggregate-coverage_data">coverage_data</a>, <a href="#rule_verilog_sim_coverage_aggregate-coverage_reports">coverage_reports</a>)
+</pre>
+
+Merges Verilator coverage data as a declared Bazel output.
+
+**ATTRIBUTES**
+
+
+| Name  | Description | Type | Mandatory | Default |
+| :------------- | :------------- | :------------- | :------------- | :------------- |
+| <a id="rule_verilog_sim_coverage_aggregate-name"></a>name |  A unique name for this target.   | <a href="https://bazel.build/concepts/labels#target-names">Name</a> | required |  |
+| <a id="rule_verilog_sim_coverage_aggregate-deps"></a>deps |  The dependencies of the testbench whose design sources should be tracked transitively.   | <a href="https://bazel.build/concepts/labels">List of labels</a> | optional |  `[]`  |
+| <a id="rule_verilog_sim_coverage_aggregate-coverage_data"></a>coverage_data |  Coverage data targets whose data and info files should be merged.   | <a href="https://bazel.build/concepts/labels">List of labels</a> | optional |  `[]`  |
+| <a id="rule_verilog_sim_coverage_aggregate-coverage_reports"></a>coverage_reports |  Coverage report targets whose transitive data and info files should be merged.   | <a href="https://bazel.build/concepts/labels">List of labels</a> | optional |  `[]`  |
+
+
+<a id="rule_verilog_sim_coverage_data"></a>
+
+## rule_verilog_sim_coverage_data
+
+<pre>
+load("@bedrock-rtl//bazel:verilog.bzl", "rule_verilog_sim_coverage_data")
+
+rule_verilog_sim_coverage_data(<a href="#rule_verilog_sim_coverage_data-name">name</a>, <a href="#rule_verilog_sim_coverage_data-deps">deps</a>, <a href="#rule_verilog_sim_coverage_data-custom_tcl_body">custom_tcl_body</a>, <a href="#rule_verilog_sim_coverage_data-custom_tcl_header">custom_tcl_header</a>, <a href="#rule_verilog_sim_coverage_data-defines">defines</a>, <a href="#rule_verilog_sim_coverage_data-elab_only">elab_only</a>,
+                               <a href="#rule_verilog_sim_coverage_data-elab_opts">elab_opts</a>, <a href="#rule_verilog_sim_coverage_data-opts">opts</a>, <a href="#rule_verilog_sim_coverage_data-params">params</a>, <a href="#rule_verilog_sim_coverage_data-runner_flags">runner_flags</a>, <a href="#rule_verilog_sim_coverage_data-seed">seed</a>, <a href="#rule_verilog_sim_coverage_data-sim_opts">sim_opts</a>, <a href="#rule_verilog_sim_coverage_data-tool">tool</a>, <a href="#rule_verilog_sim_coverage_data-top">top</a>, <a href="#rule_verilog_sim_coverage_data-uvm">uvm</a>,
+                               <a href="#rule_verilog_sim_coverage_data-verilog_runner_data">verilog_runner_data</a>, <a href="#rule_verilog_sim_coverage_data-verilog_runner_env">verilog_runner_env</a>, <a href="#rule_verilog_sim_coverage_data-verilog_runner_plugins">verilog_runner_plugins</a>,
+                               <a href="#rule_verilog_sim_coverage_data-verilog_runner_tool">verilog_runner_tool</a>, <a href="#rule_verilog_sim_coverage_data-waves">waves</a>)
+</pre>
+
+Runs a Verilator simulation test target and emits coverage info and description files.
+
+**ATTRIBUTES**
+
+
+| Name  | Description | Type | Mandatory | Default |
+| :------------- | :------------- | :------------- | :------------- | :------------- |
+| <a id="rule_verilog_sim_coverage_data-name"></a>name |  A unique name for this target.   | <a href="https://bazel.build/concepts/labels#target-names">Name</a> | required |  |
+| <a id="rule_verilog_sim_coverage_data-deps"></a>deps |  The dependencies of the test.   | <a href="https://bazel.build/concepts/labels">List of labels</a> | optional |  `[]`  |
+| <a id="rule_verilog_sim_coverage_data-custom_tcl_body"></a>custom_tcl_body |  Tcl script file containing custom tool-specific commands to insert in the middle of the generated tcl script after the elaboration step.The tcl body (custom or not) is unconditionally followed by the tcl footer.Do not include Tcl commands that manipulate sources, headers, defines, or parameters, as those will be handled by the rule implementation.   | <a href="https://bazel.build/concepts/labels">Label</a> | optional |  `None`  |
+| <a id="rule_verilog_sim_coverage_data-custom_tcl_header"></a>custom_tcl_header |  Tcl script file containing custom tool-specific commands to insert at the beginning of the generated tcl script.The tcl header (custom or not) is unconditionally followed by analysis and elaborate commands, and then the tcl body.Do not include Tcl commands that manipulate sources, headers, defines, or parameters, as those will be handled by the rule implementation.   | <a href="https://bazel.build/concepts/labels">Label</a> | optional |  `None`  |
+| <a id="rule_verilog_sim_coverage_data-defines"></a>defines |  Preprocessor defines to pass to the Verilog compiler.   | List of strings | optional |  `[]`  |
+| <a id="rule_verilog_sim_coverage_data-elab_only"></a>elab_only |  Only run elaboration.   | Boolean | optional |  `False`  |
+| <a id="rule_verilog_sim_coverage_data-elab_opts"></a>elab_opts |  Tool-specific compile/elaboration options not covered by other arguments.   | List of strings | optional |  `[]`  |
+| <a id="rule_verilog_sim_coverage_data-opts"></a>opts |  Deprecated VCS-only simulation options. Prefer 'elab_opts' or 'sim_opts'.   | List of strings | optional |  `[]`  |
+| <a id="rule_verilog_sim_coverage_data-params"></a>params |  Verilog module parameters to set in the instantiation of the top-level module.   | <a href="https://bazel.build/rules/lib/core/dict">Dictionary: String -> String</a> | optional |  `{}`  |
+| <a id="rule_verilog_sim_coverage_data-runner_flags"></a>runner_flags |  command line flags   | <a href="https://bazel.build/concepts/labels">Label</a> | optional |  `"@bedrock-rtl//bazel:runner_flags"`  |
+| <a id="rule_verilog_sim_coverage_data-seed"></a>seed |  Random seed to use in simulation.   | Integer | optional |  `0`  |
+| <a id="rule_verilog_sim_coverage_data-sim_opts"></a>sim_opts |  Tool-specific simulation runtime options, such as simulator plusargs.   | List of strings | optional |  `[]`  |
+| <a id="rule_verilog_sim_coverage_data-tool"></a>tool |  Simulator tool to use.   | String | required |  |
+| <a id="rule_verilog_sim_coverage_data-top"></a>top |  The top-level module; if not provided and there exists one dependency, then defaults to that dep's label name.   | String | optional |  `""`  |
+| <a id="rule_verilog_sim_coverage_data-uvm"></a>uvm |  Run UVM test.   | Boolean | optional |  `False`  |
+| <a id="rule_verilog_sim_coverage_data-verilog_runner_data"></a>verilog_runner_data |  Additional Verilog Runner files needed at runtime.   | <a href="https://bazel.build/concepts/labels">List of labels</a> | optional |  `["@bedrock-rtl//python/verilog_runner:verilog_runner_data"]`  |
+| <a id="rule_verilog_sim_coverage_data-verilog_runner_env"></a>verilog_runner_env |  Optional shell script sourced immediately before each Verilog Runner invocation.<br><br>The wrapper does not change directories before sourcing the hook, so it inherits the wrapper's existing working directory. Direct wrappers add the hook to runfiles and source its runfiles path; sandbox generator actions declare it as an input and source its execroot path. A direct hook is sourced before the wrapper unsets any inherited `rlocation` function, but callers needing runfiles lookup must initialize a working runfiles library rather than assume that Bazel exports a usable `rlocation` implementation. Bedrock appends its `verilog_runner_plugins` directories to `VERILOG_RUNNER_PLUGIN_PATH` after the hook runs. The hook is not included in sandbox archives or sourced by their final runners.   | <a href="https://bazel.build/concepts/labels">Label</a> | optional |  `None`  |
+| <a id="rule_verilog_sim_coverage_data-verilog_runner_plugins"></a>verilog_runner_plugins |  Verilog runner plugins to load from this workspace, in addition to those loaded from VERILOG_RUNNER_PLUGIN_PATH.   | <a href="https://bazel.build/concepts/labels">List of labels</a> | optional |  `["@bedrock-rtl//python/verilog_runner/plugins:verilator.py"]`  |
+| <a id="rule_verilog_sim_coverage_data-verilog_runner_tool"></a>verilog_runner_tool |  The Verilog Runner tool to use.   | <a href="https://bazel.build/concepts/labels">Label</a> | optional |  `"@bedrock-rtl//python/verilog_runner:verilog_runner.py"`  |
+| <a id="rule_verilog_sim_coverage_data-waves"></a>waves |  Enable waveform dumping.   | Boolean | optional |  `False`  |
+
+
 <a id="rule_verilog_sim_test"></a>
 
 ## rule_verilog_sim_test
@@ -341,6 +406,61 @@ Build configuration for Verilog Runner flags from command line
 | Name  | Description | Type | Mandatory | Default |
 | :------------- | :------------- | :------------- | :------------- | :------------- |
 | <a id="runner_flags-name"></a>name |  A unique name for this target.   | <a href="https://bazel.build/concepts/labels#target-names">Name</a> | required |  |
+
+
+<a id="VerilogCoverageDataInfo"></a>
+
+## VerilogCoverageDataInfo
+
+<pre>
+load("@bedrock-rtl//bazel:verilog.bzl", "VerilogCoverageDataInfo")
+
+VerilogCoverageDataInfo(<a href="#VerilogCoverageDataInfo-toggle_info">toggle_info</a>, <a href="#VerilogCoverageDataInfo-line_info">line_info</a>, <a href="#VerilogCoverageDataInfo-branch_info">branch_info</a>, <a href="#VerilogCoverageDataInfo-expr_info">expr_info</a>, <a href="#VerilogCoverageDataInfo-covergroup_info">covergroup_info</a>, <a href="#VerilogCoverageDataInfo-user_info">user_info</a>,
+                        <a href="#VerilogCoverageDataInfo-coverage_data">coverage_data</a>, <a href="#VerilogCoverageDataInfo-coverage_failures">coverage_failures</a>)
+</pre>
+
+Verilator raw coverage data and info artifacts.
+
+**FIELDS**
+
+| Name  | Description |
+| :------------- | :------------- |
+| <a id="VerilogCoverageDataInfo-toggle_info"></a>toggle_info |  -    |
+| <a id="VerilogCoverageDataInfo-line_info"></a>line_info |  -    |
+| <a id="VerilogCoverageDataInfo-branch_info"></a>branch_info |  -    |
+| <a id="VerilogCoverageDataInfo-expr_info"></a>expr_info |  -    |
+| <a id="VerilogCoverageDataInfo-covergroup_info"></a>covergroup_info |  -    |
+| <a id="VerilogCoverageDataInfo-user_info"></a>user_info |  -    |
+| <a id="VerilogCoverageDataInfo-coverage_data"></a>coverage_data |  -    |
+| <a id="VerilogCoverageDataInfo-coverage_failures"></a>coverage_failures |  -    |
+
+
+<a id="VerilogCoverageReportInfo"></a>
+
+## VerilogCoverageReportInfo
+
+<pre>
+load("@bedrock-rtl//bazel:verilog.bzl", "VerilogCoverageReportInfo")
+
+VerilogCoverageReportInfo(<a href="#VerilogCoverageReportInfo-toggle_info">toggle_info</a>, <a href="#VerilogCoverageReportInfo-line_info">line_info</a>, <a href="#VerilogCoverageReportInfo-branch_info">branch_info</a>, <a href="#VerilogCoverageReportInfo-expr_info">expr_info</a>, <a href="#VerilogCoverageReportInfo-covergroup_info">covergroup_info</a>,
+                          <a href="#VerilogCoverageReportInfo-user_info">user_info</a>, <a href="#VerilogCoverageReportInfo-coverage_data">coverage_data</a>, <a href="#VerilogCoverageReportInfo-coverage_failures">coverage_failures</a>, <a href="#VerilogCoverageReportInfo-srcs">srcs</a>)
+</pre>
+
+Aggregated Verilator coverage data and info artifacts.
+
+**FIELDS**
+
+| Name  | Description |
+| :------------- | :------------- |
+| <a id="VerilogCoverageReportInfo-toggle_info"></a>toggle_info |  -    |
+| <a id="VerilogCoverageReportInfo-line_info"></a>line_info |  -    |
+| <a id="VerilogCoverageReportInfo-branch_info"></a>branch_info |  -    |
+| <a id="VerilogCoverageReportInfo-expr_info"></a>expr_info |  -    |
+| <a id="VerilogCoverageReportInfo-covergroup_info"></a>covergroup_info |  -    |
+| <a id="VerilogCoverageReportInfo-user_info"></a>user_info |  -    |
+| <a id="VerilogCoverageReportInfo-coverage_data"></a>coverage_data |  -    |
+| <a id="VerilogCoverageReportInfo-coverage_failures"></a>coverage_failures |  -    |
+| <a id="VerilogCoverageReportInfo-srcs"></a>srcs |  -    |
 
 
 <a id="VerilogRunnerFlagsInfo"></a>
@@ -592,6 +712,56 @@ The following extra tags are unconditionally appended to the list of tags:
 | <a id="verilog_lint_test-kwargs"></a>kwargs |  Other arguments to pass to the rule_verilog_lint_test rule.   |  none |
 
 
+<a id="verilog_sim_coverage_aggregate"></a>
+
+## verilog_sim_coverage_aggregate
+
+<pre>
+load("@bedrock-rtl//bazel:verilog.bzl", "verilog_sim_coverage_aggregate")
+
+verilog_sim_coverage_aggregate(<a href="#verilog_sim_coverage_aggregate-name">name</a>, <a href="#verilog_sim_coverage_aggregate-coverage_data">coverage_data</a>, <a href="#verilog_sim_coverage_aggregate-coverage_reports">coverage_reports</a>, <a href="#verilog_sim_coverage_aggregate-deps">deps</a>, <a href="#verilog_sim_coverage_aggregate-kwargs">**kwargs</a>)
+</pre>
+
+Wraps rule_verilog_sim_coverage_aggregate.
+
+**PARAMETERS**
+
+
+| Name  | Description | Default Value |
+| :------------- | :------------- | :------------- |
+| <a id="verilog_sim_coverage_aggregate-name"></a>name |  The name of the aggregate coverage target.   |  none |
+| <a id="verilog_sim_coverage_aggregate-coverage_data"></a>coverage_data |  Coverage data targets whose data and info files should be merged.   |  `[]` |
+| <a id="verilog_sim_coverage_aggregate-coverage_reports"></a>coverage_reports |  Coverage report targets whose transitive data and info files should be merged.   |  `[]` |
+| <a id="verilog_sim_coverage_aggregate-deps"></a>deps |  The dependencies of the testbench whose design sources should be tracked transitively.   |  `[]` |
+| <a id="verilog_sim_coverage_aggregate-kwargs"></a>kwargs |  Other arguments to pass to the rule_verilog_sim_coverage_aggregate rule.   |  none |
+
+
+<a id="verilog_sim_coverage_data"></a>
+
+## verilog_sim_coverage_data
+
+<pre>
+load("@bedrock-rtl//bazel:verilog.bzl", "verilog_sim_coverage_data")
+
+verilog_sim_coverage_data(<a href="#verilog_sim_coverage_data-tool">tool</a>, <a href="#verilog_sim_coverage_data-opts">opts</a>, <a href="#verilog_sim_coverage_data-elab_opts">elab_opts</a>, <a href="#verilog_sim_coverage_data-sim_opts">sim_opts</a>, <a href="#verilog_sim_coverage_data-tags">tags</a>, <a href="#verilog_sim_coverage_data-waves">waves</a>, <a href="#verilog_sim_coverage_data-kwargs">**kwargs</a>)
+</pre>
+
+Wraps rule_verilog_sim_coverage_data.
+
+**PARAMETERS**
+
+
+| Name  | Description | Default Value |
+| :------------- | :------------- | :------------- |
+| <a id="verilog_sim_coverage_data-tool"></a>tool |  The simulation tool to use. Must be "verilator".   |  none |
+| <a id="verilog_sim_coverage_data-opts"></a>opts |  Deprecated VCS-only simulation options.   |  `[]` |
+| <a id="verilog_sim_coverage_data-elab_opts"></a>elab_opts |  Tool-specific compile/elaboration options not covered by other arguments.   |  `[]` |
+| <a id="verilog_sim_coverage_data-sim_opts"></a>sim_opts |  Tool-specific simulation runtime options, such as simulator plusargs.   |  `[]` |
+| <a id="verilog_sim_coverage_data-tags"></a>tags |  <p align="center"> - </p>   |  `[]` |
+| <a id="verilog_sim_coverage_data-waves"></a>waves |  Enable waveform dumping.   |  `False` |
+| <a id="verilog_sim_coverage_data-kwargs"></a>kwargs |  Other arguments to pass to the rule_verilog_sim_coverage_data rule.   |  none |
+
+
 <a id="verilog_sim_test"></a>
 
 ## verilog_sim_test
@@ -632,7 +802,7 @@ The following extra tags are unconditionally appended to the list of tags:
 <pre>
 load("@bedrock-rtl//bazel:verilog.bzl", "verilog_sim_test_suite")
 
-verilog_sim_test_suite(<a href="#verilog_sim_test_suite-name">name</a>, <a href="#verilog_sim_test_suite-defines">defines</a>, <a href="#verilog_sim_test_suite-params">params</a>, <a href="#verilog_sim_test_suite-illegal_param_combinations">illegal_param_combinations</a>, <a href="#verilog_sim_test_suite-kwargs">**kwargs</a>)
+verilog_sim_test_suite(<a href="#verilog_sim_test_suite-name">name</a>, <a href="#verilog_sim_test_suite-defines">defines</a>, <a href="#verilog_sim_test_suite-params">params</a>, <a href="#verilog_sim_test_suite-illegal_param_combinations">illegal_param_combinations</a>, <a href="#verilog_sim_test_suite-coverage">coverage</a>, <a href="#verilog_sim_test_suite-kwargs">**kwargs</a>)
 </pre>
 
 Creates a suite of Verilog sim tests for each combination of the provided parameters.
@@ -651,6 +821,7 @@ to the base name followed by the parameter key-values.
 | <a id="verilog_sim_test_suite-defines"></a>defines |  A list of defines.   |  `[]` |
 | <a id="verilog_sim_test_suite-params"></a>params |  A dictionary where keys are parameter names and values are lists of possible values for those parameters.   |  `{}` |
 | <a id="verilog_sim_test_suite-illegal_param_combinations"></a>illegal_param_combinations |  A dictionary where keys are parameter tuples and values are lists of tuples of illegal values for those parameters.   |  `{}` |
+| <a id="verilog_sim_test_suite-coverage"></a>coverage |  Value enabling and disabling coverage data.   |  `False` |
 | <a id="verilog_sim_test_suite-kwargs"></a>kwargs |  Additional keyword arguments to be passed to the verilog_elab_test and verilog_lint_test functions.   |  none |
 
 

@@ -2,7 +2,7 @@
 
 load("@rules_hdl//verilog:providers.bzl", "verilog_library")
 load("//bazel:br_verilog.bzl", "br_verilog_sim_test_tools_suite")
-load("//bazel:verilog.bzl", "verilog_elab_test")
+load("//bazel:verilog.bzl", "verilog_elab_test", "verilog_sim_coverage_aggregate")
 
 package(default_visibility = ["//visibility:private"])
 
@@ -192,6 +192,13 @@ verilog_elab_test(
     ],
 )
 
+CDC_DELAY_MODES = [
+    "0",
+    "1",
+    "2",
+    "3",
+]
+
 [
     br_verilog_sim_test_tools_suite(
         name = "br_cdc_fifo_flops_sim_test_tools_suite" + cdc_delay_mode,
@@ -233,12 +240,7 @@ verilog_elab_test(
             "//mux/rtl:br_mux_bin_structured_gates_mock",
         ],
     )
-    for cdc_delay_mode in [
-        "0",
-        "1",
-        "2",
-        "3",
-    ]
+    for cdc_delay_mode in CDC_DELAY_MODES
 ]
 
 verilog_library(
@@ -388,12 +390,7 @@ verilog_elab_test(
             "//mux/rtl:br_mux_bin_structured_gates_mock",
         ],
     )
-    for cdc_delay_mode in [
-        "0",
-        "1",
-        "2",
-        "3",
-    ]
+    for cdc_delay_mode in CDC_DELAY_MODES
 ]
 
 verilog_library(
@@ -477,6 +474,7 @@ verilog_elab_test(
 [
     br_verilog_sim_test_tools_suite(
         name = "br_cdc_bit_pulse_sim_test_tools_suite_" + cdc_delay_mode,
+        coverage = True,
         params = {
             "NumStages": [
                 "2",
@@ -505,12 +503,7 @@ verilog_elab_test(
         ],
         deps = [":br_cdc_bit_pulse_tb"],
     )
-    for cdc_delay_mode in [
-        "0",
-        "1",
-        "2",
-        "3",
-    ]
+    for cdc_delay_mode in CDC_DELAY_MODES
 ]
 
 verilog_library(
@@ -675,4 +668,23 @@ br_verilog_sim_test_tools_suite(
         ":br_cdc_stable_data_autoupdate_tb",
         "//gate/rtl:br_gate_mock",
     ],
+)
+
+verilog_sim_coverage_aggregate(
+    name = "br_cdc_verilator_coverage",
+    coverage_reports = [
+        ":br_cdc_reg_sim_test_tools_suite_verilator_coverage",
+        ":br_cdc_stable_data_sim_test_tools_suite_verilator_coverage",
+        ":br_cdc_stable_data_autoupdate_sim_test_tools_suite_verilator_coverage",
+    ] + [
+        ":br_cdc_fifo_flops_sim_test_tools_suite" + cdc_delay_mode + "_verilator_coverage"
+        for cdc_delay_mode in CDC_DELAY_MODES
+    ] + [
+        ":br_cdc_fifo_flops_push_credit_sim_test_tools_suite" + cdc_delay_mode + "_verilator_coverage"
+        for cdc_delay_mode in CDC_DELAY_MODES
+    ] + [
+        ":br_cdc_bit_pulse_sim_test_tools_suite_" + cdc_delay_mode + "_verilator_coverage"
+        for cdc_delay_mode in CDC_DELAY_MODES
+    ],
+    visibility = ["//:__pkg__"],
 )

@@ -2,7 +2,7 @@
 
 load("@rules_hdl//verilog:providers.bzl", "verilog_library")
 load("//bazel:br_verilog.bzl", "br_verilog_sim_test_tools_suite")
-load("//bazel:verilog.bzl", "verilog_elab_test")
+load("//bazel:verilog.bzl", "verilog_elab_test", "verilog_sim_coverage_aggregate")
 
 package(default_visibility = ["//visibility:public"])
 
@@ -879,4 +879,44 @@ br_verilog_sim_test_tools_suite(
     elab_opts = ["-Wno-BLKANDNBLK"],
     tools = ["verilator"],
     deps = [":br_flow_xbar_lru_tb"],
+)
+
+verilog_sim_coverage_aggregate(
+    name = "br_flow_verilator_coverage",
+    coverage_reports = [
+        ":br_flow_reg_fwd_sim_test_tools_suite_verilator_coverage",
+        ":br_flow_reg_rev_sim_test_tools_suite_verilator_coverage",
+        ":br_flow_reg_none_sim_test_tools_suite_verilator_coverage",
+        ":br_flow_reg_both_sim_test_tools_suite_verilator_coverage",
+        ":br_flow_fork_select_sim_test_tools_suite_verilator_coverage",
+        ":br_flow_join_sim_test_tools_suite_verilator_coverage",
+        ":br_flow_valve_sim_test_tools_suite_verilator_coverage",
+        ":br_flow_mux_select_sim_test_tools_suite_verilator_coverage",
+        ":br_flow_demux_select_sim_test_tools_suite_verilator_coverage",
+        ":br_flow_buffer_depth_0_sim_test_tools_suite_verilator_coverage",
+        ":br_flow_buffer_depth_1_sim_test_tools_suite_verilator_coverage",
+        ":br_flow_buffer_depth_1_fwd_sim_test_tools_suite_verilator_coverage",
+        ":br_flow_buffer_depth_2_sim_test_tools_suite_verilator_coverage",
+        ":br_flow_buffer_depth_3_sim_test_tools_suite_verilator_coverage",
+        ":br_flow_arb_fixed_sim_test_tools_suite_verilator_coverage",
+        ":br_flow_arb_rr_sim_test_tools_suite_verilator_coverage",
+        ":br_flow_arb_lru_sim_test_tools_suite_verilator_verilator_coverage",
+        ":br_flow_mux_fixed_sim_test_tools_suite_verilator_coverage",
+        ":br_flow_mux_rr_sim_test_tools_suite_verilator_coverage",
+        ":br_flow_mux_lru_sim_test_tools_suite_verilator_verilator_coverage",
+        ":br_flow_mux_fixed_stable_sim_test_tools_suite_verilator_coverage",
+        ":br_flow_mux_rr_stable_sim_test_tools_suite_verilator_coverage",
+        ":br_flow_mux_lru_stable_sim_test_tools_suite_verilator_verilator_coverage",
+        ":br_flow_burst_mux_fixed_sim_test_tools_suite_verilator_coverage",
+        ":br_flow_burst_mux_rr_sim_test_tools_suite_verilator_coverage",
+        ":br_flow_burst_mux_lru_sim_test_tools_suite_verilator_verilator_coverage",
+        ":br_flow_burst_mux_fixed_stable_sim_test_tools_suite_verilator_coverage",
+        ":br_flow_burst_mux_rr_stable_sim_test_tools_suite_verilator_coverage",
+        ":br_flow_burst_mux_lru_stable_sim_test_tools_suite_verilator_verilator_coverage",
+        ":br_flow_serializer_sim_test_tools_suite_verilator_coverage",
+        ":br_flow_xbar_fixed_sim_test_tools_suite_verilator_coverage",
+        ":br_flow_xbar_rr_sim_test_tools_suite_verilator_coverage",
+        ":br_flow_xbar_lru_sim_test_tools_suite_verilator_verilator_coverage",
+    ],
+    visibility = ["//:__pkg__"],
 )

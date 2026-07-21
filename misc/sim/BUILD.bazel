@@ -2,7 +2,7 @@
 
 load("@rules_hdl//verilog:providers.bzl", "verilog_library")
 load("//bazel:br_verilog.bzl", "br_verilog_sim_test_tools_suite")
-load("//bazel:verilog.bzl", "verilog_elab_test")
+load("//bazel:verilog.bzl", "verilog_elab_test", "verilog_sim_coverage_aggregate")
 
 package(default_visibility = ["//visibility:private"])
 
@@ -128,4 +128,14 @@ br_verilog_sim_test_tools_suite(
         "verilator",
     ],
     deps = [":br_misc_unused_tb"],
+)
+
+verilog_sim_coverage_aggregate(
+    name = "br_misc_verilator_coverage",
+    coverage_reports = [
+        ":br_misc_tieoff_one_sim_test_tools_suite_verilator_coverage",
+        ":br_misc_tieoff_zero_sim_test_tools_suite_verilator_coverage",
+        ":br_misc_unused_sim_test_tools_suite_verilator_coverage",
+    ],
+    visibility = ["//:__pkg__"],
 )

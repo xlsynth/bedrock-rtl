@@ -2,7 +2,7 @@
 
 load("@rules_hdl//verilog:providers.bzl", "verilog_library")
 load("//bazel:br_verilog.bzl", "br_verilog_sim_test_tools_suite")
-load("//bazel:verilog.bzl", "verilog_elab_test")
+load("//bazel:verilog.bzl", "verilog_elab_test", "verilog_sim_coverage_aggregate")
 
 BR_AMBA_SIM_MAX_CHECK_WIDTH_64 = "BR_AMBA_SIM_MAX_CHECK_WIDTH=64"
 
@@ -615,4 +615,17 @@ br_verilog_sim_test_tools_suite(
         "verilator",
     ],
     deps = [":br_amba_atb_funnel_tb"],
+)
+
+verilog_sim_coverage_aggregate(
+    name = "br_amba_verilator_coverage",
+    coverage_reports = [
+        ":br_amba_apb_timing_slice_sim_test_tools_suite_verilator_coverage",
+        ":br_amba_atb_funnel_sim_test_tools_suite_verilator_coverage",
+        ":br_amba_axi_isolate_sub_tb_sim_test_tools_suite_verilator_coverage",
+        ":br_amba_axi_isolate_mgr_tb_sim_test_tools_suite_verilator_coverage",
+        ":br_amba_axi_demux_tb_sim_test_tools_suite_verilator_coverage",
+        ":br_amba_axil_default_target_sim_test_tools_suite_verilator_coverage",
+    ],
+    visibility = ["//:__pkg__"],
 )

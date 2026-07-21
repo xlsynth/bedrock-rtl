@@ -2,6 +2,7 @@
 
 load("@python_versions//3.12:defs.bzl", compile_pip_requirements_3_12 = "compile_pip_requirements")
 load("@rules_python//python:defs.bzl", "py_test")
+load("//bazel:verilog.bzl", "verilog_sim_coverage_aggregate")
 
 compile_pip_requirements_3_12(
     name = "requirements_3_12",
@@ -14,4 +15,30 @@ py_test(
     srcs = ["check_env.py"],
     env_inherit = ["PATH"],
     tags = ["local"],
+)
+
+verilog_sim_coverage_aggregate(
+    name = "br_verilator_coverage",
+    coverage_reports = [
+        "//amba/sim:br_amba_verilator_coverage",
+        "//arb/sim:br_arb_verilator_coverage",
+        "//counter/sim:br_counter_verilator_coverage",
+        "//credit/sim:br_credit_verilator_coverage",
+        "//cdc/sim:br_cdc_verilator_coverage",
+        "//csr/sim:br_csr_verilator_coverage",
+        "//delay/sim:br_delay_verilator_coverage",
+        "//demux/sim:br_demux_verilator_coverage",
+        "//ecc/sim:br_ecc_verilator_coverage",
+        "//enc/sim:br_enc_verilator_coverage",
+        "//flow/sim:br_flow_verilator_coverage",
+        "//fifo/sim:br_fifo_verilator_coverage",
+        "//lfsr/sim:br_lfsr_verilator_coverage",
+        "//macros:br_macros_verilator_coverage",
+        "//misc/sim:br_misc_verilator_coverage",
+        "//multi_xfer/sim:br_multi_xfer_verilator_coverage",
+        "//mux/sim:br_mux_verilator_coverage",
+        "//ram/sim:br_ram_verilator_coverage",
+        "//shift/sim:br_shift_verilator_coverage",
+        "//tracker/sim:br_tracker_verilator_coverage",
+    ],
 )

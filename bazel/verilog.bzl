@@ -11,6 +11,15 @@ TOOLS_THAT_NEED_LICENSES = [
     "vcs",
     "xrun",
 ]
+COVERAGE_TYPES = [
+    "toggle",
+    "line",
+    "branch",
+    "expr",
+    "covergroup",
+    "user",
+]
+COVERAGE_DATA_FILENAME = "coverage.dat"
 
 def extra_tags(kind, tool):
     """Returns a list of extra tags that should be added to a target.
@@ -32,6 +41,12 @@ def extra_tags(kind, tool):
     if tool in TOOLS_THAT_NEED_LICENSES:
         extra_tags.append("resources:verilog_test_tool_licenses_" + tool + ":1")
     return extra_tags
+
+def _with_manual_tag(tags):
+    """Returns tags with the manual tag included."""
+    if "manual" in tags:
+        return tags
+    return tags + ["manual"]
 
 def get_transitive(ctx, srcs_not_hdrs):
     """Returns a depset of all Verilog source or header files in the transitive closure of the deps attribute."""
@@ -101,9 +116,24 @@ def _write_executable_shell_script(ctx, executable_file, cmd, verbose = True, en
         is_executable = True,
     )
 
+def _cov_type_to_provider(cov_type):
+    return cov_type + "_info"
+
+_VERILOG_COVERAGE_DATA_FIELDS = [_cov_type_to_provider(t) for t in COVERAGE_TYPES] + ["coverage_data", "coverage_failures"]
+
 VerilogRunnerFlagsInfo = provider(
     fields = ["name", "runner_flags"],
     doc = "Verilog Runner flags provider",
+)
+
+VerilogCoverageDataInfo = provider(
+    fields = _VERILOG_COVERAGE_DATA_FIELDS,
+    doc = "Verilator raw coverage data and info artifacts.",
+)
+
+VerilogCoverageReportInfo = provider(
+    fields = _VERILOG_COVERAGE_DATA_FIELDS + ["srcs"],
+    doc = "Aggregated Verilator coverage data and info artifacts.",
 )
 
 def _runner_flags_impl(ctx):
@@ -414,6 +444,255 @@ def _verilog_synth_sandbox_impl(ctx):
         extra_args = extra_args,
         extra_runfiles = extra_runfiles,
     )
+
+def _coverage_report_info(coverage_infos_by_type, coverage_data, coverage_failures, srcs):
+    return VerilogCoverageReportInfo(
+        toggle_info = coverage_infos_by_type.get("toggle", []),
+        line_info = coverage_infos_by_type.get("line", []),
+        branch_info = coverage_infos_by_type.get("branch", []),
+        expr_info = coverage_infos_by_type.get("expr", []),
+        covergroup_info = coverage_infos_by_type.get("covergroup", []),
+        user_info = coverage_infos_by_type.get("user", []),
+        coverage_data = coverage_data,
+        coverage_failures = coverage_failures,
+        srcs = srcs,
+    )
+
+def _coverage_data_info(coverage_infos_by_type, coverage_data, coverage_failures):
+    return VerilogCoverageDataInfo(
+        toggle_info = coverage_infos_by_type.get("toggle", []),
+        line_info = coverage_infos_by_type.get("line", []),
+        branch_info = coverage_infos_by_type.get("branch", []),
+        expr_info = coverage_infos_by_type.get("expr", []),
+        covergroup_info = coverage_infos_by_type.get("covergroup", []),
+        user_info = coverage_infos_by_type.get("user", []),
+        coverage_data = coverage_data,
+        coverage_failures = coverage_failures,
+    )
+
+def _append_coverage_infos(coverage_infos_by_type, coverage_provider):
+    for coverage_type in COVERAGE_TYPES:
+        coverage_infos = getattr(coverage_provider, _cov_type_to_provider(coverage_type), [])
+        if len(coverage_infos) == 0:
+            continue
+        coverage_infos_by_type[coverage_type] += coverage_infos
+
+def _source_verilog_runner_eda_tools_env_setup():
+    return [
+        'if [[ -n "$VERILOG_RUNNER_EDA_TOOLS_ENV_SETUP" ]]; then',
+        '  source "$VERILOG_RUNNER_EDA_TOOLS_ENV_SETUP"',
+        "fi",
+    ]
+
+def _declare_coverage_info_files(ctx, coverage_data, name, coverage_dat_path = None):
+    coverage_infos = []
+    if coverage_dat_path == None:
+        coverage_dat_path = coverage_data.path
+    for coverage_type in COVERAGE_TYPES:
+        coverage_info = ctx.actions.declare_file("coverage_{}_{}.info".format(coverage_type, name))
+
+        command_prefix = ["set -e"] + _source_verilog_runner_eda_tools_env_setup()
+        ctx.actions.run_shell(
+            inputs = [coverage_data],
+            outputs = [coverage_info],
+            command = "\n".join(command_prefix + [
+                "if test -s {coverage_dat_path}; then",
+                "  " + " ".join([
+                    "\"${{VERILATOR_COVERAGE_CMD:-verilator_coverage}}\"",
+                    "--filter-type {coverage_type}",
+                    "--write-info {coverage_info_path} {coverage_dat_path}",
+                ]),
+                "else",
+                "  : > {coverage_info_path}",
+                "fi",
+            ]).format(
+                coverage_dat_path = _shell_quote(coverage_dat_path),
+                coverage_type = _shell_quote(coverage_type),
+                coverage_info_path = _shell_quote(coverage_info.path),
+            ),
+            mnemonic = "VerilatorCoverageInfo",
+            progress_message = "Creating Verilator coverage info for %{label}",
+            use_default_shell_env = True,
+        )
+
+        coverage_infos.append(coverage_info)
+
+    return coverage_infos
+
+def _verilog_sim_coverage_data_impl(ctx):
+    """Implementation of the Verilator coverage info and description rule."""
+    extra_args = []
+    if ctx.attr.opts and ctx.attr.tool != "vcs":
+        fail("'opts' is a deprecated VCS-only simulation option. Use 'elab_opts' or 'sim_opts' instead.")
+    if ctx.attr.tool != "verilator":
+        fail("'coverage' is only supported with tool = 'verilator'.")
+    if ctx.attr.elab_only:
+        fail("'coverage' cannot be combined with 'elab_only'.")
+    if ctx.attr.uvm:
+        extra_args.append("--uvm")
+    extra_args.append("--seed='" + str(ctx.attr.seed) + "'")
+    if ctx.attr.waves:
+        extra_args.append("--waves")
+    raw_coverage_data = ctx.actions.declare_directory(ctx.attr.name + "_coverage")
+    coverage_log = ctx.actions.declare_file(ctx.attr.name + ".log")
+    coverage_failure = ctx.actions.declare_file(ctx.attr.name + "_coverage_failures.txt")
+    coverage_dat_path = raw_coverage_data.path + "/" + COVERAGE_DATA_FILENAME
+    coverage_dat = _shell_quote(coverage_dat_path)
+    extra_args.extend(["--coverage", coverage_dat])
+    for opt in ctx.attr.opts:
+        extra_args.append("--opt='" + opt + "'")
+    for opt in ctx.attr.elab_opts:
+        extra_args.append("--elab_opt='" + opt + "'")
+    for opt in ctx.attr.sim_opts:
+        extra_args.append("--sim_opt='" + opt + "'")
+    verilog_test = _verilog_base_impl(ctx = ctx, subcmd = "sim", extra_args = extra_args)
+
+    runner_cmd = " ".join([verilog_test.files.to_list()[0].path])
+    command = "\n".join([
+        "set -e",
+        "rm -rf {raw_coverage_data}",
+        "mkdir -p {raw_coverage_data}",
+        ": > {coverage_failure}",
+        "set +e",
+        "{runner_cmd} > {coverage_log} 2>&1",
+        "status=$?",
+        "set -e",
+        "if [[ $status -ne 0 ]] ; then",
+        "  rm -f {coverage_dat}",
+        "  cat {coverage_log} >&2",
+        "  printf '%s\\n' '{label} failed with exit status '\"${{status}}\" > {coverage_failure}",
+        "  echo '  log: {coverage_log}' >> {coverage_failure}",
+        "fi",
+    ]).format(
+        label = str(ctx.label),
+        runner_cmd = runner_cmd,
+        raw_coverage_data = _shell_quote(raw_coverage_data.path),
+        coverage_failure = _shell_quote(coverage_failure.path),
+        coverage_log = _shell_quote(coverage_log.path),
+        coverage_dat = coverage_dat,
+    )
+
+    ctx.actions.run_shell(
+        inputs = verilog_test.files.to_list() + ctx.files.verilog_runner_plugins,
+        tools = [verilog_test.default_runfiles.files],
+        outputs = [raw_coverage_data, coverage_log, coverage_failure],
+        command = command,
+        mnemonic = "VerilatorCoverageData",
+        progress_message = "Generating Verilator coverage data for %{label}",
+        use_default_shell_env = True,
+    )
+
+    coverage_infos = _declare_coverage_info_files(
+        ctx = ctx,
+        coverage_data = raw_coverage_data,
+        coverage_dat_path = coverage_dat_path,
+        name = ctx.attr.name,
+    )
+    coverage_infos_by_type = {}
+    for index, coverage_type in enumerate(COVERAGE_TYPES):
+        coverage_infos_by_type[coverage_type] = [coverage_infos[index]]
+
+    return [
+        DefaultInfo(files = depset(coverage_infos + [raw_coverage_data, coverage_log, coverage_failure])),
+        _coverage_data_info(
+            coverage_infos_by_type = coverage_infos_by_type,
+            coverage_data = [raw_coverage_data],
+            coverage_failures = [coverage_failure],
+        ),
+    ]
+
+def _verilog_sim_coverage_aggregate_impl(ctx):
+    """Implementation of the Verilator coverage aggregation rule."""
+    srcs = get_transitive(ctx = ctx, srcs_not_hdrs = True).to_list()
+    coverage_targets = ctx.attr.coverage_data + ctx.attr.coverage_reports
+    s = []
+    for coverage_report in ctx.attr.coverage_reports:
+        s += coverage_report[VerilogCoverageReportInfo].srcs
+    srcs += depset(s).to_list()
+
+    if len(coverage_targets) == 0:
+        fail("At least one entry must be provided in 'coverage_data' or 'coverage_reports'.")
+
+    coverage_infos_by_type = {}
+    for coverage_type in COVERAGE_TYPES:
+        coverage_infos_by_type[coverage_type] = []
+    coverage_data_inputs = []
+    coverage_dat_paths = []
+    coverage_failures = []
+
+    for coverage_target in ctx.attr.coverage_data:
+        coverage_info = coverage_target[VerilogCoverageDataInfo]
+        coverage_data_inputs += coverage_info.coverage_data
+        coverage_dat_paths += [coverage_data.path + "/" + COVERAGE_DATA_FILENAME for coverage_data in coverage_info.coverage_data]
+        coverage_failures += coverage_info.coverage_failures
+        _append_coverage_infos(coverage_infos_by_type, coverage_info)
+
+    for coverage_target in ctx.attr.coverage_reports:
+        coverage_report = coverage_target[VerilogCoverageReportInfo]
+        coverage_data_inputs += coverage_report.coverage_data
+        coverage_dat_paths += [coverage_data.path for coverage_data in coverage_report.coverage_data]
+        coverage_failures += coverage_report.coverage_failures
+        _append_coverage_infos(coverage_infos_by_type, coverage_report)
+
+    merged_coverage_data = ctx.outputs.coverage_data
+    merged_coverage_failures = ctx.actions.declare_file(ctx.attr.name + "_coverage_failures.txt")
+    coverage_dat_paths = [_shell_quote(coverage_dat_path) for coverage_dat_path in coverage_dat_paths]
+    coverage_failure_paths = [_shell_quote(coverage_failure.path) for coverage_failure in coverage_failures]
+    command_prefix = ["set -e"] + _source_verilog_runner_eda_tools_env_setup()
+    ctx.actions.run_shell(
+        inputs = coverage_data_inputs + coverage_failures,
+        outputs = [merged_coverage_data, merged_coverage_failures],
+        command = "\n".join(command_prefix + [
+            # Gather failed coverages
+            ": > {merged_coverage_failures}",
+            "for failure in {coverage_failure_paths}; do",
+            "  if test -s \"${{failure}}\"; then",
+            "    cat \"${{failure}}\" >> {merged_coverage_failures}",
+            "    echo >> {merged_coverage_failures}",
+            "  fi",
+            "done",
+            "if test -s {merged_coverage_failures}; then",
+            # Exit when one of coverage data was not collected
+            "  exit 1",
+            "fi",
+            # Create list of coverage .dat files
+            "coverage_data=()",
+            "for coverage_dat in {coverage_dat_paths}; do",
+            "  if test -s \"${{coverage_dat}}\"; then",
+            "    coverage_data+=(\"${{coverage_dat}}\")",
+            "  fi",
+            "done",
+            # Merge coverage data
+            "if (( ${{#coverage_data[@]}} )); then",
+            "  \"${{VERILATOR_COVERAGE_CMD:-verilator_coverage}}\" -write {merged_coverage_data} \"${{coverage_data[@]}}\"",
+            "else",
+            "  echo 'No Verilator coverage data files were produced.' >&2",
+            "  : > {merged_coverage_data}",
+            "fi",
+        ]).format(
+            coverage_failure_paths = " ".join(coverage_failure_paths),
+            merged_coverage_failures = _shell_quote(merged_coverage_failures.path),
+            coverage_dat_paths = " ".join(coverage_dat_paths),
+            merged_coverage_data = _shell_quote(merged_coverage_data.path),
+        ),
+        mnemonic = "VerilatorCoverageDataMerge",
+        progress_message = "Merging Verilator coverage data for %{label}",
+        use_default_shell_env = True,
+    )
+
+    coverage_infos = []
+    for coverage_type in COVERAGE_TYPES:
+        coverage_infos += coverage_infos_by_type[coverage_type]
+
+    return [
+        DefaultInfo(files = depset([merged_coverage_data, merged_coverage_failures])),
+        _coverage_report_info(
+            coverage_infos_by_type = coverage_infos_by_type,
+            coverage_data = [merged_coverage_data],
+            coverage_failures = [merged_coverage_failures],
+            srcs = srcs,
+        ),
+    ]
 
 def _verilog_fpv_args(ctx):
     extra_args = []
@@ -746,12 +1025,8 @@ def verilog_synth_sandbox(name, tool, tags = [], **kwargs):
         **kwargs
     )
 
-rule_verilog_sim_test = rule(
-    doc = """
-    Runs Verilog/SystemVerilog compilation and simulation in one command. This rule should be used for simple unit tests that do not require multi-step compilation, elaboration, and simulation. Needs VERILOG_RUNNER_PLUGIN_PATH environment variable to be set correctly.
-    """,
-    implementation = _verilog_sim_test_impl,
-    attrs = {
+def _verilog_sim_attrs(verilog_runner_tool_default = "//python/verilog_runner:verilog_runner.py"):
+    return {
         "deps": attr.label_list(
             doc = "The dependencies of the test.",
             allow_files = False,
@@ -827,9 +1102,114 @@ rule_verilog_sim_test = rule(
             providers = [VerilogRunnerFlagsInfo],
             default = "//bazel:runner_flags",
         ),
-    },
+    }
+
+rule_verilog_sim_test = rule(
+    doc = """
+    Runs Verilog/SystemVerilog compilation and simulation in one command. This rule should be used for simple unit tests that do not require multi-step compilation, elaboration, and simulation. Needs VERILOG_RUNNER_PLUGIN_PATH environment variable to be set correctly.
+    """,
+    implementation = _verilog_sim_test_impl,
+    attrs = _verilog_sim_attrs(),
     test = True,
 )
+
+rule_verilog_sim_coverage_data = rule(
+    doc = """
+    Runs a Verilator simulation test target and emits coverage info and description files.
+    """,
+    implementation = _verilog_sim_coverage_data_impl,
+    attrs = _verilog_sim_attrs(),
+    provides = [VerilogCoverageDataInfo],
+)
+
+rule_verilog_sim_coverage_aggregate = rule(
+    doc = """
+    Merges Verilator coverage data as a declared Bazel output.
+    """,
+    implementation = _verilog_sim_coverage_aggregate_impl,
+    attrs = {
+        "coverage_data": attr.label_list(
+            doc = "Coverage data targets whose data and info files should be merged.",
+            default = [],
+            providers = [VerilogCoverageDataInfo],
+        ),
+        "coverage_reports": attr.label_list(
+            doc = "Coverage report targets whose transitive data and info files should be merged.",
+            default = [],
+            providers = [VerilogCoverageReportInfo],
+        ),
+        "deps": attr.label_list(
+            doc = "The dependencies of the testbench whose design sources should be tracked transitively.",
+            allow_files = False,
+            providers = [VerilogInfo],
+            default = [],
+        ),
+    },
+    outputs = {
+        "coverage_data": "%{name}.dat",
+    },
+)
+
+def verilog_sim_coverage_data(tool, opts = [], elab_opts = [], sim_opts = [], tags = [], waves = False, **kwargs):
+    """Wraps rule_verilog_sim_coverage_data.
+
+    Args:
+        name: The name of the coverage info and description target.
+        tool: The simulation tool to use. Must be "verilator".
+        opts: Deprecated VCS-only simulation options.
+        elab_opts: Tool-specific compile/elaboration options not covered by other arguments.
+        sim_opts: Tool-specific simulation runtime options, such as simulator plusargs.
+        waves: Enable waveform dumping.
+        **kwargs: Other arguments to pass to the rule_verilog_sim_coverage_data rule.
+    """
+    if opts and tool != "vcs":
+        fail("'opts' is a deprecated VCS-only simulation option. Use 'elab_opts' or 'sim_opts' instead.")
+    if tool != "verilator":
+        fail("'coverage' is only supported with tool = 'verilator'.")
+    if kwargs.get("elab_only", False):
+        fail("'coverage' cannot be combined with 'elab_only'.")
+
+    # Make sure we fail the test ASAP after any error occurs (assertion or otherwise).
+    extra_elab_opts = []
+    extra_sim_opts = []
+    tags = _with_manual_tag(tags + extra_tags("sim", tool))
+    if tool == "vcs":
+        # Make sure we fail the test if any assertions fail.
+        extra_elab_opts = ["-assert global_finish_maxfail=1+offending_values -error=TFIPC -error=PCWM-W -error=PCWM-L"]
+    elif tool == "dsim":
+        extra_sim_opts.append("-exit-on-error 1")
+
+    rule_verilog_sim_coverage_data(
+        tool = tool,
+        opts = opts,
+        elab_opts = elab_opts + extra_elab_opts,
+        sim_opts = sim_opts + extra_sim_opts,
+        tags = tags,
+        waves = waves,
+        **kwargs
+    )
+
+def verilog_sim_coverage_aggregate(name, coverage_data = [], coverage_reports = [], deps = [], **kwargs):
+    """Wraps rule_verilog_sim_coverage_aggregate.
+
+    Args:
+        name: The name of the aggregate coverage target.
+        coverage_data: Coverage data targets whose data and info files should be merged.
+        coverage_reports: Coverage report targets whose transitive data and info files should be merged.
+        deps: The dependencies of the testbench whose design sources should be tracked transitively.
+        **kwargs: Other arguments to pass to the rule_verilog_sim_coverage_aggregate rule.
+    """
+
+    tags = _with_manual_tag(kwargs.pop("tags", []))
+
+    rule_verilog_sim_coverage_aggregate(
+        name = name,
+        coverage_data = coverage_data,
+        coverage_reports = coverage_reports,
+        deps = deps,
+        tags = tags,
+        **kwargs
+    )
 
 def verilog_sim_test(tool, opts = [], elab_opts = [], sim_opts = [], tags = [], waves = False, **kwargs):
     """Wraps rule_verilog_sim_test with a default tool and appends extra tags.
@@ -1253,6 +1633,7 @@ def verilog_sim_test_suite(
         defines = [],
         params = {},
         illegal_param_combinations = {},
+        coverage = False,
         **kwargs):
     """Creates a suite of Verilog sim tests for each combination of the provided parameters.
 
@@ -1265,22 +1646,48 @@ def verilog_sim_test_suite(
         defines (list): A list of defines.
         params (dict): A dictionary where keys are parameter names and values are lists of possible values for those parameters.
         illegal_param_combinations (dict): A dictionary where keys are parameter tuples and values are lists of tuples of illegal values for those parameters.
+        coverage (bool): Value enabling and disabling coverage data.
         **kwargs: Additional keyword arguments to be passed to the verilog_elab_test and verilog_lint_test functions.
     """
     param_keys = sorted(params.keys())
     param_values_list = [params[key] for key in param_keys]
     param_combinations = _cartesian_product(param_values_list)
+    tool = kwargs.get("tool", False)
+    coverage_data = []
+
+    if coverage and tool != "verilator":
+        fail("'coverage' is only supported with tool = 'verilator'.")
 
     # Create a verilog_sim_test for each legal combination of parameters
     for param_combination in param_combinations:
         params = dict(zip(param_keys, param_combination))
-        if is_param_combination_legal(params, illegal_param_combinations):
-            verilog_sim_test(
-                name = _make_test_name(name, "sim_test", param_keys, param_combination),
+        if not is_param_combination_legal(params, illegal_param_combinations):
+            continue
+        test_name = _make_test_name(name, "sim_test", param_keys, param_combination)
+        verilog_sim_test(
+            name = test_name,
+            defines = defines,
+            params = params,
+            **kwargs
+        )
+        if coverage and tool == "verilator":
+            coverage_data_name = _make_test_name(name, "coverage_data", param_keys, param_combination)
+            verilog_sim_coverage_data(
+                name = coverage_data_name,
                 defines = defines,
                 params = params,
                 **kwargs
             )
+            coverage_data.append(":" + coverage_data_name)
+
+    if coverage:
+        if "deps" not in kwargs:
+            fail("'deps' must be provided when 'coverage' is enabled.")
+        verilog_sim_coverage_aggregate(
+            name = name + "_coverage",
+            coverage_data = coverage_data,
+            deps = kwargs["deps"],
+        )
 
 def verilog_synth_suite(
         name,
