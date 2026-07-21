@@ -11,6 +11,10 @@
 // The pop data is thus unstable as a new requester with higher priority will
 // preempt an existing requester. Pop valid can be unstable if all push valids
 // are revoked while pop_ready is low.
+//
+// `push_weight` is the arbiter weight for each flow. They are expected to follow the rules
+// set for `request_weight` in `br_arb_weighted_lru`. Weights cannot be zero and are expected
+// to be stable while traffic is ongoing.
 
 `include "br_asserts.svh"
 
