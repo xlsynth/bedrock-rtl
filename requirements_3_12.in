@@ -3,3 +3,4 @@ numpy
 click
 parameterized
 pyyaml
+info-process @ https://github.com/antmicro/info-process/archive/31c219284d82d3c18fdbf01396f830a3c312dde6.zip

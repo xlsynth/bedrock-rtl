@@ -212,10 +212,10 @@ Tests that a Verilog or SystemVerilog design passes a set of static lint checks.
 <pre>
 load("@bedrock-rtl//bazel:verilog.bzl", "rule_verilog_sim_coverage_aggregate")
 
-rule_verilog_sim_coverage_aggregate(<a href="#rule_verilog_sim_coverage_aggregate-name">name</a>, <a href="#rule_verilog_sim_coverage_aggregate-deps">deps</a>, <a href="#rule_verilog_sim_coverage_aggregate-coverage_data">coverage_data</a>, <a href="#rule_verilog_sim_coverage_aggregate-coverage_reports">coverage_reports</a>)
+rule_verilog_sim_coverage_aggregate(<a href="#rule_verilog_sim_coverage_aggregate-name">name</a>, <a href="#rule_verilog_sim_coverage_aggregate-deps">deps</a>, <a href="#rule_verilog_sim_coverage_aggregate-all_srcs">all_srcs</a>, <a href="#rule_verilog_sim_coverage_aggregate-coverage_data">coverage_data</a>, <a href="#rule_verilog_sim_coverage_aggregate-coverage_reports">coverage_reports</a>)
 </pre>
 
-Merges Verilator coverage data as a declared Bazel output.
+Merges coverage info files and packs a Coverview ZIP as a declared Bazel output.
 
 **ATTRIBUTES**
 
@@ -223,9 +223,10 @@ Merges Verilator coverage data as a declared Bazel output.
 | Name  | Description | Type | Mandatory | Default |
 | :------------- | :------------- | :------------- | :------------- | :------------- |
 | <a id="rule_verilog_sim_coverage_aggregate-name"></a>name |  A unique name for this target.   | <a href="https://bazel.build/concepts/labels#target-names">Name</a> | required |  |
-| <a id="rule_verilog_sim_coverage_aggregate-deps"></a>deps |  The dependencies of the testbench whose design sources should be tracked transitively.   | <a href="https://bazel.build/concepts/labels">List of labels</a> | optional |  `[]`  |
-| <a id="rule_verilog_sim_coverage_aggregate-coverage_data"></a>coverage_data |  Coverage data targets whose data and info files should be merged.   | <a href="https://bazel.build/concepts/labels">List of labels</a> | optional |  `[]`  |
-| <a id="rule_verilog_sim_coverage_aggregate-coverage_reports"></a>coverage_reports |  Coverage report targets whose transitive data and info files should be merged.   | <a href="https://bazel.build/concepts/labels">List of labels</a> | optional |  `[]`  |
+| <a id="rule_verilog_sim_coverage_aggregate-deps"></a>deps |  The dependencies of the testbench whose design sources should be included in sources.txt.   | <a href="https://bazel.build/concepts/labels">List of labels</a> | optional |  `[]`  |
+| <a id="rule_verilog_sim_coverage_aggregate-all_srcs"></a>all_srcs |  Target defining all sources that should be included in the aggregated coverage.   | <a href="https://bazel.build/concepts/labels">Label</a> | optional |  `None`  |
+| <a id="rule_verilog_sim_coverage_aggregate-coverage_data"></a>coverage_data |  Coverage data targets whose info files should be merged.   | <a href="https://bazel.build/concepts/labels">List of labels</a> | optional |  `[]`  |
+| <a id="rule_verilog_sim_coverage_aggregate-coverage_reports"></a>coverage_reports |  Coverage report targets whose transitive info files should be merged.   | <a href="https://bazel.build/concepts/labels">List of labels</a> | optional |  `[]`  |
 
 
 <a id="rule_verilog_sim_coverage_data"></a>
@@ -446,7 +447,7 @@ VerilogCoverageReportInfo(<a href="#VerilogCoverageReportInfo-toggle_info">toggl
                           <a href="#VerilogCoverageReportInfo-user_info">user_info</a>, <a href="#VerilogCoverageReportInfo-coverage_data">coverage_data</a>, <a href="#VerilogCoverageReportInfo-coverage_failures">coverage_failures</a>, <a href="#VerilogCoverageReportInfo-srcs">srcs</a>)
 </pre>
 
-Aggregated Verilator coverage data and info artifacts.
+Coverview coverage info and Verilator coverage data artifacts.
 
 **FIELDS**
 
@@ -719,7 +720,7 @@ The following extra tags are unconditionally appended to the list of tags:
 <pre>
 load("@bedrock-rtl//bazel:verilog.bzl", "verilog_sim_coverage_aggregate")
 
-verilog_sim_coverage_aggregate(<a href="#verilog_sim_coverage_aggregate-name">name</a>, <a href="#verilog_sim_coverage_aggregate-coverage_data">coverage_data</a>, <a href="#verilog_sim_coverage_aggregate-coverage_reports">coverage_reports</a>, <a href="#verilog_sim_coverage_aggregate-deps">deps</a>, <a href="#verilog_sim_coverage_aggregate-kwargs">**kwargs</a>)
+verilog_sim_coverage_aggregate(<a href="#verilog_sim_coverage_aggregate-name">name</a>, <a href="#verilog_sim_coverage_aggregate-coverage_data">coverage_data</a>, <a href="#verilog_sim_coverage_aggregate-coverage_reports">coverage_reports</a>, <a href="#verilog_sim_coverage_aggregate-deps">deps</a>, <a href="#verilog_sim_coverage_aggregate-all_srcs">all_srcs</a>, <a href="#verilog_sim_coverage_aggregate-kwargs">**kwargs</a>)
 </pre>
 
 Wraps rule_verilog_sim_coverage_aggregate.
@@ -730,9 +731,10 @@ Wraps rule_verilog_sim_coverage_aggregate.
 | Name  | Description | Default Value |
 | :------------- | :------------- | :------------- |
 | <a id="verilog_sim_coverage_aggregate-name"></a>name |  The name of the aggregate coverage target.   |  none |
-| <a id="verilog_sim_coverage_aggregate-coverage_data"></a>coverage_data |  Coverage data targets whose data and info files should be merged.   |  `[]` |
-| <a id="verilog_sim_coverage_aggregate-coverage_reports"></a>coverage_reports |  Coverage report targets whose transitive data and info files should be merged.   |  `[]` |
-| <a id="verilog_sim_coverage_aggregate-deps"></a>deps |  The dependencies of the testbench whose design sources should be tracked transitively.   |  `[]` |
+| <a id="verilog_sim_coverage_aggregate-coverage_data"></a>coverage_data |  Coverage data targets whose info files should be merged.   |  `[]` |
+| <a id="verilog_sim_coverage_aggregate-coverage_reports"></a>coverage_reports |  Coverage report targets whose transitive info files should be merged.   |  `[]` |
+| <a id="verilog_sim_coverage_aggregate-deps"></a>deps |  The dependencies of the testbench whose design sources should be included in sources.txt.   |  `[]` |
+| <a id="verilog_sim_coverage_aggregate-all_srcs"></a>all_srcs |  List of all source files that should be included in the coverage report.   |  `None` |
 | <a id="verilog_sim_coverage_aggregate-kwargs"></a>kwargs |  Other arguments to pass to the rule_verilog_sim_coverage_aggregate rule.   |  none |
 
 

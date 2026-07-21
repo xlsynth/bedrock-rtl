@@ -6,6 +6,15 @@ load("//bazel:verilog.bzl", "verilog_elab_test", "verilog_lint_test", "verilog_s
 
 package(default_visibility = ["//visibility:private"])
 
+filegroup(
+    name = "srcs",
+    srcs = glob([
+        "*.sv",
+        "*.svh",
+    ]),
+    visibility = ["//visibility:public"],
+)
+
 verilog_library(
     name = "br_asserts",
     hdrs = ["br_asserts.svh"],

@@ -19,6 +19,9 @@ COVERAGE_TYPES = [
     "covergroup",
     "user",
 ]
+COVERAGE_NAME_MAPPING = {
+    "user": "cover properties",
+}
 COVERAGE_DATA_FILENAME = "coverage.dat"
 
 def extra_tags(kind, tool):
@@ -133,7 +136,7 @@ VerilogCoverageDataInfo = provider(
 
 VerilogCoverageReportInfo = provider(
     fields = _VERILOG_COVERAGE_DATA_FIELDS + ["srcs"],
-    doc = "Aggregated Verilator coverage data and info artifacts.",
+    doc = "Coverview coverage info and Verilator coverage data artifacts.",
 )
 
 def _runner_flags_impl(ctx):
@@ -445,6 +448,9 @@ def _verilog_synth_sandbox_impl(ctx):
         extra_runfiles = extra_runfiles,
     )
 
+def _coverage_name(coverage_type):
+    return COVERAGE_NAME_MAPPING.get(coverage_type, coverage_type)
+
 def _coverage_report_info(coverage_infos_by_type, coverage_data, coverage_failures, srcs):
     return VerilogCoverageReportInfo(
         toggle_info = coverage_infos_by_type.get("toggle", []),
@@ -484,17 +490,21 @@ def _source_verilog_runner_eda_tools_env_setup():
         "fi",
     ]
 
-def _declare_coverage_info_files(ctx, coverage_data, name, coverage_dat_path = None):
-    coverage_infos = []
+def _declare_coverage_info_files(ctx, coverage_data, info_process, name, coverage_dat_path = None):
     if coverage_dat_path == None:
         coverage_dat_path = coverage_data.path
+
+    coverage_infos = []
+    description_files = []
+    dataset_data = {}
     for coverage_type in COVERAGE_TYPES:
+        raw_coverage_info = ctx.actions.declare_file("raw_coverage_{}_{}.info".format(coverage_type, name))
         coverage_info = ctx.actions.declare_file("coverage_{}_{}.info".format(coverage_type, name))
 
         command_prefix = ["set -e"] + _source_verilog_runner_eda_tools_env_setup()
         ctx.actions.run_shell(
             inputs = [coverage_data],
-            outputs = [coverage_info],
+            outputs = [raw_coverage_info],
             command = "\n".join(command_prefix + [
                 "if test -s {coverage_dat_path}; then",
                 "  " + " ".join([
@@ -508,16 +518,67 @@ def _declare_coverage_info_files(ctx, coverage_data, name, coverage_dat_path = N
             ]).format(
                 coverage_dat_path = _shell_quote(coverage_dat_path),
                 coverage_type = _shell_quote(coverage_type),
-                coverage_info_path = _shell_quote(coverage_info.path),
+                coverage_info_path = _shell_quote(raw_coverage_info.path),
             ),
             mnemonic = "VerilatorCoverageInfo",
             progress_message = "Creating Verilator coverage info for %{label}",
             use_default_shell_env = True,
         )
 
-        coverage_infos.append(coverage_info)
+        ctx.actions.run_shell(
+            inputs = [raw_coverage_info],
+            outputs = [coverage_info],
+            command = " ".join([
+                # Filter out all sim sources and path outside of the repository
+                "{info_process} transform --filter-out '^(/|[^/]+/sim/)'",
+                "--output {coverage_info} {raw_coverage_info}",
+            ]).format(
+                info_process = _shell_quote(info_process.executable.path),
+                coverage_info = _shell_quote(coverage_info.path),
+                raw_coverage_info = _shell_quote(raw_coverage_info.path),
+            ),
+            tools = [info_process],
+            mnemonic = "CoverviewInfoTransform",
+            progress_message = "Filtering coverage info for %{label}",
+            use_default_shell_env = True,
+        )
 
-    return coverage_infos
+        coverage_infos.append(coverage_info)
+        dataset_data[_coverage_name(coverage_type)] = [coverage_info.basename]
+
+    return coverage_infos, description_files, dataset_data
+
+def _write_coverview_base_config(ctx, name, dataset_data, output):
+    config = {
+        "repo": "bedrock-rtl",
+        "hide_not_covered": True,
+        "datasets": {
+            name: dataset_data,
+        },
+    }
+    ctx.actions.write(
+        output = output,
+        content = json.encode(config),
+    )
+
+def _pack_coverview_archive(ctx, info_process, output, config, coverage_infos, description_files = [], srcs = [], hdrs = []):
+    command_args = (
+        [_shell_quote(info_process.executable.path), "pack", "--output", _shell_quote(output.path), "--coverage-files"] +
+        [_shell_quote(info.path) for info in coverage_infos]
+    )
+    if description_files:
+        command_args += ["--description-files"] + [_shell_quote(desc.path) for desc in description_files]
+    command_args += ["--config", _shell_quote(config.path)]
+
+    ctx.actions.run_shell(
+        inputs = coverage_infos + description_files + srcs + hdrs + [config],
+        outputs = [output],
+        command = " ".join(command_args),
+        tools = [info_process],
+        mnemonic = "CoverviewPack",
+        progress_message = "Packing coverage into ZIP for %{label}",
+        use_default_shell_env = True,
+    )
 
 def _verilog_sim_coverage_data_impl(ctx):
     """Implementation of the Verilator coverage info and description rule."""
@@ -582,10 +643,12 @@ def _verilog_sim_coverage_data_impl(ctx):
         use_default_shell_env = True,
     )
 
-    coverage_infos = _declare_coverage_info_files(
+    info_process = ctx.attr._info_process_bin[DefaultInfo].files_to_run
+    coverage_infos, description_files, _ = _declare_coverage_info_files(
         ctx = ctx,
         coverage_data = raw_coverage_data,
         coverage_dat_path = coverage_dat_path,
+        info_process = info_process,
         name = ctx.attr.name,
     )
     coverage_infos_by_type = {}
@@ -593,7 +656,7 @@ def _verilog_sim_coverage_data_impl(ctx):
         coverage_infos_by_type[coverage_type] = [coverage_infos[index]]
 
     return [
-        DefaultInfo(files = depset(coverage_infos + [raw_coverage_data, coverage_log, coverage_failure])),
+        DefaultInfo(files = depset(coverage_infos + description_files + [raw_coverage_data, coverage_log, coverage_failure])),
         _coverage_data_info(
             coverage_infos_by_type = coverage_infos_by_type,
             coverage_data = [raw_coverage_data],
@@ -602,8 +665,9 @@ def _verilog_sim_coverage_data_impl(ctx):
     ]
 
 def _verilog_sim_coverage_aggregate_impl(ctx):
-    """Implementation of the Verilator coverage aggregation rule."""
+    """Implementation of the Coverview coverage aggregation rule."""
     srcs = get_transitive(ctx = ctx, srcs_not_hdrs = True).to_list()
+    hdrs = get_transitive(ctx = ctx, srcs_not_hdrs = False).to_list()
     coverage_targets = ctx.attr.coverage_data + ctx.attr.coverage_reports
     s = []
     for coverage_report in ctx.attr.coverage_reports:
@@ -613,6 +677,7 @@ def _verilog_sim_coverage_aggregate_impl(ctx):
     if len(coverage_targets) == 0:
         fail("At least one entry must be provided in 'coverage_data' or 'coverage_reports'.")
 
+    info_process = ctx.attr._info_process_bin[DefaultInfo].files_to_run
     coverage_infos_by_type = {}
     for coverage_type in COVERAGE_TYPES:
         coverage_infos_by_type[coverage_type] = []
@@ -634,7 +699,7 @@ def _verilog_sim_coverage_aggregate_impl(ctx):
         coverage_failures += coverage_report.coverage_failures
         _append_coverage_infos(coverage_infos_by_type, coverage_report)
 
-    merged_coverage_data = ctx.outputs.coverage_data
+    merged_coverage_data = ctx.actions.declare_file(ctx.attr.name + ".dat")
     merged_coverage_failures = ctx.actions.declare_file(ctx.attr.name + "_coverage_failures.txt")
     coverage_dat_paths = [_shell_quote(coverage_dat_path) for coverage_dat_path in coverage_dat_paths]
     coverage_failure_paths = [_shell_quote(coverage_failure.path) for coverage_failure in coverage_failures]
@@ -680,12 +745,134 @@ def _verilog_sim_coverage_aggregate_impl(ctx):
         use_default_shell_env = True,
     )
 
-    coverage_infos = []
+    # Ensures that all files are available in the final report
+    if ctx.files.all_srcs:
+        all_srcs_info = ctx.actions.declare_file("coverage_all_srcs_{}.info".format(ctx.attr.name))
+        ctx.actions.write(
+            output = all_srcs_info,
+            content = "TN:all_sources\n" + "\n".join(
+                ["SF:" + file.path + "\nend_of_record" for file in ctx.files.all_srcs],
+            ),
+        )
+        coverage_infos_by_type[COVERAGE_TYPES[-1]].append(all_srcs_info)
+
+    merged_coverage_infos = []
+    merged_description_files = []
+    dataset_data = {}
     for coverage_type in COVERAGE_TYPES:
-        coverage_infos += coverage_infos_by_type[coverage_type]
+        merged_coverage_info = ctx.actions.declare_file("coverage_{}_{}.info".format(coverage_type, ctx.attr.name))
+        merged_description_file = ctx.actions.declare_file("tests_{}_{}.desc".format(coverage_type, ctx.attr.name))
+        coverage_infos_for_type = coverage_infos_by_type[coverage_type]
+        coverage_info_files = [_shell_quote(coverage_info.path) for coverage_info in coverage_infos_for_type]
+        ctx.actions.run_shell(
+            inputs = coverage_infos_for_type,
+            outputs = [merged_coverage_info, merged_description_file],
+            command = " ".join([
+                "{info_process} merge",
+                "--test-list {merged_description_file}",
+                "--test-list-strip coverage_{coverage_type}_,_coverage_data.info",
+                "--output {merged_coverage_info}",
+                "{coverage_info_files}",
+            ]).format(
+                info_process = _shell_quote(info_process.executable.path),
+                merged_description_file = _shell_quote(merged_description_file.path),
+                merged_coverage_info = _shell_quote(merged_coverage_info.path),
+                coverage_type = coverage_type,
+                coverage_info_files = " ".join(coverage_info_files),
+            ),
+            tools = [info_process],
+            mnemonic = "CoverviewInfoMerge",
+            progress_message = "Merging coverage info for %{label}",
+            use_default_shell_env = True,
+        )
+        merged_coverage_infos.append(merged_coverage_info)
+        merged_description_files.append(merged_description_file)
+        dataset_data[_coverage_name(coverage_type)] = [merged_coverage_info.basename, merged_description_file.basename]
+
+    config = ctx.actions.declare_file("config_{}.json".format(ctx.attr.name))
+    _write_coverview_base_config(
+        ctx = ctx,
+        name = ctx.attr.name,
+        dataset_data = dataset_data,
+        output = config,
+    )
+
+    _pack_coverview_archive(
+        ctx = ctx,
+        info_process = info_process,
+        output = ctx.outputs.coverage_zip,
+        config = config,
+        coverage_infos = merged_coverage_infos,
+        description_files = merged_description_files,
+        srcs = srcs + ctx.files.all_srcs,
+        hdrs = hdrs,
+    )
+
+    run_config_path = ctx.outputs.coverage_zip.path.replace(".zip", "_run_config.json")
+    run_zip_path = ctx.outputs.coverage_zip.path.replace(".zip", "_run.zip")
+    run_pack_args = (
+        [_shell_quote(info_process.executable.path), "pack", "--output", _shell_quote(run_zip_path), "--coverage-files"] +
+        [_shell_quote(info.path) for info in merged_coverage_infos]
+    )
+    if merged_description_files:
+        run_pack_args += ["--description-files"] + [_shell_quote(desc.path) for desc in merged_description_files]
+    run_pack_args += ["--config", _shell_quote(run_config_path)]
+
+    runscript = ctx.actions.declare_file(ctx.attr.name + "_runner.sh")
+    ctx.actions.write(
+        output = runscript,
+        content = "\n".join(
+            [
+                "#!/usr/bin/env bash",
+                "set -euo pipefail",
+                "workspace_dir=\"${BUILD_WORKSPACE_DIRECTORY:-}\"",
+                "if [[ -z \"${workspace_dir}\" ]]; then",
+                "  workspace_dir=\"${PWD}\"",
+                "fi",
+                "cd \"${workspace_dir}\"",
+                "mkdir -p " + _shell_quote(ctx.outputs.coverage_zip.dirname),
+                "workspace_dir=\"${BUILD_WORKSPACE_DIRECTORY:-}\"",
+                "if [ -z \"${workspace_dir}\" ]; then",
+                "  workspace_dir=\"$(git -C \"${BUILD_WORKING_DIRECTORY:-${PWD}}\" rev-parse --show-toplevel 2>/dev/null || pwd)\"",
+                "fi",
+                "branch=\"$(git -C \"${workspace_dir}\" branch --show-current 2>/dev/null || true)\"",
+                "if [ -z \"${branch}\" ]; then",
+                "  branch=\"$(git -C \"${workspace_dir}\" rev-parse --abbrev-ref HEAD 2>/dev/null || echo unknown)\"",
+                "fi",
+                "jq \\",
+                "  --arg branch \"${branch}\" \\",
+                "  --arg commit \"$(git -C \"${workspace_dir}\" rev-parse HEAD 2>/dev/null || echo unknown)\" \\",
+                "  --arg timestamp \"$(date -u +%Y-%m-%dT%H:%M:%SZ)\" \\",
+                "  --arg verilator \"$(\"${VERILATOR_CMD:-verilator}\" --version 2>/dev/null || echo unknown)\" \\",
+                "  '",
+                "  .additional = (if (.additional | type) == \"object\" then .additional else {} end)",
+                "  | .additional.verilator = $verilator",
+                "  | .branch = $branch",
+                "  | .commit = $commit",
+                "  | .timestamp = $timestamp",
+                "' " + _shell_quote(config.path) + " > " + _shell_quote(run_config_path),
+                " ".join(run_pack_args),
+                "echo " + _shell_quote("Deterministic coverage archive: " + ctx.outputs.coverage_zip.path),
+                "echo " + _shell_quote("Run config: " + run_config_path),
+                "echo " + _shell_quote("Run-stamped coverage archive: " + run_zip_path),
+                "",
+            ],
+        ),
+        is_executable = True,
+    )
 
     return [
-        DefaultInfo(files = depset([merged_coverage_data, merged_coverage_failures])),
+        DefaultInfo(
+            files = depset([
+                ctx.outputs.coverage_zip,
+                merged_coverage_data,
+                merged_coverage_failures,
+            ]),
+            runfiles = ctx.runfiles(
+                files = [ctx.outputs.coverage_zip, config, info_process.executable] + merged_coverage_infos + merged_description_files + srcs + ctx.files.all_srcs + hdrs,
+            ).merge(ctx.attr._info_process_bin[DefaultInfo].default_runfiles),
+            executable = runscript,
+        ),
         _coverage_report_info(
             coverage_infos_by_type = coverage_infos_by_type,
             coverage_data = [merged_coverage_data],
@@ -1025,8 +1212,8 @@ def verilog_synth_sandbox(name, tool, tags = [], **kwargs):
         **kwargs
     )
 
-def _verilog_sim_attrs(verilog_runner_tool_default = "//python/verilog_runner:verilog_runner.py"):
-    return {
+def _verilog_sim_attrs(verilog_runner_tool_default = "//python/verilog_runner:verilog_runner.py", use_info_process = False):
+    attrs = {
         "deps": attr.label_list(
             doc = "The dependencies of the test.",
             allow_files = False,
@@ -1103,6 +1290,16 @@ def _verilog_sim_attrs(verilog_runner_tool_default = "//python/verilog_runner:ve
             default = "//bazel:runner_flags",
         ),
     }
+    if use_info_process:
+        attrs.update({
+            "_info_process_bin": attr.label(
+                doc = "info-process Python package",
+                default = "//python/verilog_runner:info_process",
+                cfg = "exec",
+                executable = True,
+            ),
+        })
+    return attrs
 
 rule_verilog_sim_test = rule(
     doc = """
@@ -1118,36 +1315,48 @@ rule_verilog_sim_coverage_data = rule(
     Runs a Verilator simulation test target and emits coverage info and description files.
     """,
     implementation = _verilog_sim_coverage_data_impl,
-    attrs = _verilog_sim_attrs(),
+    attrs = _verilog_sim_attrs(use_info_process = True),
     provides = [VerilogCoverageDataInfo],
 )
 
 rule_verilog_sim_coverage_aggregate = rule(
     doc = """
-    Merges Verilator coverage data as a declared Bazel output.
+    Merges coverage info files and packs a Coverview ZIP as a declared Bazel output.
     """,
     implementation = _verilog_sim_coverage_aggregate_impl,
     attrs = {
         "coverage_data": attr.label_list(
-            doc = "Coverage data targets whose data and info files should be merged.",
+            doc = "Coverage data targets whose info files should be merged.",
             default = [],
             providers = [VerilogCoverageDataInfo],
         ),
         "coverage_reports": attr.label_list(
-            doc = "Coverage report targets whose transitive data and info files should be merged.",
+            doc = "Coverage report targets whose transitive info files should be merged.",
             default = [],
             providers = [VerilogCoverageReportInfo],
         ),
         "deps": attr.label_list(
-            doc = "The dependencies of the testbench whose design sources should be tracked transitively.",
+            doc = "The dependencies of the testbench whose design sources should be included in sources.txt.",
             allow_files = False,
             providers = [VerilogInfo],
             default = [],
         ),
+        "all_srcs": attr.label(
+            doc = "Target defining all sources that should be included in the aggregated coverage.",
+            allow_files = False,
+            default = None,
+        ),
+        "_info_process_bin": attr.label(
+            doc = "info-process Python package",
+            default = "//python/verilog_runner:info_process",
+            cfg = "exec",
+            executable = True,
+        ),
     },
     outputs = {
-        "coverage_data": "%{name}.dat",
+        "coverage_zip": "%{name}.zip",
     },
+    executable = True,
 )
 
 def verilog_sim_coverage_data(tool, opts = [], elab_opts = [], sim_opts = [], tags = [], waves = False, **kwargs):
@@ -1189,14 +1398,15 @@ def verilog_sim_coverage_data(tool, opts = [], elab_opts = [], sim_opts = [], ta
         **kwargs
     )
 
-def verilog_sim_coverage_aggregate(name, coverage_data = [], coverage_reports = [], deps = [], **kwargs):
+def verilog_sim_coverage_aggregate(name, coverage_data = [], coverage_reports = [], deps = [], all_srcs = None, **kwargs):
     """Wraps rule_verilog_sim_coverage_aggregate.
 
     Args:
         name: The name of the aggregate coverage target.
-        coverage_data: Coverage data targets whose data and info files should be merged.
-        coverage_reports: Coverage report targets whose transitive data and info files should be merged.
-        deps: The dependencies of the testbench whose design sources should be tracked transitively.
+        coverage_data: Coverage data targets whose info files should be merged.
+        coverage_reports: Coverage report targets whose transitive info files should be merged.
+        deps: The dependencies of the testbench whose design sources should be included in sources.txt.
+        all_srcs: List of all source files that should be included in the coverage report.
         **kwargs: Other arguments to pass to the rule_verilog_sim_coverage_aggregate rule.
     """
 
@@ -1208,6 +1418,7 @@ def verilog_sim_coverage_aggregate(name, coverage_data = [], coverage_reports = 
         coverage_reports = coverage_reports,
         deps = deps,
         tags = tags,
+        all_srcs = all_srcs,
         **kwargs
     )
 
