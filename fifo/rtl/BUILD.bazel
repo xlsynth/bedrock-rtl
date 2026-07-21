@@ -6,6 +6,11 @@ load("//fifo/rtl/fifo_codegen:fifo_codegen.bzl", "shared_fifo_verilog_library")
 
 package(default_visibility = ["//visibility:public"])
 
+filegroup(
+    name = "srcs",
+    srcs = glob(["*.sv"]) + ["//fifo/rtl/internal:srcs"],
+)
+
 verilog_library(
     name = "br_fifo_ctrl_1r1w",
     srcs = ["br_fifo_ctrl_1r1w.sv"],

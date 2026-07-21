@@ -2,7 +2,7 @@
 
 load("@rules_hdl//verilog:providers.bzl", "verilog_library")
 load("//bazel:br_verilog.bzl", "br_verilog_sim_test_tools_suite")
-load("//bazel:verilog.bzl", "verilog_elab_test")
+load("//bazel:verilog.bzl", "verilog_elab_test", "verilog_sim_coverage_aggregate")
 
 package(default_visibility = ["//visibility:private"])
 
@@ -206,4 +206,16 @@ br_verilog_sim_test_tools_suite(
         "verilator",
     ],
     deps = [":br_mux_onehot_tb"],
+)
+
+verilog_sim_coverage_aggregate(
+    name = "br_mux_verilator_coverage",
+    coverage_reports = [
+        ":br_mux_bin_sim_test_tools_suite_verilator_coverage",
+        ":br_mux_bin_array_sim_test_tools_suite_verilator_coverage",
+        ":br_mux_bin_structured_gates_sim_test_tools_suite_verilator_coverage",
+        ":br_mux_bin_structured_gates_mock_sim_test_tools_suite_verilator_coverage",
+        ":br_mux_onehot_sim_test_tools_suite_verilator_coverage",
+    ],
+    visibility = ["//:__pkg__"],
 )

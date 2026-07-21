@@ -5,6 +5,7 @@
 import argparse
 from dataclasses import dataclass
 from typing import Dict, Type
+from pathlib import Path
 
 from cli import Sim, Subcommand, common_args
 from eda_tool import EdaTool
@@ -28,6 +29,7 @@ class Verilator(EdaTool):
     help: str = "Simulate a Verilog/SystemVerilog design using Verilator"
     elab_only: bool = False
     waves: bool = False
+    coverage: bool = False
 
     def __post_init__(self):
         self.logger = get_class_logger("sim", "verilator")
@@ -38,9 +40,12 @@ class Verilator(EdaTool):
 
     @classmethod
     def from_args(cls, args):
+        if args.coverage and args.elab_only:
+            raise ValueError("Coverage cannot be combined with elab_only.")
         sim_args = {
             "elab_only": args.elab_only,
             "waves": args.waves,
+            "coverage": args.coverage,
         }
         return cls(**common_args(args), **sim_args)
 
@@ -62,7 +67,7 @@ class Verilator(EdaTool):
     def cmd(self) -> str:
         """Returns a default shell script to run Verilator."""
         self.logger.info("Generating shell script.")
-        obj_dir = "obj_dir"
+        obj_dir = f"obj_dir_{Path(self.filelist).stem}"
         executable = "simv"
 
         cmd = ["#!/bin/bash"]
@@ -98,6 +103,8 @@ class Verilator(EdaTool):
         ]
         if self.waves:
             verilator_cmd += ["--trace"]
+        if self.coverage:
+            verilator_cmd += ["--coverage"]
         verilator_cmd += [f"-I{dir}" for dir in include_dirs(self.hdrs)]
         verilator_cmd += ["-DBR_VERILATOR"]
         verilator_cmd += [f"-D{define}" for define in self.defines]
@@ -108,7 +115,10 @@ class Verilator(EdaTool):
         if self.elab_only:
             cmd += [verilator_cmd]
         else:
-            sim_cmd = " ".join([f"./{obj_dir}/{executable}"] + self.sim_opts)
+            sim_cmd = [f"./{obj_dir}/{executable}"] + self.sim_opts
+            if self.coverage:
+                sim_cmd.append(f"'+verilator+coverage+file+{self.coverage}'")
+            sim_cmd = " ".join(sim_cmd)
             cmd += [" && ".join([verilator_cmd, sim_cmd])]
         cmd += [""]
         return "\n".join(cmd)

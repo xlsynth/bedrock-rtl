@@ -2,7 +2,7 @@
 
 load("@rules_hdl//verilog:providers.bzl", "verilog_library")
 load("//bazel:br_verilog.bzl", "br_verilog_sim_test_tools_suite")
-load("//bazel:verilog.bzl", "verilog_elab_test")
+load("//bazel:verilog.bzl", "verilog_elab_test", "verilog_sim_coverage_aggregate")
 
 BR_AMBA_SIM_MAX_CHECK_WIDTH_64 = "BR_AMBA_SIM_MAX_CHECK_WIDTH=64"
 
@@ -118,6 +118,50 @@ br_verilog_sim_test_tools_suite(
         "verilator",
     ],
     deps = [":br_amba_apb_timing_slice_tb"],
+)
+
+verilog_library(
+    name = "br_apb_demux_tb",
+    srcs = ["br_apb_demux_tb.sv"],
+    deps = [
+        "//amba/rtl:br_amba_pkg",
+        "//amba/rtl:br_apb_demux",
+        "//misc/sim:br_test_driver",
+    ],
+)
+
+verilog_elab_test(
+    name = "br_apb_demux_tb_elab_test",
+    tool = "slang",
+    deps = [":br_apb_demux_tb"],
+)
+
+br_verilog_sim_test_tools_suite(
+    name = "br_apb_demux_sim_test_tools_suite",
+    params = {
+        "AddrWidth": [
+            "12",
+            "16",
+        ],
+        "HasDefaultDownstream": [
+            "0",
+            "1",
+        ],
+        "NumDownstreams": [
+            "2",
+            "4",
+        ],
+        "NumRetimeStagesPerDownstream": [
+            "0",
+            "1",
+            "2",
+        ],
+    },
+    tools = [
+        "vcs",
+        "verilator",
+    ],
+    deps = [":br_apb_demux_tb"],
 )
 
 verilog_library(
@@ -347,6 +391,52 @@ br_verilog_sim_test_tools_suite(
 )
 
 verilog_library(
+    name = "br_amba_axil_write_arbiter_tb",
+    srcs = ["br_amba_axil_write_arbiter_tb.sv"],
+    deps = [
+        "//amba/rtl:br_amba_axil_write_arbiter",
+        "//misc/sim:br_test_driver",
+    ],
+)
+
+verilog_elab_test(
+    name = "br_amba_axil_write_arbiter_tb_elab_test",
+    tool = "slang",
+    deps = [":br_amba_axil_write_arbiter_tb"],
+)
+
+br_verilog_sim_test_tools_suite(
+    name = "br_amba_axil_write_arbiter_sim_test_tools_suite",
+    params = {
+        "AddrWidth": [
+            "12",
+            "32",
+        ],
+        "DataWidth": [
+            "32",
+            "64",
+        ],
+        "MaxOutstandingWrites": [
+            "1",
+            "3",
+        ],
+        "NumInitiators": [
+            "2",
+            "3",
+        ],
+        "UseMinimumUserWidths": [
+            "0",
+            "1",
+        ],
+    },
+    tools = [
+        "vcs",
+        "verilator",
+    ],
+    deps = [":br_amba_axil_write_arbiter_tb"],
+)
+
+verilog_library(
     name = "br_amba_axi_isolate_sub_tb",
     srcs = ["br_amba_axi_isolate_sub_tb.sv"],
     deps = [
@@ -525,4 +615,17 @@ br_verilog_sim_test_tools_suite(
         "verilator",
     ],
     deps = [":br_amba_atb_funnel_tb"],
+)
+
+verilog_sim_coverage_aggregate(
+    name = "br_amba_verilator_coverage",
+    coverage_reports = [
+        ":br_amba_apb_timing_slice_sim_test_tools_suite_verilator_coverage",
+        ":br_amba_atb_funnel_sim_test_tools_suite_verilator_coverage",
+        ":br_amba_axi_isolate_sub_tb_sim_test_tools_suite_verilator_coverage",
+        ":br_amba_axi_isolate_mgr_tb_sim_test_tools_suite_verilator_coverage",
+        ":br_amba_axi_demux_tb_sim_test_tools_suite_verilator_coverage",
+        ":br_amba_axil_default_target_sim_test_tools_suite_verilator_coverage",
+    ],
+    visibility = ["//:__pkg__"],
 )

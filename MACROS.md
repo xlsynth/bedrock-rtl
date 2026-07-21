@@ -1,0 +1,289 @@
+<!-- SPDX-License-Identifier: Apache-2.0 -->
+
+# SystemVerilog Macros
+
+
+## `br_registers.svh`: Flip-Flop Inference Macros
+
+
+These macros conveniently wrap `always_ff` blocks, improving readability and helping to structure user code into sequential and combinational portions.
+The macros are named according to the following suffix convention.
+
+- `A`: Asynchronous reset (if absent, then synchronous)
+- `I`: Initial value given (if absent, then 0)
+- `L`: Conditional load enable (if absent, then unconditional)
+- `N`: No reset (if absent, then reset)
+- `X`: Given explicit clock and reset names (if absent, then `clk` and either `rst` if synchronous or `arst` if asynchronous)
+
+> **Important:** Clocks are always positive-edge triggered.
+
+Resets are always active-high.
+
+> **Note:** The order of the suffices generally matches the order of the arguments to the macro.
+
+The suffices are also listed in alphabetical order, with the exception of `L` before `I`.
+The table below groups macros that share the same clock/reset behavior; the suffix convention above describes the load-enable and initial-value variants.
+
+| Macro/define | Description |
+| --- | --- |
+| `BR_REG`, `BR_REGL`, `BR_REGI`, `BR_REGLI` | Synchronous active-high reset named `rst`, positive-edge clock named `clk`; optional load enable and initial value. |
+| `BR_REGX`, `BR_REGLX`, `BR_REGIX`, `BR_REGLIX` | Synchronous active-high reset and positive-edge clock are explicit macro arguments; optional load enable and initial value. |
+| `BR_REGA`, `BR_REGAL`, `BR_REGAI`, `BR_REGALI` | Asynchronous active-high reset named `arst`, positive-edge clock named `clk`; optional load enable and initial value. |
+| `BR_REGAX`, `BR_REGALX`, `BR_REGAIX`, `BR_REGALIX` | Asynchronous active-high reset and positive-edge clock are explicit macro arguments; optional load enable and initial value. |
+| `BR_REGN`, `BR_REGLN` | No reset, positive-edge clock named `clk`; optional load enable. |
+| `BR_REGNX`, `BR_REGLNX` | No reset, positive-edge clock is an explicit macro argument; optional load enable. |
+
+
+
+<a id="assertions"></a>
+
+## `br_asserts.svh`: Public Assertions
+
+
+These assertion macros are intended for use by the user in their own designs.
+They are guarded (enabled) by the following defines:
+
+- `BR_ASSERT_ON` -- if not defined, then all macros other than `BR_ASSERT_STATIC*`
+      are no-ops.
+- `BR_ENABLE_FPV` -- if not defined, then all `BR_*_FPV` macros are no-ops.
+- `BR_DISABLE_ASSERT_IMM` -- if defined, then all `BR_ASSERT_IMM*`, `BR_COVER_IMM*`,
+      `BR_ASSERT_COMB*`, `BR_ASSUME_COMB*`, and `BR_COVER_COMB*` macros are no-ops.
+- `BR_DISABLE_FINAL_CHECKS` -- if defined, then all `BR_ASSERT_FINAL*` macros are no-ops.
+- `BR_VERILATOR` -- tool-owned define that selects the Verilator-compatible static assertion
+      implementation and temporarily suppresses concurrent assertion, assumption, and cover macros.
+      The Verilator runner sets it automatically; users should not set it for other tools.
+
+`BR_ASSERT_CONCURRENT_ON` is an internal derived define. `br_asserts.svh` defines it when
+`BR_ASSERT_ON` is set and `BR_VERILATOR` is not set. Users and build rules must not set it directly.
+When UVM is present, UVM itself supplies `UVM_MAJOR_REV`; Bedrock uses that standard UVM define to
+route assertion failures through `uvm_error` and does not set it.
+
+> **Tip:** It is recommended that users simply define `BR_ASSERT_ON` when integrating Bedrock modules into their designs.
+
+The other guards will typically not be necessary.
+
+> **Important:** Clocks are always positive-edge triggered.
+
+Resets are always active-high.
+
+| Macro/define | Description |
+| --- | --- |
+| `BR_ASSERT_STATIC` | Static (elaboration-time) assertion for use within modules |
+| `BR_ASSERT_STATIC_IN_PACKAGE` | Static (elaboration-time) assertion for use within packages |
+| `BR_ASSERT_FINAL` | Immediate assertion evaluated at the end of simulation (e.g., when `$finish` is called).<br>Disable by defining `BR_DISABLE_FINAL_CHECKS`. |
+| `BR_ASSERT` | Concurrent assertion with implicit `clk` and `rst` names. |
+| `BR_ASSERT_CR` | Concurrent assertion with explicit clock and reset names. |
+| `BR_ASSERT_KNOWN` | Concurrent assertion that an expression is known, with implicit `clk` and `rst` names. |
+| `BR_ASSERT_KNOWN_VALID` | Concurrent assertion that an expression is known when a valid condition is true, with implicit `clk` and `rst` names. |
+| `BR_ASSERT_KNOWN_CR` | Concurrent known-value assertion with explicit clock and reset names. |
+| `BR_ASSERT_KNOWN_VALID_CR` | Concurrent known-value assertion with explicit clock and reset names and an explicit valid condition. |
+| `BR_ASSERT_IMM` | Immediate assertion.<br>Also passes if the expression is unknown.<br>Disable by defining `BR_DISABLE_ASSERT_IMM`. |
+| `BR_ASSERT_COMB` | Immediate assertion wrapped inside of an `always_comb` block.<br>Also passes if the expression is unknown.<br>Disable by defining `BR_DISABLE_ASSERT_IMM`. |
+| `BR_COVER` | Concurrent cover with implicit `clk` and `rst` names. |
+| `BR_COVER_CR` | Concurrent cover with explicit clock and reset names. |
+| `BR_COVER_INCL_RST` | Concurrent cover that is active both in reset and out of reset, with implicit `clk` name. |
+| `BR_COVER_IMM` | Immediate cover.<br>Disable by defining `BR_DISABLE_ASSERT_IMM`. |
+| `BR_COVER_COMB` | Immediate cover wrapped inside of an `always_comb` block.<br>Disable by defining `BR_DISABLE_ASSERT_IMM`. |
+| `BR_ASSUME` | Concurrent assumption with implicit `clk` and `rst` names. |
+| `BR_ASSUME_CR` | Concurrent assumption with explicit clock and reset names. |
+| `BR_ASSUME_COMB` | Immediate assumption wrapped inside of an `always_comb` block.<br>Disable by defining `BR_DISABLE_ASSERT_IMM`. |
+| `BR_ASSERT_INCL_RST` | Concurrent assertion that is active in reset and out of reset<br>(but specifically intended for checking the former), with implicit `clk` name. |
+| `BR_ASSERT_INCL_RST_C` | Concurrent assertion that is active in reset and out of reset<br>(but specifically intended for checking the former), with explicit clock name. |
+
+
+### FPV-only Wrappers
+
+
+These assertion macros are intended for use in formal verification monitors that might
+be integrated into a simulation environment, but where not all formal assertions should be used in simulation.
+They are guarded (enabled) by the following defines:
+
+- `BR_ENABLE_FPV` -- if not defined, then all BR_*_FPV macros are no-ops.
+
+These wrappers remain subject to the guards on the macros they wrap. In particular,
+`BR_ASSERT_ON` must also be defined, and `BR_DISABLE_ASSERT_IMM` suppresses the
+`BR_ASSERT_COMB_FPV`, `BR_ASSUME_COMB_FPV`, and `BR_COVER_COMB_FPV` wrappers.
+
+| Macro/define | Description |
+| --- | --- |
+| `BR_ASSERT_FPV` | Wraps BR_ASSERT. |
+| `BR_ASSERT_CR_FPV` | Wraps BR_ASSERT_CR. |
+| `BR_ASSERT_COMB_FPV` | Wraps BR_ASSERT_COMB. |
+| `BR_COVER_FPV` | Wraps BR_COVER. |
+| `BR_COVER_CR_FPV` | Wraps BR_COVER_CR. |
+| `BR_COVER_COMB_FPV` | Wraps BR_COVER_COMB. |
+| `BR_ASSUME_COMB_FPV` | Wraps BR_ASSUME_COMB. |
+| `BR_ASSUME_FPV` | Wraps BR_ASSUME. |
+| `BR_ASSUME_CR_FPV` | Wraps BR_ASSUME_CR. |
+
+
+## `br_asserts_internal.svh`: Bedrock-internal Assertions
+
+
+These assertion macros wrap the public assertions.
+They are intended only for internal use inside Bedrock libraries, but the user needs to know about them.
+They are guarded (enabled) by the following defines:
+
+The macros in this file are guarded with the following defines.
+- `BR_DISABLE_INTG_CHECKS` -- if defined, then all the BR_*_INTG checks are no-ops.
+- `BR_ENABLE_IMPL_CHECKS` -- if not defined, then all the BR_*_IMPL checks are no-ops.
+
+The intent is that users should not need to do anything, so that by default they will get only
+the integration checks but not the implementation checks.
+
+> **Tip:** All of these macros wrap the public macros in `br_asserts.svh`, so they are also subject to the same global defines such as `BR_ASSERT_ON`.
+
+
+### Integration Checks
+
+
+These checks are meant for checking the integration of a library module into an end user's design.
+Disable them globally by defining `BR_DISABLE_INTG_CHECKS`.
+
+| Macro/define | Description |
+| --- | --- |
+| `BR_ASSERT_INTG` | Wraps BR_ASSERT. |
+| `BR_ASSERT_CR_INTG` | Wraps `BR_ASSERT_CR`. |
+| `BR_ASSERT_KNOWN_INTG` | Wraps `BR_ASSERT_KNOWN`. |
+| `BR_ASSERT_KNOWN_VALID_INTG` | Wraps `BR_ASSERT_KNOWN_VALID`. |
+| `BR_ASSERT_KNOWN_CR_INTG` | Wraps `BR_ASSERT_KNOWN_CR`. |
+| `BR_ASSERT_KNOWN_VALID_CR_INTG` | Wraps `BR_ASSERT_KNOWN_VALID_CR`. |
+| `BR_ASSERT_COMB_INTG` | Wraps `BR_ASSERT_COMB`. |
+| `BR_ASSERT_INCL_RST_INTG` | Wraps `BR_ASSERT_INCL_RST`. |
+| `BR_ASSERT_INCL_RST_C_INTG` | Wraps `BR_ASSERT_INCL_RST_C`. |
+| `BR_ASSERT_IMM_INTG` | Wraps `BR_ASSERT_IMM`. |
+| `BR_COVER_INTG` | Wraps `BR_COVER`. |
+| `BR_COVER_INCL_RST_INTG` | Wraps `BR_COVER_INCL_RST`. |
+| `BR_COVER_CR_INTG` | Wraps `BR_COVER_CR`. |
+| `BR_COVER_IMM_INTG` | Wraps `BR_COVER_IMM`. |
+| `BR_COVER_COMB_INTG` | Wraps `BR_COVER_COMB`. |
+
+
+
+### Implementation Checks
+
+
+These checks are meant for checking the implementation of a library module.
+Enable them globally by defining `BR_ENABLE_IMPL_CHECKS`.
+
+| Macro/define | Description |
+| --- | --- |
+| `BR_ASSERT_IMPL` | Wraps `BR_ASSERT`. |
+| `BR_ASSERT_CR_IMPL` | Wraps `BR_ASSERT_CR`. |
+| `BR_ASSERT_KNOWN_IMPL` | Wraps `BR_ASSERT_KNOWN`. |
+| `BR_ASSERT_KNOWN_VALID_IMPL` | Wraps `BR_ASSERT_KNOWN_VALID`. |
+| `BR_ASSERT_KNOWN_CR_IMPL` | Wraps `BR_ASSERT_KNOWN_CR`. |
+| `BR_ASSERT_KNOWN_VALID_CR_IMPL` | Wraps `BR_ASSERT_KNOWN_VALID_CR`. |
+| `BR_ASSERT_COMB_IMPL` | Wraps `BR_ASSERT_COMB`. |
+| `BR_ASSERT_INCL_RST_IMPL` | Wraps `BR_ASSERT_INCL_RST`. |
+| `BR_ASSERT_INCL_RST_C_IMPL` | Wraps `BR_ASSERT_INCL_RST_C`. |
+| `BR_ASSERT_IMM_IMPL` | Wraps `BR_ASSERT_IMM`. |
+| `BR_COVER_IMPL` | Wraps `BR_COVER`. |
+| `BR_COVER_INCL_RST_IMPL` | Wraps `BR_COVER_INCL_RST`. |
+| `BR_COVER_CR_IMPL` | Wraps `BR_COVER_CR`. |
+| `BR_COVER_IMM_IMPL` | Wraps `BR_COVER_IMM`. |
+| `BR_COVER_COMB_IMPL` | Wraps `BR_COVER_COMB`. |
+
+
+## Bazel Define Profiles
+
+
+The Bedrock Bazel wrappers in `bazel/br_verilog.bzl` apply the following compile-time define profiles.
+The generic rules in `bazel/verilog.bzl` do not add these Bedrock-specific defines; they pass their
+`defines` attribute unchanged to Verilog Runner.
+
+| Wrapper/profile | Defines | Intent |
+| --- | --- | --- |
+| Elaboration/lint: integration checks | `BR_ASSERT_ON` | Enables public and integration checks while leaving implementation checks disabled. |
+| Elaboration/lint: all checks | `BR_ASSERT_ON`, `BR_ENABLE_IMPL_CHECKS` | Enables both integration and Bedrock implementation checks. |
+| Elaboration/lint: no assertions | None | Verifies that RTL elaborates and lints when assertion macros are disabled. |
+| Simulation default | `BR_ASSERT_ON`, `BR_ENABLE_IMPL_CHECKS`, `SIMULATION` | Enables all Bedrock checks and simulation-specific RTL behavior. An explicitly supplied `defines`<br>list replaces this default; an explicit empty list requests no defines. |
+| Formal property verification | `BR_ASSERT_ON`, `BR_ENABLE_IMPL_CHECKS`, `BR_ENABLE_FPV`,<br>`BR_DISABLE_FINAL_CHECKS`, `BR_DISABLE_ASSERT_IMM` | Enables concurrent public, implementation, and FPV-only properties. Final blocks are simulation-only<br>and are ignored by formal tools. Immediate/combinational checks are disabled because formal assumptions<br>constrain sampled clock edges and cannot reliably prevent between-edge immediate checks from firing. |
+
+
+The formal profile is fixed by `br_verilog_fpv_test_suite`; callers cannot override `defines`.
+It is applied identically to executable FPV tests and generated FPV sandboxes, for both JasperGold and VCF.
+Formal builds intentionally do not define `SIMULATION`, `SYNTHESIS`, or `BR_VERILATOR`.
+The Verilator simulation plugin adds `BR_VERILATOR` after receiving the Bazel-provided define list.
+
+`SIMULATION` controls simulation-only RTL behavior outside the assertion headers. It is owned by the
+Bedrock simulation wrapper rather than by `br_asserts.svh`. `SYNTHESIS` is reserved for synthesis-tool
+environments and is not set by Bedrock's elaboration, lint, simulation, or formal wrappers.
+
+## `br_gates.svh`: Gate Convenience Wrappers
+
+
+These macros conveniently wrap module instantiations from the `gate` category.
+
+| Macro/define | Description |
+| --- | --- |
+| `BR_GATE_BUF` | Instantiates `br_gate_buf`. |
+| `BR_GATE_CLK_BUF` | Instantiates `br_gate_clk_buf`. |
+| `BR_GATE_CLK_INV` | Instantiates `br_gate_clk_inv`. |
+| `BR_GATE_INV` | Instantiates `br_gate_inv`. |
+| `BR_GATE_AND2` | Instantiates `br_gate_and2`. |
+| `BR_GATE_OR2` | Instantiates `br_gate_or2`. |
+| `BR_GATE_XOR2` | Instantiates `br_gate_xor2`. |
+| `BR_GATE_MUX2` | Instantiates `br_gate_mux2`. |
+| `BR_GATE_CLK_MUX2` | Instantiates `br_gate_clk_mux2`. |
+| `BR_GATE_ICG` | Instantiates `br_gate_icg`. |
+| `BR_GATE_ICG_RST` | Instantiates `br_gate_icg_rst`. |
+| `BR_GATE_CDC_SYNC` | Instantiates `br_gate_cdc_sync`. |
+| `BR_GATE_CDC_SYNC_STAGES` | Instantiates `br_gate_cdc_sync` with an explicit number of synchronizer stages. |
+| `BR_GATE_CDC_SYNC_ARST` | Instantiates `br_gate_cdc_sync_arst`. |
+| `BR_GATE_CDC_SYNC_ARST_STAGES` | Instantiates `br_gate_cdc_sync_arst` with an explicit number of synchronizer stages. |
+| `BR_GATE_CDC_RST_SYNC` | Instantiates `br_cdc_rst_sync` as an asynchronous-reset to synchronous-reset synchronizer. |
+| `BR_GATE_CDC_RST_SYNC_STAGES` | Instantiates the reset synchronizer with an explicit number of synchronizer stages. |
+| `BR_GATE_CDC_PSEUDOSTATIC`, `BR_GATE_CDC_PSEUDOSTATIC_BUS` | Instantiates `br_gate_cdc_pseudostatic` for scalar or bus pseudo-static CDC nets. |
+| `BR_GATE_CDC_MAXDEL`, `BR_GATE_CDC_MAXDEL_BUS` | Instantiates `br_gate_cdc_maxdel` for scalar or bus CDC nets that should be checked for max delay. |
+
+
+## `br_assign.svh`: Assignment Helpers
+
+
+These macros provide size-aware assignment helpers for common bit slicing and extension operations.
+
+| Macro/define | Description |
+| --- | --- |
+| `BR_ZERO_EXT` | Zero-extend a smaller expression into a larger destination. |
+| `BR_ASSIGN_MAYBE_ZERO_EXT` | Zero-extend when the destination is wider than the source, otherwise assign directly. |
+| `BR_TRUNCATE_FROM_LSB`, `BR_TRUNCATE_FROM_MSB` | Assign the least-significant or most-significant bits of a wider expression into a narrower destination. |
+| `BR_INSERT_TO_LSB`, `BR_INSERT_TO_MSB` | Insert a narrower expression into the least-significant or most-significant bits of a wider destination. |
+
+
+## `br_fv.svh`: Formal Verification Helpers
+
+
+These macros provide small helper patterns used by formal monitors.
+
+| Macro/define | Description |
+| --- | --- |
+| `BR_FV_2RAND_IDX` | Constrains two symbolic indices to be stable, in range, and unique. |
+| `BR_FV_IDX` | Computes the selected index for a one-hot vector. |
+
+
+## `br_tieoff.svh`: Tie-off Convenience Wrappers
+
+
+These macros conveniently wrap `br_misc_tieoff*` module instantiations.
+
+| Macro/define | Description |
+| --- | --- |
+| `BR_TIEOFF_ZERO_NAMED` | Instantiates `br_misc_tieoff_zero` with a given submodule instance suffix. |
+| `BR_TIEOFF_ONE_NAMED` | Instantiates `br_misc_tieoff_one` with a given submodule instance suffix. |
+| `BR_TIEOFF_ZERO` | Instantiates `br_misc_tieoff_zero` with a derived submodule instance suffix. |
+| `BR_TIEOFF_ONE` | Instantiates `br_misc_tieoff_one` with a derived submodule instance suffix. |
+| `BR_TIEOFF_ZERO_TODO` | Provided for convenience of the user grepping for `TODO` in the codebase, to help prevent accidental tie-offs that result in bugs.<br>Instantiates `br_misc_tieoff_zero` with a derived submodule instance suffix. |
+| `BR_TIEOFF_ONE_TODO` | Provided for convenience of the user grepping for `TODO` in the codebase, to help prevent accidental tie-offs that result in bugs.<br>Instantiates `br_misc_tieoff_one` with a derived submodule instance suffix. |
+
+
+## `br_unused.svh`: Unused Signal Convenience Wrappers
+
+
+These macros conveniently wrap `br_misc_unused` module instantiations.
+
+| Macro/define | Description |
+| --- | --- |
+| `BR_UNUSED_NAMED` | Instantiates `br_misc_unused` with a given submodule instance suffix. |
+| `BR_UNUSED` | Instantiates `br_misc_unused` with a derived submodule instance suffix. |
+| `BR_UNUSED_TODO` | Provided for convenience of the user grepping for `TODO` in the codebase, to help prevent accidental unused signals that result in bugs.<br>Instantiates `br_misc_unused` with a derived submodule instance suffix. |

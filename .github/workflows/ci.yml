@@ -391,15 +391,19 @@ jobs:
       id-token: write
       # Allows the job to persist the signed provenance attestation with GitHub.
       attestations: write
-      # Links the attestation to the image published in GHCR.
-      artifact-metadata: write
       # Allows the job credential to publish the image to GHCR.
       packages: write
     steps:
       # actions/checkout v7.0.0
       - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0
-      # docker/setup-buildx-action v4.1.0
-      - uses: docker/setup-buildx-action@d7f5e7f509e45cec5c76c4d5afdd7de93d0b3df5
+      - name: Download public Docker image
+        # actions/download-artifact v8.0.1
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
+        with:
+          name: bedrock-rtl-dev-image-${{ github.sha }}
+          path: /tmp
+      - name: Load public Docker image
+        run: docker load --input /tmp/bedrock-rtl-dev.tar
       - name: Log in to GHCR
         # docker/login-action v4.2.0
         uses: docker/login-action@650006c6eb7dba73a995cc03b0b2d7f5ca915bee
@@ -407,29 +411,29 @@ jobs:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ github.token }}
-      - name: Publish Docker image
+      - name: Tag tested Docker image
+        env:
+          IMAGE_TAG: ${{ needs.bazel-oss-tool-test.outputs.image-tag }}
+        run: docker tag "bedrock-rtl-dev:${GITHUB_SHA}" "ghcr.io/xlsynth/bedrock-rtl-dev:${IMAGE_TAG}"
+      - name: Push tested Docker image
         id: publish
-        # docker/build-push-action v7.2.0
-        uses: docker/build-push-action@f9f3042f7e2789586610d6e8b85c8f03e5195baf
-        with:
-          context: .
-          file: ./Dockerfile
-          platforms: linux/amd64
-          push: true
-          # Attach max-detail BuildKit provenance to the published image.
-          provenance: mode=max
-          tags: ghcr.io/xlsynth/bedrock-rtl-dev:${{ needs.bazel-oss-tool-test.outputs.image-tag }}
-          labels: |
-            org.opencontainers.image.revision=${{ github.sha }}
-          # Reuse the layers populated by bazel-oss-tool-test before publishing.
-          cache-from: type=gha,scope=bedrock-rtl-dev-docker
+        env:
+          IMAGE_TAG: ${{ needs.bazel-oss-tool-test.outputs.image-tag }}
+        run: |
+          image="ghcr.io/xlsynth/bedrock-rtl-dev:${IMAGE_TAG}"
+          docker push "${image}"
+          digest="$(docker image inspect --format='{{index .RepoDigests 0}}' "${image}" | sed 's/.*@//')"
+          echo "digest=${digest}" >> "${GITHUB_OUTPUT}"
       - name: Attest Docker image provenance
         # actions/attest v4.1.1
         uses: actions/attest@a1948c3f048ba23858d222213b7c278aabede763
         with:
           subject-name: ghcr.io/xlsynth/bedrock-rtl-dev
           subject-digest: ${{ steps.publish.outputs.digest }}
-          push-to-registry: true
+          # Keep the signed attestation in GitHub's attestation store without
+          # publishing a second sha256-* OCI artifact into GHCR.
+          push-to-registry: false
+          create-storage-record: false
 
   # Keep proprietary tools and their logs exclusively on the private runner.
   bazel-build-and-proprietary-tool-test:

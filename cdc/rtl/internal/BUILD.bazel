@@ -5,6 +5,11 @@ load("//bazel:br_verilog.bzl", "br_verilog_elab_and_lint_test_suite")
 
 package(default_visibility = ["//cdc/rtl:__subpackages__"])
 
+filegroup(
+    name = "srcs",
+    srcs = glob(["*.sv"]),
+)
+
 verilog_library(
     name = "br_cdc_fifo_push_flag_mgr",
     srcs = ["br_cdc_fifo_push_flag_mgr.sv"],

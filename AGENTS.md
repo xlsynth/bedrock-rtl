@@ -1,6 +1,6 @@
 # AGENTS.md
 
-Reading `README.adoc` in its entirety is not required, but it may provide helpful repository context. Before changing code, inspect the closest analogous module, test, and `BUILD.bazel` target and follow their established patterns.
+Reading `README.md` in its entirety is not required, but it may provide helpful repository context. Before changing code, inspect the closest analogous module, test, and `BUILD.bazel` target and follow their established patterns.
 
 ## Repository layout
 
