@@ -535,6 +535,88 @@ br_verilog_sim_test_tools_suite(
 )
 
 verilog_library(
+    name = "br_flow_mux_weighted_rr_tb",
+    srcs = ["br_flow_mux_weighted_rr_tb.sv"],
+    deps = [
+        "//flow/rtl:br_flow_mux_weighted_rr",
+        "//misc/sim:br_test_driver",
+    ],
+)
+
+verilog_elab_test(
+    name = "br_flow_mux_weighted_rr_tb_elab_test",
+    tool = "slang",
+    deps = [":br_flow_mux_weighted_rr_tb"],
+)
+
+br_verilog_sim_test_tools_suite(
+    name = "br_flow_mux_weighted_rr_sim_test_tools_suite",
+    params = {
+        "MaxAccumulatedWeight": [
+            "3",
+            "8",
+        ],
+        "MaxWeight": [
+            "1",
+            "3",
+        ],
+        "NumFlows": [
+            "1",
+            "2",
+            "4",
+        ],
+        "UsePairwiseArb": [
+            "0",
+            "1",
+        ],
+    },
+    tools = [
+        "vcs",
+        "verilator",
+    ],
+    deps = [":br_flow_mux_weighted_rr_tb"],
+)
+
+verilog_library(
+    name = "br_flow_mux_weighted_lru_tb",
+    srcs = ["br_flow_mux_weighted_lru_tb.sv"],
+    deps = [
+        "//flow/rtl:br_flow_mux_weighted_lru",
+        "//misc/sim:br_test_driver",
+    ],
+)
+
+verilog_elab_test(
+    name = "br_flow_mux_weighted_lru_tb_elab_test",
+    tool = "slang",
+    deps = [":br_flow_mux_weighted_lru_tb"],
+)
+
+br_verilog_sim_test_tools_suite(
+    name = "br_flow_mux_weighted_lru_sim_test_tools_suite",
+    params = {
+        "MaxAccumulatedWeight": [
+            "3",
+            "8",
+        ],
+        "MaxWeight": [
+            "1",
+            "3",
+        ],
+        "NumFlows": [
+            "1",
+            "2",
+            "4",
+        ],
+    },
+    tools = [
+        "vcs",
+        "verilator",
+    ],
+    deps = [":br_flow_mux_weighted_lru_tb"],
+)
+
+verilog_library(
     name = "br_flow_mux_fixed_stable_tb",
     srcs = ["br_flow_mux_fixed_stable_tb.sv"],
     deps = [
