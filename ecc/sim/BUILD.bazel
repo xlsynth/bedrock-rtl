@@ -2,7 +2,7 @@
 
 load("@rules_hdl//verilog:providers.bzl", "verilog_library")
 load("//bazel:br_verilog.bzl", "br_verilog_sim_test_tools_suite")
-load("//bazel:verilog.bzl", "verilog_elab_test")
+load("//bazel:verilog.bzl", "verilog_elab_test", "verilog_sim_coverage_aggregate")
 
 package(default_visibility = ["//visibility:private"])
 
@@ -83,16 +83,23 @@ K = [
     "68",
 ]
 
-[
-    br_verilog_sim_test_tools_suite(
-        name = "br_ecc_secded_encoder_decoder_sim_test_tools_suite",
-        params = {"DataWidth": [k]},
-        seed = 42,
-        tools = [
-            "vcs",
-            "verilator",
-        ],
-        deps = [":br_ecc_secded_encoder_decoder_tb"],
-    )
-    for k in K
-]
+br_verilog_sim_test_tools_suite(
+    name = "br_ecc_secded_encoder_decoder_sim_test_tools_suite",
+    coverage = True,
+    params = {"DataWidth": K},
+    seed = 42,
+    tools = [
+        "vcs",
+        "verilator",
+    ],
+    deps = [":br_ecc_secded_encoder_decoder_tb"],
+)
+
+verilog_sim_coverage_aggregate(
+    name = "br_ecc_verilator_coverage",
+    coverage_reports = [
+        ":br_ecc_sed_encoder_decoder_sim_test_tools_suite_verilator_coverage",
+        ":br_ecc_secded_encoder_decoder_sim_test_tools_suite_verilator_coverage",
+    ],
+    visibility = ["//:__pkg__"],
+)
