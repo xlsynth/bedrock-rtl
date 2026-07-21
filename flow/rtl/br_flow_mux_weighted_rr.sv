@@ -12,7 +12,7 @@
 // preempt an existing requester. Pop valid can be unstable if all push valids
 // are revoked while pop_ready is low.
 //
-// `push_weight` is the arbiter weight for each flow. They are expected to follow the rules
+// `cfg_weight` is the arbiter weight for each flow. They are expected to follow the rules
 // set for `request_weight` in `br_arb_weighted_rr`. Weights cannot be zero and are expected
 // to be stable while traffic is ongoing.
 
@@ -49,10 +49,10 @@ module br_flow_mux_weighted_rr #(
 ) (
     input  logic                                 clk,
     input  logic                                 rst,
+    input  logic [NumFlows-1:0][WeightWidth-1:0] cfg_weight,
     output logic [NumFlows-1:0]                  push_ready,
     input  logic [NumFlows-1:0]                  push_valid,
     input  logic [NumFlows-1:0][      Width-1:0] push_data,
-    input  logic [NumFlows-1:0][WeightWidth-1:0] push_weight,
     input  logic                                 pop_ready,
     // Pop valid can be unstable if push valid is unstable
     // and all active push_valid are withdrawn while pop_ready is low
@@ -86,7 +86,7 @@ module br_flow_mux_weighted_rr #(
       .clk,
       .rst,
       .request,
-      .request_weight(push_weight),
+      .request_weight(cfg_weight),
       .grant,
       .enable_priority_update
   );
