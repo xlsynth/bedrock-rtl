@@ -469,6 +469,8 @@ module br_fifo_staging_buffer #(
       assign internal_pop_data = head_valid ? mem_rd_data : push_data;
       // If RAM read data bypasses an invalid buffer head, check that its delayed
       // allocation address matches the current read pointer.
+      // Use a Boolean expression instead of an implication because its precondition
+      // is unreachable in some configurations.
       `BR_ASSERT_IMPL(rd_data_to_pop_correct_address_a,
                       head_valid || !ram_rd_data_valid || (wr_ptr_onehot_d == rd_ptr_onehot))
 
