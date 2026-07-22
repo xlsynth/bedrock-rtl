@@ -196,7 +196,7 @@ git checkout <pinned-commit>
 ./package_sources.py //arb/rtl:br_arb_fixed
 ```
 
-The generated `.tar` contains a `.f` file and the target's transitive SystemVerilog sources and headers. Extract it, then run your simulator or synthesis tool from the extraction directory. The file list starts with the required `macros` include directory. Choose the library target for the module you use; its name is listed in the library's `BUILD.bazel` file.
+The generated `.tar` contains a root-level `project.f` file and the target's transitive SystemVerilog sources and headers. `project.f` declares the selected target as the top module and starts with the required `macros` include directory. Extract it, then run your simulator or synthesis tool from the extraction directory. Choose the library target for the module you use; its name is listed in the library's `BUILD.bazel` file.
 
 Pass `--filelist-only` to generate just the checkout-relative `.f` file.
 

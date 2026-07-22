@@ -70,16 +70,42 @@ def query_source_paths(target: str) -> list[str]:
     ]
 
 
-def write_filelist(path: Path, source_paths: list[str]) -> None:
+def top_module(target: str) -> str:
+    return target.rsplit(":", 1)[-1]
+
+
+def write_filelist(path: Path, source_paths: list[str], top: str) -> None:
     path.write_text(
+        f"--top {top}\n"
         "+incdir+./macros\n" + "\n".join(source_paths) + ("\n" if source_paths else ""),
         encoding="utf-8",
     )
 
 
+def create_package(
+    package_path: Path,
+    source_root: Path,
+    source_paths: list[str],
+    top: str,
+) -> None:
+    with tempfile.TemporaryDirectory(prefix="package_sources_") as staging_directory:
+        staging_path = Path(staging_directory)
+        write_filelist(staging_path / "project.f", source_paths, top)
+        for source_path in source_paths:
+            relative_path = Path(source_path).relative_to(".")
+            destination = staging_path / relative_path
+            destination.parent.mkdir(parents=True, exist_ok=True)
+            shutil.copy2(source_root / relative_path, destination)
+
+        with tarfile.open(package_path, "w") as archive:
+            for path in sorted(staging_path.iterdir()):
+                archive.add(path, arcname=path.name)
+
+
 def main() -> None:
     args = parse_args()
     target_name = sanitized_target(args.target)
+    top = top_module(args.target)
     output_directory = args.output_path or Path(".")
     filelist_name = f"filelist_paths_{target_name}.f"
     source_paths = query_source_paths(args.target)
@@ -87,7 +113,7 @@ def main() -> None:
     if args.filelist_only:
         filelist_path = args.output_file or output_directory / filelist_name
         filelist_path.parent.mkdir(parents=True, exist_ok=True)
-        write_filelist(filelist_path, source_paths)
+        write_filelist(filelist_path, source_paths, top)
         print(f"File list generated and saved to {filelist_path}")
         return
 
@@ -95,17 +121,7 @@ def main() -> None:
         args.output_file or output_directory / f"package_sources_{target_name}.tar"
     )
     package_path.parent.mkdir(parents=True, exist_ok=True)
-    with tempfile.TemporaryDirectory(prefix="package_sources_") as staging_directory:
-        staging_path = Path(staging_directory)
-        write_filelist(staging_path / filelist_name, source_paths)
-        for source_path in source_paths:
-            relative_path = Path(source_path).relative_to(".")
-            destination = staging_path / relative_path
-            destination.parent.mkdir(parents=True, exist_ok=True)
-            shutil.copy2(relative_path, destination)
-
-        with tarfile.open(package_path, "w") as archive:
-            archive.add(staging_path, arcname=".")
+    create_package(package_path, Path.cwd(), source_paths, top)
 
     print(f"Source package generated and saved to {package_path}")
 

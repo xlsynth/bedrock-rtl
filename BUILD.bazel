@@ -46,6 +46,11 @@ py_test(
     tags = ["local"],
 )
 
+py_test(
+    name = "package_sources_test",
+    srcs = ["package_sources_test.py"],
+)
+
 verilog_sim_coverage_aggregate(
     name = "br_verilator_coverage",
     all_srcs = ":rtl_srcs",
