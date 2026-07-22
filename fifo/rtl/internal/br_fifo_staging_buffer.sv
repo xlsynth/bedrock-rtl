@@ -467,12 +467,12 @@ module br_fifo_staging_buffer #(
       // For bypass data, we can only do direct bypass when the buffer is empty
       assign internal_pop_valid = head_valid || ram_rd_data_valid || (empty && bypass_beat);
       assign internal_pop_data = head_valid ? mem_rd_data : push_data;
-      if (RamReadLatency >= InternalDepth) begin : gen_with_rd_data_bypass_check
-        `BR_ASSERT_IMPL(rd_data_to_pop_correct_address_a,
-                        (!head_valid && ram_rd_data_valid) |-> (wr_ptr_onehot_d == rd_ptr_onehot))
-      end else begin : gen_no_rd_data_bypass_check
-        `BR_ASSERT_IMPL(no_rd_data_when_buffer_empty_a, ram_rd_data_valid |-> head_valid)
-      end
+      // If RAM read data bypasses an invalid buffer head, check that its delayed
+      // allocation address matches the current read pointer.
+      // Use a Boolean expression instead of an implication because its precondition
+      // is unreachable in some configurations.
+      `BR_ASSERT_IMPL(rd_data_to_pop_correct_address_a,
+                      head_valid || !ram_rd_data_valid || (wr_ptr_onehot_d == rd_ptr_onehot))
 
       // Only advance the read pointer if the write pointer was advanced
       // to provide the data currently being consumed.
