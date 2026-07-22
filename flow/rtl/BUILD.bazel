@@ -1434,3 +1434,61 @@ br_verilog_elab_and_lint_test_suite(
     },
     deps = [":br_flow_xbar_lru"],
 )
+
+verilog_library(
+    name = "br_flow_mux_weighted_rr",
+    srcs = ["br_flow_mux_weighted_rr.sv"],
+    deps = [
+        "//arb/rtl:br_arb_weighted_rr",
+        "//flow/rtl/internal:br_flow_mux_core",
+    ],
+)
+
+br_verilog_elab_and_lint_test_suite(
+    name = "br_flow_mux_weighted_rr_test_suite",
+    params = {
+        "NumFlows": [
+            "1",
+            "2",
+            "3",
+        ],
+        "Width": [
+            "1",
+            "2",
+        ],
+        "MaxWeight": [
+            "1",
+            "2",
+        ],
+    },
+    deps = [":br_flow_mux_weighted_rr"],
+)
+
+verilog_library(
+    name = "br_flow_mux_weighted_lru",
+    srcs = ["br_flow_mux_weighted_lru.sv"],
+    deps = [
+        "//arb/rtl:br_arb_weighted_lru",
+        "//flow/rtl/internal:br_flow_mux_core",
+    ],
+)
+
+br_verilog_elab_and_lint_test_suite(
+    name = "br_flow_mux_weighted_lru_test_suite",
+    params = {
+        "NumFlows": [
+            "1",
+            "2",
+            "3",
+        ],
+        "Width": [
+            "1",
+            "2",
+        ],
+        "MaxWeight": [
+            "1",
+            "2",
+        ],
+    },
+    deps = [":br_flow_mux_weighted_lru"],
+)
