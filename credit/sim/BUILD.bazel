@@ -7,6 +7,43 @@ load("//bazel:verilog.bzl", "verilog_elab_test", "verilog_sim_coverage_aggregate
 package(default_visibility = ["//visibility:private"])
 
 verilog_library(
+    name = "br_credit_counter_tb",
+    srcs = ["br_credit_counter_tb.sv"],
+    deps = [
+        "//credit/rtl:br_credit_counter",
+        "//misc/sim:br_test_driver",
+    ],
+)
+
+verilog_elab_test(
+    name = "br_credit_counter_tb_elab_test",
+    tool = "slang",
+    deps = [":br_credit_counter_tb"],
+)
+
+br_verilog_sim_test_tools_suite(
+    name = "br_credit_counter_sim_test_tools_suite",
+    params = {
+        "MaxValueWidth": ["4"],
+        "MaxChangeWidth": ["3"],
+        "MaxValue": [
+            "3",
+            "7",
+        ],
+        "MaxChange": [
+            "1",
+            "3",
+        ],
+        "NumRandomCycles": ["120"],
+    },
+    tools = [
+        "vcs",
+        "verilator",
+    ],
+    deps = [":br_credit_counter_tb"],
+)
+
+verilog_library(
     name = "br_credit_receiver_tb",
     srcs = ["br_credit_receiver_tb.sv"],
     deps = [
