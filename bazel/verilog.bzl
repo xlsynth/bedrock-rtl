@@ -1698,12 +1698,16 @@ def verilog_elab_and_lint_test_suite(
         elab_tools = ["verific", "slang"],
         lint_tool = "ascentlint",
         disable_lint_rules = [],
+        tags = [],
         **kwargs):
     """Creates a suite of Verilog elaboration and lint tests for each combination of the provided parameters.
 
-    The function generates a wrapper covering all possible combinations of the provided parameters, creates a
-    verilog_elab_test for each elaboration tool, and creates one verilog_lint_test. Elaboration test names append
-    the tool name followed by "_elab_test"; the lint test name appends "_lint_test".
+    For each elaboration tool, the function creates one test of the original module's default parameters and one
+    test of a generated wrapper covering all possible combinations of the provided parameters. It also creates one
+    lint test of the original module's default parameters and one lint test of the generated wrapper.
+    Default-parameter test names append the tool name followed by "_default_params_elab_test" or
+    "_default_params_lint_test"; wrapper elaboration test names append the tool name followed by "_elab_test";
+    and the wrapper lint test name appends "_lint_test".
 
     Args:
         top (str): The top-level module to instantiate. Can be left undefined if there is only one dependency.
@@ -1714,6 +1718,7 @@ def verilog_elab_and_lint_test_suite(
         elab_tools (list of strings): The tools to use for elaboration. Defaults to Verific and Slang.
         lint_tool (str): The tool to use for linting.
         disable_lint_rules (list): A list of lint rules to disable in the generated files.
+        tags (list): A list of tags to add to generated tests.
         **kwargs: Additional common keyword arguments to be passed to the verilog_elab_test and verilog_lint_test functions.
     """
     if not top:
@@ -1750,20 +1755,42 @@ def verilog_elab_and_lint_test_suite(
     )
 
     for elab_tool in elab_tools:
+        verilog_elab_test(
+            name = name + "_" + elab_tool + "_default_params_elab_test",
+            tool = elab_tool,
+            deps = deps,
+            defines = defines,
+            tags = tags + ["default-params"],
+            top = top,
+            **kwargs
+        )
+
         test_name = name + "_" + elab_tool + "_elab_test"
         verilog_elab_test(
             name = test_name,
             tool = elab_tool,
             deps = [":" + name + "_wrapper"],
             defines = defines,
+            tags = tags,
             **kwargs
         )
+
+    verilog_lint_test(
+        name = name + "_" + lint_tool + "_default_params_lint_test",
+        tool = lint_tool,
+        deps = deps,
+        defines = defines,
+        tags = tags + ["default-params"],
+        top = top,
+        **kwargs
+    )
 
     verilog_lint_test(
         name = name + "_lint_test",
         tool = lint_tool,
         deps = [":" + name + "_wrapper"],
         defines = defines,
+        tags = tags,
         **kwargs
     )
 
