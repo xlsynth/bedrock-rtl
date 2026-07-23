@@ -23,6 +23,10 @@ def verilog_header_file(filename: str) -> str:
 
 
 def tcl_file(filename: str) -> str:
+    return check_filename_extension(filename, (".tcl", ".sby"))
+
+
+def tcl_fragment_file(filename: str) -> str:
     return check_filename_extension(filename, (".tcl"))
 
 
@@ -58,6 +62,13 @@ def add_common_args(parser: argparse.ArgumentParser) -> None:
         "Can be specified multiple times.",
     )
     parser.add_argument(
+        "--data",
+        type=str,
+        action="append",
+        default=[],
+        help="Auxiliary data file needed by the design. Can be specified multiple times.",
+    )
+    parser.add_argument(
         "--define",
         type=str,
         action="append",
@@ -83,30 +94,38 @@ def add_common_args(parser: argparse.ArgumentParser) -> None:
         default=[],
         # TODO(mgottscho): Move tool-specific option flags out of the common CLI
         # surface once each subcommand has its own option model.
-        help="Tool-specific options to pass directly to the tool. Can be specified multiple times. "
-        "If provided, then --tool must be provided explicitly.",
+        help="Legacy plugin-specific options. Their meaning is defined by the selected plugin; "
+        "for SBY they are yosys-slang analysis options. Can be specified multiple times.",
     )
     parser.add_argument(
         "--tcl",
         type=tcl_file,
-        help="Tcl script file to write commands to. The generated tcl script consists of three parts: header, body, and footer."
-        "The tcl header is unconditionally followed by analysis and elaborate commands, then the tcl body."
-        "The tcl body is unconditionally followed by the tcl footer."
-        "By default, header, body, and footer are all auto-generated, but the header and body can be overridden "
-        "by --custom_tcl_header and --custom_tcl_body, respectively.",
+        help="Tool-specific control file to write (.tcl or .sby). The generated control file consists of "
+        "a header, analysis and elaboration commands, a body, and a footer. "
+        "By default all parts are auto-generated, but the header and body can be overridden "
+        "by the corresponding --custom_control_* arguments. Tcl-based tools may use the "
+        "equivalent --custom_tcl_* aliases.",
         required=True,
     )
     parser.add_argument(
-        "--custom_tcl_header",
+        "--custom_control_header",
         type=tcl_file,
-        help="Tcl script file containing custom tool-specific commands to insert at the beginning of the generated tcl script."
-        "The tcl header (custom or not) is unconditionally followed by analysis and elaborate commands, and then the tcl body.",
+        help="Tool-neutral control fragment inserted before analysis and elaboration commands.",
+    )
+    parser.add_argument(
+        "--custom_control_body",
+        type=tcl_file,
+        help="Tool-neutral control fragment replacing the default body.",
+    )
+    parser.add_argument(
+        "--custom_tcl_header",
+        type=tcl_fragment_file,
+        help="Tcl-specific alias for --custom_control_header.",
     )
     parser.add_argument(
         "--custom_tcl_body",
-        type=tcl_file,
-        help="Tcl script file containing custom tool-specific commands to insert in the middle of the generated tcl script."
-        "The tcl body (custom or not) is unconditionally followed by the tcl footer.",
+        type=tcl_fragment_file,
+        help="Tcl-specific alias for --custom_control_body.",
     )
     parser.add_argument(
         "--script",
@@ -171,8 +190,28 @@ def common_args(args: argparse.Namespace):
             )
         return var
 
+    def resolve_custom_control_fragment(fragment: str):
+        control_arg = getattr(args, "custom_control_" + fragment, None)
+        tcl_arg = getattr(args, "custom_tcl_" + fragment, None)
+        if control_arg and tcl_arg:
+            raise ValueError(
+                "--custom_control_{} and --custom_tcl_{} are aliases; specify only one".format(
+                    fragment, fragment
+                )
+            )
+        if tcl_arg and args.tool == "sby":
+            raise ValueError(
+                "SBY control fragments must use --custom_control_{} rather than "
+                "the Tcl-specific --custom_tcl_{} alias".format(fragment, fragment)
+            )
+        return control_arg or tcl_arg
+
+    custom_control_header = resolve_custom_control_fragment("header")
+    custom_control_body = resolve_custom_control_fragment("body")
+
     common = {
         "hdrs": args.hdr,
+        "data": args.data,
         "defines": args.define,
         "params": args.params,
         # TODO(mgottscho): Stop threading `opts` through common_args once the
@@ -184,8 +223,12 @@ def common_args(args: argparse.Namespace):
         "scriptfile": args.script,
         "logfile": args.log,
         "filelist": args.filelist,
-        "tclfile_custom_header": args.custom_tcl_header,
-        "tclfile_custom_body": args.custom_tcl_body,
+        # TODO(mgottscho): Rename the internal tclfile_* plugin API to
+        # control_file_* in a versioned plugin API migration. The public
+        # tool-neutral and Tcl-specific aliases normalize here to preserve
+        # compatibility with existing plugins.
+        "tclfile_custom_header": custom_control_header,
+        "tclfile_custom_body": custom_control_body,
         # Use an environment variable instead of CLI arg because Bazel doesn't know the value at
         # analysis time (when the verilog runner command is constructed).
         "env_setup_commands": get_env_setup_command_file_from_env(),
@@ -308,7 +351,7 @@ class Fpv(Subcommand):
         parser.add_argument(
             "--gui",
             action="store_true",
-            help="Run with GUI",
+            help="Request GUI mode. Not all FPV plugins support this mode.",
         )
         parser.add_argument(
             "--elab_opt",
@@ -327,7 +370,7 @@ class Fpv(Subcommand):
         parser.add_argument(
             "--conn",
             action="store_true",
-            help="Run in connectivity mode",
+            help="Request connectivity mode. Not all FPV plugins support this mode.",
         )
 
 

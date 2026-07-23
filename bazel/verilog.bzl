@@ -175,6 +175,39 @@ final runners.""",
         cfg = "exec",
     )
 
+def _custom_control_fragment_attr(fragment):
+    return attr.label(
+        doc = "Tool-neutral custom {} fragment. Tcl-based tools may use the equivalent custom_tcl_{} alias.".format(fragment, fragment),
+        allow_single_file = [".sby", ".tcl"],
+    )
+
+def _custom_tcl_fragment_attr(fragment):
+    return attr.label(
+        doc = "Tcl-specific alias for custom_control_{}.".format(fragment),
+        allow_single_file = [".tcl"],
+    )
+
+def _append_custom_control_fragment(ctx, args, runfiles, fragment, use_runfiles):
+    """Selects one public control-fragment alias and appends its runner argument."""
+    control_name = "custom_control_" + fragment
+    tcl_name = "custom_tcl_" + fragment
+    control_files = getattr(ctx.files, control_name)
+    tcl_files = getattr(ctx.files, tcl_name)
+    if control_files and tcl_files:
+        fail("{} and {} are aliases; specify only one".format(control_name, tcl_name))
+    if tcl_files and ctx.attr.tool == "sby":
+        fail("SBY control fragments must use {} rather than the Tcl-specific {} alias".format(control_name, tcl_name))
+
+    # Keep the public spellings distinct through Bazel so errors refer to the
+    # attribute the caller used. The runner CLI performs the compatibility
+    # normalization into its existing internal plugin API.
+    selected_name = control_name if control_files else tcl_name
+    selected_files = control_files if control_files else tcl_files
+    if selected_files:
+        args.append("--{}={}".format(selected_name, _execution_path(selected_files[0], use_runfiles)))
+        runfiles += selected_files
+    return runfiles
+
 def _verilog_base_impl(ctx, subcmd, test = True, extra_args = [], extra_runfiles = [], allow_empty_top = False):
     """Shared implementation for rule_verilog_elab_test, rule_verilog_lint_test, rule_verilog_sim_test, and rule_verilog_fpv_test.
 
@@ -218,18 +251,21 @@ def _verilog_base_impl(ctx, subcmd, test = True, extra_args = [], extra_runfiles
     use_runfiles = test
     src_files = [_execution_path(src, use_runfiles) for src in srcs]
     hdr_files = [_execution_path(hdr, use_runfiles) for hdr in hdrs]
+    data_file_paths = [_execution_path(data_file, use_runfiles) for data_file in data_files]
     top = ctx.attr.top
     if top == "" and not allow_empty_top:
         if (len(ctx.attr.deps) != 1):
             fail("If the top attribute is not provided, then there must be exactly one dependency.")
         top = ctx.attr.deps[0].label.name
     args = (["--hdr=" + hdr for hdr in hdr_files] +
+            ["--data=" + data_file_path for data_file_path in data_file_paths] +
             ["--define=" + define for define in ctx.attr.defines] +
             ["--param=" + key + "=\"" + value + "\"" for key, value in ctx.attr.params.items()])
     if top:
         args.append("--top=" + top)
     filelist = ctx.label.name + ".f"
-    tcl = ctx.label.name + ".tcl"
+    control_extension = ".sby" if ctx.attr.tool == "sby" else ".tcl"
+    tcl = ctx.label.name + control_extension
     script = ctx.label.name + ".sh"
     log = ctx.label.name + ".log"
     args.append("--filelist=" + filelist)
@@ -239,12 +275,8 @@ def _verilog_base_impl(ctx, subcmd, test = True, extra_args = [], extra_runfiles
     args.append("--tool='" + ctx.attr.tool + "'")
     if not test:
         args.append("--dry-run")
-    if ctx.attr.custom_tcl_header:
-        args.append("--custom_tcl_header=" + _execution_path(ctx.files.custom_tcl_header[0], use_runfiles))
-        runfiles += ctx.files.custom_tcl_header
-    if ctx.attr.custom_tcl_body:
-        args.append("--custom_tcl_body=" + _execution_path(ctx.files.custom_tcl_body[0], use_runfiles))
-        runfiles += ctx.files.custom_tcl_body
+    runfiles = _append_custom_control_fragment(ctx, args, runfiles, "header", use_runfiles)
+    runfiles = _append_custom_control_fragment(ctx, args, runfiles, "body", use_runfiles)
     if ctx.attr.runner_flags:
         args += ctx.attr.runner_flags[VerilogRunnerFlagsInfo].runner_flags
     args += extra_args
@@ -946,18 +978,10 @@ rule_verilog_elab_test = rule(
             doc = "Verilog runner plugins to load from this workspace, in addition to those loaded from VERILOG_RUNNER_PLUGIN_PATH.",
         ),
         "tool": attr.string(doc = "Elaboration tool to use.", mandatory = True),
-        "custom_tcl_header": attr.label(
-            doc = ("Tcl script file containing custom tool-specific commands to insert at the beginning of the generated tcl script." +
-                   "The tcl header (custom or not) is unconditionally followed by analysis and elaborate commands, and then the tcl body." +
-                   "Do not include Tcl commands that manipulate sources, headers, defines, or parameters, as those will be handled by the rule implementation."),
-            allow_single_file = [".tcl"],
-        ),
-        "custom_tcl_body": attr.label(
-            doc = ("Tcl script file containing custom tool-specific commands to insert in the middle of the generated tcl script after the elaboration step." +
-                   "The tcl body (custom or not) is unconditionally followed by the tcl footer." +
-                   "Do not include Tcl commands that manipulate sources, headers, defines, or parameters, as those will be handled by the rule implementation."),
-            allow_single_file = [".tcl"],
-        ),
+        "custom_control_header": _custom_control_fragment_attr("header"),
+        "custom_control_body": _custom_control_fragment_attr("body"),
+        "custom_tcl_header": _custom_tcl_fragment_attr("header"),
+        "custom_tcl_body": _custom_tcl_fragment_attr("body"),
         "runner_flags": attr.label(
             doc = "command line flags",
             allow_files = False,
@@ -1032,18 +1056,10 @@ rule_verilog_lint_test = rule(
             doc = "Verilog runner plugins to load from this workspace, in addition to those loaded from VERILOG_RUNNER_PLUGIN_PATH.",
         ),
         "tool": attr.string(doc = "Lint tool to use.", mandatory = True),
-        "custom_tcl_header": attr.label(
-            doc = ("Tcl script file containing custom tool-specific commands to insert at the beginning of the generated tcl script." +
-                   "The tcl header (custom or not) is unconditionally followed by analysis and elaborate commands, and then the tcl body." +
-                   "Do not include Tcl commands that manipulate sources, headers, defines, or parameters, as those will be handled by the rule implementation."),
-            allow_single_file = [".tcl"],
-        ),
-        "custom_tcl_body": attr.label(
-            doc = ("Tcl script file containing custom tool-specific commands to insert in the middle of the generated tcl script after the elaboration step." +
-                   "The tcl body (custom or not) is unconditionally followed by the tcl footer." +
-                   "Do not include Tcl commands that manipulate sources, headers, defines, or parameters, as those will be handled by the rule implementation."),
-            allow_single_file = [".tcl"],
-        ),
+        "custom_control_header": _custom_control_fragment_attr("header"),
+        "custom_control_body": _custom_control_fragment_attr("body"),
+        "custom_tcl_header": _custom_tcl_fragment_attr("header"),
+        "custom_tcl_body": _custom_tcl_fragment_attr("body"),
         "runner_flags": attr.label(
             doc = "command line flags",
             allow_files = False,
@@ -1126,14 +1142,10 @@ def _verilog_synth_attrs(verilog_runner_tool_default = "//python/verilog_runner:
             doc = "Synthesis tool plugin to use.",
             mandatory = True,
         ),
-        "custom_tcl_header": attr.label(
-            doc = "Optional tool-specific Tcl header.",
-            allow_single_file = [".tcl"],
-        ),
-        "custom_tcl_body": attr.label(
-            doc = "Optional tool-specific Tcl body.",
-            allow_single_file = [".tcl"],
-        ),
+        "custom_control_header": _custom_control_fragment_attr("header"),
+        "custom_control_body": _custom_control_fragment_attr("body"),
+        "custom_tcl_header": _custom_tcl_fragment_attr("header"),
+        "custom_tcl_body": _custom_tcl_fragment_attr("body"),
         "runner_flags": attr.label(
             doc = "Command-line flags forwarded to Verilog Runner.",
             allow_files = False,
@@ -1263,18 +1275,10 @@ def _verilog_sim_attrs(verilog_runner_tool_default = "//python/verilog_runner:ve
             doc = "Simulator tool to use.",
             mandatory = True,
         ),
-        "custom_tcl_header": attr.label(
-            doc = ("Tcl script file containing custom tool-specific commands to insert at the beginning of the generated tcl script." +
-                   "The tcl header (custom or not) is unconditionally followed by analysis and elaborate commands, and then the tcl body." +
-                   "Do not include Tcl commands that manipulate sources, headers, defines, or parameters, as those will be handled by the rule implementation."),
-            allow_single_file = [".tcl"],
-        ),
-        "custom_tcl_body": attr.label(
-            doc = ("Tcl script file containing custom tool-specific commands to insert in the middle of the generated tcl script after the elaboration step." +
-                   "The tcl body (custom or not) is unconditionally followed by the tcl footer." +
-                   "Do not include Tcl commands that manipulate sources, headers, defines, or parameters, as those will be handled by the rule implementation."),
-            allow_single_file = [".tcl"],
-        ),
+        "custom_control_header": _custom_control_fragment_attr("header"),
+        "custom_control_body": _custom_control_fragment_attr("body"),
+        "custom_tcl_header": _custom_tcl_fragment_attr("header"),
+        "custom_tcl_body": _custom_tcl_fragment_attr("body"),
         "seed": attr.int(
             doc = "Random seed to use in simulation.",
             default = 0,
@@ -1468,7 +1472,7 @@ def verilog_sim_test(tool, opts = [], elab_opts = [], sim_opts = [], tags = [], 
 
 rule_verilog_fpv_test = rule(
     doc = """
-    Runs Verilog/SystemVerilog compilation and formal verification in one command. This rule should be used for simple formal unit tests. Needs VERILOG_RUNNER_PLUGIN_PATH environment variable to be set correctly.
+    Runs Verilog/SystemVerilog compilation and formal verification in one command. This rule should be used for simple formal unit tests. In-tree plugins are available automatically; configure VERILOG_RUNNER_PLUGIN_PATH only for additional external plugins.
     """,
     implementation = _verilog_fpv_test_impl,
     attrs = {
@@ -1487,7 +1491,7 @@ rule_verilog_fpv_test = rule(
             doc = "The top-level module; if not provided and there exists one dependency, then defaults to that dep's label name.",
         ),
         "opts": attr.string_list(
-            doc = "Tool-specific options not covered by other arguments. If provided, then 'tool' must also be set.",
+            doc = "Legacy plugin-specific options not covered by other arguments. Their meaning is defined by the selected plugin.",
         ),
         "elab_opts": attr.string_list(
             doc = "custom elab options",
@@ -1508,6 +1512,7 @@ rule_verilog_fpv_test = rule(
         ),
         "verilog_runner_plugins": attr.label_list(
             default = [
+                "//python/verilog_runner/plugins:sby.py",
                 "//python/verilog_runner/plugins:verilator.py",
             ],
             allow_files = True,
@@ -1521,28 +1526,20 @@ rule_verilog_fpv_test = rule(
             doc = "Formal tool to use.",
             mandatory = True,
         ),
-        "custom_tcl_header": attr.label(
-            doc = ("Tcl script file containing custom tool-specific commands to insert at the beginning of the generated tcl script." +
-                   "The tcl header (custom or not) is unconditionally followed by analysis and elaborate commands, and then the tcl body." +
-                   "Do not include Tcl commands that manipulate sources, headers, defines, or parameters, as those will be handled by the rule implementation."),
-            allow_single_file = [".tcl"],
-        ),
-        "custom_tcl_body": attr.label(
-            doc = ("Tcl script file containing custom tool-specific commands to insert in the middle of the generated tcl script after the elaboration step." +
-                   "The tcl body (custom or not) is unconditionally followed by the tcl footer." +
-                   "Do not include Tcl commands that manipulate sources, headers, defines, or parameters, as those will be handled by the rule implementation."),
-            allow_single_file = [".tcl"],
-        ),
+        "custom_control_header": _custom_control_fragment_attr("header"),
+        "custom_control_body": _custom_control_fragment_attr("body"),
+        "custom_tcl_header": _custom_tcl_fragment_attr("header"),
+        "custom_tcl_body": _custom_tcl_fragment_attr("body"),
         "gui": attr.bool(
-            doc = "Enable GUI.",
+            doc = "Request GUI mode. Not all formal plugins support this mode.",
             default = False,
         ),
         "conn": attr.bool(
-            doc = "Switch to connectivity",
+            doc = "Request connectivity mode. Not all formal plugins support this mode.",
             default = False,
         ),
         "runner_flags": attr.label(
-            doc = "jg flags",
+            doc = "Command-line flags forwarded to Verilog Runner.",
             allow_files = False,
             providers = [VerilogRunnerFlagsInfo],
             default = "//bazel:runner_flags",
@@ -1590,7 +1587,7 @@ rule_verilog_fpv_sandbox = rule(
             doc = "The top-level module; if not provided and there exists one dependency, then defaults to that dep's label name.",
         ),
         "opts": attr.string_list(
-            doc = "Tool-specific options not covered by other arguments.",
+            doc = "Legacy plugin-specific options not covered by other arguments. Their meaning is defined by the selected plugin.",
         ),
         "elab_opts": attr.string_list(
             doc = "custom elab options",
@@ -1611,6 +1608,7 @@ rule_verilog_fpv_sandbox = rule(
         ),
         "verilog_runner_plugins": attr.label_list(
             default = [
+                "//python/verilog_runner/plugins:sby.py",
                 "//python/verilog_runner/plugins:verilator.py",
             ],
             allow_files = True,
@@ -1624,28 +1622,20 @@ rule_verilog_fpv_sandbox = rule(
             doc = "Formal tool to use.",
             mandatory = True,
         ),
-        "custom_tcl_header": attr.label(
-            doc = ("Tcl script file containing custom tool-specific commands to insert at the beginning of the generated tcl script." +
-                   "The tcl header (custom or not) is unconditionally followed by analysis and elaborate commands, and then the tcl body." +
-                   "Do not include Tcl commands that manipulate sources, headers, defines, or parameters, as those will be handled by the rule implementation."),
-            allow_single_file = [".tcl"],
-        ),
-        "custom_tcl_body": attr.label(
-            doc = ("Tcl script file containing custom tool-specific commands to insert in the middle of the generated tcl script after the elaboration step." +
-                   "The tcl body (custom or not) is unconditionally followed by the tcl footer." +
-                   "Do not include Tcl commands that manipulate sources, headers, defines, or parameters, as those will be handled by the rule implementation."),
-            allow_single_file = [".tcl"],
-        ),
+        "custom_control_header": _custom_control_fragment_attr("header"),
+        "custom_control_body": _custom_control_fragment_attr("body"),
+        "custom_tcl_header": _custom_tcl_fragment_attr("header"),
+        "custom_tcl_body": _custom_tcl_fragment_attr("body"),
         "gui": attr.bool(
-            doc = "Enable GUI.",
+            doc = "Request GUI mode. Not all formal plugins support this mode.",
             default = False,
         ),
         "conn": attr.bool(
-            doc = "Switch to connectivity",
+            doc = "Request connectivity mode. Not all formal plugins support this mode.",
             default = False,
         ),
         "runner_flags": attr.label(
-            doc = "jg flags",
+            doc = "Command-line flags forwarded to Verilog Runner.",
             allow_files = False,
             providers = [VerilogRunnerFlagsInfo],
             default = "//bazel:runner_flags",

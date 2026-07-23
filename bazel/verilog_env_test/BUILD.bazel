@@ -27,8 +27,22 @@ write_file(
     is_executable = True,
 )
 
+write_file(
+    name = "custom_control_header",
+    out = "custom_control_header.sby",
+    content = ["[options]"],
+)
+
+write_file(
+    name = "custom_tcl_body",
+    out = "custom_tcl_body.tcl",
+    content = ["prove -all"],
+)
+
 rule_verilog_elab_test(
     name = "elab_with_env",
+    custom_control_header = ":custom_control_header",
+    custom_tcl_body = ":custom_tcl_body",
     tool = "fake",
     verilog_runner_data = [],
     verilog_runner_env = ":runner_env.sh",

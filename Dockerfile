@@ -196,6 +196,17 @@ RUN git clone https://github.com/Z3Prover/z3.git && \
 # Export VERILATOR_SOLVER environmental variable to use z3 as a solver
 ENV VERILATOR_SOLVER="z3 --in"
 
+# Install SymbiYosys
+# v0.66
+RUN curl -L https://github.com/YosysHQ/sby/archive/refs/tags/v0.66.tar.gz -o sby-v0.66.tar.gz && \
+    echo "d7d3e0a6476e748c9faf23b93b133ce9a79ce396fb37dbaeec855af2f85a0b8c  sby-v0.66.tar.gz" | sha256sum -c - && \
+    tar -xzf sby-v0.66.tar.gz && \
+    cd sby-0.66 && \
+    make install && \
+    cd .. && \
+    rm -rf sby-0.66 sby-v0.66.tar.gz && \
+    sby --version
+
 RUN useradd -m user
 USER user
 
