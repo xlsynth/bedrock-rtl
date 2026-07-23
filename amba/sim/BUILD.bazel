@@ -4,15 +4,6 @@ load("@rules_hdl//verilog:providers.bzl", "verilog_library")
 load("//bazel:br_verilog.bzl", "br_verilog_sim_test_tools_suite")
 load("//bazel:verilog.bzl", "verilog_elab_test", "verilog_sim_coverage_aggregate")
 
-BR_AMBA_SIM_MAX_CHECK_WIDTH_64 = "BR_AMBA_SIM_MAX_CHECK_WIDTH=64"
-
-BR_AMBA_SIM_DEFINES_64 = [
-    "BR_ASSERT_ON",
-    "BR_ENABLE_IMPL_CHECKS",
-    "SIMULATION",
-    BR_AMBA_SIM_MAX_CHECK_WIDTH_64,
-]
-
 BR_AMBA_APB_TIMING_SLICE_DEFINES = [
     "BR_AMBA_APB_SIM_ADDR_WIDTH=32",
     "BR_AMBA_APB_SIM_DATA_WIDTH=32",
@@ -27,6 +18,127 @@ verilog_library(
         "//amba/sim/drivers:br_amba_apb_sim_pkg",
     ],
 )
+
+verilog_library(
+    name = "br_amba_axil_split_sim_pkg",
+    srcs = ["br_amba_axil_split_sim_pkg.sv"],
+    visibility = ["//visibility:public"],
+    deps = [
+        "//amba/rtl:br_amba_pkg",
+        "//amba/sim/drivers:br_amba_axil_sim_pkg",
+    ],
+)
+
+verilog_library(
+    name = "br_amba_axil_split_tb",
+    srcs = ["br_amba_axil_split_tb.sv"],
+    deps = [
+        ":br_amba_axil_split_sim_pkg",
+        "//amba/rtl:br_amba_axil_split",
+        "//amba/sim/drivers:br_amba_axil_requester_driver",
+        "//amba/sim/drivers:br_amba_axil_target_driver",
+        "//amba/sim/drivers:br_amba_sim_pkg",
+        "//amba/sim/monitors:br_amba_axil_monitor",
+        "//amba/sim/monitors:br_amba_axil_monitor_sim_pkg",
+        "//amba/sim/monitors:br_amba_axil_split_scoreboard",
+        "//macros:br_asserts",
+        "//misc/sim:br_test_driver",
+    ],
+)
+
+verilog_elab_test(
+    name = "br_amba_axil_split_tb_elab_test",
+    defines = [
+        "BR_AMBA_AXIL_SIM_ADDR_WIDTH=12",
+        "BR_AMBA_AXIL_SIM_DATA_WIDTH=32",
+        "BR_AMBA_AXIL_SIM_USER_WIDTH=1",
+    ],
+    tool = "slang",
+    deps = [":br_amba_axil_split_tb"],
+)
+
+BR_AMBA_AXIL_SPLIT_TEST_CONFIGS = [
+    {
+        "addr_width": "12",
+        "data_width": "32",
+        "max_outstanding_reads": "1",
+        "max_outstanding_writes": "1",
+        "max_random_delay_cycles": "1",
+        "min_random_delay_cycles": "0",
+        "normalize_branch_address": "0",
+        "num_branch_addr_ranges": "1",
+        "user_width": "1",
+    },
+    {
+        "addr_width": "13",
+        "data_width": "32",
+        "max_outstanding_reads": "1",
+        "max_outstanding_writes": "2",
+        "max_random_delay_cycles": "3",
+        "min_random_delay_cycles": "0",
+        "normalize_branch_address": "1",
+        "num_branch_addr_ranges": "2",
+        "user_width": "3",
+    },
+    {
+        "addr_width": "17",
+        "data_width": "48",
+        "max_outstanding_reads": "5",
+        "max_outstanding_writes": "3",
+        "max_random_delay_cycles": "5",
+        "min_random_delay_cycles": "1",
+        "normalize_branch_address": "0",
+        "num_branch_addr_ranges": "5",
+        "user_width": "2",
+    },
+    {
+        "addr_width": "40",
+        "data_width": "64",
+        "max_outstanding_reads": "3",
+        "max_outstanding_writes": "3",
+        "max_random_delay_cycles": "7",
+        "min_random_delay_cycles": "2",
+        "normalize_branch_address": "1",
+        "num_branch_addr_ranges": "2",
+        "user_width": "3",
+    },
+]
+
+[
+    br_verilog_sim_test_tools_suite(
+        name = "br_amba_axil_split_sim_test_tools_suite_aw%s_dw%s_mor%s_mow%s_nbar%s_nba%s" % (
+            config["addr_width"],
+            config["data_width"],
+            config["max_outstanding_reads"],
+            config["max_outstanding_writes"],
+            config["num_branch_addr_ranges"],
+            config["normalize_branch_address"],
+        ),
+        timeout = "long",
+        defines = [
+            "BR_ASSERT_ON",
+            "BR_ENABLE_IMPL_CHECKS",
+            "SIMULATION",
+            "BR_AMBA_AXIL_SIM_ADDR_WIDTH=%s" % config["addr_width"],
+            "BR_AMBA_AXIL_SIM_DATA_WIDTH=%s" % config["data_width"],
+            "BR_AMBA_AXIL_SIM_USER_WIDTH=%s" % config["user_width"],
+        ],
+        params = {
+            "MaxOutstandingReads": [config["max_outstanding_reads"]],
+            "MaxOutstandingWrites": [config["max_outstanding_writes"]],
+            "MaxRandomDelayCycles": [config["max_random_delay_cycles"]],
+            "MinRandomDelayCycles": [config["min_random_delay_cycles"]],
+            "NormalizeBranchAddress": [config["normalize_branch_address"]],
+            "NumBranchAddrRanges": [config["num_branch_addr_ranges"]],
+        },
+        tools = [
+            "vcs",
+            "verilator",
+        ],
+        deps = [":br_amba_axil_split_tb"],
+    )
+    for config in BR_AMBA_AXIL_SPLIT_TEST_CONFIGS
+]
 
 verilog_library(
     name = "br_amba_axil2apb_tb",
@@ -49,7 +161,6 @@ verilog_library(
 verilog_elab_test(
     name = "br_amba_axil2apb_tb_elab_test",
     defines = [
-        "BR_AMBA_SIM_MAX_CHECK_WIDTH=32",
         "BR_AMBA_AXIL_SIM_ADDR_WIDTH=12",
         "BR_AMBA_AXIL_SIM_DATA_WIDTH=32",
         "BR_AMBA_AXIL_SIM_USER_WIDTH=1",
@@ -67,7 +178,6 @@ verilog_elab_test(
             "BR_ASSERT_ON",
             "BR_ENABLE_IMPL_CHECKS",
             "SIMULATION",
-            "BR_AMBA_SIM_MAX_CHECK_WIDTH=%s" % data_width,
             "BR_AMBA_AXIL_SIM_ADDR_WIDTH=12",
             "BR_AMBA_AXIL_SIM_DATA_WIDTH=%s" % data_width,
             "BR_AMBA_AXIL_SIM_USER_WIDTH=1",
