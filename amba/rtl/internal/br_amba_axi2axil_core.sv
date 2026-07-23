@@ -122,7 +122,9 @@ module br_amba_axi2axil_core #(
     logic [AddrWidth-1:0] wrap_mask;  // mask the wrap boundary
     logic [AddrWidth-1:0] align_mask;
 
-    incr_address = start_addr + (index << size);  // ri lint_check_waive VAR_SHIFT
+    // AXI bursts cannot cross a 4 KiB boundary. Since AddrWidth is at least 12, any bits
+    // truncated from this shifted beat offset are zero for legal transactions.
+    incr_address = start_addr + (index << size);  // ri lint_check_waive VAR_SHIFT TRUNC_LSHIFT
 
     unique case (br_amba::axi_burst_type_t'(burst_type))
       br_amba::AxiBurstIncr: begin
