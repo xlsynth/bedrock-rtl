@@ -1695,15 +1695,18 @@ def verilog_elab_and_lint_test_suite(
         deps = [],
         defines = [],
         params = {},
+        include_default_params = True,
         elab_tools = ["verific", "slang"],
         lint_tool = "ascentlint",
         disable_lint_rules = [],
         **kwargs):
     """Creates a suite of Verilog elaboration and lint tests for each combination of the provided parameters.
 
-    The function generates a wrapper covering all possible combinations of the provided parameters, creates a
-    verilog_elab_test for each elaboration tool, and creates one verilog_lint_test. Elaboration test names append
-    the tool name followed by "_elab_test"; the lint test name appends "_lint_test".
+    The function generates a wrapper containing one instance for every combination of the provided parameters and,
+    by default, one instance with the module's default parameters. Set include_default_params to False when another
+    sweep already covers the defaults or the defaults are intentionally invalid. It creates one verilog_elab_test
+    for each elaboration tool and one verilog_lint_test. Elaboration test names append the tool name followed by
+    "_elab_test"; the lint test name appends "_lint_test".
 
     Args:
         top (str): The top-level module to instantiate. Can be left undefined if there is only one dependency.
@@ -1711,6 +1714,7 @@ def verilog_elab_and_lint_test_suite(
         name (str): The base name for the test suite.
         defines (list): A list of defines.
         params (dict): A dictionary where keys are parameter names and values are lists of possible values for those parameters.
+        include_default_params (bool): Whether to include an instance with the module's default parameters.
         elab_tools (list of strings): The tools to use for elaboration. Defaults to Verific and Slang.
         lint_tool (str): The tool to use for linting.
         disable_lint_rules (list): A list of lint rules to disable in the generated files.
@@ -1731,6 +1735,7 @@ def verilog_elab_and_lint_test_suite(
 
     generate_parameter_file(
         name = name + "_params",
+        include_default_params = include_default_params,
         params = params,
     )
 
@@ -1986,6 +1991,8 @@ def _generate_parameter_file_impl(ctx):
         dict(zip(param_keys, [x for x in param_values]))
         for param_values in _cartesian_product(param_values_list)
     ]
+    if ctx.attr.include_default_params and len(params) > 0:
+        param_combinations = [{}] + param_combinations
 
     contents = json.encode({"param_sets": param_combinations})
     output_file = ctx.outputs.param_file
@@ -2001,6 +2008,10 @@ STITCH_TOOL_PATH = "//stitch:stitch_tool"
 generate_parameter_file = rule(
     implementation = _generate_parameter_file_impl,
     attrs = {
+        "include_default_params": attr.bool(
+            default = False,
+            doc = "Whether to include an empty parameter set that instantiates the module defaults.",
+        ),
         "params": attr.string_list_dict(mandatory = True),
     },
     outputs = {"param_file": "%{name}.json"},
