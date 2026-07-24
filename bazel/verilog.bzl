@@ -1698,16 +1698,13 @@ def verilog_elab_and_lint_test_suite(
         elab_tools = ["verific", "slang"],
         lint_tool = "ascentlint",
         disable_lint_rules = [],
-        tags = [],
         **kwargs):
     """Creates a suite of Verilog elaboration and lint tests for each combination of the provided parameters.
 
-    For each elaboration tool, the function creates one test of the original module's default parameters and one
-    test of a generated wrapper covering all possible combinations of the provided parameters. It also creates one
-    lint test of the original module's default parameters and one lint test of the generated wrapper.
-    Default-parameter test names append the tool name followed by "_default_params_elab_test" or
-    "_default_params_lint_test"; wrapper elaboration test names append the tool name followed by "_elab_test";
-    and the wrapper lint test name appends "_lint_test".
+    The function generates a wrapper containing one instance with the module's default parameters and one instance
+    for every combination of the provided parameters. It creates one verilog_elab_test for each elaboration tool
+    and one verilog_lint_test. Elaboration test names append the tool name followed by "_elab_test"; the lint test
+    name appends "_lint_test".
 
     Args:
         top (str): The top-level module to instantiate. Can be left undefined if there is only one dependency.
@@ -1718,7 +1715,6 @@ def verilog_elab_and_lint_test_suite(
         elab_tools (list of strings): The tools to use for elaboration. Defaults to Verific and Slang.
         lint_tool (str): The tool to use for linting.
         disable_lint_rules (list): A list of lint rules to disable in the generated files.
-        tags (list): A list of tags to add to generated tests.
         **kwargs: Additional common keyword arguments to be passed to the verilog_elab_test and verilog_lint_test functions.
     """
     if not top:
@@ -1736,6 +1732,7 @@ def verilog_elab_and_lint_test_suite(
 
     generate_parameter_file(
         name = name + "_params",
+        include_default_params = True,
         params = params,
     )
 
@@ -1755,42 +1752,20 @@ def verilog_elab_and_lint_test_suite(
     )
 
     for elab_tool in elab_tools:
-        verilog_elab_test(
-            name = name + "_" + elab_tool + "_default_params_elab_test",
-            tool = elab_tool,
-            deps = deps,
-            defines = defines,
-            tags = tags + ["default-params"],
-            top = top,
-            **kwargs
-        )
-
         test_name = name + "_" + elab_tool + "_elab_test"
         verilog_elab_test(
             name = test_name,
             tool = elab_tool,
             deps = [":" + name + "_wrapper"],
             defines = defines,
-            tags = tags,
             **kwargs
         )
-
-    verilog_lint_test(
-        name = name + "_" + lint_tool + "_default_params_lint_test",
-        tool = lint_tool,
-        deps = deps,
-        defines = defines,
-        tags = tags + ["default-params"],
-        top = top,
-        **kwargs
-    )
 
     verilog_lint_test(
         name = name + "_lint_test",
         tool = lint_tool,
         deps = [":" + name + "_wrapper"],
         defines = defines,
-        tags = tags,
         **kwargs
     )
 
@@ -2013,6 +1988,8 @@ def _generate_parameter_file_impl(ctx):
         dict(zip(param_keys, [x for x in param_values]))
         for param_values in _cartesian_product(param_values_list)
     ]
+    if ctx.attr.include_default_params and len(params) > 0:
+        param_combinations = [{}] + param_combinations
 
     contents = json.encode({"param_sets": param_combinations})
     output_file = ctx.outputs.param_file
@@ -2028,6 +2005,10 @@ STITCH_TOOL_PATH = "//stitch:stitch_tool"
 generate_parameter_file = rule(
     implementation = _generate_parameter_file_impl,
     attrs = {
+        "include_default_params": attr.bool(
+            default = False,
+            doc = "Whether to include an empty parameter set that instantiates the module defaults.",
+        ),
         "params": attr.string_list_dict(mandatory = True),
     },
     outputs = {"param_file": "%{name}.json"},

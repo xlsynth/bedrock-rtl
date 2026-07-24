@@ -36,7 +36,7 @@ generate_instantiation_wrapper(<a href="#generate_instantiation_wrapper-name">na
 <pre>
 load("@bedrock-rtl//bazel:verilog.bzl", "generate_parameter_file")
 
-generate_parameter_file(<a href="#generate_parameter_file-name">name</a>, <a href="#generate_parameter_file-params">params</a>)
+generate_parameter_file(<a href="#generate_parameter_file-name">name</a>, <a href="#generate_parameter_file-include_default_params">include_default_params</a>, <a href="#generate_parameter_file-params">params</a>)
 </pre>
 
 
@@ -47,6 +47,7 @@ generate_parameter_file(<a href="#generate_parameter_file-name">name</a>, <a hre
 | Name  | Description | Type | Mandatory | Default |
 | :------------- | :------------- | :------------- | :------------- | :------------- |
 | <a id="generate_parameter_file-name"></a>name |  A unique name for this target.   | <a href="https://bazel.build/concepts/labels#target-names">Name</a> | required |  |
+| <a id="generate_parameter_file-include_default_params"></a>include_default_params |  Whether to include an empty parameter set that instantiates the module defaults.   | Boolean | optional |  `False`  |
 | <a id="generate_parameter_file-params"></a>params |  -   | <a href="https://bazel.build/rules/lib/core/dict">Dictionary: String -> List of strings</a> | required |  |
 
 
@@ -566,17 +567,15 @@ True if the combination is legal, False if it is illegal.
 load("@bedrock-rtl//bazel:verilog.bzl", "verilog_elab_and_lint_test_suite")
 
 verilog_elab_and_lint_test_suite(<a href="#verilog_elab_and_lint_test_suite-name">name</a>, <a href="#verilog_elab_and_lint_test_suite-top">top</a>, <a href="#verilog_elab_and_lint_test_suite-deps">deps</a>, <a href="#verilog_elab_and_lint_test_suite-defines">defines</a>, <a href="#verilog_elab_and_lint_test_suite-params">params</a>, <a href="#verilog_elab_and_lint_test_suite-elab_tools">elab_tools</a>, <a href="#verilog_elab_and_lint_test_suite-lint_tool">lint_tool</a>,
-                                 <a href="#verilog_elab_and_lint_test_suite-disable_lint_rules">disable_lint_rules</a>, <a href="#verilog_elab_and_lint_test_suite-tags">tags</a>, <a href="#verilog_elab_and_lint_test_suite-kwargs">**kwargs</a>)
+                                 <a href="#verilog_elab_and_lint_test_suite-disable_lint_rules">disable_lint_rules</a>, <a href="#verilog_elab_and_lint_test_suite-kwargs">**kwargs</a>)
 </pre>
 
 Creates a suite of Verilog elaboration and lint tests for each combination of the provided parameters.
 
-For each elaboration tool, the function creates one test of the original module's default parameters and one
-test of a generated wrapper covering all possible combinations of the provided parameters. It also creates one
-lint test of the original module's default parameters and one lint test of the generated wrapper.
-Default-parameter test names append the tool name followed by "_default_params_elab_test" or
-"_default_params_lint_test"; wrapper elaboration test names append the tool name followed by "_elab_test";
-and the wrapper lint test name appends "_lint_test".
+The function generates a wrapper containing one instance with the module's default parameters and one instance
+for every combination of the provided parameters. It creates one verilog_elab_test for each elaboration tool
+and one verilog_lint_test. Elaboration test names append the tool name followed by "_elab_test"; the lint test
+name appends "_lint_test".
 
 
 **PARAMETERS**
@@ -592,7 +591,6 @@ and the wrapper lint test name appends "_lint_test".
 | <a id="verilog_elab_and_lint_test_suite-elab_tools"></a>elab_tools |  The tools to use for elaboration. Defaults to Verific and Slang.   |  `["verific", "slang"]` |
 | <a id="verilog_elab_and_lint_test_suite-lint_tool"></a>lint_tool |  The tool to use for linting.   |  `"ascentlint"` |
 | <a id="verilog_elab_and_lint_test_suite-disable_lint_rules"></a>disable_lint_rules |  A list of lint rules to disable in the generated files.   |  `[]` |
-| <a id="verilog_elab_and_lint_test_suite-tags"></a>tags |  A list of tags to add to generated tests.   |  `[]` |
 | <a id="verilog_elab_and_lint_test_suite-kwargs"></a>kwargs |  Additional common keyword arguments to be passed to the verilog_elab_test and verilog_lint_test functions.   |  none |
 
 
