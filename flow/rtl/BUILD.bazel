@@ -82,6 +82,17 @@ verilog_library(
 )
 
 verilog_library(
+    name = "br_flow_fork_lockstep",
+    srcs = ["br_flow_fork_lockstep.sv"],
+    deps = [
+        "//flow/rtl/internal:br_flow_checks_valid_data_impl",
+        "//flow/rtl/internal:br_flow_checks_valid_data_intg",
+        "//macros:br_asserts_internal",
+        "//macros:br_unused",
+    ],
+)
+
+verilog_library(
     name = "br_flow_join",
     srcs = ["br_flow_join.sv"],
     deps = [
@@ -96,6 +107,17 @@ verilog_library(
         "//flow/rtl/internal:br_flow_checks_valid_data_impl",
         "//flow/rtl/internal:br_flow_checks_valid_data_intg",
         "//macros:br_asserts_internal",
+    ],
+)
+
+verilog_library(
+    name = "br_flow_join_lockstep",
+    srcs = ["br_flow_join_lockstep.sv"],
+    deps = [
+        "//flow/rtl/internal:br_flow_checks_valid_data_impl",
+        "//flow/rtl/internal:br_flow_checks_valid_data_intg",
+        "//macros:br_asserts_internal",
+        "//macros:br_unused",
     ],
 )
 
@@ -892,6 +914,18 @@ br_verilog_elab_and_lint_test_suite(
 )
 
 br_verilog_elab_and_lint_test_suite(
+    name = "br_flow_fork_lockstep_test_suite",
+    params = {
+        "NumFlows": [
+            "1",
+            "2",
+            "3",
+        ],
+    },
+    deps = [":br_flow_fork_lockstep"],
+)
+
+br_verilog_elab_and_lint_test_suite(
     name = "br_flow_join_test_suite",
     params = {
         "NumFlows": [
@@ -917,6 +951,18 @@ br_verilog_elab_and_lint_test_suite(
         ],
     },
     deps = [":br_flow_join_select_multihot"],
+)
+
+br_verilog_elab_and_lint_test_suite(
+    name = "br_flow_join_lockstep_test_suite",
+    params = {
+        "NumFlows": [
+            "1",
+            "2",
+            "3",
+        ],
+    },
+    deps = [":br_flow_join_lockstep"],
 )
 
 br_verilog_elab_and_lint_test_suite(
