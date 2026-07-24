@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: Apache-2.0
 
 load("@rules_hdl//verilog:providers.bzl", "verilog_library")
-load("//bazel:br_verilog.bzl", "br_verilog_elab_and_lint_test_suite", "br_verilog_synth_suite")
+load("//bazel:br_verilog.bzl", "br_verilog_elab_and_lint_test_suite", "br_verilog_yosys_synth_suite")
 
 package(default_visibility = ["//visibility:public"])
 
@@ -19,7 +19,7 @@ verilog_library(
     ],
 )
 
-br_verilog_synth_suite(
+br_verilog_yosys_synth_suite(
     name = "br_shift_rotate_word16_ppa",
     params = {
         "MaxRotate": ["15"],
@@ -29,7 +29,7 @@ br_verilog_synth_suite(
     deps = [":br_shift_rotate"],
 )
 
-br_verilog_synth_suite(
+br_verilog_yosys_synth_suite(
     name = "br_shift_rotate_word32_ppa",
     params = {
         "MaxRotate": ["31"],
@@ -39,7 +39,7 @@ br_verilog_synth_suite(
     deps = [":br_shift_rotate"],
 )
 
-br_verilog_synth_suite(
+br_verilog_yosys_synth_suite(
     name = "br_shift_rotate_bytes_ppa",
     params = {
         "MaxRotate": ["7"],
@@ -83,7 +83,7 @@ verilog_library(
     ],
 )
 
-br_verilog_synth_suite(
+br_verilog_yosys_synth_suite(
     name = "br_shift_right_word16_ppa",
     params = {
         "MaxShift": ["15"],
@@ -93,7 +93,7 @@ br_verilog_synth_suite(
     deps = [":br_shift_right"],
 )
 
-br_verilog_synth_suite(
+br_verilog_yosys_synth_suite(
     name = "br_shift_right_word32_ppa",
     params = {
         "MaxShift": ["31"],
@@ -103,7 +103,7 @@ br_verilog_synth_suite(
     deps = [":br_shift_right"],
 )
 
-br_verilog_synth_suite(
+br_verilog_yosys_synth_suite(
     name = "br_shift_right_bytes_ppa",
     params = {
         "MaxShift": ["7"],
@@ -165,7 +165,7 @@ verilog_library(
     ],
 )
 
-br_verilog_synth_suite(
+br_verilog_yosys_synth_suite(
     name = "br_shift_left_word16_ppa",
     params = {
         "MaxShift": ["15"],
@@ -175,7 +175,7 @@ br_verilog_synth_suite(
     deps = [":br_shift_left"],
 )
 
-br_verilog_synth_suite(
+br_verilog_yosys_synth_suite(
     name = "br_shift_left_word32_ppa",
     params = {
         "MaxShift": ["31"],
@@ -185,7 +185,7 @@ br_verilog_synth_suite(
     deps = [":br_shift_left"],
 )
 
-br_verilog_synth_suite(
+br_verilog_yosys_synth_suite(
     name = "br_shift_left_bytes_ppa",
     params = {
         "MaxShift": ["7"],

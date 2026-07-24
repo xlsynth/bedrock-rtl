@@ -408,30 +408,60 @@ def _verilog_sim_test_impl(ctx):
         extra_args = extra_args,
     )
 
-def _verilog_synth_args(ctx, sandbox = False):
-    """Returns command-line arguments and files for a synthesis invocation."""
+def _verilog_synth_args(ctx):
+    """Returns generic command-line arguments for a synthesis invocation."""
     extra_args = []
-    extra_runfiles = []
-    if ctx.file.liberty:
-        liberty_path = ctx.file.liberty.path if sandbox else ctx.file.liberty.short_path
-        extra_args.append("--liberty=" + liberty_path)
-        extra_runfiles.append(ctx.file.liberty)
-    elif ctx.attr.clock_period_ps:
-        fail("clock_period_ps requires liberty")
-    if ctx.attr.clock_period_ps:
-        extra_args.append("--clock_period_ps=" + str(ctx.attr.clock_period_ps))
     for opt in ctx.attr.opts:
         extra_args.append("--opt='" + opt + "'")
-    return extra_args, extra_runfiles
+    return extra_args
+
+def _verilog_yosys_synth_args(ctx, defer_liberty_root = False):
+    """Returns Yosys-specific command-line arguments for synthesis."""
+    extra_args = _verilog_synth_args(ctx)
+    if bool(ctx.attr.input_driver_cell) != bool(ctx.attr.output_load_ff):
+        fail("input_driver_cell and output_load_ff must be specified together")
+    if ctx.attr.liberties:
+        if not ctx.attr.liberty_root:
+            fail("liberty_root is required with liberties")
+        if sorted(ctx.attr.liberty_sha256.keys()) != sorted(ctx.attr.liberties):
+            fail("liberty_sha256 must specify exactly one digest for each entry in liberties")
+        if ctx.attr.sequential_liberty and ctx.attr.sequential_liberty not in ctx.attr.liberties:
+            fail("sequential_liberty must also be present in liberties")
+    elif (
+        ctx.attr.sequential_liberty or
+        ctx.attr.liberty_root or
+        ctx.attr.liberty_sha256 or
+        ctx.attr.input_driver_cell or
+        ctx.attr.output_load_ff
+    ):
+        fail("Sequential mapping, Liberty metadata, and I/O constraints require liberties")
+
+    for liberty in ctx.attr.liberties:
+        extra_args.append("--liberty='" + liberty + "'")
+    if ctx.attr.sequential_liberty:
+        extra_args.append("--sequential_liberty='" + ctx.attr.sequential_liberty + "'")
+    if ctx.attr.liberty_root:
+        quote = "'" if defer_liberty_root else '"'
+        extra_args.append("--liberty_root=" + quote + ctx.attr.liberty_root + quote)
+    for liberty, digest in sorted(ctx.attr.liberty_sha256.items()):
+        extra_args.append("--liberty_sha256='" + liberty + "=" + digest + "'")
+    if ctx.attr.liberties:
+        extra_args.append("--synth_profile='" + ctx.attr.synth_profile + "'")
+    elif ctx.attr.clock_period_ps:
+        fail("clock_period_ps requires liberties")
+    if ctx.attr.clock_period_ps:
+        extra_args.append("--clock_period_ps=" + str(ctx.attr.clock_period_ps))
+    if ctx.attr.input_driver_cell:
+        extra_args.append("--input_driver_cell='" + ctx.attr.input_driver_cell + "'")
+        extra_args.append("--output_load_ff='" + ctx.attr.output_load_ff + "'")
+    return extra_args
 
 def _verilog_synth_impl(ctx):
     """Implementation of the verilog_synth executable rule."""
-    extra_args, extra_runfiles = _verilog_synth_args(ctx)
     return _verilog_base_impl(
         ctx = ctx,
         subcmd = "synth",
-        extra_args = extra_args,
-        extra_runfiles = extra_runfiles,
+        extra_args = _verilog_synth_args(ctx),
     )
 
 def _verilog_synth_sandbox_impl(ctx):
@@ -439,13 +469,11 @@ def _verilog_synth_sandbox_impl(ctx):
     if not ctx.outputs.tarball.basename.endswith(".tar.gz"):
         fail("The 'tarball' attribute must be a file ending with '.tar.gz', but got '{}'.".format(ctx.outputs.tarball.basename))
 
-    extra_args, extra_runfiles = _verilog_synth_args(ctx, sandbox = True)
     return _verilog_base_impl(
         ctx = ctx,
         subcmd = "synth",
         test = False,
-        extra_args = extra_args,
-        extra_runfiles = extra_runfiles,
+        extra_args = _verilog_synth_args(ctx),
     )
 
 def _coverage_name(coverage_type):
@@ -881,6 +909,29 @@ def _verilog_sim_coverage_aggregate_impl(ctx):
         ),
     ]
 
+def _verilog_yosys_synth_impl(ctx):
+    """Implementation of the Yosys synthesis executable rule."""
+    return _verilog_base_impl(
+        ctx = ctx,
+        subcmd = "synth",
+        extra_args = _verilog_yosys_synth_args(ctx),
+    )
+
+def _verilog_yosys_synth_sandbox_impl(ctx):
+    """Implementation of the Yosys synthesis sandbox rule."""
+    if not ctx.outputs.tarball.basename.endswith(".tar.gz"):
+        fail("The 'tarball' attribute must be a file ending in '.tar.gz', but got '{}'".format(ctx.outputs.tarball.basename))
+
+    return _verilog_base_impl(
+        ctx = ctx,
+        subcmd = "synth",
+        test = False,
+        # Preserve environment references such as ${ASAP7_ROOT} in the
+        # generated archive. The standalone script resolves them when run, so
+        # building the sandbox itself does not require the system PDK.
+        extra_args = _verilog_yosys_synth_args(ctx, defer_liberty_root = True),
+    )
+
 def _verilog_fpv_args(ctx):
     extra_args = []
     if ctx.attr.elab_only:
@@ -1075,9 +1126,12 @@ def verilog_lint_test(tool, tags = [], **kwargs):
         **kwargs
     )
 
-def _verilog_synth_attrs(verilog_runner_tool_default = "//python/verilog_runner:verilog_runner.py"):
+def _verilog_synth_attrs(
+        verilog_runner_tool_default = "//python/verilog_runner:verilog_runner.py",
+        verilog_runner_plugins_default = [],
+        tool_default = None):
     """Returns the common attributes for runnable and sandbox synthesis rules."""
-    return {
+    attrs = {
         "deps": attr.label_list(
             doc = "Verilog libraries containing the design to synthesize.",
             allow_files = False,
@@ -1095,13 +1149,6 @@ def _verilog_synth_attrs(verilog_runner_tool_default = "//python/verilog_runner:
         "opts": attr.string_list(
             doc = "Tool-specific synthesis frontend options.",
         ),
-        "liberty": attr.label(
-            doc = "Optional Liberty standard-cell library for technology mapping.",
-            allow_single_file = [".lib"],
-        ),
-        "clock_period_ps": attr.int(
-            doc = "Optional target clock period in picoseconds; requires liberty.",
-        ),
         "data": attr.label_list(
             doc = "Additional runtime files needed by the synthesis plugin.",
             allow_files = True,
@@ -1118,13 +1165,9 @@ def _verilog_synth_attrs(verilog_runner_tool_default = "//python/verilog_runner:
             doc = "Additional Verilog Runner files needed at runtime.",
         ),
         "verilog_runner_plugins": attr.label_list(
-            default = ["//python/verilog_runner/plugins:yosys.py"],
+            default = verilog_runner_plugins_default,
             allow_files = True,
             doc = "Verilog Runner synthesis plugins to load from this workspace.",
-        ),
-        "tool": attr.string(
-            doc = "Synthesis tool plugin to use.",
-            mandatory = True,
         ),
         "custom_tcl_header": attr.label(
             doc = "Optional tool-specific Tcl header.",
@@ -1141,6 +1184,53 @@ def _verilog_synth_attrs(verilog_runner_tool_default = "//python/verilog_runner:
             default = "//bazel:runner_flags",
         ),
     }
+    if tool_default == None:
+        attrs["tool"] = attr.string(
+            doc = "Synthesis tool plugin to use.",
+            mandatory = True,
+        )
+    else:
+        attrs["tool"] = attr.string(
+            doc = "Synthesis tool plugin to use.",
+            default = tool_default,
+        )
+    return attrs
+
+def _verilog_yosys_synth_attrs(verilog_runner_tool_default = "//python/verilog_runner:verilog_runner.py"):
+    """Returns attributes for the runnable and sandbox Yosys rules."""
+    attrs = _verilog_synth_attrs(
+        verilog_runner_plugins_default = ["//python/verilog_runner/plugins:yosys.py"],
+        verilog_runner_tool_default = verilog_runner_tool_default,
+        tool_default = "yosys",
+    )
+    attrs.update({
+        "liberties": attr.string_list(
+            doc = "System Liberty paths relative to liberty_root.",
+        ),
+        "sequential_liberty": attr.string(
+            doc = "Liberty path used for sequential-cell mapping when libraries are split; must also appear in liberties.",
+        ),
+        "liberty_root": attr.string(
+            doc = "Runtime root path for system-provided Liberty files. Shell environment references are expanded by runnable targets and preserved for standalone sandbox execution.",
+        ),
+        "liberty_sha256": attr.string_dict(
+            doc = "Expected SHA-256 digest for every entry in liberties.",
+        ),
+        "synth_profile": attr.string(
+            doc = "Stable synthesis profile recorded in generated reports.",
+            default = "generic",
+        ),
+        "clock_period_ps": attr.int(
+            doc = "Optional target clock period in picoseconds; requires liberties.",
+        ),
+        "input_driver_cell": attr.string(
+            doc = "Optional Liberty cell assumed to drive each primary input; requires output_load_ff.",
+        ),
+        "output_load_ff": attr.string(
+            doc = "Optional capacitive load in femtofarads on each primary output; requires input_driver_cell.",
+        ),
+    })
+    return attrs
 
 rule_verilog_synth = rule(
     doc = "Runs logic synthesis for a Verilog or SystemVerilog design and prints the tool report. This is an executable target, not a test.",
@@ -1159,14 +1249,30 @@ rule_verilog_synth_sandbox = rule(
     },
 )
 
+rule_verilog_yosys_synth = rule(
+    doc = "Runs Yosys logic synthesis and prints its raw report.",
+    implementation = _verilog_yosys_synth_impl,
+    attrs = _verilog_yosys_synth_attrs(),
+    executable = True,
+)
+
+rule_verilog_yosys_synth_sandbox = rule(
+    doc = "Writes Yosys synthesis inputs and generated scripts into a reproduction tarball.",
+    implementation = _verilog_yosys_synth_sandbox_impl,
+    attrs = _verilog_yosys_synth_attrs("//python/verilog_runner:verilog_runner"),
+    outputs = {
+        "tarball": "%{name}.tar.gz",
+        "runscript": "%{name}_runner.sh",
+    },
+)
+
 def verilog_synth(name, tool, tags = [], **kwargs):
     """Creates a runnable logic-synthesis target that streams the raw tool report.
 
     The tool string selects a Verilog Runner synthesis plugin, so callers can
     use the bundled Yosys plugin or provide another open-source or proprietary
-    synthesis plugin through `verilog_runner_plugins`. The Yosys flow produces
-    technology-independent cell and logic-depth signals without a Liberty
-    library, and can optionally map against one when `liberty` is supplied.
+    synthesis plugin through `verilog_runner_plugins`. Tool-specific attributes
+    belong in a tool adapter such as `verilog_yosys_synth`.
 
     Example:
         ```starlark
@@ -1209,6 +1315,40 @@ def verilog_synth_sandbox(name, tool, tags = [], **kwargs):
         name = name,
         tool = tool,
         tags = tags + extra_tags("synth-sandbox", tool),
+        **kwargs
+    )
+
+def verilog_yosys_synth(name, tool = "yosys", tags = [], **kwargs):
+    """Creates a runnable Yosys synthesis target.
+
+    Args:
+        name: Target name.
+        tool: Must be `yosys`; accepted so this function can be used by the generic sweep macro.
+        tags: Additional Bazel tags.
+        **kwargs: Arguments forwarded to rule_verilog_yosys_synth.
+    """
+    if tool != "yosys":
+        fail("verilog_yosys_synth only supports tool = 'yosys'")
+    rule_verilog_yosys_synth(
+        name = name,
+        tags = tags + extra_tags("synth", "yosys"),
+        **kwargs
+    )
+
+def verilog_yosys_synth_sandbox(name, tool = "yosys", tags = [], **kwargs):
+    """Creates a Yosys synthesis reproduction archive.
+
+    Args:
+        name: Target name.
+        tool: Must be `yosys`; accepted so this function can be used by the generic sweep macro.
+        tags: Additional Bazel tags.
+        **kwargs: Arguments forwarded to rule_verilog_yosys_synth_sandbox.
+    """
+    if tool != "yosys":
+        fail("verilog_yosys_synth_sandbox only supports tool = 'yosys'")
+    rule_verilog_yosys_synth_sandbox(
+        name = name,
+        tags = tags + extra_tags("synth-sandbox", "yosys"),
         **kwargs
     )
 
@@ -1924,8 +2064,7 @@ def verilog_synth_suite(
         defines (list): Preprocessor defines for synthesis.
         params (dict): Parameter names mapped to lists of values.
         illegal_param_combinations (dict): Parameter tuples mapped to disallowed value tuples.
-        library_name (str or None): Target-name identifier for the PDK/library/corner. Defaults to `nolib` when
-            no Liberty file is supplied and is required when `liberty` is supplied.
+        library_name (str or None): Target-name identifier for the technology library/profile. Defaults to `nolib`.
         sandbox (bool): Whether to create a reproduction archive beside each runnable target.
         sandbox_tags (list or None): Tags for sandbox targets. Defaults to `tags`.
         tags (list): Tags for runnable targets.
@@ -1944,8 +2083,6 @@ def verilog_synth_suite(
     if not tool:
         fail("verilog_synth_suite requires tool")
     if library_name == None:
-        if kwargs.get("liberty"):
-            fail("verilog_synth_suite requires library_name when liberty is supplied")
         library_name = "nolib"
     synth_suffix = "synth_%s_%s" % (
         _synth_name_token(tool),
@@ -1975,6 +2112,21 @@ def verilog_synth_suite(
                     tags = sandbox_tags,
                     **kwargs
                 )
+
+def verilog_yosys_synth_suite(**kwargs):
+    """Creates runnable and reproducible Yosys targets for a parameter sweep.
+
+    Args:
+        **kwargs: Arguments forwarded to verilog_synth_suite.
+    """
+    if kwargs.get("liberties") and not kwargs.get("library_name"):
+        fail("verilog_yosys_synth_suite requires library_name when liberties are supplied")
+    verilog_synth_suite(
+        tool = "yosys",
+        verilog_synth_func = verilog_yosys_synth,
+        verilog_synth_sandbox_func = verilog_yosys_synth_sandbox,
+        **kwargs
+    )
 
 def _generate_parameter_file_impl(ctx):
     """Implementation for the generate_parameter_file rule."""

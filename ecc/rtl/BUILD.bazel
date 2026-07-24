@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: Apache-2.0
 
 load("@rules_hdl//verilog:providers.bzl", "verilog_library")
-load("//bazel:br_verilog.bzl", "br_verilog_elab_and_lint_test_suite", "br_verilog_synth_suite")
+load("//bazel:br_verilog.bzl", "br_verilog_elab_and_lint_test_suite", "br_verilog_yosys_synth_suite")
 
 package(default_visibility = ["//visibility:public"])
 
@@ -22,7 +22,7 @@ verilog_library(
     ],
 )
 
-br_verilog_synth_suite(
+br_verilog_yosys_synth_suite(
     name = "br_ecc_sed_encoder_comb_ppa",
     params = {
         "DataWidth": [
@@ -35,7 +35,7 @@ br_verilog_synth_suite(
     deps = [":br_ecc_sed_encoder"],
 )
 
-br_verilog_synth_suite(
+br_verilog_yosys_synth_suite(
     name = "br_ecc_sed_encoder_pipelined_ppa",
     params = {
         "DataWidth": ["64"],
@@ -66,7 +66,7 @@ verilog_library(
     ],
 )
 
-br_verilog_synth_suite(
+br_verilog_yosys_synth_suite(
     name = "br_ecc_sed_decoder_comb_ppa",
     params = {
         "DataWidth": [
@@ -79,7 +79,7 @@ br_verilog_synth_suite(
     deps = [":br_ecc_sed_decoder"],
 )
 
-br_verilog_synth_suite(
+br_verilog_yosys_synth_suite(
     name = "br_ecc_sed_decoder_pipelined_ppa",
     params = {
         "DataWidth": ["64"],
@@ -115,7 +115,7 @@ verilog_library(
     ],
 )
 
-br_verilog_synth_suite(
+br_verilog_yosys_synth_suite(
     name = "br_ecc_secded_encoder_comb_ppa",
     params = {
         "DataWidth": [
@@ -128,7 +128,7 @@ br_verilog_synth_suite(
     deps = [":br_ecc_secded_encoder"],
 )
 
-br_verilog_synth_suite(
+br_verilog_yosys_synth_suite(
     name = "br_ecc_secded_encoder_pipelined_ppa",
     params = {
         "DataWidth": ["64"],
@@ -194,7 +194,7 @@ verilog_library(
     ],
 )
 
-br_verilog_synth_suite(
+br_verilog_yosys_synth_suite(
     name = "br_ecc_secded_decoder_comb_ppa",
     params = {
         "DataWidth": [
@@ -208,7 +208,7 @@ br_verilog_synth_suite(
     deps = [":br_ecc_secded_decoder"],
 )
 
-br_verilog_synth_suite(
+br_verilog_yosys_synth_suite(
     name = "br_ecc_secded_decoder_pipelined_ppa",
     params = {
         "DataWidth": ["64"],

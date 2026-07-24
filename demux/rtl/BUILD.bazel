@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: Apache-2.0
 
 load("@rules_hdl//verilog:providers.bzl", "verilog_library")
-load("//bazel:br_verilog.bzl", "br_verilog_elab_and_lint_test_suite", "br_verilog_synth_suite")
+load("//bazel:br_verilog.bzl", "br_verilog_elab_and_lint_test_suite", "br_verilog_yosys_synth_suite")
 
 package(default_visibility = ["//visibility:public"])
 
@@ -35,7 +35,7 @@ verilog_library(
     ],
 )
 
-br_verilog_synth_suite(
+br_verilog_yosys_synth_suite(
     name = "br_demux_bin_ppa",
     params = {
         "NumSymbolsOut": [
@@ -51,7 +51,7 @@ br_verilog_synth_suite(
     deps = [":br_demux_bin"],
 )
 
-br_verilog_synth_suite(
+br_verilog_yosys_synth_suite(
     name = "br_demux_onehot_ppa",
     params = {
         "NumSymbolsOut": [

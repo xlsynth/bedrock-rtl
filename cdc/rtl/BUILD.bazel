@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: Apache-2.0
 
 load("@rules_hdl//verilog:providers.bzl", "verilog_library")
-load("//bazel:br_verilog.bzl", "br_verilog_elab_and_lint_test_suite", "br_verilog_synth_suite")
+load("//bazel:br_verilog.bzl", "br_verilog_elab_and_lint_test_suite", "br_verilog_yosys_synth_suite")
 
 package(default_visibility = ["//visibility:public"])
 
@@ -391,7 +391,7 @@ br_verilog_elab_and_lint_test_suite(
     ],
 )
 
-br_verilog_synth_suite(
+br_verilog_yosys_synth_suite(
     name = "br_cdc_bit_toggle_baseline_ppa",
     params = {
         "AddSourceFlop": ["0"],
@@ -400,7 +400,7 @@ br_verilog_synth_suite(
     deps = [":br_cdc_bit_toggle"],
 )
 
-br_verilog_synth_suite(
+br_verilog_yosys_synth_suite(
     name = "br_cdc_bit_toggle_registered_ppa",
     params = {
         "AddSourceFlop": ["1"],
@@ -409,7 +409,7 @@ br_verilog_synth_suite(
     deps = [":br_cdc_bit_toggle"],
 )
 
-br_verilog_synth_suite(
+br_verilog_yosys_synth_suite(
     name = "br_cdc_fifo_ctrl_1r1w_baseline_ppa",
     params = {
         "Depth": ["8"],
@@ -422,7 +422,7 @@ br_verilog_synth_suite(
     deps = [":br_cdc_fifo_ctrl_1r1w"],
 )
 
-br_verilog_synth_suite(
+br_verilog_yosys_synth_suite(
     name = "br_cdc_fifo_ctrl_1r1w_registered_ppa",
     params = {
         "Depth": ["32"],
@@ -435,7 +435,7 @@ br_verilog_synth_suite(
     deps = [":br_cdc_fifo_ctrl_1r1w"],
 )
 
-br_verilog_synth_suite(
+br_verilog_yosys_synth_suite(
     name = "br_cdc_fifo_ctrl_pop_1r1w_baseline_ppa",
     params = {
         "Depth": ["8"],
@@ -447,7 +447,7 @@ br_verilog_synth_suite(
     deps = [":br_cdc_fifo_ctrl_pop_1r1w"],
 )
 
-br_verilog_synth_suite(
+br_verilog_yosys_synth_suite(
     name = "br_cdc_fifo_ctrl_pop_1r1w_registered_ppa",
     params = {
         "Depth": ["32"],
@@ -459,7 +459,7 @@ br_verilog_synth_suite(
     deps = [":br_cdc_fifo_ctrl_pop_1r1w"],
 )
 
-br_verilog_synth_suite(
+br_verilog_yosys_synth_suite(
     name = "br_cdc_fifo_ctrl_push_1r1w_baseline_ppa",
     params = {
         "Depth": ["8"],
@@ -470,7 +470,7 @@ br_verilog_synth_suite(
     deps = [":br_cdc_fifo_ctrl_push_1r1w"],
 )
 
-br_verilog_synth_suite(
+br_verilog_yosys_synth_suite(
     name = "br_cdc_fifo_ctrl_push_1r1w_pipelined_ppa",
     params = {
         "Depth": ["32"],
@@ -481,7 +481,7 @@ br_verilog_synth_suite(
     deps = [":br_cdc_fifo_ctrl_push_1r1w"],
 )
 
-br_verilog_synth_suite(
+br_verilog_yosys_synth_suite(
     name = "br_cdc_fifo_ctrl_push_1r1w_push_credit_baseline_ppa",
     params = {
         "Depth": ["8"],
@@ -493,7 +493,7 @@ br_verilog_synth_suite(
     deps = [":br_cdc_fifo_ctrl_push_1r1w_push_credit"],
 )
 
-br_verilog_synth_suite(
+br_verilog_yosys_synth_suite(
     name = "br_cdc_fifo_ctrl_push_1r1w_push_credit_registered_ppa",
     params = {
         "Depth": ["32"],
@@ -505,7 +505,7 @@ br_verilog_synth_suite(
     deps = [":br_cdc_fifo_ctrl_push_1r1w_push_credit"],
 )
 
-br_verilog_synth_suite(
+br_verilog_yosys_synth_suite(
     name = "br_cdc_fifo_ctrl_1r1w_push_credit_baseline_ppa",
     params = {
         "Depth": ["8"],
@@ -519,7 +519,7 @@ br_verilog_synth_suite(
     deps = [":br_cdc_fifo_ctrl_1r1w_push_credit"],
 )
 
-br_verilog_synth_suite(
+br_verilog_yosys_synth_suite(
     name = "br_cdc_fifo_ctrl_1r1w_push_credit_registered_ppa",
     params = {
         "Depth": ["32"],
@@ -533,7 +533,7 @@ br_verilog_synth_suite(
     deps = [":br_cdc_fifo_ctrl_1r1w_push_credit"],
 )
 
-br_verilog_synth_suite(
+br_verilog_yosys_synth_suite(
     name = "br_cdc_fifo_flops_baseline_ppa",
     params = {
         "Depth": ["8"],
@@ -544,7 +544,7 @@ br_verilog_synth_suite(
     deps = [":br_cdc_fifo_flops"],
 )
 
-br_verilog_synth_suite(
+br_verilog_yosys_synth_suite(
     name = "br_cdc_fifo_flops_pipelined_ppa",
     params = {
         "Depth": ["32"],
@@ -560,7 +560,7 @@ br_verilog_synth_suite(
     deps = [":br_cdc_fifo_flops"],
 )
 
-br_verilog_synth_suite(
+br_verilog_yosys_synth_suite(
     name = "br_cdc_fifo_flops_push_credit_baseline_ppa",
     params = {
         "Depth": ["8"],
@@ -572,7 +572,7 @@ br_verilog_synth_suite(
     deps = [":br_cdc_fifo_flops_push_credit"],
 )
 
-br_verilog_synth_suite(
+br_verilog_yosys_synth_suite(
     name = "br_cdc_fifo_flops_push_credit_pipelined_ppa",
     params = {
         "Depth": ["32"],
@@ -589,7 +589,7 @@ br_verilog_synth_suite(
     deps = [":br_cdc_fifo_flops_push_credit"],
 )
 
-br_verilog_synth_suite(
+br_verilog_yosys_synth_suite(
     name = "br_cdc_rst_sync_two_stage_ppa",
     params = {
         "NumStages": ["2"],
@@ -597,7 +597,7 @@ br_verilog_synth_suite(
     deps = [":br_cdc_rst_sync"],
 )
 
-br_verilog_synth_suite(
+br_verilog_yosys_synth_suite(
     name = "br_cdc_rst_sync_three_stage_ppa",
     params = {
         "NumStages": ["3"],
@@ -605,7 +605,7 @@ br_verilog_synth_suite(
     deps = [":br_cdc_rst_sync"],
 )
 
-br_verilog_synth_suite(
+br_verilog_yosys_synth_suite(
     name = "br_cdc_bit_pulse_baseline_ppa",
     params = {
         "NumStages": ["2"],
@@ -614,7 +614,7 @@ br_verilog_synth_suite(
     deps = [":br_cdc_bit_pulse"],
 )
 
-br_verilog_synth_suite(
+br_verilog_yosys_synth_suite(
     name = "br_cdc_bit_pulse_registered_ppa",
     params = {
         "NumStages": ["3"],
@@ -623,7 +623,7 @@ br_verilog_synth_suite(
     deps = [":br_cdc_bit_pulse"],
 )
 
-br_verilog_synth_suite(
+br_verilog_yosys_synth_suite(
     name = "br_cdc_reg_baseline_ppa",
     params = {
         "NumSyncStages": ["2"],
@@ -633,7 +633,7 @@ br_verilog_synth_suite(
     deps = [":br_cdc_reg"],
 )
 
-br_verilog_synth_suite(
+br_verilog_yosys_synth_suite(
     name = "br_cdc_reg_registered_ppa",
     params = {
         "NumSyncStages": ["3"],
@@ -643,7 +643,7 @@ br_verilog_synth_suite(
     deps = [":br_cdc_reg"],
 )
 
-br_verilog_synth_suite(
+br_verilog_yosys_synth_suite(
     name = "br_cdc_stable_data_baseline_ppa",
     params = {
         "NumSyncStages": ["2"],
@@ -652,7 +652,7 @@ br_verilog_synth_suite(
     deps = [":br_cdc_stable_data"],
 )
 
-br_verilog_synth_suite(
+br_verilog_yosys_synth_suite(
     name = "br_cdc_stable_data_scaled_ppa",
     params = {
         "NumSyncStages": ["3"],
@@ -661,7 +661,7 @@ br_verilog_synth_suite(
     deps = [":br_cdc_stable_data"],
 )
 
-br_verilog_synth_suite(
+br_verilog_yosys_synth_suite(
     name = "br_cdc_stable_data_autoupdate_baseline_ppa",
     params = {
         "NumSyncStages": ["2"],
@@ -670,7 +670,7 @@ br_verilog_synth_suite(
     deps = [":br_cdc_stable_data_autoupdate"],
 )
 
-br_verilog_synth_suite(
+br_verilog_yosys_synth_suite(
     name = "br_cdc_stable_data_autoupdate_scaled_ppa",
     params = {
         "NumSyncStages": ["3"],
