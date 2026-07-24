@@ -680,7 +680,7 @@ module br_amba_iso_resp_tracker #(
   always_comb begin
     if (isolate_req) begin
       // Ignore downstream responses if isolating, use fixed IsolateResp and IsolateData.
-      downstream_iso_xresp = IsolateResp;
+      downstream_iso_xresp = br_amba::axi_resp_t'(IsolateResp);
       downstream_iso_xdata = IsolateData;
       // When isolating, use the arbiter to pick the next transaction to generate (error) responses
       // for from the resp_tracker FIFO, since there's no downstream responses arriving anymore that
