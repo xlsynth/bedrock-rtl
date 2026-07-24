@@ -1,0 +1,1 @@
+testplanner @ git+https://github.com/antmicro/testplanner.git@670c0b6dfe3aaf2e23bc6c9fb4475bd0357f6cc5

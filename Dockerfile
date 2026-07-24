@@ -4,6 +4,7 @@ FROM docker.io/library/rockylinux:8.9.20231119@sha256:2d05a9266523bbf24f33ebc3a9
 ARG TARGETPLATFORM
 WORKDIR /tmp
 COPY requirements_lock_3_12.txt /tmp/requirements_lock_3_12.txt
+COPY scripts/requirements.txt /tmp/scripts_requirements.txt
 
 RUN if [ "${TARGETPLATFORM}" != "linux/amd64" ]; then \
         echo "This Dockerfile does not yet support non-amd64 platforms because Bazel hasn't provided Docker images for them yet."; \
@@ -40,6 +41,7 @@ RUN yum install -y dnf-plugins-core-4.0.21-25.el8 && \
         gperf-3.1-5.el8 \
         graphviz-2.40.1-45.el8 \
         help2man-1.47.6-1.el8 \
+        jq-1.6-12.el8_10 \
         libatomic-8.5.0-23.el8_10 \
         libffi-3.1-24.el8 \
         libffi-devel-3.1-24.el8.x86_64 \
@@ -70,6 +72,8 @@ RUN yum install -y dnf-plugins-core-4.0.21-25.el8 && \
 
 RUN pip3.12 install --require-hashes -r /tmp/requirements_lock_3_12.txt && \
     rm /tmp/requirements_lock_3_12.txt
+RUN pip3.12 install -r /tmp/scripts_requirements.txt && \
+    rm /tmp/scripts_requirements.txt
 
 # Install Verilator
 # v5.050 - devel
