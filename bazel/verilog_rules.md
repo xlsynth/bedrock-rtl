@@ -566,16 +566,17 @@ True if the combination is legal, False if it is illegal.
 <pre>
 load("@bedrock-rtl//bazel:verilog.bzl", "verilog_elab_and_lint_test_suite")
 
-verilog_elab_and_lint_test_suite(<a href="#verilog_elab_and_lint_test_suite-name">name</a>, <a href="#verilog_elab_and_lint_test_suite-top">top</a>, <a href="#verilog_elab_and_lint_test_suite-deps">deps</a>, <a href="#verilog_elab_and_lint_test_suite-defines">defines</a>, <a href="#verilog_elab_and_lint_test_suite-params">params</a>, <a href="#verilog_elab_and_lint_test_suite-elab_tools">elab_tools</a>, <a href="#verilog_elab_and_lint_test_suite-lint_tool">lint_tool</a>,
-                                 <a href="#verilog_elab_and_lint_test_suite-disable_lint_rules">disable_lint_rules</a>, <a href="#verilog_elab_and_lint_test_suite-kwargs">**kwargs</a>)
+verilog_elab_and_lint_test_suite(<a href="#verilog_elab_and_lint_test_suite-name">name</a>, <a href="#verilog_elab_and_lint_test_suite-top">top</a>, <a href="#verilog_elab_and_lint_test_suite-deps">deps</a>, <a href="#verilog_elab_and_lint_test_suite-defines">defines</a>, <a href="#verilog_elab_and_lint_test_suite-params">params</a>, <a href="#verilog_elab_and_lint_test_suite-include_default_params">include_default_params</a>,
+                                 <a href="#verilog_elab_and_lint_test_suite-elab_tools">elab_tools</a>, <a href="#verilog_elab_and_lint_test_suite-lint_tool">lint_tool</a>, <a href="#verilog_elab_and_lint_test_suite-disable_lint_rules">disable_lint_rules</a>, <a href="#verilog_elab_and_lint_test_suite-kwargs">**kwargs</a>)
 </pre>
 
 Creates a suite of Verilog elaboration and lint tests for each combination of the provided parameters.
 
-The function generates a wrapper containing one instance with the module's default parameters and one instance
-for every combination of the provided parameters. It creates one verilog_elab_test for each elaboration tool
-and one verilog_lint_test. Elaboration test names append the tool name followed by "_elab_test"; the lint test
-name appends "_lint_test".
+The function generates a wrapper containing one instance for every combination of the provided parameters and,
+by default, one instance with the module's default parameters. Set include_default_params to False when another
+sweep already covers the defaults or the defaults are intentionally invalid. It creates one verilog_elab_test
+for each elaboration tool and one verilog_lint_test. Elaboration test names append the tool name followed by
+"_elab_test"; the lint test name appends "_lint_test".
 
 
 **PARAMETERS**
@@ -588,6 +589,7 @@ name appends "_lint_test".
 | <a id="verilog_elab_and_lint_test_suite-deps"></a>deps |  The dependencies of the test suite.   |  `[]` |
 | <a id="verilog_elab_and_lint_test_suite-defines"></a>defines |  A list of defines.   |  `[]` |
 | <a id="verilog_elab_and_lint_test_suite-params"></a>params |  A dictionary where keys are parameter names and values are lists of possible values for those parameters.   |  `{}` |
+| <a id="verilog_elab_and_lint_test_suite-include_default_params"></a>include_default_params |  Whether to include an instance with the module's default parameters.   |  `True` |
 | <a id="verilog_elab_and_lint_test_suite-elab_tools"></a>elab_tools |  The tools to use for elaboration. Defaults to Verific and Slang.   |  `["verific", "slang"]` |
 | <a id="verilog_elab_and_lint_test_suite-lint_tool"></a>lint_tool |  The tool to use for linting.   |  `"ascentlint"` |
 | <a id="verilog_elab_and_lint_test_suite-disable_lint_rules"></a>disable_lint_rules |  A list of lint rules to disable in the generated files.   |  `[]` |
