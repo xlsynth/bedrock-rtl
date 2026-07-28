@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: Apache-2.0
 
 load("@rules_hdl//verilog:providers.bzl", "verilog_library")
-load("//bazel:br_verilog.bzl", "br_verilog_sim_test_tools_suite")
+load("//bazel:br_verilog.bzl", "br_verilog_sim_test_suite", "br_verilog_sim_test_tools_suite")
 load("//bazel:verilog.bzl", "verilog_elab_test")
 
 package(default_visibility = ["//visibility:private"])
@@ -35,6 +35,28 @@ verilog_elab_test(
     name = "br_fifo_flops_tb_elab_test",
     tool = "verific",
     deps = [":br_fifo_flops_tb"],
+)
+
+verilog_library(
+    name = "br_fifo_push_data_known_tb",
+    srcs = ["br_fifo_push_data_known_tb.sv"],
+    deps = [
+        "//flow/rtl:br_flow_buffer",
+        "//misc/sim:br_test_driver",
+    ],
+)
+
+br_verilog_sim_test_suite(
+    name = "br_fifo_push_data_known_iverilog_sim_test_suite",
+    tool = "iverilog",
+    deps = [":br_fifo_push_data_known_tb"],
+)
+
+br_verilog_sim_test_suite(
+    name = "br_fifo_push_data_known_vcs_sim_test_suite",
+    tool = "vcs",
+    defines = ["BR_ASSERT_ON", "SIMULATION"],
+    deps = [":br_fifo_push_data_known_tb"],
 )
 
 br_verilog_sim_test_tools_suite(

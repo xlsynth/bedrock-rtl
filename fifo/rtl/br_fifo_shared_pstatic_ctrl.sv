@@ -230,7 +230,8 @@ module br_fifo_shared_pstatic_ctrl #(
       .Width(Width),
       .StagingBufferDepth(StagingBufferDepth),
       .RamReadLatency(RamReadLatency),
-      .RegisterPopOutputs(RegisterPopOutputs)
+      .RegisterPopOutputs(RegisterPopOutputs),
+      .EnableAssertPushDataKnown(EnableAssertPushDataKnown)
   ) br_fifo_shared_pop_ctrl_inst (
       .clk,
       .rst(rst),

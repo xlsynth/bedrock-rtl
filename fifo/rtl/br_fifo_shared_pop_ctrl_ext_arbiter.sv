@@ -50,6 +50,8 @@ module br_fifo_shared_pop_ctrl_ext_arbiter #(
     parameter int RamReadLatency = 0,
     // Set to 1 if the arbiter is guaranteed to grant in a cycle when any request is asserted.
     parameter bit ArbiterAlwaysGrants = 1,
+    // If 1, assert that valid push data is always known (not X).
+    parameter bit EnableAssertPushDataKnown = 1,
 
     localparam int AddrWidth  = $clog2(Depth),
     localparam int CountWidth = $clog2(Depth + 1)
@@ -149,7 +151,8 @@ module br_fifo_shared_pop_ctrl_ext_arbiter #(
           .Width(Width),
           .RegisterPopOutputs(RegisterPopOutputs),
           .RamReadLatency(RamReadLatency),
-          .TotalItemsIncludesStaged(0)
+          .TotalItemsIncludesStaged(0),
+          .EnableAssertPushDataKnown(EnableAssertPushDataKnown)
       ) br_fifo_staging_buffer (
           .clk,
           .rst,

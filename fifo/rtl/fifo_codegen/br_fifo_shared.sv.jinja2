@@ -702,7 +702,8 @@ module {{ module_name }} #(
       .ArbiterAlwaysGrants(ArbiterAlwaysGrants)
 {%-   endif %}
 {%-   if not pop_credit %},
-      .RegisterPopOutputs(RegisterPopOutputs)
+      .RegisterPopOutputs(RegisterPopOutputs),
+      .EnableAssertPushDataKnown(EnableAssertPushDataKnown)
 {%-   endif %}
   ) {{ pop_ctrl_module }}_inst (
       .clk,

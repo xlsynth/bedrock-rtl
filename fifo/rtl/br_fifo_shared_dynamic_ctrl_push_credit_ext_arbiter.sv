@@ -266,7 +266,8 @@ module br_fifo_shared_dynamic_ctrl_push_credit_ext_arbiter #(
       .RamReadLatency(DataRamReadLatency),
       .RegisterDeallocation(RegisterDeallocation),
       .ArbiterAlwaysGrants(ArbiterAlwaysGrants),
-      .RegisterPopOutputs(RegisterPopOutputs)
+      .RegisterPopOutputs(RegisterPopOutputs),
+      .EnableAssertPushDataKnown(EnableAssertPushDataKnown)
   ) br_fifo_shared_pop_ctrl_ext_arbiter_inst (
       .clk,
       .rst(either_rst),
