@@ -205,6 +205,7 @@ module br_cdc_fifo_ctrl_1r1w_push_credit #(
       .RegisterResetActive(RegisterResetActive),
       .RamReadLatency(RamReadLatency),
       .NumSyncStages(NumSyncStages),
+      .EnableAssertPushDataKnown(EnableAssertPushDataKnown),
       .EnableAssertFinalNotValid(EnableAssertFinalNotValid)
   ) br_cdc_fifo_ctrl_pop_1r1w_inst (
       .push_clk,

@@ -205,6 +205,7 @@ module br_fifo_ctrl_1r1w_push_credit #(
       .RegisterPopOutputs(RegisterPopOutputs),
       .RamReadLatency(RamReadLatency),
       .RamDepth(RamDepth),
+      .EnableAssertPushDataKnown(EnableAssertPushDataKnown),
       .EnableAssertFinalNotValid(EnableAssertFinalNotValid)
   ) br_fifo_pop_ctrl (
       .clk,

@@ -257,7 +257,8 @@ module br_fifo_shared_dynamic_ctrl_push_credit #(
       .StagingBufferDepth(StagingBufferDepth),
       .RamReadLatency(DataRamReadLatency),
       .RegisterDeallocation(RegisterDeallocation),
-      .RegisterPopOutputs(RegisterPopOutputs)
+      .RegisterPopOutputs(RegisterPopOutputs),
+      .EnableAssertPushDataKnown(EnableAssertPushDataKnown)
   ) br_fifo_shared_pop_ctrl_inst (
       .clk,
       .rst(either_rst),

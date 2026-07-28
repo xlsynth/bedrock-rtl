@@ -32,6 +32,8 @@ module br_fifo_staging_buffer #(
     // If 0, total_items represents just the number of items in the RAM
     // and excludes those in this staging buffer or inflight from the RAM.
     parameter bit TotalItemsIncludesStaged = 1,
+    // If 1, assert that valid push data is always known (not X).
+    parameter bit EnableAssertPushDataKnown = 1,
     // If 1, then assert there are no valid bits asserted and that the FIFO is
     // empty at the end of the test.
     parameter bit EnableAssertFinalNotValid = 1,
@@ -517,6 +519,7 @@ module br_fifo_staging_buffer #(
         // we can't get backpressure, since we would only allow
         // bypass or send a read if the flow reg is empty or being popped.
         .EnableCoverPushBackpressure(InternalDepth > 0),
+        .EnableAssertPushDataKnown(EnableAssertPushDataKnown),
         .EnableAssertFinalNotValid(EnableAssertFinalNotValid)
     ) br_flow_reg_fwd (
         .clk,

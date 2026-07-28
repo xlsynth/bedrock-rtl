@@ -16,6 +16,8 @@ module br_fifo_pop_ctrl_core #(
     parameter int RamReadLatency = 0,
     parameter bit RegisterPopOutputs = 0,
     parameter int RamDepth = Depth,
+    // If 1, assert that valid push data is always known (not X).
+    parameter bit EnableAssertPushDataKnown = 1,
     // If 1, then assert there are no valid bits asserted and that the FIFO is
     // empty at the end of the test.
     parameter bit EnableAssertFinalNotValid = 1,
@@ -121,6 +123,7 @@ module br_fifo_pop_ctrl_core #(
         .RamReadLatency           (RamReadLatency),
         .Width                    (Width),
         .RegisterPopOutputs       (RegisterPopOutputs),
+        .EnableAssertPushDataKnown(EnableAssertPushDataKnown),
         .EnableAssertFinalNotValid(EnableAssertFinalNotValid)
     ) br_fifo_staging_buffer (
         .clk,

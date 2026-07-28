@@ -174,6 +174,7 @@ module br_cdc_fifo_ctrl_1r1w #(
       .RegisterPopOutputs(RegisterPopOutputs),
       .RegisterResetActive(RegisterResetActive),
       .RamReadLatency(RamReadLatency),
+      .EnableAssertPushDataKnown(EnableAssertPushDataKnown),
       .EnableAssertFinalNotValid(EnableAssertFinalNotValid),
       .NumSyncStages(NumSyncStages)
   ) br_cdc_fifo_ctrl_pop_1r1w_inst (

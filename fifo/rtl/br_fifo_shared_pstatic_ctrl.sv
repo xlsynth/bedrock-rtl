@@ -247,7 +247,8 @@ module br_fifo_shared_pstatic_ctrl #(
           ((Depth - (NumFifos - 1)) > RamReadLatency) || (RamReadLatency > 1)
       ),
       .RamReadLatency(RamReadLatency),
-      .RegisterPopOutputs(RegisterPopOutputs)
+      .RegisterPopOutputs(RegisterPopOutputs),
+      .EnableAssertPushDataKnown(EnableAssertPushDataKnown)
   ) br_fifo_shared_pop_ctrl_inst (
       .clk,
       .rst(rst),
