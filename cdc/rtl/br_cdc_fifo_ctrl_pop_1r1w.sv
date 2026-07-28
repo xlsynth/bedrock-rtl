@@ -39,6 +39,8 @@ module br_cdc_fifo_ctrl_pop_1r1w #(
     parameter int RamReadLatency = 0,
     // The number of synchronization stages to use for the gray counts.
     parameter int NumSyncStages = 3,
+    // If 1, assert that valid push data is always known (not X).
+    parameter bit EnableAssertPushDataKnown = 1,
     // If 1, then assert there are no valid bits asserted and that the FIFO is
     // empty at the end of the test.
     parameter bit EnableAssertFinalNotValid = 1,
@@ -120,6 +122,7 @@ module br_cdc_fifo_ctrl_pop_1r1w #(
       .RegisterPopOutputs(RegisterPopOutputs),
       .RegisterResetActive(RegisterResetActive),
       .RamReadLatency(RamReadLatency),
+      .EnableAssertPushDataKnown(EnableAssertPushDataKnown),
       .EnableAssertFinalNotValid(EnableAssertFinalNotValid)
   ) br_cdc_fifo_pop_ctrl (
       .clk              (pop_clk),                 // ri lint_check_waive SAME_CLOCK_NAME

@@ -50,6 +50,8 @@ module br_fifo_shared_pop_ctrl #(
     parameter bit EnableCoverBypassAndReadDataSameCycle = 1,
     // The number of cycles between data ram read address and read data. Must be >=0.
     parameter int RamReadLatency = 0,
+    // If 1, assert that valid push data is always known (not X).
+    parameter bit EnableAssertPushDataKnown = 1,
 
     localparam int AddrWidth  = $clog2(Depth),
     localparam int CountWidth = $clog2(Depth + 1)
@@ -98,7 +100,8 @@ module br_fifo_shared_pop_ctrl #(
       .EnableBypass(EnableBypass),
       .EnableCoverSameCycleReadIssueAndReturn(EnableCoverSameCycleReadIssueAndReturn),
       .EnableCoverBypassAndReadDataSameCycle(EnableCoverBypassAndReadDataSameCycle),
-      .RamReadLatency(RamReadLatency)
+      .RamReadLatency(RamReadLatency),
+      .EnableAssertPushDataKnown(EnableAssertPushDataKnown)
   ) br_fifo_shared_pop_ctrl_ext_arbiter (
       .clk,
       .rst,
