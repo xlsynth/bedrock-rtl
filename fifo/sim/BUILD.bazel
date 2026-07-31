@@ -640,6 +640,7 @@ verilog_sim_coverage_aggregate(
         ":br_fifo_ctrl_1r1w_sim_test_tools_suite_verilator_coverage",
         ":br_fifo_ctrl_1r1w_push_credit_sim_test_tools_suite_verilator_coverage",
         ":br_fifo_ctrl_1r1w_push_credit_min_depth_sim_test_tools_suite_verilator_coverage",
+        ":br_fifo_flops_cov_sim_test_tools_suite_verilator_coverage",
     ],
     visibility = ["//:__pkg__"],
 )

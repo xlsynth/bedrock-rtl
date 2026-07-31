@@ -986,6 +986,8 @@ verilog_sim_coverage_aggregate(
         ":br_flow_mux_fixed_sim_test_tools_suite_verilator_coverage",
         ":br_flow_mux_rr_sim_test_tools_suite_verilator_coverage",
         ":br_flow_mux_lru_sim_test_tools_suite_verilator_verilator_coverage",
+        ":br_flow_mux_weighted_rr_sim_test_tools_suite_verilator_coverage",
+        ":br_flow_mux_weighted_lru_sim_test_tools_suite_verilator_coverage",
         ":br_flow_mux_fixed_stable_sim_test_tools_suite_verilator_coverage",
         ":br_flow_mux_rr_stable_sim_test_tools_suite_verilator_coverage",
         ":br_flow_mux_lru_stable_sim_test_tools_suite_verilator_verilator_coverage",
