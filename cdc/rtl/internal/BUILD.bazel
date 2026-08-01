@@ -241,5 +241,9 @@ br_verilog_elab_and_lint_test_suite(
             "1",
         ],
     },
-    deps = [":br_cdc_reg_pop"],
+    top = "br_cdc_reg_pop",
+    deps = [
+        ":br_cdc_reg_pop",
+        "//gate/rtl:br_gate_mock",
+    ],
 )

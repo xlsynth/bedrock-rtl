@@ -52,12 +52,25 @@ module br_cdc_reg_tb;
   always #(PopClockPeriodNs / 2) pop_clk = ~pop_clk;
   always @(posedge pop_clk) pop_rst = push_rst;
 
+  function automatic logic [Width-1:0] item_data(input int index);
+    if (index == 0) begin
+      return '1;
+    end
+    return Width'(index);
+  endfunction
+
+  always @(negedge pop_clk) begin
+    if (!pop_rst && !RegisterPopOutputs && !pop_valid) begin
+      td.check_integer(pop_data, 0, "Unregistered invalid pop data must be zero");
+    end
+  end
+
   task automatic push_items();
     int timeout = 1000;
 
     for (int i = 0; i < NumItems; i++) begin
       push_valid = 1;
-      push_data  = i;
+      push_data  = item_data(i);
       @(posedge push_clk);
       while (!push_ready && timeout > 0) begin
         timeout -= 1;
@@ -74,6 +87,17 @@ module br_cdc_reg_tb;
     int timeout = 1000;
 
     @(negedge pop_clk);
+    while (!pop_valid && timeout > 0) begin
+      timeout -= 1;
+      @(negedge pop_clk);
+    end
+    td.check(timeout > 0, "Timed out waiting for the first pop valid");
+    td.check_integer(pop_data, item_data(0), "First pop data mismatch while stalled");
+    repeat (2) begin
+      @(negedge pop_clk);
+      td.check(pop_valid, "Pop valid changed while stalled");
+      td.check_integer(pop_data, item_data(0), "Pop data changed while stalled");
+    end
     pop_ready = 1;
 
     for (int i = 0; i < NumItems; i++) begin
@@ -83,7 +107,7 @@ module br_cdc_reg_tb;
         @(posedge pop_clk);
       end
       td.check(timeout > 0, "Timed out waiting for pop valid");
-      td.check_integer(pop_data, i, "Pop data mismatch");
+      td.check_integer(pop_data, item_data(i), "Pop data mismatch");
     end
 
     @(negedge pop_clk);
@@ -106,6 +130,15 @@ module br_cdc_reg_tb;
       push_items();
       pop_items();
     join
+
+    @(negedge pop_clk);
+    td.check(!pop_valid, "Pop output remained valid after the final transfer");
+    if (RegisterPopOutputs) begin
+      td.check_integer(pop_data, item_data(NumItems - 1),
+                       "Registered pop data must retain the final payload");
+    end else begin
+      td.check_integer(pop_data, 0, "Unregistered pop data must clear when invalid");
+    end
 
     td.finish();
   end

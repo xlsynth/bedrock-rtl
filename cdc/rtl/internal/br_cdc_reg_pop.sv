@@ -97,8 +97,15 @@ module br_cdc_reg_pop #(
     );
   end else begin : gen_passthru_out
     assign pop_valid = internal_pop_valid;
-    assign pop_data = push_reg_data;
     assign internal_pop_ready = pop_ready;
+
+    for (genvar i = 0; i < Width; i++) begin : gen_data_qualification
+      br_gate_and2 br_gate_and2_inst (
+          .in0(push_reg_data[i]),
+          .in1(internal_pop_valid),
+          .out(pop_data[i])
+      );
+    end
   end
 
   // Implementation Checks
