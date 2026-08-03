@@ -45,12 +45,24 @@ module br_cdc_reg_pop #(
   logic pop_flag_int_next;
   logic internal_pop_ready;
   logic internal_pop_valid;
+  logic [Width-1:0] internal_pop_data;
+  // ri lint_check_waive VAR_NAME
+  logic [Width-1:0] _BR_CDC_PRESERVE_NET__pop_data_unqual;
 
   assign push_flag_visible = reset_active_push ? push_flag_saved : push_flag;
   // If push and pop flag are different, the data is valid
   assign internal_pop_valid = push_flag_visible != pop_flag_int;
   assign pop_flag_int_next =
       (internal_pop_valid && internal_pop_ready) ? ~pop_flag_int : pop_flag_int;
+  assign _BR_CDC_PRESERVE_NET__pop_data_unqual = push_reg_data;
+
+  for (genvar i = 0; i < Width; i++) begin : gen_data_qualification
+    br_gate_and2 br_gate_and2_inst (
+        .in0(_BR_CDC_PRESERVE_NET__pop_data_unqual[i]),
+        .in1(internal_pop_valid),
+        .out(internal_pop_data[i])
+    );
+  end
 
   `BR_REG(pop_flag_int, pop_flag_int_next)
   `BR_REGL(push_flag_saved, push_flag, !reset_active_push)
@@ -90,26 +102,15 @@ module br_cdc_reg_pop #(
         .rst,
         .push_ready(internal_pop_ready),
         .push_valid(internal_pop_valid),
-        .push_data (push_reg_data),
+        .push_data (internal_pop_data),
         .pop_ready (pop_ready),
         .pop_valid (pop_valid),
         .pop_data  (pop_data)
     );
   end else begin : gen_passthru_out
-    // ri lint_check_waive VAR_NAME
-    logic [Width-1:0] _BR_CDC_PRESERVE_NET__pop_data_unqual;
-
     assign pop_valid = internal_pop_valid;
+    assign pop_data = internal_pop_data;
     assign internal_pop_ready = pop_ready;
-    assign _BR_CDC_PRESERVE_NET__pop_data_unqual = push_reg_data;
-
-    for (genvar i = 0; i < Width; i++) begin : gen_data_qualification
-      br_gate_and2 br_gate_and2_inst (
-          .in0(_BR_CDC_PRESERVE_NET__pop_data_unqual[i]),
-          .in1(internal_pop_valid),
-          .out(pop_data[i])
-      );
-    end
   end
 
   // Implementation Checks

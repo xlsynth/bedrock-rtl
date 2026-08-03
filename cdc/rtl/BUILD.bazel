@@ -291,6 +291,7 @@ verilog_library(
         ":br_cdc_bit_toggle",
         "//cdc/rtl/internal:br_cdc_reg_pop",
         "//cdc/rtl/internal:br_cdc_reg_push",
+        "//macros:br_gates",
     ],
 )
 
