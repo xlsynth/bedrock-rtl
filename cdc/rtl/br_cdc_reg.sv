@@ -13,6 +13,8 @@
 // At steady-state, the throughput is 1 transaction every
 // (RegisterResetActive + 1 + NumSyncStages) * (PushT + PopT).
 
+`include "br_gates.svh"
+
 module br_cdc_reg #(
     parameter int Width = 1,  // Must be at least 1
     // If 1, make sure pop_data is registered on the pop_clk at the cost of an
@@ -79,6 +81,7 @@ module br_cdc_reg #(
   logic push_reset_active_pop;
   logic pop_push_flag;
   logic [Width-1:0] push_reg_data;
+  logic [Width-1:0] push_reg_data_maxdel;
   logic pop_reset_active_push;
   logic push_pop_flag;
   logic pop_reset_active_pop;
@@ -107,6 +110,11 @@ module br_cdc_reg #(
       .pop_flag(push_pop_flag)
   );
 
+  // Tag this signal as needing max delay checks.
+  // ri lint_check_off ONE_CONN_PER_LINE
+  `BR_GATE_CDC_MAXDEL_BUS(push_reg_data_maxdel, push_reg_data, Width)
+  // ri lint_check_on ONE_CONN_PER_LINE
+
   // Pop side
   br_cdc_reg_pop #(
       .Width(Width),
@@ -122,7 +130,7 @@ module br_cdc_reg #(
       .pop_data,
       .reset_active_push(pop_reset_active_push),
       .push_flag(pop_push_flag),
-      .push_reg_data,
+      .push_reg_data(push_reg_data_maxdel),
       .reset_active_pop(pop_reset_active_pop),
       .pop_flag(pop_pop_flag)
   );
