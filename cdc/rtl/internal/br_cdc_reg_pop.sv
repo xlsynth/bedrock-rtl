@@ -96,12 +96,16 @@ module br_cdc_reg_pop #(
         .pop_data  (pop_data)
     );
   end else begin : gen_passthru_out
+    // ri lint_check_waive VAR_NAME
+    logic [Width-1:0] _BR_CDC_PRESERVE_NET__pop_data_unqual;
+
     assign pop_valid = internal_pop_valid;
     assign internal_pop_ready = pop_ready;
+    assign _BR_CDC_PRESERVE_NET__pop_data_unqual = push_reg_data;
 
     for (genvar i = 0; i < Width; i++) begin : gen_data_qualification
       br_gate_and2 br_gate_and2_inst (
-          .in0(push_reg_data[i]),
+          .in0(_BR_CDC_PRESERVE_NET__pop_data_unqual[i]),
           .in1(internal_pop_valid),
           .out(pop_data[i])
       );
