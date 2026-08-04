@@ -1845,6 +1845,14 @@ def verilog_fpv_test_suite(
                     **kwargs
                 )
 
+_VERILOG_SIM_TEST_ONLY_KWARGS = [
+    "flaky",
+    "local",
+    "shard_count",
+    "size",
+    "timeout",
+]
+
 def verilog_sim_test_suite(
         name,
         defines = [],
@@ -1870,6 +1878,13 @@ def verilog_sim_test_suite(
     param_values_list = [params[key] for key in param_keys]
     param_combinations = _cartesian_product(param_values_list)
     tool = kwargs.get("tool", False)
+
+    # Coverage-data targets are not Bazel test rules, so strip test-only attributes.
+    coverage_kwargs = {
+        key: value
+        for key, value in kwargs.items()
+        if key not in _VERILOG_SIM_TEST_ONLY_KWARGS
+    }
     coverage_data = []
 
     if coverage and tool != "verilator":
@@ -1893,7 +1908,7 @@ def verilog_sim_test_suite(
                 name = coverage_data_name,
                 defines = defines,
                 params = params,
-                **kwargs
+                **coverage_kwargs
             )
             coverage_data.append(":" + coverage_data_name)
 
