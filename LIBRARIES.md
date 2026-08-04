@@ -92,6 +92,7 @@ The verification-artifact column reports repository evidence, not a promise that
 | --- | --- | --- |
 | `br_csr_axil_widget` | Presents a CSR memory interface through an AXI-Lite subordinate port. | Elab/lint, Sim, FPV. |
 | `br_csr_cdc` | Bridges CSR requests and responses across a clock-domain boundary. | Elab/lint, FPV. |
+| `br_csr_default_responder` | Returns a registered decode-error response for every CSR request. | Elab/lint, Sim. |
 | `br_csr_demux` | Routes CSR requests to one of multiple downstream CSR interfaces. | Elab/lint, Sim, FPV. |
 | `br_csr_demux_select_onehot` | Routes CSR requests using an externally supplied one-hot downstream selection. | Elab/lint, FPV. |
 | `br_csr_mem_interface` | Adapts CSR requests to a simple memory-like interface. | Elab/lint, Sim. |
