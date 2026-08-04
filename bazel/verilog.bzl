@@ -850,6 +850,7 @@ def _verilog_sim_coverage_aggregate_impl(ctx):
                 "  | .branch = $branch",
                 "  | .commit = $commit",
                 "  | .timestamp = $timestamp",
+                "  | .testplan_link = env.TESTPLAN_LINK",
                 "' " + _shell_quote(config.path) + " > " + _shell_quote(run_config_path),
                 " ".join(run_pack_args),
                 "echo " + _shell_quote("Deterministic coverage archive: " + ctx.outputs.coverage_zip.path),

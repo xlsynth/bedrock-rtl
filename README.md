@@ -206,7 +206,7 @@ Pass `--filelist-only` to generate just the checkout-relative `.f` file.
 - [SystemVerilog Macros](MACROS.md) documents the register, gate, assignment, and helper macros.
 - [Assertions](MACROS.md#assertions) explains public, integration, implementation, and formal assertion controls.
 - [Bazel Verilog Rules](bazel/verilog_rules.md) documents the rules supplied by this repository. The `verilog_library` rule itself comes from [rules_hdl](https://github.com/hdl/bazel_rules_hdl/blob/main/verilog/providers.bzl).
-- [Scripts](SCRIPTS.md) describes the repository's report-generation scripts.
+- [Testplanner](TESTPLANNER.md) describes the repository's report-generation scripts.
 
 For repository development, see [DEVELOPING.md](DEVELOPING.md). For pull-request
 requirements, see [CONTRIBUTING.md](CONTRIBUTING.md).
