@@ -57,7 +57,7 @@ def get_simulated_time(test_result: TestResult, testlogs_dir: Path) -> str:
 def create_test_entry(test_result, testlogs_dir) -> dict:
     """Convert one parsed Bazel result into a Testplanner result entry."""
 
-    passed = 1 if test_result.result == "PASSED" else 0
+    passed = 1 if test_result.result in ("PASSED", "(cached) PASSED") else 0
     simulated_time = get_simulated_time(test_result, testlogs_dir)
     return {
         "name": test_result.name,
