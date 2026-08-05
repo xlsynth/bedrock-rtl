@@ -84,6 +84,11 @@ module br_csr_mem_interface_tb;
       .rst
   );
 
+  // Synchronize readiness changes to rising edges without racing DUT sampling.
+  clocking mem_access_cb @(posedge clk);
+    output mem_access_ready;
+  endclocking
+
   task automatic send_write_req(input logic [CsrAddrWidth-1:0] addr,
                                 input logic [CsrDataWidth-1:0] wdata,
                                 input logic [CsrStrobeWidth-1:0] wstrb);
@@ -200,7 +205,7 @@ module br_csr_mem_interface_tb;
     td.wait_cycles(2);
 
     $display("Checking immediate write request and response");
-    mem_access_ready = 1'b1;
+    mem_access_cb.mem_access_ready <= 1'b1;
     fork
       send_write_req(16'h0010, 32'h12345678, 4'b1100);
       wait_for_write_req(15'h0008, 16'h1234, 2'b11);
@@ -208,7 +213,7 @@ module br_csr_mem_interface_tb;
     join
 
     $display("Checking buffered write request, then release");
-    mem_access_ready = 1'b0;
+    mem_access_cb.mem_access_ready <= 1'b0;
     fork
       send_write_req(16'h0020, 32'h89ABCDEF, 4'b0011);
       wait_for_write_req(15'h0010, 16'hCDEF, 2'b11);
@@ -219,11 +224,11 @@ module br_csr_mem_interface_tb;
     td.check_integer(mem_access_addr, 15'h0010, "Buffered write address mismatch");
     td.check_integer(mem_access_wr_data, 16'hCDEF, "Buffered write data mismatch");
     td.check_integer(mem_access_wr_strb, 2'b11, "Buffered write strobe mismatch");
-    mem_access_ready = 1'b1;
+    mem_access_cb.mem_access_ready <= 1'b1;
     wait_for_resp('0, 1'b0);
 
     $display("Checking buffered write request abort");
-    mem_access_ready = 1'b0;
+    mem_access_cb.mem_access_ready <= 1'b0;
     fork
       send_write_req(16'h0030, 32'hCAFEBABE, 4'b1100);
       wait_for_write_req(15'h0018, 16'hCAFE, 2'b11);
@@ -237,7 +242,7 @@ module br_csr_mem_interface_tb;
     td.check(!resp_valid, "Abort should not generate a write response");
 
     $display("Checking immediate read request and error response");
-    mem_access_ready = 1'b1;
+    mem_access_cb.mem_access_ready <= 1'b1;
     fork
       send_read_req(16'h0040);
       wait_for_read_req(15'h0020);
@@ -248,7 +253,7 @@ module br_csr_mem_interface_tb;
     join
 
     $display("Checking buffered read request, then release");
-    mem_access_ready = 1'b0;
+    mem_access_cb.mem_access_ready <= 1'b0;
     fork
       send_read_req(16'h0050);
       wait_for_read_req(15'h0028);
@@ -257,7 +262,7 @@ module br_csr_mem_interface_tb;
     td.check(mem_access_valid, "Buffered read request should remain valid while backpressured");
     td.check(!mem_access_wr_en, "Memory write enable should be 0");
     td.check_integer(mem_access_addr, 15'h0028, "Buffered read address mismatch");
-    mem_access_ready = 1'b1;
+    mem_access_cb.mem_access_ready <= 1'b1;
     td.wait_cycles(1);
     fork
       pulse_read_data(16'h0BAD, 1'b0);
@@ -265,7 +270,7 @@ module br_csr_mem_interface_tb;
     join
 
     $display("Checking buffered read request abort");
-    mem_access_ready = 1'b0;
+    mem_access_cb.mem_access_ready <= 1'b0;
     fork
       send_read_req(16'h0060);
       wait_for_read_req(15'h0030);
