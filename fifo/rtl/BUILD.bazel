@@ -44,6 +44,15 @@ verilog_library(
     ],
 )
 
+verilog_library(
+    name = "br_fifo_flops_unstable",
+    srcs = ["br_fifo_flops_unstable.sv"],
+    deps = [
+        ":br_fifo_flops",
+        "//macros:br_asserts",
+    ],
+)
+
 br_verilog_synth_suite(
     name = "br_fifo_flops_baseline_ppa",
     params = {
@@ -404,6 +413,42 @@ br_verilog_elab_and_lint_test_suite(
         ],
     },
     deps = [":br_fifo_flops"],
+)
+
+br_verilog_elab_and_lint_test_suite(
+    name = "br_fifo_flops_unstable_test_suite",
+    params = {
+        "Depth": [
+            "2",
+            "4",
+        ],
+        "Width": [
+            "1",
+            "8",
+        ],
+        "RegisterPopOutputs": [
+            "0",
+            "1",
+        ],
+    },
+    deps = [":br_fifo_flops_unstable"],
+)
+
+br_verilog_elab_and_lint_test_suite(
+    name = "br_fifo_flops_unstable_pipelined_test_suite",
+    params = {
+        "Depth": ["4"],
+        "Width": ["8"],
+        "RegisterPopOutputs": [
+            "0",
+            "1",
+        ],
+        "FlopRamAddressDepthStages": [
+            "1",
+            "2",
+        ],
+    },
+    deps = [":br_fifo_flops_unstable"],
 )
 
 br_verilog_elab_and_lint_test_suite(

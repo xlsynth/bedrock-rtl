@@ -256,6 +256,42 @@ br_verilog_sim_test_tools_suite(
 )
 
 verilog_library(
+    name = "br_fifo_flops_unstable_tb",
+    srcs = ["br_fifo_flops_unstable_tb.sv"],
+    deps = [
+        "//fifo/rtl:br_fifo_flops_unstable",
+        "//misc/sim:br_test_driver",
+    ],
+)
+
+verilog_elab_test(
+    name = "br_fifo_flops_unstable_tb_elab_test",
+    tool = "slang",
+    deps = [":br_fifo_flops_unstable_tb"],
+)
+
+br_verilog_sim_test_tools_suite(
+    name = "br_fifo_flops_unstable_sim_test_tools_suite",
+    params = {
+        "Depth": [
+            "3",
+            "13",
+        ],
+        "Width": ["8"],
+        "RegisterPopOutputs": [
+            "0",
+            "1",
+        ],
+        "FlopRamAddressDepthStages": [
+            "0",
+            "1",
+        ],
+    },
+    tools = ["vcs"],
+    deps = [":br_fifo_flops_unstable_tb"],
+)
+
+verilog_library(
     name = "br_fifo_flops_push_credit_tb",
     srcs = ["br_fifo_flops_push_credit_tb.sv"],
     deps = [
