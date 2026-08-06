@@ -40,7 +40,7 @@ verilog_elab_test(
 
 Slang parses, type-checks, and elaborates the hierarchy. It supports source and header dependencies, defines, and top-level parameter overrides. For package-only source sets, set `compile_only = True`.
 
-Slang lint fully elaborates the design and treats every warning as an error using `bazel/slang_lint_policy.f`. Keep intentional waivers next to the affected RTL and restore the prior diagnostic state:
+Slang lint fully elaborates the design and treats every warning as an error using the top-level `slang_lint_policy.f`. Keep intentional waivers next to the affected RTL and restore the prior diagnostic state:
 
 ```systemverilog
 // slang lint_save
@@ -49,7 +49,7 @@ logic intentionally_unused;
 // slang lint_restore
 ```
 
-Use `lint_restore` rather than `lint_on`: restoring the saved state also restores the policy's warning-as-error severity.
+Use `lint_restore` rather than `lint_on`: restoring the saved state also restores the policy's warning-as-error severity. Pre-commit rejects waivers that are not enclosed by a matching `lint_save` and `lint_restore`.
 
 To refresh the public RTL PPA report, run:
 
