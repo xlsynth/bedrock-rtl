@@ -7,6 +7,8 @@ load("//stitch:launcher.bzl", "xls_dso_launcher")
 
 package(default_visibility = ["//visibility:public"])
 
+exports_files(["topstitch_zero_width.patch"])
+
 cc_library(
     name = "xls_lib",
     visibility = ["//visibility:public"],

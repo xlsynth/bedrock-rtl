@@ -70,6 +70,23 @@ RUST_TARGET_TRIPLES = [
 ]
 
 bedrock_stitch_crate = use_extension("@rules_rust//crate_universe:extension.bzl", "crate")
+
+# TopStitch 0.96 requires the upstream Slang 11 AST compatibility implementation.
+bedrock_stitch_crate.annotation(
+    crate = "slang-rs",
+    override_target_lib = "@bedrock_stitch//:slang-rs",
+    repositories = ["bedrock_stitch"],
+    version = "0.21.0",
+)
+
+# Ensure zero-valued parameters still emit legal, nonzero-width SV literals.
+bedrock_stitch_crate.annotation(
+    crate = "topstitch",
+    patch_args = ["-p1"],
+    patches = ["//stitch:topstitch_zero_width.patch"],
+    repositories = ["bedrock_stitch"],
+    version = "0.96.0",
+)
 bedrock_stitch_crate.from_cargo(
     name = "bedrock_stitch",
     cargo_lockfile = "//stitch:Cargo.lock",
