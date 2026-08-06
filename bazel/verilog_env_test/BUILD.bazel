@@ -47,6 +47,33 @@ rule_verilog_lint_test(
     deps = [":design"],
 )
 
+rule_verilog_lint_test(
+    name = "slang_lint_with_default_policy",
+    tool = "slang",
+    verilog_runner_data = [],
+    verilog_runner_env = ":runner_env.sh",
+    verilog_runner_plugins = _VERILOG_RUNNER_PLUGINS,
+    verilog_runner_tool = ":fake_verilog_runner.py",
+    deps = [":design"],
+)
+
+write_file(
+    name = "custom_lint_policy",
+    out = "custom_lint_policy.f",
+    content = ["-Werror"],
+)
+
+rule_verilog_lint_test(
+    name = "slang_lint_with_custom_policy",
+    policy = ":custom_lint_policy",
+    tool = "slang",
+    verilog_runner_data = [],
+    verilog_runner_env = ":runner_env.sh",
+    verilog_runner_plugins = _VERILOG_RUNNER_PLUGINS,
+    verilog_runner_tool = ":fake_verilog_runner.py",
+    deps = [":design"],
+)
+
 rule_verilog_sim_test(
     name = "sim_with_env",
     tool = "fake",
@@ -169,6 +196,8 @@ verilog_env_analysis_test_suite(
     direct_target = ":elab_with_env",
     fpv_sandbox_target = ":fpv_sandbox_with_env",
     omitted_target = ":elab_without_env",
+    slang_custom_policy_target = ":slang_lint_with_custom_policy",
+    slang_default_policy_target = ":slang_lint_with_default_policy",
 )
 
 test_suite(
@@ -181,6 +210,8 @@ test_suite(
         ":fpv_with_env",
         ":lint_with_env",
         ":sim_with_env",
+        ":slang_lint_with_custom_policy",
+        ":slang_lint_with_default_policy",
         ":synth_sandbox_contents_test",
         ":synth_with_env_test",
         ":verilog_env_analysis_tests",

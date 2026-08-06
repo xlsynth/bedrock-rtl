@@ -45,6 +45,7 @@ target
 
 # filelists
 *.f
+!bazel/slang_lint_policy.f
 
 # physical design files
 *.lef

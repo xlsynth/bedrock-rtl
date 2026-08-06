@@ -42,7 +42,30 @@ def _fpv_generator_inputs_test_impl(ctx):
 
 fpv_generator_inputs_test = analysistest.make(_fpv_generator_inputs_test_impl)
 
-def verilog_env_analysis_test_suite(name, direct_target, fpv_sandbox_target, omitted_target):
+def _slang_default_policy_runfiles_test_impl(ctx):
+    env = analysistest.begin(ctx)
+    runfiles = analysistest.target_under_test(env)[DefaultInfo].default_runfiles.files.to_list()
+    asserts.true(env, _has_basename(runfiles, "slang_lint_policy.f"))
+    return analysistest.end(env)
+
+slang_default_policy_runfiles_test = analysistest.make(_slang_default_policy_runfiles_test_impl)
+
+def _slang_custom_policy_runfiles_test_impl(ctx):
+    env = analysistest.begin(ctx)
+    runfiles = analysistest.target_under_test(env)[DefaultInfo].default_runfiles.files.to_list()
+    asserts.true(env, _has_basename(runfiles, "custom_lint_policy.f"))
+    asserts.false(env, _has_basename(runfiles, "slang_lint_policy.f"))
+    return analysistest.end(env)
+
+slang_custom_policy_runfiles_test = analysistest.make(_slang_custom_policy_runfiles_test_impl)
+
+def verilog_env_analysis_test_suite(
+        name,
+        direct_target,
+        fpv_sandbox_target,
+        omitted_target,
+        slang_custom_policy_target,
+        slang_default_policy_target):
     """Instantiates analysis tests for Verilog Runner environment wiring."""
     direct_runfiles_test(
         name = name + "_direct_runfiles",
@@ -56,11 +79,21 @@ def verilog_env_analysis_test_suite(name, direct_target, fpv_sandbox_target, omi
         name = name + "_fpv_generator_inputs",
         target_under_test = fpv_sandbox_target,
     )
+    slang_custom_policy_runfiles_test(
+        name = name + "_slang_custom_policy_runfiles",
+        target_under_test = slang_custom_policy_target,
+    )
+    slang_default_policy_runfiles_test(
+        name = name + "_slang_default_policy_runfiles",
+        target_under_test = slang_default_policy_target,
+    )
     native.test_suite(
         name = name,
         tests = [
             name + "_direct_runfiles",
             name + "_fpv_generator_inputs",
             name + "_omitted_runfiles",
+            name + "_slang_custom_policy_runfiles",
+            name + "_slang_default_policy_runfiles",
         ],
     )
