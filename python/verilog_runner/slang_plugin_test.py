@@ -62,14 +62,14 @@ class SlangPluginTest(unittest.TestCase):
             SlangLint,
             top="design",
             filelist="design.f",
-            policy="bazel/slang_lint_policy.f",
+            policy="slang_lint_policy.f",
             scriptfile="run.sh",
         )
 
         command = plugin.cmd()
 
         self.assertIn("--top design", command)
-        self.assertIn("-F bazel/slang_lint_policy.f", command)
+        self.assertIn("-F slang_lint_policy.f", command)
         self.assertNotIn("--lint-only", command)
         self.assertNotIn("--disable-analysis", command)
 

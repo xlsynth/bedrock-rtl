@@ -9,8 +9,6 @@ load("//bazel:verilog.bzl", "runner_flags")
 
 package(default_visibility = ["//visibility:public"])
 
-exports_files(["slang_lint_policy.f"])
-
 bzl_library(
     name = "rules_hdl_providers",
     srcs = ["@rules_hdl//verilog:providers.bzl"],

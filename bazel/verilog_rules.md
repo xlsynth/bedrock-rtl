@@ -196,7 +196,7 @@ Tests that a Verilog or SystemVerilog design passes a set of static lint checks.
 | <a id="rule_verilog_lint_test-custom_tcl_header"></a>custom_tcl_header |  Tcl script file containing custom tool-specific commands to insert at the beginning of the generated tcl script.The tcl header (custom or not) is unconditionally followed by analysis and elaborate commands, and then the tcl body.Do not include Tcl commands that manipulate sources, headers, defines, or parameters, as those will be handled by the rule implementation.   | <a href="https://bazel.build/concepts/labels">Label</a> | optional |  `None`  |
 | <a id="rule_verilog_lint_test-defines"></a>defines |  Preprocessor defines to pass to the Verilog compiler.   | List of strings | optional |  `[]`  |
 | <a id="rule_verilog_lint_test-params"></a>params |  Verilog module parameters to set in the instantiation of the top-level module.   | <a href="https://bazel.build/rules/lib/core/dict">Dictionary: String -> String</a> | optional |  `{}`  |
-| <a id="rule_verilog_lint_test-policy"></a>policy |  The lint policy file to use. Slang defaults to the repository-owned strict warning policy; other tools use their existing default policy.   | <a href="https://bazel.build/concepts/labels">Label</a> | optional |  `None`  |
+| <a id="rule_verilog_lint_test-policy"></a>policy |  The lint policy file to use. If not provided, then the default tool policy is used (typically provided through an environment variable).   | <a href="https://bazel.build/concepts/labels">Label</a> | optional |  `None`  |
 | <a id="rule_verilog_lint_test-runner_flags"></a>runner_flags |  command line flags   | <a href="https://bazel.build/concepts/labels">Label</a> | optional |  `"@bedrock-rtl//bazel:runner_flags"`  |
 | <a id="rule_verilog_lint_test-tool"></a>tool |  Lint tool to use.   | String | required |  |
 | <a id="rule_verilog_lint_test-top"></a>top |  The top-level module; if not provided and there exists one dependency, then defaults to that dep's label name.   | String | optional |  `""`  |
@@ -567,7 +567,7 @@ True if the combination is legal, False if it is illegal.
 load("@bedrock-rtl//bazel:verilog.bzl", "verilog_elab_and_lint_test_suite")
 
 verilog_elab_and_lint_test_suite(<a href="#verilog_elab_and_lint_test_suite-name">name</a>, <a href="#verilog_elab_and_lint_test_suite-top">top</a>, <a href="#verilog_elab_and_lint_test_suite-deps">deps</a>, <a href="#verilog_elab_and_lint_test_suite-defines">defines</a>, <a href="#verilog_elab_and_lint_test_suite-params">params</a>, <a href="#verilog_elab_and_lint_test_suite-include_default_params">include_default_params</a>,
-                                 <a href="#verilog_elab_and_lint_test_suite-elab_tools">elab_tools</a>, <a href="#verilog_elab_and_lint_test_suite-lint_tool">lint_tool</a>, <a href="#verilog_elab_and_lint_test_suite-disable_lint_rules">disable_lint_rules</a>, <a href="#verilog_elab_and_lint_test_suite-lint_tools">lint_tools</a>, <a href="#verilog_elab_and_lint_test_suite-kwargs">**kwargs</a>)
+                                 <a href="#verilog_elab_and_lint_test_suite-elab_tools">elab_tools</a>, <a href="#verilog_elab_and_lint_test_suite-lint_tools">lint_tools</a>, <a href="#verilog_elab_and_lint_test_suite-disable_lint_rules">disable_lint_rules</a>, <a href="#verilog_elab_and_lint_test_suite-kwargs">**kwargs</a>)
 </pre>
 
 Creates a suite of Verilog elaboration and lint tests for each combination of the provided parameters.
@@ -575,9 +575,8 @@ Creates a suite of Verilog elaboration and lint tests for each combination of th
 The function generates a wrapper containing one instance for every combination of the provided parameters and,
 by default, one instance with the module's default parameters. Set include_default_params to False when another
 sweep already covers the defaults or the defaults are intentionally invalid. It creates one verilog_elab_test
-for each elaboration tool and one verilog_lint_test for each lint tool. Elaboration test names append the tool
-name followed by "_elab_test". The first lint target appends "_lint_test"; additional lint targets append
-the tool name followed by "_lint_test".
+for each elaboration tool and one verilog_lint_test for each lint tool. Test names append the tool name
+followed by "_elab_test" or "_lint_test", respectively.
 
 
 **PARAMETERS**
@@ -592,9 +591,8 @@ the tool name followed by "_lint_test".
 | <a id="verilog_elab_and_lint_test_suite-params"></a>params |  A dictionary where keys are parameter names and values are lists of possible values for those parameters.   |  `{}` |
 | <a id="verilog_elab_and_lint_test_suite-include_default_params"></a>include_default_params |  Whether to include an instance with the module's default parameters.   |  `True` |
 | <a id="verilog_elab_and_lint_test_suite-elab_tools"></a>elab_tools |  The tools to use for elaboration. Defaults to Verific and Slang.   |  `["verific", "slang"]` |
-| <a id="verilog_elab_and_lint_test_suite-lint_tool"></a>lint_tool |  Legacy single lint tool. Defaults to AscentLint when lint_tools is not provided.   |  `None` |
+| <a id="verilog_elab_and_lint_test_suite-lint_tools"></a>lint_tools |  The tools to use for lint. Defaults to AscentLint.   |  `["ascentlint"]` |
 | <a id="verilog_elab_and_lint_test_suite-disable_lint_rules"></a>disable_lint_rules |  A list of lint rules to disable in the generated files.   |  `[]` |
-| <a id="verilog_elab_and_lint_test_suite-lint_tools"></a>lint_tools |  Ordered lint tools. Cannot be combined with lint_tool.   |  `None` |
 | <a id="verilog_elab_and_lint_test_suite-kwargs"></a>kwargs |  Additional common keyword arguments to be passed to the verilog_elab_test and verilog_lint_test functions.   |  none |
 
 
