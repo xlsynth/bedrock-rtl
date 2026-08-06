@@ -339,35 +339,6 @@ names, connect them directly:
 `BR_FLOW_CONNECT_INDEX(upstream, UpstreamLane, downstream, DownstreamLane)
 ```
 
-### Rules and limitations
-
-
-- Flow names and port prefixes must be bare identifiers because the macros form signal and port
-  names by token pasting.
-- Array counts must be positive constant expressions such as `1 << LogNumFlows`. Arrays add a
-  packed `[count-1:0]` lane dimension with lane 0 as the least-significant lane. Payloads may be
-  packed vectors, packed structs, or inline packed types such as `logic [31:0]`;
-  `<flow>_data[index]` or `<flow>_data_unstable[index]` selects one complete payload.
-- `_INDEX` helpers support elaboration-time constant expressions, including genvar arithmetic such
-  as `NumFlows - 1 - i`; runtime routing remains explicit RTL.
-- Use whole-flow binds for scalars or complete arrays. Use `_INDEX` to bind one lane; expressions
-  such as `flow[index]` cannot replace the flow-name argument.
-- Declaration and connect macros include their semicolons, fire macros are expressions, and bind
-  macros omit the trailing comma. Add a comma after any bind that is not last in a port list, and
-  invoke declaration and connect macros without another semicolon.
-- Verible may report `module-port` before a bind macro expands. If that rule is enabled, place one
-  local `// verilog_lint: waive module-port` immediately before the first port connection in the
-  affected instantiation.
-- Whole-array connects require equal lane counts; connected data payloads must be
-  assignment-compatible. Connect macros are direct assignments, so they do not prevent ready loops
-  or multiple drivers. Wrap a connect used as a generate body in a named `begin`/`end` block because
-  it expands to multiple assignments.
-- Cross-contract boundaries remain explicit. For data flows, `br_flow_reg_fwd_unstable` adapts an
-  unstable source to a stable sink.
-- Sidebands, multidimensional flow arrays, part-selects, concatenations, and differing lane mappings
-  for ready, valid, and data remain explicit.
-
-
 ## `br_fv.svh`: Formal Verification Helpers
 
 
