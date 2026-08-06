@@ -13,7 +13,7 @@ from typing import Iterable
 
 SCHEMA_VERSION = 1
 PASSING_TESTS_RE = re.compile(r"(\d+) tests? pass(?:es)?")
-SUITES = ("python", "stardoc", "slang", "verilator", "coverage")
+SUITES = ("python", "stardoc", "slang_elab", "slang_lint", "verilator", "coverage")
 BUILD_SUITES = frozenset({"coverage"})
 
 
@@ -290,6 +290,14 @@ def aggregate_results(
     )
     if unknown_suites:
         errors.append(f"unexpected suites: {unknown_suites}")
+
+    if "slang_elab" in outputs and "slang_lint" in outputs:
+        slang_suites = (outputs["slang_elab"], outputs["slang_lint"])
+        outputs["slang"] = {
+            "total_tests": sum(suite["total_tests"] for suite in slang_suites),
+            "passing_tests": sum(suite["passing_tests"] for suite in slang_suites),
+            "exit_code": max(suite["exit_code"] for suite in slang_suites),
+        }
     return outputs, errors, summary_rows
 
 
@@ -397,7 +405,7 @@ def command_aggregate(args: argparse.Namespace) -> int:
     expected = parse_expected_shards(args.expected)
     outputs, errors, rows = aggregate_results(args.results_dir, expected)
     with args.github_output.open("a", encoding="utf-8") as output:
-        for suite in SUITES:
+        for suite in SUITES + ("slang",):
             for field in ("total_tests", "passing_tests", "exit_code"):
                 output.write(f"{suite}_{field}={outputs[suite][field]}\n")
     with args.step_summary.open("a", encoding="utf-8") as summary:
