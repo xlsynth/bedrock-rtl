@@ -262,7 +262,7 @@ module br_fifo_staging_buffer #(
     assign internal_pop_valid =
         buffer_fwd_valid ||
         ram_rd_data_valid ||
-        bypass_beat && !has_inflight_read;
+        (bypass_beat && !has_inflight_read);
     assign internal_pop_data = buffer_fwd_valid ? buffer_data : push_data;
 
     // The buffer is written to if
@@ -336,7 +336,10 @@ module br_fifo_staging_buffer #(
     logic ptr_match;
     logic empty;
     // only used for assertion
+    // slang lint_save
+    // slang lint_off unused-but-set-variable
     logic full;  // ri lint_check_waive NOT_READ HIER_NET_NOT_READ
+    // slang lint_restore
     logic advance_wr_ptr;
     logic advance_rd_ptr;
 

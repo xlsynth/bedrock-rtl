@@ -61,12 +61,15 @@ module br_ram_flops_tile #(
     input logic [NumWritePorts-1:0][ NumWords-1:0] wr_word_en,
 
     // Used only for assertions.
+    // slang lint_save
+    // slang lint_off unused-port
     // ri lint_check_waive INPUT_NOT_READ HIER_NET_NOT_READ HIER_BRANCH_NOT_READ
     input  logic                                   rd_clk,
     // Synchronous active-high reset.
     // Read reset is only used for assertions.
     // ri lint_check_waive INPUT_NOT_READ HIER_NET_NOT_READ HIER_BRANCH_NOT_READ
     input  logic                                   rd_rst,
+    // slang lint_restore
     input  logic [NumReadPorts-1:0]                rd_addr_valid,
     // ri lint_check_waive FANOUT_LIMIT
     input  logic [NumReadPorts-1:0][AddrWidth-1:0] rd_addr,
@@ -438,7 +441,7 @@ module br_ram_flops_tile #(
   //------------------------------------------
   // Implementation checks
   //------------------------------------------
-  `BR_ASSERT_CR_IMPL(zero_read_latency_A, rd_addr_valid |-> rd_data_valid, rd_clk, rd_rst)
+  `BR_ASSERT_CR_IMPL(zero_read_latency_A, (|rd_addr_valid) |-> (|rd_data_valid), rd_clk, rd_rst)
 `ifdef BR_ASSERT_ON
 `ifdef BR_ENABLE_IMPL_CHECKS
   if (EnableBypass) begin : gen_bypass_impl_checks

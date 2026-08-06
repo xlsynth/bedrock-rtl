@@ -24,6 +24,9 @@ def br_verilog_elab_and_lint_test_suite(name, **kwargs):
     if "defines" in kwargs:
         fail("Do not pass defines to br_verilog_elab_and_lint_test_suite. They are hard-coded in the macro.")
 
+    if "lint_tool" not in kwargs and "lint_tools" not in kwargs:
+        kwargs["lint_tools"] = ["ascentlint", "slang"]
+
     verilog_elab_and_lint_test_suite(
         name = name,
         defines = ["BR_ASSERT_ON"],
