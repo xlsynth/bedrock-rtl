@@ -65,7 +65,7 @@ module br_shift_rotate #(
     // This is modulo by a constant, which shouldn't be that expensive.
     // TODO(zhemao): Figure out a way to efficiently implement this.
     // ri lint_check_waive MODULUS
-    assign real_rotate = rotate % NumSymbols;
+    assign real_rotate = RealRotateWidth'(rotate % NumSymbols);
   end else begin : gen_real_rotate_no_modulo
     assign real_rotate = RealRotateWidth'(rotate);
   end

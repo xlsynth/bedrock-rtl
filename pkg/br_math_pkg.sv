@@ -46,7 +46,7 @@ package br_math;
   // Returns 1 if the value is even, 0 otherwise.
   // ri lint_check_waive TWO_STATE_TYPE
   function automatic bit is_even(input int value);
-    return (value & 1'b1) == 0;
+    return (value & 1) == 0;
   endfunction
 
   // ceil(log_base(x)) using change-of-base formula. base must be a power-of-2.

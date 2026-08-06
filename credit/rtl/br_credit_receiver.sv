@@ -272,7 +272,7 @@ module br_credit_receiver #(
     `BR_ASSERT_IMPL(over_withhold_a,
                     credit_withhold > (credit_count + pop_credit) |-> !push_credit_internal)
     `BR_ASSERT_IMPL(withhold_and_release_a,
-                    credit_count == credit_withhold && push_credit_internal |-> pop_credit)
+                    credit_count == credit_withhold && (|push_credit_internal) |-> (|pop_credit))
   end
 
   `BR_ASSERT_IMPL(push_credit_in_range_a, push_credit <= PushCreditMaxChange)
