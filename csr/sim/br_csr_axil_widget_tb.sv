@@ -371,6 +371,24 @@ module br_csr_axil_widget_tb;
     @(posedge clk);
     while (!csr_req_abort) @(posedge clk);
 
+    $display("Checking disabled watchdog resets the second timeout period");
+    td.wait_cycles(3);
+    timeout_enable = 0;
+    timeout_cycles = 2;
+    repeat (WatchdogDisabledCheckCycles) begin
+      @(posedge clk);
+      td.check(!request_aborted, "Unexpected request abort while watchdog is disabled");
+      td.check(!axil_rvalid, "Unexpected AXI-Lite response while watchdog is disabled");
+    end
+
+    @(negedge clk);
+    timeout_enable = 1;
+    repeat (2) begin
+      @(posedge clk);
+      td.check(!request_aborted, "Watchdog resumed instead of restarting");
+      td.check(!axil_rvalid, "Unexpected AXI-Lite response before watchdog restarts");
+    end
+
     fork
       // Wait for the error response
       wait_axil_read_response(br_amba::AxiRespSlverr, 32'h00000000);

@@ -51,6 +51,7 @@
 // Changing `timeout_cycles` while a request is active is permitted. If it's changed to a value below the
 // current count, the timer will expire immediately.
 // Setting timeout_cycles to 0 or deasserting timeout_enable disables the watchdog timer.
+// Disabling the watchdog resets its timer, so re-enabling starts a new timeout period.
 //
 // SCB leaf nodes that always respond in a bounded timeframe are allowed to
 // simply ignore the abort signal. Otherwise, they must handle the abort signal
@@ -243,11 +244,13 @@ module br_csr_axil_widget #(
   assign timeout_en = timeout_enable && (timeout_cycles != '0);
   assign timer_active = timeout_en && (wd_state == Active || wd_state == Expired);
   assign timer_expired = timer_count >= timeout_cycles;
-  assign timer_reset = (timer_active && timer_expired) || request_aborted_int || csr_resp_valid;
+  assign timer_reset =
+      !timeout_en || (timer_active && timer_expired) || request_aborted_int || csr_resp_valid;
 
   assign timeout_resp_valid = (wd_state == Aborted);
   assign csr_req_abort_int = timeout_en && (wd_state == Active) && timer_expired && !csr_resp_valid;
-  assign request_aborted_int = (wd_state == Expired) && timer_expired && !csr_resp_valid;
+  assign request_aborted_int =
+      timeout_en && (wd_state == Expired) && timer_expired && !csr_resp_valid;
 
   if (RegisterCsrRequestOutputs) begin : gen_reg_csr_req_out
     `BR_REG(csr_req_abort, csr_req_abort_int)
@@ -290,7 +293,7 @@ module br_csr_axil_widget #(
       Expired: begin
         if (csr_resp_valid) begin
           wd_state_next = Idle;
-        end else if (timer_expired) begin
+        end else if (timeout_en && timer_expired) begin
           wd_state_next = Aborted;
         end
       end
