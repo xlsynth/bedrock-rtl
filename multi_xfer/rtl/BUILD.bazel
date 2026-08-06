@@ -64,6 +64,37 @@ br_verilog_elab_and_lint_test_suite(
 )
 
 verilog_library(
+    name = "br_multi_xfer_distributor_fixed",
+    srcs = ["br_multi_xfer_distributor_fixed.sv"],
+    deps = [
+        "//arb/rtl:br_arb_multi_fixed",
+        "//multi_xfer/rtl/internal:br_multi_xfer_distributor_core",
+    ],
+)
+
+br_verilog_elab_and_lint_test_suite(
+    name = "br_multi_xfer_distributor_fixed_test_suite",
+    params = {
+        "NumSymbols": [
+            "2",
+            "3",
+        ],
+        "NumFlows": [
+            "3",
+            "4",
+        ],
+        "SymbolWidth": [
+            "1",
+            "3",
+            "8",
+        ],
+    },
+    deps = [
+        ":br_multi_xfer_distributor_fixed",
+    ],
+)
+
+verilog_library(
     name = "br_multi_xfer_distributor_rr",
     srcs = ["br_multi_xfer_distributor_rr.sv"],
     deps = [
@@ -75,9 +106,9 @@ verilog_library(
 br_verilog_synth_suite(
     name = "br_multi_xfer_distributor_rr_standard_ppa",
     params = {
-        "NumFlows": ["4"],
-        "NumSymbols": ["2"],
-        "SymbolWidth": ["32"],
+        "numflows": ["4"],
+        "numsymbols": ["2"],
+        "symbolwidth": ["32"],
     },
     deps = [":br_multi_xfer_distributor_rr"],
 )
@@ -85,9 +116,9 @@ br_verilog_synth_suite(
 br_verilog_synth_suite(
     name = "br_multi_xfer_distributor_rr_scaled_ppa",
     params = {
-        "NumFlows": ["8"],
-        "NumSymbols": ["4"],
-        "SymbolWidth": ["32"],
+        "numflows": ["8"],
+        "numsymbols": ["4"],
+        "symbolwidth": ["32"],
     },
     deps = [":br_multi_xfer_distributor_rr"],
 )
@@ -95,9 +126,9 @@ br_verilog_synth_suite(
 br_verilog_synth_suite(
     name = "br_multi_xfer_distributor_rr_wide_ppa",
     params = {
-        "NumFlows": ["16"],
-        "NumSymbols": ["4"],
-        "SymbolWidth": ["64"],
+        "numflows": ["16"],
+        "numsymbols": ["4"],
+        "symbolwidth": ["64"],
     },
     deps = [":br_multi_xfer_distributor_rr"],
 )
@@ -105,15 +136,15 @@ br_verilog_synth_suite(
 br_verilog_elab_and_lint_test_suite(
     name = "br_multi_xfer_distributor_rr_test_suite",
     params = {
-        "NumSymbols": [
+        "numsymbols": [
             "2",
             "3",
         ],
-        "NumFlows": [
+        "numflows": [
             "3",
             "4",
         ],
-        "SymbolWidth": [
+        "symbolwidth": [
             "1",
             "3",
             "8",
