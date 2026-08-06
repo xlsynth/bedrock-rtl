@@ -3,7 +3,7 @@
 load("@bazel_skylib//rules:write_file.bzl", "write_file")
 load("@rules_hdl//verilog:providers.bzl", "verilog_library")
 load("@rules_shell//shell:sh_test.bzl", "sh_test")
-load("//bazel:verilog.bzl", "rule_verilog_elab_test", "rule_verilog_fpv_sandbox", "rule_verilog_fpv_test", "rule_verilog_lint_test", "rule_verilog_sim_test", "rule_verilog_synth", "rule_verilog_synth_sandbox")
+load("//bazel:verilog.bzl", "rule_verilog_elab_test", "rule_verilog_fpv_sandbox", "rule_verilog_fpv_test", "rule_verilog_lint_test", "rule_verilog_sim_test", "rule_verilog_synth", "rule_verilog_synth_sandbox", "verilog_lint_test")
 load(":verilog_env_analysis_test.bzl", "verilog_env_analysis_test_suite")
 
 _VERILOG_RUNNER_PLUGINS = [
@@ -47,7 +47,7 @@ rule_verilog_lint_test(
     deps = [":design"],
 )
 
-rule_verilog_lint_test(
+verilog_lint_test(
     name = "slang_lint_with_default_policy",
     tool = "slang",
     verilog_runner_data = [],
@@ -63,7 +63,7 @@ write_file(
     content = ["-Werror"],
 )
 
-rule_verilog_lint_test(
+verilog_lint_test(
     name = "slang_lint_with_custom_policy",
     policy = ":custom_lint_policy",
     tool = "slang",

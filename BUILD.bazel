@@ -4,6 +4,11 @@ load("@python_versions//3.12:defs.bzl", compile_pip_requirements_3_12 = "compile
 load("@rules_python//python:defs.bzl", "py_test")
 load("//bazel:verilog.bzl", "verilog_sim_coverage_aggregate")
 
+exports_files(
+    ["slang_lint_policy.f"],
+    visibility = ["//visibility:public"],
+)
+
 compile_pip_requirements_3_12(
     name = "requirements_3_12",
     src = "requirements_3_12.in",
