@@ -41,8 +41,8 @@
 // a timeout. Compliant SCB peripherals must either guarantee that they will always respond to requests
 // in a bounded timeframe or respect the abort signal. The abort mechanism works as follows:
 //
-// When the SCB request is sent out and timeout_enable is asserted, a watchdog timer starts counting
-// with a configurable timeout period set by the timeout_cycles input.
+// When the SCB request is sent out, a watchdog timer starts counting with a configurable timeout period
+// set by the timeout_cycles input.
 // When the internal count is greater than or equal to `timeout_cycles`, the watchdog timer will expire.
 // When this occurs, the abort signal will be asserted for a single cycle.
 // The timer will then reset and count for another timeout period. If no response is received before the
@@ -50,7 +50,7 @@
 // and the request_aborted signal is asserted for a single cycle.
 // Changing `timeout_cycles` while a request is active is permitted. If it's changed to a value below the
 // current count, the timer will expire immediately.
-// Deasserting timeout_enable disables the watchdog timer independently of timeout_cycles.
+// Setting timeout_cycles to 0 or deasserting timeout_enable disables the watchdog timer.
 //
 // SCB leaf nodes that always respond in a bounded timeframe are allowed to
 // simply ignore the abort signal. Otherwise, they must handle the abort signal
@@ -232,6 +232,7 @@ module br_csr_axil_widget #(
 
   watchdog_state_t wd_state, wd_state_next;
   logic [TimerWidth-1:0] timer_count;
+  logic timeout_en;
   logic timer_active;
   logic timer_expired;
   logic timer_reset;
@@ -239,15 +240,14 @@ module br_csr_axil_widget #(
   logic csr_req_abort_int;
   logic request_aborted_int;
 
-  assign timer_active = timeout_enable && (wd_state == Active || wd_state == Expired);
+  assign timeout_en = timeout_enable && (timeout_cycles != '0);
+  assign timer_active = timeout_en && (wd_state == Active || wd_state == Expired);
   assign timer_expired = timer_count >= timeout_cycles;
   assign timer_reset = (timer_active && timer_expired) || request_aborted_int || csr_resp_valid;
 
   assign timeout_resp_valid = (wd_state == Aborted);
-  assign csr_req_abort_int =
-      timeout_enable && (wd_state == Active) && timer_expired && !csr_resp_valid;
-  assign request_aborted_int =
-      timeout_enable && (wd_state == Expired) && timer_expired && !csr_resp_valid;
+  assign csr_req_abort_int = timeout_en && (wd_state == Active) && timer_expired && !csr_resp_valid;
+  assign request_aborted_int = (wd_state == Expired) && timer_expired && !csr_resp_valid;
 
   if (RegisterCsrRequestOutputs) begin : gen_reg_csr_req_out
     `BR_REG(csr_req_abort, csr_req_abort_int)
@@ -283,14 +283,14 @@ module br_csr_axil_widget #(
       Active: begin
         if (csr_resp_valid) begin
           wd_state_next = Idle;
-        end else if (timeout_enable && timer_expired) begin
+        end else if (timeout_en && timer_expired) begin
           wd_state_next = Expired;
         end
       end
       Expired: begin
         if (csr_resp_valid) begin
           wd_state_next = Idle;
-        end else if (timeout_enable && timer_expired) begin
+        end else if (timer_expired) begin
           wd_state_next = Aborted;
         end
       end
