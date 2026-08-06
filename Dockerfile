@@ -166,7 +166,7 @@ RUN git clone https://github.com/SRI-CSL/yices2.git && \
 
 # Install Slang. Make sure to tell it to use clang,
 # because our gcc install in this image is too old for C++20 language features.
-# Latest upstream Slang, pinned for a reproducible build.
+# Post-v11.0 upstream Slang commit, pinned for a reproducible build.
 RUN git clone https://github.com/MikePopoloski/slang.git && \
     cd slang && \
     git checkout d69e89069834a07e0fe9518bd33e343b514e7007 && \

@@ -9,7 +9,7 @@ use std::str::FromStr;
 use clap::Args;
 use num_bigint::BigInt;
 use serde::{Deserialize, Serialize};
-use topstitch::ModDef;
+use topstitch::{EmitOptions, ModDef};
 
 use crate::common;
 
@@ -127,7 +127,7 @@ pub fn instantiate_main(
             .expect("Failed to write lint off comment");
     }
 
-    let sv_body = inst_mod.emit(true);
+    let sv_body = inst_mod.emit(EmitOptions::default());
     write!(out_file, "{sv_body}").expect("Failed to write module body");
 
     for rule in args.disable_lint_rules.iter().rev() {
