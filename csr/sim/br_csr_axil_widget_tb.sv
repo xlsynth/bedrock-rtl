@@ -51,6 +51,7 @@ module br_csr_axil_widget_tb;
   logic csr_resp_slverr;
   logic csr_resp_decerr;
 
+  logic timeout_enable;
   logic [TimerWidth-1:0] timeout_cycles;
   logic request_aborted;
 
@@ -94,6 +95,7 @@ module br_csr_axil_widget_tb;
       .csr_resp_rdata,
       .csr_resp_slverr,
       .csr_resp_decerr,
+      .timeout_enable,
       .timeout_cycles,
       .request_aborted
   );
@@ -251,6 +253,30 @@ module br_csr_axil_widget_tb;
     axil_bready = 0;
   endtask
 
+  task automatic wait_csr_abort;
+    int timeout = 0;
+
+    @(posedge clk);
+    while (!csr_req_abort && timeout < TimeoutCycles) begin
+      @(posedge clk);
+      timeout++;
+    end
+
+    td.check(timeout < TimeoutCycles, "Timeout waiting for CSR abort");
+  endtask
+
+  task automatic wait_request_aborted;
+    int timeout = 0;
+
+    @(posedge clk);
+    while (!request_aborted && timeout < TimeoutCycles) begin
+      @(posedge clk);
+      timeout++;
+    end
+
+    td.check(timeout < TimeoutCycles, "Timeout waiting for request abort");
+  endtask
+
   initial begin
     axil_awvalid = 0;
     axil_awaddr = 0;
@@ -267,6 +293,7 @@ module br_csr_axil_widget_tb;
     csr_resp_rdata = 0;
     csr_resp_slverr = 0;
     csr_resp_decerr = 0;
+    timeout_enable = 1;
     timeout_cycles = TimeoutCycles;
 
     td.reset_dut();
@@ -337,8 +364,9 @@ module br_csr_axil_widget_tb;
     join
 
     // Keep a request pending for multiple cycles with the watchdog disabled.
-    $display("Checking timeout_cycles=0 disables the watchdog");
-    timeout_cycles = '0;
+    $display("Checking timeout_enable=0 disables the watchdog with a nonzero timeout");
+    timeout_enable = 0;
+    timeout_cycles = 5;
     fork
       send_axil_read(16'h0048, 3'b000);
       wait_csr_read(16'h0048, 1'b0, 1'b1);
@@ -358,19 +386,30 @@ module br_csr_axil_widget_tb;
 
     // Test timeout mechanism
     // Set a short timeout period
+    timeout_enable = 1;
     timeout_cycles = 10;
 
     send_axil_read(16'h0038, 3'b000);
 
     // Wait for the abort signal to be asserted
-    @(posedge clk);
-    while (!csr_req_abort) @(posedge clk);
+    wait_csr_abort();
+
+    $display("Checking timeout_enable=0 pauses the second watchdog period");
+    @(negedge clk);
+    timeout_enable = 0;
+    repeat (WatchdogDisabledCheckCycles) begin
+      @(posedge clk);
+      td.check(!request_aborted, "Unexpected request abort while the watchdog is paused");
+      td.check(!axil_rvalid, "Unexpected AXI-Lite response while the watchdog is paused");
+    end
+    @(negedge clk);
+    timeout_enable = 1;
 
     fork
       // Wait for the error response
       wait_axil_read_response(br_amba::AxiRespSlverr, 32'h00000000);
       // Wait for the request_aborted signal to be asserted
-      while (!request_aborted) @(posedge clk);
+      wait_request_aborted();
     join
 
     td.wait_cycles(2);

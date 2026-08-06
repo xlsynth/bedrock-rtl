@@ -51,6 +51,7 @@ module br_csr_axil_widget_fpv_monitor #(
     input logic                 csr_resp_slverr,
     input logic                 csr_resp_decerr,
 
+    input logic                  timeout_enable,
     input logic [TimerWidth-1:0] timeout_cycles,
     input logic                  request_aborted
 );
@@ -144,9 +145,9 @@ module br_csr_axil_widget_fpv_monitor #(
   w_t csr_write_data;
   logic [br_amba::AxiRespWidth-1:0] csr_resp;
   logic [TimerWidth:0] timer;
-  logic timeout_en;
   logic timer_expired;
   logic first_timeout;
+  logic second_timeout;
 
   always_ff @(posedge clk) begin
     if (rst) begin
@@ -179,14 +180,15 @@ module br_csr_axil_widget_fpv_monitor #(
   always_ff @(posedge clk) begin
     if (rst | csr_req_abort | csr_resp_valid | request_aborted) begin
       timer <= 1'b0;
-    end else if (csr_write_req_pending && timeout_en) begin
+    end else if (csr_write_req_pending && timeout_enable) begin
       timer <= timer + 1'b1;
     end
   end
-  assign timeout_en = timeout_cycles != '0;
   assign timer_expired = timer >= timeout_cycles;
   assign first_timeout =
-      csr_req_pending && !csr_req_aborting && timeout_en && timer_expired && !csr_resp_valid;
+      csr_req_pending && !csr_req_aborting && timeout_enable && timer_expired && !csr_resp_valid;
+  assign second_timeout =
+      csr_req_pending && csr_req_aborting && timeout_enable && timer_expired && !csr_resp_valid;
 
   assign csr_write_req = '{
           addr: axil_awaddr,
@@ -220,9 +222,7 @@ module br_csr_axil_widget_fpv_monitor #(
   `BR_ASSERT(no_deadlock_r_a,
              csr_resp_valid && !csr_write_req_pending |-> s_eventually axil_rvalid);
   `BR_ASSERT(csr_req_1st_timeout_a, first_timeout |-> csr_req_abort);
-  `BR_ASSERT(
-      csr_req_2nd_timeout_a,
-      csr_req_pending && csr_req_aborting && timer_expired && !csr_resp_valid |-> request_aborted);
+  `BR_ASSERT(csr_req_2nd_timeout_a, second_timeout |-> request_aborted);
 
   jasper_scoreboard_3 #(
       .CHUNK_WIDTH($bits(araw_req_t)),
