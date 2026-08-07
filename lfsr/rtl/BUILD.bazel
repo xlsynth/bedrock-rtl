@@ -6,6 +6,11 @@ load("//bazel:verilog.bzl", "verilog_elab_test")
 
 package(default_visibility = ["//visibility:public"])
 
+filegroup(
+    name = "srcs",
+    srcs = glob(["*.sv"]),
+)
+
 verilog_library(
     name = "br_lfsr",
     srcs = ["br_lfsr.sv"],

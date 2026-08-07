@@ -5,6 +5,11 @@ load("//bazel:br_verilog.bzl", "br_verilog_elab_and_lint_test_suite", "br_verilo
 
 package(default_visibility = ["//visibility:public"])
 
+filegroup(
+    name = "srcs",
+    srcs = glob(["*.sv"]) + ["//flow/rtl/internal:srcs"],
+)
+
 verilog_library(
     name = "br_flow_arb_fixed",
     srcs = ["br_flow_arb_fixed.sv"],
@@ -77,6 +82,17 @@ verilog_library(
 )
 
 verilog_library(
+    name = "br_flow_fork_lockstep",
+    srcs = ["br_flow_fork_lockstep.sv"],
+    deps = [
+        "//flow/rtl/internal:br_flow_checks_valid_data_impl",
+        "//flow/rtl/internal:br_flow_checks_valid_data_intg",
+        "//macros:br_asserts_internal",
+        "//macros:br_unused",
+    ],
+)
+
+verilog_library(
     name = "br_flow_join",
     srcs = ["br_flow_join.sv"],
     deps = [
@@ -91,6 +107,17 @@ verilog_library(
         "//flow/rtl/internal:br_flow_checks_valid_data_impl",
         "//flow/rtl/internal:br_flow_checks_valid_data_intg",
         "//macros:br_asserts_internal",
+    ],
+)
+
+verilog_library(
+    name = "br_flow_join_lockstep",
+    srcs = ["br_flow_join_lockstep.sv"],
+    deps = [
+        "//flow/rtl/internal:br_flow_checks_valid_data_impl",
+        "//flow/rtl/internal:br_flow_checks_valid_data_intg",
+        "//macros:br_asserts_internal",
+        "//macros:br_unused",
     ],
 )
 
@@ -887,6 +914,18 @@ br_verilog_elab_and_lint_test_suite(
 )
 
 br_verilog_elab_and_lint_test_suite(
+    name = "br_flow_fork_lockstep_test_suite",
+    params = {
+        "NumFlows": [
+            "1",
+            "2",
+            "3",
+        ],
+    },
+    deps = [":br_flow_fork_lockstep"],
+)
+
+br_verilog_elab_and_lint_test_suite(
     name = "br_flow_join_test_suite",
     params = {
         "NumFlows": [
@@ -912,6 +951,18 @@ br_verilog_elab_and_lint_test_suite(
         ],
     },
     deps = [":br_flow_join_select_multihot"],
+)
+
+br_verilog_elab_and_lint_test_suite(
+    name = "br_flow_join_lockstep_test_suite",
+    params = {
+        "NumFlows": [
+            "1",
+            "2",
+            "3",
+        ],
+    },
+    deps = [":br_flow_join_lockstep"],
 )
 
 br_verilog_elab_and_lint_test_suite(
@@ -1428,4 +1479,62 @@ br_verilog_elab_and_lint_test_suite(
         ],
     },
     deps = [":br_flow_xbar_lru"],
+)
+
+verilog_library(
+    name = "br_flow_mux_weighted_rr",
+    srcs = ["br_flow_mux_weighted_rr.sv"],
+    deps = [
+        "//arb/rtl:br_arb_weighted_rr",
+        "//flow/rtl/internal:br_flow_mux_core",
+    ],
+)
+
+br_verilog_elab_and_lint_test_suite(
+    name = "br_flow_mux_weighted_rr_test_suite",
+    params = {
+        "NumFlows": [
+            "1",
+            "2",
+            "3",
+        ],
+        "Width": [
+            "1",
+            "2",
+        ],
+        "MaxWeight": [
+            "1",
+            "2",
+        ],
+    },
+    deps = [":br_flow_mux_weighted_rr"],
+)
+
+verilog_library(
+    name = "br_flow_mux_weighted_lru",
+    srcs = ["br_flow_mux_weighted_lru.sv"],
+    deps = [
+        "//arb/rtl:br_arb_weighted_lru",
+        "//flow/rtl/internal:br_flow_mux_core",
+    ],
+)
+
+br_verilog_elab_and_lint_test_suite(
+    name = "br_flow_mux_weighted_lru_test_suite",
+    params = {
+        "NumFlows": [
+            "1",
+            "2",
+            "3",
+        ],
+        "Width": [
+            "1",
+            "2",
+        ],
+        "MaxWeight": [
+            "1",
+            "2",
+        ],
+    },
+    deps = [":br_flow_mux_weighted_lru"],
 )

@@ -1,5 +1,6 @@
 # SPDX-License-Identifier: Apache-2.0
 
+load("@bedrock-rtl-pypi//:requirements.bzl", "requirement")
 load("@rules_python//python:defs.bzl", "py_binary", "py_library", "py_test")
 
 package(default_visibility = ["//visibility:public"])
@@ -67,4 +68,12 @@ py_test(
     name = "cli_test",
     srcs = ["cli_test.py"],
     deps = [":cli"],
+)
+
+py_binary(
+    name = "info_process",
+    main_module = "info_process",
+    deps = [
+        requirement("info_process"),
+    ],
 )

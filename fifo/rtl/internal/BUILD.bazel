@@ -9,6 +9,11 @@ package(default_visibility = [
     "//fifo/rtl:__subpackages__",
 ])
 
+filegroup(
+    name = "srcs",
+    srcs = glob(["*.sv"]),
+)
+
 verilog_library(
     name = "br_fifo_push_ctrl_core",
     srcs = ["br_fifo_push_ctrl_core.sv"],

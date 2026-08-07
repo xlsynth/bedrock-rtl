@@ -24,8 +24,8 @@
 module br_fifo_shared_pop_ctrl #(
     // Number of read ports. Must be >=1 and a power of 2.
     parameter int NumReadPorts = 1,
-    // Number of logical FIFOs. Must be >=1.
-    parameter int NumFifos = 1,
+    // Number of logical FIFOs. Must be >=2.
+    parameter int NumFifos = 2,
     // Total depth of the FIFO.
     // Must be greater than two times the number of write ports.
     parameter int Depth = 2,
@@ -44,8 +44,14 @@ module br_fifo_shared_pop_ctrl #(
     parameter bit RegisterDeallocation = 0,
     // If 1, allow bypass from the push side to the pop controller.
     parameter bit EnableBypass = 0,
+    // If 1, cover issuing a RAM read when an earlier read returns.
+    parameter bit EnableCoverSameCycleReadIssueAndReturn = 1,
+    // If 1, cover accepting bypass data when RAM read data returns.
+    parameter bit EnableCoverBypassAndReadDataSameCycle = 1,
     // The number of cycles between data ram read address and read data. Must be >=0.
     parameter int RamReadLatency = 0,
+    // If 1, assert that valid push data is always known (not X).
+    parameter bit EnableAssertPushDataKnown = 1,
 
     localparam int AddrWidth  = $clog2(Depth),
     localparam int CountWidth = $clog2(Depth + 1)
@@ -92,7 +98,10 @@ module br_fifo_shared_pop_ctrl #(
       .RegisterPopOutputs(RegisterPopOutputs),
       .RegisterDeallocation(RegisterDeallocation),
       .EnableBypass(EnableBypass),
-      .RamReadLatency(RamReadLatency)
+      .EnableCoverSameCycleReadIssueAndReturn(EnableCoverSameCycleReadIssueAndReturn),
+      .EnableCoverBypassAndReadDataSameCycle(EnableCoverBypassAndReadDataSameCycle),
+      .RamReadLatency(RamReadLatency),
+      .EnableAssertPushDataKnown(EnableAssertPushDataKnown)
   ) br_fifo_shared_pop_ctrl_ext_arbiter (
       .clk,
       .rst,

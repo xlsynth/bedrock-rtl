@@ -12,7 +12,7 @@ common --action_env=VERILOG_RUNNER_EDA_TOOLS_ENV_SETUP=""
 #     common --action_env=VERILOG_RUNNER_PLUGIN_PATH=<some_paths>
 #
 #   Otherwise, tests will fail due to missing elab, lint, sim, fpv plugins.
-#   See //python/verilog_runner/README.adoc.
+#   See //python/verilog_runner/README.md.
 #
 # The environment variable must be set to some string even if it's empty.
 common --action_env=VERILOG_RUNNER_PLUGIN_PATH=""

@@ -25,7 +25,7 @@ module br_csr_mem_interface #(
     // Depth of the backing memory. Must be at least 1 and <= (2 ** CsrAddrWidth) / (MemWidth / 8).
     parameter int MemDepth = 1,
     // Width of the backing memory. Must be <= CsrDataWidth, >= 8, and a power of 2.
-    parameter int MemWidth = 1,
+    parameter int MemWidth = 8,
     // If 1, register the downstream memory request interfaces
     // at the cost of an extra cycle of latency.
     parameter bit RegisterMemOutputs = 0,

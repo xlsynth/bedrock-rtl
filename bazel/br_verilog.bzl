@@ -76,20 +76,31 @@ def br_verilog_sim_test_suite(name, tool, defines = None, elab_opts = [], sim_op
         **kwargs
     )
 
-def br_verilog_sim_test_tools_suite(name, tools = [], **kwargs):
+def br_verilog_sim_test_tools_suite(name, tools = [], coverage = None, **kwargs):
     """Wraps br_verilog_sim_test_suite with multiple simulation tools.
 
     Args:
         name (str): The base name of the test suite.
         tools (list of strings): simulator tools to use.
+        coverage (bool or None): If true, gathers coverage data from all tests in the test suite.
+            If None, the coverage will be enabled if Verilator is used.
         **kwargs: Additional keyword arguments passed to br_verilog_sim_test_suite.
     """
+    if coverage and "verilator" not in tools:
+        fail("coverage = True is currently supported only by Verilator.")
+
+    if coverage == None and "verilator" in tools and not kwargs.get("elab_only", False):
+        coverage = True
 
     for tool in tools:
+        tool_kwargs = {}
+        tool_kwargs.update(kwargs)
+        tool_kwargs["coverage"] = coverage and tool == "verilator"
+
         br_verilog_sim_test_suite(
             name = name + "_" + tool,
             tool = tool,
-            **kwargs
+            **tool_kwargs
         )
 
 def br_verilog_synth_suite(

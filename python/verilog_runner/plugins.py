@@ -107,7 +107,11 @@ def collect_plugin_files(plugin_dirs: List[str]) -> List[str]:
             logging.warning(f"{directory} is not a directory. Skipping.")
         else:
             for filename in os.listdir(directory):
-                if filename.endswith(".py") and not filename.startswith("__"):
+                if (
+                    filename.endswith(".py")
+                    and not filename.startswith("__")
+                    and not filename.endswith("check_env.py")
+                ):
                     file_path = os.path.join(directory, filename)
                     plugin_files.append(file_path)
     return plugin_files

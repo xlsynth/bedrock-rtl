@@ -1,0 +1,41 @@
+# SPDX-License-Identifier: Apache-2.0
+
+load("@bedrock-rtl-pypi//:requirements.bzl", "requirement")
+load("@rules_python//python:defs.bzl", "py_binary", "py_library")
+load("@rules_shell//shell:sh_binary.bzl", "sh_binary")
+
+package(default_visibility = ["//visibility:public"])
+
+py_library(
+    name = "utils",
+    srcs = ["utils.py"],
+)
+
+py_binary(
+    name = "generate_testplan",
+    srcs = ["generate_testplan.py"],
+    deps = [":utils"],
+)
+
+py_binary(
+    name = "generate_testreport",
+    srcs = ["generate_testreport.py"],
+    deps = [":utils"],
+)
+
+sh_binary(
+    name = "generate_test_summary",
+    srcs = ["generate_test_summary.sh"],
+    data = [
+        ":generate_testplan",
+        ":generate_testreport",
+    ],
+)
+
+py_binary(
+    name = "testplanner",
+    main_module = "testplanner",
+    deps = [
+        requirement("testplanner"),
+    ],
+)

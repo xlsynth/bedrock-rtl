@@ -240,7 +240,8 @@ module br_fifo_shared_dynamic_ctrl #(
       .StagingBufferDepth(StagingBufferDepth),
       .RamReadLatency(DataRamReadLatency),
       .RegisterDeallocation(RegisterDeallocation),
-      .RegisterPopOutputs(RegisterPopOutputs)
+      .RegisterPopOutputs(RegisterPopOutputs),
+      .EnableAssertPushDataKnown(EnableAssertPushDataKnown)
   ) br_fifo_shared_pop_ctrl_inst (
       .clk,
       .rst(rst),

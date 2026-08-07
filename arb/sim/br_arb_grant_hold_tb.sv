@@ -82,8 +82,6 @@ module br_arb_grant_hold_tb;
     enable_grant_hold_update = 1'b0;  // Reset value for enable_grant_hold_update
 
     // Wiggling the reset signal.
-    rst = 1'bx;  // Setting to undefined before asserting
-    #RESET_DURATION;
     rst = 1'b1;  // Assuming active high reset
     #RESET_DURATION;
     rst = 1'b0;  // Inactive value for reset

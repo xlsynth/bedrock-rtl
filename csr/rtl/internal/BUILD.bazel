@@ -5,6 +5,11 @@ load("//bazel:br_verilog.bzl", "br_verilog_elab_and_lint_test_suite")
 
 package(default_visibility = ["//visibility:public"])
 
+filegroup(
+    name = "srcs",
+    srcs = glob(["*.sv"]),
+)
+
 verilog_library(
     name = "br_csr_request_reg",
     srcs = ["br_csr_request_reg.sv"],

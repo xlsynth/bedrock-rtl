@@ -5,6 +5,11 @@ load("//bazel:br_verilog.bzl", "br_verilog_elab_and_lint_test_suite", "br_verilo
 
 package(default_visibility = ["//visibility:public"])
 
+filegroup(
+    name = "srcs",
+    srcs = glob(["*.sv"]) + ["//csr/rtl/internal:srcs"],
+)
+
 verilog_library(
     name = "br_csr_axil_widget",
     srcs = ["br_csr_axil_widget.sv"],
@@ -68,6 +73,44 @@ br_verilog_elab_and_lint_test_suite(
         ],
     },
     deps = [":br_csr_axil_widget"],
+)
+
+verilog_library(
+    name = "br_csr_default_responder",
+    srcs = ["br_csr_default_responder.sv"],
+    deps = [
+        "//csr/rtl/internal:br_csr_checks_intg",
+        "//macros:br_asserts_internal",
+        "//macros:br_registers",
+        "//macros:br_unused",
+    ],
+)
+
+br_verilog_synth_suite(
+    name = "br_csr_default_responder_ppa",
+    params = {
+        "AddrWidth": ["16"],
+        "DataWidth": [
+            "32",
+            "64",
+        ],
+    },
+    deps = [":br_csr_default_responder"],
+)
+
+br_verilog_elab_and_lint_test_suite(
+    name = "br_csr_default_responder_test_suite",
+    params = {
+        "AddrWidth": [
+            "1",
+            "16",
+        ],
+        "DataWidth": [
+            "32",
+            "64",
+        ],
+    },
+    deps = [":br_csr_default_responder"],
 )
 
 verilog_library(
@@ -136,6 +179,7 @@ verilog_library(
     srcs = ["br_csr_demux.sv"],
     deps = [
         ":br_csr_demux_select_onehot",
+        "//demux/rtl:br_demux_addr_decode",
         "//macros:br_asserts_internal",
     ],
 )

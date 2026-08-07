@@ -87,8 +87,6 @@ module br_arb_fixed_tb;
     cb_clk.request <= 'h0;
 
     // Wiggling the reset signal.
-    rst = 1'bx;
-    #RESET_DURATION;
     rst = 1'b1;
     #RESET_DURATION;
     rst = 1'b0;

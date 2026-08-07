@@ -7,7 +7,7 @@ description: Write or update one Bedrock-RTL SystemVerilog simulation testbench 
 
 ## Workflow
 
-1. Read the repo instructions first: `README.adoc`, local `AGENTS.md` if present, the DUT RTL, the nearest `sim/BUILD.bazel`, and 1-3 similar benches in neighboring directories.
+1. Read the repo instructions first: `README.md`, local `AGENTS.md` if present, the DUT RTL, the nearest `sim/BUILD.bazel`, and 1-3 similar benches in neighboring directories.
 2. Choose a bench shape that matches the DUT:
    - Combinational datapath: exhaustive or directed procedural sweeps with a reference function.
    - Single-clock state/protocol: scenario tasks plus a small scoreboard and timeout.
@@ -19,7 +19,8 @@ description: Write or update one Bedrock-RTL SystemVerilog simulation testbench 
    - Share small helpers only when they make each bench easier to read; accept modest duplication over preprocessor or generic-harness complexity.
 4. Add a `*_tb.sv` module and a `BUILD.bazel` entry. Expose a testbench parameter only when changing it changes stimulus or expected coverage; otherwise make it a `localparam`. Sweep important parameters from Bazel using string values.
 5. Keep VCS as the minimum simulator target; include Verilator when the bench and dependent RTL work with it.
-6. Run formatting/lint, the narrowest relevant elaboration and simulation targets, the area simulation regression, and `python/sim_tb_coverage_inventory.py` when adding direct DUT coverage. If EDA tools are unavailable, at least verify labels/deps with `bazel query` or report that simulation could not be run.
+6. When a new or edited suite includes Verilator, add every generated `*_verilator_coverage` target to the nearest same-package `verilog_sim_coverage_aggregate.coverage_reports`. Mirror the suite naming directly; for loop-generated suites, use a matching list comprehension instead of spelling out stale copies by hand.
+7. Run formatting/lint, the narrowest relevant elaboration and simulation targets, the area simulation regression, and `python/sim_tb_coverage_inventory.py` when adding direct DUT coverage. If EDA tools are unavailable, at least verify labels/deps with `bazel query` or report that simulation could not be run.
 
 Read `references/repo-patterns.md` when you need concrete examples, a BUILD skeleton, or simulator compatibility notes.
 
@@ -57,6 +58,7 @@ Use `verilog_library` for the bench, `verilog_elab_test(tool = "verific")` when 
 - Set `top = "..."` when the top cannot be inferred from a single dep or when extra mock deps are present.
 - Use `params = {"Param": ["value0", "value1"]}` for sweeps. Keep sweeps representative, not exhaustive; formal handles broad coverage.
 - Keep `br_verilog_sim_test_tools_suite` when its generated simulation defines are needed, even for a single tool. Split VCS and Verilator suites only when one tool needs scoped options or waivers.
+- If `tools` includes `"verilator"`, the suite generates a local `:<suite_name>_verilator_coverage` target. Append that label to the module directory's `verilog_sim_coverage_aggregate(coverage_reports = [...])` in the same `BUILD.bazel`; create the aggregate only if the package does not already have one. Keep existing local ordering and use comprehensions for parameterized suite names.
 - Name direct benches and generated sim targets with the DUT stem, normally `br_<dut>_tb` and `br_<dut>_sim_test_tools_suite`, so `python/sim_tb_coverage_inventory.py` recognizes them. Update the inventory's explicit composite aliases only for an intentional shared bench.
 - Use `sim_opts` for plusargs and `tags = ["no-sandbox"]` only when the test needs preserved outputs or follows an existing local pattern.
 
@@ -71,5 +73,6 @@ Check these before finalizing a new or edited bench:
 - The selected tool list matches the constructs used by the bench and dependent assertions.
 - Every simulator waiver has a narrow scope and a comment naming the RTL root cause.
 - The Bazel deps include the DUT, helper modules, mocks, packages, and macros needed by the testbench.
+- Every generated `*_verilator_coverage` target from the new or edited suite is reachable through the same directory's coverage aggregate. A repo-level sanity check is `bazel query 'filter("_verilator_coverage$", //...:*) except deps(//:br_verilator_coverage)' --output=label`; new labels from the bench must not appear in that output.
 - The direct-bench target name is visible to `python/sim_tb_coverage_inventory.py`.
 - New RTL-like helper modules follow repository reset/clock conventions and include static parameter checks where applicable.

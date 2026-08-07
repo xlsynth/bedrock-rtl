@@ -2,7 +2,7 @@
 
 load("@rules_hdl//verilog:providers.bzl", "verilog_library")
 load("//bazel:br_verilog.bzl", "br_verilog_sim_test_tools_suite")
-load("//bazel:verilog.bzl", "verilog_elab_test")
+load("//bazel:verilog.bzl", "verilog_elab_test", "verilog_sim_coverage_aggregate")
 
 package(default_visibility = ["//visibility:private"])
 
@@ -104,4 +104,14 @@ br_verilog_sim_test_tools_suite(
         "verilator",
     ],
     deps = [":br_shift_left_tb"],
+)
+
+verilog_sim_coverage_aggregate(
+    name = "br_shift_verilator_coverage",
+    coverage_reports = [
+        ":br_shift_rotate_sim_test_tools_suite_verilator_coverage",
+        ":br_shift_right_sim_test_tools_suite_verilator_coverage",
+        ":br_shift_left_sim_test_tools_suite_verilator_coverage",
+    ],
+    visibility = ["//:__pkg__"],
 )

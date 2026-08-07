@@ -197,6 +197,7 @@ module br_fifo_ctrl_1r1w #(
       .RegisterPopOutputs(RegisterPopOutputs),
       .RamDepth(RamDepth),
       .RamReadLatency(RamReadLatency),
+      .EnableAssertPushDataKnown(EnableAssertPushDataKnown),
       .EnableAssertFinalNotValid(EnableAssertFinalNotValid)
   ) br_fifo_pop_ctrl (
       .clk,

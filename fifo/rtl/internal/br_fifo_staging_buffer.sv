@@ -32,9 +32,17 @@ module br_fifo_staging_buffer #(
     // If 0, total_items represents just the number of items in the RAM
     // and excludes those in this staging buffer or inflight from the RAM.
     parameter bit TotalItemsIncludesStaged = 1,
+    // If 1, assert that valid push data is always known (not X).
+    parameter bit EnableAssertPushDataKnown = 1,
     // If 1, then assert there are no valid bits asserted and that the FIFO is
     // empty at the end of the test.
     parameter bit EnableAssertFinalNotValid = 1,
+    // If 1, cover issuing a RAM read when an earlier read returns.
+    // Otherwise, assert that these events never occur together.
+    parameter bit EnableCoverSameCycleReadIssueAndReturn = 1,
+    // If 1, cover accepting bypass data when RAM read data returns.
+    // Otherwise, assert that these events never occur together.
+    parameter bit EnableCoverBypassAndReadDataSameCycle = 1,
 
     localparam int TotalCountWidth  = $clog2(TotalDepth + 1),
     localparam int BufferCountWidth = $clog2(BufferDepth + 1)
@@ -225,7 +233,8 @@ module br_fifo_staging_buffer #(
         .MaxValue(MaxReadInflight),
         .EnableWrap(0),
         .EnableCoverReinit(0),
-        .EnableCoverZeroChange(0)
+        .EnableCoverZeroChange(0),
+        .EnableCoverIncrementAndDecrement(EnableCoverSameCycleReadIssueAndReturn)
     ) br_counter_read_inflight (
         .clk,
         .rst,
@@ -283,7 +292,8 @@ module br_fifo_staging_buffer #(
     `BR_REGL(buffer_data, buffer_data_next, buffer_data_le)
     `BR_REGL(buffer_bypass, bypass_beat, buffer_data_le)
 
-    if (EnableBypass && RamReadLatency > 0) begin : gen_no_double_push_overflow_assert
+    if (EnableBypass && RamReadLatency > 0 &&
+        EnableCoverBypassAndReadDataSameCycle) begin : gen_no_double_push_overflow_assert
       `BR_ASSERT_IMPL(no_double_push_overflow_a,
                       (ram_rd_data_valid && bypass_beat) |-> (!buffer_valid && internal_pop_ready))
     end
@@ -459,8 +469,12 @@ module br_fifo_staging_buffer #(
       // For bypass data, we can only do direct bypass when the buffer is empty
       assign internal_pop_valid = head_valid || ram_rd_data_valid || (empty && bypass_beat);
       assign internal_pop_data = head_valid ? mem_rd_data : push_data;
+      // If RAM read data bypasses an invalid buffer head, check that its delayed
+      // allocation address matches the current read pointer.
+      // Use a Boolean expression instead of an implication because its precondition
+      // is unreachable in some configurations.
       `BR_ASSERT_IMPL(rd_data_to_pop_correct_address_a,
-                      (!head_valid && ram_rd_data_valid) |-> (wr_ptr_onehot_d == rd_ptr_onehot))
+                      head_valid || !ram_rd_data_valid || (wr_ptr_onehot_d == rd_ptr_onehot))
 
       // Only advance the read pointer if the write pointer was advanced
       // to provide the data currently being consumed.
@@ -505,6 +519,7 @@ module br_fifo_staging_buffer #(
         // we can't get backpressure, since we would only allow
         // bypass or send a read if the flow reg is empty or being popped.
         .EnableCoverPushBackpressure(InternalDepth > 0),
+        .EnableAssertPushDataKnown(EnableAssertPushDataKnown),
         .EnableAssertFinalNotValid(EnableAssertFinalNotValid)
     ) br_flow_reg_fwd (
         .clk,
@@ -530,8 +545,9 @@ module br_fifo_staging_buffer #(
 
   // Implementation Checks
   if (EnableBypass) begin : gen_bypass_impl_checks
-    // TODO(zhemao): Figure out the correct condition for enabling this cover
-    localparam bit SimultaneousBypassAndReadDataPossible = RamReadLatency > 0;
+    // A returning RAM read and bypass beat require separate internal storage.
+    localparam bit SimultaneousBypassAndReadDataPossible =
+        EnableCoverBypassAndReadDataSameCycle && (RamReadLatency > 0) && (InternalDepth > 0);
     `BR_ASSERT_IMPL(no_alloc_hazard_a, !(ram_rd_addr_beat && bypass_beat))
     if (SimultaneousBypassAndReadDataPossible) begin : gen_bypass_and_read_same_cycle_cover
       `BR_COVER_IMPL(bypass_and_rd_data_same_cycle_c, bypass_beat && ram_rd_data_valid)

@@ -5,6 +5,11 @@ load("//bazel:br_verilog.bzl", "br_verilog_elab_and_lint_test_suite", "br_verilo
 
 package(default_visibility = ["//visibility:public"])
 
+filegroup(
+    name = "srcs",
+    srcs = glob(["*.sv"]),
+)
+
 verilog_library(
     name = "br_shift_rotate",
     srcs = ["br_shift_rotate.sv"],

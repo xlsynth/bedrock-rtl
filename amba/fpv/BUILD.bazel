@@ -472,3 +472,171 @@ br_verilog_fpv_test_tools_suite(
     top = "br_amba_axi_shrinker",
     deps = [":br_amba_axi_shrinker_fpv_monitor"],
 )
+
+# Bedrock-RTL AXI4-Lite Write Arbiter
+
+verilog_library(
+    name = "br_amba_axil_write_arbiter_fpv_monitor",
+    srcs = ["br_amba_axil_write_arbiter_fpv_monitor.sv"],
+    deps = [
+        "//amba/rtl:br_amba_axil_write_arbiter",
+        "//fpv/lib:fv_fifo",
+    ],
+)
+
+verilog_elab_test(
+    name = "br_amba_axil_write_arbiter_fpv_monitor_elab_test",
+    opts = ["--ignore-unknown-modules"],
+    tool = "slang",
+    deps = [":br_amba_axil_write_arbiter_fpv_monitor"],
+)
+
+br_verilog_fpv_test_tools_suite(
+    name = "br_amba_axil_write_arbiter_test_suite",
+    params = {
+        "MaxOutstandingWrites": [
+            "1",
+            "2",
+        ],
+        "NumInitiators": [
+            "2",
+            "3",
+        ],
+    },
+    tools = {
+        "jg": "br_amba_axil_write_arbiter_fpv.jg.tcl",
+    },
+    top = "br_amba_axil_write_arbiter",
+    deps = [":br_amba_axil_write_arbiter_fpv_monitor"],
+)
+
+# Bedrock-RTL APB Demux Select-Onehot
+
+verilog_library(
+    name = "br_apb_demux_select_onehot_fpv_monitor",
+    srcs = ["br_apb_demux_select_onehot_fpv_monitor.sv"],
+    deps = [
+        "//amba/rtl:br_apb_demux_select_onehot",
+    ],
+)
+
+verilog_elab_test(
+    name = "br_apb_demux_select_onehot_fpv_monitor_elab_test",
+    opts = ["--ignore-unknown-modules"],
+    tool = "slang",
+    top = "br_apb_demux_select_onehot_fpv_monitor",
+    deps = [":br_apb_demux_select_onehot_fpv_monitor"],
+)
+
+# Single-downstream case checks degenerate routing with no retiming.
+br_verilog_fpv_test_tools_suite(
+    name = "br_apb_demux_select_onehot_num_downstream1",
+    elab_opts = [
+        "-parameter NumDownstreams 1",
+        "-parameter NumRetimeStages '\"'\"'{0}",
+    ],
+    tools = {
+        "jg": "br_apb_demux_select_onehot_fpv.jg.tcl",
+    },
+    top = "br_apb_demux_select_onehot",
+    deps = [":br_apb_demux_select_onehot_fpv_monitor"],
+)
+
+# Three-downstream case checks mixed retiming across selected routes.
+br_verilog_fpv_test_tools_suite(
+    name = "br_apb_demux_select_onehot_num_downstream3",
+    elab_opts = [
+        "-parameter NumDownstreams 3",
+        "-parameter NumRetimeStages '\"'\"'{0,1,2}",
+    ],
+    tools = {
+        "jg": "br_apb_demux_select_onehot_fpv.jg.tcl",
+    },
+    top = "br_apb_demux_select_onehot",
+    deps = [":br_apb_demux_select_onehot_fpv_monitor"],
+)
+
+# Four-downstream case checks wider routing with uneven retiming.
+br_verilog_fpv_test_tools_suite(
+    name = "br_apb_demux_select_onehot_num_downstream4",
+    elab_opts = [
+        "-parameter NumDownstreams 4",
+        "-parameter NumRetimeStages '\"'\"'{0,1,2,3}",
+    ],
+    tools = {
+        "jg": "br_apb_demux_select_onehot_fpv.jg.tcl",
+    },
+    top = "br_apb_demux_select_onehot",
+    deps = [":br_apb_demux_select_onehot_fpv_monitor"],
+)
+
+# Bedrock-RTL Address-Decoding APB Demux
+
+verilog_library(
+    name = "br_apb_demux_fpv_monitor",
+    srcs = ["br_apb_demux_fpv_monitor.sv"],
+    deps = [
+        "//amba/rtl:br_apb_demux",
+    ],
+)
+
+verilog_elab_test(
+    name = "br_apb_demux_fpv_monitor_elab_test",
+    opts = ["--ignore-unknown-modules"],
+    tool = "slang",
+    top = "br_apb_demux_fpv_monitor",
+    deps = [":br_apb_demux_fpv_monitor"],
+)
+
+# No-default case checks explicit decode, normalization, masking, and local miss errors.
+br_verilog_fpv_test_tools_suite(
+    name = "br_apb_demux_no_default",
+    elab_opts = [
+        "-parameter NumDownstreams 2",
+        "-parameter HasDefaultDownstream 0",
+        "-parameter NumRetimeStages '\"'\"'{1,0}",
+        "-parameter RequirePowerOfTwoAlignedRanges '\"'\"'{1,0}",
+        "-parameter NormalizeDownstreamAddress '\"'\"'{1,0}",
+        "-parameter UpstreamAddrMask 4094",
+        "-parameter DownstreamAddrMask '\"'\"'{2047,4095}",
+    ],
+    tools = {
+        "jg": "br_apb_demux_fpv.jg.tcl",
+    },
+    top = "br_apb_demux",
+    deps = [":br_apb_demux_fpv_monitor"],
+)
+
+# Default case checks explicit and default decode with normalization and masking.
+br_verilog_fpv_test_tools_suite(
+    name = "br_apb_demux_with_default",
+    elab_opts = [
+        "-parameter NumDownstreams 2",
+        "-parameter HasDefaultDownstream 1",
+        "-parameter NumRetimeStages '\"'\"'{0,0}",
+        "-parameter RequirePowerOfTwoAlignedRanges '\"'\"'{1}",
+        "-parameter NormalizeDownstreamAddress '\"'\"'{1}",
+        "-parameter UpstreamAddrMask 4093",
+        "-parameter DownstreamAddrMask '\"'\"'{2047,4095}",
+    ],
+    tools = {
+        "jg": "br_apb_demux_fpv.jg.tcl",
+    },
+    top = "br_apb_demux",
+    deps = [":br_apb_demux_fpv_monitor"],
+)
+
+# Disabled decode-error case requires a selected route and checks the alternate response mux.
+br_verilog_fpv_test_tools_suite(
+    name = "br_apb_demux_select_onehot_no_decode_error",
+    elab_opts = [
+        "-parameter NumDownstreams 2",
+        "-parameter EnableDecodeError 0",
+        "-parameter NumRetimeStages '\"'\"'{0,1}",
+    ],
+    tools = {
+        "jg": "br_apb_demux_select_onehot_fpv.jg.tcl",
+    },
+    top = "br_apb_demux_select_onehot",
+    deps = [":br_apb_demux_select_onehot_fpv_monitor"],
+)

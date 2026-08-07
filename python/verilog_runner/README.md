@@ -1,10 +1,13 @@
-= Verilog Runner
+# Verilog Runner
+
 
 Verilog Runner is a command-line tool designed to facilitate the execution of Verilog and SystemVerilog tests. It supports various subcommands for elaboration, linting, simulation, and formal property verification, and is extensible through plugins.
 
-NOTE: We use this as the backend implementation for several Bazel rules such as `rule_verilog_elab_test`, `rule_verilog_lint_test`, `rule_verilog_sim_test`, and `rule_verilog_fpv_test`.
+> **Note:** We use this as the backend implementation for several Bazel rules such as `rule_verilog_elab_test`, `rule_verilog_lint_test`, `rule_verilog_sim_test`, and `rule_verilog_fpv_test`.
 
-== Features
+
+## Features
+
 
 - **Elaboration**: Static elaboration of Verilog designs.
 - **Linting**: Code linting to ensure adherence to coding standards.
@@ -12,28 +15,30 @@ NOTE: We use this as the backend implementation for several Bazel rules such as 
 - **Formal Property Verification**: Verification of formal properties using supported tools.
 - **Plugin Support**: Easily extendable with custom plugins for different EDA tools.
 
-== Usage
+## Usage
+
 
 Ensure you have Python 3.12 or later installed. You can then run the tool directly from the command line.
 
-[source,bash]
-----
+```bash
 python3 verilog_runner.py --help
-----
+```
 
-== Plugins
+
+## Plugins
+
 
 Verilog Runner uses a plugin architecture to support a variety of EDA tools. To create a plugin, implement the `EdaTool` abstract base class and specify the `subcommand` and `tool_name` attributes.
 
 For example:
 
-[source,python]
-----
+```python
 class MyCustomElaborationTool(EdaTool):
     subcommand = Elab
     tool_name = "mycustomtool"
     # Implement the abstract methods of EdaTool
-----
+```
+
 
 Verilog Runner discovers plugins by searching for Python modules in the directories specified by the `VERILOG_RUNNER_PLUGIN_PATH` environment variable.
 The syntax of the environment variable is the same as the `PYTHONPATH` environment variable (a colon-separated list of directories).

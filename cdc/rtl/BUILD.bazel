@@ -5,6 +5,11 @@ load("//bazel:br_verilog.bzl", "br_verilog_elab_and_lint_test_suite", "br_verilo
 
 package(default_visibility = ["//visibility:public"])
 
+filegroup(
+    name = "srcs",
+    srcs = glob(["*.sv"]) + ["//cdc/rtl/internal:srcs"],
+)
+
 verilog_library(
     name = "br_cdc_pkg",
     srcs = ["br_cdc_pkg.sv"],
@@ -291,6 +296,7 @@ verilog_library(
         ":br_cdc_bit_toggle",
         "//cdc/rtl/internal:br_cdc_reg_pop",
         "//cdc/rtl/internal:br_cdc_reg_push",
+        "//macros:br_gates",
     ],
 )
 
