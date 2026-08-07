@@ -51,6 +51,7 @@ module br_csr_axil_widget_tb;
   logic csr_resp_slverr;
   logic csr_resp_decerr;
 
+  logic timeout_enable;
   logic [TimerWidth-1:0] timeout_cycles;
   logic request_aborted;
 
@@ -94,6 +95,7 @@ module br_csr_axil_widget_tb;
       .csr_resp_rdata,
       .csr_resp_slverr,
       .csr_resp_decerr,
+      .timeout_enable,
       .timeout_cycles,
       .request_aborted
   );
@@ -267,6 +269,7 @@ module br_csr_axil_widget_tb;
     csr_resp_rdata = 0;
     csr_resp_slverr = 0;
     csr_resp_decerr = 0;
+    timeout_enable = 1;
     timeout_cycles = TimeoutCycles;
 
     td.reset_dut();
@@ -337,8 +340,9 @@ module br_csr_axil_widget_tb;
     join
 
     // Keep a request pending for multiple cycles with the watchdog disabled.
-    $display("Checking timeout_cycles=0 disables the watchdog");
-    timeout_cycles = '0;
+    $display("Checking timeout_enable=0 disables the watchdog");
+    timeout_enable = 0;
+    timeout_cycles = 5;
     fork
       send_axil_read(16'h0048, 3'b000);
       wait_csr_read(16'h0048, 1'b0, 1'b1);
@@ -358,6 +362,7 @@ module br_csr_axil_widget_tb;
 
     // Test timeout mechanism
     // Set a short timeout period
+    timeout_enable = 1;
     timeout_cycles = 10;
 
     send_axil_read(16'h0038, 3'b000);
@@ -365,6 +370,24 @@ module br_csr_axil_widget_tb;
     // Wait for the abort signal to be asserted
     @(posedge clk);
     while (!csr_req_abort) @(posedge clk);
+
+    $display("Checking disabled watchdog resets the second timeout period");
+    td.wait_cycles(3);
+    timeout_enable = 0;
+    timeout_cycles = 2;
+    repeat (WatchdogDisabledCheckCycles) begin
+      @(posedge clk);
+      td.check(!request_aborted, "Unexpected request abort while watchdog is disabled");
+      td.check(!axil_rvalid, "Unexpected AXI-Lite response while watchdog is disabled");
+    end
+
+    @(negedge clk);
+    timeout_enable = 1;
+    repeat (2) begin
+      @(posedge clk);
+      td.check(!request_aborted, "Watchdog resumed instead of restarting");
+      td.check(!axil_rvalid, "Unexpected AXI-Lite response before watchdog restarts");
+    end
 
     fork
       // Wait for the error response

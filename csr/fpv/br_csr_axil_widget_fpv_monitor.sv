@@ -51,6 +51,7 @@ module br_csr_axil_widget_fpv_monitor #(
     input logic                 csr_resp_slverr,
     input logic                 csr_resp_decerr,
 
+    input logic                  timeout_enable,
     input logic [TimerWidth-1:0] timeout_cycles,
     input logic                  request_aborted
 );
@@ -177,14 +178,14 @@ module br_csr_axil_widget_fpv_monitor #(
   // The timer will then reset and count for another timeout period.
   // If no response is received before the second period expires, request_aborted is set.
   always_ff @(posedge clk) begin
-    if (rst | csr_req_abort | csr_resp_valid | request_aborted) begin
+    if (rst | !timeout_en | csr_req_abort | csr_resp_valid | request_aborted) begin
       timer <= 1'b0;
     end else if (csr_write_req_pending && timeout_en) begin
       timer <= timer + 1'b1;
     end
   end
-  assign timeout_en = timeout_cycles != '0;
-  assign timer_expired = timer >= timeout_cycles;
+  assign timeout_en = timeout_enable && (timeout_cycles != '0);
+  assign timer_expired = timeout_en && (timer >= timeout_cycles);
   assign first_timeout =
       csr_req_pending && !csr_req_aborting && timeout_en && timer_expired && !csr_resp_valid;
 
