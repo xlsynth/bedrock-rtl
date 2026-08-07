@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: Apache-2.0
 
 load("@rules_hdl//verilog:providers.bzl", "verilog_library")
-load("//bazel:br_verilog.bzl", "br_verilog_elab_and_lint_test_suite", "br_verilog_synth_suite")
+load("//bazel:br_verilog.bzl", "br_verilog_elab_and_lint_test_suite", "br_verilog_yosys_synth_suite")
 
 package(default_visibility = ["//visibility:public"])
 
@@ -86,7 +86,7 @@ verilog_library(
     ],
 )
 
-br_verilog_synth_suite(
+br_verilog_yosys_synth_suite(
     name = "br_ram_addr_decoder_control_ppa",
     params = {
         "DataWidth": ["32"],
@@ -98,7 +98,7 @@ br_verilog_synth_suite(
     deps = [":br_ram_addr_decoder"],
 )
 
-br_verilog_synth_suite(
+br_verilog_yosys_synth_suite(
     name = "br_ram_addr_decoder_pipelined_ppa",
     params = {
         "DataWidth": ["64"],
@@ -110,7 +110,7 @@ br_verilog_synth_suite(
     deps = [":br_ram_addr_decoder"],
 )
 
-br_verilog_synth_suite(
+br_verilog_yosys_synth_suite(
     name = "br_ram_data_rd_pipe_comb_ppa",
     params = {
         "DepthStages": ["0"],
@@ -122,7 +122,7 @@ br_verilog_synth_suite(
     deps = [":br_ram_data_rd_pipe"],
 )
 
-br_verilog_synth_suite(
+br_verilog_yosys_synth_suite(
     name = "br_ram_data_rd_pipe_pipelined_ppa",
     params = {
         "DepthStages": ["1"],
@@ -134,7 +134,7 @@ br_verilog_synth_suite(
     deps = [":br_ram_data_rd_pipe"],
 )
 
-br_verilog_synth_suite(
+br_verilog_yosys_synth_suite(
     name = "br_ram_flops_baseline_ppa",
     params = {
         "Depth": ["16"],
@@ -145,7 +145,7 @@ br_verilog_synth_suite(
     deps = [":br_ram_flops"],
 )
 
-br_verilog_synth_suite(
+br_verilog_yosys_synth_suite(
     name = "br_ram_flops_tiled_ppa",
     params = {
         "AddressDepthStages": ["1"],
@@ -162,7 +162,7 @@ br_verilog_synth_suite(
     deps = [":br_ram_flops"],
 )
 
-br_verilog_synth_suite(
+br_verilog_yosys_synth_suite(
     name = "br_ram_flops_multiport_ppa",
     params = {
         "Depth": ["32"],
@@ -174,7 +174,7 @@ br_verilog_synth_suite(
     deps = [":br_ram_flops"],
 )
 
-br_verilog_synth_suite(
+br_verilog_yosys_synth_suite(
     name = "br_ram_flops_tile_baseline_ppa",
     params = {
         "Depth": ["16"],
@@ -185,7 +185,7 @@ br_verilog_synth_suite(
     deps = [":br_ram_flops_tile"],
 )
 
-br_verilog_synth_suite(
+br_verilog_yosys_synth_suite(
     name = "br_ram_flops_tile_multiport_ppa",
     params = {
         "Depth": ["32"],
@@ -200,7 +200,7 @@ br_verilog_synth_suite(
     deps = [":br_ram_flops_tile"],
 )
 
-br_verilog_synth_suite(
+br_verilog_yosys_synth_suite(
     name = "br_ram_initializer_small_ppa",
     params = {
         "Depth": ["16"],
@@ -209,7 +209,7 @@ br_verilog_synth_suite(
     deps = [":br_ram_initializer"],
 )
 
-br_verilog_synth_suite(
+br_verilog_yosys_synth_suite(
     name = "br_ram_initializer_scaled_ppa",
     params = {
         "Depth": ["256"],

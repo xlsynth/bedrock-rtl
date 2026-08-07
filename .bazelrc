@@ -20,6 +20,11 @@ common --action_env=VERILOG_RUNNER_PLUGIN_PATH=""
 # Slang is used by TopStitch to build some wrapper RTL files for elab and lint testing.
 common --action_env=SLANG_PATH=""
 
+# Optional system-provided ASAP7 root used by the ASAP7 PPA synthesis targets.
+# A Docker image may provide this value, or users may export ASAP7_ROOT before
+# invoking Bazel. Omitting the value here forwards the caller's environment.
+common --action_env=ASAP7_ROOT
+
 # If needed, set the path to locally installed XLS libraries (needed by TopStitch).
 #common --linkopt=-L/opt/xlsynth/lib
 #common --linkopt=-Wl,-rpath,/opt/xlsynth/lib

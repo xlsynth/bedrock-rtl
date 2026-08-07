@@ -1,5 +1,7 @@
 # SPDX-License-Identifier: Apache-2.0
 
+load("@rules_python//python:defs.bzl", "py_test")
+
 package(default_visibility = ["//visibility:public"])
 
 exports_files([
@@ -7,3 +9,17 @@ exports_files([
     "verilator.py",
     "yosys.py",
 ])
+
+py_test(
+    name = "yosys_test",
+    srcs = [
+        "yosys.py",
+        "yosys_test.py",
+    ],
+    imports = ["."],
+    deps = [
+        "//python/verilog_runner:cli",
+        "//python/verilog_runner:eda_tool",
+        "//python/verilog_runner:util",
+    ],
+)

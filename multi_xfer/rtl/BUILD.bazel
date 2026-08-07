@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: Apache-2.0
 
 load("@rules_hdl//verilog:providers.bzl", "verilog_library")
-load("//bazel:br_verilog.bzl", "br_verilog_elab_and_lint_test_suite", "br_verilog_synth_suite")
+load("//bazel:br_verilog.bzl", "br_verilog_elab_and_lint_test_suite", "br_verilog_yosys_synth_suite")
 
 package(default_visibility = ["//visibility:public"])
 
@@ -23,7 +23,7 @@ verilog_library(
     ],
 )
 
-br_verilog_synth_suite(
+br_verilog_yosys_synth_suite(
     name = "br_multi_xfer_reg_fwd_standard_ppa",
     params = {
         "NumSymbols": [
@@ -35,7 +35,7 @@ br_verilog_synth_suite(
     deps = [":br_multi_xfer_reg_fwd"],
 )
 
-br_verilog_synth_suite(
+br_verilog_yosys_synth_suite(
     name = "br_multi_xfer_reg_fwd_wide_ppa",
     params = {
         "NumSymbols": ["4"],
@@ -72,7 +72,7 @@ verilog_library(
     ],
 )
 
-br_verilog_synth_suite(
+br_verilog_yosys_synth_suite(
     name = "br_multi_xfer_distributor_rr_standard_ppa",
     params = {
         "NumFlows": ["4"],
@@ -82,7 +82,7 @@ br_verilog_synth_suite(
     deps = [":br_multi_xfer_distributor_rr"],
 )
 
-br_verilog_synth_suite(
+br_verilog_yosys_synth_suite(
     name = "br_multi_xfer_distributor_rr_scaled_ppa",
     params = {
         "NumFlows": ["8"],
@@ -92,7 +92,7 @@ br_verilog_synth_suite(
     deps = [":br_multi_xfer_distributor_rr"],
 )
 
-br_verilog_synth_suite(
+br_verilog_yosys_synth_suite(
     name = "br_multi_xfer_distributor_rr_wide_ppa",
     params = {
         "NumFlows": ["16"],
