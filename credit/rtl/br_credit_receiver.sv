@@ -64,9 +64,9 @@ module br_credit_receiver #(
     // Maximum pop credits that can be returned in a single cycle.
     // Must be at least 1 but cannot be greater than MaxCredit.
     parameter int PopCreditMaxChange = 1,
-    // If 1, cover that credit_withhold can be non-zero.
-    // Otherwise, assert that it is always zero.
-    parameter bit EnableCoverCreditWithhold = 1,
+    // If 1, support nonzero credit_withhold values and cover that case.
+    // Otherwise, optimize for credit_withhold being zero and assert that requirement.
+    parameter bit EnableCreditWithhold = 1,
     // If 1, cover that push_sender_in_reset can be asserted
     // Otherwise, assert that it is never asserted.
     parameter bit EnableCoverPushSenderInReset = 1,
@@ -194,12 +194,12 @@ module br_credit_receiver #(
       .MaxChange(CreditCounterMaxChange),
       .MaxIncrement(PopCreditMaxChange),
       .MaxDecrement(PushCreditMaxChange),
-      .EnableCoverZeroIncrement(0),
+      .EnableZeroIncrement(0),
       // If PushCreditMaxChange > 1, decr will never be larger
       // than available. If ==1, decr will always be 1.
       .EnableCoverZeroDecrement(PushCreditMaxChange > 1),
       .EnableCoverDecrementBackpressure(PushCreditMaxChange == 1),
-      .EnableCoverWithhold(EnableCoverCreditWithhold),
+      .EnableWithhold(EnableCreditWithhold),
       .EnableAssertAlwaysDecr(!EnableCoverPushCreditStall),
       .EnableAssertFinalMinValue(EnableAssertFinalMinValue),
       .CoverMaxValue(CoverMaxCredit),
@@ -260,7 +260,7 @@ module br_credit_receiver #(
                  pop_credit > '0 && push_credit_internal > '0 && credit_count == '0)
   // Credits can pass through the counter combinationally with nonzero count
   // only if push_credit_stall is asserted or credits are withheld.
-  if (CoverMaxCredit > 1 && (EnableCoverPushCreditStall || EnableCoverCreditWithhold))
+  if (CoverMaxCredit > 1 && (EnableCoverPushCreditStall || EnableCreditWithhold))
   begin : gen_passthru_credit_nonzero_count
     `BR_COVER_IMPL(passthru_credit_nonzero_count_c,
                    pop_credit > '0 && push_credit_internal > '0 && credit_count > '0)
@@ -268,7 +268,7 @@ module br_credit_receiver #(
     `BR_ASSERT_IMPL(passthru_only_on_zero_a,
                     pop_credit > '0 && push_credit_internal > '0 |-> credit_count == '0)
   end
-  if (EnableCoverCreditWithhold) begin : gen_credit_withhold_impl_checks
+  if (EnableCreditWithhold) begin : gen_credit_withhold_impl_checks
     `BR_ASSERT_IMPL(over_withhold_a,
                     credit_withhold > (credit_count + pop_credit) |-> !push_credit_internal)
     `BR_ASSERT_IMPL(withhold_and_release_a,

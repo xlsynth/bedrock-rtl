@@ -44,6 +44,9 @@ module br_fifo_shared_pop_ctrl_credit_ext_arbiter #(
     // This affects the pop bandwidth of each logical FIFO.
     // The bandwidth will be `PopMaxCredits / (RamReadLatency + 1)`.
     parameter int PopMaxCredits = 1,
+    // If 1, support nonzero credit_withhold values and cover that case.
+    // Otherwise, optimize for credit_withhold being zero and assert that requirement.
+    parameter bit EnableCreditWithhold = 1,
     // If 1, place a register on the deallocation path from the pop-side
     // staging buffer to the freelist. This improves timing at the cost of
     // adding a cycle of backpressure latency.
@@ -132,8 +135,9 @@ module br_fifo_shared_pop_ctrl_credit_ext_arbiter #(
 
     br_credit_counter #(
         .MaxValue(PopMaxCredits),
-        .EnableCoverZeroIncrement(0),
-        .EnableCoverZeroDecrement(0)
+        .EnableZeroIncrement(0),
+        .EnableCoverZeroDecrement(0),
+        .EnableWithhold(EnableCreditWithhold)
     ) br_credit_counter (
         .clk,
         .rst(either_rst),

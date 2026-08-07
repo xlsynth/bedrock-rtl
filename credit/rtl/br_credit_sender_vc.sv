@@ -28,6 +28,9 @@ module br_credit_sender_vc #(
     parameter int PopCreditMaxChange = 1,
     // If 1, add 1 cycle of retiming to pop outputs.
     parameter bit RegisterPopOutputs = 0,
+    // If 1, support nonzero credit_withhold values and cover that case.
+    // Otherwise, optimize for credit_withhold being zero and assert that requirement.
+    parameter bit EnableCreditWithhold = 1,
     // If 1, cover that the push side experiences backpressure.
     // If 0, disable backpressure coverage. By default, this also
     // asserts that backpressure is impossible.
@@ -128,7 +131,8 @@ module br_credit_sender_vc #(
         .MaxValue(MaxCredit),
         .MaxChange(PopCreditMaxChange),
         .MaxDecrement(1),
-        .EnableCoverZeroIncrement(0),
+        .EnableZeroIncrement(0),
+        .EnableWithhold(EnableCreditWithhold),
         .EnableCoverZeroDecrement(0),
         .EnableCoverDecrementBackpressure(EnableCoverPushBackpressure),
         .EnableAssertFinalNotValid(EnableAssertFinalNotValid),

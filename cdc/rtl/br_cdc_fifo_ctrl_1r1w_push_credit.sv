@@ -73,9 +73,9 @@ module br_cdc_fifo_ctrl_1r1w_push_credit #(
     // Do not set this to 0 unless push_rst and pop_rst are driven directly by
     // registers. If set to 0, push_sender_in_reset must be tied to 0.
     parameter bit RegisterResetActive = 1,
-    // If 1, cover that credit_withhold can be non-zero.
-    // Otherwise, assert that it is always zero.
-    parameter bit EnableCoverCreditWithhold = 1,
+    // If 1, support nonzero credit_withhold values and cover that case.
+    // Otherwise, optimize for credit_withhold being zero and assert that requirement.
+    parameter bit EnableCreditWithhold = 1,
     // If 1, cover that push_sender_in_reset can be asserted
     // Otherwise, assert that it is never asserted.
     parameter bit EnableCoverPushSenderInReset = 1,
@@ -162,7 +162,7 @@ module br_cdc_fifo_ctrl_1r1w_push_credit #(
       .RegisterResetActive(RegisterResetActive),
       .MaxCredit(MaxCredit),
       .NumSyncStages(NumSyncStages),
-      .EnableCoverCreditWithhold(EnableCoverCreditWithhold),
+      .EnableCreditWithhold(EnableCreditWithhold),
       .EnableCoverPushSenderInReset(EnableCoverPushSenderInReset),
       .EnableCoverPushCreditStall(EnableCoverPushCreditStall),
       .EnableAssertPushDataKnown(EnableAssertPushDataKnown),
