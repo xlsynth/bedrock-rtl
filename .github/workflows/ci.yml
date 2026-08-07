@@ -51,9 +51,9 @@ jobs:
           labels: |
             org.opencontainers.image.revision=${{ github.sha }}
           cache-from: type=gha,scope=bedrock-rtl-dev-docker
-          # PR builds write to their PR-scoped GitHub Actions cache; this does
-          # not publish an image or write anything to GHCR.
-          cache-to: type=gha,mode=max,scope=bedrock-rtl-dev-docker
+          # PR builds may restore the default-branch cache, but only main pushes
+          # and manual runs export BuildKit cache entries.
+          cache-to: ${{ github.event_name != 'pull_request' && 'type=gha,mode=max,scope=bedrock-rtl-dev-docker' || '' }}
       - name: Export public Docker image
         run: docker save bedrock-rtl-dev:${{ github.sha }} --output /tmp/bedrock-rtl-dev.tar
       - name: Upload public Docker image
@@ -155,10 +155,9 @@ jobs:
           # prevents incompatible partitions from sharing an Actions cache.
           disk-cache: ${{ github.workflow }}-oss-${{ matrix.suite }}-${{ matrix.shard_index }}-of-${{ matrix.shard_count }}
           repository-cache: true
-          # Save PR-local caches so repeated pushes to the same PR can reuse
-          # Bazel outputs. GitHub scopes pull_request caches to the PR merge
-          # ref; this does not make them shared main-branch caches.
-          cache-save: true
+          # PRs may restore default-branch caches without creating PR-ref cache
+          # entries; main pushes and manual runs refresh the stable shard caches.
+          cache-save: ${{ github.event_name != 'pull_request' }}
           output-base: ${{ runner.temp }}/bazel-output
       - name: Configure public Bazel environment
         run: |
@@ -362,10 +361,11 @@ jobs:
         uses: bazel-contrib/setup-bazel@c5acdfb288317d0b5c0bbd7a396a3dc868bb0f86
         with:
           bazelisk-cache: true
-          # Save the merged cache produced after restoring the coverage shards.
+          # PRs may restore default-branch caches without creating PR-ref cache
+          # entries; main pushes and manual runs save the merged coverage cache.
           disk-cache: ${{ github.workflow }}-oss-coverage-aggregate
           repository-cache: true
-          cache-save: true
+          cache-save: ${{ github.event_name != 'pull_request' }}
           output-base: ${{ runner.temp }}/bazel-output
       - name: Configure public Bazel environment
         run: |
@@ -557,6 +557,9 @@ jobs:
         with:
           bazelisk-cache: true
           repository-cache: true
+          # PRs may restore default-branch caches without creating PR-ref cache
+          # entries; main pushes and manual runs refresh the repository cache.
+          cache-save: ${{ github.event_name != 'pull_request' }}
       - name: Configure public Bazel environment
         run: |
           # setup-bazel restores these paths on a cache hit. Create them on a
