@@ -18,6 +18,12 @@ test "$unset_line" -gt "$hook_line"
 test "$plugin_export_line" -gt "$unset_line"
 test "$python_line" -gt "$plugin_export_line"
 grep -Fx "$quoted_hook_source" "$quoted_hook_wrapper"
+grep -Fq -- \
+    "--custom_control_header=bazel/verilog_env_test/custom_control_header.sby" \
+    "$hooked_wrapper"
+grep -Fq -- \
+    "--custom_tcl_body=bazel/verilog_env_test/custom_tcl_body.tcl" \
+    "$hooked_wrapper"
 
 if grep -q 'VERILOG_RUNNER_PLUGIN_PATH=.*:external/' "$hooked_wrapper"; then
     echo "Direct wrapper unexpectedly uses an execroot external plugin path" >&2

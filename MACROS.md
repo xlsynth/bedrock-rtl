@@ -48,13 +48,17 @@ They are guarded (enabled) by the following defines:
 - `BR_ENABLE_FPV` -- if not defined, then all `BR_*_FPV` macros are no-ops.
 - `BR_DISABLE_ASSERT_IMM` -- if defined, then all `BR_ASSERT_IMM*`, `BR_COVER_IMM*`,
       `BR_ASSERT_COMB*`, `BR_ASSUME_COMB*`, and `BR_COVER_COMB*` macros are no-ops.
+- `BR_YOSYS_SBY` -- tool-owned define that suppresses concurrent assertion, assumption,
+      and cover property macros for Yosys/SBY. The Bedrock FPV Bazel wrapper sets it for
+      SBY targets; direct Verilog Runner users must pass it explicitly.
 - `BR_DISABLE_FINAL_CHECKS` -- if defined, then all `BR_ASSERT_FINAL*` macros are no-ops.
 - `BR_VERILATOR` -- tool-owned define that selects the Verilator-compatible static assertion
       implementation and temporarily suppresses concurrent assertion, assumption, and cover macros.
       The Verilator runner sets it automatically; users should not set it for other tools.
 
 `BR_ASSERT_CONCURRENT_ON` is an internal derived define. `br_asserts.svh` defines it when
-`BR_ASSERT_ON` is set and `BR_VERILATOR` is not set. Users and build rules must not set it directly.
+`BR_ASSERT_ON` is set and neither `BR_YOSYS_SBY` nor `BR_VERILATOR` is set.
+Users and build rules must not set it directly.
 When UVM is present, UVM itself supplies `UVM_MAJOR_REV`; Bedrock uses that standard UVM define to
 route assertion failures through `uvm_error` and does not set it.
 
@@ -198,11 +202,12 @@ The generic rules in `bazel/verilog.bzl` do not add these Bedrock-specific defin
 | Elaboration/lint: all checks | `BR_ASSERT_ON`, `BR_ENABLE_IMPL_CHECKS` | Enables both integration and Bedrock implementation checks. |
 | Elaboration/lint: no assertions | None | Verifies that RTL elaborates and lints when assertion macros are disabled. |
 | Simulation default | `BR_ASSERT_ON`, `BR_ENABLE_IMPL_CHECKS`, `SIMULATION` | Enables all Bedrock checks and simulation-specific RTL behavior. An explicitly supplied `defines`<br>list replaces this default; an explicit empty list requests no defines. |
-| Formal property verification | `BR_ASSERT_ON`, `BR_ENABLE_IMPL_CHECKS`, `BR_ENABLE_FPV`,<br>`BR_DISABLE_FINAL_CHECKS`, `BR_DISABLE_ASSERT_IMM` | Enables concurrent public, implementation, and FPV-only properties. Final blocks are simulation-only<br>and are ignored by formal tools. Immediate/combinational checks are disabled because formal assumptions<br>constrain sampled clock edges and cannot reliably prevent between-edge immediate checks from firing. |
+| Formal property verification: JasperGold/VC Formal | `BR_ASSERT_ON`, `BR_ENABLE_IMPL_CHECKS`, `BR_ENABLE_FPV`,<br>`BR_DISABLE_FINAL_CHECKS`, `BR_DISABLE_ASSERT_IMM` | Enables concurrent public, implementation, and FPV-only properties. Final blocks are simulation-only<br>and are ignored by formal tools. Immediate/combinational checks are disabled because formal assumptions<br>constrain sampled clock edges and cannot reliably prevent between-edge immediate checks from firing. |
+| Formal property verification: SBY | `BR_ASSERT_ON`, `BR_ENABLE_IMPL_CHECKS`, `BR_ENABLE_FPV`,<br>`BR_DISABLE_FINAL_CHECKS`, `BR_YOSYS_SBY` | Suppresses concurrent Bedrock SVA that yosys-slang does not yet support while keeping immediate and<br>combinational FPV macros enabled for SBY-specific assertions, assumptions, and covers. |
 
 
-The formal profile is fixed by `br_verilog_fpv_test_suite`; callers cannot override `defines`.
-It is applied identically to executable FPV tests and generated FPV sandboxes, for both JasperGold and VCF.
+The per-tool formal profiles are fixed by `br_verilog_fpv_test_suite`; callers cannot override `defines`.
+Each profile is applied identically to executable FPV tests and generated FPV sandboxes.
 Formal builds intentionally do not define `SIMULATION`, `SYNTHESIS`, or `BR_VERILATOR`.
 The Verilator simulation plugin adds `BR_VERILATOR` after receiving the Bazel-provided define list.
 

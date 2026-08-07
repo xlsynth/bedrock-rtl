@@ -7,15 +7,22 @@ import argparse
 import unittest
 from unittest import mock
 
-from python.verilog_runner.cli import common_args, validate_top
+from python.verilog_runner.cli import (
+    common_args,
+    tcl_file,
+    tcl_fragment_file,
+    validate_top,
+)
 
 
 def _args_for_subcommand(subcommand: str) -> argparse.Namespace:
     args = argparse.Namespace(
         hdr=[],
+        data=["image.mem"],
         define=[],
         params={},
         opt=[],
+        analysis_opt=["--ignore-initial"],
         elab_opt=["-foo"],
         sim_opt=["+bar=1"],
         srcs=["tb.sv"],
@@ -24,6 +31,8 @@ def _args_for_subcommand(subcommand: str) -> argparse.Namespace:
         script="run.sh",
         log="run.log",
         filelist="sources.f",
+        custom_control_header=None,
+        custom_control_body=None,
         custom_tcl_header=None,
         custom_tcl_body=None,
         subcommand=subcommand,
@@ -33,6 +42,13 @@ def _args_for_subcommand(subcommand: str) -> argparse.Namespace:
 
 
 class TestCliFunctions(unittest.TestCase):
+
+    def test_control_file_accepts_sby_extension(self):
+        self.assertEqual(tcl_file("job.sby"), "job.sby")
+
+    def test_tcl_alias_rejects_sby_extension(self):
+        with self.assertRaises(argparse.ArgumentTypeError):
+            tcl_fragment_file("job.sby")
 
     def test_validate_top_allows_compile_only_elab_without_top(self):
         args = _args_for_subcommand("elab")
@@ -58,10 +74,12 @@ class TestCliFunctions(unittest.TestCase):
         self.assertEqual(common["sim_opts"], ["+bar=1"])
 
     @mock.patch.dict("os.environ", {}, clear=True)
-    def test_common_args_fpv_omits_sim_only_opts(self):
+    def test_common_args_fpv_leaves_plugin_specific_opts_to_plugin(self):
         common = common_args(_args_for_subcommand("fpv"))
 
+        self.assertEqual(common["data"], ["image.mem"])
         self.assertEqual(common["opts"], [])
+        self.assertNotIn("analysis_opts", common)
         self.assertNotIn("elab_opts", common)
         self.assertNotIn("sim_opts", common)
 
@@ -84,6 +102,48 @@ class TestCliFunctions(unittest.TestCase):
         common = common_args(args)
 
         self.assertEqual(common["opts"], ["-legacy"])
+
+    @mock.patch.dict("os.environ", {}, clear=True)
+    def test_common_args_accepts_generic_control_fragments(self):
+        args = _args_for_subcommand("fpv")
+        args.tool = "sby"
+        args.custom_control_header = "header.sby"
+        args.custom_control_body = "body.sby"
+
+        common = common_args(args)
+
+        self.assertEqual(common["tclfile_custom_header"], "header.sby")
+        self.assertEqual(common["tclfile_custom_body"], "body.sby")
+
+    @mock.patch.dict("os.environ", {}, clear=True)
+    def test_common_args_accepts_tcl_specific_aliases(self):
+        args = _args_for_subcommand("fpv")
+        args.tool = "jg"
+        args.custom_tcl_header = "header.tcl"
+        args.custom_tcl_body = "body.tcl"
+
+        common = common_args(args)
+
+        self.assertEqual(common["tclfile_custom_header"], "header.tcl")
+        self.assertEqual(common["tclfile_custom_body"], "body.tcl")
+
+    @mock.patch.dict("os.environ", {}, clear=True)
+    def test_common_args_rejects_duplicate_control_aliases(self):
+        args = _args_for_subcommand("fpv")
+        args.custom_control_header = "header.sby"
+        args.custom_tcl_header = "header.tcl"
+
+        with self.assertRaisesRegex(ValueError, "aliases; specify only one"):
+            common_args(args)
+
+    @mock.patch.dict("os.environ", {}, clear=True)
+    def test_common_args_rejects_tcl_alias_for_sby(self):
+        args = _args_for_subcommand("fpv")
+        args.tool = "sby"
+        args.custom_tcl_body = "body.tcl"
+
+        with self.assertRaisesRegex(ValueError, "SBY control fragments"):
+            common_args(args)
 
     @mock.patch.dict("os.environ", {}, clear=True)
     def test_common_args_sim_rejects_tool_opts_for_non_vcs(self):

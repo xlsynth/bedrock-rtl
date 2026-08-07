@@ -14,9 +14,11 @@ from util import dump_file, write_and_dump_file, to_filelist
 @dataclass
 class EdaTool(ABC):
     hdrs: List[str] = field(default_factory=list)
+    data: List[str] = field(default_factory=list)
     defines: List[str] = field(default_factory=list)
     params: Dict[str, str] = field(default_factory=dict)
     opts: List[str] = field(default_factory=list)
+    analysis_opts: List[str] = field(default_factory=list)
     elab_opts: List[str] = field(default_factory=list)
     sim_opts: List[str] = field(default_factory=list)
     srcs: List[str] = field(default_factory=list)
@@ -27,6 +29,9 @@ class EdaTool(ABC):
     logfile: str = field(default_factory=str)
     logger: logging.Logger = field(default_factory=logging.getLogger)
     filelist: str = field(default_factory=str)
+    # TODO(mgottscho): Rename these internal fields and the tcl_* methods to
+    # control_file_* in a versioned plugin API migration. Public control-file
+    # aliases intentionally normalize to this compatibility API for now.
     tclfile_custom_header: Optional[str] = field(default_factory=Optional[str])
     tclfile_custom_body: Optional[str] = field(default_factory=Optional[str])
     env_setup_commands: Optional[str] = field(default_factory=Optional[str])

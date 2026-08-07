@@ -26,13 +26,15 @@ import uvm_pkg::*;
 // * BR_ENABLE_FPV -- if not defined, then all BR_*_FPV macros are no-ops.
 // * BR_DISABLE_ASSERT_IMM -- if defined, then all BR_ASSERT_IMM*, BR_COVER_IMM*,
 //       BR_ASSERT_COMB*, BR_ASSUME_COMB*, and BR_COVER_COMB* macros are no-ops.
+// * BR_YOSYS_SBY -- tool-owned define that disables concurrent assertion,
+//       cover, and assume property macros for Yosys/SBY.
 // * BR_DISABLE_FINAL_CHECKS -- if defined, then all BR_ASSERT_FINAL macros are no-ops.
 // * BR_VERILATOR -- temporarily disables concurrent assertion, cover, and
 //       assume property macros because Verilator does not yet support all SVA
 //       sequence syntax used by Bedrock implementation checks.
 // * BR_ASSERT_CONCURRENT_ON -- internal derived define. This header defines it
-//       when BR_ASSERT_ON is set and BR_VERILATOR is not set. Callers must not
-//       set it directly.
+//       when BR_ASSERT_ON is set and neither BR_YOSYS_SBY nor BR_VERILATOR is
+//       set. Callers must not set it directly.
 
 ////////////////////////////////////////////////////////////////////////////////
 // Static (elaboration-time) assertion macros
@@ -101,9 +103,11 @@ $error($sformatf("Bedrock-RTL assertion macro failed (%0s:%0d) [%0s]: %0s", `__F
 // delayed sequence expressions used by the Bedrock assertion macros, especially
 // expressions such as `##1 !$past(rst) |-> ...`.
 `ifdef BR_ASSERT_ON
+`ifndef BR_YOSYS_SBY
 `ifndef BR_VERILATOR
 `define BR_ASSERT_CONCURRENT_ON
 `endif  // BR_VERILATOR
+`endif  // BR_YOSYS_SBY
 `endif  // BR_ASSERT_ON
 
 ////////////////////////////////////////////////////////////////////////////////
