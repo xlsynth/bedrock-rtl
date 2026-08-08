@@ -11,6 +11,7 @@ import unittest
 from python.ci.bazel_oss_sharding import (
     aggregate_results,
     canonicalize_labels,
+    command_aggregate,
     command_check,
     finalize_result,
     labels_digest,
@@ -53,7 +54,7 @@ class BazelOssShardingTest(unittest.TestCase):
     def test_prepare_rejects_empty_discovery_and_empty_shard(self):
         with tempfile.TemporaryDirectory() as temporary:
             output_dir = Path(temporary)
-            empty, _, _ = prepare_partition("slang", 0, 1, [], output_dir)
+            empty, _, _ = prepare_partition("slang_elab", 0, 1, [], output_dir)
             self.assertNotEqual(empty["exit_code"], 0)
             self.assertIn("test discovery selected no targets", empty["errors"])
 
@@ -61,7 +62,7 @@ class BazelOssShardingTest(unittest.TestCase):
             selected_index = shard_for_label(label, 2)
             empty_index = 1 - selected_index
             record, _, _ = prepare_partition(
-                "slang", empty_index, 2, [label], output_dir
+                "slang_elab", empty_index, 2, [label], output_dir
             )
             self.assertIn("shard selected no targets", record["errors"])
 
@@ -102,9 +103,15 @@ class BazelOssShardingTest(unittest.TestCase):
             self._write_suite(results_dir, "stardoc", 1, ["//bazel:test"])
             self._write_suite(
                 results_dir,
-                "slang",
+                "slang_elab",
                 2,
-                [f"//rtl:slang_{index}" for index in range(20)],
+                [f"//rtl:slang_elab_{index}" for index in range(20)],
+            )
+            self._write_suite(
+                results_dir,
+                "slang_lint",
+                2,
+                [f"//rtl:slang_lint_{index}" for index in range(18)],
             )
             self._write_suite(
                 results_dir,
@@ -115,19 +122,79 @@ class BazelOssShardingTest(unittest.TestCase):
 
             outputs, errors, _ = aggregate_results(
                 results_dir,
-                {"python": 1, "stardoc": 1, "slang": 2, "verilator": 3},
+                {
+                    "python": 1,
+                    "stardoc": 1,
+                    "slang_elab": 2,
+                    "slang_lint": 2,
+                    "verilator": 3,
+                },
             )
 
             self.assertEqual(errors, [])
-            self.assertEqual(outputs["slang"]["total_tests"], 20)
+            self.assertEqual(outputs["slang_elab"]["total_tests"], 20)
+            self.assertEqual(outputs["slang_lint"]["total_tests"], 18)
+            self.assertEqual(outputs["slang"]["total_tests"], 38)
+            self.assertEqual(outputs["slang"]["passing_tests"], 38)
+            self.assertEqual(outputs["slang"]["exit_code"], 0)
             self.assertEqual(outputs["verilator"]["passing_tests"], 30)
+
+    def test_aggregate_combines_slang_failures_for_existing_badge(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            results_dir = Path(temporary)
+            self._write_suite(results_dir, "slang_elab", 1, ["//rtl:elab"])
+            paths = self._write_suite(results_dir, "slang_lint", 1, ["//rtl:lint"])
+            record = json.loads(paths[0].read_text(encoding="utf-8"))
+            record["passing_tests"] = 0
+            record["exit_code"] = 1
+            paths[0].write_text(json.dumps(record), encoding="utf-8")
+
+            outputs, errors, _ = aggregate_results(
+                results_dir, {"slang_elab": 1, "slang_lint": 1}
+            )
+
+            self.assertTrue(errors)
+            self.assertEqual(outputs["slang"]["total_tests"], 2)
+            self.assertEqual(outputs["slang"]["passing_tests"], 1)
+            self.assertEqual(outputs["slang"]["exit_code"], 1)
+
+    def test_aggregate_writes_separate_and_combined_slang_outputs(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            results_dir = Path(temporary)
+            suites = (
+                "python",
+                "stardoc",
+                "slang_elab",
+                "slang_lint",
+                "verilator",
+                "coverage",
+            )
+            for suite in suites:
+                self._write_suite(results_dir, suite, 1, [f"//pkg:{suite}"])
+            github_output = results_dir / "github-output.txt"
+            step_summary = results_dir / "step-summary.md"
+            args = argparse.Namespace(
+                expected=[f"{suite}=1" for suite in suites],
+                results_dir=results_dir,
+                github_output=github_output,
+                step_summary=step_summary,
+            )
+
+            self.assertEqual(command_aggregate(args), 0)
+
+            output = github_output.read_text(encoding="utf-8")
+            self.assertIn("slang_elab_total_tests=1\n", output)
+            self.assertIn("slang_lint_total_tests=1\n", output)
+            self.assertIn("slang_total_tests=2\n", output)
+            self.assertIn("| slang_elab |", step_summary.read_text(encoding="utf-8"))
+            self.assertIn("| slang_lint |", step_summary.read_text(encoding="utf-8"))
 
     def test_aggregate_rejects_missing_duplicate_and_inconsistent_shards(self):
         with tempfile.TemporaryDirectory() as temporary:
             results_dir = Path(temporary)
             paths = self._write_suite(
                 results_dir,
-                "slang",
+                "slang_elab",
                 2,
                 [f"//rtl:test_{index}" for index in range(20)],
             )
@@ -138,7 +205,7 @@ class BazelOssShardingTest(unittest.TestCase):
 
             _, errors, _ = aggregate_results(
                 results_dir,
-                {"python": 1, "stardoc": 1, "slang": 2, "verilator": 1},
+                {"python": 1, "stardoc": 1, "slang_elab": 2, "verilator": 1},
             )
             self.assertTrue(any("missing shard indexes" in error for error in errors))
 
@@ -152,7 +219,7 @@ class BazelOssShardingTest(unittest.TestCase):
             )
             _, errors, _ = aggregate_results(
                 results_dir,
-                {"python": 1, "stardoc": 1, "slang": 2, "verilator": 1},
+                {"python": 1, "stardoc": 1, "slang_elab": 2, "verilator": 1},
             )
             self.assertTrue(any("duplicate shard index" in error for error in errors))
 
@@ -161,14 +228,16 @@ class BazelOssShardingTest(unittest.TestCase):
             results_dir = Path(temporary)
             self._write_suite(results_dir, "python", 1, ["//python:test"])
             self._write_suite(results_dir, "stardoc", 1, ["//bazel:test"])
-            paths = self._write_suite(results_dir, "slang", 1, ["//rtl:a", "//rtl:b"])
+            paths = self._write_suite(
+                results_dir, "slang_lint", 1, ["//rtl:a", "//rtl:b"]
+            )
             self._write_suite(results_dir, "verilator", 1, ["//sim:test"])
             record = json.loads(paths[0].read_text(encoding="utf-8"))
             (results_dir / record["target_file"]).write_text("//rtl:a\n")
 
             _, errors, _ = aggregate_results(
                 results_dir,
-                {"python": 1, "stardoc": 1, "slang": 1, "verilator": 1},
+                {"python": 1, "stardoc": 1, "slang_lint": 1, "verilator": 1},
             )
             self.assertTrue(any("does not match manifest" in error for error in errors))
             self.assertTrue(any("union digest" in error for error in errors))
@@ -180,7 +249,7 @@ class BazelOssShardingTest(unittest.TestCase):
             self._write_suite(results_dir, "stardoc", 1, ["//bazel:test"])
             paths = self._write_suite(
                 results_dir,
-                "slang",
+                "slang_lint",
                 2,
                 [f"//rtl:test_{index}" for index in range(20)],
             )
@@ -191,7 +260,7 @@ class BazelOssShardingTest(unittest.TestCase):
 
             _, errors, _ = aggregate_results(
                 results_dir,
-                {"python": 1, "stardoc": 1, "slang": 2, "verilator": 1},
+                {"python": 1, "stardoc": 1, "slang_lint": 2, "verilator": 1},
             )
             self.assertTrue(
                 any("discovered target digest" in error for error in errors)

@@ -79,20 +79,36 @@ jobs:
             suite: python-stardoc
             shard_index: 0
             shard_count: 1
-          - name: slang-1-of-4
-            suite: slang
+          - name: slang-elab-1-of-4
+            suite: slang_elab
             shard_index: 0
             shard_count: 4
-          - name: slang-2-of-4
-            suite: slang
+          - name: slang-elab-2-of-4
+            suite: slang_elab
             shard_index: 1
             shard_count: 4
-          - name: slang-3-of-4
-            suite: slang
+          - name: slang-elab-3-of-4
+            suite: slang_elab
             shard_index: 2
             shard_count: 4
-          - name: slang-4-of-4
-            suite: slang
+          - name: slang-elab-4-of-4
+            suite: slang_elab
+            shard_index: 3
+            shard_count: 4
+          - name: slang-lint-1-of-4
+            suite: slang_lint
+            shard_index: 0
+            shard_count: 4
+          - name: slang-lint-2-of-4
+            suite: slang_lint
+            shard_index: 1
+            shard_count: 4
+          - name: slang-lint-3-of-4
+            suite: slang_lint
+            shard_index: 2
+            shard_count: 4
+          - name: slang-lint-4-of-4
+            suite: slang_lint
             shard_index: 3
             shard_count: 4
           - name: verilator-1-of-8
@@ -295,9 +311,13 @@ jobs:
                 > /tmp/discovered-stardoc.txt
               run_discovered_suite stardoc 0 1 /tmp/discovered-stardoc.txt
               ;;
-            slang)
-              query_and_run_suite slang "$CI_SHARD_INDEX" "$CI_SHARD_COUNT" \
-                '(tests(//...) intersect attr(tags, "slang", //...)) except attr(tags, "manual", //...)'
+            slang_elab)
+              query_and_run_suite slang_elab "$CI_SHARD_INDEX" "$CI_SHARD_COUNT" \
+                '(tests(//...) intersect attr(tags, "slang", //...) intersect attr(tags, "elab", //...)) except attr(tags, "manual", //...)'
+              ;;
+            slang_lint)
+              query_and_run_suite slang_lint "$CI_SHARD_INDEX" "$CI_SHARD_COUNT" \
+                '(tests(//...) intersect attr(tags, "slang", //...) intersect attr(tags, "lint", //...)) except attr(tags, "manual", //...)'
               ;;
             verilator)
               query_and_run_suite verilator "$CI_SHARD_INDEX" "$CI_SHARD_COUNT" \
@@ -484,6 +504,12 @@ jobs:
       stardoc_total_tests: ${{ steps.results.outputs.stardoc_total_tests }}
       stardoc_passing_tests: ${{ steps.results.outputs.stardoc_passing_tests }}
       stardoc_exit_code: ${{ steps.results.outputs.stardoc_exit_code }}
+      slang_elab_total_tests: ${{ steps.results.outputs.slang_elab_total_tests }}
+      slang_elab_passing_tests: ${{ steps.results.outputs.slang_elab_passing_tests }}
+      slang_elab_exit_code: ${{ steps.results.outputs.slang_elab_exit_code }}
+      slang_lint_total_tests: ${{ steps.results.outputs.slang_lint_total_tests }}
+      slang_lint_passing_tests: ${{ steps.results.outputs.slang_lint_passing_tests }}
+      slang_lint_exit_code: ${{ steps.results.outputs.slang_lint_exit_code }}
       slang_total_tests: ${{ steps.results.outputs.slang_total_tests }}
       slang_passing_tests: ${{ steps.results.outputs.slang_passing_tests }}
       slang_exit_code: ${{ steps.results.outputs.slang_exit_code }}
@@ -518,7 +544,8 @@ jobs:
             --results-dir bazel-oss-aggregate \
             --expected python=1 \
             --expected stardoc=1 \
-            --expected slang=4 \
+            --expected slang_elab=4 \
+            --expected slang_lint=4 \
             --expected verilator=8 \
             --expected coverage=4 \
             --github-output "$GITHUB_OUTPUT" \
