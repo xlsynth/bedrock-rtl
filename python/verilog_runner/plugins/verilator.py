@@ -100,6 +100,8 @@ class Verilator(EdaTool):
             "-LDFLAGS",
             '"$libatomic"',
             f"-f {self.filelist}",
+            "-CFLAGS",
+            "-O0",
         ]
         if self.waves:
             verilator_cmd += ["--trace"]
