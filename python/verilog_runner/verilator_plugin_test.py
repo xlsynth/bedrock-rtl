@@ -58,10 +58,10 @@ class VerilatorPluginTest(unittest.TestCase):
             command.index("-CFLAGS -O0"), command.index("--output-groups 2")
         )
 
-    def test_caller_can_override_default_optimization_level(self):
-        command = self.execution_line(self.make_plugin(elab_opts=["-CFLAGS", "-O2"]))
+    def test_caller_can_select_runtime_optimization(self):
+        command = self.execution_line(self.make_plugin(elab_opts=["-CFLAGS", "-Os"]))
 
-        self.assertLess(command.index("-CFLAGS -O0"), command.rindex("-CFLAGS -O2"))
+        self.assertLess(command.index("-CFLAGS -O0"), command.rindex("-CFLAGS -Os"))
 
     def test_coverage_and_waves_flags_are_unchanged(self):
         command = self.execution_line(
