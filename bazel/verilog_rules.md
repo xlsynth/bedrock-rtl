@@ -202,7 +202,7 @@ Tests that a Verilog or SystemVerilog design passes a set of static lint checks.
 | <a id="rule_verilog_lint_test-top"></a>top |  The top-level module; if not provided and there exists one dependency, then defaults to that dep's label name.   | String | optional |  `""`  |
 | <a id="rule_verilog_lint_test-verilog_runner_data"></a>verilog_runner_data |  Additional Verilog Runner files needed at runtime.   | <a href="https://bazel.build/concepts/labels">List of labels</a> | optional |  `["@bedrock-rtl//python/verilog_runner:verilog_runner_data"]`  |
 | <a id="rule_verilog_lint_test-verilog_runner_env"></a>verilog_runner_env |  Optional shell script sourced immediately before each Verilog Runner invocation.<br><br>The wrapper does not change directories before sourcing the hook, so it inherits the wrapper's existing working directory. Direct wrappers add the hook to runfiles and source its runfiles path; sandbox generator actions declare it as an input and source its execroot path. A direct hook is sourced before the wrapper unsets any inherited `rlocation` function, but callers needing runfiles lookup must initialize a working runfiles library rather than assume that Bazel exports a usable `rlocation` implementation. Bedrock appends its `verilog_runner_plugins` directories to `VERILOG_RUNNER_PLUGIN_PATH` after the hook runs. The hook is not included in sandbox archives or sourced by their final runners.   | <a href="https://bazel.build/concepts/labels">Label</a> | optional |  `None`  |
-| <a id="rule_verilog_lint_test-verilog_runner_plugins"></a>verilog_runner_plugins |  Verilog runner plugins to load from this workspace, in addition to those loaded from VERILOG_RUNNER_PLUGIN_PATH.   | <a href="https://bazel.build/concepts/labels">List of labels</a> | optional |  `["@bedrock-rtl//python/verilog_runner/plugins:verilator.py"]`  |
+| <a id="rule_verilog_lint_test-verilog_runner_plugins"></a>verilog_runner_plugins |  Verilog runner plugins to load from this workspace, in addition to those loaded from VERILOG_RUNNER_PLUGIN_PATH.   | <a href="https://bazel.build/concepts/labels">List of labels</a> | optional |  `["@bedrock-rtl//python/verilog_runner/plugins:slang.py", "@bedrock-rtl//python/verilog_runner/plugins:verilator.py"]`  |
 | <a id="rule_verilog_lint_test-verilog_runner_tool"></a>verilog_runner_tool |  The Verilog Runner tool to use.   | <a href="https://bazel.build/concepts/labels">Label</a> | optional |  `"@bedrock-rtl//python/verilog_runner:verilog_runner.py"`  |
 
 
@@ -567,7 +567,7 @@ True if the combination is legal, False if it is illegal.
 load("@bedrock-rtl//bazel:verilog.bzl", "verilog_elab_and_lint_test_suite")
 
 verilog_elab_and_lint_test_suite(<a href="#verilog_elab_and_lint_test_suite-name">name</a>, <a href="#verilog_elab_and_lint_test_suite-top">top</a>, <a href="#verilog_elab_and_lint_test_suite-deps">deps</a>, <a href="#verilog_elab_and_lint_test_suite-defines">defines</a>, <a href="#verilog_elab_and_lint_test_suite-params">params</a>, <a href="#verilog_elab_and_lint_test_suite-include_default_params">include_default_params</a>,
-                                 <a href="#verilog_elab_and_lint_test_suite-elab_tools">elab_tools</a>, <a href="#verilog_elab_and_lint_test_suite-lint_tool">lint_tool</a>, <a href="#verilog_elab_and_lint_test_suite-disable_lint_rules">disable_lint_rules</a>, <a href="#verilog_elab_and_lint_test_suite-kwargs">**kwargs</a>)
+                                 <a href="#verilog_elab_and_lint_test_suite-elab_tools">elab_tools</a>, <a href="#verilog_elab_and_lint_test_suite-lint_tools">lint_tools</a>, <a href="#verilog_elab_and_lint_test_suite-disable_lint_rules">disable_lint_rules</a>, <a href="#verilog_elab_and_lint_test_suite-kwargs">**kwargs</a>)
 </pre>
 
 Creates a suite of Verilog elaboration and lint tests for each combination of the provided parameters.
@@ -575,8 +575,8 @@ Creates a suite of Verilog elaboration and lint tests for each combination of th
 The function generates a wrapper containing one instance for every combination of the provided parameters and,
 by default, one instance with the module's default parameters. Set include_default_params to False when another
 sweep already covers the defaults or the defaults are intentionally invalid. It creates one verilog_elab_test
-for each elaboration tool and one verilog_lint_test. Elaboration test names append the tool name followed by
-"_elab_test"; the lint test name appends "_lint_test".
+for each elaboration tool and one verilog_lint_test for each lint tool. Test names append the tool name
+followed by "_elab_test" or "_lint_test", respectively.
 
 
 **PARAMETERS**
@@ -591,7 +591,7 @@ for each elaboration tool and one verilog_lint_test. Elaboration test names appe
 | <a id="verilog_elab_and_lint_test_suite-params"></a>params |  A dictionary where keys are parameter names and values are lists of possible values for those parameters.   |  `{}` |
 | <a id="verilog_elab_and_lint_test_suite-include_default_params"></a>include_default_params |  Whether to include an instance with the module's default parameters.   |  `True` |
 | <a id="verilog_elab_and_lint_test_suite-elab_tools"></a>elab_tools |  The tools to use for elaboration. Defaults to Verific and Slang.   |  `["verific", "slang"]` |
-| <a id="verilog_elab_and_lint_test_suite-lint_tool"></a>lint_tool |  The tool to use for linting.   |  `"ascentlint"` |
+| <a id="verilog_elab_and_lint_test_suite-lint_tools"></a>lint_tools |  The tools to use for lint. Defaults to AscentLint.   |  `["ascentlint"]` |
 | <a id="verilog_elab_and_lint_test_suite-disable_lint_rules"></a>disable_lint_rules |  A list of lint rules to disable in the generated files.   |  `[]` |
 | <a id="verilog_elab_and_lint_test_suite-kwargs"></a>kwargs |  Additional common keyword arguments to be passed to the verilog_elab_test and verilog_lint_test functions.   |  none |
 
