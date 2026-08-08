@@ -64,11 +64,14 @@ module br_ram_flops #(
     localparam int AddressWidth = br_math::clamped_clog2(Depth),
     localparam int NumWords = Width / WordWidth,
     // Write latency in units of wr_clk cycles
+    // slang lint_save
+    // slang lint_off unused-parameter
     // ri lint_check_waive PARAM_NOT_USED
     localparam int WriteLatency = AddressDepthStages + 1,
     // Read latency in units of rd_clk cycles. Only used for assertions.
     // ri lint_check_waive PARAM_NOT_USED
     localparam int ReadLatency = AddressDepthStages + ReadDataDepthStages + ReadDataWidthStages
+    // slang lint_restore
 ) (
     // Write-clock signals
     // Posedge-triggered clock.
@@ -336,7 +339,8 @@ module br_ram_flops #(
   //------------------------------------------
   // Implementation checks
   //------------------------------------------
-  `BR_ASSERT_CR_IMPL(read_latency_a, rd_addr_valid |-> ##ReadLatency rd_data_valid, rd_clk, rd_rst)
+  `BR_ASSERT_CR_IMPL(read_latency_a, (|rd_addr_valid) |-> ##ReadLatency(|rd_data_valid), rd_clk,
+                     rd_rst)
 
 `ifdef BR_ASSERT_ON
 `ifdef BR_ENABLE_IMPL_CHECKS

@@ -7,7 +7,7 @@ This guide covers the tools and checks used to develop Bedrock-RTL. See
 
 Install Bazel 9.1.0 (Bazelisk is recommended) and a system Python interpreter version 3.12 or newer.
 
-The public toolchain uses Slang for elaboration, Verible for lint, Verilator for simulation, and TopStitch for RTL wrapper generation. The Docker image includes those tools, plus Yosys, EQY, Yices, and XLS support libraries.
+The public toolchain uses Slang for elaboration and semantic lint, Verible for style lint, Verilator for simulation, and TopStitch for RTL wrapper generation. The Docker image includes those tools, plus Yosys, EQY, Yices, and XLS support libraries.
 
 Some checks also use tools that are not distributed with Bedrock-RTL: Verific tclmain, RealIntent AscentLint, Synopsys VCS, Cadence JasperGold, and Synopsys VCF. Provide the installations and licenses yourself if you need those checks.
 
@@ -19,7 +19,7 @@ Bedrock-RTL uses [Bazel](https://bazel.build/) to assemble source lists and run 
 bazel test //...
 ```
 
-The repository includes plugins for Verilator simulation and Slang elaboration. Most other EDA-tool plugins are deliberately kept outside this repository. As a result, tests that select proprietary tools need corresponding plugins in your local or CI environment.
+The repository includes plugins for Verilator simulation and Slang elaboration and lint. Most other EDA-tool plugins are deliberately kept outside this repository. As a result, tests that select proprietary tools need corresponding plugins in your local or CI environment.
 
 Keeping these plugins separate lets the test definitions remain vendor-agnostic and avoids publishing vendor API or licensing details. Not every test works with every tool; check the relevant `BUILD.bazel` target.
 
@@ -39,6 +39,17 @@ verilog_elab_test(
 ```
 
 Slang parses, type-checks, and elaborates the hierarchy. It supports source and header dependencies, defines, and top-level parameter overrides. For package-only source sets, set `compile_only = True`.
+
+Slang lint fully elaborates the design and treats every warning as an error using the top-level `slang_lint_policy.f`. Keep intentional waivers next to the affected RTL and restore the prior diagnostic state:
+
+```systemverilog
+// slang lint_save
+// slang lint_off unused-variable
+logic intentionally_unused;
+// slang lint_restore
+```
+
+Use `lint_restore` rather than `lint_on`: restoring the saved state also restores the policy's warning-as-error severity. Pre-commit rejects waivers that are not enclosed by a matching `lint_save` and `lint_restore`.
 
 To refresh the public RTL PPA report, run:
 

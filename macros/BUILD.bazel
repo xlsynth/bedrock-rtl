@@ -67,8 +67,16 @@ verilog_elab_test(
 )
 
 verilog_lint_test(
-    name = "br_unused_tb_lint_test",
+    name = "br_unused_tb_ascentlint_lint_test",
     tool = "ascentlint",
+    visibility = ["//visibility:public"],
+    deps = [":br_unused_tb"],
+)
+
+verilog_lint_test(
+    name = "br_unused_tb_slang_lint_test",
+    tags = ["manual"],
+    tool = "slang",
     visibility = ["//visibility:public"],
     deps = [":br_unused_tb"],
 )
@@ -96,8 +104,15 @@ verilog_elab_test(
 )
 
 verilog_lint_test(
-    name = "br_tieoff_tb_lint_test",
+    name = "br_tieoff_tb_ascentlint_lint_test",
     tool = "ascentlint",
+    deps = [":br_tieoff_tb"],
+)
+
+verilog_lint_test(
+    name = "br_tieoff_tb_slang_lint_test",
+    tags = ["manual"],
+    tool = "slang",
     deps = [":br_tieoff_tb"],
 )
 
@@ -272,8 +287,16 @@ verilog_elab_test(
 )
 
 verilog_lint_test(
-    name = "br_assign_lint_test",
+    name = "br_assign_ascentlint_lint_test",
     tool = "ascentlint",
+    visibility = ["//visibility:public"],
+    deps = [":br_assign_test"],
+)
+
+verilog_lint_test(
+    name = "br_assign_slang_lint_test",
+    tags = ["manual"],
+    tool = "slang",
     visibility = ["//visibility:public"],
     deps = [":br_assign_test"],
 )

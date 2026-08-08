@@ -1779,12 +1779,15 @@ def verilog_elab_and_lint_test_suite(
 
     for tool in lint_tools:
         test_name = name + "_" + tool + "_lint_test"
+        lint_kwargs = dict(kwargs)
+        if tool == "slang":
+            lint_kwargs["tags"] = kwargs.get("tags", []) + ["manual"]
         verilog_lint_test(
             name = test_name,
             tool = tool,
             deps = [":" + name + "_wrapper"],
             defines = defines,
-            **kwargs
+            **lint_kwargs
         )
 
 def is_param_combination_legal(params, illegal_param_combinations):
