@@ -43,24 +43,6 @@ py_library(
     ],
 )
 
-py_library(
-    name = "eda_tool",
-    srcs = ["eda_tool.py"],
-    imports = ["."],
-    deps = [":util"],
-)
-
-py_library(
-    name = "verilator_plugin",
-    srcs = ["//python/verilog_runner/plugins:verilator.py"],
-    imports = ["."],
-    deps = [
-        ":cli",
-        ":eda_tool",
-        ":util",
-    ],
-)
-
 py_binary(
     name = "verilog_runner",
     srcs = [
@@ -86,15 +68,6 @@ py_test(
     name = "cli_test",
     srcs = ["cli_test.py"],
     deps = [":cli"],
-)
-
-py_test(
-    name = "verilator_plugin_test",
-    srcs = ["verilator_plugin_test.py"],
-    deps = [
-        ":cli",
-        ":verilator_plugin",
-    ],
 )
 
 py_binary(
