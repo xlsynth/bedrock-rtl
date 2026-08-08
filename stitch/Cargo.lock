@@ -1149,7 +1149,8 @@ checksum = "d66dc143e6b11c1eddc06d5c423cfc97062865baf299914ab64caa38182078fe"
 [[package]]
 name = "slang-rs"
 version = "0.22.0"
-source = "git+https://github.com/xlsynth/slang-rs.git?rev=cf75f08e9e1766d147789e6b8301a31e77fcaf6d#cf75f08e9e1766d147789e6b8301a31e77fcaf6d"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "5462dfc70cb1d4bb175080d5f527765c9c1d9facc236e1adbd319aeb6e2d4dd6"
 dependencies = [
  "num-bigint",
  "num-traits",
@@ -1322,7 +1323,8 @@ checksum = "5d99f8c9a7727884afe522e9bd5edbfc91a3312b36a77b5fb8926e4c31a41801"
 [[package]]
 name = "topstitch"
 version = "0.98.0"
-source = "git+https://github.com/xlsynth/topstitch.git?rev=faa2278a41e3cd1a042470d70a3e3ddc2edf23aa#faa2278a41e3cd1a042470d70a3e3ddc2edf23aa"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "a61573a8b4c640d913b682c004e6b8fe4cfcb755fa6b06907012d70a35a0e0e3"
 dependencies = [
  "fixedbitset",
  "geo",
