@@ -14,6 +14,7 @@ from python.ci.bazel_oss_sharding import (
     command_check,
     finalize_result,
     labels_digest,
+    parse_expected_shards,
     partition_labels,
     prepare_partition,
     shard_for_label,
@@ -113,10 +114,10 @@ class BazelOssShardingTest(unittest.TestCase):
                 [f"//sim:verilator_{index}" for index in range(30)],
             )
 
-            outputs, errors, _ = aggregate_results(
-                results_dir,
-                {"python": 1, "stardoc": 1, "slang": 2, "verilator": 3},
+            expected = parse_expected_shards(
+                ["python=1", "stardoc=1", "slang=2", "verilator=3"]
             )
+            outputs, errors, _ = aggregate_results(results_dir, expected)
 
             self.assertEqual(errors, [])
             self.assertEqual(outputs["slang"]["total_tests"], 20)
