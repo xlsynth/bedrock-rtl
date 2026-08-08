@@ -360,8 +360,6 @@ def parse_expected_shards(values: list[str]) -> dict[str, int]:
         suite, separator, count_text = value.partition("=")
         if not separator or suite not in SUITES:
             raise ValueError(f"invalid expected shard specification: {value}")
-        if suite in expected:
-            raise ValueError(f"duplicate expected shard specification: {suite}")
         count = int(count_text)
         if count <= 0:
             raise ValueError(f"invalid expected shard count: {value}")
@@ -397,11 +395,9 @@ def command_aggregate(args: argparse.Namespace) -> int:
     expected = parse_expected_shards(args.expected)
     outputs, errors, rows = aggregate_results(args.results_dir, expected)
     with args.github_output.open("a", encoding="utf-8") as output:
-        for suite in SUITES:
+        for suite in expected:
             for field in ("total_tests", "passing_tests", "exit_code"):
-                output.write(
-                    f"{suite}_{field}={outputs.get(suite, {}).get(field, '')}\n"
-                )
+                output.write(f"{suite}_{field}={outputs[suite][field]}\n")
     with args.step_summary.open("a", encoding="utf-8") as summary:
         summary.write("## Public Bazel test suites\n\n")
         summary.write("| Suite | Shards | Passing | Status |\n")

@@ -12,7 +12,6 @@ from python.ci.bazel_oss_sharding import (
     aggregate_results,
     canonicalize_labels,
     command_check,
-    command_aggregate,
     finalize_result,
     labels_digest,
     parse_expected_shards,
@@ -115,46 +114,14 @@ class BazelOssShardingTest(unittest.TestCase):
                 [f"//sim:verilator_{index}" for index in range(30)],
             )
 
-            outputs, errors, _ = aggregate_results(
-                results_dir,
-                {"python": 1, "stardoc": 1, "slang": 2, "verilator": 3},
+            expected = parse_expected_shards(
+                ["python=1", "stardoc=1", "slang=2", "verilator=3"]
             )
+            outputs, errors, _ = aggregate_results(results_dir, expected)
 
             self.assertEqual(errors, [])
             self.assertEqual(outputs["slang"]["total_tests"], 20)
             self.assertEqual(outputs["verilator"]["passing_tests"], 30)
-
-    def test_command_aggregate_accepts_population_without_coverage(self):
-        with tempfile.TemporaryDirectory() as temporary:
-            results_dir = Path(temporary)
-            self._write_suite(results_dir, "python", 1, ["//python:test"])
-            self._write_suite(results_dir, "stardoc", 1, ["//bazel:test"])
-            self._write_suite(results_dir, "slang", 1, ["//rtl:test"])
-            self._write_suite(results_dir, "verilator", 1, ["//sim:test"])
-            github_output = results_dir / "github-output.txt"
-            step_summary = results_dir / "step-summary.md"
-            args = argparse.Namespace(
-                results_dir=results_dir,
-                expected=[
-                    "python=1",
-                    "stardoc=1",
-                    "slang=1",
-                    "verilator=1",
-                ],
-                github_output=github_output,
-                step_summary=step_summary,
-            )
-
-            self.assertEqual(command_aggregate(args), 0)
-            output_lines = github_output.read_text(encoding="utf-8").splitlines()
-            self.assertIn("verilator_total_tests=1", output_lines)
-            self.assertIn("coverage_total_tests=", output_lines)
-            self.assertIn("coverage_passing_tests=", output_lines)
-            self.assertIn("coverage_exit_code=", output_lines)
-
-    def test_parse_expected_shards_rejects_duplicate_suite(self):
-        with self.assertRaisesRegex(ValueError, "duplicate"):
-            parse_expected_shards(["python=1", "python=2"])
 
     def test_aggregate_rejects_missing_duplicate_and_inconsistent_shards(self):
         with tempfile.TemporaryDirectory() as temporary:

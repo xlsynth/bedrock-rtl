@@ -376,7 +376,6 @@ jobs:
       - name: Load public Docker image
         run: docker load --input /tmp/bedrock-rtl-dev.tar
       - name: Run public Verilator coverage shard
-        continue-on-error: true
         run: |
           docker run --rm -i \
             --user "$(id -u):$(id -g)" \
@@ -395,7 +394,7 @@ jobs:
             --volume "${RUNNER_TEMP}/coverage-disk-cache:${RUNNER_TEMP}/coverage-disk-cache" \
             bedrock-rtl-dev:${{ github.sha }} \
             bash -s <<'EOF'
-          set +e
+          set -euo pipefail
           BAZEL_FLAGS=(
             --action_env=PATH
             --noshow_loading_progress
@@ -403,79 +402,36 @@ jobs:
             --repository_cache="${HOME}/.cache/bazel-repo"
           )
           HELPER=python/ci/bazel_oss_sharding.py
-          RESULTS_DIR="bazel-oss-results/coverage-${CI_SHARD_INDEX}-of-${CI_SHARD_COUNT}"
+          PARTITION_DIR="/tmp/coverage-${CI_SHARD_INDEX}-of-${CI_SHARD_COUNT}"
           DISCOVERED="/tmp/discovered-coverage-${CI_SHARD_INDEX}-of-${CI_SHARD_COUNT}.txt"
-          RESULT="${RESULTS_DIR}/result-coverage-${CI_SHARD_INDEX}-of-${CI_SHARD_COUNT}.json"
-          TARGETS="${RESULTS_DIR}/targets-coverage-${CI_SHARD_INDEX}-of-${CI_SHARD_COUNT}.txt"
-          LOG="/tmp/bazel-coverage-${CI_SHARD_INDEX}-of-${CI_SHARD_COUNT}.log"
-          mkdir -p "${RESULTS_DIR}"
-          : > "${LOG}"
+          TARGETS="${PARTITION_DIR}/targets-coverage-${CI_SHARD_INDEX}-of-${CI_SHARD_COUNT}.txt"
+          mkdir -p "${PARTITION_DIR}"
 
           bazel query --noshow_progress 'kind(".*_coverage_data", //...)' > "${DISCOVERED}"
-          query_exit_code=$?
           python3.12 "${HELPER}" partition \
             --suite coverage \
             --shard-index "${CI_SHARD_INDEX}" \
             --shard-count "${CI_SHARD_COUNT}" \
             --input "${DISCOVERED}" \
-            --output-dir "${RESULTS_DIR}"
-          partition_exit_code=$?
-
-          if [ "${query_exit_code}" -ne 0 ]; then
-            python3.12 "${HELPER}" discovery-failure \
-              --result "${RESULT}" \
-              --exit-code "${query_exit_code}" \
-              --message "Bazel query failed"
-          elif [ "${partition_exit_code}" -ne 0 ]; then
-            python3.12 "${HELPER}" discovery-failure \
-              --result "${RESULT}" \
-              --exit-code "${partition_exit_code}" \
-              --message "Coverage partitioning failed"
-          else
-            echo $(date -d "today" +"%Y-%m-%d-%H-%M-%S") > \
-              "${RESULTS_DIR}/timestamp-coverage-${CI_SHARD_INDEX}-of-${CI_SHARD_COUNT}.txt"
-            bazel build "${BAZEL_FLAGS[@]}" \
-              --target_pattern_file="${TARGETS}" 2>&1 | tee "${LOG}"
-            bazel_exit_code=${PIPESTATUS[0]}
-            python3.12 "${HELPER}" finalize \
-              --result "${RESULT}" \
-              --log "${LOG}" \
-              --exit-code "${bazel_exit_code}"
-          fi
-
-          cp "${LOG}" "${RESULTS_DIR}/"
+            --output-dir "${PARTITION_DIR}"
+          bazel build "${BAZEL_FLAGS[@]}" \
+            --target_pattern_file="${TARGETS}"
           EOF
-      - name: Upload public coverage shard result
-        if: ${{ always() }}
-        # actions/upload-artifact v7.0.1
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
-        with:
-          name: bazel-oss-result-${{ matrix.name }}
-          path: bazel-oss-results/coverage-${{ matrix.shard_index }}-of-${{ matrix.shard_count }}
-          if-no-files-found: error
-          retention-days: 1
       - name: Upload ephemeral coverage action outputs
-        if: ${{ always() }}
         # actions/upload-artifact v7.0.1
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         with:
           name: bazel-oss-coverage-disk-${{ matrix.shard_index }}-of-${{ matrix.shard_count }}
           path: ${{ runner.temp }}/coverage-disk-cache
           compression-level: 0
-          if-no-files-found: warn
+          if-no-files-found: error
           include-hidden-files: true
           retention-days: 1
-      - name: Check public coverage shard result
-        if: ${{ always() }}
-        run: |
-          python3.12 python/ci/bazel_oss_sharding.py check \
-            --results-dir "bazel-oss-results/coverage-${{ matrix.shard_index }}-of-${{ matrix.shard_count }}" \
-            --expected-suite coverage
 
   bazel-oss-verilator-coverage:
     runs-on: ubuntu-24.04
     needs: bazel-oss-verilator-coverage-shard
-    if: ${{ always() && github.ref == 'refs/heads/main' }}
+    if: ${{ github.ref == 'refs/heads/main' }}
     permissions:
       contents: read
     steps:
@@ -566,7 +522,7 @@ jobs:
   # image-publication interface; individual shards remain visible underneath it.
   bazel-oss-tool-test:
     runs-on: ubuntu-24.04
-    needs: [bazel-oss-tool-test-shard, bazel-oss-verilator-coverage-shard]
+    needs: bazel-oss-tool-test-shard
     if: ${{ always() }}
     permissions:
       contents: read
@@ -584,9 +540,6 @@ jobs:
       verilator_total_tests: ${{ steps.results.outputs.verilator_total_tests }}
       verilator_passing_tests: ${{ steps.results.outputs.verilator_passing_tests }}
       verilator_exit_code: ${{ steps.results.outputs.verilator_exit_code }}
-      coverage_total_tests: ${{ steps.results.outputs.coverage_total_tests }}
-      coverage_passing_tests: ${{ steps.results.outputs.coverage_passing_tests }}
-      coverage_exit_code: ${{ steps.results.outputs.coverage_exit_code }}
     steps:
       # actions/checkout v7.0.0
       - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0
@@ -608,29 +561,18 @@ jobs:
         id: results
         continue-on-error: true
         run: |
-          expected_args=(
-            --expected python=1
-            --expected stardoc=1
-            --expected slang=4
-            --expected verilator=8
-          )
-          if [ "$GITHUB_REF" = refs/heads/main ]; then
-            expected_args+=(--expected coverage=4)
-          fi
           python3.12 python/ci/bazel_oss_sharding.py aggregate \
             --results-dir bazel-oss-aggregate \
-            "${expected_args[@]}" \
+            --expected python=1 \
+            --expected stardoc=1 \
+            --expected slang=4 \
+            --expected verilator=8 \
             --github-output "$GITHUB_OUTPUT" \
             --step-summary "$GITHUB_STEP_SUMMARY"
       - name: Check public Bazel test suite results
         run: |
           if [ "${{ needs.bazel-oss-tool-test-shard.result }}" != success ]; then
             echo "::error title=Public Bazel shard failed::One or more matrix jobs failed"
-            exit 1
-          fi
-          if [ "$GITHUB_REF" = refs/heads/main ] && \
-             [ "${{ needs.bazel-oss-verilator-coverage-shard.result }}" != success ]; then
-            echo "::error title=Public coverage shard failed::One or more coverage jobs failed"
             exit 1
           fi
           if [ "${{ steps.results.outcome }}" != success ]; then
@@ -641,7 +583,7 @@ jobs:
   generate-test-results-dashboard:
     runs-on: ubuntu-24.04
     needs: [bazel-oss-tool-test-shard, bazel-oss-verilator-coverage]
-    if: ${{ always() && github.ref == 'refs/heads/main' }}
+    if: ${{ github.ref == 'refs/heads/main' }}
     permissions:
       contents: read
     steps:
@@ -661,8 +603,9 @@ jobs:
         with:
           bazelisk-cache: true
           repository-cache: true
-          # Dashboard generation should not create a coverage-adjacent cache.
-          cache-save: false
+          # PRs may restore default-branch caches without creating PR-ref cache
+          # entries; main pushes and manual runs refresh the repository cache.
+          cache-save: ${{ github.event_name != 'pull_request' }}
       - name: Configure public Bazel environment
         run: |
           # setup-bazel restores these paths on a cache hit. Create them on a
