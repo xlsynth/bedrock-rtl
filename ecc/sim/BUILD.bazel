@@ -85,13 +85,23 @@ K = [
 
 br_verilog_sim_test_tools_suite(
     name = "br_ecc_secded_encoder_decoder_sim_test_tools_suite",
-    coverage = True,
+    coverage = False,
     params = {"DataWidth": K},
     seed = 42,
-    tools = [
-        "vcs",
-        "verilator",
+    tools = ["vcs"],
+    deps = [":br_ecc_secded_encoder_decoder_tb"],
+)
+
+br_verilog_sim_test_tools_suite(
+    name = "br_ecc_secded_encoder_decoder_sim_test_tools_suite",
+    coverage = True,
+    elab_opts = [
+        "-CFLAGS",
+        "-Os",
     ],
+    params = {"DataWidth": K},
+    seed = 42,
+    tools = ["verilator"],
     deps = [":br_ecc_secded_encoder_decoder_tb"],
 )
 
