@@ -1,12 +1,13 @@
 # SPDX-License-Identifier: Apache-2.0
 
-"""slang elaboration plugin for Verilog Runner."""
+"""slang elaboration and lint plugins for Verilog Runner."""
 
 import argparse
 from dataclasses import dataclass
-from typing import Dict, Type
+import shlex
+from typing import Dict, Optional, Type
 
-from cli import Elab, Subcommand, common_args
+from cli import Elab, Lint, Subcommand, common_args
 from eda_tool import EdaTool
 from util import (
     gen_file_header,
@@ -53,9 +54,8 @@ class Slang(EdaTool):
     def tcl_footer(self) -> str:
         return ""
 
-    def cmd(self) -> str:
-        """Returns a default shell script to run slang."""
-        self.logger.info("Generating shell script.")
+    def slang_args(self) -> list[str]:
+        """Returns the arguments shared by slang elaboration and linting."""
         slang_cmd = [
             '"${SLANG_PATH}"',
             "--std 1800-2017",
@@ -70,7 +70,11 @@ class Slang(EdaTool):
         slang_cmd += [f"-D{define}" for define in self.defines]
         slang_cmd += [f"-G{key}={value}" for key, value in self.params.items()]
         slang_cmd += self.opts
+        return slang_cmd
 
+    def cmd(self) -> str:
+        """Returns a default shell script to run slang."""
+        self.logger.info("Generating shell script.")
         cmd = [
             "#!/bin/bash",
             gen_file_header(self.scriptfile, "slang"),
@@ -81,7 +85,7 @@ class Slang(EdaTool):
         cmd += [
             "echo '----------------------------- slang -----------------------------'"
         ]
-        cmd += [" ".join(slang_cmd), ""]
+        cmd += [" ".join(self.slang_args()), ""]
         return "\n".join(cmd)
 
     def run_cmd(self) -> Dict[str, bool]:
@@ -93,7 +97,7 @@ class Slang(EdaTool):
         return {f"Return code {returncode}": returncode == 0}
 
     def run_test(self) -> bool:
-        """Runs the test and returns True if elaboration succeeded."""
+        """Runs the test and returns True if slang succeeded."""
         self.logger.info("Running test.")
         step_success = self.run_cmd()
         success = all(step_success.values())
@@ -104,3 +108,23 @@ class Slang(EdaTool):
             logger=self.logger,
         )
         return success
+
+
+@dataclass
+class SlangLint(Slang):
+    subcommand: Type[Subcommand] = Lint
+    help: str = "Lint a Verilog/SystemVerilog design using slang"
+    policy: Optional[str] = None
+
+    def __post_init__(self):
+        self.logger = get_class_logger("lint", "slang")
+
+    @classmethod
+    def from_args(cls, args):
+        return cls(**common_args(args), policy=args.policy)
+
+    def slang_args(self) -> list[str]:
+        args = super().slang_args()
+        if self.policy:
+            args.append(f"-F {shlex.quote(self.policy)}")
+        return args

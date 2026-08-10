@@ -1027,6 +1027,7 @@ rule_verilog_lint_test = rule(
         ),
         "verilog_runner_plugins": attr.label_list(
             default = [
+                "//python/verilog_runner/plugins:slang.py",
                 "//python/verilog_runner/plugins:verilator.py",
             ],
             allow_files = True,
@@ -1069,6 +1070,9 @@ def verilog_lint_test(tool, tags = [], **kwargs):
         tags: The tags to add to the test.
         **kwargs: Other arguments to pass to the rule_verilog_lint_test rule.
     """
+
+    if tool == "slang" and "policy" not in kwargs:
+        kwargs["policy"] = Label("//:slang_lint_policy.f")
 
     rule_verilog_lint_test(
         tool = tool,
@@ -1698,7 +1702,7 @@ def verilog_elab_and_lint_test_suite(
         params = {},
         include_default_params = True,
         elab_tools = ["verific", "slang"],
-        lint_tool = "ascentlint",
+        lint_tools = ["ascentlint"],
         disable_lint_rules = [],
         **kwargs):
     """Creates a suite of Verilog elaboration and lint tests for each combination of the provided parameters.
@@ -1706,8 +1710,8 @@ def verilog_elab_and_lint_test_suite(
     The function generates a wrapper containing one instance for every combination of the provided parameters and,
     by default, one instance with the module's default parameters. Set include_default_params to False when another
     sweep already covers the defaults or the defaults are intentionally invalid. It creates one verilog_elab_test
-    for each elaboration tool and one verilog_lint_test. Elaboration test names append the tool name followed by
-    "_elab_test"; the lint test name appends "_lint_test".
+    for each elaboration tool and one verilog_lint_test for each lint tool. Test names append the tool name
+    followed by "_elab_test" or "_lint_test", respectively.
 
     Args:
         top (str): The top-level module to instantiate. Can be left undefined if there is only one dependency.
@@ -1717,7 +1721,7 @@ def verilog_elab_and_lint_test_suite(
         params (dict): A dictionary where keys are parameter names and values are lists of possible values for those parameters.
         include_default_params (bool): Whether to include an instance with the module's default parameters.
         elab_tools (list of strings): The tools to use for elaboration. Defaults to Verific and Slang.
-        lint_tool (str): The tool to use for linting.
+        lint_tools (list of strings): The tools to use for lint. Defaults to AscentLint.
         disable_lint_rules (list): A list of lint rules to disable in the generated files.
         **kwargs: Additional common keyword arguments to be passed to the verilog_elab_test and verilog_lint_test functions.
     """
@@ -1733,6 +1737,14 @@ def verilog_elab_and_lint_test_suite(
         if elab_tool in seen_elab_tools:
             fail("elab_tools contains a duplicate tool: " + elab_tool)
         seen_elab_tools[elab_tool] = True
+
+    if len(lint_tools) == 0:
+        fail("lint_tools must contain at least one lint tool")
+    seen_lint_tools = {}
+    for tool in lint_tools:
+        if tool in seen_lint_tools:
+            fail("lint_tools contains a duplicate tool: " + tool)
+        seen_lint_tools[tool] = True
 
     generate_parameter_file(
         name = name + "_params",
@@ -1765,13 +1777,15 @@ def verilog_elab_and_lint_test_suite(
             **kwargs
         )
 
-    verilog_lint_test(
-        name = name + "_lint_test",
-        tool = lint_tool,
-        deps = [":" + name + "_wrapper"],
-        defines = defines,
-        **kwargs
-    )
+    for tool in lint_tools:
+        test_name = name + "_" + tool + "_lint_test"
+        verilog_lint_test(
+            name = test_name,
+            tool = tool,
+            deps = [":" + name + "_wrapper"],
+            defines = defines,
+            **kwargs
+        )
 
 def is_param_combination_legal(params, illegal_param_combinations):
     """Checks if a given combination of parameters is legal based on the provided illegal combinations.

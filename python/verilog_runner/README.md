@@ -44,3 +44,5 @@ Verilog Runner discovers plugins by searching for Python modules in the director
 The syntax of the environment variable is the same as the `PYTHONPATH` environment variable (a colon-separated list of directories).
 
 If no plugins are found, Verilog Runner will exit with an error.
+
+The public Slang plugin supports both elaboration and linting. Slang lint fully elaborates the design and accepts the existing `--policy` argument for a Slang command file; Bedrock's Bazel lint rule supplies its strict repository-owned policy by default.

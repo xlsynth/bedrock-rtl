@@ -45,6 +45,7 @@ target
 
 # filelists
 *.f
+!/slang_lint_policy.f
 
 # physical design files
 *.lef
