@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: Apache-2.0
 
-"""Tests source-local Slang waiver scope validation."""
+"""Tests Bedrock's source-local Slang waiver policy checker, not Slang itself."""
 
 from pathlib import Path
 import tempfile

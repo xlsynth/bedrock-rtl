@@ -40,7 +40,18 @@ verilog_elab_test(
 
 Slang parses, type-checks, and elaborates the hierarchy. It supports source and header dependencies, defines, and top-level parameter overrides. For package-only source sets, set `compile_only = True`.
 
-Slang lint fully elaborates the design and treats every warning as an error using the top-level `slang_lint_policy.f`. Keep intentional waivers next to the affected RTL and restore the prior diagnostic state:
+Slang lint fully elaborates the design and treats every enabled warning as an error using the top-level `slang_lint_policy.f`.
+
+### Slang lint waiver policy
+
+Fix clear RTL issues instead of waiving them, but do not change otherwise acceptable RTL solely to satisfy Slang when that would conflict with the existing AscentLint result or make the code less clear. All exceptions require human review and must follow these rules:
+
+- Keep waivers in the affected RTL, directly beside the intentional construct. Do not add external or repository-wide waiver lists.
+- Limit each waiver to the smallest practical source region and name only the required diagnostic.
+- Use global `-Wno-*` entries in `slang_lint_policy.f` only for diagnostics that are broken or not useful across the repository, and document the reason there.
+- Prefer an existing AscentLint waiver on the same construct as supporting evidence, but review the Slang waiver independently.
+
+Slang does not yet support a one-shot waiver for one source line. That improvement is tracked upstream in [MikePopoloski/slang#1930](https://github.com/MikePopoloski/slang/issues/1930). Until it is available, express each local waiver as a saved diagnostic scope:
 
 ```systemverilog
 // slang lint_save
@@ -49,7 +60,7 @@ logic intentionally_unused;
 // slang lint_restore
 ```
 
-Use `lint_restore` rather than `lint_on`: restoring the saved state also restores the policy's warning-as-error severity. Pre-commit rejects waivers that are not enclosed by a matching `lint_save` and `lint_restore`.
+Use `lint_restore` rather than `lint_on`: restoring the saved state also restores the policy's warning-as-error severity. The `scoped-slang-waivers` pre-commit hook enforces this Bedrock policy by rejecting `lint_off` outside a saved scope, unmatched scopes, `lint_on`, and saved scopes that contain no waiver. The hook validates waiver structure; it does not test Slang's implementation of the directives.
 
 To refresh the public RTL PPA report, run:
 

@@ -1,6 +1,14 @@
 # SPDX-License-Identifier: Apache-2.0
 
-"""Reject Slang lint waivers that can leak beyond their intended source scope."""
+"""Enforce Bedrock's source-local Slang lint waiver policy.
+
+Slang does not yet provide a one-shot waiver for a single source line; that
+feature is tracked at https://github.com/MikePopoloski/slang/issues/1930.
+Until it is available, Bedrock requires every ``lint_off`` to be enclosed by a
+matching ``lint_save`` and ``lint_restore`` so that it cannot affect unrelated
+RTL. This checker validates that repository policy; it does not test Slang's
+implementation of the directives.
+"""
 
 import re
 import sys
