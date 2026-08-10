@@ -328,7 +328,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "39cab71617ae0d63f51a36d69f866391735b51691dbda63cf6f96d042b63efeb"
 dependencies = [
  "libc",
- "windows-sys 0.52.0",
+ "windows-sys 0.60.2",
 ]
 
 [[package]]
@@ -994,7 +994,7 @@ dependencies = [
  "errno",
  "libc",
  "linux-raw-sys",
- "windows-sys 0.52.0",
+ "windows-sys 0.60.2",
 ]
 
 [[package]]
@@ -1148,9 +1148,9 @@ checksum = "d66dc143e6b11c1eddc06d5c423cfc97062865baf299914ab64caa38182078fe"
 
 [[package]]
 name = "slang-rs"
-version = "0.21.0"
+version = "0.22.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "3c94a0406f03d903f5e8d66baa6109a89814f2ce5b48ccd81b0ad224b078a42b"
+checksum = "5462dfc70cb1d4bb175080d5f527765c9c1d9facc236e1adbd319aeb6e2d4dd6"
 dependencies = [
  "num-bigint",
  "num-traits",
@@ -1256,7 +1256,7 @@ dependencies = [
  "getrandom 0.3.4",
  "once_cell",
  "rustix",
- "windows-sys 0.52.0",
+ "windows-sys 0.60.2",
 ]
 
 [[package]]
@@ -1322,9 +1322,9 @@ checksum = "5d99f8c9a7727884afe522e9bd5edbfc91a3312b36a77b5fb8926e4c31a41801"
 
 [[package]]
 name = "topstitch"
-version = "0.96.0"
+version = "0.98.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "36bafce59c8828adaf4c0d0955264a606cb212c858444b09fbd39c3ea5f1e711"
+checksum = "a61573a8b4c640d913b682c004e6b8fe4cfcb755fa6b06907012d70a35a0e0e3"
 dependencies = [
  "fixedbitset",
  "geo",
