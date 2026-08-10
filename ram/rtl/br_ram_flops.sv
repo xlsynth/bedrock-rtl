@@ -339,8 +339,10 @@ module br_ram_flops #(
   //------------------------------------------
   // Implementation checks
   //------------------------------------------
-  `BR_ASSERT_CR_IMPL(read_latency_a, (|rd_addr_valid) |-> ##ReadLatency(|rd_data_valid), rd_clk,
-                     rd_rst)
+  // slang lint_save
+  // slang lint_off int-bool-conv
+  `BR_ASSERT_CR_IMPL(read_latency_a, rd_addr_valid |-> ##ReadLatency rd_data_valid, rd_clk, rd_rst)
+  // slang lint_restore
 
 `ifdef BR_ASSERT_ON
 `ifdef BR_ENABLE_IMPL_CHECKS

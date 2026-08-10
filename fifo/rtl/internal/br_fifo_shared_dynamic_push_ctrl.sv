@@ -207,8 +207,11 @@ module br_fifo_shared_dynamic_push_ctrl #(
 
   // These are only used for assertions, so it's fine to use $countones
   // ri lint_check_off SYS_TF
-  assign request_count = PortCountWidth'($unsigned($countones(push_valid)));
-  assign grant_count   = PortCountWidth'($unsigned($countones(push_valid & push_ready)));
+  // slang lint_save
+  // slang lint_off width-trunc
+  assign request_count = $unsigned($countones(push_valid));
+  assign grant_count   = $unsigned($countones(push_valid & push_ready));
+  // slang lint_restore
   // ri lint_check_on SYS_TF
 `endif
 `endif

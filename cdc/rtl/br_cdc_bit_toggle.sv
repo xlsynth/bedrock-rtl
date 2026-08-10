@@ -116,7 +116,10 @@ module br_cdc_bit_toggle #(
 
 `else
   // ri lint_check_off ONE_CONN_PER_LINE
+  // slang lint_save
+  // slang lint_off ignored-macro-paste
   `BR_GATE_CDC_MAXDEL(src_bit_internal_maxdel, src_bit_internal)
+  // slang lint_restore
   // ri lint_check_on ONE_CONN_PER_LINE
 `endif
 

@@ -441,7 +441,10 @@ module br_ram_flops_tile #(
   //------------------------------------------
   // Implementation checks
   //------------------------------------------
-  `BR_ASSERT_CR_IMPL(zero_read_latency_A, (|rd_addr_valid) |-> (|rd_data_valid), rd_clk, rd_rst)
+  // slang lint_save
+  // slang lint_off int-bool-conv
+  `BR_ASSERT_CR_IMPL(zero_read_latency_A, rd_addr_valid |-> rd_data_valid, rd_clk, rd_rst)
+  // slang lint_restore
 `ifdef BR_ASSERT_ON
 `ifdef BR_ENABLE_IMPL_CHECKS
   if (EnableBypass) begin : gen_bypass_impl_checks

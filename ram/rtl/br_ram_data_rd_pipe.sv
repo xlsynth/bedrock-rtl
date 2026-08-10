@@ -186,14 +186,20 @@ module br_ram_data_rd_pipe #(
   //------------------------------------------
   if (Latency > 0) begin : gen_stages_gt0
     for (genvar d = 0; d < DepthTiles; d++) begin : gen_d_impl_checks
+      // slang lint_save
+      // slang lint_off int-bool-conv
       `BR_ASSERT_IMPL(propagation_a,
-                      (|tile_valid[d]) |-> ##Latency valid && data == $past(tile_data[d], Latency))
+                      tile_valid[d] |-> ##Latency valid && data == $past(tile_data[d], Latency))
+      // slang lint_restore
     end
     `BR_ASSERT_IMPL(causality_a, valid |-> $past(|tile_valid, Latency))
 
   end else begin : gen_stages_eq0
     for (genvar d = 0; d < DepthTiles; d++) begin : gen_d_impl_checks
-      `BR_ASSERT_IMPL(propagation_a, (|tile_valid[d]) |-> valid && data == tile_data[d])
+      // slang lint_save
+      // slang lint_off int-bool-conv
+      `BR_ASSERT_IMPL(propagation_a, tile_valid[d] |-> valid && data == tile_data[d])
+      // slang lint_restore
     end
     `BR_ASSERT_IMPL(causality_a, valid |-> |tile_valid)
   end
