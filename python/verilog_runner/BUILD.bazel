@@ -43,6 +43,13 @@ py_library(
     ],
 )
 
+py_library(
+    name = "eda_tool",
+    srcs = ["eda_tool.py"],
+    imports = ["."],
+    deps = [":util"],
+)
+
 py_binary(
     name = "verilog_runner",
     srcs = [

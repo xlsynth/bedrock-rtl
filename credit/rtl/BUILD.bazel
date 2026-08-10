@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: Apache-2.0
 
 load("@rules_hdl//verilog:providers.bzl", "verilog_library")
-load("//bazel:br_verilog.bzl", "br_verilog_elab_and_lint_test_suite", "br_verilog_synth_suite")
+load("//bazel:br_verilog.bzl", "br_verilog_elab_and_lint_test_suite", "br_verilog_yosys_synth_suite")
 
 package(default_visibility = ["//visibility:public"])
 
@@ -19,7 +19,7 @@ verilog_library(
     ],
 )
 
-br_verilog_synth_suite(
+br_verilog_yosys_synth_suite(
     name = "br_credit_counter_small_ppa",
     params = {
         "MaxChange": ["1"],
@@ -28,7 +28,7 @@ br_verilog_synth_suite(
     deps = [":br_credit_counter"],
 )
 
-br_verilog_synth_suite(
+br_verilog_yosys_synth_suite(
     name = "br_credit_counter_scaled_ppa",
     params = {
         "MaxChange": ["4"],
@@ -131,7 +131,7 @@ verilog_library(
     ],
 )
 
-br_verilog_synth_suite(
+br_verilog_yosys_synth_suite(
     name = "br_credit_sender_small_ppa",
     params = {
         "MaxCredit": ["8"],
@@ -143,7 +143,7 @@ br_verilog_synth_suite(
     deps = [":br_credit_sender"],
 )
 
-br_verilog_synth_suite(
+br_verilog_yosys_synth_suite(
     name = "br_credit_sender_scaled_ppa",
     params = {
         "MaxCredit": ["16"],
@@ -207,7 +207,7 @@ verilog_library(
     ],
 )
 
-br_verilog_synth_suite(
+br_verilog_yosys_synth_suite(
     name = "br_credit_receiver_small_ppa",
     params = {
         "MaxCredit": ["8"],
@@ -220,7 +220,7 @@ br_verilog_synth_suite(
     deps = [":br_credit_receiver"],
 )
 
-br_verilog_synth_suite(
+br_verilog_yosys_synth_suite(
     name = "br_credit_receiver_scaled_ppa",
     params = {
         "MaxCredit": ["16"],
@@ -292,7 +292,7 @@ verilog_library(
     ],
 )
 
-br_verilog_synth_suite(
+br_verilog_yosys_synth_suite(
     name = "br_credit_sender_vc_small_ppa",
     params = {
         "MaxCredit": ["8"],
@@ -304,7 +304,7 @@ br_verilog_synth_suite(
     deps = [":br_credit_sender_vc"],
 )
 
-br_verilog_synth_suite(
+br_verilog_yosys_synth_suite(
     name = "br_credit_sender_vc_scaled_ppa",
     params = {
         "MaxCredit": ["16"],

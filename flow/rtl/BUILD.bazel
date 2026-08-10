@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: Apache-2.0
 
 load("@rules_hdl//verilog:providers.bzl", "verilog_library")
-load("//bazel:br_verilog.bzl", "br_verilog_elab_and_lint_test_suite", "br_verilog_synth_suite")
+load("//bazel:br_verilog.bzl", "br_verilog_elab_and_lint_test_suite", "br_verilog_yosys_synth_suite")
 
 package(default_visibility = ["//visibility:public"])
 
@@ -131,7 +131,7 @@ verilog_library(
     ],
 )
 
-br_verilog_synth_suite(
+br_verilog_yosys_synth_suite(
     name = "br_flow_valve_ppa",
     params = {"NumFlows": [
         "4",
@@ -293,7 +293,7 @@ verilog_library(
     ],
 )
 
-br_verilog_synth_suite(
+br_verilog_yosys_synth_suite(
     name = "br_flow_buffer_single_ppa",
     params = {
         "Depth": ["1"],
@@ -304,7 +304,7 @@ br_verilog_synth_suite(
     deps = [":br_flow_buffer"],
 )
 
-br_verilog_synth_suite(
+br_verilog_yosys_synth_suite(
     name = "br_flow_buffer_skid_ppa",
     params = {
         "Depth": ["2"],
@@ -315,7 +315,7 @@ br_verilog_synth_suite(
     deps = [":br_flow_buffer"],
 )
 
-br_verilog_synth_suite(
+br_verilog_yosys_synth_suite(
     name = "br_flow_buffer_fifo_ppa",
     params = {
         "Depth": ["16"],
@@ -428,7 +428,7 @@ verilog_library(
     ],
 )
 
-br_verilog_synth_suite(
+br_verilog_yosys_synth_suite(
     name = "br_flow_arb_fixed_ppa",
     params = {"NumFlows": [
         "4",
@@ -437,7 +437,7 @@ br_verilog_synth_suite(
     deps = [":br_flow_arb_fixed"],
 )
 
-br_verilog_synth_suite(
+br_verilog_yosys_synth_suite(
     name = "br_flow_arb_lru_ppa",
     params = {"NumFlows": [
         "4",
@@ -446,7 +446,7 @@ br_verilog_synth_suite(
     deps = [":br_flow_arb_lru"],
 )
 
-br_verilog_synth_suite(
+br_verilog_yosys_synth_suite(
     name = "br_flow_arb_rr_ppa",
     params = {"NumFlows": [
         "4",
@@ -455,7 +455,7 @@ br_verilog_synth_suite(
     deps = [":br_flow_arb_rr"],
 )
 
-br_verilog_synth_suite(
+br_verilog_yosys_synth_suite(
     name = "br_flow_burst_mux_fixed_ppa",
     params = {
         "NumFlows": [
@@ -467,7 +467,7 @@ br_verilog_synth_suite(
     deps = [":br_flow_burst_mux_fixed"],
 )
 
-br_verilog_synth_suite(
+br_verilog_yosys_synth_suite(
     name = "br_flow_burst_mux_fixed_stable_ppa",
     params = {
         "NumFlows": ["8"],
@@ -480,7 +480,7 @@ br_verilog_synth_suite(
     deps = [":br_flow_burst_mux_fixed_stable"],
 )
 
-br_verilog_synth_suite(
+br_verilog_yosys_synth_suite(
     name = "br_flow_burst_mux_lru_ppa",
     params = {
         "NumFlows": [
@@ -492,7 +492,7 @@ br_verilog_synth_suite(
     deps = [":br_flow_burst_mux_lru"],
 )
 
-br_verilog_synth_suite(
+br_verilog_yosys_synth_suite(
     name = "br_flow_burst_mux_lru_stable_ppa",
     params = {
         "NumFlows": ["8"],
@@ -505,7 +505,7 @@ br_verilog_synth_suite(
     deps = [":br_flow_burst_mux_lru_stable"],
 )
 
-br_verilog_synth_suite(
+br_verilog_yosys_synth_suite(
     name = "br_flow_burst_mux_rr_ppa",
     params = {
         "NumFlows": [
@@ -517,7 +517,7 @@ br_verilog_synth_suite(
     deps = [":br_flow_burst_mux_rr"],
 )
 
-br_verilog_synth_suite(
+br_verilog_yosys_synth_suite(
     name = "br_flow_burst_mux_rr_stable_ppa",
     params = {
         "NumFlows": ["8"],
@@ -530,7 +530,7 @@ br_verilog_synth_suite(
     deps = [":br_flow_burst_mux_rr_stable"],
 )
 
-br_verilog_synth_suite(
+br_verilog_yosys_synth_suite(
     name = "br_flow_demux_select_ppa",
     params = {
         "NumFlows": [
@@ -542,7 +542,7 @@ br_verilog_synth_suite(
     deps = [":br_flow_demux_select"],
 )
 
-br_verilog_synth_suite(
+br_verilog_yosys_synth_suite(
     name = "br_flow_demux_select_unstable_ppa",
     params = {
         "NumFlows": [
@@ -554,7 +554,7 @@ br_verilog_synth_suite(
     deps = [":br_flow_demux_select_unstable"],
 )
 
-br_verilog_synth_suite(
+br_verilog_yosys_synth_suite(
     name = "br_flow_deserializer_ppa",
     params = {
         "DeserializeMostSignificantFirst": [
@@ -568,7 +568,7 @@ br_verilog_synth_suite(
     deps = [":br_flow_deserializer"],
 )
 
-br_verilog_synth_suite(
+br_verilog_yosys_synth_suite(
     name = "br_flow_fork_ppa",
     params = {"NumFlows": [
         "4",
@@ -577,7 +577,7 @@ br_verilog_synth_suite(
     deps = [":br_flow_fork"],
 )
 
-br_verilog_synth_suite(
+br_verilog_yosys_synth_suite(
     name = "br_flow_fork_select_multihot_ppa",
     params = {"NumFlows": [
         "4",
@@ -586,7 +586,7 @@ br_verilog_synth_suite(
     deps = [":br_flow_fork_select_multihot"],
 )
 
-br_verilog_synth_suite(
+br_verilog_yosys_synth_suite(
     name = "br_flow_join_ppa",
     params = {"NumFlows": [
         "4",
@@ -595,7 +595,7 @@ br_verilog_synth_suite(
     deps = [":br_flow_join"],
 )
 
-br_verilog_synth_suite(
+br_verilog_yosys_synth_suite(
     name = "br_flow_mux_fixed_ppa",
     params = {
         "NumFlows": [
@@ -607,7 +607,7 @@ br_verilog_synth_suite(
     deps = [":br_flow_mux_fixed"],
 )
 
-br_verilog_synth_suite(
+br_verilog_yosys_synth_suite(
     name = "br_flow_mux_fixed_stable_ppa",
     params = {
         "NumFlows": ["8"],
@@ -620,7 +620,7 @@ br_verilog_synth_suite(
     deps = [":br_flow_mux_fixed_stable"],
 )
 
-br_verilog_synth_suite(
+br_verilog_yosys_synth_suite(
     name = "br_flow_mux_lru_ppa",
     params = {
         "NumFlows": [
@@ -632,7 +632,7 @@ br_verilog_synth_suite(
     deps = [":br_flow_mux_lru"],
 )
 
-br_verilog_synth_suite(
+br_verilog_yosys_synth_suite(
     name = "br_flow_mux_lru_stable_ppa",
     params = {
         "NumFlows": ["8"],
@@ -645,7 +645,7 @@ br_verilog_synth_suite(
     deps = [":br_flow_mux_lru_stable"],
 )
 
-br_verilog_synth_suite(
+br_verilog_yosys_synth_suite(
     name = "br_flow_mux_rr_ppa",
     params = {
         "NumFlows": [
@@ -657,7 +657,7 @@ br_verilog_synth_suite(
     deps = [":br_flow_mux_rr"],
 )
 
-br_verilog_synth_suite(
+br_verilog_yosys_synth_suite(
     name = "br_flow_mux_rr_stable_ppa",
     params = {
         "NumFlows": ["8"],
@@ -670,7 +670,7 @@ br_verilog_synth_suite(
     deps = [":br_flow_mux_rr_stable"],
 )
 
-br_verilog_synth_suite(
+br_verilog_yosys_synth_suite(
     name = "br_flow_mux_select_ppa",
     params = {
         "NumFlows": [
@@ -682,7 +682,7 @@ br_verilog_synth_suite(
     deps = [":br_flow_mux_select"],
 )
 
-br_verilog_synth_suite(
+br_verilog_yosys_synth_suite(
     name = "br_flow_mux_select_unstable_ppa",
     params = {
         "NumFlows": [
@@ -694,7 +694,7 @@ br_verilog_synth_suite(
     deps = [":br_flow_mux_select_unstable"],
 )
 
-br_verilog_synth_suite(
+br_verilog_yosys_synth_suite(
     name = "br_flow_reg_both_ppa",
     params = {"Width": [
         "32",
@@ -703,7 +703,7 @@ br_verilog_synth_suite(
     deps = [":br_flow_reg_both"],
 )
 
-br_verilog_synth_suite(
+br_verilog_yosys_synth_suite(
     name = "br_flow_reg_fwd_ppa",
     params = {"Width": [
         "32",
@@ -712,7 +712,7 @@ br_verilog_synth_suite(
     deps = [":br_flow_reg_fwd"],
 )
 
-br_verilog_synth_suite(
+br_verilog_yosys_synth_suite(
     name = "br_flow_reg_none_ppa",
     params = {"Width": [
         "32",
@@ -721,7 +721,7 @@ br_verilog_synth_suite(
     deps = [":br_flow_reg_none"],
 )
 
-br_verilog_synth_suite(
+br_verilog_yosys_synth_suite(
     name = "br_flow_reg_rev_ppa",
     params = {"Width": [
         "32",
@@ -730,7 +730,7 @@ br_verilog_synth_suite(
     deps = [":br_flow_reg_rev"],
 )
 
-br_verilog_synth_suite(
+br_verilog_yosys_synth_suite(
     name = "br_flow_serializer_ppa",
     params = {
         "MetadataWidth": ["8"],
@@ -744,7 +744,7 @@ br_verilog_synth_suite(
     deps = [":br_flow_serializer"],
 )
 
-br_verilog_synth_suite(
+br_verilog_yosys_synth_suite(
     name = "br_flow_xbar_fixed_baseline_ppa",
     params = {
         "NumPopFlows": ["4"],
@@ -756,7 +756,7 @@ br_verilog_synth_suite(
     deps = [":br_flow_xbar_fixed"],
 )
 
-br_verilog_synth_suite(
+br_verilog_yosys_synth_suite(
     name = "br_flow_xbar_fixed_pipelined_ppa",
     params = {
         "NumPopFlows": ["8"],
@@ -768,7 +768,7 @@ br_verilog_synth_suite(
     deps = [":br_flow_xbar_fixed"],
 )
 
-br_verilog_synth_suite(
+br_verilog_yosys_synth_suite(
     name = "br_flow_xbar_lru_baseline_ppa",
     params = {
         "NumPopFlows": ["4"],
@@ -780,7 +780,7 @@ br_verilog_synth_suite(
     deps = [":br_flow_xbar_lru"],
 )
 
-br_verilog_synth_suite(
+br_verilog_yosys_synth_suite(
     name = "br_flow_xbar_lru_pipelined_ppa",
     params = {
         "NumPopFlows": ["8"],
@@ -792,7 +792,7 @@ br_verilog_synth_suite(
     deps = [":br_flow_xbar_lru"],
 )
 
-br_verilog_synth_suite(
+br_verilog_yosys_synth_suite(
     name = "br_flow_xbar_rr_baseline_ppa",
     params = {
         "NumPopFlows": ["4"],
@@ -804,7 +804,7 @@ br_verilog_synth_suite(
     deps = [":br_flow_xbar_rr"],
 )
 
-br_verilog_synth_suite(
+br_verilog_yosys_synth_suite(
     name = "br_flow_xbar_rr_pipelined_ppa",
     params = {
         "NumPopFlows": ["8"],
