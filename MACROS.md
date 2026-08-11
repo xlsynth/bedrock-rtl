@@ -251,6 +251,78 @@ These macros provide size-aware assignment helpers for common bit slicing and ex
 | `BR_INSERT_TO_LSB`, `BR_INSERT_TO_MSB` | Insert a narrower expression into the least-significant or most-significant bits of a wider destination. |
 
 
+## `br_flow.svh`: Ready/Valid Flow Helpers
+
+
+These macros declare local signal groups for canonical ready/valid flows and connect differently
+named groups with continuous assignments. They do not declare module ports, add storage, or change
+the flow-control contract.
+
+| Contract | Signals |
+| --- | --- |
+| Stable data | `<base>_ready`, `<base>_valid`, `<base>_data` |
+| Unstable data | `<base>_ready`, `<base>_valid_unstable`, `<base>_data_unstable` |
+| Stable control | `<base>_ready`, `<base>_valid` |
+| Unstable control | `<base>_ready`, `<base>_valid_unstable` |
+
+On a stable flow, valid and, for data flows, data remain stable while valid is asserted and ready is
+low. On an unstable flow, valid may be withdrawn while stalled; data may also change on data flows.
+Control flows omit data.
+
+### Declare flows
+
+
+| Flow | Scalar | Packed array |
+| --- | --- | --- |
+| Stable data | `BR_FLOW_DECLARE` | `BR_FLOW_DECLARE_ARRAY` |
+| Unstable data | `BR_FLOW_DECLARE_UNSTABLE` | `BR_FLOW_DECLARE_UNSTABLE_ARRAY` |
+| Stable control | `BR_FLOW_CONTROL_DECLARE` | `BR_FLOW_CONTROL_DECLARE_ARRAY` |
+| Unstable control | `BR_FLOW_CONTROL_DECLARE_UNSTABLE` | `BR_FLOW_CONTROL_DECLARE_UNSTABLE_ARRAY` |
+
+Data declarations take a packed payload type. Array declarations also take a positive constant flow
+count and add a packed, little-endian lane dimension outside the payload.
+
+### Connect flows
+
+
+For connections, choose the root matching the source and sink contract:
+
+| Contract | Root |
+| --- | --- |
+| Stable data | `BR_FLOW_CONNECT` |
+| Unstable data | `BR_FLOW_CONNECT_UNSTABLE` |
+| Stable control | `BR_FLOW_CONTROL_CONNECT` |
+| Unstable control | `BR_FLOW_CONTROL_CONNECT_UNSTABLE` |
+
+The first flow is the source and the second is the sink. Ready travels toward the source; valid and,
+for data flows, data travel toward the sink.
+
+| Topology | Suffix and arguments |
+| --- | --- |
+| Scalar-to-scalar or whole array-to-array | none: `(source, sink)` |
+| Source array lane to scalar sink | `_FROM_INDEX(source, source_index, sink)` |
+| Scalar source to sink array lane | `_TO_INDEX(source, sink, sink_index)` |
+| Source array lane to sink array lane | `_INDEX(source, source_index, sink, sink_index)` |
+
+For example:
+
+```systemverilog
+typedef logic [31:0] payload_t;
+
+`BR_FLOW_DECLARE(upstream, payload_t)
+`BR_FLOW_DECLARE(downstream, payload_t)
+`BR_FLOW_CONNECT(upstream, downstream)
+```
+
+Flow names must be bare identifiers because the macros form signal names by token pasting. Indexed
+forms are intended for elaboration-time constant expressions, including genvar arithmetic. Whole-
+array connections require equal lane counts, and data payloads must be assignment-compatible.
+
+Declaration and connection macros include their semicolons. Connections are raw continuous
+assignments: they do not prevent multiple drivers or ready loops, route at runtime, or adapt between
+stable and unstable contracts.
+
+
 ## `br_fv.svh`: Formal Verification Helpers
 
 

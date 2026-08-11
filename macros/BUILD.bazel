@@ -278,6 +278,50 @@ verilog_lint_test(
     deps = [":br_assign_test"],
 )
 
+verilog_library(
+    name = "br_flow",
+    hdrs = ["br_flow.svh"],
+    visibility = ["//visibility:public"],
+)
+
+verilog_library(
+    name = "br_flow_test",
+    srcs = ["br_flow_test.sv"],
+    deps = [
+        ":br_asserts",
+        ":br_flow",
+    ],
+)
+
+verilog_elab_test(
+    name = "br_flow_elab_test",
+    tool = "slang",
+    deps = [":br_flow_test"],
+)
+
+verilog_elab_test(
+    name = "br_flow_verific_elab_test",
+    tool = "verific",
+    deps = [":br_flow_test"],
+)
+
+verilog_lint_test(
+    name = "br_flow_lint_test",
+    tool = "ascentlint",
+    visibility = ["//visibility:public"],
+    deps = [":br_flow_test"],
+)
+
+br_verilog_sim_test_tools_suite(
+    name = "br_flow_sim_test_tools_suite",
+    elab_only = True,
+    tools = [
+        "vcs",
+        "verilator",
+    ],
+    deps = [":br_flow_test"],
+)
+
 verilog_sim_coverage_aggregate(
     name = "br_macros_verilator_coverage",
     coverage_reports = [
