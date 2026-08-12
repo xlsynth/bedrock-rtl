@@ -275,6 +275,66 @@ br_verilog_sim_test_tools_suite(
 )
 
 verilog_library(
+    name = "br_apb_mux_tb",
+    srcs = ["br_apb_mux_tb.sv"],
+    deps = [
+        "//amba/rtl:br_amba_pkg",
+        "//amba/rtl:br_apb_mux",
+        "//misc/sim:br_test_driver",
+    ],
+)
+
+verilog_elab_test(
+    name = "br_apb_mux_tb_elab_test",
+    tool = "slang",
+    deps = [":br_apb_mux_tb"],
+)
+
+br_verilog_sim_test_tools_suite(
+    name = "br_apb_mux_sim_test_tools_suite",
+    params = {
+        "AddrWidth": [
+            "1",
+            "12",
+            "16",
+        ],
+        "NumUpstreams": [
+            "1",
+            "2",
+            "4",
+        ],
+    },
+    tools = [
+        "vcs",
+        "verilator",
+    ],
+    deps = [":br_apb_mux_tb"],
+)
+
+br_verilog_sim_test_tools_suite(
+    name = "br_apb_mux_protocol_violation_sim_test_tools_suite",
+    defines = [
+        "BR_ASSERT_ON",
+        "BR_ENABLE_IMPL_CHECKS",
+        "BR_DISABLE_INTG_CHECKS",
+        "SIMULATION",
+    ],
+    params = {
+        "AddrWidth": [
+            "1",
+            "12",
+        ],
+        "ExerciseProtocolViolations": ["1"],
+        "NumUpstreams": [
+            "1",
+            "2",
+        ],
+    },
+    tools = ["vcs"],
+    deps = [":br_apb_mux_tb"],
+)
+
+verilog_library(
     name = "br_amba_axi_timing_slice_tb",
     srcs = ["br_amba_axi_timing_slice_tb.sv"],
     deps = [
@@ -735,6 +795,7 @@ verilog_sim_coverage_aggregate(
         ":br_amba_apb_timing_slice_sim_test_tools_suite_verilator_coverage",
         # Re-enable after confirming that test suite with coverage gathering passes
         # ":br_apb_demux_sim_test_tools_suite_verilator_coverage",
+        ":br_apb_mux_sim_test_tools_suite_verilator_coverage",
         ":br_amba_axi_timing_slice_sim_test_tools_suite_verilator_coverage",
         ":br_amba_axi_timing_slice_multi_sim_test_tools_suite_verilator_coverage",
         ":br_amba_axi_default_target_sim_test_tools_suite_verilator_coverage",
