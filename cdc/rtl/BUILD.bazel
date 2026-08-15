@@ -92,6 +92,7 @@ verilog_library(
 
 br_verilog_elab_and_lint_test_suite(
     name = "br_cdc_fifo_ctrl_1r1w_test_suite",
+    include_default_params = False,
     params = {
         "Depth": [
             "5",
@@ -111,6 +112,7 @@ br_verilog_elab_and_lint_test_suite(
             "0",
             "1",
         ],
+        "ValidateDepthSupportsFullBandwidth": ["0"],
     },
     top = "br_cdc_fifo_ctrl_1r1w",
     deps = [
@@ -130,6 +132,7 @@ verilog_library(
 
 br_verilog_elab_and_lint_test_suite(
     name = "br_cdc_fifo_ctrl_1r1w_push_credit_test_suite",
+    include_default_params = False,
     params = {
         "Depth": [
             "5",
@@ -149,6 +152,7 @@ br_verilog_elab_and_lint_test_suite(
             "0",
             "1",
         ],
+        "ValidateDepthSupportsFullBandwidth": ["0"],
     },
     top = "br_cdc_fifo_ctrl_1r1w_push_credit",
     deps = [
@@ -168,6 +172,7 @@ verilog_library(
 
 br_verilog_elab_and_lint_test_suite(
     name = "br_cdc_fifo_flops_test_suite",
+    include_default_params = False,
     params = {
         "Depth": [
             "5",
@@ -186,6 +191,7 @@ br_verilog_elab_and_lint_test_suite(
             "0",
             "1",
         ],
+        "ValidateDepthSupportsFullBandwidth": ["0"],
     },
     top = "br_cdc_fifo_flops",
     deps = [
@@ -206,6 +212,7 @@ verilog_library(
 
 br_verilog_elab_and_lint_test_suite(
     name = "br_cdc_fifo_flops_push_credit_test_suite",
+    include_default_params = False,
     params = {
         "Depth": [
             "5",
@@ -224,6 +231,7 @@ br_verilog_elab_and_lint_test_suite(
             "0",
             "1",
         ],
+        "ValidateDepthSupportsFullBandwidth": ["0"],
     },
     top = "br_cdc_fifo_flops_push_credit",
     deps = [
@@ -418,6 +426,7 @@ br_verilog_synth_suite(
         "RamReadLatency": ["0"],
         "RamWriteLatency": ["1"],
         "RegisterPopOutputs": ["0"],
+        "ValidateDepthSupportsFullBandwidth": ["0"],
         "Width": ["32"],
     },
     deps = [":br_cdc_fifo_ctrl_1r1w"],
@@ -515,6 +524,7 @@ br_verilog_synth_suite(
         "RamWriteLatency": ["1"],
         "RegisterPopOutputs": ["0"],
         "RegisterPushOutputs": ["0"],
+        "ValidateDepthSupportsFullBandwidth": ["0"],
         "Width": ["32"],
     },
     deps = [":br_cdc_fifo_ctrl_1r1w_push_credit"],
@@ -540,6 +550,7 @@ br_verilog_synth_suite(
         "Depth": ["8"],
         "NumSyncStages": ["2"],
         "RegisterPopOutputs": ["0"],
+        "ValidateDepthSupportsFullBandwidth": ["0"],
         "Width": ["32"],
     },
     deps = [":br_cdc_fifo_flops"],
@@ -568,6 +579,7 @@ br_verilog_synth_suite(
         "NumSyncStages": ["2"],
         "RegisterPopOutputs": ["0"],
         "RegisterPushOutputs": ["0"],
+        "ValidateDepthSupportsFullBandwidth": ["0"],
         "Width": ["32"],
     },
     deps = [":br_cdc_fifo_flops_push_credit"],

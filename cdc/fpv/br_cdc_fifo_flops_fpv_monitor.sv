@@ -61,6 +61,7 @@ module br_cdc_fifo_flops_fpv_monitor #(
   // ----------Instantiate DUT----------
   br_cdc_fifo_flops #(
       .Depth(Depth),
+      .ValidateDepthSupportsFullBandwidth(0),
       .Width(Width),
       .RegisterPopOutputs(RegisterPopOutputs),
       .NumSyncStages(NumSyncStages),

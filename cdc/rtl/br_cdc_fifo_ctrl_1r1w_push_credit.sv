@@ -35,8 +35,16 @@
 // The backpressure latency is (RegisterResetActive + 1) * PopT + (NumSyncStages
 // + RegisterPushOutputs) * PushT.
 //
-// To achieve full bandwidth, the depth of the FIFO must be at least
-// (CutThroughLatency + BackpressureLatency) / max(PushT, PopT).
+// To sustain full bandwidth with arbitrary push/pop clock phase, use a FIFO
+// depth of at least
+// ceil((CutThroughLatency + BackpressureLatency) / max(PushT, PopT)) + 1.
+//
+// The additional entry accounts for clock skew and propagation delay into the
+// first Gray-count synchronizer stage in each direction. These asynchronous
+// paths are not covered by ordinary setup timing; constrain both directions
+// with a max delay tighter than min(PushT, PopT), including setup and
+// clock-skew margin. Smaller FIFO depths remain functionally correct when full
+// bandwidth is not required.
 
 `include "br_asserts_internal.svh"
 `include "br_gates.svh"
@@ -87,6 +95,9 @@ module br_cdc_fifo_ctrl_1r1w_push_credit #(
     // If 1, then assert there are no valid bits asserted and that the FIFO is
     // empty at the end of the test.
     parameter bit EnableAssertFinalNotValid = 1,
+    // If 1, require enough depth for full bandwidth at equal clock frequencies.
+    // Set to 0 when full bandwidth is unnecessary or the clock ratio permits less depth.
+    parameter bit ValidateDepthSupportsFullBandwidth = 1,
     localparam int AddrWidth = $clog2(Depth),
     localparam int CountWidth = $clog2(Depth + 1),
     localparam int CreditWidth = $clog2(MaxCredit + 1)
@@ -143,7 +154,15 @@ module br_cdc_fifo_ctrl_1r1w_push_credit #(
   //------------------------------------------
   // Integration checks
   //------------------------------------------
-  // Rely on submodule integration checks
+  localparam int ResetActiveCycles = RegisterResetActive + 1;
+  localparam int ForwardLatencyCycles =
+      ((ResetActiveCycles > RamWriteLatency) ? ResetActiveCycles : RamWriteLatency) +
+      NumSyncStages + RamReadLatency + RegisterPopOutputs;
+  localparam int ReturnLatencyCycles = ResetActiveCycles + NumSyncStages + RegisterPushOutputs;
+  localparam int MinFullBandwidthDepth = ForwardLatencyCycles + ReturnLatencyCycles + 1;
+
+  `BR_ASSERT_STATIC(depth_supports_full_bandwidth_a,
+                    !ValidateDepthSupportsFullBandwidth || Depth >= MinFullBandwidthDepth)
 
   //------------------------------------------
   // Implementation

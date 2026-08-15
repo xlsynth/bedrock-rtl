@@ -70,6 +70,7 @@ module br_cdc_fifo_flops_push_credit_fpv_monitor #(
   // ----------Instantiate DUT----------
   br_cdc_fifo_flops_push_credit #(
       .Depth(Depth),
+      .ValidateDepthSupportsFullBandwidth(0),
       .Width(Width),
       .MaxCredit(MaxCredit),
       .RegisterPushOutputs(RegisterPushOutputs),

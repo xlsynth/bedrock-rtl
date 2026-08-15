@@ -27,10 +27,18 @@
 // FlopRamReadDataWidthStages + RegisterPopOutputs) * PopT.
 //
 // The backpressure latency is (RegisterResetActive + 1) * PopT +
-// (NumSyncStages + RegisterPushOutputs) * PushT.
+// NumSyncStages * PushT.
 //
-// To achieve full bandwidth, the depth of the FIFO must be at least
-// (CutThroughLatency + BackpressureLatency) / max(PushT, PopT).
+// To sustain full bandwidth with arbitrary push/pop clock phase, use a FIFO
+// depth of at least
+// ceil((CutThroughLatency + BackpressureLatency) / max(PushT, PopT)) + 1.
+//
+// The additional entry accounts for clock skew and propagation delay into the
+// first Gray-count synchronizer stage in each direction. These asynchronous
+// paths are not covered by ordinary setup timing; constrain both directions
+// with a max delay tighter than min(PushT, PopT), including setup and
+// clock-skew margin. Smaller FIFO depths remain functionally correct when full
+// bandwidth is not required.
 
 module br_cdc_fifo_flops #(
     parameter int Depth = 2,  // Number of entries in the FIFO. Must be at least 2.
@@ -81,6 +89,9 @@ module br_cdc_fifo_flops #(
     // If 1, assert that push-side backpressure is impossible.
     // Can only be enabled if EnableCoverPushBackpressure is disabled.
     parameter bit EnableAssertNoPushBackpressure = !EnableCoverPushBackpressure,
+    // If 1, require enough depth for full bandwidth at equal clock frequencies.
+    // Set to 0 when full bandwidth is unnecessary or the clock ratio permits less depth.
+    parameter bit ValidateDepthSupportsFullBandwidth = 1,
 
     // Internal computed parameters
     localparam int AddrWidth  = $clog2(Depth),
@@ -147,7 +158,8 @@ module br_cdc_fifo_flops #(
       .EnableAssertPushValidStability(EnableAssertPushValidStability),
       .EnableAssertPushDataStability(EnableAssertPushDataStability),
       .EnableAssertPushDataKnown(EnableAssertPushDataKnown),
-      .EnableAssertFinalNotValid(EnableAssertFinalNotValid)
+      .EnableAssertFinalNotValid(EnableAssertFinalNotValid),
+      .ValidateDepthSupportsFullBandwidth(ValidateDepthSupportsFullBandwidth)
   ) br_cdc_fifo_ctrl_1r1w (
       .push_clk,
       .push_rst,

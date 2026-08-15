@@ -44,6 +44,9 @@ module br_cdc_fifo_ctrl_1r1w_push_credit_tb;
   localparam int PushCountSettleCycles = (RegisterResetActive + 1 > RamWriteLatency) ?
       RegisterResetActive + 1 : RamWriteLatency;
   localparam int PopCountSettleCycles = RegisterResetActive + 1;
+  localparam int MinFullBandwidthDepth = PushCountSettleCycles + NumSyncStages +
+      RamReadLatency + RegisterPopOutputs + PopCountSettleCycles + NumSyncStages +
+      RegisterPushOutputs + 1;
   localparam int ResetAssertPushCycles = PushCountSettleCycles + NumSyncStages + PropDelay + 4;
   localparam int ResetAssertPopCycles = PopCountSettleCycles + NumSyncStages + 4;
   localparam int ResetSettlePushCycles = NumSyncStages + RegisterResetActive + PropDelay + 4;
@@ -167,7 +170,9 @@ module br_cdc_fifo_ctrl_1r1w_push_credit_tb;
       .EnableCoverPushSenderInReset(1),
       .EnableCoverPushCreditStall(1),
       .EnableAssertPushDataKnown(1),
-      .EnableAssertFinalNotValid(1)
+      .EnableAssertFinalNotValid(1),
+      // Functional tests also exercise shallow FIFOs that cannot sustain full bandwidth.
+      .ValidateDepthSupportsFullBandwidth(Depth >= MinFullBandwidthDepth)
   ) dut (
       .push_clk,
       .push_rst,
