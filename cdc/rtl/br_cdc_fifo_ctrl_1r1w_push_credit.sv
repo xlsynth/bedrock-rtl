@@ -22,22 +22,22 @@
 //
 // The RegisterPopOutputs parameter can be set to 1 to add an additional br_flow_reg_fwd
 // before the pop interface of the FIFO. This may improve timing of paths dependent on
-// the pop interface at the expense of an additional pop cycle of cut-through latency.
+// the pop interface at the expense of an additional pop cycle of forward latency.
 
-// The cut-through latency (push_valid to pop_valid latency) and backpressure
-// latency (pop_ready to push_ready) can be calculated as follows:
+// The forward latency (push_valid to pop_valid) and return latency
+// (pop_ready to push_credit) can be calculated as follows:
 //
 // Let PushT and PopT be the push period and pop period, respectively.
 //
-// The cut-through latency is max(RegisterResetActive + 1, RamWriteLatency)
+// The forward latency is max(RegisterResetActive + 1, RamWriteLatency)
 // * PushT + (NumSyncStages + RamReadLatency + RegisterPopOutputs) * PopT.
 //
-// The backpressure latency is (RegisterResetActive + 1) * PopT + (NumSyncStages
+// The return latency is (RegisterResetActive + 1) * PopT + (NumSyncStages
 // + RegisterPushOutputs) * PushT.
 //
 // To sustain full bandwidth with arbitrary push/pop clock phase, use a FIFO
 // depth of at least
-// ceil((CutThroughLatency + BackpressureLatency) / max(PushT, PopT)) + 1.
+// ceil((ForwardLatency + ReturnLatency) / max(PushT, PopT)) + 1.
 //
 // The additional entry accounts for clock skew and propagation delay into the
 // first Gray-count synchronizer stage in each direction. These asynchronous
@@ -53,7 +53,7 @@ module br_cdc_fifo_ctrl_1r1w_push_credit #(
     parameter int Depth = 16,  // Number of entries in the FIFO. Must be at least 2.
     parameter int Width = 1,  // Width of each entry in the FIFO. Must be at least 1.
     // If 1, then ensure pop_valid/pop_data always come directly from a register
-    // at the cost of an additional pop cycle of cut-through latency.
+    // at the cost of an additional pop cycle of forward latency.
     // If 0, pop_valid/pop_data can come directly from the push interface
     // (if bypass is enabled), the RAM read interface, and/or an internal staging
     // buffer (if RAM read latency is >0).
@@ -73,11 +73,11 @@ module br_cdc_fifo_ctrl_1r1w_push_credit #(
     parameter int MaxCredit = Depth,
     // If 1, add a retiming stage to the push_credit signal so that it is
     // driven directly from a flop. This comes at the expense of one additional
-    // push cycle of credit loop latency.
+    // push cycle of return latency.
     parameter bit RegisterPushOutputs = 0,
     // If 1 (the default), register push_rst on push_clk and pop_rst on pop_clk
-    // before sending to the CDC synchronizers. This adds one cycle to the cut-through
-    // latency and one cycle to the backpressure latency.
+    // before sending to the CDC synchronizers. This adds one forward cycle and one
+    // return cycle.
     // Do not set this to 0 unless push_rst and pop_rst are driven directly by
     // registers. If set to 0, push_sender_in_reset must be tied to 0.
     parameter bit RegisterResetActive = 1,
