@@ -39,7 +39,7 @@
 
 
 module br_cdc_fifo_flops_push_credit #(
-    parameter int Depth = 2,  // Number of entries in the FIFO. Must be at least 2.
+    parameter int Depth = 16,  // Number of entries in the FIFO. Must be at least 2.
     parameter int Width = 1,  // Width of each entry in the FIFO. Must be at least 1.
     // Maximum credit for the internal credit counter. Must be at least Depth.
     // Recommended to not override the default because it is the smallest viable size.

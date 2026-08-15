@@ -92,7 +92,6 @@ verilog_library(
 
 br_verilog_elab_and_lint_test_suite(
     name = "br_cdc_fifo_ctrl_1r1w_test_suite",
-    include_default_params = False,
     params = {
         "Depth": [
             "5",
@@ -132,7 +131,6 @@ verilog_library(
 
 br_verilog_elab_and_lint_test_suite(
     name = "br_cdc_fifo_ctrl_1r1w_push_credit_test_suite",
-    include_default_params = False,
     params = {
         "Depth": [
             "5",
@@ -172,7 +170,6 @@ verilog_library(
 
 br_verilog_elab_and_lint_test_suite(
     name = "br_cdc_fifo_flops_test_suite",
-    include_default_params = False,
     params = {
         "Depth": [
             "5",
@@ -212,7 +209,6 @@ verilog_library(
 
 br_verilog_elab_and_lint_test_suite(
     name = "br_cdc_fifo_flops_push_credit_test_suite",
-    include_default_params = False,
     params = {
         "Depth": [
             "5",

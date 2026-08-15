@@ -50,7 +50,7 @@
 `include "br_gates.svh"
 
 module br_cdc_fifo_ctrl_1r1w_push_credit #(
-    parameter int Depth = 2,  // Number of entries in the FIFO. Must be at least 2.
+    parameter int Depth = 16,  // Number of entries in the FIFO. Must be at least 2.
     parameter int Width = 1,  // Width of each entry in the FIFO. Must be at least 1.
     // If 1, then ensure pop_valid/pop_data always come directly from a register
     // at the cost of an additional pop cycle of cut-through latency.
