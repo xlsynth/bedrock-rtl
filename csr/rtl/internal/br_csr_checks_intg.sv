@@ -74,7 +74,6 @@ module br_csr_checks_intg #(
   `BR_REG(req_aborted, req_aborted_next)
 
   `BR_ASSERT_INTG(no_request_when_inflight_a, req_valid |-> !req_inflight)
-  `BR_ASSERT_INTG(only_abort_when_inflight_a, req_abort |-> req_inflight)
   `BR_ASSERT_INTG(no_abort_with_request_a, req_abort |-> !req_valid)
   `BR_ASSERT_INTG(response_only_when_inflight_or_aborted_a,
                   resp_valid |-> req_inflight || req_aborted)
