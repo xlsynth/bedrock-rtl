@@ -20,6 +20,7 @@
 //
 // Shrinking is only supported for transactions with burst type BURST_INCR.
 // Transactions with other burst types must have size less than or equal to the narrow width.
+// Only transactions with address aligned to AxSIZE will be supported.
 
 `include "br_asserts_internal.svh"
 `include "br_assign.svh"
@@ -146,6 +147,15 @@ module br_amba_axi_shrinker #(
   localparam int ByteOffsetWidth = br_math::clamped_clog2(WideStrobeWidth);
 
   // Integration Assertions
+`ifdef BR_ASSERT_ON
+  function automatic logic is_aligned_to_size(logic [AddrWidth-1:0] addr,
+                                              logic [br_amba::AxiBurstSizeWidth-1:0] size);
+    logic [AddrWidth-1:0] addr_mask;
+    // ri lint_check_waive VAR_SHIFT
+    addr_mask = (1'b1 << size) - 1'b1;
+    return (addr & addr_mask) == '0;
+  endfunction
+`endif
 
   `BR_ASSERT_STATIC(addr_width_must_be_at_least_12_a, AddrWidth >= 12)
   `BR_ASSERT_STATIC(wide_data_width_must_be_at_least_16_a, WideDataWidth >= 16)
@@ -171,6 +181,10 @@ module br_amba_axi_shrinker #(
   `BR_ASSERT_INTG(
       shrinking_arburst_incr_a,
       (wide_arvalid && wide_arsize > NarrowSizeLog2) |-> wide_arburst == br_amba::AxiBurstIncr)
+  `BR_ASSERT_INTG(awaddr_aligned_awsize_a, wide_awvalid |-> is_aligned_to_size(wide_awaddr,
+                                                                               wide_awsize))
+  `BR_ASSERT_INTG(araddr_aligned_arsize_a, wide_arvalid |-> is_aligned_to_size(wide_araddr,
+                                                                               wide_arsize))
 
 `ifndef BR_DISABLE_INTG_CHECKS
 `ifdef BR_ASSERT_ON
