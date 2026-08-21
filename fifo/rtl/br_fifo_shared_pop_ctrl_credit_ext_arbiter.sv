@@ -24,6 +24,10 @@
 // This is identical to br_fifo_shared_pop_ctrl_credit, but with an external
 // arbiter interface so that an arbitrary arbitration policy can be chosen for
 // the pop side of the FIFO (where NumReadPorts < NumFifos).
+//
+// Note that an item is "popped" once the read is issued to the RAM. At this point, the `pop_empty` signal
+// may be asserted if it was the last item that was popped. However, the `pop_valid` signal will not be
+// asserted until `RamReadLatency` cycles later.
 
 `include "br_asserts_internal.svh"
 `include "br_registers.svh"

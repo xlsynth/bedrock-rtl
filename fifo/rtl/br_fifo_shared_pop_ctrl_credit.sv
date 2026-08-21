@@ -18,6 +18,9 @@
 // The module arbitrates RAM read requests among the logical FIFOs, tracks the head
 // pointers of each FIFO, and generates deallocation signals when entries are popped.
 //
+// Note that an item is "popped" once the read is issued to the RAM. At this point, the `pop_empty` signal
+// may be asserted if it was the last item that was popped. However, the `pop_valid` signal will not be
+// asserted until `RamReadLatency` cycles later.
 
 `include "br_asserts_internal.svh"
 `include "br_registers.svh"
