@@ -64,17 +64,18 @@ module br_csr_checks_intg #(
   assign clear_inflight = resp_valid || req_abort;
   assign req_inflight_next = (req_inflight && !clear_inflight) || set_inflight;
 
-  // We go into the aborted state if req_abort is set
-  assign set_aborted = req_abort;
+  // We go into the aborted state if req_abort is set when a request is inflight.
+  assign set_aborted = req_abort && req_inflight;
   // Clear the aborted state if the leaf responds or we get a new request
   assign clear_aborted = resp_valid || req_valid;
-  assign req_aborted_next = (req_aborted && !clear_aborted) || set_aborted;
+  // Clear should take precedence over set. If response is sent on the same cycle
+  // as an abort is received, we should not go to the aborted state.
+  assign req_aborted_next = (req_aborted || set_aborted) && !clear_aborted;
 
   `BR_REG(req_inflight, req_inflight_next)
   `BR_REG(req_aborted, req_aborted_next)
 
   `BR_ASSERT_INTG(no_request_when_inflight_a, req_valid |-> !req_inflight)
-  `BR_ASSERT_INTG(only_abort_when_inflight_a, req_abort |-> req_inflight)
   `BR_ASSERT_INTG(no_abort_with_request_a, req_abort |-> !req_valid)
   `BR_ASSERT_INTG(response_only_when_inflight_or_aborted_a,
                   resp_valid |-> req_inflight || req_aborted)
