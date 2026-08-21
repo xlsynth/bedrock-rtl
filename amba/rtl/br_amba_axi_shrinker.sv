@@ -152,7 +152,7 @@ module br_amba_axi_shrinker #(
                                               logic [br_amba::AxiBurstSizeWidth-1:0] size);
     logic [AddrWidth-1:0] addr_mask;
     // ri lint_check_waive VAR_SHIFT
-    addr_mask = (1'b1 << size) - 1'b1;
+    addr_mask = (AddrWidth'(1'b1) << size) - AddrWidth'(1'b1);
     return (addr & addr_mask) == '0;
   endfunction
 `endif
