@@ -103,9 +103,6 @@ module br_cdc_reg_fpv_monitor #(
     `BR_ASSUME_CR(no_push_backpressure_a, push_valid |-> push_ready, push_clk, push_rst)
   end
 
-  // Keep traffic quiescent until both independent CDC reset domains are released.
-  `BR_ASSUME_CR(no_push_while_pop_reset_a, pop_rst |-> !push_valid, push_clk, push_rst)
-
   if (((EnableCoverPushBackpressure && EnableAssertPushValidStability) ||
        (!EnableCoverPushBackpressure && EnableAssertNoPushBackpressure)) &&
       (EnableCoverPopBackpressure ||
@@ -145,7 +142,7 @@ module br_cdc_reg_fpv_monitor #(
   ) scoreboard (
       .incoming_clk(push_clk),
       .outgoing_clk(pop_clk),
-      .rstN(!fv_rst),
+      .rstN(!rst),
       .incoming_vld(push_vr),
       .incoming_data(push_data),
       .outgoing_vld(pop_vr),

@@ -25,7 +25,7 @@ clock -rate {pop_ready pop_rst} pop_clk
 get_design_info
 
 # primary input control signal should be legal during reset
-assume -name no_push_valid_during_reset {@(posedge push_clk) push_rst |-> push_valid == 'd0}
+assume -name no_push_valid_during_reset {@(posedge push_clk) +push_rst |-> push_valid == 'd0}
 
 # limit run time to 10 minutes
 set_prove_time_limit 600s
