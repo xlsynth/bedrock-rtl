@@ -101,6 +101,7 @@ verilog_elab_test(
 br_verilog_fpv_test_tools_suite(
     name = "br_amba_axi2axil_test_suite",
     elab_opts = [
+        "-parameter AddrWidth 16",
         "-parameter MaxOutstandingReqs 4",
     ],
     tools = {
@@ -162,6 +163,9 @@ verilog_elab_test(
 
 br_verilog_fpv_test_tools_suite(
     name = "br_amba_axi_timing_slice_test_suite",
+    elab_opts = [
+        "-parameter AddrWidth 16",
+    ],
     tools = {
         "jg": "br_amba_axi_timing_slice_fpv.jg.tcl",
     },
@@ -320,6 +324,7 @@ verilog_elab_test(
 br_verilog_fpv_test_tools_suite(
     name = "br_amba_axi_isolate_mgr_test_suite",
     elab_opts = [
+        "-parameter AddrWidth 16",
         "-parameter MaxOutstanding 4",
     ],
     params = {
@@ -356,6 +361,7 @@ verilog_elab_test(
 br_verilog_fpv_test_tools_suite(
     name = "br_amba_axi_isolate_sub_test_suite",
     elab_opts = [
+        "-parameter AddrWidth 16",
         "-parameter AwMaxOutstanding 4",
         "-parameter ArMaxOutstanding 4",
         "-parameter AwAxiIdCount 2",
@@ -414,6 +420,7 @@ verilog_elab_test(
 br_verilog_fpv_test_tools_suite(
     name = "br_amba_axi_demux_test_suite",
     elab_opts = [
+        "-parameter AddrWidth 16",
         "-parameter AwAxiIdWidth 2",
         "-parameter ArAxiIdWidth 2",
     ],
@@ -455,6 +462,7 @@ verilog_elab_test(
 br_verilog_fpv_test_tools_suite(
     name = "br_amba_axi_shrinker_test_suite",
     elab_opts = [
+        "-parameter AddrWidth 16",
         "-parameter WideDataWidth 128",
         "-parameter MaxOutstandingReqs 4",
         "-parameter IdWidth 3",

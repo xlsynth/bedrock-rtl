@@ -226,7 +226,19 @@ module br_amba_axi_shrinker_fpv_monitor #(
     end
   endfunction
 
+  function automatic logic fv_addr_aligned(input logic [AddrWidth-1:0] addr,
+                                           input logic [br_amba::AxiBurstSizeWidth-1:0] size);
+    logic [AddrWidth-1:0] beat_bytes;
+    beat_bytes = AddrWidth'(1'b1) << size;
+    fv_addr_aligned = (addr % beat_bytes) == '0;
+  endfunction
+
   // ----------FV assumptions----------
+  // br_amba_axi_shrinker does not support requests whose start address is not aligned
+  // to AxSIZE.
+  `BR_ASSUME(wide_awaddr_aligned_a, wide_awvalid |-> fv_addr_aligned(wide_awaddr, wide_awsize))
+  `BR_ASSUME(wide_araddr_aligned_a, wide_arvalid |-> fv_addr_aligned(wide_araddr, wide_arsize))
+
   `BR_ASSUME(
       shrinking_awburst_incr_a,
       (wide_awvalid && wide_awsize > NarrowSizeLog2) |-> wide_awburst == br_amba::AxiBurstIncr)
