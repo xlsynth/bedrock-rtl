@@ -103,13 +103,16 @@ module br_cdc_reg_fpv_monitor #(
     `BR_ASSUME_CR(no_push_backpressure_a, push_valid |-> push_ready, push_clk, push_rst)
   end
 
-  if (((EnableCoverPushBackpressure && EnableAssertPushValidStability) ||
-       (!EnableCoverPushBackpressure && EnableAssertNoPushBackpressure)) &&
-      (EnableCoverPopBackpressure ||
-       (!EnableCoverPopBackpressure &&
-        EnableAssertNoPopBackpressure))) begin : gen_push_to_pop_liveness
-    // Every persistent push offer eventually becomes visible at the destination.
-    `BR_ASSERT_CR(push_to_pop_liveness_a, push_valid |-> s_eventually pop_valid, clk, fv_rst)
+  if (EnableCoverPopBackpressure ||
+      (!EnableCoverPopBackpressure &&
+       EnableAssertNoPopBackpressure)) begin : gen_push_to_pop_liveness
+    if (EnableCoverPushBackpressure && EnableAssertPushValidStability) begin : gen_stable
+      // Every persistent push offer eventually becomes visible at the destination.
+      `BR_ASSERT_CR(push_to_pop_liveness_a, push_valid |-> s_eventually pop_valid, clk, fv_rst)
+    end else begin : gen_not_stable
+      // Without a persistent offer, only accepted pushes require forward progress.
+      `BR_ASSERT_CR(push_to_pop_liveness_a, push_vr |-> s_eventually pop_valid, clk, fv_rst)
+    end
   end
 
   if (!EnableCoverPopBackpressure && EnableAssertNoPopBackpressure) begin : gen_no_pop_backpressure
