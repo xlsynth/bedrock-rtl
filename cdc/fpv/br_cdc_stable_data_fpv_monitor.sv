@@ -53,8 +53,7 @@ module br_cdc_stable_data_fpv_monitor #(
   `BR_ASSERT_CR(src_to_dst_liveness_a, src_valid |-> s_eventually dst_updated, clk, rst)
 
   // Destination data must hold its last transferred value between updates.
-  `BR_ASSERT_CR(dst_data_stability_a, !dst_updated && !$fell(dst_updated) |-> $stable(dst_data),
-                dst_clk, dst_rst)
+  `BR_ASSERT_CR(dst_data_stability_a, !dst_updated |-> $stable(dst_data), dst_clk, dst_rst)
 
   // Preserve ordering and payload integrity from source updates to destination updates.
   jasper_scoreboard_3 #(
