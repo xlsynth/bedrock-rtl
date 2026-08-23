@@ -51,7 +51,7 @@ module br_cdc_reg_pop #(
 
   assign push_flag_visible = reset_active_push ? push_flag_saved : push_flag;
   // If push and pop flag are different, the data is valid
-  assign internal_pop_valid = push_flag_visible != pop_flag_int;
+  assign internal_pop_valid = !rst && push_flag_visible != pop_flag_int;
   assign pop_flag_int_next =
       (internal_pop_valid && internal_pop_ready) ? ~pop_flag_int : pop_flag_int;
   assign _BR_CDC_PRESERVE_NET__pop_data_unqual = push_reg_data;
