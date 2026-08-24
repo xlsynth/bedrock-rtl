@@ -720,7 +720,7 @@ jobs:
         uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0
         with:
           repository: antmicro/coverview
-          ref: 1d9f9cacd3d8395e5ee23fcbe1ab43af73afeb03
+          ref: 6e5e15f986df1e8071b1b1f6a284fecca95c34a2
           path: coverview
           persist-credentials: false
       - name: Set up Node.js
