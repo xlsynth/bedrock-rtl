@@ -735,3 +735,110 @@ br_verilog_fpv_test_tools_suite(
         "//gate/rtl:br_gate_mock",
     ],
 )
+
+# Bedrock-RTL Stable Data CDC
+verilog_library(
+    name = "br_cdc_stable_data_fpv_monitor",
+    srcs = ["br_cdc_stable_data_fpv_monitor.sv"],
+    visibility = ["//visibility:public"],
+    deps = [
+        "//cdc/rtl:br_cdc_stable_data",
+        "//gate/rtl:br_gate_mock",
+    ],
+)
+
+verilog_elab_test(
+    name = "br_cdc_stable_data_fpv_monitor_elab_test",
+    opts = ["--ignore-unknown-modules"],
+    tool = "slang",
+    top = "br_cdc_stable_data_fpv_monitor",
+    deps = [
+        ":br_cdc_stable_data_fpv_monitor",
+        "//gate/rtl:br_gate_mock",
+    ],
+)
+
+br_verilog_fpv_test_tools_suite(
+    name = "br_cdc_stable_data_test_suite",
+    params = {
+        "InitValue": [
+            "0",
+            "1",
+        ],
+        "NumSyncStages": [
+            "2",
+            "3",
+            "4",
+        ],
+        "RegisterResetActive": [
+            "0",
+            "1",
+        ],
+        "Width": [
+            "1",
+            "5",
+        ],
+    },
+    tools = {
+        "jg": "br_cdc_stable_data_fpv.jg.tcl",
+    },
+    top = "br_cdc_stable_data_fpv_monitor",
+    deps = [
+        ":br_cdc_stable_data_fpv_monitor",
+        "//gate/rtl:br_gate_mock",
+    ],
+)
+
+####################################################################################
+# Bedrock-RTL Stable Data CDC with Automatic Update
+verilog_library(
+    name = "br_cdc_stable_data_autoupdate_fpv_monitor",
+    srcs = ["br_cdc_stable_data_autoupdate_fpv_monitor.sv"],
+    visibility = ["//visibility:public"],
+    deps = [
+        "//cdc/rtl:br_cdc_stable_data_autoupdate",
+        "//gate/rtl:br_gate_mock",
+    ],
+)
+
+verilog_elab_test(
+    name = "br_cdc_stable_data_autoupdate_fpv_monitor_elab_test",
+    opts = ["--ignore-unknown-modules"],
+    tool = "slang",
+    top = "br_cdc_stable_data_autoupdate_fpv_monitor",
+    deps = [
+        ":br_cdc_stable_data_autoupdate_fpv_monitor",
+        "//gate/rtl:br_gate_mock",
+    ],
+)
+
+br_verilog_fpv_test_tools_suite(
+    name = "br_cdc_stable_data_autoupdate_test_suite",
+    params = {
+        "InitValue": [
+            "0",
+            "1",
+        ],
+        "NumSyncStages": [
+            "2",
+            "3",
+            "4",
+        ],
+        "RegisterResetActive": [
+            "0",
+            "1",
+        ],
+        "Width": [
+            "1",
+            "5",
+        ],
+    },
+    tools = {
+        "jg": "br_cdc_stable_data_autoupdate_fpv.jg.tcl",
+    },
+    top = "br_cdc_stable_data_autoupdate_fpv_monitor",
+    deps = [
+        ":br_cdc_stable_data_autoupdate_fpv_monitor",
+        "//gate/rtl:br_gate_mock",
+    ],
+)
