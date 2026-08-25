@@ -24,6 +24,10 @@ get_design_info
 assert -name no_dst_updated_during_reset {@(posedge dst_clk) \
 dst_rst |-> !dst_updated}
 
+# Destination data must be initialized while the destination interface is in reset.
+assert -name dst_data_is_init_during_reset {@(posedge dst_clk) \
+dst_rst |-> dst_data == InitValue}
+
 # limit run time to 10 minutes
 set_prove_time_limit 600s
 

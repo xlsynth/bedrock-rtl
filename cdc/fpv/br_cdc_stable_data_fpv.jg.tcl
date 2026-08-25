@@ -28,6 +28,10 @@ src_rst |-> !src_valid}
 assert -name no_dst_updated_during_reset {@(posedge dst_clk) \
 dst_rst |-> !dst_updated}
 
+# Destination data must be initialized while the destination interface is in reset.
+assert -name dst_data_is_init_during_reset {@(posedge dst_clk) \
+dst_rst |-> dst_data == InitValue}
+
 # The wrapper has no external ready port; its integration assertion defines legal source spacing.
 assume -from_assert br_cdc_stable_data_fpv_monitor.dut.no_reg_overflow_A
 

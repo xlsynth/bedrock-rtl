@@ -34,6 +34,7 @@ module br_cdc_stable_data_autoupdate_fpv_monitor #(
   logic [Width-1:0] dst_data;
   logic [Width-1:0] fv_src_data_reg;
   logic src_vr;
+  logic seen_dst_update;
 
   br_cdc_stable_data_autoupdate #(
       .Width(Width),
@@ -62,6 +63,12 @@ module br_cdc_stable_data_autoupdate_fpv_monitor #(
 
   // Destination data must hold its last transferred value between updates.
   `BR_ASSERT_CR(dst_data_stability_a, !dst_updated |-> $stable(dst_data), dst_clk, dst_rst)
+
+  `BR_REGX(seen_dst_update, seen_dst_update || dst_updated, dst_clk, dst_rst)
+
+  // Destination data must retain its reset value until the first update arrives.
+  `BR_ASSERT_CR(dst_data_init_until_update_a,
+                !seen_dst_update && !dst_updated |-> dst_data == InitValue, dst_clk, dst_rst)
 
   // Preserve ordering and payload integrity for externally observed source updates.
   jasper_scoreboard_3 #(

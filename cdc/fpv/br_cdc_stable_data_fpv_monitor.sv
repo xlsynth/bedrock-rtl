@@ -11,6 +11,7 @@
 // - Cover nonzero transfer and both reset-release orderings.
 
 `include "br_asserts.svh"
+`include "br_registers.svh"
 
 module br_cdc_stable_data_fpv_monitor #(
     parameter int Width = 1,
@@ -32,6 +33,7 @@ module br_cdc_stable_data_fpv_monitor #(
 );
   logic dst_updated;
   logic [Width-1:0] dst_data;
+  logic seen_dst_update;
 
   br_cdc_stable_data #(
       .Width(Width),
@@ -54,6 +56,12 @@ module br_cdc_stable_data_fpv_monitor #(
 
   // Destination data must hold its last transferred value between updates.
   `BR_ASSERT_CR(dst_data_stability_a, !dst_updated |-> $stable(dst_data), dst_clk, dst_rst)
+
+  `BR_REGX(seen_dst_update, seen_dst_update || dst_updated, dst_clk, dst_rst)
+
+  // Destination data must retain its reset value until the first update arrives.
+  `BR_ASSERT_CR(dst_data_init_until_update_a,
+                !seen_dst_update && !dst_updated |-> dst_data == InitValue, dst_clk, dst_rst)
 
   // Preserve ordering and payload integrity from source updates to destination updates.
   jasper_scoreboard_3 #(
