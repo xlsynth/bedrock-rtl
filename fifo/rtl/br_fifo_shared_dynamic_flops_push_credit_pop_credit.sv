@@ -29,7 +29,10 @@
 // will indicate the logical FIFO the data is read from. A logical FIFO can be popped
 // as long as it has at least one credit available. The bandwidth of a single logical FIFO
 // is bounded by the maximum available credit and the RAM read latency.
-// That is, it is `PopMaxCredits / (RamReadLatency + 1)`.
+// That is, it is `PopMaxCredits / (DataRamReadLatency + 1)`.
+// Note that an item is "popped" once the read is issued to the RAM. At this point, the `pop_empty` signal
+// may be asserted if it was the last item that was popped. However, the `pop_valid` signal will not be
+// asserted until `DataRamReadLatency` cycles later.
 //
 // The controller supports multiple read ports. Each logical FIFO can use any of the read ports.
 // The mapping of reads to ports is based on the lower bits of the read address. Each logical FIFO can
