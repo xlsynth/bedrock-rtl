@@ -603,3 +603,135 @@ br_verilog_fpv_test_tools_suite(
         "//mux/rtl:br_mux_bin_structured_gates_mock",
     ],
 )
+
+####################################################################################
+# Bedrock-RTL CDC Register
+
+verilog_library(
+    name = "br_cdc_reg_fpv_monitor",
+    srcs = ["br_cdc_reg_fpv_monitor.sv"],
+    visibility = ["//visibility:public"],
+    deps = [
+        "//cdc/rtl:br_cdc_reg",
+        "//gate/rtl:br_gate_mock",
+    ],
+)
+
+verilog_elab_test(
+    name = "br_cdc_reg_fpv_monitor_elab_test",
+    opts = ["--ignore-unknown-modules"],
+    tool = "slang",
+    top = "br_cdc_reg_fpv_monitor",
+    deps = [
+        ":br_cdc_reg_fpv_monitor",
+        "//gate/rtl:br_gate_mock",
+    ],
+)
+
+# Sweep all ready/valid and backpressure configuration parameters.
+br_verilog_fpv_test_tools_suite(
+    name = "br_cdc_reg_test_backpressure",
+    illegal_param_combinations = {
+        (
+            "EnableCoverPushBackpressure",
+            "EnableAssertPushValidStability",
+            "EnableAssertPushDataStability",
+            "EnableAssertNoPushBackpressure",
+        ): [
+            ("0", "0", "1", "0"),
+            ("0", "0", "1", "1"),
+            ("0", "1", "0", "0"),
+            ("0", "1", "0", "1"),
+            ("0", "1", "1", "0"),
+            ("0", "1", "1", "1"),
+            ("1", "0", "0", "1"),
+            ("1", "0", "1", "0"),
+            ("1", "0", "1", "1"),
+            ("1", "1", "0", "1"),
+            ("1", "1", "1", "1"),
+        ],
+        (
+            "EnableCoverPopBackpressure",
+            "EnableAssertNoPopBackpressure",
+        ): [
+            ("1", "1"),
+        ],
+    },
+    params = {
+        "EnableAssertNoPopBackpressure": [
+            "0",
+            "1",
+        ],
+        "EnableAssertNoPushBackpressure": [
+            "0",
+            "1",
+        ],
+        "EnableAssertPushDataStability": [
+            "0",
+            "1",
+        ],
+        "EnableAssertPushValidStability": [
+            "0",
+            "1",
+        ],
+        "EnableCoverPopBackpressure": [
+            "0",
+            "1",
+        ],
+        "EnableCoverPushBackpressure": [
+            "0",
+            "1",
+        ],
+        "Width": [
+            "1",
+        ],
+    },
+    tools = {
+        "jg": "br_cdc_reg_fpv.jg.tcl",
+    },
+    top = "br_cdc_reg_fpv_monitor",
+    deps = [
+        ":br_cdc_reg_fpv_monitor",
+        "//gate/rtl:br_gate_mock",
+    ],
+)
+
+# Sweep all datapath, synchronization, reset, and remaining assertion parameters.
+br_verilog_fpv_test_tools_suite(
+    name = "br_cdc_reg_test_suite",
+    params = {
+        "EnableAssertFinalNotValid": [
+            "0",
+            "1",
+        ],
+        "EnableAssertPushDataKnown": [
+            "0",
+            "1",
+        ],
+        "NumSyncStages": [
+            "2",
+            "3",
+            "4",
+        ],
+        "RegisterPopOutputs": [
+            "0",
+            "1",
+        ],
+        "RegisterResetActive": [
+            "0",
+            "1",
+        ],
+        "Width": [
+            "1",
+            "5",
+        ],
+    },
+    tools = {
+        "jg": "br_cdc_reg_fpv.jg.tcl",
+    },
+    top = "br_cdc_reg_fpv_monitor",
+    deps = [
+        ":br_cdc_reg_fpv_monitor",
+        "//gate/rtl:br_gate_mock",
+    ],
+)
