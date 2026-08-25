@@ -61,6 +61,10 @@ module br_cdc_stable_data_autoupdate_fpv_monitor #(
   // Every externally observed source update must eventually become visible at the destination.
   `BR_ASSERT_CR(src_to_dst_liveness_a, src_vr |-> s_eventually dst_updated, clk, rst)
 
+  // The internal source-side CDC handshake must not remain backpressured forever.
+  `BR_ASSERT_CR(src_ready_liveness_a, !dut.src_ready |-> s_eventually dut.src_ready, src_clk,
+                src_rst)
+
   // Destination data must hold its last transferred value between updates.
   `BR_ASSERT_CR(dst_data_stability_a, !dst_updated |-> $stable(dst_data), dst_clk, dst_rst)
 
