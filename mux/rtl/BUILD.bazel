@@ -84,6 +84,7 @@ verilog_library(
     srcs = ["br_mux_bin_structured_gates.sv"],
     deps = [
         "//macros:br_asserts_internal",
+        "//macros:br_assign",
         "//macros:br_unused",
         "//pkg:br_math_pkg",
     ],
@@ -106,6 +107,10 @@ br_verilog_elab_and_lint_test_suite(
         ],
         "SymbolWidth": [
             "2",
+        ],
+        "GateRadix": [
+            "2",
+            "4",
         ],
     },
     top = "br_mux_bin_structured_gates",
