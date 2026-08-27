@@ -124,6 +124,14 @@ br_verilog_elab_and_lint_test_suite(
 )
 
 br_verilog_elab_and_lint_test_suite(
+    name = "br_gate_mux4_test_suite",
+    top = "br_gate_mux4",
+    deps = [
+        ":br_gate_mock",
+    ],
+)
+
+br_verilog_elab_and_lint_test_suite(
     name = "br_gate_clk_mux2_test_suite",
     top = "br_gate_clk_mux2",
     deps = [
