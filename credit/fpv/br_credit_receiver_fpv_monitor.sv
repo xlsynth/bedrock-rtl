@@ -98,7 +98,7 @@ module br_credit_receiver_fpv_monitor #(
       .MAX_PENDING(MaxCredit)
   ) scoreboard (
       .clk(clk),
-      .rstN(!fv_rst),
+      .rstN(!rst),
       .incoming_vld(fv_push_valid[fv_flow]),
       .incoming_data(push_data[fv_flow]),
       .outgoing_vld(pop_valid[fv_flow]),
