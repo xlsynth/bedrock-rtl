@@ -137,21 +137,36 @@ jobs:
       # actions/checkout v7.0.0
       - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0
       # bazel-contrib/setup-bazel v0.19.0
-      - name: Set up Bazel caches
+      - name: Set up Bazel dependency caches
         uses: bazel-contrib/setup-bazel@c5acdfb288317d0b5c0bbd7a396a3dc868bb0f86
         with:
           bazelisk-cache: true
-          # A stable partition gets a stable cache. Including the shard count
-          # prevents incompatible partitions from sharing an Actions cache.
-          disk-cache: ${{ github.workflow }}-oss-${{ matrix.suite }}-${{ matrix.shard_index }}-of-${{ matrix.shard_count }}
+          # Disk snapshots are restored/saved separately below: setup-bazel's
+          # BUILD/module key cannot refresh a cache after RTL-only changes.
+          disk-cache: false
           repository-cache: true
-          # PRs may restore default-branch caches without creating PR-ref cache
-          # entries; main pushes and manual runs refresh the stable shard caches.
           cache-save: ${{ github.event_name != 'pull_request' }}
           output-base: ${{ runner.temp }}/bazel-output
+      - name: Restore public Bazel disk cache
+        id: bazel-disk-cache
+        # actions/cache v6.1.0
+        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
+        with:
+          # Match setup-bazel's exact path and prefix to reuse existing caches.
+          # The shard count keeps incompatible partitions separate.
+          path: /home/runner/.cache/bazel-disk
+          # A fresh run/attempt key can save newly computed results even when
+          # only RTL changed; reuse compatible snapshots below.
+          key: setup-bazel-1-linux-x64-disk-${{ github.workflow }}-oss-${{ matrix.suite }}-${{ matrix.shard_index }}-of-${{ matrix.shard_count }}-${{ github.sha }}-${{ github.run_id }}-${{ github.run_attempt }}
+          # Prefer the tested commit and its PR base/previous push commit so
+          # an older run finishing last cannot displace a matching snapshot.
+          restore-keys: |
+            setup-bazel-1-linux-x64-disk-${{ github.workflow }}-oss-${{ matrix.suite }}-${{ matrix.shard_index }}-of-${{ matrix.shard_count }}-${{ github.sha }}-
+            setup-bazel-1-linux-x64-disk-${{ github.workflow }}-oss-${{ matrix.suite }}-${{ matrix.shard_index }}-of-${{ matrix.shard_count }}-${{ github.event.pull_request.base.sha || github.event.before || github.sha }}-
+            setup-bazel-1-linux-x64-disk-${{ github.workflow }}-oss-${{ matrix.suite }}-${{ matrix.shard_index }}-of-${{ matrix.shard_count }}-
       - name: Configure public Bazel environment
         run: |
-          # setup-bazel restores these paths on a cache hit. Create them on a
+          # Cache restores populate these paths on a hit. Create them on a
           # miss so Docker can bind-mount the same host paths below.
           mkdir -p \
             "${HOME}/.cache/bazel" \
@@ -327,6 +342,18 @@ jobs:
             check_args+=(--expected-suite "${{ matrix.suite }}")
           fi
           python3.12 python/ci/bazel_oss_sharding.py check "${check_args[@]}"
+      - name: Save public Bazel disk cache
+        # Preserve reusable results after test failures, but never save a
+        # cancelled run or create PR-ref caches. PRs restore without writing.
+        if: >-
+          ${{ !cancelled() && github.event_name != 'pull_request' &&
+              steps.bazel-disk-cache.outputs.cache-primary-key != '' &&
+              steps.bazel-disk-cache.outputs.cache-hit != 'true' }}
+        # actions/cache v6.1.0
+        uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
+        with:
+          path: /home/runner/.cache/bazel-disk
+          key: ${{ steps.bazel-disk-cache.outputs.cache-primary-key }}
 
   bazel-oss-verilator-coverage-shard:
     name: bazel-oss-verilator-coverage-shard (${{ matrix.name }})
