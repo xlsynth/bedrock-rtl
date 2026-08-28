@@ -39,8 +39,9 @@
 //       architectural reset domain crossing (RDC). All it does is make sure the sender and receiver
 //       can be reset with skew or completely independently without causing a permanent loss of credits and
 //       broken flow control.
-//   - When in reset (the rst port and/or the push_receiver_in_reset port is high), this module:
+//   - When in reset (the rst port and/or the push_sender_in_reset port is high), this module:
 //     - Ignores (drops) any incoming push valids.
+//       Set EnableAssertPushValidInReset=0 to tolerate unknown push valids during reset.
 //     - Does not send output credits on the push interface.
 //     - Ignores (drops) any incoming pop credits.
 //     - Does not send output valids on the pop interface.
@@ -76,10 +77,16 @@ module br_credit_receiver #(
     // The maximum credit count value that will be checked by covers.
     parameter int CoverMaxCredit = MaxCredit,
     // If 1, then assert there are no valid bits asserted at the end of the test.
+    // Raw push valids during reset are ignored only if EnableAssertPushValidInReset is 0.
     parameter bit EnableAssertFinalNotValid = 1,
     // If 1, then at the end of simulation, assert that the credit counter value equals
     // the minimum number of credits that it stored at any point during the test.
     parameter bit EnableAssertFinalMinValue = 1,
+    // If 1, use raw push_valid for occupancy/overflow checks, including during sender reset.
+    // If 0, use reset-gated push_valid for those checks and the final push-valid check.
+    // This only changes assertions; functional reset gating is unchanged.
+    // ri lint_check_waive PARAM_NOT_USED
+    parameter bit EnableAssertPushValidInReset = 1,
     localparam int CounterWidth = $clog2(MaxCredit + 1),
     localparam int PushCreditWidth = $clog2(PushCreditMaxChange + 1),
     localparam int PopCreditChangeWidth = $clog2(PopCreditMaxChange + 1)
@@ -119,6 +126,12 @@ module br_credit_receiver #(
     output logic [CounterWidth-1:0] credit_available
 );
 
+  logic either_rst;
+  assign either_rst = rst || push_sender_in_reset;
+
+  logic [NumFlows-1:0] push_valid_gated;
+  assign push_valid_gated = push_valid & {NumFlows{!either_rst}};
+
   //------------------------------------------
   // Integration checks
   //------------------------------------------
@@ -135,14 +148,25 @@ module br_credit_receiver #(
   logic [CounterWidth-1:0] occupancy;
   logic [  CounterWidth:0] occupancy_next;
   logic [CounterWidth-1:0] occupancy_incr;
+  logic [    NumFlows-1:0] push_valid_checked;
+
+  // Preserve raw-valid checking by default. The gated mode ignores reset-held
+  // valids, while unknown valids outside reset still propagate into the checker.
+  if (EnableAssertPushValidInReset) begin : gen_check_raw_push_valid
+    assign push_valid_checked = push_valid;
+  end else begin : gen_check_gated_push_valid
+    assign push_valid_checked = push_valid_gated;
+  end
 
   always_comb begin
     occupancy_incr = '0;
     for (int i = 0; i < NumFlows; i++) begin
-      occupancy_incr += push_valid[i];
+      occupancy_incr += push_valid_checked[i];
     end
   end
 
+  // The buffer shares rst only: do not clear occupancy or mask its returned
+  // credits merely because the sender has entered reset first.
   // ri lint_check_off ARITH_ARGS
   assign occupancy_next = occupancy + occupancy_incr - CounterWidth'(pop_credit);
   // ri lint_check_on ARITH_ARGS
@@ -150,7 +174,7 @@ module br_credit_receiver #(
   `BR_REG(occupancy, occupancy_next[CounterWidth-1:0])
 `endif  // BR_DISABLE_INTG_CHECKS
 `endif  // BR_ASSERT_ON
-  `BR_ASSERT_INTG(no_push_overflow_a, (|push_valid) |-> (occupancy_next <= MaxCredit))
+  `BR_ASSERT_INTG(no_push_overflow_a, (|push_valid_checked) |-> (occupancy_next <= MaxCredit))
   `BR_ASSERT_INTG(pop_credit_in_range_a, pop_credit <= PopCreditMaxChange)
 
   if (EnableCoverPushSenderInReset) begin : gen_cover_push_sender_in_reset
@@ -166,7 +190,8 @@ module br_credit_receiver #(
   end
 
   if (EnableAssertFinalNotValid) begin : gen_assert_final
-    `BR_ASSERT_FINAL(final_not_push_valid_a, push_valid == '0)
+    `BR_ASSERT_FINAL(final_not_push_valid_a,
+                     (!EnableAssertPushValidInReset && either_rst) || push_valid == '0)
     `BR_ASSERT_FINAL(final_not_pop_valid_a, pop_valid == '0)
   end
 
@@ -177,9 +202,6 @@ module br_credit_receiver #(
   //------------------------------------------
   localparam int CreditCounterMaxChange = br_math::max2(PushCreditMaxChange, PopCreditMaxChange);
   localparam int CreditCounterChangeWidth = $clog2(CreditCounterMaxChange + 1);
-
-  logic either_rst;
-  assign either_rst = rst || push_sender_in_reset;
 
   logic credit_decr_valid;
   logic credit_decr_ready;
@@ -238,7 +260,7 @@ module br_credit_receiver #(
         PushCreditWidth'(credit_decr) : '0;
   end
 
-  assign pop_valid = push_valid & {NumFlows{!either_rst}};
+  assign pop_valid = push_valid_gated;
   assign pop_data  = push_data;
 
   if (RegisterPushOutputs) begin : gen_reg_push

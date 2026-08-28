@@ -1,6 +1,8 @@
 # SPDX-License-Identifier: Apache-2.0
 
 
+# Model startup with arbitrary sender reset release skew. Coordinated resets
+# after traffic are outside the scope of this startup proof.
 # clock/reset set up
 clock clk
 reset -none
@@ -9,14 +11,24 @@ assume -bound 1 -name delay_rst {rst}
 assume -name deassert_rst {##1 !rst}
 
 get_design_info
+array set param_list [get_design_info -list parameter]
+# Jasper reports bit parameters as sized SystemVerilog literals.
 
 # primary input control signal should be legal during reset
 assume -name initial_value_during_reset {rst | push_sender_in_reset |-> \
 (credit_initial <= MaxCredit) && $stable(credit_initial)}
-assume -name no_push_during_reset {rst | push_sender_in_reset |-> push_valid == 'd0}
+# Strict checking requires idle raw valids during reset. In gated mode, leave
+# them unconstrained; the monitor qualifies valids for credit accounting and data checks.
+if {$param_list(EnableAssertPushValidInReset) eq "1'b1"} {
+  assume -name no_push_during_reset {rst | push_sender_in_reset |-> push_valid == 'd0}
+}
 
 # primary output control signal should be legal during reset
-assert -name fv_rst_check_push_credit {rst | push_sender_in_reset |-> push_credit == 'd0}
+if {$param_list(RegisterPushOutputs) eq "1'b1"} {
+  assert -name fv_rst_check_push_credit {rst | push_sender_in_reset |=> push_credit == 'd0}
+} else {
+  assert -name fv_rst_check_push_credit {rst | push_sender_in_reset |-> push_credit == 'd0}
+}
 assert -name fv_rst_check_pop_valid {rst | push_sender_in_reset |-> pop_valid == 'd0}
 
 # prove command
