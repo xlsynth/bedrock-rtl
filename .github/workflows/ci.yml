@@ -156,9 +156,13 @@ jobs:
           # The shard count keeps incompatible partitions separate.
           path: /home/runner/.cache/bazel-disk
           # A fresh run/attempt key can save newly computed results even when
-          # only RTL changed; restore the latest compatible snapshot first.
-          key: setup-bazel-1-linux-x64-disk-${{ github.workflow }}-oss-${{ matrix.suite }}-${{ matrix.shard_index }}-of-${{ matrix.shard_count }}-${{ github.run_id }}-${{ github.run_attempt }}
+          # only RTL changed; reuse compatible snapshots below.
+          key: setup-bazel-1-linux-x64-disk-${{ github.workflow }}-oss-${{ matrix.suite }}-${{ matrix.shard_index }}-of-${{ matrix.shard_count }}-${{ github.sha }}-${{ github.run_id }}-${{ github.run_attempt }}
+          # Prefer the tested commit and its PR base/previous push commit so
+          # an older run finishing last cannot displace a matching snapshot.
           restore-keys: |
+            setup-bazel-1-linux-x64-disk-${{ github.workflow }}-oss-${{ matrix.suite }}-${{ matrix.shard_index }}-of-${{ matrix.shard_count }}-${{ github.sha }}-
+            setup-bazel-1-linux-x64-disk-${{ github.workflow }}-oss-${{ matrix.suite }}-${{ matrix.shard_index }}-of-${{ matrix.shard_count }}-${{ github.event.pull_request.base.sha || github.event.before || github.sha }}-
             setup-bazel-1-linux-x64-disk-${{ github.workflow }}-oss-${{ matrix.suite }}-${{ matrix.shard_index }}-of-${{ matrix.shard_count }}-
       - name: Configure public Bazel environment
         run: |
