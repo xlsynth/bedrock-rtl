@@ -229,6 +229,30 @@ br_verilog_fpv_test_tools_suite(
     deps = [":br_credit_receiver_fpv_monitor"],
 )
 
+br_verilog_fpv_test_tools_suite(
+    name = "br_credit_receiver_gated_assert_test_suite",
+    params = {
+        "EnableAssertPushValidInReset": ["0"],
+        "MaxCredit": ["5"],
+        "NumFlows": [
+            "1",
+            "3",
+        ],
+        "PopCreditMaxChange": ["3"],
+        "PushCreditMaxChange": ["3"],
+        "RegisterPushOutputs": [
+            "0",
+            "1",
+        ],
+        "Width": ["8"],
+    },
+    tools = {
+        "jg": "br_credit_receiver_fpv.jg.tcl",
+    },
+    top = "br_credit_receiver",
+    deps = [":br_credit_receiver_fpv_monitor"],
+)
+
 ##################################################################
 # Bedrock-RTL Credit Sender
 verilog_library(

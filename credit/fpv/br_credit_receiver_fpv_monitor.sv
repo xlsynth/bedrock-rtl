@@ -15,6 +15,7 @@ module br_credit_receiver_fpv_monitor #(
     parameter int PushCreditMaxChange = 1,
     parameter int PopCreditMaxChange = 1,
     parameter bit EnableAssertFinalNotValid = 1,
+    parameter bit EnableAssertPushValidInReset = 1,
     localparam int CounterWidth = $clog2(MaxCredit + 1),
     localparam int PushCreditWidth = $clog2(PushCreditMaxChange + 1),
     localparam int PopCreditChangeWidth = $clog2(PopCreditMaxChange + 1)
@@ -57,7 +58,7 @@ module br_credit_receiver_fpv_monitor #(
   logic [CounterWidth-1:0] fv_max_credit;
 
   assign fv_rst = rst | push_sender_in_reset;
-  // Reset-held raw valids are unconstrained and are not accepted transfers.
+  // Only reset-gated valids represent accepted transfers in either checking mode.
   assign fv_push_valid = push_valid & {NumFlows{!fv_rst}};
   `BR_REGX(fv_push_credit_cnt, fv_push_credit_cnt + push_credit - $countones(fv_push_valid), clk,
            fv_rst)
@@ -86,9 +87,11 @@ module br_credit_receiver_fpv_monitor #(
              |fv_push_valid && (push_credit == 'd0) |-> s_eventually (fv_push_credit_cnt != 'd0))
   `BR_ASSERT(pop_valid_passthru_a, pop_valid == fv_push_valid)
   `BR_ASSERT(no_spurious_pop_valid_a, (fv_pop_credit_cnt + pop_credit) == 'd0 |-> pop_valid == 'd0)
-  `BR_COVER(sender_reset_with_push_c, push_sender_in_reset && |push_valid)
-  `BR_COVER(sender_reset_release_traffic_c,
-            push_sender_in_reset && |push_valid ##1 !push_sender_in_reset ##[1:3] |fv_push_valid)
+  if (!EnableAssertPushValidInReset) begin : gen_gated_push_valid_covers
+    `BR_COVER(sender_reset_with_push_c, push_sender_in_reset && |push_valid)
+    `BR_COVER(sender_reset_release_traffic_c,
+              push_sender_in_reset && |push_valid ##1 !push_sender_in_reset ##[1:3] |fv_push_valid)
+  end
   // ----------Data integrity Check----------
   jasper_scoreboard_3 #(
       .CHUNK_WIDTH(Width),
@@ -114,5 +117,6 @@ bind br_credit_receiver br_credit_receiver_fpv_monitor #(
     .RegisterPushOutputs(RegisterPushOutputs),
     .PushCreditMaxChange(PushCreditMaxChange),
     .PopCreditMaxChange(PopCreditMaxChange),
-    .EnableAssertFinalNotValid(EnableAssertFinalNotValid)
+    .EnableAssertFinalNotValid(EnableAssertFinalNotValid),
+    .EnableAssertPushValidInReset(EnableAssertPushValidInReset)
 ) monitor (.*);
