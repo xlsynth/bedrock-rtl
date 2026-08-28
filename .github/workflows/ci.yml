@@ -8,6 +8,12 @@ on:
   # Allow manual triggers
   workflow_dispatch: {}
 
+# Supersede CI for the same PR without cancelling other PRs, main pushes, or
+# manual runs. Non-PR events get a unique group for each workflow run.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event_name }}-${{ github.event.pull_request.number || github.run_id }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
 jobs:
   pre-commit:
     runs-on: ubuntu-24.04
@@ -297,7 +303,7 @@ jobs:
           python3.12 "$HELPER" check "${check_args[@]}"
           EOF
       - name: Upload public shard result
-        if: ${{ always() }}
+        if: ${{ !cancelled() }}
         # actions/upload-artifact v7.0.1
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         with:
@@ -310,7 +316,7 @@ jobs:
           if-no-files-found: error
           retention-days: 1
       - name: Check public shard result
-        if: ${{ always() }}
+        if: ${{ !cancelled() }}
         run: |
           check_args=(
             --results-dir "bazel-oss-results/${{ matrix.suite }}-${{ matrix.shard_index }}-of-${{ matrix.shard_count }}"
@@ -523,7 +529,7 @@ jobs:
   bazel-oss-tool-test:
     runs-on: ubuntu-24.04
     needs: bazel-oss-tool-test-shard
-    if: ${{ always() }}
+    if: ${{ !cancelled() }}
     permissions:
       contents: read
     outputs:
