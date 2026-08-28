@@ -27,7 +27,7 @@
 //   - Users will likely want to register the push-side interface (e.g., with br_delay_valid).
 //
 // Reset:
-//   - If either this sender or the receiver resets, then the other side must also reset
+//   - If either the sender or this receiver resets, then the other side must also reset
 //     to ensure they collectively have a coherent view of the total credits and an empty receiver
 //     buffer.
 //     - If there is no reset skew between sender and receiver, the push_sender_in_reset and
@@ -36,15 +36,21 @@
 //       then the push_sender_in_reset and push_receiver_in_reset signals should be connected accordingly
 //       between sender and receiver.
 //     - Note that this is *NOT* a general-purpose substitute for a higher-level reset protocol and
-//       architectural reset domain crossing (RDC). All it does is make sure the sender and receiver
-//       can be reset with skew or completely independently without causing a permanent loss of credits and
-//       broken flow control.
-//   - When in reset (the rst port and/or the push_receiver_in_reset port is high), this module:
-//     - Ignores (drops) any incoming push valids.
-//     - Does not send output credits on the push interface.
-//     - Ignores (drops) any incoming pop credits.
-//     - Does not send output valids on the pop interface.
-//     - Loads the initial value for the credit counter from the credit_initial port.
+//       architectural reset domain crossing (RDC). Both endpoints and the receiver buffer must
+//       complete the coordinated reset, with stale in-flight traffic discarded, before traffic resumes.
+//   - When rst or push_sender_in_reset is high, this module:
+//     - Ignores (drops) incoming push valids, which may be unknown during this reset hold.
+//     - Deasserts pop_valid. The unqualified push_data-to-pop_data wire may still carry unknown data.
+//     - Stops issuing push credits. RegisterPushOutputs delays this by one cycle, so a previously
+//       registered credit may remain visible during the first reset cycle.
+//     - Loads credit_initial into the functional credit counter on each clock edge, discarding
+//       incoming pop credits from that pool.
+//   - The attached receiver buffer resets only with rst, not push_sender_in_reset. While rst is low,
+//     pop_credit must remain known and report actual buffer releases, including during sender reset
+//     skew. The occupancy checker retains buffered entries and subtracts those releases until rst.
+//     When rst is high, pop_credit is ignored by both the credit pool and occupancy checker.
+//   - Outside a known reset hold, push_valid must be known and obey the credit protocol; data must
+//     be valid for each accepted flow. Unknown valids are not treated as zero by the checker.
 
 `include "br_asserts_internal.svh"
 `include "br_registers.svh"
@@ -75,7 +81,8 @@ module br_credit_receiver #(
     parameter bit EnableCoverPushCreditStall = 1,
     // The maximum credit count value that will be checked by covers.
     parameter int CoverMaxCredit = MaxCredit,
-    // If 1, then assert there are no valid bits asserted at the end of the test.
+    // If 1, assert there are no valid transfers at the end of the test.
+    // Raw push valids are ignored while either reset is asserted.
     parameter bit EnableAssertFinalNotValid = 1,
     // If 1, then at the end of simulation, assert that the credit counter value equals
     // the minimum number of credits that it stored at any point during the test.
@@ -136,13 +143,18 @@ module br_credit_receiver #(
   logic [  CounterWidth:0] occupancy_next;
   logic [CounterWidth-1:0] occupancy_incr;
 
+  // pop_valid already gates push_valid with !(rst || push_sender_in_reset).
+  // Count it so reset-held X valids cannot poison occupancy, while unknown
+  // valids outside reset still propagate into the checker.
   always_comb begin
     occupancy_incr = '0;
     for (int i = 0; i < NumFlows; i++) begin
-      occupancy_incr += push_valid[i];
+      occupancy_incr += pop_valid[i];
     end
   end
 
+  // The buffer shares rst only: do not clear occupancy or mask its returned
+  // credits merely because the sender has entered reset first.
   // ri lint_check_off ARITH_ARGS
   assign occupancy_next = occupancy + occupancy_incr - CounterWidth'(pop_credit);
   // ri lint_check_on ARITH_ARGS
@@ -150,7 +162,7 @@ module br_credit_receiver #(
   `BR_REG(occupancy, occupancy_next[CounterWidth-1:0])
 `endif  // BR_DISABLE_INTG_CHECKS
 `endif  // BR_ASSERT_ON
-  `BR_ASSERT_INTG(no_push_overflow_a, (|push_valid) |-> (occupancy_next <= MaxCredit))
+  `BR_ASSERT_INTG(no_push_overflow_a, (|pop_valid) |-> (occupancy_next <= MaxCredit))
   `BR_ASSERT_INTG(pop_credit_in_range_a, pop_credit <= PopCreditMaxChange)
 
   if (EnableCoverPushSenderInReset) begin : gen_cover_push_sender_in_reset
@@ -166,7 +178,7 @@ module br_credit_receiver #(
   end
 
   if (EnableAssertFinalNotValid) begin : gen_assert_final
-    `BR_ASSERT_FINAL(final_not_push_valid_a, push_valid == '0)
+    `BR_ASSERT_FINAL(final_not_push_valid_a, rst || push_sender_in_reset || push_valid == '0)
     `BR_ASSERT_FINAL(final_not_pop_valid_a, pop_valid == '0)
   end
 

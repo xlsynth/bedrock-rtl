@@ -51,21 +51,30 @@ module br_credit_receiver_fpv_monitor #(
   `BR_ASSUME(fv_flow_legal_a, $stable(fv_flow) && fv_flow < NumFlows)
 
   logic fv_rst;
+  logic [NumFlows-1:0] fv_push_valid;
   logic [CounterWidth-1:0] fv_push_credit_cnt;
   logic [CounterWidth-1:0] fv_pop_credit_cnt;
   logic [CounterWidth-1:0] fv_max_credit;
 
   assign fv_rst = rst | push_sender_in_reset;
-  `BR_REG(fv_push_credit_cnt, fv_push_credit_cnt + push_credit - $countones(push_valid))
-  `BR_REGIX(fv_pop_credit_cnt, fv_pop_credit_cnt + pop_credit - $countones(pop_valid),
-            credit_initial, clk, fv_rst)
-  `BR_REGIX(fv_max_credit, fv_max_credit, credit_initial, clk, fv_rst)
+  // Reset-held raw valids are unconstrained and are not accepted transfers.
+  assign fv_push_valid = push_valid & {NumFlows{!fv_rst}};
+  `BR_REGX(fv_push_credit_cnt, fv_push_credit_cnt + push_credit - $countones(fv_push_valid), clk,
+           fv_rst)
+  // The attached buffer shares only local rst. Its credits can still return
+  // while the sender is in reset, until the buffer itself is reset.
+  `BR_REGI(fv_pop_credit_cnt, fv_pop_credit_cnt + pop_credit - $countones(pop_valid),
+           credit_initial)
+  `BR_REGI(fv_max_credit, fv_max_credit, credit_initial)
 
   // ----------FV assumptions----------
+  // This monitor proves startup release skew. Coordinated resets after traffic
+  // are outside the scope of this startup proof.
   `BR_ASSUME(push_sender_in_reset_a, !push_sender_in_reset |=> !push_sender_in_reset)
   `BR_ASSUME(credit_withhold_a, credit_withhold <= MaxCredit)
   `BR_ASSUME(credit_withhold_liveness_a, s_eventually (credit_withhold < fv_max_credit))
-  `BR_ASSUME(no_spurious_push_valid_a, fv_push_credit_cnt + push_credit >= $countones(push_valid))
+  `BR_ASSUME(no_spurious_push_valid_a, fv_push_credit_cnt + push_credit >= $countones(fv_push_valid
+                                                                                         ))
   `BR_ASSUME(no_spurious_pop_credit_a, (fv_max_credit - fv_pop_credit_cnt + $countones(pop_valid)
              ) >= pop_credit)
   `BR_ASSUME(legal_pop_credit_a, pop_credit <= PopCreditMaxChange)
@@ -74,8 +83,12 @@ module br_credit_receiver_fpv_monitor #(
   `BR_ASSERT(legal_push_credit_a, push_credit <= PushCreditMaxChange)
   `BR_ASSERT(fv_credit_sanity_a, fv_push_credit_cnt <= fv_max_credit)
   `BR_ASSERT(push_credit_deadlock_a,
-             |push_valid && (push_credit == 'd0) |-> s_eventually (fv_push_credit_cnt != 'd0))
+             |fv_push_valid && (push_credit == 'd0) |-> s_eventually (fv_push_credit_cnt != 'd0))
+  `BR_ASSERT(pop_valid_passthru_a, pop_valid == fv_push_valid)
   `BR_ASSERT(no_spurious_pop_valid_a, (fv_pop_credit_cnt + pop_credit) == 'd0 |-> pop_valid == 'd0)
+  `BR_COVER(sender_reset_with_push_c, push_sender_in_reset && |push_valid)
+  `BR_COVER(sender_reset_release_traffic_c,
+            push_sender_in_reset && |push_valid ##1 !push_sender_in_reset ##[1:3] |fv_push_valid)
   // ----------Data integrity Check----------
   jasper_scoreboard_3 #(
       .CHUNK_WIDTH(Width),
@@ -85,8 +98,8 @@ module br_credit_receiver_fpv_monitor #(
       .MAX_PENDING(MaxCredit)
   ) scoreboard (
       .clk(clk),
-      .rstN(!rst),
-      .incoming_vld(push_valid[fv_flow]),
+      .rstN(!fv_rst),
+      .incoming_vld(fv_push_valid[fv_flow]),
       .incoming_data(push_data[fv_flow]),
       .outgoing_vld(pop_valid[fv_flow]),
       .outgoing_data(pop_data[fv_flow])
