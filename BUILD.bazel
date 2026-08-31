@@ -72,6 +72,7 @@ verilog_sim_coverage_aggregate(
         "//enc/sim:br_enc_verilator_coverage",
         "//flow/sim:br_flow_verilator_coverage",
         "//fifo/sim:br_fifo_verilator_coverage",
+        "//gate/sim:br_gate_verilator_coverage",
         "//lfsr/sim:br_lfsr_verilator_coverage",
         "//macros:br_macros_verilator_coverage",
         "//misc/sim:br_misc_verilator_coverage",
