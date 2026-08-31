@@ -125,6 +125,10 @@ br_verilog_sim_test_tools_suite(
         "SymbolWidth": [
             "8",
         ],
+        "GateRadix": [
+            "2",
+            "4",
+        ],
     },
     tools = [
         "vcs",

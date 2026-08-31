@@ -4,6 +4,7 @@ module br_mux_bin_structured_gates_tb;
 
   parameter int NumSymbolsIn = 2;
   parameter int SymbolWidth = 8;
+  parameter int GateRadix = 2;
   localparam int SelectRange = 2 ** $clog2(NumSymbolsIn);
 
   logic clk;
@@ -16,7 +17,8 @@ module br_mux_bin_structured_gates_tb;
 
   br_mux_bin_structured_gates #(
       .NumSymbolsIn(NumSymbolsIn),
-      .SymbolWidth (SymbolWidth)
+      .SymbolWidth(SymbolWidth),
+      .GateRadix(GateRadix)
   ) dut (
       .select,
       .in,
