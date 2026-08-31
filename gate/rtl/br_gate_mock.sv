@@ -105,6 +105,26 @@ module br_gate_mux2 (
 
 endmodule : br_gate_mux2
 
+// 4-input MUX gate
+module br_gate_mux4 (
+    input logic in0,
+    input logic in1,
+    input logic in2,
+    input logic in3,
+    input logic [1:0] sel,
+    output logic out
+);
+  always_comb begin
+    unique case (sel)
+      2'b00:   out = in0;
+      2'b01:   out = in1;
+      2'b10:   out = in2;
+      2'b11:   out = in3;
+      default: out = 'x;
+    endcase
+  end
+endmodule : br_gate_mux4
+
 // 2-input Clock MUX gate
 // This is *not* meant to be a glitchless clock mux. This is simply a stdcell
 // mux that can be used to select between two clock sources. Some vendors may
