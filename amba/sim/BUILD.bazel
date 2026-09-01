@@ -501,6 +501,27 @@ br_verilog_sim_test_tools_suite(
 )
 
 verilog_library(
+    name = "br_amba_axil_msi_tb",
+    srcs = ["br_amba_axil_msi_tb.sv"],
+    deps = [
+        "//amba/rtl:br_amba_axil_msi",
+        "//misc/sim:br_test_driver",
+    ],
+)
+
+verilog_elab_test(
+    name = "br_amba_axil_msi_tb_elab_test",
+    tool = "slang",
+    deps = [":br_amba_axil_msi_tb"],
+)
+
+br_verilog_sim_test_tools_suite(
+    name = "br_amba_axil_msi_sim_test_tools_suite",
+    tools = ["vcs"],
+    deps = [":br_amba_axil_msi_tb"],
+)
+
+verilog_library(
     name = "br_amba_axil_write_arbiter_tb",
     srcs = ["br_amba_axil_write_arbiter_tb.sv"],
     deps = [
