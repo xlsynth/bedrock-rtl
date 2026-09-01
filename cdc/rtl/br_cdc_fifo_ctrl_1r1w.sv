@@ -137,10 +137,12 @@ module br_cdc_fifo_ctrl_1r1w #(
   //------------------------------------------
   // Integration checks
   //------------------------------------------
+  // Maximum CDC depth is required when the push/pop clock frequencies are the same, so assume
+  // that for these calculations.
   localparam int ResetActiveCycles = RegisterResetActive + 1;
-  localparam int ForwardLatencyCycles =
-      ((ResetActiveCycles > RamWriteLatency) ? ResetActiveCycles : RamWriteLatency) +
-      NumSyncStages + RamReadLatency + RegisterPopOutputs;
+  localparam int ForwardLatencyCycles = br_math::max2(
+      ResetActiveCycles, RamWriteLatency
+  ) + NumSyncStages + RamReadLatency + RegisterPopOutputs;
   localparam int ReturnLatencyCycles = ResetActiveCycles + NumSyncStages;
   localparam int MinFullBandwidthDepth = ForwardLatencyCycles + ReturnLatencyCycles + 1;
 

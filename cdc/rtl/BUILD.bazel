@@ -54,6 +54,7 @@ verilog_library(
     deps = [
         ":br_cdc_fifo_ctrl_pop_1r1w",
         ":br_cdc_fifo_ctrl_push_1r1w",
+        "//pkg:br_math_pkg",
     ],
 )
 
@@ -126,6 +127,7 @@ verilog_library(
     deps = [
         ":br_cdc_fifo_ctrl_pop_1r1w",
         ":br_cdc_fifo_ctrl_push_1r1w_push_credit",
+        "//pkg:br_math_pkg",
     ],
 )
 
