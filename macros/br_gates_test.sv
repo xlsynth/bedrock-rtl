@@ -1,12 +1,13 @@
 // SPDX-License-Identifier: Apache-2.0
 
 
-// Unit test for br_gates.svh macros
+// Unit test for gate-instantiating macros in br_gates.svh and br_registers.svh
 
 `timescale 1ns / 1ps
 
 `include "br_asserts.svh"
 `include "br_gates.svh"
+`include "br_registers.svh"
 
 module br_gates_test;
 
@@ -26,6 +27,16 @@ module br_gates_test;
   logic cdc_arst;
   logic cdc_srst;
   logic cdc_srst_stages;
+  logic out_regn_noscan;
+  logic out_reg_noscan;
+  logic out_regl_noscan;
+  logic out_rega_noscan;
+  logic out_regal_noscan;
+  logic [7:0] out_regn_noscan_bus;
+  logic [7:0] out_reg_noscan_bus;
+  logic [7:0] out_regl_noscan_bus;
+  logic [7:0] out_rega_noscan_bus;
+  logic [7:0] out_regal_noscan_bus;
 
   `BR_GATE_BUF(out_buf, in0)
   `BR_GATE_CLK_BUF(out_clk_buf, in0)
@@ -38,6 +49,19 @@ module br_gates_test;
   `BR_GATE_CLK_MUX2(out_clk_mux, in0, in1, mux_sel)
   `BR_GATE_CDC_RST_SYNC(cdc_srst, cdc_arst, cdc_clk)
   `BR_GATE_CDC_RST_SYNC_STAGES(cdc_srst_stages, cdc_arst, cdc_clk, 2)
+
+  // Exercise each NOSCAN macro with scalar and vector data and explicit clocks/resets.
+  `BR_REGNX_NOSCAN(out_regn_noscan, in0, cdc_clk)
+  `BR_REGX_NOSCAN(out_reg_noscan, in0, cdc_clk, cdc_srst)
+  `BR_REGLX_NOSCAN(out_regl_noscan, in0, mux_sel, cdc_clk, cdc_srst)
+  `BR_REGAX_NOSCAN(out_rega_noscan, in0, cdc_clk, cdc_arst)
+  `BR_REGALX_NOSCAN(out_regal_noscan, in0, mux_sel, cdc_clk, cdc_arst)
+
+  `BR_REGNX_NOSCAN(out_regn_noscan_bus, {4{in0, in1}}, cdc_clk)
+  `BR_REGX_NOSCAN(out_reg_noscan_bus, {4{in0, in1}}, cdc_clk, cdc_srst)
+  `BR_REGLX_NOSCAN(out_regl_noscan_bus, {4{in0, in1}}, mux_sel, cdc_clk, cdc_srst)
+  `BR_REGAX_NOSCAN(out_rega_noscan_bus, {4{in0, in1}}, cdc_clk, cdc_arst)
+  `BR_REGALX_NOSCAN(out_regal_noscan_bus, {4{in0, in1}}, mux_sel, cdc_clk, cdc_arst)
 
 
   `BR_ASSERT_COMB(out_buf_check, out_buf == in0)

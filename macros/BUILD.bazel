@@ -104,27 +104,6 @@ verilog_lint_test(
 
 # Macro unit tests
 verilog_library(
-    name = "br_registers_noscan_test",
-    srcs = ["br_registers_noscan_test.sv"],
-    deps = [
-        ":br_registers",
-        "//gate/rtl:br_gate_mock",
-    ],
-)
-
-verilog_elab_test(
-    name = "br_registers_noscan_elab_test",
-    tool = "slang",
-    deps = [":br_registers_noscan_test"],
-)
-
-verilog_lint_test(
-    name = "br_registers_noscan_lint_test",
-    tool = "ascentlint",
-    deps = [":br_registers_noscan_test"],
-)
-
-verilog_library(
     name = "br_asserts_test",
     srcs = ["br_asserts_test.sv"],
     deps = [":br_asserts"],
@@ -263,6 +242,7 @@ verilog_library(
     deps = [
         ":br_asserts",
         ":br_gates",
+        ":br_registers",
         "//cdc/rtl:br_cdc_rst_sync",
         "//gate/rtl:br_gate_mock",
     ],
