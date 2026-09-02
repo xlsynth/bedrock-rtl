@@ -33,7 +33,7 @@ The table below groups macros that share the same clock/reset behavior; the suff
 | `BR_REGN`, `BR_REGLN` | No reset, positive-edge clock named `clk`; optional load enable. |
 | `BR_REGNX`, `BR_REGLNX` | No reset, positive-edge clock is an explicit macro argument; optional load enable. |
 
-The NOSCAN variants instantiate scalar `br_gate` flip-flops for each bit of the output. They require the target technology's gate library, or `//gate/rtl:br_gate_mock` for behavioral simulation. The output argument must be a scalar or packed signal identifier because it names the instance array. Instance names and mock storage names end in `_NOSCAN`.
+The NOSCAN variants instantiate scalar `br_gate` flip-flops for each bit of the output. They require the target technology's gate library, or `//gate/rtl:br_gate_mock` for behavioral simulation. The output argument must be a scalar or packed signal identifier because it names the instance array. A static assertion requires the input and output to have identical packed widths; constants must also be explicitly sized to match. Instance names and mock storage names end in `_NOSCAN`.
 
 | Macro | Behavior |
 | --- | --- |
