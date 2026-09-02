@@ -255,7 +255,6 @@ module br_cdc_fifo_ctrl_1r1w_push_credit_tb;
       .ReadDataWidthStages(0),
       .TileEnableBypass(0),
       .EnableMemReset(0),
-      .SameClock(0),
       .UseStructuredGates(1),
       .EnableStructuredGatesDataQualification(EnableStructuredGatesDataQualification),
       .EnableAssertFinalNotValid(1)

@@ -271,10 +271,6 @@ br_verilog_elab_and_lint_test_suite(
         "Depth": ["12"],
         "Width": ["8"],
         "EnableBypass": ["0"],
-        "SameClock": [
-            "0",
-            "1",
-        ],
         "UseStructuredGates": ["1"],
         "NumReadPorts": [
             "1",
@@ -681,10 +677,6 @@ br_verilog_elab_and_lint_test_suite(
         ],
         "TileEnableBypass": ["0"],
         "EnableStructuredGatesDataQualification": ["1"],
-        "SameClock": [
-            "0",
-            "1",
-        ],
         "UseStructuredGates": ["1"],
         "NumReadPorts": [
             "1",
