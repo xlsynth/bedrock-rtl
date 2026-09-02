@@ -30,12 +30,15 @@ br_verilog_sim_test_tools_suite(
     deps = [":br_gate_tb"],
 )
 
-NOSCAN_GATES = [
-    "br_gate_dff_noscan",
-    "br_gate_dff_arst_noscan",
+NOSCAN_SYNCHRONIZERS = [
     "br_gate_cdc_sync_noscan",
     "br_gate_cdc_sync_arstn_noscan",
 ]
+
+NOSCAN_GATES = [
+    "br_gate_dff_noscan",
+    "br_gate_dff_arst_noscan",
+] + NOSCAN_SYNCHRONIZERS
 
 [
     verilog_library(
@@ -61,6 +64,10 @@ NOSCAN_GATES = [
 [
     br_verilog_sim_test_tools_suite(
         name = gate + "_sim_test_tools_suite",
+        params = {"NumStages": [
+            "2",
+            "3",
+        ]} if gate in NOSCAN_SYNCHRONIZERS else {},
         tools = [
             "vcs",
             "verilator",

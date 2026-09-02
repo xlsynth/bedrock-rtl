@@ -1,8 +1,10 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// Check that the mock delays each sampled input through exactly three flops.
+// Check that the mock delays each sampled input through the configured flops.
 module br_gate_cdc_sync_noscan_tb;
   timeunit 1ns; timeprecision 1ps;
+
+  parameter int NumStages = 3;
 
   localparam logic [23:0] Pattern = 24'h1d36a1;
 
@@ -10,7 +12,9 @@ module br_gate_cdc_sync_noscan_tb;
   logic in;
   logic out;
 
-  br_gate_cdc_sync_noscan dut (
+  br_gate_cdc_sync_noscan #(
+      .NumStages(NumStages)
+  ) dut (
       .clk,
       .in,
       .out
@@ -28,24 +32,24 @@ module br_gate_cdc_sync_noscan_tb;
     #1;
     td.check(out === previous_out, "Input changes do not pass through between edges");
     td.wait_cycles();
-    td.check(out === expected, "Output has exactly three stages of sampled latency");
+    td.check(out === expected, "Output has the configured number of sampled stages");
   endtask
 
   initial begin
     in = 1'b0;
     td.reset_dut();
-    td.wait_cycles(3);
+    td.wait_cycles(NumStages);
     td.check(out === 1'b0, "Zero input flushes the no-reset synchronizer");
-    td.check(dut.in_d_reg_NOSCAN === 3'b000, "All three state bits retain the NOSCAN name");
+    td.check(dut.in_d_reg_NOSCAN === '0, "All state bits retain the NOSCAN name");
 
-    // A one-cycle pulse must appear only at the third sampling edge.
-    check_cycle(1'b1, 1'b0);
-    check_cycle(1'b0, 1'b0);
-    check_cycle(1'b0, 1'b1);
-    check_cycle(1'b0, 1'b0);
+    // A one-cycle pulse appears only at the NumStages-th sampling edge.
+    for (int i = 0; i <= NumStages; i++) begin
+      check_cycle(i == 0, i == NumStages - 1);
+    end
 
-    for (int i = 0; i < $bits(Pattern) + 2; i++) begin
-      check_cycle(i < $bits(Pattern) ? Pattern[i] : 1'b0, i >= 2 ? Pattern[i-2] : 1'b0);
+    for (int i = 0; i < $bits(Pattern) + NumStages - 1; i++) begin
+      check_cycle(i < $bits(Pattern) ? Pattern[i] : 1'b0,
+                  i >= NumStages - 1 ? Pattern[i-(NumStages-1)] : 1'b0);
     end
 
     td.finish(1);

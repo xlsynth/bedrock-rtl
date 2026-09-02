@@ -264,49 +264,57 @@ module br_gate_cdc_sync_arst #(
 
 endmodule : br_gate_cdc_sync_arst
 
-// Three-stage non-scan clock domain crossing synchronizer without reset.
-// All three stages must retain the _NOSCAN suffix for scan exclusion.
-module br_gate_cdc_sync_noscan (
+// Non-scan clock domain crossing synchronizer without reset.
+// All stages must retain the _NOSCAN suffix for scan exclusion.
+module br_gate_cdc_sync_noscan #(
+    parameter int NumStages = 3
+) (
     input  logic clk,
     input  logic in,
     output logic out
 );
 
+  `BR_ASSERT_STATIC(num_stages_must_be_2_or_3_a, NumStages == 2 || NumStages == 3)
+
   // The scan-exclusion contract requires the exact uppercase _NOSCAN suffix.
   // ri lint_check_waive VAR_NAME
-  logic [2:0] in_d_reg_NOSCAN;
+  logic [NumStages-1:0] in_d_reg_NOSCAN;
 
   always_ff @(posedge clk) begin
-    in_d_reg_NOSCAN <= {in_d_reg_NOSCAN[1:0], in};
+    in_d_reg_NOSCAN <= {in_d_reg_NOSCAN[NumStages-2:0], in};
   end
 
-  assign out = in_d_reg_NOSCAN[2];
+  assign out = in_d_reg_NOSCAN[NumStages-1];
 
 endmodule : br_gate_cdc_sync_noscan
 
-// Three-stage non-scan synchronizer with active-low asynchronous reset to zero.
-// All three stages must retain the _NOSCAN suffix for scan exclusion.
-module br_gate_cdc_sync_arstn_noscan (
+// Non-scan synchronizer with active-low asynchronous reset to zero.
+// All stages must retain the _NOSCAN suffix for scan exclusion.
+module br_gate_cdc_sync_arstn_noscan #(
+    parameter int NumStages = 3
+) (
     input  logic clk,
     input  logic arst_n,
     input  logic in,
     output logic out
 );
 
+  `BR_ASSERT_STATIC(num_stages_must_be_2_or_3_a, NumStages == 2 || NumStages == 3)
+
   // The scan-exclusion contract requires the exact uppercase _NOSCAN suffix.
   // ri lint_check_waive VAR_NAME
-  logic [2:0] in_d_reg_NOSCAN;
+  logic [NumStages-1:0] in_d_reg_NOSCAN;
 
   // ri lint_check_waive CONST_FF
   always_ff @(posedge clk or negedge arst_n) begin
     if (!arst_n) begin
       in_d_reg_NOSCAN <= '0;
     end else begin
-      in_d_reg_NOSCAN <= {in_d_reg_NOSCAN[1:0], in};
+      in_d_reg_NOSCAN <= {in_d_reg_NOSCAN[NumStages-2:0], in};
     end
   end
 
-  assign out = in_d_reg_NOSCAN[2];
+  assign out = in_d_reg_NOSCAN[NumStages-1];
 
 endmodule : br_gate_cdc_sync_arstn_noscan
 
