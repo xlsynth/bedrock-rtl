@@ -517,6 +517,12 @@ verilog_elab_test(
 
 br_verilog_sim_test_tools_suite(
     name = "br_amba_axil_msi_sim_test_tools_suite",
+    params = {
+        "DataWidth": [
+            "32",
+            "64",
+        ],
+    },
     tools = ["vcs"],
     deps = [":br_amba_axil_msi_tb"],
 )
