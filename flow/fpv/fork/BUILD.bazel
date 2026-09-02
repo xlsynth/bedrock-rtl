@@ -118,13 +118,6 @@ verilog_library(
 
 verilog_elab_test(
     name = "br_flow_fork_lockstep_fpv_monitor_elab_test",
-    defines = [
-        "BR_ASSERT_ON",
-        "BR_ENABLE_IMPL_CHECKS",
-        "BR_DISABLE_FINAL_CHECKS",
-        "BR_ENABLE_FPV",
-        "BR_DISABLE_ASSERT_IMM",
-    ],
     tool = "slang",
     top = "br_flow_fork_lockstep",
     deps = [":br_flow_fork_lockstep_fpv_monitor"],
@@ -132,13 +125,6 @@ verilog_elab_test(
 
 verilog_elab_test(
     name = "br_flow_fork_lockstep_fpv_monitor_multiflow_elab_test",
-    defines = [
-        "BR_ASSERT_ON",
-        "BR_ENABLE_IMPL_CHECKS",
-        "BR_DISABLE_FINAL_CHECKS",
-        "BR_ENABLE_FPV",
-        "BR_DISABLE_ASSERT_IMM",
-    ],
     params = {"NumFlows": "5"},
     tool = "slang",
     top = "br_flow_fork_lockstep",
