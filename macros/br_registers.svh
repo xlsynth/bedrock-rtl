@@ -256,14 +256,19 @@ end
 // Both the instances and the mock's storage carry the _NOSCAN suffix.
 // Resets at the macro interface remain active-high; the asynchronous variants
 // invert reset for the gate primitive's active-low arst_n port.
+// Assign D to a Q-width net before the instance array. This preserves ordinary
+// assignment sizing and width diagnostics; a scalar connected directly to an
+// instance array would be broadcast to every flip-flop.
 
 // Flip-flop register without scan
 // * unconditional load, no reset
 // * explicit positive-edge triggered clock
 `define BR_REGNX_NOSCAN(__q__, __d__, __clk__) \
+logic [$bits(__q__)-1:0] __q__``_noscan_d; \
+assign __q__``_noscan_d = __d__; \
 br_gate_dff_noscan __q__``_reg_NOSCAN [$bits(__q__)-1:0] ( \
     .clk(__clk__), \
-    .in($bits(__q__)'(__d__)), \
+    .in(__q__``_noscan_d), \
     .out(__q__) \
 );
 
@@ -271,9 +276,11 @@ br_gate_dff_noscan __q__``_reg_NOSCAN [$bits(__q__)-1:0] ( \
 // * unconditional load, reset value 0
 // * explicit synchronous active-high reset and positive-edge triggered clock
 `define BR_REGX_NOSCAN(__q__, __d__, __clk__, __rst__) \
+logic [$bits(__q__)-1:0] __q__``_noscan_d; \
+assign __q__``_noscan_d = __d__; \
 br_gate_dff_noscan __q__``_reg_NOSCAN [$bits(__q__)-1:0] ( \
     .clk(__clk__), \
-    .in((__rst__) ? '0 : $bits(__q__)'(__d__)), \
+    .in((__rst__) ? '0 : __q__``_noscan_d), \
     .out(__q__) \
 );
 
@@ -281,9 +288,11 @@ br_gate_dff_noscan __q__``_reg_NOSCAN [$bits(__q__)-1:0] ( \
 // * conditional load enable, reset value 0 (reset takes priority over enable)
 // * explicit synchronous active-high reset and positive-edge triggered clock
 `define BR_REGLX_NOSCAN(__q__, __d__, __en__, __clk__, __rst__) \
+logic [$bits(__q__)-1:0] __q__``_noscan_d; \
+assign __q__``_noscan_d = __d__; \
 br_gate_dff_noscan __q__``_reg_NOSCAN [$bits(__q__)-1:0] ( \
     .clk(__clk__), \
-    .in((__rst__) ? '0 : ((__en__) ? $bits(__q__)'(__d__) : (__q__))), \
+    .in((__rst__) ? '0 : ((__en__) ? __q__``_noscan_d : (__q__))), \
     .out(__q__) \
 );
 
@@ -291,10 +300,12 @@ br_gate_dff_noscan __q__``_reg_NOSCAN [$bits(__q__)-1:0] ( \
 // * unconditional load, reset value 0
 // * explicit asynchronous active-high reset and positive-edge triggered clock
 `define BR_REGAX_NOSCAN(__q__, __d__, __clk__, __arst__) \
+logic [$bits(__q__)-1:0] __q__``_noscan_d; \
+assign __q__``_noscan_d = __d__; \
 br_gate_dff_arst_noscan __q__``_reg_NOSCAN [$bits(__q__)-1:0] ( \
     .clk(__clk__), \
     .arst_n(!(__arst__)), \
-    .in($bits(__q__)'(__d__)), \
+    .in(__q__``_noscan_d), \
     .out(__q__) \
 );
 
@@ -302,10 +313,12 @@ br_gate_dff_arst_noscan __q__``_reg_NOSCAN [$bits(__q__)-1:0] ( \
 // * conditional load enable, reset value 0 (reset takes priority over enable)
 // * explicit asynchronous active-high reset and positive-edge triggered clock
 `define BR_REGALX_NOSCAN(__q__, __d__, __en__, __clk__, __arst__) \
+logic [$bits(__q__)-1:0] __q__``_noscan_d; \
+assign __q__``_noscan_d = __d__; \
 br_gate_dff_arst_noscan __q__``_reg_NOSCAN [$bits(__q__)-1:0] ( \
     .clk(__clk__), \
     .arst_n(!(__arst__)), \
-    .in((__en__) ? $bits(__q__)'(__d__) : (__q__)), \
+    .in((__en__) ? __q__``_noscan_d : (__q__)), \
     .out(__q__) \
 );
 
