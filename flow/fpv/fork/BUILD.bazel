@@ -103,3 +103,73 @@ br_verilog_fpv_test_tools_suite(
     top = "br_flow_fork_select_multihot",
     deps = [":br_flow_fork_select_multihot_fpv_monitor"],
 )
+
+# Bedrock-RTL Lockstep Flow Fork
+
+verilog_library(
+    name = "br_flow_fork_lockstep_fpv_monitor",
+    srcs = ["br_flow_fork_lockstep_fpv_monitor.sv"],
+    deps = [
+        "//flow/rtl:br_flow_fork_lockstep",
+        "//macros:br_asserts",
+        "//macros:br_registers",
+    ],
+)
+
+verilog_elab_test(
+    name = "br_flow_fork_lockstep_fpv_monitor_elab_test",
+    tool = "slang",
+    top = "br_flow_fork_lockstep",
+    deps = [":br_flow_fork_lockstep_fpv_monitor"],
+)
+
+verilog_elab_test(
+    name = "br_flow_fork_lockstep_fpv_monitor_multiflow_elab_test",
+    params = {"NumFlows": "5"},
+    tool = "slang",
+    top = "br_flow_fork_lockstep",
+    deps = [":br_flow_fork_lockstep_fpv_monitor"],
+)
+
+br_verilog_fpv_test_tools_suite(
+    name = "br_flow_fork_lockstep_test_suite",
+    illegal_param_combinations = {
+        (
+            "EnableAssertPushValidStability",
+            "EnableCoverPushBackpressure",
+        ): [
+            ("1", "0"),
+        ],
+        (
+            "EnableAssertNoPushBackpressure",
+            "EnableCoverPushBackpressure",
+        ): [
+            ("1", "1"),
+        ],
+    },
+    params = {
+        "EnableAssertNoPushBackpressure": [
+            "0",
+            "1",
+        ],
+        "EnableAssertPushValidStability": [
+            "0",
+            "1",
+        ],
+        "EnableCoverPushBackpressure": [
+            "0",
+            "1",
+        ],
+        "NumFlows": [
+            "1",
+            "2",
+            "4",
+            "5",
+        ],
+    },
+    tools = {
+        "jg": "",
+    },
+    top = "br_flow_fork_lockstep",
+    deps = [":br_flow_fork_lockstep_fpv_monitor"],
+)
