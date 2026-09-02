@@ -29,9 +29,13 @@ verilog_library(
         "br_gate_buf",
         "br_gate_cdc_maxdel",
         "br_gate_cdc_pseudostatic",
+        "br_gate_cdc_sync_arst_noscan",
+        "br_gate_cdc_sync_noscan",
         "br_gate_clk_buf",
         "br_gate_clk_inv",
         "br_gate_clk_mux2",
+        "br_gate_dff_arst_noscan",
+        "br_gate_dff_noscan",
         "br_gate_icg",
         "br_gate_icg_rst",
         "br_gate_inv",
@@ -156,6 +160,22 @@ br_verilog_elab_and_lint_test_suite(
 )
 
 br_verilog_elab_and_lint_test_suite(
+    name = "br_gate_dff_noscan_test_suite",
+    top = "br_gate_dff_noscan",
+    deps = [
+        ":br_gate_mock",
+    ],
+)
+
+br_verilog_elab_and_lint_test_suite(
+    name = "br_gate_dff_arst_noscan_test_suite",
+    top = "br_gate_dff_arst_noscan",
+    deps = [
+        ":br_gate_mock",
+    ],
+)
+
+br_verilog_elab_and_lint_test_suite(
     name = "br_gate_cdc_sync_test_suite",
     params = {
         "NumStages": [
@@ -178,6 +198,22 @@ br_verilog_elab_and_lint_test_suite(
         ],
     },
     top = "br_gate_cdc_sync_arst",
+    deps = [
+        ":br_gate_mock",
+    ],
+)
+
+br_verilog_elab_and_lint_test_suite(
+    name = "br_gate_cdc_sync_noscan_test_suite",
+    top = "br_gate_cdc_sync_noscan",
+    deps = [
+        ":br_gate_mock",
+    ],
+)
+
+br_verilog_elab_and_lint_test_suite(
+    name = "br_gate_cdc_sync_arst_noscan_test_suite",
+    top = "br_gate_cdc_sync_arst_noscan",
     deps = [
         ":br_gate_mock",
     ],

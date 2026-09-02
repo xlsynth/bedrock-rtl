@@ -30,10 +30,84 @@ br_verilog_sim_test_tools_suite(
     deps = [":br_gate_tb"],
 )
 
+NOSCAN_GATES = [
+    "br_gate_dff_noscan",
+    "br_gate_dff_arst_noscan",
+    "br_gate_cdc_sync_noscan",
+    "br_gate_cdc_sync_arst_noscan",
+]
+
+[
+    verilog_library(
+        name = gate + "_tb",
+        srcs = [gate + "_tb.sv"],
+        deps = [
+            "//gate/rtl:br_gate_mock",
+            "//misc/sim:br_test_driver",
+        ],
+    )
+    for gate in NOSCAN_GATES
+]
+
+[
+    verilog_elab_test(
+        name = gate + "_tb_elab_test",
+        tool = "slang",
+        deps = [":" + gate + "_tb"],
+    )
+    for gate in NOSCAN_GATES
+]
+
+[
+    br_verilog_sim_test_tools_suite(
+        name = gate + "_sim_test_tools_suite",
+        tools = [
+            "vcs",
+            "verilator",
+        ],
+        deps = [":" + gate + "_tb"],
+    )
+    for gate in NOSCAN_GATES
+]
+
+verilog_library(
+    name = "br_registers_noscan_tb",
+    srcs = ["br_registers_noscan_tb.sv"],
+    deps = [
+        "//gate/rtl:br_gate_mock",
+        "//macros:br_registers",
+        "//misc/sim:br_test_driver",
+    ],
+)
+
+verilog_elab_test(
+    name = "br_registers_noscan_tb_elab_test",
+    tool = "slang",
+    deps = [":br_registers_noscan_tb"],
+)
+
+br_verilog_sim_test_tools_suite(
+    name = "br_registers_noscan_sim_test_tools_suite",
+    params = {"Width": [
+        "1",
+        "8",
+        "65",
+    ]},
+    tools = [
+        "vcs",
+        "verilator",
+    ],
+    deps = [":br_registers_noscan_tb"],
+)
+
 verilog_sim_coverage_aggregate(
     name = "br_gate_verilator_coverage",
     coverage_reports = [
         ":br_gate_sim_test_tools_suite_verilator_coverage",
+        ":br_registers_noscan_sim_test_tools_suite_verilator_coverage",
+    ] + [
+        ":" + gate + "_sim_test_tools_suite_verilator_coverage"
+        for gate in NOSCAN_GATES
     ],
     visibility = ["//:__pkg__"],
 )

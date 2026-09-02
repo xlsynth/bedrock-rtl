@@ -179,6 +179,51 @@ module br_gate_icg_rst (
 
 endmodule : br_gate_icg_rst
 
+// Non-scan D flip-flop without reset.
+// The state name must retain the _NOSCAN suffix for scan exclusion.
+module br_gate_dff_noscan (
+    input  logic clk,
+    input  logic in,
+    output logic out
+);
+
+  // The scan-exclusion contract requires the exact uppercase _NOSCAN suffix.
+  // ri lint_check_waive VAR_NAME
+  logic out_reg_NOSCAN;
+
+  always_ff @(posedge clk) begin
+    out_reg_NOSCAN <= in;
+  end
+
+  assign out = out_reg_NOSCAN;
+
+endmodule : br_gate_dff_noscan
+
+// Non-scan D flip-flop with active-low asynchronous reset to zero.
+// The state name must retain the _NOSCAN suffix for scan exclusion.
+module br_gate_dff_arst_noscan (
+    input  logic clk,
+    input  logic arst_n,
+    input  logic in,
+    output logic out
+);
+
+  // The scan-exclusion contract requires the exact uppercase _NOSCAN suffix.
+  // ri lint_check_waive VAR_NAME
+  logic out_reg_NOSCAN;
+
+  always_ff @(posedge clk or negedge arst_n) begin
+    if (!arst_n) begin
+      out_reg_NOSCAN <= 1'b0;
+    end else begin
+      out_reg_NOSCAN <= in;
+    end
+  end
+
+  assign out = out_reg_NOSCAN;
+
+endmodule : br_gate_dff_arst_noscan
+
 // Clock Domain Crossing Synchronizer
 module br_gate_cdc_sync #(
     parameter int NumStages = 3
@@ -218,6 +263,52 @@ module br_gate_cdc_sync_arst #(
   assign out = in_d[NumStages-1];
 
 endmodule : br_gate_cdc_sync_arst
+
+// Three-stage non-scan clock domain crossing synchronizer without reset.
+// All three stages must retain the _NOSCAN suffix for scan exclusion.
+module br_gate_cdc_sync_noscan (
+    input  logic clk,
+    input  logic in,
+    output logic out
+);
+
+  // The scan-exclusion contract requires the exact uppercase _NOSCAN suffix.
+  // ri lint_check_waive VAR_NAME
+  logic [2:0] in_d_reg_NOSCAN;
+
+  always_ff @(posedge clk) begin
+    in_d_reg_NOSCAN <= {in_d_reg_NOSCAN[1:0], in};
+  end
+
+  assign out = in_d_reg_NOSCAN[2];
+
+endmodule : br_gate_cdc_sync_noscan
+
+// Three-stage non-scan synchronizer with active-low asynchronous reset to zero.
+// All three stages must retain the _NOSCAN suffix for scan exclusion.
+module br_gate_cdc_sync_arst_noscan (
+    input  logic clk,
+    input  logic arst_n,
+    input  logic in,
+    output logic out
+);
+
+  // The scan-exclusion contract requires the exact uppercase _NOSCAN suffix.
+  // ri lint_check_waive VAR_NAME
+  logic [2:0] in_d_reg_NOSCAN;
+
+  // ri lint_check_waive CONST_FF
+  always_ff @(posedge clk or negedge arst_n) begin
+    if (!arst_n) begin
+      in_d_reg_NOSCAN <= '0;
+    end else begin
+      in_d_reg_NOSCAN <= {in_d_reg_NOSCAN[1:0], in};
+    end
+  end
+
+  assign out = in_d_reg_NOSCAN[2];
+
+endmodule : br_gate_cdc_sync_arst_noscan
 
 // Buffer used at CDC crossings but when the signal is considered pseudo-static. In other words,
 // this signal will be stable before the destination domain is out of reset and the clock is
