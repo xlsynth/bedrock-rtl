@@ -193,9 +193,8 @@ module br_amba_axil_msi #(
       {EventIdPadding{1'b0}}, event_id_to_send, {EventIdStrobeWidth{1'b1}}
     };
   end else begin : gen_strb_padding
-    // Need to check the LSB of the device_id_to_send to determine if we need to realign the data
-    // and wstrb
-    assign write_data_flow_reg_push_data = (device_id_to_send[0] == 1'b0) ? {
+    // Select the 32-bit data lane from the complete write address.
+    assign write_data_flow_reg_push_data = (write_addr_flow_reg_push_data[2] == 1'b0) ? {
       {DataWidthPadding{1'b0}},
       {EventIdPadding{1'b0}},
       event_id_to_send,
