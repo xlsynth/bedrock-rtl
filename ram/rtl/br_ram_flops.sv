@@ -36,10 +36,12 @@ module br_ram_flops #(
     // in the depth dimension. Must be at least 0.
     parameter int AddressDepthStages = 0,
     // Number of pipeline register stages inserted along the read data path in the depth dimension.
-    // Must be at least 0. Must be 0 if UseStructuredGates is 1.
+    // Must be at least 0. With structured gates, nonzero stages require Depth > 1
+    // and EnableStructuredGatesDataQualification = 1.
     parameter int ReadDataDepthStages = 0,
     // Number of pipeline register stages inserted along the read data path in the width dimension.
-    // Must be at least 0. Must be 0 if UseStructuredGates is 1.
+    // Must be at least 0. With structured gates, nonzero stages require Depth > 1
+    // and EnableStructuredGatesDataQualification = 1.
     parameter int ReadDataWidthStages = 0,
     // If 1, then each memory tile has a read-after-write hazard latency of 0 cycles, i.e.,
     // if the tile read and write address are valid and equal on the same cycle then the tile
@@ -58,9 +60,10 @@ module br_ram_flops #(
     // If 1, use structured mux2 gates for the read mux instead of relying on synthesis.
     // This is required if write and read clocks are different.
     parameter bit UseStructuredGates = 0,
-    // If 1 and UseStructuredGates is 1, then the read data is qualified with the
-    // rd_data_valid signal, 0 when not valid. Should generally always be 1 for CDC
-    // use cases.
+    // If 1 and UseStructuredGates is 1, qualify each read mux output with its valid
+    // signal before any read-data pipeline registers. Has no effect when Depth is 1.
+    // For Depth > 1, unregistered rd_data is zero when invalid; registered outputs may
+    // retain previous data or be undefined when invalid. Should generally be 1 for CDC use cases.
     parameter bit EnableStructuredGatesDataQualification = 1,
     // If 1, then assert there are no valid bits asserted at the end of the test.
     parameter bit EnableAssertFinalNotValid = 1,
@@ -124,12 +127,13 @@ module br_ram_flops #(
   // Multi-tile configurations are not supported with structured gates.
   `BR_ASSERT_STATIC(no_depth_tiles_if_structured_gates_a, (DepthTiles == 1) || !UseStructuredGates)
   `BR_ASSERT_STATIC(no_width_tiles_if_structured_gates_a, (WidthTiles == 1) || !UseStructuredGates)
-  // Multi-stage read data pipelines are not supported with structured gates, data must be
-  // qualified before destination flop (which is not supported).
-  `BR_ASSERT_STATIC(no_read_depth_stages_if_structured_gates_a,
-                    (ReadDataDepthStages == 0) || !UseStructuredGates)
-  `BR_ASSERT_STATIC(no_read_width_stages_if_structured_gates_a,
-                    (ReadDataWidthStages == 0) || !UseStructuredGates)
+  // Read data must be qualified before the first destination flop. Single-entry tiles
+  // bypass the read mux and its data qualification.
+  if ((ReadDataDepthStages > 0) || (ReadDataWidthStages > 0)) begin : gen_read_data_stages
+    `BR_ASSERT_STATIC(
+        qualified_read_data_pipeline_a,
+        !UseStructuredGates || (EnableStructuredGatesDataQualification && (Depth > 1)))
+  end
 
   // Address stages checks
   `BR_ASSERT_STATIC(address_depth_stages_gte0_a, AddressDepthStages >= 0)

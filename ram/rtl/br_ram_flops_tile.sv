@@ -44,9 +44,9 @@ module br_ram_flops_tile #(
     // If 1, use structured mux2 gates for the read mux instead of relying on synthesis.
     // This is required if write and read clocks are different.
     parameter bit UseStructuredGates = 0,
-    // If 1 and UseStructuredGates is 1, then the read data is qualified with the
-    // rd_data_valid signal, 0 when not valid. Should generally always be 1 for CDC
-    // use cases.
+    // If 1 and UseStructuredGates is 1, qualify the read mux output with rd_data_valid,
+    // forcing rd_data to zero when invalid. Has no effect when Depth is 1.
+    // Should generally be 1 for CDC use cases.
     parameter bit EnableStructuredGatesDataQualification = 1,
     // If 1, then assert there are no valid bits asserted at the end of the test.
     parameter bit EnableAssertFinalNotValid = 1,

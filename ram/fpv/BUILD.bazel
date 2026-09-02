@@ -583,20 +583,6 @@ br_verilog_fpv_test_tools_suite(
         ): [
             ("1", "1"),
         ],
-        # when UseStructuredGates = 1,
-        # ReadDataDepthStages and ReadDataWidthStages must be 0
-        (
-            "ReadDataDepthStages",
-            "UseStructuredGates",
-        ): [
-            ("1", "1"),
-        ],
-        (
-            "ReadDataWidthStages",
-            "UseStructuredGates",
-        ): [
-            ("1", "1"),
-        ],
     },
     params = {
         "TileEnableBypass": [
@@ -729,8 +715,10 @@ br_verilog_fpv_test_tools_suite(
         "-parameter SameClock 0",
         "-parameter TileEnableBypass 0",
         "-parameter UseStructuredGates 1",
+        "-parameter EnableStructuredGatesDataQualification 1",
     ],
     params = {
+        "Depth": ["2"],
         "EnablePartialWrite": [
             "0",
             "1",
@@ -743,8 +731,14 @@ br_verilog_fpv_test_tools_suite(
             "0",
             "1",
         ],
-        "ReadDataDepthStages": ["0"],
-        "ReadDataWidthStages": ["0"],
+        "ReadDataDepthStages": [
+            "0",
+            "1",
+        ],
+        "ReadDataWidthStages": [
+            "0",
+            "1",
+        ],
     },
     tools = {
         "jg": "br_ram_flops_tile_2clk_fpv.jg.tcl",
