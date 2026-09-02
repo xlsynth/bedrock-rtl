@@ -27,7 +27,12 @@ module br_arb_pri_rr #(
     // Must be at least 2
     parameter int NumRequesters = 2,
     // Must be at least 2
-    parameter int NumPriorities = 2
+    parameter int NumPriorities = 2,
+    // If 1, cover simultaneous requests. If 0, omit this cover without adding an assertion.
+    parameter bit EnableCoverRequestMultihot = 1,
+    // If 1, cover grants while priority updates are disabled.
+    // If 0, omit this cover without adding an assertion.
+    parameter bit EnableCoverBlockPriorityUpdate = 1
 ) (
     input logic clk,
     input logic rst,  // Synchronous active-high
@@ -44,7 +49,9 @@ module br_arb_pri_rr #(
   `BR_ASSERT_STATIC(num_requesters_gte_2_a, NumRequesters >= 2)
   `BR_ASSERT_STATIC(num_priorities_gte_2_a, NumPriorities >= 2)
 
-  `BR_COVER_INTG(request_multihot_c, !$onehot0(request))
+  if (EnableCoverRequestMultihot) begin : gen_request_multihot_cover
+    `BR_COVER_INTG(request_multihot_c, !$onehot0(request))
+  end
   for (genvar i = 0; i < NumRequesters; i++) begin : gen_intg_checks
     `BR_ASSERT_INTG(request_priority_range_a, request[i] |-> request_priority[i] < NumPriorities)
   end
@@ -174,6 +181,8 @@ module br_arb_pri_rr #(
   `BR_ASSERT_IMPL(grant_implies_request_A, (grant & request) == grant)
   `BR_ASSERT_IMPL(no_update_same_grants_A, ##1 !$past(enable_priority_update) && $stable(request)
                                            && $stable(request_priority) |-> $stable(grant))
-  `BR_COVER_IMPL(grant_without_state_update_C, !enable_priority_update && |grant)
+  if (EnableCoverBlockPriorityUpdate) begin : gen_block_priority_update_cover
+    `BR_COVER_IMPL(grant_without_state_update_C, !enable_priority_update && |grant)
+  end
 
 endmodule : br_arb_pri_rr

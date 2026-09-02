@@ -57,6 +57,12 @@ module br_arb_weighted_rr #(
     // matrix scales worse than the unrolled implementation as the requester count grows.
     // The two implementations are functionally equivalent.
     parameter bit UsePairwiseArb = 0,
+    // If 1, enable simultaneous-request coverage in the underlying unrolled arbiter.
+    // If 0, omit this cover without adding an assertion.
+    parameter bit EnableCoverRequestMultihot = 1,
+    // If 1, cover grants while priority updates are disabled.
+    // If 0, omit this cover without adding an assertion.
+    parameter bit EnableCoverBlockPriorityUpdate = 1,
     localparam int WeightWidth = $clog2(MaxWeight + 1)
 ) (
     // ri lint_check_waive INPUT_NOT_READ
@@ -145,11 +151,15 @@ module br_arb_weighted_rr #(
       `BR_ASSERT_IMPL(grant_onehot0_A, $onehot0(grant))
       `BR_ASSERT_IMPL(always_grant_A, |request |-> |grant)
       `BR_ASSERT_IMPL(grant_implies_request_A, (grant & request) == grant)
-      `BR_COVER_IMPL(grant_without_state_update_C, !enable_priority_update && |grant)
+      if (EnableCoverBlockPriorityUpdate) begin : gen_block_priority_update_cover
+        `BR_COVER_IMPL(grant_without_state_update_C, !enable_priority_update && |grant)
+      end
     end else begin : gen_unrolled_arb
       br_arb_pri_rr #(
           .NumRequesters(NumRequesters),
-          .NumPriorities(2)
+          .NumPriorities(2),
+          .EnableCoverRequestMultihot(EnableCoverRequestMultihot),
+          .EnableCoverBlockPriorityUpdate(EnableCoverBlockPriorityUpdate)
       ) br_arb_pri_rr_inst (
           .clk,
           .rst,
