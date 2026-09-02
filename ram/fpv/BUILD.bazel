@@ -581,20 +581,6 @@ br_verilog_fpv_test_tools_suite(
         ): [
             ("1", "1"),
         ],
-        # when UseStructuredGates = 1,
-        # ReadDataDepthStages and ReadDataWidthStages must be 0
-        (
-            "ReadDataDepthStages",
-            "UseStructuredGates",
-        ): [
-            ("1", "1"),
-        ],
-        (
-            "ReadDataWidthStages",
-            "UseStructuredGates",
-        ): [
-            ("1", "1"),
-        ],
     },
     params = {
         "TileEnableBypass": [
@@ -614,6 +600,67 @@ br_verilog_fpv_test_tools_suite(
             "1",
         ],
         "AddressDepthStages": [
+            "0",
+            "1",
+        ],
+        "ReadDataDepthStages": [
+            "0",
+            "1",
+        ],
+        "ReadDataWidthStages": [
+            "0",
+            "1",
+        ],
+    },
+    tools = {
+        "jg": "br_ram_flops_tile_1clk_fpv.jg.tcl",
+    },
+    top = "br_ram_flops",
+    deps = [":br_ram_flops_fpv_monitor"],
+)
+
+# Test the legality boundary for structured read-data pipelines.
+br_verilog_fpv_test_tools_suite(
+    name = "br_ram_flops_test_structured_read_pipeline",
+    elab_opts = [
+        "-parameter TileEnableBypass 0",
+        "-parameter UseStructuredGates 1",
+    ],
+    illegal_param_combinations = {
+        # Single-entry tiles bypass the read mux and data qualification.
+        (
+            "Depth",
+            "ReadDataDepthStages",
+        ): [
+            ("1", "1"),
+        ],
+        (
+            "Depth",
+            "ReadDataWidthStages",
+        ): [
+            ("1", "1"),
+        ],
+        # Read data must be qualified before the first destination flop.
+        (
+            "EnableStructuredGatesDataQualification",
+            "ReadDataDepthStages",
+        ): [
+            ("0", "1"),
+        ],
+        (
+            "EnableStructuredGatesDataQualification",
+            "ReadDataWidthStages",
+        ): [
+            ("0", "1"),
+        ],
+    },
+    params = {
+        "Depth": [
+            "1",
+            "2",
+            "3",
+        ],
+        "EnableStructuredGatesDataQualification": [
             "0",
             "1",
         ],
@@ -770,22 +817,6 @@ br_verilog_fpv_test_tools_suite(
     elab_opts = [
         "-parameter TileEnableBypass 0",
     ],
-    illegal_param_combinations = {
-        # when UseStructuredGates = 1,
-        # ReadDataDepthStages and ReadDataWidthStages must be 0
-        (
-            "ReadDataDepthStages",
-            "UseStructuredGates",
-        ): [
-            ("1", "1"),
-        ],
-        (
-            "ReadDataWidthStages",
-            "UseStructuredGates",
-        ): [
-            ("1", "1"),
-        ],
-    },
     params = {
         "TileEnableBypass": [
             "0",
@@ -804,6 +835,67 @@ br_verilog_fpv_test_tools_suite(
             "1",
         ],
         "AddressDepthStages": [
+            "0",
+            "1",
+        ],
+        "ReadDataDepthStages": [
+            "0",
+            "1",
+        ],
+        "ReadDataWidthStages": [
+            "0",
+            "1",
+        ],
+    },
+    tools = {
+        "jg": "br_ram_flops_tile_2clk_fpv.jg.tcl",
+    },
+    top = "br_ram_flops",
+    deps = [":br_ram_flops_fpv_monitor"],
+)
+
+# Test the legality boundary for structured read-data pipelines.
+br_verilog_fpv_test_tools_suite(
+    name = "br_ram_flops_2clk_test_structured_read_pipeline",
+    elab_opts = [
+        "-parameter TileEnableBypass 0",
+        "-parameter UseStructuredGates 1",
+    ],
+    illegal_param_combinations = {
+        # Single-entry tiles bypass the read mux and data qualification.
+        (
+            "Depth",
+            "ReadDataDepthStages",
+        ): [
+            ("1", "1"),
+        ],
+        (
+            "Depth",
+            "ReadDataWidthStages",
+        ): [
+            ("1", "1"),
+        ],
+        # Read data must be qualified before the first destination flop.
+        (
+            "EnableStructuredGatesDataQualification",
+            "ReadDataDepthStages",
+        ): [
+            ("0", "1"),
+        ],
+        (
+            "EnableStructuredGatesDataQualification",
+            "ReadDataWidthStages",
+        ): [
+            ("0", "1"),
+        ],
+    },
+    params = {
+        "Depth": [
+            "1",
+            "2",
+            "3",
+        ],
+        "EnableStructuredGatesDataQualification": [
             "0",
             "1",
         ],

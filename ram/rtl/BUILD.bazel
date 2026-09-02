@@ -667,7 +667,16 @@ br_verilog_elab_and_lint_test_suite(
     params = {
         "Depth": ["12"],
         "Width": ["8"],
+        "ReadDataDepthStages": [
+            "0",
+            "1",
+        ],
+        "ReadDataWidthStages": [
+            "0",
+            "1",
+        ],
         "TileEnableBypass": ["0"],
+        "EnableStructuredGatesDataQualification": ["1"],
         "UseStructuredGates": ["1"],
         "NumReadPorts": [
             "1",
