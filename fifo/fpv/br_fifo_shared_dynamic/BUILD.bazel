@@ -510,3 +510,251 @@ br_verilog_fpv_test_tools_suite(
     top = "br_fifo_shared_dynamic_ctrl_push_credit",
     deps = [":br_fifo_shared_dynamic_ctrl_push_credit_fpv_monitor"],
 )
+
+#################################################################
+# Shared dynamic FIFOs with credit flow control on both interfaces.
+
+verilog_library(
+    name = "br_fifo_shared_dynamic_credit_fpv_checker",
+    srcs = ["br_fifo_shared_dynamic_credit_fpv_checker.sv"],
+    deps = [
+        "//macros:br_asserts",
+        "//macros:br_registers",
+        "//pkg:br_math_pkg",
+    ],
+)
+
+verilog_library(
+    name = "br_fifo_shared_dynamic_ctrl_push_credit_pop_credit_fpv_monitor",
+    srcs = ["br_fifo_shared_dynamic_ctrl_push_credit_pop_credit_fpv_monitor.sv"],
+    deps = [
+        ":br_fifo_shared_dynamic_credit_fpv_checker",
+        "//fifo/fpv/br_fifo_ext_arb:br_fifo_credit_fpv_ram",
+        "//fifo/rtl:br_fifo_shared_dynamic_ctrl_push_credit_pop_credit",
+        "//macros:br_fv",
+    ],
+)
+
+verilog_elab_test(
+    name = "br_fifo_shared_dynamic_ctrl_push_credit_pop_credit_fpv_monitor_elab_test",
+    opts = ["--ignore-unknown-modules"],
+    tool = "slang",
+    deps = [":br_fifo_shared_dynamic_ctrl_push_credit_pop_credit_fpv_monitor"],
+)
+
+# Default configuration, including Width=1 and the minimum legal Depth=3.
+br_verilog_fpv_test_tools_suite(
+    name = "br_fifo_shared_dynamic_ctrl_push_credit_pop_credit_test_default",
+    tools = {"jg": "br_fifo_shared_dynamic_ctrl_push_credit_pop_credit_fpv.jg.tcl"},
+    top = "br_fifo_shared_dynamic_ctrl_push_credit_pop_credit",
+    deps = [":br_fifo_shared_dynamic_ctrl_push_credit_pop_credit_fpv_monitor"],
+)
+
+# Power-of-two and non-power-of-two FIFO counts, odd depths, and one/two ports.
+br_verilog_fpv_test_tools_suite(
+    name = "br_fifo_shared_dynamic_ctrl_push_credit_pop_credit_test_ports",
+    elab_opts = ["-parameter Width 3"],
+    illegal_param_combinations = {
+        ("Depth", "NumWritePorts"): [("3", "2")],
+    },
+    params = {
+        "Depth": [
+            "3",
+            "5",
+        ],
+        "NumFifos": [
+            "2",
+            "3",
+        ],
+        "NumReadPorts": [
+            "1",
+            "2",
+        ],
+        "NumWritePorts": [
+            "1",
+            "2",
+        ],
+    },
+    tools = {"jg": "br_fifo_shared_dynamic_ctrl_push_credit_pop_credit_fpv.jg.tcl"},
+    top = "br_fifo_shared_dynamic_ctrl_push_credit_pop_credit",
+    deps = [":br_fifo_shared_dynamic_ctrl_push_credit_pop_credit_fpv_monitor"],
+)
+
+# Credit-capacity boundary and both credit-return/deallocation retiming choices.
+br_verilog_fpv_test_tools_suite(
+    name = "br_fifo_shared_dynamic_ctrl_push_credit_pop_credit_test_credit",
+    elab_opts = [
+        "-parameter Depth 5",
+        "-parameter Width 3",
+        "-parameter NumFifos 3",
+        "-parameter NumWritePorts 2",
+        "-parameter NumReadPorts 2",
+    ],
+    params = {
+        "PopMaxCredits": [
+            "1",
+            "3",
+        ],
+        "RegisterDeallocation": [
+            "0",
+            "1",
+        ],
+        "RegisterPushOutputs": [
+            "0",
+            "1",
+        ],
+    },
+    tools = {"jg": "br_fifo_shared_dynamic_ctrl_push_credit_pop_credit_fpv.jg.tcl"},
+    top = "br_fifo_shared_dynamic_ctrl_push_credit_pop_credit",
+    deps = [":br_fifo_shared_dynamic_ctrl_push_credit_pop_credit_fpv_monitor"],
+)
+
+# Independent RAM latencies, interleaved linked lists, and limited/full credit bandwidth.
+br_verilog_fpv_test_tools_suite(
+    name = "br_fifo_shared_dynamic_ctrl_push_credit_pop_credit_test_delay",
+    elab_opts = [
+        "-parameter Depth 5",
+        "-parameter Width 3",
+        "-parameter NumFifos 3",
+        "-parameter NumWritePorts 2",
+        "-parameter NumReadPorts 2",
+    ],
+    params = {
+        "DataRamReadLatency": [
+            "0",
+            "2",
+        ],
+        "NumLinkedListsPerFifo": [
+            "1",
+            "2",
+        ],
+        "PointerRamReadLatency": [
+            "0",
+            "2",
+        ],
+        "PopMaxCredits": [
+            "1",
+            "3",
+        ],
+    },
+    tools = {"jg": "br_fifo_shared_dynamic_ctrl_push_credit_pop_credit_fpv.jg.tcl"},
+    top = "br_fifo_shared_dynamic_ctrl_push_credit_pop_credit",
+    deps = [":br_fifo_shared_dynamic_ctrl_push_credit_pop_credit_fpv_monitor"],
+)
+
+verilog_library(
+    name = "br_fifo_shared_dynamic_flops_push_credit_pop_credit_fpv_monitor",
+    srcs = ["br_fifo_shared_dynamic_flops_push_credit_pop_credit_fpv_monitor.sv"],
+    deps = [
+        ":br_fifo_shared_dynamic_credit_fpv_checker",
+        "//fifo/rtl:br_fifo_shared_dynamic_flops_push_credit_pop_credit",
+        "//macros:br_fv",
+    ],
+)
+
+verilog_elab_test(
+    name = "br_fifo_shared_dynamic_flops_push_credit_pop_credit_fpv_monitor_elab_test",
+    opts = ["--ignore-unknown-modules"],
+    tool = "slang",
+    deps = [":br_fifo_shared_dynamic_flops_push_credit_pop_credit_fpv_monitor"],
+)
+
+# Default configuration, including Width=1 and the minimum legal Depth=3.
+br_verilog_fpv_test_tools_suite(
+    name = "br_fifo_shared_dynamic_flops_push_credit_pop_credit_test_default",
+    tools = {"jg": "br_fifo_shared_dynamic_flops_push_credit_pop_credit_fpv.jg.tcl"},
+    top = "br_fifo_shared_dynamic_flops_push_credit_pop_credit",
+    deps = [":br_fifo_shared_dynamic_flops_push_credit_pop_credit_fpv_monitor"],
+)
+
+# Power-of-two and non-power-of-two FIFO counts, odd depths, and one/two ports.
+br_verilog_fpv_test_tools_suite(
+    name = "br_fifo_shared_dynamic_flops_push_credit_pop_credit_test_ports",
+    elab_opts = ["-parameter Width 3"],
+    illegal_param_combinations = {
+        ("Depth", "NumWritePorts"): [("3", "2")],
+    },
+    params = {
+        "Depth": [
+            "3",
+            "5",
+        ],
+        "NumFifos": [
+            "2",
+            "3",
+        ],
+        "NumReadPorts": [
+            "1",
+            "2",
+        ],
+        "NumWritePorts": [
+            "1",
+            "2",
+        ],
+    },
+    tools = {"jg": "br_fifo_shared_dynamic_flops_push_credit_pop_credit_fpv.jg.tcl"},
+    top = "br_fifo_shared_dynamic_flops_push_credit_pop_credit",
+    deps = [":br_fifo_shared_dynamic_flops_push_credit_pop_credit_fpv_monitor"],
+)
+
+# Credit-capacity boundary and both credit-return/deallocation retiming choices.
+br_verilog_fpv_test_tools_suite(
+    name = "br_fifo_shared_dynamic_flops_push_credit_pop_credit_test_credit",
+    elab_opts = [
+        "-parameter Depth 5",
+        "-parameter Width 3",
+        "-parameter NumFifos 3",
+        "-parameter NumWritePorts 2",
+        "-parameter NumReadPorts 2",
+    ],
+    params = {
+        "PopMaxCredits": [
+            "1",
+            "3",
+        ],
+        "RegisterDeallocation": [
+            "0",
+            "1",
+        ],
+        "RegisterPushOutputs": [
+            "0",
+            "1",
+        ],
+    },
+    tools = {"jg": "br_fifo_shared_dynamic_flops_push_credit_pop_credit_fpv.jg.tcl"},
+    top = "br_fifo_shared_dynamic_flops_push_credit_pop_credit",
+    deps = [":br_fifo_shared_dynamic_flops_push_credit_pop_credit_fpv_monitor"],
+)
+
+# Independent RAM latencies, interleaved linked lists, and limited/full credit bandwidth.
+br_verilog_fpv_test_tools_suite(
+    name = "br_fifo_shared_dynamic_flops_push_credit_pop_credit_test_delay",
+    elab_opts = [
+        "-parameter Depth 5",
+        "-parameter Width 3",
+        "-parameter NumFifos 3",
+        "-parameter NumWritePorts 2",
+        "-parameter NumReadPorts 2",
+    ],
+    params = {
+        "DataRamAddressDepthStages": [
+            "0",
+            "2",
+        ],
+        "NumLinkedListsPerFifo": [
+            "1",
+            "2",
+        ],
+        "PointerRamAddressDepthStages": [
+            "0",
+            "2",
+        ],
+        "PopMaxCredits": [
+            "1",
+            "3",
+        ],
+    },
+    tools = {"jg": "br_fifo_shared_dynamic_flops_push_credit_pop_credit_fpv.jg.tcl"},
+    top = "br_fifo_shared_dynamic_flops_push_credit_pop_credit",
+    deps = [":br_fifo_shared_dynamic_flops_push_credit_pop_credit_fpv_monitor"],
+)
