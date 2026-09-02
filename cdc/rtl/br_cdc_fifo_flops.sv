@@ -184,6 +184,7 @@ module br_cdc_fifo_flops #(
       .EnableMemReset(0),
       // Since there is an asynchronous path on the read,
       // we need to use structured gates for the read mux.
+      .SameClock(0),
       .UseStructuredGates(1),
       .EnableStructuredGatesDataQualification(EnableStructuredGatesDataQualification),
       .EnableAssertFinalNotValid(EnableAssertFinalNotValid)

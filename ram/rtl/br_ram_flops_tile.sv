@@ -38,6 +38,9 @@ module br_ram_flops_tile #(
     parameter bit EnableBypass = 0,
     // If 1, then the memory elements are cleared to 0 upon reset.
     parameter bit EnableReset = 0,
+    // If 1, the read and write clocks are the same. Set to 0 when the clocks differ;
+    // UseStructuredGates must then be 1.
+    parameter bit SameClock = 1,
     // If 1, use structured mux2 gates for the read mux instead of relying on synthesis.
     // This is required if write and read clocks are different.
     parameter bit UseStructuredGates = 0,
@@ -79,6 +82,7 @@ module br_ram_flops_tile #(
   //------------------------------------------
   `BR_ASSERT_STATIC(depth_gte1_a, Depth >= 1)
   `BR_ASSERT_STATIC(width_gte1_a, Width >= 1)
+  `BR_ASSERT_STATIC(structured_gates_if_different_clocks_a, SameClock || UseStructuredGates)
   `BR_ASSERT_STATIC(no_bypass_with_structured_gates_a, !(EnableBypass && UseStructuredGates))
 
   for (genvar wport = 0; wport < NumWritePorts; wport++) begin : gen_wr_addr_in_range
