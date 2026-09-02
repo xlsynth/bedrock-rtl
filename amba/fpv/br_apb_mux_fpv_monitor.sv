@@ -84,7 +84,6 @@ module br_apb_mux_fpv_monitor #(
   logic higher_priority_pending;
   logic magic_wins;
   logic magic_owner;
-  logic past_valid;
   logic downstream_setup;
   logic downstream_access;
   logic downstream_complete;
@@ -113,7 +112,6 @@ module br_apb_mux_fpv_monitor #(
   // One history bit records whether this arbitrary port won the last idle
   // arbitration. Phase assertions below independently check each output transition.
   `BR_REGL(magic_owner, magic_wins, !downstream_psel)
-  `BR_REG(past_valid, 1'b1)
 
   assign downstream_setup = downstream_psel && !downstream_penable;
   assign downstream_access = downstream_psel && downstream_penable;
@@ -139,7 +137,7 @@ module br_apb_mux_fpv_monitor #(
       };
 
   // The first sampled cycle after startup reset exposes an idle interface.
-  `BR_ASSERT(reset_release_idle_a, !past_valid |-> outputs_idle)
+  `BR_ASSERT(reset_release_idle_a, $fell(rst) |-> outputs_idle)
   // Without a requester, an idle mux cannot launch a downstream transaction.
   `BR_ASSERT(no_spurious_setup_a, !downstream_psel && !(|upstream_psel) |=> !downstream_psel)
   // A pending request starts the downstream setup exactly one cycle after arbitration.
