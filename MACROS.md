@@ -45,7 +45,7 @@ The NOSCAN variants instantiate scalar `br_gate` flip-flops for each bit of the 
 
 All NOSCAN macros take an explicit positive-edge clock. Reset takes priority over load enable. The asynchronous macros invert their active-high reset before connecting it to the gate primitive's active-low `arst_n` port.
 
-The gate library also provides `br_gate_cdc_sync_noscan` and `br_gate_cdc_sync_arst_noscan`, fixed three-stage single-bit synchronizers. Both have `clk`, `in`, and `out` ports; the resettable form adds an active-low asynchronous `arst_n` input that clears all three stages to zero. Their mock storage names end in `_NOSCAN`.
+The gate library also provides `br_gate_cdc_sync_noscan` and `br_gate_cdc_sync_arstn_noscan`, fixed three-stage single-bit synchronizers. Both have `clk`, `in`, and `out` ports; the resettable form adds an active-low asynchronous `arst_n` input that clears all three stages to zero. Their mock storage names end in `_NOSCAN`.
 
 
 

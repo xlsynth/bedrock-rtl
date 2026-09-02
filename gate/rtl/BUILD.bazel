@@ -29,7 +29,7 @@ verilog_library(
         "br_gate_buf",
         "br_gate_cdc_maxdel",
         "br_gate_cdc_pseudostatic",
-        "br_gate_cdc_sync_arst_noscan",
+        "br_gate_cdc_sync_arstn_noscan",
         "br_gate_cdc_sync_noscan",
         "br_gate_clk_buf",
         "br_gate_clk_inv",
@@ -212,8 +212,8 @@ br_verilog_elab_and_lint_test_suite(
 )
 
 br_verilog_elab_and_lint_test_suite(
-    name = "br_gate_cdc_sync_arst_noscan_test_suite",
-    top = "br_gate_cdc_sync_arst_noscan",
+    name = "br_gate_cdc_sync_arstn_noscan_test_suite",
+    top = "br_gate_cdc_sync_arstn_noscan",
     deps = [
         ":br_gate_mock",
     ],

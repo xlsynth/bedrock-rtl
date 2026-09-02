@@ -34,7 +34,7 @@ NOSCAN_GATES = [
     "br_gate_dff_noscan",
     "br_gate_dff_arst_noscan",
     "br_gate_cdc_sync_noscan",
-    "br_gate_cdc_sync_arst_noscan",
+    "br_gate_cdc_sync_arstn_noscan",
 ]
 
 [

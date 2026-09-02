@@ -286,7 +286,7 @@ endmodule : br_gate_cdc_sync_noscan
 
 // Three-stage non-scan synchronizer with active-low asynchronous reset to zero.
 // All three stages must retain the _NOSCAN suffix for scan exclusion.
-module br_gate_cdc_sync_arst_noscan (
+module br_gate_cdc_sync_arstn_noscan (
     input  logic clk,
     input  logic arst_n,
     input  logic in,
@@ -308,7 +308,7 @@ module br_gate_cdc_sync_arst_noscan (
 
   assign out = in_d_reg_NOSCAN[2];
 
-endmodule : br_gate_cdc_sync_arst_noscan
+endmodule : br_gate_cdc_sync_arstn_noscan
 
 // Buffer used at CDC crossings but when the signal is considered pseudo-static. In other words,
 // this signal will be stable before the destination domain is out of reset and the clock is

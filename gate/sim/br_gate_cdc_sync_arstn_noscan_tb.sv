@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 // Check three-stage latency and asynchronous clearing of every pipeline stage.
-module br_gate_cdc_sync_arst_noscan_tb;
+module br_gate_cdc_sync_arstn_noscan_tb;
   timeunit 1ns; timeprecision 1ps;
 
   logic clk;
@@ -9,7 +9,7 @@ module br_gate_cdc_sync_arst_noscan_tb;
   logic in;
   logic out;
 
-  br_gate_cdc_sync_arst_noscan dut (
+  br_gate_cdc_sync_arstn_noscan dut (
       .clk,
       .arst_n,
       .in,
@@ -60,4 +60,4 @@ module br_gate_cdc_sync_arst_noscan_tb;
     td.finish(1);
   end
 
-endmodule : br_gate_cdc_sync_arst_noscan_tb
+endmodule : br_gate_cdc_sync_arstn_noscan_tb
