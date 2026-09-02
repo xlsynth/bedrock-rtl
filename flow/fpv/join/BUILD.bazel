@@ -1,0 +1,91 @@
+# SPDX-License-Identifier: Apache-2.0
+
+load("@rules_hdl//verilog:providers.bzl", "verilog_library")
+load("//bazel:br_verilog.bzl", "br_verilog_fpv_test_tools_suite")
+load("//bazel:verilog.bzl", "verilog_elab_test")
+
+package(default_visibility = ["//visibility:private"])
+
+# Bedrock-RTL Lockstep Flow Join
+
+verilog_library(
+    name = "br_flow_join_lockstep_fpv_monitor",
+    srcs = ["br_flow_join_lockstep_fpv_monitor.sv"],
+    deps = [
+        "//flow/rtl:br_flow_join_lockstep",
+        "//macros:br_asserts",
+        "//macros:br_registers",
+    ],
+)
+
+verilog_elab_test(
+    name = "br_flow_join_lockstep_fpv_monitor_elab_test",
+    defines = [
+        "BR_ASSERT_ON",
+        "BR_ENABLE_IMPL_CHECKS",
+        "BR_DISABLE_FINAL_CHECKS",
+        "BR_ENABLE_FPV",
+        "BR_DISABLE_ASSERT_IMM",
+    ],
+    tool = "slang",
+    top = "br_flow_join_lockstep",
+    deps = [":br_flow_join_lockstep_fpv_monitor"],
+)
+
+verilog_elab_test(
+    name = "br_flow_join_lockstep_fpv_monitor_multiflow_elab_test",
+    defines = [
+        "BR_ASSERT_ON",
+        "BR_ENABLE_IMPL_CHECKS",
+        "BR_DISABLE_FINAL_CHECKS",
+        "BR_ENABLE_FPV",
+        "BR_DISABLE_ASSERT_IMM",
+    ],
+    params = {"NumFlows": "5"},
+    tool = "slang",
+    top = "br_flow_join_lockstep",
+    deps = [":br_flow_join_lockstep_fpv_monitor"],
+)
+
+br_verilog_fpv_test_tools_suite(
+    name = "br_flow_join_lockstep_test_suite",
+    illegal_param_combinations = {
+        (
+            "EnableAssertPushValidStability",
+            "EnableCoverPushBackpressure",
+        ): [
+            ("1", "0"),
+        ],
+        (
+            "EnableAssertNoPushBackpressure",
+            "EnableCoverPushBackpressure",
+        ): [
+            ("1", "1"),
+        ],
+    },
+    params = {
+        "EnableAssertNoPushBackpressure": [
+            "0",
+            "1",
+        ],
+        "EnableAssertPushValidStability": [
+            "0",
+            "1",
+        ],
+        "EnableCoverPushBackpressure": [
+            "0",
+            "1",
+        ],
+        "NumFlows": [
+            "1",
+            "2",
+            "4",
+            "5",
+        ],
+    },
+    tools = {
+        "jg": "",
+    },
+    top = "br_flow_join_lockstep",
+    deps = [":br_flow_join_lockstep_fpv_monitor"],
+)
