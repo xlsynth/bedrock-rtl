@@ -437,7 +437,7 @@ br_verilog_fpv_test_tools_suite(
     name = "br_flow_mux_weighted_lru_test_suite",
     illegal_param_combinations = _WEIGHTED_MUX_ILLEGAL_PARAMS,
     params = _WEIGHTED_MUX_PARAMS,
-    tools = {"jg": ""},
+    tools = {"jg": "br_flow_mux_weighted_lru_fpv.jg.tcl"},
     top = "br_flow_mux_weighted_lru",
     deps = [":br_flow_mux_weighted_lru_fpv_monitor"],
 )
@@ -446,7 +446,7 @@ br_verilog_fpv_test_tools_suite(
     name = "br_flow_mux_weighted_lru_protocol_test_suite",
     illegal_param_combinations = _WEIGHTED_MUX_PROTOCOL_ILLEGAL_PARAMS,
     params = _WEIGHTED_MUX_PROTOCOL_PARAMS,
-    tools = {"jg": ""},
+    tools = {"jg": "br_flow_mux_weighted_lru_fpv.jg.tcl"},
     top = "br_flow_mux_weighted_lru",
     deps = [":br_flow_mux_weighted_lru_fpv_monitor"],
 )
@@ -478,7 +478,7 @@ br_verilog_fpv_test_tools_suite(
             "1",
         ],
     ),
-    tools = {"jg": ""},
+    tools = {"jg": "br_flow_mux_weighted_rr_fpv.jg.tcl"},
     top = "br_flow_mux_weighted_rr",
     deps = [":br_flow_mux_weighted_rr_fpv_monitor"],
 )
@@ -493,7 +493,7 @@ br_verilog_fpv_test_tools_suite(
             "1",
         ],
     ),
-    tools = {"jg": ""},
+    tools = {"jg": "br_flow_mux_weighted_rr_fpv.jg.tcl"},
     top = "br_flow_mux_weighted_rr",
     deps = [":br_flow_mux_weighted_rr_fpv_monitor"],
 )

@@ -75,10 +75,7 @@ module br_flow_mux_weighted_lru #(
   br_arb_weighted_lru #(
       .NumRequesters(NumFlows),
       .MaxWeight(MaxWeight),
-      .MaxAccumulatedWeight(MaxAccumulatedWeight),
-      // Disable stalled-grant coverage when every push must be accepted immediately.
-      // The mux then guarantees that a grant always coincides with a priority update.
-      .EnableCoverBlockPriorityUpdate(!EnableAssertNoPushBackpressure)
+      .MaxAccumulatedWeight(MaxAccumulatedWeight)
   ) br_arb_weighted_lru_inst (
       .clk,
       .rst,

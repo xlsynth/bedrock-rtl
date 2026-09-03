@@ -27,9 +27,6 @@ module br_arb_weighted_lru #(
     parameter int MaxWeight = 1,
     // Maximum accumulated weight per requester. Must be at least MaxWeight.
     parameter int MaxAccumulatedWeight = MaxWeight,
-    // If 1, cover grants while priority updates are disabled.
-    // If 0, omit this cover without adding an assertion.
-    parameter bit EnableCoverBlockPriorityUpdate = 1,
     localparam int WeightWidth = $clog2(MaxWeight + 1)
 ) (
     // ri lint_check_waive INPUT_NOT_READ
@@ -122,8 +119,6 @@ module br_arb_weighted_lru #(
   `BR_ASSERT_IMPL(grant_implies_request_A, (grant & request) == grant)
   `BR_ASSERT_IMPL(no_update_same_grants_A, ##1 !$past(enable_priority_update) && $stable(request)
                                            |-> $stable(grant))
-  if (EnableCoverBlockPriorityUpdate) begin : gen_block_priority_update_cover
-    `BR_COVER_IMPL(grant_without_state_update_C, !enable_priority_update && |grant)
-  end
+  `BR_COVER_IMPL(grant_without_state_update_C, !enable_priority_update && |grant)
 
 endmodule : br_arb_weighted_lru

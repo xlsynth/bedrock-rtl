@@ -81,12 +81,7 @@ module br_flow_mux_weighted_rr #(
       .NumRequesters(NumFlows),
       .MaxWeight(MaxWeight),
       .MaxAccumulatedWeight(MaxAccumulatedWeight),
-      .UsePairwiseArb(UsePairwiseArb),
-      // Disable contention coverage when immediate acceptance permits at most one request.
-      .EnableCoverRequestMultihot(!EnableAssertNoPushBackpressure),
-      // Disable stalled-grant coverage when every push must be accepted immediately.
-      // The mux then guarantees that a grant always coincides with a priority update.
-      .EnableCoverBlockPriorityUpdate(!EnableAssertNoPushBackpressure)
+      .UsePairwiseArb(UsePairwiseArb)
   ) br_arb_weighted_rr_inst (
       .clk,
       .rst,
