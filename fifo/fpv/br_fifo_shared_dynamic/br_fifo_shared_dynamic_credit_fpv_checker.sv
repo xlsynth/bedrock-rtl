@@ -30,7 +30,14 @@ module br_fifo_shared_dynamic_credit_fpv_checker #(
     localparam int FifoIdWidth = br_math::clamped_clog2(NumFifos)
 ) (
     input logic clk,
+    // FIFO storage/scoreboard reset; protocol monitors also receive the actual
+    // system reset and the separate reset signals for their own interfaces.
     input logic rst,
+    input logic system_rst,
+    input logic push_sender_in_reset,
+    input logic push_receiver_in_reset,
+    input logic pop_sender_in_reset,
+    input logic pop_receiver_in_reset,
     input logic push_credit_stall,
     input logic [PushCreditWidth-1:0] push_credit,
     input logic [NumWritePorts-1:0] push_valid,
@@ -54,9 +61,9 @@ module br_fifo_shared_dynamic_credit_fpv_checker #(
 );
   localparam int MaxPending = Depth + NumFifos * PopMaxCredits;
   localparam int StateWidth = $clog2(MaxPending + NumWritePorts + NumReadPorts + 1) + 1;
-  localparam int PopStateWidth = $clog2(PopMaxCredits + NumReadPorts + 2) + 1;
+  localparam int PushCreditModelWidth = $clog2(Depth + NumWritePorts + 1) + 1;
 
-  logic [StateWidth-1:0] sender_credit, sender_credit_next;
+  logic [PushCreditModelWidth-1:0] sender_credit, sender_credit_next;
   logic [StateWidth-1:0] resident_total, resident_total_next;
   logic [StateWidth-1:0] pending_total, pending_total_next;
   logic [NumFifos-1:0][NumReadPorts-1:0] response_for_fifo;
@@ -66,10 +73,30 @@ module br_fifo_shared_dynamic_credit_fpv_checker #(
   logic selected_pop;
   logic [Width-1:0] selected_data;
 
-  // Do not assume a bound on returned DUT credits: excess credits are failures.
-  assign sender_credit_next = sender_credit + StateWidth'(push_credit) - StateWidth'($countones(
-      push_valid
-  ));
+  br_credit_receiver_fpv_monitor #(
+      .PStatic(0),
+      .MaxCredit(Depth),
+      .NumWritePorts(NumWritePorts),
+      .UseExplicitCreditOwnership(1),
+      .EnableLiveness(0)
+  ) push_credit_monitor (
+      .clk,
+      .rst(system_rst),
+      .push_sender_in_reset,
+      .push_receiver_in_reset,
+      .push_credit_stall,
+      .push_credit,
+      .push_valid,
+      .credit_initial_push,
+      .credit_withhold_push,
+      .credit_count_push,
+      .credit_available_push,
+      .config_base('0),
+      .config_bound('0),
+      .sender_credit,
+      .sender_credit_next
+  );
+
   assign resident_total_next = resident_total + StateWidth'($countones(
       push_valid
   )) - StateWidth'($countones(
@@ -80,22 +107,14 @@ module br_fifo_shared_dynamic_credit_fpv_checker #(
   )) - StateWidth'($countones(
       pop_valid
   ));
-  `BR_REG(sender_credit, sender_credit_next)
   `BR_REG(resident_total, resident_total_next)
   `BR_REG(pending_total, pending_total_next)
 
-  `BR_ASSUME(push_initial_range_a, credit_initial_push <= Depth)
-  `BR_ASSUME(push_initial_stable_a, $stable(credit_initial_push))
-  `BR_ASSUME(push_withhold_range_a, credit_withhold_push <= Depth)
-  `BR_ASSUME(push_spends_received_credit_a, $countones(push_valid)
-             <= sender_credit + StateWidth'(push_credit))
-  `BR_ASSERT(push_credit_range_a, push_credit <= NumWritePorts)
-  `BR_ASSERT(push_credit_conservation_a,
-             sender_credit_next + resident_total_next <= StateWidth'(credit_initial_push))
+  `BR_ASSERT(
+      push_credit_conservation_a,
+      StateWidth'(sender_credit_next) + resident_total_next <= StateWidth'(credit_initial_push))
   `BR_ASSERT(resident_capacity_a, resident_total_next <= Depth)
   `BR_ASSERT(pending_capacity_a, pending_total_next <= MaxPending)
-  `BR_ASSERT(push_count_range_a, credit_count_push <= Depth)
-  `BR_ASSERT(push_available_range_a, credit_available_push <= Depth)
   `BR_ASSERT(issue_port_capacity_a, $countones(pop_issue) <= NumReadPorts)
 
   assign issue_pipe[0] = pop_issue;
@@ -115,10 +134,8 @@ module br_fifo_shared_dynamic_credit_fpv_checker #(
   for (genvar f = 0; f < NumFifos; f++) begin : gen_fifo
     logic [NumWritePorts-1:0] push_for_fifo;
     logic [StateWidth-1:0] resident, resident_next;
-    logic [PopStateWidth-1:0] pop_count, pop_count_next;
-    logic [PopStateWidth-1:0] receiver_credit, receiver_credit_next;
-    logic [PopStateWidth-1:0] available;
-    logic [PopStateWidth-1:0] count_plus_credit;
+    localparam int PopCreditModelWidth = $clog2(PopMaxCredits + NumReadPorts + 2) + 1;
+    logic [PopCreditModelWidth-1:0] available;
 
     for (genvar p = 0; p < NumWritePorts; p++) begin : gen_push_match
       assign push_for_fifo[p] = push_valid[p] && push_fifo_id[p] == FifoIdWidth'(f);
@@ -129,29 +146,33 @@ module br_fifo_shared_dynamic_credit_fpv_checker #(
     assign resident_next = resident + StateWidth'($countones(
         push_for_fifo
     )) - StateWidth'(pop_issue[f]);
-    assign count_plus_credit = pop_count + PopStateWidth'(pop_credit[f]);
-    assign available = count_plus_credit > PopStateWidth'(credit_withhold_pop[f]) ?
-        count_plus_credit - PopStateWidth'(credit_withhold_pop[f]) : '0;
-    assign pop_count_next = count_plus_credit - PopStateWidth'(pop_issue[f]);
-    assign receiver_credit_next = receiver_credit + PopStateWidth'($countones(
-        response_for_fifo[f]
-    )) - PopStateWidth'(pop_credit[f]);
     `BR_REG(resident, resident_next)
-    `BR_REGI(pop_count, pop_count_next, PopStateWidth'(credit_initial_pop[f]))
-    `BR_REGI(receiver_credit, receiver_credit_next,
-             PopStateWidth'(PopMaxCredits) - PopStateWidth'(credit_initial_pop[f]))
 
-    `BR_ASSUME(pop_initial_range_a, credit_initial_pop[f] <= PopMaxCredits)
-    `BR_ASSUME(pop_initial_stable_a, $stable(credit_initial_pop[f]))
-    `BR_ASSUME(pop_withhold_range_a, credit_withhold_pop[f] <= PopMaxCredits)
-    `BR_ASSUME(pop_returns_owned_credit_a,
-               PopStateWidth'(pop_credit[f]) <= receiver_credit + PopStateWidth'($countones(
-               response_for_fifo[f])))
-    `BR_ASSERT(pop_credit_count_a, PopStateWidth'(credit_count_pop[f]) == pop_count)
-    `BR_ASSERT(pop_credit_available_a, PopStateWidth'(credit_available_pop[f]) == available)
-    `BR_ASSERT(pop_credit_capacity_a, pop_count_next <= PopMaxCredits)
-    `BR_ASSERT(receiver_credit_capacity_a, receiver_credit_next <= PopMaxCredits)
-    `BR_ASSERT(issue_has_credit_a, pop_issue[f] |-> available != '0)
+    br_pop_credit_fpv_monitor #(
+        .NumPopPorts(NumReadPorts),
+        .MaxCredit(PopMaxCredits),
+        .PopCreditMaxChange(1),
+        .UseExplicitCreditOwnership(1),
+        .EnableLiveness(0)
+    ) pop_credit_monitor (
+        .clk,
+        .rst(system_rst),
+        .pop_sender_in_reset,
+        .pop_receiver_in_reset,
+        .pop_credit(pop_credit[f]),
+        .pop_valid(response_for_fifo[f]),
+        .pop_issue(NumReadPorts'(pop_issue[f])),
+        .credit_initial_pop(credit_initial_pop[f]),
+        .credit_withhold_pop(credit_withhold_pop[f]),
+        .credit_count_pop(credit_count_pop[f]),
+        .credit_available_pop(credit_available_pop[f]),
+        .modeled_credit_count(),
+        .modeled_credit_count_next(),
+        .modeled_credit_available(available),
+        .receiver_owned_credit(),
+        .receiver_owned_credit_next()
+    );
+
     `BR_ASSERT(issue_has_item_a, pop_issue[f] |-> resident != '0)
     `BR_ASSERT(fifo_resident_capacity_a, resident_next <= Depth)
     `BR_ASSERT(empty_matches_resident_a, pop_empty[f] == (resident == '0))
@@ -169,6 +190,7 @@ module br_fifo_shared_dynamic_credit_fpv_checker #(
               !pop_empty[f] && available != '0 ##1 !pop_empty[f] && available == '0 &&
                   credit_withhold_pop[f] != '0)
     `BR_COVER(pop_credit_and_issue_c, pop_credit[f] && pop_issue[f])
+    `BR_COVER(pop_credit_and_response_c, pop_credit[f] && (|response_for_fifo[f]))
     `BR_COVER(fifo_fill_and_drain_c, resident == Depth ##[1:$] resident == '0)
     if (NumWritePorts > 1) begin : gen_multi_push_cover
       `BR_COVER(same_fifo_multi_push_c, $countones(push_for_fifo) > 1)
@@ -210,6 +232,8 @@ module br_fifo_shared_dynamic_credit_fpv_checker #(
 
   `BR_COVER(shared_storage_full_c, resident_total == Depth)
   `BR_COVER(push_initial_zero_c, credit_initial_push == '0)
+  `BR_COVER(same_cycle_first_push_credit_c,
+            sender_credit == '0 && push_credit != '0 && (|push_valid))
   `BR_COVER(push_initial_max_c, credit_initial_push == Depth && (|push_valid))
   `BR_COVER(push_withhold_max_c, credit_withhold_push == Depth)
   `BR_COVER(push_credit_stall_c, push_credit_stall)

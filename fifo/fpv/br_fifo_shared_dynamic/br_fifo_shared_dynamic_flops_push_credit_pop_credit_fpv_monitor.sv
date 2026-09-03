@@ -64,17 +64,9 @@ module br_fifo_shared_dynamic_flops_push_credit_pop_credit_fpv_monitor #(
       .DataRamReadLatency(DataRamReadLatency)
   ) checker_inst (
       .rst(fv_rst),
+      .system_rst(rst),
       .*
   );
-
-  `BR_ASSERT_INCL_RST(pop_reset_interface_a, pop_sender_in_reset == (rst || push_sender_in_reset))
-  if (RegisterPushOutputs) begin : gen_registered_reset
-    `BR_ASSERT_INCL_RST(push_reset_interface_a,
-                        ##1 push_receiver_in_reset == $past(rst || pop_receiver_in_reset))
-  end else begin : gen_combinational_reset
-    `BR_ASSERT_INCL_RST(push_reset_interface_a,
-                        push_receiver_in_reset == (rst || pop_receiver_in_reset))
-  end
 
 endmodule : br_fifo_shared_dynamic_flops_push_credit_pop_credit_fpv_monitor
 

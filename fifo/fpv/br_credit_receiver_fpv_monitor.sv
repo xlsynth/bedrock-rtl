@@ -13,8 +13,11 @@ module br_credit_receiver_fpv_monitor #(
     parameter bit EnableCoverPushCreditStall = 1,
     parameter bit EnableCoverCreditWithhold = 1,
     parameter bit EnableCoverPushSenderInReset = 1,
+    parameter bit UseExplicitCreditOwnership = 0,
+    parameter bit EnableLiveness = 1,
     localparam int PushCreditWidth = $clog2(NumWritePorts + 1),
     localparam int CreditWidth = $clog2(MaxCredit + 1),
+    localparam int CreditModelWidth = $clog2(MaxCredit + NumWritePorts + 1) + 1,
     localparam int AddrWidth = br_math::clamped_clog2(MaxCredit)
 ) (
     input logic clk,
@@ -35,55 +38,146 @@ module br_credit_receiver_fpv_monitor #(
 
     // psudo-static allocation
     input logic [AddrWidth-1:0] config_base,
-    input logic [AddrWidth-1:0] config_bound
+    input logic [AddrWidth-1:0] config_bound,
+
+    // Sender-owned credits, before and after the current cycle's transfers.
+    output logic [CreditModelWidth-1:0] sender_credit,
+    output logic [CreditModelWidth-1:0] sender_credit_next
 );
 
-  // ----------FV modeling code----------
-  logic fv_rst;
-  logic [CreditWidth-1:0] fv_credit_cnt, fv_credit_cnt_nxt;
-  logic [CreditWidth-1:0] fv_max_credit;
-  logic [CreditWidth-1:0] config_max;
+  if (UseExplicitCreditOwnership) begin : gen_explicit_ownership
+    logic link_rst;
+    logic sender_active_rst;
+    logic [CreditModelWidth-1:0] credit_capacity;
 
-  assign fv_rst = rst | push_sender_in_reset;
-  assign fv_credit_cnt_nxt = fv_credit_cnt + push_credit - $countones(push_valid);
-  `BR_REG(fv_credit_cnt, fv_credit_cnt_nxt)
-  `BR_REGIX(fv_max_credit, fv_max_credit, credit_initial_push, clk, fv_rst)
-  assign config_max = config_bound - config_base + 'd1;
+    // Both reset signals belong to the push link. Do not substitute a reset
+    // from a different FIFO interface for either endpoint signal.
+    assign link_rst = rst || push_sender_in_reset || push_receiver_in_reset;
+    assign sender_active_rst = rst || push_sender_in_reset;
+    if (PStatic) begin : gen_pstatic
+      assign credit_capacity = CreditModelWidth'(config_bound) -
+          CreditModelWidth'(config_base) + CreditModelWidth'(1);
+    end else begin : gen_static
+      assign credit_capacity = CreditModelWidth'(MaxCredit);
+    end
+    assign sender_credit_next = sender_credit + CreditModelWidth'(push_credit) -
+        CreditModelWidth'($countones(
+        push_valid
+    ));
+    `BR_REGX(sender_credit, sender_credit_next, clk, link_rst)
 
-  // ----------FV assumptions----------
-  `BR_ASSUME(push_sender_in_reset_a, !push_sender_in_reset |=> !push_sender_in_reset)
-  if (PStatic == 1) begin : gen_pstatic
-    `BR_ASSUME(credit_withhold_push_a, credit_withhold_push <= config_max)
-    `BR_ASSUME(credit_initial_push_a, credit_initial_push <= config_max)
-  end else begin : gen_static
-    `BR_ASSUME(credit_withhold_push_a, credit_withhold_push <= MaxCredit)
-  end
-  `BR_ASSUME(credit_withhold_liveness_a, s_eventually (credit_withhold_push < fv_max_credit))
-  `BR_ASSUME(push_credit_stall_liveness_a, s_eventually !push_credit_stall)
-  `BR_ASSUME(no_credit_cnt_overflow_a, push_credit > $countones(push_valid)
-                                       |-> fv_credit_cnt_nxt > fv_credit_cnt)
-  `BR_ASSUME(no_credit_cnt_underflow_a, push_credit < $countones(push_valid)
-                                        |-> fv_credit_cnt_nxt < fv_credit_cnt)
-  `BR_ASSUME(no_spurious_push_valid_a, fv_credit_cnt == 'd0 |-> push_valid == 'd0)
-  if (EnableCoverPushCreditStall) begin : gen_stall
-    `BR_COVER(push_credit_stall_a, push_credit_stall)
-  end else begin : gen_no_stall
-    `BR_ASSUME(no_push_credit_stall_a, !push_credit_stall)
-  end
-  if (EnableCoverCreditWithhold) begin : gen_withhold
-    `BR_COVER(credit_withhold_nonzero_a, credit_withhold_push != 'd0)
-  end else begin : gen_no_withhold
-    `BR_ASSUME(credit_withhold_zero_a, credit_withhold_push == 'd0)
-  end
-  if (EnableCoverPushSenderInReset) begin : gen_reset
-    `BR_COVER(push_sender_in_reset_a, push_sender_in_reset)
-  end else begin : gen_no_reset
-    `BR_ASSUME(no_push_sender_in_reset_a, !push_sender_in_reset)
-  end
+    // Configuration remains constrained during either endpoint's reset.
+    `BR_ASSUME_CR(credit_initial_push_a,
+                  CreditModelWidth'(credit_initial_push) <= credit_capacity &&
+                      credit_initial_push <= MaxCredit,
+                  clk, rst)
+    `BR_ASSUME_CR(credit_initial_push_stable_a, $stable(credit_initial_push), clk, rst)
+    `BR_ASSUME_CR(credit_withhold_push_a,
+                  CreditModelWidth'(credit_withhold_push) <= credit_capacity &&
+                      credit_withhold_push <= MaxCredit,
+                  clk, rst)
+    // The environment owns push_valid. Returned DUT credits are checked, not
+    // constrained, and a push may spend credits returned in the same cycle.
+    // Spending remains checked whenever the sender itself is out of reset.
+    `BR_ASSUME_CR(push_spends_received_credit_a, CreditModelWidth'($countones(push_valid
+                  )) <= sender_credit + CreditModelWidth'(push_credit), clk, sender_active_rst)
 
-  // ----------FV assertions----------
-  `BR_ASSERT(fv_credit_sanity_a, fv_credit_cnt <= fv_max_credit)
-  `BR_ASSERT(push_credit_deadlock_a, $countones(push_valid)
-                                     != push_credit |-> s_eventually (fv_credit_cnt != 'd0))
+    `BR_ASSERT_CR(push_credit_range_a, push_credit <= NumWritePorts, clk, link_rst)
+    `BR_ASSERT_CR(sender_credit_initial_capacity_a,
+                  sender_credit <= CreditModelWidth'(credit_initial_push) &&
+                      sender_credit_next <= CreditModelWidth'(credit_initial_push),
+                  clk, link_rst)
+    `BR_ASSERT_CR(sender_credit_capacity_a,
+                  sender_credit <= CreditModelWidth'(MaxCredit) &&
+                      sender_credit_next <= CreditModelWidth'(MaxCredit),
+                  clk, link_rst)
+    `BR_ASSERT_CR(push_count_range_a, CreditModelWidth'(credit_count_push) <= credit_capacity, clk,
+                  link_rst)
+    `BR_ASSERT_CR(push_available_range_a,
+                  CreditModelWidth'(credit_available_push) <= credit_capacity, clk, link_rst)
+
+    if (EnableLiveness) begin : gen_liveness
+      `BR_ASSUME_CR(
+          credit_withhold_liveness_a,
+          credit_initial_push != '0 |-> s_eventually (credit_withhold_push < credit_initial_push),
+          clk, link_rst)
+      `BR_ASSUME_CR(push_credit_stall_liveness_a, s_eventually !push_credit_stall, clk, link_rst)
+      `BR_ASSERT_CR(push_credit_deadlock_a,
+                    $countones(push_valid) != push_credit |-> s_eventually (sender_credit != '0),
+                    clk, link_rst)
+    end
+    if (EnableCoverPushCreditStall) begin : gen_stall
+      `BR_COVER_CR(push_credit_stall_a, push_credit_stall, clk, link_rst)
+    end else begin : gen_no_stall
+      `BR_ASSUME_CR(no_push_credit_stall_a, !push_credit_stall, clk, link_rst)
+    end
+    if (EnableCoverCreditWithhold) begin : gen_withhold
+      `BR_COVER_CR(credit_withhold_nonzero_a, credit_withhold_push != '0, clk, link_rst)
+    end else begin : gen_no_withhold
+      `BR_ASSUME_CR(credit_withhold_zero_a, credit_withhold_push == '0, clk, link_rst)
+    end
+    if (EnableCoverPushSenderInReset) begin : gen_reset
+      // A link-reset disable would make a sender-reset cover unreachable.
+      `BR_COVER_CR(push_sender_in_reset_a, push_sender_in_reset, clk, rst)
+    end else begin : gen_no_reset
+      `BR_ASSUME(no_push_sender_in_reset_a, !push_sender_in_reset)
+    end
+    `BR_COVER_CR(initial_credit_zero_c, credit_initial_push == '0, clk, link_rst)
+    `BR_COVER_CR(initial_credit_max_c, CreditModelWidth'(credit_initial_push) == credit_capacity,
+                 clk, link_rst)
+    `BR_COVER_CR(same_cycle_credit_use_c, sender_credit == '0 && push_credit != '0 && (|push_valid),
+                 clk, link_rst)
+  end else begin : gen_legacy
+    // Keep the original arithmetic widths and environment contract for callers
+    // that have not opted into explicit ownership.
+    logic fv_rst;
+    logic [CreditWidth-1:0] fv_credit_cnt, fv_credit_cnt_nxt;
+    logic [CreditWidth-1:0] fv_max_credit;
+    logic [CreditWidth-1:0] config_max;
+
+    assign fv_rst = rst | push_sender_in_reset;
+    assign fv_credit_cnt_nxt = fv_credit_cnt + push_credit - $countones(push_valid);
+    `BR_REG(fv_credit_cnt, fv_credit_cnt_nxt)
+    `BR_REGIX(fv_max_credit, fv_max_credit, credit_initial_push, clk, fv_rst)
+    assign config_max = config_bound - config_base + 'd1;
+    assign sender_credit = CreditModelWidth'(fv_credit_cnt);
+    assign sender_credit_next = CreditModelWidth'(fv_credit_cnt_nxt);
+
+    `BR_ASSUME(push_sender_in_reset_a, !push_sender_in_reset |=> !push_sender_in_reset)
+    if (PStatic == 1) begin : gen_pstatic
+      `BR_ASSUME(credit_withhold_push_a, credit_withhold_push <= config_max)
+      `BR_ASSUME(credit_initial_push_a, credit_initial_push <= config_max)
+    end else begin : gen_static
+      `BR_ASSUME(credit_withhold_push_a, credit_withhold_push <= MaxCredit)
+    end
+    if (EnableLiveness) begin : gen_liveness
+      `BR_ASSUME(credit_withhold_liveness_a, s_eventually (credit_withhold_push < fv_max_credit))
+      `BR_ASSUME(push_credit_stall_liveness_a, s_eventually !push_credit_stall)
+      `BR_ASSERT(push_credit_deadlock_a,
+                 $countones(push_valid) != push_credit |-> s_eventually (fv_credit_cnt != 'd0))
+    end
+    `BR_ASSUME(no_credit_cnt_overflow_a,
+               push_credit > $countones(push_valid) |-> fv_credit_cnt_nxt > fv_credit_cnt)
+    `BR_ASSUME(no_credit_cnt_underflow_a,
+               push_credit < $countones(push_valid) |-> fv_credit_cnt_nxt < fv_credit_cnt)
+    `BR_ASSUME(no_spurious_push_valid_a, fv_credit_cnt == 'd0 |-> push_valid == 'd0)
+    if (EnableCoverPushCreditStall) begin : gen_stall
+      `BR_COVER(push_credit_stall_a, push_credit_stall)
+    end else begin : gen_no_stall
+      `BR_ASSUME(no_push_credit_stall_a, !push_credit_stall)
+    end
+    if (EnableCoverCreditWithhold) begin : gen_withhold
+      `BR_COVER(credit_withhold_nonzero_a, credit_withhold_push != 'd0)
+    end else begin : gen_no_withhold
+      `BR_ASSUME(credit_withhold_zero_a, credit_withhold_push == 'd0)
+    end
+    if (EnableCoverPushSenderInReset) begin : gen_reset
+      `BR_COVER(push_sender_in_reset_a, push_sender_in_reset)
+    end else begin : gen_no_reset
+      `BR_ASSUME(no_push_sender_in_reset_a, !push_sender_in_reset)
+    end
+
+    `BR_ASSERT(fv_credit_sanity_a, fv_credit_cnt <= fv_max_credit)
+  end
 
 endmodule : br_credit_receiver_fpv_monitor

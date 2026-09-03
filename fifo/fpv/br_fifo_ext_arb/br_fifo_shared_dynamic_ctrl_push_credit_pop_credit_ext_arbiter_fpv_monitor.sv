@@ -3,9 +3,10 @@
 // FPV environment for the shared dynamic credit/credit FIFO controller with an
 // external pop arbiter. The shared checker verifies credit safety and per-FIFO
 // push-to-pop ordering. External data and pointer RAMs obey fixed-latency,
-// read-before-write contracts. Grant legality is assumed at the public arbiter
-// boundary; delayed and indefinitely stalled grants are legal when configured.
-// No fairness or request-stability assumption is imposed on the arbiter.
+// read-before-write contracts. Grant legality is assumed only outside system/peer
+// reset. Grants may be arbitrary during reset.
+// Delayed and indefinitely stalled grants are legal when configured. No fairness
+// or request-stability assumption is imposed on the arbiter.
 
 `include "br_asserts.svh"
 
@@ -88,6 +89,7 @@ module br_fifo_shared_dynamic_ctrl_push_credit_pop_credit_ext_arbiter_fpv_monito
       .DataRamReadLatency(DataRamReadLatency)
   ) fv_checker (
       .rst(fv_rst),
+      .system_rst(rst),
       .*
   );
 
@@ -128,10 +130,10 @@ module br_fifo_shared_dynamic_ctrl_push_credit_pop_credit_ext_arbiter_fpv_monito
   );
 
   for (genvar r = 0; r < NumReadPorts; r++) begin : gen_arbiter
-    `BR_ASSUME(arb_grant_onehot_a, $onehot0(arb_grant[r]))
-    `BR_ASSUME(arb_grant_requested_a, (arb_grant[r] & ~arb_request[r]) == '0)
+    `BR_ASSUME_CR(arb_grant_onehot_a, $onehot0(arb_grant[r]), clk, fv_rst)
+    `BR_ASSUME_CR(arb_grant_requested_a, (arb_grant[r] & ~arb_request[r]) == '0, clk, fv_rst)
     if (ArbiterAlwaysGrants) begin : gen_always_grants
-      `BR_ASSUME(arb_always_grants_a, |arb_request[r] |-> |arb_grant[r])
+      `BR_ASSUME_CR(arb_always_grants_a, |arb_request[r] |-> |arb_grant[r], clk, fv_rst)
     end else begin : gen_can_stall
       `BR_COVER(arb_stall_then_grant_c,
                 !fv_rst && |arb_request[r] && !(|arb_grant[r])

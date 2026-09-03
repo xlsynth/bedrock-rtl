@@ -9,6 +9,8 @@ verilog_library(
     name = "br_credit_receiver_fpv_monitor",
     srcs = ["br_credit_receiver_fpv_monitor.sv"],
     deps = [
+        "//macros:br_asserts",
+        "//macros:br_registers",
         "//pkg:br_math_pkg",
     ],
 )
