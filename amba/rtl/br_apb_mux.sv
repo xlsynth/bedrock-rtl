@@ -3,8 +3,11 @@
 // Bedrock-RTL Fixed-Priority APB Mux
 //
 // Routes one of several upstream APB interfaces to a shared downstream
-// interface. The lowest-index pending upstream wins arbitration when the APB
-// state machine leaves idle, and that winner is held until its access completes.
+// interface. While idle, the lowest-index pending upstream is selected
+// combinationally to drive the downstream setup phase. The winner is saved at
+// the setup-to-access transition and held until the downstream access completes.
+// This adds no arbitration cycle, but puts priority selection on the downstream
+// request timing path. Only the access state and the winner are stored.
 
 `include "br_asserts_internal.svh"
 `include "br_registers.svh"
@@ -65,10 +68,9 @@ module br_apb_mux #(
 
   // Implementation
 
-  typedef enum logic [1:0] {
-    Idle   = 2'b00,
-    Setup  = 2'b01,
-    Access = 2'b10
+  typedef enum logic {
+    Idle   = 1'b0,
+    Access = 1'b1
   } apb_state_t;
 
   typedef struct packed {
@@ -79,12 +81,14 @@ module br_apb_mux #(
     logic [31:0] wdata;
   } req_t;
 
-  apb_state_t apb_state;
+  // Two states intentionally use a single flop.
+  apb_state_t apb_state;  // ri lint_check_waive ONE_BIT_STATE_REG
   apb_state_t apb_state_next;
   logic any_grant;
   logic grant_winner_load;
   logic [NumUpstreams-1:0] grant;
   logic [NumUpstreams-1:0] grant_winner;
+  logic [NumUpstreams-1:0] request_select;
   req_t [NumUpstreams-1:0] upstream_req;
   req_t downstream_req;
 
@@ -105,6 +109,7 @@ module br_apb_mux #(
   always_comb begin
     apb_state_next = apb_state;
     grant_winner_load = 1'b0;
+    request_select = grant_winner;
     downstream_psel = 1'b0;
     downstream_penable = 1'b0;
     upstream_pready = '0;
@@ -112,14 +117,13 @@ module br_apb_mux #(
 
     unique case (apb_state)
       Idle: begin
+        // An asserted request turns this cycle into downstream setup.
+        request_select  = grant;
+        downstream_psel = any_grant;
         if (any_grant) begin
-          apb_state_next = Setup;
+          apb_state_next = Access;
           grant_winner_load = 1'b1;
         end
-      end
-      Setup: begin
-        downstream_psel = 1'b1;
-        apb_state_next  = Access;
       end
       Access: begin
         downstream_psel = 1'b1;
@@ -132,7 +136,8 @@ module br_apb_mux #(
         end
       end
       default: begin
-        apb_state_next = Idle;
+        // Both binary encodings are covered; recover from unknowns in simulation.
+        apb_state_next = Idle;  // ri lint_check_waive UNREACHABLE
       end
     endcase
   end
@@ -151,7 +156,7 @@ module br_apb_mux #(
       .NumSymbolsIn(NumUpstreams),
       .SymbolWidth ($bits(req_t))
   ) br_mux_onehot_req (
-      .select(grant_winner),
+      .select(request_select),
       .in(upstream_req),
       .out(downstream_req)
   );
@@ -166,8 +171,10 @@ module br_apb_mux #(
   // Implementation Checks
 
   `BR_ASSERT_IMPL(grant_winner_onehot0_a, $onehot0(grant_winner))
-  `BR_ASSERT_IMPL(active_grant_onehot_a, downstream_psel |-> $onehot(grant_winner))
+  `BR_ASSERT_IMPL(active_grant_onehot_a, downstream_psel |-> $onehot(request_select))
   `BR_ASSERT_IMPL(downstream_enable_requires_select_a, downstream_penable |-> downstream_psel)
+  `BR_ASSERT_IMPL(setup_advances_to_access_a,
+                  (downstream_psel && !downstream_penable) |=> downstream_penable)
   `BR_ASSERT_IMPL(grant_stable_while_active_a, (apb_state != Idle) |=> $stable(grant_winner))
   `BR_ASSERT_IMPL(
       downstream_completion_returns_idle_a,
