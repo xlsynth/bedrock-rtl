@@ -3,7 +3,7 @@
 // Bedrock-RTL Fixed-Priority APB Mux
 //
 // Routes one of several upstream APB interfaces to a shared downstream
-// interface. While idle, the lowest-index pending upstream is selected
+// interface. In Setup, the lowest-index pending upstream is selected
 // combinationally to drive the downstream setup phase. The winner is saved at
 // the setup-to-access transition and held until the downstream access completes.
 // This adds no arbitration cycle, but puts priority selection on the downstream
@@ -69,7 +69,7 @@ module br_apb_mux #(
   // Implementation
 
   typedef enum logic {
-    Idle   = 1'b0,
+    Setup  = 1'b0,
     Access = 1'b1
   } apb_state_t;
 
@@ -103,20 +103,20 @@ module br_apb_mux #(
 
   assign any_grant = |upstream_psel;
 
-  `BR_REGI(apb_state, apb_state_next, Idle)
+  `BR_REGI(apb_state, apb_state_next, Setup)
   `BR_REGL(grant_winner, grant, grant_winner_load)
 
   always_comb begin
     apb_state_next = apb_state;
     grant_winner_load = 1'b0;
-    request_select = grant_winner;
+    request_select = '0;
     downstream_psel = 1'b0;
     downstream_penable = 1'b0;
     upstream_pready = '0;
     upstream_pslverr = '0;
 
     unique case (apb_state)
-      Idle: begin
+      Setup: begin
         // An asserted request turns this cycle into downstream setup.
         request_select  = grant;
         downstream_psel = any_grant;
@@ -126,18 +126,19 @@ module br_apb_mux #(
         end
       end
       Access: begin
+        request_select = grant_winner;
         downstream_psel = 1'b1;
         downstream_penable = 1'b1;
         upstream_pready = grant_winner & upstream_penable & {NumUpstreams{downstream_pready}};
         upstream_pslverr = grant_winner & upstream_penable & {NumUpstreams{downstream_pslverr}};
 
         if (downstream_pready) begin
-          apb_state_next = Idle;
+          apb_state_next = Setup;
         end
       end
       default: begin
         // Both binary encodings are covered; recover from unknowns in simulation.
-        apb_state_next = Idle;  // ri lint_check_waive UNREACHABLE
+        apb_state_next = Setup;  // ri lint_check_waive UNREACHABLE
       end
     endcase
   end
@@ -175,9 +176,9 @@ module br_apb_mux #(
   `BR_ASSERT_IMPL(downstream_enable_requires_select_a, downstream_penable |-> downstream_psel)
   `BR_ASSERT_IMPL(setup_advances_to_access_a,
                   (downstream_psel && !downstream_penable) |=> downstream_penable)
-  `BR_ASSERT_IMPL(grant_stable_while_active_a, (apb_state != Idle) |=> $stable(grant_winner))
+  `BR_ASSERT_IMPL(grant_stable_while_active_a, (apb_state == Access) |=> $stable(grant_winner))
   `BR_ASSERT_IMPL(
-      downstream_completion_returns_idle_a,
-      (downstream_psel && downstream_penable && downstream_pready) |=> apb_state == Idle)
+      downstream_completion_returns_setup_a,
+      (downstream_psel && downstream_penable && downstream_pready) |=> apb_state == Setup)
 
 endmodule : br_apb_mux
