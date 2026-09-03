@@ -33,6 +33,20 @@ The table below groups macros that share the same clock/reset behavior; the suff
 | `BR_REGN`, `BR_REGLN` | No reset, positive-edge clock named `clk`; optional load enable. |
 | `BR_REGNX`, `BR_REGLNX` | No reset, positive-edge clock is an explicit macro argument; optional load enable. |
 
+The NOSCAN variants instantiate scalar `br_gate` flip-flops for each bit of the output. They require the target technology's gate library, or `//gate/rtl:br_gate_mock` for behavioral simulation. The output argument must be a scalar or packed signal identifier because it names the instance array. A static assertion requires the input and output to have identical packed widths; constants must also be explicitly sized to match. Instance names and mock storage names end in `_NOSCAN`.
+
+| Macro | Behavior |
+| --- | --- |
+| `BR_REGNX_NOSCAN(q, d, clk)` | No reset, unconditional load. |
+| `BR_REGX_NOSCAN(q, d, clk, rst)` | Synchronous active-high reset to zero. |
+| `BR_REGLX_NOSCAN(q, d, en, clk, rst)` | Synchronous active-high reset to zero, otherwise load when enabled. |
+| `BR_REGAX_NOSCAN(q, d, clk, arst)` | Asynchronous active-high reset to zero. |
+| `BR_REGALX_NOSCAN(q, d, en, clk, arst)` | Asynchronous active-high reset to zero, otherwise load when enabled. |
+
+All NOSCAN macros take an explicit positive-edge clock. Reset takes priority over load enable. The asynchronous macros invert their active-high reset before connecting it to the gate primitive's active-low `arst_n` port.
+
+The gate library also provides `br_gate_cdc_sync_noscan` and `br_gate_cdc_sync_arstn_noscan`, single-bit synchronizers with a `NumStages` parameter that defaults to 3 and must be 2 or 3. Both have `clk`, `in`, and `out` ports; the resettable form adds an active-low asynchronous `arst_n` input that clears all stages to zero. Their mock storage names end in `_NOSCAN`.
+
 
 
 <a id="assertions"></a>
