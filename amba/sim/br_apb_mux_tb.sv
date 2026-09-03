@@ -67,12 +67,13 @@ module br_apb_mux_tb;
       .downstream_pslverr
   );
 
-  task automatic check_downstream_request(input logic [AddrWidth-1:0] expected_addr,
-                                          input logic expected_write,
-                                          input logic [31:0] expected_wdata);
+  task automatic check_downstream_request(
+      input logic [AddrWidth-1:0] expected_addr,
+      input logic [br_amba::ApbProtWidth-1:0] expected_prot, input logic [3:0] expected_strb,
+      input logic expected_write, input logic [31:0] expected_wdata);
     td.check_integer(32'(downstream_paddr), 32'(expected_addr), "downstream PADDR mismatch");
-    td.check_integer(32'(downstream_pprot), expected_write ? 3 : 5, "downstream PPROT mismatch");
-    td.check_integer(32'(downstream_pstrb), expected_write ? 13 : 0, "downstream PSTRB mismatch");
+    td.check_integer(32'(downstream_pprot), 32'(expected_prot), "downstream PPROT mismatch");
+    td.check_integer(32'(downstream_pstrb), 32'(expected_strb), "downstream PSTRB mismatch");
     td.check(downstream_pwrite == expected_write, "downstream PWRITE mismatch");
     td.check_integer(downstream_pwdata, expected_wdata, "downstream PWDATA mismatch");
   endtask
@@ -92,7 +93,8 @@ module br_apb_mux_tb;
   endtask
 
   task automatic drive_upstream(input int source, input logic [AddrWidth-1:0] addr,
-                                input logic write, input logic [31:0] wdata,
+                                input logic [br_amba::ApbProtWidth-1:0] prot,
+                                input logic [3:0] strb, input logic write, input logic [31:0] wdata,
                                 input logic [31:0] expected_rdata, input logic expected_slverr);
     bit completed;
 
@@ -100,8 +102,8 @@ module br_apb_mux_tb;
     upstream_paddr[source] = addr;
     upstream_psel[source] = 1'b1;
     upstream_penable[source] = 1'b0;
-    upstream_pprot[source] = write ? 3'b011 : 3'b101;
-    upstream_pstrb[source] = write ? 4'b1101 : 4'b0000;
+    upstream_pprot[source] = prot;
+    upstream_pstrb[source] = strb;
     upstream_pwrite[source] = write;
     upstream_pwdata[source] = wdata;
 
@@ -128,9 +130,10 @@ module br_apb_mux_tb;
   endtask
 
   task automatic expect_downstream(input int source, input logic [AddrWidth-1:0] expected_addr,
-                                   input logic expected_write, input logic [31:0] expected_wdata,
-                                   input int wait_cycles, input logic [31:0] rdata,
-                                   input logic slverr);
+                                   input logic [br_amba::ApbProtWidth-1:0] expected_prot,
+                                   input logic [3:0] expected_strb, input logic expected_write,
+                                   input logic [31:0] expected_wdata, input int wait_cycles,
+                                   input logic [31:0] rdata, input logic slverr);
     logic [NumUpstreams-1:0] expected_grant;
 
     expected_grant = '0;
@@ -138,13 +141,15 @@ module br_apb_mux_tb;
     wait_for_downstream_select();
     td.check(!downstream_penable, "downstream APB setup was not observed");
     td.check(upstream_pready == '0, "upstream PREADY asserted during downstream setup");
-    check_downstream_request(expected_addr, expected_write, expected_wdata);
+    check_downstream_request(expected_addr, expected_prot, expected_strb, expected_write,
+                             expected_wdata);
 
     repeat (wait_cycles) begin
       @(posedge clk);
       td.check(downstream_psel && downstream_penable, "downstream access dropped while waiting");
       td.check(upstream_pready == '0, "upstream PREADY asserted while downstream waited");
-      check_downstream_request(expected_addr, expected_write, expected_wdata);
+      check_downstream_request(expected_addr, expected_prot, expected_strb, expected_write,
+                               expected_wdata);
     end
 
     @(negedge clk);
@@ -153,7 +158,8 @@ module br_apb_mux_tb;
     downstream_pslverr = slverr;
     @(posedge clk);
     td.check(downstream_psel && downstream_penable, "downstream APB access was not observed");
-    check_downstream_request(expected_addr, expected_write, expected_wdata);
+    check_downstream_request(expected_addr, expected_prot, expected_strb, expected_write,
+                             expected_wdata);
     td.check(upstream_pready == expected_grant, "APB completion reached the wrong upstream");
     for (int i = 0; i < NumUpstreams; i++) begin
       td.check_integer(upstream_prdata[i], rdata, "upstream PRDATA was not broadcast");
@@ -196,7 +202,8 @@ module br_apb_mux_tb;
       @(posedge clk);
       td.check(downstream_psel && !downstream_penable, "extra cycle before downstream setup");
       td.check(upstream_pready == '0, "upstream completed during setup");
-      check_downstream_request(addr, write, wdata);
+      check_downstream_request(addr, write ? 3'b011 : 3'b101, write ? 4'b1101 : 4'b0000, write,
+                               wdata);
 
       @(negedge clk);
       upstream_penable[source] = 1'b1;
@@ -206,7 +213,8 @@ module br_apb_mux_tb;
                "zero-wait transfer did not finish in two cycles");
       td.check_integer(upstream_prdata[source], ~wdata, "zero-wait read data mismatch");
       td.check(upstream_pslverr[source] == write, "zero-wait error response mismatch");
-      check_downstream_request(addr, write, wdata);
+      check_downstream_request(addr, write ? 3'b011 : 3'b101, write ? 4'b1101 : 4'b0000, write,
+                               wdata);
       @(negedge clk);
     end
     upstream_psel[source] = 1'b0;
@@ -240,7 +248,7 @@ module br_apb_mux_tb;
       @(posedge clk);
       td.check(downstream_psel && !downstream_penable, "missing setup or bubble during handoff");
       td.check(upstream_pready == '0, "waiting upstream completed during downstream setup");
-      check_downstream_request(AddrWidth'(i), 1'b1, 32'habcd_0000 | 32'(i));
+      check_downstream_request(AddrWidth'(i), 3'b011, 4'b1101, 1'b1, 32'habcd_0000 | 32'(i));
 
       @(negedge clk);
       upstream_penable = upstream_psel;
@@ -249,12 +257,62 @@ module br_apb_mux_tb;
       td.check(upstream_pready == expected_grant, "handoff completed the wrong upstream");
       td.check_integer(upstream_prdata[i], 32'hcafe_1234, "handoff read data mismatch");
       td.check(upstream_pslverr == '0, "handoff error response mismatch");
-      check_downstream_request(AddrWidth'(i), 1'b1, 32'habcd_0000 | 32'(i));
+      check_downstream_request(AddrWidth'(i), 3'b011, 4'b1101, 1'b1, 32'habcd_0000 | 32'(i));
 
       @(negedge clk);
       upstream_psel[i] = 1'b0;
       upstream_penable[i] = 1'b0;
     end
+    downstream_pready = 1'b0;
+    downstream_prdata = '0;
+  endtask
+
+  // Reads may change all PWDATA bits; sparse writes may change unstrobed bytes.
+  // Exercise both from setup through stalled access with integration checks on.
+  task automatic check_inactive_wdata(input bit write);
+    logic [31:0] wdata;
+    logic [ 3:0] strb;
+
+    wdata = 32'ha123_4567;
+    strb  = write ? 4'b1101 : 4'b0000;
+    @(negedge clk);
+    upstream_paddr[0] = AddrWidth'(12'h580);
+    upstream_psel[0] = 1'b1;
+    upstream_penable[0] = 1'b0;
+    upstream_pprot[0] = 3'b101;
+    upstream_pstrb[0] = strb;
+    upstream_pwrite[0] = write;
+    upstream_pwdata[0] = wdata;
+
+    @(posedge clk);
+    td.check(downstream_psel && !downstream_penable, "inactive-data test skipped setup");
+    td.check(upstream_pready == '0, "inactive-data test completed during setup");
+    check_downstream_request(AddrWidth'(12'h580), 3'b101, strb, write, wdata);
+
+    repeat (3) begin
+      @(negedge clk);
+      upstream_penable[0] = 1'b1;
+      wdata ^= write ? 32'h0000_ff00 : 32'hffff_ffff;
+      upstream_pwdata[0] = wdata;
+      @(posedge clk);
+      td.check(downstream_psel && downstream_penable, "inactive-data test lost access");
+      td.check(upstream_pready == '0, "inactive-data test completed while waiting");
+      check_downstream_request(AddrWidth'(12'h580), 3'b101, strb, write, wdata);
+    end
+
+    @(negedge clk);
+    downstream_pready = 1'b1;
+    downstream_prdata = 32'hc123_4567;
+    @(posedge clk);
+    td.check(downstream_psel && downstream_penable, "inactive-data test lost completion");
+    td.check(upstream_pready == NumUpstreams'(1), "inactive-data test completion mismatch");
+    td.check_integer(upstream_prdata[0], 32'hc123_4567, "inactive-data test read mismatch");
+    td.check(upstream_pslverr == '0, "inactive-data test error mismatch");
+    check_downstream_request(AddrWidth'(12'h580), 3'b101, strb, write, wdata);
+
+    @(negedge clk);
+    upstream_psel[0] = 1'b0;
+    upstream_penable[0] = 1'b0;
     downstream_pready = 1'b0;
     downstream_prdata = '0;
   endtask
@@ -293,14 +351,19 @@ module br_apb_mux_tb;
     end
 
     @(negedge clk);
-    downstream_pready = 1'b1;
+    downstream_pready  = 1'b1;
+    downstream_pslverr = 1'b1;
     @(posedge clk);
     td.check(downstream_psel && downstream_penable,
              "malformed upstream request prevented downstream completion");
-    td.check(upstream_pready == '0, "inactive upstream unexpectedly received completion");
+    td.check(upstream_pready == NumUpstreams'(1), "saved grant did not route completion");
+    td.check(upstream_pslverr == NumUpstreams'(1), "saved grant did not route error");
+    td.check((upstream_psel & upstream_penable & upstream_pready) == '0,
+             "inactive upstream unexpectedly accepted a transfer");
 
     @(negedge clk);
     downstream_pready = 1'b0;
+    downstream_pslverr = 1'b0;
     upstream_psel[0] = 1'b0;
     upstream_penable[0] = 1'b0;
     td.check(!downstream_penable,
@@ -309,10 +372,10 @@ module br_apb_mux_tb;
     td.check(!downstream_psel, "arbiter did not become idle after all requesters withdrew");
 
     fork
-      drive_upstream(NumUpstreams - 1, AddrWidth'(12'h740), 1'b0, 32'ha000_0740, 32'hc000_0740,
-                     1'b0);
-      expect_downstream(NumUpstreams - 1, AddrWidth'(12'h740), 1'b0, 32'ha000_0740, 0,
-                        32'hc000_0740, 1'b0);
+      drive_upstream(NumUpstreams - 1, AddrWidth'(12'h740), 3'b101, 4'b0000, 1'b0, 32'ha000_0740,
+                     32'hc000_0740, 1'b0);
+      expect_downstream(NumUpstreams - 1, AddrWidth'(12'h740), 3'b101, 4'b0000, 1'b0, 32'ha000_0740,
+                        0, 32'hc000_0740, 1'b0);
     join
   endtask
 
@@ -334,55 +397,65 @@ module br_apb_mux_tb;
     td.check(!downstream_penable, "downstream PENABLE asserted during reset/idle");
     td.check(upstream_pready == '0, "upstream PREADY asserted during reset/idle");
 
+    // PENABLE can be broadcast for a transfer to a different peripheral.
+    @(negedge clk);
+    upstream_penable = '1;
+    repeat (2) begin
+      @(posedge clk);
+      td.check(!downstream_psel, "PENABLE without PSEL started a downstream request");
+      td.check(!downstream_penable, "PENABLE without PSEL started downstream access");
+      td.check(upstream_pready == '0, "unselected upstream received completion");
+    end
+    @(negedge clk);
+    upstream_penable = '0;
+
+    check_inactive_wdata(1'b0);
+    check_inactive_wdata(1'b1);
+
     for (int i = 0; i < NumUpstreams; i++) begin
       check_zero_wait_burst(i);
     end
     check_zero_wait_handoffs();
 
     fork
-      drive_upstream(NumUpstreams - 1, AddrWidth'(12'h120), 1'b0, 32'ha000_0120, 32'hc000_0120,
-                     1'b0);
-      expect_downstream(NumUpstreams - 1, AddrWidth'(12'h120), 1'b0, 32'ha000_0120, 0,
-                        32'hc000_0120, 1'b0);
+      drive_upstream(NumUpstreams - 1, AddrWidth'(12'h120), 3'b101, 4'b0000, 1'b0, 32'ha000_0120,
+                     32'hc000_0120, 1'b0);
+      expect_downstream(NumUpstreams - 1, AddrWidth'(12'h120), 3'b101, 4'b0000, 1'b0, 32'ha000_0120,
+                        0, 32'hc000_0120, 1'b0);
     join
 
     if (NumUpstreams > 1) begin
       fork
-        drive_upstream(0, AddrWidth'(12'h240), 1'b1, 32'ha000_0240, 32'hc000_0240, 1'b0);
-        drive_upstream(NumUpstreams - 1, AddrWidth'(12'h360), 1'b0, 32'ha000_0360, 32'hc000_0360,
+        drive_upstream(0, AddrWidth'(12'h240), 3'b011, 4'b1101, 1'b1, 32'ha000_0240, 32'hc000_0240,
                        1'b0);
+        drive_upstream(NumUpstreams - 1, AddrWidth'(12'h360), 3'b101, 4'b0000, 1'b0, 32'ha000_0360,
+                       32'hc000_0360, 1'b0);
         begin
-          expect_downstream(0, AddrWidth'(12'h240), 1'b1, 32'ha000_0240, 2, 32'hc000_0240, 1'b0);
-          expect_downstream(NumUpstreams - 1, AddrWidth'(12'h360), 1'b0, 32'ha000_0360, 0,
-                            32'hc000_0360, 1'b0);
+          expect_downstream(0, AddrWidth'(12'h240), 3'b011, 4'b1101, 1'b1, 32'ha000_0240, 2,
+                            32'hc000_0240, 1'b0);
+          expect_downstream(NumUpstreams - 1, AddrWidth'(12'h360), 3'b101, 4'b0000, 1'b0,
+                            32'ha000_0360, 0, 32'hc000_0360, 1'b0);
         end
       join
 
       fork
-        drive_upstream(NumUpstreams - 1, AddrWidth'(12'h480), 1'b1, 32'ha000_0480, 32'hc000_0480,
-                       1'b1);
+        drive_upstream(NumUpstreams - 1, AddrWidth'(12'h480), 3'b011, 4'b1101, 1'b1, 32'ha000_0480,
+                       32'hc000_0480, 1'b1);
         begin
           wait_for_downstream_select();
-          drive_upstream(0, AddrWidth'(12'h5a0), 1'b0, 32'ha000_05a0, 32'hc000_05a0, 1'b0);
+          drive_upstream(0, AddrWidth'(12'h5a0), 3'b101, 4'b0000, 1'b0, 32'ha000_05a0,
+                         32'hc000_05a0, 1'b0);
         end
         begin
-          expect_downstream(NumUpstreams - 1, AddrWidth'(12'h480), 1'b1, 32'ha000_0480, 3,
-                            32'hc000_0480, 1'b1);
-          expect_downstream(0, AddrWidth'(12'h5a0), 1'b0, 32'ha000_05a0, 0, 32'hc000_05a0, 1'b0);
+          expect_downstream(NumUpstreams - 1, AddrWidth'(12'h480), 3'b011, 4'b1101, 1'b1,
+                            32'ha000_0480, 3, 32'hc000_0480, 1'b1);
+          expect_downstream(0, AddrWidth'(12'h5a0), 3'b101, 4'b0000, 1'b0, 32'ha000_05a0, 0,
+                            32'hc000_05a0, 1'b0);
         end
       join
     end
 
     if (ExerciseProtocolViolations) begin
-      @(negedge clk);
-      upstream_penable[0] = 1'b1;
-      repeat (2) begin
-        @(posedge clk);
-        td.check(!downstream_psel, "PENABLE without PSEL started a downstream request");
-      end
-      @(negedge clk);
-      upstream_penable[0] = 1'b0;
-
       check_malformed_transfer_recovers(1'b1);
       check_malformed_transfer_recovers(1'b0);
     end

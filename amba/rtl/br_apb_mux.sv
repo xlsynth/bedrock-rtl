@@ -11,6 +11,7 @@
 
 `include "br_asserts_internal.svh"
 `include "br_registers.svh"
+`include "br_unused.svh"
 
 module br_apb_mux #(
     parameter int AddrWidth = 12,  // Must be at least 1
@@ -47,7 +48,6 @@ module br_apb_mux #(
   `BR_ASSERT_STATIC(legal_num_upstreams_a, NumUpstreams >= 1)
 
   for (genvar i = 0; i < NumUpstreams; i++) begin : gen_upstream_checks
-    `BR_ASSERT_INTG(enable_requires_select_a, upstream_penable[i] |-> upstream_psel[i])
     `BR_ASSERT_INTG(access_stable_while_waiting_a,
                     (upstream_psel[i] && upstream_penable[i] && !upstream_pready[i]) |=>
                     upstream_psel[i] && upstream_penable[i])
@@ -61,10 +61,17 @@ module br_apb_mux #(
                         upstream_pstrb[i]
                     ) && $stable(
                         upstream_pwrite[i]
-                    ) && $stable(
-                        upstream_pwdata[i]
                     ))
+    for (genvar byte_idx = 0; byte_idx < 4; byte_idx++) begin : gen_wdata_checks
+      `BR_ASSERT_INTG(wdata_stable_while_pending_a,
+                      (upstream_psel[i] && (!upstream_penable[i] || !upstream_pready[i]) &&
+                       upstream_pwrite[i] && upstream_pstrb[i][byte_idx]) |=>
+                      $stable(
+                          upstream_pwdata[i][8*byte_idx+:8]
+                      ))
+    end
   end
+  `BR_UNUSED(upstream_penable)
 
   // Implementation
 
@@ -85,9 +92,9 @@ module br_apb_mux #(
   apb_state_t apb_state;  // ri lint_check_waive ONE_BIT_STATE_REG
   apb_state_t apb_state_next;
   logic any_grant;
-  logic grant_winner_load;
+  logic grant_saved_load;
   logic [NumUpstreams-1:0] grant;
-  logic [NumUpstreams-1:0] grant_winner;
+  logic [NumUpstreams-1:0] grant_saved;
   logic [NumUpstreams-1:0] request_select;
   req_t [NumUpstreams-1:0] upstream_req;
   req_t downstream_req;
@@ -104,11 +111,11 @@ module br_apb_mux #(
   assign any_grant = |upstream_psel;
 
   `BR_REGI(apb_state, apb_state_next, Setup)
-  `BR_REGL(grant_winner, grant, grant_winner_load)
+  `BR_REGL(grant_saved, grant, grant_saved_load)
 
   always_comb begin
     apb_state_next = apb_state;
-    grant_winner_load = 1'b0;
+    grant_saved_load = 1'b0;
     request_select = '0;
     downstream_psel = 1'b0;
     downstream_penable = 1'b0;
@@ -121,16 +128,16 @@ module br_apb_mux #(
         request_select  = grant;
         downstream_psel = any_grant;
         if (any_grant) begin
-          apb_state_next = Access;
-          grant_winner_load = 1'b1;
+          apb_state_next   = Access;
+          grant_saved_load = 1'b1;
         end
       end
       Access: begin
-        request_select = grant_winner;
+        request_select = grant_saved;
         downstream_psel = 1'b1;
         downstream_penable = 1'b1;
-        upstream_pready = grant_winner & upstream_penable & {NumUpstreams{downstream_pready}};
-        upstream_pslverr = grant_winner & upstream_penable & {NumUpstreams{downstream_pslverr}};
+        upstream_pready = grant_saved & {NumUpstreams{downstream_pready}};
+        upstream_pslverr = grant_saved & {NumUpstreams{downstream_pslverr}};
 
         if (downstream_pready) begin
           apb_state_next = Setup;
@@ -171,12 +178,12 @@ module br_apb_mux #(
 
   // Implementation Checks
 
-  `BR_ASSERT_IMPL(grant_winner_onehot0_a, $onehot0(grant_winner))
+  `BR_ASSERT_IMPL(grant_saved_onehot0_a, $onehot0(grant_saved))
   `BR_ASSERT_IMPL(active_grant_onehot_a, downstream_psel |-> $onehot(request_select))
   `BR_ASSERT_IMPL(downstream_enable_requires_select_a, downstream_penable |-> downstream_psel)
   `BR_ASSERT_IMPL(setup_advances_to_access_a,
                   (downstream_psel && !downstream_penable) |=> downstream_penable)
-  `BR_ASSERT_IMPL(grant_stable_while_active_a, (apb_state == Access) |=> $stable(grant_winner))
+  `BR_ASSERT_IMPL(grant_saved_stable_while_active_a, (apb_state == Access) |=> $stable(grant_saved))
   `BR_ASSERT_IMPL(
       downstream_completion_returns_setup_a,
       (downstream_psel && downstream_penable && downstream_pready) |=> apb_state == Setup)

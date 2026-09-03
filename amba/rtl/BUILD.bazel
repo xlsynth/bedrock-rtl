@@ -171,6 +171,7 @@ verilog_library(
         "//arb/rtl:br_arb_fixed",
         "//macros:br_asserts_internal",
         "//macros:br_registers",
+        "//macros:br_unused",
         "//mux/rtl:br_mux_onehot",
     ],
 )
