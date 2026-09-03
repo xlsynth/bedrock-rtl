@@ -339,6 +339,165 @@ br_verilog_fpv_test_tools_suite(
     deps = [":br_flow_mux_rr_fpv_monitor"],
 )
 
+# Weighted flow muxes share public-interface checks and keep separate DUT wrappers.
+verilog_library(
+    name = "br_flow_mux_weighted_basic_fpv_monitor",
+    srcs = ["br_flow_mux_weighted_basic_fpv_monitor.sv"],
+    deps = [
+        ":br_flow_mux_basic_fpv_monitor",
+        "//macros:br_asserts",
+        "//macros:br_fv",
+    ],
+)
+
+# Cover the single-flow bypass, even/odd arbitration, unit weights, non-power-of-two
+# limits, and accumulated weight both equal to and greater than configured weight.
+_WEIGHTED_MUX_PARAMS = {
+    "MaxAccumulatedWeight": [
+        "1",
+        "3",
+        "5",
+    ],
+    "MaxWeight": [
+        "1",
+        "2",
+        "3",
+    ],
+    "NumFlows": [
+        "1",
+        "2",
+        "3",
+        "5",
+    ],
+    "Width": ["5"],
+}
+
+_WEIGHTED_MUX_ILLEGAL_PARAMS = {
+    ("MaxAccumulatedWeight", "MaxWeight"): [
+        ("1", "2"),
+        ("1", "3"),
+    ],
+}
+
+# Exercise the same four interface contracts as the other unstable muxes,
+# separately from the weight sweep to keep the matrix focused.
+_WEIGHTED_MUX_PROTOCOL_PARAMS = {
+    "EnableAssertPushDataStability": [
+        "0",
+        "1",
+    ],
+    "EnableAssertPushValidStability": [
+        "0",
+        "1",
+    ],
+    "EnableCoverPushBackpressure": [
+        "0",
+        "1",
+    ],
+    "MaxAccumulatedWeight": ["5"],
+    "MaxWeight": ["3"],
+    "NumFlows": [
+        "1",
+        "3",
+    ],
+    "Width": ["1"],
+}
+
+_WEIGHTED_MUX_PROTOCOL_ILLEGAL_PARAMS = {
+    (
+        "EnableCoverPushBackpressure",
+        "EnableAssertPushValidStability",
+        "EnableAssertPushDataStability",
+    ): [
+        ("0", "0", "1"),
+        ("0", "1", "0"),
+        ("0", "1", "1"),
+        ("1", "0", "1"),
+    ],
+}
+
+verilog_library(
+    name = "br_flow_mux_weighted_lru_fpv_monitor",
+    srcs = ["br_flow_mux_weighted_lru_fpv_monitor.sv"],
+    deps = [
+        ":br_flow_mux_weighted_basic_fpv_monitor",
+        "//arb/fpv:lru_basic_fpv_monitor",
+        "//flow/rtl:br_flow_mux_weighted_lru",
+    ],
+)
+
+verilog_elab_test(
+    name = "br_flow_mux_weighted_lru_fpv_monitor_elab_test",
+    tool = "slang",
+    top = "br_flow_mux_weighted_lru",
+    deps = [":br_flow_mux_weighted_lru_fpv_monitor"],
+)
+
+br_verilog_fpv_test_tools_suite(
+    name = "br_flow_mux_weighted_lru_test_suite",
+    illegal_param_combinations = _WEIGHTED_MUX_ILLEGAL_PARAMS,
+    params = _WEIGHTED_MUX_PARAMS,
+    tools = {"jg": "br_flow_mux_weighted_lru_fpv.jg.tcl"},
+    top = "br_flow_mux_weighted_lru",
+    deps = [":br_flow_mux_weighted_lru_fpv_monitor"],
+)
+
+br_verilog_fpv_test_tools_suite(
+    name = "br_flow_mux_weighted_lru_protocol_test_suite",
+    illegal_param_combinations = _WEIGHTED_MUX_PROTOCOL_ILLEGAL_PARAMS,
+    params = _WEIGHTED_MUX_PROTOCOL_PARAMS,
+    tools = {"jg": "br_flow_mux_weighted_lru_fpv.jg.tcl"},
+    top = "br_flow_mux_weighted_lru",
+    deps = [":br_flow_mux_weighted_lru_fpv_monitor"],
+)
+
+verilog_library(
+    name = "br_flow_mux_weighted_rr_fpv_monitor",
+    srcs = ["br_flow_mux_weighted_rr_fpv_monitor.sv"],
+    deps = [
+        ":br_flow_mux_weighted_basic_fpv_monitor",
+        "//arb/fpv:rr_basic_fpv_monitor",
+        "//flow/rtl:br_flow_mux_weighted_rr",
+    ],
+)
+
+verilog_elab_test(
+    name = "br_flow_mux_weighted_rr_fpv_monitor_elab_test",
+    tool = "slang",
+    top = "br_flow_mux_weighted_rr",
+    deps = [":br_flow_mux_weighted_rr_fpv_monitor"],
+)
+
+br_verilog_fpv_test_tools_suite(
+    name = "br_flow_mux_weighted_rr_test_suite",
+    illegal_param_combinations = _WEIGHTED_MUX_ILLEGAL_PARAMS,
+    params = dict(
+        _WEIGHTED_MUX_PARAMS,
+        UsePairwiseArb = [
+            "0",
+            "1",
+        ],
+    ),
+    tools = {"jg": "br_flow_mux_weighted_rr_fpv.jg.tcl"},
+    top = "br_flow_mux_weighted_rr",
+    deps = [":br_flow_mux_weighted_rr_fpv_monitor"],
+)
+
+br_verilog_fpv_test_tools_suite(
+    name = "br_flow_mux_weighted_rr_protocol_test_suite",
+    illegal_param_combinations = _WEIGHTED_MUX_PROTOCOL_ILLEGAL_PARAMS,
+    params = dict(
+        _WEIGHTED_MUX_PROTOCOL_PARAMS,
+        UsePairwiseArb = [
+            "0",
+            "1",
+        ],
+    ),
+    tools = {"jg": "br_flow_mux_weighted_rr_fpv.jg.tcl"},
+    top = "br_flow_mux_weighted_rr",
+    deps = [":br_flow_mux_weighted_rr_fpv_monitor"],
+)
+
 # Bedrock-RTL Flow-Controlled Burst Multiplexer (Round-Robin)(Unstable)
 
 verilog_library(
