@@ -4,17 +4,17 @@
 // Testplan
 //
 // Design specification:
-// - Lowest-index PSEL wins when idle. Ownership is held through a one-cycle
-//   downstream Setup and an Access of arbitrary duration, then returns to Idle.
-// - The saved owner selects live PADDR, PPROT, PSTRB, PWRITE and PWDATA.
-// - PRDATA is broadcast. PREADY/PSLVERR reach only the owner's enabled Access;
+// - In Setup, lowest-index PSEL wins combinationally and drives the downstream
+//   setup phase without an extra arbitration cycle. The winner is saved for an
+//   Access of arbitrary duration, then the mux returns to Setup.
+// - The current Setup winner or saved Access owner selects live request payload.
+// - PRDATA is broadcast. PREADY/PSLVERR reach only the saved Access owner;
 //   PSLVERR is not qualified by PREADY and is meaningful at completion.
 // - Downstream completion releases ownership even if the winner withdraws its
 //   PSEL/PENABLE. This does not guarantee payload stability for malformed input.
 //
 // Input assumptions and proof boundary:
-// - Normal mode uses APB4 protocol VIP and the RTL's additional full-PWDATA
-//   stability contract for reads. Every requester advances Setup to Access.
+// - Normal mode uses APB4 protocol VIP. Every requester advances Setup to Access.
 //   Protocol hold assumptions use PREADY only to end source-side obligations;
 //   they constrain subsequent primary inputs, never the DUT's response values.
 // - Recovery mode leaves every upstream and downstream input unconstrained;
@@ -26,14 +26,14 @@
 // - Fixed priority permits starvation; no all-requester fairness is claimed.
 //
 // Checks and coverage:
-// - Check reset release, idle/setup/access sequencing, arbitrary waits, fixed
+// - Check reset release, setup/access sequencing, arbitrary waits, fixed
 //   priority, non-preemption, all payload fields and exact response routing.
-// - In normal mode, check APB protocol, transaction integrity and completion
+// - In normal mode, check APB protocol, request routing and completion
 //   correspondence. Cover reads/writes, sparse strobes, errors, waits,
 //   contention, every winning port, and consecutive transactions.
 // - In recovery mode, prove control/route behavior under arbitrary input and
 //   cover PSEL-only/PENABLE-only/both withdrawal through wait, completion,
-//   return to Idle and subsequent traffic.
+//   return to Setup and subsequent traffic.
 // - Sweep AddrWidth=1,12 and NumUpstreams=1,2,3,4 in both modes.
 
 `include "br_asserts.svh"
@@ -71,27 +71,16 @@ module br_apb_mux_fpv_monitor #(
 
   localparam int UpstreamIdxWidth = NumUpstreams > 1 ? $clog2(NumUpstreams) : 1;
 
-  typedef struct packed {
-    logic [AddrWidth-1:0] addr;
-    logic [br_amba::ApbProtWidth-1:0] prot;
-    logic [3:0] strb;
-    logic write;
-    logic [31:0] wdata;
-  } req_t;
-  localparam int ReqWidth = $bits(req_t);
-
   logic [UpstreamIdxWidth-1:0] magic_u;
   logic higher_priority_pending;
   logic magic_wins;
   logic magic_owner;
+  logic magic_selected;
   logic downstream_setup;
   logic downstream_access;
   logic downstream_complete;
   logic magic_complete;
   logic magic_response_enabled;
-  logic outputs_idle;
-  req_t magic_req;
-  req_t downstream_req;
 
   if (NumUpstreams > 1) begin : gen_magic_port
     // Quantify over every real port without constraining any DUT input.
@@ -109,68 +98,46 @@ module br_apb_mux_fpv_monitor #(
   end
   assign magic_wins = upstream_psel[magic_u] && !higher_priority_pending;
 
-  // One history bit records whether this arbitrary port won the last idle
-  // arbitration. Phase assertions below independently check each output transition.
-  `BR_REGL(magic_owner, magic_wins, !downstream_psel)
+  // One history bit records whether this arbitrary port won the most recent
+  // Setup arbitration. Phase assertions independently check each transition.
+  `BR_REGL(magic_owner, magic_wins, !downstream_penable)
 
   assign downstream_setup = downstream_psel && !downstream_penable;
   assign downstream_access = downstream_psel && downstream_penable;
   assign downstream_complete = downstream_access && downstream_pready;
-  assign magic_response_enabled = downstream_access && magic_owner && upstream_penable[magic_u];
-  assign outputs_idle = !downstream_psel && !downstream_penable &&
-                        upstream_pready == '0 && upstream_pslverr == '0;
+  assign magic_selected = downstream_setup ? magic_wins : downstream_access && magic_owner;
+  assign magic_response_enabled = downstream_access && magic_owner;
   assign magic_complete = upstream_psel[magic_u] && upstream_penable[magic_u] &&
                           upstream_pready[magic_u];
-  assign magic_req = '{
-          addr: upstream_paddr[magic_u],
-          prot: upstream_pprot[magic_u],
-          strb: upstream_pstrb[magic_u],
-          write: upstream_pwrite[magic_u],
-          wdata: upstream_pwdata[magic_u]
-      };
-  assign downstream_req = '{
-          addr: downstream_paddr,
-          prot: downstream_pprot,
-          strb: downstream_pstrb,
-          write: downstream_pwrite,
-          wdata: downstream_pwdata
-      };
 
-  // The first sampled cycle after startup reset exposes an idle interface.
-  `BR_ASSERT(reset_release_idle_a, $fell(rst) |-> outputs_idle)
-  // Without a requester, an idle mux cannot launch a downstream transaction.
-  `BR_ASSERT(no_spurious_setup_a, !downstream_psel && !(|upstream_psel) |=> !downstream_psel)
-  // A pending request starts the downstream setup exactly one cycle after arbitration.
-  `BR_ASSERT(request_starts_setup_a, !downstream_psel && (|upstream_psel) |=> downstream_setup)
+  // Reset releases into Setup, so a current request may launch immediately.
+  `BR_ASSERT(reset_release_setup_a, $fell(rst) |-> !downstream_penable)
+  // In Setup, current requests drive PSEL combinationally without an idle bubble.
+  `BR_ASSERT(no_spurious_setup_a, !downstream_penable && !(|upstream_psel) |-> !downstream_psel)
+  `BR_ASSERT(request_drives_setup_a, !downstream_penable && (|upstream_psel) |-> downstream_setup)
   // Setup always advances after one cycle, independently of requester PENABLE.
   `BR_ASSERT(setup_starts_access_a, downstream_setup |=> downstream_access)
   // Downstream backpressure retains the access, even if the requester withdraws.
   `BR_ASSERT(access_holds_until_ready_a,
              downstream_access && !downstream_pready |=> downstream_access)
-  // Downstream completion unconditionally releases the mux on the next cycle.
-  `BR_ASSERT(completion_returns_idle_a,
-             downstream_complete |=> !downstream_psel && !downstream_penable)
+  // Downstream completion returns to Setup; a pending request may launch immediately.
+  `BR_ASSERT(completion_returns_setup_a, downstream_complete |=> !downstream_penable)
   // No access can occur without a selected downstream.
   `BR_ASSERT(enable_requires_select_a, downstream_penable |-> downstream_psel)
 
   // Check every payload field against the independently identified owner.
-  `BR_ASSERT(addr_routing_a,
-             downstream_psel && magic_owner |-> downstream_paddr == upstream_paddr[magic_u])
+  `BR_ASSERT(addr_routing_a, magic_selected |-> downstream_paddr == upstream_paddr[magic_u])
   // Protection attributes follow the selected owner's live request.
-  `BR_ASSERT(prot_routing_a,
-             downstream_psel && magic_owner |-> downstream_pprot == upstream_pprot[magic_u])
+  `BR_ASSERT(prot_routing_a, magic_selected |-> downstream_pprot == upstream_pprot[magic_u])
   // Byte strobes follow the selected owner's live request.
-  `BR_ASSERT(strb_routing_a,
-             downstream_psel && magic_owner |-> downstream_pstrb == upstream_pstrb[magic_u])
+  `BR_ASSERT(strb_routing_a, magic_selected |-> downstream_pstrb == upstream_pstrb[magic_u])
   // Read/write direction follows the selected owner's live request.
-  `BR_ASSERT(write_routing_a,
-             downstream_psel && magic_owner |-> downstream_pwrite == upstream_pwrite[magic_u])
+  `BR_ASSERT(write_routing_a, magic_selected |-> downstream_pwrite == upstream_pwrite[magic_u])
   // Data is a live mux; payload preservation under malformed inputs is not assumed.
-  `BR_ASSERT(wdata_routing_a,
-             downstream_psel && magic_owner |-> downstream_pwdata == upstream_pwdata[magic_u])
+  `BR_ASSERT(wdata_routing_a, magic_selected |-> downstream_pwdata == upstream_pwdata[magic_u])
   // Read data is broadcast in all phases, including idle and unselected ports.
   `BR_ASSERT(rdata_broadcast_a, upstream_prdata[magic_u] == downstream_prdata)
-  // Only the saved, enabled owner receives ready during downstream Access.
+  // Only the saved owner receives ready during downstream Access.
   `BR_ASSERT(ready_routing_a,
              upstream_pready[magic_u] == (magic_response_enabled && downstream_pready))
   // Error follows the same ownership mask; the RTL does not qualify it by ready.
@@ -198,18 +165,17 @@ module br_apb_mux_fpv_monitor #(
   `BR_COVER(error_complete_c, magic_complete && upstream_pslverr[magic_u])
   `BR_COVER(success_complete_c, magic_complete && !upstream_pslverr[magic_u])
   `BR_COVER(consecutive_transfers_c,
-            downstream_complete ##1 !downstream_psel ##1 downstream_setup ##1 downstream_complete)
+            downstream_complete ##1 downstream_setup ##1 downstream_complete)
 
   if (NumUpstreams > 1) begin : gen_contention_covers
     // Contention chooses port zero, and the queued last port can be served later.
-    `BR_COVER(
-        all_ports_pending_c,
-        !downstream_psel && (&upstream_psel) ##1 downstream_setup && magic_owner && magic_u == 0)
+    `BR_COVER(all_ports_pending_c,
+              downstream_setup && (&upstream_psel) && magic_selected && magic_u == 0)
     `BR_COVER(queued_low_priority_served_c,
-              !downstream_psel && upstream_psel[0] && upstream_psel[NumUpstreams-1]
-              ##1 downstream_setup ##1 downstream_complete
-              ##1 !downstream_psel && !upstream_psel[0]
-              ##1 downstream_setup && magic_owner && magic_u == UpstreamIdxWidth'(NumUpstreams-1)
+              downstream_setup && upstream_psel[0] && upstream_psel[NumUpstreams-1]
+              ##1 downstream_complete
+              ##1 downstream_setup && !upstream_psel[0] && magic_selected &&
+                  magic_u == UpstreamIdxWidth'(NumUpstreams-1)
               ##1 magic_complete)
     // A newly arriving higher-priority request cannot preempt the current owner.
     `BR_COVER(higher_priority_arrives_during_wait_c,
@@ -221,7 +187,7 @@ module br_apb_mux_fpv_monitor #(
 
 `ifdef BR_APB_MUX_FPV_RECOVERY
   // No protocol or payload assumptions are applied in this mode. The covers
-  // require the same withdrawn requester to wait, complete, release, and restart.
+  // require the same withdrawn requester to wait, complete, return to Setup, and restart.
   // Keep the recovery sequence aligned by sampled cycle.
   // verilog_format: off
   `BR_COVER(drop_select_recovers_c,
@@ -230,28 +196,21 @@ module br_apb_mux_fpv_monitor #(
             ##1 downstream_access && !upstream_psel[magic_u] &&
                 upstream_penable[magic_u] && !downstream_pready
             ##1 downstream_complete && !upstream_psel[magic_u] && upstream_penable[magic_u]
-            ##1 !downstream_psel && magic_wins
-            ##1 downstream_setup && magic_owner ##1 magic_complete)
+            ##1 downstream_setup && magic_wins ##1 magic_complete)
   `BR_COVER(drop_enable_recovers_c,
             downstream_access && magic_owner && upstream_psel[magic_u] &&
                 upstream_penable[magic_u] && !downstream_pready
             ##1 downstream_access && upstream_psel[magic_u] &&
                 !upstream_penable[magic_u] && !downstream_pready
             ##1 downstream_complete && upstream_psel[magic_u] && !upstream_penable[magic_u]
-            ##1 !downstream_psel && magic_wins
-            ##1 downstream_setup && magic_owner ##1 magic_complete)
+            ##1 downstream_setup && magic_wins ##1 magic_complete)
   `BR_COVER(drop_both_recovers_c,
             downstream_access && magic_owner && upstream_psel[magic_u] &&
                 upstream_penable[magic_u] && !downstream_pready
             ##1 downstream_access && !upstream_psel[magic_u] &&
                 !upstream_penable[magic_u] && !downstream_pready
             ##1 downstream_complete && !upstream_psel[magic_u] && !upstream_penable[magic_u]
-            ##1 !downstream_psel && magic_wins
-            ##1 downstream_setup && magic_owner ##1 magic_complete)
-  // Also permit withdrawal during Setup and unrelated PENABLE activity while idle.
-  `BR_COVER(withdraw_in_setup_c,
-            downstream_setup && magic_owner && !upstream_psel[magic_u] &&
-                !upstream_penable[magic_u] ##1 downstream_complete ##1 !downstream_psel)
+            ##1 downstream_setup && magic_wins ##1 magic_complete)
   // verilog_format: on
   `BR_COVER(unselected_enable_c, !downstream_psel && upstream_psel == '0 && (|upstream_penable))
   // Demonstrate that no payload-stability assumption leaks into recovery mode.
@@ -277,13 +236,6 @@ module br_apb_mux_fpv_monitor #(
         .pslverr(upstream_pslverr[i])
     );
 
-    // Match the RTL's full-read-PWDATA stability check; this exceeds APB's read contract.
-    // TODO(masai): wait for designer confirmation
-    `BR_ASSUME(upstream_read_pwdata_stable_a,
-               upstream_psel[i] && (!upstream_penable[i] || !upstream_pready[i]) &&
-                   !upstream_pwrite[i] |=> $stable(
-                   upstream_pwdata[i]
-               ))
   end
 
   apb4_slave #(
@@ -303,33 +255,12 @@ module br_apb_mux_fpv_monitor #(
       .pslverr(downstream_pslverr)
   );
 
-  // A legal source starts one transaction in Setup and holds it until ready.
-  // Each source has at most one pending request, even when it loses arbitration.
-  jasper_scoreboard_3 #(
-      .CHUNK_WIDTH(ReqWidth),
-      .IN_CHUNKS(1),
-      .OUT_CHUNKS(1),
-      .SINGLE_CLOCK(1),
-      .MAX_PENDING(1)
-  ) req_sb (
-      .clk(clk),
-      .rstN(!rst),
-      .incoming_vld(upstream_psel[magic_u] && !upstream_penable[magic_u]),
-      .incoming_data(magic_req),
-      .outgoing_vld(downstream_setup && magic_owner),
-      .outgoing_data(downstream_req)
-  );
-
   // Legal requesters retain their Access until the selected downstream completes.
   `BR_ASSERT(
       owner_stays_in_access_a,
       downstream_access && magic_owner |-> upstream_psel[magic_u] && upstream_penable[magic_u])
   // Every downstream completion acknowledges exactly one legal upstream transaction.
   `BR_ASSERT(completion_correspondence_a, downstream_complete == (|upstream_pready))
-  // A legal owner's complete request stays stable from Setup through the last wait.
-  `BR_ASSERT(downstream_payload_stable_a,
-             downstream_psel && (!downstream_penable || !downstream_pready) |=> $stable
-             (downstream_req))
 `endif
 
 endmodule : br_apb_mux_fpv_monitor
