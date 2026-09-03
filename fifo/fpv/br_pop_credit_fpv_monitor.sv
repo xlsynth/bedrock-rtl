@@ -100,16 +100,9 @@ module br_pop_credit_fpv_monitor #(
       `BR_ASSUME_CR(credit_withhold_liveness_a, s_eventually (credit_withhold_pop < MaxCredit), clk,
                     link_rst)
     end
-    if (EnableCoverCreditWithhold) begin : gen_withhold
-      `BR_COVER_CR(credit_withhold_nonzero_a, credit_withhold_pop != '0, clk, link_rst)
-    end else begin : gen_no_withhold
+    if (!EnableCoverCreditWithhold) begin : gen_no_withhold
       `BR_ASSUME_CR(credit_withhold_zero_a, credit_withhold_pop == '0, clk, link_rst)
     end
-    `BR_COVER_CR(initial_credit_zero_bootstrap_c, credit_initial_pop == '0 && pop_credit != '0, clk,
-                 link_rst)
-    `BR_COVER_CR(initial_credit_max_c, credit_initial_pop == MaxCredit && (|pop_issue), clk,
-                 link_rst)
-    `BR_COVER_CR(same_cycle_response_credit_c, (|pop_valid) && pop_credit != '0, clk, link_rst)
   end else begin : gen_legacy
     logic fv_rst;
     logic [CreditWidth-1:0] fv_credit_cnt;

@@ -82,7 +82,7 @@ module br_fifo_shared_dynamic_ctrl_push_credit_pop_credit_fpv_monitor #(
       .*
   );
 
-  br_fifo_credit_fpv_ram #(
+  br_fifo_fv_ram #(
       .NumWritePorts(NumWritePorts),
       .NumReadPorts(NumReadPorts),
       .Depth(Depth),
@@ -91,6 +91,7 @@ module br_fifo_shared_dynamic_ctrl_push_credit_pop_credit_fpv_monitor #(
   ) data_ram_model (
       .clk,
       .rst(fv_rst),
+      .magic_bit_index('0),
       .ram_wr_valid(data_ram_wr_valid),
       .ram_wr_addr(data_ram_wr_addr),
       .ram_wr_data(data_ram_wr_data),
@@ -100,7 +101,7 @@ module br_fifo_shared_dynamic_ctrl_push_credit_pop_credit_fpv_monitor #(
       .ram_rd_data(data_ram_rd_data)
   );
 
-  br_fifo_credit_fpv_ram #(
+  br_fifo_fv_ram #(
       .NumWritePorts(NumWritePorts),
       .NumReadPorts(NumReadPorts),
       .Depth(Depth),
@@ -109,6 +110,7 @@ module br_fifo_shared_dynamic_ctrl_push_credit_pop_credit_fpv_monitor #(
   ) ptr_ram_model (
       .clk,
       .rst(fv_rst),
+      .magic_bit_index('0),
       .ram_wr_valid(ptr_ram_wr_valid),
       .ram_wr_addr(ptr_ram_wr_addr),
       .ram_wr_data(ptr_ram_wr_data),

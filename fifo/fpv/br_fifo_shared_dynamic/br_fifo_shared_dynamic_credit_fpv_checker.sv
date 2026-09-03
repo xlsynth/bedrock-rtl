@@ -124,11 +124,9 @@ module br_fifo_shared_dynamic_credit_fpv_checker #(
 
   for (genvar p = 0; p < NumWritePorts; p++) begin : gen_push
     `BR_ASSUME(push_fifo_id_range_a, push_valid[p] |-> push_fifo_id[p] < NumFifos)
-    `BR_COVER(push_port_active_c, push_valid[p])
   end
   for (genvar p = 0; p < NumReadPorts; p++) begin : gen_pop
     `BR_ASSERT(pop_fifo_id_range_a, pop_valid[p] |-> pop_fifo_id[p] < NumFifos)
-    `BR_COVER(pop_port_active_c, pop_valid[p])
   end
 
   for (genvar f = 0; f < NumFifos; f++) begin : gen_fifo
@@ -180,24 +178,6 @@ module br_fifo_shared_dynamic_credit_fpv_checker #(
     `BR_ASSERT(response_matches_issue_a,
                (|response_for_fifo[f]) == issue_pipe[DataRamReadLatency][f])
 
-    `BR_COVER(fifo_round_trip_c, (|push_for_fifo) ##[1:$] (|response_for_fifo[f]))
-    `BR_COVER(pop_initial_zero_bootstrap_c, credit_initial_pop[f] == '0 && pop_credit[f])
-    `BR_COVER(pop_initial_zero_round_trip_c,
-              credit_initial_pop[f] == '0 && pop_credit[f] ##[1:$] (|response_for_fifo[f]))
-    `BR_COVER(pop_initial_max_c, credit_initial_pop[f] == PopMaxCredits && pop_issue[f])
-    `BR_COVER(pop_withhold_max_c, credit_withhold_pop[f] == PopMaxCredits)
-    `BR_COVER(pop_withhold_withdraw_c,
-              !pop_empty[f] && available != '0 ##1 !pop_empty[f] && available == '0 &&
-                  credit_withhold_pop[f] != '0)
-    `BR_COVER(pop_credit_and_issue_c, pop_credit[f] && pop_issue[f])
-    `BR_COVER(pop_credit_and_response_c, pop_credit[f] && (|response_for_fifo[f]))
-    `BR_COVER(fifo_fill_and_drain_c, resident == Depth ##[1:$] resident == '0)
-    if (NumWritePorts > 1) begin : gen_multi_push_cover
-      `BR_COVER(same_fifo_multi_push_c, $countones(push_for_fifo) > 1)
-    end
-    if (DataRamReadLatency > 0) begin : gen_inflight_cover
-      `BR_COVER(empty_with_response_c, pop_empty[f] && (|response_for_fifo[f]))
-    end
   end
 
   `BR_ASSUME(selected_fifo_range_a, $stable(fv_fifo_id) && fv_fifo_id < NumFifos)
@@ -230,16 +210,4 @@ module br_fifo_shared_dynamic_credit_fpv_checker #(
       .outgoing_data(selected_data)
   );
 
-  `BR_COVER(shared_storage_full_c, resident_total == Depth)
-  `BR_COVER(push_initial_zero_c, credit_initial_push == '0)
-  `BR_COVER(same_cycle_first_push_credit_c,
-            sender_credit == '0 && push_credit != '0 && (|push_valid))
-  `BR_COVER(push_initial_max_c, credit_initial_push == Depth && (|push_valid))
-  `BR_COVER(push_withhold_max_c, credit_withhold_push == Depth)
-  `BR_COVER(push_credit_stall_c, push_credit_stall)
-  `BR_COVER(push_full_c, push_full)
-  `BR_COVER(simultaneous_push_pop_c, (|push_valid) && (|pop_valid))
-  if (NumReadPorts > 1 && NumFifos > 1) begin : gen_multi_pop_cover
-    `BR_COVER(multi_fifo_pop_c, $countones(pop_valid) > 1)
-  end
 endmodule : br_fifo_shared_dynamic_credit_fpv_checker

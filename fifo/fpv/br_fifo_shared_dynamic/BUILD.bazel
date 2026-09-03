@@ -531,7 +531,7 @@ verilog_library(
     srcs = ["br_fifo_shared_dynamic_ctrl_push_credit_pop_credit_fpv_monitor.sv"],
     deps = [
         ":br_fifo_shared_dynamic_credit_fpv_checker",
-        "//fifo/fpv/br_fifo_ext_arb:br_fifo_credit_fpv_ram",
+        "//fifo/fpv:br_fifo_fv_ram",
         "//fifo/rtl:br_fifo_shared_dynamic_ctrl_push_credit_pop_credit",
         "//macros:br_fv",
     ],

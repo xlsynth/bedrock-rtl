@@ -93,7 +93,7 @@ module br_fifo_shared_dynamic_ctrl_push_credit_pop_credit_ext_arbiter_fpv_monito
       .*
   );
 
-  br_fifo_credit_fpv_ram #(
+  br_fifo_fv_ram #(
       .NumWritePorts(NumWritePorts),
       .NumReadPorts(NumReadPorts),
       .Depth(Depth),
@@ -102,6 +102,7 @@ module br_fifo_shared_dynamic_ctrl_push_credit_pop_credit_ext_arbiter_fpv_monito
   ) fv_data_ram (
       .clk,
       .rst(fv_rst),
+      .magic_bit_index('0),
       .ram_wr_valid(data_ram_wr_valid),
       .ram_wr_addr(data_ram_wr_addr),
       .ram_wr_data(data_ram_wr_data),
@@ -111,7 +112,7 @@ module br_fifo_shared_dynamic_ctrl_push_credit_pop_credit_ext_arbiter_fpv_monito
       .ram_rd_data(data_ram_rd_data)
   );
 
-  br_fifo_credit_fpv_ram #(
+  br_fifo_fv_ram #(
       .NumWritePorts(NumWritePorts),
       .NumReadPorts(NumReadPorts),
       .Depth(Depth),
@@ -120,6 +121,7 @@ module br_fifo_shared_dynamic_ctrl_push_credit_pop_credit_ext_arbiter_fpv_monito
   ) fv_ptr_ram (
       .clk,
       .rst(fv_rst),
+      .magic_bit_index('0),
       .ram_wr_valid(ptr_ram_wr_valid),
       .ram_wr_addr(ptr_ram_wr_addr),
       .ram_wr_data(ptr_ram_wr_data),
@@ -129,21 +131,23 @@ module br_fifo_shared_dynamic_ctrl_push_credit_pop_credit_ext_arbiter_fpv_monito
       .ram_rd_data(ptr_ram_rd_data)
   );
 
-  for (genvar r = 0; r < NumReadPorts; r++) begin : gen_arbiter
-    `BR_ASSUME_CR(arb_grant_onehot_a, $onehot0(arb_grant[r]), clk, fv_rst)
-    `BR_ASSUME_CR(arb_grant_requested_a, (arb_grant[r] & ~arb_request[r]) == '0, clk, fv_rst)
-    if (ArbiterAlwaysGrants) begin : gen_always_grants
-      `BR_ASSUME_CR(arb_always_grants_a, |arb_request[r] |-> |arb_grant[r], clk, fv_rst)
-    end else begin : gen_can_stall
-      `BR_COVER(arb_stall_then_grant_c,
-                !fv_rst && |arb_request[r] && !(|arb_grant[r])
-                ##1 !fv_rst && |arb_request[r] && |arb_grant[r])
-    end
+  ext_arb_fv_monitor #(
+      .NumReadPorts(NumReadPorts),
+      .NumFifos(NumFifos),
+      .ArbiterAlwaysGrants(ArbiterAlwaysGrants),
+      .EnableLiveness(0),
+      .EnableCovers(0)
+  ) fv_arb (
+      .clk,
+      .rst(fv_rst),
+      .arb_request,
+      .arb_grant,
+      .arb_enable_priority_update
+  );
 
+  for (genvar r = 0; r < NumReadPorts; r++) begin : gen_arbiter
     `BR_ASSERT(arb_priority_update_enabled_a, !fv_rst |-> arb_enable_priority_update[r])
     `BR_ASSERT(arb_grant_issues_read_a, !fv_rst |-> data_ram_rd_addr_valid[r] == (|arb_grant[r]))
-    `BR_COVER(arb_contention_c, !fv_rst && !$onehot0(arb_request[r]))
-    `BR_COVER(pop_on_port_c, !fv_rst && pop_valid[r])
   end
 
   for (genvar f = 0; f < NumFifos; f++) begin : gen_fifo

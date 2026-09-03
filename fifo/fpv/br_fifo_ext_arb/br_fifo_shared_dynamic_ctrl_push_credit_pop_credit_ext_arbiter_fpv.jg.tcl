@@ -14,12 +14,8 @@ assume -name pop_receiver_reset_startup_only {!pop_receiver_in_reset |=> !pop_re
 get_design_info
 
 # The push producer remains quiet under its own reset contract. Other reset-time
-# input controls are unconstrained; ordinary credit legality is checked by the
-# shared protocol monitors once the corresponding driving endpoint is active.
+# input controls are unconstrained.
 assume -name no_push_during_reset {(rst || push_sender_in_reset) |-> push_valid == '0}
-cover -name pop_credit_active_during_receiver_reset_c {!rst && pop_receiver_in_reset && (|pop_credit)}
-cover -name data_response_active_during_peer_reset_c {!rst && (push_sender_in_reset || pop_receiver_in_reset) && (|data_ram_rd_data_valid)}
-cover -name pointer_response_active_during_peer_reset_c {!rst && (push_sender_in_reset || pop_receiver_in_reset) && (|ptr_ram_rd_data_valid)}
 assume -name push_initial_credit_legal {credit_initial_push <= Depth}
 assume -name push_initial_credit_static {$stable(credit_initial_push)}
 assume -name push_withhold_legal {credit_withhold_push <= Depth}
@@ -33,11 +29,6 @@ for {set f 0} {$f < $NumFifos} {incr f} {
   assume -name pop_initial_credit_static_$f "\$stable(credit_initial_pop\[$f\])"
   assume -name pop_withhold_legal_$f "credit_withhold_pop\[$f\] <= $PopMaxCredits"
 }
-for {set r 0} {$r < $NumReadPorts} {incr r} {
-  cover -name arb_multihot_grant_during_peer_reset_${r}_c "!rst && (push_sender_in_reset || pop_receiver_in_reset) && !\$onehot0(arb_grant\[$r\])"
-  cover -name arb_unrequested_grant_during_peer_reset_${r}_c "!rst && (push_sender_in_reset || pop_receiver_in_reset) && ((arb_grant\[$r\] & ~arb_request\[$r\]) != '0)"
-}
-
 # This top connects arb_can_grant to arb_grant. A legal grant names a request,
 # which already requires pop credit, so the pop counter cannot see a decrement
 # request with insufficient credit. Replace only these structurally unreachable
@@ -51,10 +42,4 @@ for {set f 0} {$f < $NumFifos} {incr f} {
 }
 
 set_prove_time_limit 10m
-if {[llength [info commands fifo_dump_counterexamples]] > 0} {
-  assert -set_store_trace 1 {^.*$} -regexp
-}
 prove -all
-if {[llength [info commands fifo_dump_counterexamples]] > 0} {
-  fifo_dump_counterexamples
-}

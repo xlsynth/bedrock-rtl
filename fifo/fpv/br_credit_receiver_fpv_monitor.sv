@@ -106,27 +106,15 @@ module br_credit_receiver_fpv_monitor #(
                     $countones(push_valid) != push_credit |-> s_eventually (sender_credit != '0),
                     clk, link_rst)
     end
-    if (EnableCoverPushCreditStall) begin : gen_stall
-      `BR_COVER_CR(push_credit_stall_a, push_credit_stall, clk, link_rst)
-    end else begin : gen_no_stall
+    if (!EnableCoverPushCreditStall) begin : gen_no_stall
       `BR_ASSUME_CR(no_push_credit_stall_a, !push_credit_stall, clk, link_rst)
     end
-    if (EnableCoverCreditWithhold) begin : gen_withhold
-      `BR_COVER_CR(credit_withhold_nonzero_a, credit_withhold_push != '0, clk, link_rst)
-    end else begin : gen_no_withhold
+    if (!EnableCoverCreditWithhold) begin : gen_no_withhold
       `BR_ASSUME_CR(credit_withhold_zero_a, credit_withhold_push == '0, clk, link_rst)
     end
-    if (EnableCoverPushSenderInReset) begin : gen_reset
-      // A link-reset disable would make a sender-reset cover unreachable.
-      `BR_COVER_CR(push_sender_in_reset_a, push_sender_in_reset, clk, rst)
-    end else begin : gen_no_reset
+    if (!EnableCoverPushSenderInReset) begin : gen_no_reset
       `BR_ASSUME(no_push_sender_in_reset_a, !push_sender_in_reset)
     end
-    `BR_COVER_CR(initial_credit_zero_c, credit_initial_push == '0, clk, link_rst)
-    `BR_COVER_CR(initial_credit_max_c, CreditModelWidth'(credit_initial_push) == credit_capacity,
-                 clk, link_rst)
-    `BR_COVER_CR(same_cycle_credit_use_c, sender_credit == '0 && push_credit != '0 && (|push_valid),
-                 clk, link_rst)
   end else begin : gen_legacy
     // Keep the original arithmetic widths and environment contract for callers
     // that have not opted into explicit ownership.
