@@ -144,7 +144,10 @@ module br_cdc_fifo_ctrl_pop_1r1w #(
 
   // Tag this signal as needing max delay checks
   // ri lint_check_off ONE_CONN_PER_LINE
+  // slang lint_save
+  // slang lint_off ignored-macro-paste
   `BR_GATE_CDC_MAXDEL_BUS(pop_ram_rd_data_maxdel, pop_ram_rd_data, Width)
+  // slang lint_restore
   // ri lint_check_on ONE_CONN_PER_LINE
 
   //------------------------------------------

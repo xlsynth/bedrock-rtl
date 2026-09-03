@@ -293,8 +293,11 @@ module br_credit_receiver #(
   if (EnableCoverCreditWithhold) begin : gen_credit_withhold_impl_checks
     `BR_ASSERT_IMPL(over_withhold_a,
                     credit_withhold > (credit_count + pop_credit) |-> !push_credit_internal)
+    // slang lint_save
+    // slang lint_off int-bool-conv
     `BR_ASSERT_IMPL(withhold_and_release_a,
                     credit_count == credit_withhold && push_credit_internal |-> pop_credit)
+    // slang lint_restore
   end
 
   `BR_ASSERT_IMPL(push_credit_in_range_a, push_credit <= PushCreditMaxChange)
