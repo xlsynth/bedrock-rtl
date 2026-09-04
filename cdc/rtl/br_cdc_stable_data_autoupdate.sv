@@ -41,7 +41,7 @@ module br_cdc_stable_data_autoupdate #(
 
   // Send into the register if the data has changed but hasn't been
   // crossed over yet.
-  assign src_valid = src_data != src_data_reg;
+  assign src_valid = !src_rst && src_data != src_data_reg;
 
   br_cdc_reg #(
       .Width(Width),
