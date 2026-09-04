@@ -56,8 +56,10 @@ module br_cdc_stable_data #(
       .Width(Width),
       .RegisterResetActive(RegisterResetActive),
       .NumSyncStages(NumSyncStages),
-      // There musn't be push backpressure
-      .EnableCoverPushBackpressure(0)
+      // There mustn't be push backpressure
+      .EnableCoverPushBackpressure(0),
+      // Destination is always ready, so pop backpressure is unreachable.
+      .EnableCoverPopBackpressure(0)
   ) br_cdc_reg_inst (
       .push_clk  (src_clk),    // ri lint_check_waive SAME_CLOCK_NAME
       .push_rst  (src_rst),
