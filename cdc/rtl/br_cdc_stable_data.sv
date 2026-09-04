@@ -56,7 +56,7 @@ module br_cdc_stable_data #(
       .Width(Width),
       .RegisterResetActive(RegisterResetActive),
       .NumSyncStages(NumSyncStages),
-      // There musn't be push backpressure
+      // There mustn't be push backpressure
       .EnableCoverPushBackpressure(0),
       // Destination is always ready, so pop backpressure is unreachable.
       .EnableCoverPopBackpressure(0)
