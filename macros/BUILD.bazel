@@ -39,6 +39,7 @@ verilog_library(
     name = "br_registers",
     hdrs = ["br_registers.svh"],
     visibility = ["//visibility:public"],
+    deps = [":br_asserts"],
 )
 
 verilog_library(
@@ -102,6 +103,21 @@ verilog_lint_test(
 )
 
 # Macro unit tests
+verilog_library(
+    name = "br_registers_test",
+    srcs = ["br_registers_test.sv"],
+    deps = [
+        ":br_registers",
+        "//gate/rtl:br_gate_mock",
+    ],
+)
+
+verilog_elab_test(
+    name = "br_registers_elab_test",
+    tool = "slang",
+    deps = [":br_registers_test"],
+)
+
 verilog_library(
     name = "br_asserts_test",
     srcs = ["br_asserts_test.sv"],

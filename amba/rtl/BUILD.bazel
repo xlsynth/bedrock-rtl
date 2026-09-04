@@ -163,6 +163,19 @@ verilog_library(
     ],
 )
 
+verilog_library(
+    name = "br_apb_mux",
+    srcs = ["br_apb_mux.sv"],
+    deps = [
+        ":br_amba_pkg",
+        "//arb/rtl:br_arb_fixed",
+        "//macros:br_asserts_internal",
+        "//macros:br_registers",
+        "//macros:br_unused",
+        "//mux/rtl:br_mux_onehot",
+    ],
+)
+
 br_verilog_elab_and_lint_test_suite(
     name = "br_amba_axil2apb_test_suite",
     params = {
@@ -496,6 +509,23 @@ br_verilog_elab_and_lint_test_suite(
         "NumDownstreams": ["1"],
     },
     deps = [":br_apb_demux"],
+)
+
+br_verilog_elab_and_lint_test_suite(
+    name = "br_apb_mux_test_suite",
+    params = {
+        "AddrWidth": [
+            "1",
+            "12",
+            "32",
+        ],
+        "NumUpstreams": [
+            "1",
+            "2",
+            "4",
+        ],
+    },
+    deps = [":br_apb_mux"],
 )
 
 br_verilog_synth_suite(

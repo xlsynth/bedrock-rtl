@@ -83,6 +83,7 @@ module br_cdc_fifo_ctrl_1r1w_fpv_monitor #(
   // ----------Instantiate DUT----------
   br_cdc_fifo_ctrl_1r1w #(
       .Depth(Depth),
+      .ValidateDepthSupportsFullBandwidth(0),
       .Width(Width),
       .RegisterPopOutputs(RegisterPopOutputs),
       .RamWriteLatency(RamWriteLatency),
