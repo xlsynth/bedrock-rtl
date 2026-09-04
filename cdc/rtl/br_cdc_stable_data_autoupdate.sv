@@ -49,7 +49,9 @@ module br_cdc_stable_data_autoupdate #(
       .NumSyncStages(NumSyncStages),
       // Both valid and data can change if src_data changes while the register is backpressured.
       .EnableAssertPushValidStability(0),
-      .EnableAssertPushDataStability(0)
+      .EnableAssertPushDataStability(0),
+      // Destination is always ready, so pop backpressure is unreachable.
+      .EnableCoverPopBackpressure(0)
   ) br_cdc_reg_inst (
       .push_clk  (src_clk),    // ri lint_check_waive SAME_CLOCK_NAME
       .push_rst  (src_rst),
