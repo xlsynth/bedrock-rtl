@@ -648,3 +648,69 @@ br_verilog_fpv_test_tools_suite(
     top = "br_apb_demux_select_onehot",
     deps = [":br_apb_demux_select_onehot_fpv_monitor"],
 )
+
+# Bedrock-RTL Fixed-Priority APB Mux
+
+verilog_library(
+    name = "br_apb_mux_fpv_monitor",
+    srcs = ["br_apb_mux_fpv_monitor.sv"],
+    deps = ["//amba/rtl:br_apb_mux"],
+)
+
+verilog_elab_test(
+    name = "br_apb_mux_fpv_monitor_elab_test",
+    opts = ["--ignore-unknown-modules"],
+    tool = "slang",
+    top = "br_apb_mux_fpv_monitor",
+    deps = [":br_apb_mux_fpv_monitor"],
+)
+
+verilog_elab_test(
+    name = "br_apb_mux_recovery_fpv_monitor_elab_test",
+    defines = ["BR_APB_MUX_FPV_RECOVERY"],
+    opts = ["--ignore-unknown-modules"],
+    tool = "slang",
+    top = "br_apb_mux_fpv_monitor",
+    deps = [":br_apb_mux_fpv_monitor"],
+)
+
+# Minimum address width, singleton, non-power-of-two and contended arbitration.
+br_verilog_fpv_test_tools_suite(
+    name = "br_apb_mux_test_suite",
+    params = {
+        "AddrWidth": [
+            "1",
+            "12",
+        ],
+        "NumUpstreams": [
+            "1",
+            "2",
+            "3",
+            "4",
+        ],
+    },
+    tools = {"jg": "br_apb_mux_fpv.jg.tcl"},
+    top = "br_apb_mux",
+    deps = [":br_apb_mux_fpv_monitor"],
+)
+
+# Same boundaries with no upstream protocol assumptions, including pin withdrawal.
+br_verilog_fpv_test_tools_suite(
+    name = "br_apb_mux_recovery_test_suite",
+    analysis_opts = ["+define+BR_APB_MUX_FPV_RECOVERY"],
+    params = {
+        "AddrWidth": [
+            "1",
+            "12",
+        ],
+        "NumUpstreams": [
+            "1",
+            "2",
+            "3",
+            "4",
+        ],
+    },
+    tools = {"jg": "br_apb_mux_recovery_fpv.jg.tcl"},
+    top = "br_apb_mux",
+    deps = [":br_apb_mux_fpv_monitor"],
+)
