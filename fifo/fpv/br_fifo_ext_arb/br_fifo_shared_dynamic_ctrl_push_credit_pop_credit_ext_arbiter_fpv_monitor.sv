@@ -89,7 +89,6 @@ module br_fifo_shared_dynamic_ctrl_push_credit_pop_credit_ext_arbiter_fpv_monito
       .DataRamReadLatency(DataRamReadLatency)
   ) fv_checker (
       .rst(fv_rst),
-      .system_rst(rst),
       .*
   );
 
@@ -131,19 +130,13 @@ module br_fifo_shared_dynamic_ctrl_push_credit_pop_credit_ext_arbiter_fpv_monito
       .ram_rd_data(ptr_ram_rd_data)
   );
 
-  ext_arb_fv_monitor #(
-      .NumReadPorts(NumReadPorts),
-      .NumFifos(NumFifos),
-      .ArbiterAlwaysGrants(ArbiterAlwaysGrants),
-      .EnableLiveness(0),
-      .EnableCovers(0)
-  ) fv_arb (
-      .clk,
-      .rst(fv_rst),
-      .arb_request,
-      .arb_grant,
-      .arb_enable_priority_update
-  );
+  for (genvar r = 0; r < NumReadPorts; r++) begin : gen_arbiter_inputs
+    `BR_ASSUME(arb_onehot_grant_a, $onehot0(arb_grant[r]))
+    `BR_ASSUME(arb_legal_grant_a, (arb_grant[r] & ~arb_request[r]) == '0)
+    if (ArbiterAlwaysGrants) begin : gen_always_grants
+      `BR_ASSUME(same_cyc_arb_grant_a, |arb_request[r] |-> |arb_grant[r])
+    end
+  end
 
   for (genvar r = 0; r < NumReadPorts; r++) begin : gen_arbiter
     `BR_ASSERT(arb_priority_update_enabled_a, !fv_rst |-> arb_enable_priority_update[r])

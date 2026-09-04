@@ -29,17 +29,13 @@ for {set f 0} {$f < $NumFifos} {incr f} {
   assume -name pop_initial_credit_static_$f "\$stable(credit_initial_pop\[$f\])"
   assume -name pop_withhold_legal_$f "credit_withhold_pop\[$f\] <= $PopMaxCredits"
 }
-# This top connects arb_can_grant to arb_grant. A legal grant names a request,
-# which already requires pop credit, so the pop counter cannot see a decrement
-# request with insufficient credit. Replace only these structurally unreachable
-# generic covers with their exact complementary safety assertions. The internal
-# arbiter variants have separate can_grant signals and keep the original covers.
+# This top ties arb_can_grant to arb_grant. Under that interface contract,
+# a granted read always has available credit, so replace only the two generic
+# impossible decrement-backpressure covers with the complementary safety check.
 for {set f 0} {$f < $NumFifos} {incr f} {
   set pop_counter [format {br_fifo_shared_pop_ctrl_credit_ext_arbiter_inst.gen_fifo_ram_read[%d].br_credit_counter} $f]
-  # The decrement amount is tied to one in this pop controller.
   assert -name pop_decrement_has_credit_$f "(!rst && !push_sender_in_reset && !pop_receiver_in_reset && ${pop_counter}.decr_valid) |-> ${pop_counter}.available != '0"
   cover -disable "br_fifo_shared_dynamic_ctrl_push_credit_pop_credit_ext_arbiter.${pop_counter}.gen_cover_decr_gt_available.decr_gt_available_c"
 }
-
 set_prove_time_limit 10m
 prove -all

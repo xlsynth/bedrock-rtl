@@ -515,11 +515,20 @@ br_verilog_fpv_test_tools_suite(
 # Shared dynamic FIFOs with credit flow control on both interfaces.
 
 verilog_library(
+    name = "br_fifo_shared_dynamic_pop_credit_fpv_checker",
+    srcs = ["br_fifo_shared_dynamic_pop_credit_fpv_checker.sv"],
+    deps = [
+        "//macros:br_asserts",
+        "//macros:br_registers",
+    ],
+)
+
+verilog_library(
     name = "br_fifo_shared_dynamic_credit_fpv_checker",
     srcs = ["br_fifo_shared_dynamic_credit_fpv_checker.sv"],
     deps = [
+        ":br_fifo_shared_dynamic_pop_credit_fpv_checker",
         "//fifo/fpv:br_credit_receiver_fpv_monitor",
-        "//fifo/fpv:br_pop_credit_fpv_monitor",
         "//macros:br_asserts",
         "//macros:br_registers",
         "//pkg:br_math_pkg",

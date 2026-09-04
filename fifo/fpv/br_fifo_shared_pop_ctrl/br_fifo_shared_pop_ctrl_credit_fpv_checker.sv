@@ -148,7 +148,6 @@ module br_fifo_shared_pop_ctrl_credit_fpv_checker #(
         .pop_receiver_in_reset,
         .pop_credit(pop_credit[i]),
         .pop_valid(fv_pop_valid_for_fifo),
-        .pop_issue('0),
         .credit_initial_pop(credit_initial_pop[i]),
         .credit_withhold_pop(credit_withhold_pop[i]),
         .credit_count_pop(credit_count_pop[i]),

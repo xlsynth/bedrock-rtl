@@ -64,7 +64,6 @@ module br_fifo_shared_dynamic_flops_push_credit_pop_credit_fpv_monitor #(
       .DataRamReadLatency(DataRamReadLatency)
   ) checker_inst (
       .rst(fv_rst),
-      .system_rst(rst),
       .*
   );
 
