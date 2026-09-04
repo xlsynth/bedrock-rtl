@@ -106,6 +106,7 @@ The verification-artifact column reports repository evidence, not a promise that
 | `br_delay` | Delays a signal by a fixed number of stages with reset. | Elab/lint, FPV. |
 | `br_delay_deskew` | Applies per-lane delay to deskew multiple related signals. | Elab/lint. |
 | `br_delay_nr` | Delays a signal by a fixed number of stages without reset. | Elab/lint, FPV. |
+| `br_delay_nr_prop` | Wraps `br_delay_nr` with an output-known assertion qualified by the consumer's reset. | Elab/lint, Sim. |
 | `br_delay_shift_reg` | Implements a loadable shift register. | Elab/lint. |
 | `br_delay_skew` | Applies per-lane delay to intentionally skew multiple related signals. | Elab/lint. |
 | `br_delay_valid` | Delays data using valid-based self-gating. | Elab/lint, FPV. |
