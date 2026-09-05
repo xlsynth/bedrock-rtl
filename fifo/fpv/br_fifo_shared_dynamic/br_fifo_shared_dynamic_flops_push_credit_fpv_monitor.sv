@@ -126,7 +126,7 @@ bind br_fifo_shared_dynamic_flops_push_credit
     .RegisterPopOutputs(RegisterPopOutputs),
     .RegisterPushOutputs(RegisterPushOutputs),
     .EnableCoverPushCreditStall(EnableCoverPushCreditStall),
-    .EnableCoverCreditWithhold(EnableCoverCreditWithhold),
+    .EnableCoverCreditWithhold(EnableCreditWithhold),
     .EnableCoverPushSenderInReset(EnableCoverPushSenderInReset),
     .RegisterDeallocation(RegisterDeallocation),
     .DataRamDepthTiles(DataRamDepthTiles),

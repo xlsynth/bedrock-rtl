@@ -130,7 +130,7 @@ bind br_fifo_flops_push_credit br_fifo_flops_push_credit_fpv_monitor #(
     .FlopRamAddressDepthStages(FlopRamAddressDepthStages),
     .FlopRamReadDataDepthStages(FlopRamReadDataDepthStages),
     .FlopRamReadDataWidthStages(FlopRamReadDataWidthStages),
-    .EnableCoverCreditWithhold(EnableCoverCreditWithhold),
+    .EnableCoverCreditWithhold(EnableCreditWithhold),
     .EnableCoverPushSenderInReset(EnableCoverPushSenderInReset),
     .EnableCoverPushCreditStall(EnableCoverPushCreditStall)
 ) monitor (.*);

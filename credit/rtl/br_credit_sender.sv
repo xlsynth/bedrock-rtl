@@ -86,9 +86,9 @@ module br_credit_sender #(
     parameter bit EnableAssertPushDataStability = EnableAssertPushValidStability,
     // If 1, assert that push_data is always known (not X) when push_valid is asserted.
     parameter bit EnableAssertPushDataKnown = 1,
-    // If 1, cover that credit_withhold can be non-zero.
-    // Otherwise, assert that it is always zero.
-    parameter bit EnableCoverCreditWithhold = 1,
+    // If 1, support nonzero credit_withhold values and cover that case.
+    // Otherwise, optimize for credit_withhold being zero and assert that requirement.
+    parameter bit EnableCreditWithhold = 1,
     // If 1, cover that pop_receiver_in_reset can be asserted
     // Otherwise, assert that it is never asserted.
     parameter bit EnableCoverPopReceiverInReset = 1,
@@ -198,11 +198,11 @@ module br_credit_sender #(
       .MaxChange(MaxChange),
       .MaxIncrement(PopCreditMaxChange),
       .MaxDecrement(NumFlows),
-      .EnableCoverZeroIncrement(0),
+      .EnableZeroIncrement(0),
       .EnableCoverZeroDecrement(NumFlows > 1),
       .EnableCoverDecrementBackpressure(NumFlows == 1 && EnableCoverPushBackpressure),
       .EnableAssertNoDecrementBackpressure((NumFlows != 1) || EnableAssertNoPushBackpressure),
-      .EnableCoverWithhold(EnableCoverCreditWithhold),
+      .EnableWithhold(EnableCreditWithhold),
       .EnableAssertFinalNotValid(EnableAssertFinalNotValid),
       .CoverMaxValue(CoverMaxCredit),
       .EnableAssertFinalMaxValue(EnableAssertFinalMaxValue)
@@ -292,7 +292,7 @@ module br_credit_sender #(
                                                      == pop_credit |=> credit_count == $past
                                                      (credit_count))
 
-  if (EnableCoverCreditWithhold) begin : gen_credit_withhold_impl_checks
+  if (EnableCreditWithhold) begin : gen_credit_withhold_impl_checks
     `BR_ASSERT_IMPL(withhold_and_spend_a,
                     credit_count == credit_withhold && (|internal_pop_valid) |-> (pop_credit != '0))
   end
