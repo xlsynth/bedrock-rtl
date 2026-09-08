@@ -77,6 +77,40 @@ br_verilog_sim_test_tools_suite(
 )
 
 verilog_library(
+    name = "br_delay_nr_prop_tb",
+    srcs = ["br_delay_nr_prop_tb.sv"],
+    deps = [
+        "//delay/rtl:br_delay_nr_prop",
+        "//misc/sim:br_test_driver",
+    ],
+)
+
+verilog_elab_test(
+    name = "br_delay_nr_prop_tb_elab_test",
+    tool = "slang",
+    deps = [":br_delay_nr_prop_tb"],
+)
+
+br_verilog_sim_test_tools_suite(
+    name = "br_delay_nr_prop_sim_test_tools_suite",
+    params = {
+        "NumStages": [
+            "0",
+            "1",
+            "3",
+        ],
+        "Width": [
+            "1",
+            "8",
+        ],
+    },
+    seed = 1,
+    # X/Z propagation and known-value assertions require four-state simulation.
+    tools = ["vcs"],
+    deps = [":br_delay_nr_prop_tb"],
+)
+
+verilog_library(
     name = "br_delay_shift_reg_tb",
     srcs = ["br_delay_shift_reg_tb.sv"],
     deps = [
