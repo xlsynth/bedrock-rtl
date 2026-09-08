@@ -137,6 +137,8 @@ module br_fifo_shared_dynamic_credit_fpv_checker #(
   for (genvar f = 0; f < NumFifos; f++) begin : gen_fifo
     logic [NumWritePorts-1:0] push_for_fifo;
     logic [StateWidth-1:0] resident, resident_next;
+    localparam int PopCreditModelWidth = $clog2(PopMaxCredits + NumReadPorts + 2) + 1;
+    logic [PopCreditModelWidth-1:0] receiver_owned_credit;
     for (genvar p = 0; p < NumWritePorts; p++) begin : gen_push_match
       assign push_for_fifo[p] = push_valid[p] && push_fifo_id[p] == FifoIdWidth'(f);
     end
@@ -163,8 +165,16 @@ module br_fifo_shared_dynamic_credit_fpv_checker #(
         .credit_initial_pop(credit_initial_pop[f]),
         .credit_withhold_pop(credit_withhold_pop[f]),
         .credit_count_pop(credit_count_pop[f]),
-        .credit_available_pop(credit_available_pop[f])
+        .credit_available_pop(credit_available_pop[f]),
+        .receiver_owned_credit
     );
+
+    // Downstream fairness: a receiver eventually returns an owned credit, and
+    // withheld credit capacity is eventually made available again.
+    `BR_ASSUME_CR(receiver_returns_credit_liveness_a,
+                  receiver_owned_credit != '0 |-> s_eventually pop_credit[f] != '0, clk, rst)
+    `BR_ASSUME_CR(credit_withhold_liveness_a, s_eventually credit_withhold_pop[f] < PopMaxCredits,
+                  clk, rst)
 
     `BR_ASSERT(issue_has_item_a, pop_issue[f] |-> resident != '0)
     `BR_ASSERT(fifo_resident_capacity_a, resident_next <= Depth)
@@ -172,6 +182,9 @@ module br_fifo_shared_dynamic_credit_fpv_checker #(
     `BR_ASSERT(one_response_per_fifo_a, $onehot0(response_for_fifo[f]))
     `BR_ASSERT(response_matches_issue_a,
                (|response_for_fifo[f]) == issue_pipe[DataRamReadLatency][f])
+    // With downstream credit return and arbiter fairness, every accepted push
+    // eventually produces a response for its FIFO.
+    `BR_ASSERT(no_deadlock_pop_a, |push_for_fifo |-> s_eventually (|response_for_fifo[f]))
 
   end
 

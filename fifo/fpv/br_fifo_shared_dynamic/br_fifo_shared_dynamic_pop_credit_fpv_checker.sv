@@ -27,13 +27,14 @@ module br_fifo_shared_dynamic_pop_credit_fpv_checker #(
     input logic [CreditWidth-1:0] credit_initial_pop,
     input logic [CreditWidth-1:0] credit_withhold_pop,
     input logic [CreditWidth-1:0] credit_count_pop,
-    input logic [CreditWidth-1:0] credit_available_pop
+    input logic [CreditWidth-1:0] credit_available_pop,
+    output logic [ModelWidth-1:0] receiver_owned_credit
 );
   logic link_rst;
   logic receiver_active_rst;
   logic [ModelWidth-1:0] modeled_credit_count, modeled_credit_count_next;
   logic [ModelWidth-1:0] modeled_credit_available;
-  logic [ModelWidth-1:0] receiver_owned_credit, receiver_owned_credit_next;
+  logic [ModelWidth-1:0] receiver_owned_credit_next;
   logic [ModelWidth-1:0] count_plus_credit;
   logic [ModelWidth-1:0] effective_pop_credit;
   logic receiver_credit_in_range;
@@ -69,7 +70,6 @@ module br_fifo_shared_dynamic_pop_credit_fpv_checker #(
   `BR_ASSUME_CR(pop_returns_owned_credit_a,
                 ModelWidth'(pop_credit) <= receiver_owned_credit + ModelWidth'($countones
                 (pop_valid)), clk, receiver_active_rst)
-
   `BR_ASSERT(pop_credit_count_a, ModelWidth'(credit_count_pop) == modeled_credit_count)
   `BR_ASSERT(pop_credit_available_a, ModelWidth'(credit_available_pop) == modeled_credit_available)
   `BR_ASSERT(pop_credit_capacity_a,

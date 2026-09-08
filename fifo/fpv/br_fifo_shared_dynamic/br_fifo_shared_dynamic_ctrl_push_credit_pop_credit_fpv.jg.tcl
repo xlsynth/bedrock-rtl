@@ -26,7 +26,5 @@ for {set i 0} {$i < $NumFifos} {incr i} {
   assume -name legal_pop_withhold_$i "credit_withhold_pop\[$i\] <= $PopMaxCredits"
 }
 
-# All checking is safety-based. Credits, withholding, and stalls need not make
-# progress; covers establish useful traffic without imposing eventual service.
 set_prove_time_limit 10m
 prove -all
