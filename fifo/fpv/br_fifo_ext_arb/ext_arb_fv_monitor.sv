@@ -6,7 +6,9 @@
 
 module ext_arb_fv_monitor #(
     parameter int NumReadPorts = 1,
-    parameter int NumFifos = 2
+    parameter int NumFifos = 2,
+    parameter bit ArbiterAlwaysGrants = 1,
+    parameter bit AssertRequestHeldUntilGrant = 1
 ) (
     input logic clk,
     input logic rst,
@@ -20,15 +22,16 @@ module ext_arb_fv_monitor #(
   // External arbiter interface assumptions
   for (genvar r = 0; r < NumReadPorts; r++) begin : gen_arb
     `BR_ASSUME(arb_onehot_grant_a, $onehot0(arb_grant[r]))
-    // we will use br_arb, all of them can guarantee same cycle grant
-    `BR_ASSUME(same_cyc_arb_grant_a, |arb_request[r] |-> |arb_grant[r])
+    if (ArbiterAlwaysGrants) begin : gen_always_grants
+      // We will use br_arb; all of them can guarantee same-cycle grant.
+      `BR_ASSUME(same_cyc_arb_grant_a, |arb_request[r] |-> |arb_grant[r])
+    end
     for (genvar f = 0; f < NumFifos; f++) begin : gen_arb_request
       `BR_ASSUME(arb_legal_grant_a, arb_grant[r][f] |-> arb_request[r][f])
-      // sanity check:
-      // assumption arb_grant_eventually_a can only be added
-      // if assertion arb_req_hold_until_grant_a is true
-      `BR_ASSERT(arb_req_hold_until_grant_a,
-                 arb_request[r][f] && !arb_grant[r][f] |=> arb_request[r][f])
+      if (AssertRequestHeldUntilGrant) begin : gen_request_hold
+        `BR_ASSERT(arb_req_hold_until_grant_a,
+                   arb_request[r][f] && !arb_grant[r][f] |=> arb_request[r][f])
+      end
       `BR_ASSUME(arb_grant_eventually_a, arb_request[r][f] |-> s_eventually arb_grant[r][f])
     end
 

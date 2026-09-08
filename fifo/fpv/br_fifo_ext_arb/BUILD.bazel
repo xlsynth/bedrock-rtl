@@ -228,3 +228,139 @@ br_verilog_fpv_test_tools_suite(
     top = "br_fifo_shared_dynamic_ctrl_push_credit_ext_arbiter",
     deps = [":br_fifo_shared_dynamic_ctrl_push_credit_ext_arbiter_fpv_monitor"],
 )
+
+#################################################################
+# Shared dynamic controller with push/pop credits and an external arbiter.
+verilog_library(
+    name = "br_fifo_shared_dynamic_ctrl_push_credit_pop_credit_ext_arbiter_fpv_monitor",
+    srcs = ["br_fifo_shared_dynamic_ctrl_push_credit_pop_credit_ext_arbiter_fpv_monitor.sv"],
+    deps = [
+        ":ext_arb_fv_monitor",
+        "//fifo/fpv:br_fifo_fv_ram",
+        "//fifo/fpv/br_fifo_shared_dynamic:br_fifo_shared_dynamic_credit_fpv_checker",
+        "//fifo/rtl:br_fifo_shared_dynamic_ctrl_push_credit_pop_credit_ext_arbiter",
+        "//macros:br_fv",
+    ],
+)
+
+verilog_elab_test(
+    name = "br_fifo_shared_dynamic_ctrl_push_credit_pop_credit_ext_arbiter_fpv_monitor_elab_test",
+    opts = ["--ignore-unknown-modules"],
+    tool = "slang",
+    deps = [":br_fifo_shared_dynamic_ctrl_push_credit_pop_credit_ext_arbiter_fpv_monitor"],
+)
+
+# Smallest legal configuration gives a quick smoke target.
+br_verilog_fpv_test_tools_suite(
+    name = "br_fifo_shared_dynamic_ctrl_push_credit_pop_credit_ext_arbiter_test_default",
+    tools = {
+        "jg": "br_fifo_shared_dynamic_ctrl_push_credit_pop_credit_ext_arbiter_fpv.jg.tcl",
+    },
+    top = "br_fifo_shared_dynamic_ctrl_push_credit_pop_credit_ext_arbiter",
+    deps = [":br_fifo_shared_dynamic_ctrl_push_credit_pop_credit_ext_arbiter_fpv_monitor"],
+)
+
+# Multiport allocation, arbitrary FIFO IDs (including non-powers of two), and
+# interleaved linked lists. Depth 5 is the minimum for two write ports.
+br_verilog_fpv_test_tools_suite(
+    name = "br_fifo_shared_dynamic_ctrl_push_credit_pop_credit_ext_arbiter_test_port",
+    elab_opts = [
+        "-parameter Depth 5",
+        "-parameter Width 2",
+        "-parameter PopMaxCredits 2",
+    ],
+    params = {
+        "NumWritePorts": [
+            "1",
+            "2",
+        ],
+        "NumReadPorts": [
+            "1",
+            "2",
+        ],
+        "NumFifos": [
+            "2",
+            "3",
+        ],
+        "NumLinkedListsPerFifo": [
+            "1",
+            "2",
+        ],
+    },
+    tools = {
+        "jg": "br_fifo_shared_dynamic_ctrl_push_credit_pop_credit_ext_arbiter_fpv.jg.tcl",
+    },
+    top = "br_fifo_shared_dynamic_ctrl_push_credit_pop_credit_ext_arbiter",
+    deps = [":br_fifo_shared_dynamic_ctrl_push_credit_pop_credit_ext_arbiter_fpv_monitor"],
+)
+
+# Exercise data/pointer responses in flight, both retiming controls, and
+# arbiters that may withhold a grant even when a request is present.
+br_verilog_fpv_test_tools_suite(
+    name = "br_fifo_shared_dynamic_ctrl_push_credit_pop_credit_ext_arbiter_test_latency",
+    elab_opts = [
+        "-parameter Depth 5",
+        "-parameter Width 2",
+        "-parameter NumWritePorts 2",
+        "-parameter NumReadPorts 2",
+        "-parameter NumFifos 3",
+        "-parameter NumLinkedListsPerFifo 2",
+        "-parameter PopMaxCredits 3",
+    ],
+    params = {
+        "DataRamReadLatency": [
+            "0",
+            "2",
+        ],
+        "PointerRamReadLatency": [
+            "0",
+            "1",
+        ],
+        "RegisterDeallocation": [
+            "0",
+            "1",
+        ],
+        "RegisterPushOutputs": [
+            "0",
+            "1",
+        ],
+        "ArbiterAlwaysGrants": [
+            "0",
+            "1",
+        ],
+    },
+    tools = {
+        "jg": "br_fifo_shared_dynamic_ctrl_push_credit_pop_credit_ext_arbiter_fpv.jg.tcl",
+    },
+    top = "br_fifo_shared_dynamic_ctrl_push_credit_pop_credit_ext_arbiter",
+    deps = [":br_fifo_shared_dynamic_ctrl_push_credit_pop_credit_ext_arbiter_fpv_monitor"],
+)
+
+# Credit-width, storage-depth, and payload-width boundaries. Initial credits
+# remain symbolic in every test, including zero and full-capacity values.
+br_verilog_fpv_test_tools_suite(
+    name = "br_fifo_shared_dynamic_ctrl_push_credit_pop_credit_ext_arbiter_test_credit",
+    params = {
+        "Depth": [
+            "3",
+            "4",
+        ],
+        "Width": [
+            "1",
+            "8",
+        ],
+        "PopMaxCredits": [
+            "1",
+            "3",
+        ],
+        "ArbiterAlwaysGrants": [
+            "0",
+            "1",
+        ],
+    },
+    tools = {
+        "jg": "br_fifo_shared_dynamic_ctrl_push_credit_pop_credit_ext_arbiter_fpv.jg.tcl",
+    },
+    top = "br_fifo_shared_dynamic_ctrl_push_credit_pop_credit_ext_arbiter",
+    deps = [":br_fifo_shared_dynamic_ctrl_push_credit_pop_credit_ext_arbiter_fpv_monitor"],
+)
