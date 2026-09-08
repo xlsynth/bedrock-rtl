@@ -35,5 +35,8 @@ cover -disable *monitor.downstream*master_w_aw_wstrb_valid_non_dbc:precondition1
 cover -disable *monitor.downstream*master_aw_awvalid_eventually:precondition1
 cover -disable *monitor.downstream*master_w_wvalid_eventually:precondition1
 
+# limit run time to 30-mins
+set_prove_time_limit 30m
+
 # Prove command
 prove -all
