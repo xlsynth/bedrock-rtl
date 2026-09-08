@@ -208,6 +208,16 @@ module br_amba_iso_resp_tracker #(
   end
 
   // Total outstanding requests counters (in the staging+tracker FIFOs)
+  logic total_req_incr_valid;
+
+  if (!EnableWlastTracking && !UseDynamicFifo) begin : gen_static_read_incr
+    // With static FIFOs and no WLAST tracking, ready is guaranteed when the count is below capacity.
+    `BR_ASSERT_IMPL(admitted_req_ready_a, staging_fifo_push_valid |-> staging_fifo_push_ready)
+    assign total_req_incr_valid = staging_fifo_push_valid;
+  end else begin : gen_general_incr
+    assign total_req_incr_valid = staging_fifo_push_valid && staging_fifo_push_ready;
+  end
+
   if (UseDynamicFifo || SingleIdOnly) begin : gen_total_req_count
     logic [OutstandingWidth-1:0] total_req_count;
     br_counter #(
@@ -222,7 +232,7 @@ module br_amba_iso_resp_tracker #(
         //
         .reinit(1'b0),
         .initial_value('0),
-        .incr_valid(staging_fifo_push_valid && staging_fifo_push_ready),
+        .incr_valid(total_req_incr_valid),
         .incr(1'b1),
         .decr_valid(|(tracker_fifo_pop_valid & tracker_fifo_pop_ready)),
         .decr(1'b1),
@@ -246,9 +256,7 @@ module br_amba_iso_resp_tracker #(
     for (genvar i = 0; i < AxiIdCount; i++) begin : gen_counter_per_id
       logic incr_valid;
 
-      assign incr_valid = staging_fifo_push_valid
-                          && staging_fifo_push_ready
-                          && (upstream_axid == i);
+      assign incr_valid = total_req_incr_valid && (upstream_axid == i);
 
       br_counter #(
           .MaxValue(PerIdFifoDepth),

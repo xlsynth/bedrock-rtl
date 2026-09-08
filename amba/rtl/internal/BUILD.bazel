@@ -109,6 +109,10 @@ verilog_library(
 br_verilog_elab_and_lint_test_suite(
     name = "br_amba_iso_resp_tracker_test_suite",
     params = {
+        "EnableWlastTracking": [
+            "0",
+            "1",
+        ],
         "MaxAxiBurstLen": [
             "1",
             "256",
