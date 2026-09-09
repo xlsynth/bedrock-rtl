@@ -79,6 +79,32 @@ module br_csr_mem_interface #(
   `BR_ASSERT_STATIC(legal_mem_width_a,
                     MemWidth >= 8 && MemWidth <= CsrDataWidth && br_math::is_power_of_2(MemWidth))
 
+  logic req_bypass;
+
+`ifdef BR_ASSERT_ON
+`ifndef BR_DISABLE_INTG_CHECKS
+  // A transaction ends at its CSR response, or at abort before memory accepts it.
+  // Abort cannot cancel an accepted access. The read round trip includes the
+  // CSR response and upstream abort output registers. If upstream
+  // br_csr_axil_widget programs its enabled timeout above this round trip,
+  // this assertion should be guaranteed.
+  logic csr_req_valid;
+  logic mem_access_accepted;
+  logic awaiting_accept;
+  logic request_canceled;
+  logic csr_transaction_pending;
+
+  assign csr_req_valid = req_valid && !req_bypass;
+  assign mem_access_accepted = mem_access_valid && mem_access_ready;
+  `BR_REG(awaiting_accept, (csr_req_valid || awaiting_accept) && !mem_access_accepted && !req_abort)
+  assign request_canceled = awaiting_accept && req_abort && !mem_access_accepted;
+  `BR_REG(csr_transaction_pending,
+          req_valid || (csr_transaction_pending && !resp_valid && !request_canceled))
+
+  `BR_ASSERT_INTG(one_csr_request_a, req_valid |-> !csr_transaction_pending)
+`endif
+`endif
+
   // We only care about the bits that cover the memory range
   // Upper bits might be non-zero, but they aren't used for decoding at the memory itself
   localparam int TruncCsrAddrWidth = MemAddrWidth + $clog2(MemStrobeWidth);
@@ -122,7 +148,6 @@ module br_csr_mem_interface #(
   logic req_write_error;
   logic req_empty_strb;
   logic req_error;
-  logic req_bypass;
 
   assign req_mem_addr = req_addr[OffsetWidth+:MemAddrWidth];
 
