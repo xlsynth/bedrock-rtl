@@ -36,7 +36,7 @@ module br_csr_mem_interface #(
     // TODO(zhemao): Allow the interface to perform RMW if partial write is requested
     // but memory interface doesn't support it.
     parameter bit EnablePartialWrites = 0,
-    // If 1, check that the request address is in the range [0, MemDepth)
+    // If 1, check that the local byte address is in [0, MemDepth * MemStrobeWidth)
     parameter bit EnableAddressRangeCheck = 1,
 
     localparam int CsrStrobeWidth = CsrDataWidth / 8,
@@ -113,7 +113,7 @@ module br_csr_mem_interface #(
       .DataWidth(CsrDataWidth),
       .EnableAddressRangeCheck(EnableAddressRangeCheck),
       .AddrMin(0),
-      .AddrMax(MemDepth - 1),
+      .AddrMax(MemDepth * MemStrobeWidth - 1),
       // This module doesn't care about the data
       // It should be checked by the external memory
       .EnableWriteDataKnownCheck(0)

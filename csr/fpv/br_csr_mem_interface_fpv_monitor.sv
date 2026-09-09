@@ -125,12 +125,6 @@ module br_csr_mem_interface_fpv_monitor #(
   `BR_ASSUME(one_csr_request_a, req_valid |-> !csr_transaction_pending)
   `BR_ASSUME(no_request_with_abort_a, req_abort |-> !req_valid)
 
-  if (!RegisterMemOutputs) begin : gen_unregistered_abort_contract
-    // The child request buffer asserts pop_valid is low one cycle after abort.
-    // A fresh non-bypassed request would drive it immediately in this mode.
-    `BR_ASSUME(no_memory_request_after_abort_a, req_abort |=> !csr_req_valid)
-  end
-
   // Memory returns data only for a prior accepted read. Keeping this token
   // through abort permits arbitrarily late returns, but not unsolicited ones.
   `BR_ASSUME(memory_response_has_request_a, mem_read_data_valid |-> memory_read_pending)
@@ -138,7 +132,7 @@ module br_csr_mem_interface_fpv_monitor #(
   // Needed only when the DUT enables its address-range integration assertion.
   // Translation checks themselves do not require a memory-word address bound.
   if (EnableAddressRangeCheck) begin : gen_builtin_address_contract
-    `BR_ASSUME(address_range_a, req_addr[TruncAddrWidth-1:0] < MemDepth)
+    `BR_ASSUME(address_range_a, req_addr[TruncAddrWidth-1:0] / MemStrobeWidth < MemDepth)
   end
 
   // ----------Modeling code----------
@@ -279,7 +273,9 @@ module br_csr_mem_interface_fpv_monitor #(
   `BR_ASSERT(hold_stalled_request_a,
              mem_access_valid && !mem_access_ready && !req_abort |=> mem_access_valid && $stable
              (actual_request))
-  `BR_ASSERT(abort_clears_request_a, req_abort |=> !mem_access_valid)
+  // After abort, only a fresh unregistered request may drive memory valid.
+  `BR_ASSERT(abort_clears_request_a,
+             req_abort |=> mem_access_valid == (!RegisterMemOutputs && csr_req_valid))
   `BR_ASSERT(bypass_has_no_memory_access_a, bypass_request |-> !mem_access_valid)
 
   // ----------Response scoreboard and protocol----------
@@ -343,11 +339,8 @@ module br_csr_mem_interface_fpv_monitor #(
   `BR_COVER(write_accepted_on_abort_c, (accepted_write && req_abort) ##WriteLatency resp_valid)
   // Exercise the shorter spacing now allowed by the minimal input contract.
   `BR_COVER(next_request_after_response_c, resp_valid ##1 req_valid)
-  if (RegisterMemOutputs) begin : gen_registered_retry
-    `BR_COVER(next_cycle_retry_after_cancel_c, request_canceled ##1 csr_req_valid)
-  end else begin : gen_unregistered_retry
-    `BR_COVER(retry_after_abort_gap_c, request_canceled ##2 csr_req_valid)
-  end
+  `BR_COVER(next_cycle_retry_after_cancel_c,
+            request_canceled ##1 csr_req_valid ##RegisterMemOutputs mem_access_accepted)
   `BR_COVER(empty_write_c, bypass_request && req_write && !request_error)
   `BR_COVER(read_error_c,
             (mem_read_data_valid && mem_read_data_err) ##RegisterResponseOutputs resp_valid)
@@ -355,13 +348,13 @@ module br_csr_mem_interface_fpv_monitor #(
   for (genvar word_idx = 0; word_idx < NumWords; word_idx++) begin : gen_write_word
     `BR_COVER(write_word_c, csr_req_valid && req_write && selected_word == word_idx)
   end
-  if (MemDepth > 1 && (!EnableAddressRangeCheck || MemStrobeWidth == 1)) begin : gen_full_range
+  if (MemDepth > 1) begin : gen_full_range
     `BR_COVER(last_word_c, mem_access_accepted && mem_access_addr == MemDepth - 1)
   end
   if (CsrAddrWidth > TruncAddrWidth) begin : gen_ignored_upper_address
     `BR_COVER(upper_address_bits_c, csr_req_valid && req_addr[CsrAddrWidth-1:TruncAddrWidth] != '0)
   end
-  if (MemStrobeWidth > 1 && (!EnableAddressRangeCheck || MemDepth > 1)) begin : gen_alignment
+  if (MemStrobeWidth > 1) begin : gen_alignment
     `BR_COVER(misaligned_request_c, req_valid && alignment_error)
   end
   if (NumWords > 1) begin : gen_multiword
