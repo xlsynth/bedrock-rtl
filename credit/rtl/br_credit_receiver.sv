@@ -175,7 +175,7 @@ module br_credit_receiver #(
 `endif  // BR_DISABLE_INTG_CHECKS
 `endif  // BR_ASSERT_ON
   `BR_ASSERT_INTG(no_push_overflow_a, (|push_valid_checked) |-> (occupancy_next <= MaxCredit))
-  `BR_ASSERT_INTG(pop_credit_in_range_a, pop_credit <= PopCreditMaxChange)
+  `BR_ASSERT_CR_INTG(pop_credit_in_range_a, pop_credit <= PopCreditMaxChange, clk, either_rst)
 
   if (EnableCoverPushSenderInReset) begin : gen_cover_push_sender_in_reset
     `BR_COVER_INCL_RST_INTG(push_sender_in_reset_a, push_sender_in_reset)

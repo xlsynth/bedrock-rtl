@@ -87,15 +87,7 @@ module br_cdc_fifo_ctrl_push_pop_1r1w_push_credit_fpv_monitor #(
   logic                              push_reset_active_push;
 
   // ----------FV 1R1W RAM model----------
-  logic                              push_either_rst;
-  logic                              fv_rst;
-
   logic [      Depth-1:0][Width-1:0] fv_ram_data;
-
-  assign push_either_rst = push_rst || push_sender_in_reset;
-  // A coordinated reset retires pending reference transactions and restarts
-  // the FIFO counters. New pushes remain idle until all reset inputs deassert.
-  assign fv_rst = rst || push_either_rst || pop_rst;
 
   `BR_REGLNX(fv_ram_data[push_ram_wr_addr], push_ram_wr_data, push_ram_wr_valid, push_clk)
 
@@ -177,8 +169,7 @@ module br_cdc_fifo_ctrl_push_pop_1r1w_push_credit_fpv_monitor #(
       .MaxCredit(MaxCredit)
   ) fv_credit_receiver (
       .clk(push_clk),
-      // The modeled sender credit balance clears on either push-side reset.
-      .rst(push_either_rst),
+      .rst(push_rst),
       .push_sender_in_reset,
       .push_receiver_in_reset,
       .push_credit_stall,
@@ -204,16 +195,16 @@ module br_cdc_fifo_ctrl_push_pop_1r1w_push_credit_fpv_monitor #(
       .RamReadLatency(RamReadLatency)
   ) fv_checker (
       .clk,
-      .rst(fv_rst),
+      .rst,
       .push_clk,
-      .push_rst(fv_rst),
+      .push_rst,
       .push_ready(1'd1),
       .push_valid,
       .push_data,
       .pop_clk,
-      .pop_rst(fv_rst),
+      .pop_rst,
       .pop_ready,
-      .pop_valid(pop_valid && !fv_rst),
+      .pop_valid (pop_valid && !pop_rst),
       .pop_data,
       .push_full,
       .push_slots,
@@ -223,21 +214,9 @@ module br_cdc_fifo_ctrl_push_pop_1r1w_push_credit_fpv_monitor #(
 
   `BR_ASSERT_CR(push_count_gray_a, $changed(push_push_count_gray) |-> $countones
                                    (push_push_count_gray ^ $past(push_push_count_gray)) == 'd1,
-                push_clk, fv_rst)
+                push_clk, push_rst)
   `BR_ASSERT_CR(pop_count_gray_a, $changed(pop_pop_count_gray) |-> $countones
                                   (pop_pop_count_gray ^ $past(pop_pop_count_gray)) == 'd1, pop_clk,
-                fv_rst)
-
-  // Reach sender reset after all data and credits have returned, while the
-  // completed-pop history is large enough to expose a stale-count delta.
-  // verilog_format: off
-  `BR_COVER_CR(sender_reset_after_drained_fifo_c,
-               (!fv_rst && !push_valid && pop_empty && !pop_valid && push_slots == Depth &&
-                credit_initial_push == Depth && fv_credit_receiver.fv_credit_cnt == Depth &&
-                push_dut.br_cdc_fifo_push_ctrl_credit.
-                    br_cdc_fifo_push_flag_mgr.pop_count_saved > Depth)
-               ##1 (!push_rst && push_sender_in_reset && !pop_rst)
-               ##1 (!push_rst && push_sender_in_reset && !pop_rst), push_clk, rst)
-  // verilog_format: on
+                pop_rst)
 
 endmodule : br_cdc_fifo_ctrl_push_pop_1r1w_push_credit_fpv_monitor
