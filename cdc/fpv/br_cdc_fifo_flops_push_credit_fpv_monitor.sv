@@ -67,6 +67,14 @@ module br_cdc_fifo_flops_push_credit_fpv_monitor #(
   logic                   pop_empty;
   logic [ CountWidth-1:0] pop_items;
 
+  logic                   push_either_rst;
+  logic                   fv_rst;
+
+  assign push_either_rst = push_rst || push_sender_in_reset;
+  // A coordinated reset retires pending reference transactions and restarts
+  // the FIFO counters. New pushes remain idle until all reset inputs deassert.
+  assign fv_rst = rst || push_either_rst || pop_rst;
+
   // ----------Instantiate DUT----------
   br_cdc_fifo_flops_push_credit #(
       .Depth(Depth),
@@ -112,7 +120,8 @@ module br_cdc_fifo_flops_push_credit_fpv_monitor #(
       .MaxCredit(MaxCredit)
   ) fv_credit_receiver (
       .clk(push_clk),
-      .rst(push_rst),
+      // The modeled sender credit balance clears on either push-side reset.
+      .rst(push_either_rst),
       .push_sender_in_reset,
       .push_receiver_in_reset,
       .push_credit_stall,
@@ -138,16 +147,16 @@ module br_cdc_fifo_flops_push_credit_fpv_monitor #(
       .RamReadLatency(RamReadLatency)
   ) fv_checker (
       .clk,
-      .rst,
+      .rst(fv_rst),
       .push_clk,
-      .push_rst,
+      .push_rst(fv_rst),
       .push_ready(1'd1),
       .push_valid,
       .push_data,
       .pop_clk,
-      .pop_rst,
+      .pop_rst(fv_rst),
       .pop_ready,
-      .pop_valid (pop_valid && !pop_rst),
+      .pop_valid(pop_valid && !fv_rst),
       .pop_data,
       .push_full,
       .push_slots,
@@ -156,6 +165,19 @@ module br_cdc_fifo_flops_push_credit_fpv_monitor #(
   );
 
   `BR_ASSERT_CR(no_valid_data_stable_a, ##1 !pop_valid && !$fell(pop_valid) |-> $stable(pop_data),
-                pop_clk, pop_rst)
+                pop_clk, fv_rst)
+
+  // Reach sender reset after all data and credits have returned, while the
+  // completed-pop history is large enough to expose a stale-count delta.
+  // verilog_format: off
+  `BR_COVER_CR(sender_reset_after_drained_fifo_c,
+               (!fv_rst && !push_valid && pop_empty && !pop_valid && push_slots == Depth &&
+                credit_initial_push == Depth && fv_credit_receiver.fv_credit_cnt == Depth &&
+                dut.br_cdc_fifo_ctrl_1r1w_push_credit.
+                    br_cdc_fifo_ctrl_push_1r1w_push_credit_inst.br_cdc_fifo_push_ctrl_credit.
+                    br_cdc_fifo_push_flag_mgr.pop_count_saved > Depth)
+               ##1 (!push_rst && push_sender_in_reset && !pop_rst)
+               ##1 (!push_rst && push_sender_in_reset && !pop_rst), push_clk, rst)
+  // verilog_format: on
 
 endmodule : br_cdc_fifo_flops_push_credit_fpv_monitor

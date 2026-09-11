@@ -11,13 +11,10 @@ reset -none
 assume -reset -name set_rst_during_reset {rst}
 assume -bound 1 -name delay_rst {rst}
 assume -name deassert_rst {##1 !rst}
-# reset are ready at different times
+# Resets may assert and deassert at different times, including after traffic.
 assume -env {rst |-> push_rst}
 assume -env {rst |-> pop_rst}
-assume -env {!push_rst |=> !push_rst}
-assume -env {!pop_rst |=> !pop_rst}
-assume -env {s_eventually !push_rst}
-assume -env {s_eventually !pop_rst}
+assume -env {s_eventually (!push_rst && !push_sender_in_reset && !pop_rst)}
 
 # push/pop side primary input signals only toggle w.r.t its clock
 clock -rate {push_rst \
@@ -50,7 +47,7 @@ push_rst | push_sender_in_reset |-> \
 (credit_initial_push <= Depth) && $stable(credit_initial_push)}
 
 assume -name no_push_valid_during_reset {@(posedge push_clk) \
-push_rst | push_sender_in_reset |-> push_valid == 'd0}
+fv_rst |-> push_valid == 'd0}
 
 assume -name no_pop_ram_rd_data_valid_during_reset {@(posedge pop_clk) \
 pop_rst |-> pop_ram_rd_data_valid == 'd0}
@@ -59,6 +56,11 @@ pop_rst |-> pop_ram_rd_data_valid == 'd0}
 # add assumption to force it to zero during first system_clock cycle.
 assume -bound 1 {dut.br_cdc_fifo_ctrl_push_1r1w_push_credit_inst.br_cdc_fifo_push_ctrl_credit.br_cdc_fifo_push_flag_mgr.br_cdc_fifo_reset_overlap_checks.overlap_cycles == 'd0}
 assume -bound 1 {dut.br_cdc_fifo_ctrl_pop_1r1w_inst.br_cdc_fifo_pop_ctrl.br_cdc_fifo_pop_flag_mgr.br_cdc_fifo_reset_overlap_checks.overlap_cycles == 'd0}
+
+# Allow sender reset to reassert, and constrain each reset sequence to satisfy
+# the FIFO's required overlap in both clock domains.
+assume -disable *fv_credit_receiver.push_sender_in_reset_a
+assume -from_assert *br_cdc_fifo_reset_overlap_checks.reset_overlap_a
 
 # primary output control signal should be legal during reset
 #assert -name fv_rst_check_push_credit {@(posedge push_clk) \

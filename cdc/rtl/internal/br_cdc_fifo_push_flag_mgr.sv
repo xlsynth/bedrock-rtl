@@ -108,7 +108,8 @@ module br_cdc_fifo_push_flag_mgr #(
   logic [CountWidth:0] items_ext;  // ri lint_check_waive INEFFECTIVE_NET
 
   assign pop_count_visible = reset_active_pop ? pop_count_saved : pop_count;
-  assign pop_count_delta = reset_active_pop ? '0 : (pop_count - pop_count_saved);
+  // pop_count_saved clears on push reset before the synchronized pop count does.
+  assign pop_count_delta = (rst || reset_active_pop) ? '0 : (pop_count - pop_count_saved);
   assign push_count_ext = {1'b0, push_count};
   assign pop_count_visible_ext = {1'b0, pop_count_visible};
   assign items_wrap_offset = MaxCountP1;
