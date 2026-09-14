@@ -87,10 +87,6 @@ module br_credit_receiver #(
     // This only changes assertions; functional reset gating is unchanged.
     // ri lint_check_waive PARAM_NOT_USED
     parameter bit EnableAssertPushValidInReset = 1,
-    // If 1, reset the occupancy checker on push_sender_in_reset as well as rst.
-    // Set only when the attached buffer is also reset during sender reset.
-    // ri lint_check_waive PARAM_NOT_USED
-    parameter bit BufferResetOnSenderReset = 0,
     localparam int CounterWidth = $clog2(MaxCredit + 1),
     localparam int PushCreditWidth = $clog2(PushCreditMaxChange + 1),
     localparam int PopCreditChangeWidth = $clog2(PopCreditMaxChange + 1)
@@ -153,9 +149,6 @@ module br_credit_receiver #(
   logic [  CounterWidth:0] occupancy_next;
   logic [CounterWidth-1:0] occupancy_incr;
   logic [    NumFlows-1:0] push_valid_checked;
-  logic                    occupancy_rst;
-
-  assign occupancy_rst = BufferResetOnSenderReset ? either_rst : rst;
 
   // Preserve raw-valid checking by default. The gated mode ignores reset-held
   // valids, while unknown valids outside reset still propagate into the checker.
@@ -172,15 +165,17 @@ module br_credit_receiver #(
     end
   end
 
+  // The buffer shares rst only: do not clear occupancy or mask its returned
+  // credits merely because the sender has entered reset first.
   // ri lint_check_off ARITH_ARGS
   assign occupancy_next = occupancy + occupancy_incr - CounterWidth'(pop_credit);
   // ri lint_check_on ARITH_ARGS
 
-  `BR_REGX(occupancy, occupancy_next[CounterWidth-1:0], clk, occupancy_rst)
+  `BR_REGX(occupancy, occupancy_next[CounterWidth-1:0], clk, either_rst)
 `endif  // BR_DISABLE_INTG_CHECKS
 `endif  // BR_ASSERT_ON
   `BR_ASSERT_CR_INTG(no_push_overflow_a, (|push_valid_checked) |-> (occupancy_next <= MaxCredit),
-                     clk, occupancy_rst)
+                     clk, either_rst)
   `BR_ASSERT_CR_INTG(pop_credit_in_range_a, pop_credit <= PopCreditMaxChange, clk, either_rst)
 
   if (EnableCoverPushSenderInReset) begin : gen_cover_push_sender_in_reset

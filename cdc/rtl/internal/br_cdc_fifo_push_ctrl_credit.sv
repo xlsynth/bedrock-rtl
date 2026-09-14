@@ -101,8 +101,7 @@ module br_cdc_fifo_push_ctrl_credit #(
       .EnableCoverCreditWithhold   (EnableCoverCreditWithhold),
       .EnableCoverPushSenderInReset(EnableCoverPushSenderInReset),
       .EnableCoverPushCreditStall  (EnableCoverPushCreditStall),
-      .EnableAssertFinalNotValid   (EnableAssertFinalNotValid),
-      .BufferResetOnSenderReset    (1)
+      .EnableAssertFinalNotValid   (EnableAssertFinalNotValid)
   ) br_credit_receiver (
       .clk,
       // Not using either_rst here so that there is no path from
