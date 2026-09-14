@@ -82,7 +82,7 @@ module br_credit_receiver #(
     // If 1, then at the end of simulation, assert that the credit counter value equals
     // the minimum number of credits that it stored at any point during the test.
     parameter bit EnableAssertFinalMinValue = 1,
-    // If 1, use raw push_valid for occupancy/overflow checks, including during sender reset.
+    // If 1, use raw push_valid for occupancy/overflow checks.
     // If 0, use reset-gated push_valid for those checks and the final push-valid check.
     // This only changes assertions; functional reset gating is unchanged.
     // ri lint_check_waive PARAM_NOT_USED
@@ -171,11 +171,12 @@ module br_credit_receiver #(
   assign occupancy_next = occupancy + occupancy_incr - CounterWidth'(pop_credit);
   // ri lint_check_on ARITH_ARGS
 
-  `BR_REG(occupancy, occupancy_next[CounterWidth-1:0])
+  `BR_REGX(occupancy, occupancy_next[CounterWidth-1:0], clk, either_rst)
 `endif  // BR_DISABLE_INTG_CHECKS
 `endif  // BR_ASSERT_ON
-  `BR_ASSERT_INTG(no_push_overflow_a, (|push_valid_checked) |-> (occupancy_next <= MaxCredit))
-  `BR_ASSERT_INTG(pop_credit_in_range_a, pop_credit <= PopCreditMaxChange)
+  `BR_ASSERT_CR_INTG(no_push_overflow_a, (|push_valid_checked) |-> (occupancy_next <= MaxCredit),
+                     clk, either_rst)
+  `BR_ASSERT_CR_INTG(pop_credit_in_range_a, pop_credit <= PopCreditMaxChange, clk, either_rst)
 
   if (EnableCoverPushSenderInReset) begin : gen_cover_push_sender_in_reset
     `BR_COVER_INCL_RST_INTG(push_sender_in_reset_a, push_sender_in_reset)
