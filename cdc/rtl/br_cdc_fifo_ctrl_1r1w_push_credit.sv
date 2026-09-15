@@ -79,7 +79,7 @@ module br_cdc_fifo_ctrl_1r1w_push_credit #(
     // before sending to the CDC synchronizers. This adds one forward cycle and one
     // return cycle.
     // Do not set this to 0 unless push_rst and pop_rst are driven directly by
-    // registers. If set to 0, push_sender_in_reset must be tied to 0.
+    // registers, and push_sender_in_reset is driven directly by a register or tied to 0.
     parameter bit RegisterResetActive = 1,
     // If 1, cover that credit_withhold can be non-zero.
     // Otherwise, assert that it is always zero.
