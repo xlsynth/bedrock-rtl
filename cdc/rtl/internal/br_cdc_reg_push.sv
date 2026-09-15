@@ -58,6 +58,7 @@ module br_cdc_reg_push #(
 
   logic push_flag_int_next;
   logic push_flag_int;
+  logic push_reg_le;
   logic pop_flag_saved;
   logic pop_flag_visible;
 
@@ -65,9 +66,15 @@ module br_cdc_reg_push #(
   // If push and pop flag match, the register is empty
   assign push_ready = push_flag_int == pop_flag_visible;
   assign push_flag_int_next = (push_valid && push_ready) ? ~push_flag_int : push_flag_int;
+  // If push side is in reset, but pop side is not yet in reset and the data register
+  // was occupied prior to reset entry, we want to avoid changing the registered
+  // data since it could still be read from the pop side.
+  // Since the push flag has been reset, push_ready might be high erroneously.
+  // Gate the load-enable with !rst to prevent such a scenario.
+  assign push_reg_le = push_valid && push_ready && !rst;
 
   `BR_REG(push_flag_int, push_flag_int_next)
-  `BR_REGL(push_reg_data, push_data, push_valid && push_ready)
+  `BR_REGLN(push_reg_data, push_data, push_reg_le)
   `BR_REGL(pop_flag_saved, pop_flag, !reset_active_pop)
 
   br_delay_nr #(
