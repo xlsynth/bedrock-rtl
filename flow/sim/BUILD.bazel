@@ -81,6 +81,34 @@ br_verilog_sim_test_tools_suite(
     deps = [":br_flow_reg_tb"],
 )
 
+verilog_library(
+    name = "br_flow_reg_fwd_unstable_tb",
+    srcs = ["br_flow_reg_fwd_unstable_tb.sv"],
+    deps = [
+        "//flow/rtl:br_flow_reg_fwd_unstable",
+        "//misc/sim:br_test_driver",
+    ],
+)
+
+verilog_elab_test(
+    name = "br_flow_reg_fwd_unstable_tb_elab_test",
+    tool = "slang",
+    deps = [":br_flow_reg_fwd_unstable_tb"],
+)
+
+br_verilog_sim_test_tools_suite(
+    name = "br_flow_reg_fwd_unstable_sim_test_tools_suite",
+    params = {
+        "Width": [
+            "1",
+            "8",
+            "17",
+        ],
+    },
+    tools = _FLOW_REG_SIM_TOOLS,
+    deps = [":br_flow_reg_fwd_unstable_tb"],
+)
+
 verilog_elab_test(
     name = "br_flow_reg_rev_tb_elab_test",
     tool = "slang",
@@ -167,6 +195,30 @@ br_verilog_sim_test_tools_suite(
     },
     tools = _FLOW_PRIMITIVE_SIM_TOOLS,
     deps = [":br_flow_fork_select_tb"],
+)
+
+verilog_library(
+    name = "br_flow_fork_unstable_tb",
+    srcs = ["br_flow_fork_unstable_tb.sv"],
+    deps = [
+        "//flow/rtl:br_flow_fork_unstable",
+        "//misc/sim:br_test_driver",
+    ],
+)
+
+verilog_elab_test(
+    name = "br_flow_fork_unstable_tb_elab_test",
+    tool = "slang",
+    deps = [":br_flow_fork_unstable_tb"],
+)
+
+br_verilog_sim_test_tools_suite(
+    name = "br_flow_fork_unstable_sim_test_tools_suite",
+    tools = [
+        "vcs",
+        "verilator",
+    ],
+    deps = [":br_flow_fork_unstable_tb"],
 )
 
 verilog_library(
@@ -477,6 +529,30 @@ br_verilog_sim_test_tools_suite(
         "verilator",
     ],
     deps = [":br_flow_mux_fixed_tb"],
+)
+
+verilog_library(
+    name = "br_flow_mux_fixed_unstable_tb",
+    srcs = ["br_flow_mux_fixed_unstable_tb.sv"],
+    deps = [
+        "//flow/rtl:br_flow_mux_fixed_unstable",
+        "//misc/sim:br_test_driver",
+    ],
+)
+
+verilog_elab_test(
+    name = "br_flow_mux_fixed_unstable_tb_elab_test",
+    tool = "slang",
+    deps = [":br_flow_mux_fixed_unstable_tb"],
+)
+
+br_verilog_sim_test_tools_suite(
+    name = "br_flow_mux_fixed_unstable_sim_test_tools_suite",
+    tools = [
+        "vcs",
+        "verilator",
+    ],
+    deps = [":br_flow_mux_fixed_unstable_tb"],
 )
 
 verilog_library(
@@ -967,10 +1043,12 @@ verilog_sim_coverage_aggregate(
     name = "br_flow_verilator_coverage",
     coverage_reports = [
         ":br_flow_reg_fwd_sim_test_tools_suite_verilator_coverage",
+        ":br_flow_reg_fwd_unstable_sim_test_tools_suite_verilator_coverage",
         ":br_flow_reg_rev_sim_test_tools_suite_verilator_coverage",
         ":br_flow_reg_none_sim_test_tools_suite_verilator_coverage",
         ":br_flow_reg_both_sim_test_tools_suite_verilator_coverage",
         ":br_flow_fork_select_sim_test_tools_suite_verilator_coverage",
+        ":br_flow_fork_unstable_sim_test_tools_suite_verilator_coverage",
         ":br_flow_join_sim_test_tools_suite_verilator_coverage",
         ":br_flow_valve_sim_test_tools_suite_verilator_coverage",
         ":br_flow_mux_select_sim_test_tools_suite_verilator_coverage",
@@ -984,6 +1062,7 @@ verilog_sim_coverage_aggregate(
         ":br_flow_arb_rr_sim_test_tools_suite_verilator_coverage",
         ":br_flow_arb_lru_sim_test_tools_suite_verilator_verilator_coverage",
         ":br_flow_mux_fixed_sim_test_tools_suite_verilator_coverage",
+        ":br_flow_mux_fixed_unstable_sim_test_tools_suite_verilator_coverage",
         ":br_flow_mux_rr_sim_test_tools_suite_verilator_coverage",
         ":br_flow_mux_lru_sim_test_tools_suite_verilator_verilator_coverage",
         ":br_flow_mux_weighted_rr_sim_test_tools_suite_verilator_coverage",
