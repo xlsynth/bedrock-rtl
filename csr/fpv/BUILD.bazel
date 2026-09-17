@@ -7,6 +7,100 @@ load("//bazel:verilog.bzl", "verilog_elab_test")
 package(default_visibility = ["//visibility:private"])
 
 ####################################################################################
+# Bedrock-RTL CSR Memory Interface FPV Monitor and Tests
+verilog_library(
+    name = "br_csr_mem_interface_fpv_monitor",
+    srcs = ["br_csr_mem_interface_fpv_monitor.sv"],
+    visibility = ["//visibility:public"],
+    deps = [
+        "//csr/rtl:br_csr_mem_interface",
+    ],
+)
+
+verilog_elab_test(
+    name = "br_csr_mem_interface_fpv_monitor_elab_test",
+    opts = ["--ignore-unknown-modules"],
+    tool = "slang",
+    top = "br_csr_mem_interface_fpv_monitor",
+    deps = [
+        ":br_csr_mem_interface_fpv_monitor",
+    ],
+)
+
+# Sweep two values for each datapath parameter and the partial-write policy.
+# The 32 cases cover singleton/non-power-of-two depth, byte-wide/equal-width
+# memory, multiple CSR data lanes, and exact-width/ignored-upper-bit addresses.
+# Use the default register controls; the separate control suite sweeps them.
+# EnableAddressRangeCheck only controls the RTL integration checker, so keep it
+# disabled while verifying the adapter's translation and response behavior.
+br_verilog_fpv_test_tools_suite(
+    name = "br_csr_mem_interface_datapath_test_suite",
+    elab_opts = [
+        "-parameter EnableAddressRangeCheck 0",
+    ],
+    params = {
+        "CsrAddrWidth": [
+            "4",
+            "8",
+        ],
+        "CsrDataWidth": [
+            "32",
+            "64",
+        ],
+        "MemDepth": [
+            "1",
+            "3",
+        ],
+        "MemWidth": [
+            "8",
+            "32",
+        ],
+        "EnablePartialWrites": [
+            "0",
+            "1",
+        ],
+    },
+    tools = {
+        "jg": "",
+    },
+    top = "br_csr_mem_interface",
+    deps = [":br_csr_mem_interface_fpv_monitor"],
+)
+
+# Sweep request/response registers and address-check enable with the datapath fixed.
+# A 64/32 datapath with partial writes enabled exercises two data lanes,
+# alignment, and byte strobes; depth three exercises a non-power-of-two limit.
+br_verilog_fpv_test_tools_suite(
+    name = "br_csr_mem_interface_control_test_suite",
+    elab_opts = [
+        "-parameter CsrAddrWidth 8",
+        "-parameter CsrDataWidth 64",
+        "-parameter MemDepth 3",
+        "-parameter MemWidth 32",
+        "-parameter EnablePartialWrites 1",
+    ],
+    params = {
+        "EnableAddressRangeCheck": [
+            "0",
+            "1",
+        ],
+        "RegisterMemOutputs": [
+            "0",
+            "1",
+        ],
+        "RegisterResponseOutputs": [
+            "0",
+            "1",
+        ],
+    },
+    tools = {
+        "jg": "",
+    },
+    top = "br_csr_mem_interface",
+    deps = [":br_csr_mem_interface_fpv_monitor"],
+)
+
+####################################################################################
 # AXI4-Lite to SCB Widget FPV Monitor and Tests
 verilog_library(
     name = "br_csr_axil_widget_fpv_monitor",
