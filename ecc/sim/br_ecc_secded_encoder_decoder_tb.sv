@@ -4,6 +4,8 @@
 
 // Testbench for br_ecc_secded_encoder and br_ecc_secded_decoder
 
+`include "br_asserts.svh"
+
 `timescale 1ns / 1ps
 
 module br_ecc_secded_encoder_decoder_tb;
@@ -94,6 +96,24 @@ module br_ecc_secded_encoder_decoder_tb;
       .dec_error_due,
       .dec_error_syndrome
   );
+
+  if (DataWidth == 256 && E2ELatency == 0) begin : gen_shared_matrix_check
+    logic [ParityWidth-1:0] matrix_syndrome;
+    for (genvar row = 0; row < ParityWidth; row++) begin : gen_rows
+      localparam int RowWeight = br_ecc_secded_256_pkg::SyndromeRowWeight;
+      localparam logic [CodewordWidth-1:0] RowMask = br_ecc_secded_256_pkg::syndrome_row_mask(row);
+      logic [RowWeight-1:0] terms;
+      `BR_ASSERT_STATIC(row_weight_a, $countones(RowMask) == RowWeight)
+      for (genvar term = 0; term < RowWeight; term++) begin : gen_terms
+        localparam int CodewordBit = br_ecc_secded_256_pkg::syndrome_term_index(row, term);
+        assign terms[term] = injected[CodewordBit];
+      end
+      assign matrix_syndrome[row] = ^terms;
+      `BR_ASSERT(row_mask_matches_terms_a,
+                 enc_valid |-> matrix_syndrome[row] == ^(injected & RowMask))
+    end
+    `BR_ASSERT(shared_matrix_matches_decoder_a, dec_valid |-> matrix_syndrome == dec_error_syndrome)
+  end
 
   // Clock generation
   initial clk = 0;
