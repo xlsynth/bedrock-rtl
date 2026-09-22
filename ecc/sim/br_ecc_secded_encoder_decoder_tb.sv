@@ -102,15 +102,26 @@ module br_ecc_secded_encoder_decoder_tb;
     for (genvar row = 0; row < ParityWidth; row++) begin : gen_rows
       localparam int RowWeight = br_ecc_secded_256_pkg::SyndromeRowWeight;
       localparam logic [CodewordWidth-1:0] RowMask = br_ecc_secded_256_pkg::syndrome_row_mask(row);
-      logic [RowWeight-1:0] terms;
       `BR_ASSERT_STATIC(row_weight_a, $countones(RowMask) == RowWeight)
-      for (genvar term = 0; term < RowWeight; term++) begin : gen_terms
-        localparam int CodewordBit = br_ecc_secded_256_pkg::syndrome_term_index(row, term);
-        assign terms[term] = injected[CodewordBit];
+      assign matrix_syndrome[row] = ^(injected & RowMask);
+
+      // Check every term once without elaborating a separate function call for each term.
+      initial begin
+        logic [CodewordWidth-1:0] term_mask;
+        int codeword_bit;
+        int previous_bit;
+        term_mask = '0;
+        previous_bit = -1;
+        for (int term = 0; term < RowWeight; term++) begin
+          codeword_bit = br_ecc_secded_256_pkg::syndrome_term_index(row, term);
+          if (codeword_bit <= previous_bit || codeword_bit >= CodewordWidth) begin
+            $fatal(1, "Invalid matrix term: row=%0d term=%0d bit=%0d", row, term, codeword_bit);
+          end
+          term_mask[codeword_bit] = 1'b1;
+          previous_bit = codeword_bit;
+        end
+        if (term_mask !== RowMask) $fatal(1, "Matrix term enumeration mismatch: row=%0d", row);
       end
-      assign matrix_syndrome[row] = ^terms;
-      `BR_ASSERT(row_mask_matches_terms_a,
-                 enc_valid |-> matrix_syndrome[row] == ^(injected & RowMask))
     end
     `BR_ASSERT(shared_matrix_matches_decoder_a, dec_valid |-> matrix_syndrome == dec_error_syndrome)
   end
