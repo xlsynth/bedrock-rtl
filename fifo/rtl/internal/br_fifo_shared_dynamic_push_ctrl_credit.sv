@@ -20,9 +20,9 @@ module br_fifo_shared_dynamic_push_ctrl_credit #(
     // If 1, cover that push_credit_stall can be asserted
     // Otherwise, assert that it is never asserted.
     parameter bit EnableCoverPushCreditStall = 1,
-    // If 1, cover that credit_withhold can be non-zero.
-    // Otherwise, assert that it is always zero.
-    parameter bit EnableCoverCreditWithhold = 1,
+    // If 1, support nonzero credit_withhold values and cover that case.
+    // Otherwise, optimize for credit_withhold being zero and assert that requirement.
+    parameter bit EnableCreditWithhold = 1,
     // If 1, cover that push_sender_in_reset can be asserted
     // Otherwise, assert that it is never asserted.
     parameter bit EnableCoverPushSenderInReset = 1,
@@ -123,7 +123,7 @@ module br_fifo_shared_dynamic_push_ctrl_credit #(
       .PushCreditMaxChange(NumWritePorts),
       .PopCreditMaxChange(PopCreditMaxChange),
       .RegisterPushOutputs(RegisterPushOutputs),
-      .EnableCoverCreditWithhold(EnableCoverCreditWithhold),
+      .EnableCreditWithhold(EnableCreditWithhold),
       .EnableCoverPushSenderInReset(EnableCoverPushSenderInReset),
       .EnableCoverPushCreditStall(EnableCoverPushCreditStall),
       .EnableAssertFinalNotValid(EnableAssertFinalNotValid)
