@@ -29,6 +29,16 @@ verilog_library(
 )
 
 verilog_library(
+    name = "br_delay_nr_prop",
+    srcs = ["br_delay_nr_prop.sv"],
+    deps = [
+        ":br_delay_nr",
+        "//macros:br_asserts_internal",
+        "//macros:br_unused",
+    ],
+)
+
+verilog_library(
     name = "br_delay_valid",
     srcs = ["br_delay_valid.sv"],
     deps = [
@@ -254,6 +264,22 @@ br_verilog_elab_and_lint_test_suite(
         ],
     },
     deps = [":br_delay_nr"],
+)
+
+br_verilog_elab_and_lint_test_suite(
+    name = "br_delay_nr_prop_test_suite",
+    params = {
+        "Width": [
+            "1",
+            "8",
+        ],
+        "NumStages": [
+            "0",
+            "1",
+            "2",
+        ],
+    },
+    deps = [":br_delay_nr_prop"],
 )
 
 br_verilog_elab_and_lint_test_suite(
