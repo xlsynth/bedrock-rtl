@@ -54,11 +54,14 @@ module br_ram_flops_1r1w_mock #(
     localparam int AddressWidth = $clog2(Depth),
     localparam int NumWords = br_math::ceil_div(Width, WordWidth),
     // Write latency in units of wr_clk cycles
+    // slang lint_save
+    // slang lint_off unused-parameter
     // ri lint_check_waive PARAM_NOT_USED
     localparam int WriteLatency = AddressDepthStages + 1,
     // Read latency in units of rd_clk cycles
     // ri lint_check_waive PARAM_NOT_USED
     localparam int ReadLatency = AddressDepthStages + ReadDataDepthStages + ReadDataWidthStages
+    // slang lint_restore
 ) (
     // Write-clock signals
     // Posedge-triggered clock.

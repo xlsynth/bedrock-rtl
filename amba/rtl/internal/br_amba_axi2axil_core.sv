@@ -126,6 +126,8 @@ module br_amba_axi2axil_core #(
     // truncated from this shifted beat offset are zero for legal transactions.
     incr_address = start_addr + (index << size);  // ri lint_check_waive VAR_SHIFT TRUNC_LSHIFT
 
+    // slang lint_save
+    // slang lint_off case-enum-explicit
     unique case (br_amba::axi_burst_type_t'(burst_type))
       br_amba::AxiBurstIncr: begin
         align_mask   = {AddrWidth{1'b1}} << size;  // ri lint_check_waive VAR_SHIFT TRUNC_LSHIFT
@@ -140,6 +142,7 @@ module br_amba_axi2axil_core #(
         next_address = start_addr;
       end
     endcase
+    // slang lint_restore
   endfunction
 
   //----------------------------------------------------------------------------

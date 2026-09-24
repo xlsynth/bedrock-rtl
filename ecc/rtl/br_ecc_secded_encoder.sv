@@ -92,8 +92,11 @@ module br_ecc_secded_encoder #(
     output logic [CodewordWidth-1:0] enc_codeword
 );
 
+  // slang lint_save
+  // slang lint_off unused-parameter
   // ri lint_check_waive PARAM_NOT_USED
   localparam int Latency = 32'(RegisterInputs) + 32'(RegisterOutputs);
+  // slang lint_restore
 
   //------------------------------------------
   // Integration checks

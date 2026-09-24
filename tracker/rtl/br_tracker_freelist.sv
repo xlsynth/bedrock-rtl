@@ -53,12 +53,15 @@ module br_tracker_freelist #(
     // It is expected that alloc_valid could be 1 at end of the test because it's
     // a natural idle condition for this design.
     parameter bit EnableAssertFinalNotDeallocValid = 1,
+    // slang lint_save
+    // slang lint_off unused-parameter
     // ri lint_check_waive PARAM_NOT_USED
     parameter bit EnableAssertUniqueDeallocEntryId = 1,
     // If 1, then assert that the number of allocated entries is the same as the number of
     // preallocated entries at the end of the test.
     // ri lint_check_waive PARAM_NOT_USED
     parameter bit EnableAssertFinalAllocatedInitial = 1,
+    // slang lint_restore
 
     localparam int EntryIdWidth = $clog2(NumEntries),
     localparam int DeallocCountWidth = $clog2(NumDeallocPorts + 1),

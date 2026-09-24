@@ -112,7 +112,10 @@ module br_cdc_reg #(
 
   // Tag this signal as needing max delay checks.
   // ri lint_check_off ONE_CONN_PER_LINE
+  // slang lint_save
+  // slang lint_off ignored-macro-paste
   `BR_GATE_CDC_MAXDEL_BUS(push_reg_data_maxdel, push_reg_data, Width)
+  // slang lint_restore
   // ri lint_check_on ONE_CONN_PER_LINE
 
   // Pop side

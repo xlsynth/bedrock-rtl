@@ -74,6 +74,12 @@ repos:
         language: system
         pass_filenames: true
         files: (^|/)BUILD$
+      - id: scoped-slang-waivers
+        name: scoped Slang lint waivers
+        entry: python3 python/verilog_runner/slang_waivers.py
+        language: system
+        pass_filenames: true
+        files: \.(sv|svh)$
 
   - repo: https://github.com/mgottscho/verible-py.git
     # v0.0-4051

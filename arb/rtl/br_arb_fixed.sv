@@ -12,10 +12,13 @@ module br_arb_fixed #(
     // Must be at least 1
     parameter int NumRequesters = 1
 ) (
+    // slang lint_save
+    // slang lint_off unused-port
     // ri lint_check_waive HIER_NET_NOT_READ HIER_BRANCH_NOT_READ INPUT_NOT_READ
     input logic clk,  // Only used for assertions
     // ri lint_check_waive HIER_NET_NOT_READ HIER_BRANCH_NOT_READ INPUT_NOT_READ
     input logic rst,  // Only used for assertions
+    // slang lint_restore
     input logic [NumRequesters-1:0] request,
     output logic [NumRequesters-1:0] grant
 );

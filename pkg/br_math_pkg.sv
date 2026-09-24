@@ -46,7 +46,10 @@ package br_math;
   // Returns 1 if the value is even, 0 otherwise.
   // ri lint_check_waive TWO_STATE_TYPE
   function automatic bit is_even(input int value);
+    // slang lint_save
+    // slang lint_off sign-conversion
     return (value & 1'b1) == 0;
+    // slang lint_restore
   endfunction
 
   // ceil(log_base(x)) using change-of-base formula. base must be a power-of-2.
