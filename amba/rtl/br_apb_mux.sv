@@ -133,17 +133,16 @@ module br_apb_mux #(
         end
       end
       Access: begin
-        if (|(grant_saved & upstream_psel)) begin
-          request_select = grant_saved;
-          downstream_psel = 1'b1;
-          downstream_penable = 1'b1;
-          upstream_pready = grant_saved & {NumUpstreams{downstream_pready}};
-          upstream_pslverr = grant_saved & {NumUpstreams{downstream_pslverr}};
+        request_select = grant_saved;
+        downstream_psel = 1'b1;
+        downstream_penable = 1'b1;
+        upstream_pready = grant_saved & {NumUpstreams{downstream_pready}};
+        upstream_pslverr = grant_saved & {NumUpstreams{downstream_pslverr}};
 
-          if (downstream_pready) begin
-            apb_state_next = Setup;
-          end
-        end else begin
+        if (downstream_pready) begin
+          apb_state_next = Setup;
+        end
+        if (!(|(grant_saved & upstream_psel))) begin
           // Early PSEL withdrawal violates APB. Releasing ownership here is a
           // defensive safety behavior so a malformed requester cannot retain the bus.
           apb_state_next = Setup;

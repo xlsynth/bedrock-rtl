@@ -186,7 +186,7 @@ module br_apb_mux_fpv_monitor #(
   end
 
 `ifdef BR_APB_MUX_FPV_RECOVERY
-  // TODO(bgelb): Check that early PSEL withdrawal by one requester cannot
+  // TODO(masai): Check that early PSEL withdrawal by one requester cannot
   // permanently retain mux ownership for that requester.
   // No protocol or payload assumptions are applied in this mode. The covers
   // require the same withdrawn requester to wait, complete, return to Setup, and restart.
