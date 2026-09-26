@@ -186,8 +186,10 @@ module br_apb_mux_fpv_monitor #(
   end
 
 `ifdef BR_APB_MUX_FPV_RECOVERY
-  // TODO(masai): Check that early PSEL withdrawal by one requester cannot
-  // permanently retain mux ownership for that requester.
+  // TODO(masai): Qualify access_holds_until_ready_a with the selected requester's
+  // PSEL in recovery mode, and update the PSEL withdrawal covers to expect Setup
+  // without waiting for PREADY. Check that the withdrawing requester cannot
+  // permanently retain mux ownership.
   // No protocol or payload assumptions are applied in this mode. The covers
   // require the same withdrawn requester to wait, complete, return to Setup, and restart.
   // Keep the recovery sequence aligned by sampled cycle.
