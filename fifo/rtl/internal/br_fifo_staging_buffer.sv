@@ -289,7 +289,7 @@ module br_fifo_staging_buffer #(
         (internal_pop_ready && !buffer_valid) ? bypass_data_unstable : push_data;
 
     `BR_REG(buffer_valid, buffer_valid_next)
-    `BR_REGL(buffer_data, buffer_data_next, buffer_data_le)
+    `BR_REGLN(buffer_data, buffer_data_next, buffer_data_le)
     `BR_REGL(buffer_bypass, bypass_beat, buffer_data_le)
 
     if (EnableBypass && RamReadLatency > 0 &&
@@ -385,7 +385,7 @@ module br_fifo_staging_buffer #(
 
     // Actual storage update
     for (genvar i = 0; i < InternalDepth; i++) begin : gen_storage
-      `BR_REGL(mem[i], mem_wr_data[i], mem_wr_en[i])
+      `BR_REGLN(mem[i], mem_wr_data[i], mem_wr_en[i])
     end
 
     br_mux_onehot #(
