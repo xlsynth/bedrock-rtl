@@ -343,23 +343,28 @@ module br_apb_mux_tb;
     @(negedge clk);
     upstream_penable[0] = 1'b0;
 
-    repeat (2) begin
+    if (drop_select) begin
+      td.check(!downstream_psel && !downstream_penable,
+               "arbiter did not release access after upstream PSEL withdrawal");
+    end else begin
+      repeat (2) begin
+        @(posedge clk);
+        td.check(downstream_psel && downstream_penable,
+                 "malformed upstream request disrupted downstream access");
+        td.check(upstream_pready == '0, "malformed upstream request unexpectedly completed");
+      end
+
+      @(negedge clk);
+      downstream_pready  = 1'b1;
+      downstream_pslverr = 1'b1;
       @(posedge clk);
       td.check(downstream_psel && downstream_penable,
-               "malformed upstream request disrupted downstream access");
-      td.check(upstream_pready == '0, "malformed upstream request unexpectedly completed");
+               "malformed upstream request prevented downstream completion");
+      td.check(upstream_pready == NumUpstreams'(1), "saved grant did not route completion");
+      td.check(upstream_pslverr == NumUpstreams'(1), "saved grant did not route error");
+      td.check((upstream_psel & upstream_penable & upstream_pready) == '0,
+               "inactive upstream unexpectedly accepted a transfer");
     end
-
-    @(negedge clk);
-    downstream_pready  = 1'b1;
-    downstream_pslverr = 1'b1;
-    @(posedge clk);
-    td.check(downstream_psel && downstream_penable,
-             "malformed upstream request prevented downstream completion");
-    td.check(upstream_pready == NumUpstreams'(1), "saved grant did not route completion");
-    td.check(upstream_pslverr == NumUpstreams'(1), "saved grant did not route error");
-    td.check((upstream_psel & upstream_penable & upstream_pready) == '0,
-             "inactive upstream unexpectedly accepted a transfer");
 
     @(negedge clk);
     downstream_pready = 1'b0;

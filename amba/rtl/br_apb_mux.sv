@@ -141,6 +141,10 @@ module br_apb_mux #(
 
         if (downstream_pready) begin
           apb_state_next = Setup;
+        end else if (!(|(grant_saved & upstream_psel))) begin
+          // Early PSEL withdrawal violates APB. Releasing ownership here is a
+          // defensive safety behavior so a malformed requester cannot retain the bus.
+          apb_state_next = Setup;
         end
       end
       default: begin
