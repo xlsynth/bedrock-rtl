@@ -60,7 +60,6 @@
 //     are selected through round-robin arbitration.
 
 `include "br_asserts_internal.svh"
-`include "br_registers.svh"
 `include "br_unused.svh"
 
 module br_credit_sender #(
@@ -75,6 +74,7 @@ module br_credit_sender #(
     // Must be at least 1 but at most MaxCredit.
     parameter int PopCreditMaxChange = 1,
     // If 1, add 1 cycle of retiming to pop outputs.
+    // Payload registers are not reset; pop_valid qualifies their contents.
     parameter bit RegisterPopOutputs = 0,
     // If 1, cover that the push side experiences backpressure.
     // If 0, disable backpressure coverage. By default, this also
@@ -264,17 +264,32 @@ module br_credit_sender #(
 
   assign internal_pop_valid = push_ready & push_valid;
 
-  if (RegisterPopOutputs) begin : gen_reg_pop
-    `BR_REGI(pop_sender_in_reset, 1'b0, 1'b1)
-    `BR_REG(pop_valid, internal_pop_valid)
-    for (genvar i = 0; i < NumFlows; i++) begin : gen_reg_pop_data
-      `BR_REGL(pop_data[i], push_data[i], internal_pop_valid[i])
-    end
-  end else begin : gen_passthru_pop
-    assign pop_sender_in_reset = rst;
-    assign pop_valid = internal_pop_valid;
-    assign pop_data = push_data;
+  for (genvar i = 0; i < NumFlows; i++) begin : gen_pop_outputs
+    br_delay_valid #(
+        .Width(Width),
+        .NumStages(RegisterPopOutputs),
+        .EnableAssertFinalNotValid(EnableAssertFinalNotValid)
+    ) br_delay_valid_pop (
+        .clk,
+        .rst,
+        .in_valid(internal_pop_valid[i]),
+        .in(push_data[i]),
+        .out_valid(pop_valid[i]),
+        .out(pop_data[i]),
+        .out_valid_stages(),
+        .out_stages()
+    );
   end
+
+  br_delay_nr #(
+      .Width(1),
+      .NumStages(RegisterPopOutputs)
+  ) br_delay_nr_pop_sender_in_reset (
+      .clk,
+      .in(rst),
+      .out(pop_sender_in_reset),
+      .out_stages()
+  );
 
   //------------------------------------------
   // Implementation checks

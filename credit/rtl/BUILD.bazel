@@ -124,9 +124,10 @@ verilog_library(
     deps = [
         ":br_credit_counter",
         "//arb/rtl:br_arb_multi_rr",
+        "//delay/rtl:br_delay_nr",
+        "//delay/rtl:br_delay_valid",
         "//flow/rtl/internal:br_flow_checks_valid_data_intg",
         "//macros:br_asserts_internal",
-        "//macros:br_registers",
         "//pkg:br_math_pkg",
     ],
 )
