@@ -60,7 +60,6 @@ module br_flow_fork_select_multihot #(
                     !(EnableAssertNoPushBackpressure && EnableCoverPushBackpressure))
   `BR_ASSERT_STATIC(num_flows_gte_1_a, NumFlows >= 1)
 
-  `BR_ASSERT_INTG(select_not_0_when_valid_a, push_valid |-> (|push_select_multihot))
   br_flow_checks_valid_data_intg #(
       .NumFlows(1),
       .Width(NumFlows),
@@ -136,5 +135,8 @@ module br_flow_fork_select_multihot #(
       `BR_COVER_IMPL(pop_valid_unstable_c, $stable(push_valid) && $fell(pop_valid_unstable[i]))
     end
   end
+
+  `BR_ASSERT_IMPL(always_ready_when_unselected_a,
+                  push_valid && !(|push_select_multihot) |-> push_ready)
 
 endmodule : br_flow_fork_select_multihot
