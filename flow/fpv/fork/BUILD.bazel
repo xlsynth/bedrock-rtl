@@ -37,7 +37,7 @@ br_verilog_fpv_test_tools_suite(
         ],
     },
     tools = {
-        "jg": "",
+        "jg": "br_flow_fork_fpv.jg.tcl",
     },
     top = "br_flow_fork",
     deps = [":br_flow_fork_fpv_monitor"],
