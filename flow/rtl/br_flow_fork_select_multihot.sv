@@ -136,7 +136,10 @@ module br_flow_fork_select_multihot #(
     end
   end
 
-  `BR_ASSERT_IMPL(always_ready_when_unselected_a,
-                  push_valid && !(|push_select_multihot) |-> push_ready)
+  // Onehot mode forbids valid zero-select transactions.
+  if (EnableCoverSelectMultihot) begin : gen_assert_ready_when_unselected
+    `BR_ASSERT_IMPL(always_ready_when_unselected_a,
+                    push_valid && !(|push_select_multihot) |-> push_ready)
+  end
 
 endmodule : br_flow_fork_select_multihot

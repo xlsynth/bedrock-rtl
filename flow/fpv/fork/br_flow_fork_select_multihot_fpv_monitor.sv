@@ -45,7 +45,6 @@ module br_flow_fork_select_multihot_fpv_monitor #(
   if (!EnableCoverSelectMultihot) begin : gen_1hot
     `BR_ASSUME(select_onehot_a, push_valid |-> $onehot(push_select_multihot))
   end
-  `BR_ASSUME(legal_select_a, push_valid |-> |push_select_multihot)
 
   if (!EnableCoverPushBackpressure && EnableAssertNoPushBackpressure) begin : gen_no_backpressure
     `BR_ASSUME(no_backpressure_a, !push_ready |-> !push_valid)
@@ -59,6 +58,14 @@ module br_flow_fork_select_multihot_fpv_monitor #(
   `BR_ASSERT(
       forward_progress_a,
       push_valid && push_ready && push_select_multihot[fv_idx] |-> pop_valid_unstable[fv_idx])
+
+  if (EnableCoverSelectMultihot) begin : gen_zero_select
+    `BR_ASSERT(zero_select_no_pop_valid_a,
+               push_valid && push_select_multihot == '0 |-> pop_valid_unstable == '0)
+    `BR_COVER(zero_select_no_pop_ready_c,
+              push_valid && push_select_multihot == '0 && pop_ready == '0 &&
+              push_ready && pop_valid_unstable == '0)
+  end
 
 endmodule : br_flow_fork_select_multihot_fpv_monitor
 
