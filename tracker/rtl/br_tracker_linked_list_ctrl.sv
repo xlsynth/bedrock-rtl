@@ -440,8 +440,8 @@ module br_tracker_linked_list_ctrl #(
     `BR_ASSERT(no_head_update_conflict_a,
                !(ll_head_update_from_next_tail && ll_head_update_from_ptr_ram))
 
-    `BR_REGL(ll_tail[i], ll_tail_next, ll_tail_update)
-    `BR_REGL(ll_head[i], ll_head_next, ll_head_update)
+    `BR_REGLN(ll_tail[i], ll_tail_next, ll_tail_update)
+    `BR_REGLN(ll_head[i], ll_head_next, ll_head_update)
 
     // Clear ll_head_valid if the head is read. Set it if head is updated.
     assign ll_head_clear = head_valid && head_ready && ll_head_select_read[i];

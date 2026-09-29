@@ -192,7 +192,8 @@ module br_amba_axi_demux_req_tracker #(
                             || zero_outstanding);
 
     assign update_active_port = resp_tracker_push_ready_per_id[i] && zero_outstanding;
-    `BR_REGL(active_port_per_id[i], upstream_ax_sub_select_reg, update_active_port)
+    // active_port_per_id is qualified by zero_outstanding, so it doesn't need reset
+    `BR_REGLN(active_port_per_id[i], upstream_ax_sub_select_reg, update_active_port)
 
     br_counter #(
         .MaxValue(MaxOutstandingPerId),
