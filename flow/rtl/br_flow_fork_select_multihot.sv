@@ -15,7 +15,7 @@
 module br_flow_fork_select_multihot #(
     parameter int NumFlows = 1,  // Must be at least 1
     // If 1, cover that the push_select_multihot signal is multihot when valid is high.
-    // If 0, assert that the push_select_multihot signal is always onehot when valid is high.
+    // If 0, assert that push_select_multihot has at most one bit set when valid is high.
     parameter bit EnableCoverSelectMultihot = 1,
     // If 1, cover that the push side experiences backpressure.
     // If 0, disable backpressure coverage. By default, this also
@@ -79,7 +79,7 @@ module br_flow_fork_select_multihot #(
     `BR_COVER_INTG(select_multihot_c, push_valid && $countones(push_select_multihot) > 1)
   end
   if (!EnableCoverSelectMultihot) begin : gen_assert_onehot_select
-    `BR_ASSERT_INTG(select_onehot_a, push_valid |-> $onehot(push_select_multihot))
+    `BR_ASSERT_INTG(select_onehot_a, push_valid |-> $onehot0(push_select_multihot))
   end
   `BR_ASSERT_INTG(select_multihot_known_a, push_valid |-> !$isunknown(push_select_multihot))
 
@@ -110,7 +110,7 @@ module br_flow_fork_select_multihot #(
   //------------------------------------------
   // Pop valid can be unstable because it will be revoked if a pop_ready falls.
   // The only configuration for which it could be stable is if the select is stable
-  // and guaranteed to be onehot.
+  // and guaranteed to select at most one flow.
   localparam bit EnableAssertPopValidStability =
       EnableAssertPushValidStability &&
       EnableAssertSelectMultihotStability &&
@@ -136,10 +136,7 @@ module br_flow_fork_select_multihot #(
     end
   end
 
-  // Onehot mode forbids valid zero-select transactions.
-  if (EnableCoverSelectMultihot) begin : gen_assert_ready_when_unselected
-    `BR_ASSERT_IMPL(always_ready_when_unselected_a,
-                    push_valid && !(|push_select_multihot) |-> push_ready)
-  end
+  `BR_ASSERT_IMPL(always_ready_when_unselected_a,
+                  push_valid && !(|push_select_multihot) |-> push_ready)
 
 endmodule : br_flow_fork_select_multihot
