@@ -241,6 +241,7 @@ verilog_library(
     srcs = ["br_fifo_shared_pop_ctrl_ext_arbiter.sv"],
     deps = [
         "//arb/rtl/internal:br_arb_lru_internal",
+        "//delay/rtl:br_delay_valid",
         "//fifo/rtl/internal:br_fifo_shared_read_xbar",
         "//fifo/rtl/internal:br_fifo_staging_buffer",
         "//flow/rtl:br_flow_fork",
