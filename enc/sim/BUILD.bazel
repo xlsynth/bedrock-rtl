@@ -173,6 +173,18 @@ verilog_elab_test(
 
 br_verilog_sim_test_tools_suite(
     name = "br_enc_onehot2bin_tb_sim_test_suite",
+    params = {
+        "NumValues": [
+            "2",
+            "3",
+            "4",
+            "5",
+        ],
+        "EnableAssertInputOnehot": [
+            "0",
+            "1",
+        ],
+    },
     tools = [
         "vcs",
         "verilator",

@@ -26,6 +26,7 @@ module br_enc_onehot2bin_tb;
   //===========================================================
   parameter int NumValues = 2;
   parameter int BinWidth = $clog2(NumValues);
+  parameter bit EnableAssertInputOnehot = 1;
 
   //===========================================================
   // Clock and Reset Signals
@@ -45,7 +46,8 @@ module br_enc_onehot2bin_tb;
   //===========================================================
   br_enc_onehot2bin #(
       .NumValues(NumValues),
-      .BinWidth (BinWidth)
+      .BinWidth(BinWidth),
+      .EnableAssertInputOnehot(EnableAssertInputOnehot)
   ) dut (
       .clk(clk),
       .rst(rst),
@@ -104,6 +106,7 @@ module br_enc_onehot2bin_tb;
   //===========================================================
   initial begin
     reset_dut();
+    if (!EnableAssertInputOnehot) test_MultiHotIdleInput();
     test_NormalConversion();
 
     reset_dut();
@@ -123,6 +126,18 @@ module br_enc_onehot2bin_tb;
       $finish(0);
     end
   end
+
+
+  task automatic test_MultiHotIdleInput;
+    // Ignore outputs during idle cycles, then check legal inputs without a reset.
+    for (int i = 0; i < NumValues; i++) begin
+      for (int j = i + 1; j < NumValues; j++) begin
+        @(cb_clk);
+        cb_clk.in <= (NumValues'(1) << i) | (NumValues'(1) << j);
+        @(cb_clk);
+      end
+    end
+  endtask
 
 
   task automatic test_NormalConversion;
