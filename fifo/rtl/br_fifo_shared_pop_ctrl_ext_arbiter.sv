@@ -274,18 +274,24 @@ module br_fifo_shared_pop_ctrl_ext_arbiter #(
       .arb_enable_priority_update
   );
 
-  if (RegisterDeallocation) begin : gen_reg_dealloc
-    logic [NumFifos-1:0] dealloc_valid_next;
+  logic [NumFifos-1:0] dealloc_valid_next;
 
-    assign dealloc_valid_next = head_valid & head_ready;
-    `BR_REG(dealloc_valid, dealloc_valid_next)
+  assign dealloc_valid_next = head_valid & head_ready;
 
-    for (genvar i = 0; i < NumFifos; i++) begin : gen_reg_dealloc_entry_id
-      `BR_REGL(dealloc_entry_id[i], head[i], dealloc_valid_next[i])
-    end
-  end else begin : gen_no_reg_dealloc
-    assign dealloc_valid = head_valid & head_ready;
-    assign dealloc_entry_id = head;
+  for (genvar i = 0; i < NumFifos; i++) begin : gen_dealloc_entry_id
+    br_delay_valid #(
+        .Width(AddrWidth),
+        .NumStages(RegisterDeallocation)
+    ) br_delay_valid_dealloc (
+        .clk,
+        .rst,
+        .in_valid(dealloc_valid_next[i]),
+        .in(head[i]),
+        .out_valid(dealloc_valid[i]),
+        .out(dealloc_entry_id[i]),
+        .out_valid_stages(),
+        .out_stages()
+    );
   end
 
 endmodule
