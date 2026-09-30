@@ -33,5 +33,10 @@ assert -name fv_rst_check_ptr_ram_rd_addr_valid {rst | push_sender_in_reset |-> 
 # limit run time to 10-mins
 set_prove_time_limit 600s
 
+# br_flow_fork_head ties select to all ones, so zero select is impossible in this no-buffer path.
+if {[llength [get_property_list -include {type assert name {br_fifo_shared_dynamic_ctrl_push_credit_ext_arbiter.br_fifo_shared_pop_ctrl_ext_arbiter_inst.gen_fifo_ram_read*.gen_no_buffer.br_flow_fork_head.br_flow_fork_select_multihot.always_ready_when_unselected_a}}]] > 0} {
+  assert -disable {br_fifo_shared_dynamic_ctrl_push_credit_ext_arbiter.br_fifo_shared_pop_ctrl_ext_arbiter_inst.gen_fifo_ram_read*.gen_no_buffer.br_flow_fork_head.br_flow_fork_select_multihot.always_ready_when_unselected_a}
+}
+
 # prove command
 prove -all

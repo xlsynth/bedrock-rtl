@@ -11,5 +11,10 @@ assume -name deassert_rst {##1 !rst}
 # limit run time to 10-mins
 set_prove_time_limit 600s
 
+# br_flow_fork_head ties select to all ones, so zero select is impossible in this no-buffer path.
+if {[llength [get_property_list -include {type assert name {br_fifo_shared_pstatic_ctrl.br_fifo_shared_pop_ctrl_inst.br_fifo_shared_pop_ctrl_ext_arbiter.gen_fifo_ram_read*.gen_no_buffer.br_flow_fork_head.br_flow_fork_select_multihot.always_ready_when_unselected_a}}]] > 0} {
+  assert -disable {br_fifo_shared_pstatic_ctrl.br_fifo_shared_pop_ctrl_inst.br_fifo_shared_pop_ctrl_ext_arbiter.gen_fifo_ram_read*.gen_no_buffer.br_flow_fork_head.br_flow_fork_select_multihot.always_ready_when_unselected_a}
+}
+
 # prove command
 prove -all

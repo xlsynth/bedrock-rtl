@@ -39,5 +39,15 @@ assert -disable {*downstream.genStableChksWRInf.genWStableChks.master_w_wvalid_s
 # limit run time to 30-mins
 set_prove_time_limit 1800s
 
+# br_flow_fork ties select to all ones, so the zero-select precondition is unreachable.
+if {[llength [get_property_list -include {type assert name {br_amba_axi_isolate_sub.br_amba_iso_resp_tracker_w.gen_wlast_tracking.br_flow_fork_wlast_staging.br_flow_fork_select_multihot.always_ready_when_unselected_a}}]] > 0} {
+  assert -disable {br_amba_axi_isolate_sub.br_amba_iso_resp_tracker_w.gen_wlast_tracking.br_flow_fork_wlast_staging.br_flow_fork_select_multihot.always_ready_when_unselected_a}
+}
+
+# br_flow_fork ties select to all ones, so the zero-select precondition is unreachable.
+if {[llength [get_property_list -include {type assert name {br_amba_axi_isolate_sub.br_amba_iso_resp_tracker_r.gen_multi_fifo.gen_dynamic_fifo.br_fifo_shared_dynamic_flops_req_tracker.br_fifo_shared_dynamic_ctrl_inst.br_fifo_shared_pop_ctrl_inst.br_fifo_shared_pop_ctrl_ext_arbiter.gen_fifo_ram_read*.gen_no_buffer.br_flow_fork_head.br_flow_fork_select_multihot.always_ready_when_unselected_a}}]] > 0} {
+  assert -disable {br_amba_axi_isolate_sub.br_amba_iso_resp_tracker_r.gen_multi_fifo.gen_dynamic_fifo.br_fifo_shared_dynamic_flops_req_tracker.br_fifo_shared_dynamic_ctrl_inst.br_fifo_shared_pop_ctrl_inst.br_fifo_shared_pop_ctrl_ext_arbiter.gen_fifo_ram_read*.gen_no_buffer.br_flow_fork_head.br_flow_fork_select_multihot.always_ready_when_unselected_a}
+}
+
 # prove command
 prove -all
