@@ -13,9 +13,7 @@ set_prove_time_limit 30m
 cover -disable *monitor.w_fifo.gen_Bypass_ast.no_push_full_a:precondition1
 
 # br_flow_fork ties select to all ones, so the zero-select precondition is unreachable.
-if {[llength [get_property_list -include {type assert name {br_amba_axi_shrinker.br_flow_fork_aw.br_flow_fork_select_multihot.always_ready_when_unselected_a}}]] > 0} {
-  assert -disable {br_amba_axi_shrinker.br_flow_fork_aw.br_flow_fork_select_multihot.always_ready_when_unselected_a}
-}
+assert -disable {br_amba_axi_shrinker.br_flow_fork_aw.br_flow_fork_select_multihot.always_ready_when_unselected_a}
 
 # prove command
 prove -all

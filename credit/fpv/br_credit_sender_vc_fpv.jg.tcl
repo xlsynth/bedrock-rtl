@@ -26,9 +26,7 @@ assume -name no_push_during_reset {rst | pop_receiver_in_reset |-> push_valid ==
 assert -name fv_rst_check_pop_valid {rst | pop_receiver_in_reset |-> pop_valid == 'd0}
 
 # br_flow_fork ties select to all ones, so the zero-select precondition is unreachable.
-if {[llength [get_property_list -include {type assert name {br_credit_sender_vc.gen_credit_counters*.br_flow_fork_push.br_flow_fork_select_multihot.always_ready_when_unselected_a}}]] > 0} {
-  assert -disable {br_credit_sender_vc.gen_credit_counters*.br_flow_fork_push.br_flow_fork_select_multihot.always_ready_when_unselected_a}
-}
+assert -disable {br_credit_sender_vc.gen_credit_counters*.br_flow_fork_push.br_flow_fork_select_multihot.always_ready_when_unselected_a}
 
 # prove command
 prove -all

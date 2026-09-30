@@ -17,9 +17,7 @@ if {$Depth < 2 * $NumReadPorts} {
 }
 
 # br_flow_fork_head ties select to all ones, so zero select is impossible in this no-buffer path.
-if {[llength [get_property_list -include {type assert name {br_fifo_shared_dynamic_flops.br_fifo_shared_dynamic_ctrl_inst.br_fifo_shared_pop_ctrl_inst.br_fifo_shared_pop_ctrl_ext_arbiter.gen_fifo_ram_read*.gen_no_buffer.br_flow_fork_head.br_flow_fork_select_multihot.always_ready_when_unselected_a}}]] > 0} {
-  assert -disable {br_fifo_shared_dynamic_flops.br_fifo_shared_dynamic_ctrl_inst.br_fifo_shared_pop_ctrl_inst.br_fifo_shared_pop_ctrl_ext_arbiter.gen_fifo_ram_read*.gen_no_buffer.br_flow_fork_head.br_flow_fork_select_multihot.always_ready_when_unselected_a}
-}
+assert -disable {br_fifo_shared_dynamic_flops.br_fifo_shared_dynamic_ctrl_inst.br_fifo_shared_pop_ctrl_inst.br_fifo_shared_pop_ctrl_ext_arbiter.gen_fifo_ram_read*.gen_no_buffer.br_flow_fork_head.br_flow_fork_select_multihot.always_ready_when_unselected_a}
 
 # prove command
 prove -all

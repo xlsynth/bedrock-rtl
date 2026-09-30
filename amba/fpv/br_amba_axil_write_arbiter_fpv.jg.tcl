@@ -39,9 +39,7 @@ cover -disable *monitor.downstream*master_w_wvalid_eventually:precondition1
 set_prove_time_limit 30m
 
 # br_flow_fork ties select to all ones, so the zero-select precondition is unreachable.
-if {[llength [get_property_list -include {type assert name {br_amba_axil_write_arbiter.br_flow_fork.br_flow_fork_select_multihot.always_ready_when_unselected_a}}]] > 0} {
-  assert -disable {br_amba_axil_write_arbiter.br_flow_fork.br_flow_fork_select_multihot.always_ready_when_unselected_a}
-}
+assert -disable {br_amba_axil_write_arbiter.br_flow_fork.br_flow_fork_select_multihot.always_ready_when_unselected_a}
 
 # Prove command
 prove -all
