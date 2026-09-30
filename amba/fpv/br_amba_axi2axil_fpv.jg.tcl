@@ -25,5 +25,11 @@ cover -disable *monitor.fv_ar_req_fifo.gen_Bypass_ast.no_push_full_a:preconditio
 # limit run time to 30-mins
 set_prove_time_limit 1800s
 
+# br_flow_fork ties select to all ones, so the zero-select precondition is unreachable.
+assert -disable {br_amba_axi2axil.br_amba_axi2axil_core_write.br_flow_fork_flow_reg_pop.br_flow_fork_select_multihot.always_ready_when_unselected_a}
+
+# br_flow_fork ties select to all ones, so the zero-select precondition is unreachable.
+assert -disable {br_amba_axi2axil.br_amba_axi2axil_core_read.br_flow_fork_flow_reg_pop.br_flow_fork_select_multihot.always_ready_when_unselected_a}
+
 # prove command
 prove -all

@@ -38,5 +38,8 @@ cover -disable *monitor.downstream*master_w_wvalid_eventually:precondition1
 # limit run time to 30-mins
 set_prove_time_limit 30m
 
+# br_flow_fork ties select to all ones, so the zero-select precondition is unreachable.
+assert -disable {br_amba_axil_write_arbiter.br_flow_fork.br_flow_fork_select_multihot.always_ready_when_unselected_a}
+
 # Prove command
 prove -all

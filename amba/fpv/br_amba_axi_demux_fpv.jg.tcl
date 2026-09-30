@@ -21,5 +21,11 @@ cover -disable *monitor.upstream.genPropChksWRInf.genDbcW.genAXI4Full.genWlastEx
 # limit run time to 30-mins
 set_prove_time_limit 1800s
 
+# br_flow_fork ties select to all ones, so the zero-select precondition is unreachable.
+assert -disable {br_amba_axi_demux.br_amba_axi_demux_req_tracker_ar.br_flow_fork_upstream_req.br_flow_fork_select_multihot.always_ready_when_unselected_a}
+
+# br_flow_fork ties select to all ones, so the zero-select precondition is unreachable.
+assert -disable {br_amba_axi_demux.br_amba_axi_demux_req_tracker_aw.br_flow_fork_upstream_req.br_flow_fork_select_multihot.always_ready_when_unselected_a}
+
 # prove command
 prove -all
