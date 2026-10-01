@@ -829,7 +829,7 @@ jobs:
       - name: Load public Docker image
         run: docker load --input /tmp/bedrock-rtl-dev.tar
       - name: Log in to GHCR
-        # docker/login-action v4.2.0
+        # docker/login-action v4.6.0
         uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f
         with:
           registry: ghcr.io
