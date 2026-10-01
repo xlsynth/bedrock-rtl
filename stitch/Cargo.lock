@@ -698,16 +698,6 @@ checksum = "c89e69e7e0f03bea5ef08013795c25018e101932225a656383bd384495ecc367"
 dependencies = [
  "num-integer",
  "num-traits",
-]
-
-[[package]]
-name = "num-bigint"
-version = "0.5.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "93e7820bc0a80a0238e650327316f929ba18d5be054b647490a3a6a339f3e7c0"
-dependencies = [
- "num-integer",
- "num-traits",
  "serde",
 ]
 
@@ -1162,7 +1152,7 @@ version = "0.22.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "5462dfc70cb1d4bb175080d5f527765c9c1d9facc236e1adbd319aeb6e2d4dd6"
 dependencies = [
- "num-bigint 0.4.8",
+ "num-bigint",
  "num-traits",
  "pest",
  "pest_derive",
@@ -1216,7 +1206,7 @@ name = "stitch"
 version = "0.1.0"
 dependencies = [
  "clap",
- "num-bigint 0.5.1",
+ "num-bigint",
  "serde",
  "serde_json",
  "topstitch",
@@ -1341,7 +1331,7 @@ dependencies = [
  "indexmap",
  "itertools 0.10.5",
  "nalgebra",
- "num-bigint 0.4.8",
+ "num-bigint",
  "parking_lot",
  "paste",
  "regex",
