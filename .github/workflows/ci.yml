@@ -19,7 +19,7 @@ jobs:
     runs-on: ubuntu-24.04
     steps:
       # actions/checkout v7.0.0
-      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
       # actions/setup-python v6.3.0
       - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1
       - name: Install pre-commit
@@ -41,7 +41,7 @@ jobs:
       contents: read
     steps:
       # actions/checkout v7.0.0
-      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
       # docker/setup-buildx-action v4.1.0
       - uses: docker/setup-buildx-action@d7f5e7f509e45cec5c76c4d5afdd7de93d0b3df5
       - name: Build and load public Docker image
@@ -135,7 +135,7 @@ jobs:
             shard_count: 8
     steps:
       # actions/checkout v7.0.0
-      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
       # bazel-contrib/setup-bazel v0.19.0
       - name: Set up Bazel dependency caches
         uses: bazel-contrib/setup-bazel@c5acdfb288317d0b5c0bbd7a396a3dc868bb0f86
@@ -380,7 +380,7 @@ jobs:
             shard_count: 4
     steps:
       # actions/checkout v7.0.0
-      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
       # bazel-contrib/setup-bazel v0.19.0
       - name: Restore Bazel dependency caches
         uses: bazel-contrib/setup-bazel@c5acdfb288317d0b5c0bbd7a396a3dc868bb0f86
@@ -469,7 +469,7 @@ jobs:
       contents: read
     steps:
       # actions/checkout v7.0.0
-      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
       # bazel-contrib/setup-bazel v0.19.0
       - name: Restore Bazel dependency caches
         uses: bazel-contrib/setup-bazel@c5acdfb288317d0b5c0bbd7a396a3dc868bb0f86
@@ -575,7 +575,7 @@ jobs:
       verilator_exit_code: ${{ steps.results.outputs.verilator_exit_code }}
     steps:
       # actions/checkout v7.0.0
-      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
       - name: Set YYYY-MM-DD-SHA image tag
         id: image-metadata
         run: |
@@ -621,7 +621,7 @@ jobs:
       contents: read
     steps:
       # actions/checkout v7.0.0
-      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
       - name: Download public Docker image
         # actions/download-artifact v8.0.1
         uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
@@ -750,7 +750,7 @@ jobs:
           path: dashboard-build
       - name: Check out Coverview
         # actions/checkout v7.0.0
-        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with:
           repository: antmicro/coverview
           ref: 6e5e15f986df1e8071b1b1f6a284fecca95c34a2
@@ -819,7 +819,7 @@ jobs:
       packages: write
     steps:
       # actions/checkout v7.0.0
-      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
       - name: Download public Docker image
         # actions/download-artifact v8.0.1
         uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
@@ -879,7 +879,7 @@ jobs:
       vcs_exit_code: ${{ steps.vcs.outputs.exit_code }}
     steps:
     # actions/checkout v7.0.0
-    - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0
+    - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
     # TODO(xiyu): Create a CI-container-local EDA setup script and point
     # VERILOG_RUNNER_EDA_TOOLS_ENV_SETUP at it from the copied ci.bazelrc.
     - name: Copy ci.bazelrc
@@ -967,7 +967,7 @@ jobs:
     if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
     steps:
     # actions/checkout v7.0.0
-    - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0
+    - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
     - name: Count RTL files
       run: |
         NUM_RTL_FILES=$(find . -type d -name rtl -exec find {} -type f -name "*.sv" \; | wc -l)
