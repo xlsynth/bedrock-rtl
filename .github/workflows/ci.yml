@@ -973,7 +973,7 @@ jobs:
         NUM_RTL_FILES=$(find . -type d -name rtl -exec find {} -type f -name "*.sv" \; | wc -l)
         echo "NUM_RTL_FILES=$NUM_RTL_FILES" >> $GITHUB_ENV
     - name: Create RTL files badge
-      # schneegans/dynamic-badges-action v1.7.0
+      # schneegans/dynamic-badges-action v1.9.0
       uses: schneegans/dynamic-badges-action@28b0fa8bdeb46170ac397105ece0c1fe58f68910
       with:
         auth: ${{ secrets.MGOTTSCHO_GISTS_SECRET }}
@@ -990,7 +990,7 @@ jobs:
     if: ${{ always() && github.event_name == 'push' && github.ref == 'refs/heads/main' }}
     steps:
     - name: Create python badge
-      # schneegans/dynamic-badges-action v1.7.0
+      # schneegans/dynamic-badges-action v1.9.0
       uses: schneegans/dynamic-badges-action@28b0fa8bdeb46170ac397105ece0c1fe58f68910
       with:
         auth: ${{ secrets.MGOTTSCHO_GISTS_SECRET }}
@@ -1007,7 +1007,7 @@ jobs:
     if: ${{ always() && github.event_name == 'push' && github.ref == 'refs/heads/main' }}
     steps:
     - name: Create stardoc badge
-      # schneegans/dynamic-badges-action v1.7.0
+      # schneegans/dynamic-badges-action v1.9.0
       uses: schneegans/dynamic-badges-action@28b0fa8bdeb46170ac397105ece0c1fe58f68910
       with:
         auth: ${{ secrets.MGOTTSCHO_GISTS_SECRET }}
@@ -1024,7 +1024,7 @@ jobs:
     if: ${{ always() && github.event_name == 'push' && github.ref == 'refs/heads/main' }}
     steps:
     - name: Create verific badge
-      # schneegans/dynamic-badges-action v1.7.0
+      # schneegans/dynamic-badges-action v1.9.0
       uses: schneegans/dynamic-badges-action@28b0fa8bdeb46170ac397105ece0c1fe58f68910
       with:
         auth: ${{ secrets.MGOTTSCHO_GISTS_SECRET }}
@@ -1041,7 +1041,7 @@ jobs:
     if: ${{ always() && github.event_name == 'push' && github.ref == 'refs/heads/main' }}
     steps:
     - name: Create slang badge
-      # schneegans/dynamic-badges-action v1.7.0
+      # schneegans/dynamic-badges-action v1.9.0
       uses: schneegans/dynamic-badges-action@28b0fa8bdeb46170ac397105ece0c1fe58f68910
       with:
         auth: ${{ secrets.MGOTTSCHO_GISTS_SECRET }}
@@ -1058,7 +1058,7 @@ jobs:
     if: ${{ always() && github.event_name == 'push' && github.ref == 'refs/heads/main' }}
     steps:
     - name: Create ascentlint badge
-      # schneegans/dynamic-badges-action v1.7.0
+      # schneegans/dynamic-badges-action v1.9.0
       uses: schneegans/dynamic-badges-action@28b0fa8bdeb46170ac397105ece0c1fe58f68910
       with:
         auth: ${{ secrets.MGOTTSCHO_GISTS_SECRET }}
@@ -1075,7 +1075,7 @@ jobs:
     if: ${{ always() && github.event_name == 'push' && github.ref == 'refs/heads/main' }}
     steps:
     - name: Create vcs badge
-      # schneegans/dynamic-badges-action v1.7.0
+      # schneegans/dynamic-badges-action v1.9.0
       uses: schneegans/dynamic-badges-action@28b0fa8bdeb46170ac397105ece0c1fe58f68910
       with:
         auth: ${{ secrets.MGOTTSCHO_GISTS_SECRET }}
@@ -1092,7 +1092,7 @@ jobs:
     if: ${{ always() && github.event_name == 'push' && github.ref == 'refs/heads/main' }}
     steps:
     - name: Create verilator badge
-      # schneegans/dynamic-badges-action v1.7.0
+      # schneegans/dynamic-badges-action v1.9.0
       uses: schneegans/dynamic-badges-action@28b0fa8bdeb46170ac397105ece0c1fe58f68910
       with:
         auth: ${{ secrets.MGOTTSCHO_GISTS_SECRET }}

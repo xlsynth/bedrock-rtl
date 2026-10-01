@@ -107,7 +107,7 @@ jobs:
     if: ${{ always() }}
     steps:
     - name: Create jg badge
-      # schneegans/dynamic-badges-action v1.7.0
+      # schneegans/dynamic-badges-action v1.9.0
       uses: schneegans/dynamic-badges-action@28b0fa8bdeb46170ac397105ece0c1fe58f68910
       with:
         auth: ${{ secrets.MGOTTSCHO_GISTS_SECRET }}
