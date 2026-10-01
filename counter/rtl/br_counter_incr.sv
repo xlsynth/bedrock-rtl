@@ -123,11 +123,17 @@ module br_counter_incr #(
   // ri lint_check_waive NOT_READ
   logic [TempWidth-1:0] value_temp;
   if (EnableReinitAndIncr) begin : gen_reinit_and_incr
+    // slang lint_save
+    // slang lint_off width-expand
     // ri lint_check_waive RHS_TOO_SHORT
     assign value_temp = (reinit ? initial_value : value) + (incr_valid ? incr : '0);
+    // slang lint_restore
   end else begin : gen_reinit_ignore_incr
+    // slang lint_save
+    // slang lint_off width-expand
     // ri lint_check_waive RHS_TOO_SHORT
     assign value_temp = reinit ? initial_value : (value + (incr_valid ? incr : '0));
+    // slang lint_restore
   end
 
   if (EnableSaturate) begin : gen_saturate

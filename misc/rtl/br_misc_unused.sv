@@ -22,7 +22,10 @@ module br_misc_unused #(
 
   `BR_ASSERT_STATIC(width_gte_1, Width >= 1)
 
+  // slang lint_save
+  // slang lint_off unused-but-set-variable
   logic unused;  // ri lint_check_waive NOT_READ
+  // slang lint_restore
   // cadence keep_signal_name unused
   assign unused = |in;
 

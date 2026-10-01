@@ -117,10 +117,16 @@ module br_counter_decr #(
   if (EnableReinitAndDecr) begin : gen_reinit_and_decr
     logic [ValueWidth-1:0] base_value;
     assign base_value = reinit ? initial_value : value;
+    // slang lint_save
+    // slang lint_off width-expand
     assign value_temp = base_value - (decr_valid ? decr : '0);
+    // slang lint_restore
     assign underflow  = decr_valid && (decr_ext > base_value);
   end else begin : gen_reinit_ignore_decr
+    // slang lint_save
+    // slang lint_off width-expand
     assign value_temp = reinit ? initial_value : (value - (decr_valid ? decr : '0));
+    // slang lint_restore
     assign underflow  = !reinit && decr_valid && (decr_ext > value);
   end
 

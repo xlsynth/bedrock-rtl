@@ -25,10 +25,13 @@ module br_enc_priority_encoder #(
     // The maximum number of bits in in that will be set on a given cycle.
     parameter int MaxInHot = NumRequesters
 ) (
+    // slang lint_save
+    // slang lint_off unused-port
     // ri lint_check_waive INPUT_NOT_READ HIER_NET_NOT_READ HIER_BRANCH_NOT_READ
     input logic clk,  // Used only for assertions
     // ri lint_check_waive INPUT_NOT_READ HIER_NET_NOT_READ HIER_BRANCH_NOT_READ
     input logic rst,  // Used only for assertions
+    // slang lint_restore
     input logic [NumRequesters-1:0] in,
     output logic [NumResults-1:0][NumRequesters-1:0] out
 );
