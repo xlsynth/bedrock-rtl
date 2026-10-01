@@ -797,7 +797,7 @@ jobs:
     steps:
       - name: Deploy GH pages
         id: deployment
-        # actions/deploy-pages v5.0.0
+        # actions/deploy-pages v5.0.1
         uses: actions/deploy-pages@368f82528645a54fb793d4d04e342629a3f51346
 
   docker-image-publish:
