@@ -18,7 +18,7 @@ jobs:
   pre-commit:
     runs-on: ubuntu-24.04
     steps:
-      # actions/checkout v7.0.0
+      # actions/checkout v7.0.1
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
       # actions/setup-python v6.3.0
       - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1
@@ -40,7 +40,7 @@ jobs:
     permissions:
       contents: read
     steps:
-      # actions/checkout v7.0.0
+      # actions/checkout v7.0.1
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
       # docker/setup-buildx-action v4.1.0
       - uses: docker/setup-buildx-action@d7f5e7f509e45cec5c76c4d5afdd7de93d0b3df5
@@ -134,7 +134,7 @@ jobs:
             shard_index: 7
             shard_count: 8
     steps:
-      # actions/checkout v7.0.0
+      # actions/checkout v7.0.1
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
       # bazel-contrib/setup-bazel v0.19.0
       - name: Set up Bazel dependency caches
@@ -379,7 +379,7 @@ jobs:
             shard_index: 3
             shard_count: 4
     steps:
-      # actions/checkout v7.0.0
+      # actions/checkout v7.0.1
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
       # bazel-contrib/setup-bazel v0.19.0
       - name: Restore Bazel dependency caches
@@ -468,7 +468,7 @@ jobs:
     permissions:
       contents: read
     steps:
-      # actions/checkout v7.0.0
+      # actions/checkout v7.0.1
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
       # bazel-contrib/setup-bazel v0.19.0
       - name: Restore Bazel dependency caches
@@ -574,7 +574,7 @@ jobs:
       verilator_passing_tests: ${{ steps.results.outputs.verilator_passing_tests }}
       verilator_exit_code: ${{ steps.results.outputs.verilator_exit_code }}
     steps:
-      # actions/checkout v7.0.0
+      # actions/checkout v7.0.1
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
       - name: Set YYYY-MM-DD-SHA image tag
         id: image-metadata
@@ -620,7 +620,7 @@ jobs:
     permissions:
       contents: read
     steps:
-      # actions/checkout v7.0.0
+      # actions/checkout v7.0.1
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
       - name: Download public Docker image
         # actions/download-artifact v8.0.1
@@ -749,7 +749,7 @@ jobs:
           name: br-verilator-coverage-${{ github.sha }}
           path: dashboard-build
       - name: Check out Coverview
-        # actions/checkout v7.0.0
+        # actions/checkout v7.0.1
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with:
           repository: antmicro/coverview
@@ -818,7 +818,7 @@ jobs:
       # Allows the job credential to publish the image to GHCR.
       packages: write
     steps:
-      # actions/checkout v7.0.0
+      # actions/checkout v7.0.1
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
       - name: Download public Docker image
         # actions/download-artifact v8.0.1
@@ -878,7 +878,7 @@ jobs:
       vcs_passing_tests: ${{ steps.vcs.outputs.passing_tests }}
       vcs_exit_code: ${{ steps.vcs.outputs.exit_code }}
     steps:
-    # actions/checkout v7.0.0
+    # actions/checkout v7.0.1
     - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
     # TODO(xiyu): Create a CI-container-local EDA setup script and point
     # VERILOG_RUNNER_EDA_TOOLS_ENV_SETUP at it from the copied ci.bazelrc.
@@ -966,7 +966,7 @@ jobs:
     environment: ci-badge-publishing
     if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
     steps:
-    # actions/checkout v7.0.0
+    # actions/checkout v7.0.1
     - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
     - name: Count RTL files
       run: |
