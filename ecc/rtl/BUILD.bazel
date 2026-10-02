@@ -181,9 +181,16 @@ K = [
 ]
 
 verilog_library(
+    name = "br_ecc_secded_256_pkg",
+    srcs = ["br_ecc_secded_256_pkg.sv"],
+    deps = ["//pkg:br_ecc_secded_pkg"],
+)
+
+verilog_library(
     name = "br_ecc_secded_decoder",
     srcs = ["br_ecc_secded_decoder.sv"],
     deps = [
+        ":br_ecc_secded_256_pkg",
         "//delay/rtl:br_delay_valid",
         "//macros:br_asserts",
         "//macros:br_asserts_internal",

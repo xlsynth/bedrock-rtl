@@ -37,16 +37,25 @@ diff_test(
     file2 = ":gen_br_ecc_secded_decoder.sv",
 )
 
+diff_test(
+    name = "br_ecc_secded_256_pkg_diff_test",
+    failure_message = "Run `bazel run //ecc/rtl/secded_codegen:update_golden` to update the golden package.",
+    file1 = "//ecc/rtl:br_ecc_secded_256_pkg.sv",
+    file2 = ":gen_br_ecc_secded_256_pkg.sv",
+)
+
 genrule(
     name = "gen_secded",
     srcs = [
         ":br_ecc_secded_encoder.sv.jinja2",
         ":br_ecc_secded_decoder.sv.jinja2",
+        ":br_ecc_secded_256_pkg.sv.jinja2",
         "@eccgen//eccgen/matrices",
     ],
     outs = [
         "gen_br_ecc_secded_encoder.sv",
         "gen_br_ecc_secded_decoder.sv",
+        "gen_br_ecc_secded_256_pkg.sv",
     ],
     cmd = """
 set -eu
@@ -58,7 +67,9 @@ $(execpath //ecc/rtl/secded_codegen) \
   --encoder-template $(execpath :br_ecc_secded_encoder.sv.jinja2) \
   --encoder-output $(@D)/gen_br_ecc_secded_encoder.sv \
   --decoder-template $(execpath :br_ecc_secded_decoder.sv.jinja2) \
-  --decoder-output $(@D)/gen_br_ecc_secded_decoder.sv
+  --decoder-output $(@D)/gen_br_ecc_secded_decoder.sv \
+  --package-template $(execpath :br_ecc_secded_256_pkg.sv.jinja2) \
+  --package-output $(@D)/gen_br_ecc_secded_256_pkg.sv
 """,
     tools = ["//ecc/rtl/secded_codegen"],
 )
@@ -71,6 +82,7 @@ write_file(
         "cd $BUILD_WORKSPACE_DIRECTORY",
         "cp -fv bazel-bin/ecc/rtl/secded_codegen/gen_br_ecc_secded_encoder.sv ecc/rtl/br_ecc_secded_encoder.sv",
         "cp -fv bazel-bin/ecc/rtl/secded_codegen/gen_br_ecc_secded_decoder.sv ecc/rtl/br_ecc_secded_decoder.sv",
+        "cp -fv bazel-bin/ecc/rtl/secded_codegen/gen_br_ecc_secded_256_pkg.sv ecc/rtl/br_ecc_secded_256_pkg.sv",
     ],
 )
 
@@ -78,8 +90,10 @@ sh_binary(
     name = "update_golden",
     srcs = [":update_golden.sh"],
     data = [
+        ":gen_br_ecc_secded_256_pkg.sv",
         ":gen_br_ecc_secded_decoder.sv",
         ":gen_br_ecc_secded_encoder.sv",
+        "//ecc/rtl:br_ecc_secded_256_pkg.sv",
         "//ecc/rtl:br_ecc_secded_decoder.sv",
         "//ecc/rtl:br_ecc_secded_encoder.sv",
     ],
