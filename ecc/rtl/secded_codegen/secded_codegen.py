@@ -159,7 +159,22 @@ def main():
         help="Dump the decoder implementation for all supported codes to the provided output file.",
     )
 
+    parser.add_argument(
+        "--package-template",
+        type=sv_jinja2_file,
+        help="Optional template exposing the parity-check matrix as a package.",
+    )
+    parser.add_argument(
+        "--package-output",
+        type=argparse.FileType("w"),
+        help="Output file for the optional parity-check matrix package.",
+    )
+
     args = parser.parse_args()
+    if bool(args.package_template) != bool(args.package_output):
+        parser.error(
+            "--package-template and --package-output must be specified together"
+        )
     codes = parse_g_and_h_files(args.matrix_dir, RTL_SUPPORTED_K)
 
     render_encoder_jinja2_template(codes, args.encoder_template, args.encoder_output)
@@ -168,6 +183,11 @@ def main():
         args.decoder_template,
         args.decoder_output,
     )
+
+    if args.package_template:
+        render_decoder_jinja2_template(
+            codes, args.package_template, args.package_output
+        )
 
 
 if __name__ == "__main__":
