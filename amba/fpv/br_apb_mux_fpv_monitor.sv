@@ -6,12 +6,13 @@
 // Design specification:
 // - In Setup, lowest-index PSEL wins combinationally and drives the downstream
 //   setup phase without an extra arbitration cycle. The winner is saved for an
-//   Access of arbitrary duration, then the mux returns to Setup.
+//   Access until completion or selected-owner PSEL withdrawal, then Setup resumes.
 // - The current Setup winner or saved Access owner selects live request payload.
 // - PRDATA is broadcast. PREADY/PSLVERR reach only the saved Access owner;
 //   PSLVERR is not qualified by PREADY and is meaningful at completion.
-// - Downstream completion releases ownership even if the winner withdraws its
-//   PSEL/PENABLE. This does not guarantee payload stability for malformed input.
+// - Selected-owner PSEL withdrawal releases Access on the next cycle without
+//   waiting for PREADY. PENABLE-only withdrawal retains Access until completion.
+//   Recovery does not guarantee payload stability for malformed input.
 //
 // Input assumptions and proof boundary:
 // - Normal mode uses APB4 protocol VIP. Every requester advances Setup to Access.
@@ -21,7 +22,8 @@
 //   only the symbolic port index is constrained. No upstream APB VIP or
 //   integration assumption may exclude premature PSEL/PENABLE withdrawal.
 // - No downstream response fairness or wait-state bound is assumed by safety
-//   proofs. Eventual recovery is conditional on eventual downstream PREADY.
+//   proofs. PSEL withdrawal releases ownership unconditionally; progress with
+//   PSEL retained is conditional on eventual downstream PREADY.
 // - Startup reset is modeled; repeated live reset is outside this testplan.
 // - Fixed priority permits starvation; no all-requester fairness is claimed.
 //
@@ -32,8 +34,9 @@
 //   correspondence. Cover reads/writes, sparse strobes, errors, waits,
 //   contention, every winning port, and consecutive transactions.
 // - In recovery mode, prove control/route behavior under arbitrary input and
-//   cover PSEL-only/PENABLE-only/both withdrawal through wait, completion,
-//   return to Setup and subsequent traffic.
+//   cover PSEL-only/both withdrawal through release without PREADY, idle and
+//   restart, plus handoff to a different pending requester. PENABLE-only
+//   withdrawal still waits for completion before returning to Setup.
 // - Sweep AddrWidth=1,12 and NumUpstreams=1,2,3,4 in both modes.
 
 `include "br_asserts.svh"
@@ -81,6 +84,9 @@ module br_apb_mux_fpv_monitor #(
   logic downstream_complete;
   logic magic_complete;
   logic magic_response_enabled;
+`ifdef BR_APB_MUX_FPV_RECOVERY
+  logic magic_waiting;
+`endif
 
   if (NumUpstreams > 1) begin : gen_magic_port
     // Quantify over every real port without constraining any DUT input.
@@ -117,9 +123,19 @@ module br_apb_mux_fpv_monitor #(
   `BR_ASSERT(request_drives_setup_a, !downstream_penable && (|upstream_psel) |-> downstream_setup)
   // Setup always advances after one cycle, independently of requester PENABLE.
   `BR_ASSERT(setup_starts_access_a, downstream_setup |=> downstream_access)
-  // Downstream backpressure retains the access, even if the requester withdraws.
+`ifdef BR_APB_MUX_FPV_RECOVERY
+  assign magic_waiting = magic_response_enabled && !downstream_pready;
+  // Backpressure retains Access while the owner keeps PSEL, regardless of PENABLE.
+  `BR_ASSERT(access_holds_until_ready_a,
+             magic_waiting && upstream_psel[magic_u] |=> downstream_access)
+  // A withdrawn owner must release Access without any downstream response premise.
+  `BR_ASSERT(psel_withdrawal_releases_access_a,
+             magic_waiting && !upstream_psel[magic_u] |=> !downstream_penable)
+`else
+  // Legal requesters retain PSEL, so every stalled Access must continue.
   `BR_ASSERT(access_holds_until_ready_a,
              downstream_access && !downstream_pready |=> downstream_access)
+`endif
   // Downstream completion returns to Setup; a pending request may launch immediately.
   `BR_ASSERT(completion_returns_setup_a, downstream_complete |=> !downstream_penable)
   // No access can occur without a selected downstream.
@@ -186,12 +202,8 @@ module br_apb_mux_fpv_monitor #(
   end
 
 `ifdef BR_APB_MUX_FPV_RECOVERY
-  // TODO(masai): Qualify access_holds_until_ready_a with the selected requester's
-  // PSEL in recovery mode, and update the PSEL withdrawal covers to expect Setup
-  // without waiting for PREADY. Check that the withdrawing requester cannot
-  // permanently retain mux ownership.
-  // No protocol or payload assumptions are applied in this mode. The covers
-  // require the same withdrawn requester to wait, complete, return to Setup, and restart.
+  // No protocol or payload assumptions are applied in this mode. PSEL withdrawal
+  // releases Access while PREADY stays low, then the same requester can restart.
   // Keep the recovery sequence aligned by sampled cycle.
   // verilog_format: off
   `BR_COVER(drop_select_recovers_c,
@@ -199,8 +211,11 @@ module br_apb_mux_fpv_monitor #(
                 upstream_penable[magic_u] && !downstream_pready
             ##1 downstream_access && !upstream_psel[magic_u] &&
                 upstream_penable[magic_u] && !downstream_pready
-            ##1 downstream_complete && !upstream_psel[magic_u] && upstream_penable[magic_u]
-            ##1 downstream_setup && magic_wins ##1 magic_complete)
+            ##1 !downstream_psel && !downstream_penable && upstream_psel == '0 &&
+                upstream_penable[magic_u] && !downstream_pready
+            ##1 downstream_setup && magic_wins && !upstream_penable[magic_u]
+            ##1 magic_complete)
+  // Dropping only PENABLE does not release ownership before PREADY.
   `BR_COVER(drop_enable_recovers_c,
             downstream_access && magic_owner && upstream_psel[magic_u] &&
                 upstream_penable[magic_u] && !downstream_pready
@@ -213,8 +228,32 @@ module br_apb_mux_fpv_monitor #(
                 upstream_penable[magic_u] && !downstream_pready
             ##1 downstream_access && !upstream_psel[magic_u] &&
                 !upstream_penable[magic_u] && !downstream_pready
-            ##1 downstream_complete && !upstream_psel[magic_u] && !upstream_penable[magic_u]
-            ##1 downstream_setup && magic_wins ##1 magic_complete)
+            ##1 !downstream_psel && !downstream_penable && upstream_psel == '0 &&
+                !upstream_penable[magic_u] && !downstream_pready
+            ##1 downstream_setup && magic_wins && !upstream_penable[magic_u]
+            ##1 magic_complete)
+  // A simultaneous downstream response still reaches the saved owner.
+  `BR_COVER(withdrawal_with_ready_c,
+            downstream_access && magic_owner && upstream_psel[magic_u] && !downstream_pready
+            ##1 downstream_complete && !upstream_psel[magic_u] && upstream_pready[magic_u]
+            ##1 !downstream_penable)
+  if (NumUpstreams > 1) begin : gen_recovery_handoff
+    // Another pending PSEL cannot retain the withdrawn owner's Access. The last
+    // port receives a fresh Setup phase before completing its own Access.
+    `BR_COVER(withdrawal_hands_off_c,
+              downstream_access && magic_owner && magic_u == 0 && upstream_psel[0] &&
+                  upstream_penable[0] && upstream_psel[NumUpstreams-1] &&
+                  !upstream_penable[NumUpstreams-1] && !downstream_pready
+              ##1 downstream_access &&
+                  upstream_psel == (NumUpstreams'(1) << (NumUpstreams - 1)) &&
+                  upstream_penable[NumUpstreams-1] && !downstream_pready
+              ##1 downstream_setup &&
+                  upstream_psel == (NumUpstreams'(1) << (NumUpstreams - 1)) &&
+                  upstream_penable[NumUpstreams-1] && !downstream_pready
+              ##1 downstream_complete && !upstream_psel[0] &&
+                  upstream_psel[NumUpstreams-1] && upstream_penable[NumUpstreams-1] &&
+                  upstream_pready[NumUpstreams-1])
+  end
   // verilog_format: on
   `BR_COVER(unselected_enable_c, !downstream_psel && upstream_psel == '0 && (|upstream_penable))
   // Demonstrate that no payload-stability assumption leaks into recovery mode.
