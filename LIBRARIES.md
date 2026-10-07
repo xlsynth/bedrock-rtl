@@ -207,6 +207,7 @@ The verification-artifact column reports repository evidence, not a promise that
 | `br_flow_mux_select_unstable` | Multiplexes ready/valid flows using a combinational external select. | Elab/lint, FPV. |
 | `br_flow_reg_both` | Registers both forward and reverse sides of a ready/valid flow. | Elab/lint, FPV. |
 | `br_flow_reg_fwd` | Registers the forward valid/data side of a ready/valid flow. | Elab/lint, FPV. |
+| `br_flow_reg_fwd_async` | Forward ready/valid register with active-high asynchronous reset of valid. | Elab/lint, simulation. |
 | `br_flow_reg_none` | Passes a ready/valid flow through without registering it. | Elab/lint, FPV. |
 | `br_flow_reg_rev` | Registers the reverse ready side of a ready/valid flow. | Elab/lint, FPV. |
 | `br_flow_serializer` | Converts fewer wide ready/valid flits into multiple narrower flits. | Elab/lint, FPV. |

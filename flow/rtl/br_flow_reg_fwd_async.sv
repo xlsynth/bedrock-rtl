@@ -1,0 +1,148 @@
+// SPDX-License-Identifier: Apache-2.0
+
+
+// Bedrock-RTL Flow Register (Forward Variant, Asynchronous Reset)
+//
+// A dataflow pipeline register that behaves like a 1-entry
+// FIFO. Uses the AMBA-inspired ready-valid handshake protocol
+// for synchronizing pipeline stages and stalling when
+// encountering backpressure hazards.
+//
+// Data progresses from one stage to another when both
+// the corresponding ready signal and valid signal are
+// both 1 on the same cycle. Otherwise, the stage is stalled.
+//
+// The pop_valid and pop_data outputs are registered, although the pop_valid also has some internal fanout.
+//
+// The cut-through latency (minimum delay from push_valid to pop_valid) is 1 cycle.
+// The backpressure latency (minimum delay from pop_ready to push_ready) is 0 cycles.
+// The steady-state throughput is 1 transaction per cycle.
+//
+// Asserting rst asynchronously clears pop_valid and discards any buffered item,
+// including with the clock stopped.
+// Deassert rst synchronously to clk. The connected producer/consumer must
+// share the reset contract so a reset cannot silently lose a live transaction.
+// The payload is not reset; it is qualified by pop_valid.
+
+`include "br_asserts_internal.svh"
+`include "br_registers.svh"
+
+module br_flow_reg_fwd_async #(
+    // Must be at least 1
+    parameter int Width = 1,
+    // If 1, cover that the push side experiences backpressure.
+    // If 0, disable backpressure coverage. By default, this also
+    // asserts that backpressure is impossible.
+    parameter bit EnableCoverPushBackpressure = 1,
+    // If 1, assert that push_valid is stable when backpressured.
+    parameter bit EnableAssertPushValidStability = EnableCoverPushBackpressure,
+    // If 1, assert that push_data is stable when backpressured.
+    parameter bit EnableAssertPushDataStability = EnableAssertPushValidStability,
+    // If 1, assert that push_data is always known (not X) when push_valid is asserted.
+    parameter bit EnableAssertPushDataKnown = 1,
+    // If 1, cover that the pop side experiences backpressure.
+    // If 0, disable backpressure coverage. By default, this also
+    // asserts that backpressure is impossible.
+    parameter bit EnableCoverPopBackpressure = 1,
+    // If 1, then assert there are no valid bits asserted at the end of the test.
+    parameter bit EnableAssertFinalNotValid = 1,
+    // If 1, assert that push-side backpressure is impossible.
+    // Can only be enabled if EnableCoverPushBackpressure is disabled.
+    parameter bit EnableAssertNoPushBackpressure = !EnableCoverPushBackpressure,
+    // If 1, assert that pop-side backpressure is impossible.
+    // Can only be enabled if EnableCoverPopBackpressure is disabled.
+    parameter bit EnableAssertNoPopBackpressure = !EnableCoverPopBackpressure
+) (
+    input logic clk,
+    input logic rst,  // Asynchronous active-high
+
+    output logic             push_ready,
+    input  logic             push_valid,
+    input  logic [Width-1:0] push_data,
+
+    input  logic             pop_ready,
+    output logic             pop_valid,
+    output logic [Width-1:0] pop_data
+);
+
+  //------------------------------------------
+  // Integration checks
+  //------------------------------------------
+  `BR_ASSERT_STATIC(legal_assert_no_push_backpressure_a,
+                    !(EnableAssertNoPushBackpressure && EnableCoverPushBackpressure))
+  `BR_ASSERT_STATIC(legal_assert_no_pop_backpressure_a,
+                    !(EnableAssertNoPopBackpressure && EnableCoverPopBackpressure))
+  `BR_ASSERT_STATIC(bit_width_must_be_at_least_one_a, Width >= 1)
+
+  br_flow_checks_valid_data_intg #(
+      .NumFlows(1),
+      .Width(Width),
+      .EnableCoverBackpressure(EnableCoverPushBackpressure),
+      .EnableAssertNoBackpressure(EnableAssertNoPushBackpressure),
+      .EnableAssertValidStability(EnableAssertPushValidStability),
+      .EnableAssertDataStability(EnableAssertPushDataStability),
+      .EnableAssertDataKnown(EnableAssertPushDataKnown),
+      .EnableAssertFinalNotValid(EnableAssertFinalNotValid)
+  ) br_flow_checks_valid_data_intg (
+      .clk,
+      // Assertion-only use: cancel pending checks on any asynchronous reset.
+      // ri lint_check_waive RESET_USE
+      .rst,
+      .ready(push_ready),
+      .valid(push_valid),
+      .data (push_data)
+  );
+
+  //------------------------------------------
+  // Implementation
+  //------------------------------------------
+  logic             pop_valid_next;
+  logic             pop_data_load_enable;
+  logic [Width-1:0] pop_data_next;
+
+  assign push_ready = pop_ready || !pop_valid;
+  assign pop_valid_next = push_valid || !push_ready;
+
+  // Match Bedrock's active-high reset interface.
+  // ri lint_check_waive RESET_LEVEL
+  `BR_REGAX(pop_valid, pop_valid_next, clk, rst)
+
+  assign pop_data_load_enable = push_ready && push_valid;
+  assign pop_data_next = push_data;
+
+  // No reset necessary because pop_valid qualifies the value of pop_data.
+  `BR_REGLN(pop_data, pop_data_next, pop_data_load_enable)
+
+  //------------------------------------------
+  // Implementation checks
+  //------------------------------------------
+
+  br_flow_checks_valid_data_impl #(
+      .NumFlows(1),
+      .Width(Width),
+      .EnableCoverBackpressure(EnableCoverPopBackpressure),
+      .EnableAssertNoBackpressure(EnableAssertNoPopBackpressure),
+      .EnableAssertValidStability(EnableCoverPopBackpressure),
+      .EnableAssertDataStability(EnableCoverPopBackpressure),
+      .EnableAssertFinalNotValid(EnableAssertFinalNotValid)
+  ) br_flow_checks_valid_data_impl (
+      .clk,
+      // Assertion-only use: cancel pending checks on any asynchronous reset.
+      // ri lint_check_waive RESET_USE
+      .rst,
+      .ready(pop_ready),
+      .valid(pop_valid),
+      .data (pop_data)
+  );
+
+  // This module must be ready to accept pushes out of reset.
+  `BR_ASSERT_IMPL(reset_a, $fell(rst) |-> push_ready)
+
+  // Check that the datapath has 1 cycle cut-through delay.
+  `BR_ASSERT_IMPL(cutthrough_1_delay_a,
+                  ##1 push_ready && push_valid |=> pop_valid && pop_data == $past(push_data))
+
+  // Check that that the backpressure path is combinational (0 delay).
+  `BR_ASSERT_IMPL(backpressure_0_delay_a, pop_ready |-> push_ready)
+
+endmodule : br_flow_reg_fwd_async

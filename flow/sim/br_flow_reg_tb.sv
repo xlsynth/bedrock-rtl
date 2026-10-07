@@ -9,9 +9,14 @@ module br_flow_reg_tb #(
   localparam int RegVariantRev = 1;
   localparam int RegVariantNone = 2;
   localparam int RegVariantBoth = 3;
+  localparam int RegVariantFwdAsync = 4;
 
   logic clk;
   logic rst;
+  logic td_clk;
+  logic td_rst;
+  logic stop_clk;
+  logic manual_rst;
 
   logic use_random_driver;
   logic manual_push_valid;
@@ -40,6 +45,19 @@ module br_flow_reg_tb #(
 
   if (RegVariant == RegVariantFwd) begin : gen_dut_fwd
     br_flow_reg_fwd #(
+        .Width(Width)
+    ) dut (
+        .clk,
+        .rst,
+        .push_ready,
+        .push_valid,
+        .push_data,
+        .pop_ready,
+        .pop_valid,
+        .pop_data
+    );
+  end else if (RegVariant == RegVariantFwdAsync) begin : gen_dut_fwd_async
+    br_flow_reg_fwd_async #(
         .Width(Width)
     ) dut (
         .clk,
@@ -93,9 +111,12 @@ module br_flow_reg_tb #(
   end
 
   br_test_driver td (
-      .clk,
-      .rst
+      .clk(td_clk),
+      .rst(td_rst)
   );
+
+  assign clk = td_clk && !stop_clk;
+  assign rst = td_rst || manual_rst;
 
   br_flow_test_driver #(
       .Width(Width),
@@ -148,8 +169,8 @@ module br_flow_reg_tb #(
 
   task automatic check_after_reset();
     #1;
-    td.check(push_ready, "push_ready should be asserted after reset");
-    td.check(!pop_valid, "pop_valid should be deasserted after reset");
+    td.check(push_ready === 1'b1, "push_ready should be asserted after reset");
+    td.check(pop_valid === 1'b0, "pop_valid should be deasserted after reset");
   endtask
 
   task automatic check_single_transfer(input logic [Width-1:0] data);
@@ -181,7 +202,10 @@ module br_flow_reg_tb #(
     manual_pop_ready = 1'b0;
   endtask
 
-  task automatic check_backpressure_hold(input logic [Width-1:0] data);
+  // Normally drain the stalled item. The async variant also flushes it with
+  // a reset pulse, either between clock edges or while the clock is stopped.
+  task automatic check_backpressure_hold(input logic [Width-1:0] data, input bit pulse_reset = 0,
+                                         input bit stop_clock = 0);
     manual_pop_ready  = 1'b0;
     manual_push_data  = data;
     manual_push_valid = 1'b1;
@@ -204,10 +228,36 @@ module br_flow_reg_tb #(
     td.wait_cycles(2);
     check_pop(data);
 
-    manual_pop_ready = 1'b1;
-    @(posedge clk);
-    #1;
-    td.check(!pop_valid, "backpressured transfer did not drain");
+    if (pulse_reset) begin
+      // td.wait_cycles returns at a falling edge. Reset and check before
+      // the next rising edge, even when the source clock remains running.
+      #1;
+      stop_clk = stop_clock;
+      if (stop_clock) begin
+        td.wait_cycles(3);
+        check_pop(data);
+      end
+      manual_rst = 1'b1;
+      check_after_reset();
+      if (stop_clock) begin
+        td.wait_cycles(2);
+        check_after_reset();
+      end
+      manual_rst = 1'b0;
+      check_after_reset();
+      if (stop_clock) begin
+        td.wait_cycles(2);
+        stop_clk = 1'b0;
+      end
+      @(posedge clk);
+      // No stale replay when the clock resumes or after the short pulse.
+      check_after_reset();
+    end else begin
+      manual_pop_ready = 1'b1;
+      @(posedge clk);
+      #1;
+      td.check(!pop_valid, "backpressured transfer did not drain");
+    end
 
     @(negedge clk);
     manual_pop_ready = 1'b0;
@@ -239,16 +289,27 @@ module br_flow_reg_tb #(
     if (Width < 1) begin
       $fatal(1, "Width must be at least 1");
     end
-    if (RegVariant < RegVariantFwd || RegVariant > RegVariantBoth) begin
+    if (RegVariant < RegVariantFwd || RegVariant > RegVariantFwdAsync) begin
       $fatal(1, "Unsupported RegVariant %0d", RegVariant);
     end
 
+    stop_clk   = 1'b0;
+    manual_rst = 1'b0;
     init_manual_signals();
     td.reset_dut();
     check_after_reset();
 
     check_single_transfer(Width'('h5a));
     check_backpressure_hold(Width'('ha5));
+    if (RegVariant == RegVariantFwdAsync) begin
+      // Repeat reset/refill to catch lost capacity or stale data after reset.
+      for (int i = 0; i < 3; i++) begin
+        check_backpressure_hold(Width'(i), 1'b1);
+        check_single_transfer(~Width'(i));
+      end
+      check_backpressure_hold('1, 1'b1, 1'b1);
+      check_single_transfer('0);
+    end
     run_random_flow();
 
     td.finish();
@@ -266,6 +327,17 @@ module br_flow_reg_fwd_tb #(
       .RegVariant(0)
   ) tb ();
 endmodule : br_flow_reg_fwd_tb
+
+module br_flow_reg_fwd_async_tb #(
+    parameter int Width = 8,
+    parameter int NumRandomValues = 64
+);
+  br_flow_reg_tb #(
+      .Width(Width),
+      .NumRandomValues(NumRandomValues),
+      .RegVariant(4)
+  ) tb ();
+endmodule : br_flow_reg_fwd_async_tb
 
 module br_flow_reg_rev_tb #(
     parameter int Width = 8,
