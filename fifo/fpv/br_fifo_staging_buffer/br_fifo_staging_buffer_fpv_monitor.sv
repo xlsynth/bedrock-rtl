@@ -4,6 +4,8 @@
 // - Model at most one accepted push per cycle, limited by TotalDepth. A push
 //   takes the bypass when available and otherwise adds an unstaged RAM item.
 //   This matches br_fifo_pop_ctrl_core and br_fifo_shared_pop_ctrl_ext_arbiter.
+// - Inclusive occupancy follows the ordinary parent: a full FIFO rejects pushes
+//   even when a pop occurs. RAM-only mode permits same-cycle slot replacement.
 // - total_items is the pre-edge population, either inclusive of staged/inflight
 //   items or RAM-only. Bypass inputs may change while not accepted.
 // - Every accepted read returns exactly RamReadLatency cycles later, in order.
@@ -75,9 +77,10 @@ module br_fifo_staging_buffer_fpv_monitor #(
   logic fv_bypass_ready;
 
   // Keep bypass_valid unconstrained when full: the ordinary parent forwards
-  // push_valid even while push_ready is low. Only accepted pushes add items.
+  // push_valid even while push_ready is low. Inclusive mode follows its
+  // push_ready = !full contract; only accepted pushes add items.
   assign fv_push = (EnableBypass ? bypass_valid_unstable : magic_push) &&
-      ((fv_total_items < TotalDepth) || fv_pop_beat);
+      ((fv_total_items < TotalDepth) || (!TotalItemsIncludesStaged && fv_pop_beat));
   assign fv_bypass_beat = bypass_valid_unstable && bypass_ready;
   assign fv_read_beat = ram_rd_addr_valid && ram_rd_addr_ready;
   assign fv_pop_beat = pop_valid && pop_ready;
