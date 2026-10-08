@@ -20,37 +20,16 @@
 `include "br_registers.svh"
 
 module br_fifo_staging_buffer_fpv_monitor #(
-    // If 1, data can be bypassed directly from push to the staging buffer.
-    // Otherwise, the buffer can only be filled by reading from storage.
     parameter bit EnableBypass = 1,
-    // Total depth of the FIFO, including entries in this staging buffer.
-    // Must be greater than RamReadLatency + 1.
     parameter int TotalDepth = 3,
-    // Latency of RAM reads. Must be >= 1.
     parameter int RamReadLatency = 1,
-    // The depth of the buffer. Must be >= 1.
     parameter int BufferDepth = RamReadLatency + 1,
-    // The width of the data. Must be >= 1.
     parameter int Width = 1,
-    // If 1, a flow register is added to the output so that
-    // valid and data come directly from registers.
-    // If 0, valid and data come combinationally from the read muxing logic.
     parameter bit RegisterPopOutputs = 0,
-    // If 1, total_items represents the total number of items in the FIFO,
-    // including entries in this staging buffer.
-    // If 0, total_items represents just the number of items in the RAM
-    // and excludes those in this staging buffer or inflight from the RAM.
     parameter bit TotalItemsIncludesStaged = 1,
-    // If 1, assert that valid push data is always known (not X).
     parameter bit EnableAssertPushDataKnown = 1,
-    // If 1, then assert there are no valid bits asserted and that the FIFO is
-    // empty at the end of the test.
     parameter bit EnableAssertFinalNotValid = 1,
-    // If 1, cover issuing a RAM read when an earlier read returns.
-    // Otherwise, assert that these events never occur together.
     parameter bit EnableCoverSameCycleReadIssueAndReturn = 1,
-    // If 1, cover accepting bypass data when RAM read data returns.
-    // Otherwise, assert that these events never occur together.
     parameter bit EnableCoverBypassAndReadDataSameCycle = 1,
 
     localparam int TotalCountWidth  = $clog2(TotalDepth + 1),
@@ -61,15 +40,12 @@ module br_fifo_staging_buffer_fpv_monitor #(
 
     input logic [TotalCountWidth-1:0] total_items,
 
-    // ri lint_check_off INEFFECTIVE_NET
     input logic             bypass_ready,
     input logic             bypass_valid_unstable,
     input logic [Width-1:0] bypass_data_unstable,
-    // ri lint_check_on INEFFECTIVE_NET
 
     input logic             ram_rd_addr_ready,
     input logic             ram_rd_addr_valid,
-    // ram_rd_addr driven externally by counter
     input logic             ram_rd_data_valid,
     input logic [Width-1:0] ram_rd_data,
 
