@@ -49,6 +49,11 @@ module br_cdc_fifo_flops_push_credit_fpv_monitor #(
     input logic [CreditWidth-1:0] credit_withhold_push
 );
 
+  // The unregistered reset-active mode requires sender reset to be tied low.
+  // Keep the DUT and credit checker on the same reset signal in both modes.
+  logic fv_push_sender_in_reset;
+  assign fv_push_sender_in_reset = RegisterResetActive ? push_sender_in_reset : 1'b0;
+
   localparam int RamReadLatency =
       FlopRamAddressDepthStages + FlopRamReadDataDepthStages + FlopRamReadDataWidthStages;
   localparam int RamWriteLatency = FlopRamAddressDepthStages + 1;
@@ -71,6 +76,7 @@ module br_cdc_fifo_flops_push_credit_fpv_monitor #(
   // ----------Instantiate DUT----------
   br_cdc_fifo_flops_push_credit #(
       .RegisterResetActive(RegisterResetActive),
+      .EnableCoverPushSenderInReset(RegisterResetActive),
       .Depth(Depth),
       .ValidateDepthSupportsFullBandwidth(0),
       .Width(Width),
@@ -90,7 +96,7 @@ module br_cdc_fifo_flops_push_credit_fpv_monitor #(
       .push_rst,
       .pop_clk,
       .pop_rst,
-      .push_sender_in_reset,
+      .push_sender_in_reset(fv_push_sender_in_reset),
       .push_receiver_in_reset,
       .push_credit_stall,
       .push_credit,
@@ -111,11 +117,12 @@ module br_cdc_fifo_flops_push_credit_fpv_monitor #(
 
   // ----------Instantiate credit FV checker----------
   br_credit_receiver_fpv_monitor #(
-      .MaxCredit(MaxCredit)
+      .MaxCredit(MaxCredit),
+      .EnableCoverPushSenderInReset(RegisterResetActive)
   ) fv_credit_receiver (
       .clk(push_clk),
       .rst(push_rst),
-      .push_sender_in_reset,
+      .push_sender_in_reset(fv_push_sender_in_reset),
       .push_receiver_in_reset,
       .push_credit_stall,
       .push_credit,

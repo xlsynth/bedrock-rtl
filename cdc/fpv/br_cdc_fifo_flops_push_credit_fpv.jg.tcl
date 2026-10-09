@@ -33,6 +33,11 @@ get_design_info
 array set param_list [get_design_info -list parameter]
 set Depth $param_list(Depth)
 
+# Match the sender-reset tieoff when reset-active registration is disabled.
+if {$param_list(RegisterResetActive) == 0} {
+  assume -env -name sender_reset_tied_low {!push_sender_in_reset}
+}
+
 # For Depth=6, the generic credit-counter max-increment cover requires the
 # push side to observe a full-depth pop-count delta in one synchronized sample.
 # This cover is reachable in all smaller parameter setups, but becomes
