@@ -90,10 +90,8 @@ module br_ram_flops_tile #(
                        rd_rst)
   end
 
-  if (EnablePartialWrite) begin : gen_partial_write_intg_checks
-    `BR_ASSERT_STATIC(word_width_in_range_a, (WordWidth >= 1) && (WordWidth <= Width))
-    `BR_ASSERT_STATIC(width_divisible_by_word_width_a, (Width % WordWidth) == 0)
-  end
+  `BR_ASSERT_STATIC(word_width_in_range_a, (WordWidth >= 1) && (WordWidth <= Width))
+  `BR_ASSERT_STATIC(width_divisible_by_word_width_a, (Width % WordWidth) == 0)
 
   if (EnableAssertFinalNotValid) begin : gen_assert_final
     `BR_ASSERT_FINAL(final_not_wr_valid_a, !(|wr_valid))
