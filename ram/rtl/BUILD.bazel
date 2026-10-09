@@ -292,7 +292,10 @@ br_verilog_elab_and_lint_test_suite(
             "0",
             "1",
         ],
-        "EnablePartialWrite": ["1"],
+        "EnablePartialWrite": [
+            "0",
+            "1",
+        ],
         "EnableReset": [
             "0",
             "1",
@@ -300,32 +303,6 @@ br_verilog_elab_and_lint_test_suite(
         "Depth": ["1"],
         "Width": ["8"],
         "WordWidth": ["2"],
-        "NumReadPorts": [
-            "1",
-            "2",
-        ],
-        "NumWritePorts": [
-            "1",
-            "2",
-        ],
-    },
-    deps = [":br_ram_flops_tile"],
-)
-
-br_verilog_elab_and_lint_test_suite(
-    name = "br_ram_flops_tile_test_suite_single_entry_full_write",
-    params = {
-        "EnableBypass": [
-            "0",
-            "1",
-        ],
-        "EnablePartialWrite": ["0"],
-        "EnableReset": [
-            "0",
-            "1",
-        ],
-        "Depth": ["1"],
-        "Width": ["8"],
         "NumReadPorts": [
             "1",
             "2",
@@ -637,7 +614,10 @@ br_verilog_elab_and_lint_test_suite(
         "NumReadPorts": ["2"],
         "Depth": ["64"],
         "Width": ["64"],
-        "EnablePartialWrite": ["1"],
+        "EnablePartialWrite": [
+            "0",
+            "1",
+        ],
         "TileEnableBypass": [
             "0",
             "1",
@@ -651,29 +631,6 @@ br_verilog_elab_and_lint_test_suite(
             "2",
         ],
         "WordWidth": ["8"],
-    },
-    deps = [":br_ram_flops"],
-)
-
-br_verilog_elab_and_lint_test_suite(
-    name = "br_ram_flops_test_suite_multi_read_ports_full_write",
-    params = {
-        "NumReadPorts": ["2"],
-        "Depth": ["64"],
-        "Width": ["64"],
-        "EnablePartialWrite": ["0"],
-        "TileEnableBypass": [
-            "0",
-            "1",
-        ],
-        "DepthTiles": [
-            "1",
-            "2",
-        ],
-        "WidthTiles": [
-            "1",
-            "2",
-        ],
     },
     deps = [":br_ram_flops"],
 )
@@ -684,7 +641,10 @@ br_verilog_elab_and_lint_test_suite(
         "NumWritePorts": ["2"],
         "Depth": ["64"],
         "Width": ["64"],
-        "EnablePartialWrite": ["1"],
+        "EnablePartialWrite": [
+            "0",
+            "1",
+        ],
         "EnableMemReset": [
             "0",
             "1",
@@ -698,29 +658,6 @@ br_verilog_elab_and_lint_test_suite(
             "2",
         ],
         "WordWidth": ["8"],
-    },
-    deps = [":br_ram_flops"],
-)
-
-br_verilog_elab_and_lint_test_suite(
-    name = "br_ram_flops_test_suite_multi_write_ports_full_write",
-    params = {
-        "NumWritePorts": ["2"],
-        "Depth": ["64"],
-        "Width": ["64"],
-        "EnablePartialWrite": ["0"],
-        "EnableMemReset": [
-            "0",
-            "1",
-        ],
-        "DepthTiles": [
-            "1",
-            "2",
-        ],
-        "WidthTiles": [
-            "1",
-            "2",
-        ],
     },
     deps = [":br_ram_flops"],
 )
@@ -769,7 +706,10 @@ br_verilog_elab_and_lint_test_suite(
             "0",
             "1",
         ],
-        "EnablePartialWrite": ["1"],
+        "EnablePartialWrite": [
+            "0",
+            "1",
+        ],
         "EnableMemReset": [
             "0",
             "1",
@@ -777,32 +717,6 @@ br_verilog_elab_and_lint_test_suite(
         "Depth": ["1"],
         "Width": ["8"],
         "WordWidth": ["2"],
-    },
-    deps = [":br_ram_flops"],
-)
-
-br_verilog_elab_and_lint_test_suite(
-    name = "br_ram_flops_test_suite_single_tile_single_entry_full_write",
-    params = {
-        "NumReadPorts": [
-            "1",
-            "2",
-        ],
-        "NumWritePorts": [
-            "1",
-            "2",
-        ],
-        "TileEnableBypass": [
-            "0",
-            "1",
-        ],
-        "EnablePartialWrite": ["0"],
-        "EnableMemReset": [
-            "0",
-            "1",
-        ],
-        "Depth": ["1"],
-        "Width": ["8"],
     },
     deps = [":br_ram_flops"],
 )
@@ -822,7 +736,10 @@ br_verilog_elab_and_lint_test_suite(
             "0",
             "1",
         ],
-        "EnablePartialWrite": ["1"],
+        "EnablePartialWrite": [
+            "0",
+            "1",
+        ],
         "EnableMemReset": [
             "0",
             "1",
@@ -832,34 +749,6 @@ br_verilog_elab_and_lint_test_suite(
         "WidthTiles": ["2"],
         "Width": ["8"],
         "WordWidth": ["2"],
-    },
-    deps = [":br_ram_flops"],
-)
-
-br_verilog_elab_and_lint_test_suite(
-    name = "br_ram_flops_test_suite_multi_tile_single_entry_full_write",
-    params = {
-        "NumReadPorts": [
-            "1",
-            "2",
-        ],
-        "NumWritePorts": [
-            "1",
-            "2",
-        ],
-        "TileEnableBypass": [
-            "0",
-            "1",
-        ],
-        "EnablePartialWrite": ["0"],
-        "EnableMemReset": [
-            "0",
-            "1",
-        ],
-        "Depth": ["2"],
-        "DepthTiles": ["2"],
-        "WidthTiles": ["2"],
-        "Width": ["8"],
     },
     deps = [":br_ram_flops"],
 )
