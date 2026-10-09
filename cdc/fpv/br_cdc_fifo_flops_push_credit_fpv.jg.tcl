@@ -33,9 +33,11 @@ get_design_info
 array set param_list [get_design_info -list parameter]
 set Depth $param_list(Depth)
 
-# Match the sender-reset tieoff when reset-active registration is disabled.
-if {$param_list(RegisterResetActive) == 0} {
+# This variant requires sender reset tied low without reset-active registration.
+if {$param_list(RegisterResetActive) eq "1'b0"} {
   assume -env -name sender_reset_tied_low {!push_sender_in_reset}
+  # Sender-reset coverage is unreachable in this mode; retain functional checks.
+  cover -disable *fv_credit_receiver.gen_reset.push_sender_in_reset_a
 }
 
 # For Depth=6, the generic credit-counter max-increment cover requires the
