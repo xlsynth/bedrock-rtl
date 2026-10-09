@@ -10,6 +10,7 @@ module br_cdc_fifo_flops_fpv_monitor #(
     parameter bit Jasper = 1,  // If 1 use Jasper scoreboard, else use Synopsys FML scoreboard
     parameter int Depth = 2,
     parameter int Width = 1,
+    parameter bit RegisterResetActive = 1,
     parameter bit RegisterPopOutputs = 0,
     parameter int NumSyncStages = 3,
     parameter int FlopRamDepthTiles = 1,
@@ -60,6 +61,7 @@ module br_cdc_fifo_flops_fpv_monitor #(
 
   // ----------Instantiate DUT----------
   br_cdc_fifo_flops #(
+      .RegisterResetActive(RegisterResetActive),
       .Depth(Depth),
       .ValidateDepthSupportsFullBandwidth(0),
       .Width(Width),
@@ -95,6 +97,7 @@ module br_cdc_fifo_flops_fpv_monitor #(
 
   // ----------Instantiate CDC FIFO FV basic checks----------
   br_cdc_fifo_basic_fpv_monitor #(
+      .RegisterResetActive(RegisterResetActive),
       .Jasper(Jasper),
       .Depth(Depth),
       .Width(Width),

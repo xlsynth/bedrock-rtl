@@ -189,3 +189,26 @@ br_verilog_fpv_test_tools_suite(
     top = "br_delay_valid_next_nr",
     deps = [":br_delay_valid_next_nr_fpv_monitor"],
 )
+
+br_verilog_fpv_test_tools_suite(
+    name = "br_delay_valid_ungated_first_stage",
+    elab_opts = [
+        "-parameter Width 1",
+    ],
+    params = {
+        "FirstStageUngated": [
+            "1",
+        ],
+        "NumStages": [
+            "1",
+            "2",
+        ],
+    },
+    tools = {
+        "jg": "",
+    },
+    top = "br_delay_valid",
+    deps = [
+        ":br_delay_valid_fpv_monitor",
+    ],
+)

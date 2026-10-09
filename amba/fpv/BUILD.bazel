@@ -714,3 +714,454 @@ br_verilog_fpv_test_tools_suite(
     top = "br_apb_mux",
     deps = [":br_apb_mux_fpv_monitor"],
 )
+
+br_verilog_fpv_test_tools_suite(
+    name = "br_amba_axi_isolate_sub_single_id_aw1_ar1",
+    elab_opts = [
+        "-parameter AddrWidth 16",
+        "-parameter AwMaxOutstanding 4",
+        "-parameter ArMaxOutstanding 4",
+        "-parameter ArAxiIdCount 1",
+        "-parameter ArAxiIdWidth 1",
+        "-parameter AwAxiIdCount 1",
+        "-parameter AwAxiIdWidth 1",
+        "-parameter StaticPerIdReadTrackerFifoDepth 2",
+    ],
+    params = {
+        "MaxAxiBurstLen": [
+            "1",
+            "256",
+        ],
+        "UseDynamicFifoForReadTracker": [
+            "0",
+            "1",
+        ],
+    },
+    tools = {
+        "jg": "br_amba_axi_isolate_sub_fpv.jg.tcl",
+    },
+    top = "br_amba_axi_isolate_sub",
+    deps = [
+        ":br_amba_axi_isolate_sub_fpv_monitor",
+    ],
+)
+
+br_verilog_fpv_test_tools_suite(
+    name = "br_amba_axi_isolate_sub_single_id_aw1_ar2",
+    elab_opts = [
+        "-parameter AddrWidth 16",
+        "-parameter AwMaxOutstanding 4",
+        "-parameter ArMaxOutstanding 4",
+        "-parameter ArAxiIdCount 2",
+        "-parameter ArAxiIdWidth 1",
+        "-parameter AwAxiIdCount 1",
+        "-parameter AwAxiIdWidth 1",
+        "-parameter StaticPerIdReadTrackerFifoDepth 2",
+    ],
+    params = {
+        "MaxAxiBurstLen": [
+            "1",
+            "256",
+        ],
+        "UseDynamicFifoForReadTracker": [
+            "0",
+            "1",
+        ],
+    },
+    tools = {
+        "jg": "br_amba_axi_isolate_sub_fpv.jg.tcl",
+    },
+    top = "br_amba_axi_isolate_sub",
+    deps = [
+        ":br_amba_axi_isolate_sub_fpv_monitor",
+    ],
+)
+
+br_verilog_fpv_test_tools_suite(
+    name = "br_amba_axi_isolate_sub_single_id_aw2_ar1",
+    elab_opts = [
+        "-parameter AddrWidth 16",
+        "-parameter AwMaxOutstanding 4",
+        "-parameter ArMaxOutstanding 4",
+        "-parameter ArAxiIdCount 1",
+        "-parameter ArAxiIdWidth 1",
+        "-parameter AwAxiIdCount 2",
+        "-parameter AwAxiIdWidth 1",
+        "-parameter StaticPerIdReadTrackerFifoDepth 2",
+    ],
+    params = {
+        "MaxAxiBurstLen": [
+            "1",
+            "256",
+        ],
+        "UseDynamicFifoForReadTracker": [
+            "0",
+            "1",
+        ],
+    },
+    tools = {
+        "jg": "br_amba_axi_isolate_sub_fpv.jg.tcl",
+    },
+    top = "br_amba_axi_isolate_sub",
+    deps = [
+        ":br_amba_axi_isolate_sub_fpv_monitor",
+    ],
+)
+
+br_verilog_fpv_test_tools_suite(
+    name = "br_amba_axi_timing_slice_passthrough",
+    elab_opts = [
+        "-parameter AddrWidth 16",
+    ],
+    params = {
+        "ARSliceType": [
+            "0",
+        ],
+        "AWSliceType": [
+            "0",
+        ],
+        "BSliceType": [
+            "0",
+        ],
+        "RSliceType": [
+            "0",
+        ],
+        "WSliceType": [
+            "0",
+        ],
+    },
+    tools = {
+        "jg": "br_amba_axi_timing_slice_fpv.jg.tcl",
+    },
+    top = "br_amba_axi_timing_slice",
+    deps = [
+        ":br_amba_axi_timing_slice_fpv_monitor",
+    ],
+)
+
+br_verilog_fpv_test_tools_suite(
+    name = "br_amba_axi_timing_slice_forward",
+    elab_opts = [
+        "-parameter AddrWidth 16",
+    ],
+    params = {
+        "ARSliceType": [
+            "1",
+        ],
+        "AWSliceType": [
+            "1",
+        ],
+        "BSliceType": [
+            "1",
+        ],
+        "RSliceType": [
+            "1",
+        ],
+        "WSliceType": [
+            "1",
+        ],
+    },
+    tools = {
+        "jg": "br_amba_axi_timing_slice_fpv.jg.tcl",
+    },
+    top = "br_amba_axi_timing_slice",
+    deps = [
+        ":br_amba_axi_timing_slice_fpv_monitor",
+    ],
+)
+
+br_verilog_fpv_test_tools_suite(
+    name = "br_amba_axi_timing_slice_mixed_aw_w",
+    elab_opts = [
+        "-parameter AddrWidth 16",
+    ],
+    params = {
+        "ARSliceType": [
+            "2",
+        ],
+        "AWSliceType": [
+            "1",
+        ],
+        "BSliceType": [
+            "2",
+        ],
+        "RSliceType": [
+            "2",
+        ],
+        "WSliceType": [
+            "1",
+        ],
+    },
+    tools = {
+        "jg": "br_amba_axi_timing_slice_fpv.jg.tcl",
+    },
+    top = "br_amba_axi_timing_slice",
+    deps = [
+        ":br_amba_axi_timing_slice_fpv_monitor",
+    ],
+)
+
+br_verilog_fpv_test_tools_suite(
+    name = "br_amba_axi_timing_slice_mixed_channels",
+    elab_opts = [
+        "-parameter AddrWidth 16",
+    ],
+    params = {
+        "ARSliceType": [
+            "1",
+        ],
+        "AWSliceType": [
+            "0",
+        ],
+        "BSliceType": [
+            "1",
+        ],
+        "RSliceType": [
+            "0",
+        ],
+        "WSliceType": [
+            "2",
+        ],
+    },
+    tools = {
+        "jg": "br_amba_axi_timing_slice_fpv.jg.tcl",
+    },
+    top = "br_amba_axi_timing_slice",
+    deps = [
+        ":br_amba_axi_timing_slice_fpv_monitor",
+    ],
+)
+
+br_verilog_fpv_test_tools_suite(
+    name = "br_amba_axil_split_outstanding_r2_w2_n1",
+    elab_opts = [
+        "-parameter NumBranchAddrRanges 2",
+    ],
+    params = {
+        "MaxOutstandingReads": [
+            "2",
+        ],
+        "MaxOutstandingWrites": [
+            "2",
+        ],
+        "NormalizeBranchAddress": [
+            "1",
+        ],
+    },
+    tools = {
+        "jg": "br_amba_axil_split_fpv.jg.tcl",
+    },
+    top = "br_amba_axil_split",
+    deps = [
+        ":br_amba_axil_split_fpv_monitor",
+    ],
+)
+
+br_verilog_fpv_test_tools_suite(
+    name = "br_amba_axil_split_outstanding_r1_w2_n0",
+    elab_opts = [
+        "-parameter NumBranchAddrRanges 2",
+    ],
+    params = {
+        "MaxOutstandingReads": [
+            "1",
+        ],
+        "MaxOutstandingWrites": [
+            "2",
+        ],
+        "NormalizeBranchAddress": [
+            "0",
+        ],
+    },
+    tools = {
+        "jg": "br_amba_axil_split_fpv.jg.tcl",
+    },
+    top = "br_amba_axil_split",
+    deps = [
+        ":br_amba_axil_split_fpv_monitor",
+    ],
+)
+
+br_verilog_fpv_test_tools_suite(
+    name = "br_amba_axil_split_outstanding_r2_w1_n1",
+    elab_opts = [
+        "-parameter NumBranchAddrRanges 2",
+    ],
+    params = {
+        "MaxOutstandingReads": [
+            "2",
+        ],
+        "MaxOutstandingWrites": [
+            "1",
+        ],
+        "NormalizeBranchAddress": [
+            "1",
+        ],
+    },
+    tools = {
+        "jg": "br_amba_axil_split_fpv.jg.tcl",
+    },
+    top = "br_amba_axil_split",
+    deps = [
+        ":br_amba_axil_split_fpv_monitor",
+    ],
+)
+
+br_verilog_fpv_test_tools_suite(
+    name = "br_amba_axi_shrinker_buffer_and_output_modes",
+    elab_opts = [
+        "-parameter AddrWidth 16",
+        "-parameter WideDataWidth 128",
+        "-parameter MaxOutstandingReqs 4",
+        "-parameter IdWidth 3",
+        "-parameter NarrowDataWidth 32",
+    ],
+    illegal_param_combinations = {
+        ("WriteFifoDepth", "RegisterNarrowOutputs", "RegisterWideOutputs"): [
+            ("1", "1", "1"),
+        ],
+    },
+    params = {
+        "RegisterNarrowOutputs": [
+            "0",
+            "1",
+        ],
+        "RegisterWideOutputs": [
+            "0",
+            "1",
+        ],
+        "WriteFifoDepth": [
+            "1",
+            "2",
+        ],
+    },
+    tools = {
+        "jg": "br_amba_axi_shrinker_fpv.jg.tcl",
+    },
+    top = "br_amba_axi_shrinker",
+    deps = [
+        ":br_amba_axi_shrinker_fpv_monitor",
+    ],
+)
+
+br_verilog_fpv_test_tools_suite(
+    name = "br_amba_axi_demux_output_modes",
+    elab_opts = [
+        "-parameter AddrWidth 16",
+        "-parameter AwAxiIdWidth 2",
+        "-parameter ArAxiIdWidth 2",
+        "-parameter NumSubordinates 2",
+    ],
+    illegal_param_combinations = {
+        ("RegisterDownstreamAxOutputs", "RegisterDownstreamWOutputs"): [
+            ("1", "1"),
+        ],
+    },
+    params = {
+        "RegisterDownstreamAxOutputs": [
+            "0",
+            "1",
+        ],
+        "RegisterDownstreamWOutputs": [
+            "0",
+            "1",
+        ],
+        "SingleIdOnly": [
+            "0",
+            "1",
+        ],
+    },
+    tools = {
+        "jg": "br_amba_axi_demux_fpv.jg.tcl",
+    },
+    top = "br_amba_axi_demux",
+    deps = [
+        ":br_amba_axi_demux_fpv_monitor",
+    ],
+)
+
+br_verilog_fpv_test_tools_suite(
+    name = "br_amba_axil_msi_lanes_and_destinations",
+    illegal_param_combinations = {
+        ("DataWidth", "NumMsiDestAddr"): [
+            ("64", "1"),
+        ],
+    },
+    params = {
+        "DataWidth": [
+            "32",
+            "64",
+        ],
+        "NumMsiDestAddr": [
+            "1",
+            "3",
+        ],
+    },
+    tools = {
+        "jg": "br_amba_axil_msi_fpv.jg.tcl",
+    },
+    top = "br_amba_axil_msi",
+    deps = [
+        ":br_amba_axil_msi_fpv_monitor",
+    ],
+)
+
+br_verilog_fpv_test_tools_suite(
+    name = "br_amba_axi_default_target_response_modes",
+    params = {
+        "DecodeError": [
+            "0",
+        ],
+        "SingleBeat": [
+            "0",
+            "1",
+        ],
+        "SlvErr": [
+            "0",
+            "1",
+        ],
+    },
+    tools = {
+        "jg": "br_amba_axi_default_target_fpv.jg.tcl",
+    },
+    top = "br_amba_axi_default_target",
+    deps = [
+        ":br_amba_axi_default_target_fpv_monitor",
+    ],
+)
+
+br_verilog_fpv_test_tools_suite(
+    name = "br_amba_axil_default_target_response_modes",
+    params = {
+        "DecodeError": [
+            "0",
+        ],
+        "SlvErr": [
+            "0",
+            "1",
+        ],
+    },
+    tools = {
+        "jg": "br_amba_axil_default_target_fpv.jg.tcl",
+    },
+    top = "br_amba_axil_default_target",
+    deps = [
+        ":br_amba_axil_default_target_fpv_monitor",
+    ],
+)
+
+br_verilog_fpv_test_tools_suite(
+    name = "br_amba_atb_funnel_registered_ready",
+    params = {
+        "RegisterAtReady": [
+            "1",
+        ],
+    },
+    tools = {
+        "jg": "br_amba_atb_funnel_fpv.jg.tcl",
+    },
+    top = "br_amba_atb_funnel",
+    deps = [
+        ":br_amba_atb_funnel_fpv_monitor",
+    ],
+)

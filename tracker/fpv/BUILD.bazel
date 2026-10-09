@@ -412,3 +412,49 @@ br_verilog_fpv_test_tools_suite(
     top = "br_tracker_reorder_buffer_ctrl_1r1w",
     deps = [":br_tracker_reorder_buffer_ctrl_1r1w_fpv_monitor"],
 )
+
+br_verilog_fpv_test_tools_suite(
+    name = "br_tracker_reorder_buffer_ctrl_1r1w_registered_pop",
+    elab_opts = [
+        "-parameter DataWidth 1",
+        "-parameter EntryIdWidth 2",
+        "-parameter NumEntries 4",
+    ],
+    params = {
+        "RamReadLatency": [
+            "0",
+            "1",
+        ],
+        "RegisterPopOutputs": [
+            "1",
+        ],
+    },
+    tools = {
+        "jg": "br_tracker_reorder_buffer_ctrl_1r1w_fpv.tcl",
+    },
+    top = "br_tracker_reorder_buffer_ctrl_1r1w",
+    deps = [
+        ":br_tracker_reorder_buffer_ctrl_1r1w_fpv_monitor",
+    ],
+)
+
+br_verilog_fpv_test_tools_suite(
+    name = "br_tracker_reorder_buffer_flops_registered_pop",
+    elab_opts = [
+        "-parameter DataWidth 1",
+        "-parameter EntryIdWidth 2",
+        "-parameter NumEntries 4",
+    ],
+    params = {
+        "RegisterPopOutputs": [
+            "1",
+        ],
+    },
+    tools = {
+        "jg": "br_tracker_reorder_buffer_flops_fpv.tcl",
+    },
+    top = "br_tracker_reorder_buffer_flops",
+    deps = [
+        ":br_tracker_reorder_buffer_flops_fpv_monitor",
+    ],
+)

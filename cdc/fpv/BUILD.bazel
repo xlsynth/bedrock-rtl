@@ -842,3 +842,187 @@ br_verilog_fpv_test_tools_suite(
         "//gate/rtl:br_gate_mock",
     ],
 )
+
+br_verilog_fpv_test_tools_suite(
+    name = "br_cdc_fifo_flops_reset_active_unregistered",
+    elab_opts = [
+        "-parameter Depth 6",
+        "-parameter NumSyncStages 2",
+        "-parameter RegisterResetActive 0",
+        "-parameter Width 1",
+    ],
+    params = {
+        "FlopRamAddressDepthStages": [
+            "0",
+            "1",
+        ],
+        "RegisterPopOutputs": [
+            "0",
+            "1",
+        ],
+    },
+    tools = {
+        "jg": "br_cdc_fifo_flops_fpv.jg.tcl",
+    },
+    top = "br_cdc_fifo_flops_fpv_monitor",
+    deps = [
+        ":br_cdc_fifo_flops_fpv_monitor",
+        "//gate/rtl:br_gate_mock",
+        "//mux/rtl:br_mux_bin_structured_gates_mock",
+    ],
+)
+
+br_verilog_fpv_test_tools_suite(
+    name = "br_cdc_fifo_flops_push_credit_reset_active_unregistered",
+    elab_opts = [
+        "-parameter MaxCredit Depth",
+        "-parameter Depth 6",
+        "-parameter NumSyncStages 2",
+        "-parameter RegisterResetActive 0",
+        "-parameter Width 1",
+    ],
+    params = {
+        "FlopRamAddressDepthStages": [
+            "0",
+            "1",
+        ],
+        "RegisterPopOutputs": [
+            "0",
+            "1",
+        ],
+    },
+    tools = {
+        "jg": "br_cdc_fifo_flops_push_credit_fpv.jg.tcl",
+    },
+    top = "br_cdc_fifo_flops_push_credit_fpv_monitor",
+    deps = [
+        ":br_cdc_fifo_flops_push_credit_fpv_monitor",
+        "//gate/rtl:br_gate_mock",
+        "//mux/rtl:br_mux_bin_structured_gates_mock",
+    ],
+)
+
+br_verilog_fpv_test_tools_suite(
+    name = "br_cdc_fifo_ctrl_1r1w_reset_active_unregistered",
+    elab_opts = [
+        "-parameter Depth 6",
+        "-parameter NumSyncStages 2",
+        "-parameter RegisterResetActive 0",
+        "-parameter Width 1",
+    ],
+    params = {
+        "RamReadLatency": [
+            "0",
+            "1",
+        ],
+        "RamWriteLatency": [
+            "1",
+            "3",
+        ],
+        "RegisterPopOutputs": [
+            "0",
+            "1",
+        ],
+    },
+    tools = {
+        "jg": "br_cdc_fifo_ctrl_1r1w_fpv.jg.tcl",
+    },
+    top = "br_cdc_fifo_ctrl_1r1w_fpv_monitor",
+    deps = [
+        ":br_cdc_fifo_ctrl_1r1w_fpv_monitor",
+    ],
+)
+
+br_verilog_fpv_test_tools_suite(
+    name = "br_cdc_fifo_ctrl_1r1w_push_credit_reset_active_unregistered",
+    elab_opts = [
+        "-parameter MaxCredit Depth",
+        "-parameter Depth 6",
+        "-parameter NumSyncStages 2",
+        "-parameter RegisterResetActive 0",
+        "-parameter Width 1",
+    ],
+    params = {
+        "RamReadLatency": [
+            "0",
+            "1",
+        ],
+        "RamWriteLatency": [
+            "1",
+            "3",
+        ],
+        "RegisterPopOutputs": [
+            "0",
+            "1",
+        ],
+    },
+    tools = {
+        "jg": "br_cdc_fifo_ctrl_1r1w_push_credit_fpv.jg.tcl",
+    },
+    top = "br_cdc_fifo_ctrl_1r1w_push_credit_fpv_monitor",
+    deps = [
+        ":br_cdc_fifo_ctrl_1r1w_push_credit_fpv_monitor",
+    ],
+)
+
+br_verilog_fpv_test_tools_suite(
+    name = "br_cdc_fifo_ctrl_push_pop_1r1w_reset_active_unregistered",
+    elab_opts = [
+        "-parameter Depth 6",
+        "-parameter NumSyncStages 2",
+        "-parameter RegisterResetActive 0",
+        "-parameter Width 1",
+    ],
+    params = {
+        "RamReadLatency": [
+            "0",
+            "1",
+        ],
+        "RamWriteLatency": [
+            "1",
+            "3",
+        ],
+        "RegisterPopOutputs": [
+            "0",
+            "1",
+        ],
+    },
+    tools = {
+        "jg": "br_cdc_fifo_ctrl_push_pop_1r1w_fpv.jg.tcl",
+    },
+    top = "br_cdc_fifo_ctrl_push_pop_1r1w_fpv_monitor",
+    deps = [
+        ":br_cdc_fifo_ctrl_push_pop_1r1w_fpv_monitor",
+    ],
+)
+
+br_verilog_fpv_test_tools_suite(
+    name = "br_cdc_fifo_ctrl_push_pop_1r1w_push_credit_test_delay_reset_active_unregistered",
+    elab_opts = [
+        "-parameter Depth 6",
+        "-parameter NumSyncStages 2",
+        "-parameter RegisterResetActive 0",
+        "-parameter Width 1",
+    ],
+    params = {
+        "RamReadLatency": [
+            "0",
+            "1",
+        ],
+        "RamWriteLatency": [
+            "1",
+            "3",
+        ],
+        "RegisterPopOutputs": [
+            "0",
+            "1",
+        ],
+    },
+    tools = {
+        "jg": "br_cdc_fifo_ctrl_push_pop_1r1w_push_credit_fpv.jg.tcl",
+    },
+    top = "br_cdc_fifo_ctrl_push_pop_1r1w_push_credit_fpv_monitor",
+    deps = [
+        ":br_cdc_fifo_ctrl_push_pop_1r1w_push_credit_fpv_monitor",
+    ],
+)
