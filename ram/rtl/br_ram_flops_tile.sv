@@ -30,6 +30,7 @@ module br_ram_flops_tile #(
     // can be written when partial write is enabled.
     // Must be at least 1 and at most Width.
     // Width must be evenly divisible by WordWidth.
+    // Must equal Width when EnablePartialWrite is 0.
     parameter int WordWidth = Width,
     // If 1, then if the read and write ports access the same address on the same cycle,
     // the write data is forwarded directly to the read data with zero delay.
@@ -93,6 +94,8 @@ module br_ram_flops_tile #(
   if (EnablePartialWrite) begin : gen_partial_write_intg_checks
     `BR_ASSERT_STATIC(word_width_in_range_a, (WordWidth >= 1) && (WordWidth <= Width))
     `BR_ASSERT_STATIC(width_divisible_by_word_width_a, (Width % WordWidth) == 0)
+  end else begin : gen_full_write_intg_checks
+    `BR_ASSERT_STATIC(word_width_equals_width_a, WordWidth == Width)
   end
 
   if (EnableAssertFinalNotValid) begin : gen_assert_final
