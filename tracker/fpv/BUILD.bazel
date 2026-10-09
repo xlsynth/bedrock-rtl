@@ -419,13 +419,11 @@ br_verilog_fpv_test_tools_suite(
         "-parameter DataWidth 1",
         "-parameter EntryIdWidth 2",
         "-parameter NumEntries 4",
+        "-parameter RegisterPopOutputs 1",
     ],
     params = {
         "RamReadLatency": [
             "0",
-            "1",
-        ],
-        "RegisterPopOutputs": [
             "1",
         ],
     },
@@ -444,12 +442,8 @@ br_verilog_fpv_test_tools_suite(
         "-parameter DataWidth 1",
         "-parameter EntryIdWidth 2",
         "-parameter NumEntries 4",
+        "-parameter RegisterPopOutputs 1",
     ],
-    params = {
-        "RegisterPopOutputs": [
-            "1",
-        ],
-    },
     tools = {
         "jg": "br_tracker_reorder_buffer_flops_fpv.tcl",
     },

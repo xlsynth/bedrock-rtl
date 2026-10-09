@@ -194,11 +194,9 @@ br_verilog_fpv_test_tools_suite(
     name = "br_delay_valid_ungated_first_stage",
     elab_opts = [
         "-parameter Width 1",
+        "-parameter FirstStageUngated 1",
     ],
     params = {
-        "FirstStageUngated": [
-            "1",
-        ],
         "NumStages": [
             "1",
             "2",
