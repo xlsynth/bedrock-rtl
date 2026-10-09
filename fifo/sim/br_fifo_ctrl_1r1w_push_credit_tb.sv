@@ -33,7 +33,7 @@ module br_fifo_ctrl_1r1w_push_credit_tb;
   parameter int RamReadLatency = 0;
   parameter int RamDepth = Depth;
   parameter bit EnableAssertPushDataKnown = 1;
-  parameter bit EnableCoverCreditWithhold = 1;
+  parameter bit EnableCreditWithhold = 1;
   parameter bit EnableCoverPushSenderInReset = 1;
   parameter bit EnableCoverPushCreditStall = 1;
   parameter bit EnableAssertFinalNotValid = 1;
@@ -128,7 +128,7 @@ module br_fifo_ctrl_1r1w_push_credit_tb;
       .Width(Width),
       .MaxCredit(MaxCredit),
       .EnableAssertPushDataKnown(EnableAssertPushDataKnown),
-      .EnableCoverCreditWithhold(0),
+      .EnableCreditWithhold(0),
       .EnableCoverPopReceiverInReset(EnableCoverPushSenderInReset),
       .EnableAssertFinalNotValid(EnableAssertFinalNotValid),
       .EnableAssertFinalMaxValue(0)
@@ -160,7 +160,7 @@ module br_fifo_ctrl_1r1w_push_credit_tb;
       .RamReadLatency(RamReadLatency),
       .RamDepth(RamDepth),
       .EnableAssertPushDataKnown(EnableAssertPushDataKnown),
-      .EnableCoverCreditWithhold(EnableCoverCreditWithhold),
+      .EnableCreditWithhold(EnableCreditWithhold),
       .EnableCoverPushSenderInReset(EnableCoverPushSenderInReset),
       .EnableCoverPushCreditStall(EnableCoverPushCreditStall),
       .EnableAssertFinalNotValid(EnableAssertFinalNotValid)

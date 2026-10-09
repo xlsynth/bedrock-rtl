@@ -43,9 +43,9 @@ module br_cdc_fifo_ctrl_push_1r1w_push_credit #(
     // before synchronization to the pop clock domain. You also cannot set this
     // to 0 if push_sender_in_reset is not tied to 0.
     parameter bit RegisterResetActive = 1,
-    // If 1, cover that credit_withhold can be non-zero.
-    // Otherwise, assert that it is always zero.
-    parameter bit EnableCoverCreditWithhold = 1,
+    // If 1, support nonzero credit_withhold values and cover that case.
+    // Otherwise, optimize for credit_withhold being zero and assert that requirement.
+    parameter bit EnableCreditWithhold = 1,
     // If 1, cover that push_sender_in_reset can be asserted
     // Otherwise, assert that it is never asserted.
     parameter bit EnableCoverPushSenderInReset = 1,
@@ -120,7 +120,7 @@ module br_cdc_fifo_ctrl_push_1r1w_push_credit #(
       .RegisterPushOutputs(RegisterPushOutputs),
       .RegisterResetActive(RegisterResetActive),
       .MaxCredit(MaxCredit),
-      .EnableCoverCreditWithhold(EnableCoverCreditWithhold),
+      .EnableCreditWithhold(EnableCreditWithhold),
       .EnableCoverPushSenderInReset(EnableCoverPushSenderInReset),
       .EnableCoverPushCreditStall(EnableCoverPushCreditStall),
       .EnableAssertPushDataKnown(EnableAssertPushDataKnown),
