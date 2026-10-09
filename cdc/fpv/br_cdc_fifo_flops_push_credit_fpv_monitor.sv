@@ -9,6 +9,7 @@
 module br_cdc_fifo_flops_push_credit_fpv_monitor #(
     parameter int Depth = 2,
     parameter int Width = 1,
+    parameter bit RegisterResetActive = 1,
     parameter int MaxCredit = Depth,
     parameter bit RegisterPushOutputs = 0,
     parameter bit RegisterPopOutputs = 1,
@@ -69,6 +70,7 @@ module br_cdc_fifo_flops_push_credit_fpv_monitor #(
 
   // ----------Instantiate DUT----------
   br_cdc_fifo_flops_push_credit #(
+      .RegisterResetActive(RegisterResetActive),
       .Depth(Depth),
       .ValidateDepthSupportsFullBandwidth(0),
       .Width(Width),
@@ -128,6 +130,7 @@ module br_cdc_fifo_flops_push_credit_fpv_monitor #(
 
   // ----------Instantiate CDC FIFO FV basic checks----------
   br_cdc_fifo_basic_fpv_monitor #(
+      .RegisterResetActive(RegisterResetActive),
       .Depth(Depth),
       .Width(Width),
       .NumSyncStages(NumSyncStages),

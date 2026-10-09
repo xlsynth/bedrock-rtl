@@ -11,6 +11,7 @@ module br_cdc_fifo_basic_fpv_monitor #(
     parameter int Depth = 2,
     parameter int Width = 1,
     parameter int NumSyncStages = 3,
+    parameter bit RegisterResetActive = 1,
     parameter bit EnableCoverPushBackpressure = 1,
     parameter bit EnableAssertPushValidStability = EnableCoverPushBackpressure,
     parameter bit EnableAssertPushDataStability = EnableAssertPushValidStability,
@@ -49,16 +50,15 @@ module br_cdc_fifo_basic_fpv_monitor #(
     input logic pop_empty,
     input logic [CountWidth-1:0] pop_items
 );
-  localparam int ResetActiveDelay = 1;
   // Adding ExtraDelay to account for any extra flops when instantiating br_cdc_fifo.
   // Need to make sure that on push reset, the updated push_count is not visible
   // to the pop side before reset_active is.
   localparam int PushCountDelay = PushExtraDelay +
-                                  ((ResetActiveDelay + 1) >= RamWriteLatency ?
-                                  (ResetActiveDelay + 1) : RamWriteLatency);
+                                  ((RegisterResetActive + 1) >= RamWriteLatency ?
+                                  (RegisterResetActive + 1) : RamWriteLatency);
   // Need to make sure that on pop reset, the updated pop_count is not visible
   // to the push side before reset_active is.
-  localparam int PopCountDelay = ResetActiveDelay + 1 + PopExtraDelay;
+  localparam int PopCountDelay = RegisterResetActive + 1 + PopExtraDelay;
 
   // ----------FV assumptions----------
   `BR_ASSUME_CR(pop_ready_liveness_a, s_eventually (pop_ready), pop_clk, pop_rst)

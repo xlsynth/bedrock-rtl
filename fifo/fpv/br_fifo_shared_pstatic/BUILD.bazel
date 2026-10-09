@@ -513,3 +513,30 @@ br_verilog_fpv_test_tools_suite(
     top = "br_fifo_shared_pstatic_flops_push_credit",
     deps = [":br_fifo_shared_pstatic_flops_push_credit_fpv_monitor"],
 )
+
+br_verilog_fpv_test_tools_suite(
+    name = "br_fifo_shared_pstatic_ctrl_test_numfifo_circular_staging",
+    elab_opts = [
+        "-parameter Depth 5",
+        "-parameter NumFifos 2",
+        "-parameter RegisterPopOutputs 1",
+        "-parameter StagingBufferDepth 3",
+    ],
+    params = {
+        "EnableBypass": [
+            "0",
+            "1",
+        ],
+        "RamReadLatency": [
+            "2",
+            "3",
+        ],
+    },
+    tools = {
+        "jg": "br_fifo_shared_pstatic_ctrl_fpv.jg.tcl",
+    },
+    top = "br_fifo_shared_pstatic_ctrl",
+    deps = [
+        ":br_fifo_shared_pstatic_ctrl_fpv_monitor",
+    ],
+)

@@ -442,16 +442,6 @@ br_verilog_fpv_test_tools_suite(
             ("1", "2"),
             ("1", "3"),
         ],
-        # WordWidth must be evenly divisible by WidthTiles
-        (
-            "WordWidth",
-            "WidthTiles",
-        ): [
-            ("1", "2"),
-            ("1", "3"),
-            ("2", "3"),
-            ("3", "2"),
-        ],
         # WordWidth must be at least 1 and at most (Width / WidthTiles)
         # (Width / WidthTiles) % WordWidth == 0
         (
@@ -713,16 +703,6 @@ br_verilog_fpv_test_tools_suite(
         ): [
             ("1", "2"),
             ("1", "3"),
-        ],
-        # WordWidth must be evenly divisible by WidthTiles
-        (
-            "WordWidth",
-            "WidthTiles",
-        ): [
-            ("1", "2"),
-            ("1", "3"),
-            ("2", "3"),
-            ("3", "2"),
         ],
         # WordWidth must be at least 1 and at most (Width / WidthTiles)
         # (Width / WidthTiles) % WordWidth == 0

@@ -9,6 +9,7 @@
 module br_cdc_fifo_ctrl_1r1w_fpv_monitor #(
     parameter int Depth = 2,
     parameter int Width = 1,
+    parameter bit RegisterResetActive = 1,
     parameter bit RegisterPopOutputs = 0,
     parameter int RamWriteLatency = 1,
     parameter int RamReadLatency = 0,
@@ -82,6 +83,7 @@ module br_cdc_fifo_ctrl_1r1w_fpv_monitor #(
 
   // ----------Instantiate DUT----------
   br_cdc_fifo_ctrl_1r1w #(
+      .RegisterResetActive(RegisterResetActive),
       .Depth(Depth),
       .ValidateDepthSupportsFullBandwidth(0),
       .Width(Width),
@@ -120,6 +122,7 @@ module br_cdc_fifo_ctrl_1r1w_fpv_monitor #(
 
   // ----------Instantiate CDC FIFO FV basic checks----------
   br_cdc_fifo_basic_fpv_monitor #(
+      .RegisterResetActive(RegisterResetActive),
       .Depth(Depth),
       .Width(Width),
       .NumSyncStages(NumSyncStages),

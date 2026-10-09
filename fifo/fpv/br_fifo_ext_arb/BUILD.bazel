@@ -364,3 +364,59 @@ br_verilog_fpv_test_tools_suite(
     top = "br_fifo_shared_dynamic_ctrl_push_credit_pop_credit_ext_arbiter",
     deps = [":br_fifo_shared_dynamic_ctrl_push_credit_pop_credit_ext_arbiter_fpv_monitor"],
 )
+
+br_verilog_fpv_test_tools_suite(
+    name = "br_fifo_shared_dynamic_ctrl_ext_arbiter_test_latency_delayed_grant",
+    elab_opts = [
+        "-parameter ArbiterAlwaysGrants 0",
+        "-parameter DataRamReadLatency 1",
+        "-parameter Depth 5",
+        "-parameter NumFifos 2",
+        "-parameter NumReadPorts 1",
+        "-parameter NumWritePorts 1",
+        "-parameter PointerRamReadLatency 1",
+        "-parameter RegisterPopOutputs 1",
+        "-parameter StagingBufferDepth 2",
+    ],
+    params = {
+        "RegisterDeallocation": [
+            "0",
+            "1",
+        ],
+    },
+    tools = {
+        "jg": "br_fifo_shared_dynamic_ctrl_ext_arbiter_fpv.jg.tcl",
+    },
+    top = "br_fifo_shared_dynamic_ctrl_ext_arbiter",
+    deps = [
+        ":br_fifo_shared_dynamic_ctrl_ext_arbiter_fpv_monitor",
+    ],
+)
+
+br_verilog_fpv_test_tools_suite(
+    name = "br_fifo_shared_dynamic_ctrl_push_credit_ext_arbiter_test_latency_delayed_grant",
+    elab_opts = [
+        "-parameter ArbiterAlwaysGrants 0",
+        "-parameter DataRamReadLatency 1",
+        "-parameter Depth 5",
+        "-parameter NumFifos 2",
+        "-parameter NumReadPorts 1",
+        "-parameter NumWritePorts 1",
+        "-parameter PointerRamReadLatency 1",
+        "-parameter RegisterPopOutputs 1",
+        "-parameter StagingBufferDepth 2",
+    ],
+    params = {
+        "RegisterDeallocation": [
+            "0",
+            "1",
+        ],
+    },
+    tools = {
+        "jg": "br_fifo_shared_dynamic_ctrl_push_credit_ext_arbiter_fpv.jg.tcl",
+    },
+    top = "br_fifo_shared_dynamic_ctrl_push_credit_ext_arbiter",
+    deps = [
+        ":br_fifo_shared_dynamic_ctrl_push_credit_ext_arbiter_fpv_monitor",
+    ],
+)
