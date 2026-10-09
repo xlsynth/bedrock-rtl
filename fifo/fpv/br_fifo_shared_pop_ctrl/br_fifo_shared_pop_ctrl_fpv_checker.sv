@@ -89,7 +89,23 @@ module br_fifo_shared_pop_ctrl_fpv_checker #(
 
   logic [NumFifos-1:0] head_hs;
   logic [FifoIdxWidth-1:0] fv_fifo_id;
-  logic [NumReadPorts-1:0] fv_rsp_valid;
+  logic [NumReadPorts-1:0][FifoIdxWidth-1:0] fv_read_fifo_id;
+  logic [NumReadPorts-1:0][Width-1:0] fv_issue_data;
+  logic [NumReadPorts-1:0] fv_issue_valid;
+
+  // Choose each read payload at issue so RAM latency cannot reorder it with bypass entries.
+  for (genvar p = 0; p < NumReadPorts; p++) begin : gen_issue_data
+    assign fv_issue_valid[p] = data_ram_rd_addr_valid[p] && (fv_read_fifo_id[p] == fv_fifo_id);
+    if (RamReadLatency == 0) begin : gen_zero_latency
+      `BR_ASSUME(ram_response_data_latency_a,
+                 data_ram_rd_data_valid[p] |-> data_ram_rd_data[p] == fv_issue_data[p])
+    end else begin : gen_nonzero_latency
+      `BR_ASSUME(ram_response_data_latency_a,
+                 ##RamReadLatency data_ram_rd_data_valid[p] |-> data_ram_rd_data[p] == $past(
+                     fv_issue_data[p], RamReadLatency
+                 ))
+    end
+  end
 
   br_fifo_shared_pop_ctrl_common_fpv_checker #(
       .NumReadPorts(NumReadPorts),
@@ -103,8 +119,8 @@ module br_fifo_shared_pop_ctrl_fpv_checker #(
       .rst,
       .fv_fifo_id,
       .head_hs,
-      .rd_fifo_id(),
-      .fv_rsp_valid,
+      .rd_fifo_id  (fv_read_fifo_id),
+      .fv_rsp_valid(),
       .head_valid,
       .head_ready,
       .head,
@@ -190,10 +206,7 @@ module br_fifo_shared_pop_ctrl_fpv_checker #(
     end
   end
 
-  // Returned RAM data for the selected FIFO must leave the pop interface in FIFO order.
-  // The selected FIFO can receive RAM return data from any physical read port over time,
-  // so the scoreboard has one incoming chunk per RAM read port and one outgoing chunk for
-  // the selected FIFO's pop stream.
+  // Enqueue RAM reads at issue and bypass entries at acceptance in the same FIFO order.
   jasper_scoreboard_3 #(
       .CHUNK_WIDTH(Width),
       .IN_CHUNKS(NumReadPorts + 1),
@@ -203,8 +216,10 @@ module br_fifo_shared_pop_ctrl_fpv_checker #(
   ) scoreboard (
       .clk(clk),
       .rstN(!rst),
-      .incoming_vld({bypass_valid_unstable[fv_fifo_id] && bypass_ready[fv_fifo_id], fv_rsp_valid}),
-      .incoming_data({bypass_data_unstable[fv_fifo_id], data_ram_rd_data}),
+      .incoming_vld({
+        bypass_valid_unstable[fv_fifo_id] && bypass_ready[fv_fifo_id], fv_issue_valid
+      }),
+      .incoming_data({bypass_data_unstable[fv_fifo_id], fv_issue_data}),
       .outgoing_vld(pop_valid[fv_fifo_id] && pop_ready[fv_fifo_id]),
       .outgoing_data(pop_data[fv_fifo_id])
   );
