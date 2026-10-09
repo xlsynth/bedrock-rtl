@@ -22,8 +22,11 @@ module br_multi_xfer_checks_sendable_data_intg #(
 
     localparam int CountWidth = $clog2(NumSymbols + 1)
 ) (
+    // slang lint_save
+    // slang lint_off unused-port
     // ri lint_check_waive NOT_READ HIER_NET_NOT_READ INPUT_NOT_READ
     input logic clk,
+    // slang lint_restore
     input logic rst,
 
     input logic [CountWidth-1:0] receivable,

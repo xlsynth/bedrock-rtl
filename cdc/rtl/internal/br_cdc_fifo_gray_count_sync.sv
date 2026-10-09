@@ -41,7 +41,10 @@ module br_cdc_fifo_gray_count_sync #(
 
   // Tag this signal as needing max delay checks
   // ri lint_check_off ONE_CONN_PER_LINE
+  // slang lint_save
+  // slang lint_off ignored-macro-paste
   `BR_GATE_CDC_MAXDEL_BUS(src_count_gray_maxdel, src_count_gray, CountWidth)
+  // slang lint_restore
   // ri lint_check_on ONE_CONN_PER_LINE
 
   for (genvar i = 0; i < CountWidth; i++) begin : gen_cdc_sync

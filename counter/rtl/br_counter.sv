@@ -132,8 +132,11 @@ module br_counter #(
   assign value_extended = ExtWidth'(value);
   // ri lint_check_waive IFDEF_CODE
   assign value_extended_next =
+      // slang lint_save
+      // slang lint_off width-expand
       // ri lint_check_waive ARITH_ARGS
       value_extended + (incr_valid ? incr : '0) - (decr_valid ? decr : '0);
+  // slang lint_restore
 
   if (EnableWrap || EnableSaturate) begin : gen_wrap_or_saturate_cover
     localparam int MaxValueExtWidth = br_math::max2(ExtWidth, MaxValueP1Width);
@@ -187,11 +190,17 @@ module br_counter #(
   assign decr_qual = decr_valid ? decr : '0;
 
   if (EnableReinitAndChange) begin : gen_reinit_and_change
+    // slang lint_save
+    // slang lint_off width-expand
     // ri lint_check_waive ARITH_ARGS RHS_TOO_SHORT ARITH_BITLEN
     assign value_temp = (reinit ? initial_value : value) + incr_qual - decr_qual;
+    // slang lint_restore
   end else begin : gen_reinit_ignore_change
+    // slang lint_save
+    // slang lint_off width-expand
     // ri lint_check_waive ARITH_ARGS RHS_TOO_SHORT ARITH_BITLEN
     assign value_temp = reinit ? initial_value : (value + incr_qual - decr_qual);
+    // slang lint_restore
   end
   assign value_loaden = reinit || incr_valid || decr_valid;
 

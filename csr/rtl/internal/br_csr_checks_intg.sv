@@ -14,8 +14,11 @@ module br_csr_checks_intg #(
     // Must be either 32 or 64
     parameter int DataWidth = 32,
     // If 1, check that the address is in the range [AddrMin, AddrMax]
+    // slang lint_save
+    // slang lint_off unused-parameter
     // ri lint_check_waive PARAM_NOT_USED
     parameter bit EnableAddressRangeCheck = 0,
+    // slang lint_restore
     // Must be at least 0 and at most AddrMax
     // ri lint_check_waive PARAM_NOT_USED
     parameter logic [AddrWidth-1:0] AddrMin = 0,
@@ -24,12 +27,18 @@ module br_csr_checks_intg #(
     parameter logic [AddrWidth-1:0] AddrMax = 2 ** AddrWidth - 1,
     // If 1, check that each byte of the write data is known for a write
     // request if its strobe bit is set
+    // slang lint_save
+    // slang lint_off unused-parameter
     // ri lint_check_waive PARAM_NOT_USED
     parameter bit EnableWriteDataKnownCheck = 1,
+    // slang lint_restore
     localparam int StrobeWidth = DataWidth / 8
 ) (
+    // slang lint_save
+    // slang lint_off unused-port
     // ri lint_check_waive INPUT_NOT_READ HIER_NET_NOT_READ HIER_BRANCH_NOT_READ
     input logic clk,
+    // slang lint_restore
     input logic rst,
 
     input logic req_valid,
