@@ -206,7 +206,10 @@ module br_fifo_shared_pop_ctrl_fpv_checker #(
     end
   end
 
-  // Enqueue RAM reads at issue and bypass entries at acceptance in the same FIFO order.
+  // Enqueue RAM reads at issue and bypass entries at acceptance.
+  // The default port order processes valid chunks from least to most significant.
+  // RAM data occupies the lower chunks and bypass data the highest chunk, so RAM
+  // entries precede a bypass entry accepted in the same cycle.
   jasper_scoreboard_3 #(
       .CHUNK_WIDTH(Width),
       .IN_CHUNKS(NumReadPorts + 1),
