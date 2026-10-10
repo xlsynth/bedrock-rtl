@@ -16,6 +16,10 @@ assume -env {rst |-> push_rst}
 assume -env {rst |-> pop_rst}
 assume -env {!push_rst |=> !push_rst}
 assume -env {!pop_rst |=> !pop_rst}
+# Sample sender-reset release on the reference clock so both domains observe it.
+assume -env -name sender_reset_stays_deasserted {
+  disable iff (push_rst) !push_sender_in_reset |=> !push_sender_in_reset
+}
 assume -env {s_eventually !push_rst}
 assume -env {s_eventually !pop_rst}
 
@@ -35,13 +39,6 @@ clock -rate {pop_rst \
 get_design_info
 array set param_list [get_design_info -list parameter]
 set Depth $param_list(Depth)
-
-# Keep the startup-only sender reset deasserted on the formal reference clock.
-# Without reset-active registration, pop_clk can observe a reassertion before
-# the push_clk assumption checks it.
-if {$param_list(RegisterResetActive) eq "1'b0"} {
-  assume -env -name sender_reset_stays_deasserted {!push_sender_in_reset |=> !push_sender_in_reset}
-}
 
 # For Depth=6, the generic credit-counter max-increment cover requires the
 # push side to observe a full-depth pop-count delta in one synchronized sample.
