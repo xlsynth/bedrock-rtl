@@ -370,10 +370,25 @@ module br_amba_axi_shrinker #(
       .pop_ready({write_fifo_push_ready, narrow_awready_int})
   );
 
+  // An unregistered fork may withdraw valid, but metadata must stay unchanged
+  // when it remains valid after a stall. Retain this qualified payload check
+  // when the storage's coupled valid/data stability assertion is disabled.
+  if (!RegisterNarrowOutputs) begin : gen_unregistered_metadata_checks
+    `BR_ASSERT_IMPL(write_metadata_stable_when_valid_a,
+                    write_fifo_push_valid && !write_fifo_push_ready |=>
+                    !write_fifo_push_valid || $stable(
+                        write_fifo_push_info
+                    ))
+  end
+
   if (WriteFifoDepth > 1) begin : gen_write_fifo_depth_gt1
     br_fifo_flops #(
         .Depth(WriteFifoDepth),
-        .Width($bits(tracking_info_t))
+        .Width($bits(tracking_info_t)),
+        // Without narrow output registers, AW ready can fall while metadata is
+        // stalled, causing the fork to withdraw valid. The AW output register
+        // prevents this, so retain the stability check when it is enabled.
+        .EnableAssertPushValidStability(RegisterNarrowOutputs)
     ) br_fifo_flops_write_fifo (
         .clk,
         .rst,
@@ -395,7 +410,11 @@ module br_amba_axi_shrinker #(
   end else begin : gen_write_fifo_depth_eq1
     // Use br_flow_reg_none to ensure 0 cut-through latency
     br_flow_reg_none #(
-        .Width($bits(tracking_info_t))
+        .Width($bits(tracking_info_t)),
+        // Without narrow output registers, AW ready can fall while metadata is
+        // stalled, causing the fork to withdraw valid. The AW output register
+        // prevents this, so retain the stability check when it is enabled.
+        .EnableAssertPushValidStability(RegisterNarrowOutputs)
     ) br_flow_reg_none_write_fifo (
         .clk,
         .rst,
