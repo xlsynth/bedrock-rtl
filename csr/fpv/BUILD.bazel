@@ -310,3 +310,26 @@ br_verilog_fpv_test_tools_suite(
         ":br_csr_axil_widget_fpv_monitor",
     ],
 )
+
+# Small watchdog limits exercise both timeout periods and dynamic configuration
+# across request/response output registration, including the minimum limit.
+br_verilog_fpv_test_tools_suite(
+    name = "br_csr_axil_widget_timeout",
+    params = {
+        "MaxTimeoutCycles": [
+            "1",
+            "3",
+        ],
+        "RegisterCsrRequestOutputs": [
+            "0",
+            "1",
+        ],
+        "RegisterResponseOutputs": [
+            "0",
+            "1",
+        ],
+    },
+    tools = {"jg": "br_csr_axil_widget_fpv.jg.tcl"},
+    top = "br_csr_axil_widget",
+    deps = [":br_csr_axil_widget_fpv_monitor"],
+)

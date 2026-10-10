@@ -8,6 +8,7 @@ module br_csr_axil_widget_fpv_monitor #(
     parameter int AddrWidth = 1,
     parameter int DataWidth = 32,
     parameter bit RegisterResponseOutputs = 0,
+    parameter bit RegisterCsrRequestOutputs = 0,
     parameter int MaxTimeoutCycles = 1000,
     localparam int StrobeWidth = DataWidth / 8,
     localparam int TimerWidth = br_math::clamped_clog2(MaxTimeoutCycles + 1)
@@ -148,6 +149,9 @@ module br_csr_axil_widget_fpv_monitor #(
   logic timeout_en;
   logic timer_expired;
   logic first_timeout;
+  logic second_timeout;
+  logic expected_csr_req_abort;
+  logic expected_request_aborted;
 
   always_ff @(posedge clk) begin
     if (rst) begin
@@ -156,38 +160,50 @@ module br_csr_axil_widget_fpv_monitor #(
     end else if (csr_req_valid) begin
       csr_req_pending <= 1'b1;
       csr_write_req_pending <= csr_req_write;
-    end else if (csr_resp_valid || request_aborted) begin
+    end else if (csr_resp_valid || second_timeout) begin
       csr_req_pending <= 1'b0;
       csr_write_req_pending <= 1'b0;
     end
   end
 
-  // when first period expired, csr_req_abort is sent.
-  // within timeout_cycles cycles, if no response is received, request is aborted.
+  // Track the two timeout periods from expected expiration events. The external
+  // abort outputs may be registered, so using them to advance the model would
+  // reset the timer and start the second period one cycle late.
   always_ff @(posedge clk) begin
-    if (rst) begin
+    if (rst || csr_resp_valid || second_timeout) begin
       csr_req_aborting <= 1'b0;
-    end else if (csr_req_abort) begin
+    end else if (first_timeout) begin
       csr_req_aborting <= 1'b1;
-    end else if (csr_resp_valid || request_aborted) begin
-      csr_req_aborting <= 1'b0;
     end
   end
 
-  // when first period expired, csr_req_abort is sent.
-  // The timer will then reset and count for another timeout period.
-  // If no response is received before the second period expires, request_aborted is set.
+  // Both reads and writes start the watchdog. Disabling it resets the elapsed
+  // time but preserves the timeout phase; the threshold may change at any time.
   always_ff @(posedge clk) begin
-    if (rst | !timeout_en | csr_req_abort | csr_resp_valid | request_aborted) begin
-      timer <= 1'b0;
-    end else if (csr_write_req_pending && timeout_en) begin
+    if (rst || !timeout_en) begin
+      timer <= '0;
+    end else if (first_timeout || second_timeout || csr_resp_valid) begin
+      // Reinitialization also counts the active edge. This value is retained
+      // while idle, matching the watchdog counter's reinit-and-increment mode.
+      timer <= {{TimerWidth{1'b0}}, csr_req_pending};
+    end else if (csr_req_pending) begin
       timer <= timer + 1'b1;
     end
   end
   assign timeout_en = timeout_enable && (timeout_cycles != '0);
   assign timer_expired = timeout_en && (timer >= timeout_cycles);
-  assign first_timeout =
-      csr_req_pending && !csr_req_aborting && timeout_en && timer_expired && !csr_resp_valid;
+  assign first_timeout = csr_req_pending && !csr_req_aborting && timer_expired && !csr_resp_valid;
+  assign second_timeout = csr_req_pending && csr_req_aborting && timer_expired && !csr_resp_valid;
+
+  // Apply the configured output latency only after calculating each event.
+  // Response scoreboards use the completion event, not its delayed notification.
+  if (RegisterCsrRequestOutputs) begin : gen_reg_abort
+    `BR_REG(expected_csr_req_abort, first_timeout)
+    `BR_REG(expected_request_aborted, second_timeout)
+  end else begin : gen_no_reg_abort
+    assign expected_csr_req_abort   = first_timeout;
+    assign expected_request_aborted = second_timeout;
+  end
 
   assign csr_write_req = '{
           addr: axil_awaddr,
@@ -210,20 +226,43 @@ module br_csr_axil_widget_fpv_monitor #(
   `BR_ASSUME(legal_timeout_cycles_a, timeout_cycles <= MaxTimeoutCycles)
   `BR_ASSUME(legal_csr_resp_a, csr_resp_valid |-> !(csr_resp_decerr && csr_resp_slverr))
   `BR_ASSUME(no_spurious_csr_req_resp_a, !csr_req_pending |-> !csr_resp_valid);
-  `BR_ASSUME(eventually_csr_req_resp_a, csr_req_pending |-> s_eventually csr_resp_valid);
+  `BR_ASSUME(eventually_csr_req_complete_a,
+             csr_req_pending |-> s_eventually (csr_resp_valid || second_timeout));
 
   // ----------FV assertions----------
   `BR_ASSERT(only_one_outstanding_csr_req_a, csr_req_pending |-> !csr_req_valid);
   `BR_ASSERT(no_deadlock_aw_a, axil_awvalid |-> s_eventually csr_req_valid && csr_req_write);
   `BR_ASSERT(no_deadlock_w_a, axil_wvalid |-> s_eventually csr_req_valid && csr_req_write);
   `BR_ASSERT(no_deadlock_ar_a, axil_arvalid |-> s_eventually csr_req_valid && !csr_req_write);
-  `BR_ASSERT(no_deadlock_b_a, csr_resp_valid && csr_write_req_pending |-> s_eventually axil_bvalid);
-  `BR_ASSERT(no_deadlock_r_a,
-             csr_resp_valid && !csr_write_req_pending |-> s_eventually axil_rvalid);
-  `BR_ASSERT(csr_req_1st_timeout_a, first_timeout |-> csr_req_abort);
   `BR_ASSERT(
-      csr_req_2nd_timeout_a,
-      csr_req_pending && csr_req_aborting && timer_expired && !csr_resp_valid |-> request_aborted);
+      no_deadlock_b_a,
+      (csr_resp_valid || second_timeout) && csr_write_req_pending |-> s_eventually axil_bvalid);
+  `BR_ASSERT(
+      no_deadlock_r_a,
+      (csr_resp_valid || second_timeout) && !csr_write_req_pending |-> s_eventually axil_rvalid);
+  `BR_ASSERT(csr_req_1st_timeout_a, csr_req_abort == expected_csr_req_abort)
+  `BR_ASSERT(csr_req_2nd_timeout_a, request_aborted == expected_request_aborted)
+
+  // Exercise both phases for reads and writes, including legal changes to the
+  // watchdog configuration and a response coincident with timer expiration.
+  for (genvar req_write = 0; req_write < 2; req_write++) begin : gen_timeout_covers
+    `BR_COVER(first_timeout_c, first_timeout && (csr_write_req_pending == req_write))
+    `BR_COVER(second_timeout_c, second_timeout && (csr_write_req_pending == req_write))
+    `BR_COVER(
+        response_at_timeout_c,
+        csr_req_pending && timer_expired && csr_resp_valid && (csr_write_req_pending == req_write))
+    `BR_COVER(disable_restart_c,
+              csr_req_pending && timeout_en ##1
+              csr_req_pending && !timeout_en ##1 csr_req_pending && timeout_en &&
+              (csr_write_req_pending == req_write))
+    if (MaxTimeoutCycles > 1) begin : gen_threshold_change
+      `BR_COVER(lower_threshold_c,
+                csr_req_pending && timeout_en && !timer_expired ##1
+                first_timeout && (timeout_cycles < $past(
+                    timeout_cycles
+                )) && (csr_write_req_pending == req_write))
+    end
+  end
 
   jasper_scoreboard_3 #(
       .CHUNK_WIDTH($bits(araw_req_t)),
@@ -277,8 +316,8 @@ module br_csr_axil_widget_fpv_monitor #(
   ) b_sb (
       .clk(clk),
       .rstN(!rst),
-      .incoming_vld((csr_resp_valid | request_aborted) & csr_write_req_pending),
-      .incoming_data(request_aborted ? 2'b10 : csr_resp),
+      .incoming_vld((csr_resp_valid | second_timeout) & csr_write_req_pending),
+      .incoming_data(second_timeout ? 2'b10 : csr_resp),
       .outgoing_vld(axil_bvalid & axil_bready),
       .outgoing_data(axil_bresp)
   );
@@ -294,8 +333,8 @@ module br_csr_axil_widget_fpv_monitor #(
   ) r_sb (
       .clk(clk),
       .rstN(!rst),
-      .incoming_vld((csr_resp_valid | request_aborted) & !csr_write_req_pending),
-      .incoming_data(request_aborted ? {2'b10, {DataWidth{1'b0}}} : {csr_resp, csr_resp_rdata}),
+      .incoming_vld((csr_resp_valid | second_timeout) & !csr_write_req_pending),
+      .incoming_data(second_timeout ? {2'b10, {DataWidth{1'b0}}} : {csr_resp, csr_resp_rdata}),
       .outgoing_vld(axil_rvalid & axil_rready),
       .outgoing_data({axil_rresp, axil_rdata})
   );
@@ -306,5 +345,6 @@ bind br_csr_axil_widget br_csr_axil_widget_fpv_monitor #(
     .AddrWidth(AddrWidth),
     .DataWidth(DataWidth),
     .RegisterResponseOutputs(RegisterResponseOutputs),
+    .RegisterCsrRequestOutputs(RegisterCsrRequestOutputs),
     .MaxTimeoutCycles(MaxTimeoutCycles)
 ) monitor (.*);
