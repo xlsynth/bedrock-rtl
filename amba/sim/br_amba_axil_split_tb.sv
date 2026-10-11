@@ -576,6 +576,11 @@ module br_amba_axil_split_tb;
     addr_space_size = (AddrCalcWidth'(1) << AxilAddrWidth) - 1'b1;
     if (allow_overlap) init_overlap_ranges(addr_space_size);
     else init_disjoint_ranges(addr_space_size);
+    if (NormalizeBranchAddress) begin
+      // Align the subtracted base to preserve address/data byte lanes. Rounding the first
+      // start down preserves both disjoint ranges and the forced overlap.
+      branch_start_addr[0] -= branch_start_addr[0] % AxilAddrWidth'(AxilStrobeWidth);
+    end
     populate_addr_queues();
   endtask
 
