@@ -7,6 +7,9 @@ reset -none
 assume -reset -name set_rst_during_reset {rst}
 assume -bound 1 -name delay_rst {rst}
 assume -name deassert_rst {##1 !rst}
+assume -name sender_reset_stays_deasserted {
+  disable iff (rst) !push_sender_in_reset |=> !push_sender_in_reset
+}
 
 # primary input control signal should be legal during reset
 array set param_list [get_design_info -list parameter]

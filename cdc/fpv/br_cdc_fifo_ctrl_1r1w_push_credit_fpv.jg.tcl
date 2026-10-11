@@ -16,6 +16,10 @@ assume -env {rst |-> push_rst}
 assume -env {rst |-> pop_rst}
 assume -env {!push_rst |=> !push_rst}
 assume -env {!pop_rst |=> !pop_rst}
+# Sample sender-reset release on the reference clock so both domains observe it.
+assume -env -name sender_reset_stays_deasserted {
+  disable iff (push_rst) !push_sender_in_reset |=> !push_sender_in_reset
+}
 assume -env {s_eventually !push_rst}
 assume -env {s_eventually !pop_rst}
 

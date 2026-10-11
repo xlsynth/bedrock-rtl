@@ -69,9 +69,6 @@ module br_credit_receiver_fpv_monitor #(
   `BR_REGI(fv_max_credit, fv_max_credit, credit_initial)
 
   // ----------FV assumptions----------
-  // This monitor proves startup release skew. Coordinated resets after traffic
-  // are outside the scope of this startup proof.
-  `BR_ASSUME(push_sender_in_reset_a, !push_sender_in_reset |=> !push_sender_in_reset)
   `BR_ASSUME(credit_withhold_a, credit_withhold <= MaxCredit)
   `BR_ASSUME(credit_withhold_liveness_a, s_eventually (credit_withhold < fv_max_credit))
   `BR_ASSUME(no_spurious_push_valid_a, fv_push_credit_cnt + push_credit >= $countones(fv_push_valid
