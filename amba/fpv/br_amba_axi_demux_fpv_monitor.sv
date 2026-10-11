@@ -15,6 +15,7 @@ module br_amba_axi_demux_fpv_monitor #(
     parameter int SingleIdOnly = 0,
     parameter int WdataBufferDepth = 2,
     parameter int MaxAwRunahead = 4,
+    parameter int RegisterDownstreamAxOutputs = 1,
     parameter int AddrWidth = 12,
     parameter int DataWidth = 32,
     parameter int AWUserWidth = 1,
@@ -483,11 +484,9 @@ module br_amba_axi_demux_fpv_monitor #(
         .READ_INTERLEAVE_ON(0),
         .ALLOW_SPARSE_STROBE(1),
         .BYTE_STROBE_ON(1),
-        // upstream_aw_sub_select will decide which downstream to pick
-        // therefore, before aw is available, we can't decide which downstream to pick
-        // Therefore, downstream DBC (data before control) precondition is unreachable
-        // Meaning: downstream can't have w before aw
-        .DATA_BEFORE_CONTROL_ON(0)
+        // The routing token is available before a registered AW reaches the
+        // downstream interface, so W may precede AW in that mode.
+        .DATA_BEFORE_CONTROL_ON(RegisterDownstreamAxOutputs)
     ) downstream (
         // Global signals
         .aclk    (clk),
@@ -558,6 +557,7 @@ bind br_amba_axi_demux br_amba_axi_demux_fpv_monitor #(
     .SingleIdOnly(SingleIdOnly),
     .WdataBufferDepth(WdataBufferDepth),
     .MaxAwRunahead(MaxAwRunahead),
+    .RegisterDownstreamAxOutputs(RegisterDownstreamAxOutputs),
     .AddrWidth(AddrWidth),
     .DataWidth(DataWidth),
     .AWUserWidth(AWUserWidth),
