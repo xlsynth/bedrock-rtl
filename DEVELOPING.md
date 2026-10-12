@@ -7,7 +7,7 @@ This guide covers the tools and checks used to develop Bedrock-RTL. See
 
 Install Bazel 9.1.0 (Bazelisk is recommended) and a system Python interpreter version 3.12 or newer.
 
-The public toolchain uses Slang for elaboration, Verible for lint, Verilator for simulation, and TopStitch for RTL wrapper generation. The Docker image includes those tools, plus Yosys, EQY, Yices, and XLS support libraries.
+The public toolchain uses Slang for elaboration and semantic lint, Verible for style lint, Verilator for simulation, and TopStitch for RTL wrapper generation. The Docker image includes those tools, plus Yosys, EQY, Yices, and XLS support libraries.
 
 Some checks also use tools that are not distributed with Bedrock-RTL: Verific tclmain, RealIntent AscentLint, Synopsys VCS, Cadence JasperGold, and Synopsys VCF. Provide the installations and licenses yourself if you need those checks.
 
@@ -19,7 +19,7 @@ Bedrock-RTL uses [Bazel](https://bazel.build/) to assemble source lists and run 
 bazel test //...
 ```
 
-The repository includes plugins for Verilator simulation and Slang elaboration. Most other EDA-tool plugins are deliberately kept outside this repository. As a result, tests that select proprietary tools need corresponding plugins in your local or CI environment.
+The repository includes plugins for Verilator simulation and Slang elaboration and lint. Most other EDA-tool plugins are deliberately kept outside this repository. As a result, tests that select proprietary tools need corresponding plugins in your local or CI environment.
 
 Keeping these plugins separate lets the test definitions remain vendor-agnostic and avoids publishing vendor API or licensing details. Not every test works with every tool; check the relevant `BUILD.bazel` target.
 
@@ -39,6 +39,28 @@ verilog_elab_test(
 ```
 
 Slang parses, type-checks, and elaborates the hierarchy. It supports source and header dependencies, defines, and top-level parameter overrides. For package-only source sets, set `compile_only = True`.
+
+Slang lint fully elaborates the design and treats every enabled warning as an error using the top-level `slang_lint_policy.f`.
+
+### Slang lint waiver policy
+
+Fix clear RTL issues instead of waiving them, but do not change otherwise acceptable RTL solely to satisfy Slang when that would conflict with the existing AscentLint result or make the code less clear. All exceptions require human review and must follow these rules:
+
+- Keep waivers in the affected RTL, directly beside the intentional construct. Do not add external or repository-wide waiver lists.
+- Limit each waiver to the smallest practical source region and name only the required diagnostic.
+- Use global `-Wno-*` entries in `slang_lint_policy.f` only for diagnostics that are broken or not useful across the repository, and document the reason there.
+- Prefer an existing AscentLint waiver on the same construct as supporting evidence, but review the Slang waiver independently.
+
+Slang does not yet support a one-shot waiver for one source line. That improvement is tracked upstream in [MikePopoloski/slang#1930](https://github.com/MikePopoloski/slang/issues/1930). Until it is available, express each local waiver as a saved diagnostic scope:
+
+```systemverilog
+// slang lint_save
+// slang lint_off unused-variable
+logic intentionally_unused;
+// slang lint_restore
+```
+
+Use `lint_restore` rather than `lint_on`: restoring the saved state also restores the policy's warning-as-error severity. The `scoped-slang-waivers` pre-commit hook enforces this Bedrock policy by rejecting `lint_off` outside a saved scope, unmatched scopes, `lint_on`, and saved scopes that contain no waiver. The hook validates waiver structure; it does not test Slang's implementation of the directives.
 
 To refresh the public RTL PPA report, run:
 

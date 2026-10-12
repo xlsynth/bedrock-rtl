@@ -35,8 +35,11 @@ module br_credit_sender_vc #(
     // If 1, assert that push_valid is stable when backpressured.
     parameter bit EnableAssertPushValidStability = EnableCoverPushBackpressure,
     // If 1, assert that push_data is stable when backpressured.
+    // slang lint_save
+    // slang lint_off unused-parameter
     // ri lint_check_waive PARAM_NOT_USED
     parameter bit EnableAssertPushDataStability = EnableAssertPushValidStability,
+    // slang lint_restore
     // If 1, then assert there are no valid bits asserted at the end of the test.
     parameter bit EnableAssertFinalNotValid = 1,
     // If 1, then at the end of simulation, assert that the credit counter value equals

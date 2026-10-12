@@ -134,8 +134,11 @@ module br_flow_demux_select_unstable #(
     assign push_ready = pop_ready[select];
     // The ternary expression is needed to ensure pop_valid_unstable is 0 (and not X)
     // when select is X and push_valid is 0.
+    // slang lint_save
+    // slang lint_off width-expand
     // ri lint_check_waive VAR_SHIFT TRUNC_LSHIFT
     assign pop_valid_unstable = push_valid ? (push_valid << select) : '0;
+    // slang lint_restore
     // Replicate pop_data to all flows; this is okay since pop_data[i]
     // is only valid when pop_valid_unstable[i] is high.
     always_comb begin

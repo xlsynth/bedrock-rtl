@@ -17,10 +17,13 @@ module br_fifo_shared_pstatic_size_calc #(
     localparam int AddrWidth  = br_math::clamped_clog2(Depth),
     localparam int CountWidth = $clog2(Depth + 1)
 ) (
+    // slang lint_save
+    // slang lint_off unused-port
     // ri lint_check_waive INPUT_NOT_READ HIER_NET_NOT_READ HIER_BRANCH_NOT_READ
     input logic clk,  // Used only for assertions
     // ri lint_check_waive INPUT_NOT_READ HIER_NET_NOT_READ HIER_BRANCH_NOT_READ
     input logic rst,  // Used only for assertions
+    // slang lint_restore
 
     input logic [NumFifos-1:0][AddrWidth-1:0] config_base,
     input logic [NumFifos-1:0][AddrWidth-1:0] config_bound,

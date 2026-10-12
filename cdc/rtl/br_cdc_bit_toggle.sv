@@ -20,15 +20,21 @@ module br_cdc_bit_toggle #(
     // ri lint_check_waive INPUT_NOT_READ NOT_READ HIER_NET_NOT_READ HIER_BRANCH_NOT_READ
     input logic src_clk,
     // Used for assertion only
+    // slang lint_save
+    // slang lint_off unused-port
     // ri lint_check_waive INPUT_NOT_READ NOT_READ HIER_NET_NOT_READ HIER_BRANCH_NOT_READ
     input logic src_rst,
+    // slang lint_restore
     input logic src_bit,
 
     // ri lint_check_waive ONE_LOCAL_CLOCK
     input  logic dst_clk,
     // Used for assertion only
+    // slang lint_save
+    // slang lint_off unused-port
     // ri lint_check_waive INPUT_NOT_READ NOT_READ HIER_NET_NOT_READ HIER_BRANCH_NOT_READ
     input  logic dst_rst,
+    // slang lint_restore
     output logic dst_bit
 );
 
@@ -110,7 +116,10 @@ module br_cdc_bit_toggle #(
 
 `else
   // ri lint_check_off ONE_CONN_PER_LINE
+  // slang lint_save
+  // slang lint_off ignored-macro-paste
   `BR_GATE_CDC_MAXDEL(src_bit_internal_maxdel, src_bit_internal)
+  // slang lint_restore
   // ri lint_check_on ONE_CONN_PER_LINE
 `endif
 

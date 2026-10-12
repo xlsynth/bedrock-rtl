@@ -33,16 +33,22 @@ module br_flow_checks_valid_data_intg #(
     parameter bit EnableAssertDataStability = EnableAssertValidStability,
     // If 1, assert that data is known (not X) whenever valid is asserted.
     // This is independent of stability checks; set to 0 to disable.
+    // slang lint_save
+    // slang lint_off unused-parameter
     // ri lint_check_waive PARAM_NOT_USED
     parameter bit EnableAssertDataKnown = 1,
+    // slang lint_restore
     // If 1, then assert there are no valid bits asserted at the end of the test.
     parameter bit EnableAssertFinalNotValid = 1,
     // If 1, assert that there is never backpressure.
     // Can only be enabled if EnableCoverBackpressure is disabled.
     parameter bit EnableAssertNoBackpressure = !EnableCoverBackpressure
 ) (
+    // slang lint_save
+    // slang lint_off unused-port
     // ri lint_check_waive INPUT_NOT_READ HIER_NET_NOT_READ HIER_BRANCH_NOT_READ
     input logic clk,
+    // slang lint_restore
     input logic rst,
     input logic [NumFlows-1:0] valid,
     input logic [NumFlows-1:0] ready,

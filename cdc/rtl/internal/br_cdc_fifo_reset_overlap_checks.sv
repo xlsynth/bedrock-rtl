@@ -20,8 +20,11 @@ module br_cdc_fifo_reset_overlap_checks #(
     parameter int MinOverlapCycles = 1
 ) (
     // Either the push clk or the pop clk.
+    // slang lint_save
+    // slang lint_off unused-port
     // ri lint_check_waive INPUT_NOT_READ
     input logic clk,
+    // slang lint_restore
     // Reset that originates from the push clock domain. Must be synchronous to clk.
     input logic reset_active_push,
     // Reset that originates from the pop clock domain. Must be synchronous to clk.

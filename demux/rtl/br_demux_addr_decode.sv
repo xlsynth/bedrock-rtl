@@ -22,6 +22,8 @@ module br_demux_addr_decode #(
     parameter logic [NumDownstreams-1:0][AddrWidth-1:0] DownstreamAddrMask = '1
 ) (
     // Used only by integration assertions.
+    // slang lint_save
+    // slang lint_off unused-port
     // ri lint_check_waive INPUT_NOT_READ HIER_NET_NOT_READ HIER_BRANCH_NOT_READ
     input logic clk,
     // Used only by integration assertions.
@@ -31,6 +33,7 @@ module br_demux_addr_decode #(
     // Used only by integration assertions.
     // ri lint_check_waive INPUT_NOT_READ HIER_NET_NOT_READ HIER_BRANCH_NOT_READ
     input logic addr_valid,
+    // slang lint_restore
     input logic [AddrWidth-1:0] upstream_addr,
 
     input logic [NumAddressRanges-1:0][AddrWidth-1:0] downstream_addr_base,

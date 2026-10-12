@@ -158,7 +158,10 @@ module br_tracker_linked_list_ctrl #(
     `BR_REGLI(ll_tail_select, ll_tail_select_next, ll_tail_select_update, NumLinkedLists'(1'b1))
 
     // Only used for assertion
+    // slang lint_save
+    // slang lint_off unused-but-set-variable
     logic ll_head_select_write_valid;  // ri lint_check_waive NOT_READ
+    // slang lint_restore
 
     br_delay_valid #(
         .NumStages(RamReadLatency),

@@ -26,6 +26,8 @@ module br_fifo_shared_dynamic_push_ctrl #(
     // If 1, assert that push_valid is stable when backpressured.
     parameter bit EnableAssertPushValidStability = EnableCoverPushBackpressure,
     // If 1, assert that push_data is stable when backpressured.
+    // slang lint_save
+    // slang lint_off unused-parameter
     // ri lint_check_waive PARAM_NOT_USED
     parameter bit EnableAssertPushDataStability = EnableAssertPushValidStability,
     // If 1, assert that push_data is always known (not X) when push_valid is asserted.
@@ -35,6 +37,7 @@ module br_fifo_shared_dynamic_push_ctrl #(
     // empty at the end of the test.
     // ri lint_check_waive PARAM_NOT_USED
     parameter bit EnableAssertFinalNotValid = 1,
+    // slang lint_restore
     parameter bit EnableAssertUniqueDeallocEntryId = 1,
 
     // If 1, assert that push-side backpressure is impossible.
@@ -204,8 +207,11 @@ module br_fifo_shared_dynamic_push_ctrl #(
 
   // These are only used for assertions, so it's fine to use $countones
   // ri lint_check_off SYS_TF
+  // slang lint_save
+  // slang lint_off width-trunc
   assign request_count = $unsigned($countones(push_valid));
   assign grant_count   = $unsigned($countones(push_valid & push_ready));
+  // slang lint_restore
   // ri lint_check_on SYS_TF
 `endif
 `endif
