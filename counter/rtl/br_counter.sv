@@ -129,11 +129,11 @@ module br_counter #(
   logic [ExtWidth-1:0] value_extended_next;
 
   // ri lint_check_waive IFDEF_CODE
-  assign value_extended = ExtWidth'(value);
+  assign value_extended = ExtWidth'(reinit ? initial_value : value);
   // ri lint_check_waive IFDEF_CODE
-  assign value_extended_next =
+  assign value_extended_next = (reinit && !EnableReinitAndChange) ? value_extended :
       // ri lint_check_waive ARITH_ARGS
-      value_extended + (incr_valid ? incr : '0) - (decr_valid ? decr : '0);
+      value_extended + (incr_valid ? ExtWidth'(incr) : '0) - (decr_valid ? ExtWidth'(decr) : '0);
 
   if (EnableWrap || EnableSaturate) begin : gen_wrap_or_saturate_cover
     localparam int MaxValueExtWidth = br_math::max2(ExtWidth, MaxValueP1Width);
