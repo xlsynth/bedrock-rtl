@@ -3,6 +3,20 @@
 `include "br_asserts.svh"
 `include "br_registers.svh"
 
+// br_fifo_staging_buffer reserves space for fixed-latency RAM reads and merges
+// their responses with bypass data into a ready/valid pop stream. An accepted
+// read request reserves its FIFO position before its data returns. Read requests
+// and bypass transfers cannot both be accepted in the same cycle. Pops follow
+// their acceptance order: a later bypass must wait behind an outstanding read,
+// even if bypass data arrives first. If a RAM response and a bypass transfer
+// occur together, the RAM item is older; earlier queued items still pop first.
+//
+// This checker constrains input occupancy and RAM response timing, checks
+// staging capacity/status, scheduling, output stability and progress, and uses
+// a scoreboard to check data and ordering. A symbolic read payload is enqueued
+// at request acceptance and constrained to match the later RAM response. This
+// preserves read/bypass order without modeling RAM storage or address generation.
+
 module br_fifo_staging_buffer_fpv_monitor #(
     parameter bit EnableBypass = 1,
     parameter int TotalDepth = 3,
