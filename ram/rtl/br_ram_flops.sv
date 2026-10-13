@@ -31,6 +31,7 @@ module br_ram_flops #(
     // Must be at least 1 and at most (Width / WidthTiles).
     // Must be evenly divisible by WidthTiles.
     // Width must be evenly divisible by WordWidth.
+    // Must equal (Width / WidthTiles) when EnablePartialWrite is 0.
     parameter int WordWidth = Width / WidthTiles,
     // Number of pipeline register stages inserted along the write address and read address paths
     // in the depth dimension. Must be at least 0.
