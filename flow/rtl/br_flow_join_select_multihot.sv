@@ -101,7 +101,7 @@ module br_flow_join_select_multihot #(
   end
 
   if (AllowEmptySelect) begin : gen_empty_select_pop_valid
-    assign pop_valid_unstable = (|push_valid) && (&push_valid_or_unselected);
+    assign pop_valid_unstable = (|select_multihot) && (&push_valid_or_unselected);
   end else begin : gen_non_empty_select_pop_valid
     assign pop_valid_unstable = &push_valid_or_unselected;
   end
