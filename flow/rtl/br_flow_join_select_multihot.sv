@@ -113,6 +113,7 @@ module br_flow_join_select_multihot #(
       .NumFlows(1),
       .Width(1),
       .EnableCoverBackpressure(EnableCoverPushBackpressure),
+      .EnableAssertNoBackpressure(EnableAssertNoPushBackpressure),
       // TODO(zhemao): Pass parameters for select_multihot constraints that make pop_valid stable
       .EnableAssertValidStability(0),
       .EnableAssertDataStability(0),
