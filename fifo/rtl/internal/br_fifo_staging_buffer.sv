@@ -383,23 +383,17 @@ module br_fifo_staging_buffer #(
           .out_stages      ()
       );
 
+      logic bypass_to_pop;
+      logic rd_data_to_pop;
+      logic head_to_pop;
       logic bypass_write_en;
       logic rd_data_write_en;
-      logic is_first_read_data;
       logic [InternalDepth-1:0] mem_wr_en_delayed;
       logic [InternalDepth-1:0] mem_wr_en_immediate;
       logic [InternalDepth-1:0] mem_rd_en;
 
-      // Make sure not to write data to the RAM if it is being bypassed
-      // to the internal pop interface.
-      // Bypass goes direct to pop if there is no data buffered or inflight and
-      // internal_pop_ready is asserted
-      assign bypass_write_en = bypass_beat && !(empty && internal_pop_ready);
-      // Read data goes direct to pop if it was the first read issued for an empty buffer
-      // and internal_pop_ready is asserted
-      assign rd_data_write_en = ram_rd_data_valid && !(is_first_read_data && internal_pop_ready);
-      // Write pointer advances when a read is initiated or a bypass write occurs
-      assign advance_wr_ptr = ram_rd_addr_beat || bypass_write_en;
+      assign bypass_write_en = bypass_beat && (!bypass_to_pop || !internal_pop_ready);
+      assign rd_data_write_en = ram_rd_data_valid && (!rd_data_to_pop || !internal_pop_ready);
       assign mem_wr_en_immediate = bypass_write_en ? wr_ptr_onehot : '0;
       assign mem_wr_en_delayed = rd_data_write_en ? wr_ptr_onehot_d : '0;
       assign mem_wr_en = mem_wr_en_immediate | mem_wr_en_delayed;
@@ -426,26 +420,75 @@ module br_fifo_staging_buffer #(
       `BR_REGL(mem_valid, mem_valid_next, mem_valid_le)
 
       assign head_valid = |(mem_valid & rd_ptr_onehot);
-      assign is_first_read_data = !head_valid;
-      // internal_pop_valid can come from the head of the buffer
-      // or be bypassed directly from the read data or the bypass data
-      // For bypass data, we can only do direct bypass when the buffer is empty
-      assign internal_pop_valid = head_valid || ram_rd_data_valid || (empty && bypass_beat);
-      assign internal_pop_data = head_valid ? mem_rd_data : push_data;
-      // If RAM read data bypasses an invalid buffer head, check that its delayed
-      // allocation address matches the current read pointer.
-      // Use a Boolean expression instead of an implication because its precondition
-      // is unreachable in some configurations.
-      `BR_ASSERT_IMPL(rd_data_to_pop_correct_address_a,
-                      head_valid || !ram_rd_data_valid || (wr_ptr_onehot_d == rd_ptr_onehot))
+      assign internal_pop_valid =
+          (head_valid && head_to_pop) ||
+          (ram_rd_data_valid && rd_data_to_pop) ||
+          (bypass_beat && bypass_to_pop);
+      assign internal_pop_data = (head_valid && head_to_pop) ? mem_rd_data : push_data;
 
-      // Only advance the read pointer if the write pointer was advanced
-      // to provide the data currently being consumed.
-      // This is true for read from the buffer or direct from read data,
-      // since a slot is always allocated for a read.
-      assign advance_rd_ptr = (head_valid || ram_rd_data_valid) && internal_pop_ready;
-      assign internal_pop_valid_nonbypass = head_valid || ram_rd_data_valid;
+      if (RegisterPopOutputs) begin : gen_reg_pop_bypass
+        // pop_pending=1 means that the next read data to return
+        // should be forwarded directly to the output register, bypassing the circular buffer.
+        logic pop_pending, pop_pending_next, pop_pending_set, pop_pending_clear;
 
+        assign pop_pending_set =
+            // First read for a previously empty buffer goes to the output register directly
+            (ram_rd_addr_beat && pop_empty && !pop_pending) ||
+            // If there are inflight reads, the output stage is available,
+            // and we are not going to push to the output stage on this cycle,
+            // set pop_pending if it isn't already.
+            (!pop_pending && !empty && !internal_pop_valid && internal_pop_ready);
+        assign pop_pending_clear = pop_pending && ram_rd_data_valid;
+        assign pop_pending_next = (pop_pending && !pop_pending_clear) || pop_pending_set;
+        // Bypass can go to the output if there is no pop pending, and there are
+        // no inflight reads ahead of the bypass.
+        assign bypass_to_pop = !pop_pending && empty;
+        // Read data can go to the output if pop_pending is set or the data
+        // is for the head of the circular buffer
+        assign rd_data_to_pop = pop_pending || !head_valid;
+        assign head_to_pop = !pop_pending;
+
+        `BR_REG(pop_pending, pop_pending_next)
+
+        // Advance write pointer if we're reading but not sending the read directly to output
+        // or if we're writing bypassed data.
+        assign advance_wr_ptr =
+            (ram_rd_addr_beat && (!pop_empty || pop_pending)) || bypass_write_en;
+        // Advance the read pointer when an item is marked as pending to the output stage,
+        // when an item is popped from the circular buffer,
+        // or an item is forwarded from the read data path but is not for a pop_pending item.
+        assign advance_rd_ptr =
+            (pop_pending_set && !empty) ||
+            (head_valid && head_to_pop && internal_pop_ready) ||
+            (ram_rd_data_valid && !pop_pending && !head_valid && internal_pop_ready);
+        // Not used in this configuration
+        assign internal_pop_valid_nonbypass = 1'b0;
+      end else begin : gen_no_reg_pop_bypass
+        // Bypass can go directly to output if buffer is completely empty
+        assign bypass_to_pop = empty;
+        // Read data can go directly to output if it is for the head of the
+        // circular buffer
+        assign rd_data_to_pop = !head_valid;
+        // Head can always pop in this configuration
+        assign head_to_pop = 1'b1;
+
+        // Write pointer advances when a read is initiated or a bypass write occurs
+        assign advance_wr_ptr = ram_rd_addr_beat || bypass_write_en;
+        // Only advance the read pointer if the write pointer was advanced
+        // to provide the data currently being consumed.
+        // This is true for read from the buffer or direct from read data,
+        // since a slot is always allocated for a read.
+        assign advance_rd_ptr = (head_valid || ram_rd_data_valid) && internal_pop_ready;
+        assign internal_pop_valid_nonbypass = head_valid || ram_rd_data_valid;
+        // If RAM read data bypasses an invalid buffer head, check that its delayed
+        // allocation address matches the current read pointer.
+        // Use a Boolean expression instead of an implication because its precondition
+        // is unreachable in some configurations.
+        `BR_ASSERT_IMPL(rd_data_to_pop_correct_address_a,
+                        head_valid || !ram_rd_data_valid || (wr_ptr_onehot_d == rd_ptr_onehot))
+        `BR_ASSERT_IMPL(internal_pop_valid_nonbypass_correct_a,
+                        internal_pop_valid_nonbypass |-> internal_pop_valid)
+      end
       `BR_ASSERT_IMPL(no_push_hazard_a, ~|(mem_wr_en_immediate & mem_wr_en_delayed))
       `BR_ASSERT_IMPL(no_push_overwrite_a, ~|(mem_wr_en & mem_valid & ~mem_rd_en))
       `BR_ASSERT_IMPL(bypass_to_pop_correct_address_a,
