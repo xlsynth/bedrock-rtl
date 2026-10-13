@@ -16,6 +16,7 @@ module br_amba_axil_split_fpv_monitor #(
     parameter int MaxOutstandingReads = 1,
     parameter int MaxOutstandingWrites = 1,
     parameter int NumBranchAddrRanges = 1,
+    parameter int NormalizeBranchAddress = 0,
     localparam int StrobeWidth = DataWidth / 8
 ) (
     input clk,
@@ -110,6 +111,11 @@ module br_amba_axil_split_fpv_monitor #(
   // ----------FV assumptions----------
   for (genvar i = 0; i < NumBranchAddrRanges; i++) begin : gen_asm
     `BR_ASSUME(branch_start_end_addr_a, branch_start_addr[i] <= branch_end_addr[i])
+  end
+
+  if (NormalizeBranchAddress) begin : gen_normalized_address_assumptions
+    // Match the RTL contract: normalization must preserve address/data byte-lane alignment.
+    `BR_ASSUME(branch_start_addr_aligned_a, branch_start_addr[0] % AddrWidth'(StrobeWidth) == '0)
   end
 
   `BR_ASSUME(branch_start_addr_stable_a, $stable(branch_start_addr))
@@ -342,5 +348,6 @@ bind br_amba_axil_split br_amba_axil_split_fpv_monitor #(
     .RUserWidth(RUserWidth),
     .MaxOutstandingReads(MaxOutstandingReads),
     .MaxOutstandingWrites(MaxOutstandingWrites),
-    .NumBranchAddrRanges(NumBranchAddrRanges)
+    .NumBranchAddrRanges(NumBranchAddrRanges),
+    .NormalizeBranchAddress(NormalizeBranchAddress)
 ) monitor (.*);

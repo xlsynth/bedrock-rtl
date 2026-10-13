@@ -34,6 +34,7 @@ module br_amba_axil_split #(
     // the first branch_start_addr from root_awaddr and root_araddr,
     // respectively. This is useful if the AXI-Lite peripheral connected
     // to the branch expects its own address space to start at zero.
+    // The first branch_start_addr must be aligned to DataWidth / 8 bytes.
     parameter int NormalizeBranchAddress = 0,
     localparam int StrobeWidth = DataWidth / 8
 ) (
@@ -127,6 +128,12 @@ module br_amba_axil_split #(
   `BR_ASSERT_STATIC(data_width_must_be_at_least_32_a, DataWidth >= 32)
   for (genvar i = 0; i < NumBranchAddrRanges; i++) begin : gen_branch_addr_range_checks
     `BR_ASSERT_INTG(branch_end_addr_after_start_addr_a, branch_end_addr[i] >= branch_start_addr[i])
+  end
+  if (NormalizeBranchAddress) begin : gen_normalized_address_checks
+    // Normalization leaves data and strobes unchanged, so the subtracted base
+    // must preserve address/data byte-lane alignment.
+    `BR_ASSERT_INTG(branch_start_addr_aligned_a,
+                    branch_start_addr[0] % AddrWidth'(StrobeWidth) == '0)
   end
   `BR_ASSERT_STATIC(max_out_reads_must_be_at_least_1_a, MaxOutstandingReads >= 1)
   `BR_ASSERT_STATIC(max_out_writes_must_be_at_least_1_a, MaxOutstandingWrites >= 1)
