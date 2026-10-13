@@ -210,6 +210,12 @@ br_verilog_fpv_test_tools_suite(
             ("3", "1"),
             ("4", "1"),
         ],
+        (
+            "EnableSaturate",
+            "EnableWrap",
+        ): [
+            ("1", "1"),
+        ],
     },
     params = {
         "EnableReinitAndIncr": [
@@ -217,6 +223,10 @@ br_verilog_fpv_test_tools_suite(
             "1",
         ],
         "EnableSaturate": [
+            "0",
+            "1",
+        ],
+        "EnableWrap": [
             "0",
             "1",
         ],
