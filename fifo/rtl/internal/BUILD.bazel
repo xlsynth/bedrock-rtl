@@ -181,11 +181,32 @@ br_verilog_elab_and_lint_test_suite(
 )
 
 verilog_library(
+    name = "br_fifo_staging_circ_buf_ctrl",
+    srcs = ["br_fifo_staging_circ_buf_ctrl.sv"],
+    deps = [
+        "//delay/rtl:br_delay_shift_reg",
+        "//macros:br_asserts_internal",
+        "//macros:br_registers",
+    ],
+)
+
+br_verilog_elab_and_lint_test_suite(
+    name = "br_fifo_staging_circ_buf_ctrl_test_suite",
+    params = {
+        "Depth": [
+            "2",
+            "3",
+        ],
+    },
+    deps = [":br_fifo_staging_circ_buf_ctrl"],
+)
+
+verilog_library(
     name = "br_fifo_staging_buffer",
     srcs = ["br_fifo_staging_buffer.sv"],
     deps = [
+        ":br_fifo_staging_circ_buf_ctrl",
         "//counter/rtl:br_counter",
-        "//delay/rtl:br_delay_shift_reg",
         "//delay/rtl:br_delay_valid",
         "//flow/rtl:br_flow_reg_fwd",
         "//flow/rtl:br_flow_reg_rev",

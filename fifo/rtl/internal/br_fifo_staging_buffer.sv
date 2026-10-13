@@ -317,14 +317,9 @@ module br_fifo_staging_buffer #(
 `endif
 `endif
   end else begin : gen_circ_buffer
-    // TODO(zhemao): Consider separating the pointer management logic into a standalone module
     logic [InternalDepth-1:0][Width-1:0] mem;
-    // Use onehot-encoded pointers to avoid decoding logic
-    logic [InternalDepth-1:0]            ptr_onehot_init;
     logic [InternalDepth-1:0]            rd_ptr_onehot;
     logic [InternalDepth-1:0]            wr_ptr_onehot;
-    logic                                rd_ptr_shift_bit;
-    logic                                wr_ptr_shift_bit;
     // write-en and next for each data cell
     // mem_wr_en can have up to two bits set (immediate and delayed path)
     logic [InternalDepth-1:0]            mem_wr_en;
@@ -332,56 +327,24 @@ module br_fifo_staging_buffer #(
     // Data read from mem. May not be the internal_pop_data since we can do empty bypass.
     logic [        Width-1:0]            mem_rd_data;
 
-    logic maybe_full, maybe_full_next;
-    logic ptr_match;
-    logic empty;
+    logic                                empty;
     // only used for assertion
-    logic full;  // ri lint_check_waive NOT_READ HIER_NET_NOT_READ
-    logic advance_wr_ptr;
-    logic advance_rd_ptr;
+    logic                                full;  // ri lint_check_waive NOT_READ HIER_NET_NOT_READ
+    logic                                advance_wr_ptr;
+    logic                                advance_rd_ptr;
 
-    assign ptr_match = rd_ptr_onehot == wr_ptr_onehot;
-    assign full = ptr_match && maybe_full;
-    assign empty = ptr_match && !maybe_full;
-
-    // Maybe-full becomes high when there is a push without pop
-    // and goes low when there is a pop without push
-    assign maybe_full_next = (advance_wr_ptr == advance_rd_ptr) ? maybe_full : advance_wr_ptr;
-
-    assign ptr_onehot_init = InternalDepth'(1'b1);
-    // Left-Rotate by 1 to advance pointer
-    // shift_out becomes shift in
-    br_delay_shift_reg #(
-        .Width(1),
-        .NumStages(InternalDepth),
-        .EnableCoverReinit(0)
-    ) br_delay_shift_reg_rd_ptr (
+    br_fifo_staging_circ_buf_ctrl #(
+        .Depth(InternalDepth)
+    ) br_fifo_staging_circ_buf_ctrl_inst (
         .clk,
         .rst,
-        .reinit(1'b0),
-        .initial_value(ptr_onehot_init),
-        .value(rd_ptr_onehot),
-        .shift_en(advance_rd_ptr),
-        .shift_in(rd_ptr_shift_bit),
-        .shift_out(rd_ptr_shift_bit)
+        .advance_rd_ptr,
+        .advance_wr_ptr,
+        .wr_ptr_onehot,
+        .rd_ptr_onehot,
+        .empty,
+        .full
     );
-
-    br_delay_shift_reg #(
-        .Width(1),
-        .NumStages(InternalDepth),
-        .EnableCoverReinit(0)
-    ) br_delay_shift_reg_wr_ptr (
-        .clk,
-        .rst,
-        .reinit(1'b0),
-        .initial_value(ptr_onehot_init),
-        .value(wr_ptr_onehot),
-        .shift_en(advance_wr_ptr),
-        .shift_in(wr_ptr_shift_bit),
-        .shift_out(wr_ptr_shift_bit)
-    );
-
-    `BR_REG(maybe_full, maybe_full_next)
 
     // Actual storage update
     for (genvar i = 0; i < InternalDepth; i++) begin : gen_storage
