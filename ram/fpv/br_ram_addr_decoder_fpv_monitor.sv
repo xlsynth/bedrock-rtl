@@ -79,10 +79,12 @@ module br_ram_addr_decoder_fpv_monitor #(
       `BR_ASSERT(data_integrity_a, out_data_valid[i] |-> in_data == out_data[i])
     end
   end else begin : gen_delay
+    `BR_ASSERT(no_valid_after_reset_a, $fell(rst) |-> (out_valid == '0) [* Stages])
     `BR_ASSERT(valid_integrity_a, ##Stages $past(in_valid, Stages) == out_valid[$past(i, Stages)])
     `BR_ASSERT(addr_integrity_a, out_valid[i] |-> out_addr[i] == $past(fv_out_addr, Stages))
 
     if (EnableDatapath) begin : gen_dp
+      `BR_ASSERT(no_data_valid_after_reset_a, $fell(rst) |-> (out_data_valid == '0) [* Stages])
       `BR_ASSERT(data_valid_integrity_a,
                  ##Stages $past(in_data_valid, Stages) == out_data_valid[$past(i, Stages)])
       `BR_ASSERT(data_integrity_a, out_data_valid[i] |-> $past(in_data, Stages) == out_data[i])

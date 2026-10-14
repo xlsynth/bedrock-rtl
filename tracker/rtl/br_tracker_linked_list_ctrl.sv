@@ -78,6 +78,9 @@ module br_tracker_linked_list_ctrl #(
   if (RamReadLatency == 0) begin : gen_zero_read_latency_check
     `BR_ASSERT_INTG(ptr_ram_rd_zero_latency_a, ptr_ram_rd_addr_valid == ptr_ram_rd_data_valid)
   end else begin : gen_nonzero_read_latency_check
+    // No response may appear until a post-reset read can mature.
+    `BR_ASSERT_INTG(no_ram_response_after_reset_a,
+                    $fell(rst) |-> !ptr_ram_rd_data_valid [* RamReadLatency])
     `BR_ASSERT_INTG(
         expected_read_latency_a,
         ##(RamReadLatency) ptr_ram_rd_data_valid == $past(ptr_ram_rd_addr_valid, RamReadLatency))

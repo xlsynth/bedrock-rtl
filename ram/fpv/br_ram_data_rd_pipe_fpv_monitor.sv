@@ -55,6 +55,7 @@ module br_ram_data_rd_pipe_fpv_monitor #(
     `BR_ASSERT(valid_integrity_a, |tile_valid == valid)
     `BR_ASSERT(data_integrity_a, valid |-> data == fv_data)
   end else begin : gen_delay
+    `BR_ASSERT(no_valid_after_reset_a, $fell(rst) |-> !valid [* Latency])
     `BR_ASSERT(valid_integrity_a, ##Latency $past(|tile_valid, Latency) == valid)
     `BR_ASSERT(data_integrity_a, valid |-> data == $past(fv_data, Latency))
   end
