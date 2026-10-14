@@ -175,11 +175,13 @@ module br_fifo_staging_buffer_fpv_monitor #(
   `BR_COVER(read_return_c, ram_rd_data_valid)
   if (EnableBypass) begin : gen_bypass_covers
     `BR_COVER(bypass_c, fv_bypass_beat)
-    if ((RamReadLatency > 0) && (BufferDepth > RegisterPopOutputs)) begin : gen_overlap
+    if (EnableCoverBypassAndReadDataSameCycle &&
+        (RamReadLatency > 0) && (BufferDepth > RegisterPopOutputs)) begin : gen_overlap
       `BR_COVER(bypass_read_return_c, fv_bypass_beat && ram_rd_data_valid)
     end
   end
-  if (BufferDepth > 1 || RamReadLatency == 0 || !RegisterPopOutputs) begin : gen_read_overlap
+  if (EnableCoverSameCycleReadIssueAndReturn &&
+      (BufferDepth > 1 || RamReadLatency == 0 || !RegisterPopOutputs)) begin : gen_read_overlap
     `BR_COVER(read_issue_return_c, fv_read_beat && ram_rd_data_valid)
   end
 
