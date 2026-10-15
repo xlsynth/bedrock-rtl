@@ -177,7 +177,7 @@ bind br_fifo_shared_dynamic_ctrl_push_credit br_fifo_shared_dynamic_ctrl_push_cr
     .RegisterPopOutputs(RegisterPopOutputs),
     .RegisterPushOutputs(RegisterPushOutputs),
     .EnableCoverPushCreditStall(EnableCoverPushCreditStall),
-    .EnableCoverCreditWithhold(EnableCoverCreditWithhold),
+    .EnableCoverCreditWithhold(EnableCreditWithhold),
     .EnableCoverPushSenderInReset(EnableCoverPushSenderInReset),
     .RegisterDeallocation(RegisterDeallocation),
     .DataRamReadLatency(DataRamReadLatency),

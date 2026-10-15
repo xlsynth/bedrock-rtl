@@ -156,7 +156,7 @@ bind br_fifo_ctrl_1r1w_push_credit br_fifo_ctrl_1r1w_push_credit_fpv_monitor #(
     .RegisterPopOutputs(RegisterPopOutputs),
     .RamReadLatency(RamReadLatency),
     .RamDepth(RamDepth),
-    .EnableCoverCreditWithhold(EnableCoverCreditWithhold),
+    .EnableCoverCreditWithhold(EnableCreditWithhold),
     .EnableCoverPushSenderInReset(EnableCoverPushSenderInReset),
     .EnableCoverPushCreditStall(EnableCoverPushCreditStall)
 ) monitor (.*);
