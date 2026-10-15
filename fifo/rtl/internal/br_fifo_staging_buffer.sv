@@ -81,6 +81,9 @@ module br_fifo_staging_buffer #(
   `BR_ASSERT_STATIC(max_buffer_depth_a, BufferDepth <= RamReadLatency + 1)
 
   if (RamReadLatency > 0) begin : gen_read_latency_gt_0
+    // No response may appear until a post-reset read can mature.
+    `BR_ASSERT_INTG(no_ram_response_after_reset_a,
+                    $fell(rst) |-> !ram_rd_data_valid [* RamReadLatency])
     `BR_ASSERT_INTG(expected_read_latency_a,
                     ##(RamReadLatency) ram_rd_data_valid == $past(
                         ram_rd_addr_valid && ram_rd_addr_ready, RamReadLatency

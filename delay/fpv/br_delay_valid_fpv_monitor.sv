@@ -31,6 +31,7 @@ module br_delay_valid_fpv_monitor #(
     `BR_ASSERT(out_stages_check_a, out_stages == in)
   end else begin : gen_pos_delay
     // out valid/payload check
+    `BR_ASSERT(no_valid_after_reset_a, $fell(rst) |-> !out_valid [* NumStages])
     `BR_ASSERT(out_valid_check_a, ##NumStages out_valid == $past(in_valid, NumStages))
     `BR_ASSERT(out_check_a, in_valid |-> ##NumStages out == $past(in, NumStages))
     // stage valid/payload check

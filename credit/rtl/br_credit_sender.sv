@@ -295,6 +295,7 @@ module br_credit_sender #(
   // Implementation checks
   //------------------------------------------
   if (RegisterPopOutputs) begin : gen_reg_pop_check
+    `BR_ASSERT_IMPL(no_pop_after_reset_a, $fell(rst) |-> (pop_valid == '0))
     `BR_ASSERT_IMPL(pop_follows_push_a, ##1 (pop_valid == $past(push_valid & push_ready)))
   end else begin : gen_passthru_pop_check
     `BR_ASSERT_IMPL(pop_follows_push_a, pop_valid == (push_valid & push_ready))

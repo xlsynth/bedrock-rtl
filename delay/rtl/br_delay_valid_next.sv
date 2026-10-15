@@ -86,6 +86,7 @@ module br_delay_valid_next #(
     // ri lint_check_waive ALWAYS_COMB
     `BR_ASSERT_COMB_IMPL(data_passthru_a, out === in)
   end else begin : gen_pos_delay
+    `BR_ASSERT_IMPL(no_valid_next_after_reset_a, $fell(rst) |-> !out_valid_next [* NumStages])
     `BR_ASSERT_IMPL(valid_next_delay_a,
                     ##NumStages out_valid_next == $past(in_valid_next, NumStages))
     `BR_ASSERT_IMPL(data_delay_a,

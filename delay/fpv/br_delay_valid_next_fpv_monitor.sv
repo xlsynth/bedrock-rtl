@@ -34,6 +34,7 @@ module br_delay_valid_next_fpv_monitor #(
     // in_valid and out_valid has NumStages of delay
     // in and out has NumStages of delay
     // valid and payload has 1 cycle delay
+    `BR_ASSERT(no_valid_next_after_reset_a, $fell(rst) |-> !out_valid_next [* NumStages])
     `BR_ASSERT(out_valid_next_check_a,
                ##NumStages out_valid_next == $past(in_valid_next, NumStages))
     `BR_ASSERT(out_check_a, in_valid_next |=> ##NumStages out == $past(in, NumStages))
