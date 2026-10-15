@@ -42,6 +42,7 @@ module br_credit_receiver_fpv_monitor #(
   logic fv_rst;
   logic [CreditWidth-1:0] fv_credit_cnt, fv_credit_cnt_nxt;
   logic [CreditWidth-1:0] fv_max_credit;
+  logic fv_credit_release_allowed;
   logic [CreditWidth-1:0] config_max;
 
   assign fv_rst = rst | push_sender_in_reset;
@@ -49,6 +50,7 @@ module br_credit_receiver_fpv_monitor #(
   `BR_REG(fv_credit_cnt, fv_credit_cnt_nxt)
   `BR_REGIX(fv_max_credit, fv_max_credit, credit_initial_push, clk, fv_rst)
   assign config_max = config_bound - config_base + 'd1;
+  assign fv_credit_release_allowed = !push_credit_stall && credit_withhold_push < fv_max_credit;
 
   // ----------FV assumptions----------
   if (PStatic == 1) begin : gen_pstatic
@@ -57,8 +59,10 @@ module br_credit_receiver_fpv_monitor #(
   end else begin : gen_static
     `BR_ASSUME(credit_withhold_push_a, credit_withhold_push <= MaxCredit)
   end
-  `BR_ASSUME(credit_withhold_liveness_a, s_eventually (credit_withhold_push < fv_max_credit))
-  `BR_ASSUME(push_credit_stall_liveness_a, s_eventually !push_credit_stall)
+  // Stall and withholding must permit credit return together. Separate fairness
+  // assumptions could alternate forever without allowing a credit to be released.
+  `BR_ASSUME_CR(credit_release_opportunity_a,
+                fv_max_credit != '0 |-> s_eventually fv_credit_release_allowed, clk, fv_rst)
   `BR_ASSUME(no_credit_cnt_overflow_a, push_credit > $countones(push_valid)
                                        |-> fv_credit_cnt_nxt > fv_credit_cnt)
   `BR_ASSUME(no_credit_cnt_underflow_a, push_credit < $countones(push_valid)
@@ -80,7 +84,10 @@ module br_credit_receiver_fpv_monitor #(
 
   // ----------FV assertions----------
   `BR_ASSERT(fv_credit_sanity_a, fv_credit_cnt <= fv_max_credit)
-  `BR_ASSERT(push_credit_deadlock_a, $countones(push_valid)
-                                     != push_credit |-> s_eventually (fv_credit_cnt != 'd0))
+  // With a nonzero allocation, an exhausted sender must eventually receive a
+  // credit. Downstream progress is assumed by the enclosing FIFO monitor.
+  `BR_ASSERT_CR(push_credit_deadlock_a,
+                fv_max_credit != '0 && fv_credit_cnt == '0 |-> s_eventually (push_credit != '0),
+                clk, fv_rst)
 
 endmodule : br_credit_receiver_fpv_monitor
