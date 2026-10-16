@@ -210,12 +210,17 @@ module br_amba_iso_resp_tracker #(
   // Total outstanding requests counters (in the staging+tracker FIFOs)
   logic total_req_incr_valid;
 
-  if (!EnableWlastTracking && !UseDynamicFifo) begin : gen_static_read_incr
+  if (!EnableWlastTracking && !UseDynamicFifo) begin : gen_static_read_admission
     // With static FIFOs and no WLAST tracking, ready is guaranteed when the count is below capacity.
     `BR_ASSERT_IMPL(admitted_req_ready_a, staging_fifo_push_valid |-> staging_fifo_push_ready)
     assign total_req_incr_valid = staging_fifo_push_valid;
-  end else begin : gen_general_incr
+    assign upstream_axready = downstream_axready && can_accept_new_req;
+    `BR_ASSERT_IMPL(
+        upstream_axready_equiv_a,
+        upstream_axready == (downstream_axready && staging_fifo_push_ready && can_accept_new_req))
+  end else begin : gen_general_admission
     assign total_req_incr_valid = staging_fifo_push_valid && staging_fifo_push_ready;
+    assign upstream_axready = downstream_axready && staging_fifo_push_ready && can_accept_new_req;
   end
 
   if (UseDynamicFifo || SingleIdOnly) begin : gen_total_req_count
@@ -777,7 +782,6 @@ module br_amba_iso_resp_tracker #(
   assign upstream_xresp = downstream_iso_xresp;
   assign upstream_xdata = downstream_iso_xdata;
 
-  assign upstream_axready = downstream_axready && staging_fifo_push_ready && can_accept_new_req;
   assign downstream_axvalid = upstream_axvalid && staging_fifo_push_ready && can_accept_new_req;
   assign downstream_axid = upstream_axid;
   assign downstream_axlen = upstream_axlen;
