@@ -265,6 +265,94 @@ These macros provide size-aware assignment helpers for common bit slicing and ex
 | `BR_INSERT_TO_LSB`, `BR_INSERT_TO_MSB` | Insert a narrower expression into the least-significant or most-significant bits of a wider destination. |
 
 
+## `br_flow.svh`: Ready/Valid Flow Helpers
+
+
+These macros reduce repetitive wiring for canonical ready/valid flows while keeping module ports
+explicit. Declaration macros create signal groups inside a module; bind macros connect those groups
+to a module instance's port prefix; connect macros join differently named groups with continuous
+assignments. They do not declare module ports, add storage, or change the flow-control contract.
+
+| Contract | Signals |
+| --- | --- |
+| Stable data | `<base>_ready`, `<base>_valid`, `<base>_data` |
+| Unstable data | `<base>_ready`, `<base>_valid_unstable`, `<base>_data_unstable` |
+| Stable control | `<base>_ready`, `<base>_valid` |
+| Unstable control | `<base>_ready`, `<base>_valid_unstable` |
+
+On a stable flow, valid and, for data flows, data remain stable while valid is asserted and ready is
+low. On an `_UNSTABLE` flow, valid may be withdrawn while stalled; data may also change on data
+flows. Control flows omit data.
+
+### Declare, bind, and observe
+
+
+| Need | Stable data | Unstable data | Stable control | Unstable control |
+| --- | --- | --- | --- | --- |
+| Declare scalar | `BR_FLOW_DECLARE` | `BR_FLOW_DECLARE_UNSTABLE` | `BR_FLOW_CONTROL_DECLARE` | `BR_FLOW_CONTROL_DECLARE_UNSTABLE` |
+| Declare packed array | `BR_FLOW_DECLARE_ARRAY` | `BR_FLOW_DECLARE_UNSTABLE_ARRAY` | `BR_FLOW_CONTROL_DECLARE_ARRAY` | `BR_FLOW_CONTROL_DECLARE_UNSTABLE_ARRAY` |
+| Bind whole flow | `BR_FLOW_BIND` | `BR_FLOW_BIND_UNSTABLE` | `BR_FLOW_CONTROL_BIND` | `BR_FLOW_CONTROL_BIND_UNSTABLE` |
+| Bind one array lane | `BR_FLOW_BIND_INDEX` | `BR_FLOW_BIND_UNSTABLE_INDEX` | `BR_FLOW_CONTROL_BIND_INDEX` | `BR_FLOW_CONTROL_BIND_UNSTABLE_INDEX` |
+
+Use `BR_FLOW_FIRE(flow)` or `BR_FLOW_FIRE_UNSTABLE(flow)` to obtain the scalar handshake or packed
+vector of per-lane handshakes. The corresponding `BR_FLOW_FIRE_INDEX(flow, index)` and
+`BR_FLOW_FIRE_UNSTABLE_INDEX(flow, index)` forms return one lane's handshake. These macros work for
+both data and control flows.
+
+For example:
+
+```systemverilog
+typedef logic [31:0] payload_t;
+
+`BR_FLOW_DECLARE(input_flow, payload_t)
+`BR_FLOW_DECLARE(output_flow, payload_t)
+
+logic input_fire;
+
+br_flow_reg_fwd #(
+    .Width($bits(payload_t))
+) u_flow_reg (
+    // verilog_lint: waive module-port
+    .clk,
+    .rst,
+    `BR_FLOW_BIND(push, input_flow),
+    `BR_FLOW_BIND(pop, output_flow)
+);
+
+assign input_fire = `BR_FLOW_FIRE(input_flow);
+```
+
+### Connect differently named flows
+
+For connections, choose a contract root and append the topology suffix:
+
+| Contract | Root |
+| --- | --- |
+| Stable data | `BR_FLOW_CONNECT` |
+| Unstable data | `BR_FLOW_CONNECT_UNSTABLE` |
+| Stable control | `BR_FLOW_CONTROL_CONNECT` |
+| Unstable control | `BR_FLOW_CONTROL_CONNECT_UNSTABLE` |
+
+The first flow is the source and the second is the sink. Ready travels toward the source; valid and,
+for data flows, data travel toward the sink.
+
+| Topology | Suffix and arguments |
+| --- | --- |
+| Scalar-to-scalar or whole array-to-array | none: `(source, sink)` |
+| Source array lane to scalar sink | `_FROM_INDEX(source, source_index, sink)` |
+| Scalar source to sink array lane | `_TO_INDEX(source, sink, sink_index)` |
+| Source array lane to sink array lane | `_INDEX(source, source_index, sink, sink_index)` |
+
+For example, an unstable control connection from one array lane to a scalar sink uses
+`BR_FLOW_CONTROL_CONNECT_UNSTABLE_FROM_INDEX`.
+
+Prefer one shared flow name bound at both endpoints. When existing endpoints need different base
+names, connect them directly:
+
+```systemverilog
+`BR_FLOW_CONNECT_INDEX(upstream, UpstreamLane, downstream, DownstreamLane)
+```
+
 ## `br_fv.svh`: Formal Verification Helpers
 
 

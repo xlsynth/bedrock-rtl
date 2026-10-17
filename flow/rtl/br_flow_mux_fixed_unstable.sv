@@ -1,0 +1,80 @@
+// SPDX-License-Identifier: Apache-2.0
+
+
+// Bedrock-RTL Flow-Controlled Multiplexer (Fixed-Priority, Unstable Push)
+//
+// A fixed-priority flow mux that accepts valid and data which may change or be
+// revoked while push_ready is low. The mux is purely combinational, so the pop
+// valid and data are also explicitly unstable while pop_ready is low.
+
+`include "br_asserts.svh"
+
+module br_flow_mux_fixed_unstable #(
+    // Must be at least 1
+    parameter int NumFlows = 1,
+    // Must be at least 1
+    parameter int Width = 1,
+    // If 1, cover that the push side experiences backpressure.
+    // If 0, disable backpressure coverage. By default, this also
+    // asserts that backpressure is impossible.
+    parameter bit EnableCoverPushBackpressure = 1,
+    // If 1, assert that push_data_unstable is always known (not X) when
+    // push_valid_unstable is asserted.
+    parameter bit EnableAssertPushDataKnown = 1,
+    // If 1, then assert there are no valid bits asserted at the end of the test.
+    parameter bit EnableAssertFinalNotValid = 1,
+    // If 1, assert that push-side backpressure is impossible.
+    // Can only be enabled if EnableCoverPushBackpressure is disabled.
+    parameter bit EnableAssertNoPushBackpressure = !EnableCoverPushBackpressure
+) (
+    input  logic                           clk,
+    input  logic                           rst,
+    output logic [NumFlows-1:0]            push_ready,
+    input  logic [NumFlows-1:0]            push_valid_unstable,
+    input  logic [NumFlows-1:0][Width-1:0] push_data_unstable,
+    input  logic                           pop_ready,
+    output logic                           pop_valid_unstable,
+    output logic [   Width-1:0]            pop_data_unstable
+);
+
+  //------------------------------------------
+  // Integration checks
+  //------------------------------------------
+  `BR_ASSERT_STATIC(legal_assert_no_push_backpressure_a,
+                    !(EnableAssertNoPushBackpressure && EnableCoverPushBackpressure))
+  `BR_ASSERT_STATIC(num_flows_gte_1_a, NumFlows >= 1)
+  `BR_ASSERT_STATIC(datawidth_gte_1_a, Width >= 1)
+
+  // Rely on submodule integration checks.
+
+  //------------------------------------------
+  // Implementation
+  //------------------------------------------
+  // The fixed mux accepts only ready/valid transfers. Disable its push-side
+  // stability checks because instability is this wrapper's contract.
+  br_flow_mux_fixed #(
+      .NumFlows(NumFlows),
+      .Width(Width),
+      .EnableCoverPushBackpressure(EnableCoverPushBackpressure),
+      .EnableAssertPushValidStability(1'b0),
+      .EnableAssertPushDataStability(1'b0),
+      .EnableAssertPushDataKnown(EnableAssertPushDataKnown),
+      .EnableAssertFinalNotValid(EnableAssertFinalNotValid),
+      .EnableAssertNoPushBackpressure(EnableAssertNoPushBackpressure)
+  ) br_flow_mux_fixed (
+      .clk,
+      .rst,
+      .push_ready,
+      .push_valid(push_valid_unstable),
+      .push_data (push_data_unstable),
+      .pop_ready,
+      .pop_valid_unstable,
+      .pop_data_unstable
+  );
+
+  //------------------------------------------
+  // Implementation checks
+  //------------------------------------------
+  // Rely on submodule implementation checks.
+
+endmodule : br_flow_mux_fixed_unstable
