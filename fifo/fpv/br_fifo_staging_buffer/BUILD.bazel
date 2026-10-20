@@ -1,0 +1,101 @@
+# SPDX-License-Identifier: Apache-2.0
+
+load("@rules_hdl//verilog:providers.bzl", "verilog_library")
+load("//bazel:br_verilog.bzl", "br_verilog_fpv_test_tools_suite")
+load("//bazel:verilog.bzl", "verilog_elab_test")
+
+package(default_visibility = ["//fifo/fpv:__subpackages__"])
+
+verilog_library(
+    name = "br_fifo_staging_buffer_fpv_monitor",
+    srcs = ["br_fifo_staging_buffer_fpv_monitor.sv"],
+    deps = [
+        "//fifo/rtl/internal:br_fifo_staging_buffer",
+        "//fpv/lib:fv_delay",
+        "//fpv/lib:fv_valid_ready_check",
+        "//macros:br_asserts",
+        "//macros:br_registers",
+    ],
+)
+
+verilog_elab_test(
+    name = "br_fifo_staging_buffer_fpv_monitor_elab_test",
+    opts = ["--ignore-unknown-modules"],
+    tool = "slang",
+    deps = [":br_fifo_staging_buffer_fpv_monitor"],
+)
+
+br_verilog_fpv_test_tools_suite(
+    name = "br_fifo_staging_buffer_test_default",
+    tools = {"jg": "br_fifo_staging_buffer_fpv.jg.tcl"},
+    top = "br_fifo_staging_buffer",
+    deps = [":br_fifo_staging_buffer_fpv_monitor"],
+)
+
+# Cross every legal buffer depth at representative RAM latencies. TotalDepth
+# at BufferDepth + 1 stresses the minimum legal overall capacity.
+[
+    br_verilog_fpv_test_tools_suite(
+        name = "br_fifo_staging_buffer_test_l%d_b%d" % (latency, depth),
+        elab_opts = [
+            "-parameter RamReadLatency %d" % latency,
+            "-parameter BufferDepth %d" % depth,
+            "-parameter TotalDepth %d" % (depth + 1),
+        ],
+        params = {
+            "EnableBypass": [
+                "0",
+                "1",
+            ],
+            "RegisterPopOutputs": [
+                "0",
+                "1",
+            ],
+            "TotalItemsIncludesStaged": [
+                "0",
+                "1",
+            ],
+        },
+        tools = {"jg": "br_fifo_staging_buffer_fpv.jg.tcl"},
+        top = "br_fifo_staging_buffer",
+        deps = [":br_fifo_staging_buffer_fpv_monitor"],
+    )
+    for latency in [
+        0,
+        1,
+        2,
+        3,
+        5,
+    ]
+    for depth in range(
+        1,
+        latency + 2,
+    )
+]
+
+br_verilog_fpv_test_tools_suite(
+    name = "br_fifo_staging_buffer_test_width",
+    elab_opts = [
+        "-parameter RamReadLatency 3",
+        "-parameter BufferDepth 3",
+        "-parameter TotalDepth 8",
+        "-parameter Width 8",
+    ],
+    params = {
+        "EnableBypass": [
+            "0",
+            "1",
+        ],
+        "RegisterPopOutputs": [
+            "0",
+            "1",
+        ],
+        "TotalItemsIncludesStaged": [
+            "0",
+            "1",
+        ],
+    },
+    tools = {"jg": "br_fifo_staging_buffer_fpv.jg.tcl"},
+    top = "br_fifo_staging_buffer",
+    deps = [":br_fifo_staging_buffer_fpv_monitor"],
+)
