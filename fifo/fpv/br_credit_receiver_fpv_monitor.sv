@@ -67,6 +67,13 @@ module br_credit_receiver_fpv_monitor #(
                                        |-> fv_credit_cnt_nxt > fv_credit_cnt)
   `BR_ASSUME(no_credit_cnt_underflow_a, push_credit < $countones(push_valid)
                                         |-> fv_credit_cnt_nxt < fv_credit_cnt)
+  // When br_fifo_push_ctrl_credit is full and RegisterPushOutputs=0, a pop can
+  // release push_credit combinationally, but full stays asserted until the clock
+  // edge. The push core uses push_ready = !full, so a same-cycle push_valid leaves
+  // push_beat=0 and drops the new item. Therefore, spending a newly released credit
+  // in that cycle is unsupported: with no previously held credits, push_valid must
+  // remain low even if push_credit is asserted. Both signals may still coincide
+  // when the push uses previously held credits.
   `BR_ASSUME(no_spurious_push_valid_a, fv_credit_cnt == 'd0 |-> push_valid == 'd0)
   if (EnableCoverPushCreditStall) begin : gen_stall
     `BR_COVER(push_credit_stall_a, push_credit_stall)
