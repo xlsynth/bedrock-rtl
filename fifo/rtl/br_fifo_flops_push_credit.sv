@@ -65,9 +65,9 @@ module br_fifo_flops_push_credit #(
     parameter int FlopRamReadDataWidthStages = 0,
     // If 1, assert that push_data is always known (not X) when push_valid is asserted.
     parameter bit EnableAssertPushDataKnown = 1,
-    // If 1, cover that credit_withhold can be non-zero.
-    // Otherwise, assert that it is always zero.
-    parameter bit EnableCoverCreditWithhold = 1,
+    // If 1, support nonzero credit_withhold values and cover that case.
+    // Otherwise, optimize for credit_withhold being zero and assert that requirement.
+    parameter bit EnableCreditWithhold = 1,
     // If 1, cover that push_sender_in_reset can be asserted
     // Otherwise, assert that it is never asserted.
     parameter bit EnableCoverPushSenderInReset = 1,
@@ -156,7 +156,7 @@ module br_fifo_flops_push_credit #(
       .RamReadLatency(RamReadLatency),
       .RamDepth(RamDepth),
       .EnableAssertPushDataKnown(EnableAssertPushDataKnown),
-      .EnableCoverCreditWithhold(EnableCoverCreditWithhold),
+      .EnableCreditWithhold(EnableCreditWithhold),
       .EnableCoverPushSenderInReset(EnableCoverPushSenderInReset),
       .EnableCoverPushCreditStall(EnableCoverPushCreditStall),
       .EnableAssertFinalNotValid(EnableAssertFinalNotValid)
