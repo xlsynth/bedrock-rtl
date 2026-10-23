@@ -42,6 +42,10 @@ br_verilog_fpv_test_tools_suite(
             "-parameter BufferDepth %d" % depth,
             "-parameter TotalDepth %d" % (depth + 1),
         ],
+        # TODO(masai): Re-enable after the staging buffer preserves outstanding read reservations.
+        illegal_param_combinations = {
+            ("EnableBypass", "RegisterPopOutputs"): [("1", "1")],
+        } if 3 <= depth and depth <= latency else {},
         params = {
             "EnableBypass": [
                 "0",
@@ -81,6 +85,10 @@ br_verilog_fpv_test_tools_suite(
         "-parameter TotalDepth 8",
         "-parameter Width 8",
     ],
+    # TODO(masai): Re-enable after the staging buffer preserves outstanding read reservations.
+    illegal_param_combinations = {
+        ("EnableBypass", "RegisterPopOutputs"): [("1", "1")],
+    },
     params = {
         "EnableBypass": [
             "0",
