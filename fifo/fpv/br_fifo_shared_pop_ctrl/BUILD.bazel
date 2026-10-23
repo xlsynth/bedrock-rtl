@@ -357,7 +357,10 @@ br_verilog_fpv_test_tools_suite(
     ],
     # TODO(masai): Re-enable after the staging buffer preserves outstanding read reservations.
     illegal_param_combinations = {
-        ("EnableBypass", "RamReadLatency"): [("1", "3"), ("1", "4")],
+        ("EnableBypass", "RamReadLatency"): [
+            ("1", "3"),
+            ("1", "4"),
+        ],
     },
     params = {
         "EnableBypass": [
@@ -394,7 +397,10 @@ br_verilog_fpv_test_tools_suite(
     ],
     # TODO(masai): Re-enable after the staging buffer preserves outstanding read reservations.
     illegal_param_combinations = {
-        ("EnableBypass", "RamReadLatency"): [("1", "3"), ("1", "4")],
+        ("EnableBypass", "RamReadLatency"): [
+            ("1", "3"),
+            ("1", "4"),
+        ],
     },
     params = {
         "EnableBypass": [
