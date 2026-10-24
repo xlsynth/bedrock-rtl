@@ -60,6 +60,9 @@ module br_csr_request_reg #(
                   (pop_valid && !pop_ready && !push_abort) |=> pop_valid)
   `BR_ASSERT_IMPL(pop_req_stable_without_abort_a,
                   (pop_valid && !pop_ready && !push_abort) |=> pop_req == $past(pop_req))
-  `BR_ASSERT_IMPL(pop_cleared_on_abort_a, push_abort |=> !pop_valid)
+  // Abort clears the buffered request. With unregistered outputs, a new push
+  // can immediately assert pop_valid on the following cycle.
+  `BR_ASSERT_IMPL(pop_cleared_on_abort_a,
+                  push_abort |=> pop_valid == (!RegisterPopOutputs && push_valid))
 
 endmodule
