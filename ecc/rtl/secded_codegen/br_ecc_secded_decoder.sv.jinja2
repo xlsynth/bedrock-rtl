@@ -209,7 +209,7 @@ module br_ecc_secded_decoder #(
   end else if ((CodewordWidth == 266) && (MessageWidth == 256)) begin : gen_266_256
     `BR_ASSERT_STATIC(parity_width_matches_a, ParityWidth == 10)
 {{ secded_dec_syndrome_266_256 }}
-{{ secded_dec_H_266_256 }}
+    assign parity_check_matrix = br_ecc_secded_256_pkg::ParityCheckMatrix;
   end else if ((CodewordWidth == 512) && (MessageWidth == 502)) begin : gen_512_502
     `BR_ASSERT_STATIC(parity_width_matches_a, ParityWidth == 10)
 {{ secded_dec_syndrome_512_502 }}
