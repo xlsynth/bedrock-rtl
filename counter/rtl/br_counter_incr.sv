@@ -89,6 +89,15 @@ module br_counter_incr #(
     output logic [    ValueWidth-1:0] value_next
 );
 
+  localparam int TempWidth = $clog2(
+      MaxValueP1Width'(MaxValue) + MaxIncrementP1Width'(MaxIncrement) + 1
+  );
+
+  // TODO(mgottscho): Sometimes the MSbs may not be used. It'd be cleaner
+  // to capture them more tightly using br_misc_unused.
+  // ri lint_check_waive NOT_READ
+  logic [TempWidth-1:0] value_temp;
+
   //------------------------------------------
   // Integration checks
   //------------------------------------------
@@ -103,6 +112,10 @@ module br_counter_incr #(
     `BR_ASSERT_INTG(initial_value_in_range_a, reinit |-> initial_value <= MaxValue)
   end
 
+  if (!EnableSaturate && !EnableWrap) begin : gen_assert_no_overflow
+    `BR_ASSERT_INTG(no_value_overflow_a, value_temp <= MaxValue)
+  end
+
   if (EnableAssertFinalNotValid) begin : gen_assert_final
     `BR_ASSERT_FINAL(final_not_incr_valid_a, !incr_valid)
   end
@@ -112,16 +125,9 @@ module br_counter_incr #(
   //------------------------------------------
   localparam logic [MaxValueP1Width-1:0] MaxValueP1 = MaxValue + 1;
   localparam bit IsMaxValueP1PowerOf2 = (MaxValueP1 & (MaxValueP1 - 1)) == 0;
-  localparam int TempWidth = $clog2(
-      MaxValueP1Width'(MaxValue) + MaxIncrementP1Width'(MaxIncrement) + 1
-  );
   localparam logic [ValueWidth-1:0] MaxValueResized = ValueWidth'(MaxValue);
   localparam logic [TempWidth-1:0] MaxValueWithOverflow = TempWidth'(MaxValue);
 
-  // TODO(mgottscho): Sometimes the MSbs may not be used. It'd be cleaner
-  // to capture them more tightly using br_misc_unused.
-  // ri lint_check_waive NOT_READ
-  logic [TempWidth-1:0] value_temp;
   if (EnableReinitAndIncr) begin : gen_reinit_and_incr
     // ri lint_check_waive RHS_TOO_SHORT
     assign value_temp = (reinit ? initial_value : value) + (incr_valid ? incr : '0);
@@ -190,9 +196,7 @@ module br_counter_incr #(
     `BR_ASSERT_IMPL(no_plus_zero_a, incr_valid |-> incr > '0)
   end
   `BR_COVER_IMPL(increment_max_c, incr_valid && incr == MaxIncrement)
-  if (!EnableSaturate && !EnableWrap) begin : gen_assert_no_overflow
-    `BR_ASSERT_IMPL(no_value_overflow_a, value_temp <= MaxValue)
-  end else if (!IsMaxValueP1PowerOf2) begin : gen_cover_overflow
+  if ((EnableSaturate || EnableWrap) && !IsMaxValueP1PowerOf2) begin : gen_cover_overflow
     `BR_COVER_IMPL(value_temp_oob_c, value_temp > MaxValue)
   end
 
