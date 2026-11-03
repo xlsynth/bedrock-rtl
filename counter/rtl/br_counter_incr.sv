@@ -90,7 +90,7 @@ module br_counter_incr #(
 );
 
   localparam logic [MaxValueP1Width-1:0] MaxValueP1 = MaxValue + 1;
-  localparam bit IsMaxValueP1PowerOf2 = (MaxValueP1 & (MaxValueP1 - 1)) == 0;
+  localparam bit IsMaxValueP1PowerOf2 = $onehot(MaxValueP1);
   localparam int TempWidth = $clog2(
       MaxValueP1Width'(MaxValue) + MaxIncrementP1Width'(MaxIncrement) + 1
   );
