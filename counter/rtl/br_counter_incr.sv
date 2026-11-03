@@ -89,11 +89,13 @@ module br_counter_incr #(
     output logic [    ValueWidth-1:0] value_next
 );
 
+  localparam logic [MaxValueP1Width-1:0] MaxValueP1 = MaxValue + 1;
+  localparam bit IsMaxValueP1PowerOf2 = (MaxValueP1 & (MaxValueP1 - 1)) == 0;
   localparam int TempWidth = $clog2(
       MaxValueP1Width'(MaxValue) + MaxIncrementP1Width'(MaxIncrement) + 1
   );
 
-  // TODO(mgottscho): Sometimes the MSbs may not be used. It'd be cleaner
+  // TODO(zhemao): Sometimes the MSbs may not be used. It'd be cleaner
   // to capture them more tightly using br_misc_unused.
   // ri lint_check_waive NOT_READ
   logic [TempWidth-1:0] value_temp;
@@ -114,6 +116,8 @@ module br_counter_incr #(
 
   if (!EnableSaturate && !EnableWrap) begin : gen_assert_no_overflow
     `BR_ASSERT_INTG(no_value_overflow_a, value_temp <= MaxValue)
+  end else if (!IsMaxValueP1PowerOf2) begin : gen_cover_overflow
+    `BR_COVER_INTG(value_temp_oob_c, value_temp > MaxValue)
   end
 
   if (EnableAssertFinalNotValid) begin : gen_assert_final
@@ -123,8 +127,6 @@ module br_counter_incr #(
   //------------------------------------------
   // Implementation
   //------------------------------------------
-  localparam logic [MaxValueP1Width-1:0] MaxValueP1 = MaxValue + 1;
-  localparam bit IsMaxValueP1PowerOf2 = (MaxValueP1 & (MaxValueP1 - 1)) == 0;
   localparam logic [ValueWidth-1:0] MaxValueResized = ValueWidth'(MaxValue);
   localparam logic [TempWidth-1:0] MaxValueWithOverflow = TempWidth'(MaxValue);
 
@@ -196,9 +198,6 @@ module br_counter_incr #(
     `BR_ASSERT_IMPL(no_plus_zero_a, incr_valid |-> incr > '0)
   end
   `BR_COVER_IMPL(increment_max_c, incr_valid && incr == MaxIncrement)
-  if ((EnableSaturate || EnableWrap) && !IsMaxValueP1PowerOf2) begin : gen_cover_overflow
-    `BR_COVER_IMPL(value_temp_oob_c, value_temp > MaxValue)
-  end
 
   // Reinit
   if (EnableCoverReinit) begin : gen_cover_reinit
