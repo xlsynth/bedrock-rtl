@@ -197,6 +197,12 @@ RUN git clone https://github.com/Z3Prover/z3.git && \
 # Export VERILATOR_SOLVER environmental variable to use z3 as a solver
 ENV VERILATOR_SOLVER="z3 --in"
 
+# Bazel runs in CI with a non-root runner UID and HOME=/home/runner. Keep
+# Cargo's registry cache in a writable temporary directory rather than under
+# that HOME, which is not owned by the runner UID inside this image.
+ENV CARGO_HOME=/tmp/cargo-home
+RUN mkdir -p "${CARGO_HOME}" && chmod 1777 "${CARGO_HOME}"
+
 RUN useradd -m user
 USER user
 
