@@ -48,8 +48,10 @@ verilog_library(
     name = "br_ecc_secded_encoder_decoder_tb",
     srcs = ["br_ecc_secded_encoder_decoder_tb.sv"],
     deps = [
+        "//ecc/rtl:br_ecc_secded_256_pkg",
         "//ecc/rtl:br_ecc_secded_decoder",
         "//ecc/rtl:br_ecc_secded_encoder",
+        "//macros:br_asserts",
         "//pkg:br_ecc_secded_pkg",
     ],
 )
