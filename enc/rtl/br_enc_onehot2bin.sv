@@ -43,7 +43,11 @@
 module br_enc_onehot2bin #(
     parameter int NumValues = 2,  // Must be at least 1
     // Width of the binary-encoded value. Must be at least $clog2(NumValues).
-    parameter int BinWidth = br_math::clamped_clog2(NumValues)
+    parameter int BinWidth = br_math::clamped_clog2(NumValues),
+    // If 1, assert that the input is onehot0 and the output is within range.
+    // If 0, the caller must check onehot0 when consuming the output.
+    // The output remains undefined for multi-hot inputs.
+    parameter bit EnableAssertInputOnehot = 1
 ) (
     // ri lint_check_waive INPUT_NOT_READ HIER_NET_NOT_READ HIER_BRANCH_NOT_READ
     input  logic                 clk,        // Used only for assertions
@@ -61,7 +65,9 @@ module br_enc_onehot2bin #(
   `BR_ASSERT_STATIC(binwidth_gte_log2_num_values_a, BinWidth >= br_math::clamped_clog2(NumValues))
   // This is necessary to avoid an integer overflow in the for-loop below.
   `BR_ASSERT_STATIC(binwidth_lt_32_a, BinWidth < 32)
-  `BR_ASSERT_INTG(in_onehot_a, $onehot0(in))
+  if (EnableAssertInputOnehot) begin : gen_assert_input_onehot
+    `BR_ASSERT_INTG(in_onehot_a, $onehot0(in))
+  end
 
   //------------------------------------------
   // Implementation
@@ -84,6 +90,8 @@ module br_enc_onehot2bin #(
   //------------------------------------------
   // Implementation checks
   //------------------------------------------
-  `BR_ASSERT_IMPL(out_within_range_a, out < NumValues)
+  if (EnableAssertInputOnehot) begin : gen_assert_output_range
+    `BR_ASSERT_IMPL(out_within_range_a, out < NumValues)
+  end
 
 endmodule : br_enc_onehot2bin
