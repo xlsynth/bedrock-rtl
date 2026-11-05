@@ -157,6 +157,7 @@ The verification-artifact column reports repository evidence, not a promise that
 | `br_fifo_ctrl_1r1w_push_credit` | Controls a 1R1W external RAM FIFO with credit/valid push and ready/valid pop flow control. | Elab/lint, FPV. |
 | `br_fifo_flops` | Implements a FIFO using internal flop storage and ready/valid flow control. | Elab/lint, Sim, FPV. |
 | `br_fifo_flops_push_credit` | Implements a FIFO using internal flop storage with credit/valid push flow control. | Elab/lint, Sim, FPV. |
+| `br_fifo_flops_unstable` | Implements a flop FIFO that accepts unstable push valid/data and presents a stable ready/valid pop flow. | Elab/lint, Sim. |
 | `br_fifo_shared_dynamic_ctrl` | Dynamically shares FIFO storage across multiple logical FIFOs. | Elab/lint, FPV. |
 | `br_fifo_shared_dynamic_ctrl_ext_arbiter` | Dynamically shares FIFO storage using an externally supplied arbiter. | Elab/lint, FPV. |
 | `br_fifo_shared_dynamic_ctrl_push_credit` | Dynamically shares FIFO storage with credit/valid push flow control. | Elab/lint, FPV. |
@@ -196,9 +197,11 @@ The verification-artifact column reports repository evidence, not a promise that
 | `br_flow_deserializer` | Converts multiple narrow ready/valid flits into fewer wider flits. | Elab/lint, FPV. |
 | `br_flow_fork` | Forks one ready/valid flow to multiple downstream consumers. | Elab/lint, FPV. |
 | `br_flow_fork_select_multihot` | Forks one ready/valid flow to a multihot-selected subset of consumers. | Elab/lint, FPV. |
+| `br_flow_fork_unstable` | Combinationally forks an unstable ready/valid control flow to multiple unstable outputs. | Elab/lint, Sim. |
 | `br_flow_join` | Joins multiple ready/valid control flows into one output flow. | Elab/lint. |
 | `br_flow_mux_fixed` | Multiplexes ready/valid flows with fixed-priority arbitration. | Elab/lint, FPV. |
 | `br_flow_mux_fixed_stable` | Multiplexes stable-data ready/valid flows with fixed-priority arbitration. | Elab/lint, FPV. |
+| `br_flow_mux_fixed_unstable` | Combinationally multiplexes unstable ready/valid flows with fixed-priority arbitration. | Elab/lint, Sim. |
 | `br_flow_mux_lru` | Multiplexes ready/valid flows with least-recently-used arbitration. | Elab/lint, FPV. |
 | `br_flow_mux_lru_stable` | Multiplexes stable-data ready/valid flows with least-recently-used arbitration. | Elab/lint, FPV. |
 | `br_flow_mux_rr` | Multiplexes ready/valid flows with round-robin arbitration. | Elab/lint, FPV. |
@@ -207,6 +210,7 @@ The verification-artifact column reports repository evidence, not a promise that
 | `br_flow_mux_select_unstable` | Multiplexes ready/valid flows using a combinational external select. | Elab/lint, FPV. |
 | `br_flow_reg_both` | Registers both forward and reverse sides of a ready/valid flow. | Elab/lint, FPV. |
 | `br_flow_reg_fwd` | Registers the forward valid/data side of a ready/valid flow. | Elab/lint, FPV. |
+| `br_flow_reg_fwd_unstable` | Captures an unstable push flow and presents stable registered valid/data outputs. | Elab/lint, Sim. |
 | `br_flow_reg_none` | Passes a ready/valid flow through without registering it. | Elab/lint, FPV. |
 | `br_flow_reg_rev` | Registers the reverse ready side of a ready/valid flow. | Elab/lint, FPV. |
 | `br_flow_serializer` | Converts fewer wide ready/valid flits into multiple narrower flits. | Elab/lint, FPV. |
