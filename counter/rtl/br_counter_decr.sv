@@ -55,6 +55,10 @@ module br_counter_decr #(
     // If 1, the counter value saturates at 0.
     // If 0, the counter value wraps around at 0.
     parameter bit EnableSaturate = 0,
+    // If 1, allow the counter to wrap around to MaxValue when it reaches 0.  If
+    // 0, the counter is assumed to never underflow and special handling for
+    // wrap-around is not needed.
+    parameter bit EnableWrap = !EnableSaturate,
     // If 1, then assert there are no valid bits asserted at the end of the test.
     parameter bit EnableAssertFinalNotValid = 1,
     // If 1, cover the cases where reinit is asserted
@@ -94,12 +98,21 @@ module br_counter_decr #(
   `BR_ASSERT_STATIC(max_value_gte_1_a, MaxValue >= 1)
   `BR_ASSERT_STATIC(max_decrement_gte_1_a, MaxDecrement >= 1)
   `BR_ASSERT_STATIC(max_decrement_lte_max_value_a, MaxDecrement <= MaxValue)
+  `BR_ASSERT_STATIC(no_wrap_and_saturate_A, !(EnableWrap && EnableSaturate))
 
   `BR_ASSERT_INTG(decr_in_range_a, decr_valid |-> decr <= MaxDecrement)
   `BR_ASSERT_INTG(initial_value_in_range_a, initial_value <= MaxValue)
 
   if (EnableAssertFinalNotValid) begin : gen_assert_final
     `BR_ASSERT_FINAL(final_not_decr_valid_a, !decr_valid)
+  end
+
+  logic underflow;
+
+  if (!EnableWrap && !EnableSaturate) begin : gen_no_wrap_no_saturate
+    `BR_ASSERT_INTG(no_underflow_A, !underflow)
+  end else begin : gen_wrap_or_saturate
+    `BR_COVER_INTG(underflow_C, underflow)
   end
 
   //------------------------------------------
@@ -109,7 +122,6 @@ module br_counter_decr #(
   localparam bit IsMaxValueP1PowerOf2 = (MaxValueP1 & (MaxValueP1 - 1)) == 0;
 
   logic [ValueWidth-1:0] value_temp;
-  logic underflow;
   logic [ValueWidth-1:0] decr_ext;
 
   assign decr_ext = ValueWidth'(decr);
@@ -128,7 +140,7 @@ module br_counter_decr #(
     assign value_next = underflow ? '0 : value_temp;
 
     // For MaxValueP1 being a power of 2, wrapping occurs naturally
-  end else if (IsMaxValueP1PowerOf2) begin : gen_power_of_2_wrap
+  end else if (!EnableWrap || IsMaxValueP1PowerOf2) begin : gen_power_of_2_wrap
     assign value_next = value_temp;
     `BR_UNUSED(underflow)
   end else begin : gen_non_power_of_2_wrap
