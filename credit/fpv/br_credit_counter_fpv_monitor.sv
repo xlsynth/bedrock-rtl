@@ -115,10 +115,10 @@ bind br_credit_counter br_credit_counter_fpv_monitor #(
     .MaxChange(MaxChange),
     .MaxIncrement(MaxIncrement),
     .MaxDecrement(MaxDecrement),
-    .EnableCoverZeroIncrement(EnableCoverZeroIncrement),
+    .EnableCoverZeroIncrement(EnableZeroIncrement),
     .EnableCoverZeroDecrement(EnableCoverZeroDecrement),
     .EnableCoverDecrementBackpressure(EnableCoverDecrementBackpressure),
-    .EnableCoverWithhold(EnableCoverWithhold),
+    .EnableCoverWithhold(EnableWithhold),
     .EnableAssertAlwaysDecr(EnableAssertAlwaysDecr),
     .EnableAssertNoDecrementBackpressure(EnableAssertNoDecrementBackpressure),
     .EnableAssertFinalNotValid(EnableAssertFinalNotValid)
