@@ -104,3 +104,26 @@ py_binary(
         requirement("info_process"),
     ],
 )
+
+py_library(
+    name = "yosys_plugin",
+    srcs = ["//python/verilog_runner/plugins:yosys.py"],
+    imports = [
+        ".",
+        "plugins",
+    ],
+    deps = [
+        ":cli",
+        ":eda_tool",
+        ":util",
+    ],
+)
+
+py_test(
+    name = "yosys_plugin_test",
+    srcs = ["yosys_plugin_test.py"],
+    deps = [
+        ":cli",
+        ":yosys_plugin",
+    ],
+)
