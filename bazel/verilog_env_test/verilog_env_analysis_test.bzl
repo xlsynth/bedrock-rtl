@@ -97,3 +97,12 @@ def verilog_env_analysis_test_suite(
             name + "_slang_default_policy_runfiles",
         ],
     )
+
+def _fpv_body_isolation_test_impl(ctx):
+    env = analysistest.begin(ctx)
+    target = analysistest.target_under_test(env)
+    runfiles = target[DefaultInfo].default_runfiles.files.to_list()
+    asserts.false(env, _has_basename(runfiles, "custom_fpv_body.tcl"))
+    return analysistest.end(env)
+
+fpv_body_isolation_test = analysistest.make(_fpv_body_isolation_test_impl)

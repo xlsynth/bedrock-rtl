@@ -3,8 +3,9 @@
 load("@bazel_skylib//rules:write_file.bzl", "write_file")
 load("@rules_hdl//verilog:providers.bzl", "verilog_library")
 load("@rules_shell//shell:sh_test.bzl", "sh_test")
+load("//bazel:br_verilog.bzl", "br_verilog_fpv_test_tools_suite")
 load("//bazel:verilog.bzl", "rule_verilog_elab_test", "rule_verilog_fpv_sandbox", "rule_verilog_fpv_test", "rule_verilog_lint_test", "rule_verilog_sim_test", "rule_verilog_synth", "rule_verilog_synth_sandbox", "verilog_lint_test")
-load(":verilog_env_analysis_test.bzl", "verilog_env_analysis_test_suite")
+load(":verilog_env_analysis_test.bzl", "fpv_body_isolation_test", "verilog_env_analysis_test_suite")
 
 _VERILOG_RUNNER_PLUGINS = [
     ":plugins/fake_plugin.py",
@@ -217,4 +218,29 @@ test_suite(
         ":verilog_env_analysis_tests",
         ":wrapper_contents_test",
     ],
+)
+
+write_file(
+    name = "custom_fpv_body",
+    out = "custom_fpv_body.tcl",
+    content = ["# Tool-specific body"],
+)
+
+br_verilog_fpv_test_tools_suite(
+    name = "fpv_body_isolation",
+    sandbox = False,
+    tools = {
+        "fake": ":custom_fpv_body",
+        "fake_without_body": None,
+    },
+    verilog_runner_data = [],
+    verilog_runner_env = ":runner_env.sh",
+    verilog_runner_plugins = _VERILOG_RUNNER_PLUGINS,
+    verilog_runner_tool = ":fake_verilog_runner.py",
+    deps = [":design"],
+)
+
+fpv_body_isolation_test(
+    name = "fpv_body_isolation_test",
+    target_under_test = ":fpv_body_isolation_fake_without_body_fpv_test",
 )

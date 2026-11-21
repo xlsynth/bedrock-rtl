@@ -164,12 +164,13 @@ def br_verilog_fpv_test_tools_suite(name, tools = {}, **kwargs):
     """
 
     for tool, custom_tcl_body in tools.items():
+        tool_kwargs = dict(kwargs)
         if custom_tcl_body:
-            kwargs["custom_tcl_body"] = custom_tcl_body
+            tool_kwargs["custom_tcl_body"] = custom_tcl_body
         br_verilog_fpv_test_suite(
             name = name + "_" + tool,
             tool = tool,
-            **kwargs
+            **tool_kwargs
         )
 
 def br_verilog_fpv_test_suite(**kwargs):

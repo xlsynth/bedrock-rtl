@@ -97,3 +97,20 @@ repos:
         language: system
         pass_filenames: true
         files: (^|/)BUILD\.bazel$
+
+  - repo: local
+    hooks:
+      - id: no-generated-or-sensitive-filenames
+        name: generated outputs and credential filenames
+        language: fail
+        entry: Logs, waveforms, run receipts, and credential files must stay outside source control.
+        files: |
+          (?x)(
+            \.(log|vcd|fst|fsdb|vpd|wlf)(\.(gz|bz2|xz|zst))?$|
+            \.tcl\.(il|sby)$|
+            (^|/)[^/]+\.tcl\.sby-work(\.bak[0-9]+)?/|
+            (^|/)(slurm-[0-9]+\.out|run-receipt\.json|submission-receipt\.json|status\.sqlite)$|
+            (^|/)(id_rsa|id_dsa|id_ecdsa|id_ed25519|private[-_]key\.(pem|key))(\.(bak|old|backup)|~)?$|
+            (^|/)\.env(?!\.(example|template)$)(\.[^/]+)?$|
+            (^|/)(credentials|credentials\.json|service-account-key\.json)(\.(bak|old|backup)|~)?$
+          )
