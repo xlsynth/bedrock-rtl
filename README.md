@@ -5,15 +5,20 @@
 ![GitHub License](https://img.shields.io/github/license/xlsynth/bedrock-rtl?color=blue)
 ![language - SystemVerilog](https://img.shields.io/badge/language-SystemVerilog-blue)
 ![build system - Bazel](https://img.shields.io/badge/build%20system-Bazel-blue)
+![rtl-files](https://img.shields.io/endpoint?url=https://gist.githubusercontent.com/mgottscho/c66dc2ddc0e513ba06ce338620977b26/raw/rtl.json)
 
-[![CI](https://github.com/xlsynth/bedrock-rtl/actions/workflows/ci.yml/badge.svg?branch=main&event=push)](https://github.com/xlsynth/bedrock-rtl/actions/workflows/ci.yml)
-[![Nightly Tests](https://github.com/xlsynth/bedrock-rtl/actions/workflows/nightly.yml/badge.svg?branch=main&event=schedule)](https://github.com/xlsynth/bedrock-rtl/actions/workflows/nightly.yml)
 [![pre-commit](https://img.shields.io/github/check-runs/xlsynth/bedrock-rtl/main?nameFilter=pre-commit&label=pre-commit)](https://github.com/xlsynth/bedrock-rtl/actions/workflows/ci.yml?query=job%3Apre-commit)
 [![oss-tools](https://img.shields.io/github/check-runs/xlsynth/bedrock-rtl/main?nameFilter=bazel-oss-tool-test&label=oss%20tools)](https://github.com/xlsynth/bedrock-rtl/actions/workflows/ci.yml?query=job%3Abazel-oss-tool-test)
 [![build-and-proprietary-tools](https://img.shields.io/github/check-runs/xlsynth/bedrock-rtl/main?nameFilter=bazel-build-and-proprietary-tool-test&label=build-and-proprietary-tools)](https://github.com/xlsynth/bedrock-rtl/actions/workflows/ci.yml?query=job%3Abazel-build-and-proprietary-tool-test)
+[![bazel-test-python](https://img.shields.io/endpoint?url=https://gist.githubusercontent.com/mgottscho/c66dc2ddc0e513ba06ce338620977b26/raw/python.json)](https://github.com/xlsynth/bedrock-rtl/actions/workflows/ci.yml?query=job%3Abazel-oss-tool-test)
+[![bazel-test-stardoc](https://img.shields.io/endpoint?url=https://gist.githubusercontent.com/mgottscho/c66dc2ddc0e513ba06ce338620977b26/raw/stardoc.json)](https://github.com/xlsynth/bedrock-rtl/actions/workflows/ci.yml?query=job%3Abazel-oss-tool-test)
+[![bazel-test-verific](https://img.shields.io/endpoint?url=https://gist.githubusercontent.com/mgottscho/c66dc2ddc0e513ba06ce338620977b26/raw/verific.json)](https://github.com/xlsynth/bedrock-rtl/actions/workflows/ci.yml?query=job%3Abazel-build-and-proprietary-tool-test)
+[![bazel-test-slang](https://img.shields.io/endpoint?url=https://gist.githubusercontent.com/mgottscho/c66dc2ddc0e513ba06ce338620977b26/raw/slang.json)](https://github.com/xlsynth/bedrock-rtl/actions/workflows/ci.yml?query=job%3Abazel-oss-tool-test)
+[![bazel-test-ascentlint](https://img.shields.io/endpoint?url=https://gist.githubusercontent.com/mgottscho/c66dc2ddc0e513ba06ce338620977b26/raw/ascentlint.json)](https://github.com/xlsynth/bedrock-rtl/actions/workflows/ci.yml?query=job%3Abazel-build-and-proprietary-tool-test)
+[![bazel-test-vcs](https://img.shields.io/endpoint?url=https://gist.githubusercontent.com/mgottscho/c66dc2ddc0e513ba06ce338620977b26/raw/vcs.json)](https://github.com/xlsynth/bedrock-rtl/actions/workflows/ci.yml?query=job%3Abazel-build-and-proprietary-tool-test)
+[![bazel-test-verilator](https://img.shields.io/endpoint?url=https://gist.githubusercontent.com/mgottscho/c66dc2ddc0e513ba06ce338620977b26/raw/verilator.json)](https://github.com/xlsynth/bedrock-rtl/actions/workflows/ci.yml?query=job%3Abazel-oss-tool-test)
+<!-- [![bazel-test-jg](https://img.shields.io/endpoint?url=https://gist.githubusercontent.com/mgottscho/c66dc2ddc0e513ba06ce338620977b26/raw/jg.json)](https://github.com/xlsynth/bedrock-rtl/actions/workflows/nightly.yml?query=job%3Abazel-test-jg) -->
 [![open bugs](https://img.shields.io/github/issues/xlsynth/bedrock-rtl/bug?label=bugs)](https://github.com/xlsynth/bedrock-rtl/issues?q=is%3Aissue%20state%3Aopen%20label%3Abug)
-
-Open a CI or Nightly Tests run to see the test counts in its GitHub Actions summary.
 
 High quality and composable RTL libraries in SystemVerilog
 

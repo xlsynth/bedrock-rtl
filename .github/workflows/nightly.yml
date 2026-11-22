@@ -1,108 +1,118 @@
 name: Nightly Tests
 
+# Run once a day at midnight Pacific Daylight Time.
+# Note: GitHub Actions cron is in UTC.
 on:
   schedule:
-    - cron: '0 7 * * *'  # Daily at 07:00 UTC.
-  workflow_dispatch: {}
+    - cron: '0 7 * * *'  # Daily at 07:00 UTC → 00:00 PDT
+  workflow_dispatch:     # Allow manual triggering
 
-permissions:
-  contents: read
-
-# Run one nightly workflow at a time.
+# Only allow one pipeline to run at a time.
 concurrency:
   group: ${{ github.repository }}
   cancel-in-progress: false
 
 jobs:
+  # Run bazel build before bazel tests because the logging is not chronologically
+  # ordered if a build step fails while unrelated tests are running.
+  #
+  # Additionally, we rely on the fact that we disabled any pipeline concurrency and that there is
+  # a single self-hosted runner. So each job can assume the working directory is preserved
+  # from the previous job (bazel-build). This is fine for now since our CI throughput demands are not
+  # very high.
   bazel-build:
     runs-on: self-hosted
     steps:
-      # actions/checkout v7.0.1
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
-        with:
-          ref: ${{ github.sha }}
-          persist-credentials: false
-      - name: Copy ci.bazelrc
-        run: cp /home/gh-actions/bedrock-infra/ci.bazelrc ci.bazelrc
-      - name: Build
-        run: |
-          bazel build --noshow_loading_progress //... > .bazel-build-nightly.log 2>&1 || {
-            code=$?
-            echo "::error::Nightly Bazel build failed. See the log on the private runner."
-            exit "$code"
-          }
+    # actions/checkout v7.0.1
+    - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+    - name: Copy ci.bazelrc
+      working-directory: ${{ github.workspace }}
+      run: cp /home/gh-actions/bedrock-infra/ci.bazelrc ci.bazelrc
+    - name: Build
+      run: bazel build --noshow_loading_progress //...
 
   bazel-test-jg:
     runs-on: self-hosted
+    environment: ci-badge-publishing
     needs: bazel-build
+    outputs:
+      total_tests: ${{ steps.test.outputs.total_tests }}
+      passing_tests: ${{ steps.test.outputs.passing_tests }}
+      failing_timeout_tests: ${{ steps.test.outputs.failing_timeout_tests }}
+      exit_code: ${{ steps.test.outputs.exit_code }}
     steps:
-      # Another job can reuse the workspace between the build and this job.
-      # actions/checkout v7.0.1
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
-        with:
-          ref: ${{ github.sha }}
-          persist-credentials: false
-      - name: Copy ci.bazelrc
-        run: cp /home/gh-actions/bedrock-infra/ci.bazelrc ci.bazelrc
-      - name: Run and summarize JasperGold tests
-        shell: bash
-        run: |
-          printf '## Nightly JasperGold tests\n\n' >> "$GITHUB_STEP_SUMMARY"
+    - name: Verilog formal tests (using Cadence JasperGold)
+      id: test
+      # Use --test_output=summary to suppress log output, even on failure (proprietary EDA tool output may be sensitive).
+      #
+      # Set a timeout of 60 seconds per test and randomly sample 1000 tests to run every night, since there are tens of
+      # thousands of tests and we have very few licenses.
+      #
+      # For now, exclude //fifo/fpv/... //cdc/fpv/... as they are known to be very slow.
+      run: |
+        bazel query 'tests(//...) intersect attr(tags, "jg", //...)' \
+          | grep -v -E '//fifo/fpv:|//cdc/fpv:' \
+          | shuf -n 1000 \
+          | xargs -r bazel test --action_env=PATH --noshow_loading_progress --test_output=summary --test_timeout=60 2>&1 \
+          | tee .bazel-test-jg.log
+        BAZEL_EXIT_CODE=${PIPESTATUS[3]}
+        TOTAL_TESTS=$(grep -Po '(?<=out of )\d+(?= test)' .bazel-test-jg.log)
+        PASSING_TESTS=$(grep -Po '\d+(?= test passes?\.| tests pass)' .bazel-test-jg.log)
+        FAILING_TIMEOUT_TESTS=$(grep -c ' TIMEOUT in' .bazel-test-jg.log)
+        echo "total_tests=$TOTAL_TESTS" >> $GITHUB_OUTPUT
+        echo "passing_tests=$PASSING_TESTS" >> $GITHUB_OUTPUT
+        echo "failing_timeout_tests=$FAILING_TIMEOUT_TESTS" >> $GITHUB_OUTPUT
+        echo "exit_code=$BAZEL_EXIT_CODE" >> $GITHUB_OUTPUT
+        exit $BAZEL_EXIT_CODE
 
-          # Sample at most 1,000 targets and keep the existing slow-suite exclusions.
-          if ! discovered=$(bazel query --output=label 'tests(//...) intersect attr(tags, "jg", //...)' 2> .bazel-query-jg.log); then
-            echo "Test counts are unavailable because the Bazel query failed." >> "$GITHUB_STEP_SUMMARY"
-            echo "::error::JasperGold test discovery failed. See the query log on the private runner."
-            exit 1
-          fi
-          sample=$(printf '%s\n' "$discovered" | awk 'NF && !/^\/\/(fifo|cdc)\/fpv:/' | shuf -n 1000)
-          if [[ -z "$sample" ]]; then
-            echo "No eligible JasperGold tests were selected." >> "$GITHUB_STEP_SUMMARY"
-            echo "::error::No eligible JasperGold tests were selected."
-            exit 1
-          fi
+    - name: Post nightly test summary to GitHub Gist
+      if: always()
+      run: |
+        # Fetch current log via Gist API
+        EXISTING_CONTENT=$(
+          curl -s https://api.github.com/gists/4c1321baf4a3e4b67d12480df7fd2d0c \
+            | jq -r --arg f "jg-nightly-log.txt" '.files[$f].content'
+        )
+        echo "$EXISTING_CONTENT"
 
-          targets=()
-          while IFS= read -r target; do
-            targets+=("$target")
-          done <<< "$sample"
+        # Create summary line
+        TIMESTAMP=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
+        SUMMARY="[$TIMESTAMP] Passed: ${{ needs.bazel-test-jg.outputs.passing_tests }} | Timeouts: ${{ needs.bazel-test-jg.outputs.failing_timeout_tests }} | Total: ${{ needs.bazel-test-jg.outputs.total_tests }}"
 
-          # Keep all test output on the private runner. Publish only aggregate counts.
-          test_exit=0
-          bazel test --noshow_loading_progress --color=no --curses=no \
-            --test_output=summary --test_summary=short --test_timeout=60 \
-            "${targets[@]}" > .bazel-test-jg.log 2>&1 || test_exit=$?
+        # Combine existing content and new summary
+        UPDATED_CONTENT="$(printf "%s\n%s" "$EXISTING_CONTENT" "$SUMMARY")"
 
-          if read -r total passed timed_out < <(
-            awk '
-              /^Executed [0-9]+ out of [0-9]+ tests?:/ {
-                total = $5
-                passed = 0
-                if (match($0, /[0-9]+ tests? pass(es)?([,. ]|$)/)) {
-                  passed = substr($0, RSTART, RLENGTH) + 0
-                }
-              }
-              /^\/\/[^[:space:]]+[[:space:]]+(\(([0-9]+\/[0-9]+ )?cached\)[[:space:]]+)?TIMEOUT([[:space:]]|$)/ {
-                timed_out++
-              }
-              END {
-                if (total > 0 && passed + timed_out <= total) {
-                  print total, passed, timed_out + 0
-                }
-              }
-            ' .bazel-test-jg.log
-          ); then
-            {
-              printf '| Total targets | Passed | Timed out | Other non-passing |\n'
-              printf '| ---: | ---: | ---: | ---: |\n'
-              printf '| %d | %d | %d | %d |\n' "$total" "$passed" "$timed_out" "$((total - passed - timed_out))"
-            } >> "$GITHUB_STEP_SUMMARY"
-          else
-            echo "Bazel did not report usable test counts." >> "$GITHUB_STEP_SUMMARY"
-          fi
+        # Escape UPDATED_CONTENT for JSON:
+        # - Replace all literal \ with \\
+        # - Replace all literal " with \"
+        # - Replace all literal newlines with \n
+        # Thus we obtain one long string that we can embed into a JSON "content" field.
+        escaped=$(sed -e 's/\\/\\\\/g' -e 's/"/\\"/g' -e ':a;N;$!ba;s/\n/\\n/g' <<< "$UPDATED_CONTENT")
 
-          printf '\nBazel exit code: %d\n' "$test_exit" >> "$GITHUB_STEP_SUMMARY"
-          if (( test_exit != 0 )); then
-            printf '::error::JasperGold Bazel invocation exited with code %d. See the log on the private runner.\n' "$test_exit"
-          fi
-          exit "$test_exit"
+        # Build JSON payload by hand
+        PATCH_DATA=$(printf '{"files":{"jg-nightly-log.txt":{"content":"%s"}}}' "$escaped")
+
+        # Append and push updated content
+        echo "$PATCH_DATA" \
+          | curl -s -X PATCH \
+              -H "Authorization: token ${{ secrets.MGOTTSCHO_GISTS_SECRET }}" \
+              -H "Content-Type: application/json" \
+              --data @- https://api.github.com/gists/4c1321baf4a3e4b67d12480df7fd2d0c
+
+  jg-badge:
+    runs-on: ubuntu-24.04
+    environment: ci-badge-publishing
+    needs: bazel-test-jg
+    # Run when bazel-test-jg completes, even if it failed.
+    if: ${{ always() }}
+    steps:
+    - name: Create jg badge
+      # schneegans/dynamic-badges-action v1.9.0
+      uses: schneegans/dynamic-badges-action@28b0fa8bdeb46170ac397105ece0c1fe58f68910
+      with:
+        auth: ${{ secrets.MGOTTSCHO_GISTS_SECRET }}
+        gistID: c66dc2ddc0e513ba06ce338620977b26
+        filename: jg.json
+        label: "jg (nightly)"
+        message: ${{ needs.bazel-test-jg.outputs.passing_tests }} passed, ${{ needs.bazel-test-jg.outputs.failing_timeout_tests }} timed out, total ${{ needs.bazel-test-jg.outputs.total_tests }}
+        color: ${{ needs.bazel-test-jg.outputs.exit_code == '0' && 'brightgreen' || 'red' }}
