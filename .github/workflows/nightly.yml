@@ -33,7 +33,6 @@ jobs:
 
   bazel-test-jg:
     runs-on: self-hosted
-    environment: ci-badge-publishing
     needs: bazel-build
     outputs:
       total_tests: ${{ steps.test.outputs.total_tests }}
@@ -65,54 +64,24 @@ jobs:
         echo "exit_code=$BAZEL_EXIT_CODE" >> $GITHUB_OUTPUT
         exit $BAZEL_EXIT_CODE
 
-    - name: Post nightly test summary to GitHub Gist
+    - name: Summarize Nightly JasperGold tests
       if: always()
+      continue-on-error: true
+      shell: bash
+      env:
+        TOTAL: ${{ steps.test.outputs.total_tests }}
+        PASSED: ${{ steps.test.outputs.passing_tests }}
+        TIMED_OUT: ${{ steps.test.outputs.failing_timeout_tests }}
       run: |
-        # Fetch current log via Gist API
-        EXISTING_CONTENT=$(
-          curl -s https://api.github.com/gists/4c1321baf4a3e4b67d12480df7fd2d0c \
-            | jq -r --arg f "jg-nightly-log.txt" '.files[$f].content'
-        )
-        echo "$EXISTING_CONTENT"
-
-        # Create summary line
-        TIMESTAMP=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
-        SUMMARY="[$TIMESTAMP] Passed: ${{ needs.bazel-test-jg.outputs.passing_tests }} | Timeouts: ${{ needs.bazel-test-jg.outputs.failing_timeout_tests }} | Total: ${{ needs.bazel-test-jg.outputs.total_tests }}"
-
-        # Combine existing content and new summary
-        UPDATED_CONTENT="$(printf "%s\n%s" "$EXISTING_CONTENT" "$SUMMARY")"
-
-        # Escape UPDATED_CONTENT for JSON:
-        # - Replace all literal \ with \\
-        # - Replace all literal " with \"
-        # - Replace all literal newlines with \n
-        # Thus we obtain one long string that we can embed into a JSON "content" field.
-        escaped=$(sed -e 's/\\/\\\\/g' -e 's/"/\\"/g' -e ':a;N;$!ba;s/\n/\\n/g' <<< "$UPDATED_CONTENT")
-
-        # Build JSON payload by hand
-        PATCH_DATA=$(printf '{"files":{"jg-nightly-log.txt":{"content":"%s"}}}' "$escaped")
-
-        # Append and push updated content
-        echo "$PATCH_DATA" \
-          | curl -s -X PATCH \
-              -H "Authorization: token ${{ secrets.MGOTTSCHO_GISTS_SECRET }}" \
-              -H "Content-Type: application/json" \
-              --data @- https://api.github.com/gists/4c1321baf4a3e4b67d12480df7fd2d0c
-
-  jg-badge:
-    runs-on: ubuntu-24.04
-    environment: ci-badge-publishing
-    needs: bazel-test-jg
-    # Run when bazel-test-jg completes, even if it failed.
-    if: ${{ always() }}
-    steps:
-    - name: Create jg badge
-      # schneegans/dynamic-badges-action v1.9.0
-      uses: schneegans/dynamic-badges-action@28b0fa8bdeb46170ac397105ece0c1fe58f68910
-      with:
-        auth: ${{ secrets.MGOTTSCHO_GISTS_SECRET }}
-        gistID: c66dc2ddc0e513ba06ce338620977b26
-        filename: jg.json
-        label: "jg (nightly)"
-        message: ${{ needs.bazel-test-jg.outputs.passing_tests }} passed, ${{ needs.bazel-test-jg.outputs.failing_timeout_tests }} timed out, total ${{ needs.bazel-test-jg.outputs.total_tests }}
-        color: ${{ needs.bazel-test-jg.outputs.exit_code == '0' && 'brightgreen' || 'red' }}
+        count='^(0|[1-9][0-9]{0,8})$'
+        {
+          echo "## Nightly JasperGold tests"
+          echo
+          if [[ "$TOTAL" =~ $count && "$PASSED" =~ $count && "$TIMED_OUT" =~ $count ]] &&
+             (( TOTAL > 0 && PASSED + TIMED_OUT <= TOTAL )); then
+            printf 'Bazel reported %s of %s test targets passing and %s timed out.\n' "$PASSED" "$TOTAL" "$TIMED_OUT"
+            echo "These counts do not confirm that JasperGold ran or proved any assertions."
+          else
+            echo "Bazel test counts are unavailable for this run."
+          fi
+        } >> "$GITHUB_STEP_SUMMARY"
