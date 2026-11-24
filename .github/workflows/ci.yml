@@ -877,6 +877,10 @@ jobs:
       vcs_total_tests: ${{ steps.vcs.outputs.total_tests }}
       vcs_passing_tests: ${{ steps.vcs.outputs.passing_tests }}
       vcs_exit_code: ${{ steps.vcs.outputs.exit_code }}
+      # Publish a badge only when the full Bazel summary is accounted for.
+      verific: ${{ steps.summary.outputs.verific }}
+      ascentlint: ${{ steps.summary.outputs.ascentlint }}
+      vcs: ${{ steps.summary.outputs.vcs }}
     steps:
     # actions/checkout v7.0.1
     - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
@@ -897,12 +901,13 @@ jobs:
       run: |
         set +e
         bazel test $TMP_HACK_BAZEL_CI_FLAGS --noshow_loading_progress --test_output=summary //... --test_tag_filters=verific 2>&1 | tee .bazel-test-verific.log
-        BAZEL_EXIT_CODE=${PIPESTATUS[0]}
+        BAZEL_EXIT_CODE=${PIPESTATUS[0]} LOG_EXIT_CODE=${PIPESTATUS[1]}
         TOTAL_TESTS=$(grep -Po '(?<=out of )\d+(?= test)' .bazel-test-verific.log)
         PASSING_TESTS=$(grep -Po '\d+(?= test passes?\.| tests pass)' .bazel-test-verific.log)
         echo "total_tests=$TOTAL_TESTS" >> $GITHUB_OUTPUT
         echo "passing_tests=$PASSING_TESTS" >> $GITHUB_OUTPUT
         echo "exit_code=$BAZEL_EXIT_CODE" >> $GITHUB_OUTPUT
+        echo "log_exit_code=$LOG_EXIT_CODE" >> "$GITHUB_OUTPUT"
     # Keep AscentLint after the elaboration suites.
     - name: Verilog lint tests (using RealIntent AscentLint)
       id: ascentlint
@@ -910,24 +915,26 @@ jobs:
       run: |
         set +e
         bazel test $TMP_HACK_BAZEL_CI_FLAGS --noshow_loading_progress --test_output=summary //... --test_tag_filters=ascentlint 2>&1 | tee .bazel-test-ascentlint.log
-        BAZEL_EXIT_CODE=${PIPESTATUS[0]}
+        BAZEL_EXIT_CODE=${PIPESTATUS[0]} LOG_EXIT_CODE=${PIPESTATUS[1]}
         TOTAL_TESTS=$(grep -Po '(?<=out of )\d+(?= test)' .bazel-test-ascentlint.log)
         PASSING_TESTS=$(grep -Po '\d+(?= test passes?\.| tests pass)' .bazel-test-ascentlint.log)
         echo "total_tests=$TOTAL_TESTS" >> $GITHUB_OUTPUT
         echo "passing_tests=$PASSING_TESTS" >> $GITHUB_OUTPUT
         echo "exit_code=$BAZEL_EXIT_CODE" >> $GITHUB_OUTPUT
+        echo "log_exit_code=$LOG_EXIT_CODE" >> "$GITHUB_OUTPUT"
     - name: Verilog sim tests (using Synopsys VCS)
       id: vcs
       # Use --test_output=summary to suppress log output, even on failure (proprietary EDA tool output may be sensitive).
       run: |
         set +e
         bazel test $TMP_HACK_BAZEL_CI_FLAGS --noshow_loading_progress --test_output=summary //... --test_tag_filters=vcs 2>&1 | tee .bazel-test-vcs.log
-        BAZEL_EXIT_CODE=${PIPESTATUS[0]}
+        BAZEL_EXIT_CODE=${PIPESTATUS[0]} LOG_EXIT_CODE=${PIPESTATUS[1]}
         TOTAL_TESTS=$(grep -Po '(?<=out of )\d+(?= test)' .bazel-test-vcs.log)
         PASSING_TESTS=$(grep -Po '\d+(?= test passes?\.| tests pass)' .bazel-test-vcs.log)
         echo "total_tests=$TOTAL_TESTS" >> $GITHUB_OUTPUT
         echo "passing_tests=$PASSING_TESTS" >> $GITHUB_OUTPUT
         echo "exit_code=$BAZEL_EXIT_CODE" >> $GITHUB_OUTPUT
+        echo "log_exit_code=$LOG_EXIT_CODE" >> "$GITHUB_OUTPUT"
     - name: Check proprietary Bazel build and test suite results
       run: |
         failed_suites=()
@@ -951,6 +958,42 @@ jobs:
           printf '  - %s\n' "${failed_suites[@]}"
           exit 1
         fi
+    - name: Summarize proprietary Bazel results
+      id: summary
+      if: ${{ !cancelled() }}
+      continue-on-error: true
+      shell: bash
+      env:
+        VERIFIC: ${{ steps.verific.outputs.exit_code }}/${{ steps.verific.outputs.log_exit_code }}
+        ASCENTLINT: ${{ steps.ascentlint.outputs.exit_code }}/${{ steps.ascentlint.outputs.log_exit_code }}
+        VCS: ${{ steps.vcs.outputs.exit_code }}/${{ steps.vcs.outputs.log_exit_code }}
+      run: |
+        python3.12 - >> "$GITHUB_STEP_SUMMARY" <<'PY'
+        import os
+        from pathlib import Path
+        from python.ci.bazel_oss_sharding import complete_test_counts
+
+        print("## Proprietary Bazel tests\n")
+        print("| Suite | Passed / Total |")
+        print("| --- | ---: |")
+        with open(os.environ["GITHUB_OUTPUT"], "a") as output:
+            for suite in ("Verific", "AscentLint", "VCS"):
+                name = suite.lower()
+                status = os.environ.get(name.upper())
+                counts = "Unavailable"
+                # Only read this run's console summary if Bazel finished and tee wrote it.
+                if status in ("0/0", "3/0"):
+                    code = int(status[0])
+                    try:
+                        log = Path(f".bazel-test-{name}.log").read_text(errors="replace")
+                    except OSError:
+                        log = ""
+                    result = complete_test_counts(log, code)
+                    if result is not None:
+                        counts = f"{result[0]}/{result[1]}"
+                        print(f"{name}={counts}/{code}", file=output)
+                print(f"| {suite} | {counts} |")
+        PY
 
   ##########################################
   ##########################################
