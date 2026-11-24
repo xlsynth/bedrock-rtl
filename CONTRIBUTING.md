@@ -27,8 +27,8 @@ Stardoc, Slang elaboration, and Verilator simulation. The
 ### Proprietary-tool checks
 
 A self-hosted GitHub Actions runner runs the proprietary-tool lane. It builds the
-repository and runs Verific elaboration, RealIntent AscentLint, and Synopsys VCS
-tests. JasperGold formal tests run in the nightly workflow.
+repository and runs RealIntent AscentLint and Synopsys VCS tests. JasperGold
+formal tests run in the nightly workflow.
 
 The self-hosted runner's detailed logs are not shown in GitHub Actions. This keeps
 third-party vendor IP out of public logs while still reporting the overall check

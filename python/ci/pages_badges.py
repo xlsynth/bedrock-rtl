@@ -14,7 +14,7 @@ import re
 import subprocess
 
 PUBLIC = ("python", "stardoc", "slang", "verilator")
-PRIVATE = ("verific", "ascentlint", "vcs")
+PRIVATE = ("ascentlint", "vcs")
 
 
 def suite_badge(counts: object, failure_code: int) -> tuple[str, str]:
@@ -67,6 +67,8 @@ def write_badges(site: Path, restored: bool) -> None:
             r"#[1-9][0-9]* \([0-9a-f]{7}\)", report
         ):
             raise ValueError("Invalid report source")
+        # A restored dashboard can still contain the retired elaboration badge.
+        (badges / "verific.json").unlink(missing_ok=True)
 
     badge("run", "CI snapshot", run, "blue")
     badge("report", "Report", report, "blue")

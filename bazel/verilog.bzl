@@ -1701,7 +1701,7 @@ def verilog_elab_and_lint_test_suite(
         defines = [],
         params = {},
         include_default_params = True,
-        elab_tools = ["verific", "slang"],
+        elab_tools = ["slang"],
         lint_tools = ["ascentlint"],
         disable_lint_rules = [],
         **kwargs):
@@ -1720,7 +1720,7 @@ def verilog_elab_and_lint_test_suite(
         defines (list): A list of defines.
         params (dict): A dictionary where keys are parameter names and values are lists of possible values for those parameters.
         include_default_params (bool): Whether to include an instance with the module's default parameters.
-        elab_tools (list of strings): The tools to use for elaboration. Defaults to Verific and Slang.
+        elab_tools (list of strings): The tools to use for elaboration. Defaults to Slang.
         lint_tools (list of strings): The tools to use for lint. Defaults to AscentLint.
         disable_lint_rules (list): A list of lint rules to disable in the generated files.
         **kwargs: Additional common keyword arguments to be passed to the verilog_elab_test and verilog_lint_test functions.

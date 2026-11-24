@@ -58,7 +58,7 @@ verilog_library(
 
 verilog_elab_test(
     name = "br_example_tb_elab_test",
-    tool = "verific",
+    tool = "slang",
     deps = [":br_example_tb"],
 )
 
@@ -202,7 +202,7 @@ Leave exhaustive parameter sweeps, full protocol state-space coverage, and liven
 ## Validation Sequence
 
 1. Run `pre-commit` on the changed bench and BUILD files, then `git diff --check`.
-2. Run the bench's Verific elaboration target when present.
+2. Run the bench's Slang elaboration target when present.
 3. Run every generated VCS/Verilator target for the changed bench with `--nocache_test_results`.
 4. Run the containing area's simulation regression, for example `bazel test //flow/sim:all --test_tag_filters=sim --nocache_test_results`.
 5. Run `python3 python/sim_tb_coverage_inventory.py` and confirm the intended DUTs are reported as direct benches.

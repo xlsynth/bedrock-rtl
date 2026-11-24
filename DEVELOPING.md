@@ -9,7 +9,7 @@ Install Bazel 9.1.0 (Bazelisk is recommended) and a system Python interpreter ve
 
 The public toolchain uses Slang for elaboration, Verible for lint, Verilator for simulation, and TopStitch for RTL wrapper generation. The Docker image includes those tools, plus Yosys, EQY, Yices, and XLS support libraries.
 
-Some checks also use tools that are not distributed with Bedrock-RTL: Verific tclmain, RealIntent AscentLint, Synopsys VCS, Cadence JasperGold, and Synopsys VCF. Provide the installations and licenses yourself if you need those checks.
+Some checks also use tools that are not distributed with Bedrock-RTL: RealIntent AscentLint, Synopsys VCS, Cadence JasperGold, and Synopsys VCF. Provide the installations and licenses yourself if you need those checks.
 
 ## Build and test
 
@@ -88,7 +88,7 @@ bazel build //... && bazel test //fifo/sim/... --test_tag_filters=verilator
 
 ## Continuous integration and image publishing
 
-GitHub Actions builds the public Docker image and runs Python/ecc code generation, Stardoc, Slang, and Verilator checks in parallel. The `bazel-oss-tool-test` check verifies shard coverage and reports their combined result. A self-hosted job runs `bazel build //...` plus Verific, AscentLint, and VCS tests. Sampled JasperGold formal tests run nightly. See `.github/workflows/ci.yml` and `.github/workflows/nightly.yml` for details.
+GitHub Actions builds the public Docker image and runs Python/ecc code generation, Stardoc, Slang, and Verilator checks in parallel. The `bazel-oss-tool-test` check verifies shard coverage and reports their combined result. A self-hosted job runs `bazel build //...` plus AscentLint and VCS tests. Sampled JasperGold formal tests run nightly. See `.github/workflows/ci.yml` and `.github/workflows/nightly.yml` for details.
 
 Public CI shards restore a shared Docker layer cache; only a trusted `main` or manually dispatched run updates it. Bazel disk caches are partitioned by test shard, so repeated runs restore the relevant outputs while pull requests restore caches without saving them.
 

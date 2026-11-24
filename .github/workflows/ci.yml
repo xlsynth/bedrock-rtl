@@ -971,9 +971,6 @@ jobs:
       # a sanitized action PATH unless PATH is passed explicitly.
       TMP_HACK_BAZEL_CI_FLAGS: --action_env=PATH
     outputs:
-      verific_total_tests: ${{ steps.verific.outputs.total_tests }}
-      verific_passing_tests: ${{ steps.verific.outputs.passing_tests }}
-      verific_exit_code: ${{ steps.verific.outputs.exit_code }}
       ascentlint_total_tests: ${{ steps.ascentlint.outputs.total_tests }}
       ascentlint_passing_tests: ${{ steps.ascentlint.outputs.passing_tests }}
       ascentlint_exit_code: ${{ steps.ascentlint.outputs.exit_code }}
@@ -981,7 +978,6 @@ jobs:
       vcs_passing_tests: ${{ steps.vcs.outputs.passing_tests }}
       vcs_exit_code: ${{ steps.vcs.outputs.exit_code }}
       # Publish a badge only when the full Bazel summary is accounted for.
-      verific: ${{ steps.summary.outputs.verific }}
       ascentlint: ${{ steps.summary.outputs.ascentlint }}
       vcs: ${{ steps.summary.outputs.vcs }}
     steps:
@@ -998,20 +994,6 @@ jobs:
         set +e
         bazel build $TMP_HACK_BAZEL_CI_FLAGS --noshow_loading_progress //...
         echo "exit_code=$?" >> $GITHUB_OUTPUT
-    - name: Verilog elaboration tests (using Verific tclmain)
-      id: verific
-      # Use --test_output=summary to suppress log output, even on failure (proprietary EDA tool output may be sensitive).
-      run: |
-        set +e
-        bazel test $TMP_HACK_BAZEL_CI_FLAGS --noshow_loading_progress --test_output=summary //... --test_tag_filters=verific 2>&1 | tee .bazel-test-verific.log
-        BAZEL_EXIT_CODE=${PIPESTATUS[0]} LOG_EXIT_CODE=${PIPESTATUS[1]}
-        TOTAL_TESTS=$(grep -Po '(?<=out of )\d+(?= test)' .bazel-test-verific.log)
-        PASSING_TESTS=$(grep -Po '\d+(?= test passes?\.| tests pass)' .bazel-test-verific.log)
-        echo "total_tests=$TOTAL_TESTS" >> $GITHUB_OUTPUT
-        echo "passing_tests=$PASSING_TESTS" >> $GITHUB_OUTPUT
-        echo "exit_code=$BAZEL_EXIT_CODE" >> $GITHUB_OUTPUT
-        echo "log_exit_code=$LOG_EXIT_CODE" >> "$GITHUB_OUTPUT"
-    # Keep AscentLint after the elaboration suites.
     - name: Verilog lint tests (using RealIntent AscentLint)
       id: ascentlint
       # Use --test_output=summary to suppress log output, even on failure (proprietary EDA tool output may be sensitive).
@@ -1052,7 +1034,6 @@ jobs:
         }
 
         check_suite "build" "${{ steps.build.outputs.exit_code }}"
-        check_suite "verific" "${{ steps.verific.outputs.exit_code }}"
         check_suite "ascentlint" "${{ steps.ascentlint.outputs.exit_code }}"
         check_suite "vcs" "${{ steps.vcs.outputs.exit_code }}"
 
@@ -1067,7 +1048,6 @@ jobs:
       continue-on-error: true
       shell: bash
       env:
-        VERIFIC: ${{ steps.verific.outputs.exit_code }}/${{ steps.verific.outputs.log_exit_code }}
         ASCENTLINT: ${{ steps.ascentlint.outputs.exit_code }}/${{ steps.ascentlint.outputs.log_exit_code }}
         VCS: ${{ steps.vcs.outputs.exit_code }}/${{ steps.vcs.outputs.log_exit_code }}
       run: |
@@ -1080,7 +1060,7 @@ jobs:
         print("| Suite | Passed / Total |")
         print("| --- | ---: |")
         with open(os.environ["GITHUB_OUTPUT"], "a") as output:
-            for suite in ("Verific", "AscentLint", "VCS"):
+            for suite in ("AscentLint", "VCS"):
                 name = suite.lower()
                 status = os.environ.get(name.upper())
                 counts = "Unavailable"
@@ -1110,7 +1090,6 @@ jobs:
       - name: Prepare proprietary badge counts
         shell: python
         env:
-          VERIFIC: ${{ needs.bazel-build-and-proprietary-tool-test.outputs.verific }}
           ASCENTLINT: ${{ needs.bazel-build-and-proprietary-tool-test.outputs.ascentlint }}
           VCS: ${{ needs.bazel-build-and-proprietary-tool-test.outputs.vcs }}
         run: |
@@ -1119,7 +1098,7 @@ jobs:
           import re
 
           counts = {}
-          for suite in ("verific", "ascentlint", "vcs"):
+          for suite in ("ascentlint", "vcs"):
               value = os.environ[suite.upper()]
               counts[suite] = value if re.fullmatch(r"[0-9]{1,9}/[0-9]{1,9}/[0-9]{1,3}", value) else ""
           with open("proprietary-counts.json", "w") as output:
