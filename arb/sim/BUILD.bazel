@@ -172,6 +172,40 @@ br_verilog_sim_test_tools_suite(
 )
 
 verilog_library(
+    name = "br_arb_multi_fixed_tb",
+    srcs = ["br_arb_multi_fixed_tb.sv"],
+    deps = [
+        "//arb/rtl:br_arb_multi_fixed",
+        "//misc/sim:br_test_driver",
+    ],
+)
+
+verilog_elab_test(
+    name = "br_arb_multi_fixed_tb_elab_test",
+    tool = "slang",
+    deps = [":br_arb_multi_fixed_tb"],
+)
+
+br_verilog_sim_test_tools_suite(
+    name = "br_arb_multi_fixed_sim_test_tools_suite",
+    params = {
+        "MaxGrantPerCycle": [
+            "2",
+            "3",
+        ],
+        "NumRequesters": [
+            "3",
+            "5",
+        ],
+    },
+    tools = [
+        "vcs",
+        "verilator",
+    ],
+    deps = [":br_arb_multi_fixed_tb"],
+)
+
+verilog_library(
     name = "br_arb_weighted_lru_tb",
     srcs = ["br_arb_weighted_lru_tb.sv"],
     deps = [
