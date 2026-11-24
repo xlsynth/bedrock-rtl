@@ -28,3 +28,11 @@ py_test(
         "pages_badges_test.py",
     ],
 )
+
+py_test(
+    name = "restore_pages_test",
+    srcs = [
+        "restore_pages.py",
+        "restore_pages_test.py",
+    ],
+)
