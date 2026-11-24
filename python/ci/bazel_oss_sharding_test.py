@@ -12,6 +12,7 @@ from python.ci.bazel_oss_sharding import (
     aggregate_results,
     canonicalize_labels,
     command_check,
+    complete_test_counts,
     finalize_result,
     labels_digest,
     parse_expected_shards,
@@ -122,6 +123,15 @@ class BazelOssShardingTest(unittest.TestCase):
             self.assertEqual(errors, [])
             self.assertEqual(outputs["slang"]["total_tests"], 20)
             self.assertEqual(outputs["verilator"]["passing_tests"], 30)
+
+    def test_complete_counts_require_one_consistent_summary(self):
+        cached = "Executed 0 out of 2 tests: 2 tests pass."
+        self.assertEqual(complete_test_counts(cached, 0), (2, 2))
+        self.assertIsNone(complete_test_counts(cached, 3))
+        self.assertIsNone(complete_test_counts(f"{cached}\n{cached}", 0))
+        self.assertIsNone(
+            complete_test_counts("Executed 1 out of 2 tests: 1 test passes.", 0)
+        )
 
     def test_aggregate_rejects_missing_duplicate_and_inconsistent_shards(self):
         with tempfile.TemporaryDirectory() as temporary:

@@ -129,6 +129,36 @@ def parse_passing_tests(log: str) -> int | None:
     return int(matches[-1]) if matches else None
 
 
+def complete_test_counts(log: str, exit_code: int) -> tuple[int, int] | None:
+    """Reads a single Bazel summary accounting for every test, including cached results."""
+    summaries = [line for line in log.splitlines() if line.startswith("Executed ")]
+    if len(summaries) != 1 or exit_code not in (0, 3):
+        return None
+    summary = re.fullmatch(
+        r"Executed ([0-9]{1,9}) out of ([1-9][0-9]{0,8}) tests?: (.+)\.", summaries[0]
+    )
+    if not summary or int(summary[1]) > int(summary[2]):
+        return None
+    total = int(summary[2])
+    counts = {}
+    for result in re.split(r", (?:and )?| and ", summary[3]):
+        match = re.fullmatch(
+            r"([1-9][0-9]{0,8}) (?:tests? pass(?:es)?|fails? (locally|remotely))",
+            result,
+        )
+        if not match:
+            return None
+        kind = match[2] or "passed"
+        if kind in counts:
+            return None
+        counts[kind] = int(match[1])
+    # Bazel omits the passing count when every test fails.
+    passed = counts.get("passed", 0)
+    if sum(counts.values()) != total or (exit_code == 0) != (passed == total):
+        return None
+    return passed, total
+
+
 def finalize_result(result_path: Path, log_path: Path, exit_code: int) -> dict:
     """Adds Bazel's outcome to an existing result record."""
 
