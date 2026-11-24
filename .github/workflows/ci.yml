@@ -573,6 +573,11 @@ jobs:
       verilator_total_tests: ${{ steps.results.outputs.verilator_total_tests }}
       verilator_passing_tests: ${{ steps.results.outputs.verilator_passing_tests }}
       verilator_exit_code: ${{ steps.results.outputs.verilator_exit_code }}
+      # The aggregator withholds fractions when a shard is missing or invalid.
+      python: ${{ steps.results.outputs.python_badge }}
+      stardoc: ${{ steps.results.outputs.stardoc_badge }}
+      slang: ${{ steps.results.outputs.slang_badge }}
+      verilator: ${{ steps.results.outputs.verilator_badge }}
     steps:
       # actions/checkout v7.0.1
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1

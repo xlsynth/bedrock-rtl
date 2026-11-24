@@ -167,9 +167,8 @@ def finalize_result(result_path: Path, log_path: Path, exit_code: int) -> dict:
     if record["suite"] in BUILD_SUITES:
         passing_tests = record["selected_count"] if exit_code == 0 else 0
     else:
-        passing_tests = parse_passing_tests(
-            log_path.read_text(encoding="utf-8", errors="replace")
-        )
+        log = log_path.read_text(encoding="utf-8", errors="replace")
+        passing_tests = parse_passing_tests(log)
         if passing_tests is None:
             passing_tests = 0
             if exit_code == 0:
@@ -183,6 +182,12 @@ def finalize_result(result_path: Path, log_path: Path, exit_code: int) -> dict:
                 "successful Bazel invocation did not pass every selected target"
             )
             exit_code = 4
+        # The original outputs retain partial counts. A badge needs a complete
+        # summary that agrees with both those counts and the selected targets.
+        record["complete_counts"] = complete_test_counts(log, exit_code) == (
+            passing_tests,
+            record["selected_count"],
+        )
     record["passing_tests"] = passing_tests
     record["exit_code"] = exit_code
     record["errors"] = errors
@@ -203,7 +208,7 @@ def mark_discovery_failure(result_path: Path, exit_code: int, message: str) -> d
 
 def aggregate_results(
     results_dir: Path, expected_shards: dict[str, int]
-) -> tuple[dict[str, dict[str, int]], list[str], list[str]]:
+) -> tuple[dict[str, dict[str, int | str]], list[str], list[str]]:
     """Validates and aggregates shard records.
 
     Returns suite outputs, validation errors, and Markdown summary rows.
@@ -214,7 +219,9 @@ def aggregate_results(
     for result_path in sorted(results_dir.rglob("result-*.json")):
         try:
             record = read_json(result_path)
-        except (OSError, json.JSONDecodeError) as error:
+            if not isinstance(record, dict) or not isinstance(record.get("suite"), str):
+                raise ValueError("expected a shard record with a suite")
+        except (OSError, ValueError) as error:
             errors.append(f"{result_path.name}: invalid JSON: {error}")
             continue
         record["_result_path"] = result_path
@@ -279,17 +286,12 @@ def aggregate_results(
             selected_seen.update(labels)
             selected_labels.extend(labels)
             passing_tests += record["passing_tests"]
-            if record["exit_code"] != 0:
-                suite_errors.append(
-                    f"shard {record['shard_index']} exited with {record['exit_code']}"
-                )
             suite_errors.extend(
                 f"shard {record['shard_index']}: {message}"
                 for message in record.get("errors", [])
             )
 
-        # Keep badge outputs deterministic even when inconsistent records make
-        # the suite fail validation.
+        # Retain partial totals for diagnostics even when validation fails.
         total_tests = max(discovered_counts, default=0)
         discovered_digest = min(discovered_digests, default=labels_digest([]))
         if len(selected_labels) != total_tests:
@@ -299,17 +301,41 @@ def aggregate_results(
         if passing_tests > total_tests:
             suite_errors.append("aggregate passing count exceeds discovered count")
 
+        # A test failure (Bazel exit 3) can have complete counts. Keep the
+        # failing check even when the badge can report the exact fraction.
+        complete = not suite_errors
+        for record in valid_records:
+            if suite not in BUILD_SUITES and record.get("complete_counts") is not True:
+                complete = False
+            if record["exit_code"] != 0:
+                if (
+                    record["exit_code"] != 3
+                    or suite in BUILD_SUITES
+                    or record["passing_tests"] >= record["selected_count"]
+                ):
+                    complete = False
+                suite_errors.append(
+                    f"shard {record['shard_index']} exited with {record['exit_code']}"
+                )
+            elif record["passing_tests"] != record["selected_count"]:
+                complete = False
         exit_code = 1 if suite_errors else 0
         outputs[suite] = {
             "total_tests": total_tests,
             "passing_tests": passing_tests,
             "exit_code": exit_code,
+            "badge": (
+                f"{passing_tests}/{total_tests}/{exit_code}"
+                if complete
+                else "incomplete"
+            ),
         }
         errors.extend(f"{suite}: {message}" for message in suite_errors)
         status = "PASS" if exit_code == 0 else "FAIL"
-        summary_rows.append(
-            f"| {suite} | {shard_count} | {passing_tests} / {total_tests} | {status} |"
-        )
+        counts = f"{passing_tests} / {total_tests}"
+        if not complete:
+            counts += " (incomplete)"
+        summary_rows.append(f"| {suite} | {shard_count} | {counts} | {status} |")
 
     unknown_suites = sorted(
         {
@@ -426,7 +452,7 @@ def command_aggregate(args: argparse.Namespace) -> int:
     outputs, errors, rows = aggregate_results(args.results_dir, expected)
     with args.github_output.open("a", encoding="utf-8") as output:
         for suite in expected:
-            for field in ("total_tests", "passing_tests", "exit_code"):
+            for field in ("total_tests", "passing_tests", "exit_code", "badge"):
                 output.write(f"{suite}_{field}={outputs[suite][field]}\n")
     with args.step_summary.open("a", encoding="utf-8") as summary:
         summary.write("## Public Bazel test suites\n\n")
