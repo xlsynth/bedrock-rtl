@@ -51,7 +51,7 @@ Target VCS first. Add Verilator when practical:
 
 ## Bazel Integration
 
-Use `verilog_library` for the bench, `verilog_elab_test(tool = "verific")` when appropriate, and `br_verilog_sim_test_tools_suite` for internal Bedrock sim suites.
+Use `verilog_library` for the bench, `verilog_elab_test(tool = "slang")` when appropriate, and `br_verilog_sim_test_tools_suite` for internal Bedrock sim suites.
 
 - Add `//misc/sim:br_test_driver` when using `td`.
 - Add helper deps explicitly: `//flow/sim:br_flow_test_driver`, `//flow/sim:br_flow_test_sink`, `//fifo/sim:br_fifo_test_harness`, mocks, packages, and macros as needed.

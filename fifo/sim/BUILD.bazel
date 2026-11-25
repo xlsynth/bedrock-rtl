@@ -33,7 +33,7 @@ verilog_library(
 
 verilog_elab_test(
     name = "br_fifo_ctrl_1r1w_tb_elab_test",
-    tool = "verific",
+    tool = "slang",
     deps = [":br_fifo_ctrl_1r1w_tb"],
 )
 
@@ -85,7 +85,7 @@ verilog_library(
 
 verilog_elab_test(
     name = "br_fifo_ctrl_1r1w_push_credit_tb_elab_test",
-    tool = "verific",
+    tool = "slang",
     deps = [":br_fifo_ctrl_1r1w_push_credit_tb"],
 )
 

@@ -41,11 +41,15 @@ class PagesBadgesTest(unittest.TestCase):
         write_badges(self.site, restored=False)
         self.assertEqual(self.badge("verilator")["message"], "10 of 10 passing")
         self.assertEqual(self.badge("verilator")["color"], "brightgreen")
+        retired = self.badges / "verific.json"
+        self.assertFalse(retired.exists())
+        retired.write_text('{"message":"1 of 1 passing"}')
         del os.environ["SLANG_COUNTS"]
         os.environ.update(VERILATOR_COUNTS="incomplete", PYTHON_COUNTS="2/3/1")
         for number in ("2", "3"):
             os.environ.update(GITHUB_RUN_NUMBER=number, GITHUB_SHA="1" * 40)
             write_badges(self.site, restored=True)
+            self.assertFalse(retired.exists())
             self.assertEqual(self.badge("report")["message"], "#1 (abcdef0)")
             self.assertEqual(self.badge("run")["message"], f"#{number} (1111111)")
             self.assertEqual(self.badge("verilator")["message"], "incomplete")
@@ -56,15 +60,15 @@ class PagesBadgesTest(unittest.TestCase):
     def test_private_counts_only_render_complete_numeric_results(self):
         data = self.root / "badge-counts/proprietary-counts.json"
         data.parent.mkdir()
-        data.write_text(
-            json.dumps(dict(verific="PRIVATE DETAIL", vcs="3/4/3", ascentlint="2/5/8"))
-        )
+        data.write_text(json.dumps(dict(vcs="3/4/3", ascentlint="2/5/8")))
         os.environ["PRIVATE_COUNTS_READY"] = "true"
         write_badges(self.site, restored=False)
-        self.assertEqual(self.badge("verific")["message"], "unavailable")
         self.assertEqual(self.badge("ascentlint")["message"], "incomplete")
         self.assertEqual(self.badge("vcs")["message"], "3 of 4 passing")
         self.assertEqual(self.badge("vcs")["color"], "red")
+        data.write_text(json.dumps(dict(vcs="PRIVATE DETAIL")))
+        write_badges(self.site, restored=True)
+        self.assertEqual(self.badge("vcs")["message"], "unavailable")
         self.assertNotIn(
             "PRIVATE DETAIL", "".join(f.read_text() for f in self.badges.iterdir())
         )

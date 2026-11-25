@@ -590,7 +590,7 @@ followed by "_elab_test" or "_lint_test", respectively.
 | <a id="verilog_elab_and_lint_test_suite-defines"></a>defines |  A list of defines.   |  `[]` |
 | <a id="verilog_elab_and_lint_test_suite-params"></a>params |  A dictionary where keys are parameter names and values are lists of possible values for those parameters.   |  `{}` |
 | <a id="verilog_elab_and_lint_test_suite-include_default_params"></a>include_default_params |  Whether to include an instance with the module's default parameters.   |  `True` |
-| <a id="verilog_elab_and_lint_test_suite-elab_tools"></a>elab_tools |  The tools to use for elaboration. Defaults to Verific and Slang.   |  `["verific", "slang"]` |
+| <a id="verilog_elab_and_lint_test_suite-elab_tools"></a>elab_tools |  The tools to use for elaboration. Defaults to Slang.   |  `["slang"]` |
 | <a id="verilog_elab_and_lint_test_suite-lint_tools"></a>lint_tools |  The tools to use for lint. Defaults to AscentLint.   |  `["ascentlint"]` |
 | <a id="verilog_elab_and_lint_test_suite-disable_lint_rules"></a>disable_lint_rules |  A list of lint rules to disable in the generated files.   |  `[]` |
 | <a id="verilog_elab_and_lint_test_suite-kwargs"></a>kwargs |  Additional common keyword arguments to be passed to the verilog_elab_test and verilog_lint_test functions.   |  none |
