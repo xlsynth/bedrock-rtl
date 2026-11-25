@@ -1,14 +1,15 @@
 # SPDX-License-Identifier: Apache-2.0
 
-"""Yosys logic-synthesis plugin for Verilog Runner."""
+"""Yosys synthesis and SymbiYosys formal plugins for Verilog Runner."""
 
 import argparse
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 import json
 from pathlib import Path
+import shlex
 from typing import Dict, Type
 
-from cli import Subcommand, Synth, common_args
+from cli import Fpv, Subcommand, Synth, common_args
 from eda_tool import EdaTool
 from util import (
     gen_file_header,
@@ -16,6 +17,7 @@ from util import (
     include_dirs,
     print_summary,
     run_shell_script,
+    write_and_dump_file,
 )
 
 
@@ -161,7 +163,7 @@ class Yosys(EdaTool):
         }
 
     def run_test(self) -> bool:
-        """Runs synthesis and returns whether Yosys completed successfully."""
+        """Runs the selected Yosys flow and reports its success criteria."""
         step_success = self.run_cmd()
         success = all(step_success.values())
         print_summary(
@@ -170,4 +172,137 @@ class Yosys(EdaTool):
             report_table="",
             logger=self.logger,
         )
+        return success
+
+
+@dataclass
+class YosysFpv(Yosys):
+    """Checks safety properties with yosys-slang and SymbiYosys.
+
+    ``opts`` contains SBY settings in ``key=value`` form. Supported keys are
+    ``mode`` (prove, bmc, cover), ``engine``, ``depth``, and ``timeout`` in seconds.
+    Frontend switches use ``analysis_opts`` and ``elab_opts``. Clock and reset
+    assumptions belong in the formal harness.
+    """
+
+    subcommand: Type[Subcommand] = Fpv
+    help: str = "Check SystemVerilog properties using Yosys and SymbiYosys"
+    analysis_opts: list[str] = field(default_factory=list)
+    elab_only: bool = False
+    sby_options: Dict[str, str] = field(init=False)
+    engine: str = field(init=False)
+
+    def __post_init__(self):
+        self.logger = get_class_logger("fpv", "yosys")
+        settings = {"mode": "prove", "depth": "20", "timeout": "60"}
+        for option in self.opts:
+            key, separator, value = option.partition("=")
+            if (
+                not separator
+                or key not in ("mode", "engine", "depth", "timeout")
+                or not value
+                or "\n" in value
+                or "\r" in value
+            ):
+                raise ValueError("Invalid Yosys FPV option: " + option)
+            settings[key] = value
+        if settings["mode"] not in ("prove", "bmc", "cover"):
+            raise ValueError("Yosys FPV mode must be prove, bmc, or cover")
+        for key in ("depth", "timeout"):
+            if not settings[key].isdigit() or int(settings[key]) < 1:
+                raise ValueError("Yosys FPV " + key + " must be a positive integer")
+        self.engine = settings.pop(
+            "engine", "abc pdr" if settings["mode"] == "prove" else "smtbmc z3"
+        )
+        self.sby_options = settings
+        self.opts = (
+            ["--no-synthesis-define", "-DFORMAL"] + self.analysis_opts + self.elab_opts
+        )
+
+    @classmethod
+    def from_args(cls, args):
+        if args.gui or args.conn:
+            raise ValueError("Yosys FPV supports batch property verification")
+        return cls(
+            **common_args(args),
+            analysis_opts=args.analysis_opt,
+            elab_opts=args.elab_opt,
+            elab_only=args.elab_only,
+        )
+
+    @property
+    def model_file(self) -> str:
+        return self.tclfile + ".il"
+
+    @property
+    def sby_file(self) -> str:
+        return self.tclfile + ".sby"
+
+    @property
+    def work_directory(self) -> str:
+        return self.tclfile + ".sby-work"
+
+    def default_tcl_body(self) -> str:
+        return "prep -top " + _tcl_word(self.top)
+
+    def tcl_footer(self) -> str:
+        return "write_rtlil " + _tcl_word(self.model_file)
+
+    def sby_config(self) -> str:
+        # The RTLIL model already includes the transitive sources, headers,
+        # defines, and top-level parameter overrides from the runner.
+        return "\n".join(
+            ["[options]"]
+            + [key + " " + value for key, value in self.sby_options.items()]
+            + [
+                "[engines]",
+                self.engine,
+                "[script]",
+                "read_rtlil model.il",
+                "prep -top " + self.top,
+                "[files]",
+                "model.il " + self.model_file,
+                "",
+            ]
+        )
+
+    def cmd(self) -> str:
+        commands = (
+            [
+                "#!/usr/bin/env bash",
+                "set -euo pipefail",
+            ]
+            + self.read_env_setup_commands()
+            + [
+                '"${YOSYS_PATH:-yosys}" -m slang -c ' + shlex.quote(self.tclfile),
+            ]
+        )
+        if not self.elab_only:
+            # Embed the SBY configuration so existing sandbox rules need only
+            # package the runner's Tcl, shell script, and source file list.
+            commands += [
+                "cat > " + shlex.quote(self.sby_file) + " <<'VERILOG_RUNNER_SBY'",
+                self.sby_config(),
+                "VERILOG_RUNNER_SBY",
+                "sby_backup_args=()",
+                "if [ -d " + shlex.quote(self.work_directory) + " ]; then",
+                "  sby_backup_args=(-b)",
+                "fi",
+                '"${SBY_PATH:-sby}" --yosys "${YOSYS_PATH:-yosys}" "${sby_backup_args[@]}" -j 1 -d '
+                + shlex.quote(self.work_directory)
+                + " "
+                + shlex.quote(self.sby_file),
+            ]
+        return "\n".join(commands + [""])
+
+    def run_cmd(self) -> Dict[str, bool]:
+        self.prepare_files()
+        returncode, output = run_shell_script(self.scriptfile, self.logger)
+        write_and_dump_file(output, self.logfile, logger=self.logger)
+        success = {f"Return code {returncode}": returncode == 0}
+        if not self.elab_only:
+            status_file = Path(self.work_directory) / "status"
+            fields = status_file.read_text().split() if status_file.exists() else []
+            verdict = fields[0] if fields else "MISSING"
+            success["SymbiYosys status " + verdict] = verdict == "PASS"
         return success
