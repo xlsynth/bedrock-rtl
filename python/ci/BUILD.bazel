@@ -20,3 +20,11 @@ py_test(
     srcs = ["bazel_oss_sharding_test.py"],
     deps = [":bazel_oss_sharding_lib"],
 )
+
+py_test(
+    name = "pages_badges_test",
+    srcs = [
+        "pages_badges.py",
+        "pages_badges_test.py",
+    ],
+)

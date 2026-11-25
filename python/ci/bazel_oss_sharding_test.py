@@ -11,6 +11,7 @@ import unittest
 from python.ci.bazel_oss_sharding import (
     aggregate_results,
     canonicalize_labels,
+    command_aggregate,
     command_check,
     complete_test_counts,
     finalize_result,
@@ -78,6 +79,13 @@ class BazelOssShardingTest(unittest.TestCase):
             record = finalize_result(result_path, log_path, 0)
             self.assertEqual(record["passing_tests"], 1)
             self.assertEqual(record["exit_code"], 0)
+            self.assertTrue(record.pop("complete_counts"))
+            # Older shard records still count toward CI without certifying a badge.
+            result_path.write_text(json.dumps(record))
+            outputs, errors, _ = aggregate_results(output_dir, {"python": 1})
+            self.assertEqual(errors, [])
+            self.assertEqual(outputs["python"]["passing_tests"], 1)
+            self.assertEqual(outputs["python"]["badge"], "incomplete")
 
             log_path.write_text("no summary\n")
             record = finalize_result(result_path, log_path, 0)
@@ -123,6 +131,47 @@ class BazelOssShardingTest(unittest.TestCase):
             self.assertEqual(errors, [])
             self.assertEqual(outputs["slang"]["total_tests"], 20)
             self.assertEqual(outputs["verilator"]["passing_tests"], 30)
+            self.assertEqual(outputs["verilator"]["badge"], "30/30/0")
+
+    def test_failed_badges_require_complete_test_counts(self):
+        cases = [
+            (
+                "Executed 2 out of 2 tests: 1 test passes and 1 fails locally.",
+                3,
+                1,
+                "1/2/1",
+            ),
+            ("Executed 2 out of 2 tests: 2 fail locally.", 3, 0, "0/2/1"),
+            (
+                "Executed 1 out of 2 tests: 1 test passes and 1 was skipped.",
+                3,
+                1,
+                "incomplete",
+            ),
+            ("Bazel failed before running tests", 1, 0, "incomplete"),
+        ]
+        for summary, code, passed, badge in cases:
+            with self.subTest(summary=summary), tempfile.TemporaryDirectory() as tmp:
+                root = Path(tmp)
+                _, result, _ = prepare_partition(
+                    "python", 0, 1, ["//p:a", "//p:b"], root
+                )
+                log = root / "bazel.log"
+                log.write_text(summary + "\n")
+                self.assertEqual(finalize_result(result, log, code)["exit_code"], code)
+                args = argparse.Namespace(
+                    results_dir=root,
+                    expected=["python=1"],
+                    github_output=root / "output",
+                    step_summary=root / "summary",
+                )
+                with redirect_stderr(io.StringIO()):
+                    self.assertEqual(command_aggregate(args), 1)
+                output = args.github_output.read_text()
+                self.assertIn(f"python_passing_tests={passed}\n", output)
+                self.assertIn("python_total_tests=2\n", output)
+                self.assertIn("python_exit_code=1\n", output)
+                self.assertIn(f"python_badge={badge}\n", output)
 
     def test_complete_counts_require_one_consistent_summary(self):
         cached = "Executed 0 out of 2 tests: 2 tests pass."
@@ -147,11 +196,15 @@ class BazelOssShardingTest(unittest.TestCase):
             self._write_suite(results_dir, "stardoc", 1, ["//bazel:test"])
             self._write_suite(results_dir, "verilator", 1, ["//sim:test"])
 
-            _, errors, _ = aggregate_results(
+            outputs, errors, rows = aggregate_results(
                 results_dir,
                 {"python": 1, "stardoc": 1, "slang": 2, "verilator": 1},
             )
             self.assertTrue(any("missing shard indexes" in error for error in errors))
+            self.assertEqual(outputs["slang"]["badge"], "incomplete")
+            passed = outputs["slang"]["passing_tests"]
+            self.assertIn(f"| slang | 2 | {passed} / 20 (incomplete) | FAIL |", rows)
+            self.assertEqual(outputs["verilator"]["badge"], "1/1/0")
 
             duplicate = results_dir / "duplicate"
             duplicate.mkdir()
@@ -177,12 +230,13 @@ class BazelOssShardingTest(unittest.TestCase):
             record = json.loads(paths[0].read_text(encoding="utf-8"))
             (results_dir / record["target_file"]).write_text("//rtl:a\n")
 
-            _, errors, _ = aggregate_results(
+            outputs, errors, _ = aggregate_results(
                 results_dir,
                 {"python": 1, "stardoc": 1, "slang": 1, "verilator": 1},
             )
             self.assertTrue(any("does not match manifest" in error for error in errors))
             self.assertTrue(any("union digest" in error for error in errors))
+            self.assertEqual(outputs["slang"]["badge"], "incomplete")
 
     def test_aggregate_rejects_inconsistent_discovery(self):
         with tempfile.TemporaryDirectory() as temporary:
@@ -238,6 +292,7 @@ class BazelOssShardingTest(unittest.TestCase):
                 raise AssertionError(record["errors"])
             record["passing_tests"] = record["selected_count"]
             record["exit_code"] = 0
+            record["complete_counts"] = True
             result_path.write_text(
                 json.dumps(record, indent=2, sort_keys=True) + "\n", encoding="utf-8"
             )
