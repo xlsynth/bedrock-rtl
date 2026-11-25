@@ -10,6 +10,13 @@ id = "token"
 description = "look for 'TOKEN' string"
 regex = '''TOKEN'''
 
+[[rules.allowlists]]
+description = "Let the CI workflow pass GitHub's temporary job token to the GitHub CLI."
+condition = "AND"
+paths = ['''^\.github/workflows/ci\.yml$''']
+regexTarget = "line"
+regexes = ['''(?m)^ +GH_TOKEN: \$\{\{ github\.token \}\}$''']
+
 [[rules]]
 id = "hw1p"
 description = "look for 'hw1p' string"
